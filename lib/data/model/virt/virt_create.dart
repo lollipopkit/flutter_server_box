@@ -245,3 +245,33 @@ List<VirtNetwork> virtCreateNetworks(
 /// where it can.
 String virtLibvirtDiskFormat(String type) =>
     _libvirtRawOnly.contains(type) ? 'raw' : 'qcow2';
+
+/// A copy of a guest (the Settings view's Clone group).
+final class VirtCloneRequest {
+  const VirtCloneRequest({
+    required this.name,
+    this.full = true,
+    this.vmid,
+  });
+
+  /// A VM's name, a container's hostname: the same rules as a new guest's.
+  final String name;
+
+  /// PVE: a full clone, or a linked one sharing the template's disks
+  /// (templates only). libvirt: each disk's contents copied, or an empty
+  /// disk of the same size — the design's "copy disk contents".
+  final bool full;
+
+  /// PVE: the new guest's VMID (`/cluster/nextid` when null).
+  final int? vmid;
+}
+
+/// Why [name] cannot be a clone's name on a host of [kind], or null. Taken
+/// names are the caller's to check: it has the host's guests.
+VirtCreateIssue? virtCloneNameIssue(String name, VirtHostKind? kind) {
+  if (name.isEmpty) return VirtCreateIssue.nameEmpty;
+  final pattern = kind == VirtHostKind.pve
+      ? virtPveNamePattern
+      : virtLibvirtNamePattern;
+  return pattern.hasMatch(name) ? null : VirtCreateIssue.nameInvalid;
+}

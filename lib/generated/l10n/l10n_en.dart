@@ -3758,6 +3758,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Editing hardware needs VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network and VM.Config.Options; new disks and interfaces also need Datastore.AllocateSpace and SDN.Use. The video card and USB and PCI devices also need VM.Config.HWType; a device given through a resource mapping needs Mapping.Use on it, and Mapping.Audit to list mappings.';
 
   @override
+  String get pveTokenTipBackup =>
+      'Cloning needs VM.Clone, and backing up and restoring VM.Backup, with Datastore.AllocateSpace where the copy or the backup goes.';
+
+  @override
   String get virtErrConflict => 'Changed elsewhere';
 
   @override
@@ -4212,5 +4216,130 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String virtHwSwitchFirmwareAsk(String guest, String firmware) {
     return 'Switch $guest to $firmware?';
+  }
+
+  @override
+  String get virtCloneName => 'New name';
+
+  @override
+  String get virtCloneFull => 'Full clone';
+
+  @override
+  String get virtCloneCopyDisks => 'Copy disk contents';
+
+  @override
+  String get virtCloneLinkedNote =>
+      'Off: a linked clone, which depends on the template\'s disks';
+
+  @override
+  String get virtCloneFullOnly =>
+      'Only a template can be cloned as a linked clone';
+
+  @override
+  String get virtCloneEmptyNote => 'Off: new empty disks of the same size';
+
+  @override
+  String get virtCloneStopFirst => 'Shut it down before cloning.';
+
+  @override
+  String get virtCloneFullShort => 'Full';
+
+  @override
+  String get virtCloneLinkedShort => 'Linked';
+
+  @override
+  String get virtCloneEmptyShort => 'Empty disks';
+
+  @override
+  String get virtCloning => 'Cloning…';
+
+  @override
+  String virtCloned(String name) {
+    return 'Cloned as $name';
+  }
+
+  @override
+  String get virtBackupPlan => 'Plan';
+
+  @override
+  String get virtBackupPlanWhere => 'Datacenter → Backup';
+
+  @override
+  String get virtBackupNoPlanShort => 'No plan';
+
+  @override
+  String get virtBackupNoPlan =>
+      'No scheduled backup job takes this guest. Jobs are set up in the datacenter.';
+
+  @override
+  String get virtBackupKeep => 'Keep';
+
+  @override
+  String get virtBackupJobDisabled => 'This job is disabled.';
+
+  @override
+  String virtBackupCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count backups',
+      one: '1 backup',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get virtBackupNoStorage => 'No storage on this node holds backups.';
+
+  @override
+  String get virtBackupLiveTip => 'Running: snapshot mode, no downtime';
+
+  @override
+  String get virtBackupStoppedTip => 'Stopped: backed up as it is';
+
+  @override
+  String get virtBackupNow => 'Back up now';
+
+  @override
+  String get virtBackupNotes => 'Notes';
+
+  @override
+  String get virtBackupProtected =>
+      'Protected: it cannot be deleted until protection is removed in PVE.';
+
+  @override
+  String virtBackupVerified(String state) {
+    return 'Verification: $state';
+  }
+
+  @override
+  String get virtBackupRestoreOverwrites =>
+      'Restoring overwrites the current disks';
+
+  @override
+  String get virtBackupStopFirst => 'Shut it down before restoring.';
+
+  @override
+  String get virtBackupRestoreAgain =>
+      'The guest\'s disks and configuration are replaced by the backup\'s.';
+
+  @override
+  String get virtBackupDeleteConfirm => 'Delete backup';
+
+  @override
+  String get virtBackupRestoreNew => 'Restore as new';
+
+  @override
+  String get virtBackupRestoreConfirm => 'Restore over it';
+
+  @override
+  String get virtBackupDone => 'Backup finished';
+
+  @override
+  String get virtBackupDeleted => 'Backup deleted';
+
+  @override
+  String virtBackupRestored(String time) {
+    return 'Restored from $time';
   }
 }

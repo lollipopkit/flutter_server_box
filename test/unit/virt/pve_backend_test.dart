@@ -17,6 +17,7 @@ import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/virt/pve_resources.dart';
 import 'package:server_box/data/model/virt/virt.dart';
+import 'package:server_box/data/model/virt/virt_backup.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
@@ -1237,6 +1238,181 @@ void main() {
 
       final running = off.copyWith(state: VirtGuestState.running);
       expect((await _err(pve.delete(running))).type, VirtErrType.unsupported);
+    });
+  });
+
+  group('clone and backups', () {
+    Object? fixture(String name) =>
+        jsonDecode(File('test/fixtures/pve/$name').readAsStringSync());
+    Map<String, String> form(String body) => Uri.splitQueryString(body);
+    const token = PveConfig(
+      addr: 'https://pve.lan:8006',
+      auth: PveAuth.token,
+      tokenId: 'root@pam!sb',
+      tokenSecret: 's3cret',
+    );
+    const vm = VirtGuest(
+      id: 'qemu/9941',
+      name: 'sbbk-src',
+      kind: VirtGuestKind.qemu,
+      state: VirtGuestState.stopped,
+      vmid: 9941,
+      node: 'pve',
+    );
+    const ct = VirtGuest(
+      id: 'lxc/200',
+      name: 'alpine',
+      kind: VirtGuestKind.lxc,
+      state: VirtGuestState.stopped,
+      vmid: 200,
+      node: 'pve',
+    );
+
+    test('backups and jobs, as PVE 9.2 lists them', () {
+      final backups = PveResources.parseBackups(
+        'pve',
+        'local',
+        fixture('backup_content.json')! as List,
+      );
+      final b = backups.single;
+      expect(b.id, 'local:backup/vzdump-qemu-9941-2026_09_26-03_11_45.vma.zst');
+      expect(b.fileName, 'vzdump-qemu-9941-2026_09_26-03_11_45.vma.zst');
+      expect((b.storage, b.node, b.vmid), ('local', 'pve', 9941));
+      expect((b.size, b.format, b.notes), (37103, 'vma.zst', 'sb e2e 9941'));
+      expect(b.kind, VirtGuestKind.qemu);
+      expect(b.createdAt, DateTime.fromMillisecondsSinceEpoch(1790363505000));
+      expect(b.protected, isFalse);
+
+      final raw = fixture('backup_jobs.json')! as List;
+      final job = PveResources.parseBackupJobs(raw, vmid: 9941).single;
+      expect(
+        (job.id, job.schedule, job.storage, job.mode, job.compress, job.keep),
+        ('sbbk-job', '02:00', 'local', 'snapshot', 'zstd', 'keep-last=7'),
+      );
+      expect(job.enabled, isFalse);
+      expect(PveResources.parseBackupJobs(raw, vmid: 100), isEmpty);
+      // Every guest, less the excluded ones.
+      final all = [
+        {'id': 'all', 'type': 'vzdump', 'all': 1, 'exclude': '101'},
+      ];
+      expect(PveResources.parseBackupJobs(all, vmid: 100), hasLength(1));
+      expect(PveResources.parseBackupJobs(all, vmid: 101), isEmpty);
+    });
+
+    test('clone: full unless a template asks for linked; a VMID taken', () async {
+      final api = _Api();
+      api.routes['GET /cluster/nextid'] = (_) => '120';
+      api.routes['POST /nodes/pve/qemu/9941/clone'] = (_) => _Api.upid;
+      api.routes['POST /nodes/pve/lxc/200/clone'] = (_) => _Api.upid;
+      final pve = api.backend(token);
+      expect(
+        await pve.clone(vm, const VirtCloneRequest(name: 'copy', full: false)),
+        'qemu/120',
+      );
+      var i = api.paths.indexOf('POST /nodes/pve/qemu/9941/clone');
+      expect(form(api.bodies[i]), {'newid': '120', 'name': 'copy', 'full': '1'});
+      expect(api.paths.last, contains('/tasks/'), reason: 'waited for');
+
+      final template = vm.copyWith(template: true);
+      await pve.clone(template, const VirtCloneRequest(name: 'l', full: false, vmid: 121));
+      i = api.paths.lastIndexOf('POST /nodes/pve/qemu/9941/clone');
+      expect(form(api.bodies[i]), {'newid': '121', 'name': 'l', 'full': '0'});
+
+      expect(
+        await pve.clone(ct, const VirtCloneRequest(name: 'ct2', vmid: 202)),
+        'lxc/202',
+      );
+      i = api.paths.indexOf('POST /nodes/pve/lxc/200/clone');
+      expect(form(api.bodies[i]), {'newid': '202', 'hostname': 'ct2', 'full': '1'});
+
+      api.routes['POST /nodes/pve/qemu/9941/clone'] = (_) => _Api._status(
+        500,
+        message: "unable to create VM 120 - VM 120 already exists on node 'pve'",
+      );
+      final taken = await _err(pve.clone(vm, const VirtCloneRequest(name: 'x', vmid: 120)));
+      expect(taken.type, VirtErrType.exists);
+    });
+
+    test('back up now, list, restore over and as new, delete', () async {
+      final api = _Api();
+      api.routes['GET /nodes/pve/storage'] = (_) => [
+        {'storage': 'local', 'type': 'dir', 'active': 1, 'enabled': 1, 'content': 'iso,backup'},
+        {'storage': 'nfs', 'type': 'nfs', 'active': 1, 'enabled': 1, 'content': 'backup'},
+      ];
+      api.routes['GET /nodes/pve/storage/local/content'] =
+          (_) => fixture('backup_content.json');
+      api.routes['GET /nodes/pve/storage/nfs/content'] = (_) => [
+        {
+          'volid': 'nfs:backup/vzdump-qemu-9941-2026_09_27-02_00_00.vma.zst',
+          'content': 'backup',
+          'ctime': 1790450000,
+          'protected': 1,
+          'verification': {'state': 'ok'},
+          'subtype': 'qemu',
+          'vmid': 9941,
+        },
+      ];
+      api.routes['POST /nodes/pve/vzdump'] = (_) => _Api.upid;
+      api.routes['POST /nodes/pve/qemu'] = (_) => _Api.upid;
+      api.routes['POST /nodes/pve/lxc'] = (_) => _Api.upid;
+      final pve = api.backend(token);
+
+      final storages = await pve.backupStorages(vm);
+      expect(storages.map((s) => s.name), ['local', 'nfs']);
+      final i0 = api.paths.indexOf('GET /nodes/pve/storage');
+      expect(Uri.splitQueryString(api.queries[i0]), {'content': 'backup', 'enabled': '1'});
+
+      final backups = await pve.backups(vm);
+      expect(backups.map((b) => b.storage), ['nfs', 'local'], reason: 'newest first');
+      expect(backups.first.protected, isTrue);
+      expect(backups.first.verification, 'ok');
+      final ic = api.paths.indexOf('GET /nodes/pve/storage/local/content');
+      expect(Uri.splitQueryString(api.queries[ic]), {'content': 'backup', 'vmid': '9941'});
+
+      await pve.backup(
+        vm,
+        const VirtBackupRequest(storage: 'local', mode: 'stop', notes: ' n ', protected: true),
+      );
+      var i = api.paths.indexOf('POST /nodes/pve/vzdump');
+      expect(form(api.bodies[i]), {
+        'vmid': '9941',
+        'storage': 'local',
+        'mode': 'stop',
+        'compress': 'zstd',
+        'notes-template': 'n',
+        'protected': '1',
+      });
+      expect(api.paths.last, contains('/tasks/'));
+
+      final local = backups.last;
+      await pve.restoreBackup(vm, local);
+      i = api.paths.indexOf('POST /nodes/pve/qemu');
+      expect(form(api.bodies[i]), {'vmid': '9941', 'archive': local.id, 'force': '1'});
+      await pve.restoreBackup(vm, local, vmid: 130);
+      i = api.paths.lastIndexOf('POST /nodes/pve/qemu');
+      expect(form(api.bodies[i]), {'vmid': '130', 'archive': local.id});
+      // Over a running guest: refused here, not forced.
+      final running = vm.copyWith(state: VirtGuestState.running);
+      expect(
+        (await _err(pve.restoreBackup(running, local))).type,
+        VirtErrType.unsupported,
+      );
+      // A container's archive is its template, restored.
+      final ctBackup = local.copyWith(id: 'local:backup/vzdump-lxc-200-x.tar.zst', kind: VirtGuestKind.lxc);
+      await pve.restoreBackup(ct, ctBackup);
+      i = api.paths.indexOf('POST /nodes/pve/lxc');
+      expect(form(api.bodies[i]), {
+        'vmid': '200',
+        'ostemplate': ctBackup.id,
+        'restore': '1',
+        'force': '1',
+      });
+
+      final del =
+          'DELETE /nodes/pve/storage/local/content/${Uri.encodeComponent(local.id)}';
+      api.routes[del] = (_) => _Api.upid;
+      await pve.deleteBackup(vm, local);
+      expect(api.paths, contains(del));
     });
   });
 

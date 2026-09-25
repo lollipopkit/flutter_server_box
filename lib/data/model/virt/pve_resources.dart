@@ -1,4 +1,5 @@
 import 'package:server_box/data/model/virt/virt.dart';
+import 'package:server_box/data/model/virt/virt_backup.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/model/virt/virt_rates.dart';
@@ -389,6 +390,91 @@ abstract final class PveResources {
       );
     }
     out.sort((a, b) => a.name.compareTo(b.name));
+    return out;
+  }
+
+  /// `GET /nodes/{node}/storage/{storage}/content?content=backup`: the
+  /// backups on [storage], newest first. `verification` is an object where a
+  /// verify job has looked at one.
+  static List<VirtBackup> parseBackups(
+    String node,
+    String storage,
+    List<Object?> raw,
+  ) {
+    final out = <VirtBackup>[];
+    for (final item in raw) {
+      if (item is! Map) continue;
+      final e = item.cast<String, Object?>();
+      final id = _str(e['volid']);
+      if (id == null || (_str(e['content']) ?? 'backup') != 'backup') continue;
+      final ctime = _int(e['ctime']);
+      final verification = e['verification'];
+      out.add(
+        VirtBackup(
+          id: id,
+          storage: storage,
+          node: node,
+          vmid: _int(e['vmid']),
+          createdAt: ctime == null
+              ? null
+              : DateTime.fromMillisecondsSinceEpoch(ctime * 1000),
+          size: _positive(_int(e['size'])),
+          format: _str(e['format']),
+          notes: _str(e['notes']),
+          protected: _int(e['protected']) == 1,
+          verification: verification is Map
+              ? _str(verification['state'])
+              : null,
+          kind: switch (_str(e['subtype'])) {
+            'qemu' => VirtGuestKind.qemu,
+            'lxc' => VirtGuestKind.lxc,
+            _ => null,
+          },
+        ),
+      );
+    }
+    out.sort(
+      (a, b) => (b.createdAt ?? DateTime(0)).compareTo(a.createdAt ?? DateTime(0)),
+    );
+    return out;
+  }
+
+  /// `GET /cluster/backup`: the vzdump jobs that take [vmid] — every guest
+  /// (`all`), or it by name in `vmid`. A job by pool or excluding it is
+  /// left out: which guests a pool holds is not in this answer.
+  static List<VirtBackupJob> parseBackupJobs(List<Object?> raw, {int? vmid}) {
+    final out = <VirtBackupJob>[];
+    for (final item in raw) {
+      if (item is! Map) continue;
+      final e = item.cast<String, Object?>();
+      final id = _str(e['id']);
+      if (id == null || (_str(e['type']) ?? 'vzdump') != 'vzdump') continue;
+      final all = _int(e['all']) == 1;
+      final exclude = (_str(e['exclude']) ?? '').split(',');
+      final ids = (_str(e['vmid']) ?? '').split(',');
+      final takes = vmid == null ||
+          (all && !exclude.contains('$vmid')) ||
+          ids.contains('$vmid');
+      if (!takes) continue;
+      final prune = e['prune-backups'];
+      out.add(
+        VirtBackupJob(
+          id: id,
+          schedule: _str(e['schedule']) ?? _str(e['starttime']),
+          storage: _str(e['storage']),
+          mode: _str(e['mode']),
+          compress: _str(e['compress']),
+          keep: switch (prune) {
+            final Map m when m.isNotEmpty => [
+              for (final MapEntry(:key, :value) in m.entries) '$key=$value',
+            ].join(','),
+            final String p => p,
+            _ => null,
+          },
+          enabled: _int(e['enabled']) != 0,
+        ),
+      );
+    }
     return out;
   }
 

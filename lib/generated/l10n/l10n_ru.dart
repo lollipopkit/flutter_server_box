@@ -3788,6 +3788,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Для изменения оборудования нужны VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network и VM.Config.Options; для новых дисков и интерфейсов также Datastore.AllocateSpace и SDN.Use. Для видеокарты и устройств USB и PCI нужна также VM.Config.HWType; для устройства через сопоставление ресурсов нужна Mapping.Use на нём, а для списка сопоставлений — Mapping.Audit.';
 
   @override
+  String get pveTokenTipBackup =>
+      'Для клонирования нужен VM.Clone, для резервного копирования и восстановления — VM.Backup, а также Datastore.AllocateSpace на хранилище копии.';
+
+  @override
   String get virtErrConflict => 'Изменено в другом месте';
 
   @override
@@ -4244,5 +4248,132 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String virtHwSwitchFirmwareAsk(String guest, String firmware) {
     return 'Переключить $guest на $firmware?';
+  }
+
+  @override
+  String get virtCloneName => 'Новое имя';
+
+  @override
+  String get virtCloneFull => 'Полный клон';
+
+  @override
+  String get virtCloneCopyDisks => 'Копировать содержимое дисков';
+
+  @override
+  String get virtCloneLinkedNote =>
+      'Выкл.: связанный клон, зависящий от дисков шаблона';
+
+  @override
+  String get virtCloneFullOnly =>
+      'Связанный клон можно сделать только из шаблона';
+
+  @override
+  String get virtCloneEmptyNote => 'Выкл.: новые пустые диски того же размера';
+
+  @override
+  String get virtCloneStopFirst => 'Перед клонированием выключите её.';
+
+  @override
+  String get virtCloneFullShort => 'Полный';
+
+  @override
+  String get virtCloneLinkedShort => 'Связанный';
+
+  @override
+  String get virtCloneEmptyShort => 'Пустые диски';
+
+  @override
+  String get virtCloning => 'Клонирование…';
+
+  @override
+  String virtCloned(String name) {
+    return 'Клонировано как $name';
+  }
+
+  @override
+  String get virtBackupPlan => 'План';
+
+  @override
+  String get virtBackupPlanWhere => 'Датацентр → Резервное копирование';
+
+  @override
+  String get virtBackupNoPlanShort => 'Нет плана';
+
+  @override
+  String get virtBackupNoPlan =>
+      'Ни одно плановое задание резервного копирования не включает этот гостевой хост. Задания настраиваются в датацентре.';
+
+  @override
+  String get virtBackupKeep => 'Хранить';
+
+  @override
+  String get virtBackupJobDisabled => 'Это задание отключено.';
+
+  @override
+  String virtBackupCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count копий',
+      few: '$count копии',
+      one: '$count копия',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get virtBackupNoStorage =>
+      'На этом узле нет хранилища для резервных копий.';
+
+  @override
+  String get virtBackupLiveTip => 'Работает: режим snapshot, без остановки';
+
+  @override
+  String get virtBackupStoppedTip => 'Выключен: копируется как есть';
+
+  @override
+  String get virtBackupNow => 'Создать копию';
+
+  @override
+  String get virtBackupNotes => 'Заметки';
+
+  @override
+  String get virtBackupProtected =>
+      'Защищена: её нельзя удалить, пока защита не снята в PVE.';
+
+  @override
+  String virtBackupVerified(String state) {
+    return 'Проверка: $state';
+  }
+
+  @override
+  String get virtBackupRestoreOverwrites =>
+      'Восстановление перезапишет текущие диски';
+
+  @override
+  String get virtBackupStopFirst => 'Перед восстановлением выключите её.';
+
+  @override
+  String get virtBackupRestoreAgain =>
+      'Диски и конфигурация гостя будут заменены данными из копии.';
+
+  @override
+  String get virtBackupDeleteConfirm => 'Удалить копию';
+
+  @override
+  String get virtBackupRestoreNew => 'Восстановить как новый';
+
+  @override
+  String get virtBackupRestoreConfirm => 'Восстановить поверх';
+
+  @override
+  String get virtBackupDone => 'Копия создана';
+
+  @override
+  String get virtBackupDeleted => 'Копия удалена';
+
+  @override
+  String virtBackupRestored(String time) {
+    return 'Восстановлено из $time';
   }
 }

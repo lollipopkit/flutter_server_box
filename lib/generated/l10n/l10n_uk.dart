@@ -3787,6 +3787,10 @@ class AppLocalizationsUk extends AppLocalizations {
       'Для зміни обладнання потрібні VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network і VM.Config.Options; для нових дисків та інтерфейсів також Datastore.AllocateSpace і SDN.Use. Для відеокарти та пристроїв USB і PCI потрібна також VM.Config.HWType; для пристрою через зіставлення ресурсів потрібна Mapping.Use на ньому, а для списку зіставлень — Mapping.Audit.';
 
   @override
+  String get pveTokenTipBackup =>
+      'Для клонування потрібен VM.Clone, для резервного копіювання й відновлення — VM.Backup, а також Datastore.AllocateSpace на сховищі копії.';
+
+  @override
   String get virtErrConflict => 'Змінено деінде';
 
   @override
@@ -4244,5 +4248,132 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String virtHwSwitchFirmwareAsk(String guest, String firmware) {
     return 'Перемкнути $guest на $firmware?';
+  }
+
+  @override
+  String get virtCloneName => 'Нове імʼя';
+
+  @override
+  String get virtCloneFull => 'Повний клон';
+
+  @override
+  String get virtCloneCopyDisks => 'Копіювати вміст дисків';
+
+  @override
+  String get virtCloneLinkedNote =>
+      'Вимк.: повʼязаний клон, що залежить від дисків шаблону';
+
+  @override
+  String get virtCloneFullOnly =>
+      'Повʼязаний клон можна зробити лише з шаблону';
+
+  @override
+  String get virtCloneEmptyNote => 'Вимк.: нові порожні диски того ж розміру';
+
+  @override
+  String get virtCloneStopFirst => 'Перед клонуванням вимкніть її.';
+
+  @override
+  String get virtCloneFullShort => 'Повний';
+
+  @override
+  String get virtCloneLinkedShort => 'Повʼязаний';
+
+  @override
+  String get virtCloneEmptyShort => 'Порожні диски';
+
+  @override
+  String get virtCloning => 'Клонування…';
+
+  @override
+  String virtCloned(String name) {
+    return 'Клоновано як $name';
+  }
+
+  @override
+  String get virtBackupPlan => 'План';
+
+  @override
+  String get virtBackupPlanWhere => 'Датацентр → Резервне копіювання';
+
+  @override
+  String get virtBackupNoPlanShort => 'Немає плану';
+
+  @override
+  String get virtBackupNoPlan =>
+      'Жодне планове завдання резервного копіювання не охоплює цей гостьовий хост. Завдання налаштовуються в датацентрі.';
+
+  @override
+  String get virtBackupKeep => 'Зберігати';
+
+  @override
+  String get virtBackupJobDisabled => 'Це завдання вимкнено.';
+
+  @override
+  String virtBackupCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count копій',
+      few: '$count копії',
+      one: '$count копія',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get virtBackupNoStorage =>
+      'На цьому вузлі немає сховища для резервних копій.';
+
+  @override
+  String get virtBackupLiveTip => 'Працює: режим snapshot, без зупинки';
+
+  @override
+  String get virtBackupStoppedTip => 'Вимкнений: копіюється як є';
+
+  @override
+  String get virtBackupNow => 'Створити копію';
+
+  @override
+  String get virtBackupNotes => 'Нотатки';
+
+  @override
+  String get virtBackupProtected =>
+      'Захищена: її не можна видалити, доки захист не знято в PVE.';
+
+  @override
+  String virtBackupVerified(String state) {
+    return 'Перевірка: $state';
+  }
+
+  @override
+  String get virtBackupRestoreOverwrites =>
+      'Відновлення перезапише поточні диски';
+
+  @override
+  String get virtBackupStopFirst => 'Перед відновленням вимкніть її.';
+
+  @override
+  String get virtBackupRestoreAgain =>
+      'Диски й конфігурацію гостя буде замінено даними з копії.';
+
+  @override
+  String get virtBackupDeleteConfirm => 'Видалити копію';
+
+  @override
+  String get virtBackupRestoreNew => 'Відновити як новий';
+
+  @override
+  String get virtBackupRestoreConfirm => 'Відновити поверх';
+
+  @override
+  String get virtBackupDone => 'Копію створено';
+
+  @override
+  String get virtBackupDeleted => 'Копію видалено';
+
+  @override
+  String virtBackupRestored(String time) {
+    return 'Відновлено з $time';
   }
 }

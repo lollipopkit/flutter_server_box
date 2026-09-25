@@ -15,6 +15,7 @@ import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/virt/pve_resources.dart';
 import 'package:server_box/data/model/virt/virt.dart';
+import 'package:server_box/data/model/virt/virt_backup.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
@@ -252,6 +253,9 @@ class PveBackend implements VirtBackend {
         create: true,
         hardware: true,
         hardwareRevert: true,
+        clone: true,
+        linkedClone: true,
+        backup: true,
       ),
     );
   }
@@ -886,6 +890,164 @@ class PveBackend implements VirtBackend {
       ),
     );
   }
+
+  // ---------------------------------------------------------------------------
+  // Cloning and backups
+  // ---------------------------------------------------------------------------
+
+  /// `POST .../clone` on the guest's node, waited for. A full clone copies
+  /// the disks to the storages they are on; a linked one (a template only —
+  /// PVE refuses it for anything else) shares them.
+  @override
+  Future<String> clone(VirtGuest guest, VirtCloneRequest request) async {
+    final lxc = guest.kind == VirtGuestKind.lxc;
+    final vmid = request.vmid ?? await nextVmid();
+    if (vmid == null) {
+      throw const VirtErr(
+        type: VirtErrType.invalidResponse,
+        message: 'No VMID for the clone',
+      );
+    }
+    try {
+      await _task(
+        guest,
+        (dio) => dio.post(
+          _url('${_guestPath(guest)}/clone'),
+          data: {
+            'newid': vmid,
+            lxc ? 'hostname' : 'name': request.name,
+            'full': request.full || !guest.template ? 1 : 0,
+          },
+          options: Options(contentType: Headers.formUrlEncodedContentType),
+        ),
+      );
+    } on VirtErr catch (e) {
+      throw _createErr(e);
+    }
+    return '${lxc ? 'lxc' : 'qemu'}/$vmid';
+  }
+
+  /// Every storage on the guest's node that holds backups, listed for the
+  /// guest's VMID.
+  @override
+  Future<List<VirtBackup>> backups(VirtGuest guest) async {
+    final node = guest.node!;
+    final out = <VirtBackup>[];
+    for (final storage in await backupStorages(guest)) {
+      final data = await _call(
+        (dio) => dio.get(
+          _url('/nodes/${_seg(node)}/storage/${_seg(storage.name)}/content'),
+          queryParameters: {'content': 'backup', 'vmid': guest.vmid},
+        ),
+      );
+      if (data is List) {
+        out.addAll(PveResources.parseBackups(node, storage.name, data));
+      }
+    }
+    out.sort(
+      (a, b) => (b.createdAt ?? DateTime(0)).compareTo(a.createdAt ?? DateTime(0)),
+    );
+    return out;
+  }
+
+  @override
+  Future<List<VirtStoragePool>> backupStorages(VirtGuest guest) async {
+    final node = guest.node!;
+    final data = await _call(
+      (dio) => dio.get(
+        _url('/nodes/${_seg(node)}/storage'),
+        queryParameters: {'content': 'backup', 'enabled': 1},
+      ),
+    );
+    if (data is! List) return const [];
+    return PveResources.parseStorages(node, data)
+        .where((s) => s.active && s.content.contains('backup'))
+        .toList();
+  }
+
+  /// `/cluster/backup` needs `Sys.Audit`: an account without it sees no plan,
+  /// which is not a failure of the view.
+  @override
+  Future<List<VirtBackupJob>> backupJobs(VirtGuest guest) async {
+    final Object? data;
+    try {
+      data = await _call((dio) => dio.get(_url('/cluster/backup')));
+    } on VirtErr catch (e) {
+      if (e.type == VirtErrType.authFailed) return const [];
+      rethrow;
+    }
+    if (data is! List) return const [];
+    return PveResources.parseBackupJobs(data, vmid: guest.vmid);
+  }
+
+  /// `POST /nodes/{node}/vzdump` for the one guest, waited for.
+  @override
+  Future<void> backup(VirtGuest guest, VirtBackupRequest request) async {
+    final node = guest.node!;
+    final notes = request.notes?.trim();
+    await _task(
+      guest,
+      (dio) => dio.post(
+        _url('/nodes/${_seg(node)}/vzdump'),
+        data: {
+          'vmid': guest.vmid,
+          'storage': request.storage,
+          'mode': request.mode,
+          'compress': request.compress,
+          'notes-template': ?(notes == null || notes.isEmpty) ? null : notes,
+          'protected': ?request.protected ? 1 : null,
+        },
+        options: Options(contentType: Headers.formUrlEncodedContentType),
+      ),
+    );
+  }
+
+  /// `POST /nodes/{node}/qemu` with `archive`, or `/lxc` with `ostemplate`
+  /// and `restore=1`. Over the guest itself with `force=1`, which PVE
+  /// refuses while it runs; as a new guest with [vmid] otherwise.
+  @override
+  Future<void> restoreBackup(
+    VirtGuest guest,
+    VirtBackup backup, {
+    int? vmid,
+  }) async {
+    final node = guest.node!;
+    final lxc = (backup.kind ?? guest.kind) == VirtGuestKind.lxc;
+    final over = vmid == null;
+    if (over && guest.state != VirtGuestState.stopped) {
+      throw VirtErr(
+        type: VirtErrType.unsupported,
+        message: '${guest.name} is not stopped',
+      );
+    }
+    try {
+      await _task(
+        guest,
+        (dio) => dio.post(
+          _url('/nodes/${_seg(node)}/${lxc ? 'lxc' : 'qemu'}'),
+          data: {
+            'vmid': vmid ?? guest.vmid,
+            if (lxc) ...{'ostemplate': backup.id, 'restore': 1} else 'archive': backup.id,
+            'force': ?over ? 1 : null,
+          },
+          options: Options(contentType: Headers.formUrlEncodedContentType),
+        ),
+      );
+    } on VirtErr catch (e) {
+      throw _createErr(e);
+    }
+  }
+
+  @override
+  Future<void> deleteBackup(VirtGuest guest, VirtBackup backup) => _task(
+    guest,
+    (dio) => dio.delete(
+      _url(
+        '/nodes/${_seg(backup.node)}/storage/${_seg(backup.storage)}'
+        '/content/${_seg(backup.id)}',
+      ),
+    ),
+  );
 
   // ---------------------------------------------------------------------------
   // Hardware

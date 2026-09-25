@@ -3796,6 +3796,10 @@ class AppLocalizationsPt extends AppLocalizations {
       'Editar o hardware requer VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network e VM.Config.Options; novos discos e interfaces também requerem Datastore.AllocateSpace e SDN.Use. A placa de vídeo e os dispositivos USB e PCI também precisam de VM.Config.HWType; um dispositivo repassado por um mapeamento de recursos precisa de Mapping.Use nele, e Mapping.Audit para listá-los.';
 
   @override
+  String get pveTokenTipBackup =>
+      'Clonar precisa de VM.Clone, e fazer backup e restaurar de VM.Backup, com Datastore.AllocateSpace onde fica a cópia ou o backup.';
+
+  @override
   String get virtErrConflict => 'Alterado em outro lugar';
 
   @override
@@ -4250,5 +4254,132 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String virtHwSwitchFirmwareAsk(String guest, String firmware) {
     return 'Mudar $guest para $firmware?';
+  }
+
+  @override
+  String get virtCloneName => 'Novo nome';
+
+  @override
+  String get virtCloneFull => 'Clone completo';
+
+  @override
+  String get virtCloneCopyDisks => 'Copiar o conteúdo dos discos';
+
+  @override
+  String get virtCloneLinkedNote =>
+      'Desligado: um clone vinculado, que depende dos discos do modelo';
+
+  @override
+  String get virtCloneFullOnly =>
+      'Só um modelo pode ser clonado como clone vinculado';
+
+  @override
+  String get virtCloneEmptyNote =>
+      'Desligado: discos novos vazios do mesmo tamanho';
+
+  @override
+  String get virtCloneStopFirst => 'Desligue antes de clonar.';
+
+  @override
+  String get virtCloneFullShort => 'Completo';
+
+  @override
+  String get virtCloneLinkedShort => 'Vinculado';
+
+  @override
+  String get virtCloneEmptyShort => 'Discos vazios';
+
+  @override
+  String get virtCloning => 'Clonando…';
+
+  @override
+  String virtCloned(String name) {
+    return 'Clonado como $name';
+  }
+
+  @override
+  String get virtBackupPlan => 'Plano';
+
+  @override
+  String get virtBackupPlanWhere => 'Datacenter → Backup';
+
+  @override
+  String get virtBackupNoPlanShort => 'Sem plano';
+
+  @override
+  String get virtBackupNoPlan =>
+      'Nenhuma tarefa agendada de backup inclui este convidado. As tarefas são configuradas no datacenter.';
+
+  @override
+  String get virtBackupKeep => 'Manter';
+
+  @override
+  String get virtBackupJobDisabled => 'Esta tarefa está desativada.';
+
+  @override
+  String virtBackupCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count backups',
+      one: '1 backup',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get virtBackupNoStorage =>
+      'Nenhum armazenamento deste nó guarda backups.';
+
+  @override
+  String get virtBackupLiveTip => 'Em execução: modo snapshot, sem parada';
+
+  @override
+  String get virtBackupStoppedTip => 'Desligado: copiado como está';
+
+  @override
+  String get virtBackupNow => 'Fazer backup agora';
+
+  @override
+  String get virtBackupNotes => 'Notas';
+
+  @override
+  String get virtBackupProtected =>
+      'Protegido: não pode ser excluído até a proteção ser removida no PVE.';
+
+  @override
+  String virtBackupVerified(String state) {
+    return 'Verificação: $state';
+  }
+
+  @override
+  String get virtBackupRestoreOverwrites =>
+      'Restaurar sobrescreve os discos atuais';
+
+  @override
+  String get virtBackupStopFirst => 'Desligue antes de restaurar.';
+
+  @override
+  String get virtBackupRestoreAgain =>
+      'Os discos e a configuração do convidado são substituídos pelos do backup.';
+
+  @override
+  String get virtBackupDeleteConfirm => 'Excluir backup';
+
+  @override
+  String get virtBackupRestoreNew => 'Restaurar como novo';
+
+  @override
+  String get virtBackupRestoreConfirm => 'Restaurar por cima';
+
+  @override
+  String get virtBackupDone => 'Backup concluído';
+
+  @override
+  String get virtBackupDeleted => 'Backup excluído';
+
+  @override
+  String virtBackupRestored(String time) {
+    return 'Restaurado de $time';
   }
 }

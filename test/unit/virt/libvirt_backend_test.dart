@@ -764,6 +764,38 @@ void main() {
       expect((p.key, p.current, p.pending), ('cpu', '3/4 (4×1×1)', '2/4 (4×1×1)'));
     });
 
+    test('clone: disks copied from the definition, then the copy defined',
+        () async {
+      final exec = _Exec((call) {
+        if (call.script.contains('vol-clone')) {
+          return _ok(_fixture('script_clone_volumes_full.txt'));
+        }
+        if (call.script.contains('define --file')) {
+          return _ok(_fixture('script_clone_define.txt'));
+        }
+        return _ok(_fixture('script_hardware_stopped.txt'));
+      });
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      final off = guest.copyWith(state: VirtGuestState.stopped);
+      final id = await virt.clone(off, const VirtCloneRequest(name: 'sbcl-full'));
+      expect(id, 'b0352bd8-52ad-4cf7-875c-7ceb45b0d751');
+      final scripts = exec.calls.map((c) => c.script).toList();
+      final vols = scripts.firstWhere((s) => s.contains('vol-clone'));
+      expect(vols, contains("--vol '/var/lib/libvirt/images/off1.qcow2'"));
+      expect(vols, contains("--newname 'sbcl-full.qcow2'"));
+      // The copy on the volume the first step made, named as asked.
+      final define = scripts.firstWhere((s) => s.contains('define --file'));
+      // Shell-quoted: each `'` of the XML is `'\''` in the script.
+      expect(define, contains("<source file='\\''/var/lib/libvirt/images/sbcl-full.qcow2'\\''/>"));
+      expect(define, contains('<name>sbcl-full</name>'));
+
+      // Running: refused before anything reaches the host.
+      final calls = exec.calls.length;
+      final e = await _err(virt.clone(guest, const VirtCloneRequest(name: 'x')));
+      expect(e.type, VirtErrType.unsupported);
+      expect(exec.calls, hasLength(calls));
+    });
+
     test('shut off: one definition, nothing pending', () async {
       final exec = _Exec((_) => _ok(_fixture('script_hardware_stopped.txt')));
       final virt = LibvirtBackend(serverId: 's', exec: () async => exec);

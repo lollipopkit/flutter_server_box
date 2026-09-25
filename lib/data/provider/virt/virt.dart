@@ -13,6 +13,7 @@ import 'package:server_box/data/model/server/server.dart' show ServerConn;
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/virt/libvirt.dart';
 import 'package:server_box/data/model/virt/virt.dart';
+import 'package:server_box/data/model/virt/virt_backup.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
@@ -367,6 +368,9 @@ abstract class VirtHostState with _$VirtHostState {
     /// Guests with a hardware change in flight.
     @Default(<String>{}) Set<String> editing,
 
+    /// Guests being cloned, backed up or restored, and which.
+    @Default(<String, VirtCopyOp>{}) Map<String, VirtCopyOp> copyOps,
+
     /// This session's readings per guest, oldest first, capped at
     /// [VirtHostNotifier.sampleLimit] — the chart for a host without
     /// `storedHistory`, and the live tail for one with it.
@@ -382,7 +386,11 @@ abstract class VirtHostState with _$VirtHostState {
   /// [guest]'s state as it should read now: the transient state of an action
   /// this app has in flight, otherwise what the host reported.
   VirtGuestState displayState(VirtGuest guest) =>
-      busy[guest.id]?.transientState ?? guest.state;
+      busy[guest.id]?.transientState ??
+      switch (copyOps[guest.id]) {
+        VirtCopyOp.backup || VirtCopyOp.restore => VirtGuestState.backup,
+        _ => guest.state,
+      };
 
   /// What [guest] offers now: nothing while an action of this app's is in
   /// flight on it — except force stop while that action is a shutdown or a
@@ -405,7 +413,8 @@ abstract class VirtHostState with _$VirtHostState {
       } &&
       !snapshotOps.containsKey(id) &&
       !deleting.contains(id) &&
-      !editing.contains(id);
+      !editing.contains(id) &&
+      !copyOps.containsKey(id);
 
   /// A power action, a snapshot operation, a hardware change or a delete of
   /// this app's is in flight on the guest [id].
@@ -413,8 +422,13 @@ abstract class VirtHostState with _$VirtHostState {
       busy.containsKey(id) ||
       snapshotOps.containsKey(id) ||
       deleting.contains(id) ||
-      editing.contains(id);
+      editing.contains(id) ||
+      copyOps.containsKey(id);
 }
+
+/// A copy of a guest in flight: a clone, a backup, or a backup restored
+/// over it.
+enum VirtCopyOp { clone, backup, restore }
 
 /// A snapshot operation in flight.
 enum VirtSnapshotOp { create, revert, delete }
@@ -804,6 +818,70 @@ class VirtHostNotifier extends _$VirtHostNotifier {
     }
   }
 
+  /// Clones [guestId] and loads the host again, so the copy is in
+  /// [VirtHostState.data] when its id is returned. Throws [VirtErr].
+  Future<String> clone(String guestId, VirtCloneRequest request) =>
+      _copyOp(guestId, VirtCopyOp.clone, (guest) async {
+        final id = await _backend.clone(guest, request);
+        if (ref.mounted) await refresh();
+        return id;
+      });
+
+  /// See [VirtBackend.backups].
+  Future<List<VirtBackup>> backups(String guestId) =>
+      _backend.backups(_guest(guestId));
+
+  /// See [VirtBackend.backupJobs].
+  Future<List<VirtBackupJob>> backupJobs(String guestId) =>
+      _backend.backupJobs(_guest(guestId));
+
+  /// See [VirtBackend.backupStorages].
+  Future<List<VirtStoragePool>> backupStorages(String guestId) =>
+      _backend.backupStorages(_guest(guestId));
+
+  /// Backs [guestId] up now. The guest reads as backing up meanwhile.
+  Future<void> backup(String guestId, VirtBackupRequest request) =>
+      _copyOp(
+        guestId,
+        VirtCopyOp.backup,
+        (guest) => _backend.backup(guest, request),
+      );
+
+  /// Restores [backup] over [guestId], or as a new guest [vmid].
+  Future<void> restoreBackup(String guestId, VirtBackup backup, {int? vmid}) =>
+      _copyOp(
+        guestId,
+        VirtCopyOp.restore,
+        (guest) => _backend.restoreBackup(guest, backup, vmid: vmid),
+      );
+
+  Future<void> deleteBackup(String guestId, VirtBackup backup) =>
+      _backend.deleteBackup(_guest(guestId), backup);
+
+  /// One operation per guest at a time, as the others.
+  Future<T> _copyOp<T>(
+    String guestId,
+    VirtCopyOp op,
+    Future<T> Function(VirtGuest guest) run,
+  ) async {
+    final guest = _guest(guestId);
+    if (state.isBusy(guestId)) {
+      throw VirtErr(
+        type: VirtErrType.unsupported,
+        message: '${guest.name} is busy',
+      );
+    }
+    state = state.copyWith(copyOps: {...state.copyOps, guestId: op});
+    try {
+      return await run(guest);
+    } finally {
+      if (ref.mounted) {
+        state = state.copyWith(copyOps: {...state.copyOps}..remove(guestId));
+        unawaited(refresh());
+      }
+    }
+  }
+
   Future<List<VirtStoragePool>> storagePools() => _backend.storagePools();
 
   Future<List<VirtVolume>> volumes(VirtStoragePool pool) =>
@@ -913,6 +991,35 @@ final class _MissingBackend implements VirtBackend {
 
   @override
   Future<VirtHostDevices> hostDevices(VirtGuest guest) async => _fail();
+
+  @override
+  Future<String> clone(VirtGuest guest, VirtCloneRequest request) async =>
+      _fail();
+
+  @override
+  Future<List<VirtBackup>> backups(VirtGuest guest) async => _fail();
+
+  @override
+  Future<List<VirtBackupJob>> backupJobs(VirtGuest guest) async => _fail();
+
+  @override
+  Future<List<VirtStoragePool>> backupStorages(VirtGuest guest) async =>
+      _fail();
+
+  @override
+  Future<void> backup(VirtGuest guest, VirtBackupRequest request) async =>
+      _fail();
+
+  @override
+  Future<void> restoreBackup(
+    VirtGuest guest,
+    VirtBackup backup, {
+    int? vmid,
+  }) async => _fail();
+
+  @override
+  Future<void> deleteBackup(VirtGuest guest, VirtBackup backup) async =>
+      _fail();
 
   @override
   Future<void> delete(VirtGuest guest, {bool removeDisks = true}) async =>

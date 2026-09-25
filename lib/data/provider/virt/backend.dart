@@ -1,4 +1,5 @@
 import 'package:server_box/data/model/virt/virt.dart';
+import 'package:server_box/data/model/virt/virt_backup.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
@@ -116,6 +117,34 @@ abstract interface class VirtBackend {
   /// The host devices [guest] can be given (USB, PCI), for the Hardware
   /// view's add block. Only where `VirtHardware.support` offers them.
   Future<VirtHostDevices> hostDevices(VirtGuest guest);
+
+  /// Clones [guest] as [request] says and returns once the host has: the
+  /// new guest's id. libvirt refuses a guest that is not stopped. Throws
+  /// `VirtErrType.exists` for a name or VMID taken, and
+  /// `VirtErrType.actionFailed` with the host's words. Only where
+  /// `VirtCapabilities.clone`.
+  Future<String> clone(VirtGuest guest, VirtCloneRequest request);
+
+  /// [guest]'s backups on every storage that holds backups, newest first.
+  /// Only where `VirtCapabilities.backup`.
+  Future<List<VirtBackup>> backups(VirtGuest guest);
+
+  /// The scheduled backup jobs that take [guest]: every guest, or it by
+  /// VMID. Empty where the account may not read them.
+  Future<List<VirtBackupJob>> backupJobs(VirtGuest guest);
+
+  /// The storages [guest]'s backups can go to.
+  Future<List<VirtStoragePool>> backupStorages(VirtGuest guest);
+
+  /// Backs [guest] up now and returns once the host has.
+  Future<void> backup(VirtGuest guest, VirtBackupRequest request);
+
+  /// Restores [backup] over [guest], which must be stopped, or — with
+  /// [vmid] — as a new guest with that VMID, [guest] untouched.
+  Future<void> restoreBackup(VirtGuest guest, VirtBackup backup, {int? vmid});
+
+  /// Deletes [backup]. A protected one is refused by the host.
+  Future<void> deleteBackup(VirtGuest guest, VirtBackup backup);
 
   /// Drops any session, so the next call starts over (a new login, a new
   /// sudo probe). Keeps what the user confirmed or typed: a pinned

@@ -3800,6 +3800,10 @@ class AppLocalizationsNl extends AppLocalizations {
       'Hardware bewerken vereist VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network en VM.Config.Options; nieuwe schijven en interfaces vereisen ook Datastore.AllocateSpace en SDN.Use. De videokaart en USB- en PCI-apparaten vereisen ook VM.Config.HWType; een apparaat via een resourcekoppeling vereist Mapping.Use daarop, en Mapping.Audit om koppelingen te tonen.';
 
   @override
+  String get pveTokenTipBackup =>
+      'Klonen vraagt VM.Clone, back-uppen en herstellen VM.Backup, met Datastore.AllocateSpace waar de kopie of back-up heen gaat.';
+
+  @override
   String get virtErrConflict => 'Elders gewijzigd';
 
   @override
@@ -4257,5 +4261,132 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String virtHwSwitchFirmwareAsk(String guest, String firmware) {
     return '$guest omzetten naar $firmware?';
+  }
+
+  @override
+  String get virtCloneName => 'Nieuwe naam';
+
+  @override
+  String get virtCloneFull => 'Volledige kloon';
+
+  @override
+  String get virtCloneCopyDisks => 'Schijfinhoud kopiëren';
+
+  @override
+  String get virtCloneLinkedNote =>
+      'Uit: een gekoppelde kloon, afhankelijk van de schijven van de sjabloon';
+
+  @override
+  String get virtCloneFullOnly =>
+      'Alleen een sjabloon kan als gekoppelde kloon worden gekloond';
+
+  @override
+  String get virtCloneEmptyNote =>
+      'Uit: nieuwe lege schijven van dezelfde grootte';
+
+  @override
+  String get virtCloneStopFirst => 'Sluit hem af voordat je kloont.';
+
+  @override
+  String get virtCloneFullShort => 'Volledig';
+
+  @override
+  String get virtCloneLinkedShort => 'Gekoppeld';
+
+  @override
+  String get virtCloneEmptyShort => 'Lege schijven';
+
+  @override
+  String get virtCloning => 'Klonen…';
+
+  @override
+  String virtCloned(String name) {
+    return 'Gekloond als $name';
+  }
+
+  @override
+  String get virtBackupPlan => 'Planning';
+
+  @override
+  String get virtBackupPlanWhere => 'Datacenter → Back-up';
+
+  @override
+  String get virtBackupNoPlanShort => 'Geen planning';
+
+  @override
+  String get virtBackupNoPlan =>
+      'Geen geplande back-uptaak neemt deze gast mee. Taken stel je in het datacenter in.';
+
+  @override
+  String get virtBackupKeep => 'Bewaren';
+
+  @override
+  String get virtBackupJobDisabled => 'Deze taak is uitgeschakeld.';
+
+  @override
+  String virtBackupCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count back-ups',
+      one: '1 back-up',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get virtBackupNoStorage =>
+      'Geen opslag op deze node bewaart back-ups.';
+
+  @override
+  String get virtBackupLiveTip => 'Actief: snapshotmodus, zonder uitval';
+
+  @override
+  String get virtBackupStoppedTip => 'Uit: wordt geback-upt zoals hij is';
+
+  @override
+  String get virtBackupNow => 'Nu back-uppen';
+
+  @override
+  String get virtBackupNotes => 'Notities';
+
+  @override
+  String get virtBackupProtected =>
+      'Beveiligd: kan pas worden verwijderd als de beveiliging in PVE is opgeheven.';
+
+  @override
+  String virtBackupVerified(String state) {
+    return 'Verificatie: $state';
+  }
+
+  @override
+  String get virtBackupRestoreOverwrites =>
+      'Herstellen overschrijft de huidige schijven';
+
+  @override
+  String get virtBackupStopFirst => 'Sluit hem af voordat je herstelt.';
+
+  @override
+  String get virtBackupRestoreAgain =>
+      'De schijven en configuratie van de gast worden vervangen door die van de back-up.';
+
+  @override
+  String get virtBackupDeleteConfirm => 'Back-up verwijderen';
+
+  @override
+  String get virtBackupRestoreNew => 'Als nieuw herstellen';
+
+  @override
+  String get virtBackupRestoreConfirm => 'Eroverheen herstellen';
+
+  @override
+  String get virtBackupDone => 'Back-up voltooid';
+
+  @override
+  String get virtBackupDeleted => 'Back-up verwijderd';
+
+  @override
+  String virtBackupRestored(String time) {
+    return 'Hersteld van $time';
   }
 }

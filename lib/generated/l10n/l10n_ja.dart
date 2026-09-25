@@ -3578,6 +3578,10 @@ class AppLocalizationsJa extends AppLocalizations {
       'ハードウェアの編集には VM.Config.CPU、VM.Config.Memory、VM.Config.Disk、VM.Config.CDROM、VM.Config.Network、VM.Config.Options が必要です。ディスクやインターフェースの追加には Datastore.AllocateSpace と SDN.Use も必要です。ビデオカードと USB・PCI デバイスには VM.Config.HWType も必要です。リソースマッピング経由のデバイスにはそのマッピングの Mapping.Use、マッピングの一覧には Mapping.Audit が必要です。';
 
   @override
+  String get pveTokenTipBackup =>
+      'クローンには VM.Clone、バックアップと復元には VM.Backup が必要です。コピーやバックアップの保存先には Datastore.AllocateSpace も必要です。';
+
+  @override
   String get virtErrConflict => '他の場所で変更済み';
 
   @override
@@ -4017,5 +4021,118 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String virtHwSwitchFirmwareAsk(String guest, String firmware) {
     return '$guest を $firmware に切り替えますか？';
+  }
+
+  @override
+  String get virtCloneName => '新しい名前';
+
+  @override
+  String get virtCloneFull => '完全クローン';
+
+  @override
+  String get virtCloneCopyDisks => 'ディスクの内容をコピー';
+
+  @override
+  String get virtCloneLinkedNote => 'オフ: テンプレートのディスクに依存するリンククローン';
+
+  @override
+  String get virtCloneFullOnly => 'リンククローンにできるのはテンプレートだけです';
+
+  @override
+  String get virtCloneEmptyNote => 'オフ: 同じサイズの空のディスクを新規作成';
+
+  @override
+  String get virtCloneStopFirst => 'クローンの前にシャットダウンしてください。';
+
+  @override
+  String get virtCloneFullShort => '完全';
+
+  @override
+  String get virtCloneLinkedShort => 'リンク';
+
+  @override
+  String get virtCloneEmptyShort => '空のディスク';
+
+  @override
+  String get virtCloning => 'クローン中…';
+
+  @override
+  String virtCloned(String name) {
+    return '$name としてクローンしました';
+  }
+
+  @override
+  String get virtBackupPlan => 'スケジュール';
+
+  @override
+  String get virtBackupPlanWhere => 'データセンター → バックアップ';
+
+  @override
+  String get virtBackupNoPlanShort => 'スケジュールなし';
+
+  @override
+  String get virtBackupNoPlan => 'このゲストを含む定期バックアップジョブはありません。ジョブはデータセンターで設定します。';
+
+  @override
+  String get virtBackupKeep => '保持';
+
+  @override
+  String get virtBackupJobDisabled => 'このジョブは無効です。';
+
+  @override
+  String virtBackupCount(int count) {
+    return '$count 件';
+  }
+
+  @override
+  String get virtBackupNoStorage => 'このノードにはバックアップを保存できるストレージがありません。';
+
+  @override
+  String get virtBackupLiveTip => '実行中: snapshot モード、停止なし';
+
+  @override
+  String get virtBackupStoppedTip => '停止中: 現在の状態でバックアップ';
+
+  @override
+  String get virtBackupNow => '今すぐバックアップ';
+
+  @override
+  String get virtBackupNotes => 'メモ';
+
+  @override
+  String get virtBackupProtected => '保護中: PVE で保護を外すまで削除できません。';
+
+  @override
+  String virtBackupVerified(String state) {
+    return '検証: $state';
+  }
+
+  @override
+  String get virtBackupRestoreOverwrites => '復元すると現在のディスクは上書きされます';
+
+  @override
+  String get virtBackupStopFirst => '復元の前にシャットダウンしてください。';
+
+  @override
+  String get virtBackupRestoreAgain => 'ゲストのディスクと設定はバックアップのものに置き換わります。';
+
+  @override
+  String get virtBackupDeleteConfirm => 'バックアップを削除';
+
+  @override
+  String get virtBackupRestoreNew => '新規として復元';
+
+  @override
+  String get virtBackupRestoreConfirm => '上書きして復元';
+
+  @override
+  String get virtBackupDone => 'バックアップ完了';
+
+  @override
+  String get virtBackupDeleted => 'バックアップを削除しました';
+
+  @override
+  String virtBackupRestored(String time) {
+    return '$time から復元しました';
   }
 }

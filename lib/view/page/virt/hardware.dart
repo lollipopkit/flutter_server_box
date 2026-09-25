@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/virt/virt.dart';
+import 'package:server_box/data/model/virt/virt_backup.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
@@ -15,6 +16,7 @@ import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/view/page/virt/common.dart';
 import 'package:server_box/view/widget/group_title.dart';
 
+part 'backups.dart';
 part 'edit_pane.dart';
 part 'settings.dart';
 

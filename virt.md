@@ -549,6 +549,51 @@ kept as they are), a CD-ROM on SATA/SCSI, PVE clusters, and hardware over
 SSH (the read-only groups in `virt_real_test.dart` need an SSH key the test
 can open).
 
+### Clone and backups (phase 5)
+
+Following the design: **Clone** is a group of the Settings view (new name,
+"Full clone" on PVE / "Copy disk contents" on libvirt, the Clone button; the
+copy opens on its overview afterwards), and **Backup** is a guest view of its
+own on PVE, between Snapshots and Settings (the Plan group — the scheduled
+jobs that take the guest, read only, "Datacenter → Backup" — and the Backup
+list: "Back up now" and each backup's file, notes, protection, verification,
+Delete and Restore). Capabilities: `clone` (both), `linkedClone` and `backup`
+(PVE). A clone, a backup and a restore are a guest's one operation in flight
+(`VirtHostState.copyOps`); a backup or restore reads as "Backing up…".
+
+| | libvirt | PVE |
+| --- | --- | --- |
+| Clone | Stopped only (a disk being written gives a copy of nothing in particular). `clone_volumes_script`: the name not defined, the source `shut off`, then per writable disk `vol-pool` → `vol-clone` (or `vol-create-as` of its capacity and format: "copy disk contents" off) → `vol-path`; any step failing deletes the volumes made. `clone_define_script`: `clone_domain_xml` (new name; no `<uuid>`, no `<mac>`: libvirt gives new ones; each disk a `file`/`block` at its new path; a CD-ROM on the same image; `<nvram>` keeps its template and loses its path, so the copy gets a variables file of its own) → `define`, its volumes deleted if refused | `POST .../clone` (`newid` from `/cluster/nextid`, `name`/`hostname`, `full`), the task waited for. Linked (`full=0`) only from a template — PVE refuses it otherwise ("Linked clone feature is not supported"), so the switch is fixed on elsewhere |
+| Backups | none (libvirt has no backup of its own; the view is not offered) | Storages with `backup` content on the node; `.../content?content=backup&vmid=`; `POST /nodes/{n}/vzdump` (`mode` snapshot while running, stop otherwise; `zstd`); restore `POST /nodes/{n}/qemu` with `archive` (`/lxc` with `ostemplate` + `restore=1`) over the guest with `force=1` (stopped only) or as the next VMID; `DELETE .../content/{volid}`; jobs from `/cluster/backup` (`all` less `exclude`, or `vmid`) |
+
+Restoring over the guest and deleting a backup are each pressed twice (the
+design's two-step confirmation, the second in red); a protected backup cannot
+be deleted.
+
+Verified on real hosts (temporary guests only, all removed):
+
+- libvirt 11.3 through the agent with sudo: a full clone and an empty-disk
+  clone of a UEFI domain with a qcow2 disk and an ISO CD-ROM — new UUID and
+  MAC, `<name>_VARS.fd` of its own made at the first start, the CD-ROM on
+  the same image, the source untouched; a name taken (`Exists`), a running
+  source (`InvalidState`), a define refused (its volume deleted). e2e: the
+  app's clone of a created VM, full and empty, refused while running.
+- PVE 9.2.2 through the relay, with a privilege-separated token holding
+  exactly the documented privileges (the create/hardware set plus `VM.Clone`
+  and `VM.Backup`: deleting a backup needs no `Datastore.Allocate`, the plan
+  reads with `Sys.Audit`): clone, back up, list, restore as a new VM and over
+  the stopped VM (refused running), delete. A linked clone of a template
+  (lvmthin, origin `base-<vmid>-disk-0`) and PVE refusing one of a guest that
+  is not a template, as root.
+- Learned: `/cluster/resources` names a clone or a restored guest a moment
+  after its task (the same lag as other actions): the list shows its VMID
+  until the next refresh. `qm destroy --purge` takes the guest out of backup
+  jobs, and deletes a job left with no guest.
+- Lesson from testing: `virsh undefine --remove-all-storage` deletes every
+  volume the domain names, **a CD-ROM's image included** — shared base images
+  go with it. The app's delete never uses it (writable disks by target only);
+  a test must not either.
+
 ## Verified against real hosts
 
 `test/e2e/virt_real_test.dart` (opt-in; its header lists the variables) and
@@ -770,8 +815,12 @@ page, so feature pages use the `featureIntroVer` counter.
   before trying.
 - Hardware: adding a CD-ROM drive; libvirt revert (redefine from the running
   XML); USB passthrough by port rather than vendor/product.
-- Clone, migrate (PVE cluster); creating from a cloud image or with
-  cloud-init, UEFI/TPM and a choice of bus and NIC model in the create form.
-- Backups (PVE `vzdump` / backup storage).
+- Migrate (PVE cluster; the design's Migrate group in Settings); creating
+  from a cloud image or with cloud-init, UEFI/TPM and a choice of bus and NIC
+  model in the create form.
+- Clone: "convert to template" (PVE `POST .../template`), a target storage
+  or node for a full clone. Backups: scheduled jobs edited from the app,
+  per-run options (storage, mode, compression, notes, protection) in the
+  view, notes and protection edited on a backup, a restore's target storage.
 - Monitor agent: native virt endpoints and web panel parity, reusing
   `sbm_parser::virt`.

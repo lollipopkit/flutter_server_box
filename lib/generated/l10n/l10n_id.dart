@@ -3757,6 +3757,10 @@ class AppLocalizationsId extends AppLocalizations {
       'Mengedit perangkat keras memerlukan VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network, dan VM.Config.Options; disk dan antarmuka baru juga memerlukan Datastore.AllocateSpace dan SDN.Use. Kartu grafis serta perangkat USB dan PCI juga membutuhkan VM.Config.HWType; perangkat lewat pemetaan sumber daya membutuhkan Mapping.Use padanya, dan Mapping.Audit untuk mendaftar pemetaan.';
 
   @override
+  String get pveTokenTipBackup =>
+      'Kloning memerlukan VM.Clone, pencadangan dan pemulihan memerlukan VM.Backup, dengan Datastore.AllocateSpace di tempat salinan atau cadangan disimpan.';
+
+  @override
   String get virtErrConflict => 'Diubah di tempat lain';
 
   @override
@@ -4213,5 +4217,124 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String virtHwSwitchFirmwareAsk(String guest, String firmware) {
     return 'Ganti $guest ke $firmware?';
+  }
+
+  @override
+  String get virtCloneName => 'Nama baru';
+
+  @override
+  String get virtCloneFull => 'Klon penuh';
+
+  @override
+  String get virtCloneCopyDisks => 'Salin isi disk';
+
+  @override
+  String get virtCloneLinkedNote =>
+      'Mati: klon tertaut, bergantung pada disk templat';
+
+  @override
+  String get virtCloneFullOnly =>
+      'Hanya templat yang dapat dikloning sebagai klon tertaut';
+
+  @override
+  String get virtCloneEmptyNote => 'Mati: disk kosong baru berukuran sama';
+
+  @override
+  String get virtCloneStopFirst => 'Matikan sebelum mengkloning.';
+
+  @override
+  String get virtCloneFullShort => 'Penuh';
+
+  @override
+  String get virtCloneLinkedShort => 'Tertaut';
+
+  @override
+  String get virtCloneEmptyShort => 'Disk kosong';
+
+  @override
+  String get virtCloning => 'Mengkloning…';
+
+  @override
+  String virtCloned(String name) {
+    return 'Dikloning sebagai $name';
+  }
+
+  @override
+  String get virtBackupPlan => 'Jadwal';
+
+  @override
+  String get virtBackupPlanWhere => 'Pusat data → Cadangan';
+
+  @override
+  String get virtBackupNoPlanShort => 'Tanpa jadwal';
+
+  @override
+  String get virtBackupNoPlan =>
+      'Tidak ada tugas cadangan terjadwal yang mencakup tamu ini. Tugas diatur di pusat data.';
+
+  @override
+  String get virtBackupKeep => 'Simpan';
+
+  @override
+  String get virtBackupJobDisabled => 'Tugas ini dinonaktifkan.';
+
+  @override
+  String virtBackupCount(int count) {
+    return '$count cadangan';
+  }
+
+  @override
+  String get virtBackupNoStorage =>
+      'Tidak ada penyimpanan di node ini yang menampung cadangan.';
+
+  @override
+  String get virtBackupLiveTip => 'Berjalan: mode snapshot, tanpa henti';
+
+  @override
+  String get virtBackupStoppedTip => 'Mati: dicadangkan apa adanya';
+
+  @override
+  String get virtBackupNow => 'Cadangkan sekarang';
+
+  @override
+  String get virtBackupNotes => 'Catatan';
+
+  @override
+  String get virtBackupProtected =>
+      'Dilindungi: tidak dapat dihapus sampai perlindungan dicabut di PVE.';
+
+  @override
+  String virtBackupVerified(String state) {
+    return 'Verifikasi: $state';
+  }
+
+  @override
+  String get virtBackupRestoreOverwrites => 'Memulihkan menimpa disk saat ini';
+
+  @override
+  String get virtBackupStopFirst => 'Matikan sebelum memulihkan.';
+
+  @override
+  String get virtBackupRestoreAgain =>
+      'Disk dan konfigurasi tamu diganti dengan milik cadangan.';
+
+  @override
+  String get virtBackupDeleteConfirm => 'Hapus cadangan';
+
+  @override
+  String get virtBackupRestoreNew => 'Pulihkan sebagai baru';
+
+  @override
+  String get virtBackupRestoreConfirm => 'Pulihkan menimpa';
+
+  @override
+  String get virtBackupDone => 'Pencadangan selesai';
+
+  @override
+  String get virtBackupDeleted => 'Cadangan dihapus';
+
+  @override
+  String virtBackupRestored(String time) {
+    return 'Dipulihkan dari $time';
   }
 }

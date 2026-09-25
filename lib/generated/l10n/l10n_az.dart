@@ -3770,6 +3770,10 @@ class AppLocalizationsAz extends AppLocalizations {
       'Avadanlığı redaktə etmək üçün VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network və VM.Config.Options lazımdır; yeni disklər və interfeyslər üçün həmçinin Datastore.AllocateSpace və SDN.Use lazımdır. Video kart, USB və PCI cihazları üçün VM.Config.HWType da lazımdır; resurs xəritəsi ilə verilən cihaz üçün onun üzərində Mapping.Use, xəritələri siyahılamaq üçün Mapping.Audit lazımdır.';
 
   @override
+  String get pveTokenTipBackup =>
+      'Klonlama üçün VM.Clone, nüsxələmə və bərpa üçün VM.Backup, həmçinin nüsxənin getdiyi yerdə Datastore.AllocateSpace lazımdır.';
+
+  @override
   String get virtErrConflict => 'Başqa yerdə dəyişdirilib';
 
   @override
@@ -4225,5 +4229,124 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String virtHwSwitchFirmwareAsk(String guest, String firmware) {
     return '$guest $firmware rejiminə keçirilsin?';
+  }
+
+  @override
+  String get virtCloneName => 'Yeni ad';
+
+  @override
+  String get virtCloneFull => 'Tam klon';
+
+  @override
+  String get virtCloneCopyDisks => 'Disk məzmununu kopyala';
+
+  @override
+  String get virtCloneLinkedNote =>
+      'Söndürülü: şablonun disklərindən asılı bağlı klon';
+
+  @override
+  String get virtCloneFullOnly =>
+      'Yalnız şablon bağlı klon kimi klonlana bilər';
+
+  @override
+  String get virtCloneEmptyNote => 'Söndürülü: eyni ölçüdə yeni boş disklər';
+
+  @override
+  String get virtCloneStopFirst => 'Klonlamadan əvvəl söndürün.';
+
+  @override
+  String get virtCloneFullShort => 'Tam';
+
+  @override
+  String get virtCloneLinkedShort => 'Bağlı';
+
+  @override
+  String get virtCloneEmptyShort => 'Boş disklər';
+
+  @override
+  String get virtCloning => 'Klonlanır…';
+
+  @override
+  String virtCloned(String name) {
+    return '$name kimi klonlandı';
+  }
+
+  @override
+  String get virtBackupPlan => 'Plan';
+
+  @override
+  String get virtBackupPlanWhere => 'Məlumat mərkəzi → Ehtiyat nüsxə';
+
+  @override
+  String get virtBackupNoPlanShort => 'Plan yoxdur';
+
+  @override
+  String get virtBackupNoPlan =>
+      'Bu qonağı əhatə edən planlı ehtiyat nüsxə işi yoxdur. İşlər məlumat mərkəzində qurulur.';
+
+  @override
+  String get virtBackupKeep => 'Saxla';
+
+  @override
+  String get virtBackupJobDisabled => 'Bu iş deaktivdir.';
+
+  @override
+  String virtBackupCount(int count) {
+    return '$count nüsxə';
+  }
+
+  @override
+  String get virtBackupNoStorage =>
+      'Bu qovşaqda ehtiyat nüsxələri saxlayan anbar yoxdur.';
+
+  @override
+  String get virtBackupLiveTip => 'İşləyir: snapshot rejimi, dayanmadan';
+
+  @override
+  String get virtBackupStoppedTip => 'Söndürülüb: olduğu kimi nüsxələnir';
+
+  @override
+  String get virtBackupNow => 'İndi nüsxələ';
+
+  @override
+  String get virtBackupNotes => 'Qeydlər';
+
+  @override
+  String get virtBackupProtected =>
+      'Qorunur: qoruma PVE-də götürülənə qədər silinə bilməz.';
+
+  @override
+  String virtBackupVerified(String state) {
+    return 'Yoxlama: $state';
+  }
+
+  @override
+  String get virtBackupRestoreOverwrites => 'Bərpa cari diskləri üzərinə yazır';
+
+  @override
+  String get virtBackupStopFirst => 'Bərpadan əvvəl söndürün.';
+
+  @override
+  String get virtBackupRestoreAgain =>
+      'Qonağın diskləri və konfiqurasiyası nüsxədəkilərlə əvəz olunur.';
+
+  @override
+  String get virtBackupDeleteConfirm => 'Nüsxəni sil';
+
+  @override
+  String get virtBackupRestoreNew => 'Yeni kimi bərpa et';
+
+  @override
+  String get virtBackupRestoreConfirm => 'Üzərinə bərpa et';
+
+  @override
+  String get virtBackupDone => 'Nüsxə hazırdır';
+
+  @override
+  String get virtBackupDeleted => 'Nüsxə silindi';
+
+  @override
+  String virtBackupRestored(String time) {
+    return '$time tarixindən bərpa edildi';
   }
 }

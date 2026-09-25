@@ -142,6 +142,27 @@ String virtCreateVolumeScript({required String specJson}) =>
 Future<String> parseVirtCreateVolume({required String raw}) =>
     RustLib.instance.api.crateApiVirtParseVirtCreateVolume(raw: raw);
 
+/// A clone's disks (`VirtCloneSpec` JSON), each copied or made empty in
+/// its source's pool
+String virtCloneVolumesScript({required String specJson}) =>
+    RustLib.instance.api.crateApiVirtVirtCloneVolumesScript(specJson: specJson);
+
+/// [`virt_clone_volumes_script`]'s output: the new volumes' paths, in order
+Future<List<String>> parseVirtCloneVolumes({required String raw}) =>
+    RustLib.instance.api.crateApiVirtParseVirtCloneVolumes(raw: raw);
+
+/// Defines the clone of `base_xml` called `name` on `disks_json`
+/// (`[[target, path], ...]`); parse with [`parse_virt_create_json`]
+String virtCloneDefineScript({
+  required String baseXml,
+  required String name,
+  required String disksJson,
+}) => RustLib.instance.api.crateApiVirtVirtCloneDefineScript(
+  baseXml: baseXml,
+  name: name,
+  disksJson: disksJson,
+);
+
 /// Defines (and optionally starts) the domain on that disk
 String virtDefineScript({required String specJson}) =>
     RustLib.instance.api.crateApiVirtVirtDefineScript(specJson: specJson);

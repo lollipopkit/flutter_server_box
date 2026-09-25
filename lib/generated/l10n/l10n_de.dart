@@ -3811,6 +3811,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Hardware bearbeiten braucht VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network und VM.Config.Options; neue Datenträger und Schnittstellen zusätzlich Datastore.AllocateSpace und SDN.Use. Grafikkarte sowie USB- und PCI-Geräte benötigen außerdem VM.Config.HWType; ein über eine Ressourcenzuordnung durchgereichtes Gerät benötigt Mapping.Use darauf, und Mapping.Audit zum Auflisten.';
 
   @override
+  String get pveTokenTipBackup =>
+      'Klonen braucht VM.Clone, Sichern und Wiederherstellen VM.Backup, dazu Datastore.AllocateSpace dort, wo die Kopie oder das Backup landet.';
+
+  @override
   String get virtErrConflict => 'Anderswo geändert';
 
   @override
@@ -4268,5 +4272,131 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String virtHwSwitchFirmwareAsk(String guest, String firmware) {
     return '$guest auf $firmware umstellen?';
+  }
+
+  @override
+  String get virtCloneName => 'Neuer Name';
+
+  @override
+  String get virtCloneFull => 'Vollständiger Klon';
+
+  @override
+  String get virtCloneCopyDisks => 'Festplatteninhalte kopieren';
+
+  @override
+  String get virtCloneLinkedNote =>
+      'Aus: ein verknüpfter Klon, der von den Festplatten der Vorlage abhängt';
+
+  @override
+  String get virtCloneFullOnly =>
+      'Nur eine Vorlage kann verknüpft geklont werden';
+
+  @override
+  String get virtCloneEmptyNote => 'Aus: neue leere Festplatten gleicher Größe';
+
+  @override
+  String get virtCloneStopFirst => 'Vor dem Klonen herunterfahren.';
+
+  @override
+  String get virtCloneFullShort => 'Vollständig';
+
+  @override
+  String get virtCloneLinkedShort => 'Verknüpft';
+
+  @override
+  String get virtCloneEmptyShort => 'Leere Festplatten';
+
+  @override
+  String get virtCloning => 'Wird geklont…';
+
+  @override
+  String virtCloned(String name) {
+    return 'Geklont als $name';
+  }
+
+  @override
+  String get virtBackupPlan => 'Plan';
+
+  @override
+  String get virtBackupPlanWhere => 'Rechenzentrum → Backup';
+
+  @override
+  String get virtBackupNoPlanShort => 'Kein Plan';
+
+  @override
+  String get virtBackupNoPlan =>
+      'Kein geplanter Backup-Job sichert diesen Gast. Jobs werden im Rechenzentrum eingerichtet.';
+
+  @override
+  String get virtBackupKeep => 'Aufbewahren';
+
+  @override
+  String get virtBackupJobDisabled => 'Dieser Job ist deaktiviert.';
+
+  @override
+  String virtBackupCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Backups',
+      one: '1 Backup',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get virtBackupNoStorage =>
+      'Kein Speicher auf diesem Knoten nimmt Backups auf.';
+
+  @override
+  String get virtBackupLiveTip => 'Läuft: Snapshot-Modus, ohne Ausfallzeit';
+
+  @override
+  String get virtBackupStoppedTip => 'Aus: wird so gesichert, wie er ist';
+
+  @override
+  String get virtBackupNow => 'Jetzt sichern';
+
+  @override
+  String get virtBackupNotes => 'Notizen';
+
+  @override
+  String get virtBackupProtected =>
+      'Geschützt: kann erst gelöscht werden, wenn der Schutz in PVE aufgehoben ist.';
+
+  @override
+  String virtBackupVerified(String state) {
+    return 'Prüfung: $state';
+  }
+
+  @override
+  String get virtBackupRestoreOverwrites =>
+      'Wiederherstellen überschreibt die aktuellen Festplatten';
+
+  @override
+  String get virtBackupStopFirst => 'Vor dem Wiederherstellen herunterfahren.';
+
+  @override
+  String get virtBackupRestoreAgain =>
+      'Festplatten und Konfiguration des Gastes werden durch die des Backups ersetzt.';
+
+  @override
+  String get virtBackupDeleteConfirm => 'Backup löschen';
+
+  @override
+  String get virtBackupRestoreNew => 'Als neu wiederherstellen';
+
+  @override
+  String get virtBackupRestoreConfirm => 'Darüber wiederherstellen';
+
+  @override
+  String get virtBackupDone => 'Backup abgeschlossen';
+
+  @override
+  String get virtBackupDeleted => 'Backup gelöscht';
+
+  @override
+  String virtBackupRestored(String time) {
+    return 'Aus $time wiederhergestellt';
   }
 }

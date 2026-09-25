@@ -1804,3 +1804,140 @@ fn second_part_scripts_under_sh_with_a_hostile_name() {
     assert!(!std::path::Path::new("pwned").exists() && !d.join("pwned").exists());
     let _ = std::fs::remove_dir_all(&d);
 }
+
+// ---------------------------------------------------------------------------
+// Cloning: captured from libvirt 11.3, and under sh with a stub
+// ---------------------------------------------------------------------------
+
+#[test]
+fn clone_outputs_from_the_host() {
+    let full = virt::parse_clone_volumes(&fixture("script_clone_volumes_full.txt")).unwrap();
+    assert_eq!(full, ["/var/lib/libvirt/images/sbcl-full.qcow2"]);
+    let empty = virt::parse_clone_volumes(&fixture("script_clone_volumes_empty.txt")).unwrap();
+    assert_eq!(empty, ["/var/lib/libvirt/images/sbcl-empty.qcow2"]);
+    assert!(matches!(
+        virt::parse_clone_volumes(&fixture("script_clone_volumes_exists.txt")),
+        Err(VirtError::Exists { .. })
+    ));
+    assert!(matches!(
+        virt::parse_clone_volumes(&fixture("script_clone_volumes_running.txt")),
+        Err(VirtError::InvalidState { .. })
+    ));
+    let made = virt::parse_create(&fixture("script_clone_define.txt")).unwrap();
+    assert_eq!(made.uuid.as_deref(), Some("b0352bd8-52ad-4cf7-875c-7ceb45b0d751"));
+    // A define refused (the name taken meanwhile) says so, its volume gone.
+    assert!(matches!(
+        virt::parse_create(&fixture("script_clone_define_rollback.txt")),
+        Err(VirtError::Exists { .. })
+    ));
+}
+
+#[test]
+fn clone_xml_is_a_new_domain_on_new_disks() {
+    let base = r#"<domain type='kvm'>
+  <name>src</name>
+  <uuid>8ecccb6b-4f93-4739-afb1-caa17c3f4f91</uuid>
+  <os firmware='efi'><type arch='x86_64' machine='q35'>hvm</type>
+    <nvram template='/usr/share/OVMF/OVMF_VARS_4M.ms.fd' format='raw'>/var/lib/libvirt/qemu/nvram/src_VARS.fd</nvram>
+  </os>
+  <devices>
+    <disk type='volume' device='disk'><driver name='qemu' type='qcow2'/><source pool='images' volume='src.qcow2'/><target dev='vda' bus='virtio'/></disk>
+    <disk type='file' device='disk'><driver name='qemu' type='raw'/><source file='/v/data.img'/><target dev='vdb' bus='virtio'/></disk>
+    <disk type='file' device='cdrom'><source file='/iso/cirros.img'/><target dev='sda' bus='sata'/><readonly/></disk>
+    <interface type='network'><mac address='52:54:00:df:b2:a4'/><source network='default'/></interface>
+  </devices>
+</domain>"#;
+    let name = "it's <new> & \"odd\"";
+    let xml = virt::clone_domain_xml(
+        base,
+        name,
+        &[
+            ("vda".into(), "/var/lib/libvirt/images/new.qcow2".into()),
+            ("vdb".into(), "/dev/vg0/new-1".into()),
+        ],
+    )
+    .unwrap();
+    let doc = roxmltree::Document::parse(&xml).unwrap();
+    let root = doc.root_element();
+    let el = |name: &str| root.descendants().find(|n| n.has_tag_name(name));
+    assert_eq!(el("name").and_then(|n| n.text()), Some(name));
+    assert!(el("uuid").is_none(), "libvirt gives it one");
+    assert!(el("mac").is_none(), "nor one of the source's MACs");
+    let disks: Vec<_> = root.descendants().filter(|n| n.has_tag_name("disk")).collect();
+    fn src<'a>(d: roxmltree::Node<'a, 'a>) -> (Option<&'a str>, Option<&'a str>) {
+        let s = d.children().find(|n| n.has_tag_name("source")).unwrap();
+        (d.attribute("type"), s.attribute("file").or(s.attribute("dev")))
+    }
+    assert_eq!(src(disks[0]), (Some("file"), Some("/var/lib/libvirt/images/new.qcow2")));
+    assert_eq!(src(disks[1]), (Some("block"), Some("/dev/vg0/new-1")));
+    assert_eq!(src(disks[2]), (Some("file"), Some("/iso/cirros.img")), "a CD-ROM keeps its image");
+    // Its own variables file, made by libvirt from the same template.
+    let nvram = el("nvram").unwrap();
+    assert_eq!(nvram.attribute("template"), Some("/usr/share/OVMF/OVMF_VARS_4M.ms.fd"));
+    assert_eq!(nvram.text(), None);
+    assert!(virt::clone_domain_xml(base, "x", &[("vdz".into(), "/p".into())]).is_err());
+}
+
+#[cfg(unix)]
+#[test]
+fn clone_scripts_under_sh_with_hostile_names() {
+    use virt::{VirtCloneDisk, VirtCloneSpec};
+    let d = std::env::temp_dir().join(format!("sbm_virt_clone_{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&d);
+    std::fs::create_dir_all(&d).unwrap();
+    // A virsh that logs its arguments, answers the domain as shut off, and
+    // makes volumes as files — refusing the second clone when told to.
+    let stub = r#"#!/bin/sh
+dir="$(dirname "$0")"
+for a in "$@"; do printf '%s\n' "$a" >> "$dir/log"; done
+echo --- >> "$dir/log"
+shift 3
+case "$1" in
+  domuuid) exit 1 ;;
+  domstate) echo 'shut off' ;;
+  vol-pool) echo pool ;;
+  vol-clone) [ -f "$dir/fail_second" ] && [ -f "$dir/made" ] && { echo "error: clone refused" >&2; exit 1; }; echo x >> "$dir/made"; echo "Vol cloned" ;;
+  vol-info) echo "Capacity:       1073741824 bytes" ;;
+  vol-create-as) echo "Vol created" ;;
+  vol-path) echo "/pool/$5" ;;
+  vol-delete) echo "Vol deleted" ;;
+  *) echo "error: unexpected $*" >&2; exit 1 ;;
+esac
+"#;
+    std::fs::write(d.join("virsh"), stub).unwrap();
+    Command::new("chmod").arg("+x").arg(d.join("virsh")).status().unwrap();
+    let path = format!("{}:/usr/bin:/bin", d.display());
+    let log = || std::fs::read_to_string(d.join("log")).unwrap_or_default();
+    let name = "it's \"odd\"; touch pwned $(id) `id`";
+    let spec = |full: bool| VirtCloneSpec {
+        source: name.into(),
+        name: format!("{name} copy"),
+        full,
+        disks: vec![
+            VirtCloneDisk { target: "vda".into(), source: format!("/pool/{name}.qcow2"), format: Some("qcow2".into()) },
+            VirtCloneDisk { target: "vdb".into(), source: "/pool/data".into(), format: Some("raw".into()) },
+        ],
+    };
+
+    let raw = run_sh(&virt::clone_volumes_script(&spec(true)).unwrap(), &path);
+    let paths = virt::parse_clone_volumes(&raw).unwrap();
+    assert_eq!(paths, [format!("/pool/{name} copy.qcow2"), format!("/pool/{name} copy-1")]);
+    assert!(log().contains(&format!("vol-clone\n--vol\n/pool/{name}.qcow2\n--newname\n{name} copy.qcow2\n")), "{}", log());
+    assert!(!std::path::Path::new("pwned").exists() && !d.join("pwned").exists());
+
+    // Empty copies: the source's size and format.
+    let _ = std::fs::remove_file(d.join("log"));
+    let raw = run_sh(&virt::clone_volumes_script(&spec(false)).unwrap(), &path);
+    assert_eq!(virt::parse_clone_volumes(&raw).unwrap().len(), 2);
+    assert!(log().contains("vol-create-as\n--pool\npool\n--name\nit's"), "{}", log());
+    assert!(log().contains("--capacity\n1073741824\n--format\nraw\n"), "{}", log());
+
+    // The second disk refused: the first one's volume is deleted again.
+    let _ = std::fs::remove_file(d.join("log"));
+    let _ = std::fs::remove_file(d.join("made"));
+    std::fs::write(d.join("fail_second"), "").unwrap();
+    let raw = run_sh(&virt::clone_volumes_script(&spec(true)).unwrap(), &path);
+    assert!(matches!(virt::parse_clone_volumes(&raw), Err(VirtError::Command { .. })), "{raw}");
+    assert!(log().contains(&format!("vol-delete\n--vol\n/pool/{name} copy.qcow2\n")), "{}", log());
+    let _ = std::fs::remove_dir_all(&d);
+}

@@ -112,3 +112,16 @@ no IOMMU, no USB device, no swtpm, a QEMU without SPICE):
 | `script_hw_firmware_*.txt` | UEFI with Secure Boot, without, back to BIOS, to UEFI again, and Secure Boot on after a start (the variables file moved to `-sb`) |
 | `script_hw_display.txt` | Listen on `0.0.0.0`, card `vga` |
 | `script_hw_add_pci.txt`, `script_hw_remove_pci.txt` | A host PCI device written into the definition (the start is then refused: no IOMMU), and removed |
+
+Cloning, captured with `clone_volumes_script` / `clone_define_script` on a
+throwaway UEFI domain `sbcl-src` (a 64M qcow2 disk, the cirros image as a
+CD-ROM) on the same host:
+
+| File | What |
+| --- | --- |
+| `script_clone_volumes_full.txt` | `vol-clone` of its disk as `sbcl-full.qcow2`, and the path |
+| `script_clone_volumes_empty.txt` | An empty volume of the same size and format (`vol-create-as`) |
+| `script_clone_volumes_exists.txt` | The new name already defined: nothing made |
+| `script_clone_volumes_running.txt` | The source running: refused before anything is made |
+| `script_clone_define.txt` | The copy defined, and its new UUID |
+| `script_clone_define_rollback.txt` | The define refused (the name taken meanwhile): the volume deleted again |

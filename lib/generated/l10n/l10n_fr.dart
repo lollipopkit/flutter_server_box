@@ -3830,6 +3830,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Modifier le matériel requiert VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network et VM.Config.Options ; les nouveaux disques et interfaces requièrent aussi Datastore.AllocateSpace et SDN.Use. La carte graphique et les périphériques USB et PCI demandent aussi VM.Config.HWType ; un périphérique transmis par un mappage de ressources demande Mapping.Use sur celui-ci, et Mapping.Audit pour lister les mappages.';
 
   @override
+  String get pveTokenTipBackup =>
+      'Le clonage nécessite VM.Clone, la sauvegarde et la restauration VM.Backup, avec Datastore.AllocateSpace là où va la copie ou la sauvegarde.';
+
+  @override
   String get virtErrConflict => 'Modifié ailleurs';
 
   @override
@@ -4288,5 +4292,132 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String virtHwSwitchFirmwareAsk(String guest, String firmware) {
     return 'Passer $guest en $firmware ?';
+  }
+
+  @override
+  String get virtCloneName => 'Nouveau nom';
+
+  @override
+  String get virtCloneFull => 'Clone complet';
+
+  @override
+  String get virtCloneCopyDisks => 'Copier le contenu des disques';
+
+  @override
+  String get virtCloneLinkedNote =>
+      'Désactivé : un clone lié, qui dépend des disques du modèle';
+
+  @override
+  String get virtCloneFullOnly => 'Seul un modèle peut être cloné en clone lié';
+
+  @override
+  String get virtCloneEmptyNote =>
+      'Désactivé : de nouveaux disques vides de même taille';
+
+  @override
+  String get virtCloneStopFirst => 'Éteignez-la avant de la cloner.';
+
+  @override
+  String get virtCloneFullShort => 'Complet';
+
+  @override
+  String get virtCloneLinkedShort => 'Lié';
+
+  @override
+  String get virtCloneEmptyShort => 'Disques vides';
+
+  @override
+  String get virtCloning => 'Clonage…';
+
+  @override
+  String virtCloned(String name) {
+    return 'Cloné sous $name';
+  }
+
+  @override
+  String get virtBackupPlan => 'Planification';
+
+  @override
+  String get virtBackupPlanWhere => 'Centre de données → Sauvegarde';
+
+  @override
+  String get virtBackupNoPlanShort => 'Aucune planification';
+
+  @override
+  String get virtBackupNoPlan =>
+      'Aucune tâche de sauvegarde planifiée n\'inclut cet invité. Les tâches se configurent dans le centre de données.';
+
+  @override
+  String get virtBackupKeep => 'Conservation';
+
+  @override
+  String get virtBackupJobDisabled => 'Cette tâche est désactivée.';
+
+  @override
+  String virtBackupCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count sauvegardes',
+      one: '1 sauvegarde',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get virtBackupNoStorage =>
+      'Aucun stockage de ce nœud ne contient de sauvegardes.';
+
+  @override
+  String get virtBackupLiveTip =>
+      'En marche : mode snapshot, sans interruption';
+
+  @override
+  String get virtBackupStoppedTip => 'Arrêté : sauvegardé tel quel';
+
+  @override
+  String get virtBackupNow => 'Sauvegarder maintenant';
+
+  @override
+  String get virtBackupNotes => 'Notes';
+
+  @override
+  String get virtBackupProtected =>
+      'Protégée : elle ne peut pas être supprimée tant que la protection n\'est pas retirée dans PVE.';
+
+  @override
+  String virtBackupVerified(String state) {
+    return 'Vérification : $state';
+  }
+
+  @override
+  String get virtBackupRestoreOverwrites =>
+      'La restauration écrase les disques actuels';
+
+  @override
+  String get virtBackupStopFirst => 'Éteignez-la avant de restaurer.';
+
+  @override
+  String get virtBackupRestoreAgain =>
+      'Les disques et la configuration de l\'invité sont remplacés par ceux de la sauvegarde.';
+
+  @override
+  String get virtBackupDeleteConfirm => 'Supprimer la sauvegarde';
+
+  @override
+  String get virtBackupRestoreNew => 'Restaurer en nouveau';
+
+  @override
+  String get virtBackupRestoreConfirm => 'Restaurer par-dessus';
+
+  @override
+  String get virtBackupDone => 'Sauvegarde terminée';
+
+  @override
+  String get virtBackupDeleted => 'Sauvegarde supprimée';
+
+  @override
+  String virtBackupRestored(String time) {
+    return 'Restauré depuis $time';
   }
 }

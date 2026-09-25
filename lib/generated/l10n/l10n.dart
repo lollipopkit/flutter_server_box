@@ -6484,6 +6484,12 @@ abstract class AppLocalizations {
   /// **'Editing hardware needs VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network and VM.Config.Options; new disks and interfaces also need Datastore.AllocateSpace and SDN.Use. The video card and USB and PCI devices also need VM.Config.HWType; a device given through a resource mapping needs Mapping.Use on it, and Mapping.Audit to list mappings.'**
   String get pveTokenTipHardware;
 
+  /// PVE API token help: the privileges cloning and backups need (verified on PVE 9.2).
+  ///
+  /// In en, this message translates to:
+  /// **'Cloning needs VM.Clone, and backing up and restoring VM.Backup, with Datastore.AllocateSpace where the copy or the backup goes.'**
+  String get pveTokenTipBackup;
+
   /// Error title: the guest's configuration changed since it was read.
   ///
   /// In en, this message translates to:
@@ -7293,6 +7299,216 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Switch {guest} to {firmware}?'**
   String virtHwSwitchFirmwareAsk(String guest, String firmware);
+
+  /// Clone group (guest Settings): the new guest's name field.
+  ///
+  /// In en, this message translates to:
+  /// **'New name'**
+  String get virtCloneName;
+
+  /// PVE clone switch: full clone (off = linked clone).
+  ///
+  /// In en, this message translates to:
+  /// **'Full clone'**
+  String get virtCloneFull;
+
+  /// libvirt clone switch: copy the disks' contents (off = new empty disks).
+  ///
+  /// In en, this message translates to:
+  /// **'Copy disk contents'**
+  String get virtCloneCopyDisks;
+
+  /// Note under the PVE full-clone switch on a template.
+  ///
+  /// In en, this message translates to:
+  /// **'Off: a linked clone, which depends on the template\'s disks'**
+  String get virtCloneLinkedNote;
+
+  /// Note under the PVE full-clone switch on a guest that is not a template: linked clones need a template.
+  ///
+  /// In en, this message translates to:
+  /// **'Only a template can be cloned as a linked clone'**
+  String get virtCloneFullOnly;
+
+  /// Note under the libvirt copy-disks switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Off: new empty disks of the same size'**
+  String get virtCloneEmptyNote;
+
+  /// libvirt: why the Clone button is disabled while the guest runs.
+  ///
+  /// In en, this message translates to:
+  /// **'Shut it down before cloning.'**
+  String get virtCloneStopFirst;
+
+  /// Index note for the Clone group: full clone.
+  ///
+  /// In en, this message translates to:
+  /// **'Full'**
+  String get virtCloneFullShort;
+
+  /// Index note for the Clone group: linked clone.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked'**
+  String get virtCloneLinkedShort;
+
+  /// Index note for the Clone group: new empty disks.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty disks'**
+  String get virtCloneEmptyShort;
+
+  /// The Clone button while a clone runs.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloning…'**
+  String get virtCloning;
+
+  /// Toast after a clone.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloned as {name}'**
+  String virtCloned(String name);
+
+  /// Backup view: title of the group showing the scheduled backup job.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan'**
+  String get virtBackupPlan;
+
+  /// Backup view: where backup jobs are configured in PVE, shown beside the Plan title.
+  ///
+  /// In en, this message translates to:
+  /// **'Datacenter → Backup'**
+  String get virtBackupPlanWhere;
+
+  /// Index note: no scheduled backup job takes the guest.
+  ///
+  /// In en, this message translates to:
+  /// **'No plan'**
+  String get virtBackupNoPlanShort;
+
+  /// Backup view: no scheduled backup job takes the guest.
+  ///
+  /// In en, this message translates to:
+  /// **'No scheduled backup job takes this guest. Jobs are set up in the datacenter.'**
+  String get virtBackupNoPlan;
+
+  /// Backup job: how many backups are kept (retention).
+  ///
+  /// In en, this message translates to:
+  /// **'Keep'**
+  String get virtBackupKeep;
+
+  /// Backup job: the job is disabled.
+  ///
+  /// In en, this message translates to:
+  /// **'This job is disabled.'**
+  String get virtBackupJobDisabled;
+
+  /// Number of backups of a guest.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 backup} other{{count} backups}}'**
+  String virtBackupCount(int count);
+
+  /// Backup view: no storage on the node accepts backups.
+  ///
+  /// In en, this message translates to:
+  /// **'No storage on this node holds backups.'**
+  String get virtBackupNoStorage;
+
+  /// Backup view: a running guest is backed up in snapshot mode, without stopping it.
+  ///
+  /// In en, this message translates to:
+  /// **'Running: snapshot mode, no downtime'**
+  String get virtBackupLiveTip;
+
+  /// Backup view: a stopped guest is backed up as it is.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped: backed up as it is'**
+  String get virtBackupStoppedTip;
+
+  /// Backup view: button starting a backup now.
+  ///
+  /// In en, this message translates to:
+  /// **'Back up now'**
+  String get virtBackupNow;
+
+  /// A backup's notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get virtBackupNotes;
+
+  /// A protected backup cannot be deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Protected: it cannot be deleted until protection is removed in PVE.'**
+  String get virtBackupProtected;
+
+  /// A backup's verification state from PVE (ok / failed).
+  ///
+  /// In en, this message translates to:
+  /// **'Verification: {state}'**
+  String virtBackupVerified(String state);
+
+  /// Warning: restoring a backup over the guest replaces its disks.
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring overwrites the current disks'**
+  String get virtBackupRestoreOverwrites;
+
+  /// Why Restore is disabled while the guest runs.
+  ///
+  /// In en, this message translates to:
+  /// **'Shut it down before restoring.'**
+  String get virtBackupStopFirst;
+
+  /// Second-press confirmation body for restoring over the guest.
+  ///
+  /// In en, this message translates to:
+  /// **'The guest\'s disks and configuration are replaced by the backup\'s.'**
+  String get virtBackupRestoreAgain;
+
+  /// Second press of a backup's delete button.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete backup'**
+  String get virtBackupDeleteConfirm;
+
+  /// Restore a backup as a new guest (new VMID).
+  ///
+  /// In en, this message translates to:
+  /// **'Restore as new'**
+  String get virtBackupRestoreNew;
+
+  /// Second press of the restore-over-the-guest button.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore over it'**
+  String get virtBackupRestoreConfirm;
+
+  /// Toast: a backup finished.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup finished'**
+  String get virtBackupDone;
+
+  /// Toast: a backup was deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup deleted'**
+  String get virtBackupDeleted;
+
+  /// Toast: restored from the backup taken at a time.
+  ///
+  /// In en, this message translates to:
+  /// **'Restored from {time}'**
+  String virtBackupRestored(String time);
 }
 
 class _AppLocalizationsDelegate

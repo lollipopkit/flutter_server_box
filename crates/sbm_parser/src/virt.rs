@@ -2506,6 +2506,278 @@ pub fn parse_create(raw: &str) -> Result<VirtCreated, VirtError> {
     Ok(VirtCreated { uuid, start_error })
 }
 
+// ---------------------------------------------------------------------------
+// Cloning a domain
+// ---------------------------------------------------------------------------
+
+pub const KEY_CLONE_STATE: &str = "virt.clone.state";
+pub const KEY_CLONE_VOL: &str = "virt.clone.vol";
+
+/// One writable disk of the domain being cloned: its target, the volume it
+/// is on, and that volume's format (`qcow2`, `raw`) for an empty copy.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtCloneDisk {
+    pub target: String,
+    pub source: String,
+    pub format: Option<String>,
+}
+
+/// A copy of `source` (UUID or name) called `name`: [`clone_volumes_script`]
+/// makes its disks, [`clone_define_script`] defines it on them.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtCloneSpec {
+    pub source: String,
+    pub name: String,
+    /// Each disk's contents copied (`vol-clone`), or an empty volume of the
+    /// same size and format (`vol-create-as`) — the design's "copy disk
+    /// contents" off.
+    pub full: bool,
+    pub disks: Vec<VirtCloneDisk>,
+}
+
+impl VirtCloneSpec {
+    fn check(&self) -> Result<(), VirtError> {
+        let bad = |what: &str| {
+            Err(VirtError::Malformed {
+                message: format!("invalid clone spec: {what}"),
+            })
+        };
+        // The same rule as a new domain's name: it names volumes too.
+        if self.name.is_empty()
+            || self.name.len() > 200
+            || self.name.starts_with('.')
+            || self.name.starts_with('-')
+            || self.name.chars().any(|c| c == '/' || c.is_control())
+        {
+            return bad("name");
+        }
+        if self.source.is_empty() || self.source.chars().any(char::is_control) {
+            return bad("source");
+        }
+        for d in &self.disks {
+            if d.target.is_empty() || !d.target.chars().all(|c| c.is_ascii_alphanumeric()) {
+                return bad("disk target");
+            }
+            if !d.source.starts_with('/') || d.source.chars().any(char::is_control) {
+                return bad("disk source");
+            }
+            if d.format.as_deref().is_some_and(|f| f != "qcow2" && f != "raw") {
+                return bad("disk format");
+            }
+        }
+        Ok(())
+    }
+
+    /// The new volume for disk `i`: the domain's name, a number after the
+    /// first, and the source's extension, so a pool reads as it did.
+    pub fn volume_name(&self, i: usize) -> String {
+        let file = self.disks[i].source.rsplit('/').next().unwrap_or_default();
+        let ext = file
+            .rsplit_once('.')
+            .map(|(_, e)| e)
+            .filter(|e| !e.is_empty() && e.len() <= 6 && e.chars().all(|c| c.is_ascii_alphanumeric()));
+        let suffix = if i == 0 { String::new() } else { format!("-{i}") };
+        match ext {
+            Some(ext) => format!("{}{suffix}.{ext}", self.name),
+            None => format!("{}{suffix}", self.name),
+        }
+    }
+}
+
+/// The clone's disks, each in the pool its source is in, and their paths.
+/// Parse with [`parse_clone_volumes`].
+///
+/// A name already defined stops it before anything is made, and so does a
+/// source that is not shut off: copying a disk a running guest writes to
+/// gives a copy of nothing in particular. Any step failing deletes every
+/// volume made so far, so a failed clone leaves nothing behind.
+pub fn clone_volumes_script(spec: &VirtCloneSpec) -> Result<String, VirtError> {
+    spec.check()?;
+    let name = shell_quote_unix(&spec.name);
+    let src = shell_quote_unix(&spec.source);
+    let m = script::cmd_marker;
+    let mut s = prelude();
+    s.push_str(&run_fn());
+    s.push_str(&format!(
+        "if virsh --connect {CONNECT_URI} -q domuuid --domain {name} </dev/null >/dev/null 2>&1; then echo '{}'; exit 0; fi\n",
+        m(KEY_EXISTS),
+    ));
+    s.push_str(&format!(
+        "echo '{}'\nst=$(virsh --connect {CONNECT_URI} -q domstate --domain {src} </dev/null 2>&1); r=$?\n\
+         printf '%s\\n{RC_PREFIX}%s\\n' \"$st\" \"$r\"\n\
+         [ \"$r\" = 0 ] && [ \"$st\" = 'shut off' ] || exit 0\n",
+        m(KEY_CLONE_STATE),
+    ));
+    // Deletes the volumes made before disk `i`, by the paths read back.
+    let rollback = |i: usize| -> String {
+        if i == 0 {
+            return "exit 0".into();
+        }
+        let dels: String = (0..i).map(|k| format!("R vol-delete --vol \"$p{k}\"; ")).collect();
+        format!("{{ echo '{}'; {dels}exit 0; }}", m(KEY_ROLLBACK))
+    };
+    for (i, d) in spec.disks.iter().enumerate() {
+        let source = shell_quote_unix(&d.source);
+        let vol = shell_quote_unix(&spec.volume_name(i));
+        s.push_str(&format!(
+            "echo '{}'\npool=$(virsh --connect {CONNECT_URI} -q vol-pool --vol {source} </dev/null 2>&1); r=$?\n\
+             if [ \"$r\" != 0 ]; then printf '%s\\n{RC_PREFIX}%s\\n' \"$pool\" \"$r\"; {}; fi\n",
+            m(KEY_CLONE_VOL),
+            rollback(i),
+        ));
+        if spec.full {
+            s.push_str(&format!("R vol-clone --vol {source} --newname {vol} --pool \"$pool\"\n"));
+        } else {
+            let format = d.format.as_deref().unwrap_or("qcow2");
+            s.push_str(&format!(
+                "cap=$(virsh --connect {CONNECT_URI} -q vol-info --bytes --vol {source} </dev/null 2>/dev/null | awk '$1==\"Capacity:\"{{print $2}}')\n\
+                 if [ -n \"$cap\" ]; then R vol-create-as --pool \"$pool\" --name {vol} --capacity \"$cap\" --format {format}; \
+                 else printf 'no capacity for %s\\n{RC_PREFIX}1\\n' {source}; r=1; fi\n",
+            ));
+        }
+        s.push_str(&format!("[ \"$r\" = 0 ] || {}\n", rollback(i)));
+        s.push_str(&format!(
+            "echo '{}'\np{i}=$(virsh --connect {CONNECT_URI} -q vol-path --pool \"$pool\" --vol {vol} </dev/null 2>&1); r=$?\n\
+             printf '%s\\n{RC_PREFIX}%s\\n' \"$p{i}\" \"$r\"\n\
+             [ \"$r\" = 0 ] || {{ R vol-delete --pool \"$pool\" --vol {vol}; {}; }}\n",
+            m(KEY_VOL_PATH),
+            rollback(i),
+        ));
+    }
+    Ok(s)
+}
+
+/// [`clone_volumes_script`]'s output: the new volumes' paths, in the order
+/// of [`VirtCloneSpec::disks`]. `Exists` for a name already defined,
+/// `InvalidState` for a source that is not shut off.
+pub fn parse_clone_volumes(raw: &str) -> Result<Vec<String>, VirtError> {
+    let secs = sections(raw)?;
+    if secs.iter().any(|(k, _)| k == KEY_EXISTS) {
+        return Err(VirtError::Exists { message: String::new() });
+    }
+    let state = take(&secs, KEY_CLONE_STATE, raw)?.ok()?.trim();
+    if state != "shut off" {
+        return Err(VirtError::InvalidState {
+            message: format!("the domain is {state}"),
+        });
+    }
+    let mut paths = Vec::new();
+    for (k, sec) in &secs {
+        if k == KEY_CLONE_VOL {
+            sec.ok()?;
+        } else if k == KEY_VOL_PATH {
+            let path = sec.ok()?.trim().to_string();
+            if !path.starts_with('/') {
+                return Err(VirtError::Malformed {
+                    message: format!("vol-path printed {path:?}"),
+                });
+            }
+            paths.push(path);
+        }
+    }
+    Ok(paths)
+}
+
+/// `base_xml` as a new domain called `name`, on the disks `disks` (target,
+/// new path): no UUID and no MACs, which libvirt gives it afresh; each
+/// disk a file (or a block device, for a path under `/dev`) at its new
+/// path, a CD-ROM left on the image it has; and its UEFI variables file
+/// left for libvirt to make — `<nvram>` keeps its template and loses its
+/// path, so the copy gets a file of its own, one per guest.
+pub fn clone_domain_xml(base_xml: &str, name: &str, disks: &[(String, String)]) -> Result<String, VirtError> {
+    let (xml, doc) = domain_doc(base_xml)?;
+    let root = doc.root_element();
+    let mut edits = Vec::new();
+    let name_node = child(root, "name").ok_or_else(|| not_found("<name>"))?;
+    edits.push((name_node.range(), format!("<name>{}</name>", xml_escape(name))));
+    if let Some(uuid) = child(root, "uuid") {
+        edits.push((uuid.range(), String::new()));
+    }
+    let devices = devices_of(root)?;
+    for (target, path) in disks {
+        let disk = devices
+            .children()
+            .filter(|n| n.is_element() && n.tag_name().name() == "disk")
+            .find(|n| child(*n, "target").and_then(|t| t.attribute("dev")) == Some(target.as_str()))
+            .ok_or_else(|| not_found(&format!("disk {target}")))?;
+        let block = path.starts_with("/dev/");
+        edits.push((
+            start_tag_range(disk),
+            start_tag(disk, &["type"], &[("type", if block { "block" } else { "file" }.to_string())]),
+        ));
+        let source = format!(
+            "<source {}='{}'/>",
+            if block { "dev" } else { "file" },
+            xml_escape(path)
+        );
+        match child(disk, "source") {
+            Some(src) => edits.push((src.range(), source)),
+            None => {
+                let at = start_tag_range(disk).end;
+                edits.push((at..at, source));
+            }
+        }
+    }
+    for nic in devices
+        .children()
+        .filter(|n| n.is_element() && n.tag_name().name() == "interface")
+    {
+        if let Some(mac) = child(nic, "mac") {
+            edits.push((mac.range(), String::new()));
+        }
+    }
+    if let Some(os) = child(root, "os")
+        && let Some(nvram) = child(os, "nvram")
+    {
+        let attrs: String = nvram
+            .attributes()
+            .map(|a| format!(" {}='{}'", a.name(), xml_escape(a.value())))
+            .collect();
+        edits.push((
+            nvram.range(),
+            if attrs.is_empty() { String::new() } else { format!("<nvram{attrs}/>") },
+        ));
+    }
+    edited(xml, edits)
+}
+
+/// Defines [`clone_domain_xml`]'s domain. A define that fails deletes the
+/// volumes [`clone_volumes_script`] made for it. Parse with [`parse_create`].
+pub fn clone_define_script(base_xml: &str, name: &str, disks: &[(String, String)]) -> Result<String, VirtError> {
+    if disks.iter().any(|(_, p)| !p.starts_with('/') || p.chars().any(char::is_control)) {
+        return Err(VirtError::Malformed {
+            message: "invalid clone disk path".to_string(),
+        });
+    }
+    let xml = shell_quote_unix(&clone_domain_xml(base_xml, name, disks)?);
+    let m = script::cmd_marker;
+    let mut s = prelude();
+    s.push_str(&run_fn());
+    s.push_str(&format!(
+        "echo '{define}'\nf=$(mktemp 2>&1) || {{ printf '%s\\n{RC_PREFIX}1\\n' \"$f\"; f=; r=1; }}\n\
+         if [ -n \"$f\" ]; then printf '%s' {xml} >\"$f\"; R define --file \"$f\"; rm -f \"$f\"; fi\n",
+        define = m(KEY_DEFINE),
+    ));
+    if !disks.is_empty() {
+        let dels: String = disks
+            .iter()
+            .map(|(_, p)| format!("R vol-delete --vol {}; ", shell_quote_unix(p)))
+            .collect();
+        s.push_str(&format!(
+            "if [ \"$r\" != 0 ]; then echo '{}'; {dels}exit 0; fi\n",
+            m(KEY_ROLLBACK),
+        ));
+    } else {
+        s.push_str("[ \"$r\" = 0 ] || exit 0\n");
+    }
+    s.push_str(&format!(
+        "echo '{}'\nR domuuid --domain {}\n",
+        m(KEY_UUID),
+        shell_quote_unix(name)
+    ));
+    Ok(s)
+}
+
 /// `undefine`, with the metadata a domain may hold (snapshots, a managed
 /// save) so they do not refuse it. `storage` are the disk targets whose
 /// volumes go with it (`vda`, `sdb`), NVRAM included; empty keeps every

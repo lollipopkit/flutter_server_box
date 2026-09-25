@@ -40,6 +40,11 @@
 ///   (default: the libvirt one) — an agent with `full_access` **off**: the
 ///   typed refusals for commands and for the relay.
 ///
+/// The "clone" groups clone a throwaway VM of their own (libvirt: a full copy
+/// and one with empty disks; PVE: a full clone) and, on PVE, back it up, list
+/// the backup, restore it as a new VM and over the VM, and delete it. Every
+/// guest and backup they make is deleted again.
+///
 /// The "create and delete" groups make guests named `sbme2e-*` and delete
 /// them again, disks included: a VM on libvirt (in the first pool that takes
 /// a disk, with an ISO found in any pool as its CD-ROM), and on PVE a VM (an
@@ -74,6 +79,7 @@ import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/model/virt/virt.dart';
+import 'package:server_box/data/model/virt/virt_backup.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_hardware.dart';
@@ -134,7 +140,9 @@ Future<void> main() async {
   if (libvirt != null) _libvirtVncPassword(libvirt);
   if (libvirt != null) _libvirtHardware(libvirt);
   if (libvirt != null) _libvirtHardwareDevices(libvirt);
+  if (libvirt != null) _libvirtClone(libvirt);
   if (pve != null) _pveCreate(pve);
+  if (pve != null) _pveCloneBackup(pve);
   if (pve != null) _pveHardware(pve);
   if (pve != null) _pveHardwareDevices(pve);
   if (libvirt != null) {
@@ -750,6 +758,108 @@ void _libvirtCreate(_Agent agent) {
         final still = await w.host.volumes(mediaPool);
         expect(still.map((v) => v.name), contains(media.first.name));
       }
+    });
+  });
+}
+
+void _libvirtClone(_Agent agent) {
+  final sudoPassword = e2eEnv('SBM_E2E_MONITOR_SUDO_PASSWORD');
+
+  group('clone: libvirt over the monitor agent', () {
+    late _World w;
+    final name = _e2eName('cl');
+    final names = [name, '$name-full', '$name-empty'];
+
+    setUpAll(() async {
+      w = _World(agent.spi('e2e-monitor-libvirt-clone'));
+      await w.host.firstLoad;
+      if (w.state.error?.type == VirtErrType.sudoPasswordRequired &&
+          sudoPassword != null) {
+        await w.host.provideSudoPassword(sudoPassword);
+      }
+      expect(w.state.error, isNull, reason: '${w.state.error}');
+    });
+    tearDownAll(() async {
+      await w.host.refresh();
+      for (final g in w.state.data?.guests.where((g) => names.contains(g.name)) ??
+          const <VirtGuest>[]) {
+        try {
+          if (g.state != VirtGuestState.stopped) {
+            await w.host.power(g.id, VirtPowerAction.forceStop);
+            await w.host.refresh();
+          }
+          await w.host.delete(g.id);
+        } catch (_) {}
+      }
+      await w.dispose();
+    });
+
+    test('a copy on copied disks, one on empty disks; the source kept',
+        () async {
+      expect(w.state.data!.capabilities.clone, isTrue);
+      final pools = await w.host.storagePools();
+      final pool = virtDiskStorages(
+        pools,
+        host: VirtHostKind.libvirt,
+        kind: VirtGuestKind.qemu,
+      ).first;
+      final nets = virtCreateNetworks(
+        await w.host.networks(),
+        host: VirtHostKind.libvirt,
+      );
+      final created = await w.host.create(
+        VirtCreateSpec(
+          kind: VirtGuestKind.qemu,
+          name: name,
+          cores: 1,
+          memoryMiB: 128,
+          storage: pool,
+          diskGiB: 1,
+          network: nets.firstWhereOrNull((n) => n.name == 'default'),
+        ),
+      );
+      final src = w.guest((g) => g.id == created.id, name);
+      final srcDetail = await w.host.detail(src.id);
+
+      // Running: refused before anything is made.
+      await w.host.power(src.id, VirtPowerAction.start);
+      await w.settle((g) => g.id == src.id, name, (g) => g.state == VirtGuestState.running);
+      final running = await _virtErr(
+        w.host.clone(src.id, VirtCloneRequest(name: '$name-full')),
+      );
+      expect(running.type, VirtErrType.unsupported);
+      await w.host.power(src.id, VirtPowerAction.forceStop);
+      await w.settle((g) => g.id == src.id, name, (g) => g.state == VirtGuestState.stopped);
+
+      for (final full in [true, false]) {
+        final copy = full ? '$name-full' : '$name-empty';
+        final id = await w.host.clone(src.id, VirtCloneRequest(name: copy, full: full));
+        final g = w.guest((g) => g.id == id, copy);
+        expect(g.name, copy);
+        expect(g.state, VirtGuestState.stopped);
+        final detail = await w.host.detail(g.id);
+        final disk = detail.disks.firstWhere((d) => d.device == 'disk');
+        expect(disk.source, endsWith('/$copy.qcow2'));
+        expect(disk.format, 'qcow2');
+        // A MAC of its own.
+        expect(
+          detail.nics.map((n) => n.mac).toSet().intersection(srcDetail.nics.map((n) => n.mac).toSet()),
+          isEmpty,
+        );
+      }
+
+      // The name taken: refused, nothing made.
+      final taken = await _virtErr(
+        w.host.clone(src.id, VirtCloneRequest(name: '$name-full')),
+      );
+      expect(taken.type, VirtErrType.exists);
+
+      for (final n in names.reversed) {
+        final g = w.guest((g) => g.name == n, n);
+        await w.host.delete(g.id);
+      }
+      final vols = (await w.host.volumes(pool)).map((v) => v.name);
+      expect(vols.where((v) => v.startsWith(name)), isEmpty);
     });
   });
 }
@@ -1858,6 +1968,142 @@ Future<VirtErr> _virtErr(Future<Object?> future) async {
 // -----------------------------------------------------------------------------
 // Proxmox VE
 // -----------------------------------------------------------------------------
+
+void _pveCloneBackup(_Agent agent) {
+  final tokenId = e2eEnv('SBM_E2E_PVE_TOKEN_ID');
+  final tokenSecret = e2eEnv('SBM_E2E_PVE_TOKEN_SECRET');
+  if (tokenId == null || tokenSecret == null) return;
+
+  group('clone and backups: PVE over the monitor agent relay', () {
+    late _World w;
+    final name = _e2eName('bk');
+    final made = <String>[];
+
+    setUpAll(() async {
+      w = _World(agent.spi('e2e-monitor-pve-clone'));
+      Stores.pve.put(
+        w.id,
+        PveConfig(
+          addr: 'https://localhost:8006',
+          auth: PveAuth.token,
+          tokenId: tokenId,
+          tokenSecret: tokenSecret,
+        ),
+      );
+      await w.host.firstLoad;
+      final cert = w.state.error?.cert;
+      if (cert != null) await w.host.confirmCert(cert.fingerprint);
+      expect(w.state.error, isNull, reason: '${w.state.error}');
+    });
+    tearDownAll(() async {
+      await w.host.refresh();
+      for (final id in made) {
+        final g = w.state.guest(id);
+        if (g == null) continue;
+        try {
+          for (final b in await w.host.backups(id)) {
+            await w.host.deleteBackup(id, b);
+          }
+        } catch (_) {}
+        try {
+          if (g.state != VirtGuestState.stopped) {
+            await w.host.power(id, VirtPowerAction.forceStop);
+            await w.host.refresh();
+          }
+          await w.host.delete(id);
+        } catch (_) {}
+      }
+      await w.dispose();
+    });
+
+    test('a VM cloned, backed up, restored as new and over it, deleted',
+        () async {
+      final snap = w.state.data!;
+      expect((snap.capabilities.clone, snap.capabilities.backup), (true, true));
+      final node = snap.host.nodes.firstWhere((n) => n.online).name;
+      final storage = virtDiskStorages(
+        await w.host.storagePools(),
+        host: VirtHostKind.pve,
+        kind: VirtGuestKind.qemu,
+        node: node,
+      ).first;
+      final vmid = (await w.host.nextVmid())!;
+      final created = await w.host.create(
+        VirtCreateSpec(
+          kind: VirtGuestKind.qemu,
+          name: name,
+          node: node,
+          vmid: vmid,
+          cores: 1,
+          memoryMiB: 128,
+          storage: storage,
+          diskGiB: 1,
+        ),
+      );
+      made.add(created.id);
+      final src = w.guest((g) => g.id == created.id, name);
+
+      // Clone: full, a new VMID, stopped.
+      final cloneId = await w.host.clone(src.id, VirtCloneRequest(name: '$name-c'));
+      made.add(cloneId);
+      // `/cluster/resources` names a new guest a moment after its task.
+      final clone = await w.settle(
+        (g) => g.id == cloneId,
+        '$name-c',
+        (g) => g.name == '$name-c',
+      );
+      expect(clone.vmid, isNot(src.vmid));
+      final cloneHw = await w.host.hardware(clone.id);
+      expect(cloneHw.disks.where((d) => d.kind == VirtHwDiskKind.disk), isNotEmpty);
+      // Linked from a guest that is not a template: a full clone all the same.
+      expect(src.template, isFalse);
+
+      // Backups: where they can go, taken now, listed.
+      final targets = await w.host.backupStorages(src.id);
+      expect(targets, isNotEmpty);
+      final target = targets.first;
+      expect(await w.host.backups(src.id), isEmpty);
+      await w.host.backup(src.id, VirtBackupRequest(storage: target.name, mode: 'stop'));
+      final backups = await w.host.backups(src.id);
+      expect(backups, hasLength(1));
+      final b = backups.single;
+      expect(b.vmid, src.vmid);
+      expect(b.kind, VirtGuestKind.qemu);
+      expect(b.fileName, startsWith('vzdump-qemu-${src.vmid}-'));
+      expect(b.size, greaterThan(0));
+      await w.host.backupJobs(src.id);
+
+      // Restored as a new VM.
+      final newVmid = (await w.host.nextVmid())!;
+      await w.host.restoreBackup(src.id, b, vmid: newVmid);
+      final restored = await w.settle(
+        (g) => g.vmid == newVmid,
+        'restored $newVmid',
+        (g) => g.name == name,
+      );
+      made.add(restored.id);
+
+      // Over the VM: refused while it runs, done once it is stopped.
+      await w.host.power(src.id, VirtPowerAction.start);
+      await w.settle((g) => g.id == src.id, name, (g) => g.state == VirtGuestState.running);
+      final running = await _virtErr(w.host.restoreBackup(src.id, b));
+      expect(running.type, VirtErrType.unsupported);
+      await w.host.power(src.id, VirtPowerAction.forceStop);
+      await w.settle((g) => g.id == src.id, name, (g) => g.state == VirtGuestState.stopped);
+      await w.host.restoreBackup(src.id, b);
+
+      // Deleted: the list is empty again.
+      await w.host.deleteBackup(src.id, b);
+      expect(await w.host.backups(src.id), isEmpty);
+
+      for (final id in [restored.id, cloneId, src.id]) {
+        await w.host.refresh();
+        await w.host.delete(id);
+        made.remove(id);
+      }
+    });
+  });
+}
 
 void _pve(_Agent agent) {
   final tokenId = e2eEnv('SBM_E2E_PVE_TOKEN_ID');

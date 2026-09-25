@@ -260,7 +260,17 @@ abstract class VirtCapabilities with _$VirtCapabilities {
 
     /// Networks and the guests on them can be listed.
     @Default(false) bool network,
+
+    /// Guests can be backed up now, their backups listed, restored and
+    /// deleted, and the backup jobs that take them read (PVE `vzdump`).
     @Default(false) bool backup,
+
+    /// Guests can be cloned: libvirt copying each disk or making it empty,
+    /// PVE a full clone.
+    @Default(false) bool clone,
+
+    /// A template can be cloned as a linked clone, sharing its disks (PVE).
+    @Default(false) bool linkedClone,
 
     /// More than one node: guests are grouped by node.
     @Default(false) bool cluster,

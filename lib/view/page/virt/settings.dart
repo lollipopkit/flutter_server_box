@@ -1,13 +1,13 @@
 part of 'hardware.dart';
 
 /// A guest's settings — the design's Settings view: what the guest is called
-/// and noted as, whether it starts with the host, PVE's protection, and
-/// deleting it.
+/// and noted as, whether it starts with the host, PVE's protection, cloning
+/// it, and deleting it.
 ///
 /// The same pane and the same hardware read as the Hardware view: a setting
 /// the running guest takes only at its next start (a container's hostname)
 /// is pending there too, and every change is sent back with the revision it
-/// was made from. The design's Migrate and Clone groups are later phases.
+/// was made from. The design's Migrate group is a later phase.
 class VirtSettingsView extends ConsumerStatefulWidget {
   const VirtSettingsView({
     super.key,
@@ -15,6 +15,7 @@ class VirtSettingsView extends ConsumerStatefulWidget {
     required this.guest,
     required this.caps,
     required this.onDelete,
+    required this.onCloned,
   });
 
   final String serverId;
@@ -24,6 +25,9 @@ class VirtSettingsView extends ConsumerStatefulWidget {
   /// Deletes the guest, and its disks with it or not. The guest view owns
   /// what follows: the toast, closing what showed it.
   final Future<void> Function({required bool removeDisks}) onDelete;
+
+  /// The clone with this id was made: the guest view opens it.
+  final ValueChanged<String> onCloned;
 
   @override
   ConsumerState<VirtSettingsView> createState() => _VirtSettingsViewState();
@@ -40,6 +44,11 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
 
   final _name = TextEditingController();
   final _desc = TextEditingController();
+  late final _cloneName = TextEditingController(text: '${_guest.name}-clone');
+
+  /// The design's Full clone (PVE) / Copy disk contents (libvirt).
+  var _cloneFull = true;
+  var _cloning = false;
 
   /// What [_name] and [_desc] were last filled from. A read that brings a
   /// different value refills a field the user has not changed, and leaves
@@ -57,6 +66,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
   void dispose() {
     _name.dispose();
     _desc.dispose();
+    _cloneName.dispose();
     super.dispose();
   }
 
@@ -80,6 +90,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
     _sync(hw);
     return [
       _generalGroup(hw, busy),
+      if (_caps.clone) _cloneGroup(busy),
       if (_caps.create) _deleteGroup(hw, busy),
     ];
   }
@@ -201,6 +212,99 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
   bool _waits(VirtHardware hw) =>
       hw.running &&
       hw.pending.any((p) => _placeOf(hw, p.key) == _PendingPlace.settings);
+
+  // --- Clone ---
+
+  _Group _cloneGroup(bool busy) {
+    final name = _cloneName.text.trim();
+    final taken = (ref.read(virtHostProvider(_serverId)).data?.guests ??
+            const <VirtGuest>[])
+        .any((g) => g.name == name);
+    final issue = taken
+        ? l10n.virtCreateNameTaken
+        : switch (virtCloneNameIssue(name, _host)) {
+            null => null,
+            // Nothing to say yet: the button waits for a name.
+            VirtCreateIssue.nameEmpty => null,
+            _ =>
+              _pve
+                  ? l10n.virtCreateNameInvalidPve
+                  : l10n.virtCreateNameInvalidLibvirt,
+          };
+    // libvirt copies a disk only while nothing writes to it; PVE clones a
+    // running guest through a snapshot of its own.
+    final stopFirst = !_pve && _guest.state != VirtGuestState.stopped;
+    // PVE links a clone only to a template's disks; anything else is full.
+    final canLink = _caps.linkedClone && _guest.template;
+    final full = _pve && !canLink ? true : _cloneFull;
+    return _Group(
+      key: 'clone',
+      title: libL10n.clone,
+      right: '',
+      warn: false,
+      indexNote: full
+          ? l10n.virtCloneFullShort
+          : _pve
+          ? l10n.virtCloneLinkedShort
+          : l10n.virtCloneEmptyShort,
+      rows: [
+        Input(
+          key: const ValueKey('clone:name'),
+          controller: _cloneName,
+          label: l10n.virtCloneName,
+          icon: Icons.content_copy_outlined,
+          noWrap: true,
+          suggestion: false,
+          enabled: !_cloning,
+          errorText: issue,
+          onChanged: (_) => setState(() {}),
+        ),
+        _toggle(
+          Icons.file_copy_outlined,
+          _pve ? l10n.virtCloneFull : l10n.virtCloneCopyDisks,
+          full,
+          key: 'clone:full',
+          note: !_pve
+              ? l10n.virtCloneEmptyNote
+              : canLink
+              ? l10n.virtCloneLinkedNote
+              : l10n.virtCloneFullOnly,
+          onChanged: _cloning || (_pve && !canLink)
+              ? null
+              : (on) => setState(() => _cloneFull = on),
+        ),
+        if (stopFirst) _text(l10n.virtCloneStopFirst),
+        _actions([
+          _Action(
+            _cloning ? l10n.virtCloning : libL10n.clone,
+            key: 'clone:go',
+            primary: true,
+            onTap: name.isEmpty || issue != null || stopFirst || busy || _cloning
+                ? null
+                : () => _onClone(name, full),
+          ),
+        ]),
+      ],
+    );
+  }
+
+  Future<void> _onClone(String name, bool full) async {
+    setState(() => _cloning = true);
+    try {
+      final id = await _notifier.clone(
+        _guest.id,
+        VirtCloneRequest(name: name, full: full),
+      );
+      Toast.success(l10n.virtCloned(name));
+      if (mounted) widget.onCloned(id);
+    } on VirtErr catch (e) {
+      Toast.error(e.title, body: e.detail);
+    } catch (e) {
+      Toast.error(libL10n.fail, body: '$e');
+    } finally {
+      if (mounted) setState(() => _cloning = false);
+    }
+  }
 
   // --- Delete ---
 

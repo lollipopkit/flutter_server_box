@@ -246,6 +246,31 @@ pub fn parse_virt_create_volume(raw: String) -> Result<String, VirtFfiError> {
     Ok(virt::parse_create_volume(&raw)?)
 }
 
+/// A clone's disks (`VirtCloneSpec` JSON), each copied or made empty in
+/// its source's pool
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_clone_volumes_script(spec_json: String) -> Result<String, VirtFfiError> {
+    let spec: virt::VirtCloneSpec = serde_json::from_str(&spec_json).map_err(json_err)?;
+    Ok(virt::clone_volumes_script(&spec)?)
+}
+
+/// [`virt_clone_volumes_script`]'s output: the new volumes' paths, in order
+pub fn parse_virt_clone_volumes(raw: String) -> Result<Vec<String>, VirtFfiError> {
+    Ok(virt::parse_clone_volumes(&raw)?)
+}
+
+/// Defines the clone of `base_xml` called `name` on `disks_json`
+/// (`[[target, path], ...]`); parse with [`parse_virt_create_json`]
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_clone_define_script(
+    base_xml: String,
+    name: String,
+    disks_json: String,
+) -> Result<String, VirtFfiError> {
+    let disks: Vec<(String, String)> = serde_json::from_str(&disks_json).map_err(json_err)?;
+    Ok(virt::clone_define_script(&base_xml, &name, &disks)?)
+}
+
 /// Defines (and optionally starts) the domain on that disk
 #[flutter_rust_bridge::frb(sync)]
 pub fn virt_define_script(spec_json: String) -> Result<String, VirtFfiError> {

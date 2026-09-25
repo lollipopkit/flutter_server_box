@@ -10,6 +10,7 @@ import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/virt/libvirt.dart';
 import 'package:server_box/data/model/virt/virt.dart';
+import 'package:server_box/data/model/virt/virt_backup.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
@@ -126,6 +127,7 @@ class LibvirtBackend implements VirtBackend {
         create: true,
         deleteKeepsDisks: true,
         hardware: true,
+        clone: true,
       ),
     );
   }
@@ -489,6 +491,104 @@ class LibvirtBackend implements VirtBackend {
       ),
     );
   }
+
+  // ---------------------------------------------------------------------------
+  // Cloning (libvirt has no backups of its own)
+  // ---------------------------------------------------------------------------
+
+  /// Two steps, as creating is: each writable disk copied (or made empty)
+  /// in the pool its source is in, then the copy defined on those volumes —
+  /// a new UUID and MACs, its own UEFI variables file. Either step failing
+  /// deletes the volumes it made. A CD-ROM stays on the image it has.
+  @override
+  Future<String> clone(VirtGuest guest, VirtCloneRequest request) async {
+    if (guest.state != VirtGuestState.stopped) {
+      throw VirtErr(
+        type: VirtErrType.unsupported,
+        message: '${guest.name} is not stopped',
+      );
+    }
+    final hw = await hardware(guest);
+    final base = _hardware[guest.id]!.configXml;
+    final disks = <Map<String, Object?>>[];
+    for (final d in hw.disks) {
+      if (d.kind != VirtHwDiskKind.disk || d.readonly) continue;
+      final source = d.source;
+      if (source == null || !source.startsWith('/')) {
+        throw VirtErr(
+          type: VirtErrType.unsupported,
+          message: 'Disk ${d.key} has no file to copy',
+        );
+      }
+      disks.add({
+        'target': d.key,
+        'source': source,
+        'format': d.format == 'qcow2' || d.format == 'raw' ? d.format : null,
+      });
+    }
+    final spec = {
+      'source': guest.id,
+      'name': request.name,
+      'full': request.full,
+      'disks': disks,
+    };
+    final List<Object?> paths;
+    try {
+      paths = jsonDecode(
+        await _run(
+          _script(() => ffi.virtCloneVolumesScript(specJson: jsonEncode(spec))),
+          ({required String raw}) async =>
+              jsonEncode(await ffi.parseVirtCloneVolumes(raw: raw)),
+          action: true,
+        ),
+      ) as List<Object?>;
+    } on VirtErr catch (e) {
+      throw _existsOr(e);
+    }
+    final created = _decode(
+      await _run(
+        _script(
+          () => ffi.virtCloneDefineScript(
+            baseXml: base,
+            name: request.name,
+            disksJson: jsonEncode([
+              for (var i = 0; i < disks.length; i++) [disks[i]['target'], paths[i]],
+            ]),
+          ),
+        ),
+        ffi.parseVirtCreateJson,
+        action: true,
+      ),
+    );
+    return created['uuid'] as String? ?? request.name;
+  }
+
+  static Never _noBackups() => throw const VirtErr(type: VirtErrType.unsupported);
+
+  @override
+  Future<List<VirtBackup>> backups(VirtGuest guest) async => _noBackups();
+
+  @override
+  Future<List<VirtBackupJob>> backupJobs(VirtGuest guest) async => const [];
+
+  @override
+  Future<List<VirtStoragePool>> backupStorages(VirtGuest guest) async =>
+      const [];
+
+  @override
+  Future<void> backup(VirtGuest guest, VirtBackupRequest request) async =>
+      _noBackups();
+
+  @override
+  Future<void> restoreBackup(
+    VirtGuest guest,
+    VirtBackup backup, {
+    int? vmid,
+  }) async => _noBackups();
+
+  @override
+  Future<void> deleteBackup(VirtGuest guest, VirtBackup backup) async =>
+      _noBackups();
 
   /// A script the parser refused to write: what it was given is this app's
   /// fault, not the host's.

@@ -3586,6 +3586,10 @@ class AppLocalizationsKo extends AppLocalizations {
       '하드웨어 편집에는 VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network, VM.Config.Options가 필요하며, 디스크와 인터페이스를 추가하려면 Datastore.AllocateSpace와 SDN.Use도 필요합니다. 그래픽 카드와 USB·PCI 장치에는 VM.Config.HWType도 필요합니다. 리소스 매핑으로 넘기는 장치에는 해당 매핑의 Mapping.Use가, 매핑 목록에는 Mapping.Audit가 필요합니다.';
 
   @override
+  String get pveTokenTipBackup =>
+      '복제에는 VM.Clone, 백업과 복원에는 VM.Backup이 필요하며, 복사본이나 백업이 저장되는 곳에 Datastore.AllocateSpace도 필요합니다.';
+
+  @override
   String get virtErrConflict => '다른 곳에서 변경됨';
 
   @override
@@ -4025,5 +4029,119 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String virtHwSwitchFirmwareAsk(String guest, String firmware) {
     return '$guest을(를) $firmware(으)로 전환할까요?';
+  }
+
+  @override
+  String get virtCloneName => '새 이름';
+
+  @override
+  String get virtCloneFull => '전체 복제';
+
+  @override
+  String get virtCloneCopyDisks => '디스크 내용 복사';
+
+  @override
+  String get virtCloneLinkedNote => '끄면 템플릿 디스크에 의존하는 연결 복제';
+
+  @override
+  String get virtCloneFullOnly => '연결 복제는 템플릿에서만 가능합니다';
+
+  @override
+  String get virtCloneEmptyNote => '끄면 같은 크기의 빈 디스크를 새로 만듭니다';
+
+  @override
+  String get virtCloneStopFirst => '복제하기 전에 종료하세요.';
+
+  @override
+  String get virtCloneFullShort => '전체';
+
+  @override
+  String get virtCloneLinkedShort => '연결';
+
+  @override
+  String get virtCloneEmptyShort => '빈 디스크';
+
+  @override
+  String get virtCloning => '복제 중…';
+
+  @override
+  String virtCloned(String name) {
+    return '$name(으)로 복제했습니다';
+  }
+
+  @override
+  String get virtBackupPlan => '일정';
+
+  @override
+  String get virtBackupPlanWhere => '데이터센터 → 백업';
+
+  @override
+  String get virtBackupNoPlanShort => '일정 없음';
+
+  @override
+  String get virtBackupNoPlan =>
+      '이 게스트를 포함하는 예약 백업 작업이 없습니다. 작업은 데이터센터에서 설정합니다.';
+
+  @override
+  String get virtBackupKeep => '보존';
+
+  @override
+  String get virtBackupJobDisabled => '이 작업은 비활성화되어 있습니다.';
+
+  @override
+  String virtBackupCount(int count) {
+    return '$count개';
+  }
+
+  @override
+  String get virtBackupNoStorage => '이 노드에는 백업을 저장할 스토리지가 없습니다.';
+
+  @override
+  String get virtBackupLiveTip => '실행 중: snapshot 모드, 중단 없음';
+
+  @override
+  String get virtBackupStoppedTip => '중지됨: 현재 상태로 백업';
+
+  @override
+  String get virtBackupNow => '지금 백업';
+
+  @override
+  String get virtBackupNotes => '메모';
+
+  @override
+  String get virtBackupProtected => '보호됨: PVE에서 보호를 해제하기 전에는 삭제할 수 없습니다.';
+
+  @override
+  String virtBackupVerified(String state) {
+    return '검증: $state';
+  }
+
+  @override
+  String get virtBackupRestoreOverwrites => '복원하면 현재 디스크를 덮어씁니다';
+
+  @override
+  String get virtBackupStopFirst => '복원하기 전에 종료하세요.';
+
+  @override
+  String get virtBackupRestoreAgain => '게스트의 디스크와 구성이 백업의 것으로 바뀝니다.';
+
+  @override
+  String get virtBackupDeleteConfirm => '백업 삭제';
+
+  @override
+  String get virtBackupRestoreNew => '새로 복원';
+
+  @override
+  String get virtBackupRestoreConfirm => '덮어써서 복원';
+
+  @override
+  String get virtBackupDone => '백업 완료';
+
+  @override
+  String get virtBackupDeleted => '백업을 삭제했습니다';
+
+  @override
+  String virtBackupRestored(String time) {
+    return '$time에서 복원했습니다';
   }
 }

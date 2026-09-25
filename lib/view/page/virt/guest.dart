@@ -70,7 +70,7 @@ class VirtGuestPage extends StatelessWidget {
   }
 }
 
-/// The views a guest has, in the design's order. Backup comes later.
+/// The views a guest has, in the design's order.
 enum VirtGuestViewKind {
   overview,
   console,
@@ -80,6 +80,9 @@ enum VirtGuestViewKind {
 
   /// Where the host has `VirtCapabilities.snapshots`, and not for a template.
   snapshots,
+
+  /// Where the host has `VirtCapabilities.backup` (PVE).
+  backup,
 
   /// What the guest is called, starting with the host, protection, deleting
   /// it. Where the host has `VirtCapabilities.hardware`: it is the same read.
@@ -92,6 +95,7 @@ enum VirtGuestViewKind {
         console,
         if ((caps?.hardware ?? false) && !guest.template) hardware,
         if ((caps?.snapshots ?? false) && !guest.template) snapshots,
+        if (caps?.backup ?? false) backup,
         if (caps?.hardware ?? false) settings,
       ];
 }
@@ -108,6 +112,7 @@ class VirtGuestView extends ConsumerStatefulWidget {
     this.switcher = false,
     this.leading,
     this.onDeleted,
+    this.onOpenGuest,
   });
 
   final String serverId;
@@ -115,6 +120,10 @@ class VirtGuestView extends ConsumerStatefulWidget {
 
   /// The guest was deleted from here: whatever shows this closes it.
   final VoidCallback? onDeleted;
+
+  /// Opens another of the host's guests where this one is — what the tab
+  /// does with a list beside it. Null: this view switches to it itself.
+  final ValueChanged<String>? onOpenGuest;
 
   /// Whether the name in the bar opens the host's other guests — with one
   /// column, where the list is not beside this.
@@ -223,6 +232,14 @@ class _VirtGuestViewState extends ConsumerState<VirtGuestView> {
                 caps: st.data!.capabilities,
                 onDelete: ({required removeDisks}) =>
                     _delete(guest, removeDisks: removeDisks),
+                onCloned: _openGuest,
+              ),
+              VirtGuestViewKind.backup => VirtBackupView(
+                key: ValueKey('backup:${guest.id}'),
+                serverId: widget.serverId,
+                guest: guest,
+                caps: st.data!.capabilities,
+                onOpenGuest: _openGuest,
               ),
               VirtGuestViewKind.snapshots => VirtSnapshotsView(
                 key: ValueKey('snapshots:${guest.id}'),
@@ -422,6 +439,7 @@ extension on VirtGuestViewKind {
     VirtGuestViewKind.console => l10n.virtConsole,
     VirtGuestViewKind.hardware => l10n.virtHardware,
     VirtGuestViewKind.snapshots => l10n.virtSnapshots,
+    VirtGuestViewKind.backup => libL10n.backup,
     VirtGuestViewKind.settings => libL10n.setting,
   };
 
@@ -438,6 +456,7 @@ extension on VirtGuestViewKind {
         : Icons.desktop_windows_outlined,
     VirtGuestViewKind.hardware => Icons.memory,
     VirtGuestViewKind.snapshots => Icons.history,
+    VirtGuestViewKind.backup => Icons.backup_outlined,
     VirtGuestViewKind.settings => Icons.tune,
   };
 }
@@ -454,6 +473,18 @@ extension _GuestActions on _VirtGuestViewState {
       Loggers.app.warning('Restarting to apply hardware changes', e, s);
       Toast.error(libL10n.fail, body: '$e');
     }
+  }
+
+  /// A guest this one made — a clone, a backup restored as new: where the
+  /// tab has a list beside, it selects it; here alone, this view shows it,
+  /// on its overview as the design does.
+  void _openGuest(String guestId) {
+    if (widget.onOpenGuest case final open?) {
+      open(guestId);
+      return;
+    }
+    _switchTo(guestId);
+    setState(() => _view = VirtGuestViewKind.overview);
   }
 
   void _switchTo(String guestId) {

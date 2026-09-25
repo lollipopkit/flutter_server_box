@@ -4876,6 +4876,10 @@
   "@pveTokenTipHardware": {
     "description": "Token help: privileges for the Hardware view."
   },
+  "pveTokenTipBackup": "Cloning needs VM.Clone, and backing up and restoring VM.Backup, with Datastore.AllocateSpace where the copy or the backup goes.",
+  "@pveTokenTipBackup": {
+    "description": "PVE API token help: the privileges cloning and backups need (verified on PVE 9.2)."
+  },
   "virtErrConflict": "Changed elsewhere",
   "@virtErrConflict": {
     "description": "Error title: the guest's configuration changed since it was read."
@@ -5525,6 +5529,170 @@
       },
       "firmware": {
         "type": "String"
+      }
+    }
+  },
+  "virtCloneName": "New name",
+  "@virtCloneName": {
+    "description": "Clone group (guest Settings): the new guest's name field."
+  },
+  "virtCloneFull": "Full clone",
+  "@virtCloneFull": {
+    "description": "PVE clone switch: full clone (off = linked clone)."
+  },
+  "virtCloneCopyDisks": "Copy disk contents",
+  "@virtCloneCopyDisks": {
+    "description": "libvirt clone switch: copy the disks' contents (off = new empty disks)."
+  },
+  "virtCloneLinkedNote": "Off: a linked clone, which depends on the template's disks",
+  "@virtCloneLinkedNote": {
+    "description": "Note under the PVE full-clone switch on a template."
+  },
+  "virtCloneFullOnly": "Only a template can be cloned as a linked clone",
+  "@virtCloneFullOnly": {
+    "description": "Note under the PVE full-clone switch on a guest that is not a template: linked clones need a template."
+  },
+  "virtCloneEmptyNote": "Off: new empty disks of the same size",
+  "@virtCloneEmptyNote": {
+    "description": "Note under the libvirt copy-disks switch."
+  },
+  "virtCloneStopFirst": "Shut it down before cloning.",
+  "@virtCloneStopFirst": {
+    "description": "libvirt: why the Clone button is disabled while the guest runs."
+  },
+  "virtCloneFullShort": "Full",
+  "@virtCloneFullShort": {
+    "description": "Index note for the Clone group: full clone."
+  },
+  "virtCloneLinkedShort": "Linked",
+  "@virtCloneLinkedShort": {
+    "description": "Index note for the Clone group: linked clone."
+  },
+  "virtCloneEmptyShort": "Empty disks",
+  "@virtCloneEmptyShort": {
+    "description": "Index note for the Clone group: new empty disks."
+  },
+  "virtCloning": "Cloning…",
+  "@virtCloning": {
+    "description": "The Clone button while a clone runs."
+  },
+  "virtCloned": "Cloned as {name}",
+  "@virtCloned": {
+    "description": "Toast after a clone.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "web-01-clone"
+      }
+    }
+  },
+  "virtBackupPlan": "Plan",
+  "@virtBackupPlan": {
+    "description": "Backup view: title of the group showing the scheduled backup job."
+  },
+  "virtBackupPlanWhere": "Datacenter → Backup",
+  "@virtBackupPlanWhere": {
+    "description": "Backup view: where backup jobs are configured in PVE, shown beside the Plan title."
+  },
+  "virtBackupNoPlanShort": "No plan",
+  "@virtBackupNoPlanShort": {
+    "description": "Index note: no scheduled backup job takes the guest."
+  },
+  "virtBackupNoPlan": "No scheduled backup job takes this guest. Jobs are set up in the datacenter.",
+  "@virtBackupNoPlan": {
+    "description": "Backup view: no scheduled backup job takes the guest."
+  },
+  "virtBackupKeep": "Keep",
+  "@virtBackupKeep": {
+    "description": "Backup job: how many backups are kept (retention)."
+  },
+  "virtBackupJobDisabled": "This job is disabled.",
+  "@virtBackupJobDisabled": {
+    "description": "Backup job: the job is disabled."
+  },
+  "virtBackupCount": "{count, plural, =1{1 backup} other{{count} backups}}",
+  "@virtBackupCount": {
+    "description": "Number of backups of a guest.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "virtBackupNoStorage": "No storage on this node holds backups.",
+  "@virtBackupNoStorage": {
+    "description": "Backup view: no storage on the node accepts backups."
+  },
+  "virtBackupLiveTip": "Running: snapshot mode, no downtime",
+  "@virtBackupLiveTip": {
+    "description": "Backup view: a running guest is backed up in snapshot mode, without stopping it."
+  },
+  "virtBackupStoppedTip": "Stopped: backed up as it is",
+  "@virtBackupStoppedTip": {
+    "description": "Backup view: a stopped guest is backed up as it is."
+  },
+  "virtBackupNow": "Back up now",
+  "@virtBackupNow": {
+    "description": "Backup view: button starting a backup now."
+  },
+  "virtBackupNotes": "Notes",
+  "@virtBackupNotes": {
+    "description": "A backup's notes."
+  },
+  "virtBackupProtected": "Protected: it cannot be deleted until protection is removed in PVE.",
+  "@virtBackupProtected": {
+    "description": "A protected backup cannot be deleted."
+  },
+  "virtBackupVerified": "Verification: {state}",
+  "@virtBackupVerified": {
+    "description": "A backup's verification state from PVE (ok / failed).",
+    "placeholders": {
+      "state": {
+        "type": "String",
+        "example": "ok"
+      }
+    }
+  },
+  "virtBackupRestoreOverwrites": "Restoring overwrites the current disks",
+  "@virtBackupRestoreOverwrites": {
+    "description": "Warning: restoring a backup over the guest replaces its disks."
+  },
+  "virtBackupStopFirst": "Shut it down before restoring.",
+  "@virtBackupStopFirst": {
+    "description": "Why Restore is disabled while the guest runs."
+  },
+  "virtBackupRestoreAgain": "The guest's disks and configuration are replaced by the backup's.",
+  "@virtBackupRestoreAgain": {
+    "description": "Second-press confirmation body for restoring over the guest."
+  },
+  "virtBackupDeleteConfirm": "Delete backup",
+  "@virtBackupDeleteConfirm": {
+    "description": "Second press of a backup's delete button."
+  },
+  "virtBackupRestoreNew": "Restore as new",
+  "@virtBackupRestoreNew": {
+    "description": "Restore a backup as a new guest (new VMID)."
+  },
+  "virtBackupRestoreConfirm": "Restore over it",
+  "@virtBackupRestoreConfirm": {
+    "description": "Second press of the restore-over-the-guest button."
+  },
+  "virtBackupDone": "Backup finished",
+  "@virtBackupDone": {
+    "description": "Toast: a backup finished."
+  },
+  "virtBackupDeleted": "Backup deleted",
+  "@virtBackupDeleted": {
+    "description": "Toast: a backup was deleted."
+  },
+  "virtBackupRestored": "Restored from {time}",
+  "@virtBackupRestored": {
+    "description": "Toast: restored from the backup taken at a time.",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "2026-09-24 02:00"
       }
     }
   }

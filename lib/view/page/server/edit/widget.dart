@@ -876,6 +876,7 @@ extension _Widgets on _ServerEditPageState {
                   l10n.pveTokenTip,
                   l10n.pveTokenTipCreate,
                   l10n.pveTokenTipHardware,
+                  l10n.pveTokenTipBackup,
                 ].join('\n')
               : l10n.pvePasswordAuthTip,
         ),

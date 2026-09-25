@@ -17,6 +17,8 @@ import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/virt/pve_resources.dart';
 import 'package:server_box/data/model/virt/virt.dart';
+import 'package:server_box/data/model/virt/virt_backup.dart';
+import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
@@ -74,7 +76,30 @@ VirtSnapshot _snapshot() => VirtSnapshot(
     create: true,
     hardware: true,
     hardwareRevert: true,
+    clone: true,
+    linkedClone: true,
+    backup: true,
   ),
+);
+
+/// On `local`: one backup of `web-01`, and the job that takes it.
+final _backup = VirtBackup(
+  id: 'local:backup/vzdump-qemu-100-2026_09_24-02_00_00.vma.zst',
+  storage: 'local',
+  node: 'pve',
+  vmid: 100,
+  createdAt: DateTime(2026, 9, 24, 2),
+  size: 18 << 30,
+  format: 'vma.zst',
+  kind: VirtGuestKind.qemu,
+);
+const _job = VirtBackupJob(
+  id: 'nightly',
+  schedule: '02:00',
+  storage: 'local',
+  mode: 'snapshot',
+  compress: 'zstd',
+  keep: 'keep-last=7',
 );
 
 /// Running with a vCPU added and its boot order changed since the start.
@@ -254,6 +279,47 @@ class _FakeHost extends VirtHostNotifier {
   @override
   Future<void> delete(String guestId, {bool removeDisks = true}) async =>
       _calls.add('delete $guestId disks=$removeDisks');
+
+  @override
+  Future<String> clone(String guestId, VirtCloneRequest request) async {
+    _calls.add('clone $guestId ${request.name} full=${request.full}');
+    return 'qemu/150';
+  }
+
+  @override
+  Future<List<VirtBackup>> backups(String guestId) async =>
+      guestId == 'qemu/100' || guestId == 'qemu/101'
+      ? [_backup.copyWith(vmid: int.parse(guestId.split('/').last))]
+      : const [];
+
+  @override
+  Future<List<VirtBackupJob>> backupJobs(String guestId) async => const [_job];
+
+  @override
+  Future<List<VirtStoragePool>> backupStorages(String guestId) async => const [
+    VirtStoragePool(
+      id: 'pve/local',
+      name: 'local',
+      node: 'pve',
+      type: 'dir',
+      content: ['backup', 'iso'],
+    ),
+  ];
+
+  @override
+  Future<void> backup(String guestId, VirtBackupRequest request) async =>
+      _calls.add('backup $guestId ${request.storage} ${request.mode}');
+
+  @override
+  Future<void> restoreBackup(
+    String guestId,
+    VirtBackup backup, {
+    int? vmid,
+  }) async => _calls.add('restore $guestId vmid=$vmid');
+
+  @override
+  Future<void> deleteBackup(String guestId, VirtBackup backup) async =>
+      _calls.add('delete backup $guestId');
 }
 
 void main() {
@@ -467,6 +533,91 @@ void main() {
     await _settle(tester);
     // Scrolled to, in the pane: not merely built.
     expect(tester.getRect(_key('hw:disc:config')).top, lessThan(900));
+  });
+
+  group('clone', () {
+    Future<void> openSettings(WidgetTester tester, String guest) =>
+        open(tester, guest, segmentLabel: libL10n.setting);
+    Finder input(String key) => find.descendant(
+      of: _key(key),
+      matching: find.byType(TextField),
+    );
+
+    testWidgets('a full clone named after the guest; a name taken is not', (
+      tester,
+    ) async {
+      await openSettings(tester, 'web-01');
+      expect(title(libL10n.clone), findsOneWidget);
+      expect(
+        tester.widget<TextField>(input('clone:name')).controller!.text,
+        'web-01-clone',
+      );
+      // Not a template: PVE links nothing to it, so full it stays.
+      expect(text(app_locale.l10n.virtCloneFullOnly), findsOneWidget);
+      final full = find.descendant(
+        of: _key('hw:toggle:clone:full'),
+        matching: find.byType(SwitchX),
+      );
+      expect(tester.widget<SwitchX>(full).onChanged, isNull);
+
+      await tester.enterText(input('clone:name'), 'dns-01');
+      await _settle(tester);
+      expect(text(app_locale.l10n.virtCreateNameTaken), findsOneWidget);
+      expect(tester.widget<Btn>(_key('clone:go')).onTap, isNull);
+
+      await tester.enterText(input('clone:name'), 'web-02');
+      await _settle(tester);
+      await tap(tester, _key('clone:go'));
+      expect(_calls, contains('clone qemu/100 web-02 full=true'));
+    });
+  });
+
+  group('backups', () {
+    Future<void> openBackups(WidgetTester tester, String guest) =>
+        open(tester, guest, segmentLabel: libL10n.backup);
+
+    testWidgets('the plan, backing up now, and a running guest not restored',
+        (tester) async {
+      await openBackups(tester, 'web-01');
+      expect(title(app_locale.l10n.virtBackupPlan), findsOneWidget);
+      expect(text('02:00'), findsOneWidget);
+      expect(text('keep-last=7'), findsOneWidget);
+      expect(text(app_locale.l10n.virtBackupLiveTip), findsOneWidget);
+
+      await tap(tester, _key('backup:now'));
+      expect(_calls, contains('backup qemu/100 local snapshot'));
+
+      await tap(tester, _key('hw:disc:backup:${_backup.id}'));
+      expect(text(_backup.fileName), findsOneWidget);
+      expect(text(app_locale.l10n.virtBackupRestoreOverwrites), findsOneWidget);
+      expect(
+        tester.widget<Btn>(_key('backup:${_backup.id}:restore')).onTap,
+        isNull,
+        reason: 'running',
+      );
+    });
+
+    testWidgets('a stopped guest: restore and delete each asked twice', (
+      tester,
+    ) async {
+      await openBackups(tester, 'db-02');
+      expect(text(app_locale.l10n.virtBackupStoppedTip), findsOneWidget);
+      await tap(tester, _key('hw:disc:backup:${_backup.id}'));
+      final restore = _key('backup:${_backup.id}:restore');
+      await tap(tester, restore);
+      expect(_calls, isEmpty, reason: 'asked first');
+      expect(text(app_locale.l10n.virtBackupRestoreAgain), findsOneWidget);
+      await tap(tester, restore);
+      expect(_calls, ['restore qemu/101 vmid=null']);
+
+      // Still open after the list is read again.
+      _calls.clear();
+      final delete = _key('backup:${_backup.id}:delete');
+      await tap(tester, delete);
+      expect(_calls, isEmpty);
+      await tap(tester, delete);
+      expect(_calls, ['delete backup qemu/101']);
+    });
   });
 
   group('settings', () {

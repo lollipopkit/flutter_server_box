@@ -640,6 +640,7 @@ mixin _EditPane<W extends ConsumerStatefulWidget> on ConsumerState<W> {
     String action, {
     required String key,
     required VoidCallback? onTap,
+    IconData icon = Icons.add,
   }) {
     return DashedBorder(
       child: Padding(
@@ -650,7 +651,7 @@ mixin _EditPane<W extends ConsumerStatefulWidget> on ConsumerState<W> {
             Btn.row(
               key: ValueKey(key),
               text: action,
-              icon: const Icon(Icons.add, size: 17),
+              icon: Icon(icon, size: 17),
               onTap: onTap,
             ),
           ],

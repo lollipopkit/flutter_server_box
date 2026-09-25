@@ -3755,6 +3755,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'Donanım düzenlemek için VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network ve VM.Config.Options gerekir; yeni diskler ve arabirimler için ayrıca Datastore.AllocateSpace ve SDN.Use gerekir. Ekran kartı ile USB ve PCI aygıtları ayrıca VM.Config.HWType gerektirir; kaynak eşlemesiyle verilen bir aygıt o eşleme üzerinde Mapping.Use, eşlemeleri listelemek için Mapping.Audit gerektirir.';
 
   @override
+  String get pveTokenTipBackup =>
+      'Klonlama VM.Clone, yedekleme ve geri yükleme VM.Backup gerektirir; kopyanın veya yedeğin gittiği yerde Datastore.AllocateSpace de gerekir.';
+
+  @override
   String get virtErrConflict => 'Başka yerde değişti';
 
   @override
@@ -4210,5 +4214,124 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String virtHwSwitchFirmwareAsk(String guest, String firmware) {
     return '$guest, $firmware olarak değiştirilsin mi?';
+  }
+
+  @override
+  String get virtCloneName => 'Yeni ad';
+
+  @override
+  String get virtCloneFull => 'Tam klon';
+
+  @override
+  String get virtCloneCopyDisks => 'Disk içeriğini kopyala';
+
+  @override
+  String get virtCloneLinkedNote =>
+      'Kapalı: şablonun disklerine bağlı bir bağlantılı klon';
+
+  @override
+  String get virtCloneFullOnly =>
+      'Yalnızca bir şablon bağlantılı klon olarak klonlanabilir';
+
+  @override
+  String get virtCloneEmptyNote => 'Kapalı: aynı boyutta yeni boş diskler';
+
+  @override
+  String get virtCloneStopFirst => 'Klonlamadan önce kapatın.';
+
+  @override
+  String get virtCloneFullShort => 'Tam';
+
+  @override
+  String get virtCloneLinkedShort => 'Bağlantılı';
+
+  @override
+  String get virtCloneEmptyShort => 'Boş diskler';
+
+  @override
+  String get virtCloning => 'Klonlanıyor…';
+
+  @override
+  String virtCloned(String name) {
+    return '$name olarak klonlandı';
+  }
+
+  @override
+  String get virtBackupPlan => 'Plan';
+
+  @override
+  String get virtBackupPlanWhere => 'Veri merkezi → Yedekleme';
+
+  @override
+  String get virtBackupNoPlanShort => 'Plan yok';
+
+  @override
+  String get virtBackupNoPlan =>
+      'Bu konuğu içeren zamanlanmış yedekleme işi yok. İşler veri merkezinde ayarlanır.';
+
+  @override
+  String get virtBackupKeep => 'Sakla';
+
+  @override
+  String get virtBackupJobDisabled => 'Bu iş devre dışı.';
+
+  @override
+  String virtBackupCount(int count) {
+    return '$count yedek';
+  }
+
+  @override
+  String get virtBackupNoStorage => 'Bu düğümde yedekleri tutan depolama yok.';
+
+  @override
+  String get virtBackupLiveTip => 'Çalışıyor: snapshot modu, kesinti yok';
+
+  @override
+  String get virtBackupStoppedTip => 'Kapalı: olduğu gibi yedeklenir';
+
+  @override
+  String get virtBackupNow => 'Şimdi yedekle';
+
+  @override
+  String get virtBackupNotes => 'Notlar';
+
+  @override
+  String get virtBackupProtected =>
+      'Korumalı: koruma PVE\'de kaldırılana kadar silinemez.';
+
+  @override
+  String virtBackupVerified(String state) {
+    return 'Doğrulama: $state';
+  }
+
+  @override
+  String get virtBackupRestoreOverwrites =>
+      'Geri yükleme mevcut diskleri üzerine yazar';
+
+  @override
+  String get virtBackupStopFirst => 'Geri yüklemeden önce kapatın.';
+
+  @override
+  String get virtBackupRestoreAgain =>
+      'Konuğun diskleri ve yapılandırması yedektekilerle değiştirilir.';
+
+  @override
+  String get virtBackupDeleteConfirm => 'Yedeği sil';
+
+  @override
+  String get virtBackupRestoreNew => 'Yeni olarak geri yükle';
+
+  @override
+  String get virtBackupRestoreConfirm => 'Üzerine geri yükle';
+
+  @override
+  String get virtBackupDone => 'Yedekleme tamamlandı';
+
+  @override
+  String get virtBackupDeleted => 'Yedek silindi';
+
+  @override
+  String virtBackupRestored(String time) {
+    return '$time tarihinden geri yüklendi';
   }
 }

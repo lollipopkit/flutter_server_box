@@ -3516,6 +3516,10 @@ class AppLocalizationsZh extends AppLocalizations {
       '编辑硬件需要 VM.Config.CPU、VM.Config.Memory、VM.Config.Disk、VM.Config.CDROM、VM.Config.Network 和 VM.Config.Options；添加磁盘和网卡还需要 Datastore.AllocateSpace 和 SDN.Use。修改显卡以及 USB、PCI 设备还需要 VM.Config.HWType；通过资源映射直通设备需要该映射的 Mapping.Use，列出映射需要 Mapping.Audit。';
 
   @override
+  String get pveTokenTipBackup =>
+      '克隆需要 VM.Clone，备份和还原需要 VM.Backup；副本或备份存放的存储上还需要 Datastore.AllocateSpace。';
+
+  @override
   String get virtErrConflict => '已在别处修改';
 
   @override
@@ -3949,6 +3953,119 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String virtHwSwitchFirmwareAsk(String guest, String firmware) {
     return '将 $guest 切换到 $firmware？';
+  }
+
+  @override
+  String get virtCloneName => '新名称';
+
+  @override
+  String get virtCloneFull => '完整克隆';
+
+  @override
+  String get virtCloneCopyDisks => '复制磁盘内容';
+
+  @override
+  String get virtCloneLinkedNote => '关闭则为链接克隆，依赖原磁盘';
+
+  @override
+  String get virtCloneFullOnly => '只有模板可以链接克隆';
+
+  @override
+  String get virtCloneEmptyNote => '关闭则新建同样大小的空磁盘';
+
+  @override
+  String get virtCloneStopFirst => '克隆前需要先关机。';
+
+  @override
+  String get virtCloneFullShort => '完整';
+
+  @override
+  String get virtCloneLinkedShort => '链接';
+
+  @override
+  String get virtCloneEmptyShort => '空磁盘';
+
+  @override
+  String get virtCloning => '正在克隆…';
+
+  @override
+  String virtCloned(String name) {
+    return '已克隆为 $name';
+  }
+
+  @override
+  String get virtBackupPlan => '计划';
+
+  @override
+  String get virtBackupPlanWhere => '数据中心 → 备份';
+
+  @override
+  String get virtBackupNoPlanShort => '无计划';
+
+  @override
+  String get virtBackupNoPlan => '没有包含它的定时备份任务。任务在数据中心里设置。';
+
+  @override
+  String get virtBackupKeep => '保留';
+
+  @override
+  String get virtBackupJobDisabled => '这个任务已停用。';
+
+  @override
+  String virtBackupCount(int count) {
+    return '$count 份';
+  }
+
+  @override
+  String get virtBackupNoStorage => '这个节点上没有能存放备份的存储。';
+
+  @override
+  String get virtBackupLiveTip => '运行中用 snapshot 模式，不停机';
+
+  @override
+  String get virtBackupStoppedTip => '已关机：按当前状态备份';
+
+  @override
+  String get virtBackupNow => '立即备份';
+
+  @override
+  String get virtBackupNotes => '备注';
+
+  @override
+  String get virtBackupProtected => '受保护：在 PVE 中取消保护之前不能删除。';
+
+  @override
+  String virtBackupVerified(String state) {
+    return '校验：$state';
+  }
+
+  @override
+  String get virtBackupRestoreOverwrites => '还原会覆盖当前磁盘';
+
+  @override
+  String get virtBackupStopFirst => '先关机再还原。';
+
+  @override
+  String get virtBackupRestoreAgain => '客户机的磁盘和配置会被备份里的替换。';
+
+  @override
+  String get virtBackupDeleteConfirm => '确认删除备份';
+
+  @override
+  String get virtBackupRestoreNew => '还原为新的';
+
+  @override
+  String get virtBackupRestoreConfirm => '确认覆盖还原';
+
+  @override
+  String get virtBackupDone => '备份完成';
+
+  @override
+  String get virtBackupDeleted => '已删除备份';
+
+  @override
+  String virtBackupRestored(String time) {
+    return '已从 $time 还原';
   }
 }
 
@@ -7461,6 +7578,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '編輯硬體需要 VM.Config.CPU、VM.Config.Memory、VM.Config.Disk、VM.Config.CDROM、VM.Config.Network 和 VM.Config.Options；新增磁碟和網路卡還需要 Datastore.AllocateSpace 和 SDN.Use。修改顯示卡以及 USB、PCI 裝置還需要 VM.Config.HWType；透過資源對應直通裝置需要該對應的 Mapping.Use，列出對應需要 Mapping.Audit。';
 
   @override
+  String get pveTokenTipBackup =>
+      '複製需要 VM.Clone，備份和還原需要 VM.Backup；副本或備份存放的儲存上還需要 Datastore.AllocateSpace。';
+
+  @override
   String get virtErrConflict => '已在別處修改';
 
   @override
@@ -7895,5 +8016,118 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String virtHwSwitchFirmwareAsk(String guest, String firmware) {
     return '將 $guest 切換到 $firmware？';
+  }
+
+  @override
+  String get virtCloneName => '新名稱';
+
+  @override
+  String get virtCloneFull => '完整複製';
+
+  @override
+  String get virtCloneCopyDisks => '複製磁碟內容';
+
+  @override
+  String get virtCloneLinkedNote => '關閉則為連結複製，依賴原磁碟';
+
+  @override
+  String get virtCloneFullOnly => '只有範本可以連結複製';
+
+  @override
+  String get virtCloneEmptyNote => '關閉則新建同樣大小的空磁碟';
+
+  @override
+  String get virtCloneStopFirst => '複製前需要先關機。';
+
+  @override
+  String get virtCloneFullShort => '完整';
+
+  @override
+  String get virtCloneLinkedShort => '連結';
+
+  @override
+  String get virtCloneEmptyShort => '空磁碟';
+
+  @override
+  String get virtCloning => '正在複製…';
+
+  @override
+  String virtCloned(String name) {
+    return '已複製為 $name';
+  }
+
+  @override
+  String get virtBackupPlan => '排程';
+
+  @override
+  String get virtBackupPlanWhere => '資料中心 → 備份';
+
+  @override
+  String get virtBackupNoPlanShort => '無排程';
+
+  @override
+  String get virtBackupNoPlan => '沒有包含它的定時備份工作。工作在資料中心中設定。';
+
+  @override
+  String get virtBackupKeep => '保留';
+
+  @override
+  String get virtBackupJobDisabled => '這個工作已停用。';
+
+  @override
+  String virtBackupCount(int count) {
+    return '$count 份';
+  }
+
+  @override
+  String get virtBackupNoStorage => '這個節點上沒有能存放備份的儲存。';
+
+  @override
+  String get virtBackupLiveTip => '執行中用 snapshot 模式，不停機';
+
+  @override
+  String get virtBackupStoppedTip => '已關機：按目前狀態備份';
+
+  @override
+  String get virtBackupNow => '立即備份';
+
+  @override
+  String get virtBackupNotes => '備註';
+
+  @override
+  String get virtBackupProtected => '受保護：在 PVE 中取消保護之前不能刪除。';
+
+  @override
+  String virtBackupVerified(String state) {
+    return '驗證：$state';
+  }
+
+  @override
+  String get virtBackupRestoreOverwrites => '還原會覆蓋目前的磁碟';
+
+  @override
+  String get virtBackupStopFirst => '先關機再還原。';
+
+  @override
+  String get virtBackupRestoreAgain => '客體的磁碟和設定會被備份中的取代。';
+
+  @override
+  String get virtBackupDeleteConfirm => '確認刪除備份';
+
+  @override
+  String get virtBackupRestoreNew => '還原為新的';
+
+  @override
+  String get virtBackupRestoreConfirm => '確認覆蓋還原';
+
+  @override
+  String get virtBackupDone => '備份完成';
+
+  @override
+  String get virtBackupDeleted => '已刪除備份';
+
+  @override
+  String virtBackupRestored(String time) {
+    return '已從 $time 還原';
   }
 }

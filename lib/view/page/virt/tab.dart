@@ -199,6 +199,7 @@ class _VirtTabPageState extends ConsumerState<VirtTabPage>
         serverId: hostId,
         guestId: id,
         onDeleted: () => setState(() => _guestId = null),
+        onOpenGuest: (guestId) => _openGuest(hostId, guestId, true),
       ),
       VirtSection.storage => VirtPoolView(
         key: key,
