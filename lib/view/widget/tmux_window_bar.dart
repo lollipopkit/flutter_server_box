@@ -1,0 +1,389 @@
+import 'dart:async';
+
+import 'package:fl_lib/fl_lib.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/ssh/tmux/tmux_control_client.dart';
+import 'package:server_box/data/ssh/tmux/tmux_control_models.dart';
+
+/// A native app bar for the windows in the attached tmux session.
+///
+/// tmux remains the source of truth: the bar is rebuilt from control-mode
+/// notifications, and tapping a window sends `select-window` over the same
+/// CC client that carries pane output.
+final class TmuxWindowBar extends StatelessWidget {
+  final TmuxControlClient? client;
+  final ValueChanged<TmuxControlWindow>? onSelectWindow;
+  final ValueChanged<TmuxControlPane>? onSelectPane;
+  final VoidCallback? onNewWindow;
+  final ValueChanged<TmuxControlWindow>? onCloseWindow;
+  final ValueChanged<TmuxControlPane>? onClosePane;
+
+  const TmuxWindowBar({
+    super.key,
+    required this.client,
+    this.onSelectWindow,
+    this.onSelectPane,
+    this.onNewWindow,
+    this.onCloseWindow,
+    this.onClosePane,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final controlClient = client;
+    if (controlClient == null) return const SizedBox.shrink();
+
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: scheme.surfaceContainerLow,
+      child: SafeArea(
+        bottom: false,
+        child: StreamBuilder<TmuxControlSnapshot>(
+          stream: controlClient.snapshots,
+          initialData: controlClient.snapshot,
+          builder: (context, snapshot) {
+            final state = snapshot.data;
+            if (state == null) return const SizedBox.shrink();
+            return _TmuxWindowBarView(
+              state: state,
+              onSelectWindow: onSelectWindow,
+              onSelectPane: onSelectPane,
+              onNewWindow: onNewWindow,
+              onCloseWindow: onCloseWindow,
+              onClosePane: onClosePane,
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+final class _TmuxWindowBarView extends StatelessWidget {
+  final TmuxControlSnapshot state;
+  final ValueChanged<TmuxControlWindow>? onSelectWindow;
+  final ValueChanged<TmuxControlPane>? onSelectPane;
+  final VoidCallback? onNewWindow;
+  final ValueChanged<TmuxControlWindow>? onCloseWindow;
+  final ValueChanged<TmuxControlPane>? onClosePane;
+
+  const _TmuxWindowBarView({
+    required this.state,
+    this.onSelectWindow,
+    this.onSelectPane,
+    this.onNewWindow,
+    this.onCloseWindow,
+    this.onClosePane,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
+    final active = state.activeWindow;
+    final panes = active?.panes ?? const <TmuxControlPane>[];
+    final activePane = panes
+        .where((pane) => pane.id == state.activePaneId)
+        .firstOrNull;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          height: 46,
+          child: Row(
+            children: [
+              const SizedBox(width: 10),
+              Icon(Icons.terminal_outlined, size: 17, color: scheme.primary),
+              const SizedBox(width: 6),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 116),
+                child: Tooltip(
+                  message: state.session.name,
+                  child: Text(
+                    state.session.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: scheme.onSurface,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              VerticalDivider(
+                width: 1,
+                thickness: 1,
+                indent: 10,
+                endIndent: 10,
+                color: scheme.outlineVariant,
+              ),
+              Expanded(
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 7,
+                  ),
+                  children: [
+                    if (state.windows.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            l10n.tmuxNoWindowsFound,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      for (final window in state.windows)
+                        _TmuxBarChip(
+                          label: '${window.index}:${window.name}',
+                          selected: window.id == state.activeWindowId,
+                          onTap: onSelectWindow == null
+                              ? null
+                              : () => onSelectWindow!(window),
+                        ),
+                  ],
+                ),
+              ),
+              if (panes.length > 1 && activePane != null) ...[
+                _PaneSummaryButton(
+                  panes: panes,
+                  activePaneId: activePane.id,
+                  onSelectPane: onSelectPane,
+                  onClosePane: onClosePane,
+                ),
+                const SizedBox(width: 2),
+              ],
+              IconButton(
+                tooltip: l10n.tmuxNewWindow,
+                onPressed: onNewWindow,
+                icon: const Icon(Icons.add_outlined, size: 18),
+                visualDensity: VisualDensity.compact,
+              ),
+              if (active != null && onCloseWindow != null)
+                IconButton(
+                  tooltip: libL10n.delete,
+                  onPressed: () => onCloseWindow!(active),
+                  icon: const Icon(Icons.close_outlined, size: 18),
+                  visualDensity: VisualDensity.compact,
+                ),
+              const SizedBox(width: 2),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+sealed class _PaneSelection {
+  const _PaneSelection();
+
+  factory _PaneSelection.select(TmuxControlPane pane) = _SelectPane;
+
+  factory _PaneSelection.close(TmuxControlPane pane) = _ClosePane;
+}
+
+final class _SelectPane extends _PaneSelection {
+  final TmuxControlPane pane;
+
+  const _SelectPane(this.pane);
+}
+
+final class _ClosePane extends _PaneSelection {
+  final TmuxControlPane pane;
+
+  const _ClosePane(this.pane);
+}
+
+final class _PaneSummaryButton extends StatefulWidget {
+  final List<TmuxControlPane> panes;
+  final String activePaneId;
+  final ValueChanged<TmuxControlPane>? onSelectPane;
+  final ValueChanged<TmuxControlPane>? onClosePane;
+
+  const _PaneSummaryButton({
+    required this.panes,
+    required this.activePaneId,
+    this.onSelectPane,
+    this.onClosePane,
+  });
+
+  @override
+  State<_PaneSummaryButton> createState() => _PaneSummaryButtonState();
+}
+
+final class _PaneSummaryButtonState extends State<_PaneSummaryButton> {
+  Future<void> _showPaneMenu(BuildContext buttonContext) async {
+    final button = buttonContext.findRenderObject();
+    final overlay = Overlay.of(buttonContext).context.findRenderObject();
+    if (button is! RenderBox || overlay is! RenderBox) return;
+
+    // The menu belongs to the control that opened it. A bottom sheet would put
+    // a pane switch at the opposite end of the screen from the window switch,
+    // even though both are selections in the same tmux hierarchy.
+    final origin = button.localToGlobal(Offset.zero, ancestor: overlay);
+    final picked = await showMenu<_PaneSelection>(
+      context: buttonContext,
+      constraints: const BoxConstraints(minWidth: 260, maxWidth: 320),
+      position: RelativeRect.fromLTRB(
+        origin.dx,
+        origin.dy + button.size.height + 4,
+        overlay.size.width - origin.dx - button.size.width,
+        overlay.size.height - origin.dy - button.size.height,
+      ),
+      items: [
+        for (final pane in widget.panes)
+          PopupMenuItem(
+            value: _PaneSelection.select(pane),
+            child: Builder(
+              builder: (menuContext) => Row(
+                children: [
+                  Icon(
+                    pane.id == widget.activePaneId
+                        ? Icons.check_circle
+                        : Icons.circle_outlined,
+                    size: 14,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${pane.index}:${pane.displayName}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (widget.onClosePane != null)
+                    IconButton(
+                      key: ValueKey('close_tmux_pane_${pane.id}'),
+                      tooltip: libL10n.delete,
+                      onPressed: () => Navigator.of(
+                        menuContext,
+                      ).pop(_PaneSelection.close(pane)),
+                      icon: const Icon(Icons.close_outlined, size: 16),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+    if (!mounted || picked == null) return;
+
+    switch (picked) {
+      case _SelectPane(:final pane):
+        widget.onSelectPane?.call(pane);
+      case _ClosePane(:final pane):
+        widget.onClosePane?.call(pane);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final foreground = scheme.onSurfaceVariant;
+    final activeIndex = widget.panes.indexWhere(
+      (pane) => pane.id == widget.activePaneId,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Material(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          onTap: () => unawaited(_showPaneMenu(context)),
+          borderRadius: BorderRadius.circular(14),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.grid_view_outlined, size: 13, color: foreground),
+                const SizedBox(width: 4),
+                Text(
+                  '${activeIndex < 0 ? 1 : activeIndex + 1}'
+                  '/${widget.panes.length}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: foreground,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+final class _TmuxBarChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback? onTap;
+
+  const _TmuxBarChip({required this.label, required this.selected, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final background = selected
+        ? scheme.primaryContainer
+        : scheme.surfaceContainerHighest;
+    final foreground = selected
+        ? scheme.onPrimaryContainer
+        : scheme.onSurfaceVariant;
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: Material(
+        color: background,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  selected ? Icons.check_circle : Icons.circle_outlined,
+                  size: 11,
+                  color: foreground,
+                ),
+                const SizedBox(width: 5),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 128),
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                      color: foreground,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
