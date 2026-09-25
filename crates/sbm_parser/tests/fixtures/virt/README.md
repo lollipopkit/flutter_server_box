@@ -75,3 +75,14 @@ network `sbx-bridge`; `it's-"odd"` with a second NIC on `sbx-isolated` and
 `storage.expected.json`, `volumes_*.expected.json` and `networks.expected.json`
 are the parsers' output for these inputs, asserted by both the Rust and the
 Dart test.
+
+`script_create_*`, `script_define_*` and `script_undefine.txt` are what the
+create and delete scripts printed on the same host (2026-09-25):
+`create_host_script` (`domcapabilities` for KVM/q35, KVM, QEMU/q35, QEMU —
+**trimmed** to the elements the parser reads, the rest of each document runs
+to ~65 KB), `create_volume_script` for `sbm-create-test` (1 GiB qcow2 in
+`images`) and again once it was defined (`_exists`: stopped before creating
+anything), `define_script` with the ISO `sbm-test.iso` and the network
+`default`, started (`_ok`), and with the machine type `pc-bogus-9.9`
+(`_rollback`: "No PCI buses available", the volume deleted again), and
+`undefine_script` with `--storage vda`. All of them were removed afterwards.

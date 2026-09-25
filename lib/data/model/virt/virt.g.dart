@@ -164,6 +164,8 @@ _VirtCapabilities _$VirtCapabilitiesFromJson(Map<String, dynamic> json) =>
       vncConsole: json['vncConsole'] as bool? ?? false,
       termConsole: json['termConsole'] as bool? ?? false,
       storedHistory: json['storedHistory'] as bool? ?? false,
+      create: json['create'] as bool? ?? false,
+      deleteKeepsDisks: json['deleteKeepsDisks'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$VirtCapabilitiesToJson(_VirtCapabilities instance) =>
@@ -180,4 +182,6 @@ Map<String, dynamic> _$VirtCapabilitiesToJson(_VirtCapabilities instance) =>
       'vncConsole': instance.vncConsole,
       'termConsole': instance.termConsole,
       'storedHistory': instance.storedHistory,
+      'create': instance.create,
+      'deleteKeepsDisks': instance.deleteKeepsDisks,
     };

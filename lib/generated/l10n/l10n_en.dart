@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -3634,4 +3633,141 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get virtNoAttachedGuests => 'No guest is on it';
+
+  @override
+  String get virtCreateVm => 'New virtual machine';
+
+  @override
+  String get virtCreateLxc => 'New container';
+
+  @override
+  String get virtCreateGuest => 'New virtual machine or container';
+
+  @override
+  String get virtKindVm => 'Virtual machine';
+
+  @override
+  String get virtKindLxc => 'Container';
+
+  @override
+  String get virtHostname => 'Hostname';
+
+  @override
+  String get virtInstallMedia => 'Install media';
+
+  @override
+  String get virtNoIsos => 'No ISO images on this host';
+
+  @override
+  String get virtNoTemplates =>
+      'No container templates on this host. A storage\'s CT Templates in PVE can download one.';
+
+  @override
+  String get virtNoDiskStorage => 'Nowhere on this host takes a new disk';
+
+  @override
+  String get virtStartAfterCreate => 'Start it once created';
+
+  @override
+  String get virtUnprivileged => 'Unprivileged container';
+
+  @override
+  String get virtUnprivilegedTip => 'Its root is an ordinary user on the host.';
+
+  @override
+  String get virtSshKeys => 'SSH public keys';
+
+  @override
+  String get virtCredentialsTip => 'A root password, SSH keys, or both.';
+
+  @override
+  String virtCreated(String name) {
+    return '$name created';
+  }
+
+  @override
+  String virtCreatedNotStarted(String name) {
+    return '$name was created but did not start';
+  }
+
+  @override
+  String get virtErrExists => 'A guest or disk with this name already exists';
+
+  @override
+  String get virtCreateNameInvalidLibvirt =>
+      'Letters, digits, ., _ and -, starting with a letter or digit; up to 63 characters.';
+
+  @override
+  String get virtCreateNameInvalidPve =>
+      'Letters, digits and -, in parts separated by dots; up to 63 characters.';
+
+  @override
+  String get virtCreateNameTaken => 'A guest with this name exists.';
+
+  @override
+  String get virtCreateVmidInvalid => 'From 100 to 999999999.';
+
+  @override
+  String get virtCreateVmidTaken => 'This VMID is taken.';
+
+  @override
+  String get virtCreateCoresInvalid => 'More cores than this host allows.';
+
+  @override
+  String get virtCreateMemoryInvalid => 'Not enough memory.';
+
+  @override
+  String get virtCreateStorageMissing => 'Choose where its disk goes.';
+
+  @override
+  String get virtCreateDiskInvalid => 'From 1 GiB to 64 TiB.';
+
+  @override
+  String get virtCreateTemplateMissing => 'Choose a template.';
+
+  @override
+  String get virtCreateCredentialsMissing =>
+      'Set a root password or an SSH key.';
+
+  @override
+  String virtCreatePasswordShort(int min) {
+    return 'At least $min characters.';
+  }
+
+  @override
+  String get virtCreateSshKeysInvalid => 'One OpenSSH public key per line.';
+
+  @override
+  String virtDeleteAsk(String name) {
+    return 'Delete $name? This cannot be undone.';
+  }
+
+  @override
+  String virtDeleteTypeName(String name) {
+    return 'Type $name to confirm';
+  }
+
+  @override
+  String get virtDeleteDisks => 'Delete its disks too';
+
+  @override
+  String get virtDeleteDisksTip => 'Install media attached to it is kept.';
+
+  @override
+  String get virtDeleteDisksPve =>
+      'Its disks are deleted with it; install media is kept.';
+
+  @override
+  String virtDeleteStopFirst(String name) {
+    return '$name is running. It must be stopped before it can be deleted. Force it off now?';
+  }
+
+  @override
+  String virtDeleted(String name) {
+    return '$name deleted';
+  }
+
+  @override
+  String get pveTokenTipCreate =>
+      'Creating and deleting guests also needs VM.Allocate, VM.Config.*, Datastore.AllocateSpace and SDN.Use.';
 }

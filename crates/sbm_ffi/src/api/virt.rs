@@ -47,6 +47,8 @@ pub enum VirtErrorKind {
     DomainNotFound,
     /// The domain's state does not allow the operation
     InvalidState,
+    /// A domain or volume of that name is there already
+    Exists,
     /// Any other virsh failure
     Command,
     /// Output cut off or not what the script prints
@@ -69,6 +71,7 @@ impl From<virt::VirtError> for VirtFfiError {
             E::ConnectFailed { .. } => VirtErrorKind::ConnectFailed,
             E::DomainNotFound { .. } => VirtErrorKind::DomainNotFound,
             E::InvalidState { .. } => VirtErrorKind::InvalidState,
+            E::Exists { .. } => VirtErrorKind::Exists,
             E::Command { .. } => VirtErrorKind::Command,
             E::Malformed { .. } => VirtErrorKind::Malformed,
         };
@@ -200,4 +203,48 @@ pub fn virt_networks_script() -> String {
 /// [`virt_networks_script`]'s output → `VirtNetworks` JSON
 pub fn parse_virt_networks_json(raw: String) -> Result<String, VirtFfiError> {
     serde_json::to_string(&virt::parse_networks(&raw)?).map_err(json_err)
+}
+
+fn spec_of(json: &str) -> Result<virt::VirtCreateSpec, VirtFfiError> {
+    serde_json::from_str(json).map_err(json_err)
+}
+
+/// What the host can run a new domain as (`domcapabilities`)
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_create_host_script() -> String {
+    virt::create_host_script()
+}
+
+/// [`virt_create_host_script`]'s output → `VirtCreateHost` JSON
+pub fn parse_virt_create_host_json(raw: String) -> Result<String, VirtFfiError> {
+    serde_json::to_string(&virt::parse_create_host(&raw)?).map_err(json_err)
+}
+
+/// A new domain's disk and its path; `spec_json` is a `VirtCreateSpec`
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_create_volume_script(spec_json: String) -> Result<String, VirtFfiError> {
+    Ok(virt::create_volume_script(&spec_of(&spec_json)?)?)
+}
+
+/// [`virt_create_volume_script`]'s output: the new volume's path
+pub fn parse_virt_create_volume(raw: String) -> Result<String, VirtFfiError> {
+    Ok(virt::parse_create_volume(&raw)?)
+}
+
+/// Defines (and optionally starts) the domain on that disk
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_define_script(spec_json: String) -> Result<String, VirtFfiError> {
+    Ok(virt::define_script(&spec_of(&spec_json)?)?)
+}
+
+/// [`virt_define_script`]'s output → `VirtCreated` JSON
+pub fn parse_virt_create_json(raw: String) -> Result<String, VirtFfiError> {
+    serde_json::to_string(&virt::parse_create(&raw)?).map_err(json_err)
+}
+
+/// `undefine`, with the volumes of the disk targets in `storage` (none keeps
+/// them all). Parse with [`parse_virt_action`].
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_undefine_script(domain: String, storage: Vec<String>) -> Result<String, VirtFfiError> {
+    Ok(virt::undefine_script(&domain, &storage)?)
 }

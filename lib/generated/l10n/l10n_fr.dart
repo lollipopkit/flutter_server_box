@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -3701,4 +3700,147 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get virtNoAttachedGuests => 'Aucun invité connecté';
+
+  @override
+  String get virtCreateVm => 'Nouvelle machine virtuelle';
+
+  @override
+  String get virtCreateLxc => 'Nouveau conteneur';
+
+  @override
+  String get virtCreateGuest =>
+      'Nouvelle machine virtuelle ou nouveau conteneur';
+
+  @override
+  String get virtKindVm => 'Machine virtuelle';
+
+  @override
+  String get virtKindLxc => 'Conteneur';
+
+  @override
+  String get virtHostname => 'Nom d\'hôte';
+
+  @override
+  String get virtInstallMedia => 'Support d\'installation';
+
+  @override
+  String get virtNoIsos => 'Aucune image ISO sur cet hôte';
+
+  @override
+  String get virtNoTemplates =>
+      'Aucun modèle de conteneur sur cet hôte. Les modèles CT d\'un stockage dans PVE permettent d\'en télécharger un.';
+
+  @override
+  String get virtNoDiskStorage =>
+      'Aucun stockage de cet hôte n\'accepte un nouveau disque';
+
+  @override
+  String get virtStartAfterCreate => 'Le démarrer une fois créé';
+
+  @override
+  String get virtUnprivileged => 'Conteneur non privilégié';
+
+  @override
+  String get virtUnprivilegedTip =>
+      'Son root est un utilisateur ordinaire sur l\'hôte.';
+
+  @override
+  String get virtSshKeys => 'Clés publiques SSH';
+
+  @override
+  String get virtCredentialsTip =>
+      'Un mot de passe root, des clés SSH, ou les deux.';
+
+  @override
+  String virtCreated(String name) {
+    return '$name créé';
+  }
+
+  @override
+  String virtCreatedNotStarted(String name) {
+    return '$name a été créé mais n\'a pas démarré';
+  }
+
+  @override
+  String get virtErrExists => 'Un invité ou un disque de ce nom existe déjà';
+
+  @override
+  String get virtCreateNameInvalidLibvirt =>
+      'Lettres, chiffres, ., _ et -, commençant par une lettre ou un chiffre ; 63 caractères au plus.';
+
+  @override
+  String get virtCreateNameInvalidPve =>
+      'Lettres, chiffres et -, en parties séparées par des points ; 63 caractères au plus.';
+
+  @override
+  String get virtCreateNameTaken => 'Un invité de ce nom existe.';
+
+  @override
+  String get virtCreateVmidInvalid => 'De 100 à 999999999.';
+
+  @override
+  String get virtCreateVmidTaken => 'Ce VMID est pris.';
+
+  @override
+  String get virtCreateCoresInvalid =>
+      'Plus de cœurs que cet hôte n\'en permet.';
+
+  @override
+  String get virtCreateMemoryInvalid => 'Pas assez de mémoire.';
+
+  @override
+  String get virtCreateStorageMissing => 'Choisissez où va son disque.';
+
+  @override
+  String get virtCreateDiskInvalid => 'De 1 Gio à 64 Tio.';
+
+  @override
+  String get virtCreateTemplateMissing => 'Choisissez un modèle.';
+
+  @override
+  String get virtCreateCredentialsMissing =>
+      'Définissez un mot de passe root ou une clé SSH.';
+
+  @override
+  String virtCreatePasswordShort(int min) {
+    return 'Au moins $min caractères.';
+  }
+
+  @override
+  String get virtCreateSshKeysInvalid => 'Une clé publique OpenSSH par ligne.';
+
+  @override
+  String virtDeleteAsk(String name) {
+    return 'Supprimer $name ? Impossible à annuler.';
+  }
+
+  @override
+  String virtDeleteTypeName(String name) {
+    return 'Saisissez $name pour confirmer';
+  }
+
+  @override
+  String get virtDeleteDisks => 'Supprimer aussi ses disques';
+
+  @override
+  String get virtDeleteDisksTip =>
+      'Le support d\'installation attaché est conservé.';
+
+  @override
+  String get virtDeleteDisksPve =>
+      'Ses disques sont supprimés avec lui ; le support d\'installation est conservé.';
+
+  @override
+  String virtDeleteStopFirst(String name) {
+    return '$name est en marche. Il doit être arrêté avant d\'être supprimé. Le forcer à s\'éteindre maintenant ?';
+  }
+
+  @override
+  String virtDeleted(String name) {
+    return '$name supprimé';
+  }
+
+  @override
+  String get pveTokenTipCreate =>
+      'Créer et supprimer des invités demande aussi VM.Allocate, VM.Config.*, Datastore.AllocateSpace et SDN.Use.';
 }

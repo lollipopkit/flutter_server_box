@@ -14,6 +14,7 @@ import 'package:server_box/data/provider/virt/virt.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/virt/common.dart';
+import 'package:server_box/view/page/virt/create.dart';
 import 'package:server_box/view/page/virt/guest.dart';
 import 'package:server_box/view/page/virt/host_error.dart';
 import 'package:server_box/view/page/virt/resources.dart';
@@ -57,6 +58,10 @@ class _VirtTabPageState extends ConsumerState<VirtTabPage>
   var _section = VirtSection.guests;
   String? _poolId;
   String? _netId;
+
+  /// A new guest is being filled in beside the list (two columns; one column
+  /// pushes a page instead). Takes the place of the guest open there.
+  bool _creating = false;
 
   /// The host switcher, opened inside the list column (two columns only; one
   /// column raises it as a sheet instead).
@@ -106,6 +111,11 @@ class _VirtTabPageState extends ConsumerState<VirtTabPage>
     // the pane's, where a watch would subscribe the wrong widget.
     final servers = ref.watch(serversProvider).servers;
     final hostId = _resolveHost(hosts);
+    final caps = hostId == null
+        ? null
+        : ref.watch(
+            virtHostProvider(hostId).select((s) => s.data?.capabilities),
+          );
 
     return PaneSettings.listenAll((paneWidth, paneCollapsed) {
       return AdaptivePanes.detail(
@@ -120,14 +130,19 @@ class _VirtTabPageState extends ConsumerState<VirtTabPage>
         // as well, because the same id on two hosts is two different guests
         // and a pool may share a network's name.
         detailId: switch (_openId) {
+          _ when _creating && hostId != null => '$hostId/create',
           final id? when hostId != null => '$hostId/${_section.name}/$id',
           _ => null,
         },
-        onCloseDetail: () => setState(_closeDetail),
+        onCloseDetail: () => setState(() {
+          _creating = false;
+          _closeDetail();
+        }),
         // A widget with its own `ref`: this builder runs on the pane's
         // element, not this page's.
         detailBuilder: (_) => _buildDetail(hostId),
-        listBuilder: (_, split) => _buildList(hosts, servers, hostId, split),
+        listBuilder: (_, split) =>
+            _buildList(hosts, servers, hostId, split, caps),
       );
     });
   }
@@ -161,6 +176,18 @@ class _VirtTabPageState extends ConsumerState<VirtTabPage>
   }
 
   Widget _buildDetail(String? hostId) {
+    if (_creating && hostId != null) {
+      return VirtCreateView(
+        key: ValueKey('$hostId/create'),
+        serverId: hostId,
+        onCancel: () => setState(() => _creating = false),
+        onCreated: (id) => setState(() {
+          _creating = false;
+          _section = VirtSection.guests;
+          _guestId = id;
+        }),
+      );
+    }
     final id = _openId;
     if (hostId == null || id == null) {
       return EmptyPane(icon: _section.icon);
@@ -171,6 +198,7 @@ class _VirtTabPageState extends ConsumerState<VirtTabPage>
         key: key,
         serverId: hostId,
         guestId: id,
+        onDeleted: () => setState(() => _guestId = null),
       ),
       VirtSection.storage => VirtPoolView(
         key: key,
@@ -212,6 +240,7 @@ extension _Actions on _VirtTabPageState {
         _guestId = null;
         _poolId = null;
         _netId = null;
+        _creating = false;
       }
       _hostId = id;
       _showHosts = false;
@@ -219,7 +248,28 @@ extension _Actions on _VirtTabPageState {
   }
 
   void _selectSection(VirtSection section) {
-    setState(() => _section = section);
+    setState(() {
+      _section = section;
+      _creating = false;
+    });
+  }
+
+  /// The form for a new guest: beside the list with two columns, over it
+  /// with one — and then the new guest, as it would be opened from the list.
+  Future<void> _startCreate(String hostId, bool split) async {
+    if (split) {
+      setState(() {
+        _section = VirtSection.guests;
+        _creating = true;
+      });
+      return;
+    }
+    final id = await VirtCreatePage.route.go(
+      context,
+      VirtCreateArgs(serverId: hostId),
+    );
+    if (id == null || !mounted) return;
+    _openGuest(hostId, id, false);
   }
 
   /// Opens [guestId]: beside the list with two columns, over it with one.
@@ -229,6 +279,7 @@ extension _Actions on _VirtTabPageState {
       setState(() {
         _section = VirtSection.guests;
         _guestId = guestId;
+        _creating = false;
       });
       return;
     }
@@ -243,6 +294,7 @@ extension _Actions on _VirtTabPageState {
   void _openResource(String hostId, String id, bool split) {
     if (split) {
       setState(() {
+        _creating = false;
         switch (_section) {
           case VirtSection.guests:
             _guestId = id;

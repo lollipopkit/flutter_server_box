@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -3645,4 +3644,142 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get virtNoAttachedGuests => 'Qoşulmuş qonaq yoxdur';
+
+  @override
+  String get virtCreateVm => 'Yeni virtual maşın';
+
+  @override
+  String get virtCreateLxc => 'Yeni konteyner';
+
+  @override
+  String get virtCreateGuest => 'Yeni virtual maşın və ya konteyner';
+
+  @override
+  String get virtKindVm => 'Virtual maşın';
+
+  @override
+  String get virtKindLxc => 'Konteyner';
+
+  @override
+  String get virtHostname => 'Host adı';
+
+  @override
+  String get virtInstallMedia => 'Quraşdırma mediası';
+
+  @override
+  String get virtNoIsos => 'Bu hostda ISO şəkli yoxdur';
+
+  @override
+  String get virtNoTemplates =>
+      'Bu hostda konteyner şablonu yoxdur. PVE-də yaddaşın CT Şablonları bölməsindən yükləmək olar.';
+
+  @override
+  String get virtNoDiskStorage =>
+      'Bu hostda yeni disk qəbul edən yaddaş yoxdur';
+
+  @override
+  String get virtStartAfterCreate => 'Yaradandan sonra başlat';
+
+  @override
+  String get virtUnprivileged => 'İmtiyazsız konteyner';
+
+  @override
+  String get virtUnprivilegedTip => 'Onun root-u hostda adi istifadəçidir.';
+
+  @override
+  String get virtSshKeys => 'SSH açıq açarları';
+
+  @override
+  String get virtCredentialsTip => 'root parolu, SSH açarları və ya hər ikisi.';
+
+  @override
+  String virtCreated(String name) {
+    return '$name yaradıldı';
+  }
+
+  @override
+  String virtCreatedNotStarted(String name) {
+    return '$name yaradıldı, amma başlamadı';
+  }
+
+  @override
+  String get virtErrExists => 'Bu adda qonaq və ya disk artıq var';
+
+  @override
+  String get virtCreateNameInvalidLibvirt =>
+      'Hərflər, rəqəmlər, ., _ və -, hərf və ya rəqəmlə başlayır; 63 simvola qədər.';
+
+  @override
+  String get virtCreateNameInvalidPve =>
+      'Hərflər, rəqəmlər və -, nöqtələrlə ayrılmış hissələr; 63 simvola qədər.';
+
+  @override
+  String get virtCreateNameTaken => 'Bu adda qonaq var.';
+
+  @override
+  String get virtCreateVmidInvalid => '100-dən 999999999-a qədər.';
+
+  @override
+  String get virtCreateVmidTaken => 'Bu VMID məşğuldur.';
+
+  @override
+  String get virtCreateCoresInvalid => 'Bu hostun icazə verdiyindən çox nüvə.';
+
+  @override
+  String get virtCreateMemoryInvalid => 'Yaddaş kifayət deyil.';
+
+  @override
+  String get virtCreateStorageMissing => 'Diskin harada olacağını seçin.';
+
+  @override
+  String get virtCreateDiskInvalid => '1 GiB-dən 64 TiB-a qədər.';
+
+  @override
+  String get virtCreateTemplateMissing => 'Şablon seçin.';
+
+  @override
+  String get virtCreateCredentialsMissing =>
+      'root parolu və ya SSH açarı təyin edin.';
+
+  @override
+  String virtCreatePasswordShort(int min) {
+    return 'Ən azı $min simvol.';
+  }
+
+  @override
+  String get virtCreateSshKeysInvalid => 'Hər sətirdə bir OpenSSH açıq açarı.';
+
+  @override
+  String virtDeleteAsk(String name) {
+    return '$name silinsin? Geri qaytarmaq olmaz.';
+  }
+
+  @override
+  String virtDeleteTypeName(String name) {
+    return 'Təsdiq üçün $name yazın';
+  }
+
+  @override
+  String get virtDeleteDisks => 'Disklərini də sil';
+
+  @override
+  String get virtDeleteDisksTip => 'Qoşulmuş quraşdırma mediası saxlanılır.';
+
+  @override
+  String get virtDeleteDisksPve =>
+      'Diskləri onunla birlikdə silinir; quraşdırma mediası saxlanılır.';
+
+  @override
+  String virtDeleteStopFirst(String name) {
+    return '$name işləyir. Silinməzdən əvvəl dayandırılmalıdır. İndi məcburi söndürülsün?';
+  }
+
+  @override
+  String virtDeleted(String name) {
+    return '$name silindi';
+  }
+
+  @override
+  String get pveTokenTipCreate =>
+      'Qonaq yaratmaq və silmək üçün həmçinin VM.Allocate, VM.Config.*, Datastore.AllocateSpace və SDN.Use lazımdır.';
 }

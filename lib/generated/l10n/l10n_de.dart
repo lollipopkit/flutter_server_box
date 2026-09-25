@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -3681,4 +3680,148 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get virtNoAttachedGuests => 'Kein Gast darin';
+
+  @override
+  String get virtCreateVm => 'Neue virtuelle Maschine';
+
+  @override
+  String get virtCreateLxc => 'Neuer Container';
+
+  @override
+  String get virtCreateGuest => 'Neue virtuelle Maschine oder neuer Container';
+
+  @override
+  String get virtKindVm => 'Virtuelle Maschine';
+
+  @override
+  String get virtKindLxc => 'Container';
+
+  @override
+  String get virtHostname => 'Hostname';
+
+  @override
+  String get virtInstallMedia => 'Installationsmedium';
+
+  @override
+  String get virtNoIsos => 'Keine ISO-Images auf diesem Host';
+
+  @override
+  String get virtNoTemplates =>
+      'Keine Container-Vorlagen auf diesem Host. Unter CT-Vorlagen eines Speichers in PVE lässt sich eine herunterladen.';
+
+  @override
+  String get virtNoDiskStorage =>
+      'Kein Speicher auf diesem Host nimmt eine neue Festplatte auf';
+
+  @override
+  String get virtStartAfterCreate => 'Nach dem Erstellen starten';
+
+  @override
+  String get virtUnprivileged => 'Unprivilegierter Container';
+
+  @override
+  String get virtUnprivilegedTip =>
+      'Sein root ist auf dem Host ein gewöhnlicher Benutzer.';
+
+  @override
+  String get virtSshKeys => 'Öffentliche SSH-Schlüssel';
+
+  @override
+  String get virtCredentialsTip =>
+      'Ein root-Passwort, SSH-Schlüssel oder beides.';
+
+  @override
+  String virtCreated(String name) {
+    return '$name erstellt';
+  }
+
+  @override
+  String virtCreatedNotStarted(String name) {
+    return '$name wurde erstellt, ist aber nicht gestartet';
+  }
+
+  @override
+  String get virtErrExists =>
+      'Ein Gast oder eine Festplatte mit diesem Namen existiert bereits';
+
+  @override
+  String get virtCreateNameInvalidLibvirt =>
+      'Buchstaben, Ziffern, ., _ und -, beginnend mit einem Buchstaben oder einer Ziffer; bis zu 63 Zeichen.';
+
+  @override
+  String get virtCreateNameInvalidPve =>
+      'Buchstaben, Ziffern und -, in durch Punkte getrennten Teilen; bis zu 63 Zeichen.';
+
+  @override
+  String get virtCreateNameTaken =>
+      'Es gibt bereits einen Gast mit diesem Namen.';
+
+  @override
+  String get virtCreateVmidInvalid => 'Von 100 bis 999999999.';
+
+  @override
+  String get virtCreateVmidTaken => 'Diese VMID ist vergeben.';
+
+  @override
+  String get virtCreateCoresInvalid => 'Mehr Kerne, als dieser Host erlaubt.';
+
+  @override
+  String get virtCreateMemoryInvalid => 'Zu wenig Arbeitsspeicher.';
+
+  @override
+  String get virtCreateStorageMissing => 'Wähle, wohin die Festplatte kommt.';
+
+  @override
+  String get virtCreateDiskInvalid => 'Von 1 GiB bis 64 TiB.';
+
+  @override
+  String get virtCreateTemplateMissing => 'Wähle eine Vorlage.';
+
+  @override
+  String get virtCreateCredentialsMissing =>
+      'Setze ein root-Passwort oder einen SSH-Schlüssel.';
+
+  @override
+  String virtCreatePasswordShort(int min) {
+    return 'Mindestens $min Zeichen.';
+  }
+
+  @override
+  String get virtCreateSshKeysInvalid =>
+      'Ein öffentlicher OpenSSH-Schlüssel pro Zeile.';
+
+  @override
+  String virtDeleteAsk(String name) {
+    return '$name löschen? Das lässt sich nicht rückgängig machen.';
+  }
+
+  @override
+  String virtDeleteTypeName(String name) {
+    return 'Zum Bestätigen $name eingeben';
+  }
+
+  @override
+  String get virtDeleteDisks => 'Auch seine Festplatten löschen';
+
+  @override
+  String get virtDeleteDisksTip =>
+      'Eingebundene Installationsmedien bleiben erhalten.';
+
+  @override
+  String get virtDeleteDisksPve =>
+      'Seine Festplatten werden mit gelöscht; Installationsmedien bleiben erhalten.';
+
+  @override
+  String virtDeleteStopFirst(String name) {
+    return '$name läuft. Vor dem Löschen muss er gestoppt werden. Jetzt hart ausschalten?';
+  }
+
+  @override
+  String virtDeleted(String name) {
+    return '$name gelöscht';
+  }
+
+  @override
+  String get pveTokenTipCreate =>
+      'Gäste erstellen und löschen braucht außerdem VM.Allocate, VM.Config.*, Datastore.AllocateSpace und SDN.Use.';
 }

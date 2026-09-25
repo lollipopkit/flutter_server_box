@@ -18,6 +18,7 @@ import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/virt/pve_resources.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
+import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/virt/pve_backend.dart';
@@ -1021,6 +1022,200 @@ void main() {
     expect(snap.stats['lxc/100']!.netIn, 1000);
   });
 
+  group('create and delete', () {
+    const token = PveConfig(
+      addr: 'https://pve.lan:8006',
+      auth: PveAuth.token,
+      tokenId: 'root@pam!sb',
+      tokenSecret: 's3cret',
+    );
+    const lvm = VirtStoragePool(
+      id: 'pve/local-lvm',
+      name: 'local-lvm',
+      node: 'pve',
+      type: 'lvmthin',
+      content: ['images', 'rootdir'],
+    );
+    const bridge = VirtNetwork(
+      id: 'pve/vmbr0',
+      name: 'vmbr0',
+      node: 'pve',
+      mode: 'bridge',
+    );
+    Map<String, String> form(String body) => Uri.splitQueryString(body);
+
+    test('nextid', () async {
+      final api = _Api()..routes['GET /cluster/nextid'] = (_) => '105';
+      expect(await api.backend(token).nextVmid(), 105);
+    });
+
+    test('a VM: its configuration, the task, then start on its own', () async {
+      final api = _Api();
+      api.routes['POST /nodes/pve/qemu'] = (_) => _Api.upid;
+      api.routes['POST /nodes/pve/qemu/105/status/start'] = (_) => _Api.upid;
+      final created = await api.backend(token).create(
+        const VirtCreateSpec(
+          kind: VirtGuestKind.qemu,
+          name: 'web-02',
+          node: 'pve',
+          vmid: 105,
+          cores: 2,
+          memoryMiB: 2048,
+          storage: lvm,
+          diskGiB: 32,
+          media: VirtVolume(
+            id: 'local:iso/debian-13.iso',
+            name: 'debian-13.iso',
+            content: 'iso',
+          ),
+          network: bridge,
+          start: true,
+        ),
+      );
+      expect(created.id, 'qemu/105');
+      expect(created.startError, isNull);
+      final i = api.paths.indexOf('POST /nodes/pve/qemu');
+      expect(form(api.bodies[i]), {
+        'vmid': '105',
+        'name': 'web-02',
+        'cores': '2',
+        'memory': '2048',
+        'ostype': 'l26',
+        'scsihw': 'virtio-scsi-single',
+        'scsi0': 'local-lvm:32,iothread=1',
+        'ide2': 'local:iso/debian-13.iso,media=cdrom',
+        'net0': 'virtio,bridge=vmbr0',
+        'serial0': 'socket',
+        'boot': 'order=scsi0;ide2',
+      });
+      // Created (its task waited for) before it is started.
+      final start = api.paths.indexOf('POST /nodes/pve/qemu/105/status/start');
+      expect(
+        api.paths.indexWhere((p) => p.contains('/tasks/')),
+        allOf(greaterThan(i), lessThan(start)),
+      );
+    });
+
+    test('a container: template, rootfs, DHCP, and its login', () async {
+      final api = _Api()..routes['POST /nodes/pve/lxc'] = (_) => _Api.upid;
+      final created = await api.backend(token).create(
+        const VirtCreateSpec(
+          kind: VirtGuestKind.lxc,
+          name: 'ct-01',
+          node: 'pve',
+          vmid: 201,
+          cores: 1,
+          memoryMiB: 512,
+          storage: lvm,
+          diskGiB: 8,
+          media: VirtVolume(
+            id: 'local:vztmpl/alpine-3.22.tar.xz',
+            name: 'alpine-3.22.tar.xz',
+            content: 'vztmpl',
+          ),
+          network: bridge,
+          password: 'p4ss word&=',
+          sshKeys: 'ssh-ed25519 AAAAC3Nza me@host\n',
+        ),
+      );
+      expect(created.id, 'lxc/201');
+      expect(api.paths, isNot(contains(startsWith('POST /nodes/pve/lxc/201/status'))));
+      final body = form(api.bodies[api.paths.indexOf('POST /nodes/pve/lxc')]);
+      expect(body, {
+        'vmid': '201',
+        'hostname': 'ct-01',
+        'ostemplate': 'local:vztmpl/alpine-3.22.tar.xz',
+        'cores': '1',
+        'memory': '512',
+        'rootfs': 'local-lvm:8',
+        'unprivileged': '1',
+        'net0': 'name=eth0,bridge=vmbr0,ip=dhcp',
+        // In the body, encoded, as typed.
+        'password': 'p4ss word&=',
+        'ssh-public-keys': 'ssh-ed25519 AAAAC3Nza me@host',
+      });
+      // Nowhere else: not in a path, not in a query.
+      expect(api.queries.join(), isNot(contains('p4ss')));
+    });
+
+    test('a VMID taken is exists; a bad parameter, the host\'s words', () async {
+      final api = _Api()
+        ..routes['POST /nodes/pve/qemu'] = (_) => _Api._status(
+          500,
+          message: "unable to create VM 100 - VM 100 already exists on node 'pve'\n",
+        );
+      const spec = VirtCreateSpec(
+        kind: VirtGuestKind.qemu,
+        name: 'x',
+        node: 'pve',
+        vmid: 100,
+        cores: 1,
+        memoryMiB: 512,
+        storage: lvm,
+        diskGiB: 1,
+      );
+      final pve = api.backend(token);
+      final taken = await _err(pve.create(spec));
+      expect(taken.type, VirtErrType.exists);
+      expect(taken.message, contains('already exists'));
+
+      api.routes['POST /nodes/pve/qemu'] = (_) => _Api._status(
+        400,
+        message: 'Parameter verification failed.\n',
+        errors: {'memory': 'value must have a minimum value of 16\n'},
+      );
+      final bad = await _err(pve.create(spec));
+      expect(bad.type, VirtErrType.actionFailed);
+      expect(
+        bad.message,
+        'Parameter verification failed.\nmemory: value must have a minimum value of 16',
+      );
+    });
+
+    test('created, then not started: a start error, not a failure', () async {
+      final api = _Api()..actionStatus = 500;
+      api.routes['POST /nodes/pve/qemu'] = (_) => _Api.upid;
+      final created = await api.backend(token).create(
+        const VirtCreateSpec(
+          kind: VirtGuestKind.qemu,
+          name: 'x',
+          node: 'pve',
+          vmid: 106,
+          cores: 1,
+          memoryMiB: 512,
+          storage: lvm,
+          diskGiB: 1,
+          start: true,
+        ),
+      );
+      expect(created.id, 'qemu/106');
+      expect(created.startError, isNotNull);
+    });
+
+    test('delete: stopped only, purged, unreferenced disks too', () async {
+      final api = _Api()..routes['DELETE /nodes/pve/qemu/101'] = (_) => _Api.upid;
+      final pve = api.backend(token);
+      const off = VirtGuest(
+        id: 'qemu/101',
+        name: 'off',
+        kind: VirtGuestKind.qemu,
+        state: VirtGuestState.stopped,
+        vmid: 101,
+        node: 'pve',
+      );
+      await pve.delete(off);
+      final i = api.paths.indexOf('DELETE /nodes/pve/qemu/101');
+      expect(
+        Uri.splitQueryString(api.queries[i]),
+        {'purge': '1', 'destroy-unreferenced-disks': '1'},
+      );
+      expect(api.paths.last, contains('/tasks/'));
+
+      final running = off.copyWith(state: VirtGuestState.running);
+      expect((await _err(pve.delete(running))).type, VirtErrType.unsupported);
+    });
+  });
+
   group('snapshots, storage, networks', () {
     List<Object?> fixture(String name) =>
         jsonDecode(File('test/fixtures/pve/$name').readAsStringSync())
@@ -1362,6 +1557,7 @@ class _Api {
   Future<void>? ticketGate;
 
   final paths = <String>[];
+  final queries = <String>[];
   final bodies = <String>[];
   final headers = <Map<String, Object?>>[];
   final ticketRequested = Completer<void>();
@@ -1393,6 +1589,7 @@ class _Api {
     final path = o.uri.path.replaceFirst('/api2/json', '');
     final key = '${o.method} $path';
     paths.add(key);
+    queries.add(o.uri.query);
     bodies.add(body);
     headers.add(Map.of(o.headers));
     if (routes[key] case final route?) {
@@ -1490,9 +1687,12 @@ class _Api {
     },
   );
 
-  static ResponseBody _status(int code, {String? message}) =>
-      ResponseBody.fromString(
-        jsonEncode({'data': null, 'message': ?message}),
+  static ResponseBody _status(
+    int code, {
+    String? message,
+    Map<String, String>? errors,
+  }) => ResponseBody.fromString(
+        jsonEncode({'data': null, 'message': ?message, 'errors': ?errors}),
         code,
         headers: {
           Headers.contentTypeHeader: [Headers.jsonContentType],

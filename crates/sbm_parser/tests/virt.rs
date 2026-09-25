@@ -587,10 +587,17 @@ fn snapshot_actions() {
         ("script_snapshot_error_delete_not_found.txt", "no domain snapshot with matching name"),
     ] {
         match virt::parse_action(&fixture(file)) {
-            Err(VirtError::Command { message }) => assert!(message.contains(needle), "{file}: {message}"),
+            // A name taken is told apart from the rest, with the same words.
+            Err(VirtError::Command { message } | VirtError::Exists { message }) => {
+                assert!(message.contains(needle), "{file}: {message}")
+            }
             other => panic!("{file}: {other:?}"),
         }
     }
+    assert!(matches!(
+        virt::parse_action(&fixture("script_snapshot_error_exists.txt")),
+        Err(VirtError::Exists { .. })
+    ));
 }
 
 #[test]
@@ -820,5 +827,254 @@ fn probe_finds_pve_and_containers() {
     );
     assert_eq!((p.container, p.libvirt), (None, None));
     assert!(!d.join("virsh.ran").exists());
+    let _ = std::fs::remove_dir_all(&d);
+}
+
+// ---------------------------------------------------------------------------
+// Creating and deleting domains
+// ---------------------------------------------------------------------------
+
+fn create_spec(name: &str) -> virt::VirtCreateSpec {
+    virt::VirtCreateSpec {
+        name: name.to_string(),
+        vcpus: 2,
+        memory_mib: 1024,
+        host: virt::parse_create_host(&fixture("script_create_host.txt")).unwrap(),
+        disk_pool: "images".to_string(),
+        disk_gib: 8,
+        disk_format: "qcow2".to_string(),
+        disk_path: Some(format!("/var/lib/libvirt/images/{name}.qcow2")),
+        cdrom: Some("/var/lib/libvirt/images/sbm-test.iso".to_string()),
+        network: Some("default".to_string()),
+        start: true,
+    }
+}
+
+#[test]
+fn create_host_prefers_kvm_and_q35() {
+    let host = virt::parse_create_host(&fixture("script_create_host.txt")).unwrap();
+    assert_eq!(
+        host,
+        virt::VirtCreateHost {
+            domain_type: "kvm".into(),
+            machine: "pc-q35-10.0".into(),
+            arch: "x86_64".into(),
+            max_vcpus: Some(4096),
+        }
+    );
+    // A host without KVM: the first sections fail, emulation answers.
+    let raw = fixture("script_create_host.txt");
+    let no_kvm = raw.replacen(
+        "kvm\n<domainCapabilities>",
+        "kvm\nerror: unsupported configuration: KVM is not supported\n<!--",
+        2,
+    );
+    let no_kvm = no_kvm.replacen("</domainCapabilities>\n\nSbVirtRc=0", "-->\nSbVirtRc=1", 2);
+    let host = virt::parse_create_host(&no_kvm).unwrap();
+    assert_eq!((host.domain_type.as_str(), host.machine.as_str()), ("qemu", "pc-q35-10.0"));
+}
+
+#[test]
+fn create_volume_and_define_captured() {
+    assert_eq!(
+        virt::parse_create_volume(&fixture("script_create_volume.txt")).unwrap(),
+        "/var/lib/libvirt/images/sbm-create-test.qcow2"
+    );
+    // The name was defined already: nothing ran.
+    assert_eq!(
+        virt::parse_create_volume(&fixture("script_create_volume_exists.txt")),
+        Err(VirtError::Exists { message: String::new() })
+    );
+    assert_eq!(
+        virt::parse_create(&fixture("script_define_ok.txt")).unwrap(),
+        virt::VirtCreated {
+            uuid: Some("be27edda-481c-401d-88df-57e7b8756364".into()),
+            start_error: None,
+        }
+    );
+    // Refused by the host, and the volume taken back (its section is ok).
+    match virt::parse_create(&fixture("script_define_rollback.txt")) {
+        Err(VirtError::Command { message }) => {
+            assert!(message.contains("No PCI buses available"), "{message}");
+        }
+        other => panic!("{other:?}"),
+    }
+    assert_eq!(virt::parse_action(&fixture("script_undefine.txt")), Ok(()));
+}
+
+#[test]
+fn create_start_failure_and_leftover_volume() {
+    let m = script::cmd_marker;
+    let ok = |key: &str, body: &str| format!("{}\n{body}\n{}0\n", m(key), virt::RC_PREFIX);
+    let fail = |key: &str, body: &str| format!("{}\n{body}\n{}1\n", m(key), virt::RC_PREFIX);
+    // Defined, then refused to start: created all the same, with why.
+    let raw = [
+        ok(virt::KEY_DEFINE, ""),
+        ok(virt::KEY_UUID, "be27edda-481c-401d-88df-57e7b8756364"),
+        fail(virt::KEY_START, "error: Failed to start domain 'x'\nerror: Permission denied"),
+    ]
+    .concat();
+    let created = virt::parse_create(&raw).unwrap();
+    assert_eq!(
+        created.start_error.as_deref(),
+        Some("Failed to start domain 'x'\nPermission denied")
+    );
+    // Define refused and the volume could not be removed: both said.
+    let raw = [
+        fail(virt::KEY_DEFINE, "error: XML error: bad"),
+        fail(virt::KEY_ROLLBACK, "error: Failed to delete vol x.qcow2"),
+    ]
+    .concat();
+    match virt::parse_create(&raw) {
+        Err(VirtError::Command { message }) => {
+            assert_eq!(message, "XML error: bad\nFailed to delete vol x.qcow2");
+        }
+        other => panic!("{other:?}"),
+    }
+    // Refused as this user: kept as such, so the caller retries with sudo.
+    let raw = [
+        fail(virt::KEY_DEFINE, "error: Permission denied"),
+        fail(virt::KEY_ROLLBACK, "error: Permission denied"),
+    ]
+    .concat();
+    assert!(matches!(
+        virt::parse_create(&raw),
+        Err(VirtError::PermissionDenied { .. })
+    ));
+}
+
+#[test]
+fn domain_xml_escapes_and_reads_back() {
+    let spec = create_spec("it's \"odd\" <b>&amp;");
+    let xml = virt::domain_xml(&spec);
+    let back = virt::parse_domain_xml(&xml).unwrap();
+    assert_eq!(back.name.as_deref(), Some(spec.name.as_str()));
+    assert_eq!(back.machine.as_deref(), Some("pc-q35-10.0"));
+    assert!(back.has_serial_console);
+    assert_eq!(back.disks.len(), 2);
+    assert_eq!(back.disks[0].source, spec.disk_path);
+    assert_eq!(back.disks[0].target.as_deref(), Some("vda"));
+    assert_eq!(back.disks[1].device, "cdrom");
+    assert!(back.disks[1].readonly);
+    assert_eq!(back.disks[1].bus.as_deref(), Some("sata"));
+    assert_eq!(back.nics[0].source.as_deref(), Some("default"));
+    assert_eq!(back.graphics[0].listen.as_deref(), Some("127.0.0.1"));
+
+    // `pc` has no SATA; no media, no NIC.
+    let mut spec = create_spec("plain");
+    spec.host.machine = "pc-i440fx-10.0".into();
+    spec.network = None;
+    let back = virt::parse_domain_xml(&virt::domain_xml(&spec)).unwrap();
+    assert_eq!(back.disks[1].bus.as_deref(), Some("ide"));
+    assert!(back.nics.is_empty());
+    spec.cdrom = None;
+    assert_eq!(virt::parse_domain_xml(&virt::domain_xml(&spec)).unwrap().disks.len(), 1);
+}
+
+#[test]
+fn create_specs_refused_before_running() {
+    let bad = |f: &dyn Fn(&mut virt::VirtCreateSpec)| {
+        let mut spec = create_spec("vm");
+        f(&mut spec);
+        assert!(
+            matches!(virt::create_volume_script(&spec), Err(VirtError::Malformed { .. })),
+            "{spec:?}"
+        );
+    };
+    bad(&|s| s.name = String::new());
+    bad(&|s| s.name = "a/b".into());
+    bad(&|s| s.name = "a\nb".into());
+    bad(&|s| s.name = "-rf".into());
+    bad(&|s| s.name = ".hidden".into());
+    bad(&|s| s.vcpus = 0);
+    bad(&|s| s.disk_gib = 0);
+    bad(&|s| s.disk_format = "vmdk".into());
+    bad(&|s| s.host.domain_type = "xen".into());
+    bad(&|s| s.host.machine = "q35'; rm".into());
+    bad(&|s| s.disk_path = Some("relative.qcow2".into()));
+    let mut spec = create_spec("vm");
+    spec.disk_path = None;
+    assert!(virt::create_volume_script(&spec).is_ok());
+    assert!(matches!(virt::define_script(&spec), Err(VirtError::Malformed { .. })));
+
+    assert!(virt::undefine_script("vm", &["vda,sda".into()]).is_err());
+    assert!(virt::undefine_script("vm", &["".into()]).is_err());
+    let keep = virt::undefine_script("vm", &[]).unwrap();
+    assert!(keep.contains("--keep-nvram") && !keep.contains("--storage"), "{keep}");
+    let all = virt::undefine_script("vm", &["vda".into(), "vdb".into()]).unwrap();
+    assert!(all.contains("--nvram --storage vda,vdb"), "{all}");
+}
+
+/// A fake virsh for the create scripts: logs its arguments one per line,
+/// keeps what `define --file` was given, and knows a domain once defined.
+#[cfg(unix)]
+fn create_stub(tag: &str) -> PathBuf {
+    let d = std::env::temp_dir().join(format!("sbm_virt_create_{tag}_{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&d);
+    std::fs::create_dir_all(&d).unwrap();
+    let stub = r#"#!/bin/sh
+dir="$(dirname "$0")"
+for a in "$@"; do printf '%s\n' "$a" >> "$dir/log"; done
+echo --- >> "$dir/log"
+cat >> "$dir/stdin"
+shift 3
+case "$1" in
+  domuuid) [ -f "$dir/defined.xml" ] || { echo "error: failed to get domain" >&2; exit 1; }
+           echo be27edda-481c-401d-88df-57e7b8756364 ;;
+  vol-create-as) ;;
+  vol-path) echo "/pool/$5" ;;
+  define) cp "$3" "$dir/defined.xml" ;;
+  start|vol-delete|undefine) ;;
+  *) echo "error: unexpected $*" >&2; exit 1 ;;
+esac
+"#;
+    let path = d.join("virsh");
+    std::fs::write(&path, stub).unwrap();
+    Command::new("chmod").arg("+x").arg(&path).status().unwrap();
+    d
+}
+
+#[cfg(unix)]
+#[test]
+fn create_scripts_under_sh_with_a_hostile_name() {
+    let d = create_stub("hostile");
+    let path = format!("{}:/usr/bin:/bin", d.display());
+    let name = "it's \"odd\"; touch pwned $(id) `id`";
+    let mut spec = create_spec(name);
+    spec.disk_path = None;
+
+    let vol = virt::parse_create_volume(&run_sh(&virt::create_volume_script(&spec).unwrap(), &path))
+        .unwrap();
+    assert_eq!(vol, format!("/pool/{name}.qcow2"));
+    let log = std::fs::read_to_string(d.join("log")).unwrap();
+    assert!(log.contains(&format!("--name\n{name}.qcow2\n--capacity\n8G\n")), "{log}");
+
+    spec.disk_path = Some(vol);
+    let created = virt::parse_create(&run_sh(&virt::define_script(&spec).unwrap(), &path)).unwrap();
+    assert_eq!(created.uuid.as_deref(), Some("be27edda-481c-401d-88df-57e7b8756364"));
+    assert_eq!(created.start_error, None);
+    // The file virsh was given is the XML, byte for byte.
+    assert_eq!(
+        std::fs::read_to_string(d.join("defined.xml")).unwrap(),
+        virt::domain_xml(&spec)
+    );
+    let log = std::fs::read_to_string(d.join("log")).unwrap();
+    assert!(log.contains(&format!("start\n--domain\n{name}\n")), "{log}");
+    assert!(!d.join("pwned").exists() && !std::path::Path::new("pwned").exists());
+    assert_eq!(std::fs::read_to_string(d.join("stdin")).unwrap(), "");
+
+    // Defined already: stops before creating anything.
+    std::fs::remove_file(d.join("log")).unwrap();
+    assert_eq!(
+        virt::parse_create_volume(&run_sh(&virt::create_volume_script(&spec).unwrap(), &path)),
+        Err(VirtError::Exists { message: String::new() })
+    );
+    let log = std::fs::read_to_string(d.join("log")).unwrap();
+    assert!(!log.contains("vol-create-as"), "{log}");
+
+    let undefine = virt::undefine_script(name, &["vda".into()]).unwrap();
+    assert_eq!(virt::parse_action(&run_sh(&undefine, &path)), Ok(()));
+    let log = std::fs::read_to_string(d.join("log")).unwrap();
+    assert!(log.contains(&format!("undefine\n--domain\n{name}\n--managed-save\n")), "{log}");
     let _ = std::fs::remove_dir_all(&d);
 }

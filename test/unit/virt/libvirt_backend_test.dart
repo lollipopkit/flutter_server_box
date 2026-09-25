@@ -14,6 +14,7 @@ import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/virt/libvirt.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
+import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/virt/libvirt_backend.dart';
@@ -435,6 +436,142 @@ void main() {
       final e = await _err(virt.createSnapshot(web, name: 'snap1'));
       expect(e.type, VirtErrType.actionFailed);
       expect(e.message, contains('unsupported for storage type raw'));
+    });
+  });
+
+  group('create and delete', () {
+    const images = VirtStoragePool(
+      id: 'images',
+      name: 'images',
+      type: 'dir',
+      path: '/var/lib/libvirt/images',
+    );
+    VirtCreateSpec spec({bool start = true}) => VirtCreateSpec(
+      kind: VirtGuestKind.qemu,
+      name: 'sbm-create-test',
+      cores: 1,
+      memoryMiB: 256,
+      storage: images,
+      diskGiB: 1,
+      media: const VirtVolume(
+        id: 'sbm-test.iso',
+        name: 'sbm-test.iso',
+        path: '/var/lib/libvirt/images/sbm-test.iso',
+      ),
+      network: const VirtNetwork(id: 'default', name: 'default', mode: 'nat'),
+      start: start,
+    );
+
+    /// The host as captured (libvirt 11.3), [volume] and [define] the
+    /// answers to the second and third steps.
+    _Exec createExec({
+      String volume = 'script_create_volume.txt',
+      String define = 'script_define_ok.txt',
+    }) => _Exec((call) {
+      if (call.script.contains('domcapabilities')) {
+        return _ok(_fixture('script_create_host.txt'));
+      }
+      if (call.script.contains('vol-create-as')) return _ok(_fixture(volume));
+      if (call.script.contains('define --file')) return _ok(_fixture(define));
+      return _fail('unexpected script');
+    });
+
+    test('three steps: the host, the disk, the domain on its path', () async {
+      final exec = createExec();
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      final created = await virt.create(spec());
+
+      expect(created.id, 'be27edda-481c-401d-88df-57e7b8756364');
+      expect(created.startError, isNull);
+      expect(exec.calls, hasLength(3));
+      expect(exec.calls.map((c) => c.entry), everyElement('sh'));
+      final volume = exec.calls[1].script;
+      expect(volume, contains("--name 'sbm-create-test.qcow2' --capacity 1G --format qcow2"));
+      final define = exec.calls[2].script;
+      // KVM on q35 as the host said, the disk by the path it gave, the ISO
+      // by its own.
+      expect(define, contains('machine='));
+      expect(define, contains('pc-q35-10.0'));
+      expect(define, contains('/var/lib/libvirt/images/sbm-create-test.qcow2'));
+      expect(define, contains('/var/lib/libvirt/images/sbm-test.iso'));
+      expect(define, contains("R start --domain 'sbm-create-test'"));
+    });
+
+    test('a name already defined is exists, and nothing is defined', () async {
+      final exec = createExec(volume: 'script_create_volume_exists.txt');
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      final e = await _err(virt.create(spec()));
+      expect(e.type, VirtErrType.exists);
+      expect(e.message, isNull);
+      expect(exec.calls, hasLength(2));
+    });
+
+    test('a define the host refuses is actionFailed, with its words', () async {
+      final exec = createExec(define: 'script_define_rollback.txt');
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      final e = await _err(virt.create(spec(start: false)));
+      expect(e.type, VirtErrType.actionFailed);
+      expect(e.message, contains('No PCI buses available'));
+      expect(exec.calls[2].script, contains('vol-delete'));
+      expect(exec.calls[2].script, isNot(contains('R start')));
+    });
+
+    test('media without a path is refused before the host is asked', () async {
+      final exec = createExec();
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      final s = spec();
+      final e = await _err(
+        virt.create(
+          VirtCreateSpec(
+            kind: s.kind,
+            name: s.name,
+            cores: 1,
+            memoryMiB: 256,
+            storage: images,
+            diskGiB: 1,
+            media: const VirtVolume(id: 'x.iso', name: 'x.iso'),
+          ),
+        ),
+      );
+      expect(e.type, VirtErrType.invalidResponse);
+      expect(exec.calls, isEmpty);
+    });
+
+    test('delete: a running guest is refused, a stopped one undefined '
+        'with its writable disks only', () async {
+      final exec = _Exec((call) {
+        if (call.script.contains('domstats')) return _ok(_overview());
+        if (call.script.contains('dumpxml')) {
+          return _ok(
+            _section(
+                  'virt.display',
+                  _fixture('error_display_not_running.txt'),
+                  1,
+                ) +
+                _section('virt.xml', _fixture('dumpxml_win11.xml')),
+          );
+        }
+        if (call.script.contains('undefine')) {
+          return _ok(_fixture('script_undefine.txt'));
+        }
+        return _fail('unexpected script');
+      });
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      final guests = (await virt.load()).guests;
+      final running = guests.firstWhere((g) => g.id == _run);
+      expect((await _err(virt.delete(running))).type, VirtErrType.unsupported);
+
+      final odd = guests.firstWhere((g) => g.id == _odd);
+      await virt.delete(odd);
+      final undefine = exec.calls.last.script;
+      expect(undefine, contains("undefine --domain '$_odd'"));
+      // Not the CD-ROM.
+      expect(undefine, contains('--nvram --storage sda,sdb,vdb,vdc'));
+
+      await virt.delete(odd, removeDisks: false);
+      expect(exec.calls.last.script, contains('--keep-nvram'));
+      expect(exec.calls.last.script, isNot(contains('--storage')));
+      expect(exec.calls.where((c) => c.script.contains('dumpxml')), hasLength(1));
     });
   });
 

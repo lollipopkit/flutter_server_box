@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -3692,4 +3691,146 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get virtNoAttachedGuests => 'Ningún invitado en ella';
+
+  @override
+  String get virtCreateVm => 'Nueva máquina virtual';
+
+  @override
+  String get virtCreateLxc => 'Nuevo contenedor';
+
+  @override
+  String get virtCreateGuest => 'Nueva máquina virtual o contenedor';
+
+  @override
+  String get virtKindVm => 'Máquina virtual';
+
+  @override
+  String get virtKindLxc => 'Contenedor';
+
+  @override
+  String get virtHostname => 'Nombre de host';
+
+  @override
+  String get virtInstallMedia => 'Medio de instalación';
+
+  @override
+  String get virtNoIsos => 'No hay imágenes ISO en este host';
+
+  @override
+  String get virtNoTemplates =>
+      'No hay plantillas de contenedor en este host. En PVE, las plantillas CT de un almacenamiento permiten descargar una.';
+
+  @override
+  String get virtNoDiskStorage =>
+      'Ningún almacenamiento de este host admite un disco nuevo';
+
+  @override
+  String get virtStartAfterCreate => 'Iniciarla al crearla';
+
+  @override
+  String get virtUnprivileged => 'Contenedor sin privilegios';
+
+  @override
+  String get virtUnprivilegedTip => 'Su root es un usuario normal en el host.';
+
+  @override
+  String get virtSshKeys => 'Claves públicas SSH';
+
+  @override
+  String get virtCredentialsTip =>
+      'Una contraseña de root, claves SSH o ambas.';
+
+  @override
+  String virtCreated(String name) {
+    return '$name creado';
+  }
+
+  @override
+  String virtCreatedNotStarted(String name) {
+    return '$name se creó pero no se inició';
+  }
+
+  @override
+  String get virtErrExists =>
+      'Ya existe un invitado o un disco con este nombre';
+
+  @override
+  String get virtCreateNameInvalidLibvirt =>
+      'Letras, dígitos, ., _ y -, empezando por una letra o un dígito; hasta 63 caracteres.';
+
+  @override
+  String get virtCreateNameInvalidPve =>
+      'Letras, dígitos y -, en partes separadas por puntos; hasta 63 caracteres.';
+
+  @override
+  String get virtCreateNameTaken => 'Ya existe un invitado con este nombre.';
+
+  @override
+  String get virtCreateVmidInvalid => 'De 100 a 999999999.';
+
+  @override
+  String get virtCreateVmidTaken => 'Este VMID está ocupado.';
+
+  @override
+  String get virtCreateCoresInvalid =>
+      'Más núcleos de los que permite este host.';
+
+  @override
+  String get virtCreateMemoryInvalid => 'Memoria insuficiente.';
+
+  @override
+  String get virtCreateStorageMissing => 'Elige dónde va su disco.';
+
+  @override
+  String get virtCreateDiskInvalid => 'De 1 GiB a 64 TiB.';
+
+  @override
+  String get virtCreateTemplateMissing => 'Elige una plantilla.';
+
+  @override
+  String get virtCreateCredentialsMissing =>
+      'Establece una contraseña de root o una clave SSH.';
+
+  @override
+  String virtCreatePasswordShort(int min) {
+    return 'Al menos $min caracteres.';
+  }
+
+  @override
+  String get virtCreateSshKeysInvalid => 'Una clave pública OpenSSH por línea.';
+
+  @override
+  String virtDeleteAsk(String name) {
+    return '¿Eliminar $name? No se puede deshacer.';
+  }
+
+  @override
+  String virtDeleteTypeName(String name) {
+    return 'Escribe $name para confirmar';
+  }
+
+  @override
+  String get virtDeleteDisks => 'Eliminar también sus discos';
+
+  @override
+  String get virtDeleteDisksTip =>
+      'El medio de instalación conectado se conserva.';
+
+  @override
+  String get virtDeleteDisksPve =>
+      'Sus discos se eliminan con él; el medio de instalación se conserva.';
+
+  @override
+  String virtDeleteStopFirst(String name) {
+    return '$name está en ejecución. Debe detenerse antes de eliminarlo. ¿Forzar el apagado ahora?';
+  }
+
+  @override
+  String virtDeleted(String name) {
+    return '$name eliminado';
+  }
+
+  @override
+  String get pveTokenTipCreate =>
+      'Crear y eliminar invitados también requiere VM.Allocate, VM.Config.*, Datastore.AllocateSpace y SDN.Use.';
 }

@@ -1,5 +1,6 @@
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
+import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 
@@ -76,6 +77,24 @@ abstract interface class VirtBackend {
 
   /// Networks with the guests on each. Only where `VirtCapabilities.network`.
   Future<List<VirtNetwork>> networks();
+
+  /// The VMID PVE would give a new guest (`/cluster/nextid`); null where the
+  /// host has no such thing.
+  Future<int?> nextVmid();
+
+  /// Creates [spec] (checked with `virtCreateIssue` first) and returns once
+  /// the host has finished — started too, when asked. Throws
+  /// `VirtErrType.exists` for a name, VMID or disk already there, and
+  /// `VirtErrType.actionFailed` with the host's words for the rest. A guest
+  /// that was created and then failed to start is not a failure:
+  /// [VirtCreated.startError] says why. Only where `VirtCapabilities.create`.
+  Future<VirtCreated> create(VirtCreateSpec spec);
+
+  /// Deletes [guest], which must be stopped (a running one is refused, not
+  /// stopped), with its snapshots. [removeDisks] deletes its disks as well;
+  /// PVE always does (`VirtCapabilities.deleteKeepsDisks`). Install media
+  /// attached to it is never deleted.
+  Future<void> delete(VirtGuest guest, {bool removeDisks = true});
 
   /// Drops any session, so the next call starts over (a new login, a new
   /// sudo probe). Keeps what the user confirmed or typed: a pinned

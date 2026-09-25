@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -3465,4 +3464,138 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get virtNoAttachedGuests => '연결된 게스트 없음';
+
+  @override
+  String get virtCreateVm => '새 가상 머신';
+
+  @override
+  String get virtCreateLxc => '새 컨테이너';
+
+  @override
+  String get virtCreateGuest => '새 가상 머신 또는 컨테이너';
+
+  @override
+  String get virtKindVm => '가상 머신';
+
+  @override
+  String get virtKindLxc => '컨테이너';
+
+  @override
+  String get virtHostname => '호스트 이름';
+
+  @override
+  String get virtInstallMedia => '설치 미디어';
+
+  @override
+  String get virtNoIsos => '이 호스트에 ISO 이미지가 없습니다';
+
+  @override
+  String get virtNoTemplates =>
+      '이 호스트에 컨테이너 템플릿이 없습니다. PVE에서 스토리지의 CT 템플릿으로 내려받을 수 있습니다.';
+
+  @override
+  String get virtNoDiskStorage => '이 호스트에 새 디스크를 만들 수 있는 스토리지가 없습니다';
+
+  @override
+  String get virtStartAfterCreate => '생성 후 시작';
+
+  @override
+  String get virtUnprivileged => '비특권 컨테이너';
+
+  @override
+  String get virtUnprivilegedTip => '컨테이너의 root는 호스트의 일반 사용자입니다.';
+
+  @override
+  String get virtSshKeys => 'SSH 공개 키';
+
+  @override
+  String get virtCredentialsTip => 'root 비밀번호, SSH 키, 또는 둘 다.';
+
+  @override
+  String virtCreated(String name) {
+    return '$name 생성됨';
+  }
+
+  @override
+  String virtCreatedNotStarted(String name) {
+    return '$name이(가) 생성되었지만 시작되지 않았습니다';
+  }
+
+  @override
+  String get virtErrExists => '같은 이름의 게스트나 디스크가 이미 있습니다';
+
+  @override
+  String get virtCreateNameInvalidLibvirt =>
+      '영문자, 숫자, ., _, -, 영문자나 숫자로 시작; 최대 63자.';
+
+  @override
+  String get virtCreateNameInvalidPve => '영문자, 숫자, -, 점으로 구분된 부분; 최대 63자.';
+
+  @override
+  String get virtCreateNameTaken => '같은 이름의 게스트가 있습니다.';
+
+  @override
+  String get virtCreateVmidInvalid => '100에서 999999999까지.';
+
+  @override
+  String get virtCreateVmidTaken => '이 VMID는 사용 중입니다.';
+
+  @override
+  String get virtCreateCoresInvalid => '이 호스트가 허용하는 것보다 코어가 많습니다.';
+
+  @override
+  String get virtCreateMemoryInvalid => '메모리가 부족합니다.';
+
+  @override
+  String get virtCreateStorageMissing => '디스크를 둘 곳을 선택하세요.';
+
+  @override
+  String get virtCreateDiskInvalid => '1 GiB에서 64 TiB까지.';
+
+  @override
+  String get virtCreateTemplateMissing => '템플릿을 선택하세요.';
+
+  @override
+  String get virtCreateCredentialsMissing => 'root 비밀번호나 SSH 키를 설정하세요.';
+
+  @override
+  String virtCreatePasswordShort(int min) {
+    return '최소 $min자.';
+  }
+
+  @override
+  String get virtCreateSshKeysInvalid => '한 줄에 OpenSSH 공개 키 하나.';
+
+  @override
+  String virtDeleteAsk(String name) {
+    return '$name을(를) 삭제할까요? 되돌릴 수 없습니다.';
+  }
+
+  @override
+  String virtDeleteTypeName(String name) {
+    return '확인하려면 $name을(를) 입력하세요';
+  }
+
+  @override
+  String get virtDeleteDisks => '디스크도 함께 삭제';
+
+  @override
+  String get virtDeleteDisksTip => '연결된 설치 미디어는 유지됩니다.';
+
+  @override
+  String get virtDeleteDisksPve => '디스크는 함께 삭제되고, 설치 미디어는 유지됩니다.';
+
+  @override
+  String virtDeleteStopFirst(String name) {
+    return '$name이(가) 실행 중입니다. 삭제하려면 먼저 중지해야 합니다. 지금 강제로 끌까요?';
+  }
+
+  @override
+  String virtDeleted(String name) {
+    return '$name 삭제됨';
+  }
+
+  @override
+  String get pveTokenTipCreate =>
+      '게스트를 만들고 삭제하려면 VM.Allocate, VM.Config.*, Datastore.AllocateSpace, SDN.Use도 필요합니다.';
 }

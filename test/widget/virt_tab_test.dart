@@ -22,6 +22,7 @@ import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
+import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/remote_desktop.dart';
 import 'package:server_box/data/provider/session_keep_alive.dart';
@@ -39,6 +40,7 @@ import 'package:server_box/view/page/remote_desktop/viewer.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/virt/common.dart';
 import 'package:server_box/view/page/virt/console_connect.dart';
+import 'package:server_box/view/page/virt/create.dart';
 import 'package:server_box/view/page/virt/guest.dart';
 import 'package:server_box/view/page/virt/tab.dart';
 
@@ -217,6 +219,19 @@ class _FakeHost extends VirtHostNotifier {
   @override
   Future<void> provideSudoPassword(String password) async =>
       _calls.add('$serverId.sudo $password');
+
+  @override
+  Future<int?> nextVmid() async => null;
+
+  @override
+  Future<List<VirtStoragePool>> storagePools() async => const [];
+
+  @override
+  Future<List<VirtNetwork>> networks() async => const [];
+
+  @override
+  Future<void> delete(String guestId, {bool removeDisks = true}) async =>
+      _calls.add('$serverId.delete $guestId disks=$removeDisks');
 }
 
 void main() {
@@ -483,11 +498,90 @@ void main() {
   testWidgets('storage and network only where the host has them', (
     tester,
   ) async {
-    // The fake hosts offer neither.
+    // The fake hosts offer neither — nor creating guests.
     await pump(tester, wide: true);
+    expect(find.byKey(const ValueKey('virt:create')), findsNothing);
     expect(find.text(libL10n.storage), findsNothing);
     expect(find.text(libL10n.network), findsNothing);
     expect(segment(app_locale.l10n.virtGuests), findsOneWidget);
+  });
+
+  group('create and delete', () {
+    void offerCreate() => _states[_pve] = _states[_pve]!.copyWith(
+      data: _pveSnapshot.copyWith(
+        capabilities: const VirtCapabilities(
+          lxc: true,
+          pause: true,
+          create: true,
+        ),
+      ),
+    );
+
+    testWidgets('a host that takes new guests offers one, beside the list', (
+      tester,
+    ) async {
+      offerCreate();
+      await pump(tester, wide: true);
+      expect(
+        find.byTooltip(app_locale.l10n.virtCreateGuest),
+        findsOneWidget,
+        reason: 'VMs and containers on PVE',
+      );
+      await tester.tap(find.byKey(const ValueKey('virt:create')));
+      await settle(tester);
+      expect(find.byType(VirtCreateView), findsOneWidget);
+      // The list stays beside it.
+      expect(find.text('web-01'), findsOneWidget);
+
+      // Opening a guest puts the form away.
+      await tester.tap(find.text('web-01'));
+      await settle(tester);
+      expect(find.byType(VirtCreateView), findsNothing);
+      expect(find.byType(VirtGuestView), findsOneWidget);
+    });
+
+    testWidgets('delete: a running guest is offered a stop first', (
+      tester,
+    ) async {
+      offerCreate();
+      await pump(tester, wide: true);
+      await tester.tap(find.text('web-01'));
+      await settle(tester);
+
+      await tester.tap(find.byKey(const ValueKey('virt:delete')));
+      await settle(tester);
+      expect(
+        find.text(app_locale.l10n.virtDeleteStopFirst('web-01')),
+        findsOneWidget,
+      );
+      await tester.tap(find.text(libL10n.cancel));
+      await settle(tester);
+      expect(_calls.where((c) => c.contains('power')), isEmpty);
+      expect(_calls.where((c) => c.contains('delete')), isEmpty);
+    });
+
+    testWidgets('delete: a stopped one, once its name is typed', (
+      tester,
+    ) async {
+      offerCreate();
+      await pump(tester, wide: true);
+      await tester.tap(find.text('dns-01'));
+      await settle(tester);
+      await tester.tap(find.byKey(const ValueKey('virt:delete')));
+      await settle(tester);
+      // PVE deletes a guest's disks with it: said, not asked.
+      expect(find.text(app_locale.l10n.virtDeleteDisksPve), findsOneWidget);
+      await tester.enterText(
+        find.byKey(const ValueKey('delete:name')),
+        'dns-01',
+      );
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('delete:confirm')));
+      await settle(tester);
+      expect(_calls, contains('$_pve.delete lxc/200 disks=true'));
+      // Closed beside the list.
+      expect(find.byType(VirtGuestView), findsNothing);
+    });
   });
 
   group('host switching', () {

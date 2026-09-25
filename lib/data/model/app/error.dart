@@ -237,6 +237,9 @@ enum VirtErrType {
 
   /// Not offered for this guest or host.
   unsupported,
+
+  /// A new guest's name (or PVE VMID, or disk volume) is taken on the host.
+  exists,
   unknown,
 }
 

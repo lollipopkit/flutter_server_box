@@ -4711,5 +4711,196 @@
   "virtNoAttachedGuests": "No guest is on it",
   "@virtNoAttachedGuests": {
     "description": "No guest has a NIC on this network."
+  },
+  "virtCreateVm": "New virtual machine",
+  "@virtCreateVm": {
+    "description": "Title and action: create a new virtual machine."
+  },
+  "virtCreateLxc": "New container",
+  "@virtCreateLxc": {
+    "description": "Title: create a new Proxmox VE container."
+  },
+  "virtCreateGuest": "New virtual machine or container",
+  "@virtCreateGuest": {
+    "description": "Tooltip of the add button on a PVE host, where a VM or a container can be created."
+  },
+  "virtKindVm": "Virtual machine",
+  "@virtKindVm": {
+    "description": "Segment choosing to create a virtual machine."
+  },
+  "virtKindLxc": "Container",
+  "@virtKindLxc": {
+    "description": "Segment choosing to create a container."
+  },
+  "virtHostname": "Hostname",
+  "@virtHostname": {
+    "description": "Label: a new container's hostname."
+  },
+  "virtInstallMedia": "Install media",
+  "@virtInstallMedia": {
+    "description": "Heading: the ISO a new VM boots from."
+  },
+  "virtNoIsos": "No ISO images on this host",
+  "@virtNoIsos": {
+    "description": "Shown when the host has no ISO images to install from."
+  },
+  "virtNoTemplates": "No container templates on this host. A storage's CT Templates in PVE can download one.",
+  "@virtNoTemplates": {
+    "description": "Shown when the PVE host has no container templates."
+  },
+  "virtNoDiskStorage": "Nowhere on this host takes a new disk",
+  "@virtNoDiskStorage": {
+    "description": "Shown when no storage on the host can hold a new disk."
+  },
+  "virtStartAfterCreate": "Start it once created",
+  "@virtStartAfterCreate": {
+    "description": "Switch: start the new guest once it is created."
+  },
+  "virtUnprivileged": "Unprivileged container",
+  "@virtUnprivileged": {
+    "description": "Switch: create an unprivileged container."
+  },
+  "virtUnprivilegedTip": "Its root is an ordinary user on the host.",
+  "@virtUnprivilegedTip": {
+    "description": "Explains what an unprivileged container is."
+  },
+  "virtSshKeys": "SSH public keys",
+  "@virtSshKeys": {
+    "description": "Label: SSH public keys for a new container's root."
+  },
+  "virtCredentialsTip": "A root password, SSH keys, or both.",
+  "@virtCredentialsTip": {
+    "description": "Explains a new container needs a root password, SSH keys or both."
+  },
+  "virtCreated": "{name} created",
+  "@virtCreated": {
+    "description": "Toast after a guest was created.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "virtCreatedNotStarted": "{name} was created but did not start",
+  "@virtCreatedNotStarted": {
+    "description": "Toast title when a guest was created but failed to start; the host's error follows.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "virtErrExists": "A guest or disk with this name already exists",
+  "@virtErrExists": {
+    "description": "Error title: the new guest's name, VMID or disk already exists on the host."
+  },
+  "virtCreateNameInvalidLibvirt": "Letters, digits, ., _ and -, starting with a letter or digit; up to 63 characters.",
+  "@virtCreateNameInvalidLibvirt": {
+    "description": "Rule for a new libvirt guest's name."
+  },
+  "virtCreateNameInvalidPve": "Letters, digits and -, in parts separated by dots; up to 63 characters.",
+  "@virtCreateNameInvalidPve": {
+    "description": "Rule for a new PVE guest's name (a DNS name)."
+  },
+  "virtCreateNameTaken": "A guest with this name exists.",
+  "@virtCreateNameTaken": {
+    "description": "The new guest's name is already used."
+  },
+  "virtCreateVmidInvalid": "From 100 to 999999999.",
+  "@virtCreateVmidInvalid": {
+    "description": "The VMID is out of PVE's range."
+  },
+  "virtCreateVmidTaken": "This VMID is taken.",
+  "@virtCreateVmidTaken": {
+    "description": "The VMID is already used."
+  },
+  "virtCreateCoresInvalid": "More cores than this host allows.",
+  "@virtCreateCoresInvalid": {
+    "description": "More cores than the host allows."
+  },
+  "virtCreateMemoryInvalid": "Not enough memory.",
+  "@virtCreateMemoryInvalid": {
+    "description": "Too little memory for a new guest."
+  },
+  "virtCreateStorageMissing": "Choose where its disk goes.",
+  "@virtCreateStorageMissing": {
+    "description": "No storage chosen for the new disk."
+  },
+  "virtCreateDiskInvalid": "From 1 GiB to 64 TiB.",
+  "@virtCreateDiskInvalid": {
+    "description": "Disk size out of range."
+  },
+  "virtCreateTemplateMissing": "Choose a template.",
+  "@virtCreateTemplateMissing": {
+    "description": "No container template chosen."
+  },
+  "virtCreateCredentialsMissing": "Set a root password or an SSH key.",
+  "@virtCreateCredentialsMissing": {
+    "description": "A new container needs a root password or an SSH key."
+  },
+  "virtCreatePasswordShort": "At least {min} characters.",
+  "@virtCreatePasswordShort": {
+    "description": "The container's root password is too short.",
+    "placeholders": {
+      "min": {
+        "type": "int"
+      }
+    }
+  },
+  "virtCreateSshKeysInvalid": "One OpenSSH public key per line.",
+  "@virtCreateSshKeysInvalid": {
+    "description": "The SSH keys field has a line that is not an OpenSSH public key."
+  },
+  "virtDeleteAsk": "Delete {name}? This cannot be undone.",
+  "@virtDeleteAsk": {
+    "description": "Delete confirmation for a guest.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "virtDeleteTypeName": "Type {name} to confirm",
+  "@virtDeleteTypeName": {
+    "description": "Label of the field where the guest's name is typed to confirm deleting it.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "virtDeleteDisks": "Delete its disks too",
+  "@virtDeleteDisks": {
+    "description": "Checkbox: delete the guest's disks as well."
+  },
+  "virtDeleteDisksTip": "Install media attached to it is kept.",
+  "@virtDeleteDisksTip": {
+    "description": "Install media attached to the guest is not deleted."
+  },
+  "virtDeleteDisksPve": "Its disks are deleted with it; install media is kept.",
+  "@virtDeleteDisksPve": {
+    "description": "On PVE a guest's disks always go with it."
+  },
+  "virtDeleteStopFirst": "{name} is running. It must be stopped before it can be deleted. Force it off now?",
+  "@virtDeleteStopFirst": {
+    "description": "A running guest must be stopped before it is deleted; asks to force it off.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "virtDeleted": "{name} deleted",
+  "@virtDeleted": {
+    "description": "Toast after a guest was deleted.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "pveTokenTipCreate": "Creating and deleting guests also needs VM.Allocate, VM.Config.*, Datastore.AllocateSpace and SDN.Use.",
+  "@pveTokenTipCreate": {
+    "description": "Second part of the PVE API token help: the extra privileges creating and deleting guests needs."
   }
 }

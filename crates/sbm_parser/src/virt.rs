@@ -224,6 +224,8 @@ pub enum VirtError {
     DomainNotFound { message: String },
     /// The domain is in a state that does not allow the operation
     InvalidState { message: String },
+    /// A domain or volume of that name is there already
+    Exists { message: String },
     /// Any other `virsh` failure, with its error text
     Command { message: String },
     /// Output that is not what the script prints: truncated, or a section
@@ -239,6 +241,7 @@ impl std::fmt::Display for VirtError {
             | VirtError::ConnectFailed { message }
             | VirtError::DomainNotFound { message }
             | VirtError::InvalidState { message }
+            | VirtError::Exists { message }
             | VirtError::Command { message }
             | VirtError::Malformed { message } => f.write_str(message),
         }
@@ -306,6 +309,8 @@ pub fn classify_error(text: &str) -> VirtError {
         "not paused",
     ]) {
         VirtError::InvalidState { message }
+    } else if has(&["already exists"]) {
+        VirtError::Exists { message }
     } else {
         VirtError::Command { message }
     }
@@ -2017,6 +2022,431 @@ pub fn parse_networks(raw: &str) -> Result<VirtNetworks, VirtError> {
         ifaces,
         leases,
     })
+}
+
+// ---------------------------------------------------------------------------
+// Creating and deleting domains
+// ---------------------------------------------------------------------------
+
+pub const KEY_CAPS: &str = "virt.caps";
+pub const KEY_EXISTS: &str = "virt.exists";
+pub const KEY_VOL_CREATE: &str = "virt.vol.create";
+pub const KEY_VOL_PATH: &str = "virt.vol.path";
+pub const KEY_DEFINE: &str = "virt.define";
+pub const KEY_ROLLBACK: &str = "virt.rollback";
+pub const KEY_UUID: &str = "virt.uuid";
+pub const KEY_START: &str = "virt.start";
+
+/// What the host can run a new domain as, from `domcapabilities`.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtCreateHost {
+    /// `kvm`, or `qemu` (emulation) where `/dev/kvm` is not usable
+    pub domain_type: String,
+    /// The canonical machine type, e.g. `pc-q35-10.0`
+    pub machine: String,
+    pub arch: String,
+    /// `<vcpu max=…>` for that machine
+    pub max_vcpus: Option<u32>,
+}
+
+/// The `domcapabilities` asked for, best first: KVM before emulation, q35
+/// (PCIe, SATA) before the default `pc`.
+const CAPS_TRIES: &[(&str, Option<&str>)] = &[
+    ("kvm", Some("q35")),
+    ("kvm", None),
+    ("qemu", Some("q35")),
+    ("qemu", None),
+];
+
+/// `domcapabilities` for each of [`CAPS_TRIES`]. Parse with
+/// [`parse_create_host`].
+pub fn create_host_script() -> String {
+    let mut s = prelude();
+    for (virttype, machine) in CAPS_TRIES {
+        let machine_arg = machine.map(|m| format!(" --machine {m}")).unwrap_or_default();
+        s.push_str(&format!(
+            "echo '{}'\nprintf '%s\\n' '{virttype}'\nV domcapabilities --virttype {virttype}{machine_arg}\n",
+            script::cmd_marker(KEY_CAPS),
+        ));
+    }
+    s
+}
+
+/// [`create_host_script`]'s output: the first combination the host accepts.
+pub fn parse_create_host(raw: &str) -> Result<VirtCreateHost, VirtError> {
+    let secs = sections(raw)?;
+    let mut first_err = None;
+    for sec in all_items(&secs, KEY_CAPS) {
+        let (_, body) = split_item(&sec.body);
+        let body = match (Section { body: body.to_string(), rc: sec.rc }).ok() {
+            Ok(b) => b.to_string(),
+            Err(e) => {
+                first_err.get_or_insert(e);
+                continue;
+            }
+        };
+        let doc = parse_xml_doc(&body, "domainCapabilities", "domcapabilities")?;
+        let root = doc.root_element();
+        let text = |name: &str| text_of(root, name);
+        if let (Some(domain_type), Some(machine), Some(arch)) = (text("domain"), text("machine"), text("arch")) {
+            let max_vcpus = child(root, "vcpu")
+                .and_then(|v| v.attribute("max"))
+                .and_then(|m| m.parse().ok());
+            return Ok(VirtCreateHost { domain_type, machine, arch, max_vcpus });
+        }
+    }
+    Err(first_err.unwrap_or_else(|| VirtError::Malformed {
+        message: "no usable domcapabilities".to_string(),
+    }))
+}
+
+/// A new domain. `host` is [`parse_create_host`]'s answer.
+///
+/// Created in two steps: [`create_volume_script`] makes the disk and reads
+/// its path, then [`define_script`] defines the domain on that path. Disks
+/// are named by path rather than by pool and volume (`type='volume'`): on a
+/// Debian host with AppArmor, `virt-aa-helper` did not allow QEMU a volume
+/// disk, and the domain failed to start with "Permission denied" on its own
+/// image (libvirt 11.3, verified).
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtCreateSpec {
+    pub name: String,
+    pub vcpus: u32,
+    pub memory_mib: u64,
+    pub host: VirtCreateHost,
+    /// The pool the new disk is created in
+    pub disk_pool: String,
+    pub disk_gib: u64,
+    /// `qcow2`, or `raw` where the pool cannot hold qcow2 (LVM, disks)
+    pub disk_format: String,
+    /// The new disk's path, as [`parse_create_volume`] read it; needed by
+    /// [`define_script`] only
+    pub disk_path: Option<String>,
+    /// Install media, attached as a read-only CD-ROM: its path
+    pub cdrom: Option<String>,
+    /// A libvirt network for the one NIC; none for no NIC
+    pub network: Option<String>,
+    pub start: bool,
+}
+
+impl VirtCreateSpec {
+    /// The new disk's volume name.
+    pub fn volume_name(&self) -> String {
+        let ext = if self.disk_format == "qcow2" { "qcow2" } else { "img" };
+        format!("{}.{ext}", self.name)
+    }
+
+    /// Refuses what the host would refuse later, or what would land in a
+    /// place it should not: every value here reaches `virsh` or the XML.
+    fn check(&self) -> Result<(), VirtError> {
+        // Refused before anything runs: the app checks all of this first, so
+        // reaching here is a caller's bug, and the message is for the log.
+        let bad = |what: &str| {
+            Err(VirtError::Malformed {
+                message: format!("invalid create spec: {what}"),
+            })
+        };
+        // A domain name is also a volume name (a file in a directory pool):
+        // no path separators, no control characters, not a dot file.
+        if self.name.is_empty()
+            || self.name.len() > 200
+            || self.name.starts_with('.')
+            || self.name.starts_with('-')
+            || self.name.chars().any(|c| c == '/' || c.is_control())
+        {
+            return bad("name");
+        }
+        if self.vcpus == 0 || self.vcpus > 4096 {
+            return bad("vcpus");
+        }
+        if self.memory_mib < 16 {
+            return bad("memory");
+        }
+        if self.disk_gib == 0 || self.disk_gib > 1 << 20 {
+            return bad("disk size");
+        }
+        if self.disk_format != "qcow2" && self.disk_format != "raw" {
+            return bad("disk format");
+        }
+        if self.host.domain_type != "kvm" && self.host.domain_type != "qemu" {
+            return bad("domain type");
+        }
+        let token = |s: &str| {
+            !s.is_empty() && s.chars().all(|c| c.is_ascii_alphanumeric() || "._-".contains(c))
+        };
+        if !token(&self.host.machine) || !token(&self.host.arch) {
+            return bad("machine");
+        }
+        if self.disk_pool.is_empty() || self.disk_pool.chars().any(char::is_control) {
+            return bad("pool");
+        }
+        let path = |p: &Option<String>| {
+            p.as_deref()
+                .is_some_and(|p| !p.starts_with('/') || p.chars().any(char::is_control))
+        };
+        if path(&self.disk_path) || path(&self.cdrom) {
+            return bad("path");
+        }
+        Ok(())
+    }
+}
+
+/// `&`, `<`, `>`, `"` and `'` as entities, for text and attribute values
+/// alike. Control characters other than tab and newline have no place in
+/// XML 1.0 at all; [`VirtCreateSpec::check`] keeps them out of names.
+fn xml_escape(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    for c in s.chars() {
+        match c {
+            '&' => out.push_str("&amp;"),
+            '<' => out.push_str("&lt;"),
+            '>' => out.push_str("&gt;"),
+            '"' => out.push_str("&quot;"),
+            '\'' => out.push_str("&apos;"),
+            c => out.push(c),
+        }
+    }
+    out
+}
+
+/// The domain XML for `spec`.
+///
+/// Disks by path (see [`VirtCreateSpec`]); `undefine --storage` still finds
+/// the volume by it. A serial console so the text console works before the
+/// guest has any network; VNC on loopback only, reached through the app's
+/// tunnel.
+pub fn domain_xml(spec: &VirtCreateSpec) -> String {
+    let e = xml_escape;
+    let q35 = spec.host.machine.contains("q35");
+    let cdrom_bus = if q35 { "sata" } else { "ide" };
+    let mut x = String::new();
+    x.push_str(&format!("<domain type='{}'>\n", e(&spec.host.domain_type)));
+    x.push_str(&format!("  <name>{}</name>\n", e(&spec.name)));
+    x.push_str(&format!("  <memory unit='MiB'>{}</memory>\n", spec.memory_mib));
+    x.push_str(&format!("  <vcpu>{}</vcpu>\n", spec.vcpus));
+    x.push_str("  <os>\n");
+    x.push_str(&format!(
+        "    <type arch='{}' machine='{}'>hvm</type>\n",
+        e(&spec.host.arch),
+        e(&spec.host.machine)
+    ));
+    x.push_str("    <boot dev='hd'/>\n");
+    if spec.cdrom.is_some() {
+        x.push_str("    <boot dev='cdrom'/>\n");
+    }
+    x.push_str("  </os>\n");
+    x.push_str("  <features><acpi/><apic/></features>\n");
+    if spec.host.domain_type == "kvm" {
+        x.push_str("  <cpu mode='host-passthrough'/>\n");
+    }
+    x.push_str("  <clock offset='utc'/>\n");
+    x.push_str("  <on_poweroff>destroy</on_poweroff>\n");
+    x.push_str("  <on_reboot>restart</on_reboot>\n");
+    x.push_str("  <on_crash>destroy</on_crash>\n");
+    x.push_str("  <devices>\n");
+    x.push_str("    <disk type='file' device='disk'>\n");
+    x.push_str(&format!(
+        "      <driver name='qemu' type='{}'/>\n",
+        e(&spec.disk_format)
+    ));
+    x.push_str(&format!(
+        "      <source file='{}'/>\n",
+        e(spec.disk_path.as_deref().unwrap_or_default())
+    ));
+    x.push_str("      <target dev='vda' bus='virtio'/>\n");
+    x.push_str("    </disk>\n");
+    if let Some(cd) = &spec.cdrom {
+        x.push_str("    <disk type='file' device='cdrom'>\n");
+        x.push_str("      <driver name='qemu' type='raw'/>\n");
+        x.push_str(&format!("      <source file='{}'/>\n", e(cd)));
+        x.push_str(&format!("      <target dev='sda' bus='{cdrom_bus}'/>\n"));
+        x.push_str("      <readonly/>\n");
+        x.push_str("    </disk>\n");
+    }
+    if let Some(net) = &spec.network {
+        x.push_str("    <interface type='network'>\n");
+        x.push_str(&format!("      <source network='{}'/>\n", e(net)));
+        x.push_str("      <model type='virtio'/>\n");
+        x.push_str("    </interface>\n");
+    }
+    x.push_str("    <serial type='pty'><target port='0'/></serial>\n");
+    x.push_str("    <console type='pty'><target type='serial' port='0'/></console>\n");
+    x.push_str("    <input type='tablet' bus='usb'/>\n");
+    x.push_str("    <graphics type='vnc' port='-1' autoport='yes' listen='127.0.0.1'>\n");
+    x.push_str("      <listen type='address' address='127.0.0.1'/>\n");
+    x.push_str("    </graphics>\n");
+    x.push_str("    <video><model type='virtio'/></video>\n");
+    x.push_str("  </devices>\n");
+    x.push_str("</domain>\n");
+    x
+}
+
+fn run_fn() -> String {
+    format!(
+        "R() {{ virsh --connect {CONNECT_URI} -q \"$@\" </dev/null 2>&1; r=$?; printf '\\n{RC_PREFIX}%s\\n' \"$r\"; }}\n"
+    )
+}
+
+/// The new domain's disk, and its path. Parse with [`parse_create_volume`].
+///
+/// A name already defined stops it before anything is created, and so does
+/// a volume of that name (`vol-create-as` refuses it): nothing of someone
+/// else's is reused. A path that cannot be read deletes the volume again.
+pub fn create_volume_script(spec: &VirtCreateSpec) -> Result<String, VirtError> {
+    spec.check()?;
+    let name = shell_quote_unix(&spec.name);
+    let pool = shell_quote_unix(&spec.disk_pool);
+    let vol = shell_quote_unix(&spec.volume_name());
+    let m = script::cmd_marker;
+    let mut s = prelude();
+    s.push_str(&run_fn());
+    s.push_str(&format!(
+        "if virsh --connect {CONNECT_URI} -q domuuid --domain {name} </dev/null >/dev/null 2>&1; then echo '{}'; exit 0; fi\n",
+        m(KEY_EXISTS),
+    ));
+    s.push_str(&format!(
+        "echo '{}'\nR vol-create-as --pool {pool} --name {vol} --capacity {}G --format {}\n",
+        m(KEY_VOL_CREATE),
+        spec.disk_gib,
+        spec.disk_format,
+    ));
+    s.push_str("[ \"$r\" = 0 ] || exit 0\n");
+    s.push_str(&format!(
+        "echo '{}'\nR vol-path --pool {pool} --vol {vol}\n",
+        m(KEY_VOL_PATH)
+    ));
+    s.push_str(&format!(
+        "[ \"$r\" = 0 ] || {{ echo '{}'; R vol-delete --pool {pool} --vol {vol}; }}\n",
+        m(KEY_ROLLBACK),
+    ));
+    Ok(s)
+}
+
+/// [`create_volume_script`]'s output: the new volume's path. `Exists` for a
+/// name already defined or a volume already there.
+pub fn parse_create_volume(raw: &str) -> Result<String, VirtError> {
+    let secs = sections(raw)?;
+    if secs.iter().any(|(k, _)| k == KEY_EXISTS) {
+        return Err(VirtError::Exists { message: String::new() });
+    }
+    take(&secs, KEY_VOL_CREATE, raw)?.ok()?;
+    let path = take(&secs, KEY_VOL_PATH, raw)?.ok()?.trim().to_string();
+    if !path.starts_with('/') {
+        return Err(VirtError::Malformed {
+            message: format!("vol-path printed {path:?}"),
+        });
+    }
+    Ok(path)
+}
+
+/// Defines the domain on the volume [`create_volume_script`] made, and
+/// starts it when asked. Parse with [`parse_create`].
+///
+/// A define that fails deletes that volume, so a refused domain leaves
+/// nothing behind; a start that fails leaves the domain defined. The XML
+/// goes through a temporary file, as `virsh define` wants one: the script is
+/// on `sh`'s stdin, which no command here may read.
+pub fn define_script(spec: &VirtCreateSpec) -> Result<String, VirtError> {
+    spec.check()?;
+    if spec.disk_path.is_none() {
+        return Err(VirtError::Malformed {
+            message: "invalid create spec: no disk path".to_string(),
+        });
+    }
+    let name = shell_quote_unix(&spec.name);
+    let pool = shell_quote_unix(&spec.disk_pool);
+    let vol = shell_quote_unix(&spec.volume_name());
+    let xml = shell_quote_unix(&domain_xml(spec));
+    let m = script::cmd_marker;
+    let mut s = prelude();
+    s.push_str(&run_fn());
+    s.push_str(&format!(
+        "echo '{define}'\nf=$(mktemp 2>&1) || {{ printf '%s\\n{RC_PREFIX}1\\n' \"$f\"; f=; r=1; }}\n\
+         if [ -n \"$f\" ]; then printf '%s' {xml} >\"$f\"; R define --file \"$f\"; rm -f \"$f\"; fi\n",
+        define = m(KEY_DEFINE),
+    ));
+    s.push_str(&format!(
+        "if [ \"$r\" != 0 ]; then echo '{}'; R vol-delete --pool {pool} --vol {vol}; exit 0; fi\n",
+        m(KEY_ROLLBACK),
+    ));
+    s.push_str(&format!("echo '{}'\nR domuuid --domain {name}\n", m(KEY_UUID)));
+    if spec.start {
+        s.push_str(&format!("echo '{}'\nR start --domain {name}\n", m(KEY_START)));
+    }
+    Ok(s)
+}
+
+/// What [`define_script`] did.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtCreated {
+    /// The new domain's UUID, when `domuuid` answered
+    pub uuid: Option<String>,
+    /// Defined, but `start` refused, with virsh's words
+    pub start_error: Option<String>,
+}
+
+/// [`define_script`]'s output. `Err` when nothing was defined; a volume a
+/// failed define could not take back is named in the error.
+pub fn parse_create(raw: &str) -> Result<VirtCreated, VirtError> {
+    let secs = sections(raw)?;
+    if let Err(define) = take(&secs, KEY_DEFINE, raw)?.ok() {
+        let left = secs
+            .iter()
+            .find(|(k, _)| k == KEY_ROLLBACK)
+            .and_then(|(_, s)| s.ok().err());
+        // The volume left behind is worth knowing about: its own error
+        // names it.
+        return Err(match left {
+            // Refused as this user: sudo runs the whole step again.
+            _ if matches!(define, VirtError::PermissionDenied { .. }) => define,
+            None => define,
+            Some(rollback) => VirtError::Command {
+                message: format!("{}\n{}", define.message(), rollback.message()),
+            },
+        });
+    }
+    let uuid = secs
+        .iter()
+        .find(|(k, _)| k == KEY_UUID)
+        .and_then(|(_, s)| s.ok().ok())
+        .map(str::trim)
+        .filter(|u| is_uuid(u))
+        .map(str::to_string);
+    let start_error = secs
+        .iter()
+        .find(|(k, _)| k == KEY_START)
+        .and_then(|(_, s)| s.ok().err())
+        .map(|e| e.message());
+    Ok(VirtCreated { uuid, start_error })
+}
+
+/// `undefine`, with the metadata a domain may hold (snapshots, a managed
+/// save) so they do not refuse it. `storage` are the disk targets whose
+/// volumes go with it (`vda`, `sdb`), NVRAM included; empty keeps every
+/// volume and the NVRAM file. A running domain is not stopped by this —
+/// `undefine` would leave it running, transient — so the caller stops it
+/// first. Parse with [`parse_action`].
+pub fn undefine_script(domain: &str, storage: &[String]) -> Result<String, VirtError> {
+    if storage
+        .iter()
+        .any(|t| t.is_empty() || !t.chars().all(|c| c.is_ascii_alphanumeric()))
+    {
+        return Err(VirtError::Malformed {
+            message: format!("invalid disk target in {storage:?}"),
+        });
+    }
+    let mut args = format!(
+        "undefine {} --managed-save --snapshots-metadata",
+        domain_arg(domain)
+    );
+    if storage.is_empty() {
+        args.push_str(" --keep-nvram");
+    } else {
+        args.push_str(&format!(" --nvram --storage {}", storage.join(",")));
+    }
+    let mut s = prelude();
+    s.push_str(&section(KEY_ACTION, &args));
+    Ok(s)
 }
 
 #[cfg(test)]

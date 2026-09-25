@@ -119,12 +119,12 @@ void main() {
       ),
       jsonDecode(_fixture('networks.expected.json')),
     );
-    // A refused snapshot is the host's words, typed.
+    // A refused snapshot is the host's words, typed: a name taken is `exists`.
     expect(
       () => parseVirtAction(raw: _fixture('script_snapshot_error_exists.txt')),
       throwsA(
         isA<VirtFfiError>()
-            .having((e) => e.kind, 'kind', VirtErrorKind.command)
+            .having((e) => e.kind, 'kind', VirtErrorKind.exists)
             .having((e) => e.message, 'message', contains('already exists')),
       ),
     );

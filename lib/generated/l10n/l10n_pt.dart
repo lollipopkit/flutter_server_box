@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -3671,4 +3670,142 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get virtNoAttachedGuests => 'Nenhum convidado nela';
+
+  @override
+  String get virtCreateVm => 'Nova máquina virtual';
+
+  @override
+  String get virtCreateLxc => 'Novo contêiner';
+
+  @override
+  String get virtCreateGuest => 'Nova máquina virtual ou contêiner';
+
+  @override
+  String get virtKindVm => 'Máquina virtual';
+
+  @override
+  String get virtKindLxc => 'Contêiner';
+
+  @override
+  String get virtHostname => 'Nome do host';
+
+  @override
+  String get virtInstallMedia => 'Mídia de instalação';
+
+  @override
+  String get virtNoIsos => 'Não há imagens ISO neste host';
+
+  @override
+  String get virtNoTemplates =>
+      'Não há modelos de contêiner neste host. Os modelos CT de um armazenamento no PVE permitem baixar um.';
+
+  @override
+  String get virtNoDiskStorage =>
+      'Nenhum armazenamento deste host aceita um disco novo';
+
+  @override
+  String get virtStartAfterCreate => 'Iniciar depois de criar';
+
+  @override
+  String get virtUnprivileged => 'Contêiner não privilegiado';
+
+  @override
+  String get virtUnprivilegedTip => 'O root dele é um usuário comum no host.';
+
+  @override
+  String get virtSshKeys => 'Chaves públicas SSH';
+
+  @override
+  String get virtCredentialsTip => 'Uma senha de root, chaves SSH ou ambas.';
+
+  @override
+  String virtCreated(String name) {
+    return '$name criado';
+  }
+
+  @override
+  String virtCreatedNotStarted(String name) {
+    return '$name foi criado mas não iniciou';
+  }
+
+  @override
+  String get virtErrExists => 'Já existe um convidado ou disco com este nome';
+
+  @override
+  String get virtCreateNameInvalidLibvirt =>
+      'Letras, dígitos, ., _ e -, começando com uma letra ou um dígito; até 63 caracteres.';
+
+  @override
+  String get virtCreateNameInvalidPve =>
+      'Letras, dígitos e -, em partes separadas por pontos; até 63 caracteres.';
+
+  @override
+  String get virtCreateNameTaken => 'Já existe um convidado com este nome.';
+
+  @override
+  String get virtCreateVmidInvalid => 'De 100 a 999999999.';
+
+  @override
+  String get virtCreateVmidTaken => 'Este VMID está em uso.';
+
+  @override
+  String get virtCreateCoresInvalid => 'Mais núcleos do que este host permite.';
+
+  @override
+  String get virtCreateMemoryInvalid => 'Memória insuficiente.';
+
+  @override
+  String get virtCreateStorageMissing => 'Escolha onde fica o disco.';
+
+  @override
+  String get virtCreateDiskInvalid => 'De 1 GiB a 64 TiB.';
+
+  @override
+  String get virtCreateTemplateMissing => 'Escolha um modelo.';
+
+  @override
+  String get virtCreateCredentialsMissing =>
+      'Defina uma senha de root ou uma chave SSH.';
+
+  @override
+  String virtCreatePasswordShort(int min) {
+    return 'Pelo menos $min caracteres.';
+  }
+
+  @override
+  String get virtCreateSshKeysInvalid => 'Uma chave pública OpenSSH por linha.';
+
+  @override
+  String virtDeleteAsk(String name) {
+    return 'Excluir $name? Não é possível desfazer.';
+  }
+
+  @override
+  String virtDeleteTypeName(String name) {
+    return 'Digite $name para confirmar';
+  }
+
+  @override
+  String get virtDeleteDisks => 'Excluir também os discos';
+
+  @override
+  String get virtDeleteDisksTip => 'A mídia de instalação conectada é mantida.';
+
+  @override
+  String get virtDeleteDisksPve =>
+      'Os discos são excluídos junto; a mídia de instalação é mantida.';
+
+  @override
+  String virtDeleteStopFirst(String name) {
+    return '$name está em execução. Precisa ser parado antes de ser excluído. Forçar o desligamento agora?';
+  }
+
+  @override
+  String virtDeleted(String name) {
+    return '$name excluído';
+  }
+
+  @override
+  String get pveTokenTipCreate =>
+      'Criar e excluir convidados também requer VM.Allocate, VM.Config.*, Datastore.AllocateSpace e SDN.Use.';
 }

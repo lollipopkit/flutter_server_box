@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -3672,4 +3671,146 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get virtNoAttachedGuests => 'Geen gasten erop';
+
+  @override
+  String get virtCreateVm => 'Nieuwe virtuele machine';
+
+  @override
+  String get virtCreateLxc => 'Nieuwe container';
+
+  @override
+  String get virtCreateGuest => 'Nieuwe virtuele machine of container';
+
+  @override
+  String get virtKindVm => 'Virtuele machine';
+
+  @override
+  String get virtKindLxc => 'Container';
+
+  @override
+  String get virtHostname => 'Hostnaam';
+
+  @override
+  String get virtInstallMedia => 'Installatiemedium';
+
+  @override
+  String get virtNoIsos => 'Geen ISO-images op deze host';
+
+  @override
+  String get virtNoTemplates =>
+      'Geen containersjablonen op deze host. Via CT-sjablonen van een opslag in PVE kun je er een downloaden.';
+
+  @override
+  String get virtNoDiskStorage =>
+      'Geen opslag op deze host neemt een nieuwe schijf aan';
+
+  @override
+  String get virtStartAfterCreate => 'Na aanmaken starten';
+
+  @override
+  String get virtUnprivileged => 'Niet-geprivilegieerde container';
+
+  @override
+  String get virtUnprivilegedTip =>
+      'Zijn root is een gewone gebruiker op de host.';
+
+  @override
+  String get virtSshKeys => 'Openbare SSH-sleutels';
+
+  @override
+  String get virtCredentialsTip =>
+      'Een root-wachtwoord, SSH-sleutels of beide.';
+
+  @override
+  String virtCreated(String name) {
+    return '$name aangemaakt';
+  }
+
+  @override
+  String virtCreatedNotStarted(String name) {
+    return '$name is aangemaakt maar niet gestart';
+  }
+
+  @override
+  String get virtErrExists => 'Er bestaat al een gast of schijf met deze naam';
+
+  @override
+  String get virtCreateNameInvalidLibvirt =>
+      'Letters, cijfers, ., _ en -, beginnend met een letter of cijfer; tot 63 tekens.';
+
+  @override
+  String get virtCreateNameInvalidPve =>
+      'Letters, cijfers en -, in delen gescheiden door punten; tot 63 tekens.';
+
+  @override
+  String get virtCreateNameTaken => 'Er bestaat al een gast met deze naam.';
+
+  @override
+  String get virtCreateVmidInvalid => 'Van 100 tot 999999999.';
+
+  @override
+  String get virtCreateVmidTaken => 'Deze VMID is bezet.';
+
+  @override
+  String get virtCreateCoresInvalid => 'Meer cores dan deze host toestaat.';
+
+  @override
+  String get virtCreateMemoryInvalid => 'Te weinig geheugen.';
+
+  @override
+  String get virtCreateStorageMissing => 'Kies waar de schijf komt.';
+
+  @override
+  String get virtCreateDiskInvalid => 'Van 1 GiB tot 64 TiB.';
+
+  @override
+  String get virtCreateTemplateMissing => 'Kies een sjabloon.';
+
+  @override
+  String get virtCreateCredentialsMissing =>
+      'Stel een root-wachtwoord of een SSH-sleutel in.';
+
+  @override
+  String virtCreatePasswordShort(int min) {
+    return 'Minstens $min tekens.';
+  }
+
+  @override
+  String get virtCreateSshKeysInvalid =>
+      'Eén openbare OpenSSH-sleutel per regel.';
+
+  @override
+  String virtDeleteAsk(String name) {
+    return '$name verwijderen? Dit kan niet ongedaan worden gemaakt.';
+  }
+
+  @override
+  String virtDeleteTypeName(String name) {
+    return 'Typ $name om te bevestigen';
+  }
+
+  @override
+  String get virtDeleteDisks => 'Ook de schijven verwijderen';
+
+  @override
+  String get virtDeleteDisksTip =>
+      'Gekoppeld installatiemedium blijft behouden.';
+
+  @override
+  String get virtDeleteDisksPve =>
+      'De schijven worden mee verwijderd; installatiemedium blijft behouden.';
+
+  @override
+  String virtDeleteStopFirst(String name) {
+    return '$name draait. Hij moet gestopt zijn voordat hij verwijderd kan worden. Nu geforceerd uitschakelen?';
+  }
+
+  @override
+  String virtDeleted(String name) {
+    return '$name verwijderd';
+  }
+
+  @override
+  String get pveTokenTipCreate =>
+      'Gasten aanmaken en verwijderen vraagt ook VM.Allocate, VM.Config.*, Datastore.AllocateSpace en SDN.Use.';
 }

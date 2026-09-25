@@ -15,6 +15,7 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/virt/pve_resources.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
+import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_rates.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
@@ -246,6 +247,7 @@ class PveBackend implements VirtBackend {
         vncConsole: true,
         termConsole: true,
         storedHistory: true,
+        create: true,
       ),
     );
   }
@@ -709,6 +711,156 @@ class PveBackend implements VirtBackend {
     if (upid is String && upid.startsWith('UPID:')) {
       await _waitTask(guest.node!, upid);
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Creating and deleting
+  // ---------------------------------------------------------------------------
+
+  @override
+  Future<int?> nextVmid() async {
+    final data = await _call((dio) => dio.get(_url('/cluster/nextid')));
+    return switch (data) {
+      final int id => id,
+      final String id => int.tryParse(id),
+      _ => null,
+    };
+  }
+
+  /// `POST /nodes/{node}/qemu` or `/lxc`, waited for; then `start` as a
+  /// request of its own rather than the create's `start=1`, so a guest that
+  /// was created and did not start is told apart from one that was not
+  /// created.
+  ///
+  /// A VM gets a serial port (`serial0: socket`), so its text console works
+  /// before it has a network, and the install media first in the boot order
+  /// after its disk. A container is unprivileged unless asked otherwise, with
+  /// DHCP on its NIC.
+  @override
+  Future<VirtCreated> create(VirtCreateSpec spec) async {
+    final node = spec.node;
+    final vmid = spec.vmid;
+    if (node == null || vmid == null) {
+      throw const VirtErr(
+        type: VirtErrType.unsupported,
+        message: 'A PVE guest needs a node and a VMID',
+      );
+    }
+    final lxc = spec.kind == VirtGuestKind.lxc;
+    final storage = spec.storage.name;
+    final bridge = spec.network?.name;
+    final Map<String, Object> body;
+    if (lxc) {
+      final template = spec.media;
+      if (template == null) {
+        throw const VirtErr(
+          type: VirtErrType.unsupported,
+          message: 'A container needs a template',
+        );
+      }
+      final password = spec.password ?? '';
+      final keys = (spec.sshKeys ?? '').trim();
+      body = {
+        'vmid': vmid,
+        'hostname': spec.name,
+        'ostemplate': template.id,
+        'cores': spec.cores,
+        'memory': spec.memoryMiB,
+        'rootfs': '$storage:${spec.diskGiB}',
+        'unprivileged': spec.unprivileged ? 1 : 0,
+        'net0': ?bridge == null ? null : 'name=eth0,bridge=$bridge,ip=dhcp',
+        'password': ?password.isEmpty ? null : password,
+        'ssh-public-keys': ?keys.isEmpty ? null : keys,
+      };
+    } else {
+      final iso = spec.media?.id;
+      body = {
+        'vmid': vmid,
+        'name': spec.name,
+        'cores': spec.cores,
+        'memory': spec.memoryMiB,
+        'ostype': 'l26',
+        'scsihw': 'virtio-scsi-single',
+        'scsi0': '$storage:${spec.diskGiB},iothread=1',
+        'ide2': ?iso == null ? null : '$iso,media=cdrom',
+        'net0': ?bridge == null ? null : 'virtio,bridge=$bridge',
+        'serial0': 'socket',
+        'boot': 'order=${['scsi0', if (iso != null) 'ide2'].join(';')}',
+      };
+    }
+    final kind = lxc ? 'lxc' : 'qemu';
+    try {
+      final upid = await _call(
+        (dio) => dio.post(
+          _url('/nodes/${_seg(node)}/$kind'),
+          data: body,
+          options: Options(contentType: Headers.formUrlEncodedContentType),
+        ),
+        action: true,
+      );
+      if (upid is String && upid.startsWith('UPID:')) {
+        await _waitTask(node, upid);
+      }
+    } on VirtErr catch (e) {
+      throw _createErr(e);
+    }
+    final id = '$kind/$vmid';
+    String? startError;
+    if (spec.start) {
+      try {
+        final upid = await _call(
+          (dio) => dio.post(_url('/nodes/${_seg(node)}/$kind/$vmid/status/start')),
+          action: true,
+        );
+        if (upid is String && upid.startsWith('UPID:')) {
+          await _waitTask(node, upid);
+        }
+      } on VirtErr catch (e) {
+        startError = e.message ?? e.type.name;
+      }
+    }
+    return VirtCreated(id: id, startError: startError);
+  }
+
+  /// A refused create, in the host's words: PVE answers a bad parameter with
+  /// 400 and a taken VMID with 500, before any task.
+  static VirtErr _createErr(VirtErr e) {
+    // `unable to create VM 105 - VM 105 already exists on node 'pve'`.
+    if (e.message?.contains('already exists') ?? false) {
+      return VirtErr(type: VirtErrType.exists, message: e.message, cause: e);
+    }
+    final cause = e.cause;
+    if (e.type == VirtErrType.invalidResponse &&
+        cause is DioException &&
+        cause.response != null) {
+      return VirtErr(
+        type: VirtErrType.actionFailed,
+        message: e.message,
+        cause: cause,
+      );
+    }
+    return e;
+  }
+
+  /// `DELETE` with `purge=1` (out of backup jobs, replication and HA) and
+  /// `destroy-unreferenced-disks=1` (volumes of its VMID no configuration
+  /// names). PVE deletes a guest's own disks whatever is asked:
+  /// [removeDisks] cannot keep them here.
+  @override
+  Future<void> delete(VirtGuest guest, {bool removeDisks = true}) async {
+    if (guest.state != VirtGuestState.stopped) {
+      throw VirtErr(
+        type: VirtErrType.unsupported,
+        message: '${guest.name} is not stopped',
+      );
+    }
+    await _task(
+      guest,
+      (dio) => dio.delete(
+        _url(_guestPath(guest)),
+        queryParameters: {'purge': 1, 'destroy-unreferenced-disks': 1},
+      ),
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -1429,13 +1581,15 @@ class PveBackend implements VirtBackend {
     final data = e.response?.data;
     if (data is Map) {
       final message = data['message'];
-      if (message is String && message.trim().isNotEmpty) {
-        return message.trim();
-      }
       final errors = data['errors'];
-      if (errors is Map && errors.isNotEmpty) {
-        return errors.entries.map((e) => '${e.key}: ${e.value}').join('\n');
-      }
+      // A 400 says "Parameter verification failed." and which parameter in
+      // `errors`: both, or the first says nothing.
+      final lines = [
+        if (message is String && message.trim().isNotEmpty) message.trim(),
+        if (errors is Map)
+          for (final e in errors.entries) '${e.key}: ${'${e.value}'.trim()}',
+      ];
+      if (lines.isNotEmpty) return lines.join('\n');
     }
     final reason = e.response?.statusMessage;
     return reason == null || reason.trim().isEmpty ? null : reason.trim();

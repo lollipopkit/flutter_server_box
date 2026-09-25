@@ -262,6 +262,63 @@ config below, so no store changes beyond the PVE columns.
   an attempt may run `virsh` through sudo or log in, and a failure is shown
   with its own retry.
 
+### Creating and deleting guests (phase 3)
+
+A new guest is a form in the detail pane (a page with one column), opened
+from the add button in the host's list bar, where `VirtCapabilities.create`
+(both backends): a VM, or on PVE a container too
+(`lib/view/page/virt/create.dart`). Everything offered comes from the host's
+own lists — `virtDiskStorages`, `virtMediaStorages` + `virtIsMedia`,
+`virtCreateNetworks` (`lib/data/model/virt/virt_create.dart`) — and
+`virtCreateIssue` refuses what the host would refuse before it is asked:
+
+- Names: libvirt `^[A-Za-z0-9][A-Za-z0-9._-]{0,62}$` — `virt-aa-helper`
+  refuses to start a domain with `"` in its name (`error_apparmor_start.txt`),
+  and `vol-create-as` builds its XML from the name unescaped, so `&` and `<`
+  come back as an XML error from the host (verified). PVE: a DNS name. A name
+  another guest has is refused on both (PVE would allow it).
+- VMID 100–999999999 and free (default `/cluster/nextid`); cores up to the
+  node's; memory ≥ 128 MiB (VM) / 64 MiB (container); disk 1 GiB–64 TiB.
+- A container needs a template and a root password (≥ 5, PVE's floor) or
+  OpenSSH public keys, one per line. Both go in the request body only.
+
+| | libvirt | PVE |
+| --- | --- | --- |
+| Create | 1. `create_host_script`: `domcapabilities` for KVM/q35, KVM, QEMU/q35, QEMU, the first the host accepts. 2. `create_volume_script`: stops if the name is defined, `vol-create-as` (qcow2, raw on LVM/ZFS/RBD pools), `vol-path`. 3. `define_script`: the XML (`domain_xml`, escaped) through a `mktemp` file, `define --file`, `domuuid`, `start`; a refused define deletes the volume again. | `POST /nodes/{node}/qemu` (`scsi0` on the storage, `ide2` the ISO, `net0` virtio on the bridge, `serial0: socket`, `ostype l26`) or `/lxc` (`ostemplate`, `rootfs`, `net0` DHCP, `unprivileged`), the task; then `status/start` as its own request |
+| Delete | `undefine --managed-save --snapshots-metadata`, with `--nvram --storage <targets>` of the writable disks (never a CD-ROM or a read-only disk), or `--keep-nvram` keeping them | `DELETE` with `purge=1&destroy-unreferenced-disks=1`, the task. Its own disks always go (`deleteKeepsDisks` false) |
+
+- Disks by path, not `type='volume'`: on the Debian/AppArmor libvirt host a
+  volume disk failed to start with "Permission denied" on its own image
+  (verified), which a file disk in the same pool does not.
+- A guest that was created and did not start is not a failure:
+  `VirtCreated.startError`, shown as a warning; the guest is opened either
+  way. A name, VMID or volume already there is `VirtErrType.exists`
+  (`VirtErrorKind::Exists` from virsh's "already exists"; PVE's `unable to
+  create VM 100 - VM 100 already exists on node 'pve'`); anything else PVE
+  refuses is `actionFailed` with its message and, for a 400, each parameter's
+  error.
+- Delete is in the guest's bar, where `create`: in red, the name typed back,
+  and on libvirt a "delete its disks too" box (ticked). A guest that is not
+  stopped is offered a forced stop first and asked again once off —
+  `delete` itself refuses one (`unsupported`), since `undefine` would leave a
+  running domain transient.
+- PVE privileges on top of the listing ones: `VM.Allocate`, `VM.Config.*`,
+  `Datastore.AllocateSpace`, `SDN.Use` (in the token help). A
+  privilege-separated token with exactly the documented set (a custom role on
+  `/`) created a VM with an ISO, a container from a template, and deleted
+  both with `purge` (PVE 9.2.2, verified).
+
+Verified 2026-09-25 by `test/e2e/virt_monitor_test.dart` ("create and
+delete" groups, which touch no existing guest): on libvirt 11.3 through the
+agent and sudo — a VM with ISO and NIC started on KVM/q35, its serial and VNC
+consoles in its detail, the same name refused as `exists`, delete refused
+while running, then deleted with its volume and the ISO kept; on PVE 9.2.2
+through the relay with the token above — a VM (serial port, CD-ROM) and an
+Alpine container, both started, the VMID reused refused as `exists`, both
+deleted with no volume of their VMID left. The Rust scripts also ran by hand
+there for the fixtures, including a hostile name (quotes, spaces, `$(id)`
+and backticks) through create, define and undefine.
+
 ## Verified against real hosts
 
 `test/e2e/virt_real_test.dart` (opt-in; its header lists the variables) and
@@ -462,7 +519,8 @@ page, so feature pages use the `featureIntroVer` counter.
   snapshot's configuration diff, PVE's per-storage snapshot support shown
   before trying.
 - Hardware editing (pending-change model: libvirt `define` vs PVE `pending`).
-- Create wizard (VM, and LXC on PVE), clone, migrate (PVE cluster).
+- Clone, migrate (PVE cluster); creating from a cloud image or with
+  cloud-init, UEFI/TPM and a choice of bus and NIC model in the create form.
 - Backups (PVE `vzdump` / backup storage).
 - Monitor agent: native virt endpoints and web panel parity, reusing
   `sbm_parser::virt`.

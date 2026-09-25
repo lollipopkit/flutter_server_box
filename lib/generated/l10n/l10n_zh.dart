@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -3396,6 +3395,139 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtNoAttachedGuests => '没有虚拟机连接到此网络';
+
+  @override
+  String get virtCreateVm => '新建虚拟机';
+
+  @override
+  String get virtCreateLxc => '新建容器';
+
+  @override
+  String get virtCreateGuest => '新建虚拟机或容器';
+
+  @override
+  String get virtKindVm => '虚拟机';
+
+  @override
+  String get virtKindLxc => '容器';
+
+  @override
+  String get virtHostname => '主机名';
+
+  @override
+  String get virtInstallMedia => '安装介质';
+
+  @override
+  String get virtNoIsos => '这台主机上没有 ISO 镜像';
+
+  @override
+  String get virtNoTemplates => '这台主机上没有容器模板。可以在 PVE 中存储的 CT 模板里下载。';
+
+  @override
+  String get virtNoDiskStorage => '这台主机上没有可以创建新磁盘的存储';
+
+  @override
+  String get virtStartAfterCreate => '创建后启动';
+
+  @override
+  String get virtUnprivileged => '非特权容器';
+
+  @override
+  String get virtUnprivilegedTip => '容器内的 root 对应宿主机上的普通用户。';
+
+  @override
+  String get virtSshKeys => 'SSH 公钥';
+
+  @override
+  String get virtCredentialsTip => 'root 密码、SSH 公钥，或两者都设置。';
+
+  @override
+  String virtCreated(String name) {
+    return '已创建 $name';
+  }
+
+  @override
+  String virtCreatedNotStarted(String name) {
+    return '已创建 $name，但未能启动';
+  }
+
+  @override
+  String get virtErrExists => '同名的客户机或磁盘已存在';
+
+  @override
+  String get virtCreateNameInvalidLibvirt =>
+      '字母、数字、.、_ 和 -，以字母或数字开头，最多 63 个字符。';
+
+  @override
+  String get virtCreateNameInvalidPve => '字母、数字和 -，各段之间用点分隔，最多 63 个字符。';
+
+  @override
+  String get virtCreateNameTaken => '已有同名客户机。';
+
+  @override
+  String get virtCreateVmidInvalid => '范围为 100 到 999999999。';
+
+  @override
+  String get virtCreateVmidTaken => '这个 VMID 已被占用。';
+
+  @override
+  String get virtCreateCoresInvalid => '超出了这台主机允许的核心数。';
+
+  @override
+  String get virtCreateMemoryInvalid => '内存不足。';
+
+  @override
+  String get virtCreateStorageMissing => '选择磁盘的存放位置。';
+
+  @override
+  String get virtCreateDiskInvalid => '范围为 1 GiB 到 64 TiB。';
+
+  @override
+  String get virtCreateTemplateMissing => '选择一个模板。';
+
+  @override
+  String get virtCreateCredentialsMissing => '设置 root 密码或 SSH 公钥。';
+
+  @override
+  String virtCreatePasswordShort(int min) {
+    return '至少 $min 个字符。';
+  }
+
+  @override
+  String get virtCreateSshKeysInvalid => '每行一个 OpenSSH 公钥。';
+
+  @override
+  String virtDeleteAsk(String name) {
+    return '删除 $name？此操作无法撤销。';
+  }
+
+  @override
+  String virtDeleteTypeName(String name) {
+    return '输入 $name 以确认';
+  }
+
+  @override
+  String get virtDeleteDisks => '同时删除它的磁盘';
+
+  @override
+  String get virtDeleteDisksTip => '挂载的安装介质会保留。';
+
+  @override
+  String get virtDeleteDisksPve => '磁盘会随它一起删除，安装介质会保留。';
+
+  @override
+  String virtDeleteStopFirst(String name) {
+    return '$name 正在运行，删除前必须先停止。现在强制关机吗？';
+  }
+
+  @override
+  String virtDeleted(String name) {
+    return '已删除 $name';
+  }
+
+  @override
+  String get pveTokenTipCreate =>
+      '创建和删除客户机还需要 VM.Allocate、VM.Config.*、Datastore.AllocateSpace 和 SDN.Use。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -6786,4 +6918,137 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtNoAttachedGuests => '沒有虛擬機連線到此網路';
+
+  @override
+  String get virtCreateVm => '新增虛擬機';
+
+  @override
+  String get virtCreateLxc => '新增容器';
+
+  @override
+  String get virtCreateGuest => '新增虛擬機或容器';
+
+  @override
+  String get virtKindVm => '虛擬機';
+
+  @override
+  String get virtKindLxc => '容器';
+
+  @override
+  String get virtHostname => '主機名稱';
+
+  @override
+  String get virtInstallMedia => '安裝媒體';
+
+  @override
+  String get virtNoIsos => '這台主機上沒有 ISO 映像';
+
+  @override
+  String get virtNoTemplates => '這台主機上沒有容器範本。可以在 PVE 中儲存的 CT 範本裡下載。';
+
+  @override
+  String get virtNoDiskStorage => '這台主機上沒有可以建立新磁碟的儲存';
+
+  @override
+  String get virtStartAfterCreate => '建立後啟動';
+
+  @override
+  String get virtUnprivileged => '非特權容器';
+
+  @override
+  String get virtUnprivilegedTip => '容器內的 root 對應主機上的一般使用者。';
+
+  @override
+  String get virtSshKeys => 'SSH 公鑰';
+
+  @override
+  String get virtCredentialsTip => 'root 密碼、SSH 公鑰，或兩者都設定。';
+
+  @override
+  String virtCreated(String name) {
+    return '已建立 $name';
+  }
+
+  @override
+  String virtCreatedNotStarted(String name) {
+    return '已建立 $name，但未能啟動';
+  }
+
+  @override
+  String get virtErrExists => '同名的客體或磁碟已存在';
+
+  @override
+  String get virtCreateNameInvalidLibvirt =>
+      '字母、數字、.、_ 和 -，以字母或數字開頭，最多 63 個字元。';
+
+  @override
+  String get virtCreateNameInvalidPve => '字母、數字和 -，各段之間以點分隔，最多 63 個字元。';
+
+  @override
+  String get virtCreateNameTaken => '已有同名客體。';
+
+  @override
+  String get virtCreateVmidInvalid => '範圍為 100 到 999999999。';
+
+  @override
+  String get virtCreateVmidTaken => '這個 VMID 已被使用。';
+
+  @override
+  String get virtCreateCoresInvalid => '超出了這台主機允許的核心數。';
+
+  @override
+  String get virtCreateMemoryInvalid => '記憶體不足。';
+
+  @override
+  String get virtCreateStorageMissing => '選擇磁碟的存放位置。';
+
+  @override
+  String get virtCreateDiskInvalid => '範圍為 1 GiB 到 64 TiB。';
+
+  @override
+  String get virtCreateTemplateMissing => '選擇一個範本。';
+
+  @override
+  String get virtCreateCredentialsMissing => '設定 root 密碼或 SSH 公鑰。';
+
+  @override
+  String virtCreatePasswordShort(int min) {
+    return '至少 $min 個字元。';
+  }
+
+  @override
+  String get virtCreateSshKeysInvalid => '每行一個 OpenSSH 公鑰。';
+
+  @override
+  String virtDeleteAsk(String name) {
+    return '刪除 $name？此操作無法復原。';
+  }
+
+  @override
+  String virtDeleteTypeName(String name) {
+    return '輸入 $name 以確認';
+  }
+
+  @override
+  String get virtDeleteDisks => '同時刪除它的磁碟';
+
+  @override
+  String get virtDeleteDisksTip => '掛載的安裝媒體會保留。';
+
+  @override
+  String get virtDeleteDisksPve => '磁碟會隨它一起刪除，安裝媒體會保留。';
+
+  @override
+  String virtDeleteStopFirst(String name) {
+    return '$name 正在執行，刪除前必須先停止。現在強制關機嗎？';
+  }
+
+  @override
+  String virtDeleted(String name) {
+    return '已刪除 $name';
+  }
+
+  @override
+  String get pveTokenTipCreate =>
+      '建立和刪除客體還需要 VM.Allocate、VM.Config.*、Datastore.AllocateSpace 和 SDN.Use。';
 }

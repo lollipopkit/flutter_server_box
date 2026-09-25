@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -3631,4 +3630,144 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get virtNoAttachedGuests => 'Tidak ada guest di dalamnya';
+
+  @override
+  String get virtCreateVm => 'Mesin virtual baru';
+
+  @override
+  String get virtCreateLxc => 'Kontainer baru';
+
+  @override
+  String get virtCreateGuest => 'Mesin virtual atau kontainer baru';
+
+  @override
+  String get virtKindVm => 'Mesin virtual';
+
+  @override
+  String get virtKindLxc => 'Kontainer';
+
+  @override
+  String get virtHostname => 'Nama host';
+
+  @override
+  String get virtInstallMedia => 'Media instalasi';
+
+  @override
+  String get virtNoIsos => 'Tidak ada image ISO di host ini';
+
+  @override
+  String get virtNoTemplates =>
+      'Tidak ada templat kontainer di host ini. CT Templates pada sebuah penyimpanan di PVE dapat mengunduhnya.';
+
+  @override
+  String get virtNoDiskStorage =>
+      'Tidak ada penyimpanan di host ini yang menerima disk baru';
+
+  @override
+  String get virtStartAfterCreate => 'Jalankan setelah dibuat';
+
+  @override
+  String get virtUnprivileged => 'Kontainer tanpa hak istimewa';
+
+  @override
+  String get virtUnprivilegedTip => 'root-nya adalah pengguna biasa di host.';
+
+  @override
+  String get virtSshKeys => 'Kunci publik SSH';
+
+  @override
+  String get virtCredentialsTip => 'Kata sandi root, kunci SSH, atau keduanya.';
+
+  @override
+  String virtCreated(String name) {
+    return '$name dibuat';
+  }
+
+  @override
+  String virtCreatedNotStarted(String name) {
+    return '$name dibuat tetapi tidak berjalan';
+  }
+
+  @override
+  String get virtErrExists => 'Tamu atau disk dengan nama ini sudah ada';
+
+  @override
+  String get virtCreateNameInvalidLibvirt =>
+      'Huruf, angka, ., _ dan -, diawali huruf atau angka; hingga 63 karakter.';
+
+  @override
+  String get virtCreateNameInvalidPve =>
+      'Huruf, angka dan -, dalam bagian yang dipisahkan titik; hingga 63 karakter.';
+
+  @override
+  String get virtCreateNameTaken => 'Sudah ada tamu dengan nama ini.';
+
+  @override
+  String get virtCreateVmidInvalid => 'Dari 100 sampai 999999999.';
+
+  @override
+  String get virtCreateVmidTaken => 'VMID ini sudah dipakai.';
+
+  @override
+  String get virtCreateCoresInvalid =>
+      'Lebih banyak core daripada yang diizinkan host ini.';
+
+  @override
+  String get virtCreateMemoryInvalid => 'Memori tidak cukup.';
+
+  @override
+  String get virtCreateStorageMissing => 'Pilih tempat disknya.';
+
+  @override
+  String get virtCreateDiskInvalid => 'Dari 1 GiB sampai 64 TiB.';
+
+  @override
+  String get virtCreateTemplateMissing => 'Pilih templat.';
+
+  @override
+  String get virtCreateCredentialsMissing =>
+      'Atur kata sandi root atau kunci SSH.';
+
+  @override
+  String virtCreatePasswordShort(int min) {
+    return 'Minimal $min karakter.';
+  }
+
+  @override
+  String get virtCreateSshKeysInvalid => 'Satu kunci publik OpenSSH per baris.';
+
+  @override
+  String virtDeleteAsk(String name) {
+    return 'Hapus $name? Ini tidak dapat dibatalkan.';
+  }
+
+  @override
+  String virtDeleteTypeName(String name) {
+    return 'Ketik $name untuk mengonfirmasi';
+  }
+
+  @override
+  String get virtDeleteDisks => 'Hapus juga disknya';
+
+  @override
+  String get virtDeleteDisksTip =>
+      'Media instalasi yang terpasang tetap disimpan.';
+
+  @override
+  String get virtDeleteDisksPve =>
+      'Disknya ikut dihapus; media instalasi tetap disimpan.';
+
+  @override
+  String virtDeleteStopFirst(String name) {
+    return '$name sedang berjalan. Harus dihentikan sebelum dihapus. Matikan paksa sekarang?';
+  }
+
+  @override
+  String virtDeleted(String name) {
+    return '$name dihapus';
+  }
+
+  @override
+  String get pveTokenTipCreate =>
+      'Membuat dan menghapus tamu juga memerlukan VM.Allocate, VM.Config.*, Datastore.AllocateSpace dan SDN.Use.';
 }

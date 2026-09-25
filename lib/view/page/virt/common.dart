@@ -121,6 +121,7 @@ extension VirtErrUi on VirtErr {
     VirtErrType.invalidResponse => l10n.virtErrInvalidResponse,
     VirtErrType.actionFailed => l10n.virtErrActionFailed,
     VirtErrType.unsupported => libL10n.unsupported,
+    VirtErrType.exists => l10n.virtErrExists,
     VirtErrType.unknown => libL10n.error,
   };
 
@@ -133,6 +134,7 @@ extension VirtErrUi on VirtErr {
       VirtErrType.permissionDenied ||
       VirtErrType.invalidResponse ||
       VirtErrType.actionFailed ||
+      VirtErrType.exists ||
       VirtErrType.unknown => message,
       VirtErrType.notConfigured => l10n.virtErrNotConfiguredTip,
       _ => null,

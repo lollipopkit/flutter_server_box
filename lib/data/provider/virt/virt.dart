@@ -14,6 +14,7 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/virt/libvirt.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
+import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/server/all.dart';
@@ -359,6 +360,9 @@ abstract class VirtHostState with _$VirtHostState {
     /// either map takes no other action until it is out.
     @Default(<String, VirtSnapshotOp>{}) Map<String, VirtSnapshotOp> snapshotOps,
 
+    /// Guests being deleted.
+    @Default(<String>{}) Set<String> deleting,
+
     /// This session's readings per guest, oldest first, capped at
     /// [VirtHostNotifier.sampleLimit] — the chart for a host without
     /// `storedHistory`, and the live tail for one with it.
@@ -382,10 +386,12 @@ abstract class VirtHostState with _$VirtHostState {
       ? const {}
       : guest.actions;
 
-  /// A power action or a snapshot operation of this app's is in flight on
-  /// the guest [id].
+  /// A power action, a snapshot operation or a delete of this app's is in
+  /// flight on the guest [id].
   bool isBusy(String id) =>
-      busy.containsKey(id) || snapshotOps.containsKey(id);
+      busy.containsKey(id) ||
+      snapshotOps.containsKey(id) ||
+      deleting.contains(id);
 }
 
 /// A snapshot operation in flight.
@@ -662,6 +668,38 @@ class VirtHostNotifier extends _$VirtHostNotifier {
     }
   }
 
+  /// See [VirtBackend.nextVmid].
+  Future<int?> nextVmid() => _backend.nextVmid();
+
+  /// Creates [spec] and loads the host again, so the new guest is in
+  /// [VirtHostState.data] when this returns. Throws [VirtErr].
+  Future<VirtCreated> create(VirtCreateSpec spec) async {
+    final created = await _backend.create(spec);
+    if (ref.mounted) await refresh();
+    return created;
+  }
+
+  /// Deletes the stopped guest [guestId], then refreshes. One operation per
+  /// guest, as [power]. Throws [VirtErr].
+  Future<void> delete(String guestId, {bool removeDisks = true}) async {
+    final guest = _guest(guestId);
+    if (state.isBusy(guestId)) {
+      throw VirtErr(
+        type: VirtErrType.unsupported,
+        message: '${guest.name} is busy',
+      );
+    }
+    state = state.copyWith(deleting: {...state.deleting, guestId});
+    try {
+      await _backend.delete(guest, removeDisks: removeDisks);
+    } finally {
+      if (ref.mounted) {
+        state = state.copyWith(deleting: {...state.deleting}..remove(guestId));
+        await refresh();
+      }
+    }
+  }
+
   Future<List<VirtStoragePool>> storagePools() => _backend.storagePools();
 
   Future<List<VirtVolume>> volumes(VirtStoragePool pool) =>
@@ -752,6 +790,16 @@ final class _MissingBackend implements VirtBackend {
 
   @override
   Future<VirtGuestDetail> detail(VirtGuest guest) async => _fail();
+
+  @override
+  Future<int?> nextVmid() async => _fail();
+
+  @override
+  Future<VirtCreated> create(VirtCreateSpec spec) async => _fail();
+
+  @override
+  Future<void> delete(VirtGuest guest, {bool removeDisks = true}) async =>
+      _fail();
 
   @override
   Future<VirtConsole> console(VirtGuest guest, VirtConsoleKind kind) async =>

@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -3458,4 +3457,137 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get virtNoAttachedGuests => '接続中のゲストはありません';
+
+  @override
+  String get virtCreateVm => '新しい仮想マシン';
+
+  @override
+  String get virtCreateLxc => '新しいコンテナ';
+
+  @override
+  String get virtCreateGuest => '新しい仮想マシンまたはコンテナ';
+
+  @override
+  String get virtKindVm => '仮想マシン';
+
+  @override
+  String get virtKindLxc => 'コンテナ';
+
+  @override
+  String get virtHostname => 'ホスト名';
+
+  @override
+  String get virtInstallMedia => 'インストールメディア';
+
+  @override
+  String get virtNoIsos => 'このホストに ISO イメージがありません';
+
+  @override
+  String get virtNoTemplates =>
+      'このホストにコンテナテンプレートがありません。PVE のストレージの CT テンプレートからダウンロードできます。';
+
+  @override
+  String get virtNoDiskStorage => 'このホストに新しいディスクを作れるストレージがありません';
+
+  @override
+  String get virtStartAfterCreate => '作成後に起動';
+
+  @override
+  String get virtUnprivileged => '非特権コンテナ';
+
+  @override
+  String get virtUnprivilegedTip => 'コンテナ内の root はホスト上の一般ユーザーになります。';
+
+  @override
+  String get virtSshKeys => 'SSH 公開鍵';
+
+  @override
+  String get virtCredentialsTip => 'root パスワード、SSH 鍵、またはその両方。';
+
+  @override
+  String virtCreated(String name) {
+    return '$name を作成しました';
+  }
+
+  @override
+  String virtCreatedNotStarted(String name) {
+    return '$name を作成しましたが、起動しませんでした';
+  }
+
+  @override
+  String get virtErrExists => '同じ名前のゲストまたはディスクが既にあります';
+
+  @override
+  String get virtCreateNameInvalidLibvirt => '英数字、.、_、- で、先頭は英数字。63 文字まで。';
+
+  @override
+  String get virtCreateNameInvalidPve => '英数字と - で、ドットで区切った部分から成る名前。63 文字まで。';
+
+  @override
+  String get virtCreateNameTaken => '同じ名前のゲストがあります。';
+
+  @override
+  String get virtCreateVmidInvalid => '100 から 999999999 まで。';
+
+  @override
+  String get virtCreateVmidTaken => 'この VMID は使用中です。';
+
+  @override
+  String get virtCreateCoresInvalid => 'このホストで使えるコア数を超えています。';
+
+  @override
+  String get virtCreateMemoryInvalid => 'メモリが足りません。';
+
+  @override
+  String get virtCreateStorageMissing => 'ディスクの置き場所を選んでください。';
+
+  @override
+  String get virtCreateDiskInvalid => '1 GiB から 64 TiB まで。';
+
+  @override
+  String get virtCreateTemplateMissing => 'テンプレートを選んでください。';
+
+  @override
+  String get virtCreateCredentialsMissing => 'root パスワードか SSH 鍵を設定してください。';
+
+  @override
+  String virtCreatePasswordShort(int min) {
+    return '$min 文字以上。';
+  }
+
+  @override
+  String get virtCreateSshKeysInvalid => '1 行に OpenSSH 公開鍵を 1 つ。';
+
+  @override
+  String virtDeleteAsk(String name) {
+    return '$name を削除しますか？元に戻せません。';
+  }
+
+  @override
+  String virtDeleteTypeName(String name) {
+    return '確認のため $name と入力';
+  }
+
+  @override
+  String get virtDeleteDisks => 'ディスクも削除する';
+
+  @override
+  String get virtDeleteDisksTip => '接続しているインストールメディアは残ります。';
+
+  @override
+  String get virtDeleteDisksPve => 'ディスクは一緒に削除されます。インストールメディアは残ります。';
+
+  @override
+  String virtDeleteStopFirst(String name) {
+    return '$name は実行中です。削除する前に停止する必要があります。今すぐ強制停止しますか？';
+  }
+
+  @override
+  String virtDeleted(String name) {
+    return '$name を削除しました';
+  }
+
+  @override
+  String get pveTokenTipCreate =>
+      'ゲストの作成と削除には VM.Allocate、VM.Config.*、Datastore.AllocateSpace、SDN.Use も必要です。';
 }

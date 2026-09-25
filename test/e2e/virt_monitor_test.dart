@@ -37,6 +37,12 @@
 ///   (default: the libvirt one) — an agent with `full_access` **off**: the
 ///   typed refusals for commands and for the relay.
 ///
+/// The "create and delete" groups make guests named `sbme2e-*` and delete
+/// them again, disks included: a VM on libvirt (in the first pool that takes
+/// a disk, with an ISO found in any pool as its CD-ROM), and on PVE a VM (an
+/// ISO from a storage holding them, if there is one) and a container (from
+/// the first template there is). They touch no other guest.
+///
 /// Every agent is expected to serve TLS with a certificate this device does
 /// not trust (`[server.tls]` with a self-signed pair), so the credential sets
 /// `ignoreCert`. Plain HTTP would need both opt-ins (`allowInsecure` here,
@@ -65,7 +71,9 @@ import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/model/virt/virt.dart';
+import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
+import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/virt/libvirt_backend.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
@@ -113,6 +121,10 @@ Future<void> main() async {
     await tempDir.delete(recursive: true);
   });
 
+  // Before the groups that change the existing guests, and standing alone:
+  // `--plain-name 'create and delete'` runs only these.
+  if (libvirt != null) _libvirtCreate(libvirt);
+  if (pve != null) _pveCreate(pve);
   if (libvirt != null) {
     _libvirt(libvirt);
   } else {
@@ -445,6 +457,355 @@ void _libvirt(_Agent agent) {
       expect(again.stateReason, 'user');
     });
   });
+}
+
+// -----------------------------------------------------------------------------
+// Creating and deleting
+// -----------------------------------------------------------------------------
+
+/// A name for a new guest no earlier run left behind.
+String _e2eName(String kind) =>
+    'sbme2e-$kind-${DateTime.now().millisecondsSinceEpoch % 100000}';
+
+void _libvirtCreate(_Agent agent) {
+  final sudoPassword = e2eEnv('SBM_E2E_MONITOR_SUDO_PASSWORD');
+
+  group('create and delete: libvirt over the monitor agent', () {
+    late _World w;
+    final name = _e2eName('vm');
+
+    setUpAll(() async {
+      w = _World(agent.spi('e2e-monitor-libvirt-create'));
+      await w.host.firstLoad;
+      if (w.state.error?.type == VirtErrType.sudoPasswordRequired &&
+          sudoPassword != null) {
+        await w.host.provideSudoPassword(sudoPassword);
+      }
+      expect(w.state.error, isNull, reason: '${w.state.error}');
+    });
+    tearDownAll(() async {
+      // Whatever a failed test left.
+      final left = w.state.data?.guests.where((g) => g.name == name);
+      for (final g in left ?? const <VirtGuest>[]) {
+        try {
+          if (g.state != VirtGuestState.stopped) {
+            await w.host.power(g.id, VirtPowerAction.forceStop);
+            await w.host.refresh();
+          }
+          await w.host.delete(g.id);
+        } catch (_) {}
+      }
+      await w.dispose();
+    });
+
+    test('a VM: disk in a pool, ISO, NIC, started; then deleted with it',
+        () async {
+      final snap = w.state.data!;
+      expect(snap.capabilities.create, isTrue);
+      expect(snap.capabilities.deleteKeepsDisks, isTrue);
+      final pools = await w.host.storagePools();
+      final pool = virtDiskStorages(
+        pools,
+        host: VirtHostKind.libvirt,
+        kind: VirtGuestKind.qemu,
+      ).first;
+      final media = <VirtVolume>[];
+      VirtStoragePool? mediaPool;
+      for (final p in virtMediaStorages(
+        pools,
+        host: VirtHostKind.libvirt,
+        kind: VirtGuestKind.qemu,
+      )) {
+        final isos = (await w.host.volumes(p)).where(
+          (v) => virtIsMedia(v, VirtGuestKind.qemu),
+        );
+        if (isos.isNotEmpty) mediaPool ??= p;
+        media.addAll(isos);
+      }
+      final nets = virtCreateNetworks(
+        await w.host.networks(),
+        host: VirtHostKind.libvirt,
+      );
+      final spec = VirtCreateSpec(
+        kind: VirtGuestKind.qemu,
+        name: name,
+        cores: 1,
+        memoryMiB: 256,
+        storage: pool,
+        diskGiB: 1,
+        media: media.firstOrNull,
+        network: nets.firstWhereOrNull((n) => n.name == 'default'),
+        start: true,
+      );
+      expect(
+        virtCreateIssue(spec, host: VirtHostKind.libvirt, guests: snap.guests),
+        isNull,
+      );
+
+      final created = await w.host.create(spec);
+      expect(created.startError, isNull);
+      final g = await w.settle(
+        (g) => g.id == created.id,
+        name,
+        (g) => g.state == VirtGuestState.running,
+      );
+      expect(g.name, name);
+      final detail = await w.host.detail(g.id);
+      final disk = detail.disks.firstWhere((d) => d.device == 'disk');
+      expect(disk.source, endsWith('/$name.qcow2'));
+      expect(disk.format, 'qcow2');
+      if (media.isNotEmpty) {
+        final cd = detail.disks.firstWhere((d) => d.device == 'cdrom');
+        expect(cd.source, media.first.path);
+      }
+      expect(detail.consoles, containsAll(VirtConsoleKind.values));
+
+      // The same name again: taken, and nothing new on the host.
+      final taken = await _virtErr(w.host.create(spec));
+      expect(taken.type, VirtErrType.exists);
+
+      // Running: refused, not stopped behind the user's back.
+      final running = await _virtErr(w.host.delete(g.id));
+      expect(running.type, VirtErrType.unsupported);
+      await w.host.power(g.id, VirtPowerAction.forceStop);
+      await w.settle(
+        (x) => x.id == g.id,
+        name,
+        (x) => x.state == VirtGuestState.stopped,
+      );
+      await w.host.delete(g.id);
+      expect(w.state.guest(g.id), isNull);
+      final vols = await w.host.volumes(pool);
+      expect(vols.where((v) => v.name == '$name.qcow2'), isEmpty);
+      // The ISO stays.
+      if (mediaPool != null) {
+        final still = await w.host.volumes(mediaPool);
+        expect(still.map((v) => v.name), contains(media.first.name));
+      }
+    });
+  });
+}
+
+void _pveCreate(_Agent agent) {
+  final tokenId = e2eEnv('SBM_E2E_PVE_TOKEN_ID');
+  final tokenSecret = e2eEnv('SBM_E2E_PVE_TOKEN_SECRET');
+  if (tokenId == null || tokenSecret == null) return;
+
+  group('create and delete: PVE over the monitor agent relay', () {
+    late _World w;
+    final created = <String>[];
+
+    setUpAll(() async {
+      w = _World(agent.spi('e2e-monitor-pve-create'));
+      Stores.pve.put(
+        w.id,
+        PveConfig(
+          addr: 'https://localhost:8006',
+          auth: PveAuth.token,
+          tokenId: tokenId,
+          tokenSecret: tokenSecret,
+        ),
+      );
+      await w.host.firstLoad;
+      final cert = w.state.error?.cert;
+      if (cert != null) await w.host.confirmCert(cert.fingerprint);
+      expect(w.state.error, isNull, reason: '${w.state.error}');
+    });
+    tearDownAll(() async {
+      for (final id in created) {
+        final g = w.state.guest(id);
+        if (g == null) continue;
+        try {
+          if (g.state != VirtGuestState.stopped) {
+            await w.host.power(id, VirtPowerAction.forceStop);
+            await w.host.refresh();
+          }
+          await w.host.delete(id);
+        } catch (_) {}
+      }
+      await w.dispose();
+    });
+
+    /// Stopped by force, then deleted: gone from the list, and no volume of
+    /// its VMID left on [storage].
+    Future<void> stopAndDelete(VirtGuest g, VirtStoragePool storage) async {
+      final running = await _virtErr(w.host.delete(g.id));
+      expect(running.type, VirtErrType.unsupported);
+      await w.host.power(g.id, VirtPowerAction.forceStop);
+      await w.settle(
+        (x) => x.id == g.id,
+        g.name,
+        (x) => x.state == VirtGuestState.stopped,
+      );
+      await w.host.delete(g.id);
+      expect(w.state.guest(g.id), isNull);
+      final vols = await w.host.volumes(storage);
+      expect(vols.where((v) => v.id.contains('-${g.vmid}-')), isEmpty);
+    }
+
+    test('a VM with a serial port and a CD-ROM, started, then deleted',
+        () async {
+      final snap = w.state.data!;
+      expect(snap.capabilities.create, isTrue);
+      expect(snap.capabilities.deleteKeepsDisks, isFalse);
+      final node = snap.host.nodes.firstWhere((n) => n.online).name;
+      final pools = await w.host.storagePools();
+      final storage = virtDiskStorages(
+        pools,
+        host: VirtHostKind.pve,
+        kind: VirtGuestKind.qemu,
+        node: node,
+      ).first;
+      final isos = <VirtVolume>[];
+      for (final p in virtMediaStorages(
+        pools,
+        host: VirtHostKind.pve,
+        kind: VirtGuestKind.qemu,
+        node: node,
+      )) {
+        isos.addAll(
+          (await w.host.volumes(p)).where(
+            (v) => virtIsMedia(v, VirtGuestKind.qemu),
+          ),
+        );
+      }
+      final bridge = virtCreateNetworks(
+        await w.host.networks(),
+        host: VirtHostKind.pve,
+        node: node,
+      ).first;
+      final vmid = (await w.host.nextVmid())!;
+      final spec = VirtCreateSpec(
+        kind: VirtGuestKind.qemu,
+        name: _e2eName('vm'),
+        node: node,
+        vmid: vmid,
+        cores: 1,
+        memoryMiB: 512,
+        storage: storage,
+        diskGiB: 1,
+        media: isos.firstOrNull,
+        network: bridge,
+        start: true,
+      );
+      expect(
+        virtCreateIssue(spec, host: VirtHostKind.pve, guests: snap.guests),
+        isNull,
+      );
+      final result = await w.host.create(spec);
+      created.add(result.id);
+      expect(result.id, 'qemu/$vmid');
+      expect(result.startError, isNull);
+      final g = await w.settle(
+        (g) => g.id == result.id,
+        spec.name,
+        (g) => g.state == VirtGuestState.running,
+      );
+      final detail = await w.host.detail(g.id);
+      expect(detail.consoles, containsAll(VirtConsoleKind.values));
+      expect(
+        detail.disks.where((d) => d.target == 'scsi0').single.source,
+        startsWith('${storage.name}:'),
+      );
+      if (isos.isNotEmpty) {
+        expect(
+          detail.disks.where((d) => d.target == 'ide2').single.source,
+          isos.first.id,
+        );
+      }
+
+      // Its VMID again: taken, in PVE's words.
+      final taken = await _virtErr(w.host.create(spec));
+      expect(taken.type, VirtErrType.exists, reason: '${taken.message}');
+
+      await stopAndDelete(g, storage);
+      created.remove(result.id);
+    });
+
+    test('a container from a template, with a password, then deleted',
+        () async {
+      final snap = w.state.data!;
+      final node = snap.host.nodes.firstWhere((n) => n.online).name;
+      final pools = await w.host.storagePools();
+      final storage = virtDiskStorages(
+        pools,
+        host: VirtHostKind.pve,
+        kind: VirtGuestKind.lxc,
+        node: node,
+      ).first;
+      final templates = <VirtVolume>[];
+      for (final p in virtMediaStorages(
+        pools,
+        host: VirtHostKind.pve,
+        kind: VirtGuestKind.lxc,
+        node: node,
+      )) {
+        templates.addAll(
+          (await w.host.volumes(p)).where(
+            (v) => virtIsMedia(v, VirtGuestKind.lxc),
+          ),
+        );
+      }
+      if (templates.isEmpty) {
+        markTestSkipped('no container template on $node');
+        return;
+      }
+      final bridge = virtCreateNetworks(
+        await w.host.networks(),
+        host: VirtHostKind.pve,
+        node: node,
+      ).first;
+      final vmid = (await w.host.nextVmid())!;
+      final password = List.generate(
+        16,
+        (_) => 'abcdefghjkmnpqrstuvwxyz23456789'[Random.secure().nextInt(31)],
+      ).join();
+      final spec = VirtCreateSpec(
+        kind: VirtGuestKind.lxc,
+        name: _e2eName('ct'),
+        node: node,
+        vmid: vmid,
+        cores: 1,
+        memoryMiB: 256,
+        storage: storage,
+        diskGiB: 1,
+        media: templates.first,
+        network: bridge,
+        password: password,
+        start: true,
+      );
+      expect(
+        virtCreateIssue(spec, host: VirtHostKind.pve, guests: snap.guests),
+        isNull,
+      );
+      final result = await w.host.create(spec);
+      created.add(result.id);
+      expect(result.id, 'lxc/$vmid');
+      expect(result.startError, isNull);
+      final g = await w.settle(
+        (g) => g.id == result.id,
+        spec.name,
+        (g) => g.state == VirtGuestState.running,
+      );
+      expect(g.kind, VirtGuestKind.lxc);
+      final detail = await w.host.detail(g.id);
+      expect(
+        detail.disks.where((d) => d.target == 'rootfs').single.source,
+        startsWith('${storage.name}:'),
+      );
+      await stopAndDelete(g, storage);
+      created.remove(result.id);
+    });
+  });
+}
+
+Future<VirtErr> _virtErr(Future<Object?> future) async {
+  try {
+    await future;
+  } on VirtErr catch (e) {
+    return e;
+  }
+  fail('expected a VirtErr');
 }
 
 // -----------------------------------------------------------------------------

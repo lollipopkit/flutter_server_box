@@ -870,7 +870,9 @@ extension _Widgets on _ServerEditPageState {
         leading: const Icon(MingCute.key_2_line),
         title: TipText(
           libL10n.login,
-          useToken ? l10n.pveTokenTip : l10n.pvePasswordAuthTip,
+          useToken
+              ? '${l10n.pveTokenTip}\n${l10n.pveTokenTipCreate}'
+              : l10n.pvePasswordAuthTip,
         ),
         trailing: PopupMenu<bool>(
           initialValue: useToken,

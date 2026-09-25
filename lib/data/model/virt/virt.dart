@@ -278,6 +278,13 @@ abstract class VirtCapabilities with _$VirtCapabilities {
     /// once (PVE `rrddata`). Without it the chart fills from this session's
     /// samples.
     @Default(false) bool storedHistory,
+
+    /// Guests can be created (VMs; containers too where [lxc]) and deleted.
+    @Default(false) bool create,
+
+    /// Deleting a guest can keep its disks. PVE's cannot: a guest's own
+    /// volumes go with it.
+    @Default(false) bool deleteKeepsDisks,
   }) = _VirtCapabilities;
 
   factory VirtCapabilities.fromJson(Map<String, dynamic> json) =>

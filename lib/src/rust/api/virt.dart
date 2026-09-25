@@ -6,7 +6,7 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `json_err`
+// These functions are ignored because they are not marked as `pub`: `json_err`, `spec_of`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `clone`, `eq`, `fmt`, `fmt`, `from`, `from`
 
 /// Host probe: Proxmox VE, a container, or `virsh` answering this user
@@ -117,6 +117,40 @@ String virtNetworksScript() =>
 Future<String> parseVirtNetworksJson({required String raw}) =>
     RustLib.instance.api.crateApiVirtParseVirtNetworksJson(raw: raw);
 
+/// What the host can run a new domain as (`domcapabilities`)
+String virtCreateHostScript() =>
+    RustLib.instance.api.crateApiVirtVirtCreateHostScript();
+
+/// [`virt_create_host_script`]'s output → `VirtCreateHost` JSON
+Future<String> parseVirtCreateHostJson({required String raw}) =>
+    RustLib.instance.api.crateApiVirtParseVirtCreateHostJson(raw: raw);
+
+/// A new domain's disk and its path; `spec_json` is a `VirtCreateSpec`
+String virtCreateVolumeScript({required String specJson}) =>
+    RustLib.instance.api.crateApiVirtVirtCreateVolumeScript(specJson: specJson);
+
+/// [`virt_create_volume_script`]'s output: the new volume's path
+Future<String> parseVirtCreateVolume({required String raw}) =>
+    RustLib.instance.api.crateApiVirtParseVirtCreateVolume(raw: raw);
+
+/// Defines (and optionally starts) the domain on that disk
+String virtDefineScript({required String specJson}) =>
+    RustLib.instance.api.crateApiVirtVirtDefineScript(specJson: specJson);
+
+/// [`virt_define_script`]'s output → `VirtCreated` JSON
+Future<String> parseVirtCreateJson({required String raw}) =>
+    RustLib.instance.api.crateApiVirtParseVirtCreateJson(raw: raw);
+
+/// `undefine`, with the volumes of the disk targets in `storage` (none keeps
+/// them all). Parse with [`parse_virt_action`].
+String virtUndefineScript({
+  required String domain,
+  required List<String> storage,
+}) => RustLib.instance.api.crateApiVirtVirtUndefineScript(
+  domain: domain,
+  storage: storage,
+);
+
 /// Power actions (mirrors sbm_parser::virt::VirtAction)
 enum VirtActionKind {
   start,
@@ -149,6 +183,9 @@ enum VirtErrorKind {
 
   /// The domain's state does not allow the operation
   invalidState,
+
+  /// A domain or volume of that name is there already
+  exists,
 
   /// Any other virsh failure
   command,

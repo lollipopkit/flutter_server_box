@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -3680,4 +3679,147 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get virtNoAttachedGuests => 'Nessun guest collegato';
+
+  @override
+  String get virtCreateVm => 'Nuova macchina virtuale';
+
+  @override
+  String get virtCreateLxc => 'Nuovo container';
+
+  @override
+  String get virtCreateGuest => 'Nuova macchina virtuale o nuovo container';
+
+  @override
+  String get virtKindVm => 'Macchina virtuale';
+
+  @override
+  String get virtKindLxc => 'Container';
+
+  @override
+  String get virtHostname => 'Nome host';
+
+  @override
+  String get virtInstallMedia => 'Supporto di installazione';
+
+  @override
+  String get virtNoIsos => 'Nessuna immagine ISO su questo host';
+
+  @override
+  String get virtNoTemplates =>
+      'Nessun modello di container su questo host. I modelli CT di uno storage in PVE permettono di scaricarne uno.';
+
+  @override
+  String get virtNoDiskStorage =>
+      'Nessuno storage di questo host accetta un nuovo disco';
+
+  @override
+  String get virtStartAfterCreate => 'Avviala dopo la creazione';
+
+  @override
+  String get virtUnprivileged => 'Container non privilegiato';
+
+  @override
+  String get virtUnprivilegedTip =>
+      'Il suo root è un utente normale sull\'host.';
+
+  @override
+  String get virtSshKeys => 'Chiavi pubbliche SSH';
+
+  @override
+  String get virtCredentialsTip =>
+      'Una password di root, chiavi SSH o entrambe.';
+
+  @override
+  String virtCreated(String name) {
+    return '$name creato';
+  }
+
+  @override
+  String virtCreatedNotStarted(String name) {
+    return '$name è stato creato ma non si è avviato';
+  }
+
+  @override
+  String get virtErrExists => 'Esiste già un guest o un disco con questo nome';
+
+  @override
+  String get virtCreateNameInvalidLibvirt =>
+      'Lettere, cifre, ., _ e -, iniziando con una lettera o una cifra; fino a 63 caratteri.';
+
+  @override
+  String get virtCreateNameInvalidPve =>
+      'Lettere, cifre e -, in parti separate da punti; fino a 63 caratteri.';
+
+  @override
+  String get virtCreateNameTaken => 'Esiste già un guest con questo nome.';
+
+  @override
+  String get virtCreateVmidInvalid => 'Da 100 a 999999999.';
+
+  @override
+  String get virtCreateVmidTaken => 'Questo VMID è occupato.';
+
+  @override
+  String get virtCreateCoresInvalid =>
+      'Più core di quanti ne consenta questo host.';
+
+  @override
+  String get virtCreateMemoryInvalid => 'Memoria insufficiente.';
+
+  @override
+  String get virtCreateStorageMissing => 'Scegli dove va il suo disco.';
+
+  @override
+  String get virtCreateDiskInvalid => 'Da 1 GiB a 64 TiB.';
+
+  @override
+  String get virtCreateTemplateMissing => 'Scegli un modello.';
+
+  @override
+  String get virtCreateCredentialsMissing =>
+      'Imposta una password di root o una chiave SSH.';
+
+  @override
+  String virtCreatePasswordShort(int min) {
+    return 'Almeno $min caratteri.';
+  }
+
+  @override
+  String get virtCreateSshKeysInvalid =>
+      'Una chiave pubblica OpenSSH per riga.';
+
+  @override
+  String virtDeleteAsk(String name) {
+    return 'Eliminare $name? Non si può annullare.';
+  }
+
+  @override
+  String virtDeleteTypeName(String name) {
+    return 'Digita $name per confermare';
+  }
+
+  @override
+  String get virtDeleteDisks => 'Elimina anche i suoi dischi';
+
+  @override
+  String get virtDeleteDisksTip =>
+      'Il supporto di installazione collegato viene conservato.';
+
+  @override
+  String get virtDeleteDisksPve =>
+      'I suoi dischi vengono eliminati con esso; il supporto di installazione viene conservato.';
+
+  @override
+  String virtDeleteStopFirst(String name) {
+    return '$name è in esecuzione. Va fermato prima di eliminarlo. Forzare lo spegnimento ora?';
+  }
+
+  @override
+  String virtDeleted(String name) {
+    return '$name eliminato';
+  }
+
+  @override
+  String get pveTokenTipCreate =>
+      'Creare ed eliminare guest richiede anche VM.Allocate, VM.Config.*, Datastore.AllocateSpace e SDN.Use.';
 }

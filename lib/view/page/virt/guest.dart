@@ -62,6 +62,7 @@ class VirtGuestPage extends StatelessWidget {
       guestId: args.guestId,
       switcher: true,
       leading: const BackButton(),
+      onDeleted: () => context.pop(),
     );
   }
 }
@@ -95,10 +96,14 @@ class VirtGuestView extends ConsumerStatefulWidget {
     required this.guestId,
     this.switcher = false,
     this.leading,
+    this.onDeleted,
   });
 
   final String serverId;
   final String guestId;
+
+  /// The guest was deleted from here: whatever shows this closes it.
+  final VoidCallback? onDeleted;
 
   /// Whether the name in the bar opens the host's other guests — with one
   /// column, where the list is not beside this.
@@ -284,6 +289,20 @@ class _VirtGuestViewState extends ConsumerState<VirtGuestView> {
                     ),
                     onTap: () => unawaited(_onPower(guest, action)),
                   ),
+            // Last, after the power actions: it loses more than any of them.
+            if (guest != null &&
+                (st.data?.capabilities.create ?? false) &&
+                !st.isBusy(guest.id))
+              Btn.icon(
+                key: const ValueKey('virt:delete'),
+                text: libL10n.delete,
+                icon: Icon(
+                  Icons.delete_outline,
+                  size: 18,
+                  color: Theme.of(context).colorScheme.error,
+                ),
+                onTap: () => unawaited(_onDelete(st, guest)),
+              ),
             const SizedBox(width: 7),
           ],
         ),
@@ -359,6 +378,49 @@ extension _GuestActions on _VirtGuestViewState {
     _detail = _notifier.detail(guest.id);
   }
 
+  /// Deletes [guest], once its name is typed back. A guest that is not
+  /// stopped is offered a forced stop first, and asked again once it is off:
+  /// deleting never stops anything by itself.
+  Future<void> _onDelete(VirtHostState st, VirtGuest guest) async {
+    if (st.displayState(guest) != VirtGuestState.stopped) {
+      final stop = await context.showRoundDialog<bool>(
+        title: libL10n.attention,
+        child: Text(l10n.virtDeleteStopFirst(guest.name)),
+        actions: Btnx.cancelRedOk,
+      );
+      if (stop != true || !mounted) return;
+      try {
+        await _notifier.power(guest.id, VirtPowerAction.forceStop);
+        // The state after it, not the one the action started from.
+        await _notifier.refresh();
+      } on VirtErr catch (e) {
+        Toast.error(e.title, body: e.detail);
+        return;
+      }
+      if (!mounted) return;
+      final now = ref.read(virtHostProvider(widget.serverId)).guest(guest.id);
+      if (now == null || now.state != VirtGuestState.stopped) return;
+      guest = now;
+    }
+    final keeps = st.data?.capabilities.deleteKeepsDisks ?? false;
+    final removeDisks = await VirtDeleteDialog.show(
+      context,
+      name: guest.name,
+      canKeepDisks: keeps,
+    );
+    if (removeDisks == null || !mounted) return;
+    try {
+      await _notifier.delete(guest.id, removeDisks: removeDisks);
+      Toast.success(l10n.virtDeleted(guest.name));
+      widget.onDeleted?.call();
+    } on VirtErr catch (e) {
+      Toast.error(e.title, body: e.detail);
+    } catch (e, s) {
+      Loggers.app.warning('Deleting a guest', e, s);
+      Toast.error(libL10n.fail, body: '$e');
+    }
+  }
+
   /// Asks, then acts. The action that loses the guest's unsaved state is
   /// asked in red.
   Future<void> _onPower(VirtGuest guest, VirtPowerAction action) async {
@@ -405,5 +467,102 @@ extension _GuestActions on _VirtGuestViewState {
           ? null
           : _notifier.history(_guestId, window: window);
     });
+  }
+}
+
+/// Asks to delete a guest named [name]: in red, with the name typed back
+/// before the button does anything, and — where the host can keep them —
+/// whether its disks go too. Answers whether to remove the disks, or null.
+class VirtDeleteDialog extends StatefulWidget {
+  const VirtDeleteDialog({
+    super.key,
+    required this.name,
+    required this.canKeepDisks,
+  });
+
+  final String name;
+  final bool canKeepDisks;
+
+  static Future<bool?> show(
+    BuildContext context, {
+    required String name,
+    required bool canKeepDisks,
+  }) => context.showRoundDialog<bool>(
+    title: libL10n.delete,
+    child: VirtDeleteDialog(name: name, canKeepDisks: canKeepDisks),
+  );
+
+  @override
+  State<VirtDeleteDialog> createState() => _VirtDeleteDialogState();
+}
+
+class _VirtDeleteDialogState extends State<VirtDeleteDialog> {
+  final _typed = TextEditingController();
+  var _removeDisks = true;
+
+  @override
+  void dispose() {
+    _typed.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final matches = _typed.text == widget.name;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          l10n.virtDeleteAsk(widget.name),
+          style: TextStyle(color: scheme.error),
+        ),
+        UIs.height13,
+        Input(
+          key: const ValueKey('delete:name'),
+          controller: _typed,
+          label: l10n.virtDeleteTypeName(widget.name),
+          icon: Icons.keyboard_outlined,
+          noWrap: true,
+          suggestion: false,
+          autoCorrect: false,
+          onChanged: (_) => setState(() {}),
+        ),
+        if (widget.canKeepDisks)
+          CheckboxListTile(
+            key: const ValueKey('delete:disks'),
+            contentPadding: EdgeInsets.zero,
+            controlAffinity: ListTileControlAffinity.leading,
+            title: Text(l10n.virtDeleteDisks, style: UIs.text13),
+            subtitle: Text(l10n.virtDeleteDisksTip, style: UIs.text12Grey),
+            value: _removeDisks,
+            onChanged: (v) => setState(() => _removeDisks = v ?? true),
+          )
+        else ...[
+          UIs.height7,
+          Text(l10n.virtDeleteDisksPve, style: UIs.text12Grey),
+        ],
+        UIs.height13,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Btn.cancel(),
+            UIs.width7,
+            FilledButton(
+              key: const ValueKey('delete:confirm'),
+              style: FilledButton.styleFrom(
+                backgroundColor: scheme.error,
+                foregroundColor: scheme.onError,
+              ),
+              onPressed: matches
+                  ? () => context.popDialog(_removeDisks)
+                  : null,
+              child: Text(libL10n.delete),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 }

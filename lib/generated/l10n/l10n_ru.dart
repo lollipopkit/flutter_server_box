@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -3662,4 +3661,144 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get virtNoAttachedGuests => 'Гостей нет';
+
+  @override
+  String get virtCreateVm => 'Новая виртуальная машина';
+
+  @override
+  String get virtCreateLxc => 'Новый контейнер';
+
+  @override
+  String get virtCreateGuest => 'Новая виртуальная машина или контейнер';
+
+  @override
+  String get virtKindVm => 'Виртуальная машина';
+
+  @override
+  String get virtKindLxc => 'Контейнер';
+
+  @override
+  String get virtHostname => 'Имя хоста';
+
+  @override
+  String get virtInstallMedia => 'Установочный носитель';
+
+  @override
+  String get virtNoIsos => 'На этом хосте нет ISO-образов';
+
+  @override
+  String get virtNoTemplates =>
+      'На этом хосте нет шаблонов контейнеров. Скачать шаблон можно в разделе «Шаблоны CT» хранилища в PVE.';
+
+  @override
+  String get virtNoDiskStorage =>
+      'На этом хосте нет хранилища для нового диска';
+
+  @override
+  String get virtStartAfterCreate => 'Запустить после создания';
+
+  @override
+  String get virtUnprivileged => 'Непривилегированный контейнер';
+
+  @override
+  String get virtUnprivilegedTip => 'Его root — обычный пользователь на хосте.';
+
+  @override
+  String get virtSshKeys => 'Открытые ключи SSH';
+
+  @override
+  String get virtCredentialsTip => 'Пароль root, ключи SSH или и то и другое.';
+
+  @override
+  String virtCreated(String name) {
+    return '$name создан';
+  }
+
+  @override
+  String virtCreatedNotStarted(String name) {
+    return '$name создан, но не запустился';
+  }
+
+  @override
+  String get virtErrExists => 'Гость или диск с таким именем уже существует';
+
+  @override
+  String get virtCreateNameInvalidLibvirt =>
+      'Буквы, цифры, ., _ и -, начиная с буквы или цифры; до 63 символов.';
+
+  @override
+  String get virtCreateNameInvalidPve =>
+      'Буквы, цифры и -, части разделены точками; до 63 символов.';
+
+  @override
+  String get virtCreateNameTaken => 'Гость с таким именем уже есть.';
+
+  @override
+  String get virtCreateVmidInvalid => 'От 100 до 999999999.';
+
+  @override
+  String get virtCreateVmidTaken => 'Этот VMID занят.';
+
+  @override
+  String get virtCreateCoresInvalid => 'Больше ядер, чем допускает этот хост.';
+
+  @override
+  String get virtCreateMemoryInvalid => 'Недостаточно памяти.';
+
+  @override
+  String get virtCreateStorageMissing => 'Выберите, где будет диск.';
+
+  @override
+  String get virtCreateDiskInvalid => 'От 1 ГиБ до 64 ТиБ.';
+
+  @override
+  String get virtCreateTemplateMissing => 'Выберите шаблон.';
+
+  @override
+  String get virtCreateCredentialsMissing =>
+      'Задайте пароль root или ключ SSH.';
+
+  @override
+  String virtCreatePasswordShort(int min) {
+    return 'Не менее $min символов.';
+  }
+
+  @override
+  String get virtCreateSshKeysInvalid =>
+      'По одному открытому ключу OpenSSH на строку.';
+
+  @override
+  String virtDeleteAsk(String name) {
+    return 'Удалить $name? Это нельзя отменить.';
+  }
+
+  @override
+  String virtDeleteTypeName(String name) {
+    return 'Введите $name для подтверждения';
+  }
+
+  @override
+  String get virtDeleteDisks => 'Удалить и его диски';
+
+  @override
+  String get virtDeleteDisksTip =>
+      'Подключённый установочный носитель сохранится.';
+
+  @override
+  String get virtDeleteDisksPve =>
+      'Его диски удаляются вместе с ним; установочный носитель сохранится.';
+
+  @override
+  String virtDeleteStopFirst(String name) {
+    return '$name работает. Перед удалением его нужно остановить. Принудительно выключить сейчас?';
+  }
+
+  @override
+  String virtDeleted(String name) {
+    return '$name удалён';
+  }
+
+  @override
+  String get pveTokenTipCreate =>
+      'Для создания и удаления гостей также нужны VM.Allocate, VM.Config.*, Datastore.AllocateSpace и SDN.Use.';
 }

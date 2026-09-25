@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -3627,4 +3626,145 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtNoAttachedGuests => 'Bağlı konuk yok';
+
+  @override
+  String get virtCreateVm => 'Yeni sanal makine';
+
+  @override
+  String get virtCreateLxc => 'Yeni kapsayıcı';
+
+  @override
+  String get virtCreateGuest => 'Yeni sanal makine veya kapsayıcı';
+
+  @override
+  String get virtKindVm => 'Sanal makine';
+
+  @override
+  String get virtKindLxc => 'Kapsayıcı';
+
+  @override
+  String get virtHostname => 'Ana makine adı';
+
+  @override
+  String get virtInstallMedia => 'Kurulum ortamı';
+
+  @override
+  String get virtNoIsos => 'Bu ana makinede ISO kalıbı yok';
+
+  @override
+  String get virtNoTemplates =>
+      'Bu ana makinede kapsayıcı şablonu yok. PVE\'de bir depolamanın CT Şablonları\'ndan indirilebilir.';
+
+  @override
+  String get virtNoDiskStorage =>
+      'Bu ana makinede yeni disk alan bir depolama yok';
+
+  @override
+  String get virtStartAfterCreate => 'Oluşturunca başlat';
+
+  @override
+  String get virtUnprivileged => 'Ayrıcalıksız kapsayıcı';
+
+  @override
+  String get virtUnprivilegedTip =>
+      'root\'u ana makinede sıradan bir kullanıcıdır.';
+
+  @override
+  String get virtSshKeys => 'SSH açık anahtarları';
+
+  @override
+  String get virtCredentialsTip => 'root parolası, SSH anahtarları veya ikisi.';
+
+  @override
+  String virtCreated(String name) {
+    return '$name oluşturuldu';
+  }
+
+  @override
+  String virtCreatedNotStarted(String name) {
+    return '$name oluşturuldu ama başlamadı';
+  }
+
+  @override
+  String get virtErrExists => 'Bu adda bir konuk veya disk zaten var';
+
+  @override
+  String get virtCreateNameInvalidLibvirt =>
+      'Harf, rakam, ., _ ve -, harf veya rakamla başlar; en fazla 63 karakter.';
+
+  @override
+  String get virtCreateNameInvalidPve =>
+      'Harf, rakam ve -, noktalarla ayrılmış parçalar; en fazla 63 karakter.';
+
+  @override
+  String get virtCreateNameTaken => 'Bu adda bir konuk var.';
+
+  @override
+  String get virtCreateVmidInvalid => '100 ile 999999999 arası.';
+
+  @override
+  String get virtCreateVmidTaken => 'Bu VMID kullanımda.';
+
+  @override
+  String get virtCreateCoresInvalid =>
+      'Bu ana makinenin izin verdiğinden fazla çekirdek.';
+
+  @override
+  String get virtCreateMemoryInvalid => 'Bellek yetersiz.';
+
+  @override
+  String get virtCreateStorageMissing => 'Diskinin nereye gideceğini seçin.';
+
+  @override
+  String get virtCreateDiskInvalid => '1 GiB ile 64 TiB arası.';
+
+  @override
+  String get virtCreateTemplateMissing => 'Bir şablon seçin.';
+
+  @override
+  String get virtCreateCredentialsMissing =>
+      'Bir root parolası veya SSH anahtarı belirleyin.';
+
+  @override
+  String virtCreatePasswordShort(int min) {
+    return 'En az $min karakter.';
+  }
+
+  @override
+  String get virtCreateSshKeysInvalid =>
+      'Her satıra bir OpenSSH açık anahtarı.';
+
+  @override
+  String virtDeleteAsk(String name) {
+    return '$name silinsin mi? Geri alınamaz.';
+  }
+
+  @override
+  String virtDeleteTypeName(String name) {
+    return 'Onaylamak için $name yazın';
+  }
+
+  @override
+  String get virtDeleteDisks => 'Disklerini de sil';
+
+  @override
+  String get virtDeleteDisksTip => 'Bağlı kurulum ortamı korunur.';
+
+  @override
+  String get virtDeleteDisksPve =>
+      'Diskleri onunla birlikte silinir; kurulum ortamı korunur.';
+
+  @override
+  String virtDeleteStopFirst(String name) {
+    return '$name çalışıyor. Silinmeden önce durdurulmalı. Şimdi zorla kapatılsın mı?';
+  }
+
+  @override
+  String virtDeleted(String name) {
+    return '$name silindi';
+  }
+
+  @override
+  String get pveTokenTipCreate =>
+      'Konuk oluşturmak ve silmek için ayrıca VM.Allocate, VM.Config.*, Datastore.AllocateSpace ve SDN.Use gerekir.';
 }

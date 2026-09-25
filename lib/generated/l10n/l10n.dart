@@ -6267,6 +6267,240 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No guest is on it'**
   String get virtNoAttachedGuests;
+
+  /// Title and action: create a new virtual machine.
+  ///
+  /// In en, this message translates to:
+  /// **'New virtual machine'**
+  String get virtCreateVm;
+
+  /// Title: create a new Proxmox VE container.
+  ///
+  /// In en, this message translates to:
+  /// **'New container'**
+  String get virtCreateLxc;
+
+  /// Tooltip of the add button on a PVE host, where a VM or a container can be created.
+  ///
+  /// In en, this message translates to:
+  /// **'New virtual machine or container'**
+  String get virtCreateGuest;
+
+  /// Segment choosing to create a virtual machine.
+  ///
+  /// In en, this message translates to:
+  /// **'Virtual machine'**
+  String get virtKindVm;
+
+  /// Segment choosing to create a container.
+  ///
+  /// In en, this message translates to:
+  /// **'Container'**
+  String get virtKindLxc;
+
+  /// Label: a new container's hostname.
+  ///
+  /// In en, this message translates to:
+  /// **'Hostname'**
+  String get virtHostname;
+
+  /// Heading: the ISO a new VM boots from.
+  ///
+  /// In en, this message translates to:
+  /// **'Install media'**
+  String get virtInstallMedia;
+
+  /// Shown when the host has no ISO images to install from.
+  ///
+  /// In en, this message translates to:
+  /// **'No ISO images on this host'**
+  String get virtNoIsos;
+
+  /// Shown when the PVE host has no container templates.
+  ///
+  /// In en, this message translates to:
+  /// **'No container templates on this host. A storage\'s CT Templates in PVE can download one.'**
+  String get virtNoTemplates;
+
+  /// Shown when no storage on the host can hold a new disk.
+  ///
+  /// In en, this message translates to:
+  /// **'Nowhere on this host takes a new disk'**
+  String get virtNoDiskStorage;
+
+  /// Switch: start the new guest once it is created.
+  ///
+  /// In en, this message translates to:
+  /// **'Start it once created'**
+  String get virtStartAfterCreate;
+
+  /// Switch: create an unprivileged container.
+  ///
+  /// In en, this message translates to:
+  /// **'Unprivileged container'**
+  String get virtUnprivileged;
+
+  /// Explains what an unprivileged container is.
+  ///
+  /// In en, this message translates to:
+  /// **'Its root is an ordinary user on the host.'**
+  String get virtUnprivilegedTip;
+
+  /// Label: SSH public keys for a new container's root.
+  ///
+  /// In en, this message translates to:
+  /// **'SSH public keys'**
+  String get virtSshKeys;
+
+  /// Explains a new container needs a root password, SSH keys or both.
+  ///
+  /// In en, this message translates to:
+  /// **'A root password, SSH keys, or both.'**
+  String get virtCredentialsTip;
+
+  /// Toast after a guest was created.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} created'**
+  String virtCreated(String name);
+
+  /// Toast title when a guest was created but failed to start; the host's error follows.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} was created but did not start'**
+  String virtCreatedNotStarted(String name);
+
+  /// Error title: the new guest's name, VMID or disk already exists on the host.
+  ///
+  /// In en, this message translates to:
+  /// **'A guest or disk with this name already exists'**
+  String get virtErrExists;
+
+  /// Rule for a new libvirt guest's name.
+  ///
+  /// In en, this message translates to:
+  /// **'Letters, digits, ., _ and -, starting with a letter or digit; up to 63 characters.'**
+  String get virtCreateNameInvalidLibvirt;
+
+  /// Rule for a new PVE guest's name (a DNS name).
+  ///
+  /// In en, this message translates to:
+  /// **'Letters, digits and -, in parts separated by dots; up to 63 characters.'**
+  String get virtCreateNameInvalidPve;
+
+  /// The new guest's name is already used.
+  ///
+  /// In en, this message translates to:
+  /// **'A guest with this name exists.'**
+  String get virtCreateNameTaken;
+
+  /// The VMID is out of PVE's range.
+  ///
+  /// In en, this message translates to:
+  /// **'From 100 to 999999999.'**
+  String get virtCreateVmidInvalid;
+
+  /// The VMID is already used.
+  ///
+  /// In en, this message translates to:
+  /// **'This VMID is taken.'**
+  String get virtCreateVmidTaken;
+
+  /// More cores than the host allows.
+  ///
+  /// In en, this message translates to:
+  /// **'More cores than this host allows.'**
+  String get virtCreateCoresInvalid;
+
+  /// Too little memory for a new guest.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough memory.'**
+  String get virtCreateMemoryInvalid;
+
+  /// No storage chosen for the new disk.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose where its disk goes.'**
+  String get virtCreateStorageMissing;
+
+  /// Disk size out of range.
+  ///
+  /// In en, this message translates to:
+  /// **'From 1 GiB to 64 TiB.'**
+  String get virtCreateDiskInvalid;
+
+  /// No container template chosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a template.'**
+  String get virtCreateTemplateMissing;
+
+  /// A new container needs a root password or an SSH key.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a root password or an SSH key.'**
+  String get virtCreateCredentialsMissing;
+
+  /// The container's root password is too short.
+  ///
+  /// In en, this message translates to:
+  /// **'At least {min} characters.'**
+  String virtCreatePasswordShort(int min);
+
+  /// The SSH keys field has a line that is not an OpenSSH public key.
+  ///
+  /// In en, this message translates to:
+  /// **'One OpenSSH public key per line.'**
+  String get virtCreateSshKeysInvalid;
+
+  /// Delete confirmation for a guest.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name}? This cannot be undone.'**
+  String virtDeleteAsk(String name);
+
+  /// Label of the field where the guest's name is typed to confirm deleting it.
+  ///
+  /// In en, this message translates to:
+  /// **'Type {name} to confirm'**
+  String virtDeleteTypeName(String name);
+
+  /// Checkbox: delete the guest's disks as well.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete its disks too'**
+  String get virtDeleteDisks;
+
+  /// Install media attached to the guest is not deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Install media attached to it is kept.'**
+  String get virtDeleteDisksTip;
+
+  /// On PVE a guest's disks always go with it.
+  ///
+  /// In en, this message translates to:
+  /// **'Its disks are deleted with it; install media is kept.'**
+  String get virtDeleteDisksPve;
+
+  /// A running guest must be stopped before it is deleted; asks to force it off.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is running. It must be stopped before it can be deleted. Force it off now?'**
+  String virtDeleteStopFirst(String name);
+
+  /// Toast after a guest was deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} deleted'**
+  String virtDeleted(String name);
+
+  /// Second part of the PVE API token help: the extra privileges creating and deleting guests needs.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating and deleting guests also needs VM.Allocate, VM.Config.*, Datastore.AllocateSpace and SDN.Use.'**
+  String get pveTokenTipCreate;
 }
 
 class _AppLocalizationsDelegate

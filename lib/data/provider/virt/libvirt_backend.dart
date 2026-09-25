@@ -9,6 +9,7 @@ import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/virt/libvirt.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
+import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_rates.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
@@ -119,6 +120,8 @@ class LibvirtBackend implements VirtBackend {
         network: true,
         serialConsole: true,
         vncConsole: true,
+        create: true,
+        deleteKeepsDisks: true,
       ),
     );
   }
@@ -376,6 +379,119 @@ class LibvirtBackend implements VirtBackend {
       return '';
     }, action: true);
   }
+
+  // ---------------------------------------------------------------------------
+  // Creating and deleting
+  // ---------------------------------------------------------------------------
+
+  @override
+  Future<int?> nextVmid() async => null;
+
+  /// Three round trips: what the host runs a domain as (`domcapabilities`:
+  /// KVM and q35 where it can), the disk and its path, then the domain on
+  /// that path — defined, and started when asked. A define the host refuses
+  /// deletes the disk again. See `sbm_parser::virt::create_volume_script`.
+  @override
+  Future<VirtCreated> create(VirtCreateSpec spec) async {
+    if (spec.kind != VirtGuestKind.qemu) {
+      throw const VirtErr(type: VirtErrType.unsupported);
+    }
+    final media = spec.media;
+    final mediaPath = media?.path;
+    if (media != null && mediaPath == null) {
+      throw VirtErr(
+        type: VirtErrType.invalidResponse,
+        message: 'No path for ${media.name}',
+      );
+    }
+    final host = _decode(
+      await _run(ffi.virtCreateHostScript(), ffi.parseVirtCreateHostJson),
+    );
+    final json = <String, Object?>{
+      'name': spec.name,
+      'vcpus': spec.cores,
+      'memory_mib': spec.memoryMiB,
+      'host': host,
+      'disk_pool': spec.storage.id,
+      'disk_gib': spec.diskGiB,
+      'disk_format': virtLibvirtDiskFormat(spec.storage.type),
+      'disk_path': null,
+      'cdrom': mediaPath,
+      'network': spec.network?.name,
+      'start': spec.start,
+    };
+    final String path;
+    try {
+      path = await _run(
+        _script(() => ffi.virtCreateVolumeScript(specJson: jsonEncode(json))),
+        ffi.parseVirtCreateVolume,
+        action: true,
+      );
+    } on VirtErr catch (e) {
+      throw _existsOr(e);
+    }
+    json['disk_path'] = path;
+    final created = _decode(
+      await _run(
+        _script(() => ffi.virtDefineScript(specJson: jsonEncode(json))),
+        ffi.parseVirtCreateJson,
+        action: true,
+      ),
+    );
+    return VirtCreated(
+      // By name when `domuuid` did not answer: virsh takes either.
+      id: created['uuid'] as String? ?? spec.name,
+      startError: created['start_error'] as String?,
+    );
+  }
+
+  /// Snapshots' metadata and a managed save go with it; with [removeDisks]
+  /// the volumes of its writable disks and its NVRAM too — not a CD-ROM or a
+  /// read-only disk, which are install media or shared. Refused while it
+  /// runs: `undefine` would leave it running, transient.
+  @override
+  Future<void> delete(VirtGuest guest, {bool removeDisks = true}) async {
+    if (guest.state != VirtGuestState.stopped) {
+      throw VirtErr(
+        type: VirtErrType.unsupported,
+        message: '${guest.name} is not stopped',
+      );
+    }
+    final targets = <String>[];
+    if (removeDisks) {
+      final detail = await this.detail(guest);
+      for (final d in detail.disks) {
+        final target = d.target;
+        if (d.device == 'disk' && !d.readonly && target != null) {
+          targets.add(target);
+        }
+      }
+    }
+    await _action1(
+      _script(
+        () => ffi.virtUndefineScript(domain: guest.id, storage: targets),
+      ),
+    );
+  }
+
+  /// A script the parser refused to write: what it was given is this app's
+  /// fault, not the host's.
+  static String _script(String Function() build) {
+    try {
+      return build();
+    } on ffi.VirtFfiError catch (e) {
+      throw VirtErr(type: VirtErrType.unsupported, message: e.message, cause: e);
+    }
+  }
+
+  static VirtErr _existsOr(VirtErr e) => switch (e.cause) {
+    ffi.VirtFfiError(kind: ffi.VirtErrorKind.exists) => VirtErr(
+      type: VirtErrType.exists,
+      message: e.message == ffi.VirtErrorKind.exists.name ? null : e.message,
+      cause: e.cause,
+    ),
+    _ => e,
+  };
 
   // ---------------------------------------------------------------------------
   // Storage and networks
@@ -642,8 +758,11 @@ class LibvirtBackend implements VirtBackend {
       ffi.VirtErrorKind.permissionDenied => VirtErrType.permissionDenied,
       ffi.VirtErrorKind.connectFailed => VirtErrType.unreachable,
       ffi.VirtErrorKind.malformed => VirtErrType.invalidResponse,
+      // `exists` too: a snapshot name taken is the action refused, with the
+      // host's words. Creating a guest tells it apart itself.
       ffi.VirtErrorKind.domainNotFound ||
       ffi.VirtErrorKind.invalidState ||
+      ffi.VirtErrorKind.exists ||
       ffi.VirtErrorKind.command =>
         action ? VirtErrType.actionFailed : VirtErrType.unknown,
     };

@@ -15,6 +15,7 @@ extension _List on _VirtTabPageState {
     Map<String, Spi> servers,
     String? hostId,
     bool split,
+    VirtCapabilities? caps,
   ) {
     final hostIds = hosts.hostIds;
     final at = hostId == null ? -1 : hostIds.indexOf(hostId);
@@ -49,6 +50,17 @@ extension _List on _VirtTabPageState {
                 icon: const Icon(Icons.refresh, size: 18),
                 onTap: () => _refresh(hostId),
               ),
+              // With the guests, where a new one lands; the host's answer
+              // says whether it takes one.
+              if (_section == VirtSection.guests && (caps?.create ?? false))
+                Btn.icon(
+                  key: const ValueKey('virt:create'),
+                  text: (caps?.lxc ?? false)
+                      ? l10n.virtCreateGuest
+                      : l10n.virtCreateVm,
+                  icon: const Icon(Icons.add, size: 18),
+                  onTap: () => unawaited(_startCreate(hostId, split)),
+                ),
             ],
             const SizedBox(width: 7),
           ],
