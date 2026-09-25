@@ -453,11 +453,19 @@ deleted (`is_libvirt_nvram`), whatever the definition names, and a refused
 define keeps the file. (Replaced keeping the old file for going back, which
 left one per switch that nothing removed.)
 
-Not proven: **real PCI passthrough** — the test host has no IOMMU
-(`SBM_E2E_PVE_PCI` runs the same flow once one is on, e.g. after enabling
-VT-d for a GPU), and the libvirt host is a nested guest; USB passthrough on
-libvirt (no USB device there); a TPM on libvirt (no swtpm there); SPICE on
-libvirt (not in that QEMU build).
+Real PCI passthrough on PVE 9.2.2, verified with a Tesla T10 (`10de:1e37`,
+subsystem `10de:1370`) after enabling VT-d (the DMAR table appeared; the card
+in an IOMMU group with only its root port) and binding it to `vfio-pci`:
+`SBM_E2E_PVE_PCI=0000:01:00.0` mapped it, gave it to a temporary VM through
+the backend, started the VM (its QEMU command line has `vfio-pci` for the
+card), stopped it, took the device off. A mapping must carry the device's
+`subsystem-id` when it has one: PVE 9 refuses the start otherwise ("PCI
+device mapping invalid … missing expected property 'subsystem-id'"). The
+guest had no OS, so what a driver inside makes of the card is not shown.
+
+Not proven: PCI passthrough on libvirt (the libvirt host is a nested guest);
+USB passthrough on libvirt (no USB device there); a TPM on libvirt (no swtpm
+there); SPICE on libvirt (not in that QEMU build).
 
 ### Settings (phase 4)
 

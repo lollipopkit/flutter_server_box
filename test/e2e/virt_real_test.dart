@@ -1609,7 +1609,14 @@ Future<void> _pvePassthrough() async {
         final group = (await onNode(
           "basename \"\$(readlink /sys/bus/pci/devices/'$device'/iommu_group)\" 2>/dev/null || echo -1",
         )).trim();
-        map = 'node=$node,path=$device,id=$ids,iommugroup=$group';
+        // PVE 9 checks a mapping against the device as it finds it at start,
+        // the subsystem among it: a mapping without one refuses a device that
+        // has one ("missing expected property 'subsystem-id'").
+        final sub = (await onNode(
+          "d=/sys/bus/pci/devices/'$device'; "
+          "printf '%s:%s' \"\$(cut -c3- \$d/subsystem_vendor)\" \"\$(cut -c3- \$d/subsystem_device)\"",
+        )).trim();
+        map = 'node=$node,path=$device,id=$ids,subsystem-id=$sub,iommugroup=$group';
       }
       await onNode("pvesh create /cluster/mapping/$kind --id '$id' --map '$map'");
       try {
@@ -1628,6 +1635,10 @@ Future<void> _pvePassthrough() async {
         );
         hw = await pve.hardware(vm);
         final key = hw.devices.firstWhere((d) => d.detail == id).key;
+        // The guest as it is now, not as `setUpAll` saw it straight after
+        // creating it — when PVE may still have held its create lock, and
+        // offered no start.
+        vm = await settle((g) => g.actions.contains(VirtPowerAction.start));
         await pve.power(vm, VirtPowerAction.start);
         vm = await settle((g) => g.state == VirtGuestState.running);
         final cmd = await onNode('qm showcmd ${vm.vmid}');
