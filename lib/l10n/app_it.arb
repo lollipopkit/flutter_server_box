@@ -1039,8 +1039,6 @@
   "virtIntroInBar": "È stata aggiunta alla barra delle schede.",
   "virtIntroInMore": "Si trova in Altro. Schede home, nelle impostazioni, può spostarla nella barra delle schede.",
   "virtGuests": "Macchine virtuali",
-  "virtGuestsAndContainers": "VM e container",
-  "virtSectionLater": "Non ancora disponibile",
   "virtHosts": "Host",
   "virtCheckServer": "Controlla questo server",
   "virtCheckAll": "Controlla tutti i server",

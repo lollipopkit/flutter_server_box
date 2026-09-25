@@ -3351,12 +3351,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get virtGuests => 'Mesin virtual';
 
   @override
-  String get virtGuestsAndContainers => 'VM & kontainer';
-
-  @override
-  String get virtSectionLater => 'Belum tersedia';
-
-  @override
   String get virtHosts => 'Host';
 
   @override

@@ -1036,8 +1036,6 @@
   "virtIntroInBar": "Er wurde der Tab-Leiste hinzugefügt.",
   "virtIntroInMore": "Er befindet sich unter „Mehr“. Unter Home-Tabs in den Einstellungen lässt er sich in die Tab-Leiste verschieben.",
   "virtGuests": "Virtuelle Maschinen",
-  "virtGuestsAndContainers": "VMs & Container",
-  "virtSectionLater": "Noch nicht verfügbar",
   "virtHosts": "Hosts",
   "virtCheckServer": "Diesen Server prüfen",
   "virtCheckAll": "Alle Server prüfen",

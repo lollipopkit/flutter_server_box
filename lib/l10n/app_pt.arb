@@ -1039,8 +1039,6 @@
   "virtIntroInBar": "Ela foi adicionada à barra de abas.",
   "virtIntroInMore": "Ela está em Mais. Abas iniciais, nas configurações, pode movê-la para a barra de abas.",
   "virtGuests": "Máquinas virtuais",
-  "virtGuestsAndContainers": "VMs e contêineres",
-  "virtSectionLater": "Ainda não disponível",
   "virtHosts": "Hosts",
   "virtCheckServer": "Verificar este servidor",
   "virtCheckAll": "Verificar todos os servidores",

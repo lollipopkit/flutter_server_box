@@ -993,8 +993,6 @@
   "virtIntroInBar": "已新增到分頁列。",
   "virtIntroInMore": "位於「更多」中。可在設定的「主頁標籤」中將其移到分頁列。",
   "virtGuests": "虛擬機",
-  "virtGuestsAndContainers": "虛擬機/容器",
-  "virtSectionLater": "暫不可用",
   "virtHosts": "主機",
   "virtCheckServer": "檢查此伺服器",
   "virtCheckAll": "檢查所有伺服器",

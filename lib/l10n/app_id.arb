@@ -1015,8 +1015,6 @@
   "virtIntroInBar": "Tab ini telah ditambahkan ke bilah tab.",
   "virtIntroInMore": "Tab ini ada di Lainnya. Tab Beranda di Pengaturan dapat memindahkannya ke bilah tab.",
   "virtGuests": "Mesin virtual",
-  "virtGuestsAndContainers": "VM & kontainer",
-  "virtSectionLater": "Belum tersedia",
   "virtHosts": "Host",
   "virtCheckServer": "Periksa server ini",
   "virtCheckAll": "Periksa semua server",

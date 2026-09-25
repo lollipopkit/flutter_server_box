@@ -3413,12 +3413,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get virtGuests => 'Machines virtuelles';
 
   @override
-  String get virtGuestsAndContainers => 'VM et conteneurs';
-
-  @override
-  String get virtSectionLater => 'Pas encore disponible';
-
-  @override
   String get virtHosts => 'Hôtes';
 
   @override

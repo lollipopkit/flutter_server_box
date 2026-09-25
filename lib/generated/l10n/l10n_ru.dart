@@ -3378,12 +3378,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get virtGuests => 'Виртуальные машины';
 
   @override
-  String get virtGuestsAndContainers => 'ВМ и контейнеры';
-
-  @override
-  String get virtSectionLater => 'Пока недоступно';
-
-  @override
   String get virtHosts => 'Хосты';
 
   @override

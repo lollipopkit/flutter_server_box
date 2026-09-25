@@ -113,6 +113,10 @@ class VirtGuestView extends ConsumerStatefulWidget {
 class _VirtGuestViewState extends ConsumerState<VirtGuestView> {
   late String _guestId = widget.guestId;
   var _view = VirtGuestViewKind.overview;
+
+  /// The console chosen in the Console segment's second level; null for the
+  /// guest's default ([VirtConsoleView.defaultKind]).
+  VirtConsoleKind? _console;
   var _metric = _VirtMetric.cpu;
 
   /// The chart's window: null for this session's samples, otherwise the
@@ -164,19 +168,25 @@ class _VirtGuestViewState extends ConsumerState<VirtGuestView> {
             padding: const EdgeInsets.fromLTRB(13, 3, 13, 7),
             child: Align(
               alignment: AlignmentDirectional.centerStart,
-              child: Wrap(
-                spacing: 3,
-                runSpacing: 3,
-                children: [
-                  for (final v in views)
-                    VirtPill(
-                      key: ValueKey(v),
-                      label: v.label,
-                      icon: v.iconFor(guest),
-                      active: v == view,
-                      onTap: () => setState(() => _view = v),
-                    ),
-                ],
+              // The detail says which consoles there are; with two, the
+              // Console segment offers them as its second level.
+              child: FutureBuilder<VirtGuestDetail>(
+                future: _detail,
+                builder: (_, snap) => SegmentedTabs<VirtGuestViewKind>(
+                  selected: view,
+                  onSelected: (v) => setState(() => _view = v),
+                  segments: [
+                    for (final v in views)
+                      SegmentedTab(
+                        value: v,
+                        label: v.label,
+                        icon: v.iconFor(guest),
+                        sub: v == VirtGuestViewKind.console
+                            ? _consoleSub(snap.data?.consoles, state)
+                            : null,
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -195,6 +205,7 @@ class _VirtGuestViewState extends ConsumerState<VirtGuestView> {
                 guest: guest,
                 state: state,
                 detail: _detail,
+                kind: _console,
                 onStart: _startIfOffered(st, guest),
                 onRetryDetail: () => setState(() {
                   _detail = _notifier.detail(guest.id);
@@ -204,6 +215,28 @@ class _VirtGuestViewState extends ConsumerState<VirtGuestView> {
           ),
         ],
       ),
+    );
+  }
+
+  /// Terminal and Graphical, when the guest has both. Only while it is
+  /// running: a stopped guest's console view offers to start it instead.
+  SegmentedSub<VirtConsoleKind>? _consoleSub(
+    Set<VirtConsoleKind>? consoles,
+    VirtGuestState state,
+  ) {
+    if (!state.isActive || consoles == null || consoles.length < 2) {
+      return null;
+    }
+    return SegmentedSub(
+      selected: consoles.contains(_console)
+          ? _console!
+          : VirtConsoleView.defaultKind(consoles),
+      onSelected: (kind) => setState(() => _console = kind),
+      segments: [
+        for (final kind in VirtConsoleKind.values)
+          if (consoles.contains(kind))
+            SegmentedTab(value: kind, label: kind.label, icon: kind.icon),
+      ],
     );
   }
 
@@ -292,6 +325,7 @@ extension _GuestActions on _VirtGuestViewState {
   void _switchTo(String guestId) {
     setState(() {
       _guestId = guestId;
+      _console = null;
       _window = null;
       _stored = null;
       _detail = null;

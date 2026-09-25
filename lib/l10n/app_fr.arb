@@ -1039,8 +1039,6 @@
   "virtIntroInBar": "Il a été ajouté à la barre d'onglets.",
   "virtIntroInMore": "Il se trouve sous Plus. Onglets d'accueil, dans les réglages, permet de le déplacer dans la barre d'onglets.",
   "virtGuests": "Machines virtuelles",
-  "virtGuestsAndContainers": "VM et conteneurs",
-  "virtSectionLater": "Pas encore disponible",
   "virtHosts": "Hôtes",
   "virtCheckServer": "Vérifier ce serveur",
   "virtCheckAll": "Vérifier tous les serveurs",

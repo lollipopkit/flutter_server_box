@@ -3129,12 +3129,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtGuests => '虚拟机';
 
   @override
-  String get virtGuestsAndContainers => '虚拟机/容器';
-
-  @override
-  String get virtSectionLater => '暂不可用';
-
-  @override
   String get virtHosts => '宿主机';
 
   @override
@@ -6520,12 +6514,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtGuests => '虛擬機';
-
-  @override
-  String get virtGuestsAndContainers => '虛擬機/容器';
-
-  @override
-  String get virtSectionLater => '暫不可用';
 
   @override
   String get virtHosts => '主機';

@@ -3349,12 +3349,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get virtGuests => 'Virtual machines';
 
   @override
-  String get virtGuestsAndContainers => 'VMs & containers';
-
-  @override
-  String get virtSectionLater => 'Not available yet';
-
-  @override
   String get virtHosts => 'Hosts';
 
   @override

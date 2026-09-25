@@ -3375,12 +3375,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get virtGuests => 'Віртуальні машини';
 
   @override
-  String get virtGuestsAndContainers => 'ВМ і контейнери';
-
-  @override
-  String get virtSectionLater => 'Поки недоступно';
-
-  @override
   String get virtHosts => 'Хости';
 
   @override

@@ -5770,18 +5770,6 @@ abstract class AppLocalizations {
   /// **'Virtual machines'**
   String get virtGuests;
 
-  /// Section of the Virtualization tab listing virtual machines and LXC containers.
-  ///
-  /// In en, this message translates to:
-  /// **'VMs & containers'**
-  String get virtGuestsAndContainers;
-
-  /// Tooltip on a Virtualization section that is not built yet.
-  ///
-  /// In en, this message translates to:
-  /// **'Not available yet'**
-  String get virtSectionLater;
-
   /// Heading over the virtualization hosts in the host switcher.
   ///
   /// In en, this message translates to:

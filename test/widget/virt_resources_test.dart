@@ -28,6 +28,7 @@ import 'package:server_box/view/page/virt/guest.dart';
 import 'package:server_box/view/page/virt/resources.dart';
 import 'package:server_box/view/page/virt/tab.dart';
 
+import '../helpers/segment.dart';
 import '../helpers/spi_fixture.dart';
 import '../helpers/test_db.dart';
 
@@ -307,7 +308,7 @@ void main() {
   Future<void> openSnapshots(WidgetTester tester, String guest) async {
     await tester.tap(find.text(guest));
     await _settle(tester);
-    await tester.tap(find.byKey(const ValueKey(VirtGuestViewKind.snapshots)));
+    await tester.tap(segment(app_locale.l10n.virtSnapshots));
     await _settle(tester);
   }
 
@@ -320,11 +321,11 @@ void main() {
       await tester.tap(find.text('web-01'));
       await _settle(tester);
       expect(
-        find.byKey(const ValueKey(VirtGuestViewKind.snapshots)),
+        segment(app_locale.l10n.virtSnapshots),
         findsNothing,
       );
       expect(
-        find.byKey(const ValueKey(VirtGuestViewKind.overview)),
+        segment(app_locale.l10n.virtOverview),
         findsOneWidget,
       );
     });
@@ -540,12 +541,7 @@ void main() {
       tester,
     ) async {
       await pump(tester, wide: true);
-      final pill = find.byKey(const ValueKey(VirtSection.storage));
-      final ink = tester.widget<InkWell>(
-        find.descendant(of: pill, matching: find.byType(InkWell)),
-      );
-      expect(ink.onTap, isNotNull);
-      await tester.tap(pill);
+      await tester.tap(segment(libL10n.storage));
       await _settle(tester);
 
       expect(find.byKey(const ValueKey('pool:pve/local-lvm')), findsOneWidget);
@@ -570,7 +566,7 @@ void main() {
       tester,
     ) async {
       await pump(tester, wide: true);
-      await tester.tap(find.byKey(const ValueKey(VirtSection.storage)));
+      await tester.tap(segment(libL10n.storage));
       await _settle(tester);
       await tester.tap(find.byKey(const ValueKey('pool:pve/nfs')));
       await _settle(tester);
@@ -580,7 +576,7 @@ void main() {
 
     testWidgets('narrow: a pool is pushed over the list', (tester) async {
       await pump(tester, wide: false);
-      await tester.tap(find.byKey(const ValueKey(VirtSection.storage)));
+      await tester.tap(segment(libL10n.storage));
       await _settle(tester);
       await tester.tap(find.byKey(const ValueKey('pool:pve/local-lvm')));
       await _settle(tester);
@@ -594,7 +590,7 @@ void main() {
       tester,
     ) async {
       await pump(tester, wide: true);
-      await tester.tap(find.byKey(const ValueKey(VirtSection.network)));
+      await tester.tap(segment(libL10n.network));
       await _settle(tester);
       expect(find.byKey(const ValueKey('net:pve/vmbr0')), findsOneWidget);
 
@@ -617,7 +613,7 @@ void main() {
 
     testWidgets('a port is not somewhere guests attach', (tester) async {
       await pump(tester, wide: true);
-      await tester.tap(find.byKey(const ValueKey(VirtSection.network)));
+      await tester.tap(segment(libL10n.network));
       await _settle(tester);
       await tester.tap(find.byKey(const ValueKey('net:pve/nic0')));
       await _settle(tester);
@@ -628,7 +624,7 @@ void main() {
       tester,
     ) async {
       await pump(tester, wide: false);
-      await tester.tap(find.byKey(const ValueKey(VirtSection.network)));
+      await tester.tap(segment(libL10n.network));
       await _settle(tester);
       await tester.tap(find.byKey(const ValueKey('net:pve/vmbr0')));
       await _settle(tester);
@@ -645,7 +641,7 @@ void main() {
     _failPools = true;
     addTearDown(() => _failPools = false);
     await pump(tester, wide: true);
-    await tester.tap(find.byKey(const ValueKey(VirtSection.storage)));
+    await tester.tap(segment(libL10n.storage));
     await _settle(tester);
     expect(find.text(app_locale.l10n.virtErrUnreachable), findsOneWidget);
     expect(find.byTooltip(libL10n.retry), findsOneWidget);

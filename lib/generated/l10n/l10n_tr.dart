@@ -3348,12 +3348,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get virtGuests => 'Sanal makineler';
 
   @override
-  String get virtGuestsAndContainers => 'VM\'ler ve konteynerler';
-
-  @override
-  String get virtSectionLater => 'Henüz kullanılamıyor';
-
-  @override
   String get virtHosts => 'Ana makineler';
 
   @override

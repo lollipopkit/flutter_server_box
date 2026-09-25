@@ -1217,8 +1217,6 @@
   "virtIntroInBar": "Vərəq panelinə əlavə edildi.",
   "virtIntroInMore": "Daha çox bölməsindədir. Ayarlardakı Ana səhifə vərəqləri onu vərəq panelinə köçürə bilər.",
   "virtGuests": "Virtual maşınlar",
-  "virtGuestsAndContainers": "VM-lər və konteynerlər",
-  "virtSectionLater": "Hələ mövcud deyil",
   "virtHosts": "Hostlar",
   "virtCheckServer": "Bu serveri yoxla",
   "virtCheckAll": "Bütün serverləri yoxla",

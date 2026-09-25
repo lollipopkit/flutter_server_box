@@ -352,9 +352,12 @@ Follows the repo's tab conventions (`CLAUDE.md` → Tabs):
   installs keep their bar; the migration below adds the tab for users who had
   PVE configured.
 - Wide: `SessionSwitcherLabel` host switcher over a list column (guests
-  grouped by state; sections VMs / Storage / Network, a section the host's
-  capabilities lack drawn disabled with a tooltip) and the detail beside it:
-  a guest (Overview, Console, Snapshots), a pool (capacity, what it is, its
+  grouped by state; sections VMs / Storage / Network as fl_lib
+  `SegmentedTabs`, a section the host's capabilities lack left out — both
+  backends have all three) and the detail beside it:
+  a guest (Overview, Console, Snapshots; a guest with a terminal and a
+  screen offers them as the Console segment's second level,
+  `SegmentedTab.sub`), a pool (capacity, what it is, its
   volumes with the guests using them) or a network (configuration, the guests
   on it — a tap opens the guest in the VMs section).
 - Narrow: the single column is the selected host's list in the chosen

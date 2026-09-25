@@ -3189,12 +3189,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get virtGuests => '仮想マシン';
 
   @override
-  String get virtGuestsAndContainers => 'VM とコンテナ';
-
-  @override
-  String get virtSectionLater => 'まだ利用できません';
-
-  @override
   String get virtHosts => 'ホスト';
 
   @override

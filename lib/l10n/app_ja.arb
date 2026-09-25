@@ -994,8 +994,6 @@
   "virtIntroInBar": "タブバーに追加されました。",
   "virtIntroInMore": "「その他」にあります。設定のホームタブでタブバーに移動できます。",
   "virtGuests": "仮想マシン",
-  "virtGuestsAndContainers": "VM とコンテナ",
-  "virtSectionLater": "まだ利用できません",
   "virtHosts": "ホスト",
   "virtCheckServer": "このサーバーを確認",
   "virtCheckAll": "すべてのサーバーを確認",

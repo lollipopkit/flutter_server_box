@@ -3368,12 +3368,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get virtGuests => 'Virtual maşınlar';
 
   @override
-  String get virtGuestsAndContainers => 'VM-lər və konteynerlər';
-
-  @override
-  String get virtSectionLater => 'Hələ mövcud deyil';
-
-  @override
   String get virtHosts => 'Hostlar';
 
   @override

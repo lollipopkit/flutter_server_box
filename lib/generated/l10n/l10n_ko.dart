@@ -3197,12 +3197,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get virtGuests => '가상 머신';
 
   @override
-  String get virtGuestsAndContainers => 'VM 및 컨테이너';
-
-  @override
-  String get virtSectionLater => '아직 사용할 수 없음';
-
-  @override
   String get virtHosts => '호스트';
 
   @override

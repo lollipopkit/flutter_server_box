@@ -1022,8 +1022,6 @@
   "virtIntroInBar": "Її додано на панель вкладок.",
   "virtIntroInMore": "Вона в розділі «Більше». У домашніх вкладках у налаштуваннях її можна перенести на панель вкладок.",
   "virtGuests": "Віртуальні машини",
-  "virtGuestsAndContainers": "ВМ і контейнери",
-  "virtSectionLater": "Поки недоступно",
   "virtHosts": "Хости",
   "virtCheckServer": "Перевірити цей сервер",
   "virtCheckAll": "Перевірити всі сервери",

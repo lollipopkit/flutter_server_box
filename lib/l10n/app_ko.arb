@@ -1007,8 +1007,6 @@
   "virtIntroInBar": "탭 바에 추가되었습니다.",
   "virtIntroInMore": "'더보기'에 있습니다. 설정의 홈 탭에서 탭 바로 옮길 수 있습니다.",
   "virtGuests": "가상 머신",
-  "virtGuestsAndContainers": "VM 및 컨테이너",
-  "virtSectionLater": "아직 사용할 수 없음",
   "virtHosts": "호스트",
   "virtCheckServer": "이 서버 확인",
   "virtCheckAll": "모든 서버 확인",

@@ -1039,8 +1039,6 @@
   "virtIntroInBar": "Se ha añadido a la barra de pestañas.",
   "virtIntroInMore": "Está en Más. Pestañas de inicio, en Ajustes, puede moverla a la barra de pestañas.",
   "virtGuests": "Máquinas virtuales",
-  "virtGuestsAndContainers": "VMs y contenedores",
-  "virtSectionLater": "Aún no disponible",
   "virtHosts": "Hosts",
   "virtCheckServer": "Comprobar este servidor",
   "virtCheckAll": "Comprobar todos los servidores",

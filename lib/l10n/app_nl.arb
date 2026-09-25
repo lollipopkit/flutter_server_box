@@ -1036,8 +1036,6 @@
   "virtIntroInBar": "Het is aan de tabbalk toegevoegd.",
   "virtIntroInMore": "Het staat onder Meer. Home-tabbladen in de instellingen kan het naar de tabbalk verplaatsen.",
   "virtGuests": "Virtuele machines",
-  "virtGuestsAndContainers": "VM's & containers",
-  "virtSectionLater": "Nog niet beschikbaar",
   "virtHosts": "Hosts",
   "virtCheckServer": "Deze server controleren",
   "virtCheckAll": "Alle servers controleren",

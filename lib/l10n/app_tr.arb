@@ -1015,8 +1015,6 @@
   "virtIntroInBar": "Sekme çubuğuna eklendi.",
   "virtIntroInMore": "Daha fazla altında. Ayarlardaki Ana Sayfa Sekmeleri ile sekme çubuğuna taşıyabilirsiniz.",
   "virtGuests": "Sanal makineler",
-  "virtGuestsAndContainers": "VM'ler ve konteynerler",
-  "virtSectionLater": "Henüz kullanılamıyor",
   "virtHosts": "Ana makineler",
   "virtCheckServer": "Bu sunucuyu denetle",
   "virtCheckAll": "Tüm sunucuları denetle",

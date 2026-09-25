@@ -4330,14 +4330,6 @@
   "@virtGuests": {
     "description": "Section of the Virtualization tab listing virtual machines."
   },
-  "virtGuestsAndContainers": "VMs & containers",
-  "@virtGuestsAndContainers": {
-    "description": "Section of the Virtualization tab listing virtual machines and LXC containers."
-  },
-  "virtSectionLater": "Not available yet",
-  "@virtSectionLater": {
-    "description": "Tooltip on a Virtualization section that is not built yet."
-  },
   "virtHosts": "Hosts",
   "@virtHosts": {
     "description": "Heading over the virtualization hosts in the host switcher."

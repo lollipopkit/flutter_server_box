@@ -240,33 +240,35 @@ class _VirtHostColumn extends ConsumerWidget {
     await ref.read(virtHostProvider(serverId).notifier).refresh();
   }
 
-  /// Guests, storage, network. One the host does not have is drawn
-  /// disabled and says so, rather than missing: the row keeps its shape from
-  /// host to host. Until the host has answered, only the guests.
+  /// Guests, and storage and network where the host has them. Until the
+  /// host has answered, only the guests.
   Widget _buildSections(VirtCapabilities? caps, VirtSection shown) {
-    Widget pill(VirtSection s, String label, bool offered) => VirtPill(
-      key: ValueKey(s),
-      icon: s.icon,
-      label: label,
-      active: s == shown,
-      tooltip: offered || caps == null ? null : l10n.virtSectionLater,
-      onTap: offered ? () => onSection(s) : null,
-    );
     return Padding(
       padding: const EdgeInsets.fromLTRB(9, 3, 9, 0),
-      child: Wrap(
-        spacing: 3,
-        runSpacing: 3,
-        children: [
-          pill(
-            VirtSection.guests,
-            (caps?.lxc ?? false)
-                ? l10n.virtGuestsAndContainers
-                : l10n.virtGuests,
-            true,
+      child: SegmentedTabs<VirtSection>(
+        expand: true,
+        selected: shown,
+        onSelected: onSection,
+        segments: [
+          SegmentedTab(
+            value: VirtSection.guests,
+            icon: VirtSection.guests.icon,
+            // Containers included where the host has them: one short word
+            // for the section, as the design names it.
+            label: l10n.virtGuests,
           ),
-          pill(VirtSection.storage, libL10n.storage, caps?.storage ?? false),
-          pill(VirtSection.network, libL10n.network, caps?.network ?? false),
+          if (caps?.storage ?? false)
+            SegmentedTab(
+              value: VirtSection.storage,
+              icon: VirtSection.storage.icon,
+              label: libL10n.storage,
+            ),
+          if (caps?.network ?? false)
+            SegmentedTab(
+              value: VirtSection.network,
+              icon: VirtSection.network.icon,
+              label: libL10n.network,
+            ),
         ],
       ),
     );

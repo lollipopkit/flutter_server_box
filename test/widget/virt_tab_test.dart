@@ -43,6 +43,7 @@ import 'package:server_box/view/page/virt/guest.dart';
 import 'package:server_box/view/page/virt/tab.dart';
 
 import '../helpers/fake_shell.dart';
+import '../helpers/segment.dart';
 import '../helpers/spi_fixture.dart';
 import '../helpers/test_db.dart';
 
@@ -363,7 +364,7 @@ void main() {
       tab.update(AppTab.virt);
       await tester.tap(find.text('web-01'));
       await settle(tester);
-      await tester.tap(find.byKey(const ValueKey(VirtGuestViewKind.console)));
+      await tester.tap(segment(app_locale.l10n.virtConsole));
       await settle(tester);
       await tester.tap(find.text(app_locale.l10n.connect));
       await settle(tester);
@@ -403,8 +404,8 @@ void main() {
       expect(find.text('pve-host'), findsOneWidget);
       expect(find.text('web-01'), findsOneWidget);
       expect(find.text('dns-01'), findsOneWidget);
-      // A PVE host with containers names the section for both.
-      expect(find.text(app_locale.l10n.virtGuestsAndContainers), findsOneWidget);
+      // One short name for the section, containers or not.
+      expect(segment(app_locale.l10n.virtGuests), findsOneWidget);
       // Templates are their own group, not "stopped" guests.
       expect(find.textContaining(app_locale.l10n.virtTemplate.toUpperCase()), findsOneWidget);
 
@@ -442,15 +443,17 @@ void main() {
       await tester.tap(find.text('web-01'));
       await settle(tester);
 
-      await tester.tap(find.byKey(const ValueKey(VirtGuestViewKind.console)));
+      // The Console segment's second level, only while it is chosen.
+      expect(segment(libL10n.terminal), findsNothing);
+      await tester.tap(segment(app_locale.l10n.virtConsole));
       await settle(tester);
 
       // Both, with the screen first.
-      expect(find.byKey(const ValueKey(VirtConsoleKind.vnc)), findsOneWidget);
-      expect(find.byKey(const ValueKey(VirtConsoleKind.text)), findsOneWidget);
+      expect(segment(app_locale.l10n.virtConsoleGraphical), findsOneWidget);
+      expect(segment(libL10n.terminal), findsOneWidget);
       expect(find.text(app_locale.l10n.connect), findsOneWidget);
 
-      await tester.tap(find.byKey(const ValueKey(VirtConsoleKind.text)));
+      await tester.tap(segment(libL10n.terminal));
       await settle(tester);
       expect(find.text(app_locale.l10n.connect), findsOneWidget);
       // The virsh escape is libvirt's; PVE's console has none to explain.
@@ -477,26 +480,14 @@ void main() {
     });
   });
 
-  testWidgets('storage and network a host lacks: disabled, with the reason', (
+  testWidgets('storage and network only where the host has them', (
     tester,
   ) async {
+    // The fake hosts offer neither.
     await pump(tester, wide: true);
-
-    for (final section in [VirtSection.storage, VirtSection.network]) {
-      final pill = find.byKey(ValueKey(section));
-      expect(pill, findsOneWidget);
-      final ink = tester.widget<InkWell>(
-        find.descendant(of: pill, matching: find.byType(InkWell)),
-      );
-      expect(ink.onTap, isNull);
-      final tip = tester.widget<Tooltip>(
-        find.ancestor(
-          of: find.descendant(of: pill, matching: find.byType(Material)),
-          matching: find.byType(Tooltip),
-        ).first,
-      );
-      expect(tip.message, app_locale.l10n.virtSectionLater);
-    }
+    expect(find.text(libL10n.storage), findsNothing);
+    expect(find.text(libL10n.network), findsNothing);
+    expect(segment(app_locale.l10n.virtGuests), findsOneWidget);
   });
 
   group('host switching', () {
@@ -805,7 +796,7 @@ void main() {
       await pump(tester, wide: true, request: host == _pve ? null : host);
       await tester.tap(find.text(guest));
       await settle(tester);
-      await tester.tap(find.byKey(const ValueKey(VirtGuestViewKind.console)));
+      await tester.tap(segment(app_locale.l10n.virtConsole));
       await settle(tester);
     }
 
@@ -817,7 +808,7 @@ void main() {
       );
       await openConsole(tester, host: _kvm, guest: 'db-01');
 
-      expect(find.byKey(const ValueKey(VirtConsoleKind.vnc)), findsNothing);
+      expect(segment(app_locale.l10n.virtConsoleGraphical), findsNothing);
       expect(find.text(app_locale.l10n.connect), findsOneWidget);
       expect(find.text(app_locale.l10n.virtConsoleSerialTip), findsOneWidget);
     });
@@ -885,7 +876,7 @@ void main() {
 
       // Leaving the console closes its session once it has been left long
       // enough, with the notice's countdown first.
-      await tester.tap(find.byKey(const ValueKey(VirtGuestViewKind.overview)));
+      await tester.tap(segment(app_locale.l10n.virtOverview));
       await settle(tester);
       expect(
         container.read(remoteDesktopSessionsProvider).consoles,
@@ -916,7 +907,7 @@ void main() {
       final session = container.read(remoteDesktopSessionsProvider).consoles[id];
       expect(session, isNotNull);
 
-      await tester.tap(find.byKey(const ValueKey(VirtGuestViewKind.overview)));
+      await tester.tap(segment(app_locale.l10n.virtOverview));
       await settle(tester);
       expect(
         container.read(remoteDesktopSessionsProvider).consoles[id]?.visible,
@@ -924,7 +915,7 @@ void main() {
       );
       await tester.pump(const Duration(seconds: 50));
 
-      await tester.tap(find.byKey(const ValueKey(VirtGuestViewKind.console)));
+      await tester.tap(segment(app_locale.l10n.virtConsole));
       await settle(tester);
       expect(find.byType(RemoteDesktopViewer), findsOneWidget);
       expect(
@@ -1008,7 +999,7 @@ void main() {
       // Back: the same session, in place again.
       await tester.tap(find.text('web-01'));
       await settle(tester);
-      await tester.tap(find.byKey(const ValueKey(VirtGuestViewKind.console)));
+      await tester.tap(segment(app_locale.l10n.virtConsole));
       await settle(tester);
       expect(find.byType(SSHPage), findsOneWidget);
       expect(keepAlive.isRegistered(id), isFalse);

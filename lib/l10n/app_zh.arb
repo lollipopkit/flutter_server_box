@@ -993,8 +993,6 @@
   "virtIntroInBar": "已添加到标签栏。",
   "virtIntroInMore": "位于“更多”中。可在设置的“主页标签”中将其移到标签栏。",
   "virtGuests": "虚拟机",
-  "virtGuestsAndContainers": "虚拟机/容器",
-  "virtSectionLater": "暂不可用",
   "virtHosts": "宿主机",
   "virtCheckServer": "检查此服务器",
   "virtCheckAll": "检查所有服务器",

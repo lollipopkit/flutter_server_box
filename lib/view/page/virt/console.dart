@@ -27,6 +27,7 @@ class VirtConsoleView extends StatelessWidget {
     required this.guest,
     required this.state,
     required this.detail,
+    this.kind,
     this.onStart,
     this.onRetryDetail,
   });
@@ -37,6 +38,17 @@ class VirtConsoleView extends StatelessWidget {
 
   /// The guest's detail, which says which consoles it has.
   final Future<VirtGuestDetail>? detail;
+
+  /// The console asked for — the second level of the guest's Console
+  /// segment. Null, or one the guest does not have, is [defaultKind].
+  final VirtConsoleKind? kind;
+
+  /// Graphical first where there is one: a VM's screen is what its console
+  /// usually means, and its serial port is the fallback.
+  static VirtConsoleKind defaultKind(Set<VirtConsoleKind> consoles) =>
+      consoles.contains(VirtConsoleKind.vnc)
+      ? VirtConsoleKind.vnc
+      : VirtConsoleKind.text;
 
   /// Starts the guest, when that is on offer: a console of a guest that is
   /// off has nothing on it.
@@ -94,7 +106,9 @@ class VirtConsoleView extends StatelessWidget {
           key: ValueKey(guest.id),
           serverId: serverId,
           guest: guest,
-          consoles: data.consoles,
+          kind: data.consoles.contains(kind)
+              ? kind!
+              : defaultKind(data.consoles),
         );
       },
     );
@@ -106,23 +120,21 @@ class _VirtConsoles extends ConsumerStatefulWidget {
     super.key,
     required this.serverId,
     required this.guest,
-    required this.consoles,
+    required this.kind,
   });
 
   final String serverId;
   final VirtGuest guest;
-  final Set<VirtConsoleKind> consoles;
+
+  /// The console shown: one the guest has.
+  final VirtConsoleKind kind;
 
   @override
   ConsumerState<_VirtConsoles> createState() => _VirtConsolesState();
 }
 
 class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
-  /// Graphical first where there is one: a VM's screen is what its console
-  /// usually means, and its serial port is the fallback.
-  late var _kind = widget.consoles.contains(VirtConsoleKind.vnc)
-      ? VirtConsoleKind.vnc
-      : VirtConsoleKind.text;
+  VirtConsoleKind get _kind => widget.kind;
 
   var _opening = false;
 
@@ -182,12 +194,6 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
     super.initState();
     _sessions = ref.read(remoteDesktopSessionsProvider.notifier);
     _mounted.update(_vncId, (n) => n + 1, ifAbsent: () => 1);
-  }
-
-  @override
-  void didUpdateWidget(_VirtConsoles oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (!widget.consoles.contains(_kind)) _kind = widget.consoles.first;
   }
 
   @override
@@ -263,32 +269,7 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
         onTap: _openText,
       ),
     };
-    if (widget.consoles.length < 2) return body;
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(13, 0, 13, 7),
-          child: Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: Wrap(
-              spacing: 3,
-              children: [
-                for (final kind in VirtConsoleKind.values)
-                  if (widget.consoles.contains(kind))
-                    VirtPill(
-                      key: ValueKey(kind),
-                      label: kind.label,
-                      icon: kind.icon,
-                      active: kind == _kind,
-                      onTap: () => setState(() => _kind = kind),
-                    ),
-              ],
-            ),
-          ),
-        ),
-        Expanded(child: body),
-      ],
-    );
+    return body;
   }
 
   /// [onClose], given, is a second button: the session is running, and this

@@ -174,20 +174,17 @@ extension _Overview on _VirtGuestViewState {
                     // Windows the host kept, where it keeps any. Without them
                     // the chart is this session's, which needs no choice.
                     if (stored)
-                      Wrap(
-                        spacing: 2,
-                        children: [
-                          VirtPill(
-                            label: l10n.rangeLive,
-                            active: _window == null,
-                            onTap: () => _selectWindow(null),
-                          ),
+                      // Shares the title's line and is changed once in a
+                      // while: the chosen window at rest, all of them while
+                      // choosing.
+                      SegmentedTabs<VirtHistoryWindow?>(
+                        collapse: true,
+                        selected: _window,
+                        onSelected: _selectWindow,
+                        segments: [
+                          SegmentedTab(value: null, label: l10n.rangeLive),
                           for (final w in VirtHistoryWindow.values)
-                            VirtPill(
-                              label: w.label,
-                              active: _window == w,
-                              onTap: () => _selectWindow(w),
-                            ),
+                            SegmentedTab(value: w, label: w.label),
                         ],
                       ),
                   ],
