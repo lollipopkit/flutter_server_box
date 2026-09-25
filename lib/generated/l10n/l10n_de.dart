@@ -3794,30 +3794,11 @@ class AppLocalizationsDe extends AppLocalizations {
       'Ein öffentlicher OpenSSH-Schlüssel pro Zeile.';
 
   @override
-  String virtDeleteAsk(String name) {
-    return '$name löschen? Das lässt sich nicht rückgängig machen.';
-  }
-
-  @override
-  String virtDeleteTypeName(String name) {
-    return 'Zum Bestätigen $name eingeben';
-  }
-
-  @override
   String get virtDeleteDisks => 'Auch seine Festplatten löschen';
-
-  @override
-  String get virtDeleteDisksTip =>
-      'Eingebundene Installationsmedien bleiben erhalten.';
 
   @override
   String get virtDeleteDisksPve =>
       'Seine Festplatten werden mit gelöscht; Installationsmedien bleiben erhalten.';
-
-  @override
-  String virtDeleteStopFirst(String name) {
-    return '$name läuft. Vor dem Löschen muss er gestoppt werden. Jetzt hart ausschalten?';
-  }
 
   @override
   String virtDeleted(String name) {
@@ -4048,13 +4029,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Einige Hardwareänderungen werden nach dem Neustart wirksam';
 
   @override
-  String get virtHwPendingTip =>
-      'Der laufende Gast behält den linken Wert; den rechten erhält er beim nächsten Start.';
-
-  @override
-  String get virtHwPendingTitle => 'Ausstehend bis zum nächsten Start';
-
-  @override
   String get virtHwPickNet => 'Netzwerk wählen';
 
   @override
@@ -4090,6 +4064,49 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get virtHwRevertAll => 'Alle zurücknehmen';
+
+  @override
+  String get virtSetRenameStopped =>
+      'Zum Umbenennen herunterfahren: libvirt benennt nur einen Gast um, der nicht läuft.';
+
+  @override
+  String virtSetIssueDescription(int max) {
+    return 'Höchstens $max Zeichen, ohne Steuerzeichen.';
+  }
+
+  @override
+  String get virtSetManualStart => 'Manuell gestartet';
+
+  @override
+  String get virtSetProtection => 'Schutz';
+
+  @override
+  String get virtSetProtectionNote =>
+      'Verhindert das Löschen des Gastes und Änderungen an seinen Datenträgern';
+
+  @override
+  String get virtSetIrreversible => 'Nicht rückgängig zu machen';
+
+  @override
+  String get virtSetDeleteStopFirst => 'Vor dem Löschen herunterfahren.';
+
+  @override
+  String get virtSetDeleteProtected =>
+      'Der Schutz ist an: zuerst unter Allgemein ausschalten.';
+
+  @override
+  String get virtSetDeleteAgain => 'Zum Bestätigen erneut drücken';
+
+  @override
+  String virtSetDeleteConfirm(String name) {
+    return '$name löschen';
+  }
+
+  @override
+  String get virtSetDeleteVm => 'Virtuelle Maschine löschen';
+
+  @override
+  String get virtSetDeleteLxc => 'Container löschen';
 
   @override
   String get virtHwSockets => 'Sockel';

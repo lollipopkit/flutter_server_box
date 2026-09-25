@@ -684,13 +684,13 @@ class LibvirtBackend implements VirtBackend {
       ),
     );
     _hardware[guest.id] = info;
-    return hardwareOf(info);
+    return hardwareOf(info, name: guest.name);
   }
 
   /// [info] as the Hardware view edits it: the persistent definition, with
   /// what the running one has instead as pending.
   @visibleForTesting
-  static VirtHardware hardwareOf(LibvirtHardwareInfo info) {
+  static VirtHardware hardwareOf(LibvirtHardwareInfo info, {String? name}) {
     final c = info.config;
     final hostMem = info.hostMemoryKib;
     return VirtHardware(
@@ -730,6 +730,9 @@ class LibvirtBackend implements VirtBackend {
       ],
       boot: c.boot,
       autostart: info.autostart,
+      name: name,
+      description: info.description,
+      renameRunning: false,
       pending: pendingOf(c, info.live),
       revision: info.configXml,
       configText: info.configXml.trimRight(),
@@ -995,7 +998,11 @@ class LibvirtBackend implements VirtBackend {
         return {'op': 'boot', 'order': order};
       case VirtHwSetAutostart(:final on):
         return {'op': 'autostart', 'on': on};
-      case VirtHwRevert():
+      case VirtHwSetDescription(:final text):
+        return {'op': 'description', 'text': text};
+      case VirtHwSetName(:final name):
+        return {'op': 'rename', 'name': name};
+      case VirtHwSetProtection() || VirtHwRevert():
         throw const VirtErr(type: VirtErrType.unsupported);
     }
   }

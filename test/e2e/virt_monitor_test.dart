@@ -1002,6 +1002,31 @@ void _libvirtHardware(_Agent agent) {
       );
       expect((await hw()).disk('vda')!.size, 2 << 30);
     });
+
+    test('settings: a note with quotes and a leading dash, and a rename '
+        'only while stopped', () async {
+      var h = await hw();
+      expect(h.name, g.name);
+      expect(h.protection, isNull);
+      const note = '-it\'s "a" note\nsecond line';
+      await w.host.changeHardware(g.id, h, const VirtHwSetDescription(note));
+      h = await hw();
+      expect(h.description, note);
+      await w.host.changeHardware(g.id, h, const VirtHwSetDescription(''));
+      h = await hw();
+      expect(h.description, isNull);
+
+      // Stopped by the test before: renamed, and back.
+      expect(h.running, isFalse);
+      final renamed = '$name-r';
+      await w.host.changeHardware(g.id, h, VirtHwSetName(renamed));
+      await w.host.refresh();
+      expect(w.state.guest(g.id)?.name, renamed);
+      h = await hw();
+      await w.host.changeHardware(g.id, h, VirtHwSetName(name));
+      await w.host.refresh();
+      expect(w.state.guest(g.id)?.name, name);
+    });
   });
 }
 
@@ -1110,6 +1135,48 @@ void _pveHardware(_Agent agent) {
       final h = await hw(vm);
       expect(h.autostart, isTrue);
       await w.host.changeHardware(vm.id, h, const VirtHwSetAutostart(false));
+    });
+
+    test('settings: a VM\'s name, note, start with the host, protection',
+        () async {
+      var h = await hw(vm);
+      final name0 = h.name!;
+      await w.host.changeHardware(vm.id, h, const VirtHwSetName('sb-e2e-set'));
+      h = await hw(vm);
+      expect(h.name, 'sb-e2e-set');
+      // Taken at once, running or not.
+      expect(h.pending.map((p) => p.key), isNot(contains('name')));
+      await w.host.changeHardware(vm.id, h, VirtHwSetName(name0));
+      h = await hw(vm);
+      await w.host.changeHardware(
+        vm.id,
+        h,
+        const VirtHwSetDescription('it\'s "a" note\nline two'),
+      );
+      h = await hw(vm);
+      expect(h.description, 'it\'s "a" note\nline two');
+      await w.host.changeHardware(vm.id, h, const VirtHwSetDescription(''));
+      h = await hw(vm);
+      expect(h.description, isNull);
+      await w.host.changeHardware(vm.id, h, const VirtHwSetProtection(true));
+      h = await hw(vm);
+      expect(h.protection, isTrue);
+      await w.host.changeHardware(vm.id, h, const VirtHwSetProtection(false));
+      expect((await hw(vm)).protection, isFalse);
+    });
+
+    test('settings: a running container\'s hostname, taken at once',
+        () async {
+      var h = await hw(ct);
+      final name0 = h.name!;
+      await w.host.changeHardware(ct.id, h, const VirtHwSetName('sb-e2e-ct'));
+      h = await hw(ct);
+      expect(h.name, 'sb-e2e-ct');
+      // PVE 9.2 writes a running container's hostname into it at once;
+      // nothing waits for a restart.
+      expect(h.pending.map((p) => p.key), isNot(contains('hostname')));
+      await w.host.changeHardware(ct.id, h, VirtHwSetName(name0));
+      expect((await hw(ct)).name, name0);
     });
 
     test('a VM: a disk added, grown, removed with its volume', () async {

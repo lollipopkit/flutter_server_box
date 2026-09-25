@@ -3562,28 +3562,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get virtCreateSshKeysInvalid => '1 行に OpenSSH 公開鍵を 1 つ。';
 
   @override
-  String virtDeleteAsk(String name) {
-    return '$name を削除しますか？元に戻せません。';
-  }
-
-  @override
-  String virtDeleteTypeName(String name) {
-    return '確認のため $name と入力';
-  }
-
-  @override
   String get virtDeleteDisks => 'ディスクも削除する';
 
   @override
-  String get virtDeleteDisksTip => '接続しているインストールメディアは残ります。';
-
-  @override
   String get virtDeleteDisksPve => 'ディスクは一緒に削除されます。インストールメディアは残ります。';
-
-  @override
-  String virtDeleteStopFirst(String name) {
-    return '$name は実行中です。削除する前に停止する必要があります。今すぐ強制停止しますか？';
-  }
 
   @override
   String virtDeleted(String name) {
@@ -3806,12 +3788,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get virtHwPendingBanner => '一部のハードウェア変更は再起動後に反映されます';
 
   @override
-  String get virtHwPendingTip => '実行中のゲストは左の値のままで、次回起動時に右の値になります。';
-
-  @override
-  String get virtHwPendingTitle => '次回起動時に反映';
-
-  @override
   String get virtHwPickNet => 'ネットワークを選択';
 
   @override
@@ -3847,6 +3823,47 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get virtHwRevertAll => 'すべて元に戻す';
+
+  @override
+  String get virtSetRenameStopped =>
+      '名前を変更するにはシャットダウンしてください：libvirt は停止中のゲストしか名前を変更できません。';
+
+  @override
+  String virtSetIssueDescription(int max) {
+    return '$max 文字まで、制御文字は使えません。';
+  }
+
+  @override
+  String get virtSetManualStart => '手動で起動';
+
+  @override
+  String get virtSetProtection => '保護';
+
+  @override
+  String get virtSetProtectionNote => 'ゲストの削除とディスクの変更を禁止します';
+
+  @override
+  String get virtSetIrreversible => '元に戻せません';
+
+  @override
+  String get virtSetDeleteStopFirst => '削除する前にシャットダウンしてください。';
+
+  @override
+  String get virtSetDeleteProtected => '保護が有効です：先に「一般」でオフにしてください。';
+
+  @override
+  String get virtSetDeleteAgain => 'もう一度押して確定';
+
+  @override
+  String virtSetDeleteConfirm(String name) {
+    return '$name を削除';
+  }
+
+  @override
+  String get virtSetDeleteVm => '仮想マシンを削除';
+
+  @override
+  String get virtSetDeleteLxc => 'コンテナを削除';
 
   @override
   String get virtHwSockets => 'ソケット';

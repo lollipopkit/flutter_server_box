@@ -3753,29 +3753,11 @@ class AppLocalizationsAz extends AppLocalizations {
   String get virtCreateSshKeysInvalid => 'Hər sətirdə bir OpenSSH açıq açarı.';
 
   @override
-  String virtDeleteAsk(String name) {
-    return '$name silinsin? Geri qaytarmaq olmaz.';
-  }
-
-  @override
-  String virtDeleteTypeName(String name) {
-    return 'Təsdiq üçün $name yazın';
-  }
-
-  @override
   String get virtDeleteDisks => 'Disklərini də sil';
-
-  @override
-  String get virtDeleteDisksTip => 'Qoşulmuş quraşdırma mediası saxlanılır.';
 
   @override
   String get virtDeleteDisksPve =>
       'Diskləri onunla birlikdə silinir; quraşdırma mediası saxlanılır.';
-
-  @override
-  String virtDeleteStopFirst(String name) {
-    return '$name işləyir. Silinməzdən əvvəl dayandırılmalıdır. İndi məcburi söndürülsün?';
-  }
 
   @override
   String virtDeleted(String name) {
@@ -4006,13 +3988,6 @@ class AppLocalizationsAz extends AppLocalizations {
       'Bəzi avadanlıq dəyişiklikləri yenidən başladıqda qüvvəyə minir';
 
   @override
-  String get virtHwPendingTip =>
-      'İşləyən qonaq soldakı dəyəri saxlayır; sağdakını növbəti başlanğıcda alır.';
-
-  @override
-  String get virtHwPendingTitle => 'Növbəti başlanğıca qədər gözləyir';
-
-  @override
   String get virtHwPickNet => 'Şəbəkə seçin';
 
   @override
@@ -4048,6 +4023,49 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get virtHwRevertAll => 'Hamısını geri qaytar';
+
+  @override
+  String get virtSetRenameStopped =>
+      'Adını dəyişmək üçün qonağı söndürün: libvirt yalnız işləməyən qonağın adını dəyişir.';
+
+  @override
+  String virtSetIssueDescription(int max) {
+    return 'Ən çox $max simvol, idarəetmə simvolları olmadan.';
+  }
+
+  @override
+  String get virtSetManualStart => 'Əllə başladılır';
+
+  @override
+  String get virtSetProtection => 'Qoruma';
+
+  @override
+  String get virtSetProtectionNote =>
+      'Qonağın silinməsini və disklərinin dəyişdirilməsini qadağan edir';
+
+  @override
+  String get virtSetIrreversible => 'Geri qaytarıla bilməz';
+
+  @override
+  String get virtSetDeleteStopFirst => 'Silməzdən əvvəl söndürün.';
+
+  @override
+  String get virtSetDeleteProtected =>
+      'Qoruma aktivdir: əvvəlcə Ümumi bölməsində söndürün.';
+
+  @override
+  String get virtSetDeleteAgain => 'Təsdiqləmək üçün yenidən basın';
+
+  @override
+  String virtSetDeleteConfirm(String name) {
+    return '$name sil';
+  }
+
+  @override
+  String get virtSetDeleteVm => 'Virtual maşını sil';
+
+  @override
+  String get virtSetDeleteLxc => 'Konteyneri sil';
 
   @override
   String get virtHwSockets => 'Soketlər';

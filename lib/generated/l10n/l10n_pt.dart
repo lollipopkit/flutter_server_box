@@ -3779,29 +3779,11 @@ class AppLocalizationsPt extends AppLocalizations {
   String get virtCreateSshKeysInvalid => 'Uma chave pública OpenSSH por linha.';
 
   @override
-  String virtDeleteAsk(String name) {
-    return 'Excluir $name? Não é possível desfazer.';
-  }
-
-  @override
-  String virtDeleteTypeName(String name) {
-    return 'Digite $name para confirmar';
-  }
-
-  @override
   String get virtDeleteDisks => 'Excluir também os discos';
-
-  @override
-  String get virtDeleteDisksTip => 'A mídia de instalação conectada é mantida.';
 
   @override
   String get virtDeleteDisksPve =>
       'Os discos são excluídos junto; a mídia de instalação é mantida.';
-
-  @override
-  String virtDeleteStopFirst(String name) {
-    return '$name está em execução. Precisa ser parado antes de ser excluído. Forçar o desligamento agora?';
-  }
 
   @override
   String virtDeleted(String name) {
@@ -4030,13 +4012,6 @@ class AppLocalizationsPt extends AppLocalizations {
       'Algumas mudanças de hardware valem após reiniciar';
 
   @override
-  String get virtHwPendingTip =>
-      'O convidado em execução mantém o valor da esquerda; recebe o da direita na próxima inicialização.';
-
-  @override
-  String get virtHwPendingTitle => 'Pendente até a próxima inicialização';
-
-  @override
   String get virtHwPickNet => 'Escolha uma rede';
 
   @override
@@ -4072,6 +4047,49 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get virtHwRevertAll => 'Reverter tudo';
+
+  @override
+  String get virtSetRenameStopped =>
+      'Desligue o convidado para renomeá-lo: o libvirt só renomeia um convidado que não está em execução.';
+
+  @override
+  String virtSetIssueDescription(int max) {
+    return 'No máximo $max caracteres, sem caracteres de controle.';
+  }
+
+  @override
+  String get virtSetManualStart => 'Iniciado manualmente';
+
+  @override
+  String get virtSetProtection => 'Proteção';
+
+  @override
+  String get virtSetProtectionNote =>
+      'Impede excluir o convidado e alterar seus discos';
+
+  @override
+  String get virtSetIrreversible => 'Não pode ser desfeito';
+
+  @override
+  String get virtSetDeleteStopFirst => 'Desligue-o antes de excluí-lo.';
+
+  @override
+  String get virtSetDeleteProtected =>
+      'A proteção está ativada: desative-a primeiro em Geral.';
+
+  @override
+  String get virtSetDeleteAgain => 'Pressione de novo para confirmar';
+
+  @override
+  String virtSetDeleteConfirm(String name) {
+    return 'Excluir $name';
+  }
+
+  @override
+  String get virtSetDeleteVm => 'Excluir máquina virtual';
+
+  @override
+  String get virtSetDeleteLxc => 'Excluir contêiner';
 
   @override
   String get virtHwSockets => 'Sockets';

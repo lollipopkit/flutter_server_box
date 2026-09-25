@@ -453,6 +453,7 @@ abstract class LibvirtHardwareInfo with _$LibvirtHardwareInfo {
     LibvirtHwConfig? live,
     required String configXml,
     @Default(false) bool autostart,
+    String? description,
     int? hostCpus,
     int? hostMemoryKib,
   }) = _LibvirtHardwareInfo;

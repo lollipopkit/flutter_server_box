@@ -1,7 +1,9 @@
-/// The Virtualization tab's Hardware view over a scripted host: the groups
-/// for a VM and a container, a CPU edit held as a draft until Save, pending
-/// changes with their revert and the restart banner, a disk removed behind
-/// its confirmation, and the index on a wide window.
+/// The Virtualization tab's Hardware and Settings views over a scripted
+/// host: the groups for a VM and a container, a CPU edit held as a draft
+/// until Save, pending changes shown on what they change with their revert
+/// and the restart banner, a disk removed behind its confirmation, the
+/// dashed add rows, the index on a wide window, and the Settings view's
+/// name, note, start and protection, and its two-press delete.
 ///
 /// As in `virt_tab_test.dart`, the providers are replaced, not the backends.
 library;
@@ -36,17 +38,18 @@ VirtGuest _guest(
   String id,
   String name, {
   VirtGuestKind kind = VirtGuestKind.qemu,
+  VirtGuestState state = VirtGuestState.running,
   required int vmid,
 }) => VirtGuest(
   id: id,
   name: name,
   kind: kind,
-  state: VirtGuestState.running,
+  state: state,
   vmid: vmid,
   node: 'pve',
   vcpu: 2,
   actions: VirtPowerAction.offered(
-    VirtGuestState.running,
+    state,
     pause: kind == VirtGuestKind.qemu,
   ),
 );
@@ -61,11 +64,13 @@ VirtSnapshot _snapshot() => VirtSnapshot(
   guests: [
     _guest('qemu/100', 'web-01', vmid: 100),
     _guest('lxc/200', 'dns-01', kind: VirtGuestKind.lxc, vmid: 200),
+    _guest('qemu/101', 'db-02', state: VirtGuestState.stopped, vmid: 101),
   ],
   capabilities: const VirtCapabilities(
     lxc: true,
     storage: true,
     network: true,
+    create: true,
     hardware: true,
     hardwareRevert: true,
   ),
@@ -102,6 +107,10 @@ const _vm = VirtHardware(
     VirtPendingField(key: 'cores', current: '1', pending: '2'),
     VirtPendingField(key: 'boot', current: 'order=scsi0', pending: 'order=scsi0;ide2;net0'),
   ],
+  autostart: true,
+  name: 'web-01',
+  description: 'the web tier',
+  protection: false,
   revision: 'digest-1',
   limits: VirtHwLimits(hostCpus: 8, hostMemoryBytes: 16 << 30),
   cpuTypes: ['host', 'x86-64-v3'],
@@ -123,7 +132,31 @@ const _ct = VirtHardware(
     ),
   ],
   nics: [VirtHwNic(key: 'net0', source: 'vmbr0', name: 'eth0')],
+  name: 'dns-01',
+  protection: false,
+  pending: [VirtPendingField(key: 'hostname', current: 'dns', pending: 'dns-01')],
   revision: 'digest-2',
+);
+
+/// Stopped, and protected.
+const _stopped = VirtHardware(
+  kind: VirtGuestKind.qemu,
+  running: false,
+  cpu: VirtHwCpu(sockets: 1, cores: 1),
+  memory: VirtHwMemory(mib: 1024, balloon: true),
+  disks: [
+    VirtHwDisk(
+      key: 'scsi0',
+      kind: VirtHwDiskKind.disk,
+      source: 'local-lvm:vm-101-disk-0',
+      size: 4 << 30,
+      bus: 'scsi',
+    ),
+  ],
+  boot: ['scsi0'],
+  name: 'db-02',
+  protection: true,
+  revision: 'digest-3',
 );
 
 final _hardware = <String, VirtHardware>{};
@@ -188,6 +221,10 @@ class _FakeHost extends VirtHostNotifier {
   @override
   Future<void> restartToApply(String guestId) async =>
       _calls.add('restart $guestId');
+
+  @override
+  Future<void> delete(String guestId, {bool removeDisks = true}) async =>
+      _calls.add('delete $guestId disks=$removeDisks');
 }
 
 void main() {
@@ -207,7 +244,8 @@ void main() {
     _hardware
       ..clear()
       ..['qemu/100'] = _vm
-      ..['lxc/200'] = _ct;
+      ..['lxc/200'] = _ct
+      ..['qemu/101'] = _stopped;
     _changes.clear();
     _calls.clear();
   });
@@ -225,7 +263,7 @@ void main() {
   }) async {
     tester.view.physicalSize = wide
         ? const Size(1400, 900)
-        : const Size(400, 800);
+        : const Size(400, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     final container = ProviderContainer(
@@ -282,7 +320,6 @@ void main() {
     await open(tester, 'web-01');
     final l10n = app_locale.l10n;
     for (final t in [
-      l10n.virtHwPendingTitle,
       l10n.virtHwProcessor,
       l10n.virtHwNics,
       l10n.virtHwCdrom,
@@ -291,7 +328,17 @@ void main() {
     ]) {
       expect(title(t), findsOneWidget, reason: t);
     }
+    // On what it changes, not in a list of its own: the pending vCPUs in
+    // the processor group, the boot order's in the boot group.
     expect(_key('hw:pending:cores'), findsOneWidget);
+    expect(
+      tester.getRect(_key('hw:pending:cores')).top,
+      lessThan(tester.getRect(_key('hw:step:memory')).top),
+    );
+    expect(
+      tester.getRect(_key('hw:pending:boot')).top,
+      greaterThan(tester.getRect(_key('hw:boot:scsi0')).top),
+    );
     expect(_key('hw:pending-banner'), findsOneWidget);
 
     await tap(tester, _key('hw:revert:cores'));
@@ -299,9 +346,28 @@ void main() {
     expect(id, 'qemu/100');
     expect((change as VirtHwRevert).keys, ['cores']);
 
+    // Every one at once, from the banner.
+    _changes.clear();
+    await tester.tap(_key('hw:revert-all'));
+    await _settle(tester);
+    expect((_changes.single.$2 as VirtHwRevert).keys, ['cores', 'boot']);
+
     await tester.tap(_key('hw:restart-now'));
     await _settle(tester);
     expect(_calls, ['restart qemu/100']);
+  });
+
+  testWidgets('adding is a dashed row, as the design draws room for one', (
+    tester,
+  ) async {
+    await open(tester, 'web-01');
+    for (final k in ['hw:disk:add', 'hw:nic:add']) {
+      expect(
+        find.ancestor(of: _key(k), matching: find.byType(DashedBorder)),
+        findsOneWidget,
+        reason: k,
+      );
+    }
   });
 
   testWidgets('a CPU edit waits for Save, and Cancel drops it', (tester) async {
@@ -311,7 +377,6 @@ void main() {
     expect(save, findsNothing);
 
     await tap(tester, inc);
-    debugPrint('DBG keys ${find.byWidgetPredicate((w) => w.key is ValueKey<String> && (w.key! as ValueKey<String>).value.startsWith('hw:'), skipOffstage: false).evaluate().map((e) => (e.widget.key! as ValueKey<String>).value).toList()}');
     expect(_changes, isEmpty, reason: 'a draft until Save');
     expect(save, findsOneWidget);
     await tap(tester, find.text(libL10n.cancel));
@@ -355,13 +420,15 @@ void main() {
     expect(title(l10n.virtHwCdrom), findsNothing);
     expect(text(l10n.virtHwBootOrder), findsNothing);
     expect(_key('hw:boot:up'), findsNothing);
-    expect(title(l10n.virtHwPendingTitle), findsNothing);
-    expect(_key('hw:pending-banner'), findsNothing);
+    // Its hostname waits for a restart: said in Settings, where it is set,
+    // and above the tabs.
+    expect(_key('hw:pending:hostname'), findsNothing);
+    expect(_key('hw:pending-banner'), findsOneWidget);
   });
 
   testWidgets('a wide window indexes the groups', (tester) async {
     await open(tester, 'web-01', wide: true);
-    for (final g in ['pending', 'cpu', 'mem', 'disks', 'nics', 'cdrom', 'boot', 'config']) {
+    for (final g in ['cpu', 'mem', 'disks', 'nics', 'cdrom', 'boot', 'config']) {
       expect(_key('hw:index:$g'), findsOneWidget, reason: g);
     }
     expect(tester.getRect(_key('hw:disc:config')).top, greaterThan(900));
@@ -370,7 +437,96 @@ void main() {
     // Scrolled to, in the pane: not merely built.
     expect(tester.getRect(_key('hw:disc:config')).top, lessThan(900));
   });
+
+  group('settings', () {
+    Future<void> openSettings(WidgetTester tester, String guest) =>
+        open(tester, guest, segmentLabel: libL10n.setting);
+
+    Finder input(String key) => find.descendant(
+      of: _key(key),
+      matching: find.byType(TextField),
+    );
+
+    testWidgets('name, note, start with the host and protection', (
+      tester,
+    ) async {
+      await openSettings(tester, 'web-01');
+      expect(title(libL10n.general), findsOneWidget);
+      expect(
+        tester.widget<TextField>(input('set:name')).controller!.text,
+        'web-01',
+      );
+      expect(
+        tester.widget<TextField>(input('set:desc')).controller!.text,
+        'the web tier',
+      );
+
+      // A name PVE refuses cannot be saved; one it takes can.
+      await tester.enterText(input('set:name'), 'web_01');
+      await _settle(tester);
+      expect(
+        text(app_locale.l10n.virtCreateNameInvalidPve),
+        findsOneWidget,
+      );
+      await tester.enterText(input('set:name'), 'web-03');
+      await _settle(tester);
+      await tap(tester, _key('set:name:save'));
+      expect((_changes.single.$2 as VirtHwSetName).name, 'web-03');
+
+      _changes.clear();
+      await tester.enterText(input('set:desc'), '');
+      await _settle(tester);
+      await tap(tester, _key('set:desc:save'));
+      expect((_changes.single.$2 as VirtHwSetDescription).text, '');
+
+      _changes.clear();
+      await tap(tester, _key('hw:toggle:autostart'));
+      expect((_changes.single.$2 as VirtHwSetAutostart).on, isFalse);
+      _changes.clear();
+      await tap(tester, _key('hw:toggle:protection'));
+      expect((_changes.single.$2 as VirtHwSetProtection).on, isTrue);
+    });
+
+    testWidgets('a container\'s pending hostname is shown by its field', (
+      tester,
+    ) async {
+      await openSettings(tester, 'dns-01');
+      expect(_key('hw:pending:hostname'), findsOneWidget);
+      await tap(tester, _key('hw:revert:hostname'));
+      expect((_changes.single.$2 as VirtHwRevert).keys, ['hostname']);
+    });
+
+    testWidgets('delete: not while running, and asked twice', (tester) async {
+      await openSettings(tester, 'web-01');
+      expect(text(app_locale.l10n.virtSetDeleteStopFirst), findsOneWidget);
+      expect(
+        tester.widget<Btn>(_key('delete:go')).onTap,
+        isNull,
+        reason: 'running',
+      );
+      // PVE deletes a guest's disks with it: said, not asked.
+      expect(text(app_locale.l10n.virtDeleteDisksPve), findsOneWidget);
+    });
+
+    testWidgets('delete: protection holds it back, then two presses', (
+      tester,
+    ) async {
+      await openSettings(tester, 'db-02');
+      expect(text(app_locale.l10n.virtSetDeleteProtected), findsOneWidget);
+      expect(tester.widget<Btn>(_key('delete:go')).onTap, isNull);
+
+      _hardware['qemu/101'] = _stopped.copyWith(protection: false);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await openSettings(tester, 'db-02');
+      await tap(tester, _key('delete:go'));
+      expect(_calls, isEmpty, reason: 'the first press asks');
+      expect(text(app_locale.l10n.virtSetDeleteAgain), findsOneWidget);
+      await tap(tester, _key('delete:go'));
+      expect(_calls, ['delete qemu/101 disks=true']);
+    });
+  });
 }
+
 
 /// Built, whether scrolled to or not.
 Finder _key(String key) => find.byKey(ValueKey(key), skipOffstage: false);

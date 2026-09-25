@@ -6460,41 +6460,17 @@ abstract class AppLocalizations {
   /// **'One OpenSSH public key per line.'**
   String get virtCreateSshKeysInvalid;
 
-  /// Delete confirmation for a guest.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete {name}? This cannot be undone.'**
-  String virtDeleteAsk(String name);
-
-  /// Label of the field where the guest's name is typed to confirm deleting it.
-  ///
-  /// In en, this message translates to:
-  /// **'Type {name} to confirm'**
-  String virtDeleteTypeName(String name);
-
   /// Checkbox: delete the guest's disks as well.
   ///
   /// In en, this message translates to:
   /// **'Delete its disks too'**
   String get virtDeleteDisks;
 
-  /// Install media attached to the guest is not deleted.
-  ///
-  /// In en, this message translates to:
-  /// **'Install media attached to it is kept.'**
-  String get virtDeleteDisksTip;
-
   /// On PVE a guest's disks always go with it.
   ///
   /// In en, this message translates to:
   /// **'Its disks are deleted with it; install media is kept.'**
   String get virtDeleteDisksPve;
-
-  /// A running guest must be stopped before it is deleted; asks to force it off.
-  ///
-  /// In en, this message translates to:
-  /// **'{name} is running. It must be stopped before it can be deleted. Force it off now?'**
-  String virtDeleteStopFirst(String name);
 
   /// Toast after a guest was deleted.
   ///
@@ -6904,18 +6880,6 @@ abstract class AppLocalizations {
   /// **'Some hardware changes take effect at restart'**
   String get virtHwPendingBanner;
 
-  /// Explains the pending card's rows (current → pending).
-  ///
-  /// In en, this message translates to:
-  /// **'The running guest keeps the value on the left; it gets the one on the right when it next starts.'**
-  String get virtHwPendingTip;
-
-  /// Card title: changes the running guest has not taken yet.
-  ///
-  /// In en, this message translates to:
-  /// **'Pending until the next start'**
-  String get virtHwPendingTitle;
-
   /// Summary of the new NIC block.
   ///
   /// In en, this message translates to:
@@ -6981,6 +6945,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Revert all'**
   String get virtHwRevertAll;
+
+  /// Settings view: libvirt can rename a guest only when it is shut off.
+  ///
+  /// In en, this message translates to:
+  /// **'Shut the guest down to rename it: libvirt renames only a guest that is not running.'**
+  String get virtSetRenameStopped;
+
+  /// Settings view: the guest's description is too long or has control characters.
+  ///
+  /// In en, this message translates to:
+  /// **'At most {max} characters, and no control characters.'**
+  String virtSetIssueDescription(int max);
+
+  /// Settings view index note: the guest does not start with the host.
+  ///
+  /// In en, this message translates to:
+  /// **'Started by hand'**
+  String get virtSetManualStart;
+
+  /// Settings view: PVE's protection flag.
+  ///
+  /// In en, this message translates to:
+  /// **'Protection'**
+  String get virtSetProtection;
+
+  /// Settings view: what PVE's protection flag does.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocks deleting the guest and changing its disks'**
+  String get virtSetProtectionNote;
+
+  /// Settings view: deleting a guest cannot be undone.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot be undone'**
+  String get virtSetIrreversible;
+
+  /// Settings view: a running guest must be shut down before it can be deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Shut it down before deleting it.'**
+  String get virtSetDeleteStopFirst;
+
+  /// Settings view: deletion is blocked while PVE protection is on.
+  ///
+  /// In en, this message translates to:
+  /// **'Protection is on: turn it off under General first.'**
+  String get virtSetDeleteProtected;
+
+  /// Settings view: the delete button was pressed once; pressing again deletes.
+  ///
+  /// In en, this message translates to:
+  /// **'Press again to confirm'**
+  String get virtSetDeleteAgain;
+
+  /// Settings view: the delete button's second, confirming label.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name}'**
+  String virtSetDeleteConfirm(String name);
+
+  /// Settings view: button that deletes a virtual machine.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete virtual machine'**
+  String get virtSetDeleteVm;
+
+  /// Settings view: button that deletes a container.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete container'**
+  String get virtSetDeleteLxc;
 
   /// CPU sockets of a VM.
   ///

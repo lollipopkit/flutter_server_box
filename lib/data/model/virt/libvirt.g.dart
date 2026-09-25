@@ -549,6 +549,7 @@ _LibvirtHardwareInfo _$LibvirtHardwareInfoFromJson(Map<String, dynamic> json) =>
           : LibvirtHwConfig.fromJson(json['live'] as Map<String, dynamic>),
       configXml: json['config_xml'] as String,
       autostart: json['autostart'] as bool? ?? false,
+      description: json['description'] as String?,
       hostCpus: (json['host_cpus'] as num?)?.toInt(),
       hostMemoryKib: (json['host_memory_kib'] as num?)?.toInt(),
     );
@@ -560,6 +561,7 @@ Map<String, dynamic> _$LibvirtHardwareInfoToJson(
   'live': instance.live,
   'config_xml': instance.configXml,
   'autostart': instance.autostart,
+  'description': instance.description,
   'host_cpus': instance.hostCpus,
   'host_memory_kib': instance.hostMemoryKib,
 };

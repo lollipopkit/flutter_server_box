@@ -2628,6 +2628,9 @@ pub struct VirtHardwareInfo {
     /// digest in all but name
     pub config_xml: String,
     pub autostart: bool,
+    /// The persistent definition's `<description>`, the note shown with the
+    /// domain; none when it has none
+    pub description: Option<String>,
     /// The host's logical CPUs and memory, the bounds of what a guest can use
     pub host_cpus: Option<u32>,
     pub host_memory_kib: Option<u64>,
@@ -2855,11 +2858,16 @@ pub fn parse_hardware(raw: &str) -> Result<VirtHardwareInfo, VirtError> {
     } else {
         None
     };
+    let description = parse_xml_doc(config_xml, "domain", "dumpxml")
+        .ok()
+        .and_then(|doc| child(doc.root_element(), "description").and_then(|d| d.text()).map(str::to_string))
+        .filter(|d| !d.is_empty());
     Ok(VirtHardwareInfo {
         config,
         live,
         config_xml: config_xml.to_string(),
         autostart,
+        description,
         host_cpus,
         host_memory_kib,
     })
@@ -2950,6 +2958,11 @@ pub enum VirtHwChange {
     /// `base_xml`
     Boot { order: Vec<String> },
     Autostart { on: bool },
+    /// The note shown with the domain (`virsh desc`); empty clears it
+    Description { text: String },
+    /// A new name (`virsh domrename`), which libvirt takes only from a
+    /// domain that is not running
+    Rename { name: String },
 }
 
 /// What [`parse_hardware_change`] found.
@@ -3078,6 +3091,21 @@ impl VirtHwChange {
                 }
             }
             VirtHwChange::Autostart { .. } => {}
+            VirtHwChange::Description { text } => {
+                // `virsh desc` stores anything; a NUL cannot reach a shell
+                // argument, and the rest of the control characters are no
+                // note anyone meant to write.
+                if text.len() > 8192 || text.chars().any(|c| c.is_control() && c != '\n' && c != '\t') {
+                    return bad("description");
+                }
+            }
+            VirtHwChange::Rename { name } => {
+                // What the app creates domains with: AppArmor and libvirt's
+                // own volume handling trip over anything more.
+                if !is_token(name) || name.len() > 63 || name.starts_with('.') {
+                    return bad("name");
+                }
+            }
         }
         Ok(())
     }
@@ -3505,6 +3533,15 @@ pub fn hardware_change_script(
         VirtHwChange::Autostart { on } => {
             let disable = if *on { "" } else { " --disable" };
             s.push_str(&hw_step(&format!("autostart {d}{disable}")));
+        }
+        VirtHwChange::Description { text } => {
+            s.push_str(&hw_step(&format!("desc {d} --config --new-desc {}", q(text))));
+            if running {
+                s.push_str(&hw_live_step(&format!("desc {d} --live --new-desc {}", q(text))));
+            }
+        }
+        VirtHwChange::Rename { name } => {
+            s.push_str(&hw_step(&format!("domrename {d} {}", q(name))));
         }
     }
     Ok(s)

@@ -1110,6 +1110,19 @@ class PveBackend implements VirtBackend {
           }, digest: digest);
         case VirtHwSetAutostart(:final on):
           await _setConfig(guest, {'onboot': on ? 1 : 0}, digest: digest);
+        case VirtHwSetName(:final name):
+          await _setConfig(guest, {
+            lxc ? 'hostname' : 'name': name,
+          }, digest: digest);
+        case VirtHwSetDescription(:final text):
+          await _setConfig(
+            guest,
+            {if (text.isNotEmpty) 'description': text},
+            delete: [if (text.isEmpty) 'description'],
+            digest: digest,
+          );
+        case VirtHwSetProtection(:final on):
+          await _setConfig(guest, {'protection': on ? 1 : 0}, digest: digest);
         case VirtHwRevert(:final keys):
           await _setConfig(guest, {'revert': keys.join(',')}, digest: digest);
       }

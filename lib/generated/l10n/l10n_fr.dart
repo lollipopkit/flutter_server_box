@@ -3813,30 +3813,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get virtCreateSshKeysInvalid => 'Une clé publique OpenSSH par ligne.';
 
   @override
-  String virtDeleteAsk(String name) {
-    return 'Supprimer $name ? Impossible à annuler.';
-  }
-
-  @override
-  String virtDeleteTypeName(String name) {
-    return 'Saisissez $name pour confirmer';
-  }
-
-  @override
   String get virtDeleteDisks => 'Supprimer aussi ses disques';
-
-  @override
-  String get virtDeleteDisksTip =>
-      'Le support d\'installation attaché est conservé.';
 
   @override
   String get virtDeleteDisksPve =>
       'Ses disques sont supprimés avec lui ; le support d\'installation est conservé.';
-
-  @override
-  String virtDeleteStopFirst(String name) {
-    return '$name est en marche. Il doit être arrêté avant d\'être supprimé. Le forcer à s\'éteindre maintenant ?';
-  }
 
   @override
   String virtDeleted(String name) {
@@ -4068,13 +4049,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'Certaines modifications matérielles s\'appliquent au redémarrage';
 
   @override
-  String get virtHwPendingTip =>
-      'L\'invité en cours garde la valeur de gauche ; il reçoit celle de droite au prochain démarrage.';
-
-  @override
-  String get virtHwPendingTitle => 'En attente du prochain démarrage';
-
-  @override
   String get virtHwPickNet => 'Choisissez un réseau';
 
   @override
@@ -4110,6 +4084,49 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get virtHwRevertAll => 'Tout annuler';
+
+  @override
+  String get virtSetRenameStopped =>
+      'Arrêtez l\'invité pour le renommer : libvirt ne renomme qu\'un invité à l\'arrêt.';
+
+  @override
+  String virtSetIssueDescription(int max) {
+    return '$max caractères au plus, sans caractères de contrôle.';
+  }
+
+  @override
+  String get virtSetManualStart => 'Démarré à la main';
+
+  @override
+  String get virtSetProtection => 'Protection';
+
+  @override
+  String get virtSetProtectionNote =>
+      'Empêche de supprimer l\'invité et de modifier ses disques';
+
+  @override
+  String get virtSetIrreversible => 'Irréversible';
+
+  @override
+  String get virtSetDeleteStopFirst => 'Arrêtez-le avant de le supprimer.';
+
+  @override
+  String get virtSetDeleteProtected =>
+      'La protection est active : désactivez-la d\'abord dans Général.';
+
+  @override
+  String get virtSetDeleteAgain => 'Appuyez à nouveau pour confirmer';
+
+  @override
+  String virtSetDeleteConfirm(String name) {
+    return 'Supprimer $name';
+  }
+
+  @override
+  String get virtSetDeleteVm => 'Supprimer la machine virtuelle';
+
+  @override
+  String get virtSetDeleteLxc => 'Supprimer le conteneur';
 
   @override
   String get virtHwSockets => 'Sockets';

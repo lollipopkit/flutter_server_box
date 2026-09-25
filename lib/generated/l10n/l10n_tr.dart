@@ -3738,29 +3738,11 @@ class AppLocalizationsTr extends AppLocalizations {
       'Her satıra bir OpenSSH açık anahtarı.';
 
   @override
-  String virtDeleteAsk(String name) {
-    return '$name silinsin mi? Geri alınamaz.';
-  }
-
-  @override
-  String virtDeleteTypeName(String name) {
-    return 'Onaylamak için $name yazın';
-  }
-
-  @override
   String get virtDeleteDisks => 'Disklerini de sil';
-
-  @override
-  String get virtDeleteDisksTip => 'Bağlı kurulum ortamı korunur.';
 
   @override
   String get virtDeleteDisksPve =>
       'Diskleri onunla birlikte silinir; kurulum ortamı korunur.';
-
-  @override
-  String virtDeleteStopFirst(String name) {
-    return '$name çalışıyor. Silinmeden önce durdurulmalı. Şimdi zorla kapatılsın mı?';
-  }
 
   @override
   String virtDeleted(String name) {
@@ -3990,13 +3972,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bazı donanım değişiklikleri yeniden başlatınca geçerli olur';
 
   @override
-  String get virtHwPendingTip =>
-      'Çalışan konuk soldaki değeri korur; sağdakini bir sonraki başlatmada alır.';
-
-  @override
-  String get virtHwPendingTitle => 'Sonraki başlatmaya kadar bekliyor';
-
-  @override
   String get virtHwPickNet => 'Bir ağ seçin';
 
   @override
@@ -4032,6 +4007,49 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtHwRevertAll => 'Tümünü geri al';
+
+  @override
+  String get virtSetRenameStopped =>
+      'Yeniden adlandırmak için konuğu kapatın: libvirt yalnızca çalışmayan bir konuğu yeniden adlandırır.';
+
+  @override
+  String virtSetIssueDescription(int max) {
+    return 'En çok $max karakter, denetim karakteri olmadan.';
+  }
+
+  @override
+  String get virtSetManualStart => 'Elle başlatılır';
+
+  @override
+  String get virtSetProtection => 'Koruma';
+
+  @override
+  String get virtSetProtectionNote =>
+      'Konuğun silinmesini ve disklerinin değiştirilmesini engeller';
+
+  @override
+  String get virtSetIrreversible => 'Geri alınamaz';
+
+  @override
+  String get virtSetDeleteStopFirst => 'Silmeden önce kapatın.';
+
+  @override
+  String get virtSetDeleteProtected =>
+      'Koruma açık: önce Genel altında kapatın.';
+
+  @override
+  String get virtSetDeleteAgain => 'Onaylamak için yeniden basın';
+
+  @override
+  String virtSetDeleteConfirm(String name) {
+    return '$name öğesini sil';
+  }
+
+  @override
+  String get virtSetDeleteVm => 'Sanal makineyi sil';
+
+  @override
+  String get virtSetDeleteLxc => 'Kapsayıcıyı sil';
 
   @override
   String get virtHwSockets => 'Soketler';

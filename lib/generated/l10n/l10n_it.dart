@@ -3792,30 +3792,11 @@ class AppLocalizationsIt extends AppLocalizations {
       'Una chiave pubblica OpenSSH per riga.';
 
   @override
-  String virtDeleteAsk(String name) {
-    return 'Eliminare $name? Non si può annullare.';
-  }
-
-  @override
-  String virtDeleteTypeName(String name) {
-    return 'Digita $name per confermare';
-  }
-
-  @override
   String get virtDeleteDisks => 'Elimina anche i suoi dischi';
-
-  @override
-  String get virtDeleteDisksTip =>
-      'Il supporto di installazione collegato viene conservato.';
 
   @override
   String get virtDeleteDisksPve =>
       'I suoi dischi vengono eliminati con esso; il supporto di installazione viene conservato.';
-
-  @override
-  String virtDeleteStopFirst(String name) {
-    return '$name è in esecuzione. Va fermato prima di eliminarlo. Forzare lo spegnimento ora?';
-  }
 
   @override
   String virtDeleted(String name) {
@@ -4046,13 +4027,6 @@ class AppLocalizationsIt extends AppLocalizations {
       'Alcune modifiche hardware hanno effetto al riavvio';
 
   @override
-  String get virtHwPendingTip =>
-      'Il guest in esecuzione mantiene il valore a sinistra; riceve quello a destra al prossimo avvio.';
-
-  @override
-  String get virtHwPendingTitle => 'In attesa del prossimo avvio';
-
-  @override
   String get virtHwPickNet => 'Scegli una rete';
 
   @override
@@ -4088,6 +4062,49 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get virtHwRevertAll => 'Annulla tutto';
+
+  @override
+  String get virtSetRenameStopped =>
+      'Spegni il guest per rinominarlo: libvirt rinomina solo un guest non in esecuzione.';
+
+  @override
+  String virtSetIssueDescription(int max) {
+    return 'Al massimo $max caratteri, senza caratteri di controllo.';
+  }
+
+  @override
+  String get virtSetManualStart => 'Avvio manuale';
+
+  @override
+  String get virtSetProtection => 'Protezione';
+
+  @override
+  String get virtSetProtectionNote =>
+      'Impedisce di eliminare il guest e di modificarne i dischi';
+
+  @override
+  String get virtSetIrreversible => 'Non si può annullare';
+
+  @override
+  String get virtSetDeleteStopFirst => 'Spegnilo prima di eliminarlo.';
+
+  @override
+  String get virtSetDeleteProtected =>
+      'La protezione è attiva: disattivala prima in Generale.';
+
+  @override
+  String get virtSetDeleteAgain => 'Premi di nuovo per confermare';
+
+  @override
+  String virtSetDeleteConfirm(String name) {
+    return 'Elimina $name';
+  }
+
+  @override
+  String get virtSetDeleteVm => 'Elimina macchina virtuale';
+
+  @override
+  String get virtSetDeleteLxc => 'Elimina container';
 
   @override
   String get virtHwSockets => 'Socket';

@@ -3803,30 +3803,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get virtCreateSshKeysInvalid => 'Una clave pública OpenSSH por línea.';
 
   @override
-  String virtDeleteAsk(String name) {
-    return '¿Eliminar $name? No se puede deshacer.';
-  }
-
-  @override
-  String virtDeleteTypeName(String name) {
-    return 'Escribe $name para confirmar';
-  }
-
-  @override
   String get virtDeleteDisks => 'Eliminar también sus discos';
-
-  @override
-  String get virtDeleteDisksTip =>
-      'El medio de instalación conectado se conserva.';
 
   @override
   String get virtDeleteDisksPve =>
       'Sus discos se eliminan con él; el medio de instalación se conserva.';
-
-  @override
-  String virtDeleteStopFirst(String name) {
-    return '$name está en ejecución. Debe detenerse antes de eliminarlo. ¿Forzar el apagado ahora?';
-  }
 
   @override
   String virtDeleted(String name) {
@@ -4058,13 +4039,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Algunos cambios de hardware se aplican al reiniciar';
 
   @override
-  String get virtHwPendingTip =>
-      'El invitado en ejecución mantiene el valor de la izquierda; recibe el de la derecha al arrancar de nuevo.';
-
-  @override
-  String get virtHwPendingTitle => 'Pendiente hasta el próximo arranque';
-
-  @override
   String get virtHwPickNet => 'Elige una red';
 
   @override
@@ -4100,6 +4074,49 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get virtHwRevertAll => 'Revertir todo';
+
+  @override
+  String get virtSetRenameStopped =>
+      'Apaga el invitado para renombrarlo: libvirt solo renombra un invitado que no está en ejecución.';
+
+  @override
+  String virtSetIssueDescription(int max) {
+    return 'Como máximo $max caracteres, sin caracteres de control.';
+  }
+
+  @override
+  String get virtSetManualStart => 'Inicio manual';
+
+  @override
+  String get virtSetProtection => 'Protección';
+
+  @override
+  String get virtSetProtectionNote =>
+      'Impide eliminar el invitado y modificar sus discos';
+
+  @override
+  String get virtSetIrreversible => 'No se puede deshacer';
+
+  @override
+  String get virtSetDeleteStopFirst => 'Apágalo antes de eliminarlo.';
+
+  @override
+  String get virtSetDeleteProtected =>
+      'La protección está activada: desactívala primero en General.';
+
+  @override
+  String get virtSetDeleteAgain => 'Pulsa de nuevo para confirmar';
+
+  @override
+  String virtSetDeleteConfirm(String name) {
+    return 'Eliminar $name';
+  }
+
+  @override
+  String get virtSetDeleteVm => 'Eliminar máquina virtual';
+
+  @override
+  String get virtSetDeleteLxc => 'Eliminar contenedor';
 
   @override
   String get virtHwSockets => 'Sockets';

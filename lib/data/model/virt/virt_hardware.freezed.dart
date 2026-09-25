@@ -18,7 +18,16 @@ mixin _$VirtHardware {
 /// the next start, and shows in [pending] until then.
  bool get running; VirtHwCpu get cpu; VirtHwMemory get memory; List<VirtHwDisk> get disks; List<VirtHwNic> get nics;/// Boot devices in order, by [VirtHwDisk.key] / [VirtHwNic.key]. Null
 /// where there is no order to set (a container).
- List<String>? get boot; bool get autostart; List<VirtPendingField> get pending;/// What an edit is made from, sent back with it: PVE's `digest`, the
+ List<String>? get boot; bool get autostart;/// The guest's name as saved: a VM's `name` or a container's `hostname`
+/// on PVE, the domain's name on libvirt. The Settings view edits it.
+ String? get name;/// The note kept with the guest: PVE's `description`, libvirt's
+/// `<description>`. Null for none.
+ String? get description;/// PVE's `protection`: no deleting the guest or its disks while set.
+/// Null where the host has no such setting (libvirt).
+ bool? get protection;/// Whether the name can change while the guest runs: PVE's can (a
+/// container's waits for a restart, as pending), libvirt's
+/// `domrename` takes only a domain that is not running.
+ bool get renameRunning; List<VirtPendingField> get pending;/// What an edit is made from, sent back with it: PVE's `digest`, the
 /// persistent XML libvirt printed. An edit made from an older read is
 /// refused (`VirtErrType.conflict`) rather than undoing someone else's.
  String? get revision; VirtHwLimits get limits;/// PVE: the CPU models the node offers, for [VirtHwCpu.type].
@@ -35,16 +44,16 @@ $VirtHardwareCopyWith<VirtHardware> get copyWith => _$VirtHardwareCopyWithImpl<V
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHardware&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.running, running) || other.running == running)&&(identical(other.cpu, cpu) || other.cpu == cpu)&&(identical(other.memory, memory) || other.memory == memory)&&const DeepCollectionEquality().equals(other.disks, disks)&&const DeepCollectionEquality().equals(other.nics, nics)&&const DeepCollectionEquality().equals(other.boot, boot)&&(identical(other.autostart, autostart) || other.autostart == autostart)&&const DeepCollectionEquality().equals(other.pending, pending)&&(identical(other.revision, revision) || other.revision == revision)&&(identical(other.limits, limits) || other.limits == limits)&&const DeepCollectionEquality().equals(other.cpuTypes, cpuTypes)&&(identical(other.configText, configText) || other.configText == configText));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHardware&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.running, running) || other.running == running)&&(identical(other.cpu, cpu) || other.cpu == cpu)&&(identical(other.memory, memory) || other.memory == memory)&&const DeepCollectionEquality().equals(other.disks, disks)&&const DeepCollectionEquality().equals(other.nics, nics)&&const DeepCollectionEquality().equals(other.boot, boot)&&(identical(other.autostart, autostart) || other.autostart == autostart)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.protection, protection) || other.protection == protection)&&(identical(other.renameRunning, renameRunning) || other.renameRunning == renameRunning)&&const DeepCollectionEquality().equals(other.pending, pending)&&(identical(other.revision, revision) || other.revision == revision)&&(identical(other.limits, limits) || other.limits == limits)&&const DeepCollectionEquality().equals(other.cpuTypes, cpuTypes)&&(identical(other.configText, configText) || other.configText == configText));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,kind,running,cpu,memory,const DeepCollectionEquality().hash(disks),const DeepCollectionEquality().hash(nics),const DeepCollectionEquality().hash(boot),autostart,const DeepCollectionEquality().hash(pending),revision,limits,const DeepCollectionEquality().hash(cpuTypes),configText);
+int get hashCode => Object.hash(runtimeType,kind,running,cpu,memory,const DeepCollectionEquality().hash(disks),const DeepCollectionEquality().hash(nics),const DeepCollectionEquality().hash(boot),autostart,name,description,protection,renameRunning,const DeepCollectionEquality().hash(pending),revision,limits,const DeepCollectionEquality().hash(cpuTypes),configText);
 
 @override
 String toString() {
-  return 'VirtHardware(kind: $kind, running: $running, cpu: $cpu, memory: $memory, disks: $disks, nics: $nics, boot: $boot, autostart: $autostart, pending: $pending, revision: $revision, limits: $limits, cpuTypes: $cpuTypes, configText: $configText)';
+  return 'VirtHardware(kind: $kind, running: $running, cpu: $cpu, memory: $memory, disks: $disks, nics: $nics, boot: $boot, autostart: $autostart, name: $name, description: $description, protection: $protection, renameRunning: $renameRunning, pending: $pending, revision: $revision, limits: $limits, cpuTypes: $cpuTypes, configText: $configText)';
 }
 
 
@@ -55,7 +64,7 @@ abstract mixin class $VirtHardwareCopyWith<$Res>  {
   factory $VirtHardwareCopyWith(VirtHardware value, $Res Function(VirtHardware) _then) = _$VirtHardwareCopyWithImpl;
 @useResult
 $Res call({
- VirtGuestKind kind, bool running, VirtHwCpu cpu, VirtHwMemory memory, List<VirtHwDisk> disks, List<VirtHwNic> nics, List<String>? boot, bool autostart, List<VirtPendingField> pending, String? revision, VirtHwLimits limits, List<String> cpuTypes, String? configText
+ VirtGuestKind kind, bool running, VirtHwCpu cpu, VirtHwMemory memory, List<VirtHwDisk> disks, List<VirtHwNic> nics, List<String>? boot, bool autostart, String? name, String? description, bool? protection, bool renameRunning, List<VirtPendingField> pending, String? revision, VirtHwLimits limits, List<String> cpuTypes, String? configText
 });
 
 
@@ -72,7 +81,7 @@ class _$VirtHardwareCopyWithImpl<$Res>
 
 /// Create a copy of VirtHardware
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? kind = null,Object? running = null,Object? cpu = null,Object? memory = null,Object? disks = null,Object? nics = null,Object? boot = freezed,Object? autostart = null,Object? pending = null,Object? revision = freezed,Object? limits = null,Object? cpuTypes = null,Object? configText = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? kind = null,Object? running = null,Object? cpu = null,Object? memory = null,Object? disks = null,Object? nics = null,Object? boot = freezed,Object? autostart = null,Object? name = freezed,Object? description = freezed,Object? protection = freezed,Object? renameRunning = null,Object? pending = null,Object? revision = freezed,Object? limits = null,Object? cpuTypes = null,Object? configText = freezed,}) {
   return _then(_self.copyWith(
 kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
 as VirtGuestKind,running: null == running ? _self.running : running // ignore: cast_nullable_to_non_nullable
@@ -82,6 +91,10 @@ as VirtHwMemory,disks: null == disks ? _self.disks : disks // ignore: cast_nulla
 as List<VirtHwDisk>,nics: null == nics ? _self.nics : nics // ignore: cast_nullable_to_non_nullable
 as List<VirtHwNic>,boot: freezed == boot ? _self.boot : boot // ignore: cast_nullable_to_non_nullable
 as List<String>?,autostart: null == autostart ? _self.autostart : autostart // ignore: cast_nullable_to_non_nullable
+as bool,name: freezed == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String?,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String?,protection: freezed == protection ? _self.protection : protection // ignore: cast_nullable_to_non_nullable
+as bool?,renameRunning: null == renameRunning ? _self.renameRunning : renameRunning // ignore: cast_nullable_to_non_nullable
 as bool,pending: null == pending ? _self.pending : pending // ignore: cast_nullable_to_non_nullable
 as List<VirtPendingField>,revision: freezed == revision ? _self.revision : revision // ignore: cast_nullable_to_non_nullable
 as String?,limits: null == limits ? _self.limits : limits // ignore: cast_nullable_to_non_nullable
@@ -199,10 +212,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( VirtGuestKind kind,  bool running,  VirtHwCpu cpu,  VirtHwMemory memory,  List<VirtHwDisk> disks,  List<VirtHwNic> nics,  List<String>? boot,  bool autostart,  List<VirtPendingField> pending,  String? revision,  VirtHwLimits limits,  List<String> cpuTypes,  String? configText)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( VirtGuestKind kind,  bool running,  VirtHwCpu cpu,  VirtHwMemory memory,  List<VirtHwDisk> disks,  List<VirtHwNic> nics,  List<String>? boot,  bool autostart,  String? name,  String? description,  bool? protection,  bool renameRunning,  List<VirtPendingField> pending,  String? revision,  VirtHwLimits limits,  List<String> cpuTypes,  String? configText)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _VirtHardware() when $default != null:
-return $default(_that.kind,_that.running,_that.cpu,_that.memory,_that.disks,_that.nics,_that.boot,_that.autostart,_that.pending,_that.revision,_that.limits,_that.cpuTypes,_that.configText);case _:
+return $default(_that.kind,_that.running,_that.cpu,_that.memory,_that.disks,_that.nics,_that.boot,_that.autostart,_that.name,_that.description,_that.protection,_that.renameRunning,_that.pending,_that.revision,_that.limits,_that.cpuTypes,_that.configText);case _:
   return orElse();
 
 }
@@ -220,10 +233,10 @@ return $default(_that.kind,_that.running,_that.cpu,_that.memory,_that.disks,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( VirtGuestKind kind,  bool running,  VirtHwCpu cpu,  VirtHwMemory memory,  List<VirtHwDisk> disks,  List<VirtHwNic> nics,  List<String>? boot,  bool autostart,  List<VirtPendingField> pending,  String? revision,  VirtHwLimits limits,  List<String> cpuTypes,  String? configText)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( VirtGuestKind kind,  bool running,  VirtHwCpu cpu,  VirtHwMemory memory,  List<VirtHwDisk> disks,  List<VirtHwNic> nics,  List<String>? boot,  bool autostart,  String? name,  String? description,  bool? protection,  bool renameRunning,  List<VirtPendingField> pending,  String? revision,  VirtHwLimits limits,  List<String> cpuTypes,  String? configText)  $default,) {final _that = this;
 switch (_that) {
 case _VirtHardware():
-return $default(_that.kind,_that.running,_that.cpu,_that.memory,_that.disks,_that.nics,_that.boot,_that.autostart,_that.pending,_that.revision,_that.limits,_that.cpuTypes,_that.configText);case _:
+return $default(_that.kind,_that.running,_that.cpu,_that.memory,_that.disks,_that.nics,_that.boot,_that.autostart,_that.name,_that.description,_that.protection,_that.renameRunning,_that.pending,_that.revision,_that.limits,_that.cpuTypes,_that.configText);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -240,10 +253,10 @@ return $default(_that.kind,_that.running,_that.cpu,_that.memory,_that.disks,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( VirtGuestKind kind,  bool running,  VirtHwCpu cpu,  VirtHwMemory memory,  List<VirtHwDisk> disks,  List<VirtHwNic> nics,  List<String>? boot,  bool autostart,  List<VirtPendingField> pending,  String? revision,  VirtHwLimits limits,  List<String> cpuTypes,  String? configText)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( VirtGuestKind kind,  bool running,  VirtHwCpu cpu,  VirtHwMemory memory,  List<VirtHwDisk> disks,  List<VirtHwNic> nics,  List<String>? boot,  bool autostart,  String? name,  String? description,  bool? protection,  bool renameRunning,  List<VirtPendingField> pending,  String? revision,  VirtHwLimits limits,  List<String> cpuTypes,  String? configText)?  $default,) {final _that = this;
 switch (_that) {
 case _VirtHardware() when $default != null:
-return $default(_that.kind,_that.running,_that.cpu,_that.memory,_that.disks,_that.nics,_that.boot,_that.autostart,_that.pending,_that.revision,_that.limits,_that.cpuTypes,_that.configText);case _:
+return $default(_that.kind,_that.running,_that.cpu,_that.memory,_that.disks,_that.nics,_that.boot,_that.autostart,_that.name,_that.description,_that.protection,_that.renameRunning,_that.pending,_that.revision,_that.limits,_that.cpuTypes,_that.configText);case _:
   return null;
 
 }
@@ -255,7 +268,7 @@ return $default(_that.kind,_that.running,_that.cpu,_that.memory,_that.disks,_tha
 
 
 class _VirtHardware extends VirtHardware {
-  const _VirtHardware({required this.kind, required this.running, required this.cpu, required this.memory, final  List<VirtHwDisk> disks = const <VirtHwDisk>[], final  List<VirtHwNic> nics = const <VirtHwNic>[], final  List<String>? boot, this.autostart = false, final  List<VirtPendingField> pending = const <VirtPendingField>[], this.revision, this.limits = const VirtHwLimits(), final  List<String> cpuTypes = const <String>[], this.configText}): _disks = disks,_nics = nics,_boot = boot,_pending = pending,_cpuTypes = cpuTypes,super._();
+  const _VirtHardware({required this.kind, required this.running, required this.cpu, required this.memory, final  List<VirtHwDisk> disks = const <VirtHwDisk>[], final  List<VirtHwNic> nics = const <VirtHwNic>[], final  List<String>? boot, this.autostart = false, this.name, this.description, this.protection, this.renameRunning = true, final  List<VirtPendingField> pending = const <VirtPendingField>[], this.revision, this.limits = const VirtHwLimits(), final  List<String> cpuTypes = const <String>[], this.configText}): _disks = disks,_nics = nics,_boot = boot,_pending = pending,_cpuTypes = cpuTypes,super._();
   
 
 @override final  VirtGuestKind kind;
@@ -292,6 +305,19 @@ class _VirtHardware extends VirtHardware {
 }
 
 @override@JsonKey() final  bool autostart;
+/// The guest's name as saved: a VM's `name` or a container's `hostname`
+/// on PVE, the domain's name on libvirt. The Settings view edits it.
+@override final  String? name;
+/// The note kept with the guest: PVE's `description`, libvirt's
+/// `<description>`. Null for none.
+@override final  String? description;
+/// PVE's `protection`: no deleting the guest or its disks while set.
+/// Null where the host has no such setting (libvirt).
+@override final  bool? protection;
+/// Whether the name can change while the guest runs: PVE's can (a
+/// container's waits for a restart, as pending), libvirt's
+/// `domrename` takes only a domain that is not running.
+@override@JsonKey() final  bool renameRunning;
  final  List<VirtPendingField> _pending;
 @override@JsonKey() List<VirtPendingField> get pending {
   if (_pending is EqualUnmodifiableListView) return _pending;
@@ -327,16 +353,16 @@ _$VirtHardwareCopyWith<_VirtHardware> get copyWith => __$VirtHardwareCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtHardware&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.running, running) || other.running == running)&&(identical(other.cpu, cpu) || other.cpu == cpu)&&(identical(other.memory, memory) || other.memory == memory)&&const DeepCollectionEquality().equals(other._disks, _disks)&&const DeepCollectionEquality().equals(other._nics, _nics)&&const DeepCollectionEquality().equals(other._boot, _boot)&&(identical(other.autostart, autostart) || other.autostart == autostart)&&const DeepCollectionEquality().equals(other._pending, _pending)&&(identical(other.revision, revision) || other.revision == revision)&&(identical(other.limits, limits) || other.limits == limits)&&const DeepCollectionEquality().equals(other._cpuTypes, _cpuTypes)&&(identical(other.configText, configText) || other.configText == configText));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtHardware&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.running, running) || other.running == running)&&(identical(other.cpu, cpu) || other.cpu == cpu)&&(identical(other.memory, memory) || other.memory == memory)&&const DeepCollectionEquality().equals(other._disks, _disks)&&const DeepCollectionEquality().equals(other._nics, _nics)&&const DeepCollectionEquality().equals(other._boot, _boot)&&(identical(other.autostart, autostart) || other.autostart == autostart)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.protection, protection) || other.protection == protection)&&(identical(other.renameRunning, renameRunning) || other.renameRunning == renameRunning)&&const DeepCollectionEquality().equals(other._pending, _pending)&&(identical(other.revision, revision) || other.revision == revision)&&(identical(other.limits, limits) || other.limits == limits)&&const DeepCollectionEquality().equals(other._cpuTypes, _cpuTypes)&&(identical(other.configText, configText) || other.configText == configText));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,kind,running,cpu,memory,const DeepCollectionEquality().hash(_disks),const DeepCollectionEquality().hash(_nics),const DeepCollectionEquality().hash(_boot),autostart,const DeepCollectionEquality().hash(_pending),revision,limits,const DeepCollectionEquality().hash(_cpuTypes),configText);
+int get hashCode => Object.hash(runtimeType,kind,running,cpu,memory,const DeepCollectionEquality().hash(_disks),const DeepCollectionEquality().hash(_nics),const DeepCollectionEquality().hash(_boot),autostart,name,description,protection,renameRunning,const DeepCollectionEquality().hash(_pending),revision,limits,const DeepCollectionEquality().hash(_cpuTypes),configText);
 
 @override
 String toString() {
-  return 'VirtHardware(kind: $kind, running: $running, cpu: $cpu, memory: $memory, disks: $disks, nics: $nics, boot: $boot, autostart: $autostart, pending: $pending, revision: $revision, limits: $limits, cpuTypes: $cpuTypes, configText: $configText)';
+  return 'VirtHardware(kind: $kind, running: $running, cpu: $cpu, memory: $memory, disks: $disks, nics: $nics, boot: $boot, autostart: $autostart, name: $name, description: $description, protection: $protection, renameRunning: $renameRunning, pending: $pending, revision: $revision, limits: $limits, cpuTypes: $cpuTypes, configText: $configText)';
 }
 
 
@@ -347,7 +373,7 @@ abstract mixin class _$VirtHardwareCopyWith<$Res> implements $VirtHardwareCopyWi
   factory _$VirtHardwareCopyWith(_VirtHardware value, $Res Function(_VirtHardware) _then) = __$VirtHardwareCopyWithImpl;
 @override @useResult
 $Res call({
- VirtGuestKind kind, bool running, VirtHwCpu cpu, VirtHwMemory memory, List<VirtHwDisk> disks, List<VirtHwNic> nics, List<String>? boot, bool autostart, List<VirtPendingField> pending, String? revision, VirtHwLimits limits, List<String> cpuTypes, String? configText
+ VirtGuestKind kind, bool running, VirtHwCpu cpu, VirtHwMemory memory, List<VirtHwDisk> disks, List<VirtHwNic> nics, List<String>? boot, bool autostart, String? name, String? description, bool? protection, bool renameRunning, List<VirtPendingField> pending, String? revision, VirtHwLimits limits, List<String> cpuTypes, String? configText
 });
 
 
@@ -364,7 +390,7 @@ class __$VirtHardwareCopyWithImpl<$Res>
 
 /// Create a copy of VirtHardware
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? kind = null,Object? running = null,Object? cpu = null,Object? memory = null,Object? disks = null,Object? nics = null,Object? boot = freezed,Object? autostart = null,Object? pending = null,Object? revision = freezed,Object? limits = null,Object? cpuTypes = null,Object? configText = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? kind = null,Object? running = null,Object? cpu = null,Object? memory = null,Object? disks = null,Object? nics = null,Object? boot = freezed,Object? autostart = null,Object? name = freezed,Object? description = freezed,Object? protection = freezed,Object? renameRunning = null,Object? pending = null,Object? revision = freezed,Object? limits = null,Object? cpuTypes = null,Object? configText = freezed,}) {
   return _then(_VirtHardware(
 kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
 as VirtGuestKind,running: null == running ? _self.running : running // ignore: cast_nullable_to_non_nullable
@@ -374,6 +400,10 @@ as VirtHwMemory,disks: null == disks ? _self._disks : disks // ignore: cast_null
 as List<VirtHwDisk>,nics: null == nics ? _self._nics : nics // ignore: cast_nullable_to_non_nullable
 as List<VirtHwNic>,boot: freezed == boot ? _self._boot : boot // ignore: cast_nullable_to_non_nullable
 as List<String>?,autostart: null == autostart ? _self.autostart : autostart // ignore: cast_nullable_to_non_nullable
+as bool,name: freezed == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String?,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String?,protection: freezed == protection ? _self.protection : protection // ignore: cast_nullable_to_non_nullable
+as bool?,renameRunning: null == renameRunning ? _self.renameRunning : renameRunning // ignore: cast_nullable_to_non_nullable
 as bool,pending: null == pending ? _self._pending : pending // ignore: cast_nullable_to_non_nullable
 as List<VirtPendingField>,revision: freezed == revision ? _self.revision : revision // ignore: cast_nullable_to_non_nullable
 as String?,limits: null == limits ? _self.limits : limits // ignore: cast_nullable_to_non_nullable

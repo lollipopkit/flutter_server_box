@@ -3740,30 +3740,11 @@ class AppLocalizationsId extends AppLocalizations {
   String get virtCreateSshKeysInvalid => 'Satu kunci publik OpenSSH per baris.';
 
   @override
-  String virtDeleteAsk(String name) {
-    return 'Hapus $name? Ini tidak dapat dibatalkan.';
-  }
-
-  @override
-  String virtDeleteTypeName(String name) {
-    return 'Ketik $name untuk mengonfirmasi';
-  }
-
-  @override
   String get virtDeleteDisks => 'Hapus juga disknya';
-
-  @override
-  String get virtDeleteDisksTip =>
-      'Media instalasi yang terpasang tetap disimpan.';
 
   @override
   String get virtDeleteDisksPve =>
       'Disknya ikut dihapus; media instalasi tetap disimpan.';
-
-  @override
-  String virtDeleteStopFirst(String name) {
-    return '$name sedang berjalan. Harus dihentikan sebelum dihapus. Matikan paksa sekarang?';
-  }
 
   @override
   String virtDeleted(String name) {
@@ -3994,13 +3975,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Sebagian perubahan perangkat keras berlaku setelah mulai ulang';
 
   @override
-  String get virtHwPendingTip =>
-      'Tamu yang berjalan tetap memakai nilai di kiri; nilai di kanan berlaku saat dijalankan berikutnya.';
-
-  @override
-  String get virtHwPendingTitle => 'Tertunda hingga mulai berikutnya';
-
-  @override
   String get virtHwPickNet => 'Pilih jaringan';
 
   @override
@@ -4036,6 +4010,49 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get virtHwRevertAll => 'Kembalikan semua';
+
+  @override
+  String get virtSetRenameStopped =>
+      'Matikan tamu untuk mengganti namanya: libvirt hanya mengganti nama tamu yang tidak berjalan.';
+
+  @override
+  String virtSetIssueDescription(int max) {
+    return 'Paling banyak $max karakter, tanpa karakter kontrol.';
+  }
+
+  @override
+  String get virtSetManualStart => 'Dimulai manual';
+
+  @override
+  String get virtSetProtection => 'Perlindungan';
+
+  @override
+  String get virtSetProtectionNote =>
+      'Mencegah penghapusan tamu dan perubahan disknya';
+
+  @override
+  String get virtSetIrreversible => 'Tidak dapat dibatalkan';
+
+  @override
+  String get virtSetDeleteStopFirst => 'Matikan sebelum menghapusnya.';
+
+  @override
+  String get virtSetDeleteProtected =>
+      'Perlindungan aktif: matikan dulu di Umum.';
+
+  @override
+  String get virtSetDeleteAgain => 'Tekan lagi untuk mengonfirmasi';
+
+  @override
+  String virtSetDeleteConfirm(String name) {
+    return 'Hapus $name';
+  }
+
+  @override
+  String get virtSetDeleteVm => 'Hapus mesin virtual';
+
+  @override
+  String get virtSetDeleteLxc => 'Hapus kontainer';
 
   @override
   String get virtHwSockets => 'Soket';

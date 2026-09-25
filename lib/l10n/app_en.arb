@@ -4855,44 +4855,13 @@
   "@virtCreateSshKeysInvalid": {
     "description": "The SSH keys field has a line that is not an OpenSSH public key."
   },
-  "virtDeleteAsk": "Delete {name}? This cannot be undone.",
-  "@virtDeleteAsk": {
-    "description": "Delete confirmation for a guest.",
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "virtDeleteTypeName": "Type {name} to confirm",
-  "@virtDeleteTypeName": {
-    "description": "Label of the field where the guest's name is typed to confirm deleting it.",
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
   "virtDeleteDisks": "Delete its disks too",
   "@virtDeleteDisks": {
     "description": "Checkbox: delete the guest's disks as well."
   },
-  "virtDeleteDisksTip": "Install media attached to it is kept.",
-  "@virtDeleteDisksTip": {
-    "description": "Install media attached to the guest is not deleted."
-  },
   "virtDeleteDisksPve": "Its disks are deleted with it; install media is kept.",
   "@virtDeleteDisksPve": {
     "description": "On PVE a guest's disks always go with it."
-  },
-  "virtDeleteStopFirst": "{name} is running. It must be stopped before it can be deleted. Force it off now?",
-  "@virtDeleteStopFirst": {
-    "description": "A running guest must be stopped before it is deleted; asks to force it off.",
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
   },
   "virtDeleted": "{name} deleted",
   "@virtDeleted": {
@@ -5213,14 +5182,6 @@
   "@virtHwPendingBanner": {
     "description": "Notice above a guest's views."
   },
-  "virtHwPendingTip": "The running guest keeps the value on the left; it gets the one on the right when it next starts.",
-  "@virtHwPendingTip": {
-    "description": "Explains the pending card's rows (current → pending)."
-  },
-  "virtHwPendingTitle": "Pending until the next start",
-  "@virtHwPendingTitle": {
-    "description": "Card title: changes the running guest has not taken yet."
-  },
   "virtHwPickNet": "Pick a network",
   "@virtHwPickNet": {
     "description": "Summary of the new NIC block."
@@ -5284,6 +5245,66 @@
   "virtHwRevertAll": "Revert all",
   "@virtHwRevertAll": {
     "description": "Button: drop every pending change."
+  },
+  "virtSetRenameStopped": "Shut the guest down to rename it: libvirt renames only a guest that is not running.",
+  "@virtSetRenameStopped": {
+    "description": "Settings view: libvirt can rename a guest only when it is shut off."
+  },
+  "virtSetIssueDescription": "At most {max} characters, and no control characters.",
+  "@virtSetIssueDescription": {
+    "description": "Settings view: the guest's description is too long or has control characters.",
+    "placeholders": {
+      "max": {
+        "type": "int",
+        "example": "8192"
+      }
+    }
+  },
+  "virtSetManualStart": "Started by hand",
+  "@virtSetManualStart": {
+    "description": "Settings view index note: the guest does not start with the host."
+  },
+  "virtSetProtection": "Protection",
+  "@virtSetProtection": {
+    "description": "Settings view: PVE's protection flag."
+  },
+  "virtSetProtectionNote": "Blocks deleting the guest and changing its disks",
+  "@virtSetProtectionNote": {
+    "description": "Settings view: what PVE's protection flag does."
+  },
+  "virtSetIrreversible": "Cannot be undone",
+  "@virtSetIrreversible": {
+    "description": "Settings view: deleting a guest cannot be undone."
+  },
+  "virtSetDeleteStopFirst": "Shut it down before deleting it.",
+  "@virtSetDeleteStopFirst": {
+    "description": "Settings view: a running guest must be shut down before it can be deleted."
+  },
+  "virtSetDeleteProtected": "Protection is on: turn it off under General first.",
+  "@virtSetDeleteProtected": {
+    "description": "Settings view: deletion is blocked while PVE protection is on."
+  },
+  "virtSetDeleteAgain": "Press again to confirm",
+  "@virtSetDeleteAgain": {
+    "description": "Settings view: the delete button was pressed once; pressing again deletes."
+  },
+  "virtSetDeleteConfirm": "Delete {name}",
+  "@virtSetDeleteConfirm": {
+    "description": "Settings view: the delete button's second, confirming label.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "web-01"
+      }
+    }
+  },
+  "virtSetDeleteVm": "Delete virtual machine",
+  "@virtSetDeleteVm": {
+    "description": "Settings view: button that deletes a virtual machine."
+  },
+  "virtSetDeleteLxc": "Delete container",
+  "@virtSetDeleteLxc": {
+    "description": "Settings view: button that deletes a container."
   },
   "virtHwSockets": "Sockets",
   "@virtHwSockets": {

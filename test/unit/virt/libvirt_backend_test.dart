@@ -845,6 +845,31 @@ void main() {
         () => json(const VirtHwRevert(['cpu'])),
         throwsA(isA<VirtErr>().having((e) => e.type, 'type', VirtErrType.unsupported)),
       );
+      // Settings: the note and a new name; libvirt has no protection.
+      expect(json(const VirtHwSetDescription('a & b')), {
+        'op': 'description',
+        'text': 'a & b',
+      });
+      expect(json(const VirtHwSetName('sbhw-2')), {'op': 'rename', 'name': 'sbhw-2'});
+      expect(
+        () => json(const VirtHwSetProtection(true)),
+        throwsA(isA<VirtErr>().having((e) => e.type, 'type', VirtErrType.unsupported)),
+      );
+    });
+
+    test('settings as read: the domain\'s name, its note, no protection, and '
+        'a rename that waits for it to stop', () async {
+      final info = LibvirtHardwareInfo.fromJson(
+        jsonDecode(
+              await parseVirtHardwareJson(
+                raw: _fixture('script_hardware_running.txt'),
+              ),
+            )
+            as Map<String, dynamic>,
+      ).copyWith(description: 'the web tier');
+      final hw = LibvirtBackend.hardwareOf(info, name: 'sbhw-test');
+      expect((hw.name, hw.description, hw.protection), ('sbhw-test', 'the web tier', null));
+      expect(hw.renameRunning, isFalse);
     });
 
     test('the running half refused: saved for the next start, in the host\'s words',

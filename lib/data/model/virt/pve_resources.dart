@@ -645,6 +645,12 @@ abstract final class PveResources {
       nics: nics,
       boot: lxc ? null : _bootOrder(_str(config['boot']), config, disks, nics),
       autostart: _int(config['onboot']) == 1,
+      name: _str(config[lxc ? 'hostname' : 'name']),
+      description: switch (_str(config['description'])?.trimRight()) {
+        final d? when d.isNotEmpty => d,
+        _ => null,
+      },
+      protection: _int(config['protection']) == 1,
       pending: [
         for (final item in pending)
           if (item is Map && item['key'] != 'digest')

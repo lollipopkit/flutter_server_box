@@ -1514,6 +1514,37 @@ void main() {
       );
     });
 
+    test('settings: name, note (cleared by deleting it), protection',
+        () async {
+      final api = hwApi();
+      final pve = api.backend(token);
+      final hw = await pve.hardware(vm);
+      await pve.changeHardware(vm, hw, const VirtHwSetName('web-03'));
+      expect(sent(api, 'POST /nodes/pve/qemu/9901/config'), {
+        'name': 'web-03',
+        'digest': hw.revision,
+      });
+      await pve.changeHardware(vm, hw, const VirtHwSetDescription('a & b'));
+      expect(sent(api, 'POST /nodes/pve/qemu/9901/config')['description'], 'a & b');
+      await pve.changeHardware(vm, hw, const VirtHwSetDescription(''));
+      expect(sent(api, 'POST /nodes/pve/qemu/9901/config'), {
+        'delete': 'description',
+        'digest': hw.revision,
+      });
+      await pve.changeHardware(vm, hw, const VirtHwSetProtection(true));
+      expect(sent(api, 'POST /nodes/pve/qemu/9901/config')['protection'], '1');
+
+      // A container's name is its hostname.
+      final ctApi = hwApi()
+        ..routes['GET /nodes/pve/lxc/9902/config'] = ((_) => config('hw_ct_config.json'))
+        ..routes['GET /nodes/pve/lxc/9902/pending'] = ((_) => const <Object?>[]);
+      final ctPve = ctApi.backend(token);
+      final ctHw = await ctPve.hardware(ct);
+      expect(ctHw.name, isNotNull);
+      await ctPve.changeHardware(ct, ctHw, const VirtHwSetName('dns-02'));
+      expect(sent(ctApi, 'PUT /nodes/pve/lxc/9902/config')['hostname'], 'dns-02');
+    });
+
     test('a stale digest is a conflict; a bad value the host\'s words',
         () async {
       final api = hwApi();

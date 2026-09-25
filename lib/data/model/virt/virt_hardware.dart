@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:server_box/data/model/virt/virt.dart';
+import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 
 part 'virt_hardware.freezed.dart';
@@ -31,6 +32,23 @@ abstract class VirtHardware with _$VirtHardware {
     /// where there is no order to set (a container).
     List<String>? boot,
     @Default(false) bool autostart,
+
+    /// The guest's name as saved: a VM's `name` or a container's `hostname`
+    /// on PVE, the domain's name on libvirt. The Settings view edits it.
+    String? name,
+
+    /// The note kept with the guest: PVE's `description`, libvirt's
+    /// `<description>`. Null for none.
+    String? description,
+
+    /// PVE's `protection`: no deleting the guest or its disks while set.
+    /// Null where the host has no such setting (libvirt).
+    bool? protection,
+
+    /// Whether the name can change while the guest runs: PVE's can (a
+    /// container's waits for a restart, as pending), libvirt's
+    /// `domrename` takes only a domain that is not running.
+    @Default(true) bool renameRunning,
     @Default(<VirtPendingField>[]) List<VirtPendingField> pending,
 
     /// What an edit is made from, sent back with it: PVE's `digest`, the
@@ -305,6 +323,27 @@ final class VirtHwSetAutostart extends VirtHwChange {
   final bool on;
 }
 
+/// A new name: PVE `name` / `hostname`, libvirt `domrename`.
+final class VirtHwSetName extends VirtHwChange {
+  const VirtHwSetName(this.name);
+
+  final String name;
+}
+
+/// The guest's note; empty clears it.
+final class VirtHwSetDescription extends VirtHwChange {
+  const VirtHwSetDescription(this.text);
+
+  final String text;
+}
+
+/// PVE's `protection`.
+final class VirtHwSetProtection extends VirtHwChange {
+  const VirtHwSetProtection(this.on);
+
+  final bool on;
+}
+
 /// Drops pending changes to [keys] (PVE `revert`).
 final class VirtHwRevert extends VirtHwChange {
   const VirtHwRevert(this.keys);
@@ -345,7 +384,21 @@ enum VirtHwIssue {
   storageSpace,
   mountPoint,
   bootEmpty,
+
+  /// Not a name the host takes: see [virtPveNamePattern] and
+  /// [virtLibvirtNamePattern].
+  nameInvalid,
+
+  /// libvirt renames only a guest that is not running.
+  nameRunning,
+
+  /// Longer than a note is kept, or with control characters in it.
+  description,
 }
+
+/// The longest note kept with a guest here: PVE's `description` is capped at
+/// 8 KiB, and libvirt's is held to the same.
+const virtHwDescriptionMax = 8192;
 
 /// The least memory a guest is given here.
 const virtHwMinMemoryMib = 16;
@@ -354,8 +407,13 @@ const virtHwMinMemoryMib = 16;
 /// read as the next option.
 final virtMountPointPattern = RegExp(r'^/[^,=\s]*[^,=\s/]$');
 
-/// Why [change] cannot be made to [hw]; null when it can.
-VirtHwIssue? virtHwIssue(VirtHardware hw, VirtHwChange change) {
+/// Why [change] cannot be made to [hw]; null when it can. [host] decides
+/// which names are taken; without it a name is checked against both.
+VirtHwIssue? virtHwIssue(
+  VirtHardware hw,
+  VirtHwChange change, {
+  VirtHostKind? host,
+}) {
   final limits = hw.limits;
   switch (change) {
     case VirtHwSetCpu(:final sockets, :final cores, :final online):
@@ -392,12 +450,28 @@ VirtHwIssue? virtHwIssue(VirtHardware hw, VirtHwChange change) {
       }
     case VirtHwSetBoot(:final order):
       if (order.isEmpty) return VirtHwIssue.bootEmpty;
+    case VirtHwSetName(:final name):
+      final ok = switch (host) {
+        VirtHostKind.pve => virtPveNamePattern.hasMatch(name),
+        VirtHostKind.libvirt => virtLibvirtNamePattern.hasMatch(name),
+        null =>
+          virtPveNamePattern.hasMatch(name) &&
+              virtLibvirtNamePattern.hasMatch(name),
+      };
+      if (!ok) return VirtHwIssue.nameInvalid;
+      if (hw.running && !hw.renameRunning) return VirtHwIssue.nameRunning;
+    case VirtHwSetDescription(:final text):
+      if (text.length > virtHwDescriptionMax ||
+          text.runes.any((r) => r < 0x20 && r != 0x0a && r != 0x09)) {
+        return VirtHwIssue.description;
+      }
     case VirtHwRemoveDisk() ||
         VirtHwSetMedia() ||
         VirtHwAddNic() ||
         VirtHwRemoveNic() ||
         VirtHwUpdateNic() ||
         VirtHwSetAutostart() ||
+        VirtHwSetProtection() ||
         VirtHwRevert():
       break;
   }

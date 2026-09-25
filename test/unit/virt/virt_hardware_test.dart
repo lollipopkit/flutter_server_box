@@ -62,6 +62,48 @@ void main() {
     expect(virtHwIssue(vm, const VirtHwAddDisk(storage: pool, gib: 1)), isNull);
   });
 
+  test('a name the host takes; libvirt renames only a stopped guest', () {
+    expect(
+      virtHwIssue(vm, const VirtHwSetName('web-02'), host: VirtHostKind.pve),
+      isNull,
+    );
+    // An underscore: libvirt's, not a DNS name.
+    expect(
+      virtHwIssue(vm, const VirtHwSetName('web_02'), host: VirtHostKind.pve),
+      VirtHwIssue.nameInvalid,
+    );
+    final libvirt = vm.copyWith(renameRunning: false);
+    expect(
+      virtHwIssue(libvirt, const VirtHwSetName('web_02'), host: VirtHostKind.libvirt),
+      VirtHwIssue.nameRunning,
+    );
+    expect(
+      virtHwIssue(
+        libvirt.copyWith(running: false),
+        const VirtHwSetName('web_02'),
+        host: VirtHostKind.libvirt,
+      ),
+      isNull,
+    );
+    expect(
+      virtHwIssue(vm, const VirtHwSetName('-x'), host: VirtHostKind.libvirt),
+      VirtHwIssue.nameInvalid,
+    );
+  });
+
+  test('a note: lines and tabs, no other control characters, bounded', () {
+    expect(virtHwIssue(vm, const VirtHwSetDescription('a\n\tb')), isNull);
+    expect(virtHwIssue(vm, const VirtHwSetDescription('')), isNull);
+    expect(
+      virtHwIssue(vm, const VirtHwSetDescription('a\u0007b')),
+      VirtHwIssue.description,
+    );
+    expect(
+      virtHwIssue(vm, VirtHwSetDescription('x' * (virtHwDescriptionMax + 1))),
+      VirtHwIssue.description,
+    );
+  });
+
   test('a boot order needs a device', () {
     expect(virtHwIssue(vm, const VirtHwSetBoot([])), VirtHwIssue.bootEmpty);
     expect(virtHwIssue(vm, const VirtHwSetBoot(['vda'])), isNull);

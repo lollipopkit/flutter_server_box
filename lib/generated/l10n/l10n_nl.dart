@@ -3783,30 +3783,11 @@ class AppLocalizationsNl extends AppLocalizations {
       'Eén openbare OpenSSH-sleutel per regel.';
 
   @override
-  String virtDeleteAsk(String name) {
-    return '$name verwijderen? Dit kan niet ongedaan worden gemaakt.';
-  }
-
-  @override
-  String virtDeleteTypeName(String name) {
-    return 'Typ $name om te bevestigen';
-  }
-
-  @override
   String get virtDeleteDisks => 'Ook de schijven verwijderen';
-
-  @override
-  String get virtDeleteDisksTip =>
-      'Gekoppeld installatiemedium blijft behouden.';
 
   @override
   String get virtDeleteDisksPve =>
       'De schijven worden mee verwijderd; installatiemedium blijft behouden.';
-
-  @override
-  String virtDeleteStopFirst(String name) {
-    return '$name draait. Hij moet gestopt zijn voordat hij verwijderd kan worden. Nu geforceerd uitschakelen?';
-  }
 
   @override
   String virtDeleted(String name) {
@@ -4037,13 +4018,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Sommige hardwarewijzigingen gelden na een herstart';
 
   @override
-  String get virtHwPendingTip =>
-      'De draaiende gast houdt de waarde links; bij de volgende start krijgt hij die rechts.';
-
-  @override
-  String get virtHwPendingTitle => 'In afwachting tot de volgende start';
-
-  @override
   String get virtHwPickNet => 'Kies een netwerk';
 
   @override
@@ -4079,6 +4053,49 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get virtHwRevertAll => 'Alles terugdraaien';
+
+  @override
+  String get virtSetRenameStopped =>
+      'Zet de gast uit om hem te hernoemen: libvirt hernoemt alleen een gast die niet draait.';
+
+  @override
+  String virtSetIssueDescription(int max) {
+    return 'Hoogstens $max tekens, zonder stuurtekens.';
+  }
+
+  @override
+  String get virtSetManualStart => 'Handmatig gestart';
+
+  @override
+  String get virtSetProtection => 'Beveiliging';
+
+  @override
+  String get virtSetProtectionNote =>
+      'Voorkomt het verwijderen van de gast en wijzigingen aan zijn schijven';
+
+  @override
+  String get virtSetIrreversible => 'Kan niet ongedaan worden gemaakt';
+
+  @override
+  String get virtSetDeleteStopFirst => 'Zet hem uit voordat je hem verwijdert.';
+
+  @override
+  String get virtSetDeleteProtected =>
+      'Beveiliging staat aan: zet die eerst uit onder Algemeen.';
+
+  @override
+  String get virtSetDeleteAgain => 'Druk nogmaals om te bevestigen';
+
+  @override
+  String virtSetDeleteConfirm(String name) {
+    return '$name verwijderen';
+  }
+
+  @override
+  String get virtSetDeleteVm => 'Virtuele machine verwijderen';
+
+  @override
+  String get virtSetDeleteLxc => 'Container verwijderen';
 
   @override
   String get virtHwSockets => 'Sockets';

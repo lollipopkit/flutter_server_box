@@ -3500,28 +3500,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtCreateSshKeysInvalid => '每行一个 OpenSSH 公钥。';
 
   @override
-  String virtDeleteAsk(String name) {
-    return '删除 $name？此操作无法撤销。';
-  }
-
-  @override
-  String virtDeleteTypeName(String name) {
-    return '输入 $name 以确认';
-  }
-
-  @override
-  String get virtDeleteDisks => '同时删除它的磁盘';
-
-  @override
-  String get virtDeleteDisksTip => '挂载的安装介质会保留。';
+  String get virtDeleteDisks => '同时删除磁盘卷';
 
   @override
   String get virtDeleteDisksPve => '磁盘会随它一起删除，安装介质会保留。';
-
-  @override
-  String virtDeleteStopFirst(String name) {
-    return '$name 正在运行，删除前必须先停止。现在强制关机吗？';
-  }
 
   @override
   String virtDeleted(String name) {
@@ -3558,7 +3540,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtHwAppliesOnRestart => '已保存，将在下次启动时生效。';
 
   @override
-  String get virtHwAutostart => '随宿主机启动';
+  String get virtHwAutostart => '随宿主机开机自启';
 
   @override
   String get virtHwAutostartPve => 'onboot · 按 VMID 顺序启动';
@@ -3742,12 +3724,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtHwPendingBanner => '部分硬件更改在重启后生效';
 
   @override
-  String get virtHwPendingTip => '运行中的客户机仍使用左边的值，下次启动时改用右边的值。';
-
-  @override
-  String get virtHwPendingTitle => '下次启动时生效';
-
-  @override
   String get virtHwPickNet => '选择网络';
 
   @override
@@ -3783,6 +3759,46 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtHwRevertAll => '全部撤销';
+
+  @override
+  String get virtSetRenameStopped => '关机后才能改名：libvirt 只能重命名未运行的虚拟机。';
+
+  @override
+  String virtSetIssueDescription(int max) {
+    return '最多 $max 个字符，且不能包含控制字符。';
+  }
+
+  @override
+  String get virtSetManualStart => '手动启动';
+
+  @override
+  String get virtSetProtection => '保护';
+
+  @override
+  String get virtSetProtectionNote => '禁止删除虚拟机和修改磁盘';
+
+  @override
+  String get virtSetIrreversible => '不可撤销';
+
+  @override
+  String get virtSetDeleteStopFirst => '先关机再删除。';
+
+  @override
+  String get virtSetDeleteProtected => '已开启保护，先在常规里关闭。';
+
+  @override
+  String get virtSetDeleteAgain => '再点一次确认';
+
+  @override
+  String virtSetDeleteConfirm(String name) {
+    return '确认删除 $name';
+  }
+
+  @override
+  String get virtSetDeleteVm => '删除虚拟机';
+
+  @override
+  String get virtSetDeleteLxc => '删除容器';
 
   @override
   String get virtHwSockets => '插槽';
@@ -7303,28 +7319,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtCreateSshKeysInvalid => '每行一個 OpenSSH 公鑰。';
 
   @override
-  String virtDeleteAsk(String name) {
-    return '刪除 $name？此操作無法復原。';
-  }
-
-  @override
-  String virtDeleteTypeName(String name) {
-    return '輸入 $name 以確認';
-  }
-
-  @override
-  String get virtDeleteDisks => '同時刪除它的磁碟';
-
-  @override
-  String get virtDeleteDisksTip => '掛載的安裝媒體會保留。';
+  String get virtDeleteDisks => '同時刪除磁碟區';
 
   @override
   String get virtDeleteDisksPve => '磁碟會隨它一起刪除，安裝媒體會保留。';
-
-  @override
-  String virtDeleteStopFirst(String name) {
-    return '$name 正在執行，刪除前必須先停止。現在強制關機嗎？';
-  }
 
   @override
   String virtDeleted(String name) {
@@ -7361,7 +7359,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtHwAppliesOnRestart => '已儲存，將在下次啟動時生效。';
 
   @override
-  String get virtHwAutostart => '隨主機啟動';
+  String get virtHwAutostart => '隨主機開機自動啟動';
 
   @override
   String get virtHwAutostartPve => 'onboot · 依 VMID 順序啟動';
@@ -7545,12 +7543,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtHwPendingBanner => '部分硬體變更在重新啟動後生效';
 
   @override
-  String get virtHwPendingTip => '執行中的客體仍使用左邊的值，下次啟動時改用右邊的值。';
-
-  @override
-  String get virtHwPendingTitle => '下次啟動時生效';
-
-  @override
   String get virtHwPickNet => '選擇網路';
 
   @override
@@ -7586,6 +7578,46 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtHwRevertAll => '全部復原';
+
+  @override
+  String get virtSetRenameStopped => '關機後才能改名：libvirt 只能重新命名未執行的虛擬機。';
+
+  @override
+  String virtSetIssueDescription(int max) {
+    return '最多 $max 個字元，且不能包含控制字元。';
+  }
+
+  @override
+  String get virtSetManualStart => '手動啟動';
+
+  @override
+  String get virtSetProtection => '保護';
+
+  @override
+  String get virtSetProtectionNote => '禁止刪除虛擬機和修改磁碟';
+
+  @override
+  String get virtSetIrreversible => '無法復原';
+
+  @override
+  String get virtSetDeleteStopFirst => '先關機再刪除。';
+
+  @override
+  String get virtSetDeleteProtected => '已開啟保護，請先在一般設定中關閉。';
+
+  @override
+  String get virtSetDeleteAgain => '再按一次確認';
+
+  @override
+  String virtSetDeleteConfirm(String name) {
+    return '確認刪除 $name';
+  }
+
+  @override
+  String get virtSetDeleteVm => '刪除虛擬機';
+
+  @override
+  String get virtSetDeleteLxc => '刪除容器';
 
   @override
   String get virtHwSockets => '插槽';

@@ -539,49 +539,6 @@ void main() {
       expect(find.byType(VirtCreateView), findsNothing);
       expect(find.byType(VirtGuestView), findsOneWidget);
     });
-
-    testWidgets('delete: a running guest is offered a stop first', (
-      tester,
-    ) async {
-      offerCreate();
-      await pump(tester, wide: true);
-      await tester.tap(find.text('web-01'));
-      await settle(tester);
-
-      await tester.tap(find.byKey(const ValueKey('virt:delete')));
-      await settle(tester);
-      expect(
-        find.text(app_locale.l10n.virtDeleteStopFirst('web-01')),
-        findsOneWidget,
-      );
-      await tester.tap(find.text(libL10n.cancel));
-      await settle(tester);
-      expect(_calls.where((c) => c.contains('power')), isEmpty);
-      expect(_calls.where((c) => c.contains('delete')), isEmpty);
-    });
-
-    testWidgets('delete: a stopped one, once its name is typed', (
-      tester,
-    ) async {
-      offerCreate();
-      await pump(tester, wide: true);
-      await tester.tap(find.text('dns-01'));
-      await settle(tester);
-      await tester.tap(find.byKey(const ValueKey('virt:delete')));
-      await settle(tester);
-      // PVE deletes a guest's disks with it: said, not asked.
-      expect(find.text(app_locale.l10n.virtDeleteDisksPve), findsOneWidget);
-      await tester.enterText(
-        find.byKey(const ValueKey('delete:name')),
-        'dns-01',
-      );
-      await tester.pump();
-      await tester.tap(find.byKey(const ValueKey('delete:confirm')));
-      await settle(tester);
-      expect(_calls, contains('$_pve.delete lxc/200 disks=true'));
-      // Closed beside the list.
-      expect(find.byType(VirtGuestView), findsNothing);
-    });
   });
 
   group('host switching', () {

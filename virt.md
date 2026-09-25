@@ -361,12 +361,56 @@ and backticks) through create, define and undefine.
 A "Hardware" view next to Overview / Console / Snapshots (labelled
 "Resources" for a container), where `VirtCapabilities.hardware` (both
 backends), not on a template (`lib/view/page/virt/hardware.dart`). One form
-per group — processor, memory, disks (a container: root disk and mount
-points), NICs, CD-ROM, boot, the configuration as the host writes it — with
-an index beside them from 860 pt. Steppers and pickers are drafts with
-Cancel / Save; device toggles (link, firewall, autostart) and device
-actions (add, grow, detach, eject) are one change each, a destructive one
-behind a red confirmation (a disk: "delete its volume too", unticked).
+per group, in the design's order — processor, memory, disks (a container:
+root disk and mount points), NICs, CD-ROM, boot order (VMs), the
+configuration as the host writes it — with an index beside them from
+860 pt. Steppers and pickers are drafts with Cancel / Save; device toggles
+(link, firewall) and device actions (add, grow, detach, eject) are one
+change each, a destructive one behind a red confirmation (a disk: "delete
+its volume too", unticked). "Add" rows have the design's dashed outline
+(fl_lib `DashedBorder`).
+
+The pane (`edit_pane.dart`, a mixin both the Hardware and the Settings view
+use) keeps the rows, the index and the one way a change is made (`_apply`:
+check, send with the revision, read again, say what waits). A pending
+change is shown **where it is set**: under the processor or memory fields,
+under the device row it changes (a removed device's under its group), under
+the boot order, under the Settings field; an option neither view edits is
+listed with the configuration file. Each has its revert on PVE; the notice
+above the tabs has "revert all" (an icon, beside the design's one "Restart
+now" — two labels do not fit a phone) and the restart.
+
+### Settings (phase 4)
+
+The design's Settings view, a segment after Snapshots
+(`lib/view/page/virt/settings.dart`), on the same hardware read:
+
+- **General**: the name (PVE `name`, a container's `hostname`; libvirt
+  `domrename`), the note (PVE `description`; libvirt `virsh desc`, both
+  definitions while running; empty clears it), starting with the host
+  (moved here from the boot group: `onboot` / `virsh autostart`), and PVE's
+  protection. Name and note are drafts with Cancel / Save; a name is checked
+  as the create form checks it (a DNS name on PVE, letters, digits, `.`,
+  `_`, `-` on libvirt) and against the host's other guests.
+- **Delete** (moved here from the guest's bar): the design's two presses —
+  the first shows "press again to confirm", the second deletes — held back
+  while the guest runs ("shut it down first") or is protected. libvirt asks
+  whether the disks go too; PVE says they do.
+- libvirt renames only a domain that is not running (`renameRunning`
+  false): the field says so while it runs. libvirt has no protection
+  (`protection` null) and no revert.
+- The design's Migrate and Clone groups are later phases; its Settings view
+  has nothing else.
+
+Verified, 2026-09-26: PVE 9.2.2 through the relay with a privilege-separated
+token holding exactly the documented privileges (`VM.Config.Options` covers
+name, note, `onboot` and protection; a container's hostname is
+`VM.Config.Network`, also documented) — a VM's name and note apply at once,
+running; **a running container's hostname applies at once too** (PVE 9.2
+writes it into the container; nothing pending). libvirt 11.3 through the
+agent and sudo: a note starting with `-` and holding quotes and a newline
+round-trips through `virsh desc`; `domrename` on the stopped domain, and
+back.
 
 `VirtHardware` (`lib/data/model/virt/virt_hardware.dart`) is **the
 definition the next start gets**, so an edit starts from what was last
@@ -514,8 +558,8 @@ Follows the repo's tab conventions (`CLAUDE.md` → Tabs):
   grouped by state; sections VMs / Storage / Network as fl_lib
   `SegmentedTabs`, a section the host's capabilities lack left out — both
   backends have all three) and the detail beside it:
-  a guest (Overview, Console, Snapshots; a guest with a terminal and a
-  screen offers them as the Console segment's second level,
+  a guest (Overview, Console, Hardware, Snapshots, Settings; a guest with a
+  terminal and a screen offers them as the Console segment's second level,
   `SegmentedTab.sub`), a pool (capacity, what it is, its
   volumes with the guests using them) or a network (configuration, the guests
   on it — a tap opens the guest in the VMs section).
@@ -530,6 +574,14 @@ Follows the repo's tab conventions (`CLAUDE.md` → Tabs):
   fixed (libvirt, active), or a note (stopped). Revert and delete are
   confirmed; a revert to a snapshot without memory on an active guest is
   asked in red with "start it afterwards".
+- Design deviations in the Hardware and Settings views, and why:
+  - drafts with Save / Cancel where the design applies each step (a step
+    is not a change to the host);
+  - the boot order is the design's numbered rows with up/down arrows (the
+    design has no drag), and tapping a row includes or leaves out a device;
+  - "revert" rows and the notice's "revert all" icon, which the design has
+    no place for (PVE's pending list);
+  - delete keeps no typed name: the design's two presses.
 - Power actions with confirmation, as the PVE page does today; busy states
   (`starting`, `stopping`, …) show progress and disable conflicting actions.
   PVE actions return a UPID; poll `GET .../tasks/{upid}/status` until done.
@@ -621,8 +673,9 @@ page, so feature pages use the `featureIntroVer` counter.
   snapshot's configuration diff, PVE's per-storage snapshot support shown
   before trying.
 - Hardware: bus and cache, NIC model and MAC, CD-ROM/USB/PCI/TPM devices,
-  the display, firmware and Secure Boot; libvirt revert (redefine from the
-  running XML).
+  the display, firmware and Secure Boot (task B: groups go between the
+  CD-ROM and the boot order, as the design has them); libvirt revert
+  (redefine from the running XML).
 - Clone, migrate (PVE cluster); creating from a cloud image or with
   cloud-init, UEFI/TPM and a choice of bus and NIC model in the create form.
 - Backups (PVE `vzdump` / backup storage).

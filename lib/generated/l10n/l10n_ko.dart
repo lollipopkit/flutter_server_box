@@ -3570,28 +3570,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get virtCreateSshKeysInvalid => '한 줄에 OpenSSH 공개 키 하나.';
 
   @override
-  String virtDeleteAsk(String name) {
-    return '$name을(를) 삭제할까요? 되돌릴 수 없습니다.';
-  }
-
-  @override
-  String virtDeleteTypeName(String name) {
-    return '확인하려면 $name을(를) 입력하세요';
-  }
-
-  @override
   String get virtDeleteDisks => '디스크도 함께 삭제';
 
   @override
-  String get virtDeleteDisksTip => '연결된 설치 미디어는 유지됩니다.';
-
-  @override
   String get virtDeleteDisksPve => '디스크는 함께 삭제되고, 설치 미디어는 유지됩니다.';
-
-  @override
-  String virtDeleteStopFirst(String name) {
-    return '$name이(가) 실행 중입니다. 삭제하려면 먼저 중지해야 합니다. 지금 강제로 끌까요?';
-  }
 
   @override
   String virtDeleted(String name) {
@@ -3814,12 +3796,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get virtHwPendingBanner => '일부 하드웨어 변경은 재시작 후 적용됩니다';
 
   @override
-  String get virtHwPendingTip => '실행 중인 게스트는 왼쪽 값을 유지하고, 다음 시작 시 오른쪽 값을 받습니다.';
-
-  @override
-  String get virtHwPendingTitle => '다음 시작 시 적용';
-
-  @override
   String get virtHwPickNet => '네트워크 선택';
 
   @override
@@ -3855,6 +3831,47 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get virtHwRevertAll => '모두 되돌리기';
+
+  @override
+  String get virtSetRenameStopped =>
+      '이름을 바꾸려면 게스트를 종료하세요: libvirt는 실행 중이 아닌 게스트만 이름을 바꿀 수 있습니다.';
+
+  @override
+  String virtSetIssueDescription(int max) {
+    return '최대 $max자, 제어 문자는 사용할 수 없습니다.';
+  }
+
+  @override
+  String get virtSetManualStart => '수동 시작';
+
+  @override
+  String get virtSetProtection => '보호';
+
+  @override
+  String get virtSetProtectionNote => '게스트 삭제와 디스크 변경을 막습니다';
+
+  @override
+  String get virtSetIrreversible => '되돌릴 수 없음';
+
+  @override
+  String get virtSetDeleteStopFirst => '삭제하기 전에 종료하세요.';
+
+  @override
+  String get virtSetDeleteProtected => '보호가 켜져 있습니다: 먼저 일반에서 끄세요.';
+
+  @override
+  String get virtSetDeleteAgain => '확인하려면 한 번 더 누르세요';
+
+  @override
+  String virtSetDeleteConfirm(String name) {
+    return '$name 삭제';
+  }
+
+  @override
+  String get virtSetDeleteVm => '가상 머신 삭제';
+
+  @override
+  String get virtSetDeleteLxc => '컨테이너 삭제';
 
   @override
   String get virtHwSockets => '소켓';

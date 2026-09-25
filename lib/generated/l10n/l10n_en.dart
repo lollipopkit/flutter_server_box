@@ -3741,29 +3741,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get virtCreateSshKeysInvalid => 'One OpenSSH public key per line.';
 
   @override
-  String virtDeleteAsk(String name) {
-    return 'Delete $name? This cannot be undone.';
-  }
-
-  @override
-  String virtDeleteTypeName(String name) {
-    return 'Type $name to confirm';
-  }
-
-  @override
   String get virtDeleteDisks => 'Delete its disks too';
-
-  @override
-  String get virtDeleteDisksTip => 'Install media attached to it is kept.';
 
   @override
   String get virtDeleteDisksPve =>
       'Its disks are deleted with it; install media is kept.';
-
-  @override
-  String virtDeleteStopFirst(String name) {
-    return '$name is running. It must be stopped before it can be deleted. Force it off now?';
-  }
 
   @override
   String virtDeleted(String name) {
@@ -3992,13 +3974,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Some hardware changes take effect at restart';
 
   @override
-  String get virtHwPendingTip =>
-      'The running guest keeps the value on the left; it gets the one on the right when it next starts.';
-
-  @override
-  String get virtHwPendingTitle => 'Pending until the next start';
-
-  @override
   String get virtHwPickNet => 'Pick a network';
 
   @override
@@ -4034,6 +4009,49 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get virtHwRevertAll => 'Revert all';
+
+  @override
+  String get virtSetRenameStopped =>
+      'Shut the guest down to rename it: libvirt renames only a guest that is not running.';
+
+  @override
+  String virtSetIssueDescription(int max) {
+    return 'At most $max characters, and no control characters.';
+  }
+
+  @override
+  String get virtSetManualStart => 'Started by hand';
+
+  @override
+  String get virtSetProtection => 'Protection';
+
+  @override
+  String get virtSetProtectionNote =>
+      'Blocks deleting the guest and changing its disks';
+
+  @override
+  String get virtSetIrreversible => 'Cannot be undone';
+
+  @override
+  String get virtSetDeleteStopFirst => 'Shut it down before deleting it.';
+
+  @override
+  String get virtSetDeleteProtected =>
+      'Protection is on: turn it off under General first.';
+
+  @override
+  String get virtSetDeleteAgain => 'Press again to confirm';
+
+  @override
+  String virtSetDeleteConfirm(String name) {
+    return 'Delete $name';
+  }
+
+  @override
+  String get virtSetDeleteVm => 'Delete virtual machine';
+
+  @override
+  String get virtSetDeleteLxc => 'Delete container';
 
   @override
   String get virtHwSockets => 'Sockets';

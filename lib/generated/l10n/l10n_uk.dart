@@ -3770,30 +3770,11 @@ class AppLocalizationsUk extends AppLocalizations {
       'Один відкритий ключ OpenSSH на рядок.';
 
   @override
-  String virtDeleteAsk(String name) {
-    return 'Видалити $name? Це неможливо скасувати.';
-  }
-
-  @override
-  String virtDeleteTypeName(String name) {
-    return 'Введіть $name для підтвердження';
-  }
-
-  @override
   String get virtDeleteDisks => 'Видалити і його диски';
-
-  @override
-  String get virtDeleteDisksTip =>
-      'Підключений інсталяційний носій залишиться.';
 
   @override
   String get virtDeleteDisksPve =>
       'Його диски видаляються разом із ним; інсталяційний носій залишиться.';
-
-  @override
-  String virtDeleteStopFirst(String name) {
-    return '$name працює. Перед видаленням його треба зупинити. Примусово вимкнути зараз?';
-  }
 
   @override
   String virtDeleted(String name) {
@@ -4025,13 +4006,6 @@ class AppLocalizationsUk extends AppLocalizations {
       'Частина змін обладнання набуде чинності після перезапуску';
 
   @override
-  String get virtHwPendingTip =>
-      'Запущений гість зберігає значення ліворуч; значення праворуч він отримає під час наступного запуску.';
-
-  @override
-  String get virtHwPendingTitle => 'Очікує наступного запуску';
-
-  @override
   String get virtHwPickNet => 'Виберіть мережу';
 
   @override
@@ -4067,6 +4041,49 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get virtHwRevertAll => 'Скасувати все';
+
+  @override
+  String get virtSetRenameStopped =>
+      'Вимкніть гостя, щоб перейменувати: libvirt перейменовує лише гостя, що не працює.';
+
+  @override
+  String virtSetIssueDescription(int max) {
+    return 'Не більше $max символів, без керувальних символів.';
+  }
+
+  @override
+  String get virtSetManualStart => 'Запуск вручну';
+
+  @override
+  String get virtSetProtection => 'Захист';
+
+  @override
+  String get virtSetProtectionNote =>
+      'Забороняє видаляти гостя й змінювати його диски';
+
+  @override
+  String get virtSetIrreversible => 'Не можна скасувати';
+
+  @override
+  String get virtSetDeleteStopFirst => 'Вимкніть його перед видаленням.';
+
+  @override
+  String get virtSetDeleteProtected =>
+      'Увімкнено захист: спершу вимкніть його в розділі «Загальні».';
+
+  @override
+  String get virtSetDeleteAgain => 'Натисніть ще раз для підтвердження';
+
+  @override
+  String virtSetDeleteConfirm(String name) {
+    return 'Видалити $name';
+  }
+
+  @override
+  String get virtSetDeleteVm => 'Видалити віртуальну машину';
+
+  @override
+  String get virtSetDeleteLxc => 'Видалити контейнер';
 
   @override
   String get virtHwSockets => 'Сокети';

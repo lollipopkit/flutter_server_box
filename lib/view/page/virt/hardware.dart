@@ -14,14 +14,18 @@ import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/view/page/virt/common.dart';
 import 'package:server_box/view/widget/group_title.dart';
 
+part 'edit_pane.dart';
+part 'settings.dart';
+
 /// A guest's hardware, and changing it — the design's sectioned edit pane:
 /// groups under a title and a rule, each saying on the right what it amounts
 /// to, or that a change waits for the next start. Wide, an index of the
 /// groups runs down the left.
 ///
 /// Every value shown is what the next start gets. What the running guest has
-/// instead is listed first, with a way to drop it where the host keeps such a
-/// list (PVE); the guest view says so above its tabs, with a restart.
+/// instead is shown by the field or device it changes, with a way to drop it
+/// where the host keeps such a list (PVE); the guest view says so above its
+/// tabs, with a restart and — on PVE — dropping them all.
 ///
 /// Steppers and the boot order are drafts, saved or dropped with the buttons
 /// under them: one click is one step, not one change to the host. A device's
@@ -43,12 +47,6 @@ class VirtHardwareView extends ConsumerStatefulWidget {
   ConsumerState<VirtHardwareView> createState() => _VirtHardwareViewState();
 }
 
-/// Where the index column appears: room for it beside the 600-wide pane.
-const _indexFrom = 860.0;
-
-/// How far a device's own rows sit in from its row.
-const _indent = 26.0;
-
 class _CpuDraft {
   const _CpuDraft(this.sockets, this.cores, this.online);
 
@@ -67,7 +65,15 @@ class _MemDraft {
   final int? swapMib;
 }
 
-class _VirtHardwareViewState extends ConsumerState<VirtHardwareView> {
+class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
+    with _EditPane<VirtHardwareView> {
+  @override
+  String get _serverId => widget.serverId;
+  @override
+  VirtGuest get _guest => widget.guest;
+  @override
+  VirtCapabilities get _caps => widget.caps;
+
   _CpuDraft? _cpu;
   _MemDraft? _mem;
 
@@ -79,8 +85,6 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView> {
   /// Grown sizes not saved yet, by disk.
   final _grow = <String, int>{};
 
-  /// Open device rows, by key; `config` for the configuration file.
-  final _open = <String>{};
 
   /// The add block that is open: `disk` or `nic`.
   String? _adding;
@@ -92,18 +96,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView> {
   VirtNetwork? _addNet;
 
   Future<List<VirtVolume>>? _isos;
-  final _groupKeys = <String, GlobalKey>{};
 
-  VirtHostNotifier get _notifier =>
-      ref.read(virtHostProvider(widget.serverId).notifier);
-
-  VirtHardwareProvider get _provider =>
-      virtHardwareProvider(widget.serverId, widget.guest.id);
-
-  bool get _lxc => widget.guest.kind == VirtGuestKind.lxc;
-
-  bool get _pve =>
-      ref.read(virtHostProvider(widget.serverId)).kind == VirtHostKind.pve;
 
   @override
   void initState() {
@@ -120,213 +113,27 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final async = ref.watch(_provider);
-    final busy = ref.watch(
-      virtHostProvider(
-        widget.serverId,
-      ).select((s) => s.isBusy(widget.guest.id)),
-    );
-    final hw = async.value;
-    if (async.error case final e?) return _buildError(e);
-    if (hw == null) return const Center(child: SizedLoading.medium);
-    final groups = _groups(hw, busy);
-    return LayoutBuilder(
-      builder: (context, cons) {
-        final pane = RefreshIndicator(
-          onRefresh: () => ref.refresh(_provider.future),
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(13, 0, 13, 17),
-            children: [
-              Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 600),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      for (final g in groups)
-                        Column(
-                          key: _groupKeys.putIfAbsent(g.key, GlobalKey.new),
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            GroupTitle(
-                              g.title,
-                              right: g.right.isEmpty ? null : g.right,
-                              rightColor: g.warn ? StatePalette.warn : null,
-                            ),
-                            for (final r in g.rows)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 7),
-                                child: r,
-                              ),
-                          ],
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-        if (cons.maxWidth < _indexFrom || groups.length < 3) return pane;
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SizedBox(width: 206, child: _buildIndex(groups)),
-            const VerticalDivider(width: 1),
-            Expanded(child: pane),
-          ],
-        );
-      },
-    );
-  }
+  Widget build(BuildContext context) => _buildEditPane(_groups);
 
-  Widget _buildIndex(List<_Group> groups) {
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 13),
-      children: [
-        for (final g in groups)
-          InkWell(
-            key: ValueKey('hw:index:${g.key}'),
-            borderRadius: BorderRadius.circular(13),
-            onTap: () => _scrollTo(g.key),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
-              child: Row(
-                children: [
-                  Container(
-                    width: 7,
-                    height: 7,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: g.warn ? StatePalette.warn : ChartPalette.accent,
-                    ),
-                  ),
-                  UIs.width7,
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(g.title, style: UIs.text12Bold),
-                        Text(
-                          g.indexNote,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: UIs.text11Grey,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  /// The group's own list only: `Scrollable.ensureVisible` would move every
-  /// scrollable above it too.
-  void _scrollTo(String key) {
-    final ctx = _groupKeys[key]?.currentContext;
-    final object = ctx?.findRenderObject();
-    if (ctx == null || object == null) return;
-    Scrollable.maybeOf(ctx)?.position.ensureVisible(
-      object,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOutCubic,
-    );
-  }
-
-  Widget _buildError(Object e) {
-    return ListView(
-      padding: const EdgeInsets.all(13),
-      children: [
-        VirtCard(
-          icon: Icons.error_outline,
-          title: e is VirtErr ? e.title : libL10n.error,
-          trailing: Btn.icon(
-            text: libL10n.retry,
-            icon: const Icon(Icons.refresh, size: 18),
-            onTap: () => ref.invalidate(_provider),
-          ),
-          children: [
-            if (e is VirtErr)
-              if (e.detail case final d?) Text(d, style: UIs.text12Grey)
-              else UIs.placeholder
-            else
-              Text('$e', style: UIs.text12Grey),
-          ],
-        ),
-      ],
-    );
-  }
-
+  /// The design's order. Groups task B adds (devices and passthrough,
+  /// display, firmware) go where the design has them: between the CD-ROM
+  /// and the boot order.
   List<_Group> _groups(VirtHardware hw, bool busy) => [
-    if (hw.pending.isNotEmpty) _pendingGroup(hw, busy),
     _cpuGroup(hw, busy),
     _memGroup(hw, busy),
     _diskGroup(hw, busy),
     _nicGroup(hw, busy),
     if (!_lxc && hw.disks.any((d) => d.kind == VirtHwDiskKind.cdrom))
       _cdromGroup(hw, busy),
-    _bootGroup(hw, busy),
-    _configGroup(hw),
+    // A container boots its root; it has no order to set.
+    if (hw.boot != null) _bootGroup(hw, busy),
+    _configGroup(hw, busy),
   ];
 
   /// Whether a change to [keys] waits for the next start: the running guest
   /// has it pending.
   bool _waits(VirtHardware hw, Iterable<String> keys) =>
       hw.running && hw.pendingFor(keys);
-
-  // --- Pending ---
-
-  _Group _pendingGroup(VirtHardware hw, bool busy) {
-    final revert = widget.caps.hardwareRevert;
-    return _Group(
-      key: 'pending',
-      title: l10n.virtHwPendingTitle,
-      right: '${hw.pending.length}',
-      warn: true,
-      indexNote: hw.pending.map((p) => p.key).join(', '),
-      rows: [
-        _text(l10n.virtHwPendingTip),
-        for (final p in hw.pending)
-          _field(
-            Icons.schedule,
-            p.key,
-            p.delete
-                ? '${p.current ?? ''} → ${libL10n.delete}'
-                : '${p.current ?? '—'} → ${p.pending ?? '—'}',
-            key: ValueKey('hw:pending:${p.key}'),
-            trailing: revert
-                ? Btn.icon(
-                    key: ValueKey('hw:revert:${p.key}'),
-                    text: l10n.virtHwRevert,
-                    icon: const Icon(Icons.undo, size: 17),
-                    onTap: busy
-                        ? null
-                        : () => _apply(hw, VirtHwRevert([p.key])),
-                  )
-                : null,
-          ),
-        if (revert && hw.pending.length > 1)
-          _actions([
-            _Action(
-              l10n.virtHwRevertAll,
-              icon: Icons.undo,
-              key: 'hw:revert-all',
-              onTap: busy
-                  ? null
-                  : () => _apply(
-                      hw,
-                      VirtHwRevert([for (final p in hw.pending) p.key]),
-                    ),
-            ),
-          ]),
-      ],
-    );
-  }
 
   // --- CPU ---
 
@@ -442,6 +249,11 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView> {
             l10n.virtHwTopologyValue(d.sockets, d.cores, threads),
           ),
         ],
+        ..._pendingRows(
+          hw,
+          busy,
+          (p) => _placeOf(hw, p.key) == _PendingPlace.cpu,
+        ),
         if (changed)
           _actions([
             _Action(
@@ -616,6 +428,11 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView> {
           ),
         if (hw.running && used != null)
           _field(Icons.data_usage, l10n.virtHwGuestUsed, used.bytes2Str),
+        ..._pendingRows(
+          hw,
+          busy,
+          (p) => _placeOf(hw, p.key) == _PendingPlace.memory,
+        ),
         if (changed)
           _actions([
             _Action(
@@ -660,6 +477,13 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView> {
       indexNote: disks.isEmpty ? '—' : disks.map((d) => d.key).join(', '),
       rows: [
         for (final d in disks) ..._diskRows(hw, d, busy),
+        // Pending for a disk the next start no longer has: removed.
+        ..._pendingRows(
+          hw,
+          busy,
+          (p) =>
+              _placeOf(hw, p.key) == _PendingPlace.disk && hw.disk(p.key) == null,
+        ),
         if (_adding == 'disk')
           ..._addDiskRows(hw, busy)
         else
@@ -682,6 +506,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView> {
     ].join(' · ');
     return [
       _disc(d.key, Icons.storage, d.key, summary),
+      ..._pendingRows(hw, busy, (p) => p.key == d.key, indent: true),
       if (_open.contains(d.key)) ...[
         _field(
           Icons.folder_outlined,
@@ -840,6 +665,12 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView> {
           : hw.nics.map((n) => n.source ?? n.key).join(', '),
       rows: [
         for (final (i, n) in hw.nics.indexed) ..._nicRows(hw, n, i, busy),
+        ..._pendingRows(
+          hw,
+          busy,
+          (p) =>
+              _placeOf(hw, p.key) == _PendingPlace.nic && hw.nic(p.key) == null,
+        ),
         if (_adding == 'nic')
           ..._addNicRows(hw, busy)
         else
@@ -869,6 +700,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView> {
         _nicName(n, i),
         [?n.model, ?n.source, if (!n.linkUp) l10n.virtHwLinkDown].join(' · '),
       ),
+      ..._pendingRows(hw, busy, (p) => p.key == n.key, indent: true),
       if (_open.contains(n.key)) ...[
         if (editable && nets != null && nets.isNotEmpty)
           _seg(
@@ -1023,6 +855,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView> {
               _isos ??= _loadIsos();
             },
           ),
+          ..._pendingRows(hw, busy, (p) => p.key == d.key, indent: true),
           if (_open.contains(d.key)) ...[
             FutureBuilder<List<VirtVolume>>(
               future: _isos,
@@ -1094,19 +927,12 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView> {
 
   // --- Boot and start ---
 
+  /// The boot order, arrows and a numbered place as the design draws it.
+  /// Starting with the host is the Settings view's.
   _Group _bootGroup(VirtHardware hw, bool busy) {
     final saved = hw.boot;
-    final waits = _waits(hw, const ['boot', 'onboot']);
-    final rows = <Widget>[
-      _toggle(
-        Icons.power_settings_new,
-        l10n.virtHwAutostart,
-        hw.autostart,
-        key: 'autostart',
-        note: _pve ? l10n.virtHwAutostartPve : 'virsh autostart',
-        onChanged: busy ? null : (on) => _apply(hw, VirtHwSetAutostart(on)),
-      ),
-    ];
+    final waits = _waits(hw, const ['boot']);
+    final rows = <Widget>[];
     if (saved != null) {
       final order = _boot ?? _bootDevices(hw);
       final on = _boot == null ? {...saved} : _bootOn;
@@ -1143,6 +969,11 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView> {
             onDown: i == order.length - 1 ? null : () => move(i, 1),
           ),
         _text(l10n.virtHwBootTip),
+        ..._pendingRows(
+          hw,
+          busy,
+          (p) => _placeOf(hw, p.key) == _PendingPlace.boot,
+        ),
         if (changed)
           _actions([
             _Action(
@@ -1163,13 +994,10 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView> {
     }
     return _Group(
       key: 'boot',
-      title: saved == null ? libL10n.general : l10n.virtHwBoot,
+      title: l10n.virtHwBoot,
       right: waits ? l10n.virtHwLater : '',
       warn: waits,
-      indexNote: [
-        if (saved != null && saved.isNotEmpty) saved.first,
-        if (hw.autostart) l10n.virtHwAutostart,
-      ].join(' · '),
+      indexNote: saved == null || saved.isEmpty ? '—' : saved.first,
       rows: rows,
     );
   }
@@ -1210,7 +1038,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView> {
 
   // --- Configuration file ---
 
-  _Group _configGroup(VirtHardware hw) {
+  _Group _configGroup(VirtHardware hw, bool busy) {
     final g = widget.guest;
     final (name, path) = switch ((_pve, _lxc)) {
       (true, true) => ('pct config ${g.vmid}', '/etc/pve/lxc/${g.vmid}.conf'),
@@ -1228,6 +1056,13 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView> {
       warn: false,
       indexNote: _pve ? (_lxc ? 'pct config' : 'qm config') : 'dumpxml',
       rows: [
+        // Options this view does not edit, still waiting for the restart
+        // the notice offers: listed rather than left unexplained.
+        ..._pendingRows(
+          hw,
+          busy,
+          (p) => _placeOf(hw, p.key) == _PendingPlace.other,
+        ),
         _disc('config', Icons.code, name, open ? '' : path),
         if (open)
           Container(
@@ -1248,621 +1083,11 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView> {
       ],
     );
   }
-
-  // --- Rows, as the design draws them ---
-
-  Color get _rowColor =>
-      Theme.of(context).cardTheme.color ??
-      Theme.of(context).colorScheme.surfaceContainerLow;
-
-  Widget _box({
-    required Widget child,
-    Key? key,
-    EdgeInsets padding = const EdgeInsets.symmetric(
-      horizontal: 13,
-      vertical: 9,
-    ),
-    Color? color,
-    VoidCallback? onTap,
-    bool indent = false,
-  }) {
-    return Padding(
-      key: key,
-      padding: EdgeInsets.only(left: indent ? _indent : 0),
-      child: Material(
-        color: color ?? _rowColor,
-        borderRadius: BorderRadius.circular(13),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(padding: padding, child: child),
-        ),
-      ),
-    );
-  }
-
-  Widget _icon(IconData icon, {Color? color}) => Icon(
-    icon,
-    size: 19,
-    color: color ?? Theme.of(context).colorScheme.outline,
-  );
-
-  Widget _field(
-    IconData icon,
-    String label,
-    String value, {
-    Key? key,
-    bool mono = false,
-    bool indent = false,
-    VoidCallback? onTap,
-    Widget? trailing,
-  }) {
-    return _box(
-      key: key,
-      indent: indent,
-      onTap: onTap,
-      child: Row(
-        children: [
-          _icon(icon),
-          UIs.width13,
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: UIs.text11Grey),
-                Text(
-                  value,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontFamily: mono ? 'monospace' : null,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          ?trailing,
-        ],
-      ),
-    );
-  }
-
-  Widget _step(
-    IconData icon,
-    String label,
-    String value, {
-    required String key,
-    required VoidCallback? onDec,
-    required VoidCallback? onInc,
-    bool indent = false,
-  }) {
-    return _box(
-      key: ValueKey('hw:step:$key'),
-      indent: indent,
-      padding: const EdgeInsets.fromLTRB(13, 5, 7, 5),
-      child: Row(
-        children: [
-          _icon(icon),
-          UIs.width13,
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: UIs.text11Grey),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontFeatures: [FontFeature.tabularFigures()],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              color: Theme.of(
-                context,
-              ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(30),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(3),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Btn.icon(
-                    key: ValueKey('hw:step:$key:dec'),
-                    text: l10n.virtHwLess,
-                    icon: const Icon(Icons.remove, size: 17),
-                    onTap: onDec,
-                  ),
-                  Btn.icon(
-                    key: ValueKey('hw:step:$key:inc'),
-                    text: l10n.virtHwMore,
-                    icon: const Icon(Icons.add, size: 17),
-                    onTap: onInc,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _toggle(
-    IconData icon,
-    String label,
-    bool value, {
-    required String key,
-    required ValueChanged<bool>? onChanged,
-    String? note,
-    bool indent = false,
-  }) {
-    return _box(
-      key: ValueKey('hw:toggle:$key'),
-      indent: indent,
-      onTap: onChanged == null ? null : () => onChanged(!value),
-      child: Row(
-        children: [
-          _icon(icon),
-          UIs.width13,
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: UIs.text13),
-                if (note != null) Text(note, style: UIs.text11Grey),
-              ],
-            ),
-          ),
-          SwitchX(value: value, onChanged: onChanged),
-        ],
-      ),
-    );
-  }
-
-  Widget _seg(
-    IconData icon,
-    String label,
-    List<String> options,
-    String? selected, {
-    required String key,
-    required ValueChanged<String>? onSelected,
-    bool indent = false,
-  }) {
-    return _box(
-      key: ValueKey('hw:seg:$key'),
-      indent: indent,
-      padding: const EdgeInsets.fromLTRB(13, 7, 7, 7),
-      child: Wrap(
-        crossAxisAlignment: WrapCrossAlignment.center,
-        alignment: WrapAlignment.spaceBetween,
-        spacing: 13,
-        runSpacing: 7,
-        children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _icon(icon),
-              UIs.width13,
-              Text(label, style: UIs.text13),
-            ],
-          ),
-          SegmentedTabs<String?>(
-            selected: selected,
-            onSelected: (v) {
-              if (v != null && v != selected) onSelected?.call(v);
-            },
-            segments: [
-              for (final o in options) SegmentedTab(value: o, label: o),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _choice(List<_Choice> options, {bool indent = false}) {
-    final scheme = Theme.of(context).colorScheme;
-    return _box(
-      indent: indent,
-      padding: const EdgeInsets.all(5),
-      child: Column(
-        children: [
-          for (final o in options)
-            Material(
-              key: ValueKey(o.key),
-              color: o.selected
-                  ? scheme.secondaryContainer
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(13),
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: o.onTap,
-                child: Padding(
-                  padding: const EdgeInsets.all(9),
-                  child: Row(
-                    children: [
-                      _icon(
-                        o.icon,
-                        color: o.selected ? scheme.onSecondaryContainer : null,
-                      ),
-                      UIs.width13,
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              o.label,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: UIs.text13.copyWith(
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            if (o.sub case final sub? when sub.isNotEmpty)
-                              Text(sub, style: UIs.text11Grey),
-                          ],
-                        ),
-                      ),
-                      if (o.selected) const Icon(Icons.check, size: 17),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  /// A device's row, which opens and closes its own rows under it.
-  Widget _disc(
-    String key,
-    IconData icon,
-    String label,
-    String summary, {
-    VoidCallback? onTap,
-  }) {
-    final open = _open.contains(key);
-    final scheme = Theme.of(context).colorScheme;
-    return _box(
-      key: ValueKey('hw:disc:$key'),
-      padding: const EdgeInsets.all(13),
-      color: open ? scheme.surfaceContainerHigh : null,
-      onTap:
-          onTap ??
-          () => setState(() => open ? _open.remove(key) : _open.add(key)),
-      child: Row(
-        children: [
-          _icon(icon, color: open ? scheme.primary : null),
-          UIs.width13,
-          Text(label, style: UIs.text13.copyWith(fontWeight: FontWeight.w500)),
-          UIs.width13,
-          Expanded(
-            child: Text(
-              summary,
-              textAlign: TextAlign.end,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: UIs.text12Grey,
-            ),
-          ),
-          UIs.width7,
-          Icon(
-            open ? Icons.expand_less : Icons.expand_more,
-            size: 17,
-            color: scheme.outline,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _text(String text, {bool indent = false, bool error = false}) {
-    return Padding(
-      padding: EdgeInsets.only(left: (indent ? _indent : 0) + 13, right: 13),
-      child: Text(
-        text,
-        style: error
-            ? UIs.text12.copyWith(color: Theme.of(context).colorScheme.error)
-            : UIs.text12Grey,
-      ),
-    );
-  }
-
-  /// A group with nothing more to it yet: what it is for, and the way to add.
-  Widget _empty(
-    String text,
-    String action, {
-    required String key,
-    required VoidCallback? onTap,
-  }) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(13),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outlineVariant,
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(13, 7, 7, 7),
-        child: Row(
-          children: [
-            Expanded(child: Text(text, style: UIs.text12Grey)),
-            Btn.row(
-              key: ValueKey(key),
-              text: action,
-              icon: const Icon(Icons.add, size: 17),
-              onTap: onTap,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _actions(List<_Action> actions, {bool indent = false}) {
-    final error = Theme.of(context).colorScheme.error;
-    return Padding(
-      padding: EdgeInsets.only(left: indent ? _indent : 0),
-      child: Wrap(
-        alignment: WrapAlignment.end,
-        spacing: 7,
-        runSpacing: 7,
-        children: [
-          for (final a in actions)
-            if (a.primary)
-              Btn.elevated(
-                key: a.key == null ? null : ValueKey<String>(a.key!),
-                text: a.text,
-                mainAxisSize: MainAxisSize.min,
-                onTap: a.onTap,
-              )
-            else
-              Btn.row(
-                key: a.key == null ? null : ValueKey<String>(a.key!),
-                text: a.text,
-                icon: Icon(
-                  a.icon ?? Icons.check,
-                  size: 17,
-                  color: a.danger ? error : null,
-                ),
-                textStyle: a.danger ? TextStyle(color: error) : null,
-                onTap: a.onTap,
-              ),
-        ],
-      ),
-    );
-  }
-
-  /// One boot device: its place, what it is, and the arrows that move it.
-  /// Tapped, it is booted from or not.
-  Widget _reorder({
-    required String key,
-    required String ord,
-    required bool first,
-    required (IconData, String, String) device,
-    required VoidCallback onToggle,
-    required VoidCallback? onUp,
-    required VoidCallback? onDown,
-  }) {
-    final scheme = Theme.of(context).colorScheme;
-    final (icon, label, summary) = device;
-    return Opacity(
-      opacity: ord == '–' ? 0.5 : 1,
-      child: _box(
-        key: ValueKey('hw:$key'),
-        padding: const EdgeInsets.fromLTRB(13, 5, 7, 5),
-        onTap: onToggle,
-        child: Row(
-          children: [
-            Container(
-              constraints: const BoxConstraints(minWidth: 19),
-              height: 19,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: first ? scheme.primary : scheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(5),
-              ),
-              child: Text(
-                ord,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: first ? scheme.onPrimary : null,
-                ),
-              ),
-            ),
-            UIs.width7,
-            _icon(icon),
-            UIs.width7,
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: UIs.text13.copyWith(fontWeight: FontWeight.w500),
-                  ),
-                  if (summary.isNotEmpty)
-                    Text(
-                      summary,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: UIs.text11Grey,
-                    ),
-                ],
-              ),
-            ),
-            Btn.icon(
-              key: ValueKey('hw:$key:up'),
-              text: l10n.virtHwMoveUp,
-              icon: const Icon(Icons.arrow_upward, size: 17),
-              onTap: onUp,
-            ),
-            Btn.icon(
-              key: ValueKey('hw:$key:down'),
-              text: l10n.virtHwMoveDown,
-              icon: const Icon(Icons.arrow_downward, size: 17),
-              onTap: onDown,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String? _issueText(VirtHardware hw, VirtHwIssue? issue) {
-    final hostCpus = hw.limits.hostCpus;
-    final hostMib = switch (hw.limits.hostMemoryBytes) {
-      final b? => b >> 20,
-      null => null,
-    };
-    return switch (issue) {
-      null => null,
-      VirtHwIssue.cpuCount => l10n.virtHwIssueCpuCount(hostCpus ?? 4096),
-      VirtHwIssue.cpuOnline => l10n.virtHwIssueCpuOnline,
-      VirtHwIssue.memory => l10n.virtHwIssueMemory(
-        virtHwMinMemoryMib,
-        hostMib ?? 1 << 30,
-      ),
-      VirtHwIssue.memoryMin => l10n.virtHwIssueMemoryMin,
-      VirtHwIssue.swap => l10n.virtHwIssueSwap,
-      VirtHwIssue.diskShrink => l10n.virtHwIssueDiskShrink,
-      VirtHwIssue.diskSize => l10n.virtHwIssueDiskSize,
-      VirtHwIssue.storageSpace => l10n.virtHwIssueStorageSpace,
-      VirtHwIssue.mountPoint => l10n.virtHwIssueMountPoint,
-      VirtHwIssue.bootEmpty => l10n.virtHwIssueBootEmpty,
-    };
-  }
-}
-
-/// One group of the pane: its heading and rows, and its line in the index.
-final class _Group {
-  const _Group({
-    required this.key,
-    required this.title,
-    required this.right,
-    required this.warn,
-    required this.indexNote,
-    required this.rows,
-  });
-
-  final String key;
-  final String title;
-
-  /// Beside the rule: what the group amounts to, or that it waits.
-  final String right;
-
-  /// [right] is a change waiting for the next start.
-  final bool warn;
-  final String indexNote;
-  final List<Widget> rows;
-}
-
-final class _Action {
-  const _Action(
-    this.text, {
-    this.icon,
-    this.key,
-    this.primary = false,
-    this.danger = false,
-    required this.onTap,
-  });
-
-  final String text;
-  final IconData? icon;
-  final String? key;
-  final bool primary;
-  final bool danger;
-  final VoidCallback? onTap;
-}
-
-final class _Choice {
-  const _Choice({
-    required this.key,
-    required this.icon,
-    required this.label,
-    this.sub,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String key;
-  final IconData icon;
-  final String label;
-  final String? sub;
-  final bool selected;
-  final VoidCallback? onTap;
 }
 
 // --- Actions ---
 
 extension _Actions on _VirtHardwareViewState {
-  /// Makes [change] and, when the host took it, drops the draft with
-  /// [clear].
-  Future<void> _save(
-    VirtHardware hw,
-    VirtHwChange change,
-    void Function() clear,
-  ) async {
-    if (await _apply(hw, change) && mounted) {
-      // ignore: invalid_use_of_protected_member
-      setState(clear);
-    }
-  }
-
-  /// Makes [change], says what came of it, and reads the hardware again.
-  /// True when the host took it.
-  Future<bool> _apply(VirtHardware hw, VirtHwChange change) async {
-    final issue = virtHwIssue(hw, change);
-    if (issue != null) {
-      Toast.warn(_issueText(hw, issue) ?? libL10n.fail);
-      return false;
-    }
-    final VirtHwOutcome outcome;
-    try {
-      outcome = await _notifier.changeHardware(widget.guest.id, hw, change);
-    } on VirtErr catch (e) {
-      if (e.type == VirtErrType.conflict) {
-        Toast.warn(e.title, body: l10n.virtErrConflictTip);
-      } else {
-        Toast.error(e.title, body: e.detail);
-      }
-      if (mounted) ref.invalidate(_provider);
-      return false;
-    } catch (e, s) {
-      Loggers.app.warning('Virtualization hardware', e, s);
-      Toast.error(libL10n.fail, body: '$e');
-      if (mounted) ref.invalidate(_provider);
-      return false;
-    }
-    if (!mounted) return true;
-    final before = {for (final p in hw.pending) p.key};
-    VirtHardware? after;
-    try {
-      after = await ref.refresh(_provider.future);
-    } catch (_) {
-      // The view shows why it cannot read.
-    }
-    final waits =
-        outcome.liveError != null ||
-        (after?.pending.any((p) => !before.contains(p.key)) ?? false);
-    if (outcome.volumeKept) {
-      Toast.warn(l10n.virtHwVolumeKept);
-    } else if (waits && change is! VirtHwRevert) {
-      Toast.info(l10n.virtHwAppliesOnRestart, body: outcome.liveError);
-    } else {
-      Toast.success(libL10n.success);
-    }
-    return true;
-  }
-
   /// Opens the add block for `disk` or `nic`, with what it offers read now.
   Future<void> _openAdd(String kind) async {
     // ignore: invalid_use_of_protected_member

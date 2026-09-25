@@ -1,6 +1,6 @@
-/// Creating a guest (`VirtCreateView`) and deleting one (`VirtDeleteDialog`):
-/// what the form offers from the host's own lists, what it refuses before
-/// asking, and what it sends.
+/// Creating a guest (`VirtCreateView`): what the form offers from the host's
+/// own lists, what it refuses before asking, and what it sends. Deleting one
+/// is the Settings view's (`virt_hardware_test.dart`).
 library;
 
 import 'package:fl_lib/fl_lib.dart';
@@ -17,7 +17,6 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/virt/create.dart';
-import 'package:server_box/view/page/virt/guest.dart';
 
 import '../helpers/test_db.dart';
 
@@ -235,77 +234,4 @@ void main() {
     expect(spec.unprivileged, isTrue);
   });
 
-  group('delete', () {
-    Future<List<bool?>> open(WidgetTester tester, {required bool keeps}) async {
-      final answers = <bool?>[];
-      await tester.pumpWidget(
-        MaterialApp(
-          localizationsDelegates: const [
-            LibLocalizations.delegate,
-            ...AppLocalizations.localizationsDelegates,
-          ],
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: Builder(
-            builder: (context) {
-              app_locale.l10n = AppLocalizations.of(context)!;
-              context.setLibL10n();
-              return Scaffold(
-                body: TextButton(
-                  onPressed: () async => answers.add(
-                    await VirtDeleteDialog.show(
-                      context,
-                      name: 'web-01',
-                      canKeepDisks: keeps,
-                    ),
-                  ),
-                  child: const Text('open'),
-                ),
-              );
-            },
-          ),
-        ),
-      );
-      await tester.tap(find.text('open'));
-      await tester.pump(const Duration(milliseconds: 300));
-      return answers;
-    }
-
-    Finder confirm() => find.byKey(const ValueKey('delete:confirm'));
-
-    testWidgets('only once the name is typed back', (tester) async {
-      final answers = await open(tester, keeps: true);
-      expect(tester.widget<FilledButton>(confirm()).onPressed, isNull);
-      await tester.enterText(find.byKey(const ValueKey('delete:name')), 'web-0');
-      await tester.pump();
-      expect(tester.widget<FilledButton>(confirm()).onPressed, isNull);
-      await tester.enterText(find.byKey(const ValueKey('delete:name')), 'web-01');
-      await tester.pump();
-      // Disks too, unless unticked.
-      await tester.tap(find.byKey(const ValueKey('delete:disks')));
-      await tester.pump();
-      await tester.tap(confirm());
-      await tester.pump(const Duration(milliseconds: 300));
-      expect(answers, [false]);
-    });
-
-    testWidgets('where disks cannot be kept, it says so instead', (
-      tester,
-    ) async {
-      final answers = await open(tester, keeps: false);
-      expect(find.byKey(const ValueKey('delete:disks')), findsNothing);
-      expect(find.text(app_locale.l10n.virtDeleteDisksPve), findsOneWidget);
-      await tester.enterText(find.byKey(const ValueKey('delete:name')), 'web-01');
-      await tester.pump();
-      await tester.tap(confirm());
-      await tester.pump(const Duration(milliseconds: 300));
-      expect(answers, [true]);
-
-      // Cancelled: nothing.
-      await tester.tap(find.text('open'));
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.tap(find.text(libL10n.cancel));
-      await tester.pump(const Duration(milliseconds: 300));
-      expect(answers, [true, null]);
-    });
-  });
 }

@@ -1170,6 +1170,16 @@ fn hardware_stopped_has_no_running_definition() {
     let hw = virt::parse_hardware(&fixture("script_hardware_stopped.txt")).unwrap();
     assert!(hw.live.is_none());
     assert_eq!(hw.config.disks[0].capacity, Some(117_440_512));
+    assert_eq!(hw.description, None);
+
+    // The persistent definition's note, as `virsh desc` wrote it: escaped
+    // in the XML, read back as typed.
+    let raw = fixture("script_hardware_stopped.txt").replacen(
+        "<name>it&apos;s-&quot;odd&quot;</name>",
+        "<name>it&apos;s-&quot;odd&quot;</name>\n  <description>web &amp; &lt;db&gt;\nsecond</description>",
+        1,
+    );
+    assert_eq!(virt::parse_hardware(&raw).unwrap().description.as_deref(), Some("web & <db>\nsecond"));
 }
 
 fn base_xml() -> String {
@@ -1476,6 +1486,26 @@ fn hardware_change_scripts_under_sh_with_hostile_names() {
          <source network='it&apos;s &quot;odd&quot;; touch pwned $(id) `id`'/>\
          <model type='virtio'/><link state='down'/><boot order='2'/></interface>"
     );
+
+    // A note with every quote and a leading dash reaches `desc` as one
+    // argument, to both definitions of a running domain; a rename is one
+    // step with the new name.
+    let note = format!("-{name}\nsecond line");
+    reset();
+    assert_eq!(run(true, &C::Description { text: note.clone() }), Ok(Default::default()));
+    assert!(log().contains(&format!("desc\n--domain\n{name}\n--config\n--new-desc\n-{name}\nsecond line\n")), "{}", log());
+    assert!(log().contains(&format!("desc\n--domain\n{name}\n--live\n--new-desc\n")), "{}", log());
+    reset();
+    assert_eq!(run(false, &C::Description { text: String::new() }), Ok(Default::default()));
+    assert!(!log().contains("--live"), "{}", log());
+    reset();
+    assert_eq!(run(false, &C::Rename { name: "web-02".into() }), Ok(Default::default()));
+    assert!(log().contains(&format!("domrename\n--domain\n{name}\nweb-02\n")), "{}", log());
+    // A name libvirt or AppArmor would trip over is refused before a shell.
+    for bad in [name, "-x", ".hidden", "a b", ""] {
+        assert!(virt::hardware_change_script(name, false, None, &C::Rename { name: bad.into() }).is_err(), "{bad}");
+    }
+    assert!(virt::hardware_change_script(name, false, None, &C::Description { text: "a\u{0}b".into() }).is_err());
 
     assert!(!d.join("pwned").exists() && !std::path::Path::new("pwned").exists());
     assert_eq!(std::fs::read_to_string(d.join("stdin")).unwrap_or_default(), "");
