@@ -3797,7 +3797,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get pveTokenTipHardware =>
-      'Hardware bewerken vereist VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network en VM.Config.Options; nieuwe schijven en interfaces vereisen ook Datastore.AllocateSpace en SDN.Use.';
+      'Hardware bewerken vereist VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network en VM.Config.Options; nieuwe schijven en interfaces vereisen ook Datastore.AllocateSpace en SDN.Use. De videokaart en USB- en PCI-apparaten vereisen ook VM.Config.HWType; een apparaat via een resourcekoppeling vereist Mapping.Use daarop, en Mapping.Audit om koppelingen te tonen.';
 
   @override
   String get virtErrConflict => 'Elders gewijzigd';
@@ -4119,4 +4119,143 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get virtHwVolumeKept =>
       'Verwijderd, maar de draaiende gast gebruikt de schijf nog, dus het volume is bewaard. Bij de volgende start wordt hij losgekoppeld.';
+
+  @override
+  String get virtHwBus => 'Bus';
+
+  @override
+  String get virtHwCache => 'Cache';
+
+  @override
+  String get virtHwBusStopped =>
+      'De bus verandert alleen als de gast is gestopt.';
+
+  @override
+  String get virtHwMacGenerate => 'Genereren';
+
+  @override
+  String get virtHwIssueMac =>
+      'Moet een unicast-MAC-adres zijn, zoals 52:54:00:12:34:56';
+
+  @override
+  String get virtHwIssueStopFirst => 'Stop eerst de gast';
+
+  @override
+  String get virtHwIssueStorageMissing => 'Kies eerst een opslag';
+
+  @override
+  String get virtHwIssueDevice => 'Kies eerst een apparaat';
+
+  @override
+  String get virtHwDevices => 'Cd-rom en passthrough';
+
+  @override
+  String get virtHwDevicesEmpty => 'USB- en PCI-passthrough, TPM';
+
+  @override
+  String get virtHwAddDevice => 'Apparaat toevoegen';
+
+  @override
+  String get virtHwNewDevice => 'Nieuw apparaat';
+
+  @override
+  String get virtHwUsbHotplug => 'USB-passthrough is hot-pluggable.';
+
+  @override
+  String get virtHwPci => 'PCI-passthrough';
+
+  @override
+  String get virtHwIommuOffTitle => 'De host heeft geen IOMMU';
+
+  @override
+  String get virtHwIommuOffBody =>
+      'Zet eerst VT-d of AMD-Vi aan in de BIOS van de host en IOMMU in de kernel. Tot dan start een gast met een PCI-apparaat niet.';
+
+  @override
+  String get virtHwPciTitle => 'Vereist IOMMU op de host';
+
+  @override
+  String get virtHwPciBody =>
+      'Eenmaal doorgegeven kan de host het apparaat niet gebruiken en kan de gast niet live migreren.';
+
+  @override
+  String virtHwIommuGroup(int group) {
+    return 'IOMMU-groep $group';
+  }
+
+  @override
+  String virtHwIommuShared(int count) {
+    return '$count apparaten delen de IOMMU-groep en gaan samen door';
+  }
+
+  @override
+  String get virtHwNoHostDevices =>
+      'Geen apparaten om door te geven op deze host';
+
+  @override
+  String get virtHwMappingsOnly =>
+      'Hier zijn alleen resourcekoppelingen mogelijk: PVE laat alleen root@pam met wachtwoord een ruw apparaat doorgeven. Maak koppelingen onder Datacenter → Resourcekoppelingen.';
+
+  @override
+  String get virtHwTpmNote => 'Windows 11 vereist TPM 2.0.';
+
+  @override
+  String get virtHwDisplay => 'Weergave';
+
+  @override
+  String get virtHwProtocol => 'Protocol';
+
+  @override
+  String get virtHwListen => 'Luisteren';
+
+  @override
+  String get virtHwGpu => 'Videokaart';
+
+  @override
+  String get virtHwListenAllTitle => 'De console staat open voor het netwerk';
+
+  @override
+  String get virtHwListenAllBody =>
+      'Luisteren op alle adressen laat iedereen die de host bereikt de console openen. Houd 127.0.0.1 en verbind via een SSH-tunnel.';
+
+  @override
+  String get virtHwFirmware => 'Firmware';
+
+  @override
+  String get virtHwUefiSub =>
+      'OVMF · ondersteunt Secure Boot, vereist door Windows 11';
+
+  @override
+  String get virtHwBiosSub => 'SeaBIOS · oudere systemen en MBR-schijven';
+
+  @override
+  String get virtHwSecureBootNote =>
+      'Start alleen ondertekende kernels en bootloaders';
+
+  @override
+  String get virtHwFirmwareWarnTitle =>
+      'Wissel de firmware van een geïnstalleerd systeem niet';
+
+  @override
+  String get virtHwFirmwareWarnBody =>
+      'Wisselen tussen UEFI en BIOS maakt een geïnstalleerd systeem onopstartbaar.';
+
+  @override
+  String get virtHwFirmwareStopped =>
+      'De firmware verandert alleen als de gast is gestopt.';
+
+  @override
+  String get virtHwSecureBootVars =>
+      'Secure Boot in- of uitschakelen maakt de EFI-variabelen opnieuw aan; opgeslagen opstartitems gaan verloren.';
+
+  @override
+  String get virtHwEfiStorage => 'Waar de EFI-variabelen komen';
+
+  @override
+  String get virtHwTpmStorage => 'Waar de TPM-status komt';
+
+  @override
+  String virtHwSwitchFirmwareAsk(String guest, String firmware) {
+    return '$guest omzetten naar $firmware?';
+  }
 }

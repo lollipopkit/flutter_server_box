@@ -187,6 +187,14 @@ String virtHardwareChangeScript({
 Future<String> parseVirtHardwareChangeJson({required String raw}) =>
     RustLib.instance.api.crateApiVirtParseVirtHardwareChangeJson(raw: raw);
 
+/// The host's USB and PCI devices, for passing one to a guest
+String virtHostDevicesScript() =>
+    RustLib.instance.api.crateApiVirtVirtHostDevicesScript();
+
+/// [`virt_host_devices_script`]'s output → `VirtHostDevices` JSON
+Future<String> parseVirtHostDevicesJson({required String raw}) =>
+    RustLib.instance.api.crateApiVirtParseVirtHostDevicesJson(raw: raw);
+
 /// Power actions (mirrors sbm_parser::virt::VirtAction)
 enum VirtActionKind {
   start,

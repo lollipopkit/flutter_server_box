@@ -3767,7 +3767,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get pveTokenTipHardware =>
-      'Avadanlığı redaktə etmək üçün VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network və VM.Config.Options lazımdır; yeni disklər və interfeyslər üçün həmçinin Datastore.AllocateSpace və SDN.Use lazımdır.';
+      'Avadanlığı redaktə etmək üçün VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network və VM.Config.Options lazımdır; yeni disklər və interfeyslər üçün həmçinin Datastore.AllocateSpace və SDN.Use lazımdır. Video kart, USB və PCI cihazları üçün VM.Config.HWType da lazımdır; resurs xəritəsi ilə verilən cihaz üçün onun üzərində Mapping.Use, xəritələri siyahılamaq üçün Mapping.Audit lazımdır.';
 
   @override
   String get virtErrConflict => 'Başqa yerdə dəyişdirilib';
@@ -4089,4 +4089,141 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get virtHwVolumeKept =>
       'Çıxarıldı, lakin işləyən qonaq diski hələ istifadə edir, ona görə həcmi saxlanıldı. Növbəti başlanğıcda ayrılacaq.';
+
+  @override
+  String get virtHwBus => 'Şin';
+
+  @override
+  String get virtHwCache => 'Keş';
+
+  @override
+  String get virtHwBusStopped => 'Şin yalnız qonaq dayandırılanda dəyişir.';
+
+  @override
+  String get virtHwMacGenerate => 'Yarat';
+
+  @override
+  String get virtHwIssueMac =>
+      'Unicast MAC ünvanı olmalıdır, məs. 52:54:00:12:34:56';
+
+  @override
+  String get virtHwIssueStopFirst => 'Əvvəlcə qonağı dayandırın';
+
+  @override
+  String get virtHwIssueStorageMissing => 'Əvvəlcə yaddaş seçin';
+
+  @override
+  String get virtHwIssueDevice => 'Əvvəlcə cihaz seçin';
+
+  @override
+  String get virtHwDevices => 'CD-ROM və ötürmə';
+
+  @override
+  String get virtHwDevicesEmpty => 'USB və PCI ötürməsi, TPM';
+
+  @override
+  String get virtHwAddDevice => 'Cihaz əlavə et';
+
+  @override
+  String get virtHwNewDevice => 'Yeni cihaz';
+
+  @override
+  String get virtHwUsbHotplug => 'USB ötürməsi isti qoşulmanı dəstəkləyir.';
+
+  @override
+  String get virtHwPci => 'PCI ötürməsi';
+
+  @override
+  String get virtHwIommuOffTitle => 'Hostda IOMMU yoxdur';
+
+  @override
+  String get virtHwIommuOffBody =>
+      'Əvvəlcə hostun BIOS-unda VT-d və ya AMD-Vi-ni, nüvəsində IOMMU-nu açın. O vaxta qədər PCI cihazı verilmiş qonaq başlamayacaq.';
+
+  @override
+  String get virtHwPciTitle => 'Hostda IOMMU tələb olunur';
+
+  @override
+  String get virtHwPciBody =>
+      'Ötürüldükdən sonra host cihazdan istifadə edə bilməz, qonaq da işləyərkən köçürülə bilməz.';
+
+  @override
+  String virtHwIommuGroup(int group) {
+    return 'IOMMU qrupu $group';
+  }
+
+  @override
+  String virtHwIommuShared(int count) {
+    return 'IOMMU qrupunu paylaşan $count cihaz birlikdə ötürülür';
+  }
+
+  @override
+  String get virtHwNoHostDevices => 'Bu hostda ötürüləcək cihaz yoxdur';
+
+  @override
+  String get virtHwMappingsOnly =>
+      'Burada yalnız resurs xəritələri istifadə oluna bilər: PVE xam cihaz ötürməyə yalnız parolu ilə daxil olmuş root@pam-a icazə verir. Xəritələri Data mərkəzi → Resurs xəritələri bölməsində yaradın.';
+
+  @override
+  String get virtHwTpmNote => 'Windows 11 TPM 2.0 tələb edir.';
+
+  @override
+  String get virtHwDisplay => 'Ekran';
+
+  @override
+  String get virtHwProtocol => 'Protokol';
+
+  @override
+  String get virtHwListen => 'Dinləmə';
+
+  @override
+  String get virtHwGpu => 'Video kart';
+
+  @override
+  String get virtHwListenAllTitle => 'Konsol şəbəkəyə açıqdır';
+
+  @override
+  String get virtHwListenAllBody =>
+      'Bütün ünvanlarda dinləmək hosta çatan hər kəsə konsola qoşulmağa imkan verir. 127.0.0.1-də saxlayın və SSH tuneli ilə qoşulun.';
+
+  @override
+  String get virtHwFirmware => 'Proqram təminatı';
+
+  @override
+  String get virtHwUefiSub =>
+      'OVMF · Secure Boot dəstəkli, Windows 11 üçün lazımdır';
+
+  @override
+  String get virtHwBiosSub => 'SeaBIOS · köhnə sistemlər və MBR diskləri';
+
+  @override
+  String get virtHwSecureBootNote =>
+      'Yalnız imzalı nüvə və yükləyiciləri başladır';
+
+  @override
+  String get virtHwFirmwareWarnTitle =>
+      'Quraşdırılmış sistemin proqram təminatını dəyişməyin';
+
+  @override
+  String get virtHwFirmwareWarnBody =>
+      'UEFI ilə BIOS arasında keçid quraşdırılmış sistemi yüklənməz edir.';
+
+  @override
+  String get virtHwFirmwareStopped =>
+      'Proqram təminatı yalnız qonaq dayandırılanda dəyişir.';
+
+  @override
+  String get virtHwSecureBootVars =>
+      'Secure Boot-u açıb-söndürmək EFI dəyişənlərini yenidən yaradır; onlarda saxlanan yükləmə qeydləri itir.';
+
+  @override
+  String get virtHwEfiStorage => 'EFI dəyişənlərinin yeri';
+
+  @override
+  String get virtHwTpmStorage => 'TPM vəziyyətinin yeri';
+
+  @override
+  String virtHwSwitchFirmwareAsk(String guest, String firmware) {
+    return '$guest $firmware rejiminə keçirilsin?';
+  }
 }

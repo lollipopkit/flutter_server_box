@@ -3752,7 +3752,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get pveTokenTipHardware =>
-      'Donanım düzenlemek için VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network ve VM.Config.Options gerekir; yeni diskler ve arabirimler için ayrıca Datastore.AllocateSpace ve SDN.Use gerekir.';
+      'Donanım düzenlemek için VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network ve VM.Config.Options gerekir; yeni diskler ve arabirimler için ayrıca Datastore.AllocateSpace ve SDN.Use gerekir. Ekran kartı ile USB ve PCI aygıtları ayrıca VM.Config.HWType gerektirir; kaynak eşlemesiyle verilen bir aygıt o eşleme üzerinde Mapping.Use, eşlemeleri listelemek için Mapping.Audit gerektirir.';
 
   @override
   String get virtErrConflict => 'Başka yerde değişti';
@@ -4073,4 +4073,142 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get virtHwVolumeKept =>
       'Kaldırıldı, ancak çalışan konuk diski hâlâ kullanıyor, bu yüzden birimi korundu. Bir sonraki başlatmada ayrılacak.';
+
+  @override
+  String get virtHwBus => 'Veri yolu';
+
+  @override
+  String get virtHwCache => 'Önbellek';
+
+  @override
+  String get virtHwBusStopped =>
+      'Veri yolu yalnızca konuk durdurulmuşken değişir.';
+
+  @override
+  String get virtHwMacGenerate => 'Oluştur';
+
+  @override
+  String get virtHwIssueMac =>
+      'Tek noktaya yayın MAC adresi olmalı, örn. 52:54:00:12:34:56';
+
+  @override
+  String get virtHwIssueStopFirst => 'Önce konuğu durdurun';
+
+  @override
+  String get virtHwIssueStorageMissing => 'Önce bir depolama seçin';
+
+  @override
+  String get virtHwIssueDevice => 'Önce bir aygıt seçin';
+
+  @override
+  String get virtHwDevices => 'CD-ROM ve geçiş';
+
+  @override
+  String get virtHwDevicesEmpty => 'USB ve PCI geçişi, TPM';
+
+  @override
+  String get virtHwAddDevice => 'Aygıt ekle';
+
+  @override
+  String get virtHwNewDevice => 'Yeni aygıt';
+
+  @override
+  String get virtHwUsbHotplug => 'USB geçişi çalışırken takılabilir.';
+
+  @override
+  String get virtHwPci => 'PCI geçişi';
+
+  @override
+  String get virtHwIommuOffTitle => 'Ana makinede IOMMU yok';
+
+  @override
+  String get virtHwIommuOffBody =>
+      'Önce ana makinenin BIOS\'unda VT-d ya da AMD-Vi\'yi, çekirdeğinde IOMMU\'yu açın. O zamana kadar PCI aygıtı verilen konuk başlamaz.';
+
+  @override
+  String get virtHwPciTitle => 'Ana makinede IOMMU gerekir';
+
+  @override
+  String get virtHwPciBody =>
+      'Geçirildikten sonra ana makine aygıtı kullanamaz, konuk da çalışırken taşınamaz.';
+
+  @override
+  String virtHwIommuGroup(int group) {
+    return 'IOMMU grubu $group';
+  }
+
+  @override
+  String virtHwIommuShared(int count) {
+    return 'IOMMU grubunu paylaşan $count aygıt birlikte geçirilir';
+  }
+
+  @override
+  String get virtHwNoHostDevices => 'Bu ana makinede geçirilecek aygıt yok';
+
+  @override
+  String get virtHwMappingsOnly =>
+      'Burada yalnızca kaynak eşlemeleri kullanılabilir: PVE ham aygıt geçişine yalnızca parolasıyla giriş yapan root@pam için izin verir. Eşlemeleri Veri Merkezi → Kaynak Eşlemeleri altında oluşturun.';
+
+  @override
+  String get virtHwTpmNote => 'Windows 11 TPM 2.0 gerektirir.';
+
+  @override
+  String get virtHwDisplay => 'Görüntü';
+
+  @override
+  String get virtHwProtocol => 'Protokol';
+
+  @override
+  String get virtHwListen => 'Dinleme';
+
+  @override
+  String get virtHwGpu => 'Ekran kartı';
+
+  @override
+  String get virtHwListenAllTitle => 'Konsol ağa açık';
+
+  @override
+  String get virtHwListenAllBody =>
+      'Tüm adreslerde dinlemek, ana makineye erişen herkesin konsola bağlanmasına izin verir. 127.0.0.1\'de tutun ve SSH tüneliyle bağlanın.';
+
+  @override
+  String get virtHwFirmware => 'Ürün yazılımı';
+
+  @override
+  String get virtHwUefiSub =>
+      'OVMF · Secure Boot destekli, Windows 11 için gerekli';
+
+  @override
+  String get virtHwBiosSub => 'SeaBIOS · eski sistemler ve MBR diskler';
+
+  @override
+  String get virtHwSecureBootNote =>
+      'Yalnızca imzalı çekirdek ve önyükleyicileri başlatır';
+
+  @override
+  String get virtHwFirmwareWarnTitle =>
+      'Kurulu bir sistemin ürün yazılımını değiştirmeyin';
+
+  @override
+  String get virtHwFirmwareWarnBody =>
+      'UEFI ile BIOS arasında geçiş, kurulu sistemi önyüklenemez hâle getirir.';
+
+  @override
+  String get virtHwFirmwareStopped =>
+      'Ürün yazılımı yalnızca konuk durdurulmuşken değişir.';
+
+  @override
+  String get virtHwSecureBootVars =>
+      'Secure Boot\'u açıp kapatmak EFI değişkenlerini yeniden oluşturur; içlerinde kayıtlı önyükleme girdileri kaybolur.';
+
+  @override
+  String get virtHwEfiStorage => 'EFI değişkenlerinin yeri';
+
+  @override
+  String get virtHwTpmStorage => 'TPM durumunun yeri';
+
+  @override
+  String virtHwSwitchFirmwareAsk(String guest, String firmware) {
+    return '$guest, $firmware olarak değiştirilsin mi?';
+  }
 }

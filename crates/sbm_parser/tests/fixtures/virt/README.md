@@ -97,3 +97,18 @@ hot-plugged, saved for the next start), `_remove_disk_kept` (the running
 domain keeps the disk, so its volume is kept), `_add_disk_exists` (the volume
 name taken), `_conflict` (the persistent XML changed since it was read) and
 `_guard_refused`. The domain and its volumes were removed afterwards.
+
+Devices, display and firmware (hardware, second part), captured with the
+same scripts on a throwaway q35 domain on that host (a nested Debian guest:
+no IOMMU, no USB device, no swtpm, a QEMU without SPICE):
+
+| File | What |
+| --- | --- |
+| `script_hardware_caps_stopped.txt` | `hardware_script` on the stopped domain, with its `domcapabilities` (q35: Secure Boot offered, TPM not) |
+| `script_hardware_caps_running.txt` | The same running with UEFI and Secure Boot, a cache mode changed in the definition only |
+| `script_host_devices.txt` | `host_devices_script`: 13 PCI devices, none in an IOMMU group; no USB |
+| `script_hw_update_disk_bus.txt`, `script_hw_update_disk_cache.txt`, `script_hw_cache_running.txt` | `vda` moved to SATA, then a cache mode, stopped and running |
+| `script_hw_nic_hardware.txt` | Model `e1000e` and a new MAC |
+| `script_hw_firmware_*.txt` | UEFI with Secure Boot, without, back to BIOS, to UEFI again, and Secure Boot on after a start (the variables file moved to `-sb`) |
+| `script_hw_display.txt` | Listen on `0.0.0.0`, card `vga` |
+| `script_hw_add_pci.txt`, `script_hw_remove_pci.txt` | A host PCI device written into the definition (the start is then refused: no IOMMU), and removed |

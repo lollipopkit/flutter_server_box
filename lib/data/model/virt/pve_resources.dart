@@ -543,16 +543,26 @@ abstract final class PveResources {
     final lxc = kind == VirtGuestKind.lxc;
     final disks = <VirtHwDisk>[];
     final nics = <VirtHwNic>[];
+    final devices = <VirtHwDevice>[];
     final keys = config.keys.toList()..sort(_naturalCompare);
     for (final key in keys) {
       final value = config[key];
       if (value is! String) continue;
       final diskMatch = lxc ? _lxcDisk.firstMatch(key) : _qemuDisk.firstMatch(key);
       if (diskMatch != null) {
-        // Detached volumes, EFI vars and a TPM state are not disks to edit.
-        if (key.startsWith('unused') ||
-            key.startsWith('efidisk') ||
-            key.startsWith('tpmstate')) {
+        if (key.startsWith('tpmstate')) {
+          final named = {for (final (k, v) in _options(value)) k: v};
+          devices.add(
+            VirtHwDevice(
+              key: key,
+              kind: VirtHwDeviceKind.tpm,
+              detail: 'TPM ${named['version'] ?? 'v1.2'}',
+            ),
+          );
+          continue;
+        }
+        // Detached volumes and EFI vars are not disks to edit.
+        if (key.startsWith('unused') || key.startsWith('efidisk')) {
           continue;
         }
         final d = _disk(key, value, kind, diskMatch);
@@ -576,9 +586,17 @@ abstract final class PveResources {
             bus: d.bus,
             format: d.format,
             readonly: d.readonly,
+            cache: named['cache'],
           ),
         );
         continue;
+      }
+      if (!lxc) {
+        final device = _device(key, value);
+        if (device != null) {
+          devices.add(device);
+          continue;
+        }
       }
       if (_net.hasMatch(key)) {
         final n = _nic(key, value, kind);
@@ -636,6 +654,8 @@ abstract final class PveResources {
       );
     }
 
+    final efi = _str(config['efidisk0']);
+    final vga = _str(config['vga']);
     return VirtHardware(
       kind: kind,
       running: running,
@@ -643,6 +663,20 @@ abstract final class PveResources {
       memory: memory,
       disks: disks,
       nics: nics,
+      devices: devices,
+      firmware: lxc
+          ? null
+          : VirtHwFirmware(
+              uefi: _str(config['bios']) == 'ovmf',
+              secureBoot:
+                  efi != null &&
+                  _options(efi).any((o) => o == ('pre-enrolled-keys', '1')),
+              varsStorage: efi == null ? null : volumeOf(efi)?.split(':').first,
+            ),
+      display: lxc
+          ? null
+          : VirtHwDisplay(gpu: vga == null ? 'std' : _options(vga).first.$2),
+      support: lxc ? pveLxcSupport : pveQemuSupport,
       boot: lxc ? null : _bootOrder(_str(config['boot']), config, disks, nics),
       autostart: _int(config['onboot']) == 1,
       name: _str(config[lxc ? 'hostname' : 'name']),
@@ -670,6 +704,80 @@ abstract final class PveResources {
           if (k != 'digest' && config[k] != null) '$k: ${config[k]}',
       ].join('\n'),
     );
+  }
+
+  /// What a PVE VM's hardware can be changed to. SPICE is not a choice of
+  /// its own there: it comes with a `qxl` card.
+  static const pveQemuSupport = VirtHwSupport(
+    buses: ['scsi', 'virtio', 'sata', 'ide'],
+    caches: ['default', 'none', 'writeback', 'writethrough', 'directsync', 'unsafe'],
+    nicModels: ['virtio', 'e1000', 'e1000e', 'rtl8139', 'vmxnet3'],
+    mac: true,
+    gpus: ['std', 'virtio', 'qxl', 'vmware', 'cirrus', 'none'],
+    uefi: true,
+    secureBoot: true,
+    tpm: true,
+    usb: true,
+    pci: true,
+  );
+
+  static const pveLxcSupport = VirtHwSupport(mac: true);
+
+  static final _usbKey = RegExp(r'^usb\d+$');
+  static final _pciKey = RegExp(r'^hostpci\d+$');
+
+  /// `usbN` (`host=0bda:b023`, `host=1-4`, `mapping=bt`, `spice`) and
+  /// `hostpciN` (`0000:01:00.0,pcie=1`, `01:00`, `mapping=gpu`) as devices.
+  static VirtHwDevice? _device(String key, String value) {
+    final VirtHwDeviceKind kind;
+    if (_usbKey.hasMatch(key)) {
+      kind = VirtHwDeviceKind.usb;
+    } else if (_pciKey.hasMatch(key)) {
+      kind = VirtHwDeviceKind.pci;
+    } else {
+      return null;
+    }
+    final opts = _options(value);
+    final named = {for (final (k, v) in opts) k: v};
+    final mapping = named['mapping'];
+    final detail =
+        mapping ??
+        switch (kind) {
+          VirtHwDeviceKind.usb => named['host'] ?? opts.first.$2,
+          _ => named['host'] ?? (opts.first.$1.isEmpty ? opts.first.$2 : null),
+        };
+    return VirtHwDevice(
+      key: key,
+      kind: kind,
+      detail: detail,
+      mapping: mapping != null,
+    );
+  }
+
+  /// A NIC's option with its model and MAC changed: a VM's `model=MAC`
+  /// pair, a container's `hwaddr`. The rest stays as written.
+  static String withNicHardware(
+    String raw, {
+    required bool lxc,
+    String? model,
+    String? mac,
+  }) {
+    if (lxc) return mac == null ? raw : withOptions(raw, {'hwaddr': mac.toUpperCase()});
+    const models = {
+      'virtio', 'e1000', 'e1000e', 'rtl8139', 'vmxnet3', //
+      'i82551', 'i82557b', 'i82559er', 'ne2k_isa', 'ne2k_pci', 'pcnet',
+    };
+    final out = <String>[];
+    var done = false;
+    for (final (k, v) in _options(raw)) {
+      if (!done && models.contains(k)) {
+        done = true;
+        out.add('${model ?? k}=${mac?.toUpperCase() ?? v}');
+        continue;
+      }
+      out.add(k.isEmpty ? v : '$k=$v');
+    }
+    return out.join(',');
   }
 
   /// `cpu: host,flags=+aes` or `cputype=host,…`: the model.
@@ -751,6 +859,9 @@ abstract final class PveResources {
   static String sizeArg(int bytes) => bytes % (1 << 30) == 0
       ? '${bytes >> 30}G'
       : '${(bytes + 1023) >> 10}K';
+
+  /// [_options], for the backend.
+  static List<(String, String)> optionsOf(String value) => _options(value);
 
   /// `a,b=c,d=e` → `[('', a), (b, c), (d, e)]`.
   static List<(String, String)> _options(String value) {

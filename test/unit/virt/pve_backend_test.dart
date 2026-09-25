@@ -1862,6 +1862,155 @@ void main() {
       expect(nets.firstWhere((n) => n.name == 'nic0').users, isEmpty);
     });
   });
+
+  group('hardware: devices, firmware, display', () {
+    Object? fixture(String name) =>
+        jsonDecode(File('test/fixtures/pve/$name').readAsStringSync());
+
+    const token = PveConfig(
+      addr: 'https://pve.lan:8006',
+      auth: PveAuth.token,
+      tokenId: 'root@pam!sb',
+      tokenSecret: 's',
+    );
+    const vm = VirtGuest(
+      id: 'qemu/9921',
+      name: 'sbhwb-probe',
+      kind: VirtGuestKind.qemu,
+      state: VirtGuestState.stopped,
+      vmid: 9921,
+      node: 'pve',
+    );
+
+    /// Captured from PVE 9.2: UEFI with Secure Boot, a TPM, a USB device by
+    /// mapping and one by id, a PCI device by mapping, a virtio card, and
+    /// disks with cache modes.
+    _Api devApi() => _Api()
+      ..routes['GET /nodes/pve/qemu/9921/config'] = ((_) => fixture('hw_vm_devices_config.json'))
+      ..routes['GET /nodes/pve/qemu/9921/pending'] = ((_) => const [])
+      ..routes['GET /nodes/pve/status'] = ((_) => const {})
+      ..routes['GET /nodes/pve/capabilities/qemu/cpu'] = ((_) => const [])
+      ..routes['POST /nodes/pve/qemu/9921/config'] = ((_) => _Api.upid)
+      ..routes['GET /nodes/pve/hardware/pci'] = ((_) => fixture('hardware_pci.json'))
+      ..routes['GET /nodes/pve/hardware/usb'] = ((_) => fixture('hardware_usb.json'))
+      ..routes['GET /cluster/mapping/usb'] = ((_) => fixture('mapping_usb.json'))
+      ..routes['GET /cluster/mapping/pci'] = ((_) => fixture('mapping_pci.json'));
+
+    Map<String, String> sent(_Api api) {
+      final i = api.paths.lastIndexOf('POST /nodes/pve/qemu/9921/config');
+      expect(i, isNot(-1), reason: '${api.paths}');
+      return Uri.splitQueryString(api.bodies[i]);
+    }
+
+    test('read: devices, firmware, card and cache modes', () async {
+      final hw = await devApi().backend(token).hardware(vm);
+      expect(
+        hw.devices.map((d) => (d.key, d.kind, d.detail, d.mapping)),
+        [
+          ('hostpci0', VirtHwDeviceKind.pci, 'sbhwb-xhci', true),
+          ('tpmstate0', VirtHwDeviceKind.tpm, 'TPM v2.0', false),
+          ('usb0', VirtHwDeviceKind.usb, 'sbhwb-bt', true),
+          ('usb1', VirtHwDeviceKind.usb, '0bda:b023', false),
+        ],
+      );
+      expect(hw.firmware, const VirtHwFirmware(uefi: true, secureBoot: true, varsStorage: 'local-lvm'));
+      expect(hw.display?.gpu, 'virtio');
+      expect({for (final d in hw.disks) d.key: d.cache}, {'scsi1': 'writethrough', 'virtio0': 'writeback'});
+      // The EFI and TPM volumes are not disks to edit.
+      expect(hw.disks.map((d) => d.key), isNot(contains('efidisk0')));
+      expect(hw.support, PveResources.pveQemuSupport);
+    });
+
+    test('disk cache, and a bus change with the boot order kept', () async {
+      final api = devApi();
+      final pve = api.backend(token);
+      final hw = await pve.hardware(vm);
+      await pve.changeHardware(vm, hw, const VirtHwUpdateDisk(key: 'virtio0', cache: 'default'));
+      expect(sent(api)['virtio0'], 'local-lvm:vm-9921-disk-0,size=1G');
+      // The boot order names the disk: it moves with it, in its place.
+      final booted = hw.copyWith(boot: ['scsi1', 'net0']);
+      await pve.changeHardware(vm, booted, const VirtHwUpdateDisk(key: 'scsi1', bus: 'sata'));
+      expect(sent(api), {
+        'sata0': 'local-lvm:vm-9921-disk-4,cache=writethrough,size=1G',
+        'boot': 'order=sata0;net0',
+        'delete': 'scsi1',
+        'digest': hw.revision!,
+      });
+    });
+
+    test('NIC model and MAC, devices, card', () async {
+      final api = devApi();
+      final pve = api.backend(token);
+      final hw = await pve.hardware(vm);
+      await pve.changeHardware(
+        vm,
+        hw,
+        const VirtHwSetNicHardware(key: 'net0', model: 'virtio', mac: 'bc:24:11:00:00:09'),
+      );
+      expect(sent(api)['net0'], 'virtio=BC:24:11:00:00:09,bridge=vmbr0');
+      await pve.changeHardware(
+        vm,
+        hw,
+        const VirtHwAddDevice(
+          kind: VirtHwDeviceKind.usb,
+          host: VirtHostDevice(id: 'bt', label: 'bt', mapping: true),
+        ),
+      );
+      expect(sent(api)['usb2'], 'mapping=bt');
+      await pve.changeHardware(
+        vm,
+        hw,
+        const VirtHwAddDevice(
+          kind: VirtHwDeviceKind.pci,
+          host: VirtHostDevice(id: '0000:00:14.0', label: 'xHCI'),
+        ),
+      );
+      expect(sent(api)['hostpci1'], '0000:00:14.0');
+      await pve.changeHardware(vm, hw, const VirtHwAddDevice(kind: VirtHwDeviceKind.tpm, storage: 'local-lvm'));
+      expect(sent(api)['tpmstate0'], 'local-lvm:1,version=v2.0');
+      await pve.changeHardware(vm, hw, const VirtHwRemoveDevice(key: 'usb1'));
+      expect(sent(api)['delete'], 'usb1');
+      await pve.changeHardware(vm, hw, const VirtHwSetDisplay(gpu: 'qxl'));
+      expect(sent(api)['vga'], 'qxl');
+    });
+
+    test('firmware: Secure Boot is a new variables disk, BIOS keeps it', () async {
+      final api = devApi();
+      final pve = api.backend(token);
+      final hw = await pve.hardware(vm);
+      await pve.changeHardware(vm, hw, const VirtHwSetFirmware(uefi: true, secureBoot: true));
+      expect(sent(api), {'bios': 'ovmf', 'digest': hw.revision!});
+      await pve.changeHardware(vm, hw, const VirtHwSetFirmware(uefi: true));
+      final bodies = [
+        for (final (i, p) in api.paths.indexed)
+          if (p == 'POST /nodes/pve/qemu/9921/config') Uri.splitQueryString(api.bodies[i]),
+      ];
+      expect(bodies.reversed.take(2).toList().reversed, [
+        {'delete': 'efidisk0', 'digest': hw.revision!},
+        {'bios': 'ovmf', 'efidisk0': 'local-lvm:1,efitype=4m,pre-enrolled-keys=0'},
+      ]);
+      await pve.changeHardware(vm, hw, const VirtHwSetFirmware(uefi: false));
+      expect(sent(api), {'bios': 'seabios', 'digest': hw.revision!});
+    });
+
+    test('host devices: a token gets mappings; root@pam the node\'s too', () async {
+      final tokenDevs = await devApi().backend(token).hostDevices(vm);
+      expect(tokenDevs.mappingsOnly, isTrue);
+      expect(tokenDevs.usb.map((d) => (d.id, d.mapping)), [('sbhwb-bt', true)]);
+      expect(tokenDevs.pci.map((d) => (d.id, d.mapping)), [('sbhwb-xhci', true)]);
+      // No IOMMU group on any device: the host has none on.
+      expect(tokenDevs.iommu, isFalse);
+
+      final api = devApi();
+      const password = PveConfig(addr: 'https://pve.lan:8006', auth: PveAuth.password);
+      final root = await api.backend(password, user: 'root').hostDevices(vm);
+      expect(root.mappingsOnly, isFalse);
+      // Hubs left out; the Bluetooth radio offered by id.
+      expect(root.usb.map((d) => d.id), ['sbhwb-bt', '0bda:b023']);
+      expect(root.pci.length, 1 + (fixture('hardware_pci.json')! as List).length);
+      expect(root.pci.last.iommuGroup, isNull);
+    });
+  });
 }
 
 Future<VirtErr> _err(Future<Object?> future) async {

@@ -26,6 +26,15 @@
 /// - `SBM_E2E_PVE_TOKEN_ID`, `SBM_E2E_PVE_TOKEN_SECRET` — an API token
 ///   (`user@realm!name`) with `VM.Audit`, `VM.PowerMgmt`, `VM.Console` and
 ///   `Sys.Audit`. Read from the environment only by this file; never printed.
+/// - `SBM_E2E_PVE_USB` (`vendor:product`) and `SBM_E2E_PVE_PCI` (an address,
+///   `0000:01:00.0`), with `SBM_E2E_PVE_HOST` reached as root: real
+///   passthrough of that host device to a temporary VM, through a temporary
+///   resource mapping made over SSH and granted to the token
+///   (`PVEMappingUser` on it) — how a token is allowed a device at all. The
+///   VM is started with it and the device checked in its QEMU command line,
+///   then stopped, the device taken off, the VM deleted, the mapping and the
+///   grant removed. PCI needs the IOMMU on; nothing here changes the host.
+///   **The device is the guest's while it runs.**
 /// - `SBM_E2E_PVE_LXC` (default `200`): a running container. **Rebooted**, and
 ///   over SSH **snapshotted, rolled back (and started again) and the snapshot
 ///   deleted**, on a storage that supports snapshots. Its console is typed
@@ -117,6 +126,7 @@ Future<void> main() async {
   // Standing alone: `--plain-name 'create and delete'` runs only these.
   await _libvirtCreate();
   await _pveCreate();
+  await _pvePassthrough();
   await _libvirt();
   await _pve();
   await _pveTestVm();
@@ -1472,6 +1482,187 @@ Future<void> _libvirtCreate() async {
       expect(await find(), isNull);
       final vols = await virt.volumes(pool);
       expect(vols.where((v) => v.name == '$name.qcow2'), isEmpty);
+    });
+  });
+}
+
+/// Real USB and PCI passthrough on the PVE node, through a resource mapping:
+/// see the file's header, `SBM_E2E_PVE_USB` and `SBM_E2E_PVE_PCI`.
+Future<void> _pvePassthrough() async {
+  final host = e2eEnv('SBM_E2E_PVE_HOST');
+  final tokenId = e2eEnv('SBM_E2E_PVE_TOKEN_ID');
+  final tokenSecret = e2eEnv('SBM_E2E_PVE_TOKEN_SECRET');
+  final usb = e2eEnv('SBM_E2E_PVE_USB');
+  final pci = e2eEnv('SBM_E2E_PVE_PCI');
+  if (host == null || tokenId == null || tokenSecret == null) return;
+  if (usb == null && pci == null) return;
+  final ready = await prepareSshE2e(host);
+  final target = ready.target;
+  if (target == null) return;
+
+  group('passthrough: PVE over SSH', () {
+    SSHClient? client;
+    late PveBackend pve;
+    late VirtGuest vm;
+    late VirtStoragePool storage;
+
+    /// On the node, as the SSH user (root: the mapping needs it).
+    Future<String> onNode(String command) async {
+      final session = await client!.execute(command);
+      final (out, err) = await (
+        utf8.decodeStream(session.stdout),
+        utf8.decodeStream(session.stderr),
+      ).wait;
+      await session.done;
+      expect(session.exitCode, 0, reason: '$command\n$out$err');
+      return out;
+    }
+
+    Future<VirtGuest> settle(bool Function(VirtGuest g) test) async {
+      final deadline = DateTime.now().add(const Duration(seconds: 60));
+      while (true) {
+        final g = (await pve.load()).guests.where((g) => g.id == vm.id).firstOrNull;
+        if (g != null && test(g)) return g;
+        if (DateTime.now().isAfter(deadline)) fail('${vm.id} never settled');
+        await Future<void>.delayed(const Duration(seconds: 1));
+      }
+    }
+
+    Future<void> stop() async {
+      final g = await settle((_) => true);
+      if (g.state != VirtGuestState.stopped) {
+        await pve.power(g, VirtPowerAction.forceStop);
+      }
+      vm = await settle((g) => g.state == VirtGuestState.stopped);
+    }
+
+    setUpAll(() async {
+      await initRustLibForTest();
+      final c = await connectSshE2e(target, ready.identities);
+      client = c;
+      expect((await onNode('id -u')).trim(), '0', reason: 'a mapping is made as root');
+      final d = _pvePaths(target, () => c, '')['over SSH']!.dialer();
+      pve = PveBackend(
+        serverId: 'e2e-pve-passthrough',
+        config: PveConfig(
+          addr: 'https://localhost:8006',
+          auth: PveAuth.token,
+          tokenId: tokenId,
+          tokenSecret: tokenSecret,
+        ),
+        connect: d.startConnect,
+        onClose: d.close,
+        taskPoll: const Duration(milliseconds: 500),
+        taskTimeout: const Duration(minutes: 3),
+      );
+      final e = await _virtErr(pve.load());
+      expect(e.type, VirtErrType.certUnconfirmed);
+      await pve.confirmCert(e.cert!.fingerprint);
+      final snap = await pve.load();
+      final node = snap.host.nodes.first.name;
+      storage = virtDiskStorages(
+        await pve.storagePools(),
+        host: VirtHostKind.pve,
+        kind: VirtGuestKind.qemu,
+        node: node,
+      ).first;
+      final created = await pve.create(
+        VirtCreateSpec(
+          kind: VirtGuestKind.qemu,
+          name: _e2eName('pt'),
+          node: node,
+          vmid: (await pve.nextVmid())!,
+          cores: 1,
+          memoryMiB: 256,
+          storage: storage,
+          diskGiB: 1,
+          network: virtCreateNetworks(
+            await pve.networks(),
+            host: VirtHostKind.pve,
+            node: node,
+          ).first,
+        ),
+      );
+      vm = (await pve.load()).guests.firstWhere((g) => g.id == created.id);
+    });
+    tearDownAll(() async {
+      try {
+        await stop();
+        await _whileLocked(() => pve.delete(vm));
+      } catch (_) {}
+      await pve.close();
+      client?.close();
+    });
+
+    /// Maps [device], grants the token its use, gives it to the VM through
+    /// the backend as the Hardware view does, starts the VM with it, checks
+    /// QEMU was given it, and takes it off again. The mapping and the grant
+    /// go whatever happens.
+    Future<void> passthrough(String kind, String device) async {
+      final id = 'sbe2e-$kind-${DateTime.now().millisecondsSinceEpoch % 100000}';
+      final node = vm.node!;
+      final String map;
+      if (kind == 'usb') {
+        map = 'node=$node,id=$device';
+      } else {
+        final ids = (await onNode("lspci -n -s '$device' | awk '{print \$3}'")).trim();
+        final group = (await onNode(
+          "basename \"\$(readlink /sys/bus/pci/devices/'$device'/iommu_group)\" 2>/dev/null || echo -1",
+        )).trim();
+        map = 'node=$node,path=$device,id=$ids,iommugroup=$group';
+      }
+      await onNode("pvesh create /cluster/mapping/$kind --id '$id' --map '$map'");
+      try {
+        await onNode("pveum acl modify '/mapping/$kind/$id' --tokens '$tokenId' --roles PVEMappingUser");
+        final devs = await pve.hostDevices(vm);
+        final mapped = (kind == 'usb' ? devs.usb : devs.pci).firstWhere((d) => d.id == id);
+        expect(mapped.mapping, isTrue);
+        var hw = await pve.hardware(vm);
+        await pve.changeHardware(
+          vm,
+          hw,
+          VirtHwAddDevice(
+            kind: kind == 'usb' ? VirtHwDeviceKind.usb : VirtHwDeviceKind.pci,
+            host: mapped,
+          ),
+        );
+        hw = await pve.hardware(vm);
+        final key = hw.devices.firstWhere((d) => d.detail == id).key;
+        await pve.power(vm, VirtPowerAction.start);
+        vm = await settle((g) => g.state == VirtGuestState.running);
+        final cmd = await onNode('qm showcmd ${vm.vmid}');
+        if (kind == 'usb') {
+          final [vendor, product] = device.split(':');
+          expect(cmd, allOf(contains('usb-host'), contains('0x$vendor'), contains('0x$product')));
+        } else {
+          expect(cmd, allOf(contains('vfio-pci'), contains(device)));
+        }
+        await stop();
+        await pve.changeHardware(vm, await pve.hardware(vm), VirtHwRemoveDevice(key: key));
+        expect((await pve.hardware(vm)).device(key), isNull);
+      } finally {
+        try {
+          await stop();
+        } catch (_) {}
+        await onNode("pveum acl delete '/mapping/$kind/$id' --tokens '$tokenId' --roles PVEMappingUser || true");
+        await onNode("pvesh delete '/cluster/mapping/$kind/$id'");
+      }
+    }
+
+    test('USB passthrough through a resource mapping', () async {
+      if (usb == null) {
+        markTestSkipped('SBM_E2E_PVE_USB is not set');
+        return;
+      }
+      await passthrough('usb', usb);
+    });
+
+    test('PCI passthrough through a resource mapping', () async {
+      if (pci == null) {
+        markTestSkipped('SBM_E2E_PVE_PCI is not set');
+        return;
+      }
+      await passthrough('pci', pci);
     });
   });
 }

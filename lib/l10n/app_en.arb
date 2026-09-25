@@ -4872,7 +4872,7 @@
   "@pveTokenTipCreate": {
     "description": "Second part of the PVE API token help: the extra privileges creating and deleting guests needs."
   },
-  "pveTokenTipHardware": "Editing hardware needs VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network and VM.Config.Options; new disks and interfaces also need Datastore.AllocateSpace and SDN.Use.",
+  "pveTokenTipHardware": "Editing hardware needs VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network and VM.Config.Options; new disks and interfaces also need Datastore.AllocateSpace and SDN.Use. The video card and USB and PCI devices also need VM.Config.HWType; a device given through a resource mapping needs Mapping.Use on it, and Mapping.Audit to list mappings.",
   "@pveTokenTipHardware": {
     "description": "Token help: privileges for the Hardware view."
   },
@@ -5349,5 +5349,183 @@
   "virtHwVolumeKept": "Removed, but the running guest still uses the disk, so its volume was kept. It is detached at the next start.",
   "@virtHwVolumeKept": {
     "description": "Toast after removing a disk the running guest holds."
+  },
+  "virtHwBus": "Bus",
+  "@virtHwBus": {
+    "description": "Hardware view (virtualization): Bus"
+  },
+  "virtHwCache": "Cache",
+  "@virtHwCache": {
+    "description": "Hardware view (virtualization): Cache"
+  },
+  "virtHwBusStopped": "The bus changes only while the guest is stopped.",
+  "@virtHwBusStopped": {
+    "description": "Hardware view (virtualization): BusStopped"
+  },
+  "virtHwMacGenerate": "Generate",
+  "@virtHwMacGenerate": {
+    "description": "Hardware view (virtualization): MacGenerate"
+  },
+  "virtHwIssueMac": "Must be a unicast MAC address, such as 52:54:00:12:34:56",
+  "@virtHwIssueMac": {
+    "description": "Hardware view (virtualization): IssueMac"
+  },
+  "virtHwIssueStopFirst": "Stop the guest first",
+  "@virtHwIssueStopFirst": {
+    "description": "Hardware view (virtualization): IssueStopFirst"
+  },
+  "virtHwIssueStorageMissing": "Pick a storage for it first",
+  "@virtHwIssueStorageMissing": {
+    "description": "Hardware view (virtualization): IssueStorageMissing"
+  },
+  "virtHwIssueDevice": "Pick a device first",
+  "@virtHwIssueDevice": {
+    "description": "Hardware view (virtualization): IssueDevice"
+  },
+  "virtHwDevices": "CD-ROM and passthrough",
+  "@virtHwDevices": {
+    "description": "Hardware view (virtualization): Devices"
+  },
+  "virtHwDevicesEmpty": "USB and PCI passthrough, TPM",
+  "@virtHwDevicesEmpty": {
+    "description": "Hardware view (virtualization): DevicesEmpty"
+  },
+  "virtHwAddDevice": "Add device",
+  "@virtHwAddDevice": {
+    "description": "Hardware view (virtualization): AddDevice"
+  },
+  "virtHwNewDevice": "New device",
+  "@virtHwNewDevice": {
+    "description": "Hardware view (virtualization): NewDevice"
+  },
+  "virtHwUsbHotplug": "USB passthrough is hot-pluggable.",
+  "@virtHwUsbHotplug": {
+    "description": "Hardware view (virtualization): UsbHotplug"
+  },
+  "virtHwPci": "PCI passthrough",
+  "@virtHwPci": {
+    "description": "Hardware view (virtualization): Pci"
+  },
+  "virtHwIommuOffTitle": "The host has no IOMMU",
+  "@virtHwIommuOffTitle": {
+    "description": "Hardware view (virtualization): IommuOffTitle"
+  },
+  "virtHwIommuOffBody": "Turn on VT-d or AMD-Vi in the host's BIOS and IOMMU in its kernel first. Until then, a guest given a PCI device won't start.",
+  "@virtHwIommuOffBody": {
+    "description": "Hardware view (virtualization): IommuOffBody"
+  },
+  "virtHwPciTitle": "Needs IOMMU on the host",
+  "@virtHwPciTitle": {
+    "description": "Hardware view (virtualization): PciTitle"
+  },
+  "virtHwPciBody": "Once passed through, the host can't use the device, and the guest can't migrate while running.",
+  "@virtHwPciBody": {
+    "description": "Hardware view (virtualization): PciBody"
+  },
+  "virtHwIommuGroup": "IOMMU group {group}",
+  "@virtHwIommuGroup": {
+    "description": "Hardware view (virtualization): IommuGroup",
+    "placeholders": {
+      "group": {
+        "type": "int"
+      }
+    }
+  },
+  "virtHwIommuShared": "{count} devices share its IOMMU group and are passed through together",
+  "@virtHwIommuShared": {
+    "description": "Hardware view (virtualization): IommuShared",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "virtHwNoHostDevices": "No devices to pass through on this host",
+  "@virtHwNoHostDevices": {
+    "description": "Hardware view (virtualization): NoHostDevices"
+  },
+  "virtHwMappingsOnly": "Only resource mappings can be used here: PVE lets only root@pam, signed in with its password, pass a raw device through. Create mappings under Datacenter → Resource Mappings.",
+  "@virtHwMappingsOnly": {
+    "description": "Hardware view (virtualization): MappingsOnly"
+  },
+  "virtHwTpmNote": "Windows 11 needs TPM 2.0.",
+  "@virtHwTpmNote": {
+    "description": "Hardware view (virtualization): TpmNote"
+  },
+  "virtHwDisplay": "Display",
+  "@virtHwDisplay": {
+    "description": "Hardware view (virtualization): Display"
+  },
+  "virtHwProtocol": "Protocol",
+  "@virtHwProtocol": {
+    "description": "Hardware view (virtualization): Protocol"
+  },
+  "virtHwListen": "Listen",
+  "@virtHwListen": {
+    "description": "Hardware view (virtualization): Listen"
+  },
+  "virtHwGpu": "Video card",
+  "@virtHwGpu": {
+    "description": "Hardware view (virtualization): Gpu"
+  },
+  "virtHwListenAllTitle": "The console is open to the network",
+  "@virtHwListenAllTitle": {
+    "description": "Hardware view (virtualization): ListenAllTitle"
+  },
+  "virtHwListenAllBody": "Listening on all addresses lets anyone who can reach the host connect to the console. Keep 127.0.0.1 and connect through an SSH tunnel.",
+  "@virtHwListenAllBody": {
+    "description": "Hardware view (virtualization): ListenAllBody"
+  },
+  "virtHwFirmware": "Firmware",
+  "@virtHwFirmware": {
+    "description": "Hardware view (virtualization): Firmware"
+  },
+  "virtHwUefiSub": "OVMF · Secure Boot capable, needed by Windows 11",
+  "@virtHwUefiSub": {
+    "description": "Hardware view (virtualization): UefiSub"
+  },
+  "virtHwBiosSub": "SeaBIOS · older systems and MBR disks",
+  "@virtHwBiosSub": {
+    "description": "Hardware view (virtualization): BiosSub"
+  },
+  "virtHwSecureBootNote": "Boots only signed kernels and boot loaders",
+  "@virtHwSecureBootNote": {
+    "description": "Hardware view (virtualization): SecureBootNote"
+  },
+  "virtHwFirmwareWarnTitle": "Don't switch the firmware of an installed system",
+  "@virtHwFirmwareWarnTitle": {
+    "description": "Hardware view (virtualization): FirmwareWarnTitle"
+  },
+  "virtHwFirmwareWarnBody": "Switching between UEFI and BIOS leaves an installed system unable to boot.",
+  "@virtHwFirmwareWarnBody": {
+    "description": "Hardware view (virtualization): FirmwareWarnBody"
+  },
+  "virtHwFirmwareStopped": "The firmware changes only while the guest is stopped.",
+  "@virtHwFirmwareStopped": {
+    "description": "Hardware view (virtualization): FirmwareStopped"
+  },
+  "virtHwSecureBootVars": "Turning Secure Boot on or off makes the EFI variables anew; boot entries saved in them are lost.",
+  "@virtHwSecureBootVars": {
+    "description": "Note under the Secure Boot switch: switching it recreates the guest's EFI variables (PVE's EFI disk, libvirt's variables file), losing saved boot entries."
+  },
+  "virtHwEfiStorage": "Where the EFI variables go",
+  "@virtHwEfiStorage": {
+    "description": "Hardware view (virtualization): EfiStorage"
+  },
+  "virtHwTpmStorage": "Where the TPM state goes",
+  "@virtHwTpmStorage": {
+    "description": "Hardware view (virtualization): TpmStorage"
+  },
+  "virtHwSwitchFirmwareAsk": "Switch {guest} to {firmware}?",
+  "@virtHwSwitchFirmwareAsk": {
+    "description": "Hardware view (virtualization): SwitchFirmwareAsk",
+    "placeholders": {
+      "guest": {
+        "type": "String"
+      },
+      "firmware": {
+        "type": "String"
+      }
+    }
   }
 }

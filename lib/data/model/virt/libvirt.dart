@@ -404,6 +404,7 @@ abstract class LibvirtHwDisk with _$LibvirtHwDisk {
     @Default(false) bool readonly,
     int? capacity,
     int? bootOrder,
+    String? cache,
   }) = _LibvirtHwDisk;
 
   factory LibvirtHwDisk.fromJson(Map<String, dynamic> json) =>
@@ -438,10 +439,124 @@ abstract class LibvirtHwConfig with _$LibvirtHwConfig {
     @Default(<LibvirtHwNic>[]) List<LibvirtHwNic> nics,
     @Default(<String>[]) List<String> boot,
     @Default(false) bool balloon,
+    @Default(false) bool efi,
+    @Default(false) bool secureBoot,
+    String? machine,
+    LibvirtHwGraphics? graphics,
+    String? video,
+    LibvirtHwTpm? tpm,
+    @Default(<LibvirtHwHostdev>[]) List<LibvirtHwHostdev> hostdevs,
   }) = _LibvirtHwConfig;
 
   factory LibvirtHwConfig.fromJson(Map<String, dynamic> json) =>
       _$LibvirtHwConfigFromJson(json);
+}
+
+@freezed
+abstract class LibvirtHwGraphics with _$LibvirtHwGraphics {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory LibvirtHwGraphics({
+    @Default('') String kind,
+    String? listen,
+    int? port,
+  }) = _LibvirtHwGraphics;
+
+  factory LibvirtHwGraphics.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtHwGraphicsFromJson(json);
+}
+
+@freezed
+abstract class LibvirtHwTpm with _$LibvirtHwTpm {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory LibvirtHwTpm({
+    @Default('') String model,
+    @Default('') String backend,
+    String? version,
+  }) = _LibvirtHwTpm;
+
+  factory LibvirtHwTpm.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtHwTpmFromJson(json);
+}
+
+@freezed
+abstract class LibvirtHwHostdev with _$LibvirtHwHostdev {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory LibvirtHwHostdev({
+    required String key,
+    @Default('') String kind,
+    String? vendor,
+    String? product,
+    String? address,
+  }) = _LibvirtHwHostdev;
+
+  factory LibvirtHwHostdev.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtHwHostdevFromJson(json);
+}
+
+/// `sbm_parser::virt::VirtHwCaps`: what the host offers this domain.
+@freezed
+abstract class LibvirtHwCaps with _$LibvirtHwCaps {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory LibvirtHwCaps({
+    @Default(false) bool efi,
+    @Default(false) bool secureBoot,
+    @Default(false) bool tpmEmulator,
+    @Default(<String>[]) List<String> graphics,
+    @Default(<String>[]) List<String> video,
+    @Default(<String>[]) List<String> diskBuses,
+    @Default(false) bool hostdev,
+  }) = _LibvirtHwCaps;
+
+  factory LibvirtHwCaps.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtHwCapsFromJson(json);
+}
+
+/// `sbm_parser::virt::VirtHostDevices`.
+@freezed
+abstract class LibvirtHostDevices with _$LibvirtHostDevices {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory LibvirtHostDevices({
+    @Default(<LibvirtHostUsb>[]) List<LibvirtHostUsb> usb,
+    @Default(<LibvirtHostPci>[]) List<LibvirtHostPci> pci,
+    @Default(false) bool iommu,
+  }) = _LibvirtHostDevices;
+
+  factory LibvirtHostDevices.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtHostDevicesFromJson(json);
+}
+
+@freezed
+abstract class LibvirtHostUsb with _$LibvirtHostUsb {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory LibvirtHostUsb({
+    required String vendor,
+    required String product,
+    String? vendorName,
+    String? productName,
+    int? bus,
+    int? device,
+  }) = _LibvirtHostUsb;
+
+  factory LibvirtHostUsb.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtHostUsbFromJson(json);
+}
+
+@freezed
+abstract class LibvirtHostPci with _$LibvirtHostPci {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory LibvirtHostPci({
+    required String address,
+    String? vendor,
+    String? product,
+    String? vendorName,
+    String? productName,
+    @JsonKey(name: 'class') String? pciClass,
+    int? iommuGroup,
+    @Default(0) int groupSize,
+  }) = _LibvirtHostPci;
+
+  factory LibvirtHostPci.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtHostPciFromJson(json);
 }
 
 /// `sbm_parser::virt::VirtHardwareInfo`.
@@ -456,6 +571,7 @@ abstract class LibvirtHardwareInfo with _$LibvirtHardwareInfo {
     String? description,
     int? hostCpus,
     int? hostMemoryKib,
+    LibvirtHwCaps? caps,
   }) = _LibvirtHardwareInfo;
 
   factory LibvirtHardwareInfo.fromJson(Map<String, dynamic> json) =>

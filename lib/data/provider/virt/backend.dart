@@ -113,6 +113,10 @@ abstract interface class VirtBackend {
     VirtHwChange change,
   );
 
+  /// The host devices [guest] can be given (USB, PCI), for the Hardware
+  /// view's add block. Only where `VirtHardware.support` offers them.
+  Future<VirtHostDevices> hostDevices(VirtGuest guest);
+
   /// Drops any session, so the next call starts over (a new login, a new
   /// sudo probe). Keeps what the user confirmed or typed: a pinned
   /// certificate, a sudo password.

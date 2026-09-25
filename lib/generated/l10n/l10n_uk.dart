@@ -3784,7 +3784,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get pveTokenTipHardware =>
-      'Для зміни обладнання потрібні VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network і VM.Config.Options; для нових дисків та інтерфейсів також Datastore.AllocateSpace і SDN.Use.';
+      'Для зміни обладнання потрібні VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network і VM.Config.Options; для нових дисків та інтерфейсів також Datastore.AllocateSpace і SDN.Use. Для відеокарти та пристроїв USB і PCI потрібна також VM.Config.HWType; для пристрою через зіставлення ресурсів потрібна Mapping.Use на ньому, а для списку зіставлень — Mapping.Audit.';
 
   @override
   String get virtErrConflict => 'Змінено деінде';
@@ -4107,4 +4107,142 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get virtHwVolumeKept =>
       'Вилучено, але запущений гість ще використовує диск, тому том збережено. Диск буде від\'єднано під час наступного запуску.';
+
+  @override
+  String get virtHwBus => 'Шина';
+
+  @override
+  String get virtHwCache => 'Кеш';
+
+  @override
+  String get virtHwBusStopped => 'Шину можна змінити лише в зупиненого гостя.';
+
+  @override
+  String get virtHwMacGenerate => 'Згенерувати';
+
+  @override
+  String get virtHwIssueMac =>
+      'Потрібна одноадресна MAC-адреса, наприклад 52:54:00:12:34:56';
+
+  @override
+  String get virtHwIssueStopFirst => 'Спочатку зупиніть гостя';
+
+  @override
+  String get virtHwIssueStorageMissing => 'Спочатку виберіть сховище';
+
+  @override
+  String get virtHwIssueDevice => 'Спочатку виберіть пристрій';
+
+  @override
+  String get virtHwDevices => 'CD-ROM і прокидання';
+
+  @override
+  String get virtHwDevicesEmpty => 'Прокидання USB і PCI, TPM';
+
+  @override
+  String get virtHwAddDevice => 'Додати пристрій';
+
+  @override
+  String get virtHwNewDevice => 'Новий пристрій';
+
+  @override
+  String get virtHwUsbHotplug => 'Прокидання USB підтримує гаряче підключення.';
+
+  @override
+  String get virtHwPci => 'Прокидання PCI';
+
+  @override
+  String get virtHwIommuOffTitle => 'У хоста немає IOMMU';
+
+  @override
+  String get virtHwIommuOffBody =>
+      'Спочатку ввімкніть VT-d або AMD-Vi у BIOS хоста та IOMMU в його ядрі. До того гість із PCI-пристроєм не запуститься.';
+
+  @override
+  String get virtHwPciTitle => 'Потрібен IOMMU на хості';
+
+  @override
+  String get virtHwPciBody =>
+      'Після прокидання хост не зможе використовувати пристрій, а гість — мігрувати на ходу.';
+
+  @override
+  String virtHwIommuGroup(int group) {
+    return 'Група IOMMU $group';
+  }
+
+  @override
+  String virtHwIommuShared(int count) {
+    return '$count пристроїв в одній групі IOMMU прокидаються разом';
+  }
+
+  @override
+  String get virtHwNoHostDevices =>
+      'На цьому хості немає пристроїв для прокидання';
+
+  @override
+  String get virtHwMappingsOnly =>
+      'Тут доступні лише зіставлення ресурсів: PVE дозволяє прокидати пристрій напряму лише root@pam, що увійшов за паролем. Створіть зіставлення в Датацентр → Зіставлення ресурсів.';
+
+  @override
+  String get virtHwTpmNote => 'Windows 11 потребує TPM 2.0.';
+
+  @override
+  String get virtHwDisplay => 'Дисплей';
+
+  @override
+  String get virtHwProtocol => 'Протокол';
+
+  @override
+  String get virtHwListen => 'Прослуховування';
+
+  @override
+  String get virtHwGpu => 'Відеокарта';
+
+  @override
+  String get virtHwListenAllTitle => 'Консоль відкрита в мережу';
+
+  @override
+  String get virtHwListenAllBody =>
+      'Під час прослуховування всіх адрес консоль може відкрити будь-хто, хто досягає хоста. Залиште 127.0.0.1 і підключайтеся через SSH-тунель.';
+
+  @override
+  String get virtHwFirmware => 'Прошивка';
+
+  @override
+  String get virtHwUefiSub =>
+      'OVMF · підтримує Secure Boot, потрібна для Windows 11';
+
+  @override
+  String get virtHwBiosSub => 'SeaBIOS · старі системи та диски MBR';
+
+  @override
+  String get virtHwSecureBootNote =>
+      'Завантажує лише підписані ядра й завантажувачі';
+
+  @override
+  String get virtHwFirmwareWarnTitle =>
+      'Не змінюйте прошивку встановленої системи';
+
+  @override
+  String get virtHwFirmwareWarnBody =>
+      'Перемикання між UEFI і BIOS робить встановлену систему незавантажуваною.';
+
+  @override
+  String get virtHwFirmwareStopped =>
+      'Прошивку можна змінити лише в зупиненого гостя.';
+
+  @override
+  String get virtHwSecureBootVars =>
+      'Увімкнення або вимкнення Secure Boot створює змінні EFI заново; збережені в них записи завантаження буде втрачено.';
+
+  @override
+  String get virtHwEfiStorage => 'Де зберігати змінні EFI';
+
+  @override
+  String get virtHwTpmStorage => 'Де зберігати стан TPM';
+
+  @override
+  String virtHwSwitchFirmwareAsk(String guest, String firmware) {
+    return 'Перемкнути $guest на $firmware?';
+  }
 }

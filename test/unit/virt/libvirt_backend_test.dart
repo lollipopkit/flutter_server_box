@@ -914,6 +914,84 @@ void main() {
       expect(err2.type, VirtErrType.conflict);
       expect(exec.calls, hasLength(calls));
     });
+
+    Future<LibvirtHardwareInfo> info(String fixture) async => LibvirtHardwareInfo.fromJson(
+      jsonDecode(await parseVirtHardwareJson(raw: _fixture(fixture))) as Map<String, dynamic>,
+    );
+
+    test('what the host offers comes from its domcapabilities', () async {
+      // A q35 domain on a host with OVMF but no swtpm, a QEMU without SPICE.
+      final hw = LibvirtBackend.hardwareOf(await info('script_hardware_caps_stopped.txt'));
+      final s = hw.support;
+      expect(s.buses, ['virtio', 'scsi', 'sata']);
+      expect(s.protocols, ['vnc']);
+      expect(s.gpus, ['virtio', 'vga', 'cirrus', 'bochs', 'none']);
+      expect((s.uefi, s.secureBoot, s.tpm, s.usb, s.pci, s.listen, s.mac), (true, true, false, true, true, true, true));
+      expect(hw.firmware, const VirtHwFirmware(uefi: false));
+      expect(hw.display, const VirtHwDisplay(protocol: 'vnc', listen: '127.0.0.1', gpu: 'virtio'));
+      // Without them: the common ground, and nothing the host may lack.
+      final bare = LibvirtBackend.supportOf(null);
+      expect((bare.uefi, bare.tpm, bare.pci), (false, false, false));
+      expect(bare.buses, contains('virtio'));
+    });
+
+    test('a cache mode changed while running is pending', () async {
+      final hw = LibvirtBackend.hardwareOf(await info('script_hardware_caps_running.txt'));
+      expect(hw.firmware, const VirtHwFirmware(uefi: true, secureBoot: true));
+      final p = hw.pending.singleWhere((p) => p.key == 'sda');
+      expect((p.current, p.pending), ('sata writeback', 'sata none'));
+    });
+
+    test('the second part of the changes, as JSON', () async {
+      final i = await info('script_hardware_caps_stopped.txt');
+      final hw = LibvirtBackend.hardwareOf(i);
+      Map<String, Object?> json(VirtHwChange c) =>
+          LibvirtBackend.changeJson(i, hw, c, guestName: 'sbhwb-test', mac: () => '52:54:00:00:00:01');
+      // Another bus is another name on it.
+      expect(json(const VirtHwUpdateDisk(key: 'vda', bus: 'sata')), {
+        'op': 'update_disk',
+        'target': 'vda',
+        'new_target': 'sda',
+        'bus': 'sata',
+        'cache': null,
+      });
+      // The same bus is no bus change.
+      expect(json(const VirtHwUpdateDisk(key: 'vda', bus: 'virtio', cache: 'none'))['new_target'], isNull);
+      expect(json(const VirtHwSetNicHardware(key: '52:54:00:5b:00:01', mac: 'BC:24:11:00:00:09')), {
+        'op': 'update_nic_hardware',
+        'mac': '52:54:00:5b:00:01',
+        'new_mac': 'bc:24:11:00:00:09',
+        'model': null,
+      });
+      expect(json(const VirtHwSetFirmware(uefi: false, secureBoot: true)), {
+        'op': 'firmware',
+        'efi': false,
+        'secure_boot': false,
+      });
+      expect(
+        json(
+          const VirtHwAddDevice(
+            kind: VirtHwDeviceKind.usb,
+            host: VirtHostDevice(id: '0bda:b023', label: 'bt'),
+          ),
+        )['device'],
+        {'kind': 'usb', 'vendor': '0bda', 'product': 'b023'},
+      );
+      expect(json(const VirtHwAddDevice(kind: VirtHwDeviceKind.tpm))['device'], {'kind': 'tpm', 'model': 'tpm-crb'});
+      expect(json(const VirtHwRemoveDevice(key: 'pci:0000:00:01.2')), {
+        'op': 'remove_device',
+        'key': 'pci:0000:00:01.2',
+      });
+    });
+
+    test('host devices: root hubs left out, no IOMMU said', () async {
+      final exec = _Exec((_) => _ok(_fixture('script_host_devices.txt')));
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      final devs = await virt.hostDevices(guest);
+      expect(devs.iommu, isFalse);
+      expect(devs.usb, isEmpty);
+      expect(devs.pci.firstWhere((p) => p.id == '0000:00:01.2').label, contains('PIIX3 USB'));
+    });
   });
 }
 

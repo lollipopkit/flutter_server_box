@@ -3513,7 +3513,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pveTokenTipHardware =>
-      '编辑硬件需要 VM.Config.CPU、VM.Config.Memory、VM.Config.Disk、VM.Config.CDROM、VM.Config.Network 和 VM.Config.Options；添加磁盘和网卡还需要 Datastore.AllocateSpace 和 SDN.Use。';
+      '编辑硬件需要 VM.Config.CPU、VM.Config.Memory、VM.Config.Disk、VM.Config.CDROM、VM.Config.Network 和 VM.Config.Options；添加磁盘和网卡还需要 Datastore.AllocateSpace 和 SDN.Use。修改显卡以及 USB、PCI 设备还需要 VM.Config.HWType；通过资源映射直通设备需要该映射的 Mapping.Use，列出映射需要 Mapping.Audit。';
 
   @override
   String get virtErrConflict => '已在别处修改';
@@ -3821,6 +3821,135 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtHwVolumeKept => '已移除，但运行中的客户机仍在使用该磁盘，因此保留了卷。它会在下次启动时分离。';
+
+  @override
+  String get virtHwBus => '总线';
+
+  @override
+  String get virtHwCache => '缓存';
+
+  @override
+  String get virtHwBusStopped => '关机后才能更换总线。';
+
+  @override
+  String get virtHwMacGenerate => '生成';
+
+  @override
+  String get virtHwIssueMac => '须为单播 MAC 地址，如 52:54:00:12:34:56';
+
+  @override
+  String get virtHwIssueStopFirst => '先关机';
+
+  @override
+  String get virtHwIssueStorageMissing => '先选择存放的存储';
+
+  @override
+  String get virtHwIssueDevice => '先选择一个设备';
+
+  @override
+  String get virtHwDevices => '光驱与直通';
+
+  @override
+  String get virtHwDevicesEmpty => 'USB 与 PCI 直通、TPM';
+
+  @override
+  String get virtHwAddDevice => '添加设备';
+
+  @override
+  String get virtHwNewDevice => '新设备';
+
+  @override
+  String get virtHwUsbHotplug => 'USB 直通支持热插拔。';
+
+  @override
+  String get virtHwPci => 'PCI 直通';
+
+  @override
+  String get virtHwIommuOffTitle => '宿主机没有开启 IOMMU';
+
+  @override
+  String get virtHwIommuOffBody =>
+      '先在宿主机 BIOS 中开启 VT-d 或 AMD-Vi，并在内核中启用 IOMMU。在此之前，添加了 PCI 设备的虚拟机无法启动。';
+
+  @override
+  String get virtHwPciTitle => '需要宿主机开启 IOMMU';
+
+  @override
+  String get virtHwPciBody => '直通后该设备不能再给宿主机使用，虚拟机也不能在线迁移。';
+
+  @override
+  String virtHwIommuGroup(int group) {
+    return 'IOMMU 组 $group';
+  }
+
+  @override
+  String virtHwIommuShared(int count) {
+    return '同一 IOMMU 组共 $count 个设备，会一起直通';
+  }
+
+  @override
+  String get virtHwNoHostDevices => '宿主机上没有可直通的设备';
+
+  @override
+  String get virtHwMappingsOnly =>
+      '这里只能使用资源映射：PVE 只允许以密码登录的 root@pam 直通原始设备。可在 数据中心 → 资源映射 中创建映射。';
+
+  @override
+  String get virtHwTpmNote => 'Windows 11 需要 TPM 2.0。';
+
+  @override
+  String get virtHwDisplay => '显示';
+
+  @override
+  String get virtHwProtocol => '协议';
+
+  @override
+  String get virtHwListen => '监听';
+
+  @override
+  String get virtHwGpu => '显卡';
+
+  @override
+  String get virtHwListenAllTitle => '控制台暴露在网络上';
+
+  @override
+  String get virtHwListenAllBody =>
+      '监听所有地址后任何能访问宿主机的人都能连上控制台。保持 127.0.0.1，经 SSH 隧道连接即可。';
+
+  @override
+  String get virtHwFirmware => '固件';
+
+  @override
+  String get virtHwUefiSub => 'OVMF · 支持 Secure Boot，Windows 11 需要';
+
+  @override
+  String get virtHwBiosSub => 'SeaBIOS · 旧系统和 MBR 分区';
+
+  @override
+  String get virtHwSecureBootNote => '只引导已签名的内核和引导程序';
+
+  @override
+  String get virtHwFirmwareWarnTitle => '已安装系统不要切换固件';
+
+  @override
+  String get virtHwFirmwareWarnBody => '在 UEFI 和 BIOS 之间切换会导致现有系统无法引导。';
+
+  @override
+  String get virtHwFirmwareStopped => '关机后才能切换固件。';
+
+  @override
+  String get virtHwSecureBootVars => '开关 Secure Boot 会重新生成 EFI 变量，其中保存的启动项会丢失。';
+
+  @override
+  String get virtHwEfiStorage => 'EFI 变量存放在';
+
+  @override
+  String get virtHwTpmStorage => 'TPM 状态存放在';
+
+  @override
+  String virtHwSwitchFirmwareAsk(String guest, String firmware) {
+    return '将 $guest 切换到 $firmware？';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -7329,7 +7458,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get pveTokenTipHardware =>
-      '編輯硬體需要 VM.Config.CPU、VM.Config.Memory、VM.Config.Disk、VM.Config.CDROM、VM.Config.Network 和 VM.Config.Options；新增磁碟和網路卡還需要 Datastore.AllocateSpace 和 SDN.Use。';
+      '編輯硬體需要 VM.Config.CPU、VM.Config.Memory、VM.Config.Disk、VM.Config.CDROM、VM.Config.Network 和 VM.Config.Options；新增磁碟和網路卡還需要 Datastore.AllocateSpace 和 SDN.Use。修改顯示卡以及 USB、PCI 裝置還需要 VM.Config.HWType；透過資源對應直通裝置需要該對應的 Mapping.Use，列出對應需要 Mapping.Audit。';
 
   @override
   String get virtErrConflict => '已在別處修改';
@@ -7637,4 +7766,134 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtHwVolumeKept => '已移除，但執行中的客體仍在使用該磁碟，因此保留了磁碟區。它會在下次啟動時分離。';
+
+  @override
+  String get virtHwBus => '匯流排';
+
+  @override
+  String get virtHwCache => '快取';
+
+  @override
+  String get virtHwBusStopped => '關機後才能更換匯流排。';
+
+  @override
+  String get virtHwMacGenerate => '產生';
+
+  @override
+  String get virtHwIssueMac => '須為單播 MAC 位址，如 52:54:00:12:34:56';
+
+  @override
+  String get virtHwIssueStopFirst => '先關機';
+
+  @override
+  String get virtHwIssueStorageMissing => '先選擇存放的儲存';
+
+  @override
+  String get virtHwIssueDevice => '先選擇一個裝置';
+
+  @override
+  String get virtHwDevices => '光碟機與直通';
+
+  @override
+  String get virtHwDevicesEmpty => 'USB 與 PCI 直通、TPM';
+
+  @override
+  String get virtHwAddDevice => '新增裝置';
+
+  @override
+  String get virtHwNewDevice => '新裝置';
+
+  @override
+  String get virtHwUsbHotplug => 'USB 直通支援熱插拔。';
+
+  @override
+  String get virtHwPci => 'PCI 直通';
+
+  @override
+  String get virtHwIommuOffTitle => '主機沒有啟用 IOMMU';
+
+  @override
+  String get virtHwIommuOffBody =>
+      '先在主機 BIOS 中啟用 VT-d 或 AMD-Vi，並在核心中啟用 IOMMU。在此之前，加入了 PCI 裝置的虛擬機無法啟動。';
+
+  @override
+  String get virtHwPciTitle => '需要主機啟用 IOMMU';
+
+  @override
+  String get virtHwPciBody => '直通後該裝置不能再給主機使用，虛擬機也不能線上遷移。';
+
+  @override
+  String virtHwIommuGroup(int group) {
+    return 'IOMMU 群組 $group';
+  }
+
+  @override
+  String virtHwIommuShared(int count) {
+    return '同一 IOMMU 群組共 $count 個裝置，會一起直通';
+  }
+
+  @override
+  String get virtHwNoHostDevices => '主機上沒有可直通的裝置';
+
+  @override
+  String get virtHwMappingsOnly =>
+      '這裡只能使用資源對應：PVE 只允許以密碼登入的 root@pam 直通原始裝置。可在 資料中心 → 資源對應 中建立對應。';
+
+  @override
+  String get virtHwTpmNote => 'Windows 11 需要 TPM 2.0。';
+
+  @override
+  String get virtHwDisplay => '顯示';
+
+  @override
+  String get virtHwProtocol => '協定';
+
+  @override
+  String get virtHwListen => '監聽';
+
+  @override
+  String get virtHwGpu => '顯示卡';
+
+  @override
+  String get virtHwListenAllTitle => '主控台暴露在網路上';
+
+  @override
+  String get virtHwListenAllBody =>
+      '監聽所有位址後，任何能存取主機的人都能連上主控台。保持 127.0.0.1，經 SSH 通道連線即可。';
+
+  @override
+  String get virtHwFirmware => '韌體';
+
+  @override
+  String get virtHwUefiSub => 'OVMF · 支援 Secure Boot，Windows 11 需要';
+
+  @override
+  String get virtHwBiosSub => 'SeaBIOS · 舊系統與 MBR 分割';
+
+  @override
+  String get virtHwSecureBootNote => '只開機已簽署的核心與開機程式';
+
+  @override
+  String get virtHwFirmwareWarnTitle => '已安裝系統不要切換韌體';
+
+  @override
+  String get virtHwFirmwareWarnBody => '在 UEFI 與 BIOS 之間切換會導致現有系統無法開機。';
+
+  @override
+  String get virtHwFirmwareStopped => '關機後才能切換韌體。';
+
+  @override
+  String get virtHwSecureBootVars =>
+      '開關 Secure Boot 會重新產生 EFI 變數，其中儲存的開機項目會遺失。';
+
+  @override
+  String get virtHwEfiStorage => 'EFI 變數存放於';
+
+  @override
+  String get virtHwTpmStorage => 'TPM 狀態存放於';
+
+  @override
+  String virtHwSwitchFirmwareAsk(String guest, String firmware) {
+    return '將 $guest 切換到 $firmware？';
+  }
 }

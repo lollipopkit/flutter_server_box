@@ -742,6 +742,10 @@ class VirtHostNotifier extends _$VirtHostNotifier {
   Future<VirtHardware> hardware(String guestId) =>
       _backend.hardware(_guest(guestId));
 
+  /// See [VirtBackend.hostDevices].
+  Future<VirtHostDevices> hostDevices(String guestId) =>
+      _backend.hostDevices(_guest(guestId));
+
   /// Makes [change] to [guestId] from [base], then refreshes: a CPU or
   /// memory change shows in the guest list. One operation per guest at a
   /// time, as [power]. Throws [VirtErr].
@@ -906,6 +910,9 @@ final class _MissingBackend implements VirtBackend {
     VirtHardware base,
     VirtHwChange change,
   ) async => _fail();
+
+  @override
+  Future<VirtHostDevices> hostDevices(VirtGuest guest) async => _fail();
 
   @override
   Future<void> delete(VirtGuest guest, {bool removeDisks = true}) async =>

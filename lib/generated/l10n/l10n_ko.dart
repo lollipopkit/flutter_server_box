@@ -3583,7 +3583,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get pveTokenTipHardware =>
-      '하드웨어 편집에는 VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network, VM.Config.Options가 필요하며, 디스크와 인터페이스를 추가하려면 Datastore.AllocateSpace와 SDN.Use도 필요합니다.';
+      '하드웨어 편집에는 VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network, VM.Config.Options가 필요하며, 디스크와 인터페이스를 추가하려면 Datastore.AllocateSpace와 SDN.Use도 필요합니다. 그래픽 카드와 USB·PCI 장치에는 VM.Config.HWType도 필요합니다. 리소스 매핑으로 넘기는 장치에는 해당 매핑의 Mapping.Use가, 매핑 목록에는 Mapping.Audit가 필요합니다.';
 
   @override
   String get virtErrConflict => '다른 곳에서 변경됨';
@@ -3895,4 +3895,135 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get virtHwVolumeKept =>
       '제거했지만 실행 중인 게스트가 아직 디스크를 사용 중이라 볼륨은 남겨 두었습니다. 다음 시작 시 분리됩니다.';
+
+  @override
+  String get virtHwBus => '버스';
+
+  @override
+  String get virtHwCache => '캐시';
+
+  @override
+  String get virtHwBusStopped => '버스는 게스트가 중지된 상태에서만 바꿀 수 있습니다.';
+
+  @override
+  String get virtHwMacGenerate => '생성';
+
+  @override
+  String get virtHwIssueMac => '유니캐스트 MAC 주소여야 합니다(예: 52:54:00:12:34:56)';
+
+  @override
+  String get virtHwIssueStopFirst => '먼저 게스트를 중지하세요';
+
+  @override
+  String get virtHwIssueStorageMissing => '먼저 스토리지를 선택하세요';
+
+  @override
+  String get virtHwIssueDevice => '먼저 장치를 선택하세요';
+
+  @override
+  String get virtHwDevices => 'CD-ROM 및 패스스루';
+
+  @override
+  String get virtHwDevicesEmpty => 'USB 및 PCI 패스스루, TPM';
+
+  @override
+  String get virtHwAddDevice => '장치 추가';
+
+  @override
+  String get virtHwNewDevice => '새 장치';
+
+  @override
+  String get virtHwUsbHotplug => 'USB 패스스루는 핫플러그를 지원합니다.';
+
+  @override
+  String get virtHwPci => 'PCI 패스스루';
+
+  @override
+  String get virtHwIommuOffTitle => '호스트에 IOMMU가 없습니다';
+
+  @override
+  String get virtHwIommuOffBody =>
+      '먼저 호스트 BIOS에서 VT-d 또는 AMD-Vi를, 커널에서 IOMMU를 켜세요. 그 전에는 PCI 장치를 단 게스트가 시작되지 않습니다.';
+
+  @override
+  String get virtHwPciTitle => '호스트에 IOMMU가 필요합니다';
+
+  @override
+  String get virtHwPciBody =>
+      '패스스루하면 호스트는 해당 장치를 쓸 수 없고 게스트는 실행 중 마이그레이션할 수 없습니다.';
+
+  @override
+  String virtHwIommuGroup(int group) {
+    return 'IOMMU 그룹 $group';
+  }
+
+  @override
+  String virtHwIommuShared(int count) {
+    return '같은 IOMMU 그룹의 장치 $count개가 함께 패스스루됩니다';
+  }
+
+  @override
+  String get virtHwNoHostDevices => '이 호스트에 패스스루할 장치가 없습니다';
+
+  @override
+  String get virtHwMappingsOnly =>
+      '여기서는 리소스 매핑만 쓸 수 있습니다. PVE는 비밀번호로 로그인한 root@pam만 원시 장치를 패스스루하도록 허용합니다. 데이터센터 → 리소스 매핑에서 매핑을 만드세요.';
+
+  @override
+  String get virtHwTpmNote => 'Windows 11에는 TPM 2.0이 필요합니다.';
+
+  @override
+  String get virtHwDisplay => '디스플레이';
+
+  @override
+  String get virtHwProtocol => '프로토콜';
+
+  @override
+  String get virtHwListen => '수신 대기';
+
+  @override
+  String get virtHwGpu => '그래픽 카드';
+
+  @override
+  String get virtHwListenAllTitle => '콘솔이 네트워크에 노출됩니다';
+
+  @override
+  String get virtHwListenAllBody =>
+      '모든 주소에서 수신 대기하면 호스트에 닿는 누구나 콘솔에 접속할 수 있습니다. 127.0.0.1을 유지하고 SSH 터널로 접속하세요.';
+
+  @override
+  String get virtHwFirmware => '펌웨어';
+
+  @override
+  String get virtHwUefiSub => 'OVMF · Secure Boot 지원, Windows 11에 필요';
+
+  @override
+  String get virtHwBiosSub => 'SeaBIOS · 오래된 시스템과 MBR 디스크';
+
+  @override
+  String get virtHwSecureBootNote => '서명된 커널과 부트로더만 부팅합니다';
+
+  @override
+  String get virtHwFirmwareWarnTitle => '설치된 시스템의 펌웨어를 바꾸지 마세요';
+
+  @override
+  String get virtHwFirmwareWarnBody => 'UEFI와 BIOS를 서로 바꾸면 설치된 시스템이 부팅되지 않습니다.';
+
+  @override
+  String get virtHwFirmwareStopped => '펌웨어는 게스트가 중지된 상태에서만 바꿀 수 있습니다.';
+
+  @override
+  String get virtHwSecureBootVars =>
+      'Secure Boot를 켜거나 끄면 EFI 변수가 새로 만들어지며, 저장된 부팅 항목은 사라집니다.';
+
+  @override
+  String get virtHwEfiStorage => 'EFI 변수 저장 위치';
+
+  @override
+  String get virtHwTpmStorage => 'TPM 상태 저장 위치';
+
+  @override
+  String virtHwSwitchFirmwareAsk(String guest, String firmware) {
+    return '$guest을(를) $firmware(으)로 전환할까요?';
+  }
 }

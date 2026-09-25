@@ -1511,3 +1511,296 @@ fn hardware_change_scripts_under_sh_with_hostile_names() {
     assert_eq!(std::fs::read_to_string(d.join("stdin")).unwrap_or_default(), "");
     let _ = std::fs::remove_dir_all(&d);
 }
+
+// ---------------------------------------------------------------------------
+// Hardware, second part: disk bus and cache, NIC model and MAC, firmware,
+// display, host devices. Captured from libvirt 11.3 (QEMU 10.0) on a nested
+// Debian host with no IOMMU and no swtpm, on a throwaway q35 domain.
+// ---------------------------------------------------------------------------
+
+#[test]
+fn hardware_caps_as_captured() {
+    let hw = virt::parse_hardware(&fixture("script_hardware_caps_stopped.txt")).unwrap();
+    let caps = hw.caps.unwrap();
+    // q35: Secure Boot there; no swtpm on this host, so no TPM; no SPICE in
+    // this QEMU build.
+    assert!(caps.efi && caps.secure_boot && caps.hostdev);
+    assert!(!caps.tpm_emulator);
+    assert!(caps.graphics.contains(&"vnc".to_string()) && !caps.graphics.contains(&"spice".to_string()));
+    assert!(caps.video.contains(&"virtio".to_string()));
+    assert_eq!(caps.disk_buses, ["fdc", "scsi", "virtio", "usb", "sata"]);
+    let c = hw.config;
+    assert_eq!(c.machine.as_deref(), Some("pc-q35-10.0"));
+    assert!(!c.efi && !c.secure_boot);
+    assert_eq!(
+        c.graphics,
+        Some(virt::VirtHwGraphics { kind: "vnc".into(), listen: Some("127.0.0.1".into()), port: None })
+    );
+    assert_eq!(c.video.as_deref(), Some("virtio"));
+    assert_eq!(c.disks[0].cache, None);
+
+    // Running with Secure Boot, a cache mode changed in the definition only.
+    let hw = virt::parse_hardware(&fixture("script_hardware_caps_running.txt")).unwrap();
+    assert!(hw.config.efi && hw.config.secure_boot);
+    assert_eq!(hw.config.disks[0].cache.as_deref(), Some("none"));
+    assert_eq!(hw.live.unwrap().disks[0].cache.as_deref(), Some("writeback"));
+}
+
+#[test]
+fn host_devices_as_captured() {
+    let d = virt::parse_host_devices(&fixture("script_host_devices.txt")).unwrap();
+    assert!(!d.iommu, "no IOMMU in a nested guest");
+    assert!(d.usb.is_empty());
+    assert_eq!(d.pci.len(), 13);
+    let usb = d.pci.iter().find(|p| p.address == "0000:00:01.2").unwrap();
+    assert_eq!((usb.vendor.as_deref(), usb.product.as_deref()), (Some("8086"), Some("7020")));
+    assert_eq!(usb.iommu_group, None);
+}
+
+#[test]
+fn hardware_changes_second_part_as_captured() {
+    for name in [
+        "update_disk_bus",
+        "update_disk_cache",
+        "cache_running",
+        "nic_hardware",
+        "firmware_secure",
+        "firmware_plain",
+        "firmware_bios",
+        "firmware_efi",
+        "firmware_secure_move",
+        "display",
+        "add_pci",
+        "remove_pci",
+    ] {
+        let out = virt::parse_hardware_change(&fixture(&format!("script_hw_{name}.txt")));
+        assert_eq!(out, Ok(virt::VirtHwOutcome::default()), "{name}");
+    }
+}
+
+#[test]
+fn disk_and_nic_edits() {
+    let base = base_xml();
+    // Another bus: the name on it, and no controller address left behind.
+    let xml = virt::edit_disk_xml(&base, "vda", Some("sda"), Some("sata"), None).unwrap();
+    let d = hw_of(&xml).disks.into_iter().find(|d| d.target == "sda").unwrap();
+    assert_eq!(d.bus.as_deref(), Some("sata"));
+    let disk = &xml[xml.find("<target dev='sda'").unwrap()..];
+    assert!(!disk[..disk.find("</disk>").unwrap()].contains("<address"), "{xml}");
+    // A cache mode, and back to the default.
+    let xml = virt::edit_disk_xml(&base, "vda", None, None, Some("writeback")).unwrap();
+    assert_eq!(hw_of(&xml).disks[0].cache.as_deref(), Some("writeback"));
+    let xml = virt::edit_disk_xml(&xml, "vda", None, None, Some("default")).unwrap();
+    assert_eq!(hw_of(&xml).disks[0].cache, None);
+    assert!(virt::edit_disk_xml(&base, "vdz", None, None, Some("none")).is_err());
+
+    let mac = hw_of(&base).nics[0].mac.clone();
+    let xml = virt::edit_nic_hardware_xml(&base, &mac, Some("52:54:00:AA:BB:CC"), Some("e1000e")).unwrap();
+    let nic = &hw_of(&xml).nics[0];
+    assert_eq!((nic.mac.as_str(), nic.model.as_deref()), ("52:54:00:aa:bb:cc", Some("e1000e")));
+}
+
+#[test]
+fn firmware_edits() {
+    let base = base_xml();
+    let edit = virt::edit_firmware_xml(&base, true, true).unwrap();
+    let hw = hw_of(&edit.xml);
+    assert!(hw.efi && hw.secure_boot);
+    assert!(edit.xml.contains("<smm state='on'/>"), "{}", edit.xml);
+    assert_eq!(edit.drop_vars, None, "BIOS had no variables file");
+    let back = virt::edit_firmware_xml(&edit.xml, false, false).unwrap();
+    let hw = hw_of(&back.xml);
+    assert!(!hw.efi && !hw.secure_boot);
+    assert!(!back.xml.contains("<firmware>") && !back.xml.contains("firmware='efi'"), "{}", back.xml);
+
+    // A domain that has run has its variables file: one path, kept.
+    const VARS: &str = "/var/lib/libvirt/qemu/nvram/vm_VARS.fd";
+    let ran = virt::edit_firmware_xml(&base, true, false).unwrap().xml.replacen(
+        "<firmware>",
+        &format!("<nvram template='/t.fd'>{VARS}</nvram><firmware>"),
+        1,
+    );
+    // Secure Boot on, and off again: the same path, its file dropped each
+    // time so that libvirt makes it from the right template — no second
+    // file left behind.
+    let on = virt::edit_firmware_xml(&ran, true, true).unwrap();
+    assert!(on.xml.contains(&format!("<nvram>{VARS}</nvram>")), "{}", on.xml);
+    assert!(!on.xml.contains("-sb.fd") && !on.xml.contains("template="), "{}", on.xml);
+    assert_eq!(on.drop_vars.as_deref(), Some(VARS));
+    let off = virt::edit_firmware_xml(&on.xml, true, false).unwrap();
+    assert!(off.xml.contains(&format!("<nvram>{VARS}</nvram>")), "{}", off.xml);
+    assert_eq!(off.drop_vars.as_deref(), Some(VARS));
+    // The same setting keeps the file it has.
+    let same = virt::edit_firmware_xml(&on.xml, true, true).unwrap();
+    assert_eq!(same.drop_vars, None);
+    // Leaving UEFI: nothing names the file any more, so it goes.
+    let bios = virt::edit_firmware_xml(&ran, false, false).unwrap();
+    assert!(!bios.xml.contains("<nvram"), "{}", bios.xml);
+    assert_eq!(bios.drop_vars.as_deref(), Some(VARS));
+
+    // Only a file in libvirt's NVRAM directory is ever deleted, whatever
+    // the definition says.
+    for path in [
+        "/etc/passwd",
+        "/var/lib/libvirt/qemu/nvram/../../../../etc/x.fd",
+        "/var/lib/libvirt/images/disk.fd",
+        "relative/libvirt/qemu/nvram/x.fd",
+        "/var/lib/libvirt/qemu/nvram/x.fd\n/etc/y.fd",
+    ] {
+        assert!(!virt::is_libvirt_nvram(path), "{path:?}");
+        let odd = ran.replacen(VARS, path, 1);
+        if let Ok(edit) = virt::edit_firmware_xml(&odd, false, false) {
+            assert_eq!(edit.drop_vars, None, "{path:?}");
+        }
+    }
+    assert!(virt::is_libvirt_nvram(
+        "/home/u/.config/libvirt/qemu/nvram/vm_VARS.fd"
+    ));
+
+    // The change script deletes it after the definition, quoted.
+    let script = virt::hardware_change_script(
+        "vm",
+        false,
+        Some(&ran),
+        &virt::VirtHwChange::Firmware { efi: true, secure_boot: true },
+    )
+    .unwrap();
+    let define_at = script.find("define --file").unwrap();
+    let rm_at = script.find(&format!("rm -f -- '{VARS}'")).unwrap();
+    assert!(define_at < rm_at, "{script}");
+}
+
+#[cfg(unix)]
+#[test]
+fn firmware_change_deletes_the_dropped_variables_file() {
+    use virt::VirtHwChange as C;
+    let name = "it's \"odd\"; touch pwned $(id) `id`";
+    let nvram = std::env::temp_dir()
+        .join(format!("sbm_nv_{}", std::process::id()))
+        .join("libvirt/qemu/nvram");
+    std::fs::create_dir_all(&nvram).unwrap();
+    let vars = nvram.join(format!("{name}_VARS.fd"));
+    let vars_s = vars.display().to_string();
+    // As a domain that has run: UEFI without Secure Boot, and its file.
+    let base = virt::edit_firmware_xml(&base_xml(), true, false).unwrap().xml.replacen(
+        "<firmware>",
+        &format!("<nvram>{}</nvram><firmware>", vars_s.replace('&', "&amp;").replace('<', "&lt;")),
+        1,
+    );
+    let d = hardware_stub("nvram", &base);
+    let path = format!("{}:/usr/bin:/bin", d.display());
+    let run = || {
+        let script = virt::hardware_change_script(name, false, Some(&base), &C::Firmware {
+            efi: true,
+            secure_boot: true,
+        })
+        .unwrap();
+        virt::parse_hardware_change(&run_sh(&script, &path))
+    };
+
+    // A refused definition still names the file: it stays.
+    std::fs::write(&vars, "vars").unwrap();
+    std::fs::write(d.join("fail_define"), "").unwrap();
+    assert!(run().is_err());
+    assert!(vars.exists());
+    std::fs::remove_file(d.join("fail_define")).unwrap();
+
+    // Defined: gone, and nothing else with it.
+    std::fs::write(nvram.join("other_VARS.fd"), "other").unwrap();
+    assert_eq!(run(), Ok(Default::default()));
+    assert!(!vars.exists());
+    assert!(nvram.join("other_VARS.fd").exists());
+    assert!(!std::path::Path::new("pwned").exists());
+    let _ = std::fs::remove_dir_all(nvram.parent().unwrap().parent().unwrap().parent().unwrap());
+    let _ = std::fs::remove_dir_all(&d);
+}
+
+#[test]
+fn display_and_device_edits() {
+    let base = base_xml();
+    let with_pw = base.replacen("<graphics type='vnc'", "<graphics type='vnc' passwd='x&amp;y'", 1);
+    let xml = virt::edit_display_xml(&with_pw, None, Some("0.0.0.0"), Some("vga")).unwrap();
+    let hw = hw_of(&xml);
+    assert_eq!(hw.graphics.unwrap().listen.as_deref(), Some("0.0.0.0"));
+    assert_eq!(hw.video.as_deref(), Some("vga"));
+    // What the console had besides stays: its password among it.
+    assert!(xml.contains("passwd='x&amp;y'"), "{xml}");
+
+    let added = virt::VirtHwNewDevice::Pci { address: "0000:01:00.0".into() }.xml();
+    let with = base.replacen("</devices>", &format!("{added}</devices>"), 1);
+    assert_eq!(hw_of(&with).hostdevs[0].key, "pci:0000:01:00.0");
+    let (without, element) = virt::remove_device_xml(&with, "pci:0000:01:00.0").unwrap();
+    assert!(hw_of(&without).hostdevs.is_empty());
+    assert_eq!(element, added);
+    let usb = virt::VirtHwNewDevice::Usb { vendor: "0bda".into(), product: "b023".into() }.xml();
+    let with = base.replacen("</devices>", &format!("{usb}</devices>"), 1);
+    assert_eq!(hw_of(&with).hostdevs[0].key, "usb:0bda:b023");
+    assert!(virt::remove_device_xml(&base, "tpm").is_err());
+}
+
+#[test]
+fn second_part_changes_refuse_what_must_not_reach_a_shell() {
+    use virt::{VirtHwChange as C, VirtHwNewDevice as D};
+    let script = |c: &C| virt::hardware_change_script("vm", false, Some(&base_xml()), c);
+    let disk = |bus: Option<&str>, cache: Option<&str>| C::UpdateDisk {
+        target: "vda".into(),
+        new_target: bus.map(|_| "sda".into()),
+        bus: bus.map(str::to_string),
+        cache: cache.map(str::to_string),
+    };
+    assert!(script(&disk(Some("sata; rm"), None)).is_err());
+    assert!(script(&disk(None, Some("fast"))).is_err());
+    assert!(script(&disk(None, None)).is_err());
+    let nic = |mac: &str| C::UpdateNicHardware { mac: "52:54:00:b9:34:c3".into(), new_mac: Some(mac.into()), model: None };
+    assert!(script(&nic("01:00:00:00:00:01")).is_err(), "multicast");
+    assert!(script(&nic("00:00:00:00:00:00")).is_err());
+    assert!(script(&nic("52:54:00:00:00:01'")).is_err());
+    let display = |l: &str| C::Display { graphics: None, listen: Some(l.into()), video: None };
+    assert!(script(&display("0.0.0.0' autoport='no")).is_err());
+    assert!(script(&display("::1")).is_ok());
+    for bad in [
+        D::Pci { address: "0000:01:00.0'/>".into() },
+        D::Pci { address: "0000:01:20.0".into() },
+        D::Usb { vendor: "0bda".into(), product: "b02".into() },
+        D::Tpm { model: "tpm-crb' x='".into() },
+    ] {
+        assert!(script(&C::AddDevice { device: bad.clone() }).is_err(), "{bad:?}");
+    }
+    assert!(script(&C::RemoveDevice { key: "pci:0000:01:00.0; x".into() }).is_err());
+}
+
+#[cfg(unix)]
+#[test]
+fn second_part_scripts_under_sh_with_a_hostile_name() {
+    use virt::VirtHwChange as C;
+    let name = "it's \"odd\"; touch pwned $(id) `id`";
+    let base = base_xml();
+    let d = hardware_stub("hostile2", &base);
+    let path = format!("{}:/usr/bin:/bin", d.display());
+    let run = |running: bool, c: &C| {
+        let script = virt::hardware_change_script(name, running, Some(&base), c).unwrap();
+        virt::parse_hardware_change(&run_sh(&script, &path))
+    };
+    let log = || std::fs::read_to_string(d.join("log")).unwrap_or_default();
+
+    let change = C::UpdateDisk { target: "vda".into(), new_target: None, bus: None, cache: Some("none".into()) };
+    assert_eq!(run(true, &change), Ok(Default::default()));
+    assert_eq!(
+        std::fs::read_to_string(d.join("given_define.xml")).unwrap(),
+        virt::edit_disk_xml(&base, "vda", None, None, Some("none")).unwrap()
+    );
+    assert!(log().contains(&format!("dumpxml\n--inactive\n--domain\n{name}\n")), "{}", log());
+
+    // A USB device goes to the running guest too; a PCI one does not.
+    let usb = C::AddDevice { device: virt::VirtHwNewDevice::Usb { vendor: "0bda".into(), product: "b023".into() } };
+    let _ = std::fs::remove_file(d.join("log"));
+    assert_eq!(run(true, &usb), Ok(Default::default()));
+    assert!(log().contains(&format!("attach-device\n--domain\n{name}\n")), "{}", log());
+    assert_eq!(log().matches("attach-device").count(), 2, "{}", log());
+    let pci = C::AddDevice { device: virt::VirtHwNewDevice::Pci { address: "0000:01:00.0".into() } };
+    let _ = std::fs::remove_file(d.join("log"));
+    assert_eq!(run(true, &pci), Ok(Default::default()));
+    assert_eq!(log().matches("attach-device").count(), 1, "{}", log());
+    assert!(!std::path::Path::new("pwned").exists() && !d.join("pwned").exists());
+    let _ = std::fs::remove_dir_all(&d);
+}

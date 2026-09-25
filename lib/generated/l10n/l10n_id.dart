@@ -3754,7 +3754,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get pveTokenTipHardware =>
-      'Mengedit perangkat keras memerlukan VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network, dan VM.Config.Options; disk dan antarmuka baru juga memerlukan Datastore.AllocateSpace dan SDN.Use.';
+      'Mengedit perangkat keras memerlukan VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network, dan VM.Config.Options; disk dan antarmuka baru juga memerlukan Datastore.AllocateSpace dan SDN.Use. Kartu grafis serta perangkat USB dan PCI juga membutuhkan VM.Config.HWType; perangkat lewat pemetaan sumber daya membutuhkan Mapping.Use padanya, dan Mapping.Audit untuk mendaftar pemetaan.';
 
   @override
   String get virtErrConflict => 'Diubah di tempat lain';
@@ -4076,4 +4076,142 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get virtHwVolumeKept =>
       'Dilepas, tetapi tamu yang berjalan masih memakai disk itu, jadi volumenya disimpan. Disk akan dilepas saat mulai berikutnya.';
+
+  @override
+  String get virtHwBus => 'Bus';
+
+  @override
+  String get virtHwCache => 'Cache';
+
+  @override
+  String get virtHwBusStopped => 'Bus hanya bisa diganti saat tamu berhenti.';
+
+  @override
+  String get virtHwMacGenerate => 'Buat';
+
+  @override
+  String get virtHwIssueMac =>
+      'Harus alamat MAC unicast, misalnya 52:54:00:12:34:56';
+
+  @override
+  String get virtHwIssueStopFirst => 'Hentikan tamu dulu';
+
+  @override
+  String get virtHwIssueStorageMissing => 'Pilih penyimpanan dulu';
+
+  @override
+  String get virtHwIssueDevice => 'Pilih perangkat dulu';
+
+  @override
+  String get virtHwDevices => 'CD-ROM dan passthrough';
+
+  @override
+  String get virtHwDevicesEmpty => 'Passthrough USB dan PCI, TPM';
+
+  @override
+  String get virtHwAddDevice => 'Tambah perangkat';
+
+  @override
+  String get virtHwNewDevice => 'Perangkat baru';
+
+  @override
+  String get virtHwUsbHotplug => 'Passthrough USB mendukung hot-plug.';
+
+  @override
+  String get virtHwPci => 'Passthrough PCI';
+
+  @override
+  String get virtHwIommuOffTitle => 'Host tidak punya IOMMU';
+
+  @override
+  String get virtHwIommuOffBody =>
+      'Aktifkan dulu VT-d atau AMD-Vi di BIOS host dan IOMMU di kernelnya. Sampai saat itu, tamu yang diberi perangkat PCI tidak akan menyala.';
+
+  @override
+  String get virtHwPciTitle => 'Butuh IOMMU di host';
+
+  @override
+  String get virtHwPciBody =>
+      'Setelah diteruskan, host tidak bisa memakai perangkat itu dan tamu tidak bisa dimigrasi saat berjalan.';
+
+  @override
+  String virtHwIommuGroup(int group) {
+    return 'Grup IOMMU $group';
+  }
+
+  @override
+  String virtHwIommuShared(int count) {
+    return '$count perangkat berbagi grup IOMMU-nya dan diteruskan bersama';
+  }
+
+  @override
+  String get virtHwNoHostDevices =>
+      'Tidak ada perangkat untuk diteruskan di host ini';
+
+  @override
+  String get virtHwMappingsOnly =>
+      'Di sini hanya pemetaan sumber daya yang bisa dipakai: PVE hanya mengizinkan root@pam yang masuk dengan kata sandinya meneruskan perangkat mentah. Buat pemetaan di Datacenter → Resource Mappings.';
+
+  @override
+  String get virtHwTpmNote => 'Windows 11 membutuhkan TPM 2.0.';
+
+  @override
+  String get virtHwDisplay => 'Tampilan';
+
+  @override
+  String get virtHwProtocol => 'Protokol';
+
+  @override
+  String get virtHwListen => 'Dengar';
+
+  @override
+  String get virtHwGpu => 'Kartu grafis';
+
+  @override
+  String get virtHwListenAllTitle => 'Konsol terbuka ke jaringan';
+
+  @override
+  String get virtHwListenAllBody =>
+      'Mendengar di semua alamat membuat siapa pun yang menjangkau host bisa membuka konsol. Tetap di 127.0.0.1 dan sambungkan lewat terowongan SSH.';
+
+  @override
+  String get virtHwFirmware => 'Firmware';
+
+  @override
+  String get virtHwUefiSub =>
+      'OVMF · mendukung Secure Boot, dibutuhkan Windows 11';
+
+  @override
+  String get virtHwBiosSub => 'SeaBIOS · sistem lama dan disk MBR';
+
+  @override
+  String get virtHwSecureBootNote =>
+      'Hanya mem-boot kernel dan boot loader bertanda tangan';
+
+  @override
+  String get virtHwFirmwareWarnTitle =>
+      'Jangan ganti firmware sistem yang sudah terpasang';
+
+  @override
+  String get virtHwFirmwareWarnBody =>
+      'Berpindah antara UEFI dan BIOS membuat sistem terpasang tidak bisa boot.';
+
+  @override
+  String get virtHwFirmwareStopped =>
+      'Firmware hanya bisa diganti saat tamu berhenti.';
+
+  @override
+  String get virtHwSecureBootVars =>
+      'Menyalakan atau mematikan Secure Boot membuat ulang variabel EFI; entri boot yang tersimpan di dalamnya akan hilang.';
+
+  @override
+  String get virtHwEfiStorage => 'Tempat variabel EFI';
+
+  @override
+  String get virtHwTpmStorage => 'Tempat status TPM';
+
+  @override
+  String virtHwSwitchFirmwareAsk(String guest, String firmware) {
+    return 'Ganti $guest ke $firmware?';
+  }
 }

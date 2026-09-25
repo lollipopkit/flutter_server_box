@@ -715,6 +715,7 @@ class LibvirtBackend implements VirtBackend {
               bus: d.bus,
               format: d.format,
               readonly: d.readonly,
+              cache: d.cache,
             ),
       ],
       nics: [
@@ -730,6 +731,30 @@ class LibvirtBackend implements VirtBackend {
       ],
       boot: c.boot,
       autostart: info.autostart,
+      firmware: VirtHwFirmware(uefi: c.efi, secureBoot: c.secureBoot),
+      display: VirtHwDisplay(
+        protocol: c.graphics?.kind,
+        listen: c.graphics?.listen,
+        gpu: c.video,
+        port: c.graphics?.port,
+      ),
+      devices: [
+        if (c.tpm case final t?)
+          VirtHwDevice(
+            key: 'tpm',
+            kind: VirtHwDeviceKind.tpm,
+            detail: [t.model, t.version].nonNulls.join(' · '),
+          ),
+        for (final h in c.hostdevs)
+          VirtHwDevice(
+            key: h.key,
+            kind: h.kind == 'pci' ? VirtHwDeviceKind.pci : VirtHwDeviceKind.usb,
+            detail:
+                h.address ??
+                (h.vendor != null ? '${h.vendor}:${h.product}' : h.key.substring(4)),
+          ),
+      ],
+      support: supportOf(info.caps),
       name: name,
       description: info.description,
       renameRunning: false,
@@ -740,6 +765,30 @@ class LibvirtBackend implements VirtBackend {
         hostCpus: info.hostCpus,
         hostMemoryBytes: hostMem == null ? null : hostMem * 1024,
       ),
+    );
+  }
+
+  /// What the host's `domcapabilities` allows this domain, as the view's
+  /// choices. Without them (an older libvirt, a refusal), the common ground
+  /// every QEMU has.
+  @visibleForTesting
+  static VirtHwSupport supportOf(LibvirtHwCaps? caps) {
+    List<String> pick(List<String>? have, List<String> wanted) => have == null
+        ? wanted
+        : [for (final w in wanted) if (have.contains(w)) w];
+    return VirtHwSupport(
+      buses: pick(caps?.diskBuses, const ['virtio', 'scsi', 'sata', 'ide']),
+      caches: const ['default', 'none', 'writeback', 'writethrough', 'directsync', 'unsafe'],
+      nicModels: const ['virtio', 'e1000e', 'e1000', 'rtl8139'],
+      mac: true,
+      protocols: pick(caps?.graphics, const ['vnc', 'spice']),
+      listen: true,
+      gpus: pick(caps?.video, const ['virtio', 'qxl', 'vga', 'cirrus', 'bochs', 'none']),
+      uefi: caps?.efi ?? false,
+      secureBoot: caps?.secureBoot ?? false,
+      tpm: caps?.tpmEmulator ?? false,
+      usb: caps?.hostdev ?? false,
+      pci: caps?.hostdev ?? false,
     );
   }
 
@@ -772,7 +821,7 @@ class LibvirtBackend implements VirtBackend {
 
     String mem(int kib) => '${kib ~/ 1024} MiB';
     String nic(LibvirtHwNic n) =>
-        [n.kind, n.source, if (!n.linkUp) 'link down'].nonNulls.join(' ');
+        [n.kind, n.source, n.model, if (!n.linkUp) 'link down'].nonNulls.join(' ');
     final out = <VirtPendingField>[];
     if (cpu(config.cpu) != cpu(live.cpu)) {
       out.add(VirtPendingField(key: 'cpu', current: cpu(live.cpu), pending: cpu(config.cpu)));
@@ -814,6 +863,36 @@ class LibvirtBackend implements VirtBackend {
     for (final l in live.nics) {
       if (!configNics.containsKey(l.mac)) {
         out.add(VirtPendingField(key: l.mac, current: nic(l), delete: true));
+      }
+    }
+    String fw(LibvirtHwConfig c) =>
+        c.efi ? (c.secureBoot ? 'UEFI · Secure Boot' : 'UEFI') : 'BIOS';
+    if (fw(config) != fw(live)) {
+      out.add(VirtPendingField(key: 'firmware', current: fw(live), pending: fw(config)));
+    }
+    String display(LibvirtHwConfig c) => [
+      c.graphics?.kind,
+      c.graphics?.listen,
+      c.video,
+    ].nonNulls.join(' · ');
+    if (display(config) != display(live)) {
+      out.add(
+        VirtPendingField(key: 'display', current: display(live), pending: display(config)),
+      );
+    }
+    final liveDevs = {for (final h in live.hostdevs) h.key, if (live.tpm != null) 'tpm'};
+    final configDevs = {for (final h in config.hostdevs) h.key, if (config.tpm != null) 'tpm'};
+    for (final k in configDevs.difference(liveDevs)) {
+      out.add(VirtPendingField(key: k, pending: k));
+    }
+    for (final k in liveDevs.difference(configDevs)) {
+      out.add(VirtPendingField(key: k, current: k, delete: true));
+    }
+    String diskHw(LibvirtHwDisk d) => '${d.bus ?? ''} ${d.cache ?? 'default'}';
+    for (final d in config.disks) {
+      final l = liveDisks[d.target];
+      if (l != null && l.source == d.source && diskHw(l) != diskHw(d)) {
+        out.add(VirtPendingField(key: d.target, current: diskHw(l), pending: diskHw(d)));
       }
     }
     if (config.boot.join(',') != live.boot.join(',')) {
@@ -916,12 +995,7 @@ class LibvirtBackend implements VirtBackend {
                 .firstOrNull
                 ?.bus ??
             'virtio';
-        final prefix = switch (bus) {
-          'virtio' => 'vd',
-          'ide' => 'hd',
-          _ => 'sd',
-        };
-        final target = _freeTarget(prefix, taken);
+        final target = _freeTarget(_busPrefix(bus), taken);
         final format = virtLibvirtDiskFormat(storage.type);
         return {
           'op': 'add_disk',
@@ -1002,9 +1076,97 @@ class LibvirtBackend implements VirtBackend {
         return {'op': 'description', 'text': text};
       case VirtHwSetName(:final name):
         return {'op': 'rename', 'name': name};
+      case VirtHwUpdateDisk(:final key, :final bus, :final cache):
+        String? to;
+        if (bus != null && bus != diskIn(config, key)?.bus) {
+          final taken = {
+            for (final d in [...config.disks, ...?live?.disks]) d.target,
+          };
+          to = _freeTarget(_busPrefix(bus), taken);
+        }
+        return {
+          'op': 'update_disk',
+          'target': key,
+          'new_target': to,
+          'bus': to == null ? null : bus,
+          'cache': cache,
+        };
+      case VirtHwSetNicHardware(:final key, :final model, :final mac):
+        return {
+          'op': 'update_nic_hardware',
+          'mac': key,
+          'new_mac': mac?.toLowerCase(),
+          'model': model,
+        };
+      case VirtHwSetFirmware(:final uefi, :final secureBoot):
+        return {'op': 'firmware', 'efi': uefi, 'secure_boot': uefi && secureBoot};
+      case VirtHwSetDisplay(:final protocol, :final listen, :final gpu):
+        return {'op': 'display', 'graphics': protocol, 'listen': listen, 'video': gpu};
+      case VirtHwAddDevice(:final kind, :final host):
+        return {
+          'op': 'add_device',
+          'device': switch (kind) {
+            VirtHwDeviceKind.tpm => {'kind': 'tpm', 'model': 'tpm-crb'},
+            VirtHwDeviceKind.usb => {
+              'kind': 'usb',
+              'vendor': host!.id.split(':').first,
+              'product': host.id.split(':').last,
+            },
+            VirtHwDeviceKind.pci => {'kind': 'pci', 'address': host!.id},
+          },
+        };
+      case VirtHwRemoveDevice(:final key):
+        return {'op': 'remove_device', 'key': key};
       case VirtHwSetProtection() || VirtHwRevert():
         throw const VirtErr(type: VirtErrType.unsupported);
     }
+  }
+
+  /// Where a bus's disks are named: `vd` for virtio, `hd` for IDE, `sd`
+  /// for the rest.
+  static String _busPrefix(String bus) => switch (bus) {
+    'virtio' => 'vd',
+    'ide' => 'hd',
+    _ => 'sd',
+  };
+
+  /// The host's USB and PCI devices (`nodedev-list`), for giving one to a
+  /// guest. See `sbm_parser::virt::host_devices_script`.
+  @override
+  Future<VirtHostDevices> hostDevices(VirtGuest guest) async {
+    final d = LibvirtHostDevices.fromJson(
+      _decode(
+        await _run(ffi.virtHostDevicesScript(), ffi.parseVirtHostDevicesJson),
+      ),
+    );
+    String name(String? vendor, String? product, String fallback) {
+      final n = [vendor, product].nonNulls.join(' ').trim();
+      return n.isEmpty ? fallback : n;
+    }
+
+    return VirtHostDevices(
+      iommu: d.iommu,
+      usb: [
+        for (final u in d.usb)
+          // Root hubs are the host's own, never anyone's to pass through.
+          if (u.vendor != '1d6b')
+            VirtHostDevice(
+              id: '${u.vendor}:${u.product}',
+              label: name(u.vendorName, u.productName, '${u.vendor}:${u.product}'),
+              detail: '${u.vendor}:${u.product}',
+            ),
+      ],
+      pci: [
+        for (final p in d.pci)
+          VirtHostDevice(
+            id: p.address,
+            label: name(p.vendorName, p.productName, p.address),
+            detail: p.address,
+            iommuGroup: p.iommuGroup,
+            groupSize: p.groupSize,
+          ),
+      ],
+    );
   }
 
   /// `vda`, `vdb`, … `vdz`, then `vdaa`, as libvirt names disks.

@@ -3575,7 +3575,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get pveTokenTipHardware =>
-      'ハードウェアの編集には VM.Config.CPU、VM.Config.Memory、VM.Config.Disk、VM.Config.CDROM、VM.Config.Network、VM.Config.Options が必要です。ディスクやインターフェースの追加には Datastore.AllocateSpace と SDN.Use も必要です。';
+      'ハードウェアの編集には VM.Config.CPU、VM.Config.Memory、VM.Config.Disk、VM.Config.CDROM、VM.Config.Network、VM.Config.Options が必要です。ディスクやインターフェースの追加には Datastore.AllocateSpace と SDN.Use も必要です。ビデオカードと USB・PCI デバイスには VM.Config.HWType も必要です。リソースマッピング経由のデバイスにはそのマッピングの Mapping.Use、マッピングの一覧には Mapping.Audit が必要です。';
 
   @override
   String get virtErrConflict => '他の場所で変更済み';
@@ -3887,4 +3887,135 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get virtHwVolumeKept =>
       '削除しましたが、実行中のゲストがまだディスクを使用しているため、ボリュームは残しました。次回起動時に切り離されます。';
+
+  @override
+  String get virtHwBus => 'バス';
+
+  @override
+  String get virtHwCache => 'キャッシュ';
+
+  @override
+  String get virtHwBusStopped => 'バスはゲスト停止中のみ変更できます。';
+
+  @override
+  String get virtHwMacGenerate => '生成';
+
+  @override
+  String get virtHwIssueMac => 'ユニキャスト MAC アドレスを入力してください（例: 52:54:00:12:34:56）';
+
+  @override
+  String get virtHwIssueStopFirst => '先にゲストを停止してください';
+
+  @override
+  String get virtHwIssueStorageMissing => '先にストレージを選んでください';
+
+  @override
+  String get virtHwIssueDevice => '先にデバイスを選んでください';
+
+  @override
+  String get virtHwDevices => 'CD-ROM とパススルー';
+
+  @override
+  String get virtHwDevicesEmpty => 'USB と PCI のパススルー、TPM';
+
+  @override
+  String get virtHwAddDevice => 'デバイスを追加';
+
+  @override
+  String get virtHwNewDevice => '新しいデバイス';
+
+  @override
+  String get virtHwUsbHotplug => 'USB パススルーはホットプラグに対応しています。';
+
+  @override
+  String get virtHwPci => 'PCI パススルー';
+
+  @override
+  String get virtHwIommuOffTitle => 'ホストに IOMMU がありません';
+
+  @override
+  String get virtHwIommuOffBody =>
+      '先にホストの BIOS で VT-d または AMD-Vi を、カーネルで IOMMU を有効にしてください。それまで PCI デバイスを付けたゲストは起動しません。';
+
+  @override
+  String get virtHwPciTitle => 'ホストで IOMMU が必要です';
+
+  @override
+  String get virtHwPciBody => 'パススルーするとホストはそのデバイスを使えず、ゲストはライブマイグレーションできません。';
+
+  @override
+  String virtHwIommuGroup(int group) {
+    return 'IOMMU グループ $group';
+  }
+
+  @override
+  String virtHwIommuShared(int count) {
+    return '同じ IOMMU グループの $count 台のデバイスが一緒にパススルーされます';
+  }
+
+  @override
+  String get virtHwNoHostDevices => 'このホストにパススルーできるデバイスはありません';
+
+  @override
+  String get virtHwMappingsOnly =>
+      'ここではリソースマッピングのみ使えます: PVE は生のデバイスのパススルーを、パスワードでログインした root@pam にのみ許可します。データセンター → リソースマッピング でマッピングを作成してください。';
+
+  @override
+  String get virtHwTpmNote => 'Windows 11 には TPM 2.0 が必要です。';
+
+  @override
+  String get virtHwDisplay => 'ディスプレイ';
+
+  @override
+  String get virtHwProtocol => 'プロトコル';
+
+  @override
+  String get virtHwListen => '待ち受け';
+
+  @override
+  String get virtHwGpu => 'ビデオカード';
+
+  @override
+  String get virtHwListenAllTitle => 'コンソールがネットワークに公開されています';
+
+  @override
+  String get virtHwListenAllBody =>
+      'すべてのアドレスで待ち受けると、ホストに届く誰でもコンソールに接続できます。127.0.0.1 のまま SSH トンネル経由で接続してください。';
+
+  @override
+  String get virtHwFirmware => 'ファームウェア';
+
+  @override
+  String get virtHwUefiSub => 'OVMF · Secure Boot 対応、Windows 11 に必要';
+
+  @override
+  String get virtHwBiosSub => 'SeaBIOS · 古いシステムと MBR ディスク';
+
+  @override
+  String get virtHwSecureBootNote => '署名済みのカーネルとブートローダーのみ起動します';
+
+  @override
+  String get virtHwFirmwareWarnTitle => 'インストール済みシステムのファームウェアは切り替えないでください';
+
+  @override
+  String get virtHwFirmwareWarnBody =>
+      'UEFI と BIOS を切り替えると、インストール済みのシステムが起動しなくなります。';
+
+  @override
+  String get virtHwFirmwareStopped => 'ファームウェアはゲスト停止中のみ変更できます。';
+
+  @override
+  String get virtHwSecureBootVars =>
+      'Secure Boot のオン/オフで EFI 変数が作り直され、保存されていたブートエントリは失われます。';
+
+  @override
+  String get virtHwEfiStorage => 'EFI 変数の保存先';
+
+  @override
+  String get virtHwTpmStorage => 'TPM 状態の保存先';
+
+  @override
+  String virtHwSwitchFirmwareAsk(String guest, String firmware) {
+    return '$guest を $firmware に切り替えますか？';
+  }
 }

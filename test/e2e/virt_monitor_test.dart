@@ -133,8 +133,10 @@ Future<void> main() async {
   if (libvirt != null) _libvirtCreate(libvirt);
   if (libvirt != null) _libvirtVncPassword(libvirt);
   if (libvirt != null) _libvirtHardware(libvirt);
+  if (libvirt != null) _libvirtHardwareDevices(libvirt);
   if (pve != null) _pveCreate(pve);
   if (pve != null) _pveHardware(pve);
+  if (pve != null) _pveHardwareDevices(pve);
   if (libvirt != null) {
     _libvirt(libvirt);
   } else {
@@ -1345,6 +1347,289 @@ void _pveHardware(_Agent agent) {
         );
       }
     });
+  });
+}
+
+/// Disk bus and cache, NIC model and MAC, display, firmware and host
+/// devices on a temporary domain.
+void _libvirtHardwareDevices(_Agent agent) {
+  final sudoPassword = e2eEnv('SBM_E2E_MONITOR_SUDO_PASSWORD');
+
+  group('hardware devices: libvirt over the monitor agent', () {
+    late _World w;
+    final name = _e2eName('hwd');
+    late VirtGuest g;
+
+    Future<VirtHardware> hw() => w.host.hardware(g.id);
+
+    setUpAll(() async {
+      w = _World(agent.spi('e2e-monitor-libvirt-hwd'));
+      await w.host.firstLoad;
+      if (w.state.error?.type == VirtErrType.sudoPasswordRequired &&
+          sudoPassword != null) {
+        await w.host.provideSudoPassword(sudoPassword);
+      }
+      expect(w.state.error, isNull, reason: '${w.state.error}');
+      final pool = virtDiskStorages(
+        await w.host.storagePools(),
+        host: VirtHostKind.libvirt,
+        kind: VirtGuestKind.qemu,
+      ).first;
+      final net = virtCreateNetworks(
+        await w.host.networks(),
+        host: VirtHostKind.libvirt,
+      ).firstWhere((n) => n.name == 'default');
+      final created = await w.host.create(
+        VirtCreateSpec(
+          kind: VirtGuestKind.qemu,
+          name: name,
+          cores: 1,
+          memoryMiB: 256,
+          storage: pool,
+          diskGiB: 1,
+          network: net,
+        ),
+      );
+      g = await w.settle(
+        (x) => x.id == created.id,
+        name,
+        (x) => x.state == VirtGuestState.stopped,
+      );
+    });
+    tearDownAll(() async {
+      for (final x in w.state.data?.guests.where((x) => x.name == name) ?? const <VirtGuest>[]) {
+        try {
+          if (x.state != VirtGuestState.stopped) {
+            await w.host.power(x.id, VirtPowerAction.forceStop);
+            await w.host.refresh();
+          }
+          await w.host.delete(x.id);
+        } catch (_) {}
+      }
+      await w.dispose();
+    });
+
+    test('what the host offers, from its domcapabilities', () async {
+      final s = (await hw()).support;
+      expect(s.buses, contains('sata'));
+      expect(s.gpus, contains('virtio'));
+      expect(s.protocols, contains('vnc'));
+      // ignore: avoid_print
+      print('libvirt offers uefi=${s.uefi} secureBoot=${s.secureBoot} tpm=${s.tpm} gpus=${s.gpus}');
+    });
+
+    test('a disk to another bus, and a cache mode', () async {
+      var h = await hw();
+      final disk = h.disks.firstWhere((d) => d.kind == VirtHwDiskKind.disk);
+      await w.host.changeHardware(g.id, h, VirtHwUpdateDisk(key: disk.key, bus: 'sata'));
+      h = await hw();
+      final moved = h.disks.firstWhere((d) => d.kind == VirtHwDiskKind.disk);
+      expect((moved.key.startsWith('sd'), moved.bus), (true, 'sata'));
+      // The boot order follows the disk: it is still what the guest boots.
+      expect(h.boot, contains(moved.key));
+      await w.host.changeHardware(g.id, h, VirtHwUpdateDisk(key: moved.key, cache: 'writeback'));
+      h = await hw();
+      expect(h.disk(moved.key)!.cache, 'writeback');
+    });
+
+    test('a NIC\'s model and MAC', () async {
+      var h = await hw();
+      final nic = h.nics.first;
+      await w.host.changeHardware(
+        g.id,
+        h,
+        VirtHwSetNicHardware(key: nic.key, model: 'e1000e', mac: '52:54:00:5b:0e:02'),
+      );
+      h = await hw();
+      expect((h.nics.first.mac, h.nics.first.model), ('52:54:00:5b:0e:02', 'e1000e'));
+    });
+
+    test('the display', () async {
+      var h = await hw();
+      await w.host.changeHardware(g.id, h, const VirtHwSetDisplay(listen: '0.0.0.0', gpu: 'vga'));
+      h = await hw();
+      expect((h.display!.listen, h.display!.gpu), ('0.0.0.0', 'vga'));
+      await w.host.changeHardware(g.id, h, const VirtHwSetDisplay(listen: '127.0.0.1'));
+      expect((await hw()).display!.listen, '127.0.0.1');
+    });
+
+    test('UEFI with Secure Boot: started on it, then back to BIOS', () async {
+      var h = await hw();
+      if (!h.support.secureBoot) {
+        markTestSkipped('no Secure Boot firmware for this machine type here');
+        return;
+      }
+      await w.host.changeHardware(g.id, h, const VirtHwSetFirmware(uefi: true, secureBoot: true));
+      h = await hw();
+      expect(h.firmware, const VirtHwFirmware(uefi: true, secureBoot: true));
+      await w.host.power(g.id, VirtPowerAction.start);
+      g = await w.settle((x) => x.id == g.id, name, (x) => x.state == VirtGuestState.running);
+      h = await hw();
+      expect((h.running, h.firmware!.secureBoot), (true, true));
+      // Running: the firmware is not changed under it.
+      expect(virtHwIssue(h, const VirtHwSetFirmware(uefi: false)), VirtHwIssue.stopFirst);
+      await w.host.power(g.id, VirtPowerAction.forceStop);
+      g = await w.settle((x) => x.id == g.id, name, (x) => x.state == VirtGuestState.stopped);
+      await w.host.changeHardware(g.id, await hw(), const VirtHwSetFirmware(uefi: false));
+      expect((await hw()).firmware, const VirtHwFirmware(uefi: false));
+    });
+
+    test('host devices, and a PCI device on a host without an IOMMU', () async {
+      final devs = await w.host.hostDevices(g.id);
+      expect(devs.pci, isNotEmpty);
+      if (devs.iommu) {
+        markTestSkipped('this host has an IOMMU: the refusal is not what it gives');
+        return;
+      }
+      final pci = devs.pci.first;
+      var h = await hw();
+      await w.host.changeHardware(g.id, h, VirtHwAddDevice(kind: VirtHwDeviceKind.pci, host: pci));
+      h = await hw();
+      final key = 'pci:${pci.id}';
+      expect(h.device(key)?.kind, VirtHwDeviceKind.pci);
+      // The definition takes it; the host will not start it, and says why.
+      final e = await _virtErr(w.host.power(g.id, VirtPowerAction.start));
+      expect(e.message, contains('PCI'));
+      await w.host.refresh();
+      await w.host.changeHardware(g.id, await hw(), VirtHwRemoveDevice(key: key));
+      expect((await hw()).device(key), isNull);
+    });
+  });
+}
+
+/// Disk bus and cache, NIC model and MAC, card, firmware and TPM on a
+/// temporary VM, and host devices as a token sees them. Real passthrough is
+/// `virt_real_test.dart`'s: making a resource mapping needs root on the node.
+void _pveHardwareDevices(_Agent agent) {
+  final tokenId = e2eEnv('SBM_E2E_PVE_TOKEN_ID');
+  final tokenSecret = e2eEnv('SBM_E2E_PVE_TOKEN_SECRET');
+  if (tokenId == null || tokenSecret == null) return;
+
+  group('hardware devices: PVE over the monitor agent relay', () {
+    late _World w;
+    late VirtStoragePool storage;
+    late VirtGuest g;
+    final name = _e2eName('hwd');
+
+    Future<VirtHardware> hw() => w.host.hardware(g.id);
+
+    Future<void> stop() async {
+      await w.host.refresh();
+      if (w.state.guest(g.id)?.state != VirtGuestState.stopped) {
+        await w.host.power(g.id, VirtPowerAction.forceStop);
+      }
+      g = await w.settle((x) => x.id == g.id, name, (x) => x.state == VirtGuestState.stopped);
+    }
+
+    setUpAll(() async {
+      w = _World(agent.spi('e2e-monitor-pve-hwd'));
+      Stores.pve.put(
+        w.id,
+        PveConfig(
+          addr: 'https://localhost:8006',
+          auth: PveAuth.token,
+          tokenId: tokenId,
+          tokenSecret: tokenSecret,
+        ),
+      );
+      await w.host.firstLoad;
+      final cert = w.state.error?.cert;
+      if (cert != null) await w.host.confirmCert(cert.fingerprint);
+      expect(w.state.error, isNull, reason: '${w.state.error}');
+      final node = w.state.data!.host.nodes.first.name;
+      storage = virtDiskStorages(
+        await w.host.storagePools(),
+        host: VirtHostKind.pve,
+        kind: VirtGuestKind.qemu,
+        node: node,
+      ).first;
+      final bridge = virtCreateNetworks(
+        await w.host.networks(),
+        host: VirtHostKind.pve,
+        node: node,
+      ).first;
+      final created = await w.host.create(
+        VirtCreateSpec(
+          kind: VirtGuestKind.qemu,
+          name: name,
+          node: node,
+          vmid: await w.host.nextVmid(),
+          cores: 1,
+          memoryMiB: 256,
+          storage: storage,
+          diskGiB: 1,
+          network: bridge,
+        ),
+      );
+      g = await w.settle((x) => x.id == created.id, name, (x) => x.state == VirtGuestState.stopped);
+    });
+    tearDownAll(() async {
+      try {
+        await stop();
+        await w.host.delete(g.id);
+      } catch (_) {}
+      await w.dispose();
+    });
+
+    test('a disk to another bus, the boot order with it, and a cache mode', () async {
+      var h = await hw();
+      final disk = h.disks.firstWhere((d) => d.kind == VirtHwDiskKind.disk);
+      await w.host.changeHardware(g.id, h, VirtHwUpdateDisk(key: disk.key, bus: 'virtio'));
+      h = await hw();
+      final moved = h.disks.firstWhere((d) => d.kind == VirtHwDiskKind.disk);
+      expect(moved.key, startsWith('virtio'));
+      expect(h.boot, contains(moved.key));
+      await w.host.changeHardware(g.id, h, VirtHwUpdateDisk(key: moved.key, cache: 'writeback'));
+      expect((await hw()).disk(moved.key)!.cache, 'writeback');
+    });
+
+    test('a NIC\'s model and MAC, and the card', () async {
+      var h = await hw();
+      await w.host.changeHardware(
+        g.id,
+        h,
+        VirtHwSetNicHardware(key: h.nics.first.key, model: 'e1000e', mac: 'bc:24:11:5b:0e:03'),
+      );
+      h = await hw();
+      expect((h.nics.first.model, h.nics.first.mac?.toLowerCase()), ('e1000e', 'bc:24:11:5b:0e:03'));
+      await w.host.changeHardware(g.id, h, const VirtHwSetDisplay(gpu: 'virtio'));
+      expect((await hw()).display!.gpu, 'virtio');
+    });
+
+    test('UEFI, Secure Boot on and off, and a TPM', () async {
+      var h = await hw();
+      await w.host.changeHardware(
+        g.id,
+        h,
+        VirtHwSetFirmware(uefi: true, secureBoot: true, storage: storage.name),
+      );
+      h = await hw();
+      expect(h.firmware!.uefi, isTrue);
+      expect(h.firmware!.secureBoot, isTrue);
+      await w.host.changeHardware(g.id, h, const VirtHwSetFirmware(uefi: true));
+      h = await hw();
+      expect((h.firmware!.uefi, h.firmware!.secureBoot), (true, false));
+      await w.host.changeHardware(
+        g.id,
+        h,
+        VirtHwAddDevice(kind: VirtHwDeviceKind.tpm, storage: storage.name),
+      );
+      h = await hw();
+      expect(h.hasTpm, isTrue);
+      await w.host.changeHardware(g.id, h, const VirtHwRemoveDevice(key: 'tpmstate0'));
+      expect((await hw()).hasTpm, isFalse);
+      // Nothing of the variables disks or the TPM state left behind.
+      final vols = await w.host.volumes(storage);
+      expect(vols.where((v) => v.id.contains('-${g.vmid}-')).length, 2, reason: 'the disk and one EFI disk');
+    });
+
+    test('host devices as a token sees them', () async {
+      final devs = await w.host.hostDevices(g.id);
+      expect(devs.mappingsOnly, isTrue);
+      // ignore: avoid_print
+      print('PVE host devices: iommu=${devs.iommu} usb=${devs.usb.length} pci=${devs.pci.length}');
+    });
+
   });
 }
 

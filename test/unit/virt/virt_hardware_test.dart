@@ -108,4 +108,49 @@ void main() {
     expect(virtHwIssue(vm, const VirtHwSetBoot([])), VirtHwIssue.bootEmpty);
     expect(virtHwIssue(vm, const VirtHwSetBoot(['vda'])), isNull);
   });
+
+  test('a MAC: unicast, six octets, not all zero', () {
+    VirtHwIssue? mac(String m) => virtHwIssue(vm, VirtHwSetNicHardware(key: 'n', mac: m));
+    expect(mac('52:54:00:12:34:56'), isNull);
+    expect(mac('BC:24:11:AA:BB:CC'), isNull);
+    expect(mac('01:00:5e:00:00:01'), VirtHwIssue.mac, reason: 'multicast');
+    expect(mac('00:00:00:00:00:00'), VirtHwIssue.mac);
+    expect(mac('52:54:00:12:34'), VirtHwIssue.mac);
+    expect(mac('52-54-00-12-34-56'), VirtHwIssue.mac);
+    expect(virtHwIssue(vm, const VirtHwSetNicHardware(key: 'n', model: 'e1000')), isNull);
+  });
+
+  test('a bus and the firmware change only while stopped', () {
+    final stopped = vm.copyWith(running: false);
+    const bus = VirtHwUpdateDisk(key: 'vda', bus: 'sata');
+    expect(virtHwIssue(vm, bus), VirtHwIssue.stopFirst);
+    expect(virtHwIssue(stopped, bus), isNull);
+    // A cache mode waits for a restart instead: it is not refused.
+    expect(virtHwIssue(vm, const VirtHwUpdateDisk(key: 'vda', cache: 'none')), isNull);
+    const uefi = VirtHwSetFirmware(uefi: true);
+    expect(virtHwIssue(vm, uefi), VirtHwIssue.stopFirst);
+    expect(virtHwIssue(stopped, uefi, host: VirtHostKind.libvirt), isNull);
+    // PVE puts the variables on a storage: one is needed.
+    expect(virtHwIssue(stopped, uefi, host: VirtHostKind.pve), VirtHwIssue.storageMissing);
+    expect(
+      virtHwIssue(stopped, const VirtHwSetFirmware(uefi: true, storage: 'local-lvm'), host: VirtHostKind.pve),
+      isNull,
+    );
+  });
+
+  test('devices: one TPM, and a device picked', () {
+    const usb = VirtHwAddDevice(kind: VirtHwDeviceKind.usb);
+    expect(virtHwIssue(vm, usb), VirtHwIssue.device);
+    expect(
+      virtHwIssue(vm, const VirtHwAddDevice(kind: VirtHwDeviceKind.usb, host: VirtHostDevice(id: '0bda:b023', label: 'bt'))),
+      isNull,
+    );
+    const tpm = VirtHwAddDevice(kind: VirtHwDeviceKind.tpm);
+    expect(virtHwIssue(vm, tpm, host: VirtHostKind.libvirt), isNull);
+    expect(virtHwIssue(vm, tpm, host: VirtHostKind.pve), VirtHwIssue.storageMissing);
+    final withTpm = vm.copyWith(
+      devices: const [VirtHwDevice(key: 'tpm', kind: VirtHwDeviceKind.tpm)],
+    );
+    expect(virtHwIssue(withTpm, tpm, host: VirtHostKind.libvirt), VirtHwIssue.device);
+  });
 }

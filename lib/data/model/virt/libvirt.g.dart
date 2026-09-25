@@ -474,6 +474,7 @@ _LibvirtHwDisk _$LibvirtHwDiskFromJson(Map<String, dynamic> json) =>
       readonly: json['readonly'] as bool? ?? false,
       capacity: (json['capacity'] as num?)?.toInt(),
       bootOrder: (json['boot_order'] as num?)?.toInt(),
+      cache: json['cache'] as String?,
     );
 
 Map<String, dynamic> _$LibvirtHwDiskToJson(_LibvirtHwDisk instance) =>
@@ -487,6 +488,7 @@ Map<String, dynamic> _$LibvirtHwDiskToJson(_LibvirtHwDisk instance) =>
       'readonly': instance.readonly,
       'capacity': instance.capacity,
       'boot_order': instance.bootOrder,
+      'cache': instance.cache,
     };
 
 _LibvirtHwNic _$LibvirtHwNicFromJson(Map<String, dynamic> json) =>
@@ -528,6 +530,23 @@ _LibvirtHwConfig _$LibvirtHwConfigFromJson(Map<String, dynamic> json) =>
           (json['boot'] as List<dynamic>?)?.map((e) => e as String).toList() ??
           const <String>[],
       balloon: json['balloon'] as bool? ?? false,
+      efi: json['efi'] as bool? ?? false,
+      secureBoot: json['secure_boot'] as bool? ?? false,
+      machine: json['machine'] as String?,
+      graphics: json['graphics'] == null
+          ? null
+          : LibvirtHwGraphics.fromJson(
+              json['graphics'] as Map<String, dynamic>,
+            ),
+      video: json['video'] as String?,
+      tpm: json['tpm'] == null
+          ? null
+          : LibvirtHwTpm.fromJson(json['tpm'] as Map<String, dynamic>),
+      hostdevs:
+          (json['hostdevs'] as List<dynamic>?)
+              ?.map((e) => LibvirtHwHostdev.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const <LibvirtHwHostdev>[],
     );
 
 Map<String, dynamic> _$LibvirtHwConfigToJson(_LibvirtHwConfig instance) =>
@@ -539,6 +558,157 @@ Map<String, dynamic> _$LibvirtHwConfigToJson(_LibvirtHwConfig instance) =>
       'nics': instance.nics,
       'boot': instance.boot,
       'balloon': instance.balloon,
+      'efi': instance.efi,
+      'secure_boot': instance.secureBoot,
+      'machine': instance.machine,
+      'graphics': instance.graphics,
+      'video': instance.video,
+      'tpm': instance.tpm,
+      'hostdevs': instance.hostdevs,
+    };
+
+_LibvirtHwGraphics _$LibvirtHwGraphicsFromJson(Map<String, dynamic> json) =>
+    _LibvirtHwGraphics(
+      kind: json['kind'] as String? ?? '',
+      listen: json['listen'] as String?,
+      port: (json['port'] as num?)?.toInt(),
+    );
+
+Map<String, dynamic> _$LibvirtHwGraphicsToJson(_LibvirtHwGraphics instance) =>
+    <String, dynamic>{
+      'kind': instance.kind,
+      'listen': instance.listen,
+      'port': instance.port,
+    };
+
+_LibvirtHwTpm _$LibvirtHwTpmFromJson(Map<String, dynamic> json) =>
+    _LibvirtHwTpm(
+      model: json['model'] as String? ?? '',
+      backend: json['backend'] as String? ?? '',
+      version: json['version'] as String?,
+    );
+
+Map<String, dynamic> _$LibvirtHwTpmToJson(_LibvirtHwTpm instance) =>
+    <String, dynamic>{
+      'model': instance.model,
+      'backend': instance.backend,
+      'version': instance.version,
+    };
+
+_LibvirtHwHostdev _$LibvirtHwHostdevFromJson(Map<String, dynamic> json) =>
+    _LibvirtHwHostdev(
+      key: json['key'] as String,
+      kind: json['kind'] as String? ?? '',
+      vendor: json['vendor'] as String?,
+      product: json['product'] as String?,
+      address: json['address'] as String?,
+    );
+
+Map<String, dynamic> _$LibvirtHwHostdevToJson(_LibvirtHwHostdev instance) =>
+    <String, dynamic>{
+      'key': instance.key,
+      'kind': instance.kind,
+      'vendor': instance.vendor,
+      'product': instance.product,
+      'address': instance.address,
+    };
+
+_LibvirtHwCaps _$LibvirtHwCapsFromJson(Map<String, dynamic> json) =>
+    _LibvirtHwCaps(
+      efi: json['efi'] as bool? ?? false,
+      secureBoot: json['secure_boot'] as bool? ?? false,
+      tpmEmulator: json['tpm_emulator'] as bool? ?? false,
+      graphics:
+          (json['graphics'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const <String>[],
+      video:
+          (json['video'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+          const <String>[],
+      diskBuses:
+          (json['disk_buses'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const <String>[],
+      hostdev: json['hostdev'] as bool? ?? false,
+    );
+
+Map<String, dynamic> _$LibvirtHwCapsToJson(_LibvirtHwCaps instance) =>
+    <String, dynamic>{
+      'efi': instance.efi,
+      'secure_boot': instance.secureBoot,
+      'tpm_emulator': instance.tpmEmulator,
+      'graphics': instance.graphics,
+      'video': instance.video,
+      'disk_buses': instance.diskBuses,
+      'hostdev': instance.hostdev,
+    };
+
+_LibvirtHostDevices _$LibvirtHostDevicesFromJson(Map<String, dynamic> json) =>
+    _LibvirtHostDevices(
+      usb:
+          (json['usb'] as List<dynamic>?)
+              ?.map((e) => LibvirtHostUsb.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const <LibvirtHostUsb>[],
+      pci:
+          (json['pci'] as List<dynamic>?)
+              ?.map((e) => LibvirtHostPci.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const <LibvirtHostPci>[],
+      iommu: json['iommu'] as bool? ?? false,
+    );
+
+Map<String, dynamic> _$LibvirtHostDevicesToJson(_LibvirtHostDevices instance) =>
+    <String, dynamic>{
+      'usb': instance.usb,
+      'pci': instance.pci,
+      'iommu': instance.iommu,
+    };
+
+_LibvirtHostUsb _$LibvirtHostUsbFromJson(Map<String, dynamic> json) =>
+    _LibvirtHostUsb(
+      vendor: json['vendor'] as String,
+      product: json['product'] as String,
+      vendorName: json['vendor_name'] as String?,
+      productName: json['product_name'] as String?,
+      bus: (json['bus'] as num?)?.toInt(),
+      device: (json['device'] as num?)?.toInt(),
+    );
+
+Map<String, dynamic> _$LibvirtHostUsbToJson(_LibvirtHostUsb instance) =>
+    <String, dynamic>{
+      'vendor': instance.vendor,
+      'product': instance.product,
+      'vendor_name': instance.vendorName,
+      'product_name': instance.productName,
+      'bus': instance.bus,
+      'device': instance.device,
+    };
+
+_LibvirtHostPci _$LibvirtHostPciFromJson(Map<String, dynamic> json) =>
+    _LibvirtHostPci(
+      address: json['address'] as String,
+      vendor: json['vendor'] as String?,
+      product: json['product'] as String?,
+      vendorName: json['vendor_name'] as String?,
+      productName: json['product_name'] as String?,
+      pciClass: json['class'] as String?,
+      iommuGroup: (json['iommu_group'] as num?)?.toInt(),
+      groupSize: (json['group_size'] as num?)?.toInt() ?? 0,
+    );
+
+Map<String, dynamic> _$LibvirtHostPciToJson(_LibvirtHostPci instance) =>
+    <String, dynamic>{
+      'address': instance.address,
+      'vendor': instance.vendor,
+      'product': instance.product,
+      'vendor_name': instance.vendorName,
+      'product_name': instance.productName,
+      'class': instance.pciClass,
+      'iommu_group': instance.iommuGroup,
+      'group_size': instance.groupSize,
     };
 
 _LibvirtHardwareInfo _$LibvirtHardwareInfoFromJson(Map<String, dynamic> json) =>
@@ -552,6 +722,9 @@ _LibvirtHardwareInfo _$LibvirtHardwareInfoFromJson(Map<String, dynamic> json) =>
       description: json['description'] as String?,
       hostCpus: (json['host_cpus'] as num?)?.toInt(),
       hostMemoryKib: (json['host_memory_kib'] as num?)?.toInt(),
+      caps: json['caps'] == null
+          ? null
+          : LibvirtHwCaps.fromJson(json['caps'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$LibvirtHardwareInfoToJson(
@@ -564,4 +737,5 @@ Map<String, dynamic> _$LibvirtHardwareInfoToJson(
   'description': instance.description,
   'host_cpus': instance.hostCpus,
   'host_memory_kib': instance.hostMemoryKib,
+  'caps': instance.caps,
 };

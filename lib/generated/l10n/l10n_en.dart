@@ -3755,7 +3755,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pveTokenTipHardware =>
-      'Editing hardware needs VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network and VM.Config.Options; new disks and interfaces also need Datastore.AllocateSpace and SDN.Use.';
+      'Editing hardware needs VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network and VM.Config.Options; new disks and interfaces also need Datastore.AllocateSpace and SDN.Use. The video card and USB and PCI devices also need VM.Config.HWType; a device given through a resource mapping needs Mapping.Use on it, and Mapping.Audit to list mappings.';
 
   @override
   String get virtErrConflict => 'Changed elsewhere';
@@ -4075,4 +4075,142 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get virtHwVolumeKept =>
       'Removed, but the running guest still uses the disk, so its volume was kept. It is detached at the next start.';
+
+  @override
+  String get virtHwBus => 'Bus';
+
+  @override
+  String get virtHwCache => 'Cache';
+
+  @override
+  String get virtHwBusStopped =>
+      'The bus changes only while the guest is stopped.';
+
+  @override
+  String get virtHwMacGenerate => 'Generate';
+
+  @override
+  String get virtHwIssueMac =>
+      'Must be a unicast MAC address, such as 52:54:00:12:34:56';
+
+  @override
+  String get virtHwIssueStopFirst => 'Stop the guest first';
+
+  @override
+  String get virtHwIssueStorageMissing => 'Pick a storage for it first';
+
+  @override
+  String get virtHwIssueDevice => 'Pick a device first';
+
+  @override
+  String get virtHwDevices => 'CD-ROM and passthrough';
+
+  @override
+  String get virtHwDevicesEmpty => 'USB and PCI passthrough, TPM';
+
+  @override
+  String get virtHwAddDevice => 'Add device';
+
+  @override
+  String get virtHwNewDevice => 'New device';
+
+  @override
+  String get virtHwUsbHotplug => 'USB passthrough is hot-pluggable.';
+
+  @override
+  String get virtHwPci => 'PCI passthrough';
+
+  @override
+  String get virtHwIommuOffTitle => 'The host has no IOMMU';
+
+  @override
+  String get virtHwIommuOffBody =>
+      'Turn on VT-d or AMD-Vi in the host\'s BIOS and IOMMU in its kernel first. Until then, a guest given a PCI device won\'t start.';
+
+  @override
+  String get virtHwPciTitle => 'Needs IOMMU on the host';
+
+  @override
+  String get virtHwPciBody =>
+      'Once passed through, the host can\'t use the device, and the guest can\'t migrate while running.';
+
+  @override
+  String virtHwIommuGroup(int group) {
+    return 'IOMMU group $group';
+  }
+
+  @override
+  String virtHwIommuShared(int count) {
+    return '$count devices share its IOMMU group and are passed through together';
+  }
+
+  @override
+  String get virtHwNoHostDevices => 'No devices to pass through on this host';
+
+  @override
+  String get virtHwMappingsOnly =>
+      'Only resource mappings can be used here: PVE lets only root@pam, signed in with its password, pass a raw device through. Create mappings under Datacenter → Resource Mappings.';
+
+  @override
+  String get virtHwTpmNote => 'Windows 11 needs TPM 2.0.';
+
+  @override
+  String get virtHwDisplay => 'Display';
+
+  @override
+  String get virtHwProtocol => 'Protocol';
+
+  @override
+  String get virtHwListen => 'Listen';
+
+  @override
+  String get virtHwGpu => 'Video card';
+
+  @override
+  String get virtHwListenAllTitle => 'The console is open to the network';
+
+  @override
+  String get virtHwListenAllBody =>
+      'Listening on all addresses lets anyone who can reach the host connect to the console. Keep 127.0.0.1 and connect through an SSH tunnel.';
+
+  @override
+  String get virtHwFirmware => 'Firmware';
+
+  @override
+  String get virtHwUefiSub =>
+      'OVMF · Secure Boot capable, needed by Windows 11';
+
+  @override
+  String get virtHwBiosSub => 'SeaBIOS · older systems and MBR disks';
+
+  @override
+  String get virtHwSecureBootNote =>
+      'Boots only signed kernels and boot loaders';
+
+  @override
+  String get virtHwFirmwareWarnTitle =>
+      'Don\'t switch the firmware of an installed system';
+
+  @override
+  String get virtHwFirmwareWarnBody =>
+      'Switching between UEFI and BIOS leaves an installed system unable to boot.';
+
+  @override
+  String get virtHwFirmwareStopped =>
+      'The firmware changes only while the guest is stopped.';
+
+  @override
+  String get virtHwSecureBootVars =>
+      'Turning Secure Boot on or off makes the EFI variables anew; boot entries saved in them are lost.';
+
+  @override
+  String get virtHwEfiStorage => 'Where the EFI variables go';
+
+  @override
+  String get virtHwTpmStorage => 'Where the TPM state goes';
+
+  @override
+  String virtHwSwitchFirmwareAsk(String guest, String firmware) {
+    return 'Switch $guest to $firmware?';
+  }
 }

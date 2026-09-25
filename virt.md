@@ -362,8 +362,9 @@ A "Hardware" view next to Overview / Console / Snapshots (labelled
 "Resources" for a container), where `VirtCapabilities.hardware` (both
 backends), not on a template (`lib/view/page/virt/hardware.dart`). One form
 per group, in the design's order — processor, memory, disks (a container:
-root disk and mount points), NICs, CD-ROM, boot order (VMs), the
-configuration as the host writes it — with an index beside them from
+root disk and mount points), NICs, "CD-ROM and passthrough" (VMs), display
+(VMs), boot (VMs: firmware, Secure Boot, the order), the configuration as
+the host writes it — with an index beside them from
 860 pt. Steppers and pickers are drafts with Cancel / Save; device toggles
 (link, firewall) and device actions (add, grow, detach, eject) are one
 change each, a destructive one behind a red confirmation (a disk: "delete
@@ -379,6 +380,84 @@ the boot order, under the Settings field; an option neither view edits is
 listed with the configuration file. Each has its revert on PVE; the notice
 above the tabs has "revert all" (an icon, beside the design's one "Restart
 now" — two labels do not fit a phone) and the restart.
+
+#### Devices, display and firmware (phase 4, second part)
+
+What the design's hardware view has besides CPU, memory, disks and NICs.
+What a guest can be changed to is `VirtHardware.support` (`VirtHwSupport`):
+PVE's fixed list (`PveResources.pveQemuSupport`), libvirt's from the host's
+`domcapabilities` **for the domain's own virt type, arch and machine**
+(read in `hardware_script`; Secure Boot is a q35 thing — i440fx answers
+`secure: no` — and a Debian QEMU build without SPICE offers no SPICE and no
+`qxl`). Nothing is offered that the host lacks: no TPM without swtpm
+(`backendModel` `emulator`), no UEFI without OVMF.
+
+| | libvirt | PVE |
+| --- | --- | --- |
+| Disk bus | Stopped only (`VirtHwIssue.stopFirst`). `edit_disk_xml`: the target renamed on the new bus (`vda` → `sda`), its `<address>` dropped; the `<boot order>` travels inside the disk | Stopped only. One request: the new key (`virtio0`) with the same volume string, `delete` of the old; **PVE drops the old key from `boot`**, so the order is sent again with the new key in its place |
+| Disk cache | `<driver cache>` in the definition (pending while running) | The option's `cache=` (`default` drops it) |
+| NIC model / MAC | `edit_nic_hardware_xml`, pending while running | The `model=MAC` pair rewritten (`withNicHardware`); a container's `hwaddr` |
+| Display | `edit_display_xml`: protocol (VNC/SPICE where offered), listen address (127.0.0.1 / 0.0.0.0 — the latter warned about, as the design has it), primary video model; a VNC password and keymap are kept | `vga` type (its `memory=` kept); PVE has no protocol or listen address to set here: VNC through its proxy, SPICE comes with `qxl` |
+| Firmware | Stopped only, asked first ("don't switch the firmware of an installed system"). `edit_firmware_xml`: `<os firmware='efi'>` with `enrolled-keys`/`secure-boot` features and no `<loader>`/`<nvram>` of its own, so libvirt autoselects (verified: `OVMF_CODE_4M.ms.fd` with SMM on for Secure Boot, `OVMF_CODE_4M.fd` without). **libvirt reuses a variables file whatever template made it**, and keys are enrolled only when one is made, so a change of Secure Boot keeps `<nvram>`'s path and deletes the file after the define: libvirt makes it from the right template at the next start (boot entries go, as on PVE; the view says so on both) | `bios=ovmf` plus an `efidisk0` (`<storage>:1,efitype=4m,pre-enrolled-keys=0/1`) on the storage the old one was on, or one picked. Keys are enrolled when the disk is made: turning Secure Boot on or off **replaces the EFI disk** (the old one detached and its `unusedN` deleted; the view says boot entries go with it). BIOS keeps the EFI disk |
+| TPM | `<tpm model='tpm-crb'><backend type='emulator' version='2.0'/>` — only where swtpm is there; config only, pending | `tpmstate0: <storage>:1,version=v2.0`; removing it deletes the state volume too |
+| USB | `nodedev-list --cap usb_device` + `nodedev-dumpxml` each (root hubs left out); a `<hostdev>` by vendor/product, live as well while running | Resource mappings (`/cluster/mapping/usb`); the node's own devices only for root@pam with its password |
+| PCI | `nodedev-list --cap pci` with IOMMU groups (and how many share one); a managed `<hostdev>` by address, config only | Mappings (`/cluster/mapping/pci`); the node's devices (`/nodes/{n}/hardware/pci`, which also says whether there is an IOMMU) for root@pam only |
+
+- **PVE lets only root@pam give a guest a raw device**: a token (or any
+  other user) gets "only root can set 'usb0' config for real devices" /
+  "'hostpci0' config for non-mapped devices" in the task. So the add block
+  offers mappings to everyone (`Mapping.Use` on the mapping,
+  `Mapping.Audit` to list them — `PVEMappingUser`), and says why raw
+  devices are missing (`VirtHostDevices.mappingsOnly`). Listing the node's
+  USB devices needs `Sys.Modify`, so only root sees them anyway.
+- **No IOMMU** (VT-d / AMD-Vi off, as on the test host: no DMAR table,
+  every PCI device `iommugroup: -1`, and no `iommuGroup` in libvirt's
+  nodedev XML) is a warning in the PCI add block, not an error: the
+  configuration is written, and the guest refuses to start with the host's
+  words — PVE "cannot prepare PCI pass-through, IOMMU not present", libvirt
+  "host doesn't support passthrough of host PCI devices" (both seen).
+- Keys: libvirt `usb:0bda:b023` (or `usb@bus.device`), `pci:0000:01:00.0`,
+  `tpm`; PVE the option (`usb0`, `hostpci0`, `tpmstate0`). Removing a
+  libvirt USB device detaches it live as well; a TPM and a PCI device stay
+  until the guest stops (pending).
+- New PVE privileges (token help): `VM.Config.HWType` for the card and
+  USB/PCI devices (a request without it is refused before any task: 403),
+  `Mapping.Use`/`Mapping.Audit` for mappings. Firmware, TPM, NIC model and
+  cache need nothing beyond the documented set (verified with a
+  privilege-separated token holding exactly that).
+
+Verified 2026-09-26:
+- **libvirt 11.3** (agent + sudo, a q35 domain of the test's own): bus
+  change with the boot order following, cache (pending while running), NIC
+  model and MAC, listen address and card, UEFI with Secure Boot started
+  (`secure='yes'` loader, SMM on), the `-sb` variables file made on the
+  next start and the old kept, back to BIOS; the host device list (nested
+  guest: no IOMMU, no USB); a PCI device written and the start refused with
+  the host's words, then removed.
+- **PVE 9.2.2** (relay, token): bus change with the boot order, cache, NIC
+  model and MAC, card, UEFI with Secure Boot on and off (EFI disk replaced,
+  the old volume gone), TPM added and removed (volume gone); a token sees
+  mappings only.
+- **Real USB passthrough** on PVE (over SSH, `SBM_E2E_PVE_USB=0bda:b023`,
+  the node's Bluetooth adapter): a temporary mapping granted to the token,
+  given to a temporary VM, the VM started and QEMU's command line holding
+  `usb-host` with that vendor and product; then taken off and everything
+  removed.
+
+A libvirt guest keeps one variables file at one path
+(`FirmwareEdit::drop_vars`): a Secure Boot change keeps the path and deletes
+the file after the define, and libvirt makes it again from the right template
+at the next start; leaving UEFI deletes it. So `undefine --nvram` on delete
+removes all there is. Only files under libvirt's NVRAM directory are ever
+deleted (`is_libvirt_nvram`), whatever the definition names, and a refused
+define keeps the file. (Replaced keeping the old file for going back, which
+left one per switch that nothing removed.)
+
+Not proven: **real PCI passthrough** — the test host has no IOMMU
+(`SBM_E2E_PVE_PCI` runs the same flow once one is on, e.g. after enabling
+VT-d for a GPU), and the libvirt host is a nested guest; USB passthrough on
+libvirt (no USB device there); a TPM on libvirt (no swtpm there); SPICE on
+libvirt (not in that QEMU build).
 
 ### Settings (phase 4)
 
@@ -581,7 +660,16 @@ Follows the repo's tab conventions (`CLAUDE.md` → Tabs):
     design has no drag), and tapping a row includes or leaves out a device;
   - "revert" rows and the notice's "revert all" icon, which the design has
     no place for (PVE's pending list);
-  - delete keeps no typed name: the design's two presses.
+  - delete keeps no typed name: the design's two presses;
+  - "CD-ROM and passthrough" has no "add CD-ROM" (the design offers one
+    when a guest has none): adding a drive is not built yet;
+  - PVE shows no protocol or listen rows in the display group: neither is a
+    PVE setting (VNC through its proxy; SPICE follows the `qxl` card); the
+    port row is shown only where the host fixed one;
+  - the firmware choice asks before switching (the design switches on tap):
+    it is the change most likely to leave a guest unbootable;
+  - a NIC's MAC is a row that opens a dialog with "generate", not an inline
+    field: one typed character is not one change to send.
 - Power actions with confirmation, as the PVE page does today; busy states
   (`starting`, `stopping`, …) show progress and disable conflicting actions.
   PVE actions return a UPID; poll `GET .../tasks/{upid}/status` until done.
@@ -672,10 +760,8 @@ page, so feature pages use the `featureIntroVer` counter.
 - Snapshots: external libvirt snapshots (disk-only while running), a
   snapshot's configuration diff, PVE's per-storage snapshot support shown
   before trying.
-- Hardware: bus and cache, NIC model and MAC, CD-ROM/USB/PCI/TPM devices,
-  the display, firmware and Secure Boot (task B: groups go between the
-  CD-ROM and the boot order, as the design has them); libvirt revert
-  (redefine from the running XML).
+- Hardware: adding a CD-ROM drive; libvirt revert (redefine from the running
+  XML); USB passthrough by port rather than vendor/product.
 - Clone, migrate (PVE cluster); creating from a cloud image or with
   cloud-init, UEFI/TPM and a choice of bus and NIC model in the create form.
 - Backups (PVE `vzdump` / backup storage).

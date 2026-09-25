@@ -546,6 +546,39 @@ mixin _EditPane<W extends ConsumerStatefulWidget> on ConsumerState<W> {
     );
   }
 
+  /// A notice among the rows, as the design's callout: a title, what it
+  /// means, in the warning colour or the primary one.
+  Widget _callout(
+    String title,
+    String body, {
+    bool warn = true,
+    bool indent = false,
+    Key? key,
+  }) {
+    final color = warn ? StatePalette.warn : Theme.of(context).colorScheme.primary;
+    return _box(
+      key: key,
+      indent: indent,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(warn ? Icons.warning_amber_rounded : Icons.info_outline, size: 19, color: color),
+          UIs.width13,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: UIs.text13Bold.copyWith(color: color)),
+                const SizedBox(height: 2),
+                Text(body, style: UIs.text12Grey),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// A device's row, which opens and closes its own rows under it.
   Widget _disc(
     String key,
@@ -764,6 +797,10 @@ mixin _EditPane<W extends ConsumerStatefulWidget> on ConsumerState<W> {
       VirtHwIssue.description => l10n.virtSetIssueDescription(
         virtHwDescriptionMax,
       ),
+      VirtHwIssue.mac => l10n.virtHwIssueMac,
+      VirtHwIssue.stopFirst => l10n.virtHwIssueStopFirst,
+      VirtHwIssue.storageMissing => l10n.virtHwIssueStorageMissing,
+      VirtHwIssue.device => l10n.virtHwIssueDevice,
     };
   }
 

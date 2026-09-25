@@ -6481,7 +6481,7 @@ abstract class AppLocalizations {
   /// Token help: privileges for the Hardware view.
   ///
   /// In en, this message translates to:
-  /// **'Editing hardware needs VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network and VM.Config.Options; new disks and interfaces also need Datastore.AllocateSpace and SDN.Use.'**
+  /// **'Editing hardware needs VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network and VM.Config.Options; new disks and interfaces also need Datastore.AllocateSpace and SDN.Use. The video card and USB and PCI devices also need VM.Config.HWType; a device given through a resource mapping needs Mapping.Use on it, and Mapping.Audit to list mappings.'**
   String get pveTokenTipHardware;
 
   /// Error title: the guest's configuration changed since it was read.
@@ -7053,6 +7053,246 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Removed, but the running guest still uses the disk, so its volume was kept. It is detached at the next start.'**
   String get virtHwVolumeKept;
+
+  /// Hardware view (virtualization): Bus
+  ///
+  /// In en, this message translates to:
+  /// **'Bus'**
+  String get virtHwBus;
+
+  /// Hardware view (virtualization): Cache
+  ///
+  /// In en, this message translates to:
+  /// **'Cache'**
+  String get virtHwCache;
+
+  /// Hardware view (virtualization): BusStopped
+  ///
+  /// In en, this message translates to:
+  /// **'The bus changes only while the guest is stopped.'**
+  String get virtHwBusStopped;
+
+  /// Hardware view (virtualization): MacGenerate
+  ///
+  /// In en, this message translates to:
+  /// **'Generate'**
+  String get virtHwMacGenerate;
+
+  /// Hardware view (virtualization): IssueMac
+  ///
+  /// In en, this message translates to:
+  /// **'Must be a unicast MAC address, such as 52:54:00:12:34:56'**
+  String get virtHwIssueMac;
+
+  /// Hardware view (virtualization): IssueStopFirst
+  ///
+  /// In en, this message translates to:
+  /// **'Stop the guest first'**
+  String get virtHwIssueStopFirst;
+
+  /// Hardware view (virtualization): IssueStorageMissing
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a storage for it first'**
+  String get virtHwIssueStorageMissing;
+
+  /// Hardware view (virtualization): IssueDevice
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a device first'**
+  String get virtHwIssueDevice;
+
+  /// Hardware view (virtualization): Devices
+  ///
+  /// In en, this message translates to:
+  /// **'CD-ROM and passthrough'**
+  String get virtHwDevices;
+
+  /// Hardware view (virtualization): DevicesEmpty
+  ///
+  /// In en, this message translates to:
+  /// **'USB and PCI passthrough, TPM'**
+  String get virtHwDevicesEmpty;
+
+  /// Hardware view (virtualization): AddDevice
+  ///
+  /// In en, this message translates to:
+  /// **'Add device'**
+  String get virtHwAddDevice;
+
+  /// Hardware view (virtualization): NewDevice
+  ///
+  /// In en, this message translates to:
+  /// **'New device'**
+  String get virtHwNewDevice;
+
+  /// Hardware view (virtualization): UsbHotplug
+  ///
+  /// In en, this message translates to:
+  /// **'USB passthrough is hot-pluggable.'**
+  String get virtHwUsbHotplug;
+
+  /// Hardware view (virtualization): Pci
+  ///
+  /// In en, this message translates to:
+  /// **'PCI passthrough'**
+  String get virtHwPci;
+
+  /// Hardware view (virtualization): IommuOffTitle
+  ///
+  /// In en, this message translates to:
+  /// **'The host has no IOMMU'**
+  String get virtHwIommuOffTitle;
+
+  /// Hardware view (virtualization): IommuOffBody
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on VT-d or AMD-Vi in the host\'s BIOS and IOMMU in its kernel first. Until then, a guest given a PCI device won\'t start.'**
+  String get virtHwIommuOffBody;
+
+  /// Hardware view (virtualization): PciTitle
+  ///
+  /// In en, this message translates to:
+  /// **'Needs IOMMU on the host'**
+  String get virtHwPciTitle;
+
+  /// Hardware view (virtualization): PciBody
+  ///
+  /// In en, this message translates to:
+  /// **'Once passed through, the host can\'t use the device, and the guest can\'t migrate while running.'**
+  String get virtHwPciBody;
+
+  /// Hardware view (virtualization): IommuGroup
+  ///
+  /// In en, this message translates to:
+  /// **'IOMMU group {group}'**
+  String virtHwIommuGroup(int group);
+
+  /// Hardware view (virtualization): IommuShared
+  ///
+  /// In en, this message translates to:
+  /// **'{count} devices share its IOMMU group and are passed through together'**
+  String virtHwIommuShared(int count);
+
+  /// Hardware view (virtualization): NoHostDevices
+  ///
+  /// In en, this message translates to:
+  /// **'No devices to pass through on this host'**
+  String get virtHwNoHostDevices;
+
+  /// Hardware view (virtualization): MappingsOnly
+  ///
+  /// In en, this message translates to:
+  /// **'Only resource mappings can be used here: PVE lets only root@pam, signed in with its password, pass a raw device through. Create mappings under Datacenter → Resource Mappings.'**
+  String get virtHwMappingsOnly;
+
+  /// Hardware view (virtualization): TpmNote
+  ///
+  /// In en, this message translates to:
+  /// **'Windows 11 needs TPM 2.0.'**
+  String get virtHwTpmNote;
+
+  /// Hardware view (virtualization): Display
+  ///
+  /// In en, this message translates to:
+  /// **'Display'**
+  String get virtHwDisplay;
+
+  /// Hardware view (virtualization): Protocol
+  ///
+  /// In en, this message translates to:
+  /// **'Protocol'**
+  String get virtHwProtocol;
+
+  /// Hardware view (virtualization): Listen
+  ///
+  /// In en, this message translates to:
+  /// **'Listen'**
+  String get virtHwListen;
+
+  /// Hardware view (virtualization): Gpu
+  ///
+  /// In en, this message translates to:
+  /// **'Video card'**
+  String get virtHwGpu;
+
+  /// Hardware view (virtualization): ListenAllTitle
+  ///
+  /// In en, this message translates to:
+  /// **'The console is open to the network'**
+  String get virtHwListenAllTitle;
+
+  /// Hardware view (virtualization): ListenAllBody
+  ///
+  /// In en, this message translates to:
+  /// **'Listening on all addresses lets anyone who can reach the host connect to the console. Keep 127.0.0.1 and connect through an SSH tunnel.'**
+  String get virtHwListenAllBody;
+
+  /// Hardware view (virtualization): Firmware
+  ///
+  /// In en, this message translates to:
+  /// **'Firmware'**
+  String get virtHwFirmware;
+
+  /// Hardware view (virtualization): UefiSub
+  ///
+  /// In en, this message translates to:
+  /// **'OVMF · Secure Boot capable, needed by Windows 11'**
+  String get virtHwUefiSub;
+
+  /// Hardware view (virtualization): BiosSub
+  ///
+  /// In en, this message translates to:
+  /// **'SeaBIOS · older systems and MBR disks'**
+  String get virtHwBiosSub;
+
+  /// Hardware view (virtualization): SecureBootNote
+  ///
+  /// In en, this message translates to:
+  /// **'Boots only signed kernels and boot loaders'**
+  String get virtHwSecureBootNote;
+
+  /// Hardware view (virtualization): FirmwareWarnTitle
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t switch the firmware of an installed system'**
+  String get virtHwFirmwareWarnTitle;
+
+  /// Hardware view (virtualization): FirmwareWarnBody
+  ///
+  /// In en, this message translates to:
+  /// **'Switching between UEFI and BIOS leaves an installed system unable to boot.'**
+  String get virtHwFirmwareWarnBody;
+
+  /// Hardware view (virtualization): FirmwareStopped
+  ///
+  /// In en, this message translates to:
+  /// **'The firmware changes only while the guest is stopped.'**
+  String get virtHwFirmwareStopped;
+
+  /// Note under the Secure Boot switch: switching it recreates the guest's EFI variables (PVE's EFI disk, libvirt's variables file), losing saved boot entries.
+  ///
+  /// In en, this message translates to:
+  /// **'Turning Secure Boot on or off makes the EFI variables anew; boot entries saved in them are lost.'**
+  String get virtHwSecureBootVars;
+
+  /// Hardware view (virtualization): EfiStorage
+  ///
+  /// In en, this message translates to:
+  /// **'Where the EFI variables go'**
+  String get virtHwEfiStorage;
+
+  /// Hardware view (virtualization): TpmStorage
+  ///
+  /// In en, this message translates to:
+  /// **'Where the TPM state goes'**
+  String get virtHwTpmStorage;
+
+  /// Hardware view (virtualization): SwitchFirmwareAsk
+  ///
+  /// In en, this message translates to:
+  /// **'Switch {guest} to {firmware}?'**
+  String virtHwSwitchFirmwareAsk(String guest, String firmware);
 }
 
 class _AppLocalizationsDelegate

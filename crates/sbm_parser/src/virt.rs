@@ -2548,6 +2548,9 @@ pub const KEY_HW_STEP: &str = "virt.hw.step";
 pub const KEY_HW_LIVE_STEP: &str = "virt.hw.live_step";
 pub const KEY_HW_CONFLICT: &str = "virt.hw.conflict";
 pub const KEY_HW_KEPT: &str = "virt.hw.kept";
+pub const KEY_HW_CAPS: &str = "virt.hw.caps";
+pub const KEY_HOST_USB: &str = "virt.host.usb";
+pub const KEY_HOST_PCI: &str = "virt.host.pci";
 
 /// `<vcpu>` and `<cpu><topology>`. Without a topology libvirt gives the
 /// guest one socket per vCPU, which is what is reported then.
@@ -2582,6 +2585,43 @@ pub struct VirtHwDisk {
     /// `domblkinfo` capacity in bytes; none for an empty drive
     pub capacity: Option<u64>,
     pub boot_order: Option<u32>,
+    /// `<driver cache>`; none for the hypervisor's default
+    pub cache: Option<String>,
+}
+
+/// The first `<graphics>`: how the console is reached.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtHwGraphics {
+    /// `vnc`, `spice`, ...
+    pub kind: String,
+    /// The address it listens on; none for libvirt's default (the host's
+    /// `vnc_listen`, loopback unless someone changed it)
+    pub listen: Option<String>,
+    /// The fixed port; none with `autoport`
+    pub port: Option<i32>,
+}
+
+/// A `<tpm>`.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtHwTpm {
+    pub model: String,
+    /// `emulator` (swtpm) or `passthrough`
+    pub backend: String,
+    pub version: Option<String>,
+}
+
+/// A `<hostdev>`: a host USB or PCI device given to the guest.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtHwHostdev {
+    /// `usb:0bda:b023` (by vendor and product), `usb@1.4` (by bus and
+    /// device), `pci:0000:01:00.0`; what a removal names it by
+    pub key: String,
+    /// `usb`, `pci`
+    pub kind: String,
+    pub vendor: Option<String>,
+    pub product: Option<String>,
+    /// PCI address, `0000:01:00.0`
+    pub address: Option<String>,
 }
 
 /// An `<interface>`.
@@ -2614,6 +2654,38 @@ pub struct VirtHwConfig {
     /// A `<memballoon>` other than `none`: the current allocation can move
     /// below the maximum
     pub balloon: bool,
+    /// UEFI: `<os firmware='efi'>`, or a pflash loader set by hand
+    pub efi: bool,
+    /// Secure Boot: the `secure-boot` firmware feature, or a loader with
+    /// `secure='yes'`
+    pub secure_boot: bool,
+    /// `<os><type machine>`, e.g. `pc-q35-10.0`
+    pub machine: Option<String>,
+    pub graphics: Option<VirtHwGraphics>,
+    /// The primary `<video><model type>`
+    pub video: Option<String>,
+    pub tpm: Option<VirtHwTpm>,
+    pub hostdevs: Vec<VirtHwHostdev>,
+}
+
+/// What the host's QEMU offers a domain of this machine type
+/// (`domcapabilities`): what the Hardware view may offer to change to.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtHwCaps {
+    /// UEFI firmware is installed (OVMF)
+    pub efi: bool,
+    /// A Secure Boot capable one, for this machine type (q35, not i440fx)
+    pub secure_boot: bool,
+    /// A software TPM (swtpm) can back a `<tpm>`
+    pub tpm_emulator: bool,
+    /// `<graphics type>`s
+    pub graphics: Vec<String>,
+    /// `<video><model type>`s
+    pub video: Vec<String>,
+    /// `<disk><target bus>`es
+    pub disk_buses: Vec<String>,
+    /// Host devices can be given to guests
+    pub hostdev: bool,
 }
 
 /// What [`hardware_script`] yields.
@@ -2634,6 +2706,8 @@ pub struct VirtHardwareInfo {
     /// The host's logical CPUs and memory, the bounds of what a guest can use
     pub host_cpus: Option<u32>,
     pub host_memory_kib: Option<u64>,
+    /// What the host can give this domain; none when it would not say
+    pub caps: Option<VirtHwCaps>,
 }
 
 /// Everything [`VirtHardwareInfo`] needs, in one round trip. Parse with
@@ -2645,6 +2719,20 @@ pub fn hardware_script(domain: &str) -> String {
     s.push_str(&section(KEY_HW_NODE, "nodeinfo"));
     s.push_str(&section(KEY_HW_CONFIG, &format!("dumpxml --inactive {d}")));
     s.push_str(&section(KEY_HW_LIVE, &format!("dumpxml {d}")));
+    // For the domain's own virt type, arch and machine: Secure Boot is a
+    // q35 thing, and what the host offers differs between them. The values
+    // are cut to the characters those names have before reaching a shell
+    // word.
+    s.push_str(&format!(
+        r#"echo '{caps}'
+x=$(virsh --connect {CONNECT_URI} -q dumpxml --inactive {d} </dev/null 2>/dev/null)
+t=$(printf '%s' "$x" | sed -n "s/.*<domain type='\([a-z]*\)'.*/\1/p" | head -n 1)
+a=$(printf '%s' "$x" | sed -n "s/.*<type arch='\([A-Za-z0-9_]*\)' machine='\([A-Za-z0-9._-]*\)'.*/\1/p" | head -n 1)
+m=$(printf '%s' "$x" | sed -n "s/.*<type arch='\([A-Za-z0-9_]*\)' machine='\([A-Za-z0-9._-]*\)'.*/\2/p" | head -n 1)
+V domcapabilities ${{t:+--virttype "$t"}} ${{a:+--arch "$a"}} ${{m:+--machine "$m"}}
+"#,
+        caps = script::cmd_marker(KEY_HW_CAPS),
+    ));
     // One disk at a time: `domblkinfo --all` fails outright on a running
     // domain with an empty CD-ROM (libvirt 11.3). An empty drive has no
     // size to ask for.
@@ -2728,6 +2816,23 @@ pub fn parse_hw_xml(raw: &str, capacity: &[(String, u64)]) -> Result<VirtHwConfi
         current_memory_kib,
         ..Default::default()
     };
+    if let Some(os) = child(root, "os") {
+        let loader = child(os, "loader");
+        hw.efi = os.attribute("firmware") == Some("efi")
+            || loader.is_some_and(|l| l.attribute("type") == Some("pflash"));
+        let feature = |name: &str| {
+            child(os, "firmware").is_some_and(|f| {
+                f.children().any(|n| {
+                    n.is_element()
+                        && n.tag_name().name() == "feature"
+                        && n.attribute("name") == Some(name)
+                        && n.attribute("enabled") == Some("yes")
+                })
+            })
+        };
+        hw.secure_boot = hw.efi && (feature("secure-boot") || loader.is_some_and(|l| l.attribute("secure") == Some("yes")));
+        hw.machine = child(os, "type").and_then(|t| t.attribute("machine")).map(str::to_string);
+    }
     let os_boot: Vec<String> = child(root, "os")
         .map(|os| {
             os.children()
@@ -2765,6 +2870,7 @@ pub fn parse_hw_xml(raw: &str, capacity: &[(String, u64)]) -> Result<VirtHwConfi
                         format: child(dev, "driver").and_then(|d| d.attribute("type")).map(str::to_string),
                         readonly: child(dev, "readonly").is_some(),
                         boot_order: boot_order_of(dev),
+                        cache: child(dev, "driver").and_then(|d| d.attribute("cache")).map(str::to_string),
                     });
                 }
                 "interface" => {
@@ -2786,6 +2892,41 @@ pub fn parse_hw_xml(raw: &str, capacity: &[(String, u64)]) -> Result<VirtHwConfi
                     });
                 }
                 "memballoon" => hw.balloon = dev.attribute("model").is_some_and(|m| m != "none"),
+                "graphics" if hw.graphics.is_none() => {
+                    let listen = dev
+                        .attribute("listen")
+                        .or_else(|| child(dev, "listen").and_then(|l| l.attribute("address")))
+                        .map(str::to_string);
+                    hw.graphics = Some(VirtHwGraphics {
+                        kind: dev.attribute("type").unwrap_or_default().to_string(),
+                        listen,
+                        port: (dev.attribute("autoport") != Some("yes"))
+                            .then(|| dev.attribute("port").and_then(|p| p.parse().ok()))
+                            .flatten()
+                            .filter(|p: &i32| *p > 0),
+                    });
+                }
+                "video" => {
+                    let model = child(dev, "model");
+                    // The primary card, or the first where none says so.
+                    let primary = model.and_then(|m| m.attribute("primary")) == Some("yes");
+                    if hw.video.is_none() || primary {
+                        hw.video = model.and_then(|m| m.attribute("type")).map(str::to_string);
+                    }
+                }
+                "tpm" => {
+                    let backend = child(dev, "backend");
+                    hw.tpm = Some(VirtHwTpm {
+                        model: dev.attribute("model").unwrap_or("tpm-tis").to_string(),
+                        backend: backend.and_then(|b| b.attribute("type")).unwrap_or_default().to_string(),
+                        version: backend.and_then(|b| b.attribute("version")).map(str::to_string),
+                    });
+                }
+                "hostdev" => {
+                    if let Some(h) = hostdev_of(dev) {
+                        hw.hostdevs.push(h);
+                    }
+                }
                 _ => {}
             }
         }
@@ -2818,6 +2959,201 @@ pub fn parse_hw_xml(raw: &str, capacity: &[(String, u64)]) -> Result<VirtHwConfi
     Ok(hw)
 }
 
+
+/// A `<hostdev>` as [`VirtHwHostdev`]; none for a kind this does not edit
+/// (SCSI, mediated devices).
+fn hostdev_of(dev: roxmltree::Node<'_, '_>) -> Option<VirtHwHostdev> {
+    let kind = dev.attribute("type")?;
+    let source = child(dev, "source")?;
+    let hex4 = |n: Option<roxmltree::Node<'_, '_>>| {
+        let id = n?.attribute("id")?;
+        let id = id.strip_prefix("0x").unwrap_or(id).to_ascii_lowercase();
+        (id.len() == 4 && id.chars().all(|c| c.is_ascii_hexdigit())).then_some(id)
+    };
+    match kind {
+        "usb" => {
+            let vendor = hex4(child(source, "vendor"));
+            let product = hex4(child(source, "product"));
+            let key = match (&vendor, &product) {
+                (Some(v), Some(p)) => format!("usb:{v}:{p}"),
+                _ => {
+                    let a = child(source, "address")?;
+                    format!("usb@{}.{}", a.attribute("bus")?, a.attribute("device")?)
+                }
+            };
+            Some(VirtHwHostdev { key, kind: kind.into(), vendor, product, address: None })
+        }
+        "pci" => {
+            let a = child(source, "address")?;
+            let num = |attr: &str| {
+                let v = a.attribute(attr)?;
+                u32::from_str_radix(v.strip_prefix("0x").unwrap_or(v), 16).ok()
+            };
+            let address = format!(
+                "{:04x}:{:02x}:{:02x}.{:x}",
+                num("domain").unwrap_or(0),
+                num("bus")?,
+                num("slot")?,
+                num("function").unwrap_or(0)
+            );
+            Some(VirtHwHostdev {
+                key: format!("pci:{address}"),
+                kind: kind.into(),
+                vendor: None,
+                product: None,
+                address: Some(address),
+            })
+        }
+        _ => None,
+    }
+}
+
+/// The values of `<enum name='{name}'>` directly under `parent`.
+fn enum_values(parent: Option<roxmltree::Node<'_, '_>>, name: &str) -> Vec<String> {
+    let Some(parent) = parent else {
+        return Vec::new();
+    };
+    parent
+        .children()
+        .find(|n| n.is_element() && n.tag_name().name() == "enum" && n.attribute("name") == Some(name))
+        .map(|e| {
+            e.children()
+                .filter(|n| n.is_element() && n.tag_name().name() == "value")
+                .filter_map(|n| n.text().map(|t| t.trim().to_string()))
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// `virsh domcapabilities` as [`VirtHwCaps`].
+pub fn parse_domcaps(raw: &str) -> Option<VirtHwCaps> {
+    let doc = parse_xml_doc(raw, "domainCapabilities", "domcapabilities").ok()?;
+    let root = doc.root_element();
+    let supported = |n: Option<roxmltree::Node<'_, '_>>| n.is_some_and(|n| n.attribute("supported") == Some("yes"));
+    let os = child(root, "os");
+    let loader = os.and_then(|o| child(o, "loader"));
+    let devices = child(root, "devices");
+    let dev = |name: &str| devices.and_then(|d| child(d, name));
+    let tpm = dev("tpm");
+    Some(VirtHwCaps {
+        efi: enum_values(os, "firmware").iter().any(|f| f == "efi")
+            || (supported(loader) && loader.is_some_and(|l| l.children().any(|n| n.tag_name().name() == "value"))),
+        secure_boot: enum_values(loader, "secure").iter().any(|v| v == "yes"),
+        tpm_emulator: supported(tpm) && enum_values(tpm, "backendModel").iter().any(|v| v == "emulator"),
+        graphics: if supported(dev("graphics")) { enum_values(dev("graphics"), "type") } else { Vec::new() },
+        video: if supported(dev("video")) { enum_values(dev("video"), "modelType") } else { Vec::new() },
+        disk_buses: enum_values(dev("disk"), "bus"),
+        hostdev: supported(dev("hostdev")),
+    })
+}
+
+/// A host USB device a guest can be given.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtHostUsb {
+    /// `0bda`
+    pub vendor: String,
+    /// `b023`
+    pub product: String,
+    pub vendor_name: Option<String>,
+    pub product_name: Option<String>,
+    pub bus: Option<u32>,
+    pub device: Option<u32>,
+}
+
+/// A host PCI device a guest can be given.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtHostPci {
+    /// `0000:01:00.0`
+    pub address: String,
+    pub vendor: Option<String>,
+    pub product: Option<String>,
+    pub vendor_name: Option<String>,
+    pub product_name: Option<String>,
+    /// `0x030000`
+    pub class: Option<String>,
+    /// None without an IOMMU (or with it off in the firmware)
+    pub iommu_group: Option<u32>,
+    /// How many devices share its IOMMU group: they go to a guest together
+    pub group_size: u32,
+}
+
+/// What [`host_devices_script`] finds.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtHostDevices {
+    pub usb: Vec<VirtHostUsb>,
+    pub pci: Vec<VirtHostPci>,
+    /// Some PCI device has an IOMMU group: the host can pass PCI devices
+    /// through at all. False is VT-d/AMD-Vi off, or no IOMMU.
+    pub iommu: bool,
+}
+
+/// The host's USB and PCI devices, each with its `nodedev-dumpxml`. Parse
+/// with [`parse_host_devices`].
+pub fn host_devices_script() -> String {
+    let mut s = prelude();
+    for (cap, key) in [("usb_device", KEY_HOST_USB), ("pci", KEY_HOST_PCI)] {
+        s.push_str(&format!(
+            "for n in $(virsh --connect {CONNECT_URI} -q nodedev-list --cap {cap} </dev/null 2>/dev/null); do\n{}done\n",
+            item_section(key, "n", "nodedev-dumpxml \"$n\"")
+        ));
+    }
+    s
+}
+
+/// [`host_devices_script`]'s output. Devices whose XML does not read are left
+/// out; a host with none is an empty list.
+pub fn parse_host_devices(raw: &str) -> Result<VirtHostDevices, VirtError> {
+    let secs = sections(raw)?;
+    let mut out = VirtHostDevices::default();
+    let bodies = |key: &str| -> Vec<String> {
+        all_items(&secs, key)
+            .filter_map(|sec| {
+                let (_, body) = split_item(&sec.body);
+                let section = Section { body: body.to_string(), rc: sec.rc };
+                section.ok().ok().map(str::to_string)
+            })
+            .collect()
+    };
+    let hex = |n: Option<roxmltree::Node<'_, '_>>| {
+        let id = n?.attribute("id")?;
+        Some(id.strip_prefix("0x").unwrap_or(id).to_ascii_lowercase())
+    };
+    let name = |n: Option<roxmltree::Node<'_, '_>>| n.and_then(|n| n.text()).map(|t| t.trim().to_string()).filter(|t| !t.is_empty());
+    for body in bodies(KEY_HOST_USB) {
+        let Ok(doc) = parse_xml_doc(&body, "device", "nodedev-dumpxml") else { continue };
+        let Some(cap) = child(doc.root_element(), "capability") else { continue };
+        let (Some(vendor), Some(product)) = (hex(child(cap, "vendor")), hex(child(cap, "product"))) else { continue };
+        out.usb.push(VirtHostUsb {
+            vendor_name: name(child(cap, "vendor")),
+            product_name: name(child(cap, "product")),
+            vendor,
+            product,
+            bus: text_of(cap, "bus").and_then(|v| v.parse().ok()),
+            device: text_of(cap, "device").and_then(|v| v.parse().ok()),
+        });
+    }
+    for body in bodies(KEY_HOST_PCI) {
+        let Ok(doc) = parse_xml_doc(&body, "device", "nodedev-dumpxml") else { continue };
+        let Some(cap) = child(doc.root_element(), "capability") else { continue };
+        let num = |n: &str| text_of(cap, n).and_then(|v| v.parse::<u32>().ok());
+        let (Some(bus), Some(slot)) = (num("bus"), num("slot")) else { continue };
+        let group = child(cap, "iommuGroup");
+        out.pci.push(VirtHostPci {
+            address: format!("{:04x}:{bus:02x}:{slot:02x}.{:x}", num("domain").unwrap_or(0), num("function").unwrap_or(0)),
+            vendor: hex(child(cap, "vendor")),
+            product: hex(child(cap, "product")),
+            vendor_name: name(child(cap, "vendor")),
+            product_name: name(child(cap, "product")),
+            class: text_of(cap, "class"),
+            iommu_group: group.and_then(|g| g.attribute("number")).and_then(|n| n.parse().ok()),
+            group_size: group
+                .map(|g| g.children().filter(|n| n.is_element() && n.tag_name().name() == "address").count() as u32)
+                .unwrap_or(0),
+        });
+    }
+    out.iommu = out.pci.iter().any(|p| p.iommu_group.is_some());
+    Ok(out)
+}
 
 fn info_value<'a>(raw: &'a str, key: &str) -> Option<&'a str> {
     raw.lines().find_map(|l| {
@@ -2862,7 +3198,13 @@ pub fn parse_hardware(raw: &str) -> Result<VirtHardwareInfo, VirtError> {
         .ok()
         .and_then(|doc| child(doc.root_element(), "description").and_then(|d| d.text()).map(str::to_string))
         .filter(|d| !d.is_empty());
+    let caps = secs
+        .iter()
+        .find(|(k, _)| k == KEY_HW_CAPS)
+        .and_then(|(_, s)| s.ok().ok())
+        .and_then(parse_domcaps);
     Ok(VirtHardwareInfo {
+        caps,
         config,
         live,
         config_xml: config_xml.to_string(),
@@ -2963,6 +3305,114 @@ pub enum VirtHwChange {
     /// A new name (`virsh domrename`), which libvirt takes only from a
     /// domain that is not running
     Rename { name: String },
+    /// A disk's bus (as `new_target`, a name on that bus) and cache mode
+    /// (`default` drops it); made from `base_xml`
+    UpdateDisk {
+        target: String,
+        new_target: Option<String>,
+        bus: Option<String>,
+        cache: Option<String>,
+    },
+    /// An interface's MAC and model; made from `base_xml`
+    UpdateNicHardware {
+        mac: String,
+        new_mac: Option<String>,
+        model: Option<String>,
+    },
+    /// UEFI or BIOS, and Secure Boot; made from `base_xml`
+    Firmware { efi: bool, secure_boot: bool },
+    /// The console's protocol and listen address, and the video card; made
+    /// from `base_xml`
+    Display {
+        graphics: Option<String>,
+        listen: Option<String>,
+        video: Option<String>,
+    },
+    AddDevice { device: VirtHwNewDevice },
+    /// Removes the TPM (`tpm`) or a host device by [`VirtHwHostdev::key`];
+    /// made from `base_xml`
+    RemoveDevice { key: String },
+}
+
+/// A device [`VirtHwChange::AddDevice`] adds.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum VirtHwNewDevice {
+    /// A software TPM 2.0 (swtpm)
+    Tpm { model: String },
+    /// A host USB device by vendor and product
+    Usb { vendor: String, product: String },
+    /// A host PCI device by address, `0000:01:00.0`
+    Pci { address: String },
+}
+
+fn is_hex4(s: &str) -> bool {
+    s.len() == 4 && s.chars().all(|c| c.is_ascii_hexdigit())
+}
+
+/// `0000:01:00.0`, lowercase.
+fn pci_parts(a: &str) -> Option<(u32, u32, u32, u32)> {
+    let (dom, rest) = a.split_once(':')?;
+    let (bus, rest) = rest.split_once(':')?;
+    let (slot, func) = rest.split_once('.')?;
+    let ok = |s: &str, n: usize| s.len() == n && s.chars().all(|c| c.is_ascii_digit() || ('a'..='f').contains(&c));
+    if !(ok(dom, 4) && ok(bus, 2) && ok(slot, 2) && ok(func, 1)) {
+        return None;
+    }
+    let h = |s: &str| u32::from_str_radix(s, 16).ok();
+    let f = h(func)?;
+    (f <= 7 && h(slot)? <= 0x1f).then_some((h(dom)?, h(bus)?, h(slot)?, f))
+}
+
+impl VirtHwNewDevice {
+    fn valid(&self) -> bool {
+        match self {
+            VirtHwNewDevice::Tpm { model } => matches!(model.as_str(), "tpm-crb" | "tpm-tis"),
+            VirtHwNewDevice::Usb { vendor, product } => is_hex4(vendor) && is_hex4(product),
+            VirtHwNewDevice::Pci { address } => pci_parts(address).is_some(),
+        }
+    }
+
+    /// The element `attach-device` is given.
+    pub fn xml(&self) -> String {
+        match self {
+            VirtHwNewDevice::Tpm { model } => format!(
+                "<tpm model='{}'><backend type='emulator' version='2.0'/></tpm>",
+                xml_escape(model)
+            ),
+            VirtHwNewDevice::Usb { vendor, product } => format!(
+                "<hostdev mode='subsystem' type='usb' managed='yes'><source><vendor id='0x{vendor}'/><product id='0x{product}'/></source></hostdev>"
+            ),
+            VirtHwNewDevice::Pci { address } => {
+                let (d, b, s, f) = pci_parts(address).unwrap_or_default();
+                format!(
+                    "<hostdev mode='subsystem' type='pci' managed='yes'><source><address domain='0x{d:04x}' bus='0x{b:02x}' slot='0x{s:02x}' function='0x{f:x}'/></source></hostdev>"
+                )
+            }
+        }
+    }
+
+    /// Whether a running domain takes it: USB does; a TPM and a PCI device
+    /// wait for the next start.
+    fn hotplug(&self) -> bool {
+        matches!(self, VirtHwNewDevice::Usb { .. })
+    }
+}
+
+/// A device key [`VirtHwChange::RemoveDevice`] takes.
+fn is_device_key(k: &str) -> bool {
+    if k == "tpm" {
+        return true;
+    }
+    if let Some(rest) = k.strip_prefix("usb:") {
+        return rest.split_once(':').is_some_and(|(v, p)| is_hex4(v) && is_hex4(p));
+    }
+    if let Some(rest) = k.strip_prefix("usb@") {
+        return rest
+            .split_once('.')
+            .is_some_and(|(b, d)| !b.is_empty() && !d.is_empty() && b.chars().chain(d.chars()).all(|c| c.is_ascii_digit()));
+    }
+    k.strip_prefix("pci:").is_some_and(|a| pci_parts(a).is_some())
 }
 
 /// What [`parse_hardware_change`] found.
@@ -3104,6 +3554,66 @@ impl VirtHwChange {
                 // own volume handling trip over anything more.
                 if !is_token(name) || name.len() > 63 || name.starts_with('.') {
                     return bad("name");
+                }
+            }
+            VirtHwChange::UpdateDisk { target, new_target, bus, cache } => {
+                if !is_target(target) || new_target.as_deref().is_some_and(|t| !is_target(t)) {
+                    return bad("disk");
+                }
+                if bus.as_deref().is_some_and(|b| !matches!(b, "virtio" | "scsi" | "sata" | "ide" | "usb")) {
+                    return bad("bus");
+                }
+                if cache
+                    .as_deref()
+                    .is_some_and(|c| !matches!(c, "default" | "none" | "writeback" | "writethrough" | "directsync" | "unsafe"))
+                {
+                    return bad("cache");
+                }
+                if bus.is_some() != new_target.is_some() || (bus.is_none() && cache.is_none()) {
+                    return bad("disk");
+                }
+            }
+            VirtHwChange::UpdateNicHardware { mac, new_mac, model } => {
+                if !is_mac(mac) || model.as_deref().is_some_and(|m| !is_token(m)) {
+                    return bad("interface");
+                }
+                if let Some(m) = new_mac
+                    && (!is_mac(m)
+                        || u8::from_str_radix(&m[..2], 16).is_ok_and(|b| b & 1 == 1)
+                        || m.split(':').all(|p| p == "00"))
+                {
+                    return bad("mac");
+                }
+                if new_mac.is_none() && model.is_none() {
+                    return bad("interface");
+                }
+            }
+            VirtHwChange::Firmware { .. } => {}
+            VirtHwChange::Display { graphics, listen, video } => {
+                if graphics.as_deref().is_some_and(|g| !matches!(g, "vnc" | "spice")) {
+                    return bad("graphics");
+                }
+                if listen.as_deref().is_some_and(|l| l.parse::<std::net::IpAddr>().is_err()) {
+                    return bad("listen");
+                }
+                if video
+                    .as_deref()
+                    .is_some_and(|v| !matches!(v, "virtio" | "qxl" | "vga" | "cirrus" | "bochs" | "vmvga" | "ramfb" | "none"))
+                {
+                    return bad("video");
+                }
+                if graphics.is_none() && listen.is_none() && video.is_none() {
+                    return bad("display");
+                }
+            }
+            VirtHwChange::AddDevice { device } => {
+                if !device.valid() {
+                    return bad("device");
+                }
+            }
+            VirtHwChange::RemoveDevice { key } => {
+                if !is_device_key(key) {
+                    return bad("device");
                 }
             }
         }
@@ -3299,6 +3809,324 @@ pub fn edit_boot_xml(base_xml: &str, order: &[String]) -> Result<String, VirtErr
         message: format!("edited XML: {e}"),
     })?;
     Ok(out)
+}
+
+/// `base_xml` from its `<domain>`, parsed.
+fn domain_doc(base_xml: &str) -> Result<(&str, roxmltree::Document<'_>), VirtError> {
+    let start = base_xml.find("<domain").ok_or_else(|| VirtError::Malformed {
+        message: "no <domain> element".into(),
+    })?;
+    let xml = &base_xml[start..];
+    let doc = roxmltree::Document::parse(xml).map_err(|e| VirtError::Malformed {
+        message: format!("dumpxml: {e}"),
+    })?;
+    Ok((xml, doc))
+}
+
+/// Checks an edit still reads as a domain before it is handed to `define`.
+fn edited(xml: &str, edits: Vec<(std::ops::Range<usize>, String)>) -> Result<String, VirtError> {
+    let out = splice(xml, edits);
+    roxmltree::Document::parse(&out).map_err(|e| VirtError::Malformed {
+        message: format!("edited XML: {e}"),
+    })?;
+    Ok(out)
+}
+
+/// Where `node`'s start tag is: up to its first child, or all of it for an
+/// element with none.
+fn start_tag_range(node: roxmltree::Node<'_, '_>) -> std::ops::Range<usize> {
+    match node.first_child() {
+        Some(c) => node.range().start..c.range().start,
+        None => node.range(),
+    }
+}
+
+/// `node`'s start tag rewritten: its attributes but `skip`, then `extra`. An
+/// element with no children comes out self-closing.
+fn start_tag(node: roxmltree::Node<'_, '_>, skip: &[&str], extra: &[(&str, String)]) -> String {
+    let close = if node.first_child().is_none() { "/" } else { "" };
+    format!("<{}{}{close}>", node.tag_name().name(), attrs_xml(node, skip, extra))
+}
+
+fn devices_of<'a, 'i>(root: roxmltree::Node<'a, 'i>) -> Result<roxmltree::Node<'a, 'i>, VirtError> {
+    child(root, "devices").ok_or_else(|| VirtError::Malformed {
+        message: "no <devices> element".into(),
+    })
+}
+
+fn not_found(what: &str) -> VirtError {
+    VirtError::Malformed {
+        message: format!("no {what} in the definition"),
+    }
+}
+
+/// `base_xml` with disk `target`'s bus (and name on it) and cache mode
+/// changed. A new bus drops the disk's `<address>`: the old controller's
+/// slot means nothing on another, and libvirt picks one.
+pub fn edit_disk_xml(
+    base_xml: &str,
+    target: &str,
+    new_target: Option<&str>,
+    bus: Option<&str>,
+    cache: Option<&str>,
+) -> Result<String, VirtError> {
+    let (xml, doc) = domain_doc(base_xml)?;
+    let devices = devices_of(doc.root_element())?;
+    let disk = devices
+        .children()
+        .filter(|n| n.is_element() && n.tag_name().name() == "disk")
+        .find(|n| child(*n, "target").and_then(|t| t.attribute("dev")) == Some(target))
+        .ok_or_else(|| not_found(&format!("disk {target}")))?;
+    let mut edits = Vec::new();
+    if let (Some(new_target), Some(bus)) = (new_target, bus) {
+        let t = child(disk, "target").ok_or_else(|| not_found("disk target"))?;
+        edits.push((
+            start_tag_range(t),
+            start_tag(t, &["dev", "bus"], &[("dev", new_target.to_string()), ("bus", bus.to_string())]),
+        ));
+        if let Some(a) = child(disk, "address") {
+            edits.push((a.range(), String::new()));
+        }
+    }
+    if let Some(cache) = cache {
+        let extra: Vec<(&str, String)> = if cache == "default" { vec![] } else { vec![("cache", cache.to_string())] };
+        match child(disk, "driver") {
+            Some(d) => edits.push((start_tag_range(d), start_tag(d, &["cache"], &extra))),
+            None if cache != "default" => {
+                let at = start_tag_range(disk).end;
+                edits.push((at..at, format!("<driver name='qemu' cache='{}'/>", xml_escape(cache))));
+            }
+            None => {}
+        }
+    }
+    edited(xml, edits)
+}
+
+/// `base_xml` with the interface `mac` given `new_mac` and `model`.
+pub fn edit_nic_hardware_xml(
+    base_xml: &str,
+    mac: &str,
+    new_mac: Option<&str>,
+    model: Option<&str>,
+) -> Result<String, VirtError> {
+    let (xml, doc) = domain_doc(base_xml)?;
+    let devices = devices_of(doc.root_element())?;
+    let nic = devices
+        .children()
+        .filter(|n| n.is_element() && n.tag_name().name() == "interface")
+        .find(|n| {
+            child(*n, "mac")
+                .and_then(|m| m.attribute("address"))
+                .is_some_and(|m| m.eq_ignore_ascii_case(mac))
+        })
+        .ok_or_else(|| not_found(&format!("interface {mac}")))?;
+    let mac_node = child(nic, "mac").ok_or_else(|| not_found("mac"))?;
+    let mut edits = Vec::new();
+    if let Some(new_mac) = new_mac {
+        edits.push((
+            start_tag_range(mac_node),
+            start_tag(mac_node, &["address"], &[("address", new_mac.to_ascii_lowercase())]),
+        ));
+    }
+    if let Some(model) = model {
+        match child(nic, "model") {
+            Some(m) => edits.push((start_tag_range(m), start_tag(m, &["type"], &[("type", model.to_string())]))),
+            None => {
+                let at = mac_node.range().end;
+                edits.push((at..at, format!("<model type='{}'/>", xml_escape(model))));
+            }
+        }
+    }
+    edited(xml, edits)
+}
+
+/// [`edit_firmware_xml`]'s result.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FirmwareEdit {
+    /// The definition to `define`.
+    pub xml: String,
+    /// The variables file to delete once it is defined: the one a Secure
+    /// Boot change must not reuse, or the one UEFI leaves behind. Only ever
+    /// a path under libvirt's own NVRAM directory ([`is_libvirt_nvram`]).
+    pub drop_vars: Option<String>,
+}
+
+/// Whether `path` is a variables file in libvirt's NVRAM directory — the
+/// system one or a session's — and nothing else: the only files a firmware
+/// change deletes, whatever a definition written elsewhere says.
+pub fn is_libvirt_nvram(path: &str) -> bool {
+    path.starts_with('/')
+        && path.ends_with(".fd")
+        && path.contains("/libvirt/qemu/nvram/")
+        && !path.split('/').any(|seg| seg == "..")
+        && !path.chars().any(char::is_control)
+}
+
+/// `base_xml` booting from UEFI or BIOS, with Secure Boot or without, by
+/// firmware autoselection: `<os firmware='efi'>` with the features asked
+/// for, and no `<loader>` of its own, which would pin the old choice. Secure
+/// Boot needs SMM, added where the definition lacks it.
+///
+/// A guest keeps one variables file, at one path. libvirt reuses that file
+/// whatever template made it, and Secure Boot's keys are enrolled only when
+/// one is made, so a change of Secure Boot keeps the path and deletes the
+/// file ([`FirmwareEdit::drop_vars`]): libvirt makes it again from the right
+/// template at the next start. Leaving UEFI deletes it too. Keeping the old
+/// one for going back left a file per switch that nothing ever removed —
+/// deleting the guest removes only the file its definition names.
+pub fn edit_firmware_xml(
+    base_xml: &str,
+    efi: bool,
+    secure_boot: bool,
+) -> Result<FirmwareEdit, VirtError> {
+    let (xml, doc) = domain_doc(base_xml)?;
+    let root = doc.root_element();
+    let os = child(root, "os").ok_or_else(|| not_found("<os>"))?;
+    let before = parse_hw_xml(base_xml, &[])?;
+    let vars = child(os, "nvram")
+        .and_then(|n| n.text())
+        .map(str::trim)
+        .filter(|p| is_libvirt_nvram(p));
+    let drop_vars = match vars {
+        Some(path) if before.efi && (!efi || before.secure_boot != secure_boot) => {
+            Some(path.to_string())
+        }
+        _ => None,
+    };
+    let mut edits = Vec::new();
+    let extra: Vec<(&str, String)> = if efi { vec![("firmware", "efi".into())] } else { vec![] };
+    edits.push((start_tag_range(os), start_tag(os, &["firmware"], &extra)));
+    for name in ["loader", "nvram", "firmware"] {
+        for n in os.children().filter(|n| n.is_element() && n.tag_name().name() == name) {
+            edits.push((n.range(), String::new()));
+        }
+    }
+    let secure = efi && secure_boot;
+    if efi {
+        let yes = |on: bool| if on { "yes" } else { "no" };
+        let at = start_tag_range(os).end;
+        // An `<os>` written `<os/>` has no inside to put it in.
+        if os.first_child().is_none() {
+            return Err(not_found("<os> contents"));
+        }
+        edits.push((
+            at..at,
+            format!(
+                "<firmware><feature enabled='{}' name='enrolled-keys'/><feature enabled='{}' name='secure-boot'/></firmware>",
+                yes(secure),
+                yes(secure)
+            ),
+        ));
+        // The same path either way: made again there when dropped.
+        if let Some(path) = vars {
+            edits.push((at..at, format!("<nvram>{}</nvram>", xml_escape(&path))));
+        }
+    }
+    if secure {
+        match child(root, "features") {
+            Some(f) if child(f, "smm").is_none() => match closing_tag_at(xml, f) {
+                Some(at) => edits.push((at..at, "<smm state='on'/>".into())),
+                None => edits.push((f.range(), "<features><smm state='on'/></features>".into())),
+            },
+            Some(_) => {}
+            None => {
+                let at = os.range().end;
+                edits.push((at..at, "\n  <features><smm state='on'/></features>".into()));
+            }
+        }
+    }
+    Ok(FirmwareEdit {
+        xml: edited(xml, edits)?,
+        drop_vars,
+    })
+}
+
+/// `base_xml` with the console's protocol and listen address, and the
+/// primary video card, changed. The `<graphics>` keeps what it had besides
+/// (a VNC password, a keymap); its port goes back to automatic.
+pub fn edit_display_xml(
+    base_xml: &str,
+    graphics: Option<&str>,
+    listen: Option<&str>,
+    video: Option<&str>,
+) -> Result<String, VirtError> {
+    let (xml, doc) = domain_doc(base_xml)?;
+    let devices = devices_of(doc.root_element())?;
+    let mut edits = Vec::new();
+    let end = closing_tag_at(xml, devices).ok_or_else(|| not_found("</devices>"))?;
+    if graphics.is_some() || listen.is_some() {
+        let g = devices
+            .children()
+            .find(|n| n.is_element() && n.tag_name().name() == "graphics");
+        let kind = graphics
+            .map(str::to_string)
+            .or_else(|| g.and_then(|g| g.attribute("type")).map(str::to_string))
+            .unwrap_or_else(|| "vnc".into());
+        let address = listen
+            .map(str::to_string)
+            .or_else(|| {
+                g.and_then(|g| g.attribute("listen").or_else(|| child(g, "listen").and_then(|l| l.attribute("address"))))
+                    .map(str::to_string)
+            })
+            .unwrap_or_else(|| "127.0.0.1".into());
+        let skip = ["type", "port", "autoport", "listen", "tlsPort", "websocket"];
+        let extra = [("type", kind), ("autoport", "yes".to_string()), ("listen", address.clone())];
+        let attrs = match g {
+            Some(g) => attrs_xml(g, &skip, &extra),
+            None => extra.iter().map(|(k, v)| format!(" {k}='{}'", xml_escape(v))).collect(),
+        };
+        let element = format!("<graphics{attrs}><listen type='address' address='{}'/></graphics>", xml_escape(&address));
+        match g {
+            Some(g) => edits.push((g.range(), element)),
+            None => edits.push((end..end, element)),
+        }
+    }
+    if let Some(video) = video {
+        let model = if video == "none" {
+            "<model type='none'/>".to_string()
+        } else {
+            format!("<model type='{}' heads='1' primary='yes'/>", xml_escape(video))
+        };
+        let cards: Vec<_> = devices
+            .children()
+            .filter(|n| n.is_element() && n.tag_name().name() == "video")
+            .collect();
+        let primary = cards
+            .iter()
+            .find(|v| child(**v, "model").and_then(|m| m.attribute("primary")) == Some("yes"))
+            .or(cards.first());
+        match primary.and_then(|v| child(*v, "model").map(|m| (*v, m))) {
+            Some((_, m)) => edits.push((m.range(), model)),
+            None => match primary {
+                Some(v) => match closing_tag_at(xml, *v) {
+                    Some(at) => edits.push((at..at, model)),
+                    None => edits.push((v.range(), format!("<video>{model}</video>"))),
+                },
+                None => edits.push((end..end, format!("<video>{model}</video>"))),
+            },
+        }
+    }
+    edited(xml, edits)
+}
+
+/// The element for a device key in `base_xml`: the `<tpm>`, or a
+/// `<hostdev>` by [`VirtHwHostdev::key`].
+fn device_node<'a, 'i>(devices: roxmltree::Node<'a, 'i>, key: &str) -> Option<roxmltree::Node<'a, 'i>> {
+    devices.children().filter(|n| n.is_element()).find(|n| match n.tag_name().name() {
+        "tpm" => key == "tpm",
+        "hostdev" => hostdev_of(*n).is_some_and(|h| h.key == key),
+        _ => false,
+    })
+}
+
+/// `base_xml` without the device `key`, and that device's element as
+/// written, for the running domain's `detach-device`.
+pub fn remove_device_xml(base_xml: &str, key: &str) -> Result<(String, String), VirtError> {
+    let (xml, doc) = domain_doc(base_xml)?;
+    let devices = devices_of(doc.root_element())?;
+    let node = device_node(devices, key).ok_or_else(|| not_found(key))?;
+    let element = xml[node.range()].to_string();
+    Ok((edited(xml, vec![(node.range(), String::new())])?, element))
 }
 
 /// An interface's XML for `update-device`, which replaces the whole
@@ -3542,6 +4370,57 @@ pub fn hardware_change_script(
         }
         VirtHwChange::Rename { name } => {
             s.push_str(&hw_step(&format!("domrename {d} {}", q(name))));
+        }
+        VirtHwChange::UpdateDisk { target, new_target, bus, cache } => {
+            let base = base()?;
+            let xml = edit_disk_xml(base, target, new_target.as_deref(), bus.as_deref(), cache.as_deref())?;
+            s.push_str(&hw_guard(domain, base));
+            define(&mut s, &xml);
+        }
+        VirtHwChange::UpdateNicHardware { mac, new_mac, model } => {
+            let base = base()?;
+            let xml = edit_nic_hardware_xml(base, mac, new_mac.as_deref(), model.as_deref())?;
+            s.push_str(&hw_guard(domain, base));
+            define(&mut s, &xml);
+        }
+        VirtHwChange::Firmware { efi, secure_boot } => {
+            let base = base()?;
+            let edit = edit_firmware_xml(base, *efi, *secure_boot)?;
+            s.push_str(&hw_guard(domain, base));
+            define(&mut s, &edit.xml);
+            // After the definition stopped naming its old contents: a failed
+            // define (the step exits) keeps the file it still uses.
+            if let Some(path) = &edit.drop_vars {
+                s.push_str(&format!(
+                    "echo '{}'\nout=$(rm -f -- {} 2>&1); r=$?\nprintf '%s\\n{RC_PREFIX}%s\\n' \"$out\" \"$r\"\n",
+                    script::cmd_marker(KEY_HW_STEP),
+                    q(path),
+                ));
+            }
+        }
+        VirtHwChange::Display { graphics, listen, video } => {
+            let base = base()?;
+            let xml = edit_display_xml(base, graphics.as_deref(), listen.as_deref(), video.as_deref())?;
+            s.push_str(&hw_guard(domain, base));
+            define(&mut s, &xml);
+        }
+        VirtHwChange::AddDevice { device } => {
+            let xml = device.xml();
+            s.push_str(&hw_step_with_file(&xml, &format!("attach-device {d} --file \"$f\" --config"), false));
+            if running && device.hotplug() {
+                s.push_str(&hw_step_with_file(&xml, &format!("attach-device {d} --file \"$f\" --live"), true));
+            }
+        }
+        VirtHwChange::RemoveDevice { key } => {
+            let base = base()?;
+            let (xml, element) = remove_device_xml(base, key)?;
+            s.push_str(&hw_guard(domain, base));
+            define(&mut s, &xml);
+            // USB goes from the running guest too; a TPM and a PCI device
+            // stay until it stops, as the pending list says.
+            if running && key.starts_with("usb") {
+                s.push_str(&hw_step_with_file(&element, &format!("detach-device {d} --file \"$f\" --live"), true));
+            }
         }
     }
     Ok(s)

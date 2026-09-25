@@ -63,7 +63,28 @@ abstract class VirtHardware with _$VirtHardware {
     /// The configuration as the host writes it — `qm config`'s lines, the
     /// persistent XML — for the view to show as it is.
     String? configText,
+
+    /// UEFI or BIOS; null for a container, which has neither.
+    VirtHwFirmware? firmware,
+
+    /// The console and video card; null for a container.
+    VirtHwDisplay? display,
+
+    /// Host USB and PCI devices given to the guest, and its TPM.
+    @Default(<VirtHwDevice>[]) List<VirtHwDevice> devices,
+
+    /// What this guest can be changed to, on this host.
+    @Default(VirtHwSupport()) VirtHwSupport support,
   }) = _VirtHardware;
+
+  VirtHwDevice? device(String key) {
+    for (final d in devices) {
+      if (d.key == key) return d;
+    }
+    return null;
+  }
+
+  bool get hasTpm => devices.any((d) => d.kind == VirtHwDeviceKind.tpm);
 
   VirtHwDisk? disk(String key) {
     for (final d in disks) {
@@ -156,6 +177,9 @@ abstract class VirtHwDisk with _$VirtHwDisk {
     String? bus,
     String? format,
     @Default(false) bool readonly,
+
+    /// The cache mode; null for the host's default.
+    String? cache,
   }) = _VirtHwDisk;
 }
 
@@ -195,6 +219,117 @@ abstract class VirtPendingField with _$VirtPendingField {
     /// Goes at the next start.
     @Default(false) bool delete,
   }) = _VirtPendingField;
+}
+
+@freezed
+abstract class VirtHwFirmware with _$VirtHwFirmware {
+  const factory VirtHwFirmware({
+    required bool uefi,
+    @Default(false) bool secureBoot,
+
+    /// PVE: the storage the EFI variables disk is on; null without one.
+    String? varsStorage,
+  }) = _VirtHwFirmware;
+}
+
+@freezed
+abstract class VirtHwDisplay with _$VirtHwDisplay {
+  const factory VirtHwDisplay({
+    /// `vnc`, `spice`; null where the host decides (PVE: VNC through its
+    /// own proxy, SPICE with a `qxl` card).
+    String? protocol,
+
+    /// The address the console listens on (libvirt); null for the default.
+    String? listen,
+
+    /// The video card: libvirt's model, PVE's `vga` type.
+    String? gpu,
+    int? port,
+  }) = _VirtHwDisplay;
+}
+
+enum VirtHwDeviceKind { usb, pci, tpm }
+
+/// A host device given to the guest, or its TPM.
+@freezed
+abstract class VirtHwDevice with _$VirtHwDevice {
+  const factory VirtHwDevice({
+    /// PVE option (`usb0`, `hostpci0`, `tpmstate0`); libvirt
+    /// `usb:0bda:b023`, `pci:0000:01:00.0`, `tpm`.
+    required String key,
+    required VirtHwDeviceKind kind,
+
+    /// `0bda:b023`, `0000:01:00.0`, a PVE mapping's name, or the TPM's
+    /// model and version.
+    String? detail,
+
+    /// Given through a PVE resource mapping rather than by address.
+    @Default(false) bool mapping,
+  }) = _VirtHwDevice;
+}
+
+/// What a guest's hardware can be changed to, on its host: the choices the
+/// view offers, and none it cannot make.
+@freezed
+abstract class VirtHwSupport with _$VirtHwSupport {
+  const factory VirtHwSupport({
+    /// Disk buses; empty: the bus is not changed here.
+    @Default(<String>[]) List<String> buses,
+    @Default(<String>[]) List<String> caches,
+    @Default(<String>[]) List<String> nicModels,
+
+    /// A NIC's MAC can be set.
+    @Default(false) bool mac,
+
+    /// Console protocols to choose from; empty where the host has one.
+    @Default(<String>[]) List<String> protocols,
+
+    /// The console's listen address can be set (libvirt).
+    @Default(false) bool listen,
+    @Default(<String>[]) List<String> gpus,
+    @Default(false) bool uefi,
+    @Default(false) bool secureBoot,
+    @Default(false) bool tpm,
+    @Default(false) bool usb,
+    @Default(false) bool pci,
+  }) = _VirtHwSupport;
+}
+
+/// A host device a guest can be given.
+@freezed
+abstract class VirtHostDevice with _$VirtHostDevice {
+  const factory VirtHostDevice({
+    /// What attaching sends: `0bda:b023`, `0000:01:00.0`, or a PVE
+    /// mapping's name.
+    required String id,
+    required String label,
+    String? detail,
+
+    /// A PVE resource mapping rather than a raw device.
+    @Default(false) bool mapping,
+    int? iommuGroup,
+
+    /// Devices sharing its IOMMU group, itself included: all of them go to
+    /// the guest together.
+    @Default(0) int groupSize,
+  }) = _VirtHostDevice;
+}
+
+/// The host devices a guest can be given, and why there may be none.
+@freezed
+abstract class VirtHostDevices with _$VirtHostDevices {
+  const factory VirtHostDevices({
+    @Default(<VirtHostDevice>[]) List<VirtHostDevice> usb,
+    @Default(<VirtHostDevice>[]) List<VirtHostDevice> pci,
+
+    /// The host has an IOMMU on; false: VT-d/AMD-Vi is off or absent, and
+    /// a PCI device given to a guest keeps it from starting.
+    @Default(true) bool iommu,
+
+    /// PVE: this login may only use resource mappings (only root@pam gives
+    /// a guest a raw device).
+    @Default(false) bool mappingsOnly,
+  }) = _VirtHostDevices;
 }
 
 @freezed
@@ -344,6 +479,72 @@ final class VirtHwSetProtection extends VirtHwChange {
   final bool on;
 }
 
+/// A disk's bus and cache mode; null keeps it. A new bus is a new name on
+/// it, and waits for the guest to be stopped.
+final class VirtHwUpdateDisk extends VirtHwChange {
+  const VirtHwUpdateDisk({required this.key, this.bus, this.cache});
+
+  final String key;
+  final String? bus;
+
+  /// `default` for the host's.
+  final String? cache;
+}
+
+/// A NIC's model and MAC; null keeps it.
+final class VirtHwSetNicHardware extends VirtHwChange {
+  const VirtHwSetNicHardware({required this.key, this.model, this.mac});
+
+  final String key;
+  final String? model;
+  final String? mac;
+}
+
+/// UEFI (with Secure Boot or without) or BIOS.
+final class VirtHwSetFirmware extends VirtHwChange {
+  const VirtHwSetFirmware({
+    required this.uefi,
+    this.secureBoot = false,
+    this.storage,
+  });
+
+  final bool uefi;
+  final bool secureBoot;
+
+  /// PVE: the storage's name (`local-lvm`) a new EFI variables disk goes
+  /// on.
+  final String? storage;
+}
+
+/// The console's protocol and listen address, and the video card; null
+/// keeps it.
+final class VirtHwSetDisplay extends VirtHwChange {
+  const VirtHwSetDisplay({this.protocol, this.listen, this.gpu});
+
+  final String? protocol;
+  final String? listen;
+  final String? gpu;
+}
+
+/// A host device, or a TPM.
+final class VirtHwAddDevice extends VirtHwChange {
+  const VirtHwAddDevice({required this.kind, this.host, this.storage});
+
+  final VirtHwDeviceKind kind;
+
+  /// The device, for USB and PCI.
+  final VirtHostDevice? host;
+
+  /// PVE: the storage's name (`local-lvm`) the TPM's state goes on.
+  final String? storage;
+}
+
+final class VirtHwRemoveDevice extends VirtHwChange {
+  const VirtHwRemoveDevice({required this.key});
+
+  final String key;
+}
+
 /// Drops pending changes to [keys] (PVE `revert`).
 final class VirtHwRevert extends VirtHwChange {
   const VirtHwRevert(this.keys);
@@ -394,6 +595,28 @@ enum VirtHwIssue {
 
   /// Longer than a note is kept, or with control characters in it.
   description,
+
+  /// Not a unicast MAC address.
+  mac,
+
+  /// A disk moves to another bus, or the firmware changes, only while the
+  /// guest is stopped.
+  stopFirst,
+
+  /// A TPM or an EFI disk needs a storage to go on.
+  storageMissing,
+
+  /// No device picked, or a second TPM.
+  device,
+}
+
+/// A unicast MAC: six octets, the first even, not all zero.
+bool virtIsUnicastMac(String mac) {
+  if (!RegExp(r'^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$').hasMatch(mac)) {
+    return false;
+  }
+  if (int.parse(mac.substring(0, 2), radix: 16).isOdd) return false;
+  return mac.replaceAll(':', '').replaceAll('0', '').isNotEmpty;
 }
 
 /// The longest note kept with a guest here: PVE's `description` is capped at
@@ -465,7 +688,28 @@ VirtHwIssue? virtHwIssue(
           text.runes.any((r) => r < 0x20 && r != 0x0a && r != 0x09)) {
         return VirtHwIssue.description;
       }
+    case VirtHwUpdateDisk(:final bus):
+      if (bus != null && hw.running) return VirtHwIssue.stopFirst;
+    case VirtHwSetNicHardware(:final mac):
+      if (mac != null && !virtIsUnicastMac(mac)) return VirtHwIssue.mac;
+    case VirtHwSetFirmware(:final uefi, :final storage):
+      if (hw.running) return VirtHwIssue.stopFirst;
+      if (host == VirtHostKind.pve && uefi && storage == null) {
+        return VirtHwIssue.storageMissing;
+      }
+    case VirtHwAddDevice(:final kind, host: final device, :final storage):
+      switch (kind) {
+        case VirtHwDeviceKind.tpm:
+          if (hw.hasTpm) return VirtHwIssue.device;
+          if (host == VirtHostKind.pve && storage == null) {
+            return VirtHwIssue.storageMissing;
+          }
+        case VirtHwDeviceKind.usb || VirtHwDeviceKind.pci:
+          if (device == null) return VirtHwIssue.device;
+      }
     case VirtHwRemoveDisk() ||
+        VirtHwSetDisplay() ||
+        VirtHwRemoveDevice() ||
         VirtHwSetMedia() ||
         VirtHwAddNic() ||
         VirtHwRemoveNic() ||

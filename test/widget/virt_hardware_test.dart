@@ -15,6 +15,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/data/model/server/pve_config.dart';
+import 'package:server_box/data/model/virt/pve_resources.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_hardware.dart';
@@ -103,6 +104,13 @@ const _vm = VirtHardware(
     ),
   ],
   boot: ['scsi0', 'ide2', 'net0'],
+  firmware: VirtHwFirmware(uefi: true, secureBoot: true, varsStorage: 'local-lvm'),
+  display: VirtHwDisplay(gpu: 'std'),
+  devices: [
+    VirtHwDevice(key: 'usb0', kind: VirtHwDeviceKind.usb, detail: '0bda:b023'),
+    VirtHwDevice(key: 'tpmstate0', kind: VirtHwDeviceKind.tpm, detail: 'TPM v2.0'),
+  ],
+  support: PveResources.pveQemuSupport,
   pending: [
     VirtPendingField(key: 'cores', current: '1', pending: '2'),
     VirtPendingField(key: 'boot', current: 'order=scsi0', pending: 'order=scsi0;ide2;net0'),
@@ -157,7 +165,25 @@ const _stopped = VirtHardware(
   name: 'db-02',
   protection: true,
   revision: 'digest-3',
+  // An EFI disk left from before: switching back finds where it goes.
+  firmware: VirtHwFirmware(uefi: false, varsStorage: 'local-lvm'),
+  display: VirtHwDisplay(protocol: 'vnc', listen: '0.0.0.0', gpu: 'virtio'),
+  // As libvirt reports one: listen address and protocol to choose.
+  support: VirtHwSupport(
+    buses: ['virtio', 'scsi', 'sata'],
+    caches: ['default', 'none', 'writeback'],
+    nicModels: ['virtio', 'e1000e'],
+    mac: true,
+    protocols: ['vnc', 'spice'],
+    listen: true,
+    gpus: ['virtio', 'vga'],
+    uefi: true,
+    secureBoot: true,
+    pci: true,
+  ),
 );
+
+var _hostDevs = const VirtHostDevices();
 
 final _hardware = <String, VirtHardware>{};
 final _changes = <(String, VirtHwChange)>[];
@@ -219,6 +245,9 @@ class _FakeHost extends VirtHostNotifier {
   }
 
   @override
+  Future<VirtHostDevices> hostDevices(String guestId) async => _hostDevs;
+
+  @override
   Future<void> restartToApply(String guestId) async =>
       _calls.add('restart $guestId');
 
@@ -248,6 +277,7 @@ void main() {
       ..['qemu/101'] = _stopped;
     _changes.clear();
     _calls.clear();
+    _hostDevs = const VirtHostDevices();
   });
 
   tearDown(() async {
@@ -322,7 +352,8 @@ void main() {
     for (final t in [
       l10n.virtHwProcessor,
       l10n.virtHwNics,
-      l10n.virtHwCdrom,
+      l10n.virtHwDevices,
+      l10n.virtHwDisplay,
       l10n.virtHwBoot,
       l10n.virtHwConfigFile,
     ]) {
@@ -428,7 +459,7 @@ void main() {
 
   testWidgets('a wide window indexes the groups', (tester) async {
     await open(tester, 'web-01', wide: true);
-    for (final g in ['cpu', 'mem', 'disks', 'nics', 'cdrom', 'boot', 'config']) {
+    for (final g in ['cpu', 'mem', 'disks', 'nics', 'devices', 'display', 'boot', 'config']) {
       expect(_key('hw:index:$g'), findsOneWidget, reason: g);
     }
     expect(tester.getRect(_key('hw:disc:config')).top, greaterThan(900));
@@ -525,11 +556,117 @@ void main() {
       expect(_calls, ['delete qemu/101 disks=true']);
     });
   });
+
+  testWidgets('disks: the bus waits for a stop, the cache is set at once', (
+    tester,
+  ) async {
+    await open(tester, 'web-01');
+    await tap(tester, _key('hw:disc:scsi0'));
+    // Running: the bus is shown, not offered, and says why.
+    expect(text(app_locale.l10n.virtHwBusStopped), findsOneWidget);
+    await tap(tester, _segOpt('disk:scsi0:bus', 'virtio'));
+    expect(_changes, isEmpty);
+    await tap(tester, _segOpt('disk:scsi0:cache', 'writeback'));
+    final (_, change) = _changes.single;
+    expect(change, isA<VirtHwUpdateDisk>());
+    change as VirtHwUpdateDisk;
+    expect((change.key, change.bus, change.cache), ('scsi0', null, 'writeback'));
+  });
+
+  testWidgets('NICs: the model, and a MAC checked before it is sent', (
+    tester,
+  ) async {
+    await open(tester, 'web-01');
+    await tap(tester, _key('hw:disc:net0'));
+    await tap(tester, _segOpt('nic:net0:model', 'e1000'));
+    final model = _changes.single.$2 as VirtHwSetNicHardware;
+    expect((model.key, model.model, model.mac), ('net0', 'e1000', null));
+
+    await tap(tester, _key('nic:net0:mac'));
+    await tester.enterText(find.byType(TextField).last, '01:00:00:00:00:01');
+    await _settle(tester);
+    // Multicast: said, and the save refused.
+    expect(text(app_locale.l10n.virtHwIssueMac), findsWidgets);
+    await tester.enterText(find.byType(TextField).last, 'bc:24:11:00:00:02');
+    await _settle(tester);
+    await tester.tap(find.text(libL10n.save));
+    await _settle(tester);
+    final mac = _changes.last.$2 as VirtHwSetNicHardware;
+    expect(mac.mac, 'bc:24:11:00:00:02');
+  });
+
+  testWidgets('devices: passthrough and the TPM listed, a USB device added', (
+    tester,
+  ) async {
+    _hostDevs = const VirtHostDevices(
+      usb: [VirtHostDevice(id: 'bt', label: 'bt', detail: 'node=pve,id=0bda:b023', mapping: true)],
+      mappingsOnly: true,
+    );
+    await open(tester, 'web-01');
+    expect(_key('hw:disc:usb0'), findsOneWidget);
+    expect(_key('hw:disc:tpmstate0'), findsOneWidget);
+    // A second TPM is not offered: only USB and PCI.
+    await tap(tester, _key('hw:add:dev'));
+    expect(_segOpt('dev:add:kind', 'TPM'), findsNothing);
+    expect(text(app_locale.l10n.virtHwMappingsOnly), findsOneWidget);
+    await tap(tester, _key('hw:dev:pick:bt'));
+    await tap(tester, _key('hw:dev:add'));
+    final add = _changes.single.$2 as VirtHwAddDevice;
+    expect((add.kind, add.host?.id, add.host?.mapping), (VirtHwDeviceKind.usb, 'bt', true));
+  });
+
+  testWidgets('PCI without an IOMMU says so, as a warning, not an error', (
+    tester,
+  ) async {
+    _hostDevs = const VirtHostDevices(
+      iommu: false,
+      pci: [VirtHostDevice(id: '0000:00:14.0', label: 'xHCI', detail: '0000:00:14.0')],
+    );
+    await open(tester, 'db-02');
+    await tap(tester, _key('hw:add:dev'));
+    expect(_key('hw:dev:iommu-off'), findsOneWidget);
+    expect(text(app_locale.l10n.virtHwIommuOffTitle), findsOneWidget);
+    // Still offered: the configuration is the user's to write.
+    expect(_key('hw:dev:pick:0000:00:14.0'), findsOneWidget);
+  });
+
+  testWidgets('display: listening everywhere is warned about', (tester) async {
+    await open(tester, 'db-02');
+    expect(_key('hw:display:exposed'), findsOneWidget);
+    await tap(tester, _segOpt('display:listen', '127.0.0.1'));
+    final d = _changes.single.$2 as VirtHwSetDisplay;
+    expect((d.listen, d.protocol, d.gpu), ('127.0.0.1', null, null));
+    await tap(tester, _segOpt('display:protocol', 'SPICE'));
+    expect((_changes.last.$2 as VirtHwSetDisplay).protocol, 'spice');
+  });
+
+  testWidgets('firmware: asked first, only while stopped', (tester) async {
+    await open(tester, 'web-01');
+    // Running: neither choice switches.
+    await tap(tester, _key('hw:fw:bios'));
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(text(app_locale.l10n.virtHwFirmwareStopped), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+
+    await open(tester, 'db-02');
+    await tap(tester, _key('hw:fw:uefi'));
+    expect(text(app_locale.l10n.virtHwFirmwareWarnBody), findsWidgets);
+    await tester.tap(find.text(libL10n.ok));
+    await _settle(tester);
+    final fw = _changes.single.$2 as VirtHwSetFirmware;
+    expect((fw.uefi, fw.secureBoot, fw.storage), (true, false, 'local-lvm'));
+  });
 }
 
 
 /// Built, whether scrolled to or not.
 Finder _key(String key) => find.byKey(ValueKey(key), skipOffstage: false);
+
+/// An option of the segmented row [key].
+Finder _segOpt(String key, String label) => find.descendant(
+  of: _key('hw:seg:$key'),
+  matching: find.text(label, skipOffstage: false),
+);
 
 Future<void> _settle(WidgetTester tester) async {
   for (var i = 0; i < 8; i++) {

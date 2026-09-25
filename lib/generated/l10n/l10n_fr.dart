@@ -3827,7 +3827,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get pveTokenTipHardware =>
-      'Modifier le matériel requiert VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network et VM.Config.Options ; les nouveaux disques et interfaces requièrent aussi Datastore.AllocateSpace et SDN.Use.';
+      'Modifier le matériel requiert VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network et VM.Config.Options ; les nouveaux disques et interfaces requièrent aussi Datastore.AllocateSpace et SDN.Use. La carte graphique et les périphériques USB et PCI demandent aussi VM.Config.HWType ; un périphérique transmis par un mappage de ressources demande Mapping.Use sur celui-ci, et Mapping.Audit pour lister les mappages.';
 
   @override
   String get virtErrConflict => 'Modifié ailleurs';
@@ -4150,4 +4150,143 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get virtHwVolumeKept =>
       'Retiré, mais l\'invité en cours utilise encore le disque, donc son volume a été conservé. Il sera détaché au prochain démarrage.';
+
+  @override
+  String get virtHwBus => 'Bus';
+
+  @override
+  String get virtHwCache => 'Cache';
+
+  @override
+  String get virtHwBusStopped =>
+      'Le bus ne change que lorsque l\'invité est arrêté.';
+
+  @override
+  String get virtHwMacGenerate => 'Générer';
+
+  @override
+  String get virtHwIssueMac =>
+      'Doit être une adresse MAC unicast, par ex. 52:54:00:12:34:56';
+
+  @override
+  String get virtHwIssueStopFirst => 'Arrêtez d\'abord l\'invité';
+
+  @override
+  String get virtHwIssueStorageMissing => 'Choisissez d\'abord un stockage';
+
+  @override
+  String get virtHwIssueDevice => 'Choisissez d\'abord un périphérique';
+
+  @override
+  String get virtHwDevices => 'CD-ROM et passthrough';
+
+  @override
+  String get virtHwDevicesEmpty => 'Passthrough USB et PCI, TPM';
+
+  @override
+  String get virtHwAddDevice => 'Ajouter un périphérique';
+
+  @override
+  String get virtHwNewDevice => 'Nouveau périphérique';
+
+  @override
+  String get virtHwUsbHotplug => 'Le passthrough USB est enfichable à chaud.';
+
+  @override
+  String get virtHwPci => 'Passthrough PCI';
+
+  @override
+  String get virtHwIommuOffTitle => 'L\'hôte n\'a pas d\'IOMMU';
+
+  @override
+  String get virtHwIommuOffBody =>
+      'Activez d\'abord VT-d ou AMD-Vi dans le BIOS de l\'hôte et l\'IOMMU dans son noyau. D\'ici là, un invité doté d\'un périphérique PCI ne démarrera pas.';
+
+  @override
+  String get virtHwPciTitle => 'Nécessite l\'IOMMU sur l\'hôte';
+
+  @override
+  String get virtHwPciBody =>
+      'Une fois transmis, l\'hôte ne peut plus utiliser le périphérique et l\'invité ne peut plus migrer à chaud.';
+
+  @override
+  String virtHwIommuGroup(int group) {
+    return 'Groupe IOMMU $group';
+  }
+
+  @override
+  String virtHwIommuShared(int count) {
+    return '$count périphériques partagent son groupe IOMMU et sont transmis ensemble';
+  }
+
+  @override
+  String get virtHwNoHostDevices =>
+      'Aucun périphérique à transmettre sur cet hôte';
+
+  @override
+  String get virtHwMappingsOnly =>
+      'Seuls les mappages de ressources sont utilisables ici : PVE ne laisse que root@pam, connecté avec son mot de passe, transmettre un périphérique brut. Créez des mappages sous Centre de données → Mappages de ressources.';
+
+  @override
+  String get virtHwTpmNote => 'Windows 11 exige TPM 2.0.';
+
+  @override
+  String get virtHwDisplay => 'Affichage';
+
+  @override
+  String get virtHwProtocol => 'Protocole';
+
+  @override
+  String get virtHwListen => 'Écoute';
+
+  @override
+  String get virtHwGpu => 'Carte graphique';
+
+  @override
+  String get virtHwListenAllTitle => 'La console est ouverte au réseau';
+
+  @override
+  String get virtHwListenAllBody =>
+      'Écouter sur toutes les adresses permet à quiconque atteint l\'hôte d\'ouvrir la console. Gardez 127.0.0.1 et connectez-vous via un tunnel SSH.';
+
+  @override
+  String get virtHwFirmware => 'Micrologiciel';
+
+  @override
+  String get virtHwUefiSub =>
+      'OVMF · compatible Secure Boot, exigé par Windows 11';
+
+  @override
+  String get virtHwBiosSub => 'SeaBIOS · anciens systèmes et disques MBR';
+
+  @override
+  String get virtHwSecureBootNote =>
+      'Ne démarre que des noyaux et chargeurs signés';
+
+  @override
+  String get virtHwFirmwareWarnTitle =>
+      'Ne changez pas le micrologiciel d\'un système installé';
+
+  @override
+  String get virtHwFirmwareWarnBody =>
+      'Passer de UEFI à BIOS ou l\'inverse empêche un système installé de démarrer.';
+
+  @override
+  String get virtHwFirmwareStopped =>
+      'Le micrologiciel ne change que lorsque l\'invité est arrêté.';
+
+  @override
+  String get virtHwSecureBootVars =>
+      'Activer ou désactiver Secure Boot recrée les variables EFI ; les entrées de démarrage qui y sont enregistrées sont perdues.';
+
+  @override
+  String get virtHwEfiStorage => 'Où vont les variables EFI';
+
+  @override
+  String get virtHwTpmStorage => 'Où va l\'état TPM';
+
+  @override
+  String virtHwSwitchFirmwareAsk(String guest, String firmware) {
+    return 'Passer $guest en $firmware ?';
+  }
 }

@@ -293,3 +293,14 @@ pub fn virt_hardware_change_script(
 pub fn parse_virt_hardware_change_json(raw: String) -> Result<String, VirtFfiError> {
     serde_json::to_string(&virt::parse_hardware_change(&raw)?).map_err(json_err)
 }
+
+/// The host's USB and PCI devices, for passing one to a guest
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_host_devices_script() -> String {
+    virt::host_devices_script()
+}
+
+/// [`virt_host_devices_script`]'s output → `VirtHostDevices` JSON
+pub fn parse_virt_host_devices_json(raw: String) -> Result<String, VirtFfiError> {
+    serde_json::to_string(&virt::parse_host_devices(&raw)?).map_err(json_err)
+}

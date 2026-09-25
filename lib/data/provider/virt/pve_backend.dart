@@ -1125,11 +1125,232 @@ class PveBackend implements VirtBackend {
           await _setConfig(guest, {'protection': on ? 1 : 0}, digest: digest);
         case VirtHwRevert(:final keys):
           await _setConfig(guest, {'revert': keys.join(',')}, digest: digest);
+        case VirtHwUpdateDisk(:final key, :final bus, :final cache):
+          final config = await rawConfig();
+          final current = rawOf(config, key);
+          if (current == null) {
+            throw VirtErr(type: VirtErrType.conflict, message: '$key is gone');
+          }
+          final value = cache == null
+              ? current
+              : PveResources.withOptions(current, {
+                  'cache': cache == 'default' ? null : cache,
+                });
+          if (bus == null || key.startsWith(bus)) {
+            await _setConfig(guest, {key: value}, digest: digest);
+            break;
+          }
+          // Another bus is another option for the same volume, set in the
+          // request that drops the old one. PVE drops the old one from the
+          // boot order too; it is put back as the new one, in its place.
+          final to = _freeKey(config, bus, _busSlots[bus] ?? 1);
+          final order = base.boot;
+          await _setConfig(
+            guest,
+            {
+              to: value,
+              if (order != null && order.contains(key))
+                'boot': 'order=${[for (final k in order) k == key ? to : k].join(';')}',
+            },
+            delete: [key],
+            digest: digest,
+          );
+        case VirtHwSetNicHardware(:final key, :final model, :final mac):
+          final current = rawOf(await rawConfig(), key);
+          if (current == null) {
+            throw VirtErr(type: VirtErrType.conflict, message: '$key is gone');
+          }
+          await _setConfig(guest, {
+            key: PveResources.withNicHardware(
+              current,
+              lxc: lxc,
+              model: model,
+              mac: mac,
+            ),
+          }, digest: digest);
+        case VirtHwSetFirmware(:final uefi, :final secureBoot, :final storage):
+          if (!uefi) {
+            // The EFI variables disk stays: switching back finds them.
+            await _setConfig(guest, {'bios': 'seabios'}, digest: digest);
+            break;
+          }
+          final config = await rawConfig();
+          final efi = rawOf(config, 'efidisk0');
+          final keys = efi != null &&
+              PveResources.withOptions(efi, const {}).contains('pre-enrolled-keys=1');
+          if (efi != null && keys == secureBoot) {
+            await _setConfig(guest, {'bios': 'ovmf'}, digest: digest);
+            break;
+          }
+          // Keys are enrolled when the variables disk is made: turning
+          // Secure Boot on or off is a new one, and the old one goes.
+          final on = storage ??
+              (efi == null ? null : PveResources.volumeOf(efi)?.split(':').first);
+          if (on == null) {
+            throw const VirtErr(
+              type: VirtErrType.unsupported,
+              message: 'No storage for the EFI disk',
+            );
+          }
+          var at = digest;
+          if (efi != null) {
+            await _dropVolume(guest, 'efidisk0', digest: at);
+            at = null;
+          }
+          await _setConfig(guest, {
+            'bios': 'ovmf',
+            'efidisk0':
+                '$on:1,efitype=4m,pre-enrolled-keys=${secureBoot ? 1 : 0}',
+          }, digest: at);
+        case VirtHwSetDisplay(:final gpu):
+          if (gpu == null) break;
+          final vga = rawOf(await rawConfig(), 'vga');
+          final memory = vga == null
+              ? null
+              : {for (final (k, v) in PveResources.optionsOf(vga)) k: v}['memory'];
+          await _setConfig(guest, {
+            'vga': [gpu, if (memory != null && gpu != 'none') 'memory=$memory'].join(','),
+          }, digest: digest);
+        case VirtHwAddDevice(:final kind, :final host, :final storage):
+          final config = await rawConfig();
+          switch (kind) {
+            case VirtHwDeviceKind.tpm:
+              await _setConfig(guest, {
+                'tpmstate0': '$storage:1,version=v2.0',
+              }, digest: digest);
+            case VirtHwDeviceKind.usb:
+              final id = host!.id;
+              await _setConfig(guest, {
+                _freeKey(config, 'usb', 14): host.mapping ? 'mapping=$id' : 'host=$id',
+              }, digest: digest);
+            case VirtHwDeviceKind.pci:
+              final id = host!.id;
+              await _setConfig(guest, {
+                _freeKey(config, 'hostpci', 16): host.mapping ? 'mapping=$id' : id,
+              }, digest: digest);
+          }
+        case VirtHwRemoveDevice(:final key):
+          if (key.startsWith('tpmstate')) {
+            // The state is the TPM: removing it removes what it held.
+            await _dropVolume(guest, key, digest: digest);
+          } else {
+            await _setConfig(guest, const {}, delete: [key], digest: digest);
+          }
       }
     } on VirtErr catch (e) {
       throw _changeErr(e);
     }
     return const VirtHwOutcome();
+  }
+
+  /// Detaches [key] and deletes its volume: detached, it is `unusedN`, and
+  /// deleting that entry deletes it.
+  Future<void> _dropVolume(VirtGuest guest, String key, {String? digest}) async {
+    final path = _guestPath(guest);
+    final raw = (await _configOf(path))[key];
+    final volume = raw is String ? PveResources.volumeOf(raw) : null;
+    await _setConfig(guest, const {}, delete: [key], digest: digest);
+    if (volume == null) return;
+    final after = await _configOf(path);
+    final unused = after.entries
+        .where(
+          (e) =>
+              e.key.startsWith('unused') &&
+              e.value is String &&
+              PveResources.volumeOf(e.value! as String) == volume,
+        )
+        .map((e) => e.key)
+        .firstOrNull;
+    if (unused == null) return;
+    await _setConfig(guest, const {}, delete: [unused]);
+  }
+
+  /// Resource mappings, which any account with `Mapping.Use` can give a
+  /// guest, and — for root@pam logged in with its password, the only one
+  /// PVE lets set a raw device ("only root can set 'usb0' config for real
+  /// devices") — the node's own devices. The PCI list says whether the
+  /// node has an IOMMU at all.
+  @override
+  Future<VirtHostDevices> hostDevices(VirtGuest guest) async {
+    final node = _seg(guest.node!);
+    Future<List<Map<String, Object?>>> list(String url) async {
+      try {
+        final data = await _call((dio) => dio.get(_url(url)));
+        return [
+          if (data is List)
+            for (final e in data)
+              if (e is Map) e.cast<String, Object?>(),
+        ];
+      } on VirtErr catch (e) {
+        Loggers.app.info('PVE $url for host devices: ${e.message}');
+        return const [];
+      }
+    }
+
+    final root =
+        _config.auth == PveAuth.password &&
+        (_userFields()['username'] == 'root' ||
+            _userFields()['username'] == 'root@pam');
+    final (usbMaps, pciMaps, pci, usb) = await (
+      list('/cluster/mapping/usb'),
+      list('/cluster/mapping/pci'),
+      list('/nodes/$node/hardware/pci'),
+      root ? list('/nodes/$node/hardware/usb') : Future.value(const <Map<String, Object?>>[]),
+    ).wait;
+    VirtHostDevice mapped(Map<String, Object?> m) {
+      final map = m['map'];
+      final here = map is List
+          ? map.whereType<String>().firstWhere(
+              (e) => e.contains('node=${guest.node}'),
+              orElse: () => map.whereType<String>().firstOrNull ?? '',
+            )
+          : '';
+      final opts = {for (final (k, v) in PveResources.optionsOf(here)) k: v};
+      return VirtHostDevice(
+        id: '${m['id']}',
+        label: '${m['id']}',
+        detail: [opts['path'], opts['id']].nonNulls.join(' · '),
+        mapping: true,
+        iommuGroup: int.tryParse(opts['iommugroup'] ?? ''),
+      );
+    }
+
+    String hex(Object? v) => '$v'.replaceFirst('0x', '');
+    final groups = <int, int>{};
+    for (final p in pci) {
+      final g = _intOf(p['iommugroup']) ?? -1;
+      if (g >= 0) groups[g] = (groups[g] ?? 0) + 1;
+    }
+    return VirtHostDevices(
+      mappingsOnly: !root,
+      iommu: pci.isEmpty || groups.isNotEmpty,
+      usb: [
+        for (final m in usbMaps) mapped(m),
+        for (final u in usb)
+          // Hubs are not devices anyone passes through.
+          if (_intOf(u['class']) != 9)
+            VirtHostDevice(
+              id: '${u['vendid']}:${u['prodid']}',
+              label: [u['manufacturer'], u['product']].nonNulls.join(' ').trim(),
+              detail: '${u['vendid']}:${u['prodid']}',
+            ),
+      ],
+      pci: [
+        for (final m in pciMaps) mapped(m),
+        if (root)
+          for (final p in pci)
+            VirtHostDevice(
+              id: '${p['id']}',
+              label: '${p['device_name'] ?? '${hex(p['vendor'])}:${hex(p['device'])}'}',
+              detail: [p['id'], p['vendor_name']].nonNulls.join(' · '),
+              iommuGroup: switch (_intOf(p['iommugroup'])) {
+                final g? when g >= 0 => g,
+                _ => null,
+              },
+              groupSize: groups[_intOf(p['iommugroup']) ?? -1] ?? 0,
+            ),
+      ],
+    );
   }
 
   /// How many drives each bus takes (`ide0`–`ide3`, …).
