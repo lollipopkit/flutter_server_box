@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -3568,6 +3569,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get remoteSessionKeepAlive => 'Offen halten';
+
+  @override
+  String get remoteSessionClosedAway => 'Wegen Inaktivität geschlossen';
 
   @override
   String remoteSessionClosingIn(int seconds) {

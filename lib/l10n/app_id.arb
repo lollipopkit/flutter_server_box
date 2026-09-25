@@ -1065,6 +1065,7 @@
   "remoteSessionIdleTimeout": "Tutup saat ditinggalkan",
   "remoteSessionIdleTimeoutTip": "Berapa lama desktop jarak jauh atau konsol tamu tetap terhubung setelah Anda meninggalkannya. Sebelum ditutup, pemberitahuan memberi Anda 10 detik untuk mempertahankannya.",
   "remoteSessionKeepAlive": "Pertahankan",
+  "remoteSessionClosedAway": "Ditutup karena tidak aktif",
   "remoteSessionClosingIn": "Ditutup dalam {seconds} dtk",
   "reopen": "Buka lagi",
   "virtSnapshots": "Snapshot",

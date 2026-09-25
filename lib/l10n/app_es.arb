@@ -1089,6 +1089,7 @@
   "remoteSessionIdleTimeout": "Cerrar al dejarla inactiva",
   "remoteSessionIdleTimeoutTip": "Cuánto tiempo sigue conectado un escritorio remoto o la consola de un invitado después de salir de él. Antes de cerrarse, un aviso te da 10 segundos para mantenerlo.",
   "remoteSessionKeepAlive": "Mantener",
+  "remoteSessionClosedAway": "Cerrado por inactividad",
   "remoteSessionClosingIn": "Se cierra en {seconds} s",
   "reopen": "Reabrir",
   "virtSnapshots": "Instantáneas",

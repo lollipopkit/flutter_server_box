@@ -1086,6 +1086,7 @@
   "remoteSessionIdleTimeout": "Sluiten na verlaten",
   "remoteSessionIdleTimeoutTip": "Hoe lang een extern bureaublad of de console van een gast verbonden blijft nadat je die verlaat. Voor het sluiten geeft een melding je 10 seconden om het open te houden.",
   "remoteSessionKeepAlive": "Openhouden",
+  "remoteSessionClosedAway": "Gesloten wegens inactiviteit",
   "remoteSessionClosingIn": "Sluit over {seconds} s",
   "reopen": "Opnieuw openen",
   "virtSnapshots": "Snapshots",

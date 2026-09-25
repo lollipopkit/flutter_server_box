@@ -192,28 +192,119 @@ void main() {
     });
   });
 
-  test('the app off screen holds the countdown until it is back', () {
+  void hide() {
+    final binding = TestWidgetsFlutterBinding.instance;
+    binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+  }
+
+  void show() {
+    final binding = TestWidgetsFlutterBinding.instance;
+    binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+  }
+
+  test('off screen, the countdown holds; back, it carries on', () {
     run((async, container, keepAlive, closed) {
-      final binding = TestWidgetsFlutterBinding.instance;
       keepAlive.setVisible('a', false);
-      async.elapse(const Duration(seconds: 62));
+      async.elapse(const Duration(seconds: 60 + 3));
       expect(notices(container)['a']?.deadline, isNotNull);
 
-      binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
-      binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      hide();
       expect(notices(container)['a']?.deadline, isNull);
-      async.elapse(const Duration(minutes: 10));
-      expect(closed, isEmpty, reason: 'nobody could see the notice');
+      expect(notices(container)['a']?.paused, const Duration(seconds: 7));
+      async.elapse(const Duration(seconds: 30));
+      expect(closed, isEmpty, reason: 'nobody can see the notice');
 
-      binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
-      binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      show();
+      expect(
+        notices(container)['a']?.deadline,
+        clock.now().add(const Duration(seconds: 7)),
+        reason: 'what was left, not a fresh countdown',
+      );
+      async.elapse(const Duration(seconds: 7));
+      expect(closed, ['a']);
+    });
+  });
+
+  test('back with a second left: at least long enough to keep it', () {
+    run((async, container, keepAlive, closed) {
+      keepAlive.setVisible('a', false);
+      async.elapse(const Duration(seconds: 60 + 9));
+      hide();
+      async.elapse(const Duration(seconds: 5));
+      show();
+      expect(
+        notices(container)['a']?.deadline,
+        clock.now().add(SessionKeepAlive.graceOnReturn),
+      );
+
+      // Going away and back again buys nothing more.
+      async.elapse(const Duration(seconds: 3));
+      hide();
+      show();
+      expect(
+        notices(container)['a']?.deadline,
+        clock.now().add(SessionKeepAlive.graceOnReturn),
+      );
+      async.elapse(SessionKeepAlive.graceOnReturn);
+      expect(closed, ['a']);
+    });
+  });
+
+  test('a notice off screen for another whole timeout closes, and says so',
+      () {
+    run((async, container, keepAlive, closed) {
+      keepAlive.setVisible('a', false);
+      async.elapse(const Duration(seconds: 61));
+      hide();
+      async.elapse(const Duration(seconds: 59));
+      expect(closed, isEmpty);
+      async.elapse(const Duration(seconds: 1));
+      expect(closed, ['a']);
+      expect(notices(container), isEmpty);
+      expect(
+        container.read(sessionsClosedAwayProvider),
+        isEmpty,
+        reason: 'said when the app is back, not while nobody can see it',
+      );
+
+      show();
+      final reported = container.read(sessionsClosedAwayProvider);
+      expect(reported.map((e) => (e.name, e.host)), [('web-01', 'pve')]);
+    });
+  });
+
+  test('a notice that first appears off screen waits the same way', () {
+    run((async, container, keepAlive, closed) {
+      keepAlive.setVisible('a', false);
+      hide();
+      async.elapse(const Duration(seconds: 60));
+      expect(notices(container)['a']?.paused, SessionKeepAlive.grace);
+      async.elapse(const Duration(seconds: 59));
+      expect(closed, isEmpty);
+
+      show();
       expect(
         notices(container)['a']?.deadline,
         clock.now().add(SessionKeepAlive.grace),
-        reason: 'the whole countdown, once it can be seen',
       );
       async.elapse(SessionKeepAlive.grace);
       expect(closed, ['a']);
+      expect(container.read(sessionsClosedAwayProvider), isEmpty);
+    });
+  });
+
+  test('off screen with no timeout, nothing closes by itself', () {
+    run((async, container, keepAlive, closed) {
+      keepAlive.setVisible('a', false);
+      async.elapse(const Duration(seconds: 61));
+      hide();
+      // Set to never while the notice was up: the notice stays.
+      Stores.setting.remoteSessionIdleTimeout.put(0);
+      async.elapse(const Duration(hours: 2));
+      expect(closed, isEmpty);
+      show();
     });
   });
 }

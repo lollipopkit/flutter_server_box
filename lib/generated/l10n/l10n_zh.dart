@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -3290,6 +3291,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get remoteSessionKeepAlive => '保持连接';
+
+  @override
+  String get remoteSessionClosedAway => '已因空闲关闭';
 
   @override
   String remoteSessionClosingIn(int seconds) {
@@ -6677,6 +6681,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get remoteSessionKeepAlive => '保持連線';
+
+  @override
+  String get remoteSessionClosedAway => '已因閒置關閉';
 
   @override
   String remoteSessionClosingIn(int seconds) {

@@ -6070,6 +6070,12 @@ abstract class AppLocalizations {
   /// **'Keep alive'**
   String get remoteSessionKeepAlive;
 
+  /// Toast title when the app comes back: an idle remote session (remote desktop, guest console) was closed while the app was in the background. The body names the session.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed while you were away'**
+  String get remoteSessionClosedAway;
+
   /// Countdown on the notice before an idle remote session closes.
   ///
   /// In en, this message translates to:

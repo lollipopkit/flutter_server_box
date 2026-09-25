@@ -4562,6 +4562,10 @@
   "@remoteSessionKeepAlive": {
     "description": "Button on the notice before an idle remote session closes: keeps it open for another full timeout."
   },
+  "remoteSessionClosedAway": "Closed while you were away",
+  "@remoteSessionClosedAway": {
+    "description": "Toast title when the app comes back: an idle remote session (remote desktop, guest console) was closed while the app was in the background. The body names the session."
+  },
   "remoteSessionClosingIn": "Closing in {seconds} s",
   "@remoteSessionClosingIn": {
     "description": "Countdown on the notice before an idle remote session closes.",

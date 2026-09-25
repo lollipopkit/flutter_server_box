@@ -1044,6 +1044,7 @@
   "remoteSessionIdleTimeout": "離れたら閉じる",
   "remoteSessionIdleTimeoutTip": "リモートデスクトップやゲストのコンソールから離れた後、接続を維持する時間。閉じる前に通知が表示され、10 秒以内なら維持できます。",
   "remoteSessionKeepAlive": "維持する",
+  "remoteSessionClosedAway": "アイドルのため閉じました",
   "remoteSessionClosingIn": "{seconds} 秒後に閉じます",
   "reopen": "再度開く",
   "virtSnapshots": "スナップショット",

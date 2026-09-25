@@ -1043,6 +1043,7 @@
   "remoteSessionIdleTimeout": "離開後自動關閉",
   "remoteSessionIdleTimeoutTip": "離開遠端桌面或虛擬機主控台後,連線保持多久。關閉前會顯示提示,10 秒內可選擇保持連線。",
   "remoteSessionKeepAlive": "保持連線",
+  "remoteSessionClosedAway": "已因閒置關閉",
   "remoteSessionClosingIn": "{seconds} 秒後關閉",
   "reopen": "重新開啟",
   "virtSnapshots": "快照",

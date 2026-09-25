@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:clock/clock.dart';
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/data/res/store.dart';
@@ -18,6 +17,7 @@ final class SessionExpiry {
     required this.name,
     required this.host,
     this.deadline,
+    this.paused,
   });
 
   final String id;
@@ -28,9 +28,12 @@ final class SessionExpiry {
   /// The server it goes through.
   final String host;
 
-  /// When it closes. Null while the app itself is off screen: the countdown
-  /// starts when the notice can be seen, not before.
+  /// When it closes. Null while the app itself is off screen, when [paused]
+  /// says what was left.
   final DateTime? deadline;
+
+  /// What was left of the countdown when the app went off screen.
+  final Duration? paused;
 
   @override
   bool operator ==(Object other) =>
@@ -38,10 +41,11 @@ final class SessionExpiry {
       other.id == id &&
       other.name == name &&
       other.host == host &&
-      other.deadline == deadline;
+      other.deadline == deadline &&
+      other.paused == paused;
 
   @override
-  int get hashCode => Object.hash(id, name, host, deadline);
+  int get hashCode => Object.hash(id, name, host, deadline, paused);
 
   @override
   String toString() => 'SessionExpiry($id, deadline: $deadline)';
@@ -63,20 +67,31 @@ final class SessionExpiry {
 /// - Then it is put in [state] for [grace]: the notice with the countdown and
 ///   "Keep alive". Keeping it starts a full [timeout] again; coming back to it
 ///   withdraws the notice; neither, and it is closed by its owner's own close.
-/// - The app off screen holds the countdown, and restarts it in full when the
-///   app is back, so nothing closes behind a notice nobody could have seen. The
-///   idle time itself keeps counting by the clock: a phone that froze the app
-///   delays the timer, and the timer finding the time already passed shows the
-///   notice at once. Leaving the app is not leaving a session — one on screen
-///   when the app went stays on screen as far as this is concerned.
+/// - The app off screen holds the countdown, and carries on with what was left
+///   when the app is back — never less than [graceOnReturn], so there is time
+///   to read the notice and keep the session. Going away and back does not buy
+///   a fresh countdown each time.
+/// - A notice left off screen for another whole [timeout] is not waited on:
+///   the session is closed then, and [SessionsClosedAway] says so once the app
+///   is back. An app left in the background does not keep an idle session
+///   open for good.
+/// - The idle time itself keeps counting by the clock: a phone that froze the
+///   app delays the timer, and the timer finding the time already passed shows
+///   the notice at once. Leaving the app is not leaving a session — one on
+///   screen when the app went stays on screen as far as this is concerned.
 @Riverpod(keepAlive: true)
 class SessionKeepAlive extends _$SessionKeepAlive {
   /// How long the notice stays before the session closes.
   static const grace = Duration(seconds: 10);
 
+  /// The least a notice is given when the app comes back: long enough to find
+  /// the button.
+  static const graceOnReturn = Duration(seconds: 5);
+
+  /// Closed off screen, waiting to be reported once the app is back.
+  final _closedAway = <SessionExpiry>[];
+
   final _entries = <String, _KeptSession>{};
-  late final ValueListenable<int> _setting;
-  late final AppLifecycleListener _lifecycle;
   var _appShown = true;
 
   /// How long a session off screen stays open; null for as long as it takes.
@@ -87,15 +102,17 @@ class SessionKeepAlive extends _$SessionKeepAlive {
 
   @override
   Map<String, SessionExpiry> build() {
-    _setting = Stores.setting.remoteSessionIdleTimeout.listenable()
+    // Locals, not fields: `build` runs again on the same notifier when the
+    // provider is rebuilt, and each run sets up and tears down its own.
+    final setting = Stores.setting.remoteSessionIdleTimeout.listenable()
       ..addListener(_onTimeoutChanged);
-    _lifecycle = AppLifecycleListener(
+    final lifecycle = AppLifecycleListener(
       onShow: _onAppShown,
       onHide: _onAppHidden,
     );
     ref.onDispose(() {
-      _setting.removeListener(_onTimeoutChanged);
-      _lifecycle.dispose();
+      setting.removeListener(_onTimeoutChanged);
+      lifecycle.dispose();
       for (final entry in _entries.values) {
         entry.cancelTimers();
       }
@@ -186,14 +203,32 @@ class SessionKeepAlive extends _$SessionKeepAlive {
         name: entry.name,
         host: entry.host,
         deadline: _appShown ? clock.now().add(grace) : null,
+        paused: _appShown ? null : grace,
       ),
     });
-    if (_appShown) _startClosing(id, entry);
+    if (_appShown) {
+      _startClosing(id, entry, grace);
+    } else {
+      _startAway(id, entry);
+    }
   }
 
-  void _startClosing(String id, _KeptSession entry) {
+  void _startClosing(String id, _KeptSession entry, Duration after) {
     entry.closing?.cancel();
-    entry.closing = Timer(grace, () => unawaited(_close(id, entry)));
+    entry.closing = Timer(after, () => unawaited(_close(id, entry)));
+  }
+
+  /// A notice nobody can see: closed anyway after another whole [timeout].
+  void _startAway(String id, _KeptSession entry) {
+    entry.away?.cancel();
+    entry.away = null;
+    final timeout = SessionKeepAlive.timeout;
+    if (timeout == null) return;
+    entry.away = Timer(timeout, () {
+      final expiry = state[id];
+      if (expiry != null) _closedAway.add(expiry);
+      unawaited(_close(id, entry));
+    });
   }
 
   Future<void> _close(String id, _KeptSession entry) async {
@@ -235,34 +270,54 @@ class SessionKeepAlive extends _$SessionKeepAlive {
   void _onAppHidden() {
     _appShown = false;
     if (!ref.mounted || state.isEmpty) return;
-    for (final id in state.keys) {
+    final now = clock.now();
+    final next = <String, SessionExpiry>{};
+    for (final MapEntry(key: id, value: expiry) in state.entries) {
       final entry = _entries[id];
       entry?.closing?.cancel();
       entry?.closing = null;
+      if (entry != null) _startAway(id, entry);
+      final deadline = expiry.deadline;
+      final left = deadline == null
+          ? expiry.paused ?? grace
+          : deadline.difference(now);
+      next[id] = SessionExpiry(
+        id: id,
+        name: expiry.name,
+        host: expiry.host,
+        paused: left.isNegative ? Duration.zero : left,
+      );
     }
-    state = Map.unmodifiable({
-      for (final MapEntry(key: id, value: expiry) in state.entries)
-        id: SessionExpiry(id: id, name: expiry.name, host: expiry.host),
-    });
+    state = Map.unmodifiable(next);
   }
 
   void _onAppShown() {
     _appShown = true;
-    if (!ref.mounted || state.isEmpty) return;
-    final deadline = clock.now().add(grace);
-    for (final id in state.keys) {
-      final entry = _entries[id];
-      if (entry != null) _startClosing(id, entry);
+    if (!ref.mounted) return;
+    if (_closedAway.isNotEmpty) {
+      ref.read(sessionsClosedAwayProvider.notifier).add(_closedAway);
+      _closedAway.clear();
     }
-    state = Map.unmodifiable({
-      for (final MapEntry(key: id, value: expiry) in state.entries)
-        id: SessionExpiry(
-          id: id,
-          name: expiry.name,
-          host: expiry.host,
-          deadline: deadline,
-        ),
-    });
+    if (state.isEmpty) return;
+    final now = clock.now();
+    final next = <String, SessionExpiry>{};
+    for (final MapEntry(key: id, value: expiry) in state.entries) {
+      final paused = expiry.paused ?? grace;
+      final left = paused < graceOnReturn ? graceOnReturn : paused;
+      final entry = _entries[id];
+      if (entry != null) {
+        entry.away?.cancel();
+        entry.away = null;
+        _startClosing(id, entry, left);
+      }
+      next[id] = SessionExpiry(
+        id: id,
+        name: expiry.name,
+        host: expiry.host,
+        deadline: now.add(left),
+      );
+    }
+    state = Map.unmodifiable(next);
   }
 }
 
@@ -282,10 +337,29 @@ final class _KeptSession {
   /// Until the close, while the notice is up.
   Timer? closing;
 
+  /// Until the close, while the notice is up and the app off screen.
+  Timer? away;
+
   void cancelTimers() {
     idle?.cancel();
     idle = null;
     closing?.cancel();
     closing = null;
+    away?.cancel();
+    away = null;
   }
+}
+
+/// Sessions [SessionKeepAlive] closed while the app was off screen, reported
+/// once it is back — they went without their notice ever being seen.
+@Riverpod(keepAlive: true)
+class SessionsClosedAway extends _$SessionsClosedAway {
+  @override
+  List<SessionExpiry> build() => const [];
+
+  void add(Iterable<SessionExpiry> closed) =>
+      state = List.unmodifiable([...state, ...closed]);
+
+  /// Reported: nothing left to say.
+  void clear() => state = const [];
 }

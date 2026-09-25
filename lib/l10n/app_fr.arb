@@ -1089,6 +1089,7 @@
   "remoteSessionIdleTimeout": "Fermer après l'avoir quittée",
   "remoteSessionIdleTimeoutTip": "Durée pendant laquelle un bureau à distance ou la console d'un invité reste connecté après l'avoir quitté. Avant la fermeture, une notification vous laisse 10 secondes pour le garder.",
   "remoteSessionKeepAlive": "Garder",
+  "remoteSessionClosedAway": "Fermé pour inactivité",
   "remoteSessionClosingIn": "Fermeture dans {seconds} s",
   "reopen": "Rouvrir",
   "virtSnapshots": "Instantanés",

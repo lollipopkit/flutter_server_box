@@ -291,16 +291,18 @@ class RemoteDesktopProfiles extends _$RemoteDesktopProfiles {
 @Riverpod(keepAlive: true)
 class RemoteDesktopSessions extends _$RemoteDesktopSessions {
   final Map<String, _SessionEntry> _entries = {};
-  late final AppLifecycleListener _lifecycle;
-  late final SessionKeepAlive _keepAlive;
+  /// Not final: `build` runs again on the same notifier when the provider is
+  /// rebuilt, and sets these afresh.
+  late SessionKeepAlive _keepAlive;
   bool _disposed = false;
   bool _appVisible = true;
   bool _surfaceVisible = false;
 
   @override
   RemoteDesktopSessionsState build() {
+    _disposed = false;
     _keepAlive = ref.read(sessionKeepAliveProvider.notifier);
-    _lifecycle = AppLifecycleListener(
+    final lifecycle = AppLifecycleListener(
       onResume: _resume,
       onPause: _pause,
       onHide: _pause,
@@ -308,7 +310,7 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
     );
     ref.onDispose(() {
       _disposed = true;
-      _lifecycle.dispose();
+      lifecycle.dispose();
       for (final entry in _entries.values.toList()) {
         unawaited(_disposeEntry(entry));
       }

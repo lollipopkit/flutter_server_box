@@ -111,6 +111,37 @@ void main() {
     expect(title, findsNothing, reason: 'gone with the session');
   });
 
+  testWidgets('away: the countdown shows what is left, and a session closed '
+      'meanwhile is said once back', (tester) async {
+    final keepAlive = await pump(tester);
+    final binding = TestWidgetsFlutterBinding.instance;
+    keepAlive.setVisible('a', false);
+    await tester.pump(const Duration(seconds: 30 + 3));
+    await frames(tester);
+    expect(find.text(closingIn(7)), findsOneWidget);
+
+    binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    await frames(tester);
+    expect(find.text(closingIn(7)), findsOneWidget, reason: 'held');
+
+    // Another whole timeout away: closed without waiting on the notice.
+    await tester.pump(const Duration(seconds: 30));
+    await frames(tester);
+    expect(closed, ['a']);
+    // No frames are drawn while the app is hidden: what is on screen is
+    // checked once it is back.
+
+    binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await frames(tester, 20);
+    expect(find.text(app_locale.l10n.remoteSessionClosedAway), findsOneWidget);
+    expect(find.textContaining(closingIn(7)), findsNothing);
+    expect(find.text(app_locale.l10n.remoteSessionKeepAlive), findsNothing);
+    Toast.dismissAll();
+    await frames(tester, 20);
+  });
+
   testWidgets('keep alive dismisses it and starts the timeout again', (
     tester,
   ) async {

@@ -1089,6 +1089,7 @@
   "remoteSessionIdleTimeout": "Fechar ao sair",
   "remoteSessionIdleTimeoutTip": "Por quanto tempo uma área de trabalho remota ou o console de um convidado continua conectado depois que você sai dele. Antes de fechar, um aviso dá 10 segundos para mantê-lo.",
   "remoteSessionKeepAlive": "Manter",
+  "remoteSessionClosedAway": "Fechado por inatividade",
   "remoteSessionClosingIn": "Fecha em {seconds} s",
   "reopen": "Reabrir",
   "virtSnapshots": "Snapshots",

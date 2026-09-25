@@ -1089,6 +1089,7 @@
   "remoteSessionIdleTimeout": "Chiudi quando lasciata",
   "remoteSessionIdleTimeoutTip": "Per quanto tempo un desktop remoto o la console di un guest resta connesso dopo che lo lasci. Prima della chiusura, un avviso ti dà 10 secondi per mantenerlo.",
   "remoteSessionKeepAlive": "Mantieni",
+  "remoteSessionClosedAway": "Chiuso per inattività",
   "remoteSessionClosingIn": "Chiusura tra {seconds} s",
   "reopen": "Riapri",
   "virtSnapshots": "Snapshot",

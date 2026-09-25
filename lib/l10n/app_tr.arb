@@ -1065,6 +1065,7 @@
   "remoteSessionIdleTimeout": "Ayrılınca kapat",
   "remoteSessionIdleTimeoutTip": "Uzak masaüstünden veya bir konuğun konsolundan ayrıldıktan sonra bağlantının ne kadar süre açık kalacağı. Kapanmadan önce bir bildirim, bağlantıyı korumanız için 10 saniye verir.",
   "remoteSessionKeepAlive": "Açık tut",
+  "remoteSessionClosedAway": "Boşta kaldığı için kapatıldı",
   "remoteSessionClosingIn": "{seconds} sn içinde kapanıyor",
   "reopen": "Yeniden aç",
   "virtSnapshots": "Anlık görüntüler",

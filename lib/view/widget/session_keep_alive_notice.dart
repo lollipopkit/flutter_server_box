@@ -16,6 +16,9 @@ import 'package:server_box/data/provider/session_keep_alive.dart';
 /// sticky and taken down when a session leaves the provider's state, so the
 /// countdown that closes a session is the provider's, and a toast swiped away
 /// early is a session that still closes when its countdown ends.
+///
+/// Sessions closed while the app was off screen ([SessionsClosedAway]) are
+/// said once, as an ordinary toast each, when the app is back.
 class SessionKeepAliveNotices extends ConsumerWidget {
   const SessionKeepAliveNotices({super.key, required this.child});
 
@@ -25,6 +28,17 @@ class SessionKeepAliveNotices extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(sessionsClosedAwayProvider, (_, closed) {
+      if (closed.isEmpty) return;
+      for (final expiry in closed) {
+        Toast.show(
+          l10n.remoteSessionClosedAway,
+          body: '${expiry.name} · ${expiry.host}',
+          level: ToastLevel.info,
+        );
+      }
+      ref.read(sessionsClosedAwayProvider.notifier).clear();
+    });
     ref.listen(sessionKeepAliveProvider, (previous, next) {
       final before = previous ?? const <String, SessionExpiry>{};
       for (final id in before.keys) {
@@ -84,7 +98,7 @@ class _NoticeBody extends StatelessWidget {
 /// Worked out from the provider's deadline on every tick rather than counted
 /// down here, so it cannot drift from what actually closes the session. With
 /// no deadline — the app was off screen, and the countdown waits for it — it
-/// shows the whole of [SessionKeepAlive.grace].
+/// shows what was left when it went.
 class SessionKeepAliveCountdown extends ConsumerStatefulWidget {
   const SessionKeepAliveCountdown({
     super.key,
@@ -125,12 +139,14 @@ class _SessionKeepAliveCountdownState
 
   @override
   Widget build(BuildContext context) {
-    final deadline = ref.watch(
-      sessionKeepAliveProvider.select((s) => s[widget.id]?.deadline),
+    final (deadline, paused) = ref.watch(
+      sessionKeepAliveProvider.select(
+        (s) => (s[widget.id]?.deadline, s[widget.id]?.paused),
+      ),
     );
     const grace = SessionKeepAlive.grace;
     final left = deadline == null
-        ? grace
+        ? paused ?? grace
         : Duration(
             microseconds: math.max(
               0,

@@ -1072,6 +1072,7 @@
   "remoteSessionIdleTimeout": "Закривати після виходу",
   "remoteSessionIdleTimeoutTip": "Скільки віддалений робочий стіл або консоль гостя залишаються підключеними після того, як ви їх залишили. Перед закриттям сповіщення дає 10 секунд, щоб зберегти підключення.",
   "remoteSessionKeepAlive": "Не закривати",
+  "remoteSessionClosedAway": "Закрито через бездіяльність",
   "remoteSessionClosingIn": "Закриється через {seconds} с",
   "reopen": "Відкрити знову",
   "virtSnapshots": "Знімки",

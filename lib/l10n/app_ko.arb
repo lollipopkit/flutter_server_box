@@ -1057,6 +1057,7 @@
   "remoteSessionIdleTimeout": "떠나면 닫기",
   "remoteSessionIdleTimeoutTip": "원격 데스크톱이나 게스트 콘솔을 떠난 뒤 연결을 유지하는 시간입니다. 닫히기 전에 알림이 표시되며 10초 안에 유지할 수 있습니다.",
   "remoteSessionKeepAlive": "유지",
+  "remoteSessionClosedAway": "유휴 상태로 닫힘",
   "remoteSessionClosingIn": "{seconds}초 후 닫힘",
   "reopen": "다시 열기",
   "virtSnapshots": "스냅샷",
