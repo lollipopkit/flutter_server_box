@@ -109,8 +109,11 @@ class _Bar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The height too: the track hands its bar a loose height, and a
+    // childless box takes the least it may — none, a bar nobody can see.
     return FractionallySizedBox(
       widthFactor: length,
+      heightFactor: 1,
       child: ColoredBox(color: color),
     );
   }
