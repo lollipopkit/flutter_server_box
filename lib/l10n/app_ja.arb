@@ -1017,6 +1017,7 @@
   "virtConsole": "コンソール",
   "virtConsoleNone": "このゲストにはコンソールが設定されていません",
   "virtConsoleGraphical": "グラフィカル",
+  "virtVncPasswordNeeded": "このディスプレイにはパスワードが必要です",
   "virtConsoleSerialTip": "ホスト上の virsh でゲストのシリアルコンソールを開きます。切断または Ctrl+] でホストのシェルに戻ります。",
   "virtConsoleVia": "{transport} 経由",
   "virtConsoleEnterTip": "出力がない場合は Enter を押してください",

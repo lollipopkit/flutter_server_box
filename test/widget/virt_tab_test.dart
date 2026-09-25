@@ -718,7 +718,7 @@ void main() {
       tester,
     ) async {
       _states[_pve] = _states[_pve]!.copyWith(
-        busy: {'qemu/100': VirtPowerAction.reboot},
+        busy: {'qemu/100': VirtPowerAction.suspend},
       );
       await pump(tester, wide: true);
       await tester.tap(find.text('web-01'));
@@ -726,6 +726,26 @@ void main() {
 
       for (final a in VirtPowerAction.values) {
         expect(find.byKey(ValueKey(a)), findsNothing);
+      }
+    });
+
+    testWidgets('a shutdown or reboot in flight still offers force stop', (
+      tester,
+    ) async {
+      // The guest may ignore it for as long as the host lets it wait.
+      _states[_pve] = _states[_pve]!.copyWith(
+        busy: {'qemu/100': VirtPowerAction.reboot},
+      );
+      await pump(tester, wide: true);
+      await tester.tap(find.text('web-01'));
+      await settle(tester);
+
+      for (final a in VirtPowerAction.values) {
+        expect(
+          find.byKey(ValueKey(a)),
+          a == VirtPowerAction.forceStop ? findsOneWidget : findsNothing,
+          reason: '$a',
+        );
       }
       expect(find.text(app_locale.l10n.virtRebooting), findsWidgets);
     });

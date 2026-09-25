@@ -13,6 +13,8 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/websocket_tunnel.dart';
 
+import '../../helpers/tunnel_client.dart';
+
 void main() {
   late HttpServer server;
   late Completer<WebSocket> accepted;
@@ -62,7 +64,7 @@ void main() {
     expect(tunnel.address.isLoopback, isTrue);
     final far = await accepted.future;
 
-    final client = await Socket.connect(tunnel.address, tunnel.port);
+    final client = await connectTunnel(tunnel);
     addTearDown(client.destroy);
     final fromTunnel = BytesBuilder();
     client.listen(fromTunnel.add);
@@ -95,24 +97,20 @@ void main() {
     addTearDown(tunnel.close);
     await accepted.future;
 
-    final first = await Socket.connect(tunnel.address, tunnel.port);
+    final first = await connectTunnel(tunnel);
     addTearDown(first.destroy);
     first.add(const [7]);
     await until(() => received.isNotEmpty);
 
-    final second = await Socket.connect(tunnel.address, tunnel.port);
-    addTearDown(second.destroy);
-    // Closed by the tunnel without a byte.
-    final bytes = await second
-        .fold<int>(0, (n, b) => n + b.length)
-        .timeout(const Duration(seconds: 5));
-    expect(bytes, 0);
+    // The listener is gone once the one connection is through: nothing is
+    // left open on the port for the rest of the session.
+    await expectLater(connectTunnel(tunnel), throwsA(isA<SocketException>()));
   });
 
   test('the websocket ending closes the connection and the tunnel', () async {
     final tunnel = await WebSocketTunnelChannel.loopbackOnce(await open());
     final far = await accepted.future;
-    final client = await Socket.connect(tunnel.address, tunnel.port);
+    final client = await connectTunnel(tunnel);
     addTearDown(client.destroy);
     final ended = client.drain<void>().timeout(const Duration(seconds: 5));
     client.add(const [1]);
@@ -128,7 +126,7 @@ void main() {
     final tunnel = await WebSocketTunnelChannel.loopbackOnce(await open());
     addTearDown(tunnel.close);
     await accepted.future;
-    final client = await Socket.connect(tunnel.address, tunnel.port);
+    final client = await connectTunnel(tunnel);
     client.add(const [1]);
     await until(() => received.isNotEmpty);
 

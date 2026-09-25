@@ -1240,6 +1240,7 @@
   "virtConsole": "Konsol",
   "virtConsoleNone": "Bu qonaq üçün konsol qurulmayıb",
   "virtConsoleGraphical": "Qrafik",
+  "virtVncPasswordNeeded": "Bu ekran parol tələb edir",
   "virtConsoleSerialTip": "Qonağın seriya konsolunu hostda virsh ilə açır. Bağlantını kəs və ya Ctrl+] hostun shell-inə qaytarır.",
   "virtConsoleVia": "{transport} vasitəsilə",
   "virtConsoleEnterTip": "Çıxış yoxdur? Enter basın",

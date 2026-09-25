@@ -3451,6 +3451,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get virtConsoleGraphical => 'Графічна';
 
   @override
+  String get virtVncPasswordNeeded => 'Цей дисплей вимагає пароль';
+
+  @override
   String get virtConsoleSerialTip =>
       'Відкриває послідовну консоль гостя через virsh на хості. «Від\'єднати» або Ctrl+] повертає до оболонки хоста.';
 

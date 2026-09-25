@@ -52,8 +52,9 @@ class WebSocketTunnelChannel implements SshTunnelChannel {
         .catchError((_) {});
   }
 
-  /// A loopback listener that carries its first accepted connection over
-  /// [channel], and refuses any other.
+  /// A loopback listener that carries one connection over [channel]: the
+  /// first to present the tunnel's `SshLocalTunnel.accessToken`. Any other
+  /// is dropped unread, and the listener closes once that one is through.
   ///
   /// One connection because the websocket behind [channel] is one: a PVE
   /// console ticket opens one socket, and a client connecting a second time
@@ -67,6 +68,8 @@ class WebSocketTunnelChannel implements SshTunnelChannel {
       return await SshLocalTunnel.bindWithDialer(
         bindHost: InternetAddress.loopbackIPv4.address,
         sshDone: channel.done,
+        authenticated: true,
+        once: true,
         dialer: () async {
           if (taken) {
             throw StateError('This console tunnel carries one connection');

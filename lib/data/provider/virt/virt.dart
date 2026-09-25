@@ -381,10 +381,26 @@ abstract class VirtHostState with _$VirtHostState {
       busy[guest.id]?.transientState ?? guest.state;
 
   /// What [guest] offers now: nothing while an action of this app's is in
-  /// flight on it.
-  Set<VirtPowerAction> actionsOf(VirtGuest guest) => isBusy(guest.id)
-      ? const {}
-      : guest.actions;
+  /// flight on it — except force stop while that action is a shutdown or a
+  /// reboot, which a guest may ignore for as long as the host lets it: force
+  /// stop is the way out of that.
+  Set<VirtPowerAction> actionsOf(VirtGuest guest) {
+    if (overrulable(guest.id) &&
+        guest.actions.contains(VirtPowerAction.forceStop)) {
+      return const {VirtPowerAction.forceStop};
+    }
+    return isBusy(guest.id) ? const {} : guest.actions;
+  }
+
+  /// The action in flight on [id] is a shutdown or reboot of this app's,
+  /// and nothing else is: force stop may take over from it.
+  bool overrulable(String id) =>
+      switch (busy[id]) {
+        VirtPowerAction.shutdown || VirtPowerAction.reboot => true,
+        _ => false,
+      } &&
+      !snapshotOps.containsKey(id) &&
+      !deleting.contains(id);
 
   /// A power action, a snapshot operation or a delete of this app's is in
   /// flight on the guest [id].
@@ -420,6 +436,9 @@ class VirtHostNotifier extends _$VirtHostNotifier {
 
   late VirtBackend _backend;
   Timer? _timer;
+
+  /// Per guest, the latest power call's number — see [power].
+  final _powerSeq = <String, int>{};
   bool _refreshing = false;
 
   /// A requested refresh arrived while one was running: run once more after
@@ -580,17 +599,26 @@ class VirtHostNotifier extends _$VirtHostNotifier {
   /// [VirtErrType.unsupported].
   Future<void> power(String guestId, VirtPowerAction action) async {
     final guest = _guest(guestId);
-    if (state.isBusy(guestId)) {
+    final overruling =
+        action == VirtPowerAction.forceStop && state.overrulable(guestId);
+    if (state.isBusy(guestId) && !overruling) {
       throw VirtErr(
         type: VirtErrType.unsupported,
         message: '${guest.name} is busy',
       );
     }
+    // Which call owns the guest's busy entry: a force stop taking over from
+    // a shutdown still waiting on its task leaves that call nothing to clear
+    // and nothing to report — its task was aborted on purpose.
+    final seq = (_powerSeq[guestId] ?? 0) + 1;
+    _powerSeq[guestId] = seq;
     state = state.copyWith(busy: {...state.busy, guestId: action});
     try {
       await _backend.power(guest, action);
+    } catch (_) {
+      if (_powerSeq[guestId] == seq) rethrow;
     } finally {
-      if (ref.mounted) {
+      if (ref.mounted && _powerSeq[guestId] == seq) {
         state = state.copyWith(busy: {...state.busy}..remove(guestId));
         unawaited(refresh());
       }

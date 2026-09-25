@@ -1059,6 +1059,7 @@
   "virtConsole": "Console",
   "virtConsoleNone": "Voor deze gast is geen console ingesteld",
   "virtConsoleGraphical": "Grafisch",
+  "virtVncPasswordNeeded": "Dit scherm vraagt om een wachtwoord",
   "virtConsoleSerialTip": "Opent de seriële console van de gast met virsh op de host. Verbreken, of Ctrl+], keert terug naar de shell van de host.",
   "virtConsoleVia": "via {transport}",
   "virtConsoleEnterTip": "Geen uitvoer? Druk op Enter",

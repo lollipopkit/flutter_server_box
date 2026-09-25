@@ -1059,6 +1059,7 @@
   "virtConsole": "Konsole",
   "virtConsoleNone": "Für diesen Gast ist keine Konsole eingerichtet",
   "virtConsoleGraphical": "Grafisch",
+  "virtVncPasswordNeeded": "Diese Anzeige verlangt ein Passwort",
   "virtConsoleSerialTip": "Öffnet die serielle Konsole des Gasts mit virsh auf dem Host. Trennen oder Strg+] führt zurück zur Shell des Hosts.",
   "virtConsoleVia": "über {transport}",
   "virtConsoleEnterTip": "Keine Ausgabe? Enter drücken",

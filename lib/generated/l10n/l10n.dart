@@ -5908,6 +5908,12 @@ abstract class AppLocalizations {
   /// **'Graphical'**
   String get virtConsoleGraphical;
 
+  /// Over a guest's graphical console whose VNC server refused the connection for a password; beside a button to enter it.
+  ///
+  /// In en, this message translates to:
+  /// **'This display asks for a password'**
+  String get virtVncPasswordNeeded;
+
   /// Under the button that opens a libvirt guest's serial console in the terminal.
   ///
   /// In en, this message translates to:

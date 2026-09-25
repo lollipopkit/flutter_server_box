@@ -122,6 +122,96 @@ void main() {
     await channel.closedSignal.future.timeout(const Duration(seconds: 1));
     await ended.timeout(const Duration(seconds: 1));
   });
+
+  group('authenticated', () {
+    /// A tunnel for the engine, and how many channels it has dialled.
+    Future<(SshLocalTunnel, List<int> Function())> authed({
+      bool once = false,
+    }) async {
+      var dialled = 0;
+      final tunnel = await SshLocalTunnel.bindWithDialer(
+        bindHost: InternetAddress.loopbackIPv4.address,
+        sshDone: Completer<void>().future,
+        dialer: () async {
+          dialled++;
+          return _EchoChannel();
+        },
+        authenticated: true,
+        once: once,
+      );
+      addTearDown(tunnel.close);
+      return (tunnel, () => [dialled]);
+    }
+
+    /// Everything [socket] receives until the tunnel ends it.
+    Future<int> drained(Socket socket) => socket
+        .fold<int>(0, (n, b) => n + b.length)
+        .timeout(const Duration(seconds: 5));
+
+    test('a token of its own, the whole length, unguessable', () async {
+      final (a, _) = await authed();
+      final (b, _) = await authed();
+      expect(a.accessToken, hasLength(SshLocalTunnel.accessTokenLength));
+      expect(a.accessToken, isNot(b.accessToken));
+    });
+
+    test('a connection without it gets nothing, and nothing is dialled', () async {
+      final (tunnel, dialled) = await authed();
+      final stranger = await Socket.connect(tunnel.address, tunnel.port);
+      stranger.add(List.filled(SshLocalTunnel.accessTokenLength, 0));
+      expect(await drained(stranger), 0);
+      expect(dialled(), [0]);
+
+      // The engine still gets through afterwards.
+      final engine = await Socket.connect(tunnel.address, tunnel.port);
+      addTearDown(engine.destroy);
+      engine.add(tunnel.accessToken!);
+      expect(await _echo(engine, [1, 2, 3]), [1, 2, 3]);
+      expect(dialled(), [1]);
+    });
+
+    test('a token one byte off is refused', () async {
+      final (tunnel, dialled) = await authed();
+      final wrong = [...tunnel.accessToken!];
+      wrong[wrong.length - 1] ^= 1;
+      final socket = await Socket.connect(tunnel.address, tunnel.port);
+      socket.add(wrong);
+      expect(await drained(socket), 0);
+      expect(dialled(), [0]);
+    });
+
+    test('split across writes, and what follows it is carried', () async {
+      final (tunnel, _) = await authed();
+      final socket = await Socket.connect(tunnel.address, tunnel.port);
+      addTearDown(socket.destroy);
+      final token = tunnel.accessToken!;
+      socket.add(token.sublist(0, 5));
+      await socket.flush();
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      // The rest of the token and the first bytes of the protocol together.
+      socket.add([...token.sublist(5), 9, 8]);
+      final echoed = <int>[];
+      final sub = socket.listen(echoed.addAll);
+      addTearDown(sub.cancel);
+      for (var i = 0; i < 100 && echoed.length < 2; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      expect(echoed, [9, 8]);
+    });
+
+    test('once: one connection, then no port left open', () async {
+      final (tunnel, dialled) = await authed(once: true);
+      final engine = await Socket.connect(tunnel.address, tunnel.port);
+      addTearDown(engine.destroy);
+      engine.add(tunnel.accessToken!);
+      expect(await _echo(engine, [5]), [5]);
+      await expectLater(
+        Socket.connect(tunnel.address, tunnel.port),
+        throwsA(isA<SocketException>()),
+      );
+      expect(dialled(), [1]);
+    });
+  });
 }
 
 Future<List<int>> _echo(Socket socket, List<int> bytes) async {

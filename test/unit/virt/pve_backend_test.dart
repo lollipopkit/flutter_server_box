@@ -843,6 +843,29 @@ void main() {
       expect(vm(await pve.load()).state, VirtGuestState.running);
     });
 
+    test('force stop overrules a pending shutdown, where PVE knows how', () async {
+      Future<String> stopBody(String version) async {
+        final api = _Api()
+          ..resources = _resources
+          ..version = version
+          ..current = {'status': 'stopped', 'qmpstatus': 'stopped'};
+        final pve = api.backend(const PveConfig(addr: 'https://pve.lan:8006'));
+        final vm = (await pve.load()).guests.firstWhere(
+          (g) => g.id == 'qemu/102',
+        );
+        await pve.power(vm, VirtPowerAction.forceStop);
+        final at = api.paths.indexOf('POST /nodes/pve/qemu/102/status/stop');
+        expect(at, isNonNegative);
+        return api.bodies[at];
+      }
+
+      expect(await stopBody('9.2.2'), contains('overrule-shutdown=1'));
+      expect(await stopBody('8.1.3'), contains('overrule-shutdown=1'));
+      // Older releases refuse a parameter they do not know.
+      expect(await stopBody('8.0.4'), isNot(contains('overrule-shutdown')));
+      expect(await stopBody('7.4-3'), isNot(contains('overrule-shutdown')));
+    });
+
     test('the listing agreeing ends the overlay', () async {
       final api = _Api()
         ..resources = _resources
@@ -1530,6 +1553,7 @@ class _Api {
   List<Map<String, Object?>> resources = const [];
   int resourcesStatus = 200;
   int versionStatus = 200;
+  String version = '8.2.4';
   int actionStatus = 200;
   int consoleStatus = 200;
   int ticketStatus = 200;
@@ -1630,7 +1654,7 @@ class _Api {
     }
     if (key == 'GET /version') {
       if (versionStatus != 200) return _status(versionStatus);
-      return _json({'version': '8.2.4', 'release': '8.2'});
+      return _json({'version': version, 'release': version});
     }
     if (key == 'GET /cluster/resources') {
       if (resources401 > 0) {

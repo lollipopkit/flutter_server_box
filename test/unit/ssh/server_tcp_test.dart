@@ -22,6 +22,8 @@ import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 
+import '../../helpers/tunnel_client.dart';
+
 void main() {
   late _Echo echo;
 
@@ -74,7 +76,7 @@ void main() {
       addTearDown(tunnel.close);
       expect(tunnel.address.isLoopback, isTrue);
 
-      final socket = await Socket.connect(tunnel.address, tunnel.port);
+      final socket = await connectTunnel(tunnel);
       addTearDown(socket.destroy);
       expect(await _socketRoundTrip(socket, [7]), [7]);
       expect(ssh.forwarded, ['desktop:5900']);
@@ -137,7 +139,7 @@ void main() {
 
         final tunnel = await dialer.loopback('localhost', 5900);
         addTearDown(tunnel.close);
-        final socket = await Socket.connect(tunnel.address, tunnel.port);
+        final socket = await connectTunnel(tunnel);
         addTearDown(socket.destroy);
         expect(await _socketRoundTrip(socket, [6]), [6]);
         expect(agent.dialled, ['localhost:5900']);
@@ -359,7 +361,7 @@ void main() {
 
       final tunnel = await dialer.loopback('127.0.0.1', echo.port);
       addTearDown(tunnel.close);
-      final viaTunnel = await Socket.connect(tunnel.address, tunnel.port);
+      final viaTunnel = await connectTunnel(tunnel);
       addTearDown(viaTunnel.destroy);
       expect(await _socketRoundTrip(viaTunnel, [3]), [3]);
       expect(echo.accepted, 3);

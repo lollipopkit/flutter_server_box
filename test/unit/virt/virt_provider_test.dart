@@ -148,7 +148,8 @@ void main() {
     final busy = c.read(provider);
     final web = busy.guest(_run)!;
     expect(busy.displayState(web), VirtGuestState.stopping);
-    expect(busy.actionsOf(web), isEmpty);
+    // Only the way out of a shutdown the guest may ignore.
+    expect(busy.actionsOf(web), {VirtPowerAction.forceStop});
     await expectLater(
       notifier.power(_run, VirtPowerAction.reboot),
       throwsA(
@@ -160,6 +161,47 @@ void main() {
     await action;
     expect(c.read(provider).busy, isEmpty);
     await _until(() => c.read(provider).samples[_run]!.length >= 2);
+  });
+
+  test('force stop takes over from a shutdown still waiting', () async {
+    Stores.server.put(_spi('kvm'));
+    final shutdownGate = Completer<void>();
+    final exec = _Exec((call) async {
+      if (call.script.contains('V shutdown')) {
+        await shutdownGate.future;
+        // What the aborted shutdown answers once the stop has run.
+        return _ok(
+          _section('virt.action', 'error: domain is not running', 1),
+        );
+      }
+      if (call.script.contains('V destroy')) {
+        return _ok(_section('virt.action', "Domain 'cirros-run' destroyed"));
+      }
+      return _ok(_overview());
+    });
+    final c = container({'kvm': exec});
+    final provider = virtHostProvider('kvm');
+    final sub = c.listen(provider, (_, _) {});
+    addTearDown(sub.close);
+    await _until(() => c.read(provider).data != null);
+
+    final notifier = c.read(provider.notifier);
+    final shutdown = notifier.power(_run, VirtPowerAction.shutdown);
+    await _until(() => c.read(provider).busy.isNotEmpty);
+    // Nothing else may overrule it.
+    await expectLater(
+      notifier.power(_run, VirtPowerAction.suspend),
+      throwsA(isA<VirtErr>()),
+    );
+
+    await notifier.power(_run, VirtPowerAction.forceStop);
+    expect(c.read(provider).busy, isEmpty);
+
+    // The shutdown's own failure, once it comes back, is not reported: it
+    // was overruled on purpose. Nor does it take anything off the state.
+    shutdownGate.complete();
+    await shutdown;
+    expect(c.read(provider).busy, isEmpty);
   });
 
   test('a refresh asked for during another waits for its own run', () async {

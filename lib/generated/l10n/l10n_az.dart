@@ -3443,6 +3443,9 @@ class AppLocalizationsAz extends AppLocalizations {
   String get virtConsoleGraphical => 'Qrafik';
 
   @override
+  String get virtVncPasswordNeeded => 'Bu ekran parol tələb edir';
+
+  @override
   String get virtConsoleSerialTip =>
       'Qonağın seriya konsolunu hostda virsh ilə açır. Bağlantını kəs və ya Ctrl+] hostun shell-inə qaytarır.';
 

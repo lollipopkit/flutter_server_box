@@ -153,6 +153,10 @@ class ServerTcpDialer {
   /// socket is carried to [host]:[port] — for a client that must be given a
   /// port number, such as the remote desktop engine.
   ///
+  /// Authenticated: a connection must present the tunnel's
+  /// `SshLocalTunnel.accessToken` first, which the engine is handed with the
+  /// port. Another process on this device gets nothing from the port.
+  ///
   /// The transport is chosen when the listener is bound, not per connection.
   /// The tunnel closes itself when an SSH connection under it ends.
   Future<SshLocalTunnel> loopback(String host, int port) =>
@@ -318,6 +322,7 @@ class ServerTcpDialer {
           bindHost: bindHost,
           sshDone: ssh.done,
           dialer: () => ssh.forward(host, port),
+          authenticated: true,
         );
       case ServerConnectCredentialMonitorHttp(:final monitor):
         // One client for the tunnel's life rather than one per dial: it holds
@@ -336,6 +341,7 @@ class ServerTcpDialer {
             // No SSH connection to outlive: the relay socket is opened per
             // accepted connection, and `MonitorTunnelChannel.close` ends it.
             sshDone: Completer<void>().future,
+            authenticated: true,
           );
         } catch (_) {
           client.dispose();
@@ -350,6 +356,7 @@ class ServerTcpDialer {
             await Socket.connect(host, port, timeout: openTimeout),
           ),
           sshDone: Completer<void>().future,
+          authenticated: true,
         );
     }
   }

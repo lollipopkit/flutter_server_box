@@ -3468,6 +3468,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get virtConsoleGraphical => 'Grafica';
 
   @override
+  String get virtVncPasswordNeeded => 'Questo display richiede una password';
+
+  @override
   String get virtConsoleSerialTip =>
       'Apre la console seriale del guest con virsh sull\'host. Disconnetti, o Ctrl+], torna alla shell dell\'host.';
 

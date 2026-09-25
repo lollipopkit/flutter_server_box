@@ -1038,6 +1038,7 @@
   "virtConsole": "Konsol",
   "virtConsoleNone": "Bu konuk için yapılandırılmış konsol yok",
   "virtConsoleGraphical": "Grafik",
+  "virtVncPasswordNeeded": "Bu ekran bir parola istiyor",
   "virtConsoleSerialTip": "Konuğun seri konsolunu ana makinede virsh ile açar. Bağlantıyı kes veya Ctrl+] ana makinenin kabuğuna döndürür.",
   "virtConsoleVia": "{transport} üzerinden",
   "virtConsoleEnterTip": "Çıktı yok mu? Enter'a basın",

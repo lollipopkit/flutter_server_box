@@ -597,6 +597,7 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
           params: ffi.RdpSessionParams(
             connectHost: tunnel.address.address,
             connectPort: tunnel.port,
+            accessToken: tunnel.accessToken,
             serverName: entry.profile.host,
             serverPort: entry.profile.port,
             username: entry.profile.username ?? '',
@@ -612,6 +613,7 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
           params: ffi.VncSessionParams(
             connectHost: tunnel.address.address,
             connectPort: tunnel.port,
+            accessToken: tunnel.accessToken,
             password: password,
             shared: entry.profile.shared,
           ),

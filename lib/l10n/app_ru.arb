@@ -1045,6 +1045,7 @@
   "virtConsole": "Консоль",
   "virtConsoleNone": "Для этой гостевой системы консоль не настроена",
   "virtConsoleGraphical": "Графическая",
+  "virtVncPasswordNeeded": "Этот дисплей запрашивает пароль",
   "virtConsoleSerialTip": "Открывает последовательную консоль гостя через virsh на хосте. «Отключить» или Ctrl+] возвращает в оболочку хоста.",
   "virtConsoleVia": "через {transport}",
   "virtConsoleEnterTip": "Нет вывода? Нажмите Enter",

@@ -3203,6 +3203,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtConsoleGraphical => '图形';
 
   @override
+  String get virtVncPasswordNeeded => '这个显示需要密码';
+
+  @override
   String get virtConsoleSerialTip =>
       '在宿主机上用 virsh 打开客户机的串口控制台。断开连接或按 Ctrl+] 可返回宿主机的 shell。';
 
@@ -6724,6 +6727,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtConsoleGraphical => '圖形';
+
+  @override
+  String get virtVncPasswordNeeded => '這個顯示需要密碼';
 
   @override
   String get virtConsoleSerialTip =>

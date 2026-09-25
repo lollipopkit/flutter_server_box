@@ -23,6 +23,8 @@ import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/provider/virt/pve_backend.dart';
 
+import '../../helpers/tunnel_client.dart';
+
 const _dir = 'test/fixtures/virt_tls';
 
 String _leafFingerprint() {
@@ -252,7 +254,7 @@ void main() {
         WebSocketTunnelChannel(await pve.openConsoleSocket(console)),
       );
       addTearDown(tunnel.close);
-      final vnc = await Socket.connect(tunnel.address, tunnel.port);
+      final vnc = await connectTunnel(tunnel);
       addTearDown(vnc.destroy);
       final greeting = await vnc.first.timeout(const Duration(seconds: 5));
       expect(ascii.decode(greeting), 'RFB 003.008\n');

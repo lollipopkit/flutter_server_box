@@ -161,6 +161,41 @@ abstract class LibvirtDomainDetail with _$LibvirtDomainDetail {
       _$LibvirtDomainDetailFromJson(json);
 }
 
+/// `sbm_parser::virt::VirtVncConsoleInfo`: a display and its VNC password.
+///
+/// Not freezed: a generated `toString` would print the password.
+final class LibvirtVncConsoleInfo {
+  const LibvirtVncConsoleInfo({
+    this.display,
+    this.password,
+    this.passwordKnown = false,
+  });
+
+  factory LibvirtVncConsoleInfo.fromJson(Map<String, dynamic> json) =>
+      LibvirtVncConsoleInfo(
+        display: switch (json['display']) {
+          final Map<String, dynamic> d => VirtDisplay.fromJson(d),
+          _ => null,
+        },
+        password: json['password'] as String?,
+        passwordKnown: json['password_known'] as bool? ?? false,
+      );
+
+  final VirtDisplay? display;
+
+  /// Kept in memory for one connection, then gone. Never logged.
+  final String? password;
+
+  /// Whether the password could be read at all; false leaves the VNC server
+  /// to say whether it wants one.
+  final bool passwordKnown;
+
+  @override
+  String toString() =>
+      'LibvirtVncConsoleInfo($display, password: '
+      '${password == null ? 'none' : '[redacted]'}, known: $passwordKnown)';
+}
+
 /// `sbm_parser::virt::VirtSnapshotInfo`.
 @freezed
 abstract class LibvirtSnapshot with _$LibvirtSnapshot {

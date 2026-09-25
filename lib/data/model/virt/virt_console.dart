@@ -114,17 +114,32 @@ final class LibvirtSerialConsole extends VirtConsole {
 /// libvirt graphical console: a VNC server on the hypervisor. Dial [host]:
 /// [port] from the server's side with `ServerTcpDialer.loopback` and point
 /// the VNC client at the loopback port.
+///
+/// [password] is the display's own, read with `dumpxml --security-info`, for
+/// this one connection. Where it could not be read ([passwordKnown] false),
+/// the server's answer decides: one that asks is answered from the user.
 final class LibvirtVncConsole extends VirtConsole {
-  const LibvirtVncConsole({required this.host, required this.port});
+  const LibvirtVncConsole({
+    required this.host,
+    required this.port,
+    this.password,
+    this.passwordKnown = true,
+  });
 
   /// As seen from the hypervisor; a wildcard listen address is given as
   /// loopback.
   final String host;
   final int port;
 
+  /// Never logged, never stored.
+  final String? password;
+  final bool passwordKnown;
+
   @override
   VirtConsoleKind get kind => VirtConsoleKind.vnc;
 
   @override
-  String toString() => 'LibvirtVncConsole($host:$port)';
+  String toString() =>
+      'LibvirtVncConsole($host:$port, '
+      'password: ${password == null ? 'none' : '[redacted]'})';
 }

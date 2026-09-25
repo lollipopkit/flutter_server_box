@@ -9,6 +9,7 @@ import 'package:redfish/redfish.dart' show CertInfo, PinnedCert;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/server_tcp.dart';
+import 'package:server_box/core/utils/version.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -294,7 +295,16 @@ class PveBackend implements VirtBackend {
       VirtPowerAction.resume => 'resume',
     };
     final upid = await _call(
-      (dio) => dio.post(_url('$path/status/$verb')),
+      (dio) => dio.post(
+        _url('$path/status/$verb'),
+        data: {
+          // A shutdown the guest ignores holds the guest until it times
+          // out, and a plain stop queues behind it; this aborts it instead.
+          if (action == VirtPowerAction.forceStop && _canOverruleShutdown)
+            'overrule-shutdown': 1,
+        },
+        options: Options(contentType: Headers.formUrlEncodedContentType),
+      ),
       action: true,
     );
     if (upid is String && upid.startsWith('UPID:')) {
@@ -305,6 +315,17 @@ class PveBackend implements VirtBackend {
     } else {
       await _readStatus(guest, path);
     }
+  }
+
+  /// The first release whose `status/stop` takes `overrule-shutdown` (QEMU
+  /// and LXC alike). Sent only to a release known to have it: an older one
+  /// refuses the request for a parameter it does not know.
+  static const overruleShutdownSince = [8, 1];
+
+  bool get _canOverruleShutdown {
+    final release = _release;
+    return release != null &&
+        !isVersionLessThan(release, overruleShutdownSince);
   }
 
   /// How long a reboot's guest may read as not running once its task has

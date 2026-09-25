@@ -1062,6 +1062,7 @@
   "virtConsole": "Console",
   "virtConsoleNone": "Nessuna console configurata per questo guest",
   "virtConsoleGraphical": "Grafica",
+  "virtVncPasswordNeeded": "Questo display richiede una password",
   "virtConsoleSerialTip": "Apre la console seriale del guest con virsh sull'host. Disconnetti, o Ctrl+], torna alla shell dell'host.",
   "virtConsoleVia": "tramite {transport}",
   "virtConsoleEnterTip": "Nessun output? Premi Invio",

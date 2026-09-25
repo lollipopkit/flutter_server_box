@@ -35,6 +35,15 @@
 ///   without input, its VNC console is authenticated and closed.
 /// - `SBM_E2E_SSH_KEY_PASSPHRASE`: only for an encrypted key.
 ///
+/// Creating and deleting, groups of their own that touch nothing existing
+/// (`--plain-name 'create and delete'` runs only them): on the libvirt host a
+/// VM `sbme2e-vm-*` with a 1 GiB disk in the first pool, the first ISO and
+/// the `default` network; on the PVE node a VM and — where a template is
+/// there — a container `sbme2e-*`. Each is started, refused a second time,
+/// refused deletion while running, force-stopped and deleted with its disk.
+/// The PVE token then needs `VM.Allocate`, `VM.Config.*`,
+/// `Datastore.AllocateSpace` and `SDN.Use` as well.
+///
 /// A QEMU VM of the test's own, a group of its own (needs the three PVE
 /// variables above, and the `SBM_E2E_PVE_HOST` login to be root for `qm`):
 ///
@@ -91,7 +100,9 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
+import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
+import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/virt/libvirt_backend.dart';
 import 'package:server_box/data/provider/virt/pve_backend.dart';
 import 'package:server_box/src/rust/api/virt.dart' as ffi;
@@ -99,8 +110,12 @@ import 'package:server_box/src/rust/api/virt.dart' as ffi;
 import '../helpers/rust_lib_helper.dart';
 import '../helpers/spi_fixture.dart';
 import '../helpers/ssh_e2e.dart';
+import '../helpers/tunnel_client.dart';
 
 Future<void> main() async {
+  // Standing alone: `--plain-name 'create and delete'` runs only these.
+  await _libvirtCreate();
+  await _pveCreate();
   await _libvirt();
   await _pve();
   await _pveTestVm();
@@ -259,10 +274,7 @@ Future<void> _libvirt() async {
         ssh: () async => ServerTcpSsh.client(client!),
       );
       final tunnel = await dialer.loopback(console.host, console.port);
-      final socket = await Socket.connect(
-        InternetAddress.loopbackIPv4,
-        tunnel.port,
-      );
+      final socket = await connectTunnel(tunnel);
       final rfb = _RfbReader(socket);
       try {
         expect(ascii.decode(await rfb.take(12)), startsWith('RFB 003.00'));
@@ -1301,6 +1313,300 @@ Map<String, ({String addr, ServerTcpDialer Function() dialer})> _pvePaths(
 };
 
 // -----------------------------------------------------------------------------
+// Creating and deleting, over SSH
+// -----------------------------------------------------------------------------
+
+/// A name for a new guest no earlier run left behind.
+String _e2eName(String kind) =>
+    'sbme2e-$kind-${DateTime.now().millisecondsSinceEpoch % 100000}';
+
+/// A VM of the test's own on the libvirt host, over the backend the app uses
+/// on SSH: created with a disk in a pool, the first ISO and the `default`
+/// network, started, refused a second time and refused deletion while
+/// running, then force-stopped and deleted with its disk. The existing
+/// domains are not touched.
+Future<void> _libvirtCreate() async {
+  final host = e2eEnv('SBM_E2E_LIBVIRT_HOST');
+  if (host == null) return;
+  final ready = await prepareSshE2e(host);
+  final target = ready.target;
+  if (target == null) return;
+
+  group('create and delete: libvirt over SSH', () {
+    SSHClient? client;
+    late LibvirtBackend virt;
+    final name = _e2eName('vm');
+
+    Future<VirtGuest?> find() async =>
+        (await virt.load()).guests.where((g) => g.name == name).firstOrNull;
+
+    Future<VirtGuest> settle(bool Function(VirtGuest g) test) async {
+      for (var i = 0; i < 40; i++) {
+        final g = await find();
+        if (g != null && test(g)) return g;
+        await Future<void>.delayed(const Duration(milliseconds: 500));
+      }
+      fail('$name never settled');
+    }
+
+    setUpAll(() async {
+      await initRustLibForTest();
+      final c = await connectSshE2e(target, ready.identities);
+      client = c;
+      virt = LibvirtBackend(
+        serverId: 'e2e-libvirt-create',
+        exec: () async => SshExec(c),
+      );
+    });
+    tearDownAll(() async {
+      // Whatever a failed test left.
+      try {
+        final g = await find();
+        if (g != null) {
+          if (g.state != VirtGuestState.stopped) {
+            await virt.power(g, VirtPowerAction.forceStop);
+          }
+          await virt.delete((await find())!);
+        }
+      } catch (_) {}
+      await virt.close();
+      client?.close();
+    });
+
+    test('a VM: disk in a pool, ISO, NIC, started; then deleted with it',
+        () async {
+      final snap = await virt.load();
+      expect(snap.capabilities.create, isTrue);
+      final pools = await virt.storagePools();
+      final pool = virtDiskStorages(
+        pools,
+        host: VirtHostKind.libvirt,
+        kind: VirtGuestKind.qemu,
+      ).first;
+      final media = <VirtVolume>[];
+      for (final p in virtMediaStorages(
+        pools,
+        host: VirtHostKind.libvirt,
+        kind: VirtGuestKind.qemu,
+      )) {
+        media.addAll(
+          (await virt.volumes(p)).where(
+            (v) => virtIsMedia(v, VirtGuestKind.qemu),
+          ),
+        );
+      }
+      final nets = virtCreateNetworks(
+        await virt.networks(),
+        host: VirtHostKind.libvirt,
+      );
+      final spec = VirtCreateSpec(
+        kind: VirtGuestKind.qemu,
+        name: name,
+        cores: 1,
+        memoryMiB: 256,
+        storage: pool,
+        diskGiB: 1,
+        media: media.firstOrNull,
+        network: nets.where((n) => n.name == 'default').firstOrNull,
+        start: true,
+      );
+      expect(
+        virtCreateIssue(spec, host: VirtHostKind.libvirt, guests: snap.guests),
+        isNull,
+      );
+
+      final created = await virt.create(spec);
+      expect(created.startError, isNull);
+      final g = await settle((g) => g.state == VirtGuestState.running);
+      expect(g.id, created.id);
+      final detail = await virt.detail(g);
+      final disk = detail.disks.firstWhere((d) => d.device == 'disk');
+      expect(disk.source, endsWith('/$name.qcow2'));
+      expect(detail.consoles, containsAll(VirtConsoleKind.values));
+
+      final taken = await _virtErr(virt.create(spec));
+      expect(taken.type, VirtErrType.exists);
+
+      final running = await _virtErr(virt.delete(g));
+      expect(running.type, VirtErrType.unsupported);
+      await virt.power(g, VirtPowerAction.forceStop);
+      final stopped = await settle((g) => g.state == VirtGuestState.stopped);
+      await virt.delete(stopped);
+      expect(await find(), isNull);
+      final vols = await virt.volumes(pool);
+      expect(vols.where((v) => v.name == '$name.qcow2'), isEmpty);
+    });
+  });
+}
+
+/// A VM and, where a template is there, a container of the test's own on the
+/// PVE node, through the API over an SSH channel: created, started, refused
+/// a second time, refused deletion while running, then force-stopped and
+/// deleted with their volumes. The token needs the create privileges too:
+/// `VM.Allocate`, `VM.Config.*`, `Datastore.AllocateSpace`, `SDN.Use`.
+Future<void> _pveCreate() async {
+  final host = e2eEnv('SBM_E2E_PVE_HOST');
+  final tokenId = e2eEnv('SBM_E2E_PVE_TOKEN_ID');
+  final tokenSecret = e2eEnv('SBM_E2E_PVE_TOKEN_SECRET');
+  if (host == null || tokenId == null || tokenSecret == null) return;
+  final ready = await prepareSshE2e(host);
+  final target = ready.target;
+  if (target == null) return;
+
+  group('create and delete: PVE over SSH', () {
+    SSHClient? client;
+    late PveBackend pve;
+    final created = <VirtGuestKind, int>{};
+
+    Future<VirtGuest?> find(VirtGuestKind kind, int vmid) async =>
+        (await pve.load()).guests
+            .where((g) => g.kind == kind && g.vmid == vmid)
+            .firstOrNull;
+
+    Future<VirtGuest> settle(
+      VirtGuestKind kind,
+      int vmid,
+      bool Function(VirtGuest g) test,
+    ) async {
+      final deadline = DateTime.now().add(const Duration(seconds: 60));
+      while (true) {
+        final g = await find(kind, vmid);
+        if (g != null && test(g)) return g;
+        if (DateTime.now().isAfter(deadline)) fail('$kind $vmid never settled');
+        await Future<void>.delayed(const Duration(seconds: 1));
+      }
+    }
+
+    setUpAll(() async {
+      await initRustLibForTest();
+      final c = await connectSshE2e(target, ready.identities);
+      client = c;
+      final d = _pvePaths(target, () => c, '')['over SSH']!.dialer();
+      pve = PveBackend(
+        serverId: 'e2e-pve-create',
+        config: PveConfig(
+          addr: 'https://localhost:8006',
+          auth: PveAuth.token,
+          tokenId: tokenId,
+          tokenSecret: tokenSecret,
+        ),
+        connect: d.startConnect,
+        onClose: d.close,
+        taskPoll: const Duration(milliseconds: 500),
+        taskTimeout: const Duration(minutes: 3),
+      );
+      final e = await _virtErr(pve.load());
+      expect(e.type, VirtErrType.certUnconfirmed);
+      await pve.confirmCert(e.cert!.fingerprint);
+    });
+    tearDownAll(() async {
+      for (final MapEntry(key: kind, value: vmid) in created.entries) {
+        try {
+          final g = await find(kind, vmid);
+          if (g == null) continue;
+          if (g.state != VirtGuestState.stopped) {
+            await pve.power(g, VirtPowerAction.forceStop);
+          }
+          await _whileLocked(() async => pve.delete((await find(kind, vmid))!));
+        } catch (_) {}
+      }
+      await pve.close();
+      client?.close();
+    });
+
+    Future<void> stopAndDelete(VirtGuest g, VirtStoragePool storage) async {
+      final running = await _virtErr(pve.delete(g));
+      expect(running.type, VirtErrType.unsupported);
+      await pve.power(g, VirtPowerAction.forceStop);
+      final stopped = await settle(
+        g.kind,
+        g.vmid!,
+        (x) => x.state == VirtGuestState.stopped,
+      );
+      await _afterStop();
+      await _whileLocked(() => pve.delete(stopped));
+      expect(await find(g.kind, g.vmid!), isNull);
+      final vols = await pve.volumes(storage);
+      expect(vols.where((v) => v.id.contains('-${g.vmid}-')), isEmpty);
+      created.remove(g.kind);
+    }
+
+    for (final kind in VirtGuestKind.values) {
+      test('a ${kind.name}: created, started, then deleted', () async {
+        final snap = await pve.load();
+        expect(snap.capabilities.create, isTrue);
+        final node = snap.host.nodes.firstWhere((n) => n.online).name;
+        final pools = await pve.storagePools();
+        final storage = virtDiskStorages(
+          pools,
+          host: VirtHostKind.pve,
+          kind: kind,
+          node: node,
+        ).first;
+        final media = <VirtVolume>[];
+        for (final p in virtMediaStorages(
+          pools,
+          host: VirtHostKind.pve,
+          kind: kind,
+          node: node,
+        )) {
+          media.addAll(
+            (await pve.volumes(p)).where((v) => virtIsMedia(v, kind)),
+          );
+        }
+        if (kind == VirtGuestKind.lxc && media.isEmpty) {
+          markTestSkipped('no container template on $node');
+          return;
+        }
+        final bridge = virtCreateNetworks(
+          await pve.networks(),
+          host: VirtHostKind.pve,
+          node: node,
+        ).first;
+        final vmid = (await pve.nextVmid())!;
+        final spec = VirtCreateSpec(
+          kind: kind,
+          name: _e2eName(kind == VirtGuestKind.lxc ? 'ct' : 'vm'),
+          node: node,
+          vmid: vmid,
+          cores: 1,
+          memoryMiB: kind == VirtGuestKind.lxc ? 256 : 512,
+          storage: storage,
+          diskGiB: 1,
+          media: media.firstOrNull,
+          network: bridge,
+          password: kind == VirtGuestKind.lxc
+              ? List.generate(
+                  16,
+                  (_) => 'abcdefghjkmnpqrstuvwxyz23456789'[Random.secure()
+                      .nextInt(31)],
+                ).join()
+              : null,
+          start: true,
+        );
+        expect(
+          virtCreateIssue(spec, host: VirtHostKind.pve, guests: snap.guests),
+          isNull,
+        );
+        final result = await pve.create(spec);
+        created[kind] = vmid;
+        expect(result.startError, isNull);
+        final g = await settle(
+          kind,
+          vmid,
+          (g) => g.state == VirtGuestState.running,
+        );
+
+        final taken = await _virtErr(pve.create(spec));
+        expect(taken.type, VirtErrType.exists, reason: '${taken.message}');
+
+        await stopAndDelete(g, storage);
+      });
+    }
+  });
+}
+
+// -----------------------------------------------------------------------------
 // Proxmox VE, password login
 // -----------------------------------------------------------------------------
 
@@ -1766,7 +2072,7 @@ Future<({int result, List<int> types})> _pveVncHandshake(
     WebSocketTunnelChannel(socket),
   );
   final rfb = _RfbReader(
-    await Socket.connect(InternetAddress.loopbackIPv4, tunnel.port),
+    await connectTunnel(tunnel),
   );
   try {
     final version = ascii.decode(await rfb.take(12));

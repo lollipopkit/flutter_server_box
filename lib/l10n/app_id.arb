@@ -1038,6 +1038,7 @@
   "virtConsole": "Konsol",
   "virtConsoleNone": "Tidak ada konsol yang dikonfigurasi untuk tamu ini",
   "virtConsoleGraphical": "Grafis",
+  "virtVncPasswordNeeded": "Tampilan ini meminta kata sandi",
   "virtConsoleSerialTip": "Membuka konsol serial tamu dengan virsh di host. Putuskan, atau Ctrl+], kembali ke shell host.",
   "virtConsoleVia": "melalui {transport}",
   "virtConsoleEnterTip": "Tidak ada keluaran? Tekan Enter",

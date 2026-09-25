@@ -1016,6 +1016,7 @@
   "virtConsole": "控制台",
   "virtConsoleNone": "此客户机没有可用的控制台",
   "virtConsoleGraphical": "图形",
+  "virtVncPasswordNeeded": "这个显示需要密码",
   "virtConsoleSerialTip": "在宿主机上用 virsh 打开客户机的串口控制台。断开连接或按 Ctrl+] 可返回宿主机的 shell。",
   "virtConsoleVia": "经 {transport}",
   "virtConsoleEnterTip": "没有输出？按 Enter",

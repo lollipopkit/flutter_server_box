@@ -4434,6 +4434,10 @@
   "@virtConsoleGraphical": {
     "description": "Toggle for a guest's graphical (VNC) console, beside the text one."
   },
+  "virtVncPasswordNeeded": "This display asks for a password",
+  "@virtVncPasswordNeeded": {
+    "description": "Over a guest's graphical console whose VNC server refused the connection for a password; beside a button to enter it."
+  },
   "virtConsoleSerialTip": "Opens the guest's serial console with virsh on the host. Disconnect, or Ctrl+], returns to the host's shell.",
   "@virtConsoleSerialTip": {
     "description": "Under the button that opens a libvirt guest's serial console in the terminal."

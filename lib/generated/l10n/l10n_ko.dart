@@ -3272,6 +3272,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get virtConsoleGraphical => '그래픽';
 
   @override
+  String get virtVncPasswordNeeded => '이 디스플레이는 암호가 필요합니다';
+
+  @override
   String get virtConsoleSerialTip =>
       '호스트에서 virsh로 게스트의 시리얼 콘솔을 엽니다. 연결 끊기 또는 Ctrl+]로 호스트 셸로 돌아갑니다.';
 

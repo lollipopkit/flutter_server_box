@@ -41,6 +41,15 @@ Future<String> parseVirtProbeJson({required String raw}) =>
 Future<String> parseVirtOverviewJson({required String raw}) =>
     RustLib.instance.api.crateApiVirtParseVirtOverviewJson(raw: raw);
 
+/// Display and VNC password, for opening a graphical console
+String virtVncConsoleScript({required String domain}) =>
+    RustLib.instance.api.crateApiVirtVirtVncConsoleScript(domain: domain);
+
+/// [`virt_vnc_console_script`]'s output → `VirtVncConsoleInfo` JSON. Holds
+/// the password: never logged.
+Future<String> parseVirtVncConsoleJson({required String raw}) =>
+    RustLib.instance.api.crateApiVirtParseVirtVncConsoleJson(raw: raw);
+
 /// [`virt_domain_detail_script`]'s output → `VirtDomainDetail` JSON
 Future<String> parseVirtDomainDetailJson({required String raw}) =>
     RustLib.instance.api.crateApiVirtParseVirtDomainDetailJson(raw: raw);

@@ -1062,6 +1062,7 @@
   "virtConsole": "Console",
   "virtConsoleNone": "Aucune console n'est configurée pour cet invité",
   "virtConsoleGraphical": "Graphique",
+  "virtVncPasswordNeeded": "Cet affichage demande un mot de passe",
   "virtConsoleSerialTip": "Ouvre la console série de l'invité avec virsh sur l'hôte. Déconnecter, ou Ctrl+], revient au shell de l'hôte.",
   "virtConsoleVia": "via {transport}",
   "virtConsoleEnterTip": "Aucune sortie ? Appuyez sur Entrée",

@@ -1016,6 +1016,7 @@
   "virtConsole": "主控台",
   "virtConsoleNone": "此客體機沒有可用的主控台",
   "virtConsoleGraphical": "圖形",
+  "virtVncPasswordNeeded": "這個顯示需要密碼",
   "virtConsoleSerialTip": "在主機上以 virsh 開啟客體機的序列主控台。中斷連線或按 Ctrl+] 可返回主機的 shell。",
   "virtConsoleVia": "經 {transport}",
   "virtConsoleEnterTip": "沒有輸出？按 Enter",

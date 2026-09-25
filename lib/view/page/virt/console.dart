@@ -248,9 +248,7 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
 
     final text = _text;
     final body = switch (_kind) {
-      VirtConsoleKind.vnc when vncOpen => RemoteDesktopViewer(
-        sessionId: _vncId,
-      ),
+      VirtConsoleKind.vnc when vncOpen => _buildVnc(),
       VirtConsoleKind.vnc => _launcher(
         icon: Icons.desktop_windows_outlined,
         text: l10n.connect,
@@ -505,7 +503,79 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
     );
   }
 
-  void _openVnc() {
+  /// The viewer, and over it — when the display refused the connection for
+  /// a password, which a libvirt display with one it could not read does —
+  /// the way to give it.
+  Widget _buildVnc() {
+    final refused = ref.watch(
+      remoteDesktopSessionsProvider.select(
+        (s) =>
+            s.consoles[_vncId]?.endReason ==
+            ffi.RemoteDesktopEndReason.authenticationFailed,
+      ),
+    );
+    final viewer = RemoteDesktopViewer(sessionId: _vncId);
+    if (!refused) return viewer;
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(13, 0, 7, 5),
+          child: Row(
+            children: [
+              Icon(
+                Icons.lock_outline,
+                size: 17,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              UIs.width7,
+              Expanded(
+                child: Text(
+                  l10n.virtVncPasswordNeeded,
+                  style: UIs.text13,
+                ),
+              ),
+              Btn.text(text: libL10n.pwd, onTap: _askVncPassword),
+            ],
+          ),
+        ),
+        Expanded(child: viewer),
+      ],
+    );
+  }
+
+  /// Asks for the display's password and connects again with it — used for
+  /// this connection only, kept nowhere.
+  Future<void> _askVncPassword() async {
+    final ctrl = TextEditingController();
+    final password = await context.showRoundDialog<String>(
+      title: 'VNC ${libL10n.pwd}',
+      childBuilder: (dialogContext) => DisposeWith(
+        notifiers: [ctrl],
+        child: Input(
+          controller: ctrl,
+          hint: libL10n.pwd,
+          obscureText: true,
+          autoFocus: true,
+          suggestion: false,
+          onSubmitted: (value) => dialogContext.popDialog(value),
+        ),
+      ),
+      actionsBuilder: (dialogContext) => [
+        Btn.cancel(),
+        Btn.text(
+          text: l10n.connect,
+          onTap: () => dialogContext.popDialog(ctrl.text),
+        ),
+      ],
+    );
+    if (password == null || password.isEmpty || !mounted) return;
+    // A new opener, not a reconnect of the old one: that one has no password.
+    await _sessions.close(_vncId);
+    if (!mounted) return;
+    _openVnc(password: password);
+  }
+
+  void _openVnc({String? password}) {
     final container = ProviderScope.containerOf(context);
     _sessions.openConsole(
       VirtConsoleConnect.vncProfile(
@@ -516,6 +586,7 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
         container,
         serverId: widget.serverId,
         guestId: widget.guest.id,
+        password: password,
       ),
     );
   }

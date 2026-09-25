@@ -1062,6 +1062,7 @@
   "virtConsole": "Console",
   "virtConsoleNone": "Nenhum console configurado para este convidado",
   "virtConsoleGraphical": "Gráfico",
+  "virtVncPasswordNeeded": "Esta tela pede uma senha",
   "virtConsoleSerialTip": "Abre o console serial do convidado com virsh no host. Desconectar, ou Ctrl+], volta ao shell do host.",
   "virtConsoleVia": "via {transport}",
   "virtConsoleEnterTip": "Sem saída? Pressione Enter",

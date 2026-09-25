@@ -3458,6 +3458,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get virtConsoleGraphical => 'Grafisch';
 
   @override
+  String get virtVncPasswordNeeded => 'Dit scherm vraagt om een wachtwoord';
+
+  @override
   String get virtConsoleSerialTip =>
       'Opent de seriële console van de gast met virsh op de host. Verbreken, of Ctrl+], keert terug naar de shell van de host.';
 

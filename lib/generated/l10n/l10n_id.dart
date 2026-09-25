@@ -3427,6 +3427,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get virtConsoleGraphical => 'Grafis';
 
   @override
+  String get virtVncPasswordNeeded => 'Tampilan ini meminta kata sandi';
+
+  @override
   String get virtConsoleSerialTip =>
       'Membuka konsol serial tamu dengan virsh di host. Putuskan, atau Ctrl+], kembali ke shell host.';
 

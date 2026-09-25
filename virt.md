@@ -90,6 +90,22 @@ one shared place (proposed `lib/core/utils/server_tcp.dart`):
   server gets a direct `Socket.connect`. `ServerTcpDialer.loopback` (built on
   `SshLocalTunnel.bindWithDialer`) is for consumers that need a port number
   (VNC client).
+- **The loopback is authenticated.** A loopback port is open to every process
+  on the device, and the first to connect used to get the remote end — a
+  guest's console. `ServerTcpDialer.loopback` and
+  `WebSocketTunnelChannel.loopbackOnce` now bind with `authenticated: true`:
+  the tunnel draws a 32-byte token from `Random.secure()`, the remote desktop
+  engine gets it in-process with the port (`RdpSessionParams`/
+  `VncSessionParams.access_token`) and writes it first on the connection (VNC:
+  `run_vnc`; RDP: `ConfigBuilder::with_tcp_preamble` in the vendored
+  IronRDP's `connect_direct`), and the listener carries only a connection
+  that presents it — read within 5 s, compared in constant time, before
+  anything is dialled. Any other is dropped unread. `loopbackOnce` also stops
+  listening once its one connection is through. The port-forward feature's
+  `SshLocalTunnel.bind` is left open on purpose: it serves outside clients.
+  Residual risk: a process that can read this app's memory, or sniff the
+  loopback interface (root), can still take the token; both already own the
+  session by other means.
 
 ### PVE TLS
 
@@ -234,8 +250,29 @@ config below, so no store changes beyond the PVE columns.
   back on screen the view takes it up again. Close ends it.
 - Opening glue: `lib/view/page/virt/console_connect.dart`; view:
   `lib/view/page/virt/console.dart`.
-- A libvirt VNC display with a password is not supported: `dumpxml` without
-  `--security-info` does not show it, and nothing asks for it.
+- A libvirt VNC display with a password: opening the console runs
+  `vnc_console_script` — `domdisplay` and `dumpxml --security-info` in one
+  round trip — and the parser returns only the display and the `passwd` of
+  the VNC `<graphics>`; the secured XML never leaves Rust, and no error
+  carries it. The password is handed to the engine for that connection (cut
+  to 8 bytes: RFB's DES and QEMU use no more) and kept nowhere;
+  `LibvirtVncConsole` and `LibvirtVncConsoleInfo` print it redacted. Where
+  `--security-info` is refused (a read-only connection: `operation
+  forbidden: virDomainGetXMLDesc with secure flag`, libvirt 11.3) the console
+  is tried without one, and a display that refuses it for a password gets
+  "This display asks for a password" over the viewer and a dialog; the typed
+  password lives only in that console's opener.
+- Force stop during a shutdown: the app's own shutdown or reboot waits on
+  its task (PVE) and so kept the guest busy, offering nothing. It now offers
+  force stop meanwhile (`VirtHostState.overrulable`), which takes over the
+  busy entry; the shutdown's own failure afterwards is not reported. On PVE
+  8.1+ the stop carries `overrule-shutdown=1`: without it a stop queues
+  behind a `qmshutdown`/`vzshutdown` the guest ignores until that times out
+  (PVE 9.2.2, a VM with no OS: still running 10 s after a plain stop; stopped
+  in 2 s with the parameter). Older releases are sent no parameter they would
+  refuse. libvirt needs nothing: `virsh shutdown` returns at once and the
+  guest reads running until it goes (libvirt 11.3: `running (booted)` 5 s
+  after the request, `destroy` immediate).
 
 ### Snapshots, storage and networks (phase 2)
 
@@ -353,7 +390,10 @@ Debian 13 over SSH. What they established:
 | QEMU ACPI shutdown | A booted Debian guest is `stopped` when the task ends, 2–4 s. A request sent during boot (~3 s in) is lost: the task waits 60 s and fails with `VM quit/powerdown failed - got timeout`, the VM still running (`actionFailed` with that text). |
 | Stop, then start | A start within about a second of a stop leaves `qmeventd`'s cleanup of the old process holding the config lock until it gives up 30 s later ("QEMU process ... still running (or newly started)"). Every action in that window fails after 10 s with `can't lock file '/var/lock/qemu-server/lock-<vmid>.conf' - got timeout` (`actionFailed`). A few seconds between the two avoids it. |
 | Locks | `qm set --lock backup`: the listing shows the lock within pvestatd's cycle, the VM reads `backup` and offers only suspend (resume when paused) — `vm_suspend` and `vm_resume` skip the lock check for a backup, and both succeeded. A stop under it is refused by PVE: task error `VM is locked (backup)`. Any other lock (`snapshot`) offers nothing, and PVE refuses a suspend with `VM is locked (snapshot)`. A running VM under a backup lock keeps its CPU and memory readings. |
-| One action at a time | `VirtHostNotifier.power` refuses a second action on a guest with one in flight (`unsupported`); the guest reads as the action's transient state and offers nothing until the first returns. |
+| One action at a time | `VirtHostNotifier.power` refuses a second action on a guest with one in flight (`unsupported`); the guest reads as the action's transient state and offers nothing until the first returns — except force stop over a shutdown or reboot. |
+| Force stop over a stuck shutdown | A VM with no OS ignores ACPI: `status/shutdown --timeout 300` held it, and a plain `status/stop` sent 3 s later left it running 10 s on; `status/stop` with `overrule-shutdown=1` stopped it in 2 s (PVE 9.2.2). |
+| libvirt VNC password | A throwaway domain with `passwd` on its VNC `<graphics>`: `dumpxml --security-info` over the agent and sudo gives it, the real VNC engine behind the authenticated relay loopback connects with it, and a wrong one ends `authenticationFailed`. A process without the tunnel's token got 0 bytes. `virsh -r dumpxml --security-info` is refused with `operation forbidden: virDomainGetXMLDesc with secure flag`. |
+| Engine end reason | A session that failed fast (a refused VNC password) sometimes read as ended with no reason: `next_event` returned None once the frame channel closed, while the `Error`/`Ended` events were still queued (2 of 3 runs). It now drains the queue first. |
 | QEMU serial console | `termproxy` with `serial=serial0` (a task named `vncproxy`, `starting qemu termproxy`) reaches the guest's `ttyS0` getty; a root login with the cloud-init password and a command work through it, and `exit` returns to `login:`. |
 | QEMU detail | `scsi0` (8 GiB, `local-lvm`), `ide2` cloud-init as a read-only CD-ROM, `net0` virtio on `vmbr0` with its MAC, graphics `std`, consoles VNC and text, `ostype` `l26`. |
 | pveproxy keep-alive | pveproxy closes an idle connection after 5 s (`PVE::APIServer::AnyEvent`, `timeout`). `HttpClient` kept one for 15 s, and a request sent on it after a 5 s pause failed with `Connection closed before full header was received` (`unreachable`), directly and over SSH. `PveBackend.idleTimeout` is now 3 s. |

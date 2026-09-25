@@ -3423,6 +3423,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get virtConsoleGraphical => 'Grafik';
 
   @override
+  String get virtVncPasswordNeeded => 'Bu ekran bir parola istiyor';
+
+  @override
   String get virtConsoleSerialTip =>
       'Konuğun seri konsolunu ana makinede virsh ile açar. Bağlantıyı kes veya Ctrl+] ana makinenin kabuğuna döndürür.';
 

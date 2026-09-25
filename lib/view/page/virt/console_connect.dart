@@ -171,11 +171,14 @@ abstract final class VirtConsoleConnect {
   ///
   /// PVE: a new `vncproxy` ticket and its websocket every time, since the
   /// proxy behind it accepts one connection and QEMU's password changes with
-  /// the ticket. libvirt: the display's port, dialled from the host.
+  /// the ticket. libvirt: the display's port, dialled from the host, with the
+  /// display's own password where it could be read, [password] (typed by the
+  /// user, kept only in this opener) where it could not.
   static RemoteDesktopTargetOpener vncTarget(
     ProviderContainer container, {
     required String serverId,
     required String guestId,
+    String? password,
   }) => () async {
     try {
       return await withHost(container, serverId, guestId, (host) async {
@@ -190,7 +193,10 @@ abstract final class VirtConsoleConnect {
           case LibvirtVncConsole(host: final at, :final port):
             final dialer = _dialer(container, serverId);
             try {
-              return (tunnel: await dialer.loopback(at, port), password: null);
+              return (
+                tunnel: await dialer.loopback(at, port),
+                password: rfbPassword(console.password ?? password),
+              );
             } finally {
               // The tunnel owns what it runs on.
               dialer.close();
@@ -203,6 +209,14 @@ abstract final class VirtConsoleConnect {
       throw VirtConsoleFailure(describe(e), cause: e);
     }
   };
+
+  /// [password] as RFB's VNC authentication takes it: DES keyed with at most
+  /// its first 8 bytes, which is also all QEMU compares — a longer libvirt
+  /// password works cut to that.
+  static String? rfbPassword(String? password) {
+    if (password == null || password.isEmpty) return null;
+    return password.length <= 8 ? password : password.substring(0, 8);
+  }
 
   /// A session for [guest]'s graphical console, as the remote desktop engine
   /// needs one. Not stored: [RemoteDesktopSessions.openConsole] takes the

@@ -1078,3 +1078,54 @@ fn create_scripts_under_sh_with_a_hostile_name() {
     assert!(log.contains(&format!("undefine\n--domain\n{name}\n--managed-save\n")), "{log}");
     let _ = std::fs::remove_dir_all(&d);
 }
+
+// ---------------------------------------------------------------------------
+// VNC console: display and password
+// ---------------------------------------------------------------------------
+
+/// Captured from libvirt 11.3 for a throwaway domain whose VNC password is a
+/// made-up one, `fakepw12`.
+#[test]
+fn vnc_console_password_from_a_secure_dump() {
+    let info = virt::parse_vnc_console(&fixture("script_vnc_console_password.txt")).unwrap();
+    let display = info.display.clone().unwrap();
+    assert_eq!(display.protocol, "vnc");
+    assert_eq!(display.port, Some(5901));
+    assert_eq!(info.password.as_deref(), Some("fakepw12"));
+    assert!(info.password_known);
+    // Debug output is what reaches a log or a failed assertion.
+    assert!(!format!("{info:?}").contains("fakepw12"));
+}
+
+#[test]
+fn vnc_console_without_a_password_or_refused_one() {
+    // No `passwd`: known to have none.
+    let open = fixture("script_vnc_console_password.txt").replace(" passwd='fakepw12'", "");
+    let info = virt::parse_vnc_console(&open).unwrap();
+    assert_eq!(info.password, None);
+    assert!(info.password_known);
+
+    // `--security-info` refused (the text libvirt 11.3 prints on a read-only
+    // connection): the display is still there, the password unknown.
+    let raw = fixture("script_vnc_console_password.txt");
+    let marker = format!("{}\n", sbm_parser::script::cmd_marker(virt::KEY_SECURE_XML));
+    let head = &raw[..raw.find(&marker).unwrap() + marker.len()];
+    let refused = format!(
+        "{head}error: operation forbidden: virDomainGetXMLDesc with secure flag\n\n{}1\n",
+        virt::RC_PREFIX
+    );
+    let info = virt::parse_vnc_console(&refused).unwrap();
+    assert_eq!(info.display.and_then(|d| d.port), Some(5901));
+    assert_eq!(info.password, None);
+    assert!(!info.password_known);
+
+    // A secure dump that does not parse is an error without its text.
+    let broken = raw.replace("<domain ", "<domain <");
+    match virt::parse_vnc_console(&broken) {
+        Err(VirtError::Malformed { message }) => {
+            assert!(!message.contains("fakepw12"), "{message}");
+            assert!(!message.contains("<devices"), "{message}");
+        }
+        other => panic!("{other:?}"),
+    }
+}

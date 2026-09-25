@@ -280,8 +280,15 @@ class LibvirtBackend implements VirtBackend {
           needsRoot: _viaSudo,
         );
       case VirtConsoleKind.vnc:
-        final detail = await this.detail(guest);
-        final display = detail.display;
+        final info = LibvirtVncConsoleInfo.fromJson(
+          _decode(
+            await _run(
+              ffi.virtVncConsoleScript(domain: guest.id),
+              ffi.parseVirtVncConsoleJson,
+            ),
+          ),
+        );
+        final display = info.display;
         final port = display?.port;
         if (display == null || display.protocol != 'vnc' || port == null) {
           throw VirtErr(
@@ -291,7 +298,12 @@ class LibvirtBackend implements VirtBackend {
                 : 'The display is ${display.uri}, not a VNC port',
           );
         }
-        return LibvirtVncConsole(host: _dialHost(display.host), port: port);
+        return LibvirtVncConsole(
+          host: _dialHost(display.host),
+          port: port,
+          password: info.password,
+          passwordKnown: info.passwordKnown,
+        );
     }
   }
 

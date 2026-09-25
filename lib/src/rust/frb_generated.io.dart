@@ -172,6 +172,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<CustomCmd>? dco_decode_opt_list_custom_cmd(dynamic raw);
 
   @protected
+  Uint8List? dco_decode_opt_list_prim_u_8_strict(dynamic raw);
+
+  @protected
   RdpSessionParams dco_decode_rdp_session_params(dynamic raw);
 
   @protected
@@ -372,6 +375,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<CustomCmd>? sse_decode_opt_list_custom_cmd(SseDeserializer deserializer);
+
+  @protected
+  Uint8List? sse_decode_opt_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
   RdpSessionParams sse_decode_rdp_session_params(SseDeserializer deserializer);
@@ -610,6 +616,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_opt_list_custom_cmd(
     List<CustomCmd>? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_list_prim_u_8_strict(
+    Uint8List? self,
     SseSerializer serializer,
   );
 

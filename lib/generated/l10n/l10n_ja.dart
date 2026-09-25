@@ -3264,6 +3264,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get virtConsoleGraphical => 'グラフィカル';
 
   @override
+  String get virtVncPasswordNeeded => 'このディスプレイにはパスワードが必要です';
+
+  @override
   String get virtConsoleSerialTip =>
       'ホスト上の virsh でゲストのシリアルコンソールを開きます。切断または Ctrl+] でホストのシェルに戻ります。';
 

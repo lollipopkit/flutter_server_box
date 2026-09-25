@@ -64,6 +64,12 @@ class RdpSessionParams {
   final String connectHost;
   final int connectPort;
 
+  /// The tunnel's one-time token, written before anything else on the
+  /// connection: the local listener carries only a connection that
+  /// presents it, so another process on this device racing for the port
+  /// gets nothing. Never logged.
+  final Uint8List? accessToken;
+
   /// Hostname as seen by the SSH server and used for certificate checks.
   final String serverName;
   final int serverPort;
@@ -78,6 +84,7 @@ class RdpSessionParams {
   const RdpSessionParams({
     required this.connectHost,
     required this.connectPort,
+    this.accessToken,
     required this.serverName,
     required this.serverPort,
     required this.username,
@@ -93,6 +100,7 @@ class RdpSessionParams {
   int get hashCode =>
       connectHost.hashCode ^
       connectPort.hashCode ^
+      accessToken.hashCode ^
       serverName.hashCode ^
       serverPort.hashCode ^
       username.hashCode ^
@@ -110,6 +118,7 @@ class RdpSessionParams {
           runtimeType == other.runtimeType &&
           connectHost == other.connectHost &&
           connectPort == other.connectPort &&
+          accessToken == other.accessToken &&
           serverName == other.serverName &&
           serverPort == other.serverPort &&
           username == other.username &&
@@ -194,12 +203,16 @@ class VncSessionParams {
   /// Loopback address of the SSH local tunnel.
   final String connectHost;
   final int connectPort;
+
+  /// See [`RdpSessionParams::access_token`].
+  final Uint8List? accessToken;
   final String? password;
   final bool shared;
 
   const VncSessionParams({
     required this.connectHost,
     required this.connectPort,
+    this.accessToken,
     this.password,
     required this.shared,
   });
@@ -208,6 +221,7 @@ class VncSessionParams {
   int get hashCode =>
       connectHost.hashCode ^
       connectPort.hashCode ^
+      accessToken.hashCode ^
       password.hashCode ^
       shared.hashCode;
 
@@ -218,6 +232,7 @@ class VncSessionParams {
           runtimeType == other.runtimeType &&
           connectHost == other.connectHost &&
           connectPort == other.connectPort &&
+          accessToken == other.accessToken &&
           password == other.password &&
           shared == other.shared;
 }

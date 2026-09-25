@@ -21,6 +21,7 @@ import 'package:server_box/data/provider/virt/virt.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/ssh/terminal_session.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
+import 'package:server_box/src/rust/api/remote_desktop.dart' as ffi;
 import 'package:server_box/view/page/remote_desktop/viewer.dart';
 import 'package:server_box/view/page/server/chart.dart';
 import 'package:server_box/view/page/server/reading_text.dart';

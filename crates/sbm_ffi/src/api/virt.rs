@@ -126,6 +126,18 @@ pub fn parse_virt_overview_json(raw: String) -> Result<String, VirtFfiError> {
     serde_json::to_string(&virt::parse_overview(&raw)?).map_err(json_err)
 }
 
+/// Display and VNC password, for opening a graphical console
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_vnc_console_script(domain: String) -> String {
+    virt::vnc_console_script(&domain)
+}
+
+/// [`virt_vnc_console_script`]'s output → `VirtVncConsoleInfo` JSON. Holds
+/// the password: never logged.
+pub fn parse_virt_vnc_console_json(raw: String) -> Result<String, VirtFfiError> {
+    serde_json::to_string(&virt::parse_vnc_console(&raw)?).map_err(json_err)
+}
+
 /// [`virt_domain_detail_script`]'s output → `VirtDomainDetail` JSON
 pub fn parse_virt_domain_detail_json(raw: String) -> Result<String, VirtFfiError> {
     serde_json::to_string(&virt::parse_domain_detail(&raw)?).map_err(json_err)

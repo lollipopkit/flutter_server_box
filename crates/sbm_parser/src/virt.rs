@@ -57,6 +57,7 @@ pub const KEY_AUTOSTART: &str = "virt.autostart";
 pub const KEY_PERSISTENT: &str = "virt.persistent";
 pub const KEY_STATS: &str = "virt.stats";
 pub const KEY_DISPLAY: &str = "virt.display";
+pub const KEY_SECURE_XML: &str = "virt.secure_xml";
 pub const KEY_XML: &str = "virt.xml";
 pub const KEY_ACTION: &str = "virt.action";
 
@@ -151,6 +152,21 @@ pub fn domain_detail_script(domain: &str) -> String {
     let mut s = prelude();
     s.push_str(&section(KEY_DISPLAY, &format!("domdisplay {d}")));
     s.push_str(&section(KEY_XML, &format!("dumpxml {d}")));
+    s
+}
+
+/// The display and its VNC password, for opening a graphical console. Parse
+/// with [`parse_vnc_console`].
+///
+/// `--security-info` is what puts the `passwd` attribute in the XML; libvirt
+/// allows it on a read-write connection only, which is what this account has
+/// when it can manage the domain at all. The XML itself never leaves the
+/// parser: only the password does, to be handed to the VNC client.
+pub fn vnc_console_script(domain: &str) -> String {
+    let d = domain_arg(domain);
+    let mut s = prelude();
+    s.push_str(&section(KEY_DISPLAY, &format!("domdisplay {d}")));
+    s.push_str(&section(KEY_SECURE_XML, &format!("dumpxml --security-info {d}")));
     s
 }
 
@@ -700,6 +716,30 @@ pub struct VirtDisplay {
     pub socket: Option<String>,
 }
 
+/// What [`vnc_console_script`] yields.
+#[derive(Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtVncConsoleInfo {
+    /// None while the domain is not running, or has no display.
+    pub display: Option<VirtDisplay>,
+    /// The VNC display's password; None when it has none — or when it could
+    /// not be read, which [`Self::password_known`] tells apart.
+    pub password: Option<String>,
+    /// Whether `dumpxml --security-info` answered. False: the display may
+    /// still ask for a password nobody here could read.
+    pub password_known: bool,
+}
+
+/// Leaves the password out: this is printed in test failures and logs.
+impl std::fmt::Debug for VirtVncConsoleInfo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("VirtVncConsoleInfo")
+            .field("display", &self.display)
+            .field("password", &self.password.as_ref().map(|_| "[redacted]"))
+            .field("password_known", &self.password_known)
+            .finish()
+    }
+}
+
 /// What [`domain_detail_script`] yields.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct VirtDomainDetail {
@@ -1139,6 +1179,48 @@ pub fn parse_domain_detail(raw: &str) -> Result<VirtDomainDetail, VirtError> {
         Err(_) => None,
     };
     Ok(VirtDomainDetail { display, xml })
+}
+
+/// [`vnc_console_script`]'s output.
+///
+/// Errors never carry the secured XML: a document that does not parse is
+/// reported without its text, and the password is only ever in the result.
+pub fn parse_vnc_console(raw: &str) -> Result<VirtVncConsoleInfo, VirtError> {
+    let secs = sections(raw)?;
+    let display = match take(&secs, KEY_DISPLAY, raw)?.ok() {
+        Ok(body) => parse_display(body),
+        Err(VirtError::PermissionDenied { message }) => {
+            return Err(VirtError::PermissionDenied { message });
+        }
+        Err(_) => None,
+    };
+    let (password, password_known) = match take(&secs, KEY_SECURE_XML, raw)?.ok() {
+        Ok(xml) => (vnc_password(xml)?, true),
+        // Refused: the console can still be tried, and asks if it must.
+        Err(_) => (None, false),
+    };
+    Ok(VirtVncConsoleInfo {
+        display,
+        password,
+        password_known,
+    })
+}
+
+/// The first VNC `<graphics>`'s `passwd`, from a `--security-info` dump.
+fn vnc_password(xml: &str) -> Result<Option<String>, VirtError> {
+    let doc = roxmltree::Document::parse(xml).map_err(|_| VirtError::Malformed {
+        message: "dumpxml --security-info: not a domain XML document".into(),
+    })?;
+    Ok(doc
+        .descendants()
+        .find(|n| {
+            n.has_tag_name("graphics")
+                && n.attribute("type") == Some("vnc")
+                && n.parent().is_some_and(|p| p.has_tag_name("devices"))
+        })
+        .and_then(|g| g.attribute("passwd"))
+        .filter(|p| !p.is_empty())
+        .map(str::to_owned))
 }
 
 /// [`action_script`]'s output.
@@ -2533,6 +2615,11 @@ mod tests {
         assert!(s.contains("V start --domain 'it'\\''s; rm -rf / #'\n"), "{s}");
         let s = action_script(VirtAction::ForceStop, "-x");
         assert!(s.contains("V destroy --domain '-x'\n"));
+        let s = vnc_console_script("it's; rm -rf / #");
+        assert!(
+            s.contains("V dumpxml --security-info --domain 'it'\\''s; rm -rf / #'\n"),
+            "{s}"
+        );
         assert_eq!(
             console_command("a b"),
             "virsh --connect qemu:///system console --force --domain 'a b'"
