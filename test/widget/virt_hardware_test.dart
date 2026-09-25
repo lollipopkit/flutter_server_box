@@ -29,6 +29,7 @@ import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/view/page/virt/hardware.dart';
 import 'package:server_box/view/page/virt/tab.dart';
 
 import '../helpers/segment.dart';
@@ -533,6 +534,25 @@ void main() {
     await _settle(tester);
     // Scrolled to, in the pane: not merely built.
     expect(tester.getRect(_key('hw:disc:config')).top, lessThan(900));
+  });
+
+  testWidgets('the index seam is the shared divider, and drags', (tester) async {
+    await open(tester, 'web-01', wide: true);
+    final seam = find.descendant(
+      of: find.byType(VirtHardwareView),
+      matching: find.byType(PaneDivider),
+    );
+    expect(seam, findsOneWidget);
+    final index = _key('hw:index:cpu');
+    final before = tester.getRect(index).width;
+    await tester.drag(seam, const Offset(60, 0));
+    await _settle(tester);
+    expect(tester.getRect(index).width, closeTo(before + 60, 1));
+    // Held to its bounds, however far it is pulled.
+    await tester.drag(seam, const Offset(-600, 0));
+    await _settle(tester);
+    expect(tester.getRect(index).width, lessThan(before));
+    expect(tester.getRect(index).width, greaterThan(100));
   });
 
   group('clone', () {

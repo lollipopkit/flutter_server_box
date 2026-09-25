@@ -3146,7 +3146,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get virtProbeContainerTip => '这台服务器运行在容器里，属于客户机，不是宿主机。请在运行它的宿主机上管理。';
+  String get virtProbeContainerTip => '这台服务器运行在容器里，本身不是宿主机。请在运行它的宿主机上管理。';
 
   @override
   String get virtProbePve => 'PVE，未配置';
@@ -3194,7 +3194,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtConsole => '控制台';
 
   @override
-  String get virtConsoleNone => '此客户机没有可用的控制台';
+  String get virtConsoleNone => '此虚拟机没有可用的控制台';
 
   @override
   String get virtConsoleGraphical => '图形';
@@ -3204,7 +3204,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtConsoleSerialTip =>
-      '在宿主机上用 virsh 打开客户机的串口控制台。断开连接或按 Ctrl+] 可返回宿主机的 shell。';
+      '在宿主机上用 virsh 打开虚拟机的串口控制台。断开连接或按 Ctrl+] 可返回宿主机的 shell。';
 
   @override
   String virtConsoleVia(String transport) {
@@ -3452,7 +3452,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get virtErrExists => '同名的客户机或磁盘已存在';
+  String get virtErrExists => '同名的虚拟机或磁盘已存在';
 
   @override
   String get virtCreateNameInvalidLibvirt =>
@@ -3462,7 +3462,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtCreateNameInvalidPve => '字母、数字和 -，各段之间用点分隔，最多 63 个字符。';
 
   @override
-  String get virtCreateNameTaken => '已有同名客户机。';
+  String get virtCreateNameTaken => '已有同名虚拟机。';
 
   @override
   String get virtCreateVmidInvalid => '范围为 100 到 999999999。';
@@ -3509,7 +3509,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pveTokenTipCreate =>
-      '创建和删除客户机还需要 VM.Allocate、VM.Config.*、Datastore.AllocateSpace 和 SDN.Use。';
+      '创建和删除虚拟机还需要 VM.Allocate、VM.Config.*、Datastore.AllocateSpace 和 SDN.Use。';
 
   @override
   String get pveTokenTipHardware =>
@@ -3523,7 +3523,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtErrConflict => '已在别处修改';
 
   @override
-  String get virtErrConflictTip => '此客户机的配置在读取后被他人修改，因此未做任何更改。已重新读取，如仍需要请再次修改。';
+  String get virtErrConflictTip => '此虚拟机的配置在读取后被他人修改，因此未做任何更改。已重新读取，如仍需要请再次修改。';
 
   @override
   String get virtHardware => '硬件';
@@ -3550,7 +3550,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtHwBalloonLibvirt => '当前内存';
 
   @override
-  String get virtHwBalloonNote => '允许宿主机在内存紧张时回收来宾的空闲内存';
+  String get virtHwBalloonNote => '允许宿主机在内存紧张时回收虚拟机的空闲内存';
 
   @override
   String get virtHwBoot => '引导';
@@ -3606,10 +3606,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtHwGrowNote => '只能在原容量上扩容。';
 
   @override
-  String get virtHwGrowNoteRunning => '只能在原容量上扩容。运行中扩容后需在来宾内扩展分区。';
+  String get virtHwGrowNoteRunning => '只能在原容量上扩容。运行中扩容后需在系统内扩展分区。';
 
   @override
-  String get virtHwGuestUsed => '来宾已用';
+  String get virtHwGuestUsed => '系统内已用';
 
   @override
   String virtHwHostCpus(int threads, int allocated) {
@@ -3668,7 +3668,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtHwLinkDown => '已断开';
 
   @override
-  String get virtHwLinkNote => '断开后来宾看到网线拔出，不需要重启';
+  String get virtHwLinkNote => '断开后系统内会显示网线已拔出，无需重启';
 
   @override
   String get virtHwLinkUp => '已连接';
@@ -3824,7 +3824,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get virtHwVolumeKept => '已移除，但运行中的客户机仍在使用该磁盘，因此保留了卷。它会在下次启动时分离。';
+  String get virtHwVolumeKept => '已移除，但运行中的虚拟机仍在使用该磁盘，因此保留了卷。它会在下次启动时分离。';
 
   @override
   String get virtHwBus => '总线';
@@ -4046,7 +4046,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtBackupStopFirst => '先关机再还原。';
 
   @override
-  String get virtBackupRestoreAgain => '客户机的磁盘和配置会被备份里的替换。';
+  String get virtBackupRestoreAgain => '虚拟机的磁盘和配置会被备份里的替换。';
 
   @override
   String get virtBackupDeleteConfirm => '确认删除备份';
@@ -7208,7 +7208,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get virtProbeContainerTip => '這台伺服器執行在容器中，屬於客體，不是主機。請在執行它的主機上管理。';
+  String get virtProbeContainerTip => '這台伺服器執行在容器中，本身不是主機。請在執行它的主機上管理。';
 
   @override
   String get virtProbePve => 'PVE，未設定';
@@ -7256,7 +7256,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtConsole => '主控台';
 
   @override
-  String get virtConsoleNone => '此客體機沒有可用的主控台';
+  String get virtConsoleNone => '此虛擬機器沒有可用的主控台';
 
   @override
   String get virtConsoleGraphical => '圖形';
@@ -7266,7 +7266,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtConsoleSerialTip =>
-      '在主機上以 virsh 開啟客體機的序列主控台。中斷連線或按 Ctrl+] 可返回主機的 shell。';
+      '在主機上以 virsh 開啟虛擬機器的序列主控台。中斷連線或按 Ctrl+] 可返回主機的 shell。';
 
   @override
   String virtConsoleVia(String transport) {
@@ -7514,7 +7514,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get virtErrExists => '同名的客體或磁碟已存在';
+  String get virtErrExists => '同名的虛擬機器或磁碟已存在';
 
   @override
   String get virtCreateNameInvalidLibvirt =>
@@ -7524,7 +7524,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtCreateNameInvalidPve => '字母、數字和 -，各段之間以點分隔，最多 63 個字元。';
 
   @override
-  String get virtCreateNameTaken => '已有同名客體。';
+  String get virtCreateNameTaken => '已有同名虛擬機器。';
 
   @override
   String get virtCreateVmidInvalid => '範圍為 100 到 999999999。';
@@ -7571,7 +7571,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get pveTokenTipCreate =>
-      '建立和刪除客體還需要 VM.Allocate、VM.Config.*、Datastore.AllocateSpace 和 SDN.Use。';
+      '建立和刪除虛擬機器還需要 VM.Allocate、VM.Config.*、Datastore.AllocateSpace 和 SDN.Use。';
 
   @override
   String get pveTokenTipHardware =>
@@ -7585,7 +7585,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtErrConflict => '已在別處修改';
 
   @override
-  String get virtErrConflictTip => '此客體的設定在讀取後被他人修改，因此未做任何變更。已重新讀取，如仍需要請再次修改。';
+  String get virtErrConflictTip =>
+      '此虛擬機器的設定在讀取後被他人修改，因此未做任何變更。已重新讀取，如仍需要請再次修改。';
 
   @override
   String get virtHardware => '硬體';
@@ -7612,7 +7613,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtHwBalloonLibvirt => '目前記憶體';
 
   @override
-  String get virtHwBalloonNote => '允許主機在記憶體緊張時回收客體的閒置記憶體';
+  String get virtHwBalloonNote => '允許主機在記憶體緊張時回收虛擬機器的閒置記憶體';
 
   @override
   String get virtHwBoot => '開機';
@@ -7668,10 +7669,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtHwGrowNote => '只能在原容量上擴充。';
 
   @override
-  String get virtHwGrowNoteRunning => '只能在原容量上擴充。執行中擴充後需在客體內擴充分割區。';
+  String get virtHwGrowNoteRunning => '只能在原容量上擴充。執行中擴充後需在系統內擴充分割區。';
 
   @override
-  String get virtHwGuestUsed => '客體已用';
+  String get virtHwGuestUsed => '系統內已用';
 
   @override
   String virtHwHostCpus(int threads, int allocated) {
@@ -7730,7 +7731,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtHwLinkDown => '已中斷';
 
   @override
-  String get virtHwLinkNote => '中斷後客體會看到網路線被拔出，不需要重新啟動';
+  String get virtHwLinkNote => '中斷後系統內會顯示網路線已拔出，不需要重新啟動';
 
   @override
   String get virtHwLinkUp => '已連線';
@@ -7886,7 +7887,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get virtHwVolumeKept => '已移除，但執行中的客體仍在使用該磁碟，因此保留了磁碟區。它會在下次啟動時分離。';
+  String get virtHwVolumeKept => '已移除，但執行中的虛擬機器仍在使用該磁碟，因此保留了磁碟區。它會在下次啟動時分離。';
 
   @override
   String get virtHwBus => '匯流排';
@@ -8109,7 +8110,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtBackupStopFirst => '先關機再還原。';
 
   @override
-  String get virtBackupRestoreAgain => '客體的磁碟和設定會被備份中的取代。';
+  String get virtBackupRestoreAgain => '虛擬機器的磁碟和設定會被備份中的取代。';
 
   @override
   String get virtBackupDeleteConfirm => '確認刪除備份';

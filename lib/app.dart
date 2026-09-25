@@ -108,6 +108,10 @@ ThemeData _theme({Color? seed, Brightness? brightness}) {
     // help, and the platform's own transition is the right one.
     pageTransitionsTheme: hasBackground ? AppPageTransitions.backgrounded : null,
     cardTheme: CardThemeData(shape: cardShape, elevation: 0),
+    // Every plain `Divider`/`VerticalDivider` a hairline, as the seams and
+    // section rules are: Material's own is drawn for a light background and
+    // reads as a bright line on a dark one, next to hairlines that do not.
+    dividerTheme: DividerThemeData(color: Hairline.of(colorScheme)),
     elevatedButtonTheme: ElevatedButtonThemeData(style: buttonStyle),
     filledButtonTheme: FilledButtonThemeData(style: buttonStyle),
     outlinedButtonTheme: OutlinedButtonThemeData(style: buttonStyle),

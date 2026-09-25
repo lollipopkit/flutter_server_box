@@ -20,6 +20,13 @@ mixin _EditPane<W extends ConsumerStatefulWidget> on ConsumerState<W> {
   final _open = <String>{};
   final _groupKeys = <String, GlobalKey>{};
 
+  /// The index column's width: dragged at its seam, kept for this view only.
+  /// Not stored — the index is a way around one guest's groups, not a layout
+  /// anyone sets up.
+  double _indexWidth = 206;
+  static const _indexMin = 160.0;
+  static const _indexMax = 320.0;
+
   VirtHostNotifier get _notifier =>
       ref.read(virtHostProvider(_serverId).notifier);
 
@@ -88,8 +95,18 @@ mixin _EditPane<W extends ConsumerStatefulWidget> on ConsumerState<W> {
         return Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SizedBox(width: 206, child: _buildIndex(groups)),
-            const VerticalDivider(width: 1),
+            SizedBox(width: _indexWidth, child: _buildIndex(groups)),
+            PaneDivider(
+              onDrag: (dx) {
+                // Towards the index is narrower whichever side it is on.
+                final d = Directionality.of(context) == TextDirection.rtl
+                    ? -dx
+                    : dx;
+                setState(() {
+                  _indexWidth = (_indexWidth + d).clamp(_indexMin, _indexMax);
+                });
+              },
+            ),
             Expanded(child: pane),
           ],
         );
