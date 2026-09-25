@@ -1049,9 +1049,6 @@ class AppLocalizationsUk extends AppLocalizations {
       'Парсинг статусу зайнятості Docker є відносно повільним.';
 
   @override
-  String get plugInType => 'Тип вставки';
-
-  @override
   String get preferDiskAmount => 'Пріоритетно показувати ємність диска';
 
   @override
@@ -1190,24 +1187,12 @@ class AppLocalizationsUk extends AppLocalizations {
       'Не рекомендується включати, будьте обережні з ризиками безпеки! Якщо ви використовуєте стандартний сертифікат від PVE, вам потрібно увімкнути цю опцію.';
 
   @override
-  String get pveServerClientMissing =>
-      'SSH-клієнт для цього сервера недоступний.';
-
-  @override
-  String get pveAddressMissing =>
-      'Не вказано адресу PVE. Налаштуйте її в параметрах сервера.';
-
-  @override
   String get pvePasswordRequired =>
       'Потрібен пароль PVE. Задайте його в параметрах сервера.';
 
   @override
   String get pveOtpRequired =>
       'На цьому сервері PVE увімкнено двофакторну автентифікацію. Введіть код OTP.';
-
-  @override
-  String get pveOtpChallengeExpired =>
-      'Термін дії запиту OTP минув. Оновіть і спробуйте ще раз.';
 
   @override
   String get pveOtpCodeRequired => 'Потрібен код OTP.';
@@ -1233,19 +1218,6 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get pveMissingAuthTicket =>
       'Вхід у PVE успішний, але квиток автентифікації не повернуто.';
-
-  @override
-  String get pveVersionLow =>
-      'Ця функція наразі перебуває на стадії тестування та випробувалася лише на PVE 8+. Будь ласка, використовуйте її з обережністю.';
-
-  @override
-  String get pveLoadingForwarding => 'Встановлення SSH-тунелю…';
-
-  @override
-  String get pveLoadingLogin => 'Автентифікація в PVE…';
-
-  @override
-  String get pveLoadingData => 'Отримання даних кластера…';
 
   @override
   String get pveLoadingConnect => 'Підключення…';
@@ -3322,4 +3294,204 @@ class AppLocalizationsUk extends AppLocalizations {
   String appearanceThemeModeLocked(String mode) {
     return 'Ця тема підтримує лише режим «$mode». Щоб змінити режим, виберіть іншу тему.';
   }
+
+  @override
+  String get pveAuthToken => 'API-токен';
+
+  @override
+  String get pveVersionLow =>
+      'Ця функція наразі перебуває на стадії тестування та випробувалася лише на PVE 8+. Будь ласка, використовуйте її з обережністю.';
+
+  @override
+  String get pveTokenId => 'ID токена';
+
+  @override
+  String get pveTokenSecret => 'Секрет токена';
+
+  @override
+  String get pveTokenTip =>
+      'Створіть його в PVE: Датацентр → Дозволи → API Tokens. Потрібні права VM.Audit, VM.PowerMgmt, VM.Console і Sys.Audit на шляхах, які треба показати; якщо ввімкнено розділення привілеїв, надайте їх самому токену.';
+
+  @override
+  String get pveTokenIdInvalid =>
+      'ID токена має мати вигляд user@realm!tokenid';
+
+  @override
+  String get pvePasswordAuthTip =>
+      'Вхід виконується від імені користувача SSH у realm PAM з паролем SSH, а якщо SSH використовує ключ — з паролем PVE нижче. За потреби запитується код двофакторної автентифікації.';
+
+  @override
+  String get pveCertUnpinned =>
+      'Ще нічого не підтверджено. Якщо сертифікат не підписаний довіреним CA, під час наступного підключення його буде показано для підтвердження.';
+
+  @override
+  String get pveCertForget => 'Забути сертифікат';
+
+  @override
+  String get pveCertForgetTip =>
+      'Під час наступного підключення сертифікат PVE знову буде показано для підтвердження.';
+
+  @override
+  String get virtualization => 'Віртуалізація';
+
+  @override
+  String get virtIntro =>
+      'Керування віртуальними машинами й контейнерами на хостах Proxmox VE і libvirt/KVM: стан, керування живленням і консолі.';
+
+  @override
+  String get virtIntroPveMoved =>
+      'Proxmox VE перенесено зі сторінки сервера на цю вкладку. Картка PVE сервера відкриває її тут.';
+
+  @override
+  String get virtIntroLibvirt =>
+      'Сервер із встановленим virsh з libvirt показується як хост разом із його віртуальними машинами QEMU/KVM.';
+
+  @override
+  String get virtIntroTransports =>
+      'Обидва працюють через SSH, через агент Monitor або на цьому пристрої.';
+
+  @override
+  String get virtIntroTokens =>
+      'PVE може входити за допомогою API-токена замість пароля. Налаштовується на сторінці редагування сервера, у розділі PVE.';
+
+  @override
+  String get virtIntroInBar => 'Її додано на панель вкладок.';
+
+  @override
+  String get virtIntroInMore =>
+      'Вона в розділі «Більше». У домашніх вкладках у налаштуваннях її можна перенести на панель вкладок.';
+
+  @override
+  String get virtGuests => 'Віртуальні машини';
+
+  @override
+  String get virtGuestsAndContainers => 'ВМ і контейнери';
+
+  @override
+  String get virtSectionLater => 'Поки недоступно';
+
+  @override
+  String get virtHosts => 'Хости';
+
+  @override
+  String get virtCheckServer => 'Перевірити цей сервер';
+
+  @override
+  String get virtCheckAll => 'Перевірити всі сервери';
+
+  @override
+  String get virtProbeNotChecked => 'Ще не перевірено';
+
+  @override
+  String get virtProbeAbsent => 'virsh не знайдено';
+
+  @override
+  String get virtNoHosts => 'Немає хостів віртуалізації';
+
+  @override
+  String get virtNoHostsTip =>
+      'Сервер з адресою PVE є хостом, як і сервер, на якому відповідає virsh. Інші сервери можна перевірити в перемикачі хостів.';
+
+  @override
+  String get virtNoGuests => 'Немає віртуальних машин або контейнерів';
+
+  @override
+  String get virtPaused => 'Призупинено';
+
+  @override
+  String get virtStarting => 'Запуск…';
+
+  @override
+  String get virtStopping => 'Зупинка…';
+
+  @override
+  String get virtRebooting => 'Перезавантаження…';
+
+  @override
+  String get virtMigrating => 'Міграція…';
+
+  @override
+  String get virtBackingUp => 'Резервне копіювання…';
+
+  @override
+  String get virtResume => 'Відновити';
+
+  @override
+  String get virtOverview => 'Огляд';
+
+  @override
+  String get virtConsole => 'Консоль';
+
+  @override
+  String get virtConsoleNone =>
+      'Для цієї гостьової системи консоль не налаштовано';
+
+  @override
+  String get virtConsoleGraphical => 'Графічна';
+
+  @override
+  String get virtConsoleSerialTip =>
+      'Відкриває послідовну консоль гостя через virsh на хості. «Від\'єднати» або Ctrl+] повертає до оболонки хоста.';
+
+  @override
+  String get virtOffTip =>
+      'Запустіть, щоб бачити тут ЦП, пам\'ять, диск і мережу в реальному часі.';
+
+  @override
+  String get virtAllocated => 'Виділено';
+
+  @override
+  String virtRunningCount(int running, int total) {
+    return '$running працюють · усього $total';
+  }
+
+  @override
+  String get virtTemplate => 'Шаблон';
+
+  @override
+  String get virtAutostart => 'Запускається разом із хостом';
+
+  @override
+  String get virtErrUnreachable => 'Не вдалося зв\'язатися з цим хостом';
+
+  @override
+  String get virtErrNotConfigured => 'Налаштування PVE цього сервера неповні';
+
+  @override
+  String get virtErrNotConfiguredTip =>
+      'Перевірте адресу, а також пароль або API-токен у налаштуваннях сервера.';
+
+  @override
+  String get virtErrAuthFailed => 'Хост відхилив вхід';
+
+  @override
+  String get virtErrCertUnconfirmed => 'Підтвердьте сертифікат хоста';
+
+  @override
+  String get virtErrCertChanged => 'Сертифікат хоста змінився';
+
+  @override
+  String get virtErrRelayNotGranted => 'Агент Monitor не пересилає з\'єднання';
+
+  @override
+  String get virtErrExecNotGranted => 'Агент Monitor не виконує команди';
+
+  @override
+  String get virtErrNotInstalled => 'virsh не встановлено на цьому сервері';
+
+  @override
+  String get virtErrServerRemoved => 'Цей сервер більше не існує';
+
+  @override
+  String get virtErrSudoRequired =>
+      'Для доступу до libvirt sudo потребує пароль';
+
+  @override
+  String get virtErrSudoRejected => 'sudo відхилив пароль';
+
+  @override
+  String get virtErrInvalidResponse => 'Хост відповів у неочікуваному вигляді';
+
+  @override
+  String get virtErrActionFailed => 'Хост відхилив дію';
 }

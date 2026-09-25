@@ -187,7 +187,7 @@ abstract final class ServerShareCodec {
     ShareCarrier carrier,
   ) {
     return Cryptor.encryptBytes(
-      _pack(json.encode(share.toJson())),
+      _pack(json.encode(share.toWireJson())),
       password,
       iterations: carrier.iterations,
     );
@@ -204,7 +204,7 @@ abstract final class ServerShareCodec {
     String password,
     ShareCarrier carrier,
   ) => compute(_encrypt, (
-    json.encode(share.toJson()),
+    json.encode(share.toWireJson()),
     password,
     carrier.iterations,
   ));
@@ -242,7 +242,7 @@ abstract final class ServerShareCodec {
     ServerShare share, {
     ShareCarrier carrier = ShareCarrier.qr,
   }) {
-    final plain = _pack(json.encode(share.toJson())).length;
+    final plain = _pack(json.encode(share.toWireJson())).length;
     // magic(12) + salt(32) + nonce(12) + tag(16), and four more for the
     // iteration count — which `Cryptor` writes only when the cost is not its
     // default, so the carrier decides whether those four are there.
@@ -462,6 +462,8 @@ abstract final class ServerShareInstaller {
     spi.validateOrThrow();
 
     Stores.server.put(spi);
+    final pve = share.pve;
+    if (pve != null) Stores.pve.put(spi.id, pve);
     return ServerShareResult(spi: spi, addedKeys: added);
   }
 

@@ -81,6 +81,22 @@ class ServerDetailRequest extends _$ServerDetailRequest {
   void done() => state = null;
 }
 
+/// A host waiting to be selected on the Virtualization tab — what a server's
+/// PVE card asks for.
+///
+/// A request for the same reasons as [ServerDetailRequest]: the tab is built
+/// when first visited, so it may not exist yet, and which host it shows is its
+/// own state. It drains this when it appears and whenever it changes.
+@Riverpod(keepAlive: true)
+class VirtHostRequest extends _$VirtHostRequest {
+  @override
+  String? build() => null;
+
+  void go(String serverId) => state = serverId;
+
+  void done() => state = null;
+}
+
 /// A server waiting for a terminal, and what to put in it once it opens.
 class TerminalRequest {
   const TerminalRequest(this.spi, {this.snippet, this.session});

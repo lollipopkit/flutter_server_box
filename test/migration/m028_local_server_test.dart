@@ -14,6 +14,7 @@ import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/tables.dart';
 import 'package:sqlite3/sqlite3.dart';
 
+import '../helpers/server_ddl.dart';
 import '../helpers/test_db.dart';
 
 void main() {
@@ -26,8 +27,8 @@ void main() {
               .single['sql']
           as String;
 
-  /// The v28 shape: today's table less `is_local`, with the CHECK it relaxes
-  /// put back.
+  /// The v28 shape: the v29 table less `is_local`, with the CHECK it relaxes
+  /// put back. v29 is today's table with the PVE columns m030 later moved out.
   ///
   /// Derived from today's DDL by removing exactly those two things, each
   /// asserted to have been found — so a change to the table that moves either
@@ -35,7 +36,7 @@ void main() {
   Future<void> createV28Schema() async {
     final db = SqliteDb.instance;
     await createTables(db);
-    final fresh = serverDdl();
+    final fresh = serverDdlBeforePveTable(serverDdl());
     const localColumn =
         '"is_local" INTEGER NOT NULL DEFAULT 0 CHECK ("is_local" IN (0, 1)), ';
     const check =
@@ -95,8 +96,9 @@ void main() {
     expect(row['rev'], 3);
   });
 
-  test('ends in the shape a fresh install has', () async {
+  test('ends in the shape a fresh install had at v29', () async {
     await createTables(SqliteDb.instance);
+    replaceServerTable(serverDdlBeforePveTable(serverDdl()));
     final fresh = SqliteDb.instance
         .select('PRAGMA table_xinfo(server);')
         .map((r) => [r['name'], r['type'], r['notnull'], r['dflt_value']])

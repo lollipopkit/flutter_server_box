@@ -3,17 +3,23 @@ title: Bulk Import Servers
 description: Import multiple server configurations from a JSON file
 ---
 
-You can import multiple server configurations from one JSON file.
+Use a JSON file to add several servers in one import. Each array item describes
+one server, including its connection method and optional grouping or startup
+settings.
 
 ## JSON format
 
 :::danger[Security warning]
-**Do not store plaintext passwords in the file.** The example below includes a sample password only to show the format. In real files:
+Import files are plain text and may contain credentials. Keep them out of
+shared folders and source control, and remove them as soon as the import is
+complete.
 
-- **Prefer SSH keys** (`pubKeyId`) instead of `pwd`.
-- If a password is unavoidable, generate the file through a secret manager or environment variable.
-- Delete the file immediately after import.
-- Add it to `.gitignore`; never commit credential files to version control.
+- Prefer an SSH key already stored in the App and reference it with
+  `pubKeyId`; do not put private key material in this file.
+- If a password or token must be included, restrict access to the file and
+  delete it immediately after import.
+- Add any import file to `.gitignore`. Never commit it, even if you think its
+  credentials are temporary.
 :::
 
 ```json
@@ -24,7 +30,6 @@ You can import multiple server configurations from one JSON file.
       "ip": "example.com",
       "port": 22,
       "user": "root",
-      "pwd": "password",
       "pubKeyId": ""
     },
     "tags": ["production"],
@@ -33,9 +38,13 @@ You can import multiple server configurations from one JSON file.
 ]
 ```
 
-SSH fields are nested under the `ssh` object. This is the format exported by the App and shown in the import dialog.
+SSH settings belong in the `ssh` object. This nested layout is used by the
+App's exports and by the import dialog example.
 
-The older flat format, with `ip`, `port`, `user`, and other fields at the top level, is still accepted. Files exported by older versions and `~/.ssh/config` imports therefore remain usable; the current version does not write this format.
+For backward compatibility, import also accepts the older flat layout, where
+fields such as `ip`, `port`, and `user` are at the top level. This keeps files
+from older releases and `~/.ssh/config` imports usable. New exports use the
+nested layout above.
 
 ## Fields
 
@@ -47,14 +56,15 @@ The older flat format, with `ip`, `port`, `user`, and other fields at the top le
 | `preferredTransport` | No | Which transport leads when both SSH and Monitor HTTP are configured: `ssh` or `monitorHttp`. SSH leads when omitted |
 | `tags` | No | Tags used to group servers |
 | `autoConnect` | No | Connect automatically when the App starts |
-| `custom` | No | Per-server extras such as `pveAddr`, `preferTempDev`, and `logoUrl` |
+| `custom` | No | Per-server extras such as `preferTempDev` and `logoUrl` |
+| `pve` | No | Proxmox VE configuration; see below |
 | `wolCfg` | No | Wake-on-LAN configuration |
 | `envs` | No | Environment variables for the SSH terminal only |
 | `customSystemType` | No | Skip automatic system-type detection |
 | `disabledCmdTypes` | No | Status commands to skip on this server |
 | `id` | No | Stable server ID; omitted or empty values are generated during import |
 
-Inside `ssh`:
+The following fields belong inside `ssh`:
 
 | Field | Required | Description |
 |---|---|---|
@@ -69,17 +79,37 @@ Inside `ssh`:
 | `jumpIds` | No | Jump-server chain specified by server ID |
 | `proxyCommand` | No | ProxyCommand; desktop only and mutually exclusive with `jumpIds` |
 
-A record that omits both `ssh` and `monitorHttp` cannot connect to anything after import. Provide at least one.
+The following fields belong inside `pve`:
 
-`allowInsecure` defaults to `false`. Set it only when you intentionally allow this Monitor connection to use plaintext HTTP, including for non-loopback private addresses. Monitor agent independently checks its own `allow_insecure` setting for sensitive endpoints.
+| Field | Required | Description |
+|---|---|---|
+| `addr` | Yes | PVE web address, for example `https://127.0.0.1:8006`; the host is resolved on the server's side of the connection |
+| `auth` | No | `token` or `password`. Defaults to `password` |
+| `tokenId` | For `token` | API token ID in the form `user@realm!tokenid` |
+| `tokenSecret` | For `token` | The token's secret; a credential, so treat the file as one |
+| `pwd` | No | For `password`: the PVE password of the SSH user in the `pam` realm. Omit it to reuse the SSH password |
+| `certSha256` | No | SHA-256 of the certificate to trust, lowercase hex. Omit it to confirm the certificate on the first connection |
+
+Older exports may put `pveAddr`, `pveIgnoreCert`, and `pvePwd` inside
+`custom`. Import still recognizes those fields and converts them to password
+authentication without a pinned certificate. This legacy format is for
+import compatibility; current exports use `pve`.
+
+A server needs at least one connection method. If both `ssh` and
+`monitorHttp` are omitted, the imported record cannot connect to a host.
+
+`allowInsecure` defaults to `false`. Set it only if you intend this Monitor
+connection to use plaintext HTTP, including when the address is a private
+non-loopback IP. The Monitor agent separately enforces its own
+`allow_insecure` setting for sensitive endpoints.
 
 ## Import steps
 
-1. Create a JSON file containing the server configurations.
+1. Create a JSON array containing the server records.
 2. Open **Settings → Backup → Import → Server**.
 3. Select the JSON file.
-4. Confirm the number of servers to import.
-5. Delete the JSON file after the import completes.
+4. Check the displayed server count and confirm the import.
+5. Remove the import file and any copies as soon as the import finishes.
 
 ## Example
 
@@ -109,18 +139,12 @@ A record that omits both `ssh` and `monitorHttp` cannot connect to anything afte
     "name": "Behind NAT",
     "monitorHttp": {
       "addr": "https://10.0.0.5:3770",
-      "user": "admin",
-      "pwd": "panel-password"
+      "user": "admin"
     },
     "tags": ["monitor"]
   }
 ]
 ```
 
-## Recommendations
-
-- Prefer SSH keys over passwords.
-- Test every connection after importing.
-- Use tags to organize servers.
-- Delete the JSON file after importing.
-- Never commit a JSON file containing credentials.
+After importing, test each connection and confirm that the expected tags and
+transport settings appear on the server records.

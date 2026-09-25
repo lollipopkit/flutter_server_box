@@ -15,6 +15,7 @@ import 'package:server_box/core/service/app_font.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
 import 'package:server_box/core/service/theme_package.dart';
 import 'package:server_box/core/utils/local_server.dart';
+import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/app/theme_style.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';

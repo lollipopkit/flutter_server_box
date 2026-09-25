@@ -3,7 +3,7 @@ title: 实现架构
 description: Server Box 的 Flutter、存储、连接和原生层实现细节
 ---
 
-本页介绍代码布局和 App 的组装方式。系统层面的分层、transport 与能力、两条状态路径、迁移和安全模型，请参阅[系统架构](/docs/zh/principles/architecture/)。
+本页说明源码目录与 App 实现之间的对应关系。关于更完整的系统设计，包括分层、transport、能力、状态采集、迁移和安全模型，请参阅[系统架构](/docs/zh/principles/architecture/)。
 
 ## 分层结构
 
@@ -34,35 +34,35 @@ description: Server Box 的 Flutter、存储、连接和原生层实现细节
 
 ## 应用入口
 
-`lib/main.dart` 负责初始化依赖、打开加密的本地数据库、初始化 Rust bindings，并调用 `runApp`。根组件负责主题、路由和 Riverpod `ProviderScope`。
+`lib/main.dart` 初始化依赖、打开加密的本地数据库、初始化 Rust bindings，并通过 `runApp` 启动 Flutter。根 Widget 设置主题和路由，并创建用于依赖注入的 Riverpod `ProviderScope`。
 
-首页通过标签页提供服务器、终端、文件和代码片段等功能。页面只负责展示和接收交互，具体状态和操作交给 provider、service 或 store。
+首页通过标签页提供服务器、终端、文件和代码片段功能。页面负责显示状态和处理交互；provider、service 和 store 执行操作并管理状态变化。
 
 ## 状态管理：Riverpod
 
-项目使用 `riverpod_generator` 生成类型安全的 Provider：
+项目通过 `riverpod_generator` 生成带类型的 provider：
 
 - `NotifierProvider`：管理带更新方法的同步状态
 - `AsyncNotifierProvider`：管理异步加载、成功和错误状态
 - `StreamProvider`：暴露持续产生的数据流
 - Family Provider：为不同服务器或其他参数维护独立状态
 
-Provider 不要求依赖 `BuildContext`，因此 service 和业务逻辑可以独立测试。声明的写法和生命周期细节见 [Riverpod 实践](/docs/zh/development/state/)。
+provider 不依赖 `BuildContext`，因此 service 和业务逻辑不受 Widget tree 限制。provider 的声明方式和生命周期详见 [Riverpod 实践](/docs/zh/development/state/)。
 
 ## 数据持久化：加密 SQLite
 
-App 的权威本地存储是加密 SQLite 文件 `store.db`。`SqliteDb` 打开连接，并在那里应用数据库加密和 `foreign_keys` pragma。
+加密 SQLite 文件 `store.db` 是 App 本地数据的权威存储。`SqliteDb` 负责打开连接、配置数据库加密并启用 `foreign_keys` pragma。
 
 数据按用途分为两种形态：
 
-- **Key-value 表 `kv(store, key, value, updated_at)`**：用于设置和历史等互不相关的值。`value` 以 JSON 存储，经 `SqliteStore.set` 写入的值需要提供 `toJson`。
-- **Entity 表**：用于服务器、private key、snippet、port forward、connection statistics 和 Agent conversation 等具有关系的数据，使用真实列、外键、约束和索引。
+- **Key-value 表 `kv(store, key, value, updated_at)`**：保存设置、历史等无需关系查询的数据。值以 JSON 格式存储；通过 `SqliteStore.set` 写入时需要提供 `toJson`。
+- **Entity 表**：保存 server、private key、snippet、port forward、connection statistics、Agent conversation 等有关联的数据，使用独立列、外键、约束和索引。
 
-Drift 只负责 DDL（`lib/data/store/db.dart`），不打开连接，也不替代手写的同步查询。Entity 的 primary key 使用生成的 ID，用户输入的 name 只作为可唯一约束的普通列。列表和 map 字段使用 child table。
+Drift 在 `lib/data/store/db.dart` 定义 DDL。连接由 `SqliteDb` 管理，store 查询仍是手写的同步查询。Entity 的 primary key 使用生成的 ID；用户填写的 name 是普通列，并施加唯一约束。List 和 map 字段存放在 child table 中。
 
 ## 依赖注入
 
-服务和 store 通过三种方式组合：
+service 和 store 使用以下三种方式获取依赖：
 
 1. **Provider**：向 UI 暴露依赖和状态。
 2. **GetIt**：在适合服务定位的场景提供全局服务实例。
@@ -70,6 +70,6 @@ Drift 只负责 DDL（`lib/data/store/db.dart`），不打开连接，也不替�
 
 ## 平台和 Rust 集成
 
-App 使用 Flutter 作为跨平台 UI，平台插件负责系统能力。Rust 代码通过 `crates/sbm_ffi` 和 flutter_rust_bridge 暴露给 Dart；生成的 bindings 位于 `lib/src/rust/`。
+Flutter 为 App 提供跨平台 UI。平台集成负责通知、后台服务、文件系统等操作系统能力。Rust API 通过 `crates/sbm_ffi` 和 flutter_rust_bridge 暴露给 Dart；生成的 bindings 位于 `lib/src/rust/`。
 
-`sbm_parser` 负责纯解析函数，`sbm_native` 只供 Monitor agent 采样。两者共享状态类型，但 App 不会在远程服务器上调用 `sbm_native`。
+`crates/sbm_parser` 存放多个项目共用的解析逻辑。`crates/sbm_native` 为 Monitor agent 采集运行所在主机的指标；App 不会在远程服务器上调用 `sbm_native`。

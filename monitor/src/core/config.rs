@@ -143,6 +143,10 @@ impl Default for ServerConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MonitoringConfig {
     pub interval_seconds: u64,
+    /// Absent means none: a `[monitoring]` written by hand to set the interval
+    /// was refused outright ("missing field `rules`"), and the agent did not
+    /// start.
+    #[serde(default)]
     pub rules: Vec<MonitoringRule>,
     pub data_retention: Option<DataRetentionConfig>,
 
@@ -950,6 +954,17 @@ impl Default for Config {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_monitoring_section_without_rules_parses() {
+        let config: Config = toml::from_str(
+            "[monitoring]\ninterval_seconds = 30\n",
+        )
+        .unwrap();
+        let monitoring = config.monitoring.unwrap();
+        assert_eq!(monitoring.interval_seconds, 30);
+        assert!(monitoring.rules.is_empty());
+    }
 
     #[test]
     fn oversized_go_durations_are_rejected_without_overflowing() {

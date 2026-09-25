@@ -387,8 +387,6 @@ extension Spix on Spi {
     tags: ['tag1', 'tag2'],
     autoConnect: true,
     custom: ServerCustom(
-      pveAddr: 'http://localhost:8006',
-      pveIgnoreCert: false,
       cmds: {'echo': 'echo hello'},
       preferTempDev: 'nvme-pci-0400',
       logoUrl: 'https://example.com/logo.png',

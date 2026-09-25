@@ -1,15 +1,17 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/app.dart';
 import 'package:server_box/data/model/app/theme_style.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/view/widget/app_background.dart';
+
+import '../helpers/test_db.dart';
 
 /// A 1x1 PNG, so that `Image.file` has something it can actually decode.
 const _png = <int>[
@@ -29,15 +31,18 @@ void main() {
   late SettingStore setting;
 
   setUp(() async {
-    SqliteDb.openInMemory();
+    // The tables, not only a connection: the intro's Virtualization page
+    // reads the PVE table to decide what to say.
+    await openTestDb();
     setting = SettingStore('setting_test');
     getIt.registerSingleton<SettingStore>(setting);
+    getIt.registerSingleton<PveStore>(PveStore());
     FlutterSecureStorage.setMockInitialValues({});
   });
 
   tearDown(() async {
     await getIt.reset();
-    await SqliteDb.close();
+    await closeTestDb();
   });
 
   (ThemeData, ThemeData) themesOf(WidgetTester tester) {

@@ -3,6 +3,7 @@ import 'package:server_box/core/utils/android_rootfs.dart';
 import 'package:server_box/core/utils/local_exec.dart';
 import 'package:server_box/core/utils/rootfs.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/ssh/ssh_terminal_environment.dart';
 
 /// Where a terminal's shell comes from.
@@ -16,7 +17,8 @@ import 'package:server_box/data/ssh/ssh_terminal_environment.dart';
 ///
 /// The same shape the file tab uses for the same reason
 /// (`view/page/storage/tab.dart`): two ways to reach something, and no other
-/// difference the page cares about.
+/// difference the page cares about. [ConsoleSource] is the third: a guest's
+/// console, which has a server behind it but none of a server's extras.
 sealed class TerminalSource {
   const TerminalSource();
 
@@ -131,4 +133,61 @@ final class LocalSource extends TerminalSource {
 
   @override
   int get hashCode => id.hashCode;
+}
+
+/// A console on something a server hosts — a virtual machine's serial port, a
+/// container's terminal — rather than a shell on a machine in the list.
+///
+/// Its own kind because nothing a server offers applies inside it. Snippets
+/// that name the server, its sudo password, its files, tmux and the Agent all
+/// act on the host, while what is typed here reaches the guest; so the
+/// terminal page, which offers those where it has a server, finds none here.
+///
+/// [connect] makes a new source of the console's one shell each time: a
+/// console's ticket is good for one connection, so the terminal page's
+/// reconnect gets a fresh one rather than reusing a spent one.
+final class ConsoleSource extends TerminalSource {
+  const ConsoleSource({
+    required this.id,
+    required this.label,
+    required this.connect,
+  });
+
+  @override
+  final String id;
+
+  /// The guest's name.
+  @override
+  final String label;
+
+  /// Opens the console. Throws with a message meant for the user when it
+  /// cannot — see [TerminalConsoleErr].
+  final Future<ShellBackend> Function() connect;
+
+  @override
+  Map<String, String>? get environment => null;
+
+  @override
+  String? get tmuxLang => null;
+
+  @override
+  bool operator ==(Object other) => other is ConsoleSource && other.id == id;
+
+  @override
+  int get hashCode => id.hashCode;
+}
+
+/// Why a [ConsoleSource] could not connect, in words for the user: the
+/// terminal page shows [message] under its failure.
+class TerminalConsoleErr implements Exception {
+  const TerminalConsoleErr(this.message, {this.retryable = false, this.cause});
+
+  final String message;
+
+  /// Whether trying again soon may work — a dropped link, not a refusal.
+  final bool retryable;
+  final Object? cause;
+
+  @override
+  String toString() => 'TerminalConsoleErr: $message';
 }

@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
+import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/store.dart';
 
@@ -67,6 +68,11 @@ abstract class ServerShare with _$ServerShare {
     /// server growing a second key reference should not need a format change.
     @Default(<PrivateKeyInfo>[]) List<PrivateKeyInfo> keys,
 
+    /// [spi]'s PVE configuration, which is a table of its own rather than
+    /// part of [Spi]. A payload from before that carries it inside
+    /// `spi.custom`, which [_readSharedPve] reads instead.
+    @JsonKey(readValue: _readSharedPve) PveConfig? pve,
+
     /// Unix milliseconds, or null for a payload with no deadline.
     ///
     /// Set for the QR flavour and not for the file one, which is the whole
@@ -84,6 +90,19 @@ abstract class ServerShare with _$ServerShare {
   factory ServerShare.fromJson(Map<String, dynamic> json) =>
       _$ServerShareFromJson(json);
 
+  /// What is encoded: [toJson], with [pve] also written into `spi.custom`
+  /// the way a build from before `server_pve` reads it — see
+  /// `PveConfig.toLegacyCustom`. Such a build ignores [pve].
+  // TODO(migration): back to plain `toJson` after 5 releases.
+  Map<String, dynamic> toWireJson() {
+    final out = toJson();
+    final pve = this.pve;
+    if (pve != null) {
+      out['spi'] = PveConfig.withLegacyCustom(spi.toJson(), pve);
+    }
+    return out;
+  }
+
   /// Bumped when the shape changes in a way an older reader would get wrong.
   static const formatVer = 1;
 
@@ -100,6 +119,7 @@ abstract class ServerShare with _$ServerShare {
       version: formatVer,
       spi: _portable(spi, keptKey: key),
       keys: keys,
+      pve: Stores.pve.fetch(spi.id),
       expiresAt: ttl == null
           ? null
           : DateTime.now().add(ttl).millisecondsSinceEpoch,
@@ -164,4 +184,12 @@ abstract class ServerShare with _$ServerShare {
   void validate() {
     if (version > formatVer) throw ServerShareTooNewException(version);
   }
+}
+
+// TODO(migration): drop the `spi.custom` fallback after 5 releases, with
+// `PveConfig.fromLegacyRecord`.
+Object? _readSharedPve(Map json, String key) {
+  final pve = json[key];
+  if (pve != null) return pve;
+  return PveConfig.fromLegacyRecord(json['spi'])?.toJson();
 }

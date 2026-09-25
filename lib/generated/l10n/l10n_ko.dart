@@ -995,9 +995,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get parseContainerStatsTip => 'Docker 점유 상태 파싱이 비교적 느립니다.';
 
   @override
-  String get plugInType => '삽입 유형';
-
-  @override
   String get preferDiskAmount => '디스크 용량 우선 표시';
 
   @override
@@ -1132,20 +1129,11 @@ class AppLocalizationsKo extends AppLocalizations {
       '활성화를 권장하지 않습니다. 보안 위험에 주의하세요! PVE 기본 인증서를 사용하는 경우 이 옵션을 활성화해야 합니다.';
 
   @override
-  String get pveServerClientMissing => '이 서버의 SSH 클라이언트를 사용할 수 없습니다.';
-
-  @override
-  String get pveAddressMissing => 'PVE 주소가 없습니다. 서버 설정에서 구성해 주세요.';
-
-  @override
   String get pvePasswordRequired => 'PVE 비밀번호가 필요합니다. 서버 설정에서 설정해 주세요.';
 
   @override
   String get pveOtpRequired =>
       '이 PVE 서버에는 2단계 인증이 활성화되어 있습니다. OTP 코드를 입력해 주세요.';
-
-  @override
-  String get pveOtpChallengeExpired => 'OTP 인증 요청이 만료되었습니다. 새로고침 후 다시 시도해 주세요.';
 
   @override
   String get pveOtpCodeRequired => 'OTP 코드가 필요합니다.';
@@ -1167,19 +1155,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get pveMissingAuthTicket => 'PVE 로그인은 성공했지만 인증 티켓이 반환되지 않았습니다.';
-
-  @override
-  String get pveVersionLow =>
-      '이 기능은 현재 테스트 단계이며 PVE 8+에서만 테스트되었습니다. 주의하여 사용해 주세요.';
-
-  @override
-  String get pveLoadingForwarding => 'SSH 터널을 설정하는 중...';
-
-  @override
-  String get pveLoadingLogin => 'PVE에 인증하는 중...';
-
-  @override
-  String get pveLoadingData => '클러스터 데이터를 가져오는 중...';
 
   @override
   String get pveLoadingConnect => '연결하는 중...';
@@ -3145,4 +3120,196 @@ class AppLocalizationsKo extends AppLocalizations {
   String appearanceThemeModeLocked(String mode) {
     return '이 테마는 $mode만 지원합니다. 모드를 변경하려면 다른 테마를 선택하세요.';
   }
+
+  @override
+  String get pveAuthToken => 'API 토큰';
+
+  @override
+  String get pveVersionLow =>
+      '이 기능은 현재 테스트 단계이며 PVE 8+에서만 테스트되었습니다. 주의하여 사용해 주세요.';
+
+  @override
+  String get pveTokenId => '토큰 ID';
+
+  @override
+  String get pveTokenSecret => '토큰 시크릿';
+
+  @override
+  String get pveTokenTip =>
+      'PVE의 데이터센터 → 권한 → API 토큰에서 만듭니다. 표시할 경로에 VM.Audit, VM.PowerMgmt, VM.Console, Sys.Audit 권한이 필요하며, 권한 분리가 켜져 있으면 토큰 자체에 부여해야 합니다.';
+
+  @override
+  String get pveTokenIdInvalid => '토큰 ID는 user@realm!tokenid 형식이어야 합니다';
+
+  @override
+  String get pvePasswordAuthTip =>
+      'SSH 사용자로 PAM 영역에 SSH 비밀번호로 로그인합니다. SSH가 키를 사용하면 아래의 PVE 비밀번호를 사용합니다. 필요하면 2단계 인증 코드를 요청합니다.';
+
+  @override
+  String get pveCertUnpinned =>
+      '아직 확인되지 않았습니다. 신뢰할 수 있는 CA가 서명하지 않았다면 다음 연결 시 인증서를 표시해 확인을 요청합니다.';
+
+  @override
+  String get pveCertForget => '인증서 잊기';
+
+  @override
+  String get pveCertForgetTip => '다음 연결 시 PVE 인증서를 다시 표시해 확인을 요청합니다.';
+
+  @override
+  String get virtualization => '가상화';
+
+  @override
+  String get virtIntro =>
+      'Proxmox VE 및 libvirt/KVM 호스트의 가상 머신과 컨테이너를 관리합니다: 상태, 전원 작업, 콘솔.';
+
+  @override
+  String get virtIntroPveMoved =>
+      'Proxmox VE가 서버 페이지에서 이 탭으로 이동했습니다. 서버의 PVE 카드를 누르면 여기서 열립니다.';
+
+  @override
+  String get virtIntroLibvirt =>
+      'libvirt의 virsh가 설치된 서버는 QEMU/KVM 가상 머신과 함께 호스트로 표시됩니다.';
+
+  @override
+  String get virtIntroTransports => '둘 다 SSH, Monitor 에이전트 또는 이 기기에서 작동합니다.';
+
+  @override
+  String get virtIntroTokens =>
+      'PVE는 비밀번호 대신 API 토큰으로 로그인할 수 있습니다. 서버 편집 페이지의 PVE에서 설정하세요.';
+
+  @override
+  String get virtIntroInBar => '탭 바에 추가되었습니다.';
+
+  @override
+  String get virtIntroInMore => '\'더보기\'에 있습니다. 설정의 홈 탭에서 탭 바로 옮길 수 있습니다.';
+
+  @override
+  String get virtGuests => '가상 머신';
+
+  @override
+  String get virtGuestsAndContainers => 'VM 및 컨테이너';
+
+  @override
+  String get virtSectionLater => '아직 사용할 수 없음';
+
+  @override
+  String get virtHosts => '호스트';
+
+  @override
+  String get virtCheckServer => '이 서버 확인';
+
+  @override
+  String get virtCheckAll => '모든 서버 확인';
+
+  @override
+  String get virtProbeNotChecked => '아직 확인 안 됨';
+
+  @override
+  String get virtProbeAbsent => 'virsh를 찾을 수 없음';
+
+  @override
+  String get virtNoHosts => '가상화 호스트 없음';
+
+  @override
+  String get virtNoHostsTip =>
+      'PVE 주소가 있는 서버와 virsh가 응답하는 서버가 호스트입니다. 다른 서버는 호스트 전환기에서 확인할 수 있습니다.';
+
+  @override
+  String get virtNoGuests => '가상 머신이나 컨테이너 없음';
+
+  @override
+  String get virtPaused => '일시 중지됨';
+
+  @override
+  String get virtStarting => '시작 중…';
+
+  @override
+  String get virtStopping => '중지 중…';
+
+  @override
+  String get virtRebooting => '재부팅 중…';
+
+  @override
+  String get virtMigrating => '마이그레이션 중…';
+
+  @override
+  String get virtBackingUp => '백업 중…';
+
+  @override
+  String get virtResume => '재개';
+
+  @override
+  String get virtOverview => '개요';
+
+  @override
+  String get virtConsole => '콘솔';
+
+  @override
+  String get virtConsoleNone => '이 게스트에 설정된 콘솔이 없습니다';
+
+  @override
+  String get virtConsoleGraphical => '그래픽';
+
+  @override
+  String get virtConsoleSerialTip =>
+      '호스트에서 virsh로 게스트의 시리얼 콘솔을 엽니다. 연결 끊기 또는 Ctrl+]로 호스트 셸로 돌아갑니다.';
+
+  @override
+  String get virtOffTip => '시작하면 여기에서 CPU, 메모리, 디스크, 네트워크를 실시간으로 볼 수 있습니다.';
+
+  @override
+  String get virtAllocated => '할당됨';
+
+  @override
+  String virtRunningCount(int running, int total) {
+    return '$running개 실행 중 · 총 $total개';
+  }
+
+  @override
+  String get virtTemplate => '템플릿';
+
+  @override
+  String get virtAutostart => '호스트와 함께 시작';
+
+  @override
+  String get virtErrUnreachable => '이 호스트에 연결할 수 없음';
+
+  @override
+  String get virtErrNotConfigured => '이 서버의 PVE 설정이 불완전합니다';
+
+  @override
+  String get virtErrNotConfiguredTip => '서버 설정에서 주소와 비밀번호 또는 API 토큰을 확인하세요.';
+
+  @override
+  String get virtErrAuthFailed => '호스트가 로그인을 거부했습니다';
+
+  @override
+  String get virtErrCertUnconfirmed => '호스트 인증서를 확인하세요';
+
+  @override
+  String get virtErrCertChanged => '호스트 인증서가 변경되었습니다';
+
+  @override
+  String get virtErrRelayNotGranted => 'Monitor 에이전트가 연결을 중계하지 않습니다';
+
+  @override
+  String get virtErrExecNotGranted => 'Monitor 에이전트가 명령을 실행하지 않습니다';
+
+  @override
+  String get virtErrNotInstalled => '이 서버에 virsh가 설치되어 있지 않습니다';
+
+  @override
+  String get virtErrServerRemoved => '이 서버는 더 이상 존재하지 않습니다';
+
+  @override
+  String get virtErrSudoRequired => 'libvirt에 접근하려면 sudo 비밀번호가 필요합니다';
+
+  @override
+  String get virtErrSudoRejected => 'sudo가 비밀번호를 거부했습니다';
+
+  @override
+  String get virtErrInvalidResponse => '호스트가 예상치 못한 형식으로 응답했습니다';
+
+  @override
+  String get virtErrActionFailed => '호스트가 작업을 거부했습니다';
 }

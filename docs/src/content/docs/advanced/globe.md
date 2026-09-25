@@ -3,18 +3,18 @@ title: Globe View
 description: View servers by location and manage the on-device location data
 ---
 
-The server tab can display your servers on an interactive globe instead of in
-the grid. Tap the globe icon above the server list to switch views. Server Box
-remembers the last view you used.
+The server tab offers two layouts: the server grid and an interactive globe.
+Select the globe icon above the server list to switch to it. Server Box opens
+the view you used most recently the next time you visit.
 
-The feature is enabled by default. To remove the globe button and stop location
-resolution, turn off **Settings → Server → General → Globe**. Disabling the
-feature does not delete the downloaded city dataset. To remove it, use
-**Delete** on the **City-level data** row.
+Globe view is enabled by default. Turn off **Settings → Server → General →
+Globe** to hide its button and stop location lookups. This keeps the downloaded
+city dataset on the device. To delete the files as well, select **Delete** on
+the **City-level data** row.
 
 ## How a server gets a location
 
-Server Box uses the first available source in this order:
+Server Box checks these sources in order and uses the first available location:
 
 | Priority | Source | Requirement |
 |---|---|---|
@@ -22,15 +22,15 @@ Server Box uses the first available source in this order:
 | 2 | A public address reported by the server | Used when Server Box connects through a private address; the downloaded city dataset is still required |
 | 3 | The address used for the connection | The downloaded city dataset is required |
 
-All geolocation lookups use files on this device. Server addresses are not sent
-to a geolocation API. If a server is configured with a hostname, the device may
-resolve it through its configured DNS service, just as it does when connecting
-to that server.
+Location lookups use the dataset stored on this device; Server Box does not
+send server addresses to a geolocation API. A configured hostname may still be
+resolved through your device's DNS service, as it is when connecting to the
+server.
 
 ### Servers reached through a private network
 
-A VPS reached through a VPN or an internal hostname may still have a public IP
-address on one of its interfaces. The normal status poll already reports those
+A VPS accessed through a VPN or internal hostname may still have a public IP
+on one of its network interfaces. The regular status poll already collects
 interface addresses over SSH or through a
 [Monitor agent](/docs/advanced/monitor-agent/). Server Box selects a public
 address and looks it up in the local city dataset; it does not run an additional
@@ -41,8 +41,8 @@ only a manually entered location can place it on the globe.
 
 ## Download city-level data
 
-The city dataset is not bundled with Server Box and is never downloaded
-automatically.
+Server Box does not bundle the city dataset or download it automatically. You
+choose when to install it:
 
 1. Open the globe and tap **Download** beside the unplaced servers. You can
    also open **Settings → Server → General → Globe** and tap **Download**
@@ -52,9 +52,9 @@ automatically.
 3. Review the confirmation dialog. The data files are downloaded only after you
    accept.
 
-The current dataset is typically about 25 MB to download and 52 MB after
-installation. The confirmation dialog reads both values from the manifest, so
-its figures are authoritative if these estimates change.
+The dataset currently downloads about 25 MB and uses about 52 MB when
+installed. These are estimates; the confirmation dialog reads the latest sizes
+from the manifest and shows the values to use if they change.
 
 - IPv4 and IPv6 data are both city-level.
 - The dataset is updated monthly. When data is already installed, tap
@@ -63,9 +63,9 @@ its figures are authoritative if these estimates change.
   additional copy.
 - Tap **Delete** to remove the dataset from the device.
 
-The download host can observe that your network requested the manifest or data
-files. After installation, it receives no requests for individual lookups and
-cannot learn which server addresses you query or when you query them. See the
+The download host can see requests for the manifest and dataset files. Once
+the files are installed, lookups happen locally and do not generate requests to
+that host, so it cannot see which server addresses you look up or when. See the
 [privacy policy](/docs/privacy/#globe-and-location-data) for the complete data
 flow.
 
@@ -74,8 +74,8 @@ placed.
 
 ## Servers without a coordinate
 
-Servers that cannot be placed appear as chips along the bottom of the globe.
-Tap a chip to open that server's editor and enter a location.
+Servers without a usable coordinate appear as chips along the bottom of the
+globe. Select a chip to edit that server's location.
 
 - **Private address** — Server Box connects through a LAN, loopback, or
   link-local address, or through a hostname that resolves to one. Public
@@ -88,9 +88,9 @@ the row of chips.
 
 ## Enter a location manually
 
-In the server editor, open **More** and enter **Location (lat, lon)**. Put
-latitude first and longitude second, in degrees—for example,
-`39.9042, 116.4074`. A comma or whitespace can separate the two values.
+In the server editor, open **More** and fill in **Location (lat, lon)**. Enter
+latitude first and longitude second, in degrees. For example:
+`39.9042, 116.4074`. Separate the values with a comma or whitespace.
 
 Latitude must be between -90 and 90, and longitude between -180 and 180. Server
 Box rejects an invalid value when you save instead of silently discarding it.
@@ -116,9 +116,9 @@ coordinate.
 
 ## When a location looks wrong
 
-Coordinates are not cached. Each lookup uses the dataset currently installed
-on the device, so installing a newer monthly release immediately changes what
-the globe draws, with nothing to clear.
+Server Box does not cache lookup results. Each lookup uses the dataset
+currently installed on the device, so updating the monthly dataset changes
+the displayed location immediately.
 
 For a server reached through a private address, Server Box may remember the
 public interface address that the server reported for itself. Once that record

@@ -1319,10 +1319,6 @@
   "@parseContainerStatsTip": {
     "description": "Help text for the parse container stats setting or action."
   },
-  "plugInType": "Insertion Type",
-  "@plugInType": {
-    "description": "User-facing label or message for plug in type."
-  },
   "preferDiskAmount": "Prioritize displaying disk capacity",
   "@preferDiskAmount": {
     "description": "User-facing label or message for prefer disk amount."
@@ -1510,14 +1506,6 @@
   "@pveIgnoreCertTip": {
     "description": "Help text for the pve ignore cert setting or action."
   },
-  "pveServerClientMissing": "The SSH client for this server is not available.",
-  "@pveServerClientMissing": {
-    "description": "User-facing label or message for pve server client missing."
-  },
-  "pveAddressMissing": "The PVE address is missing. Please configure it in server settings.",
-  "@pveAddressMissing": {
-    "description": "User-facing label or message for pve address missing."
-  },
   "pvePasswordRequired": "PVE password is required. Please set it in server settings.",
   "@pvePasswordRequired": {
     "description": "User-facing label or message for pve password required."
@@ -1525,10 +1513,6 @@
   "pveOtpRequired": "Two-factor authentication is enabled on this PVE server. Please enter the OTP code.",
   "@pveOtpRequired": {
     "description": "User-facing label or message for pve otp required."
-  },
-  "pveOtpChallengeExpired": "The OTP challenge has expired. Please refresh and try again.",
-  "@pveOtpChallengeExpired": {
-    "description": "User-facing label or message for pve otp challenge expired."
   },
   "pveOtpCodeRequired": "OTP code is required.",
   "@pveOtpCodeRequired": {
@@ -1557,22 +1541,6 @@
   "pveMissingAuthTicket": "PVE login succeeded but no authentication ticket was returned.",
   "@pveMissingAuthTicket": {
     "description": "User-facing label or message for pve missing auth ticket."
-  },
-  "pveVersionLow": "This feature is currently in the testing phase and has only been tested on PVE 8+. Please use it with caution.",
-  "@pveVersionLow": {
-    "description": "User-facing label or message for pve version low."
-  },
-  "pveLoadingForwarding": "Establishing SSH tunnel...",
-  "@pveLoadingForwarding": {
-    "description": "User-facing label or message for pve loading forwarding."
-  },
-  "pveLoadingLogin": "Authenticating with PVE...",
-  "@pveLoadingLogin": {
-    "description": "User-facing label or message for pve loading login."
-  },
-  "pveLoadingData": "Fetching cluster data...",
-  "@pveLoadingData": {
-    "description": "User-facing label or message for pve loading data."
   },
   "pveLoadingConnect": "Connecting...",
   "@pveLoadingConnect": {
@@ -4257,5 +4225,253 @@
         "type": "String"
       }
     }
+  },
+  "pveAuthToken": "API token",
+  "@pveAuthToken": {
+    "description": "Label for logging in to Proxmox VE with an API token."
+  },
+  "pveVersionLow": "This feature is currently in the testing phase and has only been tested on PVE 8+. Please use it with caution.",
+  "@pveVersionLow": {
+    "description": "Notice on a Proxmox VE host older than 8.0: the feature was only tested on PVE 8 and later."
+  },
+  "pveTokenId": "Token ID",
+  "@pveTokenId": {
+    "description": "Label for the Proxmox VE API token ID field (user@realm!tokenid)."
+  },
+  "pveTokenSecret": "Token secret",
+  "@pveTokenSecret": {
+    "description": "Label for the Proxmox VE API token secret field."
+  },
+  "pveTokenTip": "Create one in PVE under Datacenter → Permissions → API Tokens. It needs VM.Audit, VM.PowerMgmt, VM.Console and Sys.Audit on the paths to show; with privilege separation on, grant them to the token itself.",
+  "@pveTokenTip": {
+    "description": "Help text explaining how to create a Proxmox VE API token and which privileges it needs."
+  },
+  "pveTokenIdInvalid": "The token ID must look like user@realm!tokenid",
+  "@pveTokenIdInvalid": {
+    "description": "Error shown when the Proxmox VE API token ID has the wrong format."
+  },
+  "pvePasswordAuthTip": "Logs in as the SSH user in the PAM realm, with the SSH password, or with the PVE password below when SSH uses a key. A two-factor code is asked for when needed.",
+  "@pvePasswordAuthTip": {
+    "description": "Help text for logging in to Proxmox VE with a password."
+  },
+  "pveCertUnpinned": "None confirmed yet. Unless a trusted CA signed it, the next connection shows the certificate for confirmation.",
+  "@pveCertUnpinned": {
+    "description": "Shown when no Proxmox VE certificate has been confirmed yet."
+  },
+  "pveCertForget": "Forget certificate",
+  "@pveCertForget": {
+    "description": "Action that forgets the confirmed Proxmox VE certificate."
+  },
+  "pveCertForgetTip": "The next connection will show the PVE certificate for confirmation again.",
+  "@pveCertForgetTip": {
+    "description": "Confirmation text for forgetting the confirmed Proxmox VE certificate."
+  },
+  "virtualization": "Virtualization",
+  "@virtualization": {
+    "description": "Name of the Virtualization tab."
+  },
+  "virtIntro": "Manage virtual machines and containers on Proxmox VE and libvirt/KVM hosts: their state, power actions and consoles.",
+  "@virtIntro": {
+    "description": "Intro page text describing the Virtualization tab."
+  },
+  "virtIntroPveMoved": "Proxmox VE has moved from the server page into this tab. A server's PVE card opens it there.",
+  "@virtIntroPveMoved": {
+    "description": "Intro page text telling Proxmox VE users where PVE moved."
+  },
+  "virtIntroLibvirt": "A server with libvirt's virsh installed shows up as a host, with its QEMU/KVM virtual machines.",
+  "@virtIntroLibvirt": {
+    "description": "Intro page text about libvirt/KVM hosts."
+  },
+  "virtIntroTransports": "Both work over SSH, through a Monitor agent, or on this device.",
+  "@virtIntroTransports": {
+    "description": "Intro page text about the transports the Virtualization tab works over."
+  },
+  "virtIntroTokens": "PVE can log in with an API token instead of a password. Set it in a server's edit page, under PVE.",
+  "@virtIntroTokens": {
+    "description": "Intro page text about Proxmox VE API token support."
+  },
+  "virtIntroInBar": "It has been added to the tab bar.",
+  "@virtIntroInBar": {
+    "description": "Intro page text saying the Virtualization tab is in the tab bar."
+  },
+  "virtIntroInMore": "It is under More. Home Tabs in Settings can move it to the tab bar.",
+  "@virtIntroInMore": {
+    "description": "Intro page text saying the Virtualization tab is under More."
+  },
+  "virtGuests": "Virtual machines",
+  "@virtGuests": {
+    "description": "Section of the Virtualization tab listing virtual machines."
+  },
+  "virtGuestsAndContainers": "VMs & containers",
+  "@virtGuestsAndContainers": {
+    "description": "Section of the Virtualization tab listing virtual machines and LXC containers."
+  },
+  "virtSectionLater": "Not available yet",
+  "@virtSectionLater": {
+    "description": "Tooltip on a Virtualization section that is not built yet."
+  },
+  "virtHosts": "Hosts",
+  "@virtHosts": {
+    "description": "Heading over the virtualization hosts in the host switcher."
+  },
+  "virtCheckServer": "Check this server",
+  "@virtCheckServer": {
+    "description": "Heading over servers not known to be virtualization hosts; tapping one checks it for virsh."
+  },
+  "virtCheckAll": "Check all servers",
+  "@virtCheckAll": {
+    "description": "Action that checks every server for libvirt again."
+  },
+  "virtProbeNotChecked": "Not checked yet",
+  "@virtProbeNotChecked": {
+    "description": "A server not yet checked for libvirt."
+  },
+  "virtProbeAbsent": "virsh not found",
+  "@virtProbeAbsent": {
+    "description": "A server checked for libvirt that has no virsh."
+  },
+  "virtNoHosts": "No virtualization hosts",
+  "@virtNoHosts": {
+    "description": "Shown when no server is a virtualization host."
+  },
+  "virtNoHostsTip": "A server with a PVE address is a host, and so is one where virsh answers. The other servers can be checked from the host switcher.",
+  "@virtNoHostsTip": {
+    "description": "Explains which servers count as virtualization hosts."
+  },
+  "virtNoGuests": "No virtual machines or containers",
+  "@virtNoGuests": {
+    "description": "Shown when a virtualization host has no guests."
+  },
+  "virtPaused": "Paused",
+  "@virtPaused": {
+    "description": "A guest that is paused."
+  },
+  "virtStarting": "Starting…",
+  "@virtStarting": {
+    "description": "A guest that is starting."
+  },
+  "virtStopping": "Stopping…",
+  "@virtStopping": {
+    "description": "A guest that is stopping."
+  },
+  "virtRebooting": "Rebooting…",
+  "@virtRebooting": {
+    "description": "A guest that is rebooting."
+  },
+  "virtMigrating": "Migrating…",
+  "@virtMigrating": {
+    "description": "A guest that is migrating to another node."
+  },
+  "virtBackingUp": "Backing up…",
+  "@virtBackingUp": {
+    "description": "A guest held by a running backup."
+  },
+  "virtResume": "Resume",
+  "@virtResume": {
+    "description": "Power action that resumes a paused guest."
+  },
+  "virtOverview": "Overview",
+  "@virtOverview": {
+    "description": "View of a guest with its readings and facts."
+  },
+  "virtConsole": "Console",
+  "@virtConsole": {
+    "description": "View of a guest with its console."
+  },
+  "virtConsoleNone": "No console is configured for this guest",
+  "@virtConsoleNone": {
+    "description": "Shown in a guest's console view when it has neither a text nor a graphical console."
+  },
+  "virtConsoleGraphical": "Graphical",
+  "@virtConsoleGraphical": {
+    "description": "Toggle for a guest's graphical (VNC) console, beside the text one."
+  },
+  "virtConsoleSerialTip": "Opens the guest's serial console with virsh on the host. Disconnect, or Ctrl+], returns to the host's shell.",
+  "@virtConsoleSerialTip": {
+    "description": "Under the button that opens a libvirt guest's serial console in the terminal."
+  },
+  "virtOffTip": "Start it to see live CPU, memory, disk and network here.",
+  "@virtOffTip": {
+    "description": "Shown for a guest that is not running, in place of its charts."
+  },
+  "virtAllocated": "Allocated",
+  "@virtAllocated": {
+    "description": "Card showing what running guests hold of the host."
+  },
+  "virtRunningCount": "{running} running · {total} in total",
+  "@virtRunningCount": {
+    "description": "How many guests are running, of how many.",
+    "placeholders": {
+      "running": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "virtTemplate": "Template",
+  "@virtTemplate": {
+    "description": "A PVE template: a guest image that does not run."
+  },
+  "virtAutostart": "Starts with the host",
+  "@virtAutostart": {
+    "description": "A guest that starts with its host."
+  },
+  "virtErrUnreachable": "Could not reach this host",
+  "@virtErrUnreachable": {
+    "description": "Error: the virtualization host could not be reached."
+  },
+  "virtErrNotConfigured": "The PVE settings of this server are incomplete",
+  "@virtErrNotConfigured": {
+    "description": "Error: the PVE configuration of a server is incomplete."
+  },
+  "virtErrNotConfiguredTip": "Check the address, and the password or API token, in the server's settings.",
+  "@virtErrNotConfiguredTip": {
+    "description": "What to do about incomplete PVE settings."
+  },
+  "virtErrAuthFailed": "The host refused the login",
+  "@virtErrAuthFailed": {
+    "description": "Error: the virtualization host refused the login."
+  },
+  "virtErrCertUnconfirmed": "Confirm the host's certificate",
+  "@virtErrCertUnconfirmed": {
+    "description": "Error: the PVE certificate has to be confirmed first."
+  },
+  "virtErrCertChanged": "The host's certificate has changed",
+  "@virtErrCertChanged": {
+    "description": "Error: the PVE certificate is not the one confirmed before."
+  },
+  "virtErrRelayNotGranted": "The Monitor agent does not relay connections",
+  "@virtErrRelayNotGranted": {
+    "description": "Error: the Monitor agent does not relay TCP connections to PVE."
+  },
+  "virtErrExecNotGranted": "The Monitor agent does not run commands",
+  "@virtErrExecNotGranted": {
+    "description": "Error: the Monitor agent does not run commands (its full access is off), so libvirt cannot be reached through it."
+  },
+  "virtErrNotInstalled": "virsh is not installed on this server",
+  "@virtErrNotInstalled": {
+    "description": "Error: virsh is not installed on the server."
+  },
+  "virtErrServerRemoved": "This server no longer exists",
+  "@virtErrServerRemoved": {
+    "description": "Error: the server this virtualization host belonged to has been deleted."
+  },
+  "virtErrSudoRequired": "sudo needs a password to reach libvirt",
+  "@virtErrSudoRequired": {
+    "description": "Error: reaching libvirt needs sudo, and sudo needs a password."
+  },
+  "virtErrSudoRejected": "sudo rejected the password",
+  "@virtErrSudoRejected": {
+    "description": "Error: sudo rejected the password given."
+  },
+  "virtErrInvalidResponse": "The host answered in an unexpected form",
+  "@virtErrInvalidResponse": {
+    "description": "Error: the virtualization host answered with something unreadable."
+  },
+  "virtErrActionFailed": "The host refused the action",
+  "@virtErrActionFailed": {
+    "description": "Error: the host refused a power action or it failed."
   }
 }

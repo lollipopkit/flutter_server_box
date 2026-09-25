@@ -1,19 +1,15 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/diag.dart';
-import 'package:server_box/core/utils/monitor_tunnel.dart';
+import 'package:server_box/core/utils/server_tcp.dart';
 import 'package:server_box/core/utils/ssh_local_tunnel.dart';
-import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
-import 'package:server_box/data/provider/server/monitor_http.dart';
-import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/src/rust/api/remote_desktop.dart' as ffi;
 
@@ -172,21 +168,63 @@ class RemoteDesktopSessionView {
 }
 
 class RemoteDesktopSessionsState {
-  const RemoteDesktopSessionsState({this.sessions = const {}, this.activeId});
+  const RemoteDesktopSessionsState({
+    this.sessions = const {},
+    this.activeId,
+    this.consoles = const {},
+  });
 
+  /// The remote desktop tab's sessions, one per profile.
   final Map<String, RemoteDesktopSessionView> sessions;
   final String? activeId;
+
+  /// Sessions a page other than the remote desktop tab opened and shows — a
+  /// virtual machine's graphical console. Kept apart so that tab neither
+  /// lists them nor switches to them.
+  final Map<String, RemoteDesktopSessionView> consoles;
 
   RemoteDesktopSessionView? get active => sessions[activeId];
   List<RemoteDesktopSessionView> get ordered => sessions.values.toList();
 
-  RemoteDesktopSessionsState put(RemoteDesktopSessionView session) =>
-      RemoteDesktopSessionsState(
-        sessions: Map.unmodifiable({...sessions, session.id: session}),
+  /// A session of either kind, by id — what the viewer shows.
+  RemoteDesktopSessionView? byId(String id) => sessions[id] ?? consoles[id];
+
+  /// Whether input for [id] — keys, pointer, wheel, clipboard — is sent: a
+  /// session of either kind that is not view-only.
+  bool acceptsInput(String id) => !(byId(id)?.viewOnly ?? true);
+
+  RemoteDesktopSessionsState put(RemoteDesktopSessionView session) {
+    if (consoles.containsKey(session.id)) {
+      return RemoteDesktopSessionsState(
+        sessions: sessions,
         activeId: activeId,
+        consoles: Map.unmodifiable({...consoles, session.id: session}),
+      );
+    }
+    return RemoteDesktopSessionsState(
+      sessions: Map.unmodifiable({...sessions, session.id: session}),
+      activeId: activeId,
+      consoles: consoles,
+    );
+  }
+
+  RemoteDesktopSessionsState putConsole(RemoteDesktopSessionView session) =>
+      RemoteDesktopSessionsState(
+        sessions: sessions,
+        activeId: activeId,
+        consoles: Map.unmodifiable({...consoles, session.id: session}),
       );
 
   RemoteDesktopSessionsState remove(String id) {
+    if (consoles.containsKey(id)) {
+      return RemoteDesktopSessionsState(
+        sessions: sessions,
+        activeId: activeId,
+        consoles: Map.unmodifiable(
+          Map<String, RemoteDesktopSessionView>.from(consoles)..remove(id),
+        ),
+      );
+    }
     final next = Map<String, RemoteDesktopSessionView>.from(sessions)
       ..remove(id);
     final nextActive = activeId == id
@@ -195,14 +233,24 @@ class RemoteDesktopSessionsState {
     return RemoteDesktopSessionsState(
       sessions: Map.unmodifiable(next),
       activeId: nextActive,
+      consoles: consoles,
     );
   }
 
   RemoteDesktopSessionsState select(String? id) => RemoteDesktopSessionsState(
     sessions: sessions,
     activeId: id != null && sessions.containsKey(id) ? id : activeId,
+    consoles: consoles,
   );
 }
+
+/// Where one connection attempt of a session goes: the loopback listener the
+/// engine connects to, and the password to give it.
+typedef RemoteDesktopTarget = ({SshLocalTunnel tunnel, String? password});
+
+/// Makes a [RemoteDesktopTarget] for each connection attempt — so a target
+/// whose password is a one-use ticket fetches a new one every time.
+typedef RemoteDesktopTargetOpener = Future<RemoteDesktopTarget> Function();
 
 @Riverpod(keepAlive: true)
 class RemoteDesktopProfiles extends _$RemoteDesktopProfiles {
@@ -290,6 +338,45 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
     return profile.id;
   }
 
+  /// Opens a session shown by a page of its own rather than by the remote
+  /// desktop tab — see [RemoteDesktopSessionsState.consoles].
+  ///
+  /// [profile] is not stored anywhere; [target] says where each connection
+  /// attempt goes and with which password, in place of the profile's host,
+  /// port and password. Opening an id that is already open reconnects it.
+  String openConsole(
+    RemoteDesktopProfile profile, {
+    required RemoteDesktopTargetOpener target,
+  }) {
+    final existing = _entries[profile.id];
+    if (existing != null) {
+      unawaited(reconnect(profile.id));
+      return profile.id;
+    }
+    final entry = _SessionEntry(
+      profile: profile,
+      password: null,
+      width: 1280,
+      height: 720,
+      scaleFactor: 100,
+      target: target,
+    );
+    _entries[profile.id] = entry;
+    state = state.putConsole(RemoteDesktopSessionView(profile: profile));
+    _syncVisibility();
+    unawaited(_connect(entry));
+    return profile.id;
+  }
+
+  /// Whether the page showing console [id] is on screen. Frames are decoded
+  /// only while it is, and while the app is.
+  void setConsoleVisible(String id, bool visible) {
+    final entry = _entries[id];
+    if (entry == null || entry.target == null) return;
+    entry.consoleVisible = visible;
+    _syncVisibility();
+  }
+
   void select(String id) {
     if (!_entries.containsKey(id) || state.activeId == id) return;
     state = state.select(id);
@@ -331,7 +418,7 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
 
   Future<void> trustCertificate(String id) async {
     final entry = _entries[id];
-    final prompt = state.sessions[id]?.certificate;
+    final prompt = state.byId(id)?.certificate;
     if (entry == null || prompt == null) return;
     final trusted = entry.profile.copyWith(trustedCertSha256: prompt.sha256);
     // What is written is the stored record, not the draft the session may have
@@ -367,13 +454,6 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
 
   void setViewOnly(String id, bool value) {
     _replaceView(id, (view) => view.copyWith(viewOnly: value));
-  }
-
-  void setVisible(String id, bool visible) {
-    final entry = _entries[id];
-    final effective = visible && _appVisible && _surfaceVisible;
-    entry?.handle?.setVisible(visible: effective);
-    _replaceView(id, (view) => view.copyWith(visible: effective));
   }
 
   void setSurfaceVisible(bool visible) {
@@ -447,7 +527,7 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
   }
 
   _SessionEntry? _writableEntry(String id) {
-    if (state.sessions[id]?.viewOnly ?? true) return null;
+    if (!state.acceptsInput(id)) return null;
     return _entries[id];
   }
 
@@ -471,7 +551,15 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
 
     SshLocalTunnel? tunnel;
     try {
-      tunnel = await _openTunnel(entry);
+      final String? password;
+      if (entry.target case final target?) {
+        final opened = await target();
+        tunnel = opened.tunnel;
+        password = opened.password;
+      } else {
+        tunnel = await _openTunnel(entry);
+        password = entry.password;
+      }
       if (tunnel == null || !_isCurrent(entry, generation)) {
         await tunnel?.close();
         return;
@@ -484,7 +572,7 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
             serverName: entry.profile.host,
             serverPort: entry.profile.port,
             username: entry.profile.username ?? '',
-            password: entry.password ?? '',
+            password: password ?? '',
             domain: entry.profile.domain,
             trustedCertSha256: entry.profile.trustedCertSha256,
             width: entry.width,
@@ -496,7 +584,7 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
           params: ffi.VncSessionParams(
             connectHost: tunnel.address.address,
             connectPort: tunnel.port,
-            password: entry.password,
+            password: password,
             shared: entry.profile.shared,
           ),
         ),
@@ -508,12 +596,7 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
       }
       entry.tunnel = tunnel;
       entry.handle = handle;
-      handle.setVisible(
-        visible:
-            _appVisible &&
-            _surfaceVisible &&
-            state.activeId == entry.profile.id,
-      );
+      handle.setVisible(visible: _shown(entry));
       await _pump(entry, generation, handle);
     } catch (error, stackTrace) {
       final failedTunnel = tunnel;
@@ -550,129 +633,26 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
   }
 
   /// The local loopback a session connects to, carried by whichever transport
-  /// can reach the target.
+  /// can reach the target — see [ServerTcpDialer], which owns the ordering and
+  /// the fall-through between a server's two transports.
   ///
-  /// Two ways to the same connection, and the same ordering rule the terminal
-  /// and the exec path use: the transport the server prefers leads, and a
-  /// server the user gave both sets of credentials to falls through to the
-  /// other when the first cannot carry it. That fall-through is the whole point
-  /// for a monitor-only server — it was the case this feature did not have an
-  /// answer for at all.
+  /// `LocalCapabilities.tcpRelay` is false, and that policy is this feature's:
+  /// this device reaches its own desktop without a relay, and the page is not
+  /// offered for it. So `local` is left out of the transports the dialer may
+  /// use, although it could open a direct socket.
   Future<SshLocalTunnel?> _openTunnel(_SessionEntry entry) async {
     final spi = ref.read(serversProvider).servers[entry.profile.serverId];
     if (spi == null) return null;
-
-    final primary = _relayCapable(spi, ServerConnectCredential.fromSpi(spi));
-    Object? primaryError;
-    StackTrace? primaryTrace;
-    if (primary != null) {
-      try {
-        return await _tunnelOver(entry, primary);
-      } catch (error, stackTrace) {
-        primaryError = error;
-        primaryTrace = stackTrace;
-        Loggers.app.info(
-          'Remote desktop over ${spi.transport.name} for ${spi.name} failed',
-          error,
-          stackTrace,
-        );
-      }
-    }
-
-    // Reached for an agent that will not relay as well as for a leading
-    // transport that failed: both mean the same thing to this session, which is
-    // "not this way".
-    final fallback = ServerConnectCredential.fallbackOf(spi);
-    final other = fallback == null ? null : _relayCapable(spi, fallback);
-    if (other != null) return _tunnelOver(entry, other);
-
-    // Nothing left to try. What actually failed is the better answer when
-    // something did; only a server whose transports were both unusable before
-    // either was attempted gets the sentence about neither carrying one.
-    if (primaryError != null) {
-      Error.throwWithStackTrace(primaryError, primaryTrace!);
-    }
-    throw StateError(
-      'Neither transport of ${spi.name} can carry a remote desktop',
+    final dialer = ServerTcpDialer.of(
+      ref,
+      spi,
+      transports: const {ServerTransport.ssh, ServerTransport.monitorHttp},
     );
-  }
-
-  /// [credential] when it can carry a TCP connection, or null when it cannot.
-  ///
-  /// A monitor credential is only a way in when the agent said it will relay:
-  /// an agent older than the endpoint reports `full_access` and would refuse
-  /// the upgrade, and an agent with the grant switched off answers 403. Binding
-  /// a tunnel over one of those fails at the dial, after a loopback listener
-  /// has been opened — so the question is asked here, where the answer can
-  /// still choose the other transport.
-  ///
-  /// A grant that has not been read yet is not a "no". Nothing has asked this
-  /// agent, and treating "not looked" as "cannot" would hide a server that can,
-  /// which is the same mistake the server list refuses to make.
-  ServerConnectCredential? _relayCapable(
-    Spi spi,
-    ServerConnectCredential credential,
-  ) {
-    switch (credential) {
-      case ServerConnectCredentialSsh():
-        return credential;
-      case ServerConnectCredentialMonitorHttp():
-        final granted = ref.read(serverProvider(spi.id)).remoteAccess;
-        if (granted != null && !granted.stream) return null;
-        return credential;
-      // `LocalCapabilities.tcpRelay` is false: this device reaches its own
-      // desktop without a relay, and the page is not offered for it.
-      case ServerConnectCredentialLocal():
-        return null;
-    }
-  }
-
-  Future<SshLocalTunnel> _tunnelOver(
-    _SessionEntry entry,
-    ServerConnectCredential credential,
-  ) async {
-    switch (credential) {
-      case ServerConnectCredentialSsh():
-        final client = await ref
-            .read(serverProvider(entry.profile.serverId).notifier)
-            .ensureShellClient();
-        return SshLocalTunnel.loopback(
-          client: client,
-          remoteHost: entry.profile.host,
-          remotePort: entry.profile.port,
-        );
-      case ServerConnectCredentialMonitorHttp(:final monitor):
-        // The local loopback the Rust client dials is built here, and its
-        // accepted socket is bridged to the agent's relay — the agent dials the
-        // target from its own machine, which is what makes `localhost` on a
-        // profile mean that machine.
-        //
-        // One client for the tunnel's life rather than one per dial: it holds
-        // the login the relay socket is authorised with, and a fresh one per
-        // attempt would log in again each time.
-        final client = MonitorHttpClient(monitor);
-        final SshLocalTunnel tunnel;
-        try {
-          tunnel = await SshLocalTunnel.bindWithDialer(
-            bindHost: InternetAddress.loopbackIPv4.address,
-            dialer: () => MonitorTunnelChannel.dial(
-              client: client,
-              remoteHost: entry.profile.host,
-              remotePort: entry.profile.port,
-            ),
-            // No SSH connection to outlive: the relay socket is opened per
-            // attempt, and `MonitorTunnelChannel.close` is what ends it.
-            sshDone: Completer<void>().future,
-          );
-        } catch (_) {
-          client.dispose();
-          rethrow;
-        }
-        unawaited(tunnel.done.whenComplete(client.dispose));
-        return tunnel;
-      case ServerConnectCredentialLocal():
-        // Never reached: [_relayCapable] refuses this credential.
-        throw StateError('No relay to this device');
+    try {
+      return await dialer.loopback(entry.profile.host, entry.profile.port);
+    } finally {
+      // The tunnel owns what it runs on; the dialer holds nothing it needs.
+      dialer.close();
     }
   }
 
@@ -880,18 +860,29 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
     RemoteDesktopSessionView Function(RemoteDesktopSessionView) update,
   ) {
     if (_disposed || !ref.mounted) return;
-    final current = state.sessions[id];
+    final current = state.byId(id);
     if (current == null) return;
     state = state.put(update(current));
   }
 
+  /// Whether [entry]'s frames are wanted: its page is on screen, and so is
+  /// the app.
+  bool _shown(_SessionEntry entry) {
+    if (!_appVisible) return false;
+    if (entry.target != null) return entry.consoleVisible;
+    return _surfaceVisible && state.activeId == entry.profile.id;
+  }
+
   void _syncVisibility() {
     if (_disposed || !ref.mounted) return;
-    final activeId = state.activeId;
     var next = state;
-    for (final session in state.sessions.values) {
-      final visible = session.id == activeId && _appVisible && _surfaceVisible;
-      _entries[session.id]?.handle?.setVisible(visible: visible);
+    for (final session in [
+      ...state.sessions.values,
+      ...state.consoles.values,
+    ]) {
+      final entry = _entries[session.id];
+      final visible = entry != null && _shown(entry);
+      entry?.handle?.setVisible(visible: visible);
       if (session.visible != visible) {
         next = next.put(session.copyWith(visible: visible));
       }
@@ -909,6 +900,17 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
   void _resume() {
     _appVisible = true;
     _syncVisibility();
+    // A console on screen that dropped while the app was away: the same as
+    // the tab's active session below.
+    for (final console in state.consoles.values) {
+      final entry = _entries[console.id];
+      if (entry != null &&
+          entry.consoleVisible &&
+          console.connectionState ==
+              ffi.RemoteDesktopConnectionState.disconnected) {
+        unawaited(reconnect(console.id));
+      }
+    }
     final active = state.activeId;
     if (active == null) return;
     final entry = _entries[active];
@@ -929,9 +931,17 @@ class _SessionEntry {
     required this.width,
     required this.height,
     required this.scaleFactor,
+    this.target,
   });
 
   RemoteDesktopProfile profile;
+
+  /// Where a console's connections go, in place of [profile]'s address and
+  /// [password]. Null for the remote desktop tab's sessions.
+  final RemoteDesktopTargetOpener? target;
+
+  /// For a console: whether the page showing it is on screen.
+  bool consoleVisible = false;
   String? password;
   int width;
   int height;

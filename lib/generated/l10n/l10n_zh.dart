@@ -978,9 +978,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get parseContainerStatsTip => 'Docker 解析占用状态较为缓慢';
 
   @override
-  String get plugInType => '插入类型';
-
-  @override
   String get preferDiskAmount => '优先显示硬盘容量';
 
   @override
@@ -1111,19 +1108,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pveIgnoreCertTip => '不推荐开启，注意安全隐患！如果你使用的 PVE 默认证书，需要开启该选项';
 
   @override
-  String get pveServerClientMissing => '当前服务器的 SSH 客户端不可用。';
-
-  @override
-  String get pveAddressMissing => '未配置 PVE 地址，请在服务器设置中填写。';
-
-  @override
   String get pvePasswordRequired => '需要提供 PVE 密码，请在服务器设置中填写。';
 
   @override
   String get pveOtpRequired => '此 PVE 服务器已启用双因素认证，请输入 OTP 验证码。';
-
-  @override
-  String get pveOtpChallengeExpired => 'OTP 验证挑战已过期，请刷新后重试。';
 
   @override
   String get pveOtpCodeRequired => '请输入 OTP 验证码。';
@@ -1145,18 +1133,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pveMissingAuthTicket => 'PVE 登录成功，但未返回认证票据。';
-
-  @override
-  String get pveVersionLow => '当前该功能处于测试阶段，仅在 PVE 8+ 上测试过，请谨慎使用';
-
-  @override
-  String get pveLoadingForwarding => '正在建立 SSH 隧道...';
-
-  @override
-  String get pveLoadingLogin => '正在认证 PVE...';
-
-  @override
-  String get pveLoadingData => '正在获取集群数据...';
 
   @override
   String get pveLoadingConnect => '正在连接...';
@@ -3078,6 +3054,196 @@ class AppLocalizationsZh extends AppLocalizations {
   String appearanceThemeModeLocked(String mode) {
     return '此主题仅支持$mode。如需切换模式，请选择其他主题。';
   }
+
+  @override
+  String get pveAuthToken => 'API token';
+
+  @override
+  String get pveVersionLow => '当前该功能处于测试阶段，仅在 PVE 8+ 上测试过，请谨慎使用';
+
+  @override
+  String get pveTokenId => 'Token ID';
+
+  @override
+  String get pveTokenSecret => 'Token secret';
+
+  @override
+  String get pveTokenTip =>
+      '在 PVE 的 数据中心 → 权限 → API Tokens 中创建。需要在要显示的路径上具有 VM.Audit、VM.PowerMgmt、VM.Console 和 Sys.Audit 权限；如果启用了权限分离，需要把这些权限授予 token 本身。';
+
+  @override
+  String get pveTokenIdInvalid => 'Token ID 的格式应为 user@realm!tokenid';
+
+  @override
+  String get pvePasswordAuthTip =>
+      '以 SSH 用户身份在 PAM realm 登录，使用 SSH 密码；SSH 使用 key 时使用下方的 PVE 密码。需要时会要求输入两步验证码。';
+
+  @override
+  String get pveCertUnpinned => '尚未确认。除非证书由受信任的 CA 签发，下次连接时会显示证书以供确认。';
+
+  @override
+  String get pveCertForget => '忘记证书';
+
+  @override
+  String get pveCertForgetTip => '下次连接时会再次显示 PVE 证书以供确认。';
+
+  @override
+  String get virtualization => '虚拟化';
+
+  @override
+  String get virtIntro =>
+      '管理 Proxmox VE 和 libvirt/KVM 主机上的虚拟机和容器：查看状态、执行电源操作、打开控制台。';
+
+  @override
+  String get virtIntroPveMoved =>
+      'Proxmox VE 已从服务器页面移到此标签页。服务器的 PVE 卡片会在这里打开它。';
+
+  @override
+  String get virtIntroLibvirt =>
+      '安装了 libvirt 的 virsh 的服务器会显示为主机，并列出其 QEMU/KVM 虚拟机。';
+
+  @override
+  String get virtIntroTransports => '两者都可以通过 SSH、Monitor agent 或在本设备上使用。';
+
+  @override
+  String get virtIntroTokens =>
+      'PVE 可以使用 API token 登录，无需密码。在服务器编辑页面的 PVE 部分设置。';
+
+  @override
+  String get virtIntroInBar => '已添加到标签栏。';
+
+  @override
+  String get virtIntroInMore => '位于“更多”中。可在设置的“主页标签”中将其移到标签栏。';
+
+  @override
+  String get virtGuests => '虚拟机';
+
+  @override
+  String get virtGuestsAndContainers => '虚拟机/容器';
+
+  @override
+  String get virtSectionLater => '暂不可用';
+
+  @override
+  String get virtHosts => '宿主机';
+
+  @override
+  String get virtCheckServer => '检查此服务器';
+
+  @override
+  String get virtCheckAll => '检查所有服务器';
+
+  @override
+  String get virtProbeNotChecked => '尚未检查';
+
+  @override
+  String get virtProbeAbsent => '未找到 virsh';
+
+  @override
+  String get virtNoHosts => '没有虚拟化宿主机';
+
+  @override
+  String get virtNoHostsTip =>
+      '配置了 PVE 地址的服务器是宿主机，能运行 virsh 的服务器也是。其他服务器可以在宿主机切换器中检查。';
+
+  @override
+  String get virtNoGuests => '没有虚拟机或容器';
+
+  @override
+  String get virtPaused => '已暂停';
+
+  @override
+  String get virtStarting => '正在启动…';
+
+  @override
+  String get virtStopping => '正在关机…';
+
+  @override
+  String get virtRebooting => '正在重启…';
+
+  @override
+  String get virtMigrating => '正在迁移…';
+
+  @override
+  String get virtBackingUp => '正在备份…';
+
+  @override
+  String get virtResume => '恢复';
+
+  @override
+  String get virtOverview => '概览';
+
+  @override
+  String get virtConsole => '控制台';
+
+  @override
+  String get virtConsoleNone => '此客户机没有可用的控制台';
+
+  @override
+  String get virtConsoleGraphical => '图形';
+
+  @override
+  String get virtConsoleSerialTip =>
+      '在宿主机上用 virsh 打开客户机的串口控制台。断开连接或按 Ctrl+] 可返回宿主机的 shell。';
+
+  @override
+  String get virtOffTip => '启动后在这里显示实时 CPU、内存、磁盘和网络。';
+
+  @override
+  String get virtAllocated => '已分配';
+
+  @override
+  String virtRunningCount(int running, int total) {
+    return '$running 运行 · 共 $total 台';
+  }
+
+  @override
+  String get virtTemplate => '模板';
+
+  @override
+  String get virtAutostart => '随宿主机启动';
+
+  @override
+  String get virtErrUnreachable => '无法连接到此宿主机';
+
+  @override
+  String get virtErrNotConfigured => '此服务器的 PVE 设置不完整';
+
+  @override
+  String get virtErrNotConfiguredTip => '请在服务器设置中检查地址，以及密码或 API token。';
+
+  @override
+  String get virtErrAuthFailed => '宿主机拒绝了登录';
+
+  @override
+  String get virtErrCertUnconfirmed => '请确认宿主机的证书';
+
+  @override
+  String get virtErrCertChanged => '宿主机的证书已更改';
+
+  @override
+  String get virtErrRelayNotGranted => 'Monitor agent 不转发连接';
+
+  @override
+  String get virtErrExecNotGranted => 'Monitor agent 不执行命令';
+
+  @override
+  String get virtErrNotInstalled => '此服务器上未安装 virsh';
+
+  @override
+  String get virtErrServerRemoved => '该服务器已被删除';
+
+  @override
+  String get virtErrSudoRequired => 'sudo 需要密码才能访问 libvirt';
+
+  @override
+  String get virtErrSudoRejected => 'sudo 拒绝了该密码';
+
+  @override
+  String get virtErrInvalidResponse => '宿主机返回了无法识别的内容';
+
+  @override
+  String get virtErrActionFailed => '宿主机拒绝了该操作';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -4053,9 +4219,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get parseContainerStatsTip => 'Docker 解析消耗狀態較為緩慢';
 
   @override
-  String get plugInType => '插入類型';
-
-  @override
   String get preferDiskAmount => '優先顯示硬碟容量';
 
   @override
@@ -4186,19 +4349,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get pveIgnoreCertTip => '不建議啟用，請注意安全風險！如果您使用的是 PVE 的預設憑證，則需要啟用此選項。';
 
   @override
-  String get pveServerClientMissing => '目前伺服器的 SSH 用戶端不可用。';
-
-  @override
-  String get pveAddressMissing => '未設定 PVE 位址，請在伺服器設定中填寫。';
-
-  @override
   String get pvePasswordRequired => '需要提供 PVE 密碼，請在伺服器設定中填寫。';
 
   @override
   String get pveOtpRequired => '此 PVE 伺服器已啟用雙因素認證，請輸入 OTP 驗證碼。';
-
-  @override
-  String get pveOtpChallengeExpired => 'OTP 驗證挑戰已過期，請重新整理後再試一次。';
 
   @override
   String get pveOtpCodeRequired => '請輸入 OTP 驗證碼。';
@@ -4220,18 +4374,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get pveMissingAuthTicket => 'PVE 登入成功，但未返回認證票據。';
-
-  @override
-  String get pveVersionLow => '此功能目前處於測試階段，僅在 PVE 8+ 上進行過測試。請謹慎使用。';
-
-  @override
-  String get pveLoadingForwarding => '正在建立 SSH 隧道...';
-
-  @override
-  String get pveLoadingLogin => '正在認證 PVE...';
-
-  @override
-  String get pveLoadingData => '正在獲取集群數據...';
 
   @override
   String get pveLoadingConnect => '正在連接...';
@@ -6152,4 +6294,193 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String appearanceThemeModeLocked(String mode) {
     return '此主題僅支援$mode。如需切換模式，請選擇其他主題。';
   }
+
+  @override
+  String get pveAuthToken => 'API token';
+
+  @override
+  String get pveVersionLow => '此功能目前處於測試階段，僅在 PVE 8+ 上進行過測試。請謹慎使用。';
+
+  @override
+  String get pveTokenId => 'Token ID';
+
+  @override
+  String get pveTokenSecret => 'Token secret';
+
+  @override
+  String get pveTokenTip =>
+      '在 PVE 的 資料中心 → 權限 → API Tokens 中建立。需要在要顯示的路徑上具有 VM.Audit、VM.PowerMgmt、VM.Console 和 Sys.Audit 權限；若啟用了權限分離，需要將這些權限授予 token 本身。';
+
+  @override
+  String get pveTokenIdInvalid => 'Token ID 的格式應為 user@realm!tokenid';
+
+  @override
+  String get pvePasswordAuthTip =>
+      '以 SSH 使用者身分在 PAM realm 登入，使用 SSH 密碼；SSH 使用 key 時使用下方的 PVE 密碼。需要時會要求輸入兩步驟驗證碼。';
+
+  @override
+  String get pveCertUnpinned => '尚未確認。除非憑證由受信任的 CA 簽發，下次連線時會顯示憑證以供確認。';
+
+  @override
+  String get pveCertForget => '忘記憑證';
+
+  @override
+  String get pveCertForgetTip => '下次連線時會再次顯示 PVE 憑證以供確認。';
+
+  @override
+  String get virtualization => '虛擬化';
+
+  @override
+  String get virtIntro =>
+      '管理 Proxmox VE 與 libvirt/KVM 主機上的虛擬機器和容器：查看狀態、執行電源操作、開啟主控台。';
+
+  @override
+  String get virtIntroPveMoved => 'Proxmox VE 已從伺服器頁面移到此分頁。伺服器的 PVE 卡片會在這裡開啟它。';
+
+  @override
+  String get virtIntroLibvirt =>
+      '安裝了 libvirt 的 virsh 的伺服器會顯示為主機，並列出其 QEMU/KVM 虛擬機器。';
+
+  @override
+  String get virtIntroTransports => '兩者都可以透過 SSH、Monitor agent 或在本裝置上使用。';
+
+  @override
+  String get virtIntroTokens =>
+      'PVE 可以使用 API token 登入，無需密碼。請在伺服器編輯頁面的 PVE 部分設定。';
+
+  @override
+  String get virtIntroInBar => '已新增到分頁列。';
+
+  @override
+  String get virtIntroInMore => '位於「更多」中。可在設定的「主頁標籤」中將其移到分頁列。';
+
+  @override
+  String get virtGuests => '虛擬機';
+
+  @override
+  String get virtGuestsAndContainers => '虛擬機/容器';
+
+  @override
+  String get virtSectionLater => '暫不可用';
+
+  @override
+  String get virtHosts => '主機';
+
+  @override
+  String get virtCheckServer => '檢查此伺服器';
+
+  @override
+  String get virtCheckAll => '檢查所有伺服器';
+
+  @override
+  String get virtProbeNotChecked => '尚未檢查';
+
+  @override
+  String get virtProbeAbsent => '找不到 virsh';
+
+  @override
+  String get virtNoHosts => '沒有虛擬化主機';
+
+  @override
+  String get virtNoHostsTip =>
+      '設定了 PVE 位址的伺服器是主機，能執行 virsh 的伺服器也是。其他伺服器可以在主機切換器中檢查。';
+
+  @override
+  String get virtNoGuests => '沒有虛擬機或容器';
+
+  @override
+  String get virtPaused => '已暫停';
+
+  @override
+  String get virtStarting => '正在啟動…';
+
+  @override
+  String get virtStopping => '正在關機…';
+
+  @override
+  String get virtRebooting => '正在重新啟動…';
+
+  @override
+  String get virtMigrating => '正在遷移…';
+
+  @override
+  String get virtBackingUp => '正在備份…';
+
+  @override
+  String get virtResume => '繼續';
+
+  @override
+  String get virtOverview => '概覽';
+
+  @override
+  String get virtConsole => '主控台';
+
+  @override
+  String get virtConsoleNone => '此客體機沒有可用的主控台';
+
+  @override
+  String get virtConsoleGraphical => '圖形';
+
+  @override
+  String get virtConsoleSerialTip =>
+      '在主機上以 virsh 開啟客體機的序列主控台。中斷連線或按 Ctrl+] 可返回主機的 shell。';
+
+  @override
+  String get virtOffTip => '啟動後在這裡顯示即時 CPU、記憶體、磁碟和網路。';
+
+  @override
+  String get virtAllocated => '已分配';
+
+  @override
+  String virtRunningCount(int running, int total) {
+    return '$running 執行中 · 共 $total 台';
+  }
+
+  @override
+  String get virtTemplate => '範本';
+
+  @override
+  String get virtAutostart => '隨主機啟動';
+
+  @override
+  String get virtErrUnreachable => '無法連線到此主機';
+
+  @override
+  String get virtErrNotConfigured => '此伺服器的 PVE 設定不完整';
+
+  @override
+  String get virtErrNotConfiguredTip => '請在伺服器設定中檢查位址，以及密碼或 API token。';
+
+  @override
+  String get virtErrAuthFailed => '主機拒絕了登入';
+
+  @override
+  String get virtErrCertUnconfirmed => '請確認主機的憑證';
+
+  @override
+  String get virtErrCertChanged => '主機的憑證已變更';
+
+  @override
+  String get virtErrRelayNotGranted => 'Monitor agent 不轉送連線';
+
+  @override
+  String get virtErrExecNotGranted => 'Monitor agent 不執行命令';
+
+  @override
+  String get virtErrNotInstalled => '此伺服器上未安裝 virsh';
+
+  @override
+  String get virtErrServerRemoved => '該伺服器已被刪除';
+
+  @override
+  String get virtErrSudoRequired => 'sudo 需要密碼才能存取 libvirt';
+
+  @override
+  String get virtErrSudoRejected => 'sudo 拒絕了該密碼';
+
+  @override
+  String get virtErrInvalidResponse => '主機回傳了無法辨識的內容';
+
+  @override
+  String get virtErrActionFailed => '主機拒絕了該操作';
 }

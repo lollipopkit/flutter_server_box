@@ -311,6 +311,19 @@ extension _HomePageNav on _HomePageState {
           ),
         ],
       ),
+      // Every server asked again whether it is a host: the one thing to do to
+      // the whole set, and otherwise a trip into the host switcher.
+      AppTab.virt => (
+        title: l10n.virtualization,
+        actions: [
+          ContextMenuAction(
+            text: l10n.virtCheckAll,
+            icon: MingCute.refresh_2_line,
+            onTap: () =>
+                unawaited(ref.read(virtHostsProvider.notifier).refresh()),
+          ),
+        ],
+      ),
       _ => null,
     };
     if (menu == null) return null;

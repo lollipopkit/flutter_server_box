@@ -276,6 +276,69 @@ extension _Actions on _ServerEditPageState {
     _bmcCert.value = info.fingerprint;
   }
 
+  /// What [_pveConfigToSave] answers when the form cannot be saved; it has
+  /// already said why.
+  static const _pveInvalid = PveConfig(addr: '');
+
+  /// The PVE configuration the form describes: null for none, [_pveInvalid]
+  /// when it is incomplete. [sshKeyId] is the key the SSH login is saved
+  /// with, which decides whether the PVE password is kept at all.
+  PveConfig? _pveConfigToSave({required String? sshKeyId}) {
+    final addr = _pveAddrCtrl.text.trim();
+    final useToken = _pveUseToken.value;
+    final tokenId = _pveTokenIdCtrl.text.trim().selfNotEmptyOrNull;
+    final tokenSecret = _pveTokenSecretCtrl.text.trim().selfNotEmptyOrNull;
+    if (addr.isEmpty) return null;
+    if (useToken) {
+      if (tokenId == null || !PveConfig.tokenIdPattern.hasMatch(tokenId)) {
+        Toast.show(l10n.pveTokenIdInvalid);
+        return _pveInvalid;
+      }
+      if (tokenSecret == null) {
+        Toast.show('${libL10n.empty} ${l10n.pveTokenSecret}');
+        return _pveInvalid;
+      }
+    }
+    // The pin is the stored one, read now rather than when the page opened:
+    // this page never sets it, and the Virtualization tab may have confirmed
+    // a certificate while it was open. Saving the copy read at open time
+    // wrote that confirmation away. Two things drop it: Forget, and another
+    // address — a pin names a certificate seen at one address, and keeping it
+    // for another would turn that server's first connection into a
+    // "certificate changed" error instead of the confirmation it should be.
+    final stored = Stores.pve.fetch(spi?.id);
+    final cert = stored != null && stored.addr.trim() == addr && !_pveCertForgot
+        ? stored.certSha256
+        : null;
+    // Only the chosen method's credentials, so the row never holds a token
+    // and a password that disagree about how to log in. The password only
+    // where its field is shown — SSH with a key — since only there is it what
+    // a login sends (`PveConfig.loginPassword`); a hidden field's text saved
+    // anyway would be a second password nothing uses.
+    final ownsPwd = !useToken && PveConfig.ownsPassword(sshKeyId: sshKeyId);
+    return PveConfig(
+      addr: addr,
+      auth: useToken ? PveAuth.token : PveAuth.password,
+      pwd: ownsPwd ? _pvePwdCtrl.text.selfNotEmptyOrNull : null,
+      tokenId: useToken ? tokenId : null,
+      tokenSecret: useToken ? tokenSecret : null,
+      certSha256: cert,
+    );
+  }
+
+  Future<void> _onTapForgetPveCert() async {
+    // The dialog answers; this page clears the field it holds — see the
+    // dialog rules in CLAUDE.md.
+    final ok = await context.showRoundDialog<bool>(
+      title: l10n.pveCertForget,
+      child: Text(l10n.pveCertForgetTip),
+      actions: Btnx.cancelRedOk,
+    );
+    if (ok != true || !mounted) return;
+    _pveCert.value = null;
+    _pveCertForgot = true;
+  }
+
   Future<void> _onTapSudoPassword() async {
     final controller = TextEditingController();
     controller.text = _pendingSudoPassword ?? '';
@@ -521,11 +584,10 @@ extension _Actions on _ServerEditPageState {
       Toast.show('${libL10n.invalid}: ${libL10n.location}');
       return;
     }
+    final pve = _pveConfigToSave(sshKeyId: selectedKey?.id);
+    if (identical(pve, _pveInvalid)) return;
     final customCmds = _unmigratedCmds.value;
     final custom = ServerCustom(
-      pveAddr: _pveAddrCtrl.text.selfNotEmptyOrNull,
-      pveIgnoreCert: _pveIgnoreCert.value,
-      pvePwd: _pvePwdCtrl.text.selfNotEmptyOrNull,
       cmds: customCmds.isEmpty ? null : customCmds,
       preferTempDev: _preferTempDevCtrl.text.selfNotEmptyOrNull,
       tempIsCelsius: _tempIsCelsius.value,
@@ -678,6 +740,8 @@ extension _Actions on _ServerEditPageState {
         if (!await _persistPendingSudoPassword()) return;
         await ref.read(serversProvider.notifier).updateServer(this.spi!, spi);
       }
+      // A child of the server row, so only once that row exists.
+      Stores.pve.put(spi.id, pve);
       // After this server is written, so that a failure above leaves the other
       // servers alone — and so that the state this reads back already has this
       // server's own tags in it.
@@ -880,14 +944,21 @@ extension _Utils on _ServerEditPageState {
 
     final custom = spi.custom;
     if (custom != null) {
-      _pveAddrCtrl.text = custom.pveAddr ?? '';
-      _pveIgnoreCert.value = custom.pveIgnoreCert;
-      _pvePwdCtrl.text = custom.pvePwd ?? '';
       _unmigratedCmds.value = custom.cmds ?? {};
       _preferTempDevCtrl.text = custom.preferTempDev ?? '';
       _tempIsCelsius.value = custom.tempIsCelsius;
       _logoUrlCtrl.text = custom.logoUrl ?? '';
       _geoCtrl.text = custom.geo?.text ?? '';
+    }
+
+    final pve = Stores.pve.fetch(spi.id);
+    if (pve != null) {
+      _pveAddrCtrl.text = pve.addr;
+      _pveUseToken.value = pve.auth == PveAuth.token;
+      _pvePwdCtrl.text = pve.pwd ?? '';
+      _pveTokenIdCtrl.text = pve.tokenId ?? '';
+      _pveTokenSecretCtrl.text = pve.tokenSecret ?? '';
+      _pveCert.value = pve.certSha256;
     }
 
     final monitorHttp = spi.monitorHttp;

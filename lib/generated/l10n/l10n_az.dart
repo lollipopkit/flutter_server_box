@@ -1054,9 +1054,6 @@ class AppLocalizationsAz extends AppLocalizations {
       'Docker resurs istifadəsi vəziyyətinin təhlili nisbətən yavaşdır.';
 
   @override
-  String get plugInType => 'Daxiletmə növü';
-
-  @override
   String get preferDiskAmount => 'Disk tutumunun göstərilməsinə üstünlük ver';
 
   @override
@@ -1196,24 +1193,12 @@ class AppLocalizationsAz extends AppLocalizations {
       'Aktivləşdirmək tövsiyə olunmur, təhlükəsizlik risklərini nəzərə al! PVE standart sertifikatından istifadə edirsənsə, bu seçimi aktivləşdirməlisən.';
 
   @override
-  String get pveServerClientMissing =>
-      'Bu server üçün SSH müştərisi əlçatan deyil.';
-
-  @override
-  String get pveAddressMissing =>
-      'PVE ünvanı yoxdur. Onu server parametrlərində təyin et.';
-
-  @override
   String get pvePasswordRequired =>
       'PVE parolu tələb olunur. Onu server parametrlərində təyin et.';
 
   @override
   String get pveOtpRequired =>
       'Bu PVE serverində iki amilli autentifikasiya aktivdir. OTP kodunu daxil et.';
-
-  @override
-  String get pveOtpChallengeExpired =>
-      'OTP sorğusunun müddəti bitib. Yenilə və yenidən cəhd et.';
 
   @override
   String get pveOtpCodeRequired => 'OTP kodu tələb olunur.';
@@ -1239,19 +1224,6 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get pveMissingAuthTicket =>
       'PVE girişi uğurlu oldu, lakin autentifikasiya bileti qaytarılmadı.';
-
-  @override
-  String get pveVersionLow =>
-      'Bu funksiya hazırda sınaq mərhələsindədir və yalnız PVE 8+ üzərində sınaqdan keçirilib. Ehtiyatla istifadə et.';
-
-  @override
-  String get pveLoadingForwarding => 'SSH tuneli yaradılır...';
-
-  @override
-  String get pveLoadingLogin => 'PVE ilə autentifikasiya aparılır...';
-
-  @override
-  String get pveLoadingData => 'Klaster məlumatları alınır...';
 
   @override
   String get pveLoadingConnect => 'Əlaqə qurulur...';
@@ -3315,4 +3287,203 @@ class AppLocalizationsAz extends AppLocalizations {
   String appearanceThemeModeLocked(String mode) {
     return 'Bu mövzu yalnız $mode rejimini dəstəkləyir. Rejimi dəyişmək üçün başqa mövzu seçin.';
   }
+
+  @override
+  String get pveAuthToken => 'API tokeni';
+
+  @override
+  String get pveVersionLow =>
+      'Bu funksiya hazırda sınaq mərhələsindədir və yalnız PVE 8+ üzərində sınaqdan keçirilib. Ehtiyatla istifadə et.';
+
+  @override
+  String get pveTokenId => 'Token ID';
+
+  @override
+  String get pveTokenSecret => 'Token sirri';
+
+  @override
+  String get pveTokenTip =>
+      'PVE-də Datacenter → Permissions → API Tokens bölməsində yaradın. Göstəriləcək yollarda VM.Audit, VM.PowerMgmt, VM.Console və Sys.Audit lazımdır; imtiyaz ayrılması açıqdırsa, bunları tokenin özünə verin.';
+
+  @override
+  String get pveTokenIdInvalid =>
+      'Token ID user@realm!tokenid formatında olmalıdır';
+
+  @override
+  String get pvePasswordAuthTip =>
+      'PAM realm-də SSH istifadəçisi kimi SSH parolu ilə, SSH açar istifadə edirsə aşağıdakı PVE parolu ilə daxil olur. Lazım olduqda iki faktorlu kod soruşulur.';
+
+  @override
+  String get pveCertUnpinned =>
+      'Hələ təsdiqlənməyib. Etibarlı CA imzalamayıbsa, növbəti bağlantı sertifikatı təsdiq üçün göstərəcək.';
+
+  @override
+  String get pveCertForget => 'Sertifikatı unut';
+
+  @override
+  String get pveCertForgetTip =>
+      'Növbəti bağlantı PVE sertifikatını yenidən təsdiq üçün göstərəcək.';
+
+  @override
+  String get virtualization => 'Virtuallaşdırma';
+
+  @override
+  String get virtIntro =>
+      'Proxmox VE və libvirt/KVM hostlarında virtual maşınları və konteynerləri idarə edin: vəziyyət, enerji əməliyyatları və konsollar.';
+
+  @override
+  String get virtIntroPveMoved =>
+      'Proxmox VE server səhifəsindən bu vərəqə köçürüldü. Serverin PVE kartı onu burada açır.';
+
+  @override
+  String get virtIntroLibvirt =>
+      'libvirt-in virsh aləti quraşdırılmış server QEMU/KVM virtual maşınları ilə birlikdə host kimi görünür.';
+
+  @override
+  String get virtIntroTransports =>
+      'Hər ikisi SSH ilə, Monitor agenti vasitəsilə və ya bu cihazda işləyir.';
+
+  @override
+  String get virtIntroTokens =>
+      'PVE parol əvəzinə API tokeni ilə daxil ola bilər. Bunu serverin redaktə səhifəsində, PVE bölməsində təyin edin.';
+
+  @override
+  String get virtIntroInBar => 'Vərəq panelinə əlavə edildi.';
+
+  @override
+  String get virtIntroInMore =>
+      'Daha çox bölməsindədir. Ayarlardakı Ana səhifə vərəqləri onu vərəq panelinə köçürə bilər.';
+
+  @override
+  String get virtGuests => 'Virtual maşınlar';
+
+  @override
+  String get virtGuestsAndContainers => 'VM-lər və konteynerlər';
+
+  @override
+  String get virtSectionLater => 'Hələ mövcud deyil';
+
+  @override
+  String get virtHosts => 'Hostlar';
+
+  @override
+  String get virtCheckServer => 'Bu serveri yoxla';
+
+  @override
+  String get virtCheckAll => 'Bütün serverləri yoxla';
+
+  @override
+  String get virtProbeNotChecked => 'Hələ yoxlanılmayıb';
+
+  @override
+  String get virtProbeAbsent => 'virsh tapılmadı';
+
+  @override
+  String get virtNoHosts => 'Virtualizasiya hostu yoxdur';
+
+  @override
+  String get virtNoHostsTip =>
+      'PVE ünvanı olan server hostdur, virsh cavab verən server də. Digər serverləri host dəyişdiricisindən yoxlamaq olar.';
+
+  @override
+  String get virtNoGuests => 'Virtual maşın və ya konteyner yoxdur';
+
+  @override
+  String get virtPaused => 'Dayandırılıb';
+
+  @override
+  String get virtStarting => 'Başladılır…';
+
+  @override
+  String get virtStopping => 'Dayandırılır…';
+
+  @override
+  String get virtRebooting => 'Yenidən başladılır…';
+
+  @override
+  String get virtMigrating => 'Köçürülür…';
+
+  @override
+  String get virtBackingUp => 'Ehtiyat nüsxə çıxarılır…';
+
+  @override
+  String get virtResume => 'Davam et';
+
+  @override
+  String get virtOverview => 'İcmal';
+
+  @override
+  String get virtConsole => 'Konsol';
+
+  @override
+  String get virtConsoleNone => 'Bu qonaq üçün konsol qurulmayıb';
+
+  @override
+  String get virtConsoleGraphical => 'Qrafik';
+
+  @override
+  String get virtConsoleSerialTip =>
+      'Qonağın seriya konsolunu hostda virsh ilə açır. Bağlantını kəs və ya Ctrl+] hostun shell-inə qaytarır.';
+
+  @override
+  String get virtOffTip =>
+      'CPU, yaddaş, disk və şəbəkəni burada canlı görmək üçün başladın.';
+
+  @override
+  String get virtAllocated => 'Ayrılıb';
+
+  @override
+  String virtRunningCount(int running, int total) {
+    return '$running işləyir · cəmi $total';
+  }
+
+  @override
+  String get virtTemplate => 'Şablon';
+
+  @override
+  String get virtAutostart => 'Hostla birlikdə başlayır';
+
+  @override
+  String get virtErrUnreachable => 'Bu hosta çatmaq mümkün olmadı';
+
+  @override
+  String get virtErrNotConfigured => 'Bu serverin PVE ayarları natamamdır';
+
+  @override
+  String get virtErrNotConfiguredTip =>
+      'Server ayarlarında ünvanı, həmçinin parolu və ya API tokenini yoxlayın.';
+
+  @override
+  String get virtErrAuthFailed => 'Host girişi rədd etdi';
+
+  @override
+  String get virtErrCertUnconfirmed => 'Hostun sertifikatını təsdiqləyin';
+
+  @override
+  String get virtErrCertChanged => 'Hostun sertifikatı dəyişib';
+
+  @override
+  String get virtErrRelayNotGranted => 'Monitor agenti bağlantıları ötürmür';
+
+  @override
+  String get virtErrExecNotGranted => 'Monitor agenti əmrləri icra etmir';
+
+  @override
+  String get virtErrNotInstalled => 'Bu serverdə virsh quraşdırılmayıb';
+
+  @override
+  String get virtErrServerRemoved => 'Bu server artıq mövcud deyil';
+
+  @override
+  String get virtErrSudoRequired =>
+      'libvirt-ə çatmaq üçün sudo parol tələb edir';
+
+  @override
+  String get virtErrSudoRejected => 'sudo parolu rədd etdi';
+
+  @override
+  String get virtErrInvalidResponse => 'Host gözlənilməz formada cavab verdi';
+
+  @override
+  String get virtErrActionFailed => 'Host əməliyyatı rədd etdi';
 }

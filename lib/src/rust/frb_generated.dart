@@ -13,6 +13,7 @@ import 'package:server_box/src/rust/api/remote_desktop.dart';
 import 'package:server_box/src/rust/api/script.dart';
 import 'package:server_box/src/rust/api/ssh_asym.dart';
 import 'package:server_box/src/rust/api/ssh_crypto.dart';
+import 'package:server_box/src/rust/api/virt.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 import 'package:server_box/src/rust/frb_generated.io.dart'
     if (dart.library.js_interop) 'frb_generated.web.dart';
@@ -72,7 +73,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => 1608297972;
+  int get rustContentHash => 2108017049;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -269,6 +270,14 @@ abstract class RustLibApi extends BaseApi {
     required double tempDivisor,
   });
 
+  void crateApiVirtParseVirtAction({required String raw});
+
+  Future<String> crateApiVirtParseVirtDomainDetailJson({required String raw});
+
+  Future<String> crateApiVirtParseVirtOverviewJson({required String raw});
+
+  Future<String> crateApiVirtParseVirtProbeJson({required String raw});
+
   String crateApiParserParseWindowsNetSpeedJson({required String raw});
 
   String crateApiScriptReadCustomCmdsCommand({required String system});
@@ -279,6 +288,19 @@ abstract class RustLibApi extends BaseApi {
   });
 
   String crateApiScriptShellFuncFlag({required ShellFuncKind func});
+
+  String crateApiVirtVirtActionScript({
+    required VirtActionKind action,
+    required String domain,
+  });
+
+  String crateApiVirtVirtConsoleCommand({required String domain});
+
+  String crateApiVirtVirtDomainDetailScript({required String domain});
+
+  String crateApiVirtVirtOverviewScript();
+
+  String crateApiVirtVirtProbeScript();
 
   X25519KeyPair crateApiSshAsymX25519Keypair();
 
@@ -1552,13 +1574,129 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  String crateApiParserParseWindowsNetSpeedJson({required String raw}) {
+  void crateApiVirtParseVirtAction({required String raw}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(raw, serializer);
           return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 39)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtActionConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtActionConstMeta =>
+      const TaskConstMeta(debugName: 'parse_virt_action', argNames: ['raw']);
+
+  @override
+  Future<String> crateApiVirtParseVirtDomainDetailJson({required String raw}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 40,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtDomainDetailJsonConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtDomainDetailJsonConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_domain_detail_json',
+        argNames: ['raw'],
+      );
+
+  @override
+  Future<String> crateApiVirtParseVirtOverviewJson({required String raw}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 41,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtOverviewJsonConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtOverviewJsonConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_overview_json',
+        argNames: ['raw'],
+      );
+
+  @override
+  Future<String> crateApiVirtParseVirtProbeJson({required String raw}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 42,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtProbeJsonConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtProbeJsonConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_probe_json',
+        argNames: ['raw'],
+      );
+
+  @override
+  String crateApiParserParseWindowsNetSpeedJson({required String raw}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 43)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -1584,7 +1722,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(system, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 40)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 44)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -1614,7 +1752,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(key, serializer);
           sse_encode_bool(custom, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 41)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 45)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -1640,7 +1778,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_shell_func_kind(func, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 42)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 46)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -1657,12 +1795,138 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: 'shell_func_flag', argNames: ['func']);
 
   @override
+  String crateApiVirtVirtActionScript({
+    required VirtActionKind action,
+    required String domain,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_virt_action_kind(action, serializer);
+          sse_encode_String(domain, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 47)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtActionScriptConstMeta,
+        argValues: [action, domain],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtActionScriptConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_action_script',
+        argNames: ['action', 'domain'],
+      );
+
+  @override
+  String crateApiVirtVirtConsoleCommand({required String domain}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(domain, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 48)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtConsoleCommandConstMeta,
+        argValues: [domain],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtConsoleCommandConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_console_command',
+        argNames: ['domain'],
+      );
+
+  @override
+  String crateApiVirtVirtDomainDetailScript({required String domain}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(domain, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 49)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtDomainDetailScriptConstMeta,
+        argValues: [domain],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtDomainDetailScriptConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_domain_detail_script',
+        argNames: ['domain'],
+      );
+
+  @override
+  String crateApiVirtVirtOverviewScript() {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 50)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtOverviewScriptConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtOverviewScriptConstMeta =>
+      const TaskConstMeta(debugName: 'virt_overview_script', argNames: []);
+
+  @override
+  String crateApiVirtVirtProbeScript() {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 51)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtProbeScriptConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtProbeScriptConstMeta =>
+      const TaskConstMeta(debugName: 'virt_probe_script', argNames: []);
+
+  @override
   X25519KeyPair crateApiSshAsymX25519Keypair() {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 43)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 52)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_x_25519_key_pair,
@@ -1689,7 +1953,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_list_prim_u_8_loose(privateKey, serializer);
           sse_encode_list_prim_u_8_loose(peerPublicKey, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 44)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 53)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_prim_u_8_strict,
@@ -2161,6 +2425,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   BigInt dco_decode_usize(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dcoDecodeU64(raw);
+  }
+
+  @protected
+  VirtActionKind dco_decode_virt_action_kind(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return VirtActionKind.values[raw as int];
+  }
+
+  @protected
+  VirtErrorKind dco_decode_virt_error_kind(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return VirtErrorKind.values[raw as int];
+  }
+
+  @protected
+  VirtFfiError dco_decode_virt_ffi_error(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return VirtFfiError(
+      kind: dco_decode_virt_error_kind(arr[0]),
+      message: dco_decode_String(arr[1]),
+    );
   }
 
   @protected
@@ -2730,6 +3018,28 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  VirtActionKind sse_decode_virt_action_kind(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final inner = sse_decode_i_32(deserializer);
+    return VirtActionKind.values[inner];
+  }
+
+  @protected
+  VirtErrorKind sse_decode_virt_error_kind(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final inner = sse_decode_i_32(deserializer);
+    return VirtErrorKind.values[inner];
+  }
+
+  @protected
+  VirtFfiError sse_decode_virt_ffi_error(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_kind = sse_decode_virt_error_kind(deserializer);
+    final var_message = sse_decode_String(deserializer);
+    return VirtFfiError(kind: var_kind, message: var_message);
+  }
+
+  @protected
   VncSessionParams sse_decode_vnc_session_params(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final var_connectHost = sse_decode_String(deserializer);
@@ -3292,6 +3602,31 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_usize(BigInt self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putBigUint64(self);
+  }
+
+  @protected
+  void sse_encode_virt_action_kind(
+    VirtActionKind self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_error_kind(
+    VirtErrorKind self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_ffi_error(VirtFfiError self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_virt_error_kind(self.kind, serializer);
+    sse_encode_String(self.message, serializer);
   }
 
   @protected

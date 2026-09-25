@@ -215,3 +215,27 @@ async fn a_small_freelist_is_left_alone() -> Result<()> {
 
     Ok(())
 }
+
+/// The database carries the panel's password hashes and the access log, so
+/// neither it nor its WAL may be readable by other accounts — whatever the
+/// umask, and for a database an older agent created world-readable.
+#[cfg(unix)]
+#[tokio::test]
+async fn the_database_files_are_owner_only() -> Result<()> {
+    use std::os::unix::fs::PermissionsExt;
+
+    let mode = |p: &std::path::Path| std::fs::metadata(p).unwrap().permissions().mode() & 0o777;
+
+    let ((pool, _dir), path) = fresh_db_at().await?;
+    sqlx::query("CREATE TABLE t (x)").execute(&pool).await?;
+    assert_eq!(mode(&path), 0o600);
+    assert_eq!(mode(&wal_path(&path)), 0o600);
+    pool.close().await;
+
+    // An existing install: opened again, it is tightened.
+    std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o644))?;
+    let pool = database::init(&format!("sqlite:{}", path.display())).await?;
+    assert_eq!(mode(&path), 0o600);
+    pool.close().await;
+    Ok(())
+}

@@ -9,27 +9,41 @@ Only the read path (power state and sensors) has been verified against one real 
 Treat power operations like pressing a physical power button on a remote server.
 :::
 
-A BMC (Baseboard Management Controller) is an independent computer on the server motherboard with its own power and network connection. It can respond when the host is powered off, hung, or has no operating system installed. SSH and Monitor agent cannot work in those situations.
+A BMC (Baseboard Management Controller) is a small computer on the server's
+motherboard. It has its own power and network connection, so it can remain
+reachable when the host is off, unresponsive, or has no operating system. SSH
+and Monitor agent depend on the host, so they cannot provide access in those
+states.
 
-Server Box communicates with the BMC through **Redfish**, a common HTTPS API for enterprise servers. Devices that support only IPMI are outside the current scope; see [BMC design](/docs/principles/bmc/) for the reason.
+Server Box connects to the BMC through **Redfish**, an HTTPS management API
+used by enterprise servers. BMCs that expose only IPMI are not supported; see
+[BMC design](/docs/principles/bmc/) for the design rationale.
 
 ## What it provides
 
-- **Power state**: Determine whether a host is on or off even when SSH and Monitor agent are unreachable.
-- **Hardware sensors**: Read inlet and CPU temperatures, fan speeds, and chassis power draw from the BMC rather than the operating system.
-- **Power control**: Power on a host, request an operating-system shutdown or restart, or perform a power cycle or force-off operation.
+- **Power state:** Check whether the host is on or off, even if SSH and Monitor
+  agent are unavailable.
+- **Hardware sensors:** Read inlet and CPU temperatures, fan speeds, and
+  chassis power draw reported by the BMC.
+- **Power control:** Turn on the host, ask its operating system to shut down or
+  restart, or directly power-cycle or force it off.
 
-BMC is a complementary management path, not a replacement for SSH. A server can have SSH, Monitor agent, and BMC configured at the same time.
+Use BMC alongside SSH; it does not replace normal host access. You can
+configure SSH, Monitor agent, and BMC on the same server.
 
 ## Configure a BMC
 
-1. Open the server edit page and find **BMC (Redfish)**.
-2. Enter the BMC's address, not the host operating system's address, for example `https://10.0.0.9`. Enter only the scheme, host, and port; the App handles the Redfish path.
-3. Select an existing BMC account or create one.
-4. Open **Certificate**, compare the fingerprint with the one shown by the BMC's own web interface, and accept it only after verifying the device.
-5. Save the server configuration.
+1. Open the server's edit page and locate **BMC (Redfish)**.
+2. Enter the BMC address, not the host's operating-system address. For
+   example, use `https://10.0.0.9`; enter the scheme, host, and port only. The
+   App adds the Redfish path.
+3. Choose a saved BMC account or create one.
+4. Open **Certificate** and compare its fingerprint with the value shown in
+   the BMC's web interface. Accept it only after confirming the device.
+5. Save the server.
 
-The server detail page then shows a BMC card and hardware-level power operations.
+The server detail page will show a BMC card with its reported state and
+hardware-level power controls.
 
 ## BMC accounts
 

@@ -1048,9 +1048,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Docker\'ın doluluk durumunu ayrıştırmak oldukça yavaş.';
 
   @override
-  String get plugInType => 'Eklenti Türü';
-
-  @override
   String get preferDiskAmount => 'Disk kapasitesini öncelikli olarak göster';
 
   @override
@@ -1190,24 +1187,12 @@ class AppLocalizationsTr extends AppLocalizations {
       'Etkinleştirilmesi önerilmez, güvenlik risklerine dikkat edin! PVE\'den varsayılan sertifikayı kullanıyorsanız, bu seçeneği etkinleştirmeniz gerekir.';
 
   @override
-  String get pveServerClientMissing =>
-      'Bu sunucunun SSH istemcisi kullanılamıyor.';
-
-  @override
-  String get pveAddressMissing =>
-      'PVE adresi eksik. Lütfen sunucu ayarlarından yapılandır.';
-
-  @override
   String get pvePasswordRequired =>
       'PVE parolası gerekli. Lütfen sunucu ayarlarında belirle.';
 
   @override
   String get pveOtpRequired =>
       'Bu PVE sunucusunda iki adımlı doğrulama açık. Lütfen OTP kodunu gir.';
-
-  @override
-  String get pveOtpChallengeExpired =>
-      'OTP isteğinin süresi doldu. Lütfen yenileyip tekrar dene.';
 
   @override
   String get pveOtpCodeRequired => 'OTP kodu gerekli.';
@@ -1233,19 +1218,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get pveMissingAuthTicket =>
       'PVE oturumu açıldı ancak kimlik doğrulama bileti döndürülmedi.';
-
-  @override
-  String get pveVersionLow =>
-      'Bu özellik şu anda test aşamasında ve yalnızca PVE 8+ üzerinde test edildi. Lütfen dikkatli kullanın.';
-
-  @override
-  String get pveLoadingForwarding => 'SSH tüneli kuruluyor...';
-
-  @override
-  String get pveLoadingLogin => 'PVE ile kimlik doğrulanıyor...';
-
-  @override
-  String get pveLoadingData => 'Küme verileri alınıyor...';
 
   @override
   String get pveLoadingConnect => 'Bağlanıyor...';
@@ -3295,4 +3267,205 @@ class AppLocalizationsTr extends AppLocalizations {
   String appearanceThemeModeLocked(String mode) {
     return 'Bu tema yalnızca $mode modunu destekler. Modu değiştirmek için başka bir tema seçin.';
   }
+
+  @override
+  String get pveAuthToken => 'API belirteci';
+
+  @override
+  String get pveVersionLow =>
+      'Bu özellik şu anda test aşamasında ve yalnızca PVE 8+ üzerinde test edildi. Lütfen dikkatli kullanın.';
+
+  @override
+  String get pveTokenId => 'Belirteç kimliği';
+
+  @override
+  String get pveTokenSecret => 'Belirteç gizli anahtarı';
+
+  @override
+  String get pveTokenTip =>
+      'PVE\'de Veri Merkezi → İzinler → API Tokens altında oluşturun. Gösterilecek yollarda VM.Audit, VM.PowerMgmt, VM.Console ve Sys.Audit gerekir; ayrıcalık ayrımı açıksa bunları belirtecin kendisine verin.';
+
+  @override
+  String get pveTokenIdInvalid =>
+      'Belirteç kimliği user@realm!tokenid biçiminde olmalıdır';
+
+  @override
+  String get pvePasswordAuthTip =>
+      'PAM realm\'inde SSH kullanıcısı olarak SSH parolasıyla, SSH anahtar kullanıyorsa aşağıdaki PVE parolasıyla oturum açar. Gerektiğinde iki aşamalı doğrulama kodu istenir.';
+
+  @override
+  String get pveCertUnpinned =>
+      'Henüz onaylanmış bir sertifika yok. Güvenilir bir CA imzalamadıysa, sonraki bağlantı sertifikayı onay için gösterir.';
+
+  @override
+  String get pveCertForget => 'Sertifikayı unut';
+
+  @override
+  String get pveCertForgetTip =>
+      'Sonraki bağlantı PVE sertifikasını yeniden onay için gösterecek.';
+
+  @override
+  String get virtualization => 'Sanallaştırma';
+
+  @override
+  String get virtIntro =>
+      'Proxmox VE ve libvirt/KVM ana makinelerindeki sanal makineleri ve kapsayıcıları yönetin: durum, güç işlemleri ve konsollar.';
+
+  @override
+  String get virtIntroPveMoved =>
+      'Proxmox VE sunucu sayfasından bu sekmeye taşındı. Bir sunucunun PVE kartı onu burada açar.';
+
+  @override
+  String get virtIntroLibvirt =>
+      'libvirt\'in virsh aracı kurulu bir sunucu, QEMU/KVM sanal makineleriyle birlikte ana makine olarak görünür.';
+
+  @override
+  String get virtIntroTransports =>
+      'İkisi de SSH üzerinden, bir Monitor ajanı aracılığıyla veya bu cihazda çalışır.';
+
+  @override
+  String get virtIntroTokens =>
+      'PVE, parola yerine bir API belirteciyle oturum açabilir. Sunucunun düzenleme sayfasında, PVE altında ayarlayın.';
+
+  @override
+  String get virtIntroInBar => 'Sekme çubuğuna eklendi.';
+
+  @override
+  String get virtIntroInMore =>
+      'Daha fazla altında. Ayarlardaki Ana Sayfa Sekmeleri ile sekme çubuğuna taşıyabilirsiniz.';
+
+  @override
+  String get virtGuests => 'Sanal makineler';
+
+  @override
+  String get virtGuestsAndContainers => 'VM\'ler ve konteynerler';
+
+  @override
+  String get virtSectionLater => 'Henüz kullanılamıyor';
+
+  @override
+  String get virtHosts => 'Ana makineler';
+
+  @override
+  String get virtCheckServer => 'Bu sunucuyu denetle';
+
+  @override
+  String get virtCheckAll => 'Tüm sunucuları denetle';
+
+  @override
+  String get virtProbeNotChecked => 'Henüz denetlenmedi';
+
+  @override
+  String get virtProbeAbsent => 'virsh bulunamadı';
+
+  @override
+  String get virtNoHosts => 'Sanallaştırma ana makinesi yok';
+
+  @override
+  String get virtNoHostsTip =>
+      'PVE adresi olan bir sunucu ana makinedir; virsh\'in yanıt verdiği sunucu da öyledir. Diğer sunucular ana makine değiştiriciden denetlenebilir.';
+
+  @override
+  String get virtNoGuests => 'Sanal makine veya konteyner yok';
+
+  @override
+  String get virtPaused => 'Duraklatıldı';
+
+  @override
+  String get virtStarting => 'Başlatılıyor…';
+
+  @override
+  String get virtStopping => 'Durduruluyor…';
+
+  @override
+  String get virtRebooting => 'Yeniden başlatılıyor…';
+
+  @override
+  String get virtMigrating => 'Taşınıyor…';
+
+  @override
+  String get virtBackingUp => 'Yedekleniyor…';
+
+  @override
+  String get virtResume => 'Sürdür';
+
+  @override
+  String get virtOverview => 'Genel bakış';
+
+  @override
+  String get virtConsole => 'Konsol';
+
+  @override
+  String get virtConsoleNone => 'Bu konuk için yapılandırılmış konsol yok';
+
+  @override
+  String get virtConsoleGraphical => 'Grafik';
+
+  @override
+  String get virtConsoleSerialTip =>
+      'Konuğun seri konsolunu ana makinede virsh ile açar. Bağlantıyı kes veya Ctrl+] ana makinenin kabuğuna döndürür.';
+
+  @override
+  String get virtOffTip =>
+      'CPU, bellek, disk ve ağı burada canlı görmek için başlatın.';
+
+  @override
+  String get virtAllocated => 'Ayrılan';
+
+  @override
+  String virtRunningCount(int running, int total) {
+    return '$running çalışıyor · toplam $total';
+  }
+
+  @override
+  String get virtTemplate => 'Şablon';
+
+  @override
+  String get virtAutostart => 'Ana makineyle başlar';
+
+  @override
+  String get virtErrUnreachable => 'Bu ana makineye ulaşılamadı';
+
+  @override
+  String get virtErrNotConfigured => 'Bu sunucunun PVE ayarları eksik';
+
+  @override
+  String get virtErrNotConfiguredTip =>
+      'Sunucu ayarlarında adresi ve parolayı ya da API belirtecini denetleyin.';
+
+  @override
+  String get virtErrAuthFailed => 'Ana makine oturum açmayı reddetti';
+
+  @override
+  String get virtErrCertUnconfirmed => 'Ana makinenin sertifikasını onaylayın';
+
+  @override
+  String get virtErrCertChanged => 'Ana makinenin sertifikası değişti';
+
+  @override
+  String get virtErrRelayNotGranted =>
+      'Monitor aracısı bağlantıları aktarmıyor';
+
+  @override
+  String get virtErrExecNotGranted => 'Monitor aracısı komut çalıştırmıyor';
+
+  @override
+  String get virtErrNotInstalled => 'Bu sunucuda virsh kurulu değil';
+
+  @override
+  String get virtErrServerRemoved => 'Bu sunucu artık mevcut değil';
+
+  @override
+  String get virtErrSudoRequired =>
+      'libvirt\'e erişmek için sudo parola istiyor';
+
+  @override
+  String get virtErrSudoRejected => 'sudo parolayı reddetti';
+
+  @override
+  String get virtErrInvalidResponse =>
+      'Ana makine beklenmeyen biçimde yanıt verdi';
+
+  @override
+  String get virtErrActionFailed => 'Ana makine işlemi reddetti';
 }

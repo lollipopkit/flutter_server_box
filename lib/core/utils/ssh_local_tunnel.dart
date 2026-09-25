@@ -36,7 +36,7 @@ class SshLocalTunnel {
   final ServerSocket _listener;
   final SshTunnelDialer _dialer;
   final Set<Socket> _pendingSockets = {};
-  final Set<_TunnelConnection> _connections = {};
+  final Set<SshTunnelBridge> _connections = {};
   final Set<Future<void>> _bridges = {};
   final _openingStops = <Completer<SshTunnelChannel>>{};
   final Completer<void> _done = Completer<void>();
@@ -72,10 +72,16 @@ class SshLocalTunnel {
     bindHost: bindHost,
     bindPort: bindPort,
     sshDone: client.done,
-    dialer: () async => _DartSshTunnelChannel(
-      await client.forwardLocal(remoteHost, remotePort),
-    ),
+    dialer: () => forward(client, remoteHost, remotePort),
   );
+
+  /// A direct-tcpip channel on [client] to [remoteHost]:[remotePort].
+  static Future<SshTunnelChannel> forward(
+    SSHClient client,
+    String remoteHost,
+    int remotePort,
+  ) async =>
+      _DartSshTunnelChannel(await client.forwardLocal(remoteHost, remotePort));
 
   /// The lifecycle seam used by tests and alternative SSH transports.
   static Future<SshLocalTunnel> bindWithDialer({
@@ -147,7 +153,7 @@ class SshLocalTunnel {
         return;
       }
 
-      final connection = _TunnelConnection(socket, channel);
+      final connection = SshTunnelBridge(socket, channel);
       _connections.add(connection);
       await connection.pipe();
       _connections.remove(connection);
@@ -220,8 +226,10 @@ class _DartSshTunnelChannel implements SshTunnelChannel {
   Future<void> close() => _channel.close();
 }
 
-class _TunnelConnection {
-  _TunnelConnection(this.socket, this.channel);
+/// Carries bytes between a local [socket] and a tunnel [channel], both ways,
+/// until either side ends; then tears both down.
+class SshTunnelBridge {
+  SshTunnelBridge(this.socket, this.channel);
 
   final Socket socket;
   final SshTunnelChannel channel;

@@ -33,7 +33,11 @@ COPY monitor/.sqlx/ ./.sqlx/
 # Copy source code
 COPY monitor/src/ ./src/
 
-# 独立构建 monitor(脱离 monorepo workspace),修正 sbm_parser 相对路径
+# 独立构建 monitor(脱离 monorepo workspace),修正 crates/ 下各依赖的相对路径
+#
+# Every `../crates/` path, not one crate by name: naming sbm_parser alone left
+# sbm_native pointing at /crates, and `cargo build` failed with "failed to
+# load source for dependency `sbm_native`".
 #
 # That also puts this build outside everything the workspace Cargo.toml says:
 # `monitor/Cargo.toml` becomes the root, so neither `[profile.release] strip`
@@ -42,7 +46,7 @@ COPY monitor/src/ ./src/
 # Environment variables rather than a profile section, since the section would
 # have to be written into a manifest the workspace also reads, where cargo
 # ignores a non-root package's profiles with a warning.
-RUN sed -i 's|path = "../crates/sbm_parser"|path = "crates/sbm_parser"|' Cargo.toml \
+RUN sed -i 's|path = "../crates/|path = "crates/|' Cargo.toml \
     && CARGO_PROFILE_RELEASE_STRIP=true \
        CARGO_PROFILE_RELEASE_LTO=fat \
        CARGO_PROFILE_RELEASE_CODEGEN_UNITS=1 \

@@ -1045,9 +1045,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Parsing status okupansi oleh Docker agak lambat';
 
   @override
-  String get plugInType => 'Jenis Penyisipan';
-
-  @override
   String get preferDiskAmount => 'Prioritaskan tampilan kapasitas disk';
 
   @override
@@ -1187,24 +1184,12 @@ class AppLocalizationsId extends AppLocalizations {
       'Tidak disarankan untuk diaktifkan, waspadai risiko keamanan! Jika Anda menggunakan sertifikat default dari PVE, Anda perlu mengaktifkan opsi ini.';
 
   @override
-  String get pveServerClientMissing =>
-      'Klien SSH untuk server ini tidak tersedia.';
-
-  @override
-  String get pveAddressMissing =>
-      'Alamat PVE belum diisi. Atur di pengaturan server.';
-
-  @override
   String get pvePasswordRequired =>
       'Kata sandi PVE diperlukan. Atur di pengaturan server.';
 
   @override
   String get pveOtpRequired =>
       'Autentikasi dua faktor aktif di server PVE ini. Masukkan kode OTP.';
-
-  @override
-  String get pveOtpChallengeExpired =>
-      'Tantangan OTP sudah kedaluwarsa. Segarkan lalu coba lagi.';
 
   @override
   String get pveOtpCodeRequired => 'Kode OTP wajib diisi.';
@@ -1230,19 +1215,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get pveMissingAuthTicket =>
       'Login PVE berhasil, tetapi tidak ada tiket autentikasi yang dikembalikan.';
-
-  @override
-  String get pveVersionLow =>
-      'Fitur ini saat ini sedang dalam tahap pengujian dan hanya diuji pada PVE 8+. Gunakan dengan hati-hati.';
-
-  @override
-  String get pveLoadingForwarding => 'Membangun terowongan SSH...';
-
-  @override
-  String get pveLoadingLogin => 'Mengautentikasi ke PVE...';
-
-  @override
-  String get pveLoadingData => 'Mengambil data klaster...';
 
   @override
   String get pveLoadingConnect => 'Menghubungkan...';
@@ -3299,4 +3271,205 @@ class AppLocalizationsId extends AppLocalizations {
   String appearanceThemeModeLocked(String mode) {
     return 'Tema ini hanya mendukung $mode. Pilih tema lain untuk mengubah mode.';
   }
+
+  @override
+  String get pveAuthToken => 'Token API';
+
+  @override
+  String get pveVersionLow =>
+      'Fitur ini saat ini sedang dalam tahap pengujian dan hanya diuji pada PVE 8+. Gunakan dengan hati-hati.';
+
+  @override
+  String get pveTokenId => 'ID token';
+
+  @override
+  String get pveTokenSecret => 'Rahasia token';
+
+  @override
+  String get pveTokenTip =>
+      'Buat di PVE pada Datacenter → Permissions → API Tokens. Token memerlukan VM.Audit, VM.PowerMgmt, VM.Console, dan Sys.Audit pada jalur yang ingin ditampilkan; jika pemisahan hak aktif, berikan hak tersebut ke token itu sendiri.';
+
+  @override
+  String get pveTokenIdInvalid => 'ID token harus berbentuk user@realm!tokenid';
+
+  @override
+  String get pvePasswordAuthTip =>
+      'Masuk sebagai pengguna SSH di realm PAM, dengan kata sandi SSH, atau dengan kata sandi PVE di bawah jika SSH memakai kunci. Kode dua faktor diminta bila diperlukan.';
+
+  @override
+  String get pveCertUnpinned =>
+      'Belum ada yang dikonfirmasi. Kecuali ditandatangani CA tepercaya, koneksi berikutnya menampilkan sertifikat untuk dikonfirmasi.';
+
+  @override
+  String get pveCertForget => 'Lupakan sertifikat';
+
+  @override
+  String get pveCertForgetTip =>
+      'Koneksi berikutnya akan menampilkan sertifikat PVE lagi untuk dikonfirmasi.';
+
+  @override
+  String get virtualization => 'Virtualisasi';
+
+  @override
+  String get virtIntro =>
+      'Kelola mesin virtual dan kontainer di host Proxmox VE dan libvirt/KVM: status, aksi daya, dan konsol.';
+
+  @override
+  String get virtIntroPveMoved =>
+      'Proxmox VE telah pindah dari halaman server ke tab ini. Kartu PVE sebuah server membukanya di sini.';
+
+  @override
+  String get virtIntroLibvirt =>
+      'Server dengan virsh dari libvirt terpasang muncul sebagai host, beserta mesin virtual QEMU/KVM-nya.';
+
+  @override
+  String get virtIntroTransports =>
+      'Keduanya bekerja lewat SSH, melalui agen Monitor, atau di perangkat ini.';
+
+  @override
+  String get virtIntroTokens =>
+      'PVE dapat masuk dengan token API alih-alih kata sandi. Atur di halaman edit server, pada bagian PVE.';
+
+  @override
+  String get virtIntroInBar => 'Tab ini telah ditambahkan ke bilah tab.';
+
+  @override
+  String get virtIntroInMore =>
+      'Tab ini ada di Lainnya. Tab Beranda di Pengaturan dapat memindahkannya ke bilah tab.';
+
+  @override
+  String get virtGuests => 'Mesin virtual';
+
+  @override
+  String get virtGuestsAndContainers => 'VM & kontainer';
+
+  @override
+  String get virtSectionLater => 'Belum tersedia';
+
+  @override
+  String get virtHosts => 'Host';
+
+  @override
+  String get virtCheckServer => 'Periksa server ini';
+
+  @override
+  String get virtCheckAll => 'Periksa semua server';
+
+  @override
+  String get virtProbeNotChecked => 'Belum diperiksa';
+
+  @override
+  String get virtProbeAbsent => 'virsh tidak ditemukan';
+
+  @override
+  String get virtNoHosts => 'Tidak ada host virtualisasi';
+
+  @override
+  String get virtNoHostsTip =>
+      'Server dengan alamat PVE adalah host, begitu juga server tempat virsh merespons. Server lainnya dapat diperiksa dari pengalih host.';
+
+  @override
+  String get virtNoGuests => 'Tidak ada mesin virtual atau kontainer';
+
+  @override
+  String get virtPaused => 'Dijeda';
+
+  @override
+  String get virtStarting => 'Memulai…';
+
+  @override
+  String get virtStopping => 'Menghentikan…';
+
+  @override
+  String get virtRebooting => 'Memulai ulang…';
+
+  @override
+  String get virtMigrating => 'Memigrasi…';
+
+  @override
+  String get virtBackingUp => 'Mencadangkan…';
+
+  @override
+  String get virtResume => 'Lanjutkan';
+
+  @override
+  String get virtOverview => 'Ikhtisar';
+
+  @override
+  String get virtConsole => 'Konsol';
+
+  @override
+  String get virtConsoleNone =>
+      'Tidak ada konsol yang dikonfigurasi untuk tamu ini';
+
+  @override
+  String get virtConsoleGraphical => 'Grafis';
+
+  @override
+  String get virtConsoleSerialTip =>
+      'Membuka konsol serial tamu dengan virsh di host. Putuskan, atau Ctrl+], kembali ke shell host.';
+
+  @override
+  String get virtOffTip =>
+      'Jalankan untuk melihat CPU, memori, disk, dan jaringan secara langsung di sini.';
+
+  @override
+  String get virtAllocated => 'Dialokasikan';
+
+  @override
+  String virtRunningCount(int running, int total) {
+    return '$running berjalan · $total total';
+  }
+
+  @override
+  String get virtTemplate => 'Templat';
+
+  @override
+  String get virtAutostart => 'Mulai bersama host';
+
+  @override
+  String get virtErrUnreachable => 'Tidak dapat menjangkau host ini';
+
+  @override
+  String get virtErrNotConfigured => 'Pengaturan PVE server ini belum lengkap';
+
+  @override
+  String get virtErrNotConfiguredTip =>
+      'Periksa alamat, serta kata sandi atau token API, di pengaturan server.';
+
+  @override
+  String get virtErrAuthFailed => 'Host menolak login';
+
+  @override
+  String get virtErrCertUnconfirmed => 'Konfirmasi sertifikat host';
+
+  @override
+  String get virtErrCertChanged => 'Sertifikat host telah berubah';
+
+  @override
+  String get virtErrRelayNotGranted => 'Agent Monitor tidak meneruskan koneksi';
+
+  @override
+  String get virtErrExecNotGranted =>
+      'Agent Monitor tidak menjalankan perintah';
+
+  @override
+  String get virtErrNotInstalled => 'virsh tidak terpasang di server ini';
+
+  @override
+  String get virtErrServerRemoved => 'Server ini sudah tidak ada';
+
+  @override
+  String get virtErrSudoRequired =>
+      'sudo memerlukan kata sandi untuk mengakses libvirt';
+
+  @override
+  String get virtErrSudoRejected => 'sudo menolak kata sandi';
+
+  @override
+  String get virtErrInvalidResponse =>
+      'Host menjawab dalam bentuk yang tidak terduga';
+
+  @override
+  String get virtErrActionFailed => 'Host menolak tindakan tersebut';
 }

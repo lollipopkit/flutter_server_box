@@ -11,6 +11,7 @@ void main() {
         AppTab.ssh,
         AppTab.file,
         AppTab.agent,
+        AppTab.virt,
       ]);
       // Snippets are a library rather than a place, and a benchmark is a
       // quarter of an hour started deliberately — neither is wanted a tap away.
@@ -133,6 +134,7 @@ void main() {
       AppTab.agent,
       AppTab.benchmark,
       AppTab.remoteDesktop,
+      AppTab.virt,
     ]);
   });
 
@@ -144,12 +146,15 @@ void main() {
     expect(AppTab.server.index, 0);
     expect(AppTab.benchmark.index, 5);
     expect(AppTab.remoteDesktop.index, 6);
+    expect(AppTab.virt.index, 7);
   });
 
   /// 7 was the Monitor settings tab. `values` is positional, so the next case
-  /// appended takes that index — and without the retired list an install that
-  /// had the old tab in its bar would silently get the new tab in its place.
+  /// appended took that index — Virtualization — and without the retired list
+  /// an install that had the old tab in its bar would silently get the new tab
+  /// in its place.
   test('drops a retired tab index instead of resolving it', () {
+    expect(AppTab.values[7], AppTab.virt);
     expect(AppTab.parseAppTabsFromObj([0, 7, 1]), [AppTab.server, AppTab.ssh]);
     // Nothing left is nothing stored, which is what the default is for.
     expect(AppTab.parseAppTabsFromObj([7]), AppTab.defaultOrder);
@@ -157,6 +162,15 @@ void main() {
     // dropped by the same path.
     expect(AppTab.parseAppTabsFromObj(['server', 'monitorSettings']), [
       AppTab.server,
+    ]);
+  });
+
+  test('the tab that took index 7 is reached by its name', () {
+    // Every build that knows it stores tabs by name, so this is the only way a
+    // record names it.
+    expect(AppTab.parseAppTabsFromObj(['server', 'virt']), [
+      AppTab.server,
+      AppTab.virt,
     ]);
   });
 

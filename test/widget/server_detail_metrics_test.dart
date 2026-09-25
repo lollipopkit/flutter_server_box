@@ -25,6 +25,7 @@ import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/res/status.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/private_key.dart';
+import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
@@ -53,6 +54,7 @@ void main() {
     await openTestDb();
     getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
     getIt.registerSingleton<ServerStore>(ServerStore());
+    getIt.registerSingleton<PveStore>(PveStore());
     getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore());
     // 0 is off: a periodic refresh outliving the tree fails the run.
     Stores.setting.serverStatusUpdateInterval.put(0);

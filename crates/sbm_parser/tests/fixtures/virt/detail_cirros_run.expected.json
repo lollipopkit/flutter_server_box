@@ -1,0 +1,65 @@
+{
+  "display": {
+    "uri": "vnc://127.0.0.1:0",
+    "protocol": "vnc",
+    "host": "127.0.0.1",
+    "port": 5900,
+    "tls_port": null,
+    "socket": null
+  },
+  "xml": {
+    "name": "cirros-run",
+    "uuid": "8a2ed2a2-83e1-4c41-ad0a-a57d54d0d649",
+    "title": null,
+    "description": null,
+    "arch": "x86_64",
+    "machine": "pc-i440fx-10.0",
+    "disks": [
+      {
+        "device": "disk",
+        "source_type": "file",
+        "source": "/var/lib/libvirt/images/run1.qcow2",
+        "target": "vda",
+        "bus": "virtio",
+        "format": "qcow2",
+        "readonly": false
+      },
+      {
+        "device": "disk",
+        "source_type": "file",
+        "source": "/var/lib/libvirt/images/extra.qcow2",
+        "target": "vdb",
+        "bus": "virtio",
+        "format": "qcow2",
+        "readonly": false
+      }
+    ],
+    "nics": [
+      {
+        "kind": "network",
+        "mac": "52:54:00:6e:d2:3c",
+        "source": "default",
+        "model": "virtio",
+        "target": "vnet0"
+      },
+      {
+        "kind": "network",
+        "mac": "52:54:00:bb:c0:4b",
+        "source": "default",
+        "model": "virtio",
+        "target": "vnet1"
+      }
+    ],
+    "graphics": [
+      {
+        "kind": "vnc",
+        "port": 5900,
+        "tls_port": null,
+        "autoport": true,
+        "listen": "127.0.0.1",
+        "socket": null
+      }
+    ],
+    "has_serial_console": true
+  }
+}

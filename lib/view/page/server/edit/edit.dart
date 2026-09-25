@@ -10,6 +10,7 @@ import 'package:redfish/redfish.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
+import 'package:server_box/core/utils/cert_fingerprint.dart';
 import 'package:server_box/core/utils/jump_chain.dart';
 import 'package:server_box/core/utils/local_server.dart';
 import 'package:server_box/core/utils/server_dedup.dart';
@@ -22,6 +23,7 @@ import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/discovery_result.dart';
 import 'package:server_box/data/model/server/geo.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/server/system.dart';
@@ -68,6 +70,26 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   final _passwordController = TextEditingController();
   final _pveAddrCtrl = TextEditingController();
   final _pvePwdCtrl = TextEditingController();
+  final _pveTokenIdCtrl = TextEditingController();
+  final _pveTokenSecretCtrl = TextEditingController();
+
+  /// Whether PVE is logged in to with an API token (true) or a password.
+  ///
+  /// `PveConfig.auth`. Saving writes only the chosen method's credentials, so
+  /// there is never a token and a password competing. True for a new
+  /// configuration, which is what PVE recommends for an app: a token's
+  /// permissions are its own, and it needs no TOTP.
+  final _pveUseToken = ValueNotifier(true);
+
+  /// The PVE certificate fingerprint the user confirmed, or null.
+  ///
+  /// Shown and forgotten here, never set: the confirmation happens when the
+  /// app connects and sees the certificate, which this page does not.
+  final _pveCert = ValueNotifier<String?>(null);
+
+  /// Forget was pressed, so saving drops the pin — whatever is stored by
+  /// then. Otherwise saving keeps the stored one (see `_pveConfigToSave`).
+  bool _pveCertForgot = false;
   final _monitorAddrCtrl = TextEditingController();
   final _monitorUserCtrl = TextEditingController();
   final _monitorPwdCtrl = TextEditingController();
@@ -123,7 +145,6 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   final _keyPath = ValueNotifier<String?>(null);
   final _autoConnect = ValueNotifier(true);
   final _jumpServers = <String>[].vn;
-  final _pveIgnoreCert = ValueNotifier(false);
   final _monitorIgnoreCert = ValueNotifier(false);
   final _monitorAllowInsecure = ValueNotifier(false);
 
@@ -230,6 +251,10 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _usernameFocus.dispose();
     _pveAddrCtrl.dispose();
     _pvePwdCtrl.dispose();
+    _pveTokenIdCtrl.dispose();
+    _pveTokenSecretCtrl.dispose();
+    _pveUseToken.dispose();
+    _pveCert.dispose();
     _monitorAddrCtrl.dispose();
     _monitorUserCtrl.dispose();
     _monitorPwdCtrl.dispose();
@@ -238,7 +263,6 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _keyPath.dispose();
     _autoConnect.dispose();
     _jumpServers.dispose();
-    _pveIgnoreCert.dispose();
     _monitorIgnoreCert.dispose();
     _monitorAllowInsecure.dispose();
     _useSsh.dispose();

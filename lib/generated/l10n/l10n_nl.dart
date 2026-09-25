@@ -1051,9 +1051,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Het parsen van de bezettingsstatus van Docker is relatief langzaam.';
 
   @override
-  String get plugInType => 'Invoegingstype';
-
-  @override
   String get preferDiskAmount =>
       'Geef de schijfcapaciteit prioriteit bij weergave';
 
@@ -1195,24 +1192,12 @@ class AppLocalizationsNl extends AppLocalizations {
       'Niet aanbevolen om in te schakelen, let op beveiligingsrisico\'s! Als u de standaardcertificaat van PVE gebruikt, moet u deze optie inschakelen.';
 
   @override
-  String get pveServerClientMissing =>
-      'De SSH-client voor deze server is niet beschikbaar.';
-
-  @override
-  String get pveAddressMissing =>
-      'Het PVE-adres ontbreekt. Stel het in bij de serverinstellingen.';
-
-  @override
   String get pvePasswordRequired =>
       'Het PVE-wachtwoord is vereist. Stel het in bij de serverinstellingen.';
 
   @override
   String get pveOtpRequired =>
       'Op deze PVE-server staat tweestapsverificatie aan. Voer de OTP-code in.';
-
-  @override
-  String get pveOtpChallengeExpired =>
-      'De OTP-aanvraag is verlopen. Vernieuw en probeer het opnieuw.';
 
   @override
   String get pveOtpCodeRequired => 'OTP-code is vereist.';
@@ -1238,19 +1223,6 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get pveMissingAuthTicket =>
       'De PVE-aanmelding is gelukt, maar er is geen authenticatieticket teruggegeven.';
-
-  @override
-  String get pveVersionLow =>
-      'Deze functie bevindt zich momenteel in de testfase en is alleen getest op PVE 8+. Gebruik het met voorzichtigheid.';
-
-  @override
-  String get pveLoadingForwarding => 'SSH-tunnel opzetten...';
-
-  @override
-  String get pveLoadingLogin => 'Aanmelden bij PVE...';
-
-  @override
-  String get pveLoadingData => 'Clustergegevens ophalen...';
 
   @override
   String get pveLoadingConnect => 'Verbinden...';
@@ -3330,4 +3302,208 @@ class AppLocalizationsNl extends AppLocalizations {
   String appearanceThemeModeLocked(String mode) {
     return 'Dit thema ondersteunt alleen $mode. Kies een ander thema om de modus te wijzigen.';
   }
+
+  @override
+  String get pveAuthToken => 'API-token';
+
+  @override
+  String get pveVersionLow =>
+      'Deze functie bevindt zich momenteel in de testfase en is alleen getest op PVE 8+. Gebruik het met voorzichtigheid.';
+
+  @override
+  String get pveTokenId => 'Token-ID';
+
+  @override
+  String get pveTokenSecret => 'Tokengeheim';
+
+  @override
+  String get pveTokenTip =>
+      'Maak er een aan in PVE onder Datacenter → Rechten → API Tokens. Het heeft VM.Audit, VM.PowerMgmt, VM.Console en Sys.Audit nodig op de paden die getoond worden; met privilegescheiding aan moeten ze aan het token zelf worden toegekend.';
+
+  @override
+  String get pveTokenIdInvalid =>
+      'Het token-ID moet de vorm user@realm!tokenid hebben';
+
+  @override
+  String get pvePasswordAuthTip =>
+      'Meldt aan als de SSH-gebruiker in de PAM-realm, met het SSH-wachtwoord, of met het PVE-wachtwoord hieronder als SSH een sleutel gebruikt. Een tweefactorcode wordt gevraagd wanneer nodig.';
+
+  @override
+  String get pveCertUnpinned =>
+      'Nog niets bevestigd. Tenzij een vertrouwde CA het heeft ondertekend, toont de volgende verbinding het certificaat ter bevestiging.';
+
+  @override
+  String get pveCertForget => 'Certificaat vergeten';
+
+  @override
+  String get pveCertForgetTip =>
+      'De volgende verbinding toont het PVE-certificaat opnieuw ter bevestiging.';
+
+  @override
+  String get virtualization => 'Virtualisatie';
+
+  @override
+  String get virtIntro =>
+      'Beheer virtuele machines en containers op Proxmox VE- en libvirt/KVM-hosts: hun status, energieacties en consoles.';
+
+  @override
+  String get virtIntroPveMoved =>
+      'Proxmox VE is van de serverpagina naar dit tabblad verhuisd. De PVE-kaart van een server opent het hier.';
+
+  @override
+  String get virtIntroLibvirt =>
+      'Een server met virsh van libvirt geïnstalleerd verschijnt als host, met zijn QEMU/KVM-VM\'s.';
+
+  @override
+  String get virtIntroTransports =>
+      'Beide werken via SSH, via een Monitor-agent of op dit apparaat.';
+
+  @override
+  String get virtIntroTokens =>
+      'PVE kan aanmelden met een API-token in plaats van een wachtwoord. Stel het in op de bewerkpagina van een server, onder PVE.';
+
+  @override
+  String get virtIntroInBar => 'Het is aan de tabbalk toegevoegd.';
+
+  @override
+  String get virtIntroInMore =>
+      'Het staat onder Meer. Home-tabbladen in de instellingen kan het naar de tabbalk verplaatsen.';
+
+  @override
+  String get virtGuests => 'Virtuele machines';
+
+  @override
+  String get virtGuestsAndContainers => 'VM\'s & containers';
+
+  @override
+  String get virtSectionLater => 'Nog niet beschikbaar';
+
+  @override
+  String get virtHosts => 'Hosts';
+
+  @override
+  String get virtCheckServer => 'Deze server controleren';
+
+  @override
+  String get virtCheckAll => 'Alle servers controleren';
+
+  @override
+  String get virtProbeNotChecked => 'Nog niet gecontroleerd';
+
+  @override
+  String get virtProbeAbsent => 'virsh niet gevonden';
+
+  @override
+  String get virtNoHosts => 'Geen virtualisatiehosts';
+
+  @override
+  String get virtNoHostsTip =>
+      'Een server met een PVE-adres is een host, net als een server waarop virsh antwoordt. De overige servers kun je controleren via de hostwisselaar.';
+
+  @override
+  String get virtNoGuests => 'Geen virtuele machines of containers';
+
+  @override
+  String get virtPaused => 'Gepauzeerd';
+
+  @override
+  String get virtStarting => 'Starten…';
+
+  @override
+  String get virtStopping => 'Stoppen…';
+
+  @override
+  String get virtRebooting => 'Herstarten…';
+
+  @override
+  String get virtMigrating => 'Migreren…';
+
+  @override
+  String get virtBackingUp => 'Back-up maken…';
+
+  @override
+  String get virtResume => 'Hervatten';
+
+  @override
+  String get virtOverview => 'Overzicht';
+
+  @override
+  String get virtConsole => 'Console';
+
+  @override
+  String get virtConsoleNone => 'Voor deze gast is geen console ingesteld';
+
+  @override
+  String get virtConsoleGraphical => 'Grafisch';
+
+  @override
+  String get virtConsoleSerialTip =>
+      'Opent de seriële console van de gast met virsh op de host. Verbreken, of Ctrl+], keert terug naar de shell van de host.';
+
+  @override
+  String get virtOffTip =>
+      'Start deze om hier live CPU, geheugen, schijf en netwerk te zien.';
+
+  @override
+  String get virtAllocated => 'Toegewezen';
+
+  @override
+  String virtRunningCount(int running, int total) {
+    return '$running actief · $total in totaal';
+  }
+
+  @override
+  String get virtTemplate => 'Sjabloon';
+
+  @override
+  String get virtAutostart => 'Start met de host';
+
+  @override
+  String get virtErrUnreachable => 'Deze host is niet bereikbaar';
+
+  @override
+  String get virtErrNotConfigured =>
+      'De PVE-instellingen van deze server zijn onvolledig';
+
+  @override
+  String get virtErrNotConfiguredTip =>
+      'Controleer het adres en het wachtwoord of API-token in de instellingen van de server.';
+
+  @override
+  String get virtErrAuthFailed => 'De host heeft de aanmelding geweigerd';
+
+  @override
+  String get virtErrCertUnconfirmed => 'Bevestig het certificaat van de host';
+
+  @override
+  String get virtErrCertChanged => 'Het certificaat van de host is gewijzigd';
+
+  @override
+  String get virtErrRelayNotGranted =>
+      'De Monitor-agent stuurt geen verbindingen door';
+
+  @override
+  String get virtErrExecNotGranted =>
+      'De Monitor-agent voert geen opdrachten uit';
+
+  @override
+  String get virtErrNotInstalled =>
+      'virsh is niet geïnstalleerd op deze server';
+
+  @override
+  String get virtErrServerRemoved => 'Deze server bestaat niet meer';
+
+  @override
+  String get virtErrSudoRequired =>
+      'sudo heeft een wachtwoord nodig voor libvirt';
+
+  @override
+  String get virtErrSudoRejected => 'sudo heeft het wachtwoord geweigerd';
+
+  @override
+  String get virtErrInvalidResponse =>
+      'De host antwoordde in een onverwachte vorm';
+
+  @override
+  String get virtErrActionFailed => 'De host heeft de actie geweigerd';
 }

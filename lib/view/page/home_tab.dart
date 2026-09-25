@@ -13,6 +13,7 @@ import 'package:server_box/view/page/server/tab/tab.dart';
 import 'package:server_box/view/page/snippet/list.dart';
 import 'package:server_box/view/page/ssh/tab.dart';
 import 'package:server_box/view/page/storage/tab.dart';
+import 'package:server_box/view/page/virt/tab.dart';
 import 'package:server_box/view/widget/conn_count_badge.dart';
 import 'package:server_box/view/widget/nav_rail.dart';
 import 'package:server_box/view/widget/themed_icon.dart';
@@ -27,6 +28,7 @@ extension AppTabViewX on AppTab {
       AppTab.agent => const AgentPage(),
       AppTab.benchmark => const BenchmarkTabPage(),
       AppTab.remoteDesktop => const RemoteDesktopTabPage(),
+      AppTab.virt => const VirtTabPage(),
     };
   }
 
@@ -54,6 +56,7 @@ extension AppTabViewX on AppTab {
       AppTab.agent => 'Agent',
       AppTab.benchmark => l10n.benchmark,
       AppTab.remoteDesktop => l10n.remoteDesktop,
+      AppTab.virt => l10n.virtualization,
     };
   }
 
@@ -148,6 +151,8 @@ class _AppTabIcon extends StatelessWidget {
                   selected ? MingCute.dashboard_fill : MingCute.dashboard_line,
                 AppTab.remoteDesktop =>
                   selected ? MingCute.computer_fill : MingCute.computer_line,
+                AppTab.virt =>
+                  selected ? MingCute.box_3_fill : MingCute.box_3_line,
               }
             : switch (tab) {
                 AppTab.server =>
@@ -164,6 +169,8 @@ class _AppTabIcon extends StatelessWidget {
                   selected
                       ? Icons.desktop_windows
                       : Icons.desktop_windows_outlined,
+                AppTab.virt =>
+                  selected ? Icons.view_in_ar : Icons.view_in_ar_outlined,
               };
         return ThemeIconAsset(
           keyName: tabIconKey(tab, selected: selected),

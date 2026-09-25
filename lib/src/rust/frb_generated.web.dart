@@ -16,6 +16,7 @@ import 'package:server_box/src/rust/api/remote_desktop.dart';
 import 'package:server_box/src/rust/api/script.dart';
 import 'package:server_box/src/rust/api/ssh_asym.dart';
 import 'package:server_box/src/rust/api/ssh_crypto.dart';
+import 'package:server_box/src/rust/api/virt.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
 abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
@@ -212,6 +213,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   BigInt dco_decode_usize(dynamic raw);
+
+  @protected
+  VirtActionKind dco_decode_virt_action_kind(dynamic raw);
+
+  @protected
+  VirtErrorKind dco_decode_virt_error_kind(dynamic raw);
+
+  @protected
+  VirtFfiError dco_decode_virt_ffi_error(dynamic raw);
 
   @protected
   VncSessionParams dco_decode_vnc_session_params(dynamic raw);
@@ -411,6 +421,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   BigInt sse_decode_usize(SseDeserializer deserializer);
+
+  @protected
+  VirtActionKind sse_decode_virt_action_kind(SseDeserializer deserializer);
+
+  @protected
+  VirtErrorKind sse_decode_virt_error_kind(SseDeserializer deserializer);
+
+  @protected
+  VirtFfiError sse_decode_virt_ffi_error(SseDeserializer deserializer);
 
   @protected
   VncSessionParams sse_decode_vnc_session_params(SseDeserializer deserializer);
@@ -649,6 +668,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_usize(BigInt self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_virt_action_kind(
+    VirtActionKind self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_virt_error_kind(VirtErrorKind self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_virt_ffi_error(VirtFfiError self, SseSerializer serializer);
 
   @protected
   void sse_encode_vnc_session_params(

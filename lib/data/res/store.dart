@@ -9,6 +9,7 @@ import 'package:server_box/data/store/history.dart';
 import 'package:server_box/data/store/migrations/m003_hive_to_sqlite.dart';
 import 'package:server_box/data/store/port_forward.dart';
 import 'package:server_box/data/store/private_key.dart';
+import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/remote_desktop.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/self_addr.dart';
@@ -41,6 +42,9 @@ abstract final class Stores {
   static SettingStore get setting => getIt<SettingStore>();
   static ServerStore get server => getIt<ServerStore>();
   static ContainerStore get container => getIt<ContainerStore>();
+
+  /// Each server's PVE configuration — a child of `server`, see [PveStore].
+  static PveStore get pve => getIt<PveStore>();
   static PrivateKeyStore get key => getIt<PrivateKeyStore>();
   static BmcCredentialStore get bmcCredential => getIt<BmcCredentialStore>();
   static SnippetStore get snippet => getIt<SnippetStore>();
@@ -77,8 +81,8 @@ abstract final class Stores {
 
   /// The same question asked of the stores that own tables.
   ///
-  /// `container` is absent because its rows are children of `server`: changing
-  /// a container host stamps the server that owns it.
+  /// `container` and `pve` are absent because their rows are children of
+  /// `server`: changing one stamps the server that owns it.
   static List<EntityStore> get _entityStores => [
     server,
     key,
@@ -92,6 +96,7 @@ abstract final class Stores {
     getIt.registerLazySingleton<SettingStore>(() => SettingStore.instance);
     getIt.registerLazySingleton<ServerStore>(() => ServerStore.instance);
     getIt.registerLazySingleton<ContainerStore>(() => ContainerStore.instance);
+    getIt.registerLazySingleton<PveStore>(() => PveStore.instance);
     getIt.registerLazySingleton<PrivateKeyStore>(
       () => PrivateKeyStore.instance,
     );

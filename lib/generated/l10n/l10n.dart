@@ -1943,12 +1943,6 @@ abstract class AppLocalizations {
   /// **'Parsing the occupancy status of Docker is relatively slow.'**
   String get parseContainerStatsTip;
 
-  /// User-facing label or message for plug in type.
-  ///
-  /// In en, this message translates to:
-  /// **'Insertion Type'**
-  String get plugInType;
-
   /// User-facing label or message for prefer disk amount.
   ///
   /// In en, this message translates to:
@@ -2183,18 +2177,6 @@ abstract class AppLocalizations {
   /// **'Not recommended to enable, beware of security risks! If you are using the default certificate from PVE, you need to enable this option.'**
   String get pveIgnoreCertTip;
 
-  /// User-facing label or message for pve server client missing.
-  ///
-  /// In en, this message translates to:
-  /// **'The SSH client for this server is not available.'**
-  String get pveServerClientMissing;
-
-  /// User-facing label or message for pve address missing.
-  ///
-  /// In en, this message translates to:
-  /// **'The PVE address is missing. Please configure it in server settings.'**
-  String get pveAddressMissing;
-
   /// User-facing label or message for pve password required.
   ///
   /// In en, this message translates to:
@@ -2206,12 +2188,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Two-factor authentication is enabled on this PVE server. Please enter the OTP code.'**
   String get pveOtpRequired;
-
-  /// User-facing label or message for pve otp challenge expired.
-  ///
-  /// In en, this message translates to:
-  /// **'The OTP challenge has expired. Please refresh and try again.'**
-  String get pveOtpChallengeExpired;
 
   /// User-facing label or message for pve otp code required.
   ///
@@ -2254,30 +2230,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'PVE login succeeded but no authentication ticket was returned.'**
   String get pveMissingAuthTicket;
-
-  /// User-facing label or message for pve version low.
-  ///
-  /// In en, this message translates to:
-  /// **'This feature is currently in the testing phase and has only been tested on PVE 8+. Please use it with caution.'**
-  String get pveVersionLow;
-
-  /// User-facing label or message for pve loading forwarding.
-  ///
-  /// In en, this message translates to:
-  /// **'Establishing SSH tunnel...'**
-  String get pveLoadingForwarding;
-
-  /// User-facing label or message for pve loading login.
-  ///
-  /// In en, this message translates to:
-  /// **'Authenticating with PVE...'**
-  String get pveLoadingLogin;
-
-  /// User-facing label or message for pve loading data.
-  ///
-  /// In en, this message translates to:
-  /// **'Fetching cluster data...'**
-  String get pveLoadingData;
 
   /// User-facing label or message for pve loading connect.
   ///
@@ -5691,6 +5643,366 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This theme only supports {mode}. Select another theme to change the mode.'**
   String appearanceThemeModeLocked(String mode);
+
+  /// Label for logging in to Proxmox VE with an API token.
+  ///
+  /// In en, this message translates to:
+  /// **'API token'**
+  String get pveAuthToken;
+
+  /// Notice on a Proxmox VE host older than 8.0: the feature was only tested on PVE 8 and later.
+  ///
+  /// In en, this message translates to:
+  /// **'This feature is currently in the testing phase and has only been tested on PVE 8+. Please use it with caution.'**
+  String get pveVersionLow;
+
+  /// Label for the Proxmox VE API token ID field (user@realm!tokenid).
+  ///
+  /// In en, this message translates to:
+  /// **'Token ID'**
+  String get pveTokenId;
+
+  /// Label for the Proxmox VE API token secret field.
+  ///
+  /// In en, this message translates to:
+  /// **'Token secret'**
+  String get pveTokenSecret;
+
+  /// Help text explaining how to create a Proxmox VE API token and which privileges it needs.
+  ///
+  /// In en, this message translates to:
+  /// **'Create one in PVE under Datacenter → Permissions → API Tokens. It needs VM.Audit, VM.PowerMgmt, VM.Console and Sys.Audit on the paths to show; with privilege separation on, grant them to the token itself.'**
+  String get pveTokenTip;
+
+  /// Error shown when the Proxmox VE API token ID has the wrong format.
+  ///
+  /// In en, this message translates to:
+  /// **'The token ID must look like user@realm!tokenid'**
+  String get pveTokenIdInvalid;
+
+  /// Help text for logging in to Proxmox VE with a password.
+  ///
+  /// In en, this message translates to:
+  /// **'Logs in as the SSH user in the PAM realm, with the SSH password, or with the PVE password below when SSH uses a key. A two-factor code is asked for when needed.'**
+  String get pvePasswordAuthTip;
+
+  /// Shown when no Proxmox VE certificate has been confirmed yet.
+  ///
+  /// In en, this message translates to:
+  /// **'None confirmed yet. Unless a trusted CA signed it, the next connection shows the certificate for confirmation.'**
+  String get pveCertUnpinned;
+
+  /// Action that forgets the confirmed Proxmox VE certificate.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget certificate'**
+  String get pveCertForget;
+
+  /// Confirmation text for forgetting the confirmed Proxmox VE certificate.
+  ///
+  /// In en, this message translates to:
+  /// **'The next connection will show the PVE certificate for confirmation again.'**
+  String get pveCertForgetTip;
+
+  /// Name of the Virtualization tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Virtualization'**
+  String get virtualization;
+
+  /// Intro page text describing the Virtualization tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage virtual machines and containers on Proxmox VE and libvirt/KVM hosts: their state, power actions and consoles.'**
+  String get virtIntro;
+
+  /// Intro page text telling Proxmox VE users where PVE moved.
+  ///
+  /// In en, this message translates to:
+  /// **'Proxmox VE has moved from the server page into this tab. A server\'s PVE card opens it there.'**
+  String get virtIntroPveMoved;
+
+  /// Intro page text about libvirt/KVM hosts.
+  ///
+  /// In en, this message translates to:
+  /// **'A server with libvirt\'s virsh installed shows up as a host, with its QEMU/KVM virtual machines.'**
+  String get virtIntroLibvirt;
+
+  /// Intro page text about the transports the Virtualization tab works over.
+  ///
+  /// In en, this message translates to:
+  /// **'Both work over SSH, through a Monitor agent, or on this device.'**
+  String get virtIntroTransports;
+
+  /// Intro page text about Proxmox VE API token support.
+  ///
+  /// In en, this message translates to:
+  /// **'PVE can log in with an API token instead of a password. Set it in a server\'s edit page, under PVE.'**
+  String get virtIntroTokens;
+
+  /// Intro page text saying the Virtualization tab is in the tab bar.
+  ///
+  /// In en, this message translates to:
+  /// **'It has been added to the tab bar.'**
+  String get virtIntroInBar;
+
+  /// Intro page text saying the Virtualization tab is under More.
+  ///
+  /// In en, this message translates to:
+  /// **'It is under More. Home Tabs in Settings can move it to the tab bar.'**
+  String get virtIntroInMore;
+
+  /// Section of the Virtualization tab listing virtual machines.
+  ///
+  /// In en, this message translates to:
+  /// **'Virtual machines'**
+  String get virtGuests;
+
+  /// Section of the Virtualization tab listing virtual machines and LXC containers.
+  ///
+  /// In en, this message translates to:
+  /// **'VMs & containers'**
+  String get virtGuestsAndContainers;
+
+  /// Tooltip on a Virtualization section that is not built yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not available yet'**
+  String get virtSectionLater;
+
+  /// Heading over the virtualization hosts in the host switcher.
+  ///
+  /// In en, this message translates to:
+  /// **'Hosts'**
+  String get virtHosts;
+
+  /// Heading over servers not known to be virtualization hosts; tapping one checks it for virsh.
+  ///
+  /// In en, this message translates to:
+  /// **'Check this server'**
+  String get virtCheckServer;
+
+  /// Action that checks every server for libvirt again.
+  ///
+  /// In en, this message translates to:
+  /// **'Check all servers'**
+  String get virtCheckAll;
+
+  /// A server not yet checked for libvirt.
+  ///
+  /// In en, this message translates to:
+  /// **'Not checked yet'**
+  String get virtProbeNotChecked;
+
+  /// A server checked for libvirt that has no virsh.
+  ///
+  /// In en, this message translates to:
+  /// **'virsh not found'**
+  String get virtProbeAbsent;
+
+  /// Shown when no server is a virtualization host.
+  ///
+  /// In en, this message translates to:
+  /// **'No virtualization hosts'**
+  String get virtNoHosts;
+
+  /// Explains which servers count as virtualization hosts.
+  ///
+  /// In en, this message translates to:
+  /// **'A server with a PVE address is a host, and so is one where virsh answers. The other servers can be checked from the host switcher.'**
+  String get virtNoHostsTip;
+
+  /// Shown when a virtualization host has no guests.
+  ///
+  /// In en, this message translates to:
+  /// **'No virtual machines or containers'**
+  String get virtNoGuests;
+
+  /// A guest that is paused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get virtPaused;
+
+  /// A guest that is starting.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting…'**
+  String get virtStarting;
+
+  /// A guest that is stopping.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopping…'**
+  String get virtStopping;
+
+  /// A guest that is rebooting.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebooting…'**
+  String get virtRebooting;
+
+  /// A guest that is migrating to another node.
+  ///
+  /// In en, this message translates to:
+  /// **'Migrating…'**
+  String get virtMigrating;
+
+  /// A guest held by a running backup.
+  ///
+  /// In en, this message translates to:
+  /// **'Backing up…'**
+  String get virtBackingUp;
+
+  /// Power action that resumes a paused guest.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get virtResume;
+
+  /// View of a guest with its readings and facts.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get virtOverview;
+
+  /// View of a guest with its console.
+  ///
+  /// In en, this message translates to:
+  /// **'Console'**
+  String get virtConsole;
+
+  /// Shown in a guest's console view when it has neither a text nor a graphical console.
+  ///
+  /// In en, this message translates to:
+  /// **'No console is configured for this guest'**
+  String get virtConsoleNone;
+
+  /// Toggle for a guest's graphical (VNC) console, beside the text one.
+  ///
+  /// In en, this message translates to:
+  /// **'Graphical'**
+  String get virtConsoleGraphical;
+
+  /// Under the button that opens a libvirt guest's serial console in the terminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Opens the guest\'s serial console with virsh on the host. Disconnect, or Ctrl+], returns to the host\'s shell.'**
+  String get virtConsoleSerialTip;
+
+  /// Shown for a guest that is not running, in place of its charts.
+  ///
+  /// In en, this message translates to:
+  /// **'Start it to see live CPU, memory, disk and network here.'**
+  String get virtOffTip;
+
+  /// Card showing what running guests hold of the host.
+  ///
+  /// In en, this message translates to:
+  /// **'Allocated'**
+  String get virtAllocated;
+
+  /// How many guests are running, of how many.
+  ///
+  /// In en, this message translates to:
+  /// **'{running} running · {total} in total'**
+  String virtRunningCount(int running, int total);
+
+  /// A PVE template: a guest image that does not run.
+  ///
+  /// In en, this message translates to:
+  /// **'Template'**
+  String get virtTemplate;
+
+  /// A guest that starts with its host.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts with the host'**
+  String get virtAutostart;
+
+  /// Error: the virtualization host could not be reached.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not reach this host'**
+  String get virtErrUnreachable;
+
+  /// Error: the PVE configuration of a server is incomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'The PVE settings of this server are incomplete'**
+  String get virtErrNotConfigured;
+
+  /// What to do about incomplete PVE settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the address, and the password or API token, in the server\'s settings.'**
+  String get virtErrNotConfiguredTip;
+
+  /// Error: the virtualization host refused the login.
+  ///
+  /// In en, this message translates to:
+  /// **'The host refused the login'**
+  String get virtErrAuthFailed;
+
+  /// Error: the PVE certificate has to be confirmed first.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm the host\'s certificate'**
+  String get virtErrCertUnconfirmed;
+
+  /// Error: the PVE certificate is not the one confirmed before.
+  ///
+  /// In en, this message translates to:
+  /// **'The host\'s certificate has changed'**
+  String get virtErrCertChanged;
+
+  /// Error: the Monitor agent does not relay TCP connections to PVE.
+  ///
+  /// In en, this message translates to:
+  /// **'The Monitor agent does not relay connections'**
+  String get virtErrRelayNotGranted;
+
+  /// Error: the Monitor agent does not run commands (its full access is off), so libvirt cannot be reached through it.
+  ///
+  /// In en, this message translates to:
+  /// **'The Monitor agent does not run commands'**
+  String get virtErrExecNotGranted;
+
+  /// Error: virsh is not installed on the server.
+  ///
+  /// In en, this message translates to:
+  /// **'virsh is not installed on this server'**
+  String get virtErrNotInstalled;
+
+  /// Error: the server this virtualization host belonged to has been deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'This server no longer exists'**
+  String get virtErrServerRemoved;
+
+  /// Error: reaching libvirt needs sudo, and sudo needs a password.
+  ///
+  /// In en, this message translates to:
+  /// **'sudo needs a password to reach libvirt'**
+  String get virtErrSudoRequired;
+
+  /// Error: sudo rejected the password given.
+  ///
+  /// In en, this message translates to:
+  /// **'sudo rejected the password'**
+  String get virtErrSudoRejected;
+
+  /// Error: the virtualization host answered with something unreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'The host answered in an unexpected form'**
+  String get virtErrInvalidResponse;
+
+  /// Error: the host refused a power action or it failed.
+  ///
+  /// In en, this message translates to:
+  /// **'The host refused the action'**
+  String get virtErrActionFailed;
 }
 
 class _AppLocalizationsDelegate

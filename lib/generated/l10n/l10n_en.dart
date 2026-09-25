@@ -1039,9 +1039,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Parsing the occupancy status of Docker is relatively slow.';
 
   @override
-  String get plugInType => 'Insertion Type';
-
-  @override
   String get preferDiskAmount => 'Prioritize displaying disk capacity';
 
   @override
@@ -1181,24 +1178,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'Not recommended to enable, beware of security risks! If you are using the default certificate from PVE, you need to enable this option.';
 
   @override
-  String get pveServerClientMissing =>
-      'The SSH client for this server is not available.';
-
-  @override
-  String get pveAddressMissing =>
-      'The PVE address is missing. Please configure it in server settings.';
-
-  @override
   String get pvePasswordRequired =>
       'PVE password is required. Please set it in server settings.';
 
   @override
   String get pveOtpRequired =>
       'Two-factor authentication is enabled on this PVE server. Please enter the OTP code.';
-
-  @override
-  String get pveOtpChallengeExpired =>
-      'The OTP challenge has expired. Please refresh and try again.';
 
   @override
   String get pveOtpCodeRequired => 'OTP code is required.';
@@ -1224,19 +1209,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get pveMissingAuthTicket =>
       'PVE login succeeded but no authentication ticket was returned.';
-
-  @override
-  String get pveVersionLow =>
-      'This feature is currently in the testing phase and has only been tested on PVE 8+. Please use it with caution.';
-
-  @override
-  String get pveLoadingForwarding => 'Establishing SSH tunnel...';
-
-  @override
-  String get pveLoadingLogin => 'Authenticating with PVE...';
-
-  @override
-  String get pveLoadingData => 'Fetching cluster data...';
 
   @override
   String get pveLoadingConnect => 'Connecting...';
@@ -3296,4 +3268,205 @@ class AppLocalizationsEn extends AppLocalizations {
   String appearanceThemeModeLocked(String mode) {
     return 'This theme only supports $mode. Select another theme to change the mode.';
   }
+
+  @override
+  String get pveAuthToken => 'API token';
+
+  @override
+  String get pveVersionLow =>
+      'This feature is currently in the testing phase and has only been tested on PVE 8+. Please use it with caution.';
+
+  @override
+  String get pveTokenId => 'Token ID';
+
+  @override
+  String get pveTokenSecret => 'Token secret';
+
+  @override
+  String get pveTokenTip =>
+      'Create one in PVE under Datacenter → Permissions → API Tokens. It needs VM.Audit, VM.PowerMgmt, VM.Console and Sys.Audit on the paths to show; with privilege separation on, grant them to the token itself.';
+
+  @override
+  String get pveTokenIdInvalid =>
+      'The token ID must look like user@realm!tokenid';
+
+  @override
+  String get pvePasswordAuthTip =>
+      'Logs in as the SSH user in the PAM realm, with the SSH password, or with the PVE password below when SSH uses a key. A two-factor code is asked for when needed.';
+
+  @override
+  String get pveCertUnpinned =>
+      'None confirmed yet. Unless a trusted CA signed it, the next connection shows the certificate for confirmation.';
+
+  @override
+  String get pveCertForget => 'Forget certificate';
+
+  @override
+  String get pveCertForgetTip =>
+      'The next connection will show the PVE certificate for confirmation again.';
+
+  @override
+  String get virtualization => 'Virtualization';
+
+  @override
+  String get virtIntro =>
+      'Manage virtual machines and containers on Proxmox VE and libvirt/KVM hosts: their state, power actions and consoles.';
+
+  @override
+  String get virtIntroPveMoved =>
+      'Proxmox VE has moved from the server page into this tab. A server\'s PVE card opens it there.';
+
+  @override
+  String get virtIntroLibvirt =>
+      'A server with libvirt\'s virsh installed shows up as a host, with its QEMU/KVM virtual machines.';
+
+  @override
+  String get virtIntroTransports =>
+      'Both work over SSH, through a Monitor agent, or on this device.';
+
+  @override
+  String get virtIntroTokens =>
+      'PVE can log in with an API token instead of a password. Set it in a server\'s edit page, under PVE.';
+
+  @override
+  String get virtIntroInBar => 'It has been added to the tab bar.';
+
+  @override
+  String get virtIntroInMore =>
+      'It is under More. Home Tabs in Settings can move it to the tab bar.';
+
+  @override
+  String get virtGuests => 'Virtual machines';
+
+  @override
+  String get virtGuestsAndContainers => 'VMs & containers';
+
+  @override
+  String get virtSectionLater => 'Not available yet';
+
+  @override
+  String get virtHosts => 'Hosts';
+
+  @override
+  String get virtCheckServer => 'Check this server';
+
+  @override
+  String get virtCheckAll => 'Check all servers';
+
+  @override
+  String get virtProbeNotChecked => 'Not checked yet';
+
+  @override
+  String get virtProbeAbsent => 'virsh not found';
+
+  @override
+  String get virtNoHosts => 'No virtualization hosts';
+
+  @override
+  String get virtNoHostsTip =>
+      'A server with a PVE address is a host, and so is one where virsh answers. The other servers can be checked from the host switcher.';
+
+  @override
+  String get virtNoGuests => 'No virtual machines or containers';
+
+  @override
+  String get virtPaused => 'Paused';
+
+  @override
+  String get virtStarting => 'Starting…';
+
+  @override
+  String get virtStopping => 'Stopping…';
+
+  @override
+  String get virtRebooting => 'Rebooting…';
+
+  @override
+  String get virtMigrating => 'Migrating…';
+
+  @override
+  String get virtBackingUp => 'Backing up…';
+
+  @override
+  String get virtResume => 'Resume';
+
+  @override
+  String get virtOverview => 'Overview';
+
+  @override
+  String get virtConsole => 'Console';
+
+  @override
+  String get virtConsoleNone => 'No console is configured for this guest';
+
+  @override
+  String get virtConsoleGraphical => 'Graphical';
+
+  @override
+  String get virtConsoleSerialTip =>
+      'Opens the guest\'s serial console with virsh on the host. Disconnect, or Ctrl+], returns to the host\'s shell.';
+
+  @override
+  String get virtOffTip =>
+      'Start it to see live CPU, memory, disk and network here.';
+
+  @override
+  String get virtAllocated => 'Allocated';
+
+  @override
+  String virtRunningCount(int running, int total) {
+    return '$running running · $total in total';
+  }
+
+  @override
+  String get virtTemplate => 'Template';
+
+  @override
+  String get virtAutostart => 'Starts with the host';
+
+  @override
+  String get virtErrUnreachable => 'Could not reach this host';
+
+  @override
+  String get virtErrNotConfigured =>
+      'The PVE settings of this server are incomplete';
+
+  @override
+  String get virtErrNotConfiguredTip =>
+      'Check the address, and the password or API token, in the server\'s settings.';
+
+  @override
+  String get virtErrAuthFailed => 'The host refused the login';
+
+  @override
+  String get virtErrCertUnconfirmed => 'Confirm the host\'s certificate';
+
+  @override
+  String get virtErrCertChanged => 'The host\'s certificate has changed';
+
+  @override
+  String get virtErrRelayNotGranted =>
+      'The Monitor agent does not relay connections';
+
+  @override
+  String get virtErrExecNotGranted => 'The Monitor agent does not run commands';
+
+  @override
+  String get virtErrNotInstalled => 'virsh is not installed on this server';
+
+  @override
+  String get virtErrServerRemoved => 'This server no longer exists';
+
+  @override
+  String get virtErrSudoRequired => 'sudo needs a password to reach libvirt';
+
+  @override
+  String get virtErrSudoRejected => 'sudo rejected the password';
+
+  @override
+  String get virtErrInvalidResponse =>
+      'The host answered in an unexpected form';
+
+  @override
+  String get virtErrActionFailed => 'The host refused the action';
 }

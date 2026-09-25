@@ -14,6 +14,7 @@ import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
+import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
@@ -30,6 +31,7 @@ import 'package:server_box/data/store/migrations/m009_grouped_settings.dart';
 import 'package:server_box/data/store/migrations/m011_virt_key_rows.dart';
 import 'package:server_box/data/store/migrations/m013_virt_key_names.dart';
 import 'package:server_box/data/store/migrations/m021_home_tabs_bar.dart';
+import 'package:server_box/data/store/migrations/m030_pve_virt.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
 
@@ -75,6 +77,14 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     /// one. A server whose `bmc.credId` names an account this map does not
     /// carry restores with the address and no account, which the editor shows.
     @Default(<String, Object?>{}) Map<String, Object?> bmcCredentials,
+
+    /// Each server's `PveConfig`, by server id — `PveStore.getAllMap`.
+    ///
+    /// Absent from files written before PVE had a table of its own. Those
+    /// carry it inside the server record's `custom` instead — and so does
+    /// every file this build writes, for those builds to read. What [merge]
+    /// makes of either is `_pveToRestore`'s rule.
+    @Default(<String, Object?>{}) Map<String, Object?> pve,
   }) = _BackupV2;
 
   /// Must stay a single expression with a cascade, not a block body.
@@ -99,6 +109,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     late bool forwardsChanged;
     late bool remoteDesktopsChanged;
     late bool containerChanged;
+    var pveChanged = false;
     late Set<String> historyNotifications;
     late Set<String> settingNotifications;
 
@@ -160,6 +171,25 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
         )) {
           containerChanged = true;
           serversChanged = true;
+        }
+      }
+
+      // Same rule as the container host just above: a child of its server,
+      // restored exactly where the server was — and only as far as the file
+      // can speak for it, see [_pveToRestore].
+      final restoredPve = _pveWithRestoredServerIds(restored.serverIds);
+      for (final serverId in containerIds.union(restoredPve.keys.toSet())) {
+        if (!appliedServerIds.contains(serverId)) continue;
+        final value = _pveToRestore(
+          serverId,
+          restoredPve,
+          restored.servers[serverId],
+          force: force,
+        );
+        if (value == null) continue;
+        if (Stores.pve.restoreOne(serverId, value, notify: false)) {
+          serversChanged = true;
+          pveChanged = true;
         }
       }
 
@@ -227,6 +257,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       GlobalRef.gRef?.read(bmcCredentialProvider.notifier).reload();
     }
     if (containerChanged) GlobalRef.gRef?.invalidate(containerProvider);
+    if (pveChanged) Stores.pve.invalidate();
 
     _loggerV2.info('Merge completed');
   }
@@ -243,13 +274,14 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     return BackupV2(
       version: formatVer,
       date: DateTimeX.timestamp,
-      spis: Stores.server.getAllMap(),
+      spis: _withLegacyPve(Stores.server.getAllMap(), Stores.pve.fetchAll()),
       snippets: Stores.snippet.getAllMap(),
       keys: Stores.key.getAllMap(),
       bmcCredentials: Stores.bmcCredential.getAllMap(),
       portForwards: Stores.portForward.getAllMap(),
       remoteDesktopProfiles: Stores.remoteDesktop.getAllMap(),
       container: Stores.container.getAllMap(),
+      pve: Stores.pve.getAllMap(),
       history: _backupStore(Stores.history),
       settings: includeSettings
           ? _backupStore(
@@ -560,6 +592,79 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
   ) => {
     for (final entry in container.entries)
       serverIds[entry.key] ?? entry.key: entry.value,
+  };
+
+  Map<String, Object?> _pveWithRestoredServerIds(
+    Map<String, String> serverIds,
+  ) => {
+    for (final entry in pve.entries)
+      if (!_isInternalStoreKey(entry.key))
+        serverIds[entry.key] ?? entry.key: entry.value,
+  };
+
+  /// Whether this file was written by a build with `server_pve`, and so has
+  /// a [pve] section that is the complete state: every server with PVE has an
+  /// entry, and one without an entry has none.
+  bool get carriesPveSection => version > PveVirtMigration.appliedAt;
+
+  /// What restoring [serverId]'s PVE configuration writes: an entry for
+  /// `PveStore.restoreOne` (empty removes the row), or null to leave the row
+  /// as it is.
+  ///
+  /// **A file with a [pve] section** ([carriesPveSection]) is the whole
+  /// truth: its entry, or none, which removes the row. That is how removing
+  /// PVE on one device reaches the others.
+  ///
+  /// **A file from an older build** has no section; its server records carry
+  /// the legacy `custom.pveAddr`/`pvePwd` instead, which express an address
+  /// and a password and nothing else.
+  /// - Present: applied onto the row here with `PveConfig.mergeLegacy`, so
+  ///   an older device handing back a record it got from this build leaves
+  ///   the token and the pinned certificate alone.
+  /// - Absent: in a sync, the row is left alone. An older build writes no
+  ///   PVE fields for a server whose record it has not seen with them, and
+  ///   cannot say "removed" in any other way than it says "never had", so
+  ///   reading absence as removal lets one old device delete what a new one
+  ///   configured. The cost is that removing PVE *on an older build* does not
+  ///   reach newer ones. [force] (restoring a backup) is the exception: the
+  ///   user asked for the file's state, and at the time it was written the
+  ///   server had no PVE.
+  // TODO(migration): after 5 releases every file has the section; reduce this
+  // to its first branch, with `PveConfig.fromLegacyRecord` and `mergeLegacy`.
+  Map<String, Object?>? _pveToRestore(
+    String serverId,
+    Map<String, Object?> restoredPve,
+    Object? server, {
+    required bool force,
+  }) {
+    if (carriesPveSection) {
+      final entry = restoredPve[serverId];
+      return entry is Map
+          ? Map<String, Object?>.from(entry)
+          : const <String, Object?>{};
+    }
+    final legacy = PveConfig.fromLegacyRecord(server);
+    if (legacy != null) {
+      return PveConfig.mergeLegacy(Stores.pve.fetch(serverId), legacy).toJson();
+    }
+    return force ? const <String, Object?>{} : null;
+  }
+
+  /// [spis] with each server's PVE configuration also written into its
+  /// record's `custom`, where a build from before `server_pve` reads it —
+  /// see `PveConfig.toLegacyCustom`. Such a build ignores the [pve] section
+  /// and writes back only what it read.
+  // TODO(migration): remove after 5 releases.
+  static Map<String, Object?> _withLegacyPve(
+    Map<String, Object?> spis,
+    Map<String, PveConfig> pve,
+  ) => {
+    for (final MapEntry(:key, :value) in spis.entries)
+      key: switch ((value, pve[key])) {
+        (final Map record, final PveConfig cfg) =>
+          PveConfig.withLegacyCustom(record, cfg),
+        _ => value,
+      },
   };
 
   Map<String, Object?> _historyWithRestoredServerIds(
@@ -906,6 +1011,7 @@ Object? _toEncodable(Object? value) {
     final SshCredential ssh => ssh.toJson(),
     final MonitorHttpCredential monitor => monitor.toJson(),
     final BmcCfg bmc => bmc.toJson(),
+    final PveConfig pve => pve.toJson(),
     _ => throw UnsupportedError(
       'Cannot JSON-encode ${value.runtimeType}: missing supported toJson()',
     ),

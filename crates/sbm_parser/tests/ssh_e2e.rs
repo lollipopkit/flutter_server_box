@@ -553,7 +553,9 @@ fn ssh_e2e_unix_custom_and_disabled() {
         segments
             .get(&script::custom_result_key("e2e_probe"))
             .map(String::as_str),
-        Some("custom-cmd-works"),
+        // Byte-for-byte since the output is base64-carried: `echo`'s own
+        // newline is part of what the command printed
+        Some("custom-cmd-works\n"),
         "custom command segment must round-trip"
     );
     assert!(
@@ -761,5 +763,117 @@ fn ssh_e2e_windows_script_parse_matches_direct_commands() {
         status.disks.len(),
         status.net.len(),
         status.nvidia.len()
+    );
+}
+
+/// Feed a `virt` script to `sh` on stdin, as the app does (`entry: 'sh'`).
+fn run_virt(host: &str, script: &str) -> String {
+    let out = run_ssh(host, "sh", Some(script)).expect("run virt script");
+    String::from_utf8_lossy(&out.stdout).into_owned()
+}
+
+/// libvirt command layer against a real host: probe, overview, per-domain
+/// detail, and a power action aimed at a UUID that does not exist. No action
+/// is ever run against a real domain. Hosts without `virsh` pass silently.
+#[test]
+#[ignore = "requires SBM_E2E_SSH_HOST and a reachable SSH server"]
+fn ssh_e2e_virt() {
+    use sbm_parser::virt::{self, VirtAction, VirtError, VirtState};
+
+    let host =
+        ssh_host().expect("SBM_E2E_SSH_HOST must be set in the environment or workspace-root .env");
+
+    let version = match virt::parse_probe(&run_virt(&host, &virt::probe_script())) {
+        Ok(v) => v,
+        Err(VirtError::NotInstalled) => {
+            eprintln!("virsh not installed on {host}; skipping");
+            return;
+        }
+        Err(VirtError::PermissionDenied { message }) => {
+            eprintln!("virsh refused this user on {host} ({message}); skipping");
+            return;
+        }
+        Err(e) => panic!("probe failed: {e:?}"),
+    };
+    assert!(version.libvirt.is_some(), "{version:?}");
+
+    let raw = run_virt(&host, &virt::overview_script());
+    // Per-vCPU counters are filtered out on the host
+    assert!(
+        !raw.lines().any(|l| l.trim_start().starts_with("vcpu.0.")),
+        "per-vCPU lines reached the app"
+    );
+    let overview = virt::parse_overview(&raw).expect("overview");
+    assert_eq!(overview.version.as_ref(), Some(&version));
+
+    // Same set of domains as a direct listing
+    let direct = ssh(
+        &host,
+        "LC_ALL=C virsh --connect qemu:///system -q list --all --uuid",
+        None,
+    )
+    .expect("direct list");
+    let mut direct: Vec<String> = virt::parse_uuids(&direct);
+    let mut got: Vec<String> = overview.domains.iter().map(|d| d.uuid.clone()).collect();
+    direct.sort();
+    got.sort();
+    assert_eq!(got, direct);
+
+    for dom in &overview.domains {
+        // The numeric state agrees with virsh's own text for it
+        let text = ssh(
+            &host,
+            &format!(
+                "LC_ALL=C virsh --connect qemu:///system -q domstate --domain {}",
+                dom.uuid
+            ),
+            None,
+        )
+        .expect("domstate");
+        let expected = match text.trim() {
+            "running" | "idle" => VirtState::Running,
+            "shut off" | "crashed" => VirtState::Stopped,
+            "in shutdown" => VirtState::Stopping,
+            // The reason decides between these three
+            "paused" | "pmsuspended" => {
+                assert!(
+                    matches!(
+                        dom.state,
+                        VirtState::Paused | VirtState::Starting | VirtState::Stopping
+                    ),
+                    "{}: {:?}",
+                    dom.name,
+                    dom.state
+                );
+                dom.state
+            }
+            other => panic!("unexpected domstate {other:?}"),
+        };
+        assert_eq!(dom.state, expected, "{}: {}", dom.name, text.trim());
+
+        let detail = virt::parse_domain_detail(&run_virt(
+            &host,
+            &virt::domain_detail_script(&dom.uuid),
+        ))
+        .unwrap_or_else(|e| panic!("detail of {}: {e:?}", dom.name));
+        assert_eq!(detail.xml.uuid.as_deref(), Some(dom.uuid.as_str()));
+        assert_eq!(detail.xml.name.as_deref(), Some(dom.name.as_str()));
+        if dom.state != VirtState::Running {
+            assert!(detail.display.is_none());
+        } else if detail.xml.graphics.iter().any(|g| g.kind == "vnc" && g.socket.is_none()) {
+            // A running TCP VNC display resolves to a real port
+            let display = detail.display.as_ref().expect("running VNC display");
+            assert_eq!(display.protocol, "vnc");
+            assert!(display.port.is_some_and(|p| p >= 5900), "{display:?}");
+        }
+    }
+
+    let missing = virt::parse_action(&run_virt(
+        &host,
+        &virt::action_script(VirtAction::Start, "00000000-0000-4000-8000-00000000e2e0"),
+    ));
+    assert!(
+        matches!(missing, Err(VirtError::DomainNotFound { .. })),
+        "{missing:?}"
     );
 }

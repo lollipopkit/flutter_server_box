@@ -313,8 +313,8 @@ abstract final class HiveImport {
   /// Returns null for anything else, including a record whose adapter is still
   /// generated from the live model — those encode themselves.
   static Object? _fromLegacy(Object raw) => switch (raw) {
-    final LegacySpiV2 spi => spi.toSpi(),
-    final LegacySpiV3 spi => spi.toSpi(),
+    final LegacySpiV2 spi => spi.toJson(),
+    final LegacySpiV3 spi => spi.toJson(),
     final LegacyMonitorHttpCredentialV1 monitor => monitor.toJson(),
     final LegacyPrivateKeyV1 key => key.toJson(),
     final LegacySnippetV1 snippet => snippet.toJson(),

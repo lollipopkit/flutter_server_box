@@ -243,20 +243,16 @@ class ServerStore extends EntityStore<Spi> {
 
   /// Null when the record says nothing beyond the defaults.
   ///
-  /// The columns always have a value — `pve_ignore_cert` and `temp_is_celsius`
-  /// are `NOT NULL` with one — so building a [ServerCustom] unconditionally
-  /// would give every server a non-null `custom` it did not have before, and
-  /// put it in every backup.
+  /// `temp_is_celsius` always has a value — it is `NOT NULL` with a default —
+  /// so building a [ServerCustom] unconditionally would give every server a
+  /// non-null `custom` it did not have before, and put it in every backup.
   static ServerCustom? _customOf(Row row, Map<String, String>? cmds) {
     const strings = [
-      'pve_addr',
-      'pve_pwd',
       'prefer_temp_dev',
       'logo_url',
       'net_dev',
       'script_dir',
     ];
-    final pveIgnoreCert = (row['pve_ignore_cert'] as int) == 1;
     final tempIsCelsius = (row['temp_is_celsius'] as int) == 1;
     // Null unless both columns hold a value in range — the one place the pair
     // becomes a coordinate, since the schema has no way to say "both or
@@ -271,16 +267,12 @@ class ServerStore extends EntityStore<Spi> {
     // `tempIsCelsius` is false, while the column's default — and what an empty
     // record means here — is true, so the two would never match.
     if (cmds == null &&
-        !pveIgnoreCert &&
         tempIsCelsius &&
         geo == null &&
         strings.every((c) => row[c] == null)) {
       return null;
     }
     return ServerCustom(
-      pveAddr: row['pve_addr'] as String?,
-      pveIgnoreCert: pveIgnoreCert,
-      pvePwd: row['pve_pwd'] as String?,
       cmds: cmds,
       preferTempDev: row['prefer_temp_dev'] as String?,
       tempIsCelsius: tempIsCelsius,
@@ -327,9 +319,6 @@ class ServerStore extends EntityStore<Spi> {
       'bmc_addr',
       'bmc_cred_id',
       'bmc_cert_sha256',
-      'pve_addr',
-      'pve_ignore_cert',
-      'pve_pwd',
       'prefer_temp_dev',
       'temp_is_celsius',
       'logo_url',
@@ -378,9 +367,6 @@ class ServerStore extends EntityStore<Spi> {
       bmc?.addr,
       bmc?.credId,
       bmc?.certSha256,
-      custom?.pveAddr,
-      (custom?.pveIgnoreCert ?? false) ? 1 : 0,
-      custom?.pvePwd,
       custom?.preferTempDev,
       (custom?.tempIsCelsius ?? true) ? 1 : 0,
       custom?.logoUrl,
@@ -576,6 +562,7 @@ class ServerStore extends EntityStore<Spi> {
           'known_host',
           'container_host',
           'container_runtime',
+          'server_pve',
           'port_forward',
           'remote_desktop_profile',
           'conn_stat',

@@ -530,15 +530,20 @@ extension on _ServerDetailPageState {
   }
 
   Widget? _buildPve(ServerState si) {
-    final addr = si.spi.custom?.pveAddr;
-    if (addr == null || addr.isEmpty) return null;
-    // Nothing is read here: the guests are the PVE page's, and this card is
-    // the way to it rather than a summary of what it will say.
+    // One primary-key lookup; the row is not part of `Spi`.
+    if (Stores.pve.fetch(si.spi.id) == null) return null;
+    // Nothing is read here: the guests are the Virtualization tab's, and this
+    // card is the way to them rather than a summary of what they will say.
+    // The host is asked for before the tab, so a tab built by the switch finds
+    // the request already waiting.
     return _buildReadoutCard(
       cardKey: 'pve',
       icon: FontAwesome.server_solid,
       title: 'PVE',
-      onTap: () => PvePage.route.go(context, PvePageArgs(spi: si.spi)),
+      onTap: () {
+        ref.read(virtHostRequestProvider.notifier).go(si.spi.id);
+        ref.read(homeTabRequestProvider.notifier).go(AppTab.virt);
+      },
     );
   }
 
