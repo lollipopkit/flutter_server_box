@@ -67,7 +67,13 @@ extension AppTabViewX on AppTab {
   /// Not on the destination itself: `NavigationDestination.label` and
   /// [NavRailItem.label] are strings, and a bar that has to fit four of them
   /// on a phone is the last place with room for a second glyph.
-  Widget? get mark => this == AppTab.remoteDesktop ? const BetaTag() : null;
+  Widget? get mark => switch (this) {
+    AppTab.remoteDesktop ||
+    AppTab.agent ||
+    AppTab.benchmark ||
+    AppTab.virt => const BetaTag(),
+    _ => null,
+  };
 
   /// [label] with [mark], for a row that lists the tab rather than opening it.
   Widget get listTitle {

@@ -10,6 +10,7 @@ extension on _ServerDetailPageState {
     required String cardKey,
     required IconData icon,
     required String title,
+    Widget? mark,
     ({String text, ReadoutVerdict tone})? verdict,
     ({String value, String note})? headline,
     List<Widget> rows = const [],
@@ -21,6 +22,7 @@ extension on _ServerDetailPageState {
     return ServerDetailReadoutCard(
       icon: icon,
       title: title,
+      mark: mark,
       verdict: verdict,
       headline: headline,
       rows: rows,

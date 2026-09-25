@@ -1,5 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/view/page/home_tab.dart';
 import 'package:server_box/view/page/setting/entries/home_tabs.dart';
 
 void main() {
@@ -248,6 +251,41 @@ void main() {
         ),
         isNull,
       );
+    });
+  });
+
+  group('the mark a feature carries', () {
+    // Read off the enums rather than drawn: what the mark *looks* like is
+    // fl_lib's to test, and what matters here is which entries have one. A tab
+    // that gained a mark without the row that lists it being told would draw
+    // the mark nowhere at all.
+    test('the tabs still in beta carry one, the rest carry none', () {
+      final marked = {
+        for (final tab in AppTab.values)
+          if (tab.mark != null) tab,
+      };
+      expect(marked, {
+        AppTab.remoteDesktop,
+        AppTab.agent,
+        AppTab.benchmark,
+        AppTab.virt,
+      });
+    });
+
+    test('a tab with no mark is listed as plain text', () {
+      expect(AppTab.server.mark, isNull);
+      expect(AppTab.server.listTitle, isA<Text>());
+      expect(AppTab.virt.listTitle, isNot(isA<Text>()));
+    });
+  });
+
+  group('the server function marks', () {
+    test('only the remote desktop entry is still in beta', () {
+      final marked = {
+        for (final btn in ServerFuncBtn.values)
+          if (btn.mark != null) btn,
+      };
+      expect(marked, {ServerFuncBtn.remoteDesktop});
     });
   });
 }

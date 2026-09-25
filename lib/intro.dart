@@ -389,7 +389,11 @@ final class _IntroPage extends StatelessWidget {
 
     return _introList(
       children: [
-        ..._head(l10n.virtualization, padTop),
+        ..._head(
+          l10n.virtualization,
+          padTop,
+          mark: const BetaTag(height: BetaTag.heading),
+        ),
         _prose(l10n.virtIntro),
         ListTile(
           leading: const Icon(Icons.view_in_ar_outlined, size: _kIconSize),

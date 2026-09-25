@@ -87,7 +87,7 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
       child: SwitchListTile(
         contentPadding: const EdgeInsets.only(left: 17, right: 11),
         secondary: Icon(card.icon),
-        title: Text(card.toStr),
+        title: card.listTitle,
         value: enabled,
         onChanged: (_) => _toggle(card.name),
       ),

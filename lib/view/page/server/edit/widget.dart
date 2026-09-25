@@ -499,7 +499,7 @@ extension _Widgets on _ServerEditPageState {
         _buildOptionalTile(
           icon: Icons.tune,
           title: l10n.sshAdvanced,
-          summary: l10n.sshAdvancedTip,
+          summary: Text(l10n.sshAdvancedTip),
           children: [
             _buildAltUrl(),
             _buildProxyCommand(),
@@ -513,7 +513,7 @@ extension _Widgets on _ServerEditPageState {
         _buildOptionalTile(
           icon: Icons.image_outlined,
           title: l10n.appearanceAndPlace,
-          summary: l10n.appearanceAndPlaceTip,
+          summary: Text(l10n.appearanceAndPlaceTip),
           children: [
             Input(
               controller: _logoUrlCtrl,
@@ -532,7 +532,7 @@ extension _Widgets on _ServerEditPageState {
         _buildOptionalTile(
           icon: MingCute.dashboard_line,
           title: l10n.statusCollection,
-          summary: l10n.statusCollectionTip,
+          summary: Text(l10n.statusCollectionTip),
           children: [
             _buildDisabledCmdTypes(),
             _buildCustomCmds(),
@@ -544,25 +544,26 @@ extension _Widgets on _ServerEditPageState {
           key: _pveKey,
           icon: MingCute.server_line,
           title: 'PVE',
-          summary: 'Proxmox VE',
+          summary: const Text('Proxmox VE'),
           initiallyExpanded: widget.args?.section == ServerEditSection.pve,
           children: [_buildPVEs()],
         ),
         _buildOptionalTile(
           icon: MingCute.chip_line,
           title: 'BMC (Redfish)',
-          // The word, not the sentence: a right-aligned summary is a phrase
-          // read at a glance. The sentence is under the heading's `?`, first,
-          // because what matters about this one is that nothing here is
-          // guaranteed and this is where someone decides to turn it on.
-          summary: 'Beta',
+          // The mark, not the word: a right-aligned summary is a phrase read
+          // at a glance, and this one is the same word in every locale. The
+          // sentence is under the heading's `?`, first, because what matters
+          // about this one is that nothing here is guaranteed and this is
+          // where someone decides to turn it on.
+          summary: const BetaTag(),
           tip: '${l10n.betaTip}\n\n${l10n.bmcTip}',
           children: [_buildBmc()],
         ),
         _buildOptionalTile(
           icon: Icons.power_settings_new,
           title: 'Wake on LAN',
-          summary: 'Beta',
+          summary: const BetaTag(),
           tip: '${l10n.betaTip}\n\n${l10n.wolTip}',
           children: [_buildWOLs()],
         ),
@@ -586,7 +587,7 @@ extension _Widgets on _ServerEditPageState {
   Widget _buildOptionalTile({
     required IconData icon,
     required String title,
-    required String summary,
+    required Widget summary,
     required List<Widget> children,
     String? tip,
     Key? key,
@@ -597,7 +598,7 @@ extension _Widgets on _ServerEditPageState {
       initiallyExpanded: initiallyExpanded,
       leading: Icon(icon),
       title: tip == null ? Text(title) : TipText(title, tip),
-      summary: Text(summary),
+      summary: summary,
       children: children,
     );
   }
