@@ -16,14 +16,20 @@
 ///     again.
 ///   - `SBM_E2E_LIBVIRT_STOPPED` (`it's-"odd"`): shut off. Started and
 ///     destroyed when the host allows it.
+///
+///   The running and the stopped domain get snapshots named `sbxe2e-*`
+///   (their writable disks must be qcow2), reverted to and deleted again;
+///   pools and networks are only listed.
 /// - `SBM_E2E_PVE_HOST` — SSH destination of a Proxmox VE node. The API is
 ///   reached through an SSH channel to `https://localhost:8006`, and directly
 ///   at `SBM_E2E_PVE_ADDR` (default `https://<ssh hostname>:8006`).
 /// - `SBM_E2E_PVE_TOKEN_ID`, `SBM_E2E_PVE_TOKEN_SECRET` — an API token
 ///   (`user@realm!name`) with `VM.Audit`, `VM.PowerMgmt`, `VM.Console` and
 ///   `Sys.Audit`. Read from the environment only by this file; never printed.
-/// - `SBM_E2E_PVE_LXC` (default `200`): a running container. **Rebooted.** Its
-///   console is typed into, at the login prompt only.
+/// - `SBM_E2E_PVE_LXC` (default `200`): a running container. **Rebooted**, and
+///   over SSH **snapshotted, rolled back (and started again) and the snapshot
+///   deleted**, on a storage that supports snapshots. Its console is typed
+///   into, at the login prompt only.
 /// - `SBM_E2E_PVE_VM` (default `100`): a running VM with a `serialN` port and
 ///   a display. Only read: its serial console is connected to and closed
 ///   without input, its VNC console is authenticated and closed.
@@ -37,7 +43,9 @@
 ///   one `scsi0` disk of 8 GiB on `local-lvm`, a cloud-init drive on `ide2`,
 ///   one virtio NIC on `vmbr0` and `ostype: l26`; a guest that honours ACPI.
 ///   **Started, suspended, rebooted, shut down, force-stopped, locked with
-///   `qm set --lock` and unlocked, over each transport; left stopped.**
+///   `qm set --lock` and unlocked, over each transport; over SSH also
+///   snapshotted without and with memory, rolled back to each and the
+///   snapshots deleted; left stopped.**
 /// - `SBM_E2E_PVE_TEST_VM_ROOT_PASSWORD` (optional): root's password on that
 ///   serial console; the test logs in and runs a command. Unset, it only
 ///   checks that getty answers a login name.
@@ -166,6 +174,13 @@ Future<void> _libvirt() async {
         null,
       );
       final q = _shQuote;
+      for (final name in [runningName, stoppedName]) {
+        for (final snap in ['sbxe2e-a', 'sbxe2e-b', 'sbxe2e-off']) {
+          await virsh(
+            'snapshot-delete --domain ${q(name)} --snapshotname $snap',
+          );
+        }
+      }
       await virsh('start --domain ${q(runningName)}');
       await virsh('suspend --domain ${q(pausedName)}');
       await virsh('destroy --domain ${q(stoppedName)}');
@@ -292,6 +307,99 @@ Future<void> _libvirt() async {
       } finally {
         shell.close();
       }
+    });
+
+    test('snapshots: with memory on the running domain; revert keeps it '
+        'running', () async {
+      var run = await guest(runningName);
+      await virt.createSnapshot(run, name: 'sbxe2e-a', description: 'e2e');
+      await virt.createSnapshot(run, name: 'sbxe2e-b');
+      var list = await virt.snapshots(run);
+      final a = list.firstWhere((s) => s.name == 'sbxe2e-a');
+      final b = list.firstWhere((s) => s.name == 'sbxe2e-b');
+      // Internal snapshots of an active domain always hold its memory.
+      expect(a.withMemory, isTrue);
+      expect(a.description, 'e2e');
+      expect(b.parent, 'sbxe2e-a');
+      expect(b.current, isTrue);
+      expect(a.createdAt, isNotNull);
+
+      // A name taken is libvirt's refusal, in its words.
+      final taken = await _virtErr(virt.createSnapshot(run, name: 'sbxe2e-a'));
+      expect(taken.type, VirtErrType.actionFailed);
+      expect(taken.message, contains('already exists'));
+
+      await virt.revertSnapshot(run, 'sbxe2e-a');
+      run = await settle(runningName, VirtGuestState.running);
+      list = await virt.snapshots(run);
+      expect(list.firstWhere((s) => s.name == 'sbxe2e-a').current, isTrue);
+
+      await virt.deleteSnapshot(run, 'sbxe2e-b');
+      await virt.deleteSnapshot(run, 'sbxe2e-a');
+      list = await virt.snapshots(run);
+      expect(list.where((s) => s.name.startsWith('sbxe2e')), isEmpty);
+    });
+
+    test('snapshots: disks only while shut off, and a name that needs '
+        'quoting', () async {
+      final off = await guest(stoppedName);
+      await virt.createSnapshot(off, name: 'sbxe2e-off');
+      final snap = (await virt.snapshots(
+        off,
+      )).firstWhere((s) => s.name == 'sbxe2e-off');
+      expect(snap.withMemory, isFalse);
+      expect(snap.current, isTrue);
+      await virt.revertSnapshot(off, 'sbxe2e-off');
+      expect((await guest(stoppedName)).state, VirtGuestState.stopped);
+      await virt.deleteSnapshot(off, 'sbxe2e-off');
+      expect(
+        (await virt.snapshots(off)).where((s) => s.name == 'sbxe2e-off'),
+        isEmpty,
+      );
+    });
+
+    test('storage: pools, and the running domain on its volumes', () async {
+      final run = await guest(runningName);
+      final pools = await virt.storagePools();
+      expect(pools, isNotEmpty);
+      final active = pools.where((p) => p.active).toList();
+      expect(active, isNotEmpty);
+      var found = false;
+      for (final pool in active) {
+        expect(pool.capacity, greaterThan(0), reason: pool.name);
+        expect(pool.path, isNotNull, reason: pool.name);
+        final vols = await virt.volumes(pool);
+        expect(vols.length, pool.volumeCount, reason: pool.name);
+        for (final v in vols) {
+          expect(v.format, isNotNull, reason: v.name);
+          expect(v.capacity, greaterThan(0), reason: v.name);
+          if (v.users.any((u) => u.guestId == run.id)) found = true;
+        }
+      }
+      expect(found, isTrue, reason: 'no volume names $runningName');
+      for (final p in pools.where((p) => !p.active)) {
+        expect(await virt.volumes(p), isEmpty);
+      }
+    });
+
+    test('networks: the default NAT network with the running domain on it',
+        () async {
+      final run = await guest(runningName);
+      final nets = await virt.networks();
+      final def = nets.firstWhere(
+        (n) => n.name == 'default',
+        orElse: () => fail('no default network'),
+      );
+      expect(def.mode, 'nat');
+      expect(def.bridge, isNotNull);
+      expect(def.cidrs.single, matches(RegExp(r'^\d+\.\d+\.\d+\.\d+/\d+$')));
+      expect(def.dhcpRanges, isNotEmpty);
+      final nic = def.users.firstWhere(
+        (u) => u.guestId == run.id,
+        orElse: () => fail('$runningName is not on default'),
+      );
+      expect(nic.mac, matches(RegExp(r'^([0-9a-f]{2}:){5}[0-9a-f]{2}$')));
+      expect(nic.device, startsWith('vnet'));
     });
 
     test('power: resume and suspend the paused domain', () async {
@@ -502,6 +610,81 @@ Future<void> _pve() async {
         }
       });
 
+      test('storage: pools with their figures, volumes with their owners',
+          () async {
+        final snap = await pve.load();
+        final pools = await pve.storagePools();
+        expect(pools, isNotEmpty);
+        for (final p in pools.where((p) => p.active)) {
+          expect(p.node, isNotNull);
+          expect(p.capacity, greaterThan(0), reason: p.name);
+          expect(p.content, isNotEmpty, reason: p.name);
+        }
+        final vm = guestOf(snap, VirtGuestKind.qemu, vmId);
+        final images = pools.where(
+          (p) => p.active && p.content.contains('images'),
+        );
+        var owned = false;
+        for (final p in images) {
+          final vols = await pve.volumes(p);
+          if (vols.any((v) => v.users.any((u) => u.vmid == vm.vmid))) {
+            owned = true;
+          }
+        }
+        expect(owned, isTrue, reason: 'no volume of VM $vmId');
+      });
+
+      test('network: bridges with the guests on them', () async {
+        await pve.load();
+        final nets = await pve.networks();
+        final bridges = nets.where((n) => n.mode == 'bridge').toList();
+        expect(bridges, isNotEmpty);
+        final users = {
+          for (final b in bridges) ...b.users.map((u) => u.vmid),
+        };
+        expect(users, containsAll([vmId, lxcId]));
+        final withCidr = bridges.where((b) => b.cidrs.isNotEmpty);
+        expect(withCidr, isNotEmpty);
+        expect(bridges.first.ports, isNotEmpty);
+      });
+
+      if (path == 'over SSH') {
+        test('snapshots: the running container, rolled back and started '
+            'again, then deleted', () async {
+          var ct = guestOf(await pve.load(), VirtGuestKind.lxc, lxcId);
+          // A container never has memory to save, whatever is asked.
+          await pve.createSnapshot(
+            ct,
+            name: 'sbxe2e-ct',
+            description: 'e2e',
+            memory: true,
+          );
+          try {
+            final snap = (await pve.snapshots(
+              ct,
+            )).firstWhere((s) => s.name == 'sbxe2e-ct');
+            expect(snap.withMemory, isFalse);
+            expect(snap.current, isTrue);
+            expect(snap.description, 'e2e');
+            final taken = await _virtErr(
+              pve.createSnapshot(ct, name: 'sbxe2e-ct'),
+            );
+            expect(taken.type, VirtErrType.actionFailed);
+            expect(taken.message, contains('already used'));
+
+            await pve.revertSnapshot(ct, 'sbxe2e-ct', start: true);
+            ct = guestOf(await pve.load(), VirtGuestKind.lxc, lxcId);
+            expect(ct.state, VirtGuestState.running);
+          } finally {
+            await _whileLocked(() => pve.deleteSnapshot(ct, 'sbxe2e-ct'));
+          }
+          expect(
+            (await pve.snapshots(ct)).where((s) => s.name == 'sbxe2e-ct'),
+            isEmpty,
+          );
+        });
+      }
+
       if (path == 'over SSH') {
         test('power: reboot the container and wait for its task', () async {
           final ct = guestOf(await pve.load(), VirtGuestKind.lxc, lxcId);
@@ -687,11 +870,22 @@ Future<void> _pveTestVm() async {
         pin = pve.config.certSha256;
       });
       tearDownAll(() async {
-        // Stopped, whatever a failed test left behind.
+        // Stopped and without the test's snapshots, whatever a failed test
+        // left behind.
         try {
-          final g = await _pveVm(pve, vmid);
+          var g = await _pveVm(pve, vmid);
           if (g.actions.contains(VirtPowerAction.forceStop)) {
-            await pve.power(g, VirtPowerAction.forceStop);
+            final running = g;
+            await _whileLocked(
+              () => pve.power(running, VirtPowerAction.forceStop),
+            );
+            await _afterStop();
+            g = await _pveVm(pve, vmid);
+          }
+          for (final s in await pve.snapshots(g)) {
+            if (s.name.startsWith('sbxe2e')) {
+              await _whileLocked(() => pve.deleteSnapshot(g, s.name));
+            }
           }
         } finally {
           await pve.close();
@@ -928,6 +1122,58 @@ Future<void> _pveTestVm() async {
         expect(g.state, VirtGuestState.stopped);
         expect(g.actions, {VirtPowerAction.start});
       });
+
+      if (path == 'over SSH') {
+        test('snapshots: disks only while stopped, memory while running; '
+            'rollback to each, then deleted', () async {
+          var g = await vm();
+          expect(g.state, VirtGuestState.stopped);
+          // Straight after the force stop above: qmeventd's cleanup may
+          // still hold the config lock.
+          await _whileLocked(
+            () => pve.createSnapshot(g, name: 'sbxe2e-disk', memory: true),
+          );
+          var list = await pve.snapshots(g);
+          final disk = list.firstWhere((s) => s.name == 'sbxe2e-disk');
+          // Stopped: nothing to save, whatever was asked.
+          expect(disk.withMemory, isFalse);
+          expect(disk.current, isTrue);
+
+          await pve.power(g, VirtPowerAction.start);
+          g = await vm();
+          expect(g.state, VirtGuestState.running);
+          await pve.createSnapshot(g, name: 'sbxe2e-mem', memory: true);
+          list = await pve.snapshots(g);
+          final mem = list.firstWhere((s) => s.name == 'sbxe2e-mem');
+          expect(mem.withMemory, isTrue);
+          expect(mem.parent, 'sbxe2e-disk');
+
+          // Disks only: the running VM is stopped by it.
+          await pve.revertSnapshot(g, 'sbxe2e-disk');
+          g = await vm();
+          expect(g.state, VirtGuestState.stopped);
+          // With memory: running again, where it was.
+          await pve.revertSnapshot(g, 'sbxe2e-mem');
+          g = await vm();
+          expect(g.state, VirtGuestState.running);
+          list = await pve.snapshots(g);
+          expect(list.firstWhere((s) => s.name == 'sbxe2e-mem').current, isTrue);
+
+          // Straight after a rollback with memory the lock can still be
+          // held: a stop there failed twice on it (PVE 9.2).
+          final running = g;
+          await _whileLocked(
+            () => pve.power(running, VirtPowerAction.forceStop),
+          );
+          g = await vm();
+          await _whileLocked(() => pve.deleteSnapshot(g, 'sbxe2e-mem'));
+          await _whileLocked(() => pve.deleteSnapshot(g, 'sbxe2e-disk'));
+          expect(
+            (await pve.snapshots(g)).where((s) => s.name.startsWith('sbxe2e')),
+            isEmpty,
+          );
+        });
+      }
     });
   }
 }
@@ -950,6 +1196,28 @@ Future<VirtGuest> _pveVm(PveBackend pve, int vmid) async =>
 /// that window fails on it after 10 s (PVE 9.2, see virt.md). The cleanup
 /// takes well under a second when nothing has started yet.
 Future<void> _afterStop() => Future<void>.delayed(const Duration(seconds: 5));
+
+/// Runs [op] again while PVE refuses it on the guest's config lock
+/// (`can't lock file ... got timeout`), for up to a minute: a stop leaves
+/// `qmeventd`'s cleanup holding it for as long as 30 s (see [_afterStop]),
+/// and a rollback that starts the guest again holds it past its own task.
+Future<void> _whileLocked(Future<void> Function() op) async {
+  final deadline = DateTime.now().add(const Duration(minutes: 1));
+  while (true) {
+    try {
+      return await op();
+    } on VirtErr catch (e) {
+      final message = e.message ?? '';
+      final locked =
+          message.contains("can't lock file") ||
+          message.contains('Failed to obtain guest migration lock');
+      if (!locked || DateTime.now().isAfter(deadline)) rethrow;
+      // ignore: avoid_print
+      print('config lock held, again: ${e.message}');
+      await Future<void>.delayed(const Duration(seconds: 3));
+    }
+  }
+}
 
 /// Loads until the VM satisfies [test]: `/cluster/resources` catches up
 /// within pvestatd's ~10 s cycle.

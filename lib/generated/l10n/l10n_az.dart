@@ -3303,7 +3303,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get pveTokenTip =>
-      'PVE-də Datacenter → Permissions → API Tokens bölməsində yaradın. Göstəriləcək yollarda VM.Audit, VM.PowerMgmt, VM.Console və Sys.Audit lazımdır; imtiyaz ayrılması açıqdırsa, bunları tokenin özünə verin.';
+      'PVE-də Datacenter → Permissions → API Tokens bölməsində yaradın. Göstəriləcək yollarda VM.Audit, VM.PowerMgmt, VM.Console, VM.Snapshot, VM.Snapshot.Rollback, Datastore.Audit və Sys.Audit lazımdır; imtiyaz ayrılması açıqdırsa, bunları tokenin özünə verin.';
 
   @override
   String get pveTokenIdInvalid =>
@@ -3376,14 +3376,31 @@ class AppLocalizationsAz extends AppLocalizations {
   String get virtProbeNotChecked => 'Hələ yoxlanılmayıb';
 
   @override
-  String get virtProbeAbsent => 'virsh tapılmadı';
+  String get virtProbeAbsent => 'Host deyil';
+
+  @override
+  String virtProbeContainer(String kind) {
+    return '$kind konteyneri';
+  }
+
+  @override
+  String get virtProbeContainerTip =>
+      'Bu server konteynerdə işləyir, yəni host deyil, qonaqdır. Onu işlədən hostdan idarə olunur.';
+
+  @override
+  String get virtProbePve => 'PVE, qurulmayıb';
+
+  @override
+  String virtPveSetupTip(String version) {
+    return 'Bu serverdə $version işləyir. Virtual maşınlarını və konteynerlərini burada idarə etmək üçün server ayarlarında API girişini doldurun (API tokeni tövsiyə olunur).';
+  }
 
   @override
   String get virtNoHosts => 'Virtualizasiya hostu yoxdur';
 
   @override
   String get virtNoHostsTip =>
-      'PVE ünvanı olan server hostdur, virsh cavab verən server də. Digər serverləri host dəyişdiricisindən yoxlamaq olar.';
+      'Proxmox VE işlədən və API girişi doldurulmuş server hostdur, virsh cavab verən server də. Digər serverləri host dəyişdiricisindən yoxlamaq olar.';
 
   @override
   String get virtNoGuests => 'Virtual maşın və ya konteyner yoxdur';
@@ -3486,4 +3503,122 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get virtErrActionFailed => 'Host əməliyyatı rədd etdi';
+
+  @override
+  String get remoteSessionIdleTimeout => 'Tərk edildikdə bağla';
+
+  @override
+  String get remoteSessionIdleTimeoutTip =>
+      'Uzaq masaüstünü və ya qonağın konsolunu tərk etdikdən sonra bağlantının nə qədər açıq qalacağı. Bağlanmazdan əvvəl bildiriş onu saxlamaq üçün 10 saniyə verir.';
+
+  @override
+  String get remoteSessionKeepAlive => 'Açıq saxla';
+
+  @override
+  String remoteSessionClosingIn(int seconds) {
+    return '$seconds san sonra bağlanır';
+  }
+
+  @override
+  String get reopen => 'Yenidən aç';
+
+  @override
+  String get virtSnapshots => 'Snapshotlar';
+
+  @override
+  String get virtSnapshotCreate => 'Snapshot yarat';
+
+  @override
+  String get virtSnapshotNone => 'Hələ snapshot yoxdur';
+
+  @override
+  String get virtSnapshotWithMemory => 'Disklər və yaddaş';
+
+  @override
+  String get virtSnapshotDiskOnly => 'Yalnız disklər';
+
+  @override
+  String get virtSnapshotParent => 'Valideyn';
+
+  @override
+  String get virtSnapshotRevert => 'Geri qaytar';
+
+  @override
+  String get virtSnapshotMemory => 'Yaddaşı daxil et';
+
+  @override
+  String get virtSnapshotMemoryTip =>
+      'Geri qaytardıqda qonaq bu andan davam edir.';
+
+  @override
+  String get virtSnapshotMemoryAlways =>
+      'Burada işləyən qonağın snapshotu həmişə yaddaşı daxil edir.';
+
+  @override
+  String get virtSnapshotMemoryOff =>
+      'Qonaq işləmir, ona görə yalnız diskləri saxlanılır.';
+
+  @override
+  String get virtSnapshotNameInvalid =>
+      'Əvvəl hərf, sonra hərf, rəqəm, - və ya _; 2-dən 40-a qədər simvol.';
+
+  @override
+  String get virtSnapshotNameTaken => 'Bu adda snapshot artıq var.';
+
+  @override
+  String get virtSnapshotRevertTip =>
+      'Geri qaytarmaq snapshotdan sonrakı bütün dəyişiklikləri silir.';
+
+  @override
+  String virtSnapshotRevertAsk(String guest, String snapshot) {
+    return '$guest $snapshot vəziyyətinə qaytarılsın? O vaxtdan bəri bütün dəyişikliklər itəcək.';
+  }
+
+  @override
+  String virtSnapshotRevertStops(String guest) {
+    return 'Bu snapshotda yaddaş yoxdur: $guest dayandırılacaq.';
+  }
+
+  @override
+  String get virtSnapshotStartAfter => 'Sonra başlat';
+
+  @override
+  String get virtVolumes => 'Həcmlər';
+
+  @override
+  String get virtNoPools => 'Yaddaş hovuzu yoxdur';
+
+  @override
+  String get virtNoNetworks => 'Şəbəkə yoxdur';
+
+  @override
+  String get virtPoolInactive =>
+      'Hovuz aktiv deyil, ona görə həcmləri siyahılana bilmir.';
+
+  @override
+  String get virtShared => 'Qovşaqlar arasında paylaşılır';
+
+  @override
+  String get virtBackingFile => 'Əsas fayl';
+
+  @override
+  String get virtNetIsolated => 'Təcrid olunmuş';
+
+  @override
+  String get virtNetBridged => 'Körpü';
+
+  @override
+  String get virtNetRouted => 'Marşrutlaşdırılmış';
+
+  @override
+  String get virtBridge => 'Körpü';
+
+  @override
+  String get virtPorts => 'Portlar';
+
+  @override
+  String get virtAttachedGuests => 'Qoşulmuş qonaqlar';
+
+  @override
+  String get virtNoAttachedGuests => 'Qoşulmuş qonaq yoxdur';
 }

@@ -22,6 +22,25 @@ abstract class LibvirtVersion with _$LibvirtVersion {
       _$LibvirtVersionFromJson(json);
 }
 
+/// What the host probe found on a server (`VirtHostProbe`).
+@freezed
+abstract class VirtHostProbeResult with _$VirtHostProbeResult {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory VirtHostProbeResult({
+    /// `pveversion`'s line on a Proxmox VE host; nothing else was asked.
+    String? pve,
+
+    /// The container the server runs in (`lxc`, `docker`, …).
+    String? container,
+
+    /// `virsh version`, when `virsh` is installed and answered.
+    LibvirtVersion? libvirt,
+  }) = _VirtHostProbeResult;
+
+  factory VirtHostProbeResult.fromJson(Map<String, dynamic> json) =>
+      _$VirtHostProbeResultFromJson(json);
+}
+
 @freezed
 abstract class LibvirtBlockStats with _$LibvirtBlockStats {
   @JsonSerializable(fieldRename: FieldRename.snake)
@@ -140,4 +159,178 @@ abstract class LibvirtDomainDetail with _$LibvirtDomainDetail {
 
   factory LibvirtDomainDetail.fromJson(Map<String, dynamic> json) =>
       _$LibvirtDomainDetailFromJson(json);
+}
+
+/// `sbm_parser::virt::VirtSnapshotInfo`.
+@freezed
+abstract class LibvirtSnapshot with _$LibvirtSnapshot {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory LibvirtSnapshot({
+    required String name,
+    String? description,
+    String? parent,
+
+    /// `running`, `paused`, `shutoff`, `disk-snapshot`.
+    String? state,
+
+    /// Seconds since the epoch.
+    int? creationTime,
+    @Default(false) bool memory,
+    @Default(false) bool external,
+    @Default(false) bool current,
+  }) = _LibvirtSnapshot;
+
+  factory LibvirtSnapshot.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtSnapshotFromJson(json);
+}
+
+@freezed
+abstract class LibvirtVolumeRef with _$LibvirtVolumeRef {
+  const factory LibvirtVolumeRef({required String name, String? path}) =
+      _LibvirtVolumeRef;
+
+  factory LibvirtVolumeRef.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtVolumeRefFromJson(json);
+}
+
+/// `sbm_parser::virt::VirtPool`.
+@freezed
+abstract class LibvirtPool with _$LibvirtPool {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory LibvirtPool({
+    required String name,
+    String? uuid,
+    String? poolType,
+    @Default(false) bool active,
+    @Default(false) bool autostart,
+    int? capacity,
+    int? allocation,
+    int? available,
+    String? target,
+    String? source,
+
+    /// Null when they could not be listed (an inactive pool).
+    List<LibvirtVolumeRef>? volumes,
+  }) = _LibvirtPool;
+
+  factory LibvirtPool.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtPoolFromJson(json);
+}
+
+/// One disk of one domain (`domblklist --details`).
+@freezed
+abstract class LibvirtDiskUse with _$LibvirtDiskUse {
+  const factory LibvirtDiskUse({
+    required String domain,
+    @Default('') String kind,
+    @Default('') String device,
+    @Default('') String target,
+    String? source,
+  }) = _LibvirtDiskUse;
+
+  factory LibvirtDiskUse.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtDiskUseFromJson(json);
+}
+
+@freezed
+abstract class LibvirtStorage with _$LibvirtStorage {
+  const factory LibvirtStorage({
+    @Default(<LibvirtPool>[]) List<LibvirtPool> pools,
+    @Default(<LibvirtDiskUse>[]) List<LibvirtDiskUse> disks,
+  }) = _LibvirtStorage;
+
+  factory LibvirtStorage.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtStorageFromJson(json);
+}
+
+/// `sbm_parser::virt::VirtVolume`.
+@freezed
+abstract class LibvirtVolume with _$LibvirtVolume {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory LibvirtVolume({
+    required String name,
+    String? volType,
+    String? path,
+    String? format,
+    int? capacity,
+    int? allocation,
+    String? backing,
+  }) = _LibvirtVolume;
+
+  factory LibvirtVolume.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtVolumeFromJson(json);
+}
+
+@freezed
+abstract class LibvirtNetIp with _$LibvirtNetIp {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory LibvirtNetIp({
+    @Default('ipv4') String family,
+    required String cidr,
+    @Default(<String>[]) List<String> dhcpRanges,
+  }) = _LibvirtNetIp;
+
+  factory LibvirtNetIp.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtNetIpFromJson(json);
+}
+
+/// `sbm_parser::virt::VirtNetworkInfo`.
+@freezed
+abstract class LibvirtNetwork with _$LibvirtNetwork {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory LibvirtNetwork({
+    required String name,
+    String? uuid,
+    @Default(false) bool active,
+    @Default(false) bool autostart,
+    @Default('isolated') String mode,
+    String? bridge,
+    @Default(<String>[]) List<String> forwardDevs,
+    @Default(<LibvirtNetIp>[]) List<LibvirtNetIp> ips,
+    int? connections,
+  }) = _LibvirtNetwork;
+
+  factory LibvirtNetwork.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtNetworkFromJson(json);
+}
+
+/// One interface of one domain (`domiflist`).
+@freezed
+abstract class LibvirtIfaceUse with _$LibvirtIfaceUse {
+  const factory LibvirtIfaceUse({
+    required String domain,
+    String? interface,
+    @Default('') String kind,
+    String? source,
+    String? model,
+    String? mac,
+  }) = _LibvirtIfaceUse;
+
+  factory LibvirtIfaceUse.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtIfaceUseFromJson(json);
+}
+
+@freezed
+abstract class LibvirtLease with _$LibvirtLease {
+  const factory LibvirtLease({
+    required String network,
+    required String mac,
+    required String ip,
+    String? hostname,
+  }) = _LibvirtLease;
+
+  factory LibvirtLease.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtLeaseFromJson(json);
+}
+
+@freezed
+abstract class LibvirtNetworks with _$LibvirtNetworks {
+  const factory LibvirtNetworks({
+    @Default(<LibvirtNetwork>[]) List<LibvirtNetwork> networks,
+    @Default(<LibvirtIfaceUse>[]) List<LibvirtIfaceUse> ifaces,
+    @Default(<LibvirtLease>[]) List<LibvirtLease> leases,
+  }) = _LibvirtNetworks;
+
+  factory LibvirtNetworks.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtNetworksFromJson(json);
 }

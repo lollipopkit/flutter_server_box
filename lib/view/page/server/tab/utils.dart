@@ -43,7 +43,7 @@ extension _Actions on _ServerPageState {
     if (srv.canViewDetails) {
       ServerDetailPage.route.go(context, SpiRequiredArgs(srv.spi));
     } else {
-      ServerEditPage.route.go(context, args: SpiRequiredArgs(srv.spi));
+      ServerEditPage.route.go(context, args: ServerEditArgs(srv.spi));
     }
   }
 
@@ -62,7 +62,7 @@ extension _Actions on _ServerPageState {
     ServerListDensity density = ServerListDensity.cards,
   }) {
     if (srv.conn == ServerConn.disconnected && srv.status.err == null) {
-      ServerEditPage.route.go(context, args: SpiRequiredArgs(srv.spi));
+      ServerEditPage.route.go(context, args: ServerEditArgs(srv.spi));
       return;
     }
 

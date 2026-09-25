@@ -43,12 +43,29 @@ import 'package:server_box/view/widget/ssh_discovery/dialog.dart';
 part 'actions.dart';
 part 'widget.dart';
 
+/// A group of the editor to open on arrival, for a page that sent the user
+/// here to fill in that group.
+enum ServerEditSection {
+  /// Proxmox VE, from a server the Virtualization tab found running it.
+  /// Gets the local API address when nothing is configured yet.
+  pve,
+}
+
+final class ServerEditArgs {
+  final Spi spi;
+
+  /// Opened and scrolled to once the page is laid out.
+  final ServerEditSection? section;
+
+  const ServerEditArgs(this.spi, {this.section});
+}
+
 class ServerEditPage extends ConsumerStatefulWidget {
-  final SpiRequiredArgs? args;
+  final ServerEditArgs? args;
 
   const ServerEditPage({super.key, this.args});
 
-  static const route = AppRoute<bool, SpiRequiredArgs>(
+  static const route = AppRoute<bool, ServerEditArgs>(
     page: ServerEditPage.new,
     path: '/servers/edit',
   );
@@ -69,6 +86,9 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _pveAddrCtrl = TextEditingController();
+
+  /// The PVE group, for [ServerEditSection.pve] to scroll to.
+  final _pveKey = GlobalKey();
   final _pvePwdCtrl = TextEditingController();
   final _pveTokenIdCtrl = TextEditingController();
   final _pveTokenSecretCtrl = TextEditingController();
@@ -401,6 +421,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   void afterFirstLayout(BuildContext context) {
     if (spi != null) {
       _initWithSpi(spi!);
+      if (widget.args?.section case final section?) _openSection(section);
     } else if (isDesktop && Stores.setting.firstTimeReadSSHCfg.fetch()) {
       _checkSSHConfigImport();
     }

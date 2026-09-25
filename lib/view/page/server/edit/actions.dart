@@ -914,6 +914,26 @@ extension _Utils on _ServerEditPageState {
     );
   }
 
+  void _openSection(ServerEditSection section) {
+    switch (section) {
+      case ServerEditSection.pve:
+        // The API as the server itself sees it, which every transport can
+        // reach (`ServerTcpDialer`).
+        if (_pveAddrCtrl.text.trim().isEmpty) {
+          _pveAddrCtrl.text = PveConfig.localAddr;
+        }
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final ctx = _pveKey.currentContext;
+          if (ctx == null || !ctx.mounted) return;
+          Scrollable.ensureVisible(
+            ctx,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+          );
+        });
+    }
+  }
+
   void _initWithSpi(Spi spi) {
     _nameController.text = spi.name;
 

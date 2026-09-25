@@ -4242,7 +4242,7 @@
   "@pveTokenSecret": {
     "description": "Label for the Proxmox VE API token secret field."
   },
-  "pveTokenTip": "Create one in PVE under Datacenter → Permissions → API Tokens. It needs VM.Audit, VM.PowerMgmt, VM.Console and Sys.Audit on the paths to show; with privilege separation on, grant them to the token itself.",
+  "pveTokenTip": "Create one in PVE under Datacenter → Permissions → API Tokens. It needs VM.Audit, VM.PowerMgmt, VM.Console, VM.Snapshot, VM.Snapshot.Rollback, Datastore.Audit and Sys.Audit on the paths to show; with privilege separation on, grant them to the token itself.",
   "@pveTokenTip": {
     "description": "Help text explaining how to create a Proxmox VE API token and which privileges it needs."
   },
@@ -4326,15 +4326,43 @@
   "@virtProbeNotChecked": {
     "description": "A server not yet checked for libvirt."
   },
-  "virtProbeAbsent": "virsh not found",
+  "virtProbeAbsent": "Not a host",
   "@virtProbeAbsent": {
-    "description": "A server checked for libvirt that has no virsh."
+    "description": "A server checked for virtualization that has neither Proxmox VE nor virsh."
+  },
+  "virtProbeContainer": "{kind} container",
+  "@virtProbeContainer": {
+    "description": "A checked server that is itself a container (a guest), e.g. 'LXC container'.",
+    "placeholders": {
+      "kind": {
+        "type": "String",
+        "example": "LXC"
+      }
+    }
+  },
+  "virtProbeContainerTip": "This server runs in a container, so it is a guest rather than a host. It is managed from the host that runs it.",
+  "@virtProbeContainerTip": {
+    "description": "Tooltip on a checked server that runs in a container."
+  },
+  "virtProbePve": "PVE, not set up",
+  "@virtProbePve": {
+    "description": "A checked server that runs Proxmox VE but has no PVE API access configured."
+  },
+  "virtPveSetupTip": "{version} is running on this server. Fill in its API access in the server's settings (an API token is recommended) to manage its virtual machines and containers here.",
+  "@virtPveSetupTip": {
+    "description": "Dialog body offering to configure PVE API access for a server found running Proxmox VE.",
+    "placeholders": {
+      "version": {
+        "type": "String",
+        "example": "pve-manager/9.2.2"
+      }
+    }
   },
   "virtNoHosts": "No virtualization hosts",
   "@virtNoHosts": {
     "description": "Shown when no server is a virtualization host."
   },
-  "virtNoHostsTip": "A server with a PVE address is a host, and so is one where virsh answers. The other servers can be checked from the host switcher.",
+  "virtNoHostsTip": "A server running Proxmox VE, with its API access filled in, is a host, and so is one where virsh answers. The other servers can be checked from the host switcher.",
   "@virtNoHostsTip": {
     "description": "Explains which servers count as virtualization hosts."
   },
@@ -4473,5 +4501,163 @@
   "virtErrActionFailed": "The host refused the action",
   "@virtErrActionFailed": {
     "description": "Error: the host refused a power action or it failed."
+  },
+  "remoteSessionIdleTimeout": "Close when left idle",
+  "@remoteSessionIdleTimeout": {
+    "description": "Settings row: how long a remote desktop or guest console stays connected after the user leaves it."
+  },
+  "remoteSessionIdleTimeoutTip": "How long a remote desktop or a guest's console stays connected after you leave it. Before it closes, a notice gives you 10 seconds to keep it.",
+  "@remoteSessionIdleTimeoutTip": {
+    "description": "Help text for the remote session idle timeout setting."
+  },
+  "remoteSessionKeepAlive": "Keep alive",
+  "@remoteSessionKeepAlive": {
+    "description": "Button on the notice before an idle remote session closes: keeps it open for another full timeout."
+  },
+  "remoteSessionClosingIn": "Closing in {seconds} s",
+  "@remoteSessionClosingIn": {
+    "description": "Countdown on the notice before an idle remote session closes.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "reopen": "Reopen",
+  "@reopen": {
+    "description": "Button: show a console that is still running again."
+  },
+  "virtSnapshots": "Snapshots",
+  "@virtSnapshots": {
+    "description": "A guest view and its heading: the guest's snapshots."
+  },
+  "virtSnapshotCreate": "Take a snapshot",
+  "@virtSnapshotCreate": {
+    "description": "Button that opens the form for a new snapshot, and the form's confirm button."
+  },
+  "virtSnapshotNone": "No snapshots yet",
+  "@virtSnapshotNone": {
+    "description": "Shown when a guest has no snapshots."
+  },
+  "virtSnapshotWithMemory": "Disks and memory",
+  "@virtSnapshotWithMemory": {
+    "description": "What a snapshot holds: the disks and the running memory."
+  },
+  "virtSnapshotDiskOnly": "Disks only",
+  "@virtSnapshotDiskOnly": {
+    "description": "What a snapshot holds: the disks only, no memory."
+  },
+  "virtSnapshotParent": "Parent",
+  "@virtSnapshotParent": {
+    "description": "The snapshot another one was taken on top of."
+  },
+  "virtSnapshotRevert": "Revert",
+  "@virtSnapshotRevert": {
+    "description": "Action: revert the guest to a snapshot."
+  },
+  "virtSnapshotMemory": "Include memory",
+  "@virtSnapshotMemory": {
+    "description": "Switch in the snapshot form: also save the guest's memory."
+  },
+  "virtSnapshotMemoryTip": "Reverting resumes the guest at this moment.",
+  "@virtSnapshotMemoryTip": {
+    "description": "Under the memory switch: what saving memory gives."
+  },
+  "virtSnapshotMemoryAlways": "A snapshot of a running guest always includes its memory here.",
+  "@virtSnapshotMemoryAlways": {
+    "description": "Under the memory switch on libvirt: an internal snapshot of a running guest always includes its memory."
+  },
+  "virtSnapshotMemoryOff": "The guest is not running, so only its disks are saved.",
+  "@virtSnapshotMemoryOff": {
+    "description": "Snapshot form of a guest that is not running: only disks are saved."
+  },
+  "virtSnapshotNameInvalid": "A letter first, then letters, digits, - or _; 2 to 40 characters.",
+  "@virtSnapshotNameInvalid": {
+    "description": "Error under the snapshot name field."
+  },
+  "virtSnapshotNameTaken": "A snapshot with this name exists.",
+  "@virtSnapshotNameTaken": {
+    "description": "Error under the snapshot name field."
+  },
+  "virtSnapshotRevertTip": "Reverting discards every change made since the snapshot.",
+  "@virtSnapshotRevertTip": {
+    "description": "Note under the snapshot list."
+  },
+  "virtSnapshotRevertAsk": "Revert {guest} to {snapshot}? Every change since it was taken is lost.",
+  "@virtSnapshotRevertAsk": {
+    "description": "Revert confirmation.",
+    "placeholders": {
+      "guest": {
+        "type": "String"
+      },
+      "snapshot": {
+        "type": "String"
+      }
+    }
+  },
+  "virtSnapshotRevertStops": "This snapshot has no memory: {guest} will be stopped.",
+  "@virtSnapshotRevertStops": {
+    "description": "Revert confirmation when the snapshot has no memory and the guest is running.",
+    "placeholders": {
+      "guest": {
+        "type": "String"
+      }
+    }
+  },
+  "virtSnapshotStartAfter": "Start it afterwards",
+  "@virtSnapshotStartAfter": {
+    "description": "Switch in the revert confirmation: start the guest after reverting to a snapshot without memory."
+  },
+  "virtVolumes": "Volumes",
+  "@virtVolumes": {
+    "description": "Heading over the volumes of a storage pool."
+  },
+  "virtNoPools": "No storage pools",
+  "@virtNoPools": {
+    "description": "Shown when a host has no storage pools."
+  },
+  "virtNoNetworks": "No networks",
+  "@virtNoNetworks": {
+    "description": "Shown when a host has no networks."
+  },
+  "virtPoolInactive": "The pool is not active, so its volumes cannot be listed.",
+  "@virtPoolInactive": {
+    "description": "A storage pool that is not active: its volumes cannot be listed."
+  },
+  "virtShared": "Shared between nodes",
+  "@virtShared": {
+    "description": "A PVE storage shared between cluster nodes."
+  },
+  "virtBackingFile": "Backing file",
+  "@virtBackingFile": {
+    "description": "The file a qcow2 volume is layered on."
+  },
+  "virtNetIsolated": "Isolated",
+  "@virtNetIsolated": {
+    "description": "libvirt network mode: guests reach each other and the host only."
+  },
+  "virtNetBridged": "Bridged",
+  "@virtNetBridged": {
+    "description": "libvirt network mode: guests are on a host bridge."
+  },
+  "virtNetRouted": "Routed",
+  "@virtNetRouted": {
+    "description": "libvirt network mode: routed without NAT."
+  },
+  "virtBridge": "Bridge",
+  "@virtBridge": {
+    "description": "A network's bridge device."
+  },
+  "virtPorts": "Ports",
+  "@virtPorts": {
+    "description": "The devices a bridge or bond uses."
+  },
+  "virtAttachedGuests": "Guests on it",
+  "@virtAttachedGuests": {
+    "description": "Heading over the guests with a NIC on a network."
+  },
+  "virtNoAttachedGuests": "No guest is on it",
+  "@virtNoAttachedGuests": {
+    "description": "No guest has a NIC on this network."
   }
 }

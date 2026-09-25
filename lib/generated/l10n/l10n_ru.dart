@@ -3313,7 +3313,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get pveTokenTip =>
-      'Создайте его в PVE: Датацентр → Права доступа → API Tokens. Нужны права VM.Audit, VM.PowerMgmt, VM.Console и Sys.Audit на отображаемых путях; при включённом разделении привилегий выдайте их самому токену.';
+      'Создайте его в PVE: Датацентр → Права доступа → API Tokens. Нужны права VM.Audit, VM.PowerMgmt, VM.Console, VM.Snapshot, VM.Snapshot.Rollback, Datastore.Audit и Sys.Audit на отображаемых путях; при включённом разделении привилегий выдайте их самому токену.';
 
   @override
   String get pveTokenIdInvalid =>
@@ -3386,14 +3386,31 @@ class AppLocalizationsRu extends AppLocalizations {
   String get virtProbeNotChecked => 'Ещё не проверен';
 
   @override
-  String get virtProbeAbsent => 'virsh не найден';
+  String get virtProbeAbsent => 'Не хост';
+
+  @override
+  String virtProbeContainer(String kind) {
+    return 'Контейнер $kind';
+  }
+
+  @override
+  String get virtProbeContainerTip =>
+      'Этот сервер работает в контейнере, то есть это гость, а не хост. Управлять им нужно с хоста, на котором он запущен.';
+
+  @override
+  String get virtProbePve => 'PVE, не настроен';
+
+  @override
+  String virtPveSetupTip(String version) {
+    return 'На этом сервере работает $version. Укажите доступ к API в настройках сервера (рекомендуется API-токен), чтобы управлять здесь его виртуальными машинами и контейнерами.';
+  }
 
   @override
   String get virtNoHosts => 'Нет хостов виртуализации';
 
   @override
   String get virtNoHostsTip =>
-      'Сервер с адресом PVE является хостом, как и сервер, на котором отвечает virsh. Остальные серверы можно проверить в переключателе хостов.';
+      'Сервер с Proxmox VE и указанным доступом к API является хостом, как и сервер, на котором отвечает virsh. Остальные серверы можно проверить в переключателе хостов.';
 
   @override
   String get virtNoGuests => 'Нет виртуальных машин или контейнеров';
@@ -3496,4 +3513,122 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get virtErrActionFailed => 'Хост отклонил действие';
+
+  @override
+  String get remoteSessionIdleTimeout => 'Закрывать после ухода';
+
+  @override
+  String get remoteSessionIdleTimeoutTip =>
+      'Сколько удалённый рабочий стол или консоль гостя остаются подключёнными после того, как вы их покинули. Перед закрытием уведомление даёт 10 секунд, чтобы сохранить подключение.';
+
+  @override
+  String get remoteSessionKeepAlive => 'Не закрывать';
+
+  @override
+  String remoteSessionClosingIn(int seconds) {
+    return 'Закроется через $seconds с';
+  }
+
+  @override
+  String get reopen => 'Открыть снова';
+
+  @override
+  String get virtSnapshots => 'Снимки';
+
+  @override
+  String get virtSnapshotCreate => 'Сделать снимок';
+
+  @override
+  String get virtSnapshotNone => 'Снимков пока нет';
+
+  @override
+  String get virtSnapshotWithMemory => 'Диски и память';
+
+  @override
+  String get virtSnapshotDiskOnly => 'Только диски';
+
+  @override
+  String get virtSnapshotParent => 'Родитель';
+
+  @override
+  String get virtSnapshotRevert => 'Откатить';
+
+  @override
+  String get virtSnapshotMemory => 'Включить память';
+
+  @override
+  String get virtSnapshotMemoryTip =>
+      'После отката гость продолжит работу с этого момента.';
+
+  @override
+  String get virtSnapshotMemoryAlways =>
+      'Здесь снимок работающего гостя всегда включает память.';
+
+  @override
+  String get virtSnapshotMemoryOff =>
+      'Гость не запущен, поэтому сохраняются только диски.';
+
+  @override
+  String get virtSnapshotNameInvalid =>
+      'Сначала буква, затем буквы, цифры, - или _; от 2 до 40 символов.';
+
+  @override
+  String get virtSnapshotNameTaken => 'Снимок с таким именем уже есть.';
+
+  @override
+  String get virtSnapshotRevertTip =>
+      'Откат отменит все изменения, сделанные после снимка.';
+
+  @override
+  String virtSnapshotRevertAsk(String guest, String snapshot) {
+    return 'Откатить $guest к $snapshot? Все изменения после него будут потеряны.';
+  }
+
+  @override
+  String virtSnapshotRevertStops(String guest) {
+    return 'В этом снимке нет памяти: $guest будет остановлен.';
+  }
+
+  @override
+  String get virtSnapshotStartAfter => 'Запустить после';
+
+  @override
+  String get virtVolumes => 'Тома';
+
+  @override
+  String get virtNoPools => 'Нет пулов хранения';
+
+  @override
+  String get virtNoNetworks => 'Нет сетей';
+
+  @override
+  String get virtPoolInactive =>
+      'Пул не активен, поэтому его тома нельзя перечислить.';
+
+  @override
+  String get virtShared => 'Общий для узлов';
+
+  @override
+  String get virtBackingFile => 'Базовый файл';
+
+  @override
+  String get virtNetIsolated => 'Изолированная';
+
+  @override
+  String get virtNetBridged => 'Мост';
+
+  @override
+  String get virtNetRouted => 'Маршрутизируемая';
+
+  @override
+  String get virtBridge => 'Мост';
+
+  @override
+  String get virtPorts => 'Порты';
+
+  @override
+  String get virtAttachedGuests => 'Гости в ней';
+
+  @override
+  String get virtNoAttachedGuests => 'Гостей нет';
 }

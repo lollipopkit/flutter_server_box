@@ -18,6 +18,9 @@ Design: Claude Design project `2a6eadf3-ac6c-4925-bb18-8f763a0c3ead`,
 | libvirt access | `virsh` run through `ServerExec`. libvirt has no HTTP API enabled by default, so there is nothing to tunnel. |
 | PVE auth | Password (+ TOTP), as today, **plus API token** (`PVEAPIToken=user@realm!tokenid=secret`). New configurations are pointed at tokens. |
 | Phase 1 scope | Tab, host switcher, guest list and state, power actions, overview (charts), console, IntroPage, migration of the old PVE entry. |
+| Phase 2 scope | Snapshots (list, create, revert, delete) for both backends; Storage and Network sections, read-only: pools/storages with their volumes, networks/interfaces with the guests on them. |
+| libvirt snapshots | Internal (`snapshot-create-as` without `--disk-only`): every writable disk must be qcow2, and an active domain's snapshot always holds its memory — QEMU refuses an internal one without it, so the form shows the memory switch on and fixed. External snapshots are left out: reverting them needs libvirt ≥ 9.9 and they add overlay files to every disk. |
+| Snapshot names | PVE's `pve-configid` rule (a letter, then letters, digits, `-`, `_`; 2–40), for both backends, and never `current` (PVE's "you are here" entry). A name never needs quoting to be read back. |
 
 ## Current PVE implementation (what is being migrated)
 
@@ -114,8 +117,9 @@ certificate is an error with the old and new fingerprints.
   (`server_pve.token_id`, `server_pve.token_secret`). Never logged; error messages name the
   token id, never the secret.
 - The editor offers token first; the help text lists the minimum privileges
-  for phase 1 (`VM.Audit`, `VM.PowerMgmt`, `VM.Console`, `Sys.Audit` on the
-  paths the user wants shown).
+  (`VM.Audit`, `VM.PowerMgmt`, `VM.Console`, `Sys.Audit` on the paths the
+  user wants shown; since phase 2 also `VM.Snapshot`, `VM.Snapshot.Rollback`
+  and `Datastore.Audit`).
 
 ### libvirt
 
@@ -142,6 +146,23 @@ A server is a virtualization host when:
   every other server only through "Check this server" / "Check all". Cached
   per server for the session. A server that has both is shown as PVE.
 
+The probe (`sbm_parser::virt::probe_script`, one round trip) asks, in order:
+
+1. `pveversion`. Present: the server runs PVE, nothing else is asked
+   (`VirtProbeStatus.pve`). Without a `server_pve` row it is not a host yet —
+   the switcher shows it as "PVE, not set up", and tapping it opens the
+   server editor on its PVE group with `PveConfig.localAddr`
+   (`https://127.0.0.1:8006`, resolved on the server's side of any
+   transport) filled in. Saving the token makes it a host.
+2. Whether the server is a container (`systemd-detect-virt -c`,
+   `/run/systemd/container`, `openrc --sys` for Alpine,
+   `/proc/1/environ` as root, Docker/Podman marker files). A container is a
+   guest: its row says "LXC container" and that it is managed from its host.
+3. `virsh version`, as before.
+
+Verified on the PVE 9.2.2 host (PVE), its Alpine LXC 200 as root and as
+`nobody` (`lxc`, from `openrc --sys`) and VM 100 (libvirt 11.3.0).
+
 The host switcher lists hosts first and offers the other servers under
 "Check this server" (runs the probe on demand), so a server is never hidden
 because it was not probed yet.
@@ -156,9 +177,15 @@ because it was not probed yet.
 - `VirtGuest { id, name, kind, state, vmid?, node?, vcpu, memBytes, uptime, tags }`.
 - `VirtStats` — CPU %, memory, disk read/write, net in/out, as rates; the
   charts reuse `MetricChart` and `ChartPalette`.
-- `VirtCapabilities` per host — `lxc`, `pause`, `snapshots`, `backup`,
-  `cluster`, `serialConsole`, `vncConsole`, `termConsole`. The UI shows or
-  hides by capability, never by `kind`.
+- `VirtCapabilities` per host — `lxc`, `pause`, `snapshots`,
+  `snapshotMemoryRequired`, `storage`, `network`, `backup`, `cluster`,
+  `serialConsole`, `vncConsole`, `termConsole`, `storedHistory`. The UI shows
+  or hides by capability, never by `kind`.
+- `virt_resources.dart`: `VirtGuestSnapshot` (parent, time, description,
+  `current`, `withMemory`; `virtSnapshotTree` orders them depth-first),
+  `VirtStoragePool`, `VirtVolume`, `VirtNetwork` and `VirtGuestRef` (a guest by
+  libvirt UUID or PVE VMID, with the disk target or NIC and its MAC/address).
+  `VirtSnapshot` stays the name of one load of a host.
 
 Freezed + json_serializable; nothing here is persisted except the host
 config below, so no store changes beyond the PVE columns.
@@ -188,6 +215,31 @@ config below, so no store changes beyond the PVE columns.
 - A libvirt VNC display with a password is not supported: `dumpxml` without
   `--security-info` does not show it, and nothing asks for it.
 
+### Snapshots, storage and networks (phase 2)
+
+| | libvirt (`virsh` through `ensureExec()`) | PVE (HTTP API) |
+| --- | --- | --- |
+| Snapshot list | `snapshots_script`: `snapshot-current --name`, `snapshot-list --name`, then `snapshot-dumpxml` per name in a `sh` loop — one round trip | `GET .../{qemu,lxc}/{vmid}/snapshot`; the `current` entry's `parent` is the current snapshot |
+| Create | `snapshot-create-as --name --description` (internal; memory when active) | `POST .../snapshot` `snapname`, `description`, `vmstate=1` (VMs only), then the UPID's task |
+| Revert | `snapshot-revert [--running]` | `POST .../snapshot/{name}/rollback` `start=1`, the task, then the separate `qmstart`/`vzstart` task it begins |
+| Delete | `snapshot-delete` (children move up) | `DELETE .../snapshot/{name}`, the task |
+| Pools | `storage_script`: `pool-list --all/--autostart --name`, `pool-dumpxml` and `vol-list` (with its header) per pool, `domblklist --details` per domain | `GET /nodes/{node}/storage` per online node, with `GET /storage` for paths (skipped without `Datastore.Audit`) |
+| Volumes | `volumes_script(pool, names)`: `vol-dumpxml` per volume named by the last listing; users by disk source path | `GET /nodes/{node}/storage/{id}/content`; users by `vmid` |
+| Networks | `networks_script`: `net-list`, `net-dumpxml` per network, `net-dhcp-leases` per active one, `domiflist` per domain | `GET /nodes/{node}/network` per online node; users from each guest's `config` `netN: bridge=` (4 at a time) |
+
+- A reverted snapshot without memory leaves the guest stopped; the revert
+  dialog says so in red for an active guest and offers to start it again
+  (`--running` / `start=1`). A snapshot operation is one per guest and blocks
+  power actions on it (`VirtHostState.snapshotOps`), and the reverse.
+- Scripts, parsers and fixtures: `sbm_parser::virt` (`snapshots_script`,
+  `storage_script`, `volumes_script`, `networks_script`, the three snapshot
+  actions), `tests/fixtures/virt/script_*.txt` captured from the libvirt host.
+  PVE payloads: `test/fixtures/pve/`, captured from PVE 9.2.2.
+- The providers (`virtSnapshotsProvider`, `virtStoragePoolsProvider`,
+  `virtVolumesProvider`, `virtNetworksProvider`) do not retry by themselves:
+  an attempt may run `virsh` through sudo or log in, and a failure is shown
+  with its own retry.
+
 ## Verified against real hosts
 
 `test/e2e/virt_real_test.dart` (opt-in; its header lists the variables) and
@@ -215,9 +267,27 @@ Debian 13 over SSH. What they established:
 | Refused session | A disabled account's ticket gets `401 Authentication failed!`, and its login `401`. Enabled again, the next call logs in again. |
 | Console as a user | With a ticket session, termproxy's `user` is `<user>@pam`, and the websocket authenticates with the `PVEAuthCookie` cookie. |
 | Uptime after a reboot | `status/current` can answer `uptime: 0` in a container's first second after `reboot`; the overlay counts it up from there rather than leaving it at 0 (read as no uptime). |
+| QEMU test VM | VM 101 `pve-e2e-vm` (Debian 13 cloud image, 1 vCPU, 1 GiB, `serial0: socket`, `vga: std`, cloud-init, no guest agent), driven by `SBM_E2E_PVE_TEST_VM` over SSH, directly and through the agent's relay; the same results on all three. |
+| Paused QEMU guest | `status/current` answers `status: running`, `qmpstatus: paused`; `/cluster/resources` answers `status: paused` within pvestatd's cycle. Both read as `paused`, offering resume and force stop, not suspend. The uptime keeps counting while paused. |
+| QEMU start | The `qmstart` task ends in ~1 s, and the guest reads `running` at once. Its serial getty answers ~15 s later. |
+| QEMU reboot | Without the guest agent it is an ACPI shutdown (`qmreboot`, 3–6 s here); the task ends once the guest is down and `qmeventd` starts it in a `qmstart` task of its own ~1 s later. `status/current` read straight after the task says `stopped`, which `PveBackend` recorded and showed as stopped (offering start, refused as "already running") for up to 30 s; it now reads again until the guest runs (at most 30 s). The uptime restarts. |
+| QEMU ACPI shutdown | A booted Debian guest is `stopped` when the task ends, 2–4 s. A request sent during boot (~3 s in) is lost: the task waits 60 s and fails with `VM quit/powerdown failed - got timeout`, the VM still running (`actionFailed` with that text). |
+| Stop, then start | A start within about a second of a stop leaves `qmeventd`'s cleanup of the old process holding the config lock until it gives up 30 s later ("QEMU process ... still running (or newly started)"). Every action in that window fails after 10 s with `can't lock file '/var/lock/qemu-server/lock-<vmid>.conf' - got timeout` (`actionFailed`). A few seconds between the two avoids it. |
+| Locks | `qm set --lock backup`: the listing shows the lock within pvestatd's cycle, the VM reads `backup` and offers only suspend (resume when paused) — `vm_suspend` and `vm_resume` skip the lock check for a backup, and both succeeded. A stop under it is refused by PVE: task error `VM is locked (backup)`. Any other lock (`snapshot`) offers nothing, and PVE refuses a suspend with `VM is locked (snapshot)`. A running VM under a backup lock keeps its CPU and memory readings. |
+| One action at a time | `VirtHostNotifier.power` refuses a second action on a guest with one in flight (`unsupported`); the guest reads as the action's transient state and offers nothing until the first returns. |
+| QEMU serial console | `termproxy` with `serial=serial0` (a task named `vncproxy`, `starting qemu termproxy`) reaches the guest's `ttyS0` getty; a root login with the cloud-init password and a command work through it, and `exit` returns to `login:`. |
+| QEMU detail | `scsi0` (8 GiB, `local-lvm`), `ide2` cloud-init as a read-only CD-ROM, `net0` virtio on `vmbr0` with its MAC, graphics `std`, consoles VNC and text, `ostype` `l26`. |
+| pveproxy keep-alive | pveproxy closes an idle connection after 5 s (`PVE::APIServer::AnyEvent`, `timeout`). `HttpClient` kept one for 15 s, and a request sent on it after a 5 s pause failed with `Connection closed before full header was received` (`unreachable`), directly and over SSH. `PveBackend.idleTimeout` is now 3 s. |
 | libvirt `domstats` | A shut-off domain still reports the last run's `cpu.*`, `balloon.current/maximum`, `vcpu.*` and block sizes. `--vcpu` prints ~65 KVM counters per vCPU, now dropped on the host. |
 | libvirt errors | `start` on a running domain says `Domain is already active` (now `invalid_state`). A domain name containing `"` cannot start on an AppArmor host (`virt-aa-helper: bad name`); libvirt's text is shown. A user outside the `libvirt` group gets the polkit refusal (`permission_denied`). |
 | libvirt consoles | `virsh console --force` attaches in a PTY shell and Ctrl+] returns to it; `domdisplay` gives `vnc://127.0.0.1:0`, and the SSH loopback tunnel to 5900 carries the RFB greeting. |
+| libvirt snapshots | An internal snapshot of a running domain without memory (`--memspec snapshot=no`, with or without `--diskspec ...,snapshot=internal`) is refused: `internal snapshot of a running VM must include the memory state`. A paused domain's snapshot holds memory too (`<memory snapshot='internal'/>`, state `paused`). One taken shut off has `<memory snapshot='no'/>`, state `shutoff`; reverting a running domain to it leaves it `shut off (from snapshot)` without `--force`, and one with memory resumes it `running (from snapshot)`. A raw disk: `internal snapshot for disk vda unsupported for storage type raw`. A name taken: `domain moment <name> already exists`. An unknown one: `Domain snapshot not found: no domain snapshot with matching name`. `snapshot-current --name` prints no trailing newline, and fails (`has no current snapshot`) on a domain without any, which reads as none. `snapshot-dumpxml` carries the whole domain XML (~5 KB each); `--no-domain` does not exist on 11.3. |
+| libvirt storage | `pool-list --details` and `vol-list --details` print human units only (`19.49 GiB`), so sizes come from `pool-dumpxml` / `vol-dumpxml` (`unit='bytes'`). `vol-list` pads the Name column, so a volume named `my disk.qcow2` is split from its path by the header's `Path` column. An inactive pool's `pool-dumpxml` reports 0 for capacity, allocation and available (read as unknown), and `vol-list` fails. `domblklist --details` lists a shut-off domain's disks and an empty cdrom as `-`. |
+| libvirt networks | No `<forward>` is an isolated network; `<forward mode='bridge'/>` names the host bridge in `<bridge name>`. `connections=` is present only while interfaces are attached. `domiflist` lists a shut-off domain's NICs with `-` for the host device. `net-dhcp-leases` gives `date time mac proto ip/prefix hostname client-id`. |
+| PVE snapshots | A VM: `vmstate=1` while running saves its memory to a volume of its own (`vm-101-state-<name>`, 2.6 GiB for a 1 GiB guest), listed as `vmstate: 1`; stopped, the parameter is ignored and the snapshot has none. A container never has memory. Rolling a running VM back to a snapshot without memory leaves it `stopped`; with memory, `running`; with `start=1`, running either way. A name that is not a `pve-configid` is a 400 `invalid configuration ID`; a name taken, or a snapshot that does not exist, is answered with a UPID all the same, and the task fails (`snapshot name 'x' already used`, `snapshot 'x' does not exist`) — `actionFailed` with that text. An empty description is listed as `""`, a multi-line one with a trailing newline. |
+| PVE rollback with `start=1` | The rollback task ends, and the start runs as a `qmstart`/`vzstart` task of its own, holding the guest's lock: a container's took 44–45 s here, and a snapshot deleted meanwhile failed with `Failed to obtain guest migration lock - replication running?`. `revertSnapshot` now waits for that task (it appears with the rollback's end). |
+| PVE lock after a rollback with memory | A stop sent right after rolling a VM back to a snapshot with memory failed twice with `can't lock file '/var/lock/qemu-server/lock-101.conf' - got timeout`; it went through 26 s after the rollback. What holds the lock is not established. A snapshot delete straight after a `rollback start=1` failed the same way. The e2e test retries on these two messages; the app shows PVE's text. |
+| PVE storage and network | `lvmthin` has no path, only `vgname`/`thinpool` (shown as `pve/data`); `content` lists `vmid`, `format`, `size`, `ctime` (a string on some storages), and no `used` for `lvmthin`. `/nodes/{node}/network` lists `bridge_ports`, `cidr`, `gateway`, `active`, `autostart` for a bridge; an unused port has neither `active` nor `autostart`. |
 
 ### Over a monitor agent
 
@@ -234,14 +304,19 @@ on the libvirt host is outside the `libvirt` group.
 | libvirt VNC | `ServerTcpDialer.loopback` over `/api/v1/stream/ws` to `127.0.0.1:5900` carries the RFB greeting. |
 | libvirt serial | `TerminalSession` picks `MonitorShellBackend`; `sudo virsh console` typed into the agent's PTY prompts for sudo's password in the PTY, attaches, and Ctrl+] returns to the shell. |
 | PVE over the relay | `https://localhost:8006` resolved by the agent: `certUnconfirmed` → confirm → pinned in `server_pve`, load, LXC reboot with its task, termproxy on the container, vncproxy with VNC auth through the websocket tunnel. The grant had not been read yet (no status poll first), and the relay was tried rather than refused. |
+| PVE QEMU over the relay | The test VM's power cycle (start, suspend with a second action refused while it runs, resume, reboot, ACPI shutdown, start, force stop), detail, serial login and VNC auth, through the providers. |
+| Snapshots, storage, networks | libvirt through the agent's `/exec` and `sudo -S`: pools with their volumes, networks, and a snapshot of the shut-off domain taken and deleted. PVE through the relay: storage with the volumes of VM 100, bridges with VM 100 and CT 200 on them. |
 | `full_access` off | libvirt: `/exec` answers 403 → `execNotGranted` (was `unreachable` with a DioException's text). PVE: the relay is `relayNotGranted` whether the grant was read (refused before dialling) or not (the agent refuses the stream ticket with 403; was `unreachable`). |
 | Refused before dialling | The dialer failed its socket future before `HttpClient` listened to it, and so did `PveBackend`'s TLS future on top: the load failed correctly *and* the zone got an uncaught error. Both futures are now marked handled. |
 
 Not verified on a real host: a ticket that expired on the server's clock (the 2 h expiry and the
 renewal were driven by the backend's injected clock against real tickets), a
-paused PVE QEMU guest, clusters, and PVE before 9.2.
+real backup job (the lock was set by hand), the guest agent's shutdown,
+clusters (storage and networks per node), PVE before 9.2, external libvirt
+snapshots, libvirt pools other than `dir`, and PVE bonds, VLANs and OVS
+(parsed from hand-written payloads only).
 
-## UI (phase 1)
+## UI
 
 Follows the repo's tab conventions (`CLAUDE.md` → Tabs):
 
@@ -255,11 +330,22 @@ Follows the repo's tab conventions (`CLAUDE.md` → Tabs):
   installs keep their bar; the migration below adds the tab for users who had
   PVE configured.
 - Wide: `SessionSwitcherLabel` host switcher over a list column (guests
-  grouped by state; sections VMs / Storage / Network, with Storage and
-  Network shown disabled in phase 1 and a tooltip saying they are not
-  available yet) and the guest detail beside it (Overview, Console tabs).
-- Narrow: the single column is the selected host's guest list; the host list
-  is behind the switcher sheet; the guest detail is pushed.
+  grouped by state; sections VMs / Storage / Network, a section the host's
+  capabilities lack drawn disabled with a tooltip) and the detail beside it:
+  a guest (Overview, Console, Snapshots), a pool (capacity, what it is, its
+  volumes with the guests using them) or a network (configuration, the guests
+  on it — a tap opens the guest in the VMs section).
+- Narrow: the single column is the selected host's list in the chosen
+  section; the host list is behind the switcher sheet; a guest, pool or
+  network is pushed (`VirtGuestPage`, `VirtPoolPage`, `VirtNetworkPage`), and
+  its bar's switcher moves to another in place.
+- Snapshots view (`view/page/virt/snapshots.dart`): the tree by indent, the
+  current one marked; a row opens to its time, parent, description and
+  Revert / Delete. The new-snapshot form checks the name as it is typed and
+  shows memory as the host allows it: a switch (PVE VM, running), on and
+  fixed (libvirt, active), or a note (stopped). Revert and delete are
+  confirmed; a revert to a snapshot without memory on an active guest is
+  asked in red with "start it afterwards".
 - Power actions with confirmation, as the PVE page does today; busy states
   (`starting`, `stopping`, …) show progress and disable conflicting actions.
   PVE actions return a UPID; poll `GET .../tasks/{upid}/status` until done.
@@ -345,8 +431,11 @@ page, so feature pages use the `featureIntroVer` counter.
 
 ## Later phases
 
-- Snapshots (list / create / revert / delete).
-- Storage pools and volumes, networks — read-only first, then management.
+- Storage and network management: create, start/stop, delete pools, volumes
+  and networks; upload an ISO; attach a volume; PVE SDN.
+- Snapshots: external libvirt snapshots (disk-only while running), a
+  snapshot's configuration diff, PVE's per-storage snapshot support shown
+  before trying.
 - Hardware editing (pending-change model: libvirt `define` vs PVE `pending`).
 - Create wizard (VM, and LXC on PVE), clone, migrate (PVE cluster).
 - Backups (PVE `vzdump` / backup storage).

@@ -9,11 +9,15 @@ part of 'guest.dart';
 /// - **Text** opens the terminal page over the window, with its virtual keys,
 ///   theme and reconnect: the one terminal the app has, given a console
 ///   instead of a shell (PVE), or a shell on the host with `virsh console`
-///   typed into it (libvirt).
+///   typed into it (libvirt). Leaving that page leaves the console running
+///   ([VirtTextConsoles]), and this view offers it back as "Reopen".
 /// - **Graphical** is the remote desktop viewer, in place here. Its toolbar
 ///   has reconnect, full screen and close; closing brings back "Connect".
-///   The session is closed when this view goes — leaving the console, or the
-///   guest stopping.
+///
+/// Either one left — this view gone, another guest, another tab — is closed
+/// by [SessionKeepAlive] after the idle time the settings give, with a notice
+/// first; coming back before then finds it as it was. A guest that stops
+/// closes both at once (`_syncDetail` in guest.dart).
 class VirtConsoleView extends StatelessWidget {
   const VirtConsoleView({
     super.key,
@@ -48,6 +52,7 @@ class VirtConsoleView extends StatelessWidget {
         action: onStart == null
             ? null
             : Btn.elevated(
+                mainAxisSize: MainAxisSize.min,
                 text: libL10n.start,
                 icon: const Icon(Icons.play_arrow),
                 onTap: onStart,
@@ -66,6 +71,7 @@ class VirtConsoleView extends StatelessWidget {
             action: onRetryDetail == null
                 ? null
                 : Btn.elevated(
+                    mainAxisSize: MainAxisSize.min,
                     text: libL10n.retry,
                     icon: const Icon(Icons.refresh),
                     onTap: onRetryDetail,
@@ -121,8 +127,8 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
   /// What the graphical session was last told about being on screen.
   var _shown = false;
 
-  /// Kept from `initState`: [dispose] closes the session and may not use
-  /// `ref`.
+  /// Kept from `initState`: [dispose] reports the session off screen and may
+  /// not use `ref`.
   late final RemoteDesktopSessions _sessions;
 
   late final String _vncId = VirtConsoleConnect.vncSessionId(
@@ -130,10 +136,23 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
     widget.guest.id,
   );
 
+  late final String _textId = VirtConsoleConnect.textSessionId(
+    widget.serverId,
+    widget.guest.id,
+  );
+
+  /// How many of these are mounted per graphical session.
+  ///
+  /// Two at once is a layout change — the guest pushed as a page becoming a
+  /// pane beside the list — and the one going says "off screen" after the
+  /// frame the one arriving said "on screen" in. Only the last one to go may.
+  static final _mounted = <String, int>{};
+
   @override
   void initState() {
     super.initState();
     _sessions = ref.read(remoteDesktopSessionsProvider.notifier);
+    _mounted.update(_vncId, (n) => n + 1, ifAbsent: () => 1);
   }
 
   @override
@@ -144,7 +163,19 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
 
   @override
   void dispose() {
-    unawaited(_sessions.close(_vncId));
+    // Not closed: [SessionKeepAlive] does that once it has been off screen
+    // long enough. After the frame, as in [build].
+    final id = _vncId;
+    final sessions = _sessions;
+    final left = (_mounted[id] ?? 1) - 1;
+    if (left <= 0) {
+      _mounted.remove(id);
+    } else {
+      _mounted[id] = left;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_mounted.containsKey(id)) sessions.setConsoleVisible(id, false);
+    });
     super.dispose();
   }
 
@@ -157,6 +188,9 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
       remoteDesktopSessionsProvider.select(
         (s) => s.consoles.containsKey(_vncId),
       ),
+    );
+    final textRunning = ref.watch(
+      virtTextConsolesProvider.select((ids) => ids.contains(_textId)),
     );
     final visible = vncOpen && onScreen && _kind == VirtConsoleKind.vnc;
     if (visible != _shown) {
@@ -179,12 +213,15 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
       ),
       VirtConsoleKind.text => _launcher(
         icon: Icons.terminal,
-        text: libL10n.open,
+        text: textRunning ? l10n.reopen : libL10n.open,
         tip: switch (ref.watch(virtHostProvider(widget.serverId)).kind) {
           VirtHostKind.libvirt => l10n.virtConsoleSerialTip,
           _ => null,
         },
         onTap: _openText,
+        onClose: textRunning
+            ? () => ref.read(virtTextConsolesProvider.notifier).close(_textId)
+            : null,
       ),
     };
     if (widget.consoles.length < 2) return body;
@@ -215,30 +252,70 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
     );
   }
 
+  /// [onClose], given, is a second button: the session is running, and this
+  /// ends it rather than waiting for it to be closed as idle.
   Widget _launcher({
     required IconData icon,
     required String text,
     required VoidCallback onTap,
     String? tip,
+    VoidCallback? onClose,
   }) {
+    final open = Btn.elevated(
+      text: text,
+      icon: Icon(icon),
+      mainAxisSize: MainAxisSize.min,
+      onTap: onTap,
+    );
     return EmptyPane(
       icon: icon,
       title: widget.guest.name,
       label: tip,
       action: _opening
           ? SizedLoading.medium
-          : Btn.elevated(text: text, icon: Icon(icon), onTap: onTap),
+          : onClose == null
+          ? open
+          : Wrap(
+              spacing: 7,
+              runSpacing: 7,
+              alignment: WrapAlignment.center,
+              children: [
+                open,
+                Btn.text(text: libL10n.close, onTap: onClose),
+              ],
+            ),
     );
   }
 
   Future<void> _openText() async {
     if (_opening) return;
+    final consoles = ref.read(virtTextConsolesProvider.notifier);
+    final id = _textId;
+    final name = widget.guest.name;
+    final host = ref.read(serversProvider).servers[widget.serverId]?.name ??
+        widget.serverId;
+    // Captured rather than read through `ref` when it runs: it runs after the
+    // terminal page has gone, and this view may have too.
+    void park(TerminalSession session) =>
+        consoles.park(id, session, name: name, host: host);
+
+    final running = consoles.take(id);
+    if (running != null) {
+      await SSHPage.route.go(
+        context,
+        VirtConsoleConnect.resumedTextArgs(running, onLeave: park),
+        target: NavTarget.root,
+      );
+      return;
+    }
+
     setState(() => _opening = true);
     try {
       final args = await VirtConsoleConnect.textArgs(
         ProviderScope.containerOf(context),
         serverId: widget.serverId,
         guest: widget.guest,
+        onLeave: park,
       );
       if (!mounted) return;
       setState(() => _opening = false);

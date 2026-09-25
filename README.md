@@ -12,11 +12,14 @@ English | [简体中文](README_zh.md)
 <p align="center">
 A Flutter project which provides charts to display Linux, Unix and Windows server status and tools to manage servers.
 <br>
-Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartssh2</a> & <a href="https://github.com/TerminalStudio/xterm.dart">xterm.dart</a>.
+Read the <a href="https://serverbox.lolli.tech/docs/">documentation site</a> for user guides, architecture notes, and development instructions.
 </p>
 
-Read the [documentation site](https://serverbox.lolli.tech/docs/) for user guides,
-architecture notes, and development instructions.
+## Acknowledgements
+
+Special thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartssh2</a> & <a href="https://github.com/TerminalStudio/xterm.dart">xterm.dart</a>.
+Thanks to my partner for their emotional and financial support.
+Thanks to <a href="https://openai.com">OpenAI</a> for providing six months of ChatGPT Pro 20x subscription! Not an advertisement, just appreciation for their contribution to FOSS.
 
 ## Screenshots
 
@@ -118,7 +121,7 @@ Download packages only from sources you trust.
 ## Features
 
 - Status charts for CPU, sensors, GPU, and other metrics; an SSH terminal; SFTP; [RDP and VNC through SSH](https://serverbox.lolli.tech/docs/advanced/remote-desktop/); Docker, process, and service management; and S.M.A.R.T.
-- Platform features include biometric authentication, push notifications, home-screen widgets, watchOS support, and system color themes.
+- Platform features include biometric authentication, push notifications, home-screen widgets, a watchOS app, and system color themes.
 - 16 languages. The current list is in `lib/l10n/`; its git history records the translators.
 
 ## Help
@@ -129,8 +132,8 @@ Download packages only from sources you trust.
   <a href="https://discord.gg/SsVNbRhK7w"><img alt="discord" src="https://img.shields.io/badge/Discord-lpkt-purple"></a>
 </div>
 
-- [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) is an agent you install on your servers. It is required for anything that has to work while the app is closed — **message push**, **home widgets** and the **watch app** — and it is also a second way to add a server: the app can reach it over HTTP instead of SSH, which suits hosts whose SSH port you would rather not expose, and gives charts a history from before the app ever connected. It serves a web panel of its own too. See its [README](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/README.md) for setup and for what each remote-access switch grants.
-- **Common issues** can be found in [app wiki](https://github.com/lollipopkit/flutter_server_box/wiki).
+- [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) is an agent you install on your servers. It is required for features that need to work while the app is closed — **push notifications**, **home-screen widgets**, and the **watch app**. It also offers another way to add a server: the app can connect to it over HTTP instead of SSH, which suits hosts whose SSH port you prefer not to expose, and gives charts historical data from before the app's first connection. Monitor also serves its own web panel. See its [Chinese documentation](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/README_zh.md) for setup and details on what each remote-access switch allows.
+- **Common issues** are listed in the [app wiki](https://github.com/lollipopkit/flutter_server_box/wiki/主页).
 - **Agent onboarding:** This repository includes a skill for installing and using the app, deploying and configuring Monitor agent, setting up the Flutter + Rust + Node environment, and answering common server-management questions. Add it to your agent with
 
   ```sh
@@ -139,31 +142,19 @@ Download packages only from sources you trust.
 
   The source is [`.claude/skills/serverbox-onboarding`](.claude/skills/serverbox-onboarding), so you can read what it will tell your agent before installing it.
 
-Check these points before opening an issue:
+Before opening an issue, please:
 
-1. Paste the **entire log** (click the top right of the home page) in the issue template.
+1. Include the log (click the top-right corner of the home page) and use the bug report template.
 2. Confirm that the issue is caused by ServerBox.
 3. Concrete, constructive feedback is welcome. Subjective requests, such as preferring another UI, may not be accepted.
-
-After you read the above, you can open an [issue](https://github.com/lollipopkit/flutter_server_box/issues/new).
 
 ## Contributions
 
 Any positive contribution is welcome. [CONTRIBUTING.md](CONTRIBUTING.md) covers the development setup, the commit convention, the checks to run, and how translations work.
 
-Contributors sign the [CLA](CLA.md) ([中文](CLA_zh.md)) once, by leaving a single comment on their first pull request. It grants the right to ship your work in the App Store builds alongside the AGPLv3 source — you keep the copyright to what you wrote.
+Contributors sign the [CLA](CLA.md) ([Chinese version](CLA_zh.md)) once by leaving a comment on their first pull request. It grants the right to ship your work in App Store builds alongside the AGPLv3 source. You retain the copyright to your work.
 
 If I forgot to add your name to the contributors list, please add a comment in the issue or PR you opened to let me know, I will add it as soon as possible.
-
-### Development
-
-- Read the [development guide](https://serverbox.lolli.tech/docs/development/structure/).
-- Follow the [build guide](https://serverbox.lolli.tech/docs/development/building/) for platform requirements and release builds.
-- See [CONTRIBUTING.md](CONTRIBUTING.md) for local setup, checks, commits, and translations.
-
-### Translation
-
-- Translation contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow.
 
 ## License
 

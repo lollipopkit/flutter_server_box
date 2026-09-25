@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/cert_fingerprint.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/provider/server/all.dart';
@@ -88,7 +87,10 @@ class VirtHostError extends ConsumerWidget {
         onTap: () {
           final spi = ref.read(serversProvider).servers[serverId];
           if (spi == null) return;
-          ServerEditPage.route.go(context, args: SpiRequiredArgs(spi));
+          ServerEditPage.route.go(
+            context,
+            args: ServerEditArgs(spi, section: ServerEditSection.pve),
+          );
         },
       ),
       _ => Btn.text(

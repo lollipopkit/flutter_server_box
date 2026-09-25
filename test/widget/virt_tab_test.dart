@@ -1,10 +1,13 @@
 /// The Virtualization tab over scripted hosts: its two layouts, switching
-/// hosts, a power action going through its confirmation, the sections not
-/// built yet, and each host failure offering the action that answers it.
+/// hosts, a power action going through its confirmation, the sections a
+/// host does not have, and each host failure offering the action that answers
+/// it. Snapshots, storage and networks are `virt_resources_test.dart`.
 ///
 /// The providers are replaced, not the backends: what is under test is what
 /// the tab does with a host's state and which call it makes back.
 library;
+
+import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/generated/l10n/lib_l10n.dart';
@@ -21,8 +24,11 @@ import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/remote_desktop.dart';
+import 'package:server_box/data/provider/session_keep_alive.dart';
+import 'package:server_box/data/provider/virt/text_consoles.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/ssh/terminal_session.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/pve.dart';
@@ -35,12 +41,19 @@ import 'package:server_box/view/page/virt/console_connect.dart';
 import 'package:server_box/view/page/virt/guest.dart';
 import 'package:server_box/view/page/virt/tab.dart';
 
+import '../helpers/fake_shell.dart';
 import '../helpers/spi_fixture.dart';
 import '../helpers/test_db.dart';
 
 const _pve = 'srv-pve';
 const _kvm = 'srv-kvm';
 const _plain = 'srv-plain';
+
+/// Runs PVE with no API access configured.
+const _barePve = 'srv-bare-pve';
+
+/// A container: somebody's guest.
+const _lxc = 'srv-lxc';
 
 VirtGuest _guest(
   String id,
@@ -125,8 +138,15 @@ class _FakeHosts extends VirtHosts {
   @override
   VirtHostsState build() => const VirtHostsState(
     hosts: {_pve: VirtHostKind.pve, _kvm: VirtHostKind.libvirt},
-    others: [_plain],
-    probes: {_plain: VirtProbe(status: VirtProbeStatus.absent)},
+    others: [_plain, _barePve, _lxc],
+    probes: {
+      _plain: VirtProbe(status: VirtProbeStatus.absent),
+      _barePve: VirtProbe(
+        status: VirtProbeStatus.pve,
+        pve: 'pve-manager/9.2.2/b9984c6d90a4bd80',
+      ),
+      _lxc: VirtProbe(status: VirtProbeStatus.absent, container: 'lxc'),
+    },
   );
 
   @override
@@ -215,6 +235,12 @@ void main() {
     );
     Stores.server.put(
       spiFixture(id: _plain, name: 'plain-host', ip: 'h3', autoConnect: false),
+    );
+    Stores.server.put(
+      spiFixture(id: _barePve, name: 'bare-pve', ip: 'h4', autoConnect: false),
+    );
+    Stores.server.put(
+      spiFixture(id: _lxc, name: 'lxc-alpine', ip: 'h5', autoConnect: false),
     );
     Stores.pve.put(_pve, const PveConfig(addr: 'https://localhost:8006'));
     _calls.clear();
@@ -364,6 +390,8 @@ void main() {
       for (var i = 0; i < 12; i++) {
         await tester.pump(const Duration(seconds: 1));
       }
+      await container.read(remoteDesktopSessionsProvider.notifier).close(id);
+      await settle(tester);
     });
   });
 
@@ -448,7 +476,7 @@ void main() {
     });
   });
 
-  testWidgets('storage and network are shown, disabled, with the reason', (
+  testWidgets('storage and network a host lacks: disabled, with the reason', (
     tester,
   ) async {
     await pump(tester, wide: true);
@@ -520,6 +548,36 @@ void main() {
       await settle(tester);
 
       expect(_calls, contains('probe $_plain force=true'));
+    });
+
+    testWidgets('PVE without API access is offered, a container explained', (
+      tester,
+    ) async {
+      await pump(tester, wide: true);
+      await tester.tap(find.text('pve-host'));
+      await settle(tester);
+
+      expect(find.byTooltip(app_locale.l10n.virtProbePve), findsOneWidget);
+      expect(
+        find.byTooltip(app_locale.l10n.virtProbeContainerTip),
+        findsOneWidget,
+      );
+      expect(find.text(app_locale.l10n.virtProbeContainer('LXC')), findsOneWidget);
+
+      // Not probed again: asked to set up, with the version it runs.
+      await tester.tap(find.text('bare-pve'));
+      await settle(tester);
+      expect(_calls.where((c) => c.startsWith('probe $_barePve')), isEmpty);
+      expect(
+        find.text(app_locale.l10n.virtPveSetupTip('Proxmox VE 9.2.2')),
+        findsOneWidget,
+      );
+      await tester.tap(find.text(libL10n.cancel));
+      await settle(tester);
+      expect(
+        find.text(app_locale.l10n.virtPveSetupTip('Proxmox VE 9.2.2')),
+        findsNothing,
+      );
     });
 
     testWidgets('a request from a server page selects its host', (
@@ -802,6 +860,7 @@ void main() {
           tester.element(find.byType(VirtGuestView)),
         ),
       );
+      container.read(currentHomeTabProvider.notifier).update(AppTab.virt);
 
       await tester.tap(find.text(app_locale.l10n.connect));
       await settle(tester);
@@ -823,10 +882,113 @@ void main() {
       expect(find.textContaining('no route to host'), findsOneWidget);
       expect(find.text(app_locale.l10n.remoteDesktopReconnect), findsOneWidget);
 
-      // Leaving the console closes its session.
+      // Leaving the console closes its session once it has been left long
+      // enough, with the notice's countdown first.
       await tester.tap(find.byKey(const ValueKey(VirtGuestViewKind.overview)));
       await settle(tester);
+      expect(
+        container.read(remoteDesktopSessionsProvider).consoles,
+        contains(id),
+        reason: 'not closed with the view',
+      );
+      await tester.pump(const Duration(seconds: 60));
+      expect(container.read(sessionKeepAliveProvider), contains(id));
+      await tester.pump(SessionKeepAlive.grace);
+      await settle(tester);
       expect(container.read(remoteDesktopSessionsProvider).consoles, isEmpty);
+    });
+
+    testWidgets('graphical: back within the timeout, still connected', (
+      tester,
+    ) async {
+      _details['qemu/100'] = const VirtGuestDetail(
+        consoles: {VirtConsoleKind.vnc},
+      );
+      await openConsole(tester);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(VirtGuestView)),
+      );
+      container.read(currentHomeTabProvider.notifier).update(AppTab.virt);
+      await tester.tap(find.text(app_locale.l10n.connect));
+      await settle(tester);
+      final id = VirtConsoleConnect.vncSessionId(_pve, 'qemu/100');
+      final session = container.read(remoteDesktopSessionsProvider).consoles[id];
+      expect(session, isNotNull);
+
+      await tester.tap(find.byKey(const ValueKey(VirtGuestViewKind.overview)));
+      await settle(tester);
+      expect(
+        container.read(remoteDesktopSessionsProvider).consoles[id]?.visible,
+        isFalse,
+      );
+      await tester.pump(const Duration(seconds: 50));
+
+      await tester.tap(find.byKey(const ValueKey(VirtGuestViewKind.console)));
+      await settle(tester);
+      expect(find.byType(RemoteDesktopViewer), findsOneWidget);
+      expect(
+        container.read(remoteDesktopSessionsProvider).consoles[id]?.profile,
+        same(session!.profile),
+        reason: 'the same session, not a new one',
+      );
+      expect(
+        container.read(remoteDesktopSessionsProvider).consoles[id]?.visible,
+        isTrue,
+      );
+
+      // Well past the timeout from when it was left: on screen, it stays.
+      await tester.pump(const Duration(seconds: 90));
+      expect(container.read(sessionKeepAliveProvider), isEmpty);
+      expect(
+        container.read(remoteDesktopSessionsProvider).consoles,
+        contains(id),
+      );
+      await container.read(remoteDesktopSessionsProvider.notifier).close(id);
+      await settle(tester);
+    });
+
+    testWidgets('text: a running console is offered back, or closed', (
+      tester,
+    ) async {
+      _details['qemu/100'] = const VirtGuestDetail(
+        consoles: {VirtConsoleKind.text},
+      );
+      await openConsole(tester);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(VirtGuestView)),
+      );
+      expect(find.text(libL10n.open), findsOneWidget);
+      expect(find.text(app_locale.l10n.reopen), findsNothing);
+
+      // What the terminal page leaves behind when it goes.
+      final id = VirtConsoleConnect.textSessionId(_pve, 'qemu/100');
+      final shell = FakeShellSession();
+      final session = TerminalSession(
+        source: ConsoleSource(
+          id: 'virt-console:$_pve:qemu/100',
+          label: 'web-01',
+          connect: () async => FakeShellBackend(),
+        ),
+        backend: FakeShellBackend(),
+      )..bindForeground(shell);
+      var shellClosed = false;
+      unawaited(shell.done.then((_) => shellClosed = true));
+      container
+          .read(virtTextConsolesProvider.notifier)
+          .park(id, session, name: 'web-01', host: 'pve-host');
+      await settle(tester);
+
+      expect(find.text(app_locale.l10n.reopen), findsOneWidget);
+      expect(find.text(libL10n.open), findsNothing);
+      final keepAlive = container.read(sessionKeepAliveProvider.notifier);
+      expect(keepAlive.isRegistered(id), isTrue, reason: 'off screen');
+
+      await tester.tap(find.text(libL10n.close));
+      await settle(tester);
+      expect(container.read(virtTextConsolesProvider), isEmpty);
+      expect(keepAlive.isRegistered(id), isFalse);
+      expect(find.text(libL10n.open), findsOneWidget);
+      expect(shellClosed, isTrue);
     });
 
     testWidgets('text: what the terminal page is given, per host', (

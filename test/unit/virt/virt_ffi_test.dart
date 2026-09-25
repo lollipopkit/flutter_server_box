@@ -92,4 +92,54 @@ void main() {
       "virsh --connect qemu:///system console --force --domain 'a b'",
     );
   });
+
+  test('snapshots, storage, volumes and networks parse to the expected JSON',
+      () async {
+    expect(
+      jsonDecode(
+        await parseVirtSnapshotsJson(
+          raw: _fixture('script_snapshots_cirros_run.txt'),
+        ),
+      ),
+      jsonDecode(_fixture('snapshots_cirros_run.expected.json')),
+    );
+    expect(
+      jsonDecode(await parseVirtStorageJson(raw: _fixture('script_storage.txt'))),
+      jsonDecode(_fixture('storage.expected.json')),
+    );
+    expect(
+      jsonDecode(
+        await parseVirtVolumesJson(raw: _fixture('script_volumes_sbx_iso.txt')),
+      ),
+      jsonDecode(_fixture('volumes_sbx_iso.expected.json')),
+    );
+    expect(
+      jsonDecode(
+        await parseVirtNetworksJson(raw: _fixture('script_networks.txt')),
+      ),
+      jsonDecode(_fixture('networks.expected.json')),
+    );
+    // A refused snapshot is the host's words, typed.
+    expect(
+      () => parseVirtAction(raw: _fixture('script_snapshot_error_exists.txt')),
+      throwsA(
+        isA<VirtFfiError>()
+            .having((e) => e.kind, 'kind', VirtErrorKind.command)
+            .having((e) => e.message, 'message', contains('already exists')),
+      ),
+    );
+  });
+
+  test('resource scripts quote what they are given', () {
+    expect(
+      virtSnapshotCreateScript(domain: 'd', name: 'n', description: "it's"),
+      contains("--description 'it'\\''s'"),
+    );
+    expect(
+      virtVolumesScript(pool: 'p q', names: ['a b']),
+      contains("V vol-dumpxml --pool 'p q' --vol 'a b'"),
+    );
+    expect(virtStorageScript(), contains('domblklist --details'));
+    expect(virtNetworksScript(), contains('net-dhcp-leases'));
+  });
 }

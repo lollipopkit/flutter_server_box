@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/app.dart';
@@ -113,7 +114,7 @@ void main() {
     setting.appBackgroundStyle.put(BackgroundStyle.image);
     setting.appBackgroundPath.put(file.path);
 
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(const ProviderScope(child: MyApp()));
     await tester.pumpAndSettle();
 
     final (light, dark) = themesOf(tester);
@@ -135,7 +136,7 @@ void main() {
   testWidgets('without a background the bar keeps the scheme surface', (
     tester,
   ) async {
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(const ProviderScope(child: MyApp()));
     await tester.pumpAndSettle();
 
     final (light, dark) = themesOf(tester);

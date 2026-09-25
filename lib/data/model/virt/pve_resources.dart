@@ -1,6 +1,7 @@
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_rates.dart';
+import 'package:server_box/data/model/virt/virt_resources.dart';
 
 /// Reading PVE API answers into the Virtualization models. Pure functions,
 /// tested against captured payloads.
@@ -299,6 +300,225 @@ abstract final class PveResources {
       source: named['bridge'],
       model: model ?? named['model'],
     );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Snapshots, storage, networks
+  // ---------------------------------------------------------------------------
+
+  /// `GET .../{qemu|lxc}/{vmid}/snapshot`. The listing ends in an entry named
+  /// `current` ("You are here!"), which is not a snapshot: its `parent` is the
+  /// current one.
+  static List<VirtGuestSnapshot> parseSnapshots(List<Object?> raw) {
+    String? current;
+    final out = <VirtGuestSnapshot>[];
+    for (final item in raw) {
+      if (item is! Map) continue;
+      final e = item.cast<String, Object?>();
+      final name = _str(e['name']);
+      if (name == null) continue;
+      if (name == 'current') {
+        current = _str(e['parent']);
+        continue;
+      }
+      final time = _int(e['snaptime']);
+      final desc = _str(e['description'])?.trimRight();
+      out.add(
+        VirtGuestSnapshot(
+          name: name,
+          parent: _str(e['parent']),
+          description: desc == null || desc.isEmpty ? null : desc,
+          createdAt: time == null
+              ? null
+              : DateTime.fromMillisecondsSinceEpoch(time * 1000),
+          withMemory: _int(e['vmstate']) == 1,
+        ),
+      );
+    }
+    return [
+      for (final s in out) s.name == current ? s.copyWith(current: true) : s,
+    ];
+  }
+
+  /// `GET /nodes/{node}/storage` for [node], with what `GET /storage` (the
+  /// cluster's storage configuration, [config]) says of where each one is.
+  static List<VirtStoragePool> parseStorages(
+    String node,
+    List<Object?> raw, {
+    List<Object?>? config,
+  }) {
+    final configs = <String, Map<String, Object?>>{};
+    for (final c in config ?? const <Object?>[]) {
+      if (c is! Map) continue;
+      final id = _str(c['storage']);
+      if (id != null) configs[id] = c.cast<String, Object?>();
+    }
+    final out = <VirtStoragePool>[];
+    for (final item in raw) {
+      if (item is! Map) continue;
+      final e = item.cast<String, Object?>();
+      final name = _str(e['storage']);
+      if (name == null) continue;
+      final c = configs[name] ?? const <String, Object?>{};
+      final type = _str(e['type']) ?? _str(c['type']) ?? '';
+      final total = _positive(_int(e['total']));
+      out.add(
+        VirtStoragePool(
+          id: '$node/$name',
+          name: name,
+          node: node,
+          type: type,
+          path: _storagePath(type, c),
+          source: _storageSource(c),
+          capacity: total,
+          used: total == null ? null : _int(e['used']),
+          available: total == null ? null : _int(e['avail']),
+          active: _int(e['active']) == 1,
+          enabled: switch (_int(e['enabled'])) {
+            null => null,
+            final v => v == 1,
+          },
+          shared: _int(e['shared']) == 1,
+          content: [
+            for (final c in (_str(e['content']) ?? _str(c['content']) ?? '')
+                .split(','))
+              if (c.trim().isNotEmpty) c.trim(),
+          ]..sort(),
+        ),
+      );
+    }
+    out.sort((a, b) => a.name.compareTo(b.name));
+    return out;
+  }
+
+  /// Where a storage keeps its volumes, by its type's configuration keys.
+  static String? _storagePath(String type, Map<String, Object?> c) {
+    if (_str(c['path']) case final path?) return path;
+    final vg = _str(c['vgname']);
+    final thin = _str(c['thinpool']);
+    if (vg != null) return thin == null ? vg : '$vg/$thin';
+    return _str(c['pool']) ?? _str(c['datastore']);
+  }
+
+  /// Where a network storage comes from.
+  static String? _storageSource(Map<String, Object?> c) {
+    final server = _str(c['server']) ?? _str(c['portal']);
+    final export = _str(c['export']) ?? _str(c['share']) ?? _str(c['target']);
+    if (server != null && export != null) return '$server:$export';
+    return server ?? _str(c['monhost']);
+  }
+
+  /// `GET /nodes/{node}/storage/{storage}/content`. The owner is `vmid`.
+  static List<VirtVolume> parseContent(List<Object?> raw) {
+    final out = <VirtVolume>[];
+    for (final item in raw) {
+      if (item is! Map) continue;
+      final e = item.cast<String, Object?>();
+      final volid = _str(e['volid']);
+      if (volid == null) continue;
+      // `local:iso/debian.iso` → `debian.iso`; `local-lvm:vm-100-disk-0`.
+      final afterStorage = volid.substring(volid.indexOf(':') + 1);
+      final name = afterStorage.substring(afterStorage.lastIndexOf('/') + 1);
+      final vmid = _int(e['vmid']);
+      final ctime = _int(e['ctime']);
+      out.add(
+        VirtVolume(
+          id: volid,
+          name: name.isEmpty ? volid : name,
+          format: _str(e['format']),
+          content: _str(e['content']),
+          capacity: _int(e['size']),
+          allocation: _int(e['used']),
+          createdAt: ctime == null
+              ? null
+              : DateTime.fromMillisecondsSinceEpoch(ctime * 1000),
+          users: [if (vmid != null && vmid > 0) VirtGuestRef(vmid: vmid)],
+        ),
+      );
+    }
+    return out;
+  }
+
+  /// `GET /nodes/{node}/network`, with [users] by bridge name.
+  static List<VirtNetwork> parseNetworks(
+    String node,
+    List<Object?> raw, {
+    Map<String, List<VirtGuestRef>> users = const {},
+  }) {
+    List<String> words(Object? v) => [
+      for (final w in (_str(v) ?? '').split(RegExp(r'[\s,]+')))
+        if (w.isNotEmpty) w,
+    ];
+    final out = <VirtNetwork>[];
+    for (final item in raw) {
+      if (item is! Map) continue;
+      final e = item.cast<String, Object?>();
+      final iface = _str(e['iface']);
+      if (iface == null) continue;
+      final type = _str(e['type']) ?? 'unknown';
+      out.add(
+        VirtNetwork(
+          id: '$node/$iface',
+          name: iface,
+          node: node,
+          mode: type,
+          cidrs: [?_str(e['cidr']), ?_str(e['cidr6'])],
+          gateway: _str(e['gateway']),
+          ports: [
+            ...words(e['bridge_ports']),
+            ...words(e['ovs_ports']),
+            ...words(e['slaves']),
+          ],
+          vlanAware: switch (e['bridge_vlan_aware']) {
+            null => null,
+            final v => _int(v) == 1,
+          },
+          vlanId: _int(e['vlan-id']),
+          vlanDevice: _str(e['vlan-raw-device']),
+          bondMode: _str(e['bond_mode']),
+          active: _int(e['active']) == 1,
+          autostart: _int(e['autostart']) == 1,
+          comment: _str(e['comments'])?.trim(),
+          users: users[iface] ?? const [],
+        ),
+      );
+    }
+    // Bridges first — what guests attach to — then bonds, VLANs and ports.
+    int rank(VirtNetwork n) => switch (n.mode) {
+      'bridge' || 'OVSBridge' => 0,
+      'bond' || 'OVSBond' => 1,
+      'vlan' || 'OVSIntPort' => 2,
+      _ => 3,
+    };
+    out.sort((a, b) {
+      final r = rank(a).compareTo(rank(b));
+      return r != 0 ? r : _naturalCompare(a.name, b.name);
+    });
+    return out;
+  }
+
+  /// A guest's NICs from its configuration, as users of the bridge each is
+  /// on.
+  static Map<String, List<VirtGuestRef>> bridgeUsers(
+    VirtGuest guest,
+    Map<String, Object?> config,
+  ) {
+    final out = <String, List<VirtGuestRef>>{};
+    for (final nic in parseConfig(config, guest.kind).nics) {
+      final bridge = nic.source;
+      if (bridge == null) continue;
+      out
+          .putIfAbsent(bridge, () => [])
+          .add(
+            VirtGuestRef(
+              guestId: guest.id,
+              vmid: guest.vmid,
+              device: nic.kind,
+              mac: nic.mac?.toLowerCase(),
+            ),
+          );
+    }
+    return out;
   }
 
   /// `a,b=c,d=e` → `[('', a), (b, c), (d, e)]`.

@@ -95,9 +95,17 @@ abstract class _$PveConfigs extends $Notifier<Map<String, PveConfig>> {
 ///
 /// PVE: a server with a `server_pve` row — explicit, and followed as it
 /// changes ([pveConfigsProvider]). libvirt: `virsh`
-/// answers through `ensureExec()`, probed on demand ([probeAll] when the tab
-/// first lists servers, [probe] for one), cached for the session, re-probed
-/// by [refresh]. A server that is both is shown as PVE and not probed.
+/// answers through `ensureExec()`, probed on demand, cached for the session.
+/// A server that is both is shown as PVE and not probed. The probe also
+/// finds PVE without a row ([VirtProbeStatus.pve]): not a host until its API
+/// access is configured, which is what the switcher offers for it.
+///
+/// **Who is probed without being asked.** A probe is a connection, so the
+/// tab's first listing and a pull to refresh probe only the servers the
+/// server list is connected to or connecting anyway ([autoProbeable]):
+/// `probeAll(onlyConnected: true)`. Everything else is probed only when the
+/// user asks — "Check this server" ([probe]) or "Check all" ([refresh]) —
+/// which is also what connects a server whose `autoConnect` is off.
 ///
 /// Kept alive: the probe cache is the point, and a probe is a connection to
 /// every server.
@@ -109,9 +117,17 @@ final virtHostsProvider = VirtHostsProvider._();
 ///
 /// PVE: a server with a `server_pve` row — explicit, and followed as it
 /// changes ([pveConfigsProvider]). libvirt: `virsh`
-/// answers through `ensureExec()`, probed on demand ([probeAll] when the tab
-/// first lists servers, [probe] for one), cached for the session, re-probed
-/// by [refresh]. A server that is both is shown as PVE and not probed.
+/// answers through `ensureExec()`, probed on demand, cached for the session.
+/// A server that is both is shown as PVE and not probed. The probe also
+/// finds PVE without a row ([VirtProbeStatus.pve]): not a host until its API
+/// access is configured, which is what the switcher offers for it.
+///
+/// **Who is probed without being asked.** A probe is a connection, so the
+/// tab's first listing and a pull to refresh probe only the servers the
+/// server list is connected to or connecting anyway ([autoProbeable]):
+/// `probeAll(onlyConnected: true)`. Everything else is probed only when the
+/// user asks — "Check this server" ([probe]) or "Check all" ([refresh]) —
+/// which is also what connects a server whose `autoConnect` is off.
 ///
 /// Kept alive: the probe cache is the point, and a probe is a connection to
 /// every server.
@@ -121,9 +137,17 @@ final class VirtHostsProvider
   ///
   /// PVE: a server with a `server_pve` row — explicit, and followed as it
   /// changes ([pveConfigsProvider]). libvirt: `virsh`
-  /// answers through `ensureExec()`, probed on demand ([probeAll] when the tab
-  /// first lists servers, [probe] for one), cached for the session, re-probed
-  /// by [refresh]. A server that is both is shown as PVE and not probed.
+  /// answers through `ensureExec()`, probed on demand, cached for the session.
+  /// A server that is both is shown as PVE and not probed. The probe also
+  /// finds PVE without a row ([VirtProbeStatus.pve]): not a host until its API
+  /// access is configured, which is what the switcher offers for it.
+  ///
+  /// **Who is probed without being asked.** A probe is a connection, so the
+  /// tab's first listing and a pull to refresh probe only the servers the
+  /// server list is connected to or connecting anyway ([autoProbeable]):
+  /// `probeAll(onlyConnected: true)`. Everything else is probed only when the
+  /// user asks — "Check this server" ([probe]) or "Check all" ([refresh]) —
+  /// which is also what connects a server whose `autoConnect` is off.
   ///
   /// Kept alive: the probe cache is the point, and a probe is a connection to
   /// every server.
@@ -154,15 +178,23 @@ final class VirtHostsProvider
   }
 }
 
-String _$virtHostsHash() => r'8aee523c1699bedd724f9c0f1aaddf4d5b51c6bd';
+String _$virtHostsHash() => r'de85bd282292f1a8e6e45780750b4d2b70e753bf';
 
 /// Which servers are virtualization hosts.
 ///
 /// PVE: a server with a `server_pve` row — explicit, and followed as it
 /// changes ([pveConfigsProvider]). libvirt: `virsh`
-/// answers through `ensureExec()`, probed on demand ([probeAll] when the tab
-/// first lists servers, [probe] for one), cached for the session, re-probed
-/// by [refresh]. A server that is both is shown as PVE and not probed.
+/// answers through `ensureExec()`, probed on demand, cached for the session.
+/// A server that is both is shown as PVE and not probed. The probe also
+/// finds PVE without a row ([VirtProbeStatus.pve]): not a host until its API
+/// access is configured, which is what the switcher offers for it.
+///
+/// **Who is probed without being asked.** A probe is a connection, so the
+/// tab's first listing and a pull to refresh probe only the servers the
+/// server list is connected to or connecting anyway ([autoProbeable]):
+/// `probeAll(onlyConnected: true)`. Everything else is probed only when the
+/// user asks — "Check this server" ([probe]) or "Check all" ([refresh]) —
+/// which is also what connects a server whose `autoConnect` is off.
 ///
 /// Kept alive: the probe cache is the point, and a probe is a connection to
 /// every server.
@@ -286,7 +318,7 @@ final class VirtHostNotifierProvider
   }
 }
 
-String _$virtHostNotifierHash() => r'7d565dbedbfa866e3a4df4ac1de5d40b436ab564';
+String _$virtHostNotifierHash() => r'7b01972380cc755f4045c06f2a2868f3bfb7d4ca';
 
 /// One virtualization host: its backend, periodic refresh, actions in flight
 /// and the answers the user gives (TOTP, certificate, sudo password).
@@ -386,4 +418,354 @@ abstract class _$VirtHostNotifier extends $Notifier<VirtHostState> {
             >;
     return element.handleCreate(ref, () => build(_$args));
   }
+}
+
+/// The snapshots of one guest. Invalidated by the view after each operation.
+
+@ProviderFor(virtSnapshots)
+final virtSnapshotsProvider = VirtSnapshotsFamily._();
+
+/// The snapshots of one guest. Invalidated by the view after each operation.
+
+final class VirtSnapshotsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<VirtGuestSnapshot>>,
+          List<VirtGuestSnapshot>,
+          FutureOr<List<VirtGuestSnapshot>>
+        >
+    with
+        $FutureModifier<List<VirtGuestSnapshot>>,
+        $FutureProvider<List<VirtGuestSnapshot>> {
+  /// The snapshots of one guest. Invalidated by the view after each operation.
+  VirtSnapshotsProvider._({
+    required VirtSnapshotsFamily super.from,
+    required (String, String) super.argument,
+  }) : super(
+         retry: _noRetry,
+         name: r'virtSnapshotsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$virtSnapshotsHash();
+
+  @override
+  String toString() {
+    return r'virtSnapshotsProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<VirtGuestSnapshot>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<VirtGuestSnapshot>> create(Ref ref) {
+    final argument = this.argument as (String, String);
+    return virtSnapshots(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is VirtSnapshotsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$virtSnapshotsHash() => r'83a2db4c1d51eeb17908fe3be6cbdcfdd740c0e3';
+
+/// The snapshots of one guest. Invalidated by the view after each operation.
+
+final class VirtSnapshotsFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<List<VirtGuestSnapshot>>,
+          (String, String)
+        > {
+  VirtSnapshotsFamily._()
+    : super(
+        retry: _noRetry,
+        name: r'virtSnapshotsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The snapshots of one guest. Invalidated by the view after each operation.
+
+  VirtSnapshotsProvider call(String serverId, String guestId) =>
+      VirtSnapshotsProvider._(argument: (serverId, guestId), from: this);
+
+  @override
+  String toString() => r'virtSnapshotsProvider';
+}
+
+/// The host's storage pools.
+
+@ProviderFor(virtStoragePools)
+final virtStoragePoolsProvider = VirtStoragePoolsFamily._();
+
+/// The host's storage pools.
+
+final class VirtStoragePoolsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<VirtStoragePool>>,
+          List<VirtStoragePool>,
+          FutureOr<List<VirtStoragePool>>
+        >
+    with
+        $FutureModifier<List<VirtStoragePool>>,
+        $FutureProvider<List<VirtStoragePool>> {
+  /// The host's storage pools.
+  VirtStoragePoolsProvider._({
+    required VirtStoragePoolsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: _noRetry,
+         name: r'virtStoragePoolsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$virtStoragePoolsHash();
+
+  @override
+  String toString() {
+    return r'virtStoragePoolsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<VirtStoragePool>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<VirtStoragePool>> create(Ref ref) {
+    final argument = this.argument as String;
+    return virtStoragePools(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is VirtStoragePoolsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$virtStoragePoolsHash() => r'fd7699ce3557d08ce0ec5314f8b38f3401ae06b1';
+
+/// The host's storage pools.
+
+final class VirtStoragePoolsFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<VirtStoragePool>>, String> {
+  VirtStoragePoolsFamily._()
+    : super(
+        retry: _noRetry,
+        name: r'virtStoragePoolsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The host's storage pools.
+
+  VirtStoragePoolsProvider call(String serverId) =>
+      VirtStoragePoolsProvider._(argument: serverId, from: this);
+
+  @override
+  String toString() => r'virtStoragePoolsProvider';
+}
+
+/// What is in the pool [poolId] of [virtStoragePoolsProvider].
+
+@ProviderFor(virtVolumes)
+final virtVolumesProvider = VirtVolumesFamily._();
+
+/// What is in the pool [poolId] of [virtStoragePoolsProvider].
+
+final class VirtVolumesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<VirtVolume>>,
+          List<VirtVolume>,
+          FutureOr<List<VirtVolume>>
+        >
+    with $FutureModifier<List<VirtVolume>>, $FutureProvider<List<VirtVolume>> {
+  /// What is in the pool [poolId] of [virtStoragePoolsProvider].
+  VirtVolumesProvider._({
+    required VirtVolumesFamily super.from,
+    required (String, String) super.argument,
+  }) : super(
+         retry: _noRetry,
+         name: r'virtVolumesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$virtVolumesHash();
+
+  @override
+  String toString() {
+    return r'virtVolumesProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<VirtVolume>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<VirtVolume>> create(Ref ref) {
+    final argument = this.argument as (String, String);
+    return virtVolumes(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is VirtVolumesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$virtVolumesHash() => r'fabeb3ec209a357ac8af1220d71c5760e5e2985f';
+
+/// What is in the pool [poolId] of [virtStoragePoolsProvider].
+
+final class VirtVolumesFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<List<VirtVolume>>,
+          (String, String)
+        > {
+  VirtVolumesFamily._()
+    : super(
+        retry: _noRetry,
+        name: r'virtVolumesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// What is in the pool [poolId] of [virtStoragePoolsProvider].
+
+  VirtVolumesProvider call(String serverId, String poolId) =>
+      VirtVolumesProvider._(argument: (serverId, poolId), from: this);
+
+  @override
+  String toString() => r'virtVolumesProvider';
+}
+
+/// The host's networks, with the guests on each.
+
+@ProviderFor(virtNetworks)
+final virtNetworksProvider = VirtNetworksFamily._();
+
+/// The host's networks, with the guests on each.
+
+final class VirtNetworksProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<VirtNetwork>>,
+          List<VirtNetwork>,
+          FutureOr<List<VirtNetwork>>
+        >
+    with
+        $FutureModifier<List<VirtNetwork>>,
+        $FutureProvider<List<VirtNetwork>> {
+  /// The host's networks, with the guests on each.
+  VirtNetworksProvider._({
+    required VirtNetworksFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: _noRetry,
+         name: r'virtNetworksProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$virtNetworksHash();
+
+  @override
+  String toString() {
+    return r'virtNetworksProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<VirtNetwork>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<VirtNetwork>> create(Ref ref) {
+    final argument = this.argument as String;
+    return virtNetworks(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is VirtNetworksProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$virtNetworksHash() => r'e667f3a4cdc50391318e31681aaf235fc7f0c97d';
+
+/// The host's networks, with the guests on each.
+
+final class VirtNetworksFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<VirtNetwork>>, String> {
+  VirtNetworksFamily._()
+    : super(
+        retry: _noRetry,
+        name: r'virtNetworksProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The host's networks, with the guests on each.
+
+  VirtNetworksProvider call(String serverId) =>
+      VirtNetworksProvider._(argument: serverId, from: this);
+
+  @override
+  String toString() => r'virtNetworksProvider';
 }

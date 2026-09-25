@@ -3283,7 +3283,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get pveTokenTip =>
-      'PVE\'de Veri Merkezi → İzinler → API Tokens altında oluşturun. Gösterilecek yollarda VM.Audit, VM.PowerMgmt, VM.Console ve Sys.Audit gerekir; ayrıcalık ayrımı açıksa bunları belirtecin kendisine verin.';
+      'PVE\'de Veri Merkezi → İzinler → API Tokens altında oluşturun. Gösterilecek yollarda VM.Audit, VM.PowerMgmt, VM.Console, VM.Snapshot, VM.Snapshot.Rollback, Datastore.Audit ve Sys.Audit gerekir; ayrıcalık ayrımı açıksa bunları belirtecin kendisine verin.';
 
   @override
   String get pveTokenIdInvalid =>
@@ -3356,14 +3356,31 @@ class AppLocalizationsTr extends AppLocalizations {
   String get virtProbeNotChecked => 'Henüz denetlenmedi';
 
   @override
-  String get virtProbeAbsent => 'virsh bulunamadı';
+  String get virtProbeAbsent => 'Ana makine değil';
+
+  @override
+  String virtProbeContainer(String kind) {
+    return '$kind kapsayıcısı';
+  }
+
+  @override
+  String get virtProbeContainerTip =>
+      'Bu sunucu bir kapsayıcıda çalışıyor, yani ana makine değil konuk. Onu çalıştıran ana makineden yönetilir.';
+
+  @override
+  String get virtProbePve => 'PVE, ayarlanmadı';
+
+  @override
+  String virtPveSetupTip(String version) {
+    return 'Bu sunucuda $version çalışıyor. Sanal makinelerini ve kapsayıcılarını burada yönetmek için sunucu ayarlarında API erişimini girin (API belirteci önerilir).';
+  }
 
   @override
   String get virtNoHosts => 'Sanallaştırma ana makinesi yok';
 
   @override
   String get virtNoHostsTip =>
-      'PVE adresi olan bir sunucu ana makinedir; virsh\'in yanıt verdiği sunucu da öyledir. Diğer sunucular ana makine değiştiriciden denetlenebilir.';
+      'Proxmox VE çalıştıran ve API erişimi girilmiş bir sunucu ana makinedir; virsh\'in yanıt verdiği sunucu da öyledir. Diğer sunucular ana makine değiştiriciden denetlenebilir.';
 
   @override
   String get virtNoGuests => 'Sanal makine veya konteyner yok';
@@ -3468,4 +3485,122 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtErrActionFailed => 'Ana makine işlemi reddetti';
+
+  @override
+  String get remoteSessionIdleTimeout => 'Ayrılınca kapat';
+
+  @override
+  String get remoteSessionIdleTimeoutTip =>
+      'Uzak masaüstünden veya bir konuğun konsolundan ayrıldıktan sonra bağlantının ne kadar süre açık kalacağı. Kapanmadan önce bir bildirim, bağlantıyı korumanız için 10 saniye verir.';
+
+  @override
+  String get remoteSessionKeepAlive => 'Açık tut';
+
+  @override
+  String remoteSessionClosingIn(int seconds) {
+    return '$seconds sn içinde kapanıyor';
+  }
+
+  @override
+  String get reopen => 'Yeniden aç';
+
+  @override
+  String get virtSnapshots => 'Anlık görüntüler';
+
+  @override
+  String get virtSnapshotCreate => 'Anlık görüntü al';
+
+  @override
+  String get virtSnapshotNone => 'Henüz anlık görüntü yok';
+
+  @override
+  String get virtSnapshotWithMemory => 'Diskler ve bellek';
+
+  @override
+  String get virtSnapshotDiskOnly => 'Yalnızca diskler';
+
+  @override
+  String get virtSnapshotParent => 'Üst';
+
+  @override
+  String get virtSnapshotRevert => 'Geri dön';
+
+  @override
+  String get virtSnapshotMemory => 'Belleği dahil et';
+
+  @override
+  String get virtSnapshotMemoryTip =>
+      'Geri dönüldüğünde konuk bu andan devam eder.';
+
+  @override
+  String get virtSnapshotMemoryAlways =>
+      'Burada çalışan bir konuğun anlık görüntüsü her zaman belleğini içerir.';
+
+  @override
+  String get virtSnapshotMemoryOff =>
+      'Konuk çalışmıyor, bu yüzden yalnızca diskleri kaydedilir.';
+
+  @override
+  String get virtSnapshotNameInvalid =>
+      'Önce bir harf, sonra harf, rakam, - veya _; 2 ile 40 karakter.';
+
+  @override
+  String get virtSnapshotNameTaken => 'Bu adda bir anlık görüntü zaten var.';
+
+  @override
+  String get virtSnapshotRevertTip =>
+      'Geri dönmek, anlık görüntüden sonraki tüm değişiklikleri siler.';
+
+  @override
+  String virtSnapshotRevertAsk(String guest, String snapshot) {
+    return '$guest, $snapshot anına geri döndürülsün mü? O zamandan beri yapılan tüm değişiklikler kaybolur.';
+  }
+
+  @override
+  String virtSnapshotRevertStops(String guest) {
+    return 'Bu anlık görüntüde bellek yok: $guest durdurulacak.';
+  }
+
+  @override
+  String get virtSnapshotStartAfter => 'Ardından başlat';
+
+  @override
+  String get virtVolumes => 'Birimler';
+
+  @override
+  String get virtNoPools => 'Depolama havuzu yok';
+
+  @override
+  String get virtNoNetworks => 'Ağ yok';
+
+  @override
+  String get virtPoolInactive =>
+      'Havuz etkin değil, bu yüzden birimleri listelenemiyor.';
+
+  @override
+  String get virtShared => 'Düğümler arasında paylaşılan';
+
+  @override
+  String get virtBackingFile => 'Temel dosya';
+
+  @override
+  String get virtNetIsolated => 'Yalıtılmış';
+
+  @override
+  String get virtNetBridged => 'Köprülü';
+
+  @override
+  String get virtNetRouted => 'Yönlendirilmiş';
+
+  @override
+  String get virtBridge => 'Köprü';
+
+  @override
+  String get virtPorts => 'Bağlantı noktaları';
+
+  @override
+  String get virtAttachedGuests => 'Bağlı konuklar';
+
+  @override
+  String get virtNoAttachedGuests => 'Bağlı konuk yok';
 }

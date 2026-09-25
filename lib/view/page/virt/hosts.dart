@@ -10,6 +10,7 @@ class _VirtHostPicker extends ConsumerWidget {
     required this.selectedId,
     required this.onSelect,
     required this.onCheck,
+    required this.onSetUpPve,
   });
 
   final String? selectedId;
@@ -17,6 +18,10 @@ class _VirtHostPicker extends ConsumerWidget {
 
   /// Probes a server; true when it turned out to be a host.
   final Future<bool> Function(String serverId) onCheck;
+
+  /// Offers PVE's API access for a server found running it; true when it
+  /// became a host.
+  final Future<bool> Function(String serverId) onSetUpPve;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -50,9 +55,11 @@ class _VirtHostPicker extends ConsumerWidget {
                 key: ValueKey('other:$id'),
                 title: spi.name,
                 trailing: _ProbeStatus(hosts.probes[id]),
-                onTap: hosts.probes[id]?.status == VirtProbeStatus.probing
-                    ? null
-                    : () => unawaited(onCheck(id)),
+                onTap: switch (hosts.probes[id]?.status) {
+                  VirtProbeStatus.probing => null,
+                  VirtProbeStatus.pve => () => unawaited(onSetUpPve(id)),
+                  _ => () => unawaited(onCheck(id)),
+                },
               ),
         ],
       ],
@@ -60,7 +67,7 @@ class _VirtHostPicker extends ConsumerWidget {
   }
 }
 
-/// What asking a server for virsh found, at the end of its row.
+/// What probing a server found, at the end of its row.
 class _ProbeStatus extends StatelessWidget {
   const _ProbeStatus(this.probe);
 
@@ -81,6 +88,17 @@ class _ProbeStatus extends StatelessWidget {
     ),
   );
 
+  /// `systemd-detect-virt`'s names, as their projects write them.
+  static String _containerName(String kind) => switch (kind) {
+    'lxc' || 'lxc-libvirt' => 'LXC',
+    'docker' => 'Docker',
+    'podman' => 'Podman',
+    'systemd-nspawn' => 'nspawn',
+    'openvz' => 'OpenVZ',
+    'wsl' => 'WSL',
+    _ => kind,
+  };
+
   @override
   Widget build(BuildContext context) {
     final probe = this.probe;
@@ -90,7 +108,14 @@ class _ProbeStatus extends StatelessWidget {
         dimension: 14,
         child: CircularProgressIndicator(strokeWidth: 2),
       ),
-      VirtProbeStatus.absent => _note(l10n.virtProbeAbsent),
+      VirtProbeStatus.pve => _note(l10n.virtProbePve),
+      VirtProbeStatus.absent => switch (probe!.container) {
+        final kind? => Tooltip(
+          message: l10n.virtProbeContainerTip,
+          child: _note(l10n.virtProbeContainer(_containerName(kind))),
+        ),
+        null => _note(l10n.virtProbeAbsent),
+      },
       // Found but refused: it is a host, and the host's own page says what to
       // change. Not reached in practice — a found server is a host — but a
       // row has to say something.

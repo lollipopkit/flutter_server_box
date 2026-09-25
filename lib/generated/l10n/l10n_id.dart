@@ -3287,7 +3287,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get pveTokenTip =>
-      'Buat di PVE pada Datacenter → Permissions → API Tokens. Token memerlukan VM.Audit, VM.PowerMgmt, VM.Console, dan Sys.Audit pada jalur yang ingin ditampilkan; jika pemisahan hak aktif, berikan hak tersebut ke token itu sendiri.';
+      'Buat di PVE pada Datacenter → Permissions → API Tokens. Token memerlukan VM.Audit, VM.PowerMgmt, VM.Console, VM.Snapshot, VM.Snapshot.Rollback, Datastore.Audit, dan Sys.Audit pada jalur yang ingin ditampilkan; jika pemisahan hak aktif, berikan hak tersebut ke token itu sendiri.';
 
   @override
   String get pveTokenIdInvalid => 'ID token harus berbentuk user@realm!tokenid';
@@ -3359,14 +3359,31 @@ class AppLocalizationsId extends AppLocalizations {
   String get virtProbeNotChecked => 'Belum diperiksa';
 
   @override
-  String get virtProbeAbsent => 'virsh tidak ditemukan';
+  String get virtProbeAbsent => 'Bukan host';
+
+  @override
+  String virtProbeContainer(String kind) {
+    return 'Kontainer $kind';
+  }
+
+  @override
+  String get virtProbeContainerTip =>
+      'Server ini berjalan di dalam kontainer, jadi merupakan tamu, bukan host. Kelola dari host yang menjalankannya.';
+
+  @override
+  String get virtProbePve => 'PVE, belum disiapkan';
+
+  @override
+  String virtPveSetupTip(String version) {
+    return '$version berjalan di server ini. Isi akses API-nya di pengaturan server (disarankan token API) untuk mengelola mesin virtual dan kontainernya di sini.';
+  }
 
   @override
   String get virtNoHosts => 'Tidak ada host virtualisasi';
 
   @override
   String get virtNoHostsTip =>
-      'Server dengan alamat PVE adalah host, begitu juga server tempat virsh merespons. Server lainnya dapat diperiksa dari pengalih host.';
+      'Server yang menjalankan Proxmox VE dengan akses API terisi adalah host, begitu juga server tempat virsh merespons. Server lainnya dapat diperiksa dari pengalih host.';
 
   @override
   String get virtNoGuests => 'Tidak ada mesin virtual atau kontainer';
@@ -3472,4 +3489,122 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get virtErrActionFailed => 'Host menolak tindakan tersebut';
+
+  @override
+  String get remoteSessionIdleTimeout => 'Tutup saat ditinggalkan';
+
+  @override
+  String get remoteSessionIdleTimeoutTip =>
+      'Berapa lama desktop jarak jauh atau konsol tamu tetap terhubung setelah Anda meninggalkannya. Sebelum ditutup, pemberitahuan memberi Anda 10 detik untuk mempertahankannya.';
+
+  @override
+  String get remoteSessionKeepAlive => 'Pertahankan';
+
+  @override
+  String remoteSessionClosingIn(int seconds) {
+    return 'Ditutup dalam $seconds dtk';
+  }
+
+  @override
+  String get reopen => 'Buka lagi';
+
+  @override
+  String get virtSnapshots => 'Snapshot';
+
+  @override
+  String get virtSnapshotCreate => 'Ambil snapshot';
+
+  @override
+  String get virtSnapshotNone => 'Belum ada snapshot';
+
+  @override
+  String get virtSnapshotWithMemory => 'Disk dan memori';
+
+  @override
+  String get virtSnapshotDiskOnly => 'Hanya disk';
+
+  @override
+  String get virtSnapshotParent => 'Induk';
+
+  @override
+  String get virtSnapshotRevert => 'Kembalikan';
+
+  @override
+  String get virtSnapshotMemory => 'Sertakan memori';
+
+  @override
+  String get virtSnapshotMemoryTip =>
+      'Mengembalikan akan melanjutkan guest dari saat ini.';
+
+  @override
+  String get virtSnapshotMemoryAlways =>
+      'Di sini snapshot guest yang berjalan selalu menyertakan memorinya.';
+
+  @override
+  String get virtSnapshotMemoryOff =>
+      'Guest tidak berjalan, jadi hanya disknya yang disimpan.';
+
+  @override
+  String get virtSnapshotNameInvalid =>
+      'Diawali huruf, lalu huruf, angka, - atau _; 2 sampai 40 karakter.';
+
+  @override
+  String get virtSnapshotNameTaken => 'Snapshot dengan nama ini sudah ada.';
+
+  @override
+  String get virtSnapshotRevertTip =>
+      'Mengembalikan akan membuang semua perubahan sejak snapshot.';
+
+  @override
+  String virtSnapshotRevertAsk(String guest, String snapshot) {
+    return 'Kembalikan $guest ke $snapshot? Semua perubahan sejak itu akan hilang.';
+  }
+
+  @override
+  String virtSnapshotRevertStops(String guest) {
+    return 'Snapshot ini tanpa memori: $guest akan dihentikan.';
+  }
+
+  @override
+  String get virtSnapshotStartAfter => 'Jalankan setelahnya';
+
+  @override
+  String get virtVolumes => 'Volume';
+
+  @override
+  String get virtNoPools => 'Tidak ada pool penyimpanan';
+
+  @override
+  String get virtNoNetworks => 'Tidak ada jaringan';
+
+  @override
+  String get virtPoolInactive =>
+      'Pool tidak aktif, jadi volumenya tidak dapat dicantumkan.';
+
+  @override
+  String get virtShared => 'Dibagi antar node';
+
+  @override
+  String get virtBackingFile => 'Berkas dasar';
+
+  @override
+  String get virtNetIsolated => 'Terisolasi';
+
+  @override
+  String get virtNetBridged => 'Bridge';
+
+  @override
+  String get virtNetRouted => 'Dirutekan';
+
+  @override
+  String get virtBridge => 'Bridge';
+
+  @override
+  String get virtPorts => 'Port';
+
+  @override
+  String get virtAttachedGuests => 'Guest di dalamnya';
+
+  @override
+  String get virtNoAttachedGuests => 'Tidak ada guest di dalamnya';
 }

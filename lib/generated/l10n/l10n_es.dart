@@ -3340,7 +3340,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get pveTokenTip =>
-      'Créalo en PVE en Centro de datos → Permisos → API Tokens. Necesita VM.Audit, VM.PowerMgmt, VM.Console y Sys.Audit en las rutas que se mostrarán; con la separación de privilegios activada, concédelos al propio token.';
+      'Créalo en PVE en Centro de datos → Permisos → API Tokens. Necesita VM.Audit, VM.PowerMgmt, VM.Console, VM.Snapshot, VM.Snapshot.Rollback, Datastore.Audit y Sys.Audit en las rutas que se mostrarán; con la separación de privilegios activada, concédelos al propio token.';
 
   @override
   String get pveTokenIdInvalid =>
@@ -3413,14 +3413,31 @@ class AppLocalizationsEs extends AppLocalizations {
   String get virtProbeNotChecked => 'Aún sin comprobar';
 
   @override
-  String get virtProbeAbsent => 'virsh no encontrado';
+  String get virtProbeAbsent => 'No es un host';
+
+  @override
+  String virtProbeContainer(String kind) {
+    return 'Contenedor $kind';
+  }
+
+  @override
+  String get virtProbeContainerTip =>
+      'Este servidor se ejecuta en un contenedor, así que es un invitado y no un host. Se gestiona desde el host que lo ejecuta.';
+
+  @override
+  String get virtProbePve => 'PVE, sin configurar';
+
+  @override
+  String virtPveSetupTip(String version) {
+    return 'En este servidor se ejecuta $version. Completa su acceso a la API en los ajustes del servidor (se recomienda un token de API) para gestionar aquí sus máquinas virtuales y contenedores.';
+  }
 
   @override
   String get virtNoHosts => 'No hay hosts de virtualización';
 
   @override
   String get virtNoHostsTip =>
-      'Un servidor con dirección de PVE es un host, y también uno donde virsh responde. Los demás servidores se pueden comprobar desde el selector de hosts.';
+      'Un servidor con Proxmox VE y su acceso a la API completado es un host, y también uno donde virsh responde. Los demás servidores se pueden comprobar desde el selector de hosts.';
 
   @override
   String get virtNoGuests => 'No hay máquinas virtuales ni contenedores';
@@ -3526,4 +3543,123 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get virtErrActionFailed => 'El host rechazó la acción';
+
+  @override
+  String get remoteSessionIdleTimeout => 'Cerrar al dejarla inactiva';
+
+  @override
+  String get remoteSessionIdleTimeoutTip =>
+      'Cuánto tiempo sigue conectado un escritorio remoto o la consola de un invitado después de salir de él. Antes de cerrarse, un aviso te da 10 segundos para mantenerlo.';
+
+  @override
+  String get remoteSessionKeepAlive => 'Mantener';
+
+  @override
+  String remoteSessionClosingIn(int seconds) {
+    return 'Se cierra en $seconds s';
+  }
+
+  @override
+  String get reopen => 'Reabrir';
+
+  @override
+  String get virtSnapshots => 'Instantáneas';
+
+  @override
+  String get virtSnapshotCreate => 'Crear instantánea';
+
+  @override
+  String get virtSnapshotNone => 'Aún no hay instantáneas';
+
+  @override
+  String get virtSnapshotWithMemory => 'Discos y memoria';
+
+  @override
+  String get virtSnapshotDiskOnly => 'Solo discos';
+
+  @override
+  String get virtSnapshotParent => 'Padre';
+
+  @override
+  String get virtSnapshotRevert => 'Revertir';
+
+  @override
+  String get virtSnapshotMemory => 'Incluir memoria';
+
+  @override
+  String get virtSnapshotMemoryTip =>
+      'Al revertir, el invitado continúa desde este momento.';
+
+  @override
+  String get virtSnapshotMemoryAlways =>
+      'Aquí, una instantánea de un invitado en ejecución siempre incluye su memoria.';
+
+  @override
+  String get virtSnapshotMemoryOff =>
+      'El invitado no está en ejecución, así que solo se guardan sus discos.';
+
+  @override
+  String get virtSnapshotNameInvalid =>
+      'Primero una letra y luego letras, dígitos, - o _; de 2 a 40 caracteres.';
+
+  @override
+  String get virtSnapshotNameTaken =>
+      'Ya existe una instantánea con este nombre.';
+
+  @override
+  String get virtSnapshotRevertTip =>
+      'Revertir descarta todos los cambios hechos desde la instantánea.';
+
+  @override
+  String virtSnapshotRevertAsk(String guest, String snapshot) {
+    return '¿Revertir $guest a $snapshot? Se perderán todos los cambios desde entonces.';
+  }
+
+  @override
+  String virtSnapshotRevertStops(String guest) {
+    return 'Esta instantánea no tiene memoria: $guest se detendrá.';
+  }
+
+  @override
+  String get virtSnapshotStartAfter => 'Iniciarlo después';
+
+  @override
+  String get virtVolumes => 'Volúmenes';
+
+  @override
+  String get virtNoPools => 'No hay grupos de almacenamiento';
+
+  @override
+  String get virtNoNetworks => 'No hay redes';
+
+  @override
+  String get virtPoolInactive =>
+      'El grupo no está activo, así que no se pueden listar sus volúmenes.';
+
+  @override
+  String get virtShared => 'Compartido entre nodos';
+
+  @override
+  String get virtBackingFile => 'Archivo base';
+
+  @override
+  String get virtNetIsolated => 'Aislada';
+
+  @override
+  String get virtNetBridged => 'Puente';
+
+  @override
+  String get virtNetRouted => 'Enrutada';
+
+  @override
+  String get virtBridge => 'Puente';
+
+  @override
+  String get virtPorts => 'Puertos';
+
+  @override
+  String get virtAttachedGuests => 'Invitados en ella';
+
+  @override
+  String get virtNoAttachedGuests => 'Ningún invitado en ella';
 }

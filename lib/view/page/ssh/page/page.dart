@@ -82,6 +82,15 @@ final class SshPageArgs {
   /// everything printed into it are the session's, not the page's, so the page
   /// showing them can change without the shell noticing.
   final TerminalSession? session;
+
+  /// Where the session goes when this page does, instead of being closed.
+  ///
+  /// For a shell that is meant to outlive the page showing it — a guest's text
+  /// console, kept running for a while after it is left (`VirtTextConsoles`).
+  /// Given the session as it is: still connected, still writing into its
+  /// terminal, and with nothing called when its shell ends. Called after the
+  /// frame that removed the page, so it may write to a provider.
+  final void Function(TerminalSession session)? onLeave;
   final bool notFromTab;
   final Function()? onSessionEnd;
   final GlobalKey<TerminalViewState>? terminalKey;
@@ -104,6 +113,7 @@ final class SshPageArgs {
     this.initSnippet,
     this.detachInput,
     this.session,
+    this.onLeave,
     this.notFromTab = true,
     this.onSessionEnd,
     this.terminalKey,
@@ -396,7 +406,16 @@ class SSHPageState extends ConsumerState<SSHPage>
     //
     // Otherwise not `close`: a tab's session may be handed on (the floating
     // window), and one this page adopted belongs to whoever started it.
-    if (widget.args.notFromTab && !_adopted) {
+    //
+    // Neither for a page with somewhere to leave its session: that session
+    // keeps running, and its output keeps landing in the terminal a later page
+    // will show.
+    final onLeave = widget.args.onLeave;
+    if (onLeave != null) {
+      // This page's own handler would run on a page that no longer exists.
+      session.onForegroundDone = null;
+      WidgetsBinding.instance.addPostFrameCallback((_) => onLeave(session));
+    } else if (widget.args.notFromTab && !_adopted) {
       _sess.close();
     } else {
       _sess.dispose();

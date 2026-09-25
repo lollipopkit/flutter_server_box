@@ -1,11 +1,14 @@
 /// `PveBackend` against a scripted PVE API: parsing, auth (ticket, TOTP,
-/// token), session drop on 401 and not on 403, the generation guard, and UPID polling.
+/// token), session drop on 401 and not on 403, the generation guard, UPID
+/// polling, and snapshots, storage and networks against payloads captured
+/// from PVE 9.2.2 (`test/fixtures/pve/`).
 ///
 /// TLS is `pve_tls_test.dart`, against a real TLS server.
 library;
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -16,6 +19,7 @@ import 'package:server_box/data/model/virt/pve_resources.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
+import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/virt/pve_backend.dart';
 
 /// `/cluster/resources` from a one-node PVE 8 (the old `pve_test.dart`
@@ -978,6 +982,302 @@ void main() {
     snap = await pve.load();
     expect(snap.stats['lxc/100']!.netIn, 1000);
   });
+
+  group('snapshots, storage, networks', () {
+    List<Object?> fixture(String name) =>
+        jsonDecode(File('test/fixtures/pve/$name').readAsStringSync())
+            as List<Object?>;
+
+    const token = PveConfig(
+      addr: 'https://pve.lan:8006',
+      auth: PveAuth.token,
+      tokenId: 'root@pam!sb',
+      tokenSecret: 's3cret',
+    );
+
+    test('snapshot listing: the "current" entry marks, and is not one', () {
+      final list = PveResources.parseSnapshots(fixture('snapshots_qemu.json'));
+      expect(list.map((s) => s.name), ['sbx-disk', 'sbx-mem']);
+      final disk = list.first;
+      expect(disk.description, 'disk only');
+      expect(disk.withMemory, isFalse);
+      // After a rollback to it: `current`'s parent.
+      expect(disk.current, isTrue);
+      expect(
+        disk.createdAt,
+        DateTime.fromMillisecondsSinceEpoch(1790335982 * 1000),
+      );
+      final mem = list.last;
+      expect(mem.withMemory, isTrue);
+      expect(mem.parent, 'sbx-disk');
+      expect(mem.current, isFalse);
+      // An empty description is none.
+      expect(mem.description, isNull);
+      expect(PveResources.parseSnapshots(fixture('snapshots_none.json')), isEmpty);
+    });
+
+    test('storage: node figures with the cluster configuration', () {
+      final pools = PveResources.parseStorages(
+        'pve',
+        fixture('node_storage.json'),
+        config: fixture('storage_config.json'),
+      );
+      expect(pools.map((p) => p.id), ['pve/local', 'pve/local-lvm']);
+      final local = pools.first;
+      expect(local.type, 'dir');
+      expect(local.path, '/var/lib/vz');
+      expect(local.content, ['backup', 'import', 'iso', 'vztmpl']);
+      expect(local.capacity, 105089261568);
+      expect(local.shared, isFalse);
+      final lvm = pools.last;
+      expect(lvm.path, 'pve/data');
+      expect(lvm.used, 4176431231);
+      expect(lvm.available, 848156473217);
+      expect(lvm.usedFraction, closeTo(0.0049, 0.0001));
+      // Without the configuration (no Datastore.Audit on /storage): no path.
+      final bare = PveResources.parseStorages('pve', fixture('node_storage.json'));
+      expect(bare.first.path, isNull);
+      // A network storage says where it comes from.
+      final nfs = PveResources.parseStorages(
+        'pve',
+        [
+          {'storage': 'nas', 'type': 'nfs', 'active': 0, 'content': 'backup'},
+        ],
+        config: [
+          {
+            'storage': 'nas',
+            'type': 'nfs',
+            'server': '10.0.0.5',
+            'export': '/export/pve',
+            'path': '/mnt/pve/nas',
+          },
+        ],
+      ).single;
+      expect(nfs.source, '10.0.0.5:/export/pve');
+      expect(nfs.active, isFalse);
+      expect(nfs.capacity, isNull);
+    });
+
+    test('content: names, kinds and owners', () {
+      final vols = PveResources.parseContent(fixture('content_local_lvm.json'));
+      expect(vols.map((v) => v.name), [
+        'vm-100-cloudinit',
+        'vm-100-disk-0',
+        'vm-101-cloudinit',
+        'vm-101-disk-0',
+        'vm-101-state-sbx-mem',
+        'vm-200-disk-0',
+      ]);
+      final disk = vols[1];
+      expect(disk.id, 'local-lvm:vm-100-disk-0');
+      expect(disk.capacity, 21474836480);
+      expect(disk.users, [const VirtGuestRef(vmid: 100)]);
+      // `ctime` arrives as a string for some storages.
+      expect(disk.createdAt, isNotNull);
+      final tmpl = PveResources.parseContent(fixture('content_local.json')).single;
+      expect(tmpl.name, 'alpine-3.24-default_20260714_amd64.tar.xz');
+      expect(tmpl.content, 'vztmpl');
+      expect(tmpl.users, isEmpty);
+    });
+
+    test('network: bridges first, ports, and the guests on each', () {
+      final nets = PveResources.parseNetworks(
+        'pve',
+        [
+          ...fixture('network.json'),
+          {
+            'iface': 'bond0',
+            'type': 'bond',
+            'slaves': 'nic1 nic2',
+            'bond_mode': '802.3ad',
+            'active': 1,
+          },
+          {
+            'iface': 'vmbr1',
+            'type': 'bridge',
+            'bridge_ports': 'bond0',
+            'bridge_vlan_aware': 1,
+            'comments': 'lab\n',
+          },
+          {
+            'iface': 'vmbr1.10',
+            'type': 'vlan',
+            'vlan-id': '10',
+            'vlan-raw-device': 'vmbr1',
+            'cidr': '10.10.0.2/24',
+          },
+        ],
+        users: {
+          'vmbr0': [const VirtGuestRef(guestId: 'qemu/100', vmid: 100)],
+        },
+      );
+      expect(nets.map((n) => n.name), [
+        'vmbr0',
+        'vmbr1',
+        'bond0',
+        'vmbr1.10',
+        'nic0',
+        'nic1',
+        'wlp4s0',
+      ]);
+      final vmbr0 = nets.first;
+      expect(vmbr0.id, 'pve/vmbr0');
+      expect(vmbr0.cidrs, ['192.168.31.20/24']);
+      expect(vmbr0.gateway, '192.168.31.1');
+      expect(vmbr0.ports, ['nic0']);
+      expect(vmbr0.active, isTrue);
+      expect(vmbr0.autostart, isTrue);
+      expect(vmbr0.vlanAware, isNull);
+      expect(vmbr0.users.single.vmid, 100);
+      expect(nets[1].vlanAware, isTrue);
+      expect(nets[1].comment, 'lab');
+      expect(nets[1].active, isFalse);
+      expect(nets[2].ports, ['nic1', 'nic2']);
+      expect(nets[2].bondMode, '802.3ad');
+      expect(nets[3].vlanId, 10);
+      expect(nets[3].vlanDevice, 'vmbr1');
+    });
+
+    test('bridge users from a guest configuration', () {
+      final users = PveResources.bridgeUsers(
+        const VirtGuest(
+          id: 'lxc/200',
+          name: 'ct',
+          kind: VirtGuestKind.lxc,
+          state: VirtGuestState.running,
+          vmid: 200,
+        ),
+        {
+          'net0':
+              'name=eth0,bridge=vmbr0,hwaddr=BC:24:11:30:5B:A7,ip=dhcp,type=veth',
+          'net1': 'name=eth1,bridge=vmbr1,hwaddr=BC:24:11:30:5B:A8',
+          'rootfs': 'local-lvm:vm-200-disk-0,size=4G',
+        },
+      );
+      expect(users.keys, unorderedEquals(['vmbr0', 'vmbr1']));
+      expect(
+        users['vmbr0'],
+        [
+          const VirtGuestRef(
+            guestId: 'lxc/200',
+            vmid: 200,
+            device: 'net0',
+            mac: 'bc:24:11:30:5b:a7',
+          ),
+        ],
+      );
+    });
+
+    test('snapshot requests: create, rollback and delete wait for their task',
+        () async {
+      final api = _Api()..resources = _resources;
+      api.routes['POST /nodes/pve/qemu/102/snapshot'] = (_) => _Api.upid;
+      api.routes['POST /nodes/pve/lxc/100/snapshot'] = (_) => _Api.upid;
+      api.routes['POST /nodes/pve/qemu/102/snapshot/pre-up/rollback'] =
+          (_) => _Api.upid;
+      api.routes['DELETE /nodes/pve/qemu/102/snapshot/pre-up'] =
+          (_) => _Api.upid;
+      api.current = {'status': 'stopped'};
+      final pve = api.backend(token);
+      final guests = (await pve.load()).guests;
+      final vm = guests.firstWhere((g) => g.id == 'qemu/102');
+      final ct = guests.firstWhere((g) => g.id == 'lxc/100');
+
+      await pve.createSnapshot(
+        vm,
+        name: 'pre-up',
+        description: ' before ',
+        memory: true,
+      );
+      expect(api.bodies[api.paths.indexOf('POST /nodes/pve/qemu/102/snapshot')],
+          'snapname=pre-up&description=before&vmstate=1');
+      expect(api.paths.last, startsWith('GET /nodes/pve/tasks/'));
+
+      // A container has no memory to save, whatever is asked.
+      await pve.createSnapshot(ct, name: 'pre-up', memory: true);
+      expect(
+        api.bodies[api.paths.indexOf('POST /nodes/pve/lxc/100/snapshot')],
+        'snapname=pre-up',
+      );
+
+      // The start is a task of its own, holding the guest's lock: waited for.
+      api.routes['GET /nodes/pve/tasks'] = (_) => [
+        {'type': 'vncproxy', 'upid': 'UPID:other'},
+        {'type': 'qmstart', 'upid': 'UPID:pve:9:9:9:qmstart:102:root@pam:'},
+      ];
+      await pve.revertSnapshot(vm, 'pre-up', start: true);
+      expect(
+        api.bodies[api.paths.indexOf(
+          'POST /nodes/pve/qemu/102/snapshot/pre-up/rollback',
+        )],
+        'start=1',
+      );
+      expect(
+        api.paths,
+        contains(
+          'GET /nodes/pve/tasks/${Uri.encodeComponent('UPID:pve:9:9:9:qmstart:102:root@pam:')}/status',
+        ),
+      );
+      // The state after it is read, as after a power action.
+      expect(api.paths.last, 'GET /nodes/pve/qemu/102/status/current');
+
+      await pve.deleteSnapshot(vm, 'pre-up');
+      expect(api.paths, contains('DELETE /nodes/pve/qemu/102/snapshot/pre-up'));
+
+      expect(
+        (await _err(pve.createSnapshot(vm, name: '1bad'))).type,
+        VirtErrType.unsupported,
+      );
+    });
+
+    test('a snapshot task that fails is actionFailed with its exit', () async {
+      final api = _Api()
+        ..resources = _resources
+        ..taskExit = "snapshot name 'pre-up' already used";
+      api.routes['POST /nodes/pve/qemu/102/snapshot'] = (_) => _Api.upid;
+      final pve = api.backend(token);
+      final vm = (await pve.load()).guests.firstWhere((g) => g.id == 'qemu/102');
+      final e = await _err(pve.createSnapshot(vm, name: 'pre-up'));
+      expect(e.type, VirtErrType.actionFailed);
+      expect(e.message, "snapshot name 'pre-up' already used");
+    });
+
+    test('storage without /storage access still lists, without paths',
+        () async {
+      final api = _Api()..resources = _resources;
+      api.routes['GET /storage'] = (_) => _Api._status(403);
+      api.routes['GET /nodes/pve/storage'] = (_) => fixture('node_storage.json');
+      api.routes['GET /nodes/pve/storage/local-lvm/content'] =
+          (_) => fixture('content_local_lvm.json');
+      final pve = api.backend(token);
+      await pve.load();
+      final pools = await pve.storagePools();
+      expect(pools.map((p) => p.name), ['local', 'local-lvm']);
+      expect(pools.first.path, isNull);
+      final vols = await pve.volumes(pools.last);
+      expect(vols, hasLength(6));
+    });
+
+    test("networks: each guest's configuration says which bridge", () async {
+      final api = _Api()..resources = _resources;
+      api.routes['GET /nodes/pve/network'] = (_) => fixture('network.json');
+      for (final g in ['lxc/100', 'qemu/101', 'qemu/102', 'qemu/103', 'qemu/9000', 'qemu/104']) {
+        api.routes['GET /nodes/pve/$g/config'] = (_) => {
+          'net0': g.startsWith('lxc')
+              ? 'name=eth0,bridge=vmbr0,hwaddr=BC:24:11:00:00:01,type=veth'
+              : 'virtio=BC:24:11:00:00:02,bridge=vmbr0',
+        };
+      }
+      // One guest this account may not read: left out, not a failure.
+      api.routes['GET /nodes/pve/qemu/104/config'] = (_) => _Api._status(403);
+      final pve = api.backend(token);
+      await pve.load();
+      final nets = await pve.networks();
+      final vmbr0 = nets.firstWhere((n) => n.name == 'vmbr0');
+      expect(vmbr0.users.map((u) => u.vmid), [100, 101, 102, 103, 9000]);
+      expect(nets.firstWhere((n) => n.name == 'nic0').users, isEmpty);
+    });
+  });
 }
 
 Future<VirtErr> _err(Future<Object?> future) async {
@@ -1010,6 +1310,9 @@ class _Api {
   /// answer [resourcesStatus] — an expired ticket.
   int resources401 = 0;
   bool needTfa = false;
+  /// Answers by `METHOD path`, checked before everything else: a value to
+  /// send as `data`, or a [ResponseBody] as it is.
+  final routes = <String, Object? Function(String body)>{};
   List<String> taskStates = const ['stopped'];
   String taskExit = 'OK';
 
@@ -1054,6 +1357,10 @@ class _Api {
     paths.add(key);
     bodies.add(body);
     headers.add(Map.of(o.headers));
+    if (routes[key] case final route?) {
+      final answer = route(body);
+      return answer is ResponseBody ? answer : _json(answer);
+    }
 
     if (key == 'POST /access/ticket') {
       _ticketsInFlight++;

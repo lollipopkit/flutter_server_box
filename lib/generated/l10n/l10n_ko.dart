@@ -3136,7 +3136,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get pveTokenTip =>
-      'PVE의 데이터센터 → 권한 → API 토큰에서 만듭니다. 표시할 경로에 VM.Audit, VM.PowerMgmt, VM.Console, Sys.Audit 권한이 필요하며, 권한 분리가 켜져 있으면 토큰 자체에 부여해야 합니다.';
+      'PVE의 데이터센터 → 권한 → API 토큰에서 만듭니다. 표시할 경로에 VM.Audit, VM.PowerMgmt, VM.Console, VM.Snapshot, VM.Snapshot.Rollback, Datastore.Audit, Sys.Audit 권한이 필요하며, 권한 분리가 켜져 있으면 토큰 자체에 부여해야 합니다.';
 
   @override
   String get pveTokenIdInvalid => '토큰 ID는 user@realm!tokenid 형식이어야 합니다';
@@ -3205,14 +3205,31 @@ class AppLocalizationsKo extends AppLocalizations {
   String get virtProbeNotChecked => '아직 확인 안 됨';
 
   @override
-  String get virtProbeAbsent => 'virsh를 찾을 수 없음';
+  String get virtProbeAbsent => '호스트 아님';
+
+  @override
+  String virtProbeContainer(String kind) {
+    return '$kind 컨테이너';
+  }
+
+  @override
+  String get virtProbeContainerTip =>
+      '이 서버는 컨테이너에서 실행되므로 호스트가 아니라 게스트입니다. 이를 실행하는 호스트에서 관리하세요.';
+
+  @override
+  String get virtProbePve => 'PVE, 설정 안 됨';
+
+  @override
+  String virtPveSetupTip(String version) {
+    return '이 서버에서 $version이(가) 실행 중입니다. 서버 설정에서 API 접근 정보(API 토큰 권장)를 입력하면 여기에서 가상 머신과 컨테이너를 관리할 수 있습니다.';
+  }
 
   @override
   String get virtNoHosts => '가상화 호스트 없음';
 
   @override
   String get virtNoHostsTip =>
-      'PVE 주소가 있는 서버와 virsh가 응답하는 서버가 호스트입니다. 다른 서버는 호스트 전환기에서 확인할 수 있습니다.';
+      'Proxmox VE가 실행되고 API 접근 정보가 입력된 서버와 virsh가 응답하는 서버가 호스트입니다. 다른 서버는 호스트 전환기에서 확인할 수 있습니다.';
 
   @override
   String get virtNoGuests => '가상 머신이나 컨테이너 없음';
@@ -3312,4 +3329,116 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get virtErrActionFailed => '호스트가 작업을 거부했습니다';
+
+  @override
+  String get remoteSessionIdleTimeout => '떠나면 닫기';
+
+  @override
+  String get remoteSessionIdleTimeoutTip =>
+      '원격 데스크톱이나 게스트 콘솔을 떠난 뒤 연결을 유지하는 시간입니다. 닫히기 전에 알림이 표시되며 10초 안에 유지할 수 있습니다.';
+
+  @override
+  String get remoteSessionKeepAlive => '유지';
+
+  @override
+  String remoteSessionClosingIn(int seconds) {
+    return '$seconds초 후 닫힘';
+  }
+
+  @override
+  String get reopen => '다시 열기';
+
+  @override
+  String get virtSnapshots => '스냅샷';
+
+  @override
+  String get virtSnapshotCreate => '스냅샷 만들기';
+
+  @override
+  String get virtSnapshotNone => '아직 스냅샷이 없습니다';
+
+  @override
+  String get virtSnapshotWithMemory => '디스크와 메모리';
+
+  @override
+  String get virtSnapshotDiskOnly => '디스크만';
+
+  @override
+  String get virtSnapshotParent => '상위';
+
+  @override
+  String get virtSnapshotRevert => '되돌리기';
+
+  @override
+  String get virtSnapshotMemory => '메모리 포함';
+
+  @override
+  String get virtSnapshotMemoryTip => '되돌리면 이 시점부터 게스트가 다시 실행됩니다.';
+
+  @override
+  String get virtSnapshotMemoryAlways => '여기서는 실행 중인 게스트의 스냅샷에 항상 메모리가 포함됩니다.';
+
+  @override
+  String get virtSnapshotMemoryOff => '게스트가 실행 중이 아니므로 디스크만 저장됩니다.';
+
+  @override
+  String get virtSnapshotNameInvalid => '영문자로 시작하고 영문자, 숫자, - 또는 _, 2~40자.';
+
+  @override
+  String get virtSnapshotNameTaken => '이 이름의 스냅샷이 이미 있습니다.';
+
+  @override
+  String get virtSnapshotRevertTip => '되돌리면 스냅샷 이후의 모든 변경 사항이 사라집니다.';
+
+  @override
+  String virtSnapshotRevertAsk(String guest, String snapshot) {
+    return '$guest을(를) $snapshot(으)로 되돌릴까요? 이후의 모든 변경 사항이 사라집니다.';
+  }
+
+  @override
+  String virtSnapshotRevertStops(String guest) {
+    return '이 스냅샷에는 메모리가 없습니다: $guest이(가) 중지됩니다.';
+  }
+
+  @override
+  String get virtSnapshotStartAfter => '이후 시작';
+
+  @override
+  String get virtVolumes => '볼륨';
+
+  @override
+  String get virtNoPools => '스토리지 풀 없음';
+
+  @override
+  String get virtNoNetworks => '네트워크 없음';
+
+  @override
+  String get virtPoolInactive => '풀이 활성 상태가 아니어서 볼륨을 나열할 수 없습니다.';
+
+  @override
+  String get virtShared => '노드 간 공유';
+
+  @override
+  String get virtBackingFile => '백킹 파일';
+
+  @override
+  String get virtNetIsolated => '격리';
+
+  @override
+  String get virtNetBridged => '브리지';
+
+  @override
+  String get virtNetRouted => '라우팅';
+
+  @override
+  String get virtBridge => '브리지';
+
+  @override
+  String get virtPorts => '포트';
+
+  @override
+  String get virtAttachedGuests => '연결된 게스트';
+
+  @override
+  String get virtNoAttachedGuests => '연결된 게스트 없음';
 }

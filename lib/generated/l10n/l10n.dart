@@ -5671,7 +5671,7 @@ abstract class AppLocalizations {
   /// Help text explaining how to create a Proxmox VE API token and which privileges it needs.
   ///
   /// In en, this message translates to:
-  /// **'Create one in PVE under Datacenter → Permissions → API Tokens. It needs VM.Audit, VM.PowerMgmt, VM.Console and Sys.Audit on the paths to show; with privilege separation on, grant them to the token itself.'**
+  /// **'Create one in PVE under Datacenter → Permissions → API Tokens. It needs VM.Audit, VM.PowerMgmt, VM.Console, VM.Snapshot, VM.Snapshot.Rollback, Datastore.Audit and Sys.Audit on the paths to show; with privilege separation on, grant them to the token itself.'**
   String get pveTokenTip;
 
   /// Error shown when the Proxmox VE API token ID has the wrong format.
@@ -5794,11 +5794,35 @@ abstract class AppLocalizations {
   /// **'Not checked yet'**
   String get virtProbeNotChecked;
 
-  /// A server checked for libvirt that has no virsh.
+  /// A server checked for virtualization that has neither Proxmox VE nor virsh.
   ///
   /// In en, this message translates to:
-  /// **'virsh not found'**
+  /// **'Not a host'**
   String get virtProbeAbsent;
+
+  /// A checked server that is itself a container (a guest), e.g. 'LXC container'.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind} container'**
+  String virtProbeContainer(String kind);
+
+  /// Tooltip on a checked server that runs in a container.
+  ///
+  /// In en, this message translates to:
+  /// **'This server runs in a container, so it is a guest rather than a host. It is managed from the host that runs it.'**
+  String get virtProbeContainerTip;
+
+  /// A checked server that runs Proxmox VE but has no PVE API access configured.
+  ///
+  /// In en, this message translates to:
+  /// **'PVE, not set up'**
+  String get virtProbePve;
+
+  /// Dialog body offering to configure PVE API access for a server found running Proxmox VE.
+  ///
+  /// In en, this message translates to:
+  /// **'{version} is running on this server. Fill in its API access in the server\'s settings (an API token is recommended) to manage its virtual machines and containers here.'**
+  String virtPveSetupTip(String version);
 
   /// Shown when no server is a virtualization host.
   ///
@@ -5809,7 +5833,7 @@ abstract class AppLocalizations {
   /// Explains which servers count as virtualization hosts.
   ///
   /// In en, this message translates to:
-  /// **'A server with a PVE address is a host, and so is one where virsh answers. The other servers can be checked from the host switcher.'**
+  /// **'A server running Proxmox VE, with its API access filled in, is a host, and so is one where virsh answers. The other servers can be checked from the host switcher.'**
   String get virtNoHostsTip;
 
   /// Shown when a virtualization host has no guests.
@@ -6003,6 +6027,216 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The host refused the action'**
   String get virtErrActionFailed;
+
+  /// Settings row: how long a remote desktop or guest console stays connected after the user leaves it.
+  ///
+  /// In en, this message translates to:
+  /// **'Close when left idle'**
+  String get remoteSessionIdleTimeout;
+
+  /// Help text for the remote session idle timeout setting.
+  ///
+  /// In en, this message translates to:
+  /// **'How long a remote desktop or a guest\'s console stays connected after you leave it. Before it closes, a notice gives you 10 seconds to keep it.'**
+  String get remoteSessionIdleTimeoutTip;
+
+  /// Button on the notice before an idle remote session closes: keeps it open for another full timeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep alive'**
+  String get remoteSessionKeepAlive;
+
+  /// Countdown on the notice before an idle remote session closes.
+  ///
+  /// In en, this message translates to:
+  /// **'Closing in {seconds} s'**
+  String remoteSessionClosingIn(int seconds);
+
+  /// Button: show a console that is still running again.
+  ///
+  /// In en, this message translates to:
+  /// **'Reopen'**
+  String get reopen;
+
+  /// A guest view and its heading: the guest's snapshots.
+  ///
+  /// In en, this message translates to:
+  /// **'Snapshots'**
+  String get virtSnapshots;
+
+  /// Button that opens the form for a new snapshot, and the form's confirm button.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a snapshot'**
+  String get virtSnapshotCreate;
+
+  /// Shown when a guest has no snapshots.
+  ///
+  /// In en, this message translates to:
+  /// **'No snapshots yet'**
+  String get virtSnapshotNone;
+
+  /// What a snapshot holds: the disks and the running memory.
+  ///
+  /// In en, this message translates to:
+  /// **'Disks and memory'**
+  String get virtSnapshotWithMemory;
+
+  /// What a snapshot holds: the disks only, no memory.
+  ///
+  /// In en, this message translates to:
+  /// **'Disks only'**
+  String get virtSnapshotDiskOnly;
+
+  /// The snapshot another one was taken on top of.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent'**
+  String get virtSnapshotParent;
+
+  /// Action: revert the guest to a snapshot.
+  ///
+  /// In en, this message translates to:
+  /// **'Revert'**
+  String get virtSnapshotRevert;
+
+  /// Switch in the snapshot form: also save the guest's memory.
+  ///
+  /// In en, this message translates to:
+  /// **'Include memory'**
+  String get virtSnapshotMemory;
+
+  /// Under the memory switch: what saving memory gives.
+  ///
+  /// In en, this message translates to:
+  /// **'Reverting resumes the guest at this moment.'**
+  String get virtSnapshotMemoryTip;
+
+  /// Under the memory switch on libvirt: an internal snapshot of a running guest always includes its memory.
+  ///
+  /// In en, this message translates to:
+  /// **'A snapshot of a running guest always includes its memory here.'**
+  String get virtSnapshotMemoryAlways;
+
+  /// Snapshot form of a guest that is not running: only disks are saved.
+  ///
+  /// In en, this message translates to:
+  /// **'The guest is not running, so only its disks are saved.'**
+  String get virtSnapshotMemoryOff;
+
+  /// Error under the snapshot name field.
+  ///
+  /// In en, this message translates to:
+  /// **'A letter first, then letters, digits, - or _; 2 to 40 characters.'**
+  String get virtSnapshotNameInvalid;
+
+  /// Error under the snapshot name field.
+  ///
+  /// In en, this message translates to:
+  /// **'A snapshot with this name exists.'**
+  String get virtSnapshotNameTaken;
+
+  /// Note under the snapshot list.
+  ///
+  /// In en, this message translates to:
+  /// **'Reverting discards every change made since the snapshot.'**
+  String get virtSnapshotRevertTip;
+
+  /// Revert confirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Revert {guest} to {snapshot}? Every change since it was taken is lost.'**
+  String virtSnapshotRevertAsk(String guest, String snapshot);
+
+  /// Revert confirmation when the snapshot has no memory and the guest is running.
+  ///
+  /// In en, this message translates to:
+  /// **'This snapshot has no memory: {guest} will be stopped.'**
+  String virtSnapshotRevertStops(String guest);
+
+  /// Switch in the revert confirmation: start the guest after reverting to a snapshot without memory.
+  ///
+  /// In en, this message translates to:
+  /// **'Start it afterwards'**
+  String get virtSnapshotStartAfter;
+
+  /// Heading over the volumes of a storage pool.
+  ///
+  /// In en, this message translates to:
+  /// **'Volumes'**
+  String get virtVolumes;
+
+  /// Shown when a host has no storage pools.
+  ///
+  /// In en, this message translates to:
+  /// **'No storage pools'**
+  String get virtNoPools;
+
+  /// Shown when a host has no networks.
+  ///
+  /// In en, this message translates to:
+  /// **'No networks'**
+  String get virtNoNetworks;
+
+  /// A storage pool that is not active: its volumes cannot be listed.
+  ///
+  /// In en, this message translates to:
+  /// **'The pool is not active, so its volumes cannot be listed.'**
+  String get virtPoolInactive;
+
+  /// A PVE storage shared between cluster nodes.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared between nodes'**
+  String get virtShared;
+
+  /// The file a qcow2 volume is layered on.
+  ///
+  /// In en, this message translates to:
+  /// **'Backing file'**
+  String get virtBackingFile;
+
+  /// libvirt network mode: guests reach each other and the host only.
+  ///
+  /// In en, this message translates to:
+  /// **'Isolated'**
+  String get virtNetIsolated;
+
+  /// libvirt network mode: guests are on a host bridge.
+  ///
+  /// In en, this message translates to:
+  /// **'Bridged'**
+  String get virtNetBridged;
+
+  /// libvirt network mode: routed without NAT.
+  ///
+  /// In en, this message translates to:
+  /// **'Routed'**
+  String get virtNetRouted;
+
+  /// A network's bridge device.
+  ///
+  /// In en, this message translates to:
+  /// **'Bridge'**
+  String get virtBridge;
+
+  /// The devices a bridge or bond uses.
+  ///
+  /// In en, this message translates to:
+  /// **'Ports'**
+  String get virtPorts;
+
+  /// Heading over the guests with a NIC on a network.
+  ///
+  /// In en, this message translates to:
+  /// **'Guests on it'**
+  String get virtAttachedGuests;
+
+  /// No guest has a NIC on this network.
+  ///
+  /// In en, this message translates to:
+  /// **'No guest is on it'**
+  String get virtNoAttachedGuests;
 }
 
 class _AppLocalizationsDelegate

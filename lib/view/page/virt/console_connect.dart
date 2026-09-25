@@ -12,7 +12,10 @@ import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/provider/remote_desktop.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/data/provider/session_keep_alive.dart';
+import 'package:server_box/data/provider/virt/text_consoles.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
+import 'package:server_box/data/ssh/terminal_session.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/virt/common.dart';
@@ -39,6 +42,29 @@ abstract final class VirtConsoleConnect {
   static String vncSessionId(String serverId, String guestId) =>
       'virt-console:$serverId:$guestId';
 
+  /// The id a guest's text console is kept by while no page shows it — see
+  /// [VirtTextConsoles]. Not [vncSessionId]: both can be running at once, and
+  /// [SessionKeepAlive] tells sessions apart by id alone.
+  static String textSessionId(String serverId, String guestId) =>
+      'virt-text:$serverId:$guestId';
+
+  /// Closes every console of [guestId] there is, shown or not — for a guest
+  /// that has stopped, where there is nothing left for them to show.
+  static void closeAll(
+    ProviderContainer container, {
+    required String serverId,
+    required String guestId,
+  }) {
+    unawaited(
+      container
+          .read(remoteDesktopSessionsProvider.notifier)
+          .close(vncSessionId(serverId, guestId)),
+    );
+    container
+        .read(virtTextConsolesProvider.notifier)
+        .close(textSessionId(serverId, guestId));
+  }
+
   /// What to type into a shell on the host to reach [console].
   ///
   /// Through `sudo` when the host's account reaches libvirt only that way,
@@ -53,10 +79,14 @@ abstract final class VirtConsoleConnect {
   /// ticket. libvirt: a shell on the host — over whatever the terminal tab
   /// would use for this server: SSH, the agent's PTY, or this device — with
   /// `virsh console` typed into it and Ctrl+] offered as "Disconnect".
+  ///
+  /// [onLeave] is where the page leaves the session when it goes — see
+  /// [SshPageArgs.onLeave].
   static Future<SshPageArgs> textArgs(
     ProviderContainer container, {
     required String serverId,
     required VirtGuest guest,
+    void Function(TerminalSession session)? onLeave,
   }) async {
     final kind = container.read(virtHostProvider(serverId)).kind;
     if (kind == VirtHostKind.pve) {
@@ -70,6 +100,7 @@ abstract final class VirtConsoleConnect {
             guestId: guest.id,
           ),
         ),
+        onLeave: onLeave,
       );
     }
     final spi = container.read(serversProvider).servers[serverId];
@@ -87,8 +118,25 @@ abstract final class VirtConsoleConnect {
       source: ServerSource(spi),
       initCmd: serialCommand(console),
       detachInput: serialEscape,
+      onLeave: onLeave,
     );
   }
+
+  /// The terminal page's arguments for a text console that is still running,
+  /// taken back from [VirtTextConsoles]: [session] as it is, with no command
+  /// typed into it again.
+  ///
+  /// A shell on the host is libvirt's `virsh console`, whose escape the bar
+  /// offers as it did the first time; PVE's console has none.
+  static SshPageArgs resumedTextArgs(
+    TerminalSession session, {
+    void Function(TerminalSession session)? onLeave,
+  }) => SshPageArgs(
+    source: session.source,
+    session: session,
+    detachInput: session.source is ServerSource ? serialEscape : null,
+    onLeave: onLeave,
+  );
 
   /// A PVE text console: a fresh `termproxy` ticket, its websocket, and the
   /// termproxy handshake on it.

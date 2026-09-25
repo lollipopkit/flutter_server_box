@@ -11,6 +11,7 @@ import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_rates.dart';
+import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/virt/backend.dart';
 import 'package:server_box/src/rust/api/virt.dart' as ffi;
@@ -68,14 +69,15 @@ class LibvirtBackend implements VirtBackend {
     _viaSudo = true;
   }
 
-  /// Whether `virsh` is on this server and answers — the host probe.
+  /// The host probe: whether this server is Proxmox VE, a container, or has
+  /// a `virsh` that answers.
   ///
   /// A daemon refusing this account still makes this a libvirt host: the
   /// error is thrown, and the host list counts [VirtErrType.permissionDenied]
   /// and the sudo types as "found".
-  Future<LibvirtVersion> probe() async {
+  Future<VirtHostProbeResult> probe() async {
     final json = await _run(ffi.virtProbeScript(), ffi.parseVirtProbeJson);
-    return LibvirtVersion.fromJson(_decode(json));
+    return VirtHostProbeResult.fromJson(_decode(json));
   }
 
   @override
@@ -111,6 +113,10 @@ class LibvirtBackend implements VirtBackend {
       stats: stats,
       capabilities: const VirtCapabilities(
         pause: true,
+        snapshots: true,
+        snapshotMemoryRequired: true,
+        storage: true,
+        network: true,
         serialConsole: true,
         vncConsole: true,
       ),
@@ -293,6 +299,219 @@ class LibvirtBackend implements VirtBackend {
     final h => h,
   };
 
+  // ---------------------------------------------------------------------------
+  // Snapshots
+  // ---------------------------------------------------------------------------
+
+  @override
+  Future<List<VirtGuestSnapshot>> snapshots(VirtGuest guest) async {
+    final json = await _run(
+      ffi.virtSnapshotsScript(domain: guest.id),
+      ffi.parseVirtSnapshotsJson,
+    );
+    return [
+      for (final s in _decodeList(json))
+        snapshotOf(LibvirtSnapshot.fromJson(s)),
+    ];
+  }
+
+  static VirtGuestSnapshot snapshotOf(LibvirtSnapshot s) => VirtGuestSnapshot(
+    name: s.name,
+    parent: s.parent,
+    description: s.description,
+    createdAt: switch (s.creationTime) {
+      final t? => DateTime.fromMillisecondsSinceEpoch(t * 1000),
+      null => null,
+    },
+    current: s.current,
+    withMemory: s.memory,
+  );
+
+  /// An internal snapshot: with the memory of an active domain, which QEMU
+  /// insists on, so [memory] changes nothing; disks only for a shut-off one.
+  /// Every writable disk must be qcow2 — libvirt's refusal says which is not.
+  @override
+  Future<void> createSnapshot(
+    VirtGuest guest, {
+    required String name,
+    String? description,
+    bool memory = false,
+  }) async {
+    _checkName(name);
+    await _action1(
+      ffi.virtSnapshotCreateScript(
+        domain: guest.id,
+        name: name,
+        description: description,
+      ),
+    );
+  }
+
+  @override
+  Future<void> revertSnapshot(
+    VirtGuest guest,
+    String name, {
+    bool start = false,
+  }) => _action1(
+    ffi.virtSnapshotRevertScript(domain: guest.id, name: name, running: start),
+  );
+
+  @override
+  Future<void> deleteSnapshot(VirtGuest guest, String name) => _action1(
+    ffi.virtSnapshotDeleteScript(domain: guest.id, name: name),
+  );
+
+  static void _checkName(String name) {
+    if (!virtSnapshotNamePattern.hasMatch(name)) {
+      throw VirtErr(
+        type: VirtErrType.unsupported,
+        message: 'Not a snapshot name: $name',
+      );
+    }
+  }
+
+  Future<void> _action1(String script) async {
+    await _run(script, ({required String raw}) async {
+      ffi.parseVirtAction(raw: raw);
+      return '';
+    }, action: true);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Storage and networks
+  // ---------------------------------------------------------------------------
+
+  /// The last storage listing: which volumes each pool has and every
+  /// domain's disks, which [volumes] needs and does not list again.
+  LibvirtStorage? _storage;
+
+  @override
+  Future<List<VirtStoragePool>> storagePools() async {
+    final json = await _run(ffi.virtStorageScript(), ffi.parseVirtStorageJson);
+    final storage = LibvirtStorage.fromJson(_decode(json));
+    _storage = storage;
+    return [for (final p in storage.pools) poolOf(p)];
+  }
+
+  static VirtStoragePool poolOf(LibvirtPool p) {
+    final capacity = p.capacity;
+    // An inactive pool reports 0 for everything: unknown, not empty.
+    final known = p.active && capacity != null && capacity > 0;
+    return VirtStoragePool(
+      id: p.name,
+      name: p.name,
+      type: p.poolType ?? '',
+      path: p.target,
+      source: p.source,
+      capacity: known ? capacity : null,
+      used: known ? p.allocation : null,
+      available: known ? p.available : null,
+      active: p.active,
+      autostart: p.autostart,
+      volumeCount: p.volumes?.length,
+    );
+  }
+
+  /// `vol-dumpxml` for each volume the last [storagePools] listed in [pool]
+  /// (listed again when there is none), with the domains whose disks are
+  /// those volumes.
+  @override
+  Future<List<VirtVolume>> volumes(VirtStoragePool pool) async {
+    var storage = _storage;
+    if (storage == null || !storage.pools.any((p) => p.name == pool.id)) {
+      await storagePools();
+      storage = _storage!;
+    }
+    final listed = storage.pools
+        .firstWhereOrNull((p) => p.name == pool.id)
+        ?.volumes;
+    if (listed == null || listed.isEmpty) return const [];
+    final json = await _run(
+      ffi.virtVolumesScript(
+        pool: pool.id,
+        names: [for (final v in listed) v.name],
+      ),
+      ffi.parseVirtVolumesJson,
+    );
+    final disks = storage.disks;
+    return [
+      for (final v in _decodeList(json))
+        volumeOf(LibvirtVolume.fromJson(v), pool.id, disks),
+    ];
+  }
+
+  static VirtVolume volumeOf(
+    LibvirtVolume v,
+    String pool,
+    List<LibvirtDiskUse> disks,
+  ) {
+    final path = v.path;
+    bool uses(LibvirtDiskUse d) {
+      final source = d.source;
+      if (source == null) return false;
+      if (path != null && source == path) return true;
+      // A `type='volume'` disk names its pool and volume instead of a path.
+      return d.kind == 'volume' &&
+          (source == '$pool/${v.name}' || source == v.name);
+    }
+
+    return VirtVolume(
+      id: v.name,
+      name: v.name,
+      path: path,
+      format: v.format,
+      capacity: v.capacity,
+      allocation: v.allocation,
+      backing: v.backing,
+      users: [
+        for (final d in disks)
+          if (uses(d)) VirtGuestRef(guestId: d.domain, device: d.target),
+      ],
+    );
+  }
+
+  @override
+  Future<List<VirtNetwork>> networks() async {
+    final json = await _run(
+      ffi.virtNetworksScript(),
+      ffi.parseVirtNetworksJson,
+    );
+    final nets = LibvirtNetworks.fromJson(_decode(json));
+    return [for (final n in nets.networks) networkOf(n, nets)];
+  }
+
+  /// [n] with the domains that have a NIC on it: by network name, or on its
+  /// bridge directly. Addresses from its DHCP leases.
+  static VirtNetwork networkOf(LibvirtNetwork n, LibvirtNetworks all) {
+    final bridge = n.bridge;
+    bool on(LibvirtIfaceUse i) =>
+        (i.kind == 'network' && i.source == n.name) ||
+        (i.kind == 'bridge' && bridge != null && i.source == bridge);
+    return VirtNetwork(
+      id: n.name,
+      name: n.name,
+      mode: n.mode,
+      bridge: bridge,
+      cidrs: [for (final ip in n.ips) ip.cidr],
+      dhcpRanges: [for (final ip in n.ips) ...ip.dhcpRanges],
+      ports: n.forwardDevs,
+      active: n.active,
+      autostart: n.autostart,
+      users: [
+        for (final i in all.ifaces)
+          if (on(i))
+            VirtGuestRef(
+              guestId: i.domain,
+              device: i.interface,
+              mac: i.mac,
+              ip: all.leases
+                  .firstWhereOrNull((l) => l.mac == i.mac)
+                  ?.ip,
+            ),
+      ],
+    );
+  }
+
   @override
   Future<List<VirtStats>?> history(
     VirtGuest guest, {
@@ -302,12 +521,14 @@ class LibvirtBackend implements VirtBackend {
   @override
   Future<void> reset() async {
     _rates.clear();
+    _storage = null;
   }
 
   @override
   Future<void> close() async {
     _sudoPassword = null;
     _rates.clear();
+    _storage = null;
   }
 
   // ---------------------------------------------------------------------------
@@ -436,6 +657,18 @@ class LibvirtBackend implements VirtBackend {
   static Map<String, dynamic> _decode(String json) {
     try {
       return jsonDecode(json) as Map<String, dynamic>;
+    } catch (e) {
+      throw VirtErr(
+        type: VirtErrType.invalidResponse,
+        message: '$e',
+        cause: e,
+      );
+    }
+  }
+
+  static List<Map<String, dynamic>> _decodeList(String json) {
+    try {
+      return (jsonDecode(json) as List).cast<Map<String, dynamic>>();
     } catch (e) {
       throw VirtErr(
         type: VirtErrType.invalidResponse,

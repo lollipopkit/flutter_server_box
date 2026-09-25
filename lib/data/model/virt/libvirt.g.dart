@@ -20,6 +20,23 @@ Map<String, dynamic> _$LibvirtVersionToJson(_LibvirtVersion instance) =>
       'hypervisor_version': instance.hypervisorVersion,
     };
 
+_VirtHostProbeResult _$VirtHostProbeResultFromJson(Map<String, dynamic> json) =>
+    _VirtHostProbeResult(
+      pve: json['pve'] as String?,
+      container: json['container'] as String?,
+      libvirt: json['libvirt'] == null
+          ? null
+          : LibvirtVersion.fromJson(json['libvirt'] as Map<String, dynamic>),
+    );
+
+Map<String, dynamic> _$VirtHostProbeResultToJson(
+  _VirtHostProbeResult instance,
+) => <String, dynamic>{
+  'pve': instance.pve,
+  'container': instance.container,
+  'libvirt': instance.libvirt,
+};
+
 _LibvirtBlockStats _$LibvirtBlockStatsFromJson(Map<String, dynamic> json) =>
     _LibvirtBlockStats(
       name: json['name'] as String? ?? '',
@@ -186,3 +203,238 @@ _LibvirtDomainDetail _$LibvirtDomainDetailFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$LibvirtDomainDetailToJson(
   _LibvirtDomainDetail instance,
 ) => <String, dynamic>{'display': instance.display, 'xml': instance.xml};
+
+_LibvirtSnapshot _$LibvirtSnapshotFromJson(Map<String, dynamic> json) =>
+    _LibvirtSnapshot(
+      name: json['name'] as String,
+      description: json['description'] as String?,
+      parent: json['parent'] as String?,
+      state: json['state'] as String?,
+      creationTime: (json['creation_time'] as num?)?.toInt(),
+      memory: json['memory'] as bool? ?? false,
+      external: json['external'] as bool? ?? false,
+      current: json['current'] as bool? ?? false,
+    );
+
+Map<String, dynamic> _$LibvirtSnapshotToJson(_LibvirtSnapshot instance) =>
+    <String, dynamic>{
+      'name': instance.name,
+      'description': instance.description,
+      'parent': instance.parent,
+      'state': instance.state,
+      'creation_time': instance.creationTime,
+      'memory': instance.memory,
+      'external': instance.external,
+      'current': instance.current,
+    };
+
+_LibvirtVolumeRef _$LibvirtVolumeRefFromJson(Map<String, dynamic> json) =>
+    _LibvirtVolumeRef(
+      name: json['name'] as String,
+      path: json['path'] as String?,
+    );
+
+Map<String, dynamic> _$LibvirtVolumeRefToJson(_LibvirtVolumeRef instance) =>
+    <String, dynamic>{'name': instance.name, 'path': instance.path};
+
+_LibvirtPool _$LibvirtPoolFromJson(Map<String, dynamic> json) => _LibvirtPool(
+  name: json['name'] as String,
+  uuid: json['uuid'] as String?,
+  poolType: json['pool_type'] as String?,
+  active: json['active'] as bool? ?? false,
+  autostart: json['autostart'] as bool? ?? false,
+  capacity: (json['capacity'] as num?)?.toInt(),
+  allocation: (json['allocation'] as num?)?.toInt(),
+  available: (json['available'] as num?)?.toInt(),
+  target: json['target'] as String?,
+  source: json['source'] as String?,
+  volumes: (json['volumes'] as List<dynamic>?)
+      ?.map((e) => LibvirtVolumeRef.fromJson(e as Map<String, dynamic>))
+      .toList(),
+);
+
+Map<String, dynamic> _$LibvirtPoolToJson(_LibvirtPool instance) =>
+    <String, dynamic>{
+      'name': instance.name,
+      'uuid': instance.uuid,
+      'pool_type': instance.poolType,
+      'active': instance.active,
+      'autostart': instance.autostart,
+      'capacity': instance.capacity,
+      'allocation': instance.allocation,
+      'available': instance.available,
+      'target': instance.target,
+      'source': instance.source,
+      'volumes': instance.volumes,
+    };
+
+_LibvirtDiskUse _$LibvirtDiskUseFromJson(Map<String, dynamic> json) =>
+    _LibvirtDiskUse(
+      domain: json['domain'] as String,
+      kind: json['kind'] as String? ?? '',
+      device: json['device'] as String? ?? '',
+      target: json['target'] as String? ?? '',
+      source: json['source'] as String?,
+    );
+
+Map<String, dynamic> _$LibvirtDiskUseToJson(_LibvirtDiskUse instance) =>
+    <String, dynamic>{
+      'domain': instance.domain,
+      'kind': instance.kind,
+      'device': instance.device,
+      'target': instance.target,
+      'source': instance.source,
+    };
+
+_LibvirtStorage _$LibvirtStorageFromJson(Map<String, dynamic> json) =>
+    _LibvirtStorage(
+      pools:
+          (json['pools'] as List<dynamic>?)
+              ?.map((e) => LibvirtPool.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const <LibvirtPool>[],
+      disks:
+          (json['disks'] as List<dynamic>?)
+              ?.map((e) => LibvirtDiskUse.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const <LibvirtDiskUse>[],
+    );
+
+Map<String, dynamic> _$LibvirtStorageToJson(_LibvirtStorage instance) =>
+    <String, dynamic>{'pools': instance.pools, 'disks': instance.disks};
+
+_LibvirtVolume _$LibvirtVolumeFromJson(Map<String, dynamic> json) =>
+    _LibvirtVolume(
+      name: json['name'] as String,
+      volType: json['vol_type'] as String?,
+      path: json['path'] as String?,
+      format: json['format'] as String?,
+      capacity: (json['capacity'] as num?)?.toInt(),
+      allocation: (json['allocation'] as num?)?.toInt(),
+      backing: json['backing'] as String?,
+    );
+
+Map<String, dynamic> _$LibvirtVolumeToJson(_LibvirtVolume instance) =>
+    <String, dynamic>{
+      'name': instance.name,
+      'vol_type': instance.volType,
+      'path': instance.path,
+      'format': instance.format,
+      'capacity': instance.capacity,
+      'allocation': instance.allocation,
+      'backing': instance.backing,
+    };
+
+_LibvirtNetIp _$LibvirtNetIpFromJson(Map<String, dynamic> json) =>
+    _LibvirtNetIp(
+      family: json['family'] as String? ?? 'ipv4',
+      cidr: json['cidr'] as String,
+      dhcpRanges:
+          (json['dhcp_ranges'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const <String>[],
+    );
+
+Map<String, dynamic> _$LibvirtNetIpToJson(_LibvirtNetIp instance) =>
+    <String, dynamic>{
+      'family': instance.family,
+      'cidr': instance.cidr,
+      'dhcp_ranges': instance.dhcpRanges,
+    };
+
+_LibvirtNetwork _$LibvirtNetworkFromJson(Map<String, dynamic> json) =>
+    _LibvirtNetwork(
+      name: json['name'] as String,
+      uuid: json['uuid'] as String?,
+      active: json['active'] as bool? ?? false,
+      autostart: json['autostart'] as bool? ?? false,
+      mode: json['mode'] as String? ?? 'isolated',
+      bridge: json['bridge'] as String?,
+      forwardDevs:
+          (json['forward_devs'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const <String>[],
+      ips:
+          (json['ips'] as List<dynamic>?)
+              ?.map((e) => LibvirtNetIp.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const <LibvirtNetIp>[],
+      connections: (json['connections'] as num?)?.toInt(),
+    );
+
+Map<String, dynamic> _$LibvirtNetworkToJson(_LibvirtNetwork instance) =>
+    <String, dynamic>{
+      'name': instance.name,
+      'uuid': instance.uuid,
+      'active': instance.active,
+      'autostart': instance.autostart,
+      'mode': instance.mode,
+      'bridge': instance.bridge,
+      'forward_devs': instance.forwardDevs,
+      'ips': instance.ips,
+      'connections': instance.connections,
+    };
+
+_LibvirtIfaceUse _$LibvirtIfaceUseFromJson(Map<String, dynamic> json) =>
+    _LibvirtIfaceUse(
+      domain: json['domain'] as String,
+      interface: json['interface'] as String?,
+      kind: json['kind'] as String? ?? '',
+      source: json['source'] as String?,
+      model: json['model'] as String?,
+      mac: json['mac'] as String?,
+    );
+
+Map<String, dynamic> _$LibvirtIfaceUseToJson(_LibvirtIfaceUse instance) =>
+    <String, dynamic>{
+      'domain': instance.domain,
+      'interface': instance.interface,
+      'kind': instance.kind,
+      'source': instance.source,
+      'model': instance.model,
+      'mac': instance.mac,
+    };
+
+_LibvirtLease _$LibvirtLeaseFromJson(Map<String, dynamic> json) =>
+    _LibvirtLease(
+      network: json['network'] as String,
+      mac: json['mac'] as String,
+      ip: json['ip'] as String,
+      hostname: json['hostname'] as String?,
+    );
+
+Map<String, dynamic> _$LibvirtLeaseToJson(_LibvirtLease instance) =>
+    <String, dynamic>{
+      'network': instance.network,
+      'mac': instance.mac,
+      'ip': instance.ip,
+      'hostname': instance.hostname,
+    };
+
+_LibvirtNetworks _$LibvirtNetworksFromJson(Map<String, dynamic> json) =>
+    _LibvirtNetworks(
+      networks:
+          (json['networks'] as List<dynamic>?)
+              ?.map((e) => LibvirtNetwork.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const <LibvirtNetwork>[],
+      ifaces:
+          (json['ifaces'] as List<dynamic>?)
+              ?.map((e) => LibvirtIfaceUse.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const <LibvirtIfaceUse>[],
+      leases:
+          (json['leases'] as List<dynamic>?)
+              ?.map((e) => LibvirtLease.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const <LibvirtLease>[],
+    );
+
+Map<String, dynamic> _$LibvirtNetworksToJson(_LibvirtNetworks instance) =>
+    <String, dynamic>{
+      'networks': instance.networks,
+      'ifaces': instance.ifaces,
+      'leases': instance.leases,
+    };

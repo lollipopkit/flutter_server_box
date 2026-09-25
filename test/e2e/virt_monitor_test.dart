@@ -15,7 +15,8 @@
 ///   `remote_access.full_access` and `[remote_access.terminal] enabled` on.
 ///   The host needs the domains `virt_real_test.dart` describes
 ///   (`SBM_E2E_LIBVIRT_RUNNING` / `_PAUSED` / `_STOPPED`, same defaults);
-///   only the paused one is changed (resumed and paused again).
+///   only the paused one is changed (resumed and paused again), and the
+///   stopped one gets a snapshot `sbxe2e-agent`, deleted again.
 /// - `SBM_E2E_MONITOR_SUDO_PASSWORD` — the sudo password of the account the
 ///   libvirt agent runs as, for an account outside the `libvirt` group (what
 ///   `install.sh` sets up: an ordinary user). Then the listing goes through
@@ -336,6 +337,35 @@ void _libvirt(_Agent agent) {
       expect(detail.consoles, {VirtConsoleKind.text, VirtConsoleKind.vnc});
     });
 
+    test('storage, networks and snapshots through the agent (and sudo)',
+        () async {
+      final c = w.container;
+      final pools = await c.read(virtStoragePoolsProvider(w.id).future);
+      final active = pools.firstWhere(
+        (p) => p.active && (p.volumeCount ?? 0) > 0,
+        orElse: () => fail('no active pool with volumes'),
+      );
+      final vols = await c.read(
+        virtVolumesProvider(w.id, active.id).future,
+      );
+      expect(vols, isNotEmpty);
+      expect(vols.every((v) => v.format != null), isTrue);
+      final nets = await c.read(virtNetworksProvider(w.id).future);
+      expect(nets.map((n) => n.name), contains('default'));
+
+      // A snapshot of the shut-off domain: taken, listed, deleted.
+      final off = w.guest((g) => byName(g, stoppedName), stoppedName);
+      await w.host.createSnapshot(off.id, name: 'sbxe2e-agent');
+      final taken = await w.host.snapshots(off.id);
+      final snap = taken.firstWhere((s) => s.name == 'sbxe2e-agent');
+      expect(snap.withMemory, isFalse);
+      await w.host.deleteSnapshot(off.id, 'sbxe2e-agent');
+      expect(
+        (await w.host.snapshots(off.id)).where((s) => s.name == 'sbxe2e-agent'),
+        isEmpty,
+      );
+    });
+
     test('VNC console: RFB through the agent\'s TCP relay', () async {
       final run = w.guest((g) => byName(g, runningName), runningName);
       final target = await VirtConsoleConnect.vncTarget(
@@ -474,6 +504,22 @@ void _pve(_Agent agent) {
       expect(snap.host.nodes, isNotEmpty);
       expect(w.guest(isVm, 'VM $vmId').state, VirtGuestState.running);
       expect(w.guest(isCt, 'CT $lxcId').state, VirtGuestState.running);
+    });
+
+    test('storage and networks through the relay', () async {
+      final c = w.container;
+      final pools = await c.read(virtStoragePoolsProvider(w.id).future);
+      final images = pools.firstWhere(
+        (p) => p.active && p.content.contains('images'),
+        orElse: () => fail('no active storage for disk images'),
+      );
+      final vols = await c.read(virtVolumesProvider(w.id, images.id).future);
+      expect(vols.any((v) => v.users.any((u) => u.vmid == vmId)), isTrue);
+      final nets = await c.read(virtNetworksProvider(w.id).future);
+      final users = {
+        for (final n in nets) ...n.users.map((u) => u.vmid),
+      };
+      expect(users, containsAll([vmId, lxcId]));
     });
 
     test('power: reboot the container and wait for its task', () async {

@@ -3284,7 +3284,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pveTokenTip =>
-      'Create one in PVE under Datacenter → Permissions → API Tokens. It needs VM.Audit, VM.PowerMgmt, VM.Console and Sys.Audit on the paths to show; with privilege separation on, grant them to the token itself.';
+      'Create one in PVE under Datacenter → Permissions → API Tokens. It needs VM.Audit, VM.PowerMgmt, VM.Console, VM.Snapshot, VM.Snapshot.Rollback, Datastore.Audit and Sys.Audit on the paths to show; with privilege separation on, grant them to the token itself.';
 
   @override
   String get pveTokenIdInvalid =>
@@ -3357,14 +3357,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get virtProbeNotChecked => 'Not checked yet';
 
   @override
-  String get virtProbeAbsent => 'virsh not found';
+  String get virtProbeAbsent => 'Not a host';
+
+  @override
+  String virtProbeContainer(String kind) {
+    return '$kind container';
+  }
+
+  @override
+  String get virtProbeContainerTip =>
+      'This server runs in a container, so it is a guest rather than a host. It is managed from the host that runs it.';
+
+  @override
+  String get virtProbePve => 'PVE, not set up';
+
+  @override
+  String virtPveSetupTip(String version) {
+    return '$version is running on this server. Fill in its API access in the server\'s settings (an API token is recommended) to manage its virtual machines and containers here.';
+  }
 
   @override
   String get virtNoHosts => 'No virtualization hosts';
 
   @override
   String get virtNoHostsTip =>
-      'A server with a PVE address is a host, and so is one where virsh answers. The other servers can be checked from the host switcher.';
+      'A server running Proxmox VE, with its API access filled in, is a host, and so is one where virsh answers. The other servers can be checked from the host switcher.';
 
   @override
   String get virtNoGuests => 'No virtual machines or containers';
@@ -3469,4 +3486,122 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get virtErrActionFailed => 'The host refused the action';
+
+  @override
+  String get remoteSessionIdleTimeout => 'Close when left idle';
+
+  @override
+  String get remoteSessionIdleTimeoutTip =>
+      'How long a remote desktop or a guest\'s console stays connected after you leave it. Before it closes, a notice gives you 10 seconds to keep it.';
+
+  @override
+  String get remoteSessionKeepAlive => 'Keep alive';
+
+  @override
+  String remoteSessionClosingIn(int seconds) {
+    return 'Closing in $seconds s';
+  }
+
+  @override
+  String get reopen => 'Reopen';
+
+  @override
+  String get virtSnapshots => 'Snapshots';
+
+  @override
+  String get virtSnapshotCreate => 'Take a snapshot';
+
+  @override
+  String get virtSnapshotNone => 'No snapshots yet';
+
+  @override
+  String get virtSnapshotWithMemory => 'Disks and memory';
+
+  @override
+  String get virtSnapshotDiskOnly => 'Disks only';
+
+  @override
+  String get virtSnapshotParent => 'Parent';
+
+  @override
+  String get virtSnapshotRevert => 'Revert';
+
+  @override
+  String get virtSnapshotMemory => 'Include memory';
+
+  @override
+  String get virtSnapshotMemoryTip =>
+      'Reverting resumes the guest at this moment.';
+
+  @override
+  String get virtSnapshotMemoryAlways =>
+      'A snapshot of a running guest always includes its memory here.';
+
+  @override
+  String get virtSnapshotMemoryOff =>
+      'The guest is not running, so only its disks are saved.';
+
+  @override
+  String get virtSnapshotNameInvalid =>
+      'A letter first, then letters, digits, - or _; 2 to 40 characters.';
+
+  @override
+  String get virtSnapshotNameTaken => 'A snapshot with this name exists.';
+
+  @override
+  String get virtSnapshotRevertTip =>
+      'Reverting discards every change made since the snapshot.';
+
+  @override
+  String virtSnapshotRevertAsk(String guest, String snapshot) {
+    return 'Revert $guest to $snapshot? Every change since it was taken is lost.';
+  }
+
+  @override
+  String virtSnapshotRevertStops(String guest) {
+    return 'This snapshot has no memory: $guest will be stopped.';
+  }
+
+  @override
+  String get virtSnapshotStartAfter => 'Start it afterwards';
+
+  @override
+  String get virtVolumes => 'Volumes';
+
+  @override
+  String get virtNoPools => 'No storage pools';
+
+  @override
+  String get virtNoNetworks => 'No networks';
+
+  @override
+  String get virtPoolInactive =>
+      'The pool is not active, so its volumes cannot be listed.';
+
+  @override
+  String get virtShared => 'Shared between nodes';
+
+  @override
+  String get virtBackingFile => 'Backing file';
+
+  @override
+  String get virtNetIsolated => 'Isolated';
+
+  @override
+  String get virtNetBridged => 'Bridged';
+
+  @override
+  String get virtNetRouted => 'Routed';
+
+  @override
+  String get virtBridge => 'Bridge';
+
+  @override
+  String get virtPorts => 'Ports';
+
+  @override
+  String get virtAttachedGuests => 'Guests on it';
+
+  @override
+  String get virtNoAttachedGuests => 'No guest is on it';
 }

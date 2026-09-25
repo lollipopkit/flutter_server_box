@@ -15,7 +15,9 @@ T _$identity<T>(T value) => value;
 mixin _$VirtProbe {
 
  VirtProbeStatus get status;/// libvirt's version, when found and readable.
- String? get version; VirtErr? get error;
+ String? get version;/// `pveversion`'s line, for [VirtProbeStatus.pve].
+ String? get pve;/// The container type (`lxc`, `docker`, …), for [VirtProbeStatus.absent].
+ String? get container; VirtErr? get error;
 /// Create a copy of VirtProbe
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -26,16 +28,16 @@ $VirtProbeCopyWith<VirtProbe> get copyWith => _$VirtProbeCopyWithImpl<VirtProbe>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtProbe&&(identical(other.status, status) || other.status == status)&&(identical(other.version, version) || other.version == version)&&(identical(other.error, error) || other.error == error));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtProbe&&(identical(other.status, status) || other.status == status)&&(identical(other.version, version) || other.version == version)&&(identical(other.pve, pve) || other.pve == pve)&&(identical(other.container, container) || other.container == container)&&(identical(other.error, error) || other.error == error));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,status,version,error);
+int get hashCode => Object.hash(runtimeType,status,version,pve,container,error);
 
 @override
 String toString() {
-  return 'VirtProbe(status: $status, version: $version, error: $error)';
+  return 'VirtProbe(status: $status, version: $version, pve: $pve, container: $container, error: $error)';
 }
 
 
@@ -46,7 +48,7 @@ abstract mixin class $VirtProbeCopyWith<$Res>  {
   factory $VirtProbeCopyWith(VirtProbe value, $Res Function(VirtProbe) _then) = _$VirtProbeCopyWithImpl;
 @useResult
 $Res call({
- VirtProbeStatus status, String? version, VirtErr? error
+ VirtProbeStatus status, String? version, String? pve, String? container, VirtErr? error
 });
 
 
@@ -63,10 +65,12 @@ class _$VirtProbeCopyWithImpl<$Res>
 
 /// Create a copy of VirtProbe
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? version = freezed,Object? error = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? version = freezed,Object? pve = freezed,Object? container = freezed,Object? error = freezed,}) {
   return _then(_self.copyWith(
 status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as VirtProbeStatus,version: freezed == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
+as String?,pve: freezed == pve ? _self.pve : pve // ignore: cast_nullable_to_non_nullable
+as String?,container: freezed == container ? _self.container : container // ignore: cast_nullable_to_non_nullable
 as String?,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
 as VirtErr?,
   ));
@@ -153,10 +157,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( VirtProbeStatus status,  String? version,  VirtErr? error)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( VirtProbeStatus status,  String? version,  String? pve,  String? container,  VirtErr? error)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _VirtProbe() when $default != null:
-return $default(_that.status,_that.version,_that.error);case _:
+return $default(_that.status,_that.version,_that.pve,_that.container,_that.error);case _:
   return orElse();
 
 }
@@ -174,10 +178,10 @@ return $default(_that.status,_that.version,_that.error);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( VirtProbeStatus status,  String? version,  VirtErr? error)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( VirtProbeStatus status,  String? version,  String? pve,  String? container,  VirtErr? error)  $default,) {final _that = this;
 switch (_that) {
 case _VirtProbe():
-return $default(_that.status,_that.version,_that.error);case _:
+return $default(_that.status,_that.version,_that.pve,_that.container,_that.error);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -194,10 +198,10 @@ return $default(_that.status,_that.version,_that.error);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( VirtProbeStatus status,  String? version,  VirtErr? error)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( VirtProbeStatus status,  String? version,  String? pve,  String? container,  VirtErr? error)?  $default,) {final _that = this;
 switch (_that) {
 case _VirtProbe() when $default != null:
-return $default(_that.status,_that.version,_that.error);case _:
+return $default(_that.status,_that.version,_that.pve,_that.container,_that.error);case _:
   return null;
 
 }
@@ -209,12 +213,16 @@ return $default(_that.status,_that.version,_that.error);case _:
 
 
 class _VirtProbe implements VirtProbe {
-  const _VirtProbe({required this.status, this.version, this.error});
+  const _VirtProbe({required this.status, this.version, this.pve, this.container, this.error});
   
 
 @override final  VirtProbeStatus status;
 /// libvirt's version, when found and readable.
 @override final  String? version;
+/// `pveversion`'s line, for [VirtProbeStatus.pve].
+@override final  String? pve;
+/// The container type (`lxc`, `docker`, …), for [VirtProbeStatus.absent].
+@override final  String? container;
 @override final  VirtErr? error;
 
 /// Create a copy of VirtProbe
@@ -227,16 +235,16 @@ _$VirtProbeCopyWith<_VirtProbe> get copyWith => __$VirtProbeCopyWithImpl<_VirtPr
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtProbe&&(identical(other.status, status) || other.status == status)&&(identical(other.version, version) || other.version == version)&&(identical(other.error, error) || other.error == error));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtProbe&&(identical(other.status, status) || other.status == status)&&(identical(other.version, version) || other.version == version)&&(identical(other.pve, pve) || other.pve == pve)&&(identical(other.container, container) || other.container == container)&&(identical(other.error, error) || other.error == error));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,status,version,error);
+int get hashCode => Object.hash(runtimeType,status,version,pve,container,error);
 
 @override
 String toString() {
-  return 'VirtProbe(status: $status, version: $version, error: $error)';
+  return 'VirtProbe(status: $status, version: $version, pve: $pve, container: $container, error: $error)';
 }
 
 
@@ -247,7 +255,7 @@ abstract mixin class _$VirtProbeCopyWith<$Res> implements $VirtProbeCopyWith<$Re
   factory _$VirtProbeCopyWith(_VirtProbe value, $Res Function(_VirtProbe) _then) = __$VirtProbeCopyWithImpl;
 @override @useResult
 $Res call({
- VirtProbeStatus status, String? version, VirtErr? error
+ VirtProbeStatus status, String? version, String? pve, String? container, VirtErr? error
 });
 
 
@@ -264,10 +272,12 @@ class __$VirtProbeCopyWithImpl<$Res>
 
 /// Create a copy of VirtProbe
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? status = null,Object? version = freezed,Object? error = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? status = null,Object? version = freezed,Object? pve = freezed,Object? container = freezed,Object? error = freezed,}) {
   return _then(_VirtProbe(
 status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as VirtProbeStatus,version: freezed == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
+as String?,pve: freezed == pve ? _self.pve : pve // ignore: cast_nullable_to_non_nullable
+as String?,container: freezed == container ? _self.container : container // ignore: cast_nullable_to_non_nullable
 as String?,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
 as VirtErr?,
   ));
@@ -283,7 +293,7 @@ mixin _$VirtHostsState {
  Map<String, VirtHostKind> get hosts;/// The other servers, in order: not probed yet, probed and not a host,
 /// or not reachable. The host switcher offers them under "Check this
 /// server" ([VirtHosts.probe]).
- List<String> get others;/// libvirt probe results by server id, this session's.
+ List<String> get others;/// Host probe results by server id, this session's.
  Map<String, VirtProbe> get probes;
 /// Create a copy of VirtHostsState
 /// with the given fields replaced by the non-null parameter values.
@@ -503,9 +513,9 @@ class _VirtHostsState extends VirtHostsState {
   return EqualUnmodifiableListView(_others);
 }
 
-/// libvirt probe results by server id, this session's.
+/// Host probe results by server id, this session's.
  final  Map<String, VirtProbe> _probes;
-/// libvirt probe results by server id, this session's.
+/// Host probe results by server id, this session's.
 @override@JsonKey() Map<String, VirtProbe> get probes {
   if (_probes is EqualUnmodifiableMapView) return _probes;
   // ignore: implicit_dynamic_type
@@ -582,7 +592,9 @@ mixin _$VirtHostState {
  VirtErr? get error;/// A refresh someone asked for is running (an automatic one is not
 /// announced).
  bool get loading;/// Guests with a power action in flight, and which.
- Map<String, VirtPowerAction> get busy;/// This session's readings per guest, oldest first, capped at
+ Map<String, VirtPowerAction> get busy;/// Guests with a snapshot operation in flight, and which. A guest in
+/// either map takes no other action until it is out.
+ Map<String, VirtSnapshotOp> get snapshotOps;/// This session's readings per guest, oldest first, capped at
 /// [VirtHostNotifier.sampleLimit] — the chart for a host without
 /// `storedHistory`, and the live tail for one with it.
  Map<String, List<VirtStats>> get samples; DateTime? get updatedAt;
@@ -596,16 +608,16 @@ $VirtHostStateCopyWith<VirtHostState> get copyWith => _$VirtHostStateCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHostState&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.data, data) || other.data == data)&&(identical(other.error, error) || other.error == error)&&(identical(other.loading, loading) || other.loading == loading)&&const DeepCollectionEquality().equals(other.busy, busy)&&const DeepCollectionEquality().equals(other.samples, samples)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHostState&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.data, data) || other.data == data)&&(identical(other.error, error) || other.error == error)&&(identical(other.loading, loading) || other.loading == loading)&&const DeepCollectionEquality().equals(other.busy, busy)&&const DeepCollectionEquality().equals(other.snapshotOps, snapshotOps)&&const DeepCollectionEquality().equals(other.samples, samples)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,serverId,kind,data,error,loading,const DeepCollectionEquality().hash(busy),const DeepCollectionEquality().hash(samples),updatedAt);
+int get hashCode => Object.hash(runtimeType,serverId,kind,data,error,loading,const DeepCollectionEquality().hash(busy),const DeepCollectionEquality().hash(snapshotOps),const DeepCollectionEquality().hash(samples),updatedAt);
 
 @override
 String toString() {
-  return 'VirtHostState(serverId: $serverId, kind: $kind, data: $data, error: $error, loading: $loading, busy: $busy, samples: $samples, updatedAt: $updatedAt)';
+  return 'VirtHostState(serverId: $serverId, kind: $kind, data: $data, error: $error, loading: $loading, busy: $busy, snapshotOps: $snapshotOps, samples: $samples, updatedAt: $updatedAt)';
 }
 
 
@@ -616,7 +628,7 @@ abstract mixin class $VirtHostStateCopyWith<$Res>  {
   factory $VirtHostStateCopyWith(VirtHostState value, $Res Function(VirtHostState) _then) = _$VirtHostStateCopyWithImpl;
 @useResult
 $Res call({
- String serverId, VirtHostKind? kind, VirtSnapshot? data, VirtErr? error, bool loading, Map<String, VirtPowerAction> busy, Map<String, List<VirtStats>> samples, DateTime? updatedAt
+ String serverId, VirtHostKind? kind, VirtSnapshot? data, VirtErr? error, bool loading, Map<String, VirtPowerAction> busy, Map<String, VirtSnapshotOp> snapshotOps, Map<String, List<VirtStats>> samples, DateTime? updatedAt
 });
 
 
@@ -633,7 +645,7 @@ class _$VirtHostStateCopyWithImpl<$Res>
 
 /// Create a copy of VirtHostState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? serverId = null,Object? kind = freezed,Object? data = freezed,Object? error = freezed,Object? loading = null,Object? busy = null,Object? samples = null,Object? updatedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? serverId = null,Object? kind = freezed,Object? data = freezed,Object? error = freezed,Object? loading = null,Object? busy = null,Object? snapshotOps = null,Object? samples = null,Object? updatedAt = freezed,}) {
   return _then(_self.copyWith(
 serverId: null == serverId ? _self.serverId : serverId // ignore: cast_nullable_to_non_nullable
 as String,kind: freezed == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
@@ -641,7 +653,8 @@ as VirtHostKind?,data: freezed == data ? _self.data : data // ignore: cast_nulla
 as VirtSnapshot?,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
 as VirtErr?,loading: null == loading ? _self.loading : loading // ignore: cast_nullable_to_non_nullable
 as bool,busy: null == busy ? _self.busy : busy // ignore: cast_nullable_to_non_nullable
-as Map<String, VirtPowerAction>,samples: null == samples ? _self.samples : samples // ignore: cast_nullable_to_non_nullable
+as Map<String, VirtPowerAction>,snapshotOps: null == snapshotOps ? _self.snapshotOps : snapshotOps // ignore: cast_nullable_to_non_nullable
+as Map<String, VirtSnapshotOp>,samples: null == samples ? _self.samples : samples // ignore: cast_nullable_to_non_nullable
 as Map<String, List<VirtStats>>,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,
   ));
@@ -740,10 +753,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String serverId,  VirtHostKind? kind,  VirtSnapshot? data,  VirtErr? error,  bool loading,  Map<String, VirtPowerAction> busy,  Map<String, List<VirtStats>> samples,  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String serverId,  VirtHostKind? kind,  VirtSnapshot? data,  VirtErr? error,  bool loading,  Map<String, VirtPowerAction> busy,  Map<String, VirtSnapshotOp> snapshotOps,  Map<String, List<VirtStats>> samples,  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _VirtHostState() when $default != null:
-return $default(_that.serverId,_that.kind,_that.data,_that.error,_that.loading,_that.busy,_that.samples,_that.updatedAt);case _:
+return $default(_that.serverId,_that.kind,_that.data,_that.error,_that.loading,_that.busy,_that.snapshotOps,_that.samples,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -761,10 +774,10 @@ return $default(_that.serverId,_that.kind,_that.data,_that.error,_that.loading,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String serverId,  VirtHostKind? kind,  VirtSnapshot? data,  VirtErr? error,  bool loading,  Map<String, VirtPowerAction> busy,  Map<String, List<VirtStats>> samples,  DateTime? updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String serverId,  VirtHostKind? kind,  VirtSnapshot? data,  VirtErr? error,  bool loading,  Map<String, VirtPowerAction> busy,  Map<String, VirtSnapshotOp> snapshotOps,  Map<String, List<VirtStats>> samples,  DateTime? updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _VirtHostState():
-return $default(_that.serverId,_that.kind,_that.data,_that.error,_that.loading,_that.busy,_that.samples,_that.updatedAt);case _:
+return $default(_that.serverId,_that.kind,_that.data,_that.error,_that.loading,_that.busy,_that.snapshotOps,_that.samples,_that.updatedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -781,10 +794,10 @@ return $default(_that.serverId,_that.kind,_that.data,_that.error,_that.loading,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String serverId,  VirtHostKind? kind,  VirtSnapshot? data,  VirtErr? error,  bool loading,  Map<String, VirtPowerAction> busy,  Map<String, List<VirtStats>> samples,  DateTime? updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String serverId,  VirtHostKind? kind,  VirtSnapshot? data,  VirtErr? error,  bool loading,  Map<String, VirtPowerAction> busy,  Map<String, VirtSnapshotOp> snapshotOps,  Map<String, List<VirtStats>> samples,  DateTime? updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _VirtHostState() when $default != null:
-return $default(_that.serverId,_that.kind,_that.data,_that.error,_that.loading,_that.busy,_that.samples,_that.updatedAt);case _:
+return $default(_that.serverId,_that.kind,_that.data,_that.error,_that.loading,_that.busy,_that.snapshotOps,_that.samples,_that.updatedAt);case _:
   return null;
 
 }
@@ -796,7 +809,7 @@ return $default(_that.serverId,_that.kind,_that.data,_that.error,_that.loading,_
 
 
 class _VirtHostState extends VirtHostState {
-  const _VirtHostState({required this.serverId, this.kind, this.data, this.error, this.loading = false, final  Map<String, VirtPowerAction> busy = const <String, VirtPowerAction>{}, final  Map<String, List<VirtStats>> samples = const <String, List<VirtStats>>{}, this.updatedAt}): _busy = busy,_samples = samples,super._();
+  const _VirtHostState({required this.serverId, this.kind, this.data, this.error, this.loading = false, final  Map<String, VirtPowerAction> busy = const <String, VirtPowerAction>{}, final  Map<String, VirtSnapshotOp> snapshotOps = const <String, VirtSnapshotOp>{}, final  Map<String, List<VirtStats>> samples = const <String, List<VirtStats>>{}, this.updatedAt}): _busy = busy,_snapshotOps = snapshotOps,_samples = samples,super._();
   
 
 @override final  String serverId;
@@ -817,6 +830,17 @@ class _VirtHostState extends VirtHostState {
   if (_busy is EqualUnmodifiableMapView) return _busy;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableMapView(_busy);
+}
+
+/// Guests with a snapshot operation in flight, and which. A guest in
+/// either map takes no other action until it is out.
+ final  Map<String, VirtSnapshotOp> _snapshotOps;
+/// Guests with a snapshot operation in flight, and which. A guest in
+/// either map takes no other action until it is out.
+@override@JsonKey() Map<String, VirtSnapshotOp> get snapshotOps {
+  if (_snapshotOps is EqualUnmodifiableMapView) return _snapshotOps;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_snapshotOps);
 }
 
 /// This session's readings per guest, oldest first, capped at
@@ -844,16 +868,16 @@ _$VirtHostStateCopyWith<_VirtHostState> get copyWith => __$VirtHostStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtHostState&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.data, data) || other.data == data)&&(identical(other.error, error) || other.error == error)&&(identical(other.loading, loading) || other.loading == loading)&&const DeepCollectionEquality().equals(other._busy, _busy)&&const DeepCollectionEquality().equals(other._samples, _samples)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtHostState&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.data, data) || other.data == data)&&(identical(other.error, error) || other.error == error)&&(identical(other.loading, loading) || other.loading == loading)&&const DeepCollectionEquality().equals(other._busy, _busy)&&const DeepCollectionEquality().equals(other._snapshotOps, _snapshotOps)&&const DeepCollectionEquality().equals(other._samples, _samples)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,serverId,kind,data,error,loading,const DeepCollectionEquality().hash(_busy),const DeepCollectionEquality().hash(_samples),updatedAt);
+int get hashCode => Object.hash(runtimeType,serverId,kind,data,error,loading,const DeepCollectionEquality().hash(_busy),const DeepCollectionEquality().hash(_snapshotOps),const DeepCollectionEquality().hash(_samples),updatedAt);
 
 @override
 String toString() {
-  return 'VirtHostState(serverId: $serverId, kind: $kind, data: $data, error: $error, loading: $loading, busy: $busy, samples: $samples, updatedAt: $updatedAt)';
+  return 'VirtHostState(serverId: $serverId, kind: $kind, data: $data, error: $error, loading: $loading, busy: $busy, snapshotOps: $snapshotOps, samples: $samples, updatedAt: $updatedAt)';
 }
 
 
@@ -864,7 +888,7 @@ abstract mixin class _$VirtHostStateCopyWith<$Res> implements $VirtHostStateCopy
   factory _$VirtHostStateCopyWith(_VirtHostState value, $Res Function(_VirtHostState) _then) = __$VirtHostStateCopyWithImpl;
 @override @useResult
 $Res call({
- String serverId, VirtHostKind? kind, VirtSnapshot? data, VirtErr? error, bool loading, Map<String, VirtPowerAction> busy, Map<String, List<VirtStats>> samples, DateTime? updatedAt
+ String serverId, VirtHostKind? kind, VirtSnapshot? data, VirtErr? error, bool loading, Map<String, VirtPowerAction> busy, Map<String, VirtSnapshotOp> snapshotOps, Map<String, List<VirtStats>> samples, DateTime? updatedAt
 });
 
 
@@ -881,7 +905,7 @@ class __$VirtHostStateCopyWithImpl<$Res>
 
 /// Create a copy of VirtHostState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? serverId = null,Object? kind = freezed,Object? data = freezed,Object? error = freezed,Object? loading = null,Object? busy = null,Object? samples = null,Object? updatedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? serverId = null,Object? kind = freezed,Object? data = freezed,Object? error = freezed,Object? loading = null,Object? busy = null,Object? snapshotOps = null,Object? samples = null,Object? updatedAt = freezed,}) {
   return _then(_VirtHostState(
 serverId: null == serverId ? _self.serverId : serverId // ignore: cast_nullable_to_non_nullable
 as String,kind: freezed == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
@@ -889,7 +913,8 @@ as VirtHostKind?,data: freezed == data ? _self.data : data // ignore: cast_nulla
 as VirtSnapshot?,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
 as VirtErr?,loading: null == loading ? _self.loading : loading // ignore: cast_nullable_to_non_nullable
 as bool,busy: null == busy ? _self._busy : busy // ignore: cast_nullable_to_non_nullable
-as Map<String, VirtPowerAction>,samples: null == samples ? _self._samples : samples // ignore: cast_nullable_to_non_nullable
+as Map<String, VirtPowerAction>,snapshotOps: null == snapshotOps ? _self._snapshotOps : snapshotOps // ignore: cast_nullable_to_non_nullable
+as Map<String, VirtSnapshotOp>,samples: null == samples ? _self._samples : samples // ignore: cast_nullable_to_non_nullable
 as Map<String, List<VirtStats>>,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,
   ));

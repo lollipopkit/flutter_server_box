@@ -233,3 +233,100 @@ class VirtPill extends StatelessWidget {
     return tip == null ? pill : Tooltip(message: tip, child: pill);
   }
 }
+
+/// A titled card of facts, the shape every card in a detail view has.
+class VirtCard extends StatelessWidget {
+  const VirtCard({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.children,
+    this.trailing,
+  });
+
+  final IconData icon;
+  final String title;
+  final List<Widget> children;
+
+  /// Beside the title: a count, a state, an action.
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return CardX(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(17, 13, 17, 13),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 18, color: ChartPalette.accent),
+                UIs.width7,
+                Expanded(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: UIs.text13Bold,
+                  ),
+                ),
+                ?trailing,
+              ],
+            ),
+            UIs.height7,
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One fact: its name on the left, its value on the right.
+class VirtFact extends StatelessWidget {
+  const VirtFact(this.k, this.v, {super.key});
+
+  final String k;
+  final String v;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(k, style: UIs.text12Grey),
+          UIs.width13,
+          Expanded(
+            child: SelectableText(
+              v,
+              textAlign: TextAlign.end,
+              style: const TextStyle(fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A small tag: a kind, a flag, a state.
+class VirtChip extends StatelessWidget {
+  const VirtChip(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: Text(text, style: UIs.text11Grey),
+    );
+  }
+}

@@ -1,0 +1,89 @@
+SrvBoxSep.b64.dmlydC5uZXRz
+default
+sbx-bridge
+sbx-isolated
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5uZXRzLmFjdGl2ZQ==
+default
+sbx-isolated
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5uZXRzLmF1dG9zdGFydA==
+default
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5uZXQueG1s
+default
+<network connections='3'>
+  <name>default</name>
+  <uuid>503dfdb3-3f43-41ff-9a57-046a2b2be8b5</uuid>
+  <forward mode='nat'>
+    <nat>
+      <port start='1024' end='65535'/>
+    </nat>
+  </forward>
+  <bridge name='virbr0' stp='on' delay='0'/>
+  <mac address='52:54:00:55:61:fa'/>
+  <ip address='192.168.122.1' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.122.2' end='192.168.122.254'/>
+    </dhcp>
+  </ip>
+</network>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5uZXQueG1s
+sbx-bridge
+<network>
+  <name>sbx-bridge</name>
+  <uuid>faa2b2e7-0d0c-4c97-8a15-a6c2f8fa5a62</uuid>
+  <forward mode='bridge'/>
+  <bridge name='br-sbx'/>
+</network>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5uZXQueG1s
+sbx-isolated
+<network>
+  <name>sbx-isolated</name>
+  <uuid>f0e4b179-8252-43d6-95df-53d1c79adf60</uuid>
+  <bridge name='virbr9' stp='on' delay='0'/>
+  <mac address='52:54:00:8a:0e:e5'/>
+  <ip address='10.99.0.1' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='10.99.0.100' end='10.99.0.200'/>
+    </dhcp>
+  </ip>
+  <ip family='ipv6' address='fd00:99::1' prefix='64'>
+  </ip>
+</network>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5uZXQubGVhc2Vz
+default
+ 2026-09-25 12:05:30   52:54:00:6e:d2:3c   ipv4   192.168.122.202/24   -   01:52:54:00:6e:d2:3c
+ 2026-09-25 12:04:14   52:54:00:bb:c0:4b   ipv4   192.168.122.208/24   -   01:52:54:00:bb:c0:4b
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5uZXQubGVhc2Vz
+sbx-isolated
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5pZmxpc3Q=
+24a8bbc6-deaa-4be0-9699-a1d801faa927
+ vnet2   network   default   virtio   52:54:00:1e:d1:4f
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5pZmxpc3Q=
+8a2ed2a2-83e1-4c41-ad0a-a57d54d0d649
+ vnet9    network   default   virtio   52:54:00:6e:d2:3c
+ vnet10   network   default   virtio   52:54:00:bb:c0:4b
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5pZmxpc3Q=
+1438b9e3-f647-47ee-8ed2-6dbc3adccd68
+ -   network   default        virtio   52:54:00:90:2c:99
+ -   network   sbx-isolated   virtio   52:54:00:99:00:01
+
+SbVirtRc=0

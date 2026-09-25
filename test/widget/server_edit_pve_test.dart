@@ -11,7 +11,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
-import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -48,12 +47,15 @@ void main() {
   });
   tearDown(closeTestDb);
 
-  /// Opens the editor on [server], runs [whileOpen], and saves.
+  /// Opens the editor on [server], runs [whileOpen], and saves unless
+  /// [save] is off.
   Future<void> editAndSave(
     WidgetTester tester,
     Spi server, {
     List<PrivateKeyInfo> keys = const [],
     void Function()? whileOpen,
+    ServerEditSection? section,
+    bool save = true,
   }) async {
     Stores.server.put(server);
     await tester.pumpWidget(
@@ -80,7 +82,9 @@ void main() {
                   onPressed: () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (_) =>
-                          ServerEditPage(args: SpiRequiredArgs(server)),
+                          ServerEditPage(
+                            args: ServerEditArgs(server, section: section),
+                          ),
                     ),
                   ),
                   child: const Text('Open editor'),
@@ -96,6 +100,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     whileOpen?.call();
+    if (!save) {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+      return;
+    }
 
     await tester.tap(find.widgetWithText(FilledButton, libL10n.save));
     await tester.pump();
@@ -105,6 +114,30 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
   }
+
+  testWidgets('opened for PVE: the group is open, on the local API', (
+    tester,
+  ) async {
+    // What the Virtualization tab sends a server it found running PVE to.
+    final server = spiFixture(name: 'pve', ip: '10.0.0.1', id: 'pve-id');
+    await editAndSave(
+      tester,
+      server,
+      section: ServerEditSection.pve,
+      save: false,
+      whileOpen: () {
+        expect(
+          find.byWidgetPredicate(
+            (w) =>
+                w is TextField && w.controller?.text == PveConfig.localAddr,
+          ),
+          findsOneWidget,
+        );
+        expect(find.text(app_locale.l10n.pveTokenId), findsOneWidget);
+      },
+    );
+    expect(Stores.pve.fetch(server.id), isNull);
+  });
 
   testWidgets('a pin confirmed while the editor was open is kept', (
     tester,

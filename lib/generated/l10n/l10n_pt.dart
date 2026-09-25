@@ -3321,7 +3321,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get pveTokenTip =>
-      'Crie um no PVE em Datacenter → Permissões → API Tokens. Ele precisa de VM.Audit, VM.PowerMgmt, VM.Console e Sys.Audit nos caminhos a mostrar; com a separação de privilégios ativa, conceda-os ao próprio token.';
+      'Crie um no PVE em Datacenter → Permissões → API Tokens. Ele precisa de VM.Audit, VM.PowerMgmt, VM.Console, VM.Snapshot, VM.Snapshot.Rollback, Datastore.Audit e Sys.Audit nos caminhos a mostrar; com a separação de privilégios ativa, conceda-os ao próprio token.';
 
   @override
   String get pveTokenIdInvalid =>
@@ -3394,14 +3394,31 @@ class AppLocalizationsPt extends AppLocalizations {
   String get virtProbeNotChecked => 'Ainda não verificado';
 
   @override
-  String get virtProbeAbsent => 'virsh não encontrado';
+  String get virtProbeAbsent => 'Não é um host';
+
+  @override
+  String virtProbeContainer(String kind) {
+    return 'Contêiner $kind';
+  }
+
+  @override
+  String get virtProbeContainerTip =>
+      'Este servidor roda em um contêiner, então é um convidado e não um host. Ele é gerenciado pelo host que o executa.';
+
+  @override
+  String get virtProbePve => 'PVE, não configurado';
+
+  @override
+  String virtPveSetupTip(String version) {
+    return '$version está rodando neste servidor. Preencha o acesso à API nas configurações do servidor (recomenda-se um token de API) para gerenciar aqui suas máquinas virtuais e contêineres.';
+  }
 
   @override
   String get virtNoHosts => 'Nenhum host de virtualização';
 
   @override
   String get virtNoHostsTip =>
-      'Um servidor com endereço PVE é um host, assim como um onde o virsh responde. Os outros servidores podem ser verificados no seletor de hosts.';
+      'Um servidor com Proxmox VE e acesso à API preenchido é um host, assim como um onde o virsh responde. Os outros servidores podem ser verificados no seletor de hosts.';
 
   @override
   String get virtNoGuests => 'Nenhuma máquina virtual ou contêiner';
@@ -3506,4 +3523,122 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get virtErrActionFailed => 'O host recusou a ação';
+
+  @override
+  String get remoteSessionIdleTimeout => 'Fechar ao sair';
+
+  @override
+  String get remoteSessionIdleTimeoutTip =>
+      'Por quanto tempo uma área de trabalho remota ou o console de um convidado continua conectado depois que você sai dele. Antes de fechar, um aviso dá 10 segundos para mantê-lo.';
+
+  @override
+  String get remoteSessionKeepAlive => 'Manter';
+
+  @override
+  String remoteSessionClosingIn(int seconds) {
+    return 'Fecha em $seconds s';
+  }
+
+  @override
+  String get reopen => 'Reabrir';
+
+  @override
+  String get virtSnapshots => 'Snapshots';
+
+  @override
+  String get virtSnapshotCreate => 'Criar snapshot';
+
+  @override
+  String get virtSnapshotNone => 'Ainda não há snapshots';
+
+  @override
+  String get virtSnapshotWithMemory => 'Discos e memória';
+
+  @override
+  String get virtSnapshotDiskOnly => 'Apenas discos';
+
+  @override
+  String get virtSnapshotParent => 'Pai';
+
+  @override
+  String get virtSnapshotRevert => 'Reverter';
+
+  @override
+  String get virtSnapshotMemory => 'Incluir memória';
+
+  @override
+  String get virtSnapshotMemoryTip =>
+      'Reverter retoma o convidado a partir deste momento.';
+
+  @override
+  String get virtSnapshotMemoryAlways =>
+      'Aqui, um snapshot de um convidado em execução inclui sempre a memória.';
+
+  @override
+  String get virtSnapshotMemoryOff =>
+      'O convidado não está em execução, então apenas os discos são salvos.';
+
+  @override
+  String get virtSnapshotNameInvalid =>
+      'Primeiro uma letra, depois letras, dígitos, - ou _; de 2 a 40 caracteres.';
+
+  @override
+  String get virtSnapshotNameTaken => 'Já existe um snapshot com este nome.';
+
+  @override
+  String get virtSnapshotRevertTip =>
+      'Reverter descarta todas as alterações feitas desde o snapshot.';
+
+  @override
+  String virtSnapshotRevertAsk(String guest, String snapshot) {
+    return 'Reverter $guest para $snapshot? Todas as alterações desde então serão perdidas.';
+  }
+
+  @override
+  String virtSnapshotRevertStops(String guest) {
+    return 'Este snapshot não tem memória: $guest será parado.';
+  }
+
+  @override
+  String get virtSnapshotStartAfter => 'Iniciá-lo depois';
+
+  @override
+  String get virtVolumes => 'Volumes';
+
+  @override
+  String get virtNoPools => 'Nenhum pool de armazenamento';
+
+  @override
+  String get virtNoNetworks => 'Nenhuma rede';
+
+  @override
+  String get virtPoolInactive =>
+      'O pool não está ativo, então os volumes não podem ser listados.';
+
+  @override
+  String get virtShared => 'Compartilhado entre nós';
+
+  @override
+  String get virtBackingFile => 'Arquivo base';
+
+  @override
+  String get virtNetIsolated => 'Isolada';
+
+  @override
+  String get virtNetBridged => 'Em ponte';
+
+  @override
+  String get virtNetRouted => 'Roteada';
+
+  @override
+  String get virtBridge => 'Ponte';
+
+  @override
+  String get virtPorts => 'Portas';
+
+  @override
+  String get virtAttachedGuests => 'Convidados nela';
+
+  @override
+  String get virtNoAttachedGuests => 'Nenhum convidado nela';
 }

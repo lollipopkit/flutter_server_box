@@ -47,8 +47,7 @@ extension _List on _VirtTabPageState {
               Btn.icon(
                 text: libL10n.refresh,
                 icon: const Icon(Icons.refresh, size: 18),
-                onTap: () =>
-                    unawaited(ref.read(virtHostProvider(hostId).notifier).refresh()),
+                onTap: () => _refresh(hostId),
               ),
             ],
             const SizedBox(width: 7),
@@ -63,6 +62,7 @@ extension _List on _VirtTabPageState {
         selectedId: hostId,
         onSelect: _selectHost,
         onCheck: _check,
+        onSetUpPve: _setUpPve,
       );
     } else if (hostId == null) {
       body = _buildNoHosts(hosts);
@@ -73,8 +73,10 @@ extension _List on _VirtTabPageState {
           key: ValueKey(hostId),
           serverId: hostId,
           needle: _search.needle,
-          selectedGuestId: split ? _guestId : null,
-          onOpen: (guestId) => _openGuest(hostId, guestId, split),
+          section: _section,
+          onSection: _selectSection,
+          selectedId: split ? _openId : null,
+          onOpen: (id) => _openResource(hostId, id, split),
         ),
       );
     }
@@ -117,19 +119,25 @@ extension _List on _VirtTabPageState {
 }
 
 /// One host's column under the bar: its sections, its failure if it has one,
-/// and its guests grouped by state.
+/// and its guests grouped by state — or its pools or networks.
 class _VirtHostColumn extends ConsumerWidget {
   const _VirtHostColumn({
     super.key,
     required this.serverId,
     required this.needle,
-    required this.selectedGuestId,
+    required this.section,
+    required this.onSection,
+    required this.selectedId,
     required this.onOpen,
   });
 
   final String serverId;
   final String needle;
-  final String? selectedGuestId;
+  final VirtSection section;
+  final ValueChanged<VirtSection> onSection;
+
+  /// What is open beside the list, in [section].
+  final String? selectedId;
   final ValueChanged<String> onOpen;
 
   /// Headed groups, in the order a reader wants them: what is running, what
@@ -150,36 +158,73 @@ class _VirtHostColumn extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final st = ref.watch(virtHostProvider(serverId));
     final data = st.data;
-    final err = st.error;
     final busy =
         st.loading ||
         st.busy.isNotEmpty ||
+        st.snapshotOps.isNotEmpty ||
         (data?.guests.any((g) => st.displayState(g).isTransient) ?? false);
+
+    final caps = data?.capabilities;
+    // A section the host does not have (the host changed, or its answer
+    // did): the guests, which every host has.
+    final shownSection = switch (section) {
+      VirtSection.storage when caps?.storage ?? false => section,
+      VirtSection.network when caps?.network ?? false => section,
+      _ => VirtSection.guests,
+    };
+    final Widget body = switch (shownSection) {
+      VirtSection.storage => VirtPoolList(
+        serverId: serverId,
+        needle: needle,
+        selectedId: selectedId,
+        onOpen: onOpen,
+      ),
+      VirtSection.network => VirtNetworkList(
+        serverId: serverId,
+        needle: needle,
+        selectedId: selectedId,
+        onOpen: onOpen,
+      ),
+      VirtSection.guests => _buildGuestList(context, ref, st),
+    };
 
     return Column(
       children: [
-        SizedBox(height: 3, child: busy ? const ProgressLine() : null),
-        _buildSections(data?.capabilities),
-        Expanded(
-          child: RefreshIndicator(
-            onRefresh: () => _onRefresh(ref),
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(9, 5, 9, 17),
-              children: [
-                if (err != null) VirtHostError(serverId: serverId, err: err),
-                if (data?.host.pveUntested ?? false)
-                  _UntestedNotice(version: data!.host.version!),
-                if (data == null && err == null)
-                  const Padding(
-                    padding: EdgeInsets.all(27),
-                    child: Center(child: SizedLoading.medium),
-                  ),
-                if (data != null) ..._buildGuests(context, st, data),
-              ],
-            ),
-          ),
+        SizedBox(
+          height: 3,
+          child: busy && shownSection == VirtSection.guests
+              ? const ProgressLine()
+              : null,
         ),
+        _buildSections(caps, shownSection),
+        Expanded(child: body),
       ],
+    );
+  }
+
+  Widget _buildGuestList(
+    BuildContext context,
+    WidgetRef ref,
+    VirtHostState st,
+  ) {
+    final data = st.data;
+    final err = st.error;
+    return RefreshIndicator(
+      onRefresh: () => _onRefresh(ref),
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(9, 5, 9, 17),
+        children: [
+          if (err != null) VirtHostError(serverId: serverId, err: err),
+          if (data?.host.pveUntested ?? false)
+            _UntestedNotice(version: data!.host.version!),
+          if (data == null && err == null)
+            const Padding(
+              padding: EdgeInsets.all(27),
+              child: Center(child: SizedLoading.medium),
+            ),
+          if (data != null) ..._buildGuests(context, st, data),
+        ],
+      ),
     );
   }
 
@@ -195,35 +240,33 @@ class _VirtHostColumn extends ConsumerWidget {
     await ref.read(virtHostProvider(serverId).notifier).refresh();
   }
 
-  /// Guests, storage, network. The last two are not built yet and say so
-  /// rather than being missing: the row keeps its shape when they arrive.
-  Widget _buildSections(VirtCapabilities? caps) {
+  /// Guests, storage, network. One the host does not have is drawn
+  /// disabled and says so, rather than missing: the row keeps its shape from
+  /// host to host. Until the host has answered, only the guests.
+  Widget _buildSections(VirtCapabilities? caps, VirtSection shown) {
+    Widget pill(VirtSection s, String label, bool offered) => VirtPill(
+      key: ValueKey(s),
+      icon: s.icon,
+      label: label,
+      active: s == shown,
+      tooltip: offered || caps == null ? null : l10n.virtSectionLater,
+      onTap: offered ? () => onSection(s) : null,
+    );
     return Padding(
       padding: const EdgeInsets.fromLTRB(9, 3, 9, 0),
       child: Wrap(
         spacing: 3,
         runSpacing: 3,
         children: [
-          VirtPill(
-            icon: Icons.view_in_ar_outlined,
-            label: (caps?.lxc ?? false)
+          pill(
+            VirtSection.guests,
+            (caps?.lxc ?? false)
                 ? l10n.virtGuestsAndContainers
                 : l10n.virtGuests,
-            active: true,
-            onTap: () {},
+            true,
           ),
-          VirtPill(
-            key: const ValueKey(VirtSection.storage),
-            icon: Icons.storage_outlined,
-            label: libL10n.storage,
-            tooltip: l10n.virtSectionLater,
-          ),
-          VirtPill(
-            key: const ValueKey(VirtSection.network),
-            icon: Icons.lan_outlined,
-            label: libL10n.network,
-            tooltip: l10n.virtSectionLater,
-          ),
+          pill(VirtSection.storage, libL10n.storage, caps?.storage ?? false),
+          pill(VirtSection.network, libL10n.network, caps?.network ?? false),
         ],
       ),
     );
@@ -256,7 +299,7 @@ class _VirtHostColumn extends ConsumerWidget {
       state: st.displayState(g),
       stats: st.statsOf(g.id),
       cluster: cluster,
-      selected: g.id == selectedGuestId,
+      selected: g.id == selectedId,
       onTap: () => onOpen(g.id),
     );
 

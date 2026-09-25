@@ -1,0 +1,114 @@
+{
+  "pools": [
+    {
+      "name": "images",
+      "uuid": "7c102738-9851-400b-b8bf-346798947910",
+      "pool_type": "dir",
+      "active": true,
+      "autostart": true,
+      "capacity": 20922114048,
+      "allocation": 1152606208,
+      "available": 19769507840,
+      "target": "/var/lib/libvirt/images",
+      "source": null,
+      "volumes": [
+        {
+          "name": "cirros.img",
+          "path": "/var/lib/libvirt/images/cirros.img"
+        },
+        {
+          "name": "data1.qcow2",
+          "path": "/var/lib/libvirt/images/data1.qcow2"
+        },
+        {
+          "name": "extra.qcow2",
+          "path": "/var/lib/libvirt/images/extra.qcow2"
+        },
+        {
+          "name": "off1.qcow2",
+          "path": "/var/lib/libvirt/images/off1.qcow2"
+        },
+        {
+          "name": "paused1.qcow2",
+          "path": "/var/lib/libvirt/images/paused1.qcow2"
+        },
+        {
+          "name": "run1.qcow2",
+          "path": "/var/lib/libvirt/images/run1.qcow2"
+        }
+      ]
+    },
+    {
+      "name": "sbx-iso",
+      "uuid": "c21f45ee-9840-4b2f-aa90-22f3d15b8914",
+      "pool_type": "dir",
+      "active": true,
+      "autostart": false,
+      "capacity": 20922114048,
+      "allocation": 1472385024,
+      "available": 19449729024,
+      "target": "/var/lib/libvirt/sbx-iso",
+      "source": null,
+      "volumes": [
+        {
+          "name": "my disk.qcow2",
+          "path": "/var/lib/libvirt/sbx-iso/my disk.qcow2"
+        },
+        {
+          "name": "tiny.iso",
+          "path": "/var/lib/libvirt/sbx-iso/tiny.iso"
+        }
+      ]
+    },
+    {
+      "name": "sbx-off",
+      "uuid": "5d98f8b8-d5a6-4627-bfd3-b169b5af70ea",
+      "pool_type": "dir",
+      "active": false,
+      "autostart": false,
+      "capacity": 0,
+      "allocation": 0,
+      "available": 0,
+      "target": "/var/lib/libvirt/sbx-off",
+      "source": null,
+      "volumes": null
+    }
+  ],
+  "disks": [
+    {
+      "domain": "24a8bbc6-deaa-4be0-9699-a1d801faa927",
+      "kind": "file",
+      "device": "disk",
+      "target": "vda",
+      "source": "/var/lib/libvirt/images/paused1.qcow2"
+    },
+    {
+      "domain": "8a2ed2a2-83e1-4c41-ad0a-a57d54d0d649",
+      "kind": "file",
+      "device": "disk",
+      "target": "vda",
+      "source": "/var/lib/libvirt/images/run1.qcow2"
+    },
+    {
+      "domain": "8a2ed2a2-83e1-4c41-ad0a-a57d54d0d649",
+      "kind": "file",
+      "device": "disk",
+      "target": "vdb",
+      "source": "/var/lib/libvirt/images/extra.qcow2"
+    },
+    {
+      "domain": "1438b9e3-f647-47ee-8ed2-6dbc3adccd68",
+      "kind": "file",
+      "device": "disk",
+      "target": "vda",
+      "source": "/var/lib/libvirt/images/off1.qcow2"
+    },
+    {
+      "domain": "1438b9e3-f647-47ee-8ed2-6dbc3adccd68",
+      "kind": "file",
+      "device": "cdrom",
+      "target": "hdc",
+      "source": "/var/lib/libvirt/sbx-iso/tiny.iso"
+    }
+  ]
+}

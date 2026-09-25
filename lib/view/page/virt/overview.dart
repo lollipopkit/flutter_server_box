@@ -353,6 +353,7 @@ extension _Overview on _VirtGuestViewState {
               if (start != null) ...[
                 UIs.height13,
                 Btn.elevated(
+                  mainAxisSize: MainAxisSize.min,
                   text: libL10n.start,
                   icon: const Icon(Icons.play_arrow),
                   onTap: start,
@@ -374,26 +375,26 @@ extension _Overview on _VirtGuestViewState {
       if (guest.autostart ?? false) l10n.virtAutostart,
       ...guest.tags,
     ];
-    return _VirtCard(
+    return VirtCard(
       icon: guest.kind.icon,
       title: guest.name,
       children: [
-        _VirtFact(
+        VirtFact(
           l10n.status,
           reason == null ? state.label : '${state.label} ($reason)',
         ),
-        if (guest.vmid case final vmid?) _VirtFact('VMID', '$vmid'),
-        if (guest.node case final node?) _VirtFact(libL10n.node, node),
-        if (guest.vcpu case final n?) _VirtFact('vCPU', '$n'),
-        if (guest.memBytes case final m?) _VirtFact(libL10n.memory, m.bytes2Str),
+        if (guest.vmid case final vmid?) VirtFact('VMID', '$vmid'),
+        if (guest.node case final node?) VirtFact(libL10n.node, node),
+        if (guest.vcpu case final n?) VirtFact('vCPU', '$n'),
+        if (guest.memBytes case final m?) VirtFact(libL10n.memory, m.bytes2Str),
         if (state.isActive)
           if (guest.uptime case final up?)
-            _VirtFact(libL10n.uptime, up.toAgoStr),
+            VirtFact(libL10n.uptime, up.toAgoStr),
         UIs.height7,
         Wrap(
           spacing: 5,
           runSpacing: 5,
-          children: [for (final c in chips) _VirtChip(c)],
+          children: [for (final c in chips) VirtChip(c)],
         ),
       ],
     );
@@ -401,14 +402,14 @@ extension _Overview on _VirtGuestViewState {
 
   Widget _buildHost(VirtHost host, VirtGuest guest, String? serverName) {
     final version = [?host.version, ?host.hypervisor].join(' · ');
-    return _VirtCard(
+    return VirtCard(
       icon: Icons.dns_outlined,
       title: libL10n.host,
       children: [
-        if (serverName != null) _VirtFact(libL10n.server, serverName),
-        _VirtFact(host.kind.label, version.isEmpty ? '--' : version),
+        if (serverName != null) VirtFact(libL10n.server, serverName),
+        VirtFact(host.kind.label, version.isEmpty ? '--' : version),
         if (host.isCluster)
-          if (guest.node case final node?) _VirtFact(libL10n.node, node),
+          if (guest.node case final node?) VirtFact(libL10n.node, node),
       ],
     );
   }
@@ -425,7 +426,7 @@ extension _Overview on _VirtGuestViewState {
           );
         }
         if (snap.error case final e?) {
-          return _VirtCard(
+          return VirtCard(
             icon: Icons.error_outline,
             title: e is VirtErr ? e.title : libL10n.error,
             children: [
@@ -439,12 +440,12 @@ extension _Overview on _VirtGuestViewState {
         return Column(
           children: [
             if (detail.disks.isNotEmpty)
-              _VirtCard(
+              VirtCard(
                 icon: Icons.storage_outlined,
                 title: libL10n.disk,
                 children: [
                   for (final d in detail.disks)
-                    _VirtFact(
+                    VirtFact(
                       [?d.target, if (d.device != 'disk') d.device].join(' · '),
                       [
                         d.source ?? '--',
@@ -455,12 +456,12 @@ extension _Overview on _VirtGuestViewState {
                 ],
               ),
             if (detail.nics.isNotEmpty)
-              _VirtCard(
+              VirtCard(
                 icon: Icons.lan_outlined,
                 title: libL10n.network,
                 children: [
                   for (final n in detail.nics)
-                    _VirtFact(
+                    VirtFact(
                       [
                         if (n.target case final t?) t else n.kind,
                         ?n.model,
@@ -470,7 +471,7 @@ extension _Overview on _VirtGuestViewState {
                 ],
               ),
             if (detail.description case final desc? when desc.isNotEmpty)
-              _VirtCard(
+              VirtCard(
                 icon: Icons.notes,
                 title: libL10n.note,
                 children: [SelectableText(desc, style: UIs.text13)],
@@ -478,96 +479,6 @@ extension _Overview on _VirtGuestViewState {
           ],
         );
       },
-    );
-  }
-}
-
-/// A titled card of facts, the shape every card on the overview has.
-class _VirtCard extends StatelessWidget {
-  const _VirtCard({
-    required this.icon,
-    required this.title,
-    required this.children,
-  });
-
-  final IconData icon;
-  final String title;
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    return CardX(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(17, 13, 17, 13),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Icon(icon, size: 18, color: ChartPalette.accent),
-                UIs.width7,
-                Expanded(
-                  child: Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: UIs.text13Bold,
-                  ),
-                ),
-              ],
-            ),
-            UIs.height7,
-            ...children,
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// One fact: its name on the left, its value on the right.
-class _VirtFact extends StatelessWidget {
-  const _VirtFact(this.k, this.v);
-
-  final String k;
-  final String v;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(k, style: UIs.text12Grey),
-          UIs.width13,
-          Expanded(
-            child: SelectableText(
-              v,
-              textAlign: TextAlign.end,
-              style: const TextStyle(fontSize: 13),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _VirtChip extends StatelessWidget {
-  const _VirtChip(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(7),
-      ),
-      child: Text(text, style: UIs.text11Grey),
     );
   }
 }

@@ -282,6 +282,305 @@ as String?,
 
 
 /// @nodoc
+mixin _$VirtHostProbeResult {
+
+/// `pveversion`'s line on a Proxmox VE host; nothing else was asked.
+ String? get pve;/// The container the server runs in (`lxc`, `docker`, …).
+ String? get container;/// `virsh version`, when `virsh` is installed and answered.
+ LibvirtVersion? get libvirt;
+/// Create a copy of VirtHostProbeResult
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$VirtHostProbeResultCopyWith<VirtHostProbeResult> get copyWith => _$VirtHostProbeResultCopyWithImpl<VirtHostProbeResult>(this as VirtHostProbeResult, _$identity);
+
+  /// Serializes this VirtHostProbeResult to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHostProbeResult&&(identical(other.pve, pve) || other.pve == pve)&&(identical(other.container, container) || other.container == container)&&(identical(other.libvirt, libvirt) || other.libvirt == libvirt));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,pve,container,libvirt);
+
+@override
+String toString() {
+  return 'VirtHostProbeResult(pve: $pve, container: $container, libvirt: $libvirt)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $VirtHostProbeResultCopyWith<$Res>  {
+  factory $VirtHostProbeResultCopyWith(VirtHostProbeResult value, $Res Function(VirtHostProbeResult) _then) = _$VirtHostProbeResultCopyWithImpl;
+@useResult
+$Res call({
+ String? pve, String? container, LibvirtVersion? libvirt
+});
+
+
+$LibvirtVersionCopyWith<$Res>? get libvirt;
+
+}
+/// @nodoc
+class _$VirtHostProbeResultCopyWithImpl<$Res>
+    implements $VirtHostProbeResultCopyWith<$Res> {
+  _$VirtHostProbeResultCopyWithImpl(this._self, this._then);
+
+  final VirtHostProbeResult _self;
+  final $Res Function(VirtHostProbeResult) _then;
+
+/// Create a copy of VirtHostProbeResult
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? pve = freezed,Object? container = freezed,Object? libvirt = freezed,}) {
+  return _then(_self.copyWith(
+pve: freezed == pve ? _self.pve : pve // ignore: cast_nullable_to_non_nullable
+as String?,container: freezed == container ? _self.container : container // ignore: cast_nullable_to_non_nullable
+as String?,libvirt: freezed == libvirt ? _self.libvirt : libvirt // ignore: cast_nullable_to_non_nullable
+as LibvirtVersion?,
+  ));
+}
+/// Create a copy of VirtHostProbeResult
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$LibvirtVersionCopyWith<$Res>? get libvirt {
+    if (_self.libvirt == null) {
+    return null;
+  }
+
+  return $LibvirtVersionCopyWith<$Res>(_self.libvirt!, (value) {
+    return _then(_self.copyWith(libvirt: value));
+  });
+}
+}
+
+
+/// Adds pattern-matching-related methods to [VirtHostProbeResult].
+extension VirtHostProbeResultPatterns on VirtHostProbeResult {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _VirtHostProbeResult value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _VirtHostProbeResult() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _VirtHostProbeResult value)  $default,){
+final _that = this;
+switch (_that) {
+case _VirtHostProbeResult():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _VirtHostProbeResult value)?  $default,){
+final _that = this;
+switch (_that) {
+case _VirtHostProbeResult() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? pve,  String? container,  LibvirtVersion? libvirt)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _VirtHostProbeResult() when $default != null:
+return $default(_that.pve,_that.container,_that.libvirt);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? pve,  String? container,  LibvirtVersion? libvirt)  $default,) {final _that = this;
+switch (_that) {
+case _VirtHostProbeResult():
+return $default(_that.pve,_that.container,_that.libvirt);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? pve,  String? container,  LibvirtVersion? libvirt)?  $default,) {final _that = this;
+switch (_that) {
+case _VirtHostProbeResult() when $default != null:
+return $default(_that.pve,_that.container,_that.libvirt);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class _VirtHostProbeResult implements VirtHostProbeResult {
+  const _VirtHostProbeResult({this.pve, this.container, this.libvirt});
+  factory _VirtHostProbeResult.fromJson(Map<String, dynamic> json) => _$VirtHostProbeResultFromJson(json);
+
+/// `pveversion`'s line on a Proxmox VE host; nothing else was asked.
+@override final  String? pve;
+/// The container the server runs in (`lxc`, `docker`, …).
+@override final  String? container;
+/// `virsh version`, when `virsh` is installed and answered.
+@override final  LibvirtVersion? libvirt;
+
+/// Create a copy of VirtHostProbeResult
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$VirtHostProbeResultCopyWith<_VirtHostProbeResult> get copyWith => __$VirtHostProbeResultCopyWithImpl<_VirtHostProbeResult>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$VirtHostProbeResultToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtHostProbeResult&&(identical(other.pve, pve) || other.pve == pve)&&(identical(other.container, container) || other.container == container)&&(identical(other.libvirt, libvirt) || other.libvirt == libvirt));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,pve,container,libvirt);
+
+@override
+String toString() {
+  return 'VirtHostProbeResult(pve: $pve, container: $container, libvirt: $libvirt)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$VirtHostProbeResultCopyWith<$Res> implements $VirtHostProbeResultCopyWith<$Res> {
+  factory _$VirtHostProbeResultCopyWith(_VirtHostProbeResult value, $Res Function(_VirtHostProbeResult) _then) = __$VirtHostProbeResultCopyWithImpl;
+@override @useResult
+$Res call({
+ String? pve, String? container, LibvirtVersion? libvirt
+});
+
+
+@override $LibvirtVersionCopyWith<$Res>? get libvirt;
+
+}
+/// @nodoc
+class __$VirtHostProbeResultCopyWithImpl<$Res>
+    implements _$VirtHostProbeResultCopyWith<$Res> {
+  __$VirtHostProbeResultCopyWithImpl(this._self, this._then);
+
+  final _VirtHostProbeResult _self;
+  final $Res Function(_VirtHostProbeResult) _then;
+
+/// Create a copy of VirtHostProbeResult
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? pve = freezed,Object? container = freezed,Object? libvirt = freezed,}) {
+  return _then(_VirtHostProbeResult(
+pve: freezed == pve ? _self.pve : pve // ignore: cast_nullable_to_non_nullable
+as String?,container: freezed == container ? _self.container : container // ignore: cast_nullable_to_non_nullable
+as String?,libvirt: freezed == libvirt ? _self.libvirt : libvirt // ignore: cast_nullable_to_non_nullable
+as LibvirtVersion?,
+  ));
+}
+
+/// Create a copy of VirtHostProbeResult
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$LibvirtVersionCopyWith<$Res>? get libvirt {
+    if (_self.libvirt == null) {
+    return null;
+  }
+
+  return $LibvirtVersionCopyWith<$Res>(_self.libvirt!, (value) {
+    return _then(_self.copyWith(libvirt: value));
+  });
+}
+}
+
+
+/// @nodoc
 mixin _$LibvirtBlockStats {
 
  String get name; String? get path; int? get rdBytes; int? get wrBytes; int? get capacity; int? get allocation;
@@ -2351,6 +2650,3109 @@ $LibvirtDomainXmlCopyWith<$Res> get xml {
     return _then(_self.copyWith(xml: value));
   });
 }
+}
+
+
+/// @nodoc
+mixin _$LibvirtSnapshot {
+
+ String get name; String? get description; String? get parent;/// `running`, `paused`, `shutoff`, `disk-snapshot`.
+ String? get state;/// Seconds since the epoch.
+ int? get creationTime; bool get memory; bool get external; bool get current;
+/// Create a copy of LibvirtSnapshot
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$LibvirtSnapshotCopyWith<LibvirtSnapshot> get copyWith => _$LibvirtSnapshotCopyWithImpl<LibvirtSnapshot>(this as LibvirtSnapshot, _$identity);
+
+  /// Serializes this LibvirtSnapshot to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtSnapshot&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.parent, parent) || other.parent == parent)&&(identical(other.state, state) || other.state == state)&&(identical(other.creationTime, creationTime) || other.creationTime == creationTime)&&(identical(other.memory, memory) || other.memory == memory)&&(identical(other.external, external) || other.external == external)&&(identical(other.current, current) || other.current == current));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,name,description,parent,state,creationTime,memory,external,current);
+
+@override
+String toString() {
+  return 'LibvirtSnapshot(name: $name, description: $description, parent: $parent, state: $state, creationTime: $creationTime, memory: $memory, external: $external, current: $current)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $LibvirtSnapshotCopyWith<$Res>  {
+  factory $LibvirtSnapshotCopyWith(LibvirtSnapshot value, $Res Function(LibvirtSnapshot) _then) = _$LibvirtSnapshotCopyWithImpl;
+@useResult
+$Res call({
+ String name, String? description, String? parent, String? state, int? creationTime, bool memory, bool external, bool current
+});
+
+
+
+
+}
+/// @nodoc
+class _$LibvirtSnapshotCopyWithImpl<$Res>
+    implements $LibvirtSnapshotCopyWith<$Res> {
+  _$LibvirtSnapshotCopyWithImpl(this._self, this._then);
+
+  final LibvirtSnapshot _self;
+  final $Res Function(LibvirtSnapshot) _then;
+
+/// Create a copy of LibvirtSnapshot
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? description = freezed,Object? parent = freezed,Object? state = freezed,Object? creationTime = freezed,Object? memory = null,Object? external = null,Object? current = null,}) {
+  return _then(_self.copyWith(
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String?,parent: freezed == parent ? _self.parent : parent // ignore: cast_nullable_to_non_nullable
+as String?,state: freezed == state ? _self.state : state // ignore: cast_nullable_to_non_nullable
+as String?,creationTime: freezed == creationTime ? _self.creationTime : creationTime // ignore: cast_nullable_to_non_nullable
+as int?,memory: null == memory ? _self.memory : memory // ignore: cast_nullable_to_non_nullable
+as bool,external: null == external ? _self.external : external // ignore: cast_nullable_to_non_nullable
+as bool,current: null == current ? _self.current : current // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [LibvirtSnapshot].
+extension LibvirtSnapshotPatterns on LibvirtSnapshot {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _LibvirtSnapshot value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _LibvirtSnapshot() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _LibvirtSnapshot value)  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtSnapshot():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _LibvirtSnapshot value)?  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtSnapshot() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String? description,  String? parent,  String? state,  int? creationTime,  bool memory,  bool external,  bool current)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _LibvirtSnapshot() when $default != null:
+return $default(_that.name,_that.description,_that.parent,_that.state,_that.creationTime,_that.memory,_that.external,_that.current);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String? description,  String? parent,  String? state,  int? creationTime,  bool memory,  bool external,  bool current)  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtSnapshot():
+return $default(_that.name,_that.description,_that.parent,_that.state,_that.creationTime,_that.memory,_that.external,_that.current);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String? description,  String? parent,  String? state,  int? creationTime,  bool memory,  bool external,  bool current)?  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtSnapshot() when $default != null:
+return $default(_that.name,_that.description,_that.parent,_that.state,_that.creationTime,_that.memory,_that.external,_that.current);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class _LibvirtSnapshot implements LibvirtSnapshot {
+  const _LibvirtSnapshot({required this.name, this.description, this.parent, this.state, this.creationTime, this.memory = false, this.external = false, this.current = false});
+  factory _LibvirtSnapshot.fromJson(Map<String, dynamic> json) => _$LibvirtSnapshotFromJson(json);
+
+@override final  String name;
+@override final  String? description;
+@override final  String? parent;
+/// `running`, `paused`, `shutoff`, `disk-snapshot`.
+@override final  String? state;
+/// Seconds since the epoch.
+@override final  int? creationTime;
+@override@JsonKey() final  bool memory;
+@override@JsonKey() final  bool external;
+@override@JsonKey() final  bool current;
+
+/// Create a copy of LibvirtSnapshot
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$LibvirtSnapshotCopyWith<_LibvirtSnapshot> get copyWith => __$LibvirtSnapshotCopyWithImpl<_LibvirtSnapshot>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$LibvirtSnapshotToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtSnapshot&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.parent, parent) || other.parent == parent)&&(identical(other.state, state) || other.state == state)&&(identical(other.creationTime, creationTime) || other.creationTime == creationTime)&&(identical(other.memory, memory) || other.memory == memory)&&(identical(other.external, external) || other.external == external)&&(identical(other.current, current) || other.current == current));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,name,description,parent,state,creationTime,memory,external,current);
+
+@override
+String toString() {
+  return 'LibvirtSnapshot(name: $name, description: $description, parent: $parent, state: $state, creationTime: $creationTime, memory: $memory, external: $external, current: $current)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$LibvirtSnapshotCopyWith<$Res> implements $LibvirtSnapshotCopyWith<$Res> {
+  factory _$LibvirtSnapshotCopyWith(_LibvirtSnapshot value, $Res Function(_LibvirtSnapshot) _then) = __$LibvirtSnapshotCopyWithImpl;
+@override @useResult
+$Res call({
+ String name, String? description, String? parent, String? state, int? creationTime, bool memory, bool external, bool current
+});
+
+
+
+
+}
+/// @nodoc
+class __$LibvirtSnapshotCopyWithImpl<$Res>
+    implements _$LibvirtSnapshotCopyWith<$Res> {
+  __$LibvirtSnapshotCopyWithImpl(this._self, this._then);
+
+  final _LibvirtSnapshot _self;
+  final $Res Function(_LibvirtSnapshot) _then;
+
+/// Create a copy of LibvirtSnapshot
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? description = freezed,Object? parent = freezed,Object? state = freezed,Object? creationTime = freezed,Object? memory = null,Object? external = null,Object? current = null,}) {
+  return _then(_LibvirtSnapshot(
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String?,parent: freezed == parent ? _self.parent : parent // ignore: cast_nullable_to_non_nullable
+as String?,state: freezed == state ? _self.state : state // ignore: cast_nullable_to_non_nullable
+as String?,creationTime: freezed == creationTime ? _self.creationTime : creationTime // ignore: cast_nullable_to_non_nullable
+as int?,memory: null == memory ? _self.memory : memory // ignore: cast_nullable_to_non_nullable
+as bool,external: null == external ? _self.external : external // ignore: cast_nullable_to_non_nullable
+as bool,current: null == current ? _self.current : current // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$LibvirtVolumeRef {
+
+ String get name; String? get path;
+/// Create a copy of LibvirtVolumeRef
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$LibvirtVolumeRefCopyWith<LibvirtVolumeRef> get copyWith => _$LibvirtVolumeRefCopyWithImpl<LibvirtVolumeRef>(this as LibvirtVolumeRef, _$identity);
+
+  /// Serializes this LibvirtVolumeRef to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtVolumeRef&&(identical(other.name, name) || other.name == name)&&(identical(other.path, path) || other.path == path));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,name,path);
+
+@override
+String toString() {
+  return 'LibvirtVolumeRef(name: $name, path: $path)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $LibvirtVolumeRefCopyWith<$Res>  {
+  factory $LibvirtVolumeRefCopyWith(LibvirtVolumeRef value, $Res Function(LibvirtVolumeRef) _then) = _$LibvirtVolumeRefCopyWithImpl;
+@useResult
+$Res call({
+ String name, String? path
+});
+
+
+
+
+}
+/// @nodoc
+class _$LibvirtVolumeRefCopyWithImpl<$Res>
+    implements $LibvirtVolumeRefCopyWith<$Res> {
+  _$LibvirtVolumeRefCopyWithImpl(this._self, this._then);
+
+  final LibvirtVolumeRef _self;
+  final $Res Function(LibvirtVolumeRef) _then;
+
+/// Create a copy of LibvirtVolumeRef
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? path = freezed,}) {
+  return _then(_self.copyWith(
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,path: freezed == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [LibvirtVolumeRef].
+extension LibvirtVolumeRefPatterns on LibvirtVolumeRef {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _LibvirtVolumeRef value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _LibvirtVolumeRef() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _LibvirtVolumeRef value)  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtVolumeRef():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _LibvirtVolumeRef value)?  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtVolumeRef() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String? path)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _LibvirtVolumeRef() when $default != null:
+return $default(_that.name,_that.path);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String? path)  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtVolumeRef():
+return $default(_that.name,_that.path);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String? path)?  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtVolumeRef() when $default != null:
+return $default(_that.name,_that.path);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _LibvirtVolumeRef implements LibvirtVolumeRef {
+  const _LibvirtVolumeRef({required this.name, this.path});
+  factory _LibvirtVolumeRef.fromJson(Map<String, dynamic> json) => _$LibvirtVolumeRefFromJson(json);
+
+@override final  String name;
+@override final  String? path;
+
+/// Create a copy of LibvirtVolumeRef
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$LibvirtVolumeRefCopyWith<_LibvirtVolumeRef> get copyWith => __$LibvirtVolumeRefCopyWithImpl<_LibvirtVolumeRef>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$LibvirtVolumeRefToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtVolumeRef&&(identical(other.name, name) || other.name == name)&&(identical(other.path, path) || other.path == path));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,name,path);
+
+@override
+String toString() {
+  return 'LibvirtVolumeRef(name: $name, path: $path)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$LibvirtVolumeRefCopyWith<$Res> implements $LibvirtVolumeRefCopyWith<$Res> {
+  factory _$LibvirtVolumeRefCopyWith(_LibvirtVolumeRef value, $Res Function(_LibvirtVolumeRef) _then) = __$LibvirtVolumeRefCopyWithImpl;
+@override @useResult
+$Res call({
+ String name, String? path
+});
+
+
+
+
+}
+/// @nodoc
+class __$LibvirtVolumeRefCopyWithImpl<$Res>
+    implements _$LibvirtVolumeRefCopyWith<$Res> {
+  __$LibvirtVolumeRefCopyWithImpl(this._self, this._then);
+
+  final _LibvirtVolumeRef _self;
+  final $Res Function(_LibvirtVolumeRef) _then;
+
+/// Create a copy of LibvirtVolumeRef
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? path = freezed,}) {
+  return _then(_LibvirtVolumeRef(
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,path: freezed == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$LibvirtPool {
+
+ String get name; String? get uuid; String? get poolType; bool get active; bool get autostart; int? get capacity; int? get allocation; int? get available; String? get target; String? get source;/// Null when they could not be listed (an inactive pool).
+ List<LibvirtVolumeRef>? get volumes;
+/// Create a copy of LibvirtPool
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$LibvirtPoolCopyWith<LibvirtPool> get copyWith => _$LibvirtPoolCopyWithImpl<LibvirtPool>(this as LibvirtPool, _$identity);
+
+  /// Serializes this LibvirtPool to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtPool&&(identical(other.name, name) || other.name == name)&&(identical(other.uuid, uuid) || other.uuid == uuid)&&(identical(other.poolType, poolType) || other.poolType == poolType)&&(identical(other.active, active) || other.active == active)&&(identical(other.autostart, autostart) || other.autostart == autostart)&&(identical(other.capacity, capacity) || other.capacity == capacity)&&(identical(other.allocation, allocation) || other.allocation == allocation)&&(identical(other.available, available) || other.available == available)&&(identical(other.target, target) || other.target == target)&&(identical(other.source, source) || other.source == source)&&const DeepCollectionEquality().equals(other.volumes, volumes));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,name,uuid,poolType,active,autostart,capacity,allocation,available,target,source,const DeepCollectionEquality().hash(volumes));
+
+@override
+String toString() {
+  return 'LibvirtPool(name: $name, uuid: $uuid, poolType: $poolType, active: $active, autostart: $autostart, capacity: $capacity, allocation: $allocation, available: $available, target: $target, source: $source, volumes: $volumes)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $LibvirtPoolCopyWith<$Res>  {
+  factory $LibvirtPoolCopyWith(LibvirtPool value, $Res Function(LibvirtPool) _then) = _$LibvirtPoolCopyWithImpl;
+@useResult
+$Res call({
+ String name, String? uuid, String? poolType, bool active, bool autostart, int? capacity, int? allocation, int? available, String? target, String? source, List<LibvirtVolumeRef>? volumes
+});
+
+
+
+
+}
+/// @nodoc
+class _$LibvirtPoolCopyWithImpl<$Res>
+    implements $LibvirtPoolCopyWith<$Res> {
+  _$LibvirtPoolCopyWithImpl(this._self, this._then);
+
+  final LibvirtPool _self;
+  final $Res Function(LibvirtPool) _then;
+
+/// Create a copy of LibvirtPool
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? uuid = freezed,Object? poolType = freezed,Object? active = null,Object? autostart = null,Object? capacity = freezed,Object? allocation = freezed,Object? available = freezed,Object? target = freezed,Object? source = freezed,Object? volumes = freezed,}) {
+  return _then(_self.copyWith(
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,uuid: freezed == uuid ? _self.uuid : uuid // ignore: cast_nullable_to_non_nullable
+as String?,poolType: freezed == poolType ? _self.poolType : poolType // ignore: cast_nullable_to_non_nullable
+as String?,active: null == active ? _self.active : active // ignore: cast_nullable_to_non_nullable
+as bool,autostart: null == autostart ? _self.autostart : autostart // ignore: cast_nullable_to_non_nullable
+as bool,capacity: freezed == capacity ? _self.capacity : capacity // ignore: cast_nullable_to_non_nullable
+as int?,allocation: freezed == allocation ? _self.allocation : allocation // ignore: cast_nullable_to_non_nullable
+as int?,available: freezed == available ? _self.available : available // ignore: cast_nullable_to_non_nullable
+as int?,target: freezed == target ? _self.target : target // ignore: cast_nullable_to_non_nullable
+as String?,source: freezed == source ? _self.source : source // ignore: cast_nullable_to_non_nullable
+as String?,volumes: freezed == volumes ? _self.volumes : volumes // ignore: cast_nullable_to_non_nullable
+as List<LibvirtVolumeRef>?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [LibvirtPool].
+extension LibvirtPoolPatterns on LibvirtPool {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _LibvirtPool value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _LibvirtPool() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _LibvirtPool value)  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtPool():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _LibvirtPool value)?  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtPool() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String? uuid,  String? poolType,  bool active,  bool autostart,  int? capacity,  int? allocation,  int? available,  String? target,  String? source,  List<LibvirtVolumeRef>? volumes)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _LibvirtPool() when $default != null:
+return $default(_that.name,_that.uuid,_that.poolType,_that.active,_that.autostart,_that.capacity,_that.allocation,_that.available,_that.target,_that.source,_that.volumes);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String? uuid,  String? poolType,  bool active,  bool autostart,  int? capacity,  int? allocation,  int? available,  String? target,  String? source,  List<LibvirtVolumeRef>? volumes)  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtPool():
+return $default(_that.name,_that.uuid,_that.poolType,_that.active,_that.autostart,_that.capacity,_that.allocation,_that.available,_that.target,_that.source,_that.volumes);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String? uuid,  String? poolType,  bool active,  bool autostart,  int? capacity,  int? allocation,  int? available,  String? target,  String? source,  List<LibvirtVolumeRef>? volumes)?  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtPool() when $default != null:
+return $default(_that.name,_that.uuid,_that.poolType,_that.active,_that.autostart,_that.capacity,_that.allocation,_that.available,_that.target,_that.source,_that.volumes);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class _LibvirtPool implements LibvirtPool {
+  const _LibvirtPool({required this.name, this.uuid, this.poolType, this.active = false, this.autostart = false, this.capacity, this.allocation, this.available, this.target, this.source, final  List<LibvirtVolumeRef>? volumes}): _volumes = volumes;
+  factory _LibvirtPool.fromJson(Map<String, dynamic> json) => _$LibvirtPoolFromJson(json);
+
+@override final  String name;
+@override final  String? uuid;
+@override final  String? poolType;
+@override@JsonKey() final  bool active;
+@override@JsonKey() final  bool autostart;
+@override final  int? capacity;
+@override final  int? allocation;
+@override final  int? available;
+@override final  String? target;
+@override final  String? source;
+/// Null when they could not be listed (an inactive pool).
+ final  List<LibvirtVolumeRef>? _volumes;
+/// Null when they could not be listed (an inactive pool).
+@override List<LibvirtVolumeRef>? get volumes {
+  final value = _volumes;
+  if (value == null) return null;
+  if (_volumes is EqualUnmodifiableListView) return _volumes;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(value);
+}
+
+
+/// Create a copy of LibvirtPool
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$LibvirtPoolCopyWith<_LibvirtPool> get copyWith => __$LibvirtPoolCopyWithImpl<_LibvirtPool>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$LibvirtPoolToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtPool&&(identical(other.name, name) || other.name == name)&&(identical(other.uuid, uuid) || other.uuid == uuid)&&(identical(other.poolType, poolType) || other.poolType == poolType)&&(identical(other.active, active) || other.active == active)&&(identical(other.autostart, autostart) || other.autostart == autostart)&&(identical(other.capacity, capacity) || other.capacity == capacity)&&(identical(other.allocation, allocation) || other.allocation == allocation)&&(identical(other.available, available) || other.available == available)&&(identical(other.target, target) || other.target == target)&&(identical(other.source, source) || other.source == source)&&const DeepCollectionEquality().equals(other._volumes, _volumes));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,name,uuid,poolType,active,autostart,capacity,allocation,available,target,source,const DeepCollectionEquality().hash(_volumes));
+
+@override
+String toString() {
+  return 'LibvirtPool(name: $name, uuid: $uuid, poolType: $poolType, active: $active, autostart: $autostart, capacity: $capacity, allocation: $allocation, available: $available, target: $target, source: $source, volumes: $volumes)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$LibvirtPoolCopyWith<$Res> implements $LibvirtPoolCopyWith<$Res> {
+  factory _$LibvirtPoolCopyWith(_LibvirtPool value, $Res Function(_LibvirtPool) _then) = __$LibvirtPoolCopyWithImpl;
+@override @useResult
+$Res call({
+ String name, String? uuid, String? poolType, bool active, bool autostart, int? capacity, int? allocation, int? available, String? target, String? source, List<LibvirtVolumeRef>? volumes
+});
+
+
+
+
+}
+/// @nodoc
+class __$LibvirtPoolCopyWithImpl<$Res>
+    implements _$LibvirtPoolCopyWith<$Res> {
+  __$LibvirtPoolCopyWithImpl(this._self, this._then);
+
+  final _LibvirtPool _self;
+  final $Res Function(_LibvirtPool) _then;
+
+/// Create a copy of LibvirtPool
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? uuid = freezed,Object? poolType = freezed,Object? active = null,Object? autostart = null,Object? capacity = freezed,Object? allocation = freezed,Object? available = freezed,Object? target = freezed,Object? source = freezed,Object? volumes = freezed,}) {
+  return _then(_LibvirtPool(
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,uuid: freezed == uuid ? _self.uuid : uuid // ignore: cast_nullable_to_non_nullable
+as String?,poolType: freezed == poolType ? _self.poolType : poolType // ignore: cast_nullable_to_non_nullable
+as String?,active: null == active ? _self.active : active // ignore: cast_nullable_to_non_nullable
+as bool,autostart: null == autostart ? _self.autostart : autostart // ignore: cast_nullable_to_non_nullable
+as bool,capacity: freezed == capacity ? _self.capacity : capacity // ignore: cast_nullable_to_non_nullable
+as int?,allocation: freezed == allocation ? _self.allocation : allocation // ignore: cast_nullable_to_non_nullable
+as int?,available: freezed == available ? _self.available : available // ignore: cast_nullable_to_non_nullable
+as int?,target: freezed == target ? _self.target : target // ignore: cast_nullable_to_non_nullable
+as String?,source: freezed == source ? _self.source : source // ignore: cast_nullable_to_non_nullable
+as String?,volumes: freezed == volumes ? _self._volumes : volumes // ignore: cast_nullable_to_non_nullable
+as List<LibvirtVolumeRef>?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$LibvirtDiskUse {
+
+ String get domain; String get kind; String get device; String get target; String? get source;
+/// Create a copy of LibvirtDiskUse
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$LibvirtDiskUseCopyWith<LibvirtDiskUse> get copyWith => _$LibvirtDiskUseCopyWithImpl<LibvirtDiskUse>(this as LibvirtDiskUse, _$identity);
+
+  /// Serializes this LibvirtDiskUse to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtDiskUse&&(identical(other.domain, domain) || other.domain == domain)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.device, device) || other.device == device)&&(identical(other.target, target) || other.target == target)&&(identical(other.source, source) || other.source == source));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,domain,kind,device,target,source);
+
+@override
+String toString() {
+  return 'LibvirtDiskUse(domain: $domain, kind: $kind, device: $device, target: $target, source: $source)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $LibvirtDiskUseCopyWith<$Res>  {
+  factory $LibvirtDiskUseCopyWith(LibvirtDiskUse value, $Res Function(LibvirtDiskUse) _then) = _$LibvirtDiskUseCopyWithImpl;
+@useResult
+$Res call({
+ String domain, String kind, String device, String target, String? source
+});
+
+
+
+
+}
+/// @nodoc
+class _$LibvirtDiskUseCopyWithImpl<$Res>
+    implements $LibvirtDiskUseCopyWith<$Res> {
+  _$LibvirtDiskUseCopyWithImpl(this._self, this._then);
+
+  final LibvirtDiskUse _self;
+  final $Res Function(LibvirtDiskUse) _then;
+
+/// Create a copy of LibvirtDiskUse
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? domain = null,Object? kind = null,Object? device = null,Object? target = null,Object? source = freezed,}) {
+  return _then(_self.copyWith(
+domain: null == domain ? _self.domain : domain // ignore: cast_nullable_to_non_nullable
+as String,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as String,device: null == device ? _self.device : device // ignore: cast_nullable_to_non_nullable
+as String,target: null == target ? _self.target : target // ignore: cast_nullable_to_non_nullable
+as String,source: freezed == source ? _self.source : source // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [LibvirtDiskUse].
+extension LibvirtDiskUsePatterns on LibvirtDiskUse {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _LibvirtDiskUse value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _LibvirtDiskUse() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _LibvirtDiskUse value)  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtDiskUse():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _LibvirtDiskUse value)?  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtDiskUse() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String domain,  String kind,  String device,  String target,  String? source)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _LibvirtDiskUse() when $default != null:
+return $default(_that.domain,_that.kind,_that.device,_that.target,_that.source);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String domain,  String kind,  String device,  String target,  String? source)  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtDiskUse():
+return $default(_that.domain,_that.kind,_that.device,_that.target,_that.source);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String domain,  String kind,  String device,  String target,  String? source)?  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtDiskUse() when $default != null:
+return $default(_that.domain,_that.kind,_that.device,_that.target,_that.source);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _LibvirtDiskUse implements LibvirtDiskUse {
+  const _LibvirtDiskUse({required this.domain, this.kind = '', this.device = '', this.target = '', this.source});
+  factory _LibvirtDiskUse.fromJson(Map<String, dynamic> json) => _$LibvirtDiskUseFromJson(json);
+
+@override final  String domain;
+@override@JsonKey() final  String kind;
+@override@JsonKey() final  String device;
+@override@JsonKey() final  String target;
+@override final  String? source;
+
+/// Create a copy of LibvirtDiskUse
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$LibvirtDiskUseCopyWith<_LibvirtDiskUse> get copyWith => __$LibvirtDiskUseCopyWithImpl<_LibvirtDiskUse>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$LibvirtDiskUseToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtDiskUse&&(identical(other.domain, domain) || other.domain == domain)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.device, device) || other.device == device)&&(identical(other.target, target) || other.target == target)&&(identical(other.source, source) || other.source == source));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,domain,kind,device,target,source);
+
+@override
+String toString() {
+  return 'LibvirtDiskUse(domain: $domain, kind: $kind, device: $device, target: $target, source: $source)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$LibvirtDiskUseCopyWith<$Res> implements $LibvirtDiskUseCopyWith<$Res> {
+  factory _$LibvirtDiskUseCopyWith(_LibvirtDiskUse value, $Res Function(_LibvirtDiskUse) _then) = __$LibvirtDiskUseCopyWithImpl;
+@override @useResult
+$Res call({
+ String domain, String kind, String device, String target, String? source
+});
+
+
+
+
+}
+/// @nodoc
+class __$LibvirtDiskUseCopyWithImpl<$Res>
+    implements _$LibvirtDiskUseCopyWith<$Res> {
+  __$LibvirtDiskUseCopyWithImpl(this._self, this._then);
+
+  final _LibvirtDiskUse _self;
+  final $Res Function(_LibvirtDiskUse) _then;
+
+/// Create a copy of LibvirtDiskUse
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? domain = null,Object? kind = null,Object? device = null,Object? target = null,Object? source = freezed,}) {
+  return _then(_LibvirtDiskUse(
+domain: null == domain ? _self.domain : domain // ignore: cast_nullable_to_non_nullable
+as String,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as String,device: null == device ? _self.device : device // ignore: cast_nullable_to_non_nullable
+as String,target: null == target ? _self.target : target // ignore: cast_nullable_to_non_nullable
+as String,source: freezed == source ? _self.source : source // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$LibvirtStorage {
+
+ List<LibvirtPool> get pools; List<LibvirtDiskUse> get disks;
+/// Create a copy of LibvirtStorage
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$LibvirtStorageCopyWith<LibvirtStorage> get copyWith => _$LibvirtStorageCopyWithImpl<LibvirtStorage>(this as LibvirtStorage, _$identity);
+
+  /// Serializes this LibvirtStorage to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtStorage&&const DeepCollectionEquality().equals(other.pools, pools)&&const DeepCollectionEquality().equals(other.disks, disks));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(pools),const DeepCollectionEquality().hash(disks));
+
+@override
+String toString() {
+  return 'LibvirtStorage(pools: $pools, disks: $disks)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $LibvirtStorageCopyWith<$Res>  {
+  factory $LibvirtStorageCopyWith(LibvirtStorage value, $Res Function(LibvirtStorage) _then) = _$LibvirtStorageCopyWithImpl;
+@useResult
+$Res call({
+ List<LibvirtPool> pools, List<LibvirtDiskUse> disks
+});
+
+
+
+
+}
+/// @nodoc
+class _$LibvirtStorageCopyWithImpl<$Res>
+    implements $LibvirtStorageCopyWith<$Res> {
+  _$LibvirtStorageCopyWithImpl(this._self, this._then);
+
+  final LibvirtStorage _self;
+  final $Res Function(LibvirtStorage) _then;
+
+/// Create a copy of LibvirtStorage
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? pools = null,Object? disks = null,}) {
+  return _then(_self.copyWith(
+pools: null == pools ? _self.pools : pools // ignore: cast_nullable_to_non_nullable
+as List<LibvirtPool>,disks: null == disks ? _self.disks : disks // ignore: cast_nullable_to_non_nullable
+as List<LibvirtDiskUse>,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [LibvirtStorage].
+extension LibvirtStoragePatterns on LibvirtStorage {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _LibvirtStorage value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _LibvirtStorage() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _LibvirtStorage value)  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtStorage():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _LibvirtStorage value)?  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtStorage() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<LibvirtPool> pools,  List<LibvirtDiskUse> disks)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _LibvirtStorage() when $default != null:
+return $default(_that.pools,_that.disks);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<LibvirtPool> pools,  List<LibvirtDiskUse> disks)  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtStorage():
+return $default(_that.pools,_that.disks);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<LibvirtPool> pools,  List<LibvirtDiskUse> disks)?  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtStorage() when $default != null:
+return $default(_that.pools,_that.disks);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _LibvirtStorage implements LibvirtStorage {
+  const _LibvirtStorage({final  List<LibvirtPool> pools = const <LibvirtPool>[], final  List<LibvirtDiskUse> disks = const <LibvirtDiskUse>[]}): _pools = pools,_disks = disks;
+  factory _LibvirtStorage.fromJson(Map<String, dynamic> json) => _$LibvirtStorageFromJson(json);
+
+ final  List<LibvirtPool> _pools;
+@override@JsonKey() List<LibvirtPool> get pools {
+  if (_pools is EqualUnmodifiableListView) return _pools;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_pools);
+}
+
+ final  List<LibvirtDiskUse> _disks;
+@override@JsonKey() List<LibvirtDiskUse> get disks {
+  if (_disks is EqualUnmodifiableListView) return _disks;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_disks);
+}
+
+
+/// Create a copy of LibvirtStorage
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$LibvirtStorageCopyWith<_LibvirtStorage> get copyWith => __$LibvirtStorageCopyWithImpl<_LibvirtStorage>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$LibvirtStorageToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtStorage&&const DeepCollectionEquality().equals(other._pools, _pools)&&const DeepCollectionEquality().equals(other._disks, _disks));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_pools),const DeepCollectionEquality().hash(_disks));
+
+@override
+String toString() {
+  return 'LibvirtStorage(pools: $pools, disks: $disks)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$LibvirtStorageCopyWith<$Res> implements $LibvirtStorageCopyWith<$Res> {
+  factory _$LibvirtStorageCopyWith(_LibvirtStorage value, $Res Function(_LibvirtStorage) _then) = __$LibvirtStorageCopyWithImpl;
+@override @useResult
+$Res call({
+ List<LibvirtPool> pools, List<LibvirtDiskUse> disks
+});
+
+
+
+
+}
+/// @nodoc
+class __$LibvirtStorageCopyWithImpl<$Res>
+    implements _$LibvirtStorageCopyWith<$Res> {
+  __$LibvirtStorageCopyWithImpl(this._self, this._then);
+
+  final _LibvirtStorage _self;
+  final $Res Function(_LibvirtStorage) _then;
+
+/// Create a copy of LibvirtStorage
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? pools = null,Object? disks = null,}) {
+  return _then(_LibvirtStorage(
+pools: null == pools ? _self._pools : pools // ignore: cast_nullable_to_non_nullable
+as List<LibvirtPool>,disks: null == disks ? _self._disks : disks // ignore: cast_nullable_to_non_nullable
+as List<LibvirtDiskUse>,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$LibvirtVolume {
+
+ String get name; String? get volType; String? get path; String? get format; int? get capacity; int? get allocation; String? get backing;
+/// Create a copy of LibvirtVolume
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$LibvirtVolumeCopyWith<LibvirtVolume> get copyWith => _$LibvirtVolumeCopyWithImpl<LibvirtVolume>(this as LibvirtVolume, _$identity);
+
+  /// Serializes this LibvirtVolume to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtVolume&&(identical(other.name, name) || other.name == name)&&(identical(other.volType, volType) || other.volType == volType)&&(identical(other.path, path) || other.path == path)&&(identical(other.format, format) || other.format == format)&&(identical(other.capacity, capacity) || other.capacity == capacity)&&(identical(other.allocation, allocation) || other.allocation == allocation)&&(identical(other.backing, backing) || other.backing == backing));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,name,volType,path,format,capacity,allocation,backing);
+
+@override
+String toString() {
+  return 'LibvirtVolume(name: $name, volType: $volType, path: $path, format: $format, capacity: $capacity, allocation: $allocation, backing: $backing)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $LibvirtVolumeCopyWith<$Res>  {
+  factory $LibvirtVolumeCopyWith(LibvirtVolume value, $Res Function(LibvirtVolume) _then) = _$LibvirtVolumeCopyWithImpl;
+@useResult
+$Res call({
+ String name, String? volType, String? path, String? format, int? capacity, int? allocation, String? backing
+});
+
+
+
+
+}
+/// @nodoc
+class _$LibvirtVolumeCopyWithImpl<$Res>
+    implements $LibvirtVolumeCopyWith<$Res> {
+  _$LibvirtVolumeCopyWithImpl(this._self, this._then);
+
+  final LibvirtVolume _self;
+  final $Res Function(LibvirtVolume) _then;
+
+/// Create a copy of LibvirtVolume
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? volType = freezed,Object? path = freezed,Object? format = freezed,Object? capacity = freezed,Object? allocation = freezed,Object? backing = freezed,}) {
+  return _then(_self.copyWith(
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,volType: freezed == volType ? _self.volType : volType // ignore: cast_nullable_to_non_nullable
+as String?,path: freezed == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
+as String?,format: freezed == format ? _self.format : format // ignore: cast_nullable_to_non_nullable
+as String?,capacity: freezed == capacity ? _self.capacity : capacity // ignore: cast_nullable_to_non_nullable
+as int?,allocation: freezed == allocation ? _self.allocation : allocation // ignore: cast_nullable_to_non_nullable
+as int?,backing: freezed == backing ? _self.backing : backing // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [LibvirtVolume].
+extension LibvirtVolumePatterns on LibvirtVolume {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _LibvirtVolume value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _LibvirtVolume() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _LibvirtVolume value)  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtVolume():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _LibvirtVolume value)?  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtVolume() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String? volType,  String? path,  String? format,  int? capacity,  int? allocation,  String? backing)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _LibvirtVolume() when $default != null:
+return $default(_that.name,_that.volType,_that.path,_that.format,_that.capacity,_that.allocation,_that.backing);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String? volType,  String? path,  String? format,  int? capacity,  int? allocation,  String? backing)  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtVolume():
+return $default(_that.name,_that.volType,_that.path,_that.format,_that.capacity,_that.allocation,_that.backing);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String? volType,  String? path,  String? format,  int? capacity,  int? allocation,  String? backing)?  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtVolume() when $default != null:
+return $default(_that.name,_that.volType,_that.path,_that.format,_that.capacity,_that.allocation,_that.backing);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class _LibvirtVolume implements LibvirtVolume {
+  const _LibvirtVolume({required this.name, this.volType, this.path, this.format, this.capacity, this.allocation, this.backing});
+  factory _LibvirtVolume.fromJson(Map<String, dynamic> json) => _$LibvirtVolumeFromJson(json);
+
+@override final  String name;
+@override final  String? volType;
+@override final  String? path;
+@override final  String? format;
+@override final  int? capacity;
+@override final  int? allocation;
+@override final  String? backing;
+
+/// Create a copy of LibvirtVolume
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$LibvirtVolumeCopyWith<_LibvirtVolume> get copyWith => __$LibvirtVolumeCopyWithImpl<_LibvirtVolume>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$LibvirtVolumeToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtVolume&&(identical(other.name, name) || other.name == name)&&(identical(other.volType, volType) || other.volType == volType)&&(identical(other.path, path) || other.path == path)&&(identical(other.format, format) || other.format == format)&&(identical(other.capacity, capacity) || other.capacity == capacity)&&(identical(other.allocation, allocation) || other.allocation == allocation)&&(identical(other.backing, backing) || other.backing == backing));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,name,volType,path,format,capacity,allocation,backing);
+
+@override
+String toString() {
+  return 'LibvirtVolume(name: $name, volType: $volType, path: $path, format: $format, capacity: $capacity, allocation: $allocation, backing: $backing)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$LibvirtVolumeCopyWith<$Res> implements $LibvirtVolumeCopyWith<$Res> {
+  factory _$LibvirtVolumeCopyWith(_LibvirtVolume value, $Res Function(_LibvirtVolume) _then) = __$LibvirtVolumeCopyWithImpl;
+@override @useResult
+$Res call({
+ String name, String? volType, String? path, String? format, int? capacity, int? allocation, String? backing
+});
+
+
+
+
+}
+/// @nodoc
+class __$LibvirtVolumeCopyWithImpl<$Res>
+    implements _$LibvirtVolumeCopyWith<$Res> {
+  __$LibvirtVolumeCopyWithImpl(this._self, this._then);
+
+  final _LibvirtVolume _self;
+  final $Res Function(_LibvirtVolume) _then;
+
+/// Create a copy of LibvirtVolume
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? volType = freezed,Object? path = freezed,Object? format = freezed,Object? capacity = freezed,Object? allocation = freezed,Object? backing = freezed,}) {
+  return _then(_LibvirtVolume(
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,volType: freezed == volType ? _self.volType : volType // ignore: cast_nullable_to_non_nullable
+as String?,path: freezed == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
+as String?,format: freezed == format ? _self.format : format // ignore: cast_nullable_to_non_nullable
+as String?,capacity: freezed == capacity ? _self.capacity : capacity // ignore: cast_nullable_to_non_nullable
+as int?,allocation: freezed == allocation ? _self.allocation : allocation // ignore: cast_nullable_to_non_nullable
+as int?,backing: freezed == backing ? _self.backing : backing // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$LibvirtNetIp {
+
+ String get family; String get cidr; List<String> get dhcpRanges;
+/// Create a copy of LibvirtNetIp
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$LibvirtNetIpCopyWith<LibvirtNetIp> get copyWith => _$LibvirtNetIpCopyWithImpl<LibvirtNetIp>(this as LibvirtNetIp, _$identity);
+
+  /// Serializes this LibvirtNetIp to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtNetIp&&(identical(other.family, family) || other.family == family)&&(identical(other.cidr, cidr) || other.cidr == cidr)&&const DeepCollectionEquality().equals(other.dhcpRanges, dhcpRanges));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,family,cidr,const DeepCollectionEquality().hash(dhcpRanges));
+
+@override
+String toString() {
+  return 'LibvirtNetIp(family: $family, cidr: $cidr, dhcpRanges: $dhcpRanges)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $LibvirtNetIpCopyWith<$Res>  {
+  factory $LibvirtNetIpCopyWith(LibvirtNetIp value, $Res Function(LibvirtNetIp) _then) = _$LibvirtNetIpCopyWithImpl;
+@useResult
+$Res call({
+ String family, String cidr, List<String> dhcpRanges
+});
+
+
+
+
+}
+/// @nodoc
+class _$LibvirtNetIpCopyWithImpl<$Res>
+    implements $LibvirtNetIpCopyWith<$Res> {
+  _$LibvirtNetIpCopyWithImpl(this._self, this._then);
+
+  final LibvirtNetIp _self;
+  final $Res Function(LibvirtNetIp) _then;
+
+/// Create a copy of LibvirtNetIp
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? family = null,Object? cidr = null,Object? dhcpRanges = null,}) {
+  return _then(_self.copyWith(
+family: null == family ? _self.family : family // ignore: cast_nullable_to_non_nullable
+as String,cidr: null == cidr ? _self.cidr : cidr // ignore: cast_nullable_to_non_nullable
+as String,dhcpRanges: null == dhcpRanges ? _self.dhcpRanges : dhcpRanges // ignore: cast_nullable_to_non_nullable
+as List<String>,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [LibvirtNetIp].
+extension LibvirtNetIpPatterns on LibvirtNetIp {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _LibvirtNetIp value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _LibvirtNetIp() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _LibvirtNetIp value)  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtNetIp():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _LibvirtNetIp value)?  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtNetIp() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String family,  String cidr,  List<String> dhcpRanges)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _LibvirtNetIp() when $default != null:
+return $default(_that.family,_that.cidr,_that.dhcpRanges);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String family,  String cidr,  List<String> dhcpRanges)  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtNetIp():
+return $default(_that.family,_that.cidr,_that.dhcpRanges);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String family,  String cidr,  List<String> dhcpRanges)?  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtNetIp() when $default != null:
+return $default(_that.family,_that.cidr,_that.dhcpRanges);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class _LibvirtNetIp implements LibvirtNetIp {
+  const _LibvirtNetIp({this.family = 'ipv4', required this.cidr, final  List<String> dhcpRanges = const <String>[]}): _dhcpRanges = dhcpRanges;
+  factory _LibvirtNetIp.fromJson(Map<String, dynamic> json) => _$LibvirtNetIpFromJson(json);
+
+@override@JsonKey() final  String family;
+@override final  String cidr;
+ final  List<String> _dhcpRanges;
+@override@JsonKey() List<String> get dhcpRanges {
+  if (_dhcpRanges is EqualUnmodifiableListView) return _dhcpRanges;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_dhcpRanges);
+}
+
+
+/// Create a copy of LibvirtNetIp
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$LibvirtNetIpCopyWith<_LibvirtNetIp> get copyWith => __$LibvirtNetIpCopyWithImpl<_LibvirtNetIp>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$LibvirtNetIpToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtNetIp&&(identical(other.family, family) || other.family == family)&&(identical(other.cidr, cidr) || other.cidr == cidr)&&const DeepCollectionEquality().equals(other._dhcpRanges, _dhcpRanges));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,family,cidr,const DeepCollectionEquality().hash(_dhcpRanges));
+
+@override
+String toString() {
+  return 'LibvirtNetIp(family: $family, cidr: $cidr, dhcpRanges: $dhcpRanges)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$LibvirtNetIpCopyWith<$Res> implements $LibvirtNetIpCopyWith<$Res> {
+  factory _$LibvirtNetIpCopyWith(_LibvirtNetIp value, $Res Function(_LibvirtNetIp) _then) = __$LibvirtNetIpCopyWithImpl;
+@override @useResult
+$Res call({
+ String family, String cidr, List<String> dhcpRanges
+});
+
+
+
+
+}
+/// @nodoc
+class __$LibvirtNetIpCopyWithImpl<$Res>
+    implements _$LibvirtNetIpCopyWith<$Res> {
+  __$LibvirtNetIpCopyWithImpl(this._self, this._then);
+
+  final _LibvirtNetIp _self;
+  final $Res Function(_LibvirtNetIp) _then;
+
+/// Create a copy of LibvirtNetIp
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? family = null,Object? cidr = null,Object? dhcpRanges = null,}) {
+  return _then(_LibvirtNetIp(
+family: null == family ? _self.family : family // ignore: cast_nullable_to_non_nullable
+as String,cidr: null == cidr ? _self.cidr : cidr // ignore: cast_nullable_to_non_nullable
+as String,dhcpRanges: null == dhcpRanges ? _self._dhcpRanges : dhcpRanges // ignore: cast_nullable_to_non_nullable
+as List<String>,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$LibvirtNetwork {
+
+ String get name; String? get uuid; bool get active; bool get autostart; String get mode; String? get bridge; List<String> get forwardDevs; List<LibvirtNetIp> get ips; int? get connections;
+/// Create a copy of LibvirtNetwork
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$LibvirtNetworkCopyWith<LibvirtNetwork> get copyWith => _$LibvirtNetworkCopyWithImpl<LibvirtNetwork>(this as LibvirtNetwork, _$identity);
+
+  /// Serializes this LibvirtNetwork to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtNetwork&&(identical(other.name, name) || other.name == name)&&(identical(other.uuid, uuid) || other.uuid == uuid)&&(identical(other.active, active) || other.active == active)&&(identical(other.autostart, autostart) || other.autostart == autostart)&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.bridge, bridge) || other.bridge == bridge)&&const DeepCollectionEquality().equals(other.forwardDevs, forwardDevs)&&const DeepCollectionEquality().equals(other.ips, ips)&&(identical(other.connections, connections) || other.connections == connections));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,name,uuid,active,autostart,mode,bridge,const DeepCollectionEquality().hash(forwardDevs),const DeepCollectionEquality().hash(ips),connections);
+
+@override
+String toString() {
+  return 'LibvirtNetwork(name: $name, uuid: $uuid, active: $active, autostart: $autostart, mode: $mode, bridge: $bridge, forwardDevs: $forwardDevs, ips: $ips, connections: $connections)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $LibvirtNetworkCopyWith<$Res>  {
+  factory $LibvirtNetworkCopyWith(LibvirtNetwork value, $Res Function(LibvirtNetwork) _then) = _$LibvirtNetworkCopyWithImpl;
+@useResult
+$Res call({
+ String name, String? uuid, bool active, bool autostart, String mode, String? bridge, List<String> forwardDevs, List<LibvirtNetIp> ips, int? connections
+});
+
+
+
+
+}
+/// @nodoc
+class _$LibvirtNetworkCopyWithImpl<$Res>
+    implements $LibvirtNetworkCopyWith<$Res> {
+  _$LibvirtNetworkCopyWithImpl(this._self, this._then);
+
+  final LibvirtNetwork _self;
+  final $Res Function(LibvirtNetwork) _then;
+
+/// Create a copy of LibvirtNetwork
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? uuid = freezed,Object? active = null,Object? autostart = null,Object? mode = null,Object? bridge = freezed,Object? forwardDevs = null,Object? ips = null,Object? connections = freezed,}) {
+  return _then(_self.copyWith(
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,uuid: freezed == uuid ? _self.uuid : uuid // ignore: cast_nullable_to_non_nullable
+as String?,active: null == active ? _self.active : active // ignore: cast_nullable_to_non_nullable
+as bool,autostart: null == autostart ? _self.autostart : autostart // ignore: cast_nullable_to_non_nullable
+as bool,mode: null == mode ? _self.mode : mode // ignore: cast_nullable_to_non_nullable
+as String,bridge: freezed == bridge ? _self.bridge : bridge // ignore: cast_nullable_to_non_nullable
+as String?,forwardDevs: null == forwardDevs ? _self.forwardDevs : forwardDevs // ignore: cast_nullable_to_non_nullable
+as List<String>,ips: null == ips ? _self.ips : ips // ignore: cast_nullable_to_non_nullable
+as List<LibvirtNetIp>,connections: freezed == connections ? _self.connections : connections // ignore: cast_nullable_to_non_nullable
+as int?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [LibvirtNetwork].
+extension LibvirtNetworkPatterns on LibvirtNetwork {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _LibvirtNetwork value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _LibvirtNetwork() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _LibvirtNetwork value)  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtNetwork():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _LibvirtNetwork value)?  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtNetwork() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String? uuid,  bool active,  bool autostart,  String mode,  String? bridge,  List<String> forwardDevs,  List<LibvirtNetIp> ips,  int? connections)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _LibvirtNetwork() when $default != null:
+return $default(_that.name,_that.uuid,_that.active,_that.autostart,_that.mode,_that.bridge,_that.forwardDevs,_that.ips,_that.connections);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String? uuid,  bool active,  bool autostart,  String mode,  String? bridge,  List<String> forwardDevs,  List<LibvirtNetIp> ips,  int? connections)  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtNetwork():
+return $default(_that.name,_that.uuid,_that.active,_that.autostart,_that.mode,_that.bridge,_that.forwardDevs,_that.ips,_that.connections);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String? uuid,  bool active,  bool autostart,  String mode,  String? bridge,  List<String> forwardDevs,  List<LibvirtNetIp> ips,  int? connections)?  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtNetwork() when $default != null:
+return $default(_that.name,_that.uuid,_that.active,_that.autostart,_that.mode,_that.bridge,_that.forwardDevs,_that.ips,_that.connections);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class _LibvirtNetwork implements LibvirtNetwork {
+  const _LibvirtNetwork({required this.name, this.uuid, this.active = false, this.autostart = false, this.mode = 'isolated', this.bridge, final  List<String> forwardDevs = const <String>[], final  List<LibvirtNetIp> ips = const <LibvirtNetIp>[], this.connections}): _forwardDevs = forwardDevs,_ips = ips;
+  factory _LibvirtNetwork.fromJson(Map<String, dynamic> json) => _$LibvirtNetworkFromJson(json);
+
+@override final  String name;
+@override final  String? uuid;
+@override@JsonKey() final  bool active;
+@override@JsonKey() final  bool autostart;
+@override@JsonKey() final  String mode;
+@override final  String? bridge;
+ final  List<String> _forwardDevs;
+@override@JsonKey() List<String> get forwardDevs {
+  if (_forwardDevs is EqualUnmodifiableListView) return _forwardDevs;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_forwardDevs);
+}
+
+ final  List<LibvirtNetIp> _ips;
+@override@JsonKey() List<LibvirtNetIp> get ips {
+  if (_ips is EqualUnmodifiableListView) return _ips;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_ips);
+}
+
+@override final  int? connections;
+
+/// Create a copy of LibvirtNetwork
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$LibvirtNetworkCopyWith<_LibvirtNetwork> get copyWith => __$LibvirtNetworkCopyWithImpl<_LibvirtNetwork>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$LibvirtNetworkToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtNetwork&&(identical(other.name, name) || other.name == name)&&(identical(other.uuid, uuid) || other.uuid == uuid)&&(identical(other.active, active) || other.active == active)&&(identical(other.autostart, autostart) || other.autostart == autostart)&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.bridge, bridge) || other.bridge == bridge)&&const DeepCollectionEquality().equals(other._forwardDevs, _forwardDevs)&&const DeepCollectionEquality().equals(other._ips, _ips)&&(identical(other.connections, connections) || other.connections == connections));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,name,uuid,active,autostart,mode,bridge,const DeepCollectionEquality().hash(_forwardDevs),const DeepCollectionEquality().hash(_ips),connections);
+
+@override
+String toString() {
+  return 'LibvirtNetwork(name: $name, uuid: $uuid, active: $active, autostart: $autostart, mode: $mode, bridge: $bridge, forwardDevs: $forwardDevs, ips: $ips, connections: $connections)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$LibvirtNetworkCopyWith<$Res> implements $LibvirtNetworkCopyWith<$Res> {
+  factory _$LibvirtNetworkCopyWith(_LibvirtNetwork value, $Res Function(_LibvirtNetwork) _then) = __$LibvirtNetworkCopyWithImpl;
+@override @useResult
+$Res call({
+ String name, String? uuid, bool active, bool autostart, String mode, String? bridge, List<String> forwardDevs, List<LibvirtNetIp> ips, int? connections
+});
+
+
+
+
+}
+/// @nodoc
+class __$LibvirtNetworkCopyWithImpl<$Res>
+    implements _$LibvirtNetworkCopyWith<$Res> {
+  __$LibvirtNetworkCopyWithImpl(this._self, this._then);
+
+  final _LibvirtNetwork _self;
+  final $Res Function(_LibvirtNetwork) _then;
+
+/// Create a copy of LibvirtNetwork
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? uuid = freezed,Object? active = null,Object? autostart = null,Object? mode = null,Object? bridge = freezed,Object? forwardDevs = null,Object? ips = null,Object? connections = freezed,}) {
+  return _then(_LibvirtNetwork(
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,uuid: freezed == uuid ? _self.uuid : uuid // ignore: cast_nullable_to_non_nullable
+as String?,active: null == active ? _self.active : active // ignore: cast_nullable_to_non_nullable
+as bool,autostart: null == autostart ? _self.autostart : autostart // ignore: cast_nullable_to_non_nullable
+as bool,mode: null == mode ? _self.mode : mode // ignore: cast_nullable_to_non_nullable
+as String,bridge: freezed == bridge ? _self.bridge : bridge // ignore: cast_nullable_to_non_nullable
+as String?,forwardDevs: null == forwardDevs ? _self._forwardDevs : forwardDevs // ignore: cast_nullable_to_non_nullable
+as List<String>,ips: null == ips ? _self._ips : ips // ignore: cast_nullable_to_non_nullable
+as List<LibvirtNetIp>,connections: freezed == connections ? _self.connections : connections // ignore: cast_nullable_to_non_nullable
+as int?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$LibvirtIfaceUse {
+
+ String get domain; String? get interface; String get kind; String? get source; String? get model; String? get mac;
+/// Create a copy of LibvirtIfaceUse
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$LibvirtIfaceUseCopyWith<LibvirtIfaceUse> get copyWith => _$LibvirtIfaceUseCopyWithImpl<LibvirtIfaceUse>(this as LibvirtIfaceUse, _$identity);
+
+  /// Serializes this LibvirtIfaceUse to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtIfaceUse&&(identical(other.domain, domain) || other.domain == domain)&&(identical(other.interface, interface) || other.interface == interface)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.source, source) || other.source == source)&&(identical(other.model, model) || other.model == model)&&(identical(other.mac, mac) || other.mac == mac));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,domain,interface,kind,source,model,mac);
+
+@override
+String toString() {
+  return 'LibvirtIfaceUse(domain: $domain, interface: $interface, kind: $kind, source: $source, model: $model, mac: $mac)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $LibvirtIfaceUseCopyWith<$Res>  {
+  factory $LibvirtIfaceUseCopyWith(LibvirtIfaceUse value, $Res Function(LibvirtIfaceUse) _then) = _$LibvirtIfaceUseCopyWithImpl;
+@useResult
+$Res call({
+ String domain, String? interface, String kind, String? source, String? model, String? mac
+});
+
+
+
+
+}
+/// @nodoc
+class _$LibvirtIfaceUseCopyWithImpl<$Res>
+    implements $LibvirtIfaceUseCopyWith<$Res> {
+  _$LibvirtIfaceUseCopyWithImpl(this._self, this._then);
+
+  final LibvirtIfaceUse _self;
+  final $Res Function(LibvirtIfaceUse) _then;
+
+/// Create a copy of LibvirtIfaceUse
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? domain = null,Object? interface = freezed,Object? kind = null,Object? source = freezed,Object? model = freezed,Object? mac = freezed,}) {
+  return _then(_self.copyWith(
+domain: null == domain ? _self.domain : domain // ignore: cast_nullable_to_non_nullable
+as String,interface: freezed == interface ? _self.interface : interface // ignore: cast_nullable_to_non_nullable
+as String?,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as String,source: freezed == source ? _self.source : source // ignore: cast_nullable_to_non_nullable
+as String?,model: freezed == model ? _self.model : model // ignore: cast_nullable_to_non_nullable
+as String?,mac: freezed == mac ? _self.mac : mac // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [LibvirtIfaceUse].
+extension LibvirtIfaceUsePatterns on LibvirtIfaceUse {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _LibvirtIfaceUse value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _LibvirtIfaceUse() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _LibvirtIfaceUse value)  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtIfaceUse():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _LibvirtIfaceUse value)?  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtIfaceUse() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String domain,  String? interface,  String kind,  String? source,  String? model,  String? mac)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _LibvirtIfaceUse() when $default != null:
+return $default(_that.domain,_that.interface,_that.kind,_that.source,_that.model,_that.mac);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String domain,  String? interface,  String kind,  String? source,  String? model,  String? mac)  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtIfaceUse():
+return $default(_that.domain,_that.interface,_that.kind,_that.source,_that.model,_that.mac);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String domain,  String? interface,  String kind,  String? source,  String? model,  String? mac)?  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtIfaceUse() when $default != null:
+return $default(_that.domain,_that.interface,_that.kind,_that.source,_that.model,_that.mac);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _LibvirtIfaceUse implements LibvirtIfaceUse {
+  const _LibvirtIfaceUse({required this.domain, this.interface, this.kind = '', this.source, this.model, this.mac});
+  factory _LibvirtIfaceUse.fromJson(Map<String, dynamic> json) => _$LibvirtIfaceUseFromJson(json);
+
+@override final  String domain;
+@override final  String? interface;
+@override@JsonKey() final  String kind;
+@override final  String? source;
+@override final  String? model;
+@override final  String? mac;
+
+/// Create a copy of LibvirtIfaceUse
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$LibvirtIfaceUseCopyWith<_LibvirtIfaceUse> get copyWith => __$LibvirtIfaceUseCopyWithImpl<_LibvirtIfaceUse>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$LibvirtIfaceUseToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtIfaceUse&&(identical(other.domain, domain) || other.domain == domain)&&(identical(other.interface, interface) || other.interface == interface)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.source, source) || other.source == source)&&(identical(other.model, model) || other.model == model)&&(identical(other.mac, mac) || other.mac == mac));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,domain,interface,kind,source,model,mac);
+
+@override
+String toString() {
+  return 'LibvirtIfaceUse(domain: $domain, interface: $interface, kind: $kind, source: $source, model: $model, mac: $mac)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$LibvirtIfaceUseCopyWith<$Res> implements $LibvirtIfaceUseCopyWith<$Res> {
+  factory _$LibvirtIfaceUseCopyWith(_LibvirtIfaceUse value, $Res Function(_LibvirtIfaceUse) _then) = __$LibvirtIfaceUseCopyWithImpl;
+@override @useResult
+$Res call({
+ String domain, String? interface, String kind, String? source, String? model, String? mac
+});
+
+
+
+
+}
+/// @nodoc
+class __$LibvirtIfaceUseCopyWithImpl<$Res>
+    implements _$LibvirtIfaceUseCopyWith<$Res> {
+  __$LibvirtIfaceUseCopyWithImpl(this._self, this._then);
+
+  final _LibvirtIfaceUse _self;
+  final $Res Function(_LibvirtIfaceUse) _then;
+
+/// Create a copy of LibvirtIfaceUse
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? domain = null,Object? interface = freezed,Object? kind = null,Object? source = freezed,Object? model = freezed,Object? mac = freezed,}) {
+  return _then(_LibvirtIfaceUse(
+domain: null == domain ? _self.domain : domain // ignore: cast_nullable_to_non_nullable
+as String,interface: freezed == interface ? _self.interface : interface // ignore: cast_nullable_to_non_nullable
+as String?,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as String,source: freezed == source ? _self.source : source // ignore: cast_nullable_to_non_nullable
+as String?,model: freezed == model ? _self.model : model // ignore: cast_nullable_to_non_nullable
+as String?,mac: freezed == mac ? _self.mac : mac // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$LibvirtLease {
+
+ String get network; String get mac; String get ip; String? get hostname;
+/// Create a copy of LibvirtLease
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$LibvirtLeaseCopyWith<LibvirtLease> get copyWith => _$LibvirtLeaseCopyWithImpl<LibvirtLease>(this as LibvirtLease, _$identity);
+
+  /// Serializes this LibvirtLease to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtLease&&(identical(other.network, network) || other.network == network)&&(identical(other.mac, mac) || other.mac == mac)&&(identical(other.ip, ip) || other.ip == ip)&&(identical(other.hostname, hostname) || other.hostname == hostname));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,network,mac,ip,hostname);
+
+@override
+String toString() {
+  return 'LibvirtLease(network: $network, mac: $mac, ip: $ip, hostname: $hostname)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $LibvirtLeaseCopyWith<$Res>  {
+  factory $LibvirtLeaseCopyWith(LibvirtLease value, $Res Function(LibvirtLease) _then) = _$LibvirtLeaseCopyWithImpl;
+@useResult
+$Res call({
+ String network, String mac, String ip, String? hostname
+});
+
+
+
+
+}
+/// @nodoc
+class _$LibvirtLeaseCopyWithImpl<$Res>
+    implements $LibvirtLeaseCopyWith<$Res> {
+  _$LibvirtLeaseCopyWithImpl(this._self, this._then);
+
+  final LibvirtLease _self;
+  final $Res Function(LibvirtLease) _then;
+
+/// Create a copy of LibvirtLease
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? network = null,Object? mac = null,Object? ip = null,Object? hostname = freezed,}) {
+  return _then(_self.copyWith(
+network: null == network ? _self.network : network // ignore: cast_nullable_to_non_nullable
+as String,mac: null == mac ? _self.mac : mac // ignore: cast_nullable_to_non_nullable
+as String,ip: null == ip ? _self.ip : ip // ignore: cast_nullable_to_non_nullable
+as String,hostname: freezed == hostname ? _self.hostname : hostname // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [LibvirtLease].
+extension LibvirtLeasePatterns on LibvirtLease {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _LibvirtLease value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _LibvirtLease() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _LibvirtLease value)  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtLease():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _LibvirtLease value)?  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtLease() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String network,  String mac,  String ip,  String? hostname)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _LibvirtLease() when $default != null:
+return $default(_that.network,_that.mac,_that.ip,_that.hostname);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String network,  String mac,  String ip,  String? hostname)  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtLease():
+return $default(_that.network,_that.mac,_that.ip,_that.hostname);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String network,  String mac,  String ip,  String? hostname)?  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtLease() when $default != null:
+return $default(_that.network,_that.mac,_that.ip,_that.hostname);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _LibvirtLease implements LibvirtLease {
+  const _LibvirtLease({required this.network, required this.mac, required this.ip, this.hostname});
+  factory _LibvirtLease.fromJson(Map<String, dynamic> json) => _$LibvirtLeaseFromJson(json);
+
+@override final  String network;
+@override final  String mac;
+@override final  String ip;
+@override final  String? hostname;
+
+/// Create a copy of LibvirtLease
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$LibvirtLeaseCopyWith<_LibvirtLease> get copyWith => __$LibvirtLeaseCopyWithImpl<_LibvirtLease>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$LibvirtLeaseToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtLease&&(identical(other.network, network) || other.network == network)&&(identical(other.mac, mac) || other.mac == mac)&&(identical(other.ip, ip) || other.ip == ip)&&(identical(other.hostname, hostname) || other.hostname == hostname));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,network,mac,ip,hostname);
+
+@override
+String toString() {
+  return 'LibvirtLease(network: $network, mac: $mac, ip: $ip, hostname: $hostname)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$LibvirtLeaseCopyWith<$Res> implements $LibvirtLeaseCopyWith<$Res> {
+  factory _$LibvirtLeaseCopyWith(_LibvirtLease value, $Res Function(_LibvirtLease) _then) = __$LibvirtLeaseCopyWithImpl;
+@override @useResult
+$Res call({
+ String network, String mac, String ip, String? hostname
+});
+
+
+
+
+}
+/// @nodoc
+class __$LibvirtLeaseCopyWithImpl<$Res>
+    implements _$LibvirtLeaseCopyWith<$Res> {
+  __$LibvirtLeaseCopyWithImpl(this._self, this._then);
+
+  final _LibvirtLease _self;
+  final $Res Function(_LibvirtLease) _then;
+
+/// Create a copy of LibvirtLease
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? network = null,Object? mac = null,Object? ip = null,Object? hostname = freezed,}) {
+  return _then(_LibvirtLease(
+network: null == network ? _self.network : network // ignore: cast_nullable_to_non_nullable
+as String,mac: null == mac ? _self.mac : mac // ignore: cast_nullable_to_non_nullable
+as String,ip: null == ip ? _self.ip : ip // ignore: cast_nullable_to_non_nullable
+as String,hostname: freezed == hostname ? _self.hostname : hostname // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$LibvirtNetworks {
+
+ List<LibvirtNetwork> get networks; List<LibvirtIfaceUse> get ifaces; List<LibvirtLease> get leases;
+/// Create a copy of LibvirtNetworks
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$LibvirtNetworksCopyWith<LibvirtNetworks> get copyWith => _$LibvirtNetworksCopyWithImpl<LibvirtNetworks>(this as LibvirtNetworks, _$identity);
+
+  /// Serializes this LibvirtNetworks to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtNetworks&&const DeepCollectionEquality().equals(other.networks, networks)&&const DeepCollectionEquality().equals(other.ifaces, ifaces)&&const DeepCollectionEquality().equals(other.leases, leases));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(networks),const DeepCollectionEquality().hash(ifaces),const DeepCollectionEquality().hash(leases));
+
+@override
+String toString() {
+  return 'LibvirtNetworks(networks: $networks, ifaces: $ifaces, leases: $leases)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $LibvirtNetworksCopyWith<$Res>  {
+  factory $LibvirtNetworksCopyWith(LibvirtNetworks value, $Res Function(LibvirtNetworks) _then) = _$LibvirtNetworksCopyWithImpl;
+@useResult
+$Res call({
+ List<LibvirtNetwork> networks, List<LibvirtIfaceUse> ifaces, List<LibvirtLease> leases
+});
+
+
+
+
+}
+/// @nodoc
+class _$LibvirtNetworksCopyWithImpl<$Res>
+    implements $LibvirtNetworksCopyWith<$Res> {
+  _$LibvirtNetworksCopyWithImpl(this._self, this._then);
+
+  final LibvirtNetworks _self;
+  final $Res Function(LibvirtNetworks) _then;
+
+/// Create a copy of LibvirtNetworks
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? networks = null,Object? ifaces = null,Object? leases = null,}) {
+  return _then(_self.copyWith(
+networks: null == networks ? _self.networks : networks // ignore: cast_nullable_to_non_nullable
+as List<LibvirtNetwork>,ifaces: null == ifaces ? _self.ifaces : ifaces // ignore: cast_nullable_to_non_nullable
+as List<LibvirtIfaceUse>,leases: null == leases ? _self.leases : leases // ignore: cast_nullable_to_non_nullable
+as List<LibvirtLease>,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [LibvirtNetworks].
+extension LibvirtNetworksPatterns on LibvirtNetworks {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _LibvirtNetworks value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _LibvirtNetworks() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _LibvirtNetworks value)  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtNetworks():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _LibvirtNetworks value)?  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtNetworks() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<LibvirtNetwork> networks,  List<LibvirtIfaceUse> ifaces,  List<LibvirtLease> leases)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _LibvirtNetworks() when $default != null:
+return $default(_that.networks,_that.ifaces,_that.leases);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<LibvirtNetwork> networks,  List<LibvirtIfaceUse> ifaces,  List<LibvirtLease> leases)  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtNetworks():
+return $default(_that.networks,_that.ifaces,_that.leases);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<LibvirtNetwork> networks,  List<LibvirtIfaceUse> ifaces,  List<LibvirtLease> leases)?  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtNetworks() when $default != null:
+return $default(_that.networks,_that.ifaces,_that.leases);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _LibvirtNetworks implements LibvirtNetworks {
+  const _LibvirtNetworks({final  List<LibvirtNetwork> networks = const <LibvirtNetwork>[], final  List<LibvirtIfaceUse> ifaces = const <LibvirtIfaceUse>[], final  List<LibvirtLease> leases = const <LibvirtLease>[]}): _networks = networks,_ifaces = ifaces,_leases = leases;
+  factory _LibvirtNetworks.fromJson(Map<String, dynamic> json) => _$LibvirtNetworksFromJson(json);
+
+ final  List<LibvirtNetwork> _networks;
+@override@JsonKey() List<LibvirtNetwork> get networks {
+  if (_networks is EqualUnmodifiableListView) return _networks;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_networks);
+}
+
+ final  List<LibvirtIfaceUse> _ifaces;
+@override@JsonKey() List<LibvirtIfaceUse> get ifaces {
+  if (_ifaces is EqualUnmodifiableListView) return _ifaces;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_ifaces);
+}
+
+ final  List<LibvirtLease> _leases;
+@override@JsonKey() List<LibvirtLease> get leases {
+  if (_leases is EqualUnmodifiableListView) return _leases;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_leases);
+}
+
+
+/// Create a copy of LibvirtNetworks
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$LibvirtNetworksCopyWith<_LibvirtNetworks> get copyWith => __$LibvirtNetworksCopyWithImpl<_LibvirtNetworks>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$LibvirtNetworksToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtNetworks&&const DeepCollectionEquality().equals(other._networks, _networks)&&const DeepCollectionEquality().equals(other._ifaces, _ifaces)&&const DeepCollectionEquality().equals(other._leases, _leases));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_networks),const DeepCollectionEquality().hash(_ifaces),const DeepCollectionEquality().hash(_leases));
+
+@override
+String toString() {
+  return 'LibvirtNetworks(networks: $networks, ifaces: $ifaces, leases: $leases)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$LibvirtNetworksCopyWith<$Res> implements $LibvirtNetworksCopyWith<$Res> {
+  factory _$LibvirtNetworksCopyWith(_LibvirtNetworks value, $Res Function(_LibvirtNetworks) _then) = __$LibvirtNetworksCopyWithImpl;
+@override @useResult
+$Res call({
+ List<LibvirtNetwork> networks, List<LibvirtIfaceUse> ifaces, List<LibvirtLease> leases
+});
+
+
+
+
+}
+/// @nodoc
+class __$LibvirtNetworksCopyWithImpl<$Res>
+    implements _$LibvirtNetworksCopyWith<$Res> {
+  __$LibvirtNetworksCopyWithImpl(this._self, this._then);
+
+  final _LibvirtNetworks _self;
+  final $Res Function(_LibvirtNetworks) _then;
+
+/// Create a copy of LibvirtNetworks
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? networks = null,Object? ifaces = null,Object? leases = null,}) {
+  return _then(_LibvirtNetworks(
+networks: null == networks ? _self._networks : networks // ignore: cast_nullable_to_non_nullable
+as List<LibvirtNetwork>,ifaces: null == ifaces ? _self._ifaces : ifaces // ignore: cast_nullable_to_non_nullable
+as List<LibvirtIfaceUse>,leases: null == leases ? _self._leases : leases // ignore: cast_nullable_to_non_nullable
+as List<LibvirtLease>,
+  ));
+}
+
+
 }
 
 // dart format on

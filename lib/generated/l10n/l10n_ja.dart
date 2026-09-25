@@ -3127,7 +3127,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get pveTokenTip =>
-      'PVE の データセンター → 権限 → API トークン で作成します。表示するパスに VM.Audit、VM.PowerMgmt、VM.Console、Sys.Audit が必要です。権限の分離が有効な場合は、トークン自体に付与してください。';
+      'PVE の データセンター → 権限 → API トークン で作成します。表示するパスに VM.Audit、VM.PowerMgmt、VM.Console、VM.Snapshot、VM.Snapshot.Rollback、Datastore.Audit、Sys.Audit が必要です。権限の分離が有効な場合は、トークン自体に付与してください。';
 
   @override
   String get pveTokenIdInvalid => 'トークン ID は user@realm!tokenid の形式にしてください';
@@ -3197,14 +3197,31 @@ class AppLocalizationsJa extends AppLocalizations {
   String get virtProbeNotChecked => '未確認';
 
   @override
-  String get virtProbeAbsent => 'virsh が見つかりません';
+  String get virtProbeAbsent => 'ホストではありません';
+
+  @override
+  String virtProbeContainer(String kind) {
+    return '$kind コンテナ';
+  }
+
+  @override
+  String get virtProbeContainerTip =>
+      'このサーバーはコンテナ内で動作しているため、ホストではなくゲストです。これを実行しているホストから管理してください。';
+
+  @override
+  String get virtProbePve => 'PVE、未設定';
+
+  @override
+  String virtPveSetupTip(String version) {
+    return 'このサーバーでは $version が動作しています。サーバー設定で API アクセス（API トークン推奨）を入力すると、ここで仮想マシンとコンテナを管理できます。';
+  }
 
   @override
   String get virtNoHosts => '仮想化ホストがありません';
 
   @override
   String get virtNoHostsTip =>
-      'PVE アドレスが設定されたサーバーと、virsh が応答するサーバーがホストになります。その他のサーバーはホスト切り替えから確認できます。';
+      'Proxmox VE が動作し API アクセスが入力されたサーバーと、virsh が応答するサーバーがホストになります。その他のサーバーはホスト切り替えから確認できます。';
 
   @override
   String get virtNoGuests => '仮想マシンもコンテナもありません';
@@ -3305,4 +3322,116 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get virtErrActionFailed => 'ホストが操作を拒否しました';
+
+  @override
+  String get remoteSessionIdleTimeout => '離れたら閉じる';
+
+  @override
+  String get remoteSessionIdleTimeoutTip =>
+      'リモートデスクトップやゲストのコンソールから離れた後、接続を維持する時間。閉じる前に通知が表示され、10 秒以内なら維持できます。';
+
+  @override
+  String get remoteSessionKeepAlive => '維持する';
+
+  @override
+  String remoteSessionClosingIn(int seconds) {
+    return '$seconds 秒後に閉じます';
+  }
+
+  @override
+  String get reopen => '再度開く';
+
+  @override
+  String get virtSnapshots => 'スナップショット';
+
+  @override
+  String get virtSnapshotCreate => 'スナップショットを作成';
+
+  @override
+  String get virtSnapshotNone => 'スナップショットはまだありません';
+
+  @override
+  String get virtSnapshotWithMemory => 'ディスクとメモリ';
+
+  @override
+  String get virtSnapshotDiskOnly => 'ディスクのみ';
+
+  @override
+  String get virtSnapshotParent => '親';
+
+  @override
+  String get virtSnapshotRevert => '復元';
+
+  @override
+  String get virtSnapshotMemory => 'メモリを含める';
+
+  @override
+  String get virtSnapshotMemoryTip => '復元するとこの時点から実行が再開されます。';
+
+  @override
+  String get virtSnapshotMemoryAlways => 'ここでは、実行中のゲストのスナップショットには常にメモリが含まれます。';
+
+  @override
+  String get virtSnapshotMemoryOff => 'ゲストが実行されていないため、ディスクのみ保存されます。';
+
+  @override
+  String get virtSnapshotNameInvalid => '先頭は英字、以降は英数字・-・_、2〜40 文字。';
+
+  @override
+  String get virtSnapshotNameTaken => 'この名前のスナップショットは既に存在します。';
+
+  @override
+  String get virtSnapshotRevertTip => '復元すると、スナップショット以降のすべての変更が失われます。';
+
+  @override
+  String virtSnapshotRevertAsk(String guest, String snapshot) {
+    return '$guest を $snapshot に復元しますか？それ以降の変更はすべて失われます。';
+  }
+
+  @override
+  String virtSnapshotRevertStops(String guest) {
+    return 'このスナップショットにはメモリがありません：$guest は停止されます。';
+  }
+
+  @override
+  String get virtSnapshotStartAfter => 'その後起動する';
+
+  @override
+  String get virtVolumes => 'ボリューム';
+
+  @override
+  String get virtNoPools => 'ストレージプールがありません';
+
+  @override
+  String get virtNoNetworks => 'ネットワークがありません';
+
+  @override
+  String get virtPoolInactive => 'プールがアクティブでないため、ボリュームを一覧表示できません。';
+
+  @override
+  String get virtShared => 'ノード間で共有';
+
+  @override
+  String get virtBackingFile => 'バッキングファイル';
+
+  @override
+  String get virtNetIsolated => '分離';
+
+  @override
+  String get virtNetBridged => 'ブリッジ';
+
+  @override
+  String get virtNetRouted => 'ルーティング';
+
+  @override
+  String get virtBridge => 'ブリッジ';
+
+  @override
+  String get virtPorts => 'ポート';
+
+  @override
+  String get virtAttachedGuests => '接続中のゲスト';
+
+  @override
+  String get virtNoAttachedGuests => '接続中のゲストはありません';
 }

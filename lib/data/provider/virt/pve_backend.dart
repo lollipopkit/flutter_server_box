@@ -17,6 +17,7 @@ import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_rates.dart';
+import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/virt/backend.dart';
 import 'package:server_box/data/res/store.dart';
 
@@ -219,6 +220,8 @@ class PveBackend implements VirtBackend {
     };
     _rates.retain(parsed.samples.keys);
     final nodes = parsed.nodes..sort((a, b) => a.name.compareTo(b.name));
+    _nodes = nodes;
+    _guests = parsed.guests;
     return VirtSnapshot(
       host: VirtHost(
         serverId: serverId,
@@ -231,6 +234,9 @@ class PveBackend implements VirtBackend {
       capabilities: VirtCapabilities(
         lxc: true,
         pause: true,
+        snapshots: true,
+        storage: true,
+        network: true,
         cluster: nodes.length > 1,
         vncConsole: true,
         termConsole: true,
@@ -540,6 +546,271 @@ class PveBackend implements VirtBackend {
       );
     }
     return PveResources.parseRrd(data);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Snapshots
+  // ---------------------------------------------------------------------------
+
+  /// The nodes and guests of the last [load]: which nodes to list storage and
+  /// networks for, and whose NICs say which guest is on which bridge.
+  List<VirtNode> _nodes = const [];
+  List<VirtGuest> _guests = const [];
+
+  @override
+  Future<List<VirtGuestSnapshot>> snapshots(VirtGuest guest) async {
+    final data = await _call(
+      (dio) => dio.get(_url('${_guestPath(guest)}/snapshot')),
+    );
+    if (data is! List) {
+      throw VirtErr(
+        type: VirtErrType.invalidResponse,
+        message: l10n.pveInvalidResponseData,
+      );
+    }
+    return PveResources.parseSnapshots(data);
+  }
+
+  /// `vmstate` only for a VM: a container's snapshot never has memory, and
+  /// PVE refuses the parameter for one.
+  @override
+  Future<void> createSnapshot(
+    VirtGuest guest, {
+    required String name,
+    String? description,
+    bool memory = false,
+  }) async {
+    if (!virtSnapshotNamePattern.hasMatch(name)) {
+      throw VirtErr(
+        type: VirtErrType.unsupported,
+        message: 'Not a snapshot name: $name',
+      );
+    }
+    final desc = description?.trim();
+    await _task(
+      guest,
+      (dio) => dio.post(
+        _url('${_guestPath(guest)}/snapshot'),
+        data: {
+          'snapname': name,
+          if (desc != null && desc.isNotEmpty) 'description': desc,
+          if (memory && guest.kind == VirtGuestKind.qemu) 'vmstate': 1,
+        },
+        options: Options(contentType: Headers.formUrlEncodedContentType),
+      ),
+    );
+  }
+
+  /// `rollback`, with `start=1` for [start]. A snapshot without memory stops
+  /// a running guest; PVE starts it again afterwards when asked (verified on
+  /// PVE 9.2 for a VM and a container).
+  ///
+  /// That start is a task of its own (`qmstart` / `vzstart`), begun as the
+  /// rollback's ends, and it holds the guest's lock until it is done: on
+  /// PVE 9.2 a container's took 45 s, and a snapshot deleted meanwhile failed
+  /// with "Failed to obtain guest migration lock". So with [start] this
+  /// returns once that task has finished too, and the guest is not offered
+  /// anything before.
+  @override
+  Future<void> revertSnapshot(
+    VirtGuest guest,
+    String name, {
+    bool start = false,
+  }) async {
+    final path = _guestPath(guest);
+    await _task(
+      guest,
+      (dio) => dio.post(
+        _url('$path/snapshot/${_seg(name)}/rollback'),
+        data: {if (start) 'start': 1},
+        options: Options(contentType: Headers.formUrlEncodedContentType),
+      ),
+    );
+    if (start) await _waitStartTask(guest);
+    await _readStatus(guest, path);
+  }
+
+  /// How long [_waitStartTask] looks for the start task to appear.
+  static const _startTaskAppears = Duration(seconds: 5);
+
+  /// Waits for the guest's running start task, if one appears within
+  /// [_startTaskAppears]. Its failure is the action's.
+  Future<void> _waitStartTask(VirtGuest guest) async {
+    final node = guest.node!;
+    final deadline = _now().add(_startTaskAppears);
+    while (true) {
+      final data = await _call(
+        (dio) => dio.get(
+          _url('/nodes/${_seg(node)}/tasks'),
+          queryParameters: {'vmid': guest.vmid, 'source': 'active'},
+        ),
+        action: true,
+      );
+      final upid = data is List
+          ? data
+                .whereType<Map>()
+                .where((t) => t['type'] == 'qmstart' || t['type'] == 'vzstart')
+                .map((t) => t['upid'])
+                .whereType<String>()
+                .firstOrNull
+          : null;
+      if (upid != null) {
+        await _waitTask(node, upid);
+        return;
+      }
+      if (_now().isAfter(deadline)) return;
+      await Future<void>.delayed(taskPoll);
+    }
+  }
+
+  @override
+  Future<void> deleteSnapshot(VirtGuest guest, String name) => _task(
+    guest,
+    (dio) => dio.delete(_url('${_guestPath(guest)}/snapshot/${_seg(name)}')),
+  );
+
+  /// Runs [request], which answers a UPID, and waits for its task. PVE
+  /// answers a snapshot request that is bound to fail (a name taken, one that
+  /// is gone) with a task all the same, and the task's exit status says why.
+  Future<void> _task(
+    VirtGuest guest,
+    Future<Response<dynamic>> Function(Dio dio) request,
+  ) async {
+    final upid = await _call(request, action: true);
+    if (upid is String && upid.startsWith('UPID:')) {
+      await _waitTask(guest.node!, upid);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Storage and networks
+  // ---------------------------------------------------------------------------
+
+  /// The nodes to ask: the online ones of the last [load], or every node
+  /// `/nodes` lists when there has been none.
+  Future<List<String>> _onlineNodes() async {
+    if (_nodes.isNotEmpty) {
+      return [
+        for (final n in _nodes)
+          if (n.online) n.name,
+      ];
+    }
+    final data = await _call((dio) => dio.get(_url('/nodes')));
+    if (data is! List) return const [];
+    return [
+      for (final n in data)
+        if (n is Map && n['status'] == 'online' && n['node'] is String)
+          n['node'] as String,
+    ]..sort();
+  }
+
+  @override
+  Future<List<VirtStoragePool>> storagePools() async {
+    final nodes = await _onlineNodes();
+    // Where each storage is comes from the cluster's configuration, which
+    // needs `Datastore.Audit` on `/storage`: without it the list is still
+    // there, only without paths.
+    List<Object?>? config;
+    try {
+      final c = await _call((dio) => dio.get(_url('/storage')));
+      if (c is List) config = c;
+    } on VirtErr catch (e) {
+      if (e.type != VirtErrType.authFailed) rethrow;
+      Loggers.app.info('PVE /storage: ${e.message}');
+    }
+    final out = <VirtStoragePool>[];
+    for (final node in nodes) {
+      final data = await _call(
+        (dio) => dio.get(_url('/nodes/${_seg(node)}/storage')),
+      );
+      if (data is! List) continue;
+      out.addAll(PveResources.parseStorages(node, data, config: config));
+    }
+    return out;
+  }
+
+  @override
+  Future<List<VirtVolume>> volumes(VirtStoragePool pool) async {
+    final node = pool.node;
+    if (node == null) {
+      throw VirtErr(
+        type: VirtErrType.invalidResponse,
+        message: 'No node for storage ${pool.name}',
+      );
+    }
+    if (!pool.active) return const [];
+    final data = await _call(
+      (dio) => dio.get(
+        _url('/nodes/${_seg(node)}/storage/${_seg(pool.name)}/content'),
+      ),
+    );
+    if (data is! List) {
+      throw VirtErr(
+        type: VirtErrType.invalidResponse,
+        message: l10n.pveInvalidResponseData,
+      );
+    }
+    return PveResources.parseContent(data);
+  }
+
+  /// How many guest configurations are read at once to find which bridge
+  /// each NIC is on.
+  static const _configConcurrency = 4;
+
+  /// Every online node's interfaces, with the guests whose NICs are on each
+  /// bridge — read from each guest's configuration, one request per guest.
+  @override
+  Future<List<VirtNetwork>> networks() async {
+    final nodes = await _onlineNodes();
+    final out = <VirtNetwork>[];
+    for (final node in nodes) {
+      final data = await _call(
+        (dio) => dio.get(_url('/nodes/${_seg(node)}/network')),
+      );
+      if (data is! List) continue;
+      final users = await _bridgeUsers([
+        for (final g in _guests)
+          if (g.node == node) g,
+      ]);
+      out.addAll(PveResources.parseNetworks(node, data, users: users));
+    }
+    return out;
+  }
+
+  Future<Map<String, List<VirtGuestRef>>> _bridgeUsers(
+    List<VirtGuest> guests,
+  ) async {
+    final users = <String, List<VirtGuestRef>>{};
+    var next = 0;
+    Future<void> worker() async {
+      while (next < guests.length) {
+        final guest = guests[next++];
+        try {
+          final config = await _call(
+            (dio) => dio.get(_url('${_guestPath(guest)}/config')),
+          );
+          if (config is! Map) continue;
+          final of = PveResources.bridgeUsers(
+            guest,
+            config.cast<String, Object?>(),
+          );
+          for (final MapEntry(:key, :value) in of.entries) {
+            users.putIfAbsent(key, () => []).addAll(value);
+          }
+        } on VirtErr catch (e) {
+          // One guest this account may not read leaves only that guest out.
+          if (e.type != VirtErrType.authFailed) rethrow;
+        }
+      }
+    }
+
+    await Future.wait([
+      for (var i = 0; i < _configConcurrency; i++) worker(),
+    ]);
+    for (final list in users.values) {
+      list.sort((a, b) => (a.vmid ?? 0).compareTo(b.vmid ?? 0));
+    }
+    return users;
   }
 
   @override

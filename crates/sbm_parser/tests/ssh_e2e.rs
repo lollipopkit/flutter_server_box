@@ -784,9 +784,9 @@ fn ssh_e2e_virt() {
         ssh_host().expect("SBM_E2E_SSH_HOST must be set in the environment or workspace-root .env");
 
     let version = match virt::parse_probe(&run_virt(&host, &virt::probe_script())) {
-        Ok(v) => v,
-        Err(VirtError::NotInstalled) => {
-            eprintln!("virsh not installed on {host}; skipping");
+        Ok(virt::VirtHostProbe { libvirt: Some(v), .. }) => v,
+        Ok(p) => {
+            eprintln!("virsh not installed on {host} ({p:?}); skipping");
             return;
         }
         Err(VirtError::PermissionDenied { message }) => {
@@ -876,4 +876,33 @@ fn ssh_e2e_virt() {
         matches!(missing, Err(VirtError::DomainNotFound { .. })),
         "{missing:?}"
     );
+
+    // Read-only listings: snapshots of every domain, pools with each active
+    // one's volumes, networks. Every domain's disks and NICs are listed.
+    for dom in &overview.domains {
+        virt::parse_snapshots(&run_virt(&host, &virt::snapshots_script(&dom.uuid)))
+            .unwrap_or_else(|e| panic!("snapshots of {}: {e:?}", dom.name));
+    }
+    let storage = virt::parse_storage(&run_virt(&host, &virt::storage_script())).expect("storage");
+    let with_disks: std::collections::BTreeSet<&str> =
+        storage.disks.iter().map(|d| d.domain.as_str()).collect();
+    for dom in overview.domains.iter().filter(|d| d.persistent) {
+        assert!(with_disks.contains(dom.uuid.as_str()) || dom.counters.blocks.is_empty(), "{}", dom.name);
+    }
+    for pool in storage.pools.iter().filter(|p| p.active) {
+        let names: Vec<String> = pool
+            .volumes
+            .as_ref()
+            .expect("an active pool lists its volumes")
+            .iter()
+            .map(|v| v.name.clone())
+            .collect();
+        let vols = virt::parse_volumes(&run_virt(&host, &virt::volumes_script(&pool.name, &names)))
+            .unwrap_or_else(|e| panic!("volumes of {}: {e:?}", pool.name));
+        assert_eq!(vols.len(), names.len(), "{}", pool.name);
+    }
+    let nets = virt::parse_networks(&run_virt(&host, &virt::networks_script())).expect("networks");
+    for n in nets.networks.iter().filter(|n| n.active) {
+        assert!(n.bridge.is_some() || n.mode != "nat", "{}", n.name);
+    }
 }

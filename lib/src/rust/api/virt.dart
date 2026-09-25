@@ -9,7 +9,7 @@ import 'package:server_box/src/rust/frb_generated.dart';
 // These functions are ignored because they are not marked as `pub`: `json_err`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `clone`, `eq`, `fmt`, `fmt`, `from`, `from`
 
-/// Host probe: `virsh` present and the daemon answering this user
+/// Host probe: Proxmox VE, a container, or `virsh` answering this user
 String virtProbeScript() => RustLib.instance.api.crateApiVirtVirtProbeScript();
 
 /// Guest list, state, and raw counters in one round trip
@@ -33,7 +33,7 @@ String virtActionScript({
 String virtConsoleCommand({required String domain}) =>
     RustLib.instance.api.crateApiVirtVirtConsoleCommand(domain: domain);
 
-/// [`virt_probe_script`]'s output → `VirtVersion` JSON
+/// [`virt_probe_script`]'s output → `VirtHostProbe` JSON
 Future<String> parseVirtProbeJson({required String raw}) =>
     RustLib.instance.api.crateApiVirtParseVirtProbeJson(raw: raw);
 
@@ -48,6 +48,74 @@ Future<String> parseVirtDomainDetailJson({required String raw}) =>
 /// [`virt_action_script`]'s output: `Ok` when virsh accepted the action
 void parseVirtAction({required String raw}) =>
     RustLib.instance.api.crateApiVirtParseVirtAction(raw: raw);
+
+/// Every snapshot of one domain
+String virtSnapshotsScript({required String domain}) =>
+    RustLib.instance.api.crateApiVirtVirtSnapshotsScript(domain: domain);
+
+/// [`virt_snapshots_script`]'s output → `Vec<VirtSnapshotInfo>` JSON
+Future<String> parseVirtSnapshotsJson({required String raw}) =>
+    RustLib.instance.api.crateApiVirtParseVirtSnapshotsJson(raw: raw);
+
+/// An internal snapshot; with memory when the domain is active. Parse with
+/// [`parse_virt_action`].
+String virtSnapshotCreateScript({
+  required String domain,
+  required String name,
+  String? description,
+}) => RustLib.instance.api.crateApiVirtVirtSnapshotCreateScript(
+  domain: domain,
+  name: name,
+  description: description,
+);
+
+/// Revert to a snapshot; `running` starts the domain afterwards. Parse with
+/// [`parse_virt_action`].
+String virtSnapshotRevertScript({
+  required String domain,
+  required String name,
+  required bool running,
+}) => RustLib.instance.api.crateApiVirtVirtSnapshotRevertScript(
+  domain: domain,
+  name: name,
+  running: running,
+);
+
+/// Delete one snapshot. Parse with [`parse_virt_action`].
+String virtSnapshotDeleteScript({
+  required String domain,
+  required String name,
+}) => RustLib.instance.api.crateApiVirtVirtSnapshotDeleteScript(
+  domain: domain,
+  name: name,
+);
+
+/// Pools, volume names and every domain's disks
+String virtStorageScript() =>
+    RustLib.instance.api.crateApiVirtVirtStorageScript();
+
+/// [`virt_storage_script`]'s output → `VirtStorage` JSON
+Future<String> parseVirtStorageJson({required String raw}) =>
+    RustLib.instance.api.crateApiVirtParseVirtStorageJson(raw: raw);
+
+/// What each of `names` in `pool` is: format and sizes
+String virtVolumesScript({required String pool, required List<String> names}) =>
+    RustLib.instance.api.crateApiVirtVirtVolumesScript(
+      pool: pool,
+      names: names,
+    );
+
+/// [`virt_volumes_script`]'s output → `Vec<VirtVolume>` JSON
+Future<String> parseVirtVolumesJson({required String raw}) =>
+    RustLib.instance.api.crateApiVirtParseVirtVolumesJson(raw: raw);
+
+/// Networks, DHCP leases and every domain's interfaces
+String virtNetworksScript() =>
+    RustLib.instance.api.crateApiVirtVirtNetworksScript();
+
+/// [`virt_networks_script`]'s output → `VirtNetworks` JSON
+Future<String> parseVirtNetworksJson({required String raw}) =>
+    RustLib.instance.api.crateApiVirtParseVirtNetworksJson(raw: raw);
 
 /// Power actions (mirrors sbm_parser::virt::VirtAction)
 enum VirtActionKind {

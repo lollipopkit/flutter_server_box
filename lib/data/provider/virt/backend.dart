@@ -1,6 +1,7 @@
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
+import 'package:server_box/data/model/virt/virt_resources.dart';
 
 /// One virtualization host, as the Virtualization tab talks to it.
 ///
@@ -38,6 +39,43 @@ abstract interface class VirtBackend {
     VirtGuest guest, {
     VirtHistoryWindow window = VirtHistoryWindow.hour,
   });
+
+  /// [guest]'s snapshots, in no particular order (`virtSnapshotTree` orders
+  /// them). Only where `VirtCapabilities.snapshots`.
+  Future<List<VirtGuestSnapshot>> snapshots(VirtGuest guest);
+
+  /// Takes a snapshot named [name] (checked with `virtSnapshotNameIssue`
+  /// first), and returns once the host has finished. [memory] asks for the
+  /// guest's memory as well, where `virtSnapshotMemory` says it is optional;
+  /// where it is always taken, it is taken whatever this says.
+  Future<void> createSnapshot(
+    VirtGuest guest, {
+    required String name,
+    String? description,
+    bool memory = false,
+  });
+
+  /// Reverts [guest] to the snapshot [name]. A snapshot without memory leaves
+  /// the guest stopped — a running one is stopped by it — unless [start].
+  Future<void> revertSnapshot(
+    VirtGuest guest,
+    String name, {
+    bool start = false,
+  });
+
+  /// Deletes the snapshot [name]. Its children keep their contents and move
+  /// up to its parent.
+  Future<void> deleteSnapshot(VirtGuest guest, String name);
+
+  /// Storage pools, every node's for a PVE cluster. Only where
+  /// `VirtCapabilities.storage`.
+  Future<List<VirtStoragePool>> storagePools();
+
+  /// What is in [pool], with the guests using each volume.
+  Future<List<VirtVolume>> volumes(VirtStoragePool pool);
+
+  /// Networks with the guests on each. Only where `VirtCapabilities.network`.
+  Future<List<VirtNetwork>> networks();
 
   /// Drops any session, so the next call starts over (a new login, a new
   /// sudo probe). Keeps what the user confirmed or typed: a pinned

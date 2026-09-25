@@ -50,6 +50,8 @@ pub const RC_PREFIX: &str = "SbVirtRc=";
 /// Section keys (wire format: they are encoded into the markers).
 pub const KEY_MISSING: &str = "virt.missing";
 pub const KEY_VERSION: &str = "virt.version";
+pub const KEY_PVE: &str = "virt.pve";
+pub const KEY_CONTAINER: &str = "virt.container";
 pub const KEY_LIST: &str = "virt.list";
 pub const KEY_AUTOSTART: &str = "virt.autostart";
 pub const KEY_PERSISTENT: &str = "virt.persistent";
@@ -85,10 +87,32 @@ fn section(key: &str, virsh_args: &str) -> String {
     format!("echo '{}'\nV {virsh_args}\n", script::cmd_marker(key))
 }
 
-/// Host probe: whether `virsh` exists and the daemon answers this user.
-/// Parse with [`parse_probe`].
+/// Host probe: whether this server is Proxmox VE, a container, and whether
+/// `virsh` exists and the daemon answers this user. Parse with
+/// [`parse_probe`].
+///
+/// PVE is asked first and ends the script: a PVE host is managed through its
+/// HTTP API, so its `virsh` (there is none by default) is not the question.
+/// The container checks need no root: `systemd-detect-virt` and
+/// `/run/systemd/container` on systemd, `openrc --sys` on OpenRC (Alpine),
+/// then `/proc/1/environ` (root only) and the Docker/Podman marker files.
+/// Each may print nothing or `none`; the parser takes the first container
+/// name it knows.
 pub fn probe_script() -> String {
-    let mut s = prelude();
+    let mut s = format!(
+        "export LC_ALL=C\n\
+         if command -v pveversion >/dev/null 2>&1; then echo '{pve}'; pveversion 2>/dev/null </dev/null; exit 0; fi\n\
+         echo '{container}'\n\
+         systemd-detect-virt -c 2>/dev/null </dev/null\n\
+         cat /run/systemd/container 2>/dev/null; echo\n\
+         command -v openrc >/dev/null 2>&1 && openrc --sys 2>/dev/null </dev/null\n\
+         {{ tr '\\0' '\\n' </proc/1/environ; }} 2>/dev/null | sed -n 's/^container=//p'\n\
+         [ -f /.dockerenv ] && echo docker\n\
+         [ -f /run/.containerenv ] && echo podman\n",
+        pve = script::cmd_marker(KEY_PVE),
+        container = script::cmd_marker(KEY_CONTAINER),
+    );
+    s.push_str(&prelude());
     s.push_str(&section(KEY_VERSION, "version"));
     s
 }
@@ -483,6 +507,20 @@ pub struct VirtVersion {
     /// `Running hypervisor: <name> X` — name, e.g. `QEMU`
     pub hypervisor: Option<String>,
     pub hypervisor_version: Option<String>,
+}
+
+/// What [`probe_script`] found on a server.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtHostProbe {
+    /// `pveversion`'s line (`pve-manager/9.2.2/…`) on a Proxmox VE host.
+    /// Empty when the command printed nothing. When set, nothing else was
+    /// asked.
+    pub pve: Option<String>,
+    /// The container this server runs in (`lxc`, `docker`, …), when it is
+    /// one: a guest of some other host rather than a host.
+    pub container: Option<String>,
+    /// `virsh version`, when `virsh` is installed and answered.
+    pub libvirt: Option<VirtVersion>,
 }
 
 /// One disk in `domstats --block`.
@@ -984,13 +1022,56 @@ fn child<'a, 'i>(parent: roxmltree::Node<'a, 'i>, name: &str) -> Option<roxmltre
 // Parsers: script output
 // ---------------------------------------------------------------------------
 
-/// [`probe_script`]'s output: the versions when this user can reach the
-/// daemon.
-pub fn parse_probe(raw: &str) -> Result<VirtVersion, VirtError> {
-    let secs = sections(raw)?;
-    let body = take(&secs, KEY_VERSION, raw)?.ok()?;
-    parse_version(body).ok_or_else(|| VirtError::Malformed {
-        message: format!("unrecognised virsh version output: {}", body.trim()),
+/// Container types [`parse_probe`] reports, as the detectors print them
+/// (lowercased). Anything else they may print — `none`, a hypervisor name
+/// from `openrc --sys` such as `xen0` — is not a container.
+const CONTAINER_KINDS: &[&str] = &[
+    "lxc",
+    "lxc-libvirt",
+    "docker",
+    "podman",
+    "systemd-nspawn",
+    "openvz",
+    "rkt",
+    "wsl",
+    "proot",
+    "container-other",
+];
+
+/// [`probe_script`]'s output.
+///
+/// `Err` only for what stops libvirt being asked on a server that has it —
+/// the daemon refusing this user, or not answering — so the caller can
+/// retry with sudo. No `virsh` is `Ok` with [`VirtHostProbe::libvirt`] unset.
+pub fn parse_probe(raw: &str) -> Result<VirtHostProbe, VirtError> {
+    let segs = script::parse_script_segments(raw);
+    let body = |key: &str| segs.iter().find(|(k, _)| k == key).map(|(_, v)| v.as_str());
+    if let Some(pve) = body(KEY_PVE) {
+        let line = pve.lines().map(str::trim).find(|l| !l.is_empty());
+        return Ok(VirtHostProbe {
+            pve: Some(line.unwrap_or_default().to_string()),
+            ..Default::default()
+        });
+    }
+    let container = body(KEY_CONTAINER).and_then(|b| {
+        b.lines()
+            .map(|l| l.trim().to_ascii_lowercase())
+            .find(|l| CONTAINER_KINDS.contains(&l.as_str()))
+    });
+    let libvirt = match sections(raw) {
+        Err(VirtError::NotInstalled) => None,
+        Err(e) => return Err(e),
+        Ok(secs) => {
+            let body = take(&secs, KEY_VERSION, raw)?.ok()?;
+            Some(parse_version(body).ok_or_else(|| VirtError::Malformed {
+                message: format!("unrecognised virsh version output: {}", body.trim()),
+            })?)
+        }
+    };
+    Ok(VirtHostProbe {
+        pve: None,
+        container,
+        libvirt,
     })
 }
 
@@ -1059,6 +1140,883 @@ pub fn parse_domain_detail(raw: &str) -> Result<VirtDomainDetail, VirtError> {
 pub fn parse_action(raw: &str) -> Result<(), VirtError> {
     let secs = sections(raw)?;
     take(&secs, KEY_ACTION, raw)?.ok().map(|_| ())
+}
+
+// ---------------------------------------------------------------------------
+// Loops over what virsh lists
+// ---------------------------------------------------------------------------
+
+/// Runs `body` once per line `virsh <list_args>` prints, with the line in
+/// `$<var>`. The listing's own failure is reported by a section of its own
+/// elsewhere in the script, so it is silent here. Every name reaches `body`
+/// as one line: libvirt names cannot contain a newline.
+fn each(list_args: &str, var: &str, body: &str) -> String {
+    format!(
+        "virsh --connect {CONNECT_URI} -q {list_args} </dev/null 2>/dev/null | \
+         while IFS= read -r {var}; do [ -n \"${var}\" ] || continue\n{body}done\n"
+    )
+}
+
+/// A section for one item of a loop: the marker, the item on the section's
+/// first line, then the `virsh` call. The first line is how the parser knows
+/// which item the output is about.
+fn item_section(key: &str, var: &str, virsh_args: &str) -> String {
+    format!(
+        "echo '{}'\nprintf '%s\\n' \"${var}\"\nV {virsh_args}\n",
+        script::cmd_marker(key)
+    )
+}
+
+/// Splits an [`item_section`]'s body into its item and the `virsh` output.
+fn split_item(body: &str) -> (&str, &str) {
+    match body.split_once('\n') {
+        Some((item, rest)) => (item.strip_suffix('\r').unwrap_or(item), rest),
+        None => (body, ""),
+    }
+}
+
+/// `--name` listings: one name per line, empty lines dropped.
+pub fn parse_names(raw: &str) -> Vec<String> {
+    raw.lines()
+        .map(|l| l.strip_suffix('\r').unwrap_or(l))
+        .filter(|l| !l.trim().is_empty())
+        .map(str::to_string)
+        .collect()
+}
+
+fn all_items<'a>(secs: &'a [(String, Section)], key: &str) -> impl Iterator<Item = &'a Section> {
+    secs.iter().filter(move |(k, _)| k == key).map(|(_, s)| s)
+}
+
+/// A value element with `unit='bytes'` (what libvirt prints for pools and
+/// volumes), or another unit converted to bytes.
+fn bytes_of(node: Option<roxmltree::Node<'_, '_>>) -> Option<u64> {
+    let node = node?;
+    let n: u64 = node.text()?.trim().parse().ok()?;
+    let mul: u64 = match node.attribute("unit").unwrap_or("bytes") {
+        "b" | "bytes" => 1,
+        "KB" => 1_000,
+        "k" | "KiB" => 1 << 10,
+        "MB" => 1_000_000,
+        "M" | "MiB" => 1 << 20,
+        "GB" => 1_000_000_000,
+        "G" | "GiB" => 1 << 30,
+        "TB" => 1_000_000_000_000,
+        "T" | "TiB" => 1 << 40,
+        _ => return None,
+    };
+    n.checked_mul(mul)
+}
+
+fn parse_xml_doc<'i>(raw: &'i str, root: &str, what: &str) -> Result<roxmltree::Document<'i>, VirtError> {
+    let start = raw.find(&format!("<{root}")).ok_or_else(|| VirtError::Malformed {
+        message: format!("no <{root}> element in {what} output"),
+    })?;
+    roxmltree::Document::parse(raw[start..].trim_end()).map_err(|e| VirtError::Malformed {
+        message: format!("{what}: {e}"),
+    })
+}
+
+fn text_of(parent: roxmltree::Node<'_, '_>, name: &str) -> Option<String> {
+    child(parent, name)
+        .and_then(|n| n.text())
+        .map(|t| t.trim().to_string())
+        .filter(|t| !t.is_empty())
+}
+
+// ---------------------------------------------------------------------------
+// Snapshots
+// ---------------------------------------------------------------------------
+
+pub const KEY_SNAP_CURRENT: &str = "virt.snap.current";
+pub const KEY_SNAP_LIST: &str = "virt.snap.list";
+pub const KEY_SNAP_XML: &str = "virt.snap.xml";
+
+/// One snapshot of a domain, from `snapshot-dumpxml`.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtSnapshotInfo {
+    pub name: String,
+    pub description: Option<String>,
+    pub parent: Option<String>,
+    /// The domain's state when it was taken: `running`, `paused`, `shutoff`,
+    /// or `disk-snapshot` for an external disk-only one
+    pub state: Option<String>,
+    /// Seconds since the epoch
+    pub creation_time: Option<i64>,
+    /// Holds the guest's memory, so reverting resumes it where it was
+    pub memory: bool,
+    /// Any part of it is kept outside the disk image (`snapshot='external'`)
+    pub external: bool,
+    /// The snapshot the domain's disks were last created from or reverted to
+    pub current: bool,
+}
+
+/// Every snapshot of one domain, as [`snapshots_script`] reads them.
+pub fn snapshots_script(domain: &str) -> String {
+    let d = domain_arg(domain);
+    let mut s = prelude();
+    s.push_str(&section(KEY_SNAP_CURRENT, &format!("snapshot-current {d} --name")));
+    s.push_str(&section(KEY_SNAP_LIST, &format!("snapshot-list {d} --name")));
+    s.push_str(&each(
+        &format!("snapshot-list {d} --name"),
+        "s",
+        &item_section(KEY_SNAP_XML, "s", &format!("snapshot-dumpxml {d} --snapshotname \"$s\"")),
+    ));
+    s
+}
+
+/// `snapshot-create-as`: an internal snapshot, which on a running or paused
+/// domain includes its memory (QEMU refuses an internal one without it) and
+/// on a shut-off one holds the disks only. Every writable disk must be qcow2.
+/// Parse with [`parse_action`].
+pub fn snapshot_create_script(domain: &str, name: &str, description: Option<&str>) -> String {
+    let mut args = format!(
+        "snapshot-create-as {} --name {}",
+        domain_arg(domain),
+        shell_quote_unix(name)
+    );
+    if let Some(desc) = description.filter(|d| !d.trim().is_empty()) {
+        args.push_str(&format!(" --description {}", shell_quote_unix(desc)));
+    }
+    let mut s = prelude();
+    s.push_str(&section(KEY_ACTION, &args));
+    s
+}
+
+/// `snapshot-revert`. A snapshot without memory leaves the domain shut off
+/// (a running one is stopped); `running` starts it afterwards instead.
+/// Parse with [`parse_action`].
+pub fn snapshot_revert_script(domain: &str, name: &str, running: bool) -> String {
+    let mut s = prelude();
+    s.push_str(&section(
+        KEY_ACTION,
+        &format!(
+            "snapshot-revert {} --snapshotname {}{}",
+            domain_arg(domain),
+            shell_quote_unix(name),
+            if running { " --running" } else { "" }
+        ),
+    ));
+    s
+}
+
+/// `snapshot-delete`: the snapshot only; its children move up to its parent.
+/// Parse with [`parse_action`].
+pub fn snapshot_delete_script(domain: &str, name: &str) -> String {
+    let mut s = prelude();
+    s.push_str(&section(
+        KEY_ACTION,
+        &format!(
+            "snapshot-delete {} --snapshotname {}",
+            domain_arg(domain),
+            shell_quote_unix(name)
+        ),
+    ));
+    s
+}
+
+/// `snapshot-dumpxml`. The embedded `<domain>` is ignored.
+pub fn parse_snapshot_xml(raw: &str) -> Result<VirtSnapshotInfo, VirtError> {
+    let doc = parse_xml_doc(raw, "domainsnapshot", "snapshot-dumpxml")?;
+    let root = doc.root_element();
+    let name = text_of(root, "name").ok_or_else(|| VirtError::Malformed {
+        message: "snapshot without a name".into(),
+    })?;
+    let state = text_of(root, "state");
+    let memory_attr = child(root, "memory").and_then(|m| m.attribute("snapshot"));
+    let disks: Vec<&str> = child(root, "disks")
+        .map(|d| {
+            d.children()
+                .filter(|n| n.is_element() && n.tag_name().name() == "disk")
+                .filter_map(|n| n.attribute("snapshot"))
+                .collect()
+        })
+        .unwrap_or_default();
+    // Before `<memory>` existed (libvirt < 1.0.1) a snapshot of an active
+    // domain always held its memory.
+    let memory = match memory_attr {
+        Some(m) => m != "no",
+        None => matches!(state.as_deref(), Some("running" | "paused" | "blocked")),
+    };
+    Ok(VirtSnapshotInfo {
+        description: text_of(root, "description"),
+        parent: child(root, "parent").and_then(|p| text_of(p, "name")),
+        creation_time: text_of(root, "creationTime").and_then(|t| t.parse().ok()),
+        external: memory_attr == Some("external") || disks.contains(&"external"),
+        memory,
+        state,
+        name,
+        current: false,
+    })
+}
+
+/// [`snapshots_script`]'s output, in `snapshot-list` order.
+///
+/// A snapshot deleted between the listing and its `snapshot-dumpxml` is left
+/// out rather than failing the rest.
+pub fn parse_snapshots(raw: &str) -> Result<Vec<VirtSnapshotInfo>, VirtError> {
+    let secs = sections(raw)?;
+    let names = parse_names(take(&secs, KEY_SNAP_LIST, raw)?.ok()?);
+    // "the domain does not have a current snapshot" is a failure of its own,
+    // and means none.
+    let current = secs
+        .iter()
+        .find(|(k, _)| k == KEY_SNAP_CURRENT)
+        .and_then(|(_, s)| s.ok().ok())
+        .map(|b| b.trim().to_string())
+        .filter(|b| !b.is_empty());
+    let mut infos: Vec<VirtSnapshotInfo> = Vec::new();
+    for sec in all_items(&secs, KEY_SNAP_XML) {
+        let body = match sec.ok() {
+            Ok(b) => split_item(b).1,
+            Err(e @ VirtError::PermissionDenied { .. }) => return Err(e),
+            Err(_) => continue,
+        };
+        if let Ok(info) = parse_snapshot_xml(body) {
+            infos.push(info);
+        }
+    }
+    let mut out = Vec::with_capacity(names.len());
+    for name in names {
+        let Some(at) = infos.iter().position(|i| i.name == name) else {
+            continue;
+        };
+        let mut info = infos.swap_remove(at);
+        info.current = current.as_deref() == Some(info.name.as_str());
+        out.push(info);
+    }
+    Ok(out)
+}
+
+// ---------------------------------------------------------------------------
+// Storage pools and volumes
+// ---------------------------------------------------------------------------
+
+pub const KEY_POOLS: &str = "virt.pools";
+pub const KEY_POOLS_ACTIVE: &str = "virt.pools.active";
+pub const KEY_POOLS_AUTOSTART: &str = "virt.pools.autostart";
+pub const KEY_POOL_XML: &str = "virt.pool.xml";
+pub const KEY_POOL_VOLS: &str = "virt.pool.vols";
+pub const KEY_DOMAINS: &str = "virt.domains";
+pub const KEY_BLKLIST: &str = "virt.blklist";
+pub const KEY_VOL_XML: &str = "virt.vol.xml";
+
+/// A volume as `vol-list` names it.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtVolumeRef {
+    pub name: String,
+    pub path: Option<String>,
+}
+
+/// One storage pool.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtPool {
+    pub name: String,
+    pub uuid: Option<String>,
+    /// `dir`, `fs`, `netfs`, `logical`, `disk`, `iscsi`, `rbd`, `zfs`, ...
+    pub pool_type: Option<String>,
+    pub active: bool,
+    pub autostart: bool,
+    /// Bytes. An inactive pool reports what it last knew, often 0
+    pub capacity: Option<u64>,
+    pub allocation: Option<u64>,
+    pub available: Option<u64>,
+    /// `<target><path>`: the directory or device directory volumes are in
+    pub target: Option<String>,
+    /// Where the pool comes from: `host:/dir` for NFS, the device, the volume
+    /// group or the Ceph pool
+    pub source: Option<String>,
+    /// `None` when the volumes could not be listed (an inactive pool)
+    pub volumes: Option<Vec<VirtVolumeRef>>,
+}
+
+/// One disk of one domain, from `domblklist --details`.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtDiskUse {
+    pub domain: String,
+    /// `file`, `block`, `network`, `volume`
+    pub kind: String,
+    /// `disk`, `cdrom`, ...
+    pub device: String,
+    pub target: String,
+    /// `None` for an empty drive
+    pub source: Option<String>,
+}
+
+/// What [`storage_script`] yields.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtStorage {
+    pub pools: Vec<VirtPool>,
+    /// Every domain's disks, for "which guest uses this volume"
+    pub disks: Vec<VirtDiskUse>,
+}
+
+/// One volume, from `vol-dumpxml`.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtVolume {
+    pub name: String,
+    /// `file`, `block`, `dir`, `network`, ...
+    pub vol_type: Option<String>,
+    pub path: Option<String>,
+    /// `qcow2`, `raw`, `iso`, ...
+    pub format: Option<String>,
+    /// Bytes: the size the guest sees
+    pub capacity: Option<u64>,
+    /// Bytes the volume takes on the host
+    pub allocation: Option<u64>,
+    /// A qcow2 overlay's backing file
+    pub backing: Option<String>,
+}
+
+/// `vol-list` with its header line, not `-q`: the header is where the Path
+/// column starts, which is the only way to tell a name containing spaces from
+/// the path after it.
+fn vol_list_prelude() -> String {
+    format!(
+        "L() {{ virsh --connect {CONNECT_URI} \"$@\" </dev/null 2>&1; printf '\\n{RC_PREFIX}%s\\n' \"$?\"; }}\n"
+    )
+}
+
+/// Pools, their volumes' names, and every domain's disks, in one round trip.
+/// Parse with [`parse_storage`]. What each volume is — its format and sizes —
+/// is [`volumes_script`]'s, asked for one pool at a time.
+pub fn storage_script() -> String {
+    let mut s = prelude();
+    s.push_str(&vol_list_prelude());
+    s.push_str(&section(KEY_POOLS, "pool-list --all --name"));
+    s.push_str(&section(KEY_POOLS_ACTIVE, "pool-list --name"));
+    s.push_str(&section(KEY_POOLS_AUTOSTART, "pool-list --all --autostart --name"));
+    s.push_str(&each(
+        "pool-list --all --name",
+        "p",
+        &format!(
+            "{}echo '{}'\nprintf '%s\\n' \"$p\"\nL vol-list --pool \"$p\"\n",
+            item_section(KEY_POOL_XML, "p", "pool-dumpxml --pool \"$p\""),
+            script::cmd_marker(KEY_POOL_VOLS),
+        ),
+    ));
+    s.push_str(&section(KEY_DOMAINS, "list --all --uuid"));
+    s.push_str(&each(
+        "list --all --uuid",
+        "d",
+        &item_section(KEY_BLKLIST, "d", "domblklist --details --domain \"$d\""),
+    ));
+    s
+}
+
+/// `vol-dumpxml` for each of `names` in `pool`. Parse with [`parse_volumes`].
+pub fn volumes_script(pool: &str, names: &[String]) -> String {
+    let p = shell_quote_unix(pool);
+    let mut s = prelude();
+    for name in names {
+        s.push_str(&format!(
+            "echo '{}'\nprintf '%s\\n' {n}\nV vol-dumpxml --pool {p} --vol {n}\n",
+            script::cmd_marker(KEY_VOL_XML),
+            n = shell_quote_unix(name),
+        ));
+    }
+    s
+}
+
+/// `pool-dumpxml`.
+pub fn parse_pool_xml(raw: &str) -> Result<VirtPool, VirtError> {
+    let doc = parse_xml_doc(raw, "pool", "pool-dumpxml")?;
+    let root = doc.root_element();
+    let source = child(root, "source").and_then(|src| {
+        let host = child(src, "host").and_then(|h| h.attribute("name"));
+        let dir = child(src, "dir").and_then(|d| d.attribute("path"));
+        let device = child(src, "device").and_then(|d| d.attribute("path"));
+        let name = text_of(src, "name");
+        match (host, dir) {
+            (Some(h), Some(d)) => Some(format!("{h}:{d}")),
+            (Some(h), None) => Some(match &name {
+                Some(n) => format!("{h}/{n}"),
+                None => h.to_string(),
+            }),
+            (None, Some(d)) => Some(d.to_string()),
+            (None, None) => name.or_else(|| device.map(str::to_string)),
+        }
+    });
+    Ok(VirtPool {
+        name: text_of(root, "name").unwrap_or_default(),
+        uuid: text_of(root, "uuid"),
+        pool_type: root.attribute("type").map(str::to_string),
+        capacity: bytes_of(child(root, "capacity")),
+        allocation: bytes_of(child(root, "allocation")),
+        available: bytes_of(child(root, "available")),
+        target: child(root, "target").and_then(|t| text_of(t, "path")),
+        source,
+        ..Default::default()
+    })
+}
+
+/// `vol-list` output with its header (not `-q`).
+///
+/// virsh pads the Name column to its widest entry, so the Path column starts
+/// where the header's `Path` does, on every line. Measured in characters,
+/// which is virsh's own measure for anything but double-width script.
+pub fn parse_vol_list(raw: &str) -> Vec<VirtVolumeRef> {
+    let mut lines = raw.lines().map(|l| l.strip_suffix('\r').unwrap_or(l));
+    let Some(header) = lines.by_ref().find(|l| l.trim_start().starts_with("Name")) else {
+        return Vec::new();
+    };
+    let col = header.find("Path").map(|b| header[..b].chars().count());
+    let mut out = Vec::new();
+    for line in lines {
+        if line.trim().is_empty() || line.trim_start().starts_with("---") {
+            continue;
+        }
+        let chars: Vec<char> = line.chars().collect();
+        let (name, path) = match col {
+            // The column boundary falls on the padding: split there
+            Some(c) if c <= chars.len() && (c == 0 || chars[c - 1] == ' ') => {
+                let name: String = chars[..c].iter().collect();
+                let path: String = chars[c..].iter().collect();
+                (name.trim().to_string(), path.trim().to_string())
+            }
+            // Wider characters moved it: the last run of 2+ spaces instead
+            _ => match line.trim().rsplit_once("  ") {
+                Some((n, p)) => (n.trim().to_string(), p.trim().to_string()),
+                None => (line.trim().to_string(), String::new()),
+            },
+        };
+        if name.is_empty() {
+            continue;
+        }
+        out.push(VirtVolumeRef {
+            name,
+            path: Some(path).filter(|p| !p.is_empty() && p != "-"),
+        });
+    }
+    out
+}
+
+/// `domblklist --details` (with `-q`): `type device target source`, the
+/// source last so it may contain spaces; `-` for an empty drive.
+pub fn parse_blklist(domain: &str, raw: &str) -> Vec<VirtDiskUse> {
+    raw.lines()
+        .filter_map(|line| {
+            let (fields, rest) = split_fields(line, 3);
+            let [kind, device, target] = fields[..] else {
+                return None;
+            };
+            Some(VirtDiskUse {
+                domain: domain.to_string(),
+                kind: kind.to_string(),
+                device: device.to_string(),
+                target: target.to_string(),
+                source: Some(rest.to_string()).filter(|s| !s.is_empty() && s != "-"),
+            })
+        })
+        .collect()
+}
+
+/// The first `n` whitespace-separated fields of `line`, and the rest of it
+/// trimmed (which may itself contain spaces).
+fn split_fields(line: &str, n: usize) -> (Vec<&str>, &str) {
+    let mut fields = Vec::with_capacity(n);
+    let mut rest = line.trim();
+    while fields.len() < n && !rest.is_empty() {
+        let end = rest.find(char::is_whitespace).unwrap_or(rest.len());
+        fields.push(&rest[..end]);
+        rest = rest[end..].trim_start();
+    }
+    (fields, rest.trim_end())
+}
+
+/// [`storage_script`]'s output.
+pub fn parse_storage(raw: &str) -> Result<VirtStorage, VirtError> {
+    let secs = sections(raw)?;
+    let names = parse_names(take(&secs, KEY_POOLS, raw)?.ok()?);
+    let set = |key: &str| -> Vec<String> {
+        secs.iter()
+            .find(|(k, _)| k == key)
+            .and_then(|(_, s)| s.ok().ok())
+            .map(parse_names)
+            .unwrap_or_default()
+    };
+    let active = set(KEY_POOLS_ACTIVE);
+    let autostart = set(KEY_POOLS_AUTOSTART);
+
+    let mut xmls: Vec<(String, VirtPool)> = Vec::new();
+    for sec in all_items(&secs, KEY_POOL_XML) {
+        let (item, _) = split_item(&sec.body);
+        if let Ok(body) = sec.ok()
+            && let Ok(pool) = parse_pool_xml(split_item(body).1)
+        {
+            xmls.push((item.to_string(), pool));
+        }
+    }
+    let mut vols: Vec<(String, Vec<VirtVolumeRef>)> = Vec::new();
+    for sec in all_items(&secs, KEY_POOL_VOLS) {
+        let (item, _) = split_item(&sec.body);
+        if let Ok(body) = sec.ok() {
+            vols.push((item.to_string(), parse_vol_list(split_item(body).1)));
+        }
+    }
+
+    let pools = names
+        .into_iter()
+        .map(|name| {
+            let mut pool = xmls
+                .iter()
+                .find(|(n, _)| *n == name)
+                .map(|(_, p)| p.clone())
+                .unwrap_or_default();
+            pool.active = active.contains(&name);
+            pool.autostart = autostart.contains(&name);
+            pool.volumes = vols
+                .iter()
+                .find(|(n, _)| *n == name)
+                .map(|(_, v)| v.clone());
+            pool.name = name;
+            pool
+        })
+        .collect();
+
+    let mut disks = Vec::new();
+    for sec in all_items(&secs, KEY_BLKLIST) {
+        let (domain, _) = split_item(&sec.body);
+        if let Ok(body) = sec.ok() {
+            disks.extend(parse_blklist(&domain.to_ascii_lowercase(), split_item(body).1));
+        }
+    }
+    Ok(VirtStorage { pools, disks })
+}
+
+/// `vol-dumpxml`.
+pub fn parse_volume_xml(raw: &str) -> Result<VirtVolume, VirtError> {
+    let doc = parse_xml_doc(raw, "volume", "vol-dumpxml")?;
+    let root = doc.root_element();
+    let target = child(root, "target");
+    Ok(VirtVolume {
+        name: text_of(root, "name").unwrap_or_default(),
+        vol_type: root.attribute("type").map(str::to_string),
+        path: target
+            .and_then(|t| text_of(t, "path"))
+            .or_else(|| text_of(root, "key")),
+        format: target
+            .and_then(|t| child(t, "format"))
+            .and_then(|f| f.attribute("type"))
+            .map(str::to_string),
+        capacity: bytes_of(child(root, "capacity")),
+        allocation: bytes_of(child(root, "allocation")),
+        backing: child(root, "backingStore").and_then(|b| text_of(b, "path")),
+    })
+}
+
+/// [`volumes_script`]'s output, in the order asked. A volume gone since the
+/// listing is left out.
+pub fn parse_volumes(raw: &str) -> Result<Vec<VirtVolume>, VirtError> {
+    let segs = script::parse_script_segments(raw);
+    if segs.iter().any(|(k, _)| k == KEY_MISSING) {
+        return Err(VirtError::NotInstalled);
+    }
+    if segs.is_empty() && !raw.trim().is_empty() {
+        return Err(match classify_error(raw.trim()) {
+            VirtError::Command { message } => VirtError::Malformed { message },
+            other => other,
+        });
+    }
+    let mut out = Vec::new();
+    for (key, body) in segs {
+        if key != KEY_VOL_XML {
+            continue;
+        }
+        let sec = Section::parse(&body);
+        match sec.ok() {
+            Ok(b) => {
+                if let Ok(v) = parse_volume_xml(split_item(b).1) {
+                    out.push(v);
+                }
+            }
+            Err(e @ VirtError::PermissionDenied { .. }) => return Err(e),
+            Err(_) => {}
+        }
+    }
+    Ok(out)
+}
+
+// ---------------------------------------------------------------------------
+// Networks
+// ---------------------------------------------------------------------------
+
+pub const KEY_NETS: &str = "virt.nets";
+pub const KEY_NETS_ACTIVE: &str = "virt.nets.active";
+pub const KEY_NETS_AUTOSTART: &str = "virt.nets.autostart";
+pub const KEY_NET_XML: &str = "virt.net.xml";
+pub const KEY_LEASES: &str = "virt.net.leases";
+pub const KEY_IFLIST: &str = "virt.iflist";
+
+/// One `<ip>` of a network.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtNetIp {
+    /// `ipv4` or `ipv6`
+    pub family: String,
+    /// The host's address on the network with its prefix, e.g.
+    /// `192.168.122.1/24`
+    pub cidr: String,
+    /// `start-end` of each DHCP range
+    pub dhcp_ranges: Vec<String>,
+}
+
+/// One libvirt virtual network.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtNetworkInfo {
+    pub name: String,
+    pub uuid: Option<String>,
+    pub active: bool,
+    pub autostart: bool,
+    /// `<forward mode>`: `nat`, `route`, `open`, `bridge`, `passthrough`,
+    /// `private`, `vepa`, `hostdev`; `isolated` when there is no `<forward>`
+    pub mode: String,
+    /// The bridge device: libvirt's own (`virbr0`), or the host bridge a
+    /// `bridge`-mode network hands guests to
+    pub bridge: Option<String>,
+    /// Host devices traffic leaves through (`<forward dev>` / `<interface>`)
+    pub forward_devs: Vec<String>,
+    pub ips: Vec<VirtNetIp>,
+    /// Interfaces attached now (`connections=`), while active
+    pub connections: Option<u32>,
+}
+
+/// One interface of one domain, from `domiflist`.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtIfaceUse {
+    pub domain: String,
+    /// Host-side device, `None` while the domain is not running
+    pub interface: Option<String>,
+    /// `network`, `bridge`, `direct`, `user`, ...
+    pub kind: String,
+    /// Network name, bridge or host device, by `kind`
+    pub source: Option<String>,
+    pub model: Option<String>,
+    pub mac: Option<String>,
+}
+
+/// One DHCP lease of a network.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtLease {
+    pub network: String,
+    pub mac: String,
+    /// With its prefix, as virsh prints it
+    pub ip: String,
+    pub hostname: Option<String>,
+}
+
+/// What [`networks_script`] yields.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtNetworks {
+    pub networks: Vec<VirtNetworkInfo>,
+    pub ifaces: Vec<VirtIfaceUse>,
+    pub leases: Vec<VirtLease>,
+}
+
+/// Networks, their DHCP leases and every domain's interfaces, in one round
+/// trip. Parse with [`parse_networks`].
+pub fn networks_script() -> String {
+    let mut s = prelude();
+    s.push_str(&section(KEY_NETS, "net-list --all --name"));
+    s.push_str(&section(KEY_NETS_ACTIVE, "net-list --name"));
+    s.push_str(&section(KEY_NETS_AUTOSTART, "net-list --all --autostart --name"));
+    s.push_str(&each(
+        "net-list --all --name",
+        "n",
+        &item_section(KEY_NET_XML, "n", "net-dumpxml --network \"$n\""),
+    ));
+    s.push_str(&each(
+        "net-list --name",
+        "n",
+        &item_section(KEY_LEASES, "n", "net-dhcp-leases --network \"$n\""),
+    ));
+    s.push_str(&each(
+        "list --all --uuid",
+        "d",
+        &item_section(KEY_IFLIST, "d", "domiflist --domain \"$d\""),
+    ));
+    s
+}
+
+fn prefix_of_netmask(mask: &str) -> Option<u32> {
+    let octets: Vec<u8> = mask.split('.').map(|o| o.parse().ok()).collect::<Option<_>>()?;
+    if octets.len() != 4 {
+        return None;
+    }
+    let n = u32::from_be_bytes([octets[0], octets[1], octets[2], octets[3]]);
+    // Contiguous ones only
+    (n.leading_ones() + n.trailing_zeros() == 32).then_some(n.leading_ones())
+}
+
+/// `net-dumpxml`.
+pub fn parse_network_xml(raw: &str) -> Result<VirtNetworkInfo, VirtError> {
+    let doc = parse_xml_doc(raw, "network", "net-dumpxml")?;
+    let root = doc.root_element();
+    let forward = child(root, "forward");
+    let mode = match forward {
+        None => "isolated".to_string(),
+        Some(f) => f.attribute("mode").unwrap_or("nat").to_string(),
+    };
+    let mut forward_devs: Vec<String> = Vec::new();
+    if let Some(f) = forward {
+        if let Some(dev) = f.attribute("dev") {
+            forward_devs.push(dev.to_string());
+        }
+        for i in f.children().filter(|n| n.is_element() && n.tag_name().name() == "interface") {
+            if let Some(dev) = i.attribute("dev")
+                && !forward_devs.iter().any(|d| d == dev)
+            {
+                forward_devs.push(dev.to_string());
+            }
+        }
+    }
+    let ips = root
+        .children()
+        .filter(|n| n.is_element() && n.tag_name().name() == "ip")
+        .filter_map(|ip| {
+            let addr = ip.attribute("address")?;
+            let family = ip.attribute("family").unwrap_or(if addr.contains(':') {
+                "ipv6"
+            } else {
+                "ipv4"
+            });
+            let prefix = ip
+                .attribute("prefix")
+                .and_then(|p| p.parse::<u32>().ok())
+                .or_else(|| ip.attribute("netmask").and_then(prefix_of_netmask));
+            let dhcp_ranges = child(ip, "dhcp")
+                .map(|d| {
+                    d.children()
+                        .filter(|n| n.is_element() && n.tag_name().name() == "range")
+                        .filter_map(|r| Some(format!("{}-{}", r.attribute("start")?, r.attribute("end")?)))
+                        .collect()
+                })
+                .unwrap_or_default();
+            Some(VirtNetIp {
+                family: family.to_string(),
+                cidr: match prefix {
+                    Some(p) => format!("{addr}/{p}"),
+                    None => addr.to_string(),
+                },
+                dhcp_ranges,
+            })
+        })
+        .collect();
+    Ok(VirtNetworkInfo {
+        name: text_of(root, "name").unwrap_or_default(),
+        uuid: text_of(root, "uuid"),
+        mode,
+        bridge: child(root, "bridge").and_then(|b| b.attribute("name")).map(str::to_string),
+        forward_devs,
+        ips,
+        connections: root.attribute("connections").and_then(|c| c.parse().ok()),
+        ..Default::default()
+    })
+}
+
+/// `domiflist` (with `-q`): `interface type source model mac`, `-` where a
+/// value is missing (the interface of a shut-off domain).
+pub fn parse_iflist(domain: &str, raw: &str) -> Vec<VirtIfaceUse> {
+    let opt = |s: &str| Some(s.to_string()).filter(|s| !s.is_empty() && s != "-");
+    raw.lines()
+        .filter_map(|line| {
+            let t: Vec<&str> = line.split_whitespace().collect();
+            if t.len() < 5 {
+                return None;
+            }
+            // A source with spaces in it is everything between type and model
+            let source = t[2..t.len() - 2].join(" ");
+            Some(VirtIfaceUse {
+                domain: domain.to_string(),
+                interface: opt(t[0]),
+                kind: t[1].to_string(),
+                source: opt(&source),
+                model: opt(t[t.len() - 2]),
+                mac: opt(t[t.len() - 1]).map(|m| m.to_ascii_lowercase()),
+            })
+        })
+        .collect()
+}
+
+/// `net-dhcp-leases` (with `-q`): `date time mac protocol ip hostname
+/// client-id`.
+pub fn parse_leases(network: &str, raw: &str) -> Vec<VirtLease> {
+    raw.lines()
+        .filter_map(|line| {
+            let t: Vec<&str> = line.split_whitespace().collect();
+            if t.len() < 6 || !t[2].contains(':') {
+                return None;
+            }
+            Some(VirtLease {
+                network: network.to_string(),
+                mac: t[2].to_ascii_lowercase(),
+                ip: t[4].to_string(),
+                hostname: Some(t[5].to_string()).filter(|h| h != "-"),
+            })
+        })
+        .collect()
+}
+
+/// [`networks_script`]'s output.
+pub fn parse_networks(raw: &str) -> Result<VirtNetworks, VirtError> {
+    let secs = sections(raw)?;
+    let names = parse_names(take(&secs, KEY_NETS, raw)?.ok()?);
+    let set = |key: &str| -> Vec<String> {
+        secs.iter()
+            .find(|(k, _)| k == key)
+            .and_then(|(_, s)| s.ok().ok())
+            .map(parse_names)
+            .unwrap_or_default()
+    };
+    let active = set(KEY_NETS_ACTIVE);
+    let autostart = set(KEY_NETS_AUTOSTART);
+    let mut xmls: Vec<(String, VirtNetworkInfo)> = Vec::new();
+    for sec in all_items(&secs, KEY_NET_XML) {
+        let (item, _) = split_item(&sec.body);
+        if let Ok(body) = sec.ok()
+            && let Ok(net) = parse_network_xml(split_item(body).1)
+        {
+            xmls.push((item.to_string(), net));
+        }
+    }
+    let networks = names
+        .into_iter()
+        .map(|name| {
+            let mut net = xmls
+                .iter()
+                .find(|(n, _)| *n == name)
+                .map(|(_, x)| x.clone())
+                .unwrap_or_else(|| VirtNetworkInfo {
+                    mode: "isolated".into(),
+                    ..Default::default()
+                });
+            net.active = active.contains(&name);
+            net.autostart = autostart.contains(&name);
+            if !net.active {
+                net.connections = None;
+            }
+            net.name = name;
+            net
+        })
+        .collect();
+    let mut leases = Vec::new();
+    for sec in all_items(&secs, KEY_LEASES) {
+        let (item, _) = split_item(&sec.body);
+        if let Ok(body) = sec.ok() {
+            leases.extend(parse_leases(item, split_item(body).1));
+        }
+    }
+    let mut ifaces = Vec::new();
+    for sec in all_items(&secs, KEY_IFLIST) {
+        let (domain, _) = split_item(&sec.body);
+        if let Ok(body) = sec.ok() {
+            ifaces.extend(parse_iflist(&domain.to_ascii_lowercase(), split_item(body).1));
+        }
+    }
+    Ok(VirtNetworks {
+        networks,
+        ifaces,
+        leases,
+    })
 }
 
 #[cfg(test)]

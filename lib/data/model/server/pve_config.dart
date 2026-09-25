@@ -61,6 +61,10 @@ abstract class PveConfig with _$PveConfig {
   factory PveConfig.fromJson(Map<String, dynamic> json) =>
       _$PveConfigFromJson(json);
 
+  /// The API on the server itself. Resolved on the far end of the transport,
+  /// so it reaches a PVE host over SSH, its agent's relay, or locally alike.
+  static const localAddr = 'https://127.0.0.1:8006';
+
   /// Just for showing the shape, next to `Spix.example`. **Not** a default.
   static const example = PveConfig(
     addr: 'https://localhost:8006',

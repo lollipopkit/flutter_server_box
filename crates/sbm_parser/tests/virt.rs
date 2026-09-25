@@ -512,9 +512,313 @@ fn scripts_without_virsh() {
     std::fs::create_dir_all(&empty).unwrap();
     let raw = run_sh(&virt::overview_script(), &empty.display().to_string());
     assert_eq!(virt::parse_overview(&raw), Err(VirtError::NotInstalled));
-    assert_eq!(
-        virt::parse_probe(&run_sh(&virt::probe_script(), &empty.display().to_string())),
-        Err(VirtError::NotInstalled)
-    );
+    let probe = virt::parse_probe(&run_sh(&virt::probe_script(), &empty.display().to_string()));
+    assert_eq!(probe, Ok(virt::VirtHostProbe::default()));
     let _ = std::fs::remove_dir_all(&empty);
+}
+
+// ---------------------------------------------------------------------------
+// Snapshots, storage and networks: whole script outputs, captured
+// ---------------------------------------------------------------------------
+
+#[test]
+fn snapshots_tree_current_and_memory() {
+    let snaps = virt::parse_snapshots(&fixture("script_snapshots_cirros_run.txt")).unwrap();
+    assert_eq!(
+        snaps.iter().map(|s| s.name.as_str()).collect::<Vec<_>>(),
+        ["sbx-a", "sbx-b", "sbx-off"]
+    );
+    let a = &snaps[0];
+    assert!(a.current && a.memory && !a.external);
+    assert_eq!(a.parent, None);
+    assert_eq!(a.description.as_deref(), Some("first one"));
+    assert_eq!(a.state.as_deref(), Some("running"));
+    assert_eq!(a.creation_time, Some(1790335495));
+    let off = &snaps[2];
+    // Taken while shut off: disks only
+    assert!(!off.memory && !off.current);
+    assert_eq!(off.state.as_deref(), Some("shutoff"));
+    assert_eq!(off.parent.as_deref(), Some("sbx-a"));
+    assert_eq!(snaps[1].parent.as_deref(), Some("sbx-off"));
+    assert_expected(&snaps, "snapshots_cirros_run.expected.json");
+
+    // No snapshots: `snapshot-current` fails, and that is "none"
+    assert_eq!(virt::parse_snapshots(&fixture("script_snapshots_none.txt")), Ok(vec![]));
+}
+
+#[test]
+fn snapshot_xml_without_memory_element() {
+    // libvirt < 1.0.1 had no <memory>: an active domain's snapshot held it
+    let x = virt::parse_snapshot_xml(
+        "<domainsnapshot><name>old</name><state>running</state>\
+         <creationTime>1</creationTime></domainsnapshot>",
+    )
+    .unwrap();
+    assert!(x.memory);
+    let x = virt::parse_snapshot_xml(
+        "<domainsnapshot><name>ext</name><state>disk-snapshot</state>\
+         <memory snapshot='no'/><disks><disk name='vda' snapshot='external'/></disks>\
+         </domainsnapshot>",
+    )
+    .unwrap();
+    assert!(!x.memory && x.external);
+    assert!(virt::parse_snapshot_xml("<domainsnapshot/>").is_err());
+}
+
+#[test]
+fn snapshot_actions() {
+    let s = virt::snapshot_create_script("it's", "snap-1", Some("two\nlines"));
+    assert!(
+        s.contains("V snapshot-create-as --domain 'it'\\''s' --name 'snap-1' --description 'two\nlines'\n"),
+        "{s}"
+    );
+    assert!(!virt::snapshot_create_script("d", "n", Some("  ")).contains("--description"));
+    assert!(
+        virt::snapshot_revert_script("d", "n", true)
+            .contains("V snapshot-revert --domain 'd' --snapshotname 'n' --running\n")
+    );
+    assert!(virt::snapshot_delete_script("d", "-n").contains("V snapshot-delete --domain 'd' --snapshotname '-n'\n"));
+
+    // Captured refusals: all "the host said no", with its words
+    for (file, needle) in [
+        ("script_snapshot_error_raw.txt", "unsupported for storage type raw"),
+        ("script_snapshot_error_exists.txt", "sbx-a already exists"),
+        ("script_snapshot_error_not_found.txt", "no domain snapshot with matching name"),
+        ("script_snapshot_error_delete_not_found.txt", "no domain snapshot with matching name"),
+    ] {
+        match virt::parse_action(&fixture(file)) {
+            Err(VirtError::Command { message }) => assert!(message.contains(needle), "{file}: {message}"),
+            other => panic!("{file}: {other:?}"),
+        }
+    }
+}
+
+#[test]
+fn storage_pools_volumes_and_users() {
+    let st = virt::parse_storage(&fixture("script_storage.txt")).unwrap();
+    let names: Vec<&str> = st.pools.iter().map(|p| p.name.as_str()).collect();
+    assert_eq!(names, ["images", "sbx-iso", "sbx-off"]);
+    let images = &st.pools[0];
+    assert!(images.active && images.autostart);
+    assert_eq!(images.pool_type.as_deref(), Some("dir"));
+    assert_eq!(images.capacity, Some(20922114048));
+    assert_eq!(images.target.as_deref(), Some("/var/lib/libvirt/images"));
+    assert_eq!(images.volumes.as_ref().unwrap().len(), 6);
+    let iso = &st.pools[1];
+    assert!(iso.active && !iso.autostart);
+    // A name with a space, split from its path by the header's column
+    assert_eq!(
+        iso.volumes.as_ref().unwrap()[0],
+        virt::VirtVolumeRef {
+            name: "my disk.qcow2".into(),
+            path: Some("/var/lib/libvirt/sbx-iso/my disk.qcow2".into()),
+        }
+    );
+    // Inactive: the volumes cannot be listed
+    let off = &st.pools[2];
+    assert!(!off.active && off.volumes.is_none());
+    // Every domain's disks, shut-off ones and cdroms included
+    assert_eq!(st.disks.len(), 5);
+    let cdrom = st.disks.iter().find(|d| d.device == "cdrom").unwrap();
+    assert_eq!(cdrom.domain, "1438b9e3-f647-47ee-8ed2-6dbc3adccd68");
+    assert_eq!(cdrom.source.as_deref(), Some("/var/lib/libvirt/sbx-iso/tiny.iso"));
+    assert_expected(&st, "storage.expected.json");
+
+    let vols = virt::parse_volumes(&fixture("script_volumes_images.txt")).unwrap();
+    // `gone.qcow2` was asked for and does not exist: left out
+    assert_eq!(vols.len(), 6);
+    let run1 = vols.iter().find(|v| v.name == "run1.qcow2").unwrap();
+    assert_eq!(run1.format.as_deref(), Some("qcow2"));
+    assert_eq!(run1.capacity, Some(117440512));
+    assert_eq!(run1.backing.as_deref(), Some("/var/lib/libvirt/images/cirros.img"));
+    let vols = virt::parse_volumes(&fixture("script_volumes_sbx_iso.txt")).unwrap();
+    assert_eq!(vols[0].path.as_deref(), Some("/var/lib/libvirt/sbx-iso/my disk.qcow2"));
+    assert_eq!(vols[1].format.as_deref(), Some("raw"));
+    assert_expected(&vols, "volumes_sbx_iso.expected.json");
+}
+
+#[test]
+fn vol_list_columns() {
+    let raw = " Name                 Path\n\
+               -------------------------------------------\n \
+               a b  c.qcow2         /p/a b  c.qcow2\n \
+               x                    /p/x\n \
+               noname-path          -\n";
+    let v = virt::parse_vol_list(raw);
+    assert_eq!(v[0].name, "a b  c.qcow2");
+    assert_eq!(v[0].path.as_deref(), Some("/p/a b  c.qcow2"));
+    assert_eq!(v[1].name, "x");
+    assert_eq!(v[2].path, None);
+    assert!(virt::parse_vol_list("").is_empty());
+}
+
+#[test]
+fn blk_and_if_lists() {
+    let d = virt::parse_blklist(
+        "u",
+        " file   disk    vda   /var/a b.qcow2\n file   cdrom   hdc   -\n network disk sda rbd/img\n",
+    );
+    assert_eq!(d[0].source.as_deref(), Some("/var/a b.qcow2"));
+    assert_eq!(d[1].source, None);
+    assert_eq!((d[2].kind.as_str(), d[2].target.as_str()), ("network", "sda"));
+    let i = virt::parse_iflist(
+        "u",
+        " vnet0  bridge  br 0  virtio  52:54:00:AA:00:01\n -  user  -  e1000  52:54:00:aa:00:02\n",
+    );
+    assert_eq!(i[0].source.as_deref(), Some("br 0"));
+    assert_eq!(i[0].mac.as_deref(), Some("52:54:00:aa:00:01"));
+    assert_eq!((i[1].interface.as_deref(), i[1].source.as_deref()), (None, None));
+}
+
+#[test]
+fn networks_modes_ips_leases() {
+    let n = virt::parse_networks(&fixture("script_networks.txt")).unwrap();
+    let by = |name: &str| n.networks.iter().find(|x| x.name == name).unwrap();
+    let def = by("default");
+    assert!(def.active && def.autostart);
+    assert_eq!((def.mode.as_str(), def.bridge.as_deref()), ("nat", Some("virbr0")));
+    assert_eq!(def.ips[0].cidr, "192.168.122.1/24");
+    assert_eq!(def.ips[0].dhcp_ranges, ["192.168.122.2-192.168.122.254"]);
+    assert_eq!(def.connections, Some(3));
+    let iso = by("sbx-isolated");
+    assert_eq!(iso.mode, "isolated");
+    assert_eq!(iso.ips.len(), 2);
+    assert_eq!((iso.ips[1].family.as_str(), iso.ips[1].cidr.as_str()), ("ipv6", "fd00:99::1/64"));
+    let br = by("sbx-bridge");
+    assert!(!br.active);
+    assert_eq!((br.mode.as_str(), br.bridge.as_deref()), ("bridge", Some("br-sbx")));
+    // Inactive domains list their interfaces too, without a host device
+    let odd: Vec<_> = n
+        .ifaces
+        .iter()
+        .filter(|i| i.domain == "1438b9e3-f647-47ee-8ed2-6dbc3adccd68")
+        .collect();
+    assert_eq!(odd.len(), 2);
+    assert!(odd.iter().all(|i| i.interface.is_none()));
+    assert_eq!(odd[1].source.as_deref(), Some("sbx-isolated"));
+    assert_eq!(n.leases.len(), 2);
+    assert_eq!(n.leases[0].ip, "192.168.122.202/24");
+    assert_expected(&n, "networks.expected.json");
+}
+
+#[test]
+fn resource_scripts_errors() {
+    let raw = format!("{}\n", script::cmd_marker(virt::KEY_MISSING));
+    assert_eq!(virt::parse_storage(&raw), Err(VirtError::NotInstalled));
+    assert_eq!(virt::parse_networks(&raw), Err(VirtError::NotInstalled));
+    assert_eq!(virt::parse_snapshots(&raw), Err(VirtError::NotInstalled));
+    assert_eq!(virt::parse_volumes(&raw), Err(VirtError::NotInstalled));
+    let polkit = section(virt::KEY_POOLS, &fixture("error_polkit.txt"), 1);
+    assert!(matches!(virt::parse_storage(&polkit), Err(VirtError::PermissionDenied { .. })));
+    let polkit = section(virt::KEY_SNAP_LIST, &fixture("error_polkit.txt"), 1);
+    assert!(matches!(virt::parse_snapshots(&polkit), Err(VirtError::PermissionDenied { .. })));
+    assert!(matches!(
+        virt::parse_volumes("sudo: a password is required"),
+        Err(VirtError::Malformed { .. })
+    ));
+    // Nothing asked, nothing answered
+    assert_eq!(virt::parse_volumes(""), Ok(vec![]));
+}
+
+/// A `virsh` for the resource scripts: lists with hostile names, and every
+/// per-item call logged so the test can see the names arrive intact.
+#[cfg(unix)]
+fn resource_stub(tag: &str) -> PathBuf {
+    let d = std::env::temp_dir().join(format!("sbm_virt_res_{tag}_{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&d);
+    std::fs::create_dir_all(&d).unwrap();
+    let stub = r#"#!/bin/sh
+log="$(dirname "$0")/log"
+for a in "$@"; do printf '%s\n' "$a" >> "$log"; done
+echo --- >> "$log"
+cat >> "$(dirname "$0")/stdin"
+[ "$1 $2" = "--connect qemu:///system" ] || exit 9
+shift 2
+[ "$1" = "-q" ] && shift
+evil='it'"'"'s "odd" $(touch pwned) `touch pwned`'
+case "$1" in
+  pool-list|net-list|snapshot-list) printf '%s\n%s\n' plain "$evil" ;;
+  list) echo 11111111-2222-4333-8444-555555555555 ;;
+  pool-dumpxml) echo "<pool type='dir'><name>x</name></pool>" ;;
+  vol-list) printf ' Name   Path\n----------\n v      /v\n' ;;
+  net-dumpxml) echo "<network><name>x</name></network>" ;;
+  snapshot-dumpxml) printf "<domainsnapshot><name>%s</name></domainsnapshot>\n" "$5" ;;
+  snapshot-current) printf plain ;;
+  *) : ;;
+esac
+"#;
+    let path = d.join("virsh");
+    std::fs::write(&path, stub).unwrap();
+    Command::new("chmod").arg("+x").arg(&path).status().unwrap();
+    d
+}
+
+#[cfg(unix)]
+#[test]
+fn resource_scripts_under_sh() {
+    let d = resource_stub("ok");
+    let path = format!("{}:/usr/bin:/bin", d.display());
+    let evil = "it's \"odd\" $(touch pwned) `touch pwned`";
+
+    let st = virt::parse_storage(&run_sh(&virt::storage_script(), &path)).unwrap();
+    assert_eq!(st.pools.len(), 2);
+    assert_eq!(st.pools[1].name, evil);
+    assert_eq!(st.pools[1].volumes.as_ref().unwrap()[0].name, "v");
+    let n = virt::parse_networks(&run_sh(&virt::networks_script(), &path)).unwrap();
+    assert_eq!(n.networks[1].name, evil);
+    let s = virt::parse_snapshots(&run_sh(&virt::snapshots_script(evil), &path)).unwrap();
+    assert_eq!(s.iter().map(|s| s.name.as_str()).collect::<Vec<_>>(), ["plain", evil]);
+    assert!(s[0].current);
+    let v = run_sh(&virt::volumes_script(evil, &[evil.to_string()]), &path);
+    assert_eq!(virt::parse_volumes(&v), Ok(vec![]));
+
+    let log = std::fs::read_to_string(d.join("log")).unwrap();
+    // Each loop hands the name over as one argument, untouched
+    assert!(log.contains(&format!("pool-dumpxml\n--pool\n{evil}\n---\n")), "{log}");
+    assert!(log.contains(&format!("vol-list\n--pool\n{evil}\n---\n")), "{log}");
+    assert!(log.contains(&format!("net-dumpxml\n--network\n{evil}\n---\n")), "{log}");
+    assert!(log.contains(&format!("--domain\n{evil}\n--snapshotname\n{evil}\n---\n")), "{log}");
+    assert!(log.contains(&format!("vol-dumpxml\n--pool\n{evil}\n--vol\n{evil}\n---\n")), "{log}");
+    assert!(log.contains("domblklist\n--details\n--domain\n11111111-2222-4333-8444-555555555555\n"));
+    assert!(!d.join("pwned").exists() && !std::path::Path::new("pwned").exists());
+    assert_eq!(std::fs::read_to_string(d.join("stdin")).unwrap(), "");
+    let _ = std::fs::remove_dir_all(&d);
+}
+
+#[cfg(unix)]
+#[test]
+fn probe_finds_pve_and_containers() {
+    let d = std::env::temp_dir().join(format!("sbm_virt_probe_{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&d);
+    std::fs::create_dir_all(&d).unwrap();
+    let stub = |name: &str, body: &str| {
+        use std::os::unix::fs::PermissionsExt;
+        let p = d.join(name);
+        std::fs::write(&p, format!("#!/bin/sh\n{body}\n")).unwrap();
+        std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o755)).unwrap();
+    };
+    let path = format!("{}:/usr/bin:/bin", d.display());
+
+    // Alpine in a PVE container: no systemd, `openrc --sys` says LXC. A
+    // hypervisor name before it is not a container.
+    stub("systemd-detect-virt", "echo none; exit 1");
+    stub("openrc", "echo LXC");
+    let p = virt::parse_probe(&run_sh(&virt::probe_script(), &path)).unwrap();
+    assert_eq!(p.container.as_deref(), Some("lxc"));
+    assert_eq!((p.pve, p.libvirt), (None, None));
+
+    // PVE: its line, and nothing else asked (the virsh stub is not run)
+    stub(
+        "pveversion",
+        "echo 'pve-manager/9.2.2/b9984c6d90a4bd80 (running kernel: 7.0.2-6-pve)'",
+    );
+    stub("virsh", "touch \"$0.ran\"; echo 'Using library: libvirt 11.3.0'");
+    let p = virt::parse_probe(&run_sh(&virt::probe_script(), &path)).unwrap();
+    assert_eq!(
+        p.pve.as_deref(),
+        Some("pve-manager/9.2.2/b9984c6d90a4bd80 (running kernel: 7.0.2-6-pve)")
+    );
+    assert_eq!((p.container, p.libvirt), (None, None));
+    assert!(!d.join("virsh.ran").exists());
+    let _ = std::fs::remove_dir_all(&d);
 }

@@ -114,12 +114,31 @@ abstract class _$RemoteDesktopProfiles
   }
 }
 
+/// Every remote desktop session there is — the remote desktop tab's and the
+/// consoles other pages show — and their connections.
+///
+/// A session off screen is not closed here: each is registered with
+/// [SessionKeepAlive], told whenever it comes on or goes off screen, and
+/// closed through [close] when that decides it has been left long enough.
+
 @ProviderFor(RemoteDesktopSessions)
 final remoteDesktopSessionsProvider = RemoteDesktopSessionsProvider._();
 
+/// Every remote desktop session there is — the remote desktop tab's and the
+/// consoles other pages show — and their connections.
+///
+/// A session off screen is not closed here: each is registered with
+/// [SessionKeepAlive], told whenever it comes on or goes off screen, and
+/// closed through [close] when that decides it has been left long enough.
 final class RemoteDesktopSessionsProvider
     extends
         $NotifierProvider<RemoteDesktopSessions, RemoteDesktopSessionsState> {
+  /// Every remote desktop session there is — the remote desktop tab's and the
+  /// consoles other pages show — and their connections.
+  ///
+  /// A session off screen is not closed here: each is registered with
+  /// [SessionKeepAlive], told whenever it comes on or goes off screen, and
+  /// closed through [close] when that decides it has been left long enough.
   RemoteDesktopSessionsProvider._()
     : super(
         from: null,
@@ -148,7 +167,14 @@ final class RemoteDesktopSessionsProvider
 }
 
 String _$remoteDesktopSessionsHash() =>
-    r'112f6cb926735221f501c6da2376f23219c86b90';
+    r'e97274b438d2ed244597f66cdf33fbeb3a7e8008';
+
+/// Every remote desktop session there is — the remote desktop tab's and the
+/// consoles other pages show — and their connections.
+///
+/// A session off screen is not closed here: each is registered with
+/// [SessionKeepAlive], told whenever it comes on or goes off screen, and
+/// closed through [close] when that decides it has been left long enough.
 
 abstract class _$RemoteDesktopSessions
     extends $Notifier<RemoteDesktopSessionsState> {

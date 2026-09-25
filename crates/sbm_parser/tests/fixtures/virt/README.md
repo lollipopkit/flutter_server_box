@@ -47,6 +47,31 @@ real scripts and is the check that the formats hold; the Dart one is
 | `error_permission.txt` | hand-written | same | socket `Permission denied` (a host whose socket is group-restricted) |
 | `error_no_daemon.txt` | hand-written | any | daemon not running |
 
-`overview.expected.json`, `detail_cirros_run.expected.json` and
-`detail_win11.expected.json` are the parsers' output for these inputs,
-asserted by both the Rust and the Dart test.
+`script_*.txt` are whole script outputs rather than one command's: what
+`snapshots_script`, `storage_script`, `volumes_script`, `networks_script` and
+the snapshot actions printed when fed to `sh` on the same host, markers and
+`SbVirtRc=` lines included. For them the host also had, besides the domains
+above: snapshots `sbx-a` (running, with memory), `sbx-off` (taken shut off,
+disks only) and `sbx-b` (running) of `cirros-run` in a chain, `sbx-a`
+current; an active dir pool `sbx-iso` holding `my disk.qcow2` (a name with a
+space) and `tiny.iso`, and an inactive dir pool `sbx-off`; an isolated network
+`sbx-isolated` with DHCP and an IPv6 address, and an inactive bridge-mode
+network `sbx-bridge`; `it's-"odd"` with a second NIC on `sbx-isolated` and
+`tiny.iso` as a cdrom.
+
+| File | Script | Notes |
+| --- | --- | --- |
+| `script_snapshots_cirros_run.txt` | `snapshots_script` | three snapshots, `snapshot-dumpxml` with the embedded `<domain>` |
+| `script_snapshots_none.txt` | `snapshots_script` | no snapshots: `snapshot-current` fails (`has no current snapshot`) |
+| `script_snapshot_error_raw.txt` | `snapshot_create_script` | a domain with a raw disk: `internal snapshot for disk vda unsupported for storage type raw` |
+| `script_snapshot_error_exists.txt` | `snapshot_create_script` | a name taken: `domain moment sbx-a already exists` |
+| `script_snapshot_error_not_found.txt`, `script_snapshot_error_delete_not_found.txt` | `snapshot_revert_script` / `snapshot_delete_script` | an unknown snapshot |
+| `script_storage.txt` | `storage_script` | `vol-list` with its header, so the Path column is found |
+| `script_volumes_images.txt` | `volumes_script` | qcow2 overlays with a backing file, and `gone.qcow2`, which does not exist |
+| `script_volumes_sbx_iso.txt` | `volumes_script` | the name with a space, a raw `.iso` |
+| `script_networks.txt` | `networks_script` | NAT, isolated with IPv6, inactive bridge mode, two DHCP leases |
+
+`overview.expected.json`, `detail_*.expected.json`, `snapshots_*.expected.json`,
+`storage.expected.json`, `volumes_*.expected.json` and `networks.expected.json`
+are the parsers' output for these inputs, asserted by both the Rust and the
+Dart test.

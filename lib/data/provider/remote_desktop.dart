@@ -10,6 +10,7 @@ import 'package:server_box/core/utils/ssh_local_tunnel.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/session_keep_alive.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/src/rust/api/remote_desktop.dart' as ffi;
 
@@ -281,16 +282,24 @@ class RemoteDesktopProfiles extends _$RemoteDesktopProfiles {
   }
 }
 
+/// Every remote desktop session there is — the remote desktop tab's and the
+/// consoles other pages show — and their connections.
+///
+/// A session off screen is not closed here: each is registered with
+/// [SessionKeepAlive], told whenever it comes on or goes off screen, and
+/// closed through [close] when that decides it has been left long enough.
 @Riverpod(keepAlive: true)
 class RemoteDesktopSessions extends _$RemoteDesktopSessions {
   final Map<String, _SessionEntry> _entries = {};
   late final AppLifecycleListener _lifecycle;
+  late final SessionKeepAlive _keepAlive;
   bool _disposed = false;
   bool _appVisible = true;
   bool _surfaceVisible = false;
 
   @override
   RemoteDesktopSessionsState build() {
+    _keepAlive = ref.read(sessionKeepAliveProvider.notifier);
     _lifecycle = AppLifecycleListener(
       onResume: _resume,
       onPause: _pause,
@@ -306,6 +315,20 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
       _entries.clear();
     });
     return const RemoteDesktopSessionsState();
+  }
+
+  /// Hands [profile]'s session to [SessionKeepAlive], named for its notice by
+  /// the profile and the server it goes through.
+  void _registerKeepAlive(RemoteDesktopProfile profile) {
+    final id = profile.id;
+    _keepAlive.register(
+      id,
+      name: profile.name,
+      host:
+          ref.read(serversProvider).servers[profile.serverId]?.name ??
+          profile.host,
+      onClose: () => close(id),
+    );
   }
 
   /// Opens a profile once; repeated launches focus the existing session.
@@ -330,6 +353,7 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
       scaleFactor: scaleFactor.clamp(100, 500),
     );
     _entries[profile.id] = entry;
+    _registerKeepAlive(profile);
     state = state
         .put(RemoteDesktopSessionView(profile: profile, visible: true))
         .select(profile.id);
@@ -362,6 +386,7 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
       target: target,
     );
     _entries[profile.id] = entry;
+    _registerKeepAlive(profile);
     state = state.putConsole(RemoteDesktopSessionView(profile: profile));
     _syncVisibility();
     unawaited(_connect(entry));
@@ -386,6 +411,7 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
   Future<void> close(String id) async {
     final entry = _entries.remove(id);
     if (entry == null) return;
+    _keepAlive.unregister(id);
     entry.closed = true;
     entry.generation++;
     await _disposeEntry(entry);
@@ -867,8 +893,12 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
 
   /// Whether [entry]'s frames are wanted: its page is on screen, and so is
   /// the app.
-  bool _shown(_SessionEntry entry) {
-    if (!_appVisible) return false;
+  bool _shown(_SessionEntry entry) => _appVisible && _onScreen(entry);
+
+  /// Whether the page showing [entry] is the one on screen, whether or not
+  /// the app is. What [SessionKeepAlive] is told: leaving the app is not
+  /// leaving the session.
+  bool _onScreen(_SessionEntry entry) {
     if (entry.target != null) return entry.consoleVisible;
     return _surfaceVisible && state.activeId == entry.profile.id;
   }
@@ -883,6 +913,7 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
       final entry = _entries[session.id];
       final visible = entry != null && _shown(entry);
       entry?.handle?.setVisible(visible: visible);
+      if (entry != null) _keepAlive.setVisible(session.id, _onScreen(entry));
       if (session.visible != visible) {
         next = next.put(session.copyWith(visible: visible));
       }

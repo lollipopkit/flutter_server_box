@@ -3318,7 +3318,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get pveTokenTip =>
-      'Maak er een aan in PVE onder Datacenter → Rechten → API Tokens. Het heeft VM.Audit, VM.PowerMgmt, VM.Console en Sys.Audit nodig op de paden die getoond worden; met privilegescheiding aan moeten ze aan het token zelf worden toegekend.';
+      'Maak er een aan in PVE onder Datacenter → Rechten → API Tokens. Het heeft VM.Audit, VM.PowerMgmt, VM.Console, VM.Snapshot, VM.Snapshot.Rollback, Datastore.Audit en Sys.Audit nodig op de paden die getoond worden; met privilegescheiding aan moeten ze aan het token zelf worden toegekend.';
 
   @override
   String get pveTokenIdInvalid =>
@@ -3391,14 +3391,31 @@ class AppLocalizationsNl extends AppLocalizations {
   String get virtProbeNotChecked => 'Nog niet gecontroleerd';
 
   @override
-  String get virtProbeAbsent => 'virsh niet gevonden';
+  String get virtProbeAbsent => 'Geen host';
+
+  @override
+  String virtProbeContainer(String kind) {
+    return '$kind-container';
+  }
+
+  @override
+  String get virtProbeContainerTip =>
+      'Deze server draait in een container en is dus een gast, geen host. Hij wordt beheerd vanaf de host waarop hij draait.';
+
+  @override
+  String get virtProbePve => 'PVE, niet ingesteld';
+
+  @override
+  String virtPveSetupTip(String version) {
+    return 'Op deze server draait $version. Vul de API-toegang in bij de serverinstellingen (een API-token wordt aanbevolen) om de virtuele machines en containers hier te beheren.';
+  }
 
   @override
   String get virtNoHosts => 'Geen virtualisatiehosts';
 
   @override
   String get virtNoHostsTip =>
-      'Een server met een PVE-adres is een host, net als een server waarop virsh antwoordt. De overige servers kun je controleren via de hostwisselaar.';
+      'Een server met Proxmox VE en ingevulde API-toegang is een host, net als een server waarop virsh antwoordt. De overige servers kun je controleren via de hostwisselaar.';
 
   @override
   String get virtNoGuests => 'Geen virtuele machines of containers';
@@ -3506,4 +3523,123 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get virtErrActionFailed => 'De host heeft de actie geweigerd';
+
+  @override
+  String get remoteSessionIdleTimeout => 'Sluiten na verlaten';
+
+  @override
+  String get remoteSessionIdleTimeoutTip =>
+      'Hoe lang een extern bureaublad of de console van een gast verbonden blijft nadat je die verlaat. Voor het sluiten geeft een melding je 10 seconden om het open te houden.';
+
+  @override
+  String get remoteSessionKeepAlive => 'Openhouden';
+
+  @override
+  String remoteSessionClosingIn(int seconds) {
+    return 'Sluit over $seconds s';
+  }
+
+  @override
+  String get reopen => 'Opnieuw openen';
+
+  @override
+  String get virtSnapshots => 'Snapshots';
+
+  @override
+  String get virtSnapshotCreate => 'Snapshot maken';
+
+  @override
+  String get virtSnapshotNone => 'Nog geen snapshots';
+
+  @override
+  String get virtSnapshotWithMemory => 'Schijven en geheugen';
+
+  @override
+  String get virtSnapshotDiskOnly => 'Alleen schijven';
+
+  @override
+  String get virtSnapshotParent => 'Bovenliggend';
+
+  @override
+  String get virtSnapshotRevert => 'Terugzetten';
+
+  @override
+  String get virtSnapshotMemory => 'Geheugen opnemen';
+
+  @override
+  String get virtSnapshotMemoryTip =>
+      'Terugzetten hervat de gast vanaf dit moment.';
+
+  @override
+  String get virtSnapshotMemoryAlways =>
+      'Hier bevat een snapshot van een draaiende gast altijd het geheugen.';
+
+  @override
+  String get virtSnapshotMemoryOff =>
+      'De gast draait niet, dus alleen de schijven worden opgeslagen.';
+
+  @override
+  String get virtSnapshotNameInvalid =>
+      'Eerst een letter, dan letters, cijfers, - of _; 2 tot 40 tekens.';
+
+  @override
+  String get virtSnapshotNameTaken =>
+      'Er bestaat al een snapshot met deze naam.';
+
+  @override
+  String get virtSnapshotRevertTip =>
+      'Terugzetten verwijdert alle wijzigingen sinds de snapshot.';
+
+  @override
+  String virtSnapshotRevertAsk(String guest, String snapshot) {
+    return '$guest terugzetten naar $snapshot? Alle wijzigingen sindsdien gaan verloren.';
+  }
+
+  @override
+  String virtSnapshotRevertStops(String guest) {
+    return 'Deze snapshot heeft geen geheugen: $guest wordt gestopt.';
+  }
+
+  @override
+  String get virtSnapshotStartAfter => 'Daarna starten';
+
+  @override
+  String get virtVolumes => 'Volumes';
+
+  @override
+  String get virtNoPools => 'Geen opslagpools';
+
+  @override
+  String get virtNoNetworks => 'Geen netwerken';
+
+  @override
+  String get virtPoolInactive =>
+      'De pool is niet actief, dus de volumes kunnen niet worden weergegeven.';
+
+  @override
+  String get virtShared => 'Gedeeld tussen nodes';
+
+  @override
+  String get virtBackingFile => 'Basisbestand';
+
+  @override
+  String get virtNetIsolated => 'Geïsoleerd';
+
+  @override
+  String get virtNetBridged => 'Gebrugd';
+
+  @override
+  String get virtNetRouted => 'Gerouteerd';
+
+  @override
+  String get virtBridge => 'Bridge';
+
+  @override
+  String get virtPorts => 'Poorten';
+
+  @override
+  String get virtAttachedGuests => 'Gasten erop';
+
+  @override
+  String get virtNoAttachedGuests => 'Geen gasten erop';
 }

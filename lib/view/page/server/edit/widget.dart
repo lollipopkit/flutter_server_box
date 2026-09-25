@@ -541,9 +541,11 @@ extension _Widgets on _ServerEditPageState {
           ],
         ),
         _buildOptionalTile(
+          key: _pveKey,
           icon: MingCute.server_line,
           title: 'PVE',
           summary: 'Proxmox VE',
+          initiallyExpanded: widget.args?.section == ServerEditSection.pve,
           children: [_buildPVEs()],
         ),
         _buildOptionalTile(
@@ -587,8 +589,12 @@ extension _Widgets on _ServerEditPageState {
     required String summary,
     required List<Widget> children,
     String? tip,
+    Key? key,
+    bool initiallyExpanded = false,
   }) {
     return ExpandableTile(
+      key: key,
+      initiallyExpanded: initiallyExpanded,
       leading: Icon(icon),
       title: tip == null ? Text(title) : TipText(title, tip),
       summary: Text(summary),
@@ -834,7 +840,7 @@ extension _Widgets on _ServerEditPageState {
   /// recommends for an app — its permissions are its own and it never asks for
   /// a TOTP code. The password stays for configurations that already use it.
   Widget _buildPVEs() {
-    const addr = 'https://127.0.0.1:8006';
+    const addr = PveConfig.localAddr;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [

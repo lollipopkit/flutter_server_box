@@ -654,7 +654,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
           onPressed: () async {
             final delete = await ServerEditPage.route.go(
               context,
-              args: SpiRequiredArgs(si.spi),
+              args: ServerEditArgs(si.spi),
             );
             if (delete == true) {
               context.pop();

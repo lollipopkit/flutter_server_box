@@ -83,7 +83,7 @@ fn json_err(e: serde_json::Error) -> VirtFfiError {
     }
 }
 
-/// Host probe: `virsh` present and the daemon answering this user
+/// Host probe: Proxmox VE, a container, or `virsh` answering this user
 #[flutter_rust_bridge::frb(sync)]
 pub fn virt_probe_script() -> String {
     virt::probe_script()
@@ -113,7 +113,7 @@ pub fn virt_console_command(domain: String) -> String {
     virt::console_command(&domain)
 }
 
-/// [`virt_probe_script`]'s output → `VirtVersion` JSON
+/// [`virt_probe_script`]'s output → `VirtHostProbe` JSON
 pub fn parse_virt_probe_json(raw: String) -> Result<String, VirtFfiError> {
     serde_json::to_string(&virt::parse_probe(&raw)?).map_err(json_err)
 }
@@ -132,4 +132,72 @@ pub fn parse_virt_domain_detail_json(raw: String) -> Result<String, VirtFfiError
 #[flutter_rust_bridge::frb(sync)]
 pub fn parse_virt_action(raw: String) -> Result<(), VirtFfiError> {
     Ok(virt::parse_action(&raw)?)
+}
+
+/// Every snapshot of one domain
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_snapshots_script(domain: String) -> String {
+    virt::snapshots_script(&domain)
+}
+
+/// [`virt_snapshots_script`]'s output → `Vec<VirtSnapshotInfo>` JSON
+pub fn parse_virt_snapshots_json(raw: String) -> Result<String, VirtFfiError> {
+    serde_json::to_string(&virt::parse_snapshots(&raw)?).map_err(json_err)
+}
+
+/// An internal snapshot; with memory when the domain is active. Parse with
+/// [`parse_virt_action`].
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_snapshot_create_script(
+    domain: String,
+    name: String,
+    description: Option<String>,
+) -> String {
+    virt::snapshot_create_script(&domain, &name, description.as_deref())
+}
+
+/// Revert to a snapshot; `running` starts the domain afterwards. Parse with
+/// [`parse_virt_action`].
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_snapshot_revert_script(domain: String, name: String, running: bool) -> String {
+    virt::snapshot_revert_script(&domain, &name, running)
+}
+
+/// Delete one snapshot. Parse with [`parse_virt_action`].
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_snapshot_delete_script(domain: String, name: String) -> String {
+    virt::snapshot_delete_script(&domain, &name)
+}
+
+/// Pools, volume names and every domain's disks
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_storage_script() -> String {
+    virt::storage_script()
+}
+
+/// [`virt_storage_script`]'s output → `VirtStorage` JSON
+pub fn parse_virt_storage_json(raw: String) -> Result<String, VirtFfiError> {
+    serde_json::to_string(&virt::parse_storage(&raw)?).map_err(json_err)
+}
+
+/// What each of `names` in `pool` is: format and sizes
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_volumes_script(pool: String, names: Vec<String>) -> String {
+    virt::volumes_script(&pool, &names)
+}
+
+/// [`virt_volumes_script`]'s output → `Vec<VirtVolume>` JSON
+pub fn parse_virt_volumes_json(raw: String) -> Result<String, VirtFfiError> {
+    serde_json::to_string(&virt::parse_volumes(&raw)?).map_err(json_err)
+}
+
+/// Networks, DHCP leases and every domain's interfaces
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_networks_script() -> String {
+    virt::networks_script()
+}
+
+/// [`virt_networks_script`]'s output → `VirtNetworks` JSON
+pub fn parse_virt_networks_json(raw: String) -> Result<String, VirtFfiError> {
+    serde_json::to_string(&virt::parse_networks(&raw)?).map_err(json_err)
 }

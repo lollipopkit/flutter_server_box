@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
-import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/private_key.dart';
@@ -81,7 +80,7 @@ void main() {
                     onPressed: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) =>
-                            ServerEditPage(args: SpiRequiredArgs(server)),
+                            ServerEditPage(args: ServerEditArgs(server)),
                       ),
                     ),
                     child: const Text('Open editor'),
@@ -181,7 +180,7 @@ void main() {
                     onPressed: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) =>
-                            ServerEditPage(args: SpiRequiredArgs(server)),
+                            ServerEditPage(args: ServerEditArgs(server)),
                       ),
                     ),
                     child: const Text('Open editor'),
@@ -264,7 +263,7 @@ void main() {
                     onPressed: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) =>
-                            ServerEditPage(args: SpiRequiredArgs(server)),
+                            ServerEditPage(args: ServerEditArgs(server)),
                       ),
                     ),
                     child: const Text('Open editor'),

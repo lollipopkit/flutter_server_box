@@ -240,13 +240,26 @@ abstract class VirtStats with _$VirtStats {
 /// [VirtHostKind].
 ///
 /// They describe this build's support, not the hypervisor's in general:
-/// libvirt has snapshots, but until the app manages them [snapshots] is false.
+/// PVE has backups, but until the app manages them [backup] is false.
 @freezed
 abstract class VirtCapabilities with _$VirtCapabilities {
   const factory VirtCapabilities({
     @Default(false) bool lxc,
     @Default(false) bool pause,
+
+    /// Snapshots can be listed, taken, reverted to and deleted.
     @Default(false) bool snapshots,
+
+    /// A snapshot of an active guest always holds its memory, with no way to
+    /// leave it out (libvirt's internal snapshots: QEMU refuses one without).
+    /// Otherwise it is the user's choice, where the guest is not a container.
+    @Default(false) bool snapshotMemoryRequired,
+
+    /// Storage pools and their volumes can be listed.
+    @Default(false) bool storage,
+
+    /// Networks and the guests on them can be listed.
+    @Default(false) bool network,
     @Default(false) bool backup,
 
     /// More than one node: guests are grouped by node.

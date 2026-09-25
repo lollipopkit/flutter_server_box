@@ -11,9 +11,11 @@ import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server.dart' show ServerConn;
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/virt/libvirt.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
+import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/virt/backend.dart';
@@ -64,7 +66,12 @@ enum VirtProbeStatus {
   /// error says what to change).
   found,
 
-  /// No `virsh` on this server.
+  /// Proxmox VE, without a PVE configuration: a host once its API access is
+  /// filled in ([VirtProbe.pve] says which version).
+  pve,
+
+  /// Neither PVE nor `virsh` on this server. [VirtProbe.container] says
+  /// when that is because it is a container — somebody's guest.
   absent,
 
   /// The server could not be asked: [VirtProbe.error] says why.
@@ -79,6 +86,12 @@ abstract class VirtProbe with _$VirtProbe {
 
     /// libvirt's version, when found and readable.
     String? version,
+
+    /// `pveversion`'s line, for [VirtProbeStatus.pve].
+    String? pve,
+
+    /// The container type (`lxc`, `docker`, …), for [VirtProbeStatus.absent].
+    String? container,
     VirtErr? error,
   }) = _VirtProbe;
 }
@@ -96,7 +109,7 @@ abstract class VirtHostsState with _$VirtHostsState {
     /// server" ([VirtHosts.probe]).
     @Default(<String>[]) List<String> others,
 
-    /// libvirt probe results by server id, this session's.
+    /// Host probe results by server id, this session's.
     @Default(<String, VirtProbe>{}) Map<String, VirtProbe> probes,
   }) = _VirtHostsState;
 
@@ -108,7 +121,9 @@ abstract class VirtHostsState with _$VirtHostsState {
 /// PVE: a server with a `server_pve` row — explicit, and followed as it
 /// changes ([pveConfigsProvider]). libvirt: `virsh`
 /// answers through `ensureExec()`, probed on demand, cached for the session.
-/// A server that is both is shown as PVE and not probed.
+/// A server that is both is shown as PVE and not probed. The probe also
+/// finds PVE without a row ([VirtProbeStatus.pve]): not a host until its API
+/// access is configured, which is what the switcher offers for it.
 ///
 /// **Who is probed without being asked.** A probe is a connection, so the
 /// tab's first listing and a pull to refresh probe only the servers the
@@ -170,8 +185,8 @@ class VirtHosts extends _$VirtHosts {
     );
   }
 
-  /// Probes [serverId] for libvirt, unless this session already has — or
-  /// always with [force].
+  /// Probes [serverId], unless this session already has — or always with
+  /// [force].
   Future<void> probe(String serverId, {bool force = false}) {
     final running = _inFlight[serverId];
     if (running != null) return running;
@@ -198,16 +213,23 @@ class VirtHosts extends _$VirtHosts {
     final backend = LibvirtBackend.of(ref, serverId);
     VirtProbe result;
     try {
-      final version = await backend.probe();
-      result = VirtProbe(
-        status: VirtProbeStatus.found,
-        version: version.libvirt,
-      );
+      final found = await backend.probe();
+      result = switch (found) {
+        VirtHostProbeResult(:final pve?) => VirtProbe(
+          status: VirtProbeStatus.pve,
+          pve: pve,
+        ),
+        VirtHostProbeResult(:final libvirt?) => VirtProbe(
+          status: VirtProbeStatus.found,
+          version: libvirt.libvirt,
+        ),
+        _ => VirtProbe(
+          status: VirtProbeStatus.absent,
+          container: found.container,
+        ),
+      };
     } on VirtErr catch (e) {
       result = switch (e.type) {
-        VirtErrType.notInstalled => const VirtProbe(
-          status: VirtProbeStatus.absent,
-        ),
         VirtErrType.permissionDenied ||
         VirtErrType.sudoPasswordRequired ||
         VirtErrType.sudoPasswordRejected => VirtProbe(
@@ -217,7 +239,7 @@ class VirtHosts extends _$VirtHosts {
         _ => VirtProbe(status: VirtProbeStatus.failed, error: e),
       };
     } catch (e, s) {
-      Loggers.app.warning('libvirt probe failed', e, s);
+      Loggers.app.warning('Virtualization host probe failed', e, s);
       result = VirtProbe(
         status: VirtProbeStatus.failed,
         error: VirtErr(type: VirtErrType.unknown, message: '$e', cause: e),
@@ -333,6 +355,10 @@ abstract class VirtHostState with _$VirtHostState {
     /// Guests with a power action in flight, and which.
     @Default(<String, VirtPowerAction>{}) Map<String, VirtPowerAction> busy,
 
+    /// Guests with a snapshot operation in flight, and which. A guest in
+    /// either map takes no other action until it is out.
+    @Default(<String, VirtSnapshotOp>{}) Map<String, VirtSnapshotOp> snapshotOps,
+
     /// This session's readings per guest, oldest first, capped at
     /// [VirtHostNotifier.sampleLimit] — the chart for a host without
     /// `storedHistory`, and the live tail for one with it.
@@ -352,9 +378,18 @@ abstract class VirtHostState with _$VirtHostState {
 
   /// What [guest] offers now: nothing while an action of this app's is in
   /// flight on it.
-  Set<VirtPowerAction> actionsOf(VirtGuest guest) =>
-      busy.containsKey(guest.id) ? const {} : guest.actions;
+  Set<VirtPowerAction> actionsOf(VirtGuest guest) => isBusy(guest.id)
+      ? const {}
+      : guest.actions;
+
+  /// A power action or a snapshot operation of this app's is in flight on
+  /// the guest [id].
+  bool isBusy(String id) =>
+      busy.containsKey(id) || snapshotOps.containsKey(id);
 }
+
+/// A snapshot operation in flight.
+enum VirtSnapshotOp { create, revert, delete }
 
 /// One virtualization host: its backend, periodic refresh, actions in flight
 /// and the answers the user gives (TOTP, certificate, sudo password).
@@ -385,6 +420,11 @@ class VirtHostNotifier extends _$VirtHostNotifier {
   /// it, since what was asked for (the state after an action) may be newer
   /// than what the running one reads.
   bool _again = false;
+
+  /// Completed when that second run has finished, so whoever asked for it —
+  /// a pull to refresh, a test — waits for the state it asked for rather than
+  /// returning while the first run still reads the old one.
+  Completer<void>? _againDone;
 
   /// The load [build] starts, done when it has finished (whatever came of
   /// it). A caller that needs the host loaded awaits this rather than asking
@@ -450,8 +490,9 @@ class VirtHostNotifier extends _$VirtHostNotifier {
   Future<void> refresh({bool auto = false}) async {
     if (!ref.mounted) return;
     if (_refreshing) {
-      if (!auto) _again = true;
-      return;
+      if (auto) return;
+      _again = true;
+      return (_againDone ??= Completer<void>()).future;
     }
     if (auto && (state.error?.needsInput ?? false)) return;
     final backend = _backend;
@@ -480,9 +521,14 @@ class VirtHostNotifier extends _$VirtHostNotifier {
       );
     } finally {
       _refreshing = false;
+      final done = _againDone;
+      _againDone = null;
       if (_again && ref.mounted) {
         _again = false;
-        unawaited(refresh());
+        unawaited(refresh().whenComplete(() => done?.complete()));
+      } else {
+        _again = false;
+        done?.complete();
       }
     }
   }
@@ -528,7 +574,7 @@ class VirtHostNotifier extends _$VirtHostNotifier {
   /// [VirtErrType.unsupported].
   Future<void> power(String guestId, VirtPowerAction action) async {
     final guest = _guest(guestId);
-    if (state.busy.containsKey(guestId)) {
+    if (state.isBusy(guestId)) {
       throw VirtErr(
         type: VirtErrType.unsupported,
         message: '${guest.name} is busy',
@@ -547,6 +593,81 @@ class VirtHostNotifier extends _$VirtHostNotifier {
 
   Future<VirtGuestDetail> detail(String guestId) =>
       _backend.detail(_guest(guestId));
+
+  Future<List<VirtGuestSnapshot>> snapshots(String guestId) =>
+      _backend.snapshots(_guest(guestId));
+
+  /// Takes a snapshot of [guestId], then refreshes. [memory] where
+  /// `virtSnapshotMemory` says it is the user's choice. Throws [VirtErr].
+  Future<void> createSnapshot(
+    String guestId, {
+    required String name,
+    String? description,
+    bool memory = false,
+  }) => _snapshotOp(
+    guestId,
+    VirtSnapshotOp.create,
+    (guest) => _backend.createSnapshot(
+      guest,
+      name: name,
+      description: description,
+      memory: memory,
+    ),
+  );
+
+  /// Reverts [guestId] to the snapshot [name], then refreshes: the guest's
+  /// state is the snapshot's now. [start] starts it again after a snapshot
+  /// without memory.
+  Future<void> revertSnapshot(
+    String guestId,
+    String name, {
+    bool start = false,
+  }) => _snapshotOp(
+    guestId,
+    VirtSnapshotOp.revert,
+    (guest) => _backend.revertSnapshot(guest, name, start: start),
+  );
+
+  Future<void> deleteSnapshot(String guestId, String name) => _snapshotOp(
+    guestId,
+    VirtSnapshotOp.delete,
+    (guest) => _backend.deleteSnapshot(guest, name),
+  );
+
+  /// One operation per guest at a time, power actions included: a snapshot
+  /// taken while a shutdown is on its way, or a revert under a running
+  /// snapshot, is a race the host settles in a way nobody asked for.
+  Future<void> _snapshotOp(
+    String guestId,
+    VirtSnapshotOp op,
+    Future<void> Function(VirtGuest guest) run,
+  ) async {
+    final guest = _guest(guestId);
+    if (state.isBusy(guestId)) {
+      throw VirtErr(
+        type: VirtErrType.unsupported,
+        message: '${guest.name} is busy',
+      );
+    }
+    state = state.copyWith(snapshotOps: {...state.snapshotOps, guestId: op});
+    try {
+      await run(guest);
+    } finally {
+      if (ref.mounted) {
+        state = state.copyWith(
+          snapshotOps: {...state.snapshotOps}..remove(guestId),
+        );
+        unawaited(refresh());
+      }
+    }
+  }
+
+  Future<List<VirtStoragePool>> storagePools() => _backend.storagePools();
+
+  Future<List<VirtVolume>> volumes(VirtStoragePool pool) =>
+      _backend.volumes(pool);
+
+  Future<List<VirtNetwork>> networks() => _backend.networks();
 
   /// A fresh console handle — see [VirtConsole] for what each kind needs.
   Future<VirtConsole> console(String guestId, VirtConsoleKind kind) =>
@@ -643,8 +764,99 @@ final class _MissingBackend implements VirtBackend {
   }) async => _fail();
 
   @override
+  Future<List<VirtGuestSnapshot>> snapshots(VirtGuest guest) async => _fail();
+
+  @override
+  Future<void> createSnapshot(
+    VirtGuest guest, {
+    required String name,
+    String? description,
+    bool memory = false,
+  }) async => _fail();
+
+  @override
+  Future<void> revertSnapshot(
+    VirtGuest guest,
+    String name, {
+    bool start = false,
+  }) async => _fail();
+
+  @override
+  Future<void> deleteSnapshot(VirtGuest guest, String name) async => _fail();
+
+  @override
+  Future<List<VirtStoragePool>> storagePools() async => _fail();
+
+  @override
+  Future<List<VirtVolume>> volumes(VirtStoragePool pool) async => _fail();
+
+  @override
+  Future<List<VirtNetwork>> networks() async => _fail();
+
+  @override
   Future<void> reset() async {}
 
   @override
   Future<void> close() async {}
+}
+
+// -----------------------------------------------------------------------------
+// Snapshots, storage and networks of one host
+// -----------------------------------------------------------------------------
+
+/// No automatic retry for the providers below: each attempt is a round trip
+/// that may run `virsh` through sudo or log in to PVE, and a failure is shown
+/// with its own retry.
+Duration? _noRetry(int count, Object error) => null;
+
+/// The host's backend, for the providers below: they follow the host's kind
+/// (a server gaining a PVE row changes backend) and nothing else of its state,
+/// which changes on every refresh.
+VirtHostNotifier _hostOf(Ref ref, String serverId) {
+  ref.watch(virtHostProvider(serverId).select((s) => s.kind));
+  return ref.read(virtHostProvider(serverId).notifier);
+}
+
+/// The snapshots of one guest. Invalidated by the view after each operation.
+@Riverpod(retry: _noRetry)
+Future<List<VirtGuestSnapshot>> virtSnapshots(
+  Ref ref,
+  String serverId,
+  String guestId,
+) async {
+  final host = _hostOf(ref, serverId);
+  await host.firstLoad;
+  return host.snapshots(guestId);
+}
+
+/// The host's storage pools.
+@Riverpod(retry: _noRetry)
+Future<List<VirtStoragePool>> virtStoragePools(Ref ref, String serverId) async {
+  final host = _hostOf(ref, serverId);
+  await host.firstLoad;
+  return host.storagePools();
+}
+
+/// What is in the pool [poolId] of [virtStoragePoolsProvider].
+@Riverpod(retry: _noRetry)
+Future<List<VirtVolume>> virtVolumes(
+  Ref ref,
+  String serverId,
+  String poolId,
+) async {
+  // Every watch before the first await: after it this provider may be gone.
+  final host = _hostOf(ref, serverId);
+  final pools = await ref.watch(virtStoragePoolsProvider(serverId).future);
+  final pool = pools.firstWhereOrNull((p) => p.id == poolId);
+  // An inactive pool's volumes cannot be listed: not asked.
+  if (pool == null || !pool.active) return const [];
+  return host.volumes(pool);
+}
+
+/// The host's networks, with the guests on each.
+@Riverpod(retry: _noRetry)
+Future<List<VirtNetwork>> virtNetworks(Ref ref, String serverId) async {
+  final host = _hostOf(ref, serverId);
+  await host.firstLoad;
+  return host.networks();
 }

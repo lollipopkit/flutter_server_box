@@ -12,26 +12,31 @@ import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
 import 'package:server_box/data/res/chart_palette.dart';
+import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/virt/common.dart';
 import 'package:server_box/view/page/virt/guest.dart';
 import 'package:server_box/view/page/virt/host_error.dart';
+import 'package:server_box/view/page/virt/resources.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/progress_line.dart';
 
 part 'hosts.dart';
 part 'list.dart';
 
-/// What the list column is showing. Only [guests] exists yet; the other two
-/// are drawn, disabled, so the shape of the tab does not change when they
-/// arrive.
+/// What the list column is showing. Storage and network are offered where
+/// the host's capabilities say (`VirtCapabilities.storage` / `.network`),
+/// and drawn disabled elsewhere, so the shape of the tab does not change
+/// between hosts.
 enum VirtSection { guests, storage, network }
 
 /// The Virtualization tab: libvirt/KVM and Proxmox VE hosts and their guests.
 ///
-/// The subject is a host. Its guests are the list; a guest's overview and
-/// console are the detail beside it, or a page over it on a narrow window —
-/// the host's guest list is what a single column is for, and the other hosts
-/// are behind the switcher at its head. See virt.md, "UI (phase 1)".
+/// The subject is a host. Its guests are the list; a guest's overview,
+/// console and snapshots are the detail beside it, or a page over it on a
+/// narrow window — the host's guest list is what a single column is for, and
+/// the other hosts are behind the switcher at its head. The Storage and
+/// Network sections swap the list for the host's pools or networks, the same
+/// way. See virt.md, "UI".
 class VirtTabPage extends ConsumerStatefulWidget {
   const VirtTabPage({super.key});
 
@@ -47,6 +52,11 @@ class _VirtTabPageState extends ConsumerState<VirtTabPage>
   /// The guest open beside the list. Null while nothing is — which is what
   /// tells `NestedNavigator` a change is the detail closing.
   String? _guestId;
+
+  /// The section on screen, and what is open beside it in the other two.
+  var _section = VirtSection.guests;
+  String? _poolId;
+  String? _netId;
 
   /// The host switcher, opened inside the list column (two columns only; one
   /// column raises it as a sheet instead).
@@ -105,13 +115,15 @@ class _VirtTabPageState extends ConsumerState<VirtTabPage>
         onCollapsedChanged: PaneSettings.saveCollapsed,
         collapseTooltip: libL10n.fold,
         expandTooltip: libL10n.open,
-        // Null whenever no guest is open, so a return to the host's own
-        // column animates as a way back. Keyed on the host as well, because
-        // the same id on two hosts is two different guests.
-        detailId: hostId == null || _guestId == null
-            ? null
-            : '$hostId/$_guestId',
-        onCloseDetail: () => setState(() => _guestId = null),
+        // Null whenever nothing is open, so a return to the host's own
+        // column animates as a way back. Keyed on the host and the section
+        // as well, because the same id on two hosts is two different guests
+        // and a pool may share a network's name.
+        detailId: switch (_openId) {
+          final id? when hostId != null => '$hostId/${_section.name}/$id',
+          _ => null,
+        },
+        onCloseDetail: () => setState(_closeDetail),
         // A widget with its own `ref`: this builder runs on the pane's
         // element, not this page's.
         detailBuilder: (_) => _buildDetail(hostId),
@@ -130,17 +142,57 @@ class _VirtTabPageState extends ConsumerState<VirtTabPage>
     return hosts.hostIds.firstOrNull;
   }
 
-  Widget _buildDetail(String? hostId) {
-    final guestId = _guestId;
-    if (hostId == null || guestId == null) {
-      return const EmptyPane(icon: Icons.view_in_ar_outlined);
+  /// What is open beside the list in the section on screen.
+  String? get _openId => switch (_section) {
+    VirtSection.guests => _guestId,
+    VirtSection.storage => _poolId,
+    VirtSection.network => _netId,
+  };
+
+  void _closeDetail() {
+    switch (_section) {
+      case VirtSection.guests:
+        _guestId = null;
+      case VirtSection.storage:
+        _poolId = null;
+      case VirtSection.network:
+        _netId = null;
     }
-    return VirtGuestView(
-      key: ValueKey('$hostId/$guestId'),
-      serverId: hostId,
-      guestId: guestId,
-    );
   }
+
+  Widget _buildDetail(String? hostId) {
+    final id = _openId;
+    if (hostId == null || id == null) {
+      return EmptyPane(icon: _section.icon);
+    }
+    final key = ValueKey('$hostId/${_section.name}/$id');
+    return switch (_section) {
+      VirtSection.guests => VirtGuestView(
+        key: key,
+        serverId: hostId,
+        guestId: id,
+      ),
+      VirtSection.storage => VirtPoolView(
+        key: key,
+        serverId: hostId,
+        poolId: id,
+      ),
+      VirtSection.network => VirtNetworkView(
+        key: key,
+        serverId: hostId,
+        netId: id,
+        onOpenGuest: (guestId) => _openGuest(hostId, guestId, true),
+      ),
+    };
+  }
+}
+
+extension VirtSectionUi on VirtSection {
+  IconData get icon => switch (this) {
+    VirtSection.guests => Icons.view_in_ar_outlined,
+    VirtSection.storage => Icons.storage_outlined,
+    VirtSection.network => Icons.lan_outlined,
+  };
 }
 
 // --- Actions ---
@@ -156,22 +208,74 @@ extension _Actions on _VirtTabPageState {
   void _selectHost(String id) {
     if (!mounted) return;
     setState(() {
-      if (_hostId != id) _guestId = null;
+      if (_hostId != id) {
+        _guestId = null;
+        _poolId = null;
+        _netId = null;
+      }
       _hostId = id;
       _showHosts = false;
     });
   }
 
+  void _selectSection(VirtSection section) {
+    setState(() => _section = section);
+  }
+
   /// Opens [guestId]: beside the list with two columns, over it with one.
+  /// From another section (a guest on a network), with the guest list.
   void _openGuest(String hostId, String guestId, bool split) {
     if (split) {
-      setState(() => _guestId = guestId);
+      setState(() {
+        _section = VirtSection.guests;
+        _guestId = guestId;
+      });
       return;
     }
     VirtGuestPage.route.go(
       context,
       VirtGuestArgs(serverId: hostId, guestId: guestId),
     );
+  }
+
+  /// Opens the pool or network [id] of the section on screen, as [_openGuest]
+  /// opens a guest.
+  void _openResource(String hostId, String id, bool split) {
+    if (split) {
+      setState(() {
+        switch (_section) {
+          case VirtSection.guests:
+            _guestId = id;
+          case VirtSection.storage:
+            _poolId = id;
+          case VirtSection.network:
+            _netId = id;
+        }
+      });
+      return;
+    }
+    final args = VirtResourceArgs(serverId: hostId, id: id);
+    switch (_section) {
+      case VirtSection.guests:
+        _openGuest(hostId, id, split);
+      case VirtSection.storage:
+        VirtPoolPage.route.go(context, args);
+      case VirtSection.network:
+        VirtNetworkPage.route.go(context, args);
+    }
+  }
+
+  /// Asks the host again, and what the section on screen lists with it.
+  void _refresh(String hostId) {
+    unawaited(ref.read(virtHostProvider(hostId).notifier).refresh());
+    switch (_section) {
+      case VirtSection.guests:
+        break;
+      case VirtSection.storage:
+        ref.invalidate(virtStoragePoolsProvider(hostId));
+      case VirtSection.network:
+        ref.invalidate(virtNetworksProvider(hostId));
+    }
   }
 
   /// Probes [serverId] and, if it turns out to be a host, shows it — asking
@@ -181,6 +285,42 @@ extension _Actions on _VirtTabPageState {
   Future<bool> _check(String serverId) async {
     final notifier = ref.read(virtHostsProvider.notifier);
     await notifier.probe(serverId, force: true);
+    if (!mounted) return false;
+    final hosts = ref.read(virtHostsProvider);
+    if (hosts.probes[serverId]?.status == VirtProbeStatus.pve) {
+      return _setUpPve(serverId);
+    }
+    if (!hosts.hosts.containsKey(serverId)) return false;
+    _selectHost(serverId);
+    return true;
+  }
+
+  /// Offers the server editor's PVE group for a server found running PVE
+  /// with no API access configured, and shows the host once it is.
+  ///
+  /// True when it became a host.
+  Future<bool> _setUpPve(String serverId) async {
+    final spi = ref.read(serversProvider).servers[serverId];
+    if (spi == null) return false;
+    final line = ref.read(virtHostsProvider).probes[serverId]?.pve;
+    final version = RegExp(r'pve-manager/([^/\s]+)').firstMatch(line ?? '');
+    final go = await context.showRoundDialog<bool>(
+      title: 'Proxmox VE',
+      child: Text(
+        l10n.virtPveSetupTip(
+          version == null ? 'Proxmox VE' : 'Proxmox VE ${version[1]}',
+        ),
+      ),
+      actions: [
+        Btn.cancel(),
+        Btn.text(text: libL10n.setting, onTap: () => context.popDialog(true)),
+      ],
+    );
+    if (go != true || !mounted) return false;
+    await ServerEditPage.route.go(
+      context,
+      args: ServerEditArgs(spi, section: ServerEditSection.pve),
+    );
     if (!mounted) return false;
     if (!ref.read(virtHostsProvider).hosts.containsKey(serverId)) return false;
     _selectHost(serverId);
@@ -207,6 +347,11 @@ extension _Actions on _VirtTabPageState {
           // sheet has done its job.
           onCheck: (id) async {
             final found = await _check(id);
+            if (found && sheetContext.mounted) Navigator.of(sheetContext).pop();
+            return found;
+          },
+          onSetUpPve: (id) async {
+            final found = await _setUpPve(id);
             if (found && sheetContext.mounted) Navigator.of(sheetContext).pop();
             return found;
           },

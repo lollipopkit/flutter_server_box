@@ -162,6 +162,90 @@ void main() {
     await _until(() => c.read(provider).samples[_run]!.length >= 2);
   });
 
+  test('a refresh asked for during another waits for its own run', () async {
+    Stores.server.put(_spi('kvm'));
+    var gate = Completer<void>();
+    var loads = 0;
+    final exec = _Exec((call) async {
+      loads++;
+      await gate.future;
+      return _ok(_overview());
+    });
+    final c = container({'kvm': exec});
+    final provider = virtHostProvider('kvm');
+    final sub = c.listen(provider, (_, _) {});
+    addTearDown(sub.close);
+    await _until(() => loads == 1);
+
+    // Asked while the first load is in flight: done only after a second one,
+    // which reads the host as it is after the ask.
+    var done = false;
+    final asked = c.read(provider.notifier).refresh().whenComplete(
+      () => done = true,
+    );
+    final first = gate;
+    gate = Completer<void>();
+    first.complete();
+    await _until(() => loads == 2);
+    expect(done, isFalse);
+    gate.complete();
+    await asked;
+    expect(c.read(provider).data, isNotNull);
+    expect(c.read(provider).samples[_run], hasLength(2));
+  });
+
+  test('a snapshot operation: one per guest, power included; lists follow',
+      () async {
+    Stores.server.put(_spi('kvm'));
+    final gate = Completer<void>();
+    final exec = _Exec((call) async {
+      if (call.script.contains('V snapshot-create-as')) {
+        await gate.future;
+        return _ok(_section('virt.action', 'Domain snapshot snap-1 created'));
+      }
+      if (call.script.contains('snapshot-list')) {
+        return _ok(_fixture('script_snapshots_cirros_run.txt'));
+      }
+      if (call.script.contains('net-list')) {
+        return _ok(_fixture('script_networks.txt'));
+      }
+      return _ok(_overview());
+    });
+    final c = container({'kvm': exec});
+    final provider = virtHostProvider('kvm');
+    final sub = c.listen(provider, (_, _) {});
+    addTearDown(sub.close);
+    await _until(() => c.read(provider).data != null);
+
+    final snaps = await c.read(virtSnapshotsProvider('kvm', _run).future);
+    expect(snaps.map((s) => s.name), ['sbx-a', 'sbx-b', 'sbx-off']);
+    final nets = await c.read(virtNetworksProvider('kvm').future);
+    expect(nets.first.name, 'default');
+
+    final notifier = c.read(provider.notifier);
+    final create = notifier.createSnapshot(_run, name: 'snap-1');
+    await _until(() => c.read(provider).snapshotOps.isNotEmpty);
+    final st = c.read(provider);
+    expect(st.snapshotOps[_run], VirtSnapshotOp.create);
+    expect(st.isBusy(_run), isTrue);
+    expect(st.actionsOf(st.guest(_run)!), isEmpty);
+    for (final second in [
+      () => notifier.power(_run, VirtPowerAction.reboot),
+      () => notifier.deleteSnapshot(_run, 'sbx-a'),
+    ]) {
+      await expectLater(
+        second(),
+        throwsA(
+          isA<VirtErr>().having((e) => e.type, 'type', VirtErrType.unsupported),
+        ),
+      );
+    }
+
+    gate.complete();
+    await create;
+    expect(c.read(provider).snapshotOps, isEmpty);
+  });
+
   group('what is probed without being asked', () {
     Spi spi({bool autoConnect = true}) => Spi(
       id: 's',

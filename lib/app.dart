@@ -27,6 +27,7 @@ import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/home.dart';
 import 'package:server_box/view/widget/app_background.dart';
 import 'package:server_box/view/widget/diagnostics_level_picker.dart';
+import 'package:server_box/view/widget/session_keep_alive_notice.dart';
 import 'package:server_box/view/widget/theme_splash.dart';
 
 part 'intro.dart';
@@ -357,7 +358,13 @@ class _MyAppState extends State<MyApp> {
         // that was picked, which the two builders above keep current whether
         // it came from the setting or from the system.
         ChartPalette.resolve(UIs.colorSeed, dark: ctx.isDark);
-        final content = ToastHost(child: ResponsivePoints.builder(ctx, child));
+        final content = ToastHost(
+          // Under the host, whose toasts it raises, and over every page:
+          // a remote session closes as idle whichever page is showing.
+          child: SessionKeepAliveNotices(
+            child: ResponsivePoints.builder(ctx, child),
+          ),
+        );
         // The one background the whole app stands on. A page takes a copy of
         // it while it moves, so that it covers the page below — see
         // [AppPageTransitions].

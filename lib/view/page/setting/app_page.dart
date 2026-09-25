@@ -15,6 +15,9 @@ enum SettingsSection {
   linux,
   sftp,
   container,
+  /// The remote desktop tab's sessions and a guest's consoles: what they
+  /// have in common, which is how long one stays open once it is left.
+  remoteDesktop,
   editor,
   fullScreen;
 
@@ -36,6 +39,7 @@ enum SettingsSection {
     SettingsSection.linux => 'Linux (Beta)',
     SettingsSection.sftp => 'SFTP',
     SettingsSection.container => libL10n.container,
+    SettingsSection.remoteDesktop => l10n.remoteDesktop,
     SettingsSection.editor => libL10n.editor,
     SettingsSection.fullScreen => l10n.fullScreen,
   };
@@ -56,6 +60,7 @@ enum SettingsSection {
     SettingsSection.sftp => '${libL10n.file} › SFTP',
     SettingsSection.editor => '${libL10n.file} › ${libL10n.editor}',
     SettingsSection.container => libL10n.container,
+    SettingsSection.remoteDesktop => l10n.remoteDesktop,
   };
 
   /// Whether this build has this group at all.
@@ -228,6 +233,7 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
     SettingsSection.linux => _buildLinux(),
     SettingsSection.sftp => _buildSFTP(),
     SettingsSection.container => _buildContainer(),
+    SettingsSection.remoteDesktop => _buildRemoteDesktop(),
     SettingsSection.editor => _buildEditor(),
     SettingsSection.fullScreen => _buildFullScreen(),
   };

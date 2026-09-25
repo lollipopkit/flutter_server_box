@@ -1,0 +1,114 @@
+{
+  "networks": [
+    {
+      "name": "default",
+      "uuid": "503dfdb3-3f43-41ff-9a57-046a2b2be8b5",
+      "active": true,
+      "autostart": true,
+      "mode": "nat",
+      "bridge": "virbr0",
+      "forward_devs": [],
+      "ips": [
+        {
+          "family": "ipv4",
+          "cidr": "192.168.122.1/24",
+          "dhcp_ranges": [
+            "192.168.122.2-192.168.122.254"
+          ]
+        }
+      ],
+      "connections": 3
+    },
+    {
+      "name": "sbx-bridge",
+      "uuid": "faa2b2e7-0d0c-4c97-8a15-a6c2f8fa5a62",
+      "active": false,
+      "autostart": false,
+      "mode": "bridge",
+      "bridge": "br-sbx",
+      "forward_devs": [],
+      "ips": [],
+      "connections": null
+    },
+    {
+      "name": "sbx-isolated",
+      "uuid": "f0e4b179-8252-43d6-95df-53d1c79adf60",
+      "active": true,
+      "autostart": false,
+      "mode": "isolated",
+      "bridge": "virbr9",
+      "forward_devs": [],
+      "ips": [
+        {
+          "family": "ipv4",
+          "cidr": "10.99.0.1/24",
+          "dhcp_ranges": [
+            "10.99.0.100-10.99.0.200"
+          ]
+        },
+        {
+          "family": "ipv6",
+          "cidr": "fd00:99::1/64",
+          "dhcp_ranges": []
+        }
+      ],
+      "connections": null
+    }
+  ],
+  "ifaces": [
+    {
+      "domain": "24a8bbc6-deaa-4be0-9699-a1d801faa927",
+      "interface": "vnet2",
+      "kind": "network",
+      "source": "default",
+      "model": "virtio",
+      "mac": "52:54:00:1e:d1:4f"
+    },
+    {
+      "domain": "8a2ed2a2-83e1-4c41-ad0a-a57d54d0d649",
+      "interface": "vnet9",
+      "kind": "network",
+      "source": "default",
+      "model": "virtio",
+      "mac": "52:54:00:6e:d2:3c"
+    },
+    {
+      "domain": "8a2ed2a2-83e1-4c41-ad0a-a57d54d0d649",
+      "interface": "vnet10",
+      "kind": "network",
+      "source": "default",
+      "model": "virtio",
+      "mac": "52:54:00:bb:c0:4b"
+    },
+    {
+      "domain": "1438b9e3-f647-47ee-8ed2-6dbc3adccd68",
+      "interface": null,
+      "kind": "network",
+      "source": "default",
+      "model": "virtio",
+      "mac": "52:54:00:90:2c:99"
+    },
+    {
+      "domain": "1438b9e3-f647-47ee-8ed2-6dbc3adccd68",
+      "interface": null,
+      "kind": "network",
+      "source": "sbx-isolated",
+      "model": "virtio",
+      "mac": "52:54:00:99:00:01"
+    }
+  ],
+  "leases": [
+    {
+      "network": "default",
+      "mac": "52:54:00:6e:d2:3c",
+      "ip": "192.168.122.202/24",
+      "hostname": null
+    },
+    {
+      "network": "default",
+      "mac": "52:54:00:bb:c0:4b",
+      "ip": "192.168.122.208/24",
+      "hostname": null
+    }
+  ]
+}

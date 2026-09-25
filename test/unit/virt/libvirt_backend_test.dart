@@ -1,6 +1,7 @@
 /// `LibvirtBackend` over a scripted `ServerExec` that answers with the
 /// `sbm_parser` virt fixtures: mapping, rates across two samples, the sudo
-/// retry, and a server without virsh.
+/// retry, a server without virsh, and snapshots, storage and networks against
+/// the captured script outputs.
 ///
 /// Parsing goes through the real FFI: `cargo build -p sbm_ffi` first.
 library;
@@ -14,6 +15,7 @@ import 'package:server_box/data/model/virt/libvirt.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
+import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/virt/libvirt_backend.dart';
 import 'package:server_box/src/rust/api/script.dart' as script;
 
@@ -216,10 +218,10 @@ void main() {
     });
   });
 
-  test('no virsh is notInstalled, for the probe and the overview', () async {
+  test('no virsh: the probe says so, the overview is notInstalled', () async {
     final exec = _Exec((call) => _ok('${_marker('virt.missing')}\n'));
     final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
-    expect((await _err(virt.probe())).type, VirtErrType.notInstalled);
+    expect(await virt.probe(), const VirtHostProbeResult());
     expect((await _err(virt.load())).type, VirtErrType.notInstalled);
   });
 
@@ -228,7 +230,20 @@ void main() {
       (call) => _ok(_section('virt.version', _fixture('version_libvirt12.txt'))),
     );
     final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
-    expect((await virt.probe()).libvirt, '12.0.0');
+    expect((await virt.probe()).libvirt?.libvirt, '12.0.0');
+  });
+
+  test('the probe finds PVE, and a container', () async {
+    var out = '${_marker('virt.pve')}\npve-manager/9.2.2/b9984c6d90a4bd80\n';
+    final exec = _Exec((call) => _ok(out));
+    final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+    expect(
+      await virt.probe(),
+      const VirtHostProbeResult(pve: 'pve-manager/9.2.2/b9984c6d90a4bd80'),
+    );
+    out = '${_marker('virt.container')}\nnone\n\nLXC\n'
+        '${_marker('virt.missing')}\n';
+    expect(await virt.probe(), const VirtHostProbeResult(container: 'lxc'));
   });
 
   test('a transport failure is unreachable', () async {
@@ -347,6 +362,185 @@ void main() {
     expect((vnc as LibvirtVncConsole).port, 5900);
     expect(vnc.host, '127.0.0.1');
   });
+  group('snapshots', () {
+    test('listed with parent, time, memory and the current one', () async {
+      final exec = _Exec((call) {
+        if (call.script.contains('domstats')) return _ok(_overview());
+        return _ok(_fixture('script_snapshots_cirros_run.txt'));
+      });
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      final snap = await virt.load();
+      expect(snap.capabilities.snapshots, isTrue);
+      expect(snap.capabilities.snapshotMemoryRequired, isTrue);
+      final web = snap.guests.firstWhere((g) => g.id == _run);
+      final list = await virt.snapshots(web);
+      // By UUID, never by name.
+      expect(exec.calls.last.script, contains("--domain '$_run'"));
+      expect(list.map((s) => s.name), ['sbx-a', 'sbx-b', 'sbx-off']);
+      final a = list.first;
+      expect(a.current, isTrue);
+      expect(a.withMemory, isTrue);
+      expect(a.description, 'first one');
+      expect(
+        a.createdAt,
+        DateTime.fromMillisecondsSinceEpoch(1790335495 * 1000),
+      );
+      expect(list.last.withMemory, isFalse);
+      expect(list.last.parent, 'sbx-a');
+      expect(
+        virtSnapshotTree(list).map((e) => (e.$1.name, e.$2)),
+        [('sbx-a', 0), ('sbx-off', 1), ('sbx-b', 2)],
+      );
+    });
+
+    test('create, revert and delete run their virsh command', () async {
+      final exec = _Exec((call) {
+        if (call.script.contains('domstats')) return _ok(_overview());
+        return _ok(_section('virt.action', 'ok'));
+      });
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      final web = (await virt.load()).guests.firstWhere((g) => g.id == _run);
+
+      await virt.createSnapshot(web, name: 'pre-up', description: 'a b');
+      expect(
+        exec.calls.last.script,
+        contains(
+          "V snapshot-create-as --domain '$_run' --name 'pre-up' "
+          "--description 'a b'\n",
+        ),
+      );
+      await virt.revertSnapshot(web, 'pre-up', start: true);
+      expect(exec.calls.last.script, contains('--snapshotname \'pre-up\' --running'));
+      await virt.revertSnapshot(web, 'pre-up');
+      expect(exec.calls.last.script, isNot(contains('--running')));
+      await virt.deleteSnapshot(web, 'pre-up');
+      expect(
+        exec.calls.last.script,
+        contains("V snapshot-delete --domain '$_run' --snapshotname 'pre-up'"),
+      );
+      // A name the form would not allow never reaches the host.
+      final calls = exec.calls.length;
+      final e = await _err(virt.createSnapshot(web, name: "x'; reboot"));
+      expect(e.type, VirtErrType.unsupported);
+      expect(exec.calls, hasLength(calls));
+    });
+
+    test('libvirt refusing one is actionFailed with its words', () async {
+      final exec = _Exec((call) {
+        if (call.script.contains('domstats')) return _ok(_overview());
+        return _ok(_fixture('script_snapshot_error_raw.txt'));
+      });
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      final web = (await virt.load()).guests.firstWhere((g) => g.id == _run);
+      final e = await _err(virt.createSnapshot(web, name: 'snap1'));
+      expect(e.type, VirtErrType.actionFailed);
+      expect(e.message, contains('unsupported for storage type raw'));
+    });
+  });
+
+  group('storage', () {
+    _Exec storageExec() => _Exec((call) {
+      if (call.script.contains('domstats')) return _ok(_overview());
+      if (call.script.contains('pool-list')) {
+        return _ok(_fixture('script_storage.txt'));
+      }
+      if (call.script.contains("vol-dumpxml --pool 'images'")) {
+        return _ok(_fixture('script_volumes_images.txt'));
+      }
+      if (call.script.contains("vol-dumpxml --pool 'sbx-iso'")) {
+        return _ok(_fixture('script_volumes_sbx_iso.txt'));
+      }
+      return _fail('unexpected ${call.script}');
+    });
+
+    test('pools, with an inactive one read as unknown rather than empty', () async {
+      final virt = LibvirtBackend(serverId: 's', exec: () async => storageExec());
+      final pools = await virt.storagePools();
+      expect(pools.map((p) => p.id), ['images', 'sbx-iso', 'sbx-off']);
+      final images = pools.first;
+      expect(images.type, 'dir');
+      expect(images.path, '/var/lib/libvirt/images');
+      expect(images.capacity, 20922114048);
+      expect(images.used, 1152606208);
+      expect(images.autostart, isTrue);
+      expect(images.volumeCount, 6);
+      final off = pools.last;
+      expect(off.active, isFalse);
+      expect(off.capacity, isNull);
+      expect(off.usedFraction, isNull);
+      expect(off.volumeCount, isNull);
+    });
+
+    test('volumes with their format and the guests using them', () async {
+      final exec = storageExec();
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      final pools = await virt.storagePools();
+      final vols = await virt.volumes(pools.first);
+      // The names come from the listing, not a second one.
+      expect(exec.calls.where((c) => c.script.contains('pool-list')), hasLength(1));
+      expect(vols.map((v) => v.name), [
+        'cirros.img',
+        'data1.qcow2',
+        'extra.qcow2',
+        'off1.qcow2',
+        'paused1.qcow2',
+        'run1.qcow2',
+      ]);
+      final run1 = vols.firstWhere((v) => v.name == 'run1.qcow2');
+      expect(run1.format, 'qcow2');
+      expect(run1.capacity, 117440512);
+      expect(run1.backing, '/var/lib/libvirt/images/cirros.img');
+      expect(run1.users, [const VirtGuestRef(guestId: _run, device: 'vda')]);
+      expect(
+        vols.firstWhere((v) => v.name == 'off1.qcow2').users.single.guestId,
+        _odd,
+      );
+      // A base image only others are layered on is not "used" by a disk.
+      expect(vols.firstWhere((v) => v.name == 'cirros.img').users, isEmpty);
+
+      final iso = await virt.volumes(pools[1]);
+      expect(iso.first.name, 'my disk.qcow2');
+      final tiny = iso.firstWhere((v) => v.name == 'tiny.iso');
+      expect(tiny.users, [const VirtGuestRef(guestId: _odd, device: 'hdc')]);
+      expect(await virt.volumes(pools.last), isEmpty);
+    });
+
+    test('volumes without a listing first list the pools', () async {
+      final exec = storageExec();
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      final vols = await virt.volumes(
+        const VirtStoragePool(id: 'sbx-iso', name: 'sbx-iso', type: 'dir'),
+      );
+      expect(vols, hasLength(2));
+      expect(exec.calls.first.script, contains('pool-list'));
+    });
+  });
+
+  test('networks with modes, addresses and the guests on each', () async {
+    final exec = _Exec((call) => _ok(_fixture('script_networks.txt')));
+    final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+    final nets = await virt.networks();
+    expect(nets.map((n) => n.name), ['default', 'sbx-bridge', 'sbx-isolated']);
+    final def = nets.first;
+    expect(def.mode, 'nat');
+    expect(def.bridge, 'virbr0');
+    expect(def.cidrs, ['192.168.122.1/24']);
+    expect(def.dhcpRanges, ['192.168.122.2-192.168.122.254']);
+    expect(def.autostart, isTrue);
+    // Every domain's NICs on it, running or not, with a leased address.
+    expect(def.users.map((u) => u.guestId), [_paused, _run, _run, _odd]);
+    final leased = def.users.firstWhere((u) => u.mac == '52:54:00:6e:d2:3c');
+    expect(leased.ip, '192.168.122.202/24');
+    expect(leased.device, isNotNull);
+    expect(def.users.last.device, isNull, reason: 'shut off: no vnetN');
+    final iso = nets.last;
+    expect(iso.mode, 'isolated');
+    expect(iso.cidrs, ['10.99.0.1/24', 'fd00:99::1/64']);
+    expect(iso.users.single.guestId, _odd);
+    expect(nets[1].active, isFalse);
+    expect(nets[1].users, isEmpty);
+  });
+
 }
 
 Future<VirtErr> _err(Future<Object?> future) async {

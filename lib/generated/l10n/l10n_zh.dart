@@ -3069,7 +3069,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pveTokenTip =>
-      '在 PVE 的 数据中心 → 权限 → API Tokens 中创建。需要在要显示的路径上具有 VM.Audit、VM.PowerMgmt、VM.Console 和 Sys.Audit 权限；如果启用了权限分离，需要把这些权限授予 token 本身。';
+      '在 PVE 的 数据中心 → 权限 → API Tokens 中创建。需要在要显示的路径上具有 VM.Audit、VM.PowerMgmt、VM.Console、VM.Snapshot、VM.Snapshot.Rollback、Datastore.Audit 和 Sys.Audit 权限；如果启用了权限分离，需要把这些权限授予 token 本身。';
 
   @override
   String get pveTokenIdInvalid => 'Token ID 的格式应为 user@realm!tokenid';
@@ -3137,14 +3137,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtProbeNotChecked => '尚未检查';
 
   @override
-  String get virtProbeAbsent => '未找到 virsh';
+  String get virtProbeAbsent => '不是宿主机';
+
+  @override
+  String virtProbeContainer(String kind) {
+    return '$kind 容器';
+  }
+
+  @override
+  String get virtProbeContainerTip => '这台服务器运行在容器里，属于客户机，不是宿主机。请在运行它的宿主机上管理。';
+
+  @override
+  String get virtProbePve => 'PVE，未配置';
+
+  @override
+  String virtPveSetupTip(String version) {
+    return '这台服务器运行着 $version。在服务器设置里填写 API 访问信息（推荐使用 API token）后，即可在这里管理其中的虚拟机和容器。';
+  }
 
   @override
   String get virtNoHosts => '没有虚拟化宿主机';
 
   @override
   String get virtNoHostsTip =>
-      '配置了 PVE 地址的服务器是宿主机，能运行 virsh 的服务器也是。其他服务器可以在宿主机切换器中检查。';
+      '运行 Proxmox VE 且填写了 API 访问信息的服务器是宿主机，能运行 virsh 的服务器也是。其他服务器可以在宿主机切换器中检查。';
 
   @override
   String get virtNoGuests => '没有虚拟机或容器';
@@ -3244,6 +3260,118 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtErrActionFailed => '宿主机拒绝了该操作';
+
+  @override
+  String get remoteSessionIdleTimeout => '离开后自动关闭';
+
+  @override
+  String get remoteSessionIdleTimeoutTip =>
+      '离开远程桌面或虚拟机控制台后,连接保持多久。关闭前会显示提示,10 秒内可选择保持连接。';
+
+  @override
+  String get remoteSessionKeepAlive => '保持连接';
+
+  @override
+  String remoteSessionClosingIn(int seconds) {
+    return '$seconds 秒后关闭';
+  }
+
+  @override
+  String get reopen => '重新打开';
+
+  @override
+  String get virtSnapshots => '快照';
+
+  @override
+  String get virtSnapshotCreate => '创建快照';
+
+  @override
+  String get virtSnapshotNone => '还没有快照';
+
+  @override
+  String get virtSnapshotWithMemory => '磁盘和内存';
+
+  @override
+  String get virtSnapshotDiskOnly => '仅磁盘';
+
+  @override
+  String get virtSnapshotParent => '父快照';
+
+  @override
+  String get virtSnapshotRevert => '恢复到此快照';
+
+  @override
+  String get virtSnapshotMemory => '包含内存状态';
+
+  @override
+  String get virtSnapshotMemoryTip => '恢复后回到这一刻的运行状态。';
+
+  @override
+  String get virtSnapshotMemoryAlways => '在此宿主机上，运行中的虚拟机快照总是包含内存。';
+
+  @override
+  String get virtSnapshotMemoryOff => '虚拟机未运行，只能保存磁盘。';
+
+  @override
+  String get virtSnapshotNameInvalid => '以字母开头，之后只能是字母、数字、- 或 _，长度 2 到 40。';
+
+  @override
+  String get virtSnapshotNameTaken => '已有同名快照。';
+
+  @override
+  String get virtSnapshotRevertTip => '恢复会丢弃快照之后的所有改动。';
+
+  @override
+  String virtSnapshotRevertAsk(String guest, String snapshot) {
+    return '将 $guest 恢复到 $snapshot？此后的所有改动都会丢失。';
+  }
+
+  @override
+  String virtSnapshotRevertStops(String guest) {
+    return '此快照不含内存：$guest 将被停止。';
+  }
+
+  @override
+  String get virtSnapshotStartAfter => '恢复后启动';
+
+  @override
+  String get virtVolumes => '卷';
+
+  @override
+  String get virtNoPools => '没有存储池';
+
+  @override
+  String get virtNoNetworks => '没有网络';
+
+  @override
+  String get virtPoolInactive => '存储池未激活，无法列出其中的卷。';
+
+  @override
+  String get virtShared => '节点间共享';
+
+  @override
+  String get virtBackingFile => '后备文件';
+
+  @override
+  String get virtNetIsolated => '隔离';
+
+  @override
+  String get virtNetBridged => '桥接';
+
+  @override
+  String get virtNetRouted => '路由';
+
+  @override
+  String get virtBridge => '网桥';
+
+  @override
+  String get virtPorts => '端口';
+
+  @override
+  String get virtAttachedGuests => '已连接的虚拟机';
+
+  @override
+  String get virtNoAttachedGuests => '没有虚拟机连接到此网络';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -6309,7 +6437,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get pveTokenTip =>
-      '在 PVE 的 資料中心 → 權限 → API Tokens 中建立。需要在要顯示的路徑上具有 VM.Audit、VM.PowerMgmt、VM.Console 和 Sys.Audit 權限；若啟用了權限分離，需要將這些權限授予 token 本身。';
+      '在 PVE 的 資料中心 → 權限 → API Tokens 中建立。需要在要顯示的路徑上具有 VM.Audit、VM.PowerMgmt、VM.Console、VM.Snapshot、VM.Snapshot.Rollback、Datastore.Audit 和 Sys.Audit 權限；若啟用了權限分離，需要將這些權限授予 token 本身。';
 
   @override
   String get pveTokenIdInvalid => 'Token ID 的格式應為 user@realm!tokenid';
@@ -6376,14 +6504,30 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtProbeNotChecked => '尚未檢查';
 
   @override
-  String get virtProbeAbsent => '找不到 virsh';
+  String get virtProbeAbsent => '不是主機';
+
+  @override
+  String virtProbeContainer(String kind) {
+    return '$kind 容器';
+  }
+
+  @override
+  String get virtProbeContainerTip => '這台伺服器執行在容器中，屬於客體，不是主機。請在執行它的主機上管理。';
+
+  @override
+  String get virtProbePve => 'PVE，未設定';
+
+  @override
+  String virtPveSetupTip(String version) {
+    return '這台伺服器執行著 $version。在伺服器設定中填寫 API 存取資訊（建議使用 API token）後，即可在這裡管理其中的虛擬機和容器。';
+  }
 
   @override
   String get virtNoHosts => '沒有虛擬化主機';
 
   @override
   String get virtNoHostsTip =>
-      '設定了 PVE 位址的伺服器是主機，能執行 virsh 的伺服器也是。其他伺服器可以在主機切換器中檢查。';
+      '執行 Proxmox VE 且填寫了 API 存取資訊的伺服器是主機，能執行 virsh 的伺服器也是。其他伺服器可以在主機切換器中檢查。';
 
   @override
   String get virtNoGuests => '沒有虛擬機或容器';
@@ -6483,4 +6627,116 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtErrActionFailed => '主機拒絕了該操作';
+
+  @override
+  String get remoteSessionIdleTimeout => '離開後自動關閉';
+
+  @override
+  String get remoteSessionIdleTimeoutTip =>
+      '離開遠端桌面或虛擬機主控台後,連線保持多久。關閉前會顯示提示,10 秒內可選擇保持連線。';
+
+  @override
+  String get remoteSessionKeepAlive => '保持連線';
+
+  @override
+  String remoteSessionClosingIn(int seconds) {
+    return '$seconds 秒後關閉';
+  }
+
+  @override
+  String get reopen => '重新開啟';
+
+  @override
+  String get virtSnapshots => '快照';
+
+  @override
+  String get virtSnapshotCreate => '建立快照';
+
+  @override
+  String get virtSnapshotNone => '還沒有快照';
+
+  @override
+  String get virtSnapshotWithMemory => '磁碟和記憶體';
+
+  @override
+  String get virtSnapshotDiskOnly => '僅磁碟';
+
+  @override
+  String get virtSnapshotParent => '父快照';
+
+  @override
+  String get virtSnapshotRevert => '還原到此快照';
+
+  @override
+  String get virtSnapshotMemory => '包含記憶體狀態';
+
+  @override
+  String get virtSnapshotMemoryTip => '還原後回到這一刻的執行狀態。';
+
+  @override
+  String get virtSnapshotMemoryAlways => '在此主機上，執行中的虛擬機快照總是包含記憶體。';
+
+  @override
+  String get virtSnapshotMemoryOff => '虛擬機未執行，只能儲存磁碟。';
+
+  @override
+  String get virtSnapshotNameInvalid => '以字母開頭，之後只能是字母、數字、- 或 _，長度 2 到 40。';
+
+  @override
+  String get virtSnapshotNameTaken => '已有同名快照。';
+
+  @override
+  String get virtSnapshotRevertTip => '還原會捨棄快照之後的所有變更。';
+
+  @override
+  String virtSnapshotRevertAsk(String guest, String snapshot) {
+    return '將 $guest 還原到 $snapshot？此後的所有變更都會遺失。';
+  }
+
+  @override
+  String virtSnapshotRevertStops(String guest) {
+    return '此快照不含記憶體：$guest 將被停止。';
+  }
+
+  @override
+  String get virtSnapshotStartAfter => '還原後啟動';
+
+  @override
+  String get virtVolumes => '磁碟區';
+
+  @override
+  String get virtNoPools => '沒有儲存池';
+
+  @override
+  String get virtNoNetworks => '沒有網路';
+
+  @override
+  String get virtPoolInactive => '儲存池未啟用，無法列出其中的磁碟區。';
+
+  @override
+  String get virtShared => '節點間共用';
+
+  @override
+  String get virtBackingFile => '後備檔案';
+
+  @override
+  String get virtNetIsolated => '隔離';
+
+  @override
+  String get virtNetBridged => '橋接';
+
+  @override
+  String get virtNetRouted => '路由';
+
+  @override
+  String get virtBridge => '網橋';
+
+  @override
+  String get virtPorts => '連接埠';
+
+  @override
+  String get virtAttachedGuests => '已連線的虛擬機';
+
+  @override
+  String get virtNoAttachedGuests => '沒有虛擬機連線到此網路';
 }

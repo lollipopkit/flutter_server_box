@@ -13,14 +13,18 @@ import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/remote_desktop.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/session_keep_alive.dart';
+import 'package:server_box/data/provider/virt/text_consoles.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
 import 'package:server_box/data/res/chart_palette.dart';
+import 'package:server_box/data/ssh/terminal_session.dart';
 import 'package:server_box/view/page/remote_desktop/viewer.dart';
 import 'package:server_box/view/page/server/chart.dart';
 import 'package:server_box/view/page/server/reading_text.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/virt/common.dart';
 import 'package:server_box/view/page/virt/console_connect.dart';
+import 'package:server_box/view/page/virt/snapshots.dart';
 import 'package:server_box/view/widget/progress_line.dart';
 
 part 'console.dart';
@@ -59,9 +63,23 @@ class VirtGuestPage extends StatelessWidget {
   }
 }
 
-/// The views a guest has in phase 1. Hardware, snapshots, settings and backup
-/// come later, as more of these.
-enum VirtGuestViewKind { overview, console }
+/// The views a guest has. Hardware, settings and backup come later, as more
+/// of these.
+enum VirtGuestViewKind {
+  overview,
+  console,
+
+  /// Where the host has `VirtCapabilities.snapshots`, and not for a template.
+  snapshots;
+
+  /// The views [guest] has on a host with [caps].
+  static List<VirtGuestViewKind> of(VirtGuest guest, VirtCapabilities? caps) =>
+      [
+        overview,
+        console,
+        if ((caps?.snapshots ?? false) && !guest.template) snapshots,
+      ];
+}
 
 /// One guest: what it is doing, what it is, and the power actions it offers.
 ///
@@ -128,7 +146,11 @@ class _VirtGuestViewState extends ConsumerState<VirtGuestView> {
     }
     final state = st.displayState(guest);
     _syncDetail(guest, state);
-    final busy = st.busy.containsKey(guest.id) || state.isTransient;
+    final busy = st.isBusy(guest.id) || state.isTransient;
+    final views = VirtGuestViewKind.of(guest, st.data?.capabilities);
+    // A view the guest does not have (a host that lost a capability, a guest
+    // switched to a template): back to the overview.
+    final view = views.contains(_view) ? _view : VirtGuestViewKind.overview;
 
     return Scaffold(
       appBar: _bar(st, guest),
@@ -143,21 +165,28 @@ class _VirtGuestViewState extends ConsumerState<VirtGuestView> {
                 spacing: 3,
                 runSpacing: 3,
                 children: [
-                  for (final view in VirtGuestViewKind.values)
+                  for (final v in views)
                     VirtPill(
-                      key: ValueKey(view),
-                      label: view.label,
-                      icon: view.iconFor(guest),
-                      active: view == _view,
-                      onTap: () => setState(() => _view = view),
+                      key: ValueKey(v),
+                      label: v.label,
+                      icon: v.iconFor(guest),
+                      active: v == view,
+                      onTap: () => setState(() => _view = v),
                     ),
                 ],
               ),
             ),
           ),
           Expanded(
-            child: switch (_view) {
+            child: switch (view) {
               VirtGuestViewKind.overview => _buildOverview(st, guest, state),
+              VirtGuestViewKind.snapshots => VirtSnapshotsView(
+                key: ValueKey('snapshots:${guest.id}'),
+                serverId: widget.serverId,
+                guest: guest,
+                state: state,
+                caps: st.data!.capabilities,
+              ),
               VirtGuestViewKind.console => VirtConsoleView(
                 serverId: widget.serverId,
                 guest: guest,
@@ -242,6 +271,7 @@ extension on VirtGuestViewKind {
   String get label => switch (this) {
     VirtGuestViewKind.overview => l10n.virtOverview,
     VirtGuestViewKind.console => l10n.virtConsole,
+    VirtGuestViewKind.snapshots => l10n.virtSnapshots,
   };
 
   IconData iconFor(VirtGuest guest) => switch (this) {
@@ -249,6 +279,7 @@ extension on VirtGuestViewKind {
     VirtGuestViewKind.console => guest.kind == VirtGuestKind.lxc
         ? Icons.terminal
         : Icons.desktop_windows_outlined,
+    VirtGuestViewKind.snapshots => Icons.history,
   };
 }
 
@@ -267,9 +298,26 @@ extension _GuestActions on _VirtGuestViewState {
 
   /// Fetches the detail the first time, and again when the guest has started
   /// or stopped since.
+  ///
+  /// A guest seen to stop takes its consoles with it: what they showed is
+  /// gone, and waiting out the idle time would only keep a notice coming for
+  /// a screen that no longer exists.
   void _syncDetail(VirtGuest guest, VirtGuestState state) {
     final active = state.isActive;
     if (_detail != null && _detailActive == active) return;
+    if (_detailActive == true && !active) {
+      final container = ProviderScope.containerOf(context, listen: false);
+      final serverId = widget.serverId;
+      final guestId = guest.id;
+      // After the frame: this runs while the view is being built.
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => VirtConsoleConnect.closeAll(
+          container,
+          serverId: serverId,
+          guestId: guestId,
+        ),
+      );
+    }
     _detailActive = active;
     _detail = _notifier.detail(guest.id);
   }
