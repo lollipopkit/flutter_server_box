@@ -27,7 +27,7 @@ extension _Init on SSHPageState {
   /// [TerminalSession.connect] asks the agent directly before opening a PTY.
   Future<ShellBackend> _connectBackend() => _sess.connect(
     granted: switch (widget.args.spi) {
-      final spi? => ref.read(serverProvider(spi.id)).remoteAccess,
+      final spi? => ref.readPresentServer(spi.id)?.remoteAccess,
       null => null,
     },
     context: mounted ? context : null,

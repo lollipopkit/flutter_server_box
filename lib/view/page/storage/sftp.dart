@@ -102,7 +102,7 @@ class _SftpPageState extends ConsumerState<SftpPage> {
   ///
   /// Replaceable, so that a connection that failed can be tried again without
   /// closing the page and opening it.
-  late Future<_SftpStart> _start = _open();
+  late Future<_SftpStart> _start = _opening();
 
   /// The server this page was opened on, as the route named it.
   ///
@@ -149,7 +149,7 @@ class _SftpPageState extends ConsumerState<SftpPage> {
 
   void _retry() {
     _release(_start);
-    final started = _open();
+    final started = _opening();
     setStateSafe(() {
       _start = started;
     });
@@ -245,6 +245,16 @@ class _SftpStart {
 extension _Open on _SftpPageState {
   Duration get _opTimeout =>
       sftpOperationTimeout(Stores.setting.timeout.fetch());
+
+  /// [_open], marked as handled from the moment it exists.
+  ///
+  /// The page's [FutureWidget] only subscribes on its next build, and
+  /// `ensureShellClient` can fail before then — a server past its reconnect
+  /// limit refuses at once. A future that fails with nobody listening is
+  /// reported as uncaught (SERVERBOX-9S), though the error view would have
+  /// shown it a frame later. `ignore` adds a listener and changes nothing for
+  /// the ones that come after it.
+  Future<_SftpStart> _opening() => _open()..ignore();
 
   Future<_SftpStart> _open() async {
     // [_current], not `_spi`, and read once for everything below. The page

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
@@ -356,6 +357,40 @@ void main() {
       expect(state.history.whereType<AskAiFunctionOutputItem>(), isEmpty);
     });
 
+    test('stopping a turn in flight neither waits for it nor leaks it', () async {
+      // `ask` is an `async*` generator stuck in its request. Awaiting the
+      // cancel held Stop until the request ended; not awaiting it left the
+      // request's later failure on a future nobody listened to
+      // (SERVERBOX-L).
+      addTearDown(() => conversationStore.clearServer(globalAgentConversationScope));
+
+      final uncaught = <Object>[];
+      await runZonedGuarded(() async {
+        // Inside the guarded zone: an error cannot cross into another error
+        // zone, so a request created outside it would report there instead.
+        final repository = _StalledAskAiRepository();
+        final container = ProviderContainer(
+          overrides: [askAiRepositoryProvider.overrideWithValue(repository)],
+        );
+        addTearDown(container.dispose);
+        final notifier = container.read(globalAgentSessionProvider.notifier);
+
+        await notifier.submitPrompt('check the server');
+        await Future<void>.delayed(Duration.zero);
+        expect(container.read(globalAgentSessionProvider).isStreaming, isTrue);
+
+        await notifier.stopWork().timeout(const Duration(seconds: 1));
+        expect(container.read(globalAgentSessionProvider).isStreaming, isFalse);
+
+        repository.request.completeError(
+          const AskAiNetworkException(message: 'connect timeout'),
+        );
+        await Future<void>.delayed(Duration.zero);
+      }, (e, _) => uncaught.add(e));
+
+      expect(uncaught, isEmpty);
+    });
+
     test('declining answers the whole batch, not the card on screen', () async {
       const first = AskAiCommand(
         id: 'call-a',
@@ -591,6 +626,26 @@ class _ParallelToolCallRepository extends AskAiRepository {
         protocol: AskAiProtocol.chatCompletions,
       ),
     ]);
+  }
+}
+
+/// A request that does not return until the test says so.
+class _StalledAskAiRepository extends AskAiRepository {
+  final request = Completer<void>();
+
+  @override
+  Stream<AskAiEvent> ask({
+    required String terminalContext,
+    required String serverName,
+    String? localeHint,
+    List<AskAiConversationItem> conversation = const [],
+    AskAiProtocol? protocol,
+    String? customInstructions,
+    List<AskAiToolDefinition> tools = const [
+      AskAiToolDefinition.runShellCommand,
+    ],
+  }) async* {
+    await request.future;
   }
 }
 

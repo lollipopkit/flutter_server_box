@@ -1,12 +1,14 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:server_box/core/diag.dart';
-import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/service/report_filter.dart';
 import 'package:server_box/data/model/app/bak/backup.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/bak/utils.dart';
+import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/schema.dart';
@@ -33,8 +35,7 @@ final class BakSyncer extends SyncIface {
   static SchemaTooNewException? _remoteTooNew;
 
   /// Whether the last sync attempt aborted because the remote data is newer
-  /// than this build understands. The UI surfaces this — a silently skipped
-  /// sync is indistinguishable from a working one.
+  /// than this build understands.
   static SchemaTooNewException? get remoteTooNew => _remoteTooNew;
 
   @override
@@ -54,10 +55,58 @@ final class BakSyncer extends SyncIface {
     bool includeSettings = true,
   }) async {
     final pwd = await SecureStoreProps.bakPwd.read();
-    if (pwd == null || pwd.isEmpty) {
-      throw StateError(l10n.remoteBackupPasswordRequired);
-    }
+    if (pwd == null || pwd.isEmpty) throw const RemoteBackupPasswordMissing();
     return BackupV2.backup(name, pwd, includeSettings);
+  }
+
+  /// The sync an edit starts, which nobody waits for.
+  ///
+  /// Its failures are nearly all the remote's — a WebDAV server that does not
+  /// answer, iCloud signed out — and with no caller they reached the zone as
+  /// uncaught errors (SERVERBOX-8B). Handled here instead: logged, and
+  /// reported only when [ReportFilter] says it is a defect of this app.
+  void syncSoon({RemoteStorage? rs}) {
+    unawaited(
+      sync(milliDelay: 1000, rs: rs).catchError((Object e, StackTrace s) {
+        if (ReportFilter.isDefect(e)) {
+          Diag.error(e, s, 'Background sync');
+        } else {
+          Loggers.app.warning('Background sync', e, s);
+          Diag.crumb(SbDiag.sync, 'failed', data: {
+            'error': e.runtimeType.toString(),
+          });
+        }
+      }),
+    );
+  }
+
+  /// Skipped outright without a backup password, rather than attempted.
+  ///
+  /// Syncs are started on every edit and nobody awaits them, so each attempt
+  /// ended as an unhandled [RemoteBackupPasswordMissing] — hundreds per install
+  /// — after downloading and trying to merge a remote it had no key for. The
+  /// backup page already says the backup is unencrypted, which is the state
+  /// to fix.
+  @override
+  Future<void> sync({
+    int throttleMilli = 5000,
+    RemoteStorage? rs,
+    int milliDelay = 0,
+  }) async {
+    // Only with somewhere to sync to: without a remote the base returns at
+    // once, and there is no password question to ask.
+    if ((rs ?? remoteStorage) != null) {
+      final pwd = await SecureStoreProps.bakPwd.read();
+      if (pwd == null || pwd.isEmpty) {
+        Diag.crumb(SbDiag.sync, 'skipped', data: {'why': 'no password'});
+        return;
+      }
+    }
+    return super.sync(
+      throttleMilli: throttleMilli,
+      rs: rs,
+      milliDelay: milliDelay,
+    );
   }
 
   @override

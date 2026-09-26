@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
@@ -89,6 +90,49 @@ void main() {
     expect(Stores.setting.timeout.fetch(), 5);
   });
 
+  test('a sync nobody waits for handles its own network failure', () async {
+    // What every edit starts. The remote not answering used to reach the
+    // zone as an uncaught error (SERVERBOX-8B).
+    Stores.setting.timeout.put(17);
+    if (remote.existsSync()) remote.deleteSync();
+    final uncaught = <Object>[];
+    final rs = _FileRemote(
+      remote,
+      uploadError: const SocketException('Connection refused'),
+    );
+    // The assertions stay outside: a failure inside the guarded zone goes to
+    // its handler, and the zone's future then never completes.
+    await runZonedGuarded(() async {
+      bakSync.syncSoon(rs: rs);
+      // Its one-second delay and the base's five-second throttle, then however
+      // long a slow runner takes to write the backup — polled rather than one
+      // fixed wait, which a CI runner overran.
+      final deadline = DateTime.now().add(const Duration(seconds: 15));
+      while (rs.uploads == 0 && DateTime.now().isBefore(deadline)) {
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      }
+      // And a moment for the failure to reach whatever handles it.
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+    }, (e, _) => uncaught.add(e));
+
+    expect(rs.uploads, 1, reason: 'the upload was attempted and failed');
+    expect(uncaught, isEmpty);
+  });
+
+  test('without a backup password nothing is attempted', () async {
+    // Syncs start on every edit and nobody awaits them, so a missing
+    // password used to surface as an unhandled error per edit.
+    FlutterSecureStorage.setMockInitialValues({});
+    Stores.setting.timeout.put(17);
+    await remote.writeAsString('not read');
+    final rs = _FileRemote(remote);
+
+    await bakSync.sync(throttleMilli: 0, rs: rs);
+
+    expect(rs.downloads, 0);
+    expect(rs.uploads, 0);
+  });
+
   test('a remote from a newer build is recorded and not uploaded over', () async {
     await remote.writeAsString(
       '{"version": ${BackupV2.formatVer + 1}, "date": 0}',
@@ -105,16 +149,21 @@ void main() {
 /// Serves [file] as the remote backup: a download copies it out, an upload
 /// copies over it.
 final class _FileRemote extends RemoteStorage<String> {
-  _FileRemote(this.file);
+  _FileRemote(this.file, {this.uploadError});
 
   final File file;
+  final Object? uploadError;
+  int downloads = 0;
   int uploads = 0;
 
   @override
   Future<void> download({
     required String relativePath,
     String? localPath,
-  }) => file.copy(localPath ?? Paths.bak);
+  }) async {
+    downloads++;
+    await file.copy(localPath ?? Paths.bak);
+  }
 
   @override
   Future<void> upload({
@@ -122,6 +171,7 @@ final class _FileRemote extends RemoteStorage<String> {
     String? localPath,
   }) async {
     uploads++;
+    if (uploadError case final e?) throw e;
     await File(localPath ?? Paths.bak).copy(file.path);
   }
 

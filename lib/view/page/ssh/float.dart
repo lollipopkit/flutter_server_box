@@ -9,11 +9,11 @@ import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/app/terminal_shell.dart';
-import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/virtual_keyboard.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/terminal.dart';
 import 'package:server_box/data/ssh/terminal_session.dart';
+import 'package:server_box/view/page/ssh/present_server.dart';
 import 'package:server_box/view/widget/float_shell.dart';
 import 'package:xterm/core.dart';
 import 'package:xterm/ui.dart' hide TerminalThemes;
@@ -153,7 +153,7 @@ extension _Utils on _FloatTerminalState {
         spi != null &&
         serverShellUsesAgent(
           spi,
-          ref.read(serverProvider(spi.id)).remoteAccess,
+          ref.readPresentServer(spi.id)?.remoteAccess,
         );
     return VirtKeyX.loadFromStore(persistRepairs: false)
         .where((key) => !disabled.contains(key.name))

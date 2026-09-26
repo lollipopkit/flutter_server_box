@@ -562,6 +562,6 @@ class _HomePageState extends ConsumerState<HomePage>
 
     unawaited(_restartServerRefreshCycle());
 
-    bakSync.sync(milliDelay: 1000);
+    bakSync.syncSoon();
   }
 }
