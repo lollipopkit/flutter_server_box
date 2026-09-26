@@ -60,13 +60,19 @@ class _BenchmarkRunPageState extends ConsumerState<BenchmarkRunPage> {
   /// comes back, which is up to twenty seconds apart.
   Timer? _tick;
 
+  /// Whether a run is going, as of the last build.
+  ///
+  /// The clock reads this rather than the provider: a timer fires whenever it
+  /// likes, including while the element is deactivated — moved between panes —
+  /// and `ref` there fails ("looking up a deactivated widget's ancestor").
+  /// `build` already watches the provider, and every change rebuilds.
+  var _running = false;
+
   @override
   void initState() {
     super.initState();
     _tick = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted && ref.read(benchmarkProvider(_spi.id)).active != null) {
-        setState(() {});
-      }
+      if (mounted && _running) setState(() {});
     });
   }
 
@@ -79,6 +85,7 @@ class _BenchmarkRunPageState extends ConsumerState<BenchmarkRunPage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(benchmarkProvider(_spi.id));
+    _running = state.active != null;
     ref.listen<String?>(benchmarkProvider(_spi.id).select((s) => s.error), (
       _,
       err,
