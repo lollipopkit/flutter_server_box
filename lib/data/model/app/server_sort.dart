@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
@@ -256,10 +257,10 @@ class ServerSortOrder {
       case ServerSortField.cpu:
         // Busiest first by default, which is the direction the question is
         // asked in — so this one reverses what "ascending" means to it.
-        return _by(
-          order,
-          (id) => -(stateOf(id).status.cpu.usedPercent(coreIdx: 0) ?? -1),
-        );
+        return _by(order, (id) {
+          final used = stateOf(id).status.cpu.usedPercent(coreIdx: 0);
+          return used == null ? null : -used;
+        });
       case ServerSortField.alert:
         // Not a comparison but a partition: over the line, then everything
         // else in the arrangement it was already in.
@@ -270,12 +271,73 @@ class ServerSortOrder {
               : 1,
         );
       case ServerSortField.uptime:
-        return _by(
-          order,
-          (id) =>
-              -(stateOf(id).status.history.time.firstOrNull ?? 0).toDouble(),
-        );
+        // Ascending is shortest first, the direction the field's own doc
+        // names. `_by` applies the direction itself, so the key is the plain
+        // number of seconds and nothing here reads [ascending].
+        //
+        // A machine that has not said, or said something this cannot read,
+        // has no key and goes last either way — see [_by].
+        return _by(order, (id) {
+          final raw = stateOf(id).status.more[StatusCmdType.uptime];
+          return raw == null ? null : uptimeSeconds(raw)?.toDouble();
+        });
     }
+  }
+
+  /// The seconds [raw] says the machine has been up, or null if it cannot be
+  /// read.
+  ///
+  /// [raw] is `StatusCmdType.uptime`'s value, which is a *formatted* string,
+  /// not a number: what the Rust parser's `common::parse_uptime` keeps of the
+  /// line `uptime(1)` prints, or the same shape from the monitor agent's
+  /// `format_uptime`. An optional day count, then a duration:
+  ///
+  /// ```
+  /// 61 days, 18:16   61 days, 18 hours and 16 minutes
+  /// 1 day, 2:34      one day, singular
+  /// 5 days, 10 min   a zero hour prints a unit instead of H:MM
+  /// 5 days           days alone
+  /// 2:34             under a day — hours:minutes
+  /// 34 min           procps and busybox, with a zero hour
+  /// 3 hrs            BSD and macOS `w.c`: hr[s] with a zero minute,
+  /// 14 mins          min[s] with a zero hour,
+  /// 30 secs          sec[s] under a minute
+  /// ```
+  ///
+  /// Null for anything else, including the formats `parse_uptime` itself
+  /// rejects. The caller decides where an unknown goes; this does not guess a
+  /// number for something it did not understand.
+  ///
+  /// Public so a test can pin the shapes without building a server.
+  static int? uptimeSeconds(String raw) {
+    var rest = raw.trim();
+    var seconds = 0;
+
+    final days = RegExp(r'^(\d+)\s+days?(?:,\s*|$)').firstMatch(rest);
+    if (days != null) {
+      seconds = int.parse(days.group(1)!) * Duration.secondsPerDay;
+      rest = rest.substring(days.end);
+      if (rest.isEmpty) return seconds;
+    }
+
+    final clock = RegExp(r'^(\d+):(\d{2})$').firstMatch(rest);
+    if (clock != null) {
+      return seconds +
+          int.parse(clock.group(1)!) * Duration.secondsPerHour +
+          int.parse(clock.group(2)!) * Duration.secondsPerMinute;
+    }
+
+    final unit = RegExp(r'^(\d+)\s*(hr|min|sec)s?$').firstMatch(rest);
+    if (unit != null) {
+      final per = switch (unit.group(2)!) {
+        'hr' => Duration.secondsPerHour,
+        'min' => Duration.secondsPerMinute,
+        _ => 1,
+      };
+      return seconds + int.parse(unit.group(1)!) * per;
+    }
+
+    return null;
   }
 
   /// Sorts by one number per server, keeping the arrangement as the tie.
@@ -284,13 +346,24 @@ class ServerSortOrder {
   /// O(n log n) times: [stateOf] reaches a provider. And the tie is broken
   /// explicitly, because `sort` is not stable — without it two servers with
   /// the same reading swap places between rebuilds.
-  List<String> _by(List<String> order, double Function(String id) keyOf) {
+  ///
+  /// A null key is a server with no reading, and goes last in *either*
+  /// direction: a list sorted by a magnitude must not be led by the ones it
+  /// has no magnitude for. A sentinel number cannot say that — whichever end
+  /// it sits at, reversing the order puts it at the front.
+  List<String> _by(List<String> order, double? Function(String id) keyOf) {
     final keys = {for (final id in order) id: keyOf(id)};
     final rank = {for (var i = 0; i < order.length; i++) order[i]: i};
     final sorted = order.toList();
     sorted.sort((a, b) {
-      final byKey = keys[a]!.compareTo(keys[b]!);
-      if (byKey != 0) return ascending ? byKey : -byKey;
+      final keyA = keys[a];
+      final keyB = keys[b];
+      if (keyA != null && keyB != null) {
+        final byKey = keyA.compareTo(keyB);
+        if (byKey != 0) return ascending ? byKey : -byKey;
+      } else if (keyA != keyB) {
+        return keyA == null ? 1 : -1;
+      }
       return rank[a]!.compareTo(rank[b]!);
     });
     return sorted;

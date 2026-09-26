@@ -42,6 +42,7 @@ Guidance for Claude Code (claude.ai/code) when working in this repository.
   - macOS / Windows build: `macos/` or `windows/`, `hook/`, `crates/`, `Cargo.{toml,lock}`, `packages/flutter_pty`.
   - All three: `pubspec.{yaml,lock}` (a new plugin brings native code), `.github/actions/`, and `analysis.yml` itself.
   - Not a reason on its own: `lib/`, `test/`, or a gitlink move of a pure-Dart submodule (`fl_lib`, `dartssh2`, `xterm`, `fl_build`). `check` compiles those, and a native dependency they add shows up in `pubspec.lock`.
+- **Rust caching depends on who runs cargo, and every cache saves from main only.** A job's own `cargo` gets `kunobi-ninja/kache-action` (as `RUSTC_WRAPPER`), with a `cache-key-prefix` of its own. A `flutter build`/`flutter test` builds `sbm_ffi` through the build hook instead, which kache never sees — hooks_runner passes an environment allowlist, and neither `RUSTC_WRAPPER` nor `RUSTUP_TOOLCHAIN` is on it — so it gets `.github/actions/build-hook-cache` (`step: restore` before, `step: save` after). rust-cache is gone: it cached a `target/` the hook does not build into.
 
 ### Rust / FFI
 
