@@ -34,6 +34,15 @@ Guidance for Claude Code (claude.ai/code) when working in this repository.
 - Size the view, not the surface, for breakpoint tests: `tester.view.physicalSize` + `devicePixelRatio`. `setSurfaceSize` changes layout but not what `MediaQuery` reports, so a "phone" test written that way exercises the desktop rendering.
 - `pumpAndSettle` never returns on a tree with a text field or another always-scheduling widget; it gives up after its 10-minute default. Count frames with `pump(duration)`, and use `--timeout 30s`.
 
+### CI
+
+- **The native app builds run only by hand**: `iOS Linux engine`, `macOS build` and `Windows build` in `analysis.yml` are `workflow_dispatch`-only. Each holds a platform runner for 10-45 minutes, and `check` already analyzes and tests every Dart change on a pull request.
+- **Deciding whether a PR needs them is part of opening it.** When the diff reaches something only a native build can answer, run `gh workflow run analysis.yml --ref <branch>` and wait for it before marking the PR ready; otherwise say in the PR that it was not needed.
+  - iOS Linux engine: `ios/`, `third_party/`, `crates/sbm_ffi/`, `scripts/build-ish-ios.sh`, `scripts/check-ish-linkage.sh`, and the submodules with iOS code (`packages/flutter_pty`, `plain_notification_token`, `watch_connectivity`).
+  - macOS / Windows build: `macos/` or `windows/`, `hook/`, `crates/`, `Cargo.{toml,lock}`, `packages/flutter_pty`.
+  - All three: `pubspec.{yaml,lock}` (a new plugin brings native code), `.github/actions/`, and `analysis.yml` itself.
+  - Not a reason on its own: `lib/`, `test/`, or a gitlink move of a pure-Dart submodule (`fl_lib`, `dartssh2`, `xterm`, `fl_build`). `check` compiles those, and a native dependency they add shows up in `pubspec.lock`.
+
 ### Rust / FFI
 
 - `cargo build -p sbm_ffi` before `flutter test test/unit/app/frb_parser_test.dart` and `test/unit/ssh/ssh_native_crypto_test.dart` (`test/helpers/rust_lib_helper.dart` loads the dylib from `target/`).

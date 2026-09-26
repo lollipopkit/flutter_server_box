@@ -10,6 +10,10 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  # The full native builds (iOS Linux engine, macOS, Windows) run only from
+  # here. Each is a platform runner for 10-45 minutes, and `check` already
+  # compiles and tests every Dart change on a pull request.
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -17,31 +21,25 @@ permissions:
   pull-requests: read
 
 jobs:
-  # Which of the expensive jobs this diff can actually affect.
+  # Which of the jobs this diff can actually affect.
   #
-  # The two that cost real time are `iOS Linux engine` (~9 min: brews an LLVM
-  # toolchain, builds the guest engine, then builds the app twice) and `Rust
-  # tests (windows-latest)` (~7-9 min, most of it a cold compile). A docs-only
-  # or Dart-only PR paid both for nothing.
+  # `Rust tests (windows-latest)` is the one that costs real time (~7-9 min,
+  # most of it a cold compile); a docs-only or Dart-only PR paid it for
+  # nothing. The native app builds are not filtered here: they run only on
+  # `workflow_dispatch`.
   #
   # Asks GitHub for the file list rather than diffing refs: no checkout, no
   # fetch depth to get wrong, and no merge-base to compute against a base
-  # branch that may have moved since. A pull request has one of its own; a push
-  # is the range it pushed.
+  # branch that may have moved since. A pull request has one of its own.
   #
-  # On a push to main every filter answers "everything" — that is the ref
-  # releases are cut from, and narrowing what runs there trades away the wrong
-  # thing. Native macOS and Windows builds are the exceptions, and are answered
-  # honestly on both: platform runners should not be queued for a diff that
-  # cannot reach their products.
+  # Anything else — a push to main, a manual run — answers "everything": main is
+  # the ref releases are cut from, and narrowing what runs there trades away the
+  # wrong thing.
   changes:
     name: What changed
     runs-on: ubuntu-latest
     outputs:
       rust: ${{ steps.filter.outputs.rust }}
-      ish: ${{ steps.filter.outputs.ish }}
-      macos: ${{ steps.filter.outputs.macos }}
-      windows: ${{ steps.filter.outputs.windows }}
       dart: ${{ steps.filter.outputs.dart }}
       frontend: ${{ steps.filter.outputs.frontend }}
       docs: ${{ steps.filter.outputs.docs }}
@@ -54,28 +52,18 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Which filters are answered from the diff. Everything, on a pull
-          # request; on anything else only the ones named here, and the rest
-          # run unconditionally.
-          strict=' rust ish macos windows dart frontend docs website '
+          # Which filters are answered from the diff: all of them on a pull
+          # request, none otherwise.
+          strict=' rust dart frontend docs website '
 
           if [[ "${{ github.event_name }}" == 'pull_request' ]]; then
             files="$(gh api --paginate \
               "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" \
               --jq '.[].filename')"
           else
-            strict=' macos windows '
-            base='${{ github.event.before }}'
-            # A branch's first push has no `before` to compare against, and a
-            # force-push leaves one that is no longer an ancestor. Either way
-            # there is no diff to be had, so nothing is narrowed.
-            if [[ "$base" =~ ^0*$ ]] || ! files="$(gh api --paginate \
-              "repos/${{ github.repository }}/compare/$base...${{ github.sha }}" \
-              --jq '.files[].filename')"; then
-              strict=''
-              files=''
-              echo "no diff to read: running everything"
-            fi
+            strict=''
+            files=''
+            echo "not a pull request: running everything"
           fi
           echo "changed files:"
           echo "$files"
@@ -107,32 +95,12 @@ jobs:
           shared='^\.github/(workflows/(analysis|build)\.yml$|actions/)|^pubspec\.(yaml|lock)$|^packages/'
 
           emit rust "$shared|^crates/|^monitor/|^Cargo\.(toml|lock)$"
-          # The engine, the scripts that build and check it, and everything the
-          # iOS app links: this is the only job that compiles either the engine
-          # or `flutter build ios` at all
-          emit ish "$shared|^third_party/|^scripts/(build-ish-ios|check-ish-linkage)\.sh$|^ios/|^crates/sbm_ffi/"
-          # The Xcode project and the entitlements, plus everything that is
-          # compiled into the product: `hook/build.dart` is what builds the Rust
-          # library into the app, and nothing else in CI links it on macOS.
-          #
-          # `lib/` is deliberately absent. `check` runs `flutter analyze` and
-          # `flutter test` on every Dart change, so a change there that would
-          # fail to compile fails there first, minutes earlier and on a cheaper
-          # runner. What only a macOS runner can answer is whether the project
-          # and the Rust static library still link.
-          emit macos "$shared|^macos/|^hook/|^crates/|^Cargo\.(toml|lock)$"
-          # Compile the Windows runner only when its native product or build
-          # inputs changed. Dart-only changes are already compiled and tested
-          # by `check` below on a cheaper runner.
-          emit windows "$shared|^windows/|^hook/|^crates/|^Cargo\.(toml|lock)$"
           # `crates/` because `flutter test` loads the FFI dylib and the
           # generated bindings come from there.
           #
           # `macos/` because `test/platform/macos_entitlements_test.dart` is a plain
           # test and runs here — the `macOS build` job below says exactly that
-          # and then relies on it. Without this, a change to an entitlements
-          # file ran the 45-minute build and skipped the one test guarding what
-          # it changed.
+          # and then relies on it.
           #
           # `docs/schemas/` because `test/unit/theme_schema_test.dart` reads the
           # manifest schema and holds it against the parser; a schema-only
@@ -329,8 +297,7 @@ jobs:
   # strip turned out to pass on a binary that still had the engine in it.
   ishEngine:
     name: iOS Linux engine
-    needs: changes
-    if: needs.changes.outputs.ish == 'true'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: macos-latest
 
     steps:
@@ -391,14 +358,9 @@ jobs:
   # plain test and runs in `check` below; what is left for a macOS runner is
   # whether the project and the Rust static library still link.  The
   # running-app half needs a machine, and has nowhere in CI to run.
-  #
-  # This was a workflow of its own until it moved here, because `paths:` is a
-  # workflow-level filter and "only when macos/** changed" had nowhere else to
-  # live. The `changes` job above is that filter, per job, so it does now.
   macosBuild:
     name: macOS build
-    needs: changes
-    if: needs.changes.outputs.macos == 'true'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: macos-latest
     timeout-minutes: 45
 
@@ -457,8 +419,7 @@ jobs:
 
   windowsBuild:
     name: Windows build
-    needs: changes
-    if: needs.changes.outputs.windows == 'true'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: windows-latest
     timeout-minutes: 30
 
