@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/bak/backup.dart';
@@ -21,11 +22,12 @@ final class BakSyncer extends SyncIface {
 
   /// Set by [fromFile] when the remote payload came from a newer build.
   ///
-  /// `SyncIface._sync` catches merge failures, logs them, and then uploads
-  /// unconditionally — so a device that could not read the remote data would
-  /// overwrite it with its own older copy, silently discarding whatever it
-  /// didn't understand. [backup] is the one hook available for refusing that
-  /// without forking the whole cycle.
+  /// `SyncIface._sync` already skips the upload after a failed merge. The
+  /// case left is `_inheritLegacyRemote`, which reads a remote file outside
+  /// that cycle: after it found newer data, the next sync would upload this
+  /// device's older copy, silently discarding whatever it didn't understand.
+  /// [backup] is the one hook available for refusing that without forking the
+  /// whole cycle.
   ///
   /// Static because the syncer is a single instance shared by every caller.
   static SchemaTooNewException? _remoteTooNew;
@@ -65,35 +67,26 @@ final class BakSyncer extends SyncIface {
     final pwd = await SecureStoreProps.bakPwd.read();
     final includeSettings = PrefProps.syncAppSettings.get();
     try {
-      if (Cryptor.isEncrypted(content)) {
-        final mergeable = MergeableUtils.fromJsonString(content, pwd).$1;
-        return _normalizeSyncPayload(
-          mergeable,
-          includeSettings: includeSettings,
-        );
-      }
-      // Backups uploaded before remote encryption became mandatory are
-      // plaintext. Keep accepting them; only new remote writes are required
-      // to be encrypted.
-      final mergeable = MergeableUtils.fromJsonString(content).$1;
+      // Only decrypting and decoding leave this isolate: they read nothing but
+      // their arguments. Prefs, secure storage and [_remoteTooNew] belong to
+      // this one — in a worker the pref answered its default and dropped every
+      // synced setting, with no error anywhere (#1562).
+      //
+      // A plaintext backup, uploaded before remote encryption became
+      // mandatory, is still accepted: the password is only used on an
+      // encrypted payload.
+      final mergeable = await compute(_parse, (content, pwd));
       return _normalizeSyncPayload(mergeable, includeSettings: includeSettings);
     } on SchemaTooNewException catch (e) {
-      // Not a parse problem — retrying without the password would decode the
-      // same too-new payload, and falling through to the v1 reader would
-      // decode it wrong. Record it so `backup` refuses to upload over it.
+      // Recorded so `backup` refuses to upload over data this build cannot
+      // read.
       _remoteTooNew = e;
       rethrow;
-    } catch (e, s) {
-      Loggers.app.warning(
-        'Failed to parse backup file with password, trying without password',
-        e,
-        s,
-      );
-      // Fallback: try without password if detection failed
-      final mergeable = MergeableUtils.fromJsonString(content).$1;
-      return _normalizeSyncPayload(mergeable, includeSettings: includeSettings);
     }
   }
+
+  static Mergeable _parse((String, String?) args) =>
+      MergeableUtils.fromJsonString(args.$1, args.$2).$1;
 
   Mergeable _normalizeSyncPayload(
     Mergeable mergeable, {
