@@ -281,7 +281,15 @@ jobs:
           fetch-depth: 1
       - name: Install Flutter
         uses: ./.github/actions/setup-flutter
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+      # sbm_ffi is built by the build hook, into a target directory and on a
+      # toolchain rust-cache never covered, so it cached nothing this build
+      # used. Not `build-hook-cache` either: a tag cannot save under main's
+      # rule, and what main saves is a debug build this one does not reuse.
+      # The minimal profile skips what the hook's implicit install would fetch
+      # and this build never runs (docs, clippy, rustfmt).
+      - name: Install the build hook's Rust toolchain
+        working-directory: crates/sbm_ffi
+        run: rustup toolchain install --profile minimal --no-self-update
       - name: Install dependencies
         run: flutter pub get
       - name: Sign locally
@@ -506,9 +514,16 @@ jobs:
           sudo apt-get install -y musl-tools
       - name: Add Rust target
         run: rustup target add ${{ matrix.target }}
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+      # kache rather than rust-cache: see `rustTests` in analysis.yml. Only a
+      # run from main saves, so a tag's release build restores what main left
+      # and a one-off dispatch adds nothing.
+      - uses: kunobi-ninja/kache-action@ad7317540dcdd71c904f7a60a87b620a0c0e67ed # v1
         with:
-          key: ${{ matrix.target }}
+          version: 0.26.3
+          cache-key-prefix: kache-monitor-${{ matrix.target }}
+          save-cache: ${{ github.ref == 'refs/heads/main' }}
+          pr-comment: false
+          cache-dir: ${{ runner.os == 'Windows' && format('{0}/kache', runner.temp) || '' }}
       - name: Build
         shell: bash
         run: cargo build -p server_box_monitor --release --target ${{ matrix.target }}

@@ -167,7 +167,21 @@ jobs:
           submodules: recursive
           persist-credentials: false
 
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+      # kache caches each rustc invocation by a hash of its normalized inputs,
+      # deduplicated across crates, rather than a snapshot of `target/` per
+      # job. Saved from main only: a pull request restores main's store and
+      # adds nothing to the repository's 10 GB, so branches stop evicting it.
+      # A prefix per job, because the store is keyed by OS and `Cargo.lock`
+      # alone, and the first job to save under a key keeps it.
+      - uses: kunobi-ninja/kache-action@ad7317540dcdd71c904f7a60a87b620a0c0e67ed # v1
+        with:
+          version: 0.26.3
+          cache-key-prefix: kache-rust-tests
+          save-cache: ${{ github.ref == 'refs/heads/main' }}
+          pr-comment: false
+          # The home and workspace volumes differ on hosted Windows runners,
+          # and a store that cannot hardlink into `target/` copies instead.
+          cache-dir: ${{ runner.os == 'Windows' && format('{0}/kache', runner.temp) || '' }}
 
       - name: Test Rust workspace
         run: cargo test --workspace --no-fail-fast
@@ -374,7 +388,9 @@ jobs:
 
       - uses: ./.github/actions/setup-flutter
 
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+      - uses: ./.github/actions/build-hook-cache
+        with:
+          step: restore
 
       - name: Install dependencies
         run: flutter pub get
@@ -417,6 +433,10 @@ jobs:
       - name: Build the unsandboxed app
         run: flutter build macos --debug
 
+      - uses: ./.github/actions/build-hook-cache
+        with:
+          step: save
+
   windowsBuild:
     name: Windows build
     if: github.event_name == 'workflow_dispatch'
@@ -434,13 +454,19 @@ jobs:
       - name: Install Flutter
         uses: ./.github/actions/setup-flutter
 
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+      - uses: ./.github/actions/build-hook-cache
+        with:
+          step: restore
 
       - name: Install dependencies
         run: flutter pub get --enforce-lockfile
 
       - name: Build the Windows app
         run: flutter build windows --debug --no-pub
+
+      - uses: ./.github/actions/build-hook-cache
+        with:
+          step: save
 
   check:
     needs: changes
@@ -467,12 +493,57 @@ jobs:
       - name: Analyze project source
         run: flutter analyze lib test integration_test
 
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+  # Sharded because `flutter test` compiles test files one at a time — its
+  # `TestCompiler` is a queue, and concurrency only applies to running them. On
+  # one runner that was ~6.5 of the 10 minutes, for ~300 files whose tests took
+  # under 5 minutes of CPU between them. Each shard compiles only its own.
+  tests:
+    name: tests (${{ matrix.shard }}/3)
+    needs: changes
+    if: needs.changes.outputs.dart == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2]
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          lfs: true
+          fetch-depth: 1
+          submodules: recursive
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-flutter
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # See `rustTests` for why kache and why only main saves.
+      - uses: kunobi-ninja/kache-action@ad7317540dcdd71c904f7a60a87b620a0c0e67ed # v1
+        with:
+          version: 0.26.3
+          cache-key-prefix: kache-flutter-tests
+          save-cache: ${{ github.ref == 'refs/heads/main' }}
+          pr-comment: false
 
       # FFI-dependent suites (frb_parser/windows/server_status_update_req...)
       # load the dylib from target/debug via test/helpers/rust_lib_helper.dart
       - name: Build native FFI library
         run: cargo build -p sbm_ffi
 
+      # `flutter test` builds sbm_ffi again through the build hook, for a
+      # library no unit test loads (they take the one built above).
+      - uses: ./.github/actions/build-hook-cache
+        with:
+          step: restore
+
       - name: Run tests
-        run: flutter test
+        run: flutter test --total-shards 3 --shard-index ${{ matrix.shard }}
+
+      # From one shard: all three build the same thing.
+      - if: matrix.shard == 0
+        uses: ./.github/actions/build-hook-cache
+        with:
+          step: save

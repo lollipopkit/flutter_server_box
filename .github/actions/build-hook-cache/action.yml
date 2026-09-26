@@ -1,0 +1,56 @@
+name: Build hook cache
+description: The Rust toolchain and outputs of the app's Dart build hooks.
+
+# `flutter build` and `flutter test` build `crates/sbm_ffi` through
+# `hook/build.dart`: a `cargo build` into `.dart_tool/hooks_runner`, on the
+# toolchain `crates/sbm_ffi/rust-toolchain.toml` pins, with every shipped
+# target. rust-cache knows neither that target directory nor that toolchain,
+# and kache never sees the build — hooks_runner passes a fixed allowlist of
+# environment variables, and `RUSTC_WRAPPER` is not on it. Cold, the hook was
+# ~3.5 minutes before the first test in `analysis.yml`.
+#
+# Two steps rather than `actions/cache`, whose save cannot be turned off: a
+# pull request restores main's outputs and does not add its own to the
+# repository's 10 GB.
+#
+# Requires the repository to be checked out first.
+inputs:
+  step:
+    description: "`restore` before the build, `save` after it"
+    required: true
+  key-suffix:
+    description: What else changes the hook's outputs, such as a target architecture
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    # The minimal profile skips the docs, clippy and rustfmt the hook's
+    # implicit install would fetch; `--no-self-update` because rustup updates
+    # itself first otherwise. In a step of its own so its time is visible.
+    - name: Install the build hook's Rust toolchain
+      if: inputs.step == 'restore'
+      shell: bash
+      working-directory: crates/sbm_ffi
+      run: rustup toolchain install --profile minimal --no-self-update
+
+    # A partial match is safe to restore: hooks_runner re-runs a hook whose
+    # inputs changed, and cargo then rebuilds only what its fingerprints say is
+    # stale.
+    - name: Restore build hook outputs
+      if: inputs.step == 'restore'
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: .dart_tool/hooks_runner
+        key: hooks-${{ runner.os }}-${{ runner.arch }}${{ inputs.key-suffix }}-${{ hashFiles('pubspec.lock', 'Cargo.lock', 'crates/**', 'hook/**', 'packages/flutter_pty/src/**', 'packages/flutter_pty/hook/**') }}
+        restore-keys: hooks-${{ runner.os }}-${{ runner.arch }}${{ inputs.key-suffix }}-
+
+    # A key that already exists is a warning, not a failure, so an exact hit
+    # needs no check here.
+    - name: Save build hook outputs
+      if: inputs.step == 'save' && github.ref == 'refs/heads/main'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: .dart_tool/hooks_runner
+        key: hooks-${{ runner.os }}-${{ runner.arch }}${{ inputs.key-suffix }}-${{ hashFiles('pubspec.lock', 'Cargo.lock', 'crates/**', 'hook/**', 'packages/flutter_pty/src/**', 'packages/flutter_pty/hook/**') }}
