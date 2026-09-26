@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
-import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/status_history.dart';
 import 'package:server_box/data/model/server/system.dart';
@@ -388,20 +387,10 @@ List<DetailMetric> serverDetailMetrics(
     );
   }
 
-  // The cached reading where there is one, which is every status that came
-  // through either transport: both set it once per apply, and it is what the
-  // card's row, the chart's disk line and the overview read — `recordSample`
-  // writes this same field into the history buffer. Parsing here as well would
-  // be a second answer recomputed on every build, agreeing only while both are
-  // the same function of the same list.
-  //
-  // The guard stays `disk.isNotEmpty`, which is what decides whether there is a
-  // row. Tying it to the cache instead would have hidden the row wherever a
-  // status was built without going through `applyStatus` — a test fixture, and
-  // any future path that fills one in by hand. The fallback covers exactly
-  // those: a status holding disks and no cached reading still draws.
-  if (ss.disk.isNotEmpty) {
-    final usage = ss.diskUsage ?? DiskUsage.parse(ss.disk);
+  // `diskUsage` is the one reading the card's row, the chart's disk line and
+  // the overview also draw — see [ServerStatus.diskUsage]. Null with no disks
+  // or an unreadable list, and then there is no row.
+  if (ss.diskUsage case final usage?) {
     final used = usage.usedPercent;
     views.add(
       DetailMetric(

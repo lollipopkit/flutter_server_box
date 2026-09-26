@@ -357,14 +357,6 @@ void _applyDisks(ServerStatus ss, Map<String, dynamic> status) {
   ss.disk = (status['disks'] as List)
       .map((d) => _diskFromJson(d as Map<String, dynamic>))
       .toList();
-  try {
-    ss.diskUsage = ss.disk.isEmpty ? null : DiskUsage.parse(ss.disk);
-  } catch (e, s) {
-    // Cleared, not kept: the last reading describes disks this status no
-    // longer lists, and a stale figure reads as a current one everywhere.
-    ss.diskUsage = null;
-    Loggers.app.warning(e, s);
-  }
 }
 
 void _applyNet(

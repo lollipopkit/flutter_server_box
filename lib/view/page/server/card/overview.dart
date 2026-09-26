@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/context/motion.dart';
 import 'package:server_box/data/model/server/connection_stat.dart';
-import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
@@ -520,8 +519,7 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
         memTotal += ss.mem.total.toDouble();
         memUsed += (ss.mem.total - ss.mem.free).toDouble();
       }
-      if (ss.disk.isNotEmpty) {
-        final usage = ss.diskUsage ?? DiskUsage.parse(ss.disk);
+      if (ss.diskUsage case final usage?) {
         diskTotal += usage.size.toDouble();
         diskUsed += usage.used.toDouble();
       }

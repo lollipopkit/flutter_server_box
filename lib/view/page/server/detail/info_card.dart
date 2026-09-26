@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/self_addr.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
-import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/gpu.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -60,7 +59,7 @@ class ServerDetailInfoCard extends StatelessWidget {
   static List<ServerInfoRow> hardwareRows(ServerState si) {
     final ss = si.status;
     final cores = ss.cpu.coresCount;
-    final usage = ss.disk.isEmpty ? null : DiskUsage.parse(ss.disk);
+    final usage = ss.diskUsage;
     return <ServerInfoRow>[
       if (ss.cpu.brand.keys.firstOrNull case final brand?)
         (k: 'CPU', v: brand, secret: false),

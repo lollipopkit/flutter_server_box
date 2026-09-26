@@ -3,6 +3,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/system.dart';
+import 'package:server_box/data/res/status.dart';
 
 // Parsing tests migrated to crates/sbm_parser/tests/dart_compat.rs
 void main() {
@@ -306,6 +307,36 @@ void main() {
 
       expect(usage.used, BigInt.from(515072));
       expect(usage.size, BigInt.from(1032256));
+    });
+  });
+
+  group('ServerStatus.diskUsage', () {
+    Disk disk(String path, int used, int size) => Disk(
+      path: path,
+      mount: '/',
+      usedPercent: size == 0 ? 0 : used * 100 ~/ size,
+      used: BigInt.from(used),
+      size: BigInt.from(size),
+      avail: BigInt.from(size - used),
+    );
+
+    test('a status built by hand still has a reading', () {
+      // Nothing here went through a mapper, which is where the reading used
+      // to be computed; the views each parsed again to cover that case.
+      final ss = InitStatus.status..disk = [disk('/dev/sda1', 25, 100)];
+      expect(ss.diskUsage?.usedPercent, 25);
+    });
+
+    test('is recomputed when the disks are replaced, and only then', () {
+      final ss = InitStatus.status..disk = [disk('/dev/sda1', 25, 100)];
+      final first = ss.diskUsage;
+      expect(identical(ss.diskUsage, first), isTrue, reason: 'one parse per list');
+
+      ss.disk = [disk('/dev/sda1', 75, 100)];
+      expect(ss.diskUsage?.usedPercent, 75);
+
+      ss.disk = const [];
+      expect(ss.diskUsage, isNull);
     });
   });
 }

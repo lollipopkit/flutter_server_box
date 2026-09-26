@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
-import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/gpu.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -495,8 +494,7 @@ List<ServerMetric> _readings(ServerState srv) {
     );
   }
 
-  if (ss.disk.isNotEmpty) {
-    final usage = ss.diskUsage ?? DiskUsage.parse(ss.disk);
+  if (ss.diskUsage case final usage?) {
     final used = usage.usedPercent;
     out.add(
       ServerMetric(

@@ -457,7 +457,6 @@ ServerStatus _createPreviousStatus() {
       avail: BigInt.from(500),
     ),
   ];
-  previous.diskUsage = DiskUsage.parse(previous.disk);
   previous.more[StatusCmdType.host] = 'old-host';
   previous.sensors.add(
     const SensorItem(

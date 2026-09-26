@@ -142,11 +142,13 @@ jobs:
 
       # kache rather than rust-cache: see `rustTests` in analysis.yml. Only a
       # run from main saves, so a tag's release build restores what main left
-      # and a one-off dispatch adds nothing.
+      # and a one-off dispatch adds nothing. The profile is in the prefix
+      # because `verifyMonitor` in build.yml builds the same target under
+      # `release`, and the first job to save under a shared key keeps it.
       - uses: kunobi-ninja/kache-action@ad7317540dcdd71c904f7a60a87b620a0c0e67ed # v1
         with:
           version: 0.26.3
-          cache-key-prefix: kache-monitor-${{ matrix.target }}
+          cache-key-prefix: kache-monitor-release-monitor-${{ matrix.target }}
           save-cache: ${{ github.ref == 'refs/heads/main' }}
           pr-comment: false
           cache-dir: ${{ runner.os == 'Windows' && format('{0}/kache', runner.temp) || '' }}
