@@ -557,6 +557,26 @@ void main() {
       expect(find.text('web-01'), findsNothing);
     });
 
+    testWidgets('wide: the list below crosses rather than cutting', (
+      tester,
+    ) async {
+      await pump(tester, wide: true);
+      await tester.tap(find.text('pve-host'));
+      await settle(tester);
+
+      await tester.tap(find.text('kvm-host'));
+      // One frame in: the host list is still on screen, on its way out, with
+      // the new host's guests already arriving over it. A hard cut would have
+      // swapped the two between frames, which is what this catches.
+      await tester.pump();
+      expect(find.text(app_locale.l10n.virtHosts.toUpperCase()), findsOneWidget);
+      expect(find.text('db-01'), findsOneWidget);
+
+      await settle(tester);
+      expect(find.text(app_locale.l10n.virtHosts.toUpperCase()), findsNothing);
+      expect(find.text('db-01'), findsOneWidget);
+    });
+
     testWidgets('narrow: in a sheet', (tester) async {
       await pump(tester, wide: false);
 

@@ -7,6 +7,7 @@ part of 'tab.dart';
 /// itself so a probe finishing while it is open moves its row up.
 class _VirtHostPicker extends ConsumerWidget {
   const _VirtHostPicker({
+    super.key,
     required this.selectedId,
     required this.onSelect,
     required this.onCheck,
