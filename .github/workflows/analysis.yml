@@ -496,7 +496,12 @@ jobs:
   # Sharded because `flutter test` compiles test files one at a time — its
   # `TestCompiler` is a queue, and concurrency only applies to running them. On
   # one runner that was ~6.5 of the 10 minutes, for ~300 files whose tests took
-  # under 5 minutes of CPU between them. Each shard compiles only its own.
+  # under 5 minutes of CPU between them.
+  #
+  # By file, and not with `--total-shards`: that slices the tests *inside*
+  # every suite (test_core's `_shardSuite`), so each shard still loads and
+  # compiles all of them. Tried first; every shard took as long as the whole
+  # run had.
   tests:
     name: tests (${{ matrix.shard }}/3)
     needs: changes
@@ -539,8 +544,18 @@ jobs:
         with:
           step: restore
 
+      # Every third file, from a sorted list, so the split is stable and a new
+      # test file lands in exactly one shard. `git ls-files` rather than a
+      # directory walk: only what is checked in, the same set `flutter test`
+      # finds on its own, and a pathspec `*` crosses directories.
       - name: Run tests
-        run: flutter test --total-shards 3 --shard-index ${{ matrix.shard }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(git ls-files -- 'test/*_test.dart' | sort \
+            | awk -v n=3 -v i=${{ matrix.shard }} '(NR - 1) % n == i')
+          echo "${#files[@]} test files in this shard"
+          flutter test "${files[@]}"
 
       # From one shard: all three build the same thing.
       - if: matrix.shard == 0
