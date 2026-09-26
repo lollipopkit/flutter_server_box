@@ -4154,7 +4154,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get virtHwDevices => 'Cd-rom en passthrough';
 
   @override
-  String get virtHwDevicesEmpty => 'USB- en PCI-passthrough, TPM';
+  String get virtHwDevicesEmpty => 'USB- en PCI-passthrough, cd-rom, TPM';
 
   @override
   String get virtHwAddDevice => 'Apparaat toevoegen';
@@ -4702,4 +4702,115 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get pveTokenTipStorage =>
       'Opslagbeheer vereist Datastore.Allocate op /storage (toevoegen, uitschakelen, verwijderen), Datastore.AllocateSpace (volumes) en Datastore.AllocateTemplate (uploads); Linux-bridges en het toepassen van de netwerkconfiguratie vereisen Sys.Modify op de node.';
+
+  @override
+  String get virtCreateUnnamed => 'Naamloos';
+
+  @override
+  String get virtCreateNotChosen => 'Niet gekozen';
+
+  @override
+  String get virtCreateKindVmSub => 'qm · een volledige KVM-VM';
+
+  @override
+  String get virtCreateKindLxcSub =>
+      'pct · deelt de kernel van de host, lichter';
+
+  @override
+  String get virtCloudImage => 'Cloud-image';
+
+  @override
+  String get virtCloudImageTip =>
+      'Een schijf met een systeem erop: gekopieerd, vergroot tot de grootte onder Opslag en bij de eerste start door cloud-init ingericht. De image zelf blijft ongewijzigd.';
+
+  @override
+  String get virtNoCloudImagesLibvirt =>
+      'Geen cloud-images hier: zet een qcow2- of raw-image in een pool (upload bij Opslag) die door geen VM wordt gebruikt.';
+
+  @override
+  String get virtNoCloudImagesPve =>
+      'Geen cloud-images hier: upload een qcow2-, raw- of vmdk-image naar een opslag met het inhoudstype Import (PVE 8.2+).';
+
+  @override
+  String get virtCreateWindowsTitle => 'Windows 11 vereist UEFI en TPM 2.0';
+
+  @override
+  String get virtCreateWindowsBody => 'Kies hierboven UEFI en zet de TPM aan.';
+
+  @override
+  String get virtCreateWindowsNoTpm =>
+      'Deze host heeft geen software-TPM (swtpm): installeer die om de VM er een te geven.';
+
+  @override
+  String virtCreateImageSize(String size) {
+    return 'De image is $size: de schijf moet minstens zo groot zijn.';
+  }
+
+  @override
+  String get virtCreateImageMissing => 'Kies een cloud-image.';
+
+  @override
+  String get virtCreateIncomplete =>
+      'Vul eerst de oranje gemarkeerde delen in.';
+
+  @override
+  String virtCreateOn(String host) {
+    return 'Wordt aangemaakt op $host';
+  }
+
+  @override
+  String get virtCiTip =>
+      'Een account met sudo, aan te melden met het wachtwoord, een SSH-sleutel of beide.';
+
+  @override
+  String get virtCiUserInvalid =>
+      'Kleine letters, cijfers, _ en -, beginnend met een letter of _';
+
+  @override
+  String get virtCiCredentialsMissing =>
+      'Stel een wachtwoord of een SSH-sleutel in.';
+
+  @override
+  String get virtCiHostnamePve => 'De hostnaam is de naam van de VM.';
+
+  @override
+  String get virtCiStatic => 'Statisch';
+
+  @override
+  String get virtCiAddressInvalid =>
+      'Een IPv4-adres met prefix, zoals 10.0.0.5/24';
+
+  @override
+  String get virtCiGatewayInvalid => 'Een IPv4-adres, zoals 10.0.0.1';
+
+  @override
+  String get virtCiDnsFromDhcp => 'Leeg: via DHCP';
+
+  @override
+  String get virtCiDnsInvalid =>
+      'IP-adressen, gescheiden door spaties of komma\'s';
+
+  @override
+  String get virtCiSearch => 'Zoekdomein';
+
+  @override
+  String get virtCiSeedNote =>
+      'Geschreven naar een kleine ISO naast de schijf, gekoppeld als cd-rom en verwijderd met de VM. Alleen de hash van het wachtwoord wordt bewaard.';
+
+  @override
+  String get virtCiNoToolTitle =>
+      'Geen hulpmiddel op de host voor de cloud-init-gegevens';
+
+  @override
+  String virtCiNoToolBody(String tools) {
+    return 'Installeer een van $tools op de host. Zonder cloud-init start de image zonder account om mee aan te melden.';
+  }
+
+  @override
+  String get virtHwCloudInitNote =>
+      'Wat cloud-init bij de eerste start leest. Geen installatiemedium: hier wordt niets geplaatst.';
+
+  @override
+  String get virtHwCdromLater =>
+      'Terwijl ze draait, wordt het station bij de volgende start toegevoegd (SATA en IDE nemen er live geen).';
 }

@@ -235,15 +235,25 @@ pub fn parse_virt_create_host_json(raw: String) -> Result<String, VirtFfiError> 
     serde_json::to_string(&virt::parse_create_host(&raw)?).map_err(json_err)
 }
 
-/// A new domain's disk and its path; `spec_json` is a `VirtCreateSpec`
+/// A new domain's disk (empty, or a copy of a cloud image) and its
+/// cloud-init seed; `spec_json` is a `VirtCreateSpec`
 #[flutter_rust_bridge::frb(sync)]
 pub fn virt_create_volume_script(spec_json: String) -> Result<String, VirtFfiError> {
     Ok(virt::create_volume_script(&spec_of(&spec_json)?)?)
 }
 
-/// [`virt_create_volume_script`]'s output: the new volume's path
-pub fn parse_virt_create_volume(raw: String) -> Result<String, VirtFfiError> {
-    Ok(virt::parse_create_volume(&raw)?)
+/// [`virt_create_volume_script`]'s output → `VirtCreateVolumes` JSON (the
+/// disk's and the seed's paths)
+pub fn parse_virt_create_volumes_json(raw: String) -> Result<String, VirtFfiError> {
+    serde_json::to_string(&virt::parse_create_volumes(&raw)?).map_err(json_err)
+}
+
+/// `$6$<salt>$…`: a cloud-init password as SHA-512 crypt, so only the hash
+/// ever leaves the app. `salt` is up to 16 of `./0-9A-Za-z`, drawn from a
+/// secure source by the caller.
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_hash_password(password: String, salt: String) -> Result<String, VirtFfiError> {
+    Ok(sbm_parser::virt_cloud_init::sha512_crypt(&password, &salt)?)
 }
 
 /// A clone's disks (`VirtCloneSpec` JSON), each copied or made empty in
@@ -283,10 +293,22 @@ pub fn parse_virt_create_json(raw: String) -> Result<String, VirtFfiError> {
 }
 
 /// `undefine`, with the volumes of the disk targets in `storage` (none keeps
-/// them all). Parse with [`parse_virt_action`].
+/// them all), and the domain's own cloud-init `seed` after it. Parse with
+/// [`parse_virt_undefine`].
 #[flutter_rust_bridge::frb(sync)]
-pub fn virt_undefine_script(domain: String, storage: Vec<String>) -> Result<String, VirtFfiError> {
-    Ok(virt::undefine_script(&domain, &storage)?)
+pub fn virt_undefine_script(
+    domain: String,
+    storage: Vec<String>,
+    seed: Option<String>,
+) -> Result<String, VirtFfiError> {
+    Ok(virt::undefine_script(&domain, &storage, seed.as_deref())?)
+}
+
+/// [`virt_undefine_script`]'s output: `Ok` once the domain (and its seed)
+/// are gone
+#[flutter_rust_bridge::frb(sync)]
+pub fn parse_virt_undefine(raw: String) -> Result<(), VirtFfiError> {
+    Ok(virt::parse_undefine(&raw)?)
 }
 
 /// A domain's hardware, persistent and running, in one round trip

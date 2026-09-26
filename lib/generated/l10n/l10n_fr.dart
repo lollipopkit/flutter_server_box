@@ -4185,7 +4185,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get virtHwDevices => 'CD-ROM et passthrough';
 
   @override
-  String get virtHwDevicesEmpty => 'Passthrough USB et PCI, TPM';
+  String get virtHwDevicesEmpty => 'Passthrough USB et PCI, CD-ROM, TPM';
 
   @override
   String get virtHwAddDevice => 'Ajouter un périphérique';
@@ -4736,4 +4736,116 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get pveTokenTipStorage =>
       'Gérer le stockage nécessite Datastore.Allocate sur /storage (ajout, désactivation, retrait), Datastore.AllocateSpace (volumes) et Datastore.AllocateTemplate (téléversements) ; les ponts Linux et l\'application de la configuration réseau nécessitent Sys.Modify sur le nœud.';
+
+  @override
+  String get virtCreateUnnamed => 'Sans nom';
+
+  @override
+  String get virtCreateNotChosen => 'Non choisi';
+
+  @override
+  String get virtCreateKindVmSub => 'qm · une machine virtuelle KVM complète';
+
+  @override
+  String get virtCreateKindLxcSub =>
+      'pct · partage le noyau de l\'hôte, plus léger';
+
+  @override
+  String get virtCloudImage => 'Image cloud';
+
+  @override
+  String get virtCloudImageTip =>
+      'Un disque avec un système déjà installé : copié, agrandi à la taille indiquée sous Stockage et configuré par cloud-init au premier démarrage. L\'image elle-même reste intacte.';
+
+  @override
+  String get virtNoCloudImagesLibvirt =>
+      'Aucune image cloud ici : placez une image qcow2 ou raw dans un pool (téléversez-la dans Stockage), qu\'aucune VM n\'utilise.';
+
+  @override
+  String get virtNoCloudImagesPve =>
+      'Aucune image cloud ici : téléversez une image qcow2, raw ou vmdk vers un stockage avec le type de contenu Import (PVE 8.2+).';
+
+  @override
+  String get virtCreateWindowsTitle => 'Windows 11 exige UEFI et TPM 2.0';
+
+  @override
+  String get virtCreateWindowsBody =>
+      'Choisissez UEFI et activez le TPM ci-dessus.';
+
+  @override
+  String get virtCreateWindowsNoTpm =>
+      'Cet hôte n\'a pas de TPM logiciel (swtpm) : installez-le pour en donner un à la VM.';
+
+  @override
+  String virtCreateImageSize(String size) {
+    return 'L\'image fait $size : le disque doit être au moins aussi grand.';
+  }
+
+  @override
+  String get virtCreateImageMissing => 'Choisissez une image cloud.';
+
+  @override
+  String get virtCreateIncomplete =>
+      'Complétez d\'abord les parties marquées en orange.';
+
+  @override
+  String virtCreateOn(String host) {
+    return 'Créé sur $host';
+  }
+
+  @override
+  String get virtCiTip =>
+      'Un compte avec sudo, accessible par son mot de passe, une clé SSH ou les deux.';
+
+  @override
+  String get virtCiUserInvalid =>
+      'Minuscules, chiffres, _ et -, commençant par une lettre ou _';
+
+  @override
+  String get virtCiCredentialsMissing =>
+      'Définissez un mot de passe ou une clé SSH.';
+
+  @override
+  String get virtCiHostnamePve => 'Le nom d\'hôte est le nom de la VM.';
+
+  @override
+  String get virtCiStatic => 'Statique';
+
+  @override
+  String get virtCiAddressInvalid =>
+      'Une adresse IPv4 avec son préfixe, comme 10.0.0.5/24';
+
+  @override
+  String get virtCiGatewayInvalid => 'Une adresse IPv4, comme 10.0.0.1';
+
+  @override
+  String get virtCiDnsFromDhcp => 'Vide : depuis DHCP';
+
+  @override
+  String get virtCiDnsInvalid =>
+      'Adresses IP, séparées par des espaces ou des virgules';
+
+  @override
+  String get virtCiSearch => 'Domaine de recherche';
+
+  @override
+  String get virtCiSeedNote =>
+      'Écrit dans une petite ISO à côté du disque, attachée comme CD-ROM et supprimée avec la VM. Seul le hachage du mot de passe est conservé.';
+
+  @override
+  String get virtCiNoToolTitle =>
+      'Aucun outil sur l\'hôte pour créer les données cloud-init';
+
+  @override
+  String virtCiNoToolBody(String tools) {
+    return 'Installez l\'un de $tools sur l\'hôte. Sans cloud-init, l\'image démarre sans compte pour se connecter.';
+  }
+
+  @override
+  String get virtHwCloudInitNote =>
+      'Ce que cloud-init lit au premier démarrage. Pas un support d\'installation : rien à insérer ici.';
+
+  @override
+  String get virtHwCdromLater =>
+      'Tant qu\'elle tourne, le lecteur est ajouté au prochain démarrage (SATA et IDE n\'en acceptent pas à chaud).';
 }

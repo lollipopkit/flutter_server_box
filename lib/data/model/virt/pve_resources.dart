@@ -618,6 +618,12 @@ abstract final class PveResources {
   ///
   /// [limits] and [cpuTypes] are the node's: `/nodes/{node}/status` and
   /// `/nodes/{node}/capabilities/qemu/cpu`.
+  /// PVE's cloud-init drive, a volume of the VM's own: `<storage>:vm-<vmid>-cloudinit`,
+  /// or `<storage>:<vmid>/vm-<vmid>-cloudinit.qcow2` on a storage of files.
+  static final _cloudInitVolume = RegExp(
+    r'^[^:]+:(\d+/)?vm-\d+-cloudinit(\.(qcow2|raw|vmdk))?$',
+  );
+
   static VirtHardware parseHardware({
     required Map<String, Object?> config,
     required List<Object?> pending,
@@ -673,6 +679,9 @@ abstract final class PveResources {
             format: d.format,
             readonly: d.readonly,
             cache: named['cache'],
+            cloudInit: d.device == 'cdrom' &&
+                source != null &&
+                _cloudInitVolume.hasMatch(source),
           ),
         );
         continue;

@@ -4141,7 +4141,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get virtHwDevices => 'CD-ROM і прокидання';
 
   @override
-  String get virtHwDevicesEmpty => 'Прокидання USB і PCI, TPM';
+  String get virtHwDevicesEmpty => 'Прокидання USB і PCI, CD-ROM, TPM';
 
   @override
   String get virtHwAddDevice => 'Додати пристрій';
@@ -4688,4 +4688,112 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get pveTokenTipStorage =>
       'Керування сховищем потребує Datastore.Allocate на /storage (додавання, вимкнення, видалення), Datastore.AllocateSpace (томи) і Datastore.AllocateTemplate (завантаження); мости Linux і застосування мережевої конфігурації потребують Sys.Modify на вузлі.';
+
+  @override
+  String get virtCreateUnnamed => 'Без назви';
+
+  @override
+  String get virtCreateNotChosen => 'Не вибрано';
+
+  @override
+  String get virtCreateKindVmSub => 'qm · повноцінна віртуальна машина KVM';
+
+  @override
+  String get virtCreateKindLxcSub => 'pct · спільне ядро з хостом, легше';
+
+  @override
+  String get virtCloudImage => 'Хмарний образ';
+
+  @override
+  String get virtCloudImageTip =>
+      'Диск із готовою системою: копіюється, збільшується до розміру з розділу «Сховище» й налаштовується cloud-init під час першого завантаження. Сам образ не змінюється.';
+
+  @override
+  String get virtNoCloudImagesLibvirt =>
+      'Хмарних образів немає: покладіть образ qcow2 або raw у пул (завантажте в «Сховище»), який не використовує жодна ВМ.';
+
+  @override
+  String get virtNoCloudImagesPve =>
+      'Хмарних образів немає: завантажте образ qcow2, raw або vmdk до сховища з типом вмісту Import (PVE 8.2+).';
+
+  @override
+  String get virtCreateWindowsTitle => 'Windows 11 потребує UEFI і TPM 2.0';
+
+  @override
+  String get virtCreateWindowsBody => 'Виберіть вище UEFI й увімкніть TPM.';
+
+  @override
+  String get virtCreateWindowsNoTpm =>
+      'На цьому хості немає програмного TPM (swtpm): встановіть його, щоб дати ВМ TPM.';
+
+  @override
+  String virtCreateImageSize(String size) {
+    return 'Образ має $size: диск має бути не менший.';
+  }
+
+  @override
+  String get virtCreateImageMissing => 'Виберіть хмарний образ.';
+
+  @override
+  String get virtCreateIncomplete =>
+      'Спершу заповніть частини, позначені помаранчевим.';
+
+  @override
+  String virtCreateOn(String host) {
+    return 'Створюється на $host';
+  }
+
+  @override
+  String get virtCiTip =>
+      'Обліковий запис із sudo; вхід за паролем, SSH-ключем або обома.';
+
+  @override
+  String get virtCiUserInvalid =>
+      'Малі літери, цифри, _ і -, починаючи з літери або _';
+
+  @override
+  String get virtCiCredentialsMissing => 'Задайте пароль або SSH-ключ.';
+
+  @override
+  String get virtCiHostnamePve => 'Ім\'я хоста — це ім\'я ВМ.';
+
+  @override
+  String get virtCiStatic => 'Статична';
+
+  @override
+  String get virtCiAddressInvalid =>
+      'IPv4-адреса з префіксом, наприклад 10.0.0.5/24';
+
+  @override
+  String get virtCiGatewayInvalid => 'IPv4-адреса, наприклад 10.0.0.1';
+
+  @override
+  String get virtCiDnsFromDhcp => 'Порожньо: з DHCP';
+
+  @override
+  String get virtCiDnsInvalid => 'IP-адреси через пробіл або кому';
+
+  @override
+  String get virtCiSearch => 'Домен пошуку';
+
+  @override
+  String get virtCiSeedNote =>
+      'Записується в невеликий ISO поруч із диском, підключається як CD-ROM і видаляється разом із ВМ. Зберігається лише хеш пароля.';
+
+  @override
+  String get virtCiNoToolTitle =>
+      'На хості немає засобу для створення даних cloud-init';
+
+  @override
+  String virtCiNoToolBody(String tools) {
+    return 'Встановіть на хост одне з: $tools. Без cloud-init образ запуститься без облікового запису для входу.';
+  }
+
+  @override
+  String get virtHwCloudInitNote =>
+      'Те, що cloud-init читає під час першого завантаження. Не інсталяційний носій: вставляти сюди нічого.';
+
+  @override
+  String get virtHwCdromLater =>
+      'Поки ВМ працює, привід додасться під час наступного запуску (SATA та IDE не підтримують гаряче підключення).';
 }

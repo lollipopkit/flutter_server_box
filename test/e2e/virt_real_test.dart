@@ -99,6 +99,26 @@
 ///   password. The `SBM_E2E_LIBVIRT_HOST` login must be root: the upload runs
 ///   as that account through `su`, and so through sudo with the password.
 ///
+/// Cloud images and cloud-init, groups of their own (`--plain-name 'cloud
+/// images'`) that touch nothing existing. Each boots a VM `sbxe2e-ci-*` made
+/// from a cloud image with cloud-init (an account with a password and a key
+/// generated for the run), logs in to it over SSH through the host, checks
+/// the hostname, the account, sudo, the password's hash and the grown disk,
+/// adds and removes a CD-ROM drive, then deletes it — with its own disk and
+/// seed; the image is left as it was.
+///
+/// - `SBM_E2E_LIBVIRT_CLOUD_IMAGE`: the path of a cloud image volume in a
+///   pool of the libvirt host (Debian 13 genericcloud, say), which the
+///   `SBM_E2E_LIBVIRT_HOST` login (root) can use; the host needs an ISO tool
+///   (genisoimage, xorriso, …). The VM gets DHCP on `default`.
+/// - `SBM_E2E_PVE_CLOUD_IMAGE`: the volid of such an image with `import`
+///   content (`local:import/debian-13.qcow2`), with `SBM_E2E_PVE_HOST` as
+///   root and the token; `SBM_E2E_PVE_CLOUD_ADDR` (`192.168.31.230/24`) and
+///   `SBM_E2E_PVE_CLOUD_GW`: a free address on `vmbr0`'s network for the VM
+///   (checked unanswered first) and its gateway. A VMID from 950 up that is
+///   free is used. The token needs `VM.Config.Cloudinit` besides the create
+///   set.
+///
 /// Run with `flutter test test/e2e/virt_real_test.dart`, after
 /// `cargo build -p sbm_ffi`.
 @Timeout(Duration(minutes: 10))
@@ -144,6 +164,8 @@ import '../helpers/tunnel_client.dart';
 Future<void> main() async {
   // Standing alone: `--plain-name 'create and delete'` runs only these.
   await _libvirtCreate();
+  await _libvirtCloudInit();
+  await _pveCloudInit();
   await _libvirtManage();
   await _pveManage();
   await _pveCreate();
@@ -3231,3 +3253,375 @@ Future<void> _pveManage() async {
     });
   });
 }
+
+// -----------------------------------------------------------------------------
+// Cloud images and cloud-init
+// -----------------------------------------------------------------------------
+
+/// A key pair and a password for a guest's cloud-init, made for this run.
+/// The password is never printed.
+Future<({SSHKeyPair key, String publicKey, String password})> _guestLogin() async {
+  final dir = await Directory.systemTemp.createTemp('sbxe2e-key');
+  addTearDown(() => dir.delete(recursive: true));
+  final path = '${dir.path}/id';
+  final r = await Process.run('ssh-keygen', ['-q', '-t', 'ed25519', '-N', '', '-C', 'sbxe2e', '-f', path]);
+  expect(r.exitCode, 0, reason: '${r.stderr}');
+  final rnd = Random.secure();
+  final password = base64Url.encode([for (var i = 0; i < 18; i++) rnd.nextInt(256)]);
+  return (
+    key: SSHKeyPair.fromPem(await File(path).readAsString()).single,
+    publicKey: (await File('$path.pub').readAsString()).trim(),
+    password: password,
+  );
+}
+
+/// What the guest [ip] says of itself, over SSH through [host] once its
+/// sshd answers (cloud-init done): the hostname, the account, sudo, the
+/// account's password hash, whether [password] makes that hash (`pw`: the
+/// guest's crypt(3) with the hash as its salt, the password on stdin) and
+/// the size of [disk].
+Future<Map<String, String>> _guestFacts(
+  SSHClient host,
+  String ip,
+  String user,
+  SSHKeyPair key,
+  String disk,
+  String password,
+) async {
+  final deadline = DateTime.now().add(const Duration(minutes: 4));
+  while (true) {
+    try {
+      final guest = SSHClient(
+        await host.forwardLocal(ip, 22),
+        username: user,
+        identities: [key],
+        disableHostkeyVerification: true,
+      );
+      try {
+        final out = (await execSshE2e(
+          guest,
+          'cloud-init status --wait >/dev/null 2>&1; echo "host=\$(hostname)"; echo "user=\$(id -un)"; '
+          'sudo -n true && echo sudo=ok; echo "hash=\$(sudo -n getent shadow $user | cut -d: -f2)"; '
+          'echo "disk=\$(lsblk -bdno SIZE /dev/$disk)"; '
+          'h=\$(sudo -n getent shadow $user | cut -d: -f2); '
+          // The system's own crypt(3), as a login checks it: perl-base
+          // is in every Debian image, `crypt` is gone from Python 3.13.
+          r'''perl -e '$p = <STDIN>; chomp $p; print "pw=ok\n" if length $ARGV[0] && crypt($p, $ARGV[0]) eq $ARGV[0]' "$h"''',
+          Uint8List.fromList(utf8.encode('$password\n')),
+        )).stdout;
+        return {
+          for (final l in const LineSplitter().convert(out))
+            if (l.contains('=')) l.substring(0, l.indexOf('=')): l.substring(l.indexOf('=') + 1),
+        };
+      } finally {
+        guest.close();
+      }
+    } catch (e) {
+      if (DateTime.now().isAfter(deadline)) rethrow;
+      await Future<void>.delayed(const Duration(seconds: 5));
+    }
+  }
+}
+
+/// The hash of [password] with the salt [hash] was made with equals it:
+/// the app's own SHA-512 crypt, for a hash it made (libvirt's seed).
+bool _sameCrypt(String hash, String password) {
+  final salt = hash.split(r'$')[2];
+  return ffi.virtHashPassword(password: password, salt: salt) == hash;
+}
+
+Future<void> _libvirtCloudInit() async {
+  final host = e2eEnv('SBM_E2E_LIBVIRT_HOST');
+  final imagePath = e2eEnv('SBM_E2E_LIBVIRT_CLOUD_IMAGE');
+  if (host == null || imagePath == null) return;
+  final ready = await prepareSshE2e(host);
+  final target = ready.target;
+  if (target == null) return;
+
+  group('cloud images: libvirt over SSH', () {
+    SSHClient? client;
+    late LibvirtBackend virt;
+    final vm = 'sbxe2e-ci-${DateTime.now().millisecondsSinceEpoch % 100000}';
+    String? poolName;
+
+    Future<String> sh(String command) async =>
+        (await execSshE2e(client!, command, null)).stdout;
+    Future<VirtGuest?> find() async =>
+        (await virt.load()).guests.where((g) => g.name == vm).firstOrNull;
+
+    setUpAll(() async {
+      await initRustLibForTest();
+      final c = await connectSshE2e(target, ready.identities);
+      client = c;
+      virt = LibvirtBackend(serverId: 'e2e-libvirt-ci', exec: () async => SshExec(c));
+    });
+    tearDownAll(() async {
+      final c = client;
+      if (c == null) return;
+      Future<void> virsh(String args) =>
+          execSshE2e(c, 'LC_ALL=C virsh --connect qemu:///system -q $args </dev/null', null);
+      // Only what this group made, by name.
+      await virsh("destroy '$vm'");
+      await virsh("undefine '$vm' --nvram");
+      if (poolName case final p?) {
+        await virsh("vol-delete --pool '$p' --vol '$vm.qcow2'");
+        await virsh("vol-delete --pool '$p' --vol '$vm-cidata.iso'");
+      }
+      await virt.close();
+      c.close();
+    });
+
+    test('a VM from a cloud image, set up by cloud-init, then deleted with '
+        'its disk and seed', () async {
+      final options = await virt.createOptions();
+      expect((options.cloudImages, options.cloudInit, options.uefi), (true, true, true));
+      expect(options.buses, isNot(contains('ide')));
+
+      // The image, in whichever pool holds it.
+      VirtStoragePool? pool;
+      VirtVolume? image;
+      for (final p in await virt.storagePools()) {
+        if (!p.active) continue;
+        final v = (await virt.volumes(p)).where((v) => v.path == imagePath).firstOrNull;
+        if (v != null) {
+          (pool, image) = (p, v);
+          break;
+        }
+      }
+      expect(image, isNotNull, reason: 'no volume at $imagePath');
+      expect(virtIsCloudImage(image!, VirtHostKind.libvirt), isTrue);
+      poolName = pool!.name;
+      final baseSum = await sh("sha256sum '$imagePath' | cut -c1-64");
+      final login = await _guestLogin();
+      final net = (await virt.networks()).firstWhere((n) => n.name == 'default');
+      final snap = await virt.load();
+      final spec = VirtCreateSpec(
+        kind: VirtGuestKind.qemu,
+        name: vm,
+        cores: 1,
+        memoryMiB: 1024,
+        storage: pool,
+        diskGiB: 4,
+        image: image,
+        network: net,
+        bus: 'virtio',
+        nicModel: 'virtio',
+        uefi: true,
+        cloudInit: VirtCloudInit(
+          user: 'sbxe',
+          password: login.password,
+          sshKeys: login.publicKey,
+          hostname: vm,
+        ),
+        start: true,
+      );
+      expect(virtCreateIssue(spec, host: VirtHostKind.libvirt, guests: snap.guests), isNull);
+      final created = await virt.create(spec);
+      expect(created.startError, isNull);
+      final g = (await find())!;
+
+      // The seed is the domain's own, and not install media.
+      final hw = await virt.hardware(g);
+      final seed = hw.disks.singleWhere((d) => d.cloudInit);
+      expect(seed.source, endsWith('/$vm-cidata.iso'));
+      expect(hw.firmware?.uefi, isTrue);
+      // Only the hash is on the host.
+      expect(await sh("grep -c -F '${login.password}' '${seed.source}' || true"), contains('0'));
+
+      final mac = (await virt.detail(g)).nics.single.mac!;
+      String? ip;
+      for (var i = 0; i < 60 && ip == null; i++) {
+        final leases = await sh('virsh --connect qemu:///system -q net-dhcp-leases default');
+        ip = RegExp('${RegExp.escape(mac)}\\s+ipv4\\s+([0-9.]+)/').firstMatch(leases)?[1];
+        if (ip == null) await Future<void>.delayed(const Duration(seconds: 3));
+      }
+      expect(ip, isNotNull, reason: 'no DHCP lease for $mac');
+      final facts = await _guestFacts(client!, ip!, 'sbxe', login.key, 'vda', login.password);
+      expect(facts['host'], vm);
+      expect(facts['user'], 'sbxe');
+      expect(facts['sudo'], 'ok');
+      // The hash the app made, and the password makes it on the guest too.
+      expect(_sameCrypt(facts['hash']!, login.password), isTrue);
+      expect(facts['pw'], 'ok');
+      expect(facts['disk'], '${4 << 30}');
+
+      // A CD-ROM drive beside the seed, stopped, and taken off again.
+      await virt.power(g, VirtPowerAction.forceStop);
+      final stopped = (await find())!;
+      var hw2 = await virt.hardware(stopped);
+      await virt.changeHardware(stopped, hw2, const VirtHwAddCdrom());
+      hw2 = await virt.hardware(stopped);
+      final drive = hw2.disks.singleWhere((d) => d.kind == VirtHwDiskKind.cdrom && !d.cloudInit);
+      expect((drive.source, drive.bus), (null, 'sata'));
+      await virt.changeHardware(stopped, hw2, VirtHwRemoveDisk(key: drive.key));
+      expect((await virt.hardware(stopped)).disks.where((d) => d.kind == VirtHwDiskKind.cdrom), hasLength(1));
+
+      await virt.delete(stopped);
+      expect(await find(), isNull);
+      final names = [for (final v in await virt.volumes(pool)) v.name];
+      expect(names, isNot(contains('$vm.qcow2')));
+      expect(names, isNot(contains('$vm-cidata.iso')));
+      expect(names, contains(image.name));
+      expect(await sh("sha256sum '$imagePath' | cut -c1-64"), baseSum);
+    }, timeout: const Timeout(Duration(minutes: 10)));
+  });
+}
+
+Future<void> _pveCloudInit() async {
+  final host = e2eEnv('SBM_E2E_PVE_HOST');
+  final tokenId = e2eEnv('SBM_E2E_PVE_TOKEN_ID');
+  final tokenSecret = e2eEnv('SBM_E2E_PVE_TOKEN_SECRET');
+  final imageId = e2eEnv('SBM_E2E_PVE_CLOUD_IMAGE');
+  final addr = e2eEnv('SBM_E2E_PVE_CLOUD_ADDR');
+  final gw = e2eEnv('SBM_E2E_PVE_CLOUD_GW');
+  if ([host, tokenId, tokenSecret, imageId, addr, gw].contains(null)) return;
+  final ready = await prepareSshE2e(host!);
+  final target = ready.target;
+  if (target == null) return;
+
+  group('cloud images: PVE over SSH', () {
+    SSHClient? client;
+    late PveBackend pve;
+    int? vmid;
+    final name = 'sbxe2e-ci-${DateTime.now().millisecondsSinceEpoch % 100000}';
+    final ip = addr!.split('/').first;
+
+    Future<String> sh(String command) async =>
+        (await execSshE2e(client!, command, null)).stdout;
+    Future<VirtGuest?> find() async => (await pve.load()).guests
+        .where((g) => g.kind == VirtGuestKind.qemu && g.vmid == vmid)
+        .firstOrNull;
+
+    setUpAll(() async {
+      await initRustLibForTest();
+      final c = await connectSshE2e(target, ready.identities);
+      client = c;
+      final d = _pvePaths(target, () => c, '')['over SSH']!.dialer();
+      pve = PveBackend(
+        serverId: 'e2e-pve-ci',
+        config: PveConfig(
+          addr: 'https://localhost:8006',
+          auth: PveAuth.token,
+          tokenId: tokenId,
+          tokenSecret: tokenSecret,
+        ),
+        connect: d.startConnect,
+        onClose: d.close,
+        taskPoll: const Duration(milliseconds: 500),
+        taskTimeout: const Duration(minutes: 5),
+      );
+      final e = await _virtErr(pve.load());
+      expect(e.type, VirtErrType.certUnconfirmed);
+      await pve.confirmCert(e.cert!.fingerprint);
+    });
+    tearDownAll(() async {
+      final c = client;
+      if (c == null) return;
+      // Only the VM this group made, and only if it still has this name.
+      if (vmid case final id?) {
+        if ((await sh('qm config $id 2>/dev/null | grep "^name: "')).contains(name)) {
+          await sh('qm stop $id 2>/dev/null; qm destroy $id --purge 2>/dev/null');
+        }
+      }
+      await pve.close();
+      c.close();
+    });
+
+    test('a VM imported from a cloud image, set up by cloud-init, then '
+        'deleted with its volumes', () async {
+      final options = await pve.createOptions();
+      expect((options.cloudImages, options.cloudInit, options.uefi, options.tpm), (true, true, true, true));
+      final snap = await pve.load();
+      final node = snap.host.nodes.first.name;
+      // A free VMID of the test's range, and an address nothing answers.
+      for (var id = 950; id < 1000 && vmid == null; id++) {
+        if (snap.guests.any((g) => g.vmid == id)) continue;
+        if ((await sh('qm status $id 2>/dev/null; pct status $id 2>/dev/null')).isEmpty) vmid = id;
+      }
+      expect(vmid, isNotNull);
+      expect(await sh('ping -c 2 -W 1 $ip >/dev/null 2>&1 && echo answered'), isEmpty, reason: '$ip is in use');
+
+      final pools = await pve.storagePools();
+      final disks = virtDiskStorages(pools, host: VirtHostKind.pve, kind: VirtGuestKind.qemu, node: node);
+      final storage = disks.firstWhere((p) => p.name == 'local-lvm', orElse: () => disks.first);
+      VirtVolume? image;
+      for (final p in virtImageStorages(pools, host: VirtHostKind.pve, node: node)) {
+        image ??= (await pve.volumes(p)).where((v) => v.id == imageId).firstOrNull;
+      }
+      expect(image, isNotNull, reason: 'no $imageId with import content');
+      expect(virtIsCloudImage(image!, VirtHostKind.pve), isTrue);
+      final bridge = virtCreateNetworks(await pve.networks(), host: VirtHostKind.pve, node: node)
+          .firstWhere((n) => n.name == 'vmbr0');
+      final login = await _guestLogin();
+      final spec = VirtCreateSpec(
+        kind: VirtGuestKind.qemu,
+        name: name,
+        node: node,
+        vmid: vmid,
+        cores: 1,
+        memoryMiB: 1024,
+        storage: storage,
+        diskGiB: 8,
+        image: image,
+        network: bridge,
+        bus: 'scsi',
+        uefi: true,
+        tpm: true,
+        cloudInit: VirtCloudInit(
+          user: 'sbxe',
+          password: login.password,
+          sshKeys: login.publicKey,
+          address: addr,
+          gateway: gw,
+          dns: [gw!],
+        ),
+        start: true,
+      );
+      expect(virtCreateIssue(spec, host: VirtHostKind.pve, guests: snap.guests), isNull);
+      final created = await pve.create(spec);
+      expect(created.startError, isNull);
+
+      final config = await sh('qm config $vmid');
+      expect(config, contains('scsi0: ${storage.name}:vm-$vmid-disk-'));
+      expect(config, contains('size=8G'));
+      expect(config, contains('scsi1: ${storage.name}:vm-$vmid-cloudinit'));
+      expect(config, contains('efidisk0:'));
+      expect(config, contains('tpmstate0:'));
+      expect(config, contains('ipconfig0: ip=$addr,gw=$gw'));
+      // PVE stores a hash of it.
+      expect(config, isNot(contains(login.password)));
+
+      final g = (await find())!;
+      final hw = await pve.hardware(g);
+      expect(hw.disk('scsi1')!.cloudInit, isTrue);
+
+      final facts = await _guestFacts(client!, ip, 'sbxe', login.key, 'sda', login.password);
+      expect(facts['host'], name);
+      expect(facts['user'], 'sbxe');
+      expect(facts['sudo'], 'ok');
+      // PVE hashes it itself (SHA-256 crypt): checked on the guest.
+      expect(facts['hash'], startsWith(r'$'));
+      expect(facts['pw'], 'ok');
+      expect(facts['disk'], '${8 << 30}');
+
+      // A CD-ROM drive while it runs: the first free IDE slot, and gone
+      // again.
+      await pve.changeHardware(g, hw, const VirtHwAddCdrom());
+      var hw2 = await pve.hardware(g);
+      final drive = hw2.disks.singleWhere((d) => d.kind == VirtHwDiskKind.cdrom && !d.cloudInit);
+      expect(drive.key, 'ide2');
+      await pve.changeHardware(g, hw2, const VirtHwRemoveDisk(key: 'ide2'));
+      hw2 = await pve.hardware(g);
+      expect(hw2.disk('ide2'), isNull);
+
+      final running = await _settle(pve, vmid!, (g) => g.state == VirtGuestState.running);
+      await pve.power(running, VirtPowerAction.forceStop);
+      await _afterStop();
+      await _whileLocked(() async => pve.delete((await find())!));
+      expect(await find(), isNull);
+      expect(await sh('pvesm list ${storage.name} | grep -c "vm-$vmid-" || true'), contains('0'));
+      expect(await sh("pvesm list ${imageId!.split(':').first} --content import | grep -c '$imageId' || true"), contains('1'));
+    }, timeout: const Timeout(Duration(minutes: 10)));
+  });
+}
+

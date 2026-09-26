@@ -3928,7 +3928,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get virtHwDevices => 'CD-ROM 및 패스스루';
 
   @override
-  String get virtHwDevicesEmpty => 'USB 및 PCI 패스스루, TPM';
+  String get virtHwDevicesEmpty => 'USB 및 PCI 패스스루, CD-ROM, TPM';
 
   @override
   String get virtHwAddDevice => '장치 추가';
@@ -4444,4 +4444,107 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get pveTokenTipStorage =>
       '스토리지 관리에는 /storage의 Datastore.Allocate(추가, 비활성화, 제거), Datastore.AllocateSpace(볼륨), Datastore.AllocateTemplate(업로드)가 필요하고, Linux 브리지와 네트워크 구성 적용에는 노드의 Sys.Modify가 필요합니다.';
+
+  @override
+  String get virtCreateUnnamed => '이름 없음';
+
+  @override
+  String get virtCreateNotChosen => '선택 안 됨';
+
+  @override
+  String get virtCreateKindVmSub => 'qm · 완전한 KVM 가상 머신';
+
+  @override
+  String get virtCreateKindLxcSub => 'pct · 호스트 커널 공유, 더 가벼움';
+
+  @override
+  String get virtCloudImage => '클라우드 이미지';
+
+  @override
+  String get virtCloudImageTip =>
+      '시스템이 설치된 디스크: 복사한 뒤 저장소의 크기로 늘리고, 첫 부팅 때 cloud-init이 설정합니다. 이미지 자체는 그대로 둡니다.';
+
+  @override
+  String get virtNoCloudImagesLibvirt =>
+      '클라우드 이미지가 없습니다: 어떤 VM도 쓰지 않는 qcow2 또는 raw 이미지를 풀에 넣으세요(저장소에서 업로드).';
+
+  @override
+  String get virtNoCloudImagesPve =>
+      '클라우드 이미지가 없습니다: qcow2, raw 또는 vmdk 이미지를 Import 콘텐츠 유형의 저장소에 업로드하세요(PVE 8.2+).';
+
+  @override
+  String get virtCreateWindowsTitle => 'Windows 11에는 UEFI와 TPM 2.0이 필요합니다';
+
+  @override
+  String get virtCreateWindowsBody => '위에서 UEFI를 선택하고 TPM을 켜세요.';
+
+  @override
+  String get virtCreateWindowsNoTpm =>
+      '이 호스트에는 소프트웨어 TPM(swtpm)이 없습니다. VM에 주려면 설치하세요.';
+
+  @override
+  String virtCreateImageSize(String size) {
+    return '이미지가 $size입니다. 디스크는 최소 그만큼 커야 합니다.';
+  }
+
+  @override
+  String get virtCreateImageMissing => '클라우드 이미지를 선택하세요.';
+
+  @override
+  String get virtCreateIncomplete => '먼저 주황색으로 표시된 부분을 채우세요.';
+
+  @override
+  String virtCreateOn(String host) {
+    return '$host에 생성';
+  }
+
+  @override
+  String get virtCiTip => 'sudo 권한이 있는 계정으로, 비밀번호, SSH 키 또는 둘 다로 로그인합니다.';
+
+  @override
+  String get virtCiUserInvalid => '소문자, 숫자, _, -만 가능하며 문자 또는 _로 시작';
+
+  @override
+  String get virtCiCredentialsMissing => '비밀번호나 SSH 키를 설정하세요.';
+
+  @override
+  String get virtCiHostnamePve => '호스트 이름은 VM 이름입니다.';
+
+  @override
+  String get virtCiStatic => '고정';
+
+  @override
+  String get virtCiAddressInvalid => '접두사가 있는 IPv4 주소(예: 10.0.0.5/24)';
+
+  @override
+  String get virtCiGatewayInvalid => 'IPv4 주소(예: 10.0.0.1)';
+
+  @override
+  String get virtCiDnsFromDhcp => '비우면 DHCP에서';
+
+  @override
+  String get virtCiDnsInvalid => 'IP 주소(공백이나 쉼표로 구분)';
+
+  @override
+  String get virtCiSearch => '검색 도메인';
+
+  @override
+  String get virtCiSeedNote =>
+      '디스크 옆의 작은 ISO에 기록해 CD-ROM으로 연결하며 VM과 함께 삭제합니다. 비밀번호는 해시만 저장합니다.';
+
+  @override
+  String get virtCiNoToolTitle => '호스트에 cloud-init 데이터를 만들 도구가 없습니다';
+
+  @override
+  String virtCiNoToolBody(String tools) {
+    return '호스트에 $tools 중 하나를 설치하세요. cloud-init 없이는 로그인할 계정 없이 시작됩니다.';
+  }
+
+  @override
+  String get virtHwCloudInitNote =>
+      'cloud-init이 첫 부팅 때 읽는 데이터입니다. 설치 미디어가 아니므로 여기서 넣을 것이 없습니다.';
+
+  @override
+  String get virtHwCdromLater =>
+      '실행 중에는 다음 시작 때 드라이브가 추가됩니다(SATA와 IDE는 핫플러그 불가).';
 }

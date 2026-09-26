@@ -4123,7 +4123,7 @@ class AppLocalizationsAz extends AppLocalizations {
   String get virtHwDevices => 'CD-ROM və ötürmə';
 
   @override
-  String get virtHwDevicesEmpty => 'USB və PCI ötürməsi, TPM';
+  String get virtHwDevicesEmpty => 'USB və PCI ötürməsi, CD-ROM, TPM';
 
   @override
   String get virtHwAddDevice => 'Cihaz əlavə et';
@@ -4661,4 +4661,113 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get pveTokenTipStorage =>
       'Yaddaşın idarəsi /storage üzərində Datastore.Allocate (əlavə, söndürmə, çıxarma), Datastore.AllocateSpace (həcmlər) və Datastore.AllocateTemplate (yükləmələr) tələb edir; Linux körpüləri və şəbəkə konfiqurasiyasının tətbiqi node-da Sys.Modify tələb edir.';
+
+  @override
+  String get virtCreateUnnamed => 'Adsız';
+
+  @override
+  String get virtCreateNotChosen => 'Seçilməyib';
+
+  @override
+  String get virtCreateKindVmSub => 'qm · tam KVM virtual maşın';
+
+  @override
+  String get virtCreateKindLxcSub =>
+      'pct · hostun nüvəsini paylaşır, daha yüngül';
+
+  @override
+  String get virtCloudImage => 'Bulud təsviri';
+
+  @override
+  String get virtCloudImageTip =>
+      'Üzərində sistem olan disk: kopyalanır, Yaddaş bölməsindəki ölçüyə böyüdülür və ilk açılışda cloud-init tərəfindən qurulur. Təsvirin özü olduğu kimi qalır.';
+
+  @override
+  String get virtNoCloudImagesLibvirt =>
+      'Burada bulud təsviri yoxdur: heç bir VM-in istifadə etmədiyi qcow2 və ya raw təsvirini hovuza qoyun (Yaddaşda yükləyin).';
+
+  @override
+  String get virtNoCloudImagesPve =>
+      'Burada bulud təsviri yoxdur: qcow2, raw və ya vmdk təsvirini Import məzmun növlü yaddaşa yükləyin (PVE 8.2+).';
+
+  @override
+  String get virtCreateWindowsTitle => 'Windows 11 UEFI və TPM 2.0 tələb edir';
+
+  @override
+  String get virtCreateWindowsBody => 'Yuxarıda UEFI seçin və TPM-i yandırın.';
+
+  @override
+  String get virtCreateWindowsNoTpm =>
+      'Bu hostda proqram TPM-i (swtpm) yoxdur: VM-ə vermək üçün quraşdırın.';
+
+  @override
+  String virtCreateImageSize(String size) {
+    return 'Təsvir $size-dır: disk ən azı bu qədər olmalıdır.';
+  }
+
+  @override
+  String get virtCreateImageMissing => 'Bulud təsviri seçin.';
+
+  @override
+  String get virtCreateIncomplete =>
+      'Əvvəlcə narıncı ilə işarələnmiş hissələri tamamlayın.';
+
+  @override
+  String virtCreateOn(String host) {
+    return '$host üzərində yaradılır';
+  }
+
+  @override
+  String get virtCiTip =>
+      'sudo icazəli hesab; parol, SSH açarı və ya hər ikisi ilə daxil olunur.';
+
+  @override
+  String get virtCiUserInvalid =>
+      'Kiçik hərflər, rəqəmlər, _ və -; hərf və ya _ ilə başlamalı';
+
+  @override
+  String get virtCiCredentialsMissing => 'Parol və ya SSH açarı təyin edin.';
+
+  @override
+  String get virtCiHostnamePve => 'Host adı VM-in adıdır.';
+
+  @override
+  String get virtCiStatic => 'Statik';
+
+  @override
+  String get virtCiAddressInvalid =>
+      'Prefiksli IPv4 ünvanı, məsələn 10.0.0.5/24';
+
+  @override
+  String get virtCiGatewayInvalid => 'IPv4 ünvanı, məsələn 10.0.0.1';
+
+  @override
+  String get virtCiDnsFromDhcp => 'Boş: DHCP-dən';
+
+  @override
+  String get virtCiDnsInvalid => 'Boşluq və ya vergüllə ayrılmış IP ünvanları';
+
+  @override
+  String get virtCiSearch => 'Axtarış domeni';
+
+  @override
+  String get virtCiSeedNote =>
+      'Diskin yanındakı kiçik ISO-ya yazılır, CD-ROM kimi qoşulur və VM ilə birlikdə silinir. Parolun yalnız heşi saxlanılır.';
+
+  @override
+  String get virtCiNoToolTitle =>
+      'Hostda cloud-init məlumatını yaratmaq üçün alət yoxdur';
+
+  @override
+  String virtCiNoToolBody(String tools) {
+    return 'Hosta $tools alətlərindən birini quraşdırın. cloud-init olmadan təsvir daxil olmaq üçün hesabsız başlayır.';
+  }
+
+  @override
+  String get virtHwCloudInitNote =>
+      'cloud-init-in ilk açılışda oxuduğu məlumat. Quraşdırma mediası deyil: bura heç nə taxılmır.';
+
+  @override
+  String get virtHwCdromLater =>
+      'İşləyərkən sürücü növbəti açılışda əlavə olunur (SATA və IDE işləyərkən qoşulmanı dəstəkləmir).';
 }

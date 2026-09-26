@@ -134,13 +134,24 @@ String virtCreateHostScript() =>
 Future<String> parseVirtCreateHostJson({required String raw}) =>
     RustLib.instance.api.crateApiVirtParseVirtCreateHostJson(raw: raw);
 
-/// A new domain's disk and its path; `spec_json` is a `VirtCreateSpec`
+/// A new domain's disk (empty, or a copy of a cloud image) and its
+/// cloud-init seed; `spec_json` is a `VirtCreateSpec`
 String virtCreateVolumeScript({required String specJson}) =>
     RustLib.instance.api.crateApiVirtVirtCreateVolumeScript(specJson: specJson);
 
-/// [`virt_create_volume_script`]'s output: the new volume's path
-Future<String> parseVirtCreateVolume({required String raw}) =>
-    RustLib.instance.api.crateApiVirtParseVirtCreateVolume(raw: raw);
+/// [`virt_create_volume_script`]'s output → `VirtCreateVolumes` JSON (the
+/// disk's and the seed's paths)
+Future<String> parseVirtCreateVolumesJson({required String raw}) =>
+    RustLib.instance.api.crateApiVirtParseVirtCreateVolumesJson(raw: raw);
+
+/// `$6$<salt>$…`: a cloud-init password as SHA-512 crypt, so only the hash
+/// ever leaves the app. `salt` is up to 16 of `./0-9A-Za-z`, drawn from a
+/// secure source by the caller.
+String virtHashPassword({required String password, required String salt}) =>
+    RustLib.instance.api.crateApiVirtVirtHashPassword(
+      password: password,
+      salt: salt,
+    );
 
 /// A clone's disks (`VirtCloneSpec` JSON), each copied or made empty in
 /// its source's pool
@@ -172,14 +183,22 @@ Future<String> parseVirtCreateJson({required String raw}) =>
     RustLib.instance.api.crateApiVirtParseVirtCreateJson(raw: raw);
 
 /// `undefine`, with the volumes of the disk targets in `storage` (none keeps
-/// them all). Parse with [`parse_virt_action`].
+/// them all), and the domain's own cloud-init `seed` after it. Parse with
+/// [`parse_virt_undefine`].
 String virtUndefineScript({
   required String domain,
   required List<String> storage,
+  String? seed,
 }) => RustLib.instance.api.crateApiVirtVirtUndefineScript(
   domain: domain,
   storage: storage,
+  seed: seed,
 );
+
+/// [`virt_undefine_script`]'s output: `Ok` once the domain (and its seed)
+/// are gone
+void parseVirtUndefine({required String raw}) =>
+    RustLib.instance.api.crateApiVirtParseVirtUndefine(raw: raw);
 
 /// A domain's hardware, persistent and running, in one round trip
 String virtHardwareScript({required String domain}) =>

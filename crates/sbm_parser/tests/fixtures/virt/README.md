@@ -87,6 +87,13 @@ anything), `define_script` with the ISO `sbm-test.iso` and the network
 (`_rollback`: "No PCI buses available", the volume deleted again), and
 `undefine_script` with `--storage vda`. All of them were removed afterwards.
 
+`script_create_host_full.txt` is `create_host_script` on the same host
+(2026-09-26) with the seed tool section (`genisoimage`): the four
+`domcapabilities` documents trimmed only of `<cpu>`, `<features>`,
+`<memoryBacking>` and the device kinds the parser does not read (`hostdev`
+kept as `supported='yes'`), so UEFI, Secure Boot, the TPM backends and the
+disk buses are as the host answered.
+
 `script_hardware_{running,stopped}.txt` are `hardware_script` on a domain
 `sbhw-test` made for them (libvirt 11.3, 2026-09-26): running with 3 of 4
 vCPUs online and 2 in the persistent definition, and shut off.

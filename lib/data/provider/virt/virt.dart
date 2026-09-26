@@ -803,6 +803,9 @@ class VirtHostNotifier extends _$VirtHostNotifier {
   /// See [VirtBackend.nextVmid].
   Future<int?> nextVmid() => _backend.nextVmid();
 
+  /// See [VirtBackend.createOptions].
+  Future<VirtCreateOptions> createOptions() => _backend.createOptions();
+
   /// Creates [spec] and loads the host again, so the new guest is in
   /// [VirtHostState.data] when this returns. Throws [VirtErr].
   Future<VirtCreated> create(VirtCreateSpec spec) async {
@@ -1086,6 +1089,9 @@ final class _MissingBackend implements VirtBackend {
 
   @override
   Future<int?> nextVmid() async => _fail();
+
+  @override
+  Future<VirtCreateOptions> createOptions() async => _fail();
 
   @override
   Future<VirtCreated> create(VirtCreateSpec spec) async => _fail();

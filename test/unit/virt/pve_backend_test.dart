@@ -1122,6 +1122,114 @@ void main() {
       );
     });
 
+    test('a cloud image with cloud-init: import-from, PVE\'s drive, grown '
+        'before the start', () async {
+      final api = _Api();
+      api.routes['POST /nodes/pve/qemu'] = (_) => _Api.upid;
+      api.routes['PUT /nodes/pve/qemu/107/resize'] = (_) => _Api.upid;
+      api.routes['POST /nodes/pve/qemu/107/status/start'] = (_) => _Api.upid;
+      const key = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5 me@x';
+      final created = await api.backend(token).create(
+        const VirtCreateSpec(
+          kind: VirtGuestKind.qemu,
+          name: 'ci-01',
+          node: 'pve',
+          vmid: 107,
+          cores: 1,
+          memoryMiB: 1024,
+          storage: lvm,
+          diskGiB: 16,
+          image: VirtVolume(
+            id: 'local:import/debian-13.qcow2',
+            name: 'debian-13.qcow2',
+            content: 'import',
+            format: 'qcow2',
+            capacity: 3 << 30,
+          ),
+          network: bridge,
+          nicModel: 'e1000e',
+          uefi: true,
+          tpm: true,
+          cloudInit: VirtCloudInit(
+            user: 'admin',
+            password: 'p a&ss=word',
+            sshKeys: '$key\n',
+            address: '10.0.0.5/24',
+            gateway: '10.0.0.1',
+            dns: ['1.1.1.1', '9.9.9.9'],
+            searchDomain: 'lab.example',
+          ),
+          start: true,
+        ),
+      );
+      expect(created.startError, isNull);
+      final i = api.paths.indexOf('POST /nodes/pve/qemu');
+      final body = form(api.bodies[i]);
+      expect(body, {
+        'vmid': '107',
+        'name': 'ci-01',
+        'cores': '1',
+        'memory': '1024',
+        'ostype': 'l26',
+        'scsihw': 'virtio-scsi-single',
+        'scsi0': 'local-lvm:0,import-from=local:import/debian-13.qcow2,iothread=1',
+        // Where a cloud kernel reads it: not IDE.
+        'scsi1': 'local-lvm:cloudinit',
+        'net0': 'e1000e,bridge=vmbr0',
+        'serial0': 'socket',
+        'boot': 'order=scsi0',
+        'bios': 'ovmf',
+        'efidisk0': 'local-lvm:1,efitype=4m,pre-enrolled-keys=0',
+        'tpmstate0': 'local-lvm:1,version=v2.0',
+        'ciuser': 'admin',
+        'cipassword': 'p a&ss=word',
+        // Encoded once more inside the form, as PVE wants it.
+        'sshkeys': Uri.encodeComponent('$key\n'),
+        'ipconfig0': 'ip=10.0.0.5/24,gw=10.0.0.1',
+        'nameserver': '1.1.1.1 9.9.9.9',
+        'searchdomain': 'lab.example',
+      });
+      expect(body['sshkeys'], 'ssh-ed25519%20AAAAC3NzaC1lZDI1NTE5%20me%40x%0A');
+      // Grown to the size asked for, then started.
+      final resize = api.paths.indexOf('PUT /nodes/pve/qemu/107/resize');
+      expect(form(api.bodies[resize]), {'disk': 'scsi0', 'size': '16G'});
+      final start = api.paths.indexOf('POST /nodes/pve/qemu/107/status/start');
+      expect(i < resize && resize < start, isTrue);
+    });
+
+    test('a disk on SATA has no I/O thread; a failed growth is not started',
+        () async {
+      final api = _Api();
+      api.routes['POST /nodes/pve/qemu'] = (_) => _Api.upid;
+      api.routes['PUT /nodes/pve/qemu/108/resize'] = (_) =>
+          _Api._status(500, message: 'resize failed');
+      final created = await api.backend(token).create(
+        const VirtCreateSpec(
+          kind: VirtGuestKind.qemu,
+          name: 'ci-02',
+          node: 'pve',
+          vmid: 108,
+          cores: 1,
+          memoryMiB: 1024,
+          storage: lvm,
+          diskGiB: 8,
+          image: VirtVolume(id: 'local:import/x.raw', name: 'x.raw', format: 'raw'),
+          bus: 'sata',
+          cloudInit: VirtCloudInit(user: 'u', password: 'pw'),
+          start: true,
+        ),
+      );
+      final body = form(api.bodies[api.paths.indexOf('POST /nodes/pve/qemu')]);
+      expect(body['sata0'], 'local-lvm:0,import-from=local:import/x.raw');
+      expect(body['boot'], 'order=sata0');
+      expect(body['sata1'], 'local-lvm:cloudinit');
+      // No NIC: DHCP all the same (PVE writes it for none), no key.
+      expect(body['ipconfig0'], 'ip=dhcp');
+      expect(body.containsKey('sshkeys'), isFalse);
+      expect(created.startError, contains('resize failed'));
+      expect(api.paths.where((p) => p.contains('status/start')), isEmpty);
+    });
+
     test('a container: template, rootfs, DHCP, and its login', () async {
       final api = _Api()..routes['POST /nodes/pve/lxc'] = (_) => _Api.upid;
       final created = await api.backend(token).create(
@@ -1623,6 +1731,29 @@ void main() {
         VirtHwSetMedia(key: 'ide2', media: _iso('local:iso/a.iso')),
       );
       expect(sent(api, 'POST /nodes/pve/qemu/9901/config')['ide2'], 'local:iso/a.iso,media=cdrom');
+      // A new drive: the first free IDE slot (ide2 is taken), empty or not.
+      await pve.changeHardware(vm, hw, const VirtHwAddCdrom());
+      expect(sent(api, 'POST /nodes/pve/qemu/9901/config')['ide0'], 'none,media=cdrom');
+      await pve.changeHardware(vm, hw, VirtHwAddCdrom(media: _iso('local:iso/a.iso')));
+      expect(sent(api, 'POST /nodes/pve/qemu/9901/config')['ide0'], 'local:iso/a.iso,media=cdrom');
+    });
+
+    test('a cloud-init drive is told apart from install media', () {
+      final hw = PveResources.parseHardware(
+        config: {
+          ...config('hw_vm_config.json'),
+          'ide2': 'local-lvm:vm-9901-cloudinit,media=cdrom',
+          'ide0': 'local:9901/vm-9901-cloudinit.qcow2,media=cdrom',
+          'ide3': 'local:iso/vm-1-cloudinit.iso,media=cdrom',
+        },
+        pending: const [],
+        kind: VirtGuestKind.qemu,
+        running: false,
+      );
+      expect(hw.disk('ide2')!.cloudInit, isTrue);
+      expect(hw.disk('ide0')!.cloudInit, isTrue);
+      // An ISO that happens to be named so is media.
+      expect(hw.disk('ide3')!.cloudInit, isFalse);
     });
 
     test('a removed disk\'s volume: deleted as unused, or kept while in use',

@@ -87,6 +87,7 @@
         "socket": null
       }
     ],
-    "has_serial_console": false
+    "has_serial_console": false,
+    "seed": null
   }
 }

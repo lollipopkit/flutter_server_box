@@ -4110,7 +4110,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get virtHwDevices => 'CD-ROM dan passthrough';
 
   @override
-  String get virtHwDevicesEmpty => 'Passthrough USB dan PCI, TPM';
+  String get virtHwDevicesEmpty => 'Passthrough USB dan PCI, CD-ROM, TPM';
 
   @override
   String get virtHwAddDevice => 'Tambah perangkat';
@@ -4651,4 +4651,113 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get pveTokenTipStorage =>
       'Mengelola penyimpanan butuh Datastore.Allocate pada /storage (tambah, nonaktifkan, hapus), Datastore.AllocateSpace (volume) dan Datastore.AllocateTemplate (unggahan); Linux bridge dan menerapkan konfigurasi jaringan butuh Sys.Modify pada node.';
+
+  @override
+  String get virtCreateUnnamed => 'Tanpa nama';
+
+  @override
+  String get virtCreateNotChosen => 'Belum dipilih';
+
+  @override
+  String get virtCreateKindVmSub => 'qm · mesin virtual KVM penuh';
+
+  @override
+  String get virtCreateKindLxcSub => 'pct · berbagi kernel host, lebih ringan';
+
+  @override
+  String get virtCloudImage => 'Image cloud';
+
+  @override
+  String get virtCloudImageTip =>
+      'Disk yang sudah berisi sistem: disalin, diperbesar ke ukuran di Penyimpanan, dan diatur oleh cloud-init saat boot pertama. Image-nya sendiri tidak diubah.';
+
+  @override
+  String get virtNoCloudImagesLibvirt =>
+      'Tidak ada image cloud di sini: taruh image qcow2 atau raw di sebuah pool (unggah di Penyimpanan) yang tidak dipakai VM mana pun.';
+
+  @override
+  String get virtNoCloudImagesPve =>
+      'Tidak ada image cloud di sini: unggah image qcow2, raw, atau vmdk ke penyimpanan dengan tipe konten Import (PVE 8.2+).';
+
+  @override
+  String get virtCreateWindowsTitle =>
+      'Windows 11 membutuhkan UEFI dan TPM 2.0';
+
+  @override
+  String get virtCreateWindowsBody => 'Pilih UEFI dan aktifkan TPM di atas.';
+
+  @override
+  String get virtCreateWindowsNoTpm =>
+      'Host ini tidak punya TPM perangkat lunak (swtpm): pasang agar VM bisa diberi TPM.';
+
+  @override
+  String virtCreateImageSize(String size) {
+    return 'Image-nya $size: disk harus minimal sebesar itu.';
+  }
+
+  @override
+  String get virtCreateImageMissing => 'Pilih image cloud.';
+
+  @override
+  String get virtCreateIncomplete =>
+      'Lengkapi dulu bagian yang ditandai oranye.';
+
+  @override
+  String virtCreateOn(String host) {
+    return 'Dibuat di $host';
+  }
+
+  @override
+  String get virtCiTip =>
+      'Akun dengan sudo, masuk dengan kata sandi, kunci SSH, atau keduanya.';
+
+  @override
+  String get virtCiUserInvalid =>
+      'Huruf kecil, angka, _ dan -, diawali huruf atau _';
+
+  @override
+  String get virtCiCredentialsMissing => 'Atur kata sandi atau kunci SSH.';
+
+  @override
+  String get virtCiHostnamePve => 'Nama host adalah nama VM.';
+
+  @override
+  String get virtCiStatic => 'Statis';
+
+  @override
+  String get virtCiAddressInvalid =>
+      'Alamat IPv4 dengan prefiksnya, seperti 10.0.0.5/24';
+
+  @override
+  String get virtCiGatewayInvalid => 'Alamat IPv4, seperti 10.0.0.1';
+
+  @override
+  String get virtCiDnsFromDhcp => 'Kosong: dari DHCP';
+
+  @override
+  String get virtCiDnsInvalid => 'Alamat IP, dipisahkan spasi atau koma';
+
+  @override
+  String get virtCiSearch => 'Domain pencarian';
+
+  @override
+  String get virtCiSeedNote =>
+      'Ditulis ke ISO kecil di sebelah disk, dipasang sebagai CD-ROM, dan dihapus bersama VM. Hanya hash kata sandi yang disimpan.';
+
+  @override
+  String get virtCiNoToolTitle =>
+      'Tidak ada alat di host untuk membuat data cloud-init';
+
+  @override
+  String virtCiNoToolBody(String tools) {
+    return 'Pasang salah satu dari $tools di host. Tanpa cloud-init, image berjalan tanpa akun untuk masuk.';
+  }
+
+  @override
+  String get virtHwCloudInitNote =>
+      'Data yang dibaca cloud-init saat boot pertama. Bukan media instalasi: tidak ada yang dimasukkan di sini.';
+
+  @override
+  String get virtHwCdromLater =>
+      'Selama berjalan, drive ditambahkan saat start berikutnya (SATA dan IDE tidak mendukung hot-plug).';
 }

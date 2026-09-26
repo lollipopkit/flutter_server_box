@@ -570,6 +570,164 @@ void main() {
       expect(exec.calls, isEmpty);
     });
 
+    test('create options: what the machine offers, and the seed tool', () async {
+      final exec = _Exec((_) => _ok(_fixture('script_create_host_full.txt')));
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      final o = await virt.createOptions();
+      // q35 has no IDE; OVMF is there, swtpm is not.
+      expect(o.buses, ['virtio', 'scsi', 'sata']);
+      expect(o.nicModels.first, 'virtio');
+      expect((o.uefi, o.tpm, o.cloudImages, o.cloudInit), (true, false, true, true));
+      expect(o.cloudInitMissing, isNull);
+      // The trimmed capture asked for no tool: none, and which to install.
+      final old = _Exec((_) => _ok(_fixture('script_create_host.txt')));
+      final o2 = await LibvirtBackend(serverId: 's', exec: () async => old).createOptions();
+      expect(o2.cloudInit, isFalse);
+      expect(o2.cloudInitMissing, contains('genisoimage'));
+    });
+
+    test('a cloud image with cloud-init: a copy, a seed, only a hash', () async {
+      const password = 'correct horse battery';
+      final exec = _Exec((call) {
+        if (call.script.contains('domcapabilities')) {
+          return _ok(_fixture('script_create_host_full.txt'));
+        }
+        if (call.script.contains('vol-create-from')) {
+          return _ok(
+            [
+              _section('virt.vol.create', ''),
+              _section('virt.vol.resize', ''),
+              _section('virt.vol.path', '/var/lib/libvirt/images/ci-01.qcow2'),
+              _section('virt.seed.iso', ''),
+              _section('virt.seed.vol', ''),
+              _section('virt.seed.upload', ''),
+              _section('virt.seed.path', '/var/lib/libvirt/images/ci-01-cidata.iso'),
+            ].join(),
+          );
+        }
+        if (call.script.contains('define --file')) {
+          return _ok(_fixture('script_define_ok.txt'));
+        }
+        return _fail('unexpected script');
+      });
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      await virt.create(
+        const VirtCreateSpec(
+          kind: VirtGuestKind.qemu,
+          name: 'ci-01',
+          cores: 1,
+          memoryMiB: 1024,
+          storage: images,
+          diskGiB: 8,
+          image: VirtVolume(
+            id: 'noble.img',
+            name: 'noble.img',
+            format: 'qcow2',
+            path: '/var/lib/libvirt/images/noble.img',
+          ),
+          network: VirtNetwork(id: 'default', name: 'default', mode: 'nat'),
+          bus: 'scsi',
+          nicModel: 'e1000e',
+          uefi: true,
+          cloudInit: VirtCloudInit(
+            user: 'admin',
+            password: password,
+            sshKeys: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5 me@x',
+          ),
+        ),
+      );
+      final volume = exec.calls[1].script;
+      expect(volume, contains("--vol '/var/lib/libvirt/images/noble.img'"));
+      expect(volume, contains('genisoimage'));
+      expect(volume, contains(r'hashed_passwd: "$6$'));
+      // The password itself goes nowhere.
+      for (final c in exec.calls) {
+        expect(c.script, isNot(contains(password)));
+      }
+      final define = exec.calls[2].script;
+      expect(define, contains('/var/lib/libvirt/images/ci-01-cidata.iso'));
+      expect(define, contains('https://serverbox.app/xmlns/libvirt/cloud-init/1'));
+      expect(define, contains('firmware='));
+      expect(define, contains('virtio-scsi'));
+      // The NIC cloud-init finds by its MAC is the one defined with it.
+      final mac = RegExp(r'52:54:00(:[0-9a-f]{2}){3}').allMatches(volume).map((m) => m[0]).toSet();
+      expect(mac, hasLength(1));
+      expect(define, contains(mac.single));
+    });
+
+    test('cloud-init JSON: the hostname from the name, the NIC by its MAC', () {
+      const spec = VirtCreateSpec(
+        kind: VirtGuestKind.qemu,
+        name: 'web.01',
+        cores: 1,
+        memoryMiB: 512,
+        storage: images,
+        diskGiB: 4,
+      );
+      final dhcp = LibvirtBackend.cloudInitJson(
+        spec,
+        const VirtCloudInit(user: 'u', sshKeys: ' ssh-ed25519 AAAA a \n\n'),
+        mac: '52:54:00:00:00:02',
+      );
+      expect(dhcp['password_hash'], isNull);
+      expect(dhcp['ssh_keys'], ['ssh-ed25519 AAAA a']);
+      expect(dhcp['hostname'], 'web.01');
+      expect(dhcp['instance_id'], matches(RegExp(r'^iid-web\.01-[0-9a-f]{8}$')));
+      expect(dhcp['network'], {
+        'mac': '52:54:00:00:00:02',
+        'ipv4': null,
+        'dns': <String>[],
+        'search': <String>[],
+      });
+      final fixed = LibvirtBackend.cloudInitJson(
+        spec,
+        const VirtCloudInit(
+          user: 'u',
+          password: 'pw',
+          hostname: 'web-01',
+          address: '10.0.0.5/24',
+          gateway: '10.0.0.1',
+          dns: ['1.1.1.1'],
+          searchDomain: 'lab',
+        ),
+        mac: '52:54:00:00:00:02',
+      );
+      expect(fixed['password_hash'], startsWith(r'$6$'));
+      expect(fixed['hostname'], 'web-01');
+      expect((fixed['network']! as Map)['ipv4'], {'address': '10.0.0.5/24', 'gateway': '10.0.0.1'});
+      expect((fixed['network']! as Map)['search'], ['lab']);
+      // No NIC: no network config.
+      expect(LibvirtBackend.cloudInitJson(spec, const VirtCloudInit(user: 'u'), mac: null)['network'], isNull);
+    });
+
+    test('delete: the seed the domain names goes with it, after it', () async {
+      const seed = '/var/lib/libvirt/images/it-cidata.iso';
+      final xml = _fixture('dumpxml_win11.xml').replaceFirst(
+        '<name>',
+        "<metadata><sbx:cloud-init xmlns:sbx='https://serverbox.app/xmlns/libvirt/cloud-init/1' seed='$seed'/></metadata><name>",
+      );
+      final exec = _Exec((call) {
+        if (call.script.contains('domstats')) return _ok(_overview());
+        if (call.script.contains('dumpxml')) {
+          return _ok(
+            _section('virt.display', _fixture('error_display_not_running.txt'), 1) +
+                _section('virt.xml', xml),
+          );
+        }
+        if (call.script.contains('undefine')) {
+          return _ok(_section('virt.action', '') + _section('virt.seed.delete', ''));
+        }
+        return _fail('unexpected script');
+      });
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      final odd = (await virt.load()).guests.firstWhere((g) => g.id == _odd);
+      await virt.delete(odd);
+      expect(exec.calls.last.script, contains("vol-delete --vol '$seed'"));
+      // Kept with the disks.
+      await virt.delete(odd, removeDisks: false);
+      expect(exec.calls.last.script, isNot(contains('vol-delete')));
+    });
+
     test('delete: a running guest is refused, a stopped one undefined '
         'with its writable disks only', () async {
       final exec = _Exec((call) {
@@ -821,6 +979,21 @@ void main() {
         guestName: 'sbhw-test',
         mac: () => '52:54:00:00:00:01',
       );
+      // A CD-ROM drive: IDE on `pc`, beside the one there is.
+      expect(json(const VirtHwAddCdrom()), {
+        'op': 'add_cdrom',
+        'target': 'hda',
+        'bus': 'ide',
+        'source': null,
+      });
+      expect(
+        json(const VirtHwAddCdrom(media: VirtVolume(id: 'a.iso', name: 'a.iso', path: '/iso/a.iso')))['source'],
+        '/iso/a.iso',
+      );
+      expect(
+        () => json(const VirtHwAddCdrom(media: VirtVolume(id: 'a.iso', name: 'a.iso'))),
+        throwsA(isA<VirtErr>()),
+      );
       expect(json(const VirtHwAddDisk(storage: pool, gib: 2)), {
         'op': 'add_disk',
         'pool': 'images',
@@ -979,6 +1152,13 @@ void main() {
       final hw = LibvirtBackend.hardwareOf(i);
       Map<String, Object?> json(VirtHwChange c) =>
           LibvirtBackend.changeJson(i, hw, c, guestName: 'sbhwb-test', mac: () => '52:54:00:00:00:01');
+      // q35: a new CD-ROM drive on SATA.
+      expect(json(const VirtHwAddCdrom()), {
+        'op': 'add_cdrom',
+        'target': 'sda',
+        'bus': 'sata',
+        'source': null,
+      });
       // Another bus is another name on it.
       expect(json(const VirtHwUpdateDisk(key: 'vda', bus: 'sata')), {
         'op': 'update_disk',

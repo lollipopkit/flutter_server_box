@@ -4110,7 +4110,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get virtHwDevices => 'CD-ROM and passthrough';
 
   @override
-  String get virtHwDevicesEmpty => 'USB and PCI passthrough, TPM';
+  String get virtHwDevicesEmpty => 'USB and PCI passthrough, CD-ROM, TPM';
 
   @override
   String get virtHwAddDevice => 'Add device';
@@ -4657,4 +4657,111 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get pveTokenTipStorage =>
       'Managing storage needs Datastore.Allocate on /storage (adding, disabling, removing), Datastore.AllocateSpace (volumes) and Datastore.AllocateTemplate (uploads); Linux bridges and applying the network configuration need Sys.Modify on the node.';
+
+  @override
+  String get virtCreateUnnamed => 'Unnamed';
+
+  @override
+  String get virtCreateNotChosen => 'Not chosen';
+
+  @override
+  String get virtCreateKindVmSub => 'qm · a full KVM virtual machine';
+
+  @override
+  String get virtCreateKindLxcSub => 'pct · shares the host\'s kernel, lighter';
+
+  @override
+  String get virtCloudImage => 'Cloud image';
+
+  @override
+  String get virtCloudImageTip =>
+      'A disk with a system on it: copied, grown to the size under Storage, and set up by cloud-init at its first boot. The image itself is left as it is.';
+
+  @override
+  String get virtNoCloudImagesLibvirt =>
+      'No cloud images here: put a qcow2 or raw image in a pool (upload it in Storage), one no guest uses.';
+
+  @override
+  String get virtNoCloudImagesPve =>
+      'No cloud images here: upload a qcow2, raw or vmdk image to a storage with the Import content type (PVE 8.2+).';
+
+  @override
+  String get virtCreateWindowsTitle => 'Windows 11 needs UEFI and TPM 2.0';
+
+  @override
+  String get virtCreateWindowsBody => 'Choose UEFI and turn the TPM on above.';
+
+  @override
+  String get virtCreateWindowsNoTpm =>
+      'This host has no software TPM (swtpm): install it to give the guest one.';
+
+  @override
+  String virtCreateImageSize(String size) {
+    return 'The image is $size: the disk must be at least that big.';
+  }
+
+  @override
+  String get virtCreateImageMissing => 'Choose a cloud image.';
+
+  @override
+  String get virtCreateIncomplete => 'Complete the parts marked orange first.';
+
+  @override
+  String virtCreateOn(String host) {
+    return 'Created on $host';
+  }
+
+  @override
+  String get virtCiTip =>
+      'An account with sudo, logged in to with its password, an SSH key, or both.';
+
+  @override
+  String get virtCiUserInvalid =>
+      'Lowercase letters, digits, _ and -, starting with a letter or _';
+
+  @override
+  String get virtCiCredentialsMissing => 'Set a password or an SSH key.';
+
+  @override
+  String get virtCiHostnamePve => 'The hostname is the VM\'s name.';
+
+  @override
+  String get virtCiStatic => 'Static';
+
+  @override
+  String get virtCiAddressInvalid =>
+      'An IPv4 address with its prefix, like 10.0.0.5/24';
+
+  @override
+  String get virtCiGatewayInvalid => 'An IPv4 address, like 10.0.0.1';
+
+  @override
+  String get virtCiDnsFromDhcp => 'Empty: from DHCP';
+
+  @override
+  String get virtCiDnsInvalid => 'IP addresses, separated by spaces or commas';
+
+  @override
+  String get virtCiSearch => 'Search domain';
+
+  @override
+  String get virtCiSeedNote =>
+      'Written to a small ISO next to the disk, attached as a CD-ROM and deleted with the VM. Only the password\'s hash is stored.';
+
+  @override
+  String get virtCiNoToolTitle =>
+      'No tool on the host to make the cloud-init data';
+
+  @override
+  String virtCiNoToolBody(String tools) {
+    return 'Install one of $tools on the host. Without cloud-init the image starts with no account to log in with.';
+  }
+
+  @override
+  String get virtHwCloudInitNote =>
+      'What cloud-init reads at the first boot. Not install media: nothing to insert here.';
+
+  @override
+  String get virtHwCdromLater =>
+      'While it runs, the drive is added at its next start (SATA and IDE take none live).';
 }

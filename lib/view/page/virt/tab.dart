@@ -15,7 +15,6 @@ import 'package:server_box/data/provider/virt/virt.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/virt/common.dart';
-import 'package:server_box/view/page/virt/create.dart';
 import 'package:server_box/view/page/virt/guest.dart';
 import 'package:server_box/view/page/virt/hardware.dart';
 import 'package:server_box/view/page/virt/host_error.dart';

@@ -847,6 +847,7 @@ fn create_spec(name: &str) -> virt::VirtCreateSpec {
         cdrom: Some("/var/lib/libvirt/images/sbm-test.iso".to_string()),
         network: Some("default".to_string()),
         start: true,
+        ..Default::default()
     }
 }
 
@@ -854,14 +855,20 @@ fn create_spec(name: &str) -> virt::VirtCreateSpec {
 fn create_host_prefers_kvm_and_q35() {
     let host = virt::parse_create_host(&fixture("script_create_host.txt")).unwrap();
     assert_eq!(
-        host,
-        virt::VirtCreateHost {
-            domain_type: "kvm".into(),
-            machine: "pc-q35-10.0".into(),
-            arch: "x86_64".into(),
-            max_vcpus: Some(4096),
-        }
+        (host.domain_type.as_str(), host.machine.as_str(), host.arch.as_str(), host.max_vcpus),
+        ("kvm", "pc-q35-10.0", "x86_64", Some(4096))
     );
+    // Captured before the seed tool was asked for, and trimmed: none.
+    assert_eq!(host.seed_tool, None);
+    // The whole answer (2026-09-26, with the seed tool): what the machine
+    // offers besides, from the same `domcapabilities` — UEFI with Secure
+    // Boot, no IDE on q35, a TPM only by passthrough (no swtpm there).
+    let full = virt::parse_create_host(&fixture("script_create_host_full.txt")).unwrap();
+    assert_eq!(full.machine, "pc-q35-10.0");
+    assert_eq!(full.seed_tool.as_deref(), Some("genisoimage"));
+    let caps = full.caps.unwrap();
+    assert!(caps.efi && caps.secure_boot && !caps.tpm_emulator, "{caps:?}");
+    assert_eq!(caps.disk_buses, ["fdc", "scsi", "virtio", "usb", "sata"]);
     // A host without KVM: the first sections fail, emulation answers.
     let raw = fixture("script_create_host.txt");
     let no_kvm = raw.replacen(
@@ -877,12 +884,15 @@ fn create_host_prefers_kvm_and_q35() {
 #[test]
 fn create_volume_and_define_captured() {
     assert_eq!(
-        virt::parse_create_volume(&fixture("script_create_volume.txt")).unwrap(),
-        "/var/lib/libvirt/images/sbm-create-test.qcow2"
+        virt::parse_create_volumes(&fixture("script_create_volume.txt")).unwrap(),
+        virt::VirtCreateVolumes {
+            disk_path: "/var/lib/libvirt/images/sbm-create-test.qcow2".into(),
+            seed_path: None,
+        }
     );
     // The name was defined already: nothing ran.
     assert_eq!(
-        virt::parse_create_volume(&fixture("script_create_volume_exists.txt")),
+        virt::parse_create_volumes(&fixture("script_create_volume_exists.txt")),
         Err(VirtError::Exists { message: String::new() })
     );
     assert_eq!(
@@ -900,6 +910,7 @@ fn create_volume_and_define_captured() {
         other => panic!("{other:?}"),
     }
     assert_eq!(virt::parse_action(&fixture("script_undefine.txt")), Ok(()));
+    assert_eq!(virt::parse_undefine(&fixture("script_undefine.txt")), Ok(()));
 }
 
 #[test]
@@ -997,11 +1008,13 @@ fn create_specs_refused_before_running() {
     assert!(virt::create_volume_script(&spec).is_ok());
     assert!(matches!(virt::define_script(&spec), Err(VirtError::Malformed { .. })));
 
-    assert!(virt::undefine_script("vm", &["vda,sda".into()]).is_err());
-    assert!(virt::undefine_script("vm", &["".into()]).is_err());
-    let keep = virt::undefine_script("vm", &[]).unwrap();
+    assert!(virt::undefine_script("vm", &["vda,sda".into()], None).is_err());
+    assert!(virt::undefine_script("vm", &["".into()], None).is_err());
+    assert!(virt::undefine_script("vm", &[], Some("seed.iso")).is_err());
+    let keep = virt::undefine_script("vm", &[], None).unwrap();
     assert!(keep.contains("--keep-nvram") && !keep.contains("--storage"), "{keep}");
-    let all = virt::undefine_script("vm", &["vda".into(), "vdb".into()]).unwrap();
+    assert!(!keep.contains("vol-delete"), "{keep}");
+    let all = virt::undefine_script("vm", &["vda".into(), "vdb".into()], None).unwrap();
     assert!(all.contains("--nvram --storage vda,vdb"), "{all}");
 }
 
@@ -1043,8 +1056,9 @@ fn create_scripts_under_sh_with_a_hostile_name() {
     let mut spec = create_spec(name);
     spec.disk_path = None;
 
-    let vol = virt::parse_create_volume(&run_sh(&virt::create_volume_script(&spec).unwrap(), &path))
-        .unwrap();
+    let vol = virt::parse_create_volumes(&run_sh(&virt::create_volume_script(&spec).unwrap(), &path))
+        .unwrap()
+        .disk_path;
     assert_eq!(vol, format!("/pool/{name}.qcow2"));
     let log = std::fs::read_to_string(d.join("log")).unwrap();
     assert!(log.contains(&format!("--name\n{name}.qcow2\n--capacity\n8G\n")), "{log}");
@@ -1066,14 +1080,14 @@ fn create_scripts_under_sh_with_a_hostile_name() {
     // Defined already: stops before creating anything.
     std::fs::remove_file(d.join("log")).unwrap();
     assert_eq!(
-        virt::parse_create_volume(&run_sh(&virt::create_volume_script(&spec).unwrap(), &path)),
+        virt::parse_create_volumes(&run_sh(&virt::create_volume_script(&spec).unwrap(), &path)),
         Err(VirtError::Exists { message: String::new() })
     );
     let log = std::fs::read_to_string(d.join("log")).unwrap();
     assert!(!log.contains("vol-create-as"), "{log}");
 
-    let undefine = virt::undefine_script(name, &["vda".into()]).unwrap();
-    assert_eq!(virt::parse_action(&run_sh(&undefine, &path)), Ok(()));
+    let undefine = virt::undefine_script(name, &["vda".into()], None).unwrap();
+    assert_eq!(virt::parse_undefine(&run_sh(&undefine, &path)), Ok(()));
     let log = std::fs::read_to_string(d.join("log")).unwrap();
     assert!(log.contains(&format!("undefine\n--domain\n{name}\n--managed-save\n")), "{log}");
     let _ = std::fs::remove_dir_all(&d);

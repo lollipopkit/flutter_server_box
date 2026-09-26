@@ -175,6 +175,7 @@ _LibvirtDomainXml _$LibvirtDomainXmlFromJson(Map<String, dynamic> json) =>
               .toList() ??
           const <VirtGraphics>[],
       hasSerialConsole: json['has_serial_console'] as bool? ?? false,
+      seed: json['seed'] as String?,
     );
 
 Map<String, dynamic> _$LibvirtDomainXmlToJson(_LibvirtDomainXml instance) =>
@@ -188,6 +189,7 @@ Map<String, dynamic> _$LibvirtDomainXmlToJson(_LibvirtDomainXml instance) =>
       'nics': instance.nics,
       'graphics': instance.graphics,
       'has_serial_console': instance.hasSerialConsole,
+      'seed': instance.seed,
     };
 
 _LibvirtDomainDetail _$LibvirtDomainDetailFromJson(Map<String, dynamic> json) =>
@@ -547,6 +549,7 @@ _LibvirtHwConfig _$LibvirtHwConfigFromJson(Map<String, dynamic> json) =>
               ?.map((e) => LibvirtHwHostdev.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const <LibvirtHwHostdev>[],
+      seed: json['seed'] as String?,
     );
 
 Map<String, dynamic> _$LibvirtHwConfigToJson(_LibvirtHwConfig instance) =>
@@ -565,6 +568,7 @@ Map<String, dynamic> _$LibvirtHwConfigToJson(_LibvirtHwConfig instance) =>
       'video': instance.video,
       'tpm': instance.tpm,
       'hostdevs': instance.hostdevs,
+      'seed': instance.seed,
     };
 
 _LibvirtHwGraphics _$LibvirtHwGraphicsFromJson(Map<String, dynamic> json) =>
@@ -643,6 +647,28 @@ Map<String, dynamic> _$LibvirtHwCapsToJson(_LibvirtHwCaps instance) =>
       'video': instance.video,
       'disk_buses': instance.diskBuses,
       'hostdev': instance.hostdev,
+    };
+
+_LibvirtCreateHost _$LibvirtCreateHostFromJson(Map<String, dynamic> json) =>
+    _LibvirtCreateHost(
+      domainType: json['domain_type'] as String? ?? '',
+      machine: json['machine'] as String? ?? '',
+      arch: json['arch'] as String? ?? '',
+      maxVcpus: (json['max_vcpus'] as num?)?.toInt(),
+      caps: json['caps'] == null
+          ? null
+          : LibvirtHwCaps.fromJson(json['caps'] as Map<String, dynamic>),
+      seedTool: json['seed_tool'] as String?,
+    );
+
+Map<String, dynamic> _$LibvirtCreateHostToJson(_LibvirtCreateHost instance) =>
+    <String, dynamic>{
+      'domain_type': instance.domainType,
+      'machine': instance.machine,
+      'arch': instance.arch,
+      'max_vcpus': instance.maxVcpus,
+      'caps': instance.caps,
+      'seed_tool': instance.seedTool,
     };
 
 _LibvirtHostDevices _$LibvirtHostDevicesFromJson(Map<String, dynamic> json) =>

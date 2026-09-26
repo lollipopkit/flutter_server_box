@@ -22,6 +22,7 @@ import 'package:server_box/view/widget/group_title.dart';
 import 'package:server_box/view/widget/progress_line.dart';
 
 part 'backups.dart';
+part 'create.dart';
 part 'edit_pane.dart';
 part 'network.dart';
 part 'settings.dart';
@@ -55,6 +56,21 @@ class VirtHardwareView extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<VirtHardwareView> createState() => _VirtHardwareViewState();
+}
+
+/// What the devices group's add block adds: a CD-ROM drive, or a device.
+enum _NewDevice {
+  cdrom,
+  usb,
+  pci,
+  tpm;
+
+  VirtHwDeviceKind? get hw => switch (this) {
+    cdrom => null,
+    usb => VirtHwDeviceKind.usb,
+    pci => VirtHwDeviceKind.pci,
+    tpm => VirtHwDeviceKind.tpm,
+  };
 }
 
 class _CpuDraft {
@@ -108,8 +124,11 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
   Future<List<VirtVolume>>? _isos;
 
   /// The device add block's kind and choice, and the host's devices for it.
-  VirtHwDeviceKind? _devKind;
+  _NewDevice? _devKind;
   VirtHostDevice? _devPick;
+
+  /// A new CD-ROM's media; null for an empty drive.
+  VirtVolume? _cdMedia;
   Future<VirtHostDevices>? _hostDevs;
 
 
@@ -906,10 +925,13 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
       for (final d in hw.disks)
         if (d.kind == VirtHwDiskKind.cdrom) d,
     ];
+    // A drive for install media is offered where there is none, as the
+    // design has it; a cloud-init drive is not one.
     final kinds = [
-      if (hw.support.usb) VirtHwDeviceKind.usb,
-      if (hw.support.pci) VirtHwDeviceKind.pci,
-      if (hw.support.tpm && !hw.hasTpm) VirtHwDeviceKind.tpm,
+      if (!drives.any((d) => !d.cloudInit)) _NewDevice.cdrom,
+      if (hw.support.usb) _NewDevice.usb,
+      if (hw.support.pci) _NewDevice.pci,
+      if (hw.support.tpm && !hw.hasTpm) _NewDevice.tpm,
     ];
     return _Group(
       key: 'devices',
@@ -920,11 +942,12 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
         ...hw.devices.map((d) => d.key),
       ]),
       indexNote: [
-        for (final _ in drives) l10n.virtHwCdrom,
+        for (final d in drives) d.cloudInit ? 'cloud-init' : l10n.virtHwCdrom,
         for (final d in hw.devices) _deviceName(d.kind),
       ].join(', ').ifEmpty('—'),
       rows: [
-        for (final d in drives) ...[
+        for (final d in drives)
+          if (d.cloudInit) ..._cloudInitRows(hw, d, busy) else ...[
           _disc(
             d.key,
             Icons.album_outlined,
@@ -1014,6 +1037,37 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
     );
   }
 
+  /// A cloud-init drive: what it is, and taking it off. Its contents are
+  /// not media to swap.
+  List<Widget> _cloudInitRows(VirtHardware hw, VirtHwDisk d, bool busy) => [
+    _disc(
+      d.key,
+      Icons.cloud_outlined,
+      '${d.key} · cloud-init',
+      d.source == null ? l10n.virtHwNoMedia : _baseName(d.source!),
+    ),
+    ..._pendingRows(hw, busy, (p) => p.key == d.key, indent: true),
+    _reveal(d.key, [
+      _text(l10n.virtHwCloudInitNote, indent: true),
+      _actions(indent: true, [
+        _Action(
+          l10n.virtHwRemove,
+          key: 'hw:media:${d.key}:remove',
+          icon: Icons.delete_outline,
+          danger: true,
+          onTap: busy ? null : () => _removeDisk(hw, d),
+        ),
+      ]),
+    ]),
+  ];
+
+  String _newDeviceName(_NewDevice kind) => switch (kind) {
+    _NewDevice.cdrom => l10n.virtHwCdrom,
+    _NewDevice.usb => _deviceName(VirtHwDeviceKind.usb),
+    _NewDevice.pci => _deviceName(VirtHwDeviceKind.pci),
+    _NewDevice.tpm => _deviceName(VirtHwDeviceKind.tpm),
+  };
+
   String _deviceName(VirtHwDeviceKind kind) => switch (kind) {
     VirtHwDeviceKind.usb => 'USB',
     VirtHwDeviceKind.pci => l10n.virtHwPci,
@@ -1063,34 +1117,76 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
   /// the TPM's state (PVE).
   List<Widget> _addDeviceRows(
     VirtHardware hw,
-    List<VirtHwDeviceKind> kinds,
+    List<_NewDevice> kinds,
     bool busy,
   ) {
-    final kind = _devKind ?? kinds.firstOrNull;
+    final kind = kinds.contains(_devKind) ? _devKind : kinds.firstOrNull;
     final pick = _devPick;
-    final change = kind == null
-        ? null
-        : VirtHwAddDevice(kind: kind, host: pick, storage: _addPool?.name);
+    final VirtHwChange? change = switch (kind) {
+      null => null,
+      _NewDevice.cdrom => VirtHwAddCdrom(media: _cdMedia),
+      _NewDevice.usb ||
+      _NewDevice.pci ||
+      _NewDevice.tpm => VirtHwAddDevice(
+        kind: kind.hw!,
+        host: pick,
+        storage: _addPool?.name,
+      ),
+    };
     final issue = change == null ? null : virtHwIssue(hw, change, host: _host);
     return [
       _disc('__add_dev', Icons.add_circle_outline, l10n.virtHwNewDevice,
-          kinds.map(_deviceName).join(' · ')),
+          kinds.map(_newDeviceName).join(' · ')),
       if (kinds.length > 1)
         _seg(
           Icons.category_outlined,
           libL10n.type,
-          [for (final k in kinds) _deviceName(k)],
-          kind == null ? null : _deviceName(kind),
+          [for (final k in kinds) _newDeviceName(k)],
+          kind == null ? null : _newDeviceName(kind),
           key: 'dev:add:kind',
           indent: true,
           onSelected: (name) => setState(() {
-            _devKind = kinds.firstWhere((k) => _deviceName(k) == name);
+            _devKind = kinds.firstWhere((k) => _newDeviceName(k) == name);
             _devPick = null;
+            if (_devKind == _NewDevice.cdrom) _isos ??= _loadIsos();
           }),
         ),
-      if (kind == VirtHwDeviceKind.tpm && _pve) ..._storageChoice(),
-      if (kind == VirtHwDeviceKind.tpm) _text(l10n.virtHwTpmNote, indent: true),
-      if (kind == VirtHwDeviceKind.usb || kind == VirtHwDeviceKind.pci)
+      if (kind == _NewDevice.cdrom) ...[
+        FutureBuilder<List<VirtVolume>>(
+          future: _isos,
+          builder: (_, snap) {
+            final isos = snap.data;
+            if (isos == null) {
+              return const Padding(
+                padding: EdgeInsets.all(7),
+                child: Center(child: SizedLoading.small),
+              );
+            }
+            return _choice([
+              _Choice(
+                key: 'hw:cdrom:new:none',
+                icon: Icons.block,
+                label: l10n.virtHwEmpty,
+                selected: _cdMedia == null,
+                onTap: () => setState(() => _cdMedia = null),
+              ),
+              for (final v in isos)
+                _Choice(
+                  key: 'hw:cdrom:new:${v.id}',
+                  icon: Icons.album_outlined,
+                  label: v.name,
+                  sub: v.capacity?.bytes2Str,
+                  selected: _cdMedia?.id == v.id,
+                  onTap: () => setState(() => _cdMedia = v),
+                ),
+            ], indent: true);
+          },
+        ),
+        if (hw.running) _text(l10n.virtHwCdromLater, indent: true),
+      ],
+      if (kind == _NewDevice.tpm && _pve) ..._storageChoice(),
+      if (kind == _NewDevice.tpm) _text(l10n.virtHwTpmNote, indent: true),
+      if (kind == _NewDevice.usb || kind == _NewDevice.pci)
         FutureBuilder<VirtHostDevices>(
           future: _hostDevs,
           builder: (_, snap) {
@@ -1104,11 +1200,11 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                 child: Center(child: SizedLoading.small),
               );
             }
-            final list = kind == VirtHwDeviceKind.usb ? devs.usb : devs.pci;
+            final list = kind == _NewDevice.usb ? devs.usb : devs.pci;
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (kind == VirtHwDeviceKind.pci)
+                if (kind == _NewDevice.pci)
                   Padding(
                     padding: const EdgeInsets.only(bottom: _rowGap),
                     child: devs.iommu
@@ -1132,7 +1228,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                     for (final x in list)
                       _Choice(
                         key: 'hw:dev:pick:${x.id}',
-                        icon: x.mapping ? Icons.link : _deviceIcon(kind!),
+                        icon: x.mapping ? Icons.link : _deviceIcon(kind!.hw!),
                         label: x.label,
                         sub: [
                           x.detail,
@@ -1147,7 +1243,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
             );
           },
         ),
-      if (_issueText(hw, issue) case final t? when pick != null || kind == VirtHwDeviceKind.tpm)
+      if (_issueText(hw, issue) case final t? when pick != null || kind == _NewDevice.tpm)
         _text(t, indent: true, error: true),
       _actions(indent: true, [
         _Action(
@@ -1164,6 +1260,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
               : () => _save(hw, change, () {
                   _adding = null;
                   _devPick = null;
+                  _cdMedia = null;
                 }),
         ),
       ]),
@@ -1622,15 +1719,17 @@ extension _Actions on _VirtHardwareViewState {
     await _apply(hw, VirtHwRemoveDisk(key: d.key, deleteVolume: delete));
   }
 
-  Future<void> _openAddDevice(VirtHwDeviceKind kind) async {
+  Future<void> _openAddDevice(_NewDevice kind) async {
     // ignore: invalid_use_of_protected_member
     setState(() {
       _adding = 'dev';
       _devKind = kind;
       _devPick = null;
+      _cdMedia = null;
       _addPools = null;
       _addPool = null;
       _hostDevs ??= _notifier.hostDevices(widget.guest.id);
+      if (kind == _NewDevice.cdrom) _isos ??= _loadIsos();
     });
     // The TPM's state is a volume on PVE: where it goes is asked.
     if (_pve) await _loadDiskPools();

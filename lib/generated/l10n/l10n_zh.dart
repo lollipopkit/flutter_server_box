@@ -3854,7 +3854,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtHwDevices => '光驱与直通';
 
   @override
-  String get virtHwDevicesEmpty => 'USB 与 PCI 直通、TPM';
+  String get virtHwDevicesEmpty => 'USB 与 PCI 直通、光驱、TPM';
 
   @override
   String get virtHwAddDevice => '添加设备';
@@ -4364,6 +4364,105 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get pveTokenTipStorage =>
       '管理存储需要 /storage 上的 Datastore.Allocate（添加、停用、移除）、Datastore.AllocateSpace（卷）和 Datastore.AllocateTemplate（上传）；Linux bridge 和应用网络配置需要节点上的 Sys.Modify。';
+
+  @override
+  String get virtCreateUnnamed => '未命名';
+
+  @override
+  String get virtCreateNotChosen => '未选择';
+
+  @override
+  String get virtCreateKindVmSub => 'qm · 完整的 KVM 虚拟机';
+
+  @override
+  String get virtCreateKindLxcSub => 'pct · 共享宿主机内核，开销更小';
+
+  @override
+  String get virtCloudImage => '云镜像';
+
+  @override
+  String get virtCloudImageTip =>
+      '已装好系统的磁盘：复制一份，扩到「存储」里的容量，首次启动时由 cloud-init 配置。镜像本身保持不变。';
+
+  @override
+  String get virtNoCloudImagesLibvirt =>
+      '这里没有云镜像：把 qcow2 或 raw 镜像放进一个存储池（可在「存储」里上传），且没有虚拟机在用它。';
+
+  @override
+  String get virtNoCloudImagesPve =>
+      '这里没有云镜像：把 qcow2、raw 或 vmdk 镜像上传到内容类型含「导入」(Import) 的存储（PVE 8.2+）。';
+
+  @override
+  String get virtCreateWindowsTitle => 'Windows 11 需要 UEFI + TPM 2.0';
+
+  @override
+  String get virtCreateWindowsBody => '在上面选 UEFI 并打开 TPM。';
+
+  @override
+  String get virtCreateWindowsNoTpm => '这台宿主机没有软件 TPM (swtpm)：安装后才能给虚拟机添加。';
+
+  @override
+  String virtCreateImageSize(String size) {
+    return '镜像有 $size：磁盘至少要这么大。';
+  }
+
+  @override
+  String get virtCreateImageMissing => '选择一个云镜像。';
+
+  @override
+  String get virtCreateIncomplete => '先补全标橙色的部分。';
+
+  @override
+  String virtCreateOn(String host) {
+    return '将在 $host 上创建';
+  }
+
+  @override
+  String get virtCiTip => '一个带 sudo 的账户，可用密码、SSH 密钥或两者登录。';
+
+  @override
+  String get virtCiUserInvalid => '小写字母、数字、_ 和 -，以字母或 _ 开头';
+
+  @override
+  String get virtCiCredentialsMissing => '设置密码或 SSH 密钥。';
+
+  @override
+  String get virtCiHostnamePve => '主机名就是虚拟机的名称。';
+
+  @override
+  String get virtCiStatic => '静态';
+
+  @override
+  String get virtCiAddressInvalid => '带前缀的 IPv4 地址，如 10.0.0.5/24';
+
+  @override
+  String get virtCiGatewayInvalid => 'IPv4 地址，如 10.0.0.1';
+
+  @override
+  String get virtCiDnsFromDhcp => '留空：由 DHCP 提供';
+
+  @override
+  String get virtCiDnsInvalid => 'IP 地址，用空格或逗号分隔';
+
+  @override
+  String get virtCiSearch => '搜索域';
+
+  @override
+  String get virtCiSeedNote => '写入磁盘旁的一个小 ISO，作为光驱挂载，随虚拟机一起删除。只保存密码的哈希。';
+
+  @override
+  String get virtCiNoToolTitle => '宿主机上没有制作 cloud-init 数据的工具';
+
+  @override
+  String virtCiNoToolBody(String tools) {
+    return '在宿主机上安装 $tools 之一。没有 cloud-init，镜像启动后没有可登录的账户。';
+  }
+
+  @override
+  String get virtHwCloudInitNote => 'cloud-init 在首次启动时读取的数据，不是安装介质，这里不能换盘。';
+
+  @override
+  String get virtHwCdromLater => '运行中添加的光驱在下次启动时生效（SATA 和 IDE 不支持热插拔）。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -8214,7 +8313,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtHwDevices => '光碟機與直通';
 
   @override
-  String get virtHwDevicesEmpty => 'USB 與 PCI 直通、TPM';
+  String get virtHwDevicesEmpty => 'USB 與 PCI 直通、光碟機、TPM';
 
   @override
   String get virtHwAddDevice => '新增裝置';
@@ -8725,4 +8824,103 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get pveTokenTipStorage =>
       '管理儲存需要 /storage 上的 Datastore.Allocate（新增、停用、移除）、Datastore.AllocateSpace（磁碟區）和 Datastore.AllocateTemplate（上傳）；Linux bridge 和套用網路設定需要節點上的 Sys.Modify。';
+
+  @override
+  String get virtCreateUnnamed => '未命名';
+
+  @override
+  String get virtCreateNotChosen => '未選擇';
+
+  @override
+  String get virtCreateKindVmSub => 'qm · 完整的 KVM 虛擬機器';
+
+  @override
+  String get virtCreateKindLxcSub => 'pct · 共用主機核心，開銷更小';
+
+  @override
+  String get virtCloudImage => '雲端映像';
+
+  @override
+  String get virtCloudImageTip =>
+      '已裝好系統的磁碟：複製一份，擴充到「儲存」中的容量，首次啟動時由 cloud-init 設定。映像本身保持不變。';
+
+  @override
+  String get virtNoCloudImagesLibvirt =>
+      '這裡沒有雲端映像：把 qcow2 或 raw 映像放進一個儲存池（可在「儲存」中上傳），且沒有虛擬機器在使用它。';
+
+  @override
+  String get virtNoCloudImagesPve =>
+      '這裡沒有雲端映像：把 qcow2、raw 或 vmdk 映像上傳到內容類型含「匯入」(Import) 的儲存（PVE 8.2+）。';
+
+  @override
+  String get virtCreateWindowsTitle => 'Windows 11 需要 UEFI + TPM 2.0';
+
+  @override
+  String get virtCreateWindowsBody => '在上方選 UEFI 並開啟 TPM。';
+
+  @override
+  String get virtCreateWindowsNoTpm => '這台主機沒有軟體 TPM (swtpm)：安裝後才能為虛擬機器新增。';
+
+  @override
+  String virtCreateImageSize(String size) {
+    return '映像有 $size：磁碟至少要這麼大。';
+  }
+
+  @override
+  String get virtCreateImageMissing => '選擇一個雲端映像。';
+
+  @override
+  String get virtCreateIncomplete => '先補齊標為橘色的部分。';
+
+  @override
+  String virtCreateOn(String host) {
+    return '將在 $host 上建立';
+  }
+
+  @override
+  String get virtCiTip => '一個帶 sudo 的帳戶，可用密碼、SSH 金鑰或兩者登入。';
+
+  @override
+  String get virtCiUserInvalid => '小寫字母、數字、_ 和 -，以字母或 _ 開頭';
+
+  @override
+  String get virtCiCredentialsMissing => '設定密碼或 SSH 金鑰。';
+
+  @override
+  String get virtCiHostnamePve => '主機名稱就是虛擬機器的名稱。';
+
+  @override
+  String get virtCiStatic => '靜態';
+
+  @override
+  String get virtCiAddressInvalid => '帶前綴的 IPv4 位址，如 10.0.0.5/24';
+
+  @override
+  String get virtCiGatewayInvalid => 'IPv4 位址，如 10.0.0.1';
+
+  @override
+  String get virtCiDnsFromDhcp => '留空：由 DHCP 提供';
+
+  @override
+  String get virtCiDnsInvalid => 'IP 位址，以空格或逗號分隔';
+
+  @override
+  String get virtCiSearch => '搜尋網域';
+
+  @override
+  String get virtCiSeedNote => '寫入磁碟旁的一個小 ISO，作為光碟機掛載，隨虛擬機器一起刪除。只儲存密碼的雜湊。';
+
+  @override
+  String get virtCiNoToolTitle => '主機上沒有製作 cloud-init 資料的工具';
+
+  @override
+  String virtCiNoToolBody(String tools) {
+    return '在主機上安裝 $tools 之一。沒有 cloud-init，映像啟動後沒有可登入的帳戶。';
+  }
+
+  @override
+  String get virtHwCloudInitNote => 'cloud-init 在首次啟動時讀取的資料，不是安裝媒體，這裡不能換片。';
+
+  @override
+  String get virtHwCdromLater => '執行中新增的光碟機在下次啟動時生效（SATA 和 IDE 不支援熱插拔）。';
 }

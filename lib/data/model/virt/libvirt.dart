@@ -144,6 +144,9 @@ abstract class LibvirtDomainXml with _$LibvirtDomainXml {
     @Default(<VirtNic>[]) List<VirtNic> nics,
     @Default(<VirtGraphics>[]) List<VirtGraphics> graphics,
     @Default(false) bool hasSerialConsole,
+
+    /// The domain's own cloud-init seed volume: deleted with it.
+    String? seed,
   }) = _LibvirtDomainXml;
 
   factory LibvirtDomainXml.fromJson(Map<String, dynamic> json) =>
@@ -446,6 +449,10 @@ abstract class LibvirtHwConfig with _$LibvirtHwConfig {
     String? video,
     LibvirtHwTpm? tpm,
     @Default(<LibvirtHwHostdev>[]) List<LibvirtHwHostdev> hostdevs,
+
+    /// The domain's own cloud-init seed, as the app named it when it made
+    /// the domain.
+    String? seed,
   }) = _LibvirtHwConfig;
 
   factory LibvirtHwConfig.fromJson(Map<String, dynamic> json) =>
@@ -509,6 +516,26 @@ abstract class LibvirtHwCaps with _$LibvirtHwCaps {
 
   factory LibvirtHwCaps.fromJson(Map<String, dynamic> json) =>
       _$LibvirtHwCapsFromJson(json);
+}
+
+/// `sbm_parser::virt::VirtCreateHost`: what a new domain runs as, and what
+/// its machine offers.
+@freezed
+abstract class LibvirtCreateHost with _$LibvirtCreateHost {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory LibvirtCreateHost({
+    @Default('') String domainType,
+    @Default('') String machine,
+    @Default('') String arch,
+    int? maxVcpus,
+    LibvirtHwCaps? caps,
+
+    /// The ISO tool a cloud-init seed is made with; null: none there.
+    String? seedTool,
+  }) = _LibvirtCreateHost;
+
+  factory LibvirtCreateHost.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtCreateHostFromJson(json);
 }
 
 /// `sbm_parser::virt::VirtHostDevices`.

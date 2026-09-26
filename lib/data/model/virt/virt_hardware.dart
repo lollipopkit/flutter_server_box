@@ -180,6 +180,10 @@ abstract class VirtHwDisk with _$VirtHwDisk {
 
     /// The cache mode; null for the host's default.
     String? cache,
+
+    /// A CD-ROM holding the guest's cloud-init data (PVE's `cloudinit`
+    /// drive, the seed the app made on libvirt): not install media to swap.
+    @Default(false) bool cloudInit,
   }) = _VirtHwDisk;
 }
 
@@ -418,6 +422,14 @@ final class VirtHwRemoveDisk extends VirtHwChange {
 
   /// Deletes the volume as well, once nothing uses it.
   final bool deleteVolume;
+}
+
+/// A new CD-ROM drive, empty or with [media] in it. Where the running guest
+/// cannot take a drive (SATA, IDE), it gets it at its next start.
+final class VirtHwAddCdrom extends VirtHwChange {
+  const VirtHwAddCdrom({this.media});
+
+  final VirtVolume? media;
 }
 
 final class VirtHwSetMedia extends VirtHwChange {
@@ -733,6 +745,7 @@ VirtHwIssue? virtHwIssue(
           if (device == null) return VirtHwIssue.device;
       }
     case VirtHwRemoveDisk() ||
+        VirtHwAddCdrom() ||
         VirtHwSetDisplay() ||
         VirtHwRemoveDevice() ||
         VirtHwSetMedia() ||

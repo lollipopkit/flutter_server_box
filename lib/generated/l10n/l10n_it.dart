@@ -4162,7 +4162,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get virtHwDevices => 'CD-ROM e passthrough';
 
   @override
-  String get virtHwDevicesEmpty => 'Passthrough USB e PCI, TPM';
+  String get virtHwDevicesEmpty => 'Passthrough USB e PCI, CD-ROM, TPM';
 
   @override
   String get virtHwAddDevice => 'Aggiungi dispositivo';
@@ -4711,4 +4711,114 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get pveTokenTipStorage =>
       'Gestire l\'archiviazione richiede Datastore.Allocate su /storage (aggiunta, disattivazione, rimozione), Datastore.AllocateSpace (volumi) e Datastore.AllocateTemplate (caricamenti); i Linux bridge e l\'applicazione della configurazione di rete richiedono Sys.Modify sul nodo.';
+
+  @override
+  String get virtCreateUnnamed => 'Senza nome';
+
+  @override
+  String get virtCreateNotChosen => 'Non scelto';
+
+  @override
+  String get virtCreateKindVmSub => 'qm · una macchina virtuale KVM completa';
+
+  @override
+  String get virtCreateKindLxcSub =>
+      'pct · condivide il kernel dell\'host, più leggero';
+
+  @override
+  String get virtCloudImage => 'Immagine cloud';
+
+  @override
+  String get virtCloudImageTip =>
+      'Un disco con un sistema già installato: copiato, ingrandito alla dimensione indicata in Archiviazione e configurato da cloud-init al primo avvio. L\'immagine resta com\'è.';
+
+  @override
+  String get virtNoCloudImagesLibvirt =>
+      'Nessuna immagine cloud qui: metti un\'immagine qcow2 o raw in un pool (caricala in Archiviazione) che nessuna VM usi.';
+
+  @override
+  String get virtNoCloudImagesPve =>
+      'Nessuna immagine cloud qui: carica un\'immagine qcow2, raw o vmdk in uno storage con il tipo di contenuto Import (PVE 8.2+).';
+
+  @override
+  String get virtCreateWindowsTitle => 'Windows 11 richiede UEFI e TPM 2.0';
+
+  @override
+  String get virtCreateWindowsBody => 'Scegli UEFI e attiva il TPM qui sopra.';
+
+  @override
+  String get virtCreateWindowsNoTpm =>
+      'Questo host non ha un TPM software (swtpm): installalo per darne uno alla VM.';
+
+  @override
+  String virtCreateImageSize(String size) {
+    return 'L\'immagine è di $size: il disco deve essere almeno così grande.';
+  }
+
+  @override
+  String get virtCreateImageMissing => 'Scegli un\'immagine cloud.';
+
+  @override
+  String get virtCreateIncomplete =>
+      'Completa prima le parti segnate in arancione.';
+
+  @override
+  String virtCreateOn(String host) {
+    return 'Creato su $host';
+  }
+
+  @override
+  String get virtCiTip =>
+      'Un account con sudo, a cui si accede con la password, una chiave SSH o entrambe.';
+
+  @override
+  String get virtCiUserInvalid =>
+      'Minuscole, cifre, _ e -, iniziando con una lettera o _';
+
+  @override
+  String get virtCiCredentialsMissing =>
+      'Imposta una password o una chiave SSH.';
+
+  @override
+  String get virtCiHostnamePve => 'Il nome host è il nome della VM.';
+
+  @override
+  String get virtCiStatic => 'Statico';
+
+  @override
+  String get virtCiAddressInvalid =>
+      'Un indirizzo IPv4 con il prefisso, come 10.0.0.5/24';
+
+  @override
+  String get virtCiGatewayInvalid => 'Un indirizzo IPv4, come 10.0.0.1';
+
+  @override
+  String get virtCiDnsFromDhcp => 'Vuoto: da DHCP';
+
+  @override
+  String get virtCiDnsInvalid => 'Indirizzi IP, separati da spazi o virgole';
+
+  @override
+  String get virtCiSearch => 'Dominio di ricerca';
+
+  @override
+  String get virtCiSeedNote =>
+      'Scritto in una piccola ISO accanto al disco, collegata come CD-ROM ed eliminata con la VM. Si conserva solo l\'hash della password.';
+
+  @override
+  String get virtCiNoToolTitle =>
+      'Nessuno strumento sull\'host per creare i dati cloud-init';
+
+  @override
+  String virtCiNoToolBody(String tools) {
+    return 'Installa uno tra $tools sull\'host. Senza cloud-init l\'immagine si avvia senza un account per accedere.';
+  }
+
+  @override
+  String get virtHwCloudInitNote =>
+      'Ciò che cloud-init legge al primo avvio. Non è un supporto di installazione: qui non si inserisce nulla.';
+
+  @override
+  String get virtHwCdromLater =>
+      'Mentre è in esecuzione, l\'unità viene aggiunta al prossimo avvio (SATA e IDE non ne accettano a caldo).';
 }

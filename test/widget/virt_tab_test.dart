@@ -21,6 +21,7 @@ import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
+import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
@@ -40,8 +41,8 @@ import 'package:server_box/view/page/remote_desktop/viewer.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/virt/common.dart';
 import 'package:server_box/view/page/virt/console_connect.dart';
-import 'package:server_box/view/page/virt/create.dart';
 import 'package:server_box/view/page/virt/guest.dart';
+import 'package:server_box/view/page/virt/hardware.dart';
 import 'package:server_box/view/page/virt/tab.dart';
 
 import '../helpers/fake_shell.dart';
@@ -225,6 +226,10 @@ class _FakeHost extends VirtHostNotifier {
 
   @override
   Future<List<VirtStoragePool>> storagePools() async => const [];
+
+  @override
+  Future<VirtCreateOptions> createOptions() async =>
+      const VirtCreateOptions();
 
   @override
   Future<List<VirtNetwork>> networks() async => const [];

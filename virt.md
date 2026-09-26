@@ -711,6 +711,133 @@ server, no LVM on the test host) and routed networks; PVE `nfs`, `lvmthin`
 and `zfspool` storages, bridges with ports, clusters; uploads from this
 device as a libvirt host (`ProcessExec`).
 
+### Cloud images, cloud-init and create options (phase 7)
+
+The create form moves onto the design's sectioned pane (the `_PaneRows`
+groups every other form uses, `create.dart` now a part of `hardware.dart`):
+General, System (VM) or Template (container), cloud-init (a cloud image),
+Resources, Storage, Network, Confirm, each group's dot in the index green
+when it is complete and orange while not, as the design has it. A VM's
+system comes from install media or, where the host can (`VirtCreateOptions`,
+`VirtBackend.createOptions`), from a cloud image; the form also sets the disk
+bus, the NIC model, UEFI or BIOS, and a TPM. The Hardware view's "CD-ROM and
+passthrough" group adds and removes a CD-ROM drive.
+
+| | libvirt (`sbm_parser::virt`, `virt_cloud_init`) | PVE (HTTP API) |
+| --- | --- | --- |
+| Options | `create_host_script`: `domcapabilities` for the machine a new domain gets (its disk buses — q35 has no IDE —, OVMF, swtpm) and which ISO tool the host has (`genisoimage`, `xorriso`, `mkisofs`, `cloud-localds`, first found) | Fixed: SCSI/virtio/SATA/IDE, UEFI, TPM, cloud-init; cloud images from 8.2 (`import` content) |
+| Cloud images offered | qcow2 or raw volumes of any active pool no guest uses (a disk in use would be copied mid-write), not an ISO | Volumes with `import` content in a format QEMU reads (qcow2, raw, vmdk; not an OVA) on the node |
+| The disk | `create_volume_script`: `vol-create-from --vol <image path>` (a copy in the chosen pool, converted to its format: qcow2, raw on LVM) → `vol-resize` to the size asked for → `vol-path`; any later step failing deletes it | `<bus>0: <storage>:0,import-from=<volid>` (PVE requires size 0), then `PUT .../resize` to the size asked for, before the start. A failed growth leaves the VM created and not started (`startError`) |
+| cloud-init | A NoCloud seed made on the host, a volume `<name>-cidata.iso` in the disk's pool, attached as a read-only CD-ROM (below) | PVE's own drive `<storage>:cloudinit`; `ciuser`, `cipassword` (PVE hashes it, SHA-256 crypt), `sshkeys` URL-encoded inside the form's own encoding (`encodeURIComponent`, as PVE's web UI), `ipconfig0` (`ip=dhcp` or `ip=<cidr>,gw=<gw>`), `nameserver`, `searchdomain`. The hostname is the VM's name |
+| Bus, NIC model | `<target bus>` (`vda`/`sda`/`hda`), a `virtio-scsi` controller for SCSI; `<model type>` | `<bus>0` (I/O thread on SCSI and virtio only: PVE refuses it on SATA and IDE); `net0: <model>,bridge=` |
+| UEFI | `<os firmware='efi'>` with `enrolled-keys` and `secure-boot` off, as phase 4 writes it: autoselected OVMF, a variables file of its own | `bios=ovmf`, `efidisk0: <storage>:1,efitype=4m,pre-enrolled-keys=0` |
+| TPM | `<tpm model='tpm-crb'>` with the swtpm emulator, only where `domcapabilities` has it | `tpmstate0: <storage>:1,version=v2.0` |
+| Delete | The domain's `<metadata>` names its seed; `undefine_script` deletes it with `vol-delete` once the domain is gone (a refused undefine keeps it; one already gone is fine), with the disks only ("delete its disks too") | The cloud-init volume is the VM's own: `purge` deletes it |
+| Add a CD-ROM | `attach-device` of an empty (or ISO) `<disk device='cdrom'>` on SATA (q35) or IDE (`pc`), to the persistent definition only: neither takes a drive live, so a running guest gets it at its next start (pending) | The first free of `ide2`, `ide0`, `ide1`, `ide3`, `sata0-5`: `none,media=cdrom` or the ISO; PVE puts it in pending while the VM runs |
+| Remove it | `VirtHwRemoveDisk` (phase 4); a CD-ROM's image is never deleted | The same; an ISO stays on its storage |
+
+The seed:
+
+- `user-data` makes one account of its own (not the image's default user,
+  so the name asked for is the name on every distribution) with passwordless
+  sudo, `hashed_passwd` (or `lock_passwd` without a password), the keys, and
+  `ssh_pwauth` on when there is a password; the hostname with
+  `manage_etc_hosts`. `meta-data`: a new `instance-id`
+  (`iid-<name>-<random>`) and `local-hostname`. `network-config` (v2) finds
+  the one NIC **by its MAC**, which the app therefore chooses
+  (`52:54:00:…`) and writes on the interface too: DHCP, or the address with
+  its prefix, a route `0.0.0.0/0` via the gateway (`to: default` needs a
+  newer cloud-init), and nameservers/search. Every value goes in as a JSON
+  string (JSON is YAML), so nothing typed becomes a key of its own; Rust
+  checks each again (`VirtCloudInit::check`).
+- **The password never leaves the app.** It is hashed in-process with
+  SHA-512 crypt (`virt_cloud_init::sha512_crypt`, checked against the
+  specification's examples and glibc's `crypt(3)` on the PVE host; a
+  16-character salt from `Random.secure`), and only the hash is in the seed,
+  the script and the host. The files are written by `printf` (a shell
+  builtin: no process, no argv) into a `mktemp -d` directory (0700, the
+  files 0600 under `umask 077`), which a `trap` removes on every way out; the
+  script itself travels on `sh`'s stdin as every other.
+- The ISO: `genisoimage`/`mkisofs`/`xorriso -as mkisofs` `-volid cidata
+  -joliet -rock`, or `cloud-localds -N`. The volume: `vol-create-as` of the
+  ISO's size (raw), `vol-upload --file` from the staging file (virsh on the
+  host reads it, so it works through the agent and sudo as well), `vol-path`.
+  A host with none of the tools gets a callout naming them; the image can
+  still be created without cloud-init. Any step failing deletes what was made
+  (the seed volume, then the disk).
+- **The seed's CD-ROM is where the image's kernel can read it.** Debian's
+  cloud kernel has no IDE driver: on PVE, cloud-init never ran from `ide2`
+  (hostname `localhost`, no SSH host keys, verified on the serial console)
+  and did from `scsi1`. So the seed goes on SCSI beside a SCSI disk and on
+  `pc`, SATA on q35 otherwise; PVE's drive on `scsi1` (SCSI or virtio disk),
+  `sata1` beside SATA, `ide2` only beside IDE. Install media keeps the
+  machine's own CD-ROM bus: an installer has every driver.
+- A clone does not inherit the seed as its own (`clone_domain_xml` drops the
+  metadata element): its CD-ROM reads the same image, and deleting the clone
+  must not delete it. Only the app's own element (its namespace, an absolute
+  `.iso` path without `..`) is read.
+- The Hardware view shows a cloud-init drive (libvirt: the CD-ROM holding
+  the seed its metadata names; PVE: a `vm-<vmid>-cloudinit` volume) as
+  "cloud-init" with Remove only: nothing to insert into it. "Add CD-ROM" is
+  offered where the guest has no other CD-ROM, as the design has it.
+
+Decisions:
+
+- **libvirt: a copy, not a qcow2 overlay.** An overlay (a backing store on
+  the image) is instant and small, but it pins the image: deleting or
+  replacing it breaks every guest made from it, the Storage view would have
+  to know which volumes are bases (`domblklist` names only the top of a
+  chain), and a raw image in an LVM pool cannot be a base at all. A copy is a
+  guest's own disk like any other, the image stays free to be deleted or
+  updated, and deleting the guest deletes exactly what it owns. The cost is
+  the copy's time and space (a 325 MiB Debian image: a few seconds).
+- PVE's `import-from` takes `images` or `import` content, not `iso` (PVE
+  9.2's check: "needs to be 'images' or 'import'"); the form offers `import`
+  only (an `images` volume is some guest's disk). PVE's content listing
+  gives an import volume's **file size**, not its virtual size, so the form
+  cannot tell that a 3 GiB Debian image does not fit a 2 GiB disk; the growth
+  then fails ("shrinking disks is not supported") and the VM is left created,
+  not started, with that message. libvirt reports the virtual size, and the
+  form refuses a disk smaller than the image.
+- PVE's cloud-init upgrades packages at the first boot by default
+  (`ciupgrade`, PVE 8.1+): left as PVE has it. The libvirt seed does not.
+- PVE privileges: creating with a serial port (`serial0: socket`, as every
+  VM here) needs `VM.Config.HWType` (a token without it was refused:
+  "Permission check failed (/vms/950, VM.Config.HWType)"); by PVE's code,
+  cloud-init needs `VM.Config.Cloudinit` or `VM.Config.Network`, and
+  `import-from` `Datastore.Audit` or `Datastore.AllocateSpace` on the image's
+  storage — all inside the documented create set (`VM.Allocate`,
+  `VM.Config.*`, `Datastore.AllocateSpace`, `SDN.Use`).
+
+Verified 2026-09-26 by the "cloud images" groups of
+`test/e2e/virt_real_test.dart` (everything named `sbxe2e*`, removed
+afterwards):
+
+- **libvirt 11.3** over SSH as root: a Debian 13 genericcloud image in a
+  pool of the test's own; a UEFI VM copied from it (4 GiB, virtio) with a
+  seed made by `genisoimage`, started; logged in to over SSH through the host
+  with the generated key: hostname, the account, passwordless sudo, the
+  shadow hash the app made (and the password makes it under the guest's own
+  `crypt(3)`), the disk grown to 4 GiB; the password not in the seed;
+  a CD-ROM drive added (SATA, empty) and removed; deleted with its disk,
+  seed and variables file, the image byte for byte as before. By hand
+  before: the create scripts with the seed, and `undefine` with the seed.
+- **PVE 9.2.2** over SSH with a privilege-separated token holding the create
+  set (`VM.Config.*` among it): the same image with `import` content (a hard
+  link in `/var/lib/vz/import`), SCSI, UEFI, TPM, a static address and
+  gateway; `qm config` with `size=8G`, the cloud-init drive on `scsi1`, the
+  EFI and TPM volumes, `ipconfig0`, and no password in it; logged in over
+  SSH at the static address: hostname = the VM's name, the account, sudo,
+  the password against PVE's own hash, 8 GiB; a CD-ROM drive added while
+  running (`ide2`) and removed; deleted with every volume of its
+  VMID, the image kept.
+
+Not verified on a real host: a TPM on libvirt (no swtpm there), a seed
+through the monitor agent or sudo (the same script as every other), a cloud
+image in another pool than the disk's, `xorriso`/`mkisofs`/`cloud-localds`
+(stubbed in the Rust tests only), cloud images other than Debian 13, and
+editing cloud-init after creation (not in the design).
+
 ## Verified against real hosts
 
 `test/e2e/virt_real_test.dart` (opt-in; its header lists the variables) and
@@ -831,8 +958,8 @@ Follows the repo's tab conventions (`CLAUDE.md` → Tabs):
   - "revert" rows and the notice's "revert all" icon, which the design has
     no place for (PVE's pending list);
   - delete keeps no typed name: the design's two presses;
-  - "CD-ROM and passthrough" has no "add CD-ROM" (the design offers one
-    when a guest has none): adding a drive is not built yet;
+  - adding a CD-ROM offers an ISO to put in it (the design's adds an empty
+    drive), and a cloud-init drive is a row of its own with Remove only;
   - PVE shows no protocol or listen rows in the display group: neither is a
     PVE setting (VNC through its proxy; SPICE follows the `qxl` card); the
     port row is shown only where the host fixed one;
@@ -862,6 +989,25 @@ Follows the repo's tab conventions (`CLAUDE.md` → Tabs):
   - PVE volume formats follow the storage (qcow2 on a directory), where the
     design offers raw only; upload is offered on every libvirt pool of files,
     not only one already holding ISOs.
+- Design deviations in the create form (phase 7), and why:
+  - the design has no cloud image or cloud-init: a "Source" segment (install
+    media / cloud image) opens the System group, and a cloud-init group of
+    the pane's own rows follows it (user, password, keys, hostname on
+    libvirt, DHCP or static address with gateway, DNS and search domain);
+  - a TPM switch under the firmware (the design says "add a TPM in Hardware
+    afterwards"), only where the host has one; the Windows callout asks for
+    UEFI and the TPM there;
+  - no command preview in Confirm (the design shows a `virt-install`/`qm
+    create` line): the app runs neither, and a line that is not what runs
+    would mislead;
+  - "None" among the install media (a network boot, or a system later), and
+    among the networks; a container's root login is a group of its own (the
+    design has none);
+  - the VMID is the design's stepper (was a text field); several nodes are a
+    segment in General;
+  - buses and NIC models are the host's (libvirt: no IDE on q35; `e1000`
+    beside the design's `e1000e` and `rtl8139`); the resources group shows
+    no host remainder, which the form does not read.
 - Power actions with confirmation, as the PVE page does today; busy states
   (`starting`, `stopping`, …) show progress and disable conflicting actions.
   PVE actions return a UPID; poll `GET .../tasks/{upid}/status` until done.
@@ -955,11 +1101,11 @@ page, so feature pages use the `featureIntroVer` counter.
 - Snapshots: external libvirt snapshots (disk-only while running), a
   snapshot's configuration diff, PVE's per-storage snapshot support shown
   before trying.
-- Hardware: adding a CD-ROM drive; libvirt revert (redefine from the running
-  XML); USB passthrough by port rather than vendor/product.
-- Migrate (PVE cluster; the design's Migrate group in Settings); creating
-  from a cloud image or with cloud-init, UEFI/TPM and a choice of bus and NIC
-  model in the create form.
+- Hardware: libvirt revert (redefine from the running XML); USB passthrough
+  by port rather than vendor/product; editing cloud-init after creation
+  (PVE's `ci*` options, a new libvirt seed).
+- Migrate (PVE cluster; the design's Migrate group in Settings). Create:
+  Secure Boot in the form, a cloud image's virtual size on PVE.
 - Clone: "convert to template" (PVE `POST .../template`), a target storage
   or node for a full clone. Backups: scheduled jobs edited from the app,
   per-run options (storage, mode, compression, notes, protection) in the

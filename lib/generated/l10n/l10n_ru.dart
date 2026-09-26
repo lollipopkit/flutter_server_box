@@ -4141,7 +4141,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get virtHwDevices => 'CD-ROM и проброс';
 
   @override
-  String get virtHwDevicesEmpty => 'Проброс USB и PCI, TPM';
+  String get virtHwDevicesEmpty => 'Проброс USB и PCI, CD-ROM, TPM';
 
   @override
   String get virtHwAddDevice => 'Добавить устройство';
@@ -4688,4 +4688,112 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get pveTokenTipStorage =>
       'Управление хранилищем требует Datastore.Allocate на /storage (добавление, отключение, удаление), Datastore.AllocateSpace (тома) и Datastore.AllocateTemplate (загрузки); мосты Linux и применение сетевой конфигурации требуют Sys.Modify на узле.';
+
+  @override
+  String get virtCreateUnnamed => 'Без имени';
+
+  @override
+  String get virtCreateNotChosen => 'Не выбрано';
+
+  @override
+  String get virtCreateKindVmSub => 'qm · полноценная виртуальная машина KVM';
+
+  @override
+  String get virtCreateKindLxcSub => 'pct · общее ядро с хостом, легче';
+
+  @override
+  String get virtCloudImage => 'Облачный образ';
+
+  @override
+  String get virtCloudImageTip =>
+      'Диск с готовой системой: копируется, увеличивается до размера из раздела «Хранилище» и настраивается cloud-init при первой загрузке. Сам образ не меняется.';
+
+  @override
+  String get virtNoCloudImagesLibvirt =>
+      'Облачных образов нет: поместите образ qcow2 или raw в пул (загрузите в «Хранилище»), который не использует ни одна ВМ.';
+
+  @override
+  String get virtNoCloudImagesPve =>
+      'Облачных образов нет: загрузите образ qcow2, raw или vmdk в хранилище с типом содержимого Import (PVE 8.2+).';
+
+  @override
+  String get virtCreateWindowsTitle => 'Windows 11 требует UEFI и TPM 2.0';
+
+  @override
+  String get virtCreateWindowsBody => 'Выберите выше UEFI и включите TPM.';
+
+  @override
+  String get virtCreateWindowsNoTpm =>
+      'На этом хосте нет программного TPM (swtpm): установите его, чтобы дать ВМ TPM.';
+
+  @override
+  String virtCreateImageSize(String size) {
+    return 'Образ занимает $size: диск должен быть не меньше.';
+  }
+
+  @override
+  String get virtCreateImageMissing => 'Выберите облачный образ.';
+
+  @override
+  String get virtCreateIncomplete =>
+      'Сначала заполните части, отмеченные оранжевым.';
+
+  @override
+  String virtCreateOn(String host) {
+    return 'Создаётся на $host';
+  }
+
+  @override
+  String get virtCiTip =>
+      'Учётная запись с sudo; вход по паролю, SSH-ключу или обоим.';
+
+  @override
+  String get virtCiUserInvalid =>
+      'Строчные буквы, цифры, _ и -, начиная с буквы или _';
+
+  @override
+  String get virtCiCredentialsMissing => 'Задайте пароль или SSH-ключ.';
+
+  @override
+  String get virtCiHostnamePve => 'Имя хоста — это имя ВМ.';
+
+  @override
+  String get virtCiStatic => 'Статический';
+
+  @override
+  String get virtCiAddressInvalid =>
+      'IPv4-адрес с префиксом, например 10.0.0.5/24';
+
+  @override
+  String get virtCiGatewayInvalid => 'IPv4-адрес, например 10.0.0.1';
+
+  @override
+  String get virtCiDnsFromDhcp => 'Пусто: из DHCP';
+
+  @override
+  String get virtCiDnsInvalid => 'IP-адреса через пробел или запятую';
+
+  @override
+  String get virtCiSearch => 'Домен поиска';
+
+  @override
+  String get virtCiSeedNote =>
+      'Записывается в небольшой ISO рядом с диском, подключается как CD-ROM и удаляется вместе с ВМ. Хранится только хеш пароля.';
+
+  @override
+  String get virtCiNoToolTitle =>
+      'На хосте нет средства для создания данных cloud-init';
+
+  @override
+  String virtCiNoToolBody(String tools) {
+    return 'Установите на хост одно из: $tools. Без cloud-init образ запустится без учётной записи для входа.';
+  }
+
+  @override
+  String get virtHwCloudInitNote =>
+      'То, что cloud-init читает при первой загрузке. Не установочный носитель: вставлять сюда нечего.';
+
+  @override
+  String get virtHwCdromLater =>
+      'Пока ВМ работает, привод добавится при следующем запуске (SATA и IDE не поддерживают горячее подключение).';
 }

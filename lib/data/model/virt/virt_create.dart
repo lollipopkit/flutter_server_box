@@ -3,10 +3,10 @@ import 'package:server_box/data/model/virt/virt_resources.dart';
 
 /// A guest to create. Checked with [virtCreateIssue] before it is sent.
 ///
-/// [storage], [media] and [network] are what the host listed
-/// ([virtDiskStorages], [virtMediaStorages], [virtCreateNetworks]), so the
-/// backend can name them as the host does: PVE's storage and volid, libvirt's
-/// pool and the volume's path.
+/// [storage], [media], [image] and [network] are what the host listed
+/// ([virtDiskStorages], [virtMediaStorages], [virtImageStorages],
+/// [virtCreateNetworks]), so the backend can name them as the host does:
+/// PVE's storage and volid, libvirt's pool and the volume's path.
 final class VirtCreateSpec {
   const VirtCreateSpec({
     required this.kind,
@@ -18,10 +18,16 @@ final class VirtCreateSpec {
     required this.storage,
     required this.diskGiB,
     this.media,
+    this.image,
     this.network,
     this.password,
     this.sshKeys,
     this.unprivileged = true,
+    this.bus,
+    this.nicModel,
+    this.uefi = false,
+    this.tpm = false,
+    this.cloudInit,
     this.start = false,
   });
 
@@ -43,6 +49,11 @@ final class VirtCreateSpec {
   /// A VM's install media (an ISO), a container's template.
   final VirtVolume? media;
 
+  /// A cloud image the VM's disk is a copy of, grown to [diskGiB]: a disk
+  /// with a system on it already, set up at its first boot by [cloudInit].
+  /// Never with [media].
+  final VirtVolume? image;
+
   /// The one NIC's network or bridge; null for none.
   final VirtNetwork? network;
 
@@ -54,8 +65,95 @@ final class VirtCreateSpec {
   /// A container whose root is an unprivileged user on the host.
   final bool unprivileged;
 
+  /// A VM's disk bus and NIC model ([VirtCreateOptions]); null for the
+  /// backend's default (virtio; PVE's disk on SCSI).
+  final String? bus;
+  final String? nicModel;
+
+  /// A VM booting from UEFI (Secure Boot off), and with a TPM 2.0.
+  final bool uefi;
+  final bool tpm;
+
+  /// What a cloud [image] is told at its first boot.
+  final VirtCloudInit? cloudInit;
+
   /// Started once created.
   final bool start;
+}
+
+/// What a new VM's cloud-init sets up: an account with sudo, how to log in
+/// to it, the hostname and the one NIC's address.
+final class VirtCloudInit {
+  const VirtCloudInit({
+    required this.user,
+    this.password,
+    this.sshKeys,
+    this.hostname,
+    this.address,
+    this.gateway,
+    this.dns = const [],
+    this.searchDomain,
+  });
+
+  final String user;
+
+  /// Never sent as it is to libvirt: hashed here (SHA-512 crypt) and only
+  /// the hash written to the host. PVE takes it in the request body and
+  /// hashes it itself. Never logged.
+  final String? password;
+
+  /// OpenSSH public keys, one per line.
+  final String? sshKeys;
+
+  /// libvirt; PVE's cloud-init uses the VM's name.
+  final String? hostname;
+
+  /// IPv4 with its prefix (`10.0.0.5/24`); null for DHCP.
+  final String? address;
+  final String? gateway;
+  final List<String> dns;
+  final String? searchDomain;
+
+  List<String> get keys => [
+    for (final l in (sshKeys ?? '').split('\n'))
+      if (l.trim().isNotEmpty) l.trim(),
+  ];
+
+  @override
+  String toString() =>
+      'VirtCloudInit(user: $user, password: ${password == null ? null : '[redacted]'}, '
+      'keys: ${keys.length}, hostname: $hostname, address: ${address ?? 'dhcp'})';
+}
+
+/// What a new VM on this host can be given, beyond what every host offers.
+final class VirtCreateOptions {
+  const VirtCreateOptions({
+    this.buses = const [],
+    this.nicModels = const [],
+    this.uefi = false,
+    this.tpm = false,
+    this.cloudImages = false,
+    this.cloudInit = false,
+    this.cloudInitMissing,
+  });
+
+  /// Disk buses, the default first.
+  final List<String> buses;
+
+  /// NIC models, the default first.
+  final List<String> nicModels;
+
+  /// UEFI firmware is installed (libvirt: OVMF), and a software TPM (swtpm).
+  final bool uefi;
+  final bool tpm;
+
+  /// A VM's disk can be a copy of a cloud image.
+  final bool cloudImages;
+
+  /// A cloud image can be set up with cloud-init; where not,
+  /// [cloudInitMissing] says what the host lacks.
+  final bool cloudInit;
+  final String? cloudInitMissing;
 }
 
 /// What creating a guest came to.
@@ -84,6 +182,19 @@ enum VirtCreateIssue {
   credentials,
   password,
   sshKeys,
+
+  /// A cloud image not picked, or bigger than the disk asked for.
+  image,
+  imageSize,
+
+  /// cloud-init: the account's name, its way in, the hostname, the address.
+  ciUser,
+  ciCredentials,
+  ciHostname,
+  ciAddress,
+  ciGateway,
+  ciDns,
+  ciSearch,
 }
 
 /// libvirt: what AppArmor's `virt-aa-helper` accepts (a `"` in a domain name
@@ -138,6 +249,18 @@ VirtCreateIssue? virtCreateIssue(
   if (spec.cores < 1 || spec.cores > (maxCores ?? 512)) {
     return VirtCreateIssue.cores;
   }
+  if (spec.kind == VirtGuestKind.qemu) {
+    final image = spec.image;
+    if (spec.cloudInit != null && image == null) return VirtCreateIssue.image;
+    // A copy is grown, never cut.
+    final bytes = image?.capacity;
+    if (bytes != null && bytes > spec.diskGiB * (1 << 30)) {
+      return VirtCreateIssue.imageSize;
+    }
+    if (spec.cloudInit case final ci?) {
+      if (virtCloudInitIssue(ci, host: host) case final i?) return i;
+    }
+  }
   final minMem = spec.kind == VirtGuestKind.lxc ? 64 : 128;
   if (spec.memoryMiB < minMem || spec.memoryMiB > 16 << 20) {
     return VirtCreateIssue.memory;
@@ -163,6 +286,87 @@ VirtCreateIssue? virtCreateIssue(
   }
   return null;
 }
+
+/// A Linux account name as `useradd` takes it by default.
+final virtUserNamePattern = RegExp(r'^[a-z_][a-z0-9_-]{0,31}$');
+
+final _ipv4 = RegExp(
+  r'^((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$',
+);
+
+bool _isIp(String s) => _ipv4.hasMatch(s) || (s.contains(':') && Uri.tryParse('http://[$s]/') != null);
+
+/// Why [ci] cannot be sent; null when it can. Checked where a cloud image
+/// is created ([virtCreateIssue]); the host checks it again.
+VirtCreateIssue? virtCloudInitIssue(VirtCloudInit ci, {required VirtHostKind host}) {
+  if (!virtUserNamePattern.hasMatch(ci.user)) return VirtCreateIssue.ciUser;
+  final password = ci.password ?? '';
+  if (password.isEmpty && ci.keys.isEmpty) return VirtCreateIssue.ciCredentials;
+  if (!ci.keys.every(_sshKeyPattern.hasMatch)) return VirtCreateIssue.sshKeys;
+  if (host == VirtHostKind.libvirt &&
+      !virtPveNamePattern.hasMatch(ci.hostname ?? '')) {
+    return VirtCreateIssue.ciHostname;
+  }
+  final address = ci.address;
+  if (address != null) {
+    final (ip, prefix) = switch (address.split('/')) {
+      [final a, final p] => (a, int.tryParse(p)),
+      _ => ('', null),
+    };
+    if (!_ipv4.hasMatch(ip) || prefix == null || prefix < 1 || prefix > 32) {
+      return VirtCreateIssue.ciAddress;
+    }
+    final gw = ci.gateway;
+    if (gw != null && !_ipv4.hasMatch(gw)) return VirtCreateIssue.ciGateway;
+  }
+  if (!ci.dns.every(_isIp)) return VirtCreateIssue.ciDns;
+  final search = ci.searchDomain;
+  if (search != null && !virtPveNamePattern.hasMatch(search)) {
+    return VirtCreateIssue.ciSearch;
+  }
+  return null;
+}
+
+/// Where cloud images are found on [host] ([node] for PVE): a PVE storage
+/// with `import` content (what `import-from` takes, PVE 8.2+); every active
+/// libvirt pool.
+List<VirtStoragePool> virtImageStorages(
+  List<VirtStoragePool> pools, {
+  required VirtHostKind host,
+  String? node,
+}) => [
+  for (final p in pools)
+    if (p.active &&
+        switch (host) {
+          VirtHostKind.pve =>
+            p.node == node && p.enabled != false && p.content.contains('import'),
+          VirtHostKind.libvirt => true,
+        })
+      p,
+];
+
+/// Whether [volume] is a disk image a new VM can be a copy of: PVE's
+/// `import` content in a format QEMU reads (not an OVA, which carries a
+/// machine of its own); on libvirt a qcow2 or raw volume no guest uses — a
+/// disk in use would be copied mid-write — and not an ISO.
+bool virtIsCloudImage(VirtVolume volume, VirtHostKind host) {
+  final format = volume.format;
+  return switch (host) {
+    VirtHostKind.pve =>
+      volume.content == 'import' &&
+          (format == 'qcow2' || format == 'raw' || format == 'vmdk'),
+    VirtHostKind.libvirt =>
+      (format == 'qcow2' || format == 'raw') &&
+          volume.users.isEmpty &&
+          !volume.name.toLowerCase().endsWith('.iso'),
+  };
+}
+
+/// Disk buses and NIC models a new VM can have, the default first. libvirt
+/// narrows the buses to what the machine type has (q35: no IDE).
+const virtCreateBuses = ['virtio', 'scsi', 'sata', 'ide'];
+const virtPveCreateBuses = ['scsi', 'virtio', 'sata', 'ide'];
+const virtCreateNicModels = ['virtio', 'e1000e', 'e1000', 'rtl8139'];
 
 /// libvirt pool types no disk image is created in: a whole device, iSCSI
 /// LUNs, multipath and SCSI adapters hold volumes the host made, not ones

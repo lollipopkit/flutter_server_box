@@ -203,4 +203,103 @@ void main() {
       ['pve/vmbr0'],
     );
   });
+
+  group('cloud images and cloud-init', () {
+    const image = VirtVolume(
+      id: 'noble.img',
+      name: 'noble.img',
+      format: 'qcow2',
+      capacity: 3758096384,
+    );
+    VirtCreateSpec withCi(
+      VirtCloudInit ci, {
+      VirtVolume? img = image,
+      int diskGiB = 8,
+    }) => VirtCreateSpec(
+      kind: VirtGuestKind.qemu,
+      name: 'ci-01',
+      vmid: 105,
+      cores: 1,
+      memoryMiB: 1024,
+      storage: _pool,
+      diskGiB: diskGiB,
+      image: img,
+      cloudInit: ci,
+    );
+    VirtCreateIssue? issue(VirtCreateSpec s, [VirtHostKind h = VirtHostKind.libvirt]) =>
+        virtCreateIssue(s, host: h, guests: const []);
+    const ok = VirtCloudInit(user: 'debian', password: 'pw', hostname: 'ci-01');
+
+    test('the image: chosen, and no bigger than the disk', () {
+      expect(issue(withCi(ok)), isNull);
+      expect(issue(withCi(ok, img: null)), VirtCreateIssue.image);
+      expect(issue(withCi(ok, diskGiB: 3)), VirtCreateIssue.imageSize);
+      expect(issue(withCi(ok, diskGiB: 4)), isNull);
+    });
+
+    test('the account, its way in, the hostname and the address', () {
+      VirtCreateIssue? ci(VirtCloudInit c, [VirtHostKind h = VirtHostKind.libvirt]) =>
+          issue(withCi(c), h);
+      expect(ci(const VirtCloudInit(user: 'Root', password: 'x', hostname: 'h')), VirtCreateIssue.ciUser);
+      expect(ci(const VirtCloudInit(user: '1st', password: 'x', hostname: 'h')), VirtCreateIssue.ciUser);
+      expect(ci(const VirtCloudInit(user: 'u', hostname: 'h')), VirtCreateIssue.ciCredentials);
+      expect(
+        ci(const VirtCloudInit(user: 'u', sshKeys: 'not a key', hostname: 'h')),
+        VirtCreateIssue.sshKeys,
+      );
+      expect(
+        ci(const VirtCloudInit(user: 'u', sshKeys: 'ssh-ed25519 AAAA me\n\n', hostname: 'h')),
+        isNull,
+      );
+      expect(ci(const VirtCloudInit(user: 'u', password: 'x', hostname: 'ci_01')), VirtCreateIssue.ciHostname);
+      // PVE names the host after the VM: no hostname of its own.
+      expect(ci(const VirtCloudInit(user: 'u', password: 'x'), VirtHostKind.pve), isNull);
+      VirtCloudInit net({String? address, String? gateway, List<String> dns = const [], String? search}) =>
+          VirtCloudInit(
+            user: 'u',
+            password: 'x',
+            hostname: 'h',
+            address: address,
+            gateway: gateway,
+            dns: dns,
+            searchDomain: search,
+          );
+      expect(ci(net(address: '10.0.0.5')), VirtCreateIssue.ciAddress);
+      expect(ci(net(address: '10.0.0.256/24')), VirtCreateIssue.ciAddress);
+      expect(ci(net(address: '10.0.0.5/33')), VirtCreateIssue.ciAddress);
+      expect(ci(net(address: '10.0.0.5/24', gateway: 'gw')), VirtCreateIssue.ciGateway);
+      expect(ci(net(address: '10.0.0.5/24', gateway: '10.0.0.1')), isNull);
+      expect(ci(net(dns: ['1.1.1.1', '2606:4700::1111'])), isNull);
+      expect(ci(net(dns: ['one.one'])), VirtCreateIssue.ciDns);
+      expect(ci(net(search: 'lab example')), VirtCreateIssue.ciSearch);
+      // Never printed.
+      expect('${net()}', isNot(contains('x,')));
+      expect('${net()}', contains('[redacted]'));
+    });
+
+    test('which volumes are cloud images, and where they are looked for', () {
+      bool lv(VirtVolume v) => virtIsCloudImage(v, VirtHostKind.libvirt);
+      bool pve(VirtVolume v) => virtIsCloudImage(v, VirtHostKind.pve);
+      expect(lv(image), isTrue);
+      expect(lv(const VirtVolume(id: 'a', name: 'a.raw', format: 'raw')), isTrue);
+      expect(lv(const VirtVolume(id: 'a', name: 'seed.iso', format: 'raw')), isFalse);
+      expect(lv(const VirtVolume(id: 'a', name: 'a.iso', format: 'iso')), isFalse);
+      expect(
+        lv(const VirtVolume(id: 'a', name: 'a.qcow2', format: 'qcow2', users: [VirtGuestRef(guestId: 'g')])),
+        isFalse,
+      );
+      expect(pve(const VirtVolume(id: 'l:import/a.qcow2', name: 'a.qcow2', format: 'qcow2', content: 'import')), isTrue);
+      expect(pve(const VirtVolume(id: 'l:import/a.ova', name: 'a.ova', format: 'ova+vmdk', content: 'import')), isFalse);
+      expect(pve(const VirtVolume(id: 'l:iso/a.img', name: 'a.img', format: 'raw', content: 'iso')), isFalse);
+      const pools = [
+        VirtStoragePool(id: 'pve/local', name: 'local', node: 'pve', type: 'dir', content: ['iso', 'import']),
+        VirtStoragePool(id: 'pve/nas', name: 'nas', node: 'pve', type: 'nfs', content: ['iso']),
+        VirtStoragePool(id: 'pve2/local', name: 'local', node: 'pve2', type: 'dir', content: ['import']),
+      ];
+      expect(
+        [for (final p in virtImageStorages(pools, host: VirtHostKind.pve, node: 'pve')) p.id],
+        ['pve/local'],
+      );
+    });
+  });
 }

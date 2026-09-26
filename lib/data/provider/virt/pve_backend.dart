@@ -762,6 +762,28 @@ class PveBackend implements VirtBackend {
     };
   }
 
+  /// The first release with the `import` content type, where a cloud image
+  /// is kept for `import-from`.
+  static const importContentSince = [8, 2];
+
+  /// PVE's fixed set: OVMF and swtpm ship with it, cloud-init is its own
+  /// drive. Cloud images wait for a release with `import` content (an
+  /// unknown release is given the benefit of the doubt: its storages say
+  /// whether they hold any).
+  @override
+  Future<VirtCreateOptions> createOptions() async {
+    final release = _release;
+    return VirtCreateOptions(
+      buses: virtPveCreateBuses,
+      nicModels: virtCreateNicModels,
+      uefi: true,
+      tpm: true,
+      cloudImages:
+          release == null || !isVersionLessThan(release, importContentSince),
+      cloudInit: true,
+    );
+  }
+
   /// `POST /nodes/{node}/qemu` or `/lxc`, waited for; then `start` as a
   /// request of its own rather than the create's `start=1`, so a guest that
   /// was created and did not start is told apart from one that was not
@@ -769,8 +791,11 @@ class PveBackend implements VirtBackend {
   ///
   /// A VM gets a serial port (`serial0: socket`), so its text console works
   /// before it has a network, and the install media first in the boot order
-  /// after its disk. A container is unprivileged unless asked otherwise, with
-  /// DHCP on its NIC.
+  /// after its disk. A cloud image is its disk's `import-from` (PVE 8.2+
+  /// takes one from `import` or `images` content), grown afterwards to the
+  /// size asked for, with PVE's own cloud-init drive; the password goes in
+  /// the request body and PVE stores its hash. A container is unprivileged
+  /// unless asked otherwise, with DHCP on its NIC.
   @override
   Future<VirtCreated> create(VirtCreateSpec spec) async {
     final node = spec.node;
@@ -808,20 +833,7 @@ class PveBackend implements VirtBackend {
         'ssh-public-keys': ?keys.isEmpty ? null : keys,
       };
     } else {
-      final iso = spec.media?.id;
-      body = {
-        'vmid': vmid,
-        'name': spec.name,
-        'cores': spec.cores,
-        'memory': spec.memoryMiB,
-        'ostype': 'l26',
-        'scsihw': 'virtio-scsi-single',
-        'scsi0': '$storage:${spec.diskGiB},iothread=1',
-        'ide2': ?iso == null ? null : '$iso,media=cdrom',
-        'net0': ?bridge == null ? null : 'virtio,bridge=$bridge',
-        'serial0': 'socket',
-        'boot': 'order=${['scsi0', if (iso != null) 'ide2'].join(';')}',
-      };
+      body = qemuCreateBody(spec, vmid: vmid);
     }
     final kind = lxc ? 'lxc' : 'qemu';
     try {
@@ -841,6 +853,28 @@ class PveBackend implements VirtBackend {
     }
     final id = '$kind/$vmid';
     String? startError;
+    final image = spec.image;
+    final grow = spec.diskGiB * (1 << 30);
+    if (!lxc && image != null && (image.capacity == null || image.capacity! < grow)) {
+      // Imported at the image's own size; grown now, before a first boot
+      // lays its filesystem out.
+      try {
+        final upid = await _call(
+          (dio) => dio.put(
+            _url('/nodes/${_seg(node)}/qemu/$vmid/resize'),
+            data: {'disk': '${_createBus(spec)}0', 'size': '${spec.diskGiB}G'},
+            options: Options(contentType: Headers.formUrlEncodedContentType),
+          ),
+          action: true,
+        );
+        if (upid is String && upid.startsWith('UPID:')) {
+          await _waitTask(node, upid);
+        }
+      } on VirtErr catch (e) {
+        // Created all the same; not started on a disk of the wrong size.
+        return VirtCreated(id: id, startError: e.message ?? e.type.name);
+      }
+    }
     if (spec.start) {
       try {
         final upid = await _call(
@@ -855,6 +889,68 @@ class PveBackend implements VirtBackend {
       }
     }
     return VirtCreated(id: id, startError: startError);
+  }
+
+  static String _createBus(VirtCreateSpec spec) => spec.bus ?? 'scsi';
+
+  /// A VM's `POST /nodes/{node}/qemu` parameters for [spec].
+  @visibleForTesting
+  static Map<String, Object> qemuCreateBody(VirtCreateSpec spec, {required int vmid}) {
+    final storage = spec.storage.name;
+    final bridge = spec.network?.name;
+    final bus = _createBus(spec);
+    final disk = '${bus}0';
+    final iso = spec.media?.id;
+    final image = spec.image?.id;
+    final ci = spec.cloudInit;
+    // An I/O thread is for virtio-blk and virtio-scsi-single only; PVE
+    // refuses it on SATA and IDE.
+    final iothread = bus == 'scsi' || bus == 'virtio' ? ',iothread=1' : '';
+    final address = ci?.address;
+    // The cloud-init drive where the image's kernel can read it: Debian's
+    // cloud kernel has no IDE driver at all (PVE 9.2: cloud-init never ran
+    // from `ide2`, and did from `scsi1`). SCSI beside a SCSI or virtio disk
+    // (the virtio-scsi controller is there anyway), SATA beside SATA, IDE
+    // only beside IDE.
+    final ciDrive = switch (bus) {
+      'ide' => 'ide2',
+      'sata' => 'sata1',
+      _ => 'scsi1',
+    };
+    return {
+      'vmid': vmid,
+      'name': spec.name,
+      'cores': spec.cores,
+      'memory': spec.memoryMiB,
+      'ostype': 'l26',
+      'scsihw': 'virtio-scsi-single',
+      disk: image == null
+          ? '$storage:${spec.diskGiB}$iothread'
+          : '$storage:0,import-from=$image$iothread',
+      // The install media, or the cloud-init drive: never both.
+      if (iso != null) 'ide2': '$iso,media=cdrom',
+      if (ci != null && iso == null) ciDrive: '$storage:cloudinit',
+      'net0': ?bridge == null ? null : '${spec.nicModel ?? 'virtio'},bridge=$bridge',
+      'serial0': 'socket',
+      'boot': 'order=${[disk, if (iso != null) 'ide2'].join(';')}',
+      if (spec.uefi) ...{
+        'bios': 'ovmf',
+        'efidisk0': '$storage:1,efitype=4m,pre-enrolled-keys=0',
+      },
+      if (spec.tpm) 'tpmstate0': '$storage:1,version=v2.0',
+      if (ci != null) ...{
+        'ciuser': ci.user,
+        if (ci.password case final p? when p.isNotEmpty) 'cipassword': p,
+        // PVE wants the keys URL-encoded, as its web UI sends them
+        // (`encodeURIComponent`), inside the form's own encoding.
+        if (ci.keys.isNotEmpty) 'sshkeys': Uri.encodeComponent('${ci.keys.join('\n')}\n'),
+        'ipconfig0': address == null
+            ? 'ip=dhcp'
+            : ['ip=$address', if (ci.gateway case final gw?) 'gw=$gw'].join(','),
+        if (ci.dns.isNotEmpty) 'nameserver': ci.dns.join(' '),
+        'searchdomain': ?ci.searchDomain,
+      },
+    };
   }
 
   /// A refused create, in the host's words: PVE answers a bad parameter with
@@ -1249,6 +1345,23 @@ class PveBackend implements VirtBackend {
             delete: [unused],
             digest: after['digest'] as String?,
           );
+        case VirtHwAddCdrom(:final media):
+          // IDE's secondary master first, as PVE's own create puts one;
+          // then the rest of IDE, then SATA.
+          final config = await rawConfig();
+          final key = [
+            'ide2', 'ide0', 'ide1', 'ide3',
+            for (var i = 0; i < 6; i++) 'sata$i',
+          ].firstWhere(
+            (k) => !config.containsKey(k),
+            orElse: () => throw const VirtErr(
+              type: VirtErrType.unsupported,
+              message: 'No free IDE or SATA slot for a CD-ROM',
+            ),
+          );
+          await _setConfig(guest, {
+            key: '${media?.id ?? 'none'},media=cdrom',
+          }, digest: digest);
         case VirtHwSetMedia(:final key, :final media):
           await _setConfig(guest, {
             key: '${media?.id ?? 'none'},media=cdrom',

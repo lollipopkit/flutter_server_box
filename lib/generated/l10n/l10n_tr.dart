@@ -4108,7 +4108,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get virtHwDevices => 'CD-ROM ve geçiş';
 
   @override
-  String get virtHwDevicesEmpty => 'USB ve PCI geçişi, TPM';
+  String get virtHwDevicesEmpty => 'USB ve PCI geçişi, CD-ROM, TPM';
 
   @override
   String get virtHwAddDevice => 'Aygıt ekle';
@@ -4647,4 +4647,115 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get pveTokenTipStorage =>
       'Depolama yönetimi /storage üzerinde Datastore.Allocate (ekleme, devre dışı bırakma, kaldırma), Datastore.AllocateSpace (birimler) ve Datastore.AllocateTemplate (yüklemeler) gerektirir; Linux köprüleri ve ağ yapılandırmasını uygulamak düğümde Sys.Modify gerektirir.';
+
+  @override
+  String get virtCreateUnnamed => 'Adsız';
+
+  @override
+  String get virtCreateNotChosen => 'Seçilmedi';
+
+  @override
+  String get virtCreateKindVmSub => 'qm · tam bir KVM sanal makinesi';
+
+  @override
+  String get virtCreateKindLxcSub =>
+      'pct · ana makinenin çekirdeğini paylaşır, daha hafif';
+
+  @override
+  String get virtCloudImage => 'Bulut imajı';
+
+  @override
+  String get virtCloudImageTip =>
+      'Üzerinde sistem olan bir disk: kopyalanır, Depolama altındaki boyuta büyütülür ve ilk açılışta cloud-init ile yapılandırılır. İmajın kendisi olduğu gibi kalır.';
+
+  @override
+  String get virtNoCloudImagesLibvirt =>
+      'Burada bulut imajı yok: hiçbir VM\'nin kullanmadığı bir qcow2 veya raw imajını bir havuza koyun (Depolama\'dan yükleyin).';
+
+  @override
+  String get virtNoCloudImagesPve =>
+      'Burada bulut imajı yok: bir qcow2, raw veya vmdk imajını Import içerik türüne sahip bir depolamaya yükleyin (PVE 8.2+).';
+
+  @override
+  String get virtCreateWindowsTitle => 'Windows 11 UEFI ve TPM 2.0 gerektirir';
+
+  @override
+  String get virtCreateWindowsBody =>
+      'Yukarıda UEFI\'yi seçin ve TPM\'yi açın.';
+
+  @override
+  String get virtCreateWindowsNoTpm =>
+      'Bu ana makinede yazılım TPM\'si (swtpm) yok: VM\'ye vermek için kurun.';
+
+  @override
+  String virtCreateImageSize(String size) {
+    return 'İmaj $size: disk en az bu kadar büyük olmalı.';
+  }
+
+  @override
+  String get virtCreateImageMissing => 'Bir bulut imajı seçin.';
+
+  @override
+  String get virtCreateIncomplete =>
+      'Önce turuncu işaretli kısımları tamamlayın.';
+
+  @override
+  String virtCreateOn(String host) {
+    return '$host üzerinde oluşturulur';
+  }
+
+  @override
+  String get virtCiTip =>
+      'sudo yetkili bir hesap; parola, SSH anahtarı veya ikisiyle giriş yapılır.';
+
+  @override
+  String get virtCiUserInvalid =>
+      'Küçük harf, rakam, _ ve -; harf veya _ ile başlamalı';
+
+  @override
+  String get virtCiCredentialsMissing =>
+      'Bir parola veya SSH anahtarı belirleyin.';
+
+  @override
+  String get virtCiHostnamePve => 'Ana bilgisayar adı VM\'nin adıdır.';
+
+  @override
+  String get virtCiStatic => 'Statik';
+
+  @override
+  String get virtCiAddressInvalid =>
+      'Önekiyle bir IPv4 adresi, örneğin 10.0.0.5/24';
+
+  @override
+  String get virtCiGatewayInvalid => 'Bir IPv4 adresi, örneğin 10.0.0.1';
+
+  @override
+  String get virtCiDnsFromDhcp => 'Boş: DHCP\'den';
+
+  @override
+  String get virtCiDnsInvalid => 'Boşluk veya virgülle ayrılmış IP adresleri';
+
+  @override
+  String get virtCiSearch => 'Arama alanı';
+
+  @override
+  String get virtCiSeedNote =>
+      'Diskin yanındaki küçük bir ISO\'ya yazılır, CD-ROM olarak takılır ve VM ile birlikte silinir. Parolanın yalnızca özeti saklanır.';
+
+  @override
+  String get virtCiNoToolTitle =>
+      'Ana makinede cloud-init verisini oluşturacak araç yok';
+
+  @override
+  String virtCiNoToolBody(String tools) {
+    return 'Ana makineye $tools araçlarından birini kurun. cloud-init olmadan imaj, giriş yapılacak hesap olmadan başlar.';
+  }
+
+  @override
+  String get virtHwCloudInitNote =>
+      'cloud-init\'in ilk açılışta okuduğu veri. Kurulum ortamı değil: buraya bir şey takılmaz.';
+
+  @override
+  String get virtHwCdromLater =>
+      'Çalışırken sürücü bir sonraki açılışta eklenir (SATA ve IDE çalışırken takmayı desteklemez).';
 }

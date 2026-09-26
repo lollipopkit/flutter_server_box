@@ -7117,7 +7117,7 @@ abstract class AppLocalizations {
   /// Hardware view (virtualization): DevicesEmpty
   ///
   /// In en, this message translates to:
-  /// **'USB and PCI passthrough, TPM'**
+  /// **'USB and PCI passthrough, CD-ROM, TPM'**
   String get virtHwDevicesEmpty;
 
   /// Hardware view (virtualization): AddDevice
@@ -8012,6 +8012,186 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Managing storage needs Datastore.Allocate on /storage (adding, disabling, removing), Datastore.AllocateSpace (volumes) and Datastore.AllocateTemplate (uploads); Linux bridges and applying the network configuration need Sys.Modify on the node.'**
   String get pveTokenTipStorage;
+
+  /// Index note of the create form's general group: no name typed yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Unnamed'**
+  String get virtCreateUnnamed;
+
+  /// Index note: nothing chosen yet in that group.
+  ///
+  /// In en, this message translates to:
+  /// **'Not chosen'**
+  String get virtCreateNotChosen;
+
+  /// Create form, PVE: what a virtual machine is (qm is the command).
+  ///
+  /// In en, this message translates to:
+  /// **'qm · a full KVM virtual machine'**
+  String get virtCreateKindVmSub;
+
+  /// Create form, PVE: what a container is (pct is the command).
+  ///
+  /// In en, this message translates to:
+  /// **'pct · shares the host\'s kernel, lighter'**
+  String get virtCreateKindLxcSub;
+
+  /// Where a VM's system comes from: a disk image with a system already on it, set up by cloud-init.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud image'**
+  String get virtCloudImage;
+
+  /// Create form: what choosing a cloud image does.
+  ///
+  /// In en, this message translates to:
+  /// **'A disk with a system on it: copied, grown to the size under Storage, and set up by cloud-init at its first boot. The image itself is left as it is.'**
+  String get virtCloudImageTip;
+
+  /// Create form, libvirt: no cloud image volume in any pool.
+  ///
+  /// In en, this message translates to:
+  /// **'No cloud images here: put a qcow2 or raw image in a pool (upload it in Storage), one no guest uses.'**
+  String get virtNoCloudImagesLibvirt;
+
+  /// Create form, PVE: no image in a storage with Import content.
+  ///
+  /// In en, this message translates to:
+  /// **'No cloud images here: upload a qcow2, raw or vmdk image to a storage with the Import content type (PVE 8.2+).'**
+  String get virtNoCloudImagesPve;
+
+  /// Create form callout when a Windows ISO is chosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Windows 11 needs UEFI and TPM 2.0'**
+  String get virtCreateWindowsTitle;
+
+  /// Create form callout body: turn both on here.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose UEFI and turn the TPM on above.'**
+  String get virtCreateWindowsBody;
+
+  /// Create form callout body: this libvirt host has no software TPM.
+  ///
+  /// In en, this message translates to:
+  /// **'This host has no software TPM (swtpm): install it to give the guest one.'**
+  String get virtCreateWindowsNoTpm;
+
+  /// Create form: the disk asked for is smaller than the cloud image.
+  ///
+  /// In en, this message translates to:
+  /// **'The image is {size}: the disk must be at least that big.'**
+  String virtCreateImageSize(String size);
+
+  /// Create form: no cloud image chosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a cloud image.'**
+  String get virtCreateImageMissing;
+
+  /// Create form: something above still needs filling in (the orange groups).
+  ///
+  /// In en, this message translates to:
+  /// **'Complete the parts marked orange first.'**
+  String get virtCreateIncomplete;
+
+  /// Create form, confirm group: which server it is created on.
+  ///
+  /// In en, this message translates to:
+  /// **'Created on {host}'**
+  String virtCreateOn(String host);
+
+  /// cloud-init group: what the account is.
+  ///
+  /// In en, this message translates to:
+  /// **'An account with sudo, logged in to with its password, an SSH key, or both.'**
+  String get virtCiTip;
+
+  /// cloud-init user name rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Lowercase letters, digits, _ and -, starting with a letter or _'**
+  String get virtCiUserInvalid;
+
+  /// cloud-init: neither a password nor a key.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a password or an SSH key.'**
+  String get virtCiCredentialsMissing;
+
+  /// cloud-init on PVE: the hostname is the VM name.
+  ///
+  /// In en, this message translates to:
+  /// **'The hostname is the VM\'s name.'**
+  String get virtCiHostnamePve;
+
+  /// cloud-init network: a fixed address rather than DHCP.
+  ///
+  /// In en, this message translates to:
+  /// **'Static'**
+  String get virtCiStatic;
+
+  /// cloud-init: not an IPv4 address with prefix.
+  ///
+  /// In en, this message translates to:
+  /// **'An IPv4 address with its prefix, like 10.0.0.5/24'**
+  String get virtCiAddressInvalid;
+
+  /// cloud-init: gateway is not an IPv4 address.
+  ///
+  /// In en, this message translates to:
+  /// **'An IPv4 address, like 10.0.0.1'**
+  String get virtCiGatewayInvalid;
+
+  /// cloud-init DNS field hint with DHCP: empty takes what DHCP gives.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty: from DHCP'**
+  String get virtCiDnsFromDhcp;
+
+  /// cloud-init DNS servers rule.
+  ///
+  /// In en, this message translates to:
+  /// **'IP addresses, separated by spaces or commas'**
+  String get virtCiDnsInvalid;
+
+  /// cloud-init: DNS search domain field.
+  ///
+  /// In en, this message translates to:
+  /// **'Search domain'**
+  String get virtCiSearch;
+
+  /// cloud-init on libvirt: where its data goes and what is kept of the password.
+  ///
+  /// In en, this message translates to:
+  /// **'Written to a small ISO next to the disk, attached as a CD-ROM and deleted with the VM. Only the password\'s hash is stored.'**
+  String get virtCiSeedNote;
+
+  /// cloud-init on libvirt: the host has no tool to make the seed ISO.
+  ///
+  /// In en, this message translates to:
+  /// **'No tool on the host to make the cloud-init data'**
+  String get virtCiNoToolTitle;
+
+  /// cloud-init on libvirt: which tools to install; without one the image boots unconfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Install one of {tools} on the host. Without cloud-init the image starts with no account to log in with.'**
+  String virtCiNoToolBody(String tools);
+
+  /// Hardware view: a cloud-init drive row.
+  ///
+  /// In en, this message translates to:
+  /// **'What cloud-init reads at the first boot. Not install media: nothing to insert here.'**
+  String get virtHwCloudInitNote;
+
+  /// Hardware view: a new CD-ROM drive on a running VM arrives at its next start.
+  ///
+  /// In en, this message translates to:
+  /// **'While it runs, the drive is added at its next start (SATA and IDE take none live).'**
+  String get virtHwCdromLater;
 }
 
 class _AppLocalizationsDelegate

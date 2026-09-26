@@ -702,6 +702,10 @@ pub struct VirtDomainXml {
     /// A `<serial>` or `<console>` device exists, so `virsh console` has
     /// something to attach to
     pub has_serial_console: bool,
+    /// The domain's own cloud-init seed volume, as the app named it in
+    /// `<metadata>` when it made the domain: deleted with it
+    #[serde(default)]
+    pub seed: Option<String>,
 }
 
 /// `domdisplay` URI, parsed.
@@ -981,6 +985,7 @@ pub fn parse_domain_xml(raw: &str) -> Result<VirtDomainXml, VirtError> {
         xml.arch = attr(ty, "arch");
         xml.machine = attr(ty, "machine");
     }
+    xml.seed = seed_of(root);
     let Some(devices) = child(root, "devices") else {
         return Ok(xml);
     };
@@ -1059,6 +1064,27 @@ pub fn parse_domain_xml(raw: &str) -> Result<VirtDomainXml, VirtError> {
         }
     }
     Ok(xml)
+}
+
+/// The seed path in the app's own `<metadata>` element, where it is an
+/// absolute path to an ISO; anything else is not a seed this app made.
+fn seed_of(root: roxmltree::Node<'_, '_>) -> Option<String> {
+    use crate::virt_cloud_init::{SEED_METADATA_ELEMENT, SEED_METADATA_NS};
+    child(root, "metadata")?
+        .children()
+        .find(|n| {
+            n.is_element()
+                && n.tag_name().name() == SEED_METADATA_ELEMENT
+                && n.tag_name().namespace() == Some(SEED_METADATA_NS)
+        })?
+        .attribute("seed")
+        .filter(|p| {
+            p.starts_with('/')
+                && p.ends_with(".iso")
+                && !p.split('/').any(|seg| seg == "..")
+                && !p.chars().any(char::is_control)
+        })
+        .map(str::to_string)
 }
 
 fn child<'a, 'i>(parent: roxmltree::Node<'a, 'i>, name: &str) -> Option<roxmltree::Node<'a, 'i>> {
@@ -2118,6 +2144,7 @@ pub const KEY_CAPS: &str = "virt.caps";
 pub const KEY_EXISTS: &str = "virt.exists";
 pub const KEY_VOL_CREATE: &str = "virt.vol.create";
 pub const KEY_VOL_PATH: &str = "virt.vol.path";
+pub const KEY_VOL_RESIZE: &str = "virt.vol.resize";
 pub const KEY_DEFINE: &str = "virt.define";
 pub const KEY_ROLLBACK: &str = "virt.rollback";
 pub const KEY_UUID: &str = "virt.uuid";
@@ -2133,6 +2160,14 @@ pub struct VirtCreateHost {
     pub arch: String,
     /// `<vcpu max=…>` for that machine
     pub max_vcpus: Option<u32>,
+    /// What else that machine offers a new domain: UEFI, a software TPM,
+    /// disk buses
+    #[serde(default)]
+    pub caps: Option<VirtHwCaps>,
+    /// The ISO tool a cloud-init seed is made with; none: the host has none
+    /// of [`crate::virt_cloud_init::SEED_TOOLS`]
+    #[serde(default)]
+    pub seed_tool: Option<String>,
 }
 
 /// The `domcapabilities` asked for, best first: KVM before emulation, q35
@@ -2144,8 +2179,8 @@ const CAPS_TRIES: &[(&str, Option<&str>)] = &[
     ("qemu", None),
 ];
 
-/// `domcapabilities` for each of [`CAPS_TRIES`]. Parse with
-/// [`parse_create_host`].
+/// `domcapabilities` for each of [`CAPS_TRIES`], and the ISO tool a
+/// cloud-init seed would be made with. Parse with [`parse_create_host`].
 pub fn create_host_script() -> String {
     let mut s = prelude();
     for (virttype, machine) in CAPS_TRIES {
@@ -2155,6 +2190,7 @@ pub fn create_host_script() -> String {
             script::cmd_marker(KEY_CAPS),
         ));
     }
+    s.push_str(&crate::virt_cloud_init::seed_tool_probe());
     s
 }
 
@@ -2178,7 +2214,14 @@ pub fn parse_create_host(raw: &str) -> Result<VirtCreateHost, VirtError> {
             let max_vcpus = child(root, "vcpu")
                 .and_then(|v| v.attribute("max"))
                 .and_then(|m| m.parse().ok());
-            return Ok(VirtCreateHost { domain_type, machine, arch, max_vcpus });
+            return Ok(VirtCreateHost {
+                domain_type,
+                machine,
+                arch,
+                max_vcpus,
+                caps: parse_domcaps(&body),
+                seed_tool: crate::virt_cloud_init::parse_seed_tool(&script::parse_script_segments(raw)),
+            });
         }
     }
     Err(first_err.unwrap_or_else(|| VirtError::Malformed {
@@ -2188,12 +2231,12 @@ pub fn parse_create_host(raw: &str) -> Result<VirtCreateHost, VirtError> {
 
 /// A new domain. `host` is [`parse_create_host`]'s answer.
 ///
-/// Created in two steps: [`create_volume_script`] makes the disk and reads
-/// its path, then [`define_script`] defines the domain on that path. Disks
-/// are named by path rather than by pool and volume (`type='volume'`): on a
-/// Debian host with AppArmor, `virt-aa-helper` did not allow QEMU a volume
-/// disk, and the domain failed to start with "Permission denied" on its own
-/// image (libvirt 11.3, verified).
+/// Created in two steps: [`create_volume_script`] makes the disk (and a
+/// cloud-init seed) and reads their paths, then [`define_script`] defines
+/// the domain on them. Disks are named by path rather than by pool and
+/// volume (`type='volume'`): on a Debian host with AppArmor, `virt-aa-helper`
+/// did not allow QEMU a volume disk, and the domain failed to start with
+/// "Permission denied" on its own image (libvirt 11.3, verified).
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct VirtCreateSpec {
     pub name: String,
@@ -2205,21 +2248,61 @@ pub struct VirtCreateSpec {
     pub disk_gib: u64,
     /// `qcow2`, or `raw` where the pool cannot hold qcow2 (LVM, disks)
     pub disk_format: String,
-    /// The new disk's path, as [`parse_create_volume`] read it; needed by
+    /// The new disk's path, as [`parse_create_volumes`] read it; needed by
     /// [`define_script`] only
     pub disk_path: Option<String>,
+    /// A cloud image the disk is a copy of (`vol-create-from`, then grown to
+    /// `disk_gib`): its path. None: an empty disk
+    #[serde(default)]
+    pub base_image: Option<String>,
+    /// `virtio` (the default), `scsi`, `sata`, `ide`
+    #[serde(default)]
+    pub disk_bus: Option<String>,
     /// Install media, attached as a read-only CD-ROM: its path
     pub cdrom: Option<String>,
     /// A libvirt network for the one NIC; none for no NIC
     pub network: Option<String>,
+    /// The NIC's model (`virtio` by default) and MAC (libvirt's own when
+    /// none; cloud-init's network config finds the NIC by it)
+    #[serde(default)]
+    pub nic_model: Option<String>,
+    #[serde(default)]
+    pub mac: Option<String>,
+    /// UEFI by firmware autoselection, Secure Boot off; BIOS otherwise
+    #[serde(default)]
+    pub efi: bool,
+    /// A software TPM 2.0 (swtpm)
+    #[serde(default)]
+    pub tpm: bool,
+    /// A NoCloud seed made on the host and attached as a CD-ROM
+    #[serde(default)]
+    pub cloud_init: Option<crate::virt_cloud_init::VirtCloudInit>,
+    /// The seed's path, as [`parse_create_volumes`] read it; needed by
+    /// [`define_script`] only
+    #[serde(default)]
+    pub seed_path: Option<String>,
     pub start: bool,
 }
+
+/// Disk buses a new domain's disk can be on.
+pub const CREATE_BUSES: &[&str] = &["virtio", "scsi", "sata", "ide"];
+/// NIC models a new domain's NIC can be.
+pub const CREATE_NIC_MODELS: &[&str] = &["virtio", "e1000e", "e1000", "rtl8139"];
 
 impl VirtCreateSpec {
     /// The new disk's volume name.
     pub fn volume_name(&self) -> String {
         let ext = if self.disk_format == "qcow2" { "qcow2" } else { "img" };
         format!("{}.{ext}", self.name)
+    }
+
+    /// The cloud-init seed's volume name.
+    pub fn seed_name(&self) -> String {
+        format!("{}-cidata.iso", self.name)
+    }
+
+    fn bus(&self) -> &str {
+        self.disk_bus.as_deref().unwrap_or("virtio")
     }
 
     /// Refuses what the host would refuse later, or what would land in a
@@ -2270,8 +2353,31 @@ impl VirtCreateSpec {
             p.as_deref()
                 .is_some_and(|p| !p.starts_with('/') || p.chars().any(char::is_control))
         };
-        if path(&self.disk_path) || path(&self.cdrom) {
+        if path(&self.disk_path) || path(&self.cdrom) || path(&self.base_image) || path(&self.seed_path) {
             return bad("path");
+        }
+        if !CREATE_BUSES.contains(&self.bus()) {
+            return bad("bus");
+        }
+        if self.bus() == "ide" && self.host.machine.contains("q35") {
+            return bad("bus: q35 has no IDE");
+        }
+        if self.nic_model.as_deref().is_some_and(|m| !CREATE_NIC_MODELS.contains(&m)) {
+            return bad("nic model");
+        }
+        if self.mac.as_deref().is_some_and(|m| !is_mac(m)) {
+            return bad("mac");
+        }
+        if let Some(ci) = &self.cloud_init {
+            ci.check()?;
+            if self.cdrom.is_some() {
+                return bad("install media and a cloud-init seed");
+            }
+            if ci.network.as_ref().is_some_and(|n| {
+                self.network.is_none() || !self.mac.as_deref().is_some_and(|m| m.eq_ignore_ascii_case(&n.mac))
+            }) {
+                return bad("cloud-init network without that NIC");
+            }
         }
         Ok(())
     }
@@ -2295,28 +2401,73 @@ pub(crate) fn xml_escape(s: &str) -> String {
     out
 }
 
+/// Where a bus's disks are named: `vd` for virtio, `hd` for IDE, `sd` for
+/// the rest — as the app names a disk it adds.
+fn target_prefix(bus: &str) -> &'static str {
+    match bus {
+        "virtio" => "vd",
+        "ide" => "hd",
+        _ => "sd",
+    }
+}
+
 /// The domain XML for `spec`.
 ///
 /// Disks by path (see [`VirtCreateSpec`]); `undefine --storage` still finds
 /// the volume by it. A serial console so the text console works before the
 /// guest has any network; VNC on loopback only, reached through the app's
-/// tunnel.
+/// tunnel. UEFI as the Hardware view sets it ([`edit_firmware_xml`]):
+/// autoselected, Secure Boot off. A cloud-init seed is a CD-ROM like install
+/// media, named in `<metadata>` as the domain's own, so deleting the domain
+/// deletes it — and only it ([`VirtDomainXml::seed`]).
 pub fn domain_xml(spec: &VirtCreateSpec) -> String {
     let e = xml_escape;
     let q35 = spec.host.machine.contains("q35");
-    let cdrom_bus = if q35 { "sata" } else { "ide" };
+    let bus = spec.bus();
+    // Install media on the machine's own CD-ROM bus: an installer has every
+    // driver. A seed is read by the system on the disk, whose kernel may
+    // have none for IDE — Debian's cloud kernel has not (verified on PVE):
+    // SCSI beside a SCSI disk or on `pc`, SATA on q35 otherwise.
+    let cdrom_bus = match (spec.seed_path.is_some(), q35) {
+        (true, _) if bus == "scsi" => "scsi",
+        (true, false) => "scsi",
+        (_, true) => "sata",
+        (false, false) => "ide",
+    };
+    let disk_target = format!("{}a", target_prefix(bus));
+    let cdrom_target = match (target_prefix(cdrom_bus), target_prefix(bus)) {
+        // IDE's second channel: `hdc`, as virt-install puts a CD-ROM.
+        ("hd", "hd") => "hdc".to_string(),
+        (c, d) if c == d => format!("{c}b"),
+        (c, _) => format!("{c}a"),
+    };
+    let cd = spec.cdrom.as_ref().or(spec.seed_path.as_ref());
     let mut x = String::new();
     x.push_str(&format!("<domain type='{}'>\n", e(&spec.host.domain_type)));
     x.push_str(&format!("  <name>{}</name>\n", e(&spec.name)));
+    if let Some(seed) = &spec.seed_path {
+        x.push_str(&format!(
+            "  <metadata>\n    <sbx:{el} xmlns:sbx='{ns}' seed='{}'/>\n  </metadata>\n",
+            e(seed),
+            el = crate::virt_cloud_init::SEED_METADATA_ELEMENT,
+            ns = crate::virt_cloud_init::SEED_METADATA_NS,
+        ));
+    }
     x.push_str(&format!("  <memory unit='MiB'>{}</memory>\n", spec.memory_mib));
     x.push_str(&format!("  <vcpu>{}</vcpu>\n", spec.vcpus));
-    x.push_str("  <os>\n");
+    x.push_str(if spec.efi { "  <os firmware='efi'>\n" } else { "  <os>\n" });
     x.push_str(&format!(
         "    <type arch='{}' machine='{}'>hvm</type>\n",
         e(&spec.host.arch),
         e(&spec.host.machine)
     ));
+    if spec.efi {
+        x.push_str(
+            "    <firmware><feature enabled='no' name='enrolled-keys'/><feature enabled='no' name='secure-boot'/></firmware>\n",
+        );
+    }
     x.push_str("    <boot dev='hd'/>\n");
+    // A seed is read by the system on the disk, never booted from.
     if spec.cdrom.is_some() {
         x.push_str("    <boot dev='cdrom'/>\n");
     }
@@ -2330,6 +2481,9 @@ pub fn domain_xml(spec: &VirtCreateSpec) -> String {
     x.push_str("  <on_reboot>restart</on_reboot>\n");
     x.push_str("  <on_crash>destroy</on_crash>\n");
     x.push_str("  <devices>\n");
+    if bus == "scsi" || (cd.is_some() && cdrom_bus == "scsi") {
+        x.push_str("    <controller type='scsi' model='virtio-scsi'/>\n");
+    }
     x.push_str("    <disk type='file' device='disk'>\n");
     x.push_str(&format!(
         "      <driver name='qemu' type='{}'/>\n",
@@ -2339,20 +2493,26 @@ pub fn domain_xml(spec: &VirtCreateSpec) -> String {
         "      <source file='{}'/>\n",
         e(spec.disk_path.as_deref().unwrap_or_default())
     ));
-    x.push_str("      <target dev='vda' bus='virtio'/>\n");
+    x.push_str(&format!("      <target dev='{disk_target}' bus='{bus}'/>\n"));
     x.push_str("    </disk>\n");
-    if let Some(cd) = &spec.cdrom {
+    if let Some(cd) = cd {
         x.push_str("    <disk type='file' device='cdrom'>\n");
         x.push_str("      <driver name='qemu' type='raw'/>\n");
         x.push_str(&format!("      <source file='{}'/>\n", e(cd)));
-        x.push_str(&format!("      <target dev='sda' bus='{cdrom_bus}'/>\n"));
+        x.push_str(&format!("      <target dev='{cdrom_target}' bus='{cdrom_bus}'/>\n"));
         x.push_str("      <readonly/>\n");
         x.push_str("    </disk>\n");
     }
     if let Some(net) = &spec.network {
         x.push_str("    <interface type='network'>\n");
+        if let Some(mac) = &spec.mac {
+            x.push_str(&format!("      <mac address='{}'/>\n", e(&mac.to_ascii_lowercase())));
+        }
         x.push_str(&format!("      <source network='{}'/>\n", e(net)));
-        x.push_str("      <model type='virtio'/>\n");
+        x.push_str(&format!(
+            "      <model type='{}'/>\n",
+            e(spec.nic_model.as_deref().unwrap_or("virtio"))
+        ));
         x.push_str("    </interface>\n");
     }
     x.push_str("    <serial type='pty'><target port='0'/></serial>\n");
@@ -2362,6 +2522,12 @@ pub fn domain_xml(spec: &VirtCreateSpec) -> String {
     x.push_str("      <listen type='address' address='127.0.0.1'/>\n");
     x.push_str("    </graphics>\n");
     x.push_str("    <video><model type='virtio'/></video>\n");
+    if spec.tpm {
+        x.push_str(&format!(
+            "    {}\n",
+            VirtHwNewDevice::Tpm { model: "tpm-crb".into() }.xml()
+        ));
+    }
     x.push_str("  </devices>\n");
     x.push_str("</domain>\n");
     x
@@ -2373,11 +2539,16 @@ pub(crate) fn run_fn() -> String {
     )
 }
 
-/// The new domain's disk, and its path. Parse with [`parse_create_volume`].
+/// The new domain's disk and cloud-init seed, and their paths. Parse with
+/// [`parse_create_volumes`].
 ///
 /// A name already defined stops it before anything is created, and so does
 /// a volume of that name (`vol-create-as` refuses it): nothing of someone
-/// else's is reused. A path that cannot be read deletes the volume again.
+/// else's is reused. The disk is empty (`vol-create-as`) or a copy of a
+/// cloud image (`vol-create-from`, converted to the pool's format, then
+/// `vol-resize` to its size): a copy of its own, so the image stays free to
+/// be deleted or replaced and deleting the domain deletes nothing it was
+/// made from. Any later step that fails deletes what the earlier ones made.
 pub fn create_volume_script(spec: &VirtCreateSpec) -> Result<String, VirtError> {
     spec.check()?;
     let name = shell_quote_unix(&spec.name);
@@ -2390,45 +2561,110 @@ pub fn create_volume_script(spec: &VirtCreateSpec) -> Result<String, VirtError> 
         "if virsh --connect {CONNECT_URI} -q domuuid --domain {name} </dev/null >/dev/null 2>&1; then echo '{}'; exit 0; fi\n",
         m(KEY_EXISTS),
     ));
-    s.push_str(&format!(
-        "echo '{}'\nR vol-create-as --pool {pool} --name {vol} --capacity {}G --format {}\n",
-        m(KEY_VOL_CREATE),
-        spec.disk_gib,
-        spec.disk_format,
-    ));
-    s.push_str("[ \"$r\" = 0 ] || exit 0\n");
+    let del_disk = format!("virsh --connect {CONNECT_URI} -q vol-delete --pool {pool} --vol {vol} </dev/null >/dev/null 2>&1; ");
+    match &spec.base_image {
+        None => s.push_str(&format!(
+            "echo '{}'\nR vol-create-as --pool {pool} --name {vol} --capacity {}G --format {}\n\
+             [ \"$r\" = 0 ] || exit 0\n",
+            m(KEY_VOL_CREATE),
+            spec.disk_gib,
+            spec.disk_format,
+        )),
+        Some(base) => {
+            let xml = format!(
+                "<volume><name>{}</name><capacity unit='G'>{}</capacity><target><format type='{}'/></target></volume>",
+                xml_escape(&spec.volume_name()),
+                spec.disk_gib,
+                xml_escape(&spec.disk_format),
+            );
+            // `--vol` by path: virsh finds a volume by its key, which for a
+            // file is its path, in whichever pool holds it.
+            s.push_str(&format!(
+                "echo '{create}'\nf=$(mktemp 2>&1) || {{ printf '%s\\n{RC_PREFIX}1\\n' \"$f\"; exit 0; }}\n\
+                 printf '%s' {xml} >\"$f\"; R vol-create-from --pool {pool} --file \"$f\" --vol {base}; rm -f \"$f\"\n\
+                 [ \"$r\" = 0 ] || exit 0\n\
+                 echo '{resize}'\nR vol-resize --pool {pool} --vol {vol} --capacity {gib}G\n\
+                 if [ \"$r\" != 0 ]; then {del_disk}exit 0; fi\n",
+                create = m(KEY_VOL_CREATE),
+                resize = m(KEY_VOL_RESIZE),
+                xml = shell_quote_unix(&xml),
+                base = shell_quote_unix(base),
+                gib = spec.disk_gib,
+            ));
+        }
+    }
     s.push_str(&format!(
         "echo '{}'\nR vol-path --pool {pool} --vol {vol}\n",
         m(KEY_VOL_PATH)
     ));
     s.push_str(&format!(
-        "[ \"$r\" = 0 ] || {{ echo '{}'; R vol-delete --pool {pool} --vol {vol}; }}\n",
+        "[ \"$r\" = 0 ] || {{ echo '{}'; R vol-delete --pool {pool} --vol {vol}; exit 0; }}\n",
         m(KEY_ROLLBACK),
     ));
+    if let Some(ci) = &spec.cloud_init {
+        s.push_str(&crate::virt_cloud_init::seed_script(ci, &spec.disk_pool, &spec.seed_name(), &del_disk)?);
+    }
     Ok(s)
 }
 
-/// [`create_volume_script`]'s output: the new volume's path. `Exists` for a
-/// name already defined or a volume already there.
-pub fn parse_create_volume(raw: &str) -> Result<String, VirtError> {
+/// What [`create_volume_script`] made.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtCreateVolumes {
+    pub disk_path: String,
+    /// The cloud-init seed's path; none without one
+    pub seed_path: Option<String>,
+}
+
+/// [`create_volume_script`]'s output: the new volumes' paths. `Exists` for a
+/// name already defined or a volume already there; `Command` naming the
+/// tools for a host that has none to make a seed with.
+pub fn parse_create_volumes(raw: &str) -> Result<VirtCreateVolumes, VirtError> {
+    use crate::virt_cloud_init as ci;
+    let segs = script::parse_script_segments(raw);
     let secs = sections(raw)?;
     if secs.iter().any(|(k, _)| k == KEY_EXISTS) {
         return Err(VirtError::Exists { message: String::new() });
     }
     take(&secs, KEY_VOL_CREATE, raw)?.ok()?;
-    let path = take(&secs, KEY_VOL_PATH, raw)?.ok()?.trim().to_string();
-    if !path.starts_with('/') {
-        return Err(VirtError::Malformed {
-            message: format!("vol-path printed {path:?}"),
+    if let Some((_, resize)) = secs.iter().find(|(k, _)| k == KEY_VOL_RESIZE) {
+        resize.ok()?;
+    }
+    let path_of = |key: &str| -> Result<String, VirtError> {
+        let path = take(&secs, key, raw)?.ok()?.trim().to_string();
+        if path.starts_with('/') {
+            Ok(path)
+        } else {
+            Err(VirtError::Malformed {
+                message: format!("vol-path printed {path:?}"),
+            })
+        }
+    };
+    let disk_path = path_of(KEY_VOL_PATH)?;
+    let seeded = segs.iter().any(|(k, _)| k == ci::KEY_SEED_ISO);
+    if !seeded {
+        return Ok(VirtCreateVolumes { disk_path, seed_path: None });
+    }
+    if segs.iter().any(|(k, _)| k == ci::KEY_SEED_NO_TOOL) {
+        return Err(VirtError::Command {
+            message: format!(
+                "No tool to make a cloud-init seed ISO on the host: install one of {}",
+                ci::SEED_TOOLS.join(", ")
+            ),
         });
     }
-    Ok(path)
+    for key in [ci::KEY_SEED_ISO, ci::KEY_SEED_VOL, ci::KEY_SEED_UPLOAD] {
+        take(&secs, key, raw)?.ok()?;
+    }
+    Ok(VirtCreateVolumes {
+        disk_path,
+        seed_path: Some(path_of(ci::KEY_SEED_PATH)?),
+    })
 }
 
-/// Defines the domain on the volume [`create_volume_script`] made, and
+/// Defines the domain on the volumes [`create_volume_script`] made, and
 /// starts it when asked. Parse with [`parse_create`].
 ///
-/// A define that fails deletes that volume, so a refused domain leaves
+/// A define that fails deletes those volumes, so a refused domain leaves
 /// nothing behind; a start that fails leaves the domain defined. The XML
 /// goes through a temporary file, as `virsh define` wants one: the script is
 /// on `sh`'s stdin, which no command here may read.
@@ -2437,6 +2673,11 @@ pub fn define_script(spec: &VirtCreateSpec) -> Result<String, VirtError> {
     if spec.disk_path.is_none() {
         return Err(VirtError::Malformed {
             message: "invalid create spec: no disk path".to_string(),
+        });
+    }
+    if spec.cloud_init.is_some() != spec.seed_path.is_some() {
+        return Err(VirtError::Malformed {
+            message: "invalid create spec: a seed path is the cloud-init seed's".to_string(),
         });
     }
     let name = shell_quote_unix(&spec.name);
@@ -2451,8 +2692,16 @@ pub fn define_script(spec: &VirtCreateSpec) -> Result<String, VirtError> {
          if [ -n \"$f\" ]; then printf '%s' {xml} >\"$f\"; R define --file \"$f\"; rm -f \"$f\"; fi\n",
         define = m(KEY_DEFINE),
     ));
+    let del_seed = if spec.seed_path.is_some() {
+        format!(
+            "virsh --connect {CONNECT_URI} -q vol-delete --pool {pool} --vol {} </dev/null >/dev/null 2>&1; ",
+            shell_quote_unix(&spec.seed_name())
+        )
+    } else {
+        String::new()
+    };
     s.push_str(&format!(
-        "if [ \"$r\" != 0 ]; then echo '{}'; R vol-delete --pool {pool} --vol {vol}; exit 0; fi\n",
+        "if [ \"$r\" != 0 ]; then echo '{}'; {del_seed}R vol-delete --pool {pool} --vol {vol}; exit 0; fi\n",
         m(KEY_ROLLBACK),
     ));
     s.push_str(&format!("echo '{}'\nR domuuid --domain {name}\n", m(KEY_UUID)));
@@ -2693,6 +2942,18 @@ pub fn clone_domain_xml(base_xml: &str, name: &str, disks: &[(String, String)]) 
     if let Some(uuid) = child(root, "uuid") {
         edits.push((uuid.range(), String::new()));
     }
+    // A cloud-init seed stays the source's: the copy's CD-ROM reads the same
+    // image, and a copy naming it as its own would delete it with itself.
+    if let Some(metadata) = child(root, "metadata") {
+        use crate::virt_cloud_init::{SEED_METADATA_ELEMENT, SEED_METADATA_NS};
+        for n in metadata.children().filter(|n| {
+            n.is_element()
+                && n.tag_name().name() == SEED_METADATA_ELEMENT
+                && n.tag_name().namespace() == Some(SEED_METADATA_NS)
+        }) {
+            edits.push((n.range(), String::new()));
+        }
+    }
     let devices = devices_of(root)?;
     for (target, path) in disks {
         let disk = devices
@@ -2781,10 +3042,17 @@ pub fn clone_define_script(base_xml: &str, name: &str, disks: &[(String, String)
 /// `undefine`, with the metadata a domain may hold (snapshots, a managed
 /// save) so they do not refuse it. `storage` are the disk targets whose
 /// volumes go with it (`vda`, `sdb`), NVRAM included; empty keeps every
-/// volume and the NVRAM file. A running domain is not stopped by this —
+/// volume and the NVRAM file. `seed` is the domain's own cloud-init seed
+/// ([`VirtDomainXml::seed`]), deleted once the domain is gone whether a
+/// CD-ROM still holds it or not. A running domain is not stopped by this —
 /// `undefine` would leave it running, transient — so the caller stops it
-/// first. Parse with [`parse_action`].
-pub fn undefine_script(domain: &str, storage: &[String]) -> Result<String, VirtError> {
+/// first. Parse with [`parse_undefine`].
+pub fn undefine_script(domain: &str, storage: &[String], seed: Option<&str>) -> Result<String, VirtError> {
+    if seed.is_some_and(|p| !p.starts_with('/') || p.chars().any(char::is_control)) {
+        return Err(VirtError::Malformed {
+            message: "invalid seed path".into(),
+        });
+    }
     if storage
         .iter()
         .any(|t| t.is_empty() || !t.chars().all(|c| c.is_ascii_alphanumeric()))
@@ -2803,8 +3071,34 @@ pub fn undefine_script(domain: &str, storage: &[String]) -> Result<String, VirtE
         args.push_str(&format!(" --nvram --storage {}", storage.join(",")));
     }
     let mut s = prelude();
-    s.push_str(&section(KEY_ACTION, &args));
+    s.push_str(&run_fn());
+    s.push_str(&format!("echo '{}'\nR {args}\n", script::cmd_marker(KEY_ACTION)));
+    if let Some(seed) = seed {
+        // Only once the domain is gone: a refused undefine keeps its seed.
+        s.push_str(&format!(
+            "if [ \"$r\" = 0 ]; then echo '{}'; R vol-delete --vol {}; fi\n",
+            script::cmd_marker(KEY_SEED_DELETE),
+            shell_quote_unix(seed)
+        ));
+    }
     Ok(s)
+}
+
+pub const KEY_SEED_DELETE: &str = "virt.seed.delete";
+
+/// [`undefine_script`]'s output. The domain is gone once this is `Ok`; a
+/// seed that could not be deleted is an error naming it — the domain is gone
+/// all the same — and one already gone is not.
+pub fn parse_undefine(raw: &str) -> Result<(), VirtError> {
+    let secs = sections(raw)?;
+    take(&secs, KEY_ACTION, raw)?.ok()?;
+    match secs.iter().find(|(k, _)| k == KEY_SEED_DELETE).map(|(_, s)| s.ok()) {
+        None | Some(Ok(_)) => Ok(()),
+        Some(Err(e)) if e.message().contains("not found") => Ok(()),
+        Some(Err(e)) => Err(VirtError::Command {
+            message: format!("The guest was deleted, its cloud-init seed was not: {}", e.message()),
+        }),
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -2938,6 +3232,10 @@ pub struct VirtHwConfig {
     pub video: Option<String>,
     pub tpm: Option<VirtHwTpm>,
     pub hostdevs: Vec<VirtHwHostdev>,
+    /// The domain's own cloud-init seed ([`VirtDomainXml::seed`]): the
+    /// CD-ROM holding it is not install media to swap
+    #[serde(default)]
+    pub seed: Option<String>,
 }
 
 /// What the host's QEMU offers a domain of this machine type
@@ -3086,6 +3384,7 @@ pub fn parse_hw_xml(raw: &str, capacity: &[(String, u64)]) -> Result<VirtHwConfi
         cpu,
         memory_kib,
         current_memory_kib,
+        seed: seed_of(root),
         ..Default::default()
     };
     if let Some(os) = child(root, "os") {
@@ -3542,6 +3841,14 @@ pub enum VirtHwChange {
         config: bool,
         live: bool,
     },
+    /// A new CD-ROM drive `target` on `bus`, empty or holding `source`: to
+    /// the persistent definition only — neither SATA nor IDE takes a drive
+    /// while the domain runs, so a running one gets it at its next start
+    AddCdrom {
+        target: String,
+        bus: String,
+        source: Option<String>,
+    },
     /// Inserts `source` into a CD-ROM, or ejects it
     SetMedia {
         target: String,
@@ -3794,6 +4101,14 @@ impl VirtHwChange {
             }
             VirtHwChange::SetMedia { target, source, .. } => {
                 if !is_target(target) || source.as_deref().is_some_and(|p| !is_host_path(p)) {
+                    return bad("media");
+                }
+            }
+            VirtHwChange::AddCdrom { target, bus, source } => {
+                if !is_target(target) || !matches!(bus.as_str(), "sata" | "ide" | "scsi") {
+                    return bad("cdrom");
+                }
+                if source.as_deref().is_some_and(|p| !is_host_path(p)) {
                     return bad("media");
                 }
             }
@@ -4304,7 +4619,7 @@ pub fn edit_firmware_xml(
         ));
         // The same path either way: made again there when dropped.
         if let Some(path) = vars {
-            edits.push((at..at, format!("<nvram>{}</nvram>", xml_escape(&path))));
+            edits.push((at..at, format!("<nvram>{}</nvram>", xml_escape(path))));
         }
     }
     if secure {
@@ -4608,6 +4923,19 @@ pub fn hardware_change_script(
                     step = hw_step(&format!("vol-delete --vol {}", q(path))),
                 ));
             }
+        }
+        VirtHwChange::AddCdrom { target, bus, source } => {
+            let e = xml_escape;
+            let source = source
+                .as_deref()
+                .map(|p| format!("<source file='{}'/>", e(p)))
+                .unwrap_or_default();
+            let xml = format!(
+                "<disk type='file' device='cdrom'><driver name='qemu' type='raw'/>{source}<target dev='{}' bus='{}'/><readonly/></disk>",
+                e(target),
+                e(bus)
+            );
+            s.push_str(&hw_step_with_file(&xml, &format!("attach-device {d} --file \"$f\" --config"), false));
         }
         VirtHwChange::SetMedia { target, source, config, live } => {
             let args = match source {

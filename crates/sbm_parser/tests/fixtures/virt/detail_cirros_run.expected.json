@@ -60,6 +60,7 @@
         "socket": null
       }
     ],
-    "has_serial_console": true
+    "has_serial_console": true,
+    "seed": null
   }
 }

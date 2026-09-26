@@ -4147,7 +4147,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get virtHwDevices => 'CD-ROM e passthrough';
 
   @override
-  String get virtHwDevicesEmpty => 'Passthrough USB e PCI, TPM';
+  String get virtHwDevicesEmpty => 'Passthrough USB e PCI, CD-ROM, TPM';
 
   @override
   String get virtHwAddDevice => 'Adicionar dispositivo';
@@ -4697,4 +4697,115 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get pveTokenTipStorage =>
       'Gerir o armazenamento requer Datastore.Allocate em /storage (adicionar, desativar, remover), Datastore.AllocateSpace (volumes) e Datastore.AllocateTemplate (carregamentos); as Linux bridges e aplicar a configuração de rede requerem Sys.Modify no nó.';
+
+  @override
+  String get virtCreateUnnamed => 'Sem nome';
+
+  @override
+  String get virtCreateNotChosen => 'Não escolhido';
+
+  @override
+  String get virtCreateKindVmSub => 'qm · uma máquina virtual KVM completa';
+
+  @override
+  String get virtCreateKindLxcSub =>
+      'pct · partilha o kernel do host, mais leve';
+
+  @override
+  String get virtCloudImage => 'Imagem cloud';
+
+  @override
+  String get virtCloudImageTip =>
+      'Um disco com um sistema já instalado: copiado, aumentado até ao tamanho em Armazenamento e configurado pelo cloud-init no primeiro arranque. A imagem fica como está.';
+
+  @override
+  String get virtNoCloudImagesLibvirt =>
+      'Não há imagens cloud aqui: coloque uma imagem qcow2 ou raw num pool (carregue-a em Armazenamento) que nenhuma VM use.';
+
+  @override
+  String get virtNoCloudImagesPve =>
+      'Não há imagens cloud aqui: carregue uma imagem qcow2, raw ou vmdk para um armazenamento com o tipo de conteúdo Import (PVE 8.2+).';
+
+  @override
+  String get virtCreateWindowsTitle => 'O Windows 11 exige UEFI e TPM 2.0';
+
+  @override
+  String get virtCreateWindowsBody => 'Escolha UEFI e ative o TPM acima.';
+
+  @override
+  String get virtCreateWindowsNoTpm =>
+      'Este host não tem TPM por software (swtpm): instale-o para dar um à VM.';
+
+  @override
+  String virtCreateImageSize(String size) {
+    return 'A imagem tem $size: o disco tem de ser pelo menos desse tamanho.';
+  }
+
+  @override
+  String get virtCreateImageMissing => 'Escolha uma imagem cloud.';
+
+  @override
+  String get virtCreateIncomplete =>
+      'Complete primeiro as partes marcadas a laranja.';
+
+  @override
+  String virtCreateOn(String host) {
+    return 'Criado em $host';
+  }
+
+  @override
+  String get virtCiTip =>
+      'Uma conta com sudo, com início de sessão por palavra-passe, chave SSH ou ambas.';
+
+  @override
+  String get virtCiUserInvalid =>
+      'Minúsculas, dígitos, _ e -, a começar por uma letra ou _';
+
+  @override
+  String get virtCiCredentialsMissing =>
+      'Defina uma palavra-passe ou uma chave SSH.';
+
+  @override
+  String get virtCiHostnamePve => 'O nome de anfitrião é o nome da VM.';
+
+  @override
+  String get virtCiStatic => 'Estático';
+
+  @override
+  String get virtCiAddressInvalid =>
+      'Um endereço IPv4 com prefixo, como 10.0.0.5/24';
+
+  @override
+  String get virtCiGatewayInvalid => 'Um endereço IPv4, como 10.0.0.1';
+
+  @override
+  String get virtCiDnsFromDhcp => 'Vazio: do DHCP';
+
+  @override
+  String get virtCiDnsInvalid =>
+      'Endereços IP, separados por espaços ou vírgulas';
+
+  @override
+  String get virtCiSearch => 'Domínio de pesquisa';
+
+  @override
+  String get virtCiSeedNote =>
+      'Escrito numa pequena ISO junto ao disco, ligada como CD-ROM e eliminada com a VM. Só é guardado o hash da palavra-passe.';
+
+  @override
+  String get virtCiNoToolTitle =>
+      'Não há ferramenta no host para criar os dados do cloud-init';
+
+  @override
+  String virtCiNoToolBody(String tools) {
+    return 'Instale um de $tools no host. Sem cloud-init, a imagem arranca sem conta para iniciar sessão.';
+  }
+
+  @override
+  String get virtHwCloudInitNote =>
+      'O que o cloud-init lê no primeiro arranque. Não é um meio de instalação: nada a inserir aqui.';
+
+  @override
+  String get virtHwCdromLater =>
+      'Enquanto está a correr, a unidade é adicionada no próximo arranque (SATA e IDE não aceitam a quente).';
 }

@@ -248,8 +248,22 @@ class _FakeHost extends VirtHostNotifier {
     VirtHistoryWindow window = VirtHistoryWindow.hour,
   }) async => const [];
 
+  /// ISOs only: no disk goes here.
   @override
-  Future<List<VirtStoragePool>> storagePools() async => const [];
+  Future<List<VirtStoragePool>> storagePools() async => const [
+    VirtStoragePool(
+      id: 'pve/local',
+      name: 'local',
+      node: 'pve',
+      type: 'dir',
+      content: ['iso'],
+    ),
+  ];
+
+  @override
+  Future<List<VirtVolume>> volumes(VirtStoragePool pool) async => const [
+    VirtVolume(id: 'local:iso/debian-13.iso', name: 'debian-13.iso', content: 'iso'),
+  ];
 
   @override
   Future<List<VirtNetwork>> networks() async => const [
@@ -825,9 +839,10 @@ void main() {
     await open(tester, 'web-01');
     expect(_key('hw:disc:usb0'), findsOneWidget);
     expect(_key('hw:disc:tpmstate0'), findsOneWidget);
-    // A second TPM is not offered: only USB and PCI.
+    // A second TPM or CD-ROM is not offered: only USB and PCI.
     await tap(tester, _key('hw:add:dev'));
     expect(_segOpt('dev:add:kind', 'TPM'), findsNothing);
+    expect(_segOpt('dev:add:kind', app_locale.l10n.virtHwCdrom), findsNothing);
     expect(text(app_locale.l10n.virtHwMappingsOnly), findsOneWidget);
     await tap(tester, _key('hw:dev:pick:bt'));
     await tap(tester, _key('hw:dev:add'));
@@ -844,10 +859,56 @@ void main() {
     );
     await open(tester, 'db-02');
     await tap(tester, _key('hw:add:dev'));
+    // It has no CD-ROM: that is offered first, as the design has it.
+    await tap(tester, _segOpt('dev:add:kind', app_locale.l10n.virtHwPci));
     expect(_key('hw:dev:iommu-off'), findsOneWidget);
     expect(text(app_locale.l10n.virtHwIommuOffTitle), findsOneWidget);
     // Still offered: the configuration is the user's to write.
     expect(_key('hw:dev:pick:0000:00:14.0'), findsOneWidget);
+  });
+
+  testWidgets('devices: a CD-ROM drive added where there is none', (
+    tester,
+  ) async {
+    await open(tester, 'db-02');
+    await tap(tester, _key('hw:add:dev'));
+    expect(_segOpt('dev:add:kind', app_locale.l10n.virtHwCdrom), findsOneWidget);
+    // Empty unless an ISO is picked; stopped, nothing waits for a restart.
+    expect(_key('hw:cdrom:new:none'), findsOneWidget);
+    expect(text(app_locale.l10n.virtHwCdromLater), findsNothing);
+    await tap(tester, _key('hw:cdrom:new:local:iso/debian-13.iso'));
+    await tap(tester, _key('hw:dev:add'));
+    final add = _changes.single.$2 as VirtHwAddCdrom;
+    expect(add.media?.id, 'local:iso/debian-13.iso');
+  });
+
+  testWidgets('devices: a cloud-init drive is not install media', (
+    tester,
+  ) async {
+    _hardware['qemu/101'] = _stopped.copyWith(
+      disks: [
+        ..._stopped.disks,
+        const VirtHwDisk(
+          key: 'ide2',
+          kind: VirtHwDiskKind.cdrom,
+          source: 'local-lvm:vm-101-cloudinit',
+          bus: 'ide',
+          cloudInit: true,
+        ),
+      ],
+    );
+    await open(tester, 'db-02');
+    expect(text('ide2 · cloud-init'), findsOneWidget);
+    await tap(tester, _key('hw:disc:ide2'));
+    // Nothing to insert into it, only taking it off.
+    expect(_key('hw:media:none'), findsNothing);
+    expect(text(app_locale.l10n.virtHwCloudInitNote), findsOneWidget);
+    expect(_key('hw:media:ide2:remove'), findsOneWidget);
+    // A drive for media can still be added beside it.
+    await tap(tester, _key('hw:add:dev'));
+    expect(_segOpt('dev:add:kind', app_locale.l10n.virtHwCdrom), findsOneWidget);
+    await tap(tester, _key('hw:dev:add'));
+    expect((_changes.single.$2 as VirtHwAddCdrom).media, isNull);
   });
 
   testWidgets('display: listening everywhere is warned about', (tester) async {

@@ -4165,7 +4165,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get virtHwDevices => 'CD-ROM und Durchreichung';
 
   @override
-  String get virtHwDevicesEmpty => 'USB- und PCI-Durchreichung, TPM';
+  String get virtHwDevicesEmpty => 'USB- und PCI-Durchreichung, CD-ROM, TPM';
 
   @override
   String get virtHwAddDevice => 'Gerät hinzufügen';
@@ -4718,4 +4718,116 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get pveTokenTipStorage =>
       'Speicherverwaltung braucht Datastore.Allocate auf /storage (hinzufügen, deaktivieren, entfernen), Datastore.AllocateSpace (Volumes) und Datastore.AllocateTemplate (Uploads); Linux-Bridges und das Anwenden der Netzwerkkonfiguration brauchen Sys.Modify auf dem Knoten.';
+
+  @override
+  String get virtCreateUnnamed => 'Ohne Namen';
+
+  @override
+  String get virtCreateNotChosen => 'Nicht gewählt';
+
+  @override
+  String get virtCreateKindVmSub => 'qm · eine vollständige KVM-VM';
+
+  @override
+  String get virtCreateKindLxcSub =>
+      'pct · teilt den Kernel des Hosts, leichter';
+
+  @override
+  String get virtCloudImage => 'Cloud-Image';
+
+  @override
+  String get virtCloudImageTip =>
+      'Eine Festplatte mit fertigem System: kopiert, auf die Größe unter Speicher vergrößert und beim ersten Start von cloud-init eingerichtet. Das Image selbst bleibt unverändert.';
+
+  @override
+  String get virtNoCloudImagesLibvirt =>
+      'Keine Cloud-Images hier: Legen Sie ein qcow2- oder raw-Image in einen Pool (Hochladen unter Speicher), das keine VM verwendet.';
+
+  @override
+  String get virtNoCloudImagesPve =>
+      'Keine Cloud-Images hier: Laden Sie ein qcow2-, raw- oder vmdk-Image in einen Speicher mit dem Inhaltstyp Import hoch (PVE 8.2+).';
+
+  @override
+  String get virtCreateWindowsTitle => 'Windows 11 benötigt UEFI und TPM 2.0';
+
+  @override
+  String get virtCreateWindowsBody =>
+      'Wählen Sie oben UEFI und schalten Sie das TPM ein.';
+
+  @override
+  String get virtCreateWindowsNoTpm =>
+      'Dieser Host hat kein Software-TPM (swtpm): installieren Sie es, um der VM eines zu geben.';
+
+  @override
+  String virtCreateImageSize(String size) {
+    return 'Das Image ist $size groß: Die Festplatte muss mindestens so groß sein.';
+  }
+
+  @override
+  String get virtCreateImageMissing => 'Wählen Sie ein Cloud-Image.';
+
+  @override
+  String get virtCreateIncomplete =>
+      'Vervollständigen Sie zuerst die orange markierten Teile.';
+
+  @override
+  String virtCreateOn(String host) {
+    return 'Wird auf $host erstellt';
+  }
+
+  @override
+  String get virtCiTip =>
+      'Ein Konto mit sudo, Anmeldung per Passwort, SSH-Schlüssel oder beidem.';
+
+  @override
+  String get virtCiUserInvalid =>
+      'Kleinbuchstaben, Ziffern, _ und -, beginnend mit einem Buchstaben oder _';
+
+  @override
+  String get virtCiCredentialsMissing =>
+      'Legen Sie ein Passwort oder einen SSH-Schlüssel fest.';
+
+  @override
+  String get virtCiHostnamePve => 'Der Hostname ist der Name der VM.';
+
+  @override
+  String get virtCiStatic => 'Statisch';
+
+  @override
+  String get virtCiAddressInvalid =>
+      'Eine IPv4-Adresse mit Präfix, etwa 10.0.0.5/24';
+
+  @override
+  String get virtCiGatewayInvalid => 'Eine IPv4-Adresse, etwa 10.0.0.1';
+
+  @override
+  String get virtCiDnsFromDhcp => 'Leer: von DHCP';
+
+  @override
+  String get virtCiDnsInvalid =>
+      'IP-Adressen, getrennt durch Leerzeichen oder Kommas';
+
+  @override
+  String get virtCiSearch => 'Suchdomäne';
+
+  @override
+  String get virtCiSeedNote =>
+      'Wird in ein kleines ISO neben der Festplatte geschrieben, als CD-ROM eingebunden und mit der VM gelöscht. Nur der Hash des Passworts wird gespeichert.';
+
+  @override
+  String get virtCiNoToolTitle =>
+      'Kein Werkzeug auf dem Host für die cloud-init-Daten';
+
+  @override
+  String virtCiNoToolBody(String tools) {
+    return 'Installieren Sie eines von $tools auf dem Host. Ohne cloud-init startet das Image ohne Konto zum Anmelden.';
+  }
+
+  @override
+  String get virtHwCloudInitNote =>
+      'Was cloud-init beim ersten Start liest. Kein Installationsmedium: hier wird nichts eingelegt.';
+
+  @override
+  String get virtHwCdromLater =>
+      'Solange sie läuft, kommt das Laufwerk beim nächsten Start hinzu (SATA und IDE nehmen keins im Betrieb).';
 }

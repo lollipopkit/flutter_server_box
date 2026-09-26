@@ -107,6 +107,13 @@ abstract interface class VirtBackend {
   /// host has no such thing.
   Future<int?> nextVmid();
 
+  /// What a new VM on this host can be given besides what every host offers
+  /// — its disk bus and NIC model, UEFI, a TPM, a cloud image set up by
+  /// cloud-init — read from the host where it says (libvirt's
+  /// `domcapabilities`, an ISO tool for the cloud-init seed). Only where
+  /// `VirtCapabilities.create`.
+  Future<VirtCreateOptions> createOptions();
+
   /// Creates [spec] (checked with `virtCreateIssue` first) and returns once
   /// the host has finished — started too, when asked. Throws
   /// `VirtErrType.exists` for a name, VMID or disk already there, and

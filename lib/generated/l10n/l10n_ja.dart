@@ -3920,7 +3920,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get virtHwDevices => 'CD-ROM とパススルー';
 
   @override
-  String get virtHwDevicesEmpty => 'USB と PCI のパススルー、TPM';
+  String get virtHwDevicesEmpty => 'USB と PCI のパススルー、CD-ROM、TPM';
 
   @override
   String get virtHwAddDevice => 'デバイスを追加';
@@ -4434,4 +4434,106 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get pveTokenTipStorage =>
       'ストレージの管理には /storage での Datastore.Allocate（追加・無効化・削除）、Datastore.AllocateSpace（ボリューム）、Datastore.AllocateTemplate（アップロード）が必要です。Linux ブリッジとネットワーク構成の適用にはノードでの Sys.Modify が必要です。';
+
+  @override
+  String get virtCreateUnnamed => '名前なし';
+
+  @override
+  String get virtCreateNotChosen => '未選択';
+
+  @override
+  String get virtCreateKindVmSub => 'qm · 完全な KVM 仮想マシン';
+
+  @override
+  String get virtCreateKindLxcSub => 'pct · ホストのカーネルを共有、より軽量';
+
+  @override
+  String get virtCloudImage => 'クラウドイメージ';
+
+  @override
+  String get virtCloudImageTip =>
+      'システム入りのディスク: コピーしてストレージのサイズまで拡張し、初回起動時に cloud-init で設定します。イメージ自体は変更しません。';
+
+  @override
+  String get virtNoCloudImagesLibvirt =>
+      'クラウドイメージがありません: どの VM も使っていない qcow2 または raw イメージをプールに置いてください（ストレージでアップロード）。';
+
+  @override
+  String get virtNoCloudImagesPve =>
+      'クラウドイメージがありません: qcow2、raw、vmdk イメージを Import コンテンツのストレージにアップロードしてください（PVE 8.2+）。';
+
+  @override
+  String get virtCreateWindowsTitle => 'Windows 11 には UEFI と TPM 2.0 が必要です';
+
+  @override
+  String get virtCreateWindowsBody => '上で UEFI を選び、TPM をオンにしてください。';
+
+  @override
+  String get virtCreateWindowsNoTpm =>
+      'このホストにはソフトウェア TPM (swtpm) がありません。VM に付けるにはインストールしてください。';
+
+  @override
+  String virtCreateImageSize(String size) {
+    return 'イメージは $size です。ディスクは少なくともその大きさが必要です。';
+  }
+
+  @override
+  String get virtCreateImageMissing => 'クラウドイメージを選んでください。';
+
+  @override
+  String get virtCreateIncomplete => 'まずオレンジ色の部分を入力してください。';
+
+  @override
+  String virtCreateOn(String host) {
+    return '$host に作成';
+  }
+
+  @override
+  String get virtCiTip => 'sudo 付きのアカウント。パスワード、SSH 鍵、または両方でログインします。';
+
+  @override
+  String get virtCiUserInvalid => '小文字、数字、_、- のみ。先頭は英字か _';
+
+  @override
+  String get virtCiCredentialsMissing => 'パスワードか SSH 鍵を設定してください。';
+
+  @override
+  String get virtCiHostnamePve => 'ホスト名は VM の名前です。';
+
+  @override
+  String get virtCiStatic => '静的';
+
+  @override
+  String get virtCiAddressInvalid => 'プレフィックス付きの IPv4 アドレス（例: 10.0.0.5/24）';
+
+  @override
+  String get virtCiGatewayInvalid => 'IPv4 アドレス（例: 10.0.0.1）';
+
+  @override
+  String get virtCiDnsFromDhcp => '空欄: DHCP から';
+
+  @override
+  String get virtCiDnsInvalid => 'IP アドレス（空白またはカンマ区切り）';
+
+  @override
+  String get virtCiSearch => '検索ドメイン';
+
+  @override
+  String get virtCiSeedNote =>
+      'ディスクの隣の小さな ISO に書き込み、CD-ROM として接続し、VM と一緒に削除します。保存するのはパスワードのハッシュだけです。';
+
+  @override
+  String get virtCiNoToolTitle => 'ホストに cloud-init データを作るツールがありません';
+
+  @override
+  String virtCiNoToolBody(String tools) {
+    return 'ホストに $tools のいずれかをインストールしてください。cloud-init がないと、ログインできるアカウントなしで起動します。';
+  }
+
+  @override
+  String get virtHwCloudInitNote =>
+      'cloud-init が初回起動時に読むデータです。インストールメディアではないため、ここでは入れ替えません。';
+
+  @override
+  String get virtHwCdromLater => '実行中はドライブが次回起動時に追加されます（SATA と IDE はホットプラグ不可）。';
 }

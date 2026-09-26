@@ -2043,7 +2043,8 @@ $LibvirtVersionCopyWith<$Res>? get version {
 /// @nodoc
 mixin _$LibvirtDomainXml {
 
- String? get name; String? get uuid; String? get description; String? get arch; String? get machine; List<VirtDisk> get disks; List<VirtNic> get nics; List<VirtGraphics> get graphics; bool get hasSerialConsole;
+ String? get name; String? get uuid; String? get description; String? get arch; String? get machine; List<VirtDisk> get disks; List<VirtNic> get nics; List<VirtGraphics> get graphics; bool get hasSerialConsole;/// The domain's own cloud-init seed volume: deleted with it.
+ String? get seed;
 /// Create a copy of LibvirtDomainXml
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2056,16 +2057,16 @@ $LibvirtDomainXmlCopyWith<LibvirtDomainXml> get copyWith => _$LibvirtDomainXmlCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtDomainXml&&(identical(other.name, name) || other.name == name)&&(identical(other.uuid, uuid) || other.uuid == uuid)&&(identical(other.description, description) || other.description == description)&&(identical(other.arch, arch) || other.arch == arch)&&(identical(other.machine, machine) || other.machine == machine)&&const DeepCollectionEquality().equals(other.disks, disks)&&const DeepCollectionEquality().equals(other.nics, nics)&&const DeepCollectionEquality().equals(other.graphics, graphics)&&(identical(other.hasSerialConsole, hasSerialConsole) || other.hasSerialConsole == hasSerialConsole));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtDomainXml&&(identical(other.name, name) || other.name == name)&&(identical(other.uuid, uuid) || other.uuid == uuid)&&(identical(other.description, description) || other.description == description)&&(identical(other.arch, arch) || other.arch == arch)&&(identical(other.machine, machine) || other.machine == machine)&&const DeepCollectionEquality().equals(other.disks, disks)&&const DeepCollectionEquality().equals(other.nics, nics)&&const DeepCollectionEquality().equals(other.graphics, graphics)&&(identical(other.hasSerialConsole, hasSerialConsole) || other.hasSerialConsole == hasSerialConsole)&&(identical(other.seed, seed) || other.seed == seed));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,uuid,description,arch,machine,const DeepCollectionEquality().hash(disks),const DeepCollectionEquality().hash(nics),const DeepCollectionEquality().hash(graphics),hasSerialConsole);
+int get hashCode => Object.hash(runtimeType,name,uuid,description,arch,machine,const DeepCollectionEquality().hash(disks),const DeepCollectionEquality().hash(nics),const DeepCollectionEquality().hash(graphics),hasSerialConsole,seed);
 
 @override
 String toString() {
-  return 'LibvirtDomainXml(name: $name, uuid: $uuid, description: $description, arch: $arch, machine: $machine, disks: $disks, nics: $nics, graphics: $graphics, hasSerialConsole: $hasSerialConsole)';
+  return 'LibvirtDomainXml(name: $name, uuid: $uuid, description: $description, arch: $arch, machine: $machine, disks: $disks, nics: $nics, graphics: $graphics, hasSerialConsole: $hasSerialConsole, seed: $seed)';
 }
 
 
@@ -2076,7 +2077,7 @@ abstract mixin class $LibvirtDomainXmlCopyWith<$Res>  {
   factory $LibvirtDomainXmlCopyWith(LibvirtDomainXml value, $Res Function(LibvirtDomainXml) _then) = _$LibvirtDomainXmlCopyWithImpl;
 @useResult
 $Res call({
- String? name, String? uuid, String? description, String? arch, String? machine, List<VirtDisk> disks, List<VirtNic> nics, List<VirtGraphics> graphics, bool hasSerialConsole
+ String? name, String? uuid, String? description, String? arch, String? machine, List<VirtDisk> disks, List<VirtNic> nics, List<VirtGraphics> graphics, bool hasSerialConsole, String? seed
 });
 
 
@@ -2093,7 +2094,7 @@ class _$LibvirtDomainXmlCopyWithImpl<$Res>
 
 /// Create a copy of LibvirtDomainXml
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? name = freezed,Object? uuid = freezed,Object? description = freezed,Object? arch = freezed,Object? machine = freezed,Object? disks = null,Object? nics = null,Object? graphics = null,Object? hasSerialConsole = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? name = freezed,Object? uuid = freezed,Object? description = freezed,Object? arch = freezed,Object? machine = freezed,Object? disks = null,Object? nics = null,Object? graphics = null,Object? hasSerialConsole = null,Object? seed = freezed,}) {
   return _then(_self.copyWith(
 name: freezed == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String?,uuid: freezed == uuid ? _self.uuid : uuid // ignore: cast_nullable_to_non_nullable
@@ -2104,7 +2105,8 @@ as String?,disks: null == disks ? _self.disks : disks // ignore: cast_nullable_t
 as List<VirtDisk>,nics: null == nics ? _self.nics : nics // ignore: cast_nullable_to_non_nullable
 as List<VirtNic>,graphics: null == graphics ? _self.graphics : graphics // ignore: cast_nullable_to_non_nullable
 as List<VirtGraphics>,hasSerialConsole: null == hasSerialConsole ? _self.hasSerialConsole : hasSerialConsole // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,seed: freezed == seed ? _self.seed : seed // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -2189,10 +2191,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? name,  String? uuid,  String? description,  String? arch,  String? machine,  List<VirtDisk> disks,  List<VirtNic> nics,  List<VirtGraphics> graphics,  bool hasSerialConsole)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? name,  String? uuid,  String? description,  String? arch,  String? machine,  List<VirtDisk> disks,  List<VirtNic> nics,  List<VirtGraphics> graphics,  bool hasSerialConsole,  String? seed)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _LibvirtDomainXml() when $default != null:
-return $default(_that.name,_that.uuid,_that.description,_that.arch,_that.machine,_that.disks,_that.nics,_that.graphics,_that.hasSerialConsole);case _:
+return $default(_that.name,_that.uuid,_that.description,_that.arch,_that.machine,_that.disks,_that.nics,_that.graphics,_that.hasSerialConsole,_that.seed);case _:
   return orElse();
 
 }
@@ -2210,10 +2212,10 @@ return $default(_that.name,_that.uuid,_that.description,_that.arch,_that.machine
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? name,  String? uuid,  String? description,  String? arch,  String? machine,  List<VirtDisk> disks,  List<VirtNic> nics,  List<VirtGraphics> graphics,  bool hasSerialConsole)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? name,  String? uuid,  String? description,  String? arch,  String? machine,  List<VirtDisk> disks,  List<VirtNic> nics,  List<VirtGraphics> graphics,  bool hasSerialConsole,  String? seed)  $default,) {final _that = this;
 switch (_that) {
 case _LibvirtDomainXml():
-return $default(_that.name,_that.uuid,_that.description,_that.arch,_that.machine,_that.disks,_that.nics,_that.graphics,_that.hasSerialConsole);case _:
+return $default(_that.name,_that.uuid,_that.description,_that.arch,_that.machine,_that.disks,_that.nics,_that.graphics,_that.hasSerialConsole,_that.seed);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -2230,10 +2232,10 @@ return $default(_that.name,_that.uuid,_that.description,_that.arch,_that.machine
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? name,  String? uuid,  String? description,  String? arch,  String? machine,  List<VirtDisk> disks,  List<VirtNic> nics,  List<VirtGraphics> graphics,  bool hasSerialConsole)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? name,  String? uuid,  String? description,  String? arch,  String? machine,  List<VirtDisk> disks,  List<VirtNic> nics,  List<VirtGraphics> graphics,  bool hasSerialConsole,  String? seed)?  $default,) {final _that = this;
 switch (_that) {
 case _LibvirtDomainXml() when $default != null:
-return $default(_that.name,_that.uuid,_that.description,_that.arch,_that.machine,_that.disks,_that.nics,_that.graphics,_that.hasSerialConsole);case _:
+return $default(_that.name,_that.uuid,_that.description,_that.arch,_that.machine,_that.disks,_that.nics,_that.graphics,_that.hasSerialConsole,_that.seed);case _:
   return null;
 
 }
@@ -2245,7 +2247,7 @@ return $default(_that.name,_that.uuid,_that.description,_that.arch,_that.machine
 
 @JsonSerializable(fieldRename: FieldRename.snake)
 class _LibvirtDomainXml implements LibvirtDomainXml {
-  const _LibvirtDomainXml({this.name, this.uuid, this.description, this.arch, this.machine, final  List<VirtDisk> disks = const <VirtDisk>[], final  List<VirtNic> nics = const <VirtNic>[], final  List<VirtGraphics> graphics = const <VirtGraphics>[], this.hasSerialConsole = false}): _disks = disks,_nics = nics,_graphics = graphics;
+  const _LibvirtDomainXml({this.name, this.uuid, this.description, this.arch, this.machine, final  List<VirtDisk> disks = const <VirtDisk>[], final  List<VirtNic> nics = const <VirtNic>[], final  List<VirtGraphics> graphics = const <VirtGraphics>[], this.hasSerialConsole = false, this.seed}): _disks = disks,_nics = nics,_graphics = graphics;
   factory _LibvirtDomainXml.fromJson(Map<String, dynamic> json) => _$LibvirtDomainXmlFromJson(json);
 
 @override final  String? name;
@@ -2275,6 +2277,8 @@ class _LibvirtDomainXml implements LibvirtDomainXml {
 }
 
 @override@JsonKey() final  bool hasSerialConsole;
+/// The domain's own cloud-init seed volume: deleted with it.
+@override final  String? seed;
 
 /// Create a copy of LibvirtDomainXml
 /// with the given fields replaced by the non-null parameter values.
@@ -2289,16 +2293,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtDomainXml&&(identical(other.name, name) || other.name == name)&&(identical(other.uuid, uuid) || other.uuid == uuid)&&(identical(other.description, description) || other.description == description)&&(identical(other.arch, arch) || other.arch == arch)&&(identical(other.machine, machine) || other.machine == machine)&&const DeepCollectionEquality().equals(other._disks, _disks)&&const DeepCollectionEquality().equals(other._nics, _nics)&&const DeepCollectionEquality().equals(other._graphics, _graphics)&&(identical(other.hasSerialConsole, hasSerialConsole) || other.hasSerialConsole == hasSerialConsole));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtDomainXml&&(identical(other.name, name) || other.name == name)&&(identical(other.uuid, uuid) || other.uuid == uuid)&&(identical(other.description, description) || other.description == description)&&(identical(other.arch, arch) || other.arch == arch)&&(identical(other.machine, machine) || other.machine == machine)&&const DeepCollectionEquality().equals(other._disks, _disks)&&const DeepCollectionEquality().equals(other._nics, _nics)&&const DeepCollectionEquality().equals(other._graphics, _graphics)&&(identical(other.hasSerialConsole, hasSerialConsole) || other.hasSerialConsole == hasSerialConsole)&&(identical(other.seed, seed) || other.seed == seed));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,uuid,description,arch,machine,const DeepCollectionEquality().hash(_disks),const DeepCollectionEquality().hash(_nics),const DeepCollectionEquality().hash(_graphics),hasSerialConsole);
+int get hashCode => Object.hash(runtimeType,name,uuid,description,arch,machine,const DeepCollectionEquality().hash(_disks),const DeepCollectionEquality().hash(_nics),const DeepCollectionEquality().hash(_graphics),hasSerialConsole,seed);
 
 @override
 String toString() {
-  return 'LibvirtDomainXml(name: $name, uuid: $uuid, description: $description, arch: $arch, machine: $machine, disks: $disks, nics: $nics, graphics: $graphics, hasSerialConsole: $hasSerialConsole)';
+  return 'LibvirtDomainXml(name: $name, uuid: $uuid, description: $description, arch: $arch, machine: $machine, disks: $disks, nics: $nics, graphics: $graphics, hasSerialConsole: $hasSerialConsole, seed: $seed)';
 }
 
 
@@ -2309,7 +2313,7 @@ abstract mixin class _$LibvirtDomainXmlCopyWith<$Res> implements $LibvirtDomainX
   factory _$LibvirtDomainXmlCopyWith(_LibvirtDomainXml value, $Res Function(_LibvirtDomainXml) _then) = __$LibvirtDomainXmlCopyWithImpl;
 @override @useResult
 $Res call({
- String? name, String? uuid, String? description, String? arch, String? machine, List<VirtDisk> disks, List<VirtNic> nics, List<VirtGraphics> graphics, bool hasSerialConsole
+ String? name, String? uuid, String? description, String? arch, String? machine, List<VirtDisk> disks, List<VirtNic> nics, List<VirtGraphics> graphics, bool hasSerialConsole, String? seed
 });
 
 
@@ -2326,7 +2330,7 @@ class __$LibvirtDomainXmlCopyWithImpl<$Res>
 
 /// Create a copy of LibvirtDomainXml
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = freezed,Object? uuid = freezed,Object? description = freezed,Object? arch = freezed,Object? machine = freezed,Object? disks = null,Object? nics = null,Object? graphics = null,Object? hasSerialConsole = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? name = freezed,Object? uuid = freezed,Object? description = freezed,Object? arch = freezed,Object? machine = freezed,Object? disks = null,Object? nics = null,Object? graphics = null,Object? hasSerialConsole = null,Object? seed = freezed,}) {
   return _then(_LibvirtDomainXml(
 name: freezed == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String?,uuid: freezed == uuid ? _self.uuid : uuid // ignore: cast_nullable_to_non_nullable
@@ -2337,7 +2341,8 @@ as String?,disks: null == disks ? _self._disks : disks // ignore: cast_nullable_
 as List<VirtDisk>,nics: null == nics ? _self._nics : nics // ignore: cast_nullable_to_non_nullable
 as List<VirtNic>,graphics: null == graphics ? _self._graphics : graphics // ignore: cast_nullable_to_non_nullable
 as List<VirtGraphics>,hasSerialConsole: null == hasSerialConsole ? _self.hasSerialConsole : hasSerialConsole // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,seed: freezed == seed ? _self.seed : seed // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -6611,7 +6616,9 @@ as int?,
 /// @nodoc
 mixin _$LibvirtHwConfig {
 
- LibvirtHwCpu get cpu; int get memoryKib; int get currentMemoryKib; List<LibvirtHwDisk> get disks; List<LibvirtHwNic> get nics; List<String> get boot; bool get balloon; bool get efi; bool get secureBoot; String? get machine; LibvirtHwGraphics? get graphics; String? get video; LibvirtHwTpm? get tpm; List<LibvirtHwHostdev> get hostdevs;
+ LibvirtHwCpu get cpu; int get memoryKib; int get currentMemoryKib; List<LibvirtHwDisk> get disks; List<LibvirtHwNic> get nics; List<String> get boot; bool get balloon; bool get efi; bool get secureBoot; String? get machine; LibvirtHwGraphics? get graphics; String? get video; LibvirtHwTpm? get tpm; List<LibvirtHwHostdev> get hostdevs;/// The domain's own cloud-init seed, as the app named it when it made
+/// the domain.
+ String? get seed;
 /// Create a copy of LibvirtHwConfig
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -6624,16 +6631,16 @@ $LibvirtHwConfigCopyWith<LibvirtHwConfig> get copyWith => _$LibvirtHwConfigCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtHwConfig&&(identical(other.cpu, cpu) || other.cpu == cpu)&&(identical(other.memoryKib, memoryKib) || other.memoryKib == memoryKib)&&(identical(other.currentMemoryKib, currentMemoryKib) || other.currentMemoryKib == currentMemoryKib)&&const DeepCollectionEquality().equals(other.disks, disks)&&const DeepCollectionEquality().equals(other.nics, nics)&&const DeepCollectionEquality().equals(other.boot, boot)&&(identical(other.balloon, balloon) || other.balloon == balloon)&&(identical(other.efi, efi) || other.efi == efi)&&(identical(other.secureBoot, secureBoot) || other.secureBoot == secureBoot)&&(identical(other.machine, machine) || other.machine == machine)&&(identical(other.graphics, graphics) || other.graphics == graphics)&&(identical(other.video, video) || other.video == video)&&(identical(other.tpm, tpm) || other.tpm == tpm)&&const DeepCollectionEquality().equals(other.hostdevs, hostdevs));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtHwConfig&&(identical(other.cpu, cpu) || other.cpu == cpu)&&(identical(other.memoryKib, memoryKib) || other.memoryKib == memoryKib)&&(identical(other.currentMemoryKib, currentMemoryKib) || other.currentMemoryKib == currentMemoryKib)&&const DeepCollectionEquality().equals(other.disks, disks)&&const DeepCollectionEquality().equals(other.nics, nics)&&const DeepCollectionEquality().equals(other.boot, boot)&&(identical(other.balloon, balloon) || other.balloon == balloon)&&(identical(other.efi, efi) || other.efi == efi)&&(identical(other.secureBoot, secureBoot) || other.secureBoot == secureBoot)&&(identical(other.machine, machine) || other.machine == machine)&&(identical(other.graphics, graphics) || other.graphics == graphics)&&(identical(other.video, video) || other.video == video)&&(identical(other.tpm, tpm) || other.tpm == tpm)&&const DeepCollectionEquality().equals(other.hostdevs, hostdevs)&&(identical(other.seed, seed) || other.seed == seed));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,cpu,memoryKib,currentMemoryKib,const DeepCollectionEquality().hash(disks),const DeepCollectionEquality().hash(nics),const DeepCollectionEquality().hash(boot),balloon,efi,secureBoot,machine,graphics,video,tpm,const DeepCollectionEquality().hash(hostdevs));
+int get hashCode => Object.hash(runtimeType,cpu,memoryKib,currentMemoryKib,const DeepCollectionEquality().hash(disks),const DeepCollectionEquality().hash(nics),const DeepCollectionEquality().hash(boot),balloon,efi,secureBoot,machine,graphics,video,tpm,const DeepCollectionEquality().hash(hostdevs),seed);
 
 @override
 String toString() {
-  return 'LibvirtHwConfig(cpu: $cpu, memoryKib: $memoryKib, currentMemoryKib: $currentMemoryKib, disks: $disks, nics: $nics, boot: $boot, balloon: $balloon, efi: $efi, secureBoot: $secureBoot, machine: $machine, graphics: $graphics, video: $video, tpm: $tpm, hostdevs: $hostdevs)';
+  return 'LibvirtHwConfig(cpu: $cpu, memoryKib: $memoryKib, currentMemoryKib: $currentMemoryKib, disks: $disks, nics: $nics, boot: $boot, balloon: $balloon, efi: $efi, secureBoot: $secureBoot, machine: $machine, graphics: $graphics, video: $video, tpm: $tpm, hostdevs: $hostdevs, seed: $seed)';
 }
 
 
@@ -6644,7 +6651,7 @@ abstract mixin class $LibvirtHwConfigCopyWith<$Res>  {
   factory $LibvirtHwConfigCopyWith(LibvirtHwConfig value, $Res Function(LibvirtHwConfig) _then) = _$LibvirtHwConfigCopyWithImpl;
 @useResult
 $Res call({
- LibvirtHwCpu cpu, int memoryKib, int currentMemoryKib, List<LibvirtHwDisk> disks, List<LibvirtHwNic> nics, List<String> boot, bool balloon, bool efi, bool secureBoot, String? machine, LibvirtHwGraphics? graphics, String? video, LibvirtHwTpm? tpm, List<LibvirtHwHostdev> hostdevs
+ LibvirtHwCpu cpu, int memoryKib, int currentMemoryKib, List<LibvirtHwDisk> disks, List<LibvirtHwNic> nics, List<String> boot, bool balloon, bool efi, bool secureBoot, String? machine, LibvirtHwGraphics? graphics, String? video, LibvirtHwTpm? tpm, List<LibvirtHwHostdev> hostdevs, String? seed
 });
 
 
@@ -6661,7 +6668,7 @@ class _$LibvirtHwConfigCopyWithImpl<$Res>
 
 /// Create a copy of LibvirtHwConfig
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? cpu = null,Object? memoryKib = null,Object? currentMemoryKib = null,Object? disks = null,Object? nics = null,Object? boot = null,Object? balloon = null,Object? efi = null,Object? secureBoot = null,Object? machine = freezed,Object? graphics = freezed,Object? video = freezed,Object? tpm = freezed,Object? hostdevs = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? cpu = null,Object? memoryKib = null,Object? currentMemoryKib = null,Object? disks = null,Object? nics = null,Object? boot = null,Object? balloon = null,Object? efi = null,Object? secureBoot = null,Object? machine = freezed,Object? graphics = freezed,Object? video = freezed,Object? tpm = freezed,Object? hostdevs = null,Object? seed = freezed,}) {
   return _then(_self.copyWith(
 cpu: null == cpu ? _self.cpu : cpu // ignore: cast_nullable_to_non_nullable
 as LibvirtHwCpu,memoryKib: null == memoryKib ? _self.memoryKib : memoryKib // ignore: cast_nullable_to_non_nullable
@@ -6677,7 +6684,8 @@ as String?,graphics: freezed == graphics ? _self.graphics : graphics // ignore: 
 as LibvirtHwGraphics?,video: freezed == video ? _self.video : video // ignore: cast_nullable_to_non_nullable
 as String?,tpm: freezed == tpm ? _self.tpm : tpm // ignore: cast_nullable_to_non_nullable
 as LibvirtHwTpm?,hostdevs: null == hostdevs ? _self.hostdevs : hostdevs // ignore: cast_nullable_to_non_nullable
-as List<LibvirtHwHostdev>,
+as List<LibvirtHwHostdev>,seed: freezed == seed ? _self.seed : seed // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 /// Create a copy of LibvirtHwConfig
@@ -6795,10 +6803,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( LibvirtHwCpu cpu,  int memoryKib,  int currentMemoryKib,  List<LibvirtHwDisk> disks,  List<LibvirtHwNic> nics,  List<String> boot,  bool balloon,  bool efi,  bool secureBoot,  String? machine,  LibvirtHwGraphics? graphics,  String? video,  LibvirtHwTpm? tpm,  List<LibvirtHwHostdev> hostdevs)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( LibvirtHwCpu cpu,  int memoryKib,  int currentMemoryKib,  List<LibvirtHwDisk> disks,  List<LibvirtHwNic> nics,  List<String> boot,  bool balloon,  bool efi,  bool secureBoot,  String? machine,  LibvirtHwGraphics? graphics,  String? video,  LibvirtHwTpm? tpm,  List<LibvirtHwHostdev> hostdevs,  String? seed)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _LibvirtHwConfig() when $default != null:
-return $default(_that.cpu,_that.memoryKib,_that.currentMemoryKib,_that.disks,_that.nics,_that.boot,_that.balloon,_that.efi,_that.secureBoot,_that.machine,_that.graphics,_that.video,_that.tpm,_that.hostdevs);case _:
+return $default(_that.cpu,_that.memoryKib,_that.currentMemoryKib,_that.disks,_that.nics,_that.boot,_that.balloon,_that.efi,_that.secureBoot,_that.machine,_that.graphics,_that.video,_that.tpm,_that.hostdevs,_that.seed);case _:
   return orElse();
 
 }
@@ -6816,10 +6824,10 @@ return $default(_that.cpu,_that.memoryKib,_that.currentMemoryKib,_that.disks,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( LibvirtHwCpu cpu,  int memoryKib,  int currentMemoryKib,  List<LibvirtHwDisk> disks,  List<LibvirtHwNic> nics,  List<String> boot,  bool balloon,  bool efi,  bool secureBoot,  String? machine,  LibvirtHwGraphics? graphics,  String? video,  LibvirtHwTpm? tpm,  List<LibvirtHwHostdev> hostdevs)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( LibvirtHwCpu cpu,  int memoryKib,  int currentMemoryKib,  List<LibvirtHwDisk> disks,  List<LibvirtHwNic> nics,  List<String> boot,  bool balloon,  bool efi,  bool secureBoot,  String? machine,  LibvirtHwGraphics? graphics,  String? video,  LibvirtHwTpm? tpm,  List<LibvirtHwHostdev> hostdevs,  String? seed)  $default,) {final _that = this;
 switch (_that) {
 case _LibvirtHwConfig():
-return $default(_that.cpu,_that.memoryKib,_that.currentMemoryKib,_that.disks,_that.nics,_that.boot,_that.balloon,_that.efi,_that.secureBoot,_that.machine,_that.graphics,_that.video,_that.tpm,_that.hostdevs);case _:
+return $default(_that.cpu,_that.memoryKib,_that.currentMemoryKib,_that.disks,_that.nics,_that.boot,_that.balloon,_that.efi,_that.secureBoot,_that.machine,_that.graphics,_that.video,_that.tpm,_that.hostdevs,_that.seed);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -6836,10 +6844,10 @@ return $default(_that.cpu,_that.memoryKib,_that.currentMemoryKib,_that.disks,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( LibvirtHwCpu cpu,  int memoryKib,  int currentMemoryKib,  List<LibvirtHwDisk> disks,  List<LibvirtHwNic> nics,  List<String> boot,  bool balloon,  bool efi,  bool secureBoot,  String? machine,  LibvirtHwGraphics? graphics,  String? video,  LibvirtHwTpm? tpm,  List<LibvirtHwHostdev> hostdevs)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( LibvirtHwCpu cpu,  int memoryKib,  int currentMemoryKib,  List<LibvirtHwDisk> disks,  List<LibvirtHwNic> nics,  List<String> boot,  bool balloon,  bool efi,  bool secureBoot,  String? machine,  LibvirtHwGraphics? graphics,  String? video,  LibvirtHwTpm? tpm,  List<LibvirtHwHostdev> hostdevs,  String? seed)?  $default,) {final _that = this;
 switch (_that) {
 case _LibvirtHwConfig() when $default != null:
-return $default(_that.cpu,_that.memoryKib,_that.currentMemoryKib,_that.disks,_that.nics,_that.boot,_that.balloon,_that.efi,_that.secureBoot,_that.machine,_that.graphics,_that.video,_that.tpm,_that.hostdevs);case _:
+return $default(_that.cpu,_that.memoryKib,_that.currentMemoryKib,_that.disks,_that.nics,_that.boot,_that.balloon,_that.efi,_that.secureBoot,_that.machine,_that.graphics,_that.video,_that.tpm,_that.hostdevs,_that.seed);case _:
   return null;
 
 }
@@ -6851,7 +6859,7 @@ return $default(_that.cpu,_that.memoryKib,_that.currentMemoryKib,_that.disks,_th
 
 @JsonSerializable(fieldRename: FieldRename.snake)
 class _LibvirtHwConfig implements LibvirtHwConfig {
-  const _LibvirtHwConfig({required this.cpu, required this.memoryKib, required this.currentMemoryKib, final  List<LibvirtHwDisk> disks = const <LibvirtHwDisk>[], final  List<LibvirtHwNic> nics = const <LibvirtHwNic>[], final  List<String> boot = const <String>[], this.balloon = false, this.efi = false, this.secureBoot = false, this.machine, this.graphics, this.video, this.tpm, final  List<LibvirtHwHostdev> hostdevs = const <LibvirtHwHostdev>[]}): _disks = disks,_nics = nics,_boot = boot,_hostdevs = hostdevs;
+  const _LibvirtHwConfig({required this.cpu, required this.memoryKib, required this.currentMemoryKib, final  List<LibvirtHwDisk> disks = const <LibvirtHwDisk>[], final  List<LibvirtHwNic> nics = const <LibvirtHwNic>[], final  List<String> boot = const <String>[], this.balloon = false, this.efi = false, this.secureBoot = false, this.machine, this.graphics, this.video, this.tpm, final  List<LibvirtHwHostdev> hostdevs = const <LibvirtHwHostdev>[], this.seed}): _disks = disks,_nics = nics,_boot = boot,_hostdevs = hostdevs;
   factory _LibvirtHwConfig.fromJson(Map<String, dynamic> json) => _$LibvirtHwConfigFromJson(json);
 
 @override final  LibvirtHwCpu cpu;
@@ -6892,6 +6900,9 @@ class _LibvirtHwConfig implements LibvirtHwConfig {
   return EqualUnmodifiableListView(_hostdevs);
 }
 
+/// The domain's own cloud-init seed, as the app named it when it made
+/// the domain.
+@override final  String? seed;
 
 /// Create a copy of LibvirtHwConfig
 /// with the given fields replaced by the non-null parameter values.
@@ -6906,16 +6917,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtHwConfig&&(identical(other.cpu, cpu) || other.cpu == cpu)&&(identical(other.memoryKib, memoryKib) || other.memoryKib == memoryKib)&&(identical(other.currentMemoryKib, currentMemoryKib) || other.currentMemoryKib == currentMemoryKib)&&const DeepCollectionEquality().equals(other._disks, _disks)&&const DeepCollectionEquality().equals(other._nics, _nics)&&const DeepCollectionEquality().equals(other._boot, _boot)&&(identical(other.balloon, balloon) || other.balloon == balloon)&&(identical(other.efi, efi) || other.efi == efi)&&(identical(other.secureBoot, secureBoot) || other.secureBoot == secureBoot)&&(identical(other.machine, machine) || other.machine == machine)&&(identical(other.graphics, graphics) || other.graphics == graphics)&&(identical(other.video, video) || other.video == video)&&(identical(other.tpm, tpm) || other.tpm == tpm)&&const DeepCollectionEquality().equals(other._hostdevs, _hostdevs));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtHwConfig&&(identical(other.cpu, cpu) || other.cpu == cpu)&&(identical(other.memoryKib, memoryKib) || other.memoryKib == memoryKib)&&(identical(other.currentMemoryKib, currentMemoryKib) || other.currentMemoryKib == currentMemoryKib)&&const DeepCollectionEquality().equals(other._disks, _disks)&&const DeepCollectionEquality().equals(other._nics, _nics)&&const DeepCollectionEquality().equals(other._boot, _boot)&&(identical(other.balloon, balloon) || other.balloon == balloon)&&(identical(other.efi, efi) || other.efi == efi)&&(identical(other.secureBoot, secureBoot) || other.secureBoot == secureBoot)&&(identical(other.machine, machine) || other.machine == machine)&&(identical(other.graphics, graphics) || other.graphics == graphics)&&(identical(other.video, video) || other.video == video)&&(identical(other.tpm, tpm) || other.tpm == tpm)&&const DeepCollectionEquality().equals(other._hostdevs, _hostdevs)&&(identical(other.seed, seed) || other.seed == seed));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,cpu,memoryKib,currentMemoryKib,const DeepCollectionEquality().hash(_disks),const DeepCollectionEquality().hash(_nics),const DeepCollectionEquality().hash(_boot),balloon,efi,secureBoot,machine,graphics,video,tpm,const DeepCollectionEquality().hash(_hostdevs));
+int get hashCode => Object.hash(runtimeType,cpu,memoryKib,currentMemoryKib,const DeepCollectionEquality().hash(_disks),const DeepCollectionEquality().hash(_nics),const DeepCollectionEquality().hash(_boot),balloon,efi,secureBoot,machine,graphics,video,tpm,const DeepCollectionEquality().hash(_hostdevs),seed);
 
 @override
 String toString() {
-  return 'LibvirtHwConfig(cpu: $cpu, memoryKib: $memoryKib, currentMemoryKib: $currentMemoryKib, disks: $disks, nics: $nics, boot: $boot, balloon: $balloon, efi: $efi, secureBoot: $secureBoot, machine: $machine, graphics: $graphics, video: $video, tpm: $tpm, hostdevs: $hostdevs)';
+  return 'LibvirtHwConfig(cpu: $cpu, memoryKib: $memoryKib, currentMemoryKib: $currentMemoryKib, disks: $disks, nics: $nics, boot: $boot, balloon: $balloon, efi: $efi, secureBoot: $secureBoot, machine: $machine, graphics: $graphics, video: $video, tpm: $tpm, hostdevs: $hostdevs, seed: $seed)';
 }
 
 
@@ -6926,7 +6937,7 @@ abstract mixin class _$LibvirtHwConfigCopyWith<$Res> implements $LibvirtHwConfig
   factory _$LibvirtHwConfigCopyWith(_LibvirtHwConfig value, $Res Function(_LibvirtHwConfig) _then) = __$LibvirtHwConfigCopyWithImpl;
 @override @useResult
 $Res call({
- LibvirtHwCpu cpu, int memoryKib, int currentMemoryKib, List<LibvirtHwDisk> disks, List<LibvirtHwNic> nics, List<String> boot, bool balloon, bool efi, bool secureBoot, String? machine, LibvirtHwGraphics? graphics, String? video, LibvirtHwTpm? tpm, List<LibvirtHwHostdev> hostdevs
+ LibvirtHwCpu cpu, int memoryKib, int currentMemoryKib, List<LibvirtHwDisk> disks, List<LibvirtHwNic> nics, List<String> boot, bool balloon, bool efi, bool secureBoot, String? machine, LibvirtHwGraphics? graphics, String? video, LibvirtHwTpm? tpm, List<LibvirtHwHostdev> hostdevs, String? seed
 });
 
 
@@ -6943,7 +6954,7 @@ class __$LibvirtHwConfigCopyWithImpl<$Res>
 
 /// Create a copy of LibvirtHwConfig
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? cpu = null,Object? memoryKib = null,Object? currentMemoryKib = null,Object? disks = null,Object? nics = null,Object? boot = null,Object? balloon = null,Object? efi = null,Object? secureBoot = null,Object? machine = freezed,Object? graphics = freezed,Object? video = freezed,Object? tpm = freezed,Object? hostdevs = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? cpu = null,Object? memoryKib = null,Object? currentMemoryKib = null,Object? disks = null,Object? nics = null,Object? boot = null,Object? balloon = null,Object? efi = null,Object? secureBoot = null,Object? machine = freezed,Object? graphics = freezed,Object? video = freezed,Object? tpm = freezed,Object? hostdevs = null,Object? seed = freezed,}) {
   return _then(_LibvirtHwConfig(
 cpu: null == cpu ? _self.cpu : cpu // ignore: cast_nullable_to_non_nullable
 as LibvirtHwCpu,memoryKib: null == memoryKib ? _self.memoryKib : memoryKib // ignore: cast_nullable_to_non_nullable
@@ -6959,7 +6970,8 @@ as String?,graphics: freezed == graphics ? _self.graphics : graphics // ignore: 
 as LibvirtHwGraphics?,video: freezed == video ? _self.video : video // ignore: cast_nullable_to_non_nullable
 as String?,tpm: freezed == tpm ? _self.tpm : tpm // ignore: cast_nullable_to_non_nullable
 as LibvirtHwTpm?,hostdevs: null == hostdevs ? _self._hostdevs : hostdevs // ignore: cast_nullable_to_non_nullable
-as List<LibvirtHwHostdev>,
+as List<LibvirtHwHostdev>,seed: freezed == seed ? _self.seed : seed // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -8109,6 +8121,310 @@ as bool,
 }
 
 
+}
+
+
+/// @nodoc
+mixin _$LibvirtCreateHost {
+
+ String get domainType; String get machine; String get arch; int? get maxVcpus; LibvirtHwCaps? get caps;/// The ISO tool a cloud-init seed is made with; null: none there.
+ String? get seedTool;
+/// Create a copy of LibvirtCreateHost
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$LibvirtCreateHostCopyWith<LibvirtCreateHost> get copyWith => _$LibvirtCreateHostCopyWithImpl<LibvirtCreateHost>(this as LibvirtCreateHost, _$identity);
+
+  /// Serializes this LibvirtCreateHost to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtCreateHost&&(identical(other.domainType, domainType) || other.domainType == domainType)&&(identical(other.machine, machine) || other.machine == machine)&&(identical(other.arch, arch) || other.arch == arch)&&(identical(other.maxVcpus, maxVcpus) || other.maxVcpus == maxVcpus)&&(identical(other.caps, caps) || other.caps == caps)&&(identical(other.seedTool, seedTool) || other.seedTool == seedTool));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,domainType,machine,arch,maxVcpus,caps,seedTool);
+
+@override
+String toString() {
+  return 'LibvirtCreateHost(domainType: $domainType, machine: $machine, arch: $arch, maxVcpus: $maxVcpus, caps: $caps, seedTool: $seedTool)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $LibvirtCreateHostCopyWith<$Res>  {
+  factory $LibvirtCreateHostCopyWith(LibvirtCreateHost value, $Res Function(LibvirtCreateHost) _then) = _$LibvirtCreateHostCopyWithImpl;
+@useResult
+$Res call({
+ String domainType, String machine, String arch, int? maxVcpus, LibvirtHwCaps? caps, String? seedTool
+});
+
+
+$LibvirtHwCapsCopyWith<$Res>? get caps;
+
+}
+/// @nodoc
+class _$LibvirtCreateHostCopyWithImpl<$Res>
+    implements $LibvirtCreateHostCopyWith<$Res> {
+  _$LibvirtCreateHostCopyWithImpl(this._self, this._then);
+
+  final LibvirtCreateHost _self;
+  final $Res Function(LibvirtCreateHost) _then;
+
+/// Create a copy of LibvirtCreateHost
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? domainType = null,Object? machine = null,Object? arch = null,Object? maxVcpus = freezed,Object? caps = freezed,Object? seedTool = freezed,}) {
+  return _then(_self.copyWith(
+domainType: null == domainType ? _self.domainType : domainType // ignore: cast_nullable_to_non_nullable
+as String,machine: null == machine ? _self.machine : machine // ignore: cast_nullable_to_non_nullable
+as String,arch: null == arch ? _self.arch : arch // ignore: cast_nullable_to_non_nullable
+as String,maxVcpus: freezed == maxVcpus ? _self.maxVcpus : maxVcpus // ignore: cast_nullable_to_non_nullable
+as int?,caps: freezed == caps ? _self.caps : caps // ignore: cast_nullable_to_non_nullable
+as LibvirtHwCaps?,seedTool: freezed == seedTool ? _self.seedTool : seedTool // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+/// Create a copy of LibvirtCreateHost
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$LibvirtHwCapsCopyWith<$Res>? get caps {
+    if (_self.caps == null) {
+    return null;
+  }
+
+  return $LibvirtHwCapsCopyWith<$Res>(_self.caps!, (value) {
+    return _then(_self.copyWith(caps: value));
+  });
+}
+}
+
+
+/// Adds pattern-matching-related methods to [LibvirtCreateHost].
+extension LibvirtCreateHostPatterns on LibvirtCreateHost {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _LibvirtCreateHost value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _LibvirtCreateHost() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _LibvirtCreateHost value)  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtCreateHost():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _LibvirtCreateHost value)?  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtCreateHost() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String domainType,  String machine,  String arch,  int? maxVcpus,  LibvirtHwCaps? caps,  String? seedTool)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _LibvirtCreateHost() when $default != null:
+return $default(_that.domainType,_that.machine,_that.arch,_that.maxVcpus,_that.caps,_that.seedTool);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String domainType,  String machine,  String arch,  int? maxVcpus,  LibvirtHwCaps? caps,  String? seedTool)  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtCreateHost():
+return $default(_that.domainType,_that.machine,_that.arch,_that.maxVcpus,_that.caps,_that.seedTool);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String domainType,  String machine,  String arch,  int? maxVcpus,  LibvirtHwCaps? caps,  String? seedTool)?  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtCreateHost() when $default != null:
+return $default(_that.domainType,_that.machine,_that.arch,_that.maxVcpus,_that.caps,_that.seedTool);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class _LibvirtCreateHost implements LibvirtCreateHost {
+  const _LibvirtCreateHost({this.domainType = '', this.machine = '', this.arch = '', this.maxVcpus, this.caps, this.seedTool});
+  factory _LibvirtCreateHost.fromJson(Map<String, dynamic> json) => _$LibvirtCreateHostFromJson(json);
+
+@override@JsonKey() final  String domainType;
+@override@JsonKey() final  String machine;
+@override@JsonKey() final  String arch;
+@override final  int? maxVcpus;
+@override final  LibvirtHwCaps? caps;
+/// The ISO tool a cloud-init seed is made with; null: none there.
+@override final  String? seedTool;
+
+/// Create a copy of LibvirtCreateHost
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$LibvirtCreateHostCopyWith<_LibvirtCreateHost> get copyWith => __$LibvirtCreateHostCopyWithImpl<_LibvirtCreateHost>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$LibvirtCreateHostToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtCreateHost&&(identical(other.domainType, domainType) || other.domainType == domainType)&&(identical(other.machine, machine) || other.machine == machine)&&(identical(other.arch, arch) || other.arch == arch)&&(identical(other.maxVcpus, maxVcpus) || other.maxVcpus == maxVcpus)&&(identical(other.caps, caps) || other.caps == caps)&&(identical(other.seedTool, seedTool) || other.seedTool == seedTool));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,domainType,machine,arch,maxVcpus,caps,seedTool);
+
+@override
+String toString() {
+  return 'LibvirtCreateHost(domainType: $domainType, machine: $machine, arch: $arch, maxVcpus: $maxVcpus, caps: $caps, seedTool: $seedTool)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$LibvirtCreateHostCopyWith<$Res> implements $LibvirtCreateHostCopyWith<$Res> {
+  factory _$LibvirtCreateHostCopyWith(_LibvirtCreateHost value, $Res Function(_LibvirtCreateHost) _then) = __$LibvirtCreateHostCopyWithImpl;
+@override @useResult
+$Res call({
+ String domainType, String machine, String arch, int? maxVcpus, LibvirtHwCaps? caps, String? seedTool
+});
+
+
+@override $LibvirtHwCapsCopyWith<$Res>? get caps;
+
+}
+/// @nodoc
+class __$LibvirtCreateHostCopyWithImpl<$Res>
+    implements _$LibvirtCreateHostCopyWith<$Res> {
+  __$LibvirtCreateHostCopyWithImpl(this._self, this._then);
+
+  final _LibvirtCreateHost _self;
+  final $Res Function(_LibvirtCreateHost) _then;
+
+/// Create a copy of LibvirtCreateHost
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? domainType = null,Object? machine = null,Object? arch = null,Object? maxVcpus = freezed,Object? caps = freezed,Object? seedTool = freezed,}) {
+  return _then(_LibvirtCreateHost(
+domainType: null == domainType ? _self.domainType : domainType // ignore: cast_nullable_to_non_nullable
+as String,machine: null == machine ? _self.machine : machine // ignore: cast_nullable_to_non_nullable
+as String,arch: null == arch ? _self.arch : arch // ignore: cast_nullable_to_non_nullable
+as String,maxVcpus: freezed == maxVcpus ? _self.maxVcpus : maxVcpus // ignore: cast_nullable_to_non_nullable
+as int?,caps: freezed == caps ? _self.caps : caps // ignore: cast_nullable_to_non_nullable
+as LibvirtHwCaps?,seedTool: freezed == seedTool ? _self.seedTool : seedTool // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+/// Create a copy of LibvirtCreateHost
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$LibvirtHwCapsCopyWith<$Res>? get caps {
+    if (_self.caps == null) {
+    return null;
+  }
+
+  return $LibvirtHwCapsCopyWith<$Res>(_self.caps!, (value) {
+    return _then(_self.copyWith(caps: value));
+  });
+}
 }
 
 

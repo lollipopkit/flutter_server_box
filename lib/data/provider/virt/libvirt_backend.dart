@@ -285,11 +285,7 @@ class LibvirtBackend implements VirtBackend {
 
   @override
   Future<VirtGuestDetail> detail(VirtGuest guest) async {
-    final json = await _run(
-      ffi.virtDomainDetailScript(domain: guest.id),
-      ffi.parseVirtDomainDetailJson,
-    );
-    final d = LibvirtDomainDetail.fromJson(_decode(json));
+    final d = await _domainDetail(guest);
     final xml = d.xml;
     final vnc =
         d.display?.protocol == 'vnc' ||
@@ -308,6 +304,16 @@ class LibvirtBackend implements VirtBackend {
       machine: xml.machine,
     );
   }
+
+  Future<LibvirtDomainDetail> _domainDetail(VirtGuest guest) async =>
+      LibvirtDomainDetail.fromJson(
+        _decode(
+          await _run(
+            ffi.virtDomainDetailScript(domain: guest.id),
+            ffi.parseVirtDomainDetailJson,
+          ),
+        ),
+      );
 
   @override
   Future<VirtConsole> console(VirtGuest guest, VirtConsoleKind kind) async {
@@ -437,26 +443,71 @@ class LibvirtBackend implements VirtBackend {
   @override
   Future<int?> nextVmid() async => null;
 
+  /// From `domcapabilities` for the machine a new domain gets (KVM and q35
+  /// where the host has them): the buses it has (q35: no IDE), UEFI where
+  /// OVMF is installed, a TPM where swtpm is; and whether the host has a
+  /// tool to make a cloud-init seed with. A cloud image is a
+  /// `vol-create-from` away on any host.
+  @override
+  Future<VirtCreateOptions> createOptions() async {
+    final host = LibvirtCreateHost.fromJson(
+      _decode(await _run(ffi.virtCreateHostScript(), ffi.parseVirtCreateHostJson)),
+    );
+    final caps = host.caps;
+    final buses = [
+      for (final b in virtCreateBuses)
+        if (caps == null
+            ? b == 'virtio' || b == 'sata'
+            : caps.diskBuses.contains(b) &&
+                  !(b == 'ide' && host.machine.contains('q35')))
+          b,
+    ];
+    return VirtCreateOptions(
+      buses: buses,
+      nicModels: virtCreateNicModels,
+      uefi: caps?.efi ?? false,
+      tpm: caps?.tpmEmulator ?? false,
+      cloudImages: true,
+      cloudInit: host.seedTool != null,
+      cloudInitMissing: host.seedTool == null
+          ? 'genisoimage, xorriso, mkisofs, cloud-localds'
+          : null,
+    );
+  }
+
   /// Three round trips: what the host runs a domain as (`domcapabilities`:
-  /// KVM and q35 where it can), the disk and its path, then the domain on
-  /// that path — defined, and started when asked. A define the host refuses
-  /// deletes the disk again. See `sbm_parser::virt::create_volume_script`.
+  /// KVM and q35 where it can), the disk — empty, or a copy of a cloud image
+  /// — and a cloud-init seed, with their paths, then the domain on them —
+  /// defined, and started when asked. A define the host refuses deletes the
+  /// volumes again. See `sbm_parser::virt::create_volume_script`.
+  ///
+  /// A cloud-init password is hashed here (SHA-512 crypt, a salt from
+  /// `Random.secure`): only the hash reaches the host.
   @override
   Future<VirtCreated> create(VirtCreateSpec spec) async {
     if (spec.kind != VirtGuestKind.qemu) {
       throw const VirtErr(type: VirtErrType.unsupported);
     }
-    final media = spec.media;
-    final mediaPath = media?.path;
-    if (media != null && mediaPath == null) {
-      throw VirtErr(
-        type: VirtErrType.invalidResponse,
-        message: 'No path for ${media.name}',
-      );
-    }
+    String pathOf(VirtVolume v) =>
+        v.path ??
+        (throw VirtErr(
+          type: VirtErrType.invalidResponse,
+          message: 'No path for ${v.name}',
+        ));
+    final mediaPath = switch (spec.media) {
+      final m? => pathOf(m),
+      null => null,
+    };
+    final imagePath = switch (spec.image) {
+      final i? => pathOf(i),
+      null => null,
+    };
     final host = _decode(
       await _run(ffi.virtCreateHostScript(), ffi.parseVirtCreateHostJson),
     );
+    final ci = spec.cloudInit;
+    // The NIC's MAC is chosen here when cloud-init finds the NIC by it.
+    final mac = ci != null && spec.network != null ? _newMac() : null;
     final json = <String, Object?>{
       'name': spec.name,
       'vcpus': spec.cores,
@@ -466,21 +517,32 @@ class LibvirtBackend implements VirtBackend {
       'disk_gib': spec.diskGiB,
       'disk_format': virtLibvirtDiskFormat(spec.storage.type),
       'disk_path': null,
+      'base_image': imagePath,
+      'disk_bus': spec.bus,
       'cdrom': mediaPath,
       'network': spec.network?.name,
+      'nic_model': spec.nicModel,
+      'mac': mac,
+      'efi': spec.uefi,
+      'tpm': spec.tpm,
+      'cloud_init': ci == null ? null : cloudInitJson(spec, ci, mac: mac),
+      'seed_path': null,
       'start': spec.start,
     };
-    final String path;
+    final Map<String, dynamic> made;
     try {
-      path = await _run(
-        _script(() => ffi.virtCreateVolumeScript(specJson: jsonEncode(json))),
-        ffi.parseVirtCreateVolume,
-        action: true,
+      made = _decode(
+        await _run(
+          _script(() => ffi.virtCreateVolumeScript(specJson: jsonEncode(json))),
+          ffi.parseVirtCreateVolumesJson,
+          action: true,
+        ),
       );
     } on VirtErr catch (e) {
       throw _existsOr(e);
     }
-    json['disk_path'] = path;
+    json['disk_path'] = made['disk_path'];
+    json['seed_path'] = made['seed_path'];
     final created = _decode(
       await _run(
         _script(() => ffi.virtDefineScript(specJson: jsonEncode(json))),
@@ -495,10 +557,53 @@ class LibvirtBackend implements VirtBackend {
     );
   }
 
+  /// [ci] as `sbm_parser::virt_cloud_init::VirtCloudInit` JSON: the password
+  /// as its SHA-512 crypt hash, the hostname the domain's name where none
+  /// was given, a new instance id, and the NIC by [mac].
+  @visibleForTesting
+  static Map<String, Object?> cloudInitJson(
+    VirtCreateSpec spec,
+    VirtCloudInit ci, {
+    required String? mac,
+    Random? random,
+  }) {
+    final r = random ?? Random.secure();
+    const alphabet =
+        './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    final salt = String.fromCharCodes([
+      for (var i = 0; i < 16; i++) alphabet.codeUnitAt(r.nextInt(64)),
+    ]);
+    final password = ci.password ?? '';
+    final hex = [
+      for (var i = 0; i < 4; i++) r.nextInt(256).toRadixString(16).padLeft(2, '0'),
+    ].join();
+    final address = ci.address;
+    return {
+      'user': ci.user,
+      'password_hash': password.isEmpty
+          ? null
+          : _script(() => ffi.virtHashPassword(password: password, salt: salt)),
+      'ssh_keys': ci.keys,
+      'hostname': ci.hostname ?? spec.name,
+      'instance_id': 'iid-${spec.name.replaceAll(RegExp('[^A-Za-z0-9._-]'), '-')}-$hex',
+      'network': mac == null
+          ? null
+          : {
+              'mac': mac,
+              'ipv4': address == null
+                  ? null
+                  : {'address': address, 'gateway': ci.gateway},
+              'dns': ci.dns,
+              'search': [?ci.searchDomain],
+            },
+    };
+  }
+
   /// Snapshots' metadata and a managed save go with it; with [removeDisks]
-  /// the volumes of its writable disks and its NVRAM too — not a CD-ROM or a
-  /// read-only disk, which are install media or shared. Refused while it
-  /// runs: `undefine` would leave it running, transient.
+  /// the volumes of its writable disks, its NVRAM and its own cloud-init
+  /// seed too — not a CD-ROM's image or a read-only disk, which are install
+  /// media or shared. Refused while it runs: `undefine` would leave it
+  /// running, transient.
   @override
   Future<void> delete(VirtGuest guest, {bool removeDisks = true}) async {
     if (guest.state != VirtGuestState.stopped) {
@@ -508,19 +613,30 @@ class LibvirtBackend implements VirtBackend {
       );
     }
     final targets = <String>[];
+    String? seed;
     if (removeDisks) {
-      final detail = await this.detail(guest);
-      for (final d in detail.disks) {
+      final xml = (await _domainDetail(guest)).xml;
+      for (final d in xml.disks) {
         final target = d.target;
         if (d.device == 'disk' && !d.readonly && target != null) {
           targets.add(target);
         }
       }
+      seed = xml.seed;
     }
-    await _action1(
+    await _run(
       _script(
-        () => ffi.virtUndefineScript(domain: guest.id, storage: targets),
+        () => ffi.virtUndefineScript(
+          domain: guest.id,
+          storage: targets,
+          seed: seed,
+        ),
       ),
+      ({required String raw}) async {
+        ffi.parseVirtUndefine(raw: raw);
+        return '';
+      },
+      action: true,
     );
   }
 
@@ -1213,6 +1329,8 @@ class LibvirtBackend implements VirtBackend {
               format: d.format,
               readonly: d.readonly,
               cache: d.cache,
+              cloudInit:
+                  d.device == 'cdrom' && c.seed != null && d.source == c.seed,
             ),
       ],
       nics: [
@@ -1546,6 +1664,26 @@ class LibvirtBackend implements VirtBackend {
           'delete_path': deletable ? disk.source : null,
           'config': diskIn(config, key) != null,
           'live': diskIn(live, key) != null,
+        };
+      case VirtHwAddCdrom(:final media):
+        final taken = {
+          for (final d in [...config.disks, ...?live?.disks]) d.target,
+        };
+        // Where the machine has a controller for one: SATA on q35, IDE on
+        // `pc`.
+        final bus = (config.machine ?? '').contains('q35') ? 'sata' : 'ide';
+        final path = media?.path;
+        if (media != null && path == null) {
+          throw VirtErr(
+            type: VirtErrType.unsupported,
+            message: 'No path for ${media.name}',
+          );
+        }
+        return {
+          'op': 'add_cdrom',
+          'target': _freeTarget(_busPrefix(bus), taken),
+          'bus': bus,
+          'source': path,
         };
       case VirtHwSetMedia(:final key, :final media):
         final path = media?.path;
