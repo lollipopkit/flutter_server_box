@@ -24,7 +24,6 @@ import 'package:server_box/data/provider/ai/agent_scope.dart';
 import 'package:server_box/data/provider/ai/agent_session.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/app/terminal_shell.dart';
-import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/provider/virtual_keyboard.dart';
 import 'package:server_box/data/res/store.dart';
@@ -37,6 +36,7 @@ import 'package:server_box/data/ssh/tmux/tmux_export.dart';
 import 'package:server_box/view/page/agent/history.dart';
 import 'package:server_box/view/page/ssh/ask_ai_layout.dart';
 import 'package:server_box/view/page/ssh/page/virt_key_intro.dart';
+import 'package:server_box/view/page/ssh/present_server.dart';
 import 'package:server_box/view/page/storage/server_file.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:server_box/view/widget/agent_common.dart';
@@ -430,13 +430,12 @@ class SSHPageState extends ConsumerState<SSHPage>
     // Adopt whatever the provider already has, so a server that is connected
     // for status does not connect a second time just to show a terminal. This
     // device has nothing to adopt, and nothing to ask a provider about.
+    // A server deleted since the tab opened has nothing either.
     final serverId = widget.args.spi?.id;
-    if (serverId == null) {
-      _sess.adopt(null);
-    } else {
-      final serverState = ref.read(serverProvider(serverId));
-      _sess.adopt(serverState.client, granted: serverState.remoteAccess);
-    }
+    final serverState = serverId == null
+        ? null
+        : ref.readPresentServer(serverId);
+    _sess.adopt(serverState?.client, granted: serverState?.remoteAccess);
     _sess.onForegroundDone = _onForegroundSessionDone;
 
     if (++_sshConnCount == 1) {

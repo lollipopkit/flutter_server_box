@@ -244,7 +244,7 @@ extension _AI on _AppSettingsPageState {
       final current = config.contextOverrideFor(baseUrl, model);
       if (current > 0) ctrl.text = '$current';
 
-      void onSave() {
+      void onSave(BuildContext dialog) {
         final parsed = int.tryParse(ctrl.text.trim()) ?? 0;
         unawaited(
           _persist(
@@ -255,12 +255,14 @@ extension _AI on _AppSettingsPageState {
             ),
           ),
         );
-        context.popDialog();
+        dialog.pop();
       }
 
+      // Closed through the dialog's own context: the settings page can be
+      // gone by the time a button is pressed, and its context with it.
       await context.showRoundDialog(
         title: l10n.askAiContextTokens,
-        child: Column(
+        childBuilder: (dialog) => Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -271,7 +273,7 @@ extension _AI on _AppSettingsPageState {
               label: l10n.askAiContextTokens,
               hint: '0',
               icon: Icons.edit,
-              onSubmitted: (_) => onSave(),
+              onSubmitted: (_) => onSave(dialog),
             ),
             const SizedBox(height: 8),
             // Which pair this is about. The dialog is reached from a row that
@@ -281,9 +283,12 @@ extension _AI on _AppSettingsPageState {
             Text(l10n.askAiContextTokensTip, style: UIs.textGrey),
           ],
         ),
-        actions: [
-          TextButton(onPressed: context.popDialog, child: Text(libL10n.cancel)),
-          TextButton(onPressed: onSave, child: Text(libL10n.ok)),
+        actionsBuilder: (dialog) => [
+          TextButton(onPressed: dialog.pop, child: Text(libL10n.cancel)),
+          TextButton(
+            onPressed: () => onSave(dialog),
+            child: Text(libL10n.ok),
+          ),
         ],
       );
     });
@@ -367,17 +372,17 @@ extension _AI on _AppSettingsPageState {
         onTap: () => withTextFieldController((ctrl) async {
           ctrl.text = '${prop.get()}';
 
-          void onSave() {
+          void onSave(BuildContext dialog) {
             final parsed = int.tryParse(ctrl.text.trim());
             if (parsed != null) {
               unawaited(_persist(prop.set(sanitize(parsed))));
             }
-            context.popDialog();
+            dialog.pop();
           }
 
           await context.showRoundDialog(
             title: title,
-            child: Column(
+            childBuilder: (dialog) => Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -388,7 +393,7 @@ extension _AI on _AppSettingsPageState {
                   label: title,
                   hint: hint,
                   icon: Icons.edit,
-                  onSubmitted: (_) => onSave(),
+                  onSubmitted: (_) => onSave(dialog),
                 ),
                 if (description != null) ...[
                   const SizedBox(height: 8),
@@ -396,12 +401,12 @@ extension _AI on _AppSettingsPageState {
                 ],
               ],
             ),
-            actions: [
+            actionsBuilder: (dialog) => [
+              TextButton(onPressed: dialog.pop, child: Text(libL10n.cancel)),
               TextButton(
-                onPressed: context.popDialog,
-                child: Text(libL10n.cancel),
+                onPressed: () => onSave(dialog),
+                child: Text(libL10n.ok),
               ),
-              TextButton(onPressed: onSave, child: Text(libL10n.ok)),
             ],
           );
         }),
@@ -468,14 +473,14 @@ extension _AI on _AppSettingsPageState {
       // does not land, and unawaited that reaches the zone handler as a
       // generic error while the dialog has already closed as though it
       // worked. The old `put` could not fail, so this path is new.
-      void onSave() {
+      void onSave(BuildContext dialog) {
         unawaited(_persist(prop.set(ctrl.text.trim())));
-        context.popDialog();
+        dialog.pop();
       }
 
       await context.showRoundDialog(
         title: title,
-        child: Column(
+        childBuilder: (dialog) => Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -487,7 +492,7 @@ extension _AI on _AppSettingsPageState {
               icon: obscure ? MingCute.key_2_line : Icons.edit,
               obscureText: obscure,
               suggestion: !obscure,
-              onSubmitted: (_) => onSave(),
+              onSubmitted: (_) => onSave(dialog),
             ),
             if (description != null) ...[
               const SizedBox(height: 8),
@@ -495,18 +500,21 @@ extension _AI on _AppSettingsPageState {
             ],
           ],
         ),
-        actions: [
+        actionsBuilder: (dialog) => [
           TextButton(
             onPressed: () {
               // Back to the default rather than off the map: a grouped field
               // has no row of its own to delete, and for these the default is
               // what an absent row read as anyway.
               unawaited(_persist(prop.remove()));
-              context.popDialog();
+              dialog.pop();
             },
             child: Text(libL10n.clear),
           ),
-          TextButton(onPressed: onSave, child: Text(libL10n.ok)),
+          TextButton(
+            onPressed: () => onSave(dialog),
+            child: Text(libL10n.ok),
+          ),
         ],
       );
     });
