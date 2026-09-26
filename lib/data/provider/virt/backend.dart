@@ -144,6 +144,23 @@ abstract interface class VirtBackend {
     VirtHwChange change,
   );
 
+  /// [guest]'s cloud-init as it stands, for the Settings view: PVE's `ci*`
+  /// options, or what libvirt's seed says (the seed is what the system
+  /// reads, so it is read rather than anything kept beside it). Only for a
+  /// VM with a cloud-init drive (`VirtHwDisk.cloudInit`).
+  Future<VirtCloudInitState> cloudInit(VirtGuest guest);
+
+  /// Writes [edit] (checked with `virtCloudInitEditIssue` first), made from
+  /// [base]: PVE's options, with its drive written again at once; a new
+  /// libvirt seed in place of the old, with a new instance ID. The system
+  /// reads it at its next boot, as a new instance. Throws
+  /// `VirtErrType.conflict` when it changed since [base] was read.
+  Future<void> setCloudInit(
+    VirtGuest guest,
+    VirtCloudInitState base,
+    VirtCloudInitEdit edit,
+  );
+
   /// The host devices [guest] can be given (USB, PCI), for the Hardware
   /// view's add block. Only where `VirtHardware.support` offers them.
   Future<VirtHostDevices> hostDevices(VirtGuest guest);

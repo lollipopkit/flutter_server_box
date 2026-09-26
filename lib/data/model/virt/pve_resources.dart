@@ -1,5 +1,6 @@
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_backup.dart';
+import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/model/virt/virt_rates.dart';
@@ -496,6 +497,14 @@ abstract final class PveResources {
   }
 
   /// `GET /nodes/{node}/storage/{storage}/content`. The owner is `vmid`.
+  /// Whether the content listing's `size` of a volume is its file's rather
+  /// than its virtual size: an `import` image in a format with a size of
+  /// its own inside (qcow2, vmdk). PVE's `GET .../content/{volid}` answers
+  /// the virtual size (`qemu-img info`'s), verified on PVE 9.2.2 with only
+  /// `Datastore.Audit` on the storage.
+  static bool imageSizeUnknown(String? content, String? format) =>
+      content == 'import' && (format == 'qcow2' || format == 'vmdk');
+
   static List<VirtVolume> parseContent(List<Object?> raw) {
     final out = <VirtVolume>[];
     for (final item in raw) {
@@ -508,14 +517,19 @@ abstract final class PveResources {
       final name = afterStorage.substring(afterStorage.lastIndexOf('/') + 1);
       final vmid = _int(e['vmid']);
       final ctime = _int(e['ctime']);
+      final content = _str(e['content']);
+      final sizeUnknown = imageSizeUnknown(content, _str(e['format']));
       out.add(
         VirtVolume(
           id: volid,
           name: name.isEmpty ? volid : name,
           format: _str(e['format']),
-          content: _str(e['content']),
-          capacity: _int(e['size']),
-          allocation: _int(e['used']),
+          content: content,
+          // An import image's `size` is its file's (PVE 9.2), which for a
+          // qcow2 or vmdk is not what the guest sees: unknown until
+          // `GET .../content/{volid}` says ([imageSizeUnknown]).
+          capacity: sizeUnknown ? null : _int(e['size']),
+          allocation: sizeUnknown ? _int(e['size']) : _int(e['used']),
           createdAt: ctime == null
               ? null
               : DateTime.fromMillisecondsSinceEpoch(ctime * 1000),
@@ -948,6 +962,55 @@ abstract final class PveResources {
   static String? volumeOf(String raw) {
     final first = _options(raw).first;
     return first.$1.isEmpty ? first.$2 : null;
+  }
+
+  /// The `size=` of a disk option (`local-lvm:vm-100-disk-0,size=3G`), in
+  /// bytes; null where it has none.
+  static int? optionSize(String raw) {
+    for (final (k, v) in _options(raw)) {
+      if (k == 'size') return _size(v);
+    }
+    return null;
+  }
+
+  /// A VM's cloud-init options as the Settings view edits them: `ciuser`,
+  /// whether `cipassword` is set (PVE answers it masked, never the value or
+  /// its hash), `sshkeys` (stored URL-encoded, as PVE's web UI sends them),
+  /// `ipconfig0`, `nameserver`, `searchdomain`; the `digest` an edit is
+  /// sent back with.
+  static VirtCloudInitState parseCloudInit(Map<String, Object?> config) {
+    final rawKeys = _str(config['sshkeys']) ?? '';
+    String keys;
+    try {
+      keys = Uri.decodeComponent(rawKeys);
+    } on ArgumentError {
+      keys = rawKeys;
+    }
+    final ip = {
+      for (final (k, v) in _options(_str(config['ipconfig0']) ?? '')) k: v,
+    };
+    final address = ip['ip'];
+    final static = address != null && address != 'dhcp' && address.contains('/');
+    return VirtCloudInitState(
+      user: _str(config['ciuser']) ?? '',
+      sshKeys: [
+        for (final l in keys.split('\n'))
+          if (l.trim().isNotEmpty) l.trim(),
+      ],
+      address: static ? address : null,
+      gateway: static ? ip['gw'] : null,
+      dns: [
+        for (final w in (_str(config['nameserver']) ?? '').split(RegExp(r'[\s,]+')))
+          if (w.isNotEmpty) w,
+      ],
+      searchDomain: switch (_str(config['searchdomain'])?.trim()) {
+        final s? when s.isNotEmpty => s,
+        _ => null,
+      },
+      passwordSet: _str(config['cipassword'])?.isNotEmpty ?? false,
+      network: config['net0'] is String,
+      revision: _str(config['digest']) ?? '',
+    );
   }
 
   /// PVE sizes, for [VirtHwGrowDisk]: whole GiB where it is, KiB otherwise.

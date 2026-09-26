@@ -361,7 +361,14 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
             if (fromImage) _cloudInitGroup(pve, options, network, issue, ciOk),
             if (lxc) _loginGroup(issue),
             _resourcesGroup(issue),
-            _storageGroup(disks, storage, bus, options, issue),
+            _storageGroup(
+              disks,
+              storage,
+              bus,
+              options,
+              issue,
+              minBytes: fromImage ? image?.capacity : null,
+            ),
             _networkGroup(nets, network, nicModel, options),
             _confirmGroup(host, spec, issue),
           ],
@@ -939,10 +946,15 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
     VirtStoragePool? storage,
     String? bus,
     VirtCreateOptions options,
-    VirtCreateIssue? issue,
-  ) {
+    VirtCreateIssue? issue, {
+    int? minBytes,
+  }) {
     final lxc = _kind == VirtGuestKind.lxc;
     final pve = ref.read(virtHostProvider(widget.serverId)).kind == VirtHostKind.pve;
+    // A cloud image's copy holds at least the image: no step below it.
+    final canDec =
+        _disk > 0 &&
+        (minBytes == null || _diskSteps[_disk - 1] * (1 << 30) >= minBytes);
     return _Group(
       key: 'storage',
       title: libL10n.storage,
@@ -974,7 +986,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
           libL10n.size,
           '${_diskSteps[_disk]} GiB',
           key: 'create-disk',
-          onDec: _disk > 0 ? () => setState(() => _disk--) : null,
+          onDec: canDec ? () => setState(() => _disk--) : null,
           onInc: _disk < _diskSteps.length - 1
               ? () => setState(() => _disk++)
               : null,
@@ -1105,8 +1117,17 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
     setState(() => _busy = true);
     try {
       final created = await _notifier.create(spec);
+      final kept = switch (created.diskKeptBytes) {
+        final b? => l10n.virtCreateDiskKept(b.bytes2Str),
+        null => null,
+      };
       if (created.startError case final err?) {
-        Toast.warn(l10n.virtCreatedNotStarted(spec.name), body: err);
+        Toast.warn(
+          l10n.virtCreatedNotStarted(spec.name),
+          body: [err, ?kept].join('\n'),
+        );
+      } else if (kept != null) {
+        Toast.info(l10n.virtCreated(spec.name), body: kept);
       } else {
         Toast.success(l10n.virtCreated(spec.name));
       }

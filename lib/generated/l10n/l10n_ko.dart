@@ -4547,4 +4547,50 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get virtHwCdromLater =>
       '실행 중에는 다음 시작 때 드라이브가 추가됩니다(SATA와 IDE는 핫플러그 불가).';
+
+  @override
+  String virtCreateDiskKept(String size) {
+    return '디스크는 이미지 자체 크기인 $size로 유지됐습니다(요청보다 큼). 디스크를 안의 시스템보다 작게 줄이지 않습니다.';
+  }
+
+  @override
+  String get virtCiEditTip =>
+      'cloud-init이 이 VM에서 설정하는 내용: sudo 권한 계정, 로그인 방법, 호스트 이름과 주소.';
+
+  @override
+  String get virtCiForeignTitle => '이 seed에는 이 앱이 쓰지 않는 설정이 있습니다';
+
+  @override
+  String get virtCiForeignBody =>
+      '다른 곳에서 만든 설정(패키지, 명령, 다른 계정)은 여기에 표시되지 않습니다. 저장하면 seed가 여기 표시된 내용으로 바뀝니다.';
+
+  @override
+  String get virtCiPasswordKept => '설정됨. 비워 두면 유지합니다';
+
+  @override
+  String get virtCiRemovePassword => '비밀번호 제거';
+
+  @override
+  String get virtCiRemovePasswordNote => 'SSH 키로만 로그인';
+
+  @override
+  String get virtCiKeysAdded =>
+      '키는 계정에 추가됩니다. 여기서 뺀 키는 시스템 안에서 지울 때까지 남아 있고, 새 사용자 이름은 기존 계정 옆에 새 계정을 만듭니다.';
+
+  @override
+  String get virtCiEffectTitle => '다음 부팅 때 적용';
+
+  @override
+  String get virtCiEffectLibvirt => '저장하면 새 인스턴스 ID로 새 seed를 씁니다.';
+
+  @override
+  String get virtCiEffectPve =>
+      'PVE는 cloud-init 드라이브를 즉시 다시 씁니다. 인스턴스 ID는 이 설정에서 계산되므로 여기서 바꾸면 항상 새 ID가 됩니다.';
+
+  @override
+  String get virtCiNewInstance =>
+      '다음 부팅 때 cloud-init은 시스템을 새 인스턴스로 다룹니다. 호스트 이름을 다시 설정하고, 계정이 없으면 만들고, 비밀번호를 설정하고, 키를 추가하고, 네트워크 설정을 다시 씁니다. SSH 호스트 키도 새로 만들므로 SSH 클라이언트가 호스트 키가 바뀌었다고 경고합니다. 그 부팅 전에는 아무것도 바뀌지 않습니다.';
+
+  @override
+  String get virtCiSaved => '저장했습니다. 다음 부팅 때 적용됩니다.';
 }

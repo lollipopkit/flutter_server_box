@@ -800,6 +800,38 @@ class VirtHostNotifier extends _$VirtHostNotifier {
     }
   }
 
+  /// See [VirtBackend.cloudInit].
+  Future<VirtCloudInitState> cloudInit(String guestId) =>
+      _backend.cloudInit(_guest(guestId));
+
+  /// Writes [edit] to [guestId]'s cloud-init, made from [base], then has
+  /// its cloud-init and hardware read again (PVE's `ci*` options are in its
+  /// configuration). One operation per guest at a time, as [power]. Throws
+  /// [VirtErr].
+  Future<void> setCloudInit(
+    String guestId,
+    VirtCloudInitState base,
+    VirtCloudInitEdit edit,
+  ) async {
+    final guest = _guest(guestId);
+    if (state.isBusy(guestId)) {
+      throw VirtErr(
+        type: VirtErrType.unsupported,
+        message: '${guest.name} is busy',
+      );
+    }
+    state = state.copyWith(editing: {...state.editing, guestId});
+    try {
+      await _backend.setCloudInit(guest, base, edit);
+    } finally {
+      if (ref.mounted) {
+        state = state.copyWith(editing: {...state.editing}..remove(guestId));
+        _bump('ci:$guestId');
+        _bump('hw:$guestId');
+      }
+    }
+  }
+
   /// See [VirtBackend.nextVmid].
   Future<int?> nextVmid() => _backend.nextVmid();
 
@@ -1110,6 +1142,16 @@ final class _MissingBackend implements VirtBackend {
   Future<VirtHostDevices> hostDevices(VirtGuest guest) async => _fail();
 
   @override
+  Future<VirtCloudInitState> cloudInit(VirtGuest guest) async => _fail();
+
+  @override
+  Future<void> setCloudInit(
+    VirtGuest guest,
+    VirtCloudInitState base,
+    VirtCloudInitEdit edit,
+  ) async => _fail();
+
+  @override
   Future<String> clone(VirtGuest guest, VirtCloneRequest request) async =>
       _fail();
 
@@ -1263,6 +1305,21 @@ Future<VirtHardware> virtHardware(
   final host = _hostOf(ref, serverId);
   await host.firstLoad;
   return host.hardware(guestId);
+}
+
+/// The cloud-init settings of one guest with a cloud-init drive. Read again
+/// after each change through [VirtHostNotifier.setCloudInit], and by the view
+/// after a conflict.
+@Riverpod(retry: _noRetry)
+Future<VirtCloudInitState> virtCloudInit(
+  Ref ref,
+  String serverId,
+  String guestId,
+) async {
+  ref.watch(virtRevisionProvider(serverId, 'ci:$guestId'));
+  final host = _hostOf(ref, serverId);
+  await host.firstLoad;
+  return host.cloudInit(guestId);
 }
 
 /// The host's storage pools.

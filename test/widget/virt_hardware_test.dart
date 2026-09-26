@@ -211,6 +211,18 @@ const _stopped = VirtHardware(
 
 var _hostDevs = const VirtHostDevices();
 
+const _ciRead = VirtCloudInitState(
+  user: 'sbxe',
+  sshKeys: ['ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOld old@x'],
+  address: '10.0.0.5/24',
+  gateway: '10.0.0.1',
+  passwordSet: true,
+  network: true,
+  revision: 'd1',
+);
+var _ci = _ciRead;
+final _ciEdits = <(VirtCloudInitState, VirtCloudInitEdit)>[];
+
 final _hardware = <String, VirtHardware>{};
 final _changes = <(String, VirtHwChange)>[];
 final _calls = <String>[];
@@ -288,6 +300,16 @@ class _FakeHost extends VirtHostNotifier {
   Future<VirtHostDevices> hostDevices(String guestId) async => _hostDevs;
 
   @override
+  Future<VirtCloudInitState> cloudInit(String guestId) async => _ci;
+
+  @override
+  Future<void> setCloudInit(
+    String guestId,
+    VirtCloudInitState base,
+    VirtCloudInitEdit edit,
+  ) async => _ciEdits.add((base, edit));
+
+  @override
   Future<void> restartToApply(String guestId) async =>
       _calls.add('restart $guestId');
 
@@ -359,6 +381,8 @@ void main() {
     _changes.clear();
     _calls.clear();
     _hostDevs = const VirtHostDevices();
+    _ciEdits.clear();
+    _ci = _ciRead;
   });
 
   tearDown(() async {
@@ -701,6 +725,95 @@ void main() {
       _changes.clear();
       await tap(tester, _key('hw:toggle:protection'));
       expect((_changes.single.$2 as VirtHwSetProtection).on, isTrue);
+    });
+
+    testWidgets('cloud-init: only with its drive; read, edited, saved', (
+      tester,
+    ) async {
+      // No cloud-init drive: no group.
+      await openSettings(tester, 'web-01');
+      expect(title('cloud-init'), findsNothing);
+
+      _hardware['qemu/100'] = _vm.copyWith(
+        disks: [
+          ..._vm.disks,
+          const VirtHwDisk(
+            key: 'scsi1',
+            kind: VirtHwDiskKind.cdrom,
+            source: 'local-lvm:vm-100-cloudinit',
+            cloudInit: true,
+          ),
+        ],
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+      await openSettings(tester, 'web-01');
+      expect(title('cloud-init'), findsOneWidget);
+      expect(tester.widget<TextField>(input('ci:user')).controller!.text, 'sbxe');
+      expect(
+        tester.widget<TextField>(input('ci:keys')).controller!.text,
+        'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOld old@x',
+      );
+      // The password is never shown, only that there is one.
+      expect(tester.widget<TextField>(input('ci:password')).controller!.text, isEmpty);
+      expect(text(app_locale.l10n.virtCiPasswordKept), findsOneWidget);
+      // When it applies, in PVE's terms; nothing to save yet.
+      expect(
+        text('${app_locale.l10n.virtCiEffectPve} ${app_locale.l10n.virtCiNewInstance}'),
+        findsOneWidget,
+      );
+      expect(_key('ci:save'), findsNothing);
+      expect(_key('ci:foreign'), findsNothing);
+
+      // A new key and DHCP: saved with the password kept.
+      await tester.enterText(input('ci:keys'), 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINew new@x');
+      await _settle(tester);
+      await tap(tester, find.descendant(of: _key('hw:seg:ci:ip'), matching: find.text('DHCP')));
+      await tap(tester, _key('ci:save'));
+      final (base, edit) = _ciEdits.single;
+      expect(base.revision, 'd1');
+      expect(edit.values.keys, ['ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINew new@x']);
+      expect(edit.values.password, isNull);
+      expect(edit.removePassword, isFalse);
+      expect(edit.values.address, isNull);
+      expect(edit.values.user, 'sbxe');
+
+      // No way in left: said, and not saved.
+      _ciEdits.clear();
+      await tester.enterText(input('ci:keys'), '');
+      await _settle(tester);
+      await tap(tester, _key('hw:toggle:ci:remove-password'));
+      expect(text(app_locale.l10n.virtCiCredentialsMissing), findsOneWidget);
+      expect(tester.widget<Btn>(_key('ci:save')).onTap, isNull);
+      // A user name useradd refuses.
+      await tester.enterText(input('ci:keys'), 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINew new@x');
+      await tester.enterText(input('ci:user'), 'Ops');
+      await _settle(tester);
+      expect(text(app_locale.l10n.virtCiUserInvalid), findsOneWidget);
+      expect(tester.widget<Btn>(_key('ci:save')).onTap, isNull);
+      // Cancel: back to what was read.
+      await tap(tester, _key('ci:cancel'));
+      expect(tester.widget<TextField>(input('ci:user')).controller!.text, 'sbxe');
+      expect(_ciEdits, isEmpty);
+    });
+
+    testWidgets('cloud-init: a seed with more than the app writes is said', (
+      tester,
+    ) async {
+      _ci = VirtCloudInitState(
+        user: _ci.user,
+        passwordSet: true,
+        foreign: true,
+        revision: 'r',
+      );
+      _hardware['qemu/100'] = _vm.copyWith(
+        disks: [
+          const VirtHwDisk(key: 'scsi1', kind: VirtHwDiskKind.cdrom, cloudInit: true),
+        ],
+      );
+      await openSettings(tester, 'web-01');
+      expect(_key('ci:foreign'), findsOneWidget);
+      // No NIC: no address rows.
+      expect(_key('hw:seg:ci:ip'), findsNothing);
     });
 
     testWidgets('a container\'s pending hostname is shown by its field', (

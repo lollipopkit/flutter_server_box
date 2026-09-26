@@ -413,13 +413,16 @@ void main() {
     await type(tester, 'create:ci:user', 'debian');
     await type(tester, 'create:ci:password', 'hunter22');
     expect(text(l10n().virtCiSeedNote), findsOneWidget);
-    // A 3.5 GiB image does not fit a 3 GiB disk.
+    // A 3.5 GiB image does not fit a 3 GiB disk: the size stops at 4.
     for (var i = 0; i < 5; i++) {
       await tap(tester, key('hw:step:create-disk:dec'));
     }
-    expect(text(l10n().virtCreateImageSize(3758096384.bytes2Str)), findsOneWidget);
-    expect(enabled(tester), isFalse);
-    await tap(tester, key('hw:step:create-disk:inc'));
+    expect(
+      tester.widget<Btn>(key('hw:step:create-disk:dec')).onTap,
+      isNull,
+      reason: 'no step below the image',
+    );
+    expect(text(l10n().virtCreateImageSize(3758096384.bytes2Str)), findsNothing);
     final spec = await submit(tester);
     expect(spec.diskGiB, 4);
     expect(spec.image?.path, '/i/noble.img');

@@ -200,6 +200,39 @@ String virtUndefineScript({
 void parseVirtUndefine({required String raw}) =>
     RustLib.instance.api.crateApiVirtParseVirtUndefine(raw: raw);
 
+/// A domain's cloud-init seed at `seed` (its path, as the domain's metadata
+/// names it), read back from its volume. Parse with
+/// [`parse_virt_seed_read_json`].
+String virtSeedReadScript({required String seed}) =>
+    RustLib.instance.api.crateApiVirtVirtSeedReadScript(seed: seed);
+
+/// [`virt_seed_read_script`]'s output → `VirtSeedRead` JSON: what the seed
+/// says (its password as the hash in it), whether it holds more than the
+/// app writes, and its revision
+Future<String> parseVirtSeedReadJson({required String raw}) =>
+    RustLib.instance.api.crateApiVirtParseVirtSeedReadJson(raw: raw);
+
+/// The seed at `seed` rewritten in place from `cloud_init_json` (a
+/// `VirtCloudInit`), made from the read of `revision`; `tools` narrows the
+/// ISO tools tried (none: all, in their order). Parse with
+/// [`parse_virt_seed_update`].
+String virtSeedUpdateScript({
+  required String seed,
+  required String revision,
+  required String cloudInitJson,
+  List<String>? tools,
+}) => RustLib.instance.api.crateApiVirtVirtSeedUpdateScript(
+  seed: seed,
+  revision: revision,
+  cloudInitJson: cloudInitJson,
+  tools: tools,
+);
+
+/// [`virt_seed_update_script`]'s output: `Ok` once the new seed is in
+/// place; `Conflict` when the seed changed since it was read
+void parseVirtSeedUpdate({required String raw}) =>
+    RustLib.instance.api.crateApiVirtParseVirtSeedUpdate(raw: raw);
+
 /// A domain's hardware, persistent and running, in one round trip
 String virtHardwareScript({required String domain}) =>
     RustLib.instance.api.crateApiVirtVirtHardwareScript(domain: domain);

@@ -158,13 +158,80 @@ final class VirtCreateOptions {
 
 /// What creating a guest came to.
 final class VirtCreated {
-  const VirtCreated({required this.id, this.startError});
+  const VirtCreated({required this.id, this.startError, this.diskKeptBytes});
 
   /// The new guest's [VirtGuest.id].
   final String id;
 
   /// Created, but it did not start: the host's words.
   final String? startError;
+
+  /// A cloud image bigger than the disk asked for: the disk is the image's
+  /// size, this. A disk is grown, never cut — cutting it would cut the
+  /// system on it.
+  final int? diskKeptBytes;
+}
+
+/// A guest's cloud-init as it stands — what the Settings view's cloud-init
+/// group shows and edits. Never the password: PVE answers it masked, and
+/// libvirt's seed holds only its hash, which stays with the backend.
+final class VirtCloudInitState {
+  const VirtCloudInitState({
+    required this.user,
+    this.sshKeys = const [],
+    this.hostname,
+    this.address,
+    this.gateway,
+    this.dns = const [],
+    this.searchDomain,
+    this.passwordSet = false,
+    this.network = false,
+    this.foreign = false,
+    required this.revision,
+  });
+
+  final String user;
+  final List<String> sshKeys;
+
+  /// libvirt: the seed's hostname. Null on PVE, whose cloud-init uses the
+  /// VM's name (the Settings view's General group).
+  final String? hostname;
+
+  /// IPv4 with its prefix; null for DHCP.
+  final String? address;
+  final String? gateway;
+  final List<String> dns;
+  final String? searchDomain;
+
+  /// The account has a password.
+  final bool passwordSet;
+
+  /// The guest has the NIC the address settings apply to: PVE's `net0`,
+  /// on libvirt the NIC the seed's network config names (or the first).
+  final bool network;
+
+  /// libvirt: the seed says more than the app writes (packages, commands,
+  /// another account); saving writes a seed of the app's own instead.
+  final bool foreign;
+
+  /// What an edit is made from: PVE's `digest`, the seed's checksum. An
+  /// edit made from an older read is refused (`VirtErrType.conflict`).
+  final String revision;
+
+  @override
+  String toString() =>
+      'VirtCloudInitState(user: $user, keys: ${sshKeys.length}, hostname: $hostname, '
+      'address: ${address ?? 'dhcp'}, passwordSet: $passwordSet, foreign: $foreign)';
+}
+
+/// A change to a guest's cloud-init: [values] as they are to be. Its
+/// `password` is a new one, or null to keep the one set — unless
+/// [removePassword], which leaves the account keys only.
+final class VirtCloudInitEdit {
+  const VirtCloudInitEdit(this.values, {this.removePassword = false});
+
+  final VirtCloudInit values;
+  final bool removePassword;
 }
 
 /// Why a [VirtCreateSpec] cannot be sent. First wins; see [virtCreateIssue].
@@ -297,11 +364,19 @@ final _ipv4 = RegExp(
 bool _isIp(String s) => _ipv4.hasMatch(s) || (s.contains(':') && Uri.tryParse('http://[$s]/') != null);
 
 /// Why [ci] cannot be sent; null when it can. Checked where a cloud image
-/// is created ([virtCreateIssue]); the host checks it again.
-VirtCreateIssue? virtCloudInitIssue(VirtCloudInit ci, {required VirtHostKind host}) {
+/// is created ([virtCreateIssue]) and edited ([virtCloudInitEditIssue]);
+/// the host checks it again. [keepsPassword]: the account has a password
+/// already, which stays.
+VirtCreateIssue? virtCloudInitIssue(
+  VirtCloudInit ci, {
+  required VirtHostKind host,
+  bool keepsPassword = false,
+}) {
   if (!virtUserNamePattern.hasMatch(ci.user)) return VirtCreateIssue.ciUser;
   final password = ci.password ?? '';
-  if (password.isEmpty && ci.keys.isEmpty) return VirtCreateIssue.ciCredentials;
+  if (password.isEmpty && !keepsPassword && ci.keys.isEmpty) {
+    return VirtCreateIssue.ciCredentials;
+  }
   if (!ci.keys.every(_sshKeyPattern.hasMatch)) return VirtCreateIssue.sshKeys;
   if (host == VirtHostKind.libvirt &&
       !virtPveNamePattern.hasMatch(ci.hostname ?? '')) {
@@ -326,6 +401,18 @@ VirtCreateIssue? virtCloudInitIssue(VirtCloudInit ci, {required VirtHostKind hos
   }
   return null;
 }
+
+/// Why [edit] cannot be made to [state]; null when it can. An account needs
+/// a way in: a password (a new one, or the one set, kept) or a key.
+VirtCreateIssue? virtCloudInitEditIssue(
+  VirtCloudInitState state,
+  VirtCloudInitEdit edit, {
+  required VirtHostKind host,
+}) => virtCloudInitIssue(
+  edit.values,
+  host: host,
+  keepsPassword: state.passwordSet && !edit.removePassword,
+);
 
 /// Where cloud images are found on [host] ([node] for PVE): a PVE storage
 /// with `import` content (what `import-from` takes, PVE 8.2+); every active

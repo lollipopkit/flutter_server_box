@@ -8192,6 +8192,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'While it runs, the drive is added at its next start (SATA and IDE take none live).'**
   String get virtHwCdromLater;
+
+  /// Create form, after creating from a cloud image bigger than the disk asked for: the disk keeps the image size.
+  ///
+  /// In en, this message translates to:
+  /// **'The disk was kept at {size}, the image\'s own size, which is more than was asked for: a disk is never cut below the system on it.'**
+  String virtCreateDiskKept(String size);
+
+  /// Settings view, cloud-init group: what it edits.
+  ///
+  /// In en, this message translates to:
+  /// **'What cloud-init sets up in this VM: an account with sudo, how to log in to it, the hostname and the address.'**
+  String get virtCiEditTip;
+
+  /// Settings view, cloud-init on libvirt: the seed holds settings the app does not write.
+  ///
+  /// In en, this message translates to:
+  /// **'This seed holds more than this app writes'**
+  String get virtCiForeignTitle;
+
+  /// Settings view, cloud-init on libvirt: what saving does to a seed with settings the app does not write.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings made elsewhere (packages, commands, other accounts) are not shown here. Saving replaces the seed with what is shown.'**
+  String get virtCiForeignBody;
+
+  /// Settings view, cloud-init: hint of the password field when a password is set (never shown).
+  ///
+  /// In en, this message translates to:
+  /// **'Set. Leave empty to keep it'**
+  String get virtCiPasswordKept;
+
+  /// Settings view, cloud-init: switch that removes the account password.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the password'**
+  String get virtCiRemovePassword;
+
+  /// Settings view, cloud-init: note under the remove-password switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Log in with an SSH key only'**
+  String get virtCiRemovePasswordNote;
+
+  /// Settings view, cloud-init: what cloud-init does with keys and a renamed account at the next boot.
+  ///
+  /// In en, this message translates to:
+  /// **'Keys are added to the account. A key taken out here stays in the system until it is removed there, and a new user name makes a new account beside the old one.'**
+  String get virtCiKeysAdded;
+
+  /// Settings view, cloud-init: title of the note on when a change takes effect.
+  ///
+  /// In en, this message translates to:
+  /// **'Takes effect at the next boot'**
+  String get virtCiEffectTitle;
+
+  /// Settings view, cloud-init on libvirt: first sentence of the note on saving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving writes a new seed with a new instance ID.'**
+  String get virtCiEffectLibvirt;
+
+  /// Settings view, cloud-init on PVE: first sentence of the note on saving (PVE derives the instance ID from the settings).
+  ///
+  /// In en, this message translates to:
+  /// **'PVE writes its cloud-init drive at once, with an instance ID derived from these settings, so any change here makes a new one.'**
+  String get virtCiEffectPve;
+
+  /// Settings view, cloud-init: what cloud-init does at the next boot with a new instance ID.
+  ///
+  /// In en, this message translates to:
+  /// **'At the next boot cloud-init treats the system as a new instance: it sets the hostname again, makes the account if it is missing, sets its password, adds the keys and writes the network configuration again. It also makes new SSH host keys, so SSH clients warn that the host key changed. Nothing changes before that boot.'**
+  String get virtCiNewInstance;
+
+  /// Toast after saving cloud-init settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved. It takes effect at the next boot.'**
+  String get virtCiSaved;
 }
 
 class _AppLocalizationsDelegate

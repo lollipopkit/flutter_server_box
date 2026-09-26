@@ -1438,5 +1438,18 @@
   "virtCiNoToolTitle": "Kein Werkzeug auf dem Host für die cloud-init-Daten",
   "virtCiNoToolBody": "Installieren Sie eines von {tools} auf dem Host. Ohne cloud-init startet das Image ohne Konto zum Anmelden.",
   "virtHwCloudInitNote": "Was cloud-init beim ersten Start liest. Kein Installationsmedium: hier wird nichts eingelegt.",
-  "virtHwCdromLater": "Solange sie läuft, kommt das Laufwerk beim nächsten Start hinzu (SATA und IDE nehmen keins im Betrieb)."
+  "virtHwCdromLater": "Solange sie läuft, kommt das Laufwerk beim nächsten Start hinzu (SATA und IDE nehmen keins im Betrieb).",
+  "virtCreateDiskKept": "Die Festplatte bleibt bei {size}, der Größe des Images selbst, also größer als gewünscht: Eine Festplatte wird nie unter das System darauf verkleinert.",
+  "virtCiEditTip": "Was cloud-init in dieser VM einrichtet: ein Konto mit sudo, wie man sich anmeldet, den Hostnamen und die Adresse.",
+  "virtCiForeignTitle": "Dieser Seed enthält mehr, als diese App schreibt",
+  "virtCiForeignBody": "Anderswo gemachte Einstellungen (Pakete, Befehle, weitere Konten) werden hier nicht angezeigt. Speichern ersetzt den Seed durch das hier Gezeigte.",
+  "virtCiPasswordKept": "Gesetzt. Leer lassen, um es zu behalten",
+  "virtCiRemovePassword": "Passwort entfernen",
+  "virtCiRemovePasswordNote": "Anmeldung nur mit SSH-Schlüssel",
+  "virtCiKeysAdded": "Schlüssel werden dem Konto hinzugefügt. Ein hier entfernter Schlüssel bleibt im System, bis er dort entfernt wird, und ein neuer Benutzername legt ein neues Konto neben dem alten an.",
+  "virtCiEffectTitle": "Wirkt beim nächsten Start",
+  "virtCiEffectLibvirt": "Speichern schreibt einen neuen Seed mit neuer Instanz-ID.",
+  "virtCiEffectPve": "PVE schreibt sein cloud-init-Laufwerk sofort neu; die Instanz-ID wird aus diesen Einstellungen abgeleitet, jede Änderung hier ergibt also eine neue.",
+  "virtCiNewInstance": "Beim nächsten Start behandelt cloud-init das System als neue Instanz: Es setzt den Hostnamen neu, legt das Konto an, falls es fehlt, setzt sein Passwort, fügt die Schlüssel hinzu und schreibt die Netzwerkkonfiguration neu. Außerdem erzeugt es neue SSH-Hostschlüssel, SSH-Clients warnen also vor einem geänderten Hostschlüssel. Vor diesem Start ändert sich nichts.",
+  "virtCiSaved": "Gespeichert. Wirkt beim nächsten Start."
 }

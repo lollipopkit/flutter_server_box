@@ -1,7 +1,9 @@
-//! cloud-init for a new libvirt domain: the NoCloud seed (`user-data`,
+//! cloud-init for a libvirt domain: the NoCloud seed (`user-data`,
 //! `meta-data`, `network-config`), the script fragment that makes it an ISO
-//! on the host and a volume in a pool, and the SHA-512 crypt that keeps a
-//! password out of it.
+//! on the host and a volume in a pool, the SHA-512 crypt that keeps a
+//! password out of it, and — to edit it after creation — the seed read back
+//! from its volume (an ISO 9660 reader and the subset of YAML the seed's
+//! files are written in) and written anew in place.
 //!
 //! Pure, as the rest of the crate. Every value reaches the seed as a JSON
 //! string — JSON is YAML — so nothing typed can become a key of its own, and
@@ -189,29 +191,34 @@ impl VirtCloudInit {
     }
 
     /// `user-data`: the account, its password hash and keys, the hostname.
-    /// One account of its own rather than the image's default user, so the
-    /// name asked for is the name there on every distribution.
+    ///
+    /// The account is the image's default user under the name asked for
+    /// (`user:`, as PVE's own cloud-init writes it), so its shell, groups
+    /// and sudo or doas are what the distribution gives that user: a
+    /// `users:` entry of the app's own with `shell: /bin/bash` made an
+    /// account sshd refused on Alpine, which has no bash (verified,
+    /// Alpine 3.23). Passwordless sudo is asked for all the same, as every
+    /// default user here has it.
     pub fn user_data(&self) -> String {
         let j = json;
         let mut s = String::from("#cloud-config\n");
         s.push_str(&format!("hostname: {}\n", j(&self.hostname)));
         s.push_str("manage_etc_hosts: true\n");
-        s.push_str("users:\n");
-        s.push_str(&format!("  - name: {}\n", j(&self.user)));
-        s.push_str("    sudo: \"ALL=(ALL) NOPASSWD:ALL\"\n");
-        s.push_str("    shell: /bin/bash\n");
+        s.push_str("user:\n");
+        s.push_str(&format!("  name: {}\n", j(&self.user)));
+        s.push_str("  sudo: \"ALL=(ALL) NOPASSWD:ALL\"\n");
         match &self.password_hash {
             Some(h) => {
-                s.push_str("    lock_passwd: false\n");
-                s.push_str(&format!("    hashed_passwd: {}\n", j(h)));
+                s.push_str("  lock_passwd: false\n");
+                s.push_str(&format!("  hashed_passwd: {}\n", j(h)));
             }
-            None => s.push_str("    lock_passwd: true\n"),
+            None => s.push_str("  lock_passwd: true\n"),
         }
         let keys: Vec<&str> = self.ssh_keys.iter().map(|k| k.trim()).filter(|k| !k.is_empty()).collect();
         if !keys.is_empty() {
-            s.push_str("    ssh_authorized_keys:\n");
+            s.push_str("  ssh_authorized_keys:\n");
             for k in keys {
-                s.push_str(&format!("      - {}\n", j(k)));
+                s.push_str(&format!("    - {}\n", j(k)));
             }
         }
         // A password is for logging in with; images ship with SSH password
@@ -280,49 +287,90 @@ pub fn parse_seed_tool(segments: &[(String, String)]) -> Option<String> {
     SEED_TOOLS.contains(&body).then(|| body.to_string())
 }
 
+/// Whether `tools` is a usable ISO tool order: some of [`SEED_TOOLS`], none
+/// twice. The order is [`SEED_TOOLS`]' unless a caller narrows it (the
+/// end-to-end tests make a seed with each tool in turn).
+pub fn check_tools(tools: &[String]) -> Result<(), VirtError> {
+    let known = tools.iter().all(|t| SEED_TOOLS.contains(&t.as_str()));
+    let unique = tools.iter().enumerate().all(|(i, t)| !tools[..i].contains(t));
+    if tools.is_empty() || !known || !unique {
+        return Err(VirtError::Malformed {
+            message: "invalid cloud-init seed tools".into(),
+        });
+    }
+    Ok(())
+}
+
+/// The staging directory `$d`: 0700 from `mktemp`, the files in it 0600 by
+/// the umask, and removed however the script ends. A `mktemp` that fails is
+/// the current section's error; `fail` runs before the script stops.
+fn staging(fail: &str) -> String {
+    format!(
+        "d=$(umask 077; mktemp -d 2>&1) || {{ printf '%s\\n{RC_PREFIX}1\\n' \"$d\"; d=; {fail}exit 0; }}\n\
+         trap 'rm -rf -- \"$d\"' EXIT\ntrap 'rm -rf -- \"$d\"; exit 1' HUP INT TERM\n"
+    )
+}
+
+/// The seed's files in `$d` ([`staging`]), and `$d/seed.iso` made of them by
+/// the first of `tools` the host has, its output and status the current
+/// section's. `fail` runs before the script stops: when the tool fails, or
+/// when there is none (a [`KEY_SEED_NO_TOOL`] section then).
+fn iso_script(ci: &VirtCloudInit, tools: &[&str], fail: &str) -> String {
+    let q = shell_quote_unix;
+    let mut s = format!(
+        "(umask 077\nprintf '%s' {} >\"$d/user-data\"\nprintf '%s' {} >\"$d/meta-data\"\n",
+        q(&ci.user_data()),
+        q(&ci.meta_data())
+    );
+    if let Some(n) = ci.network_config() {
+        s.push_str(&format!("printf '%s' {} >\"$d/network-config\"\n", q(&n)));
+    }
+    s.push_str(")\n");
+    let net = if ci.network.is_some() { " network-config" } else { "" };
+    let net_ld = if ci.network.is_some() { "-N network-config " } else { "" };
+    let mkisofs = format!("-output seed.iso -volid cidata -joliet -rock user-data meta-data{net}");
+    for (i, tool) in tools.iter().enumerate() {
+        let run = match *tool {
+            "genisoimage" => format!("genisoimage -quiet {mkisofs}"),
+            "xorriso" => format!("xorriso -as mkisofs -quiet {mkisofs}"),
+            "mkisofs" => format!("mkisofs -quiet {mkisofs}"),
+            _ => format!("cloud-localds {net_ld}seed.iso user-data meta-data"),
+        };
+        s.push_str(&format!(
+            "{} command -v {tool} >/dev/null 2>&1; then out=$(cd \"$d\" && {run} 2>&1); r=$?\n",
+            if i == 0 { "if" } else { "elif" }
+        ));
+    }
+    s.push_str(&format!(
+        "else echo '{}'; {fail}exit 0; fi\nprintf '%s\\n{RC_PREFIX}%s\\n' \"$out\" \"$r\"\n\
+         if [ \"$r\" != 0 ]; then {fail}exit 0; fi\n",
+        script::cmd_marker(KEY_SEED_NO_TOOL)
+    ));
+    s
+}
+
 /// The seed as an ISO on the host, then a raw volume `volume` of `pool`
 /// holding it (`vol-create-as` of its size, `vol-upload`), then its path in
 /// `$seed`. Written for [`crate::virt::create_volume_script`], after the
 /// disk was made: `rollback` is the shell that takes the disk back, run when
 /// any step here fails, and the seed's volume is deleted as well once made.
-/// `R` is the script's virsh wrapper (status in `$r`).
-pub fn seed_script(ci: &VirtCloudInit, pool: &str, volume: &str, rollback: &str) -> Result<String, VirtError> {
+/// `R` is the script's virsh wrapper (status in `$r`). `tools` is the ISO
+/// tools tried, in order ([`check_tools`]).
+pub fn seed_script(
+    ci: &VirtCloudInit,
+    pool: &str,
+    volume: &str,
+    rollback: &str,
+    tools: &[&str],
+) -> Result<String, VirtError> {
     ci.check()?;
     let q = shell_quote_unix;
     let m = script::cmd_marker;
     let (pool, vol) = (q(pool), q(volume));
-    let files = {
-        let mut f = format!(
-            "printf '%s' {} >\"$d/user-data\"\nprintf '%s' {} >\"$d/meta-data\"\n",
-            q(&ci.user_data()),
-            q(&ci.meta_data())
-        );
-        if let Some(n) = ci.network_config() {
-            f.push_str(&format!("printf '%s' {} >\"$d/network-config\"\n", q(&n)));
-        }
-        f
-    };
-    let net = if ci.network.is_some() { " network-config" } else { "" };
-    let net_ld = if ci.network.is_some() { "-N network-config " } else { "" };
-    let mkisofs = format!("-output seed.iso -volid cidata -joliet -rock user-data meta-data{net}");
     let del_seed = format!("virsh --connect {CONNECT_URI} -q vol-delete --pool {pool} --vol {vol} </dev/null >/dev/null 2>&1");
-    let mut s = String::new();
-    // The staging directory: 0700 from mktemp, files 0600 by the umask, and
-    // removed however the script ends.
-    s.push_str(&format!(
-        "echo '{iso}'\nd=$(umask 077; mktemp -d 2>&1) || {{ printf '%s\\n{RC_PREFIX}1\\n' \"$d\"; d=; {rollback}exit 0; }}\n\
-         trap 'rm -rf -- \"$d\"' EXIT\ntrap 'rm -rf -- \"$d\"; exit 1' HUP INT TERM\n\
-         (umask 077\n{files})\n\
-         if command -v genisoimage >/dev/null 2>&1; then out=$(cd \"$d\" && genisoimage -quiet {mkisofs} 2>&1); r=$?\n\
-         elif command -v xorriso >/dev/null 2>&1; then out=$(cd \"$d\" && xorriso -as mkisofs -quiet {mkisofs} 2>&1); r=$?\n\
-         elif command -v mkisofs >/dev/null 2>&1; then out=$(cd \"$d\" && mkisofs -quiet {mkisofs} 2>&1); r=$?\n\
-         elif command -v cloud-localds >/dev/null 2>&1; then out=$(cd \"$d\" && cloud-localds {net_ld}seed.iso user-data meta-data 2>&1); r=$?\n\
-         else echo '{no_tool}'; {rollback}exit 0; fi\n\
-         printf '%s\\n{RC_PREFIX}%s\\n' \"$out\" \"$r\"\n\
-         if [ \"$r\" != 0 ]; then {rollback}exit 0; fi\n",
-        iso = m(KEY_SEED_ISO),
-        no_tool = m(KEY_SEED_NO_TOOL),
-    ));
+    let mut s = format!("echo '{}'\n", m(KEY_SEED_ISO));
+    s.push_str(&staging(rollback));
+    s.push_str(&iso_script(ci, tools, rollback));
     s.push_str(&format!(
         "echo '{v}'\nsize=$(wc -c <\"$d/seed.iso\" | tr -d ' ')\n\
          R vol-create-as --pool {pool} --name {vol} --capacity \"${{size}}B\" --format raw\n\
@@ -337,6 +385,609 @@ pub fn seed_script(ci: &VirtCloudInit, pool: &str, volume: &str, rollback: &str)
         p = m(KEY_SEED_PATH),
     ));
     Ok(s)
+}
+
+// ---------------------------------------------------------------------------
+// Reading a seed back, and writing it anew
+// ---------------------------------------------------------------------------
+
+/// The seed volume as the host has it, and its `cksum`.
+pub const KEY_SEED_READ: &str = "virt.seed.read";
+pub const KEY_SEED_SUM: &str = "virt.seed.sum";
+/// The seed's bytes, base64.
+pub const KEY_SEED_DATA: &str = "virt.seed.data";
+/// The seed as it was before an update, kept to put back.
+pub const KEY_SEED_BACKUP: &str = "virt.seed.backup";
+/// The seed changed since it was read.
+pub const KEY_SEED_CONFLICT: &str = "virt.seed.conflict";
+pub const KEY_SEED_INFO: &str = "virt.seed.info";
+pub const KEY_SEED_GROW: &str = "virt.seed.grow";
+/// A failed upload, and the old seed written back.
+pub const KEY_SEED_RESTORE: &str = "virt.seed.restore";
+
+/// The largest seed read back. The app's are about 370 KiB (the tools pad
+/// an ISO to 150 sectors and more); the cap keeps the base64 (4/3 of it)
+/// under the 1 MiB a monitor agent returns at the least.
+const SEED_READ_MAX: u64 = 640 << 10;
+
+fn check_seed_path(path: &str) -> Result<(), VirtError> {
+    if !path.starts_with('/') || path.contains("/../") || path.chars().any(char::is_control) {
+        return Err(VirtError::Malformed {
+            message: "invalid seed path".into(),
+        });
+    }
+    Ok(())
+}
+
+/// The domain's seed at `seed` (its path, as the domain's metadata names
+/// it), downloaded from its volume into a staging directory, its `cksum`
+/// and its bytes as base64. Parse with [`parse_seed_read`].
+pub fn seed_read_script(seed: &str) -> Result<String, VirtError> {
+    check_seed_path(seed)?;
+    let m = script::cmd_marker;
+    let seed = shell_quote_unix(seed);
+    let mut s = crate::virt::prelude();
+    s.push_str(&crate::virt::run_fn());
+    s.push_str(&format!("echo '{}'\n", m(KEY_SEED_READ)));
+    s.push_str(&staging(""));
+    s.push_str(&format!(
+        "R vol-download --vol {seed} --file \"$d/seed.iso\"\n[ \"$r\" = 0 ] || exit 0\n\
+         echo '{sum}'\nout=$(cksum <\"$d/seed.iso\" 2>&1); r=$?; printf '%s\\n{RC_PREFIX}%s\\n' \"$out\" \"$r\"\n\
+         [ \"$r\" = 0 ] || exit 0\n\
+         echo '{data}'\nsize=$(wc -c <\"$d/seed.iso\" | tr -d ' ')\n\
+         if [ \"$size\" -gt {SEED_READ_MAX} ]; then printf 'seed too large: %s bytes\\n{RC_PREFIX}1\\n' \"$size\"; exit 0; fi\n\
+         base64 <\"$d/seed.iso\"; printf '\\n{RC_PREFIX}%s\\n' \"$?\"\n",
+        sum = m(KEY_SEED_SUM),
+        data = m(KEY_SEED_DATA),
+    ));
+    Ok(s)
+}
+
+/// A seed as read back ([`seed_read_script`]).
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtSeedRead {
+    /// What the seed says, in the form the app writes it. What it lacks is
+    /// empty: no user, no hostname, no network.
+    pub cloud_init: VirtCloudInit,
+    /// The seed holds settings the app does not write, or writes otherwise:
+    /// a new one replaces them.
+    pub foreign: bool,
+    /// The seed's `cksum` as read: an update made from it is refused once
+    /// the seed has changed ([`seed_update_script`]).
+    pub revision: String,
+}
+
+/// [`seed_read_script`]'s output.
+pub fn parse_seed_read(raw: &str) -> Result<VirtSeedRead, VirtError> {
+    use base64::Engine;
+    let secs = crate::virt::sections(raw)?;
+    crate::virt::take(&secs, KEY_SEED_READ, raw)?.ok()?;
+    let revision = crate::virt::take(&secs, KEY_SEED_SUM, raw)?.ok()?.trim().to_string();
+    let data: String = crate::virt::take(&secs, KEY_SEED_DATA, raw)?
+        .ok()?
+        .chars()
+        .filter(|c| !c.is_ascii_whitespace())
+        .collect();
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(data)
+        .map_err(|e| VirtError::Malformed {
+            message: format!("cloud-init seed: {e}"),
+        })?;
+    let mut read = parse_seed(&iso_root_files(&bytes)?);
+    read.revision = revision;
+    Ok(read)
+}
+
+/// The seed at `seed` rewritten with `ci`, in place: the domain keeps the
+/// volume and the path its metadata names. Parse with [`parse_seed_update`].
+///
+/// Made from the read whose `cksum` is `revision`: a seed changed since is
+/// left as it is ([`VirtError::Conflict`]). The old seed is downloaded
+/// first; the new ISO is made as at creation ([`seed_script`]), the volume
+/// grown when it is bigger (a file would grow by itself, a logical volume
+/// would not), then uploaded over it — and a failed upload puts the old one
+/// back. A shorter ISO leaves the old one's tail after it, which nothing
+/// reads: an ISO 9660 image says its own size.
+pub fn seed_update_script(seed: &str, revision: &str, ci: &VirtCloudInit, tools: &[&str]) -> Result<String, VirtError> {
+    check_seed_path(seed)?;
+    ci.check()?;
+    if revision.is_empty() || revision.chars().any(|c| !(c.is_ascii_digit() || c == ' ')) {
+        return Err(VirtError::Malformed {
+            message: "invalid seed revision".into(),
+        });
+    }
+    let q = shell_quote_unix;
+    let m = script::cmd_marker;
+    let seed = q(seed);
+    let mut s = crate::virt::prelude();
+    s.push_str(&crate::virt::run_fn());
+    s.push_str(&format!("echo '{}'\n", m(KEY_SEED_BACKUP)));
+    s.push_str(&staging(""));
+    s.push_str(&format!(
+        "R vol-download --vol {seed} --file \"$d/old.iso\"\n[ \"$r\" = 0 ] || exit 0\n\
+         if [ \"$(cksum <\"$d/old.iso\")\" != {rev} ]; then echo '{conflict}'; exit 0; fi\n\
+         echo '{iso}'\n",
+        rev = q(revision),
+        conflict = m(KEY_SEED_CONFLICT),
+        iso = m(KEY_SEED_ISO),
+    ));
+    s.push_str(&iso_script(ci, tools, ""));
+    s.push_str(&format!(
+        "echo '{info}'\nsize=$(wc -c <\"$d/seed.iso\" | tr -d ' ')\n\
+         out=$(virsh --connect {CONNECT_URI} -q vol-info --bytes --vol {seed} </dev/null 2>&1); r=$?\n\
+         printf '%s\\n{RC_PREFIX}%s\\n' \"$out\" \"$r\"\n[ \"$r\" = 0 ] || exit 0\n\
+         cap=$(printf '%s\\n' \"$out\" | sed -n 's/^Capacity: *\\([0-9][0-9]*\\) bytes$/\\1/p')\n\
+         if [ \"${{cap:-0}}\" -lt \"$size\" ]; then echo '{grow}'; R vol-resize --vol {seed} --capacity \"${{size}}B\"; [ \"$r\" = 0 ] || exit 0; fi\n\
+         echo '{upload}'\nR vol-upload --vol {seed} --file \"$d/seed.iso\"\n\
+         if [ \"$r\" != 0 ]; then echo '{restore}'; R vol-upload --vol {seed} --file \"$d/old.iso\"; fi\n",
+        info = m(KEY_SEED_INFO),
+        grow = m(KEY_SEED_GROW),
+        upload = m(KEY_SEED_UPLOAD),
+        restore = m(KEY_SEED_RESTORE),
+    ));
+    Ok(s)
+}
+
+/// [`seed_update_script`]'s output: `Conflict` when the seed changed since
+/// it was read; the host's words for a step that failed, and whether the old
+/// seed is back when the upload did.
+pub fn parse_seed_update(raw: &str) -> Result<(), VirtError> {
+    let segs = script::parse_script_segments(raw);
+    let secs = crate::virt::sections(raw)?;
+    crate::virt::take(&secs, KEY_SEED_BACKUP, raw)?.ok()?;
+    if segs.iter().any(|(k, _)| k == KEY_SEED_CONFLICT) {
+        return Err(VirtError::Conflict {
+            message: "The cloud-init seed changed since it was read".into(),
+        });
+    }
+    if segs.iter().any(|(k, _)| k == KEY_SEED_NO_TOOL) {
+        return Err(no_tool_error());
+    }
+    crate::virt::take(&secs, KEY_SEED_ISO, raw)?.ok()?;
+    crate::virt::take(&secs, KEY_SEED_INFO, raw)?.ok()?;
+    if let Some((_, grow)) = secs.iter().find(|(k, _)| k == KEY_SEED_GROW) {
+        grow.ok()?;
+    }
+    let upload = crate::virt::take(&secs, KEY_SEED_UPLOAD, raw)?.ok();
+    match (upload, secs.iter().find(|(k, _)| k == KEY_SEED_RESTORE)) {
+        (Ok(_), _) => Ok(()),
+        (Err(e), Some((_, restore))) => Err(VirtError::Command {
+            message: match restore.ok() {
+                Ok(_) => format!("{}\nThe previous cloud-init seed was put back.", e.message()),
+                Err(r) => format!(
+                    "{}\nPutting the previous cloud-init seed back failed too: {}",
+                    e.message(),
+                    r.message()
+                ),
+            },
+        }),
+        (Err(e), None) => Err(e),
+    }
+}
+
+/// A host with none of [`SEED_TOOLS`].
+pub(crate) fn no_tool_error() -> VirtError {
+    VirtError::Command {
+        message: format!(
+            "No tool to make a cloud-init seed ISO on the host: install one of {}",
+            SEED_TOOLS.join(", ")
+        ),
+    }
+}
+
+// ---------------------------------------------------------------------------
+// ISO 9660: the files in a seed's root directory
+// ---------------------------------------------------------------------------
+
+const SECTOR: usize = 2048;
+
+fn iso_err(what: &str) -> VirtError {
+    VirtError::Malformed {
+        message: format!("cloud-init seed: {what}"),
+    }
+}
+
+fn le32(b: &[u8], at: usize) -> Result<usize, VirtError> {
+    b.get(at..at + 4)
+        .map(|x| u32::from_le_bytes([x[0], x[1], x[2], x[3]]) as usize)
+        .ok_or_else(|| iso_err("truncated"))
+}
+
+/// The regular files in an ISO 9660 image's root directory, by the names a
+/// seed's files have: Joliet's where the image has them, else Rock Ridge's
+/// (`NM`). Every seed tool here writes both (`-joliet -rock`); an image with
+/// neither has only 8.3 names, which no seed file has.
+pub fn iso_root_files(iso: &[u8]) -> Result<Vec<(String, Vec<u8>)>, VirtError> {
+    // Volume descriptors from sector 16 to the terminator.
+    let mut primary = None;
+    let mut joliet = None;
+    for n in 16..64 {
+        let d = iso.get(n * SECTOR..(n + 1) * SECTOR).ok_or_else(|| iso_err("no volume descriptor"))?;
+        if &d[1..6] != b"CD001" {
+            return Err(iso_err("not an ISO 9660 image"));
+        }
+        match d[0] {
+            1 => primary = Some(d),
+            // A supplementary descriptor with a UCS-2 escape is Joliet.
+            2 if matches!(&d[88..91], b"%/@" | b"%/C" | b"%/E") => joliet = Some(d),
+            255 => break,
+            _ => {}
+        }
+    }
+    let (desc, ucs2) = match (joliet, primary) {
+        (Some(j), _) => (j, true),
+        (None, Some(p)) => (p, false),
+        (None, None) => return Err(iso_err("no primary volume descriptor")),
+    };
+    let root = &desc[156..190];
+    let (lba, len) = (le32(root, 2)?, le32(root, 10)?);
+    let dir = iso
+        .get(lba * SECTOR..lba * SECTOR + len)
+        .ok_or_else(|| iso_err("root directory out of range"))?;
+    let mut out = Vec::new();
+    let mut at = 0;
+    while at < dir.len() {
+        let rec_len = dir[at] as usize;
+        if rec_len == 0 {
+            // Records do not cross sectors: the rest of this one is padding.
+            at = (at / SECTOR + 1) * SECTOR;
+            continue;
+        }
+        let rec = dir.get(at..at + rec_len).ok_or_else(|| iso_err("directory record out of range"))?;
+        at += rec_len;
+        if rec.len() < 34 {
+            return Err(iso_err("short directory record"));
+        }
+        let name_len = rec[32] as usize;
+        let raw_name = rec.get(33..33 + name_len).ok_or_else(|| iso_err("name out of range"))?;
+        // `.` and `..`, and directories.
+        if name_len == 1 && raw_name[0] <= 1 || rec[25] & 2 != 0 {
+            continue;
+        }
+        let name = if ucs2 {
+            let units: Vec<u16> = raw_name.chunks_exact(2).map(|c| u16::from_be_bytes([c[0], c[1]])).collect();
+            Some(String::from_utf16_lossy(&units))
+        } else {
+            // Rock Ridge: the system use area after the name (and its pad).
+            let su = &rec[(33 + name_len + (1 - name_len % 2)).min(rec.len())..];
+            rock_ridge_name(su)
+        };
+        let Some(name) = name else { continue };
+        let name = name.split(';').next().unwrap_or_default().to_string();
+        let (flba, flen) = (le32(rec, 2)?, le32(rec, 10)?);
+        let data = iso
+            .get(flba * SECTOR..flba * SECTOR + flen)
+            .ok_or_else(|| iso_err("file out of range"))?;
+        out.push((name, data.to_vec()));
+    }
+    Ok(out)
+}
+
+/// The `NM` entries of a Rock Ridge system use area, joined.
+fn rock_ridge_name(mut su: &[u8]) -> Option<String> {
+    let mut name = Vec::new();
+    while su.len() >= 4 {
+        let len = su[2] as usize;
+        if len < 4 || len > su.len() {
+            break;
+        }
+        if &su[..2] == b"NM" && len >= 5 {
+            name.extend_from_slice(&su[5..len]);
+        }
+        su = &su[len..];
+    }
+    (!name.is_empty()).then(|| String::from_utf8_lossy(&name).into_owned())
+}
+
+// ---------------------------------------------------------------------------
+// The seed's files, read back
+// ---------------------------------------------------------------------------
+
+/// A YAML value, as far as the seed files need: block mappings and
+/// sequences, flow sequences of scalars, and scalars plain or quoted.
+#[derive(Debug, Clone, PartialEq)]
+enum Y {
+    Map(Vec<(String, Y)>),
+    Seq(Vec<Y>),
+    Str(String),
+    Null,
+}
+
+impl Y {
+    fn get(&self, key: &str) -> Option<&Y> {
+        match self {
+            Y::Map(m) => m.iter().find(|(k, _)| k == key).map(|(_, v)| v),
+            _ => None,
+        }
+    }
+
+    fn str(&self) -> Option<&str> {
+        match self {
+            Y::Str(s) => Some(s),
+            _ => None,
+        }
+    }
+
+    fn keys(&self) -> Vec<&str> {
+        match self {
+            Y::Map(m) => m.iter().map(|(k, _)| k.as_str()).collect(),
+            _ => vec![],
+        }
+    }
+
+    fn strs(&self) -> Option<Vec<String>> {
+        match self {
+            Y::Seq(v) => v.iter().map(|x| x.str().map(str::to_string)).collect(),
+            _ => None,
+        }
+    }
+}
+
+/// A scalar as YAML reads it: double-quoted (JSON's escapes, which is what
+/// the app writes), single-quoted, or plain; `~`/`null` for nothing.
+fn yaml_scalar(s: &str) -> Y {
+    let s = s.trim();
+    if s.starts_with('"') {
+        return serde_json::from_str::<String>(s).map(Y::Str).unwrap_or_else(|_| Y::Str(s.to_string()));
+    }
+    if let Some(inner) = s.strip_prefix('\'').and_then(|x| x.strip_suffix('\'')) {
+        return Y::Str(inner.replace("''", "'"));
+    }
+    if let Some(inner) = s.strip_prefix('[').and_then(|x| x.strip_suffix(']')) {
+        if let Ok(v) = serde_json::from_str::<Vec<String>>(s) {
+            return Y::Seq(v.into_iter().map(Y::Str).collect());
+        }
+        return Y::Seq(
+            inner
+                .split(',')
+                .map(str::trim)
+                .filter(|x| !x.is_empty())
+                .map(yaml_scalar)
+                .collect(),
+        );
+    }
+    // A comment after a plain scalar.
+    let s = s.split(" #").next().unwrap_or_default().trim_end();
+    match s {
+        "" | "~" | "null" => Y::Null,
+        _ => Y::Str(s.to_string()),
+    }
+}
+
+/// `key: rest` of a mapping line, where the key is plain: a colon followed
+/// by a space or the end.
+fn yaml_key(line: &str) -> Option<(&str, &str)> {
+    if line.starts_with('"') || line.starts_with('\'') || line.starts_with('[') {
+        return None;
+    }
+    let at = line.char_indices().find(|&(i, c)| {
+        c == ':' && line[i + 1..].chars().next().is_none_or(|n| n == ' ')
+    })?;
+    Some((line[..at.0].trim(), line[at.0 + 1..].trim()))
+}
+
+struct YLines {
+    lines: Vec<(usize, String)>,
+    at: usize,
+}
+
+impl YLines {
+    fn new(text: &str) -> YLines {
+        let lines = text
+            .lines()
+            .filter(|l| {
+                let t = l.trim();
+                !t.is_empty() && !t.starts_with('#') && t != "---"
+            })
+            .map(|l| {
+                let indent = l.len() - l.trim_start_matches(' ').len();
+                (indent, l.trim().to_string())
+            })
+            .collect();
+        YLines { lines, at: 0 }
+    }
+
+    fn peek(&self) -> Option<&(usize, String)> {
+        self.lines.get(self.at)
+    }
+
+    /// The block at `indent`: a sequence where it starts with `-`, a mapping
+    /// otherwise.
+    fn block(&mut self, indent: usize) -> Y {
+        match self.peek() {
+            Some((i, l)) if *i == indent && (l == "-" || l.starts_with("- ")) => self.seq(indent),
+            Some((i, _)) if *i == indent => self.map(indent, None),
+            _ => Y::Null,
+        }
+    }
+
+    fn seq(&mut self, indent: usize) -> Y {
+        let mut items = Vec::new();
+        while let Some((i, l)) = self.peek().cloned() {
+            if i != indent || !(l == "-" || l.starts_with("- ")) {
+                break;
+            }
+            self.at += 1;
+            let rest = l[1..].trim();
+            if rest.is_empty() {
+                let child = self.peek().map(|(ci, _)| *ci).filter(|ci| *ci > indent);
+                items.push(child.map_or(Y::Null, |ci| self.block(ci)));
+            } else if let Some((k, v)) = yaml_key(rest) {
+                // A mapping item: its first key on the dash's line, the rest
+                // under it where that key stands.
+                items.push(self.map(indent + 2, Some((k.to_string(), v.to_string()))));
+            } else {
+                items.push(yaml_scalar(rest));
+            }
+        }
+        Y::Seq(items)
+    }
+
+    fn map(&mut self, indent: usize, first: Option<(String, String)>) -> Y {
+        let mut out = Vec::new();
+        let mut pending = first;
+        loop {
+            let (k, v) = match pending.take() {
+                Some(kv) => kv,
+                None => match self.peek().cloned() {
+                    Some((i, l)) if i == indent && !(l == "-" || l.starts_with("- ")) => {
+                        self.at += 1;
+                        match yaml_key(&l) {
+                            Some((k, v)) => (k.to_string(), v.to_string()),
+                            None => (l, String::new()),
+                        }
+                    }
+                    _ => break,
+                },
+            };
+            let value = if v.is_empty() {
+                match self.peek().cloned() {
+                    Some((ci, _)) if ci > indent => self.block(ci),
+                    // `key:` then `- item` at the key's own indent.
+                    Some((ci, l)) if ci == indent && (l == "-" || l.starts_with("- ")) => self.seq(ci),
+                    _ => Y::Null,
+                }
+            } else {
+                yaml_scalar(&v)
+            };
+            out.push((k, value));
+        }
+        Y::Map(out)
+    }
+}
+
+fn yaml(text: &str) -> Y {
+    let mut lines = YLines::new(text);
+    let first = lines.peek().map(|(i, _)| *i).unwrap_or(0);
+    let y = lines.block(first);
+    if lines.at < lines.lines.len() {
+        // Lines the subset did not take: read as a mapping of what was.
+        return Y::Null;
+    }
+    y
+}
+
+/// What [`VirtCloudInit`] writes, read back from the seed's files. Anything
+/// it does not write, or writes otherwise, makes the read `foreign`.
+fn parse_seed(files: &[(String, Vec<u8>)]) -> VirtSeedRead {
+    let file = |name: &str| {
+        files
+            .iter()
+            .find(|(n, _)| n == name)
+            .map(|(_, b)| String::from_utf8_lossy(b).into_owned())
+    };
+    let mut foreign = files
+        .iter()
+        .any(|(n, _)| !matches!(n.as_str(), "user-data" | "meta-data" | "network-config"));
+    let mut ci = VirtCloudInit::default();
+    let is = |y: Option<&Y>, want: &str| y.and_then(Y::str) == Some(want);
+
+    match file("user-data") {
+        Some(text) if text.starts_with("#cloud-config") => {
+            let y = yaml(&text);
+            foreign |= y == Y::Null;
+            for k in y.keys() {
+                foreign |= !matches!(k, "hostname" | "manage_etc_hosts" | "user" | "users" | "ssh_pwauth");
+            }
+            ci.hostname = y.get("hostname").and_then(Y::str).unwrap_or_default().to_string();
+            foreign |= !is(y.get("manage_etc_hosts"), "true");
+            // The default user renamed (`user:`), or — as the first release
+            // of this wrote it — one account of its own (`users:`).
+            let account = match (y.get("user"), y.get("users")) {
+                (Some(u @ Y::Map(_)), None) => Some((u, false)),
+                (None, Some(Y::Seq(users))) if users.len() == 1 && matches!(users[0], Y::Map(_)) => Some((&users[0], true)),
+                _ => None,
+            };
+            match account {
+                Some((u, legacy)) => {
+                    foreign |= !legacy && u.get("shell").is_some();
+                    for k in u.keys() {
+                        foreign |= !matches!(
+                            k,
+                            "name" | "sudo" | "shell" | "lock_passwd" | "hashed_passwd" | "ssh_authorized_keys"
+                        );
+                    }
+                    ci.user = u.get("name").and_then(Y::str).unwrap_or_default().to_string();
+                    foreign |= !is(u.get("sudo"), "ALL=(ALL) NOPASSWD:ALL");
+                    foreign |= legacy && u.get("shell").is_some_and(|s| s.str() != Some("/bin/bash"));
+                    ci.password_hash = u
+                        .get("hashed_passwd")
+                        .and_then(Y::str)
+                        .filter(|h| is_crypt_hash(h))
+                        .map(str::to_string);
+                    foreign |= u.get("hashed_passwd").is_some() && ci.password_hash.is_none();
+                    match u.get("ssh_authorized_keys") {
+                        None => {}
+                        Some(keys) => match keys.strs() {
+                            Some(k) => ci.ssh_keys = k,
+                            None => foreign = true,
+                        },
+                    }
+                }
+                _ => foreign = true,
+            }
+        }
+        _ => foreign = true,
+    }
+    match file("meta-data") {
+        Some(text) => {
+            let y = yaml(&text);
+            foreign |= y == Y::Null;
+            for k in y.keys() {
+                foreign |= !matches!(k, "instance-id" | "local-hostname");
+            }
+            ci.instance_id = y.get("instance-id").and_then(Y::str).unwrap_or_default().to_string();
+            if ci.hostname.is_empty() {
+                ci.hostname = y.get("local-hostname").and_then(Y::str).unwrap_or_default().to_string();
+            }
+        }
+        None => foreign = true,
+    }
+    if let Some(text) = file("network-config") {
+        let y = yaml(&text);
+        let nics = y.get("ethernets");
+        let one = match nics {
+            Some(Y::Map(m)) if m.len() == 1 => Some(&m[0].1),
+            _ => None,
+        };
+        foreign |= !is(y.get("version"), "2") || one.is_none() || y.keys().len() != 2;
+        if let Some(nic) = one {
+            for k in nic.keys() {
+                foreign |= !matches!(k, "match" | "dhcp4" | "addresses" | "routes" | "nameservers");
+            }
+            let mac = nic.get("match").and_then(|m| m.get("macaddress")).and_then(Y::str);
+            let dhcp = is(nic.get("dhcp4"), "true");
+            let address = nic.get("addresses").and_then(Y::strs).unwrap_or_default();
+            let gateway = match nic.get("routes") {
+                Some(Y::Seq(routes)) => routes
+                    .iter()
+                    .find(|r| matches!(r.get("to").and_then(Y::str), Some("0.0.0.0/0" | "default")))
+                    .and_then(|r| r.get("via").and_then(Y::str))
+                    .map(str::to_string),
+                _ => None,
+            };
+            let ns = nic.get("nameservers");
+            foreign |= address.len() > 1 || (dhcp && !address.is_empty());
+            ci.network = mac.map(|mac| VirtCiNetwork {
+                mac: mac.to_string(),
+                ipv4: match (dhcp, address.first()) {
+                    (false, Some(a)) => Some(VirtCiIpv4 {
+                        address: a.clone(),
+                        gateway,
+                    }),
+                    _ => None,
+                },
+                dns: ns.and_then(|n| n.get("addresses")).and_then(Y::strs).unwrap_or_default(),
+                search: ns.and_then(|n| n.get("search")).and_then(Y::strs).unwrap_or_default(),
+            });
+            foreign |= ci.network.is_none();
+        }
+    }
+    VirtSeedRead {
+        cloud_init: ci,
+        foreign,
+        revision: String::new(),
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -513,10 +1164,12 @@ mod tests {
         c.check().unwrap();
         let ud = c.user_data();
         assert!(ud.starts_with("#cloud-config\n"), "{ud}");
-        assert!(ud.contains("  - name: \"debian\"\n"), "{ud}");
-        assert!(ud.contains("    hashed_passwd: \"$6$Nq1nJ8n4tqQzq3ra$"), "{ud}");
+        assert!(ud.contains("user:\n  name: \"debian\"\n"), "{ud}");
+        assert!(ud.contains("  hashed_passwd: \"$6$Nq1nJ8n4tqQzq3ra$"), "{ud}");
         assert!(!ud.contains("hunter2"));
-        assert!(ud.contains("      - \"ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB0 me@host\"\n"), "{ud}");
+        // The distribution's own shell: none named.
+        assert!(!ud.contains("shell"), "{ud}");
+        assert!(ud.contains("    - \"ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB0 me@host\"\n"), "{ud}");
         assert!(ud.contains("ssh_pwauth: true\n"), "{ud}");
         assert_eq!(c.meta_data(), "instance-id: \"iid-web-01-1a2b\"\nlocal-hostname: \"web-01\"\n");
         assert_eq!(
@@ -560,7 +1213,7 @@ mod tests {
         assert!(c.check().is_err());
         c.ssh_keys = vec!["ssh-ed25519 AAAA \"quoted\" #: comment".into()];
         c.check().unwrap();
-        assert!(c.user_data().contains("      - \"ssh-ed25519 AAAA \\\"quoted\\\" #: comment\"\n"));
+        assert!(c.user_data().contains("    - \"ssh-ed25519 AAAA \\\"quoted\\\" #: comment\"\n"));
         let bad = |f: &dyn Fn(&mut VirtCloudInit)| {
             let mut c = ci();
             f(&mut c);

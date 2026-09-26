@@ -1396,5 +1396,18 @@
   "virtCiNoToolTitle": "ホストに cloud-init データを作るツールがありません",
   "virtCiNoToolBody": "ホストに {tools} のいずれかをインストールしてください。cloud-init がないと、ログインできるアカウントなしで起動します。",
   "virtHwCloudInitNote": "cloud-init が初回起動時に読むデータです。インストールメディアではないため、ここでは入れ替えません。",
-  "virtHwCdromLater": "実行中はドライブが次回起動時に追加されます（SATA と IDE はホットプラグ不可）。"
+  "virtHwCdromLater": "実行中はドライブが次回起動時に追加されます（SATA と IDE はホットプラグ不可）。",
+  "virtCreateDiskKept": "ディスクはイメージ自体のサイズ {size} のままです（指定より大きい）。ディスクを中のシステムより小さく切り詰めることはありません。",
+  "virtCiEditTip": "cloud-init がこの VM で設定する内容: sudo 付きのアカウント、そのログイン方法、ホスト名、アドレス。",
+  "virtCiForeignTitle": "この seed にはこのアプリが書かない設定があります",
+  "virtCiForeignBody": "他の場所で作られた設定（パッケージ、コマンド、別のアカウント）はここに表示されません。保存すると seed はここに表示された内容に置き換わります。",
+  "virtCiPasswordKept": "設定済み。空欄のままなら変更しません",
+  "virtCiRemovePassword": "パスワードを削除",
+  "virtCiRemovePasswordNote": "SSH 鍵でのみログイン",
+  "virtCiKeysAdded": "鍵はアカウントに追加されます。ここで外した鍵はシステム内で削除するまで残り、新しいユーザー名は古いアカウントとは別の新しいアカウントを作ります。",
+  "virtCiEffectTitle": "次回の起動時に反映",
+  "virtCiEffectLibvirt": "保存すると新しいインスタンス ID で新しい seed を書き込みます。",
+  "virtCiEffectPve": "PVE は cloud-init ドライブをすぐに書き直します。インスタンス ID はこれらの設定から計算されるため、ここでの変更はすべて新しい ID になります。",
+  "virtCiNewInstance": "次回の起動時、cloud-init はシステムを新しいインスタンスとして扱います。ホスト名を設定し直し、アカウントがなければ作り、パスワードを設定し、鍵を追加し、ネットワーク設定を書き直します。SSH ホスト鍵も新しく作るため、SSH クライアントはホスト鍵の変更を警告します。その起動までは何も変わりません。",
+  "virtCiSaved": "保存しました。次回の起動時に反映されます。"
 }

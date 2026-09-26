@@ -4463,6 +4463,51 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtHwCdromLater => '运行中添加的光驱在下次启动时生效（SATA 和 IDE 不支持热插拔）。';
+
+  @override
+  String virtCreateDiskKept(String size) {
+    return '磁盘保持为镜像本身的 $size，大于所选容量：磁盘不会被裁得比其中的系统还小。';
+  }
+
+  @override
+  String get virtCiEditTip => 'cloud-init 在这台虚拟机里配置的内容：带 sudo 的账户、登录方式、主机名和地址。';
+
+  @override
+  String get virtCiForeignTitle => '这份 seed 包含本应用不写入的设置';
+
+  @override
+  String get virtCiForeignBody =>
+      '在别处写入的设置（软件包、命令、其他账户）不在这里显示。保存后，seed 会被替换为这里显示的内容。';
+
+  @override
+  String get virtCiPasswordKept => '已设置，留空则保持不变';
+
+  @override
+  String get virtCiRemovePassword => '移除密码';
+
+  @override
+  String get virtCiRemovePasswordNote => '只能用 SSH 密钥登录';
+
+  @override
+  String get virtCiKeysAdded =>
+      '密钥会添加到账户。在这里删掉的密钥仍留在系统内，需要在系统内删除；改用户名会新建一个账户，旧账户保留。';
+
+  @override
+  String get virtCiEffectTitle => '下次启动时生效';
+
+  @override
+  String get virtCiEffectLibvirt => '保存会写入一份新的 seed，并使用新的实例 ID。';
+
+  @override
+  String get virtCiEffectPve =>
+      'PVE 会立即重写它的 cloud-init 驱动器，实例 ID 由这些设置计算得出，因此这里的任何改动都会产生新的实例 ID。';
+
+  @override
+  String get virtCiNewInstance =>
+      '下次启动时，cloud-init 会把系统当作新实例：重新设置主机名，账户不存在时创建它，设置密码、添加密钥，并重新写入网络配置。它还会生成新的 SSH 主机密钥，因此 SSH 客户端会提示主机密钥已变更。在那次启动之前不会有任何变化。';
+
+  @override
+  String get virtCiSaved => '已保存，下次启动时生效。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -8923,4 +8968,50 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtHwCdromLater => '執行中新增的光碟機在下次啟動時生效（SATA 和 IDE 不支援熱插拔）。';
+
+  @override
+  String virtCreateDiskKept(String size) {
+    return '磁碟保持為映像本身的 $size，大於所選容量：磁碟不會被裁得比其中的系統還小。';
+  }
+
+  @override
+  String get virtCiEditTip =>
+      'cloud-init 在這台虛擬機器裡設定的內容：帶 sudo 的帳戶、登入方式、主機名稱和位址。';
+
+  @override
+  String get virtCiForeignTitle => '這份 seed 包含本應用程式不寫入的設定';
+
+  @override
+  String get virtCiForeignBody =>
+      '在別處寫入的設定（套件、命令、其他帳戶）不在這裡顯示。儲存後，seed 會被替換為這裡顯示的內容。';
+
+  @override
+  String get virtCiPasswordKept => '已設定，留空則保持不變';
+
+  @override
+  String get virtCiRemovePassword => '移除密碼';
+
+  @override
+  String get virtCiRemovePasswordNote => '只能用 SSH 金鑰登入';
+
+  @override
+  String get virtCiKeysAdded =>
+      '金鑰會新增到帳戶。在這裡刪掉的金鑰仍留在系統內，需要在系統內刪除；改使用者名稱會新建一個帳戶，舊帳戶保留。';
+
+  @override
+  String get virtCiEffectTitle => '下次啟動時生效';
+
+  @override
+  String get virtCiEffectLibvirt => '儲存會寫入一份新的 seed，並使用新的執行個體 ID。';
+
+  @override
+  String get virtCiEffectPve =>
+      'PVE 會立即重寫它的 cloud-init 磁碟機，執行個體 ID 由這些設定計算得出，因此這裡的任何變更都會產生新的執行個體 ID。';
+
+  @override
+  String get virtCiNewInstance =>
+      '下次啟動時，cloud-init 會把系統當作新的執行個體：重新設定主機名稱，帳戶不存在時建立它，設定密碼、新增金鑰，並重新寫入網路設定。它還會產生新的 SSH 主機金鑰，因此 SSH 用戶端會提示主機金鑰已變更。在那次啟動之前不會有任何變化。';
+
+  @override
+  String get virtCiSaved => '已儲存，下次啟動時生效。';
 }

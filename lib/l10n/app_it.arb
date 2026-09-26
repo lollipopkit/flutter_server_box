@@ -1441,5 +1441,18 @@
   "virtCiNoToolTitle": "Nessuno strumento sull'host per creare i dati cloud-init",
   "virtCiNoToolBody": "Installa uno tra {tools} sull'host. Senza cloud-init l'immagine si avvia senza un account per accedere.",
   "virtHwCloudInitNote": "Ciò che cloud-init legge al primo avvio. Non è un supporto di installazione: qui non si inserisce nulla.",
-  "virtHwCdromLater": "Mentre è in esecuzione, l'unità viene aggiunta al prossimo avvio (SATA e IDE non ne accettano a caldo)."
+  "virtHwCdromLater": "Mentre è in esecuzione, l'unità viene aggiunta al prossimo avvio (SATA e IDE non ne accettano a caldo).",
+  "virtCreateDiskKept": "Il disco è rimasto a {size}, la dimensione dell'immagine stessa, più di quanto richiesto: un disco non viene mai ridotto sotto il sistema che contiene.",
+  "virtCiEditTip": "Ciò che cloud-init configura in questa VM: un account con sudo, come accedervi, il nome host e l'indirizzo.",
+  "virtCiForeignTitle": "Questo seed contiene più di quanto scrive questa app",
+  "virtCiForeignBody": "Le impostazioni fatte altrove (pacchetti, comandi, altri account) non sono mostrate qui. Salvare sostituisce il seed con ciò che è mostrato.",
+  "virtCiPasswordKept": "Impostata. Lasciare vuoto per mantenerla",
+  "virtCiRemovePassword": "Rimuovi la password",
+  "virtCiRemovePasswordNote": "Accesso solo con chiave SSH",
+  "virtCiKeysAdded": "Le chiavi vengono aggiunte all'account. Una chiave tolta qui resta nel sistema finché non la si toglie lì, e un nuovo nome utente crea un nuovo account accanto al vecchio.",
+  "virtCiEffectTitle": "Ha effetto al prossimo avvio",
+  "virtCiEffectLibvirt": "Salvare scrive un nuovo seed con un nuovo ID d'istanza.",
+  "virtCiEffectPve": "PVE riscrive subito la sua unità cloud-init, con un ID d'istanza ricavato da queste impostazioni: ogni modifica qui ne crea uno nuovo.",
+  "virtCiNewInstance": "Al prossimo avvio cloud-init tratta il sistema come una nuova istanza: reimposta il nome host, crea l'account se manca, ne imposta la password, aggiunge le chiavi e riscrive la configurazione di rete. Crea anche nuove chiavi host SSH, quindi i client SSH avviseranno che la chiave host è cambiata. Nulla cambia prima di quell'avvio.",
+  "virtCiSaved": "Salvato. Ha effetto al prossimo avvio."
 }

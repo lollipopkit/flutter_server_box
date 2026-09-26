@@ -51,6 +51,12 @@
 /// ISO from a storage holding them, if there is one) and a container (from
 /// the first template there is). They touch no other guest.
 ///
+/// With `SBM_E2E_LIBVIRT_CLOUD_IMAGE` (a cloud image's path on the libvirt
+/// host; `SBM_E2E_LIBVIRT_DISK_POOL` for the disk's pool) the "cloud-init"
+/// group makes a VM `sbme2e-ci-*` from it with a seed, reads the seed back,
+/// writes it anew and deletes the VM — through the agent, and so through
+/// sudo for an account outside the `libvirt` group.
+///
 /// Every agent is expected to serve TLS with a certificate this device does
 /// not trust (`[server.tls]` with a self-signed pair), so the credential sets
 /// `ignoreCert`. Plain HTTP would need both opt-ins (`allowInsecure` here,
@@ -137,6 +143,7 @@ Future<void> main() async {
   // Before the groups that change the existing guests, and standing alone:
   // `--plain-name 'create and delete'` runs only these.
   if (libvirt != null) _libvirtCreate(libvirt);
+  if (libvirt != null) _libvirtCloudInit(libvirt);
   if (libvirt != null) _libvirtVncPassword(libvirt);
   if (libvirt != null) _libvirtHardware(libvirt);
   if (libvirt != null) _libvirtHardwareDevices(libvirt);
@@ -861,6 +868,117 @@ void _libvirtClone(_Agent agent) {
       final vols = (await w.host.volumes(pool)).map((v) => v.name);
       expect(vols.where((v) => v.startsWith(name)), isEmpty);
     });
+  });
+}
+
+/// A cloud image's seed made, read back and written anew through the agent
+/// — its account outside the `libvirt` group, so through sudo — and deleted
+/// with the VM. Needs `SBM_E2E_LIBVIRT_CLOUD_IMAGE` (a cloud image's path on
+/// that host) and an ISO tool there; the disk goes to
+/// `SBM_E2E_LIBVIRT_DISK_POOL`, else the image's own pool.
+void _libvirtCloudInit(_Agent agent) {
+  final sudoPassword = e2eEnv('SBM_E2E_MONITOR_SUDO_PASSWORD');
+  final imagePath = e2eEnv('SBM_E2E_LIBVIRT_CLOUD_IMAGE');
+  final diskPoolName = e2eEnv('SBM_E2E_LIBVIRT_DISK_POOL');
+  if (imagePath == null) return;
+
+  group('cloud-init: libvirt over the monitor agent', () {
+    late _World w;
+    final name = _e2eName('ci');
+
+    setUpAll(() async {
+      w = _World(agent.spi('e2e-monitor-libvirt-ci'));
+      await w.host.firstLoad;
+      if (w.state.error?.type == VirtErrType.sudoPasswordRequired &&
+          sudoPassword != null) {
+        await w.host.provideSudoPassword(sudoPassword);
+      }
+      expect(w.state.error, isNull, reason: '${w.state.error}');
+    });
+    tearDownAll(() async {
+      for (final g in w.state.data?.guests.where((g) => g.name == name) ?? const <VirtGuest>[]) {
+        try {
+          if (g.state != VirtGuestState.stopped) {
+            await w.host.power(g.id, VirtPowerAction.forceStop);
+            await w.host.refresh();
+          }
+          await w.host.delete(g.id);
+        } catch (_) {}
+      }
+      await w.dispose();
+    });
+
+    test('a seed made, read back, written anew and deleted, all through sudo', () async {
+      final options = await w.host.createOptions();
+      expect((options.cloudImages, options.cloudInit), (true, true));
+      final pools = await w.host.storagePools();
+      VirtVolume? image;
+      VirtStoragePool? imagePool;
+      for (final p in pools.where((p) => p.active)) {
+        final v = (await w.host.volumes(p)).where((v) => v.path == imagePath).firstOrNull;
+        if (v != null) (image, imagePool) = (v, p);
+      }
+      expect(image, isNotNull, reason: 'no volume at $imagePath');
+      final pool = diskPoolName == null ? imagePool! : pools.firstWhere((p) => p.name == diskPoolName);
+      final net = virtCreateNetworks(await w.host.networks(), host: VirtHostKind.libvirt)
+          .firstWhere((n) => n.name == 'default');
+      const key = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIA2m8R0nAqFrd3Xb8M2nHpW4eyTZ0QZ0bdU2nHYtR8r0 sbxe2e';
+      final spec = VirtCreateSpec(
+        kind: VirtGuestKind.qemu,
+        name: name,
+        cores: 1,
+        memoryMiB: 512,
+        storage: pool,
+        diskGiB: 2,
+        image: image,
+        network: net,
+        uefi: false,
+        cloudInit: VirtCloudInit(user: 'sbxe', password: 'pw-${DateTime.now().microsecond}', sshKeys: key, hostname: name),
+        start: true,
+      );
+      expect(virtCreateIssue(spec, host: VirtHostKind.libvirt, guests: w.state.data!.guests), isNull);
+      final created = await w.host.create(spec);
+      expect(created.startError, isNull);
+      final g = await w.settle((g) => g.id == created.id, name, (g) => g.state == VirtGuestState.running);
+
+      // The Settings view's read: the seed, downloaded and parsed.
+      final hw = await w.host.hardware(g.id);
+      expect(hw.disks.where((d) => d.cloudInit), hasLength(1));
+      final ci = await w.container.read(virtCloudInitProvider(w.id, g.id).future);
+      expect((ci.user, ci.hostname, ci.passwordSet, ci.network, ci.foreign), ('sbxe', name, true, true, false));
+      expect(ci.sshKeys, [key]);
+
+      // Written anew: a new hostname, a static address, the password gone.
+      await w.host.setCloudInit(
+        g.id,
+        ci,
+        VirtCloudInitEdit(
+          VirtCloudInit(
+            user: 'sbxe',
+            sshKeys: key,
+            hostname: '$name-b',
+            address: '192.168.122.240/24',
+            gateway: '192.168.122.1',
+            dns: const ['192.168.122.1'],
+          ),
+          removePassword: true,
+        ),
+      );
+      final after = await w.container.read(virtCloudInitProvider(w.id, g.id).future);
+      expect((after.hostname, after.address, after.gateway, after.passwordSet), ('$name-b', '192.168.122.240/24', '192.168.122.1', false));
+      expect(after.revision, isNot(ci.revision));
+      // From the old read: a conflict, and nothing written.
+      final stale = await _virtErr(w.host.setCloudInit(g.id, ci, VirtCloudInitEdit(VirtCloudInit(user: 'x', sshKeys: key, hostname: 'x'))));
+      expect(stale.type, VirtErrType.conflict);
+      expect((await w.container.refresh(virtCloudInitProvider(w.id, g.id).future)).hostname, '$name-b');
+
+      await w.host.power(g.id, VirtPowerAction.forceStop);
+      await w.settle((x) => x.id == g.id, name, (x) => x.state == VirtGuestState.stopped);
+      await w.host.delete(g.id);
+      final vols = (await w.host.volumes(pool)).map((v) => v.name);
+      expect(vols, isNot(contains('$name.qcow2')));
+      expect(vols, isNot(contains('$name-cidata.iso')));
+    }, timeout: const Timeout(Duration(minutes: 8)));
   });
 }
 

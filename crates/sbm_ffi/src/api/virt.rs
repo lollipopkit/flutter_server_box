@@ -311,6 +311,51 @@ pub fn parse_virt_undefine(raw: String) -> Result<(), VirtFfiError> {
     Ok(virt::parse_undefine(&raw)?)
 }
 
+/// A domain's cloud-init seed at `seed` (its path, as the domain's metadata
+/// names it), read back from its volume. Parse with
+/// [`parse_virt_seed_read_json`].
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_seed_read_script(seed: String) -> Result<String, VirtFfiError> {
+    Ok(sbm_parser::virt_cloud_init::seed_read_script(&seed)?)
+}
+
+/// [`virt_seed_read_script`]'s output → `VirtSeedRead` JSON: what the seed
+/// says (its password as the hash in it), whether it holds more than the
+/// app writes, and its revision
+pub fn parse_virt_seed_read_json(raw: String) -> Result<String, VirtFfiError> {
+    serde_json::to_string(&sbm_parser::virt_cloud_init::parse_seed_read(&raw)?).map_err(json_err)
+}
+
+/// The seed at `seed` rewritten in place from `cloud_init_json` (a
+/// `VirtCloudInit`), made from the read of `revision`; `tools` narrows the
+/// ISO tools tried (none: all, in their order). Parse with
+/// [`parse_virt_seed_update`].
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_seed_update_script(
+    seed: String,
+    revision: String,
+    cloud_init_json: String,
+    tools: Option<Vec<String>>,
+) -> Result<String, VirtFfiError> {
+    use sbm_parser::virt_cloud_init as ci;
+    let c: ci::VirtCloudInit = serde_json::from_str(&cloud_init_json).map_err(json_err)?;
+    let tools: Vec<&str> = match &tools {
+        Some(t) => {
+            ci::check_tools(t)?;
+            t.iter().map(String::as_str).collect()
+        }
+        None => ci::SEED_TOOLS.to_vec(),
+    };
+    Ok(ci::seed_update_script(&seed, &revision, &c, &tools)?)
+}
+
+/// [`virt_seed_update_script`]'s output: `Ok` once the new seed is in
+/// place; `Conflict` when the seed changed since it was read
+#[flutter_rust_bridge::frb(sync)]
+pub fn parse_virt_seed_update(raw: String) -> Result<(), VirtFfiError> {
+    Ok(sbm_parser::virt_cloud_init::parse_seed_update(&raw)?)
+}
+
 /// A domain's hardware, persistent and running, in one round trip
 #[flutter_rust_bridge::frb(sync)]
 pub fn virt_hardware_script(domain: String) -> String {

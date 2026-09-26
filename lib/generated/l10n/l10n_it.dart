@@ -4821,4 +4821,52 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get virtHwCdromLater =>
       'Mentre è in esecuzione, l\'unità viene aggiunta al prossimo avvio (SATA e IDE non ne accettano a caldo).';
+
+  @override
+  String virtCreateDiskKept(String size) {
+    return 'Il disco è rimasto a $size, la dimensione dell\'immagine stessa, più di quanto richiesto: un disco non viene mai ridotto sotto il sistema che contiene.';
+  }
+
+  @override
+  String get virtCiEditTip =>
+      'Ciò che cloud-init configura in questa VM: un account con sudo, come accedervi, il nome host e l\'indirizzo.';
+
+  @override
+  String get virtCiForeignTitle =>
+      'Questo seed contiene più di quanto scrive questa app';
+
+  @override
+  String get virtCiForeignBody =>
+      'Le impostazioni fatte altrove (pacchetti, comandi, altri account) non sono mostrate qui. Salvare sostituisce il seed con ciò che è mostrato.';
+
+  @override
+  String get virtCiPasswordKept => 'Impostata. Lasciare vuoto per mantenerla';
+
+  @override
+  String get virtCiRemovePassword => 'Rimuovi la password';
+
+  @override
+  String get virtCiRemovePasswordNote => 'Accesso solo con chiave SSH';
+
+  @override
+  String get virtCiKeysAdded =>
+      'Le chiavi vengono aggiunte all\'account. Una chiave tolta qui resta nel sistema finché non la si toglie lì, e un nuovo nome utente crea un nuovo account accanto al vecchio.';
+
+  @override
+  String get virtCiEffectTitle => 'Ha effetto al prossimo avvio';
+
+  @override
+  String get virtCiEffectLibvirt =>
+      'Salvare scrive un nuovo seed con un nuovo ID d\'istanza.';
+
+  @override
+  String get virtCiEffectPve =>
+      'PVE riscrive subito la sua unità cloud-init, con un ID d\'istanza ricavato da queste impostazioni: ogni modifica qui ne crea uno nuovo.';
+
+  @override
+  String get virtCiNewInstance =>
+      'Al prossimo avvio cloud-init tratta il sistema come una nuova istanza: reimposta il nome host, crea l\'account se manca, ne imposta la password, aggiunge le chiavi e riscrive la configurazione di rete. Crea anche nuove chiavi host SSH, quindi i client SSH avviseranno che la chiave host è cambiata. Nulla cambia prima di quell\'avvio.';
+
+  @override
+  String get virtCiSaved => 'Salvato. Ha effetto al prossimo avvio.';
 }

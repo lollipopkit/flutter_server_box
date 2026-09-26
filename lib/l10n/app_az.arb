@@ -1619,5 +1619,18 @@
   "virtCiNoToolTitle": "Hostda cloud-init məlumatını yaratmaq üçün alət yoxdur",
   "virtCiNoToolBody": "Hosta {tools} alətlərindən birini quraşdırın. cloud-init olmadan təsvir daxil olmaq üçün hesabsız başlayır.",
   "virtHwCloudInitNote": "cloud-init-in ilk açılışda oxuduğu məlumat. Quraşdırma mediası deyil: bura heç nə taxılmır.",
-  "virtHwCdromLater": "İşləyərkən sürücü növbəti açılışda əlavə olunur (SATA və IDE işləyərkən qoşulmanı dəstəkləmir)."
+  "virtHwCdromLater": "İşləyərkən sürücü növbəti açılışda əlavə olunur (SATA və IDE işləyərkən qoşulmanı dəstəkləmir).",
+  "virtCreateDiskKept": "Disk təsvirin öz ölçüsü olan {size} olaraq saxlanıldı, istəniləndən böyük: disk heç vaxt üzərindəki sistemdən kiçik kəsilmir.",
+  "virtCiEditTip": "cloud-init-in bu VM-də qurduqları: sudo hüquqlu hesab, ona necə daxil olmaq, host adı və ünvan.",
+  "virtCiForeignTitle": "Bu seed bu tətbiqin yazdığından artıq şey saxlayır",
+  "virtCiForeignBody": "Başqa yerdə edilmiş ayarlar (paketlər, əmrlər, digər hesablar) burada göstərilmir. Saxlamaq seedi burada göstərilənlə əvəz edir.",
+  "virtCiPasswordKept": "Təyin edilib. Saxlamaq üçün boş buraxın",
+  "virtCiRemovePassword": "Parolu sil",
+  "virtCiRemovePasswordNote": "Yalnız SSH açarı ilə giriş",
+  "virtCiKeysAdded": "Açarlar hesaba əlavə olunur. Burada çıxarılan açar orada silinənə qədər sistemdə qalır, yeni istifadəçi adı isə köhnənin yanında yeni hesab yaradır.",
+  "virtCiEffectTitle": "Növbəti açılışda qüvvəyə minir",
+  "virtCiEffectLibvirt": "Saxlamaq yeni nümunə ID-si ilə yeni seed yazır.",
+  "virtCiEffectPve": "PVE cloud-init sürücüsünü dərhal yenidən yazır; nümunə ID-si bu ayarlardan hesablanır, ona görə buradakı hər dəyişiklik yenisini yaradır.",
+  "virtCiNewInstance": "Növbəti açılışda cloud-init sistemi yeni nümunə kimi qəbul edir: host adını yenidən təyin edir, hesab yoxdursa yaradır, parolunu təyin edir, açarları əlavə edir və şəbəkə konfiqurasiyasını yenidən yazır. O, həmçinin yeni SSH host açarları yaradır, ona görə SSH müştəriləri host açarının dəyişdiyi barədə xəbərdarlıq edəcək. O açılışdan əvvəl heç nə dəyişmir.",
+  "virtCiSaved": "Saxlanıldı. Növbəti açılışda qüvvəyə minir."
 }

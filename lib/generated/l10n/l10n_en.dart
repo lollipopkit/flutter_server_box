@@ -4764,4 +4764,51 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get virtHwCdromLater =>
       'While it runs, the drive is added at its next start (SATA and IDE take none live).';
+
+  @override
+  String virtCreateDiskKept(String size) {
+    return 'The disk was kept at $size, the image\'s own size, which is more than was asked for: a disk is never cut below the system on it.';
+  }
+
+  @override
+  String get virtCiEditTip =>
+      'What cloud-init sets up in this VM: an account with sudo, how to log in to it, the hostname and the address.';
+
+  @override
+  String get virtCiForeignTitle => 'This seed holds more than this app writes';
+
+  @override
+  String get virtCiForeignBody =>
+      'Settings made elsewhere (packages, commands, other accounts) are not shown here. Saving replaces the seed with what is shown.';
+
+  @override
+  String get virtCiPasswordKept => 'Set. Leave empty to keep it';
+
+  @override
+  String get virtCiRemovePassword => 'Remove the password';
+
+  @override
+  String get virtCiRemovePasswordNote => 'Log in with an SSH key only';
+
+  @override
+  String get virtCiKeysAdded =>
+      'Keys are added to the account. A key taken out here stays in the system until it is removed there, and a new user name makes a new account beside the old one.';
+
+  @override
+  String get virtCiEffectTitle => 'Takes effect at the next boot';
+
+  @override
+  String get virtCiEffectLibvirt =>
+      'Saving writes a new seed with a new instance ID.';
+
+  @override
+  String get virtCiEffectPve =>
+      'PVE writes its cloud-init drive at once, with an instance ID derived from these settings, so any change here makes a new one.';
+
+  @override
+  String get virtCiNewInstance =>
+      'At the next boot cloud-init treats the system as a new instance: it sets the hostname again, makes the account if it is missing, sets its password, adds the keys and writes the network configuration again. It also makes new SSH host keys, so SSH clients warn that the host key changed. Nothing changes before that boot.';
+
+  @override
+  String get virtCiSaved => 'Saved. It takes effect at the next boot.';
 }

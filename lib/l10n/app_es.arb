@@ -1441,5 +1441,18 @@
   "virtCiNoToolTitle": "No hay herramienta en el host para crear los datos de cloud-init",
   "virtCiNoToolBody": "Instale uno de {tools} en el host. Sin cloud-init, la imagen arranca sin cuenta con la que entrar.",
   "virtHwCloudInitNote": "Lo que lee cloud-init en el primer arranque. No es un medio de instalación: aquí no se inserta nada.",
-  "virtHwCdromLater": "Mientras funciona, la unidad se añade en el próximo arranque (SATA e IDE no admiten conexión en caliente)."
+  "virtHwCdromLater": "Mientras funciona, la unidad se añade en el próximo arranque (SATA e IDE no admiten conexión en caliente).",
+  "virtCreateDiskKept": "El disco se quedó en {size}, el tamaño propio de la imagen, mayor que el pedido: un disco nunca se recorta por debajo del sistema que contiene.",
+  "virtCiEditTip": "Lo que cloud-init configura en esta VM: una cuenta con sudo, cómo entrar en ella, el nombre de host y la dirección.",
+  "virtCiForeignTitle": "Este seed contiene más de lo que escribe esta app",
+  "virtCiForeignBody": "Los ajustes hechos en otro sitio (paquetes, comandos, otras cuentas) no se muestran aquí. Guardar sustituye el seed por lo que se ve.",
+  "virtCiPasswordKept": "Establecida. Déjela vacía para conservarla",
+  "virtCiRemovePassword": "Quitar la contraseña",
+  "virtCiRemovePasswordNote": "Entrar solo con una clave SSH",
+  "virtCiKeysAdded": "Las claves se añaden a la cuenta. Una clave quitada aquí sigue en el sistema hasta que se quite allí, y un nombre de usuario nuevo crea otra cuenta junto a la anterior.",
+  "virtCiEffectTitle": "Se aplica en el próximo arranque",
+  "virtCiEffectLibvirt": "Guardar escribe un seed nuevo con un ID de instancia nuevo.",
+  "virtCiEffectPve": "PVE reescribe su unidad de cloud-init al momento, con un ID de instancia derivado de estos ajustes, así que cualquier cambio aquí crea uno nuevo.",
+  "virtCiNewInstance": "En el próximo arranque, cloud-init trata el sistema como una instancia nueva: vuelve a poner el nombre de host, crea la cuenta si falta, pone su contraseña, añade las claves y vuelve a escribir la configuración de red. También genera claves de host SSH nuevas, así que los clientes SSH avisarán de que la clave de host cambió. Nada cambia antes de ese arranque.",
+  "virtCiSaved": "Guardado. Se aplica en el próximo arranque."
 }

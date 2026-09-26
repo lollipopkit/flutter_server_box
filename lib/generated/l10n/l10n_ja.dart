@@ -4536,4 +4536,50 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get virtHwCdromLater => '実行中はドライブが次回起動時に追加されます（SATA と IDE はホットプラグ不可）。';
+
+  @override
+  String virtCreateDiskKept(String size) {
+    return 'ディスクはイメージ自体のサイズ $size のままです（指定より大きい）。ディスクを中のシステムより小さく切り詰めることはありません。';
+  }
+
+  @override
+  String get virtCiEditTip =>
+      'cloud-init がこの VM で設定する内容: sudo 付きのアカウント、そのログイン方法、ホスト名、アドレス。';
+
+  @override
+  String get virtCiForeignTitle => 'この seed にはこのアプリが書かない設定があります';
+
+  @override
+  String get virtCiForeignBody =>
+      '他の場所で作られた設定（パッケージ、コマンド、別のアカウント）はここに表示されません。保存すると seed はここに表示された内容に置き換わります。';
+
+  @override
+  String get virtCiPasswordKept => '設定済み。空欄のままなら変更しません';
+
+  @override
+  String get virtCiRemovePassword => 'パスワードを削除';
+
+  @override
+  String get virtCiRemovePasswordNote => 'SSH 鍵でのみログイン';
+
+  @override
+  String get virtCiKeysAdded =>
+      '鍵はアカウントに追加されます。ここで外した鍵はシステム内で削除するまで残り、新しいユーザー名は古いアカウントとは別の新しいアカウントを作ります。';
+
+  @override
+  String get virtCiEffectTitle => '次回の起動時に反映';
+
+  @override
+  String get virtCiEffectLibvirt => '保存すると新しいインスタンス ID で新しい seed を書き込みます。';
+
+  @override
+  String get virtCiEffectPve =>
+      'PVE は cloud-init ドライブをすぐに書き直します。インスタンス ID はこれらの設定から計算されるため、ここでの変更はすべて新しい ID になります。';
+
+  @override
+  String get virtCiNewInstance =>
+      '次回の起動時、cloud-init はシステムを新しいインスタンスとして扱います。ホスト名を設定し直し、アカウントがなければ作り、パスワードを設定し、鍵を追加し、ネットワーク設定を書き直します。SSH ホスト鍵も新しく作るため、SSH クライアントはホスト鍵の変更を警告します。その起動までは何も変わりません。';
+
+  @override
+  String get virtCiSaved => '保存しました。次回の起動時に反映されます。';
 }

@@ -318,7 +318,7 @@ final class VirtHostNotifierProvider
   }
 }
 
-String _$virtHostNotifierHash() => r'e72eaf7346cbf6f4c88302f52068512883bfd917';
+String _$virtHostNotifierHash() => r'3ddf68def1481cca5665dac7fb3ba5e330d0f315';
 
 /// One virtualization host: its backend, periodic refresh, actions in flight
 /// and the answers the user gives (TOTP, certificate, sudo password).
@@ -743,6 +743,106 @@ final class VirtHardwareFamily extends $Family
 
   @override
   String toString() => r'virtHardwareProvider';
+}
+
+/// The cloud-init settings of one guest with a cloud-init drive. Read again
+/// after each change through [VirtHostNotifier.setCloudInit], and by the view
+/// after a conflict.
+
+@ProviderFor(virtCloudInit)
+final virtCloudInitProvider = VirtCloudInitFamily._();
+
+/// The cloud-init settings of one guest with a cloud-init drive. Read again
+/// after each change through [VirtHostNotifier.setCloudInit], and by the view
+/// after a conflict.
+
+final class VirtCloudInitProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<VirtCloudInitState>,
+          VirtCloudInitState,
+          FutureOr<VirtCloudInitState>
+        >
+    with
+        $FutureModifier<VirtCloudInitState>,
+        $FutureProvider<VirtCloudInitState> {
+  /// The cloud-init settings of one guest with a cloud-init drive. Read again
+  /// after each change through [VirtHostNotifier.setCloudInit], and by the view
+  /// after a conflict.
+  VirtCloudInitProvider._({
+    required VirtCloudInitFamily super.from,
+    required (String, String) super.argument,
+  }) : super(
+         retry: _noRetry,
+         name: r'virtCloudInitProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$virtCloudInitHash();
+
+  @override
+  String toString() {
+    return r'virtCloudInitProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<VirtCloudInitState> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<VirtCloudInitState> create(Ref ref) {
+    final argument = this.argument as (String, String);
+    return virtCloudInit(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is VirtCloudInitProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$virtCloudInitHash() => r'f852dc4e146b72b52045bae5b964f55aed87958c';
+
+/// The cloud-init settings of one guest with a cloud-init drive. Read again
+/// after each change through [VirtHostNotifier.setCloudInit], and by the view
+/// after a conflict.
+
+final class VirtCloudInitFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<VirtCloudInitState>,
+          (String, String)
+        > {
+  VirtCloudInitFamily._()
+    : super(
+        retry: _noRetry,
+        name: r'virtCloudInitProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The cloud-init settings of one guest with a cloud-init drive. Read again
+  /// after each change through [VirtHostNotifier.setCloudInit], and by the view
+  /// after a conflict.
+
+  VirtCloudInitProvider call(String serverId, String guestId) =>
+      VirtCloudInitProvider._(argument: (serverId, guestId), from: this);
+
+  @override
+  String toString() => r'virtCloudInitProvider';
 }
 
 /// The host's storage pools.

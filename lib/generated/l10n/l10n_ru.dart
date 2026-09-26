@@ -4796,4 +4796,52 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get virtHwCdromLater =>
       'Пока ВМ работает, привод добавится при следующем запуске (SATA и IDE не поддерживают горячее подключение).';
+
+  @override
+  String virtCreateDiskKept(String size) {
+    return 'Диск оставлен размером $size, как у самого образа, — больше запрошенного: диск никогда не урезается меньше системы на нём.';
+  }
+
+  @override
+  String get virtCiEditTip =>
+      'Что cloud-init настраивает в этой ВМ: учётную запись с sudo, способ входа в неё, имя хоста и адрес.';
+
+  @override
+  String get virtCiForeignTitle =>
+      'В этом seed больше, чем записывает это приложение';
+
+  @override
+  String get virtCiForeignBody =>
+      'Настройки, сделанные в другом месте (пакеты, команды, другие учётные записи), здесь не показаны. При сохранении seed заменяется тем, что показано здесь.';
+
+  @override
+  String get virtCiPasswordKept => 'Задан. Оставьте пустым, чтобы сохранить';
+
+  @override
+  String get virtCiRemovePassword => 'Удалить пароль';
+
+  @override
+  String get virtCiRemovePasswordNote => 'Вход только по SSH-ключу';
+
+  @override
+  String get virtCiKeysAdded =>
+      'Ключи добавляются к учётной записи. Ключ, убранный здесь, остаётся в системе, пока его не удалят там, а новое имя пользователя создаёт новую учётную запись рядом со старой.';
+
+  @override
+  String get virtCiEffectTitle => 'Вступит в силу при следующей загрузке';
+
+  @override
+  String get virtCiEffectLibvirt =>
+      'При сохранении записывается новый seed с новым ID экземпляра.';
+
+  @override
+  String get virtCiEffectPve =>
+      'PVE сразу перезаписывает свой диск cloud-init; ID экземпляра вычисляется из этих настроек, поэтому любое изменение здесь даёт новый.';
+
+  @override
+  String get virtCiNewInstance =>
+      'При следующей загрузке cloud-init считает систему новым экземпляром: заново задаёт имя хоста, создаёт учётную запись, если её нет, задаёт пароль, добавляет ключи и заново записывает настройки сети. Он также создаёт новые SSH-ключи хоста, поэтому SSH-клиенты предупредят, что ключ хоста изменился. До этой загрузки ничего не меняется.';
+
+  @override
+  String get virtCiSaved => 'Сохранено. Вступит в силу при следующей загрузке.';
 }

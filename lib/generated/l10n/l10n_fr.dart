@@ -4848,4 +4848,52 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get virtHwCdromLater =>
       'Tant qu\'elle tourne, le lecteur est ajouté au prochain démarrage (SATA et IDE n\'en acceptent pas à chaud).';
+
+  @override
+  String virtCreateDiskKept(String size) {
+    return 'Le disque est resté à $size, la taille de l\'image elle-même, plus que demandé : un disque n\'est jamais réduit sous le système qu\'il contient.';
+  }
+
+  @override
+  String get virtCiEditTip =>
+      'Ce que cloud-init configure dans cette VM : un compte avec sudo, la façon de s\'y connecter, le nom d\'hôte et l\'adresse.';
+
+  @override
+  String get virtCiForeignTitle =>
+      'Ce seed contient plus que ce que cette app écrit';
+
+  @override
+  String get virtCiForeignBody =>
+      'Les réglages faits ailleurs (paquets, commandes, autres comptes) ne sont pas affichés ici. Enregistrer remplace le seed par ce qui est affiché.';
+
+  @override
+  String get virtCiPasswordKept => 'Défini. Laisser vide pour le garder';
+
+  @override
+  String get virtCiRemovePassword => 'Supprimer le mot de passe';
+
+  @override
+  String get virtCiRemovePasswordNote => 'Connexion par clé SSH uniquement';
+
+  @override
+  String get virtCiKeysAdded =>
+      'Les clés sont ajoutées au compte. Une clé retirée ici reste dans le système jusqu\'à ce qu\'on l\'y retire, et un nouveau nom d\'utilisateur crée un compte à côté de l\'ancien.';
+
+  @override
+  String get virtCiEffectTitle => 'Prend effet au prochain démarrage';
+
+  @override
+  String get virtCiEffectLibvirt =>
+      'Enregistrer écrit un nouveau seed avec un nouvel ID d\'instance.';
+
+  @override
+  String get virtCiEffectPve =>
+      'PVE réécrit tout de suite son lecteur cloud-init, avec un ID d\'instance dérivé de ces réglages : tout changement ici en crée un nouveau.';
+
+  @override
+  String get virtCiNewInstance =>
+      'Au prochain démarrage, cloud-init traite le système comme une nouvelle instance : il redéfinit le nom d\'hôte, crée le compte s\'il manque, définit son mot de passe, ajoute les clés et réécrit la configuration réseau. Il crée aussi de nouvelles clés d\'hôte SSH : les clients SSH signaleront que la clé d\'hôte a changé. Rien ne change avant ce démarrage.';
+
+  @override
+  String get virtCiSaved => 'Enregistré. Prend effet au prochain démarrage.';
 }

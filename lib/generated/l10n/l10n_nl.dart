@@ -4813,4 +4813,51 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get virtHwCdromLater =>
       'Terwijl ze draait, wordt het station bij de volgende start toegevoegd (SATA en IDE nemen er live geen).';
+
+  @override
+  String virtCreateDiskKept(String size) {
+    return 'De schijf bleef $size, de grootte van de image zelf, meer dan gevraagd: een schijf wordt nooit kleiner gemaakt dan het systeem erop.';
+  }
+
+  @override
+  String get virtCiEditTip =>
+      'Wat cloud-init in deze VM inricht: een account met sudo, hoe je erop aanmeldt, de hostnaam en het adres.';
+
+  @override
+  String get virtCiForeignTitle => 'Deze seed bevat meer dan deze app schrijft';
+
+  @override
+  String get virtCiForeignBody =>
+      'Elders gemaakte instellingen (pakketten, opdrachten, andere accounts) worden hier niet getoond. Opslaan vervangt de seed door wat hier staat.';
+
+  @override
+  String get virtCiPasswordKept => 'Ingesteld. Leeg laten om het te houden';
+
+  @override
+  String get virtCiRemovePassword => 'Wachtwoord verwijderen';
+
+  @override
+  String get virtCiRemovePasswordNote => 'Alleen aanmelden met een SSH-sleutel';
+
+  @override
+  String get virtCiKeysAdded =>
+      'Sleutels worden aan het account toegevoegd. Een hier verwijderde sleutel blijft in het systeem tot hij daar wordt verwijderd, en een nieuwe gebruikersnaam maakt een nieuw account naast het oude.';
+
+  @override
+  String get virtCiEffectTitle => 'Werkt bij de volgende start';
+
+  @override
+  String get virtCiEffectLibvirt =>
+      'Opslaan schrijft een nieuwe seed met een nieuwe instantie-ID.';
+
+  @override
+  String get virtCiEffectPve =>
+      'PVE schrijft zijn cloud-init-station meteen opnieuw, met een instantie-ID afgeleid van deze instellingen, dus elke wijziging hier maakt een nieuwe.';
+
+  @override
+  String get virtCiNewInstance =>
+      'Bij de volgende start behandelt cloud-init het systeem als een nieuwe instantie: het stelt de hostnaam opnieuw in, maakt het account als het ontbreekt, zet het wachtwoord, voegt de sleutels toe en schrijft de netwerkconfiguratie opnieuw. Het maakt ook nieuwe SSH-hostsleutels, dus SSH-clients waarschuwen dat de hostsleutel is veranderd. Vóór die start verandert er niets.';
+
+  @override
+  String get virtCiSaved => 'Opgeslagen. Werkt bij de volgende start.';
 }

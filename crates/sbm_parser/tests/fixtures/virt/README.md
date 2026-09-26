@@ -132,3 +132,15 @@ CD-ROM) on the same host:
 | `script_clone_volumes_running.txt` | The source running: refused before anything is made |
 | `script_clone_define.txt` | The copy defined, and its new UUID |
 | `script_clone_define_rollback.txt` | The define refused (the name taken meanwhile): the volume deleted again |
+
+Cloud-init seeds (2026-09-26), captured on the libvirt host from the first
+release's `user-data` (`users:`, one account of its own) with hostile values,
+cut after their last file (the reader needs nothing past it). Read back by
+`virt_cloud_init::iso_root_files` and `parse_seed_read`.
+
+| File | Tool |
+| --- | --- |
+| `seed_genisoimage.iso` | `genisoimage -joliet -rock` |
+| `seed_xorriso.iso` | `xorriso -as mkisofs -joliet -rock` |
+| `seed_cloud_localds.iso` | `cloud-localds -N network-config` |
+| `seed_rock_ridge.iso` | `genisoimage -rock`: Rock Ridge names only, no Joliet |

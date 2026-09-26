@@ -888,6 +888,7 @@ fn create_volume_and_define_captured() {
         virt::VirtCreateVolumes {
             disk_path: "/var/lib/libvirt/images/sbm-create-test.qcow2".into(),
             seed_path: None,
+            copied_bytes: None,
         }
     );
     // The name was defined already: nothing ran.

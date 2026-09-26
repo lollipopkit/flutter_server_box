@@ -1126,6 +1126,9 @@ void main() {
         'before the start', () async {
       final api = _Api();
       api.routes['POST /nodes/pve/qemu'] = (_) => _Api.upid;
+      // Imported at the image's own size.
+      api.routes['GET /nodes/pve/qemu/107/config'] =
+          (_) => {'scsi0': 'local-lvm:vm-107-disk-1,iothread=1,size=3G'};
       api.routes['PUT /nodes/pve/qemu/107/resize'] = (_) => _Api.upid;
       api.routes['POST /nodes/pve/qemu/107/status/start'] = (_) => _Api.upid;
       const key = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5 me@x';
@@ -1163,6 +1166,7 @@ void main() {
         ),
       );
       expect(created.startError, isNull);
+      expect(created.diskKeptBytes, isNull);
       final i = api.paths.indexOf('POST /nodes/pve/qemu');
       final body = form(api.bodies[i]);
       expect(body, {
@@ -1195,6 +1199,35 @@ void main() {
       expect(form(api.bodies[resize]), {'disk': 'scsi0', 'size': '16G'});
       final start = api.paths.indexOf('POST /nodes/pve/qemu/107/status/start');
       expect(i < resize && resize < start, isTrue);
+    });
+
+    test('an image bigger than the disk asked for keeps its size, not grown '
+        'and not failed', () async {
+      final api = _Api();
+      api.routes['POST /nodes/pve/qemu'] = (_) => _Api.upid;
+      api.routes['GET /nodes/pve/qemu/109/config'] =
+          (_) => {'scsi0': 'local-lvm:vm-109-disk-0,iothread=1,size=3584M'};
+      api.routes['POST /nodes/pve/qemu/109/status/start'] = (_) => _Api.upid;
+      final created = await api.backend(token).create(
+        const VirtCreateSpec(
+          kind: VirtGuestKind.qemu,
+          name: 'ci-03',
+          node: 'pve',
+          vmid: 109,
+          cores: 1,
+          memoryMiB: 1024,
+          storage: lvm,
+          diskGiB: 2,
+          // The listing's size was the file's: unknown.
+          image: VirtVolume(id: 'local:import/noble.qcow2', name: 'noble.qcow2', content: 'import', format: 'qcow2'),
+          cloudInit: VirtCloudInit(user: 'u', password: 'pw'),
+          start: true,
+        ),
+      );
+      expect(created.diskKeptBytes, 3584 << 20);
+      expect(created.startError, isNull);
+      expect(api.paths.where((p) => p.endsWith('/resize')), isEmpty);
+      expect(api.paths, contains('POST /nodes/pve/qemu/109/status/start'));
     });
 
     test('a disk on SATA has no I/O thread; a failed growth is not started',
@@ -1347,6 +1380,147 @@ void main() {
 
       final running = off.copyWith(state: VirtGuestState.running);
       expect((await _err(pve.delete(running))).type, VirtErrType.unsupported);
+    });
+  });
+
+  group('cloud images and cloud-init', () {
+    const token = PveConfig(
+      addr: 'https://pve.lan:8006',
+      auth: PveAuth.token,
+      tokenId: 'root@pam!sb',
+      tokenSecret: 's3cret',
+    );
+    Map<String, String> form(String body) => Uri.splitQueryString(body);
+
+    test('an import image\'s listing size is its file\'s: the virtual size '
+        'is asked for', () async {
+      final api = _Api();
+      api.routes['GET /nodes/pve/storage/local/content'] = (_) => [
+        {'volid': 'local:import/debian-13.qcow2', 'content': 'import', 'format': 'qcow2', 'size': 340983808},
+        {'volid': 'local:import/alpine.raw', 'content': 'import', 'format': 'raw', 'size': 1 << 30},
+        {'volid': 'local:iso/x.iso', 'content': 'iso', 'format': 'iso', 'size': 1000},
+      ];
+      api.routes['GET /nodes/pve/storage/local/content/${Uri.encodeComponent('local:import/debian-13.qcow2')}'] =
+          (_) => {'size': 3221225472, 'used': 340983808, 'format': 'qcow2', 'path': '/var/lib/vz/import/debian-13.qcow2'};
+      final vols = await api.backend(token).volumes(
+        const VirtStoragePool(id: 'pve/local', name: 'local', type: 'dir', node: 'pve'),
+      );
+      final by = {for (final v in vols) v.name: v};
+      expect(by['debian-13.qcow2']!.capacity, 3 << 30);
+      expect(by['debian-13.qcow2']!.allocation, 340983808);
+      // A raw image's file is its size; nothing asked for it or the ISO.
+      expect(by['alpine.raw']!.capacity, 1 << 30);
+      expect(by['x.iso']!.capacity, 1000);
+      expect(api.paths.where((p) => p.contains('/content/')), hasLength(1));
+    });
+
+    test('an image PVE will not size stays unknown', () async {
+      final api = _Api();
+      api.routes['GET /nodes/pve/storage/local/content'] = (_) => [
+        {'volid': 'local:import/a.qcow2', 'content': 'import', 'format': 'qcow2', 'size': 10},
+      ];
+      api.routes['GET /nodes/pve/storage/local/content/${Uri.encodeComponent('local:import/a.qcow2')}'] =
+          (_) => _Api._status(403, message: 'Permission check failed');
+      final vols = await api.backend(token).volumes(
+        const VirtStoragePool(id: 'pve/local', name: 'local', type: 'dir', node: 'pve'),
+      );
+      expect(vols.single.capacity, isNull);
+    });
+
+    const vm = VirtGuest(
+      id: 'qemu/950',
+      name: 'ci',
+      kind: VirtGuestKind.qemu,
+      state: VirtGuestState.running,
+      vmid: 950,
+      node: 'pve',
+    );
+    Map<String, Object?> config() => {
+      'ciuser': 'sbxe',
+      'cipassword': '**********',
+      'sshkeys': Uri.encodeComponent('ssh-ed25519 AAAA one\nssh-ed25519 BBBB two\n'),
+      'ipconfig0': 'ip=10.0.0.5/24,gw=10.0.0.1,ip6=auto',
+      'nameserver': '1.1.1.1 9.9.9.9',
+      'searchdomain': 'lab.example',
+      'net0': 'virtio=BC:24:11:00:00:01,bridge=vmbr0',
+      'scsi1': 'local-lvm:vm-950-cloudinit,media=cdrom',
+      'digest': 'd1',
+    };
+
+    test('read: ci options, the password only as set', () async {
+      final api = _Api()..routes['GET /nodes/pve/qemu/950/config'] = (_) => config();
+      final ci = await api.backend(token).cloudInit(vm);
+      expect(ci.user, 'sbxe');
+      expect(ci.sshKeys, ['ssh-ed25519 AAAA one', 'ssh-ed25519 BBBB two']);
+      expect((ci.address, ci.gateway), ('10.0.0.5/24', '10.0.0.1'));
+      expect(ci.dns, ['1.1.1.1', '9.9.9.9']);
+      expect(ci.searchDomain, 'lab.example');
+      expect((ci.passwordSet, ci.network, ci.hostname), (true, true, null));
+      expect(ci.revision, 'd1');
+      expect('$ci', isNot(contains('**')));
+      final dhcp = PveResources.parseCloudInit({'ipconfig0': 'ip=dhcp', 'digest': 'x'});
+      expect((dhcp.address, dhcp.passwordSet, dhcp.network, dhcp.user), (null, false, false, ''));
+    });
+
+    test('write: the options with the digest, ip6 kept, emptied ones '
+        'deleted, then the drive written again', () async {
+      final api = _Api()
+        ..routes['GET /nodes/pve/qemu/950/config'] = ((_) => config())
+        ..routes['POST /nodes/pve/qemu/950/config'] = ((_) => _Api.upid)
+        ..routes['PUT /nodes/pve/qemu/950/cloudinit'] = ((_) => null);
+      final pve = api.backend(token);
+      final base = await pve.cloudInit(vm);
+      await pve.setCloudInit(
+        vm,
+        base,
+        const VirtCloudInitEdit(
+          VirtCloudInit(user: 'ops', sshKeys: 'ssh-ed25519 CCCC three'),
+          removePassword: true,
+        ),
+      );
+      final i = api.paths.indexOf('POST /nodes/pve/qemu/950/config');
+      expect(form(api.bodies[i]), {
+        'ciuser': 'ops',
+        'sshkeys': Uri.encodeComponent('ssh-ed25519 CCCC three\n'),
+        'ipconfig0': 'ip=dhcp,ip6=auto',
+        'delete': 'cipassword,nameserver,searchdomain',
+        'digest': 'd1',
+      });
+      expect(api.paths.indexOf('PUT /nodes/pve/qemu/950/cloudinit'), greaterThan(i));
+
+      // A new password and a static address; the password is kept where
+      // none is typed and it is not removed.
+      await pve.setCloudInit(
+        vm,
+        base,
+        const VirtCloudInitEdit(
+          VirtCloudInit(user: 'ops', password: 'n e&w', address: '10.0.0.9/24', gateway: '10.0.0.254', dns: ['8.8.8.8']),
+        ),
+      );
+      final j = api.paths.lastIndexOf('POST /nodes/pve/qemu/950/config');
+      expect(form(api.bodies[j]), {
+        'ciuser': 'ops',
+        'cipassword': 'n e&w',
+        'ipconfig0': 'ip=10.0.0.9/24,gw=10.0.0.254,ip6=auto',
+        'nameserver': '8.8.8.8',
+        'delete': 'sshkeys,searchdomain',
+        'digest': 'd1',
+      });
+    });
+
+    test('write from a stale read: a conflict', () async {
+      final api = _Api()
+        ..routes['GET /nodes/pve/qemu/950/config'] = ((_) => config())
+        ..routes['POST /nodes/pve/qemu/950/config'] = ((_) => _Api._status(
+          500,
+          message: 'checksum mismatch (file change by other user?)',
+        ));
+      final pve = api.backend(token);
+      final e = await _err(
+        pve.setCloudInit(vm, await pve.cloudInit(vm), const VirtCloudInitEdit(VirtCloudInit(user: 'x', password: 'y'))),
+      );
+      expect(e.type, VirtErrType.conflict);
+      expect(api.paths.where((p) => p.endsWith('/cloudinit')), isEmpty);
     });
   });
 

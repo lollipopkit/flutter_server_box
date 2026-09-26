@@ -1395,5 +1395,18 @@
   "virtCiNoToolTitle": "宿主机上没有制作 cloud-init 数据的工具",
   "virtCiNoToolBody": "在宿主机上安装 {tools} 之一。没有 cloud-init，镜像启动后没有可登录的账户。",
   "virtHwCloudInitNote": "cloud-init 在首次启动时读取的数据，不是安装介质，这里不能换盘。",
-  "virtHwCdromLater": "运行中添加的光驱在下次启动时生效（SATA 和 IDE 不支持热插拔）。"
+  "virtHwCdromLater": "运行中添加的光驱在下次启动时生效（SATA 和 IDE 不支持热插拔）。",
+  "virtCreateDiskKept": "磁盘保持为镜像本身的 {size}，大于所选容量：磁盘不会被裁得比其中的系统还小。",
+  "virtCiEditTip": "cloud-init 在这台虚拟机里配置的内容：带 sudo 的账户、登录方式、主机名和地址。",
+  "virtCiForeignTitle": "这份 seed 包含本应用不写入的设置",
+  "virtCiForeignBody": "在别处写入的设置（软件包、命令、其他账户）不在这里显示。保存后，seed 会被替换为这里显示的内容。",
+  "virtCiPasswordKept": "已设置，留空则保持不变",
+  "virtCiRemovePassword": "移除密码",
+  "virtCiRemovePasswordNote": "只能用 SSH 密钥登录",
+  "virtCiKeysAdded": "密钥会添加到账户。在这里删掉的密钥仍留在系统内，需要在系统内删除；改用户名会新建一个账户，旧账户保留。",
+  "virtCiEffectTitle": "下次启动时生效",
+  "virtCiEffectLibvirt": "保存会写入一份新的 seed，并使用新的实例 ID。",
+  "virtCiEffectPve": "PVE 会立即重写它的 cloud-init 驱动器，实例 ID 由这些设置计算得出，因此这里的任何改动都会产生新的实例 ID。",
+  "virtCiNewInstance": "下次启动时，cloud-init 会把系统当作新实例：重新设置主机名，账户不存在时创建它，设置密码、添加密钥，并重新写入网络配置。它还会生成新的 SSH 主机密钥，因此 SSH 客户端会提示主机密钥已变更。在那次启动之前不会有任何变化。",
+  "virtCiSaved": "已保存，下次启动时生效。"
 }

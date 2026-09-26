@@ -2145,6 +2145,8 @@ pub const KEY_EXISTS: &str = "virt.exists";
 pub const KEY_VOL_CREATE: &str = "virt.vol.create";
 pub const KEY_VOL_PATH: &str = "virt.vol.path";
 pub const KEY_VOL_RESIZE: &str = "virt.vol.resize";
+/// A cloud image's copy as made: `vol-info --bytes`.
+pub const KEY_VOL_INFO: &str = "virt.vol.info";
 pub const KEY_DEFINE: &str = "virt.define";
 pub const KEY_ROLLBACK: &str = "virt.rollback";
 pub const KEY_UUID: &str = "virt.uuid";
@@ -2281,6 +2283,11 @@ pub struct VirtCreateSpec {
     /// [`define_script`] only
     #[serde(default)]
     pub seed_path: Option<String>,
+    /// The ISO tools a seed may be made with, in order; none:
+    /// [`crate::virt_cloud_init::SEED_TOOLS`]. Narrowed by the end-to-end
+    /// tests, which make a seed with each tool in turn.
+    #[serde(default)]
+    pub seed_tools: Option<Vec<String>>,
     pub start: bool,
 }
 
@@ -2303,6 +2310,14 @@ impl VirtCreateSpec {
 
     fn bus(&self) -> &str {
         self.disk_bus.as_deref().unwrap_or("virtio")
+    }
+
+    /// The ISO tools tried for the seed, in order.
+    fn seed_tools(&self) -> Vec<&str> {
+        match &self.seed_tools {
+            Some(t) => t.iter().map(String::as_str).collect(),
+            None => crate::virt_cloud_init::SEED_TOOLS.to_vec(),
+        }
     }
 
     /// Refuses what the host would refuse later, or what would land in a
@@ -2367,6 +2382,9 @@ impl VirtCreateSpec {
         }
         if self.mac.as_deref().is_some_and(|m| !is_mac(m)) {
             return bad("mac");
+        }
+        if let Some(tools) = &self.seed_tools {
+            crate::virt_cloud_init::check_tools(tools)?;
         }
         if let Some(ci) = &self.cloud_init {
             ci.check()?;
@@ -2545,10 +2563,16 @@ pub(crate) fn run_fn() -> String {
 /// A name already defined stops it before anything is created, and so does
 /// a volume of that name (`vol-create-as` refuses it): nothing of someone
 /// else's is reused. The disk is empty (`vol-create-as`) or a copy of a
-/// cloud image (`vol-create-from`, converted to the pool's format, then
-/// `vol-resize` to its size): a copy of its own, so the image stays free to
-/// be deleted or replaced and deleting the domain deletes nothing it was
-/// made from. Any later step that fails deletes what the earlier ones made.
+/// cloud image (`vol-create-from`, converted to the pool's format): a copy
+/// of its own, so the image stays free to be deleted or replaced and
+/// deleting the domain deletes nothing it was made from.
+///
+/// A copy is the image's own size whatever size it was asked for (libvirt
+/// 11.3 makes a 2 GiB image's copy 2 GiB when asked for 1), and is grown
+/// (`vol-resize`) only to a bigger one: a disk is never cut, which would cut
+/// the system on it, and a request below the image leaves the disk at the
+/// image's size ([`VirtCreateVolumes::copied_bytes`] says so). Any later
+/// step that fails deletes what the earlier ones made.
 pub fn create_volume_script(spec: &VirtCreateSpec) -> Result<String, VirtError> {
     spec.check()?;
     let name = shell_quote_unix(&spec.name);
@@ -2583,13 +2607,20 @@ pub fn create_volume_script(spec: &VirtCreateSpec) -> Result<String, VirtError> 
                 "echo '{create}'\nf=$(mktemp 2>&1) || {{ printf '%s\\n{RC_PREFIX}1\\n' \"$f\"; exit 0; }}\n\
                  printf '%s' {xml} >\"$f\"; R vol-create-from --pool {pool} --file \"$f\" --vol {base}; rm -f \"$f\"\n\
                  [ \"$r\" = 0 ] || exit 0\n\
+                 echo '{info}'\nout=$(virsh --connect {CONNECT_URI} -q vol-info --bytes --pool {pool} --vol {vol} </dev/null 2>&1); r=$?\n\
+                 printf '%s\\n{RC_PREFIX}%s\\n' \"$out\" \"$r\"\n\
+                 if [ \"$r\" != 0 ]; then {del_disk}exit 0; fi\n\
+                 cap=$(printf '%s\\n' \"$out\" | sed -n 's/^Capacity: *\\([0-9][0-9]*\\) bytes$/\\1/p')\n\
+                 if [ \"${{cap:-0}}\" -lt {bytes} ]; then\n\
                  echo '{resize}'\nR vol-resize --pool {pool} --vol {vol} --capacity {gib}G\n\
-                 if [ \"$r\" != 0 ]; then {del_disk}exit 0; fi\n",
+                 if [ \"$r\" != 0 ]; then {del_disk}exit 0; fi\nfi\n",
                 create = m(KEY_VOL_CREATE),
+                info = m(KEY_VOL_INFO),
                 resize = m(KEY_VOL_RESIZE),
                 xml = shell_quote_unix(&xml),
                 base = shell_quote_unix(base),
                 gib = spec.disk_gib,
+                bytes = spec.disk_gib << 30,
             ));
         }
     }
@@ -2602,7 +2633,13 @@ pub fn create_volume_script(spec: &VirtCreateSpec) -> Result<String, VirtError> 
         m(KEY_ROLLBACK),
     ));
     if let Some(ci) = &spec.cloud_init {
-        s.push_str(&crate::virt_cloud_init::seed_script(ci, &spec.disk_pool, &spec.seed_name(), &del_disk)?);
+        s.push_str(&crate::virt_cloud_init::seed_script(
+            ci,
+            &spec.disk_pool,
+            &spec.seed_name(),
+            &del_disk,
+            &spec.seed_tools(),
+        )?);
     }
     Ok(s)
 }
@@ -2613,6 +2650,10 @@ pub struct VirtCreateVolumes {
     pub disk_path: String,
     /// The cloud-init seed's path; none without one
     pub seed_path: Option<String>,
+    /// A cloud image's copy: its size as copied, before any growth. More
+    /// than the size asked for: the disk was kept at this, the image's own
+    #[serde(default)]
+    pub copied_bytes: Option<u64>,
 }
 
 /// [`create_volume_script`]'s output: the new volumes' paths. `Exists` for a
@@ -2626,6 +2667,14 @@ pub fn parse_create_volumes(raw: &str) -> Result<VirtCreateVolumes, VirtError> {
         return Err(VirtError::Exists { message: String::new() });
     }
     take(&secs, KEY_VOL_CREATE, raw)?.ok()?;
+    let copied_bytes = match secs.iter().find(|(k, _)| k == KEY_VOL_INFO) {
+        Some((_, info)) => info.ok()?.lines().find_map(|l| {
+            l.strip_prefix("Capacity:")
+                .and_then(|v| v.trim().strip_suffix(" bytes"))
+                .and_then(|n| n.trim().parse().ok())
+        }),
+        None => None,
+    };
     if let Some((_, resize)) = secs.iter().find(|(k, _)| k == KEY_VOL_RESIZE) {
         resize.ok()?;
     }
@@ -2642,15 +2691,14 @@ pub fn parse_create_volumes(raw: &str) -> Result<VirtCreateVolumes, VirtError> {
     let disk_path = path_of(KEY_VOL_PATH)?;
     let seeded = segs.iter().any(|(k, _)| k == ci::KEY_SEED_ISO);
     if !seeded {
-        return Ok(VirtCreateVolumes { disk_path, seed_path: None });
+        return Ok(VirtCreateVolumes {
+            disk_path,
+            seed_path: None,
+            copied_bytes,
+        });
     }
     if segs.iter().any(|(k, _)| k == ci::KEY_SEED_NO_TOOL) {
-        return Err(VirtError::Command {
-            message: format!(
-                "No tool to make a cloud-init seed ISO on the host: install one of {}",
-                ci::SEED_TOOLS.join(", ")
-            ),
-        });
+        return Err(ci::no_tool_error());
     }
     for key in [ci::KEY_SEED_ISO, ci::KEY_SEED_VOL, ci::KEY_SEED_UPLOAD] {
         take(&secs, key, raw)?.ok()?;
@@ -2658,6 +2706,7 @@ pub fn parse_create_volumes(raw: &str) -> Result<VirtCreateVolumes, VirtError> {
     Ok(VirtCreateVolumes {
         disk_path,
         seed_path: Some(path_of(ci::KEY_SEED_PATH)?),
+        copied_bytes,
     })
 }
 

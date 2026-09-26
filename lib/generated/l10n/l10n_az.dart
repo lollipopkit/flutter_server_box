@@ -4770,4 +4770,52 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get virtHwCdromLater =>
       'İşləyərkən sürücü növbəti açılışda əlavə olunur (SATA və IDE işləyərkən qoşulmanı dəstəkləmir).';
+
+  @override
+  String virtCreateDiskKept(String size) {
+    return 'Disk təsvirin öz ölçüsü olan $size olaraq saxlanıldı, istəniləndən böyük: disk heç vaxt üzərindəki sistemdən kiçik kəsilmir.';
+  }
+
+  @override
+  String get virtCiEditTip =>
+      'cloud-init-in bu VM-də qurduqları: sudo hüquqlu hesab, ona necə daxil olmaq, host adı və ünvan.';
+
+  @override
+  String get virtCiForeignTitle =>
+      'Bu seed bu tətbiqin yazdığından artıq şey saxlayır';
+
+  @override
+  String get virtCiForeignBody =>
+      'Başqa yerdə edilmiş ayarlar (paketlər, əmrlər, digər hesablar) burada göstərilmir. Saxlamaq seedi burada göstərilənlə əvəz edir.';
+
+  @override
+  String get virtCiPasswordKept => 'Təyin edilib. Saxlamaq üçün boş buraxın';
+
+  @override
+  String get virtCiRemovePassword => 'Parolu sil';
+
+  @override
+  String get virtCiRemovePasswordNote => 'Yalnız SSH açarı ilə giriş';
+
+  @override
+  String get virtCiKeysAdded =>
+      'Açarlar hesaba əlavə olunur. Burada çıxarılan açar orada silinənə qədər sistemdə qalır, yeni istifadəçi adı isə köhnənin yanında yeni hesab yaradır.';
+
+  @override
+  String get virtCiEffectTitle => 'Növbəti açılışda qüvvəyə minir';
+
+  @override
+  String get virtCiEffectLibvirt =>
+      'Saxlamaq yeni nümunə ID-si ilə yeni seed yazır.';
+
+  @override
+  String get virtCiEffectPve =>
+      'PVE cloud-init sürücüsünü dərhal yenidən yazır; nümunə ID-si bu ayarlardan hesablanır, ona görə buradakı hər dəyişiklik yenisini yaradır.';
+
+  @override
+  String get virtCiNewInstance =>
+      'Növbəti açılışda cloud-init sistemi yeni nümunə kimi qəbul edir: host adını yenidən təyin edir, hesab yoxdursa yaradır, parolunu təyin edir, açarları əlavə edir və şəbəkə konfiqurasiyasını yenidən yazır. O, həmçinin yeni SSH host açarları yaradır, ona görə SSH müştəriləri host açarının dəyişdiyi barədə xəbərdarlıq edəcək. O açılışdan əvvəl heç nə dəyişmir.';
+
+  @override
+  String get virtCiSaved => 'Saxlanıldı. Növbəti açılışda qüvvəyə minir.';
 }

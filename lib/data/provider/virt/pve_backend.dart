@@ -853,26 +853,41 @@ class PveBackend implements VirtBackend {
     }
     final id = '$kind/$vmid';
     String? startError;
-    final image = spec.image;
-    final grow = spec.diskGiB * (1 << 30);
-    if (!lxc && image != null && (image.capacity == null || image.capacity! < grow)) {
-      // Imported at the image's own size; grown now, before a first boot
-      // lays its filesystem out.
+    int? kept;
+    if (!lxc && spec.image != null) {
+      // Imported at the image's own size, which the configuration says
+      // (`size=`). Grown now, before a first boot lays its filesystem out —
+      // and only grown: a request below the image keeps the image's size,
+      // as PVE cannot shrink a disk and cutting one would cut its system.
+      final want = spec.diskGiB * (1 << 30);
+      final disk = '${_createBus(spec)}0';
+      int? size;
       try {
-        final upid = await _call(
-          (dio) => dio.put(
-            _url('/nodes/${_seg(node)}/qemu/$vmid/resize'),
-            data: {'disk': '${_createBus(spec)}0', 'size': '${spec.diskGiB}G'},
-            options: Options(contentType: Headers.formUrlEncodedContentType),
-          ),
-          action: true,
-        );
-        if (upid is String && upid.startsWith('UPID:')) {
-          await _waitTask(node, upid);
+        final config = await _configOf('/nodes/${_seg(node)}/qemu/$vmid');
+        if (config[disk] case final String raw) {
+          size = PveResources.optionSize(raw);
         }
       } on VirtErr catch (e) {
-        // Created all the same; not started on a disk of the wrong size.
-        return VirtCreated(id: id, startError: e.message ?? e.type.name);
+        Loggers.app.info('PVE config of $vmid after import: ${e.message}');
+      }
+      if (size != null && size > want) kept = size;
+      if (size == null || size < want) {
+        try {
+          final upid = await _call(
+            (dio) => dio.put(
+              _url('/nodes/${_seg(node)}/qemu/$vmid/resize'),
+              data: {'disk': disk, 'size': '${spec.diskGiB}G'},
+              options: Options(contentType: Headers.formUrlEncodedContentType),
+            ),
+            action: true,
+          );
+          if (upid is String && upid.startsWith('UPID:')) {
+            await _waitTask(node, upid);
+          }
+        } on VirtErr catch (e) {
+          // Created all the same; not started on a disk of the wrong size.
+          return VirtCreated(id: id, startError: e.message ?? e.type.name);
+        }
       }
     }
     if (spec.start) {
@@ -888,7 +903,7 @@ class PveBackend implements VirtBackend {
         startError = e.message ?? e.type.name;
       }
     }
-    return VirtCreated(id: id, startError: startError);
+    return VirtCreated(id: id, startError: startError, diskKeptBytes: kept);
   }
 
   static String _createBus(VirtCreateSpec spec) => spec.bus ?? 'scsi';
@@ -1542,6 +1557,72 @@ class PveBackend implements VirtBackend {
     return const VirtHwOutcome();
   }
 
+  /// PVE's `ci*` options, from the VM's configuration.
+  @override
+  Future<VirtCloudInitState> cloudInit(VirtGuest guest) async =>
+      PveResources.parseCloudInit(await _configOf(_guestPath(guest)));
+
+  /// The `ci*` options set with [base]'s `digest`, then the cloud-init
+  /// drive written again at once (`PUT .../cloudinit`, `VM.Config.Cloudinit`)
+  /// — PVE otherwise writes it only when it starts the VM, so a reboot from
+  /// inside the system would read the old one. The system takes it at its
+  /// next boot: PVE's instance ID is a hash of the user and network data,
+  /// so any change here is a new instance to cloud-init.
+  ///
+  /// The password goes in the request body, and PVE keeps its hash. What
+  /// `ipconfig0` holds besides the IPv4 settings (`ip6`) stays.
+  @override
+  Future<void> setCloudInit(
+    VirtGuest guest,
+    VirtCloudInitState base,
+    VirtCloudInitEdit edit,
+  ) async {
+    final ci = edit.values;
+    final path = _guestPath(guest);
+    try {
+      final config = await _configOf(path);
+      String? rawOf(String key) =>
+          config[key] is String ? config[key] as String : null;
+      final password = ci.password ?? '';
+      final keys = ci.keys;
+      final ip = {
+        'ip': ci.address ?? 'dhcp',
+        'gw': ci.address == null ? null : ci.gateway,
+      };
+      final ipconfig = switch (rawOf('ipconfig0')) {
+        final raw? when raw.isNotEmpty => PveResources.withOptions(raw, ip),
+        _ => [for (final e in ip.entries) if (e.value != null) '${e.key}=${e.value}'].join(','),
+      };
+      final search = ci.searchDomain;
+      await _setConfig(
+        guest,
+        {
+          'ciuser': ci.user,
+          if (password.isNotEmpty) 'cipassword': password,
+          // URL-encoded inside the form's own encoding, as at creation.
+          if (keys.isNotEmpty) 'sshkeys': Uri.encodeComponent('${keys.join('\n')}\n'),
+          if (base.network) 'ipconfig0': ipconfig,
+          if (ci.dns.isNotEmpty) 'nameserver': ci.dns.join(' '),
+          'searchdomain': ?search,
+        },
+        delete: [
+          if (edit.removePassword && password.isEmpty && rawOf('cipassword') != null)
+            'cipassword',
+          if (keys.isEmpty && rawOf('sshkeys') != null) 'sshkeys',
+          if (ci.dns.isEmpty && rawOf('nameserver') != null) 'nameserver',
+          if (search == null && rawOf('searchdomain') != null) 'searchdomain',
+        ],
+        digest: base.revision.isEmpty ? null : base.revision,
+      );
+      await _call(
+        (dio) => dio.put(_url('$path/cloudinit')),
+        action: true,
+      );
+    } on VirtErr catch (e) {
+      throw _changeErr(e);
+    }
+  }
+
   /// Detaches [key] and deletes its volume: detached, it is `unusedN`, and
   /// deleting that entry deletes it.
   Future<void> _dropVolume(VirtGuest guest, String key, {String? digest}) async {
@@ -1787,7 +1868,51 @@ class PveBackend implements VirtBackend {
         message: l10n.pveInvalidResponseData,
       );
     }
-    return PveResources.parseContent(data);
+    return _withImageSizes(node, PveResources.parseContent(data));
+  }
+
+  /// How many import images are sized at once.
+  static const _imageSizeConcurrency = 4;
+
+  /// [volumes] with the virtual size of each import image whose listing
+  /// gives only its file's ([PveResources.imageSizeUnknown]), from
+  /// `GET .../content/{volid}` — what a new disk made from it must hold at
+  /// least. A few at a time; one PVE will not say stays unknown.
+  Future<List<VirtVolume>> _withImageSizes(
+    String node,
+    List<VirtVolume> volumes,
+  ) async {
+    final out = [...volumes];
+    final todo = [
+      for (var i = 0; i < out.length; i++)
+        if (PveResources.imageSizeUnknown(out[i].content, out[i].format)) i,
+    ];
+    var next = 0;
+    Future<void> worker() async {
+      while (next < todo.length) {
+        final i = todo[next++];
+        final v = out[i];
+        final storage = v.id.split(':').first;
+        try {
+          final info = await _call(
+            (dio) => dio.get(
+              _url(
+                '/nodes/${_seg(node)}/storage/${_seg(storage)}/content/${_seg(v.id)}',
+              ),
+            ),
+          );
+          final size = info is Map ? _intOf(info['size']) : null;
+          if (size != null) out[i] = v.copyWith(capacity: size);
+        } on VirtErr catch (e) {
+          Loggers.app.info('PVE size of ${v.id}: ${e.message}');
+        }
+      }
+    }
+
+    await Future.wait([
+      for (var w = 0; w < _imageSizeConcurrency && w < todo.length; w++) worker(),
+    ]);
+    return out;
   }
 
   /// How many guest configurations are read at once to find which bridge

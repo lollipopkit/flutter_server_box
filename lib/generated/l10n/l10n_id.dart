@@ -4760,4 +4760,53 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get virtHwCdromLater =>
       'Selama berjalan, drive ditambahkan saat start berikutnya (SATA dan IDE tidak mendukung hot-plug).';
+
+  @override
+  String virtCreateDiskKept(String size) {
+    return 'Disk tetap $size, ukuran image itu sendiri, lebih besar dari yang diminta: disk tidak pernah dipotong di bawah sistem di dalamnya.';
+  }
+
+  @override
+  String get virtCiEditTip =>
+      'Yang diatur cloud-init di VM ini: akun dengan sudo, cara masuk ke akun itu, hostname, dan alamat.';
+
+  @override
+  String get virtCiForeignTitle =>
+      'Seed ini berisi lebih dari yang ditulis aplikasi ini';
+
+  @override
+  String get virtCiForeignBody =>
+      'Pengaturan yang dibuat di tempat lain (paket, perintah, akun lain) tidak ditampilkan di sini. Menyimpan akan mengganti seed dengan yang ditampilkan.';
+
+  @override
+  String get virtCiPasswordKept =>
+      'Sudah diatur. Biarkan kosong untuk mempertahankannya';
+
+  @override
+  String get virtCiRemovePassword => 'Hapus kata sandi';
+
+  @override
+  String get virtCiRemovePasswordNote => 'Masuk hanya dengan kunci SSH';
+
+  @override
+  String get virtCiKeysAdded =>
+      'Kunci ditambahkan ke akun. Kunci yang dihapus di sini tetap ada di sistem sampai dihapus di sana, dan nama pengguna baru membuat akun baru di samping akun lama.';
+
+  @override
+  String get virtCiEffectTitle => 'Berlaku saat boot berikutnya';
+
+  @override
+  String get virtCiEffectLibvirt =>
+      'Menyimpan menulis seed baru dengan ID instans baru.';
+
+  @override
+  String get virtCiEffectPve =>
+      'PVE langsung menulis ulang drive cloud-init-nya, dengan ID instans yang diturunkan dari pengaturan ini, jadi setiap perubahan di sini membuat ID baru.';
+
+  @override
+  String get virtCiNewInstance =>
+      'Saat boot berikutnya, cloud-init memperlakukan sistem sebagai instans baru: mengatur ulang hostname, membuat akun jika belum ada, mengatur kata sandinya, menambahkan kunci, dan menulis ulang konfigurasi jaringan. Ia juga membuat kunci host SSH baru, sehingga klien SSH akan memperingatkan bahwa kunci host berubah. Tidak ada yang berubah sebelum boot itu.';
+
+  @override
+  String get virtCiSaved => 'Tersimpan. Berlaku saat boot berikutnya.';
 }

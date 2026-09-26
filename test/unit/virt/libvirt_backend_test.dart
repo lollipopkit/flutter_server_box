@@ -596,6 +596,10 @@ void main() {
           return _ok(
             [
               _section('virt.vol.create', ''),
+              _section(
+                'virt.vol.info',
+                'Name:           ci-01.qcow2\nType:           file\nCapacity:       3758096384 bytes\nAllocation:     200704 bytes\n',
+              ),
               _section('virt.vol.resize', ''),
               _section('virt.vol.path', '/var/lib/libvirt/images/ci-01.qcow2'),
               _section('virt.seed.iso', ''),
@@ -655,6 +659,44 @@ void main() {
       expect(define, contains(mac.single));
     });
 
+    test('a cloud image bigger than the disk asked for keeps its size', () async {
+      String copied = '${10 << 30}';
+      final exec = _Exec((call) {
+        if (call.script.contains('domcapabilities')) {
+          return _ok(_fixture('script_create_host_full.txt'));
+        }
+        if (call.script.contains('vol-create-from')) {
+          return _ok(
+            [
+              _section('virt.vol.create', ''),
+              _section('virt.vol.info', 'Capacity:       $copied bytes'),
+              _section('virt.vol.path', '/var/lib/libvirt/images/big.qcow2'),
+            ].join(),
+          );
+        }
+        if (call.script.contains('define --file')) {
+          return _ok(_fixture('script_define_ok.txt'));
+        }
+        return _fail('unexpected script');
+      });
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      const spec = VirtCreateSpec(
+        kind: VirtGuestKind.qemu,
+        name: 'big',
+        cores: 1,
+        memoryMiB: 512,
+        storage: images,
+        diskGiB: 8,
+        image: VirtVolume(id: 'b.qcow2', name: 'b.qcow2', format: 'qcow2', path: '/i/b.qcow2'),
+      );
+      expect((await virt.create(spec)).diskKeptBytes, 10 << 30);
+      // Grown to the 8 asked for: nothing kept.
+      copied = '${3 << 30}';
+      expect((await virt.create(spec)).diskKeptBytes, isNull);
+      // The script grows only below the size asked for.
+      expect(exec.calls[1].script, contains('-lt ${8 << 30}'));
+    });
+
     test('cloud-init JSON: the hostname from the name, the NIC by its MAC', () {
       const spec = VirtCreateSpec(
         kind: VirtGuestKind.qemu,
@@ -665,8 +707,8 @@ void main() {
         diskGiB: 4,
       );
       final dhcp = LibvirtBackend.cloudInitJson(
-        spec,
         const VirtCloudInit(user: 'u', sshKeys: ' ssh-ed25519 AAAA a \n\n'),
+        name: spec.name,
         mac: '52:54:00:00:00:02',
       );
       expect(dhcp['password_hash'], isNull);
@@ -680,7 +722,6 @@ void main() {
         'search': <String>[],
       });
       final fixed = LibvirtBackend.cloudInitJson(
-        spec,
         const VirtCloudInit(
           user: 'u',
           password: 'pw',
@@ -690,6 +731,7 @@ void main() {
           dns: ['1.1.1.1'],
           searchDomain: 'lab',
         ),
+        name: spec.name,
         mac: '52:54:00:00:00:02',
       );
       expect(fixed['password_hash'], startsWith(r'$6$'));
@@ -697,7 +739,28 @@ void main() {
       expect((fixed['network']! as Map)['ipv4'], {'address': '10.0.0.5/24', 'gateway': '10.0.0.1'});
       expect((fixed['network']! as Map)['search'], ['lab']);
       // No NIC: no network config.
-      expect(LibvirtBackend.cloudInitJson(spec, const VirtCloudInit(user: 'u'), mac: null)['network'], isNull);
+      expect(
+        LibvirtBackend.cloudInitJson(const VirtCloudInit(user: 'u'), name: spec.name, mac: null)['network'],
+        isNull,
+      );
+      // An edit keeps the seed's hash where no new password was typed, and
+      // replaces it where one was; each save is a new instance.
+      const kept = r'$6$0123456789abcdef$lDHzA5IdO41viXIs6llkDKq4Uh2VG9JXIYJ.taq2zlNFqBnKQ0/fOUW0Zoz49ZnOpe2ACY.PoF6wosL.jL3Af0';
+      final keep = LibvirtBackend.cloudInitJson(
+        const VirtCloudInit(user: 'u'),
+        name: spec.name,
+        mac: null,
+        keepHash: kept,
+      );
+      expect(keep['password_hash'], kept);
+      final replaced = LibvirtBackend.cloudInitJson(
+        const VirtCloudInit(user: 'u', password: 'new one'),
+        name: spec.name,
+        mac: null,
+        keepHash: kept,
+      );
+      expect(replaced['password_hash'], allOf(startsWith(r'$6$'), isNot(kept)));
+      expect(replaced['instance_id'], isNot(keep['instance_id']));
     });
 
     test('delete: the seed the domain names goes with it, after it', () async {
@@ -1194,6 +1257,106 @@ void main() {
         'op': 'remove_device',
         'key': 'pci:0000:00:01.2',
       });
+    });
+
+    test('cloud-init: read back from the seed, written anew in place', () async {
+      const seed = '/var/lib/libvirt/images/sbhw-test-cidata.iso';
+      // The captured domain, named as having the app's seed.
+      final hwOut = _fixture('script_hardware_stopped.txt').replaceAll(
+        '</name>\n',
+        "</name>\n  <metadata><sbx:cloud-init xmlns:sbx='https://serverbox.app/xmlns/libvirt/cloud-init/1' seed='$seed'/></metadata>\n",
+      );
+      final iso = File('$_dir/seed_genisoimage.iso').readAsBytesSync();
+      final seedOut = [
+        _section('virt.seed.read', ''),
+        _section('virt.seed.sum', '4155283651 69632'),
+        _section('virt.seed.data', base64.encode(iso)),
+      ].join();
+      var updateOut = [
+        _section('virt.seed.backup', ''),
+        _section('virt.seed.iso', ''),
+        _section('virt.seed.info', 'Capacity:       376832 bytes'),
+        _section('virt.seed.upload', ''),
+      ].join();
+      final exec = _Exec((call) {
+        if (call.script.contains('vol-upload')) return _ok(updateOut);
+        if (call.script.contains('vol-download')) return _ok(seedOut);
+        return _ok(hwOut);
+      });
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      final off = guest.copyWith(state: VirtGuestState.stopped);
+      final hw = await virt.hardware(off);
+      expect(hw.disks.where((d) => d.cloudInit), isEmpty, reason: 'no CD-ROM on that path');
+
+      final ci = await virt.cloudInit(off);
+      expect(ci.user, 'debian');
+      expect(ci.hostname, 'sbx-web');
+      expect(ci.sshKeys, hasLength(2));
+      expect((ci.address, ci.gateway), ('10.231.80.5/24', '10.231.80.1'));
+      expect(ci.dns, ['10.231.80.1', '2606:4700:4700::1111']);
+      expect(ci.searchDomain, 'lab.example');
+      expect((ci.passwordSet, ci.network, ci.foreign), (true, true, false));
+      expect(ci.revision, '4155283651 69632');
+      // The hash is not what the view gets.
+      expect('$ci', isNot(contains(r'$6$')));
+      expect(exec.calls.last.script, contains("--vol '$seed'"));
+
+      // Saved without a new password: the seed's hash kept, a new hostname
+      // and instance, the NIC the domain has (the seed's MAC is gone).
+      await virt.setCloudInit(
+        off,
+        ci,
+        const VirtCloudInitEdit(
+          VirtCloudInit(user: 'debian', sshKeys: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINEW new', hostname: 'sbx-new'),
+        ),
+      );
+      final update = exec.calls.last.script;
+      expect(update, contains("'4155283651 69632'"));
+      expect(update, contains(r'hashed_passwd: "$6$0123456789abcdef$lDHz'));
+      expect(update, contains('hostname: "sbx-new"'));
+      expect(update, contains('52:54:00:90:2c:99'));
+      expect(update, isNot(contains('52:54:00:12:34:56')));
+      expect(update, isNot(contains('iid-sbx-web-9f')));
+
+      // A new password: hashed here, never in the script.
+      await virt.cloudInit(off);
+      await virt.setCloudInit(
+        off,
+        ci,
+        const VirtCloudInitEdit(VirtCloudInit(user: 'debian', password: 'hunter2 new', hostname: 'sbx-new')),
+      );
+      expect(exec.calls.last.script, isNot(contains('hunter2 new')));
+      expect(exec.calls.last.script, isNot(contains(r'$6$0123456789abcdef$lDHz')));
+
+      // Removed: keys only, no hash at all.
+      await virt.cloudInit(off);
+      await virt.setCloudInit(
+        off,
+        ci,
+        const VirtCloudInitEdit(
+          VirtCloudInit(user: 'debian', sshKeys: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINEW new', hostname: 'sbx-new'),
+          removePassword: true,
+        ),
+      );
+      expect(exec.calls.last.script, contains('lock_passwd: true'));
+      expect(exec.calls.last.script, isNot(contains('hashed_passwd')));
+
+      // Changed on the host since it was read: refused there.
+      await virt.cloudInit(off);
+      updateOut = [
+        _section('virt.seed.backup', ''),
+        '${_marker('virt.seed.conflict')}\n',
+      ].join();
+      final e = await _err(
+        virt.setCloudInit(off, ci, const VirtCloudInitEdit(VirtCloudInit(user: 'debian', hostname: 'x'))),
+      );
+      expect(e.type, VirtErrType.conflict);
+      // Not read by this backend at all: refused before the host.
+      final calls = exec.calls.length;
+      final other = LibvirtBackend(serverId: 's', exec: () async => exec);
+      final e2 = await _err(other.setCloudInit(off, ci, const VirtCloudInitEdit(VirtCloudInit(user: 'debian'))));
+      expect(e2.type, VirtErrType.conflict);
+      expect(exec.calls, hasLength(calls));
     });
 
     test('host devices: root hubs left out, no IOMMU said', () async {

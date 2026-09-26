@@ -302,4 +302,45 @@ void main() {
       );
     });
   });
+
+  group('editing cloud-init', () {
+    const state = VirtCloudInitState(user: 'sbxe', passwordSet: true, revision: 'r');
+    VirtCreateIssue? issue(VirtCloudInitEdit e, {VirtCloudInitState s = state, VirtHostKind host = VirtHostKind.pve}) =>
+        virtCloudInitEditIssue(s, e, host: host);
+
+    test('the password set is a way in, unless it is removed', () {
+      expect(issue(const VirtCloudInitEdit(VirtCloudInit(user: 'sbxe'))), isNull);
+      expect(
+        issue(const VirtCloudInitEdit(VirtCloudInit(user: 'sbxe'), removePassword: true)),
+        VirtCreateIssue.ciCredentials,
+      );
+      expect(
+        issue(const VirtCloudInitEdit(
+          VirtCloudInit(user: 'sbxe', sshKeys: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5 me'),
+          removePassword: true,
+        )),
+        isNull,
+      );
+      // None set: a new one or a key.
+      const bare = VirtCloudInitState(user: 'sbxe', revision: 'r');
+      expect(issue(const VirtCloudInitEdit(VirtCloudInit(user: 'sbxe')), s: bare), VirtCreateIssue.ciCredentials);
+      expect(issue(const VirtCloudInitEdit(VirtCloudInit(user: 'sbxe', password: 'x')), s: bare), isNull);
+    });
+
+    test('the rest as at creation: user, hostname on libvirt, address', () {
+      expect(issue(const VirtCloudInitEdit(VirtCloudInit(user: 'Root'))), VirtCreateIssue.ciUser);
+      expect(
+        issue(const VirtCloudInitEdit(VirtCloudInit(user: 'sbxe', hostname: 'a_b')), host: VirtHostKind.libvirt),
+        VirtCreateIssue.ciHostname,
+      );
+      expect(
+        issue(const VirtCloudInitEdit(VirtCloudInit(user: 'sbxe', hostname: 'ok')), host: VirtHostKind.libvirt),
+        isNull,
+      );
+      expect(
+        issue(const VirtCloudInitEdit(VirtCloudInit(user: 'sbxe', address: '10.0.0.5'))),
+        VirtCreateIssue.ciAddress,
+      );
+    });
+  });
 }

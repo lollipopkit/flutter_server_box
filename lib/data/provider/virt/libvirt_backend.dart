@@ -43,10 +43,16 @@ class LibvirtBackend implements VirtBackend {
     Future<ServerByteExec> Function()? byteExec,
     bool Function()? canStream,
     DateTime Function()? now,
+    @visibleForTesting this.seedTools,
   }) : _exec = exec,
        _byteExec = byteExec,
        _canStream = canStream,
        _now = now ?? DateTime.now;
+
+  /// The ISO tools a cloud-init seed may be made with, in order; null: all
+  /// of them, in `sbm_parser`'s order. The end-to-end tests narrow it to
+  /// make a seed with each tool in turn.
+  final List<String>? seedTools;
 
   /// Uploads go over whatever of the server carries bytes: its SSH
   /// connection, whichever transport leads for everything else, or this
@@ -525,8 +531,11 @@ class LibvirtBackend implements VirtBackend {
       'mac': mac,
       'efi': spec.uefi,
       'tpm': spec.tpm,
-      'cloud_init': ci == null ? null : cloudInitJson(spec, ci, mac: mac),
+      'cloud_init': ci == null
+          ? null
+          : cloudInitJson(ci, name: spec.name, mac: mac),
       'seed_path': null,
+      'seed_tools': seedTools,
       'start': spec.start,
     };
     final Map<String, dynamic> made;
@@ -550,21 +559,33 @@ class LibvirtBackend implements VirtBackend {
         action: true,
       ),
     );
+    // A copy of a cloud image bigger than asked for keeps its own size.
+    final copied = made['copied_bytes'] as int?;
     return VirtCreated(
       // By name when `domuuid` did not answer: virsh takes either.
       id: created['uuid'] as String? ?? spec.name,
       startError: created['start_error'] as String?,
+      diskKeptBytes: copied != null && copied > spec.diskGiB * (1 << 30)
+          ? copied
+          : null,
     );
   }
 
-  /// [ci] as `sbm_parser::virt_cloud_init::VirtCloudInit` JSON: the password
-  /// as its SHA-512 crypt hash, the hostname the domain's name where none
-  /// was given, a new instance id, and the NIC by [mac].
+  /// [ci] as `sbm_parser::virt_cloud_init::VirtCloudInit` JSON for the
+  /// domain [name]: the password as its SHA-512 crypt hash — or, where none
+  /// was typed, [keepHash] (the seed's own, when it is edited) — the
+  /// hostname [name] where none was given, a new instance ID, and the NIC
+  /// by [mac].
+  ///
+  /// The instance ID is new every time: cloud-init runs most of its
+  /// modules once per instance, so a seed with the old one would be read
+  /// and ignored.
   @visibleForTesting
   static Map<String, Object?> cloudInitJson(
-    VirtCreateSpec spec,
     VirtCloudInit ci, {
+    required String name,
     required String? mac,
+    String? keepHash,
     Random? random,
   }) {
     final r = random ?? Random.secure();
@@ -581,11 +602,11 @@ class LibvirtBackend implements VirtBackend {
     return {
       'user': ci.user,
       'password_hash': password.isEmpty
-          ? null
+          ? keepHash
           : _script(() => ffi.virtHashPassword(password: password, salt: salt)),
       'ssh_keys': ci.keys,
-      'hostname': ci.hostname ?? spec.name,
-      'instance_id': 'iid-${spec.name.replaceAll(RegExp('[^A-Za-z0-9._-]'), '-')}-$hex',
+      'hostname': ci.hostname ?? name,
+      'instance_id': 'iid-${name.replaceAll(RegExp('[^A-Za-z0-9._-]'), '-')}-$hex',
       'network': mac == null
           ? null
           : {
@@ -1287,7 +1308,10 @@ class LibvirtBackend implements VirtBackend {
   /// One round trip: both definitions, autostart, the host's CPUs and
   /// memory, and each disk's size. See `sbm_parser::virt::hardware_script`.
   @override
-  Future<VirtHardware> hardware(VirtGuest guest) async {
+  Future<VirtHardware> hardware(VirtGuest guest) async =>
+      hardwareOf(await _hardwareInfo(guest), name: guest.name);
+
+  Future<LibvirtHardwareInfo> _hardwareInfo(VirtGuest guest) async {
     final info = LibvirtHardwareInfo.fromJson(
       _decode(
         await _run(
@@ -1296,8 +1320,7 @@ class LibvirtBackend implements VirtBackend {
         ),
       ),
     );
-    _hardware[guest.id] = info;
-    return hardwareOf(info, name: guest.name);
+    return _hardware[guest.id] = info;
   }
 
   /// [info] as the Hardware view edits it: the persistent definition, with
@@ -1562,6 +1585,112 @@ class LibvirtBackend implements VirtBackend {
       liveError: outcome['live_error'] as String?,
       volumeKept: outcome['volume_kept'] as bool? ?? false,
     );
+  }
+
+  /// The last seed read per guest, with the password's hash in it: what an
+  /// edit keeps when no new password is typed. The hash stays here; the
+  /// view is told only that there is one.
+  final _seeds = <String, ({String path, Map<String, dynamic> read})>{};
+
+  /// The domain's seed, read back from its volume (`vol-download`, in one
+  /// round trip) and parsed in Rust: the seed is what the system reads, so
+  /// it is the source of what is shown — nothing is kept beside it. The NIC
+  /// is the one its network config names while the domain still has it,
+  /// the domain's first otherwise.
+  @override
+  Future<VirtCloudInitState> cloudInit(VirtGuest guest) async {
+    final info = _hardware[guest.id] ?? await _hardwareInfo(guest);
+    final path = info.config.seed;
+    if (path == null) {
+      throw VirtErr(
+        type: VirtErrType.unsupported,
+        message: '${guest.name} has no cloud-init seed of this app',
+      );
+    }
+    final read = _decode(
+      await _run(
+        _script(() => ffi.virtSeedReadScript(seed: path)),
+        ffi.parseVirtSeedReadJson,
+      ),
+    );
+    _seeds[guest.id] = (path: path, read: read);
+    return cloudInitStateOf(read, nicMacs: [for (final n in info.config.nics) n.mac]);
+  }
+
+  /// A seed's read ([read], `sbm_parser::virt_cloud_init::VirtSeedRead`
+  /// JSON) as the view shows it: never the hash, only that there is one.
+  @visibleForTesting
+  static VirtCloudInitState cloudInitStateOf(
+    Map<String, dynamic> read, {
+    required List<String> nicMacs,
+  }) {
+    final ci = (read['cloud_init'] as Map).cast<String, dynamic>();
+    final net = (ci['network'] as Map?)?.cast<String, dynamic>();
+    final ipv4 = (net?['ipv4'] as Map?)?.cast<String, dynamic>();
+    List<String> strs(Object? v) => [for (final x in (v as List?) ?? const []) '$x'];
+    final hostname = ci['hostname'] as String? ?? '';
+    final search = strs(net?['search']);
+    return VirtCloudInitState(
+      user: ci['user'] as String? ?? '',
+      sshKeys: strs(ci['ssh_keys']),
+      hostname: hostname,
+      address: ipv4?['address'] as String?,
+      gateway: ipv4?['gateway'] as String?,
+      dns: strs(net?['dns']),
+      searchDomain: search.firstOrNull,
+      passwordSet: ci['password_hash'] != null,
+      network: nicMacs.isNotEmpty,
+      // The view edits one search domain; more are more than it shows.
+      foreign: (read['foreign'] as bool? ?? false) || search.length > 1,
+      revision: read['revision'] as String? ?? '',
+    );
+  }
+
+  /// A new seed in place of the old, on the same volume (so the domain and
+  /// its metadata stay as they are), made from [base]'s read — refused as
+  /// [VirtErrType.conflict] once the seed changed since. A new password is
+  /// hashed here; none keeps the hash the seed has. A new instance ID, so
+  /// cloud-init takes it at the next boot.
+  @override
+  Future<void> setCloudInit(
+    VirtGuest guest,
+    VirtCloudInitState base,
+    VirtCloudInitEdit edit,
+  ) async {
+    final seed = _seeds[guest.id];
+    final info = _hardware[guest.id];
+    if (seed == null || info == null || seed.read['revision'] != base.revision) {
+      throw const VirtErr(
+        type: VirtErrType.conflict,
+        message: 'Read the cloud-init settings again',
+      );
+    }
+    final ci = (seed.read['cloud_init'] as Map).cast<String, dynamic>();
+    final seedMac = ((ci['network'] as Map?)?['mac'] as String?)?.toLowerCase();
+    final macs = [for (final n in info.config.nics) n.mac.toLowerCase()];
+    final mac = macs.contains(seedMac) ? seedMac : macs.firstOrNull;
+    final json = cloudInitJson(
+      edit.values,
+      name: guest.name,
+      mac: base.network ? mac : null,
+      keepHash: edit.removePassword ? null : ci['password_hash'] as String?,
+    );
+    await _run(
+      _script(
+        () => ffi.virtSeedUpdateScript(
+          seed: seed.path,
+          revision: base.revision,
+          cloudInitJson: jsonEncode(json),
+          tools: seedTools,
+        ),
+      ),
+      ({required String raw}) async {
+        ffi.parseVirtSeedUpdate(raw: raw);
+        return '';
+      },
+      action: true,
+    );
+    _seeds.remove(guest.id);
   }
 
   /// A MAC in QEMU's locally administered range, `52:54:00`.

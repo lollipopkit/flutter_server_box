@@ -1438,5 +1438,18 @@
   "virtCiNoToolTitle": "Geen hulpmiddel op de host voor de cloud-init-gegevens",
   "virtCiNoToolBody": "Installeer een van {tools} op de host. Zonder cloud-init start de image zonder account om mee aan te melden.",
   "virtHwCloudInitNote": "Wat cloud-init bij de eerste start leest. Geen installatiemedium: hier wordt niets geplaatst.",
-  "virtHwCdromLater": "Terwijl ze draait, wordt het station bij de volgende start toegevoegd (SATA en IDE nemen er live geen)."
+  "virtHwCdromLater": "Terwijl ze draait, wordt het station bij de volgende start toegevoegd (SATA en IDE nemen er live geen).",
+  "virtCreateDiskKept": "De schijf bleef {size}, de grootte van de image zelf, meer dan gevraagd: een schijf wordt nooit kleiner gemaakt dan het systeem erop.",
+  "virtCiEditTip": "Wat cloud-init in deze VM inricht: een account met sudo, hoe je erop aanmeldt, de hostnaam en het adres.",
+  "virtCiForeignTitle": "Deze seed bevat meer dan deze app schrijft",
+  "virtCiForeignBody": "Elders gemaakte instellingen (pakketten, opdrachten, andere accounts) worden hier niet getoond. Opslaan vervangt de seed door wat hier staat.",
+  "virtCiPasswordKept": "Ingesteld. Leeg laten om het te houden",
+  "virtCiRemovePassword": "Wachtwoord verwijderen",
+  "virtCiRemovePasswordNote": "Alleen aanmelden met een SSH-sleutel",
+  "virtCiKeysAdded": "Sleutels worden aan het account toegevoegd. Een hier verwijderde sleutel blijft in het systeem tot hij daar wordt verwijderd, en een nieuwe gebruikersnaam maakt een nieuw account naast het oude.",
+  "virtCiEffectTitle": "Werkt bij de volgende start",
+  "virtCiEffectLibvirt": "Opslaan schrijft een nieuwe seed met een nieuwe instantie-ID.",
+  "virtCiEffectPve": "PVE schrijft zijn cloud-init-station meteen opnieuw, met een instantie-ID afgeleid van deze instellingen, dus elke wijziging hier maakt een nieuwe.",
+  "virtCiNewInstance": "Bij de volgende start behandelt cloud-init het systeem als een nieuwe instantie: het stelt de hostnaam opnieuw in, maakt het account als het ontbreekt, zet het wachtwoord, voegt de sleutels toe en schrijft de netwerkconfiguratie opnieuw. Het maakt ook nieuwe SSH-hostsleutels, dus SSH-clients waarschuwen dat de hostsleutel is veranderd. Vóór die start verandert er niets.",
+  "virtCiSaved": "Opgeslagen. Werkt bij de volgende start."
 }

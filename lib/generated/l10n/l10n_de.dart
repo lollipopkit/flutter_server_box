@@ -4830,4 +4830,52 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get virtHwCdromLater =>
       'Solange sie läuft, kommt das Laufwerk beim nächsten Start hinzu (SATA und IDE nehmen keins im Betrieb).';
+
+  @override
+  String virtCreateDiskKept(String size) {
+    return 'Die Festplatte bleibt bei $size, der Größe des Images selbst, also größer als gewünscht: Eine Festplatte wird nie unter das System darauf verkleinert.';
+  }
+
+  @override
+  String get virtCiEditTip =>
+      'Was cloud-init in dieser VM einrichtet: ein Konto mit sudo, wie man sich anmeldet, den Hostnamen und die Adresse.';
+
+  @override
+  String get virtCiForeignTitle =>
+      'Dieser Seed enthält mehr, als diese App schreibt';
+
+  @override
+  String get virtCiForeignBody =>
+      'Anderswo gemachte Einstellungen (Pakete, Befehle, weitere Konten) werden hier nicht angezeigt. Speichern ersetzt den Seed durch das hier Gezeigte.';
+
+  @override
+  String get virtCiPasswordKept => 'Gesetzt. Leer lassen, um es zu behalten';
+
+  @override
+  String get virtCiRemovePassword => 'Passwort entfernen';
+
+  @override
+  String get virtCiRemovePasswordNote => 'Anmeldung nur mit SSH-Schlüssel';
+
+  @override
+  String get virtCiKeysAdded =>
+      'Schlüssel werden dem Konto hinzugefügt. Ein hier entfernter Schlüssel bleibt im System, bis er dort entfernt wird, und ein neuer Benutzername legt ein neues Konto neben dem alten an.';
+
+  @override
+  String get virtCiEffectTitle => 'Wirkt beim nächsten Start';
+
+  @override
+  String get virtCiEffectLibvirt =>
+      'Speichern schreibt einen neuen Seed mit neuer Instanz-ID.';
+
+  @override
+  String get virtCiEffectPve =>
+      'PVE schreibt sein cloud-init-Laufwerk sofort neu; die Instanz-ID wird aus diesen Einstellungen abgeleitet, jede Änderung hier ergibt also eine neue.';
+
+  @override
+  String get virtCiNewInstance =>
+      'Beim nächsten Start behandelt cloud-init das System als neue Instanz: Es setzt den Hostnamen neu, legt das Konto an, falls es fehlt, setzt sein Passwort, fügt die Schlüssel hinzu und schreibt die Netzwerkkonfiguration neu. Außerdem erzeugt es neue SSH-Hostschlüssel, SSH-Clients warnen also vor einem geänderten Hostschlüssel. Vor diesem Start ändert sich nichts.';
+
+  @override
+  String get virtCiSaved => 'Gespeichert. Wirkt beim nächsten Start.';
 }

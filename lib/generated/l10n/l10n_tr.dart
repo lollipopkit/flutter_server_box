@@ -4758,4 +4758,52 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get virtHwCdromLater =>
       'Çalışırken sürücü bir sonraki açılışta eklenir (SATA ve IDE çalışırken takmayı desteklemez).';
+
+  @override
+  String virtCreateDiskKept(String size) {
+    return 'Disk, imajın kendi boyutu olan $size olarak kaldı; istenenden büyük: bir disk hiçbir zaman üzerindeki sistemden küçük kesilmez.';
+  }
+
+  @override
+  String get virtCiEditTip =>
+      'cloud-init\'in bu VM\'de kurduğu şeyler: sudo yetkili bir hesap, ona nasıl girileceği, ana makine adı ve adres.';
+
+  @override
+  String get virtCiForeignTitle =>
+      'Bu seed, bu uygulamanın yazdığından fazlasını içeriyor';
+
+  @override
+  String get virtCiForeignBody =>
+      'Başka yerde yapılan ayarlar (paketler, komutlar, diğer hesaplar) burada gösterilmez. Kaydetmek seedi burada gösterilenle değiştirir.';
+
+  @override
+  String get virtCiPasswordKept => 'Ayarlı. Korumak için boş bırakın';
+
+  @override
+  String get virtCiRemovePassword => 'Parolayı kaldır';
+
+  @override
+  String get virtCiRemovePasswordNote => 'Yalnızca SSH anahtarıyla giriş';
+
+  @override
+  String get virtCiKeysAdded =>
+      'Anahtarlar hesaba eklenir. Burada çıkarılan bir anahtar, orada silinene kadar sistemde kalır; yeni bir kullanıcı adı eskisinin yanında yeni bir hesap açar.';
+
+  @override
+  String get virtCiEffectTitle => 'Bir sonraki açılışta geçerli olur';
+
+  @override
+  String get virtCiEffectLibvirt =>
+      'Kaydetmek, yeni bir örnek kimliğiyle yeni bir seed yazar.';
+
+  @override
+  String get virtCiEffectPve =>
+      'PVE cloud-init sürücüsünü hemen yeniden yazar; örnek kimliği bu ayarlardan türetilir, bu yüzden buradaki her değişiklik yenisini oluşturur.';
+
+  @override
+  String get virtCiNewInstance =>
+      'Bir sonraki açılışta cloud-init sistemi yeni bir örnek olarak ele alır: ana makine adını yeniden ayarlar, hesap yoksa oluşturur, parolasını ayarlar, anahtarları ekler ve ağ yapılandırmasını yeniden yazar. Yeni SSH ana makine anahtarları da üretir; bu yüzden SSH istemcileri ana makine anahtarının değiştiği uyarısını verir. O açılıştan önce hiçbir şey değişmez.';
+
+  @override
+  String get virtCiSaved => 'Kaydedildi. Bir sonraki açılışta geçerli olur.';
 }
