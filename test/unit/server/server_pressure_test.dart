@@ -23,7 +23,7 @@ ServerMetric _metric(ServerMetricKind kind, double? percent) => ServerMetric(
 );
 
 ServerCardReadings _readings(List<ServerMetric> all) =>
-    (shown: all, all: all, more: 0);
+    (shown: all, all: all);
 
 void main() {
   double total(List<ServerPressureSegment> segments) =>

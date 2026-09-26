@@ -420,9 +420,9 @@ class ServerCard extends StatelessWidget {
     // one it is leaving until it has arrived — see [ServerCardFold] for why.
     final atUnfolded = expanded ? fold.value >= 1 : fold.value > 0;
     // What the machine reports and the card is not drawing, at each end.
-    // Counted from what is drawn rather than taken from `readings.more`, which
-    // is what did not fit in the five slots: a reading promoted from outside
-    // them is drawn and was still being counted.
+    // Counted from what is drawn rather than from the five slots the card has
+    // room for: a reading promoted from outside them is drawn, and counting
+    // slots would call it unseen.
     final unseenFolded = others.length;
     final unseenUnfolded =
         others.length -

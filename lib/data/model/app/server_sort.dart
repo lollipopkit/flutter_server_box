@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
@@ -270,12 +271,72 @@ class ServerSortOrder {
               : 1,
         );
       case ServerSortField.uptime:
-        return _by(
-          order,
-          (id) =>
-              -(stateOf(id).status.history.time.firstOrNull ?? 0).toDouble(),
-        );
+        // Ascending is shortest first, the direction the field's own doc
+        // names. `_by` applies the direction itself, so the key is the plain
+        // number of seconds and nothing here reads [ascending].
+        //
+        // A machine that has not said, or said something this cannot read, is
+        // keyed above every real uptime: it sorts last in the default
+        // direction, where a list that answers "which of these just came
+        // back" must not be led by the ones the app failed to read. Same
+        // shape as `cpu`'s `?? -1`, which is likewise the value that puts an
+        // unknown where a question about magnitude is not answered by it.
+        return _by(order, (id) {
+          final raw = stateOf(id).status.more[StatusCmdType.uptime];
+          final seconds = raw == null ? null : uptimeSeconds(raw);
+          return (seconds ?? double.maxFinite).toDouble();
+        });
     }
+  }
+
+  /// The seconds [raw] says the machine has been up, or null if it cannot be
+  /// read.
+  ///
+  /// [raw] is `StatusCmdType.uptime`'s value, which is a *formatted* string,
+  /// not a number: the Rust parser's `common::parse_uptime` keeps one of the
+  /// five shapes `uptime(1)` prints, and what an operator's build prints is
+  /// whatever their coreutils or busybox chose. The shapes seen in the wild,
+  /// and what each means:
+  ///
+  /// ```
+  /// 61 days, 18:16   days, then the clock time of day it came up
+  /// 1 day, 2:34      one day, singular
+  /// 2:34             under a day — hours:minutes
+  /// 34 min           under an hour, in busybox and some BSDs
+  /// 5 days           days and nothing else, when the time is unreadable
+  /// ```
+  ///
+  /// Null for anything else, including the formats `parse_uptime` itself
+  /// rejects. The caller decides where an unknown goes; this does not guess a
+  /// number for something it did not understand.
+  ///
+  /// Public so a test can pin the five shapes without building a server.
+  static int? uptimeSeconds(String raw) {
+    final text = raw.trim();
+    if (text.isEmpty) return null;
+
+    // `61 days, 18:16` and `5 days` — the day count is a number followed by
+    // `day` / `days`, and anything after it is a clock time this does not
+    // need, since a whole day of granularity is well past what an ordering
+    // is being asked to tell apart.
+    final days = RegExp(r'^(\d+)\s+days?\b').firstMatch(text);
+    if (days != null) {
+      return int.parse(days.group(1)!) * 86400;
+    }
+
+    // `2:34` — hours:minutes, under a day.
+    final clock = RegExp(r'^(\d+):(\d{2})$').firstMatch(text);
+    if (clock != null) {
+      return int.parse(clock.group(1)!) * 3600 + int.parse(clock.group(2)!) * 60;
+    }
+
+    // `34 min` — minutes, under an hour.
+    final minutes = RegExp(r'^(\d+)\s*min\b').firstMatch(text);
+    if (minutes != null) {
+      return int.parse(minutes.group(1)!) * 60;
+    }
+
+    return null;
   }
 
   /// Sorts by one number per server, keeping the arrangement as the tie.
