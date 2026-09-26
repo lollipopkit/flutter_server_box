@@ -104,8 +104,15 @@ void main() {
     // its handler, and the zone's future then never completes.
     await runZonedGuarded(() async {
       bakSync.syncSoon(rs: rs);
-      // Its one-second delay, then the base's five-second throttle.
-      await Future<void>.delayed(const Duration(milliseconds: 6500));
+      // Its one-second delay and the base's five-second throttle, then however
+      // long a slow runner takes to write the backup — polled rather than one
+      // fixed wait, which a CI runner overran.
+      final deadline = DateTime.now().add(const Duration(seconds: 15));
+      while (rs.uploads == 0 && DateTime.now().isBefore(deadline)) {
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      }
+      // And a moment for the failure to reach whatever handles it.
+      await Future<void>.delayed(const Duration(milliseconds: 200));
     }, (e, _) => uncaught.add(e));
 
     expect(rs.uploads, 1, reason: 'the upload was attempted and failed');

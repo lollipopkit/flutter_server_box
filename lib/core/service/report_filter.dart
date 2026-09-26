@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:dio/dio.dart';
 import 'package:icloud_storage_plus/models/exceptions.dart';
+import 'package:server_box/data/model/app/error.dart';
 
 /// Whether an error is a defect in this app, or the network's or the user's
 /// account's doing: a host that does not answer, credentials it refuses,
@@ -22,11 +23,10 @@ abstract final class ReportFilter {
   static bool isDefect(Object error) => switch (error) {
     // Connecting: nothing listening, nothing answering, a certificate the
     // server chose. `HandshakeException` is TLS, to a monitor agent or WebDAV.
+    // A bare `OSError` is not here: the same class carries file-system errors,
+    // and the network failures seen so far all arrived as the
+    // `SocketException` wrapping one.
     SocketException() || HandshakeException() => false,
-    // A socket failure that reached the caller without its `SocketException`.
-    // Only the network codes: the same class carries file-system errors, and
-    // those can be this app's.
-    OSError(:final errorCode) => !_networkErrnos.contains(errorCode),
     // The SSH server refused, timed out, closed, or presented a different host
     // key. `SSHStateError` is deliberately absent: "transport is closed" is
     // this app writing to a connection it should know is gone.
@@ -40,6 +40,8 @@ abstract final class ReportFilter {
     // stays: a 500 from an agent can be the agent's own defect, which is ours.
     DioException(:final type) => !_dioNetwork.contains(type),
     ICloudContainerAccessException() => false,
+    // A password removed between `BakSyncer.sync`'s check and the upload.
+    RemoteBackupPasswordMissing() => false,
     _ => true,
   };
 
@@ -49,21 +51,5 @@ abstract final class ReportFilter {
     DioExceptionType.receiveTimeout,
     DioExceptionType.connectionError,
     DioExceptionType.badCertificate,
-  };
-
-  /// Unreachable, reset, timed out, refused, host down, and name resolution,
-  /// as each platform numbers them. The sets overlap other meanings across
-  /// platforms — 8 is also `ENOEXEC` — which is accepted: a bare `OSError`
-  /// reaching a report has come from a socket in every case seen so far.
-  static const _networkErrnos = {
-    // Linux and Android.
-    101, 104, 110, 111, 112, 113,
-    // Darwin.
-    51, 54, 60, 61, 64, 65,
-    // getaddrinfo: Darwin `EAI_NONAME`, Android `EAI_NODATA`, glibc's
-    // negative codes.
-    8, 7, -2, -3,
-    // Winsock.
-    10051, 10054, 10060, 10061, 10064, 10065, 11001, 11004,
   };
 }
