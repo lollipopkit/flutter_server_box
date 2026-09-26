@@ -8,6 +8,7 @@ import 'package:server_box/core/service/diagnostics_platform.dart';
 import 'package:server_box/core/service/known_identifiers.dart';
 import 'package:server_box/core/service/native_exit.dart';
 import 'package:server_box/core/service/openpanel.dart';
+import 'package:server_box/core/service/report_filter.dart';
 import 'package:server_box/data/model/app/diagnostics_level.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
@@ -154,7 +155,15 @@ abstract final class DiagnosticsUpload {
         // produces — no `startTransaction` call exists here or in fl_lib, and
         // the pure-Dart SDK auto-instruments nothing. If one is ever started,
         // its spans need covering as well, which is a different function.
-        options.beforeSend = (event, hint) => scrubWithStoredIdentifiers(event);
+        //
+        // Before the scrub, an error that is not a defect goes nowhere — see
+        // [ReportFilter]. Here rather than in [SentrySink], because the SDK's
+        // own isolate-error integration captures without passing the sink.
+        options.beforeSend = (event, hint) {
+          final error = event.throwable;
+          if (error != null && !ReportFilter.isDefect(error)) return null;
+          return scrubWithStoredIdentifiers(event);
+        };
       });
       // Before the sink is installed, so the first error to arrive already
       // says what it arrived from. The pure-Dart SDK cannot work this out for

@@ -40,7 +40,7 @@ List<T> entityAdd<T extends Object>(
 ) {
   store.put(item);
   final next = [...current, item];
-  bakSync.sync(milliDelay: 1000);
+  bakSync.syncSoon();
   return next;
 }
 
@@ -53,7 +53,7 @@ List<T> entityUpdate<T extends Object>(
 ) {
   final next = current.withUpdated(oldItem, fresh, idOf);
   store.put(fresh);
-  bakSync.sync(milliDelay: 1000);
+  bakSync.syncSoon();
   return next;
 }
 
@@ -65,6 +65,6 @@ List<T> entityDelete<T extends Object>(
 ) {
   store.delete(item);
   final next = current.withoutId(idOf(item), idOf);
-  bakSync.sync(milliDelay: 1000);
+  bakSync.syncSoon();
   return next;
 }

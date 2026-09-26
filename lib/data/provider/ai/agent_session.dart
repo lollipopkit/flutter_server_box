@@ -267,7 +267,7 @@ class AgentSession extends _$AgentSession {
     });
     ref.onDispose(() {
       _conversationWatch?.cancel();
-      _subscription?.cancel();
+      _abandon(_subscription);
     });
 
     return _stateFor(Stores.agentConversation.fetchActive(scope));
@@ -312,9 +312,22 @@ class AgentSession extends _$AgentSession {
     }
   }
 
+  /// Stops listening to a turn nobody wants any more, without waiting for it.
+  ///
+  /// [AskAiRepository.ask] is an `async*` generator, which cannot be
+  /// interrupted inside an `await`: cancelling while the request is in flight
+  /// completes only once the request does — up to its 20-second connect
+  /// timeout. Awaited, that held Stop for as long; not awaited, a request that
+  /// then failed completed the cancel future with its error and nothing was
+  /// listening (SERVERBOX-L). No event arrives after a cancel either way, so
+  /// the outcome of an abandoned request is nobody's to handle.
+  static void _abandon(StreamSubscription<Object?>? subscription) {
+    subscription?.cancel().ignore();
+  }
+
   void startStream({String? localeHint}) {
     if (localeHint != null) _localeHint = localeHint;
-    _subscription?.cancel();
+    _abandon(_subscription);
     state = state.copyWith(
       isStreaming: true,
       turnCompleted: false,
@@ -371,7 +384,7 @@ class AgentSession extends _$AgentSession {
       return;
     }
     if (event is AskAiStreamError) {
-      _subscription?.cancel();
+      _abandon(_subscription);
       _subscription = null;
       state = state.copyWith(
         error: event.error,
@@ -830,7 +843,7 @@ class AgentSession extends _$AgentSession {
           : null,
       error: null,
     );
-    await subscription?.cancel();
+    _abandon(subscription);
     await _persist();
     return identical(state.pendingTool, proposal) && !state.isExecuting;
   }
@@ -841,7 +854,7 @@ class AgentSession extends _$AgentSession {
       return;
     }
     if (!state.isStreaming) return;
-    await _subscription?.cancel();
+    _abandon(_subscription);
     _subscription = null;
     state = state.copyWith(
       isStreaming: false,
@@ -859,7 +872,7 @@ class AgentSession extends _$AgentSession {
   // -------------------------------------------------------- conversations
 
   void restoreConversation(AgentConversation? conversation) {
-    _subscription?.cancel();
+    _abandon(_subscription);
     _subscription = null;
     state = _stateFor(conversation);
   }
