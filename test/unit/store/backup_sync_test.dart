@@ -68,7 +68,7 @@ void main() {
     expect(Stores.setting.timeout.fetch(), 17);
     expect(rs.uploads, 1);
     final uploaded = BackupV2.fromJsonString(
-      await File(Paths.bak).readAsString(),
+      await remote.readAsString(),
       'remote-password',
     );
     expect(
@@ -102,7 +102,8 @@ void main() {
   });
 }
 
-/// Serves [file] as the remote backup and counts uploads.
+/// Serves [file] as the remote backup: a download copies it out, an upload
+/// copies over it.
 final class _FileRemote extends RemoteStorage<String> {
   _FileRemote(this.file);
 
@@ -119,7 +120,10 @@ final class _FileRemote extends RemoteStorage<String> {
   Future<void> upload({
     required String relativePath,
     String? localPath,
-  }) async => uploads++;
+  }) async {
+    uploads++;
+    await File(localPath ?? Paths.bak).copy(file.path);
+  }
 
   @override
   Future<bool> exists(String relativePath) => file.exists();
