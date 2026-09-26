@@ -190,13 +190,6 @@
   "maxConcurrency": "Concurrencia máxima",
   "maxRetryCount": "Número máximo de reintentos de conexión al servidor",
   "mismatchSystem": "Sistema no coincidente: {system}",
-  "@mismatchSystem": {
-    "placeholders": {
-      "system": {
-        "type": "String"
-      }
-    }
-  },
   "mirror": "Espejo",
   "needRestart": "Necesita reiniciar la app",
   "netViewType": "Tipo de vista de red",
@@ -252,22 +245,6 @@
   "rememberPwdInMemTip": "Utilizado para contenedores, suspensión, etc.",
   "remotePath": "Ruta remota",
   "rootfsUpdateTip": "{distro} {installed} está instalado; hay {latest}. Actualizar reemplaza todo el contenedor: se pierden los datos de {pm}",
-  "@rootfsUpdateTip": {
-    "placeholders": {
-      "distro": {
-        "type": "String"
-      },
-      "installed": {
-        "type": "String"
-      },
-      "latest": {
-        "type": "String"
-      },
-      "pm": {
-        "type": "String"
-      }
-    }
-  },
   "linuxSystemInUse": "Cierra los terminales de {name} antes de borrarlo",
   "rootfsSubtitle": "Un espacio de usuario Linux en este dispositivo",
   "rootfsInstallTip": "Descarga {distro} {version} (unos {size} MB) y lo descomprime en este dispositivo.",
@@ -571,24 +548,7 @@
   "geoDataUnreachable": "No se han podido obtener los datos.",
   "geoDataRemoveFailed": "No se han podido eliminar los datos.",
   "geoDataCurrent": "{month} ya está instalado.",
-  "@geoDataCurrent": {
-    "placeholders": {
-      "month": {
-        "type": "String"
-      }
-    }
-  },
   "geoDataConsent": "**Descarga: {download} · Almacenamiento en el dispositivo: {disk}.** El conjunto de datos completo se guarda en este dispositivo y todas las consultas de ubicación posteriores se realizan localmente. No se envían al servicio de descarga direcciones de servidores ni actividad de consulta.\n\nSe actualiza cada mes. Una versión más reciente sustituye los datos instalados sin conservar una copia adicional. Puedes eliminarlos en cualquier momento.",
-  "@geoDataConsent": {
-    "placeholders": {
-      "download": {
-        "type": "String"
-      },
-      "disk": {
-        "type": "String"
-      }
-    }
-  },
   "benchmark": "Prueba de rendimiento",
   "benchmarkIntro": "Ejecuta Yet Another Bench Script en este servidor para probar el disco, la red y la CPU. Una ejecución completa tarda entre 10 y 20 minutos y continúa aunque salgas de esta página o cierres la aplicación.",
   "benchmarkNoRuns": "Aún no hay pruebas de rendimiento.",
@@ -958,65 +918,6 @@
   "remoteDesktopCertificateIssuer": "Emisor: {issuer}",
   "remoteDesktopCertificateValidity": "Válido: {start} – {end}",
   "appearanceThemeModeLocked": "Este tema solo admite {mode}. Selecciona otro tema para cambiar de modo.",
-  "@processCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@tmuxWindowCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@tmuxPaneCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@processShowKernelThreads": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@serviceOtherUnits": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@serviceJournalRecent": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@diskWarningFmt": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@scheduledTaskSummaryFmt": {
-    "placeholders": {
-      "total": {
-        "type": "int"
-      },
-      "enabled": {
-        "type": "int"
-      }
-    }
-  },
   "pveAuthToken": "Token de API",
   "pveVersionLow": "Esta función está actualmente en fase de prueba y solo se ha probado en PVE 8+. Úsela con precaución.",
   "pveTokenId": "ID del token",
@@ -1158,7 +1059,7 @@
   "virtDeleted": "{name} eliminado",
   "pveTokenTipCreate": "Crear y eliminar invitados también requiere VM.Allocate, VM.Config.*, Datastore.AllocateSpace y SDN.Use.",
   "pveTokenTipHardware": "Editar el hardware requiere VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network y VM.Config.Options; los discos e interfaces nuevos requieren además Datastore.AllocateSpace y SDN.Use. La tarjeta gráfica y los dispositivos USB y PCI también necesitan VM.Config.HWType; un dispositivo pasado mediante una asignación de recursos necesita Mapping.Use sobre ella, y Mapping.Audit para listarlas.",
-  "pveTokenTipBackup": "Clonar necesita VM.Clone, y copiar y restaurar VM.Backup, con Datastore.AllocateSpace donde vaya la copia o el respaldo.",
+  "pveTokenTipBackup": "Clonar necesita VM.Clone, copiar y restaurar VM.Backup, y convertir en plantilla VM.Allocate; las tareas de copia también necesitan Sys.Audit para leerlas y Sys.Modify en / para crearlas, editarlas y borrarlas, con Datastore.AllocateSpace donde vaya la copia o la copia de seguridad.",
   "virtErrConflict": "Cambiado en otro lugar",
   "virtErrConflictTip": "Alguien cambió la configuración de este invitado después de leerla aquí, así que no se cambió nada. Se ha vuelto a leer: repite el cambio si aún procede.",
   "virtHardware": "Hardware",
@@ -1454,5 +1355,99 @@
   "virtCiEffectLibvirt": "Guardar escribe un seed nuevo con un ID de instancia nuevo.",
   "virtCiEffectPve": "PVE reescribe su unidad de cloud-init al momento, con un ID de instancia derivado de estos ajustes, así que cualquier cambio aquí crea uno nuevo.",
   "virtCiNewInstance": "En el próximo arranque, cloud-init trata el sistema como una instancia nueva: vuelve a poner el nombre de host, crea la cuenta si falta, pone su contraseña, añade las claves y vuelve a escribir la configuración de red. También genera claves de host SSH nuevas, así que los clientes SSH avisarán de que la clave de host cambió. Nada cambia antes de ese arranque.",
-  "virtCiSaved": "Guardado. Se aplica en el próximo arranque."
+  "virtCiSaved": "Guardado. Se aplica en el próximo arranque.",
+  "virtSnapshotExternal": "Solo discos en ejecución",
+  "virtSnapshotExternalTip": "El invitado sigue en ejecución. Cada disco recibe una capa qcow2 en el pool elegido; el invitado queda en una cadena.",
+  "virtSnapshotFormInternal": "Interna (en la imagen)",
+  "virtSnapshotForm": "Tipo",
+  "virtSnapshotOverlayPool": "Pool de capas",
+  "virtSnapshotExternalNoMemory": "Una instantánea externa nunca guarda la memoria: el invitado no se detiene.",
+  "virtSnapshotChain": "Cadena de discos",
+  "virtSnapshotChainDepth": "{count} capas",
+  "virtSnapshotChainFile": "Archivo",
+  "virtSnapshotChainActive": "En uso ahora",
+  "virtSnapshotChainBase": "Imagen base",
+  "virtSnapshotChainRaw": "Una instantánea externa necesita un disco qcow2. Este es {format}.",
+  "virtSnapshotNoSupport": "El almacenamiento del invitado no admite instantáneas, así que no se puede crear ninguna.",
+  "virtSnapshotRevertChain": "Revertir en una cadena fusiona la capa en ejecución en la imagen y deja inservible toda instantánea posterior. Solo se puede revertir a la más reciente.",
+  "virtSnapshotRevertHasChildren": "Rechazado mientras una instantánea posterior dependa de esta.",
+  "virtSnapshotDiff": "Diferencias con ahora",
+  "virtSnapshotDiffNone": "La configuración no ha cambiado desde esta instantánea.",
+  "virtSnapshotDiffShow": "Comparar con ahora",
+  "virtSnapshotDiffGroup": "Cambiado",
+  "virtSnapshotDiffGroupCpu": "Procesador",
+  "virtSnapshotDiffGroupMemory": "Memoria",
+  "virtSnapshotDiffGroupDisks": "Discos",
+  "virtSnapshotDiffGroupNic": "Interfaces",
+  "virtSnapshotDiffGroupFirmware": "Firmware",
+  "virtSnapshotDiffGroupBoot": "Arranque",
+  "virtSnapshotDiffGroupOther": "Otros",
+  "virtSnapshotDiffValue": "{before} → {after}",
+  "virtSnapshotDiffRemoved": "eliminado",
+  "virtSnapshotDiffAdded": "añadido",
+  "virtSnapshotDiffAsk": "Qué cambia si revierte a {snapshot}:",
+  "virtSnapshotDiffHost": "El host no pudo decir qué difiere: {error}",
+  "virtSnapshotExternalExists": "El invitado ya está en {count} capas; esta instantánea añade una más.",
+  "virtToTemplate": "Convertir en plantilla",
+  "virtToTemplateNote": "Una plantilla no se puede iniciar ni volver a convertir en invitado. Sus discos pasan a ser imágenes base, que es lo que comparte un clon enlazado.",
+  "virtToTemplateConfirm": "¿Convertir {name} en plantilla?",
+  "virtToTemplateIrreversible": "Esto no se puede deshacer: una plantilla no puede volver a ser un invitado.",
+  "virtToTemplateStopped": "Apágalo primero.",
+  "virtToTemplateSnapshots": "Un invitado con instantáneas no puede convertirse en plantilla.",
+  "virtTemplateCreated": "{name} es ahora una plantilla",
+  "virtTemplateTip": "Una plantilla solo se ejecuta una vez clonada.",
+  "virtCloneStorage": "Almacenamiento destino",
+  "virtCloneStorageSame": "Igual que el origen",
+  "virtCloneNode": "Nodo destino",
+  "virtCloneNodeSame": "Igual que el origen",
+  "virtClonePool": "Pool destino",
+  "virtCloneStorageContent": "Este almacenamiento no admite discos de VM.",
+  "virtCloneStorageShared": "Copiar a otro nodo necesita un almacenamiento compartido.",
+  "virtCloneNodeUnknown": "Este host no tiene ese nodo.",
+  "virtCloneLinkedTarget": "Un clon enlazado comparte los discos de la plantilla, así que no puede indicar almacenamiento ni nodo.",
+  "virtBackupJobs": "Tareas de copia",
+  "virtBackupJobsNone": "Ninguna tarea de copia programada. Añada una para copiar invitados periódicamente.",
+  "virtBackupJobNew": "Nueva tarea",
+  "virtBackupJobEdit": "Editar tarea",
+  "virtBackupJobRun": "Ejecutar ahora",
+  "virtBackupJobRunAsk": "¿Iniciar esta tarea de copia ahora?",
+  "virtBackupJobDeleteAsk": "¿Eliminar la tarea de copia {id}? Las copias hechas permanecen.",
+  "virtBackupJobSaved": "Tarea guardada",
+  "virtBackupJobDeleted": "Tarea eliminada",
+  "virtBackupJobStarted": "Tarea de copia iniciada",
+  "virtBackupSchedule": "Programación",
+  "virtBackupScheduleHelp": "Un subconjunto de los eventos de calendario de systemd: 02:30, mon..fri 02:30, sat 03:00, daily, hourly, */15.",
+  "virtBackupScheduleInvalid": "El host no acepta esta programación.",
+  "virtBackupScheduleNext": "Próximas ejecuciones: {times}",
+  "virtBackupSelection": "Invitados",
+  "virtBackupSelectionAll": "Todos los invitados",
+  "virtBackupSelectionList": "Invitados seleccionados",
+  "virtBackupSelectionNone": "Elija al menos un invitado.",
+  "virtBackupMail": "Notificación",
+  "virtBackupMailAlways": "Siempre",
+  "virtBackupMailFailure": "Solo si falla",
+  "virtBackupNotesTemplate": "Notas de la copia",
+  "virtBackupNotesTemplateTip": "Las notas se añaden a cada copia de la tarea. Se sustituyen: {vars}.",
+  "virtBackupPrune": "Retención",
+  "virtBackupPruneTip": "Las opciones de retención de PVE, p. ej. keep-last=7,keep-daily=4. Vacío: las del almacenamiento o del nodo.",
+  "virtBackupNextRun": "Próxima ejecución",
+  "virtBackupJobNode": "Nodo",
+  "virtBackupJobNodeAny": "Todos los nodos",
+  "virtBackupEnabled": "Activada",
+  "virtBackupOptions": "Opciones",
+  "virtBackupProtect": "Proteger",
+  "virtBackupProtectTip": "Una copia protegida no se poda y no puede eliminarse mientras siga protegida.",
+  "virtBackupEditNotes": "Notas",
+  "virtBackupSaveNotes": "Guardar",
+  "virtBackupEdited": "Copia actualizada",
+  "virtBackupRestoreStorage": "Restaurar en el almacenamiento",
+  "virtBackupRestoreStorageSame": "Como en la copia",
+  "virtBackupModeSnapshotTip": "snapshot · sin parada",
+  "virtCloneStorageMissing": "Ningún almacenamiento de este nodo admite discos de VM.",
+  "virtBackupCompress": "Compresión",
+  "virtBackupUnprotect": "Desproteger",
+  "virtBackupModeStops": "suspend y stop interrumpen un invitado en ejecución mientras se copia.",
+  "virtBackupScheduleValidate": "Comprobar con el host",
+  "virtBackupSelected": "{count} seleccionados",
+  "virtBackupExcludeTip": "Se copian todos los invitados del nodo. Desactive uno para excluirlo."
 }

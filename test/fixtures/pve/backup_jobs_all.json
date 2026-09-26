@@ -1,0 +1,32 @@
+[
+    {
+        "comment": "sb e2e capture",
+        "compress": "zstd",
+        "enabled": 1,
+        "id": "sbxe2e-capture",
+        "mailnotification": "failure",
+        "mode": "snapshot",
+        "next-run": 1790533800,
+        "notes-template": "sb {{guestname}} {{vmid}}",
+        "prune-backups": {
+            "keep-daily": "4",
+            "keep-last": "7"
+        },
+        "schedule": "mon..fri 02:30",
+        "storage": "local",
+        "type": "vzdump",
+        "vmid": "911,912"
+    },
+    {
+        "all": 1,
+        "compress": "lzo",
+        "enabled": 0,
+        "exclude": "912",
+        "id": "sbxe2e-all",
+        "mode": "stop",
+        "next-run": 1790967600,
+        "schedule": "sat 03:00",
+        "storage": "local",
+        "type": "vzdump"
+    }
+]

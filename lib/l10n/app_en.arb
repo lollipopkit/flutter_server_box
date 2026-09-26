@@ -4876,9 +4876,9 @@
   "@pveTokenTipHardware": {
     "description": "Token help: privileges for the Hardware view."
   },
-  "pveTokenTipBackup": "Cloning needs VM.Clone, and backing up and restoring VM.Backup, with Datastore.AllocateSpace where the copy or the backup goes.",
+  "pveTokenTipBackup": "Cloning needs VM.Clone, backing up and restoring VM.Backup, and turning a guest into a template VM.Allocate; backup jobs also need Sys.Audit to read them and Sys.Modify on / to make, edit and delete them, with Datastore.AllocateSpace where the copy or the backup goes.",
   "@pveTokenTipBackup": {
-    "description": "PVE API token help: the privileges cloning and backups need (verified on PVE 9.2)."
+    "description": "PVE API token help: the privileges cloning, templates and backups need (verified on PVE 9.2.2 with a privilege-separated token)."
   },
   "virtErrConflict": "Changed elsewhere",
   "@virtErrConflict": {
@@ -6373,5 +6373,444 @@
   "virtCiSaved": "Saved. It takes effect at the next boot.",
   "@virtCiSaved": {
     "description": "Toast after saving cloud-init settings."
+  },
+  "virtSnapshotExternal": "Disk-only while running",
+  "@virtSnapshotExternal": {
+    "description": "Snapshot form: an external, disk-only snapshot."
+  },
+  "virtSnapshotExternalTip": "The guest keeps running. Each disk gets a qcow2 overlay in the chosen pool; the guest stays on a chain.",
+  "@virtSnapshotExternalTip": {
+    "description": "Snapshot form: what an external snapshot does."
+  },
+  "virtSnapshotFormInternal": "Internal (in the image)",
+  "@virtSnapshotFormInternal": {
+    "description": "Snapshot form: an internal snapshot."
+  },
+  "virtSnapshotForm": "Kind",
+  "@virtSnapshotForm": {
+    "description": "Snapshot form: which kind of snapshot to take."
+  },
+  "virtSnapshotOverlayPool": "Overlay pool",
+  "@virtSnapshotOverlayPool": {
+    "description": "Snapshot form: the pool an external snapshot puts its overlays in."
+  },
+  "virtSnapshotExternalNoMemory": "An external snapshot never holds the memory: the guest is not stopped.",
+  "@virtSnapshotExternalNoMemory": {
+    "description": "Snapshot form: an external snapshot never holds memory."
+  },
+  "virtSnapshotChain": "Disk chain",
+  "@virtSnapshotChain": {
+    "description": "Snapshots view: the chain of files a disk is on."
+  },
+  "virtSnapshotChainDepth": "{count} layers",
+  "@virtSnapshotChainDepth": {
+    "description": "Snapshots view: how many layers a chain has.",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "virtSnapshotChainFile": "File",
+  "@virtSnapshotChainFile": {
+    "description": "Snapshots view: one file of a disk chain, and whether it is the one in use."
+  },
+  "virtSnapshotChainActive": "In use now",
+  "@virtSnapshotChainActive": {
+    "description": "Snapshots view: the chain file the guest writes to now."
+  },
+  "virtSnapshotChainBase": "Base image",
+  "@virtSnapshotChainBase": {
+    "description": "Snapshots view: the base image at the bottom of a chain."
+  },
+  "virtSnapshotChainRaw": "An external snapshot needs a qcow2 disk. This one is {format}.",
+  "@virtSnapshotChainRaw": {
+    "description": "Snapshots view: a disk that is not qcow2, so no external snapshot.",
+    "placeholders": {
+      "format": {
+        "type": "String"
+      }
+    }
+  },
+  "virtSnapshotNoSupport": "The guest's storage does not support snapshots, so none can be taken.",
+  "@virtSnapshotNoSupport": {
+    "description": "Snapshot form: the storage does not support snapshots (PVE)."
+  },
+  "virtSnapshotRevertChain": "Reverting on a chain merges the running overlay into the image and leaves every later snapshot unusable. Only the newest snapshot can be reverted to.",
+  "@virtSnapshotRevertChain": {
+    "description": "Revert dialog: a revert on a chain flattens it and strands later snapshots."
+  },
+  "virtSnapshotRevertHasChildren": "Refused while a later snapshot sits on this one.",
+  "@virtSnapshotRevertHasChildren": {
+    "description": "Snapshots view: a revert refused because later snapshots sit on this one."
+  },
+  "virtSnapshotDiff": "Differences from now",
+  "@virtSnapshotDiff": {
+    "description": "Snapshots view: what differs between a snapshot and now."
+  },
+  "virtSnapshotDiffNone": "The configuration is unchanged since this snapshot.",
+  "@virtSnapshotDiffNone": {
+    "description": "Snapshots view: nothing differs between the snapshot and now."
+  },
+  "virtSnapshotDiffShow": "Compare with now",
+  "@virtSnapshotDiffShow": {
+    "description": "Snapshots view: the button that reads the diff."
+  },
+  "virtSnapshotDiffGroup": "Changed",
+  "@virtSnapshotDiffGroup": {
+    "description": "Snapshots view: the groups a diff is shown under."
+  },
+  "virtSnapshotDiffGroupCpu": "Processor",
+  "@virtSnapshotDiffGroupCpu": {
+    "description": "Snapshot diff group: processor."
+  },
+  "virtSnapshotDiffGroupMemory": "Memory",
+  "@virtSnapshotDiffGroupMemory": {
+    "description": "Snapshot diff group: memory."
+  },
+  "virtSnapshotDiffGroupDisks": "Disks",
+  "@virtSnapshotDiffGroupDisks": {
+    "description": "Snapshot diff group: disks."
+  },
+  "virtSnapshotDiffGroupNic": "Interfaces",
+  "@virtSnapshotDiffGroupNic": {
+    "description": "Snapshot diff group: interfaces."
+  },
+  "virtSnapshotDiffGroupFirmware": "Firmware",
+  "@virtSnapshotDiffGroupFirmware": {
+    "description": "Snapshot diff group: firmware."
+  },
+  "virtSnapshotDiffGroupBoot": "Boot",
+  "@virtSnapshotDiffGroupBoot": {
+    "description": "Snapshot diff group: boot options."
+  },
+  "virtSnapshotDiffGroupOther": "Other",
+  "@virtSnapshotDiffGroupOther": {
+    "description": "Snapshot diff group: everything else."
+  },
+  "virtSnapshotDiffValue": "{before} → {after}",
+  "@virtSnapshotDiffValue": {
+    "description": "Snapshots view: one diff row: what the snapshot had, what the guest has now.",
+    "placeholders": {
+      "after": {
+        "type": "String"
+      },
+      "before": {
+        "type": "String"
+      }
+    }
+  },
+  "virtSnapshotDiffRemoved": "removed",
+  "@virtSnapshotDiffRemoved": {
+    "description": "Snapshots view: a diff row for something the snapshot had and the guest no longer does."
+  },
+  "virtSnapshotDiffAdded": "added",
+  "@virtSnapshotDiffAdded": {
+    "description": "Snapshots view: a diff row for something the snapshot had not and the guest now has."
+  },
+  "virtSnapshotDiffAsk": "What changes if you revert to {snapshot}:",
+  "@virtSnapshotDiffAsk": {
+    "description": "Revert dialog: the diff is shown before the revert.",
+    "placeholders": {
+      "snapshot": {
+        "type": "String"
+      }
+    }
+  },
+  "virtSnapshotDiffHost": "The host could not say what differs: {error}",
+  "@virtSnapshotDiffHost": {
+    "description": "Snapshots view: a failure reading the diff.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "virtSnapshotExternalExists": "The guest is already on {count} layers; this snapshot adds one more.",
+  "@virtSnapshotExternalExists": {
+    "description": "Snapshot form: a chain already exists, so a new snapshot deepens it.",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "virtToTemplate": "Make a template",
+  "@virtToTemplate": {
+    "description": "Settings view: the group that turns a guest into a template."
+  },
+  "virtToTemplateNote": "A template cannot be started and cannot be turned back into a guest. Its disks become base images, which is what a linked clone shares.",
+  "@virtToTemplateNote": {
+    "description": "Settings view: what a template is and that it cannot be undone."
+  },
+  "virtToTemplateConfirm": "Turn {name} into a template?",
+  "@virtToTemplateConfirm": {
+    "description": "Settings view: the confirmation dialog before converting to a template.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "virtToTemplateIrreversible": "This cannot be undone: a template cannot be turned back into a guest.",
+  "@virtToTemplateIrreversible": {
+    "description": "Settings view: a template cannot be turned back."
+  },
+  "virtToTemplateStopped": "Shut it down first.",
+  "@virtToTemplateStopped": {
+    "description": "Settings view: a template is made from a stopped guest."
+  },
+  "virtToTemplateSnapshots": "A guest with snapshots cannot become a template.",
+  "@virtToTemplateSnapshots": {
+    "description": "Settings view: a guest with snapshots cannot become a template."
+  },
+  "virtTemplateCreated": "{name} is a template now",
+  "@virtTemplateCreated": {
+    "description": "Settings view: the guest became a template.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "virtTemplateTip": "A template only runs once it is cloned.",
+  "@virtTemplateTip": {
+    "description": "Guest view: what a template offers instead of power actions."
+  },
+  "virtCloneStorage": "Target storage",
+  "@virtCloneStorage": {
+    "description": "Clone group: which storage the copy's disks go to."
+  },
+  "virtCloneStorageSame": "Same as the source",
+  "@virtCloneStorageSame": {
+    "description": "Clone group: the source's own storage."
+  },
+  "virtCloneNode": "Target node",
+  "@virtCloneNode": {
+    "description": "Clone group: the node the copy is made on."
+  },
+  "virtCloneNodeSame": "Same as the source",
+  "@virtCloneNodeSame": {
+    "description": "Clone group: the source's own node."
+  },
+  "virtClonePool": "Target pool",
+  "@virtClonePool": {
+    "description": "Clone group (libvirt): the pool the copy's disks go in."
+  },
+  "virtCloneStorageContent": "This storage does not hold VM images.",
+  "@virtCloneStorageContent": {
+    "description": "Clone group: the storage has to hold VM images."
+  },
+  "virtCloneStorageShared": "Copying to another node needs a shared storage.",
+  "@virtCloneStorageShared": {
+    "description": "Clone group: moving to another node needs shared storage."
+  },
+  "virtCloneNodeUnknown": "This host has no such node.",
+  "@virtCloneNodeUnknown": {
+    "description": "Clone group: the target node is not one the host has."
+  },
+  "virtCloneLinkedTarget": "A linked clone shares the template's disks, so it cannot name a storage or a node.",
+  "@virtCloneLinkedTarget": {
+    "description": "Clone group: a linked clone cannot name a storage or a node."
+  },
+  "virtBackupJobs": "Backup jobs",
+  "@virtBackupJobs": {
+    "description": "Datacenter view: the scheduled backup jobs."
+  },
+  "virtBackupJobsNone": "No scheduled backup job. Add one to back guests up on a schedule.",
+  "@virtBackupJobsNone": {
+    "description": "Datacenter view: no scheduled job."
+  },
+  "virtBackupJobNew": "New job",
+  "@virtBackupJobNew": {
+    "description": "Datacenter view: the button that adds a job."
+  },
+  "virtBackupJobEdit": "Edit job",
+  "@virtBackupJobEdit": {
+    "description": "Datacenter view: editing a job."
+  },
+  "virtBackupJobRun": "Run now",
+  "@virtBackupJobRun": {
+    "description": "Datacenter view: running a job now."
+  },
+  "virtBackupJobRunAsk": "Start this backup job now?",
+  "@virtBackupJobRunAsk": {
+    "description": "Datacenter view: running a job now is confirmed."
+  },
+  "virtBackupJobDeleteAsk": "Delete the backup job {id}? The backups it made stay.",
+  "@virtBackupJobDeleteAsk": {
+    "description": "Datacenter view: deleting a job is confirmed.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "virtBackupJobSaved": "Job saved",
+  "@virtBackupJobSaved": {
+    "description": "Datacenter view: a job was saved."
+  },
+  "virtBackupJobDeleted": "Job deleted",
+  "@virtBackupJobDeleted": {
+    "description": "Datacenter view: a job was deleted."
+  },
+  "virtBackupJobStarted": "Backup job started",
+  "@virtBackupJobStarted": {
+    "description": "Datacenter view: a job was started."
+  },
+  "virtBackupSchedule": "Schedule",
+  "@virtBackupSchedule": {
+    "description": "Job editor: the schedule field."
+  },
+  "virtBackupScheduleHelp": "A subset of systemd calendar events: 02:30, mon..fri 02:30, sat 03:00, daily, hourly, */15.",
+  "@virtBackupScheduleHelp": {
+    "description": "Job editor: what the schedule format is, with examples."
+  },
+  "virtBackupScheduleInvalid": "Not a schedule the host takes.",
+  "@virtBackupScheduleInvalid": {
+    "description": "Job editor: the schedule is not a calendar event."
+  },
+  "virtBackupScheduleNext": "Next runs: {times}",
+  "@virtBackupScheduleNext": {
+    "description": "Job editor: what the host says the schedule means.",
+    "placeholders": {
+      "times": {
+        "type": "String"
+      }
+    }
+  },
+  "virtBackupSelection": "Guests",
+  "@virtBackupSelection": {
+    "description": "Job editor: which guests the job takes."
+  },
+  "virtBackupSelectionAll": "All guests",
+  "@virtBackupSelectionAll": {
+    "description": "Job editor: the job takes every guest on the node."
+  },
+  "virtBackupSelectionList": "Selected guests",
+  "@virtBackupSelectionList": {
+    "description": "Job editor: the job takes the guests picked."
+  },
+  "virtBackupSelectionNone": "Pick at least one guest.",
+  "@virtBackupSelectionNone": {
+    "description": "Job editor: a job has to take at least one guest."
+  },
+  "virtBackupMail": "Notification",
+  "@virtBackupMail": {
+    "description": "Job editor: when the job notifies."
+  },
+  "virtBackupMailAlways": "Always",
+  "@virtBackupMailAlways": {
+    "description": "Job editor: notify on every run."
+  },
+  "virtBackupMailFailure": "On failure",
+  "@virtBackupMailFailure": {
+    "description": "Job editor: notify only on failure."
+  },
+  "virtBackupNotesTemplate": "Backup notes",
+  "@virtBackupNotesTemplate": {
+    "description": "Job editor: the notes every backup the job makes carries."
+  },
+  "virtBackupNotesTemplateTip": "The notes are added to each backup the job makes. These are replaced by their values: {vars}.",
+  "@virtBackupNotesTemplateTip": {
+    "description": "Job editor: the variables PVE replaces in the notes template.",
+    "placeholders": {
+      "vars": {
+        "type": "String"
+      }
+    }
+  },
+  "virtBackupPrune": "Retention",
+  "@virtBackupPrune": {
+    "description": "Job editor: the retention, PVE's prune-backups."
+  },
+  "virtBackupPruneTip": "PVE's retention options, e.g. keep-last=7,keep-daily=4. Empty: the storage's or the node's own.",
+  "@virtBackupPruneTip": {
+    "description": "Job editor: what the retention value looks like."
+  },
+  "virtBackupNextRun": "Next run",
+  "@virtBackupNextRun": {
+    "description": "Job list: when the job next runs."
+  },
+  "virtBackupJobNode": "Node",
+  "@virtBackupJobNode": {
+    "description": "Job editor: the node the job runs on."
+  },
+  "virtBackupJobNodeAny": "Every node",
+  "@virtBackupJobNodeAny": {
+    "description": "Job editor: the job runs on every node."
+  },
+  "virtBackupEnabled": "Enabled",
+  "@virtBackupEnabled": {
+    "description": "Job editor: whether the job runs."
+  },
+  "virtBackupOptions": "Options",
+  "@virtBackupOptions": {
+    "description": "Backup view: the options a run now takes."
+  },
+  "virtBackupProtect": "Protect",
+  "@virtBackupProtect": {
+    "description": "Backup view: protect a backup from deletion."
+  },
+  "virtBackupProtectTip": "A protected backup is kept from pruning and cannot be deleted until protection is removed.",
+  "@virtBackupProtectTip": {
+    "description": "Backup view: what protection means."
+  },
+  "virtBackupEditNotes": "Notes",
+  "@virtBackupEditNotes": {
+    "description": "Backup view: a backup's own notes."
+  },
+  "virtBackupSaveNotes": "Save",
+  "@virtBackupSaveNotes": {
+    "description": "Backup view: the button that saves a backup's notes."
+  },
+  "virtBackupEdited": "Backup updated",
+  "@virtBackupEdited": {
+    "description": "Backup view: a backup's fields were written."
+  },
+  "virtBackupRestoreStorage": "Restore to storage",
+  "@virtBackupRestoreStorage": {
+    "description": "Backup view: where a restore puts the disks."
+  },
+  "virtBackupRestoreStorageSame": "As in the backup",
+  "@virtBackupRestoreStorageSame": {
+    "description": "Backup view: a restore leaves the disks where the archive says."
+  },
+  "virtBackupModeSnapshotTip": "snapshot · no downtime",
+  "@virtBackupModeSnapshotTip": {
+    "description": "Backup view: snapshot mode keeps a running guest running."
+  },
+  "virtCloneStorageMissing": "No storage on this node holds VM images.",
+  "@virtCloneStorageMissing": {
+    "description": "Clone group: no storage on the node holds VM images."
+  },
+  "virtBackupCompress": "Compression",
+  "@virtBackupCompress": {
+    "description": "Backup view: the compression a run uses."
+  },
+  "virtBackupUnprotect": "Unprotect",
+  "@virtBackupUnprotect": {
+    "description": "Backup view: lift a backup's protection."
+  },
+  "virtBackupModeStops": "suspend and stop interrupt a running guest while it is copied.",
+  "@virtBackupModeStops": {
+    "description": "Backup view: suspend and stop interrupt a running guest."
+  },
+  "virtBackupScheduleValidate": "Check with the host",
+  "@virtBackupScheduleValidate": {
+    "description": "Job editor: ask the host to check the schedule."
+  },
+  "virtBackupSelected": "{count} selected",
+  "@virtBackupSelected": {
+    "description": "Job editor: how many guests are picked.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "virtBackupExcludeTip": "Every guest on the node is taken. Turn one off to leave it out.",
+  "@virtBackupExcludeTip": {
+    "description": "Job editor: what the switches mean with \"all guests\" on."
   }
 }

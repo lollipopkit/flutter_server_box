@@ -190,13 +190,6 @@
   "maxConcurrency": "Maksimum Eşzamanlılık",
   "maxRetryCount": "Sunucu yeniden bağlantı sayısı",
   "mismatchSystem": "Eşleşmeyen sistem: {system}",
-  "@mismatchSystem": {
-    "placeholders": {
-      "system": {
-        "type": "String"
-      }
-    }
-  },
   "mirror": "Yansı",
   "needRestart": "Uygulamanın yeniden başlatılması gerekiyor",
   "netViewType": "Ağ görüntüleme türü",
@@ -252,22 +245,6 @@
   "rememberPwdInMemTip": "Konteynerler, askıya alma vb. için kullanılır.",
   "remotePath": "Uzak yol",
   "rootfsUpdateTip": "{distro} {installed} kurulu, {latest} var. Güncelleme tüm konteyneri değiştirir: {pm} verisi kaybolur",
-  "@rootfsUpdateTip": {
-    "placeholders": {
-      "distro": {
-        "type": "String"
-      },
-      "installed": {
-        "type": "String"
-      },
-      "latest": {
-        "type": "String"
-      },
-      "pm": {
-        "type": "String"
-      }
-    }
-  },
   "linuxSystemInUse": "Silmeden önce {name} üzerindeki terminalleri kapat",
   "rootfsSubtitle": "Bu cihazdaki bir Linux kullanıcı alanı",
   "rootfsInstallTip": "{distro} {version} (yaklaşık {size} MB) indirir ve bu cihaza açar.",
@@ -571,24 +548,7 @@
   "geoDataUnreachable": "Veri alınamadı.",
   "geoDataRemoveFailed": "Veriler silinemedi.",
   "geoDataCurrent": "{month} zaten yüklü.",
-  "@geoDataCurrent": {
-    "placeholders": {
-      "month": {
-        "type": "String"
-      }
-    }
-  },
   "geoDataConsent": "**İndirme: {download} · Cihazdaki depolama alanı: {disk}.** Veri kümesinin tamamı bu cihazda saklanır ve sonraki tüm konum sorguları yerel olarak gerçekleştirilir. Sunucu adresleri ve sorgu etkinliği indirme hizmetine gönderilmez.\n\nHer ay güncellenir. Yeni sürüm yüklü verilerin yerini alır ve ek bir kopya tutmaz. İstediğiniz zaman silebilirsiniz.",
-  "@geoDataConsent": {
-    "placeholders": {
-      "download": {
-        "type": "String"
-      },
-      "disk": {
-        "type": "String"
-      }
-    }
-  },
   "benchmark": "Performans testi",
   "benchmarkIntro": "Disk, ağ ve CPU'yu test etmek için bu sunucuda Yet Another Bench Script'i çalıştırır. Tam bir test 10–20 dakika sürer ve bu sayfadan ayrılsanız veya uygulamayı kapatsanız da devam eder.",
   "benchmarkNoRuns": "Henüz performans testi yok.",
@@ -958,41 +918,6 @@
   "remoteDesktopCertificateIssuer": "Veren: {issuer}",
   "remoteDesktopCertificateValidity": "Geçerlilik: {start} – {end}",
   "appearanceThemeModeLocked": "Bu tema yalnızca {mode} modunu destekler. Modu değiştirmek için başka bir tema seçin.",
-  "@tmuxWindowCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@tmuxPaneCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@processShowKernelThreads": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@serviceOtherUnits": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@serviceJournalRecent": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "pveAuthToken": "API belirteci",
   "pveVersionLow": "Bu özellik şu anda test aşamasında ve yalnızca PVE 8+ üzerinde test edildi. Lütfen dikkatli kullanın.",
   "pveTokenId": "Belirteç kimliği",
@@ -1134,7 +1059,7 @@
   "virtDeleted": "{name} silindi",
   "pveTokenTipCreate": "Konuk oluşturmak ve silmek için ayrıca VM.Allocate, VM.Config.*, Datastore.AllocateSpace ve SDN.Use gerekir.",
   "pveTokenTipHardware": "Donanım düzenlemek için VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network ve VM.Config.Options gerekir; yeni diskler ve arabirimler için ayrıca Datastore.AllocateSpace ve SDN.Use gerekir. Ekran kartı ile USB ve PCI aygıtları ayrıca VM.Config.HWType gerektirir; kaynak eşlemesiyle verilen bir aygıt o eşleme üzerinde Mapping.Use, eşlemeleri listelemek için Mapping.Audit gerektirir.",
-  "pveTokenTipBackup": "Klonlama VM.Clone, yedekleme ve geri yükleme VM.Backup gerektirir; kopyanın veya yedeğin gittiği yerde Datastore.AllocateSpace de gerekir.",
+  "pveTokenTipBackup": "Klonlama VM.Clone, yedekleme ve geri yükleme VM.Backup, şablona çevirme VM.Allocate gerektirir; yedekleme işleri ayrıca okumak için Sys.Audit, oluşturmak, düzenlemek ve silmek için / üzerinde Sys.Modify gerektirir; kopyanın veya yedeğin gittiği yerde Datastore.AllocateSpace de gerekir.",
   "virtErrConflict": "Başka yerde değişti",
   "virtErrConflictTip": "Bu konuğun yapılandırması burada okunduktan sonra başka biri tarafından değiştirildi, bu yüzden hiçbir şey değiştirilmedi. Yeniden okundu: hâlâ gerekiyorsa değişikliği tekrar yapın.",
   "virtHardware": "Donanım",
@@ -1430,5 +1355,99 @@
   "virtCiEffectLibvirt": "Kaydetmek, yeni bir örnek kimliğiyle yeni bir seed yazar.",
   "virtCiEffectPve": "PVE cloud-init sürücüsünü hemen yeniden yazar; örnek kimliği bu ayarlardan türetilir, bu yüzden buradaki her değişiklik yenisini oluşturur.",
   "virtCiNewInstance": "Bir sonraki açılışta cloud-init sistemi yeni bir örnek olarak ele alır: ana makine adını yeniden ayarlar, hesap yoksa oluşturur, parolasını ayarlar, anahtarları ekler ve ağ yapılandırmasını yeniden yazar. Yeni SSH ana makine anahtarları da üretir; bu yüzden SSH istemcileri ana makine anahtarının değiştiği uyarısını verir. O açılıştan önce hiçbir şey değişmez.",
-  "virtCiSaved": "Kaydedildi. Bir sonraki açılışta geçerli olur."
+  "virtCiSaved": "Kaydedildi. Bir sonraki açılışta geçerli olur.",
+  "virtSnapshotExternal": "Çalışırken yalnızca disk",
+  "virtSnapshotExternalTip": "Guest çalışmaya devam eder. Her disk seçilen havuza bir qcow2 katmanı alır; guest bir zincirde kalır.",
+  "virtSnapshotFormInternal": "Dahili (imaj içinde)",
+  "virtSnapshotForm": "Tür",
+  "virtSnapshotOverlayPool": "Katman havuzu",
+  "virtSnapshotExternalNoMemory": "Harici anlık görüntü belleği saklamaz: guest durdurulmaz.",
+  "virtSnapshotChain": "Disk zinciri",
+  "virtSnapshotChainDepth": "{count} katman",
+  "virtSnapshotChainFile": "Dosya",
+  "virtSnapshotChainActive": "Şu anda kullanımda",
+  "virtSnapshotChainBase": "Temel imaj",
+  "virtSnapshotChainRaw": "Harici anlık görüntü qcow2 disk gerektirir. Bu disk {format}.",
+  "virtSnapshotNoSupport": "Guest depolaması anlık görüntüyü desteklemiyor, bu yüzden oluşturulamaz.",
+  "virtSnapshotRevertChain": "Bir zincirde geri dönmek, çalışan katmanı imaja birleştirir ve sonraki tüm anlık görüntüleri kullanılamaz bırakır. Yalnızca en yeni anlık görüntüye dönülebilir.",
+  "virtSnapshotRevertHasChildren": "Sonraki bir anlık görüntü bunun üzerinde olduğu sürece reddedilir.",
+  "virtSnapshotDiff": "Şimdikiyle farklar",
+  "virtSnapshotDiffNone": "Yapılandırma bu anlık görüntüden beri değişmedi.",
+  "virtSnapshotDiffShow": "Şimdikiyle karşılaştır",
+  "virtSnapshotDiffGroup": "Değişti",
+  "virtSnapshotDiffGroupCpu": "İşlemci",
+  "virtSnapshotDiffGroupMemory": "Bellek",
+  "virtSnapshotDiffGroupDisks": "Diskler",
+  "virtSnapshotDiffGroupNic": "Arayüzler",
+  "virtSnapshotDiffGroupFirmware": "Ürün yazılımı",
+  "virtSnapshotDiffGroupBoot": "Önyükleme",
+  "virtSnapshotDiffGroupOther": "Diğer",
+  "virtSnapshotDiffValue": "{before} → {after}",
+  "virtSnapshotDiffRemoved": "kaldırıldı",
+  "virtSnapshotDiffAdded": "eklendi",
+  "virtSnapshotDiffAsk": "{snapshot} konumuna dönerseniz değişecekler:",
+  "virtSnapshotDiffHost": "Ana makine neyin farklı olduğunu söyleyemedi: {error}",
+  "virtSnapshotExternalExists": "Guest zaten {count} katmanda; bu anlık görüntü bir tane daha ekler.",
+  "virtToTemplate": "Şablona çevir",
+  "virtToTemplateNote": "Şablon başlatılamaz ve tekrar guest hâline getirilemez. Diskleri temel imaj olur; bağlantılı klon bunları paylaşır.",
+  "virtToTemplateConfirm": "{name} şablona çevrilsin mi?",
+  "virtToTemplateIrreversible": "Bu geri alınamaz: şablon tekrar guest hâline getirilemez.",
+  "virtToTemplateStopped": "Önce kapatın.",
+  "virtToTemplateSnapshots": "Anlık görüntüsü olan bir guest şablon olamaz.",
+  "virtTemplateCreated": "{name} artık bir şablon",
+  "virtTemplateTip": "Bir şablon ancak klonlandıktan sonra çalışır.",
+  "virtCloneStorage": "Hedef depolama",
+  "virtCloneStorageSame": "Kaynakla aynı",
+  "virtCloneNode": "Hedef düğüm",
+  "virtCloneNodeSame": "Kaynakla aynı",
+  "virtClonePool": "Hedef havuz",
+  "virtCloneStorageContent": "Bu depolama VM disklerini tutmaz.",
+  "virtCloneStorageShared": "Başka bir düğüme kopyalamak paylaşımlı depolama gerektirir.",
+  "virtCloneNodeUnknown": "Bu ana makinede böyle bir düğüm yok.",
+  "virtCloneLinkedTarget": "Bağlantılı klon şablonun disklerini paylaşır; bu yüzden depolama veya düğüm belirtemez.",
+  "virtBackupJobs": "Yedekleme işleri",
+  "virtBackupJobsNone": "Zamanlanmış yedekleme işi yok. Ekleyin, guest'ler düzenli yedeklensin.",
+  "virtBackupJobNew": "Yeni iş",
+  "virtBackupJobEdit": "İşi düzenle",
+  "virtBackupJobRun": "Şimdi çalıştır",
+  "virtBackupJobRunAsk": "Bu yedekleme işi şimdi başlatılsın mı?",
+  "virtBackupJobDeleteAsk": "{id} yedekleme işi silinsin mi? Oluşturulan yedekler kalır.",
+  "virtBackupJobSaved": "İş kaydedildi",
+  "virtBackupJobDeleted": "İş silindi",
+  "virtBackupJobStarted": "Yedekleme işi başlatıldı",
+  "virtBackupSchedule": "Zamanlama",
+  "virtBackupScheduleHelp": "systemd takvim olaylarının bir alt kümesi: 02:30, mon..fri 02:30, sat 03:00, daily, hourly, */15.",
+  "virtBackupScheduleInvalid": "Ana makine bu zamanlamayı kabul etmiyor.",
+  "virtBackupScheduleNext": "Sonraki çalışmalar: {times}",
+  "virtBackupSelection": "Guest'ler",
+  "virtBackupSelectionAll": "Tüm guest'ler",
+  "virtBackupSelectionList": "Seçilen guest'ler",
+  "virtBackupSelectionNone": "En az bir guest seçin.",
+  "virtBackupMail": "Bildirim",
+  "virtBackupMailAlways": "Her zaman",
+  "virtBackupMailFailure": "Hata durumunda",
+  "virtBackupNotesTemplate": "Yedek notları",
+  "virtBackupNotesTemplateTip": "Notlar işin oluşturduğu her yedeğe eklenir. Değeriyle değişenler: {vars}.",
+  "virtBackupPrune": "Saklama",
+  "virtBackupPruneTip": "PVE saklama seçenekleri, örn. keep-last=7,keep-daily=4. Boş: depolamanın veya düğümün kendi ayarı.",
+  "virtBackupNextRun": "Sonraki çalışma",
+  "virtBackupJobNode": "Düğüm",
+  "virtBackupJobNodeAny": "Her düğüm",
+  "virtBackupEnabled": "Etkin",
+  "virtBackupOptions": "Seçenekler",
+  "virtBackupProtect": "Koru",
+  "virtBackupProtectTip": "Korunan yedek saklama ile silinmez ve koruma kaldırılana kadar silinemez.",
+  "virtBackupEditNotes": "Notlar",
+  "virtBackupSaveNotes": "Kaydet",
+  "virtBackupEdited": "Yedek güncellendi",
+  "virtBackupRestoreStorage": "Depolamaya geri yükle",
+  "virtBackupRestoreStorageSame": "Yedekteki gibi",
+  "virtBackupModeSnapshotTip": "snapshot · kesintisiz",
+  "virtCloneStorageMissing": "Bu düğümde VM disklerini tutan bir depolama yok.",
+  "virtBackupCompress": "Sıkıştırma",
+  "virtBackupUnprotect": "Korumayı kaldır",
+  "virtBackupModeStops": "suspend ve stop, kopyalama sırasında çalışan guest'i kesintiye uğratır.",
+  "virtBackupScheduleValidate": "Ana makinede doğrula",
+  "virtBackupSelected": "{count} seçili",
+  "virtBackupExcludeTip": "Düğümdeki tüm guest'ler alınır. Birini kapatırsanız dışarıda kalır."
 }

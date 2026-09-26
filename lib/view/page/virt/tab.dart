@@ -25,11 +25,11 @@ import 'package:server_box/view/widget/progress_line.dart';
 part 'hosts.dart';
 part 'list.dart';
 
-/// What the list column is showing. Storage and network are offered where
-/// the host's capabilities say (`VirtCapabilities.storage` / `.network`),
-/// and drawn disabled elsewhere, so the shape of the tab does not change
-/// between hosts.
-enum VirtSection { guests, storage, network }
+/// What the list column is showing. Storage, network and backup are offered
+/// where the host's capabilities say (`VirtCapabilities.storage` /
+/// `.network` / `.backupJobs`); a section the host does not have is not
+/// drawn at all, so the shape of the tab follows the host.
+enum VirtSection { guests, storage, network, backup }
 
 /// The Virtualization tab: libvirt/KVM and Proxmox VE hosts and their guests.
 ///
@@ -55,10 +55,11 @@ class _VirtTabPageState extends ConsumerState<VirtTabPage>
   /// tells `NestedNavigator` a change is the detail closing.
   String? _guestId;
 
-  /// The section on screen, and what is open beside it in the other two.
+  /// The section on screen, and what is open beside it in the others.
   var _section = VirtSection.guests;
   String? _poolId;
   String? _netId;
+  String? _jobId;
 
   /// Something new is being filled in beside the list — a guest, a pool or
   /// a network, as the section on screen says (two columns; one column
@@ -159,11 +160,13 @@ class _VirtTabPageState extends ConsumerState<VirtTabPage>
     return hosts.hostIds.firstOrNull;
   }
 
-  /// What is open beside the list in the section on screen.
+  /// What is open beside the list in the section on screen. The backup
+  /// section's id is a job's, or the empty string for a new one.
   String? get _openId => switch (_section) {
     VirtSection.guests => _guestId,
     VirtSection.storage => _poolId,
     VirtSection.network => _netId,
+    VirtSection.backup => _jobId,
   };
 
   void _closeDetail() {
@@ -174,6 +177,8 @@ class _VirtTabPageState extends ConsumerState<VirtTabPage>
         _poolId = null;
       case VirtSection.network:
         _netId = null;
+      case VirtSection.backup:
+        _jobId = null;
     }
   }
 
@@ -209,6 +214,14 @@ class _VirtTabPageState extends ConsumerState<VirtTabPage>
             _netId = id;
           }),
         ),
+        // A new backup job is the editor with no id, saved into the list.
+        VirtSection.backup => VirtBackupJobView(
+          key: key,
+          serverId: hostId,
+          jobId: null,
+          leading: BackButton(onPressed: cancel),
+          onDeleted: cancel,
+        ),
       };
     }
     final id = _openId;
@@ -237,6 +250,13 @@ class _VirtTabPageState extends ConsumerState<VirtTabPage>
         onOpenGuest: (guestId) => _openGuest(hostId, guestId, true),
         onDeleted: () => setState(() => _netId = null),
       ),
+      VirtSection.backup => VirtBackupJobView(
+        key: key,
+        serverId: hostId,
+        jobId: id,
+        onSwitch: (jobId) => setState(() => _jobId = jobId),
+        onDeleted: () => setState(() => _jobId = null),
+      ),
     };
   }
 }
@@ -246,6 +266,7 @@ extension VirtSectionUi on VirtSection {
     VirtSection.guests => Icons.view_in_ar_outlined,
     VirtSection.storage => Icons.storage_outlined,
     VirtSection.network => Icons.lan_outlined,
+    VirtSection.backup => Icons.backup_outlined,
   };
 }
 
@@ -266,6 +287,7 @@ extension _Actions on _VirtTabPageState {
         _guestId = null;
         _poolId = null;
         _netId = null;
+        _jobId = null;
         _creating = false;
       }
       _hostId = id;
@@ -280,15 +302,22 @@ extension _Actions on _VirtTabPageState {
     });
   }
 
-  /// The form for a new guest, pool or network — whichever the section on
-  /// screen lists: beside the list with two columns, over it with one — and
-  /// then what was made, as it would be opened from the list.
+  /// The form for a new guest, pool, network or backup job — whichever the
+  /// section on screen lists: beside the list with two columns, over it with
+  /// one — and then what was made, as it would be opened from the list.
   Future<void> _startCreate(String hostId, bool split) async {
     if (split) {
       setState(() => _creating = true);
       return;
     }
     final section = _section;
+    if (section == VirtSection.backup) {
+      await VirtBackupJobPage.route.go(
+        context,
+        VirtBackupJobArgs(serverId: hostId),
+      );
+      return;
+    }
     final id = switch (section) {
       VirtSection.guests => await VirtCreatePage.route.go(
         context,
@@ -302,6 +331,7 @@ extension _Actions on _VirtTabPageState {
             network: section == VirtSection.network,
           ),
         ),
+      VirtSection.backup => null,
     };
     if (id == null || !mounted) return;
     _openResource(hostId, id, false);
@@ -337,18 +367,30 @@ extension _Actions on _VirtTabPageState {
             _poolId = id;
           case VirtSection.network:
             _netId = id;
+          case VirtSection.backup:
+            _jobId = id;
         }
       });
       return;
     }
-    final args = VirtResourceArgs(serverId: hostId, id: id);
     switch (_section) {
       case VirtSection.guests:
         _openGuest(hostId, id, split);
       case VirtSection.storage:
-        VirtPoolPage.route.go(context, args);
+        VirtPoolPage.route.go(
+          context,
+          VirtResourceArgs(serverId: hostId, id: id),
+        );
       case VirtSection.network:
-        VirtNetworkPage.route.go(context, args);
+        VirtNetworkPage.route.go(
+          context,
+          VirtResourceArgs(serverId: hostId, id: id),
+        );
+      case VirtSection.backup:
+        VirtBackupJobPage.route.go(
+          context,
+          VirtBackupJobArgs(serverId: hostId, jobId: id),
+        );
     }
   }
 
@@ -362,6 +404,8 @@ extension _Actions on _VirtTabPageState {
         ref.invalidate(virtStoragePoolsProvider(hostId));
       case VirtSection.network:
         ref.invalidate(virtNetworksProvider(hostId));
+      case VirtSection.backup:
+        ref.invalidate(virtBackupJobsProvider(hostId));
     }
   }
 

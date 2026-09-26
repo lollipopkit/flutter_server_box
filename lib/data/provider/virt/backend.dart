@@ -1,5 +1,6 @@
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_backup.dart';
+import 'package:server_box/data/model/virt/virt_backup_schedule.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
@@ -48,15 +49,51 @@ abstract interface class VirtBackend {
   /// them). Only where `VirtCapabilities.snapshots`.
   Future<List<VirtGuestSnapshot>> snapshots(VirtGuest guest);
 
+  /// The disk chain [guest]'s writable disks are on — one file per layer,
+  /// topmost first — and whether an external snapshot can be taken of it.
+  /// Only where `VirtCapabilities.snapshotExternal`.
+  Future<VirtSnapChain> snapshotChain(VirtGuest guest);
+
+  /// Whether this guest can be snapshotted at all: whether every disk it has
+  /// is on a storage that supports it.
+  ///
+  /// PVE answers this itself (`GET .../{type}/{vmid}/feature?feature=
+  /// snapshot`), which is what its own UI asks before it offers the button;
+  /// the answer is about the *storages* the guest's disks are on, so a guest
+  /// whose disks are mixed answers false when any one of them does. libvirt
+  /// has nothing to ask: it is [snapshotChain]'s own read. Null where the
+  /// backend cannot say (a container on a host that refuses the question).
+  Future<bool?> snapshotSupported(VirtGuest guest);
+
+  /// Why a snapshot cannot be taken, in the host's words, or null when one
+  /// can. Read before the form offers to make one, so a refusal is said
+  /// before the task is started rather than after it fails.
+  Future<String?> snapshotRefusal(VirtGuest guest);
+
+  /// What differs between the configuration [name] recorded and the guest's
+  /// current one, grouped the way the view shows it. Only the differences
+  /// that mean something are listed; an empty list is "nothing changed".
+  ///
+  /// libvirt compares the snapshot's `<domain>` with `dumpxml --inactive`;
+  /// PVE compares the snapshot's `config` with the guest's own.
+  Future<List<VirtSnapDiff>> snapshotDiff(VirtGuest guest, String name);
+
   /// Takes a snapshot named [name] (checked with `virtSnapshotNameIssue`
   /// first), and returns once the host has finished. [memory] asks for the
   /// guest's memory as well, where `virtSnapshotMemory` says it is optional;
   /// where it is always taken, it is taken whatever this says.
+  ///
+  /// [form] `external` (libvirt only, where `snapshotExternal`) takes a
+  /// disk-only snapshot: the guest keeps running and ends up on a qcow2
+  /// chain. [overlayPool] is the pool the new overlay goes in — the guest's
+  /// own where it is null — and is read from [snapshotChain].
   Future<void> createSnapshot(
     VirtGuest guest, {
     required String name,
     String? description,
     bool memory = false,
+    VirtSnapshotForm form = VirtSnapshotForm.internal,
+    String? overlayPool,
   });
 
   /// Reverts [guest] to the snapshot [name]. A snapshot without memory leaves
@@ -172,6 +209,12 @@ abstract interface class VirtBackend {
   /// `VirtCapabilities.clone`.
   Future<String> clone(VirtGuest guest, VirtCloneRequest request);
 
+  /// Turns [guest] into a template (PVE `POST .../template`), which cannot be
+  /// turned back and cannot be started again. PVE only, where
+  /// `VirtCapabilities.template`: the guest must be stopped and have no
+  /// snapshot. Throws `VirtErrType.actionFailed` with the host's words.
+  Future<void> makeTemplate(VirtGuest guest);
+
   /// [guest]'s backups on every storage that holds backups, newest first.
   /// Only where `VirtCapabilities.backup`.
   Future<List<VirtBackup>> backups(VirtGuest guest);
@@ -180,15 +223,49 @@ abstract interface class VirtBackend {
   /// VMID. Empty where the account may not read them.
   Future<List<VirtBackupJob>> backupJobs(VirtGuest guest);
 
+  /// Every scheduled backup job on the host, for the datacenter's Backup
+  /// view. Empty where the account may not read them (`Sys.Audit`).
+  Future<List<VirtBackupJob>> allBackupJobs();
+
+  /// Creates, edits ([VirtBackupJobEdit.id] naming the job) or — with
+  /// [remove] — deletes a scheduled job. PVE only, and `Sys.Modify` on `/`.
+  Future<void> editBackupJob(VirtBackupJobEdit edit, {bool remove = false});
+
+  /// Asks the host what it makes of [schedule] — PVE's own parser, through
+  /// the call its job editor's "Simulate" button makes — and returns its
+  /// refusal in its words, or null when it takes it. The next few runs are
+  /// [VirtScheduleCheck.next] as the host computed them, for the form to show
+  /// what the schedule means. Only where `VirtCapabilities.backupJobs`.
+  Future<VirtScheduleCheck> checkSchedule(String schedule);
+
   /// The storages [guest]'s backups can go to.
   Future<List<VirtStoragePool>> backupStorages(VirtGuest guest);
+
+  /// Every storage on the host that holds backups, across its nodes: what a
+  /// scheduled job (which belongs to the datacenter rather than a guest) can
+  /// write to and a restore can put disks on.
+  Future<List<VirtStoragePool>> allBackupStorages();
 
   /// Backs [guest] up now and returns once the host has.
   Future<void> backup(VirtGuest guest, VirtBackupRequest request);
 
+  /// Runs the scheduled [job] now, as its own "Run now": the same request a
+  /// backup of every guest it takes, without its schedule.
+  Future<void> runBackupJob(VirtBackupJob job);
+
   /// Restores [backup] over [guest], which must be stopped, or — with
-  /// [vmid] — as a new guest with that VMID, [guest] untouched.
-  Future<void> restoreBackup(VirtGuest guest, VirtBackup backup, {int? vmid});
+  /// [vmid] — as a new guest with that VMID, [guest] untouched. [storage] is
+  /// where the restored disks land; null leaves them where the archive says.
+  Future<void> restoreBackup(
+    VirtGuest guest,
+    VirtBackup backup, {
+    int? vmid,
+    String? storage,
+  });
+
+  /// Writes [edit] to [backup]: its notes and its protection. PVE writes
+  /// both into the archive's own header.
+  Future<void> editBackup(VirtBackup backup, VirtBackupEdit edit);
 
   /// Deletes [backup]. A protected one is refused by the host.
   Future<void> deleteBackup(VirtGuest guest, VirtBackup backup);

@@ -1,0 +1,97 @@
+<domainsnapshot>
+  <name>s1</name>
+  <state>disk-snapshot</state>
+  <creationTime>1790417080</creationTime>
+  <memory snapshot='no'/>
+  <disks>
+    <disk name='vda' snapshot='external' type='file'>
+      <driver type='qcow2'/>
+      <source file='/var/lib/libvirt/images/sbxe2e-r.1790417080'/>
+    </disk>
+  </disks>
+  <revertDisks>
+    <disk name='vda' snapshot='external' type='file'>
+      <driver type='qcow2'/>
+      <source file='/var/lib/libvirt/images/sbxe2e-r.1790417094'/>
+    </disk>
+  </revertDisks>
+  <domain type='kvm'>
+    <name>sbxe2e-r</name>
+    <uuid>1db20c9a-77cd-47c1-b03a-902f8d3f6623</uuid>
+    <memory unit='KiB'>262144</memory>
+    <currentMemory unit='KiB'>262144</currentMemory>
+    <vcpu placement='static'>1</vcpu>
+    <resource>
+      <partition>/machine</partition>
+    </resource>
+    <os>
+      <type arch='x86_64' machine='pc-i440fx-10.0'>hvm</type>
+      <boot dev='hd'/>
+    </os>
+    <cpu mode='custom' match='exact' check='none'>
+      <model fallback='forbid'>qemu64</model>
+    </cpu>
+    <clock offset='utc'/>
+    <on_poweroff>destroy</on_poweroff>
+    <on_reboot>restart</on_reboot>
+    <on_crash>destroy</on_crash>
+    <devices>
+      <emulator>/usr/bin/qemu-system-x86_64</emulator>
+      <disk type='file' device='disk'>
+        <driver name='qemu' type='qcow2'/>
+        <source file='/var/lib/libvirt/images/sbxe2e-r.qcow2'/>
+        <target dev='vda' bus='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
+      </disk>
+      <controller type='usb' index='0' model='piix3-uhci'>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x2'/>
+      </controller>
+      <controller type='pci' index='0' model='pci-root'/>
+      <input type='mouse' bus='ps2'/>
+      <input type='keyboard' bus='ps2'/>
+      <audio id='1' type='none'/>
+      <memballoon model='virtio'>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+      </memballoon>
+    </devices>
+    <seclabel type='dynamic' model='apparmor' relabel='yes'/>
+  </domain>
+  <inactiveDomain type='kvm'>
+    <name>sbxe2e-r</name>
+    <uuid>1db20c9a-77cd-47c1-b03a-902f8d3f6623</uuid>
+    <memory unit='KiB'>262144</memory>
+    <currentMemory unit='KiB'>262144</currentMemory>
+    <vcpu placement='static'>1</vcpu>
+    <os>
+      <type arch='x86_64' machine='pc-i440fx-10.0'>hvm</type>
+      <boot dev='hd'/>
+    </os>
+    <cpu mode='custom' match='exact' check='none'>
+      <model fallback='forbid'>qemu64</model>
+    </cpu>
+    <clock offset='utc'/>
+    <on_poweroff>destroy</on_poweroff>
+    <on_reboot>restart</on_reboot>
+    <on_crash>destroy</on_crash>
+    <devices>
+      <emulator>/usr/bin/qemu-system-x86_64</emulator>
+      <disk type='file' device='disk'>
+        <driver name='qemu' type='qcow2'/>
+        <source file='/var/lib/libvirt/images/sbxe2e-r.qcow2'/>
+        <target dev='vda' bus='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
+      </disk>
+      <controller type='usb' index='0' model='piix3-uhci'>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x2'/>
+      </controller>
+      <controller type='pci' index='0' model='pci-root'/>
+      <input type='mouse' bus='ps2'/>
+      <input type='keyboard' bus='ps2'/>
+      <audio id='1' type='none'/>
+      <memballoon model='virtio'>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+      </memballoon>
+    </devices>
+  </inactiveDomain>
+</domainsnapshot>
+

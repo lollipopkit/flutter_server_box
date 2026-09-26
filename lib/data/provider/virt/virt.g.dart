@@ -318,7 +318,7 @@ final class VirtHostNotifierProvider
   }
 }
 
-String _$virtHostNotifierHash() => r'3ddf68def1481cca5665dac7fb3ba5e330d0f315';
+String _$virtHostNotifierHash() => r'80b1cad22c701b8ff2cad101b12a65399df1a270';
 
 /// One virtualization host: its backend, periodic refresh, actions in flight
 /// and the answers the user gives (TOTP, certificate, sudo password).
@@ -490,7 +490,7 @@ final class VirtRevisionProvider extends $NotifierProvider<VirtRevision, int> {
   }
 }
 
-String _$virtRevisionHash() => r'e9874e5c40a05423d22b735752ea23b0c1831896';
+String _$virtRevisionHash() => r'8f90a5988ff932a9c1aeb2165ccb9255bf6c50d0';
 
 /// A count the host's notifier moves on after it changed what one of the
 /// providers below read — [storage], [network], or one guest's hardware
@@ -554,6 +554,199 @@ abstract class _$VirtRevision extends $Notifier<int> {
             >;
     return element.handleCreate(ref, () => build(_$args.$1, _$args.$2));
   }
+}
+
+/// The host's scheduled backup jobs (PVE `/cluster/backup`), for the
+/// datacenter's Backup view. Read again through [VirtRevision.backupJobs]
+/// after each change.
+
+@ProviderFor(virtBackupJobs)
+final virtBackupJobsProvider = VirtBackupJobsFamily._();
+
+/// The host's scheduled backup jobs (PVE `/cluster/backup`), for the
+/// datacenter's Backup view. Read again through [VirtRevision.backupJobs]
+/// after each change.
+
+final class VirtBackupJobsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<VirtBackupJob>>,
+          List<VirtBackupJob>,
+          FutureOr<List<VirtBackupJob>>
+        >
+    with
+        $FutureModifier<List<VirtBackupJob>>,
+        $FutureProvider<List<VirtBackupJob>> {
+  /// The host's scheduled backup jobs (PVE `/cluster/backup`), for the
+  /// datacenter's Backup view. Read again through [VirtRevision.backupJobs]
+  /// after each change.
+  VirtBackupJobsProvider._({
+    required VirtBackupJobsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: _noRetry,
+         name: r'virtBackupJobsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$virtBackupJobsHash();
+
+  @override
+  String toString() {
+    return r'virtBackupJobsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<VirtBackupJob>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<VirtBackupJob>> create(Ref ref) {
+    final argument = this.argument as String;
+    return virtBackupJobs(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is VirtBackupJobsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$virtBackupJobsHash() => r'1e5340847da6415c14f17d5287daa528fc997e73';
+
+/// The host's scheduled backup jobs (PVE `/cluster/backup`), for the
+/// datacenter's Backup view. Read again through [VirtRevision.backupJobs]
+/// after each change.
+
+final class VirtBackupJobsFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<VirtBackupJob>>, String> {
+  VirtBackupJobsFamily._()
+    : super(
+        retry: _noRetry,
+        name: r'virtBackupJobsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The host's scheduled backup jobs (PVE `/cluster/backup`), for the
+  /// datacenter's Backup view. Read again through [VirtRevision.backupJobs]
+  /// after each change.
+
+  VirtBackupJobsProvider call(String serverId) =>
+      VirtBackupJobsProvider._(argument: serverId, from: this);
+
+  @override
+  String toString() => r'virtBackupJobsProvider';
+}
+
+/// Every storage the host has that holds backups, across its online nodes:
+/// where a scheduled job's backups go, and where a restore can put the disks.
+/// Each pool carries its node (`VirtStoragePool.node`).
+
+@ProviderFor(virtBackupStorages)
+final virtBackupStoragesProvider = VirtBackupStoragesFamily._();
+
+/// Every storage the host has that holds backups, across its online nodes:
+/// where a scheduled job's backups go, and where a restore can put the disks.
+/// Each pool carries its node (`VirtStoragePool.node`).
+
+final class VirtBackupStoragesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<VirtStoragePool>>,
+          List<VirtStoragePool>,
+          FutureOr<List<VirtStoragePool>>
+        >
+    with
+        $FutureModifier<List<VirtStoragePool>>,
+        $FutureProvider<List<VirtStoragePool>> {
+  /// Every storage the host has that holds backups, across its online nodes:
+  /// where a scheduled job's backups go, and where a restore can put the disks.
+  /// Each pool carries its node (`VirtStoragePool.node`).
+  VirtBackupStoragesProvider._({
+    required VirtBackupStoragesFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: _noRetry,
+         name: r'virtBackupStoragesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$virtBackupStoragesHash();
+
+  @override
+  String toString() {
+    return r'virtBackupStoragesProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<VirtStoragePool>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<VirtStoragePool>> create(Ref ref) {
+    final argument = this.argument as String;
+    return virtBackupStorages(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is VirtBackupStoragesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$virtBackupStoragesHash() =>
+    r'4b2c66097871e35a62fff23648256d5cb9bc50fc';
+
+/// Every storage the host has that holds backups, across its online nodes:
+/// where a scheduled job's backups go, and where a restore can put the disks.
+/// Each pool carries its node (`VirtStoragePool.node`).
+
+final class VirtBackupStoragesFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<VirtStoragePool>>, String> {
+  VirtBackupStoragesFamily._()
+    : super(
+        retry: _noRetry,
+        name: r'virtBackupStoragesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Every storage the host has that holds backups, across its online nodes:
+  /// where a scheduled job's backups go, and where a restore can put the disks.
+  /// Each pool carries its node (`VirtStoragePool.node`).
+
+  VirtBackupStoragesProvider call(String serverId) =>
+      VirtBackupStoragesProvider._(argument: serverId, from: this);
+
+  @override
+  String toString() => r'virtBackupStoragesProvider';
 }
 
 /// The snapshots of one guest. Invalidated by the view after each operation.
@@ -644,6 +837,189 @@ final class VirtSnapshotsFamily extends $Family
 
   @override
   String toString() => r'virtSnapshotsProvider';
+}
+
+/// The disk chain of one guest: its own provider rather than part of the
+/// snapshot listing, which is one round trip of its own. Invalidated by the
+/// view after a snapshot operation, as the listing is.
+
+@ProviderFor(virtSnapChain)
+final virtSnapChainProvider = VirtSnapChainFamily._();
+
+/// The disk chain of one guest: its own provider rather than part of the
+/// snapshot listing, which is one round trip of its own. Invalidated by the
+/// view after a snapshot operation, as the listing is.
+
+final class VirtSnapChainProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<VirtSnapChain>,
+          VirtSnapChain,
+          FutureOr<VirtSnapChain>
+        >
+    with $FutureModifier<VirtSnapChain>, $FutureProvider<VirtSnapChain> {
+  /// The disk chain of one guest: its own provider rather than part of the
+  /// snapshot listing, which is one round trip of its own. Invalidated by the
+  /// view after a snapshot operation, as the listing is.
+  VirtSnapChainProvider._({
+    required VirtSnapChainFamily super.from,
+    required (String, String) super.argument,
+  }) : super(
+         retry: _noRetry,
+         name: r'virtSnapChainProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$virtSnapChainHash();
+
+  @override
+  String toString() {
+    return r'virtSnapChainProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<VirtSnapChain> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<VirtSnapChain> create(Ref ref) {
+    final argument = this.argument as (String, String);
+    return virtSnapChain(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is VirtSnapChainProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$virtSnapChainHash() => r'c86e7fbddb198ae32ff72e6c45a028db60c1be91';
+
+/// The disk chain of one guest: its own provider rather than part of the
+/// snapshot listing, which is one round trip of its own. Invalidated by the
+/// view after a snapshot operation, as the listing is.
+
+final class VirtSnapChainFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<VirtSnapChain>, (String, String)> {
+  VirtSnapChainFamily._()
+    : super(
+        retry: _noRetry,
+        name: r'virtSnapChainProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The disk chain of one guest: its own provider rather than part of the
+  /// snapshot listing, which is one round trip of its own. Invalidated by the
+  /// view after a snapshot operation, as the listing is.
+
+  VirtSnapChainProvider call(String serverId, String guestId) =>
+      VirtSnapChainProvider._(argument: (serverId, guestId), from: this);
+
+  @override
+  String toString() => r'virtSnapChainProvider';
+}
+
+/// Whether a snapshot of one guest can be taken, and why not: read before the
+/// form offers one, so a storage that does not support snapshots is said
+/// before the task is started. Null where the host does not answer.
+
+@ProviderFor(virtSnapshotRefusal)
+final virtSnapshotRefusalProvider = VirtSnapshotRefusalFamily._();
+
+/// Whether a snapshot of one guest can be taken, and why not: read before the
+/// form offers one, so a storage that does not support snapshots is said
+/// before the task is started. Null where the host does not answer.
+
+final class VirtSnapshotRefusalProvider
+    extends $FunctionalProvider<AsyncValue<String?>, String?, FutureOr<String?>>
+    with $FutureModifier<String?>, $FutureProvider<String?> {
+  /// Whether a snapshot of one guest can be taken, and why not: read before the
+  /// form offers one, so a storage that does not support snapshots is said
+  /// before the task is started. Null where the host does not answer.
+  VirtSnapshotRefusalProvider._({
+    required VirtSnapshotRefusalFamily super.from,
+    required (String, String) super.argument,
+  }) : super(
+         retry: _noRetry,
+         name: r'virtSnapshotRefusalProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$virtSnapshotRefusalHash();
+
+  @override
+  String toString() {
+    return r'virtSnapshotRefusalProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<String?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<String?> create(Ref ref) {
+    final argument = this.argument as (String, String);
+    return virtSnapshotRefusal(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is VirtSnapshotRefusalProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$virtSnapshotRefusalHash() =>
+    r'82052fcb1d7ca16cda17f05f0ff14f18ff5148e7';
+
+/// Whether a snapshot of one guest can be taken, and why not: read before the
+/// form offers one, so a storage that does not support snapshots is said
+/// before the task is started. Null where the host does not answer.
+
+final class VirtSnapshotRefusalFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<String?>, (String, String)> {
+  VirtSnapshotRefusalFamily._()
+    : super(
+        retry: _noRetry,
+        name: r'virtSnapshotRefusalProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Whether a snapshot of one guest can be taken, and why not: read before the
+  /// form offers one, so a storage that does not support snapshots is said
+  /// before the task is started. Null where the host does not answer.
+
+  VirtSnapshotRefusalProvider call(String serverId, String guestId) =>
+      VirtSnapshotRefusalProvider._(argument: (serverId, guestId), from: this);
+
+  @override
+  String toString() => r'virtSnapshotRefusalProvider';
 }
 
 /// The hardware of one guest. Invalidated by the view after each change and

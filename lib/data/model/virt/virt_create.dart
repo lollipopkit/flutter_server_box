@@ -262,6 +262,15 @@ enum VirtCreateIssue {
   ciGateway,
   ciDns,
   ciSearch,
+
+  /// A clone: a linked one cannot name a storage or a node; a storage that
+  /// is not there, holds no images, or is not shared while the copy moves to
+  /// another node; a target node the host does not have.
+  cloneLinkedTarget,
+  cloneStorage,
+  cloneStorageContent,
+  cloneStorageShared,
+  cloneNodeUnknown,
 }
 
 /// libvirt: what AppArmor's `virt-aa-helper` accepts (a `"` in a domain name
@@ -543,6 +552,9 @@ final class VirtCloneRequest {
     required this.name,
     this.full = true,
     this.vmid,
+    this.storage,
+    this.targetNode,
+    this.targetPool,
   });
 
   /// A VM's name, a container's hostname: the same rules as a new guest's.
@@ -555,6 +567,66 @@ final class VirtCloneRequest {
 
   /// PVE: the new guest's VMID (`/cluster/nextid` when null).
   final int? vmid;
+
+  /// PVE: where the copy's disks go (`storage`), null for the storages the
+  /// source's are on. A linked clone cannot name one (PVE refuses it).
+  final String? storage;
+
+  /// PVE: the node the copy is made on (`target`), null for the source's.
+  /// Needs a cluster and shared storage.
+  final String? targetNode;
+
+  /// libvirt: the pool the copy's disks go in, null for each disk's own.
+  final String? targetPool;
+}
+
+/// Why a clone cannot go to [storage] on [targetNode], or null. The checks
+/// are the ones PVE makes before it starts the clone task, so its refusals
+/// are said in the form rather than after the task: a linked clone cannot
+/// name a storage (`parameter 'storage' not allowed for linked clones`), a
+/// storage that holds no images (`does not support vm images`), and a copy
+/// moving to another node needs a storage both see. The last one is PVE's
+/// `can't clone VM to node '<n>' (VM uses local storage)`.
+VirtCreateIssue? virtCloneStorageIssue({
+  required Iterable<VirtStoragePool> storages,
+  required String? storage,
+  required bool full,
+  String? targetNode,
+}) {
+  if (!full && storage != null) return VirtCreateIssue.cloneLinkedTarget;
+  if (storage == null) return null;
+  VirtStoragePool? pool;
+  for (final p in storages) {
+    if (p.name == storage) {
+      pool = p;
+      break;
+    }
+  }
+  if (pool == null) return VirtCreateIssue.cloneStorage;
+  // A clone's disks are images wherever they land.
+  if (!pool.content.contains('images')) {
+    return VirtCreateIssue.cloneStorageContent;
+  }
+  if (targetNode != null && !(pool.shared ?? false)) {
+    return VirtCreateIssue.cloneStorageShared;
+  }
+  return null;
+}
+
+/// Why [targetNode] cannot be a clone's node, or null: the host has to have
+/// it, and a copy that moves there takes shared storage with it. PVE answers
+/// `no such cluster node '<name>'` — on a single node, for any other name.
+VirtCreateIssue? virtCloneNodeIssue({
+  required Iterable<VirtNode> nodes,
+  required String? targetNode,
+  required String? sourceNode,
+}) {
+  if (targetNode == null || targetNode == sourceNode) return null;
+  if (nodes.isEmpty) return null;
+  for (final n in nodes) {
+    if (n.name == targetNode) return null;
+  }
+  return VirtCreateIssue.cloneNodeUnknown;
 }
 
 /// Why [name] cannot be a clone's name on a host of [kind], or null. Taken

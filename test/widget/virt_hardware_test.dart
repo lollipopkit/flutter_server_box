@@ -18,6 +18,7 @@ import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/virt/pve_resources.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_backup.dart';
+import 'package:server_box/data/model/virt/virt_backup_schedule.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_hardware.dart';
@@ -101,6 +102,14 @@ const _job = VirtBackupJob(
   mode: 'snapshot',
   compress: 'zstd',
   keep: 'keep-last=7',
+  vmids: [100],
+);
+const _pool = VirtStoragePool(
+  id: 'pve/local',
+  name: 'local',
+  node: 'pve',
+  type: 'dir',
+  content: ['backup', 'iso'],
 );
 
 /// Running with a vCPU added and its boot order changed since the start.
@@ -330,29 +339,51 @@ class _FakeHost extends VirtHostNotifier {
       : const [];
 
   @override
+  Future<void> makeTemplate(String guestId) async =>
+      _calls.add('template $guestId');
+
+  @override
   Future<List<VirtBackupJob>> backupJobs(String guestId) async => const [_job];
 
   @override
-  Future<List<VirtStoragePool>> backupStorages(String guestId) async => const [
-    VirtStoragePool(
-      id: 'pve/local',
-      name: 'local',
-      node: 'pve',
-      type: 'dir',
-      content: ['backup', 'iso'],
-    ),
-  ];
+  Future<List<VirtBackupJob>> allBackupJobs() async => const [_job];
+
+  @override
+  Future<void> editBackupJob(
+    VirtBackupJobEdit edit, {
+    bool remove = false,
+  }) async => _calls.add('job ${edit.id} remove=$remove ${edit.schedule}');
+
+  @override
+  Future<VirtScheduleCheck> checkSchedule(String schedule) async =>
+      const VirtScheduleCheck();
+
+  @override
+  Future<List<VirtStoragePool>> backupStorages(String guestId) async =>
+      const [_pool];
+
+  @override
+  Future<List<VirtStoragePool>> allBackupStorages() async => const [_pool];
 
   @override
   Future<void> backup(String guestId, VirtBackupRequest request) async =>
       _calls.add('backup $guestId ${request.storage} ${request.mode}');
 
   @override
+  Future<void> runBackupJob(VirtBackupJob job) async =>
+      _calls.add('run job ${job.id}');
+
+  @override
   Future<void> restoreBackup(
     String guestId,
     VirtBackup backup, {
     int? vmid,
-  }) async => _calls.add('restore $guestId vmid=$vmid');
+    String? storage,
+  }) async => _calls.add('restore $guestId vmid=$vmid storage=$storage');
+
+  @override
+  Future<void> editBackup(VirtBackup backup, VirtBackupEdit edit) async =>
+      _calls.add('edit backup ${backup.id} protected=${edit.protected}');
 
   @override
   Future<void> deleteBackup(String guestId, VirtBackup backup) async =>
@@ -666,7 +697,7 @@ void main() {
       expect(_calls, isEmpty, reason: 'asked first');
       expect(text(app_locale.l10n.virtBackupRestoreAgain), findsOneWidget);
       await tap(tester, restore);
-      expect(_calls, ['restore qemu/101 vmid=null']);
+      expect(_calls, ['restore qemu/101 vmid=null storage=null']);
 
       // Still open after the list is read again.
       _calls.clear();

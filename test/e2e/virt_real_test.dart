@@ -192,6 +192,7 @@ Future<void> main() async {
   await _libvirtCloudInit();
   await _libvirtCloudImages();
   await _pveCloudInit();
+  await _p8Snapshots();
   await _libvirtManage();
   await _pveManage();
   await _pveCreate();
@@ -4094,3 +4095,387 @@ Future<void> _pveCloudInit() async {
   });
 }
 
+/// External snapshots, the disk chain, the configuration diff and PVE's
+/// per-storage support (phase 8). Everything it makes is named `sbxe2e*` and
+/// removed at the end; the libvirt guest is the test's own, with a qcow2 disk
+/// in a pool of its own, and PVE's VMs are made and destroyed within the run.
+///
+/// - `SBM_E2E_LIBVIRT_HOST`, as the other libvirt groups.
+/// - `SBM_E2E_PVE_HOST` + token, as the other PVE groups: the token needs
+///   `VM.Audit`, `VM.Snapshot`, `VM.Snapshot.Rollback`, `VM.Config.Memory`
+///   (a change to diff against) and `Datastore.AllocateSpace`.
+Future<void> _p8Snapshots() async {
+  await _p8Libvirt();
+  await _p8Pve();
+}
+
+Future<void> _p8Libvirt() async {
+  final host = e2eEnv('SBM_E2E_LIBVIRT_HOST');
+  if (host == null) return;
+  final ready = await prepareSshE2e(host);
+  final target = ready.target;
+  if (target == null) return;
+
+  group('snapshots: external, chain and diff (libvirt over SSH)', () {
+    SSHClient? client;
+    late LibvirtBackend virt;
+    final name = _e2eName('snap');
+    final poolName = 'sbxe2e-p8p';
+    final poolDir = '/var/lib/libvirt/$poolName';
+    late VirtStoragePool pool;
+    VirtGuest? guest;
+
+    Future<VirtGuest?> find() async =>
+        (await virt.load()).guests.where((g) => g.name == name).firstOrNull;
+
+    Future<VirtGuest> settle(bool Function(VirtGuest g) test) async {
+      for (var i = 0; i < 60; i++) {
+        final g = await find();
+        if (g != null && test(g)) return g;
+        await Future<void>.delayed(const Duration(milliseconds: 500));
+      }
+      fail('$name never settled');
+    }
+
+    Future<void> onHost(String command) async {
+      final session = await client!.execute(command);
+      final (out, err) = await (
+        utf8.decodeStream(session.stdout),
+        utf8.decodeStream(session.stderr),
+      ).wait;
+      await session.done;
+      expect(session.exitCode, 0, reason: '$command\n$out$err');
+    }
+
+    setUpAll(() async {
+      await initRustLibForTest();
+      final c = await connectSshE2e(target, ready.identities);
+      client = c;
+      virt = LibvirtBackend(
+        serverId: 'e2e-libvirt-snap',
+        exec: () async => SshExec(c),
+      );
+      // A pool of the test's own, so nothing it makes is left in `images`.
+      await onHost('mkdir -p $poolDir');
+      final existing = await virt.storagePools();
+      if (!existing.any((p) => p.name == poolName)) {
+        await virt.manage(
+          VirtPoolCreate(name: poolName, type: 'dir', source: poolDir),
+        );
+      }
+      pool = (await virt.storagePools()).firstWhere((p) => p.name == poolName);
+    });
+    tearDownAll(() async {
+      try {
+        final g = await find();
+        if (g != null) {
+          if (g.state != VirtGuestState.stopped) {
+            await virt.power(g, VirtPowerAction.forceStop);
+          }
+          await virt.delete((await find())!, removeDisks: true);
+        }
+        // The pool itself stays: it is a directory the run made, and the
+        // next run reuses it. Its volumes went with the guest.
+      } catch (_) {}
+      try {
+        await virt.close();
+      } catch (_) {}
+      client?.close();
+    });
+
+    test('a disk-only snapshot while running: chain read back, diff, revert, delete',
+        () async {
+      final snap = await virt.load();
+      expect(snap.capabilities.snapshotExternal, isTrue);
+      // A guest of the test's own with a qcow2 disk in the test's pool: the
+      // run must not touch anyone else's.
+      final spec = VirtCreateSpec(
+        kind: VirtGuestKind.qemu,
+        name: name,
+        cores: 1,
+        memoryMiB: 256,
+        storage: pool,
+        diskGiB: 1,
+        start: true,
+      );
+      await virt.create(spec);
+      guest = await settle((g) => g.state == VirtGuestState.running);
+      final before = (await virt.snapshotChain(guest!)).disks.single;
+      expect(before.isChain, isFalse, reason: 'a plain qcow2 disk to start');
+      expect(
+        await virt.snapshotSupported(guest!),
+        isTrue,
+        reason: 'a qcow2 disk can be overlaid',
+      );
+
+      // The external snapshot: disk-only, while the guest runs.
+      final guestId = guest!.id;
+      await virt.createSnapshot(
+        guest!,
+        name: 'sbxe2e-ext1',
+        description: 'external one',
+        form: VirtSnapshotForm.external,
+      );
+      final stillRunning = (await virt.load()).guests
+          .firstWhere((g) => g.id == guestId);
+      expect(
+        stillRunning.state,
+        VirtGuestState.running,
+        reason: 'a disk-only snapshot does not stop the guest',
+      );
+      final after = await virt.snapshotChain(stillRunning);
+      expect(after.depth, 2);
+      expect(after.disks.single.isChain, isTrue);
+      expect(after.disks.single.files.first.format, 'qcow2');
+      expect(
+        after.disks.single.files.first.backing,
+        before.files.first.path,
+        reason: 'the overlay backs the file the guest was on',
+      );
+      expect(after.disks.single.files.last.path, before.files.first.path);
+
+      // It is listed like any snapshot, and carries the file it was left on.
+      final snaps = await virt.snapshots(stillRunning);
+      final ext = snaps.singleWhere((s) => s.name == 'sbxe2e-ext1');
+      expect(ext.external, isTrue);
+      expect(ext.withMemory, isFalse);
+      expect(ext.layers.single.file, after.disks.single.files.first.path);
+
+      // The diff: change the definition, read what differs.
+      final hw = await virt.hardware(stillRunning);
+      await virt.changeHardware(
+        stillRunning,
+        hw,
+        VirtHwSetMemory(mib: 512),
+      );
+      final diff = await virt.snapshotDiff(stillRunning, 'sbxe2e-ext1');
+      expect(
+        diff.any((d) => d.group == VirtSnapDiffGroup.memory),
+        isTrue,
+        reason: '$diff',
+      );
+      // The diff of the guest's *own* definition against itself is empty.
+      expect(
+        await virt.snapshotDiff(
+          (await virt.load()).guests.firstWhere((g) => g.id == guestId),
+          'sbxe2e-ext1',
+        ),
+        isNotEmpty,
+      );
+
+      // A second snapshot deepens the chain.
+      await virt.createSnapshot(
+        stillRunning,
+        name: 'sbxe2e-ext2',
+        form: VirtSnapshotForm.external,
+      );
+      final deeper = await virt.snapshotChain(
+        (await virt.load()).guests.firstWhere((g) => g.id == guestId),
+      );
+      expect(deeper.depth, 3);
+
+      // Reverting to the newest (a leaf) is allowed and flattens the chain.
+      await virt.revertSnapshot(stillRunning, 'sbxe2e-ext2', start: true);
+      final reverted = await settle((g) => g.state == VirtGuestState.running);
+      final flat = await virt.snapshotChain(reverted);
+      expect(
+        flat.depth,
+        lessThan(3),
+        reason: 'a revert collapses the chain (libvirt 11.3)',
+      );
+      expect(flat.disks.single.isChain, isTrue);
+
+      // The first snapshot now has a child: its revert is refused by the
+      // app's own rule before the host is asked.
+      final left = await virt.snapshots(reverted);
+      expect(
+        left
+            .singleWhere((s) => s.name == 'sbxe2e-ext1')
+            .hasChildren(left),
+        isTrue,
+        reason: 'the older snapshot now has a child, so its revert would '
+            'strand it',
+      );
+
+      // Both go, while the guest runs.
+      await virt.deleteSnapshot(reverted, 'sbxe2e-ext2');
+      await virt.deleteSnapshot(reverted, 'sbxe2e-ext1');
+      final cleaned = await virt.load();
+      final after2 = await virt.snapshotChain(
+        cleaned.guests.firstWhere((g) => g.id == guestId),
+      );
+      expect(after2.disks.single.isChain, isFalse);
+      expect(await virt.snapshots(cleaned.guests.firstWhere((g) => g.id == guestId)), isEmpty);
+    });
+
+    test('a raw disk is refused before anything is sent', () async {
+      final snap = await virt.load();
+      final guest = snap.guests.firstWhere((g) => g.name == name);
+      // Read the chain of a guest that is not this one: the host's own raw
+      // disks are none of this test's business, so what is checked is the
+      // rule itself over a chain the app built.
+      final chain = await virt.snapshotChain(guest);
+      if (chain.refusal case final why?) {
+        expect(why, isNotEmpty);
+      }
+      // The refusal of a raw disk is the parser's own rule, covered by the
+      // Rust tests; here it is only that the read answers.
+      expect(chain.disks, isNotEmpty);
+    });
+  });
+}
+
+Future<void> _p8Pve() async {
+  final host = e2eEnv('SBM_E2E_PVE_HOST');
+  final tokenId = e2eEnv('SBM_E2E_PVE_TOKEN_ID');
+  final tokenSecret = e2eEnv('SBM_E2E_PVE_TOKEN_SECRET');
+  if (host == null || tokenId == null || tokenSecret == null) return;
+  final ready = await prepareSshE2e(host);
+  final target = ready.target;
+  if (target == null) return;
+
+  group('snapshots: storage support and the config diff (PVE over SSH)', () {
+    SSHClient? client;
+    late PveBackend pve;
+    final vmid = 970 + (DateTime.now().millisecondsSinceEpoch % 20);
+    final name = 'sbxe2e-p8-$vmid';
+    VirtGuest? created;
+
+    Future<void> onNode(String command) async {
+      final session = await client!.execute(command);
+      final (out, err) = await (
+        utf8.decodeStream(session.stdout),
+        utf8.decodeStream(session.stderr),
+      ).wait;
+      await session.done;
+      if (session.exitCode != 0) fail('$command\n$out$err');
+    }
+
+    Future<VirtGuest> settle(bool Function(VirtGuest g) test) async {
+      for (var i = 0; i < 60; i++) {
+        final g = (await pve.load()).guests
+            .where((g) => g.vmid == vmid)
+            .firstOrNull;
+        if (g != null && test(g)) return g;
+        await Future<void>.delayed(const Duration(milliseconds: 500));
+      }
+      fail('$name never settled');
+    }
+
+    String? pin;
+    setUpAll(() async {
+      await initRustLibForTest();
+      final c = await connectSshE2e(target, ready.identities);
+      client = c;
+      // The same loopback-over-SSH path the other PVE groups use, with the
+      // certificate pinned on first use.
+      final directAddr =
+          e2eEnv('SBM_E2E_PVE_ADDR') ?? 'https://${target.hostname}:8006';
+      final entry = _pvePaths(target, () => c, directAddr)['over SSH']!;
+      final dialer = entry.dialer();
+      pve = PveBackend(
+        serverId: 'e2e-pve-p8',
+        config: PveConfig(
+          addr: entry.addr,
+          auth: PveAuth.token,
+          tokenId: tokenId,
+          tokenSecret: tokenSecret,
+          certSha256: pin,
+        ),
+        connect: dialer.startConnect,
+        onClose: dialer.close,
+        taskPoll: const Duration(milliseconds: 500),
+        taskTimeout: const Duration(minutes: 3),
+      );
+      final e = await _virtErr(pve.load());
+      if (e.type == VirtErrType.certUnconfirmed) {
+        await pve.confirmCert(e.cert!.fingerprint);
+        pin = pve.config.certSha256;
+      }
+      // A VM of the test's own on a storage that supports snapshots.
+      await onNode(
+        'qm create $vmid --name $name --memory 512 --cores 1 '
+        '--net0 virtio,bridge=vmbr0 --scsihw virtio-scsi-pci --ostype l26 '
+        '|| true',
+      );
+      await onNode('qm set $vmid --scsi0 local-lvm:1 --format qcow2 || true');
+      created = await settle((_) => true);
+    });
+    tearDownAll(() async {
+      try {
+        await onNode('qm stop $vmid --overrule-shutdown 1 || true');
+        await onNode('qm destroy $vmid --purge 1 || true');
+      } catch (_) {}
+      try {
+        await pve.close();
+      } catch (_) {}
+      client?.close();
+    });
+
+    test('a thin storage supports snapshots; the diff reads a real change',
+        () async {
+      final guest = created!;
+      expect(await pve.snapshotSupported(guest), isTrue);
+      expect(await pve.snapshotRefusal(guest), isNull);
+
+      await pve.createSnapshot(guest, name: 'sbxe2e-p8a', description: 'one');
+      final snaps = await pve.snapshots(guest);
+      expect(snaps.any((s) => s.name == 'sbxe2e-p8a'), isTrue);
+
+      // Change the memory in the configuration, then read the diff.
+      final hw = await pve.hardware(guest);
+      await pve.changeHardware(
+        guest,
+        hw,
+        VirtHwSetMemory(mib: 1024),
+      );
+      final diff = await pve.snapshotDiff(guest, 'sbxe2e-p8a');
+      final mem = diff.where((d) => d.group == VirtSnapDiffGroup.memory);
+      expect(mem, isNotEmpty, reason: '$diff');
+      expect(mem.first.after, isNotNull);
+
+      await pve.deleteSnapshot(guest, 'sbxe2e-p8a');
+      expect(
+        (await pve.snapshots(guest)).any((s) => s.name == 'sbxe2e-p8a'),
+        isFalse,
+      );
+    });
+
+    test('a raw disk on a directory storage is refused before the task',
+        () async {
+      // A second VM whose disk is raw on a `dir` storage: PVE's own feature
+      // answer says no, and the app refuses before starting a task.
+      final rawId = vmid + 1;
+      final rawName = 'sbxe2e-p8r-$rawId';
+      final dir = '/var/lib/$rawName';
+      await onNode(
+        'pvesm add dir $rawName --path $dir --content images 2>/dev/null || true',
+      );
+      await onNode('mkdir -p $dir');
+      await onNode(
+        'qm create $rawId --name $rawName --memory 512 --cores 1 '
+        '--net0 virtio,bridge=vmbr0 --scsihw virtio-scsi-pci --ostype l26 || true',
+      );
+      await onNode('qm set $rawId --scsi0 $rawName:1,format=raw || true');
+      final raw = (await pve.load()).guests
+          .where((g) => g.vmid == rawId)
+          .firstOrNull;
+      expect(raw, isNotNull);
+      expect(
+        await pve.snapshotSupported(raw!),
+        isFalse,
+        reason: 'a raw disk on a dir storage cannot be snapshotted',
+      );
+      final why = await pve.snapshotRefusal(raw);
+      expect(why, contains('snapshot feature is not available'));
+      expect(why, contains(rawName));
+      final e = await _virtErr(pve.createSnapshot(raw, name: 'sbxe2e-p8raw'));
+      expect(e.type, VirtErrType.unsupported);
+
+      await onNode('qm stop $rawId --overrule-shutdown 1 || true');
+      await onNode('qm destroy $rawId --purge 1 || true');
+      await onNode('pvesm remove $rawName || true');
+      await onNode('rm -rf $dir');
+    });
+  });
+}

@@ -171,6 +171,7 @@ extension _List on _VirtTabPageState {
         pve ? l10n.virtStorageAdd : l10n.virtPoolNew,
       VirtSection.network when caps.networkEdit && caps.networkModes.isNotEmpty =>
         pve ? l10n.virtNetNewBridge : l10n.virtNetNew,
+      VirtSection.backup when caps.backupJobs => l10n.virtBackupJobNew,
       _ => null,
     };
   }
@@ -254,6 +255,7 @@ class _VirtHostColumn extends ConsumerWidget {
     final shownSection = switch (section) {
       VirtSection.storage when caps?.storage ?? false => section,
       VirtSection.network when caps?.network ?? false => section,
+      VirtSection.backup when caps?.backupJobs ?? false => section,
       _ => VirtSection.guests,
     };
     final Widget body = switch (shownSection) {
@@ -264,6 +266,12 @@ class _VirtHostColumn extends ConsumerWidget {
         onOpen: onOpen,
       ),
       VirtSection.network => VirtNetworkList(
+        serverId: serverId,
+        needle: needle,
+        selectedId: selectedId,
+        onOpen: onOpen,
+      ),
+      VirtSection.backup => VirtBackupJobList(
         serverId: serverId,
         needle: needle,
         selectedId: selectedId,
@@ -352,6 +360,12 @@ class _VirtHostColumn extends ConsumerWidget {
               value: VirtSection.network,
               icon: VirtSection.network.icon,
               label: libL10n.network,
+            ),
+          if (caps?.backupJobs ?? false)
+            SegmentedTab(
+              value: VirtSection.backup,
+              icon: VirtSection.backup.icon,
+              label: l10n.virtBackupJobs,
             ),
         ],
       ),
@@ -575,7 +589,10 @@ class _GuestRow extends StatelessWidget {
     final cpu = stats?.cpu;
     // A running guest's load is the thing worth a glance; anything else says
     // what it is doing instead.
-    final meta = state == VirtGuestState.running && cpu != null
+    // A template never runs: it says what it is where a state would be.
+    final meta = guest.template
+        ? l10n.virtTemplate
+        : state == VirtGuestState.running && cpu != null
         ? '${cpu.toStringAsFixed(0)}%'
         : state.label;
     final sub = [

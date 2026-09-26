@@ -191,13 +191,6 @@
   "maxConcurrency": "Massima concorrenza",
   "maxRetryCount": "Numero di riconnessioni del server",
   "mismatchSystem": "Sistema non corrispondente: {system}",
-  "@mismatchSystem": {
-    "placeholders": {
-      "system": {
-        "type": "String"
-      }
-    }
-  },
   "mirror": "Mirror",
   "needRestart": "L'app deve essere riavviata",
   "netViewType": "Tipo di visualizzazione rete",
@@ -253,22 +246,6 @@
   "rememberPwdInMemTip": "Utilizzato per container, sospensione, ecc.",
   "remotePath": "Percorso remoto",
   "rootfsUpdateTip": "{distro} {installed} è installato, {latest} è disponibile. L’aggiornamento sostituisce l’intero container: i dati {pm} vanno persi",
-  "@rootfsUpdateTip": {
-    "placeholders": {
-      "distro": {
-        "type": "String"
-      },
-      "installed": {
-        "type": "String"
-      },
-      "latest": {
-        "type": "String"
-      },
-      "pm": {
-        "type": "String"
-      }
-    }
-  },
   "linuxSystemInUse": "Chiudi i terminali su {name} prima di eliminarlo",
   "rootfsSubtitle": "Uno spazio utente Linux su questo dispositivo",
   "rootfsInstallTip": "Scarica {distro} {version} (circa {size} MB) e lo estrae su questo dispositivo.",
@@ -329,9 +306,6 @@
   "sshKnownHostKeysTip": "Le chiavi host che questa app ha accettato",
   "sshLegacyAlgorithms": "Algoritmi obsoleti",
   "sshLegacyAlgorithmsTip": "Per server SSH meno recenti, come router o switch, che offrono solo una chiave host SHA-1 `ssh-rsa` o uno scambio di chiavi SHA-1. Meno sicuro; attivalo solo per gli host che lo richiedono.",
-  "@sshHostKeyType": {
-    "description": "Etichetta per il tipo di chiave host SSH visualizzata nella finestra di dialogo di verifica della chiave host."
-  },
   "sshHostKeyNewDesc": "È stata ricevuta una nuova chiave host SSH da {serverName}. Rivedi l'impronta digitale prima di fidarti.",
   "sshHostKeyStoredFingerprint": "Impronta digitale memorizzata: {fingerprint}",
   "sshConfigManualSelect": "Vuoi selezionare manualmente il file di configurazione SSH?",
@@ -574,24 +548,7 @@
   "geoDataUnreachable": "Impossibile recuperare i dati.",
   "geoDataRemoveFailed": "Impossibile eliminare i dati.",
   "geoDataCurrent": "{month} è già installato.",
-  "@geoDataCurrent": {
-    "placeholders": {
-      "month": {
-        "type": "String"
-      }
-    }
-  },
   "geoDataConsent": "**Download: {download} · Spazio sul dispositivo: {disk}.** Il set di dati completo viene archiviato su questo dispositivo e tutte le successive ricerche geografiche avvengono in locale. Al servizio di download non vengono inviati né gli indirizzi dei server né l’attività di ricerca.\n\nAggiornato ogni mese. Una versione più recente sostituisce i dati installati senza conservare una copia aggiuntiva. Puoi eliminarli in qualsiasi momento.",
-  "@geoDataConsent": {
-    "placeholders": {
-      "download": {
-        "type": "String"
-      },
-      "disk": {
-        "type": "String"
-      }
-    }
-  },
   "benchmark": "Benchmark",
   "benchmarkIntro": "Esegue Yet Another Bench Script su questo server per testare disco, rete e CPU. Un'esecuzione completa richiede 10–20 minuti e continua anche se lasci questa pagina o chiudi l'app.",
   "benchmarkNoRuns": "Nessun benchmark eseguito.",
@@ -961,62 +918,6 @@
   "remoteDesktopCertificateIssuer": "Emittente: {issuer}",
   "remoteDesktopCertificateValidity": "Valido: {start} – {end}",
   "appearanceThemeModeLocked": "Questo tema supporta solo {mode}. Seleziona un altro tema per cambiare modalità.",
-  "@processCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@tmuxWindowCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@tmuxPaneCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@processShowKernelThreads": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@serviceOtherUnits": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@serviceJournalRecent": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@diskWarningFmt": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@scheduledTaskSummaryFmt": {
-    "placeholders": {
-      "enabled": {
-        "type": "int"
-      }
-    }
-  },
   "pveAuthToken": "Token API",
   "pveVersionLow": "Questa funzionalità è attualmente nella fase di test ed è stata testata solo su PVE 8+. Usala con cautela.",
   "pveTokenId": "ID token",
@@ -1158,7 +1059,7 @@
   "virtDeleted": "{name} eliminato",
   "pveTokenTipCreate": "Creare ed eliminare guest richiede anche VM.Allocate, VM.Config.*, Datastore.AllocateSpace e SDN.Use.",
   "pveTokenTipHardware": "Modificare l'hardware richiede VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network e VM.Config.Options; nuovi dischi e interfacce richiedono anche Datastore.AllocateSpace e SDN.Use. La scheda video e i dispositivi USB e PCI richiedono anche VM.Config.HWType; un dispositivo passato tramite una mappatura di risorse richiede Mapping.Use su di essa, e Mapping.Audit per elencarle.",
-  "pveTokenTipBackup": "La clonazione richiede VM.Clone, il backup e il ripristino VM.Backup, con Datastore.AllocateSpace dove va la copia o il backup.",
+  "pveTokenTipBackup": "La clonazione richiede VM.Clone, il backup e il ripristino VM.Backup, e la conversione in modello VM.Allocate; le attività di backup richiedono anche Sys.Audit per leggerle e Sys.Modify su / per crearle, modificarle ed eliminarle, con Datastore.AllocateSpace dove va la copia o il backup.",
   "virtErrConflict": "Modificato altrove",
   "virtErrConflictTip": "Qualcuno ha modificato la configurazione di questo guest dopo che è stata letta qui, quindi non è stato cambiato nulla. È stata riletta: ripeti la modifica se serve ancora.",
   "virtHardware": "Hardware",
@@ -1454,5 +1355,99 @@
   "virtCiEffectLibvirt": "Salvare scrive un nuovo seed con un nuovo ID d'istanza.",
   "virtCiEffectPve": "PVE riscrive subito la sua unità cloud-init, con un ID d'istanza ricavato da queste impostazioni: ogni modifica qui ne crea uno nuovo.",
   "virtCiNewInstance": "Al prossimo avvio cloud-init tratta il sistema come una nuova istanza: reimposta il nome host, crea l'account se manca, ne imposta la password, aggiunge le chiavi e riscrive la configurazione di rete. Crea anche nuove chiavi host SSH, quindi i client SSH avviseranno che la chiave host è cambiata. Nulla cambia prima di quell'avvio.",
-  "virtCiSaved": "Salvato. Ha effetto al prossimo avvio."
+  "virtCiSaved": "Salvato. Ha effetto al prossimo avvio.",
+  "virtSnapshotExternal": "Solo dischi a caldo",
+  "virtSnapshotExternalTip": "Il guest continua a funzionare. Ogni disco riceve un overlay qcow2 nel pool scelto; il guest resta su una catena.",
+  "virtSnapshotFormInternal": "Interna (nell'immagine)",
+  "virtSnapshotForm": "Tipo",
+  "virtSnapshotOverlayPool": "Pool overlay",
+  "virtSnapshotExternalNoMemory": "Uno snapshot esterno non contiene mai la memoria: il guest non viene fermato.",
+  "virtSnapshotChain": "Catena dei dischi",
+  "virtSnapshotChainDepth": "{count} livelli",
+  "virtSnapshotChainFile": "File",
+  "virtSnapshotChainActive": "In uso ora",
+  "virtSnapshotChainBase": "Immagine di base",
+  "virtSnapshotChainRaw": "Uno snapshot esterno richiede un disco qcow2. Questo è {format}.",
+  "virtSnapshotNoSupport": "Lo storage del guest non supporta gli snapshot, quindi non se ne può creare nessuno.",
+  "virtSnapshotRevertChain": "Un ripristino su una catena unisce l'overlay in esecuzione nell'immagine e rende inutilizzabile ogni snapshot successivo. Solo il più recente può essere ripristinato.",
+  "virtSnapshotRevertHasChildren": "Rifiutato finché uno snapshot successivo poggia su questo.",
+  "virtSnapshotDiff": "Differenze da ora",
+  "virtSnapshotDiffNone": "La configurazione non è cambiata da questo snapshot.",
+  "virtSnapshotDiffShow": "Confronta con ora",
+  "virtSnapshotDiffGroup": "Modificato",
+  "virtSnapshotDiffGroupCpu": "Processore",
+  "virtSnapshotDiffGroupMemory": "Memoria",
+  "virtSnapshotDiffGroupDisks": "Dischi",
+  "virtSnapshotDiffGroupNic": "Interfacce",
+  "virtSnapshotDiffGroupFirmware": "Firmware",
+  "virtSnapshotDiffGroupBoot": "Avvio",
+  "virtSnapshotDiffGroupOther": "Altro",
+  "virtSnapshotDiffValue": "{before} → {after}",
+  "virtSnapshotDiffRemoved": "rimosso",
+  "virtSnapshotDiffAdded": "aggiunto",
+  "virtSnapshotDiffAsk": "Cosa cambia ripristinando {snapshot}:",
+  "virtSnapshotDiffHost": "L'host non ha potuto dire cosa differisce: {error}",
+  "virtSnapshotExternalExists": "Il guest è già su {count} livelli; questo snapshot ne aggiunge uno.",
+  "virtToTemplate": "Converti in modello",
+  "virtToTemplateNote": "Un modello non può essere avviato né riconvertito in guest. I suoi dischi diventano immagini di base, che un clone collegato condivide.",
+  "virtToTemplateConfirm": "Convertire {name} in modello?",
+  "virtToTemplateIrreversible": "Non è annullabile: un modello non può tornare a essere un guest.",
+  "virtToTemplateStopped": "Spegnilo prima.",
+  "virtToTemplateSnapshots": "Un guest con snapshot non può diventare un modello.",
+  "virtTemplateCreated": "{name} è ora un modello",
+  "virtTemplateTip": "Un modello viene eseguito solo dopo essere stato clonato.",
+  "virtCloneStorage": "Storage di destinazione",
+  "virtCloneStorageSame": "Come l'origine",
+  "virtCloneNode": "Nodo di destinazione",
+  "virtCloneNodeSame": "Come l'origine",
+  "virtClonePool": "Pool di destinazione",
+  "virtCloneStorageContent": "Questo storage non contiene dischi di VM.",
+  "virtCloneStorageShared": "Copiare su un altro nodo richiede uno storage condiviso.",
+  "virtCloneNodeUnknown": "Questo host non ha quel nodo.",
+  "virtCloneLinkedTarget": "Un clone collegato condivide i dischi del modello, quindi non può indicare storage o nodo.",
+  "virtBackupJobs": "Attività di backup",
+  "virtBackupJobsNone": "Nessuna attività di backup pianificata. Aggiungine una per il backup periodico dei guest.",
+  "virtBackupJobNew": "Nuova attività",
+  "virtBackupJobEdit": "Modifica attività",
+  "virtBackupJobRun": "Esegui ora",
+  "virtBackupJobRunAsk": "Avviare ora questa attività di backup?",
+  "virtBackupJobDeleteAsk": "Eliminare l'attività di backup {id}? I backup restano.",
+  "virtBackupJobSaved": "Attività salvata",
+  "virtBackupJobDeleted": "Attività eliminata",
+  "virtBackupJobStarted": "Attività di backup avviata",
+  "virtBackupSchedule": "Pianificazione",
+  "virtBackupScheduleHelp": "Un sottoinsieme degli eventi di calendario di systemd: 02:30, mon..fri 02:30, sat 03:00, daily, hourly, */15.",
+  "virtBackupScheduleInvalid": "L'host non accetta questa pianificazione.",
+  "virtBackupScheduleNext": "Prossime esecuzioni: {times}",
+  "virtBackupSelection": "Guest",
+  "virtBackupSelectionAll": "Tutti i guest",
+  "virtBackupSelectionList": "Guest selezionati",
+  "virtBackupSelectionNone": "Scegli almeno un guest.",
+  "virtBackupMail": "Notifica",
+  "virtBackupMailAlways": "Sempre",
+  "virtBackupMailFailure": "In caso di errore",
+  "virtBackupNotesTemplate": "Note del backup",
+  "virtBackupNotesTemplateTip": "Le note vengono aggiunte a ogni backup dell'attività. Vengono sostituiti: {vars}.",
+  "virtBackupPrune": "Conservazione",
+  "virtBackupPruneTip": "Le opzioni di conservazione di PVE, es. keep-last=7,keep-daily=4. Vuoto: quelle dello storage o del nodo.",
+  "virtBackupNextRun": "Prossima esecuzione",
+  "virtBackupJobNode": "Nodo",
+  "virtBackupJobNodeAny": "Tutti i nodi",
+  "virtBackupEnabled": "Attiva",
+  "virtBackupOptions": "Opzioni",
+  "virtBackupProtect": "Proteggi",
+  "virtBackupProtectTip": "Un backup protetto non viene eliminato dalla conservazione e non può essere cancellato finché resta protetto.",
+  "virtBackupEditNotes": "Note",
+  "virtBackupSaveNotes": "Salva",
+  "virtBackupEdited": "Backup aggiornato",
+  "virtBackupRestoreStorage": "Ripristina su storage",
+  "virtBackupRestoreStorageSame": "Come nel backup",
+  "virtBackupModeSnapshotTip": "snapshot · senza fermo",
+  "virtCloneStorageMissing": "Nessuno storage di questo nodo contiene dischi di VM.",
+  "virtBackupCompress": "Compressione",
+  "virtBackupUnprotect": "Rimuovi protezione",
+  "virtBackupModeStops": "suspend e stop interrompono un guest in esecuzione durante la copia.",
+  "virtBackupScheduleValidate": "Verifica con l'host",
+  "virtBackupSelected": "{count} selezionati",
+  "virtBackupExcludeTip": "Tutti i guest del nodo vengono inclusi. Disattivane uno per escluderlo."
 }

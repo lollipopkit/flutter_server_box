@@ -3801,7 +3801,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get pveTokenTipBackup =>
-      'Klonen vraagt VM.Clone, back-uppen en herstellen VM.Backup, met Datastore.AllocateSpace waar de kopie of back-up heen gaat.';
+      'Klonen vereist VM.Clone, back-uppen en herstellen VM.Backup, en het omzetten naar een sjabloon VM.Allocate; back-uptaken vereisen ook Sys.Audit om ze te lezen en Sys.Modify op / om ze te maken, te bewerken en te verwijderen, met Datastore.AllocateSpace waar de kopie of de back-up heen gaat.';
 
   @override
   String get virtErrConflict => 'Elders gewijzigd';
@@ -4860,4 +4860,328 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get virtCiSaved => 'Opgeslagen. Werkt bij de volgende start.';
+
+  @override
+  String get virtSnapshotExternal => 'Alleen schijven tijdens bedrijf';
+
+  @override
+  String get virtSnapshotExternalTip =>
+      'De gast blijft draaien. Elke schijf krijgt een qcow2-overlay in de gekozen pool; de gast blijft op een keten.';
+
+  @override
+  String get virtSnapshotFormInternal => 'Intern (in de image)';
+
+  @override
+  String get virtSnapshotForm => 'Soort';
+
+  @override
+  String get virtSnapshotOverlayPool => 'Overlay-pool';
+
+  @override
+  String get virtSnapshotExternalNoMemory =>
+      'Een externe snapshot bevat nooit het geheugen: de gast wordt niet gestopt.';
+
+  @override
+  String get virtSnapshotChain => 'Schijfketen';
+
+  @override
+  String virtSnapshotChainDepth(String count) {
+    return '$count lagen';
+  }
+
+  @override
+  String get virtSnapshotChainFile => 'Bestand';
+
+  @override
+  String get virtSnapshotChainActive => 'Nu in gebruik';
+
+  @override
+  String get virtSnapshotChainBase => 'Basis-image';
+
+  @override
+  String virtSnapshotChainRaw(String format) {
+    return 'Een externe snapshot vereist een qcow2-schijf. Deze is $format.';
+  }
+
+  @override
+  String get virtSnapshotNoSupport =>
+      'De opslag van de gast ondersteunt geen snapshots, dus er kan geen worden gemaakt.';
+
+  @override
+  String get virtSnapshotRevertChain =>
+      'Terugzetten op een keten voegt de lopende overlay samen in de image en maakt elke latere snapshot onbruikbaar. Alleen de nieuwste snapshot kan worden teruggezet.';
+
+  @override
+  String get virtSnapshotRevertHasChildren =>
+      'Geweigerd zolang een latere snapshot op deze rust.';
+
+  @override
+  String get virtSnapshotDiff => 'Verschillen met nu';
+
+  @override
+  String get virtSnapshotDiffNone =>
+      'De configuratie is onveranderd sinds deze snapshot.';
+
+  @override
+  String get virtSnapshotDiffShow => 'Vergelijk met nu';
+
+  @override
+  String get virtSnapshotDiffGroup => 'Gewijzigd';
+
+  @override
+  String get virtSnapshotDiffGroupCpu => 'Processor';
+
+  @override
+  String get virtSnapshotDiffGroupMemory => 'Geheugen';
+
+  @override
+  String get virtSnapshotDiffGroupDisks => 'Schijven';
+
+  @override
+  String get virtSnapshotDiffGroupNic => 'Interfaces';
+
+  @override
+  String get virtSnapshotDiffGroupFirmware => 'Firmware';
+
+  @override
+  String get virtSnapshotDiffGroupBoot => 'Opstarten';
+
+  @override
+  String get virtSnapshotDiffGroupOther => 'Overig';
+
+  @override
+  String virtSnapshotDiffValue(String after, String before) {
+    return '$before → $after';
+  }
+
+  @override
+  String get virtSnapshotDiffRemoved => 'verwijderd';
+
+  @override
+  String get virtSnapshotDiffAdded => 'toegevoegd';
+
+  @override
+  String virtSnapshotDiffAsk(String snapshot) {
+    return 'Wat er verandert als u terugzet naar $snapshot:';
+  }
+
+  @override
+  String virtSnapshotDiffHost(String error) {
+    return 'De host kon niet zeggen wat verschilt: $error';
+  }
+
+  @override
+  String virtSnapshotExternalExists(String count) {
+    return 'De gast staat al op $count lagen; deze snapshot voegt er één toe.';
+  }
+
+  @override
+  String get virtToTemplate => 'Als sjabloon gebruiken';
+
+  @override
+  String get virtToTemplateNote =>
+      'Een sjabloon kan niet worden gestart en niet terug in een gast worden omgezet. De schijven worden basis-images, die een gekoppelde kloon deelt.';
+
+  @override
+  String virtToTemplateConfirm(String name) {
+    return '$name als sjabloon gebruiken?';
+  }
+
+  @override
+  String get virtToTemplateIrreversible =>
+      'Dit kan niet ongedaan worden gemaakt: een sjabloon kan niet terug in een gast worden omgezet.';
+
+  @override
+  String get virtToTemplateStopped => 'Schakel het eerst uit.';
+
+  @override
+  String get virtToTemplateSnapshots =>
+      'Een gast met snapshots kan geen sjabloon worden.';
+
+  @override
+  String virtTemplateCreated(String name) {
+    return '$name is nu een sjabloon';
+  }
+
+  @override
+  String get virtTemplateTip => 'Een sjabloon draait pas als het is gekloond.';
+
+  @override
+  String get virtCloneStorage => 'Doelopslag';
+
+  @override
+  String get virtCloneStorageSame => 'Zelfde als de bron';
+
+  @override
+  String get virtCloneNode => 'Doelknooppunt';
+
+  @override
+  String get virtCloneNodeSame => 'Zelfde als de bron';
+
+  @override
+  String get virtClonePool => 'Doelpool';
+
+  @override
+  String get virtCloneStorageContent => 'Deze opslag bevat geen VM-schijven.';
+
+  @override
+  String get virtCloneStorageShared =>
+      'Kopiëren naar een ander knooppunt vereist gedeelde opslag.';
+
+  @override
+  String get virtCloneNodeUnknown => 'Deze host heeft die knooppunt niet.';
+
+  @override
+  String get virtCloneLinkedTarget =>
+      'Een gekoppelde kloon deelt de schijven van het sjabloon en kan dus geen opslag of knooppunt noemen.';
+
+  @override
+  String get virtBackupJobs => 'Back-uptaken';
+
+  @override
+  String get virtBackupJobsNone =>
+      'Geen geplande back-uptaak. Voeg er een toe om gasten volgens schema te back-uppen.';
+
+  @override
+  String get virtBackupJobNew => 'Nieuwe taak';
+
+  @override
+  String get virtBackupJobEdit => 'Taak bewerken';
+
+  @override
+  String get virtBackupJobRun => 'Nu uitvoeren';
+
+  @override
+  String get virtBackupJobRunAsk => 'Deze back-uptaak nu starten?';
+
+  @override
+  String virtBackupJobDeleteAsk(String id) {
+    return 'Back-uptaak $id verwijderen? De gemaakte back-ups blijven.';
+  }
+
+  @override
+  String get virtBackupJobSaved => 'Taak opgeslagen';
+
+  @override
+  String get virtBackupJobDeleted => 'Taak verwijderd';
+
+  @override
+  String get virtBackupJobStarted => 'Back-uptaak gestart';
+
+  @override
+  String get virtBackupSchedule => 'Schema';
+
+  @override
+  String get virtBackupScheduleHelp =>
+      'Een subset van systemd-kalendergebeurtenissen: 02:30, mon..fri 02:30, sat 03:00, daily, hourly, */15.';
+
+  @override
+  String get virtBackupScheduleInvalid => 'Geen schema dat de host accepteert.';
+
+  @override
+  String virtBackupScheduleNext(String times) {
+    return 'Volgende uitvoeringen: $times';
+  }
+
+  @override
+  String get virtBackupSelection => 'Gasten';
+
+  @override
+  String get virtBackupSelectionAll => 'Alle gasten';
+
+  @override
+  String get virtBackupSelectionList => 'Geselecteerde gasten';
+
+  @override
+  String get virtBackupSelectionNone => 'Kies minstens één gast.';
+
+  @override
+  String get virtBackupMail => 'Melding';
+
+  @override
+  String get virtBackupMailAlways => 'Altijd';
+
+  @override
+  String get virtBackupMailFailure => 'Bij fout';
+
+  @override
+  String get virtBackupNotesTemplate => 'Back-upnotities';
+
+  @override
+  String virtBackupNotesTemplateTip(String vars) {
+    return 'De notities worden aan elke back-up van de taak toegevoegd. Vervangen worden: $vars.';
+  }
+
+  @override
+  String get virtBackupPrune => 'Bewaring';
+
+  @override
+  String get virtBackupPruneTip =>
+      'PVE-bewaaropties, bv. keep-last=7,keep-daily=4. Leeg: die van de opslag of het knooppunt.';
+
+  @override
+  String get virtBackupNextRun => 'Volgende uitvoering';
+
+  @override
+  String get virtBackupJobNode => 'Knooppunt';
+
+  @override
+  String get virtBackupJobNodeAny => 'Elk knooppunt';
+
+  @override
+  String get virtBackupEnabled => 'Ingeschakeld';
+
+  @override
+  String get virtBackupOptions => 'Opties';
+
+  @override
+  String get virtBackupProtect => 'Beschermen';
+
+  @override
+  String get virtBackupProtectTip =>
+      'Een beschermde back-up wordt niet opgeruimd en kan niet worden verwijderd zolang de bescherming geldt.';
+
+  @override
+  String get virtBackupEditNotes => 'Notities';
+
+  @override
+  String get virtBackupSaveNotes => 'Opslaan';
+
+  @override
+  String get virtBackupEdited => 'Back-up bijgewerkt';
+
+  @override
+  String get virtBackupRestoreStorage => 'Herstellen naar opslag';
+
+  @override
+  String get virtBackupRestoreStorageSame => 'Zoals in de back-up';
+
+  @override
+  String get virtBackupModeSnapshotTip => 'snapshot · zonder stilstand';
+
+  @override
+  String get virtCloneStorageMissing =>
+      'Geen opslag op dit knooppunt bevat VM-schijven.';
+
+  @override
+  String get virtBackupCompress => 'Compressie';
+
+  @override
+  String get virtBackupUnprotect => 'Bescherming opheffen';
+
+  @override
+  String get virtBackupModeStops =>
+      'suspend en stop onderbreken een draaiende gast tijdens het kopiëren.';
+
+  @override
+  String get virtBackupScheduleValidate => 'Bij de host controleren';
+
+  @override
+  String virtBackupSelected(int count) {
+    return '$count geselecteerd';
+  }
+
+  @override
+  String get virtBackupExcludeTip =>
+      'Alle gasten op het knooppunt worden meegenomen. Zet er een uit om die over te slaan.';
 }

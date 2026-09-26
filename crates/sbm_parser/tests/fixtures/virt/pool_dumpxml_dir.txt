@@ -1,0 +1,17 @@
+<pool type='dir'>
+  <name>sbxe2e-p8q</name>
+  <uuid>7414bbf5-9dc5-418a-871f-97fef751733b</uuid>
+  <capacity unit='bytes'>20922114048</capacity>
+  <allocation unit='bytes'>1454809088</allocation>
+  <available unit='bytes'>19467304960</available>
+  <source>
+  </source>
+  <target>
+    <path>/var/lib/libvirt/sbxe2e-p8q</path>
+    <permissions>
+      <mode>0755</mode>
+      <owner>0</owner>
+      <group>0</group>
+    </permissions>
+  </target>
+</pool>

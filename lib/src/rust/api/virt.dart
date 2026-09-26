@@ -99,6 +99,52 @@ String virtSnapshotDeleteScript({
   name: name,
 );
 
+/// The disk chain of a domain (external snapshots): the definition, where
+/// each device is now, and each one's chain as QEMU resolves it
+String virtSnapChainScript({required String domain}) =>
+    RustLib.instance.api.crateApiVirtVirtSnapChainScript(domain: domain);
+
+/// [`virt_snap_chain_script`]'s output → `VirtSnapChain` JSON
+Future<String> parseVirtSnapChainJson({required String raw}) =>
+    RustLib.instance.api.crateApiVirtParseVirtSnapChainJson(raw: raw);
+
+/// An external snapshot (disks only, `--atomic`), `overlays` being
+/// `(target, path)` per disk. Parse with [`parse_virt_action`].
+String virtSnapshotExternalScript({
+  required String domain,
+  required String name,
+  String? description,
+  required List<(String, String)> overlays,
+}) => RustLib.instance.api.crateApiVirtVirtSnapshotExternalScript(
+  domain: domain,
+  name: name,
+  description: description,
+  overlays: overlays,
+);
+
+/// A snapshot's configuration and the guest's current one. Parse with
+/// [`parse_virt_snap_diff_json`].
+String virtSnapDiffScript({required String domain, required String name}) =>
+    RustLib.instance.api.crateApiVirtVirtSnapDiffScript(
+      domain: domain,
+      name: name,
+    );
+
+/// [`virt_snap_diff_script`]'s output → `Vec<VirtSnapDiff>` JSON
+Future<String> parseVirtSnapDiffJson({required String raw}) =>
+    RustLib.instance.api.crateApiVirtParseVirtSnapDiffJson(raw: raw);
+
+/// A pool's own target directory (`pool-dumpxml`), for placing an overlay in
+/// it
+Future<String?> parseVirtPoolTarget({required String raw}) =>
+    RustLib.instance.api.crateApiVirtParseVirtPoolTarget(raw: raw);
+
+/// Why an external snapshot cannot be taken, from a `VirtSnapChain` JSON
+Future<String?> virtExternalSnapshotRefusal({required String chainJson}) =>
+    RustLib.instance.api.crateApiVirtVirtExternalSnapshotRefusal(
+      chainJson: chainJson,
+    );
+
 /// Pools, volume names and every domain's disks
 String virtStorageScript() =>
     RustLib.instance.api.crateApiVirtVirtStorageScript();

@@ -3788,7 +3788,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get pveTokenTipBackup =>
-      'Для клонування потрібен VM.Clone, для резервного копіювання й відновлення — VM.Backup, а також Datastore.AllocateSpace на сховищі копії.';
+      'Клонування потребує VM.Clone, резервне копіювання та відновлення — VM.Backup, перетворення на шаблон — VM.Allocate; завданням резервного копіювання потрібні ще Sys.Audit для читання та Sys.Modify на / для створення, зміни й видалення, а також Datastore.AllocateSpace там, куди потрапляє копія або резервна копія.';
 
   @override
   String get virtErrConflict => 'Змінено деінде';
@@ -4846,4 +4846,330 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get virtCiSaved =>
       'Збережено. Набуде чинності під час наступного завантаження.';
+
+  @override
+  String get virtSnapshotExternal => 'Лише диски на ходу';
+
+  @override
+  String get virtSnapshotExternalTip =>
+      'Гість продовжує працювати. Кожен диск отримує шар qcow2 у вибраному пулі; гість залишається на ланцюжку.';
+
+  @override
+  String get virtSnapshotFormInternal => 'Внутрішній (в образі)';
+
+  @override
+  String get virtSnapshotForm => 'Тип';
+
+  @override
+  String get virtSnapshotOverlayPool => 'Пул шарів';
+
+  @override
+  String get virtSnapshotExternalNoMemory =>
+      'Зовнішній знімок ніколи не містить пам’ять: гість не зупиняється.';
+
+  @override
+  String get virtSnapshotChain => 'Ланцюжок дисків';
+
+  @override
+  String virtSnapshotChainDepth(String count) {
+    return '$count шарів';
+  }
+
+  @override
+  String get virtSnapshotChainFile => 'Файл';
+
+  @override
+  String get virtSnapshotChainActive => 'Використовується зараз';
+
+  @override
+  String get virtSnapshotChainBase => 'Базовий образ';
+
+  @override
+  String virtSnapshotChainRaw(String format) {
+    return 'Для зовнішнього знімка потрібен диск qcow2. Цей — $format.';
+  }
+
+  @override
+  String get virtSnapshotNoSupport =>
+      'Сховище гостя не підтримує знімки, тому створити його неможливо.';
+
+  @override
+  String get virtSnapshotRevertChain =>
+      'Відкат на ланцюжку зливає робочий шар в образ і робить усі наступні знімки непридатними. Відкотитися можна лише до найновішого знімка.';
+
+  @override
+  String get virtSnapshotRevertHasChildren =>
+      'Відмовлено, поки на цьому знімку стоїть пізніший.';
+
+  @override
+  String get virtSnapshotDiff => 'Відмінності від поточного';
+
+  @override
+  String get virtSnapshotDiffNone =>
+      'Конфігурація не змінилася з цього знімка.';
+
+  @override
+  String get virtSnapshotDiffShow => 'Порівняти з поточним';
+
+  @override
+  String get virtSnapshotDiffGroup => 'Змінено';
+
+  @override
+  String get virtSnapshotDiffGroupCpu => 'Процесор';
+
+  @override
+  String get virtSnapshotDiffGroupMemory => 'Пам’ять';
+
+  @override
+  String get virtSnapshotDiffGroupDisks => 'Диски';
+
+  @override
+  String get virtSnapshotDiffGroupNic => 'Інтерфейси';
+
+  @override
+  String get virtSnapshotDiffGroupFirmware => 'Прошивка';
+
+  @override
+  String get virtSnapshotDiffGroupBoot => 'Завантаження';
+
+  @override
+  String get virtSnapshotDiffGroupOther => 'Інше';
+
+  @override
+  String virtSnapshotDiffValue(String after, String before) {
+    return '$before → $after';
+  }
+
+  @override
+  String get virtSnapshotDiffRemoved => 'видалено';
+
+  @override
+  String get virtSnapshotDiffAdded => 'додано';
+
+  @override
+  String virtSnapshotDiffAsk(String snapshot) {
+    return 'Що зміниться під час відкату до $snapshot:';
+  }
+
+  @override
+  String virtSnapshotDiffHost(String error) {
+    return 'Вузол не зміг сказати, що відрізняється: $error';
+  }
+
+  @override
+  String virtSnapshotExternalExists(String count) {
+    return 'Гість уже на $count шарах; цей знімок додасть ще один.';
+  }
+
+  @override
+  String get virtToTemplate => 'Зробити шаблоном';
+
+  @override
+  String get virtToTemplateNote =>
+      'Шаблон не можна запустити й не можна повернути в гостя. Його диски стають базовими образами, які поділяє пов’язаний клон.';
+
+  @override
+  String virtToTemplateConfirm(String name) {
+    return 'Зробити $name шаблоном?';
+  }
+
+  @override
+  String get virtToTemplateIrreversible =>
+      'Це незворотно: шаблон не можна повернути в гостя.';
+
+  @override
+  String get virtToTemplateStopped => 'Спочатку вимкніть його.';
+
+  @override
+  String get virtToTemplateSnapshots =>
+      'Гість зі знімками не може стати шаблоном.';
+
+  @override
+  String virtTemplateCreated(String name) {
+    return '$name тепер шаблон';
+  }
+
+  @override
+  String get virtTemplateTip => 'Шаблон запускається лише після клонування.';
+
+  @override
+  String get virtCloneStorage => 'Цільове сховище';
+
+  @override
+  String get virtCloneStorageSame => 'Як у джерела';
+
+  @override
+  String get virtCloneNode => 'Цільовий вузол';
+
+  @override
+  String get virtCloneNodeSame => 'Як у джерела';
+
+  @override
+  String get virtClonePool => 'Цільовий пул';
+
+  @override
+  String get virtCloneStorageContent =>
+      'Це сховище не зберігає диски віртуальних машин.';
+
+  @override
+  String get virtCloneStorageShared =>
+      'Для копіювання на інший вузол потрібне спільне сховище.';
+
+  @override
+  String get virtCloneNodeUnknown => 'У цього хоста немає такого вузла.';
+
+  @override
+  String get virtCloneLinkedTarget =>
+      'Пов’язаний клон використовує диски шаблону, тому не може вказати сховище чи вузол.';
+
+  @override
+  String get virtBackupJobs => 'Завдання резервного копіювання';
+
+  @override
+  String get virtBackupJobsNone =>
+      'Немає завдання резервного копіювання за розкладом. Додайте його, щоб копіювати гостей регулярно.';
+
+  @override
+  String get virtBackupJobNew => 'Нове завдання';
+
+  @override
+  String get virtBackupJobEdit => 'Змінити завдання';
+
+  @override
+  String get virtBackupJobRun => 'Запустити зараз';
+
+  @override
+  String get virtBackupJobRunAsk =>
+      'Запустити це завдання резервного копіювання зараз?';
+
+  @override
+  String virtBackupJobDeleteAsk(String id) {
+    return 'Видалити завдання $id? Створені копії залишаться.';
+  }
+
+  @override
+  String get virtBackupJobSaved => 'Завдання збережено';
+
+  @override
+  String get virtBackupJobDeleted => 'Завдання видалено';
+
+  @override
+  String get virtBackupJobStarted => 'Завдання запущено';
+
+  @override
+  String get virtBackupSchedule => 'Розклад';
+
+  @override
+  String get virtBackupScheduleHelp =>
+      'Підмножина календарних подій systemd: 02:30, mon..fri 02:30, sat 03:00, daily, hourly, */15.';
+
+  @override
+  String get virtBackupScheduleInvalid => 'Хост не приймає такого розкладу.';
+
+  @override
+  String virtBackupScheduleNext(String times) {
+    return 'Наступні запуски: $times';
+  }
+
+  @override
+  String get virtBackupSelection => 'Гості';
+
+  @override
+  String get virtBackupSelectionAll => 'Усі гості';
+
+  @override
+  String get virtBackupSelectionList => 'Вибрані гості';
+
+  @override
+  String get virtBackupSelectionNone => 'Виберіть хоча б одного гостя.';
+
+  @override
+  String get virtBackupMail => 'Сповіщення';
+
+  @override
+  String get virtBackupMailAlways => 'Завжди';
+
+  @override
+  String get virtBackupMailFailure => 'У разі збою';
+
+  @override
+  String get virtBackupNotesTemplate => 'Нотатки до копії';
+
+  @override
+  String virtBackupNotesTemplateTip(String vars) {
+    return 'Нотатки додаються до кожної копії завдання. Замінюються: $vars.';
+  }
+
+  @override
+  String get virtBackupPrune => 'Збереження';
+
+  @override
+  String get virtBackupPruneTip =>
+      'Параметри збереження PVE, напр. keep-last=7,keep-daily=4. Порожньо: зі сховища або вузла.';
+
+  @override
+  String get virtBackupNextRun => 'Наступний запуск';
+
+  @override
+  String get virtBackupJobNode => 'Вузол';
+
+  @override
+  String get virtBackupJobNodeAny => 'Кожен вузол';
+
+  @override
+  String get virtBackupEnabled => 'Увімкнено';
+
+  @override
+  String get virtBackupOptions => 'Параметри';
+
+  @override
+  String get virtBackupProtect => 'Захистити';
+
+  @override
+  String get virtBackupProtectTip =>
+      'Захищена копія не видаляється за збереженням і не може бути видалена, доки захист не знято.';
+
+  @override
+  String get virtBackupEditNotes => 'Нотатки';
+
+  @override
+  String get virtBackupSaveNotes => 'Зберегти';
+
+  @override
+  String get virtBackupEdited => 'Копію оновлено';
+
+  @override
+  String get virtBackupRestoreStorage => 'Відновити у сховище';
+
+  @override
+  String get virtBackupRestoreStorageSame => 'Як у копії';
+
+  @override
+  String get virtBackupModeSnapshotTip => 'snapshot · без простою';
+
+  @override
+  String get virtCloneStorageMissing =>
+      'Жодне сховище на цьому вузлі не зберігає диски віртуальних машин.';
+
+  @override
+  String get virtBackupCompress => 'Стиснення';
+
+  @override
+  String get virtBackupUnprotect => 'Зняти захист';
+
+  @override
+  String get virtBackupModeStops =>
+      'suspend і stop переривають роботу гостя на час копіювання.';
+
+  @override
+  String get virtBackupScheduleValidate => 'Перевірити на хості';
+
+  @override
+  String virtBackupSelected(int count) {
+    return 'Вибрано: $count';
+  }
+
+  @override
+  String get virtBackupExcludeTip =>
+      'Беруться всі гості вузла. Вимкніть одного, щоб виключити його.';
 }

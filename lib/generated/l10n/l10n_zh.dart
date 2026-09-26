@@ -3517,7 +3517,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pveTokenTipBackup =>
-      '克隆需要 VM.Clone，备份和还原需要 VM.Backup；副本或备份存放的存储上还需要 Datastore.AllocateSpace。';
+      '克隆需要 VM.Clone，备份与还原需要 VM.Backup，转为模板需要 VM.Allocate；备份任务还需要 Sys.Audit 才能读取，以及在 / 上的 Sys.Modify 才能新建、编辑和删除；副本或备份存放的存储上还需要 Datastore.AllocateSpace。';
 
   @override
   String get virtErrConflict => '已在别处修改';
@@ -4508,6 +4508,316 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtCiSaved => '已保存，下次启动时生效。';
+
+  @override
+  String get virtSnapshotExternal => '不停机，仅磁盘';
+
+  @override
+  String get virtSnapshotExternalTip =>
+      '虚拟机继续运行。每块磁盘在所选存储池中得到一个 qcow2 覆盖层，虚拟机停留在链上。';
+
+  @override
+  String get virtSnapshotFormInternal => '内部（镜像内）';
+
+  @override
+  String get virtSnapshotForm => '类型';
+
+  @override
+  String get virtSnapshotOverlayPool => '覆盖层存储池';
+
+  @override
+  String get virtSnapshotExternalNoMemory => '外部快照不含内存：虚拟机不会停机。';
+
+  @override
+  String get virtSnapshotChain => '磁盘链';
+
+  @override
+  String virtSnapshotChainDepth(String count) {
+    return '$count 层';
+  }
+
+  @override
+  String get virtSnapshotChainFile => '文件';
+
+  @override
+  String get virtSnapshotChainActive => '当前使用';
+
+  @override
+  String get virtSnapshotChainBase => '基础镜像';
+
+  @override
+  String virtSnapshotChainRaw(String format) {
+    return '外部快照需要 qcow2 磁盘，而这块是 $format。';
+  }
+
+  @override
+  String get virtSnapshotNoSupport => '虚拟机的存储不支持快照，无法创建。';
+
+  @override
+  String get virtSnapshotRevertChain =>
+      '在链上恢复会把运行中的覆盖层合并进镜像，并让之后的所有快照无法使用。只能恢复到最新的快照。';
+
+  @override
+  String get virtSnapshotRevertHasChildren => '后面还有快照时不可恢复。';
+
+  @override
+  String get virtSnapshotDiff => '与当前的不同';
+
+  @override
+  String get virtSnapshotDiffNone => '自该快照以来配置没有变化。';
+
+  @override
+  String get virtSnapshotDiffShow => '与当前比较';
+
+  @override
+  String get virtSnapshotDiffGroup => '已变更';
+
+  @override
+  String get virtSnapshotDiffGroupCpu => '处理器';
+
+  @override
+  String get virtSnapshotDiffGroupMemory => '内存';
+
+  @override
+  String get virtSnapshotDiffGroupDisks => '磁盘';
+
+  @override
+  String get virtSnapshotDiffGroupNic => '网卡';
+
+  @override
+  String get virtSnapshotDiffGroupFirmware => '固件';
+
+  @override
+  String get virtSnapshotDiffGroupBoot => '启动';
+
+  @override
+  String get virtSnapshotDiffGroupOther => '其他';
+
+  @override
+  String virtSnapshotDiffValue(String after, String before) {
+    return '$before → $after';
+  }
+
+  @override
+  String get virtSnapshotDiffRemoved => '已移除';
+
+  @override
+  String get virtSnapshotDiffAdded => '已添加';
+
+  @override
+  String virtSnapshotDiffAsk(String snapshot) {
+    return '恢复到 $snapshot 会改变：';
+  }
+
+  @override
+  String virtSnapshotDiffHost(String error) {
+    return '主机无法说明差异：$error';
+  }
+
+  @override
+  String virtSnapshotExternalExists(String count) {
+    return '虚拟机已在 $count 层链上，该快照会再增加一层。';
+  }
+
+  @override
+  String get virtToTemplate => '转为模板';
+
+  @override
+  String get virtToTemplateNote => '模板无法启动，也无法还原为虚拟机。其磁盘变为基础镜像，链接克隆正是共享它。';
+
+  @override
+  String virtToTemplateConfirm(String name) {
+    return '将 $name 转为模板？';
+  }
+
+  @override
+  String get virtToTemplateIrreversible => '此操作无法撤销：模板无法还原为虚拟机。';
+
+  @override
+  String get virtToTemplateStopped => '请先关机。';
+
+  @override
+  String get virtToTemplateSnapshots => '含快照的虚拟机无法转为模板。';
+
+  @override
+  String virtTemplateCreated(String name) {
+    return '$name 现在是模板';
+  }
+
+  @override
+  String get virtTemplateTip => '模板只有在克隆后才能运行。';
+
+  @override
+  String get virtCloneStorage => '目标存储';
+
+  @override
+  String get virtCloneStorageSame => '与源相同';
+
+  @override
+  String get virtCloneNode => '目标节点';
+
+  @override
+  String get virtCloneNodeSame => '与源相同';
+
+  @override
+  String get virtClonePool => '目标存储池';
+
+  @override
+  String get virtCloneStorageContent => '该存储不存放虚拟机磁盘。';
+
+  @override
+  String get virtCloneStorageShared => '复制到其他节点需要共享存储。';
+
+  @override
+  String get virtCloneNodeUnknown => '该宿主机没有此节点。';
+
+  @override
+  String get virtCloneLinkedTarget => '链接克隆共享模板的磁盘，因此不能指定存储或节点。';
+
+  @override
+  String get virtBackupJobs => '备份任务';
+
+  @override
+  String get virtBackupJobsNone => '没有计划备份任务。添加一个即可按计划备份虚拟机。';
+
+  @override
+  String get virtBackupJobNew => '新建任务';
+
+  @override
+  String get virtBackupJobEdit => '编辑任务';
+
+  @override
+  String get virtBackupJobRun => '立即运行';
+
+  @override
+  String get virtBackupJobRunAsk => '立即启动该备份任务？';
+
+  @override
+  String virtBackupJobDeleteAsk(String id) {
+    return '删除备份任务 $id？已生成的备份会保留。';
+  }
+
+  @override
+  String get virtBackupJobSaved => '任务已保存';
+
+  @override
+  String get virtBackupJobDeleted => '任务已删除';
+
+  @override
+  String get virtBackupJobStarted => '备份任务已启动';
+
+  @override
+  String get virtBackupSchedule => '时间表';
+
+  @override
+  String get virtBackupScheduleHelp =>
+      'systemd 日历事件的子集：02:30、mon..fri 02:30、sat 03:00、daily、hourly、*/15。';
+
+  @override
+  String get virtBackupScheduleInvalid => '宿主机不接受该时间表。';
+
+  @override
+  String virtBackupScheduleNext(String times) {
+    return '接下来运行：$times';
+  }
+
+  @override
+  String get virtBackupSelection => '虚拟机';
+
+  @override
+  String get virtBackupSelectionAll => '所有虚拟机';
+
+  @override
+  String get virtBackupSelectionList => '选定的虚拟机';
+
+  @override
+  String get virtBackupSelectionNone => '请至少选择一台虚拟机。';
+
+  @override
+  String get virtBackupMail => '通知';
+
+  @override
+  String get virtBackupMailAlways => '总是';
+
+  @override
+  String get virtBackupMailFailure => '失败时';
+
+  @override
+  String get virtBackupNotesTemplate => '备份备注';
+
+  @override
+  String virtBackupNotesTemplateTip(String vars) {
+    return '备注会加到该任务生成的每个备份上。其中的 $vars 会被替换为实际值。';
+  }
+
+  @override
+  String get virtBackupPrune => '保留';
+
+  @override
+  String get virtBackupPruneTip =>
+      'PVE 的保留选项，例如 keep-last=7,keep-daily=4。留空则用存储或节点自身的设置。';
+
+  @override
+  String get virtBackupNextRun => '下次运行';
+
+  @override
+  String get virtBackupJobNode => '节点';
+
+  @override
+  String get virtBackupJobNodeAny => '所有节点';
+
+  @override
+  String get virtBackupEnabled => '启用';
+
+  @override
+  String get virtBackupOptions => '选项';
+
+  @override
+  String get virtBackupProtect => '保护';
+
+  @override
+  String get virtBackupProtectTip => '受保护的备份不会被保留策略清理，在取消保护前也无法删除。';
+
+  @override
+  String get virtBackupEditNotes => '备注';
+
+  @override
+  String get virtBackupSaveNotes => '保存';
+
+  @override
+  String get virtBackupEdited => '备份已更新';
+
+  @override
+  String get virtBackupRestoreStorage => '还原到存储';
+
+  @override
+  String get virtBackupRestoreStorageSame => '与备份一致';
+
+  @override
+  String get virtBackupModeSnapshotTip => 'snapshot · 不停机';
+
+  @override
+  String get virtCloneStorageMissing => '该节点上没有存放虚拟机磁盘的存储。';
+
+  @override
+  String get virtBackupCompress => '压缩';
+
+  @override
+  String get virtBackupUnprotect => '取消保护';
+
+  @override
+  String get virtBackupModeStops => 'suspend 和 stop 会在复制期间中断运行中的虚拟机。';
+
+  @override
+  String get virtBackupScheduleValidate => '向宿主机校验';
+
+  @override
+  String virtBackupSelected(int count) {
+    return '已选 $count 台';
+  }
+
+  @override
+  String get virtBackupExcludeTip => '该节点上的所有虚拟机都会备份。关闭某个即可排除它。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -8020,7 +8330,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get pveTokenTipBackup =>
-      '複製需要 VM.Clone，備份和還原需要 VM.Backup；副本或備份存放的儲存上還需要 Datastore.AllocateSpace。';
+      '複製需要 VM.Clone，備份與還原需要 VM.Backup，轉為範本需要 VM.Allocate；備份工作還需要 Sys.Audit 才能讀取，以及在 / 上的 Sys.Modify 才能新增、編輯和刪除；副本或備份存放的儲存上還需要 Datastore.AllocateSpace。';
 
   @override
   String get virtErrConflict => '已在別處修改';
@@ -9014,4 +9324,314 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtCiSaved => '已儲存，下次啟動時生效。';
+
+  @override
+  String get virtSnapshotExternal => '不停機，僅磁碟';
+
+  @override
+  String get virtSnapshotExternalTip =>
+      '虛擬機器繼續運行。每顆磁碟在所選儲存池中得到一個 qcow2 覆蓋層，虛擬機器停留在鏈上。';
+
+  @override
+  String get virtSnapshotFormInternal => '內部（映像內）';
+
+  @override
+  String get virtSnapshotForm => '類型';
+
+  @override
+  String get virtSnapshotOverlayPool => '覆蓋層儲存池';
+
+  @override
+  String get virtSnapshotExternalNoMemory => '外部快照不含記憶體：虛擬機器不會停機。';
+
+  @override
+  String get virtSnapshotChain => '磁碟鏈';
+
+  @override
+  String virtSnapshotChainDepth(String count) {
+    return '$count 層';
+  }
+
+  @override
+  String get virtSnapshotChainFile => '檔案';
+
+  @override
+  String get virtSnapshotChainActive => '目前使用';
+
+  @override
+  String get virtSnapshotChainBase => '基礎映像';
+
+  @override
+  String virtSnapshotChainRaw(String format) {
+    return '外部快照需要 qcow2 磁碟，而這顆是 $format。';
+  }
+
+  @override
+  String get virtSnapshotNoSupport => '虛擬機器的儲存不支援快照，無法建立。';
+
+  @override
+  String get virtSnapshotRevertChain =>
+      '在鏈上恢復會把運行中的覆蓋層合併進映像，並讓之後的所有快照無法使用。只能恢復到最新的快照。';
+
+  @override
+  String get virtSnapshotRevertHasChildren => '後面還有快照時不可恢復。';
+
+  @override
+  String get virtSnapshotDiff => '與現在的不同';
+
+  @override
+  String get virtSnapshotDiffNone => '自該快照以來設定沒有變化。';
+
+  @override
+  String get virtSnapshotDiffShow => '與現在比較';
+
+  @override
+  String get virtSnapshotDiffGroup => '已變更';
+
+  @override
+  String get virtSnapshotDiffGroupCpu => '處理器';
+
+  @override
+  String get virtSnapshotDiffGroupMemory => '記憶體';
+
+  @override
+  String get virtSnapshotDiffGroupDisks => '磁碟';
+
+  @override
+  String get virtSnapshotDiffGroupNic => '網卡';
+
+  @override
+  String get virtSnapshotDiffGroupFirmware => '韌體';
+
+  @override
+  String get virtSnapshotDiffGroupBoot => '啟動';
+
+  @override
+  String get virtSnapshotDiffGroupOther => '其他';
+
+  @override
+  String virtSnapshotDiffValue(String after, String before) {
+    return '$before → $after';
+  }
+
+  @override
+  String get virtSnapshotDiffRemoved => '已移除';
+
+  @override
+  String get virtSnapshotDiffAdded => '已新增';
+
+  @override
+  String virtSnapshotDiffAsk(String snapshot) {
+    return '恢復到 $snapshot 會改變：';
+  }
+
+  @override
+  String virtSnapshotDiffHost(String error) {
+    return '主機無法說明差異：$error';
+  }
+
+  @override
+  String virtSnapshotExternalExists(String count) {
+    return '虛擬機器已在 $count 層鏈上，該快照會再增加一層。';
+  }
+
+  @override
+  String get virtToTemplate => '轉為範本';
+
+  @override
+  String get virtToTemplateNote => '範本無法啟動，也無法還原為虛擬機器。其磁碟成為基礎映像，連結複製正是共享它。';
+
+  @override
+  String virtToTemplateConfirm(String name) {
+    return '將 $name 轉為範本？';
+  }
+
+  @override
+  String get virtToTemplateIrreversible => '此操作無法復原：範本無法還原為虛擬機器。';
+
+  @override
+  String get virtToTemplateStopped => '請先關機。';
+
+  @override
+  String get virtToTemplateSnapshots => '含快照的虛擬機器無法轉為範本。';
+
+  @override
+  String virtTemplateCreated(String name) {
+    return '$name 現在是範本';
+  }
+
+  @override
+  String get virtTemplateTip => '範本只有在複製後才能執行。';
+
+  @override
+  String get virtCloneStorage => '目標儲存';
+
+  @override
+  String get virtCloneStorageSame => '與來源相同';
+
+  @override
+  String get virtCloneNode => '目標節點';
+
+  @override
+  String get virtCloneNodeSame => '與來源相同';
+
+  @override
+  String get virtClonePool => '目標儲存池';
+
+  @override
+  String get virtCloneStorageContent => '該儲存不存放虛擬機器磁碟。';
+
+  @override
+  String get virtCloneStorageShared => '複製到其他節點需要共享儲存。';
+
+  @override
+  String get virtCloneNodeUnknown => '該主機沒有此節點。';
+
+  @override
+  String get virtCloneLinkedTarget => '連結複製共享範本的磁碟，因此不能指定儲存或節點。';
+
+  @override
+  String get virtBackupJobs => '備份工作';
+
+  @override
+  String get virtBackupJobsNone => '沒有排程備份工作。新增一個即可依排程備份虛擬機器。';
+
+  @override
+  String get virtBackupJobNew => '新增工作';
+
+  @override
+  String get virtBackupJobEdit => '編輯工作';
+
+  @override
+  String get virtBackupJobRun => '立即執行';
+
+  @override
+  String get virtBackupJobRunAsk => '立即啟動該備份工作？';
+
+  @override
+  String virtBackupJobDeleteAsk(String id) {
+    return '刪除備份工作 $id？已產生的備份會保留。';
+  }
+
+  @override
+  String get virtBackupJobSaved => '工作已儲存';
+
+  @override
+  String get virtBackupJobDeleted => '工作已刪除';
+
+  @override
+  String get virtBackupJobStarted => '備份工作已啟動';
+
+  @override
+  String get virtBackupSchedule => '時間表';
+
+  @override
+  String get virtBackupScheduleHelp =>
+      'systemd 日曆事件的子集：02:30、mon..fri 02:30、sat 03:00、daily、hourly、*/15。';
+
+  @override
+  String get virtBackupScheduleInvalid => '主機不接受該時間表。';
+
+  @override
+  String virtBackupScheduleNext(String times) {
+    return '接下來執行：$times';
+  }
+
+  @override
+  String get virtBackupSelection => '虛擬機器';
+
+  @override
+  String get virtBackupSelectionAll => '所有虛擬機器';
+
+  @override
+  String get virtBackupSelectionList => '選定的虛擬機器';
+
+  @override
+  String get virtBackupSelectionNone => '請至少選擇一台虛擬機器。';
+
+  @override
+  String get virtBackupMail => '通知';
+
+  @override
+  String get virtBackupMailAlways => '總是';
+
+  @override
+  String get virtBackupMailFailure => '失敗時';
+
+  @override
+  String get virtBackupNotesTemplate => '備份備註';
+
+  @override
+  String virtBackupNotesTemplateTip(String vars) {
+    return '備註會加到該工作產生的每個備份上。其中的 $vars 會被替換為實際值。';
+  }
+
+  @override
+  String get virtBackupPrune => '保留';
+
+  @override
+  String get virtBackupPruneTip =>
+      'PVE 的保留選項，例如 keep-last=7,keep-daily=4。留空則用儲存或節點自身的設定。';
+
+  @override
+  String get virtBackupNextRun => '下次執行';
+
+  @override
+  String get virtBackupJobNode => '節點';
+
+  @override
+  String get virtBackupJobNodeAny => '所有節點';
+
+  @override
+  String get virtBackupEnabled => '啟用';
+
+  @override
+  String get virtBackupOptions => '選項';
+
+  @override
+  String get virtBackupProtect => '保護';
+
+  @override
+  String get virtBackupProtectTip => '受保護的備份不會被保留策略清理，在取消保護前也無法刪除。';
+
+  @override
+  String get virtBackupEditNotes => '備註';
+
+  @override
+  String get virtBackupSaveNotes => '儲存';
+
+  @override
+  String get virtBackupEdited => '備份已更新';
+
+  @override
+  String get virtBackupRestoreStorage => '還原到儲存';
+
+  @override
+  String get virtBackupRestoreStorageSame => '與備份一致';
+
+  @override
+  String get virtBackupModeSnapshotTip => 'snapshot · 不停機';
+
+  @override
+  String get virtCloneStorageMissing => '該節點上沒有存放虛擬機器磁碟的儲存。';
+
+  @override
+  String get virtBackupCompress => '壓縮';
+
+  @override
+  String get virtBackupUnprotect => '取消保護';
+
+  @override
+  String get virtBackupModeStops => 'suspend 和 stop 會在複製期間中斷執行中的虛擬機器。';
+
+  @override
+  String get virtBackupScheduleValidate => '向主機校驗';
+
+  @override
+  String virtBackupSelected(int count) {
+    return '已選 $count 台';
+  }
+
+  @override
+  String get virtBackupExcludeTip => '該節點上的所有虛擬機器都會備份。關閉某個即可排除它。';
 }

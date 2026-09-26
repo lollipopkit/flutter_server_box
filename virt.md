@@ -19,7 +19,7 @@ Design: Claude Design project `2a6eadf3-ac6c-4925-bb18-8f763a0c3ead`,
 | PVE auth | Password (+ TOTP), as today, **plus API token** (`PVEAPIToken=user@realm!tokenid=secret`). New configurations are pointed at tokens. |
 | Phase 1 scope | Tab, host switcher, guest list and state, power actions, overview (charts), console, IntroPage, migration of the old PVE entry. |
 | Phase 2 scope | Snapshots (list, create, revert, delete) for both backends; Storage and Network sections, read-only: pools/storages with their volumes, networks/interfaces with the guests on them (managed since phase 6). |
-| libvirt snapshots | Internal (`snapshot-create-as` without `--disk-only`): every writable disk must be qcow2, and an active domain's snapshot always holds its memory — QEMU refuses an internal one without it, so the form shows the memory switch on and fixed. External snapshots are left out: reverting them needs libvirt ≥ 9.9 and they add overlay files to every disk. |
+| libvirt snapshots | Internal (`snapshot-create-as` without `--disk-only`): every writable disk must be qcow2, and an active domain's snapshot always holds its memory — QEMU refuses an internal one without it, so the form shows the memory switch on and fixed. External (disk-only) snapshots are phase 8; see that section. |
 | Snapshot names | PVE's `pve-configid` rule (a letter, then letters, digits, `-`, `_`; 2–40), for both backends, and never `current` (PVE's "you are here" entry). A name never needs quoting to be read back. |
 
 ## Current PVE implementation (what is being migrated)
@@ -923,6 +923,138 @@ growth before the upload is written for it), a failed upload putting the
 old seed back (stubbed in the Rust tests only), PVE `vmdk` import images, and
 PVE's cloud-init on SATA or IDE disks with the edit.
 
+### Snapshots: external, config diff, storage support (phase 8)
+
+The phase-2 snapshot machinery extended: a **disk-only snapshot while the
+guest runs** (libvirt external snapshots), the **disk chain** the guest is
+left on, the **configuration diff** between a snapshot and the guest now, and
+PVE's **per-storage support** said before a task is started rather than after
+it fails. Scripts: `sbm_parser::virt_snapshot` (`snap_chain_script`,
+`snapshot_external_script`, `snap_diff_script`); the snapshot listing gained a
+per-snapshot `layers` field (`sbm_parser::virt::VirtSnapshotInfo`), read from
+the same `snapshot-dumpxml` the phase-2 script already collects.
+
+| | libvirt (`virsh`, through `ensureExec()`) | PVE (HTTP API) |
+| --- | --- | --- |
+| Chain | `snap_chain_script`, one round trip: `dumpxml` (the definition's `<backingStore>` chain), `domblklist --details` (where each device is *now*), then `qemu-img info -U --backing-chain --output=json` per disk — QEMU's own reader, so it is the chain QEMU would open, not what the XML claims. `-U` skips the lock a running guest holds | none: a PVE snapshot is taken by the storage, per volume, and there is no chain to show |
+| Create (external) | `snapshot-create-as --disk-only --atomic` **with** metadata, `--diskspec <target>,file=<path>,snapshot=external` per writable disk when a pool was picked | n/a (`snapshotExternal` false) |
+| Create (internal) | as phase 2: `snapshot-create-as`, memory on for an active domain | `POST .../snapshot`, `vmstate=1` |
+| Storage support | `snapshot_chain_script`'s own read: a raw disk, a disk QEMU will not open, or an overlay with no recorded format is refused with the reason | `GET .../{qemu,lxc}/{vmid}/feature?feature=snapshot` — the question PVE's own web UI asks before it offers the button. `hasFeature` over each of the guest's volumes |
+| Config diff | `snap_diff_script`: `snapshot-dumpxml` (whose `<domain>` is the definition at the time) and `dumpxml --inactive`, compared in Rust over the parsed structure | `GET .../snapshot/{name}/config` against `GET .../config`, key by key |
+
+**What the app writes, and why.** `--disk-only --atomic`, with metadata (no
+`--no-metadata`), the overlay named by `--diskspec` into a pool the user
+picks:
+
+- **With metadata.** The layer then appears in `snapshot-list` like any other
+  snapshot, `snapshot-dumpxml` names the file it was left on, and a revert can
+  be asked for through libvirt. `--no-metadata` leaves a guest whose disks no
+  longer match its definition with nothing recording the previous file — a
+  state this app does not put a guest in.
+- **`--atomic`.** libvirt makes every disk's overlay first and removes the
+  ones it made if any fails; without it a guest can be left with one disk
+  overlaid and another not.
+- The previous overlay is **not** removed. The guest's old file becomes the
+  new overlay's backing store, and a new file (`<disk>.<snapshot>`) is what
+  the guest writes from then on; deleting the snapshot is what merges them
+  back.
+- **No pool picked: no `--diskspec` at all.** libvirt then names each overlay
+  `<disk>.<snapshot>` beside the disk it backs, which needs no pool lookup and
+  cannot disagree with what libvirt writes into its own metadata. A picked
+  pool is resolved to its directory from the storage listing, once.
+
+**Reverting a chain — verified on libvirt 11.3.** `snapshot-revert` on an
+external snapshot does **not** put the guest back on the file the snapshot
+recorded:
+
+1. libvirt commits the running overlay into its backing file (the base image
+   becomes the current contents) and deletes the overlay;
+2. it starts the guest on a **new** file in the base image's directory, named
+   `<domain>.<timestamp>`;
+3. the chain is flattened, and every snapshot *after* the one reverted to is
+   left pointing at a file that is now gone — a later revert to one of them
+   fails inside QEMU
+
+So the app offers a revert only on a **leaf** (a snapshot with no children),
+which is what `VirtGuestSnapshot.hasChildren` and
+`virt_snapshot::revert_refusal` state, and the view disables the button with
+the reason rather than letting the host fail. The snapshot listing's `<disks>`
+carries a `<revertDisks>` element once it has been reverted to, naming where a
+*further* revert would go; the parser reads that instead when it is there.
+
+**Not a chain the app cannot read back.** `external_snapshot_refusal` refuses,
+before anything is sent: a guest with no disk, a disk that is not a
+regular file QEMU will open, a disk whose format is not qcow2 (an external
+snapshot needs a qcow2 base), and an overlay whose backing format is not
+recorded. The last one is the subtle case: a definition without a
+`<driver type>` on a qcow2 file is a chain QEMU reads as raw (`backing file
+format: raw`, verified), which is exactly a chain whose layers would be opened
+as the wrong format.
+
+**The diff.** Only what the design's groups name is listed — processor,
+memory, disks, interfaces, firmware, boot, other — and only where it actually
+differs. A device's `<alias>`, `<address>` and the **file it currently sits
+on** are left out: libvirt writes the first two from its own counters, and an
+external snapshot always moves the third, so none of them is a configuration
+change (the chain view is what shows the files). Values are the host's own
+(`262144`, `e1000e · network=default`, `local-lvm:vm-900-disk-0,size=8G`) with
+a human label on the group and key; PVE's listing keys (`digest`, `snaptime`,
+`parent`, `description`) and what PVE writes by itself (`meta`, `smbios1`,
+`vmgenid`) are never shown.
+
+**PVE's storage support, checked before the task.** PVE has no `snapshot`
+content kind: `content` lists what may be *stored* (`images`, `rootdir`,
+`iso`, …), and snapshot support follows the storage's type and the disk's
+format. Its own answer is `GET .../feature?feature=snapshot`, which is what
+its web UI asks before offering the button (`PVE::QemuConfig::has_feature`
+over each volume, so a guest with disks on **mixed** storages answers false
+when any one of them cannot). The form is not offered when the answer is
+false, and the reason comes from the guest's own configuration
+(`scsi0: local-lvm:vm-900-disk-0`) rather than a task. An API token needs
+`VM.Snapshot`, `VM.Snapshot.Rollback` and `VM.Audit` for the question, and
+`VM.Config.Memory` (or whichever key is diffed) for nothing — the diff only
+reads.
+
+`virtSnapshotSupportIssue` and `virtPveStorageMaySnapshot` are the form's own
+hints; the host's answer is what decides.
+
+Verified 2026-09-26 by the "snapshots: external, chain and diff" groups of
+`test/e2e/virt_monitor_test.dart` (libvirt over the agent, PVE over the
+relay), everything named `sbxe2e*` and removed afterwards:
+
+- **libvirt 11.3**, through the providers: a VM of the run's own with a qcow2
+  disk; `snapshotChain` reads one layer, `snapshotExternal` true, no refusal;
+  a disk-only snapshot while it runs leaves it **running**, the chain reads
+  two layers with the overlay backing the file the guest was on, and the
+  listing carries that file; a memory change in the definition shows in the
+  diff as a memory row and nothing else; a second snapshot deepens the chain
+  to three and **deletes cleanly** (depth back to two); reverting to the
+  newest collapses it and the guest is back on a readable chain; deleting the
+  snapshot that was reverted to is refused by libvirt itself
+  (`block-commit: Could not open '<file>': Permission denied`, the layer's
+  file having gone with the collapse) and the app shows the host's words.
+- **PVE 9.2.2**, through the relay with a privilege-separated token: a VM on
+  `lvmthin` answers `hasFeature` and snapshots; a memory change in the
+  configuration reads as a memory row in the diff, with `digest`/`snaptime`
+  left out; a VM on a `dir` storage holding a **raw** disk answers
+  `hasFeature: 0` (`snapshot feature is not available` on the task, captured)
+  and the app refuses before sending, naming the storage — no task is started
+  and no snapshot appears.
+
+By hand on the libvirt host (fixtures): the external snapshot's exact naming
+(`<disk>.<snapshot>`), `qemu-img info -U --backing-chain --output=json` for a
+one-, two- and three-layer chain and for a raw disk, `domblklist --details`, a
+pool's `pool-dumpxml`, a snapshot's `<revertDisks>`, and the diff script
+before and after a vCPU, memory and NIC-model change.
+
+Not verified on a real host: an external snapshot of a guest with more than
+one writable disk (the scripts and the parser handle a list of them; only one
+was run), a snapshot on a pool of block devices (LVM, ZFS zvols: refused by
+the pool's own target path being absent), a revert of an internal snapshot
+after an external one on the same guest, and PVE's `zfspool` and `rbd`
+storages (only `lvmthin` and `dir` were available).
+
+
 ## Verified against real hosts
 
 `test/e2e/virt_real_test.dart` (opt-in; its header lists the variables) and
@@ -994,12 +1126,13 @@ on the libvirt host is outside the `libvirt` group.
 | Snapshots, storage, networks | libvirt through the agent's `/exec` and `sudo -S`: pools with their volumes, networks, and a snapshot of the shut-off domain taken and deleted. PVE through the relay: storage with the volumes of VM 100, bridges with VM 100 and CT 200 on them. |
 | `full_access` off | libvirt: `/exec` answers 403 → `execNotGranted` (was `unreachable` with a DioException's text). PVE: the relay is `relayNotGranted` whether the grant was read (refused before dialling) or not (the agent refuses the stream ticket with 403; was `unreachable`). |
 | Refused before dialling | The dialer failed its socket future before `HttpClient` listened to it, and so did `PveBackend`'s TLS future on top: the load failed correctly *and* the zone got an uncaught error. Both futures are now marked handled. |
+| External snapshots (phase 8) | libvirt through the agent's `/exec` and `sudo -S`, the whole flow through the providers: a guest of the run's own, a disk-only snapshot while it runs, the chain read back, a memory change read as a diff, a second snapshot, a clean delete of it, a revert that collapses the chain, and the host's own refusal to delete the snapshot that was reverted to. PVE through the relay: a VM on `lvmthin` snapshotting and its memory change read as a diff; a VM on a `dir` storage added for the run with a raw disk answered `hasFeature: 0` and refused before any task. |
 
 Not verified on a real host: a ticket that expired on the server's clock (the 2 h expiry and the
 renewal were driven by the backend's injected clock against real tickets), a
 real backup job (the lock was set by hand), the guest agent's shutdown,
-clusters (storage and networks per node), PVE before 9.2, external libvirt
-snapshots, libvirt pools other than `dir`, and PVE bonds, VLANs and OVS
+clusters (storage and networks per node), PVE before 9.2, libvirt pools other
+than `dir`, and PVE bonds, VLANs and OVS
 (parsed from hand-written payloads only).
 
 ## UI
@@ -1034,7 +1167,10 @@ Follows the repo's tab conventions (`CLAUDE.md` → Tabs):
   shows memory as the host allows it: a switch (PVE VM, running), on and
   fixed (libvirt, active), or a note (stopped). Revert and delete are
   confirmed; a revert to a snapshot without memory on an active guest is
-  asked in red with "start it afterwards".
+  asked in red with "start it afterwards". Phase 8 adds the disk chain group,
+  the internal/external kind (libvirt) with its overlay pool, the
+  configuration diff (a row's own button, and the revert dialog), and the
+  refusal of a revert on a snapshot with children.
 - Design deviations in the Hardware and Settings views, and why:
   - drafts with Save / Cancel where the design applies each step (a step
     is not a change to the host);
@@ -1074,6 +1210,71 @@ Follows the repo's tab conventions (`CLAUDE.md` → Tabs):
   - PVE volume formats follow the storage (qcow2 on a directory), where the
     design offers raw only; upload is offered on every libvirt pool of files,
     not only one already holding ISOs.
+- Design deviations in the Snapshots view (phase 8), and why:
+  - a **disk chain** group above the list, which the design has no place for:
+    the design's "存于 qcow2 内部" right-hand note is true of phase 2's internal
+    snapshots, and an external one leaves the guest on a chain whose layers
+    have to be nameable. It is drawn the way the design draws a device — a
+    card that lists each disk and, under it, each file by depth, the top one
+    marked "in use now" and the last "base image";
+  - a **snapshot kind** choice (internal / external) in the create row, only
+    where the host writes both, with the overlay pool under it: the design's
+    single "包含内存状态" switch does not say which of the two libvirt forms
+    is being written, and an external one has no memory to offer at all;
+  - the **diff** opens from a snapshot's row ("与当前比较") and is shown in the
+    revert dialog, where the design shows only the revert's own warning: the
+    design has no diff, and a revert is the moment it matters. Its rows are
+    the design's `field` rows (name left, value right) grouped under the
+    design's own headings;
+  - a revert is **disabled** on a snapshot with children, with the reason
+    under it, where the design always offers it: on a chain libvirt's revert
+    strands every later snapshot (see the phase-8 section);
+  - a guest whose storage the host says cannot be snapshotted (PVE) gets the
+    reason instead of the create row, where the design always offers it.
+
+- Design deviations in the Templates, Clone and Backup work (phase 9), and
+  why:
+  - **a Backup section of the tab** (PVE), where the design's Plan group is
+    read-only and points at "数据中心 → 备份": a job that takes every guest
+    (or a pool) belongs to no guest, and a guest's own Plan group can only
+    say "one of them takes you". The section is the same `SegmentedTabs` the
+    Storage and Network sections are, and a job is edited on the design's own
+    sectioned pane (the Hardware view's groups and index) rather than in a
+    dialog;
+  - **a template's own state in the list**, which the design's state set
+    (`LIVE`: running, paused, stopping, rebooting, migrating, backup) has no
+    member for. It is grouped under "Template" after the state groups, and
+    its row's right-hand meta reads "Template" where a running guest's reads
+    its CPU: a template is not a stopped guest, and it never becomes one;
+  - **Clone is a banner and a button on a template's overview**, where the
+    design would leave the guest's own view. The clones' names come from the
+    Clone group in Settings, and the design's two-step "press again" would
+    not say that a template cannot be started;
+  - **the run's options are a group of the Backup view**, always in place,
+    where the design's "立即备份" row and its `snapshot · zstd` line name the
+    same options once: a form that is there is one fewer dialog, and the
+    options are what the storage/mode/compression segments show at rest. The
+    design's `保留` (retention) is on the job editor, not the run, because
+    PVE's `prune-backups` belongs to the storage or the job;
+  - **a clone's target storage and node are choice lists** built from the
+    host's own storages and nodes, not a text field: PVE refuses a storage
+    that holds no images and a node that cannot see it, and a form that
+    offers what the host has cannot ask for either. The node row is drawn
+    only where the host has more than one, and only on a full clone (PVE
+    refuses both on a linked one);
+  - **a job's schedule has a "Check with the host" button** rather than an
+    inline calendar picker: PVE's own format is a subset of systemd calendar
+    events, its parser is the authority, and `schedule-analyze` is the call
+    its own editor's "Simulate" button makes. What it answers — the next few
+    runs, or the parse error — is shown under the field;
+  - **the guest selection is switches over the host's guests**, with "All
+    guests" and "Selected guests" as a segment, where the design has one
+    read-only line: PVE's `all` less `exclude` and a `vmid` list are two
+    different jobs, and a template is left out (PVE refuses to back one up).
+    A pool-based job is shown in the datacenter's list and not offered in the
+    form: PVE's own editor has it, and it would need a pool listing the app
+    does not read.
+
 - The Settings view's cloud-init group, which the design has no place for
   (phase 7's create form sets cloud-init up; changing it later belongs with
   the guest's other settings): the create form's cloud-init rows, a draft
@@ -1181,6 +1382,121 @@ page, so feature pages use the `featureIntroVer` counter.
 - `_onDone` already writes `featureIntroVer = _kFeatureIntroVer`; nothing else
   to record.
 
+### Templates, clone targets and backup jobs (phase 9)
+
+The design's Plan group becomes something the app manages a level up: a
+**Backup** section of the tab (PVE, `VirtCapabilities.backupJobs`) lists the
+datacenter's jobs, makes, edits, runs and deletes them, and a guest's own
+Plan group reads the jobs that take it and runs one. A **template** is a
+state of a guest (`POST .../template`), shown in the list and the bar, with
+no power action and no console; a **clone** can be sent to a storage and a
+node of its own.
+
+| | libvirt (`virsh` through `ensureExec()`) | PVE (HTTP API) |
+| --- | --- | --- |
+| Template | none: a domain is a domain, and a copy of one is a clone (`VirtCapabilities.template` false; the group is not offered) | `POST /nodes/{n}/{qemu,lxc}/{vmid}/template`, the task. PVE refuses a running guest (`you can't convert a VM to template if VM is running`) and one with snapshots (`unable to create template, because VM contains snapshots`), and there is no way back. The disks turn into base images (`vm-910-disk-0` → `base-910-disk-0` on LVM-thin) |
+| Clone target | `vol-create-from` on the target pool, with `--inputpool` naming the source's (a `vol-clone` only ever clones within one pool). The XML is the name, `vol-info --bytes`'s capacity and the source's format, written to a `mktemp` file on the host | `POST .../clone` with `storage` (where the copy's disks go) and `target` (the node it is made on); both are refused on a linked clone (`parameter 'storage' not allowed for linked clones`) |
+| Backup jobs | none | `GET/POST /cluster/backup`, `PUT/DELETE /cluster/backup/{id}`; a run now is `POST /nodes/{n}/vzdump` with the job's fields minus the schedule — what PVE's own "Run now" does (`/cluster/backup/{id}/included_volumes` is what its detail view *lists*) |
+| A backup's own fields | none | `PUT /nodes/{n}/storage/{id}/content/{volid}`: `notes`, `protected` |
+| Restore onto a storage | none | `POST /nodes/{n}/{qemu,lxc}` with `archive`/`ostemplate` + `storage` (PVE's "Default storage") |
+
+Decisions:
+
+- **A template is a guest's state, not a separate list.** PVE's own resource
+  list marks one (`template: 1`), so `VirtGuest.template` does, and the list
+  groups them under "Template" after the state groups (the design's own `LIVE`
+  set has no such state, so this is a deviation — see the UI section). A
+  template offers no power action (PVE refuses every one:
+  `you can't start a vm if it's a template`), and the guest view drops the
+  Console, Hardware and Snapshots segments with it, keeping Overview (where
+  Clone is the button), Backups and Settings (where the Clone group is).
+- **The template group is in Settings, and says it cannot be undone.** PVE
+  has no way back, and its own web UI puts the action under "More"; the
+  dialog is red and the note is above the button.
+- **`target` is offered only where there is another node.** A copy to
+  another node needs a cluster and a storage both see
+  (`can't clone VM to node '<n>' (VM uses local storage)`), so
+  `virtCloneNodeIssue` and `virtCloneStorageIssue` refuse both before the
+  request: the node must be one the host lists, and a storage with `target`
+  must be `shared`. On libvirt the pool is the same question and the answer
+  is `vol-create-from`, which needs no cluster.
+- **The clone form sends neither on a linked clone.** PVE refuses `storage`
+  and `target` there, and the backend drops both rather than letting the
+  task fail; the form refuses the combination first
+  (`VirtCreateIssue.cloneLinkedTarget`).
+- **`isNew` on the edit, not `id == null`.** PVE's own panel lets a new job
+  be given its id, so a create carries one and still has to be a `POST`; a
+  `PUT` of a job that is not there answers `no such vzdump job`.
+- **The schedule is checked locally for shape, then by the host.** A
+  schedule is systemd calendar format, and PVE's parser is the authority:
+  `GET /cluster/jobs/schedule-analyze` is what its own editor's "Simulate"
+  button calls, and `virtScheduleIssue` refuses only what is obviously not
+  one (empty, a `;`, a newline, a weekday after the time, `Mon-Fri` instead
+  of `mon..fri`, a field's part above 59). All 32 values the unit test
+  checks were put to the host on PVE 9.2.2 and the local answer matches its
+  every time — including `mon 25:00`, which PVE **accepts** (the hour is not
+  range-checked the way the minute is).
+- **A job that takes every guest is not a guest's.** `VirtBackupJob.takes`
+  answers for `all` (less `exclude`) and for a `vmid` list, and returns
+  false for a pool job: which guests a pool holds is not in
+  `/cluster/backup`'s answer, so a guest's Plan group cannot claim one takes
+  it. The datacenter's own list shows them all.
+- **A run now is the job's fields without its schedule**, on the job's own
+  node (or this host when the job names none) — PVE's own UI clones the job
+  and deletes `enabled`, `starttime`, `dow`, `id`, `schedule`, `type`,
+  `node`, `comment`, `next-run` and `repeat-missed` before posting it. Its
+  UI posts to every online node; this app posts to one, since a job with no
+  node runs on each of them and the guests would be backed up once per node.
+- **A backup's notes and protection are written together.** PVE's `PUT`
+  keeps what is not sent, so an emptied note has to be written as one:
+  `VirtBackupEdit` carries both and the backend sends both.
+- **The run's options live in a group of the Backup view**, next to the list
+  that used them, rather than a dialog per press: the design's "立即备份" row
+  and its `snapshot · zstd` are the same options, and a form that is always
+  there is one fewer thing to open. The group's own button is the same
+  backup the list's row makes.
+- **Protection is a toggle per backup, and deleting a protected one is
+  refused** ("cannot remove protected volume ... on 'local'"): PVE's own
+  words are shown, and the row's delete is disabled while it is set.
+
+Verified 2026-09-26 on the real hosts (through `virt_monitor_test.dart`'s
+"clone", "clone and backups" and "a template"/"a backup job" groups, every
+guest named `sbme2e*`/`sbxe2e*` and removed afterwards):
+
+- **libvirt 11.3** through the agent and sudo: a source VM of the run's own,
+  and a copy into a **second pool** (`vol-create-from` out of `images` into a
+  `dir` pool of the run's own): the copy's disk is a qcow2 in the target
+  pool, the source's volumes are untouched, and deleting the copy deletes
+  only its own. `unit='bytes'` with a literal `$cap` inside the single-quoted
+  XML was refused by libvirt itself (`XML error: malformed capacity
+  element`), which is what the quoting in `clone_volumes_script` is for.
+- **PVE 9.2.2** through the relay with a privilege-separated token (the
+  documented set plus `VM.Allocate`, which `POST .../template` needs): a VM
+  turned into a template while stopped (running refused by the app *and* by
+  PVE), the template reading as one with no action offered, a linked clone
+  and a full clone of it onto a named storage, both running while the
+  template cannot, and the template deleted with its clones. A backup job
+  made with `id`, schedule, storage, mode, compression, notes template,
+  retention and notification: listed, its every field read back, edited
+  (schedule and mode), run now (`vzdump` on the node, a real archive made
+  and listed), and deleted with nothing left. `checkSchedule` answering
+  PVE's own parse errors for `not a schedule`.
+- **By hand on PVE 9.2.2** (fixtures): `POST .../template` on a VM whose disk
+  is on `lvmthin` (the LV renamed to `base-910-disk-0`), `all`-style and
+  named-guest jobs in `/etc/pve/jobs.cfg`, `--prune-backups` stored as an
+  object of strings, `PUT .../content/{volid}` for notes and protection, a
+  protected backup's own refusal, a restore onto a storage other than the
+  archive's, and `no such cluster node` / `does not support vm images` for
+  the two bad clone targets.
+
+Not verified on a real host: a clone to **another node** (the test host is a
+single node, so only the app's own refusal and PVE's `no such cluster node`
+were seen); a job by **pool** (the fixture is hand-written from the field);
+a guest with snapshots being refused as a template by PVE itself (the app
+refuses it first, and the snapshot listing is only read where that view has
+been opened); libvirt's `vol-create-from` into a **block** pool (the second
+pool was a `dir`).
+
 ## Later phases
 
 - Storage and networks: PVE SDN (zones, VNets); editing an existing
@@ -1188,18 +1504,24 @@ page, so feature pages use the `featureIntroVer` counter.
   .../network/{iface}`); a volume's contents copied on PVE; uploads over a
   monitor agent (needs a byte-stream endpoint on the agent); PVE storage
   types beyond dir/LVM-thin/NFS/ZFS, content kinds chosen in the form.
-- Snapshots: external libvirt snapshots (disk-only while running), a
-  snapshot's configuration diff, PVE's per-storage snapshot support shown
-  before trying.
+- Snapshots: a chain's merge/commit from the app (libvirt `blockcommit`, so
+  an old layer can be dropped without reverting); an external snapshot of a
+  guest whose disks are on more than one pool (the form picks one pool for
+  all of them); deleting a snapshot that was reverted to (libvirt refuses it
+  while the layer's file is gone — a `blockcommit` of the live file is the
+  way out).
 - Hardware: libvirt revert (redefine from the running XML); USB passthrough
   by port rather than vendor/product.
 - cloud-init: more than one search domain and NIC; PVE's `cicustom`
   snippets and `ciupgrade` in the form; a password's expiry.
-- Migrate (PVE cluster; the design's Migrate group in Settings). Create:
-  Secure Boot in the form.
-- Clone: "convert to template" (PVE `POST .../template`), a target storage
-  or node for a full clone. Backups: scheduled jobs edited from the app,
-  per-run options (storage, mode, compression, notes, protection) in the
-  view, notes and protection edited on a backup, a restore's target storage.
+- Migrate (PVE cluster; the design's Migrate group in Settings) — which is
+  also what a clone to another node needs a cluster for. Create: Secure Boot
+  in the form.
+- Clone: a **linked** clone from the app's own form choice on libvirt (an
+  overlay on the source's disks: the design's switch, refused here because
+  it pins the source image — see phase 7's "a copy, not a qcow2 overlay").
+  Backups: a job's `fleecing`, `bwlimit`, `ionice`, PBS storages and
+  `notification-mode`; a backup's verification run; `prune-backups` as its
+  own steppers rather than one property string.
 - Monitor agent: native virt endpoints and web panel parity, reusing
   `sbm_parser::virt`.

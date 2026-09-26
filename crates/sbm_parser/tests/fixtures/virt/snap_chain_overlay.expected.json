@@ -1,0 +1,25 @@
+{
+  "disks": [
+    {
+      "target": "vda",
+      "files": [
+        {
+          "path": "/var/lib/libvirt/sbxe2e-p8q/sx1.qcow2",
+          "format": "qcow2",
+          "backing": "/var/lib/libvirt/images/sbxe2e-f1.qcow2",
+          "allocation": 204800,
+          "capacity": 268435456
+        },
+        {
+          "path": "/var/lib/libvirt/images/sbxe2e-f1.qcow2",
+          "format": "qcow2",
+          "backing": null,
+          "allocation": 200704,
+          "capacity": 268435456
+        }
+      ],
+      "pool": "sbxe2e-p8q"
+    }
+  ],
+  "blocked": null
+}

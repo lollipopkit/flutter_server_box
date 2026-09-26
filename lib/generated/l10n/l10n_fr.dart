@@ -3831,7 +3831,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get pveTokenTipBackup =>
-      'Le clonage nécessite VM.Clone, la sauvegarde et la restauration VM.Backup, avec Datastore.AllocateSpace là où va la copie ou la sauvegarde.';
+      'Le clonage nécessite VM.Clone, la sauvegarde et la restauration VM.Backup, et la conversion en modèle VM.Allocate ; les tâches de sauvegarde nécessitent aussi Sys.Audit pour les lire et Sys.Modify sur / pour les créer, modifier et supprimer, avec Datastore.AllocateSpace là où va la copie ou la sauvegarde.';
 
   @override
   String get virtErrConflict => 'Modifié ailleurs';
@@ -4896,4 +4896,331 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get virtCiSaved => 'Enregistré. Prend effet au prochain démarrage.';
+
+  @override
+  String get virtSnapshotExternal => 'Disques seuls à chaud';
+
+  @override
+  String get virtSnapshotExternalTip =>
+      'L\'invité continue de tourner. Chaque disque reçoit une surcouche qcow2 dans le pool choisi ; l\'invité reste sur une chaîne.';
+
+  @override
+  String get virtSnapshotFormInternal => 'Interne (dans l\'image)';
+
+  @override
+  String get virtSnapshotForm => 'Type';
+
+  @override
+  String get virtSnapshotOverlayPool => 'Pool de surcouches';
+
+  @override
+  String get virtSnapshotExternalNoMemory =>
+      'Un instantané externe ne contient jamais la mémoire : l\'invité n\'est pas arrêté.';
+
+  @override
+  String get virtSnapshotChain => 'Chaîne de disques';
+
+  @override
+  String virtSnapshotChainDepth(String count) {
+    return '$count couches';
+  }
+
+  @override
+  String get virtSnapshotChainFile => 'Fichier';
+
+  @override
+  String get virtSnapshotChainActive => 'Utilisé actuellement';
+
+  @override
+  String get virtSnapshotChainBase => 'Image de base';
+
+  @override
+  String virtSnapshotChainRaw(String format) {
+    return 'Un instantané externe nécessite un disque qcow2. Celui-ci est $format.';
+  }
+
+  @override
+  String get virtSnapshotNoSupport =>
+      'Le stockage de l\'invité ne prend pas en charge les instantanés ; aucun ne peut être créé.';
+
+  @override
+  String get virtSnapshotRevertChain =>
+      'Un retour sur une chaîne fusionne la surcouche en cours dans l\'image et rend inutilisable tout instantané ultérieur. Seul le plus récent peut être restauré.';
+
+  @override
+  String get virtSnapshotRevertHasChildren =>
+      'Refusé tant qu’un instantané ultérieur repose sur celui-ci.';
+
+  @override
+  String get virtSnapshotDiff => 'Différences avec maintenant';
+
+  @override
+  String get virtSnapshotDiffNone =>
+      'La configuration n\'a pas changé depuis cet instantané.';
+
+  @override
+  String get virtSnapshotDiffShow => 'Comparer avec maintenant';
+
+  @override
+  String get virtSnapshotDiffGroup => 'Modifié';
+
+  @override
+  String get virtSnapshotDiffGroupCpu => 'Processeur';
+
+  @override
+  String get virtSnapshotDiffGroupMemory => 'Mémoire';
+
+  @override
+  String get virtSnapshotDiffGroupDisks => 'Disques';
+
+  @override
+  String get virtSnapshotDiffGroupNic => 'Interfaces';
+
+  @override
+  String get virtSnapshotDiffGroupFirmware => 'Micrologiciel';
+
+  @override
+  String get virtSnapshotDiffGroupBoot => 'Démarrage';
+
+  @override
+  String get virtSnapshotDiffGroupOther => 'Autre';
+
+  @override
+  String virtSnapshotDiffValue(String after, String before) {
+    return '$before → $after';
+  }
+
+  @override
+  String get virtSnapshotDiffRemoved => 'supprimé';
+
+  @override
+  String get virtSnapshotDiffAdded => 'ajouté';
+
+  @override
+  String virtSnapshotDiffAsk(String snapshot) {
+    return 'Ce qui change en revenant à $snapshot :';
+  }
+
+  @override
+  String virtSnapshotDiffHost(String error) {
+    return 'L\'hôte n\'a pas pu dire ce qui diffère : $error';
+  }
+
+  @override
+  String virtSnapshotExternalExists(String count) {
+    return 'L\'invité est déjà sur $count couches ; cet instantané en ajoute une.';
+  }
+
+  @override
+  String get virtToTemplate => 'Convertir en modèle';
+
+  @override
+  String get virtToTemplateNote =>
+      'Un modèle ne peut être démarré ni reconverti en invité. Ses disques deviennent des images de base, ce qu\'un clone lié partage.';
+
+  @override
+  String virtToTemplateConfirm(String name) {
+    return 'Convertir $name en modèle ?';
+  }
+
+  @override
+  String get virtToTemplateIrreversible =>
+      'Cela est irréversible : un modèle ne peut pas redevenir un invité.';
+
+  @override
+  String get virtToTemplateStopped => 'Éteignez-le d\'abord.';
+
+  @override
+  String get virtToTemplateSnapshots =>
+      'Un invité avec des instantanés ne peut pas devenir un modèle.';
+
+  @override
+  String virtTemplateCreated(String name) {
+    return '$name est maintenant un modèle';
+  }
+
+  @override
+  String get virtTemplateTip => 'Un modèle ne s\'exécute qu\'une fois cloné.';
+
+  @override
+  String get virtCloneStorage => 'Stockage cible';
+
+  @override
+  String get virtCloneStorageSame => 'Comme la source';
+
+  @override
+  String get virtCloneNode => 'Nœud cible';
+
+  @override
+  String get virtCloneNodeSame => 'Comme la source';
+
+  @override
+  String get virtClonePool => 'Pool cible';
+
+  @override
+  String get virtCloneStorageContent =>
+      'Ce stockage ne contient pas de disques de VM.';
+
+  @override
+  String get virtCloneStorageShared =>
+      'Copier vers un autre nœud nécessite un stockage partagé.';
+
+  @override
+  String get virtCloneNodeUnknown => 'Cet hôte n\'a pas ce nœud.';
+
+  @override
+  String get virtCloneLinkedTarget =>
+      'Un clone lié partage les disques du modèle : il ne peut indiquer ni stockage ni nœud.';
+
+  @override
+  String get virtBackupJobs => 'Tâches de sauvegarde';
+
+  @override
+  String get virtBackupJobsNone =>
+      'Aucune tâche de sauvegarde planifiée. Ajoutez-en une pour sauvegarder les invités régulièrement.';
+
+  @override
+  String get virtBackupJobNew => 'Nouvelle tâche';
+
+  @override
+  String get virtBackupJobEdit => 'Modifier la tâche';
+
+  @override
+  String get virtBackupJobRun => 'Exécuter maintenant';
+
+  @override
+  String get virtBackupJobRunAsk =>
+      'Lancer cette tâche de sauvegarde maintenant ?';
+
+  @override
+  String virtBackupJobDeleteAsk(String id) {
+    return 'Supprimer la tâche de sauvegarde $id ? Les sauvegardes restent.';
+  }
+
+  @override
+  String get virtBackupJobSaved => 'Tâche enregistrée';
+
+  @override
+  String get virtBackupJobDeleted => 'Tâche supprimée';
+
+  @override
+  String get virtBackupJobStarted => 'Tâche de sauvegarde lancée';
+
+  @override
+  String get virtBackupSchedule => 'Planification';
+
+  @override
+  String get virtBackupScheduleHelp =>
+      'Un sous-ensemble des événements de calendrier systemd : 02:30, mon..fri 02:30, sat 03:00, daily, hourly, */15.';
+
+  @override
+  String get virtBackupScheduleInvalid =>
+      'L\'hôte n\'accepte pas cette planification.';
+
+  @override
+  String virtBackupScheduleNext(String times) {
+    return 'Prochaines exécutions : $times';
+  }
+
+  @override
+  String get virtBackupSelection => 'Invités';
+
+  @override
+  String get virtBackupSelectionAll => 'Tous les invités';
+
+  @override
+  String get virtBackupSelectionList => 'Invités sélectionnés';
+
+  @override
+  String get virtBackupSelectionNone => 'Choisissez au moins un invité.';
+
+  @override
+  String get virtBackupMail => 'Notification';
+
+  @override
+  String get virtBackupMailAlways => 'Toujours';
+
+  @override
+  String get virtBackupMailFailure => 'En cas d\'échec';
+
+  @override
+  String get virtBackupNotesTemplate => 'Notes de sauvegarde';
+
+  @override
+  String virtBackupNotesTemplateTip(String vars) {
+    return 'Les notes sont ajoutées à chaque sauvegarde de la tâche. Remplacés : $vars.';
+  }
+
+  @override
+  String get virtBackupPrune => 'Rétention';
+
+  @override
+  String get virtBackupPruneTip =>
+      'Les options de rétention de PVE, par ex. keep-last=7,keep-daily=4. Vide : celles du stockage ou du nœud.';
+
+  @override
+  String get virtBackupNextRun => 'Prochaine exécution';
+
+  @override
+  String get virtBackupJobNode => 'Nœud';
+
+  @override
+  String get virtBackupJobNodeAny => 'Tous les nœuds';
+
+  @override
+  String get virtBackupEnabled => 'Activée';
+
+  @override
+  String get virtBackupOptions => 'Options';
+
+  @override
+  String get virtBackupProtect => 'Protéger';
+
+  @override
+  String get virtBackupProtectTip =>
+      'Une sauvegarde protégée n\'est pas élaguée et ne peut être supprimée tant que la protection est active.';
+
+  @override
+  String get virtBackupEditNotes => 'Notes';
+
+  @override
+  String get virtBackupSaveNotes => 'Enregistrer';
+
+  @override
+  String get virtBackupEdited => 'Sauvegarde mise à jour';
+
+  @override
+  String get virtBackupRestoreStorage => 'Restaurer vers le stockage';
+
+  @override
+  String get virtBackupRestoreStorageSame => 'Comme dans la sauvegarde';
+
+  @override
+  String get virtBackupModeSnapshotTip => 'snapshot · sans arrêt';
+
+  @override
+  String get virtCloneStorageMissing =>
+      'Aucun stockage de ce nœud ne contient de disques de VM.';
+
+  @override
+  String get virtBackupCompress => 'Compression';
+
+  @override
+  String get virtBackupUnprotect => 'Déprotéger';
+
+  @override
+  String get virtBackupModeStops =>
+      'suspend et stop interrompent un invité en cours d\'exécution pendant la copie.';
+
+  @override
+  String get virtBackupScheduleValidate => 'Vérifier auprès de l\'hôte';
+
+  @override
+  String virtBackupSelected(int count) {
+    return '$count sélectionnés';
+  }
+
+  @override
+  String get virtBackupExcludeTip =>
+      'Tous les invités du nœud sont pris. Désactivez-en un pour l\'exclure.';
 }

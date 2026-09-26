@@ -13,6 +13,7 @@ import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/virt/libvirt.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_backup.dart';
+import 'package:server_box/data/model/virt/virt_backup_schedule.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
@@ -148,6 +149,7 @@ class LibvirtBackend implements VirtBackend {
         pause: true,
         snapshots: true,
         snapshotMemoryRequired: true,
+        snapshotExternal: true,
         storage: true,
         network: true,
         serialConsole: true,
@@ -156,6 +158,7 @@ class LibvirtBackend implements VirtBackend {
         deleteKeepsDisks: true,
         hardware: true,
         clone: true,
+        cloneTarget: true,
         storageEdit: true,
         poolTypes: const ['dir', 'netfs', 'logical'],
         poolAutostart: true,
@@ -390,26 +393,202 @@ class LibvirtBackend implements VirtBackend {
     },
     current: s.current,
     withMemory: s.memory,
+    external: s.external,
+    layers: [
+      for (final l in s.layers)
+        VirtSnapshotLayer(target: l.target, file: l.file, external: l.snapshot == 'external'),
+    ],
   );
+
+  /// The disk chain: the definition's disks, where each device is now, and
+  /// each one's chain as QEMU resolves it, all of that in one round trip
+  /// (`snap_chain_script`).
+  ///
+  /// Two more run beside it, both cheap next to a `virsh` call and both
+  /// already read by the view that shows a chain: the snapshot listing, whose
+  /// layers name which snapshot left the guest on which file, and the pool
+  /// list, whose target directories are where a `--diskspec file=` can put
+  /// an overlay (a pool of block devices has none and is not offered).
+  @override
+  Future<VirtSnapChain> snapshotChain(VirtGuest guest) async {
+    final json = await _run(
+      ffi.virtSnapChainScript(domain: guest.id),
+      ffi.parseVirtSnapChainJson,
+    );
+    final chain = LibvirtSnapChain.fromJson(_decode(json));
+    final snaps = await snapshots(guest);
+    // Which snapshot left the guest on which layer, so the view can name it
+    // rather than only the file: a snapshot records the file it was left on,
+    // and that file is what the guest wrote to until the next snapshot moved
+    // it on. The topmost layer is the one in use, which is the current
+    // external snapshot's.
+    final owner = <String, String>{};
+    for (final s in snaps) {
+      for (final l in s.layers) {
+        if (l.file != null) owner[l.file!] = s.name;
+      }
+    }
+    final current = snaps.firstWhereOrNull((s) => s.current && s.external);
+    if (current != null) {
+      for (final d in chain.disks) {
+        final top = d.files.firstOrNull;
+        if (top != null) owner.putIfAbsent(top.path, () => current.name);
+      }
+    }
+    // Where an overlay can go: the pools of files the host has. A pool of
+    // block devices has no directory to write one into, which its own target
+    // path says (it is null or not a path).
+    List<String> pools;
+    try {
+      pools = [
+        for (final p in await storagePools())
+          if ((p.path ?? '').startsWith('/') && p.active) p.name,
+      ];
+    } on VirtErr catch (e) {
+      Loggers.app.info('libvirt pools for a snapshot overlay: ${e.message}');
+      pools = const [];
+    }
+    return VirtSnapChain(
+      pools: pools,
+      disks: [
+        for (final d in chain.disks)
+          VirtSnapChainDisk(
+            target: d.target,
+            pool: d.pool,
+            files: [
+              for (var i = 0; i < d.files.length; i++)
+                VirtSnapChainFile(
+                  path: d.files[i].path,
+                  format: d.files[i].format,
+                  allocation: d.files[i].allocation,
+                  backing: d.files[i].backing,
+                  snap: owner[d.files[i].path],
+                  active: i == 0,
+                ),
+            ],
+          ),
+      ],
+      blocked: chain.blocked,
+      refusal: await ffi.virtExternalSnapshotRefusal(chainJson: json),
+    );
+  }
+
+  /// libvirt has nothing to ask: whether a snapshot can be taken is what the
+  /// chain's own read says (a raw disk, a disk QEMU will not open).
+  @override
+  Future<bool?> snapshotSupported(VirtGuest guest) async =>
+      (await snapshotChain(guest)).refusal == null;
+
+  @override
+  Future<String?> snapshotRefusal(VirtGuest guest) async => switch (guest.state) {
+    // An external snapshot of a shut-off domain is a disk-only snapshot of
+    // the same files: allowed, and it is what the form offers.
+    _ => (await snapshotChain(guest)).refusal,
+  };
+
+  /// `snapshot-dumpxml`'s `<domain>` against `dumpxml --inactive`, in one
+  /// round trip. Only what the view can name is listed (processor, memory,
+  /// disks, interfaces, firmware, boot); a device's address, alias and the
+  /// file it currently sits on are left out, since libvirt writes those
+  /// itself rather than anyone configuring them.
+  @override
+  Future<List<VirtSnapDiff>> snapshotDiff(VirtGuest guest, String name) async {
+    final json = await _run(
+      ffi.virtSnapDiffScript(domain: guest.id, name: name),
+      ffi.parseVirtSnapDiffJson,
+    );
+    return [
+      for (final d in _decodeList(json))
+        VirtSnapDiff(
+          group: switch (LibvirtSnapDiff.fromJson(d).group) {
+            'cpu' => VirtSnapDiffGroup.cpu,
+            'memory' => VirtSnapDiffGroup.memory,
+            'disks' => VirtSnapDiffGroup.disks,
+            'interfaces' => VirtSnapDiffGroup.nics,
+            'firmware' => VirtSnapDiffGroup.firmware,
+            'boot' => VirtSnapDiffGroup.boot,
+            _ => VirtSnapDiffGroup.other,
+          },
+          key: LibvirtSnapDiff.fromJson(d).key,
+          before: LibvirtSnapDiff.fromJson(d).before,
+          after: LibvirtSnapDiff.fromJson(d).after,
+        ),
+    ];
+  }
 
   /// An internal snapshot: with the memory of an active domain, which QEMU
   /// insists on, so [memory] changes nothing; disks only for a shut-off one.
   /// Every writable disk must be qcow2 — libvirt's refusal says which is not.
+  ///
+  /// [form] `external` writes a disk-only one instead: an overlay per disk
+  /// (in [overlayPool] where one was picked), the guest left running. What
+  /// that means for the chain is `sbm_parser::virt_snapshot`'s module
+  /// comment; the guard is read before anything is sent.
   @override
   Future<void> createSnapshot(
     VirtGuest guest, {
     required String name,
     String? description,
     bool memory = false,
+    VirtSnapshotForm form = VirtSnapshotForm.internal,
+    String? overlayPool,
   }) async {
     _checkName(name);
+    if (form == VirtSnapshotForm.internal) {
+      await _action1(
+        ffi.virtSnapshotCreateScript(
+          domain: guest.id,
+          name: name,
+          description: description,
+        ),
+      );
+      return;
+    }
+    final chain = await snapshotChain(guest);
+    if (chain.refusal case final why?) {
+      throw VirtErr(type: VirtErrType.unsupported, message: why);
+    }
+    // Where the overlays go. **No pool picked: no `--diskspec` at all** —
+    // libvirt then names each overlay `<disk>.<snapshot>` beside the disk it
+    // backs, which is the disk's own pool and needs no lookup. A pool the
+    // user picked is resolved to its directory once, and every disk's
+    // overlay goes there.
+    final overlays = <(String, String)>[];
+    if (overlayPool != null) {
+      final dir = await _poolTarget(overlayPool);
+      for (final d in chain.disks) {
+        final top = d.files.firstOrNull;
+        if (top == null) continue;
+        overlays.add((
+          d.target,
+          virtSnapshotOverlayPath(top.path, name, dir),
+        ));
+      }
+    }
     await _action1(
-      ffi.virtSnapshotCreateScript(
+      ffi.virtSnapshotExternalScript(
         domain: guest.id,
         name: name,
         description: description,
+        overlays: overlays,
       ),
     );
+  }
+
+  /// Where a pool keeps its files: its target directory, from the listing
+  /// the Storage view already reads (a pool of block devices has none, and
+  /// no overlay can be put in it by path).
+  Future<String> _poolTarget(String pool) async {
+    final pools = await storagePools();
+    final found = pools.firstWhereOrNull((p) => p.id == pool || p.name == pool);
+    final path = found?.path;
+    if (path == null || path.isEmpty) {
+      throw VirtErr(
+        type: VirtErrType.unsupported,
+        message: 'Pool $pool has no directory an overlay can go in',
+      );
+    }
+    return path;
   }
 
   @override
@@ -666,9 +845,11 @@ class LibvirtBackend implements VirtBackend {
   // ---------------------------------------------------------------------------
 
   /// Two steps, as creating is: each writable disk copied (or made empty)
-  /// in the pool its source is in, then the copy defined on those volumes —
-  /// a new UUID and MACs, its own UEFI variables file. Either step failing
-  /// deletes the volumes it made. A CD-ROM stays on the image it has.
+  /// in the pool its source is in — or in [VirtCloneRequest.targetPool],
+  /// which `vol-create-from` copies across pools — then the copy defined on
+  /// those volumes: a new UUID and MACs, its own UEFI variables file. Either
+  /// step failing deletes the volumes it made. A CD-ROM stays on the image it
+  /// has.
   @override
   Future<String> clone(VirtGuest guest, VirtCloneRequest request) async {
     if (guest.state != VirtGuestState.stopped) {
@@ -700,6 +881,7 @@ class LibvirtBackend implements VirtBackend {
       'name': request.name,
       'full': request.full,
       'disks': disks,
+      'target_pool': ?request.targetPool,
     };
     final List<Object?> paths;
     try {
@@ -732,6 +914,12 @@ class LibvirtBackend implements VirtBackend {
     return created['uuid'] as String? ?? request.name;
   }
 
+  /// libvirt has no templates: a domain is a domain, and a copy of one is a
+  /// clone. Only `VirtCapabilities.template` (PVE) reaches this.
+  @override
+  Future<void> makeTemplate(VirtGuest guest) async =>
+      throw const VirtErr(type: VirtErrType.unsupported);
+
   static Never _noBackups() => throw const VirtErr(type: VirtErrType.unsupported);
 
   @override
@@ -741,19 +929,43 @@ class LibvirtBackend implements VirtBackend {
   Future<List<VirtBackupJob>> backupJobs(VirtGuest guest) async => const [];
 
   @override
+  Future<List<VirtBackupJob>> allBackupJobs() async => const [];
+
+  @override
+  Future<void> editBackupJob(
+    VirtBackupJobEdit edit, {
+    bool remove = false,
+  }) async => _noBackups();
+
+  @override
+  Future<VirtScheduleCheck> checkSchedule(String schedule) async =>
+      _noBackups();
+
+  @override
   Future<List<VirtStoragePool>> backupStorages(VirtGuest guest) async =>
       const [];
+
+  @override
+  Future<List<VirtStoragePool>> allBackupStorages() async => const [];
 
   @override
   Future<void> backup(VirtGuest guest, VirtBackupRequest request) async =>
       _noBackups();
 
   @override
+  Future<void> runBackupJob(VirtBackupJob job) async => _noBackups();
+
+  @override
   Future<void> restoreBackup(
     VirtGuest guest,
     VirtBackup backup, {
     int? vmid,
+    String? storage,
   }) async => _noBackups();
+
+  @override
+  Future<void> editBackup(VirtBackup backup, VirtBackupEdit edit) async =>
+      _noBackups();
 
   @override
   Future<void> deleteBackup(VirtGuest guest, VirtBackup backup) async =>

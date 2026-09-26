@@ -1218,14 +1218,27 @@ mixin _$VirtCapabilities {
  bool get snapshots;/// A snapshot of an active guest always holds its memory, with no way to
 /// leave it out (libvirt's internal snapshots: QEMU refuses one without).
 /// Otherwise it is the user's choice, where the guest is not a container.
- bool get snapshotMemoryRequired;/// Storage pools and their volumes can be listed.
+ bool get snapshotMemoryRequired;/// A disk-only external snapshot can be taken while the guest runs,
+/// leaving it on a qcow2 chain (libvirt). The form offers it beside the
+/// internal one, and the snapshot view shows the chain.
+ bool get snapshotExternal;/// Taking a snapshot can be refused before it is asked for, with the
+/// host's own answer about the guest's storage (PVE `feature`): the form
+/// says so rather than starting a task that fails.
+ bool get snapshotSupported;/// Storage pools and their volumes can be listed.
  bool get storage;/// Networks and the guests on them can be listed.
  bool get network;/// Guests can be backed up now, their backups listed, restored and
 /// deleted, and the backup jobs that take them read (PVE `vzdump`).
  bool get backup;/// Guests can be cloned: libvirt copying each disk or making it empty,
 /// PVE a full clone.
  bool get clone;/// A template can be cloned as a linked clone, sharing its disks (PVE).
- bool get linkedClone;/// More than one node: guests are grouped by node.
+ bool get linkedClone;/// A stopped guest can be turned into a template, and a template cannot
+/// be turned back (PVE). libvirt has no such thing: a domain is a domain.
+ bool get template;/// A clone's disks can be sent to a storage the source's are not on, and
+/// a clone can be made on another node of the cluster (PVE `storage` and
+/// `target`; libvirt `vol-create-from` into another pool).
+ bool get cloneTarget;/// Backup jobs are the datacenter's and can be listed, made, edited,
+/// deleted and run from the app (PVE `/cluster/backup`).
+ bool get backupJobs;/// More than one node: guests are grouped by node.
  bool get cluster;/// A serial console in a terminal session (`virsh console`).
  bool get serialConsole;/// A graphical (VNC) console.
  bool get vncConsole;/// A text console through PVE's `termproxy`.
@@ -1271,16 +1284,16 @@ $VirtCapabilitiesCopyWith<VirtCapabilities> get copyWith => _$VirtCapabilitiesCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtCapabilities&&(identical(other.lxc, lxc) || other.lxc == lxc)&&(identical(other.pause, pause) || other.pause == pause)&&(identical(other.snapshots, snapshots) || other.snapshots == snapshots)&&(identical(other.snapshotMemoryRequired, snapshotMemoryRequired) || other.snapshotMemoryRequired == snapshotMemoryRequired)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.network, network) || other.network == network)&&(identical(other.backup, backup) || other.backup == backup)&&(identical(other.clone, clone) || other.clone == clone)&&(identical(other.linkedClone, linkedClone) || other.linkedClone == linkedClone)&&(identical(other.cluster, cluster) || other.cluster == cluster)&&(identical(other.serialConsole, serialConsole) || other.serialConsole == serialConsole)&&(identical(other.vncConsole, vncConsole) || other.vncConsole == vncConsole)&&(identical(other.termConsole, termConsole) || other.termConsole == termConsole)&&(identical(other.storedHistory, storedHistory) || other.storedHistory == storedHistory)&&(identical(other.create, create) || other.create == create)&&(identical(other.deleteKeepsDisks, deleteKeepsDisks) || other.deleteKeepsDisks == deleteKeepsDisks)&&(identical(other.hardware, hardware) || other.hardware == hardware)&&(identical(other.hardwareRevert, hardwareRevert) || other.hardwareRevert == hardwareRevert)&&(identical(other.storageEdit, storageEdit) || other.storageEdit == storageEdit)&&const DeepCollectionEquality().equals(other.poolTypes, poolTypes)&&(identical(other.poolAutostart, poolAutostart) || other.poolAutostart == poolAutostart)&&(identical(other.poolDeleteStorage, poolDeleteStorage) || other.poolDeleteStorage == poolDeleteStorage)&&(identical(other.volumeResize, volumeResize) || other.volumeResize == volumeResize)&&(identical(other.volumeClone, volumeClone) || other.volumeClone == volumeClone)&&(identical(other.upload, upload) || other.upload == upload)&&(identical(other.networkEdit, networkEdit) || other.networkEdit == networkEdit)&&const DeepCollectionEquality().equals(other.networkModes, networkModes)&&(identical(other.networkStart, networkStart) || other.networkStart == networkStart)&&(identical(other.networkApply, networkApply) || other.networkApply == networkApply));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtCapabilities&&(identical(other.lxc, lxc) || other.lxc == lxc)&&(identical(other.pause, pause) || other.pause == pause)&&(identical(other.snapshots, snapshots) || other.snapshots == snapshots)&&(identical(other.snapshotMemoryRequired, snapshotMemoryRequired) || other.snapshotMemoryRequired == snapshotMemoryRequired)&&(identical(other.snapshotExternal, snapshotExternal) || other.snapshotExternal == snapshotExternal)&&(identical(other.snapshotSupported, snapshotSupported) || other.snapshotSupported == snapshotSupported)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.network, network) || other.network == network)&&(identical(other.backup, backup) || other.backup == backup)&&(identical(other.clone, clone) || other.clone == clone)&&(identical(other.linkedClone, linkedClone) || other.linkedClone == linkedClone)&&(identical(other.template, template) || other.template == template)&&(identical(other.cloneTarget, cloneTarget) || other.cloneTarget == cloneTarget)&&(identical(other.backupJobs, backupJobs) || other.backupJobs == backupJobs)&&(identical(other.cluster, cluster) || other.cluster == cluster)&&(identical(other.serialConsole, serialConsole) || other.serialConsole == serialConsole)&&(identical(other.vncConsole, vncConsole) || other.vncConsole == vncConsole)&&(identical(other.termConsole, termConsole) || other.termConsole == termConsole)&&(identical(other.storedHistory, storedHistory) || other.storedHistory == storedHistory)&&(identical(other.create, create) || other.create == create)&&(identical(other.deleteKeepsDisks, deleteKeepsDisks) || other.deleteKeepsDisks == deleteKeepsDisks)&&(identical(other.hardware, hardware) || other.hardware == hardware)&&(identical(other.hardwareRevert, hardwareRevert) || other.hardwareRevert == hardwareRevert)&&(identical(other.storageEdit, storageEdit) || other.storageEdit == storageEdit)&&const DeepCollectionEquality().equals(other.poolTypes, poolTypes)&&(identical(other.poolAutostart, poolAutostart) || other.poolAutostart == poolAutostart)&&(identical(other.poolDeleteStorage, poolDeleteStorage) || other.poolDeleteStorage == poolDeleteStorage)&&(identical(other.volumeResize, volumeResize) || other.volumeResize == volumeResize)&&(identical(other.volumeClone, volumeClone) || other.volumeClone == volumeClone)&&(identical(other.upload, upload) || other.upload == upload)&&(identical(other.networkEdit, networkEdit) || other.networkEdit == networkEdit)&&const DeepCollectionEquality().equals(other.networkModes, networkModes)&&(identical(other.networkStart, networkStart) || other.networkStart == networkStart)&&(identical(other.networkApply, networkApply) || other.networkApply == networkApply));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,lxc,pause,snapshots,snapshotMemoryRequired,storage,network,backup,clone,linkedClone,cluster,serialConsole,vncConsole,termConsole,storedHistory,create,deleteKeepsDisks,hardware,hardwareRevert,storageEdit,const DeepCollectionEquality().hash(poolTypes),poolAutostart,poolDeleteStorage,volumeResize,volumeClone,upload,networkEdit,const DeepCollectionEquality().hash(networkModes),networkStart,networkApply]);
+int get hashCode => Object.hashAll([runtimeType,lxc,pause,snapshots,snapshotMemoryRequired,snapshotExternal,snapshotSupported,storage,network,backup,clone,linkedClone,template,cloneTarget,backupJobs,cluster,serialConsole,vncConsole,termConsole,storedHistory,create,deleteKeepsDisks,hardware,hardwareRevert,storageEdit,const DeepCollectionEquality().hash(poolTypes),poolAutostart,poolDeleteStorage,volumeResize,volumeClone,upload,networkEdit,const DeepCollectionEquality().hash(networkModes),networkStart,networkApply]);
 
 @override
 String toString() {
-  return 'VirtCapabilities(lxc: $lxc, pause: $pause, snapshots: $snapshots, snapshotMemoryRequired: $snapshotMemoryRequired, storage: $storage, network: $network, backup: $backup, clone: $clone, linkedClone: $linkedClone, cluster: $cluster, serialConsole: $serialConsole, vncConsole: $vncConsole, termConsole: $termConsole, storedHistory: $storedHistory, create: $create, deleteKeepsDisks: $deleteKeepsDisks, hardware: $hardware, hardwareRevert: $hardwareRevert, storageEdit: $storageEdit, poolTypes: $poolTypes, poolAutostart: $poolAutostart, poolDeleteStorage: $poolDeleteStorage, volumeResize: $volumeResize, volumeClone: $volumeClone, upload: $upload, networkEdit: $networkEdit, networkModes: $networkModes, networkStart: $networkStart, networkApply: $networkApply)';
+  return 'VirtCapabilities(lxc: $lxc, pause: $pause, snapshots: $snapshots, snapshotMemoryRequired: $snapshotMemoryRequired, snapshotExternal: $snapshotExternal, snapshotSupported: $snapshotSupported, storage: $storage, network: $network, backup: $backup, clone: $clone, linkedClone: $linkedClone, template: $template, cloneTarget: $cloneTarget, backupJobs: $backupJobs, cluster: $cluster, serialConsole: $serialConsole, vncConsole: $vncConsole, termConsole: $termConsole, storedHistory: $storedHistory, create: $create, deleteKeepsDisks: $deleteKeepsDisks, hardware: $hardware, hardwareRevert: $hardwareRevert, storageEdit: $storageEdit, poolTypes: $poolTypes, poolAutostart: $poolAutostart, poolDeleteStorage: $poolDeleteStorage, volumeResize: $volumeResize, volumeClone: $volumeClone, upload: $upload, networkEdit: $networkEdit, networkModes: $networkModes, networkStart: $networkStart, networkApply: $networkApply)';
 }
 
 
@@ -1291,7 +1304,7 @@ abstract mixin class $VirtCapabilitiesCopyWith<$Res>  {
   factory $VirtCapabilitiesCopyWith(VirtCapabilities value, $Res Function(VirtCapabilities) _then) = _$VirtCapabilitiesCopyWithImpl;
 @useResult
 $Res call({
- bool lxc, bool pause, bool snapshots, bool snapshotMemoryRequired, bool storage, bool network, bool backup, bool clone, bool linkedClone, bool cluster, bool serialConsole, bool vncConsole, bool termConsole, bool storedHistory, bool create, bool deleteKeepsDisks, bool hardware, bool hardwareRevert, bool storageEdit, List<String> poolTypes, bool poolAutostart, bool poolDeleteStorage, bool volumeResize, bool volumeClone, bool upload, bool networkEdit, List<String> networkModes, bool networkStart, bool networkApply
+ bool lxc, bool pause, bool snapshots, bool snapshotMemoryRequired, bool snapshotExternal, bool snapshotSupported, bool storage, bool network, bool backup, bool clone, bool linkedClone, bool template, bool cloneTarget, bool backupJobs, bool cluster, bool serialConsole, bool vncConsole, bool termConsole, bool storedHistory, bool create, bool deleteKeepsDisks, bool hardware, bool hardwareRevert, bool storageEdit, List<String> poolTypes, bool poolAutostart, bool poolDeleteStorage, bool volumeResize, bool volumeClone, bool upload, bool networkEdit, List<String> networkModes, bool networkStart, bool networkApply
 });
 
 
@@ -1308,17 +1321,22 @@ class _$VirtCapabilitiesCopyWithImpl<$Res>
 
 /// Create a copy of VirtCapabilities
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? lxc = null,Object? pause = null,Object? snapshots = null,Object? snapshotMemoryRequired = null,Object? storage = null,Object? network = null,Object? backup = null,Object? clone = null,Object? linkedClone = null,Object? cluster = null,Object? serialConsole = null,Object? vncConsole = null,Object? termConsole = null,Object? storedHistory = null,Object? create = null,Object? deleteKeepsDisks = null,Object? hardware = null,Object? hardwareRevert = null,Object? storageEdit = null,Object? poolTypes = null,Object? poolAutostart = null,Object? poolDeleteStorage = null,Object? volumeResize = null,Object? volumeClone = null,Object? upload = null,Object? networkEdit = null,Object? networkModes = null,Object? networkStart = null,Object? networkApply = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? lxc = null,Object? pause = null,Object? snapshots = null,Object? snapshotMemoryRequired = null,Object? snapshotExternal = null,Object? snapshotSupported = null,Object? storage = null,Object? network = null,Object? backup = null,Object? clone = null,Object? linkedClone = null,Object? template = null,Object? cloneTarget = null,Object? backupJobs = null,Object? cluster = null,Object? serialConsole = null,Object? vncConsole = null,Object? termConsole = null,Object? storedHistory = null,Object? create = null,Object? deleteKeepsDisks = null,Object? hardware = null,Object? hardwareRevert = null,Object? storageEdit = null,Object? poolTypes = null,Object? poolAutostart = null,Object? poolDeleteStorage = null,Object? volumeResize = null,Object? volumeClone = null,Object? upload = null,Object? networkEdit = null,Object? networkModes = null,Object? networkStart = null,Object? networkApply = null,}) {
   return _then(_self.copyWith(
 lxc: null == lxc ? _self.lxc : lxc // ignore: cast_nullable_to_non_nullable
 as bool,pause: null == pause ? _self.pause : pause // ignore: cast_nullable_to_non_nullable
 as bool,snapshots: null == snapshots ? _self.snapshots : snapshots // ignore: cast_nullable_to_non_nullable
 as bool,snapshotMemoryRequired: null == snapshotMemoryRequired ? _self.snapshotMemoryRequired : snapshotMemoryRequired // ignore: cast_nullable_to_non_nullable
+as bool,snapshotExternal: null == snapshotExternal ? _self.snapshotExternal : snapshotExternal // ignore: cast_nullable_to_non_nullable
+as bool,snapshotSupported: null == snapshotSupported ? _self.snapshotSupported : snapshotSupported // ignore: cast_nullable_to_non_nullable
 as bool,storage: null == storage ? _self.storage : storage // ignore: cast_nullable_to_non_nullable
 as bool,network: null == network ? _self.network : network // ignore: cast_nullable_to_non_nullable
 as bool,backup: null == backup ? _self.backup : backup // ignore: cast_nullable_to_non_nullable
 as bool,clone: null == clone ? _self.clone : clone // ignore: cast_nullable_to_non_nullable
 as bool,linkedClone: null == linkedClone ? _self.linkedClone : linkedClone // ignore: cast_nullable_to_non_nullable
+as bool,template: null == template ? _self.template : template // ignore: cast_nullable_to_non_nullable
+as bool,cloneTarget: null == cloneTarget ? _self.cloneTarget : cloneTarget // ignore: cast_nullable_to_non_nullable
+as bool,backupJobs: null == backupJobs ? _self.backupJobs : backupJobs // ignore: cast_nullable_to_non_nullable
 as bool,cluster: null == cluster ? _self.cluster : cluster // ignore: cast_nullable_to_non_nullable
 as bool,serialConsole: null == serialConsole ? _self.serialConsole : serialConsole // ignore: cast_nullable_to_non_nullable
 as bool,vncConsole: null == vncConsole ? _self.vncConsole : vncConsole // ignore: cast_nullable_to_non_nullable
@@ -1424,10 +1442,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool lxc,  bool pause,  bool snapshots,  bool snapshotMemoryRequired,  bool storage,  bool network,  bool backup,  bool clone,  bool linkedClone,  bool cluster,  bool serialConsole,  bool vncConsole,  bool termConsole,  bool storedHistory,  bool create,  bool deleteKeepsDisks,  bool hardware,  bool hardwareRevert,  bool storageEdit,  List<String> poolTypes,  bool poolAutostart,  bool poolDeleteStorage,  bool volumeResize,  bool volumeClone,  bool upload,  bool networkEdit,  List<String> networkModes,  bool networkStart,  bool networkApply)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool lxc,  bool pause,  bool snapshots,  bool snapshotMemoryRequired,  bool snapshotExternal,  bool snapshotSupported,  bool storage,  bool network,  bool backup,  bool clone,  bool linkedClone,  bool template,  bool cloneTarget,  bool backupJobs,  bool cluster,  bool serialConsole,  bool vncConsole,  bool termConsole,  bool storedHistory,  bool create,  bool deleteKeepsDisks,  bool hardware,  bool hardwareRevert,  bool storageEdit,  List<String> poolTypes,  bool poolAutostart,  bool poolDeleteStorage,  bool volumeResize,  bool volumeClone,  bool upload,  bool networkEdit,  List<String> networkModes,  bool networkStart,  bool networkApply)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _VirtCapabilities() when $default != null:
-return $default(_that.lxc,_that.pause,_that.snapshots,_that.snapshotMemoryRequired,_that.storage,_that.network,_that.backup,_that.clone,_that.linkedClone,_that.cluster,_that.serialConsole,_that.vncConsole,_that.termConsole,_that.storedHistory,_that.create,_that.deleteKeepsDisks,_that.hardware,_that.hardwareRevert,_that.storageEdit,_that.poolTypes,_that.poolAutostart,_that.poolDeleteStorage,_that.volumeResize,_that.volumeClone,_that.upload,_that.networkEdit,_that.networkModes,_that.networkStart,_that.networkApply);case _:
+return $default(_that.lxc,_that.pause,_that.snapshots,_that.snapshotMemoryRequired,_that.snapshotExternal,_that.snapshotSupported,_that.storage,_that.network,_that.backup,_that.clone,_that.linkedClone,_that.template,_that.cloneTarget,_that.backupJobs,_that.cluster,_that.serialConsole,_that.vncConsole,_that.termConsole,_that.storedHistory,_that.create,_that.deleteKeepsDisks,_that.hardware,_that.hardwareRevert,_that.storageEdit,_that.poolTypes,_that.poolAutostart,_that.poolDeleteStorage,_that.volumeResize,_that.volumeClone,_that.upload,_that.networkEdit,_that.networkModes,_that.networkStart,_that.networkApply);case _:
   return orElse();
 
 }
@@ -1445,10 +1463,10 @@ return $default(_that.lxc,_that.pause,_that.snapshots,_that.snapshotMemoryRequir
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool lxc,  bool pause,  bool snapshots,  bool snapshotMemoryRequired,  bool storage,  bool network,  bool backup,  bool clone,  bool linkedClone,  bool cluster,  bool serialConsole,  bool vncConsole,  bool termConsole,  bool storedHistory,  bool create,  bool deleteKeepsDisks,  bool hardware,  bool hardwareRevert,  bool storageEdit,  List<String> poolTypes,  bool poolAutostart,  bool poolDeleteStorage,  bool volumeResize,  bool volumeClone,  bool upload,  bool networkEdit,  List<String> networkModes,  bool networkStart,  bool networkApply)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool lxc,  bool pause,  bool snapshots,  bool snapshotMemoryRequired,  bool snapshotExternal,  bool snapshotSupported,  bool storage,  bool network,  bool backup,  bool clone,  bool linkedClone,  bool template,  bool cloneTarget,  bool backupJobs,  bool cluster,  bool serialConsole,  bool vncConsole,  bool termConsole,  bool storedHistory,  bool create,  bool deleteKeepsDisks,  bool hardware,  bool hardwareRevert,  bool storageEdit,  List<String> poolTypes,  bool poolAutostart,  bool poolDeleteStorage,  bool volumeResize,  bool volumeClone,  bool upload,  bool networkEdit,  List<String> networkModes,  bool networkStart,  bool networkApply)  $default,) {final _that = this;
 switch (_that) {
 case _VirtCapabilities():
-return $default(_that.lxc,_that.pause,_that.snapshots,_that.snapshotMemoryRequired,_that.storage,_that.network,_that.backup,_that.clone,_that.linkedClone,_that.cluster,_that.serialConsole,_that.vncConsole,_that.termConsole,_that.storedHistory,_that.create,_that.deleteKeepsDisks,_that.hardware,_that.hardwareRevert,_that.storageEdit,_that.poolTypes,_that.poolAutostart,_that.poolDeleteStorage,_that.volumeResize,_that.volumeClone,_that.upload,_that.networkEdit,_that.networkModes,_that.networkStart,_that.networkApply);case _:
+return $default(_that.lxc,_that.pause,_that.snapshots,_that.snapshotMemoryRequired,_that.snapshotExternal,_that.snapshotSupported,_that.storage,_that.network,_that.backup,_that.clone,_that.linkedClone,_that.template,_that.cloneTarget,_that.backupJobs,_that.cluster,_that.serialConsole,_that.vncConsole,_that.termConsole,_that.storedHistory,_that.create,_that.deleteKeepsDisks,_that.hardware,_that.hardwareRevert,_that.storageEdit,_that.poolTypes,_that.poolAutostart,_that.poolDeleteStorage,_that.volumeResize,_that.volumeClone,_that.upload,_that.networkEdit,_that.networkModes,_that.networkStart,_that.networkApply);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1465,10 +1483,10 @@ return $default(_that.lxc,_that.pause,_that.snapshots,_that.snapshotMemoryRequir
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool lxc,  bool pause,  bool snapshots,  bool snapshotMemoryRequired,  bool storage,  bool network,  bool backup,  bool clone,  bool linkedClone,  bool cluster,  bool serialConsole,  bool vncConsole,  bool termConsole,  bool storedHistory,  bool create,  bool deleteKeepsDisks,  bool hardware,  bool hardwareRevert,  bool storageEdit,  List<String> poolTypes,  bool poolAutostart,  bool poolDeleteStorage,  bool volumeResize,  bool volumeClone,  bool upload,  bool networkEdit,  List<String> networkModes,  bool networkStart,  bool networkApply)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool lxc,  bool pause,  bool snapshots,  bool snapshotMemoryRequired,  bool snapshotExternal,  bool snapshotSupported,  bool storage,  bool network,  bool backup,  bool clone,  bool linkedClone,  bool template,  bool cloneTarget,  bool backupJobs,  bool cluster,  bool serialConsole,  bool vncConsole,  bool termConsole,  bool storedHistory,  bool create,  bool deleteKeepsDisks,  bool hardware,  bool hardwareRevert,  bool storageEdit,  List<String> poolTypes,  bool poolAutostart,  bool poolDeleteStorage,  bool volumeResize,  bool volumeClone,  bool upload,  bool networkEdit,  List<String> networkModes,  bool networkStart,  bool networkApply)?  $default,) {final _that = this;
 switch (_that) {
 case _VirtCapabilities() when $default != null:
-return $default(_that.lxc,_that.pause,_that.snapshots,_that.snapshotMemoryRequired,_that.storage,_that.network,_that.backup,_that.clone,_that.linkedClone,_that.cluster,_that.serialConsole,_that.vncConsole,_that.termConsole,_that.storedHistory,_that.create,_that.deleteKeepsDisks,_that.hardware,_that.hardwareRevert,_that.storageEdit,_that.poolTypes,_that.poolAutostart,_that.poolDeleteStorage,_that.volumeResize,_that.volumeClone,_that.upload,_that.networkEdit,_that.networkModes,_that.networkStart,_that.networkApply);case _:
+return $default(_that.lxc,_that.pause,_that.snapshots,_that.snapshotMemoryRequired,_that.snapshotExternal,_that.snapshotSupported,_that.storage,_that.network,_that.backup,_that.clone,_that.linkedClone,_that.template,_that.cloneTarget,_that.backupJobs,_that.cluster,_that.serialConsole,_that.vncConsole,_that.termConsole,_that.storedHistory,_that.create,_that.deleteKeepsDisks,_that.hardware,_that.hardwareRevert,_that.storageEdit,_that.poolTypes,_that.poolAutostart,_that.poolDeleteStorage,_that.volumeResize,_that.volumeClone,_that.upload,_that.networkEdit,_that.networkModes,_that.networkStart,_that.networkApply);case _:
   return null;
 
 }
@@ -1480,7 +1498,7 @@ return $default(_that.lxc,_that.pause,_that.snapshots,_that.snapshotMemoryRequir
 @JsonSerializable()
 
 class _VirtCapabilities implements VirtCapabilities {
-  const _VirtCapabilities({this.lxc = false, this.pause = false, this.snapshots = false, this.snapshotMemoryRequired = false, this.storage = false, this.network = false, this.backup = false, this.clone = false, this.linkedClone = false, this.cluster = false, this.serialConsole = false, this.vncConsole = false, this.termConsole = false, this.storedHistory = false, this.create = false, this.deleteKeepsDisks = false, this.hardware = false, this.hardwareRevert = false, this.storageEdit = false, final  List<String> poolTypes = const <String>[], this.poolAutostart = false, this.poolDeleteStorage = false, this.volumeResize = false, this.volumeClone = false, this.upload = false, this.networkEdit = false, final  List<String> networkModes = const <String>[], this.networkStart = false, this.networkApply = false}): _poolTypes = poolTypes,_networkModes = networkModes;
+  const _VirtCapabilities({this.lxc = false, this.pause = false, this.snapshots = false, this.snapshotMemoryRequired = false, this.snapshotExternal = false, this.snapshotSupported = false, this.storage = false, this.network = false, this.backup = false, this.clone = false, this.linkedClone = false, this.template = false, this.cloneTarget = false, this.backupJobs = false, this.cluster = false, this.serialConsole = false, this.vncConsole = false, this.termConsole = false, this.storedHistory = false, this.create = false, this.deleteKeepsDisks = false, this.hardware = false, this.hardwareRevert = false, this.storageEdit = false, final  List<String> poolTypes = const <String>[], this.poolAutostart = false, this.poolDeleteStorage = false, this.volumeResize = false, this.volumeClone = false, this.upload = false, this.networkEdit = false, final  List<String> networkModes = const <String>[], this.networkStart = false, this.networkApply = false}): _poolTypes = poolTypes,_networkModes = networkModes;
   factory _VirtCapabilities.fromJson(Map<String, dynamic> json) => _$VirtCapabilitiesFromJson(json);
 
 @override@JsonKey() final  bool lxc;
@@ -1491,6 +1509,14 @@ class _VirtCapabilities implements VirtCapabilities {
 /// leave it out (libvirt's internal snapshots: QEMU refuses one without).
 /// Otherwise it is the user's choice, where the guest is not a container.
 @override@JsonKey() final  bool snapshotMemoryRequired;
+/// A disk-only external snapshot can be taken while the guest runs,
+/// leaving it on a qcow2 chain (libvirt). The form offers it beside the
+/// internal one, and the snapshot view shows the chain.
+@override@JsonKey() final  bool snapshotExternal;
+/// Taking a snapshot can be refused before it is asked for, with the
+/// host's own answer about the guest's storage (PVE `feature`): the form
+/// says so rather than starting a task that fails.
+@override@JsonKey() final  bool snapshotSupported;
 /// Storage pools and their volumes can be listed.
 @override@JsonKey() final  bool storage;
 /// Networks and the guests on them can be listed.
@@ -1503,6 +1529,16 @@ class _VirtCapabilities implements VirtCapabilities {
 @override@JsonKey() final  bool clone;
 /// A template can be cloned as a linked clone, sharing its disks (PVE).
 @override@JsonKey() final  bool linkedClone;
+/// A stopped guest can be turned into a template, and a template cannot
+/// be turned back (PVE). libvirt has no such thing: a domain is a domain.
+@override@JsonKey() final  bool template;
+/// A clone's disks can be sent to a storage the source's are not on, and
+/// a clone can be made on another node of the cluster (PVE `storage` and
+/// `target`; libvirt `vol-create-from` into another pool).
+@override@JsonKey() final  bool cloneTarget;
+/// Backup jobs are the datacenter's and can be listed, made, edited,
+/// deleted and run from the app (PVE `/cluster/backup`).
+@override@JsonKey() final  bool backupJobs;
 /// More than one node: guests are grouped by node.
 @override@JsonKey() final  bool cluster;
 /// A serial console in a terminal session (`virsh console`).
@@ -1586,16 +1622,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtCapabilities&&(identical(other.lxc, lxc) || other.lxc == lxc)&&(identical(other.pause, pause) || other.pause == pause)&&(identical(other.snapshots, snapshots) || other.snapshots == snapshots)&&(identical(other.snapshotMemoryRequired, snapshotMemoryRequired) || other.snapshotMemoryRequired == snapshotMemoryRequired)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.network, network) || other.network == network)&&(identical(other.backup, backup) || other.backup == backup)&&(identical(other.clone, clone) || other.clone == clone)&&(identical(other.linkedClone, linkedClone) || other.linkedClone == linkedClone)&&(identical(other.cluster, cluster) || other.cluster == cluster)&&(identical(other.serialConsole, serialConsole) || other.serialConsole == serialConsole)&&(identical(other.vncConsole, vncConsole) || other.vncConsole == vncConsole)&&(identical(other.termConsole, termConsole) || other.termConsole == termConsole)&&(identical(other.storedHistory, storedHistory) || other.storedHistory == storedHistory)&&(identical(other.create, create) || other.create == create)&&(identical(other.deleteKeepsDisks, deleteKeepsDisks) || other.deleteKeepsDisks == deleteKeepsDisks)&&(identical(other.hardware, hardware) || other.hardware == hardware)&&(identical(other.hardwareRevert, hardwareRevert) || other.hardwareRevert == hardwareRevert)&&(identical(other.storageEdit, storageEdit) || other.storageEdit == storageEdit)&&const DeepCollectionEquality().equals(other._poolTypes, _poolTypes)&&(identical(other.poolAutostart, poolAutostart) || other.poolAutostart == poolAutostart)&&(identical(other.poolDeleteStorage, poolDeleteStorage) || other.poolDeleteStorage == poolDeleteStorage)&&(identical(other.volumeResize, volumeResize) || other.volumeResize == volumeResize)&&(identical(other.volumeClone, volumeClone) || other.volumeClone == volumeClone)&&(identical(other.upload, upload) || other.upload == upload)&&(identical(other.networkEdit, networkEdit) || other.networkEdit == networkEdit)&&const DeepCollectionEquality().equals(other._networkModes, _networkModes)&&(identical(other.networkStart, networkStart) || other.networkStart == networkStart)&&(identical(other.networkApply, networkApply) || other.networkApply == networkApply));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtCapabilities&&(identical(other.lxc, lxc) || other.lxc == lxc)&&(identical(other.pause, pause) || other.pause == pause)&&(identical(other.snapshots, snapshots) || other.snapshots == snapshots)&&(identical(other.snapshotMemoryRequired, snapshotMemoryRequired) || other.snapshotMemoryRequired == snapshotMemoryRequired)&&(identical(other.snapshotExternal, snapshotExternal) || other.snapshotExternal == snapshotExternal)&&(identical(other.snapshotSupported, snapshotSupported) || other.snapshotSupported == snapshotSupported)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.network, network) || other.network == network)&&(identical(other.backup, backup) || other.backup == backup)&&(identical(other.clone, clone) || other.clone == clone)&&(identical(other.linkedClone, linkedClone) || other.linkedClone == linkedClone)&&(identical(other.template, template) || other.template == template)&&(identical(other.cloneTarget, cloneTarget) || other.cloneTarget == cloneTarget)&&(identical(other.backupJobs, backupJobs) || other.backupJobs == backupJobs)&&(identical(other.cluster, cluster) || other.cluster == cluster)&&(identical(other.serialConsole, serialConsole) || other.serialConsole == serialConsole)&&(identical(other.vncConsole, vncConsole) || other.vncConsole == vncConsole)&&(identical(other.termConsole, termConsole) || other.termConsole == termConsole)&&(identical(other.storedHistory, storedHistory) || other.storedHistory == storedHistory)&&(identical(other.create, create) || other.create == create)&&(identical(other.deleteKeepsDisks, deleteKeepsDisks) || other.deleteKeepsDisks == deleteKeepsDisks)&&(identical(other.hardware, hardware) || other.hardware == hardware)&&(identical(other.hardwareRevert, hardwareRevert) || other.hardwareRevert == hardwareRevert)&&(identical(other.storageEdit, storageEdit) || other.storageEdit == storageEdit)&&const DeepCollectionEquality().equals(other._poolTypes, _poolTypes)&&(identical(other.poolAutostart, poolAutostart) || other.poolAutostart == poolAutostart)&&(identical(other.poolDeleteStorage, poolDeleteStorage) || other.poolDeleteStorage == poolDeleteStorage)&&(identical(other.volumeResize, volumeResize) || other.volumeResize == volumeResize)&&(identical(other.volumeClone, volumeClone) || other.volumeClone == volumeClone)&&(identical(other.upload, upload) || other.upload == upload)&&(identical(other.networkEdit, networkEdit) || other.networkEdit == networkEdit)&&const DeepCollectionEquality().equals(other._networkModes, _networkModes)&&(identical(other.networkStart, networkStart) || other.networkStart == networkStart)&&(identical(other.networkApply, networkApply) || other.networkApply == networkApply));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,lxc,pause,snapshots,snapshotMemoryRequired,storage,network,backup,clone,linkedClone,cluster,serialConsole,vncConsole,termConsole,storedHistory,create,deleteKeepsDisks,hardware,hardwareRevert,storageEdit,const DeepCollectionEquality().hash(_poolTypes),poolAutostart,poolDeleteStorage,volumeResize,volumeClone,upload,networkEdit,const DeepCollectionEquality().hash(_networkModes),networkStart,networkApply]);
+int get hashCode => Object.hashAll([runtimeType,lxc,pause,snapshots,snapshotMemoryRequired,snapshotExternal,snapshotSupported,storage,network,backup,clone,linkedClone,template,cloneTarget,backupJobs,cluster,serialConsole,vncConsole,termConsole,storedHistory,create,deleteKeepsDisks,hardware,hardwareRevert,storageEdit,const DeepCollectionEquality().hash(_poolTypes),poolAutostart,poolDeleteStorage,volumeResize,volumeClone,upload,networkEdit,const DeepCollectionEquality().hash(_networkModes),networkStart,networkApply]);
 
 @override
 String toString() {
-  return 'VirtCapabilities(lxc: $lxc, pause: $pause, snapshots: $snapshots, snapshotMemoryRequired: $snapshotMemoryRequired, storage: $storage, network: $network, backup: $backup, clone: $clone, linkedClone: $linkedClone, cluster: $cluster, serialConsole: $serialConsole, vncConsole: $vncConsole, termConsole: $termConsole, storedHistory: $storedHistory, create: $create, deleteKeepsDisks: $deleteKeepsDisks, hardware: $hardware, hardwareRevert: $hardwareRevert, storageEdit: $storageEdit, poolTypes: $poolTypes, poolAutostart: $poolAutostart, poolDeleteStorage: $poolDeleteStorage, volumeResize: $volumeResize, volumeClone: $volumeClone, upload: $upload, networkEdit: $networkEdit, networkModes: $networkModes, networkStart: $networkStart, networkApply: $networkApply)';
+  return 'VirtCapabilities(lxc: $lxc, pause: $pause, snapshots: $snapshots, snapshotMemoryRequired: $snapshotMemoryRequired, snapshotExternal: $snapshotExternal, snapshotSupported: $snapshotSupported, storage: $storage, network: $network, backup: $backup, clone: $clone, linkedClone: $linkedClone, template: $template, cloneTarget: $cloneTarget, backupJobs: $backupJobs, cluster: $cluster, serialConsole: $serialConsole, vncConsole: $vncConsole, termConsole: $termConsole, storedHistory: $storedHistory, create: $create, deleteKeepsDisks: $deleteKeepsDisks, hardware: $hardware, hardwareRevert: $hardwareRevert, storageEdit: $storageEdit, poolTypes: $poolTypes, poolAutostart: $poolAutostart, poolDeleteStorage: $poolDeleteStorage, volumeResize: $volumeResize, volumeClone: $volumeClone, upload: $upload, networkEdit: $networkEdit, networkModes: $networkModes, networkStart: $networkStart, networkApply: $networkApply)';
 }
 
 
@@ -1606,7 +1642,7 @@ abstract mixin class _$VirtCapabilitiesCopyWith<$Res> implements $VirtCapabiliti
   factory _$VirtCapabilitiesCopyWith(_VirtCapabilities value, $Res Function(_VirtCapabilities) _then) = __$VirtCapabilitiesCopyWithImpl;
 @override @useResult
 $Res call({
- bool lxc, bool pause, bool snapshots, bool snapshotMemoryRequired, bool storage, bool network, bool backup, bool clone, bool linkedClone, bool cluster, bool serialConsole, bool vncConsole, bool termConsole, bool storedHistory, bool create, bool deleteKeepsDisks, bool hardware, bool hardwareRevert, bool storageEdit, List<String> poolTypes, bool poolAutostart, bool poolDeleteStorage, bool volumeResize, bool volumeClone, bool upload, bool networkEdit, List<String> networkModes, bool networkStart, bool networkApply
+ bool lxc, bool pause, bool snapshots, bool snapshotMemoryRequired, bool snapshotExternal, bool snapshotSupported, bool storage, bool network, bool backup, bool clone, bool linkedClone, bool template, bool cloneTarget, bool backupJobs, bool cluster, bool serialConsole, bool vncConsole, bool termConsole, bool storedHistory, bool create, bool deleteKeepsDisks, bool hardware, bool hardwareRevert, bool storageEdit, List<String> poolTypes, bool poolAutostart, bool poolDeleteStorage, bool volumeResize, bool volumeClone, bool upload, bool networkEdit, List<String> networkModes, bool networkStart, bool networkApply
 });
 
 
@@ -1623,17 +1659,22 @@ class __$VirtCapabilitiesCopyWithImpl<$Res>
 
 /// Create a copy of VirtCapabilities
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? lxc = null,Object? pause = null,Object? snapshots = null,Object? snapshotMemoryRequired = null,Object? storage = null,Object? network = null,Object? backup = null,Object? clone = null,Object? linkedClone = null,Object? cluster = null,Object? serialConsole = null,Object? vncConsole = null,Object? termConsole = null,Object? storedHistory = null,Object? create = null,Object? deleteKeepsDisks = null,Object? hardware = null,Object? hardwareRevert = null,Object? storageEdit = null,Object? poolTypes = null,Object? poolAutostart = null,Object? poolDeleteStorage = null,Object? volumeResize = null,Object? volumeClone = null,Object? upload = null,Object? networkEdit = null,Object? networkModes = null,Object? networkStart = null,Object? networkApply = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? lxc = null,Object? pause = null,Object? snapshots = null,Object? snapshotMemoryRequired = null,Object? snapshotExternal = null,Object? snapshotSupported = null,Object? storage = null,Object? network = null,Object? backup = null,Object? clone = null,Object? linkedClone = null,Object? template = null,Object? cloneTarget = null,Object? backupJobs = null,Object? cluster = null,Object? serialConsole = null,Object? vncConsole = null,Object? termConsole = null,Object? storedHistory = null,Object? create = null,Object? deleteKeepsDisks = null,Object? hardware = null,Object? hardwareRevert = null,Object? storageEdit = null,Object? poolTypes = null,Object? poolAutostart = null,Object? poolDeleteStorage = null,Object? volumeResize = null,Object? volumeClone = null,Object? upload = null,Object? networkEdit = null,Object? networkModes = null,Object? networkStart = null,Object? networkApply = null,}) {
   return _then(_VirtCapabilities(
 lxc: null == lxc ? _self.lxc : lxc // ignore: cast_nullable_to_non_nullable
 as bool,pause: null == pause ? _self.pause : pause // ignore: cast_nullable_to_non_nullable
 as bool,snapshots: null == snapshots ? _self.snapshots : snapshots // ignore: cast_nullable_to_non_nullable
 as bool,snapshotMemoryRequired: null == snapshotMemoryRequired ? _self.snapshotMemoryRequired : snapshotMemoryRequired // ignore: cast_nullable_to_non_nullable
+as bool,snapshotExternal: null == snapshotExternal ? _self.snapshotExternal : snapshotExternal // ignore: cast_nullable_to_non_nullable
+as bool,snapshotSupported: null == snapshotSupported ? _self.snapshotSupported : snapshotSupported // ignore: cast_nullable_to_non_nullable
 as bool,storage: null == storage ? _self.storage : storage // ignore: cast_nullable_to_non_nullable
 as bool,network: null == network ? _self.network : network // ignore: cast_nullable_to_non_nullable
 as bool,backup: null == backup ? _self.backup : backup // ignore: cast_nullable_to_non_nullable
 as bool,clone: null == clone ? _self.clone : clone // ignore: cast_nullable_to_non_nullable
 as bool,linkedClone: null == linkedClone ? _self.linkedClone : linkedClone // ignore: cast_nullable_to_non_nullable
+as bool,template: null == template ? _self.template : template // ignore: cast_nullable_to_non_nullable
+as bool,cloneTarget: null == cloneTarget ? _self.cloneTarget : cloneTarget // ignore: cast_nullable_to_non_nullable
+as bool,backupJobs: null == backupJobs ? _self.backupJobs : backupJobs // ignore: cast_nullable_to_non_nullable
 as bool,cluster: null == cluster ? _self.cluster : cluster // ignore: cast_nullable_to_non_nullable
 as bool,serialConsole: null == serialConsole ? _self.serialConsole : serialConsole // ignore: cast_nullable_to_non_nullable
 as bool,vncConsole: null == vncConsole ? _self.vncConsole : vncConsole // ignore: cast_nullable_to_non_nullable

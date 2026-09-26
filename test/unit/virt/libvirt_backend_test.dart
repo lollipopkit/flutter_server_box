@@ -459,6 +459,125 @@ void main() {
       expect(exec.calls, hasLength(calls));
     });
 
+    test('the chain is read back, and a raw disk is refused', () async {
+      final exec = _Exec((call) {
+        if (call.script.contains('domstats')) return _ok(_overview());
+        if (call.script.contains('qemu-img')) {
+          return _ok(_fixture('script_snap_chain_overlay.txt'));
+        }
+        if (call.script.contains('pool-list')) {
+          return _ok(_fixture('script_storage.txt'));
+        }
+        return _ok(_fixture('script_snapshots_external.txt'));
+      });
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      final web = (await virt.load()).guests.firstWhere((g) => g.id == _run);
+      final chain = await virt.snapshotChain(web);
+      expect(chain.depth, 2);
+      expect(chain.hasOverlays, isTrue);
+      expect(chain.refusal, isNull);
+      final disk = chain.disks.first;
+      expect(disk.target, 'vda');
+      expect(disk.pool, 'sbxe2e-p8q');
+      expect(disk.files.first.active, isTrue);
+      expect(disk.files.first.snap, 'sx1');
+      // The base image is not anyone's snapshot.
+      expect(disk.files.last.snap, isNull);
+      // Only pools of files are offered for an overlay.
+      expect(chain.pools, contains('images'));
+
+      // A raw disk: the read says so and no external form is offered.
+      final raw = _Exec((call) {
+        if (call.script.contains('domstats')) return _ok(_overview());
+        if (call.script.contains('qemu-img')) {
+          return _ok(_fixture('script_snap_chain_raw.txt'));
+        }
+        if (call.script.contains('pool-list')) {
+          return _ok(_fixture('script_storage.txt'));
+        }
+        return _ok(_fixture('script_snapshots_none.txt'));
+      });
+      final virt2 = LibvirtBackend(serverId: 's', exec: () async => raw);
+      final web2 = (await virt2.load()).guests.firstWhere((g) => g.id == _run);
+      final rawChain = await virt2.snapshotChain(web2);
+      expect(rawChain.refusal, contains('raw'));
+      expect(await virt2.snapshotSupported(web2), isFalse);
+    });
+
+    test('an external snapshot names an overlay per disk', () async {
+      final exec = _Exec((call) {
+        if (call.script.contains('domstats')) return _ok(_overview());
+        if (call.script.contains('pool-list')) {
+          return _ok(_fixture('script_storage.txt'));
+        }
+        if (call.script.contains('qemu-img')) {
+          return _ok(_fixture('script_snap_chain_overlay.txt'));
+        }
+        if (call.script.contains('snapshot-create-as')) {
+          return _ok(_section('virt.action', 'ok'));
+        }
+        return _ok(_fixture('script_snapshots_external.txt'));
+      });
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      final web = (await virt.load()).guests.firstWhere((g) => g.id == _run);
+      await virt.createSnapshot(
+        web,
+        name: 'pre-up',
+        form: VirtSnapshotForm.external,
+      );
+      String last() => exec.calls
+          .map((c) => c.script)
+          .lastWhere((s) => s.contains('snapshot-create-as'));
+      final byDefault = last();
+      expect(byDefault, contains('--disk-only --atomic'));
+      expect(byDefault, isNot(contains('--no-metadata')));
+      // No pool picked: libvirt names the overlay itself, beside the disk it
+      // backs, so there is no `--diskspec` to get wrong.
+      expect(byDefault, isNot(contains('--diskspec')));
+
+      // A pool picked: the overlay goes in its directory, by path.
+      await virt.createSnapshot(
+        web,
+        name: 'pre-up',
+        form: VirtSnapshotForm.external,
+        overlayPool: 'images',
+      );
+      final picked = last();
+      expect(picked, contains('--diskspec'));
+      expect(picked, contains('snapshot=external'));
+      expect(picked, contains("file='/var/lib/libvirt/images/sx1.qcow2.pre-up'"));
+    });
+
+    test('a diff is read and grouped by what changed', () async {
+      final exec = _Exec((call) {
+        if (call.script.contains('domstats')) return _ok(_overview());
+        return _ok(_fixture('script_snap_diff.txt'));
+      });
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      final web = (await virt.load()).guests.firstWhere((g) => g.id == _run);
+      final diff = await virt.snapshotDiff(web, 's1');
+      expect(exec.calls.last.script, contains('snapshot-dumpxml'));
+      expect(exec.calls.last.script, contains('--inactive'));
+      expect(
+        diff.map((d) => (d.group, d.key)),
+        containsAll([
+          (VirtSnapDiffGroup.cpu, 'vcpu'),
+          (VirtSnapDiffGroup.memory, 'memory'),
+        ]),
+      );
+      final mem = diff.firstWhere((d) => d.key == 'memory');
+      // KiB, as libvirt writes `<memory unit='KiB'>` and the parser converts
+      // to bytes before dividing back: the numbers are the definition's.
+      expect((mem.before, mem.after), ('262144', '524288'));
+      expect(mem.added, isFalse);
+      final nic = diff.singleWhere((d) => d.group == VirtSnapDiffGroup.nics);
+      expect(nic.added, isTrue);
+      expect(nic.after, contains('e1000e'));
+      // No disk row: its source file always differs under an external
+      // snapshot and is never a configuration change.
+      expect(diff.any((d) => d.group == VirtSnapDiffGroup.disks), isFalse);
+    });
+
     test('libvirt refusing one is actionFailed with its words', () async {
       final exec = _Exec((call) {
         if (call.script.contains('domstats')) return _ok(_overview());

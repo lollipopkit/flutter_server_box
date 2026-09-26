@@ -2061,6 +2061,136 @@ void main() {
       tokenSecret: 's3cret',
     );
 
+    test('storage support: asked of the guest, refused before the task', () async {
+      final api = _Api();
+      api.routes['GET /nodes/pve/qemu/100/feature'] = (_) => {
+        'hasFeature': 0,
+        'nodes': ['pve'],
+      };
+      api.routes['GET /nodes/pve/qemu/100/config'] =
+          (_) => {'scsi0': 'local-lvm:vm-100-disk-0,size=20G'};
+      final backend = api.backend(token);
+      const guest = VirtGuest(
+        id: 'qemu/100',
+        name: 'web-01',
+        kind: VirtGuestKind.qemu,
+        state: VirtGuestState.running,
+        vmid: 100,
+        node: 'pve',
+      );
+      expect(await backend.snapshotSupported(guest), isFalse);
+      final refusal = await backend.snapshotRefusal(guest);
+      expect(refusal, contains('snapshot feature is not available'));
+      expect(refusal, contains('local-lvm'));
+      // The create is refused before any task is started, with the reason.
+      final e = await _err(
+        backend.createSnapshot(guest, name: 'pre-up'),
+      );
+      expect(e.type, VirtErrType.unsupported);
+      expect(e.message, contains('snapshot feature is not available'));
+      expect(api.paths, isNot(contains('POST /nodes/pve/qemu/100/snapshot')));
+
+      // A guest whose storages do support it goes through.
+      api.routes['GET /nodes/pve/qemu/100/feature'] = (_) => {'hasFeature': 1};
+      api.routes['POST /nodes/pve/qemu/100/snapshot'] = (_) => _Api.upid;
+      api.routes['GET /nodes/pve/qemu/100/status/current'] = (_) => {
+        'status': 'running',
+      };
+      expect(await backend.snapshotSupported(guest), isTrue);
+      expect(await backend.snapshotRefusal(guest), isNull);
+
+      // A host that does not answer the question at all (an older PVE, or a
+      // guest deleted since the last load) is "unknown", not "no".
+      api.routes['GET /nodes/pve/qemu/100/feature'] = (_) => _Api._status(501);
+      expect(await backend.snapshotSupported(guest), isNull);
+      expect(await backend.snapshotRefusal(guest), isNull);
+    });
+
+    test('the config diff: the snapshot\'s own config against the guest\'s', () async {
+      final api = _Api();
+      api.routes['GET /nodes/pve/qemu/100/snapshot/sbx/config'] = (_) => {
+        'cores': 1,
+        'memory': '512',
+        'scsi0': 'local-lvm:vm-100-disk-0,size=20G',
+        'net0': 'virtio=BC:24:11:65:B0:B5,bridge=vmbr0',
+        'description': 'before the bump',
+        'snaptime': 1790415090,
+        'digest': 'aa',
+      };
+      api.routes['GET /nodes/pve/qemu/100/config'] = (_) => {
+        'cores': 2,
+        'memory': '1024',
+        'scsi0': 'local-lvm:vm-100-disk-0,size=20G',
+        'net0': 'virtio=BC:24:11:65:B0:B5,bridge=vmbr1',
+        'digest': 'bb',
+        'parent': 'sbx',
+      };
+      final backend = api.backend(token);
+      const guest = VirtGuest(
+        id: 'qemu/100',
+        name: 'web-01',
+        kind: VirtGuestKind.qemu,
+        state: VirtGuestState.running,
+        vmid: 100,
+        node: 'pve',
+      );
+      final diff = await backend.snapshotDiff(guest, 'sbx');
+      // Grouped, and only what differs: the bookkeeping keys are left out.
+      expect(
+        diff.map((d) => (d.group, d.key, d.before, d.after)),
+        [
+          (VirtSnapDiffGroup.cpu, 'cores', '1', '2'),
+          (VirtSnapDiffGroup.memory, 'memory', '512', '1024'),
+          (
+            VirtSnapDiffGroup.nics,
+            'net0',
+            'virtio=BC:24:11:65:B0:B5,bridge=vmbr0',
+            'virtio=BC:24:11:65:B0:B5,bridge=vmbr1',
+          ),
+        ],
+      );
+      expect(diff.any((d) => d.key == 'digest'), isFalse);
+      expect(diff.any((d) => d.key == 'description'), isFalse);
+      // The disk is the same: no row for it.
+      expect(diff.any((d) => d.key == 'scsi0'), isFalse);
+    });
+
+    test('the captured payloads: a real snapshot config against the current one', () {
+      // `snapshot_config.json` / `snapshot_current_config.json` are PVE
+      // 9.2.2's own answers for a VM whose memory was changed after the
+      // snapshot was taken; `node_storage_p8.json` is the node's storage
+      // list at the same moment.
+      final snap = jsonDecode(
+        File('test/fixtures/pve/snapshot_config.json').readAsStringSync(),
+      ) as Map<String, Object?>;
+      final cur = jsonDecode(
+        File('test/fixtures/pve/snapshot_current_config.json').readAsStringSync(),
+      ) as Map<String, Object?>;
+      expect((snap['memory'], cur['memory']), ('512', '768'));
+      // The storage list has no `snapshot` content kind: support follows the
+      // storage's type, not its content.
+      final storages = jsonDecode(
+        File('test/fixtures/pve/node_storage_p8.json').readAsStringSync(),
+      ) as List<Object?>;
+      final parsed = PveResources.parseStorages('pve', storages);
+      expect(parsed.map((p) => p.type), containsAll(['dir', 'lvmthin']));
+      for (final p in parsed) {
+        expect(p.content, isNot(contains('snapshot')));
+      }
+      expect(
+        storages.whereType<Map>().map((e) => e['content']).join(),
+        isNot(contains('snapshot')),
+      );
+    });
+
+    test('a storage that does not support snapshots is a request PVE refuses', () {
+      // What PVE answers for a raw disk on a directory storage, on the task:
+      // the form's own check is what says so before it is started.
+      expect(virtPveStorageMaySnapshot('dir'), isFalse);
+      expect(virtPveStorageMaySnapshot('lvmthin'), isTrue);
+      expect(virtPveStorageMaySnapshot('zfspool'), isTrue);
+    });
+
     test('snapshot listing: the "current" entry marks, and is not one', () {
       final list = PveResources.parseSnapshots(fixture('snapshots_qemu.json'));
       expect(list.map((s) => s.name), ['sbx-disk', 'sbx-mem']);

@@ -89,10 +89,17 @@ enum VirtGuestViewKind {
   settings;
 
   /// The views [guest] has on a host with [caps].
+  ///
+  /// A template has no console, no hardware and no snapshots: it never runs
+  /// and PVE refuses to change it (`you can't start a vm if it's a
+  /// template`; a template's disks are base images, so a snapshot of one has
+  /// nothing to record). What is left is its overview — where Clone is the
+  /// action — its backups, and its Settings, which is where it can be
+  /// renamed and where its Clone group lives.
   static List<VirtGuestViewKind> of(VirtGuest guest, VirtCapabilities? caps) =>
       [
         overview,
-        console,
+        if (!guest.template) console,
         if ((caps?.hardware ?? false) && !guest.template) hardware,
         if ((caps?.snapshots ?? false) && !guest.template) snapshots,
         if (caps?.backup ?? false) backup,
@@ -189,6 +196,7 @@ class _VirtGuestViewState extends ConsumerState<VirtGuestView> {
       body: Column(
         children: [
           SizedBox(height: 3, child: busy ? const ProgressLine() : null),
+          ?_buildTemplateBanner(guest),
           ?_buildPendingBanner(st, guest, state, view),
           Padding(
             padding: const EdgeInsets.fromLTRB(13, 3, 13, 7),
@@ -265,6 +273,49 @@ class _VirtGuestViewState extends ConsumerState<VirtGuestView> {
       ),
     );
   }
+
+  /// A template says so above its views, with the one action that is done
+  /// with one: a clone. PVE refuses to start one (`you can't start a vm if
+  /// it's a template`) and to change it, so the tab offers neither, and
+  /// which view is on screen would otherwise look like a guest that is
+  /// simply off.
+  Widget? _buildTemplateBanner(VirtGuest guest) {
+    if (!guest.template) return null;
+    return Padding(
+      key: const ValueKey('virt:template-banner'),
+      padding: const EdgeInsets.fromLTRB(13, 3, 13, 0),
+      child: CardX(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(13, 7, 7, 7),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.inventory_2_outlined,
+                size: 17,
+                color: StatePalette.warn,
+              ),
+              UIs.width7,
+              Expanded(child: Text(l10n.virtTemplateTip, style: UIs.text12)),
+              if (_canClone(guest))
+                Btn.text(
+                  key: const ValueKey('virt:template-clone'),
+                  text: libL10n.clone,
+                  onTap: () => setState(
+                    () => _view = VirtGuestViewKind.settings,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Whether this guest can be cloned at all: what the banner's button is
+  /// for. Read from the host's capabilities, which this view watches.
+  bool _canClone(VirtGuest guest) =>
+      ref.read(virtHostProvider(widget.serverId)).data?.capabilities.clone ??
+      false;
 
   /// The design's notice above the views: hardware changes waiting for the
   /// next start, and the restart that applies them. Only from a hardware

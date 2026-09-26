@@ -282,13 +282,6 @@
   "maxConcurrency": "最大并发数",
   "maxRetryCount": "服务器尝试重连次数",
   "mismatchSystem": "系统不匹配：{system}",
-  "@mismatchSystem": {
-    "placeholders": {
-      "system": {
-        "type": "String"
-      }
-    }
-  },
   "mirror": "镜像",
   "needRestart": "需要重启 App",
   "netViewType": "网络视图类型",
@@ -356,38 +349,9 @@
   "rememberPwdInMemTip": "用于容器、挂起等",
   "remotePath": "远端路径",
   "rootfsUpdateTip": "已安装 {distro} {installed}，新版本为 {latest}。更新会重新下载并替换整个容器，{pm} 中的数据将丢失。",
-  "@rootfsUpdateTip": {
-    "placeholders": {
-      "distro": {
-        "type": "String"
-      },
-      "installed": {
-        "type": "String"
-      },
-      "latest": {
-        "type": "String"
-      },
-      "pm": {
-        "type": "String"
-      }
-    }
-  },
   "linuxSystemInUse": "请先关闭 {name} 上的终端，再删除",
   "rootfsSubtitle": "本机上的 Linux 用户空间",
   "rootfsInstallTip": "下载 {distro} {version}(约 {size} MB)并解压到本机。",
-  "@rootfsInstallTip": {
-    "placeholders": {
-      "distro": {
-        "type": "String"
-      },
-      "version": {
-        "type": "String"
-      },
-      "size": {
-        "type": "int"
-      }
-    }
-  },
   "nameAlreadyExistsFmt": "「{name}」已存在",
   "sameIdServerExist": "已存在相同 id 的服务器",
   "second": "秒",
@@ -615,24 +579,7 @@
   "geoDataUnreachable": "无法获取数据。",
   "geoDataRemoveFailed": "无法删除数据。",
   "geoDataCurrent": "已经是 {month} 的数据。",
-  "@geoDataCurrent": {
-    "placeholders": {
-      "month": {
-        "type": "String"
-      }
-    }
-  },
   "geoDataConsent": "**下载大小：{download} · 本机占用：{disk}。** 完整数据集保存在本机，后续所有地理位置查询均在本地完成，不会向下载服务发送服务器地址或查询活动。\n\n数据每月更新。新版本会替换已安装的数据，不保留额外副本；你可以随时删除。",
-  "@geoDataConsent": {
-    "placeholders": {
-      "download": {
-        "type": "String"
-      },
-      "disk": {
-        "type": "String"
-      }
-    }
-  },
   "benchmark": "性能测试",
   "benchmarkIntro": "在此服务器上运行 Yet Another Bench Script：磁盘、网络与 CPU。完整跑一次需要 10–20 分钟，离开本页或关闭 App 都不会中断。",
   "benchmarkNoRuns": "还没有测试记录。",
@@ -1112,7 +1059,7 @@
   "virtDeleted": "已删除 {name}",
   "pveTokenTipCreate": "创建和删除虚拟机还需要 VM.Allocate、VM.Config.*、Datastore.AllocateSpace 和 SDN.Use。",
   "pveTokenTipHardware": "编辑硬件需要 VM.Config.CPU、VM.Config.Memory、VM.Config.Disk、VM.Config.CDROM、VM.Config.Network 和 VM.Config.Options；添加磁盘和网卡还需要 Datastore.AllocateSpace 和 SDN.Use。修改显卡以及 USB、PCI 设备还需要 VM.Config.HWType；通过资源映射直通设备需要该映射的 Mapping.Use，列出映射需要 Mapping.Audit。",
-  "pveTokenTipBackup": "克隆需要 VM.Clone，备份和还原需要 VM.Backup；副本或备份存放的存储上还需要 Datastore.AllocateSpace。",
+  "pveTokenTipBackup": "克隆需要 VM.Clone，备份与还原需要 VM.Backup，转为模板需要 VM.Allocate；备份任务还需要 Sys.Audit 才能读取，以及在 / 上的 Sys.Modify 才能新建、编辑和删除；副本或备份存放的存储上还需要 Datastore.AllocateSpace。",
   "virtErrConflict": "已在别处修改",
   "virtErrConflictTip": "此虚拟机的配置在读取后被他人修改，因此未做任何更改。已重新读取，如仍需要请再次修改。",
   "virtHardware": "硬件",
@@ -1408,5 +1355,99 @@
   "virtCiEffectLibvirt": "保存会写入一份新的 seed，并使用新的实例 ID。",
   "virtCiEffectPve": "PVE 会立即重写它的 cloud-init 驱动器，实例 ID 由这些设置计算得出，因此这里的任何改动都会产生新的实例 ID。",
   "virtCiNewInstance": "下次启动时，cloud-init 会把系统当作新实例：重新设置主机名，账户不存在时创建它，设置密码、添加密钥，并重新写入网络配置。它还会生成新的 SSH 主机密钥，因此 SSH 客户端会提示主机密钥已变更。在那次启动之前不会有任何变化。",
-  "virtCiSaved": "已保存，下次启动时生效。"
+  "virtCiSaved": "已保存，下次启动时生效。",
+  "virtSnapshotExternal": "不停机，仅磁盘",
+  "virtSnapshotExternalTip": "虚拟机继续运行。每块磁盘在所选存储池中得到一个 qcow2 覆盖层，虚拟机停留在链上。",
+  "virtSnapshotFormInternal": "内部（镜像内）",
+  "virtSnapshotForm": "类型",
+  "virtSnapshotOverlayPool": "覆盖层存储池",
+  "virtSnapshotExternalNoMemory": "外部快照不含内存：虚拟机不会停机。",
+  "virtSnapshotChain": "磁盘链",
+  "virtSnapshotChainDepth": "{count} 层",
+  "virtSnapshotChainFile": "文件",
+  "virtSnapshotChainActive": "当前使用",
+  "virtSnapshotChainBase": "基础镜像",
+  "virtSnapshotChainRaw": "外部快照需要 qcow2 磁盘，而这块是 {format}。",
+  "virtSnapshotNoSupport": "虚拟机的存储不支持快照，无法创建。",
+  "virtSnapshotRevertChain": "在链上恢复会把运行中的覆盖层合并进镜像，并让之后的所有快照无法使用。只能恢复到最新的快照。",
+  "virtSnapshotRevertHasChildren": "后面还有快照时不可恢复。",
+  "virtSnapshotDiff": "与当前的不同",
+  "virtSnapshotDiffNone": "自该快照以来配置没有变化。",
+  "virtSnapshotDiffShow": "与当前比较",
+  "virtSnapshotDiffGroup": "已变更",
+  "virtSnapshotDiffGroupCpu": "处理器",
+  "virtSnapshotDiffGroupMemory": "内存",
+  "virtSnapshotDiffGroupDisks": "磁盘",
+  "virtSnapshotDiffGroupNic": "网卡",
+  "virtSnapshotDiffGroupFirmware": "固件",
+  "virtSnapshotDiffGroupBoot": "启动",
+  "virtSnapshotDiffGroupOther": "其他",
+  "virtSnapshotDiffValue": "{before} → {after}",
+  "virtSnapshotDiffRemoved": "已移除",
+  "virtSnapshotDiffAdded": "已添加",
+  "virtSnapshotDiffAsk": "恢复到 {snapshot} 会改变：",
+  "virtSnapshotDiffHost": "主机无法说明差异：{error}",
+  "virtSnapshotExternalExists": "虚拟机已在 {count} 层链上，该快照会再增加一层。",
+  "virtToTemplate": "转为模板",
+  "virtToTemplateNote": "模板无法启动，也无法还原为虚拟机。其磁盘变为基础镜像，链接克隆正是共享它。",
+  "virtToTemplateConfirm": "将 {name} 转为模板？",
+  "virtToTemplateIrreversible": "此操作无法撤销：模板无法还原为虚拟机。",
+  "virtToTemplateStopped": "请先关机。",
+  "virtToTemplateSnapshots": "含快照的虚拟机无法转为模板。",
+  "virtTemplateCreated": "{name} 现在是模板",
+  "virtTemplateTip": "模板只有在克隆后才能运行。",
+  "virtCloneStorage": "目标存储",
+  "virtCloneStorageSame": "与源相同",
+  "virtCloneNode": "目标节点",
+  "virtCloneNodeSame": "与源相同",
+  "virtClonePool": "目标存储池",
+  "virtCloneStorageContent": "该存储不存放虚拟机磁盘。",
+  "virtCloneStorageShared": "复制到其他节点需要共享存储。",
+  "virtCloneNodeUnknown": "该宿主机没有此节点。",
+  "virtCloneLinkedTarget": "链接克隆共享模板的磁盘，因此不能指定存储或节点。",
+  "virtBackupJobs": "备份任务",
+  "virtBackupJobsNone": "没有计划备份任务。添加一个即可按计划备份虚拟机。",
+  "virtBackupJobNew": "新建任务",
+  "virtBackupJobEdit": "编辑任务",
+  "virtBackupJobRun": "立即运行",
+  "virtBackupJobRunAsk": "立即启动该备份任务？",
+  "virtBackupJobDeleteAsk": "删除备份任务 {id}？已生成的备份会保留。",
+  "virtBackupJobSaved": "任务已保存",
+  "virtBackupJobDeleted": "任务已删除",
+  "virtBackupJobStarted": "备份任务已启动",
+  "virtBackupSchedule": "时间表",
+  "virtBackupScheduleHelp": "systemd 日历事件的子集：02:30、mon..fri 02:30、sat 03:00、daily、hourly、*/15。",
+  "virtBackupScheduleInvalid": "宿主机不接受该时间表。",
+  "virtBackupScheduleNext": "接下来运行：{times}",
+  "virtBackupSelection": "虚拟机",
+  "virtBackupSelectionAll": "所有虚拟机",
+  "virtBackupSelectionList": "选定的虚拟机",
+  "virtBackupSelectionNone": "请至少选择一台虚拟机。",
+  "virtBackupMail": "通知",
+  "virtBackupMailAlways": "总是",
+  "virtBackupMailFailure": "失败时",
+  "virtBackupNotesTemplate": "备份备注",
+  "virtBackupNotesTemplateTip": "备注会加到该任务生成的每个备份上。其中的 {vars} 会被替换为实际值。",
+  "virtBackupPrune": "保留",
+  "virtBackupPruneTip": "PVE 的保留选项，例如 keep-last=7,keep-daily=4。留空则用存储或节点自身的设置。",
+  "virtBackupNextRun": "下次运行",
+  "virtBackupJobNode": "节点",
+  "virtBackupJobNodeAny": "所有节点",
+  "virtBackupEnabled": "启用",
+  "virtBackupOptions": "选项",
+  "virtBackupProtect": "保护",
+  "virtBackupProtectTip": "受保护的备份不会被保留策略清理，在取消保护前也无法删除。",
+  "virtBackupEditNotes": "备注",
+  "virtBackupSaveNotes": "保存",
+  "virtBackupEdited": "备份已更新",
+  "virtBackupRestoreStorage": "还原到存储",
+  "virtBackupRestoreStorageSame": "与备份一致",
+  "virtBackupModeSnapshotTip": "snapshot · 不停机",
+  "virtCloneStorageMissing": "该节点上没有存放虚拟机磁盘的存储。",
+  "virtBackupCompress": "压缩",
+  "virtBackupUnprotect": "取消保护",
+  "virtBackupModeStops": "suspend 和 stop 会在复制期间中断运行中的虚拟机。",
+  "virtBackupScheduleValidate": "向宿主机校验",
+  "virtBackupSelected": "已选 {count} 台",
+  "virtBackupExcludeTip": "该节点上的所有虚拟机都会备份。关闭某个即可排除它。"
 }

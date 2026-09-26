@@ -82,6 +82,17 @@ abstract final class ServerCardSizes {
   static const logoHeightRatio = 0.3;
   static const logoPad = 13.0;
 
+  /// What [logoHeightRatio] may not take the image past.
+  ///
+  /// The ratio alone is a share of the width, and the width is now the column
+  /// the image is drawn in rather than the window: beside the readings that is
+  /// [aside], so 99 here. In one column it is the whole page, and a logo on a
+  /// wide window — a tablet, or the desktop app — would be given half the
+  /// screen for a picture that says which distribution this is. The cap keeps
+  /// it to a size every layout has room for, and the image is placed inside it
+  /// with its own proportions either way.
+  static const logoMaxHeight = 120.0;
+
   /// The line above the chart, once the readings are the page.
   ///
   /// Stated rather than natural, and honoured at both ends of the movement:

@@ -190,13 +190,6 @@
   "maxConcurrency": "Maximale gelijktijdigheid",
   "maxRetryCount": "Aantal serverherverbindingen",
   "mismatchSystem": "Niet-overeenkomend systeem: {system}",
-  "@mismatchSystem": {
-    "placeholders": {
-      "system": {
-        "type": "String"
-      }
-    }
-  },
   "mirror": "Mirror",
   "needRestart": "App moet opnieuw worden gestart",
   "netViewType": "Netweergavetype",
@@ -252,22 +245,6 @@
   "rememberPwdInMemTip": "Gebruikt voor containers, opschorting, enz.",
   "remotePath": "Extern pad",
   "rootfsUpdateTip": "{distro} {installed} is geïnstalleerd, {latest} is beschikbaar. Bijwerken vervangt de hele container: {pm}-gegevens gaan verloren",
-  "@rootfsUpdateTip": {
-    "placeholders": {
-      "distro": {
-        "type": "String"
-      },
-      "installed": {
-        "type": "String"
-      },
-      "latest": {
-        "type": "String"
-      },
-      "pm": {
-        "type": "String"
-      }
-    }
-  },
   "linuxSystemInUse": "Sluit de terminals op {name} voordat je het verwijdert",
   "rootfsSubtitle": "Een Linux-userland op dit apparaat",
   "rootfsInstallTip": "Downloadt {distro} {version} (ongeveer {size} MB) en pakt het uit op dit apparaat.",
@@ -571,24 +548,7 @@
   "geoDataUnreachable": "Kon de gegevens niet ophalen.",
   "geoDataRemoveFailed": "Kon de gegevens niet verwijderen.",
   "geoDataCurrent": "{month} is al geïnstalleerd.",
-  "@geoDataCurrent": {
-    "placeholders": {
-      "month": {
-        "type": "String"
-      }
-    }
-  },
   "geoDataConsent": "**Download: {download} · Opslag op het apparaat: {disk}.** De volledige gegevensset wordt op dit apparaat opgeslagen en alle latere locatiebepalingen worden lokaal uitgevoerd. Er worden geen serveradressen of opzoekactiviteiten naar de downloadservice verzonden.\n\nMaandelijks bijgewerkt. Een nieuwere versie vervangt de geïnstalleerde gegevens zonder een extra kopie te bewaren. Je kunt de gegevens op elk moment verwijderen.",
-  "@geoDataConsent": {
-    "placeholders": {
-      "download": {
-        "type": "String"
-      },
-      "disk": {
-        "type": "String"
-      }
-    }
-  },
   "benchmark": "Benchmark",
   "benchmarkIntro": "Voert Yet Another Bench Script uit op deze server om schijf, netwerk en CPU te testen. Een volledige test duurt 10–20 minuten en gaat door als je deze pagina verlaat of de app sluit.",
   "benchmarkNoRuns": "Nog geen benchmarks.",
@@ -958,62 +918,6 @@
   "remoteDesktopCertificateIssuer": "Uitgever: {issuer}",
   "remoteDesktopCertificateValidity": "Geldig: {start} – {end}",
   "appearanceThemeModeLocked": "Dit thema ondersteunt alleen {mode}. Kies een ander thema om de modus te wijzigen.",
-  "@processCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@tmuxWindowCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@tmuxPaneCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@processShowKernelThreads": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@serviceOtherUnits": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@serviceJournalRecent": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@diskWarningFmt": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@scheduledTaskSummaryFmt": {
-    "placeholders": {
-      "total": {
-        "type": "int"
-      }
-    }
-  },
   "pveAuthToken": "API-token",
   "pveVersionLow": "Deze functie bevindt zich momenteel in de testfase en is alleen getest op PVE 8+. Gebruik het met voorzichtigheid.",
   "pveTokenId": "Token-ID",
@@ -1155,7 +1059,7 @@
   "virtDeleted": "{name} verwijderd",
   "pveTokenTipCreate": "Gasten aanmaken en verwijderen vraagt ook VM.Allocate, VM.Config.*, Datastore.AllocateSpace en SDN.Use.",
   "pveTokenTipHardware": "Hardware bewerken vereist VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network en VM.Config.Options; nieuwe schijven en interfaces vereisen ook Datastore.AllocateSpace en SDN.Use. De videokaart en USB- en PCI-apparaten vereisen ook VM.Config.HWType; een apparaat via een resourcekoppeling vereist Mapping.Use daarop, en Mapping.Audit om koppelingen te tonen.",
-  "pveTokenTipBackup": "Klonen vraagt VM.Clone, back-uppen en herstellen VM.Backup, met Datastore.AllocateSpace waar de kopie of back-up heen gaat.",
+  "pveTokenTipBackup": "Klonen vereist VM.Clone, back-uppen en herstellen VM.Backup, en het omzetten naar een sjabloon VM.Allocate; back-uptaken vereisen ook Sys.Audit om ze te lezen en Sys.Modify op / om ze te maken, te bewerken en te verwijderen, met Datastore.AllocateSpace waar de kopie of de back-up heen gaat.",
   "virtErrConflict": "Elders gewijzigd",
   "virtErrConflictTip": "Iemand heeft de configuratie van deze gast gewijzigd nadat die hier is gelezen, dus er is niets gewijzigd. Hij is opnieuw gelezen: voer de wijziging opnieuw uit als die nog nodig is.",
   "virtHardware": "Hardware",
@@ -1451,5 +1355,99 @@
   "virtCiEffectLibvirt": "Opslaan schrijft een nieuwe seed met een nieuwe instantie-ID.",
   "virtCiEffectPve": "PVE schrijft zijn cloud-init-station meteen opnieuw, met een instantie-ID afgeleid van deze instellingen, dus elke wijziging hier maakt een nieuwe.",
   "virtCiNewInstance": "Bij de volgende start behandelt cloud-init het systeem als een nieuwe instantie: het stelt de hostnaam opnieuw in, maakt het account als het ontbreekt, zet het wachtwoord, voegt de sleutels toe en schrijft de netwerkconfiguratie opnieuw. Het maakt ook nieuwe SSH-hostsleutels, dus SSH-clients waarschuwen dat de hostsleutel is veranderd. Vóór die start verandert er niets.",
-  "virtCiSaved": "Opgeslagen. Werkt bij de volgende start."
+  "virtCiSaved": "Opgeslagen. Werkt bij de volgende start.",
+  "virtSnapshotExternal": "Alleen schijven tijdens bedrijf",
+  "virtSnapshotExternalTip": "De gast blijft draaien. Elke schijf krijgt een qcow2-overlay in de gekozen pool; de gast blijft op een keten.",
+  "virtSnapshotFormInternal": "Intern (in de image)",
+  "virtSnapshotForm": "Soort",
+  "virtSnapshotOverlayPool": "Overlay-pool",
+  "virtSnapshotExternalNoMemory": "Een externe snapshot bevat nooit het geheugen: de gast wordt niet gestopt.",
+  "virtSnapshotChain": "Schijfketen",
+  "virtSnapshotChainDepth": "{count} lagen",
+  "virtSnapshotChainFile": "Bestand",
+  "virtSnapshotChainActive": "Nu in gebruik",
+  "virtSnapshotChainBase": "Basis-image",
+  "virtSnapshotChainRaw": "Een externe snapshot vereist een qcow2-schijf. Deze is {format}.",
+  "virtSnapshotNoSupport": "De opslag van de gast ondersteunt geen snapshots, dus er kan geen worden gemaakt.",
+  "virtSnapshotRevertChain": "Terugzetten op een keten voegt de lopende overlay samen in de image en maakt elke latere snapshot onbruikbaar. Alleen de nieuwste snapshot kan worden teruggezet.",
+  "virtSnapshotRevertHasChildren": "Geweigerd zolang een latere snapshot op deze rust.",
+  "virtSnapshotDiff": "Verschillen met nu",
+  "virtSnapshotDiffNone": "De configuratie is onveranderd sinds deze snapshot.",
+  "virtSnapshotDiffShow": "Vergelijk met nu",
+  "virtSnapshotDiffGroup": "Gewijzigd",
+  "virtSnapshotDiffGroupCpu": "Processor",
+  "virtSnapshotDiffGroupMemory": "Geheugen",
+  "virtSnapshotDiffGroupDisks": "Schijven",
+  "virtSnapshotDiffGroupNic": "Interfaces",
+  "virtSnapshotDiffGroupFirmware": "Firmware",
+  "virtSnapshotDiffGroupBoot": "Opstarten",
+  "virtSnapshotDiffGroupOther": "Overig",
+  "virtSnapshotDiffValue": "{before} → {after}",
+  "virtSnapshotDiffRemoved": "verwijderd",
+  "virtSnapshotDiffAdded": "toegevoegd",
+  "virtSnapshotDiffAsk": "Wat er verandert als u terugzet naar {snapshot}:",
+  "virtSnapshotDiffHost": "De host kon niet zeggen wat verschilt: {error}",
+  "virtSnapshotExternalExists": "De gast staat al op {count} lagen; deze snapshot voegt er één toe.",
+  "virtToTemplate": "Als sjabloon gebruiken",
+  "virtToTemplateNote": "Een sjabloon kan niet worden gestart en niet terug in een gast worden omgezet. De schijven worden basis-images, die een gekoppelde kloon deelt.",
+  "virtToTemplateConfirm": "{name} als sjabloon gebruiken?",
+  "virtToTemplateIrreversible": "Dit kan niet ongedaan worden gemaakt: een sjabloon kan niet terug in een gast worden omgezet.",
+  "virtToTemplateStopped": "Schakel het eerst uit.",
+  "virtToTemplateSnapshots": "Een gast met snapshots kan geen sjabloon worden.",
+  "virtTemplateCreated": "{name} is nu een sjabloon",
+  "virtTemplateTip": "Een sjabloon draait pas als het is gekloond.",
+  "virtCloneStorage": "Doelopslag",
+  "virtCloneStorageSame": "Zelfde als de bron",
+  "virtCloneNode": "Doelknooppunt",
+  "virtCloneNodeSame": "Zelfde als de bron",
+  "virtClonePool": "Doelpool",
+  "virtCloneStorageContent": "Deze opslag bevat geen VM-schijven.",
+  "virtCloneStorageShared": "Kopiëren naar een ander knooppunt vereist gedeelde opslag.",
+  "virtCloneNodeUnknown": "Deze host heeft die knooppunt niet.",
+  "virtCloneLinkedTarget": "Een gekoppelde kloon deelt de schijven van het sjabloon en kan dus geen opslag of knooppunt noemen.",
+  "virtBackupJobs": "Back-uptaken",
+  "virtBackupJobsNone": "Geen geplande back-uptaak. Voeg er een toe om gasten volgens schema te back-uppen.",
+  "virtBackupJobNew": "Nieuwe taak",
+  "virtBackupJobEdit": "Taak bewerken",
+  "virtBackupJobRun": "Nu uitvoeren",
+  "virtBackupJobRunAsk": "Deze back-uptaak nu starten?",
+  "virtBackupJobDeleteAsk": "Back-uptaak {id} verwijderen? De gemaakte back-ups blijven.",
+  "virtBackupJobSaved": "Taak opgeslagen",
+  "virtBackupJobDeleted": "Taak verwijderd",
+  "virtBackupJobStarted": "Back-uptaak gestart",
+  "virtBackupSchedule": "Schema",
+  "virtBackupScheduleHelp": "Een subset van systemd-kalendergebeurtenissen: 02:30, mon..fri 02:30, sat 03:00, daily, hourly, */15.",
+  "virtBackupScheduleInvalid": "Geen schema dat de host accepteert.",
+  "virtBackupScheduleNext": "Volgende uitvoeringen: {times}",
+  "virtBackupSelection": "Gasten",
+  "virtBackupSelectionAll": "Alle gasten",
+  "virtBackupSelectionList": "Geselecteerde gasten",
+  "virtBackupSelectionNone": "Kies minstens één gast.",
+  "virtBackupMail": "Melding",
+  "virtBackupMailAlways": "Altijd",
+  "virtBackupMailFailure": "Bij fout",
+  "virtBackupNotesTemplate": "Back-upnotities",
+  "virtBackupNotesTemplateTip": "De notities worden aan elke back-up van de taak toegevoegd. Vervangen worden: {vars}.",
+  "virtBackupPrune": "Bewaring",
+  "virtBackupPruneTip": "PVE-bewaaropties, bv. keep-last=7,keep-daily=4. Leeg: die van de opslag of het knooppunt.",
+  "virtBackupNextRun": "Volgende uitvoering",
+  "virtBackupJobNode": "Knooppunt",
+  "virtBackupJobNodeAny": "Elk knooppunt",
+  "virtBackupEnabled": "Ingeschakeld",
+  "virtBackupOptions": "Opties",
+  "virtBackupProtect": "Beschermen",
+  "virtBackupProtectTip": "Een beschermde back-up wordt niet opgeruimd en kan niet worden verwijderd zolang de bescherming geldt.",
+  "virtBackupEditNotes": "Notities",
+  "virtBackupSaveNotes": "Opslaan",
+  "virtBackupEdited": "Back-up bijgewerkt",
+  "virtBackupRestoreStorage": "Herstellen naar opslag",
+  "virtBackupRestoreStorageSame": "Zoals in de back-up",
+  "virtBackupModeSnapshotTip": "snapshot · zonder stilstand",
+  "virtCloneStorageMissing": "Geen opslag op dit knooppunt bevat VM-schijven.",
+  "virtBackupCompress": "Compressie",
+  "virtBackupUnprotect": "Bescherming opheffen",
+  "virtBackupModeStops": "suspend en stop onderbreken een draaiende gast tijdens het kopiëren.",
+  "virtBackupScheduleValidate": "Bij de host controleren",
+  "virtBackupSelected": "{count} geselecteerd",
+  "virtBackupExcludeTip": "Alle gasten op het knooppunt worden meegenomen. Zet er een uit om die over te slaan."
 }

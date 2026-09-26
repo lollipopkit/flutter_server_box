@@ -3812,7 +3812,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get pveTokenTipBackup =>
-      'Klonen braucht VM.Clone, Sichern und Wiederherstellen VM.Backup, dazu Datastore.AllocateSpace dort, wo die Kopie oder das Backup landet.';
+      'Klonen braucht VM.Clone, Sichern und Wiederherstellen VM.Backup und das Umwandeln in eine Vorlage VM.Allocate; Sicherungsaufträge brauchen außerdem Sys.Audit zum Lesen und Sys.Modify auf / zum Anlegen, Bearbeiten und Löschen, mit Datastore.AllocateSpace, wo die Kopie oder die Sicherung hingeht.';
 
   @override
   String get virtErrConflict => 'Anderswo geändert';
@@ -4878,4 +4878,331 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get virtCiSaved => 'Gespeichert. Wirkt beim nächsten Start.';
+
+  @override
+  String get virtSnapshotExternal => 'Nur Datenträger im laufenden Betrieb';
+
+  @override
+  String get virtSnapshotExternalTip =>
+      'Der Gast läuft weiter. Jeder Datenträger bekommt ein qcow2-Overlay im gewählten Pool; der Gast bleibt auf einer Kette.';
+
+  @override
+  String get virtSnapshotFormInternal => 'Intern (im Datenträgerbild)';
+
+  @override
+  String get virtSnapshotForm => 'Art';
+
+  @override
+  String get virtSnapshotOverlayPool => 'Overlay-Pool';
+
+  @override
+  String get virtSnapshotExternalNoMemory =>
+      'Ein externer Snapshot enthält nie den Arbeitsspeicher: der Gast wird nicht gestoppt.';
+
+  @override
+  String get virtSnapshotChain => 'Datenträgerkette';
+
+  @override
+  String virtSnapshotChainDepth(String count) {
+    return '$count Ebenen';
+  }
+
+  @override
+  String get virtSnapshotChainFile => 'Datei';
+
+  @override
+  String get virtSnapshotChainActive => 'Wird jetzt verwendet';
+
+  @override
+  String get virtSnapshotChainBase => 'Basisabbild';
+
+  @override
+  String virtSnapshotChainRaw(String format) {
+    return 'Ein externer Snapshot braucht einen qcow2-Datenträger. Dieser ist $format.';
+  }
+
+  @override
+  String get virtSnapshotNoSupport =>
+      'Der Speicher des Gastes unterstützt keine Snapshots, daher kann keiner erstellt werden.';
+
+  @override
+  String get virtSnapshotRevertChain =>
+      'Ein Rücksetzen auf einer Kette führt das laufende Overlay in das Abbild zusammen und lässt jeden späteren Snapshot unbrauchbar zurück. Nur der neueste Snapshot kann zurückgesetzt werden.';
+
+  @override
+  String get virtSnapshotRevertHasChildren =>
+      'Abgelehnt, solange ein späterer Snapshot auf diesem aufsitzt.';
+
+  @override
+  String get virtSnapshotDiff => 'Unterschiede zu jetzt';
+
+  @override
+  String get virtSnapshotDiffNone =>
+      'Die Konfiguration ist seit diesem Snapshot unverändert.';
+
+  @override
+  String get virtSnapshotDiffShow => 'Mit jetzt vergleichen';
+
+  @override
+  String get virtSnapshotDiffGroup => 'Geändert';
+
+  @override
+  String get virtSnapshotDiffGroupCpu => 'Prozessor';
+
+  @override
+  String get virtSnapshotDiffGroupMemory => 'Arbeitsspeicher';
+
+  @override
+  String get virtSnapshotDiffGroupDisks => 'Datenträger';
+
+  @override
+  String get virtSnapshotDiffGroupNic => 'Netzwerkschnittstellen';
+
+  @override
+  String get virtSnapshotDiffGroupFirmware => 'Firmware';
+
+  @override
+  String get virtSnapshotDiffGroupBoot => 'Start';
+
+  @override
+  String get virtSnapshotDiffGroupOther => 'Sonstiges';
+
+  @override
+  String virtSnapshotDiffValue(String after, String before) {
+    return '$before → $after';
+  }
+
+  @override
+  String get virtSnapshotDiffRemoved => 'entfernt';
+
+  @override
+  String get virtSnapshotDiffAdded => 'hinzugefügt';
+
+  @override
+  String virtSnapshotDiffAsk(String snapshot) {
+    return 'Was sich ändert, wenn Sie auf $snapshot zurücksetzen:';
+  }
+
+  @override
+  String virtSnapshotDiffHost(String error) {
+    return 'Der Host konnte nicht sagen, was sich unterscheidet: $error';
+  }
+
+  @override
+  String virtSnapshotExternalExists(String count) {
+    return 'Der Gast liegt bereits auf $count Ebenen; dieser Snapshot fügt eine weitere hinzu.';
+  }
+
+  @override
+  String get virtToTemplate => 'Als Vorlage verwenden';
+
+  @override
+  String get virtToTemplateNote =>
+      'Eine Vorlage lässt sich nicht starten und nicht zurück in einen Gast verwandeln. Ihre Datenträger werden Basisabbilder, die ein verknüpfter Klon gemeinsam nutzt.';
+
+  @override
+  String virtToTemplateConfirm(String name) {
+    return '$name in eine Vorlage umwandeln?';
+  }
+
+  @override
+  String get virtToTemplateIrreversible =>
+      'Das lässt sich nicht rückgängig machen: eine Vorlage kann nicht zurück in einen Gast verwandelt werden.';
+
+  @override
+  String get virtToTemplateStopped => 'Zuerst herunterfahren.';
+
+  @override
+  String get virtToTemplateSnapshots =>
+      'Ein Gast mit Snapshots kann keine Vorlage werden.';
+
+  @override
+  String virtTemplateCreated(String name) {
+    return '$name ist jetzt eine Vorlage';
+  }
+
+  @override
+  String get virtTemplateTip =>
+      'Eine Vorlage läuft erst, wenn sie geklont wurde.';
+
+  @override
+  String get virtCloneStorage => 'Zielspeicher';
+
+  @override
+  String get virtCloneStorageSame => 'Wie die Quelle';
+
+  @override
+  String get virtCloneNode => 'Zielknoten';
+
+  @override
+  String get virtCloneNodeSame => 'Wie die Quelle';
+
+  @override
+  String get virtClonePool => 'Ziel-Pool';
+
+  @override
+  String get virtCloneStorageContent =>
+      'Dieser Speicher nimmt keine VM-Datenträger auf.';
+
+  @override
+  String get virtCloneStorageShared =>
+      'Das Kopieren auf einen anderen Knoten braucht einen gemeinsamen Speicher.';
+
+  @override
+  String get virtCloneNodeUnknown => 'Dieser Host hat keinen solchen Knoten.';
+
+  @override
+  String get virtCloneLinkedTarget =>
+      'Ein verknüpfter Klon nutzt die Datenträger der Vorlage, kann also keinen Speicher und keinen Knoten nennen.';
+
+  @override
+  String get virtBackupJobs => 'Sicherungsaufträge';
+
+  @override
+  String get virtBackupJobsNone =>
+      'Kein geplanter Sicherungsauftrag. Legen Sie einen an, um Gäste regelmäßig zu sichern.';
+
+  @override
+  String get virtBackupJobNew => 'Neuer Auftrag';
+
+  @override
+  String get virtBackupJobEdit => 'Auftrag bearbeiten';
+
+  @override
+  String get virtBackupJobRun => 'Jetzt ausführen';
+
+  @override
+  String get virtBackupJobRunAsk => 'Diesen Sicherungsauftrag jetzt starten?';
+
+  @override
+  String virtBackupJobDeleteAsk(String id) {
+    return 'Sicherungsauftrag $id löschen? Die erstellten Sicherungen bleiben.';
+  }
+
+  @override
+  String get virtBackupJobSaved => 'Auftrag gespeichert';
+
+  @override
+  String get virtBackupJobDeleted => 'Auftrag gelöscht';
+
+  @override
+  String get virtBackupJobStarted => 'Sicherungsauftrag gestartet';
+
+  @override
+  String get virtBackupSchedule => 'Zeitplan';
+
+  @override
+  String get virtBackupScheduleHelp =>
+      'Eine Teilmenge der systemd-Kalenderereignisse: 02:30, mon..fri 02:30, sat 03:00, daily, hourly, */15.';
+
+  @override
+  String get virtBackupScheduleInvalid =>
+      'Kein Zeitplan, den der Host annimmt.';
+
+  @override
+  String virtBackupScheduleNext(String times) {
+    return 'Nächste Läufe: $times';
+  }
+
+  @override
+  String get virtBackupSelection => 'Gäste';
+
+  @override
+  String get virtBackupSelectionAll => 'Alle Gäste';
+
+  @override
+  String get virtBackupSelectionList => 'Ausgewählte Gäste';
+
+  @override
+  String get virtBackupSelectionNone => 'Wählen Sie mindestens einen Gast.';
+
+  @override
+  String get virtBackupMail => 'Benachrichtigung';
+
+  @override
+  String get virtBackupMailAlways => 'Immer';
+
+  @override
+  String get virtBackupMailFailure => 'Bei Fehler';
+
+  @override
+  String get virtBackupNotesTemplate => 'Sicherungsnotizen';
+
+  @override
+  String virtBackupNotesTemplateTip(String vars) {
+    return 'Die Notizen werden jeder Sicherung des Auftrags hinzugefügt. Ersetzt werden: $vars.';
+  }
+
+  @override
+  String get virtBackupPrune => 'Aufbewahrung';
+
+  @override
+  String get virtBackupPruneTip =>
+      'PVEs Aufbewahrungsoptionen, z. B. keep-last=7,keep-daily=4. Leer: die des Speichers oder des Knotens.';
+
+  @override
+  String get virtBackupNextRun => 'Nächster Lauf';
+
+  @override
+  String get virtBackupJobNode => 'Knoten';
+
+  @override
+  String get virtBackupJobNodeAny => 'Jeder Knoten';
+
+  @override
+  String get virtBackupEnabled => 'Aktiviert';
+
+  @override
+  String get virtBackupOptions => 'Optionen';
+
+  @override
+  String get virtBackupProtect => 'Schützen';
+
+  @override
+  String get virtBackupProtectTip =>
+      'Eine geschützte Sicherung wird nicht aufgeräumt und kann nicht gelöscht werden, solange der Schutz besteht.';
+
+  @override
+  String get virtBackupEditNotes => 'Notizen';
+
+  @override
+  String get virtBackupSaveNotes => 'Speichern';
+
+  @override
+  String get virtBackupEdited => 'Sicherung aktualisiert';
+
+  @override
+  String get virtBackupRestoreStorage => 'Auf Speicher wiederherstellen';
+
+  @override
+  String get virtBackupRestoreStorageSame => 'Wie in der Sicherung';
+
+  @override
+  String get virtBackupModeSnapshotTip => 'snapshot · kein Ausfall';
+
+  @override
+  String get virtCloneStorageMissing =>
+      'Kein Speicher auf diesem Knoten nimmt VM-Datenträger auf.';
+
+  @override
+  String get virtBackupCompress => 'Kompression';
+
+  @override
+  String get virtBackupUnprotect => 'Schutz aufheben';
+
+  @override
+  String get virtBackupModeStops =>
+      'suspend und stop unterbrechen einen laufenden Gast während der Kopie.';
+
+  @override
+  String get virtBackupScheduleValidate => 'Beim Host prüfen';
+
+  @override
+  String virtBackupSelected(int count) {
+    return '$count ausgewählt';
+  }
+
+  @override
+  String get virtBackupExcludeTip =>
+      'Alle Gäste des Knotens werden gesichert. Schalten Sie einen ab, um ihn auszulassen.';
 }

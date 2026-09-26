@@ -3771,7 +3771,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get pveTokenTipBackup =>
-      'Klonlama üçün VM.Clone, nüsxələmə və bərpa üçün VM.Backup, həmçinin nüsxənin getdiyi yerdə Datastore.AllocateSpace lazımdır.';
+      'Klonlama VM.Clone, yedəkləmə və bərpa VM.Backup, şablona çevirmə VM.Allocate tələb edir; yedəkləmə işləri həmçinin oxumaq üçün Sys.Audit, yaratmaq, düzəltmək və silmək üçün / üzərində Sys.Modify tələb edir; kopyanın və ya yedəyin getdiyi yerdə Datastore.AllocateSpace də lazımdır.';
 
   @override
   String get virtErrConflict => 'Başqa yerdə dəyişdirilib';
@@ -4818,4 +4818,328 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get virtCiSaved => 'Saxlanıldı. Növbəti açılışda qüvvəyə minir.';
+
+  @override
+  String get virtSnapshotExternal => 'İşləyərkən yalnız disk';
+
+  @override
+  String get virtSnapshotExternalTip =>
+      'Qonaq işləməyə davam edir. Hər disk seçilmiş hovuzda qcow2 örtüyü alır; qonaq zəncirdə qalır.';
+
+  @override
+  String get virtSnapshotFormInternal => 'Daxili (şəkil içində)';
+
+  @override
+  String get virtSnapshotForm => 'Növ';
+
+  @override
+  String get virtSnapshotOverlayPool => 'Örtük hovuzu';
+
+  @override
+  String get virtSnapshotExternalNoMemory =>
+      'Xarici anlık görüntü yaddaşı saxlamaz: qonaq dayandırılmır.';
+
+  @override
+  String get virtSnapshotChain => 'Disk zənciri';
+
+  @override
+  String virtSnapshotChainDepth(String count) {
+    return '$count qat';
+  }
+
+  @override
+  String get virtSnapshotChainFile => 'Fayl';
+
+  @override
+  String get virtSnapshotChainActive => 'Hazırda istifadə olunur';
+
+  @override
+  String get virtSnapshotChainBase => 'Əsas şəkil';
+
+  @override
+  String virtSnapshotChainRaw(String format) {
+    return 'Xarici anlık görüntü qcow2 disk tələb edir. Bu disk $format.';
+  }
+
+  @override
+  String get virtSnapshotNoSupport =>
+      'Qonağın yaddaşı anlık görüntünü dəstəkləmir, buna görə yaradıla bilməz.';
+
+  @override
+  String get virtSnapshotRevertChain =>
+      'Zəncirdə geri qaytarma işləyən örtüyü şəklə birləşdirir və sonrakı bütün anlık görüntüləri yararsız edir. Yalnız ən yeni anlık görüntüyə qayıtmaq olar.';
+
+  @override
+  String get virtSnapshotRevertHasChildren =>
+      'Sonrakı anlık görüntü bunun üzərində olduqca rədd edilir.';
+
+  @override
+  String get virtSnapshotDiff => 'İndiki ilə fərqlər';
+
+  @override
+  String get virtSnapshotDiffNone =>
+      'Bu anlık görüntüdən bəri konfiqurasiya dəyişməyib.';
+
+  @override
+  String get virtSnapshotDiffShow => 'İndiki ilə müqayisə et';
+
+  @override
+  String get virtSnapshotDiffGroup => 'Dəyişdi';
+
+  @override
+  String get virtSnapshotDiffGroupCpu => 'Prosessor';
+
+  @override
+  String get virtSnapshotDiffGroupMemory => 'Yaddaş';
+
+  @override
+  String get virtSnapshotDiffGroupDisks => 'Disklər';
+
+  @override
+  String get virtSnapshotDiffGroupNic => 'İnterfeyslər';
+
+  @override
+  String get virtSnapshotDiffGroupFirmware => 'Proqram təminatı';
+
+  @override
+  String get virtSnapshotDiffGroupBoot => 'Önyükləmə';
+
+  @override
+  String get virtSnapshotDiffGroupOther => 'Digər';
+
+  @override
+  String virtSnapshotDiffValue(String after, String before) {
+    return '$before → $after';
+  }
+
+  @override
+  String get virtSnapshotDiffRemoved => 'silinib';
+
+  @override
+  String get virtSnapshotDiffAdded => 'əlavə edildi';
+
+  @override
+  String virtSnapshotDiffAsk(String snapshot) {
+    return '$snapshot vəziyyətinə qaytarsanız nə dəyişər:';
+  }
+
+  @override
+  String virtSnapshotDiffHost(String error) {
+    return 'Host nəyin fərqli olduğunu deyə bilmədi: $error';
+  }
+
+  @override
+  String virtSnapshotExternalExists(String count) {
+    return 'Qonaq artıq $count qatdadır; bu anlık görüntü bir daha əlavə edir.';
+  }
+
+  @override
+  String get virtToTemplate => 'Şablona çevir';
+
+  @override
+  String get virtToTemplateNote =>
+      'Şablon işə salına bilməz və guest-ə geri çevrilə bilməz. Diskləri əsas şəkillərə çevrilir; bağlı klon onları paylaşır.';
+
+  @override
+  String virtToTemplateConfirm(String name) {
+    return '$name şablona çevrilsin?';
+  }
+
+  @override
+  String get virtToTemplateIrreversible =>
+      'Bu geri alına bilməz: şablon təkrar guest-ə çevrilə bilməz.';
+
+  @override
+  String get virtToTemplateStopped => 'Əvvəlcə söndürün.';
+
+  @override
+  String get virtToTemplateSnapshots =>
+      'Anlık görüntüsü olan qonaq şablon ola bilməz.';
+
+  @override
+  String virtTemplateCreated(String name) {
+    return '$name artıq şablondur';
+  }
+
+  @override
+  String get virtTemplateTip => 'Şablon yalnızca klonlandıqdan sonra işləyir.';
+
+  @override
+  String get virtCloneStorage => 'Hədəf anbar';
+
+  @override
+  String get virtCloneStorageSame => 'Mənbə ilə eyni';
+
+  @override
+  String get virtCloneNode => 'Hədəf node';
+
+  @override
+  String get virtCloneNodeSame => 'Mənbə ilə eyni';
+
+  @override
+  String get virtClonePool => 'Hədəf hovuz';
+
+  @override
+  String get virtCloneStorageContent => 'Bu anbar VM disklərini saxlamır.';
+
+  @override
+  String get virtCloneStorageShared =>
+      'Başqa node-a köçürmək üçün paylaşılan anbar lazımdır.';
+
+  @override
+  String get virtCloneNodeUnknown => 'Bu hostda belə node yoxdur.';
+
+  @override
+  String get virtCloneLinkedTarget =>
+      'Bağlı klon şablonun disklərini paylaşır; ona görə anbar və ya node göstərə bilməz.';
+
+  @override
+  String get virtBackupJobs => 'Yedəkləmə işləri';
+
+  @override
+  String get virtBackupJobsNone =>
+      'Zamanlanmış yedəkləmə işi yoxdur. Əlavə edin, guest-lər cədvəl üzrə yedəklənsin.';
+
+  @override
+  String get virtBackupJobNew => 'Yeni iş';
+
+  @override
+  String get virtBackupJobEdit => 'İşi düzəlt';
+
+  @override
+  String get virtBackupJobRun => 'İndi işə sal';
+
+  @override
+  String get virtBackupJobRunAsk => 'Bu yedəkləmə işi indi başladılsın?';
+
+  @override
+  String virtBackupJobDeleteAsk(String id) {
+    return '$id yedəkləmə işi silinsin? Yaradılan yedəklər qalır.';
+  }
+
+  @override
+  String get virtBackupJobSaved => 'İş saxlanıldı';
+
+  @override
+  String get virtBackupJobDeleted => 'İş silindi';
+
+  @override
+  String get virtBackupJobStarted => 'Yedəkləmə işi başladı';
+
+  @override
+  String get virtBackupSchedule => 'Cədvəl';
+
+  @override
+  String get virtBackupScheduleHelp =>
+      'systemd təqvim hadisələrinin alt çoxluğu: 02:30, mon..fri 02:30, sat 03:00, daily, hourly, */15.';
+
+  @override
+  String get virtBackupScheduleInvalid => 'Host bu cədvəli qəbul etmir.';
+
+  @override
+  String virtBackupScheduleNext(String times) {
+    return 'Növbəti işə salmalar: $times';
+  }
+
+  @override
+  String get virtBackupSelection => 'Qonaqlar';
+
+  @override
+  String get virtBackupSelectionAll => 'Bütün qonaqlar';
+
+  @override
+  String get virtBackupSelectionList => 'Seçilmiş qonaqlar';
+
+  @override
+  String get virtBackupSelectionNone => 'Ən azı bir qonaq seçin.';
+
+  @override
+  String get virtBackupMail => 'Bildiriş';
+
+  @override
+  String get virtBackupMailAlways => 'Həmişə';
+
+  @override
+  String get virtBackupMailFailure => 'Xəta zamanı';
+
+  @override
+  String get virtBackupNotesTemplate => 'Yedək qeydləri';
+
+  @override
+  String virtBackupNotesTemplateTip(String vars) {
+    return 'Qeydlər işin yaratdığı hər yedəyə əlavə olunur. Dəyəri ilə əvəz olunanlar: $vars.';
+  }
+
+  @override
+  String get virtBackupPrune => 'Saxlama';
+
+  @override
+  String get virtBackupPruneTip =>
+      'PVE saxlama seçimləri, məs. keep-last=7,keep-daily=4. Boş: anbarın və ya node-un öz ayarı.';
+
+  @override
+  String get virtBackupNextRun => 'Növbəti işə salma';
+
+  @override
+  String get virtBackupJobNode => 'Node';
+
+  @override
+  String get virtBackupJobNodeAny => 'Hər node';
+
+  @override
+  String get virtBackupEnabled => 'Aktiv';
+
+  @override
+  String get virtBackupOptions => 'Seçimlər';
+
+  @override
+  String get virtBackupProtect => 'Qoru';
+
+  @override
+  String get virtBackupProtectTip =>
+      'Qorunan yedək saxlama ilə silinmir və qoruma götürülənə qədər silinə bilməz.';
+
+  @override
+  String get virtBackupEditNotes => 'Qeydlər';
+
+  @override
+  String get virtBackupSaveNotes => 'Saxla';
+
+  @override
+  String get virtBackupEdited => 'Yedək yeniləndi';
+
+  @override
+  String get virtBackupRestoreStorage => 'Anbara bərpa et';
+
+  @override
+  String get virtBackupRestoreStorageSame => 'Yedəkdəki kimi';
+
+  @override
+  String get virtBackupModeSnapshotTip => 'snapshot · dayanmadan';
+
+  @override
+  String get virtCloneStorageMissing =>
+      'Bu node-da VM disklərini saxlayan anbar yoxdur.';
+
+  @override
+  String get virtBackupCompress => 'Sıxılma';
+
+  @override
+  String get virtBackupUnprotect => 'Qorumanı götür';
+
+  @override
+  String get virtBackupModeStops =>
+      'suspend və stop kopyalama zamanı işləyən qonağı dayandırır.';
+
+  @override
+  String get virtBackupScheduleValidate => 'Hostda yoxla';
+
+  @override
+  String virtBackupSelected(int count) {
+    return '$count seçildi';
+  }
+
+  @override
+  String get virtBackupExcludeTip =>
+      'Node-dakı bütün qonaqlar götürülür. Birini söndürsəniz kənarda qalır.';
 }

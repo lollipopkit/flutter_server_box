@@ -6484,10 +6484,10 @@ abstract class AppLocalizations {
   /// **'Editing hardware needs VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network and VM.Config.Options; new disks and interfaces also need Datastore.AllocateSpace and SDN.Use. The video card and USB and PCI devices also need VM.Config.HWType; a device given through a resource mapping needs Mapping.Use on it, and Mapping.Audit to list mappings.'**
   String get pveTokenTipHardware;
 
-  /// PVE API token help: the privileges cloning and backups need (verified on PVE 9.2).
+  /// PVE API token help: the privileges cloning, templates and backups need (verified on PVE 9.2.2 with a privilege-separated token).
   ///
   /// In en, this message translates to:
-  /// **'Cloning needs VM.Clone, and backing up and restoring VM.Backup, with Datastore.AllocateSpace where the copy or the backup goes.'**
+  /// **'Cloning needs VM.Clone, backing up and restoring VM.Backup, and turning a guest into a template VM.Allocate; backup jobs also need Sys.Audit to read them and Sys.Modify on / to make, edit and delete them, with Datastore.AllocateSpace where the copy or the backup goes.'**
   String get pveTokenTipBackup;
 
   /// Error title: the guest's configuration changed since it was read.
@@ -8270,6 +8270,570 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Saved. It takes effect at the next boot.'**
   String get virtCiSaved;
+
+  /// Snapshot form: an external, disk-only snapshot.
+  ///
+  /// In en, this message translates to:
+  /// **'Disk-only while running'**
+  String get virtSnapshotExternal;
+
+  /// Snapshot form: what an external snapshot does.
+  ///
+  /// In en, this message translates to:
+  /// **'The guest keeps running. Each disk gets a qcow2 overlay in the chosen pool; the guest stays on a chain.'**
+  String get virtSnapshotExternalTip;
+
+  /// Snapshot form: an internal snapshot.
+  ///
+  /// In en, this message translates to:
+  /// **'Internal (in the image)'**
+  String get virtSnapshotFormInternal;
+
+  /// Snapshot form: which kind of snapshot to take.
+  ///
+  /// In en, this message translates to:
+  /// **'Kind'**
+  String get virtSnapshotForm;
+
+  /// Snapshot form: the pool an external snapshot puts its overlays in.
+  ///
+  /// In en, this message translates to:
+  /// **'Overlay pool'**
+  String get virtSnapshotOverlayPool;
+
+  /// Snapshot form: an external snapshot never holds memory.
+  ///
+  /// In en, this message translates to:
+  /// **'An external snapshot never holds the memory: the guest is not stopped.'**
+  String get virtSnapshotExternalNoMemory;
+
+  /// Snapshots view: the chain of files a disk is on.
+  ///
+  /// In en, this message translates to:
+  /// **'Disk chain'**
+  String get virtSnapshotChain;
+
+  /// Snapshots view: how many layers a chain has.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} layers'**
+  String virtSnapshotChainDepth(String count);
+
+  /// Snapshots view: one file of a disk chain, and whether it is the one in use.
+  ///
+  /// In en, this message translates to:
+  /// **'File'**
+  String get virtSnapshotChainFile;
+
+  /// Snapshots view: the chain file the guest writes to now.
+  ///
+  /// In en, this message translates to:
+  /// **'In use now'**
+  String get virtSnapshotChainActive;
+
+  /// Snapshots view: the base image at the bottom of a chain.
+  ///
+  /// In en, this message translates to:
+  /// **'Base image'**
+  String get virtSnapshotChainBase;
+
+  /// Snapshots view: a disk that is not qcow2, so no external snapshot.
+  ///
+  /// In en, this message translates to:
+  /// **'An external snapshot needs a qcow2 disk. This one is {format}.'**
+  String virtSnapshotChainRaw(String format);
+
+  /// Snapshot form: the storage does not support snapshots (PVE).
+  ///
+  /// In en, this message translates to:
+  /// **'The guest\'s storage does not support snapshots, so none can be taken.'**
+  String get virtSnapshotNoSupport;
+
+  /// Revert dialog: a revert on a chain flattens it and strands later snapshots.
+  ///
+  /// In en, this message translates to:
+  /// **'Reverting on a chain merges the running overlay into the image and leaves every later snapshot unusable. Only the newest snapshot can be reverted to.'**
+  String get virtSnapshotRevertChain;
+
+  /// Snapshots view: a revert refused because later snapshots sit on this one.
+  ///
+  /// In en, this message translates to:
+  /// **'Refused while a later snapshot sits on this one.'**
+  String get virtSnapshotRevertHasChildren;
+
+  /// Snapshots view: what differs between a snapshot and now.
+  ///
+  /// In en, this message translates to:
+  /// **'Differences from now'**
+  String get virtSnapshotDiff;
+
+  /// Snapshots view: nothing differs between the snapshot and now.
+  ///
+  /// In en, this message translates to:
+  /// **'The configuration is unchanged since this snapshot.'**
+  String get virtSnapshotDiffNone;
+
+  /// Snapshots view: the button that reads the diff.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare with now'**
+  String get virtSnapshotDiffShow;
+
+  /// Snapshots view: the groups a diff is shown under.
+  ///
+  /// In en, this message translates to:
+  /// **'Changed'**
+  String get virtSnapshotDiffGroup;
+
+  /// Snapshot diff group: processor.
+  ///
+  /// In en, this message translates to:
+  /// **'Processor'**
+  String get virtSnapshotDiffGroupCpu;
+
+  /// Snapshot diff group: memory.
+  ///
+  /// In en, this message translates to:
+  /// **'Memory'**
+  String get virtSnapshotDiffGroupMemory;
+
+  /// Snapshot diff group: disks.
+  ///
+  /// In en, this message translates to:
+  /// **'Disks'**
+  String get virtSnapshotDiffGroupDisks;
+
+  /// Snapshot diff group: interfaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Interfaces'**
+  String get virtSnapshotDiffGroupNic;
+
+  /// Snapshot diff group: firmware.
+  ///
+  /// In en, this message translates to:
+  /// **'Firmware'**
+  String get virtSnapshotDiffGroupFirmware;
+
+  /// Snapshot diff group: boot options.
+  ///
+  /// In en, this message translates to:
+  /// **'Boot'**
+  String get virtSnapshotDiffGroupBoot;
+
+  /// Snapshot diff group: everything else.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get virtSnapshotDiffGroupOther;
+
+  /// Snapshots view: one diff row: what the snapshot had, what the guest has now.
+  ///
+  /// In en, this message translates to:
+  /// **'{before} → {after}'**
+  String virtSnapshotDiffValue(String after, String before);
+
+  /// Snapshots view: a diff row for something the snapshot had and the guest no longer does.
+  ///
+  /// In en, this message translates to:
+  /// **'removed'**
+  String get virtSnapshotDiffRemoved;
+
+  /// Snapshots view: a diff row for something the snapshot had not and the guest now has.
+  ///
+  /// In en, this message translates to:
+  /// **'added'**
+  String get virtSnapshotDiffAdded;
+
+  /// Revert dialog: the diff is shown before the revert.
+  ///
+  /// In en, this message translates to:
+  /// **'What changes if you revert to {snapshot}:'**
+  String virtSnapshotDiffAsk(String snapshot);
+
+  /// Snapshots view: a failure reading the diff.
+  ///
+  /// In en, this message translates to:
+  /// **'The host could not say what differs: {error}'**
+  String virtSnapshotDiffHost(String error);
+
+  /// Snapshot form: a chain already exists, so a new snapshot deepens it.
+  ///
+  /// In en, this message translates to:
+  /// **'The guest is already on {count} layers; this snapshot adds one more.'**
+  String virtSnapshotExternalExists(String count);
+
+  /// Settings view: the group that turns a guest into a template.
+  ///
+  /// In en, this message translates to:
+  /// **'Make a template'**
+  String get virtToTemplate;
+
+  /// Settings view: what a template is and that it cannot be undone.
+  ///
+  /// In en, this message translates to:
+  /// **'A template cannot be started and cannot be turned back into a guest. Its disks become base images, which is what a linked clone shares.'**
+  String get virtToTemplateNote;
+
+  /// Settings view: the confirmation dialog before converting to a template.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn {name} into a template?'**
+  String virtToTemplateConfirm(String name);
+
+  /// Settings view: a template cannot be turned back.
+  ///
+  /// In en, this message translates to:
+  /// **'This cannot be undone: a template cannot be turned back into a guest.'**
+  String get virtToTemplateIrreversible;
+
+  /// Settings view: a template is made from a stopped guest.
+  ///
+  /// In en, this message translates to:
+  /// **'Shut it down first.'**
+  String get virtToTemplateStopped;
+
+  /// Settings view: a guest with snapshots cannot become a template.
+  ///
+  /// In en, this message translates to:
+  /// **'A guest with snapshots cannot become a template.'**
+  String get virtToTemplateSnapshots;
+
+  /// Settings view: the guest became a template.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is a template now'**
+  String virtTemplateCreated(String name);
+
+  /// Guest view: what a template offers instead of power actions.
+  ///
+  /// In en, this message translates to:
+  /// **'A template only runs once it is cloned.'**
+  String get virtTemplateTip;
+
+  /// Clone group: which storage the copy's disks go to.
+  ///
+  /// In en, this message translates to:
+  /// **'Target storage'**
+  String get virtCloneStorage;
+
+  /// Clone group: the source's own storage.
+  ///
+  /// In en, this message translates to:
+  /// **'Same as the source'**
+  String get virtCloneStorageSame;
+
+  /// Clone group: the node the copy is made on.
+  ///
+  /// In en, this message translates to:
+  /// **'Target node'**
+  String get virtCloneNode;
+
+  /// Clone group: the source's own node.
+  ///
+  /// In en, this message translates to:
+  /// **'Same as the source'**
+  String get virtCloneNodeSame;
+
+  /// Clone group (libvirt): the pool the copy's disks go in.
+  ///
+  /// In en, this message translates to:
+  /// **'Target pool'**
+  String get virtClonePool;
+
+  /// Clone group: the storage has to hold VM images.
+  ///
+  /// In en, this message translates to:
+  /// **'This storage does not hold VM images.'**
+  String get virtCloneStorageContent;
+
+  /// Clone group: moving to another node needs shared storage.
+  ///
+  /// In en, this message translates to:
+  /// **'Copying to another node needs a shared storage.'**
+  String get virtCloneStorageShared;
+
+  /// Clone group: the target node is not one the host has.
+  ///
+  /// In en, this message translates to:
+  /// **'This host has no such node.'**
+  String get virtCloneNodeUnknown;
+
+  /// Clone group: a linked clone cannot name a storage or a node.
+  ///
+  /// In en, this message translates to:
+  /// **'A linked clone shares the template\'s disks, so it cannot name a storage or a node.'**
+  String get virtCloneLinkedTarget;
+
+  /// Datacenter view: the scheduled backup jobs.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup jobs'**
+  String get virtBackupJobs;
+
+  /// Datacenter view: no scheduled job.
+  ///
+  /// In en, this message translates to:
+  /// **'No scheduled backup job. Add one to back guests up on a schedule.'**
+  String get virtBackupJobsNone;
+
+  /// Datacenter view: the button that adds a job.
+  ///
+  /// In en, this message translates to:
+  /// **'New job'**
+  String get virtBackupJobNew;
+
+  /// Datacenter view: editing a job.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit job'**
+  String get virtBackupJobEdit;
+
+  /// Datacenter view: running a job now.
+  ///
+  /// In en, this message translates to:
+  /// **'Run now'**
+  String get virtBackupJobRun;
+
+  /// Datacenter view: running a job now is confirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Start this backup job now?'**
+  String get virtBackupJobRunAsk;
+
+  /// Datacenter view: deleting a job is confirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the backup job {id}? The backups it made stay.'**
+  String virtBackupJobDeleteAsk(String id);
+
+  /// Datacenter view: a job was saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Job saved'**
+  String get virtBackupJobSaved;
+
+  /// Datacenter view: a job was deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Job deleted'**
+  String get virtBackupJobDeleted;
+
+  /// Datacenter view: a job was started.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup job started'**
+  String get virtBackupJobStarted;
+
+  /// Job editor: the schedule field.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule'**
+  String get virtBackupSchedule;
+
+  /// Job editor: what the schedule format is, with examples.
+  ///
+  /// In en, this message translates to:
+  /// **'A subset of systemd calendar events: 02:30, mon..fri 02:30, sat 03:00, daily, hourly, */15.'**
+  String get virtBackupScheduleHelp;
+
+  /// Job editor: the schedule is not a calendar event.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a schedule the host takes.'**
+  String get virtBackupScheduleInvalid;
+
+  /// Job editor: what the host says the schedule means.
+  ///
+  /// In en, this message translates to:
+  /// **'Next runs: {times}'**
+  String virtBackupScheduleNext(String times);
+
+  /// Job editor: which guests the job takes.
+  ///
+  /// In en, this message translates to:
+  /// **'Guests'**
+  String get virtBackupSelection;
+
+  /// Job editor: the job takes every guest on the node.
+  ///
+  /// In en, this message translates to:
+  /// **'All guests'**
+  String get virtBackupSelectionAll;
+
+  /// Job editor: the job takes the guests picked.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected guests'**
+  String get virtBackupSelectionList;
+
+  /// Job editor: a job has to take at least one guest.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick at least one guest.'**
+  String get virtBackupSelectionNone;
+
+  /// Job editor: when the job notifies.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification'**
+  String get virtBackupMail;
+
+  /// Job editor: notify on every run.
+  ///
+  /// In en, this message translates to:
+  /// **'Always'**
+  String get virtBackupMailAlways;
+
+  /// Job editor: notify only on failure.
+  ///
+  /// In en, this message translates to:
+  /// **'On failure'**
+  String get virtBackupMailFailure;
+
+  /// Job editor: the notes every backup the job makes carries.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup notes'**
+  String get virtBackupNotesTemplate;
+
+  /// Job editor: the variables PVE replaces in the notes template.
+  ///
+  /// In en, this message translates to:
+  /// **'The notes are added to each backup the job makes. These are replaced by their values: {vars}.'**
+  String virtBackupNotesTemplateTip(String vars);
+
+  /// Job editor: the retention, PVE's prune-backups.
+  ///
+  /// In en, this message translates to:
+  /// **'Retention'**
+  String get virtBackupPrune;
+
+  /// Job editor: what the retention value looks like.
+  ///
+  /// In en, this message translates to:
+  /// **'PVE\'s retention options, e.g. keep-last=7,keep-daily=4. Empty: the storage\'s or the node\'s own.'**
+  String get virtBackupPruneTip;
+
+  /// Job list: when the job next runs.
+  ///
+  /// In en, this message translates to:
+  /// **'Next run'**
+  String get virtBackupNextRun;
+
+  /// Job editor: the node the job runs on.
+  ///
+  /// In en, this message translates to:
+  /// **'Node'**
+  String get virtBackupJobNode;
+
+  /// Job editor: the job runs on every node.
+  ///
+  /// In en, this message translates to:
+  /// **'Every node'**
+  String get virtBackupJobNodeAny;
+
+  /// Job editor: whether the job runs.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled'**
+  String get virtBackupEnabled;
+
+  /// Backup view: the options a run now takes.
+  ///
+  /// In en, this message translates to:
+  /// **'Options'**
+  String get virtBackupOptions;
+
+  /// Backup view: protect a backup from deletion.
+  ///
+  /// In en, this message translates to:
+  /// **'Protect'**
+  String get virtBackupProtect;
+
+  /// Backup view: what protection means.
+  ///
+  /// In en, this message translates to:
+  /// **'A protected backup is kept from pruning and cannot be deleted until protection is removed.'**
+  String get virtBackupProtectTip;
+
+  /// Backup view: a backup's own notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get virtBackupEditNotes;
+
+  /// Backup view: the button that saves a backup's notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get virtBackupSaveNotes;
+
+  /// Backup view: a backup's fields were written.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup updated'**
+  String get virtBackupEdited;
+
+  /// Backup view: where a restore puts the disks.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore to storage'**
+  String get virtBackupRestoreStorage;
+
+  /// Backup view: a restore leaves the disks where the archive says.
+  ///
+  /// In en, this message translates to:
+  /// **'As in the backup'**
+  String get virtBackupRestoreStorageSame;
+
+  /// Backup view: snapshot mode keeps a running guest running.
+  ///
+  /// In en, this message translates to:
+  /// **'snapshot · no downtime'**
+  String get virtBackupModeSnapshotTip;
+
+  /// Clone group: no storage on the node holds VM images.
+  ///
+  /// In en, this message translates to:
+  /// **'No storage on this node holds VM images.'**
+  String get virtCloneStorageMissing;
+
+  /// Backup view: the compression a run uses.
+  ///
+  /// In en, this message translates to:
+  /// **'Compression'**
+  String get virtBackupCompress;
+
+  /// Backup view: lift a backup's protection.
+  ///
+  /// In en, this message translates to:
+  /// **'Unprotect'**
+  String get virtBackupUnprotect;
+
+  /// Backup view: suspend and stop interrupt a running guest.
+  ///
+  /// In en, this message translates to:
+  /// **'suspend and stop interrupt a running guest while it is copied.'**
+  String get virtBackupModeStops;
+
+  /// Job editor: ask the host to check the schedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Check with the host'**
+  String get virtBackupScheduleValidate;
+
+  /// Job editor: how many guests are picked.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String virtBackupSelected(int count);
+
+  /// Job editor: what the switches mean with "all guests" on.
+  ///
+  /// In en, this message translates to:
+  /// **'Every guest on the node is taken. Turn one off to leave it out.'**
+  String get virtBackupExcludeTip;
 }
 
 class _AppLocalizationsDelegate

@@ -190,13 +190,6 @@
   "maxConcurrency": "Concurrence maximale",
   "maxRetryCount": "Nombre de reconnexions au serveur",
   "mismatchSystem": "Système non correspondant : {system}",
-  "@mismatchSystem": {
-    "placeholders": {
-      "system": {
-        "type": "String"
-      }
-    }
-  },
   "mirror": "Miroir",
   "needRestart": "Nécessite un redémarrage de l'application",
   "netViewType": "Type de vue réseau",
@@ -252,22 +245,6 @@
   "rememberPwdInMemTip": "Utilisé pour les conteneurs, la suspension, etc.",
   "remotePath": "Chemin distant",
   "rootfsUpdateTip": "{distro} {installed} est installé, {latest} est disponible. La mise à jour remplace tout le conteneur : les données {pm} sont perdues",
-  "@rootfsUpdateTip": {
-    "placeholders": {
-      "distro": {
-        "type": "String"
-      },
-      "installed": {
-        "type": "String"
-      },
-      "latest": {
-        "type": "String"
-      },
-      "pm": {
-        "type": "String"
-      }
-    }
-  },
   "linuxSystemInUse": "Ferme les terminaux de {name} avant de le supprimer",
   "rootfsSubtitle": "Un espace utilisateur Linux sur cet appareil",
   "rootfsInstallTip": "Télécharge {distro} {version} (environ {size} Mo) et l’extrait sur cet appareil.",
@@ -571,24 +548,7 @@
   "geoDataUnreachable": "Impossible de récupérer les données.",
   "geoDataRemoveFailed": "Impossible de supprimer les données.",
   "geoDataCurrent": "{month} est déjà installé.",
-  "@geoDataCurrent": {
-    "placeholders": {
-      "month": {
-        "type": "String"
-      }
-    }
-  },
   "geoDataConsent": "**Téléchargement : {download} · Stockage sur l’appareil : {disk}.** Le jeu de données complet est stocké sur cet appareil et toutes les recherches de localisation ultérieures s’effectuent localement. Aucune adresse de serveur ni activité de recherche n’est transmise au service de téléchargement.\n\nMis à jour chaque mois. Une version plus récente remplace les données installées sans conserver de copie supplémentaire. Vous pouvez les supprimer à tout moment.",
-  "@geoDataConsent": {
-    "placeholders": {
-      "download": {
-        "type": "String"
-      },
-      "disk": {
-        "type": "String"
-      }
-    }
-  },
   "benchmark": "Test de performances",
   "benchmarkIntro": "Exécute Yet Another Bench Script sur ce serveur pour tester le disque, le réseau et le processeur. Un test complet dure 10 à 20 minutes et continue si vous quittez cette page ou fermez l’application.",
   "benchmarkNoRuns": "Aucun test de performances pour le moment.",
@@ -958,65 +918,6 @@
   "remoteDesktopCertificateIssuer": "Émetteur : {issuer}",
   "remoteDesktopCertificateValidity": "Valide : {start} – {end}",
   "appearanceThemeModeLocked": "Ce thème prend uniquement en charge le mode {mode}. Choisissez un autre thème pour changer de mode.",
-  "@processCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@tmuxWindowCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@tmuxPaneCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@processShowKernelThreads": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@serviceOtherUnits": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@serviceJournalRecent": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@diskWarningFmt": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@scheduledTaskSummaryFmt": {
-    "placeholders": {
-      "total": {
-        "type": "int"
-      },
-      "enabled": {
-        "type": "int"
-      }
-    }
-  },
   "pveAuthToken": "Jeton d'API",
   "pveVersionLow": "Cette fonctionnalité est actuellement en phase de test et n'a été testée que sur PVE 8+. Veuillez l'utiliser avec prudence.",
   "pveTokenId": "ID du jeton",
@@ -1158,7 +1059,7 @@
   "virtDeleted": "{name} supprimé",
   "pveTokenTipCreate": "Créer et supprimer des invités demande aussi VM.Allocate, VM.Config.*, Datastore.AllocateSpace et SDN.Use.",
   "pveTokenTipHardware": "Modifier le matériel requiert VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network et VM.Config.Options ; les nouveaux disques et interfaces requièrent aussi Datastore.AllocateSpace et SDN.Use. La carte graphique et les périphériques USB et PCI demandent aussi VM.Config.HWType ; un périphérique transmis par un mappage de ressources demande Mapping.Use sur celui-ci, et Mapping.Audit pour lister les mappages.",
-  "pveTokenTipBackup": "Le clonage nécessite VM.Clone, la sauvegarde et la restauration VM.Backup, avec Datastore.AllocateSpace là où va la copie ou la sauvegarde.",
+  "pveTokenTipBackup": "Le clonage nécessite VM.Clone, la sauvegarde et la restauration VM.Backup, et la conversion en modèle VM.Allocate ; les tâches de sauvegarde nécessitent aussi Sys.Audit pour les lire et Sys.Modify sur / pour les créer, modifier et supprimer, avec Datastore.AllocateSpace là où va la copie ou la sauvegarde.",
   "virtErrConflict": "Modifié ailleurs",
   "virtErrConflictTip": "Quelqu'un a modifié la configuration de cet invité après sa lecture ici, donc rien n'a été changé. Elle a été relue : refaites la modification si elle s'applique encore.",
   "virtHardware": "Matériel",
@@ -1454,5 +1355,99 @@
   "virtCiEffectLibvirt": "Enregistrer écrit un nouveau seed avec un nouvel ID d'instance.",
   "virtCiEffectPve": "PVE réécrit tout de suite son lecteur cloud-init, avec un ID d'instance dérivé de ces réglages : tout changement ici en crée un nouveau.",
   "virtCiNewInstance": "Au prochain démarrage, cloud-init traite le système comme une nouvelle instance : il redéfinit le nom d'hôte, crée le compte s'il manque, définit son mot de passe, ajoute les clés et réécrit la configuration réseau. Il crée aussi de nouvelles clés d'hôte SSH : les clients SSH signaleront que la clé d'hôte a changé. Rien ne change avant ce démarrage.",
-  "virtCiSaved": "Enregistré. Prend effet au prochain démarrage."
+  "virtCiSaved": "Enregistré. Prend effet au prochain démarrage.",
+  "virtSnapshotExternal": "Disques seuls à chaud",
+  "virtSnapshotExternalTip": "L'invité continue de tourner. Chaque disque reçoit une surcouche qcow2 dans le pool choisi ; l'invité reste sur une chaîne.",
+  "virtSnapshotFormInternal": "Interne (dans l'image)",
+  "virtSnapshotForm": "Type",
+  "virtSnapshotOverlayPool": "Pool de surcouches",
+  "virtSnapshotExternalNoMemory": "Un instantané externe ne contient jamais la mémoire : l'invité n'est pas arrêté.",
+  "virtSnapshotChain": "Chaîne de disques",
+  "virtSnapshotChainDepth": "{count} couches",
+  "virtSnapshotChainFile": "Fichier",
+  "virtSnapshotChainActive": "Utilisé actuellement",
+  "virtSnapshotChainBase": "Image de base",
+  "virtSnapshotChainRaw": "Un instantané externe nécessite un disque qcow2. Celui-ci est {format}.",
+  "virtSnapshotNoSupport": "Le stockage de l'invité ne prend pas en charge les instantanés ; aucun ne peut être créé.",
+  "virtSnapshotRevertChain": "Un retour sur une chaîne fusionne la surcouche en cours dans l'image et rend inutilisable tout instantané ultérieur. Seul le plus récent peut être restauré.",
+  "virtSnapshotRevertHasChildren": "Refusé tant qu’un instantané ultérieur repose sur celui-ci.",
+  "virtSnapshotDiff": "Différences avec maintenant",
+  "virtSnapshotDiffNone": "La configuration n'a pas changé depuis cet instantané.",
+  "virtSnapshotDiffShow": "Comparer avec maintenant",
+  "virtSnapshotDiffGroup": "Modifié",
+  "virtSnapshotDiffGroupCpu": "Processeur",
+  "virtSnapshotDiffGroupMemory": "Mémoire",
+  "virtSnapshotDiffGroupDisks": "Disques",
+  "virtSnapshotDiffGroupNic": "Interfaces",
+  "virtSnapshotDiffGroupFirmware": "Micrologiciel",
+  "virtSnapshotDiffGroupBoot": "Démarrage",
+  "virtSnapshotDiffGroupOther": "Autre",
+  "virtSnapshotDiffValue": "{before} → {after}",
+  "virtSnapshotDiffRemoved": "supprimé",
+  "virtSnapshotDiffAdded": "ajouté",
+  "virtSnapshotDiffAsk": "Ce qui change en revenant à {snapshot} :",
+  "virtSnapshotDiffHost": "L'hôte n'a pas pu dire ce qui diffère : {error}",
+  "virtSnapshotExternalExists": "L'invité est déjà sur {count} couches ; cet instantané en ajoute une.",
+  "virtToTemplate": "Convertir en modèle",
+  "virtToTemplateNote": "Un modèle ne peut être démarré ni reconverti en invité. Ses disques deviennent des images de base, ce qu'un clone lié partage.",
+  "virtToTemplateConfirm": "Convertir {name} en modèle ?",
+  "virtToTemplateIrreversible": "Cela est irréversible : un modèle ne peut pas redevenir un invité.",
+  "virtToTemplateStopped": "Éteignez-le d'abord.",
+  "virtToTemplateSnapshots": "Un invité avec des instantanés ne peut pas devenir un modèle.",
+  "virtTemplateCreated": "{name} est maintenant un modèle",
+  "virtTemplateTip": "Un modèle ne s'exécute qu'une fois cloné.",
+  "virtCloneStorage": "Stockage cible",
+  "virtCloneStorageSame": "Comme la source",
+  "virtCloneNode": "Nœud cible",
+  "virtCloneNodeSame": "Comme la source",
+  "virtClonePool": "Pool cible",
+  "virtCloneStorageContent": "Ce stockage ne contient pas de disques de VM.",
+  "virtCloneStorageShared": "Copier vers un autre nœud nécessite un stockage partagé.",
+  "virtCloneNodeUnknown": "Cet hôte n'a pas ce nœud.",
+  "virtCloneLinkedTarget": "Un clone lié partage les disques du modèle : il ne peut indiquer ni stockage ni nœud.",
+  "virtBackupJobs": "Tâches de sauvegarde",
+  "virtBackupJobsNone": "Aucune tâche de sauvegarde planifiée. Ajoutez-en une pour sauvegarder les invités régulièrement.",
+  "virtBackupJobNew": "Nouvelle tâche",
+  "virtBackupJobEdit": "Modifier la tâche",
+  "virtBackupJobRun": "Exécuter maintenant",
+  "virtBackupJobRunAsk": "Lancer cette tâche de sauvegarde maintenant ?",
+  "virtBackupJobDeleteAsk": "Supprimer la tâche de sauvegarde {id} ? Les sauvegardes restent.",
+  "virtBackupJobSaved": "Tâche enregistrée",
+  "virtBackupJobDeleted": "Tâche supprimée",
+  "virtBackupJobStarted": "Tâche de sauvegarde lancée",
+  "virtBackupSchedule": "Planification",
+  "virtBackupScheduleHelp": "Un sous-ensemble des événements de calendrier systemd : 02:30, mon..fri 02:30, sat 03:00, daily, hourly, */15.",
+  "virtBackupScheduleInvalid": "L'hôte n'accepte pas cette planification.",
+  "virtBackupScheduleNext": "Prochaines exécutions : {times}",
+  "virtBackupSelection": "Invités",
+  "virtBackupSelectionAll": "Tous les invités",
+  "virtBackupSelectionList": "Invités sélectionnés",
+  "virtBackupSelectionNone": "Choisissez au moins un invité.",
+  "virtBackupMail": "Notification",
+  "virtBackupMailAlways": "Toujours",
+  "virtBackupMailFailure": "En cas d'échec",
+  "virtBackupNotesTemplate": "Notes de sauvegarde",
+  "virtBackupNotesTemplateTip": "Les notes sont ajoutées à chaque sauvegarde de la tâche. Remplacés : {vars}.",
+  "virtBackupPrune": "Rétention",
+  "virtBackupPruneTip": "Les options de rétention de PVE, par ex. keep-last=7,keep-daily=4. Vide : celles du stockage ou du nœud.",
+  "virtBackupNextRun": "Prochaine exécution",
+  "virtBackupJobNode": "Nœud",
+  "virtBackupJobNodeAny": "Tous les nœuds",
+  "virtBackupEnabled": "Activée",
+  "virtBackupOptions": "Options",
+  "virtBackupProtect": "Protéger",
+  "virtBackupProtectTip": "Une sauvegarde protégée n'est pas élaguée et ne peut être supprimée tant que la protection est active.",
+  "virtBackupEditNotes": "Notes",
+  "virtBackupSaveNotes": "Enregistrer",
+  "virtBackupEdited": "Sauvegarde mise à jour",
+  "virtBackupRestoreStorage": "Restaurer vers le stockage",
+  "virtBackupRestoreStorageSame": "Comme dans la sauvegarde",
+  "virtBackupModeSnapshotTip": "snapshot · sans arrêt",
+  "virtCloneStorageMissing": "Aucun stockage de ce nœud ne contient de disques de VM.",
+  "virtBackupCompress": "Compression",
+  "virtBackupUnprotect": "Déprotéger",
+  "virtBackupModeStops": "suspend et stop interrompent un invité en cours d'exécution pendant la copie.",
+  "virtBackupScheduleValidate": "Vérifier auprès de l'hôte",
+  "virtBackupSelected": "{count} sélectionnés",
+  "virtBackupExcludeTip": "Tous les invités du nœud sont pris. Désactivez-en un pour l'exclure."
 }

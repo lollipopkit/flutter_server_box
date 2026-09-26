@@ -51,6 +51,16 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
   var _cloneFull = true;
   var _cloning = false;
 
+  /// The pool a libvirt clone's disks go in, the storage a PVE one's do, and
+  /// the node a PVE clone is made on — null for each source's own. The
+  /// storage and the node are PVE's `storage` and `target`; both are read
+  /// from the host's own lists, so the form offers only what is there.
+  String? _cloneStorage;
+  String? _cloneNode;
+
+  /// The guest is being turned into a template.
+  var _toTemplate = false;
+
   /// What [_name] and [_desc] were last filled from. A read that brings a
   /// different value refills a field the user has not changed, and leaves
   /// one they have.
@@ -109,7 +119,8 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
     return [
       _generalGroup(hw, busy),
       if (!_lxc && hw.disks.any((d) => d.cloudInit)) _cloudInitGroup(busy),
-      if (_caps.clone) _cloneGroup(busy),
+      if (_caps.template && !_guest.template) _templateGroup(hw, busy),
+      if (_caps.clone) _cloneGroup(hw, busy),
       if (_caps.create) _deleteGroup(hw, busy),
     ];
   }
@@ -231,6 +242,95 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
   bool _waits(VirtHardware hw) =>
       hw.running &&
       hw.pending.any((p) => _placeOf(hw, p.key) == _PendingPlace.settings);
+
+  // --- Template ---
+
+  /// PVE's "convert to template", offered once and never undone: the dialog
+  /// says so, since PVE has no way back (`POST .../template` writes
+  /// `template: 1` and turns each disk into a base image).
+  ///
+  /// The design has no group for this — its list has no template state
+  /// either — and it lives here because it is a setting of the guest rather
+  /// than an action on it: PVE's own web UI puts it under "More", beside
+  /// Clone, and it is the one change that decides what the guest *is*.
+  _Group _templateGroup(VirtHardware hw, bool busy) {
+    final running = _guest.state != VirtGuestState.stopped;
+    // PVE refuses a guest with snapshots. Only known where the Snapshots
+    // view has read them this session; otherwise the host says so itself
+    // when the request is made.
+    final snapCount = _readSnapshotCount();
+    final snaps = snapCount != null && snapCount != 0;
+    final blocked = running || snaps || busy || _toTemplate;
+    return _Group(
+      key: 'template',
+      title: l10n.virtToTemplate,
+      right: '',
+      warn: false,
+      indexNote: snaps
+          ? l10n.virtToTemplateSnapshots
+          : running
+          ? l10n.virtToTemplateStopped
+          : l10n.virtToTemplateIrreversible,
+      rows: [
+        _text(l10n.virtToTemplateNote),
+        if (running) _text(l10n.virtToTemplateStopped),
+        if (snaps) _text(l10n.virtToTemplateSnapshots),
+        _actions([
+          _Action(
+            l10n.virtToTemplate,
+            key: 'template:go',
+            icon: Icons.inventory_2_outlined,
+            onTap: blocked ? null : () => _onTemplate(hw),
+          ),
+        ]),
+      ],
+    );
+  }
+
+  /// How many snapshots the guest has, where the Snapshots view has read
+  /// them this session — the same trick the pending banner uses, so opening
+  /// Settings is not a round trip of its own.
+  int? _readSnapshotCount() {
+    final provider = virtSnapshotsProvider(_serverId, _guest.id);
+    if (!ref.exists(provider)) return null;
+    return ref.watch(provider).value?.length;
+  }
+
+  Future<void> _onTemplate(VirtHardware hw) async {
+    final ok = await context.showRoundDialog<bool>(
+      title: libL10n.attention,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.virtToTemplateConfirm(_guest.name)),
+          UIs.height7,
+          Text(l10n.virtToTemplateNote, style: UIs.text12Grey),
+          UIs.height7,
+          Text(
+            l10n.virtToTemplateIrreversible,
+            style: UIs.text12.copyWith(
+              color: Theme.of(context).colorScheme.error,
+            ),
+          ),
+        ],
+      ),
+      actions: Btnx.cancelRedOk,
+    );
+    if (ok != true || !mounted) return;
+    setState(() => _toTemplate = true);
+    try {
+      await _notifier.makeTemplate(_guest.id);
+      Toast.success(l10n.virtTemplateCreated(_guest.name));
+    } on VirtErr catch (e) {
+      Toast.error(e.title, body: e.detail);
+    } catch (e, s) {
+      Loggers.app.warning('Virtualization template', e, s);
+      Toast.error(libL10n.fail, body: '$e');
+    } finally {
+      if (mounted) setState(() => _toTemplate = false);
+    }
+  }
 
   // --- cloud-init ---
 
@@ -547,28 +647,46 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
 
   // --- Clone ---
 
-  _Group _cloneGroup(bool busy) {
+  _Group _cloneGroup(VirtHardware hw, bool busy) {
     final name = _cloneName.text.trim();
     final taken = (ref.read(virtHostProvider(_serverId)).data?.guests ??
             const <VirtGuest>[])
         .any((g) => g.name == name);
-    final issue = taken
-        ? l10n.virtCreateNameTaken
-        : switch (virtCloneNameIssue(name, _host)) {
-            null => null,
-            // Nothing to say yet: the button waits for a name.
-            VirtCreateIssue.nameEmpty => null,
-            _ =>
-              _pve
-                  ? l10n.virtCreateNameInvalidPve
-                  : l10n.virtCreateNameInvalidLibvirt,
-          };
     // libvirt copies a disk only while nothing writes to it; PVE clones a
     // running guest through a snapshot of its own.
     final stopFirst = !_pve && _guest.state != VirtGuestState.stopped;
     // PVE links a clone only to a template's disks; anything else is full.
     final canLink = _caps.linkedClone && _guest.template;
     final full = _pve && !canLink ? true : _cloneFull;
+    final nameOk = virtCloneNameIssue(name, _host) == null && !taken;
+    final nameIssue = name.isEmpty || !nameOk
+        ? (taken ? l10n.virtCreateNameTaken : _nameIssueText(name))
+        : null;
+    // Where the copy's disks can go: the host's own lists. PVE needs the
+    // storages of *this* guest's node (a storage is per node), libvirt the
+    // pools that take a volume.
+    final pools = _clonePools();
+    final nodes = _cloneNodes();
+    final targetIssue = !full
+        // A linked clone shares the template's disks: PVE refuses a storage
+        // and a node on it (`parameter 'storage' not allowed for linked
+        // clones`).
+        ? (_cloneStorage != null || _cloneNode != null
+              ? VirtCreateIssue.cloneLinkedTarget
+              : null)
+        : _pve
+        ? virtCloneNodeIssue(
+                nodes: nodes,
+                targetNode: _cloneNode,
+                sourceNode: _guest.node,
+              ) ??
+              virtCloneStorageIssue(
+                storages: pools,
+                storage: _cloneStorage,
+                full: full,
+                targetNode: _cloneNode,
+              )
+        : null;
     return _Group(
       key: 'clone',
       title: libL10n.clone,
@@ -588,7 +706,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
           noWrap: true,
           suggestion: false,
           enabled: !_cloning,
-          errorText: issue,
+          errorText: name.isEmpty ? null : nameIssue,
           onChanged: (_) => setState(() {}),
         ),
         _toggle(
@@ -605,13 +723,64 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
               ? null
               : (on) => setState(() => _cloneFull = on),
         ),
+        if (_caps.cloneTarget && full && pools.isNotEmpty)
+          _choice([
+            _Choice(
+              key: 'clone:target:same',
+              icon: Icons.storage_outlined,
+              label: l10n.virtCloneStorageSame,
+              sub: _cloneSources(),
+              selected: _cloneStorage == null,
+              onTap: () => setState(() => _cloneStorage = null),
+            ),
+            for (final p in pools)
+              _Choice(
+                key: 'clone:target:${p.id}',
+                icon: Icons.storage_outlined,
+                label: p.name,
+                sub: _pve
+                    ? [?p.node, ?p.path].join(' · ')
+                    : [p.type, ?p.path].join(' · '),
+                selected: _cloneStorage == p.name,
+                onTap: () => setState(() => _cloneStorage = p.name),
+              ),
+          ]),
+        // The node, only where there is another one to pick: a copy to
+        // another node needs a cluster and a storage both see.
+        if (_pve && full && nodes.length > 1)
+          _choice([
+            _Choice(
+              key: 'clone:node:same',
+              icon: Icons.dns_outlined,
+              label: l10n.virtCloneNodeSame,
+              sub: _guest.node,
+              selected: _cloneNode == null,
+              onTap: () => setState(() => _cloneNode = null),
+            ),
+            for (final n in nodes)
+              if (n.name != _guest.node)
+                _Choice(
+                  key: 'clone:node:${n.name}',
+                  icon: Icons.dns_outlined,
+                  label: n.name,
+                  selected: _cloneNode == n.name,
+                  onTap: () => setState(() => _cloneNode = n.name),
+                ),
+          ]),
+        if (targetIssue != null)
+          _text(_cloneTargetText(targetIssue), error: true),
         if (stopFirst) _text(l10n.virtCloneStopFirst),
         _actions([
           _Action(
             _cloning ? l10n.virtCloning : libL10n.clone,
             key: 'clone:go',
             primary: true,
-            onTap: name.isEmpty || issue != null || stopFirst || busy || _cloning
+            onTap: name.isEmpty ||
+                    !nameOk ||
+                    targetIssue != null ||
+                    stopFirst ||
+                    busy ||
+                    _cloning
                 ? null
                 : () => _onClone(name, full),
           ),
@@ -620,12 +789,65 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
     );
   }
 
+  String _nameIssueText(String name) => switch (virtCloneNameIssue(name, _host)) {
+    null => '',
+    _ =>
+      _pve ? l10n.virtCreateNameInvalidPve : l10n.virtCreateNameInvalidLibvirt,
+  };
+
+  String _cloneTargetText(VirtCreateIssue issue) => switch (issue) {
+    VirtCreateIssue.cloneStorage => l10n.virtCloneStorageMissing,
+    VirtCreateIssue.cloneStorageContent => l10n.virtCloneStorageContent,
+    VirtCreateIssue.cloneStorageShared => l10n.virtCloneStorageShared,
+    VirtCreateIssue.cloneLinkedTarget => l10n.virtCloneLinkedTarget,
+    VirtCreateIssue.cloneNodeUnknown => l10n.virtCloneNodeUnknown,
+    _ => libL10n.fail,
+  };
+
+  /// The storages a clone's disks can go to: PVE's, on this guest's node;
+  /// libvirt's pools that take a volume.
+  List<VirtStoragePool> _clonePools() {
+    final pools =
+        ref.watch(virtStoragePoolsProvider(_serverId)).value ??
+        const <VirtStoragePool>[];
+    return virtDiskStorages(
+      pools,
+      host: _host ?? VirtHostKind.libvirt,
+      kind: _guest.kind,
+      node: _guest.node,
+    );
+  }
+
+  List<VirtNode> _cloneNodes() =>
+      ref.watch(virtHostProvider(_serverId)).data?.host.nodes ??
+      const <VirtNode>[];
+
+  /// Where the copy's disks stay when no target is picked: the storages the
+  /// guest's own disks are on, named as the host names them.
+  String _cloneSources() {
+    final hw = ref.watch(_provider).value;
+    final names = <String>{};
+    for (final d in hw?.disks ?? const <VirtHwDisk>[]) {
+      final source = d.source;
+      if (source == null) continue;
+      // PVE: `local-lvm:vm-100-disk-0`; libvirt: a path in a pool.
+      names.add(_pve ? source.split(':').first : source);
+    }
+    return names.join(', ');
+  }
+
   Future<void> _onClone(String name, bool full) async {
     setState(() => _cloning = true);
     try {
       final id = await _notifier.clone(
         _guest.id,
-        VirtCloneRequest(name: name, full: full),
+        VirtCloneRequest(
+          name: name,
+          full: full,
+          storage: _pve ? _cloneStorage : null,
+          targetNode: _pve ? _cloneNode : null,
+          targetPool: _pve ? null : _cloneStorage,
+        ),
       );
       Toast.success(l10n.virtCloned(name));
       if (mounted) widget.onCloned(id);

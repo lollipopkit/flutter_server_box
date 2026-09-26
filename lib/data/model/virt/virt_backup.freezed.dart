@@ -317,7 +317,19 @@ mixin _$VirtBackupJob {
  String? get schedule; String? get storage;/// `snapshot`, `suspend` or `stop`.
  String? get mode;/// `zstd`, `lzo`, `gzip`, or none.
  String? get compress;/// How many are kept, as PVE's retention says it: `keep-last=7`, ...
- String? get keep; bool get enabled;
+ String? get keep; bool get enabled;/// `all` (every guest on the job's node), the VMIDs it takes, or — with
+/// [pool] — the guests of that pool. PVE's `vmid` is a comma list or
+/// `all`; the two are exclusive.
+ bool get all; List<int> get vmids;/// PVE's `exclude`, the VMIDs `all` leaves out.
+ List<int> get exclude;/// A pool (`VirtBackupJob.pool`), whose guests the job takes.
+ String? get pool;/// The node it runs on; null: every node.
+ String? get node;/// The job's own description (`comment`).
+ String? get comment;/// The notes every backup it makes carries (`notes-template`).
+ String? get notesTemplate;/// `always` or `failure` (PVE's `mailnotification`, deprecated in PVE 9
+/// but still what a job stores and its editor sets).
+ String? get mailNotification;/// The retention, as PVE's `prune-backups` property string:
+/// `keep-last=7,keep-daily=4`.
+ String? get prune;
 /// Create a copy of VirtBackupJob
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -328,16 +340,16 @@ $VirtBackupJobCopyWith<VirtBackupJob> get copyWith => _$VirtBackupJobCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtBackupJob&&(identical(other.id, id) || other.id == id)&&(identical(other.schedule, schedule) || other.schedule == schedule)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.compress, compress) || other.compress == compress)&&(identical(other.keep, keep) || other.keep == keep)&&(identical(other.enabled, enabled) || other.enabled == enabled));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtBackupJob&&(identical(other.id, id) || other.id == id)&&(identical(other.schedule, schedule) || other.schedule == schedule)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.compress, compress) || other.compress == compress)&&(identical(other.keep, keep) || other.keep == keep)&&(identical(other.enabled, enabled) || other.enabled == enabled)&&(identical(other.all, all) || other.all == all)&&const DeepCollectionEquality().equals(other.vmids, vmids)&&const DeepCollectionEquality().equals(other.exclude, exclude)&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.node, node) || other.node == node)&&(identical(other.comment, comment) || other.comment == comment)&&(identical(other.notesTemplate, notesTemplate) || other.notesTemplate == notesTemplate)&&(identical(other.mailNotification, mailNotification) || other.mailNotification == mailNotification)&&(identical(other.prune, prune) || other.prune == prune));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,schedule,storage,mode,compress,keep,enabled);
+int get hashCode => Object.hash(runtimeType,id,schedule,storage,mode,compress,keep,enabled,all,const DeepCollectionEquality().hash(vmids),const DeepCollectionEquality().hash(exclude),pool,node,comment,notesTemplate,mailNotification,prune);
 
 @override
 String toString() {
-  return 'VirtBackupJob(id: $id, schedule: $schedule, storage: $storage, mode: $mode, compress: $compress, keep: $keep, enabled: $enabled)';
+  return 'VirtBackupJob(id: $id, schedule: $schedule, storage: $storage, mode: $mode, compress: $compress, keep: $keep, enabled: $enabled, all: $all, vmids: $vmids, exclude: $exclude, pool: $pool, node: $node, comment: $comment, notesTemplate: $notesTemplate, mailNotification: $mailNotification, prune: $prune)';
 }
 
 
@@ -348,7 +360,7 @@ abstract mixin class $VirtBackupJobCopyWith<$Res>  {
   factory $VirtBackupJobCopyWith(VirtBackupJob value, $Res Function(VirtBackupJob) _then) = _$VirtBackupJobCopyWithImpl;
 @useResult
 $Res call({
- String id, String? schedule, String? storage, String? mode, String? compress, String? keep, bool enabled
+ String id, String? schedule, String? storage, String? mode, String? compress, String? keep, bool enabled, bool all, List<int> vmids, List<int> exclude, String? pool, String? node, String? comment, String? notesTemplate, String? mailNotification, String? prune
 });
 
 
@@ -365,7 +377,7 @@ class _$VirtBackupJobCopyWithImpl<$Res>
 
 /// Create a copy of VirtBackupJob
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? schedule = freezed,Object? storage = freezed,Object? mode = freezed,Object? compress = freezed,Object? keep = freezed,Object? enabled = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? schedule = freezed,Object? storage = freezed,Object? mode = freezed,Object? compress = freezed,Object? keep = freezed,Object? enabled = null,Object? all = null,Object? vmids = null,Object? exclude = null,Object? pool = freezed,Object? node = freezed,Object? comment = freezed,Object? notesTemplate = freezed,Object? mailNotification = freezed,Object? prune = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,schedule: freezed == schedule ? _self.schedule : schedule // ignore: cast_nullable_to_non_nullable
@@ -374,7 +386,16 @@ as String?,mode: freezed == mode ? _self.mode : mode // ignore: cast_nullable_to
 as String?,compress: freezed == compress ? _self.compress : compress // ignore: cast_nullable_to_non_nullable
 as String?,keep: freezed == keep ? _self.keep : keep // ignore: cast_nullable_to_non_nullable
 as String?,enabled: null == enabled ? _self.enabled : enabled // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,all: null == all ? _self.all : all // ignore: cast_nullable_to_non_nullable
+as bool,vmids: null == vmids ? _self.vmids : vmids // ignore: cast_nullable_to_non_nullable
+as List<int>,exclude: null == exclude ? _self.exclude : exclude // ignore: cast_nullable_to_non_nullable
+as List<int>,pool: freezed == pool ? _self.pool : pool // ignore: cast_nullable_to_non_nullable
+as String?,node: freezed == node ? _self.node : node // ignore: cast_nullable_to_non_nullable
+as String?,comment: freezed == comment ? _self.comment : comment // ignore: cast_nullable_to_non_nullable
+as String?,notesTemplate: freezed == notesTemplate ? _self.notesTemplate : notesTemplate // ignore: cast_nullable_to_non_nullable
+as String?,mailNotification: freezed == mailNotification ? _self.mailNotification : mailNotification // ignore: cast_nullable_to_non_nullable
+as String?,prune: freezed == prune ? _self.prune : prune // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -459,10 +480,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? schedule,  String? storage,  String? mode,  String? compress,  String? keep,  bool enabled)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? schedule,  String? storage,  String? mode,  String? compress,  String? keep,  bool enabled,  bool all,  List<int> vmids,  List<int> exclude,  String? pool,  String? node,  String? comment,  String? notesTemplate,  String? mailNotification,  String? prune)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _VirtBackupJob() when $default != null:
-return $default(_that.id,_that.schedule,_that.storage,_that.mode,_that.compress,_that.keep,_that.enabled);case _:
+return $default(_that.id,_that.schedule,_that.storage,_that.mode,_that.compress,_that.keep,_that.enabled,_that.all,_that.vmids,_that.exclude,_that.pool,_that.node,_that.comment,_that.notesTemplate,_that.mailNotification,_that.prune);case _:
   return orElse();
 
 }
@@ -480,10 +501,10 @@ return $default(_that.id,_that.schedule,_that.storage,_that.mode,_that.compress,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? schedule,  String? storage,  String? mode,  String? compress,  String? keep,  bool enabled)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? schedule,  String? storage,  String? mode,  String? compress,  String? keep,  bool enabled,  bool all,  List<int> vmids,  List<int> exclude,  String? pool,  String? node,  String? comment,  String? notesTemplate,  String? mailNotification,  String? prune)  $default,) {final _that = this;
 switch (_that) {
 case _VirtBackupJob():
-return $default(_that.id,_that.schedule,_that.storage,_that.mode,_that.compress,_that.keep,_that.enabled);case _:
+return $default(_that.id,_that.schedule,_that.storage,_that.mode,_that.compress,_that.keep,_that.enabled,_that.all,_that.vmids,_that.exclude,_that.pool,_that.node,_that.comment,_that.notesTemplate,_that.mailNotification,_that.prune);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -500,10 +521,10 @@ return $default(_that.id,_that.schedule,_that.storage,_that.mode,_that.compress,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? schedule,  String? storage,  String? mode,  String? compress,  String? keep,  bool enabled)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? schedule,  String? storage,  String? mode,  String? compress,  String? keep,  bool enabled,  bool all,  List<int> vmids,  List<int> exclude,  String? pool,  String? node,  String? comment,  String? notesTemplate,  String? mailNotification,  String? prune)?  $default,) {final _that = this;
 switch (_that) {
 case _VirtBackupJob() when $default != null:
-return $default(_that.id,_that.schedule,_that.storage,_that.mode,_that.compress,_that.keep,_that.enabled);case _:
+return $default(_that.id,_that.schedule,_that.storage,_that.mode,_that.compress,_that.keep,_that.enabled,_that.all,_that.vmids,_that.exclude,_that.pool,_that.node,_that.comment,_that.notesTemplate,_that.mailNotification,_that.prune);case _:
   return null;
 
 }
@@ -514,8 +535,8 @@ return $default(_that.id,_that.schedule,_that.storage,_that.mode,_that.compress,
 /// @nodoc
 
 
-class _VirtBackupJob implements VirtBackupJob {
-  const _VirtBackupJob({required this.id, this.schedule, this.storage, this.mode, this.compress, this.keep, this.enabled = true});
+class _VirtBackupJob extends VirtBackupJob {
+  const _VirtBackupJob({required this.id, this.schedule, this.storage, this.mode, this.compress, this.keep, this.enabled = true, this.all = false, final  List<int> vmids = const <int>[], final  List<int> exclude = const <int>[], this.pool, this.node, this.comment, this.notesTemplate, this.mailNotification, this.prune}): _vmids = vmids,_exclude = exclude,super._();
   
 
 @override final  String id;
@@ -529,6 +550,40 @@ class _VirtBackupJob implements VirtBackupJob {
 /// How many are kept, as PVE's retention says it: `keep-last=7`, ...
 @override final  String? keep;
 @override@JsonKey() final  bool enabled;
+/// `all` (every guest on the job's node), the VMIDs it takes, or — with
+/// [pool] — the guests of that pool. PVE's `vmid` is a comma list or
+/// `all`; the two are exclusive.
+@override@JsonKey() final  bool all;
+ final  List<int> _vmids;
+@override@JsonKey() List<int> get vmids {
+  if (_vmids is EqualUnmodifiableListView) return _vmids;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_vmids);
+}
+
+/// PVE's `exclude`, the VMIDs `all` leaves out.
+ final  List<int> _exclude;
+/// PVE's `exclude`, the VMIDs `all` leaves out.
+@override@JsonKey() List<int> get exclude {
+  if (_exclude is EqualUnmodifiableListView) return _exclude;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_exclude);
+}
+
+/// A pool (`VirtBackupJob.pool`), whose guests the job takes.
+@override final  String? pool;
+/// The node it runs on; null: every node.
+@override final  String? node;
+/// The job's own description (`comment`).
+@override final  String? comment;
+/// The notes every backup it makes carries (`notes-template`).
+@override final  String? notesTemplate;
+/// `always` or `failure` (PVE's `mailnotification`, deprecated in PVE 9
+/// but still what a job stores and its editor sets).
+@override final  String? mailNotification;
+/// The retention, as PVE's `prune-backups` property string:
+/// `keep-last=7,keep-daily=4`.
+@override final  String? prune;
 
 /// Create a copy of VirtBackupJob
 /// with the given fields replaced by the non-null parameter values.
@@ -540,16 +595,16 @@ _$VirtBackupJobCopyWith<_VirtBackupJob> get copyWith => __$VirtBackupJobCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtBackupJob&&(identical(other.id, id) || other.id == id)&&(identical(other.schedule, schedule) || other.schedule == schedule)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.compress, compress) || other.compress == compress)&&(identical(other.keep, keep) || other.keep == keep)&&(identical(other.enabled, enabled) || other.enabled == enabled));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtBackupJob&&(identical(other.id, id) || other.id == id)&&(identical(other.schedule, schedule) || other.schedule == schedule)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.compress, compress) || other.compress == compress)&&(identical(other.keep, keep) || other.keep == keep)&&(identical(other.enabled, enabled) || other.enabled == enabled)&&(identical(other.all, all) || other.all == all)&&const DeepCollectionEquality().equals(other._vmids, _vmids)&&const DeepCollectionEquality().equals(other._exclude, _exclude)&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.node, node) || other.node == node)&&(identical(other.comment, comment) || other.comment == comment)&&(identical(other.notesTemplate, notesTemplate) || other.notesTemplate == notesTemplate)&&(identical(other.mailNotification, mailNotification) || other.mailNotification == mailNotification)&&(identical(other.prune, prune) || other.prune == prune));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,schedule,storage,mode,compress,keep,enabled);
+int get hashCode => Object.hash(runtimeType,id,schedule,storage,mode,compress,keep,enabled,all,const DeepCollectionEquality().hash(_vmids),const DeepCollectionEquality().hash(_exclude),pool,node,comment,notesTemplate,mailNotification,prune);
 
 @override
 String toString() {
-  return 'VirtBackupJob(id: $id, schedule: $schedule, storage: $storage, mode: $mode, compress: $compress, keep: $keep, enabled: $enabled)';
+  return 'VirtBackupJob(id: $id, schedule: $schedule, storage: $storage, mode: $mode, compress: $compress, keep: $keep, enabled: $enabled, all: $all, vmids: $vmids, exclude: $exclude, pool: $pool, node: $node, comment: $comment, notesTemplate: $notesTemplate, mailNotification: $mailNotification, prune: $prune)';
 }
 
 
@@ -560,7 +615,7 @@ abstract mixin class _$VirtBackupJobCopyWith<$Res> implements $VirtBackupJobCopy
   factory _$VirtBackupJobCopyWith(_VirtBackupJob value, $Res Function(_VirtBackupJob) _then) = __$VirtBackupJobCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String? schedule, String? storage, String? mode, String? compress, String? keep, bool enabled
+ String id, String? schedule, String? storage, String? mode, String? compress, String? keep, bool enabled, bool all, List<int> vmids, List<int> exclude, String? pool, String? node, String? comment, String? notesTemplate, String? mailNotification, String? prune
 });
 
 
@@ -577,7 +632,7 @@ class __$VirtBackupJobCopyWithImpl<$Res>
 
 /// Create a copy of VirtBackupJob
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? schedule = freezed,Object? storage = freezed,Object? mode = freezed,Object? compress = freezed,Object? keep = freezed,Object? enabled = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? schedule = freezed,Object? storage = freezed,Object? mode = freezed,Object? compress = freezed,Object? keep = freezed,Object? enabled = null,Object? all = null,Object? vmids = null,Object? exclude = null,Object? pool = freezed,Object? node = freezed,Object? comment = freezed,Object? notesTemplate = freezed,Object? mailNotification = freezed,Object? prune = freezed,}) {
   return _then(_VirtBackupJob(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,schedule: freezed == schedule ? _self.schedule : schedule // ignore: cast_nullable_to_non_nullable
@@ -586,7 +641,16 @@ as String?,mode: freezed == mode ? _self.mode : mode // ignore: cast_nullable_to
 as String?,compress: freezed == compress ? _self.compress : compress // ignore: cast_nullable_to_non_nullable
 as String?,keep: freezed == keep ? _self.keep : keep // ignore: cast_nullable_to_non_nullable
 as String?,enabled: null == enabled ? _self.enabled : enabled // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,all: null == all ? _self.all : all // ignore: cast_nullable_to_non_nullable
+as bool,vmids: null == vmids ? _self._vmids : vmids // ignore: cast_nullable_to_non_nullable
+as List<int>,exclude: null == exclude ? _self._exclude : exclude // ignore: cast_nullable_to_non_nullable
+as List<int>,pool: freezed == pool ? _self.pool : pool // ignore: cast_nullable_to_non_nullable
+as String?,node: freezed == node ? _self.node : node // ignore: cast_nullable_to_non_nullable
+as String?,comment: freezed == comment ? _self.comment : comment // ignore: cast_nullable_to_non_nullable
+as String?,notesTemplate: freezed == notesTemplate ? _self.notesTemplate : notesTemplate // ignore: cast_nullable_to_non_nullable
+as String?,mailNotification: freezed == mailNotification ? _self.mailNotification : mailNotification // ignore: cast_nullable_to_non_nullable
+as String?,prune: freezed == prune ? _self.prune : prune // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

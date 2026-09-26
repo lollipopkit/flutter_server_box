@@ -199,13 +199,41 @@ class _FakeHost extends VirtHostNotifier {
     return _snaps[guestId] ?? const [];
   }
 
+  /// Scripted per guest, for the chain, its refusal and a snapshot's diff.
+  static final _chain = <String, VirtSnapChain>{};
+  static final _refusals = <String, String?>{};
+  static final _diffs = <String, List<VirtSnapDiff>>{};
+
   @override
   Future<void> createSnapshot(
     String guestId, {
     required String name,
     String? description,
     bool memory = false,
-  }) async => _calls.add('create $guestId $name $description memory=$memory');
+    VirtSnapshotForm form = VirtSnapshotForm.internal,
+    String? overlayPool,
+  }) async => _calls.add(
+    'create $guestId $name $description memory=$memory form=${form.name} '
+    'pool=$overlayPool',
+  );
+
+  @override
+  Future<VirtSnapChain> snapshotChain(String guestId) async {
+    _calls.add('chain $guestId');
+    return _chain[guestId] ?? const VirtSnapChain();
+  }
+
+  @override
+  Future<String?> snapshotRefusal(String guestId) async {
+    _calls.add('refusal $guestId');
+    return _refusals[guestId];
+  }
+
+  @override
+  Future<List<VirtSnapDiff>> snapshotDiff(String guestId, String name) async {
+    _calls.add('diff $guestId $name');
+    return _diffs['$guestId/$name'] ?? const [];
+  }
 
   @override
   Future<void> revertSnapshot(
@@ -448,7 +476,7 @@ void main() {
 
       expect(
         _calls,
-        contains('create qemu/100 pre-upgrade before 9.3 memory=false'),
+        contains('create qemu/100 pre-upgrade before 9.3 memory=false form=internal pool=null'),
       );
       // Listed again after it.
       expect(_calls.where((c) => c == 'snapshots qemu/100').length, 2);
@@ -462,7 +490,7 @@ void main() {
       expect(find.byKey(const ValueKey('snapshot:memory')), findsNothing);
       await tester.tap(find.byKey(const ValueKey('snapshot:create')));
       await _settle(tester);
-      expect(_calls, contains('create lxc/200 snap-1 null memory=false'));
+      expect(_calls, contains('create lxc/200 snap-1 null memory=false form=internal pool=null'));
     });
 
     testWidgets('create: libvirt always takes an active guest\'s memory', (
@@ -836,6 +864,8 @@ void main() {
     expect(find.byKey(const ValueKey('pool:pve/local-lvm')), findsOneWidget);
     expect(_calls.where((c) => c == 'pools').length, 2);
   });
+
+  _phase8(pump, openSnapshots);
 }
 
 bool _failPools = false;
@@ -844,4 +874,295 @@ Future<void> _settle(WidgetTester tester) async {
   for (var i = 0; i < 8; i++) {
     await tester.pump(const Duration(milliseconds: 100));
   }
+}
+
+// --- Snapshots, phase 8: the external form, the chain, the diff -----------
+
+/// What a libvirt host offers: snapshots, internal and external.
+const _libvirtCaps = VirtCapabilities(
+  pause: true,
+  snapshots: true,
+  snapshotMemoryRequired: true,
+  snapshotExternal: true,
+  storage: true,
+  network: true,
+);
+
+/// A guest on a two-layer chain, as an external snapshot leaves it.
+VirtSnapChain _chainOf({String? refusal, List<String> pools = const ['images']}) =>
+    VirtSnapChain(
+      pools: pools,
+      refusal: refusal,
+      disks: [
+        const VirtSnapChainDisk(
+          target: 'vda',
+          pool: 'images',
+          files: [
+            VirtSnapChainFile(
+              path: '/var/lib/libvirt/images/web.qcow2.snap-1',
+              format: 'qcow2',
+              allocation: 1048576,
+              backing: '/var/lib/libvirt/images/web.qcow2',
+              snap: 'snap-1',
+              active: true,
+            ),
+            VirtSnapChainFile(
+              path: '/var/lib/libvirt/images/web.qcow2',
+              format: 'qcow2',
+              allocation: 5242880,
+            ),
+          ],
+        ),
+      ],
+    );
+
+void _phase8(
+  Future<void> Function(WidgetTester, {required bool wide}) pump,
+  Future<void> Function(WidgetTester, String) openSnapshots,
+) {
+  group('snapshots: external form and the chain', () {
+    setUp(() {
+      _state = VirtHostState(
+        serverId: _pve,
+        kind: VirtHostKind.libvirt,
+        data: _snapshot(_libvirtCaps),
+      );
+      _FakeHost._chain['qemu/100'] = _chainOf();
+    });
+
+    tearDown(() {
+      _FakeHost._chain.clear();
+      _FakeHost._refusals.clear();
+      _FakeHost._diffs.clear();
+    });
+
+    testWidgets('the chain is drawn: depth, which file, and the base', (
+      tester,
+    ) async {
+      await pump(tester, wide: true);
+      await openSnapshots(tester, 'web-01');
+
+      expect(_calls, contains('chain qemu/100'));
+      expect(find.text(app_locale.l10n.virtSnapshotChain), findsOneWidget);
+      expect(
+        find.text(app_locale.l10n.virtSnapshotChainDepth('2')),
+        findsOneWidget,
+      );
+      // The overlay the guest writes to now, and the base image below it.
+      expect(find.text('web.qcow2.snap-1'), findsOneWidget);
+      expect(find.text('web.qcow2'), findsOneWidget);
+      expect(
+        find.text(app_locale.l10n.virtSnapshotChainActive),
+        findsOneWidget,
+      );
+      expect(find.text(app_locale.l10n.virtSnapshotChainBase), findsOneWidget);
+    });
+
+    testWidgets('a raw disk is refused before the form offers one', (
+      tester,
+    ) async {
+      _FakeHost._chain['qemu/100'] = _chainOf(
+        refusal: 'disk vda is raw: an external snapshot needs a qcow2 image',
+      );
+      await pump(tester, wide: true);
+      await openSnapshots(tester, 'web-01');
+      expect(
+        find.textContaining('disk vda is raw'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('the form offers the external kind and the overlay pool', (
+      tester,
+    ) async {
+      await pump(tester, wide: true);
+      await openSnapshots(tester, 'web-01');
+      await tester.tap(find.byKey(const ValueKey('snapshot:new')));
+      await _settle(tester);
+
+      // The guest is on a chain, so the external form is what opens.
+      final external = tester.widget<ChoiceChip>(
+        find.byKey(const ValueKey('snapshot:form:VirtSnapshotForm.external')),
+      );
+      expect(external.selected, isTrue);
+      // An external snapshot holds no memory, so the switch is gone.
+      expect(find.byKey(const ValueKey('snapshot:memory')), findsNothing);
+      expect(
+        find.text(app_locale.l10n.virtSnapshotExternalExists('2')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const ValueKey('snapshot:pool')), findsOneWidget);
+
+      await tester.enterText(
+        find.descendant(
+          of: find.byKey(const ValueKey('snapshot:name')),
+          matching: find.byType(TextField),
+        ),
+        'pre-upgrade',
+      );
+      await _settle(tester);
+      await tester.tap(find.byKey(const ValueKey('snapshot:create')));
+      await _settle(tester);
+      expect(
+        _calls,
+        contains(
+          'create qemu/100 pre-upgrade null memory=false '
+          'form=external pool=images',
+        ),
+      );
+    });
+
+    testWidgets('the internal kind keeps the memory switch', (tester) async {
+      await pump(tester, wide: true);
+      await openSnapshots(tester, 'web-01');
+      await tester.tap(find.byKey(const ValueKey('snapshot:new')));
+      await _settle(tester);
+      await tester.tap(
+        find.byKey(const ValueKey('snapshot:form:VirtSnapshotForm.internal')),
+      );
+      await _settle(tester);
+      expect(find.byKey(const ValueKey('snapshot:memory')), findsOneWidget);
+      expect(find.byKey(const ValueKey('snapshot:pool')), findsNothing);
+    });
+
+    testWidgets('a snapshot with children refuses a revert', (tester) async {
+      _snaps['qemu/100'] = [
+        VirtGuestSnapshot(
+          name: 'sx1',
+          createdAt: DateTime(2026, 9, 1),
+          external: true,
+        ),
+        VirtGuestSnapshot(
+          name: 'sx2',
+          parent: 'sx1',
+          createdAt: DateTime(2026, 9, 2),
+          external: true,
+          current: true,
+        ),
+      ];
+      await pump(tester, wide: true);
+      await openSnapshots(tester, 'web-01');
+      // sx1 has a child: its revert is refused, with the reason.
+      await tester.tap(find.byKey(const ValueKey('snapshot:sx1')));
+      await _settle(tester);
+      expect(
+        find.text(app_locale.l10n.virtSnapshotRevertHasChildren),
+        findsOneWidget,
+      );
+      final refused = tester.widget<FilledButton>(
+        find.byKey(const ValueKey('snapshot:revert:sx1')),
+      );
+      expect(refused.onPressed, isNull);
+      // The newest one is a leaf: it can be reverted to.
+      await tester.tap(find.byKey(const ValueKey('snapshot:sx2')));
+      await _settle(tester);
+      final ok = tester.widget<FilledButton>(
+        find.byKey(const ValueKey('snapshot:revert:sx2')),
+      );
+      expect(ok.onPressed, isNotNull);
+    });
+
+    testWidgets('a storage without support says so and offers no form', (
+      tester,
+    ) async {
+      _state = _state.copyWith(data: _snapshot(_allCaps));
+      _FakeHost._refusals['qemu/100'] =
+          'snapshot feature is not available: local';
+      await pump(tester, wide: true);
+      await openSnapshots(tester, 'web-01');
+      expect(
+        find.textContaining(app_locale.l10n.virtSnapshotNoSupport),
+        findsOneWidget,
+      );
+      expect(find.textContaining('local'), findsWidgets);
+      expect(find.byKey(const ValueKey('snapshot:new')), findsNothing);
+    });
+
+    testWidgets('the diff is read and shown, grouped', (tester) async {
+      _FakeHost._diffs['qemu/100/base'] = const [
+        VirtSnapDiff(
+          group: VirtSnapDiffGroup.memory,
+          key: 'memory',
+          before: '262144',
+          after: '524288',
+        ),
+        VirtSnapDiff(
+          group: VirtSnapDiffGroup.nics,
+          key: '52:54:00:06:83:c9',
+          after: 'e1000e · network=default',
+        ),
+      ];
+      await pump(tester, wide: true);
+      await openSnapshots(tester, 'web-01');
+      await tester.tap(find.byKey(const ValueKey('snapshot:base')));
+      await _settle(tester);
+      await tester.tap(find.byKey(const ValueKey('snapshot:diff:base')));
+      await _settle(tester);
+
+      expect(_calls, contains('diff qemu/100 base'));
+      expect(find.text(app_locale.l10n.virtSnapshotDiff), findsOneWidget);
+      // Once as the group heading, once as the key of its own row.
+      expect(
+        find.text(app_locale.l10n.virtSnapshotDiffGroupMemory),
+        findsNWidgets(2),
+      );
+      expect(
+        find.text(app_locale.l10n.virtSnapshotDiffGroupNic),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          app_locale.l10n.virtSnapshotDiffValue('262144', '524288'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(app_locale.l10n.virtSnapshotDiffAdded),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('nothing changed says so', (tester) async {
+      await pump(tester, wide: true);
+      await openSnapshots(tester, 'web-01');
+      await tester.tap(find.byKey(const ValueKey('snapshot:base')));
+      await _settle(tester);
+      await tester.tap(find.byKey(const ValueKey('snapshot:diff:base')));
+      await _settle(tester);
+      expect(
+        find.text(app_locale.l10n.virtSnapshotDiffNone),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('the revert dialog shows the diff first', (tester) async {
+      _FakeHost._diffs['qemu/100/base'] = const [
+        VirtSnapDiff(
+          group: VirtSnapDiffGroup.cpu,
+          key: 'vcpu',
+          before: '1',
+          after: '4',
+        ),
+      ];
+      await pump(tester, wide: true);
+      await openSnapshots(tester, 'web-01');
+      await tester.tap(find.byKey(const ValueKey('snapshot:base')));
+      await _settle(tester);
+      await tester.tap(find.byKey(const ValueKey('snapshot:revert:base')));
+      await _settle(tester);
+
+      expect(
+        find.text(app_locale.l10n.virtSnapshotDiffAsk('base')),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(
+          app_locale.l10n.virtSnapshotDiffValue('1', '4'),
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.text(libL10n.cancel));
+      await _settle(tester);
+    });
+  });
 }

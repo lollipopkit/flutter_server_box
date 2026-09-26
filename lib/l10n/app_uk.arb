@@ -191,13 +191,6 @@
   "maxConcurrency": "Максимальна паралельність",
   "maxRetryCount": "Кількість повторних спроб підключення до сервера",
   "mismatchSystem": "Невідповідна система: {system}",
-  "@mismatchSystem": {
-    "placeholders": {
-      "system": {
-        "type": "String"
-      }
-    }
-  },
   "mirror": "Дзеркало",
   "needRestart": "Необхідно перезапустити застосунок",
   "netViewType": "Тип перегляду мережі",
@@ -253,22 +246,6 @@
   "rememberPwdInMemTip": "Використовується для контейнерів, призупинення тощо.",
   "remotePath": "Віддалений шлях",
   "rootfsUpdateTip": "Встановлено {distro} {installed}, доступний {latest}. Оновлення замінить весь контейнер: дані {pm} буде втрачено",
-  "@rootfsUpdateTip": {
-    "placeholders": {
-      "distro": {
-        "type": "String"
-      },
-      "installed": {
-        "type": "String"
-      },
-      "latest": {
-        "type": "String"
-      },
-      "pm": {
-        "type": "String"
-      }
-    }
-  },
   "linuxSystemInUse": "Закрийте термінали на {name}, перш ніж видаляти",
   "rootfsSubtitle": "Користувацьке середовище Linux на цьому пристрої",
   "rootfsInstallTip": "Завантажує {distro} {version} (близько {size} МБ) і розпаковує на пристрої.",
@@ -571,24 +548,7 @@
   "geoDataUnreachable": "Не вдалося отримати дані.",
   "geoDataRemoveFailed": "Не вдалося видалити дані.",
   "geoDataCurrent": "{month} вже встановлено.",
-  "@geoDataCurrent": {
-    "placeholders": {
-      "month": {
-        "type": "String"
-      }
-    }
-  },
   "geoDataConsent": "**Розмір завантаження: {download} · Місце на пристрої: {disk}.** Повний набір даних зберігається на цьому пристрої, а всі подальші геолокаційні запити виконуються локально. Адреси серверів і відомості про запити не передаються сервісу завантаження.\n\nОновлюється щомісяця. Нова версія замінює встановлені дані, не зберігаючи додаткову копію. Дані можна видалити будь-коли.",
-  "@geoDataConsent": {
-    "placeholders": {
-      "download": {
-        "type": "String"
-      },
-      "disk": {
-        "type": "String"
-      }
-    }
-  },
   "benchmark": "Тест продуктивності",
   "benchmarkIntro": "Запускає на цьому сервері Yet Another Bench Script для перевірки диска, мережі та процесора. Повний тест триває 10–20 хвилин і продовжує виконуватися, якщо залишити цю сторінку або закрити застосунок.",
   "benchmarkNoRuns": "Результатів тестування ще немає.",
@@ -958,48 +918,6 @@
   "remoteDesktopCertificateIssuer": "Видавець: {issuer}",
   "remoteDesktopCertificateValidity": "Дійсний: {start} – {end}",
   "appearanceThemeModeLocked": "Ця тема підтримує лише режим «{mode}». Щоб змінити режим, виберіть іншу тему.",
-  "@processCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@tmuxWindowCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@tmuxPaneCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@processShowKernelThreads": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@serviceOtherUnits": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@serviceJournalRecent": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "pveAuthToken": "API-токен",
   "pveVersionLow": "Ця функція наразі перебуває на стадії тестування та випробувалася лише на PVE 8+. Будь ласка, використовуйте її з обережністю.",
   "pveTokenId": "ID токена",
@@ -1141,7 +1059,7 @@
   "virtDeleted": "{name} видалено",
   "pveTokenTipCreate": "Для створення й видалення гостей також потрібні VM.Allocate, VM.Config.*, Datastore.AllocateSpace і SDN.Use.",
   "pveTokenTipHardware": "Для зміни обладнання потрібні VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network і VM.Config.Options; для нових дисків та інтерфейсів також Datastore.AllocateSpace і SDN.Use. Для відеокарти та пристроїв USB і PCI потрібна також VM.Config.HWType; для пристрою через зіставлення ресурсів потрібна Mapping.Use на ньому, а для списку зіставлень — Mapping.Audit.",
-  "pveTokenTipBackup": "Для клонування потрібен VM.Clone, для резервного копіювання й відновлення — VM.Backup, а також Datastore.AllocateSpace на сховищі копії.",
+  "pveTokenTipBackup": "Клонування потребує VM.Clone, резервне копіювання та відновлення — VM.Backup, перетворення на шаблон — VM.Allocate; завданням резервного копіювання потрібні ще Sys.Audit для читання та Sys.Modify на / для створення, зміни й видалення, а також Datastore.AllocateSpace там, куди потрапляє копія або резервна копія.",
   "virtErrConflict": "Змінено деінде",
   "virtErrConflictTip": "Хтось змінив конфігурацію цього гостя після того, як її було прочитано тут, тому нічого не змінено. Її прочитано знову: повторіть зміну, якщо вона ще потрібна.",
   "virtHardware": "Обладнання",
@@ -1437,5 +1355,99 @@
   "virtCiEffectLibvirt": "Збереження записує новий seed із новим ID екземпляра.",
   "virtCiEffectPve": "PVE одразу перезаписує свій диск cloud-init; ID екземпляра обчислюється з цих налаштувань, тож будь-яка зміна тут дає новий.",
   "virtCiNewInstance": "Під час наступного завантаження cloud-init вважає систему новим екземпляром: заново задає ім’я хоста, створює обліковий запис, якщо його немає, задає пароль, додає ключі й заново записує налаштування мережі. Він також створює нові SSH-ключі хоста, тож SSH-клієнти попередять, що ключ хоста змінився. До цього завантаження нічого не змінюється.",
-  "virtCiSaved": "Збережено. Набуде чинності під час наступного завантаження."
+  "virtCiSaved": "Збережено. Набуде чинності під час наступного завантаження.",
+  "virtSnapshotExternal": "Лише диски на ходу",
+  "virtSnapshotExternalTip": "Гість продовжує працювати. Кожен диск отримує шар qcow2 у вибраному пулі; гість залишається на ланцюжку.",
+  "virtSnapshotFormInternal": "Внутрішній (в образі)",
+  "virtSnapshotForm": "Тип",
+  "virtSnapshotOverlayPool": "Пул шарів",
+  "virtSnapshotExternalNoMemory": "Зовнішній знімок ніколи не містить пам’ять: гість не зупиняється.",
+  "virtSnapshotChain": "Ланцюжок дисків",
+  "virtSnapshotChainDepth": "{count} шарів",
+  "virtSnapshotChainFile": "Файл",
+  "virtSnapshotChainActive": "Використовується зараз",
+  "virtSnapshotChainBase": "Базовий образ",
+  "virtSnapshotChainRaw": "Для зовнішнього знімка потрібен диск qcow2. Цей — {format}.",
+  "virtSnapshotNoSupport": "Сховище гостя не підтримує знімки, тому створити його неможливо.",
+  "virtSnapshotRevertChain": "Відкат на ланцюжку зливає робочий шар в образ і робить усі наступні знімки непридатними. Відкотитися можна лише до найновішого знімка.",
+  "virtSnapshotRevertHasChildren": "Відмовлено, поки на цьому знімку стоїть пізніший.",
+  "virtSnapshotDiff": "Відмінності від поточного",
+  "virtSnapshotDiffNone": "Конфігурація не змінилася з цього знімка.",
+  "virtSnapshotDiffShow": "Порівняти з поточним",
+  "virtSnapshotDiffGroup": "Змінено",
+  "virtSnapshotDiffGroupCpu": "Процесор",
+  "virtSnapshotDiffGroupMemory": "Пам’ять",
+  "virtSnapshotDiffGroupDisks": "Диски",
+  "virtSnapshotDiffGroupNic": "Інтерфейси",
+  "virtSnapshotDiffGroupFirmware": "Прошивка",
+  "virtSnapshotDiffGroupBoot": "Завантаження",
+  "virtSnapshotDiffGroupOther": "Інше",
+  "virtSnapshotDiffValue": "{before} → {after}",
+  "virtSnapshotDiffRemoved": "видалено",
+  "virtSnapshotDiffAdded": "додано",
+  "virtSnapshotDiffAsk": "Що зміниться під час відкату до {snapshot}:",
+  "virtSnapshotDiffHost": "Вузол не зміг сказати, що відрізняється: {error}",
+  "virtSnapshotExternalExists": "Гість уже на {count} шарах; цей знімок додасть ще один.",
+  "virtToTemplate": "Зробити шаблоном",
+  "virtToTemplateNote": "Шаблон не можна запустити й не можна повернути в гостя. Його диски стають базовими образами, які поділяє пов’язаний клон.",
+  "virtToTemplateConfirm": "Зробити {name} шаблоном?",
+  "virtToTemplateIrreversible": "Це незворотно: шаблон не можна повернути в гостя.",
+  "virtToTemplateStopped": "Спочатку вимкніть його.",
+  "virtToTemplateSnapshots": "Гість зі знімками не може стати шаблоном.",
+  "virtTemplateCreated": "{name} тепер шаблон",
+  "virtTemplateTip": "Шаблон запускається лише після клонування.",
+  "virtCloneStorage": "Цільове сховище",
+  "virtCloneStorageSame": "Як у джерела",
+  "virtCloneNode": "Цільовий вузол",
+  "virtCloneNodeSame": "Як у джерела",
+  "virtClonePool": "Цільовий пул",
+  "virtCloneStorageContent": "Це сховище не зберігає диски віртуальних машин.",
+  "virtCloneStorageShared": "Для копіювання на інший вузол потрібне спільне сховище.",
+  "virtCloneNodeUnknown": "У цього хоста немає такого вузла.",
+  "virtCloneLinkedTarget": "Пов’язаний клон використовує диски шаблону, тому не може вказати сховище чи вузол.",
+  "virtBackupJobs": "Завдання резервного копіювання",
+  "virtBackupJobsNone": "Немає завдання резервного копіювання за розкладом. Додайте його, щоб копіювати гостей регулярно.",
+  "virtBackupJobNew": "Нове завдання",
+  "virtBackupJobEdit": "Змінити завдання",
+  "virtBackupJobRun": "Запустити зараз",
+  "virtBackupJobRunAsk": "Запустити це завдання резервного копіювання зараз?",
+  "virtBackupJobDeleteAsk": "Видалити завдання {id}? Створені копії залишаться.",
+  "virtBackupJobSaved": "Завдання збережено",
+  "virtBackupJobDeleted": "Завдання видалено",
+  "virtBackupJobStarted": "Завдання запущено",
+  "virtBackupSchedule": "Розклад",
+  "virtBackupScheduleHelp": "Підмножина календарних подій systemd: 02:30, mon..fri 02:30, sat 03:00, daily, hourly, */15.",
+  "virtBackupScheduleInvalid": "Хост не приймає такого розкладу.",
+  "virtBackupScheduleNext": "Наступні запуски: {times}",
+  "virtBackupSelection": "Гості",
+  "virtBackupSelectionAll": "Усі гості",
+  "virtBackupSelectionList": "Вибрані гості",
+  "virtBackupSelectionNone": "Виберіть хоча б одного гостя.",
+  "virtBackupMail": "Сповіщення",
+  "virtBackupMailAlways": "Завжди",
+  "virtBackupMailFailure": "У разі збою",
+  "virtBackupNotesTemplate": "Нотатки до копії",
+  "virtBackupNotesTemplateTip": "Нотатки додаються до кожної копії завдання. Замінюються: {vars}.",
+  "virtBackupPrune": "Збереження",
+  "virtBackupPruneTip": "Параметри збереження PVE, напр. keep-last=7,keep-daily=4. Порожньо: зі сховища або вузла.",
+  "virtBackupNextRun": "Наступний запуск",
+  "virtBackupJobNode": "Вузол",
+  "virtBackupJobNodeAny": "Кожен вузол",
+  "virtBackupEnabled": "Увімкнено",
+  "virtBackupOptions": "Параметри",
+  "virtBackupProtect": "Захистити",
+  "virtBackupProtectTip": "Захищена копія не видаляється за збереженням і не може бути видалена, доки захист не знято.",
+  "virtBackupEditNotes": "Нотатки",
+  "virtBackupSaveNotes": "Зберегти",
+  "virtBackupEdited": "Копію оновлено",
+  "virtBackupRestoreStorage": "Відновити у сховище",
+  "virtBackupRestoreStorageSame": "Як у копії",
+  "virtBackupModeSnapshotTip": "snapshot · без простою",
+  "virtCloneStorageMissing": "Жодне сховище на цьому вузлі не зберігає диски віртуальних машин.",
+  "virtBackupCompress": "Стиснення",
+  "virtBackupUnprotect": "Зняти захист",
+  "virtBackupModeStops": "suspend і stop переривають роботу гостя на час копіювання.",
+  "virtBackupScheduleValidate": "Перевірити на хості",
+  "virtBackupSelected": "Вибрано: {count}",
+  "virtBackupExcludeTip": "Беруться всі гості вузла. Вимкніть одного, щоб виключити його."
 }

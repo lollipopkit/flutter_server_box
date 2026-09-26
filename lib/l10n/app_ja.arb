@@ -190,13 +190,6 @@
   "maxConcurrency": "最大同時実行数",
   "maxRetryCount": "サーバーの再接続試行回数",
   "mismatchSystem": "システムが一致しません: {system}",
-  "@mismatchSystem": {
-    "placeholders": {
-      "system": {
-        "type": "String"
-      }
-    }
-  },
   "mirror": "ミラー",
   "needRestart": "アプリを再起動する必要があります",
   "netViewType": "ネットワークビュータイプ",
@@ -252,22 +245,6 @@
   "rememberPwdInMemTip": "コンテナ、一時停止などに使用されます。",
   "remotePath": "リモートパス",
   "rootfsUpdateTip": "{distro} {installed} が入っていて、{latest} があります。更新はコンテナ全体を置き換えます：{pm} のデータは失われます",
-  "@rootfsUpdateTip": {
-    "placeholders": {
-      "distro": {
-        "type": "String"
-      },
-      "installed": {
-        "type": "String"
-      },
-      "latest": {
-        "type": "String"
-      },
-      "pm": {
-        "type": "String"
-      }
-    }
-  },
   "linuxSystemInUse": "{name} のターミナルを閉じてから削除してください",
   "rootfsSubtitle": "この端末上の Linux ユーザーランド",
   "rootfsInstallTip": "{distro} {version}（約 {size} MB）をダウンロードして端末に展開します。",
@@ -571,24 +548,7 @@
   "geoDataUnreachable": "データを取得できませんでした。",
   "geoDataRemoveFailed": "データを削除できませんでした。",
   "geoDataCurrent": "すでに {month} のデータです。",
-  "@geoDataCurrent": {
-    "placeholders": {
-      "month": {
-        "type": "String"
-      }
-    }
-  },
   "geoDataConsent": "**ダウンロード：{download} · 端末上の使用容量：{disk}。** 完全なデータセットはこの端末に保存され、以後の位置情報検索はすべてローカルで行われます。サーバーのアドレスや検索状況がダウンロードサービスに送信されることはありません。\n\n毎月更新されます。新しいバージョンはインストール済みのデータを置き換え、追加のコピーは保持しません。データはいつでも削除できます。",
-  "@geoDataConsent": {
-    "placeholders": {
-      "download": {
-        "type": "String"
-      },
-      "disk": {
-        "type": "String"
-      }
-    }
-  },
   "benchmark": "ベンチマーク",
   "benchmarkIntro": "このサーバーで Yet Another Bench Script を実行し、ディスク、ネットワーク、CPU を測定します。すべてのテストには 10～20 分かかり、このページを離れたりアプリを閉じたりしても実行は継続します。",
   "benchmarkNoRuns": "ベンチマーク結果はまだありません。",
@@ -958,20 +918,6 @@
   "remoteDesktopCertificateIssuer": "発行者：{issuer}",
   "remoteDesktopCertificateValidity": "有効期間：{start} – {end}",
   "appearanceThemeModeLocked": "このテーマは{mode}のみ対応しています。モードを変更するには、別のテーマを選択してください。",
-  "@tmuxWindowCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@tmuxPaneCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "pveAuthToken": "API トークン",
   "pveVersionLow": "この機能は現在テスト段階にあり、PVE 8+でのみテストされています。ご利用の際は慎重に。",
   "pveTokenId": "トークン ID",
@@ -1113,7 +1059,7 @@
   "virtDeleted": "{name} を削除しました",
   "pveTokenTipCreate": "ゲストの作成と削除には VM.Allocate、VM.Config.*、Datastore.AllocateSpace、SDN.Use も必要です。",
   "pveTokenTipHardware": "ハードウェアの編集には VM.Config.CPU、VM.Config.Memory、VM.Config.Disk、VM.Config.CDROM、VM.Config.Network、VM.Config.Options が必要です。ディスクやインターフェースの追加には Datastore.AllocateSpace と SDN.Use も必要です。ビデオカードと USB・PCI デバイスには VM.Config.HWType も必要です。リソースマッピング経由のデバイスにはそのマッピングの Mapping.Use、マッピングの一覧には Mapping.Audit が必要です。",
-  "pveTokenTipBackup": "クローンには VM.Clone、バックアップと復元には VM.Backup が必要です。コピーやバックアップの保存先には Datastore.AllocateSpace も必要です。",
+  "pveTokenTipBackup": "クローンには VM.Clone、バックアップと復元には VM.Backup、テンプレート化には VM.Allocate が必要です。バックアップジョブの読み取りには Sys.Audit、作成・編集・削除には / に対する Sys.Modify も必要で、コピーやバックアップの保存先には Datastore.AllocateSpace が要ります。",
   "virtErrConflict": "他の場所で変更済み",
   "virtErrConflictTip": "ここで読み込んだ後にこのゲストの設定が他の誰かに変更されたため、何も変更していません。再読み込みしたので、必要なら改めて変更してください。",
   "virtHardware": "ハードウェア",
@@ -1409,5 +1355,99 @@
   "virtCiEffectLibvirt": "保存すると新しいインスタンス ID で新しい seed を書き込みます。",
   "virtCiEffectPve": "PVE は cloud-init ドライブをすぐに書き直します。インスタンス ID はこれらの設定から計算されるため、ここでの変更はすべて新しい ID になります。",
   "virtCiNewInstance": "次回の起動時、cloud-init はシステムを新しいインスタンスとして扱います。ホスト名を設定し直し、アカウントがなければ作り、パスワードを設定し、鍵を追加し、ネットワーク設定を書き直します。SSH ホスト鍵も新しく作るため、SSH クライアントはホスト鍵の変更を警告します。その起動までは何も変わりません。",
-  "virtCiSaved": "保存しました。次回の起動時に反映されます。"
+  "virtCiSaved": "保存しました。次回の起動時に反映されます。",
+  "virtSnapshotExternal": "起動中のままディスクのみ",
+  "virtSnapshotExternalTip": "ゲストは稼働を続けます。各ディスクは選択したプールに qcow2 オーバーレイを持ち、ゲストはチェーン上に残ります。",
+  "virtSnapshotFormInternal": "内部（イメージ内）",
+  "virtSnapshotForm": "種類",
+  "virtSnapshotOverlayPool": "オーバーレイプール",
+  "virtSnapshotExternalNoMemory": "外部スナップショットはメモリを保存しません。ゲストは停止されません。",
+  "virtSnapshotChain": "ディスクチェーン",
+  "virtSnapshotChainDepth": "{count} 層",
+  "virtSnapshotChainFile": "ファイル",
+  "virtSnapshotChainActive": "現在使用中",
+  "virtSnapshotChainBase": "ベースイメージ",
+  "virtSnapshotChainRaw": "外部スナップショットには qcow2 ディスクが必要です。これは {format} です。",
+  "virtSnapshotNoSupport": "ゲストのストレージがスナップショットに対応していないため、作成できません。",
+  "virtSnapshotRevertChain": "チェーン上で戻すと、稼働中のオーバーレイがイメージに統合され、それ以降のスナップショットは使えなくなります。戻せるのは最新のスナップショットだけです。",
+  "virtSnapshotRevertHasChildren": "後続のスナップショットがこの上にある間は拒否されます。",
+  "virtSnapshotDiff": "現在との差分",
+  "virtSnapshotDiffNone": "このスナップショット以降、構成は変わっていません。",
+  "virtSnapshotDiffShow": "現在と比較",
+  "virtSnapshotDiffGroup": "変更",
+  "virtSnapshotDiffGroupCpu": "プロセッサ",
+  "virtSnapshotDiffGroupMemory": "メモリ",
+  "virtSnapshotDiffGroupDisks": "ディスク",
+  "virtSnapshotDiffGroupNic": "インターフェース",
+  "virtSnapshotDiffGroupFirmware": "ファームウェア",
+  "virtSnapshotDiffGroupBoot": "起動",
+  "virtSnapshotDiffGroupOther": "その他",
+  "virtSnapshotDiffValue": "{before} → {after}",
+  "virtSnapshotDiffRemoved": "削除済み",
+  "virtSnapshotDiffAdded": "追加済み",
+  "virtSnapshotDiffAsk": "{snapshot} に戻すと変わる内容：",
+  "virtSnapshotDiffHost": "ホストは差分を答えられませんでした：{error}",
+  "virtSnapshotExternalExists": "ゲストはすでに {count} 層にあります。このスナップショットでさらに 1 層増えます。",
+  "virtToTemplate": "テンプレート化",
+  "virtToTemplateNote": "テンプレートは起動できず、ゲストに戻すこともできません。ディスクはベースイメージになり、リンククローンがそれを共有します。",
+  "virtToTemplateConfirm": "{name} をテンプレートにしますか？",
+  "virtToTemplateIrreversible": "元に戻せません。テンプレートはゲストに戻せません。",
+  "virtToTemplateStopped": "先に停止してください。",
+  "virtToTemplateSnapshots": "スナップショットのあるゲストはテンプレートにできません。",
+  "virtTemplateCreated": "{name} はテンプレートになりました",
+  "virtTemplateTip": "テンプレートはクローンして初めて動作します。",
+  "virtCloneStorage": "移行先ストレージ",
+  "virtCloneStorageSame": "元と同じ",
+  "virtCloneNode": "移行先ノード",
+  "virtCloneNodeSame": "元と同じ",
+  "virtClonePool": "移行先プール",
+  "virtCloneStorageContent": "このストレージは VM ディスクを保持できません。",
+  "virtCloneStorageShared": "別ノードへのコピーには共有ストレージが必要です。",
+  "virtCloneNodeUnknown": "このホストにそのノードはありません。",
+  "virtCloneLinkedTarget": "リンククローンはテンプレートのディスクを共有するため、ストレージやノードを指定できません。",
+  "virtBackupJobs": "バックアップジョブ",
+  "virtBackupJobsNone": "スケジュールされたバックアップジョブはありません。追加すると定期的にゲストをバックアップできます。",
+  "virtBackupJobNew": "新しいジョブ",
+  "virtBackupJobEdit": "ジョブを編集",
+  "virtBackupJobRun": "今すぐ実行",
+  "virtBackupJobRunAsk": "このバックアップジョブを今すぐ開始しますか？",
+  "virtBackupJobDeleteAsk": "バックアップジョブ {id} を削除しますか？作成済みのバックアップは残ります。",
+  "virtBackupJobSaved": "ジョブを保存しました",
+  "virtBackupJobDeleted": "ジョブを削除しました",
+  "virtBackupJobStarted": "バックアップジョブを開始しました",
+  "virtBackupSchedule": "スケジュール",
+  "virtBackupScheduleHelp": "systemd カレンダーイベントのサブセット: 02:30、mon..fri 02:30、sat 03:00、daily、hourly、*/15。",
+  "virtBackupScheduleInvalid": "ホストが受け付けないスケジュールです。",
+  "virtBackupScheduleNext": "次回実行: {times}",
+  "virtBackupSelection": "ゲスト",
+  "virtBackupSelectionAll": "すべてのゲスト",
+  "virtBackupSelectionList": "選択したゲスト",
+  "virtBackupSelectionNone": "少なくとも 1 つのゲストを選んでください。",
+  "virtBackupMail": "通知",
+  "virtBackupMailAlways": "常に",
+  "virtBackupMailFailure": "失敗時",
+  "virtBackupNotesTemplate": "バックアップのメモ",
+  "virtBackupNotesTemplateTip": "メモはジョブが作成する各バックアップに付加されます。置換されるのは {vars} です。",
+  "virtBackupPrune": "保持",
+  "virtBackupPruneTip": "PVE の保持オプション（例: keep-last=7,keep-daily=4）。空欄ならストレージまたはノードの設定。",
+  "virtBackupNextRun": "次回実行",
+  "virtBackupJobNode": "ノード",
+  "virtBackupJobNodeAny": "すべてのノード",
+  "virtBackupEnabled": "有効",
+  "virtBackupOptions": "オプション",
+  "virtBackupProtect": "保護",
+  "virtBackupProtectTip": "保護されたバックアップは整理の対象にならず、保護を解除するまで削除できません。",
+  "virtBackupEditNotes": "メモ",
+  "virtBackupSaveNotes": "保存",
+  "virtBackupEdited": "バックアップを更新しました",
+  "virtBackupRestoreStorage": "ストレージへ復元",
+  "virtBackupRestoreStorageSame": "バックアップどおり",
+  "virtBackupModeSnapshotTip": "snapshot · 無停止",
+  "virtCloneStorageMissing": "このノードに VM ディスクを保持できるストレージがありません。",
+  "virtBackupCompress": "圧縮",
+  "virtBackupUnprotect": "保護を解除",
+  "virtBackupModeStops": "suspend と stop はコピー中に稼働中のゲストを中断します。",
+  "virtBackupScheduleValidate": "ホストで確認",
+  "virtBackupSelected": "{count} 件選択",
+  "virtBackupExcludeTip": "ノード上のすべてのゲストが対象です。オフにすると除外されます。"
 }

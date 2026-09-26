@@ -10,6 +10,7 @@
 
 use sbm_parser::script;
 use sbm_parser::virt::{self, VirtAction, VirtError, VirtState};
+use sbm_parser::virt_snapshot;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
@@ -1958,6 +1959,7 @@ esac
             VirtCloneDisk { target: "vda".into(), source: format!("/pool/{name}.qcow2"), format: Some("qcow2".into()) },
             VirtCloneDisk { target: "vdb".into(), source: "/pool/data".into(), format: Some("raw".into()) },
         ],
+        target_pool: None,
     };
 
     let raw = run_sh(&virt::clone_volumes_script(&spec(true)).unwrap(), &path);
@@ -1981,6 +1983,106 @@ esac
     assert!(matches!(virt::parse_clone_volumes(&raw), Err(VirtError::Command { .. })), "{raw}");
     assert!(log().contains(&format!("vol-delete\n--vol\n/pool/{name} copy.qcow2\n")), "{}", log());
     let _ = std::fs::remove_dir_all(&d);
+}
+
+/// A clone into another pool: `vol-create-from` with the source's pool named
+/// as the input, its capacity and format in the XML the host is handed. The
+/// hostile name is in the volume, the pool and the XML's name.
+#[cfg(unix)]
+#[test]
+fn clone_to_another_pool_under_sh() {
+    use virt::{VirtCloneDisk, VirtCloneSpec};
+    let d = clone_stub("cross");
+    let path = format!("{}:/usr/bin:/bin", d.display());
+    let log = || std::fs::read_to_string(d.join("log")).unwrap_or_default();
+    let name = "it's \"odd\" & `id`";
+    let spec = |full: bool| VirtCloneSpec {
+        source: "sbcl-src".into(),
+        name: name.into(),
+        full,
+        disks: vec![VirtCloneDisk {
+            target: "vda".into(),
+            source: "/var/lib/libvirt/images/src & q.qcow2".into(),
+            format: Some("qcow2".into()),
+        }],
+        target_pool: Some("sbxe2e-p9 #2".into()),
+    };
+
+    // Full: copied out of `pool` (what `vol-pool` answered) into the target.
+    let raw = run_sh(&virt::clone_volumes_script(&spec(true)).unwrap(), &path);
+    assert_eq!(
+        virt::parse_clone_volumes(&raw),
+        Ok(vec![format!("/pool/{name}.qcow2")]),
+        "{raw}"
+    );
+    let l = log();
+    assert!(l.contains("vol-create-from\n"), "{l}");
+    assert!(l.contains("--pool\nsbxe2e-p9 #2\n--file\n"), "{l}");
+    assert!(l.contains("--vol\n/var/lib/libvirt/images/src & q.qcow2\n--inputpool\npool\n"), "{l}");
+    // The XML the host was handed: this app's own document, every value in
+    // it escaped, and the capacity `vol-info --bytes` answered — the
+    // source's own size, expanded by the shell (a `$cap` that reached
+    // libvirt unexpanded is `malformed capacity element`).
+    assert_eq!(
+        std::fs::read_to_string(d.join("xml")).unwrap(),
+        concat!(
+            "<volume><name>it&apos;s &quot;odd&quot; &amp; `id`.qcow2</name>",
+            "<capacity unit='bytes'>1073741824</capacity>",
+            "<target><format type='qcow2'/></target></volume>",
+        )
+    );
+    assert!(!d.join("pwned").exists() && !std::path::Path::new("pwned").exists());
+
+    // The path read back is asked of the target pool, not the source's.
+    assert!(l.contains("vol-path\n--pool\nsbxe2e-p9 #2\n"), "{l}");
+
+    // Empty: made in the target with the source's capacity and format.
+    let _ = std::fs::remove_file(d.join("log"));
+    let raw = run_sh(&virt::clone_volumes_script(&spec(false)).unwrap(), &path);
+    assert_eq!(virt::parse_clone_volumes(&raw).unwrap().len(), 1);
+    let l = log();
+    assert!(l.contains("vol-create-as\n"), "{l}");
+    assert!(l.contains("--pool\nsbxe2e-p9 #2\n"), "{l}");
+    assert!(l.contains("--capacity\n1073741824\n--format\nqcow2\n"), "{l}");
+
+    // The copy refused: nothing is left, and the error is the host's.
+    let _ = std::fs::remove_file(d.join("log"));
+    std::fs::write(d.join("fail"), "vol-create-from\n").unwrap();
+    let raw = run_sh(&virt::clone_volumes_script(&spec(true)).unwrap(), &path);
+    assert!(matches!(virt::parse_clone_volumes(&raw), Err(VirtError::Command { .. })), "{raw}");
+    let _ = std::fs::remove_dir_all(&d);
+}
+
+/// A fake virsh for the clone scripts, keeping the XML a `--file` was given.
+#[cfg(unix)]
+fn clone_stub(tag: &str) -> PathBuf {
+    let d = std::env::temp_dir().join(format!("sbm_virt_clone_{tag}_{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&d);
+    std::fs::create_dir_all(&d).unwrap();
+    let stub = r#"#!/bin/sh
+dir="$(dirname "$0")"
+for a in "$@"; do printf '%s\n' "$a" >> "$dir/log"; done
+echo --- >> "$dir/log"
+shift 3
+if [ -f "$dir/fail" ] && grep -qx "$1" "$dir/fail"; then echo "error: $1 refused" >&2; exit 1; fi
+case "$1" in
+  domuuid) exit 1 ;;
+  domstate) echo 'shut off' ;;
+  vol-pool) echo pool ;;
+  vol-clone|vol-create-as) echo "Vol made" ;;
+  # The XML arrives as a path under /tmp that the script removes again, so
+  # it is copied out here for the test to read.
+  vol-create-from) [ -f "$5" ] && cp "$5" "$dir/xml"; echo "Vol made" ;;
+  vol-info) echo "Capacity:       1073741824 bytes" ;;
+  vol-path) echo "/pool/$5" ;;
+  vol-delete) echo "Vol deleted" ;;
+  *) echo "error: unexpected $*" >&2; exit 1 ;;
+esac
+"#;
+    let path = d.join("virsh");
+    std::fs::write(&path, stub).unwrap();
+    Command::new("chmod").arg("+x").arg(&path).status().unwrap();
+    d
 }
 
 // ---------------------------------------------------------------------------
@@ -2145,3 +2247,354 @@ fn upload_streams_stdin_into_the_volume() {
     assert!(matches!(m::parse_vol_upload(&out), Err(VirtError::Command { .. })), "{out}");
     let _ = std::fs::remove_dir_all(&d);
 }
+
+// ---------------------------------------------------------------------------
+// External snapshots: the disk chain
+// ---------------------------------------------------------------------------
+
+#[test]
+fn snap_chain_of_an_overlay_and_a_plain_disk() {
+    let chain = virt_snapshot::parse_snap_chain(&fixture("script_snap_chain_overlay.txt")).unwrap();
+    assert_eq!(chain.blocked, None);
+    assert_eq!(chain.depth(), 2);
+    assert!(chain.has_overlays());
+    let d = chain.disks_iter().next().unwrap();
+    assert_eq!(d.target, "vda");
+    assert_eq!(d.pool.as_deref(), Some("sbxe2e-p8q"));
+    // Topmost first: the overlay the guest writes to, then its base
+    assert_eq!(d.files[0].path, "/var/lib/libvirt/sbxe2e-p8q/sx1.qcow2");
+    assert_eq!(d.files[0].format.as_deref(), Some("qcow2"));
+    assert_eq!(
+        d.files[0].backing.as_deref(),
+        Some("/var/lib/libvirt/images/sbxe2e-f1.qcow2")
+    );
+    assert_eq!(d.files[0].capacity, Some(268435456));
+    assert_eq!(d.files[1].path, "/var/lib/libvirt/images/sbxe2e-f1.qcow2");
+    assert_eq!(d.files[1].backing, None);
+    assert_eq!(virt_snapshot::external_snapshot_refusal(&chain), None);
+    assert_expected(&chain, "snap_chain_overlay.expected.json");
+}
+
+#[test]
+fn snap_chain_of_two_overlays_lists_three_layers() {
+    let chain = virt_snapshot::parse_snap_chain(&fixture("script_snap_chain_chain.txt")).unwrap();
+    assert_eq!(chain.depth(), 3);
+    let files = &chain.disks_iter().next().unwrap().files;
+    assert_eq!(
+        files.iter().map(|f| f.path.as_str()).collect::<Vec<_>>(),
+        [
+            "/var/lib/libvirt/sbxe2e-p8q/sx2.qcow2",
+            "/var/lib/libvirt/sbxe2e-p8q/sx1.qcow2",
+            "/var/lib/libvirt/images/sbxe2e-f1.qcow2",
+        ]
+    );
+    assert_expected(&chain, "snap_chain_chain.expected.json");
+}
+
+#[test]
+fn snap_chain_refuses_a_raw_disk() {
+    let chain = virt_snapshot::parse_snap_chain(&fixture("script_snap_chain_raw.txt")).unwrap();
+    assert!(!chain.has_overlays());
+    assert_eq!(chain.depth(), 1);
+    let top = &chain.disks_iter().next().unwrap().files[0];
+    assert_eq!(top.format.as_deref(), Some("raw"));
+    let refusal = virt_snapshot::external_snapshot_refusal(&chain).unwrap();
+    assert!(refusal.contains("vda") && refusal.contains("raw"), "{refusal}");
+    assert_expected(&chain, "snap_chain_raw.expected.json");
+}
+
+#[test]
+fn snap_chain_of_a_plain_qcow2_is_one_layer() {
+    let chain = virt_snapshot::parse_snap_chain(&fixture("script_snap_chain_plain.txt")).unwrap();
+    assert_eq!(chain.depth(), 2, "cirros-run's first disk is an overlay");
+    assert_eq!(chain.disks_iter().count(), 2);
+    let vdb = chain.disks_iter().nth(1).unwrap();
+    assert_eq!(vdb.target, "vdb");
+    assert_eq!(vdb.files.len(), 1);
+    assert_expected(&chain, "snap_chain_plain.expected.json");
+}
+
+#[test]
+fn external_snapshot_refusal_says_what_is_wrong() {
+    // No disk at all
+    let empty = virt_snapshot::VirtSnapChain::default();
+    assert!(virt_snapshot::external_snapshot_refusal(&empty).is_some());
+    // A disk QEMU would not open at all
+    let blocked = virt_snapshot::VirtSnapChain {
+        disks: vec![virt_snapshot::VirtSnapChainDisk {
+            target: "vda".into(),
+            files: vec![],
+            pool: None,
+        }],
+        blocked: Some("qemu-img: Could not open 'x': Permission denied".into()),
+    };
+    assert!(virt_snapshot::external_snapshot_refusal(&blocked).is_some());
+    // An overlay whose format QEMU could not name
+    let unset = virt_snapshot::VirtSnapChain {
+        disks: vec![virt_snapshot::VirtSnapChainDisk {
+            target: "vda".into(),
+            files: vec![virt_snapshot::VirtSnapChainFile {
+                path: "/x.qcow2".into(),
+                format: None,
+                backing: Some("/base.qcow2".into()),
+                allocation: None,
+                capacity: None,
+            }],
+            pool: None,
+        }],
+        blocked: None,
+    };
+    assert!(virt_snapshot::external_snapshot_refusal(&unset).is_some());
+}
+
+#[test]
+fn revert_is_refused_on_a_snapshot_with_children() {
+    use virt_snapshot::RevertRefusal;
+    assert_eq!(virt_snapshot::revert_refusal(false, true), None);
+    assert_eq!(virt_snapshot::revert_refusal(true, false), None);
+    assert_eq!(
+        virt_snapshot::revert_refusal(true, true),
+        Some(RevertRefusal::HasChildren)
+    );
+}
+
+#[test]
+fn external_snapshot_script_quotes_everything() {
+    let s = virt_snapshot::snapshot_external_script(
+        "it's",
+        "snap-1",
+        Some("two\nlines"),
+        &[("vda".into(), "/p/a b.qcow2".into())],
+    );
+    assert!(
+        s.contains(
+            "V snapshot-create-as --domain 'it'\\''s' --name 'snap-1' --disk-only --atomic \
+             --description 'two\nlines' \
+             --diskspec 'vda',file='/p/a b.qcow2',snapshot=external\n"
+        ),
+        "{s}"
+    );
+    // No description, no flag; no overlay named, libvirt's own name is used
+    let s = virt_snapshot::snapshot_external_script("d", "n", None, &[]);
+    assert!(!s.contains("--description") && !s.contains("--diskspec"), "{s}");
+    assert!(virt_snapshot::snapshot_external_script("d", "n", Some("  "), &[]).contains("--atomic"));
+}
+
+#[test]
+fn snapshot_listing_carries_the_layers() {
+    let snaps = virt::parse_snapshots(&fixture("script_snapshots_external.txt")).unwrap();
+    assert_eq!(
+        snaps.iter().map(|s| s.name.as_str()).collect::<Vec<_>>(),
+        ["sx1", "sx2"]
+    );
+    assert!(snaps.iter().all(|s| s.external && !s.memory));
+    assert_eq!(snaps[1].parent.as_deref(), Some("sx1"));
+    assert!(snaps[1].current);
+    assert_eq!(snaps[0].layers.len(), 1);
+    assert_eq!(
+        snaps[0].layers[0].file.as_deref(),
+        Some("/var/lib/libvirt/sbxe2e-p8q/sx1.qcow2")
+    );
+    assert_eq!(snaps[0].layers[0].snapshot.as_deref(), Some("external"));
+    assert_expected(&snaps, "snapshots_external.expected.json");
+}
+
+#[test]
+fn snapshot_listing_reads_revert_disks() {
+    // A snapshot reverted to once names where a further revert would go in
+    // <revertDisks>, not in <disks> (captured on libvirt 11.3).
+    let x = virt::parse_snapshot_xml(&fixture("snapshot_revert_disks.xml")).unwrap();
+    assert_eq!(x.layers.len(), 1);
+    assert_eq!(x.layers[0].target, "vda");
+    assert_eq!(
+        x.layers[0].file.as_deref(),
+        Some("/var/lib/libvirt/images/sbxe2e-r.1790417094")
+    );
+}
+
+#[test]
+fn pool_target_of_a_directory_pool() {
+    assert_eq!(
+        virt_snapshot::parse_pool_target(&fixture("pool_dumpxml_dir.txt")).as_deref(),
+        Some("/var/lib/libvirt/sbxe2e-p8q")
+    );
+    // A pool of block devices names no target path
+    assert_eq!(
+        virt_snapshot::parse_pool_target("<pool type='logical'><name>x</name></pool>"),
+        None
+    );
+}
+
+/// A `virsh` and a `qemu-img` for the chain script: the domain's disks, and
+/// every path handed to `qemu-img` logged so the test sees it arrive whole.
+#[cfg(unix)]
+fn chain_stub(tag: &str) -> PathBuf {
+    let d = std::env::temp_dir().join(format!("sbm_virt_chain_{tag}_{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&d);
+    std::fs::create_dir_all(&d).unwrap();
+    for (name, body) in [
+        (
+            "virsh",
+            r#"#!/bin/sh
+log="$(dirname "$0")/log"
+for a in "$@"; do printf '%s\n' "$a" >> "$log"; done
+echo --- >> "$log"
+cat >> "$(dirname "$0")/stdin"
+[ "$1 $2" = "--connect qemu:///system" ] || exit 9
+shift 2
+[ "$1" = "-q" ] && shift
+case "$1" in
+  dumpxml) cat <<'XML'
+<domain><devices><disk type='file' device='disk'><source file="/var/lib/libvirt/images/evil's.qcow2"/><target dev='vda' bus='virtio'/></disk><disk type='file' device='cdrom'><target dev='sda' bus='sata'/></disk></devices></domain>
+XML
+  ;;
+  domblklist) printf ' Type   Device   Target   Source\n--------------------------------------------\n file   disk     vda      /var/lib/libvirt/images/evil'\''s.qcow2\n file   cdrom    sda      -\n' ;;
+  *) : ;;
+esac
+"#,
+        ),
+        (
+            "qemu-img",
+            r#"#!/bin/sh
+log="$(dirname "$0")/log"
+for a in "$@"; do printf '%s\n' "$a" >> "$log"; done
+echo --- >> "$log"
+cat >> "$(dirname "$0")/stdin"
+printf '{"filename": "%s", "format": "qcow2", "virtual-size": 1024, "actual-size": 512}\n' "$5"
+"#,
+        ),
+    ] {
+        use std::os::unix::fs::PermissionsExt;
+        let p = d.join(name);
+        std::fs::write(&p, body).unwrap();
+        std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o755)).unwrap();
+    }
+    d
+}
+
+#[cfg(unix)]
+#[test]
+fn chain_script_under_sh_keeps_a_hostile_path_whole() {
+    let d = chain_stub("ok");
+    let path = format!("{}:/usr/bin:/bin", d.display());
+    let chain = virt_snapshot::parse_snap_chain(&run_sh(
+        &virt_snapshot::snap_chain_script("evil"),
+        &path,
+    ))
+    .unwrap();
+    // A CD-ROM is not a chain: one disk, with the file the definition names
+    assert_eq!(chain.disks_iter().count(), 1);
+    assert_eq!(chain.disks_iter().next().unwrap().target, "vda");
+    assert_eq!(chain.blocked, None);
+    let log = std::fs::read_to_string(d.join("log")).unwrap();
+    assert!(log.contains("info\n-U\n--backing-chain\n--output=json\n"), "{log}");
+    // The path with a quote in it arrives as one argument
+    assert!(
+        log.contains("/var/lib/libvirt/images/evil's.qcow2\n---\n"),
+        "{log}"
+    );
+    assert!(!d.join("pwned").exists() && !std::path::Path::new("pwned").exists());
+    assert_eq!(std::fs::read_to_string(d.join("stdin")).unwrap(), "");
+    let _ = std::fs::remove_dir_all(&d);
+}
+
+#[cfg(unix)]
+#[test]
+fn external_snapshot_script_under_sh_keeps_a_hostile_name_whole() {
+    let d = chain_stub("ext");
+    let path = format!("{}:/usr/bin:/bin", d.display());
+    let evil = "it's \"odd\" $(touch pwned) `touch pwned`";
+    let out = run_sh(
+        &virt_snapshot::snapshot_external_script(
+            evil,
+            evil,
+            Some(evil),
+            &[("vda".into(), format!("/p/{evil}.qcow2"))],
+        ),
+        &path,
+    );
+    // The stub's `virsh` takes no `snapshot-create-as`, so the action section
+    // is the status line alone; what is checked is what reached `virsh`
+    let log = std::fs::read_to_string(d.join("log")).unwrap();
+    assert!(log.contains(&format!("snapshot-create-as\n--domain\n{evil}\n")), "{log}");
+    assert!(log.contains(&format!("--name\n{evil}\n")), "{log}");
+    assert!(log.contains(&format!("--diskspec\nvda,file=/p/{evil}.qcow2,snapshot=external\n")), "{log}");
+    assert!(!d.join("pwned").exists() && !std::path::Path::new("pwned").exists());
+    assert!(out.contains(&format!("{}{}\n", virt::RC_PREFIX, 0)), "{out}");
+    let _ = std::fs::remove_dir_all(&d);
+}
+
+#[test]
+fn snap_diff_reads_only_meaningful_changes() {
+    let diff = virt_snapshot::parse_snap_diff(&fixture("script_snap_diff.txt")).unwrap();
+    // The captured change: vCPUs 1 -> 2, memory 256 -> 512 MiB, a NIC model
+    // virtio -> e1000e. The snapshot's own definition is the `<domain>` of
+    // `snapshot-dumpxml`, and `dumpxml --inactive` is the guest's now.
+    assert_eq!(
+        diff.iter()
+            .map(|d| (d.group.as_str(), d.key.as_str()))
+            .collect::<Vec<_>>(),
+        [
+            ("cpu", "vcpu"),
+            ("memory", "memory"),
+            ("interfaces", "52:54:00:2e:3d:88"),
+        ]
+    );
+    let vcpu = &diff[0];
+    assert_eq!((vcpu.before.as_deref(), vcpu.after.as_deref()), (Some("1"), Some("2")));
+    assert!(!vcpu.added && !vcpu.removed);
+    let mem = &diff[1];
+    assert_eq!(
+        (mem.before.as_deref(), mem.after.as_deref()),
+        (Some("262144"), Some("524288"))
+    );
+    let nic = &diff[2];
+    assert!(nic.added && nic.before.is_none());
+    assert_eq!(nic.after.as_deref(), Some("e1000e · network=default"));
+    // A disk's own file is never a configuration change: an external snapshot
+    // moves the guest onto an overlay. No disk row, then.
+    assert!(!diff.iter().any(|d| d.group == "disks"));
+    assert_expected(&diff, "snap_diff.expected.json");
+}
+
+#[test]
+fn snap_diff_of_the_same_definition_is_empty() {
+    let xml = fixture("dumpxml_cirros_run_inactive.xml");
+    assert_eq!(virt_snapshot::diff_domain_xml(&xml, &xml), Vec::new());
+    // Two reads of one definition differ in what libvirt writes itself
+    // (aliases, addresses, the running `index=`): none of it is a change.
+    let running = fixture("dumpxml_cirros_run.xml");
+    let quiet = virt_snapshot::diff_domain_xml(&running, &xml);
+    assert!(
+        quiet.iter().all(|d| matches!(d.group.as_str(), "disks" | "interfaces" | "boot" | "other")),
+        "{quiet:?}"
+    );
+    // Nothing to compare at all is an empty list, not a failure.
+    assert_eq!(virt_snapshot::diff_domain_xml("", ""), Vec::new());
+    assert_eq!(virt_snapshot::diff_domain_xml("<domainsnapshot/>", "<domain/>"), Vec::new());
+}
+
+#[test]
+fn snap_diff_script_and_its_refusals() {
+    let s = virt_snapshot::snap_diff_script("it's", "snap-1");
+    assert!(
+        s.contains("V snapshot-dumpxml --domain 'it'\\''s' --snapshotname 'snap-1'\n"),
+        "{s}"
+    );
+    assert!(s.contains("V dumpxml --domain 'it'\\''s' --inactive\n"), "{s}");
+    // Either half failing is the failure: no diff is "nothing changed".
+    let raw = format!(
+        "{}\n{}\n{}{}\n",
+        script::cmd_marker(virt_snapshot::KEY_DIFF_SNAP),
+        fixture("error_not_found.txt"),
+        virt::RC_PREFIX,
+        1
+    );
+    assert!(matches!(
+        virt_snapshot::parse_snap_diff(&raw),
+        Err(VirtError::DomainNotFound { .. })
+    ));
+    let raw = format!("{}\n", script::cmd_marker(virt::KEY_MISSING));
+    assert_eq!(virt_snapshot::parse_snap_diff(&raw), Err(VirtError::NotInstalled));
+}
+

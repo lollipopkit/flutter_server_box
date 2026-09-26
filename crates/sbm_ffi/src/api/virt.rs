@@ -6,7 +6,7 @@
 //! shape later; a failure crosses as [`VirtFfiError`], whose `kind` is what
 //! the app branches on (retry with sudo on `PermissionDenied`).
 
-use sbm_parser::{virt, virt_manage};
+use sbm_parser::{virt, virt_manage, virt_snapshot};
 
 /// Power actions (mirrors sbm_parser::virt::VirtAction)
 pub enum VirtActionKind {
@@ -185,6 +185,55 @@ pub fn virt_snapshot_revert_script(domain: String, name: String, running: bool) 
 #[flutter_rust_bridge::frb(sync)]
 pub fn virt_snapshot_delete_script(domain: String, name: String) -> String {
     virt::snapshot_delete_script(&domain, &name)
+}
+
+/// The disk chain of a domain (external snapshots): the definition, where
+/// each device is now, and each one's chain as QEMU resolves it
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_snap_chain_script(domain: String) -> String {
+    virt_snapshot::snap_chain_script(&domain)
+}
+
+/// [`virt_snap_chain_script`]'s output → `VirtSnapChain` JSON
+pub fn parse_virt_snap_chain_json(raw: String) -> Result<String, VirtFfiError> {
+    serde_json::to_string(&virt_snapshot::parse_snap_chain(&raw)?).map_err(json_err)
+}
+
+/// An external snapshot (disks only, `--atomic`), `overlays` being
+/// `(target, path)` per disk. Parse with [`parse_virt_action`].
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_snapshot_external_script(
+    domain: String,
+    name: String,
+    description: Option<String>,
+    overlays: Vec<(String, String)>,
+) -> String {
+    virt_snapshot::snapshot_external_script(&domain, &name, description.as_deref(), &overlays)
+}
+
+/// A snapshot's configuration and the guest's current one. Parse with
+/// [`parse_virt_snap_diff_json`].
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_snap_diff_script(domain: String, name: String) -> String {
+    virt_snapshot::snap_diff_script(&domain, &name)
+}
+
+/// [`virt_snap_diff_script`]'s output → `Vec<VirtSnapDiff>` JSON
+pub fn parse_virt_snap_diff_json(raw: String) -> Result<String, VirtFfiError> {
+    serde_json::to_string(&virt_snapshot::parse_snap_diff(&raw)?).map_err(json_err)
+}
+
+/// A pool's own target directory (`pool-dumpxml`), for placing an overlay in
+/// it
+pub fn parse_virt_pool_target(raw: String) -> Result<Option<String>, VirtFfiError> {
+    Ok(virt_snapshot::parse_pool_target(&raw))
+}
+
+/// Why an external snapshot cannot be taken, from a `VirtSnapChain` JSON
+pub fn virt_external_snapshot_refusal(chain_json: String) -> Result<Option<String>, VirtFfiError> {
+    let chain: virt_snapshot::VirtSnapChain =
+        serde_json::from_str(&chain_json).map_err(json_err)?;
+    Ok(virt_snapshot::external_snapshot_refusal(&chain))
 }
 
 /// Pools, volume names and every domain's disks

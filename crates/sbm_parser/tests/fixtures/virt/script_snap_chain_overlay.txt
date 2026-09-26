@@ -1,0 +1,154 @@
+SrvBoxSep.b64.dmlydC54bWw=
+<domain type='kvm' id='56'>
+  <name>sbxe2e-f1</name>
+  <uuid>fc113805-8064-44c6-898a-7bd10d7006b6</uuid>
+  <memory unit='KiB'>262144</memory>
+  <currentMemory unit='KiB'>262144</currentMemory>
+  <vcpu placement='static'>1</vcpu>
+  <resource>
+    <partition>/machine</partition>
+  </resource>
+  <os>
+    <type arch='x86_64' machine='pc-i440fx-10.0'>hvm</type>
+    <boot dev='hd'/>
+  </os>
+  <cpu mode='custom' match='exact' check='full'>
+    <model fallback='forbid'>qemu64</model>
+    <feature policy='require' name='x2apic'/>
+    <feature policy='require' name='hypervisor'/>
+    <feature policy='require' name='lahf_lm'/>
+    <feature policy='disable' name='svm'/>
+  </cpu>
+  <clock offset='utc'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>destroy</on_crash>
+  <devices>
+    <emulator>/usr/bin/qemu-system-x86_64</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/sbxe2e-p8q/sx1.qcow2' index='2'/>
+      <backingStore type='file' index='1'>
+        <format type='qcow2'/>
+        <source file='/var/lib/libvirt/images/sbxe2e-f1.qcow2'/>
+        <backingStore/>
+      </backingStore>
+      <target dev='vda' bus='virtio'/>
+      <alias name='virtio-disk0'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
+    </disk>
+    <controller type='usb' index='0' model='piix3-uhci'>
+      <alias name='usb'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x2'/>
+    </controller>
+    <controller type='pci' index='0' model='pci-root'>
+      <alias name='pci.0'/>
+    </controller>
+    <input type='mouse' bus='ps2'>
+      <alias name='input0'/>
+    </input>
+    <input type='keyboard' bus='ps2'>
+      <alias name='input1'/>
+    </input>
+    <audio id='1' type='none'/>
+    <memballoon model='virtio'>
+      <alias name='balloon0'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+    </memballoon>
+  </devices>
+  <seclabel type='dynamic' model='apparmor' relabel='yes'>
+    <label>libvirt-fc113805-8064-44c6-898a-7bd10d7006b6</label>
+    <imagelabel>libvirt-fc113805-8064-44c6-898a-7bd10d7006b6</imagelabel>
+  </seclabel>
+  <seclabel type='dynamic' model='dac' relabel='yes'>
+    <label>+64055:+64055</label>
+    <imagelabel>+64055:+64055</imagelabel>
+  </seclabel>
+</domain>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5zbmFwLmNoYWlu
+/var/lib/libvirt/sbxe2e-p8q/sx1.qcow2
+[
+    {
+        "children": [
+            {
+                "name": "file",
+                "info": {
+                    "children": [
+                    ],
+                    "virtual-size": 197120,
+                    "filename": "/var/lib/libvirt/sbxe2e-p8q/sx1.qcow2",
+                    "format": "file",
+                    "actual-size": 204800,
+                    "format-specific": {
+                        "type": "file",
+                        "data": {
+                        }
+                    },
+                    "dirty-flag": false
+                }
+            }
+        ],
+        "backing-filename-format": "qcow2",
+        "virtual-size": 268435456,
+        "filename": "/var/lib/libvirt/sbxe2e-p8q/sx1.qcow2",
+        "cluster-size": 65536,
+        "format": "qcow2",
+        "actual-size": 204800,
+        "format-specific": {
+            "type": "qcow2",
+            "data": {
+                "compat": "1.1",
+                "compression-type": "zlib",
+                "lazy-refcounts": false,
+                "refcount-bits": 16,
+                "corrupt": false,
+                "extended-l2": false
+            }
+        },
+        "full-backing-filename": "/var/lib/libvirt/images/sbxe2e-f1.qcow2",
+        "backing-filename": "/var/lib/libvirt/images/sbxe2e-f1.qcow2",
+        "dirty-flag": false
+    },
+    {
+        "children": [
+            {
+                "name": "file",
+                "info": {
+                    "children": [
+                    ],
+                    "virtual-size": 197120,
+                    "filename": "/var/lib/libvirt/images/sbxe2e-f1.qcow2",
+                    "format": "file",
+                    "actual-size": 200704,
+                    "format-specific": {
+                        "type": "file",
+                        "data": {
+                        }
+                    },
+                    "dirty-flag": false
+                }
+            }
+        ],
+        "virtual-size": 268435456,
+        "filename": "/var/lib/libvirt/images/sbxe2e-f1.qcow2",
+        "cluster-size": 65536,
+        "format": "qcow2",
+        "actual-size": 200704,
+        "format-specific": {
+            "type": "qcow2",
+            "data": {
+                "compat": "1.1",
+                "compression-type": "zlib",
+                "lazy-refcounts": false,
+                "refcount-bits": 16,
+                "corrupt": false,
+                "extended-l2": false
+            }
+        },
+        "dirty-flag": false
+    }
+]
+
+SbVirtRc=0

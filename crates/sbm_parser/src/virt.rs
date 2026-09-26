@@ -141,7 +141,7 @@ pub fn overview_script() -> String {
 
 /// `--domain <quoted>`: the flag keeps a name starting with `-` from being read
 /// as an option, the quoting keeps any name a single literal argument.
-fn domain_arg(domain: &str) -> String {
+pub(crate) fn domain_arg(domain: &str) -> String {
     format!("--domain {}", shell_quote_unix(domain))
 }
 
@@ -1087,7 +1087,7 @@ fn seed_of(root: roxmltree::Node<'_, '_>) -> Option<String> {
         .map(str::to_string)
 }
 
-fn child<'a, 'i>(parent: roxmltree::Node<'a, 'i>, name: &str) -> Option<roxmltree::Node<'a, 'i>> {
+pub(crate) fn child<'a, 'i>(parent: roxmltree::Node<'a, 'i>, name: &str) -> Option<roxmltree::Node<'a, 'i>> {
     parent
         .children()
         .find(|n| n.is_element() && n.tag_name().name() == name)
@@ -1307,7 +1307,7 @@ fn all_items<'a>(secs: &'a [(String, Section)], key: &str) -> impl Iterator<Item
 
 /// A value element with `unit='bytes'` (what libvirt prints for pools and
 /// volumes), or another unit converted to bytes.
-fn bytes_of(node: Option<roxmltree::Node<'_, '_>>) -> Option<u64> {
+pub(crate) fn bytes_of(node: Option<roxmltree::Node<'_, '_>>) -> Option<u64> {
     let node = node?;
     let n: u64 = node.text()?.trim().parse().ok()?;
     let mul: u64 = match node.attribute("unit").unwrap_or("bytes") {
@@ -1325,7 +1325,7 @@ fn bytes_of(node: Option<roxmltree::Node<'_, '_>>) -> Option<u64> {
     n.checked_mul(mul)
 }
 
-fn parse_xml_doc<'i>(raw: &'i str, root: &str, what: &str) -> Result<roxmltree::Document<'i>, VirtError> {
+pub(crate) fn parse_xml_doc<'i>(raw: &'i str, root: &str, what: &str) -> Result<roxmltree::Document<'i>, VirtError> {
     let start = raw.find(&format!("<{root}")).ok_or_else(|| VirtError::Malformed {
         message: format!("no <{root}> element in {what} output"),
     })?;
@@ -1334,7 +1334,7 @@ fn parse_xml_doc<'i>(raw: &'i str, root: &str, what: &str) -> Result<roxmltree::
     })
 }
 
-fn text_of(parent: roxmltree::Node<'_, '_>, name: &str) -> Option<String> {
+pub(crate) fn text_of(parent: roxmltree::Node<'_, '_>, name: &str) -> Option<String> {
     child(parent, name)
         .and_then(|n| n.text())
         .map(|t| t.trim().to_string())
@@ -1364,6 +1364,11 @@ pub struct VirtSnapshotInfo {
     pub memory: bool,
     /// Any part of it is kept outside the disk image (`snapshot='external'`)
     pub external: bool,
+    /// Which file each disk was left on, from its own `<disks>`; a snapshot
+    /// already reverted to once carries `<revertDisks>`, where a further
+    /// revert would put the guest instead.
+    #[serde(default)]
+    pub layers: Vec<crate::virt_snapshot::VirtSnapLayer>,
     /// The snapshot the domain's disks were last created from or reverted to
     pub current: bool,
 }
@@ -1455,6 +1460,16 @@ pub fn parse_snapshot_xml(raw: &str) -> Result<VirtSnapshotInfo, VirtError> {
         Some(m) => m != "no",
         None => matches!(state.as_deref(), Some("running" | "paused" | "blocked")),
     };
+    let mut layers = crate::virt_snapshot::layers_of(root, "disks");
+    // A snapshot reverted to once names the file a *further* revert would use
+    // in `<revertDisks>`; that is the one a chain view has to show.
+    for reverted in crate::virt_snapshot::layers_of(root, "revertDisks") {
+        if let Some(layer) = layers.iter_mut().find(|l| l.target == reverted.target) {
+            if reverted.file.is_some() {
+                layer.file = reverted.file;
+            }
+        }
+    }
     Ok(VirtSnapshotInfo {
         description: text_of(root, "description"),
         parent: child(root, "parent").and_then(|p| text_of(p, "name")),
@@ -1463,6 +1478,7 @@ pub fn parse_snapshot_xml(raw: &str) -> Result<VirtSnapshotInfo, VirtError> {
         memory,
         state,
         name,
+        layers,
         current: false,
     })
 }
@@ -2831,6 +2847,12 @@ pub struct VirtCloneSpec {
     /// contents" off.
     pub full: bool,
     pub disks: Vec<VirtCloneDisk>,
+    /// Where the copies go: a pool of this host's, or each disk's own pool
+    /// when none (`vol-pool`). A source whose volume lives outside any pool
+    /// cannot be copied into another one — libvirt has no way to say which
+    /// pool a directory is.
+    #[serde(default)]
+    pub target_pool: Option<String>,
 }
 
 impl VirtCloneSpec {
@@ -2863,7 +2885,18 @@ impl VirtCloneSpec {
                 return bad("disk format");
             }
         }
+        if let Some(pool) = &self.target_pool
+            && (pool.is_empty() || pool.chars().any(char::is_control))
+        {
+            return bad("target pool");
+        }
         Ok(())
+    }
+
+    /// Whether the copies land in a pool other than the one each source is
+    /// in, which is what makes [`clone_volumes_script`] ask for the pool.
+    pub fn cross_pool(&self) -> bool {
+        self.target_pool.is_some()
     }
 
     /// The new volume for disk `i`: the domain's name, a number after the
@@ -2882,13 +2915,24 @@ impl VirtCloneSpec {
     }
 }
 
-/// The clone's disks, each in the pool its source is in, and their paths.
+/// The clone's disks, each in the pool its source is in — or in
+/// [`VirtCloneSpec::target_pool`] where one was picked — and their paths.
 /// Parse with [`parse_clone_volumes`].
 ///
 /// A name already defined stops it before anything is made, and so does a
 /// source that is not shut off: copying a disk a running guest writes to
 /// gives a copy of nothing in particular. Any step failing deletes every
 /// volume made so far, so a failed clone leaves nothing behind.
+///
+/// **Copies into another pool.** `vol-clone` only ever clones within one
+/// pool, so a copy that has to land elsewhere is made with `vol-create-from`
+/// on an XML description of the target — the size and the source's format —
+/// with `--inputpool` naming the pool the source's file is in (verified on
+/// libvirt 11.3: a 112 MiB qcow2 copied out of `images` into a directory pool
+/// byte-compatible, and its format kept). A source outside every pool cannot
+/// be copied this way: virsh names a volume's pool only through the pool it
+/// was asked about, so the form offers pools of this host's and a disk whose
+/// file is in none of them is refused before the script is built.
 pub fn clone_volumes_script(spec: &VirtCloneSpec) -> Result<String, VirtError> {
     spec.check()?;
     let name = shell_quote_unix(&spec.name);
@@ -2914,6 +2958,7 @@ pub fn clone_volumes_script(spec: &VirtCloneSpec) -> Result<String, VirtError> {
         let dels: String = (0..i).map(|k| format!("R vol-delete --vol \"$p{k}\"; ")).collect();
         format!("{{ echo '{}'; {dels}exit 0; }}", m(KEY_ROLLBACK))
     };
+    let target = spec.target_pool.as_deref().map(shell_quote_unix);
     for (i, d) in spec.disks.iter().enumerate() {
         let source = shell_quote_unix(&d.source);
         let vol = shell_quote_unix(&spec.volume_name(i));
@@ -2923,17 +2968,80 @@ pub fn clone_volumes_script(spec: &VirtCloneSpec) -> Result<String, VirtError> {
             m(KEY_CLONE_VOL),
             rollback(i),
         ));
-        if spec.full {
-            s.push_str(&format!("R vol-clone --vol {source} --newname {vol} --pool \"$pool\"\n"));
-        } else {
-            let format = d.format.as_deref().unwrap_or("qcow2");
-            s.push_str(&format!(
-                "cap=$(virsh --connect {CONNECT_URI} -q vol-info --bytes --vol {source} </dev/null 2>/dev/null | awk '$1==\"Capacity:\"{{print $2}}')\n\
-                 if [ -n \"$cap\" ]; then R vol-create-as --pool \"$pool\" --name {vol} --capacity \"$cap\" --format {format}; \
-                 else printf 'no capacity for %s\\n{RC_PREFIX}1\\n' {source}; r=1; fi\n",
-            ));
+        match (target.as_deref(), spec.full) {
+            // Within the source's pool: one `vol-clone`, which keeps the
+            // source's format and size by itself.
+            (None, true) => s.push_str(&format!(
+                "R vol-clone --vol {source} --newname {vol} --pool \"$pool\"\n"
+            )),
+            (None, false) => {
+                let format = d.format.as_deref().unwrap_or("qcow2");
+                s.push_str(&format!(
+                    "cap=$(virsh --connect {CONNECT_URI} -q vol-info --bytes --vol {source} </dev/null 2>/dev/null | awk '$1==\"Capacity:\"{{print $2}}')\n\
+                     if [ -n \"$cap\" ]; then R vol-create-as --pool \"$pool\" --name {vol} --capacity \"$cap\" --format {format}; \
+                     else printf 'no capacity for %s\\n{RC_PREFIX}1\\n' {source}; r=1; fi\n",
+                ));
+            }
+            // Into another pool. `pool` is reassigned to the target so the
+            // `vol-path` and every rollback below address the volume where
+            // it actually is.
+            (Some(dst), full) => {
+                let format = d.format.as_deref().unwrap_or("qcow2");
+                // The section this runs in was opened above, with the
+                // `vol-pool` that resolved the source: whatever fails here
+                // — no capacity, no temporary file, the copy itself — is
+                // that section's error, and nothing echoes a second marker
+                // (which would leave the parser an empty one).
+                let no_cap = format!(
+                    "printf 'no capacity for %s\\n{RC_PREFIX}1\\n' {source}; r=1\n"
+                );
+                let body = if full {
+                    // The XML carries the capacity in bytes: what `vol-info
+                    // --bytes` answered, the source's own size. libvirt
+                    // expands `unit='bytes'` from the number it is given, so
+                    // the number is not part of the quoted literal — `$cap`
+                    // inside single quotes would reach it as those four
+                    // characters, which its parser refuses with `malformed
+                    // capacity element` (verified on libvirt 11.3). The
+                    // document is written to a temporary file, because
+                    // `vol-create-from --file` takes a path, and removed
+                    // again.
+                    let head = shell_quote_unix(&format!(
+                        "<volume><name>{}</name><capacity unit='bytes'>",
+                        xml_escape(&spec.volume_name(i)),
+                    ));
+                    let tail = shell_quote_unix(&format!(
+                        "</capacity><target><format type='{}'/></target></volume>",
+                        xml_escape(format),
+                    ));
+                    format!(
+                        "f=$(mktemp 2>&1) || {{ printf '%s\\n{RC_PREFIX}1\\n' \"$f\"; r=1; f=; }}\n\
+                         if [ -n \"$f\" ]; then printf '%s' {head}\"$cap\"{tail} >\"$f\"; fi\n\
+                         if [ -n \"$f\" ] && [ -s \"$f\" ]; then\n\
+                         R vol-create-from --pool {dst} --file \"$f\" --vol {source} --inputpool \"$pool\"\n\
+                         fi\n\
+                         [ -z \"$f\" ] || rm -f \"$f\"\n",
+                    )
+                } else {
+                    let format = shell_quote_unix(format);
+                    format!(
+                        "R vol-create-as --pool {dst} --name {vol} --capacity \"$cap\" --format {format}\n"
+                    )
+                };
+                s.push_str(&format!(
+                    "cap=$(virsh --connect {CONNECT_URI} -q vol-info --bytes --vol {source} </dev/null 2>/dev/null | awk '$1==\"Capacity:\"{{print $2}}')\n\
+                     if [ -z \"$cap\" ]; then {no_cap}\n\
+                     else\n{body}\nfi\n",
+                ));
+                // Only once the copy is there: `$pool` is the source's until
+                // then, and the rollback of the volumes made before this one
+                // addresses them by their paths anyway.
+                s.push_str(&format!("[ \"$r\" = 0 ] || {};\npool={dst}\n", rollback(i)));
+            }
         }
-        s.push_str(&format!("[ \"$r\" = 0 ] || {}\n", rollback(i)));
+        if !matches!(target, Some(_)) {
+            s.push_str(&format!("[ \"$r\" = 0 ] || {}\n", rollback(i)));
+        }
         s.push_str(&format!(
             "echo '{}'\np{i}=$(virsh --connect {CONNECT_URI} -q vol-path --pool \"$pool\" --vol {vol} </dev/null 2>&1); r=$?\n\
              printf '%s\\n{RC_PREFIX}%s\\n' \"$p{i}\" \"$r\"\n\

@@ -440,9 +440,11 @@ abstract final class PveResources {
     return out;
   }
 
-  /// `GET /cluster/backup`: the vzdump jobs that take [vmid] — every guest
-  /// (`all`), or it by name in `vmid`. A job by pool or excluding it is
-  /// left out: which guests a pool holds is not in this answer.
+  /// `GET /cluster/backup`: the vzdump jobs. With [vmid], only those that
+  /// take it — every guest of the node (`all`, less `exclude`), it in
+  /// `vmid`, or every guest of its pool (whose members are not in this
+  /// answer, so one that takes the guest by pool is left out of a guest's
+  /// own Plan group).
   static List<VirtBackupJob> parseBackupJobs(List<Object?> raw, {int? vmid}) {
     final out = <VirtBackupJob>[];
     for (final item in raw) {
@@ -450,33 +452,52 @@ abstract final class PveResources {
       final e = item.cast<String, Object?>();
       final id = _str(e['id']);
       if (id == null || (_str(e['type']) ?? 'vzdump') != 'vzdump') continue;
-      final all = _int(e['all']) == 1;
-      final exclude = (_str(e['exclude']) ?? '').split(',');
-      final ids = (_str(e['vmid']) ?? '').split(',');
-      final takes = vmid == null ||
-          (all && !exclude.contains('$vmid')) ||
-          ids.contains('$vmid');
-      if (!takes) continue;
       final prune = e['prune-backups'];
-      out.add(
-        VirtBackupJob(
-          id: id,
-          schedule: _str(e['schedule']) ?? _str(e['starttime']),
-          storage: _str(e['storage']),
-          mode: _str(e['mode']),
-          compress: _str(e['compress']),
-          keep: switch (prune) {
-            final Map m when m.isNotEmpty => [
-              for (final MapEntry(:key, :value) in m.entries) '$key=$value',
-            ].join(','),
-            final String p => p,
-            _ => null,
-          },
-          enabled: _int(e['enabled']) != 0,
-        ),
+      final job = VirtBackupJob(
+        id: id,
+        schedule: _str(e['schedule']) ?? _str(e['starttime']),
+        storage: _str(e['storage']),
+        mode: _str(e['mode']),
+        compress: _str(e['compress']),
+        keep: pruneString(prune),
+        enabled: _int(e['enabled']) != 0,
+        all: _int(e['all']) == 1,
+        vmids: _intList(e['vmid']),
+        exclude: _intList(e['exclude']),
+        pool: _str(e['pool']),
+        node: _str(e['node']),
+        comment: _str(e['comment']),
+        notesTemplate: _str(e['notes-template']),
+        mailNotification: _str(e['mailnotification']),
+        prune: pruneString(prune),
       );
+      if (vmid != null && !job.takes(vmid)) continue;
+      out.add(job);
     }
     return out;
+  }
+
+  /// PVE's `prune-backups` as one property string: an object
+  /// (`{keep-last: "7"}`) or the string it is stored as.
+  static String? pruneString(Object? raw) => switch (raw) {
+    final Map m when m.isNotEmpty => [
+      for (final MapEntry(:key, :value) in m.entries) '$key=$value',
+    ].join(','),
+    final String p when p.isNotEmpty => p,
+    _ => null,
+  };
+
+  /// A comma-separated list of VMIDs, as PVE stores `vmid` and `exclude`.
+  /// Null and an empty string are both "none", `all` names no single guest,
+  /// and anything that is not a number is skipped rather than costing the
+  /// listing.
+  static List<int> _intList(Object? raw) {
+    if (raw is List) return [for (final v in raw) ?_int(v)];
+    final text = _str(raw);
+    if (text == null || text.isEmpty || text == 'all') return const [];
+    return [
+      for (final part in text.split(',')) ?int.tryParse(part.trim()),
+    ];
   }
 
   /// Where a storage keeps its volumes, by its type's configuration keys.

@@ -216,10 +216,95 @@ abstract class LibvirtSnapshot with _$LibvirtSnapshot {
     @Default(false) bool memory,
     @Default(false) bool external,
     @Default(false) bool current,
+
+    /// Which file each disk was left on (`<disks>`, or `<revertDisks>` for
+    /// one already reverted to once).
+    @Default(<LibvirtSnapLayer>[]) List<LibvirtSnapLayer> layers,
   }) = _LibvirtSnapshot;
 
   factory LibvirtSnapshot.fromJson(Map<String, dynamic> json) =>
       _$LibvirtSnapshotFromJson(json);
+}
+
+/// `sbm_parser::virt_snapshot::VirtSnapLayer`.
+@freezed
+abstract class LibvirtSnapLayer with _$LibvirtSnapLayer {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory LibvirtSnapLayer({
+    @Default('') String target,
+    String? file,
+
+    /// `external`, `internal`, `no`.
+    String? snapshot,
+  }) = _LibvirtSnapLayer;
+
+  factory LibvirtSnapLayer.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtSnapLayerFromJson(json);
+}
+
+/// `sbm_parser::virt_snapshot::VirtSnapDiff`.
+@freezed
+abstract class LibvirtSnapDiff with _$LibvirtSnapDiff {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory LibvirtSnapDiff({
+    @Default('') String group,
+    @Default('') String key,
+    String? before,
+    String? after,
+    @Default(false) bool removed,
+    @Default(false) bool added,
+  }) = _LibvirtSnapDiff;
+
+  factory LibvirtSnapDiff.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtSnapDiffFromJson(json);
+}
+
+/// `sbm_parser::virt_snapshot::VirtSnapChain`.
+@freezed
+abstract class LibvirtSnapChain with _$LibvirtSnapChain {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory LibvirtSnapChain({
+    @Default(<LibvirtSnapChainDisk>[]) List<LibvirtSnapChainDisk> disks,
+
+    /// A disk QEMU would not open, as the host says it.
+    String? blocked,
+  }) = _LibvirtSnapChain;
+
+  factory LibvirtSnapChain.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtSnapChainFromJson(json);
+}
+
+/// `sbm_parser::virt_snapshot::VirtSnapChainDisk`.
+@freezed
+abstract class LibvirtSnapChainDisk with _$LibvirtSnapChainDisk {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory LibvirtSnapChainDisk({
+    @Default('') String target,
+
+    /// Topmost first: the file the guest writes to now, then its backing
+    /// store, down to the base image.
+    @Default(<LibvirtSnapChainFile>[]) List<LibvirtSnapChainFile> files,
+    String? pool,
+  }) = _LibvirtSnapChainDisk;
+
+  factory LibvirtSnapChainDisk.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtSnapChainDiskFromJson(json);
+}
+
+/// `sbm_parser::virt_snapshot::VirtSnapChainFile`.
+@freezed
+abstract class LibvirtSnapChainFile with _$LibvirtSnapChainFile {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory LibvirtSnapChainFile({
+    required String path,
+    String? format,
+    String? backing,
+    int? allocation,
+    int? capacity,
+  }) = _LibvirtSnapChainFile;
+
+  factory LibvirtSnapChainFile.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtSnapChainFileFromJson(json);
 }
 
 @freezed

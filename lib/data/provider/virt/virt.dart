@@ -14,6 +14,7 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/virt/libvirt.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_backup.dart';
+import 'package:server_box/data/model/virt/virt_backup_schedule.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
@@ -701,6 +702,22 @@ class VirtHostNotifier extends _$VirtHostNotifier {
   Future<List<VirtGuestSnapshot>> snapshots(String guestId) =>
       _backend.snapshots(_guest(guestId));
 
+  /// See [VirtBackend.snapshotChain].
+  Future<VirtSnapChain> snapshotChain(String guestId) =>
+      _backend.snapshotChain(_guest(guestId));
+
+  /// See [VirtBackend.snapshotRefusal].
+  Future<String?> snapshotRefusal(String guestId) =>
+      _backend.snapshotRefusal(_guest(guestId));
+
+  /// See [VirtBackend.snapshotSupported].
+  Future<bool?> snapshotSupported(String guestId) =>
+      _backend.snapshotSupported(_guest(guestId));
+
+  /// See [VirtBackend.snapshotDiff].
+  Future<List<VirtSnapDiff>> snapshotDiff(String guestId, String name) =>
+      _backend.snapshotDiff(_guest(guestId), name);
+
   /// Takes a snapshot of [guestId], then refreshes. [memory] where
   /// `virtSnapshotMemory` says it is the user's choice. Throws [VirtErr].
   Future<void> createSnapshot(
@@ -708,6 +725,8 @@ class VirtHostNotifier extends _$VirtHostNotifier {
     required String name,
     String? description,
     bool memory = false,
+    VirtSnapshotForm form = VirtSnapshotForm.internal,
+    String? overlayPool,
   }) => _snapshotOp(
     guestId,
     VirtSnapshotOp.create,
@@ -716,6 +735,8 @@ class VirtHostNotifier extends _$VirtHostNotifier {
       name: name,
       description: description,
       memory: memory,
+      form: form,
+      overlayPool: overlayPool,
     ),
   );
 
@@ -876,6 +897,14 @@ class VirtHostNotifier extends _$VirtHostNotifier {
         return id;
       });
 
+  /// Turns [guestId] into a template, then refreshes: the guest reads as one
+  /// from the next listing on. One operation per guest, as the others.
+  Future<void> makeTemplate(String guestId) => _copyOp(
+    guestId,
+    VirtCopyOp.clone,
+    (guest) => _backend.makeTemplate(guest),
+  );
+
   /// See [VirtBackend.backups].
   Future<List<VirtBackup>> backups(String guestId) =>
       _backend.backups(_guest(guestId));
@@ -883,6 +912,29 @@ class VirtHostNotifier extends _$VirtHostNotifier {
   /// See [VirtBackend.backupJobs].
   Future<List<VirtBackupJob>> backupJobs(String guestId) =>
       _backend.backupJobs(_guest(guestId));
+
+  /// See [VirtBackend.allBackupJobs].
+  Future<List<VirtBackupJob>> allBackupJobs() => _backend.allBackupJobs();
+
+  /// See [VirtBackend.allBackupStorages].
+  Future<List<VirtStoragePool>> allBackupStorages() =>
+      _backend.allBackupStorages();
+
+  /// See [VirtBackend.editBackupJob]: makes, edits or deletes a scheduled
+  /// job, then has the list read again.
+  Future<void> editBackupJob(VirtBackupJobEdit edit, {bool remove = false}) async {
+    await _backend.editBackupJob(edit, remove: remove);
+    if (ref.mounted) _bump(VirtRevision.backupJobs);
+  }
+
+  /// See [VirtBackend.runBackupJob]. The guest reads as backing up meanwhile,
+  /// as a backup of it does: [`VirtHostState.copyOps`] has no entry for a job
+  /// that takes several guests, so nothing is marked busy.
+  Future<void> runBackupJob(VirtBackupJob job) => _backend.runBackupJob(job);
+
+  /// See [VirtBackend.checkSchedule].
+  Future<VirtScheduleCheck> checkSchedule(String schedule) =>
+      _backend.checkSchedule(schedule);
 
   /// See [VirtBackend.backupStorages].
   Future<List<VirtStoragePool>> backupStorages(String guestId) =>
@@ -896,13 +948,22 @@ class VirtHostNotifier extends _$VirtHostNotifier {
         (guest) => _backend.backup(guest, request),
       );
 
-  /// Restores [backup] over [guestId], or as a new guest [vmid].
-  Future<void> restoreBackup(String guestId, VirtBackup backup, {int? vmid}) =>
-      _copyOp(
-        guestId,
-        VirtCopyOp.restore,
-        (guest) => _backend.restoreBackup(guest, backup, vmid: vmid),
-      );
+  /// Restores [backup] over [guestId], or as a new guest [vmid], onto
+  /// [storage] where one is picked.
+  Future<void> restoreBackup(
+    String guestId,
+    VirtBackup backup, {
+    int? vmid,
+    String? storage,
+  }) => _copyOp(
+    guestId,
+    VirtCopyOp.restore,
+    (guest) => _backend.restoreBackup(guest, backup, vmid: vmid, storage: storage),
+  );
+
+  /// Writes [edit] to [backup] — its notes and its protection.
+  Future<void> editBackup(VirtBackup backup, VirtBackupEdit edit) =>
+      _backend.editBackup(backup, edit);
 
   Future<void> deleteBackup(String guestId, VirtBackup backup) =>
       _backend.deleteBackup(_guest(guestId), backup);
@@ -1156,25 +1217,51 @@ final class _MissingBackend implements VirtBackend {
       _fail();
 
   @override
+  Future<void> makeTemplate(VirtGuest guest) async => _fail();
+
+  @override
   Future<List<VirtBackup>> backups(VirtGuest guest) async => _fail();
 
   @override
   Future<List<VirtBackupJob>> backupJobs(VirtGuest guest) async => _fail();
 
   @override
+  Future<List<VirtBackupJob>> allBackupJobs() async => _fail();
+
+  @override
+  Future<void> editBackupJob(
+    VirtBackupJobEdit edit, {
+    bool remove = false,
+  }) async => _fail();
+
+  @override
+  Future<VirtScheduleCheck> checkSchedule(String schedule) async => _fail();
+
+  @override
   Future<List<VirtStoragePool>> backupStorages(VirtGuest guest) async =>
       _fail();
+
+  @override
+  Future<List<VirtStoragePool>> allBackupStorages() async => _fail();
 
   @override
   Future<void> backup(VirtGuest guest, VirtBackupRequest request) async =>
       _fail();
 
   @override
+  Future<void> runBackupJob(VirtBackupJob job) async => _fail();
+
+  @override
   Future<void> restoreBackup(
     VirtGuest guest,
     VirtBackup backup, {
     int? vmid,
+    String? storage,
   }) async => _fail();
+
+  @override
+  Future<void> editBackup(VirtBackup backup, VirtBackupEdit edit) async =>
+      _fail();
 
   @override
   Future<void> deleteBackup(VirtGuest guest, VirtBackup backup) async =>
@@ -1198,11 +1285,26 @@ final class _MissingBackend implements VirtBackend {
   Future<List<VirtGuestSnapshot>> snapshots(VirtGuest guest) async => _fail();
 
   @override
+  Future<VirtSnapChain> snapshotChain(VirtGuest guest) async => _fail();
+
+  @override
+  Future<bool?> snapshotSupported(VirtGuest guest) async => _fail();
+
+  @override
+  Future<String?> snapshotRefusal(VirtGuest guest) async => _fail();
+
+  @override
+  Future<List<VirtSnapDiff>> snapshotDiff(VirtGuest guest, String name) async =>
+      _fail();
+
+  @override
   Future<void> createSnapshot(
     VirtGuest guest, {
     required String name,
     String? description,
     bool memory = false,
+    VirtSnapshotForm form = VirtSnapshotForm.internal,
+    String? overlayPool,
   }) async => _fail();
 
   @override
@@ -1260,10 +1362,36 @@ class VirtRevision extends _$VirtRevision {
   static const storage = 'storage';
   static const network = 'network';
 
+  /// The datacenter's backup jobs, which are the host's rather than a
+  /// guest's: a change to one is not a guest action, so no notifier state
+  /// carries it.
+  static const backupJobs = 'backupJobs';
+
   @override
   int build(String serverId, String what) => 0;
 
   void bump() => state++;
+}
+
+/// The host's scheduled backup jobs (PVE `/cluster/backup`), for the
+/// datacenter's Backup view. Read again through [VirtRevision.backupJobs]
+/// after each change.
+@Riverpod(retry: _noRetry)
+Future<List<VirtBackupJob>> virtBackupJobs(Ref ref, String serverId) async {
+  ref.watch(virtRevisionProvider(serverId, VirtRevision.backupJobs));
+  final host = _hostOf(ref, serverId);
+  await host.firstLoad;
+  return host.allBackupJobs();
+}
+
+/// Every storage the host has that holds backups, across its online nodes:
+/// where a scheduled job's backups go, and where a restore can put the disks.
+/// Each pool carries its node (`VirtStoragePool.node`).
+@Riverpod(retry: _noRetry)
+Future<List<VirtStoragePool>> virtBackupStorages(Ref ref, String serverId) async {
+  final host = _hostOf(ref, serverId);
+  await host.firstLoad;
+  return host.allBackupStorages();
 }
 
 /// No automatic retry for the providers below: each attempt is a round trip
@@ -1289,6 +1417,34 @@ Future<List<VirtGuestSnapshot>> virtSnapshots(
   final host = _hostOf(ref, serverId);
   await host.firstLoad;
   return host.snapshots(guestId);
+}
+
+/// The disk chain of one guest: its own provider rather than part of the
+/// snapshot listing, which is one round trip of its own. Invalidated by the
+/// view after a snapshot operation, as the listing is.
+@Riverpod(retry: _noRetry)
+Future<VirtSnapChain> virtSnapChain(
+  Ref ref,
+  String serverId,
+  String guestId,
+) async {
+  final host = _hostOf(ref, serverId);
+  await host.firstLoad;
+  return host.snapshotChain(guestId);
+}
+
+/// Whether a snapshot of one guest can be taken, and why not: read before the
+/// form offers one, so a storage that does not support snapshots is said
+/// before the task is started. Null where the host does not answer.
+@Riverpod(retry: _noRetry)
+Future<String?> virtSnapshotRefusal(
+  Ref ref,
+  String serverId,
+  String guestId,
+) async {
+  final host = _hostOf(ref, serverId);
+  await host.firstLoad;
+  return host.snapshotRefusal(guestId);
 }
 
 /// The hardware of one guest. Invalidated by the view after each change and

@@ -237,9 +237,12 @@ class DistIconOf extends StatelessWidget {
           : ExtendedImage.network(
               url,
               cache: true,
+              // Width only, for the reason spelled out in `_buildLogo`
+              // (`view/page/server/detail/view.dart`): both dimensions reach
+              // `ResizeImage`, whose default policy is `exact` — `BoxFit.fill`
+              // — so a wide mark would arrive squared off. The `fit` below
+              // places it instead.
               cacheWidth:
-                  (size * MediaQuery.devicePixelRatioOf(context)).round(),
-              cacheHeight:
                   (size * MediaQuery.devicePixelRatioOf(context)).round(),
               clearMemoryCacheWhenDispose: true,
               width: size,

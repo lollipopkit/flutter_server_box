@@ -3810,7 +3810,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get pveTokenTipBackup =>
-      'La clonazione richiede VM.Clone, il backup e il ripristino VM.Backup, con Datastore.AllocateSpace dove va la copia o il backup.';
+      'La clonazione richiede VM.Clone, il backup e il ripristino VM.Backup, e la conversione in modello VM.Allocate; le attività di backup richiedono anche Sys.Audit per leggerle e Sys.Modify su / per crearle, modificarle ed eliminarle, con Datastore.AllocateSpace dove va la copia o il backup.';
 
   @override
   String get virtErrConflict => 'Modificato altrove';
@@ -4869,4 +4869,331 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get virtCiSaved => 'Salvato. Ha effetto al prossimo avvio.';
+
+  @override
+  String get virtSnapshotExternal => 'Solo dischi a caldo';
+
+  @override
+  String get virtSnapshotExternalTip =>
+      'Il guest continua a funzionare. Ogni disco riceve un overlay qcow2 nel pool scelto; il guest resta su una catena.';
+
+  @override
+  String get virtSnapshotFormInternal => 'Interna (nell\'immagine)';
+
+  @override
+  String get virtSnapshotForm => 'Tipo';
+
+  @override
+  String get virtSnapshotOverlayPool => 'Pool overlay';
+
+  @override
+  String get virtSnapshotExternalNoMemory =>
+      'Uno snapshot esterno non contiene mai la memoria: il guest non viene fermato.';
+
+  @override
+  String get virtSnapshotChain => 'Catena dei dischi';
+
+  @override
+  String virtSnapshotChainDepth(String count) {
+    return '$count livelli';
+  }
+
+  @override
+  String get virtSnapshotChainFile => 'File';
+
+  @override
+  String get virtSnapshotChainActive => 'In uso ora';
+
+  @override
+  String get virtSnapshotChainBase => 'Immagine di base';
+
+  @override
+  String virtSnapshotChainRaw(String format) {
+    return 'Uno snapshot esterno richiede un disco qcow2. Questo è $format.';
+  }
+
+  @override
+  String get virtSnapshotNoSupport =>
+      'Lo storage del guest non supporta gli snapshot, quindi non se ne può creare nessuno.';
+
+  @override
+  String get virtSnapshotRevertChain =>
+      'Un ripristino su una catena unisce l\'overlay in esecuzione nell\'immagine e rende inutilizzabile ogni snapshot successivo. Solo il più recente può essere ripristinato.';
+
+  @override
+  String get virtSnapshotRevertHasChildren =>
+      'Rifiutato finché uno snapshot successivo poggia su questo.';
+
+  @override
+  String get virtSnapshotDiff => 'Differenze da ora';
+
+  @override
+  String get virtSnapshotDiffNone =>
+      'La configurazione non è cambiata da questo snapshot.';
+
+  @override
+  String get virtSnapshotDiffShow => 'Confronta con ora';
+
+  @override
+  String get virtSnapshotDiffGroup => 'Modificato';
+
+  @override
+  String get virtSnapshotDiffGroupCpu => 'Processore';
+
+  @override
+  String get virtSnapshotDiffGroupMemory => 'Memoria';
+
+  @override
+  String get virtSnapshotDiffGroupDisks => 'Dischi';
+
+  @override
+  String get virtSnapshotDiffGroupNic => 'Interfacce';
+
+  @override
+  String get virtSnapshotDiffGroupFirmware => 'Firmware';
+
+  @override
+  String get virtSnapshotDiffGroupBoot => 'Avvio';
+
+  @override
+  String get virtSnapshotDiffGroupOther => 'Altro';
+
+  @override
+  String virtSnapshotDiffValue(String after, String before) {
+    return '$before → $after';
+  }
+
+  @override
+  String get virtSnapshotDiffRemoved => 'rimosso';
+
+  @override
+  String get virtSnapshotDiffAdded => 'aggiunto';
+
+  @override
+  String virtSnapshotDiffAsk(String snapshot) {
+    return 'Cosa cambia ripristinando $snapshot:';
+  }
+
+  @override
+  String virtSnapshotDiffHost(String error) {
+    return 'L\'host non ha potuto dire cosa differisce: $error';
+  }
+
+  @override
+  String virtSnapshotExternalExists(String count) {
+    return 'Il guest è già su $count livelli; questo snapshot ne aggiunge uno.';
+  }
+
+  @override
+  String get virtToTemplate => 'Converti in modello';
+
+  @override
+  String get virtToTemplateNote =>
+      'Un modello non può essere avviato né riconvertito in guest. I suoi dischi diventano immagini di base, che un clone collegato condivide.';
+
+  @override
+  String virtToTemplateConfirm(String name) {
+    return 'Convertire $name in modello?';
+  }
+
+  @override
+  String get virtToTemplateIrreversible =>
+      'Non è annullabile: un modello non può tornare a essere un guest.';
+
+  @override
+  String get virtToTemplateStopped => 'Spegnilo prima.';
+
+  @override
+  String get virtToTemplateSnapshots =>
+      'Un guest con snapshot non può diventare un modello.';
+
+  @override
+  String virtTemplateCreated(String name) {
+    return '$name è ora un modello';
+  }
+
+  @override
+  String get virtTemplateTip =>
+      'Un modello viene eseguito solo dopo essere stato clonato.';
+
+  @override
+  String get virtCloneStorage => 'Storage di destinazione';
+
+  @override
+  String get virtCloneStorageSame => 'Come l\'origine';
+
+  @override
+  String get virtCloneNode => 'Nodo di destinazione';
+
+  @override
+  String get virtCloneNodeSame => 'Come l\'origine';
+
+  @override
+  String get virtClonePool => 'Pool di destinazione';
+
+  @override
+  String get virtCloneStorageContent =>
+      'Questo storage non contiene dischi di VM.';
+
+  @override
+  String get virtCloneStorageShared =>
+      'Copiare su un altro nodo richiede uno storage condiviso.';
+
+  @override
+  String get virtCloneNodeUnknown => 'Questo host non ha quel nodo.';
+
+  @override
+  String get virtCloneLinkedTarget =>
+      'Un clone collegato condivide i dischi del modello, quindi non può indicare storage o nodo.';
+
+  @override
+  String get virtBackupJobs => 'Attività di backup';
+
+  @override
+  String get virtBackupJobsNone =>
+      'Nessuna attività di backup pianificata. Aggiungine una per il backup periodico dei guest.';
+
+  @override
+  String get virtBackupJobNew => 'Nuova attività';
+
+  @override
+  String get virtBackupJobEdit => 'Modifica attività';
+
+  @override
+  String get virtBackupJobRun => 'Esegui ora';
+
+  @override
+  String get virtBackupJobRunAsk => 'Avviare ora questa attività di backup?';
+
+  @override
+  String virtBackupJobDeleteAsk(String id) {
+    return 'Eliminare l\'attività di backup $id? I backup restano.';
+  }
+
+  @override
+  String get virtBackupJobSaved => 'Attività salvata';
+
+  @override
+  String get virtBackupJobDeleted => 'Attività eliminata';
+
+  @override
+  String get virtBackupJobStarted => 'Attività di backup avviata';
+
+  @override
+  String get virtBackupSchedule => 'Pianificazione';
+
+  @override
+  String get virtBackupScheduleHelp =>
+      'Un sottoinsieme degli eventi di calendario di systemd: 02:30, mon..fri 02:30, sat 03:00, daily, hourly, */15.';
+
+  @override
+  String get virtBackupScheduleInvalid =>
+      'L\'host non accetta questa pianificazione.';
+
+  @override
+  String virtBackupScheduleNext(String times) {
+    return 'Prossime esecuzioni: $times';
+  }
+
+  @override
+  String get virtBackupSelection => 'Guest';
+
+  @override
+  String get virtBackupSelectionAll => 'Tutti i guest';
+
+  @override
+  String get virtBackupSelectionList => 'Guest selezionati';
+
+  @override
+  String get virtBackupSelectionNone => 'Scegli almeno un guest.';
+
+  @override
+  String get virtBackupMail => 'Notifica';
+
+  @override
+  String get virtBackupMailAlways => 'Sempre';
+
+  @override
+  String get virtBackupMailFailure => 'In caso di errore';
+
+  @override
+  String get virtBackupNotesTemplate => 'Note del backup';
+
+  @override
+  String virtBackupNotesTemplateTip(String vars) {
+    return 'Le note vengono aggiunte a ogni backup dell\'attività. Vengono sostituiti: $vars.';
+  }
+
+  @override
+  String get virtBackupPrune => 'Conservazione';
+
+  @override
+  String get virtBackupPruneTip =>
+      'Le opzioni di conservazione di PVE, es. keep-last=7,keep-daily=4. Vuoto: quelle dello storage o del nodo.';
+
+  @override
+  String get virtBackupNextRun => 'Prossima esecuzione';
+
+  @override
+  String get virtBackupJobNode => 'Nodo';
+
+  @override
+  String get virtBackupJobNodeAny => 'Tutti i nodi';
+
+  @override
+  String get virtBackupEnabled => 'Attiva';
+
+  @override
+  String get virtBackupOptions => 'Opzioni';
+
+  @override
+  String get virtBackupProtect => 'Proteggi';
+
+  @override
+  String get virtBackupProtectTip =>
+      'Un backup protetto non viene eliminato dalla conservazione e non può essere cancellato finché resta protetto.';
+
+  @override
+  String get virtBackupEditNotes => 'Note';
+
+  @override
+  String get virtBackupSaveNotes => 'Salva';
+
+  @override
+  String get virtBackupEdited => 'Backup aggiornato';
+
+  @override
+  String get virtBackupRestoreStorage => 'Ripristina su storage';
+
+  @override
+  String get virtBackupRestoreStorageSame => 'Come nel backup';
+
+  @override
+  String get virtBackupModeSnapshotTip => 'snapshot · senza fermo';
+
+  @override
+  String get virtCloneStorageMissing =>
+      'Nessuno storage di questo nodo contiene dischi di VM.';
+
+  @override
+  String get virtBackupCompress => 'Compressione';
+
+  @override
+  String get virtBackupUnprotect => 'Rimuovi protezione';
+
+  @override
+  String get virtBackupModeStops =>
+      'suspend e stop interrompono un guest in esecuzione durante la copia.';
+
+  @override
+  String get virtBackupScheduleValidate => 'Verifica con l\'host';
+
+  @override
+  String virtBackupSelected(int count) {
+    return '$count selezionati';
+  }
+
+  @override
+  String get virtBackupExcludeTip =>
+      'Tutti i guest del nodo vengono inclusi. Disattivane uno per escluderlo.';
 }

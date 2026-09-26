@@ -3579,7 +3579,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get pveTokenTipBackup =>
-      'クローンには VM.Clone、バックアップと復元には VM.Backup が必要です。コピーやバックアップの保存先には Datastore.AllocateSpace も必要です。';
+      'クローンには VM.Clone、バックアップと復元には VM.Backup、テンプレート化には VM.Allocate が必要です。バックアップジョブの読み取りには Sys.Audit、作成・編集・削除には / に対する Sys.Modify も必要で、コピーやバックアップの保存先には Datastore.AllocateSpace が要ります。';
 
   @override
   String get virtErrConflict => '他の場所で変更済み';
@@ -4582,4 +4582,318 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get virtCiSaved => '保存しました。次回の起動時に反映されます。';
+
+  @override
+  String get virtSnapshotExternal => '起動中のままディスクのみ';
+
+  @override
+  String get virtSnapshotExternalTip =>
+      'ゲストは稼働を続けます。各ディスクは選択したプールに qcow2 オーバーレイを持ち、ゲストはチェーン上に残ります。';
+
+  @override
+  String get virtSnapshotFormInternal => '内部（イメージ内）';
+
+  @override
+  String get virtSnapshotForm => '種類';
+
+  @override
+  String get virtSnapshotOverlayPool => 'オーバーレイプール';
+
+  @override
+  String get virtSnapshotExternalNoMemory =>
+      '外部スナップショットはメモリを保存しません。ゲストは停止されません。';
+
+  @override
+  String get virtSnapshotChain => 'ディスクチェーン';
+
+  @override
+  String virtSnapshotChainDepth(String count) {
+    return '$count 層';
+  }
+
+  @override
+  String get virtSnapshotChainFile => 'ファイル';
+
+  @override
+  String get virtSnapshotChainActive => '現在使用中';
+
+  @override
+  String get virtSnapshotChainBase => 'ベースイメージ';
+
+  @override
+  String virtSnapshotChainRaw(String format) {
+    return '外部スナップショットには qcow2 ディスクが必要です。これは $format です。';
+  }
+
+  @override
+  String get virtSnapshotNoSupport => 'ゲストのストレージがスナップショットに対応していないため、作成できません。';
+
+  @override
+  String get virtSnapshotRevertChain =>
+      'チェーン上で戻すと、稼働中のオーバーレイがイメージに統合され、それ以降のスナップショットは使えなくなります。戻せるのは最新のスナップショットだけです。';
+
+  @override
+  String get virtSnapshotRevertHasChildren => '後続のスナップショットがこの上にある間は拒否されます。';
+
+  @override
+  String get virtSnapshotDiff => '現在との差分';
+
+  @override
+  String get virtSnapshotDiffNone => 'このスナップショット以降、構成は変わっていません。';
+
+  @override
+  String get virtSnapshotDiffShow => '現在と比較';
+
+  @override
+  String get virtSnapshotDiffGroup => '変更';
+
+  @override
+  String get virtSnapshotDiffGroupCpu => 'プロセッサ';
+
+  @override
+  String get virtSnapshotDiffGroupMemory => 'メモリ';
+
+  @override
+  String get virtSnapshotDiffGroupDisks => 'ディスク';
+
+  @override
+  String get virtSnapshotDiffGroupNic => 'インターフェース';
+
+  @override
+  String get virtSnapshotDiffGroupFirmware => 'ファームウェア';
+
+  @override
+  String get virtSnapshotDiffGroupBoot => '起動';
+
+  @override
+  String get virtSnapshotDiffGroupOther => 'その他';
+
+  @override
+  String virtSnapshotDiffValue(String after, String before) {
+    return '$before → $after';
+  }
+
+  @override
+  String get virtSnapshotDiffRemoved => '削除済み';
+
+  @override
+  String get virtSnapshotDiffAdded => '追加済み';
+
+  @override
+  String virtSnapshotDiffAsk(String snapshot) {
+    return '$snapshot に戻すと変わる内容：';
+  }
+
+  @override
+  String virtSnapshotDiffHost(String error) {
+    return 'ホストは差分を答えられませんでした：$error';
+  }
+
+  @override
+  String virtSnapshotExternalExists(String count) {
+    return 'ゲストはすでに $count 層にあります。このスナップショットでさらに 1 層増えます。';
+  }
+
+  @override
+  String get virtToTemplate => 'テンプレート化';
+
+  @override
+  String get virtToTemplateNote =>
+      'テンプレートは起動できず、ゲストに戻すこともできません。ディスクはベースイメージになり、リンククローンがそれを共有します。';
+
+  @override
+  String virtToTemplateConfirm(String name) {
+    return '$name をテンプレートにしますか？';
+  }
+
+  @override
+  String get virtToTemplateIrreversible => '元に戻せません。テンプレートはゲストに戻せません。';
+
+  @override
+  String get virtToTemplateStopped => '先に停止してください。';
+
+  @override
+  String get virtToTemplateSnapshots => 'スナップショットのあるゲストはテンプレートにできません。';
+
+  @override
+  String virtTemplateCreated(String name) {
+    return '$name はテンプレートになりました';
+  }
+
+  @override
+  String get virtTemplateTip => 'テンプレートはクローンして初めて動作します。';
+
+  @override
+  String get virtCloneStorage => '移行先ストレージ';
+
+  @override
+  String get virtCloneStorageSame => '元と同じ';
+
+  @override
+  String get virtCloneNode => '移行先ノード';
+
+  @override
+  String get virtCloneNodeSame => '元と同じ';
+
+  @override
+  String get virtClonePool => '移行先プール';
+
+  @override
+  String get virtCloneStorageContent => 'このストレージは VM ディスクを保持できません。';
+
+  @override
+  String get virtCloneStorageShared => '別ノードへのコピーには共有ストレージが必要です。';
+
+  @override
+  String get virtCloneNodeUnknown => 'このホストにそのノードはありません。';
+
+  @override
+  String get virtCloneLinkedTarget =>
+      'リンククローンはテンプレートのディスクを共有するため、ストレージやノードを指定できません。';
+
+  @override
+  String get virtBackupJobs => 'バックアップジョブ';
+
+  @override
+  String get virtBackupJobsNone =>
+      'スケジュールされたバックアップジョブはありません。追加すると定期的にゲストをバックアップできます。';
+
+  @override
+  String get virtBackupJobNew => '新しいジョブ';
+
+  @override
+  String get virtBackupJobEdit => 'ジョブを編集';
+
+  @override
+  String get virtBackupJobRun => '今すぐ実行';
+
+  @override
+  String get virtBackupJobRunAsk => 'このバックアップジョブを今すぐ開始しますか？';
+
+  @override
+  String virtBackupJobDeleteAsk(String id) {
+    return 'バックアップジョブ $id を削除しますか？作成済みのバックアップは残ります。';
+  }
+
+  @override
+  String get virtBackupJobSaved => 'ジョブを保存しました';
+
+  @override
+  String get virtBackupJobDeleted => 'ジョブを削除しました';
+
+  @override
+  String get virtBackupJobStarted => 'バックアップジョブを開始しました';
+
+  @override
+  String get virtBackupSchedule => 'スケジュール';
+
+  @override
+  String get virtBackupScheduleHelp =>
+      'systemd カレンダーイベントのサブセット: 02:30、mon..fri 02:30、sat 03:00、daily、hourly、*/15。';
+
+  @override
+  String get virtBackupScheduleInvalid => 'ホストが受け付けないスケジュールです。';
+
+  @override
+  String virtBackupScheduleNext(String times) {
+    return '次回実行: $times';
+  }
+
+  @override
+  String get virtBackupSelection => 'ゲスト';
+
+  @override
+  String get virtBackupSelectionAll => 'すべてのゲスト';
+
+  @override
+  String get virtBackupSelectionList => '選択したゲスト';
+
+  @override
+  String get virtBackupSelectionNone => '少なくとも 1 つのゲストを選んでください。';
+
+  @override
+  String get virtBackupMail => '通知';
+
+  @override
+  String get virtBackupMailAlways => '常に';
+
+  @override
+  String get virtBackupMailFailure => '失敗時';
+
+  @override
+  String get virtBackupNotesTemplate => 'バックアップのメモ';
+
+  @override
+  String virtBackupNotesTemplateTip(String vars) {
+    return 'メモはジョブが作成する各バックアップに付加されます。置換されるのは $vars です。';
+  }
+
+  @override
+  String get virtBackupPrune => '保持';
+
+  @override
+  String get virtBackupPruneTip =>
+      'PVE の保持オプション（例: keep-last=7,keep-daily=4）。空欄ならストレージまたはノードの設定。';
+
+  @override
+  String get virtBackupNextRun => '次回実行';
+
+  @override
+  String get virtBackupJobNode => 'ノード';
+
+  @override
+  String get virtBackupJobNodeAny => 'すべてのノード';
+
+  @override
+  String get virtBackupEnabled => '有効';
+
+  @override
+  String get virtBackupOptions => 'オプション';
+
+  @override
+  String get virtBackupProtect => '保護';
+
+  @override
+  String get virtBackupProtectTip => '保護されたバックアップは整理の対象にならず、保護を解除するまで削除できません。';
+
+  @override
+  String get virtBackupEditNotes => 'メモ';
+
+  @override
+  String get virtBackupSaveNotes => '保存';
+
+  @override
+  String get virtBackupEdited => 'バックアップを更新しました';
+
+  @override
+  String get virtBackupRestoreStorage => 'ストレージへ復元';
+
+  @override
+  String get virtBackupRestoreStorageSame => 'バックアップどおり';
+
+  @override
+  String get virtBackupModeSnapshotTip => 'snapshot · 無停止';
+
+  @override
+  String get virtCloneStorageMissing => 'このノードに VM ディスクを保持できるストレージがありません。';
+
+  @override
+  String get virtBackupCompress => '圧縮';
+
+  @override
+  String get virtBackupUnprotect => '保護を解除';
+
+  @override
+  String get virtBackupModeStops => 'suspend と stop はコピー中に稼働中のゲストを中断します。';
+
+  @override
+  String get virtBackupScheduleValidate => 'ホストで確認';
+
+  @override
+  String virtBackupSelected(int count) {
+    return '$count 件選択';
+  }
+
+  @override
+  String get virtBackupExcludeTip => 'ノード上のすべてのゲストが対象です。オフにすると除外されます。';
 }

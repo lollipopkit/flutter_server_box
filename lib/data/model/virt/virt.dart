@@ -255,6 +255,16 @@ abstract class VirtCapabilities with _$VirtCapabilities {
     /// Otherwise it is the user's choice, where the guest is not a container.
     @Default(false) bool snapshotMemoryRequired,
 
+    /// A disk-only external snapshot can be taken while the guest runs,
+    /// leaving it on a qcow2 chain (libvirt). The form offers it beside the
+    /// internal one, and the snapshot view shows the chain.
+    @Default(false) bool snapshotExternal,
+
+    /// Taking a snapshot can be refused before it is asked for, with the
+    /// host's own answer about the guest's storage (PVE `feature`): the form
+    /// says so rather than starting a task that fails.
+    @Default(false) bool snapshotSupported,
+
     /// Storage pools and their volumes can be listed.
     @Default(false) bool storage,
 
@@ -271,6 +281,19 @@ abstract class VirtCapabilities with _$VirtCapabilities {
 
     /// A template can be cloned as a linked clone, sharing its disks (PVE).
     @Default(false) bool linkedClone,
+
+    /// A stopped guest can be turned into a template, and a template cannot
+    /// be turned back (PVE). libvirt has no such thing: a domain is a domain.
+    @Default(false) bool template,
+
+    /// A clone's disks can be sent to a storage the source's are not on, and
+    /// a clone can be made on another node of the cluster (PVE `storage` and
+    /// `target`; libvirt `vol-create-from` into another pool).
+    @Default(false) bool cloneTarget,
+
+    /// Backup jobs are the datacenter's and can be listed, made, edited,
+    /// deleted and run from the app (PVE `/cluster/backup`).
+    @Default(false) bool backupJobs,
 
     /// More than one node: guests are grouped by node.
     @Default(false) bool cluster,

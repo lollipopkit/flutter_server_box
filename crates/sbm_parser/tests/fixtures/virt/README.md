@@ -71,6 +71,24 @@ network `sbx-bridge`; `it's-"odd"` with a second NIC on `sbx-isolated` and
 | `script_volumes_sbx_iso.txt` | `volumes_script` | the name with a space, a raw `.iso` |
 | `script_networks.txt` | `networks_script` | NAT, isolated with IPv6, inactive bridge mode, two DHCP leases |
 
+External snapshots (phase 8), captured 2026-09-26 on the same host from a
+throwaway domain `sbxe2e-f1` with a qcow2 disk in `images` and a second pool
+`sbxe2e-p8q` for the overlays (both removed afterwards):
+
+| File | What |
+| --- | --- |
+| `script_snap_chain_plain.txt` | `snap_chain_script` on `cirros-run`: `vda` is already an overlay (run1.qcow2 on cirros.img), `vdb` is one file |
+| `script_snap_chain_overlay.txt` | The same script with one external snapshot: the overlay in its own pool, backing the disk's file |
+| `script_snap_chain_chain.txt` | Two external snapshots: three layers, each naming the one below |
+| `script_snap_chain_raw.txt` | A raw disk: one layer, format `raw` — what the refusal is read from |
+| `script_snapshots_external.txt` | `snapshots_script` after two external snapshots: each carries its `layers` from `<disks>` |
+| `snapshot_revert_disks.xml` | `snapshot-dumpxml` of a snapshot already reverted to once: `<revertDisks>` names where a further revert would go |
+| `pool_dumpxml_dir.txt` | `pool-dumpxml` of a directory pool: the target path an overlay is placed in |
+| `script_snap_diff.txt` | `snap_diff_script` after a vCPU, memory and NIC-model change: what the diff is read from |
+
+`snap_chain_*.expected.json`, `snap_diff.expected.json` and
+`snapshots_external.expected.json` are the parsers' output for these.
+
 `overview.expected.json`, `detail_*.expected.json`, `snapshots_*.expected.json`,
 `storage.expected.json`, `volumes_*.expected.json` and `networks.expected.json`
 are the parsers' output for these inputs, asserted by both the Rust and the

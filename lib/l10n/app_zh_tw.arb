@@ -281,13 +281,6 @@
   "maxConcurrency": "最大並發數",
   "maxRetryCount": "伺服器嘗試重連次數",
   "mismatchSystem": "系統不匹配：{system}",
-  "@mismatchSystem": {
-    "placeholders": {
-      "system": {
-        "type": "String"
-      }
-    }
-  },
   "mirror": "鏡像",
   "needRestart": "需要重開 App",
   "netViewType": "網路檢視類型",
@@ -355,38 +348,9 @@
   "rememberPwdInMemTip": "用於容器、暫停等",
   "remotePath": "遠端路徑",
   "rootfsUpdateTip": "已安裝 {distro} {installed}，現有 {latest}。更新會重新下載並替換整個容器：{pm} 資料會遺失",
-  "@rootfsUpdateTip": {
-    "placeholders": {
-      "distro": {
-        "type": "String"
-      },
-      "installed": {
-        "type": "String"
-      },
-      "latest": {
-        "type": "String"
-      },
-      "pm": {
-        "type": "String"
-      }
-    }
-  },
   "linuxSystemInUse": "請先關閉 {name} 上的終端，再刪除",
   "rootfsSubtitle": "本機上的 Linux 使用者空間",
   "rootfsInstallTip": "下載 {distro} {version}（約 {size} MB）並解壓到本機。",
-  "@rootfsInstallTip": {
-    "placeholders": {
-      "distro": {
-        "type": "String"
-      },
-      "version": {
-        "type": "String"
-      },
-      "size": {
-        "type": "int"
-      }
-    }
-  },
   "nameAlreadyExistsFmt": "「{name}」已存在",
   "sameIdServerExist": "已存在相同 ID 的伺服器",
   "second": "秒",
@@ -595,24 +559,7 @@
   "geoDataUnreachable": "無法取得資料。",
   "geoDataRemoveFailed": "無法刪除資料。",
   "geoDataCurrent": "已經是 {month} 的資料。",
-  "@geoDataCurrent": {
-    "placeholders": {
-      "month": {
-        "type": "String"
-      }
-    }
-  },
   "geoDataConsent": "**下載大小：{download} · 本機空間：{disk}。** 完整資料集儲存在本機，後續所有地理位置查詢都在本機完成，不會向下載服務傳送伺服器位址或查詢活動。\n\n資料每月更新。新版本會取代已安裝的資料，不保留額外副本；你可以隨時刪除。",
-  "@geoDataConsent": {
-    "placeholders": {
-      "download": {
-        "type": "String"
-      },
-      "disk": {
-        "type": "String"
-      }
-    }
-  },
   "benchmark": "效能測試",
   "benchmarkIntro": "在此伺服器上執行 Yet Another Bench Script，測試磁碟、網路與 CPU。完整執行一次需要 10–20 分鐘，離開此頁面或關閉 App 都不會中斷。",
   "benchmarkNoRuns": "尚無效能測試記錄。",
@@ -1112,7 +1059,7 @@
   "virtDeleted": "已刪除 {name}",
   "pveTokenTipCreate": "建立和刪除虛擬機器還需要 VM.Allocate、VM.Config.*、Datastore.AllocateSpace 和 SDN.Use。",
   "pveTokenTipHardware": "編輯硬體需要 VM.Config.CPU、VM.Config.Memory、VM.Config.Disk、VM.Config.CDROM、VM.Config.Network 和 VM.Config.Options；新增磁碟和網路卡還需要 Datastore.AllocateSpace 和 SDN.Use。修改顯示卡以及 USB、PCI 裝置還需要 VM.Config.HWType；透過資源對應直通裝置需要該對應的 Mapping.Use，列出對應需要 Mapping.Audit。",
-  "pveTokenTipBackup": "複製需要 VM.Clone，備份和還原需要 VM.Backup；副本或備份存放的儲存上還需要 Datastore.AllocateSpace。",
+  "pveTokenTipBackup": "複製需要 VM.Clone，備份與還原需要 VM.Backup，轉為範本需要 VM.Allocate；備份工作還需要 Sys.Audit 才能讀取，以及在 / 上的 Sys.Modify 才能新增、編輯和刪除；副本或備份存放的儲存上還需要 Datastore.AllocateSpace。",
   "virtErrConflict": "已在別處修改",
   "virtErrConflictTip": "此虛擬機器的設定在讀取後被他人修改，因此未做任何變更。已重新讀取，如仍需要請再次修改。",
   "virtHardware": "硬體",
@@ -1408,5 +1355,99 @@
   "virtCiEffectLibvirt": "儲存會寫入一份新的 seed，並使用新的執行個體 ID。",
   "virtCiEffectPve": "PVE 會立即重寫它的 cloud-init 磁碟機，執行個體 ID 由這些設定計算得出，因此這裡的任何變更都會產生新的執行個體 ID。",
   "virtCiNewInstance": "下次啟動時，cloud-init 會把系統當作新的執行個體：重新設定主機名稱，帳戶不存在時建立它，設定密碼、新增金鑰，並重新寫入網路設定。它還會產生新的 SSH 主機金鑰，因此 SSH 用戶端會提示主機金鑰已變更。在那次啟動之前不會有任何變化。",
-  "virtCiSaved": "已儲存，下次啟動時生效。"
+  "virtCiSaved": "已儲存，下次啟動時生效。",
+  "virtSnapshotExternal": "不停機，僅磁碟",
+  "virtSnapshotExternalTip": "虛擬機器繼續運行。每顆磁碟在所選儲存池中得到一個 qcow2 覆蓋層，虛擬機器停留在鏈上。",
+  "virtSnapshotFormInternal": "內部（映像內）",
+  "virtSnapshotForm": "類型",
+  "virtSnapshotOverlayPool": "覆蓋層儲存池",
+  "virtSnapshotExternalNoMemory": "外部快照不含記憶體：虛擬機器不會停機。",
+  "virtSnapshotChain": "磁碟鏈",
+  "virtSnapshotChainDepth": "{count} 層",
+  "virtSnapshotChainFile": "檔案",
+  "virtSnapshotChainActive": "目前使用",
+  "virtSnapshotChainBase": "基礎映像",
+  "virtSnapshotChainRaw": "外部快照需要 qcow2 磁碟，而這顆是 {format}。",
+  "virtSnapshotNoSupport": "虛擬機器的儲存不支援快照，無法建立。",
+  "virtSnapshotRevertChain": "在鏈上恢復會把運行中的覆蓋層合併進映像，並讓之後的所有快照無法使用。只能恢復到最新的快照。",
+  "virtSnapshotRevertHasChildren": "後面還有快照時不可恢復。",
+  "virtSnapshotDiff": "與現在的不同",
+  "virtSnapshotDiffNone": "自該快照以來設定沒有變化。",
+  "virtSnapshotDiffShow": "與現在比較",
+  "virtSnapshotDiffGroup": "已變更",
+  "virtSnapshotDiffGroupCpu": "處理器",
+  "virtSnapshotDiffGroupMemory": "記憶體",
+  "virtSnapshotDiffGroupDisks": "磁碟",
+  "virtSnapshotDiffGroupNic": "網卡",
+  "virtSnapshotDiffGroupFirmware": "韌體",
+  "virtSnapshotDiffGroupBoot": "啟動",
+  "virtSnapshotDiffGroupOther": "其他",
+  "virtSnapshotDiffValue": "{before} → {after}",
+  "virtSnapshotDiffRemoved": "已移除",
+  "virtSnapshotDiffAdded": "已新增",
+  "virtSnapshotDiffAsk": "恢復到 {snapshot} 會改變：",
+  "virtSnapshotDiffHost": "主機無法說明差異：{error}",
+  "virtSnapshotExternalExists": "虛擬機器已在 {count} 層鏈上，該快照會再增加一層。",
+  "virtToTemplate": "轉為範本",
+  "virtToTemplateNote": "範本無法啟動，也無法還原為虛擬機器。其磁碟成為基礎映像，連結複製正是共享它。",
+  "virtToTemplateConfirm": "將 {name} 轉為範本？",
+  "virtToTemplateIrreversible": "此操作無法復原：範本無法還原為虛擬機器。",
+  "virtToTemplateStopped": "請先關機。",
+  "virtToTemplateSnapshots": "含快照的虛擬機器無法轉為範本。",
+  "virtTemplateCreated": "{name} 現在是範本",
+  "virtTemplateTip": "範本只有在複製後才能執行。",
+  "virtCloneStorage": "目標儲存",
+  "virtCloneStorageSame": "與來源相同",
+  "virtCloneNode": "目標節點",
+  "virtCloneNodeSame": "與來源相同",
+  "virtClonePool": "目標儲存池",
+  "virtCloneStorageContent": "該儲存不存放虛擬機器磁碟。",
+  "virtCloneStorageShared": "複製到其他節點需要共享儲存。",
+  "virtCloneNodeUnknown": "該主機沒有此節點。",
+  "virtCloneLinkedTarget": "連結複製共享範本的磁碟，因此不能指定儲存或節點。",
+  "virtBackupJobs": "備份工作",
+  "virtBackupJobsNone": "沒有排程備份工作。新增一個即可依排程備份虛擬機器。",
+  "virtBackupJobNew": "新增工作",
+  "virtBackupJobEdit": "編輯工作",
+  "virtBackupJobRun": "立即執行",
+  "virtBackupJobRunAsk": "立即啟動該備份工作？",
+  "virtBackupJobDeleteAsk": "刪除備份工作 {id}？已產生的備份會保留。",
+  "virtBackupJobSaved": "工作已儲存",
+  "virtBackupJobDeleted": "工作已刪除",
+  "virtBackupJobStarted": "備份工作已啟動",
+  "virtBackupSchedule": "時間表",
+  "virtBackupScheduleHelp": "systemd 日曆事件的子集：02:30、mon..fri 02:30、sat 03:00、daily、hourly、*/15。",
+  "virtBackupScheduleInvalid": "主機不接受該時間表。",
+  "virtBackupScheduleNext": "接下來執行：{times}",
+  "virtBackupSelection": "虛擬機器",
+  "virtBackupSelectionAll": "所有虛擬機器",
+  "virtBackupSelectionList": "選定的虛擬機器",
+  "virtBackupSelectionNone": "請至少選擇一台虛擬機器。",
+  "virtBackupMail": "通知",
+  "virtBackupMailAlways": "總是",
+  "virtBackupMailFailure": "失敗時",
+  "virtBackupNotesTemplate": "備份備註",
+  "virtBackupNotesTemplateTip": "備註會加到該工作產生的每個備份上。其中的 {vars} 會被替換為實際值。",
+  "virtBackupPrune": "保留",
+  "virtBackupPruneTip": "PVE 的保留選項，例如 keep-last=7,keep-daily=4。留空則用儲存或節點自身的設定。",
+  "virtBackupNextRun": "下次執行",
+  "virtBackupJobNode": "節點",
+  "virtBackupJobNodeAny": "所有節點",
+  "virtBackupEnabled": "啟用",
+  "virtBackupOptions": "選項",
+  "virtBackupProtect": "保護",
+  "virtBackupProtectTip": "受保護的備份不會被保留策略清理，在取消保護前也無法刪除。",
+  "virtBackupEditNotes": "備註",
+  "virtBackupSaveNotes": "儲存",
+  "virtBackupEdited": "備份已更新",
+  "virtBackupRestoreStorage": "還原到儲存",
+  "virtBackupRestoreStorageSame": "與備份一致",
+  "virtBackupModeSnapshotTip": "snapshot · 不停機",
+  "virtCloneStorageMissing": "該節點上沒有存放虛擬機器磁碟的儲存。",
+  "virtBackupCompress": "壓縮",
+  "virtBackupUnprotect": "取消保護",
+  "virtBackupModeStops": "suspend 和 stop 會在複製期間中斷執行中的虛擬機器。",
+  "virtBackupScheduleValidate": "向主機校驗",
+  "virtBackupSelected": "已選 {count} 台",
+  "virtBackupExcludeTip": "該節點上的所有虛擬機器都會備份。關閉某個即可排除它。"
 }

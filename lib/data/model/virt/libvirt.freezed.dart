@@ -2663,7 +2663,9 @@ mixin _$LibvirtSnapshot {
 
  String get name; String? get description; String? get parent;/// `running`, `paused`, `shutoff`, `disk-snapshot`.
  String? get state;/// Seconds since the epoch.
- int? get creationTime; bool get memory; bool get external; bool get current;
+ int? get creationTime; bool get memory; bool get external; bool get current;/// Which file each disk was left on (`<disks>`, or `<revertDisks>` for
+/// one already reverted to once).
+ List<LibvirtSnapLayer> get layers;
 /// Create a copy of LibvirtSnapshot
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2676,16 +2678,16 @@ $LibvirtSnapshotCopyWith<LibvirtSnapshot> get copyWith => _$LibvirtSnapshotCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtSnapshot&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.parent, parent) || other.parent == parent)&&(identical(other.state, state) || other.state == state)&&(identical(other.creationTime, creationTime) || other.creationTime == creationTime)&&(identical(other.memory, memory) || other.memory == memory)&&(identical(other.external, external) || other.external == external)&&(identical(other.current, current) || other.current == current));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtSnapshot&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.parent, parent) || other.parent == parent)&&(identical(other.state, state) || other.state == state)&&(identical(other.creationTime, creationTime) || other.creationTime == creationTime)&&(identical(other.memory, memory) || other.memory == memory)&&(identical(other.external, external) || other.external == external)&&(identical(other.current, current) || other.current == current)&&const DeepCollectionEquality().equals(other.layers, layers));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,description,parent,state,creationTime,memory,external,current);
+int get hashCode => Object.hash(runtimeType,name,description,parent,state,creationTime,memory,external,current,const DeepCollectionEquality().hash(layers));
 
 @override
 String toString() {
-  return 'LibvirtSnapshot(name: $name, description: $description, parent: $parent, state: $state, creationTime: $creationTime, memory: $memory, external: $external, current: $current)';
+  return 'LibvirtSnapshot(name: $name, description: $description, parent: $parent, state: $state, creationTime: $creationTime, memory: $memory, external: $external, current: $current, layers: $layers)';
 }
 
 
@@ -2696,7 +2698,7 @@ abstract mixin class $LibvirtSnapshotCopyWith<$Res>  {
   factory $LibvirtSnapshotCopyWith(LibvirtSnapshot value, $Res Function(LibvirtSnapshot) _then) = _$LibvirtSnapshotCopyWithImpl;
 @useResult
 $Res call({
- String name, String? description, String? parent, String? state, int? creationTime, bool memory, bool external, bool current
+ String name, String? description, String? parent, String? state, int? creationTime, bool memory, bool external, bool current, List<LibvirtSnapLayer> layers
 });
 
 
@@ -2713,7 +2715,7 @@ class _$LibvirtSnapshotCopyWithImpl<$Res>
 
 /// Create a copy of LibvirtSnapshot
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? description = freezed,Object? parent = freezed,Object? state = freezed,Object? creationTime = freezed,Object? memory = null,Object? external = null,Object? current = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? description = freezed,Object? parent = freezed,Object? state = freezed,Object? creationTime = freezed,Object? memory = null,Object? external = null,Object? current = null,Object? layers = null,}) {
   return _then(_self.copyWith(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
@@ -2723,7 +2725,8 @@ as String?,creationTime: freezed == creationTime ? _self.creationTime : creation
 as int?,memory: null == memory ? _self.memory : memory // ignore: cast_nullable_to_non_nullable
 as bool,external: null == external ? _self.external : external // ignore: cast_nullable_to_non_nullable
 as bool,current: null == current ? _self.current : current // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,layers: null == layers ? _self.layers : layers // ignore: cast_nullable_to_non_nullable
+as List<LibvirtSnapLayer>,
   ));
 }
 
@@ -2808,10 +2811,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String? description,  String? parent,  String? state,  int? creationTime,  bool memory,  bool external,  bool current)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String? description,  String? parent,  String? state,  int? creationTime,  bool memory,  bool external,  bool current,  List<LibvirtSnapLayer> layers)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _LibvirtSnapshot() when $default != null:
-return $default(_that.name,_that.description,_that.parent,_that.state,_that.creationTime,_that.memory,_that.external,_that.current);case _:
+return $default(_that.name,_that.description,_that.parent,_that.state,_that.creationTime,_that.memory,_that.external,_that.current,_that.layers);case _:
   return orElse();
 
 }
@@ -2829,10 +2832,10 @@ return $default(_that.name,_that.description,_that.parent,_that.state,_that.crea
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String? description,  String? parent,  String? state,  int? creationTime,  bool memory,  bool external,  bool current)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String? description,  String? parent,  String? state,  int? creationTime,  bool memory,  bool external,  bool current,  List<LibvirtSnapLayer> layers)  $default,) {final _that = this;
 switch (_that) {
 case _LibvirtSnapshot():
-return $default(_that.name,_that.description,_that.parent,_that.state,_that.creationTime,_that.memory,_that.external,_that.current);case _:
+return $default(_that.name,_that.description,_that.parent,_that.state,_that.creationTime,_that.memory,_that.external,_that.current,_that.layers);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -2849,10 +2852,10 @@ return $default(_that.name,_that.description,_that.parent,_that.state,_that.crea
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String? description,  String? parent,  String? state,  int? creationTime,  bool memory,  bool external,  bool current)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String? description,  String? parent,  String? state,  int? creationTime,  bool memory,  bool external,  bool current,  List<LibvirtSnapLayer> layers)?  $default,) {final _that = this;
 switch (_that) {
 case _LibvirtSnapshot() when $default != null:
-return $default(_that.name,_that.description,_that.parent,_that.state,_that.creationTime,_that.memory,_that.external,_that.current);case _:
+return $default(_that.name,_that.description,_that.parent,_that.state,_that.creationTime,_that.memory,_that.external,_that.current,_that.layers);case _:
   return null;
 
 }
@@ -2864,7 +2867,7 @@ return $default(_that.name,_that.description,_that.parent,_that.state,_that.crea
 
 @JsonSerializable(fieldRename: FieldRename.snake)
 class _LibvirtSnapshot implements LibvirtSnapshot {
-  const _LibvirtSnapshot({required this.name, this.description, this.parent, this.state, this.creationTime, this.memory = false, this.external = false, this.current = false});
+  const _LibvirtSnapshot({required this.name, this.description, this.parent, this.state, this.creationTime, this.memory = false, this.external = false, this.current = false, final  List<LibvirtSnapLayer> layers = const <LibvirtSnapLayer>[]}): _layers = layers;
   factory _LibvirtSnapshot.fromJson(Map<String, dynamic> json) => _$LibvirtSnapshotFromJson(json);
 
 @override final  String name;
@@ -2877,6 +2880,17 @@ class _LibvirtSnapshot implements LibvirtSnapshot {
 @override@JsonKey() final  bool memory;
 @override@JsonKey() final  bool external;
 @override@JsonKey() final  bool current;
+/// Which file each disk was left on (`<disks>`, or `<revertDisks>` for
+/// one already reverted to once).
+ final  List<LibvirtSnapLayer> _layers;
+/// Which file each disk was left on (`<disks>`, or `<revertDisks>` for
+/// one already reverted to once).
+@override@JsonKey() List<LibvirtSnapLayer> get layers {
+  if (_layers is EqualUnmodifiableListView) return _layers;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_layers);
+}
+
 
 /// Create a copy of LibvirtSnapshot
 /// with the given fields replaced by the non-null parameter values.
@@ -2891,16 +2905,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtSnapshot&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.parent, parent) || other.parent == parent)&&(identical(other.state, state) || other.state == state)&&(identical(other.creationTime, creationTime) || other.creationTime == creationTime)&&(identical(other.memory, memory) || other.memory == memory)&&(identical(other.external, external) || other.external == external)&&(identical(other.current, current) || other.current == current));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtSnapshot&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.parent, parent) || other.parent == parent)&&(identical(other.state, state) || other.state == state)&&(identical(other.creationTime, creationTime) || other.creationTime == creationTime)&&(identical(other.memory, memory) || other.memory == memory)&&(identical(other.external, external) || other.external == external)&&(identical(other.current, current) || other.current == current)&&const DeepCollectionEquality().equals(other._layers, _layers));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,description,parent,state,creationTime,memory,external,current);
+int get hashCode => Object.hash(runtimeType,name,description,parent,state,creationTime,memory,external,current,const DeepCollectionEquality().hash(_layers));
 
 @override
 String toString() {
-  return 'LibvirtSnapshot(name: $name, description: $description, parent: $parent, state: $state, creationTime: $creationTime, memory: $memory, external: $external, current: $current)';
+  return 'LibvirtSnapshot(name: $name, description: $description, parent: $parent, state: $state, creationTime: $creationTime, memory: $memory, external: $external, current: $current, layers: $layers)';
 }
 
 
@@ -2911,7 +2925,7 @@ abstract mixin class _$LibvirtSnapshotCopyWith<$Res> implements $LibvirtSnapshot
   factory _$LibvirtSnapshotCopyWith(_LibvirtSnapshot value, $Res Function(_LibvirtSnapshot) _then) = __$LibvirtSnapshotCopyWithImpl;
 @override @useResult
 $Res call({
- String name, String? description, String? parent, String? state, int? creationTime, bool memory, bool external, bool current
+ String name, String? description, String? parent, String? state, int? creationTime, bool memory, bool external, bool current, List<LibvirtSnapLayer> layers
 });
 
 
@@ -2928,7 +2942,7 @@ class __$LibvirtSnapshotCopyWithImpl<$Res>
 
 /// Create a copy of LibvirtSnapshot
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? description = freezed,Object? parent = freezed,Object? state = freezed,Object? creationTime = freezed,Object? memory = null,Object? external = null,Object? current = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? description = freezed,Object? parent = freezed,Object? state = freezed,Object? creationTime = freezed,Object? memory = null,Object? external = null,Object? current = null,Object? layers = null,}) {
   return _then(_LibvirtSnapshot(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
@@ -2938,7 +2952,1387 @@ as String?,creationTime: freezed == creationTime ? _self.creationTime : creation
 as int?,memory: null == memory ? _self.memory : memory // ignore: cast_nullable_to_non_nullable
 as bool,external: null == external ? _self.external : external // ignore: cast_nullable_to_non_nullable
 as bool,current: null == current ? _self.current : current // ignore: cast_nullable_to_non_nullable
+as bool,layers: null == layers ? _self._layers : layers // ignore: cast_nullable_to_non_nullable
+as List<LibvirtSnapLayer>,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$LibvirtSnapLayer {
+
+ String get target; String? get file;/// `external`, `internal`, `no`.
+ String? get snapshot;
+/// Create a copy of LibvirtSnapLayer
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$LibvirtSnapLayerCopyWith<LibvirtSnapLayer> get copyWith => _$LibvirtSnapLayerCopyWithImpl<LibvirtSnapLayer>(this as LibvirtSnapLayer, _$identity);
+
+  /// Serializes this LibvirtSnapLayer to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtSnapLayer&&(identical(other.target, target) || other.target == target)&&(identical(other.file, file) || other.file == file)&&(identical(other.snapshot, snapshot) || other.snapshot == snapshot));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,target,file,snapshot);
+
+@override
+String toString() {
+  return 'LibvirtSnapLayer(target: $target, file: $file, snapshot: $snapshot)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $LibvirtSnapLayerCopyWith<$Res>  {
+  factory $LibvirtSnapLayerCopyWith(LibvirtSnapLayer value, $Res Function(LibvirtSnapLayer) _then) = _$LibvirtSnapLayerCopyWithImpl;
+@useResult
+$Res call({
+ String target, String? file, String? snapshot
+});
+
+
+
+
+}
+/// @nodoc
+class _$LibvirtSnapLayerCopyWithImpl<$Res>
+    implements $LibvirtSnapLayerCopyWith<$Res> {
+  _$LibvirtSnapLayerCopyWithImpl(this._self, this._then);
+
+  final LibvirtSnapLayer _self;
+  final $Res Function(LibvirtSnapLayer) _then;
+
+/// Create a copy of LibvirtSnapLayer
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? target = null,Object? file = freezed,Object? snapshot = freezed,}) {
+  return _then(_self.copyWith(
+target: null == target ? _self.target : target // ignore: cast_nullable_to_non_nullable
+as String,file: freezed == file ? _self.file : file // ignore: cast_nullable_to_non_nullable
+as String?,snapshot: freezed == snapshot ? _self.snapshot : snapshot // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [LibvirtSnapLayer].
+extension LibvirtSnapLayerPatterns on LibvirtSnapLayer {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _LibvirtSnapLayer value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _LibvirtSnapLayer() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _LibvirtSnapLayer value)  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtSnapLayer():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _LibvirtSnapLayer value)?  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtSnapLayer() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String target,  String? file,  String? snapshot)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _LibvirtSnapLayer() when $default != null:
+return $default(_that.target,_that.file,_that.snapshot);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String target,  String? file,  String? snapshot)  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtSnapLayer():
+return $default(_that.target,_that.file,_that.snapshot);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String target,  String? file,  String? snapshot)?  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtSnapLayer() when $default != null:
+return $default(_that.target,_that.file,_that.snapshot);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class _LibvirtSnapLayer implements LibvirtSnapLayer {
+  const _LibvirtSnapLayer({this.target = '', this.file, this.snapshot});
+  factory _LibvirtSnapLayer.fromJson(Map<String, dynamic> json) => _$LibvirtSnapLayerFromJson(json);
+
+@override@JsonKey() final  String target;
+@override final  String? file;
+/// `external`, `internal`, `no`.
+@override final  String? snapshot;
+
+/// Create a copy of LibvirtSnapLayer
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$LibvirtSnapLayerCopyWith<_LibvirtSnapLayer> get copyWith => __$LibvirtSnapLayerCopyWithImpl<_LibvirtSnapLayer>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$LibvirtSnapLayerToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtSnapLayer&&(identical(other.target, target) || other.target == target)&&(identical(other.file, file) || other.file == file)&&(identical(other.snapshot, snapshot) || other.snapshot == snapshot));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,target,file,snapshot);
+
+@override
+String toString() {
+  return 'LibvirtSnapLayer(target: $target, file: $file, snapshot: $snapshot)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$LibvirtSnapLayerCopyWith<$Res> implements $LibvirtSnapLayerCopyWith<$Res> {
+  factory _$LibvirtSnapLayerCopyWith(_LibvirtSnapLayer value, $Res Function(_LibvirtSnapLayer) _then) = __$LibvirtSnapLayerCopyWithImpl;
+@override @useResult
+$Res call({
+ String target, String? file, String? snapshot
+});
+
+
+
+
+}
+/// @nodoc
+class __$LibvirtSnapLayerCopyWithImpl<$Res>
+    implements _$LibvirtSnapLayerCopyWith<$Res> {
+  __$LibvirtSnapLayerCopyWithImpl(this._self, this._then);
+
+  final _LibvirtSnapLayer _self;
+  final $Res Function(_LibvirtSnapLayer) _then;
+
+/// Create a copy of LibvirtSnapLayer
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? target = null,Object? file = freezed,Object? snapshot = freezed,}) {
+  return _then(_LibvirtSnapLayer(
+target: null == target ? _self.target : target // ignore: cast_nullable_to_non_nullable
+as String,file: freezed == file ? _self.file : file // ignore: cast_nullable_to_non_nullable
+as String?,snapshot: freezed == snapshot ? _self.snapshot : snapshot // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$LibvirtSnapDiff {
+
+ String get group; String get key; String? get before; String? get after; bool get removed; bool get added;
+/// Create a copy of LibvirtSnapDiff
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$LibvirtSnapDiffCopyWith<LibvirtSnapDiff> get copyWith => _$LibvirtSnapDiffCopyWithImpl<LibvirtSnapDiff>(this as LibvirtSnapDiff, _$identity);
+
+  /// Serializes this LibvirtSnapDiff to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtSnapDiff&&(identical(other.group, group) || other.group == group)&&(identical(other.key, key) || other.key == key)&&(identical(other.before, before) || other.before == before)&&(identical(other.after, after) || other.after == after)&&(identical(other.removed, removed) || other.removed == removed)&&(identical(other.added, added) || other.added == added));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,group,key,before,after,removed,added);
+
+@override
+String toString() {
+  return 'LibvirtSnapDiff(group: $group, key: $key, before: $before, after: $after, removed: $removed, added: $added)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $LibvirtSnapDiffCopyWith<$Res>  {
+  factory $LibvirtSnapDiffCopyWith(LibvirtSnapDiff value, $Res Function(LibvirtSnapDiff) _then) = _$LibvirtSnapDiffCopyWithImpl;
+@useResult
+$Res call({
+ String group, String key, String? before, String? after, bool removed, bool added
+});
+
+
+
+
+}
+/// @nodoc
+class _$LibvirtSnapDiffCopyWithImpl<$Res>
+    implements $LibvirtSnapDiffCopyWith<$Res> {
+  _$LibvirtSnapDiffCopyWithImpl(this._self, this._then);
+
+  final LibvirtSnapDiff _self;
+  final $Res Function(LibvirtSnapDiff) _then;
+
+/// Create a copy of LibvirtSnapDiff
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? group = null,Object? key = null,Object? before = freezed,Object? after = freezed,Object? removed = null,Object? added = null,}) {
+  return _then(_self.copyWith(
+group: null == group ? _self.group : group // ignore: cast_nullable_to_non_nullable
+as String,key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
+as String,before: freezed == before ? _self.before : before // ignore: cast_nullable_to_non_nullable
+as String?,after: freezed == after ? _self.after : after // ignore: cast_nullable_to_non_nullable
+as String?,removed: null == removed ? _self.removed : removed // ignore: cast_nullable_to_non_nullable
+as bool,added: null == added ? _self.added : added // ignore: cast_nullable_to_non_nullable
 as bool,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [LibvirtSnapDiff].
+extension LibvirtSnapDiffPatterns on LibvirtSnapDiff {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _LibvirtSnapDiff value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _LibvirtSnapDiff() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _LibvirtSnapDiff value)  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtSnapDiff():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _LibvirtSnapDiff value)?  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtSnapDiff() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String group,  String key,  String? before,  String? after,  bool removed,  bool added)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _LibvirtSnapDiff() when $default != null:
+return $default(_that.group,_that.key,_that.before,_that.after,_that.removed,_that.added);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String group,  String key,  String? before,  String? after,  bool removed,  bool added)  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtSnapDiff():
+return $default(_that.group,_that.key,_that.before,_that.after,_that.removed,_that.added);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String group,  String key,  String? before,  String? after,  bool removed,  bool added)?  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtSnapDiff() when $default != null:
+return $default(_that.group,_that.key,_that.before,_that.after,_that.removed,_that.added);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class _LibvirtSnapDiff implements LibvirtSnapDiff {
+  const _LibvirtSnapDiff({this.group = '', this.key = '', this.before, this.after, this.removed = false, this.added = false});
+  factory _LibvirtSnapDiff.fromJson(Map<String, dynamic> json) => _$LibvirtSnapDiffFromJson(json);
+
+@override@JsonKey() final  String group;
+@override@JsonKey() final  String key;
+@override final  String? before;
+@override final  String? after;
+@override@JsonKey() final  bool removed;
+@override@JsonKey() final  bool added;
+
+/// Create a copy of LibvirtSnapDiff
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$LibvirtSnapDiffCopyWith<_LibvirtSnapDiff> get copyWith => __$LibvirtSnapDiffCopyWithImpl<_LibvirtSnapDiff>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$LibvirtSnapDiffToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtSnapDiff&&(identical(other.group, group) || other.group == group)&&(identical(other.key, key) || other.key == key)&&(identical(other.before, before) || other.before == before)&&(identical(other.after, after) || other.after == after)&&(identical(other.removed, removed) || other.removed == removed)&&(identical(other.added, added) || other.added == added));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,group,key,before,after,removed,added);
+
+@override
+String toString() {
+  return 'LibvirtSnapDiff(group: $group, key: $key, before: $before, after: $after, removed: $removed, added: $added)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$LibvirtSnapDiffCopyWith<$Res> implements $LibvirtSnapDiffCopyWith<$Res> {
+  factory _$LibvirtSnapDiffCopyWith(_LibvirtSnapDiff value, $Res Function(_LibvirtSnapDiff) _then) = __$LibvirtSnapDiffCopyWithImpl;
+@override @useResult
+$Res call({
+ String group, String key, String? before, String? after, bool removed, bool added
+});
+
+
+
+
+}
+/// @nodoc
+class __$LibvirtSnapDiffCopyWithImpl<$Res>
+    implements _$LibvirtSnapDiffCopyWith<$Res> {
+  __$LibvirtSnapDiffCopyWithImpl(this._self, this._then);
+
+  final _LibvirtSnapDiff _self;
+  final $Res Function(_LibvirtSnapDiff) _then;
+
+/// Create a copy of LibvirtSnapDiff
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? group = null,Object? key = null,Object? before = freezed,Object? after = freezed,Object? removed = null,Object? added = null,}) {
+  return _then(_LibvirtSnapDiff(
+group: null == group ? _self.group : group // ignore: cast_nullable_to_non_nullable
+as String,key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
+as String,before: freezed == before ? _self.before : before // ignore: cast_nullable_to_non_nullable
+as String?,after: freezed == after ? _self.after : after // ignore: cast_nullable_to_non_nullable
+as String?,removed: null == removed ? _self.removed : removed // ignore: cast_nullable_to_non_nullable
+as bool,added: null == added ? _self.added : added // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$LibvirtSnapChain {
+
+ List<LibvirtSnapChainDisk> get disks;/// A disk QEMU would not open, as the host says it.
+ String? get blocked;
+/// Create a copy of LibvirtSnapChain
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$LibvirtSnapChainCopyWith<LibvirtSnapChain> get copyWith => _$LibvirtSnapChainCopyWithImpl<LibvirtSnapChain>(this as LibvirtSnapChain, _$identity);
+
+  /// Serializes this LibvirtSnapChain to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtSnapChain&&const DeepCollectionEquality().equals(other.disks, disks)&&(identical(other.blocked, blocked) || other.blocked == blocked));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(disks),blocked);
+
+@override
+String toString() {
+  return 'LibvirtSnapChain(disks: $disks, blocked: $blocked)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $LibvirtSnapChainCopyWith<$Res>  {
+  factory $LibvirtSnapChainCopyWith(LibvirtSnapChain value, $Res Function(LibvirtSnapChain) _then) = _$LibvirtSnapChainCopyWithImpl;
+@useResult
+$Res call({
+ List<LibvirtSnapChainDisk> disks, String? blocked
+});
+
+
+
+
+}
+/// @nodoc
+class _$LibvirtSnapChainCopyWithImpl<$Res>
+    implements $LibvirtSnapChainCopyWith<$Res> {
+  _$LibvirtSnapChainCopyWithImpl(this._self, this._then);
+
+  final LibvirtSnapChain _self;
+  final $Res Function(LibvirtSnapChain) _then;
+
+/// Create a copy of LibvirtSnapChain
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? disks = null,Object? blocked = freezed,}) {
+  return _then(_self.copyWith(
+disks: null == disks ? _self.disks : disks // ignore: cast_nullable_to_non_nullable
+as List<LibvirtSnapChainDisk>,blocked: freezed == blocked ? _self.blocked : blocked // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [LibvirtSnapChain].
+extension LibvirtSnapChainPatterns on LibvirtSnapChain {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _LibvirtSnapChain value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _LibvirtSnapChain() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _LibvirtSnapChain value)  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtSnapChain():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _LibvirtSnapChain value)?  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtSnapChain() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<LibvirtSnapChainDisk> disks,  String? blocked)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _LibvirtSnapChain() when $default != null:
+return $default(_that.disks,_that.blocked);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<LibvirtSnapChainDisk> disks,  String? blocked)  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtSnapChain():
+return $default(_that.disks,_that.blocked);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<LibvirtSnapChainDisk> disks,  String? blocked)?  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtSnapChain() when $default != null:
+return $default(_that.disks,_that.blocked);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class _LibvirtSnapChain implements LibvirtSnapChain {
+  const _LibvirtSnapChain({final  List<LibvirtSnapChainDisk> disks = const <LibvirtSnapChainDisk>[], this.blocked}): _disks = disks;
+  factory _LibvirtSnapChain.fromJson(Map<String, dynamic> json) => _$LibvirtSnapChainFromJson(json);
+
+ final  List<LibvirtSnapChainDisk> _disks;
+@override@JsonKey() List<LibvirtSnapChainDisk> get disks {
+  if (_disks is EqualUnmodifiableListView) return _disks;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_disks);
+}
+
+/// A disk QEMU would not open, as the host says it.
+@override final  String? blocked;
+
+/// Create a copy of LibvirtSnapChain
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$LibvirtSnapChainCopyWith<_LibvirtSnapChain> get copyWith => __$LibvirtSnapChainCopyWithImpl<_LibvirtSnapChain>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$LibvirtSnapChainToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtSnapChain&&const DeepCollectionEquality().equals(other._disks, _disks)&&(identical(other.blocked, blocked) || other.blocked == blocked));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_disks),blocked);
+
+@override
+String toString() {
+  return 'LibvirtSnapChain(disks: $disks, blocked: $blocked)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$LibvirtSnapChainCopyWith<$Res> implements $LibvirtSnapChainCopyWith<$Res> {
+  factory _$LibvirtSnapChainCopyWith(_LibvirtSnapChain value, $Res Function(_LibvirtSnapChain) _then) = __$LibvirtSnapChainCopyWithImpl;
+@override @useResult
+$Res call({
+ List<LibvirtSnapChainDisk> disks, String? blocked
+});
+
+
+
+
+}
+/// @nodoc
+class __$LibvirtSnapChainCopyWithImpl<$Res>
+    implements _$LibvirtSnapChainCopyWith<$Res> {
+  __$LibvirtSnapChainCopyWithImpl(this._self, this._then);
+
+  final _LibvirtSnapChain _self;
+  final $Res Function(_LibvirtSnapChain) _then;
+
+/// Create a copy of LibvirtSnapChain
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? disks = null,Object? blocked = freezed,}) {
+  return _then(_LibvirtSnapChain(
+disks: null == disks ? _self._disks : disks // ignore: cast_nullable_to_non_nullable
+as List<LibvirtSnapChainDisk>,blocked: freezed == blocked ? _self.blocked : blocked // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$LibvirtSnapChainDisk {
+
+ String get target;/// Topmost first: the file the guest writes to now, then its backing
+/// store, down to the base image.
+ List<LibvirtSnapChainFile> get files; String? get pool;
+/// Create a copy of LibvirtSnapChainDisk
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$LibvirtSnapChainDiskCopyWith<LibvirtSnapChainDisk> get copyWith => _$LibvirtSnapChainDiskCopyWithImpl<LibvirtSnapChainDisk>(this as LibvirtSnapChainDisk, _$identity);
+
+  /// Serializes this LibvirtSnapChainDisk to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtSnapChainDisk&&(identical(other.target, target) || other.target == target)&&const DeepCollectionEquality().equals(other.files, files)&&(identical(other.pool, pool) || other.pool == pool));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,target,const DeepCollectionEquality().hash(files),pool);
+
+@override
+String toString() {
+  return 'LibvirtSnapChainDisk(target: $target, files: $files, pool: $pool)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $LibvirtSnapChainDiskCopyWith<$Res>  {
+  factory $LibvirtSnapChainDiskCopyWith(LibvirtSnapChainDisk value, $Res Function(LibvirtSnapChainDisk) _then) = _$LibvirtSnapChainDiskCopyWithImpl;
+@useResult
+$Res call({
+ String target, List<LibvirtSnapChainFile> files, String? pool
+});
+
+
+
+
+}
+/// @nodoc
+class _$LibvirtSnapChainDiskCopyWithImpl<$Res>
+    implements $LibvirtSnapChainDiskCopyWith<$Res> {
+  _$LibvirtSnapChainDiskCopyWithImpl(this._self, this._then);
+
+  final LibvirtSnapChainDisk _self;
+  final $Res Function(LibvirtSnapChainDisk) _then;
+
+/// Create a copy of LibvirtSnapChainDisk
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? target = null,Object? files = null,Object? pool = freezed,}) {
+  return _then(_self.copyWith(
+target: null == target ? _self.target : target // ignore: cast_nullable_to_non_nullable
+as String,files: null == files ? _self.files : files // ignore: cast_nullable_to_non_nullable
+as List<LibvirtSnapChainFile>,pool: freezed == pool ? _self.pool : pool // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [LibvirtSnapChainDisk].
+extension LibvirtSnapChainDiskPatterns on LibvirtSnapChainDisk {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _LibvirtSnapChainDisk value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _LibvirtSnapChainDisk() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _LibvirtSnapChainDisk value)  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtSnapChainDisk():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _LibvirtSnapChainDisk value)?  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtSnapChainDisk() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String target,  List<LibvirtSnapChainFile> files,  String? pool)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _LibvirtSnapChainDisk() when $default != null:
+return $default(_that.target,_that.files,_that.pool);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String target,  List<LibvirtSnapChainFile> files,  String? pool)  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtSnapChainDisk():
+return $default(_that.target,_that.files,_that.pool);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String target,  List<LibvirtSnapChainFile> files,  String? pool)?  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtSnapChainDisk() when $default != null:
+return $default(_that.target,_that.files,_that.pool);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class _LibvirtSnapChainDisk implements LibvirtSnapChainDisk {
+  const _LibvirtSnapChainDisk({this.target = '', final  List<LibvirtSnapChainFile> files = const <LibvirtSnapChainFile>[], this.pool}): _files = files;
+  factory _LibvirtSnapChainDisk.fromJson(Map<String, dynamic> json) => _$LibvirtSnapChainDiskFromJson(json);
+
+@override@JsonKey() final  String target;
+/// Topmost first: the file the guest writes to now, then its backing
+/// store, down to the base image.
+ final  List<LibvirtSnapChainFile> _files;
+/// Topmost first: the file the guest writes to now, then its backing
+/// store, down to the base image.
+@override@JsonKey() List<LibvirtSnapChainFile> get files {
+  if (_files is EqualUnmodifiableListView) return _files;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_files);
+}
+
+@override final  String? pool;
+
+/// Create a copy of LibvirtSnapChainDisk
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$LibvirtSnapChainDiskCopyWith<_LibvirtSnapChainDisk> get copyWith => __$LibvirtSnapChainDiskCopyWithImpl<_LibvirtSnapChainDisk>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$LibvirtSnapChainDiskToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtSnapChainDisk&&(identical(other.target, target) || other.target == target)&&const DeepCollectionEquality().equals(other._files, _files)&&(identical(other.pool, pool) || other.pool == pool));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,target,const DeepCollectionEquality().hash(_files),pool);
+
+@override
+String toString() {
+  return 'LibvirtSnapChainDisk(target: $target, files: $files, pool: $pool)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$LibvirtSnapChainDiskCopyWith<$Res> implements $LibvirtSnapChainDiskCopyWith<$Res> {
+  factory _$LibvirtSnapChainDiskCopyWith(_LibvirtSnapChainDisk value, $Res Function(_LibvirtSnapChainDisk) _then) = __$LibvirtSnapChainDiskCopyWithImpl;
+@override @useResult
+$Res call({
+ String target, List<LibvirtSnapChainFile> files, String? pool
+});
+
+
+
+
+}
+/// @nodoc
+class __$LibvirtSnapChainDiskCopyWithImpl<$Res>
+    implements _$LibvirtSnapChainDiskCopyWith<$Res> {
+  __$LibvirtSnapChainDiskCopyWithImpl(this._self, this._then);
+
+  final _LibvirtSnapChainDisk _self;
+  final $Res Function(_LibvirtSnapChainDisk) _then;
+
+/// Create a copy of LibvirtSnapChainDisk
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? target = null,Object? files = null,Object? pool = freezed,}) {
+  return _then(_LibvirtSnapChainDisk(
+target: null == target ? _self.target : target // ignore: cast_nullable_to_non_nullable
+as String,files: null == files ? _self._files : files // ignore: cast_nullable_to_non_nullable
+as List<LibvirtSnapChainFile>,pool: freezed == pool ? _self.pool : pool // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$LibvirtSnapChainFile {
+
+ String get path; String? get format; String? get backing; int? get allocation; int? get capacity;
+/// Create a copy of LibvirtSnapChainFile
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$LibvirtSnapChainFileCopyWith<LibvirtSnapChainFile> get copyWith => _$LibvirtSnapChainFileCopyWithImpl<LibvirtSnapChainFile>(this as LibvirtSnapChainFile, _$identity);
+
+  /// Serializes this LibvirtSnapChainFile to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtSnapChainFile&&(identical(other.path, path) || other.path == path)&&(identical(other.format, format) || other.format == format)&&(identical(other.backing, backing) || other.backing == backing)&&(identical(other.allocation, allocation) || other.allocation == allocation)&&(identical(other.capacity, capacity) || other.capacity == capacity));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,path,format,backing,allocation,capacity);
+
+@override
+String toString() {
+  return 'LibvirtSnapChainFile(path: $path, format: $format, backing: $backing, allocation: $allocation, capacity: $capacity)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $LibvirtSnapChainFileCopyWith<$Res>  {
+  factory $LibvirtSnapChainFileCopyWith(LibvirtSnapChainFile value, $Res Function(LibvirtSnapChainFile) _then) = _$LibvirtSnapChainFileCopyWithImpl;
+@useResult
+$Res call({
+ String path, String? format, String? backing, int? allocation, int? capacity
+});
+
+
+
+
+}
+/// @nodoc
+class _$LibvirtSnapChainFileCopyWithImpl<$Res>
+    implements $LibvirtSnapChainFileCopyWith<$Res> {
+  _$LibvirtSnapChainFileCopyWithImpl(this._self, this._then);
+
+  final LibvirtSnapChainFile _self;
+  final $Res Function(LibvirtSnapChainFile) _then;
+
+/// Create a copy of LibvirtSnapChainFile
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? path = null,Object? format = freezed,Object? backing = freezed,Object? allocation = freezed,Object? capacity = freezed,}) {
+  return _then(_self.copyWith(
+path: null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
+as String,format: freezed == format ? _self.format : format // ignore: cast_nullable_to_non_nullable
+as String?,backing: freezed == backing ? _self.backing : backing // ignore: cast_nullable_to_non_nullable
+as String?,allocation: freezed == allocation ? _self.allocation : allocation // ignore: cast_nullable_to_non_nullable
+as int?,capacity: freezed == capacity ? _self.capacity : capacity // ignore: cast_nullable_to_non_nullable
+as int?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [LibvirtSnapChainFile].
+extension LibvirtSnapChainFilePatterns on LibvirtSnapChainFile {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _LibvirtSnapChainFile value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _LibvirtSnapChainFile() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _LibvirtSnapChainFile value)  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtSnapChainFile():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _LibvirtSnapChainFile value)?  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtSnapChainFile() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String path,  String? format,  String? backing,  int? allocation,  int? capacity)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _LibvirtSnapChainFile() when $default != null:
+return $default(_that.path,_that.format,_that.backing,_that.allocation,_that.capacity);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String path,  String? format,  String? backing,  int? allocation,  int? capacity)  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtSnapChainFile():
+return $default(_that.path,_that.format,_that.backing,_that.allocation,_that.capacity);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String path,  String? format,  String? backing,  int? allocation,  int? capacity)?  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtSnapChainFile() when $default != null:
+return $default(_that.path,_that.format,_that.backing,_that.allocation,_that.capacity);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class _LibvirtSnapChainFile implements LibvirtSnapChainFile {
+  const _LibvirtSnapChainFile({required this.path, this.format, this.backing, this.allocation, this.capacity});
+  factory _LibvirtSnapChainFile.fromJson(Map<String, dynamic> json) => _$LibvirtSnapChainFileFromJson(json);
+
+@override final  String path;
+@override final  String? format;
+@override final  String? backing;
+@override final  int? allocation;
+@override final  int? capacity;
+
+/// Create a copy of LibvirtSnapChainFile
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$LibvirtSnapChainFileCopyWith<_LibvirtSnapChainFile> get copyWith => __$LibvirtSnapChainFileCopyWithImpl<_LibvirtSnapChainFile>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$LibvirtSnapChainFileToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtSnapChainFile&&(identical(other.path, path) || other.path == path)&&(identical(other.format, format) || other.format == format)&&(identical(other.backing, backing) || other.backing == backing)&&(identical(other.allocation, allocation) || other.allocation == allocation)&&(identical(other.capacity, capacity) || other.capacity == capacity));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,path,format,backing,allocation,capacity);
+
+@override
+String toString() {
+  return 'LibvirtSnapChainFile(path: $path, format: $format, backing: $backing, allocation: $allocation, capacity: $capacity)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$LibvirtSnapChainFileCopyWith<$Res> implements $LibvirtSnapChainFileCopyWith<$Res> {
+  factory _$LibvirtSnapChainFileCopyWith(_LibvirtSnapChainFile value, $Res Function(_LibvirtSnapChainFile) _then) = __$LibvirtSnapChainFileCopyWithImpl;
+@override @useResult
+$Res call({
+ String path, String? format, String? backing, int? allocation, int? capacity
+});
+
+
+
+
+}
+/// @nodoc
+class __$LibvirtSnapChainFileCopyWithImpl<$Res>
+    implements _$LibvirtSnapChainFileCopyWith<$Res> {
+  __$LibvirtSnapChainFileCopyWithImpl(this._self, this._then);
+
+  final _LibvirtSnapChainFile _self;
+  final $Res Function(_LibvirtSnapChainFile) _then;
+
+/// Create a copy of LibvirtSnapChainFile
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? path = null,Object? format = freezed,Object? backing = freezed,Object? allocation = freezed,Object? capacity = freezed,}) {
+  return _then(_LibvirtSnapChainFile(
+path: null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
+as String,format: freezed == format ? _self.format : format // ignore: cast_nullable_to_non_nullable
+as String?,backing: freezed == backing ? _self.backing : backing // ignore: cast_nullable_to_non_nullable
+as String?,allocation: freezed == allocation ? _self.allocation : allocation // ignore: cast_nullable_to_non_nullable
+as int?,capacity: freezed == capacity ? _self.capacity : capacity // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 

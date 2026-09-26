@@ -3758,7 +3758,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get pveTokenTipBackup =>
-      'Kloning memerlukan VM.Clone, pencadangan dan pemulihan memerlukan VM.Backup, dengan Datastore.AllocateSpace di tempat salinan atau cadangan disimpan.';
+      'Klon memerlukan VM.Clone, backup dan pemulihan VM.Backup, dan menjadikan template VM.Allocate; tugas backup juga memerlukan Sys.Audit untuk membacanya dan Sys.Modify pada / untuk membuat, mengedit, dan menghapusnya, dengan Datastore.AllocateSpace di tempat salinan atau backup pergi.';
 
   @override
   String get virtErrConflict => 'Diubah di tempat lain';
@@ -4809,4 +4809,329 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get virtCiSaved => 'Tersimpan. Berlaku saat boot berikutnya.';
+
+  @override
+  String get virtSnapshotExternal => 'Hanya disk saat berjalan';
+
+  @override
+  String get virtSnapshotExternalTip =>
+      'Guest tetap berjalan. Setiap disk mendapat overlay qcow2 di pool terpilih; guest berada pada rantai.';
+
+  @override
+  String get virtSnapshotFormInternal => 'Internal (di dalam image)';
+
+  @override
+  String get virtSnapshotForm => 'Jenis';
+
+  @override
+  String get virtSnapshotOverlayPool => 'Pool overlay';
+
+  @override
+  String get virtSnapshotExternalNoMemory =>
+      'Snapshot eksternal tidak pernah menyimpan memori: guest tidak dihentikan.';
+
+  @override
+  String get virtSnapshotChain => 'Rantai disk';
+
+  @override
+  String virtSnapshotChainDepth(String count) {
+    return '$count lapisan';
+  }
+
+  @override
+  String get virtSnapshotChainFile => 'Berkas';
+
+  @override
+  String get virtSnapshotChainActive => 'Sedang dipakai';
+
+  @override
+  String get virtSnapshotChainBase => 'Image dasar';
+
+  @override
+  String virtSnapshotChainRaw(String format) {
+    return 'Snapshot eksternal memerlukan disk qcow2. Yang ini $format.';
+  }
+
+  @override
+  String get virtSnapshotNoSupport =>
+      'Penyimpanan guest tidak mendukung snapshot, jadi tidak ada yang bisa dibuat.';
+
+  @override
+  String get virtSnapshotRevertChain =>
+      'Mengembalikan pada rantai menggabungkan overlay yang berjalan ke dalam image dan membuat snapshot berikutnya tidak terpakai. Hanya snapshot terbaru yang bisa dikembalikan.';
+
+  @override
+  String get virtSnapshotRevertHasChildren =>
+      'Ditolak selama snapshot berikutnya berada di atas yang ini.';
+
+  @override
+  String get virtSnapshotDiff => 'Perbedaan dari sekarang';
+
+  @override
+  String get virtSnapshotDiffNone =>
+      'Konfigurasi tidak berubah sejak snapshot ini.';
+
+  @override
+  String get virtSnapshotDiffShow => 'Bandingkan dengan sekarang';
+
+  @override
+  String get virtSnapshotDiffGroup => 'Berubah';
+
+  @override
+  String get virtSnapshotDiffGroupCpu => 'Prosesor';
+
+  @override
+  String get virtSnapshotDiffGroupMemory => 'Memori';
+
+  @override
+  String get virtSnapshotDiffGroupDisks => 'Disk';
+
+  @override
+  String get virtSnapshotDiffGroupNic => 'Antarmuka';
+
+  @override
+  String get virtSnapshotDiffGroupFirmware => 'Firmware';
+
+  @override
+  String get virtSnapshotDiffGroupBoot => 'Boot';
+
+  @override
+  String get virtSnapshotDiffGroupOther => 'Lainnya';
+
+  @override
+  String virtSnapshotDiffValue(String after, String before) {
+    return '$before → $after';
+  }
+
+  @override
+  String get virtSnapshotDiffRemoved => 'dihapus';
+
+  @override
+  String get virtSnapshotDiffAdded => 'ditambahkan';
+
+  @override
+  String virtSnapshotDiffAsk(String snapshot) {
+    return 'Apa yang berubah jika Anda mengembalikan ke $snapshot:';
+  }
+
+  @override
+  String virtSnapshotDiffHost(String error) {
+    return 'Host tidak dapat mengatakan apa yang berbeda: $error';
+  }
+
+  @override
+  String virtSnapshotExternalExists(String count) {
+    return 'Guest sudah berada di $count lapisan; snapshot ini menambah satu lagi.';
+  }
+
+  @override
+  String get virtToTemplate => 'Jadikan template';
+
+  @override
+  String get virtToTemplateNote =>
+      'Template tidak dapat dijalankan dan tidak dapat dikembalikan menjadi guest. Disk-nya menjadi image dasar, yang dibagi oleh klon tertaut.';
+
+  @override
+  String virtToTemplateConfirm(String name) {
+    return 'Jadikan $name template?';
+  }
+
+  @override
+  String get virtToTemplateIrreversible =>
+      'Ini tidak dapat dibatalkan: template tidak dapat dikembalikan menjadi guest.';
+
+  @override
+  String get virtToTemplateStopped => 'Matikan dulu.';
+
+  @override
+  String get virtToTemplateSnapshots =>
+      'Guest dengan snapshot tidak dapat menjadi template.';
+
+  @override
+  String virtTemplateCreated(String name) {
+    return '$name kini template';
+  }
+
+  @override
+  String get virtTemplateTip => 'Template hanya berjalan setelah diklon.';
+
+  @override
+  String get virtCloneStorage => 'Penyimpanan tujuan';
+
+  @override
+  String get virtCloneStorageSame => 'Sama seperti sumber';
+
+  @override
+  String get virtCloneNode => 'Node tujuan';
+
+  @override
+  String get virtCloneNodeSame => 'Sama seperti sumber';
+
+  @override
+  String get virtClonePool => 'Pool tujuan';
+
+  @override
+  String get virtCloneStorageContent =>
+      'Penyimpanan ini tidak menyimpan disk VM.';
+
+  @override
+  String get virtCloneStorageShared =>
+      'Menyalin ke node lain memerlukan penyimpanan bersama.';
+
+  @override
+  String get virtCloneNodeUnknown => 'Host ini tidak memiliki node tersebut.';
+
+  @override
+  String get virtCloneLinkedTarget =>
+      'Klon tertaut berbagi disk template, jadi tidak dapat menyebut penyimpanan atau node.';
+
+  @override
+  String get virtBackupJobs => 'Tugas backup';
+
+  @override
+  String get virtBackupJobsNone =>
+      'Tidak ada tugas backup terjadwal. Tambahkan satu untuk mencadangkan guest secara berkala.';
+
+  @override
+  String get virtBackupJobNew => 'Tugas baru';
+
+  @override
+  String get virtBackupJobEdit => 'Edit tugas';
+
+  @override
+  String get virtBackupJobRun => 'Jalankan sekarang';
+
+  @override
+  String get virtBackupJobRunAsk => 'Mulai tugas backup ini sekarang?';
+
+  @override
+  String virtBackupJobDeleteAsk(String id) {
+    return 'Hapus tugas backup $id? Backup yang dibuat tetap ada.';
+  }
+
+  @override
+  String get virtBackupJobSaved => 'Tugas disimpan';
+
+  @override
+  String get virtBackupJobDeleted => 'Tugas dihapus';
+
+  @override
+  String get virtBackupJobStarted => 'Tugas backup dimulai';
+
+  @override
+  String get virtBackupSchedule => 'Jadwal';
+
+  @override
+  String get virtBackupScheduleHelp =>
+      'Subset dari peristiwa kalender systemd: 02:30, mon..fri 02:30, sat 03:00, daily, hourly, */15.';
+
+  @override
+  String get virtBackupScheduleInvalid => 'Jadwal ini tidak diterima host.';
+
+  @override
+  String virtBackupScheduleNext(String times) {
+    return 'Jalan berikutnya: $times';
+  }
+
+  @override
+  String get virtBackupSelection => 'Guest';
+
+  @override
+  String get virtBackupSelectionAll => 'Semua guest';
+
+  @override
+  String get virtBackupSelectionList => 'Guest terpilih';
+
+  @override
+  String get virtBackupSelectionNone => 'Pilih setidaknya satu guest.';
+
+  @override
+  String get virtBackupMail => 'Notifikasi';
+
+  @override
+  String get virtBackupMailAlways => 'Selalu';
+
+  @override
+  String get virtBackupMailFailure => 'Saat gagal';
+
+  @override
+  String get virtBackupNotesTemplate => 'Catatan backup';
+
+  @override
+  String virtBackupNotesTemplateTip(String vars) {
+    return 'Catatan ditambahkan ke setiap backup tugas. Digantikan: $vars.';
+  }
+
+  @override
+  String get virtBackupPrune => 'Retensi';
+
+  @override
+  String get virtBackupPruneTip =>
+      'Opsi retensi PVE, mis. keep-last=7,keep-daily=4. Kosong: milik penyimpanan atau node.';
+
+  @override
+  String get virtBackupNextRun => 'Jalan berikutnya';
+
+  @override
+  String get virtBackupJobNode => 'Node';
+
+  @override
+  String get virtBackupJobNodeAny => 'Semua node';
+
+  @override
+  String get virtBackupEnabled => 'Aktif';
+
+  @override
+  String get virtBackupOptions => 'Opsi';
+
+  @override
+  String get virtBackupProtect => 'Lindungi';
+
+  @override
+  String get virtBackupProtectTip =>
+      'Backup yang dilindungi tidak dipangkas dan tidak dapat dihapus selama dilindungi.';
+
+  @override
+  String get virtBackupEditNotes => 'Catatan';
+
+  @override
+  String get virtBackupSaveNotes => 'Simpan';
+
+  @override
+  String get virtBackupEdited => 'Backup diperbarui';
+
+  @override
+  String get virtBackupRestoreStorage => 'Pulihkan ke penyimpanan';
+
+  @override
+  String get virtBackupRestoreStorageSame => 'Seperti di backup';
+
+  @override
+  String get virtBackupModeSnapshotTip => 'snapshot · tanpa henti';
+
+  @override
+  String get virtCloneStorageMissing =>
+      'Tidak ada penyimpanan di node ini yang menyimpan disk VM.';
+
+  @override
+  String get virtBackupCompress => 'Kompresi';
+
+  @override
+  String get virtBackupUnprotect => 'Buka perlindungan';
+
+  @override
+  String get virtBackupModeStops =>
+      'suspend dan stop menghentikan sementara guest yang berjalan saat disalin.';
+
+  @override
+  String get virtBackupScheduleValidate => 'Periksa ke host';
+
+  @override
+  String virtBackupSelected(int count) {
+    return '$count dipilih';
+  }
+
+  @override
+  String get virtBackupExcludeTip =>
+      'Semua guest di node diambil. Matikan satu untuk mengecualikannya.';
 }

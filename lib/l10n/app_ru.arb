@@ -190,13 +190,6 @@
   "maxConcurrency": "Максимальная параллельность",
   "maxRetryCount": "Максимальное количество попыток переподключения к серверу",
   "mismatchSystem": "Несоответствующая система: {system}",
-  "@mismatchSystem": {
-    "placeholders": {
-      "system": {
-        "type": "String"
-      }
-    }
-  },
   "mirror": "Зеркало",
   "needRestart": "Требуется перезапуск приложения",
   "netViewType": "Тип визуализации сети",
@@ -252,22 +245,6 @@
   "rememberPwdInMemTip": "Используется для контейнеров, приостановки и т. д.",
   "remotePath": "Удаленный путь",
   "rootfsUpdateTip": "Установлен {distro} {installed}, доступен {latest}. Обновление заменит весь контейнер: данные {pm} будут потеряны",
-  "@rootfsUpdateTip": {
-    "placeholders": {
-      "distro": {
-        "type": "String"
-      },
-      "installed": {
-        "type": "String"
-      },
-      "latest": {
-        "type": "String"
-      },
-      "pm": {
-        "type": "String"
-      }
-    }
-  },
   "linuxSystemInUse": "Закройте терминалы на {name}, прежде чем удалять",
   "rootfsSubtitle": "Пользовательское окружение Linux на этом устройстве",
   "rootfsInstallTip": "Скачивает {distro} {version} (около {size} МБ) и распаковывает на устройстве.",
@@ -571,24 +548,7 @@
   "geoDataUnreachable": "Не удалось получить данные.",
   "geoDataRemoveFailed": "Не удалось удалить данные.",
   "geoDataCurrent": "{month} уже установлен.",
-  "@geoDataCurrent": {
-    "placeholders": {
-      "month": {
-        "type": "String"
-      }
-    }
-  },
   "geoDataConsent": "**Размер загрузки: {download} · Место на устройстве: {disk}.** Полный набор данных хранится на этом устройстве, а все последующие геолокационные запросы выполняются локально. Адреса серверов и сведения о запросах не передаются сервису загрузки.\n\nОбновляется ежемесячно. Новая версия заменяет установленные данные, не сохраняя дополнительную копию. Данные можно удалить в любой момент.",
-  "@geoDataConsent": {
-    "placeholders": {
-      "download": {
-        "type": "String"
-      },
-      "disk": {
-        "type": "String"
-      }
-    }
-  },
   "benchmark": "Тест производительности",
   "benchmarkIntro": "Запускает на этом сервере Yet Another Bench Script для проверки диска, сети и процессора. Полный тест занимает 10–20 минут и продолжает выполняться, если покинуть эту страницу или закрыть приложение.",
   "benchmarkNoRuns": "Результатов тестирования пока нет.",
@@ -958,48 +918,6 @@
   "remoteDesktopCertificateIssuer": "Издатель: {issuer}",
   "remoteDesktopCertificateValidity": "Действителен: {start} – {end}",
   "appearanceThemeModeLocked": "Эта тема поддерживает только режим «{mode}». Для смены режима выберите другую тему.",
-  "@processCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@tmuxWindowCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@tmuxPaneCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@processShowKernelThreads": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@serviceOtherUnits": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@serviceJournalRecent": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "pveAuthToken": "API-токен",
   "pveVersionLow": "Эта функция в настоящее время находится на стадии тестирования и была протестирована только на PVE 8+. Используйте ее с осторожностью.",
   "pveTokenId": "ID токена",
@@ -1141,7 +1059,7 @@
   "virtDeleted": "{name} удалён",
   "pveTokenTipCreate": "Для создания и удаления гостей также нужны VM.Allocate, VM.Config.*, Datastore.AllocateSpace и SDN.Use.",
   "pveTokenTipHardware": "Для изменения оборудования нужны VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network и VM.Config.Options; для новых дисков и интерфейсов также Datastore.AllocateSpace и SDN.Use. Для видеокарты и устройств USB и PCI нужна также VM.Config.HWType; для устройства через сопоставление ресурсов нужна Mapping.Use на нём, а для списка сопоставлений — Mapping.Audit.",
-  "pveTokenTipBackup": "Для клонирования нужен VM.Clone, для резервного копирования и восстановления — VM.Backup, а также Datastore.AllocateSpace на хранилище копии.",
+  "pveTokenTipBackup": "Клонирование требует VM.Clone, резервное копирование и восстановление — VM.Backup, превращение в шаблон — VM.Allocate; заданиям резервного копирования нужны ещё Sys.Audit для чтения и Sys.Modify на / для создания, изменения и удаления, а также Datastore.AllocateSpace там, куда попадает копия или резервная копия.",
   "virtErrConflict": "Изменено в другом месте",
   "virtErrConflictTip": "Кто-то изменил конфигурацию этого гостя после того, как она была прочитана здесь, поэтому ничего не изменено. Она прочитана заново: повторите изменение, если оно ещё нужно.",
   "virtHardware": "Оборудование",
@@ -1437,5 +1355,99 @@
   "virtCiEffectLibvirt": "При сохранении записывается новый seed с новым ID экземпляра.",
   "virtCiEffectPve": "PVE сразу перезаписывает свой диск cloud-init; ID экземпляра вычисляется из этих настроек, поэтому любое изменение здесь даёт новый.",
   "virtCiNewInstance": "При следующей загрузке cloud-init считает систему новым экземпляром: заново задаёт имя хоста, создаёт учётную запись, если её нет, задаёт пароль, добавляет ключи и заново записывает настройки сети. Он также создаёт новые SSH-ключи хоста, поэтому SSH-клиенты предупредят, что ключ хоста изменился. До этой загрузки ничего не меняется.",
-  "virtCiSaved": "Сохранено. Вступит в силу при следующей загрузке."
+  "virtCiSaved": "Сохранено. Вступит в силу при следующей загрузке.",
+  "virtSnapshotExternal": "Только диски на ходу",
+  "virtSnapshotExternalTip": "Гость продолжает работать. Каждый диск получает слой qcow2 в выбранном пуле; гость остаётся на цепочке.",
+  "virtSnapshotFormInternal": "Внутренний (в образе)",
+  "virtSnapshotForm": "Тип",
+  "virtSnapshotOverlayPool": "Пул слоёв",
+  "virtSnapshotExternalNoMemory": "Внешний снимок никогда не содержит память: гость не останавливается.",
+  "virtSnapshotChain": "Цепочка дисков",
+  "virtSnapshotChainDepth": "{count} слоёв",
+  "virtSnapshotChainFile": "Файл",
+  "virtSnapshotChainActive": "Используется сейчас",
+  "virtSnapshotChainBase": "Базовый образ",
+  "virtSnapshotChainRaw": "Для внешнего снимка нужен диск qcow2. Этот — {format}.",
+  "virtSnapshotNoSupport": "Хранилище гостя не поддерживает снимки, поэтому создать его нельзя.",
+  "virtSnapshotRevertChain": "Откат на цепочке сливает работающий слой в образ и делает все последующие снимки непригодными. Откатиться можно только к новейшему снимку.",
+  "virtSnapshotRevertHasChildren": "Отказано, пока на этом снимке стоит более поздний.",
+  "virtSnapshotDiff": "Отличия от текущего",
+  "virtSnapshotDiffNone": "Конфигурация не изменилась с этого снимка.",
+  "virtSnapshotDiffShow": "Сравнить с текущим",
+  "virtSnapshotDiffGroup": "Изменено",
+  "virtSnapshotDiffGroupCpu": "Процессор",
+  "virtSnapshotDiffGroupMemory": "Память",
+  "virtSnapshotDiffGroupDisks": "Диски",
+  "virtSnapshotDiffGroupNic": "Интерфейсы",
+  "virtSnapshotDiffGroupFirmware": "Прошивка",
+  "virtSnapshotDiffGroupBoot": "Загрузка",
+  "virtSnapshotDiffGroupOther": "Прочее",
+  "virtSnapshotDiffValue": "{before} → {after}",
+  "virtSnapshotDiffRemoved": "удалено",
+  "virtSnapshotDiffAdded": "добавлено",
+  "virtSnapshotDiffAsk": "Что изменится при откате к {snapshot}:",
+  "virtSnapshotDiffHost": "Узел не смог сказать, что отличается: {error}",
+  "virtSnapshotExternalExists": "Гость уже на {count} слоях; этот снимок добавит ещё один.",
+  "virtToTemplate": "Сделать шаблоном",
+  "virtToTemplateNote": "Шаблон нельзя запустить и нельзя вернуть в гостя. Его диски становятся базовыми образами, которые разделяет связанный клон.",
+  "virtToTemplateConfirm": "Сделать {name} шаблоном?",
+  "virtToTemplateIrreversible": "Это необратимо: шаблон нельзя вернуть в гостя.",
+  "virtToTemplateStopped": "Сначала выключите его.",
+  "virtToTemplateSnapshots": "Гость со снимками не может стать шаблоном.",
+  "virtTemplateCreated": "{name} теперь шаблон",
+  "virtTemplateTip": "Шаблон запускается только после клонирования.",
+  "virtCloneStorage": "Целевое хранилище",
+  "virtCloneStorageSame": "Как у источника",
+  "virtCloneNode": "Целевой узел",
+  "virtCloneNodeSame": "Как у источника",
+  "virtClonePool": "Целевой пул",
+  "virtCloneStorageContent": "Это хранилище не хранит диски виртуальных машин.",
+  "virtCloneStorageShared": "Для копирования на другой узел нужно общее хранилище.",
+  "virtCloneNodeUnknown": "У этого хоста нет такого узла.",
+  "virtCloneLinkedTarget": "Связанный клон использует диски шаблона, поэтому не может указать хранилище или узел.",
+  "virtBackupJobs": "Задания резервного копирования",
+  "virtBackupJobsNone": "Нет задания резервного копирования по расписанию. Добавьте его, чтобы копировать гостей регулярно.",
+  "virtBackupJobNew": "Новое задание",
+  "virtBackupJobEdit": "Изменить задание",
+  "virtBackupJobRun": "Запустить сейчас",
+  "virtBackupJobRunAsk": "Запустить это задание резервного копирования сейчас?",
+  "virtBackupJobDeleteAsk": "Удалить задание {id}? Сделанные копии останутся.",
+  "virtBackupJobSaved": "Задание сохранено",
+  "virtBackupJobDeleted": "Задание удалено",
+  "virtBackupJobStarted": "Задание запущено",
+  "virtBackupSchedule": "Расписание",
+  "virtBackupScheduleHelp": "Подмножество календарных событий systemd: 02:30, mon..fri 02:30, sat 03:00, daily, hourly, */15.",
+  "virtBackupScheduleInvalid": "Хост не принимает такое расписание.",
+  "virtBackupScheduleNext": "Следующие запуски: {times}",
+  "virtBackupSelection": "Гости",
+  "virtBackupSelectionAll": "Все гости",
+  "virtBackupSelectionList": "Выбранные гости",
+  "virtBackupSelectionNone": "Выберите хотя бы одного гостя.",
+  "virtBackupMail": "Уведомление",
+  "virtBackupMailAlways": "Всегда",
+  "virtBackupMailFailure": "При сбое",
+  "virtBackupNotesTemplate": "Заметки к копии",
+  "virtBackupNotesTemplateTip": "Заметки добавляются к каждой копии задания. Заменяются: {vars}.",
+  "virtBackupPrune": "Хранение",
+  "virtBackupPruneTip": "Параметры хранения PVE, напр. keep-last=7,keep-daily=4. Пусто: из хранилища или узла.",
+  "virtBackupNextRun": "Следующий запуск",
+  "virtBackupJobNode": "Узел",
+  "virtBackupJobNodeAny": "Каждый узел",
+  "virtBackupEnabled": "Включено",
+  "virtBackupOptions": "Параметры",
+  "virtBackupProtect": "Защитить",
+  "virtBackupProtectTip": "Защищённая копия не удаляется по хранению и не может быть удалена, пока защита не снята.",
+  "virtBackupEditNotes": "Заметки",
+  "virtBackupSaveNotes": "Сохранить",
+  "virtBackupEdited": "Копия обновлена",
+  "virtBackupRestoreStorage": "Восстановить в хранилище",
+  "virtBackupRestoreStorageSame": "Как в копии",
+  "virtBackupModeSnapshotTip": "snapshot · без простоя",
+  "virtCloneStorageMissing": "Ни одно хранилище на этом узле не хранит диски виртуальных машин.",
+  "virtBackupCompress": "Сжатие",
+  "virtBackupUnprotect": "Снять защиту",
+  "virtBackupModeStops": "suspend и stop прерывают работу гостя на время копирования.",
+  "virtBackupScheduleValidate": "Проверить на хосте",
+  "virtBackupSelected": "Выбрано: {count}",
+  "virtBackupExcludeTip": "Берутся все гости узла. Выключите одного, чтобы исключить его."
 }

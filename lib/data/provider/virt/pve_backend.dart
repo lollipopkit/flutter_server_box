@@ -16,6 +16,7 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/virt/pve_resources.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_backup.dart';
+import 'package:server_box/data/model/virt/virt_backup_schedule.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
@@ -245,6 +246,7 @@ class PveBackend implements VirtBackend {
         lxc: true,
         pause: true,
         snapshots: true,
+        snapshotSupported: true,
         storage: true,
         network: true,
         cluster: nodes.length > 1,
@@ -256,7 +258,10 @@ class PveBackend implements VirtBackend {
         hardwareRevert: true,
         clone: true,
         linkedClone: true,
+        template: true,
+        cloneTarget: true,
         backup: true,
+        backupJobs: true,
         storageEdit: true,
         poolTypes: const ['dir', 'lvmthin', 'nfs', 'zfspool'],
         upload: true,
@@ -637,6 +642,151 @@ class PveBackend implements VirtBackend {
     return PveResources.parseSnapshots(data);
   }
 
+  /// PVE snapshots whole volumes: a disk on an `lvmthin`, `zfspool` or `rbd`
+  /// storage is one, a raw file on a `dir` storage is not. `/storage` and a
+  /// node's storage list say what each storage holds, not whether it
+  /// snapshots, so the question is asked of the guest itself — the same
+  /// `feature?feature=snapshot` its own web UI asks before it offers the
+  /// button (`PVE::QemuConfig::has_feature` over each volume).
+  ///
+  /// A guest whose disks are on **mixed** storages answers false when any one
+  /// of them cannot be snapshotted, and PVE then refuses the task with
+  /// "snapshot feature is not available" (verified on PVE 9.2.2 with a raw
+  /// disk on a `dir` storage beside a thin one).
+  @override
+  Future<bool?> snapshotSupported(VirtGuest guest) async {
+    try {
+      final data = await _call(
+        (dio) => dio.get(
+          _url('${_guestPath(guest)}/feature'),
+          queryParameters: {'feature': 'snapshot'},
+        ),
+      );
+      return data is Map ? data['hasFeature'] == 1 : null;
+    } on VirtErr catch (e) {
+      // An older PVE, or a guest deleted since the last load: unknown
+      // rather than "no".
+      Loggers.app.info('PVE snapshot feature of ${guest.vmid}: ${e.message}');
+      return null;
+    }
+  }
+
+  /// The storages the guest's disks are on, by name, for the view to name
+  /// when it says why a snapshot is refused.
+  @override
+  Future<String?> snapshotRefusal(VirtGuest guest) async {
+    final supported = await snapshotSupported(guest);
+    if (supported != false) return null;
+    final storages = await _guestStorages(guest);
+    return storages.isEmpty
+        ? 'snapshot feature is not available'
+        : 'snapshot feature is not available: ${storages.join(', ')}';
+  }
+
+  /// The ids of the storages this guest's own volumes are on, from its
+  /// configuration (`scsi0: local-lvm:vm-900-disk-0`).
+  Future<List<String>> _guestStorages(VirtGuest guest) async {
+    try {
+      final data = await _call((dio) => dio.get(_url('${_guestPath(guest)}/config')));
+      if (data is! Map) return const [];
+      final out = <String>{};
+      for (final value in data.values) {
+        if (value is! String) continue;
+        // `<storage>:<volume>` — an id, then the volume name.
+        final at = value.indexOf(':');
+        if (at <= 0) continue;
+        final storage = value.substring(0, at);
+        if (storage.contains(',')) continue;
+        out.add(storage);
+      }
+      return out.toList()..sort();
+    } on VirtErr catch (e) {
+      Loggers.app.info('PVE config of ${guest.vmid}: ${e.message}');
+      return const [];
+    }
+  }
+
+  /// The snapshot's own `config` against the guest's current one.
+  ///
+  /// PVE answers the snapshot's configuration whole (`GET .../snapshot/
+  /// {name}/config`), which is the guest's configuration as it was; the
+  /// guest's own is `GET config`, with the pending changes already applied
+  /// (that is what a rollback would produce). Keys that are the listing's own
+  /// (`digest`, `snapname`, `snaptime`, `parent`, `description`) are left out,
+  /// as are the ones that are not a setting anyone makes (`meta`, `smbios1`,
+  /// `vmgenid`): none of them differs for a reason the view could act on.
+  @override
+  Future<List<VirtSnapDiff>> snapshotDiff(VirtGuest guest, String name) async {
+    final path = _guestPath(guest);
+    final snap = await _call(
+      (dio) => dio.get(_url('$path/snapshot/${_seg(name)}/config')),
+    );
+    final current = await _call((dio) => dio.get(_url('$path/config')));
+    if (snap is! Map || current is! Map) {
+      throw VirtErr(
+        type: VirtErrType.invalidResponse,
+        message: l10n.pveInvalidResponseData,
+      );
+    }
+    final before = snap.cast<String, Object?>();
+    final after = current.cast<String, Object?>();
+    final keys = {...before.keys, ...after.keys}.difference(_diffIgnore);
+    final out = <VirtSnapDiff>[];
+    for (final key in keys) {
+      final b = _diffValue(before[key]);
+      final a = _diffValue(after[key]);
+      if (b == a) continue;
+      out.add(
+        VirtSnapDiff(
+          group: VirtSnapDiffGroup.of(key),
+          key: key,
+          before: b,
+          after: a,
+        ),
+      );
+    }
+    out.sort((x, y) => x.key.compareTo(y.key));
+    return out;
+  }
+
+  /// Keys a diff never shows: the listing's own bookkeeping, and what PVE
+  /// writes by itself.
+  static const _diffIgnore = {
+    'digest',
+    'snapname',
+    'snaptime',
+    'parent',
+    'description',
+    'meta',
+    'smbios1',
+    'vmgenid',
+    'lock',
+    'pending',
+  };
+
+  /// A configuration value as one line. A password is never read back (PVE
+  /// answers `**********`), and `delete: 1` entries are the removal of a key
+  /// rather than a value.
+  static String? _diffValue(Object? v) {
+    if (v == null) return null;
+    if (v is Map) {
+      if (v['delete'] == 1) return null;
+      if (v['pending'] != null) return v['pending'].toString();
+      return null;
+    }
+    final text = v.toString();
+    return text.isEmpty ? null : text;
+  }
+
+  /// PVE has no external form: a snapshot is a volume-level one taken by the
+  /// storage, and a running VM's memory is `vmstate`.
+  @override
+  Future<VirtSnapChain> snapshotChain(VirtGuest guest) async =>
+      throw VirtErr(
+        type: VirtErrType.unsupported,
+        message: 'PVE snapshots are per volume; there is no chain to show',
+      );
+
   /// `vmstate` only for a VM: a container's snapshot never has memory, and
   /// PVE refuses the parameter for one.
   @override
@@ -645,12 +795,19 @@ class PveBackend implements VirtBackend {
     required String name,
     String? description,
     bool memory = false,
+    VirtSnapshotForm form = VirtSnapshotForm.internal,
+    String? overlayPool,
   }) async {
     if (!virtSnapshotNamePattern.hasMatch(name)) {
       throw VirtErr(
         type: VirtErrType.unsupported,
         message: 'Not a snapshot name: $name',
       );
+    }
+    // Refused before the task is started, with what the host says about the
+    // guest's storages, rather than after it fails.
+    if (await snapshotRefusal(guest) case final why?) {
+      throw VirtErr(type: VirtErrType.unsupported, message: why);
     }
     final desc = description?.trim();
     await _task(
@@ -1010,12 +1167,47 @@ class PveBackend implements VirtBackend {
   }
 
   // ---------------------------------------------------------------------------
-  // Cloning and backups
+  // Templates, cloning and backups
   // ---------------------------------------------------------------------------
 
+  /// `POST .../template` on the guest's node, waited for (`VM.Allocate` on
+  /// `/vms/{vmid}`, checked by PVE before the task). A guest with snapshots
+  /// cannot become one, and a template cannot become a guest again: PVE
+  /// writes `template: 1` and turns every disk into a base image
+  /// (`vdisk_create_base`: `vm-910-disk-0` → `base-910-disk-0` on LVM-thin),
+  /// which is what a linked clone then shares.
+  @override
+  Future<void> makeTemplate(VirtGuest guest) async {
+    if (guest.template) {
+      throw VirtErr(
+        type: VirtErrType.unsupported,
+        message: '${guest.name} is already a template',
+      );
+    }
+    if (guest.state != VirtGuestState.stopped) {
+      throw VirtErr(
+        type: VirtErrType.unsupported,
+        message: '${guest.name} is not stopped',
+      );
+    }
+    await _task(
+      guest,
+      (dio) => dio.post(
+        _url('${_guestPath(guest)}/template'),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
+      ),
+    );
+  }
+
   /// `POST .../clone` on the guest's node, waited for. A full clone copies
-  /// the disks to the storages they are on; a linked one (a template only —
-  /// PVE refuses it for anything else) shares them.
+  /// the disks to the storages they are on, or to [VirtCloneRequest.storage]
+  /// where one was picked; a linked one (a template only — PVE refuses it for
+  /// anything else) shares them.
+  ///
+  /// A clone that moves to another node needs a cluster and shared storage:
+  /// on a single node PVE answers `no such cluster node '<name>'` — or, once
+  /// the node exists, `can't clone VM to node '<n>' (VM uses local storage)`.
+  /// [`virtCloneTargetIssue`] refuses both before the request is sent.
   @override
   Future<String> clone(VirtGuest guest, VirtCloneRequest request) async {
     final lxc = guest.kind == VirtGuestKind.lxc;
@@ -1026,6 +1218,7 @@ class PveBackend implements VirtBackend {
         message: 'No VMID for the clone',
       );
     }
+    final full = request.full || !guest.template;
     try {
       await _task(
         guest,
@@ -1034,7 +1227,11 @@ class PveBackend implements VirtBackend {
           data: {
             'newid': vmid,
             lxc ? 'hostname' : 'name': request.name,
-            'full': request.full || !guest.template ? 1 : 0,
+            'full': full ? 1 : 0,
+            // PVE refuses either on a linked clone: `parameter 'storage' not
+            // allowed for linked clones`.
+            'storage': ?full ? request.storage : null,
+            'target': ?request.targetNode,
           },
           options: Options(contentType: Headers.formUrlEncodedContentType),
         ),
@@ -1069,8 +1266,29 @@ class PveBackend implements VirtBackend {
   }
 
   @override
-  Future<List<VirtStoragePool>> backupStorages(VirtGuest guest) async {
-    final node = guest.node!;
+  Future<List<VirtStoragePool>> backupStorages(VirtGuest guest) =>
+      _backupStorages(guest.node!);
+
+  /// Every online node's storages, deduplicated by `node/storage`: a shared
+  /// storage is listed by each node that sees it, and a job names one by its
+  /// own id.
+  @override
+  Future<List<VirtStoragePool>> allBackupStorages() async {
+    final out = <String, VirtStoragePool>{};
+    for (final node in await _onlineNodes()) {
+      for (final pool in await _backupStorages(node)) {
+        out.putIfAbsent('${pool.node}/${pool.name}', () => pool);
+      }
+    }
+    final list = out.values.toList()
+      ..sort((a, b) {
+        final byName = a.name.compareTo(b.name);
+        return byName != 0 ? byName : (a.node ?? '').compareTo(b.node ?? '');
+      });
+    return list;
+  }
+
+  Future<List<VirtStoragePool>> _backupStorages(String node) async {
     final data = await _call(
       (dio) => dio.get(
         _url('/nodes/${_seg(node)}/storage'),
@@ -1087,6 +1305,14 @@ class PveBackend implements VirtBackend {
   /// which is not a failure of the view.
   @override
   Future<List<VirtBackupJob>> backupJobs(VirtGuest guest) async {
+    final jobs = await allBackupJobs();
+    return [for (final j in jobs) if (j.takes(guest.vmid)) j];
+  }
+
+  /// `/cluster/backup` for the datacenter's Backup view. The same
+  /// `Sys.Audit`: an account without it sees no jobs rather than an error.
+  @override
+  Future<List<VirtBackupJob>> allBackupJobs() async {
     final Object? data;
     try {
       data = await _call((dio) => dio.get(_url('/cluster/backup')));
@@ -1095,39 +1321,192 @@ class PveBackend implements VirtBackend {
       rethrow;
     }
     if (data is! List) return const [];
-    return PveResources.parseBackupJobs(data, vmid: guest.vmid);
+    return PveResources.parseBackupJobs(data);
+  }
+
+  /// `POST /cluster/backup` (a new job), `PUT /cluster/backup/{id}` (the
+  /// job with that id) or `DELETE` with [remove] — `Sys.Modify` on `/`, which
+  /// is PVE's own rule for the datacenter's job list. PVE validates the
+  /// schedule itself (`pve-calendar-event`); [`virtScheduleIssue`] refuses
+  /// what it would before it is asked.
+  @override
+  Future<void> editBackupJob(VirtBackupJobEdit edit, {bool remove = false}) async {
+    final id = edit.id;
+    if (remove) {
+      if (id == null) {
+        throw const VirtErr(type: VirtErrType.unsupported);
+      }
+      final removeId = id;
+      await _call(
+        (dio) => dio.delete(_url('/cluster/backup/${_seg(removeId)}')),
+      );
+      return;
+    }
+    // PVE's own `PUT` keeps what it is not sent, so a field this edit left
+    // empty is named in `delete` — what its web UI's `deleteEmpty` does per
+    // field. Deleting one that was not set is a no-op, and a create takes
+    // none (there is nothing to clear).
+    final deletes = <String>[
+      if (!edit.all || edit.vmids.isEmpty) 'vmid',
+      if (edit.exclude.isEmpty) 'exclude',
+      if (edit.pool == null) 'pool',
+      if (edit.node == null) 'node',
+      if (edit.comment == null) 'comment',
+      if (edit.notesTemplate == null) 'notes-template',
+      if (edit.prune == null) 'prune-backups',
+    ];
+    final body = {
+      'storage': edit.storage,
+      'schedule': edit.schedule,
+      'mode': edit.mode,
+      'compress': edit.compress,
+      'enabled': edit.enabled ? 1 : 0,
+      'all': edit.all ? 1 : 0,
+      'vmid': ?edit.all || edit.vmids.isEmpty ? null : edit.vmids.join(','),
+      'exclude': ?edit.all && edit.exclude.isNotEmpty
+          ? edit.exclude.join(',')
+          : null,
+      'pool': ?edit.pool,
+      'node': ?edit.node,
+      'comment': ?edit.comment,
+      'notes-template': ?edit.notesTemplate,
+      'mailnotification': ?edit.mailNotification,
+      'prune-backups': ?edit.prune,
+      if (!edit.isNew && deletes.isNotEmpty) 'delete': deletes.join(','),
+    };
+    // A new job may be named by the form; PVE generates an id when it is
+    // not, and answers with the one it made.
+    final data = await _call(
+      (dio) => edit.isNew
+          ? dio.post(
+              _url('/cluster/backup'),
+              data: {'id': ?id, ...body},
+              options: Options(contentType: Headers.formUrlEncodedContentType),
+            )
+          : dio.put(
+              _url('/cluster/backup/${_seg(id ?? '')}'),
+              data: body,
+              options: Options(contentType: Headers.formUrlEncodedContentType),
+            ),
+    );
+    // A `POST` answers the new job's id (`"sbbk-job"`); this app names every
+    // job it makes, so there is nothing to keep.
+    if (data is String && data.isEmpty) {
+      throw const VirtErr(type: VirtErrType.invalidResponse);
+    }
+  }
+
+  /// `GET /cluster/jobs/schedule-analyze`, the call PVE's job editor's
+  /// "Simulate" button makes. Its permission is `user => 'all'`: any account
+  /// that may log in can ask it, and it is what the form's Validate runs
+  /// rather than a calendar parser written here.
+  @override
+  Future<VirtScheduleCheck> checkSchedule(String schedule) async {
+    try {
+      final data = await _call(
+        (dio) => dio.get(
+          _url('/cluster/jobs/schedule-analyze'),
+          queryParameters: {'schedule': schedule, 'iterations': 3},
+        ),
+      );
+      if (data is! List) return const VirtScheduleCheck();
+      return VirtScheduleCheck(
+        next: [
+          for (final item in data)
+            if (item is Map && item['timestamp'] is int)
+              DateTime.fromMillisecondsSinceEpoch(
+                (item['timestamp'] as int) * 1000,
+                isUtc: true,
+              ),
+        ],
+      );
+    } on VirtErr catch (e) {
+      // A refused schedule is a 400 with PVE's parse error; the form shows
+      // it under the field rather than as a failed request.
+      if (e.type == VirtErrType.actionFailed ||
+          e.type == VirtErrType.invalidResponse) {
+        return VirtScheduleCheck(error: e.message ?? 'HTTP 400');
+      }
+      rethrow;
+    }
   }
 
   /// `POST /nodes/{node}/vzdump` for the one guest, waited for.
   @override
   Future<void> backup(VirtGuest guest, VirtBackupRequest request) async {
-    final node = guest.node!;
     final notes = request.notes?.trim();
-    await _task(
-      guest,
+    await _runVzdump(guest.node!, {
+      'vmid': guest.vmid,
+      'storage': request.storage,
+      'mode': request.mode,
+      'compress': request.compress,
+      'notes-template': ?(notes == null || notes.isEmpty) ? null : notes,
+      'protected': ?request.protected ? 1 : null,
+      'prune-backups': ?request.prune,
+    });
+  }
+
+  /// A job's "Run now": what PVE's own web UI does — the job's fields without
+  /// the ones that describe the schedule, posted to `vzdump` on every online
+  /// node the job could run on (`/cluster/backup/{id}/included_volumes` is
+  /// what its detail view *lists*, not what runs it).
+  ///
+  /// A job with a node runs there; one without runs on this host, which is
+  /// the node the guest view is about. Every online node would mean a backup
+  /// per node for a job that has no node — PVE's own UI does that, and its
+  /// `all` on each of them is the same set of guests.
+  @override
+  Future<void> runBackupJob(VirtBackupJob job) async {
+    final node = job.node ?? _nodes.firstOrNull?.name;
+    if (node == null) {
+      throw const VirtErr(
+        type: VirtErrType.unsupported,
+        message: 'No node to run the job on',
+      );
+    }
+    await _runVzdump(node, {
+      'storage': ?job.storage,
+      'mode': ?job.mode,
+      'compress': ?job.compress,
+      'all': ?job.all ? 1 : null,
+      'vmid': ?job.all || job.vmids.isEmpty ? null : job.vmids.join(','),
+      'exclude': ?job.exclude.isEmpty ? null : job.exclude.join(','),
+      'pool': ?job.pool,
+      'notes-template': ?job.notesTemplate,
+      'mailnotification': ?job.mailNotification,
+      'prune-backups': ?job.prune,
+    });
+  }
+
+  /// One `vzdump` request, waited for. It is the node's task rather than a
+  /// guest's, so `_task` — which names the guest — does not fit.
+  Future<void> _runVzdump(String node, Map<String, Object?> body) async {
+    final upid = await _call(
       (dio) => dio.post(
         _url('/nodes/${_seg(node)}/vzdump'),
-        data: {
-          'vmid': guest.vmid,
-          'storage': request.storage,
-          'mode': request.mode,
-          'compress': request.compress,
-          'notes-template': ?(notes == null || notes.isEmpty) ? null : notes,
-          'protected': ?request.protected ? 1 : null,
-        },
+        data: body,
         options: Options(contentType: Headers.formUrlEncodedContentType),
       ),
+      action: true,
     );
+    if (upid is String && upid.startsWith('UPID:')) {
+      await _waitTask(node, upid);
+    }
   }
 
   /// `POST /nodes/{node}/qemu` with `archive`, or `/lxc` with `ostemplate`
   /// and `restore=1`. Over the guest itself with `force=1`, which PVE
   /// refuses while it runs; as a new guest with [vmid] otherwise.
+  ///
+  /// [storage] is where the restored disks land (`--storage`, PVE's `Default
+  /// storage`), which is how a backup taken on one storage is restored onto
+  /// another; null leaves each volume where the archive says.
   @override
   Future<void> restoreBackup(
     VirtGuest guest,
     VirtBackup backup, {
     int? vmid,
+    String? storage,
   }) async {
     final node = guest.node!;
     final lxc = (backup.kind ?? guest.kind) == VirtGuestKind.lxc;
@@ -1147,6 +1526,7 @@ class PveBackend implements VirtBackend {
             'vmid': vmid ?? guest.vmid,
             if (lxc) ...{'ostemplate': backup.id, 'restore': 1} else 'archive': backup.id,
             'force': ?over ? 1 : null,
+            'storage': ?storage,
           },
           options: Options(contentType: Headers.formUrlEncodedContentType),
         ),
@@ -1154,6 +1534,23 @@ class PveBackend implements VirtBackend {
     } on VirtErr catch (e) {
       throw _createErr(e);
     }
+  }
+
+  /// `PUT /nodes/{node}/storage/{id}/content/{volid}`: a backup's own notes
+  /// and protection. Both fields are sent every time — PVE keeps what is not
+  /// sent, so an empty note has to be written as one.
+  @override
+  Future<void> editBackup(VirtBackup backup, VirtBackupEdit edit) async {
+    await _call(
+      (dio) => dio.put(
+        _url(
+          '/nodes/${_seg(backup.node)}/storage/${_seg(backup.storage)}'
+          '/content/${_seg(backup.id)}',
+        ),
+        data: {'notes': edit.notes, 'protected': edit.protected ? 1 : 0},
+        options: Options(contentType: Headers.formUrlEncodedContentType),
+      ),
+    );
   }
 
   @override

@@ -191,16 +191,6 @@
   "invalidHostFormat": "잘못된 호스트 형식입니다. IPv4, IPv6, 도메인 문자만 허용됩니다.",
   "jumpServer": "점프 서버",
   "jumpServersNotFoundFmt": "{serverName}에 대한 점프 서버를 찾을 수 없습니다: {jumpIds}",
-  "@jumpServersNotFoundFmt": {
-    "placeholders": {
-      "serverName": {
-        "type": "String"
-      },
-      "jumpIds": {
-        "type": "String"
-      }
-    }
-  },
   "noJumpServerAvailable": "사용 가능한 점프 서버가 없습니다.",
   "jumpServerAndProxyCommandCannotBeUsedTogether": "점프 서버와 ProxyCommand는 함께 사용할 수 없습니다.",
   "noConnectionMethod": "SSH, monitor 또는 둘 다 설정하세요",
@@ -220,13 +210,6 @@
   "maxConcurrency": "최대 동시 실행 수",
   "maxRetryCount": "서버 재연결 횟수",
   "mismatchSystem": "시스템이 일치하지 않습니다: {system}",
-  "@mismatchSystem": {
-    "placeholders": {
-      "system": {
-        "type": "String"
-      }
-    }
-  },
   "mirror": "미러",
   "needRestart": "앱을 다시 시작해야 합니다",
   "netViewType": "네트워크 뷰 유형",
@@ -295,22 +278,6 @@
   "rememberPwdInMemTip": "컨테이너, 일시 중지 등에 사용됩니다.",
   "remotePath": "원격 경로",
   "rootfsUpdateTip": "{distro} {installed}이(가) 설치되어 있고 {latest}가 있습니다. 업데이트는 컨테이너 전체를 교체합니다: {pm} 데이터가 사라집니다",
-  "@rootfsUpdateTip": {
-    "placeholders": {
-      "distro": {
-        "type": "String"
-      },
-      "installed": {
-        "type": "String"
-      },
-      "latest": {
-        "type": "String"
-      },
-      "pm": {
-        "type": "String"
-      }
-    }
-  },
   "linuxSystemInUse": "{name}의 터미널을 닫은 뒤 삭제하세요",
   "rootfsSubtitle": "이 기기의 Linux 사용자 공간",
   "rootfsInstallTip": "{distro} {version}(약 {size} MB)을 내려받아 이 기기에 풉니다.",
@@ -375,9 +342,6 @@
   "sshKnownHostKeysTip": "이 앱이 수락한 호스트 키",
   "sshLegacyAlgorithms": "레거시 알고리즘",
   "sshLegacyAlgorithmsTip": "SHA-1 `ssh-rsa` 호스트 키 또는 SHA-1 키 교환만 제공하는 구형 SSH 서버(라우터, 스위치 등)용입니다. 보안이 약하므로 필요한 호스트에서만 켜세요.",
-  "@sshHostKeyType": {
-    "description": "Label for the SSH host key type displayed in the host key verification dialog."
-  },
   "sshHostKeyNewDesc": "{serverName}에서 새 SSH 호스트 키를 수신했습니다. 신뢰하기 전에 지문을 확인해 주세요.",
   "sshHostKeyStoredFingerprint": "저장된 지문: {fingerprint}",
   "sshConfigManualSelect": "SSH 설정 파일을 수동으로 선택하시겠습니까?",
@@ -584,24 +548,7 @@
   "geoDataUnreachable": "데이터를 가져오지 못했습니다.",
   "geoDataRemoveFailed": "데이터를 삭제하지 못했습니다.",
   "geoDataCurrent": "이미 {month} 데이터입니다.",
-  "@geoDataCurrent": {
-    "placeholders": {
-      "month": {
-        "type": "String"
-      }
-    }
-  },
   "geoDataConsent": "**다운로드: {download} · 기기 저장 공간: {disk}.** 전체 데이터 세트가 이 기기에 저장되며, 이후의 모든 위치 조회는 로컬에서 처리됩니다. 서버 주소나 조회 활동은 다운로드 서비스로 전송되지 않습니다.\n\n매월 업데이트됩니다. 새 버전은 설치된 데이터를 대체하며 추가 사본을 남기지 않습니다. 언제든지 삭제할 수 있습니다.",
-  "@geoDataConsent": {
-    "placeholders": {
-      "download": {
-        "type": "String"
-      },
-      "disk": {
-        "type": "String"
-      }
-    }
-  },
   "benchmark": "벤치마크",
   "benchmarkIntro": "이 서버에서 Yet Another Bench Script를 실행하여 디스크, 네트워크, CPU를 측정합니다. 전체 실행에는 10~20분이 걸리며 이 페이지를 나가거나 앱을 닫아도 계속 진행됩니다.",
   "benchmarkNoRuns": "아직 벤치마크 결과가 없습니다.",
@@ -971,20 +918,6 @@
   "remoteDesktopCertificateIssuer": "발급자: {issuer}",
   "remoteDesktopCertificateValidity": "유효 기간: {start} – {end}",
   "appearanceThemeModeLocked": "이 테마는 {mode}만 지원합니다. 모드를 변경하려면 다른 테마를 선택하세요.",
-  "@tmuxWindowCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@tmuxPaneCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "pveAuthToken": "API 토큰",
   "pveVersionLow": "이 기능은 현재 테스트 단계이며 PVE 8+에서만 테스트되었습니다. 주의하여 사용해 주세요.",
   "pveTokenId": "토큰 ID",
@@ -1126,7 +1059,7 @@
   "virtDeleted": "{name} 삭제됨",
   "pveTokenTipCreate": "게스트를 만들고 삭제하려면 VM.Allocate, VM.Config.*, Datastore.AllocateSpace, SDN.Use도 필요합니다.",
   "pveTokenTipHardware": "하드웨어 편집에는 VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network, VM.Config.Options가 필요하며, 디스크와 인터페이스를 추가하려면 Datastore.AllocateSpace와 SDN.Use도 필요합니다. 그래픽 카드와 USB·PCI 장치에는 VM.Config.HWType도 필요합니다. 리소스 매핑으로 넘기는 장치에는 해당 매핑의 Mapping.Use가, 매핑 목록에는 Mapping.Audit가 필요합니다.",
-  "pveTokenTipBackup": "복제에는 VM.Clone, 백업과 복원에는 VM.Backup이 필요하며, 복사본이나 백업이 저장되는 곳에 Datastore.AllocateSpace도 필요합니다.",
+  "pveTokenTipBackup": "복제에는 VM.Clone, 백업과 복원에는 VM.Backup, 템플릿화에는 VM.Allocate가 필요합니다. 백업 작업을 읽으려면 Sys.Audit, 만들고 편집하고 삭제하려면 / 에 대한 Sys.Modify도 필요하며, 복사본이나 백업이 가는 곳에는 Datastore.AllocateSpace가 필요합니다.",
   "virtErrConflict": "다른 곳에서 변경됨",
   "virtErrConflictTip": "여기서 읽은 뒤 다른 사람이 이 게스트의 구성을 변경해서 아무것도 바꾸지 않았습니다. 다시 읽었으니 여전히 필요하면 다시 변경하세요.",
   "virtHardware": "하드웨어",
@@ -1422,5 +1355,99 @@
   "virtCiEffectLibvirt": "저장하면 새 인스턴스 ID로 새 seed를 씁니다.",
   "virtCiEffectPve": "PVE는 cloud-init 드라이브를 즉시 다시 씁니다. 인스턴스 ID는 이 설정에서 계산되므로 여기서 바꾸면 항상 새 ID가 됩니다.",
   "virtCiNewInstance": "다음 부팅 때 cloud-init은 시스템을 새 인스턴스로 다룹니다. 호스트 이름을 다시 설정하고, 계정이 없으면 만들고, 비밀번호를 설정하고, 키를 추가하고, 네트워크 설정을 다시 씁니다. SSH 호스트 키도 새로 만들므로 SSH 클라이언트가 호스트 키가 바뀌었다고 경고합니다. 그 부팅 전에는 아무것도 바뀌지 않습니다.",
-  "virtCiSaved": "저장했습니다. 다음 부팅 때 적용됩니다."
+  "virtCiSaved": "저장했습니다. 다음 부팅 때 적용됩니다.",
+  "virtSnapshotExternal": "실행 중 디스크만",
+  "virtSnapshotExternalTip": "게스트는 계속 실행됩니다. 각 디스크는 선택한 풀에 qcow2 오버레이를 얻고, 게스트는 체인 위에 남습니다.",
+  "virtSnapshotFormInternal": "내부(이미지 안)",
+  "virtSnapshotForm": "종류",
+  "virtSnapshotOverlayPool": "오버레이 풀",
+  "virtSnapshotExternalNoMemory": "외부 스냅샷은 메모리를 저장하지 않습니다. 게스트는 중지되지 않습니다.",
+  "virtSnapshotChain": "디스크 체인",
+  "virtSnapshotChainDepth": "{count}개 계층",
+  "virtSnapshotChainFile": "파일",
+  "virtSnapshotChainActive": "현재 사용 중",
+  "virtSnapshotChainBase": "기본 이미지",
+  "virtSnapshotChainRaw": "외부 스냅샷에는 qcow2 디스크가 필요합니다. 이 디스크는 {format}입니다.",
+  "virtSnapshotNoSupport": "게스트의 스토리지가 스냅샷을 지원하지 않아 만들 수 없습니다.",
+  "virtSnapshotRevertChain": "체인에서 되돌리면 실행 중인 오버레이가 이미지에 병합되고 이후 스냅샷은 사용할 수 없게 됩니다. 최신 스냅샷만 되돌릴 수 있습니다.",
+  "virtSnapshotRevertHasChildren": "이후 스냅샷이 이 위에 있는 동안은 거부됩니다.",
+  "virtSnapshotDiff": "현재와의 차이",
+  "virtSnapshotDiffNone": "이 스냅샷 이후 구성이 바뀌지 않았습니다.",
+  "virtSnapshotDiffShow": "현재와 비교",
+  "virtSnapshotDiffGroup": "변경됨",
+  "virtSnapshotDiffGroupCpu": "프로세서",
+  "virtSnapshotDiffGroupMemory": "메모리",
+  "virtSnapshotDiffGroupDisks": "디스크",
+  "virtSnapshotDiffGroupNic": "인터페이스",
+  "virtSnapshotDiffGroupFirmware": "펌웨어",
+  "virtSnapshotDiffGroupBoot": "부팅",
+  "virtSnapshotDiffGroupOther": "기타",
+  "virtSnapshotDiffValue": "{before} → {after}",
+  "virtSnapshotDiffRemoved": "제거됨",
+  "virtSnapshotDiffAdded": "추가됨",
+  "virtSnapshotDiffAsk": "{snapshot}(으)로 되돌리면 바뀌는 내용:",
+  "virtSnapshotDiffHost": "호스트가 차이를 알려주지 못했습니다: {error}",
+  "virtSnapshotExternalExists": "게스트는 이미 {count}개 계층에 있습니다. 이 스냅샷이 하나를 더 추가합니다.",
+  "virtToTemplate": "템플릿으로 만들기",
+  "virtToTemplateNote": "템플릿은 시작할 수 없고 게스트로 되돌릴 수도 없습니다. 디스크는 기본 이미지가 되며 링크 클론이 이를 공유합니다.",
+  "virtToTemplateConfirm": "{name}을(를) 템플릿으로 만들까요?",
+  "virtToTemplateIrreversible": "되돌릴 수 없습니다. 템플릿은 게스트로 되돌릴 수 없습니다.",
+  "virtToTemplateStopped": "먼저 종료하세요.",
+  "virtToTemplateSnapshots": "스냅샷이 있는 게스트는 템플릿이 될 수 없습니다.",
+  "virtTemplateCreated": "{name}이(가) 템플릿이 되었습니다",
+  "virtTemplateTip": "템플릿은 복제한 뒤에야 실행됩니다.",
+  "virtCloneStorage": "대상 스토리지",
+  "virtCloneStorageSame": "원본과 동일",
+  "virtCloneNode": "대상 노드",
+  "virtCloneNodeSame": "원본과 동일",
+  "virtClonePool": "대상 풀",
+  "virtCloneStorageContent": "이 스토리지는 VM 디스크를 담지 않습니다.",
+  "virtCloneStorageShared": "다른 노드로 복사하려면 공유 스토리지가 필요합니다.",
+  "virtCloneNodeUnknown": "이 호스트에는 해당 노드가 없습니다.",
+  "virtCloneLinkedTarget": "링크 클론은 템플릿의 디스크를 공유하므로 스토리지나 노드를 지정할 수 없습니다.",
+  "virtBackupJobs": "백업 작업",
+  "virtBackupJobsNone": "예약된 백업 작업이 없습니다. 추가하면 게스트를 정기적으로 백업합니다.",
+  "virtBackupJobNew": "새 작업",
+  "virtBackupJobEdit": "작업 편집",
+  "virtBackupJobRun": "지금 실행",
+  "virtBackupJobRunAsk": "이 백업 작업을 지금 시작할까요?",
+  "virtBackupJobDeleteAsk": "백업 작업 {id}을(를) 삭제할까요? 만들어진 백업은 남습니다.",
+  "virtBackupJobSaved": "작업을 저장했습니다",
+  "virtBackupJobDeleted": "작업을 삭제했습니다",
+  "virtBackupJobStarted": "백업 작업을 시작했습니다",
+  "virtBackupSchedule": "일정",
+  "virtBackupScheduleHelp": "systemd 캘린더 이벤트의 하위 집합: 02:30, mon..fri 02:30, sat 03:00, daily, hourly, */15.",
+  "virtBackupScheduleInvalid": "호스트가 받아들이지 않는 일정입니다.",
+  "virtBackupScheduleNext": "다음 실행: {times}",
+  "virtBackupSelection": "게스트",
+  "virtBackupSelectionAll": "모든 게스트",
+  "virtBackupSelectionList": "선택한 게스트",
+  "virtBackupSelectionNone": "게스트를 하나 이상 선택하세요.",
+  "virtBackupMail": "알림",
+  "virtBackupMailAlways": "항상",
+  "virtBackupMailFailure": "실패 시",
+  "virtBackupNotesTemplate": "백업 메모",
+  "virtBackupNotesTemplateTip": "메모는 작업이 만드는 각 백업에 추가됩니다. 값으로 바뀌는 것은 {vars} 입니다.",
+  "virtBackupPrune": "보존",
+  "virtBackupPruneTip": "PVE 보존 옵션, 예: keep-last=7,keep-daily=4. 비우면 스토리지나 노드 설정을 따릅니다.",
+  "virtBackupNextRun": "다음 실행",
+  "virtBackupJobNode": "노드",
+  "virtBackupJobNodeAny": "모든 노드",
+  "virtBackupEnabled": "사용",
+  "virtBackupOptions": "옵션",
+  "virtBackupProtect": "보호",
+  "virtBackupProtectTip": "보호된 백업은 정리 대상이 아니며 보호를 해제할 때까지 삭제할 수 없습니다.",
+  "virtBackupEditNotes": "메모",
+  "virtBackupSaveNotes": "저장",
+  "virtBackupEdited": "백업을 갱신했습니다",
+  "virtBackupRestoreStorage": "스토리지로 복원",
+  "virtBackupRestoreStorageSame": "백업과 동일",
+  "virtBackupModeSnapshotTip": "snapshot · 무중단",
+  "virtCloneStorageMissing": "이 노드에는 VM 디스크를 담는 스토리지가 없습니다.",
+  "virtBackupCompress": "압축",
+  "virtBackupUnprotect": "보호 해제",
+  "virtBackupModeStops": "suspend와 stop은 복사하는 동안 실행 중인 게스트를 중단합니다.",
+  "virtBackupScheduleValidate": "호스트에서 확인",
+  "virtBackupSelected": "{count}개 선택",
+  "virtBackupExcludeTip": "노드의 모든 게스트가 대상입니다. 끄면 제외됩니다."
 }

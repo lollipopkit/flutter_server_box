@@ -190,13 +190,6 @@
   "maxConcurrency": "Konkurensi Maksimum",
   "maxRetryCount": "Jumlah penyambungan kembali server",
   "mismatchSystem": "Sistem tidak cocok: {system}",
-  "@mismatchSystem": {
-    "placeholders": {
-      "system": {
-        "type": "String"
-      }
-    }
-  },
   "mirror": "Mirror",
   "needRestart": "Perlu memulai ulang aplikasi",
   "netViewType": "Jenis tampilan bersih",
@@ -252,22 +245,6 @@
   "rememberPwdInMemTip": "Digunakan untuk kontainer, menangguhkan, dll.",
   "remotePath": "Jalur jarak jauh",
   "rootfsUpdateTip": "{distro} {installed} terpasang, ada {latest}. Pembaruan mengganti seluruh kontainer: data {pm} hilang",
-  "@rootfsUpdateTip": {
-    "placeholders": {
-      "distro": {
-        "type": "String"
-      },
-      "installed": {
-        "type": "String"
-      },
-      "latest": {
-        "type": "String"
-      },
-      "pm": {
-        "type": "String"
-      }
-    }
-  },
   "linuxSystemInUse": "Tutup terminal di {name} sebelum menghapusnya",
   "rootfsSubtitle": "Lingkungan pengguna Linux di perangkat ini",
   "rootfsInstallTip": "Mengunduh {distro} {version} (sekitar {size} MB) dan mengekstraknya di perangkat ini.",
@@ -571,24 +548,7 @@
   "geoDataUnreachable": "Tidak dapat mengambil data.",
   "geoDataRemoveFailed": "Tidak dapat menghapus data.",
   "geoDataCurrent": "{month} sudah terpasang.",
-  "@geoDataCurrent": {
-    "placeholders": {
-      "month": {
-        "type": "String"
-      }
-    }
-  },
   "geoDataConsent": "**Unduhan: {download} · Penyimpanan di perangkat: {disk}.** Seluruh kumpulan data disimpan di perangkat ini dan semua pencarian lokasi berikutnya dilakukan secara lokal. Alamat server dan aktivitas pencarian tidak dikirim ke layanan unduhan.\n\nDiperbarui setiap bulan. Versi yang lebih baru menggantikan data yang terpasang tanpa menyimpan salinan tambahan. Anda dapat menghapusnya kapan saja.",
-  "@geoDataConsent": {
-    "placeholders": {
-      "download": {
-        "type": "String"
-      },
-      "disk": {
-        "type": "String"
-      }
-    }
-  },
   "benchmark": "Uji performa",
   "benchmarkIntro": "Menjalankan Yet Another Bench Script di server ini untuk menguji disk, jaringan, dan CPU. Pengujian lengkap memerlukan 10–20 menit dan tetap berjalan jika Anda meninggalkan halaman ini atau menutup aplikasi.",
   "benchmarkNoRuns": "Belum ada uji performa.",
@@ -958,41 +918,6 @@
   "remoteDesktopCertificateIssuer": "Penerbit: {issuer}",
   "remoteDesktopCertificateValidity": "Berlaku: {start} – {end}",
   "appearanceThemeModeLocked": "Tema ini hanya mendukung {mode}. Pilih tema lain untuk mengubah mode.",
-  "@tmuxWindowCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@tmuxPaneCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@processShowKernelThreads": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@serviceOtherUnits": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@serviceJournalRecent": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "pveAuthToken": "Token API",
   "pveVersionLow": "Fitur ini saat ini sedang dalam tahap pengujian dan hanya diuji pada PVE 8+. Gunakan dengan hati-hati.",
   "pveTokenId": "ID token",
@@ -1134,7 +1059,7 @@
   "virtDeleted": "{name} dihapus",
   "pveTokenTipCreate": "Membuat dan menghapus tamu juga memerlukan VM.Allocate, VM.Config.*, Datastore.AllocateSpace dan SDN.Use.",
   "pveTokenTipHardware": "Mengedit perangkat keras memerlukan VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network, dan VM.Config.Options; disk dan antarmuka baru juga memerlukan Datastore.AllocateSpace dan SDN.Use. Kartu grafis serta perangkat USB dan PCI juga membutuhkan VM.Config.HWType; perangkat lewat pemetaan sumber daya membutuhkan Mapping.Use padanya, dan Mapping.Audit untuk mendaftar pemetaan.",
-  "pveTokenTipBackup": "Kloning memerlukan VM.Clone, pencadangan dan pemulihan memerlukan VM.Backup, dengan Datastore.AllocateSpace di tempat salinan atau cadangan disimpan.",
+  "pveTokenTipBackup": "Klon memerlukan VM.Clone, backup dan pemulihan VM.Backup, dan menjadikan template VM.Allocate; tugas backup juga memerlukan Sys.Audit untuk membacanya dan Sys.Modify pada / untuk membuat, mengedit, dan menghapusnya, dengan Datastore.AllocateSpace di tempat salinan atau backup pergi.",
   "virtErrConflict": "Diubah di tempat lain",
   "virtErrConflictTip": "Seseorang mengubah konfigurasi tamu ini setelah dibaca di sini, jadi tidak ada yang diubah. Konfigurasi telah dibaca ulang: ulangi perubahan jika masih diperlukan.",
   "virtHardware": "Perangkat keras",
@@ -1430,5 +1355,99 @@
   "virtCiEffectLibvirt": "Menyimpan menulis seed baru dengan ID instans baru.",
   "virtCiEffectPve": "PVE langsung menulis ulang drive cloud-init-nya, dengan ID instans yang diturunkan dari pengaturan ini, jadi setiap perubahan di sini membuat ID baru.",
   "virtCiNewInstance": "Saat boot berikutnya, cloud-init memperlakukan sistem sebagai instans baru: mengatur ulang hostname, membuat akun jika belum ada, mengatur kata sandinya, menambahkan kunci, dan menulis ulang konfigurasi jaringan. Ia juga membuat kunci host SSH baru, sehingga klien SSH akan memperingatkan bahwa kunci host berubah. Tidak ada yang berubah sebelum boot itu.",
-  "virtCiSaved": "Tersimpan. Berlaku saat boot berikutnya."
+  "virtCiSaved": "Tersimpan. Berlaku saat boot berikutnya.",
+  "virtSnapshotExternal": "Hanya disk saat berjalan",
+  "virtSnapshotExternalTip": "Guest tetap berjalan. Setiap disk mendapat overlay qcow2 di pool terpilih; guest berada pada rantai.",
+  "virtSnapshotFormInternal": "Internal (di dalam image)",
+  "virtSnapshotForm": "Jenis",
+  "virtSnapshotOverlayPool": "Pool overlay",
+  "virtSnapshotExternalNoMemory": "Snapshot eksternal tidak pernah menyimpan memori: guest tidak dihentikan.",
+  "virtSnapshotChain": "Rantai disk",
+  "virtSnapshotChainDepth": "{count} lapisan",
+  "virtSnapshotChainFile": "Berkas",
+  "virtSnapshotChainActive": "Sedang dipakai",
+  "virtSnapshotChainBase": "Image dasar",
+  "virtSnapshotChainRaw": "Snapshot eksternal memerlukan disk qcow2. Yang ini {format}.",
+  "virtSnapshotNoSupport": "Penyimpanan guest tidak mendukung snapshot, jadi tidak ada yang bisa dibuat.",
+  "virtSnapshotRevertChain": "Mengembalikan pada rantai menggabungkan overlay yang berjalan ke dalam image dan membuat snapshot berikutnya tidak terpakai. Hanya snapshot terbaru yang bisa dikembalikan.",
+  "virtSnapshotRevertHasChildren": "Ditolak selama snapshot berikutnya berada di atas yang ini.",
+  "virtSnapshotDiff": "Perbedaan dari sekarang",
+  "virtSnapshotDiffNone": "Konfigurasi tidak berubah sejak snapshot ini.",
+  "virtSnapshotDiffShow": "Bandingkan dengan sekarang",
+  "virtSnapshotDiffGroup": "Berubah",
+  "virtSnapshotDiffGroupCpu": "Prosesor",
+  "virtSnapshotDiffGroupMemory": "Memori",
+  "virtSnapshotDiffGroupDisks": "Disk",
+  "virtSnapshotDiffGroupNic": "Antarmuka",
+  "virtSnapshotDiffGroupFirmware": "Firmware",
+  "virtSnapshotDiffGroupBoot": "Boot",
+  "virtSnapshotDiffGroupOther": "Lainnya",
+  "virtSnapshotDiffValue": "{before} → {after}",
+  "virtSnapshotDiffRemoved": "dihapus",
+  "virtSnapshotDiffAdded": "ditambahkan",
+  "virtSnapshotDiffAsk": "Apa yang berubah jika Anda mengembalikan ke {snapshot}:",
+  "virtSnapshotDiffHost": "Host tidak dapat mengatakan apa yang berbeda: {error}",
+  "virtSnapshotExternalExists": "Guest sudah berada di {count} lapisan; snapshot ini menambah satu lagi.",
+  "virtToTemplate": "Jadikan template",
+  "virtToTemplateNote": "Template tidak dapat dijalankan dan tidak dapat dikembalikan menjadi guest. Disk-nya menjadi image dasar, yang dibagi oleh klon tertaut.",
+  "virtToTemplateConfirm": "Jadikan {name} template?",
+  "virtToTemplateIrreversible": "Ini tidak dapat dibatalkan: template tidak dapat dikembalikan menjadi guest.",
+  "virtToTemplateStopped": "Matikan dulu.",
+  "virtToTemplateSnapshots": "Guest dengan snapshot tidak dapat menjadi template.",
+  "virtTemplateCreated": "{name} kini template",
+  "virtTemplateTip": "Template hanya berjalan setelah diklon.",
+  "virtCloneStorage": "Penyimpanan tujuan",
+  "virtCloneStorageSame": "Sama seperti sumber",
+  "virtCloneNode": "Node tujuan",
+  "virtCloneNodeSame": "Sama seperti sumber",
+  "virtClonePool": "Pool tujuan",
+  "virtCloneStorageContent": "Penyimpanan ini tidak menyimpan disk VM.",
+  "virtCloneStorageShared": "Menyalin ke node lain memerlukan penyimpanan bersama.",
+  "virtCloneNodeUnknown": "Host ini tidak memiliki node tersebut.",
+  "virtCloneLinkedTarget": "Klon tertaut berbagi disk template, jadi tidak dapat menyebut penyimpanan atau node.",
+  "virtBackupJobs": "Tugas backup",
+  "virtBackupJobsNone": "Tidak ada tugas backup terjadwal. Tambahkan satu untuk mencadangkan guest secara berkala.",
+  "virtBackupJobNew": "Tugas baru",
+  "virtBackupJobEdit": "Edit tugas",
+  "virtBackupJobRun": "Jalankan sekarang",
+  "virtBackupJobRunAsk": "Mulai tugas backup ini sekarang?",
+  "virtBackupJobDeleteAsk": "Hapus tugas backup {id}? Backup yang dibuat tetap ada.",
+  "virtBackupJobSaved": "Tugas disimpan",
+  "virtBackupJobDeleted": "Tugas dihapus",
+  "virtBackupJobStarted": "Tugas backup dimulai",
+  "virtBackupSchedule": "Jadwal",
+  "virtBackupScheduleHelp": "Subset dari peristiwa kalender systemd: 02:30, mon..fri 02:30, sat 03:00, daily, hourly, */15.",
+  "virtBackupScheduleInvalid": "Jadwal ini tidak diterima host.",
+  "virtBackupScheduleNext": "Jalan berikutnya: {times}",
+  "virtBackupSelection": "Guest",
+  "virtBackupSelectionAll": "Semua guest",
+  "virtBackupSelectionList": "Guest terpilih",
+  "virtBackupSelectionNone": "Pilih setidaknya satu guest.",
+  "virtBackupMail": "Notifikasi",
+  "virtBackupMailAlways": "Selalu",
+  "virtBackupMailFailure": "Saat gagal",
+  "virtBackupNotesTemplate": "Catatan backup",
+  "virtBackupNotesTemplateTip": "Catatan ditambahkan ke setiap backup tugas. Digantikan: {vars}.",
+  "virtBackupPrune": "Retensi",
+  "virtBackupPruneTip": "Opsi retensi PVE, mis. keep-last=7,keep-daily=4. Kosong: milik penyimpanan atau node.",
+  "virtBackupNextRun": "Jalan berikutnya",
+  "virtBackupJobNode": "Node",
+  "virtBackupJobNodeAny": "Semua node",
+  "virtBackupEnabled": "Aktif",
+  "virtBackupOptions": "Opsi",
+  "virtBackupProtect": "Lindungi",
+  "virtBackupProtectTip": "Backup yang dilindungi tidak dipangkas dan tidak dapat dihapus selama dilindungi.",
+  "virtBackupEditNotes": "Catatan",
+  "virtBackupSaveNotes": "Simpan",
+  "virtBackupEdited": "Backup diperbarui",
+  "virtBackupRestoreStorage": "Pulihkan ke penyimpanan",
+  "virtBackupRestoreStorageSame": "Seperti di backup",
+  "virtBackupModeSnapshotTip": "snapshot · tanpa henti",
+  "virtCloneStorageMissing": "Tidak ada penyimpanan di node ini yang menyimpan disk VM.",
+  "virtBackupCompress": "Kompresi",
+  "virtBackupUnprotect": "Buka perlindungan",
+  "virtBackupModeStops": "suspend dan stop menghentikan sementara guest yang berjalan saat disalin.",
+  "virtBackupScheduleValidate": "Periksa ke host",
+  "virtBackupSelected": "{count} dipilih",
+  "virtBackupExcludeTip": "Semua guest di node diambil. Matikan satu untuk mengecualikannya."
 }

@@ -216,6 +216,11 @@ _LibvirtSnapshot _$LibvirtSnapshotFromJson(Map<String, dynamic> json) =>
       memory: json['memory'] as bool? ?? false,
       external: json['external'] as bool? ?? false,
       current: json['current'] as bool? ?? false,
+      layers:
+          (json['layers'] as List<dynamic>?)
+              ?.map((e) => LibvirtSnapLayer.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const <LibvirtSnapLayer>[],
     );
 
 Map<String, dynamic> _$LibvirtSnapshotToJson(_LibvirtSnapshot instance) =>
@@ -228,7 +233,97 @@ Map<String, dynamic> _$LibvirtSnapshotToJson(_LibvirtSnapshot instance) =>
       'memory': instance.memory,
       'external': instance.external,
       'current': instance.current,
+      'layers': instance.layers,
     };
+
+_LibvirtSnapLayer _$LibvirtSnapLayerFromJson(Map<String, dynamic> json) =>
+    _LibvirtSnapLayer(
+      target: json['target'] as String? ?? '',
+      file: json['file'] as String?,
+      snapshot: json['snapshot'] as String?,
+    );
+
+Map<String, dynamic> _$LibvirtSnapLayerToJson(_LibvirtSnapLayer instance) =>
+    <String, dynamic>{
+      'target': instance.target,
+      'file': instance.file,
+      'snapshot': instance.snapshot,
+    };
+
+_LibvirtSnapDiff _$LibvirtSnapDiffFromJson(Map<String, dynamic> json) =>
+    _LibvirtSnapDiff(
+      group: json['group'] as String? ?? '',
+      key: json['key'] as String? ?? '',
+      before: json['before'] as String?,
+      after: json['after'] as String?,
+      removed: json['removed'] as bool? ?? false,
+      added: json['added'] as bool? ?? false,
+    );
+
+Map<String, dynamic> _$LibvirtSnapDiffToJson(_LibvirtSnapDiff instance) =>
+    <String, dynamic>{
+      'group': instance.group,
+      'key': instance.key,
+      'before': instance.before,
+      'after': instance.after,
+      'removed': instance.removed,
+      'added': instance.added,
+    };
+
+_LibvirtSnapChain _$LibvirtSnapChainFromJson(Map<String, dynamic> json) =>
+    _LibvirtSnapChain(
+      disks:
+          (json['disks'] as List<dynamic>?)
+              ?.map(
+                (e) => LibvirtSnapChainDisk.fromJson(e as Map<String, dynamic>),
+              )
+              .toList() ??
+          const <LibvirtSnapChainDisk>[],
+      blocked: json['blocked'] as String?,
+    );
+
+Map<String, dynamic> _$LibvirtSnapChainToJson(_LibvirtSnapChain instance) =>
+    <String, dynamic>{'disks': instance.disks, 'blocked': instance.blocked};
+
+_LibvirtSnapChainDisk _$LibvirtSnapChainDiskFromJson(
+  Map<String, dynamic> json,
+) => _LibvirtSnapChainDisk(
+  target: json['target'] as String? ?? '',
+  files:
+      (json['files'] as List<dynamic>?)
+          ?.map((e) => LibvirtSnapChainFile.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const <LibvirtSnapChainFile>[],
+  pool: json['pool'] as String?,
+);
+
+Map<String, dynamic> _$LibvirtSnapChainDiskToJson(
+  _LibvirtSnapChainDisk instance,
+) => <String, dynamic>{
+  'target': instance.target,
+  'files': instance.files,
+  'pool': instance.pool,
+};
+
+_LibvirtSnapChainFile _$LibvirtSnapChainFileFromJson(
+  Map<String, dynamic> json,
+) => _LibvirtSnapChainFile(
+  path: json['path'] as String,
+  format: json['format'] as String?,
+  backing: json['backing'] as String?,
+  allocation: (json['allocation'] as num?)?.toInt(),
+  capacity: (json['capacity'] as num?)?.toInt(),
+);
+
+Map<String, dynamic> _$LibvirtSnapChainFileToJson(
+  _LibvirtSnapChainFile instance,
+) => <String, dynamic>{
+  'path': instance.path,
+  'format': instance.format,
+  'backing': instance.backing,
+  'allocation': instance.allocation,
+  'capacity': instance.capacity,
+};
 
 _LibvirtVolumeRef _$LibvirtVolumeRefFromJson(Map<String, dynamic> json) =>
     _LibvirtVolumeRef(

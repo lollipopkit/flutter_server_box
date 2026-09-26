@@ -24,7 +24,39 @@ abstract class VirtGuestSnapshot with _$VirtGuestSnapshot {
     /// Holds the guest's memory: reverting resumes it where it was. Without,
     /// reverting leaves the guest stopped.
     @Default(false) bool withMemory,
+
+    /// Kept outside the disk image (`snapshot='external'`): the guest was
+    /// left on a qcow2 overlay of the file the snapshot records.
+    @Default(false) bool external,
+
+    /// Which file each disk was left on, for an external one. Empty for an
+    /// internal snapshot, which is one image.
+    @Default(<VirtSnapshotLayer>[]) List<VirtSnapshotLayer> layers,
   }) = _VirtGuestSnapshot;
+
+  const VirtGuestSnapshot._();
+
+  /// Whether a later snapshot sits on this one. Reverting to a snapshot that
+  /// has one is refused: a libvirt revert on a chain flattens it and leaves
+  /// every later snapshot pointing at a file that is gone.
+  bool hasChildren(Iterable<VirtGuestSnapshot> all) =>
+      all.any((s) => s.parent == name);
+}
+
+/// The file one disk of a snapshot was left on.
+@freezed
+abstract class VirtSnapshotLayer with _$VirtSnapshotLayer {
+  const factory VirtSnapshotLayer({
+    required String target,
+
+    /// The file the snapshot left this disk on. An external layer's file is
+    /// the one the *guest* is on until the next snapshot moves it on.
+    String? file,
+
+    /// `snapshot='external'`: the layer is a file of its own rather than
+    /// something inside the image.
+    @Default(false) bool external,
+  }) = _VirtSnapshotLayer;
 }
 
 /// [snapshots] depth-first from the roots, each with its depth — how the
@@ -273,4 +305,223 @@ abstract class VirtNetwork with _$VirtNetwork {
     /// Guests with a NIC on it.
     @Default(<VirtGuestRef>[]) List<VirtGuestRef> users,
   }) = _VirtNetwork;
+}
+
+/// One file in the chain a guest's disk is on: the file the guest writes to,
+/// then its backing file, down to the base image.
+///
+/// An external snapshot (libvirt) puts a qcow2 overlay on the disk the guest
+/// was using, so the guest ends up on a chain rather than on one file. `snap`
+/// is the snapshot that left the guest on this layer, where one did: depth 1
+/// is the base image, which no snapshot of the chain created.
+@freezed
+abstract class VirtSnapChainFile with _$VirtSnapChainFile {
+  const factory VirtSnapChainFile({
+    required String path,
+
+    /// `qcow2`, `raw`, ...
+    String? format,
+
+    /// Bytes it takes on the host.
+    int? allocation,
+
+    /// The layer below it; null for the base image.
+    String? backing,
+
+    /// The snapshot this layer belongs to, where one does.
+    String? snap,
+
+    /// The file the guest is on now.
+    @Default(false) bool active,
+  }) = _VirtSnapChainFile;
+
+  const VirtSnapChainFile._();
+
+  /// What the file is called, without its directory.
+  String get name => path.split('/').last;
+}
+
+/// One disk of a guest and the chain of files it is on, topmost first.
+@freezed
+abstract class VirtSnapChainDisk with _$VirtSnapChainDisk {
+  const factory VirtSnapChainDisk({
+    required String target,
+
+    /// Topmost first: `files.first` is what the guest writes to now.
+    @Default(<VirtSnapChainFile>[]) List<VirtSnapChainFile> files,
+
+    /// The pool the topmost file is in, where it is in one.
+    String? pool,
+  }) = _VirtSnapChainDisk;
+
+  const VirtSnapChainDisk._();
+
+  /// Whether the disk is on an overlay: an external snapshot put it there.
+  bool get isChain => files.length > 1;
+}
+
+/// The chain every disk of a guest is on, and why it cannot be read when it
+/// cannot.
+@freezed
+abstract class VirtSnapChain with _$VirtSnapChain {
+  const factory VirtSnapChain({
+    @Default(<VirtSnapChainDisk>[]) List<VirtSnapChainDisk> disks,
+
+    /// A disk QEMU would not open, in the host's words.
+    String? blocked,
+
+    /// Why an external snapshot cannot be taken, asked of the host's own
+    /// read: a raw disk, a disk that is not a file.
+    String? refusal,
+
+    /// The pools an overlay can be placed in, by name.
+    @Default(<String>[]) List<String> pools,
+  }) = _VirtSnapChain;
+
+  const VirtSnapChain._();
+
+  /// The deepest chain any disk is on: 1 is a plain image.
+  int get depth =>
+      disks.map((d) => d.files.length).fold(1, (a, b) => a > b ? a : b);
+
+  /// Some disk is on an overlay.
+  bool get hasOverlays => disks.any((d) => d.isChain);
+}
+
+/// What a libvirt snapshot can be: an internal one, or an external (disk-only
+/// while the guest runs) one, which puts every disk on a chain.
+enum VirtSnapshotForm {
+  /// Inside the image: the guest stops being written to while it is made,
+  /// and an active guest's memory goes with it.
+  internal,
+
+  /// A qcow2 overlay on each disk: the guest keeps running, the memory is
+  /// left alone, and the guest ends up on a chain.
+  external,
+}
+
+/// Why an external snapshot cannot be taken here, for the form to say before
+/// the host is asked.
+enum VirtExternalIssue {
+  /// The guest has no disk (or none QEMU would open).
+  noDisk,
+
+  /// A disk is raw: an external snapshot needs a qcow2 image under it.
+  rawDisk,
+
+  /// The chain could not be read, so nothing is known about it.
+  unknown,
+}
+
+/// The file libvirt would give an overlay it makes itself, for a disk at
+/// [diskPath]: `<disk>.<snapshot>`, beside the disk it backs (captured on
+/// libvirt 11.3.0). The app names its own overlays the same way, so a chain
+/// reads alike whichever made it.
+String virtSnapshotOverlayName(String diskPath, String snapshot) =>
+    '${diskPath.split('/').last}.$snapshot';
+
+/// [`virtSnapshotOverlayName`] placed in [dir].
+String virtSnapshotOverlayPath(String diskPath, String snapshot, [String? dir]) {
+  final name = virtSnapshotOverlayName(diskPath, snapshot);
+  final at = diskPath.lastIndexOf('/');
+  final base = dir ?? (at < 0 ? '' : diskPath.substring(0, at));
+  return base.isEmpty ? name : '$base/$name';
+}
+
+/// Why a snapshot cannot be taken, from what the host answered about its
+/// storage, in the host's own words; null when one can.
+///
+/// [supported] is `false` only where the host said so (PVE's own
+/// `feature?feature=snapshot`, which its web UI asks before offering the
+/// button). A storage that does not support snapshots is the usual reason: a
+/// disk on a `dir` storage is a raw file, and PVE snapshots need qcow2.
+String? virtSnapshotSupportIssue({
+  required bool? supported,
+  required VirtGuest guest,
+  required Iterable<String> storageNames,
+}) {
+  if (supported != false) return null;
+  final where = storageNames.isEmpty ? '' : ' (${storageNames.join(', ')})';
+  return '${guest.name}$where';
+}
+
+/// Whether a disk on a storage of [content] kinds can be snapshotted on PVE.
+///
+/// PVE has no `snapshot` content kind: `content` lists what may be *stored*
+/// (`images`, `rootdir`, `iso`, ...), and snapshot support follows the
+/// storage's type and the disk's format instead — a `dir` storage holds raw
+/// files, an `lvmthin` or `zfspool` one makes a snapshot per volume. So this
+/// is a hint for the form, never a refusal: the host's own answer
+/// (`snapshotSupported`) is what decides.
+bool virtPveStorageMaySnapshot(String type) =>
+    type == 'lvmthin' || type == 'zfspool' || type == 'rbd' || type == 'btrfs';
+
+/// What one difference between a snapshot's configuration and the guest's
+/// current one is about, as the view groups it.
+enum VirtSnapDiffGroup {
+  cpu,
+  memory,
+  disks,
+  nics,
+  firmware,
+  boot,
+  other;
+
+  /// The group a backend's own key belongs to, where the backend does not
+  /// name one: PVE's configuration keys are `cores`, `memory`, `scsi0`,
+  /// `net0`, ... rather than libvirt's element names.
+  static VirtSnapDiffGroup of(String key) {
+    if (key == 'cores' ||
+        key == 'sockets' ||
+        key == 'vcpus' ||
+        key == 'cpu' ||
+        key == 'cpuunits' ||
+        key == 'cpulimit') {
+      return VirtSnapDiffGroup.cpu;
+    }
+    if (key == 'memory' || key == 'balloon' || key == 'swap' || key == 'shares') {
+      return VirtSnapDiffGroup.memory;
+    }
+    if (key == 'boot' || key == 'bootdisk' || key == 'startup') {
+      return VirtSnapDiffGroup.boot;
+    }
+    if (key == 'bios' || key == 'efidisk0' || key == 'tpmstate0' || key == 'machine') {
+      return VirtSnapDiffGroup.firmware;
+    }
+    if (_diskKeys.any(key.startsWith) || key == 'rootfs') {
+      return VirtSnapDiffGroup.disks;
+    }
+    if (_nicKeys.any(key.startsWith)) return VirtSnapDiffGroup.nics;
+    return VirtSnapDiffGroup.other;
+  }
+
+  static const _diskKeys = ['scsi', 'virtio', 'ide', 'sata', 'mp', 'unused'];
+  static const _nicKeys = ['net', 'ipconfig', 'nameserver', 'searchdomain'];
+}
+
+/// One difference between a snapshot's configuration and the guest's current
+/// one. Values are as the host writes them (`262144`, `e1000e · bridge=vmbr0`
+/// or `local-lvm:vm-900-disk-0,size=8G`), for the view to show with a label.
+@freezed
+abstract class VirtSnapDiff with _$VirtSnapDiff {
+  const factory VirtSnapDiff({
+    required VirtSnapDiffGroup group,
+
+    /// The configuration key, e.g. `vcpu`, `scsi0`, `net0`.
+    required String key,
+
+    /// What the snapshot has.
+    String? before,
+
+    /// What the guest has now.
+    String? after,
+  }) = _VirtSnapDiff;
+
+  const VirtSnapDiff._();
+
+  /// The value left the configuration since the snapshot.
+  bool get removed => before != null && after == null;
+
+  /// The value is new since the snapshot.
+  bool get added => before == null && after != null;
 }

@@ -326,6 +326,10 @@ extension _Overview on _VirtGuestViewState {
   /// A guest that is not running has nothing to chart. Says so, and offers
   /// the way to change that.
   Widget _buildOff(VirtHostState st, VirtGuest guest, VirtGuestState state) {
+    // A template is not a stopped guest: it is never started, and what one
+    // does with it is clone it. Saying "shut down" of it would be wrong
+    // twice over (it never was running, and PVE refuses the start).
+    if (guest.template) return _buildTemplate(guest);
     final start = _startIfOffered(st, guest);
     return CardX(
       child: Padding(
@@ -356,6 +360,46 @@ extension _Overview on _VirtGuestViewState {
                   onTap: start,
                 ),
               ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// A template where a stopped guest's "start it" card would be: what it is
+  /// for, and the one thing that is done with one — clone it. The Clone
+  /// group is in Settings, so the button goes there rather than duplicating
+  /// the form.
+  Widget _buildTemplate(VirtGuest guest) {
+    return CardX(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 27),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.inventory_2_outlined,
+                size: 48,
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+              UIs.height13,
+              Text(l10n.virtTemplate, style: UIs.text15Bold),
+              UIs.height7,
+              Text(
+                l10n.virtTemplateTip,
+                textAlign: TextAlign.center,
+                style: UIs.textGrey,
+              ),
+              UIs.height13,
+              Btn.elevated(
+                key: const ValueKey('template:clone'),
+                mainAxisSize: MainAxisSize.min,
+                text: libL10n.clone,
+                icon: const Icon(Icons.content_copy_outlined),
+                onTap: () => setState(() => _view = VirtGuestViewKind.settings),
+              ),
             ],
           ),
         ),

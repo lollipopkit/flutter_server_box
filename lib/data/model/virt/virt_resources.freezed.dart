@@ -19,7 +19,11 @@ mixin _$VirtGuestSnapshot {
 /// a new snapshot would have as its parent.
  bool get current;/// Holds the guest's memory: reverting resumes it where it was. Without,
 /// reverting leaves the guest stopped.
- bool get withMemory;
+ bool get withMemory;/// Kept outside the disk image (`snapshot='external'`): the guest was
+/// left on a qcow2 overlay of the file the snapshot records.
+ bool get external;/// Which file each disk was left on, for an external one. Empty for an
+/// internal snapshot, which is one image.
+ List<VirtSnapshotLayer> get layers;
 /// Create a copy of VirtGuestSnapshot
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -30,16 +34,16 @@ $VirtGuestSnapshotCopyWith<VirtGuestSnapshot> get copyWith => _$VirtGuestSnapsho
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtGuestSnapshot&&(identical(other.name, name) || other.name == name)&&(identical(other.parent, parent) || other.parent == parent)&&(identical(other.description, description) || other.description == description)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.current, current) || other.current == current)&&(identical(other.withMemory, withMemory) || other.withMemory == withMemory));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtGuestSnapshot&&(identical(other.name, name) || other.name == name)&&(identical(other.parent, parent) || other.parent == parent)&&(identical(other.description, description) || other.description == description)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.current, current) || other.current == current)&&(identical(other.withMemory, withMemory) || other.withMemory == withMemory)&&(identical(other.external, external) || other.external == external)&&const DeepCollectionEquality().equals(other.layers, layers));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,parent,description,createdAt,current,withMemory);
+int get hashCode => Object.hash(runtimeType,name,parent,description,createdAt,current,withMemory,external,const DeepCollectionEquality().hash(layers));
 
 @override
 String toString() {
-  return 'VirtGuestSnapshot(name: $name, parent: $parent, description: $description, createdAt: $createdAt, current: $current, withMemory: $withMemory)';
+  return 'VirtGuestSnapshot(name: $name, parent: $parent, description: $description, createdAt: $createdAt, current: $current, withMemory: $withMemory, external: $external, layers: $layers)';
 }
 
 
@@ -50,7 +54,7 @@ abstract mixin class $VirtGuestSnapshotCopyWith<$Res>  {
   factory $VirtGuestSnapshotCopyWith(VirtGuestSnapshot value, $Res Function(VirtGuestSnapshot) _then) = _$VirtGuestSnapshotCopyWithImpl;
 @useResult
 $Res call({
- String name, String? parent, String? description, DateTime? createdAt, bool current, bool withMemory
+ String name, String? parent, String? description, DateTime? createdAt, bool current, bool withMemory, bool external, List<VirtSnapshotLayer> layers
 });
 
 
@@ -67,7 +71,7 @@ class _$VirtGuestSnapshotCopyWithImpl<$Res>
 
 /// Create a copy of VirtGuestSnapshot
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? parent = freezed,Object? description = freezed,Object? createdAt = freezed,Object? current = null,Object? withMemory = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? parent = freezed,Object? description = freezed,Object? createdAt = freezed,Object? current = null,Object? withMemory = null,Object? external = null,Object? layers = null,}) {
   return _then(_self.copyWith(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,parent: freezed == parent ? _self.parent : parent // ignore: cast_nullable_to_non_nullable
@@ -75,7 +79,9 @@ as String?,description: freezed == description ? _self.description : description
 as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,current: null == current ? _self.current : current // ignore: cast_nullable_to_non_nullable
 as bool,withMemory: null == withMemory ? _self.withMemory : withMemory // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,external: null == external ? _self.external : external // ignore: cast_nullable_to_non_nullable
+as bool,layers: null == layers ? _self.layers : layers // ignore: cast_nullable_to_non_nullable
+as List<VirtSnapshotLayer>,
   ));
 }
 
@@ -160,10 +166,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String? parent,  String? description,  DateTime? createdAt,  bool current,  bool withMemory)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String? parent,  String? description,  DateTime? createdAt,  bool current,  bool withMemory,  bool external,  List<VirtSnapshotLayer> layers)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _VirtGuestSnapshot() when $default != null:
-return $default(_that.name,_that.parent,_that.description,_that.createdAt,_that.current,_that.withMemory);case _:
+return $default(_that.name,_that.parent,_that.description,_that.createdAt,_that.current,_that.withMemory,_that.external,_that.layers);case _:
   return orElse();
 
 }
@@ -181,10 +187,10 @@ return $default(_that.name,_that.parent,_that.description,_that.createdAt,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String? parent,  String? description,  DateTime? createdAt,  bool current,  bool withMemory)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String? parent,  String? description,  DateTime? createdAt,  bool current,  bool withMemory,  bool external,  List<VirtSnapshotLayer> layers)  $default,) {final _that = this;
 switch (_that) {
 case _VirtGuestSnapshot():
-return $default(_that.name,_that.parent,_that.description,_that.createdAt,_that.current,_that.withMemory);case _:
+return $default(_that.name,_that.parent,_that.description,_that.createdAt,_that.current,_that.withMemory,_that.external,_that.layers);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -201,10 +207,10 @@ return $default(_that.name,_that.parent,_that.description,_that.createdAt,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String? parent,  String? description,  DateTime? createdAt,  bool current,  bool withMemory)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String? parent,  String? description,  DateTime? createdAt,  bool current,  bool withMemory,  bool external,  List<VirtSnapshotLayer> layers)?  $default,) {final _that = this;
 switch (_that) {
 case _VirtGuestSnapshot() when $default != null:
-return $default(_that.name,_that.parent,_that.description,_that.createdAt,_that.current,_that.withMemory);case _:
+return $default(_that.name,_that.parent,_that.description,_that.createdAt,_that.current,_that.withMemory,_that.external,_that.layers);case _:
   return null;
 
 }
@@ -215,8 +221,8 @@ return $default(_that.name,_that.parent,_that.description,_that.createdAt,_that.
 /// @nodoc
 
 
-class _VirtGuestSnapshot implements VirtGuestSnapshot {
-  const _VirtGuestSnapshot({required this.name, this.parent, this.description, this.createdAt, this.current = false, this.withMemory = false});
+class _VirtGuestSnapshot extends VirtGuestSnapshot {
+  const _VirtGuestSnapshot({required this.name, this.parent, this.description, this.createdAt, this.current = false, this.withMemory = false, this.external = false, final  List<VirtSnapshotLayer> layers = const <VirtSnapshotLayer>[]}): _layers = layers,super._();
   
 
 @override final  String name;
@@ -230,6 +236,20 @@ class _VirtGuestSnapshot implements VirtGuestSnapshot {
 /// Holds the guest's memory: reverting resumes it where it was. Without,
 /// reverting leaves the guest stopped.
 @override@JsonKey() final  bool withMemory;
+/// Kept outside the disk image (`snapshot='external'`): the guest was
+/// left on a qcow2 overlay of the file the snapshot records.
+@override@JsonKey() final  bool external;
+/// Which file each disk was left on, for an external one. Empty for an
+/// internal snapshot, which is one image.
+ final  List<VirtSnapshotLayer> _layers;
+/// Which file each disk was left on, for an external one. Empty for an
+/// internal snapshot, which is one image.
+@override@JsonKey() List<VirtSnapshotLayer> get layers {
+  if (_layers is EqualUnmodifiableListView) return _layers;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_layers);
+}
+
 
 /// Create a copy of VirtGuestSnapshot
 /// with the given fields replaced by the non-null parameter values.
@@ -241,16 +261,16 @@ _$VirtGuestSnapshotCopyWith<_VirtGuestSnapshot> get copyWith => __$VirtGuestSnap
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtGuestSnapshot&&(identical(other.name, name) || other.name == name)&&(identical(other.parent, parent) || other.parent == parent)&&(identical(other.description, description) || other.description == description)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.current, current) || other.current == current)&&(identical(other.withMemory, withMemory) || other.withMemory == withMemory));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtGuestSnapshot&&(identical(other.name, name) || other.name == name)&&(identical(other.parent, parent) || other.parent == parent)&&(identical(other.description, description) || other.description == description)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.current, current) || other.current == current)&&(identical(other.withMemory, withMemory) || other.withMemory == withMemory)&&(identical(other.external, external) || other.external == external)&&const DeepCollectionEquality().equals(other._layers, _layers));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,parent,description,createdAt,current,withMemory);
+int get hashCode => Object.hash(runtimeType,name,parent,description,createdAt,current,withMemory,external,const DeepCollectionEquality().hash(_layers));
 
 @override
 String toString() {
-  return 'VirtGuestSnapshot(name: $name, parent: $parent, description: $description, createdAt: $createdAt, current: $current, withMemory: $withMemory)';
+  return 'VirtGuestSnapshot(name: $name, parent: $parent, description: $description, createdAt: $createdAt, current: $current, withMemory: $withMemory, external: $external, layers: $layers)';
 }
 
 
@@ -261,7 +281,7 @@ abstract mixin class _$VirtGuestSnapshotCopyWith<$Res> implements $VirtGuestSnap
   factory _$VirtGuestSnapshotCopyWith(_VirtGuestSnapshot value, $Res Function(_VirtGuestSnapshot) _then) = __$VirtGuestSnapshotCopyWithImpl;
 @override @useResult
 $Res call({
- String name, String? parent, String? description, DateTime? createdAt, bool current, bool withMemory
+ String name, String? parent, String? description, DateTime? createdAt, bool current, bool withMemory, bool external, List<VirtSnapshotLayer> layers
 });
 
 
@@ -278,7 +298,7 @@ class __$VirtGuestSnapshotCopyWithImpl<$Res>
 
 /// Create a copy of VirtGuestSnapshot
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? parent = freezed,Object? description = freezed,Object? createdAt = freezed,Object? current = null,Object? withMemory = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? parent = freezed,Object? description = freezed,Object? createdAt = freezed,Object? current = null,Object? withMemory = null,Object? external = null,Object? layers = null,}) {
   return _then(_VirtGuestSnapshot(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,parent: freezed == parent ? _self.parent : parent // ignore: cast_nullable_to_non_nullable
@@ -286,6 +306,279 @@ as String?,description: freezed == description ? _self.description : description
 as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,current: null == current ? _self.current : current // ignore: cast_nullable_to_non_nullable
 as bool,withMemory: null == withMemory ? _self.withMemory : withMemory // ignore: cast_nullable_to_non_nullable
+as bool,external: null == external ? _self.external : external // ignore: cast_nullable_to_non_nullable
+as bool,layers: null == layers ? _self._layers : layers // ignore: cast_nullable_to_non_nullable
+as List<VirtSnapshotLayer>,
+  ));
+}
+
+
+}
+
+/// @nodoc
+mixin _$VirtSnapshotLayer {
+
+ String get target;/// The file the snapshot left this disk on. An external layer's file is
+/// the one the *guest* is on until the next snapshot moves it on.
+ String? get file;/// `snapshot='external'`: the layer is a file of its own rather than
+/// something inside the image.
+ bool get external;
+/// Create a copy of VirtSnapshotLayer
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$VirtSnapshotLayerCopyWith<VirtSnapshotLayer> get copyWith => _$VirtSnapshotLayerCopyWithImpl<VirtSnapshotLayer>(this as VirtSnapshotLayer, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtSnapshotLayer&&(identical(other.target, target) || other.target == target)&&(identical(other.file, file) || other.file == file)&&(identical(other.external, external) || other.external == external));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,target,file,external);
+
+@override
+String toString() {
+  return 'VirtSnapshotLayer(target: $target, file: $file, external: $external)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $VirtSnapshotLayerCopyWith<$Res>  {
+  factory $VirtSnapshotLayerCopyWith(VirtSnapshotLayer value, $Res Function(VirtSnapshotLayer) _then) = _$VirtSnapshotLayerCopyWithImpl;
+@useResult
+$Res call({
+ String target, String? file, bool external
+});
+
+
+
+
+}
+/// @nodoc
+class _$VirtSnapshotLayerCopyWithImpl<$Res>
+    implements $VirtSnapshotLayerCopyWith<$Res> {
+  _$VirtSnapshotLayerCopyWithImpl(this._self, this._then);
+
+  final VirtSnapshotLayer _self;
+  final $Res Function(VirtSnapshotLayer) _then;
+
+/// Create a copy of VirtSnapshotLayer
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? target = null,Object? file = freezed,Object? external = null,}) {
+  return _then(_self.copyWith(
+target: null == target ? _self.target : target // ignore: cast_nullable_to_non_nullable
+as String,file: freezed == file ? _self.file : file // ignore: cast_nullable_to_non_nullable
+as String?,external: null == external ? _self.external : external // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [VirtSnapshotLayer].
+extension VirtSnapshotLayerPatterns on VirtSnapshotLayer {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _VirtSnapshotLayer value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _VirtSnapshotLayer() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _VirtSnapshotLayer value)  $default,){
+final _that = this;
+switch (_that) {
+case _VirtSnapshotLayer():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _VirtSnapshotLayer value)?  $default,){
+final _that = this;
+switch (_that) {
+case _VirtSnapshotLayer() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String target,  String? file,  bool external)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _VirtSnapshotLayer() when $default != null:
+return $default(_that.target,_that.file,_that.external);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String target,  String? file,  bool external)  $default,) {final _that = this;
+switch (_that) {
+case _VirtSnapshotLayer():
+return $default(_that.target,_that.file,_that.external);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String target,  String? file,  bool external)?  $default,) {final _that = this;
+switch (_that) {
+case _VirtSnapshotLayer() when $default != null:
+return $default(_that.target,_that.file,_that.external);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _VirtSnapshotLayer implements VirtSnapshotLayer {
+  const _VirtSnapshotLayer({required this.target, this.file, this.external = false});
+  
+
+@override final  String target;
+/// The file the snapshot left this disk on. An external layer's file is
+/// the one the *guest* is on until the next snapshot moves it on.
+@override final  String? file;
+/// `snapshot='external'`: the layer is a file of its own rather than
+/// something inside the image.
+@override@JsonKey() final  bool external;
+
+/// Create a copy of VirtSnapshotLayer
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$VirtSnapshotLayerCopyWith<_VirtSnapshotLayer> get copyWith => __$VirtSnapshotLayerCopyWithImpl<_VirtSnapshotLayer>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtSnapshotLayer&&(identical(other.target, target) || other.target == target)&&(identical(other.file, file) || other.file == file)&&(identical(other.external, external) || other.external == external));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,target,file,external);
+
+@override
+String toString() {
+  return 'VirtSnapshotLayer(target: $target, file: $file, external: $external)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$VirtSnapshotLayerCopyWith<$Res> implements $VirtSnapshotLayerCopyWith<$Res> {
+  factory _$VirtSnapshotLayerCopyWith(_VirtSnapshotLayer value, $Res Function(_VirtSnapshotLayer) _then) = __$VirtSnapshotLayerCopyWithImpl;
+@override @useResult
+$Res call({
+ String target, String? file, bool external
+});
+
+
+
+
+}
+/// @nodoc
+class __$VirtSnapshotLayerCopyWithImpl<$Res>
+    implements _$VirtSnapshotLayerCopyWith<$Res> {
+  __$VirtSnapshotLayerCopyWithImpl(this._self, this._then);
+
+  final _VirtSnapshotLayer _self;
+  final $Res Function(_VirtSnapshotLayer) _then;
+
+/// Create a copy of VirtSnapshotLayer
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? target = null,Object? file = freezed,Object? external = null,}) {
+  return _then(_VirtSnapshotLayer(
+target: null == target ? _self.target : target // ignore: cast_nullable_to_non_nullable
+as String,file: freezed == file ? _self.file : file // ignore: cast_nullable_to_non_nullable
+as String?,external: null == external ? _self.external : external // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -1554,6 +1847,1121 @@ as bool,autostart: freezed == autostart ? _self.autostart : autostart // ignore:
 as bool?,comment: freezed == comment ? _self.comment : comment // ignore: cast_nullable_to_non_nullable
 as String?,users: null == users ? _self._users : users // ignore: cast_nullable_to_non_nullable
 as List<VirtGuestRef>,
+  ));
+}
+
+
+}
+
+/// @nodoc
+mixin _$VirtSnapChainFile {
+
+ String get path;/// `qcow2`, `raw`, ...
+ String? get format;/// Bytes it takes on the host.
+ int? get allocation;/// The layer below it; null for the base image.
+ String? get backing;/// The snapshot this layer belongs to, where one does.
+ String? get snap;/// The file the guest is on now.
+ bool get active;
+/// Create a copy of VirtSnapChainFile
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$VirtSnapChainFileCopyWith<VirtSnapChainFile> get copyWith => _$VirtSnapChainFileCopyWithImpl<VirtSnapChainFile>(this as VirtSnapChainFile, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtSnapChainFile&&(identical(other.path, path) || other.path == path)&&(identical(other.format, format) || other.format == format)&&(identical(other.allocation, allocation) || other.allocation == allocation)&&(identical(other.backing, backing) || other.backing == backing)&&(identical(other.snap, snap) || other.snap == snap)&&(identical(other.active, active) || other.active == active));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,path,format,allocation,backing,snap,active);
+
+@override
+String toString() {
+  return 'VirtSnapChainFile(path: $path, format: $format, allocation: $allocation, backing: $backing, snap: $snap, active: $active)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $VirtSnapChainFileCopyWith<$Res>  {
+  factory $VirtSnapChainFileCopyWith(VirtSnapChainFile value, $Res Function(VirtSnapChainFile) _then) = _$VirtSnapChainFileCopyWithImpl;
+@useResult
+$Res call({
+ String path, String? format, int? allocation, String? backing, String? snap, bool active
+});
+
+
+
+
+}
+/// @nodoc
+class _$VirtSnapChainFileCopyWithImpl<$Res>
+    implements $VirtSnapChainFileCopyWith<$Res> {
+  _$VirtSnapChainFileCopyWithImpl(this._self, this._then);
+
+  final VirtSnapChainFile _self;
+  final $Res Function(VirtSnapChainFile) _then;
+
+/// Create a copy of VirtSnapChainFile
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? path = null,Object? format = freezed,Object? allocation = freezed,Object? backing = freezed,Object? snap = freezed,Object? active = null,}) {
+  return _then(_self.copyWith(
+path: null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
+as String,format: freezed == format ? _self.format : format // ignore: cast_nullable_to_non_nullable
+as String?,allocation: freezed == allocation ? _self.allocation : allocation // ignore: cast_nullable_to_non_nullable
+as int?,backing: freezed == backing ? _self.backing : backing // ignore: cast_nullable_to_non_nullable
+as String?,snap: freezed == snap ? _self.snap : snap // ignore: cast_nullable_to_non_nullable
+as String?,active: null == active ? _self.active : active // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [VirtSnapChainFile].
+extension VirtSnapChainFilePatterns on VirtSnapChainFile {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _VirtSnapChainFile value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _VirtSnapChainFile() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _VirtSnapChainFile value)  $default,){
+final _that = this;
+switch (_that) {
+case _VirtSnapChainFile():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _VirtSnapChainFile value)?  $default,){
+final _that = this;
+switch (_that) {
+case _VirtSnapChainFile() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String path,  String? format,  int? allocation,  String? backing,  String? snap,  bool active)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _VirtSnapChainFile() when $default != null:
+return $default(_that.path,_that.format,_that.allocation,_that.backing,_that.snap,_that.active);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String path,  String? format,  int? allocation,  String? backing,  String? snap,  bool active)  $default,) {final _that = this;
+switch (_that) {
+case _VirtSnapChainFile():
+return $default(_that.path,_that.format,_that.allocation,_that.backing,_that.snap,_that.active);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String path,  String? format,  int? allocation,  String? backing,  String? snap,  bool active)?  $default,) {final _that = this;
+switch (_that) {
+case _VirtSnapChainFile() when $default != null:
+return $default(_that.path,_that.format,_that.allocation,_that.backing,_that.snap,_that.active);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _VirtSnapChainFile extends VirtSnapChainFile {
+  const _VirtSnapChainFile({required this.path, this.format, this.allocation, this.backing, this.snap, this.active = false}): super._();
+  
+
+@override final  String path;
+/// `qcow2`, `raw`, ...
+@override final  String? format;
+/// Bytes it takes on the host.
+@override final  int? allocation;
+/// The layer below it; null for the base image.
+@override final  String? backing;
+/// The snapshot this layer belongs to, where one does.
+@override final  String? snap;
+/// The file the guest is on now.
+@override@JsonKey() final  bool active;
+
+/// Create a copy of VirtSnapChainFile
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$VirtSnapChainFileCopyWith<_VirtSnapChainFile> get copyWith => __$VirtSnapChainFileCopyWithImpl<_VirtSnapChainFile>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtSnapChainFile&&(identical(other.path, path) || other.path == path)&&(identical(other.format, format) || other.format == format)&&(identical(other.allocation, allocation) || other.allocation == allocation)&&(identical(other.backing, backing) || other.backing == backing)&&(identical(other.snap, snap) || other.snap == snap)&&(identical(other.active, active) || other.active == active));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,path,format,allocation,backing,snap,active);
+
+@override
+String toString() {
+  return 'VirtSnapChainFile(path: $path, format: $format, allocation: $allocation, backing: $backing, snap: $snap, active: $active)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$VirtSnapChainFileCopyWith<$Res> implements $VirtSnapChainFileCopyWith<$Res> {
+  factory _$VirtSnapChainFileCopyWith(_VirtSnapChainFile value, $Res Function(_VirtSnapChainFile) _then) = __$VirtSnapChainFileCopyWithImpl;
+@override @useResult
+$Res call({
+ String path, String? format, int? allocation, String? backing, String? snap, bool active
+});
+
+
+
+
+}
+/// @nodoc
+class __$VirtSnapChainFileCopyWithImpl<$Res>
+    implements _$VirtSnapChainFileCopyWith<$Res> {
+  __$VirtSnapChainFileCopyWithImpl(this._self, this._then);
+
+  final _VirtSnapChainFile _self;
+  final $Res Function(_VirtSnapChainFile) _then;
+
+/// Create a copy of VirtSnapChainFile
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? path = null,Object? format = freezed,Object? allocation = freezed,Object? backing = freezed,Object? snap = freezed,Object? active = null,}) {
+  return _then(_VirtSnapChainFile(
+path: null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
+as String,format: freezed == format ? _self.format : format // ignore: cast_nullable_to_non_nullable
+as String?,allocation: freezed == allocation ? _self.allocation : allocation // ignore: cast_nullable_to_non_nullable
+as int?,backing: freezed == backing ? _self.backing : backing // ignore: cast_nullable_to_non_nullable
+as String?,snap: freezed == snap ? _self.snap : snap // ignore: cast_nullable_to_non_nullable
+as String?,active: null == active ? _self.active : active // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+
+}
+
+/// @nodoc
+mixin _$VirtSnapChainDisk {
+
+ String get target;/// Topmost first: `files.first` is what the guest writes to now.
+ List<VirtSnapChainFile> get files;/// The pool the topmost file is in, where it is in one.
+ String? get pool;
+/// Create a copy of VirtSnapChainDisk
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$VirtSnapChainDiskCopyWith<VirtSnapChainDisk> get copyWith => _$VirtSnapChainDiskCopyWithImpl<VirtSnapChainDisk>(this as VirtSnapChainDisk, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtSnapChainDisk&&(identical(other.target, target) || other.target == target)&&const DeepCollectionEquality().equals(other.files, files)&&(identical(other.pool, pool) || other.pool == pool));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,target,const DeepCollectionEquality().hash(files),pool);
+
+@override
+String toString() {
+  return 'VirtSnapChainDisk(target: $target, files: $files, pool: $pool)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $VirtSnapChainDiskCopyWith<$Res>  {
+  factory $VirtSnapChainDiskCopyWith(VirtSnapChainDisk value, $Res Function(VirtSnapChainDisk) _then) = _$VirtSnapChainDiskCopyWithImpl;
+@useResult
+$Res call({
+ String target, List<VirtSnapChainFile> files, String? pool
+});
+
+
+
+
+}
+/// @nodoc
+class _$VirtSnapChainDiskCopyWithImpl<$Res>
+    implements $VirtSnapChainDiskCopyWith<$Res> {
+  _$VirtSnapChainDiskCopyWithImpl(this._self, this._then);
+
+  final VirtSnapChainDisk _self;
+  final $Res Function(VirtSnapChainDisk) _then;
+
+/// Create a copy of VirtSnapChainDisk
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? target = null,Object? files = null,Object? pool = freezed,}) {
+  return _then(_self.copyWith(
+target: null == target ? _self.target : target // ignore: cast_nullable_to_non_nullable
+as String,files: null == files ? _self.files : files // ignore: cast_nullable_to_non_nullable
+as List<VirtSnapChainFile>,pool: freezed == pool ? _self.pool : pool // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [VirtSnapChainDisk].
+extension VirtSnapChainDiskPatterns on VirtSnapChainDisk {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _VirtSnapChainDisk value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _VirtSnapChainDisk() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _VirtSnapChainDisk value)  $default,){
+final _that = this;
+switch (_that) {
+case _VirtSnapChainDisk():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _VirtSnapChainDisk value)?  $default,){
+final _that = this;
+switch (_that) {
+case _VirtSnapChainDisk() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String target,  List<VirtSnapChainFile> files,  String? pool)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _VirtSnapChainDisk() when $default != null:
+return $default(_that.target,_that.files,_that.pool);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String target,  List<VirtSnapChainFile> files,  String? pool)  $default,) {final _that = this;
+switch (_that) {
+case _VirtSnapChainDisk():
+return $default(_that.target,_that.files,_that.pool);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String target,  List<VirtSnapChainFile> files,  String? pool)?  $default,) {final _that = this;
+switch (_that) {
+case _VirtSnapChainDisk() when $default != null:
+return $default(_that.target,_that.files,_that.pool);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _VirtSnapChainDisk extends VirtSnapChainDisk {
+  const _VirtSnapChainDisk({required this.target, final  List<VirtSnapChainFile> files = const <VirtSnapChainFile>[], this.pool}): _files = files,super._();
+  
+
+@override final  String target;
+/// Topmost first: `files.first` is what the guest writes to now.
+ final  List<VirtSnapChainFile> _files;
+/// Topmost first: `files.first` is what the guest writes to now.
+@override@JsonKey() List<VirtSnapChainFile> get files {
+  if (_files is EqualUnmodifiableListView) return _files;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_files);
+}
+
+/// The pool the topmost file is in, where it is in one.
+@override final  String? pool;
+
+/// Create a copy of VirtSnapChainDisk
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$VirtSnapChainDiskCopyWith<_VirtSnapChainDisk> get copyWith => __$VirtSnapChainDiskCopyWithImpl<_VirtSnapChainDisk>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtSnapChainDisk&&(identical(other.target, target) || other.target == target)&&const DeepCollectionEquality().equals(other._files, _files)&&(identical(other.pool, pool) || other.pool == pool));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,target,const DeepCollectionEquality().hash(_files),pool);
+
+@override
+String toString() {
+  return 'VirtSnapChainDisk(target: $target, files: $files, pool: $pool)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$VirtSnapChainDiskCopyWith<$Res> implements $VirtSnapChainDiskCopyWith<$Res> {
+  factory _$VirtSnapChainDiskCopyWith(_VirtSnapChainDisk value, $Res Function(_VirtSnapChainDisk) _then) = __$VirtSnapChainDiskCopyWithImpl;
+@override @useResult
+$Res call({
+ String target, List<VirtSnapChainFile> files, String? pool
+});
+
+
+
+
+}
+/// @nodoc
+class __$VirtSnapChainDiskCopyWithImpl<$Res>
+    implements _$VirtSnapChainDiskCopyWith<$Res> {
+  __$VirtSnapChainDiskCopyWithImpl(this._self, this._then);
+
+  final _VirtSnapChainDisk _self;
+  final $Res Function(_VirtSnapChainDisk) _then;
+
+/// Create a copy of VirtSnapChainDisk
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? target = null,Object? files = null,Object? pool = freezed,}) {
+  return _then(_VirtSnapChainDisk(
+target: null == target ? _self.target : target // ignore: cast_nullable_to_non_nullable
+as String,files: null == files ? _self._files : files // ignore: cast_nullable_to_non_nullable
+as List<VirtSnapChainFile>,pool: freezed == pool ? _self.pool : pool // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+
+}
+
+/// @nodoc
+mixin _$VirtSnapChain {
+
+ List<VirtSnapChainDisk> get disks;/// A disk QEMU would not open, in the host's words.
+ String? get blocked;/// Why an external snapshot cannot be taken, asked of the host's own
+/// read: a raw disk, a disk that is not a file.
+ String? get refusal;/// The pools an overlay can be placed in, by name.
+ List<String> get pools;
+/// Create a copy of VirtSnapChain
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$VirtSnapChainCopyWith<VirtSnapChain> get copyWith => _$VirtSnapChainCopyWithImpl<VirtSnapChain>(this as VirtSnapChain, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtSnapChain&&const DeepCollectionEquality().equals(other.disks, disks)&&(identical(other.blocked, blocked) || other.blocked == blocked)&&(identical(other.refusal, refusal) || other.refusal == refusal)&&const DeepCollectionEquality().equals(other.pools, pools));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(disks),blocked,refusal,const DeepCollectionEquality().hash(pools));
+
+@override
+String toString() {
+  return 'VirtSnapChain(disks: $disks, blocked: $blocked, refusal: $refusal, pools: $pools)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $VirtSnapChainCopyWith<$Res>  {
+  factory $VirtSnapChainCopyWith(VirtSnapChain value, $Res Function(VirtSnapChain) _then) = _$VirtSnapChainCopyWithImpl;
+@useResult
+$Res call({
+ List<VirtSnapChainDisk> disks, String? blocked, String? refusal, List<String> pools
+});
+
+
+
+
+}
+/// @nodoc
+class _$VirtSnapChainCopyWithImpl<$Res>
+    implements $VirtSnapChainCopyWith<$Res> {
+  _$VirtSnapChainCopyWithImpl(this._self, this._then);
+
+  final VirtSnapChain _self;
+  final $Res Function(VirtSnapChain) _then;
+
+/// Create a copy of VirtSnapChain
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? disks = null,Object? blocked = freezed,Object? refusal = freezed,Object? pools = null,}) {
+  return _then(_self.copyWith(
+disks: null == disks ? _self.disks : disks // ignore: cast_nullable_to_non_nullable
+as List<VirtSnapChainDisk>,blocked: freezed == blocked ? _self.blocked : blocked // ignore: cast_nullable_to_non_nullable
+as String?,refusal: freezed == refusal ? _self.refusal : refusal // ignore: cast_nullable_to_non_nullable
+as String?,pools: null == pools ? _self.pools : pools // ignore: cast_nullable_to_non_nullable
+as List<String>,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [VirtSnapChain].
+extension VirtSnapChainPatterns on VirtSnapChain {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _VirtSnapChain value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _VirtSnapChain() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _VirtSnapChain value)  $default,){
+final _that = this;
+switch (_that) {
+case _VirtSnapChain():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _VirtSnapChain value)?  $default,){
+final _that = this;
+switch (_that) {
+case _VirtSnapChain() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<VirtSnapChainDisk> disks,  String? blocked,  String? refusal,  List<String> pools)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _VirtSnapChain() when $default != null:
+return $default(_that.disks,_that.blocked,_that.refusal,_that.pools);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<VirtSnapChainDisk> disks,  String? blocked,  String? refusal,  List<String> pools)  $default,) {final _that = this;
+switch (_that) {
+case _VirtSnapChain():
+return $default(_that.disks,_that.blocked,_that.refusal,_that.pools);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<VirtSnapChainDisk> disks,  String? blocked,  String? refusal,  List<String> pools)?  $default,) {final _that = this;
+switch (_that) {
+case _VirtSnapChain() when $default != null:
+return $default(_that.disks,_that.blocked,_that.refusal,_that.pools);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _VirtSnapChain extends VirtSnapChain {
+  const _VirtSnapChain({final  List<VirtSnapChainDisk> disks = const <VirtSnapChainDisk>[], this.blocked, this.refusal, final  List<String> pools = const <String>[]}): _disks = disks,_pools = pools,super._();
+  
+
+ final  List<VirtSnapChainDisk> _disks;
+@override@JsonKey() List<VirtSnapChainDisk> get disks {
+  if (_disks is EqualUnmodifiableListView) return _disks;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_disks);
+}
+
+/// A disk QEMU would not open, in the host's words.
+@override final  String? blocked;
+/// Why an external snapshot cannot be taken, asked of the host's own
+/// read: a raw disk, a disk that is not a file.
+@override final  String? refusal;
+/// The pools an overlay can be placed in, by name.
+ final  List<String> _pools;
+/// The pools an overlay can be placed in, by name.
+@override@JsonKey() List<String> get pools {
+  if (_pools is EqualUnmodifiableListView) return _pools;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_pools);
+}
+
+
+/// Create a copy of VirtSnapChain
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$VirtSnapChainCopyWith<_VirtSnapChain> get copyWith => __$VirtSnapChainCopyWithImpl<_VirtSnapChain>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtSnapChain&&const DeepCollectionEquality().equals(other._disks, _disks)&&(identical(other.blocked, blocked) || other.blocked == blocked)&&(identical(other.refusal, refusal) || other.refusal == refusal)&&const DeepCollectionEquality().equals(other._pools, _pools));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_disks),blocked,refusal,const DeepCollectionEquality().hash(_pools));
+
+@override
+String toString() {
+  return 'VirtSnapChain(disks: $disks, blocked: $blocked, refusal: $refusal, pools: $pools)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$VirtSnapChainCopyWith<$Res> implements $VirtSnapChainCopyWith<$Res> {
+  factory _$VirtSnapChainCopyWith(_VirtSnapChain value, $Res Function(_VirtSnapChain) _then) = __$VirtSnapChainCopyWithImpl;
+@override @useResult
+$Res call({
+ List<VirtSnapChainDisk> disks, String? blocked, String? refusal, List<String> pools
+});
+
+
+
+
+}
+/// @nodoc
+class __$VirtSnapChainCopyWithImpl<$Res>
+    implements _$VirtSnapChainCopyWith<$Res> {
+  __$VirtSnapChainCopyWithImpl(this._self, this._then);
+
+  final _VirtSnapChain _self;
+  final $Res Function(_VirtSnapChain) _then;
+
+/// Create a copy of VirtSnapChain
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? disks = null,Object? blocked = freezed,Object? refusal = freezed,Object? pools = null,}) {
+  return _then(_VirtSnapChain(
+disks: null == disks ? _self._disks : disks // ignore: cast_nullable_to_non_nullable
+as List<VirtSnapChainDisk>,blocked: freezed == blocked ? _self.blocked : blocked // ignore: cast_nullable_to_non_nullable
+as String?,refusal: freezed == refusal ? _self.refusal : refusal // ignore: cast_nullable_to_non_nullable
+as String?,pools: null == pools ? _self._pools : pools // ignore: cast_nullable_to_non_nullable
+as List<String>,
+  ));
+}
+
+
+}
+
+/// @nodoc
+mixin _$VirtSnapDiff {
+
+ VirtSnapDiffGroup get group;/// The configuration key, e.g. `vcpu`, `scsi0`, `net0`.
+ String get key;/// What the snapshot has.
+ String? get before;/// What the guest has now.
+ String? get after;
+/// Create a copy of VirtSnapDiff
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$VirtSnapDiffCopyWith<VirtSnapDiff> get copyWith => _$VirtSnapDiffCopyWithImpl<VirtSnapDiff>(this as VirtSnapDiff, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtSnapDiff&&(identical(other.group, group) || other.group == group)&&(identical(other.key, key) || other.key == key)&&(identical(other.before, before) || other.before == before)&&(identical(other.after, after) || other.after == after));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,group,key,before,after);
+
+@override
+String toString() {
+  return 'VirtSnapDiff(group: $group, key: $key, before: $before, after: $after)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $VirtSnapDiffCopyWith<$Res>  {
+  factory $VirtSnapDiffCopyWith(VirtSnapDiff value, $Res Function(VirtSnapDiff) _then) = _$VirtSnapDiffCopyWithImpl;
+@useResult
+$Res call({
+ VirtSnapDiffGroup group, String key, String? before, String? after
+});
+
+
+
+
+}
+/// @nodoc
+class _$VirtSnapDiffCopyWithImpl<$Res>
+    implements $VirtSnapDiffCopyWith<$Res> {
+  _$VirtSnapDiffCopyWithImpl(this._self, this._then);
+
+  final VirtSnapDiff _self;
+  final $Res Function(VirtSnapDiff) _then;
+
+/// Create a copy of VirtSnapDiff
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? group = null,Object? key = null,Object? before = freezed,Object? after = freezed,}) {
+  return _then(_self.copyWith(
+group: null == group ? _self.group : group // ignore: cast_nullable_to_non_nullable
+as VirtSnapDiffGroup,key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
+as String,before: freezed == before ? _self.before : before // ignore: cast_nullable_to_non_nullable
+as String?,after: freezed == after ? _self.after : after // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [VirtSnapDiff].
+extension VirtSnapDiffPatterns on VirtSnapDiff {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _VirtSnapDiff value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _VirtSnapDiff() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _VirtSnapDiff value)  $default,){
+final _that = this;
+switch (_that) {
+case _VirtSnapDiff():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _VirtSnapDiff value)?  $default,){
+final _that = this;
+switch (_that) {
+case _VirtSnapDiff() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( VirtSnapDiffGroup group,  String key,  String? before,  String? after)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _VirtSnapDiff() when $default != null:
+return $default(_that.group,_that.key,_that.before,_that.after);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( VirtSnapDiffGroup group,  String key,  String? before,  String? after)  $default,) {final _that = this;
+switch (_that) {
+case _VirtSnapDiff():
+return $default(_that.group,_that.key,_that.before,_that.after);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( VirtSnapDiffGroup group,  String key,  String? before,  String? after)?  $default,) {final _that = this;
+switch (_that) {
+case _VirtSnapDiff() when $default != null:
+return $default(_that.group,_that.key,_that.before,_that.after);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _VirtSnapDiff extends VirtSnapDiff {
+  const _VirtSnapDiff({required this.group, required this.key, this.before, this.after}): super._();
+  
+
+@override final  VirtSnapDiffGroup group;
+/// The configuration key, e.g. `vcpu`, `scsi0`, `net0`.
+@override final  String key;
+/// What the snapshot has.
+@override final  String? before;
+/// What the guest has now.
+@override final  String? after;
+
+/// Create a copy of VirtSnapDiff
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$VirtSnapDiffCopyWith<_VirtSnapDiff> get copyWith => __$VirtSnapDiffCopyWithImpl<_VirtSnapDiff>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtSnapDiff&&(identical(other.group, group) || other.group == group)&&(identical(other.key, key) || other.key == key)&&(identical(other.before, before) || other.before == before)&&(identical(other.after, after) || other.after == after));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,group,key,before,after);
+
+@override
+String toString() {
+  return 'VirtSnapDiff(group: $group, key: $key, before: $before, after: $after)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$VirtSnapDiffCopyWith<$Res> implements $VirtSnapDiffCopyWith<$Res> {
+  factory _$VirtSnapDiffCopyWith(_VirtSnapDiff value, $Res Function(_VirtSnapDiff) _then) = __$VirtSnapDiffCopyWithImpl;
+@override @useResult
+$Res call({
+ VirtSnapDiffGroup group, String key, String? before, String? after
+});
+
+
+
+
+}
+/// @nodoc
+class __$VirtSnapDiffCopyWithImpl<$Res>
+    implements _$VirtSnapDiffCopyWith<$Res> {
+  __$VirtSnapDiffCopyWithImpl(this._self, this._then);
+
+  final _VirtSnapDiff _self;
+  final $Res Function(_VirtSnapDiff) _then;
+
+/// Create a copy of VirtSnapDiff
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? group = null,Object? key = null,Object? before = freezed,Object? after = freezed,}) {
+  return _then(_VirtSnapDiff(
+group: null == group ? _self.group : group // ignore: cast_nullable_to_non_nullable
+as VirtSnapDiffGroup,key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
+as String,before: freezed == before ? _self.before : before // ignore: cast_nullable_to_non_nullable
+as String?,after: freezed == after ? _self.after : after // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

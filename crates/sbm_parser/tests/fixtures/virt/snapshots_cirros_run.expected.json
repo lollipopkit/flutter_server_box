@@ -7,6 +7,18 @@
     "creation_time": 1790335495,
     "memory": true,
     "external": false,
+    "layers": [
+      {
+        "target": "vda",
+        "file": null,
+        "snapshot": "internal"
+      },
+      {
+        "target": "vdb",
+        "file": null,
+        "snapshot": "internal"
+      }
+    ],
     "current": true
   },
   {
@@ -17,6 +29,18 @@
     "creation_time": 1790335511,
     "memory": true,
     "external": false,
+    "layers": [
+      {
+        "target": "vda",
+        "file": null,
+        "snapshot": "internal"
+      },
+      {
+        "target": "vdb",
+        "file": null,
+        "snapshot": "internal"
+      }
+    ],
     "current": false
   },
   {
@@ -27,6 +51,18 @@
     "creation_time": 1790335508,
     "memory": false,
     "external": false,
+    "layers": [
+      {
+        "target": "vda",
+        "file": null,
+        "snapshot": "internal"
+      },
+      {
+        "target": "vdb",
+        "file": null,
+        "snapshot": "internal"
+      }
+    ],
     "current": false
   }
 ]

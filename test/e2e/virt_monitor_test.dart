@@ -89,6 +89,7 @@ import 'package:server_box/data/model/virt/virt_backup.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_hardware.dart';
+import 'package:server_box/data/model/virt/virt_manage.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/remote_desktop.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -148,6 +149,7 @@ Future<void> main() async {
   if (libvirt != null) _libvirtHardware(libvirt);
   if (libvirt != null) _libvirtHardwareDevices(libvirt);
   if (libvirt != null) _libvirtClone(libvirt);
+  if (pve != null) _p8Pve(pve);
   if (pve != null) _pveCreate(pve);
   if (pve != null) _pveCloneBackup(pve);
   if (pve != null) _pveHardware(pve);
@@ -157,6 +159,8 @@ Future<void> main() async {
   } else {
     test('libvirt over monitor', () {}, skip: 'SBM_E2E_MONITOR_LIBVIRT_* unset');
   }
+  if (libvirt != null) _p8Libvirt(libvirt);
+
   if (pve != null) {
     _pve(pve);
     _pveTestVm(pve);
@@ -775,7 +779,27 @@ void _libvirtClone(_Agent agent) {
   group('clone: libvirt over the monitor agent', () {
     late _World w;
     final name = _e2eName('cl');
-    final names = [name, '$name-full', '$name-empty'];
+    /// What the group makes, whatever a test got to: the cross-pool test's
+    /// two as well, which the first test's cleanup leaves alone.
+    final names = [
+      name,
+      '$name-full',
+      '$name-empty',
+      '$name-cross',
+      '$name-cross-src',
+    ];
+
+    /// The three the first test makes.
+    final ownNames = [name, '$name-full', '$name-empty'];
+
+    /// The pool a copy is sent to by name: `SBM_E2E_LIBVIRT_CROSS_POOL`. Set
+    /// it where the host has a second pool that takes volumes; the cross-pool
+    /// test skips otherwise.
+    final crossPool = e2eEnv('SBM_E2E_LIBVIRT_CROSS_POOL');
+
+    /// The guests this group made, deleted in `tearDownAll` whatever a test
+    /// did with them.
+    final made = <String>[];
 
     setUpAll(() async {
       w = _World(agent.spi('e2e-monitor-libvirt-clone'));
@@ -861,12 +885,91 @@ void _libvirtClone(_Agent agent) {
       );
       expect(taken.type, VirtErrType.exists);
 
-      for (final n in names.reversed) {
+      for (final n in ownNames.reversed) {
         final g = w.guest((g) => g.name == n, n);
         await w.host.delete(g.id);
       }
-      final vols = (await w.host.volumes(pool)).map((v) => v.name);
+      final vols = (await w.host.volumes(
+        (await w.host.storagePools()).firstWhere((p) => p.id == pool.id),
+      )).map((v) => v.name);
       expect(vols.where((v) => v.startsWith(name)), isEmpty);
+    });
+
+    /// A copy whose disks go to a pool the source's are not in: libvirt's
+    /// `vol-clone` cannot do that, so the backend copies with
+    /// `vol-create-from` and the source's own pool as the input. Skipped
+    /// where the host has only one pool that takes a volume.
+    test('a copy into another pool', () async {
+      final pools = virtDiskStorages(
+        await w.host.storagePools(),
+        host: VirtHostKind.libvirt,
+        kind: VirtGuestKind.qemu,
+      );
+      final wanted = crossPool;
+      final target = pools.firstWhereOrNull((p) => p.name == wanted);
+      if (target == null) {
+        markTestSkipped('SBM_E2E_LIBVIRT_CROSS_POOL unset or not a pool here');
+        return;
+      }
+      final source = pools.firstWhere((p) => p.id != target.id);
+      final created = await w.host.create(
+        VirtCreateSpec(
+          kind: VirtGuestKind.qemu,
+          name: '$name-cross-src',
+          cores: 1,
+          memoryMiB: 128,
+          storage: source,
+          diskGiB: 1,
+        ),
+      );
+      made.add(created.id);
+      final src = w.guest((g) => g.id == created.id, '$name-cross-src');
+      // As the source's pool is *after* the source itself was made: what the
+      // clone adds is the difference.
+      final before = (await w.host.volumes(
+        (await w.host.storagePools()).firstWhere((p) => p.id == source.id),
+      )).map((v) => v.id).toSet();
+
+      final id = await w.host.clone(
+        src.id,
+        VirtCloneRequest(
+          name: '$name-cross',
+          targetPool: target.name,
+        ),
+      );
+      made.add(id);
+      final copy = w.guest((g) => g.id == id, '$name-cross');
+      final detail = await w.host.detail(copy.id);
+      final disk = detail.disks.firstWhere((d) => d.device == 'disk');
+      expect(disk.format, 'qcow2');
+      expect(disk.source, contains(target.path ?? target.name));
+      // A pool's volume list is a read of its own: what a clone added is
+      // there after the host is asked again.
+      final fresh = await w.host.storagePools();
+      final inTarget = (await w.host.volumes(
+        fresh.firstWhere((p) => p.id == target.id),
+      )).map((v) => v.name);
+      expect(inTarget, contains('$name-cross.qcow2'));
+      expect(
+        (await w.host.volumes(
+          fresh.firstWhere((p) => p.id == source.id),
+        )).map((v) => v.id).toSet().difference(before),
+        isEmpty,
+      );
+
+      for (final g in [copy, src]) {
+        await w.host.refresh();
+        final fresh = w.state.guest(g.id);
+        if (fresh == null) continue;
+        await w.host.delete(fresh.id, removeDisks: true);
+        made.remove(fresh.id);
+      }
+      expect(
+        (await w.host.volumes(
+          (await w.host.storagePools()).firstWhere((p) => p.id == target.id),
+        )).map((v) => v.name),
+        isNot(contains('$name-cross.qcow2')),
+      );
     });
   });
 }
@@ -2220,8 +2323,307 @@ void _pveCloneBackup(_Agent agent) {
         made.remove(id);
       }
     });
+
+    /// A guest turned into a template, cloned from it, and the template
+    /// deleted: the state reads as one, no power action is offered, PVE
+    /// refuses to start it, and a linked clone shares its base image.
+    test('a template: made, cloned, and never started', () async {
+      final snap = w.state.data!;
+      if (!snap.capabilities.template) {
+        markTestSkipped('this host has no templates');
+        return;
+      }
+      final node = snap.host.nodes.firstWhere((n) => n.online).name;
+      final storage = virtDiskStorages(
+        await w.host.storagePools(),
+        host: VirtHostKind.pve,
+        kind: VirtGuestKind.qemu,
+        node: node,
+      ).first;
+      final vmid = (await w.host.nextVmid())!;
+      final created = await w.host.create(
+        VirtCreateSpec(
+          kind: VirtGuestKind.qemu,
+          name: '$name-tpl',
+          node: node,
+          vmid: vmid,
+          cores: 1,
+          memoryMiB: 128,
+          storage: storage,
+          diskGiB: 1,
+        ),
+      );
+      made.add(created.id);
+      // `/cluster/resources` names a new guest a moment after its task, and
+      // a previous run's VMID may still be in that list with its old name.
+      final src = await w.settle(
+        (g) => g.id == created.id,
+        '$name-tpl',
+        (g) => g.name == '$name-tpl',
+      );
+      expect(src.template, isFalse);
+
+      // Running: refused before anything is asked.
+      await w.host.power(src.id, VirtPowerAction.start);
+      await w.settle(
+        (g) => g.id == src.id,
+        '$name-tpl',
+        (g) => g.state == VirtGuestState.running,
+      );
+      final running = await _virtErr(w.host.makeTemplate(src.id));
+      expect(running.type, VirtErrType.unsupported);
+      await w.host.power(src.id, VirtPowerAction.forceStop);
+      await w.settle(
+        (g) => g.id == src.id,
+        '$name-tpl',
+        (g) => g.state == VirtGuestState.stopped,
+      );
+
+      await w.host.makeTemplate(src.id);
+      final tpl = await w.settle(
+        (g) => g.id == src.id,
+        '$name-tpl',
+        (g) => g.template,
+      );
+      // A template offers nothing: no start, no stop, nothing.
+      expect(tpl.actions, isEmpty);
+      expect(w.state.actionsOf(tpl), isEmpty);
+      // PVE refuses the start itself, in its own words.
+      final startRefused = await _virtErr(
+        w.host.power(tpl.id, VirtPowerAction.start),
+      );
+      expect(startRefused.type, VirtErrType.unsupported);
+      // Making a template of a template is refused here, not by PVE.
+      expect((await _virtErr(w.host.makeTemplate(tpl.id))).type, VirtErrType.unsupported);
+
+      // A linked clone shares the template's disks; a full one copies them.
+      final linkedId = await w.host.clone(
+        tpl.id,
+        VirtCloneRequest(name: '$name-linked', full: false),
+      );
+      made.add(linkedId);
+      final linked = await w.settle(
+        (g) => g.id == linkedId,
+        '$name-linked',
+        (g) => g.name == '$name-linked',
+      );
+      expect(linked.template, isFalse);
+      final linkedHw = await w.host.hardware(linked.id);
+      expect(
+        linkedHw.disks.where((d) => d.kind == VirtHwDiskKind.disk),
+        isNotEmpty,
+      );
+      // A storage and a node cannot be named on a linked clone (PVE refuses
+      // both: `parameter 'storage' not allowed for linked clones`), so the
+      // form refuses it — and the backend sends neither even if one is
+      // passed, which is what makes this clone land at all.
+      expect(
+        virtCloneStorageIssue(
+          storages: await w.host.storagePools(),
+          storage: storage.name,
+          full: false,
+        ),
+        VirtCreateIssue.cloneLinkedTarget,
+      );
+      expect(
+        (await w.host.checkSchedule('02:30')).ok,
+        isTrue,
+        reason: 'the schedule call works on the same account',
+      );
+      final linkedTargetId = await w.host.clone(
+        tpl.id,
+        VirtCloneRequest(
+          name: '$name-linked-target',
+          full: false,
+          storage: storage.name,
+        ),
+      );
+      made.add(linkedTargetId);
+      final linkedTarget = await w.settle(
+        (g) => g.id == linkedTargetId,
+        '$name-linked-target',
+        (g) => g.name == '$name-linked-target',
+      );
+      // It shares the template's disk: the storage named was not used.
+      expect(linkedTarget.template, isFalse);
+
+      // A full clone of the template, onto the storage it is already on.
+      final fullId = await w.host.clone(
+        tpl.id,
+        VirtCloneRequest(
+          name: '$name-tpl-full',
+          full: true,
+          storage: storage.name,
+        ),
+      );
+      made.add(fullId);
+      final full = await w.settle(
+        (g) => g.id == fullId,
+        '$name-tpl-full',
+        (g) => g.name == '$name-tpl-full',
+      );
+      expect(full.template, isFalse);
+
+      // The clone runs; the template still does not.
+      await w.host.power(linked.id, VirtPowerAction.start);
+      await w.settle(
+        (g) => g.id == linked.id,
+        '$name-linked',
+        (g) => g.state == VirtGuestState.running,
+      );
+
+      for (final id in [linkedTarget.id, linked.id, full.id, tpl.id]) {
+        await w.host.refresh();
+        final fresh = w.state.guest(id);
+        if (fresh == null) continue;
+        if (fresh.state != VirtGuestState.stopped) {
+          await w.host.power(fresh.id, VirtPowerAction.forceStop);
+          await w.host.refresh();
+        }
+        await w.host.delete(fresh.id);
+        made.remove(fresh.id);
+      }
+    });
+
+    /// The datacenter's backup jobs: made, listed, edited, run now and
+    /// deleted, through the app's own calls. The job names this run's guest,
+    /// so nothing else is backed up by it.
+    test('a backup job: made, edited, run, deleted', () async {
+      final snap = w.state.data!;
+      if (!snap.capabilities.backupJobs) {
+        markTestSkipped('this host has no backup jobs');
+        return;
+      }
+      final node = snap.host.nodes.firstWhere((n) => n.online).name;
+      final storages = await w.host.allBackupStorages();
+      expect(storages, isNotEmpty, reason: 'no storage takes backups');
+      final target = storages.firstWhere((s) => s.node == node);
+      final storage = virtDiskStorages(
+        await w.host.storagePools(),
+        host: VirtHostKind.pve,
+        kind: VirtGuestKind.qemu,
+        node: node,
+      ).first;
+      final vmid = (await w.host.nextVmid())!;
+      final created = await w.host.create(
+        VirtCreateSpec(
+          kind: VirtGuestKind.qemu,
+          name: '$name-job',
+          node: node,
+          vmid: vmid,
+          cores: 1,
+          memoryMiB: 128,
+          storage: storage,
+          diskGiB: 1,
+        ),
+      );
+      made.add(created.id);
+      final src = await w.settle(
+        (g) => g.id == created.id,
+        '$name-job',
+        (g) => g.name == '$name-job',
+      );
+
+      // What the host makes of a schedule, before anything is written: the
+      // call PVE's own editor's Simulate button makes.
+      expect((await w.host.checkSchedule('mon..fri 02:30')).ok, isTrue);
+      expect(
+        (await w.host.checkSchedule('mon..fri 02:30')).next,
+        isNotEmpty,
+      );
+      final refused = await w.host.checkSchedule('not a schedule');
+      expect(refused.ok, isFalse);
+      expect(refused.error, isNotNull);
+
+      final before = await w.host.allBackupJobs();
+      await w.host.editBackupJob(
+        VirtBackupJobEdit(
+          id: '$name-job',
+          isNew: true,
+          node: node,
+          storage: target.name,
+          schedule: 'mon..fri 02:30',
+          mode: 'snapshot',
+          compress: 'zstd',
+          enabled: false,
+          vmids: [src.vmid!],
+          notesTemplate: 'sb e2e {{guestname}}',
+          mailNotification: 'failure',
+          prune: 'keep-last=2',
+        ),
+      );
+      final jobs = await w.host.allBackupJobs();
+      expect(jobs, hasLength(before.length + 1));
+      final job = jobs.firstWhere((j) => j.id == '$name-job');
+      expect(job.schedule, 'mon..fri 02:30');
+      expect(job.storage, target.name);
+      expect((job.mode, job.compress), ('snapshot', 'zstd'));
+      expect(job.enabled, isFalse);
+      expect(job.vmids, [src.vmid]);
+      expect(job.takes(src.vmid), isTrue);
+      expect(job.notesTemplate, 'sb e2e {{guestname}}');
+      expect(job.mailNotification, 'failure');
+      expect(job.prune, 'keep-last=2');
+      expect(job.node, node);
+      // The guest's own Plan group finds it; another VMID does not.
+      expect(
+        (await w.host.backupJobs(src.id)).map((j) => j.id),
+        contains('$name-job'),
+      );
+
+      // Edited: the schedule and the mode, and off `all`.
+      await w.host.editBackupJob(
+        _jobEditOf(job, schedule: 'sat 03:00', mode: 'stop'),
+      );
+      final edited = (await w.host.allBackupJobs())
+          .firstWhere((j) => j.id == '$name-job');
+      expect((edited.schedule, edited.mode), ('sat 03:00', 'stop'));
+
+      // Run now: the job's own fields without its schedule.
+      await w.host.runBackupJob(edited);
+      final backups = await w.host.backups(src.id);
+      expect(backups, isNotEmpty, reason: 'the run made no backup');
+      for (final b in backups) {
+        await w.host.deleteBackup(src.id, b);
+      }
+
+      // Deleted, with the guest's own backups left where they were.
+      await w.host.editBackupJob(_jobEditOf(edited), remove: true);
+      expect(
+        (await w.host.allBackupJobs()).map((j) => j.id),
+        isNot(contains('$name-job')),
+      );
+
+      await w.host.refresh();
+      await w.host.delete(src.id);
+      made.remove(src.id);
+    });
   });
 }
+
+/// [job] with the fields named replaced, the rest as they are: what an edit
+/// of an existing job is.
+VirtBackupJobEdit _jobEditOf(
+  VirtBackupJob job, {
+  String? schedule,
+  String? mode,
+}) => VirtBackupJobEdit(
+  id: job.id,
+  node: job.node,
+  storage: job.storage ?? '',
+  schedule: schedule ?? job.schedule ?? '',
+  mode: mode ?? job.mode ?? 'snapshot',
+  compress: job.compress ?? 'zstd',
+  enabled: job.enabled,
+  all: job.all,
+  vmids: job.vmids,
+  exclude: job.exclude,
+  pool: job.pool,
+  comment: job.comment,
+  notesTemplate: job.notesTemplate,
+  mailNotification: job.mailNotification,
+  prune: job.prune,
+);
 
 void _pve(_Agent agent) {
   final tokenId = e2eEnv('SBM_E2E_PVE_TOKEN_ID');
@@ -2771,4 +3173,370 @@ List<int> _vncResponse(String password, List<int> challenge) {
   des.processBlock(input, 0, out, 0);
   des.processBlock(input, 8, out, 8);
   return out;
+}
+
+// -----------------------------------------------------------------------------
+// External snapshots, the chain and the diff (phase 8)
+// -----------------------------------------------------------------------------
+
+/// Over the agent: the whole phase-8 path through the providers, which is what
+/// the app runs. `SBM_E2E_LIBVIRT_CLOUD_IMAGE`'s pool is not needed — the
+/// guest is made with the create set the other groups use.
+void _p8Libvirt(_Agent agent) {
+  final sudoPassword = e2eEnv('SBM_E2E_MONITOR_SUDO_PASSWORD');
+
+  group('snapshots: external, chain and diff over the monitor agent', () {
+    late _World w;
+    final name = _e2eName('snapext');
+
+    setUpAll(() async {
+      w = _World(agent.spi('e2e-monitor-libvirt-snapext'));
+      await w.host.firstLoad;
+      if (w.state.error?.type == VirtErrType.sudoPasswordRequired &&
+          sudoPassword != null) {
+        await w.host.provideSudoPassword(sudoPassword);
+      }
+      expect(w.state.error, isNull, reason: '${w.state.error}');
+    });
+    tearDownAll(() async {
+      final left = w.state.data?.guests.where((g) => g.name == name);
+      for (final g in left ?? const <VirtGuest>[]) {
+        try {
+          if (g.state != VirtGuestState.stopped) {
+            await w.host.power(g.id, VirtPowerAction.forceStop);
+            await w.host.refresh();
+          }
+          await w.host.delete(g.id);
+        } catch (_) {}
+      }
+      await w.dispose();
+    });
+
+    test('a disk-only snapshot while running: the chain, the diff, a revert',
+        () async {
+      final snap = w.state.data!;
+      expect(
+        snap.capabilities.snapshotExternal,
+        isTrue,
+        reason: 'libvirt writes external snapshots',
+      );
+      final pools = await w.host.storagePools();
+      final pool = virtDiskStorages(
+        pools,
+        host: VirtHostKind.libvirt,
+        kind: VirtGuestKind.qemu,
+      ).first;
+      await w.host.create(
+        VirtCreateSpec(
+          kind: VirtGuestKind.qemu,
+          name: name,
+          cores: 1,
+          memoryMiB: 256,
+          storage: pool,
+          diskGiB: 1,
+          start: true,
+        ),
+      );
+      final g = await w.settle(
+        (x) => x.name == name,
+        name,
+        (x) => x.state == VirtGuestState.running,
+      );
+
+      final before = await w.host.snapshotChain(g.id);
+      expect(before.disks, isNotEmpty);
+      expect(before.hasOverlays, isFalse);
+      expect(await w.host.snapshotRefusal(g.id), isNull);
+
+      await w.host.createSnapshot(
+        g.id,
+        name: 'sbxe2e-ext',
+        form: VirtSnapshotForm.external,
+      );
+      final running = await w.settle(
+        (x) => x.name == name,
+        name,
+        (x) => x.state == VirtGuestState.running,
+      );
+      final after = await w.host.snapshotChain(running.id);
+      expect(after.hasOverlays, isTrue, reason: 'the guest is on an overlay');
+      expect(after.depth, 2);
+      expect(
+        after.disks.first.files.first.backing,
+        before.disks.first.files.first.path,
+      );
+      expect(after.disks.first.files.first.snap, 'sbxe2e-ext');
+
+      // The listing carries the layer's file.
+      final listed = await w.host.snapshots(running.id);
+      final ext = listed.singleWhere((s) => s.name == 'sbxe2e-ext');
+      expect(ext.external, isTrue);
+      expect(ext.withMemory, isFalse);
+      expect(ext.layers, isNotEmpty);
+
+      // The diff: a memory change in the definition while the snapshot stays.
+      final hw = await w.host.hardware(running.id);
+      await w.host.changeHardware(
+        running.id,
+        hw,
+        const VirtHwSetMemory(mib: 384),
+      );
+      final diff = await w.host.snapshotDiff(running.id, 'sbxe2e-ext');
+      expect(
+        diff.any((d) => d.group == VirtSnapDiffGroup.memory),
+        isTrue,
+        reason: '$diff',
+      );
+
+      // A second snapshot deepens the chain, and this one deletes cleanly:
+      // nothing was reverted behind it, so its layer's file is still there.
+      await w.host.createSnapshot(
+        running.id,
+        name: 'sbxe2e-plain',
+        form: VirtSnapshotForm.external,
+      );
+      final deeper = await w.settle(
+        (x) => x.name == name,
+        name,
+        (x) => x.state == VirtGuestState.running,
+      );
+      expect((await w.host.snapshotChain(deeper.id)).depth, 3);
+      await w.host.deleteSnapshot(deeper.id, 'sbxe2e-plain');
+      final lean = w.guest((x) => x.name == name, name);
+      expect(
+        (await w.host.snapshots(lean.id)).map((s) => s.name),
+        isNot(contains('sbxe2e-plain')),
+      );
+      expect((await w.host.snapshotChain(lean.id)).depth, 2);
+
+      // Reverting to it (a leaf) puts the guest back and collapses the chain.
+      await w.host.revertSnapshot(running.id, 'sbxe2e-ext', start: true);
+      await w.settle((x) => x.name == name, name, (x) => true);
+      final back = w.guest((x) => x.name == name, name);
+      final flat = await w.host.snapshotChain(back.id);
+      expect(flat.disks.first.files.length, lessThan(3));
+      // The chain is still readable, which is the app's own rule: a guest is
+      // never left on one it cannot read back.
+      expect(flat.disks.first.isChain, isTrue);
+      expect(flat.disks.first.files.first.format, 'qcow2');
+      // And the guest is on a file that is there.
+      expect(flat.disks.first.files.first.path, isNotEmpty);
+
+      // Deleting the snapshot that was reverted to is refused by libvirt
+      // itself: its layer's file is gone (the revert collapsed the chain),
+      // and `block-commit` cannot open the base as the QEMU user. The app
+      // says so in the host's words rather than pretending it worked.
+      final e = await _virtErr(w.host.deleteSnapshot(back.id, 'sbxe2e-ext'));
+      expect(e.type, VirtErrType.permissionDenied);
+      expect(e.message, contains('block-commit'));
+      expect(
+        (await w.host.snapshots(back.id)).map((s) => s.name),
+        contains('sbxe2e-ext'),
+      );
+    });
+
+  });
+}
+
+// -----------------------------------------------------------------------------
+// PVE: storage support and the config diff (phase 8)
+// -----------------------------------------------------------------------------
+
+/// Over the agent's relay. The token needs `VM.Audit`, `VM.Snapshot`,
+/// `VM.Snapshot.Rollback`, `VM.Config.Memory` and `Datastore.AllocateSpace`.
+void _p8Pve(_Agent agent) {
+  final tokenId = e2eEnv('SBM_E2E_PVE_TOKEN_ID');
+  final tokenSecret = e2eEnv('SBM_E2E_PVE_TOKEN_SECRET');
+  if (tokenId == null || tokenSecret == null) return;
+
+  group('snapshots: storage support and the diff (PVE relay)', () {
+    late _World w;
+    final name = _e2eName('snappve');
+    final made = <String>[];
+    /// A directory storage the run added, with the path to remove.
+    final madeDir = <(String, String)>[];
+
+    setUpAll(() async {
+      w = _World(agent.spi('e2e-monitor-pve-snap'));
+      Stores.pve.put(
+        w.id,
+        PveConfig(
+          addr: 'https://localhost:8006',
+          auth: PveAuth.token,
+          tokenId: tokenId,
+          tokenSecret: tokenSecret,
+        ),
+      );
+      await w.host.firstLoad;
+      final cert = w.state.error?.cert;
+      if (cert != null) await w.host.confirmCert(cert.fingerprint);
+      expect(w.state.error, isNull, reason: '${w.state.error}');
+    });
+    tearDownAll(() async {
+      await w.host.refresh();
+      for (final id in made) {
+        final g = w.state.guest(id);
+        if (g == null) continue;
+        try {
+          for (final s in await w.host.snapshots(id)) {
+            await w.host.deleteSnapshot(id, s.name);
+          }
+        } catch (_) {}
+        try {
+          if (g.state != VirtGuestState.stopped) {
+            await w.host.power(id, VirtPowerAction.forceStop);
+            await w.host.refresh();
+          }
+          await w.host.delete(id);
+        } catch (_) {}
+      }
+      for (final (store, _) in madeDir) {
+        try {
+          final p = (await w.host.storagePools()).firstWhere(
+            (x) => x.name == store,
+          );
+          await w.host.manage(VirtPoolDelete(p, deleteStorage: true));
+        } catch (_) {}
+      }
+      await w.dispose();
+    });
+
+    test('a thin storage snapshots, and the diff reads a memory change',
+        () async {
+      final snap = w.state.data!;
+      expect(snap.capabilities.snapshotSupported, isTrue);
+      final node = snap.host.nodes.firstWhere((n) => n.online).name;
+      final storage = virtDiskStorages(
+        await w.host.storagePools(),
+        host: VirtHostKind.pve,
+        kind: VirtGuestKind.qemu,
+        node: node,
+      ).first;
+      final vmid = (await w.host.nextVmid())!;
+      await w.host.create(
+        VirtCreateSpec(
+          kind: VirtGuestKind.qemu,
+          name: name,
+          node: node,
+          vmid: vmid,
+          cores: 1,
+          memoryMiB: 128,
+          storage: storage,
+          diskGiB: 1,
+          start: true,
+        ),
+      );
+      final g = await w.settle(
+        (x) => x.vmid == vmid,
+        name,
+        (x) => x.state == VirtGuestState.running,
+      );
+      made.add(g.id);
+      // PVE's own answer about this guest's storages.
+      expect(
+        await w.host.snapshotRefusal(g.id),
+        isNull,
+        reason: 'a thin volume can be snapshotted',
+      );
+
+      await w.host.createSnapshot(g.id, name: 'sbxe2e-p8', description: 'one');
+      expect(
+        (await w.host.snapshots(g.id)).map((s) => s.name),
+        contains('sbxe2e-p8'),
+      );
+
+      // A real change in the configuration, then the diff.
+      final hw = await w.host.hardware(g.id);
+      await w.host.changeHardware(g.id, hw, const VirtHwSetMemory(mib: 256));
+      final diff = await w.host.snapshotDiff(g.id, 'sbxe2e-p8');
+      final mem = diff.where((d) => d.group == VirtSnapDiffGroup.memory);
+      expect(mem, isNotEmpty, reason: '$diff');
+      expect(mem.first.before, isNotNull);
+      expect(mem.first.after, '256');
+      // The listing's own keys are not a difference.
+      expect(diff.any((d) => d.key == 'digest'), isFalse);
+      expect(diff.any((d) => d.key == 'snaptime'), isFalse);
+
+      await w.host.deleteSnapshot(g.id, 'sbxe2e-p8');
+      expect(
+        (await w.host.snapshots(g.id)).map((s) => s.name),
+        isNot(contains('sbxe2e-p8')),
+      );
+    });
+
+    test('a raw disk on a directory storage is refused before the task',
+        () async {
+      final snap = w.state.data!;
+      final node = snap.host.nodes.firstWhere((n) => n.online).name;
+      final pools = await w.host.storagePools();
+      // A directory storage holds files: a disk on one is raw, and PVE's own
+      // feature answer says no.
+      // The node has no `dir` storage holding images (a file storage holds
+      // files, which is the point): one is added for the run and removed at
+      // the end, the way the storage groups do it.
+      final store = 'sbxe2e-p8dir';
+      final path = '/var/lib/$store';
+      var dir = pools.firstWhere(
+        (p) =>
+            p.node == node &&
+            p.type == 'dir' &&
+            p.content.contains('images') &&
+            p.active,
+        orElse: () => const VirtStoragePool(
+          id: '',
+          name: '',
+          type: '',
+          path: null,
+        ),
+      );
+      if (dir.name.isEmpty) {
+        await w.host.manage(
+          VirtPoolCreate(
+            name: store,
+            type: 'dir',
+            source: path,
+            node: node,
+            content: const ['images'],
+          ),
+        );
+        dir = (await w.host.storagePools()).firstWhere(
+          (p) => p.name == store && p.node == node,
+        );
+        madeDir.add((store, path));
+      }
+      final vmid = (await w.host.nextVmid())!;
+      await w.host.create(
+        VirtCreateSpec(
+          kind: VirtGuestKind.qemu,
+          name: _e2eName('snapraw'),
+          node: node,
+          vmid: vmid,
+          cores: 1,
+          memoryMiB: 128,
+          storage: dir,
+          diskGiB: 1,
+        ),
+      );
+      // The listing names a new guest a moment after its task.
+      final g = await w.settle((x) => x.vmid == vmid, '$vmid', (x) => true);
+      made.add(g.id);
+      expect(
+        await w.host.snapshotSupported(g.id),
+        isFalse,
+        reason: 'PVE snapshots a whole volume; a file is not one',
+      );
+      final why = await w.host.snapshotRefusal(g.id);
+      expect(why, contains('snapshot feature is not available'));
+      expect(why, contains(dir.name));
+      final e = await _virtErr(
+        w.host.createSnapshot(g.id, name: 'sbxe2e-p8raw'),
+      );
+      expect(e.type, VirtErrType.unsupported);
+      expect(
+        (await w.host.snapshots(g.id)).map((s) => s.name),
+        isNot(contains('sbxe2e-p8raw')),
+        reason: 'no task was started',
+      );
+    });
+  });
 }

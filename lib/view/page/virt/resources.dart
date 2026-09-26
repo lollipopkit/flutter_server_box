@@ -91,7 +91,7 @@ class VirtPoolList extends ConsumerWidget {
         if (needle.isEmpty || p.name.toLowerCase().contains(needle)) p,
     ];
     final nodes = {for (final p in shown) ?p.node};
-    return _ResourceColumn(
+    return VirtResourceColumn(
       loading: pools.isLoading,
       error: pools.hasError ? pools.error : null,
       onRefresh: () => ref.refresh(virtStoragePoolsProvider(serverId).future),
@@ -102,7 +102,7 @@ class VirtPoolList extends ConsumerWidget {
         for (final (i, p) in shown.indexed) ...[
           if (nodes.length > 1 && (i == 0 || shown[i - 1].node != p.node))
             SideBarSection(p.node!),
-          _ResourceRow(
+          VirtResourceRow(
             key: ValueKey('pool:${p.id}'),
             icon: Icons.storage_outlined,
             active: p.active,
@@ -150,7 +150,7 @@ class VirtNetworkList extends ConsumerWidget {
         if (needle.isEmpty || n.name.toLowerCase().contains(needle)) n,
     ];
     final nodes = {for (final n in shown) ?n.node};
-    return _ResourceColumn(
+    return VirtResourceColumn(
       loading: nets.isLoading,
       error: nets.hasError ? nets.error : null,
       onRefresh: () {
@@ -166,7 +166,7 @@ class VirtNetworkList extends ConsumerWidget {
         for (final (i, n) in shown.indexed) ...[
           if (nodes.length > 1 && (i == 0 || shown[i - 1].node != n.node))
             SideBarSection(n.node!),
-          _ResourceRow(
+          VirtResourceRow(
             key: ValueKey('net:${n.id}'),
             icon: Icons.lan_outlined,
             active: n.active,
@@ -189,8 +189,9 @@ class VirtNetworkList extends ConsumerWidget {
 }
 
 /// A list under the section pills: progress, failure, rows, pull to refresh.
-class _ResourceColumn extends StatelessWidget {
-  const _ResourceColumn({
+class VirtResourceColumn extends StatelessWidget {
+  const VirtResourceColumn({
+    super.key,
     required this.loading,
     required this.error,
     required this.onRefresh,
@@ -262,8 +263,8 @@ class VirtErrCard extends StatelessWidget {
 }
 
 /// A pool or a network in the list column, drawn like a guest row.
-class _ResourceRow extends StatelessWidget {
-  const _ResourceRow({
+class VirtResourceRow extends StatelessWidget {
+  const VirtResourceRow({
     super.key,
     required this.icon,
     required this.active,

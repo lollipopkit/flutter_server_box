@@ -40,11 +40,13 @@ abstract class VirtBackup with _$VirtBackup {
   }
 }
 
-/// A scheduled backup job (`/cluster/backup`) that takes this guest: the
-/// design's Plan group, read only — jobs are the datacenter's, not a
-/// guest's.
+/// A scheduled backup job (`/cluster/backup`), as the datacenter's Backup
+/// view and a guest's Plan group show it. Edited from the datacenter view
+/// ([VirtBackupJobEdit]); a guest's Plan group reads the jobs that take it.
 @freezed
 abstract class VirtBackupJob with _$VirtBackupJob {
+  const VirtBackupJob._();
+
   const factory VirtBackupJob({
     required String id,
 
@@ -61,7 +63,107 @@ abstract class VirtBackupJob with _$VirtBackupJob {
     /// How many are kept, as PVE's retention says it: `keep-last=7`, ...
     String? keep,
     @Default(true) bool enabled,
+
+    /// `all` (every guest on the job's node), the VMIDs it takes, or — with
+    /// [pool] — the guests of that pool. PVE's `vmid` is a comma list or
+    /// `all`; the two are exclusive.
+    @Default(false) bool all,
+    @Default(<int>[]) List<int> vmids,
+
+    /// PVE's `exclude`, the VMIDs `all` leaves out.
+    @Default(<int>[]) List<int> exclude,
+
+    /// A pool (`VirtBackupJob.pool`), whose guests the job takes.
+    String? pool,
+
+    /// The node it runs on; null: every node.
+    String? node,
+
+    /// The job's own description (`comment`).
+    String? comment,
+
+    /// The notes every backup it makes carries (`notes-template`).
+    String? notesTemplate,
+
+    /// `always` or `failure` (PVE's `mailnotification`, deprecated in PVE 9
+    /// but still what a job stores and its editor sets).
+    String? mailNotification,
+
+    /// The retention, as PVE's `prune-backups` property string:
+    /// `keep-last=7,keep-daily=4`.
+    String? prune,
   }) = _VirtBackupJob;
+
+  /// What the design's Plan group shows as the guest selection: `All`, the
+  /// VMIDs, or the pool.
+  String get selectionLabel => pool != null
+      ? 'pool:$pool'
+      : all
+      ? 'all'
+      : vmids.isEmpty
+      ? '—'
+      : vmids.join(',');
+
+  /// Whether this job takes [vmid].
+  bool takes(int? vmid) {
+    if (vmid == null) return false;
+    if (pool != null) return false;
+    if (all) return !exclude.contains(vmid);
+    return vmids.contains(vmid);
+  }
+}
+
+/// What the datacenter's Backup view edits: one scheduled job, sent as PVE's
+/// own field names. [isNew] makes one (`POST /cluster/backup`); otherwise it
+/// is an edit of the job [`id`] names (`PUT /cluster/backup/{id}`).
+///
+/// The flag is not `id == null`: PVE's own panel lets a new job be given its
+/// id, so a create carries one and still has to be a `POST`. A `PUT` of a job
+/// that is not there is `no such vzdump job`.
+final class VirtBackupJobEdit {
+  const VirtBackupJobEdit({
+    this.id,
+    this.isNew = false,
+    required this.node,
+    required this.storage,
+    required this.schedule,
+    this.mode = 'snapshot',
+    this.compress = 'zstd',
+    this.enabled = true,
+    this.all = false,
+    this.vmids = const [],
+    this.exclude = const [],
+    this.pool,
+    this.comment,
+    this.notesTemplate,
+    this.mailNotification = 'failure',
+    this.prune,
+  });
+
+  /// The job's id: what an edit names, and what a new job is called (PVE
+  /// generates one when this is null).
+  final String? id;
+
+  /// Makes a job rather than editing one.
+  final bool isNew;
+  final String? node;
+  final String storage;
+
+  /// systemd calendar format, as PVE's own `pve-calendar-event` takes it.
+  final String schedule;
+  final String mode;
+  final String compress;
+  final bool enabled;
+
+  /// Every guest on the node (PVE `all`), with [exclude] left out.
+  final bool all;
+  final List<int> vmids;
+  final List<int> exclude;
+  final String? pool;
+  final String? comment;
+  final String? notesTemplate;
+  final String? mailNotification;
+  final String? prune;
 }
 
 /// A backup to take now.
@@ -72,6 +174,7 @@ final class VirtBackupRequest {
     this.compress = 'zstd',
     this.notes,
     this.protected = false,
+    this.prune,
   });
 
   /// A storage that holds backups (PVE content `backup`), by name.
@@ -83,5 +186,18 @@ final class VirtBackupRequest {
   /// `zstd`, `lzo`, `gzip` or `0` for none.
   final String compress;
   final String? notes;
+  final bool protected;
+
+  /// Retention, PVE's `prune-backups` property string; null for the
+  /// storage's or the node's own.
+  final String? prune;
+}
+
+/// What an existing backup's own fields can be changed to (PVE `PUT
+/// .../storage/{id}/content/{volid}`): its notes and its protection.
+final class VirtBackupEdit {
+  const VirtBackupEdit({required this.notes, required this.protected});
+
+  final String notes;
   final bool protected;
 }
