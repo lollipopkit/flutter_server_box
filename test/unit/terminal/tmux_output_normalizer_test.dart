@@ -33,6 +33,16 @@ void main() {
     expect(normalizer(data), data);
   });
 
+  test('keeps OSC 52 for the terminal integration', () {
+    final normalizer = TmuxOutputNormalizer();
+    final data = utf8.encode(
+      '\x1b]52;c;aGk=\x07'
+      '\x1b]52;c;?\x07',
+    );
+
+    expect(normalizer(data), data);
+  });
+
   test('translates tmux title sequences to OSC title', () {
     final normalizer = TmuxOutputNormalizer();
 

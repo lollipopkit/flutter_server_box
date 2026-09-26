@@ -350,9 +350,11 @@ final class TmuxOutputNormalizer {
     if (const {'10', '11', '12'}.contains(code)) {
       return value.isEmpty || value.trim() == '?';
     }
-    if (code == '4' || code == '52') {
+    if (code == '4') {
       return value.split(';').any((item) => item.trim() == '?');
     }
+    // OSC 52 is handled by TerminalSession: set requests write the system
+    // clipboard and query requests generate a response through terminal output.
     return false;
   }
 

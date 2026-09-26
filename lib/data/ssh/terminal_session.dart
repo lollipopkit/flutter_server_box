@@ -2,10 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
-import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/core/diag.dart';
@@ -86,7 +86,9 @@ bool isRetryableTerminalConnectionError(Object error) {
 /// keep-alive, the virtual keyboard, state restoration — stays on the page.
 class TerminalSession {
   TerminalSession({required this.source, ShellBackend? backend})
-    : _backend = backend;
+    : _backend = backend {
+    terminal.onPrivateOSC = _handlePrivateOSC;
+  }
 
   static int _serials = 0;
 
@@ -248,10 +250,11 @@ class TerminalSession {
           : isIOS
           ? 'ish'
           : 'proot';
-      Diag.crumb(SbDiag.terminal, 'open local shell', data: {
-        'kind': kind,
-        'session': session,
-      });
+      Diag.crumb(
+        SbDiag.terminal,
+        'open local shell',
+        data: {'kind': kind, 'session': session},
+      );
       return install(_localBackend(local));
     }
 
@@ -262,9 +265,11 @@ class TerminalSession {
       if (!LocalServer.isSupported) {
         throw const LocalServerErr(type: LocalServerErrType.unsupported);
       }
-      Diag.crumb(SbDiag.terminal, 'open local server shell', data: {
-        'session': session,
-      });
+      Diag.crumb(
+        SbDiag.terminal,
+        'open local server shell',
+        data: {'session': session},
+      );
       return install(LocalShellBackend());
     }
 
@@ -288,9 +293,11 @@ class TerminalSession {
 
     final agent = _grantedBackend(currentGrant);
     if (agent != null) {
-      Diag.crumb(SbDiag.terminal, 'open agent shell', data: {
-        'session': session,
-      });
+      Diag.crumb(
+        SbDiag.terminal,
+        'open agent shell',
+        data: {'session': session},
+      );
       return install(agent);
     }
 
@@ -360,6 +367,81 @@ class TerminalSession {
     null => Future.value(),
   };
 
+  /// The largest clipboard payload OSC 52 may set or answer with.
+  ///
+  /// The sequence is unbounded protocol input, while a phone clipboard and the
+  /// response sent back through the PTY are not. Beyond this bound the request
+  /// is refused rather than turning one escape sequence into a memory spike.
+  static const _maxOsc52Bytes = 1024 * 1024;
+
+  /// The largest base64 payload considered for decoding.
+  ///
+  /// This is derived from [_maxOsc52Bytes] so a malformed or oversized request
+  /// is rejected before `base64.decode` allocates another copy of the payload.
+  static final int _maxOsc52EncodedChars = ((_maxOsc52Bytes + 2) ~/ 3) * 4;
+
+  void _handlePrivateOSC(String code, List<String> args) {
+    if (code != '52' || args.length < 2) return;
+    final selection = args[0].isEmpty ? 'c' : args[0];
+    final data = args.skip(1).join(';');
+    unawaited(_handleOsc52(selection, data));
+  }
+
+  Future<void> _handleOsc52(String selection, String data) async {
+    final targetsClipboard =
+        selection.isEmpty || selection.codeUnits.contains('c'.codeUnitAt(0));
+    if (!targetsClipboard) return;
+
+    if (data == '?') {
+      final value = await Clipboard.getData(Clipboard.kTextPlain);
+      final text = value?.text ?? '';
+      if (text.length > _maxOsc52Bytes) {
+        Loggers.app.warning(
+          'OSC 52 clipboard response exceeded $_maxOsc52Bytes bytes',
+        );
+        return;
+      }
+      final bytes = utf8.encode(text);
+      if (bytes.length > _maxOsc52Bytes) {
+        Loggers.app.warning(
+          'OSC 52 clipboard response exceeded $_maxOsc52Bytes bytes',
+        );
+        return;
+      }
+      final encoded = base64.encode(bytes);
+      terminal.onOutput?.call('\x1b]52;$selection;$encoded\x1b\\');
+      return;
+    }
+
+    if (data.length > _maxOsc52EncodedChars) {
+      Loggers.app.warning(
+        'OSC 52 clipboard request exceeded $_maxOsc52EncodedChars characters',
+      );
+      return;
+    }
+
+    try {
+      final bytes = base64.decode(data);
+      if (bytes.length > _maxOsc52Bytes) {
+        Loggers.app.warning(
+          'OSC 52 clipboard request exceeded $_maxOsc52Bytes bytes',
+        );
+        return;
+      }
+      await Clipboard.setData(
+        ClipboardData(text: utf8.decode(bytes, allowMalformed: true)),
+      );
+    } on FormatException catch (error) {
+      Loggers.app.warning('Ignoring malformed OSC 52 clipboard data', error);
+    } catch (error, stackTrace) {
+      Loggers.app.warning(
+        'Failed to set clipboard from OSC 52',
+        error,
+        stackTrace,
+      );
+    }
+  }
+
   /// Puts [session] on the screen: its bytes into the terminal, the terminal's
   /// keystrokes and size into it.
   void bindForeground(ShellSession session) {
@@ -423,10 +505,11 @@ class TerminalSession {
     // Teardown is where one of the open reports puts the crash: a swipe back,
     // a white terminal, and then the app going. A crumb on the way in tells a
     // later stack trace whether that had started.
-    Diag.crumb(SbDiag.terminal, 'close', data: {
-      'session': Redact.id(source.id),
-      'owns': '$_ownsBackend',
-    });
+    Diag.crumb(
+      SbDiag.terminal,
+      'close',
+      data: {'session': Redact.id(source.id), 'owns': '$_ownsBackend'},
+    );
     _closes++;
     final foreground = _foreground;
     if (foreground != null) {
