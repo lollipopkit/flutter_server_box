@@ -14,15 +14,29 @@ pub fn parse_uptime(raw: &str) -> Option<String> {
 
     if first.contains("day") {
         if let Some(time_part) = segments.get(1).map(|s| s.trim())
-            && time_part.contains(':')
-            && !time_part.contains("user")
-            && !time_part.contains("load")
+            && is_uptime_remainder(time_part)
         {
             return Some(format!("{}, {}", first, time_part));
         }
         return Some(first.to_string());
     }
     Some(first.to_string())
+}
+
+/// What `uptime(1)` prints after the day count: `H:MM`, or a single unit when
+/// the other is zero — `10 min` (procps, busybox), `3 hrs` / `14 mins` /
+/// `30 secs` (BSD and macOS `w.c`). Dropping the unit form lost the hours and
+/// minutes of any machine whose uptime had a zero in one of them.
+fn is_uptime_remainder(part: &str) -> bool {
+    if part.contains(':') {
+        return !part.contains("user") && !part.contains("load");
+    }
+    let Some((count, unit)) = part.split_once(' ') else {
+        return false;
+    };
+    !count.is_empty()
+        && count.bytes().all(|b| b.is_ascii_digit())
+        && matches!(unit, "min" | "mins" | "hr" | "hrs" | "sec" | "secs")
 }
 
 /// One `KEY=value` line's value out of an os-release block, unquoted.

@@ -145,17 +145,57 @@ void main() {
       ['up', 'never', 'garbled'],
       reason: 'the two unknowns keep their arrangement at the end',
     );
+    // A sentinel key would flip to the front here; no key stays at the end.
+    expect(
+      sort(
+        ServerSortField.uptime,
+        ['never', 'up', 'garbled'],
+        states,
+        ascending: false,
+      ),
+      ['up', 'never', 'garbled'],
+      reason: 'longest first is not led by the unknowns either',
+    );
   });
 
-  test('the five shapes uptime(1) prints are each read', () {
+  test('days are not the whole answer', () {
+    // Two machines up the same number of days differ by what follows, and a
+    // day count alone keyed them equal, leaving the arrangement to decide.
+    final states = {
+      'later': state('later', uptime: '5 days, 1:00'),
+      'earlier': state('earlier', uptime: '5 days, 20:00'),
+    };
+    expect(
+      sort(ServerSortField.uptime, ['earlier', 'later'], states),
+      ['later', 'earlier'],
+    );
+  });
+
+  test('the shapes uptime(1) prints are each read', () {
     // `common::parse_uptime` in Rust keeps one of these and drops everything
-    // else in the line. The samples are its own test cases, so the two sides
-    // cannot drift about what reaches this side.
-    expect(ServerSortOrder.uptimeSeconds('61 days, 18:16'), 61 * 86400);
-    expect(ServerSortOrder.uptimeSeconds('1 day, 2:34'), 86400);
-    expect(ServerSortOrder.uptimeSeconds('5 days'), 5 * 86400);
-    expect(ServerSortOrder.uptimeSeconds('2:34'), 2 * 3600 + 34 * 60);
-    expect(ServerSortOrder.uptimeSeconds('34 min'), 34 * 60);
+    // else in the line. The samples are its own test cases
+    // (`uptime_parse_formats` in dart_compat.rs), so the two sides cannot
+    // drift about what reaches this side.
+    const day = 86400, hour = 3600, minute = 60;
+    expect(
+      ServerSortOrder.uptimeSeconds('61 days, 18:16'),
+      61 * day + 18 * hour + 16 * minute,
+    );
+    expect(ServerSortOrder.uptimeSeconds('1 day, 2:34'), day + 2 * hour + 34 * minute);
+    expect(ServerSortOrder.uptimeSeconds('5 days'), 5 * day);
+    expect(ServerSortOrder.uptimeSeconds('2:34'), 2 * hour + 34 * minute);
+    expect(ServerSortOrder.uptimeSeconds('34 min'), 34 * minute);
+    // A zero hour or minute prints a unit instead of H:MM — procps and
+    // busybox `min`, BSD and macOS `hr[s]`, `min[s]` and `sec[s]`.
+    expect(ServerSortOrder.uptimeSeconds('5 days, 10 min'), 5 * day + 10 * minute);
+    expect(ServerSortOrder.uptimeSeconds('2 days, 3 hrs'), 2 * day + 3 * hour);
+    expect(ServerSortOrder.uptimeSeconds('1 day, 1 hr'), day + hour);
+    expect(ServerSortOrder.uptimeSeconds('3 days, 14 mins'), 3 * day + 14 * minute);
+    expect(ServerSortOrder.uptimeSeconds('14 mins'), 14 * minute);
+    expect(ServerSortOrder.uptimeSeconds('30 secs'), 30);
+    expect(ServerSortOrder.uptimeSeconds('1 sec'), 1);
+    // The monitor agent's `format_uptime`, which pluralises every count.
+    expect(ServerSortOrder.uptimeSeconds('1 days, 1:00'), day + hour);
   });
 
   test('what the parser refuses is refused here too', () {
@@ -168,6 +208,10 @@ void main() {
     // H:MM only, and guessing here would put a machine in the wrong half of
     // the list rather than at the end of it.
     expect(ServerSortOrder.uptimeSeconds('18:16:30'), isNull);
+    // A day count followed by something unreadable is not that many days:
+    // answering the prefix would put it among machines it may not belong with.
+    expect(ServerSortOrder.uptimeSeconds('5 days, garbled'), isNull);
+    expect(ServerSortOrder.uptimeSeconds('5 days, 3 weeks'), isNull);
   });
 
   test('only the arrangement may be dragged into another one', () {
