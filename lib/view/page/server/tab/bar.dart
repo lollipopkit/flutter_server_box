@@ -337,7 +337,7 @@ extension _Bar on _ServerPageState {
       onTapServer: (spi) =>
           _onTapCard(context, ref.read(serverProvider(spi.id))),
       onEditServer: (spi) =>
-          ServerEditPage.route.go(context, args: SpiRequiredArgs(spi)),
+          ServerEditPage.route.go(context, args: ServerEditArgs(spi)),
       action: immersive ? _buildGlobeExit() : null,
     );
   }

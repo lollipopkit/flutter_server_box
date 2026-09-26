@@ -59,6 +59,7 @@ bool isRetryableTerminalConnectionError(Object error) {
     return false;
   }
   if (error is MonitorHttpErr) return error.type == MonitorHttpErrType.net;
+  if (error is TerminalConsoleErr) return error.retryable;
   return error is TimeoutException ||
       error is SocketException ||
       isJumpFailoverError(error);
@@ -86,7 +87,7 @@ class TerminalSession {
   /// needs one asks for it here; everything else works from [source].
   Spi? get spi => switch (source) {
     ServerSource(:final spi) => spi,
-    LocalSource() => null,
+    LocalSource() || ConsoleSource() => null,
   };
 
   final terminal = Terminal(platform: hostTerminalPlatform);
@@ -141,6 +142,8 @@ class TerminalSession {
   /// having to know which it got.
   void adopt(SSHClient? client, {MonitorRemoteAccess? granted}) {
     if (_backend != null) return;
+    // A console is opened for itself, by [connect]: nobody else holds one.
+    if (source is ConsoleSource) return;
     // Nothing to adopt on this device: there is no connection anybody else
     // could be holding, so the shell this session opens is its own.
     if (source case final LocalSource local) {
@@ -179,6 +182,11 @@ class TerminalSession {
   }) async {
     _ownsBackend = true;
     final session = Redact.id(source.id);
+
+    if (source case final ConsoleSource console) {
+      Diag.crumb(SbDiag.terminal, 'open console', data: {'session': session});
+      return _backend = await console.connect();
+    }
 
     if (source case final LocalSource local) {
       // Which of the three this is, is what a report saying "the terminal

@@ -1,0 +1,44 @@
+SrvBoxSep.b64.dmlydC5jYXBz
+kvm
+<domainCapabilities>
+  <path>/usr/bin/qemu-system-x86_64</path>
+  <domain>kvm</domain>
+  <machine>pc-q35-10.0</machine>
+  <arch>x86_64</arch>
+  <vcpu max='4096'/>
+</domainCapabilities>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5jYXBz
+kvm
+<domainCapabilities>
+  <path>/usr/bin/qemu-system-x86_64</path>
+  <domain>kvm</domain>
+  <machine>pc-i440fx-10.0</machine>
+  <arch>x86_64</arch>
+  <vcpu max='255'/>
+</domainCapabilities>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5jYXBz
+qemu
+<domainCapabilities>
+  <path>/usr/bin/qemu-system-x86_64</path>
+  <domain>qemu</domain>
+  <machine>pc-q35-10.0</machine>
+  <arch>x86_64</arch>
+  <vcpu max='4096'/>
+</domainCapabilities>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5jYXBz
+qemu
+<domainCapabilities>
+  <path>/usr/bin/qemu-system-x86_64</path>
+  <domain>qemu</domain>
+  <machine>pc-i440fx-10.0</machine>
+  <arch>x86_64</arch>
+  <vcpu max='255'/>
+</domainCapabilities>
+
+SbVirtRc=0

@@ -3,11 +3,13 @@ title: Code Generation
 description: Generate Dart, Flutter, and Rust binding code
 ---
 
-Server Box uses code generation for immutable models, JSON serialization, Riverpod providers, legacy Hive adapters, localization, and Rust bindings.
+The project generates immutable model code, JSON serializers, Riverpod
+providers, Hive adapters, localization code, and Rust bindings. Run the
+generator that matches the source you changed.
 
 ## When to run code generation
 
-Run the relevant generator after modifying:
+Run code generation after changing any of these inputs:
 
 - Models with `@freezed`
 - Classes with `@JsonSerializable`
@@ -16,7 +18,9 @@ Run the relevant generator after modifying:
 - ARB localization files
 - Rust APIs under `crates/sbm_ffi/src/api`
 
-The frozen adapters in `lib/hive/legacy_adapters.dart` are not part of the generated list. They read boxes written by old releases and must not be regenerated from current models.
+The frozen adapters in `lib/hive/legacy_adapters.dart` are excluded from the
+generated adapter list. They read boxes created by earlier releases; do not
+regenerate them from current models.
 
 ## Dart generation
 
@@ -28,7 +32,10 @@ dart run build_runner build
 
 ### Clean and regenerate
 
-Use this when the build cache no longer matches the tree, which most often follows a merge that adds generated sources. A stale `.dart_tool/build/asset_graph.json` does not report anything: the build stops part-way through a phase at 0% CPU and waits forever, because the error it hits is swallowed by the step awaiting it.
+Use a clean build when the cached asset graph is out of sync with the source
+tree, for example after merging generated source files. A stale
+`.dart_tool/build/asset_graph.json` can cause build_runner to stall midway
+through a phase without reporting a useful error.
 
 ```bash
 dart run build_runner clean
@@ -39,7 +46,8 @@ dart run build_runner build
 
 ### Freezed (`*.freezed.dart`)
 
-Freezed generates immutable models, `copyWith`, equality, and union APIs:
+Freezed produces immutable model implementations, `copyWith`, equality, and
+union APIs:
 
 ```dart
 @freezed
@@ -52,7 +60,8 @@ class ServerState with _$ServerState {
 
 ### JSON serialization (`*.g.dart`)
 
-`json_serializable` generates `fromJson` and `toJson` methods from model fields:
+`json_serializable` creates `fromJson` and `toJson` methods based on model
+fields:
 
 ```dart
 @JsonSerializable()
@@ -71,7 +80,7 @@ class Server {
 
 ### Riverpod providers (`*.g.dart`)
 
-`riverpod_generator` creates providers from `@riverpod` declarations:
+`riverpod_generator` creates provider declarations from `@riverpod` classes:
 
 ```dart
 @riverpod
@@ -83,7 +92,7 @@ class MyNotifier extends _$MyNotifier {
 
 ### Hive adapters (`*.g.dart`)
 
-Generated adapters cover only models that remain in the current adapter list:
+Hive adapter generation includes only models in the current generated list:
 
 ```dart
 @HiveType(typeId: 0)
@@ -93,31 +102,40 @@ class ServerModel {
 }
 ```
 
-Adapters in `lib/hive/legacy_adapters.dart` are intentionally frozen readers. Do not regenerate them from current models or add models with new fields to the legacy generated list: old boxes do not contain those fields, and a new non-nullable field can prevent an old box from opening. Change a frozen reader only when bytes written by a released version require it, and update the migration test with it.
+Adapters in `lib/hive/legacy_adapters.dart` are frozen readers. Do not
+regenerate them from current models or add a model with new fields to the
+legacy generated list. Old boxes do not contain those fields, and a new
+non-nullable field can make an old box unreadable. Change a frozen reader only
+when data written by a released version requires it, and update its migration
+test at the same time.
 
 ## Rust bindings (flutter_rust_bridge)
 
-After changing `crates/sbm_ffi/src/api`, regenerate Dart bindings:
+After editing a Rust API under `crates/sbm_ffi/src/api`, regenerate its Dart
+bindings:
 
 ```bash
 flutter_rust_bridge_codegen generate
 ```
 
-Configuration is in `flutter_rust_bridge.yaml`; output is written to `lib/src/rust/`. Do not edit generated files. Do not run `flutter_rust_bridge_codegen integrate`; it creates template scaffolding that does not match this repository.
+The generator reads `flutter_rust_bridge.yaml` and writes files to
+`lib/src/rust/`. Do not edit those generated files. Do not run
+`flutter_rust_bridge_codegen integrate`; its template scaffolding does not
+match this repository.
 
 ## Localization generation
 
-After changing `lib/l10n/*.arb`, run:
+After editing a localization file in `lib/l10n/*.arb`, run:
 
 ```bash
 flutter gen-l10n
 ```
 
-The generated code is written to `lib/generated/l10n/`.
+Generated localization code is written to `lib/generated/l10n/`.
 
 ## Notes
 
-- `--delete-conflicting-outputs` was removed in build_runner 2.15 and is now ignored with a warning. Clear the cache instead, as above.
-- Commit generated files that are tracked by this repository.
-- Never manually edit `*.g.dart`, `*.freezed.dart`, or files under `lib/generated/`.
-- Finish code generation before running analyze and tests after a model change.
+- build_runner 2.15 removed `--delete-conflicting-outputs`; it now prints a warning and has no effect. Clear the cache as described above instead.
+- Include generated files in your change when this repository tracks them.
+- Do not edit `*.g.dart`, `*.freezed.dart`, or files under `lib/generated/` by hand.
+- After changing a model, complete generation before running analysis and tests.

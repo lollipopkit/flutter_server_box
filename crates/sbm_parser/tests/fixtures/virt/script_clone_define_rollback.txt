@@ -1,0 +1,8 @@
+SrvBoxSep.b64.dmlydC5kZWZpbmU=
+error: Failed to define domain from /tmp/tmp.7ICE1FOfsU
+error: operation failed: domain 'sbcl-full' already exists with uuid b0352bd8-52ad-4cf7-875c-7ceb45b0d751
+
+SbVirtRc=1
+SrvBoxSep.b64.dmlydC5yb2xsYmFjaw==
+
+SbVirtRc=0

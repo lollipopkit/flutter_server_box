@@ -978,9 +978,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get parseContainerStatsTip => 'Docker 解析占用状态较为缓慢';
 
   @override
-  String get plugInType => '插入类型';
-
-  @override
   String get preferDiskAmount => '优先显示硬盘容量';
 
   @override
@@ -1111,19 +1108,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pveIgnoreCertTip => '不推荐开启，注意安全隐患！如果你使用的 PVE 默认证书，需要开启该选项';
 
   @override
-  String get pveServerClientMissing => '当前服务器的 SSH 客户端不可用。';
-
-  @override
-  String get pveAddressMissing => '未配置 PVE 地址，请在服务器设置中填写。';
-
-  @override
   String get pvePasswordRequired => '需要提供 PVE 密码，请在服务器设置中填写。';
 
   @override
   String get pveOtpRequired => '此 PVE 服务器已启用双因素认证，请输入 OTP 验证码。';
-
-  @override
-  String get pveOtpChallengeExpired => 'OTP 验证挑战已过期，请刷新后重试。';
 
   @override
   String get pveOtpCodeRequired => '请输入 OTP 验证码。';
@@ -1145,18 +1133,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pveMissingAuthTicket => 'PVE 登录成功，但未返回认证票据。';
-
-  @override
-  String get pveVersionLow => '当前该功能处于测试阶段，仅在 PVE 8+ 上测试过，请谨慎使用';
-
-  @override
-  String get pveLoadingForwarding => '正在建立 SSH 隧道...';
-
-  @override
-  String get pveLoadingLogin => '正在认证 PVE...';
-
-  @override
-  String get pveLoadingData => '正在获取集群数据...';
 
   @override
   String get pveLoadingConnect => '正在连接...';
@@ -1594,9 +1570,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sortByJoinTime => '按加入时间';
-
-  @override
-  String get portForwardBetaTitle => '端口映射 (Beta)';
 
   @override
   String get tmuxAutoAttach => 'tmux 自动附加';
@@ -3078,6 +3051,1463 @@ class AppLocalizationsZh extends AppLocalizations {
   String appearanceThemeModeLocked(String mode) {
     return '此主题仅支持$mode。如需切换模式，请选择其他主题。';
   }
+
+  @override
+  String get pveAuthToken => 'API token';
+
+  @override
+  String get pveVersionLow => '当前该功能处于测试阶段，仅在 PVE 8+ 上测试过，请谨慎使用';
+
+  @override
+  String get pveTokenId => 'Token ID';
+
+  @override
+  String get pveTokenSecret => 'Token secret';
+
+  @override
+  String get pveTokenTip =>
+      '在 PVE 的 数据中心 → 权限 → API Tokens 中创建。需要在要显示的路径上具有 VM.Audit、VM.PowerMgmt、VM.Console、VM.Snapshot、VM.Snapshot.Rollback、Datastore.Audit 和 Sys.Audit 权限；如果启用了权限分离，需要把这些权限授予 token 本身。';
+
+  @override
+  String pveTokenNoPrivileges(String account, String command) {
+    return 'token $account 在这台主机上没有任何可见的资源。开启了权限分离的 token 不继承其用户的权限，需要单独授权。在 PVE 主机上执行：\n$command\n或者取消该 token 的“权限分离”。';
+  }
+
+  @override
+  String pveUserNoPrivileges(String account, String command) {
+    return '$account 在这台主机上没有任何可见的资源。在 PVE 主机上为它授权：\n$command';
+  }
+
+  @override
+  String get pveTokenIdInvalid => 'Token ID 的格式应为 user@realm!tokenid';
+
+  @override
+  String get pvePasswordAuthTip =>
+      '以 SSH 用户身份在 PAM realm 登录，使用 SSH 密码；SSH 使用 key 时使用下方的 PVE 密码。需要时会要求输入两步验证码。';
+
+  @override
+  String get pveCertUnpinned => '尚未确认。除非证书由受信任的 CA 签发，下次连接时会显示证书以供确认。';
+
+  @override
+  String get pveCertForget => '忘记证书';
+
+  @override
+  String get pveCertForgetTip => '下次连接时会再次显示 PVE 证书以供确认。';
+
+  @override
+  String get virtualization => '虚拟化';
+
+  @override
+  String get virtIntro =>
+      '管理 Proxmox VE 和 libvirt/KVM 主机上的虚拟机和容器：查看状态、执行电源操作、打开控制台。';
+
+  @override
+  String get virtIntroPveMoved =>
+      'Proxmox VE 已从服务器页面移到此标签页。服务器的 PVE 卡片会在这里打开它。';
+
+  @override
+  String get virtIntroLibvirt =>
+      '安装了 libvirt 的 virsh 的服务器会显示为主机，并列出其 QEMU/KVM 虚拟机。';
+
+  @override
+  String get virtIntroTransports => '两者都可以通过 SSH、Monitor agent 或在本设备上使用。';
+
+  @override
+  String get virtIntroTokens =>
+      'PVE 可以使用 API token 登录，无需密码。在服务器编辑页面的 PVE 部分设置。';
+
+  @override
+  String get virtIntroInBar => '已添加到标签栏。';
+
+  @override
+  String get virtIntroInMore => '位于“更多”中。可在设置的“主页标签”中将其移到标签栏。';
+
+  @override
+  String get virtGuests => '虚拟机';
+
+  @override
+  String get virtHosts => '宿主机';
+
+  @override
+  String get virtCheckServer => '检查此服务器';
+
+  @override
+  String get virtCheckAll => '检查所有服务器';
+
+  @override
+  String get virtProbeNotChecked => '尚未检查';
+
+  @override
+  String get virtProbeAbsent => '不是宿主机';
+
+  @override
+  String virtProbeContainer(String kind) {
+    return '$kind 容器';
+  }
+
+  @override
+  String get virtProbeContainerTip => '这台服务器运行在容器里，本身不是宿主机。请在运行它的宿主机上管理。';
+
+  @override
+  String get virtProbePve => 'PVE，未配置';
+
+  @override
+  String virtPveSetupTip(String version) {
+    return '这台服务器运行着 $version。在服务器设置里填写 API 访问信息（推荐使用 API token）后，即可在这里管理其中的虚拟机和容器。';
+  }
+
+  @override
+  String get virtNoHosts => '没有虚拟化宿主机';
+
+  @override
+  String get virtNoHostsTip =>
+      '运行 Proxmox VE 且填写了 API 访问信息的服务器是宿主机，能运行 virsh 的服务器也是。其他服务器可以在宿主机切换器中检查。';
+
+  @override
+  String get virtNoGuests => '没有虚拟机或容器';
+
+  @override
+  String get virtPaused => '已暂停';
+
+  @override
+  String get virtStarting => '正在启动…';
+
+  @override
+  String get virtStopping => '正在关机…';
+
+  @override
+  String get virtRebooting => '正在重启…';
+
+  @override
+  String get virtMigrating => '正在迁移…';
+
+  @override
+  String get virtBackingUp => '正在备份…';
+
+  @override
+  String get virtResume => '恢复';
+
+  @override
+  String get virtOverview => '概览';
+
+  @override
+  String get virtConsole => '控制台';
+
+  @override
+  String get virtConsoleNone => '此虚拟机没有可用的控制台';
+
+  @override
+  String get virtConsoleGraphical => '图形';
+
+  @override
+  String get virtVncPasswordNeeded => '这个显示需要密码';
+
+  @override
+  String get virtConsoleSerialTip =>
+      '在宿主机上用 virsh 打开虚拟机的串口控制台。断开连接或按 Ctrl+] 可返回宿主机的 shell。';
+
+  @override
+  String virtConsoleVia(String transport) {
+    return '经 $transport';
+  }
+
+  @override
+  String get virtConsoleEnterTip => '没有输出？按 Enter';
+
+  @override
+  String virtConsoleAutoEnter(int seconds) {
+    return '$seconds 秒后自动按 Enter 唤出提示符';
+  }
+
+  @override
+  String get virtConsoleEnterNow => '立即';
+
+  @override
+  String get virtOffTip => '启动后在这里显示实时 CPU、内存、磁盘和网络。';
+
+  @override
+  String get virtAllocated => '已分配';
+
+  @override
+  String virtRunningCount(int running, int total) {
+    return '$running 运行 · 共 $total 台';
+  }
+
+  @override
+  String get virtTemplate => '模板';
+
+  @override
+  String get virtAutostart => '随宿主机启动';
+
+  @override
+  String get virtErrUnreachable => '无法连接到此宿主机';
+
+  @override
+  String get virtErrNotConfigured => '此服务器的 PVE 设置不完整';
+
+  @override
+  String get virtErrNotConfiguredTip => '请在服务器设置中检查地址，以及密码或 API token。';
+
+  @override
+  String get virtErrAuthFailed => '宿主机拒绝了登录';
+
+  @override
+  String get virtErrCertUnconfirmed => '请确认宿主机的证书';
+
+  @override
+  String get virtErrCertChanged => '宿主机的证书已更改';
+
+  @override
+  String get virtErrRelayNotGranted => 'Monitor agent 不转发连接';
+
+  @override
+  String get virtErrExecNotGranted => 'Monitor agent 不执行命令';
+
+  @override
+  String get virtErrNotInstalled => '此服务器上未安装 virsh';
+
+  @override
+  String get virtErrServerRemoved => '该服务器已被删除';
+
+  @override
+  String get virtErrSudoRequired => 'sudo 需要密码才能访问 libvirt';
+
+  @override
+  String get virtErrSudoRejected => 'sudo 拒绝了该密码';
+
+  @override
+  String get virtErrInvalidResponse => '宿主机返回了无法识别的内容';
+
+  @override
+  String get virtErrActionFailed => '宿主机拒绝了该操作';
+
+  @override
+  String get remoteSessionIdleTimeout => '离开后自动关闭';
+
+  @override
+  String get remoteSessionIdleTimeoutTip =>
+      '离开远程桌面或虚拟机控制台后,连接保持多久。关闭前会显示提示,10 秒内可选择保持连接。';
+
+  @override
+  String get remoteSessionKeepAlive => '保持连接';
+
+  @override
+  String get remoteSessionClosedAway => '已因空闲关闭';
+
+  @override
+  String remoteSessionClosingIn(int seconds) {
+    return '$seconds 秒后关闭';
+  }
+
+  @override
+  String get reopen => '重新打开';
+
+  @override
+  String get virtSnapshots => '快照';
+
+  @override
+  String get virtSnapshotCreate => '创建快照';
+
+  @override
+  String get virtSnapshotNone => '还没有快照';
+
+  @override
+  String get virtSnapshotWithMemory => '磁盘和内存';
+
+  @override
+  String get virtSnapshotDiskOnly => '仅磁盘';
+
+  @override
+  String get virtSnapshotParent => '父快照';
+
+  @override
+  String get virtSnapshotRevert => '恢复到此快照';
+
+  @override
+  String get virtSnapshotMemory => '包含内存状态';
+
+  @override
+  String get virtSnapshotMemoryTip => '恢复后回到这一刻的运行状态。';
+
+  @override
+  String get virtSnapshotMemoryAlways => '在此宿主机上，运行中的虚拟机快照总是包含内存。';
+
+  @override
+  String get virtSnapshotMemoryOff => '虚拟机未运行，只能保存磁盘。';
+
+  @override
+  String get virtSnapshotNameInvalid => '以字母开头，之后只能是字母、数字、- 或 _，长度 2 到 40。';
+
+  @override
+  String get virtSnapshotNameTaken => '已有同名快照。';
+
+  @override
+  String get virtSnapshotRevertTip => '恢复会丢弃快照之后的所有改动。';
+
+  @override
+  String virtSnapshotRevertAsk(String guest, String snapshot) {
+    return '将 $guest 恢复到 $snapshot？此后的所有改动都会丢失。';
+  }
+
+  @override
+  String virtSnapshotRevertStops(String guest) {
+    return '此快照不含内存：$guest 将被停止。';
+  }
+
+  @override
+  String get virtSnapshotStartAfter => '恢复后启动';
+
+  @override
+  String get virtVolumes => '卷';
+
+  @override
+  String get virtNoPools => '没有存储池';
+
+  @override
+  String get virtNoNetworks => '没有网络';
+
+  @override
+  String get virtPoolInactive => '存储池未激活，无法列出其中的卷。';
+
+  @override
+  String get virtShared => '节点间共享';
+
+  @override
+  String get virtBackingFile => '后备文件';
+
+  @override
+  String get virtNetIsolated => '隔离';
+
+  @override
+  String get virtNetBridged => '桥接';
+
+  @override
+  String get virtNetRouted => '路由';
+
+  @override
+  String get virtBridge => '网桥';
+
+  @override
+  String get virtPorts => '端口';
+
+  @override
+  String get virtAttachedGuests => '已连接的虚拟机';
+
+  @override
+  String get virtNoAttachedGuests => '没有虚拟机连接到此网络';
+
+  @override
+  String get virtCreateVm => '新建虚拟机';
+
+  @override
+  String get virtCreateLxc => '新建容器';
+
+  @override
+  String get virtCreateGuest => '新建虚拟机或容器';
+
+  @override
+  String get virtKindVm => '虚拟机';
+
+  @override
+  String get virtKindLxc => '容器';
+
+  @override
+  String get virtHostname => '主机名';
+
+  @override
+  String get virtInstallMedia => '安装介质';
+
+  @override
+  String get virtNoIsos => '这台主机上没有 ISO 镜像';
+
+  @override
+  String get virtNoTemplates => '这台主机上没有容器模板。可以在 PVE 中存储的 CT 模板里下载。';
+
+  @override
+  String get virtNoDiskStorage => '这台主机上没有可以创建新磁盘的存储';
+
+  @override
+  String get virtStartAfterCreate => '创建后启动';
+
+  @override
+  String get virtUnprivileged => '非特权容器';
+
+  @override
+  String get virtUnprivilegedTip => '容器内的 root 对应宿主机上的普通用户。';
+
+  @override
+  String get virtSshKeys => 'SSH 公钥';
+
+  @override
+  String get virtCredentialsTip => 'root 密码、SSH 公钥，或两者都设置。';
+
+  @override
+  String virtCreated(String name) {
+    return '已创建 $name';
+  }
+
+  @override
+  String virtCreatedNotStarted(String name) {
+    return '已创建 $name，但未能启动';
+  }
+
+  @override
+  String get virtErrExists => '同名的虚拟机或磁盘已存在';
+
+  @override
+  String get virtCreateNameInvalidLibvirt =>
+      '字母、数字、.、_ 和 -，以字母或数字开头，最多 63 个字符。';
+
+  @override
+  String get virtCreateNameInvalidPve => '字母、数字和 -，各段之间用点分隔，最多 63 个字符。';
+
+  @override
+  String get virtCreateNameTaken => '已有同名虚拟机。';
+
+  @override
+  String get virtCreateVmidInvalid => '范围为 100 到 999999999。';
+
+  @override
+  String get virtCreateVmidTaken => '这个 VMID 已被占用。';
+
+  @override
+  String get virtCreateCoresInvalid => '超出了这台主机允许的核心数。';
+
+  @override
+  String get virtCreateMemoryInvalid => '内存不足。';
+
+  @override
+  String get virtCreateStorageMissing => '选择磁盘的存放位置。';
+
+  @override
+  String get virtCreateDiskInvalid => '范围为 1 GiB 到 64 TiB。';
+
+  @override
+  String get virtCreateTemplateMissing => '选择一个模板。';
+
+  @override
+  String get virtCreateCredentialsMissing => '设置 root 密码或 SSH 公钥。';
+
+  @override
+  String virtCreatePasswordShort(int min) {
+    return '至少 $min 个字符。';
+  }
+
+  @override
+  String get virtCreateSshKeysInvalid => '每行一个 OpenSSH 公钥。';
+
+  @override
+  String get virtDeleteDisks => '同时删除磁盘卷';
+
+  @override
+  String get virtDeleteDisksPve => '磁盘会随它一起删除，安装介质会保留。';
+
+  @override
+  String virtDeleted(String name) {
+    return '已删除 $name';
+  }
+
+  @override
+  String get pveTokenTipCreate =>
+      '创建和删除虚拟机还需要 VM.Allocate、VM.Config.*、Datastore.AllocateSpace 和 SDN.Use。';
+
+  @override
+  String get pveTokenTipHardware =>
+      '编辑硬件需要 VM.Config.CPU、VM.Config.Memory、VM.Config.Disk、VM.Config.CDROM、VM.Config.Network 和 VM.Config.Options；添加磁盘和网卡还需要 Datastore.AllocateSpace 和 SDN.Use。修改显卡以及 USB、PCI 设备还需要 VM.Config.HWType；通过资源映射直通设备需要该映射的 Mapping.Use，列出映射需要 Mapping.Audit。';
+
+  @override
+  String get pveTokenTipBackup =>
+      '克隆需要 VM.Clone，备份和还原需要 VM.Backup；副本或备份存放的存储上还需要 Datastore.AllocateSpace。';
+
+  @override
+  String get virtErrConflict => '已在别处修改';
+
+  @override
+  String get virtErrConflictTip => '此虚拟机的配置在读取后被他人修改，因此未做任何更改。已重新读取，如仍需要请再次修改。';
+
+  @override
+  String get virtHardware => '硬件';
+
+  @override
+  String get virtHwAddDisk => '添加磁盘';
+
+  @override
+  String get virtHwAddMount => '添加挂载点';
+
+  @override
+  String get virtHwAddNic => '添加网卡';
+
+  @override
+  String get virtHwAppliesOnRestart => '已保存，将在下次启动时生效。';
+
+  @override
+  String get virtHwAutostart => '随宿主机开机自启';
+
+  @override
+  String get virtHwAutostartPve => 'onboot · 按 VMID 顺序启动';
+
+  @override
+  String get virtHwBalloonLibvirt => '当前内存';
+
+  @override
+  String get virtHwBalloonNote => '允许宿主机在内存紧张时回收虚拟机的空闲内存';
+
+  @override
+  String get virtHwBoot => '引导';
+
+  @override
+  String get virtHwBootOrder => '启动顺序';
+
+  @override
+  String get virtHwBootTip => '用箭头调整顺序；点按设备可切换是否从它启动。';
+
+  @override
+  String get virtHwCdrom => '光驱';
+
+  @override
+  String get virtHwConfigFile => '配置文件';
+
+  @override
+  String get virtHwCores => '核心';
+
+  @override
+  String get virtHwCpuTypeDefault => '默认';
+
+  @override
+  String get virtHwDeleteVolume => '同时删除卷';
+
+  @override
+  String get virtHwDetach => '分离';
+
+  @override
+  String get virtHwDiskHotplug => '支持热插拔，运行中也能添加';
+
+  @override
+  String get virtHwDisksLxc => '根磁盘与挂载点';
+
+  @override
+  String get virtHwEject => '弹出';
+
+  @override
+  String get virtHwEmpty => '无介质';
+
+  @override
+  String get virtHwFirewall => '防火墙';
+
+  @override
+  String virtHwFree(String size) {
+    return '可用 $size';
+  }
+
+  @override
+  String get virtHwGrow => '扩容';
+
+  @override
+  String get virtHwGrowNote => '只能在原容量上扩容。';
+
+  @override
+  String get virtHwGrowNoteRunning => '只能在原容量上扩容。运行中扩容后需在系统内扩展分区。';
+
+  @override
+  String get virtHwGuestUsed => '系统内已用';
+
+  @override
+  String virtHwHostCpus(int threads, int allocated) {
+    return '宿主机 $threads 线程 · 已分配 $allocated';
+  }
+
+  @override
+  String virtHwHostMem(String total, String allocated) {
+    return '宿主机 $total · 已分配 $allocated';
+  }
+
+  @override
+  String get virtHwHotplugNow => '支持热插拔，运行中立即生效。';
+
+  @override
+  String get virtHwIssueBootEmpty => '至少勾选一个设备';
+
+  @override
+  String virtHwIssueCpuCount(int max) {
+    return 'vCPU 总数须在 1 到 $max 之间';
+  }
+
+  @override
+  String get virtHwIssueCpuOnline => '在线 vCPU 须在 1 到总数之间';
+
+  @override
+  String get virtHwIssueDiskShrink => '须大于当前大小：磁盘只能扩大';
+
+  @override
+  String get virtHwIssueDiskSize => '须在 1 到 65536 GiB 之间';
+
+  @override
+  String virtHwIssueMemory(int min, int max) {
+    return '须在 $min 到 $max MiB 之间';
+  }
+
+  @override
+  String get virtHwIssueMemoryMin => '不能超过内存';
+
+  @override
+  String get virtHwIssueMountPoint => '须为绝对路径，如 /data';
+
+  @override
+  String get virtHwIssueStorageSpace => '超出了存储的可用空间';
+
+  @override
+  String get virtHwIssueSwap => '不能为负数';
+
+  @override
+  String get virtHwLater => '重启后生效';
+
+  @override
+  String get virtHwLess => '减少';
+
+  @override
+  String get virtHwLinkDown => '已断开';
+
+  @override
+  String get virtHwLinkNote => '断开后系统内会显示网线已拔出，无需重启';
+
+  @override
+  String get virtHwLinkUp => '已连接';
+
+  @override
+  String get virtHwMac => 'MAC 地址';
+
+  @override
+  String get virtHwModel => '型号';
+
+  @override
+  String get virtHwMore => '增加';
+
+  @override
+  String get virtHwMountFromPool => '挂载点直接从存储池分配';
+
+  @override
+  String get virtHwMountPoint => '挂载点';
+
+  @override
+  String get virtHwMoveDown => '下移';
+
+  @override
+  String get virtHwMoveUp => '上移';
+
+  @override
+  String get virtHwNewDisk => '新磁盘';
+
+  @override
+  String get virtHwNewMount => '新挂载点';
+
+  @override
+  String get virtHwNewNic => '新网卡';
+
+  @override
+  String get virtHwNicHotplug => 'virtio 网卡支持热插拔';
+
+  @override
+  String get virtHwNics => '网卡';
+
+  @override
+  String get virtHwNoMedia => '无介质';
+
+  @override
+  String get virtHwNoNetworks => '没有可用的网络或网桥';
+
+  @override
+  String get virtHwNoStorage => '没有可存放磁盘的存储';
+
+  @override
+  String get virtHwOnline => '在线 vCPU';
+
+  @override
+  String get virtHwPendingBanner => '部分硬件更改在重启后生效';
+
+  @override
+  String get virtHwPickNet => '选择网络';
+
+  @override
+  String get virtHwPickPool => '选择存储池和容量';
+
+  @override
+  String get virtHwProcessor => '处理器';
+
+  @override
+  String get virtHwRemove => '移除';
+
+  @override
+  String get virtHwRemoveCdrom => '移除光驱';
+
+  @override
+  String virtHwRemoveDiskAsk(String disk, String guest) {
+    return '从 $guest 移除 $disk？';
+  }
+
+  @override
+  String virtHwRemoveNicAsk(String nic, String guest) {
+    return '从 $guest 移除 $nic？';
+  }
+
+  @override
+  String get virtHwResources => '资源';
+
+  @override
+  String get virtHwRestartNow => '立即重启';
+
+  @override
+  String get virtHwRevert => '撤销';
+
+  @override
+  String get virtHwRevertAll => '全部撤销';
+
+  @override
+  String get virtSetRenameStopped => '关机后才能改名：libvirt 只能重命名未运行的虚拟机。';
+
+  @override
+  String virtSetIssueDescription(int max) {
+    return '最多 $max 个字符，且不能包含控制字符。';
+  }
+
+  @override
+  String get virtSetManualStart => '手动启动';
+
+  @override
+  String get virtSetProtection => '保护';
+
+  @override
+  String get virtSetProtectionNote => '禁止删除虚拟机和修改磁盘';
+
+  @override
+  String get virtSetIrreversible => '不可撤销';
+
+  @override
+  String get virtSetDeleteStopFirst => '先关机再删除。';
+
+  @override
+  String get virtSetDeleteProtected => '已开启保护，先在常规里关闭。';
+
+  @override
+  String get virtSetDeleteAgain => '再点一次确认';
+
+  @override
+  String virtSetDeleteConfirm(String name) {
+    return '确认删除 $name';
+  }
+
+  @override
+  String get virtSetDeleteVm => '删除虚拟机';
+
+  @override
+  String get virtSetDeleteLxc => '删除容器';
+
+  @override
+  String get virtHwSockets => '插槽';
+
+  @override
+  String get virtHwSource => '源';
+
+  @override
+  String get virtHwSwap => '交换空间';
+
+  @override
+  String get virtHwTopology => '插槽 × 核心';
+
+  @override
+  String virtHwTopologyValue(int sockets, int cores, int threads) {
+    return '$sockets 插槽 × $cores 核 × $threads 线程';
+  }
+
+  @override
+  String virtHwTotal(String size) {
+    return '$size 总计';
+  }
+
+  @override
+  String get virtHwVolumeKept => '已移除，但运行中的虚拟机仍在使用该磁盘，因此保留了卷。它会在下次启动时分离。';
+
+  @override
+  String get virtHwBus => '总线';
+
+  @override
+  String get virtHwCache => '缓存';
+
+  @override
+  String get virtHwBusStopped => '关机后才能更换总线。';
+
+  @override
+  String get virtHwMacGenerate => '生成';
+
+  @override
+  String get virtHwIssueMac => '须为单播 MAC 地址，如 52:54:00:12:34:56';
+
+  @override
+  String get virtHwIssueStopFirst => '先关机';
+
+  @override
+  String get virtHwIssueStorageMissing => '先选择存放的存储';
+
+  @override
+  String get virtHwIssueDevice => '先选择一个设备';
+
+  @override
+  String get virtHwDevices => '光驱与直通';
+
+  @override
+  String get virtHwDevicesEmpty => 'USB 与 PCI 直通、光驱、TPM';
+
+  @override
+  String get virtHwAddDevice => '添加设备';
+
+  @override
+  String get virtHwNewDevice => '新设备';
+
+  @override
+  String get virtHwUsbHotplug => 'USB 直通支持热插拔。';
+
+  @override
+  String get virtHwPci => 'PCI 直通';
+
+  @override
+  String get virtHwIommuOffTitle => '宿主机没有开启 IOMMU';
+
+  @override
+  String get virtHwIommuOffBody =>
+      '先在宿主机 BIOS 中开启 VT-d 或 AMD-Vi，并在内核中启用 IOMMU。在此之前，添加了 PCI 设备的虚拟机无法启动。';
+
+  @override
+  String get virtHwPciTitle => '需要宿主机开启 IOMMU';
+
+  @override
+  String get virtHwPciBody => '直通后该设备不能再给宿主机使用，虚拟机也不能在线迁移。';
+
+  @override
+  String virtHwIommuGroup(int group) {
+    return 'IOMMU 组 $group';
+  }
+
+  @override
+  String virtHwIommuShared(int count) {
+    return '同一 IOMMU 组共 $count 个设备，会一起直通';
+  }
+
+  @override
+  String get virtHwNoHostDevices => '宿主机上没有可直通的设备';
+
+  @override
+  String get virtHwMappingsOnly =>
+      '这里只能使用资源映射：PVE 只允许以密码登录的 root@pam 直通原始设备。可在 数据中心 → 资源映射 中创建映射。';
+
+  @override
+  String get virtHwTpmNote => 'Windows 11 需要 TPM 2.0。';
+
+  @override
+  String get virtHwDisplay => '显示';
+
+  @override
+  String get virtHwProtocol => '协议';
+
+  @override
+  String get virtHwListen => '监听';
+
+  @override
+  String get virtHwGpu => '显卡';
+
+  @override
+  String get virtHwListenAllTitle => '控制台暴露在网络上';
+
+  @override
+  String get virtHwListenAllBody =>
+      '监听所有地址后任何能访问宿主机的人都能连上控制台。保持 127.0.0.1，经 SSH 隧道连接即可。';
+
+  @override
+  String get virtHwFirmware => '固件';
+
+  @override
+  String get virtHwUefiSub => 'OVMF · 支持 Secure Boot，Windows 11 需要';
+
+  @override
+  String get virtHwBiosSub => 'SeaBIOS · 旧系统和 MBR 分区';
+
+  @override
+  String get virtHwSecureBootNote => '只引导已签名的内核和引导程序';
+
+  @override
+  String get virtHwFirmwareWarnTitle => '已安装系统不要切换固件';
+
+  @override
+  String get virtHwFirmwareWarnBody => '在 UEFI 和 BIOS 之间切换会导致现有系统无法引导。';
+
+  @override
+  String get virtHwFirmwareStopped => '关机后才能切换固件。';
+
+  @override
+  String get virtHwSecureBootVars => '开关 Secure Boot 会重新生成 EFI 变量，其中保存的启动项会丢失。';
+
+  @override
+  String get virtHwEfiStorage => 'EFI 变量存放在';
+
+  @override
+  String get virtHwTpmStorage => 'TPM 状态存放在';
+
+  @override
+  String virtHwSwitchFirmwareAsk(String guest, String firmware) {
+    return '将 $guest 切换到 $firmware？';
+  }
+
+  @override
+  String get virtCloneName => '新名称';
+
+  @override
+  String get virtCloneFull => '完整克隆';
+
+  @override
+  String get virtCloneCopyDisks => '复制磁盘内容';
+
+  @override
+  String get virtCloneLinkedNote => '关闭则为链接克隆，依赖原磁盘';
+
+  @override
+  String get virtCloneFullOnly => '只有模板可以链接克隆';
+
+  @override
+  String get virtCloneEmptyNote => '关闭则新建同样大小的空磁盘';
+
+  @override
+  String get virtCloneStopFirst => '克隆前需要先关机。';
+
+  @override
+  String get virtCloneFullShort => '完整';
+
+  @override
+  String get virtCloneLinkedShort => '链接';
+
+  @override
+  String get virtCloneEmptyShort => '空磁盘';
+
+  @override
+  String get virtCloning => '正在克隆…';
+
+  @override
+  String virtCloned(String name) {
+    return '已克隆为 $name';
+  }
+
+  @override
+  String get virtBackupPlan => '计划';
+
+  @override
+  String get virtBackupPlanWhere => '数据中心 → 备份';
+
+  @override
+  String get virtBackupNoPlanShort => '无计划';
+
+  @override
+  String get virtBackupNoPlan => '没有包含它的定时备份任务。任务在数据中心里设置。';
+
+  @override
+  String get virtBackupKeep => '保留';
+
+  @override
+  String get virtBackupJobDisabled => '这个任务已停用。';
+
+  @override
+  String virtBackupCount(int count) {
+    return '$count 份';
+  }
+
+  @override
+  String get virtBackupNoStorage => '这个节点上没有能存放备份的存储。';
+
+  @override
+  String get virtBackupLiveTip => '运行中用 snapshot 模式，不停机';
+
+  @override
+  String get virtBackupStoppedTip => '已关机：按当前状态备份';
+
+  @override
+  String get virtBackupNow => '立即备份';
+
+  @override
+  String get virtBackupNotes => '备注';
+
+  @override
+  String get virtBackupProtected => '受保护：在 PVE 中取消保护之前不能删除。';
+
+  @override
+  String virtBackupVerified(String state) {
+    return '校验：$state';
+  }
+
+  @override
+  String get virtBackupRestoreOverwrites => '还原会覆盖当前磁盘';
+
+  @override
+  String get virtBackupStopFirst => '先关机再还原。';
+
+  @override
+  String get virtBackupRestoreAgain => '虚拟机的磁盘和配置会被备份里的替换。';
+
+  @override
+  String get virtBackupDeleteConfirm => '确认删除备份';
+
+  @override
+  String get virtBackupRestoreNew => '还原为新的';
+
+  @override
+  String get virtBackupRestoreConfirm => '确认覆盖还原';
+
+  @override
+  String get virtBackupDone => '备份完成';
+
+  @override
+  String get virtBackupDeleted => '已删除备份';
+
+  @override
+  String virtBackupRestored(String time) {
+    return '已从 $time 还原';
+  }
+
+  @override
+  String pveNeedsPrivilege(
+    String account,
+    String privilege,
+    String path,
+    String command,
+  ) {
+    return '$account 在 $path 上没有 $privilege 权限。请在 PVE 主机上授予：\n$command';
+  }
+
+  @override
+  String get virtCanDelete => '可以删除';
+
+  @override
+  String get virtInUse => '使用中';
+
+  @override
+  String get virtOps => '操作';
+
+  @override
+  String get virtPool => '存储池';
+
+  @override
+  String get virtPoolNew => '新建存储池';
+
+  @override
+  String get virtStorageAdd => '添加存储';
+
+  @override
+  String virtPoolUsedPct(String pct) {
+    return '已用 $pct%';
+  }
+
+  @override
+  String get virtPoolInUse => '有卷正被虚拟机使用，不能停用或删除。';
+
+  @override
+  String get virtPoolDelete => '删除存储池';
+
+  @override
+  String get virtStorageRemove => '移除存储';
+
+  @override
+  String virtPoolDeleteAsk(String name) {
+    return '删除存储池 $name？会删除它的定义，卷保留在原处。';
+  }
+
+  @override
+  String virtStorageRemoveAsk(String name) {
+    return '从 PVE 配置中移除存储 $name？其中的数据保留。';
+  }
+
+  @override
+  String virtPoolDeleteKeepsVolumes(int count) {
+    return '其中的 $count 个卷会保留在磁盘上。';
+  }
+
+  @override
+  String get virtPoolDeleteStorage => '同时删除其目录（仅当为空时）';
+
+  @override
+  String virtPoolStopAsk(String name) {
+    return '停用存储池 $name？在重新启用前无法列出或创建其中的卷。';
+  }
+
+  @override
+  String virtStorageDisableAsk(String name) {
+    return '停用存储 $name？在重新启用前，磁盘在其上的虚拟机无法启动。';
+  }
+
+  @override
+  String get virtPoolLogicalNote => '使用已有的卷组，不会格式化任何设备。';
+
+  @override
+  String get virtPoolMountPoint => '挂载点';
+
+  @override
+  String get virtPoolSourceNfs => '源 (host:/path)';
+
+  @override
+  String get virtPoolSourceVg => '卷组';
+
+  @override
+  String get virtPoolSourceThin => '卷组 / thin pool';
+
+  @override
+  String get virtPoolSourceZfs => 'ZFS 池';
+
+  @override
+  String get virtPoolTypeVg => 'LVM 卷组';
+
+  @override
+  String get virtResNameEmpty => '请输入名称';
+
+  @override
+  String get virtResNameInvalid => '主机不接受此名称（字母、数字、. _ -）';
+
+  @override
+  String get virtResSourceInvalid => '不是有效的路径或来源';
+
+  @override
+  String get virtResTargetInvalid => '需要绝对路径';
+
+  @override
+  String get virtResCidrInvalid => '需要带前缀的地址，例如 192.168.150.1/24';
+
+  @override
+  String get virtResDhcpInvalid => '需要网段内、按顺序、且不含宿主机地址的两个地址';
+
+  @override
+  String get virtResSubnetTaken => '已有网络使用此网段';
+
+  @override
+  String get virtResBridgeInvalid => '不是有效的网络接口名';
+
+  @override
+  String get virtResFormat => '这个存储池不支持此格式';
+
+  @override
+  String get virtVolNew => '新建卷';
+
+  @override
+  String virtVolCount(int count) {
+    return '$count 个卷';
+  }
+
+  @override
+  String get virtVolNone => '这个存储池还没有卷。';
+
+  @override
+  String get virtVolEmptyAttach => '新卷可以之后挂载到任意虚拟机';
+
+  @override
+  String get virtVolEmptyUpload => '也可以直接上传 ISO';
+
+  @override
+  String get virtVolPveName => 'PVE 按所属虚拟机命名卷：vm-<VMID>-disk-<N>';
+
+  @override
+  String get virtVolUsers => '使用者';
+
+  @override
+  String get virtVolAllocated => '已分配';
+
+  @override
+  String get virtVolGrowFromGuest => '有虚拟机在使用：请在该虚拟机的硬件页扩容';
+
+  @override
+  String get virtVolInUse => '有虚拟机正在使用此卷';
+
+  @override
+  String get virtVolAttach => '挂载到虚拟机';
+
+  @override
+  String get virtVolAttachNote => '作为新磁盘挂载到其第一块磁盘所在的总线';
+
+  @override
+  String virtVolAttached(String name) {
+    return '已挂载到 $name';
+  }
+
+  @override
+  String get virtVolInsert => '插入光驱';
+
+  @override
+  String virtVolInserted(String name) {
+    return '已插入 $name 的光驱';
+  }
+
+  @override
+  String virtVolNoCdrom(String name) {
+    return '$name 没有光驱';
+  }
+
+  @override
+  String virtVolDeleteAsk(String name, String pool) {
+    return '从 $pool 删除卷 $name？其中的数据将永久丢失。';
+  }
+
+  @override
+  String get virtUploadIso => '上传 ISO';
+
+  @override
+  String virtUploadTo(String pool) {
+    return '上传到 $pool';
+  }
+
+  @override
+  String virtUploadDone(String name) {
+    return '$name 上传完成';
+  }
+
+  @override
+  String get virtNetConfig => '配置';
+
+  @override
+  String get virtNetInternal => '内部';
+
+  @override
+  String get virtNetBridgePorts => '桥接端口';
+
+  @override
+  String get virtNetHostBridge => '宿主机网桥';
+
+  @override
+  String get virtNetPortsHint => 'eno2，留空为内部网桥';
+
+  @override
+  String get virtNetDhcpRange => 'DHCP 范围';
+
+  @override
+  String get virtNetDhcpTip => 'dnsmasq 为虚拟机分配地址';
+
+  @override
+  String get virtNetVlanTip => '允许虚拟机网卡带 VLAN tag';
+
+  @override
+  String get virtNetNatTip => '经宿主机转发，虚拟机能上网但外部不可达';
+
+  @override
+  String get virtNetRoutedTip => '经宿主机路由，不做 NAT：局域网需要回程路由';
+
+  @override
+  String get virtNetIsolatedTip => '只有虚拟机之间和宿主机能通信';
+
+  @override
+  String get virtNetBridgedTip => '直接接入宿主机网桥，与物理网络同网段';
+
+  @override
+  String get virtNetNew => '新建网络';
+
+  @override
+  String get virtNetNewBridge => '新建 Linux bridge';
+
+  @override
+  String get virtNetVirtual => '虚拟网络';
+
+  @override
+  String get virtNetDelete => '删除网络';
+
+  @override
+  String virtNetDeleteAsk(String name) {
+    return '删除网络 $name？它会被停止并删除定义。';
+  }
+
+  @override
+  String virtNetDeleteAskPve(String name, String node) {
+    return '从 $node 移除网桥 $name？它会先从待生效配置中移除，应用配置后才从宿主机上删除。';
+  }
+
+  @override
+  String virtNetInUse(int count) {
+    return '$count 台在使用，不能删除。';
+  }
+
+  @override
+  String virtNetStopAsk(String name, int count) {
+    return '停用 $name？其上的 $count 台虚拟机会断网，直到重新启用。';
+  }
+
+  @override
+  String get virtNetInactivePve => '未激活：新网桥在应用配置前处于待生效状态。';
+
+  @override
+  String get virtNetPveApplyNote => '保存为待生效的变更，应用配置（ifreload -a）后生效。';
+
+  @override
+  String get virtNetPendingSaved => '已保存为待生效，应用配置后生效';
+
+  @override
+  String virtNetPendingTitle(String node) {
+    return '$node 上有待生效的网络变更';
+  }
+
+  @override
+  String get virtNetPendingTip => 'PVE 会把网络变更保存在 interfaces.new 中，应用后才生效。';
+
+  @override
+  String get virtNetPendingShow => '查看变更';
+
+  @override
+  String get virtNetApply => '应用配置';
+
+  @override
+  String virtNetApplyAsk(String node) {
+    return '应用 $node 上待生效的网络配置？PVE 会重新加载宿主机网络（ifreload -a），配置有误可能导致宿主机断网。';
+  }
+
+  @override
+  String virtNetRevertAsk(String node) {
+    return '丢弃 $node 上待生效的网络配置？';
+  }
+
+  @override
+  String get pveTokenTipStorage =>
+      '管理存储需要 /storage 上的 Datastore.Allocate（添加、停用、移除）、Datastore.AllocateSpace（卷）和 Datastore.AllocateTemplate（上传）；Linux bridge 和应用网络配置需要节点上的 Sys.Modify。';
+
+  @override
+  String get virtCreateUnnamed => '未命名';
+
+  @override
+  String get virtCreateNotChosen => '未选择';
+
+  @override
+  String get virtCreateKindVmSub => 'qm · 完整的 KVM 虚拟机';
+
+  @override
+  String get virtCreateKindLxcSub => 'pct · 共享宿主机内核，开销更小';
+
+  @override
+  String get virtCloudImage => '云镜像';
+
+  @override
+  String get virtCloudImageTip =>
+      '已装好系统的磁盘：复制一份，扩到「存储」里的容量，首次启动时由 cloud-init 配置。镜像本身保持不变。';
+
+  @override
+  String get virtNoCloudImagesLibvirt =>
+      '这里没有云镜像：把 qcow2 或 raw 镜像放进一个存储池（可在「存储」里上传），且没有虚拟机在用它。';
+
+  @override
+  String get virtNoCloudImagesPve =>
+      '这里没有云镜像：把 qcow2、raw 或 vmdk 镜像上传到内容类型含「导入」(Import) 的存储（PVE 8.2+）。';
+
+  @override
+  String get virtCreateWindowsTitle => 'Windows 11 需要 UEFI + TPM 2.0';
+
+  @override
+  String get virtCreateWindowsBody => '在上面选 UEFI 并打开 TPM。';
+
+  @override
+  String get virtCreateWindowsNoTpm => '这台宿主机没有软件 TPM (swtpm)：安装后才能给虚拟机添加。';
+
+  @override
+  String virtCreateImageSize(String size) {
+    return '镜像有 $size：磁盘至少要这么大。';
+  }
+
+  @override
+  String get virtCreateImageMissing => '选择一个云镜像。';
+
+  @override
+  String get virtCreateIncomplete => '先补全标橙色的部分。';
+
+  @override
+  String virtCreateOn(String host) {
+    return '将在 $host 上创建';
+  }
+
+  @override
+  String get virtCiTip => '一个带 sudo 的账户，可用密码、SSH 密钥或两者登录。';
+
+  @override
+  String get virtCiUserInvalid => '小写字母、数字、_ 和 -，以字母或 _ 开头';
+
+  @override
+  String get virtCiCredentialsMissing => '设置密码或 SSH 密钥。';
+
+  @override
+  String get virtCiHostnamePve => '主机名就是虚拟机的名称。';
+
+  @override
+  String get virtCiStatic => '静态';
+
+  @override
+  String get virtCiAddressInvalid => '带前缀的 IPv4 地址，如 10.0.0.5/24';
+
+  @override
+  String get virtCiGatewayInvalid => 'IPv4 地址，如 10.0.0.1';
+
+  @override
+  String get virtCiDnsFromDhcp => '留空：由 DHCP 提供';
+
+  @override
+  String get virtCiDnsInvalid => 'IP 地址，用空格或逗号分隔';
+
+  @override
+  String get virtCiSearch => '搜索域';
+
+  @override
+  String get virtCiSeedNote => '写入磁盘旁的一个小 ISO，作为光驱挂载，随虚拟机一起删除。只保存密码的哈希。';
+
+  @override
+  String get virtCiNoToolTitle => '宿主机上没有制作 cloud-init 数据的工具';
+
+  @override
+  String virtCiNoToolBody(String tools) {
+    return '在宿主机上安装 $tools 之一。没有 cloud-init，镜像启动后没有可登录的账户。';
+  }
+
+  @override
+  String get virtHwCloudInitNote => 'cloud-init 在首次启动时读取的数据，不是安装介质，这里不能换盘。';
+
+  @override
+  String get virtHwCdromLater => '运行中添加的光驱在下次启动时生效（SATA 和 IDE 不支持热插拔）。';
+
+  @override
+  String virtCreateDiskKept(String size) {
+    return '磁盘保持为镜像本身的 $size，大于所选容量：磁盘不会被裁得比其中的系统还小。';
+  }
+
+  @override
+  String get virtCiEditTip => 'cloud-init 在这台虚拟机里配置的内容：带 sudo 的账户、登录方式、主机名和地址。';
+
+  @override
+  String get virtCiForeignTitle => '这份 seed 包含本应用不写入的设置';
+
+  @override
+  String get virtCiForeignBody =>
+      '在别处写入的设置（软件包、命令、其他账户）不在这里显示。保存后，seed 会被替换为这里显示的内容。';
+
+  @override
+  String get virtCiPasswordKept => '已设置，留空则保持不变';
+
+  @override
+  String get virtCiRemovePassword => '移除密码';
+
+  @override
+  String get virtCiRemovePasswordNote => '只能用 SSH 密钥登录';
+
+  @override
+  String get virtCiKeysAdded =>
+      '密钥会添加到账户。在这里删掉的密钥仍留在系统内，需要在系统内删除；改用户名会新建一个账户，旧账户保留。';
+
+  @override
+  String get virtCiEffectTitle => '下次启动时生效';
+
+  @override
+  String get virtCiEffectLibvirt => '保存会写入一份新的 seed，并使用新的实例 ID。';
+
+  @override
+  String get virtCiEffectPve =>
+      'PVE 会立即重写它的 cloud-init 驱动器，实例 ID 由这些设置计算得出，因此这里的任何改动都会产生新的实例 ID。';
+
+  @override
+  String get virtCiNewInstance =>
+      '下次启动时，cloud-init 会把系统当作新实例：重新设置主机名，账户不存在时创建它，设置密码、添加密钥，并重新写入网络配置。它还会生成新的 SSH 主机密钥，因此 SSH 客户端会提示主机密钥已变更。在那次启动之前不会有任何变化。';
+
+  @override
+  String get virtCiSaved => '已保存，下次启动时生效。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -4053,9 +5483,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get parseContainerStatsTip => 'Docker 解析消耗狀態較為緩慢';
 
   @override
-  String get plugInType => '插入類型';
-
-  @override
   String get preferDiskAmount => '優先顯示硬碟容量';
 
   @override
@@ -4186,19 +5613,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get pveIgnoreCertTip => '不建議啟用，請注意安全風險！如果您使用的是 PVE 的預設憑證，則需要啟用此選項。';
 
   @override
-  String get pveServerClientMissing => '目前伺服器的 SSH 用戶端不可用。';
-
-  @override
-  String get pveAddressMissing => '未設定 PVE 位址，請在伺服器設定中填寫。';
-
-  @override
   String get pvePasswordRequired => '需要提供 PVE 密碼，請在伺服器設定中填寫。';
 
   @override
   String get pveOtpRequired => '此 PVE 伺服器已啟用雙因素認證，請輸入 OTP 驗證碼。';
-
-  @override
-  String get pveOtpChallengeExpired => 'OTP 驗證挑戰已過期，請重新整理後再試一次。';
 
   @override
   String get pveOtpCodeRequired => '請輸入 OTP 驗證碼。';
@@ -4220,18 +5638,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get pveMissingAuthTicket => 'PVE 登入成功，但未返回認證票據。';
-
-  @override
-  String get pveVersionLow => '此功能目前處於測試階段，僅在 PVE 8+ 上進行過測試。請謹慎使用。';
-
-  @override
-  String get pveLoadingForwarding => '正在建立 SSH 隧道...';
-
-  @override
-  String get pveLoadingLogin => '正在認證 PVE...';
-
-  @override
-  String get pveLoadingData => '正在獲取集群數據...';
 
   @override
   String get pveLoadingConnect => '正在連接...';
@@ -4669,9 +6075,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sortByJoinTime => '依加入時間';
-
-  @override
-  String get portForwardBetaTitle => '連接埠轉送（Beta）';
 
   @override
   String get tmuxAutoAttach => 'tmux 自動附加';
@@ -6152,4 +7555,1463 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String appearanceThemeModeLocked(String mode) {
     return '此主題僅支援$mode。如需切換模式，請選擇其他主題。';
   }
+
+  @override
+  String get pveAuthToken => 'API token';
+
+  @override
+  String get pveVersionLow => '此功能目前處於測試階段，僅在 PVE 8+ 上進行過測試。請謹慎使用。';
+
+  @override
+  String get pveTokenId => 'Token ID';
+
+  @override
+  String get pveTokenSecret => 'Token secret';
+
+  @override
+  String get pveTokenTip =>
+      '在 PVE 的 資料中心 → 權限 → API Tokens 中建立。需要在要顯示的路徑上具有 VM.Audit、VM.PowerMgmt、VM.Console、VM.Snapshot、VM.Snapshot.Rollback、Datastore.Audit 和 Sys.Audit 權限；若啟用了權限分離，需要將這些權限授予 token 本身。';
+
+  @override
+  String pveTokenNoPrivileges(String account, String command) {
+    return 'token $account 在這台主機上沒有任何可見的資源。啟用了權限分離的 token 不繼承其使用者的權限，需要單獨授權。在 PVE 主機上執行：\n$command\n或取消該 token 的「權限分離」。';
+  }
+
+  @override
+  String pveUserNoPrivileges(String account, String command) {
+    return '$account 在這台主機上沒有任何可見的資源。在 PVE 主機上為它授權：\n$command';
+  }
+
+  @override
+  String get pveTokenIdInvalid => 'Token ID 的格式應為 user@realm!tokenid';
+
+  @override
+  String get pvePasswordAuthTip =>
+      '以 SSH 使用者身分在 PAM realm 登入，使用 SSH 密碼；SSH 使用 key 時使用下方的 PVE 密碼。需要時會要求輸入兩步驟驗證碼。';
+
+  @override
+  String get pveCertUnpinned => '尚未確認。除非憑證由受信任的 CA 簽發，下次連線時會顯示憑證以供確認。';
+
+  @override
+  String get pveCertForget => '忘記憑證';
+
+  @override
+  String get pveCertForgetTip => '下次連線時會再次顯示 PVE 憑證以供確認。';
+
+  @override
+  String get virtualization => '虛擬化';
+
+  @override
+  String get virtIntro =>
+      '管理 Proxmox VE 與 libvirt/KVM 主機上的虛擬機器和容器：查看狀態、執行電源操作、開啟主控台。';
+
+  @override
+  String get virtIntroPveMoved => 'Proxmox VE 已從伺服器頁面移到此分頁。伺服器的 PVE 卡片會在這裡開啟它。';
+
+  @override
+  String get virtIntroLibvirt =>
+      '安裝了 libvirt 的 virsh 的伺服器會顯示為主機，並列出其 QEMU/KVM 虛擬機器。';
+
+  @override
+  String get virtIntroTransports => '兩者都可以透過 SSH、Monitor agent 或在本裝置上使用。';
+
+  @override
+  String get virtIntroTokens =>
+      'PVE 可以使用 API token 登入，無需密碼。請在伺服器編輯頁面的 PVE 部分設定。';
+
+  @override
+  String get virtIntroInBar => '已新增到分頁列。';
+
+  @override
+  String get virtIntroInMore => '位於「更多」中。可在設定的「主頁標籤」中將其移到分頁列。';
+
+  @override
+  String get virtGuests => '虛擬機';
+
+  @override
+  String get virtHosts => '主機';
+
+  @override
+  String get virtCheckServer => '檢查此伺服器';
+
+  @override
+  String get virtCheckAll => '檢查所有伺服器';
+
+  @override
+  String get virtProbeNotChecked => '尚未檢查';
+
+  @override
+  String get virtProbeAbsent => '不是主機';
+
+  @override
+  String virtProbeContainer(String kind) {
+    return '$kind 容器';
+  }
+
+  @override
+  String get virtProbeContainerTip => '這台伺服器執行在容器中，本身不是主機。請在執行它的主機上管理。';
+
+  @override
+  String get virtProbePve => 'PVE，未設定';
+
+  @override
+  String virtPveSetupTip(String version) {
+    return '這台伺服器執行著 $version。在伺服器設定中填寫 API 存取資訊（建議使用 API token）後，即可在這裡管理其中的虛擬機和容器。';
+  }
+
+  @override
+  String get virtNoHosts => '沒有虛擬化主機';
+
+  @override
+  String get virtNoHostsTip =>
+      '執行 Proxmox VE 且填寫了 API 存取資訊的伺服器是主機，能執行 virsh 的伺服器也是。其他伺服器可以在主機切換器中檢查。';
+
+  @override
+  String get virtNoGuests => '沒有虛擬機或容器';
+
+  @override
+  String get virtPaused => '已暫停';
+
+  @override
+  String get virtStarting => '正在啟動…';
+
+  @override
+  String get virtStopping => '正在關機…';
+
+  @override
+  String get virtRebooting => '正在重新啟動…';
+
+  @override
+  String get virtMigrating => '正在遷移…';
+
+  @override
+  String get virtBackingUp => '正在備份…';
+
+  @override
+  String get virtResume => '繼續';
+
+  @override
+  String get virtOverview => '概覽';
+
+  @override
+  String get virtConsole => '主控台';
+
+  @override
+  String get virtConsoleNone => '此虛擬機器沒有可用的主控台';
+
+  @override
+  String get virtConsoleGraphical => '圖形';
+
+  @override
+  String get virtVncPasswordNeeded => '這個顯示需要密碼';
+
+  @override
+  String get virtConsoleSerialTip =>
+      '在主機上以 virsh 開啟虛擬機器的序列主控台。中斷連線或按 Ctrl+] 可返回主機的 shell。';
+
+  @override
+  String virtConsoleVia(String transport) {
+    return '經 $transport';
+  }
+
+  @override
+  String get virtConsoleEnterTip => '沒有輸出？按 Enter';
+
+  @override
+  String virtConsoleAutoEnter(int seconds) {
+    return '$seconds 秒後自動按 Enter 喚出提示字元';
+  }
+
+  @override
+  String get virtConsoleEnterNow => '立即';
+
+  @override
+  String get virtOffTip => '啟動後在這裡顯示即時 CPU、記憶體、磁碟和網路。';
+
+  @override
+  String get virtAllocated => '已分配';
+
+  @override
+  String virtRunningCount(int running, int total) {
+    return '$running 執行中 · 共 $total 台';
+  }
+
+  @override
+  String get virtTemplate => '範本';
+
+  @override
+  String get virtAutostart => '隨主機啟動';
+
+  @override
+  String get virtErrUnreachable => '無法連線到此主機';
+
+  @override
+  String get virtErrNotConfigured => '此伺服器的 PVE 設定不完整';
+
+  @override
+  String get virtErrNotConfiguredTip => '請在伺服器設定中檢查位址，以及密碼或 API token。';
+
+  @override
+  String get virtErrAuthFailed => '主機拒絕了登入';
+
+  @override
+  String get virtErrCertUnconfirmed => '請確認主機的憑證';
+
+  @override
+  String get virtErrCertChanged => '主機的憑證已變更';
+
+  @override
+  String get virtErrRelayNotGranted => 'Monitor agent 不轉送連線';
+
+  @override
+  String get virtErrExecNotGranted => 'Monitor agent 不執行命令';
+
+  @override
+  String get virtErrNotInstalled => '此伺服器上未安裝 virsh';
+
+  @override
+  String get virtErrServerRemoved => '該伺服器已被刪除';
+
+  @override
+  String get virtErrSudoRequired => 'sudo 需要密碼才能存取 libvirt';
+
+  @override
+  String get virtErrSudoRejected => 'sudo 拒絕了該密碼';
+
+  @override
+  String get virtErrInvalidResponse => '主機回傳了無法辨識的內容';
+
+  @override
+  String get virtErrActionFailed => '主機拒絕了該操作';
+
+  @override
+  String get remoteSessionIdleTimeout => '離開後自動關閉';
+
+  @override
+  String get remoteSessionIdleTimeoutTip =>
+      '離開遠端桌面或虛擬機主控台後,連線保持多久。關閉前會顯示提示,10 秒內可選擇保持連線。';
+
+  @override
+  String get remoteSessionKeepAlive => '保持連線';
+
+  @override
+  String get remoteSessionClosedAway => '已因閒置關閉';
+
+  @override
+  String remoteSessionClosingIn(int seconds) {
+    return '$seconds 秒後關閉';
+  }
+
+  @override
+  String get reopen => '重新開啟';
+
+  @override
+  String get virtSnapshots => '快照';
+
+  @override
+  String get virtSnapshotCreate => '建立快照';
+
+  @override
+  String get virtSnapshotNone => '還沒有快照';
+
+  @override
+  String get virtSnapshotWithMemory => '磁碟和記憶體';
+
+  @override
+  String get virtSnapshotDiskOnly => '僅磁碟';
+
+  @override
+  String get virtSnapshotParent => '父快照';
+
+  @override
+  String get virtSnapshotRevert => '還原到此快照';
+
+  @override
+  String get virtSnapshotMemory => '包含記憶體狀態';
+
+  @override
+  String get virtSnapshotMemoryTip => '還原後回到這一刻的執行狀態。';
+
+  @override
+  String get virtSnapshotMemoryAlways => '在此主機上，執行中的虛擬機快照總是包含記憶體。';
+
+  @override
+  String get virtSnapshotMemoryOff => '虛擬機未執行，只能儲存磁碟。';
+
+  @override
+  String get virtSnapshotNameInvalid => '以字母開頭，之後只能是字母、數字、- 或 _，長度 2 到 40。';
+
+  @override
+  String get virtSnapshotNameTaken => '已有同名快照。';
+
+  @override
+  String get virtSnapshotRevertTip => '還原會捨棄快照之後的所有變更。';
+
+  @override
+  String virtSnapshotRevertAsk(String guest, String snapshot) {
+    return '將 $guest 還原到 $snapshot？此後的所有變更都會遺失。';
+  }
+
+  @override
+  String virtSnapshotRevertStops(String guest) {
+    return '此快照不含記憶體：$guest 將被停止。';
+  }
+
+  @override
+  String get virtSnapshotStartAfter => '還原後啟動';
+
+  @override
+  String get virtVolumes => '磁碟區';
+
+  @override
+  String get virtNoPools => '沒有儲存池';
+
+  @override
+  String get virtNoNetworks => '沒有網路';
+
+  @override
+  String get virtPoolInactive => '儲存池未啟用，無法列出其中的磁碟區。';
+
+  @override
+  String get virtShared => '節點間共用';
+
+  @override
+  String get virtBackingFile => '後備檔案';
+
+  @override
+  String get virtNetIsolated => '隔離';
+
+  @override
+  String get virtNetBridged => '橋接';
+
+  @override
+  String get virtNetRouted => '路由';
+
+  @override
+  String get virtBridge => '網橋';
+
+  @override
+  String get virtPorts => '連接埠';
+
+  @override
+  String get virtAttachedGuests => '已連線的虛擬機';
+
+  @override
+  String get virtNoAttachedGuests => '沒有虛擬機連線到此網路';
+
+  @override
+  String get virtCreateVm => '新增虛擬機';
+
+  @override
+  String get virtCreateLxc => '新增容器';
+
+  @override
+  String get virtCreateGuest => '新增虛擬機或容器';
+
+  @override
+  String get virtKindVm => '虛擬機';
+
+  @override
+  String get virtKindLxc => '容器';
+
+  @override
+  String get virtHostname => '主機名稱';
+
+  @override
+  String get virtInstallMedia => '安裝媒體';
+
+  @override
+  String get virtNoIsos => '這台主機上沒有 ISO 映像';
+
+  @override
+  String get virtNoTemplates => '這台主機上沒有容器範本。可以在 PVE 中儲存的 CT 範本裡下載。';
+
+  @override
+  String get virtNoDiskStorage => '這台主機上沒有可以建立新磁碟的儲存';
+
+  @override
+  String get virtStartAfterCreate => '建立後啟動';
+
+  @override
+  String get virtUnprivileged => '非特權容器';
+
+  @override
+  String get virtUnprivilegedTip => '容器內的 root 對應主機上的一般使用者。';
+
+  @override
+  String get virtSshKeys => 'SSH 公鑰';
+
+  @override
+  String get virtCredentialsTip => 'root 密碼、SSH 公鑰，或兩者都設定。';
+
+  @override
+  String virtCreated(String name) {
+    return '已建立 $name';
+  }
+
+  @override
+  String virtCreatedNotStarted(String name) {
+    return '已建立 $name，但未能啟動';
+  }
+
+  @override
+  String get virtErrExists => '同名的虛擬機器或磁碟已存在';
+
+  @override
+  String get virtCreateNameInvalidLibvirt =>
+      '字母、數字、.、_ 和 -，以字母或數字開頭，最多 63 個字元。';
+
+  @override
+  String get virtCreateNameInvalidPve => '字母、數字和 -，各段之間以點分隔，最多 63 個字元。';
+
+  @override
+  String get virtCreateNameTaken => '已有同名虛擬機器。';
+
+  @override
+  String get virtCreateVmidInvalid => '範圍為 100 到 999999999。';
+
+  @override
+  String get virtCreateVmidTaken => '這個 VMID 已被使用。';
+
+  @override
+  String get virtCreateCoresInvalid => '超出了這台主機允許的核心數。';
+
+  @override
+  String get virtCreateMemoryInvalid => '記憶體不足。';
+
+  @override
+  String get virtCreateStorageMissing => '選擇磁碟的存放位置。';
+
+  @override
+  String get virtCreateDiskInvalid => '範圍為 1 GiB 到 64 TiB。';
+
+  @override
+  String get virtCreateTemplateMissing => '選擇一個範本。';
+
+  @override
+  String get virtCreateCredentialsMissing => '設定 root 密碼或 SSH 公鑰。';
+
+  @override
+  String virtCreatePasswordShort(int min) {
+    return '至少 $min 個字元。';
+  }
+
+  @override
+  String get virtCreateSshKeysInvalid => '每行一個 OpenSSH 公鑰。';
+
+  @override
+  String get virtDeleteDisks => '同時刪除磁碟區';
+
+  @override
+  String get virtDeleteDisksPve => '磁碟會隨它一起刪除，安裝媒體會保留。';
+
+  @override
+  String virtDeleted(String name) {
+    return '已刪除 $name';
+  }
+
+  @override
+  String get pveTokenTipCreate =>
+      '建立和刪除虛擬機器還需要 VM.Allocate、VM.Config.*、Datastore.AllocateSpace 和 SDN.Use。';
+
+  @override
+  String get pveTokenTipHardware =>
+      '編輯硬體需要 VM.Config.CPU、VM.Config.Memory、VM.Config.Disk、VM.Config.CDROM、VM.Config.Network 和 VM.Config.Options；新增磁碟和網路卡還需要 Datastore.AllocateSpace 和 SDN.Use。修改顯示卡以及 USB、PCI 裝置還需要 VM.Config.HWType；透過資源對應直通裝置需要該對應的 Mapping.Use，列出對應需要 Mapping.Audit。';
+
+  @override
+  String get pveTokenTipBackup =>
+      '複製需要 VM.Clone，備份和還原需要 VM.Backup；副本或備份存放的儲存上還需要 Datastore.AllocateSpace。';
+
+  @override
+  String get virtErrConflict => '已在別處修改';
+
+  @override
+  String get virtErrConflictTip =>
+      '此虛擬機器的設定在讀取後被他人修改，因此未做任何變更。已重新讀取，如仍需要請再次修改。';
+
+  @override
+  String get virtHardware => '硬體';
+
+  @override
+  String get virtHwAddDisk => '新增磁碟';
+
+  @override
+  String get virtHwAddMount => '新增掛載點';
+
+  @override
+  String get virtHwAddNic => '新增網路卡';
+
+  @override
+  String get virtHwAppliesOnRestart => '已儲存，將在下次啟動時生效。';
+
+  @override
+  String get virtHwAutostart => '隨主機開機自動啟動';
+
+  @override
+  String get virtHwAutostartPve => 'onboot · 依 VMID 順序啟動';
+
+  @override
+  String get virtHwBalloonLibvirt => '目前記憶體';
+
+  @override
+  String get virtHwBalloonNote => '允許主機在記憶體緊張時回收虛擬機器的閒置記憶體';
+
+  @override
+  String get virtHwBoot => '開機';
+
+  @override
+  String get virtHwBootOrder => '啟動順序';
+
+  @override
+  String get virtHwBootTip => '用箭頭調整順序；點按裝置可切換是否從它開機。';
+
+  @override
+  String get virtHwCdrom => '光碟機';
+
+  @override
+  String get virtHwConfigFile => '設定檔';
+
+  @override
+  String get virtHwCores => '核心';
+
+  @override
+  String get virtHwCpuTypeDefault => '預設';
+
+  @override
+  String get virtHwDeleteVolume => '同時刪除磁碟區';
+
+  @override
+  String get virtHwDetach => '分離';
+
+  @override
+  String get virtHwDiskHotplug => '支援熱插拔，執行中也能新增';
+
+  @override
+  String get virtHwDisksLxc => '根磁碟與掛載點';
+
+  @override
+  String get virtHwEject => '退出';
+
+  @override
+  String get virtHwEmpty => '無媒體';
+
+  @override
+  String get virtHwFirewall => '防火牆';
+
+  @override
+  String virtHwFree(String size) {
+    return '可用 $size';
+  }
+
+  @override
+  String get virtHwGrow => '擴充';
+
+  @override
+  String get virtHwGrowNote => '只能在原容量上擴充。';
+
+  @override
+  String get virtHwGrowNoteRunning => '只能在原容量上擴充。執行中擴充後需在系統內擴充分割區。';
+
+  @override
+  String get virtHwGuestUsed => '系統內已用';
+
+  @override
+  String virtHwHostCpus(int threads, int allocated) {
+    return '主機 $threads 執行緒 · 已分配 $allocated';
+  }
+
+  @override
+  String virtHwHostMem(String total, String allocated) {
+    return '主機 $total · 已分配 $allocated';
+  }
+
+  @override
+  String get virtHwHotplugNow => '支援熱插拔，執行中立即生效。';
+
+  @override
+  String get virtHwIssueBootEmpty => '至少勾選一個裝置';
+
+  @override
+  String virtHwIssueCpuCount(int max) {
+    return 'vCPU 總數須在 1 到 $max 之間';
+  }
+
+  @override
+  String get virtHwIssueCpuOnline => '線上 vCPU 須在 1 到總數之間';
+
+  @override
+  String get virtHwIssueDiskShrink => '須大於目前大小：磁碟只能擴大';
+
+  @override
+  String get virtHwIssueDiskSize => '須在 1 到 65536 GiB 之間';
+
+  @override
+  String virtHwIssueMemory(int min, int max) {
+    return '須在 $min 到 $max MiB 之間';
+  }
+
+  @override
+  String get virtHwIssueMemoryMin => '不能超過記憶體';
+
+  @override
+  String get virtHwIssueMountPoint => '須為絕對路徑，如 /data';
+
+  @override
+  String get virtHwIssueStorageSpace => '超出了儲存的可用空間';
+
+  @override
+  String get virtHwIssueSwap => '不能為負數';
+
+  @override
+  String get virtHwLater => '重新啟動後生效';
+
+  @override
+  String get virtHwLess => '減少';
+
+  @override
+  String get virtHwLinkDown => '已中斷';
+
+  @override
+  String get virtHwLinkNote => '中斷後系統內會顯示網路線已拔出，不需要重新啟動';
+
+  @override
+  String get virtHwLinkUp => '已連線';
+
+  @override
+  String get virtHwMac => 'MAC 位址';
+
+  @override
+  String get virtHwModel => '型號';
+
+  @override
+  String get virtHwMore => '增加';
+
+  @override
+  String get virtHwMountFromPool => '掛載點直接從儲存池分配';
+
+  @override
+  String get virtHwMountPoint => '掛載點';
+
+  @override
+  String get virtHwMoveDown => '下移';
+
+  @override
+  String get virtHwMoveUp => '上移';
+
+  @override
+  String get virtHwNewDisk => '新磁碟';
+
+  @override
+  String get virtHwNewMount => '新掛載點';
+
+  @override
+  String get virtHwNewNic => '新網路卡';
+
+  @override
+  String get virtHwNicHotplug => 'virtio 網路卡支援熱插拔';
+
+  @override
+  String get virtHwNics => '網路卡';
+
+  @override
+  String get virtHwNoMedia => '無媒體';
+
+  @override
+  String get virtHwNoNetworks => '沒有可用的網路或橋接';
+
+  @override
+  String get virtHwNoStorage => '沒有可存放磁碟的儲存';
+
+  @override
+  String get virtHwOnline => '線上 vCPU';
+
+  @override
+  String get virtHwPendingBanner => '部分硬體變更在重新啟動後生效';
+
+  @override
+  String get virtHwPickNet => '選擇網路';
+
+  @override
+  String get virtHwPickPool => '選擇儲存池和容量';
+
+  @override
+  String get virtHwProcessor => '處理器';
+
+  @override
+  String get virtHwRemove => '移除';
+
+  @override
+  String get virtHwRemoveCdrom => '移除光碟機';
+
+  @override
+  String virtHwRemoveDiskAsk(String disk, String guest) {
+    return '從 $guest 移除 $disk？';
+  }
+
+  @override
+  String virtHwRemoveNicAsk(String nic, String guest) {
+    return '從 $guest 移除 $nic？';
+  }
+
+  @override
+  String get virtHwResources => '資源';
+
+  @override
+  String get virtHwRestartNow => '立即重新啟動';
+
+  @override
+  String get virtHwRevert => '復原';
+
+  @override
+  String get virtHwRevertAll => '全部復原';
+
+  @override
+  String get virtSetRenameStopped => '關機後才能改名：libvirt 只能重新命名未執行的虛擬機。';
+
+  @override
+  String virtSetIssueDescription(int max) {
+    return '最多 $max 個字元，且不能包含控制字元。';
+  }
+
+  @override
+  String get virtSetManualStart => '手動啟動';
+
+  @override
+  String get virtSetProtection => '保護';
+
+  @override
+  String get virtSetProtectionNote => '禁止刪除虛擬機和修改磁碟';
+
+  @override
+  String get virtSetIrreversible => '無法復原';
+
+  @override
+  String get virtSetDeleteStopFirst => '先關機再刪除。';
+
+  @override
+  String get virtSetDeleteProtected => '已開啟保護，請先在一般設定中關閉。';
+
+  @override
+  String get virtSetDeleteAgain => '再按一次確認';
+
+  @override
+  String virtSetDeleteConfirm(String name) {
+    return '確認刪除 $name';
+  }
+
+  @override
+  String get virtSetDeleteVm => '刪除虛擬機';
+
+  @override
+  String get virtSetDeleteLxc => '刪除容器';
+
+  @override
+  String get virtHwSockets => '插槽';
+
+  @override
+  String get virtHwSource => '來源';
+
+  @override
+  String get virtHwSwap => '交換空間';
+
+  @override
+  String get virtHwTopology => '插槽 × 核心';
+
+  @override
+  String virtHwTopologyValue(int sockets, int cores, int threads) {
+    return '$sockets 插槽 × $cores 核 × $threads 執行緒';
+  }
+
+  @override
+  String virtHwTotal(String size) {
+    return '$size 總計';
+  }
+
+  @override
+  String get virtHwVolumeKept => '已移除，但執行中的虛擬機器仍在使用該磁碟，因此保留了磁碟區。它會在下次啟動時分離。';
+
+  @override
+  String get virtHwBus => '匯流排';
+
+  @override
+  String get virtHwCache => '快取';
+
+  @override
+  String get virtHwBusStopped => '關機後才能更換匯流排。';
+
+  @override
+  String get virtHwMacGenerate => '產生';
+
+  @override
+  String get virtHwIssueMac => '須為單播 MAC 位址，如 52:54:00:12:34:56';
+
+  @override
+  String get virtHwIssueStopFirst => '先關機';
+
+  @override
+  String get virtHwIssueStorageMissing => '先選擇存放的儲存';
+
+  @override
+  String get virtHwIssueDevice => '先選擇一個裝置';
+
+  @override
+  String get virtHwDevices => '光碟機與直通';
+
+  @override
+  String get virtHwDevicesEmpty => 'USB 與 PCI 直通、光碟機、TPM';
+
+  @override
+  String get virtHwAddDevice => '新增裝置';
+
+  @override
+  String get virtHwNewDevice => '新裝置';
+
+  @override
+  String get virtHwUsbHotplug => 'USB 直通支援熱插拔。';
+
+  @override
+  String get virtHwPci => 'PCI 直通';
+
+  @override
+  String get virtHwIommuOffTitle => '主機沒有啟用 IOMMU';
+
+  @override
+  String get virtHwIommuOffBody =>
+      '先在主機 BIOS 中啟用 VT-d 或 AMD-Vi，並在核心中啟用 IOMMU。在此之前，加入了 PCI 裝置的虛擬機無法啟動。';
+
+  @override
+  String get virtHwPciTitle => '需要主機啟用 IOMMU';
+
+  @override
+  String get virtHwPciBody => '直通後該裝置不能再給主機使用，虛擬機也不能線上遷移。';
+
+  @override
+  String virtHwIommuGroup(int group) {
+    return 'IOMMU 群組 $group';
+  }
+
+  @override
+  String virtHwIommuShared(int count) {
+    return '同一 IOMMU 群組共 $count 個裝置，會一起直通';
+  }
+
+  @override
+  String get virtHwNoHostDevices => '主機上沒有可直通的裝置';
+
+  @override
+  String get virtHwMappingsOnly =>
+      '這裡只能使用資源對應：PVE 只允許以密碼登入的 root@pam 直通原始裝置。可在 資料中心 → 資源對應 中建立對應。';
+
+  @override
+  String get virtHwTpmNote => 'Windows 11 需要 TPM 2.0。';
+
+  @override
+  String get virtHwDisplay => '顯示';
+
+  @override
+  String get virtHwProtocol => '協定';
+
+  @override
+  String get virtHwListen => '監聽';
+
+  @override
+  String get virtHwGpu => '顯示卡';
+
+  @override
+  String get virtHwListenAllTitle => '主控台暴露在網路上';
+
+  @override
+  String get virtHwListenAllBody =>
+      '監聽所有位址後，任何能存取主機的人都能連上主控台。保持 127.0.0.1，經 SSH 通道連線即可。';
+
+  @override
+  String get virtHwFirmware => '韌體';
+
+  @override
+  String get virtHwUefiSub => 'OVMF · 支援 Secure Boot，Windows 11 需要';
+
+  @override
+  String get virtHwBiosSub => 'SeaBIOS · 舊系統與 MBR 分割';
+
+  @override
+  String get virtHwSecureBootNote => '只開機已簽署的核心與開機程式';
+
+  @override
+  String get virtHwFirmwareWarnTitle => '已安裝系統不要切換韌體';
+
+  @override
+  String get virtHwFirmwareWarnBody => '在 UEFI 與 BIOS 之間切換會導致現有系統無法開機。';
+
+  @override
+  String get virtHwFirmwareStopped => '關機後才能切換韌體。';
+
+  @override
+  String get virtHwSecureBootVars =>
+      '開關 Secure Boot 會重新產生 EFI 變數，其中儲存的開機項目會遺失。';
+
+  @override
+  String get virtHwEfiStorage => 'EFI 變數存放於';
+
+  @override
+  String get virtHwTpmStorage => 'TPM 狀態存放於';
+
+  @override
+  String virtHwSwitchFirmwareAsk(String guest, String firmware) {
+    return '將 $guest 切換到 $firmware？';
+  }
+
+  @override
+  String get virtCloneName => '新名稱';
+
+  @override
+  String get virtCloneFull => '完整複製';
+
+  @override
+  String get virtCloneCopyDisks => '複製磁碟內容';
+
+  @override
+  String get virtCloneLinkedNote => '關閉則為連結複製，依賴原磁碟';
+
+  @override
+  String get virtCloneFullOnly => '只有範本可以連結複製';
+
+  @override
+  String get virtCloneEmptyNote => '關閉則新建同樣大小的空磁碟';
+
+  @override
+  String get virtCloneStopFirst => '複製前需要先關機。';
+
+  @override
+  String get virtCloneFullShort => '完整';
+
+  @override
+  String get virtCloneLinkedShort => '連結';
+
+  @override
+  String get virtCloneEmptyShort => '空磁碟';
+
+  @override
+  String get virtCloning => '正在複製…';
+
+  @override
+  String virtCloned(String name) {
+    return '已複製為 $name';
+  }
+
+  @override
+  String get virtBackupPlan => '排程';
+
+  @override
+  String get virtBackupPlanWhere => '資料中心 → 備份';
+
+  @override
+  String get virtBackupNoPlanShort => '無排程';
+
+  @override
+  String get virtBackupNoPlan => '沒有包含它的定時備份工作。工作在資料中心中設定。';
+
+  @override
+  String get virtBackupKeep => '保留';
+
+  @override
+  String get virtBackupJobDisabled => '這個工作已停用。';
+
+  @override
+  String virtBackupCount(int count) {
+    return '$count 份';
+  }
+
+  @override
+  String get virtBackupNoStorage => '這個節點上沒有能存放備份的儲存。';
+
+  @override
+  String get virtBackupLiveTip => '執行中用 snapshot 模式，不停機';
+
+  @override
+  String get virtBackupStoppedTip => '已關機：按目前狀態備份';
+
+  @override
+  String get virtBackupNow => '立即備份';
+
+  @override
+  String get virtBackupNotes => '備註';
+
+  @override
+  String get virtBackupProtected => '受保護：在 PVE 中取消保護之前不能刪除。';
+
+  @override
+  String virtBackupVerified(String state) {
+    return '驗證：$state';
+  }
+
+  @override
+  String get virtBackupRestoreOverwrites => '還原會覆蓋目前的磁碟';
+
+  @override
+  String get virtBackupStopFirst => '先關機再還原。';
+
+  @override
+  String get virtBackupRestoreAgain => '虛擬機器的磁碟和設定會被備份中的取代。';
+
+  @override
+  String get virtBackupDeleteConfirm => '確認刪除備份';
+
+  @override
+  String get virtBackupRestoreNew => '還原為新的';
+
+  @override
+  String get virtBackupRestoreConfirm => '確認覆蓋還原';
+
+  @override
+  String get virtBackupDone => '備份完成';
+
+  @override
+  String get virtBackupDeleted => '已刪除備份';
+
+  @override
+  String virtBackupRestored(String time) {
+    return '已從 $time 還原';
+  }
+
+  @override
+  String pveNeedsPrivilege(
+    String account,
+    String privilege,
+    String path,
+    String command,
+  ) {
+    return '$account 在 $path 上沒有 $privilege 權限。請在 PVE 主機上授予：\n$command';
+  }
+
+  @override
+  String get virtCanDelete => '可以刪除';
+
+  @override
+  String get virtInUse => '使用中';
+
+  @override
+  String get virtOps => '操作';
+
+  @override
+  String get virtPool => '儲存池';
+
+  @override
+  String get virtPoolNew => '新增儲存池';
+
+  @override
+  String get virtStorageAdd => '新增儲存';
+
+  @override
+  String virtPoolUsedPct(String pct) {
+    return '已用 $pct%';
+  }
+
+  @override
+  String get virtPoolInUse => '有磁碟區正被虛擬機器使用，無法停用或刪除。';
+
+  @override
+  String get virtPoolDelete => '刪除儲存池';
+
+  @override
+  String get virtStorageRemove => '移除儲存';
+
+  @override
+  String virtPoolDeleteAsk(String name) {
+    return '刪除儲存池 $name？會刪除其定義，磁碟區保留在原處。';
+  }
+
+  @override
+  String virtStorageRemoveAsk(String name) {
+    return '從 PVE 設定中移除儲存 $name？其中的資料保留。';
+  }
+
+  @override
+  String virtPoolDeleteKeepsVolumes(int count) {
+    return '其中的 $count 個磁碟區會保留在磁碟上。';
+  }
+
+  @override
+  String get virtPoolDeleteStorage => '同時刪除其目錄（僅當為空時）';
+
+  @override
+  String virtPoolStopAsk(String name) {
+    return '停用儲存池 $name？重新啟用前無法列出或建立其中的磁碟區。';
+  }
+
+  @override
+  String virtStorageDisableAsk(String name) {
+    return '停用儲存 $name？重新啟用前，磁碟在其上的虛擬機器無法啟動。';
+  }
+
+  @override
+  String get virtPoolLogicalNote => '使用現有的磁碟區群組，不會格式化任何裝置。';
+
+  @override
+  String get virtPoolMountPoint => '掛載點';
+
+  @override
+  String get virtPoolSourceNfs => '來源 (host:/path)';
+
+  @override
+  String get virtPoolSourceVg => '磁碟區群組';
+
+  @override
+  String get virtPoolSourceThin => '磁碟區群組 / thin pool';
+
+  @override
+  String get virtPoolSourceZfs => 'ZFS 池';
+
+  @override
+  String get virtPoolTypeVg => 'LVM 磁碟區群組';
+
+  @override
+  String get virtResNameEmpty => '請輸入名稱';
+
+  @override
+  String get virtResNameInvalid => '主機不接受此名稱（字母、數字、. _ -）';
+
+  @override
+  String get virtResSourceInvalid => '不是有效的路徑或來源';
+
+  @override
+  String get virtResTargetInvalid => '需要絕對路徑';
+
+  @override
+  String get virtResCidrInvalid => '需要帶前綴的位址，例如 192.168.150.1/24';
+
+  @override
+  String get virtResDhcpInvalid => '需要網段內、依序、且不含主機位址的兩個位址';
+
+  @override
+  String get virtResSubnetTaken => '已有網路使用此網段';
+
+  @override
+  String get virtResBridgeInvalid => '不是有效的網路介面名稱';
+
+  @override
+  String get virtResFormat => '這個儲存池不支援此格式';
+
+  @override
+  String get virtVolNew => '新增磁碟區';
+
+  @override
+  String virtVolCount(int count) {
+    return '$count 個磁碟區';
+  }
+
+  @override
+  String get virtVolNone => '這個儲存池還沒有磁碟區。';
+
+  @override
+  String get virtVolEmptyAttach => '新磁碟區之後可以掛載到任一虛擬機器';
+
+  @override
+  String get virtVolEmptyUpload => '也可以直接上傳 ISO';
+
+  @override
+  String get virtVolPveName => 'PVE 依所屬虛擬機器命名磁碟區：vm-<VMID>-disk-<N>';
+
+  @override
+  String get virtVolUsers => '使用者';
+
+  @override
+  String get virtVolAllocated => '已配置';
+
+  @override
+  String get virtVolGrowFromGuest => '有虛擬機器在使用：請在該虛擬機器的硬體頁擴充';
+
+  @override
+  String get virtVolInUse => '有虛擬機器正在使用此磁碟區';
+
+  @override
+  String get virtVolAttach => '掛載到虛擬機器';
+
+  @override
+  String get virtVolAttachNote => '作為新磁碟掛載到其第一顆磁碟所在的匯流排';
+
+  @override
+  String virtVolAttached(String name) {
+    return '已掛載到 $name';
+  }
+
+  @override
+  String get virtVolInsert => '插入光碟機';
+
+  @override
+  String virtVolInserted(String name) {
+    return '已插入 $name 的光碟機';
+  }
+
+  @override
+  String virtVolNoCdrom(String name) {
+    return '$name 沒有光碟機';
+  }
+
+  @override
+  String virtVolDeleteAsk(String name, String pool) {
+    return '從 $pool 刪除磁碟區 $name？其中的資料將永久遺失。';
+  }
+
+  @override
+  String get virtUploadIso => '上傳 ISO';
+
+  @override
+  String virtUploadTo(String pool) {
+    return '上傳到 $pool';
+  }
+
+  @override
+  String virtUploadDone(String name) {
+    return '$name 上傳完成';
+  }
+
+  @override
+  String get virtNetConfig => '設定';
+
+  @override
+  String get virtNetInternal => '內部';
+
+  @override
+  String get virtNetBridgePorts => '橋接埠';
+
+  @override
+  String get virtNetHostBridge => '主機網橋';
+
+  @override
+  String get virtNetPortsHint => 'eno2，留空為內部網橋';
+
+  @override
+  String get virtNetDhcpRange => 'DHCP 範圍';
+
+  @override
+  String get virtNetDhcpTip => 'dnsmasq 為虛擬機器分配位址';
+
+  @override
+  String get virtNetVlanTip => '允許虛擬機器網卡帶 VLAN tag';
+
+  @override
+  String get virtNetNatTip => '經主機轉送，虛擬機器可上網但外部無法連入';
+
+  @override
+  String get virtNetRoutedTip => '經主機路由，不做 NAT：區域網路需要回程路由';
+
+  @override
+  String get virtNetIsolatedTip => '只有虛擬機器之間和主機能通訊';
+
+  @override
+  String get virtNetBridgedTip => '直接接入主機網橋，與實體網路同網段';
+
+  @override
+  String get virtNetNew => '新增網路';
+
+  @override
+  String get virtNetNewBridge => '新增 Linux bridge';
+
+  @override
+  String get virtNetVirtual => '虛擬網路';
+
+  @override
+  String get virtNetDelete => '刪除網路';
+
+  @override
+  String virtNetDeleteAsk(String name) {
+    return '刪除網路 $name？它會被停止並刪除定義。';
+  }
+
+  @override
+  String virtNetDeleteAskPve(String name, String node) {
+    return '從 $node 移除網橋 $name？它會先從待生效設定中移除，套用設定後才從主機上刪除。';
+  }
+
+  @override
+  String virtNetInUse(int count) {
+    return '$count 台在使用，無法刪除。';
+  }
+
+  @override
+  String virtNetStopAsk(String name, int count) {
+    return '停用 $name？其上的 $count 台虛擬機器會斷網，直到重新啟用。';
+  }
+
+  @override
+  String get virtNetInactivePve => '未啟用：新網橋在套用設定前處於待生效狀態。';
+
+  @override
+  String get virtNetPveApplyNote => '儲存為待生效的變更，套用設定（ifreload -a）後生效。';
+
+  @override
+  String get virtNetPendingSaved => '已儲存為待生效，套用設定後生效';
+
+  @override
+  String virtNetPendingTitle(String node) {
+    return '$node 上有待生效的網路變更';
+  }
+
+  @override
+  String get virtNetPendingTip => 'PVE 會把網路變更保存在 interfaces.new 中，套用後才生效。';
+
+  @override
+  String get virtNetPendingShow => '查看變更';
+
+  @override
+  String get virtNetApply => '套用設定';
+
+  @override
+  String virtNetApplyAsk(String node) {
+    return '套用 $node 上待生效的網路設定？PVE 會重新載入主機網路（ifreload -a），設定有誤可能導致主機斷線。';
+  }
+
+  @override
+  String virtNetRevertAsk(String node) {
+    return '捨棄 $node 上待生效的網路設定？';
+  }
+
+  @override
+  String get pveTokenTipStorage =>
+      '管理儲存需要 /storage 上的 Datastore.Allocate（新增、停用、移除）、Datastore.AllocateSpace（磁碟區）和 Datastore.AllocateTemplate（上傳）；Linux bridge 和套用網路設定需要節點上的 Sys.Modify。';
+
+  @override
+  String get virtCreateUnnamed => '未命名';
+
+  @override
+  String get virtCreateNotChosen => '未選擇';
+
+  @override
+  String get virtCreateKindVmSub => 'qm · 完整的 KVM 虛擬機器';
+
+  @override
+  String get virtCreateKindLxcSub => 'pct · 共用主機核心，開銷更小';
+
+  @override
+  String get virtCloudImage => '雲端映像';
+
+  @override
+  String get virtCloudImageTip =>
+      '已裝好系統的磁碟：複製一份，擴充到「儲存」中的容量，首次啟動時由 cloud-init 設定。映像本身保持不變。';
+
+  @override
+  String get virtNoCloudImagesLibvirt =>
+      '這裡沒有雲端映像：把 qcow2 或 raw 映像放進一個儲存池（可在「儲存」中上傳），且沒有虛擬機器在使用它。';
+
+  @override
+  String get virtNoCloudImagesPve =>
+      '這裡沒有雲端映像：把 qcow2、raw 或 vmdk 映像上傳到內容類型含「匯入」(Import) 的儲存（PVE 8.2+）。';
+
+  @override
+  String get virtCreateWindowsTitle => 'Windows 11 需要 UEFI + TPM 2.0';
+
+  @override
+  String get virtCreateWindowsBody => '在上方選 UEFI 並開啟 TPM。';
+
+  @override
+  String get virtCreateWindowsNoTpm => '這台主機沒有軟體 TPM (swtpm)：安裝後才能為虛擬機器新增。';
+
+  @override
+  String virtCreateImageSize(String size) {
+    return '映像有 $size：磁碟至少要這麼大。';
+  }
+
+  @override
+  String get virtCreateImageMissing => '選擇一個雲端映像。';
+
+  @override
+  String get virtCreateIncomplete => '先補齊標為橘色的部分。';
+
+  @override
+  String virtCreateOn(String host) {
+    return '將在 $host 上建立';
+  }
+
+  @override
+  String get virtCiTip => '一個帶 sudo 的帳戶，可用密碼、SSH 金鑰或兩者登入。';
+
+  @override
+  String get virtCiUserInvalid => '小寫字母、數字、_ 和 -，以字母或 _ 開頭';
+
+  @override
+  String get virtCiCredentialsMissing => '設定密碼或 SSH 金鑰。';
+
+  @override
+  String get virtCiHostnamePve => '主機名稱就是虛擬機器的名稱。';
+
+  @override
+  String get virtCiStatic => '靜態';
+
+  @override
+  String get virtCiAddressInvalid => '帶前綴的 IPv4 位址，如 10.0.0.5/24';
+
+  @override
+  String get virtCiGatewayInvalid => 'IPv4 位址，如 10.0.0.1';
+
+  @override
+  String get virtCiDnsFromDhcp => '留空：由 DHCP 提供';
+
+  @override
+  String get virtCiDnsInvalid => 'IP 位址，以空格或逗號分隔';
+
+  @override
+  String get virtCiSearch => '搜尋網域';
+
+  @override
+  String get virtCiSeedNote => '寫入磁碟旁的一個小 ISO，作為光碟機掛載，隨虛擬機器一起刪除。只儲存密碼的雜湊。';
+
+  @override
+  String get virtCiNoToolTitle => '主機上沒有製作 cloud-init 資料的工具';
+
+  @override
+  String virtCiNoToolBody(String tools) {
+    return '在主機上安裝 $tools 之一。沒有 cloud-init，映像啟動後沒有可登入的帳戶。';
+  }
+
+  @override
+  String get virtHwCloudInitNote => 'cloud-init 在首次啟動時讀取的資料，不是安裝媒體，這裡不能換片。';
+
+  @override
+  String get virtHwCdromLater => '執行中新增的光碟機在下次啟動時生效（SATA 和 IDE 不支援熱插拔）。';
+
+  @override
+  String virtCreateDiskKept(String size) {
+    return '磁碟保持為映像本身的 $size，大於所選容量：磁碟不會被裁得比其中的系統還小。';
+  }
+
+  @override
+  String get virtCiEditTip =>
+      'cloud-init 在這台虛擬機器裡設定的內容：帶 sudo 的帳戶、登入方式、主機名稱和位址。';
+
+  @override
+  String get virtCiForeignTitle => '這份 seed 包含本應用程式不寫入的設定';
+
+  @override
+  String get virtCiForeignBody =>
+      '在別處寫入的設定（套件、命令、其他帳戶）不在這裡顯示。儲存後，seed 會被替換為這裡顯示的內容。';
+
+  @override
+  String get virtCiPasswordKept => '已設定，留空則保持不變';
+
+  @override
+  String get virtCiRemovePassword => '移除密碼';
+
+  @override
+  String get virtCiRemovePasswordNote => '只能用 SSH 金鑰登入';
+
+  @override
+  String get virtCiKeysAdded =>
+      '金鑰會新增到帳戶。在這裡刪掉的金鑰仍留在系統內，需要在系統內刪除；改使用者名稱會新建一個帳戶，舊帳戶保留。';
+
+  @override
+  String get virtCiEffectTitle => '下次啟動時生效';
+
+  @override
+  String get virtCiEffectLibvirt => '儲存會寫入一份新的 seed，並使用新的執行個體 ID。';
+
+  @override
+  String get virtCiEffectPve =>
+      'PVE 會立即重寫它的 cloud-init 磁碟機，執行個體 ID 由這些設定計算得出，因此這裡的任何變更都會產生新的執行個體 ID。';
+
+  @override
+  String get virtCiNewInstance =>
+      '下次啟動時，cloud-init 會把系統當作新的執行個體：重新設定主機名稱，帳戶不存在時建立它，設定密碼、新增金鑰，並重新寫入網路設定。它還會產生新的 SSH 主機金鑰，因此 SSH 用戶端會提示主機金鑰已變更。在那次啟動之前不會有任何變化。';
+
+  @override
+  String get virtCiSaved => '已儲存，下次啟動時生效。';
 }

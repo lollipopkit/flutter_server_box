@@ -15,6 +15,7 @@ import 'package:server_box/core/service/app_font.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
 import 'package:server_box/core/service/theme_package.dart';
 import 'package:server_box/core/utils/local_server.dart';
+import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/app/theme_style.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
@@ -26,6 +27,7 @@ import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/home.dart';
 import 'package:server_box/view/widget/app_background.dart';
 import 'package:server_box/view/widget/diagnostics_level_picker.dart';
+import 'package:server_box/view/widget/session_keep_alive_notice.dart';
 import 'package:server_box/view/widget/theme_splash.dart';
 
 part 'intro.dart';
@@ -106,6 +108,10 @@ ThemeData _theme({Color? seed, Brightness? brightness}) {
     // help, and the platform's own transition is the right one.
     pageTransitionsTheme: hasBackground ? AppPageTransitions.backgrounded : null,
     cardTheme: CardThemeData(shape: cardShape, elevation: 0),
+    // Every plain `Divider`/`VerticalDivider` a hairline, as the seams and
+    // section rules are: Material's own is drawn for a light background and
+    // reads as a bright line on a dark one, next to hairlines that do not.
+    dividerTheme: DividerThemeData(color: Hairline.of(colorScheme)),
     elevatedButtonTheme: ElevatedButtonThemeData(style: buttonStyle),
     filledButtonTheme: FilledButtonThemeData(style: buttonStyle),
     outlinedButtonTheme: OutlinedButtonThemeData(style: buttonStyle),
@@ -356,7 +362,13 @@ class _MyAppState extends State<MyApp> {
         // that was picked, which the two builders above keep current whether
         // it came from the setting or from the system.
         ChartPalette.resolve(UIs.colorSeed, dark: ctx.isDark);
-        final content = ToastHost(child: ResponsivePoints.builder(ctx, child));
+        final content = ToastHost(
+          // Under the host, whose toasts it raises, and over every page:
+          // a remote session closes as idle whichever page is showing.
+          child: SessionKeepAliveNotices(
+            child: ResponsivePoints.builder(ctx, child),
+          ),
+        );
         // The one background the whole app stands on. A page takes a copy of
         // it while it moves, so that it covers the page below — see
         // [AppPageTransitions].

@@ -1319,10 +1319,6 @@
   "@parseContainerStatsTip": {
     "description": "Help text for the parse container stats setting or action."
   },
-  "plugInType": "Insertion Type",
-  "@plugInType": {
-    "description": "User-facing label or message for plug in type."
-  },
   "preferDiskAmount": "Prioritize displaying disk capacity",
   "@preferDiskAmount": {
     "description": "User-facing label or message for prefer disk amount."
@@ -1510,14 +1506,6 @@
   "@pveIgnoreCertTip": {
     "description": "Help text for the pve ignore cert setting or action."
   },
-  "pveServerClientMissing": "The SSH client for this server is not available.",
-  "@pveServerClientMissing": {
-    "description": "User-facing label or message for pve server client missing."
-  },
-  "pveAddressMissing": "The PVE address is missing. Please configure it in server settings.",
-  "@pveAddressMissing": {
-    "description": "User-facing label or message for pve address missing."
-  },
   "pvePasswordRequired": "PVE password is required. Please set it in server settings.",
   "@pvePasswordRequired": {
     "description": "User-facing label or message for pve password required."
@@ -1525,10 +1513,6 @@
   "pveOtpRequired": "Two-factor authentication is enabled on this PVE server. Please enter the OTP code.",
   "@pveOtpRequired": {
     "description": "User-facing label or message for pve otp required."
-  },
-  "pveOtpChallengeExpired": "The OTP challenge has expired. Please refresh and try again.",
-  "@pveOtpChallengeExpired": {
-    "description": "User-facing label or message for pve otp challenge expired."
   },
   "pveOtpCodeRequired": "OTP code is required.",
   "@pveOtpCodeRequired": {
@@ -1557,22 +1541,6 @@
   "pveMissingAuthTicket": "PVE login succeeded but no authentication ticket was returned.",
   "@pveMissingAuthTicket": {
     "description": "User-facing label or message for pve missing auth ticket."
-  },
-  "pveVersionLow": "This feature is currently in the testing phase and has only been tested on PVE 8+. Please use it with caution.",
-  "@pveVersionLow": {
-    "description": "User-facing label or message for pve version low."
-  },
-  "pveLoadingForwarding": "Establishing SSH tunnel...",
-  "@pveLoadingForwarding": {
-    "description": "User-facing label or message for pve loading forwarding."
-  },
-  "pveLoadingLogin": "Authenticating with PVE...",
-  "@pveLoadingLogin": {
-    "description": "User-facing label or message for pve loading login."
-  },
-  "pveLoadingData": "Fetching cluster data...",
-  "@pveLoadingData": {
-    "description": "User-facing label or message for pve loading data."
   },
   "pveLoadingConnect": "Connecting...",
   "@pveLoadingConnect": {
@@ -2193,10 +2161,6 @@
   "sortByJoinTime": "By join time",
   "@sortByJoinTime": {
     "description": "User-facing label or message for sort by join time."
-  },
-  "portForwardBetaTitle": "Port Forward (Beta)",
-  "@portForwardBetaTitle": {
-    "description": "Title shown for the port forward beta dialog or section."
   },
   "tmuxAutoAttach": "tmux auto-attach",
   "@tmuxAutoAttach": {
@@ -4257,5 +4221,2157 @@
         "type": "String"
       }
     }
+  },
+  "pveAuthToken": "API token",
+  "@pveAuthToken": {
+    "description": "Label for logging in to Proxmox VE with an API token."
+  },
+  "pveVersionLow": "This feature is currently in the testing phase and has only been tested on PVE 8+. Please use it with caution.",
+  "@pveVersionLow": {
+    "description": "Notice on a Proxmox VE host older than 8.0: the feature was only tested on PVE 8 and later."
+  },
+  "pveTokenId": "Token ID",
+  "@pveTokenId": {
+    "description": "Label for the Proxmox VE API token ID field (user@realm!tokenid)."
+  },
+  "pveTokenSecret": "Token secret",
+  "@pveTokenSecret": {
+    "description": "Label for the Proxmox VE API token secret field."
+  },
+  "pveTokenTip": "Create one in PVE under Datacenter → Permissions → API Tokens. It needs VM.Audit, VM.PowerMgmt, VM.Console, VM.Snapshot, VM.Snapshot.Rollback, Datastore.Audit and Sys.Audit on the paths to show; with privilege separation on, grant them to the token itself.",
+  "@pveTokenTip": {
+    "description": "Help text explaining how to create a Proxmox VE API token and which privileges it needs."
+  },
+  "pveTokenNoPrivileges": "The token {account} may not see anything on this host. A token with privilege separation does not have its user's permissions; grant it some, on the PVE host:\n{command}\nor untick \"Privilege Separation\" for the token.",
+  "@pveTokenNoPrivileges": {
+    "description": "A PVE API token that may see nothing: explains privilege separation and gives the command that grants it permissions.",
+    "placeholders": {
+      "account": {
+        "type": "String",
+        "example": "root@pam!serverbox"
+      },
+      "command": {
+        "type": "String",
+        "example": "pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin"
+      }
+    }
+  },
+  "pveUserNoPrivileges": "{account} may not see anything on this host. Grant it permissions, on the PVE host:\n{command}",
+  "@pveUserNoPrivileges": {
+    "description": "A PVE user that may see nothing: gives the command that grants it permissions.",
+    "placeholders": {
+      "account": {
+        "type": "String",
+        "example": "alice@pam"
+      },
+      "command": {
+        "type": "String",
+        "example": "pveum acl modify / --users 'alice@pam' --roles PVEAuditor,PVEVMAdmin"
+      }
+    }
+  },
+  "pveTokenIdInvalid": "The token ID must look like user@realm!tokenid",
+  "@pveTokenIdInvalid": {
+    "description": "Error shown when the Proxmox VE API token ID has the wrong format."
+  },
+  "pvePasswordAuthTip": "Logs in as the SSH user in the PAM realm, with the SSH password, or with the PVE password below when SSH uses a key. A two-factor code is asked for when needed.",
+  "@pvePasswordAuthTip": {
+    "description": "Help text for logging in to Proxmox VE with a password."
+  },
+  "pveCertUnpinned": "None confirmed yet. Unless a trusted CA signed it, the next connection shows the certificate for confirmation.",
+  "@pveCertUnpinned": {
+    "description": "Shown when no Proxmox VE certificate has been confirmed yet."
+  },
+  "pveCertForget": "Forget certificate",
+  "@pveCertForget": {
+    "description": "Action that forgets the confirmed Proxmox VE certificate."
+  },
+  "pveCertForgetTip": "The next connection will show the PVE certificate for confirmation again.",
+  "@pveCertForgetTip": {
+    "description": "Confirmation text for forgetting the confirmed Proxmox VE certificate."
+  },
+  "virtualization": "Virtualization",
+  "@virtualization": {
+    "description": "Name of the Virtualization tab."
+  },
+  "virtIntro": "Manage virtual machines and containers on Proxmox VE and libvirt/KVM hosts: their state, power actions and consoles.",
+  "@virtIntro": {
+    "description": "Intro page text describing the Virtualization tab."
+  },
+  "virtIntroPveMoved": "Proxmox VE has moved from the server page into this tab. A server's PVE card opens it there.",
+  "@virtIntroPveMoved": {
+    "description": "Intro page text telling Proxmox VE users where PVE moved."
+  },
+  "virtIntroLibvirt": "A server with libvirt's virsh installed shows up as a host, with its QEMU/KVM virtual machines.",
+  "@virtIntroLibvirt": {
+    "description": "Intro page text about libvirt/KVM hosts."
+  },
+  "virtIntroTransports": "Both work over SSH, through a Monitor agent, or on this device.",
+  "@virtIntroTransports": {
+    "description": "Intro page text about the transports the Virtualization tab works over."
+  },
+  "virtIntroTokens": "PVE can log in with an API token instead of a password. Set it in a server's edit page, under PVE.",
+  "@virtIntroTokens": {
+    "description": "Intro page text about Proxmox VE API token support."
+  },
+  "virtIntroInBar": "It has been added to the tab bar.",
+  "@virtIntroInBar": {
+    "description": "Intro page text saying the Virtualization tab is in the tab bar."
+  },
+  "virtIntroInMore": "It is under More. Home Tabs in Settings can move it to the tab bar.",
+  "@virtIntroInMore": {
+    "description": "Intro page text saying the Virtualization tab is under More."
+  },
+  "virtGuests": "Virtual machines",
+  "@virtGuests": {
+    "description": "Section of the Virtualization tab listing virtual machines."
+  },
+  "virtHosts": "Hosts",
+  "@virtHosts": {
+    "description": "Heading over the virtualization hosts in the host switcher."
+  },
+  "virtCheckServer": "Check this server",
+  "@virtCheckServer": {
+    "description": "Heading over servers not known to be virtualization hosts; tapping one checks it for virsh."
+  },
+  "virtCheckAll": "Check all servers",
+  "@virtCheckAll": {
+    "description": "Action that checks every server for libvirt again."
+  },
+  "virtProbeNotChecked": "Not checked yet",
+  "@virtProbeNotChecked": {
+    "description": "A server not yet checked for libvirt."
+  },
+  "virtProbeAbsent": "Not a host",
+  "@virtProbeAbsent": {
+    "description": "A server checked for virtualization that has neither Proxmox VE nor virsh."
+  },
+  "virtProbeContainer": "{kind} container",
+  "@virtProbeContainer": {
+    "description": "A checked server that is itself a container (a guest), e.g. 'LXC container'.",
+    "placeholders": {
+      "kind": {
+        "type": "String",
+        "example": "LXC"
+      }
+    }
+  },
+  "virtProbeContainerTip": "This server runs in a container, so it is a guest rather than a host. It is managed from the host that runs it.",
+  "@virtProbeContainerTip": {
+    "description": "Tooltip on a checked server that runs in a container."
+  },
+  "virtProbePve": "PVE, not set up",
+  "@virtProbePve": {
+    "description": "A checked server that runs Proxmox VE but has no PVE API access configured."
+  },
+  "virtPveSetupTip": "{version} is running on this server. Fill in its API access in the server's settings (an API token is recommended) to manage its virtual machines and containers here.",
+  "@virtPveSetupTip": {
+    "description": "Dialog body offering to configure PVE API access for a server found running Proxmox VE.",
+    "placeholders": {
+      "version": {
+        "type": "String",
+        "example": "pve-manager/9.2.2"
+      }
+    }
+  },
+  "virtNoHosts": "No virtualization hosts",
+  "@virtNoHosts": {
+    "description": "Shown when no server is a virtualization host."
+  },
+  "virtNoHostsTip": "A server running Proxmox VE, with its API access filled in, is a host, and so is one where virsh answers. The other servers can be checked from the host switcher.",
+  "@virtNoHostsTip": {
+    "description": "Explains which servers count as virtualization hosts."
+  },
+  "virtNoGuests": "No virtual machines or containers",
+  "@virtNoGuests": {
+    "description": "Shown when a virtualization host has no guests."
+  },
+  "virtPaused": "Paused",
+  "@virtPaused": {
+    "description": "A guest that is paused."
+  },
+  "virtStarting": "Starting…",
+  "@virtStarting": {
+    "description": "A guest that is starting."
+  },
+  "virtStopping": "Stopping…",
+  "@virtStopping": {
+    "description": "A guest that is stopping."
+  },
+  "virtRebooting": "Rebooting…",
+  "@virtRebooting": {
+    "description": "A guest that is rebooting."
+  },
+  "virtMigrating": "Migrating…",
+  "@virtMigrating": {
+    "description": "A guest that is migrating to another node."
+  },
+  "virtBackingUp": "Backing up…",
+  "@virtBackingUp": {
+    "description": "A guest held by a running backup."
+  },
+  "virtResume": "Resume",
+  "@virtResume": {
+    "description": "Power action that resumes a paused guest."
+  },
+  "virtOverview": "Overview",
+  "@virtOverview": {
+    "description": "View of a guest with its readings and facts."
+  },
+  "virtConsole": "Console",
+  "@virtConsole": {
+    "description": "View of a guest with its console."
+  },
+  "virtConsoleNone": "No console is configured for this guest",
+  "@virtConsoleNone": {
+    "description": "Shown in a guest's console view when it has neither a text nor a graphical console."
+  },
+  "virtConsoleGraphical": "Graphical",
+  "@virtConsoleGraphical": {
+    "description": "Toggle for a guest's graphical (VNC) console, beside the text one."
+  },
+  "virtVncPasswordNeeded": "This display asks for a password",
+  "@virtVncPasswordNeeded": {
+    "description": "Over a guest's graphical console whose VNC server refused the connection for a password; beside a button to enter it."
+  },
+  "virtConsoleSerialTip": "Opens the guest's serial console with virsh on the host. Disconnect, or Ctrl+], returns to the host's shell.",
+  "@virtConsoleSerialTip": {
+    "description": "Under the button that opens a libvirt guest's serial console in the terminal."
+  },
+  "virtConsoleVia": "via {transport}",
+  "@virtConsoleVia": {
+    "description": "Under a guest's text console: what the connection goes through, e.g. 'via SSH'.",
+    "placeholders": {
+      "transport": {
+        "type": "String",
+        "example": "SSH"
+      }
+    }
+  },
+  "virtConsoleEnterTip": "No output? Press Enter",
+  "@virtConsoleEnterTip": {
+    "description": "Under a guest's text console: a serial console prints nothing until it is sent a key, so Enter brings up its prompt."
+  },
+  "virtConsoleAutoEnter": "Pressing Enter in {seconds, plural, =1{1 second} other{{seconds} seconds}} to bring up the prompt",
+  "@virtConsoleAutoEnter": {
+    "description": "Countdown under a silent serial console: Enter will be pressed automatically to make the guest draw its login prompt.",
+    "placeholders": {
+      "seconds": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "virtConsoleEnterNow": "Now",
+  "@virtConsoleEnterNow": {
+    "description": "Button beside the auto-Enter countdown: press Enter now instead of waiting."
+  },
+  "virtOffTip": "Start it to see live CPU, memory, disk and network here.",
+  "@virtOffTip": {
+    "description": "Shown for a guest that is not running, in place of its charts."
+  },
+  "virtAllocated": "Allocated",
+  "@virtAllocated": {
+    "description": "Card showing what running guests hold of the host."
+  },
+  "virtRunningCount": "{running} running · {total} in total",
+  "@virtRunningCount": {
+    "description": "How many guests are running, of how many.",
+    "placeholders": {
+      "running": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "virtTemplate": "Template",
+  "@virtTemplate": {
+    "description": "A PVE template: a guest image that does not run."
+  },
+  "virtAutostart": "Starts with the host",
+  "@virtAutostart": {
+    "description": "A guest that starts with its host."
+  },
+  "virtErrUnreachable": "Could not reach this host",
+  "@virtErrUnreachable": {
+    "description": "Error: the virtualization host could not be reached."
+  },
+  "virtErrNotConfigured": "The PVE settings of this server are incomplete",
+  "@virtErrNotConfigured": {
+    "description": "Error: the PVE configuration of a server is incomplete."
+  },
+  "virtErrNotConfiguredTip": "Check the address, and the password or API token, in the server's settings.",
+  "@virtErrNotConfiguredTip": {
+    "description": "What to do about incomplete PVE settings."
+  },
+  "virtErrAuthFailed": "The host refused the login",
+  "@virtErrAuthFailed": {
+    "description": "Error: the virtualization host refused the login."
+  },
+  "virtErrCertUnconfirmed": "Confirm the host's certificate",
+  "@virtErrCertUnconfirmed": {
+    "description": "Error: the PVE certificate has to be confirmed first."
+  },
+  "virtErrCertChanged": "The host's certificate has changed",
+  "@virtErrCertChanged": {
+    "description": "Error: the PVE certificate is not the one confirmed before."
+  },
+  "virtErrRelayNotGranted": "The Monitor agent does not relay connections",
+  "@virtErrRelayNotGranted": {
+    "description": "Error: the Monitor agent does not relay TCP connections to PVE."
+  },
+  "virtErrExecNotGranted": "The Monitor agent does not run commands",
+  "@virtErrExecNotGranted": {
+    "description": "Error: the Monitor agent does not run commands (its full access is off), so libvirt cannot be reached through it."
+  },
+  "virtErrNotInstalled": "virsh is not installed on this server",
+  "@virtErrNotInstalled": {
+    "description": "Error: virsh is not installed on the server."
+  },
+  "virtErrServerRemoved": "This server no longer exists",
+  "@virtErrServerRemoved": {
+    "description": "Error: the server this virtualization host belonged to has been deleted."
+  },
+  "virtErrSudoRequired": "sudo needs a password to reach libvirt",
+  "@virtErrSudoRequired": {
+    "description": "Error: reaching libvirt needs sudo, and sudo needs a password."
+  },
+  "virtErrSudoRejected": "sudo rejected the password",
+  "@virtErrSudoRejected": {
+    "description": "Error: sudo rejected the password given."
+  },
+  "virtErrInvalidResponse": "The host answered in an unexpected form",
+  "@virtErrInvalidResponse": {
+    "description": "Error: the virtualization host answered with something unreadable."
+  },
+  "virtErrActionFailed": "The host refused the action",
+  "@virtErrActionFailed": {
+    "description": "Error: the host refused a power action or it failed."
+  },
+  "remoteSessionIdleTimeout": "Close when left idle",
+  "@remoteSessionIdleTimeout": {
+    "description": "Settings row: how long a remote desktop or guest console stays connected after the user leaves it."
+  },
+  "remoteSessionIdleTimeoutTip": "How long a remote desktop or a guest's console stays connected after you leave it. Before it closes, a notice gives you 10 seconds to keep it.",
+  "@remoteSessionIdleTimeoutTip": {
+    "description": "Help text for the remote session idle timeout setting."
+  },
+  "remoteSessionKeepAlive": "Keep alive",
+  "@remoteSessionKeepAlive": {
+    "description": "Button on the notice before an idle remote session closes: keeps it open for another full timeout."
+  },
+  "remoteSessionClosedAway": "Closed while you were away",
+  "@remoteSessionClosedAway": {
+    "description": "Toast title when the app comes back: an idle remote session (remote desktop, guest console) was closed while the app was in the background. The body names the session."
+  },
+  "remoteSessionClosingIn": "Closing in {seconds} s",
+  "@remoteSessionClosingIn": {
+    "description": "Countdown on the notice before an idle remote session closes.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "reopen": "Reopen",
+  "@reopen": {
+    "description": "Button: show a console that is still running again."
+  },
+  "virtSnapshots": "Snapshots",
+  "@virtSnapshots": {
+    "description": "A guest view and its heading: the guest's snapshots."
+  },
+  "virtSnapshotCreate": "Take a snapshot",
+  "@virtSnapshotCreate": {
+    "description": "Button that opens the form for a new snapshot, and the form's confirm button."
+  },
+  "virtSnapshotNone": "No snapshots yet",
+  "@virtSnapshotNone": {
+    "description": "Shown when a guest has no snapshots."
+  },
+  "virtSnapshotWithMemory": "Disks and memory",
+  "@virtSnapshotWithMemory": {
+    "description": "What a snapshot holds: the disks and the running memory."
+  },
+  "virtSnapshotDiskOnly": "Disks only",
+  "@virtSnapshotDiskOnly": {
+    "description": "What a snapshot holds: the disks only, no memory."
+  },
+  "virtSnapshotParent": "Parent",
+  "@virtSnapshotParent": {
+    "description": "The snapshot another one was taken on top of."
+  },
+  "virtSnapshotRevert": "Revert",
+  "@virtSnapshotRevert": {
+    "description": "Action: revert the guest to a snapshot."
+  },
+  "virtSnapshotMemory": "Include memory",
+  "@virtSnapshotMemory": {
+    "description": "Switch in the snapshot form: also save the guest's memory."
+  },
+  "virtSnapshotMemoryTip": "Reverting resumes the guest at this moment.",
+  "@virtSnapshotMemoryTip": {
+    "description": "Under the memory switch: what saving memory gives."
+  },
+  "virtSnapshotMemoryAlways": "A snapshot of a running guest always includes its memory here.",
+  "@virtSnapshotMemoryAlways": {
+    "description": "Under the memory switch on libvirt: an internal snapshot of a running guest always includes its memory."
+  },
+  "virtSnapshotMemoryOff": "The guest is not running, so only its disks are saved.",
+  "@virtSnapshotMemoryOff": {
+    "description": "Snapshot form of a guest that is not running: only disks are saved."
+  },
+  "virtSnapshotNameInvalid": "A letter first, then letters, digits, - or _; 2 to 40 characters.",
+  "@virtSnapshotNameInvalid": {
+    "description": "Error under the snapshot name field."
+  },
+  "virtSnapshotNameTaken": "A snapshot with this name exists.",
+  "@virtSnapshotNameTaken": {
+    "description": "Error under the snapshot name field."
+  },
+  "virtSnapshotRevertTip": "Reverting discards every change made since the snapshot.",
+  "@virtSnapshotRevertTip": {
+    "description": "Note under the snapshot list."
+  },
+  "virtSnapshotRevertAsk": "Revert {guest} to {snapshot}? Every change since it was taken is lost.",
+  "@virtSnapshotRevertAsk": {
+    "description": "Revert confirmation.",
+    "placeholders": {
+      "guest": {
+        "type": "String"
+      },
+      "snapshot": {
+        "type": "String"
+      }
+    }
+  },
+  "virtSnapshotRevertStops": "This snapshot has no memory: {guest} will be stopped.",
+  "@virtSnapshotRevertStops": {
+    "description": "Revert confirmation when the snapshot has no memory and the guest is running.",
+    "placeholders": {
+      "guest": {
+        "type": "String"
+      }
+    }
+  },
+  "virtSnapshotStartAfter": "Start it afterwards",
+  "@virtSnapshotStartAfter": {
+    "description": "Switch in the revert confirmation: start the guest after reverting to a snapshot without memory."
+  },
+  "virtVolumes": "Volumes",
+  "@virtVolumes": {
+    "description": "Heading over the volumes of a storage pool."
+  },
+  "virtNoPools": "No storage pools",
+  "@virtNoPools": {
+    "description": "Shown when a host has no storage pools."
+  },
+  "virtNoNetworks": "No networks",
+  "@virtNoNetworks": {
+    "description": "Shown when a host has no networks."
+  },
+  "virtPoolInactive": "The pool is not active, so its volumes cannot be listed.",
+  "@virtPoolInactive": {
+    "description": "A storage pool that is not active: its volumes cannot be listed."
+  },
+  "virtShared": "Shared between nodes",
+  "@virtShared": {
+    "description": "A PVE storage shared between cluster nodes."
+  },
+  "virtBackingFile": "Backing file",
+  "@virtBackingFile": {
+    "description": "The file a qcow2 volume is layered on."
+  },
+  "virtNetIsolated": "Isolated",
+  "@virtNetIsolated": {
+    "description": "libvirt network mode: guests reach each other and the host only."
+  },
+  "virtNetBridged": "Bridged",
+  "@virtNetBridged": {
+    "description": "libvirt network mode: guests are on a host bridge."
+  },
+  "virtNetRouted": "Routed",
+  "@virtNetRouted": {
+    "description": "libvirt network mode: routed without NAT."
+  },
+  "virtBridge": "Bridge",
+  "@virtBridge": {
+    "description": "A network's bridge device."
+  },
+  "virtPorts": "Ports",
+  "@virtPorts": {
+    "description": "The devices a bridge or bond uses."
+  },
+  "virtAttachedGuests": "Guests on it",
+  "@virtAttachedGuests": {
+    "description": "Heading over the guests with a NIC on a network."
+  },
+  "virtNoAttachedGuests": "No guest is on it",
+  "@virtNoAttachedGuests": {
+    "description": "No guest has a NIC on this network."
+  },
+  "virtCreateVm": "New virtual machine",
+  "@virtCreateVm": {
+    "description": "Title and action: create a new virtual machine."
+  },
+  "virtCreateLxc": "New container",
+  "@virtCreateLxc": {
+    "description": "Title: create a new Proxmox VE container."
+  },
+  "virtCreateGuest": "New virtual machine or container",
+  "@virtCreateGuest": {
+    "description": "Tooltip of the add button on a PVE host, where a VM or a container can be created."
+  },
+  "virtKindVm": "Virtual machine",
+  "@virtKindVm": {
+    "description": "Segment choosing to create a virtual machine."
+  },
+  "virtKindLxc": "Container",
+  "@virtKindLxc": {
+    "description": "Segment choosing to create a container."
+  },
+  "virtHostname": "Hostname",
+  "@virtHostname": {
+    "description": "Label: a new container's hostname."
+  },
+  "virtInstallMedia": "Install media",
+  "@virtInstallMedia": {
+    "description": "Heading: the ISO a new VM boots from."
+  },
+  "virtNoIsos": "No ISO images on this host",
+  "@virtNoIsos": {
+    "description": "Shown when the host has no ISO images to install from."
+  },
+  "virtNoTemplates": "No container templates on this host. A storage's CT Templates in PVE can download one.",
+  "@virtNoTemplates": {
+    "description": "Shown when the PVE host has no container templates."
+  },
+  "virtNoDiskStorage": "Nowhere on this host takes a new disk",
+  "@virtNoDiskStorage": {
+    "description": "Shown when no storage on the host can hold a new disk."
+  },
+  "virtStartAfterCreate": "Start it once created",
+  "@virtStartAfterCreate": {
+    "description": "Switch: start the new guest once it is created."
+  },
+  "virtUnprivileged": "Unprivileged container",
+  "@virtUnprivileged": {
+    "description": "Switch: create an unprivileged container."
+  },
+  "virtUnprivilegedTip": "Its root is an ordinary user on the host.",
+  "@virtUnprivilegedTip": {
+    "description": "Explains what an unprivileged container is."
+  },
+  "virtSshKeys": "SSH public keys",
+  "@virtSshKeys": {
+    "description": "Label: SSH public keys for a new container's root."
+  },
+  "virtCredentialsTip": "A root password, SSH keys, or both.",
+  "@virtCredentialsTip": {
+    "description": "Explains a new container needs a root password, SSH keys or both."
+  },
+  "virtCreated": "{name} created",
+  "@virtCreated": {
+    "description": "Toast after a guest was created.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "virtCreatedNotStarted": "{name} was created but did not start",
+  "@virtCreatedNotStarted": {
+    "description": "Toast title when a guest was created but failed to start; the host's error follows.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "virtErrExists": "A guest or disk with this name already exists",
+  "@virtErrExists": {
+    "description": "Error title: the new guest's name, VMID or disk already exists on the host."
+  },
+  "virtCreateNameInvalidLibvirt": "Letters, digits, ., _ and -, starting with a letter or digit; up to 63 characters.",
+  "@virtCreateNameInvalidLibvirt": {
+    "description": "Rule for a new libvirt guest's name."
+  },
+  "virtCreateNameInvalidPve": "Letters, digits and -, in parts separated by dots; up to 63 characters.",
+  "@virtCreateNameInvalidPve": {
+    "description": "Rule for a new PVE guest's name (a DNS name)."
+  },
+  "virtCreateNameTaken": "A guest with this name exists.",
+  "@virtCreateNameTaken": {
+    "description": "The new guest's name is already used."
+  },
+  "virtCreateVmidInvalid": "From 100 to 999999999.",
+  "@virtCreateVmidInvalid": {
+    "description": "The VMID is out of PVE's range."
+  },
+  "virtCreateVmidTaken": "This VMID is taken.",
+  "@virtCreateVmidTaken": {
+    "description": "The VMID is already used."
+  },
+  "virtCreateCoresInvalid": "More cores than this host allows.",
+  "@virtCreateCoresInvalid": {
+    "description": "More cores than the host allows."
+  },
+  "virtCreateMemoryInvalid": "Not enough memory.",
+  "@virtCreateMemoryInvalid": {
+    "description": "Too little memory for a new guest."
+  },
+  "virtCreateStorageMissing": "Choose where its disk goes.",
+  "@virtCreateStorageMissing": {
+    "description": "No storage chosen for the new disk."
+  },
+  "virtCreateDiskInvalid": "From 1 GiB to 64 TiB.",
+  "@virtCreateDiskInvalid": {
+    "description": "Disk size out of range."
+  },
+  "virtCreateTemplateMissing": "Choose a template.",
+  "@virtCreateTemplateMissing": {
+    "description": "No container template chosen."
+  },
+  "virtCreateCredentialsMissing": "Set a root password or an SSH key.",
+  "@virtCreateCredentialsMissing": {
+    "description": "A new container needs a root password or an SSH key."
+  },
+  "virtCreatePasswordShort": "At least {min} characters.",
+  "@virtCreatePasswordShort": {
+    "description": "The container's root password is too short.",
+    "placeholders": {
+      "min": {
+        "type": "int"
+      }
+    }
+  },
+  "virtCreateSshKeysInvalid": "One OpenSSH public key per line.",
+  "@virtCreateSshKeysInvalid": {
+    "description": "The SSH keys field has a line that is not an OpenSSH public key."
+  },
+  "virtDeleteDisks": "Delete its disks too",
+  "@virtDeleteDisks": {
+    "description": "Checkbox: delete the guest's disks as well."
+  },
+  "virtDeleteDisksPve": "Its disks are deleted with it; install media is kept.",
+  "@virtDeleteDisksPve": {
+    "description": "On PVE a guest's disks always go with it."
+  },
+  "virtDeleted": "{name} deleted",
+  "@virtDeleted": {
+    "description": "Toast after a guest was deleted.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "pveTokenTipCreate": "Creating and deleting guests also needs VM.Allocate, VM.Config.*, Datastore.AllocateSpace and SDN.Use.",
+  "@pveTokenTipCreate": {
+    "description": "Second part of the PVE API token help: the extra privileges creating and deleting guests needs."
+  },
+  "pveTokenTipHardware": "Editing hardware needs VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network and VM.Config.Options; new disks and interfaces also need Datastore.AllocateSpace and SDN.Use. The video card and USB and PCI devices also need VM.Config.HWType; a device given through a resource mapping needs Mapping.Use on it, and Mapping.Audit to list mappings.",
+  "@pveTokenTipHardware": {
+    "description": "Token help: privileges for the Hardware view."
+  },
+  "pveTokenTipBackup": "Cloning needs VM.Clone, and backing up and restoring VM.Backup, with Datastore.AllocateSpace where the copy or the backup goes.",
+  "@pveTokenTipBackup": {
+    "description": "PVE API token help: the privileges cloning and backups need (verified on PVE 9.2)."
+  },
+  "virtErrConflict": "Changed elsewhere",
+  "@virtErrConflict": {
+    "description": "Error title: the guest's configuration changed since it was read."
+  },
+  "virtErrConflictTip": "Someone changed this guest's configuration after it was read here, so nothing was changed. It has been read again: make the change again if it still applies.",
+  "@virtErrConflictTip": {
+    "description": "Explains the conflict."
+  },
+  "virtHardware": "Hardware",
+  "@virtHardware": {
+    "description": "The guest view showing and changing CPU, memory, disks and network interfaces."
+  },
+  "virtHwAddDisk": "Add disk",
+  "@virtHwAddDisk": {
+    "description": "Button and dialog title."
+  },
+  "virtHwAddMount": "Add mount point",
+  "@virtHwAddMount": {
+    "description": "Button: add a container mount point."
+  },
+  "virtHwAddNic": "Add network interface",
+  "@virtHwAddNic": {
+    "description": "Button and dialog title."
+  },
+  "virtHwAppliesOnRestart": "Saved. It takes effect at the next start.",
+  "@virtHwAppliesOnRestart": {
+    "description": "Toast: the running guest could not take the change."
+  },
+  "virtHwAutostart": "Start with the host",
+  "@virtHwAutostart": {
+    "description": "Autostart / onboot."
+  },
+  "virtHwAutostartPve": "onboot · started in VMID order",
+  "@virtHwAutostartPve": {
+    "description": "Note under PVE's start-with-host switch."
+  },
+  "virtHwBalloonLibvirt": "Current memory",
+  "@virtHwBalloonLibvirt": {
+    "description": "libvirt currentMemory: what the balloon gives the guest."
+  },
+  "virtHwBalloonNote": "Lets the host take back the guest's idle memory when memory runs short",
+  "@virtHwBalloonNote": {
+    "description": "Explains the virtio-balloon switch."
+  },
+  "virtHwBoot": "Boot",
+  "@virtHwBoot": {
+    "description": "Group title: booting."
+  },
+  "virtHwBootOrder": "Boot order",
+  "@virtHwBootOrder": {
+    "description": "Label."
+  },
+  "virtHwBootTip": "The arrows move a device; tapping it switches booting from it on or off.",
+  "@virtHwBootTip": {
+    "description": "Explains the boot order rows."
+  },
+  "virtHwCdrom": "CD-ROM",
+  "@virtHwCdrom": {
+    "description": "A CD-ROM drive; also the group title."
+  },
+  "virtHwConfigFile": "Configuration file",
+  "@virtHwConfigFile": {
+    "description": "Group title: the configuration as the host has it."
+  },
+  "virtHwCores": "Cores",
+  "@virtHwCores": {
+    "description": "CPU cores (per socket for a VM)."
+  },
+  "virtHwCpuTypeDefault": "Default",
+  "@virtHwCpuTypeDefault": {
+    "description": "No CPU model set: the host's default."
+  },
+  "virtHwDeleteVolume": "Delete its volume too",
+  "@virtHwDeleteVolume": {
+    "description": "Checkbox: delete the disk image as well."
+  },
+  "virtHwDetach": "Detach",
+  "@virtHwDetach": {
+    "description": "Action: take a disk off the guest."
+  },
+  "virtHwDiskHotplug": "Hot-pluggable: can be added while it runs",
+  "@virtHwDiskHotplug": {
+    "description": "Empty row in a VM's disk group."
+  },
+  "virtHwDisksLxc": "Root disk and mount points",
+  "@virtHwDisksLxc": {
+    "description": "Group title: a container's root disk and mount points."
+  },
+  "virtHwEject": "Eject",
+  "@virtHwEject": {
+    "description": "Menu item: empty the CD-ROM."
+  },
+  "virtHwEmpty": "No media",
+  "@virtHwEmpty": {
+    "description": "Choice: no media in the CD-ROM."
+  },
+  "virtHwFirewall": "Firewall",
+  "@virtHwFirewall": {
+    "description": "PVE firewall on a NIC."
+  },
+  "virtHwFree": "{size} free",
+  "@virtHwFree": {
+    "description": "A storage's free space.",
+    "placeholders": {
+      "size": {
+        "type": "String",
+        "example": "18.4 GiB"
+      }
+    }
+  },
+  "virtHwGrow": "Grow",
+  "@virtHwGrow": {
+    "description": "Menu item and dialog title: make a disk larger."
+  },
+  "virtHwGrowNote": "Disks only grow from their size.",
+  "@virtHwGrowNote": {
+    "description": "Under a stopped guest's disk."
+  },
+  "virtHwGrowNoteRunning": "Disks only grow from their size. Grown while running, the partition has to be grown inside the guest.",
+  "@virtHwGrowNoteRunning": {
+    "description": "Under a running guest's disk."
+  },
+  "virtHwGuestUsed": "Used by the guest",
+  "@virtHwGuestUsed": {
+    "description": "Memory the running guest uses."
+  },
+  "virtHwHostCpus": "Host {threads} threads · {allocated} allocated",
+  "@virtHwHostCpus": {
+    "description": "Group note: the host's threads and the vCPUs given to guests.",
+    "placeholders": {
+      "threads": {
+        "type": "int",
+        "example": "12"
+      },
+      "allocated": {
+        "type": "int",
+        "example": "7"
+      }
+    }
+  },
+  "virtHwHostMem": "Host {total} · {allocated} allocated",
+  "@virtHwHostMem": {
+    "description": "Group note: the host's memory and what guests are given.",
+    "placeholders": {
+      "total": {
+        "type": "String",
+        "example": "15.5 GiB"
+      },
+      "allocated": {
+        "type": "String",
+        "example": "4.5 GiB"
+      }
+    }
+  },
+  "virtHwHotplugNow": "Hot-plugged: it takes effect at once.",
+  "@virtHwHotplugNow": {
+    "description": "Under an add block while the guest runs."
+  },
+  "virtHwIssueBootEmpty": "Tick at least one device",
+  "@virtHwIssueBootEmpty": {
+    "description": "Form error."
+  },
+  "virtHwIssueCpuCount": "Between 1 and {max} vCPUs in total",
+  "@virtHwIssueCpuCount": {
+    "description": "Form error.",
+    "placeholders": {
+      "max": {
+        "type": "int",
+        "example": "12"
+      }
+    }
+  },
+  "virtHwIssueCpuOnline": "Online vCPUs: from 1 to the total",
+  "@virtHwIssueCpuOnline": {
+    "description": "Form error."
+  },
+  "virtHwIssueDiskShrink": "Larger than it is: disks only grow",
+  "@virtHwIssueDiskShrink": {
+    "description": "Form error."
+  },
+  "virtHwIssueDiskSize": "From 1 to 65536 GiB",
+  "@virtHwIssueDiskSize": {
+    "description": "Form error."
+  },
+  "virtHwIssueMemory": "From {min} to {max} MiB",
+  "@virtHwIssueMemory": {
+    "description": "Form error.",
+    "placeholders": {
+      "min": {
+        "type": "int",
+        "example": "16"
+      },
+      "max": {
+        "type": "int",
+        "example": "16384"
+      }
+    }
+  },
+  "virtHwIssueMemoryMin": "Not more than the memory",
+  "@virtHwIssueMemoryMin": {
+    "description": "Form error."
+  },
+  "virtHwIssueMountPoint": "An absolute path, like /data",
+  "@virtHwIssueMountPoint": {
+    "description": "Form error."
+  },
+  "virtHwIssueStorageSpace": "More than the storage has free",
+  "@virtHwIssueStorageSpace": {
+    "description": "Form error."
+  },
+  "virtHwIssueSwap": "Not negative",
+  "@virtHwIssueSwap": {
+    "description": "Form error."
+  },
+  "virtHwLater": "Applies at restart",
+  "@virtHwLater": {
+    "description": "Group note: changes here take effect at the next restart."
+  },
+  "virtHwLess": "Less",
+  "@virtHwLess": {
+    "description": "Stepper button: less."
+  },
+  "virtHwLinkDown": "Disconnected",
+  "@virtHwLinkDown": {
+    "description": "A NIC whose link is down."
+  },
+  "virtHwLinkNote": "Off, the guest sees its cable pulled; no restart needed",
+  "@virtHwLinkNote": {
+    "description": "Explains the link switch."
+  },
+  "virtHwLinkUp": "Connected",
+  "@virtHwLinkUp": {
+    "description": "Switch: the NIC's link is up."
+  },
+  "virtHwMac": "MAC address",
+  "@virtHwMac": {
+    "description": "A NIC's MAC address."
+  },
+  "virtHwModel": "Model",
+  "@virtHwModel": {
+    "description": "A VM's CPU model."
+  },
+  "virtHwMore": "More",
+  "@virtHwMore": {
+    "description": "Stepper button: more."
+  },
+  "virtHwMountFromPool": "Mount points are allocated straight from a storage",
+  "@virtHwMountFromPool": {
+    "description": "Empty row in a container's disk group."
+  },
+  "virtHwMountPoint": "Mount point",
+  "@virtHwMountPoint": {
+    "description": "Where a container's new volume appears."
+  },
+  "virtHwMoveDown": "Move down",
+  "@virtHwMoveDown": {
+    "description": "Boot order: move down."
+  },
+  "virtHwMoveUp": "Move up",
+  "@virtHwMoveUp": {
+    "description": "Boot order: move up."
+  },
+  "virtHwNewDisk": "New disk",
+  "@virtHwNewDisk": {
+    "description": "Header of the new disk block."
+  },
+  "virtHwNewMount": "New mount point",
+  "@virtHwNewMount": {
+    "description": "Header of the new mount point block."
+  },
+  "virtHwNewNic": "New network interface",
+  "@virtHwNewNic": {
+    "description": "Header of the new NIC block."
+  },
+  "virtHwNicHotplug": "virtio NICs are hot-pluggable",
+  "@virtHwNicHotplug": {
+    "description": "Empty row in the NIC group."
+  },
+  "virtHwNics": "Network interfaces",
+  "@virtHwNics": {
+    "description": "Group title: network interfaces."
+  },
+  "virtHwNoMedia": "No media",
+  "@virtHwNoMedia": {
+    "description": "An empty CD-ROM drive."
+  },
+  "virtHwNoNetworks": "No networks or bridges here",
+  "@virtHwNoNetworks": {
+    "description": "Nothing to attach a NIC to."
+  },
+  "virtHwNoStorage": "No storage here takes disks",
+  "@virtHwNoStorage": {
+    "description": "No storage can hold a new disk."
+  },
+  "virtHwOnline": "Online vCPUs",
+  "@virtHwOnline": {
+    "description": "How many of a VM's vCPUs are online."
+  },
+  "virtHwPendingBanner": "Some hardware changes take effect at restart",
+  "@virtHwPendingBanner": {
+    "description": "Notice above a guest's views."
+  },
+  "virtHwPickNet": "Pick a network",
+  "@virtHwPickNet": {
+    "description": "Summary of the new NIC block."
+  },
+  "virtHwPickPool": "Pick a storage and a size",
+  "@virtHwPickPool": {
+    "description": "Summary of the new disk block."
+  },
+  "virtHwProcessor": "Processor",
+  "@virtHwProcessor": {
+    "description": "Group title: a VM's CPU."
+  },
+  "virtHwRemove": "Remove",
+  "@virtHwRemove": {
+    "description": "Action: remove a NIC."
+  },
+  "virtHwRemoveCdrom": "Remove CD-ROM",
+  "@virtHwRemoveCdrom": {
+    "description": "Action: remove the CD-ROM drive."
+  },
+  "virtHwRemoveDiskAsk": "Remove {disk} from {guest}?",
+  "@virtHwRemoveDiskAsk": {
+    "description": "Confirmation.",
+    "placeholders": {
+      "disk": {
+        "type": "String",
+        "example": "scsi1"
+      },
+      "guest": {
+        "type": "String",
+        "example": "web-01"
+      }
+    }
+  },
+  "virtHwRemoveNicAsk": "Remove {nic} from {guest}?",
+  "@virtHwRemoveNicAsk": {
+    "description": "Confirmation.",
+    "placeholders": {
+      "nic": {
+        "type": "String",
+        "example": "net1"
+      },
+      "guest": {
+        "type": "String",
+        "example": "web-01"
+      }
+    }
+  },
+  "virtHwResources": "Resources",
+  "@virtHwResources": {
+    "description": "A container's hardware view."
+  },
+  "virtHwRestartNow": "Restart now",
+  "@virtHwRestartNow": {
+    "description": "Button: restart the guest so pending changes apply."
+  },
+  "virtHwRevert": "Revert",
+  "@virtHwRevert": {
+    "description": "Button: drop one pending change."
+  },
+  "virtHwRevertAll": "Revert all",
+  "@virtHwRevertAll": {
+    "description": "Button: drop every pending change."
+  },
+  "virtSetRenameStopped": "Shut the guest down to rename it: libvirt renames only a guest that is not running.",
+  "@virtSetRenameStopped": {
+    "description": "Settings view: libvirt can rename a guest only when it is shut off."
+  },
+  "virtSetIssueDescription": "At most {max} characters, and no control characters.",
+  "@virtSetIssueDescription": {
+    "description": "Settings view: the guest's description is too long or has control characters.",
+    "placeholders": {
+      "max": {
+        "type": "int",
+        "example": "8192"
+      }
+    }
+  },
+  "virtSetManualStart": "Started by hand",
+  "@virtSetManualStart": {
+    "description": "Settings view index note: the guest does not start with the host."
+  },
+  "virtSetProtection": "Protection",
+  "@virtSetProtection": {
+    "description": "Settings view: PVE's protection flag."
+  },
+  "virtSetProtectionNote": "Blocks deleting the guest and changing its disks",
+  "@virtSetProtectionNote": {
+    "description": "Settings view: what PVE's protection flag does."
+  },
+  "virtSetIrreversible": "Cannot be undone",
+  "@virtSetIrreversible": {
+    "description": "Settings view: deleting a guest cannot be undone."
+  },
+  "virtSetDeleteStopFirst": "Shut it down before deleting it.",
+  "@virtSetDeleteStopFirst": {
+    "description": "Settings view: a running guest must be shut down before it can be deleted."
+  },
+  "virtSetDeleteProtected": "Protection is on: turn it off under General first.",
+  "@virtSetDeleteProtected": {
+    "description": "Settings view: deletion is blocked while PVE protection is on."
+  },
+  "virtSetDeleteAgain": "Press again to confirm",
+  "@virtSetDeleteAgain": {
+    "description": "Settings view: the delete button was pressed once; pressing again deletes."
+  },
+  "virtSetDeleteConfirm": "Delete {name}",
+  "@virtSetDeleteConfirm": {
+    "description": "Settings view: the delete button's second, confirming label.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "web-01"
+      }
+    }
+  },
+  "virtSetDeleteVm": "Delete virtual machine",
+  "@virtSetDeleteVm": {
+    "description": "Settings view: button that deletes a virtual machine."
+  },
+  "virtSetDeleteLxc": "Delete container",
+  "@virtSetDeleteLxc": {
+    "description": "Settings view: button that deletes a container."
+  },
+  "virtHwSockets": "Sockets",
+  "@virtHwSockets": {
+    "description": "CPU sockets of a VM."
+  },
+  "virtHwSource": "Source",
+  "@virtHwSource": {
+    "description": "Where a disk's data is: its volume or file."
+  },
+  "virtHwSwap": "Swap",
+  "@virtHwSwap": {
+    "description": "A container's swap."
+  },
+  "virtHwTopology": "Sockets × cores",
+  "@virtHwTopology": {
+    "description": "Label for a VM's CPU topology."
+  },
+  "virtHwTopologyValue": "{sockets} sockets × {cores} cores × {threads} threads",
+  "@virtHwTopologyValue": {
+    "description": "CPU topology.",
+    "placeholders": {
+      "sockets": {
+        "type": "int",
+        "example": "1"
+      },
+      "cores": {
+        "type": "int",
+        "example": "4"
+      },
+      "threads": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "virtHwTotal": "{size} total",
+  "@virtHwTotal": {
+    "description": "Group note: the disks' total size.",
+    "placeholders": {
+      "size": {
+        "type": "String",
+        "example": "64 GiB"
+      }
+    }
+  },
+  "virtHwVolumeKept": "Removed, but the running guest still uses the disk, so its volume was kept. It is detached at the next start.",
+  "@virtHwVolumeKept": {
+    "description": "Toast after removing a disk the running guest holds."
+  },
+  "virtHwBus": "Bus",
+  "@virtHwBus": {
+    "description": "Hardware view (virtualization): Bus"
+  },
+  "virtHwCache": "Cache",
+  "@virtHwCache": {
+    "description": "Hardware view (virtualization): Cache"
+  },
+  "virtHwBusStopped": "The bus changes only while the guest is stopped.",
+  "@virtHwBusStopped": {
+    "description": "Hardware view (virtualization): BusStopped"
+  },
+  "virtHwMacGenerate": "Generate",
+  "@virtHwMacGenerate": {
+    "description": "Hardware view (virtualization): MacGenerate"
+  },
+  "virtHwIssueMac": "Must be a unicast MAC address, such as 52:54:00:12:34:56",
+  "@virtHwIssueMac": {
+    "description": "Hardware view (virtualization): IssueMac"
+  },
+  "virtHwIssueStopFirst": "Stop the guest first",
+  "@virtHwIssueStopFirst": {
+    "description": "Hardware view (virtualization): IssueStopFirst"
+  },
+  "virtHwIssueStorageMissing": "Pick a storage for it first",
+  "@virtHwIssueStorageMissing": {
+    "description": "Hardware view (virtualization): IssueStorageMissing"
+  },
+  "virtHwIssueDevice": "Pick a device first",
+  "@virtHwIssueDevice": {
+    "description": "Hardware view (virtualization): IssueDevice"
+  },
+  "virtHwDevices": "CD-ROM and passthrough",
+  "@virtHwDevices": {
+    "description": "Hardware view (virtualization): Devices"
+  },
+  "virtHwDevicesEmpty": "USB and PCI passthrough, CD-ROM, TPM",
+  "@virtHwDevicesEmpty": {
+    "description": "Hardware view (virtualization): DevicesEmpty"
+  },
+  "virtHwAddDevice": "Add device",
+  "@virtHwAddDevice": {
+    "description": "Hardware view (virtualization): AddDevice"
+  },
+  "virtHwNewDevice": "New device",
+  "@virtHwNewDevice": {
+    "description": "Hardware view (virtualization): NewDevice"
+  },
+  "virtHwUsbHotplug": "USB passthrough is hot-pluggable.",
+  "@virtHwUsbHotplug": {
+    "description": "Hardware view (virtualization): UsbHotplug"
+  },
+  "virtHwPci": "PCI passthrough",
+  "@virtHwPci": {
+    "description": "Hardware view (virtualization): Pci"
+  },
+  "virtHwIommuOffTitle": "The host has no IOMMU",
+  "@virtHwIommuOffTitle": {
+    "description": "Hardware view (virtualization): IommuOffTitle"
+  },
+  "virtHwIommuOffBody": "Turn on VT-d or AMD-Vi in the host's BIOS and IOMMU in its kernel first. Until then, a guest given a PCI device won't start.",
+  "@virtHwIommuOffBody": {
+    "description": "Hardware view (virtualization): IommuOffBody"
+  },
+  "virtHwPciTitle": "Needs IOMMU on the host",
+  "@virtHwPciTitle": {
+    "description": "Hardware view (virtualization): PciTitle"
+  },
+  "virtHwPciBody": "Once passed through, the host can't use the device, and the guest can't migrate while running.",
+  "@virtHwPciBody": {
+    "description": "Hardware view (virtualization): PciBody"
+  },
+  "virtHwIommuGroup": "IOMMU group {group}",
+  "@virtHwIommuGroup": {
+    "description": "Hardware view (virtualization): IommuGroup",
+    "placeholders": {
+      "group": {
+        "type": "int"
+      }
+    }
+  },
+  "virtHwIommuShared": "{count} devices share its IOMMU group and are passed through together",
+  "@virtHwIommuShared": {
+    "description": "Hardware view (virtualization): IommuShared",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "virtHwNoHostDevices": "No devices to pass through on this host",
+  "@virtHwNoHostDevices": {
+    "description": "Hardware view (virtualization): NoHostDevices"
+  },
+  "virtHwMappingsOnly": "Only resource mappings can be used here: PVE lets only root@pam, signed in with its password, pass a raw device through. Create mappings under Datacenter → Resource Mappings.",
+  "@virtHwMappingsOnly": {
+    "description": "Hardware view (virtualization): MappingsOnly"
+  },
+  "virtHwTpmNote": "Windows 11 needs TPM 2.0.",
+  "@virtHwTpmNote": {
+    "description": "Hardware view (virtualization): TpmNote"
+  },
+  "virtHwDisplay": "Display",
+  "@virtHwDisplay": {
+    "description": "Hardware view (virtualization): Display"
+  },
+  "virtHwProtocol": "Protocol",
+  "@virtHwProtocol": {
+    "description": "Hardware view (virtualization): Protocol"
+  },
+  "virtHwListen": "Listen",
+  "@virtHwListen": {
+    "description": "Hardware view (virtualization): Listen"
+  },
+  "virtHwGpu": "Video card",
+  "@virtHwGpu": {
+    "description": "Hardware view (virtualization): Gpu"
+  },
+  "virtHwListenAllTitle": "The console is open to the network",
+  "@virtHwListenAllTitle": {
+    "description": "Hardware view (virtualization): ListenAllTitle"
+  },
+  "virtHwListenAllBody": "Listening on all addresses lets anyone who can reach the host connect to the console. Keep 127.0.0.1 and connect through an SSH tunnel.",
+  "@virtHwListenAllBody": {
+    "description": "Hardware view (virtualization): ListenAllBody"
+  },
+  "virtHwFirmware": "Firmware",
+  "@virtHwFirmware": {
+    "description": "Hardware view (virtualization): Firmware"
+  },
+  "virtHwUefiSub": "OVMF · Secure Boot capable, needed by Windows 11",
+  "@virtHwUefiSub": {
+    "description": "Hardware view (virtualization): UefiSub"
+  },
+  "virtHwBiosSub": "SeaBIOS · older systems and MBR disks",
+  "@virtHwBiosSub": {
+    "description": "Hardware view (virtualization): BiosSub"
+  },
+  "virtHwSecureBootNote": "Boots only signed kernels and boot loaders",
+  "@virtHwSecureBootNote": {
+    "description": "Hardware view (virtualization): SecureBootNote"
+  },
+  "virtHwFirmwareWarnTitle": "Don't switch the firmware of an installed system",
+  "@virtHwFirmwareWarnTitle": {
+    "description": "Hardware view (virtualization): FirmwareWarnTitle"
+  },
+  "virtHwFirmwareWarnBody": "Switching between UEFI and BIOS leaves an installed system unable to boot.",
+  "@virtHwFirmwareWarnBody": {
+    "description": "Hardware view (virtualization): FirmwareWarnBody"
+  },
+  "virtHwFirmwareStopped": "The firmware changes only while the guest is stopped.",
+  "@virtHwFirmwareStopped": {
+    "description": "Hardware view (virtualization): FirmwareStopped"
+  },
+  "virtHwSecureBootVars": "Turning Secure Boot on or off makes the EFI variables anew; boot entries saved in them are lost.",
+  "@virtHwSecureBootVars": {
+    "description": "Note under the Secure Boot switch: switching it recreates the guest's EFI variables (PVE's EFI disk, libvirt's variables file), losing saved boot entries."
+  },
+  "virtHwEfiStorage": "Where the EFI variables go",
+  "@virtHwEfiStorage": {
+    "description": "Hardware view (virtualization): EfiStorage"
+  },
+  "virtHwTpmStorage": "Where the TPM state goes",
+  "@virtHwTpmStorage": {
+    "description": "Hardware view (virtualization): TpmStorage"
+  },
+  "virtHwSwitchFirmwareAsk": "Switch {guest} to {firmware}?",
+  "@virtHwSwitchFirmwareAsk": {
+    "description": "Hardware view (virtualization): SwitchFirmwareAsk",
+    "placeholders": {
+      "guest": {
+        "type": "String"
+      },
+      "firmware": {
+        "type": "String"
+      }
+    }
+  },
+  "virtCloneName": "New name",
+  "@virtCloneName": {
+    "description": "Clone group (guest Settings): the new guest's name field."
+  },
+  "virtCloneFull": "Full clone",
+  "@virtCloneFull": {
+    "description": "PVE clone switch: full clone (off = linked clone)."
+  },
+  "virtCloneCopyDisks": "Copy disk contents",
+  "@virtCloneCopyDisks": {
+    "description": "libvirt clone switch: copy the disks' contents (off = new empty disks)."
+  },
+  "virtCloneLinkedNote": "Off: a linked clone, which depends on the template's disks",
+  "@virtCloneLinkedNote": {
+    "description": "Note under the PVE full-clone switch on a template."
+  },
+  "virtCloneFullOnly": "Only a template can be cloned as a linked clone",
+  "@virtCloneFullOnly": {
+    "description": "Note under the PVE full-clone switch on a guest that is not a template: linked clones need a template."
+  },
+  "virtCloneEmptyNote": "Off: new empty disks of the same size",
+  "@virtCloneEmptyNote": {
+    "description": "Note under the libvirt copy-disks switch."
+  },
+  "virtCloneStopFirst": "Shut it down before cloning.",
+  "@virtCloneStopFirst": {
+    "description": "libvirt: why the Clone button is disabled while the guest runs."
+  },
+  "virtCloneFullShort": "Full",
+  "@virtCloneFullShort": {
+    "description": "Index note for the Clone group: full clone."
+  },
+  "virtCloneLinkedShort": "Linked",
+  "@virtCloneLinkedShort": {
+    "description": "Index note for the Clone group: linked clone."
+  },
+  "virtCloneEmptyShort": "Empty disks",
+  "@virtCloneEmptyShort": {
+    "description": "Index note for the Clone group: new empty disks."
+  },
+  "virtCloning": "Cloning…",
+  "@virtCloning": {
+    "description": "The Clone button while a clone runs."
+  },
+  "virtCloned": "Cloned as {name}",
+  "@virtCloned": {
+    "description": "Toast after a clone.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "web-01-clone"
+      }
+    }
+  },
+  "virtBackupPlan": "Plan",
+  "@virtBackupPlan": {
+    "description": "Backup view: title of the group showing the scheduled backup job."
+  },
+  "virtBackupPlanWhere": "Datacenter → Backup",
+  "@virtBackupPlanWhere": {
+    "description": "Backup view: where backup jobs are configured in PVE, shown beside the Plan title."
+  },
+  "virtBackupNoPlanShort": "No plan",
+  "@virtBackupNoPlanShort": {
+    "description": "Index note: no scheduled backup job takes the guest."
+  },
+  "virtBackupNoPlan": "No scheduled backup job takes this guest. Jobs are set up in the datacenter.",
+  "@virtBackupNoPlan": {
+    "description": "Backup view: no scheduled backup job takes the guest."
+  },
+  "virtBackupKeep": "Keep",
+  "@virtBackupKeep": {
+    "description": "Backup job: how many backups are kept (retention)."
+  },
+  "virtBackupJobDisabled": "This job is disabled.",
+  "@virtBackupJobDisabled": {
+    "description": "Backup job: the job is disabled."
+  },
+  "virtBackupCount": "{count, plural, =1{1 backup} other{{count} backups}}",
+  "@virtBackupCount": {
+    "description": "Number of backups of a guest.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "virtBackupNoStorage": "No storage on this node holds backups.",
+  "@virtBackupNoStorage": {
+    "description": "Backup view: no storage on the node accepts backups."
+  },
+  "virtBackupLiveTip": "Running: snapshot mode, no downtime",
+  "@virtBackupLiveTip": {
+    "description": "Backup view: a running guest is backed up in snapshot mode, without stopping it."
+  },
+  "virtBackupStoppedTip": "Stopped: backed up as it is",
+  "@virtBackupStoppedTip": {
+    "description": "Backup view: a stopped guest is backed up as it is."
+  },
+  "virtBackupNow": "Back up now",
+  "@virtBackupNow": {
+    "description": "Backup view: button starting a backup now."
+  },
+  "virtBackupNotes": "Notes",
+  "@virtBackupNotes": {
+    "description": "A backup's notes."
+  },
+  "virtBackupProtected": "Protected: it cannot be deleted until protection is removed in PVE.",
+  "@virtBackupProtected": {
+    "description": "A protected backup cannot be deleted."
+  },
+  "virtBackupVerified": "Verification: {state}",
+  "@virtBackupVerified": {
+    "description": "A backup's verification state from PVE (ok / failed).",
+    "placeholders": {
+      "state": {
+        "type": "String",
+        "example": "ok"
+      }
+    }
+  },
+  "virtBackupRestoreOverwrites": "Restoring overwrites the current disks",
+  "@virtBackupRestoreOverwrites": {
+    "description": "Warning: restoring a backup over the guest replaces its disks."
+  },
+  "virtBackupStopFirst": "Shut it down before restoring.",
+  "@virtBackupStopFirst": {
+    "description": "Why Restore is disabled while the guest runs."
+  },
+  "virtBackupRestoreAgain": "The guest's disks and configuration are replaced by the backup's.",
+  "@virtBackupRestoreAgain": {
+    "description": "Second-press confirmation body for restoring over the guest."
+  },
+  "virtBackupDeleteConfirm": "Delete backup",
+  "@virtBackupDeleteConfirm": {
+    "description": "Second press of a backup's delete button."
+  },
+  "virtBackupRestoreNew": "Restore as new",
+  "@virtBackupRestoreNew": {
+    "description": "Restore a backup as a new guest (new VMID)."
+  },
+  "virtBackupRestoreConfirm": "Restore over it",
+  "@virtBackupRestoreConfirm": {
+    "description": "Second press of the restore-over-the-guest button."
+  },
+  "virtBackupDone": "Backup finished",
+  "@virtBackupDone": {
+    "description": "Toast: a backup finished."
+  },
+  "virtBackupDeleted": "Backup deleted",
+  "@virtBackupDeleted": {
+    "description": "Toast: a backup was deleted."
+  },
+  "virtBackupRestored": "Restored from {time}",
+  "@virtBackupRestored": {
+    "description": "Toast: restored from the backup taken at a time.",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "2026-09-24 02:00"
+      }
+    }
+  },
+  "pveNeedsPrivilege": "{account} lacks {privilege} on {path}. Grant it, on the PVE host:\n{command}",
+  "@pveNeedsPrivilege": {
+    "description": "PVE refused a storage or network change for want of a privilege: who, which, where, and the command that grants it.",
+    "placeholders": {
+      "account": {
+        "type": "String",
+        "example": "root@pam!serverbox"
+      },
+      "privilege": {
+        "type": "String",
+        "example": "Sys.Modify"
+      },
+      "path": {
+        "type": "String",
+        "example": "/nodes/pve"
+      },
+      "command": {
+        "type": "String",
+        "example": "pveum acl modify /nodes/pve --tokens 'root@pam!serverbox' --roles PVEAdmin"
+      }
+    }
+  },
+  "virtCanDelete": "Can be deleted",
+  "@virtCanDelete": {
+    "description": "Index note of the operations group: nothing stops deleting it."
+  },
+  "virtInUse": "In use",
+  "@virtInUse": {
+    "description": "Index note: a guest uses it."
+  },
+  "virtOps": "Operations",
+  "@virtOps": {
+    "description": "Group title: what can be done to a pool or network (stop, delete)."
+  },
+  "virtPool": "Storage pool",
+  "@virtPool": {
+    "description": "A libvirt storage pool; group title."
+  },
+  "virtPoolNew": "New storage pool",
+  "@virtPoolNew": {
+    "description": "Button and title: a new libvirt storage pool."
+  },
+  "virtStorageAdd": "Add storage",
+  "@virtStorageAdd": {
+    "description": "Button and title: a new PVE storage."
+  },
+  "virtPoolUsedPct": "{pct}% used",
+  "@virtPoolUsedPct": {
+    "description": "Index note: how full a pool is.",
+    "placeholders": {
+      "pct": {
+        "type": "String",
+        "example": "42.5"
+      }
+    }
+  },
+  "virtPoolInUse": "A guest uses a volume here, so the pool cannot be stopped or removed.",
+  "@virtPoolInUse": {
+    "description": "Why a pool cannot be stopped or removed."
+  },
+  "virtPoolDelete": "Delete pool",
+  "@virtPoolDelete": {
+    "description": "Button: remove a libvirt pool."
+  },
+  "virtStorageRemove": "Remove storage",
+  "@virtStorageRemove": {
+    "description": "Button: remove a PVE storage from the configuration."
+  },
+  "virtPoolDeleteAsk": "Remove the pool {name}? Its definition goes; its volumes stay where they are.",
+  "@virtPoolDeleteAsk": {
+    "description": "Confirm removing a libvirt pool.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "images"
+      }
+    }
+  },
+  "virtStorageRemoveAsk": "Remove the storage {name} from PVE's configuration? What is on it stays.",
+  "@virtStorageRemoveAsk": {
+    "description": "Confirm removing a PVE storage.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "nfs-backup"
+      }
+    }
+  },
+  "virtPoolDeleteKeepsVolumes": "Its {count} volumes are kept on disk.",
+  "@virtPoolDeleteKeepsVolumes": {
+    "description": "Under the delete question: the volumes stay.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "virtPoolDeleteStorage": "Also delete its directory (only when empty)",
+  "@virtPoolDeleteStorage": {
+    "description": "Checkbox: pool-delete, which removes an empty directory."
+  },
+  "virtPoolStopAsk": "Stop the pool {name}? Its volumes cannot be listed or created until it starts again.",
+  "@virtPoolStopAsk": {
+    "description": "Confirm stopping a libvirt pool.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "images"
+      }
+    }
+  },
+  "virtStorageDisableAsk": "Disable the storage {name}? Guests with disks on it cannot start until it is enabled again.",
+  "@virtStorageDisableAsk": {
+    "description": "Confirm disabling a PVE storage.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "local"
+      }
+    }
+  },
+  "virtPoolLogicalNote": "An existing volume group is used as it is; nothing is formatted.",
+  "@virtPoolLogicalNote": {
+    "description": "Under the new-pool form for an LVM volume group."
+  },
+  "virtPoolMountPoint": "Mount point",
+  "@virtPoolMountPoint": {
+    "description": "Field: where an NFS pool is mounted."
+  },
+  "virtPoolSourceNfs": "Source (host:/path)",
+  "@virtPoolSourceNfs": {
+    "description": "Field: an NFS export."
+  },
+  "virtPoolSourceVg": "Volume group",
+  "@virtPoolSourceVg": {
+    "description": "Field: an LVM volume group."
+  },
+  "virtPoolSourceThin": "Volume group / thin pool",
+  "@virtPoolSourceThin": {
+    "description": "Field: an LVM volume group and its thin pool, vg/thinpool."
+  },
+  "virtPoolSourceZfs": "ZFS pool",
+  "@virtPoolSourceZfs": {
+    "description": "Field: a ZFS pool or dataset."
+  },
+  "virtPoolTypeVg": "LVM volume group",
+  "@virtPoolTypeVg": {
+    "description": "Pool type choice: an LVM volume group."
+  },
+  "virtResNameEmpty": "Enter a name",
+  "@virtResNameEmpty": {
+    "description": "Form error."
+  },
+  "virtResNameInvalid": "Not a name this host takes (letters, digits, . _ -)",
+  "@virtResNameInvalid": {
+    "description": "Form error: a pool, volume or network name the host does not take."
+  },
+  "virtResSourceInvalid": "Not a path or source the host takes",
+  "@virtResSourceInvalid": {
+    "description": "Form error: the path, export, volume group or pool of a new pool."
+  },
+  "virtResTargetInvalid": "An absolute path",
+  "@virtResTargetInvalid": {
+    "description": "Form error: the mount point must be an absolute path."
+  },
+  "virtResCidrInvalid": "An address with its prefix, e.g. 192.168.150.1/24",
+  "@virtResCidrInvalid": {
+    "description": "Form error: the IPv4 address with prefix."
+  },
+  "virtResDhcpInvalid": "Two addresses in the network, in order, without the host's own",
+  "@virtResDhcpInvalid": {
+    "description": "Form error: the DHCP range."
+  },
+  "virtResSubnetTaken": "Another network here is on this subnet",
+  "@virtResSubnetTaken": {
+    "description": "Form error: another network overlaps."
+  },
+  "virtResBridgeInvalid": "Not an interface name",
+  "@virtResBridgeInvalid": {
+    "description": "Form error: an interface name."
+  },
+  "virtResFormat": "Not a format this pool holds",
+  "@virtResFormat": {
+    "description": "Form error: the pool cannot hold that format."
+  },
+  "virtVolNew": "New volume",
+  "@virtVolNew": {
+    "description": "Button and form title: a new volume."
+  },
+  "virtVolCount": "{count} volumes",
+  "@virtVolCount": {
+    "description": "Index note: how many volumes.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "4"
+      }
+    }
+  },
+  "virtVolNone": "This pool has no volumes yet.",
+  "@virtVolNone": {
+    "description": "A pool with no volumes."
+  },
+  "virtVolEmptyAttach": "A new volume can be attached to any VM later",
+  "@virtVolEmptyAttach": {
+    "description": "Dashed row beside \"New volume\"."
+  },
+  "virtVolEmptyUpload": "An ISO can also be uploaded directly",
+  "@virtVolEmptyUpload": {
+    "description": "Dashed row beside \"New volume\" where uploads are offered."
+  },
+  "virtVolPveName": "PVE names a volume for its VM: vm-<VMID>-disk-<N>",
+  "@virtVolPveName": {
+    "description": "Under the volume name on PVE."
+  },
+  "virtVolUsers": "Used by",
+  "@virtVolUsers": {
+    "description": "Field: the guests using a volume."
+  },
+  "virtVolAllocated": "Allocated",
+  "@virtVolAllocated": {
+    "description": "Meter: how much of a volume takes space on the host."
+  },
+  "virtVolGrowFromGuest": "A guest uses it: grow it from that guest's Hardware view",
+  "@virtVolGrowFromGuest": {
+    "description": "Why a used volume is not grown here."
+  },
+  "virtVolInUse": "A guest uses this volume",
+  "@virtVolInUse": {
+    "description": "A guest uses this volume: not deleted, not attached again."
+  },
+  "virtVolAttach": "Attach to VM",
+  "@virtVolAttach": {
+    "description": "Button: attach a volume to a VM as a disk."
+  },
+  "virtVolAttachNote": "Attached as a new disk, on the bus its first disk is on",
+  "@virtVolAttachNote": {
+    "description": "Under the VM choice for attaching a volume."
+  },
+  "virtVolAttached": "Attached to {name}",
+  "@virtVolAttached": {
+    "description": "Toast after attaching.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "debian-13"
+      }
+    }
+  },
+  "virtVolInsert": "Insert into CD-ROM",
+  "@virtVolInsert": {
+    "description": "Button: insert an ISO into a VM's CD-ROM drive."
+  },
+  "virtVolInserted": "Inserted into {name}'s CD-ROM drive",
+  "@virtVolInserted": {
+    "description": "Toast after inserting an ISO.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "debian-13"
+      }
+    }
+  },
+  "virtVolNoCdrom": "{name} has no CD-ROM drive",
+  "@virtVolNoCdrom": {
+    "description": "A VM without a CD-ROM drive to insert into.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "debian-13"
+      }
+    }
+  },
+  "virtVolDeleteAsk": "Delete the volume {name} from {pool}? What is in it is gone for good.",
+  "@virtVolDeleteAsk": {
+    "description": "Confirm deleting a volume.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "data.qcow2"
+      },
+      "pool": {
+        "type": "String",
+        "example": "images"
+      }
+    }
+  },
+  "virtUploadIso": "Upload ISO",
+  "@virtUploadIso": {
+    "description": "Bar button: upload an ISO from this device."
+  },
+  "virtUploadTo": "Upload to {pool}",
+  "@virtUploadTo": {
+    "description": "Dialog title: the name an upload takes.",
+    "placeholders": {
+      "pool": {
+        "type": "String",
+        "example": "local"
+      }
+    }
+  },
+  "virtUploadDone": "{name} uploaded",
+  "@virtUploadDone": {
+    "description": "Toast: an upload finished.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "debian-13.iso"
+      }
+    }
+  },
+  "virtNetConfig": "Configuration",
+  "@virtNetConfig": {
+    "description": "Group title: how a network is set up."
+  },
+  "virtNetInternal": "Internal",
+  "@virtNetInternal": {
+    "description": "A bridge with no ports, a network with no bridge of the host's."
+  },
+  "virtNetBridgePorts": "Bridge ports",
+  "@virtNetBridgePorts": {
+    "description": "Field: a PVE bridge's ports."
+  },
+  "virtNetHostBridge": "Host bridge",
+  "@virtNetHostBridge": {
+    "description": "Field: the host bridge a libvirt bridge-mode network uses."
+  },
+  "virtNetPortsHint": "eno2; empty for an internal bridge",
+  "@virtNetPortsHint": {
+    "description": "Hint for a PVE bridge's ports."
+  },
+  "virtNetDhcpRange": "DHCP range",
+  "@virtNetDhcpRange": {
+    "description": "Field: a network's DHCP range."
+  },
+  "virtNetDhcpTip": "dnsmasq gives guests their addresses",
+  "@virtNetDhcpTip": {
+    "description": "Under the DHCP switch."
+  },
+  "virtNetVlanTip": "Guests' NICs may carry a VLAN tag",
+  "@virtNetVlanTip": {
+    "description": "Under the VLAN aware switch."
+  },
+  "virtNetNatTip": "Through the host: guests reach out, nothing reaches in",
+  "@virtNetNatTip": {
+    "description": "NAT network: what it does."
+  },
+  "virtNetRoutedTip": "Routed by the host without NAT: the LAN needs a route back",
+  "@virtNetRoutedTip": {
+    "description": "Routed network: what it does."
+  },
+  "virtNetIsolatedTip": "Only the guests and the host reach each other",
+  "@virtNetIsolatedTip": {
+    "description": "Isolated network: what it does."
+  },
+  "virtNetBridgedTip": "Guests join a bridge of the host's, on its physical network",
+  "@virtNetBridgedTip": {
+    "description": "Bridged network: what it does."
+  },
+  "virtNetNew": "New network",
+  "@virtNetNew": {
+    "description": "Button and title: a new libvirt network."
+  },
+  "virtNetNewBridge": "New Linux bridge",
+  "@virtNetNewBridge": {
+    "description": "Button and title: a new PVE Linux bridge."
+  },
+  "virtNetVirtual": "Virtual network",
+  "@virtNetVirtual": {
+    "description": "Group title of the new libvirt network form."
+  },
+  "virtNetDelete": "Delete network",
+  "@virtNetDelete": {
+    "description": "Button: delete a network."
+  },
+  "virtNetDeleteAsk": "Delete the network {name}? It is stopped and its definition removed.",
+  "@virtNetDeleteAsk": {
+    "description": "Confirm deleting a libvirt network.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "lab"
+      }
+    }
+  },
+  "virtNetDeleteAskPve": "Remove the bridge {name} from {node}? It leaves the pending configuration now, and the host once that is applied.",
+  "@virtNetDeleteAskPve": {
+    "description": "Confirm removing a PVE bridge.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "vmbr2"
+      },
+      "node": {
+        "type": "String",
+        "example": "pve"
+      }
+    }
+  },
+  "virtNetInUse": "Guests on it: {count}. It cannot be deleted.",
+  "@virtNetInUse": {
+    "description": "Why a network cannot be deleted.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "virtNetStopAsk": "Stop {name}? The {count} guests on it lose their network until it starts again.",
+  "@virtNetStopAsk": {
+    "description": "Confirm stopping a network with guests on it.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "default"
+      },
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "virtNetInactivePve": "Not active: a new bridge waits in the pending configuration until it is applied.",
+  "@virtNetInactivePve": {
+    "description": "A PVE interface that is not active."
+  },
+  "virtNetPveApplyNote": "Saved as a pending change: it takes effect when the configuration is applied (ifreload -a).",
+  "@virtNetPveApplyNote": {
+    "description": "Under the new PVE bridge form."
+  },
+  "virtNetPendingSaved": "Saved as pending: apply the configuration for it to take effect",
+  "@virtNetPendingSaved": {
+    "description": "Toast after a PVE bridge was created or removed."
+  },
+  "virtNetPendingTitle": "Pending network changes on {node}",
+  "@virtNetPendingTitle": {
+    "description": "Card title: PVE network changes not applied yet.",
+    "placeholders": {
+      "node": {
+        "type": "String",
+        "example": "pve"
+      }
+    }
+  },
+  "virtNetPendingTip": "PVE keeps network changes in interfaces.new until they are applied.",
+  "@virtNetPendingTip": {
+    "description": "Card text: where PVE keeps them."
+  },
+  "virtNetPendingShow": "Show changes",
+  "@virtNetPendingShow": {
+    "description": "Button: show the pending diff."
+  },
+  "virtNetApply": "Apply configuration",
+  "@virtNetApply": {
+    "description": "Button: PVE Apply Configuration."
+  },
+  "virtNetApplyAsk": "Apply the pending network configuration on {node}? PVE reloads the host's network (ifreload -a): a mistake in it can cut the host off.",
+  "@virtNetApplyAsk": {
+    "description": "Confirm applying PVE network changes.",
+    "placeholders": {
+      "node": {
+        "type": "String",
+        "example": "pve"
+      }
+    }
+  },
+  "virtNetRevertAsk": "Drop the pending network configuration on {node}?",
+  "@virtNetRevertAsk": {
+    "description": "Confirm dropping PVE network changes.",
+    "placeholders": {
+      "node": {
+        "type": "String",
+        "example": "pve"
+      }
+    }
+  },
+  "pveTokenTipStorage": "Managing storage needs Datastore.Allocate on /storage (adding, disabling, removing), Datastore.AllocateSpace (volumes) and Datastore.AllocateTemplate (uploads); Linux bridges and applying the network configuration need Sys.Modify on the node.",
+  "@pveTokenTipStorage": {
+    "description": "PVE API token help: the privileges managing storage and networks needs (verified on PVE 9.2)."
+  },
+  "virtCreateUnnamed": "Unnamed",
+  "@virtCreateUnnamed": {
+    "description": "Index note of the create form's general group: no name typed yet."
+  },
+  "virtCreateNotChosen": "Not chosen",
+  "@virtCreateNotChosen": {
+    "description": "Index note: nothing chosen yet in that group."
+  },
+  "virtCreateKindVmSub": "qm · a full KVM virtual machine",
+  "@virtCreateKindVmSub": {
+    "description": "Create form, PVE: what a virtual machine is (qm is the command)."
+  },
+  "virtCreateKindLxcSub": "pct · shares the host's kernel, lighter",
+  "@virtCreateKindLxcSub": {
+    "description": "Create form, PVE: what a container is (pct is the command)."
+  },
+  "virtCloudImage": "Cloud image",
+  "@virtCloudImage": {
+    "description": "Where a VM's system comes from: a disk image with a system already on it, set up by cloud-init."
+  },
+  "virtCloudImageTip": "A disk with a system on it: copied, grown to the size under Storage, and set up by cloud-init at its first boot. The image itself is left as it is.",
+  "@virtCloudImageTip": {
+    "description": "Create form: what choosing a cloud image does."
+  },
+  "virtNoCloudImagesLibvirt": "No cloud images here: put a qcow2 or raw image in a pool (upload it in Storage), one no guest uses.",
+  "@virtNoCloudImagesLibvirt": {
+    "description": "Create form, libvirt: no cloud image volume in any pool."
+  },
+  "virtNoCloudImagesPve": "No cloud images here: upload a qcow2, raw or vmdk image to a storage with the Import content type (PVE 8.2+).",
+  "@virtNoCloudImagesPve": {
+    "description": "Create form, PVE: no image in a storage with Import content."
+  },
+  "virtCreateWindowsTitle": "Windows 11 needs UEFI and TPM 2.0",
+  "@virtCreateWindowsTitle": {
+    "description": "Create form callout when a Windows ISO is chosen."
+  },
+  "virtCreateWindowsBody": "Choose UEFI and turn the TPM on above.",
+  "@virtCreateWindowsBody": {
+    "description": "Create form callout body: turn both on here."
+  },
+  "virtCreateWindowsNoTpm": "This host has no software TPM (swtpm): install it to give the guest one.",
+  "@virtCreateWindowsNoTpm": {
+    "description": "Create form callout body: this libvirt host has no software TPM."
+  },
+  "virtCreateImageSize": "The image is {size}: the disk must be at least that big.",
+  "@virtCreateImageSize": {
+    "description": "Create form: the disk asked for is smaller than the cloud image.",
+    "placeholders": {
+      "size": {
+        "type": "String",
+        "example": "3 GB"
+      }
+    }
+  },
+  "virtCreateImageMissing": "Choose a cloud image.",
+  "@virtCreateImageMissing": {
+    "description": "Create form: no cloud image chosen."
+  },
+  "virtCreateIncomplete": "Complete the parts marked orange first.",
+  "@virtCreateIncomplete": {
+    "description": "Create form: something above still needs filling in (the orange groups)."
+  },
+  "virtCreateOn": "Created on {host}",
+  "@virtCreateOn": {
+    "description": "Create form, confirm group: which server it is created on.",
+    "placeholders": {
+      "host": {
+        "type": "String",
+        "example": "pve"
+      }
+    }
+  },
+  "virtCiTip": "An account with sudo, logged in to with its password, an SSH key, or both.",
+  "@virtCiTip": {
+    "description": "cloud-init group: what the account is."
+  },
+  "virtCiUserInvalid": "Lowercase letters, digits, _ and -, starting with a letter or _",
+  "@virtCiUserInvalid": {
+    "description": "cloud-init user name rule."
+  },
+  "virtCiCredentialsMissing": "Set a password or an SSH key.",
+  "@virtCiCredentialsMissing": {
+    "description": "cloud-init: neither a password nor a key."
+  },
+  "virtCiHostnamePve": "The hostname is the VM's name.",
+  "@virtCiHostnamePve": {
+    "description": "cloud-init on PVE: the hostname is the VM name."
+  },
+  "virtCiStatic": "Static",
+  "@virtCiStatic": {
+    "description": "cloud-init network: a fixed address rather than DHCP."
+  },
+  "virtCiAddressInvalid": "An IPv4 address with its prefix, like 10.0.0.5/24",
+  "@virtCiAddressInvalid": {
+    "description": "cloud-init: not an IPv4 address with prefix."
+  },
+  "virtCiGatewayInvalid": "An IPv4 address, like 10.0.0.1",
+  "@virtCiGatewayInvalid": {
+    "description": "cloud-init: gateway is not an IPv4 address."
+  },
+  "virtCiDnsFromDhcp": "Empty: from DHCP",
+  "@virtCiDnsFromDhcp": {
+    "description": "cloud-init DNS field hint with DHCP: empty takes what DHCP gives."
+  },
+  "virtCiDnsInvalid": "IP addresses, separated by spaces or commas",
+  "@virtCiDnsInvalid": {
+    "description": "cloud-init DNS servers rule."
+  },
+  "virtCiSearch": "Search domain",
+  "@virtCiSearch": {
+    "description": "cloud-init: DNS search domain field."
+  },
+  "virtCiSeedNote": "Written to a small ISO next to the disk, attached as a CD-ROM and deleted with the VM. Only the password's hash is stored.",
+  "@virtCiSeedNote": {
+    "description": "cloud-init on libvirt: where its data goes and what is kept of the password."
+  },
+  "virtCiNoToolTitle": "No tool on the host to make the cloud-init data",
+  "@virtCiNoToolTitle": {
+    "description": "cloud-init on libvirt: the host has no tool to make the seed ISO."
+  },
+  "virtCiNoToolBody": "Install one of {tools} on the host. Without cloud-init the image starts with no account to log in with.",
+  "@virtCiNoToolBody": {
+    "description": "cloud-init on libvirt: which tools to install; without one the image boots unconfigured.",
+    "placeholders": {
+      "tools": {
+        "type": "String",
+        "example": "genisoimage, xorriso, mkisofs, cloud-localds"
+      }
+    }
+  },
+  "virtHwCloudInitNote": "What cloud-init reads at the first boot. Not install media: nothing to insert here.",
+  "@virtHwCloudInitNote": {
+    "description": "Hardware view: a cloud-init drive row."
+  },
+  "virtHwCdromLater": "While it runs, the drive is added at its next start (SATA and IDE take none live).",
+  "@virtHwCdromLater": {
+    "description": "Hardware view: a new CD-ROM drive on a running VM arrives at its next start."
+  },
+  "virtCreateDiskKept": "The disk was kept at {size}, the image's own size, which is more than was asked for: a disk is never cut below the system on it.",
+  "@virtCreateDiskKept": {
+    "description": "Create form, after creating from a cloud image bigger than the disk asked for: the disk keeps the image size.",
+    "placeholders": {
+      "size": {
+        "type": "String",
+        "example": "3 GiB"
+      }
+    }
+  },
+  "virtCiEditTip": "What cloud-init sets up in this VM: an account with sudo, how to log in to it, the hostname and the address.",
+  "@virtCiEditTip": {
+    "description": "Settings view, cloud-init group: what it edits."
+  },
+  "virtCiForeignTitle": "This seed holds more than this app writes",
+  "@virtCiForeignTitle": {
+    "description": "Settings view, cloud-init on libvirt: the seed holds settings the app does not write."
+  },
+  "virtCiForeignBody": "Settings made elsewhere (packages, commands, other accounts) are not shown here. Saving replaces the seed with what is shown.",
+  "@virtCiForeignBody": {
+    "description": "Settings view, cloud-init on libvirt: what saving does to a seed with settings the app does not write."
+  },
+  "virtCiPasswordKept": "Set. Leave empty to keep it",
+  "@virtCiPasswordKept": {
+    "description": "Settings view, cloud-init: hint of the password field when a password is set (never shown)."
+  },
+  "virtCiRemovePassword": "Remove the password",
+  "@virtCiRemovePassword": {
+    "description": "Settings view, cloud-init: switch that removes the account password."
+  },
+  "virtCiRemovePasswordNote": "Log in with an SSH key only",
+  "@virtCiRemovePasswordNote": {
+    "description": "Settings view, cloud-init: note under the remove-password switch."
+  },
+  "virtCiKeysAdded": "Keys are added to the account. A key taken out here stays in the system until it is removed there, and a new user name makes a new account beside the old one.",
+  "@virtCiKeysAdded": {
+    "description": "Settings view, cloud-init: what cloud-init does with keys and a renamed account at the next boot."
+  },
+  "virtCiEffectTitle": "Takes effect at the next boot",
+  "@virtCiEffectTitle": {
+    "description": "Settings view, cloud-init: title of the note on when a change takes effect."
+  },
+  "virtCiEffectLibvirt": "Saving writes a new seed with a new instance ID.",
+  "@virtCiEffectLibvirt": {
+    "description": "Settings view, cloud-init on libvirt: first sentence of the note on saving."
+  },
+  "virtCiEffectPve": "PVE writes its cloud-init drive at once, with an instance ID derived from these settings, so any change here makes a new one.",
+  "@virtCiEffectPve": {
+    "description": "Settings view, cloud-init on PVE: first sentence of the note on saving (PVE derives the instance ID from the settings)."
+  },
+  "virtCiNewInstance": "At the next boot cloud-init treats the system as a new instance: it sets the hostname again, makes the account if it is missing, sets its password, adds the keys and writes the network configuration again. It also makes new SSH host keys, so SSH clients warn that the host key changed. Nothing changes before that boot.",
+  "@virtCiNewInstance": {
+    "description": "Settings view, cloud-init: what cloud-init does at the next boot with a new instance ID."
+  },
+  "virtCiSaved": "Saved. It takes effect at the next boot.",
+  "@virtCiSaved": {
+    "description": "Toast after saving cloud-init settings."
   }
 }

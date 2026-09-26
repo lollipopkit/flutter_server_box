@@ -210,10 +210,10 @@ class LegacyServerCustomV1 {
   /// Today's model, with everything those builds could not express left at its
   /// default — `geo` is null, because a coordinate is something the user gives
   /// a server and no Hive install was ever asked for one.
+  ///
+  /// Without the PVE fields, which today's model does not have: they are a
+  /// `server_pve` row now. [toJson] is what keeps them.
   ServerCustom toCustom() => ServerCustom(
-    pveAddr: pveAddr,
-    pveIgnoreCert: pveIgnoreCert,
-    pvePwd: pvePwd,
     cmds: cmds,
     preferTempDev: preferTempDev,
     tempIsCelsius: tempIsCelsius,
@@ -221,6 +221,15 @@ class LegacyServerCustomV1 {
     netDev: netDev,
     scriptDir: scriptDir,
   );
+
+  /// The record as the JSON those builds wrote, PVE fields included — what the
+  /// import stores in `kv`, and where m004 reads `pveAddr` and `pvePwd` from.
+  Map<String, dynamic> toJson() => {
+    ...toCustom().toJson(),
+    'pveAddr': ?pveAddr,
+    'pveIgnoreCert': pveIgnoreCert,
+    'pvePwd': ?pvePwd,
+  };
 }
 
 class LegacyServerCustomAdapter extends TypeAdapter<LegacyServerCustomV1> {

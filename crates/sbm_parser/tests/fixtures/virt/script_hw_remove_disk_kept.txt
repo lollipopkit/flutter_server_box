@@ -1,0 +1,9 @@
+SrvBoxSep.b64.dmlydC5ody5zdGVw
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5ody5saXZlX3N0ZXA=
+error: Failed to detach disk
+error: Operation not supported: This type of disk cannot be hot unplugged
+
+SbVirtRc=1
+SrvBoxSep.b64.dmlydC5ody5rZXB0

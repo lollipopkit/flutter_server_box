@@ -1045,9 +1045,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Parsing status okupansi oleh Docker agak lambat';
 
   @override
-  String get plugInType => 'Jenis Penyisipan';
-
-  @override
   String get preferDiskAmount => 'Prioritaskan tampilan kapasitas disk';
 
   @override
@@ -1187,24 +1184,12 @@ class AppLocalizationsId extends AppLocalizations {
       'Tidak disarankan untuk diaktifkan, waspadai risiko keamanan! Jika Anda menggunakan sertifikat default dari PVE, Anda perlu mengaktifkan opsi ini.';
 
   @override
-  String get pveServerClientMissing =>
-      'Klien SSH untuk server ini tidak tersedia.';
-
-  @override
-  String get pveAddressMissing =>
-      'Alamat PVE belum diisi. Atur di pengaturan server.';
-
-  @override
   String get pvePasswordRequired =>
       'Kata sandi PVE diperlukan. Atur di pengaturan server.';
 
   @override
   String get pveOtpRequired =>
       'Autentikasi dua faktor aktif di server PVE ini. Masukkan kode OTP.';
-
-  @override
-  String get pveOtpChallengeExpired =>
-      'Tantangan OTP sudah kedaluwarsa. Segarkan lalu coba lagi.';
 
   @override
   String get pveOtpCodeRequired => 'Kode OTP wajib diisi.';
@@ -1230,19 +1215,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get pveMissingAuthTicket =>
       'Login PVE berhasil, tetapi tidak ada tiket autentikasi yang dikembalikan.';
-
-  @override
-  String get pveVersionLow =>
-      'Fitur ini saat ini sedang dalam tahap pengujian dan hanya diuji pada PVE 8+. Gunakan dengan hati-hati.';
-
-  @override
-  String get pveLoadingForwarding => 'Membangun terowongan SSH...';
-
-  @override
-  String get pveLoadingLogin => 'Mengautentikasi ke PVE...';
-
-  @override
-  String get pveLoadingData => 'Mengambil data klaster...';
 
   @override
   String get pveLoadingConnect => 'Menghubungkan...';
@@ -1718,9 +1690,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get sortByJoinTime => 'Menurut waktu ditambahkan';
-
-  @override
-  String get portForwardBetaTitle => 'Penerusan Port (Beta)';
 
   @override
   String get tmuxAutoAttach => 'Sambung otomatis ke tmux';
@@ -3299,4 +3268,1545 @@ class AppLocalizationsId extends AppLocalizations {
   String appearanceThemeModeLocked(String mode) {
     return 'Tema ini hanya mendukung $mode. Pilih tema lain untuk mengubah mode.';
   }
+
+  @override
+  String get pveAuthToken => 'Token API';
+
+  @override
+  String get pveVersionLow =>
+      'Fitur ini saat ini sedang dalam tahap pengujian dan hanya diuji pada PVE 8+. Gunakan dengan hati-hati.';
+
+  @override
+  String get pveTokenId => 'ID token';
+
+  @override
+  String get pveTokenSecret => 'Rahasia token';
+
+  @override
+  String get pveTokenTip =>
+      'Buat di PVE pada Datacenter → Permissions → API Tokens. Token memerlukan VM.Audit, VM.PowerMgmt, VM.Console, VM.Snapshot, VM.Snapshot.Rollback, Datastore.Audit, dan Sys.Audit pada jalur yang ingin ditampilkan; jika pemisahan hak aktif, berikan hak tersebut ke token itu sendiri.';
+
+  @override
+  String pveTokenNoPrivileges(String account, String command) {
+    return 'Token $account tidak dapat melihat apa pun di host ini. Token dengan pemisahan hak akses tidak mewarisi izin penggunanya; berikan izin di host PVE:\n$command\natau hapus centang \"Privilege Separation\" pada token.';
+  }
+
+  @override
+  String pveUserNoPrivileges(String account, String command) {
+    return '$account tidak dapat melihat apa pun di host ini. Berikan izin di host PVE:\n$command';
+  }
+
+  @override
+  String get pveTokenIdInvalid => 'ID token harus berbentuk user@realm!tokenid';
+
+  @override
+  String get pvePasswordAuthTip =>
+      'Masuk sebagai pengguna SSH di realm PAM, dengan kata sandi SSH, atau dengan kata sandi PVE di bawah jika SSH memakai kunci. Kode dua faktor diminta bila diperlukan.';
+
+  @override
+  String get pveCertUnpinned =>
+      'Belum ada yang dikonfirmasi. Kecuali ditandatangani CA tepercaya, koneksi berikutnya menampilkan sertifikat untuk dikonfirmasi.';
+
+  @override
+  String get pveCertForget => 'Lupakan sertifikat';
+
+  @override
+  String get pveCertForgetTip =>
+      'Koneksi berikutnya akan menampilkan sertifikat PVE lagi untuk dikonfirmasi.';
+
+  @override
+  String get virtualization => 'Virtualisasi';
+
+  @override
+  String get virtIntro =>
+      'Kelola mesin virtual dan kontainer di host Proxmox VE dan libvirt/KVM: status, aksi daya, dan konsol.';
+
+  @override
+  String get virtIntroPveMoved =>
+      'Proxmox VE telah pindah dari halaman server ke tab ini. Kartu PVE sebuah server membukanya di sini.';
+
+  @override
+  String get virtIntroLibvirt =>
+      'Server dengan virsh dari libvirt terpasang muncul sebagai host, beserta mesin virtual QEMU/KVM-nya.';
+
+  @override
+  String get virtIntroTransports =>
+      'Keduanya bekerja lewat SSH, melalui agen Monitor, atau di perangkat ini.';
+
+  @override
+  String get virtIntroTokens =>
+      'PVE dapat masuk dengan token API alih-alih kata sandi. Atur di halaman edit server, pada bagian PVE.';
+
+  @override
+  String get virtIntroInBar => 'Tab ini telah ditambahkan ke bilah tab.';
+
+  @override
+  String get virtIntroInMore =>
+      'Tab ini ada di Lainnya. Tab Beranda di Pengaturan dapat memindahkannya ke bilah tab.';
+
+  @override
+  String get virtGuests => 'Mesin virtual';
+
+  @override
+  String get virtHosts => 'Host';
+
+  @override
+  String get virtCheckServer => 'Periksa server ini';
+
+  @override
+  String get virtCheckAll => 'Periksa semua server';
+
+  @override
+  String get virtProbeNotChecked => 'Belum diperiksa';
+
+  @override
+  String get virtProbeAbsent => 'Bukan host';
+
+  @override
+  String virtProbeContainer(String kind) {
+    return 'Kontainer $kind';
+  }
+
+  @override
+  String get virtProbeContainerTip =>
+      'Server ini berjalan di dalam kontainer, jadi merupakan tamu, bukan host. Kelola dari host yang menjalankannya.';
+
+  @override
+  String get virtProbePve => 'PVE, belum disiapkan';
+
+  @override
+  String virtPveSetupTip(String version) {
+    return '$version berjalan di server ini. Isi akses API-nya di pengaturan server (disarankan token API) untuk mengelola mesin virtual dan kontainernya di sini.';
+  }
+
+  @override
+  String get virtNoHosts => 'Tidak ada host virtualisasi';
+
+  @override
+  String get virtNoHostsTip =>
+      'Server yang menjalankan Proxmox VE dengan akses API terisi adalah host, begitu juga server tempat virsh merespons. Server lainnya dapat diperiksa dari pengalih host.';
+
+  @override
+  String get virtNoGuests => 'Tidak ada mesin virtual atau kontainer';
+
+  @override
+  String get virtPaused => 'Dijeda';
+
+  @override
+  String get virtStarting => 'Memulai…';
+
+  @override
+  String get virtStopping => 'Menghentikan…';
+
+  @override
+  String get virtRebooting => 'Memulai ulang…';
+
+  @override
+  String get virtMigrating => 'Memigrasi…';
+
+  @override
+  String get virtBackingUp => 'Mencadangkan…';
+
+  @override
+  String get virtResume => 'Lanjutkan';
+
+  @override
+  String get virtOverview => 'Ikhtisar';
+
+  @override
+  String get virtConsole => 'Konsol';
+
+  @override
+  String get virtConsoleNone =>
+      'Tidak ada konsol yang dikonfigurasi untuk tamu ini';
+
+  @override
+  String get virtConsoleGraphical => 'Grafis';
+
+  @override
+  String get virtVncPasswordNeeded => 'Tampilan ini meminta kata sandi';
+
+  @override
+  String get virtConsoleSerialTip =>
+      'Membuka konsol serial tamu dengan virsh di host. Putuskan, atau Ctrl+], kembali ke shell host.';
+
+  @override
+  String virtConsoleVia(String transport) {
+    return 'melalui $transport';
+  }
+
+  @override
+  String get virtConsoleEnterTip => 'Tidak ada keluaran? Tekan Enter';
+
+  @override
+  String virtConsoleAutoEnter(int seconds) {
+    return 'Enter akan ditekan dalam $seconds detik untuk menampilkan prompt';
+  }
+
+  @override
+  String get virtConsoleEnterNow => 'Sekarang';
+
+  @override
+  String get virtOffTip =>
+      'Jalankan untuk melihat CPU, memori, disk, dan jaringan secara langsung di sini.';
+
+  @override
+  String get virtAllocated => 'Dialokasikan';
+
+  @override
+  String virtRunningCount(int running, int total) {
+    return '$running berjalan · $total total';
+  }
+
+  @override
+  String get virtTemplate => 'Templat';
+
+  @override
+  String get virtAutostart => 'Mulai bersama host';
+
+  @override
+  String get virtErrUnreachable => 'Tidak dapat menjangkau host ini';
+
+  @override
+  String get virtErrNotConfigured => 'Pengaturan PVE server ini belum lengkap';
+
+  @override
+  String get virtErrNotConfiguredTip =>
+      'Periksa alamat, serta kata sandi atau token API, di pengaturan server.';
+
+  @override
+  String get virtErrAuthFailed => 'Host menolak login';
+
+  @override
+  String get virtErrCertUnconfirmed => 'Konfirmasi sertifikat host';
+
+  @override
+  String get virtErrCertChanged => 'Sertifikat host telah berubah';
+
+  @override
+  String get virtErrRelayNotGranted => 'Agent Monitor tidak meneruskan koneksi';
+
+  @override
+  String get virtErrExecNotGranted =>
+      'Agent Monitor tidak menjalankan perintah';
+
+  @override
+  String get virtErrNotInstalled => 'virsh tidak terpasang di server ini';
+
+  @override
+  String get virtErrServerRemoved => 'Server ini sudah tidak ada';
+
+  @override
+  String get virtErrSudoRequired =>
+      'sudo memerlukan kata sandi untuk mengakses libvirt';
+
+  @override
+  String get virtErrSudoRejected => 'sudo menolak kata sandi';
+
+  @override
+  String get virtErrInvalidResponse =>
+      'Host menjawab dalam bentuk yang tidak terduga';
+
+  @override
+  String get virtErrActionFailed => 'Host menolak tindakan tersebut';
+
+  @override
+  String get remoteSessionIdleTimeout => 'Tutup saat ditinggalkan';
+
+  @override
+  String get remoteSessionIdleTimeoutTip =>
+      'Berapa lama desktop jarak jauh atau konsol tamu tetap terhubung setelah Anda meninggalkannya. Sebelum ditutup, pemberitahuan memberi Anda 10 detik untuk mempertahankannya.';
+
+  @override
+  String get remoteSessionKeepAlive => 'Pertahankan';
+
+  @override
+  String get remoteSessionClosedAway => 'Ditutup karena tidak aktif';
+
+  @override
+  String remoteSessionClosingIn(int seconds) {
+    return 'Ditutup dalam $seconds dtk';
+  }
+
+  @override
+  String get reopen => 'Buka lagi';
+
+  @override
+  String get virtSnapshots => 'Snapshot';
+
+  @override
+  String get virtSnapshotCreate => 'Ambil snapshot';
+
+  @override
+  String get virtSnapshotNone => 'Belum ada snapshot';
+
+  @override
+  String get virtSnapshotWithMemory => 'Disk dan memori';
+
+  @override
+  String get virtSnapshotDiskOnly => 'Hanya disk';
+
+  @override
+  String get virtSnapshotParent => 'Induk';
+
+  @override
+  String get virtSnapshotRevert => 'Kembalikan';
+
+  @override
+  String get virtSnapshotMemory => 'Sertakan memori';
+
+  @override
+  String get virtSnapshotMemoryTip =>
+      'Mengembalikan akan melanjutkan guest dari saat ini.';
+
+  @override
+  String get virtSnapshotMemoryAlways =>
+      'Di sini snapshot guest yang berjalan selalu menyertakan memorinya.';
+
+  @override
+  String get virtSnapshotMemoryOff =>
+      'Guest tidak berjalan, jadi hanya disknya yang disimpan.';
+
+  @override
+  String get virtSnapshotNameInvalid =>
+      'Diawali huruf, lalu huruf, angka, - atau _; 2 sampai 40 karakter.';
+
+  @override
+  String get virtSnapshotNameTaken => 'Snapshot dengan nama ini sudah ada.';
+
+  @override
+  String get virtSnapshotRevertTip =>
+      'Mengembalikan akan membuang semua perubahan sejak snapshot.';
+
+  @override
+  String virtSnapshotRevertAsk(String guest, String snapshot) {
+    return 'Kembalikan $guest ke $snapshot? Semua perubahan sejak itu akan hilang.';
+  }
+
+  @override
+  String virtSnapshotRevertStops(String guest) {
+    return 'Snapshot ini tanpa memori: $guest akan dihentikan.';
+  }
+
+  @override
+  String get virtSnapshotStartAfter => 'Jalankan setelahnya';
+
+  @override
+  String get virtVolumes => 'Volume';
+
+  @override
+  String get virtNoPools => 'Tidak ada pool penyimpanan';
+
+  @override
+  String get virtNoNetworks => 'Tidak ada jaringan';
+
+  @override
+  String get virtPoolInactive =>
+      'Pool tidak aktif, jadi volumenya tidak dapat dicantumkan.';
+
+  @override
+  String get virtShared => 'Dibagi antar node';
+
+  @override
+  String get virtBackingFile => 'Berkas dasar';
+
+  @override
+  String get virtNetIsolated => 'Terisolasi';
+
+  @override
+  String get virtNetBridged => 'Bridge';
+
+  @override
+  String get virtNetRouted => 'Dirutekan';
+
+  @override
+  String get virtBridge => 'Bridge';
+
+  @override
+  String get virtPorts => 'Port';
+
+  @override
+  String get virtAttachedGuests => 'Guest di dalamnya';
+
+  @override
+  String get virtNoAttachedGuests => 'Tidak ada guest di dalamnya';
+
+  @override
+  String get virtCreateVm => 'Mesin virtual baru';
+
+  @override
+  String get virtCreateLxc => 'Kontainer baru';
+
+  @override
+  String get virtCreateGuest => 'Mesin virtual atau kontainer baru';
+
+  @override
+  String get virtKindVm => 'Mesin virtual';
+
+  @override
+  String get virtKindLxc => 'Kontainer';
+
+  @override
+  String get virtHostname => 'Nama host';
+
+  @override
+  String get virtInstallMedia => 'Media instalasi';
+
+  @override
+  String get virtNoIsos => 'Tidak ada image ISO di host ini';
+
+  @override
+  String get virtNoTemplates =>
+      'Tidak ada templat kontainer di host ini. CT Templates pada sebuah penyimpanan di PVE dapat mengunduhnya.';
+
+  @override
+  String get virtNoDiskStorage =>
+      'Tidak ada penyimpanan di host ini yang menerima disk baru';
+
+  @override
+  String get virtStartAfterCreate => 'Jalankan setelah dibuat';
+
+  @override
+  String get virtUnprivileged => 'Kontainer tanpa hak istimewa';
+
+  @override
+  String get virtUnprivilegedTip => 'root-nya adalah pengguna biasa di host.';
+
+  @override
+  String get virtSshKeys => 'Kunci publik SSH';
+
+  @override
+  String get virtCredentialsTip => 'Kata sandi root, kunci SSH, atau keduanya.';
+
+  @override
+  String virtCreated(String name) {
+    return '$name dibuat';
+  }
+
+  @override
+  String virtCreatedNotStarted(String name) {
+    return '$name dibuat tetapi tidak berjalan';
+  }
+
+  @override
+  String get virtErrExists => 'Tamu atau disk dengan nama ini sudah ada';
+
+  @override
+  String get virtCreateNameInvalidLibvirt =>
+      'Huruf, angka, ., _ dan -, diawali huruf atau angka; hingga 63 karakter.';
+
+  @override
+  String get virtCreateNameInvalidPve =>
+      'Huruf, angka dan -, dalam bagian yang dipisahkan titik; hingga 63 karakter.';
+
+  @override
+  String get virtCreateNameTaken => 'Sudah ada tamu dengan nama ini.';
+
+  @override
+  String get virtCreateVmidInvalid => 'Dari 100 sampai 999999999.';
+
+  @override
+  String get virtCreateVmidTaken => 'VMID ini sudah dipakai.';
+
+  @override
+  String get virtCreateCoresInvalid =>
+      'Lebih banyak core daripada yang diizinkan host ini.';
+
+  @override
+  String get virtCreateMemoryInvalid => 'Memori tidak cukup.';
+
+  @override
+  String get virtCreateStorageMissing => 'Pilih tempat disknya.';
+
+  @override
+  String get virtCreateDiskInvalid => 'Dari 1 GiB sampai 64 TiB.';
+
+  @override
+  String get virtCreateTemplateMissing => 'Pilih templat.';
+
+  @override
+  String get virtCreateCredentialsMissing =>
+      'Atur kata sandi root atau kunci SSH.';
+
+  @override
+  String virtCreatePasswordShort(int min) {
+    return 'Minimal $min karakter.';
+  }
+
+  @override
+  String get virtCreateSshKeysInvalid => 'Satu kunci publik OpenSSH per baris.';
+
+  @override
+  String get virtDeleteDisks => 'Hapus juga disknya';
+
+  @override
+  String get virtDeleteDisksPve =>
+      'Disknya ikut dihapus; media instalasi tetap disimpan.';
+
+  @override
+  String virtDeleted(String name) {
+    return '$name dihapus';
+  }
+
+  @override
+  String get pveTokenTipCreate =>
+      'Membuat dan menghapus tamu juga memerlukan VM.Allocate, VM.Config.*, Datastore.AllocateSpace dan SDN.Use.';
+
+  @override
+  String get pveTokenTipHardware =>
+      'Mengedit perangkat keras memerlukan VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network, dan VM.Config.Options; disk dan antarmuka baru juga memerlukan Datastore.AllocateSpace dan SDN.Use. Kartu grafis serta perangkat USB dan PCI juga membutuhkan VM.Config.HWType; perangkat lewat pemetaan sumber daya membutuhkan Mapping.Use padanya, dan Mapping.Audit untuk mendaftar pemetaan.';
+
+  @override
+  String get pveTokenTipBackup =>
+      'Kloning memerlukan VM.Clone, pencadangan dan pemulihan memerlukan VM.Backup, dengan Datastore.AllocateSpace di tempat salinan atau cadangan disimpan.';
+
+  @override
+  String get virtErrConflict => 'Diubah di tempat lain';
+
+  @override
+  String get virtErrConflictTip =>
+      'Seseorang mengubah konfigurasi tamu ini setelah dibaca di sini, jadi tidak ada yang diubah. Konfigurasi telah dibaca ulang: ulangi perubahan jika masih diperlukan.';
+
+  @override
+  String get virtHardware => 'Perangkat keras';
+
+  @override
+  String get virtHwAddDisk => 'Tambah disk';
+
+  @override
+  String get virtHwAddMount => 'Tambah titik kait';
+
+  @override
+  String get virtHwAddNic => 'Tambah antarmuka jaringan';
+
+  @override
+  String get virtHwAppliesOnRestart =>
+      'Tersimpan. Berlaku saat mulai berikutnya.';
+
+  @override
+  String get virtHwAutostart => 'Mulai bersama host';
+
+  @override
+  String get virtHwAutostartPve => 'onboot · dijalankan menurut urutan VMID';
+
+  @override
+  String get virtHwBalloonLibvirt => 'Memori saat ini';
+
+  @override
+  String get virtHwBalloonNote =>
+      'Memungkinkan host mengambil kembali memori menganggur tamu saat memori menipis';
+
+  @override
+  String get virtHwBoot => 'Boot';
+
+  @override
+  String get virtHwBootOrder => 'Urutan boot';
+
+  @override
+  String get virtHwBootTip =>
+      'Panah memindahkan perangkat; ketuk untuk mengaktifkan atau menonaktifkan boot darinya.';
+
+  @override
+  String get virtHwCdrom => 'CD-ROM';
+
+  @override
+  String get virtHwConfigFile => 'Berkas konfigurasi';
+
+  @override
+  String get virtHwCores => 'Inti';
+
+  @override
+  String get virtHwCpuTypeDefault => 'Bawaan';
+
+  @override
+  String get virtHwDeleteVolume => 'Hapus juga volumenya';
+
+  @override
+  String get virtHwDetach => 'Lepas';
+
+  @override
+  String get virtHwDiskHotplug => 'Hot-plug: bisa ditambah saat berjalan';
+
+  @override
+  String get virtHwDisksLxc => 'Disk root dan titik kait';
+
+  @override
+  String get virtHwEject => 'Keluarkan';
+
+  @override
+  String get virtHwEmpty => 'Tanpa media';
+
+  @override
+  String get virtHwFirewall => 'Firewall';
+
+  @override
+  String virtHwFree(String size) {
+    return '$size bebas';
+  }
+
+  @override
+  String get virtHwGrow => 'Perbesar';
+
+  @override
+  String get virtHwGrowNote => 'Disk hanya bisa diperbesar.';
+
+  @override
+  String get virtHwGrowNoteRunning =>
+      'Disk hanya bisa diperbesar. Jika diperbesar saat berjalan, partisi harus diperbesar di dalam tamu.';
+
+  @override
+  String get virtHwGuestUsed => 'Dipakai tamu';
+
+  @override
+  String virtHwHostCpus(int threads, int allocated) {
+    return 'Host $threads thread · $allocated dialokasikan';
+  }
+
+  @override
+  String virtHwHostMem(String total, String allocated) {
+    return 'Host $total · $allocated dialokasikan';
+  }
+
+  @override
+  String get virtHwHotplugNow => 'Hot-plug: langsung berlaku.';
+
+  @override
+  String get virtHwIssueBootEmpty => 'Centang minimal satu perangkat';
+
+  @override
+  String virtHwIssueCpuCount(int max) {
+    return 'Total 1 hingga $max vCPU';
+  }
+
+  @override
+  String get virtHwIssueCpuOnline => 'vCPU aktif: dari 1 hingga total';
+
+  @override
+  String get virtHwIssueDiskShrink =>
+      'Lebih besar dari sekarang: disk hanya bisa diperbesar';
+
+  @override
+  String get virtHwIssueDiskSize => 'Dari 1 hingga 65536 GiB';
+
+  @override
+  String virtHwIssueMemory(int min, int max) {
+    return 'Dari $min hingga $max MiB';
+  }
+
+  @override
+  String get virtHwIssueMemoryMin => 'Tidak lebih dari memori';
+
+  @override
+  String get virtHwIssueMountPoint => 'Jalur absolut, seperti /data';
+
+  @override
+  String get virtHwIssueStorageSpace => 'Lebih dari ruang kosong penyimpanan';
+
+  @override
+  String get virtHwIssueSwap => 'Tidak negatif';
+
+  @override
+  String get virtHwLater => 'Berlaku setelah mulai ulang';
+
+  @override
+  String get virtHwLess => 'Kurangi';
+
+  @override
+  String get virtHwLinkDown => 'Terputus';
+
+  @override
+  String get virtHwLinkNote =>
+      'Mati, tamu melihat kabel dicabut; tidak perlu mulai ulang';
+
+  @override
+  String get virtHwLinkUp => 'Terhubung';
+
+  @override
+  String get virtHwMac => 'Alamat MAC';
+
+  @override
+  String get virtHwModel => 'Model';
+
+  @override
+  String get virtHwMore => 'Tambah';
+
+  @override
+  String get virtHwMountFromPool =>
+      'Titik kait dialokasikan langsung dari penyimpanan';
+
+  @override
+  String get virtHwMountPoint => 'Titik kait';
+
+  @override
+  String get virtHwMoveDown => 'Turun';
+
+  @override
+  String get virtHwMoveUp => 'Naik';
+
+  @override
+  String get virtHwNewDisk => 'Disk baru';
+
+  @override
+  String get virtHwNewMount => 'Titik kait baru';
+
+  @override
+  String get virtHwNewNic => 'Antarmuka jaringan baru';
+
+  @override
+  String get virtHwNicHotplug => 'NIC virtio mendukung hot-plug';
+
+  @override
+  String get virtHwNics => 'Antarmuka jaringan';
+
+  @override
+  String get virtHwNoMedia => 'Tanpa media';
+
+  @override
+  String get virtHwNoNetworks => 'Tidak ada jaringan atau bridge di sini';
+
+  @override
+  String get virtHwNoStorage =>
+      'Tidak ada penyimpanan di sini yang menampung disk';
+
+  @override
+  String get virtHwOnline => 'vCPU aktif';
+
+  @override
+  String get virtHwPendingBanner =>
+      'Sebagian perubahan perangkat keras berlaku setelah mulai ulang';
+
+  @override
+  String get virtHwPickNet => 'Pilih jaringan';
+
+  @override
+  String get virtHwPickPool => 'Pilih penyimpanan dan ukuran';
+
+  @override
+  String get virtHwProcessor => 'Prosesor';
+
+  @override
+  String get virtHwRemove => 'Hapus';
+
+  @override
+  String get virtHwRemoveCdrom => 'Hapus CD-ROM';
+
+  @override
+  String virtHwRemoveDiskAsk(String disk, String guest) {
+    return 'Lepas $disk dari $guest?';
+  }
+
+  @override
+  String virtHwRemoveNicAsk(String nic, String guest) {
+    return 'Lepas $nic dari $guest?';
+  }
+
+  @override
+  String get virtHwResources => 'Sumber daya';
+
+  @override
+  String get virtHwRestartNow => 'Mulai ulang sekarang';
+
+  @override
+  String get virtHwRevert => 'Kembalikan';
+
+  @override
+  String get virtHwRevertAll => 'Kembalikan semua';
+
+  @override
+  String get virtSetRenameStopped =>
+      'Matikan tamu untuk mengganti namanya: libvirt hanya mengganti nama tamu yang tidak berjalan.';
+
+  @override
+  String virtSetIssueDescription(int max) {
+    return 'Paling banyak $max karakter, tanpa karakter kontrol.';
+  }
+
+  @override
+  String get virtSetManualStart => 'Dimulai manual';
+
+  @override
+  String get virtSetProtection => 'Perlindungan';
+
+  @override
+  String get virtSetProtectionNote =>
+      'Mencegah penghapusan tamu dan perubahan disknya';
+
+  @override
+  String get virtSetIrreversible => 'Tidak dapat dibatalkan';
+
+  @override
+  String get virtSetDeleteStopFirst => 'Matikan sebelum menghapusnya.';
+
+  @override
+  String get virtSetDeleteProtected =>
+      'Perlindungan aktif: matikan dulu di Umum.';
+
+  @override
+  String get virtSetDeleteAgain => 'Tekan lagi untuk mengonfirmasi';
+
+  @override
+  String virtSetDeleteConfirm(String name) {
+    return 'Hapus $name';
+  }
+
+  @override
+  String get virtSetDeleteVm => 'Hapus mesin virtual';
+
+  @override
+  String get virtSetDeleteLxc => 'Hapus kontainer';
+
+  @override
+  String get virtHwSockets => 'Soket';
+
+  @override
+  String get virtHwSource => 'Sumber';
+
+  @override
+  String get virtHwSwap => 'Swap';
+
+  @override
+  String get virtHwTopology => 'Soket × inti';
+
+  @override
+  String virtHwTopologyValue(int sockets, int cores, int threads) {
+    return '$sockets soket × $cores inti × $threads thread';
+  }
+
+  @override
+  String virtHwTotal(String size) {
+    return '$size total';
+  }
+
+  @override
+  String get virtHwVolumeKept =>
+      'Dilepas, tetapi tamu yang berjalan masih memakai disk itu, jadi volumenya disimpan. Disk akan dilepas saat mulai berikutnya.';
+
+  @override
+  String get virtHwBus => 'Bus';
+
+  @override
+  String get virtHwCache => 'Cache';
+
+  @override
+  String get virtHwBusStopped => 'Bus hanya bisa diganti saat tamu berhenti.';
+
+  @override
+  String get virtHwMacGenerate => 'Buat';
+
+  @override
+  String get virtHwIssueMac =>
+      'Harus alamat MAC unicast, misalnya 52:54:00:12:34:56';
+
+  @override
+  String get virtHwIssueStopFirst => 'Hentikan tamu dulu';
+
+  @override
+  String get virtHwIssueStorageMissing => 'Pilih penyimpanan dulu';
+
+  @override
+  String get virtHwIssueDevice => 'Pilih perangkat dulu';
+
+  @override
+  String get virtHwDevices => 'CD-ROM dan passthrough';
+
+  @override
+  String get virtHwDevicesEmpty => 'Passthrough USB dan PCI, CD-ROM, TPM';
+
+  @override
+  String get virtHwAddDevice => 'Tambah perangkat';
+
+  @override
+  String get virtHwNewDevice => 'Perangkat baru';
+
+  @override
+  String get virtHwUsbHotplug => 'Passthrough USB mendukung hot-plug.';
+
+  @override
+  String get virtHwPci => 'Passthrough PCI';
+
+  @override
+  String get virtHwIommuOffTitle => 'Host tidak punya IOMMU';
+
+  @override
+  String get virtHwIommuOffBody =>
+      'Aktifkan dulu VT-d atau AMD-Vi di BIOS host dan IOMMU di kernelnya. Sampai saat itu, tamu yang diberi perangkat PCI tidak akan menyala.';
+
+  @override
+  String get virtHwPciTitle => 'Butuh IOMMU di host';
+
+  @override
+  String get virtHwPciBody =>
+      'Setelah diteruskan, host tidak bisa memakai perangkat itu dan tamu tidak bisa dimigrasi saat berjalan.';
+
+  @override
+  String virtHwIommuGroup(int group) {
+    return 'Grup IOMMU $group';
+  }
+
+  @override
+  String virtHwIommuShared(int count) {
+    return '$count perangkat berbagi grup IOMMU-nya dan diteruskan bersama';
+  }
+
+  @override
+  String get virtHwNoHostDevices =>
+      'Tidak ada perangkat untuk diteruskan di host ini';
+
+  @override
+  String get virtHwMappingsOnly =>
+      'Di sini hanya pemetaan sumber daya yang bisa dipakai: PVE hanya mengizinkan root@pam yang masuk dengan kata sandinya meneruskan perangkat mentah. Buat pemetaan di Datacenter → Resource Mappings.';
+
+  @override
+  String get virtHwTpmNote => 'Windows 11 membutuhkan TPM 2.0.';
+
+  @override
+  String get virtHwDisplay => 'Tampilan';
+
+  @override
+  String get virtHwProtocol => 'Protokol';
+
+  @override
+  String get virtHwListen => 'Dengar';
+
+  @override
+  String get virtHwGpu => 'Kartu grafis';
+
+  @override
+  String get virtHwListenAllTitle => 'Konsol terbuka ke jaringan';
+
+  @override
+  String get virtHwListenAllBody =>
+      'Mendengar di semua alamat membuat siapa pun yang menjangkau host bisa membuka konsol. Tetap di 127.0.0.1 dan sambungkan lewat terowongan SSH.';
+
+  @override
+  String get virtHwFirmware => 'Firmware';
+
+  @override
+  String get virtHwUefiSub =>
+      'OVMF · mendukung Secure Boot, dibutuhkan Windows 11';
+
+  @override
+  String get virtHwBiosSub => 'SeaBIOS · sistem lama dan disk MBR';
+
+  @override
+  String get virtHwSecureBootNote =>
+      'Hanya mem-boot kernel dan boot loader bertanda tangan';
+
+  @override
+  String get virtHwFirmwareWarnTitle =>
+      'Jangan ganti firmware sistem yang sudah terpasang';
+
+  @override
+  String get virtHwFirmwareWarnBody =>
+      'Berpindah antara UEFI dan BIOS membuat sistem terpasang tidak bisa boot.';
+
+  @override
+  String get virtHwFirmwareStopped =>
+      'Firmware hanya bisa diganti saat tamu berhenti.';
+
+  @override
+  String get virtHwSecureBootVars =>
+      'Menyalakan atau mematikan Secure Boot membuat ulang variabel EFI; entri boot yang tersimpan di dalamnya akan hilang.';
+
+  @override
+  String get virtHwEfiStorage => 'Tempat variabel EFI';
+
+  @override
+  String get virtHwTpmStorage => 'Tempat status TPM';
+
+  @override
+  String virtHwSwitchFirmwareAsk(String guest, String firmware) {
+    return 'Ganti $guest ke $firmware?';
+  }
+
+  @override
+  String get virtCloneName => 'Nama baru';
+
+  @override
+  String get virtCloneFull => 'Klon penuh';
+
+  @override
+  String get virtCloneCopyDisks => 'Salin isi disk';
+
+  @override
+  String get virtCloneLinkedNote =>
+      'Mati: klon tertaut, bergantung pada disk templat';
+
+  @override
+  String get virtCloneFullOnly =>
+      'Hanya templat yang dapat dikloning sebagai klon tertaut';
+
+  @override
+  String get virtCloneEmptyNote => 'Mati: disk kosong baru berukuran sama';
+
+  @override
+  String get virtCloneStopFirst => 'Matikan sebelum mengkloning.';
+
+  @override
+  String get virtCloneFullShort => 'Penuh';
+
+  @override
+  String get virtCloneLinkedShort => 'Tertaut';
+
+  @override
+  String get virtCloneEmptyShort => 'Disk kosong';
+
+  @override
+  String get virtCloning => 'Mengkloning…';
+
+  @override
+  String virtCloned(String name) {
+    return 'Dikloning sebagai $name';
+  }
+
+  @override
+  String get virtBackupPlan => 'Jadwal';
+
+  @override
+  String get virtBackupPlanWhere => 'Pusat data → Cadangan';
+
+  @override
+  String get virtBackupNoPlanShort => 'Tanpa jadwal';
+
+  @override
+  String get virtBackupNoPlan =>
+      'Tidak ada tugas cadangan terjadwal yang mencakup tamu ini. Tugas diatur di pusat data.';
+
+  @override
+  String get virtBackupKeep => 'Simpan';
+
+  @override
+  String get virtBackupJobDisabled => 'Tugas ini dinonaktifkan.';
+
+  @override
+  String virtBackupCount(int count) {
+    return '$count cadangan';
+  }
+
+  @override
+  String get virtBackupNoStorage =>
+      'Tidak ada penyimpanan di node ini yang menampung cadangan.';
+
+  @override
+  String get virtBackupLiveTip => 'Berjalan: mode snapshot, tanpa henti';
+
+  @override
+  String get virtBackupStoppedTip => 'Mati: dicadangkan apa adanya';
+
+  @override
+  String get virtBackupNow => 'Cadangkan sekarang';
+
+  @override
+  String get virtBackupNotes => 'Catatan';
+
+  @override
+  String get virtBackupProtected =>
+      'Dilindungi: tidak dapat dihapus sampai perlindungan dicabut di PVE.';
+
+  @override
+  String virtBackupVerified(String state) {
+    return 'Verifikasi: $state';
+  }
+
+  @override
+  String get virtBackupRestoreOverwrites => 'Memulihkan menimpa disk saat ini';
+
+  @override
+  String get virtBackupStopFirst => 'Matikan sebelum memulihkan.';
+
+  @override
+  String get virtBackupRestoreAgain =>
+      'Disk dan konfigurasi tamu diganti dengan milik cadangan.';
+
+  @override
+  String get virtBackupDeleteConfirm => 'Hapus cadangan';
+
+  @override
+  String get virtBackupRestoreNew => 'Pulihkan sebagai baru';
+
+  @override
+  String get virtBackupRestoreConfirm => 'Pulihkan menimpa';
+
+  @override
+  String get virtBackupDone => 'Pencadangan selesai';
+
+  @override
+  String get virtBackupDeleted => 'Cadangan dihapus';
+
+  @override
+  String virtBackupRestored(String time) {
+    return 'Dipulihkan dari $time';
+  }
+
+  @override
+  String pveNeedsPrivilege(
+    String account,
+    String privilege,
+    String path,
+    String command,
+  ) {
+    return '$account tidak memiliki $privilege pada $path. Berikan di host PVE:\n$command';
+  }
+
+  @override
+  String get virtCanDelete => 'Dapat dihapus';
+
+  @override
+  String get virtInUse => 'Sedang digunakan';
+
+  @override
+  String get virtOps => 'Operasi';
+
+  @override
+  String get virtPool => 'Pool penyimpanan';
+
+  @override
+  String get virtPoolNew => 'Pool penyimpanan baru';
+
+  @override
+  String get virtStorageAdd => 'Tambah penyimpanan';
+
+  @override
+  String virtPoolUsedPct(String pct) {
+    return '$pct% terpakai';
+  }
+
+  @override
+  String get virtPoolInUse =>
+      'Sebuah VM memakai volume di sini, jadi pool tidak dapat dihentikan atau dihapus.';
+
+  @override
+  String get virtPoolDelete => 'Hapus pool';
+
+  @override
+  String get virtStorageRemove => 'Hapus penyimpanan';
+
+  @override
+  String virtPoolDeleteAsk(String name) {
+    return 'Hapus pool $name? Definisinya dihapus; volumenya tetap di tempatnya.';
+  }
+
+  @override
+  String virtStorageRemoveAsk(String name) {
+    return 'Hapus penyimpanan $name dari konfigurasi PVE? Isinya tetap ada.';
+  }
+
+  @override
+  String virtPoolDeleteKeepsVolumes(int count) {
+    return '$count volumenya tetap disimpan di disk.';
+  }
+
+  @override
+  String get virtPoolDeleteStorage =>
+      'Hapus juga direktorinya (hanya jika kosong)';
+
+  @override
+  String virtPoolStopAsk(String name) {
+    return 'Hentikan pool $name? Volumenya tidak dapat didaftar atau dibuat sampai dijalankan lagi.';
+  }
+
+  @override
+  String virtStorageDisableAsk(String name) {
+    return 'Nonaktifkan penyimpanan $name? VM dengan disk di sana tidak dapat dijalankan sampai diaktifkan lagi.';
+  }
+
+  @override
+  String get virtPoolLogicalNote =>
+      'Volume group yang ada dipakai apa adanya; tidak ada yang diformat.';
+
+  @override
+  String get virtPoolMountPoint => 'Titik kait';
+
+  @override
+  String get virtPoolSourceNfs => 'Sumber (host:/path)';
+
+  @override
+  String get virtPoolSourceVg => 'Volume group';
+
+  @override
+  String get virtPoolSourceThin => 'Volume group / thin pool';
+
+  @override
+  String get virtPoolSourceZfs => 'Pool ZFS';
+
+  @override
+  String get virtPoolTypeVg => 'Volume group LVM';
+
+  @override
+  String get virtResNameEmpty => 'Masukkan nama';
+
+  @override
+  String get virtResNameInvalid =>
+      'Bukan nama yang diterima host ini (huruf, angka, . _ -)';
+
+  @override
+  String get virtResSourceInvalid => 'Bukan path atau sumber yang valid';
+
+  @override
+  String get virtResTargetInvalid => 'Path absolut';
+
+  @override
+  String get virtResCidrInvalid =>
+      'Alamat dengan prefiks, mis. 192.168.150.1/24';
+
+  @override
+  String get virtResDhcpInvalid =>
+      'Dua alamat di jaringan, berurutan, tanpa alamat host';
+
+  @override
+  String get virtResSubnetTaken => 'Jaringan lain di sini memakai subnet ini';
+
+  @override
+  String get virtResBridgeInvalid => 'Bukan nama antarmuka';
+
+  @override
+  String get virtResFormat => 'Pool ini tidak mendukung format itu';
+
+  @override
+  String get virtVolNew => 'Volume baru';
+
+  @override
+  String virtVolCount(int count) {
+    return '$count volume';
+  }
+
+  @override
+  String get virtVolNone => 'Pool ini belum punya volume.';
+
+  @override
+  String get virtVolEmptyAttach =>
+      'Volume baru bisa dipasang ke VM mana pun nanti';
+
+  @override
+  String get virtVolEmptyUpload => 'ISO juga bisa diunggah langsung';
+
+  @override
+  String get virtVolPveName =>
+      'PVE menamai volume sesuai VM-nya: vm-<VMID>-disk-<N>';
+
+  @override
+  String get virtVolUsers => 'Dipakai oleh';
+
+  @override
+  String get virtVolAllocated => 'Teralokasi';
+
+  @override
+  String get virtVolGrowFromGuest =>
+      'Dipakai sebuah VM: perbesar dari tampilan Perangkat Keras VM itu';
+
+  @override
+  String get virtVolInUse => 'Sebuah VM memakai volume ini';
+
+  @override
+  String get virtVolAttach => 'Pasang ke VM';
+
+  @override
+  String get virtVolAttachNote =>
+      'Dipasang sebagai disk baru, di bus disk pertamanya';
+
+  @override
+  String virtVolAttached(String name) {
+    return 'Terpasang ke $name';
+  }
+
+  @override
+  String get virtVolInsert => 'Masukkan ke CD-ROM';
+
+  @override
+  String virtVolInserted(String name) {
+    return 'Dimasukkan ke CD-ROM $name';
+  }
+
+  @override
+  String virtVolNoCdrom(String name) {
+    return '$name tidak punya CD-ROM';
+  }
+
+  @override
+  String virtVolDeleteAsk(String name, String pool) {
+    return 'Hapus volume $name dari $pool? Isinya hilang selamanya.';
+  }
+
+  @override
+  String get virtUploadIso => 'Unggah ISO';
+
+  @override
+  String virtUploadTo(String pool) {
+    return 'Unggah ke $pool';
+  }
+
+  @override
+  String virtUploadDone(String name) {
+    return '$name terunggah';
+  }
+
+  @override
+  String get virtNetConfig => 'Konfigurasi';
+
+  @override
+  String get virtNetInternal => 'Internal';
+
+  @override
+  String get virtNetBridgePorts => 'Port bridge';
+
+  @override
+  String get virtNetHostBridge => 'Bridge host';
+
+  @override
+  String get virtNetPortsHint => 'eno2; kosongkan untuk bridge internal';
+
+  @override
+  String get virtNetDhcpRange => 'Rentang DHCP';
+
+  @override
+  String get virtNetDhcpTip => 'dnsmasq memberi alamat ke VM';
+
+  @override
+  String get virtNetVlanTip => 'NIC VM boleh membawa tag VLAN';
+
+  @override
+  String get virtNetNatTip =>
+      'Lewat host: VM bisa keluar, dari luar tidak bisa masuk';
+
+  @override
+  String get virtNetRoutedTip =>
+      'Dirutekan host tanpa NAT: LAN perlu rute balik';
+
+  @override
+  String get virtNetIsolatedTip => 'Hanya VM dan host yang saling terhubung';
+
+  @override
+  String get virtNetBridgedTip =>
+      'VM bergabung ke bridge host, di jaringan fisiknya';
+
+  @override
+  String get virtNetNew => 'Jaringan baru';
+
+  @override
+  String get virtNetNewBridge => 'Linux bridge baru';
+
+  @override
+  String get virtNetVirtual => 'Jaringan virtual';
+
+  @override
+  String get virtNetDelete => 'Hapus jaringan';
+
+  @override
+  String virtNetDeleteAsk(String name) {
+    return 'Hapus jaringan $name? Jaringan dihentikan dan definisinya dihapus.';
+  }
+
+  @override
+  String virtNetDeleteAskPve(String name, String node) {
+    return 'Hapus bridge $name dari $node? Dihapus dari konfigurasi tertunda sekarang, dan dari host setelah diterapkan.';
+  }
+
+  @override
+  String virtNetInUse(int count) {
+    return 'VM di dalamnya: $count. Tidak dapat dihapus.';
+  }
+
+  @override
+  String virtNetStopAsk(String name, int count) {
+    return 'Hentikan $name? $count VM di dalamnya kehilangan jaringan sampai dijalankan lagi.';
+  }
+
+  @override
+  String get virtNetInactivePve =>
+      'Tidak aktif: bridge baru menunggu di konfigurasi tertunda sampai diterapkan.';
+
+  @override
+  String get virtNetPveApplyNote =>
+      'Disimpan sebagai perubahan tertunda: berlaku saat konfigurasi diterapkan (ifreload -a).';
+
+  @override
+  String get virtNetPendingSaved =>
+      'Disimpan sebagai tertunda: terapkan konfigurasi agar berlaku';
+
+  @override
+  String virtNetPendingTitle(String node) {
+    return 'Perubahan jaringan tertunda di $node';
+  }
+
+  @override
+  String get virtNetPendingTip =>
+      'PVE menyimpan perubahan jaringan di interfaces.new sampai diterapkan.';
+
+  @override
+  String get virtNetPendingShow => 'Lihat perubahan';
+
+  @override
+  String get virtNetApply => 'Terapkan konfigurasi';
+
+  @override
+  String virtNetApplyAsk(String node) {
+    return 'Terapkan konfigurasi jaringan tertunda di $node? PVE memuat ulang jaringan host (ifreload -a): kesalahan bisa memutus host.';
+  }
+
+  @override
+  String virtNetRevertAsk(String node) {
+    return 'Buang konfigurasi jaringan tertunda di $node?';
+  }
+
+  @override
+  String get pveTokenTipStorage =>
+      'Mengelola penyimpanan butuh Datastore.Allocate pada /storage (tambah, nonaktifkan, hapus), Datastore.AllocateSpace (volume) dan Datastore.AllocateTemplate (unggahan); Linux bridge dan menerapkan konfigurasi jaringan butuh Sys.Modify pada node.';
+
+  @override
+  String get virtCreateUnnamed => 'Tanpa nama';
+
+  @override
+  String get virtCreateNotChosen => 'Belum dipilih';
+
+  @override
+  String get virtCreateKindVmSub => 'qm · mesin virtual KVM penuh';
+
+  @override
+  String get virtCreateKindLxcSub => 'pct · berbagi kernel host, lebih ringan';
+
+  @override
+  String get virtCloudImage => 'Image cloud';
+
+  @override
+  String get virtCloudImageTip =>
+      'Disk yang sudah berisi sistem: disalin, diperbesar ke ukuran di Penyimpanan, dan diatur oleh cloud-init saat boot pertama. Image-nya sendiri tidak diubah.';
+
+  @override
+  String get virtNoCloudImagesLibvirt =>
+      'Tidak ada image cloud di sini: taruh image qcow2 atau raw di sebuah pool (unggah di Penyimpanan) yang tidak dipakai VM mana pun.';
+
+  @override
+  String get virtNoCloudImagesPve =>
+      'Tidak ada image cloud di sini: unggah image qcow2, raw, atau vmdk ke penyimpanan dengan tipe konten Import (PVE 8.2+).';
+
+  @override
+  String get virtCreateWindowsTitle =>
+      'Windows 11 membutuhkan UEFI dan TPM 2.0';
+
+  @override
+  String get virtCreateWindowsBody => 'Pilih UEFI dan aktifkan TPM di atas.';
+
+  @override
+  String get virtCreateWindowsNoTpm =>
+      'Host ini tidak punya TPM perangkat lunak (swtpm): pasang agar VM bisa diberi TPM.';
+
+  @override
+  String virtCreateImageSize(String size) {
+    return 'Image-nya $size: disk harus minimal sebesar itu.';
+  }
+
+  @override
+  String get virtCreateImageMissing => 'Pilih image cloud.';
+
+  @override
+  String get virtCreateIncomplete =>
+      'Lengkapi dulu bagian yang ditandai oranye.';
+
+  @override
+  String virtCreateOn(String host) {
+    return 'Dibuat di $host';
+  }
+
+  @override
+  String get virtCiTip =>
+      'Akun dengan sudo, masuk dengan kata sandi, kunci SSH, atau keduanya.';
+
+  @override
+  String get virtCiUserInvalid =>
+      'Huruf kecil, angka, _ dan -, diawali huruf atau _';
+
+  @override
+  String get virtCiCredentialsMissing => 'Atur kata sandi atau kunci SSH.';
+
+  @override
+  String get virtCiHostnamePve => 'Nama host adalah nama VM.';
+
+  @override
+  String get virtCiStatic => 'Statis';
+
+  @override
+  String get virtCiAddressInvalid =>
+      'Alamat IPv4 dengan prefiksnya, seperti 10.0.0.5/24';
+
+  @override
+  String get virtCiGatewayInvalid => 'Alamat IPv4, seperti 10.0.0.1';
+
+  @override
+  String get virtCiDnsFromDhcp => 'Kosong: dari DHCP';
+
+  @override
+  String get virtCiDnsInvalid => 'Alamat IP, dipisahkan spasi atau koma';
+
+  @override
+  String get virtCiSearch => 'Domain pencarian';
+
+  @override
+  String get virtCiSeedNote =>
+      'Ditulis ke ISO kecil di sebelah disk, dipasang sebagai CD-ROM, dan dihapus bersama VM. Hanya hash kata sandi yang disimpan.';
+
+  @override
+  String get virtCiNoToolTitle =>
+      'Tidak ada alat di host untuk membuat data cloud-init';
+
+  @override
+  String virtCiNoToolBody(String tools) {
+    return 'Pasang salah satu dari $tools di host. Tanpa cloud-init, image berjalan tanpa akun untuk masuk.';
+  }
+
+  @override
+  String get virtHwCloudInitNote =>
+      'Data yang dibaca cloud-init saat boot pertama. Bukan media instalasi: tidak ada yang dimasukkan di sini.';
+
+  @override
+  String get virtHwCdromLater =>
+      'Selama berjalan, drive ditambahkan saat start berikutnya (SATA dan IDE tidak mendukung hot-plug).';
+
+  @override
+  String virtCreateDiskKept(String size) {
+    return 'Disk tetap $size, ukuran image itu sendiri, lebih besar dari yang diminta: disk tidak pernah dipotong di bawah sistem di dalamnya.';
+  }
+
+  @override
+  String get virtCiEditTip =>
+      'Yang diatur cloud-init di VM ini: akun dengan sudo, cara masuk ke akun itu, hostname, dan alamat.';
+
+  @override
+  String get virtCiForeignTitle =>
+      'Seed ini berisi lebih dari yang ditulis aplikasi ini';
+
+  @override
+  String get virtCiForeignBody =>
+      'Pengaturan yang dibuat di tempat lain (paket, perintah, akun lain) tidak ditampilkan di sini. Menyimpan akan mengganti seed dengan yang ditampilkan.';
+
+  @override
+  String get virtCiPasswordKept =>
+      'Sudah diatur. Biarkan kosong untuk mempertahankannya';
+
+  @override
+  String get virtCiRemovePassword => 'Hapus kata sandi';
+
+  @override
+  String get virtCiRemovePasswordNote => 'Masuk hanya dengan kunci SSH';
+
+  @override
+  String get virtCiKeysAdded =>
+      'Kunci ditambahkan ke akun. Kunci yang dihapus di sini tetap ada di sistem sampai dihapus di sana, dan nama pengguna baru membuat akun baru di samping akun lama.';
+
+  @override
+  String get virtCiEffectTitle => 'Berlaku saat boot berikutnya';
+
+  @override
+  String get virtCiEffectLibvirt =>
+      'Menyimpan menulis seed baru dengan ID instans baru.';
+
+  @override
+  String get virtCiEffectPve =>
+      'PVE langsung menulis ulang drive cloud-init-nya, dengan ID instans yang diturunkan dari pengaturan ini, jadi setiap perubahan di sini membuat ID baru.';
+
+  @override
+  String get virtCiNewInstance =>
+      'Saat boot berikutnya, cloud-init memperlakukan sistem sebagai instans baru: mengatur ulang hostname, membuat akun jika belum ada, mengatur kata sandinya, menambahkan kunci, dan menulis ulang konfigurasi jaringan. Ia juga membuat kunci host SSH baru, sehingga klien SSH akan memperingatkan bahwa kunci host berubah. Tidak ada yang berubah sebelum boot itu.';
+
+  @override
+  String get virtCiSaved => 'Tersimpan. Berlaku saat boot berikutnya.';
 }

@@ -3,13 +3,18 @@ title: Monitor Agent
 description: Reach a server through Monitor agent
 ---
 
-Server Box Monitor is a small service that runs on your server and reports its status to the App. It lets you check the server without opening an SSH port, and keeps push alerts, home-screen widgets, and the Watch app working when the App is closed.
+Server Box Monitor runs on a server and sends its status to the App. You can
+monitor a host without exposing SSH, and keep push alerts, home-screen widgets,
+and the Watch app up to date while the App is closed.
 
 ## Prompts for an AI agent
 
-Each prompt is ready to give to an AI agent that can reach the server over SSH. It spells out the details an agent should not have to guess: rule syntax and permission switches can fail silently, so a mistake may look fine until an alert never arrives.
+The prompts below are for an AI agent that can reach the server over SSH.
+They include configuration details that are easy to get wrong. For example,
+an invalid alert rule may be logged but never trigger, leaving you without the
+alert you expected.
 
-Replace the angle-bracketed placeholders before sending a prompt.
+Replace every placeholder in angle brackets before sending a prompt.
 
 <details>
 <summary>Install the agent</summary>
@@ -133,8 +138,8 @@ changing anything.
 
 Check these first:
 
-- The app shows what the agent reports on `GET /api/v1/capabilities` and
-  nothing else. A terminal, commands, containers, processes, systemd, power
+- The App shows features that the agent currently enables. A terminal,
+  commands, containers, processes, systemd, power
   and scheduled tasks all need `full_access`, which is itself gated on
   `[remote_access.terminal] enabled`. File browsing needs
   `[remote_access.fs] enabled` together with a non-empty `roots`.
@@ -163,13 +168,20 @@ Check these first:
 | SFTP transfers and port forwarding | Yes | No |
 | Push alerts, home-screen widgets, and Watch app | No | Yes |
 
-SSH is usually the simplest option. Monitor agent is useful when the SSH port is unreachable from the current network, when you want charts to have history before the App connects, or when you want server alerts pushed to a phone.
+SSH is usually the simplest way to connect. Use Monitor agent if SSH is
+unreachable from your current network, if you need charts to include data
+collected before the App connected, or if you want server alerts on your
+phone.
 
-The two methods can be used together: configure SSH in the App while running Monitor agent on the same server for widgets and the Watch app.
+You can use both methods for one server. Configure SSH in the App and run
+Monitor agent on the host to provide widgets, Watch app data, and alerts.
 
 ## Install Monitor agent
 
-Download a published `monitor-v*` release when one is available, or build the agent yourself. The release workflow is manually dispatched. For an unreleased version or an offline installation, use a local package with `SBM_INSTALL_PKG`.
+Install a published `monitor-v*` release when available, or build the agent
+from source. Releases are created by a manually dispatched workflow. For an
+unreleased build or an offline install, provide a local package through
+`SBM_INSTALL_PKG`.
 
 The installer detects the init system automatically:
 
@@ -185,50 +197,78 @@ curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main
 curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh | sudo sh -s -- install
 ```
 
-Everything after `sh -s --` is passed to the script, so `uninstall` and
-`upgrade` go the same way. It is also in the repository, so
-`./monitor/install.sh install` from the root of a checkout does the same job —
-with that checkout's copy of the script, which is not necessarily the one on
-`main` that the commands above fetch.
+Arguments after `sh -s --` are passed to the installer; use the same pattern
+for `uninstall` and `upgrade`. The script is also in the repository, so you
+can run `./monitor/install.sh install` from a checkout root. That uses the
+checked-out script, which may differ from the version fetched from `main` by
+the commands above.
 
 The agent runs as an ordinary user by default. This limits the scope of `full_access`; see [Permission switches](#permission-switches).
 
-The configuration file is `config.toml` next to the binary. Every option is documented in [`config.example.toml`](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/config.example.toml). The agent listens on `0.0.0.0:3770`; when `frontend/dist` exists, it also serves the web panel there.
+The agent reads `config.toml` from the directory beside its binary. See
+[`config.example.toml`](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/config.example.toml)
+for every available option. By default, the agent listens on `0.0.0.0:3770`.
+If `frontend/dist` is present, it also serves the web panel from that address.
 
-You can edit collection intervals, alert rules, notification channels, data retention, and allowed panel origins without opening the file. Use **Server Settings** in the web panel, or open a server with an agent in the App and select the settings button in its top bar. Both interfaces reach the same agent and write the same file.
+Collection intervals, alert rules, notification channels, data retention, and
+allowed panel origins can be edited without opening `config.toml`. Use
+**Server Settings** in the web panel, or open the server in the App and tap
+the settings button in the top bar. Both interfaces update the same agent and
+configuration file.
 
-The JWT secret, `database_url`, and `[remote_access]` switches remain file-only settings. This prevents a panel password from widening what the agent exposes.
+The JWT secret, `database_url`, and `[remote_access]` switches can only be
+changed in the configuration file. Keeping the access switches out of the
+panel prevents a panel password from granting additional capabilities.
 
-Keys and tokens already in the file—a ServerChan key, Bark key, iOS push token, or `Authorization` header—are never sent back to an editor. They appear as *set* beside an empty field. Leave the field empty to keep the stored value, or enter a new value to replace it.
+The editor never returns stored secrets such as ServerChan or Bark keys, an
+iOS push token, or an `Authorization` header. It shows that each value is
+*set* while leaving the field empty. Leave it empty to keep the existing
+secret, or enter a replacement.
 
-Notification channels, alert rules, the collection interval, data retention, and allowed origins take effect after the agent restarts. Only the extended cycle interval and the two idle-pause settings apply immediately. The App marks fields that require a restart.
+Changes to notification channels, alert rules, the collection interval, data
+retention, and allowed origins take effect after a restart. The extended cycle
+interval and both idle-pause settings apply immediately. The App marks any
+setting that needs a restart.
 
-If the agent must be reachable from another device, use HTTPS: configure built-in TLS with `[server.tls]`, or put the agent behind a reverse proxy. The App supports self-signed certificates when you explicitly enable that option.
+If other devices need to connect to the agent, protect the connection with
+HTTPS. Configure built-in TLS under `[server.tls]` or use a reverse proxy. To
+connect with a self-signed certificate, explicitly enable **Monitor Ignore
+certificate** for that server in the App.
 
 ## How far back the App can ask
 
-The chart on a server's detail page displays the selected time window. Available windows come from the agent, not the App. `GET /api/v1/capabilities` reports `retention_days`—the `[monitoring.data_retention] metrics_days` limit—and `oldest_sample`, the oldest reading actually stored. The App enables presets within the later boundary, disables the others, and shows both values at the bottom of the range picker.
-
-The App can also request an exact window with `GET /api/v1/metrics/history?from=<epoch seconds>&to=<epoch seconds>`. If the requested window begins before retained data, the agent returns the rows it has instead of changing the start time or returning an error. The chart displays the missing period as a gap. `?minutes=` remains supported for agents that predate `from` and `to`.
-
-An agent too old to report retention is offered the fixed windows, as before.
+The available chart range depends on how long Monitor agent retains data and
+how much history it has collected. The App shows only the ranges the agent can
+provide. For API fields and history-query behavior, see
+[Monitor agent API and access model](/docs/development/monitor-agent/).
 
 ## Panel credentials
 
-The user and password that the App and the web panel sign in with are rows in the agent's SQLite database, not settings in `config.toml`. `jwt_secret` in that file signs session tokens; it is not a login password.
+The App and web panel authenticate with a user account stored in the agent's
+SQLite database. These credentials are not configured in `config.toml`. The
+`jwt_secret` in that file signs session tokens; it is not a user password.
 
-Run the commands below in the agent's own directory — `/opt/server-box-monitor` for a root-owned service, `~/.local/share/server-box-monitor` otherwise — and as the account the agent runs as. `config.toml` and the database path are resolved relative to the working directory, so the same command run elsewhere writes a fresh default `config.toml`, creates an empty database, and reports success against a database that nothing reads.
+Run the commands below from the agent's working directory and as the account
+that runs the service: `/opt/server-box-monitor` for a root-owned service, or
+`~/.local/share/server-box-monitor` otherwise. Both `config.toml` and the
+database path are relative to this directory. Running a command elsewhere
+would create a new default configuration and empty database, then update a
+database the service does not use.
 
 ### The first password
 
-On its first start with an empty user table, the agent creates `admin` with a random password and writes it beside the database as `initial-admin-credentials.txt`, mode 0600 on Unix:
+When the agent starts with an empty user table for the first time, it creates
+an `admin` user with a random password. The password is written next to the
+database in `initial-admin-credentials.txt`, with mode 0600 on Unix:
 
 ```sh
 cd /opt/server-box-monitor
 cat initial-admin-credentials.txt
 ```
 
-Change the password, then delete the file. If it is still there on a later start while the user table is empty — after the database is deleted or moved, for example — the agent stops with an error instead of writing a second set of credentials over the first.
+Change the password and delete this file. If the database is later removed or
+moved and the user table is empty while the file remains, the agent stops
+instead of overwriting the original credentials with a new set.
 
 ### Change or reset a password
 
@@ -237,9 +277,14 @@ cd /opt/server-box-monitor
 ./server_box_monitor user set-password admin
 ```
 
-The new password is asked for twice, without echo, and must be at least 8 characters. The same command creates a user that does not exist yet, so it is also how a second account is added.
+The command prompts for the new password twice without displaying it. It
+requires at least 8 characters. If the named user does not exist, the command
+creates it; use this to add another account as well.
 
-To take the password from the environment instead — in a script, or to keep it out of the shell history. `read -s` is a Bash and Zsh builtin, not POSIX `sh`, so run this under one of those; the check after it is what keeps a failed or empty read from setting an empty password:
+To set the password from an environment variable, use the following in a
+script or when you want to keep it out of shell history. This uses Bash or
+Zsh: `read -s` is not available in POSIX `sh`. The check prevents a failed or
+empty read from setting an empty password:
 
 ```bash
 read -rsp 'Password: ' SBM_PW && echo
@@ -247,69 +292,124 @@ read -rsp 'Password: ' SBM_PW && echo
 SBM_PW="$SBM_PW" ./server_box_monitor user set-password admin --password-env SBM_PW
 ```
 
-There is no option that accepts the password as an argument, because a command line is visible in `ps` and recorded by the shell.
+The command deliberately has no password argument: command-line arguments
+can appear in `ps` output and shell history.
 
-The new password works at the next login and the agent does not need restarting; it reads the user table on every login. Sessions already signed in continue for up to an hour, the lifetime of a token. To end them at once, change `jwt_secret` in `config.toml` and restart the agent — `systemctl --user restart server_box_monitor`, or `rc-service server-box-monitor restart` under OpenRC — which invalidates every token issued so far.
+The new password applies to the next login; no restart is needed because the
+agent reads the user table at each login. Existing sessions remain valid for
+up to one hour. To invalidate them immediately, change `jwt_secret` in
+`config.toml` and restart the agent with `systemctl --user restart
+server_box_monitor`, or `rc-service server-box-monitor restart` on OpenRC.
 
-Then edit the server in the App and replace **Monitor Password**. Update any other client that stores the password as well. Clients are not notified when the password changes; they will fail to sign in until updated.
+After changing the password, update **Monitor Password** in the App and
+replace it in any other client that uses the account. Clients are not notified
+about password changes and cannot sign in until their saved credentials are
+updated.
 
 ### A forgotten password
 
-The panel has no recovery path. Reset it on the server with the command above.
+There is no password recovery flow in the panel. Reset the password on the
+server with the command above.
 
-Failed logins are throttled per source address and per username: three failures are free, and the delay then doubles from one second up to five minutes. A forgotten password can therefore look like an agent that has stopped answering.
+Login attempts are rate-limited by both source address and username. The first
+three failures have no delay; after that, the delay doubles from one second up
+to five minutes. A forgotten password may therefore make the agent appear
+slow or unresponsive.
 
 ## Add it in the App
 
 1. Tap **+** to add a server.
-2. Enable **Monitor HTTP**. SSH and Monitor HTTP are independent switches: you can enable either one or both. When both are enabled, use **Preferred transport** to choose which one the App tries first.
+2. Enable **Monitor HTTP**. This connection is independent of SSH, so you can
+   enable either transport or both. If both are enabled, set **Preferred
+   transport** to choose which one the App tries first.
 3. Enter:
    - **URL**: for example, `https://1.2.3.4:3770`
    - **Monitor User** / **Monitor Password**: the agent's web-panel credentials — see [Panel credentials](#panel-credentials)
    - **Monitor Ignore certificate**: enable only for a self-signed certificate
 4. Save the configuration.
 
-A server added through Monitor HTTP contains **no SSH credentials**. The App has no other way to reach the machine beyond the capabilities explicitly provided by the agent.
+Monitor HTTP does not configure SSH credentials. With no SSH connection, the
+App can reach the server only through capabilities that Monitor agent exposes.
 
 ## Integrated GPU monitoring
 
-On Linux, AMD integrated GPUs are read from the kernel's DRM/sysfs interfaces. ROCm, `amd-smi`, and `rocm-smi` are not required for an APU to report utilization. Intel integrated GPU utilization requires `intel_gpu_top`, normally provided by the `intel-gpu-tools` package.
+On Linux, the agent reads AMD integrated GPU metrics through the kernel's
+DRM/sysfs interfaces; an APU does not need ROCm, `amd-smi`, or `rocm-smi` to
+report utilization. Intel GPU utilization requires `intel_gpu_top`, usually
+provided by the `intel-gpu-tools` package.
 
-The App and Monitor agent never invoke interactive `sudo` during collection. If the account running the SSH command or Monitor agent cannot access Intel's GPU performance counters, the device still appears but unavailable values are omitted instead of shown as zero. Grant that account the distribution-appropriate permission for the GPU PMU if utilization is needed.
+Neither the App nor Monitor agent prompts for an interactive `sudo` password
+during collection. If the SSH or agent account cannot read Intel GPU
+performance counters, the GPU remains listed and unavailable values are left
+out. To collect utilization, grant that account the appropriate GPU PMU
+permission for the Linux distribution.
 
-Each Linux GPU is labelled with its PCI address, such as `0000:00:02.0`, so systems with several integrated or discrete GPUs show separate, stable entries.
+Each Linux GPU is identified by its PCI address, for example
+`0000:00:02.0`. Systems with multiple integrated or discrete GPUs therefore
+show a distinct, stable entry for each device.
 
 ## Permission switches
 
-The agent reports its current capabilities through `GET /api/v1/capabilities`, and the App shows only those capabilities. The file API and web-panel terminal are disabled by default and can only be enabled by the operator in `config.toml`.
+The App displays only the features enabled by the Monitor agent operator. The
+file API and web-panel terminal start disabled; an operator must enable them
+in `config.toml`.
 
-**Status, charts, and stored history** require only panel login credentials.
+**Status, charts, and stored history** are available after panel login.
 
-**`full_access`** gives an authenticated user a shell and command execution as the user running the agent. The App's process, systemd, container, snippet, power-control, and terminal features depend on this grant. Remote desktop (RDP and VNC) does too: the agent dials the desktop's address from its own machine over `/api/v1/stream/ws`, as the same account and under the same grant. It has no switch of its own for that reason — anyone who can open a shell can forward a port from it.
+**`full_access`** lets an authenticated user run a shell and commands as the
+agent's operating-system account. The App requires it for process, systemd,
+container, snippet, power-control, and terminal features. RDP and VNC remote
+desktop use it as well. Remote desktop has no separate switch because shell
+access already allows port forwarding. This permission is available only while
+`[remote_access.terminal] enabled = true`.
 
-There is one `full_access` switch because anyone who can open a shell can run arbitrary commands in it. Disabling a separate “commands” switch would not reduce that access. It defaults to enabled on Linux and disabled on macOS and Windows. The panel can disable it, but cannot enable it again; re-enabling requires a configuration-file change.
+The agent uses a single `full_access` switch. A user with shell access can run
+arbitrary commands, so a separate “commands” switch would not limit the
+permission. The default is enabled on Linux and disabled on macOS and Windows.
+The panel can turn it off. To turn it back on, edit the configuration file.
 
-**The panel password is equivalent to shell access as the agent user.** This is why `install.sh` runs the agent as an ordinary user by default. If you run it as root, disable `full_access`.
+**A panel password grants shell-level access as the agent user when
+`full_access` is enabled.** The installer therefore runs the agent as an
+ordinary user by default. If you choose to run it as root, disable
+`full_access`.
 
-**`[remote_access.fs]`** provides file browsing, restricted to directories listed in `roots`. It is independent of `full_access`: the file API grants access to selected directories, while `full_access` grants a shell. `roots` has no default; enabling the file API requires naming the directories explicitly.
+**`[remote_access.fs]`** enables file browsing within directories listed in
+`roots`. This grants access to those paths; `full_access` grants a shell.
+`roots` is empty by default, so list the directories explicitly when enabling
+file access.
 
-The agent resolves every request to a real path, follows symlinks, and rejects `..`. The resolved path must remain within `roots`, so a symlink pointing to `/etc` cannot escape the restriction. Setting `roots = ["/"]` is effectively shell access, and the agent warns about it at startup.
+Setting `roots = ["/"]` exposes the whole filesystem and grants access close
+to shell access; the agent warns about this configuration at startup. To use
+the File API over plaintext HTTP from another device, also set
+`[remote_access.fs] allow_insecure = true`. For path validation and transport
+details, see
+[Monitor agent API and access model](/docs/development/monitor-agent/).
 
-Like the terminal, the file API also requires `[remote_access.fs] allow_insecure = true` on a plaintext HTTP connection. Setting only `enabled` and `roots` without TLS leaves the file API unavailable: `GET /api/v1/capabilities` reports that file access is unsupported, so the App hides the entry and the agent logs a warning at startup.
+**`[remote_access.terminal]`** enables terminal access for the App and web
+panel. The panel terminal connects to the configured SSH server and uses that
+SSH account's permissions. When `full_access` is enabled, the App's terminal
+uses the agent account's local shell. Panel credentials alone do not grant
+shell access.
 
-**`[remote_access.terminal]`** enables the terminal endpoint used by both the App and the web panel. The panel terminal connects to `ssh_addr` as an SSH client, with the permissions of that SSH account. The App's passwordless terminal uses the agent user's local shell when `full_access` is enabled. Panel login credentials alone do not grant a shell.
-
-Unless `[remote_access.terminal] allow_insecure = true` is configured, the terminal will not run over plaintext HTTP because the first message may contain an SSH password. TLS or a same-host reverse proxy satisfies the transport requirement. The App must also enable **Allow insecure HTTP** for this individual Monitor connection; both settings are required.
+Use HTTPS for terminal access. Plaintext HTTP requires both
+`[remote_access.terminal] allow_insecure = true` in the agent configuration
+and **Allow insecure HTTP** for this server in the App. See
+[Monitor agent API and access model](/docs/development/monitor-agent/) for
+transport rules and endpoint behavior.
 
 ## Unsupported features
 
-A server configured only through Monitor HTTP does not provide SFTP or port forwarding. The agent has no endpoint that relays a connection to an address chosen by the App, so it cannot carry either feature. File **browsing** can use the agent's file API, but that API moves file contents rather than providing an arbitrary TCP byte stream.
+A Monitor HTTP connection cannot provide SFTP or port forwarding. The agent
+does not relay arbitrary TCP connections to addresses selected by the App.
+The file API supports **browsing** by transferring file contents; it does not
+provide a general-purpose byte stream.
 
-If you need SFTP or port forwarding, configure SSH for the same server in the App.
+To use SFTP or port forwarding, also configure SSH for that server in the App.
 
 ## Widgets, push, and the Watch app
 
-These features read directly from Monitor agent and do not depend on the App being in the foreground:
+Widgets, push notifications, and the Watch app read from Monitor agent, so the
+App does not need to stay in the foreground:
 
 - **Home-screen widgets**: Configure the server in the App after installing Monitor agent. The widget selects from the server list published by the App; you do not enter a URL manually.
 - **Watch app**: It can show only servers with Monitor agent configured. These servers sync by default, and you can exclude individual servers in the iOS settings.
@@ -317,7 +417,9 @@ These features read directly from Monitor agent and do not depend on the App bei
 
 ## Alert rules
 
-A rule has four fields. **Metric** picks what is read, **matcher** picks which part of it, and **threshold** decides when that reading is worth an alert.
+Each rule has four fields: `name`, `monitor_type`, `matcher`, and `threshold`.
+The metric selects what to measure, the matcher selects which part of that
+metric to evaluate, and the threshold sets when to send an alert.
 
 ```toml
 [[monitoring.rules]]
@@ -344,11 +446,14 @@ threshold = ">=80%"
 | `network` | Blank or anything else | Receive plus transmit |
 | `temperature` | Ignored | The reading the agent reports as the machine's temperature |
 
-`mem`, `net` and `temp` are accepted as well, so a configuration migrated from the Go agent keeps working. Any other metric is written to the agent's log once per cycle and the rule never fires.
+The aliases `mem`, `net`, and `temp` are also accepted for configurations
+migrated from the Go agent. Any other metric is logged once per cycle, and its
+rule never fires.
 
 ### Threshold
 
-A comparator, a value, and a unit: `>=80%`, `<10%`, `>10m/s`, `>=70c`.
+A threshold combines a comparator, value, and unit. Examples: `>=80%`,
+`<10%`, `>10m/s`, and `>=70c`.
 
 | Comparator | Fires when the reading is |
 | --- | --- |
@@ -358,9 +463,10 @@ A comparator, a value, and a unit: `>=80%`, `<10%`, `>10m/s`, `>=70c`.
 | `<` | Below the value |
 | `=` | Exactly the value |
 
-**A threshold with no comparator means `<`.** `80%` is "below 80 percent", not "above" — write `>=80%` for the usual case.
+If you omit the comparator, the rule uses `<`. For example, `80%` means
+“below 80 percent”; write `>=80%` to alert at or above 80 percent.
 
-The unit decides what kind of threshold it is, and it has to match the metric:
+The unit must match the metric:
 
 | Unit | Kind | Use with |
 | --- | --- | --- |
@@ -369,7 +475,9 @@ The unit decides what kind of threshold it is, and it has to match the metric:
 | `/s` after a size, as in `10m/s` | Speed | `network` |
 | `b`, `k`, `m`, `g`, `t` | Size | `network` |
 
-Sizes are base 1024 and lowercase. A threshold whose unit does not fit its metric — `>=80%` on a `network` rule — is written to the log and never fires, so the rule is silently inactive rather than wrong.
+Network sizes use base 1024 and lowercase units. If a unit does not match its
+metric, such as `>=80%` on a `network` rule, the agent logs the error and the
+rule never fires.
 
 ### Examples
 
@@ -407,20 +515,34 @@ threshold = ">=70c"
 
 ### When a rule stays quiet
 
-- **A network rule does not fire on the first cycle** after the agent starts, after a gap in collection, or for an interface that has just appeared. A speed is the difference between two samples, and there is no speed until the second one lands.
-- **A cycle with no reading is skipped, not judged.** If memory or disk cannot be read, the rule is passed over rather than evaluated against a zero — otherwise a `>=90%` rule would go quiet on a machine that is filling up, and a `<10%` rule would fire on one that is fine.
-- **A temperature rule needs a temperature.** Not every machine reports one.
+- **Network rules need two samples.** After startup, a collection gap, or a
+  newly detected interface, the first sample provides no speed value. The
+  rule can be evaluated after the next sample arrives.
+- **Missing readings skip a cycle.** If memory or disk data is unavailable,
+  the agent skips that rule instead of treating the reading as zero.
+- **Temperature rules need a temperature reading.** Some machines do not
+  report one.
 
-Rate limiting applies per channel, not per rule: see `push_rate` in `config.toml`, or **Rate limit** in the App.
+Rate limits apply to each notification channel. Configure `push_rate` in
+`config.toml` or **Rate limit** in the App.
 
 ## Troubleshooting
 
-**Features are missing from the server page.** The App shows what the agent reports. Commands and the terminal require `full_access` and the terminal endpoint; file browsing requires `[remote_access.fs]` and `roots`. Restart the agent after changing its configuration.
+**A feature is missing from the server page.** The App displays only the
+features the agent reports. Commands and terminal access require
+`full_access` and the terminal endpoint; file browsing requires
+`[remote_access.fs]` and configured `roots`. Restart the agent after changing
+its configuration.
 
 **Certificate errors.** Configure valid TLS, put the agent behind a reverse proxy, or enable **Monitor Ignore certificate** for that server.
 
-**The panel is hosted on another origin.** Add the origin to `cors_allowed_origins` in `config.toml` or to the `SBM_CORS_ORIGINS` environment variable.
+**The panel uses a different origin.** Add that origin to
+`cors_allowed_origins` in `config.toml` or the `SBM_CORS_ORIGINS` environment
+variable.
 
 **Login is rejected, or the password is lost.** Reset it on the server with `user set-password`; see [Panel credentials](#panel-credentials). Repeated failures are throttled, so a wrong password can also present as a slow or unresponsive agent.
 
-**Requests receive no response.** Confirm that the agent is running and the port is reachable, then inspect `access_log` in its database. It records the visitor, time, source, requested resource, and result, but never credentials.
+**A request gets no response.** Confirm that the agent is running and its
+port is reachable. Then inspect the database's `access_log` table, which
+records the visitor, time, source, requested resource, and result without
+storing credentials.

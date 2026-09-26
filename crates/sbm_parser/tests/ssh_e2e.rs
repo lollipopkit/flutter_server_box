@@ -553,7 +553,9 @@ fn ssh_e2e_unix_custom_and_disabled() {
         segments
             .get(&script::custom_result_key("e2e_probe"))
             .map(String::as_str),
-        Some("custom-cmd-works"),
+        // Byte-for-byte since the output is base64-carried: `echo`'s own
+        // newline is part of what the command printed
+        Some("custom-cmd-works\n"),
         "custom command segment must round-trip"
     );
     assert!(
@@ -762,4 +764,145 @@ fn ssh_e2e_windows_script_parse_matches_direct_commands() {
         status.net.len(),
         status.nvidia.len()
     );
+}
+
+/// Feed a `virt` script to `sh` on stdin, as the app does (`entry: 'sh'`).
+fn run_virt(host: &str, script: &str) -> String {
+    let out = run_ssh(host, "sh", Some(script)).expect("run virt script");
+    String::from_utf8_lossy(&out.stdout).into_owned()
+}
+
+/// libvirt command layer against a real host: probe, overview, per-domain
+/// detail, and a power action aimed at a UUID that does not exist. No action
+/// is ever run against a real domain. Hosts without `virsh` pass silently.
+#[test]
+#[ignore = "requires SBM_E2E_SSH_HOST and a reachable SSH server"]
+fn ssh_e2e_virt() {
+    use sbm_parser::virt::{self, VirtAction, VirtError, VirtState};
+
+    let host =
+        ssh_host().expect("SBM_E2E_SSH_HOST must be set in the environment or workspace-root .env");
+
+    let version = match virt::parse_probe(&run_virt(&host, &virt::probe_script())) {
+        Ok(virt::VirtHostProbe { libvirt: Some(v), .. }) => v,
+        Ok(p) => {
+            eprintln!("virsh not installed on {host} ({p:?}); skipping");
+            return;
+        }
+        Err(VirtError::PermissionDenied { message }) => {
+            eprintln!("virsh refused this user on {host} ({message}); skipping");
+            return;
+        }
+        Err(e) => panic!("probe failed: {e:?}"),
+    };
+    assert!(version.libvirt.is_some(), "{version:?}");
+
+    let raw = run_virt(&host, &virt::overview_script());
+    // Per-vCPU counters are filtered out on the host
+    assert!(
+        !raw.lines().any(|l| l.trim_start().starts_with("vcpu.0.")),
+        "per-vCPU lines reached the app"
+    );
+    let overview = virt::parse_overview(&raw).expect("overview");
+    assert_eq!(overview.version.as_ref(), Some(&version));
+
+    // Same set of domains as a direct listing
+    let direct = ssh(
+        &host,
+        "LC_ALL=C virsh --connect qemu:///system -q list --all --uuid",
+        None,
+    )
+    .expect("direct list");
+    let mut direct: Vec<String> = virt::parse_uuids(&direct);
+    let mut got: Vec<String> = overview.domains.iter().map(|d| d.uuid.clone()).collect();
+    direct.sort();
+    got.sort();
+    assert_eq!(got, direct);
+
+    for dom in &overview.domains {
+        // The numeric state agrees with virsh's own text for it
+        let text = ssh(
+            &host,
+            &format!(
+                "LC_ALL=C virsh --connect qemu:///system -q domstate --domain {}",
+                dom.uuid
+            ),
+            None,
+        )
+        .expect("domstate");
+        let expected = match text.trim() {
+            "running" | "idle" => VirtState::Running,
+            "shut off" | "crashed" => VirtState::Stopped,
+            "in shutdown" => VirtState::Stopping,
+            // The reason decides between these three
+            "paused" | "pmsuspended" => {
+                assert!(
+                    matches!(
+                        dom.state,
+                        VirtState::Paused | VirtState::Starting | VirtState::Stopping
+                    ),
+                    "{}: {:?}",
+                    dom.name,
+                    dom.state
+                );
+                dom.state
+            }
+            other => panic!("unexpected domstate {other:?}"),
+        };
+        assert_eq!(dom.state, expected, "{}: {}", dom.name, text.trim());
+
+        let detail = virt::parse_domain_detail(&run_virt(
+            &host,
+            &virt::domain_detail_script(&dom.uuid),
+        ))
+        .unwrap_or_else(|e| panic!("detail of {}: {e:?}", dom.name));
+        assert_eq!(detail.xml.uuid.as_deref(), Some(dom.uuid.as_str()));
+        assert_eq!(detail.xml.name.as_deref(), Some(dom.name.as_str()));
+        if dom.state != VirtState::Running {
+            assert!(detail.display.is_none());
+        } else if detail.xml.graphics.iter().any(|g| g.kind == "vnc" && g.socket.is_none()) {
+            // A running TCP VNC display resolves to a real port
+            let display = detail.display.as_ref().expect("running VNC display");
+            assert_eq!(display.protocol, "vnc");
+            assert!(display.port.is_some_and(|p| p >= 5900), "{display:?}");
+        }
+    }
+
+    let missing = virt::parse_action(&run_virt(
+        &host,
+        &virt::action_script(VirtAction::Start, "00000000-0000-4000-8000-00000000e2e0"),
+    ));
+    assert!(
+        matches!(missing, Err(VirtError::DomainNotFound { .. })),
+        "{missing:?}"
+    );
+
+    // Read-only listings: snapshots of every domain, pools with each active
+    // one's volumes, networks. Every domain's disks and NICs are listed.
+    for dom in &overview.domains {
+        virt::parse_snapshots(&run_virt(&host, &virt::snapshots_script(&dom.uuid)))
+            .unwrap_or_else(|e| panic!("snapshots of {}: {e:?}", dom.name));
+    }
+    let storage = virt::parse_storage(&run_virt(&host, &virt::storage_script())).expect("storage");
+    let with_disks: std::collections::BTreeSet<&str> =
+        storage.disks.iter().map(|d| d.domain.as_str()).collect();
+    for dom in overview.domains.iter().filter(|d| d.persistent) {
+        assert!(with_disks.contains(dom.uuid.as_str()) || dom.counters.blocks.is_empty(), "{}", dom.name);
+    }
+    for pool in storage.pools.iter().filter(|p| p.active) {
+        let names: Vec<String> = pool
+            .volumes
+            .as_ref()
+            .expect("an active pool lists its volumes")
+            .iter()
+            .map(|v| v.name.clone())
+            .collect();
+        let vols = virt::parse_volumes(&run_virt(&host, &virt::volumes_script(&pool.name, &names)))
+            .unwrap_or_else(|e| panic!("volumes of {}: {e:?}", pool.name));
+        assert_eq!(vols.len(), names.len(), "{}", pool.name);
+    }
+    let nets = virt::parse_networks(&run_virt(&host, &virt::networks_script())).expect("networks");
+    for n in nets.networks.iter().filter(|n| n.active) {
+        assert!(n.bridge.is_some() || n.mode != "nat", "{}", n.name);
+    }
 }

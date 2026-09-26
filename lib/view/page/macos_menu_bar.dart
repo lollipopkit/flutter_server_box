@@ -6,6 +6,7 @@ import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/view/page/home_tab.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class MacOSMenuBarManager {
@@ -72,17 +73,11 @@ class MacOSMenuBarManager {
     void Function(int) onTabChanged,
   ) {
     final menuItems = <PlatformMenuItem>[];
-    final tabLabels = {
-      AppTab.server: libL10n.server,
-      AppTab.ssh: libL10n.terminal,
-      AppTab.file: libL10n.file,
-      AppTab.snippet: libL10n.snippet,
-      AppTab.agent: 'Agent',
-    };
     for (var i = 0; i < homeTabs.length; i++) {
-      final tab = homeTabs[i];
-      final label = tabLabels[tab];
-      if (label == null) continue;
+      // The bar's own label, rather than a second table of them here: that
+      // table had fallen behind the enum, and a tab it did not name was left
+      // out of the menu without a word.
+      final label = homeTabs[i].label;
       final shortcutKey = _getShortcutKeyForIndex(i);
       menuItems.add(
         PlatformMenuItem(

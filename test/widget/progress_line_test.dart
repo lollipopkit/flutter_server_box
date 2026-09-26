@@ -22,12 +22,30 @@ void main() {
   double barWidth(WidgetTester tester) =>
       tester.getSize(find.byType(FractionallySizedBox)).width;
 
+  /// The painted bar, not its box: a box of the right width with nothing
+  /// of height in it is an empty track.
+  Size filled(WidgetTester tester) => tester.getSize(
+    find.descendant(
+      of: find.byType(FractionallySizedBox),
+      matching: find.byType(ColoredBox),
+    ),
+  );
+
   testWidgets('a measured value is the width of the bar', (tester) async {
     await pumpBar(tester, 0.5);
     // Animated to, so settle the tween before measuring.
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(barWidth(tester), closeTo(100, 1));
+    expect(filled(tester), const Size(100, 3));
+  });
+
+  testWidgets('without a value the bar is drawn the height of the track', (
+    tester,
+  ) async {
+    await pumpBar(tester, null);
+    await tester.pump(const Duration(milliseconds: 120));
+    expect(filled(tester).height, 3);
   });
 
   testWidgets('a value outside the range is clamped, not asserted', (

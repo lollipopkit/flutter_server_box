@@ -3,7 +3,7 @@ title: 项目结构
 description: 了解 Server Box 的代码库结构
 ---
 
-Server Box 使用 monorepo 组织代码：Flutter App 位于仓库根目录，与 Rust workspace、Monitor agent、文档站和项目网站共同维护。
+仓库采用 monorepo 布局。Flutter App 位于根目录，并与 Rust workspace、Monitor agent、文档站和项目网站一起维护。
 
 ## Monorepo 布局
 
@@ -41,17 +41,17 @@ lib/
 └── src/rust/          # 生成的 flutter_rust_bridge bindings
 ```
 
-`lib/src/rust/`、`lib/generated/` 以及 `*.g.dart`、`*.freezed.dart` 都是生成结果，不要直接编辑。
+`lib/src/rust/`、`lib/generated/`、`*.g.dart` 和 `*.freezed.dart` 都是生成结果。请修改对应源文件后重新生成，不要直接编辑这些产物。
 
 ## 核心代码目录
 
 ### `lib/core/`
 
-放置跨功能共用的 extension、路由和 utility。这里不应放置某个页面专属的业务状态。
+存放跨功能共用的 extension、路由和 utility。页面专属的业务状态应放在对应的 provider 或 service 中。
 
 ### `lib/data/model/`
 
-按功能组织数据模型，例如：
+model 按功能分类：
 
 - `server/`：服务器配置、凭据和状态
 - `container/`：Docker/Podman 容器
@@ -62,23 +62,23 @@ lib/
 
 ### `lib/data/provider/`
 
-Riverpod provider 负责依赖注入、异步状态和跨页面共享状态。Provider 通常调用 service 或 store，而不是把数据访问逻辑放进 UI Widget。
+Riverpod provider 协调依赖、异步操作以及跨页面共享的状态。通常由 provider 调用 service 或 store；不要在 UI Widget 中实现数据访问。
 
 ### `lib/data/store/`
 
-本地数据层使用加密 SQLite 数据库：
+本地数据层使用加密 SQLite 数据库，各部分职责如下：
 
-- `SqliteStore`：适合设置和历史等 key-value 数据
-- entity store：适合服务器、private key、snippet 等具有关系的数据
-- migrations：处理跨版本存储迁移
+- `SqliteStore`：处理设置和历史等 key-value 数据。
+- entity store：处理服务器、private key、snippet 等关系型数据。
+- migrations：将存储数据升级到新版本。
 
 ### `lib/view/`
 
-`page/` 放置主要页面，`widget/` 放置可复用 UI 组件，例如服务器卡片、状态图表、输入框和 dialog。
+`page/` 存放主要页面；`widget/` 存放可复用组件，例如服务器卡片、状态图表、输入框和 dialog。
 
 ## Packages
 
-`packages/` 中的大多数目录是通过 path dependency 引入的 fork：
+`packages/` 中的大多数目录是通过本地 path dependency 引入的 fork：
 
 - `dartssh2/`：SSH 客户端
 - `xterm/`：终端模拟器
@@ -86,13 +86,13 @@ Riverpod provider 负责依赖注入、异步状态和跨页面共享状态。Pr
 - `fl_build/`：跨平台构建工具
 - 其他平台插件和组件包
 
-`packages/webui/` 是例外。它是供 Monitor 面板和项目网站共用的 Svelte 包，提供 UI 基础组件和 design token。
+`packages/webui/` 由 Monitor 面板和项目网站共用，是提供 UI 基础组件与 design token 的 Svelte 包。
 
 ## Rust workspace
 
-- `crates/sbm_parser/`：将命令输出解析为结构化服务器状态。Flutter App 的 SSH 路径通过 FFI 调用；Monitor 的脚本路径也使用它。
-- `crates/sbm_native/`：仅 Monitor 使用的原生采样器，通过 syscall、procfs 或 sysfs 获取核心指标。Flutter App 通过 SSH 采集，不能在远程主机上调用该 crate。
-- `crates/sbm_ffi/`：向 Flutter 暴露 Rust API，包括 parser 和 native SSH crypto；Dart bindings 生成到 `lib/src/rust/`。
-- `monitor/`：独立的 Monitor agent，详细说明见 `monitor/README_zh.md`。
+- `crates/sbm_parser/`：将命令输出解析为结构化服务器状态。Flutter App 通过 FFI 调用；Monitor 在脚本采集路径中使用它。
+- `crates/sbm_native/`：在 Monitor agent 所在主机上采集指标，使用 syscall、procfs 或 sysfs。Flutter App 通过 SSH 获取远程数据，不会在远程主机上调用此 crate。
+- `crates/sbm_ffi/`：向 Flutter 暴露 Rust API，包括 parser 和 native SSH cryptography。生成的 Dart bindings 位于 `lib/src/rust/`。
+- `monitor/`：独立的 Monitor agent。详细说明见 `monitor/README_zh.md`。
 
-App 通过 SSH 获取远程主机数据，Monitor agent 则在服务器本机采样。两条路径共享部分数据模型和 parser，但不经过完全相同的采样流程。
+App 通过 SSH 采集远程服务器数据，Monitor agent 在自身所在主机采样。两者共用部分 model 和 parser，但采集流程各自独立。

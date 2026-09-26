@@ -45,12 +45,14 @@ extension on _ServerDetailPageState {
     return _buildReadoutCard(
       cardKey: 'bmc',
       icon: Icons.developer_board,
-      // A suffix here and the full sentence in the editor, which is the
-      // arrangement the Linux pages already use: the list that reaches the
-      // feature carries the marker, and the place where it is turned on
-      // carries the reason. Repeating `betaTip` on a card that is expanded
-      // every time the page opens would make it wallpaper.
-      title: 'BMC (Beta)',
+      // The mark beside the name rather than `(Beta)` inside it, and the full
+      // sentence still in the editor, which is the arrangement the Linux pages
+      // already use: the place that reaches the feature carries the marker,
+      // and the place where it is turned on carries the reason. Repeating
+      // `betaTip` on a card that is expanded every time the page opens would
+      // make it wallpaper.
+      title: 'BMC',
+      mark: const BetaTag(),
       verdict: switch (bmc) {
         BmcState(failure: final failure?) => (
           text: _bmcFailureText(failure, bmc.failureDetail),

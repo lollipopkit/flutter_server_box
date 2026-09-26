@@ -1,0 +1,93 @@
+{
+  "display": {
+    "uri": "spice://localhost:5901?tls-port=5902",
+    "protocol": "spice",
+    "host": "localhost",
+    "port": 5901,
+    "tls_port": 5902,
+    "socket": null
+  },
+  "xml": {
+    "name": "win11",
+    "uuid": "0f1e2d3c-4b5a-4968-8776-a5b4c3d2e1f0",
+    "title": null,
+    "description": "Windows 11 test box\nsecond line",
+    "arch": "x86_64",
+    "machine": "pc-q35-8.2",
+    "disks": [
+      {
+        "device": "disk",
+        "source_type": "file",
+        "source": "/var/lib/libvirt/images/win11.qcow2",
+        "target": "sda",
+        "bus": "sata",
+        "format": "qcow2",
+        "readonly": false
+      },
+      {
+        "device": "disk",
+        "source_type": "file",
+        "source": "/srv/vm/win11-data.raw",
+        "target": "sdb",
+        "bus": "sata",
+        "format": "raw",
+        "readonly": false
+      },
+      {
+        "device": "cdrom",
+        "source_type": "file",
+        "source": null,
+        "target": "sdc",
+        "bus": "sata",
+        "format": "raw",
+        "readonly": true
+      },
+      {
+        "device": "disk",
+        "source_type": "network",
+        "source": "rbd:vms/win11-scratch",
+        "target": "vdb",
+        "bus": "virtio",
+        "format": "raw",
+        "readonly": false
+      },
+      {
+        "device": "disk",
+        "source_type": "volume",
+        "source": "fast/win11-swap.qcow2",
+        "target": "vdc",
+        "bus": "virtio",
+        "format": "qcow2",
+        "readonly": false
+      }
+    ],
+    "nics": [
+      {
+        "kind": "bridge",
+        "mac": "52:54:00:aa:bb:cc",
+        "source": "br0",
+        "model": "e1000e",
+        "target": "vnet2"
+      },
+      {
+        "kind": "direct",
+        "mac": "52:54:00:dd:ee:ff",
+        "source": "enp3s0",
+        "model": "virtio",
+        "target": "macvtap0"
+      }
+    ],
+    "graphics": [
+      {
+        "kind": "spice",
+        "port": 5901,
+        "tls_port": 5902,
+        "autoport": true,
+        "listen": "0.0.0.0",
+        "socket": null
+      }
+    ],
+    "has_serial_console": false,
+    "seed": null
+  }
+}

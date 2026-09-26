@@ -9,9 +9,9 @@ import 'package:server_box/src/rust/frb_generated.dart';
 
 part 'remote_desktop.freezed.dart';
 
-// These functions are ignored because they are not marked as `pub`: `apply_vnc_event`, `bgra_to_rgba`, `certificate_event`, `classify_rdp_failure`, `copy_rect`, `draw_bgra`, `draw_jpeg`, `ensure_rect`, `event`, `finish_vnc_error`, `format_endpoint`, `format_sha256`, `frame_len`, `frame`, `handle_rdp_command`, `handle_vnc_command`, `is_ready`, `parse_sha256_fingerprint`, `publish_latest_frame`, `rdp_pixels_to_bgra`, `resize`, `run_rdp`, `run_vnc`, `send_rdp_fast_path`, `send_vnc_wheel`, `send`, `spawn`, `validate_endpoint`, `validate_size`
-// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `EventReceiver`, `EventSender`, `Frame`, `Framebuffer`, `RdpClipboardBackend`, `RdpClipboardState`, `SessionCommand`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `as_any_mut`, `as_any`, `assert_fields_are_eq`, `assert_fields_are_eq`, `client_capabilities`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `drop`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `on_file_contents_request`, `on_file_contents_response`, `on_format_data_request`, `on_format_data_response`, `on_lock`, `on_process_negotiated_capabilities`, `on_ready`, `on_remote_copy`, `on_request_format_list`, `on_unlock`, `temporary_directory`
+// These functions are ignored because they are not marked as `pub`: `apply_vnc_event`, `bgra_to_rgba`, `certificate_event`, `classify_rdp_failure`, `close`, `close`, `copy_rect`, `draw_bgra`, `draw_jpeg`, `ensure_rect`, `event`, `finish_vnc_error`, `fold_into`, `format_endpoint`, `format_sha256`, `frame_len`, `frame_shared`, `frame`, `handle_rdp_command`, `handle_vnc_command`, `is_ready`, `new`, `new`, `parse_sha256_fingerprint`, `publish_latest_frame`, `rdp_pixels_to_bgra`, `recv`, `recv`, `resize`, `run_rdp`, `run_vnc`, `send_rdp_fast_path`, `send_vnc_wheel`, `send`, `send`, `send`, `spawn`, `try_recv`, `validate_endpoint`, `validate_size`
+// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `CommandQueue`, `EventQueue`, `EventReceiver`, `EventSender`, `Frame`, `Framebuffer`, `RdpClipboardBackend`, `RdpClipboardState`, `SessionCommand`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `as_any_mut`, `as_any`, `assert_fields_are_eq`, `assert_fields_are_eq`, `client_capabilities`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `drop`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `on_file_contents_request`, `on_file_contents_response`, `on_format_data_request`, `on_format_data_response`, `on_lock`, `on_process_negotiated_capabilities`, `on_ready`, `on_remote_copy`, `on_request_format_list`, `on_unlock`, `temporary_directory`
 // These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `default`, `default`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RemoteDesktopSessionHandle>>
@@ -64,6 +64,12 @@ class RdpSessionParams {
   final String connectHost;
   final int connectPort;
 
+  /// The tunnel's one-time token, written before anything else on the
+  /// connection: the local listener carries only a connection that
+  /// presents it, so another process on this device racing for the port
+  /// gets nothing. Never logged.
+  final Uint8List? accessToken;
+
   /// Hostname as seen by the SSH server and used for certificate checks.
   final String serverName;
   final int serverPort;
@@ -78,6 +84,7 @@ class RdpSessionParams {
   const RdpSessionParams({
     required this.connectHost,
     required this.connectPort,
+    this.accessToken,
     required this.serverName,
     required this.serverPort,
     required this.username,
@@ -93,6 +100,7 @@ class RdpSessionParams {
   int get hashCode =>
       connectHost.hashCode ^
       connectPort.hashCode ^
+      accessToken.hashCode ^
       serverName.hashCode ^
       serverPort.hashCode ^
       username.hashCode ^
@@ -110,6 +118,7 @@ class RdpSessionParams {
           runtimeType == other.runtimeType &&
           connectHost == other.connectHost &&
           connectPort == other.connectPort &&
+          accessToken == other.accessToken &&
           serverName == other.serverName &&
           serverPort == other.serverPort &&
           username == other.username &&
@@ -194,12 +203,16 @@ class VncSessionParams {
   /// Loopback address of the SSH local tunnel.
   final String connectHost;
   final int connectPort;
+
+  /// See [`RdpSessionParams::access_token`].
+  final Uint8List? accessToken;
   final String? password;
   final bool shared;
 
   const VncSessionParams({
     required this.connectHost,
     required this.connectPort,
+    this.accessToken,
     this.password,
     required this.shared,
   });
@@ -208,6 +221,7 @@ class VncSessionParams {
   int get hashCode =>
       connectHost.hashCode ^
       connectPort.hashCode ^
+      accessToken.hashCode ^
       password.hashCode ^
       shared.hashCode;
 
@@ -218,6 +232,7 @@ class VncSessionParams {
           runtimeType == other.runtimeType &&
           connectHost == other.connectHost &&
           connectPort == other.connectPort &&
+          accessToken == other.accessToken &&
           password == other.password &&
           shared == other.shared;
 }

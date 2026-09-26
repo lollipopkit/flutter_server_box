@@ -1,0 +1,16 @@
+<domain type='kvm'>
+  <name>web-01</name>
+  <uuid>3b1f0c4e-9a57-4d4e-8f0e-2d6c1a9b7e10</uuid>
+  <memory unit='KiB'>2097152</memory>
+  <os>
+    <type arch='x86_64' machine='pc-q35-8.2'>hvm</type>
+  </os>
+  <devices>
+    <graphics type='vnc' port='-1' autoport='yes'>
+      <listen type='address'/>
+    </graphics>
+    <graphics type='vnc' socket='/run/libvirt/qemu/web-01.vnc'>
+      <listen type='socket' socket='/run/libvirt/qemu/web-01.vnc'/>
+    </graphics>
+  </devices>
+</domain>

@@ -1,0 +1,26 @@
+[
+  {
+    "avail": 94854426624,
+    "used_fraction": 0.0461450440858045,
+    "total": 105089261568,
+    "active": 1,
+    "type": "dir",
+    "storage": "local",
+    "enabled": 1,
+    "content": "iso,import,backup,vztmpl",
+    "shared": 0,
+    "used": 4849348608
+  },
+  {
+    "used": 4176431231,
+    "shared": 0,
+    "enabled": 1,
+    "content": "rootdir,images",
+    "type": "lvmthin",
+    "storage": "local-lvm",
+    "active": 1,
+    "total": 852332904448,
+    "used_fraction": 0.00489999999906703,
+    "avail": 848156473217
+  }
+]

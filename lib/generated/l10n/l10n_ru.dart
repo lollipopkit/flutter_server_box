@@ -1052,9 +1052,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Анализ статуса использования Docker может быть медленным';
 
   @override
-  String get plugInType => 'Тип вставки';
-
-  @override
   String get preferDiskAmount => 'Приоритетное отображение объёма диска';
 
   @override
@@ -1194,24 +1191,12 @@ class AppLocalizationsRu extends AppLocalizations {
       'Не рекомендуется включать, обратите внимание на риски безопасности! Если вы используете стандартный сертификат от PVE, вам нужно включить эту опцию.';
 
   @override
-  String get pveServerClientMissing =>
-      'SSH-клиент для этого сервера недоступен.';
-
-  @override
-  String get pveAddressMissing =>
-      'Не указан адрес PVE. Задайте его в настройках сервера.';
-
-  @override
   String get pvePasswordRequired =>
       'Требуется пароль PVE. Задайте его в настройках сервера.';
 
   @override
   String get pveOtpRequired =>
       'На этом сервере PVE включена двухфакторная аутентификация. Введите код OTP.';
-
-  @override
-  String get pveOtpChallengeExpired =>
-      'Срок действия запроса OTP истёк. Обновите и попробуйте снова.';
 
   @override
   String get pveOtpCodeRequired => 'Требуется код OTP.';
@@ -1237,19 +1222,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get pveMissingAuthTicket =>
       'Вход в PVE выполнен, но билет аутентификации не возвращён.';
-
-  @override
-  String get pveVersionLow =>
-      'Эта функция в настоящее время находится на стадии тестирования и была протестирована только на PVE 8+. Используйте ее с осторожностью.';
-
-  @override
-  String get pveLoadingForwarding => 'Установка SSH-туннеля…';
-
-  @override
-  String get pveLoadingLogin => 'Аутентификация в PVE…';
-
-  @override
-  String get pveLoadingData => 'Получение данных кластера…';
 
   @override
   String get pveLoadingConnect => 'Подключение…';
@@ -1725,9 +1697,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get sortByJoinTime => 'По времени добавления';
-
-  @override
-  String get portForwardBetaTitle => 'Перенаправление портов (бета)';
 
   @override
   String get tmuxAutoAttach => 'Автоподключение к tmux';
@@ -3325,4 +3294,1554 @@ class AppLocalizationsRu extends AppLocalizations {
   String appearanceThemeModeLocked(String mode) {
     return 'Эта тема поддерживает только режим «$mode». Для смены режима выберите другую тему.';
   }
+
+  @override
+  String get pveAuthToken => 'API-токен';
+
+  @override
+  String get pveVersionLow =>
+      'Эта функция в настоящее время находится на стадии тестирования и была протестирована только на PVE 8+. Используйте ее с осторожностью.';
+
+  @override
+  String get pveTokenId => 'ID токена';
+
+  @override
+  String get pveTokenSecret => 'Секрет токена';
+
+  @override
+  String get pveTokenTip =>
+      'Создайте его в PVE: Датацентр → Права доступа → API Tokens. Нужны права VM.Audit, VM.PowerMgmt, VM.Console, VM.Snapshot, VM.Snapshot.Rollback, Datastore.Audit и Sys.Audit на отображаемых путях; при включённом разделении привилегий выдайте их самому токену.';
+
+  @override
+  String pveTokenNoPrivileges(String account, String command) {
+    return 'Токену $account ничего не видно на этом хосте. Токен с разделением привилегий не наследует права пользователя; выдайте их на хосте PVE:\n$command\nили снимите для токена флажок «Privilege Separation».';
+  }
+
+  @override
+  String pveUserNoPrivileges(String account, String command) {
+    return '$account ничего не видно на этом хосте. Выдайте права на хосте PVE:\n$command';
+  }
+
+  @override
+  String get pveTokenIdInvalid =>
+      'ID токена должен иметь вид user@realm!tokenid';
+
+  @override
+  String get pvePasswordAuthTip =>
+      'Вход выполняется от имени пользователя SSH в realm PAM с паролем SSH, а если SSH использует ключ — с паролем PVE ниже. При необходимости запрашивается код двухфакторной аутентификации.';
+
+  @override
+  String get pveCertUnpinned =>
+      'Пока ничего не подтверждено. Если сертификат не подписан доверенным CA, при следующем подключении он будет показан для подтверждения.';
+
+  @override
+  String get pveCertForget => 'Забыть сертификат';
+
+  @override
+  String get pveCertForgetTip =>
+      'При следующем подключении сертификат PVE снова будет показан для подтверждения.';
+
+  @override
+  String get virtualization => 'Виртуализация';
+
+  @override
+  String get virtIntro =>
+      'Управление виртуальными машинами и контейнерами на хостах Proxmox VE и libvirt/KVM: состояние, управление питанием и консоли.';
+
+  @override
+  String get virtIntroPveMoved =>
+      'Proxmox VE перенесён со страницы сервера в эту вкладку. Карточка PVE сервера открывает её здесь.';
+
+  @override
+  String get virtIntroLibvirt =>
+      'Сервер с установленным virsh из libvirt отображается как хост вместе с его виртуальными машинами QEMU/KVM.';
+
+  @override
+  String get virtIntroTransports =>
+      'Оба работают по SSH, через агент Monitor или на этом устройстве.';
+
+  @override
+  String get virtIntroTokens =>
+      'PVE может входить по API-токену вместо пароля. Задаётся на странице редактирования сервера, в разделе PVE.';
+
+  @override
+  String get virtIntroInBar => 'Она добавлена на панель вкладок.';
+
+  @override
+  String get virtIntroInMore =>
+      'Она находится в разделе «Ещё». Во вкладках дома в настройках её можно перенести на панель вкладок.';
+
+  @override
+  String get virtGuests => 'Виртуальные машины';
+
+  @override
+  String get virtHosts => 'Хосты';
+
+  @override
+  String get virtCheckServer => 'Проверить этот сервер';
+
+  @override
+  String get virtCheckAll => 'Проверить все серверы';
+
+  @override
+  String get virtProbeNotChecked => 'Ещё не проверен';
+
+  @override
+  String get virtProbeAbsent => 'Не хост';
+
+  @override
+  String virtProbeContainer(String kind) {
+    return 'Контейнер $kind';
+  }
+
+  @override
+  String get virtProbeContainerTip =>
+      'Этот сервер работает в контейнере, то есть это гость, а не хост. Управлять им нужно с хоста, на котором он запущен.';
+
+  @override
+  String get virtProbePve => 'PVE, не настроен';
+
+  @override
+  String virtPveSetupTip(String version) {
+    return 'На этом сервере работает $version. Укажите доступ к API в настройках сервера (рекомендуется API-токен), чтобы управлять здесь его виртуальными машинами и контейнерами.';
+  }
+
+  @override
+  String get virtNoHosts => 'Нет хостов виртуализации';
+
+  @override
+  String get virtNoHostsTip =>
+      'Сервер с Proxmox VE и указанным доступом к API является хостом, как и сервер, на котором отвечает virsh. Остальные серверы можно проверить в переключателе хостов.';
+
+  @override
+  String get virtNoGuests => 'Нет виртуальных машин или контейнеров';
+
+  @override
+  String get virtPaused => 'Приостановлена';
+
+  @override
+  String get virtStarting => 'Запуск…';
+
+  @override
+  String get virtStopping => 'Остановка…';
+
+  @override
+  String get virtRebooting => 'Перезагрузка…';
+
+  @override
+  String get virtMigrating => 'Миграция…';
+
+  @override
+  String get virtBackingUp => 'Резервное копирование…';
+
+  @override
+  String get virtResume => 'Возобновить';
+
+  @override
+  String get virtOverview => 'Обзор';
+
+  @override
+  String get virtConsole => 'Консоль';
+
+  @override
+  String get virtConsoleNone =>
+      'Для этой гостевой системы консоль не настроена';
+
+  @override
+  String get virtConsoleGraphical => 'Графическая';
+
+  @override
+  String get virtVncPasswordNeeded => 'Этот дисплей запрашивает пароль';
+
+  @override
+  String get virtConsoleSerialTip =>
+      'Открывает последовательную консоль гостя через virsh на хосте. «Отключить» или Ctrl+] возвращает в оболочку хоста.';
+
+  @override
+  String virtConsoleVia(String transport) {
+    return 'через $transport';
+  }
+
+  @override
+  String get virtConsoleEnterTip => 'Нет вывода? Нажмите Enter';
+
+  @override
+  String virtConsoleAutoEnter(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other: '$seconds секунд',
+      few: '$seconds секунды',
+      one: '$seconds секунду',
+    );
+    return 'Enter будет нажат через $_temp0, чтобы показать приглашение';
+  }
+
+  @override
+  String get virtConsoleEnterNow => 'Сейчас';
+
+  @override
+  String get virtOffTip =>
+      'Запустите, чтобы видеть здесь ЦП, память, диск и сеть в реальном времени.';
+
+  @override
+  String get virtAllocated => 'Выделено';
+
+  @override
+  String virtRunningCount(int running, int total) {
+    return '$running работают · всего $total';
+  }
+
+  @override
+  String get virtTemplate => 'Шаблон';
+
+  @override
+  String get virtAutostart => 'Запускается вместе с хостом';
+
+  @override
+  String get virtErrUnreachable => 'Не удалось связаться с этим хостом';
+
+  @override
+  String get virtErrNotConfigured => 'Настройки PVE этого сервера неполные';
+
+  @override
+  String get virtErrNotConfiguredTip =>
+      'Проверьте адрес, а также пароль или API-токен в настройках сервера.';
+
+  @override
+  String get virtErrAuthFailed => 'Хост отклонил вход';
+
+  @override
+  String get virtErrCertUnconfirmed => 'Подтвердите сертификат хоста';
+
+  @override
+  String get virtErrCertChanged => 'Сертификат хоста изменился';
+
+  @override
+  String get virtErrRelayNotGranted => 'Агент Monitor не пересылает соединения';
+
+  @override
+  String get virtErrExecNotGranted => 'Агент Monitor не выполняет команды';
+
+  @override
+  String get virtErrNotInstalled => 'virsh не установлен на этом сервере';
+
+  @override
+  String get virtErrServerRemoved => 'Этот сервер больше не существует';
+
+  @override
+  String get virtErrSudoRequired => 'Для доступа к libvirt sudo требует пароль';
+
+  @override
+  String get virtErrSudoRejected => 'sudo отклонил пароль';
+
+  @override
+  String get virtErrInvalidResponse => 'Хост ответил в неожиданном виде';
+
+  @override
+  String get virtErrActionFailed => 'Хост отклонил действие';
+
+  @override
+  String get remoteSessionIdleTimeout => 'Закрывать после ухода';
+
+  @override
+  String get remoteSessionIdleTimeoutTip =>
+      'Сколько удалённый рабочий стол или консоль гостя остаются подключёнными после того, как вы их покинули. Перед закрытием уведомление даёт 10 секунд, чтобы сохранить подключение.';
+
+  @override
+  String get remoteSessionKeepAlive => 'Не закрывать';
+
+  @override
+  String get remoteSessionClosedAway => 'Закрыто из-за бездействия';
+
+  @override
+  String remoteSessionClosingIn(int seconds) {
+    return 'Закроется через $seconds с';
+  }
+
+  @override
+  String get reopen => 'Открыть снова';
+
+  @override
+  String get virtSnapshots => 'Снимки';
+
+  @override
+  String get virtSnapshotCreate => 'Сделать снимок';
+
+  @override
+  String get virtSnapshotNone => 'Снимков пока нет';
+
+  @override
+  String get virtSnapshotWithMemory => 'Диски и память';
+
+  @override
+  String get virtSnapshotDiskOnly => 'Только диски';
+
+  @override
+  String get virtSnapshotParent => 'Родитель';
+
+  @override
+  String get virtSnapshotRevert => 'Откатить';
+
+  @override
+  String get virtSnapshotMemory => 'Включить память';
+
+  @override
+  String get virtSnapshotMemoryTip =>
+      'После отката гость продолжит работу с этого момента.';
+
+  @override
+  String get virtSnapshotMemoryAlways =>
+      'Здесь снимок работающего гостя всегда включает память.';
+
+  @override
+  String get virtSnapshotMemoryOff =>
+      'Гость не запущен, поэтому сохраняются только диски.';
+
+  @override
+  String get virtSnapshotNameInvalid =>
+      'Сначала буква, затем буквы, цифры, - или _; от 2 до 40 символов.';
+
+  @override
+  String get virtSnapshotNameTaken => 'Снимок с таким именем уже есть.';
+
+  @override
+  String get virtSnapshotRevertTip =>
+      'Откат отменит все изменения, сделанные после снимка.';
+
+  @override
+  String virtSnapshotRevertAsk(String guest, String snapshot) {
+    return 'Откатить $guest к $snapshot? Все изменения после него будут потеряны.';
+  }
+
+  @override
+  String virtSnapshotRevertStops(String guest) {
+    return 'В этом снимке нет памяти: $guest будет остановлен.';
+  }
+
+  @override
+  String get virtSnapshotStartAfter => 'Запустить после';
+
+  @override
+  String get virtVolumes => 'Тома';
+
+  @override
+  String get virtNoPools => 'Нет пулов хранения';
+
+  @override
+  String get virtNoNetworks => 'Нет сетей';
+
+  @override
+  String get virtPoolInactive =>
+      'Пул не активен, поэтому его тома нельзя перечислить.';
+
+  @override
+  String get virtShared => 'Общий для узлов';
+
+  @override
+  String get virtBackingFile => 'Базовый файл';
+
+  @override
+  String get virtNetIsolated => 'Изолированная';
+
+  @override
+  String get virtNetBridged => 'Мост';
+
+  @override
+  String get virtNetRouted => 'Маршрутизируемая';
+
+  @override
+  String get virtBridge => 'Мост';
+
+  @override
+  String get virtPorts => 'Порты';
+
+  @override
+  String get virtAttachedGuests => 'Гости в ней';
+
+  @override
+  String get virtNoAttachedGuests => 'Гостей нет';
+
+  @override
+  String get virtCreateVm => 'Новая виртуальная машина';
+
+  @override
+  String get virtCreateLxc => 'Новый контейнер';
+
+  @override
+  String get virtCreateGuest => 'Новая виртуальная машина или контейнер';
+
+  @override
+  String get virtKindVm => 'Виртуальная машина';
+
+  @override
+  String get virtKindLxc => 'Контейнер';
+
+  @override
+  String get virtHostname => 'Имя хоста';
+
+  @override
+  String get virtInstallMedia => 'Установочный носитель';
+
+  @override
+  String get virtNoIsos => 'На этом хосте нет ISO-образов';
+
+  @override
+  String get virtNoTemplates =>
+      'На этом хосте нет шаблонов контейнеров. Скачать шаблон можно в разделе «Шаблоны CT» хранилища в PVE.';
+
+  @override
+  String get virtNoDiskStorage =>
+      'На этом хосте нет хранилища для нового диска';
+
+  @override
+  String get virtStartAfterCreate => 'Запустить после создания';
+
+  @override
+  String get virtUnprivileged => 'Непривилегированный контейнер';
+
+  @override
+  String get virtUnprivilegedTip => 'Его root — обычный пользователь на хосте.';
+
+  @override
+  String get virtSshKeys => 'Открытые ключи SSH';
+
+  @override
+  String get virtCredentialsTip => 'Пароль root, ключи SSH или и то и другое.';
+
+  @override
+  String virtCreated(String name) {
+    return '$name создан';
+  }
+
+  @override
+  String virtCreatedNotStarted(String name) {
+    return '$name создан, но не запустился';
+  }
+
+  @override
+  String get virtErrExists => 'Гость или диск с таким именем уже существует';
+
+  @override
+  String get virtCreateNameInvalidLibvirt =>
+      'Буквы, цифры, ., _ и -, начиная с буквы или цифры; до 63 символов.';
+
+  @override
+  String get virtCreateNameInvalidPve =>
+      'Буквы, цифры и -, части разделены точками; до 63 символов.';
+
+  @override
+  String get virtCreateNameTaken => 'Гость с таким именем уже есть.';
+
+  @override
+  String get virtCreateVmidInvalid => 'От 100 до 999999999.';
+
+  @override
+  String get virtCreateVmidTaken => 'Этот VMID занят.';
+
+  @override
+  String get virtCreateCoresInvalid => 'Больше ядер, чем допускает этот хост.';
+
+  @override
+  String get virtCreateMemoryInvalid => 'Недостаточно памяти.';
+
+  @override
+  String get virtCreateStorageMissing => 'Выберите, где будет диск.';
+
+  @override
+  String get virtCreateDiskInvalid => 'От 1 ГиБ до 64 ТиБ.';
+
+  @override
+  String get virtCreateTemplateMissing => 'Выберите шаблон.';
+
+  @override
+  String get virtCreateCredentialsMissing =>
+      'Задайте пароль root или ключ SSH.';
+
+  @override
+  String virtCreatePasswordShort(int min) {
+    return 'Не менее $min символов.';
+  }
+
+  @override
+  String get virtCreateSshKeysInvalid =>
+      'По одному открытому ключу OpenSSH на строку.';
+
+  @override
+  String get virtDeleteDisks => 'Удалить и его диски';
+
+  @override
+  String get virtDeleteDisksPve =>
+      'Его диски удаляются вместе с ним; установочный носитель сохранится.';
+
+  @override
+  String virtDeleted(String name) {
+    return '$name удалён';
+  }
+
+  @override
+  String get pveTokenTipCreate =>
+      'Для создания и удаления гостей также нужны VM.Allocate, VM.Config.*, Datastore.AllocateSpace и SDN.Use.';
+
+  @override
+  String get pveTokenTipHardware =>
+      'Для изменения оборудования нужны VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network и VM.Config.Options; для новых дисков и интерфейсов также Datastore.AllocateSpace и SDN.Use. Для видеокарты и устройств USB и PCI нужна также VM.Config.HWType; для устройства через сопоставление ресурсов нужна Mapping.Use на нём, а для списка сопоставлений — Mapping.Audit.';
+
+  @override
+  String get pveTokenTipBackup =>
+      'Для клонирования нужен VM.Clone, для резервного копирования и восстановления — VM.Backup, а также Datastore.AllocateSpace на хранилище копии.';
+
+  @override
+  String get virtErrConflict => 'Изменено в другом месте';
+
+  @override
+  String get virtErrConflictTip =>
+      'Кто-то изменил конфигурацию этого гостя после того, как она была прочитана здесь, поэтому ничего не изменено. Она прочитана заново: повторите изменение, если оно ещё нужно.';
+
+  @override
+  String get virtHardware => 'Оборудование';
+
+  @override
+  String get virtHwAddDisk => 'Добавить диск';
+
+  @override
+  String get virtHwAddMount => 'Добавить точку монтирования';
+
+  @override
+  String get virtHwAddNic => 'Добавить сетевой интерфейс';
+
+  @override
+  String get virtHwAppliesOnRestart =>
+      'Сохранено. Вступит в силу при следующем запуске.';
+
+  @override
+  String get virtHwAutostart => 'Запускать вместе с хостом';
+
+  @override
+  String get virtHwAutostartPve => 'onboot · запуск в порядке VMID';
+
+  @override
+  String get virtHwBalloonLibvirt => 'Текущая память';
+
+  @override
+  String get virtHwBalloonNote =>
+      'Позволяет хосту забирать свободную память гостя при нехватке памяти';
+
+  @override
+  String get virtHwBoot => 'Загрузка';
+
+  @override
+  String get virtHwBootOrder => 'Порядок загрузки';
+
+  @override
+  String get virtHwBootTip =>
+      'Стрелки меняют порядок; нажатие включает или выключает загрузку с устройства.';
+
+  @override
+  String get virtHwCdrom => 'CD-ROM';
+
+  @override
+  String get virtHwConfigFile => 'Файл конфигурации';
+
+  @override
+  String get virtHwCores => 'Ядра';
+
+  @override
+  String get virtHwCpuTypeDefault => 'По умолчанию';
+
+  @override
+  String get virtHwDeleteVolume => 'Также удалить его том';
+
+  @override
+  String get virtHwDetach => 'Отключить';
+
+  @override
+  String get virtHwDiskHotplug => 'Горячее подключение: можно добавить на ходу';
+
+  @override
+  String get virtHwDisksLxc => 'Корневой диск и точки монтирования';
+
+  @override
+  String get virtHwEject => 'Извлечь';
+
+  @override
+  String get virtHwEmpty => 'Без носителя';
+
+  @override
+  String get virtHwFirewall => 'Брандмауэр';
+
+  @override
+  String virtHwFree(String size) {
+    return 'свободно $size';
+  }
+
+  @override
+  String get virtHwGrow => 'Увеличить';
+
+  @override
+  String get virtHwGrowNote => 'Диск можно только увеличить.';
+
+  @override
+  String get virtHwGrowNoteRunning =>
+      'Диск можно только увеличить. После увеличения на ходу раздел нужно расширить внутри гостя.';
+
+  @override
+  String get virtHwGuestUsed => 'Используется гостем';
+
+  @override
+  String virtHwHostCpus(int threads, int allocated) {
+    return 'Хост $threads потоков · выделено $allocated';
+  }
+
+  @override
+  String virtHwHostMem(String total, String allocated) {
+    return 'Хост $total · выделено $allocated';
+  }
+
+  @override
+  String get virtHwHotplugNow => 'Горячее подключение: сразу вступает в силу.';
+
+  @override
+  String get virtHwIssueBootEmpty => 'Отметьте хотя бы одно устройство';
+
+  @override
+  String virtHwIssueCpuCount(int max) {
+    return 'Всего от 1 до $max vCPU';
+  }
+
+  @override
+  String get virtHwIssueCpuOnline => 'Активные vCPU: от 1 до общего числа';
+
+  @override
+  String get virtHwIssueDiskShrink =>
+      'Больше текущего: диски только увеличиваются';
+
+  @override
+  String get virtHwIssueDiskSize => 'От 1 до 65536 ГиБ';
+
+  @override
+  String virtHwIssueMemory(int min, int max) {
+    return 'От $min до $max МиБ';
+  }
+
+  @override
+  String get virtHwIssueMemoryMin => 'Не больше памяти';
+
+  @override
+  String get virtHwIssueMountPoint => 'Абсолютный путь, например /data';
+
+  @override
+  String get virtHwIssueStorageSpace => 'Больше, чем свободно в хранилище';
+
+  @override
+  String get virtHwIssueSwap => 'Не отрицательное';
+
+  @override
+  String get virtHwLater => 'Вступит в силу после перезапуска';
+
+  @override
+  String get virtHwLess => 'Меньше';
+
+  @override
+  String get virtHwLinkDown => 'Отключён';
+
+  @override
+  String get virtHwLinkNote =>
+      'Выключено — гость видит отключённый кабель; перезапуск не нужен';
+
+  @override
+  String get virtHwLinkUp => 'Подключён';
+
+  @override
+  String get virtHwMac => 'MAC-адрес';
+
+  @override
+  String get virtHwModel => 'Модель';
+
+  @override
+  String get virtHwMore => 'Больше';
+
+  @override
+  String get virtHwMountFromPool =>
+      'Точки монтирования выделяются прямо из хранилища';
+
+  @override
+  String get virtHwMountPoint => 'Точка монтирования';
+
+  @override
+  String get virtHwMoveDown => 'Вниз';
+
+  @override
+  String get virtHwMoveUp => 'Вверх';
+
+  @override
+  String get virtHwNewDisk => 'Новый диск';
+
+  @override
+  String get virtHwNewMount => 'Новая точка монтирования';
+
+  @override
+  String get virtHwNewNic => 'Новый сетевой интерфейс';
+
+  @override
+  String get virtHwNicHotplug => 'Интерфейсы virtio подключаются на ходу';
+
+  @override
+  String get virtHwNics => 'Сетевые интерфейсы';
+
+  @override
+  String get virtHwNoMedia => 'Нет носителя';
+
+  @override
+  String get virtHwNoNetworks => 'Здесь нет сетей или мостов';
+
+  @override
+  String get virtHwNoStorage => 'Здесь нет хранилища для дисков';
+
+  @override
+  String get virtHwOnline => 'Активные vCPU';
+
+  @override
+  String get virtHwPendingBanner =>
+      'Часть изменений оборудования вступит в силу после перезапуска';
+
+  @override
+  String get virtHwPickNet => 'Выберите сеть';
+
+  @override
+  String get virtHwPickPool => 'Выберите хранилище и размер';
+
+  @override
+  String get virtHwProcessor => 'Процессор';
+
+  @override
+  String get virtHwRemove => 'Удалить';
+
+  @override
+  String get virtHwRemoveCdrom => 'Удалить CD-ROM';
+
+  @override
+  String virtHwRemoveDiskAsk(String disk, String guest) {
+    return 'Удалить $disk из $guest?';
+  }
+
+  @override
+  String virtHwRemoveNicAsk(String nic, String guest) {
+    return 'Удалить $nic из $guest?';
+  }
+
+  @override
+  String get virtHwResources => 'Ресурсы';
+
+  @override
+  String get virtHwRestartNow => 'Перезапустить';
+
+  @override
+  String get virtHwRevert => 'Отменить';
+
+  @override
+  String get virtHwRevertAll => 'Отменить все';
+
+  @override
+  String get virtSetRenameStopped =>
+      'Выключите гостя, чтобы переименовать: libvirt переименовывает только неработающего гостя.';
+
+  @override
+  String virtSetIssueDescription(int max) {
+    return 'Не более $max символов, без управляющих символов.';
+  }
+
+  @override
+  String get virtSetManualStart => 'Запуск вручную';
+
+  @override
+  String get virtSetProtection => 'Защита';
+
+  @override
+  String get virtSetProtectionNote =>
+      'Запрещает удалять гостя и менять его диски';
+
+  @override
+  String get virtSetIrreversible => 'Нельзя отменить';
+
+  @override
+  String get virtSetDeleteStopFirst => 'Выключите его перед удалением.';
+
+  @override
+  String get virtSetDeleteProtected =>
+      'Включена защита: сначала отключите её в разделе «Общие».';
+
+  @override
+  String get virtSetDeleteAgain => 'Нажмите ещё раз для подтверждения';
+
+  @override
+  String virtSetDeleteConfirm(String name) {
+    return 'Удалить $name';
+  }
+
+  @override
+  String get virtSetDeleteVm => 'Удалить виртуальную машину';
+
+  @override
+  String get virtSetDeleteLxc => 'Удалить контейнер';
+
+  @override
+  String get virtHwSockets => 'Сокеты';
+
+  @override
+  String get virtHwSource => 'Источник';
+
+  @override
+  String get virtHwSwap => 'Подкачка';
+
+  @override
+  String get virtHwTopology => 'Сокеты × ядра';
+
+  @override
+  String virtHwTopologyValue(int sockets, int cores, int threads) {
+    return '$sockets сокет. × $cores ядер × $threads пот.';
+  }
+
+  @override
+  String virtHwTotal(String size) {
+    return 'всего $size';
+  }
+
+  @override
+  String get virtHwVolumeKept =>
+      'Удалён, но работающий гость ещё использует диск, поэтому том сохранён. Диск будет отключён при следующем запуске.';
+
+  @override
+  String get virtHwBus => 'Шина';
+
+  @override
+  String get virtHwCache => 'Кэш';
+
+  @override
+  String get virtHwBusStopped =>
+      'Шину можно сменить только у остановленного гостя.';
+
+  @override
+  String get virtHwMacGenerate => 'Сгенерировать';
+
+  @override
+  String get virtHwIssueMac =>
+      'Нужен одноадресный MAC-адрес, например 52:54:00:12:34:56';
+
+  @override
+  String get virtHwIssueStopFirst => 'Сначала остановите гостя';
+
+  @override
+  String get virtHwIssueStorageMissing => 'Сначала выберите хранилище';
+
+  @override
+  String get virtHwIssueDevice => 'Сначала выберите устройство';
+
+  @override
+  String get virtHwDevices => 'CD-ROM и проброс';
+
+  @override
+  String get virtHwDevicesEmpty => 'Проброс USB и PCI, CD-ROM, TPM';
+
+  @override
+  String get virtHwAddDevice => 'Добавить устройство';
+
+  @override
+  String get virtHwNewDevice => 'Новое устройство';
+
+  @override
+  String get virtHwUsbHotplug =>
+      'Проброс USB поддерживает горячее подключение.';
+
+  @override
+  String get virtHwPci => 'Проброс PCI';
+
+  @override
+  String get virtHwIommuOffTitle => 'У хоста нет IOMMU';
+
+  @override
+  String get virtHwIommuOffBody =>
+      'Сначала включите VT-d или AMD-Vi в BIOS хоста и IOMMU в его ядре. До этого гость с PCI-устройством не запустится.';
+
+  @override
+  String get virtHwPciTitle => 'Нужен IOMMU на хосте';
+
+  @override
+  String get virtHwPciBody =>
+      'После проброса хост не сможет использовать устройство, а гость — мигрировать на ходу.';
+
+  @override
+  String virtHwIommuGroup(int group) {
+    return 'Группа IOMMU $group';
+  }
+
+  @override
+  String virtHwIommuShared(int count) {
+    return '$count устройств в одной группе IOMMU пробрасываются вместе';
+  }
+
+  @override
+  String get virtHwNoHostDevices => 'На этом хосте нет устройств для проброса';
+
+  @override
+  String get virtHwMappingsOnly =>
+      'Здесь доступны только сопоставления ресурсов: PVE разрешает пробрасывать устройство напрямую только root@pam, вошедшему по паролю. Создайте сопоставления в Датацентр → Сопоставления ресурсов.';
+
+  @override
+  String get virtHwTpmNote => 'Windows 11 требует TPM 2.0.';
+
+  @override
+  String get virtHwDisplay => 'Дисплей';
+
+  @override
+  String get virtHwProtocol => 'Протокол';
+
+  @override
+  String get virtHwListen => 'Прослушивание';
+
+  @override
+  String get virtHwGpu => 'Видеокарта';
+
+  @override
+  String get virtHwListenAllTitle => 'Консоль открыта в сеть';
+
+  @override
+  String get virtHwListenAllBody =>
+      'При прослушивании всех адресов консоль может открыть любой, кто достигает хоста. Оставьте 127.0.0.1 и подключайтесь через SSH-туннель.';
+
+  @override
+  String get virtHwFirmware => 'Прошивка';
+
+  @override
+  String get virtHwUefiSub =>
+      'OVMF · поддерживает Secure Boot, нужна для Windows 11';
+
+  @override
+  String get virtHwBiosSub => 'SeaBIOS · старые системы и диски MBR';
+
+  @override
+  String get virtHwSecureBootNote =>
+      'Загружает только подписанные ядра и загрузчики';
+
+  @override
+  String get virtHwFirmwareWarnTitle =>
+      'Не меняйте прошивку установленной системы';
+
+  @override
+  String get virtHwFirmwareWarnBody =>
+      'Переключение между UEFI и BIOS делает установленную систему незагружаемой.';
+
+  @override
+  String get virtHwFirmwareStopped =>
+      'Прошивку можно сменить только у остановленного гостя.';
+
+  @override
+  String get virtHwSecureBootVars =>
+      'Включение или выключение Secure Boot создаёт переменные EFI заново; сохранённые в них записи загрузки будут потеряны.';
+
+  @override
+  String get virtHwEfiStorage => 'Где хранить переменные EFI';
+
+  @override
+  String get virtHwTpmStorage => 'Где хранить состояние TPM';
+
+  @override
+  String virtHwSwitchFirmwareAsk(String guest, String firmware) {
+    return 'Переключить $guest на $firmware?';
+  }
+
+  @override
+  String get virtCloneName => 'Новое имя';
+
+  @override
+  String get virtCloneFull => 'Полный клон';
+
+  @override
+  String get virtCloneCopyDisks => 'Копировать содержимое дисков';
+
+  @override
+  String get virtCloneLinkedNote =>
+      'Выкл.: связанный клон, зависящий от дисков шаблона';
+
+  @override
+  String get virtCloneFullOnly =>
+      'Связанный клон можно сделать только из шаблона';
+
+  @override
+  String get virtCloneEmptyNote => 'Выкл.: новые пустые диски того же размера';
+
+  @override
+  String get virtCloneStopFirst => 'Перед клонированием выключите её.';
+
+  @override
+  String get virtCloneFullShort => 'Полный';
+
+  @override
+  String get virtCloneLinkedShort => 'Связанный';
+
+  @override
+  String get virtCloneEmptyShort => 'Пустые диски';
+
+  @override
+  String get virtCloning => 'Клонирование…';
+
+  @override
+  String virtCloned(String name) {
+    return 'Клонировано как $name';
+  }
+
+  @override
+  String get virtBackupPlan => 'План';
+
+  @override
+  String get virtBackupPlanWhere => 'Датацентр → Резервное копирование';
+
+  @override
+  String get virtBackupNoPlanShort => 'Нет плана';
+
+  @override
+  String get virtBackupNoPlan =>
+      'Ни одно плановое задание резервного копирования не включает этот гостевой хост. Задания настраиваются в датацентре.';
+
+  @override
+  String get virtBackupKeep => 'Хранить';
+
+  @override
+  String get virtBackupJobDisabled => 'Это задание отключено.';
+
+  @override
+  String virtBackupCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count копий',
+      few: '$count копии',
+      one: '$count копия',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get virtBackupNoStorage =>
+      'На этом узле нет хранилища для резервных копий.';
+
+  @override
+  String get virtBackupLiveTip => 'Работает: режим snapshot, без остановки';
+
+  @override
+  String get virtBackupStoppedTip => 'Выключен: копируется как есть';
+
+  @override
+  String get virtBackupNow => 'Создать копию';
+
+  @override
+  String get virtBackupNotes => 'Заметки';
+
+  @override
+  String get virtBackupProtected =>
+      'Защищена: её нельзя удалить, пока защита не снята в PVE.';
+
+  @override
+  String virtBackupVerified(String state) {
+    return 'Проверка: $state';
+  }
+
+  @override
+  String get virtBackupRestoreOverwrites =>
+      'Восстановление перезапишет текущие диски';
+
+  @override
+  String get virtBackupStopFirst => 'Перед восстановлением выключите её.';
+
+  @override
+  String get virtBackupRestoreAgain =>
+      'Диски и конфигурация гостя будут заменены данными из копии.';
+
+  @override
+  String get virtBackupDeleteConfirm => 'Удалить копию';
+
+  @override
+  String get virtBackupRestoreNew => 'Восстановить как новый';
+
+  @override
+  String get virtBackupRestoreConfirm => 'Восстановить поверх';
+
+  @override
+  String get virtBackupDone => 'Копия создана';
+
+  @override
+  String get virtBackupDeleted => 'Копия удалена';
+
+  @override
+  String virtBackupRestored(String time) {
+    return 'Восстановлено из $time';
+  }
+
+  @override
+  String pveNeedsPrivilege(
+    String account,
+    String privilege,
+    String path,
+    String command,
+  ) {
+    return 'У $account нет $privilege на $path. Выдайте на хосте PVE:\n$command';
+  }
+
+  @override
+  String get virtCanDelete => 'Можно удалить';
+
+  @override
+  String get virtInUse => 'Используется';
+
+  @override
+  String get virtOps => 'Действия';
+
+  @override
+  String get virtPool => 'Пул хранения';
+
+  @override
+  String get virtPoolNew => 'Новый пул хранения';
+
+  @override
+  String get virtStorageAdd => 'Добавить хранилище';
+
+  @override
+  String virtPoolUsedPct(String pct) {
+    return 'Занято $pct%';
+  }
+
+  @override
+  String get virtPoolInUse =>
+      'Виртуальная машина использует том здесь, поэтому пул нельзя остановить или удалить.';
+
+  @override
+  String get virtPoolDelete => 'Удалить пул';
+
+  @override
+  String get virtStorageRemove => 'Убрать хранилище';
+
+  @override
+  String virtPoolDeleteAsk(String name) {
+    return 'Удалить пул $name? Удаляется его определение; тома остаются на месте.';
+  }
+
+  @override
+  String virtStorageRemoveAsk(String name) {
+    return 'Убрать хранилище $name из конфигурации PVE? Данные на нём сохранятся.';
+  }
+
+  @override
+  String virtPoolDeleteKeepsVolumes(int count) {
+    return 'Его тома ($count) остаются на диске.';
+  }
+
+  @override
+  String get virtPoolDeleteStorage => 'Удалить и каталог (только если пуст)';
+
+  @override
+  String virtPoolStopAsk(String name) {
+    return 'Остановить пул $name? До запуска нельзя будет просматривать и создавать тома.';
+  }
+
+  @override
+  String virtStorageDisableAsk(String name) {
+    return 'Отключить хранилище $name? ВМ с дисками на нём не запустятся, пока его снова не включат.';
+  }
+
+  @override
+  String get virtPoolLogicalNote =>
+      'Используется существующая группа томов как есть; ничего не форматируется.';
+
+  @override
+  String get virtPoolMountPoint => 'Точка монтирования';
+
+  @override
+  String get virtPoolSourceNfs => 'Источник (host:/путь)';
+
+  @override
+  String get virtPoolSourceVg => 'Группа томов';
+
+  @override
+  String get virtPoolSourceThin => 'Группа томов / thin pool';
+
+  @override
+  String get virtPoolSourceZfs => 'Пул ZFS';
+
+  @override
+  String get virtPoolTypeVg => 'Группа томов LVM';
+
+  @override
+  String get virtResNameEmpty => 'Введите имя';
+
+  @override
+  String get virtResNameInvalid =>
+      'Такое имя хост не примет (буквы, цифры, . _ -)';
+
+  @override
+  String get virtResSourceInvalid => 'Недопустимый путь или источник';
+
+  @override
+  String get virtResTargetInvalid => 'Нужен абсолютный путь';
+
+  @override
+  String get virtResCidrInvalid =>
+      'Адрес с префиксом, например 192.168.150.1/24';
+
+  @override
+  String get virtResDhcpInvalid =>
+      'Два адреса в сети по порядку, без адреса хоста';
+
+  @override
+  String get virtResSubnetTaken => 'Эта подсеть уже занята другой сетью';
+
+  @override
+  String get virtResBridgeInvalid => 'Недопустимое имя интерфейса';
+
+  @override
+  String get virtResFormat => 'Пул не поддерживает этот формат';
+
+  @override
+  String get virtVolNew => 'Новый том';
+
+  @override
+  String virtVolCount(int count) {
+    return 'Томов: $count';
+  }
+
+  @override
+  String get virtVolNone => 'В этом пуле пока нет томов.';
+
+  @override
+  String get virtVolEmptyAttach =>
+      'Новый том можно позже подключить к любой ВМ';
+
+  @override
+  String get virtVolEmptyUpload => 'Можно также сразу загрузить ISO';
+
+  @override
+  String get virtVolPveName => 'PVE называет том по его ВМ: vm-<VMID>-disk-<N>';
+
+  @override
+  String get virtVolUsers => 'Используется';
+
+  @override
+  String get virtVolAllocated => 'Выделено';
+
+  @override
+  String get virtVolGrowFromGuest =>
+      'Используется ВМ: увеличьте его в разделе «Оборудование» этой ВМ';
+
+  @override
+  String get virtVolInUse => 'Этот том использует ВМ';
+
+  @override
+  String get virtVolAttach => 'Подключить к ВМ';
+
+  @override
+  String get virtVolAttachNote =>
+      'Подключается как новый диск на шину первого диска';
+
+  @override
+  String virtVolAttached(String name) {
+    return 'Подключено к $name';
+  }
+
+  @override
+  String get virtVolInsert => 'Вставить в CD-ROM';
+
+  @override
+  String virtVolInserted(String name) {
+    return 'Вставлено в CD-ROM $name';
+  }
+
+  @override
+  String virtVolNoCdrom(String name) {
+    return 'У $name нет привода CD-ROM';
+  }
+
+  @override
+  String virtVolDeleteAsk(String name, String pool) {
+    return 'Удалить том $name из $pool? Его содержимое будет потеряно навсегда.';
+  }
+
+  @override
+  String get virtUploadIso => 'Загрузить ISO';
+
+  @override
+  String virtUploadTo(String pool) {
+    return 'Загрузить в $pool';
+  }
+
+  @override
+  String virtUploadDone(String name) {
+    return '$name загружен';
+  }
+
+  @override
+  String get virtNetConfig => 'Конфигурация';
+
+  @override
+  String get virtNetInternal => 'Внутренняя';
+
+  @override
+  String get virtNetBridgePorts => 'Порты моста';
+
+  @override
+  String get virtNetHostBridge => 'Мост хоста';
+
+  @override
+  String get virtNetPortsHint => 'eno2; пусто — внутренний мост';
+
+  @override
+  String get virtNetDhcpRange => 'Диапазон DHCP';
+
+  @override
+  String get virtNetDhcpTip => 'dnsmasq раздаёт ВМ адреса';
+
+  @override
+  String get virtNetVlanTip => 'Сетевые карты ВМ могут нести VLAN-тег';
+
+  @override
+  String get virtNetNatTip =>
+      'Через хост: ВМ выходят наружу, извне к ним не попасть';
+
+  @override
+  String get virtNetRoutedTip =>
+      'Маршрутизируется хостом без NAT: в LAN нужен обратный маршрут';
+
+  @override
+  String get virtNetIsolatedTip => 'Связь только между ВМ и хостом';
+
+  @override
+  String get virtNetBridgedTip =>
+      'ВМ подключаются к мосту хоста, в его физическую сеть';
+
+  @override
+  String get virtNetNew => 'Новая сеть';
+
+  @override
+  String get virtNetNewBridge => 'Новый мост Linux';
+
+  @override
+  String get virtNetVirtual => 'Виртуальная сеть';
+
+  @override
+  String get virtNetDelete => 'Удалить сеть';
+
+  @override
+  String virtNetDeleteAsk(String name) {
+    return 'Удалить сеть $name? Она будет остановлена, а определение удалено.';
+  }
+
+  @override
+  String virtNetDeleteAskPve(String name, String node) {
+    return 'Убрать мост $name с $node? Сейчас он уйдёт из ожидающей конфигурации, а с хоста — после её применения.';
+  }
+
+  @override
+  String virtNetInUse(int count) {
+    return 'ВМ в этой сети: $count. Удалить нельзя.';
+  }
+
+  @override
+  String virtNetStopAsk(String name, int count) {
+    return 'Остановить $name? $count ВМ в ней потеряют сеть до повторного запуска.';
+  }
+
+  @override
+  String get virtNetInactivePve =>
+      'Не активен: новый мост ждёт в ожидающей конфигурации до её применения.';
+
+  @override
+  String get virtNetPveApplyNote =>
+      'Сохраняется как ожидающее изменение и вступает в силу после применения конфигурации (ifreload -a).';
+
+  @override
+  String get virtNetPendingSaved =>
+      'Сохранено как ожидающее: примените конфигурацию, чтобы оно вступило в силу';
+
+  @override
+  String virtNetPendingTitle(String node) {
+    return 'Ожидающие изменения сети на $node';
+  }
+
+  @override
+  String get virtNetPendingTip =>
+      'PVE хранит изменения сети в interfaces.new до их применения.';
+
+  @override
+  String get virtNetPendingShow => 'Показать изменения';
+
+  @override
+  String get virtNetApply => 'Применить конфигурацию';
+
+  @override
+  String virtNetApplyAsk(String node) {
+    return 'Применить ожидающую конфигурацию сети на $node? PVE перезагрузит сеть хоста (ifreload -a): ошибка в ней может отрезать хост.';
+  }
+
+  @override
+  String virtNetRevertAsk(String node) {
+    return 'Отменить ожидающую конфигурацию сети на $node?';
+  }
+
+  @override
+  String get pveTokenTipStorage =>
+      'Управление хранилищем требует Datastore.Allocate на /storage (добавление, отключение, удаление), Datastore.AllocateSpace (тома) и Datastore.AllocateTemplate (загрузки); мосты Linux и применение сетевой конфигурации требуют Sys.Modify на узле.';
+
+  @override
+  String get virtCreateUnnamed => 'Без имени';
+
+  @override
+  String get virtCreateNotChosen => 'Не выбрано';
+
+  @override
+  String get virtCreateKindVmSub => 'qm · полноценная виртуальная машина KVM';
+
+  @override
+  String get virtCreateKindLxcSub => 'pct · общее ядро с хостом, легче';
+
+  @override
+  String get virtCloudImage => 'Облачный образ';
+
+  @override
+  String get virtCloudImageTip =>
+      'Диск с готовой системой: копируется, увеличивается до размера из раздела «Хранилище» и настраивается cloud-init при первой загрузке. Сам образ не меняется.';
+
+  @override
+  String get virtNoCloudImagesLibvirt =>
+      'Облачных образов нет: поместите образ qcow2 или raw в пул (загрузите в «Хранилище»), который не использует ни одна ВМ.';
+
+  @override
+  String get virtNoCloudImagesPve =>
+      'Облачных образов нет: загрузите образ qcow2, raw или vmdk в хранилище с типом содержимого Import (PVE 8.2+).';
+
+  @override
+  String get virtCreateWindowsTitle => 'Windows 11 требует UEFI и TPM 2.0';
+
+  @override
+  String get virtCreateWindowsBody => 'Выберите выше UEFI и включите TPM.';
+
+  @override
+  String get virtCreateWindowsNoTpm =>
+      'На этом хосте нет программного TPM (swtpm): установите его, чтобы дать ВМ TPM.';
+
+  @override
+  String virtCreateImageSize(String size) {
+    return 'Образ занимает $size: диск должен быть не меньше.';
+  }
+
+  @override
+  String get virtCreateImageMissing => 'Выберите облачный образ.';
+
+  @override
+  String get virtCreateIncomplete =>
+      'Сначала заполните части, отмеченные оранжевым.';
+
+  @override
+  String virtCreateOn(String host) {
+    return 'Создаётся на $host';
+  }
+
+  @override
+  String get virtCiTip =>
+      'Учётная запись с sudo; вход по паролю, SSH-ключу или обоим.';
+
+  @override
+  String get virtCiUserInvalid =>
+      'Строчные буквы, цифры, _ и -, начиная с буквы или _';
+
+  @override
+  String get virtCiCredentialsMissing => 'Задайте пароль или SSH-ключ.';
+
+  @override
+  String get virtCiHostnamePve => 'Имя хоста — это имя ВМ.';
+
+  @override
+  String get virtCiStatic => 'Статический';
+
+  @override
+  String get virtCiAddressInvalid =>
+      'IPv4-адрес с префиксом, например 10.0.0.5/24';
+
+  @override
+  String get virtCiGatewayInvalid => 'IPv4-адрес, например 10.0.0.1';
+
+  @override
+  String get virtCiDnsFromDhcp => 'Пусто: из DHCP';
+
+  @override
+  String get virtCiDnsInvalid => 'IP-адреса через пробел или запятую';
+
+  @override
+  String get virtCiSearch => 'Домен поиска';
+
+  @override
+  String get virtCiSeedNote =>
+      'Записывается в небольшой ISO рядом с диском, подключается как CD-ROM и удаляется вместе с ВМ. Хранится только хеш пароля.';
+
+  @override
+  String get virtCiNoToolTitle =>
+      'На хосте нет средства для создания данных cloud-init';
+
+  @override
+  String virtCiNoToolBody(String tools) {
+    return 'Установите на хост одно из: $tools. Без cloud-init образ запустится без учётной записи для входа.';
+  }
+
+  @override
+  String get virtHwCloudInitNote =>
+      'То, что cloud-init читает при первой загрузке. Не установочный носитель: вставлять сюда нечего.';
+
+  @override
+  String get virtHwCdromLater =>
+      'Пока ВМ работает, привод добавится при следующем запуске (SATA и IDE не поддерживают горячее подключение).';
+
+  @override
+  String virtCreateDiskKept(String size) {
+    return 'Диск оставлен размером $size, как у самого образа, — больше запрошенного: диск никогда не урезается меньше системы на нём.';
+  }
+
+  @override
+  String get virtCiEditTip =>
+      'Что cloud-init настраивает в этой ВМ: учётную запись с sudo, способ входа в неё, имя хоста и адрес.';
+
+  @override
+  String get virtCiForeignTitle =>
+      'В этом seed больше, чем записывает это приложение';
+
+  @override
+  String get virtCiForeignBody =>
+      'Настройки, сделанные в другом месте (пакеты, команды, другие учётные записи), здесь не показаны. При сохранении seed заменяется тем, что показано здесь.';
+
+  @override
+  String get virtCiPasswordKept => 'Задан. Оставьте пустым, чтобы сохранить';
+
+  @override
+  String get virtCiRemovePassword => 'Удалить пароль';
+
+  @override
+  String get virtCiRemovePasswordNote => 'Вход только по SSH-ключу';
+
+  @override
+  String get virtCiKeysAdded =>
+      'Ключи добавляются к учётной записи. Ключ, убранный здесь, остаётся в системе, пока его не удалят там, а новое имя пользователя создаёт новую учётную запись рядом со старой.';
+
+  @override
+  String get virtCiEffectTitle => 'Вступит в силу при следующей загрузке';
+
+  @override
+  String get virtCiEffectLibvirt =>
+      'При сохранении записывается новый seed с новым ID экземпляра.';
+
+  @override
+  String get virtCiEffectPve =>
+      'PVE сразу перезаписывает свой диск cloud-init; ID экземпляра вычисляется из этих настроек, поэтому любое изменение здесь даёт новый.';
+
+  @override
+  String get virtCiNewInstance =>
+      'При следующей загрузке cloud-init считает систему новым экземпляром: заново задаёт имя хоста, создаёт учётную запись, если её нет, задаёт пароль, добавляет ключи и заново записывает настройки сети. Он также создаёт новые SSH-ключи хоста, поэтому SSH-клиенты предупредят, что ключ хоста изменился. До этой загрузки ничего не меняется.';
+
+  @override
+  String get virtCiSaved => 'Сохранено. Вступит в силу при следующей загрузке.';
 }

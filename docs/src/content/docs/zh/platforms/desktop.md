@@ -3,7 +3,7 @@ title: 桌面端功能
 description: macOS、Linux 和 Windows 的平台特定功能
 ---
 
-桌面版 Server Box 提供更大的工作区域、完整键盘支持，以及各平台特有的窗口功能。
+桌面版 Server Box 提供更大的工作空间、完整的键盘支持和平台专属的窗口功能。
 
 ## macOS
 
@@ -17,7 +17,7 @@ macOS 菜单栏包含以下菜单和快捷键：
 
 ### 窗口管理
 
-App 会记住窗口大小和位置，并在下次启动时恢复。
+应用会记住窗口大小和位置，并在下次启动时恢复。
 
 ## Linux
 
@@ -38,9 +38,11 @@ App 会记住窗口大小和位置，并在下次启动时恢复。
 - 深色
 - 跟随系统
 
-AMOLED 已改为内置主题，Dark 使用纯黑背景，Light 使用标准浅色配色。
-原 AMOLED 自动迁移为 Dark + AMOLED，原自动 AMOLED 迁移为 System + AMOLED。
-主题包声明支持 Light 和/或 Dark；只支持一种模式时，ThemeMode 会锁定并显示说明。
+AMOLED 现为内置主题：Dark 模式使用纯黑背景，Light 模式使用标准浅色配色。原有的
+AMOLED 设置会迁移为 Dark + AMOLED，Auto AMOLED 设置会迁移为 System + AMOLED。
+
+主题包会声明支持 Light、Dark 或两种模式。主题只支持一种模式时，ThemeMode 设置会被
+锁定，并说明原因。
 
 ### 与移动端相比
 

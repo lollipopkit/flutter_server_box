@@ -18,10 +18,12 @@ import 'package:server_box/data/model/app/share/server_share.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
+import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/private_key.dart';
+import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/server.dart';
 
 import '../../helpers/test_db.dart';
@@ -62,6 +64,9 @@ void main() {
     }
     if (!getIt.isRegistered<PrivateKeyStore>()) {
       getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore());
+    }
+    if (!getIt.isRegistered<PveStore>()) {
+      getIt.registerSingleton<PveStore>(PveStore());
     }
     Stores.server.dropCache();
     Stores.key.dropCache();
@@ -295,6 +300,70 @@ void main() {
       expect(
         () => ServerShareCodec.decode('[]'),
         throwsA(isA<ServerShareUnreadableException>()),
+      );
+    });
+  });
+
+  group('PVE', () {
+    const pve = PveConfig(
+      addr: 'https://127.0.0.1:8006',
+      auth: PveAuth.token,
+      tokenId: 'root@pam!sb',
+      tokenSecret: 'secret',
+    );
+
+    test('travels beside the server and lands in its table', () {
+      final spi = _spi();
+      Stores.server.put(spi);
+      Stores.pve.put(spi.id, pve);
+
+      final share = ServerShare.of(spi);
+      expect(share.pve, pve);
+      final text = ServerShareCodec.encode(share, 'passphrase', ShareCarrier.file);
+      final back = ServerShareCodec.decode(text, password: 'passphrase');
+
+      final result = ServerShareInstaller.install(back);
+      expect(result.spi.id, isNot(spi.id), reason: 'the id was taken here');
+      expect(Stores.pve.fetch(result.spi.id), pve);
+    });
+
+    test('a payload from before its table reads it out of custom', () {
+      final json = ServerShare(version: 1, spi: _spi()).toJson();
+      final spiJson = Map<String, dynamic>.from(
+        jsonDecode(jsonEncode(json['spi'])) as Map,
+      );
+      spiJson['custom'] = {
+        'pveAddr': 'https://10.0.0.9:8006',
+        'pveIgnoreCert': true,
+        'pvePwd': 'p',
+      };
+      json
+        ..['spi'] = spiJson
+        ..remove('pve');
+
+      final share = ServerShare.fromJson(
+        jsonDecode(jsonEncode(json)) as Map<String, dynamic>,
+      );
+      // No PVE password: SSH logs in with a password here, and that is what
+      // a PVE login sends (`PveConfig.loginPassword`).
+      expect(share.pve, const PveConfig(addr: 'https://10.0.0.9:8006'));
+    });
+
+    test('an older build reads it out of custom, so it is written there', () {
+      final spi = _spi();
+      Stores.server.put(spi);
+      Stores.pve.put(spi.id, pve.copyWith(certSha256: 'ab12'));
+
+      final wire =
+          jsonDecode(jsonEncode(ServerShare.of(spi).toWireJson()))
+              as Map<String, dynamic>;
+      final custom = (wire['spi'] as Map)['custom'] as Map;
+      expect(custom['pveAddr'], pve.addr);
+      expect(custom['pveIgnoreCert'], isTrue);
+      // This build still reads the `pve` object first.
+      expect(
+        ServerShare.fromJson(wire).pve,
+        pve.copyWith(certSha256: 'ab12'),
       );
     });
   });

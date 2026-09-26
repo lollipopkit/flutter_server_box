@@ -411,6 +411,57 @@ void main() {
     });
   });
 
+  group('a guest console', () {
+    test('is opened by its own connect, each time, and owned', () async {
+      var connects = 0;
+      final backends = <_ConsoleBackend>[];
+      final source = ConsoleSource(
+        id: 'virt-console:s:qemu/100',
+        label: 'web-01',
+        connect: () async {
+          connects++;
+          final backend = _ConsoleBackend();
+          backends.add(backend);
+          return backend;
+        },
+      );
+      final session = TerminalSession(source: source);
+      expect(session.spi, isNull, reason: 'nothing of the host applies');
+
+      // Nothing to borrow: the status poller holds no console.
+      session.adopt(null);
+      expect(session.backend, isNull);
+
+      await session.connect();
+      expect(connects, 1);
+      expect(session.canExec, isFalse);
+
+      // A reconnect is a new console, and the old one is let go.
+      session.closeBackend();
+      expect(backends.single.closed, isTrue);
+      await session.connect();
+      expect(connects, 2);
+
+      session.close();
+      expect(backends.last.closed, isTrue, reason: 'the session owned it');
+    });
+
+    test('a failure retries only when it says it may', () {
+      expect(
+        isRetryableTerminalConnectionError(
+          const TerminalConsoleErr('link dropped', retryable: true),
+        ),
+        isTrue,
+      );
+      expect(
+        isRetryableTerminalConnectionError(
+          const TerminalConsoleErr('ticket refused'),
+        ),
+        isFalse,
+      );
+    });
+  });
+
   test('initial reconnect retries transport errors only', () {
     expect(isRetryableTerminalConnectionError(TimeoutException('slow')), isTrue);
     expect(
@@ -432,4 +483,35 @@ void main() {
       isFalse,
     );
   });
+}
+
+class _ConsoleBackend implements ShellBackend {
+  var closed = false;
+
+  @override
+  bool get isClosed => closed;
+
+  @override
+  bool get supportsExec => false;
+
+  @override
+  Future<ShellSession> openShell({
+    required int width,
+    required int height,
+    Map<String, String>? environment,
+  }) async => _FakeShell();
+
+  @override
+  Future<ShellSession> execute(
+    String command, {
+    required int width,
+    required int height,
+    Map<String, String>? environment,
+  }) => throw UnsupportedError('console');
+
+  @override
+  Future<void> ping() async {}
+
+  @override
+  void close() => closed = true;
 }

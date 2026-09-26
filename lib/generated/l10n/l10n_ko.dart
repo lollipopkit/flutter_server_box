@@ -995,9 +995,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get parseContainerStatsTip => 'Docker 점유 상태 파싱이 비교적 느립니다.';
 
   @override
-  String get plugInType => '삽입 유형';
-
-  @override
   String get preferDiskAmount => '디스크 용량 우선 표시';
 
   @override
@@ -1132,20 +1129,11 @@ class AppLocalizationsKo extends AppLocalizations {
       '활성화를 권장하지 않습니다. 보안 위험에 주의하세요! PVE 기본 인증서를 사용하는 경우 이 옵션을 활성화해야 합니다.';
 
   @override
-  String get pveServerClientMissing => '이 서버의 SSH 클라이언트를 사용할 수 없습니다.';
-
-  @override
-  String get pveAddressMissing => 'PVE 주소가 없습니다. 서버 설정에서 구성해 주세요.';
-
-  @override
   String get pvePasswordRequired => 'PVE 비밀번호가 필요합니다. 서버 설정에서 설정해 주세요.';
 
   @override
   String get pveOtpRequired =>
       '이 PVE 서버에는 2단계 인증이 활성화되어 있습니다. OTP 코드를 입력해 주세요.';
-
-  @override
-  String get pveOtpChallengeExpired => 'OTP 인증 요청이 만료되었습니다. 새로고침 후 다시 시도해 주세요.';
 
   @override
   String get pveOtpCodeRequired => 'OTP 코드가 필요합니다.';
@@ -1167,19 +1155,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get pveMissingAuthTicket => 'PVE 로그인은 성공했지만 인증 티켓이 반환되지 않았습니다.';
-
-  @override
-  String get pveVersionLow =>
-      '이 기능은 현재 테스트 단계이며 PVE 8+에서만 테스트되었습니다. 주의하여 사용해 주세요.';
-
-  @override
-  String get pveLoadingForwarding => 'SSH 터널을 설정하는 중...';
-
-  @override
-  String get pveLoadingLogin => 'PVE에 인증하는 중...';
-
-  @override
-  String get pveLoadingData => '클러스터 데이터를 가져오는 중...';
 
   @override
   String get pveLoadingConnect => '연결하는 중...';
@@ -1630,9 +1605,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get sortByJoinTime => '가입 시간순';
-
-  @override
-  String get portForwardBetaTitle => '포트 포워딩 (Beta)';
 
   @override
   String get tmuxAutoAttach => 'tmux 자동 연결';
@@ -3145,4 +3117,1480 @@ class AppLocalizationsKo extends AppLocalizations {
   String appearanceThemeModeLocked(String mode) {
     return '이 테마는 $mode만 지원합니다. 모드를 변경하려면 다른 테마를 선택하세요.';
   }
+
+  @override
+  String get pveAuthToken => 'API 토큰';
+
+  @override
+  String get pveVersionLow =>
+      '이 기능은 현재 테스트 단계이며 PVE 8+에서만 테스트되었습니다. 주의하여 사용해 주세요.';
+
+  @override
+  String get pveTokenId => '토큰 ID';
+
+  @override
+  String get pveTokenSecret => '토큰 시크릿';
+
+  @override
+  String get pveTokenTip =>
+      'PVE의 데이터센터 → 권한 → API 토큰에서 만듭니다. 표시할 경로에 VM.Audit, VM.PowerMgmt, VM.Console, VM.Snapshot, VM.Snapshot.Rollback, Datastore.Audit, Sys.Audit 권한이 필요하며, 권한 분리가 켜져 있으면 토큰 자체에 부여해야 합니다.';
+
+  @override
+  String pveTokenNoPrivileges(String account, String command) {
+    return '토큰 $account은(는) 이 호스트에서 아무것도 볼 수 없습니다. 권한 분리가 켜진 토큰은 사용자의 권한을 물려받지 않으므로 PVE 호스트에서 권한을 부여하세요:\n$command\n또는 토큰의 \"Privilege Separation\"을 해제하세요.';
+  }
+
+  @override
+  String pveUserNoPrivileges(String account, String command) {
+    return '$account은(는) 이 호스트에서 아무것도 볼 수 없습니다. PVE 호스트에서 권한을 부여하세요:\n$command';
+  }
+
+  @override
+  String get pveTokenIdInvalid => '토큰 ID는 user@realm!tokenid 형식이어야 합니다';
+
+  @override
+  String get pvePasswordAuthTip =>
+      'SSH 사용자로 PAM 영역에 SSH 비밀번호로 로그인합니다. SSH가 키를 사용하면 아래의 PVE 비밀번호를 사용합니다. 필요하면 2단계 인증 코드를 요청합니다.';
+
+  @override
+  String get pveCertUnpinned =>
+      '아직 확인되지 않았습니다. 신뢰할 수 있는 CA가 서명하지 않았다면 다음 연결 시 인증서를 표시해 확인을 요청합니다.';
+
+  @override
+  String get pveCertForget => '인증서 잊기';
+
+  @override
+  String get pveCertForgetTip => '다음 연결 시 PVE 인증서를 다시 표시해 확인을 요청합니다.';
+
+  @override
+  String get virtualization => '가상화';
+
+  @override
+  String get virtIntro =>
+      'Proxmox VE 및 libvirt/KVM 호스트의 가상 머신과 컨테이너를 관리합니다: 상태, 전원 작업, 콘솔.';
+
+  @override
+  String get virtIntroPveMoved =>
+      'Proxmox VE가 서버 페이지에서 이 탭으로 이동했습니다. 서버의 PVE 카드를 누르면 여기서 열립니다.';
+
+  @override
+  String get virtIntroLibvirt =>
+      'libvirt의 virsh가 설치된 서버는 QEMU/KVM 가상 머신과 함께 호스트로 표시됩니다.';
+
+  @override
+  String get virtIntroTransports => '둘 다 SSH, Monitor 에이전트 또는 이 기기에서 작동합니다.';
+
+  @override
+  String get virtIntroTokens =>
+      'PVE는 비밀번호 대신 API 토큰으로 로그인할 수 있습니다. 서버 편집 페이지의 PVE에서 설정하세요.';
+
+  @override
+  String get virtIntroInBar => '탭 바에 추가되었습니다.';
+
+  @override
+  String get virtIntroInMore => '\'더보기\'에 있습니다. 설정의 홈 탭에서 탭 바로 옮길 수 있습니다.';
+
+  @override
+  String get virtGuests => '가상 머신';
+
+  @override
+  String get virtHosts => '호스트';
+
+  @override
+  String get virtCheckServer => '이 서버 확인';
+
+  @override
+  String get virtCheckAll => '모든 서버 확인';
+
+  @override
+  String get virtProbeNotChecked => '아직 확인 안 됨';
+
+  @override
+  String get virtProbeAbsent => '호스트 아님';
+
+  @override
+  String virtProbeContainer(String kind) {
+    return '$kind 컨테이너';
+  }
+
+  @override
+  String get virtProbeContainerTip =>
+      '이 서버는 컨테이너에서 실행되므로 호스트가 아니라 게스트입니다. 이를 실행하는 호스트에서 관리하세요.';
+
+  @override
+  String get virtProbePve => 'PVE, 설정 안 됨';
+
+  @override
+  String virtPveSetupTip(String version) {
+    return '이 서버에서 $version이(가) 실행 중입니다. 서버 설정에서 API 접근 정보(API 토큰 권장)를 입력하면 여기에서 가상 머신과 컨테이너를 관리할 수 있습니다.';
+  }
+
+  @override
+  String get virtNoHosts => '가상화 호스트 없음';
+
+  @override
+  String get virtNoHostsTip =>
+      'Proxmox VE가 실행되고 API 접근 정보가 입력된 서버와 virsh가 응답하는 서버가 호스트입니다. 다른 서버는 호스트 전환기에서 확인할 수 있습니다.';
+
+  @override
+  String get virtNoGuests => '가상 머신이나 컨테이너 없음';
+
+  @override
+  String get virtPaused => '일시 중지됨';
+
+  @override
+  String get virtStarting => '시작 중…';
+
+  @override
+  String get virtStopping => '중지 중…';
+
+  @override
+  String get virtRebooting => '재부팅 중…';
+
+  @override
+  String get virtMigrating => '마이그레이션 중…';
+
+  @override
+  String get virtBackingUp => '백업 중…';
+
+  @override
+  String get virtResume => '재개';
+
+  @override
+  String get virtOverview => '개요';
+
+  @override
+  String get virtConsole => '콘솔';
+
+  @override
+  String get virtConsoleNone => '이 게스트에 설정된 콘솔이 없습니다';
+
+  @override
+  String get virtConsoleGraphical => '그래픽';
+
+  @override
+  String get virtVncPasswordNeeded => '이 디스플레이는 암호가 필요합니다';
+
+  @override
+  String get virtConsoleSerialTip =>
+      '호스트에서 virsh로 게스트의 시리얼 콘솔을 엽니다. 연결 끊기 또는 Ctrl+]로 호스트 셸로 돌아갑니다.';
+
+  @override
+  String virtConsoleVia(String transport) {
+    return '$transport 경유';
+  }
+
+  @override
+  String get virtConsoleEnterTip => '출력이 없나요? Enter를 누르세요';
+
+  @override
+  String virtConsoleAutoEnter(int seconds) {
+    return '$seconds초 후 Enter를 눌러 프롬프트를 표시합니다';
+  }
+
+  @override
+  String get virtConsoleEnterNow => '지금';
+
+  @override
+  String get virtOffTip => '시작하면 여기에서 CPU, 메모리, 디스크, 네트워크를 실시간으로 볼 수 있습니다.';
+
+  @override
+  String get virtAllocated => '할당됨';
+
+  @override
+  String virtRunningCount(int running, int total) {
+    return '$running개 실행 중 · 총 $total개';
+  }
+
+  @override
+  String get virtTemplate => '템플릿';
+
+  @override
+  String get virtAutostart => '호스트와 함께 시작';
+
+  @override
+  String get virtErrUnreachable => '이 호스트에 연결할 수 없음';
+
+  @override
+  String get virtErrNotConfigured => '이 서버의 PVE 설정이 불완전합니다';
+
+  @override
+  String get virtErrNotConfiguredTip => '서버 설정에서 주소와 비밀번호 또는 API 토큰을 확인하세요.';
+
+  @override
+  String get virtErrAuthFailed => '호스트가 로그인을 거부했습니다';
+
+  @override
+  String get virtErrCertUnconfirmed => '호스트 인증서를 확인하세요';
+
+  @override
+  String get virtErrCertChanged => '호스트 인증서가 변경되었습니다';
+
+  @override
+  String get virtErrRelayNotGranted => 'Monitor 에이전트가 연결을 중계하지 않습니다';
+
+  @override
+  String get virtErrExecNotGranted => 'Monitor 에이전트가 명령을 실행하지 않습니다';
+
+  @override
+  String get virtErrNotInstalled => '이 서버에 virsh가 설치되어 있지 않습니다';
+
+  @override
+  String get virtErrServerRemoved => '이 서버는 더 이상 존재하지 않습니다';
+
+  @override
+  String get virtErrSudoRequired => 'libvirt에 접근하려면 sudo 비밀번호가 필요합니다';
+
+  @override
+  String get virtErrSudoRejected => 'sudo가 비밀번호를 거부했습니다';
+
+  @override
+  String get virtErrInvalidResponse => '호스트가 예상치 못한 형식으로 응답했습니다';
+
+  @override
+  String get virtErrActionFailed => '호스트가 작업을 거부했습니다';
+
+  @override
+  String get remoteSessionIdleTimeout => '떠나면 닫기';
+
+  @override
+  String get remoteSessionIdleTimeoutTip =>
+      '원격 데스크톱이나 게스트 콘솔을 떠난 뒤 연결을 유지하는 시간입니다. 닫히기 전에 알림이 표시되며 10초 안에 유지할 수 있습니다.';
+
+  @override
+  String get remoteSessionKeepAlive => '유지';
+
+  @override
+  String get remoteSessionClosedAway => '유휴 상태로 닫힘';
+
+  @override
+  String remoteSessionClosingIn(int seconds) {
+    return '$seconds초 후 닫힘';
+  }
+
+  @override
+  String get reopen => '다시 열기';
+
+  @override
+  String get virtSnapshots => '스냅샷';
+
+  @override
+  String get virtSnapshotCreate => '스냅샷 만들기';
+
+  @override
+  String get virtSnapshotNone => '아직 스냅샷이 없습니다';
+
+  @override
+  String get virtSnapshotWithMemory => '디스크와 메모리';
+
+  @override
+  String get virtSnapshotDiskOnly => '디스크만';
+
+  @override
+  String get virtSnapshotParent => '상위';
+
+  @override
+  String get virtSnapshotRevert => '되돌리기';
+
+  @override
+  String get virtSnapshotMemory => '메모리 포함';
+
+  @override
+  String get virtSnapshotMemoryTip => '되돌리면 이 시점부터 게스트가 다시 실행됩니다.';
+
+  @override
+  String get virtSnapshotMemoryAlways => '여기서는 실행 중인 게스트의 스냅샷에 항상 메모리가 포함됩니다.';
+
+  @override
+  String get virtSnapshotMemoryOff => '게스트가 실행 중이 아니므로 디스크만 저장됩니다.';
+
+  @override
+  String get virtSnapshotNameInvalid => '영문자로 시작하고 영문자, 숫자, - 또는 _, 2~40자.';
+
+  @override
+  String get virtSnapshotNameTaken => '이 이름의 스냅샷이 이미 있습니다.';
+
+  @override
+  String get virtSnapshotRevertTip => '되돌리면 스냅샷 이후의 모든 변경 사항이 사라집니다.';
+
+  @override
+  String virtSnapshotRevertAsk(String guest, String snapshot) {
+    return '$guest을(를) $snapshot(으)로 되돌릴까요? 이후의 모든 변경 사항이 사라집니다.';
+  }
+
+  @override
+  String virtSnapshotRevertStops(String guest) {
+    return '이 스냅샷에는 메모리가 없습니다: $guest이(가) 중지됩니다.';
+  }
+
+  @override
+  String get virtSnapshotStartAfter => '이후 시작';
+
+  @override
+  String get virtVolumes => '볼륨';
+
+  @override
+  String get virtNoPools => '스토리지 풀 없음';
+
+  @override
+  String get virtNoNetworks => '네트워크 없음';
+
+  @override
+  String get virtPoolInactive => '풀이 활성 상태가 아니어서 볼륨을 나열할 수 없습니다.';
+
+  @override
+  String get virtShared => '노드 간 공유';
+
+  @override
+  String get virtBackingFile => '백킹 파일';
+
+  @override
+  String get virtNetIsolated => '격리';
+
+  @override
+  String get virtNetBridged => '브리지';
+
+  @override
+  String get virtNetRouted => '라우팅';
+
+  @override
+  String get virtBridge => '브리지';
+
+  @override
+  String get virtPorts => '포트';
+
+  @override
+  String get virtAttachedGuests => '연결된 게스트';
+
+  @override
+  String get virtNoAttachedGuests => '연결된 게스트 없음';
+
+  @override
+  String get virtCreateVm => '새 가상 머신';
+
+  @override
+  String get virtCreateLxc => '새 컨테이너';
+
+  @override
+  String get virtCreateGuest => '새 가상 머신 또는 컨테이너';
+
+  @override
+  String get virtKindVm => '가상 머신';
+
+  @override
+  String get virtKindLxc => '컨테이너';
+
+  @override
+  String get virtHostname => '호스트 이름';
+
+  @override
+  String get virtInstallMedia => '설치 미디어';
+
+  @override
+  String get virtNoIsos => '이 호스트에 ISO 이미지가 없습니다';
+
+  @override
+  String get virtNoTemplates =>
+      '이 호스트에 컨테이너 템플릿이 없습니다. PVE에서 스토리지의 CT 템플릿으로 내려받을 수 있습니다.';
+
+  @override
+  String get virtNoDiskStorage => '이 호스트에 새 디스크를 만들 수 있는 스토리지가 없습니다';
+
+  @override
+  String get virtStartAfterCreate => '생성 후 시작';
+
+  @override
+  String get virtUnprivileged => '비특권 컨테이너';
+
+  @override
+  String get virtUnprivilegedTip => '컨테이너의 root는 호스트의 일반 사용자입니다.';
+
+  @override
+  String get virtSshKeys => 'SSH 공개 키';
+
+  @override
+  String get virtCredentialsTip => 'root 비밀번호, SSH 키, 또는 둘 다.';
+
+  @override
+  String virtCreated(String name) {
+    return '$name 생성됨';
+  }
+
+  @override
+  String virtCreatedNotStarted(String name) {
+    return '$name이(가) 생성되었지만 시작되지 않았습니다';
+  }
+
+  @override
+  String get virtErrExists => '같은 이름의 게스트나 디스크가 이미 있습니다';
+
+  @override
+  String get virtCreateNameInvalidLibvirt =>
+      '영문자, 숫자, ., _, -, 영문자나 숫자로 시작; 최대 63자.';
+
+  @override
+  String get virtCreateNameInvalidPve => '영문자, 숫자, -, 점으로 구분된 부분; 최대 63자.';
+
+  @override
+  String get virtCreateNameTaken => '같은 이름의 게스트가 있습니다.';
+
+  @override
+  String get virtCreateVmidInvalid => '100에서 999999999까지.';
+
+  @override
+  String get virtCreateVmidTaken => '이 VMID는 사용 중입니다.';
+
+  @override
+  String get virtCreateCoresInvalid => '이 호스트가 허용하는 것보다 코어가 많습니다.';
+
+  @override
+  String get virtCreateMemoryInvalid => '메모리가 부족합니다.';
+
+  @override
+  String get virtCreateStorageMissing => '디스크를 둘 곳을 선택하세요.';
+
+  @override
+  String get virtCreateDiskInvalid => '1 GiB에서 64 TiB까지.';
+
+  @override
+  String get virtCreateTemplateMissing => '템플릿을 선택하세요.';
+
+  @override
+  String get virtCreateCredentialsMissing => 'root 비밀번호나 SSH 키를 설정하세요.';
+
+  @override
+  String virtCreatePasswordShort(int min) {
+    return '최소 $min자.';
+  }
+
+  @override
+  String get virtCreateSshKeysInvalid => '한 줄에 OpenSSH 공개 키 하나.';
+
+  @override
+  String get virtDeleteDisks => '디스크도 함께 삭제';
+
+  @override
+  String get virtDeleteDisksPve => '디스크는 함께 삭제되고, 설치 미디어는 유지됩니다.';
+
+  @override
+  String virtDeleted(String name) {
+    return '$name 삭제됨';
+  }
+
+  @override
+  String get pveTokenTipCreate =>
+      '게스트를 만들고 삭제하려면 VM.Allocate, VM.Config.*, Datastore.AllocateSpace, SDN.Use도 필요합니다.';
+
+  @override
+  String get pveTokenTipHardware =>
+      '하드웨어 편집에는 VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network, VM.Config.Options가 필요하며, 디스크와 인터페이스를 추가하려면 Datastore.AllocateSpace와 SDN.Use도 필요합니다. 그래픽 카드와 USB·PCI 장치에는 VM.Config.HWType도 필요합니다. 리소스 매핑으로 넘기는 장치에는 해당 매핑의 Mapping.Use가, 매핑 목록에는 Mapping.Audit가 필요합니다.';
+
+  @override
+  String get pveTokenTipBackup =>
+      '복제에는 VM.Clone, 백업과 복원에는 VM.Backup이 필요하며, 복사본이나 백업이 저장되는 곳에 Datastore.AllocateSpace도 필요합니다.';
+
+  @override
+  String get virtErrConflict => '다른 곳에서 변경됨';
+
+  @override
+  String get virtErrConflictTip =>
+      '여기서 읽은 뒤 다른 사람이 이 게스트의 구성을 변경해서 아무것도 바꾸지 않았습니다. 다시 읽었으니 여전히 필요하면 다시 변경하세요.';
+
+  @override
+  String get virtHardware => '하드웨어';
+
+  @override
+  String get virtHwAddDisk => '디스크 추가';
+
+  @override
+  String get virtHwAddMount => '마운트 지점 추가';
+
+  @override
+  String get virtHwAddNic => '네트워크 인터페이스 추가';
+
+  @override
+  String get virtHwAppliesOnRestart => '저장했습니다. 다음 시작 시 적용됩니다.';
+
+  @override
+  String get virtHwAutostart => '호스트와 함께 시작';
+
+  @override
+  String get virtHwAutostartPve => 'onboot · VMID 순서로 시작';
+
+  @override
+  String get virtHwBalloonLibvirt => '현재 메모리';
+
+  @override
+  String get virtHwBalloonNote => '메모리가 부족할 때 호스트가 게스트의 유휴 메모리를 회수하도록 허용';
+
+  @override
+  String get virtHwBoot => '부팅';
+
+  @override
+  String get virtHwBootOrder => '부팅 순서';
+
+  @override
+  String get virtHwBootTip => '화살표로 순서를 바꾸고, 탭하면 그 장치로 부팅할지 전환합니다.';
+
+  @override
+  String get virtHwCdrom => 'CD-ROM';
+
+  @override
+  String get virtHwConfigFile => '구성 파일';
+
+  @override
+  String get virtHwCores => '코어';
+
+  @override
+  String get virtHwCpuTypeDefault => '기본값';
+
+  @override
+  String get virtHwDeleteVolume => '볼륨도 삭제';
+
+  @override
+  String get virtHwDetach => '분리';
+
+  @override
+  String get virtHwDiskHotplug => '핫플러그 지원: 실행 중에도 추가 가능';
+
+  @override
+  String get virtHwDisksLxc => '루트 디스크와 마운트 지점';
+
+  @override
+  String get virtHwEject => '꺼내기';
+
+  @override
+  String get virtHwEmpty => '미디어 없음';
+
+  @override
+  String get virtHwFirewall => '방화벽';
+
+  @override
+  String virtHwFree(String size) {
+    return '여유 $size';
+  }
+
+  @override
+  String get virtHwGrow => '확장';
+
+  @override
+  String get virtHwGrowNote => '디스크는 현재 용량에서 확장만 가능합니다.';
+
+  @override
+  String get virtHwGrowNoteRunning =>
+      '확장만 가능합니다. 실행 중에 확장했다면 게스트 안에서 파티션을 확장해야 합니다.';
+
+  @override
+  String get virtHwGuestUsed => '게스트 사용량';
+
+  @override
+  String virtHwHostCpus(int threads, int allocated) {
+    return '호스트 $threads 스레드 · 할당됨 $allocated';
+  }
+
+  @override
+  String virtHwHostMem(String total, String allocated) {
+    return '호스트 $total · 할당됨 $allocated';
+  }
+
+  @override
+  String get virtHwHotplugNow => '핫플러그: 즉시 적용됩니다.';
+
+  @override
+  String get virtHwIssueBootEmpty => '장치를 하나 이상 체크하세요';
+
+  @override
+  String virtHwIssueCpuCount(int max) {
+    return 'vCPU 합계는 1~$max';
+  }
+
+  @override
+  String get virtHwIssueCpuOnline => '온라인 vCPU는 1~합계';
+
+  @override
+  String get virtHwIssueDiskShrink => '현재보다 커야 함: 디스크는 확장만 가능';
+
+  @override
+  String get virtHwIssueDiskSize => '1~65536 GiB';
+
+  @override
+  String virtHwIssueMemory(int min, int max) {
+    return '$min~$max MiB';
+  }
+
+  @override
+  String get virtHwIssueMemoryMin => '메모리보다 클 수 없음';
+
+  @override
+  String get virtHwIssueMountPoint => '/data 같은 절대 경로';
+
+  @override
+  String get virtHwIssueStorageSpace => '스토리지 여유 공간보다 큼';
+
+  @override
+  String get virtHwIssueSwap => '음수 불가';
+
+  @override
+  String get virtHwLater => '재시작 후 적용';
+
+  @override
+  String get virtHwLess => '줄이기';
+
+  @override
+  String get virtHwLinkDown => '연결 끊김';
+
+  @override
+  String get virtHwLinkNote => '끄면 게스트에게 케이블이 뽑힌 것처럼 보입니다. 재시작 필요 없음';
+
+  @override
+  String get virtHwLinkUp => '연결됨';
+
+  @override
+  String get virtHwMac => 'MAC 주소';
+
+  @override
+  String get virtHwModel => '모델';
+
+  @override
+  String get virtHwMore => '늘리기';
+
+  @override
+  String get virtHwMountFromPool => '마운트 지점은 스토리지에서 바로 할당됩니다';
+
+  @override
+  String get virtHwMountPoint => '마운트 지점';
+
+  @override
+  String get virtHwMoveDown => '아래로';
+
+  @override
+  String get virtHwMoveUp => '위로';
+
+  @override
+  String get virtHwNewDisk => '새 디스크';
+
+  @override
+  String get virtHwNewMount => '새 마운트 지점';
+
+  @override
+  String get virtHwNewNic => '새 네트워크 인터페이스';
+
+  @override
+  String get virtHwNicHotplug => 'virtio NIC는 핫플러그를 지원합니다';
+
+  @override
+  String get virtHwNics => '네트워크 인터페이스';
+
+  @override
+  String get virtHwNoMedia => '미디어 없음';
+
+  @override
+  String get virtHwNoNetworks => '네트워크나 브리지가 없습니다';
+
+  @override
+  String get virtHwNoStorage => '디스크를 둘 수 있는 스토리지가 없습니다';
+
+  @override
+  String get virtHwOnline => '온라인 vCPU';
+
+  @override
+  String get virtHwPendingBanner => '일부 하드웨어 변경은 재시작 후 적용됩니다';
+
+  @override
+  String get virtHwPickNet => '네트워크 선택';
+
+  @override
+  String get virtHwPickPool => '스토리지와 용량 선택';
+
+  @override
+  String get virtHwProcessor => '프로세서';
+
+  @override
+  String get virtHwRemove => '제거';
+
+  @override
+  String get virtHwRemoveCdrom => 'CD-ROM 제거';
+
+  @override
+  String virtHwRemoveDiskAsk(String disk, String guest) {
+    return '$guest에서 $disk을(를) 제거할까요?';
+  }
+
+  @override
+  String virtHwRemoveNicAsk(String nic, String guest) {
+    return '$guest에서 $nic을(를) 제거할까요?';
+  }
+
+  @override
+  String get virtHwResources => '리소스';
+
+  @override
+  String get virtHwRestartNow => '지금 재시작';
+
+  @override
+  String get virtHwRevert => '되돌리기';
+
+  @override
+  String get virtHwRevertAll => '모두 되돌리기';
+
+  @override
+  String get virtSetRenameStopped =>
+      '이름을 바꾸려면 게스트를 종료하세요: libvirt는 실행 중이 아닌 게스트만 이름을 바꿀 수 있습니다.';
+
+  @override
+  String virtSetIssueDescription(int max) {
+    return '최대 $max자, 제어 문자는 사용할 수 없습니다.';
+  }
+
+  @override
+  String get virtSetManualStart => '수동 시작';
+
+  @override
+  String get virtSetProtection => '보호';
+
+  @override
+  String get virtSetProtectionNote => '게스트 삭제와 디스크 변경을 막습니다';
+
+  @override
+  String get virtSetIrreversible => '되돌릴 수 없음';
+
+  @override
+  String get virtSetDeleteStopFirst => '삭제하기 전에 종료하세요.';
+
+  @override
+  String get virtSetDeleteProtected => '보호가 켜져 있습니다: 먼저 일반에서 끄세요.';
+
+  @override
+  String get virtSetDeleteAgain => '확인하려면 한 번 더 누르세요';
+
+  @override
+  String virtSetDeleteConfirm(String name) {
+    return '$name 삭제';
+  }
+
+  @override
+  String get virtSetDeleteVm => '가상 머신 삭제';
+
+  @override
+  String get virtSetDeleteLxc => '컨테이너 삭제';
+
+  @override
+  String get virtHwSockets => '소켓';
+
+  @override
+  String get virtHwSource => '소스';
+
+  @override
+  String get virtHwSwap => '스왑';
+
+  @override
+  String get virtHwTopology => '소켓 × 코어';
+
+  @override
+  String virtHwTopologyValue(int sockets, int cores, int threads) {
+    return '$sockets 소켓 × $cores 코어 × $threads 스레드';
+  }
+
+  @override
+  String virtHwTotal(String size) {
+    return '총 $size';
+  }
+
+  @override
+  String get virtHwVolumeKept =>
+      '제거했지만 실행 중인 게스트가 아직 디스크를 사용 중이라 볼륨은 남겨 두었습니다. 다음 시작 시 분리됩니다.';
+
+  @override
+  String get virtHwBus => '버스';
+
+  @override
+  String get virtHwCache => '캐시';
+
+  @override
+  String get virtHwBusStopped => '버스는 게스트가 중지된 상태에서만 바꿀 수 있습니다.';
+
+  @override
+  String get virtHwMacGenerate => '생성';
+
+  @override
+  String get virtHwIssueMac => '유니캐스트 MAC 주소여야 합니다(예: 52:54:00:12:34:56)';
+
+  @override
+  String get virtHwIssueStopFirst => '먼저 게스트를 중지하세요';
+
+  @override
+  String get virtHwIssueStorageMissing => '먼저 스토리지를 선택하세요';
+
+  @override
+  String get virtHwIssueDevice => '먼저 장치를 선택하세요';
+
+  @override
+  String get virtHwDevices => 'CD-ROM 및 패스스루';
+
+  @override
+  String get virtHwDevicesEmpty => 'USB 및 PCI 패스스루, CD-ROM, TPM';
+
+  @override
+  String get virtHwAddDevice => '장치 추가';
+
+  @override
+  String get virtHwNewDevice => '새 장치';
+
+  @override
+  String get virtHwUsbHotplug => 'USB 패스스루는 핫플러그를 지원합니다.';
+
+  @override
+  String get virtHwPci => 'PCI 패스스루';
+
+  @override
+  String get virtHwIommuOffTitle => '호스트에 IOMMU가 없습니다';
+
+  @override
+  String get virtHwIommuOffBody =>
+      '먼저 호스트 BIOS에서 VT-d 또는 AMD-Vi를, 커널에서 IOMMU를 켜세요. 그 전에는 PCI 장치를 단 게스트가 시작되지 않습니다.';
+
+  @override
+  String get virtHwPciTitle => '호스트에 IOMMU가 필요합니다';
+
+  @override
+  String get virtHwPciBody =>
+      '패스스루하면 호스트는 해당 장치를 쓸 수 없고 게스트는 실행 중 마이그레이션할 수 없습니다.';
+
+  @override
+  String virtHwIommuGroup(int group) {
+    return 'IOMMU 그룹 $group';
+  }
+
+  @override
+  String virtHwIommuShared(int count) {
+    return '같은 IOMMU 그룹의 장치 $count개가 함께 패스스루됩니다';
+  }
+
+  @override
+  String get virtHwNoHostDevices => '이 호스트에 패스스루할 장치가 없습니다';
+
+  @override
+  String get virtHwMappingsOnly =>
+      '여기서는 리소스 매핑만 쓸 수 있습니다. PVE는 비밀번호로 로그인한 root@pam만 원시 장치를 패스스루하도록 허용합니다. 데이터센터 → 리소스 매핑에서 매핑을 만드세요.';
+
+  @override
+  String get virtHwTpmNote => 'Windows 11에는 TPM 2.0이 필요합니다.';
+
+  @override
+  String get virtHwDisplay => '디스플레이';
+
+  @override
+  String get virtHwProtocol => '프로토콜';
+
+  @override
+  String get virtHwListen => '수신 대기';
+
+  @override
+  String get virtHwGpu => '그래픽 카드';
+
+  @override
+  String get virtHwListenAllTitle => '콘솔이 네트워크에 노출됩니다';
+
+  @override
+  String get virtHwListenAllBody =>
+      '모든 주소에서 수신 대기하면 호스트에 닿는 누구나 콘솔에 접속할 수 있습니다. 127.0.0.1을 유지하고 SSH 터널로 접속하세요.';
+
+  @override
+  String get virtHwFirmware => '펌웨어';
+
+  @override
+  String get virtHwUefiSub => 'OVMF · Secure Boot 지원, Windows 11에 필요';
+
+  @override
+  String get virtHwBiosSub => 'SeaBIOS · 오래된 시스템과 MBR 디스크';
+
+  @override
+  String get virtHwSecureBootNote => '서명된 커널과 부트로더만 부팅합니다';
+
+  @override
+  String get virtHwFirmwareWarnTitle => '설치된 시스템의 펌웨어를 바꾸지 마세요';
+
+  @override
+  String get virtHwFirmwareWarnBody => 'UEFI와 BIOS를 서로 바꾸면 설치된 시스템이 부팅되지 않습니다.';
+
+  @override
+  String get virtHwFirmwareStopped => '펌웨어는 게스트가 중지된 상태에서만 바꿀 수 있습니다.';
+
+  @override
+  String get virtHwSecureBootVars =>
+      'Secure Boot를 켜거나 끄면 EFI 변수가 새로 만들어지며, 저장된 부팅 항목은 사라집니다.';
+
+  @override
+  String get virtHwEfiStorage => 'EFI 변수 저장 위치';
+
+  @override
+  String get virtHwTpmStorage => 'TPM 상태 저장 위치';
+
+  @override
+  String virtHwSwitchFirmwareAsk(String guest, String firmware) {
+    return '$guest을(를) $firmware(으)로 전환할까요?';
+  }
+
+  @override
+  String get virtCloneName => '새 이름';
+
+  @override
+  String get virtCloneFull => '전체 복제';
+
+  @override
+  String get virtCloneCopyDisks => '디스크 내용 복사';
+
+  @override
+  String get virtCloneLinkedNote => '끄면 템플릿 디스크에 의존하는 연결 복제';
+
+  @override
+  String get virtCloneFullOnly => '연결 복제는 템플릿에서만 가능합니다';
+
+  @override
+  String get virtCloneEmptyNote => '끄면 같은 크기의 빈 디스크를 새로 만듭니다';
+
+  @override
+  String get virtCloneStopFirst => '복제하기 전에 종료하세요.';
+
+  @override
+  String get virtCloneFullShort => '전체';
+
+  @override
+  String get virtCloneLinkedShort => '연결';
+
+  @override
+  String get virtCloneEmptyShort => '빈 디스크';
+
+  @override
+  String get virtCloning => '복제 중…';
+
+  @override
+  String virtCloned(String name) {
+    return '$name(으)로 복제했습니다';
+  }
+
+  @override
+  String get virtBackupPlan => '일정';
+
+  @override
+  String get virtBackupPlanWhere => '데이터센터 → 백업';
+
+  @override
+  String get virtBackupNoPlanShort => '일정 없음';
+
+  @override
+  String get virtBackupNoPlan =>
+      '이 게스트를 포함하는 예약 백업 작업이 없습니다. 작업은 데이터센터에서 설정합니다.';
+
+  @override
+  String get virtBackupKeep => '보존';
+
+  @override
+  String get virtBackupJobDisabled => '이 작업은 비활성화되어 있습니다.';
+
+  @override
+  String virtBackupCount(int count) {
+    return '$count개';
+  }
+
+  @override
+  String get virtBackupNoStorage => '이 노드에는 백업을 저장할 스토리지가 없습니다.';
+
+  @override
+  String get virtBackupLiveTip => '실행 중: snapshot 모드, 중단 없음';
+
+  @override
+  String get virtBackupStoppedTip => '중지됨: 현재 상태로 백업';
+
+  @override
+  String get virtBackupNow => '지금 백업';
+
+  @override
+  String get virtBackupNotes => '메모';
+
+  @override
+  String get virtBackupProtected => '보호됨: PVE에서 보호를 해제하기 전에는 삭제할 수 없습니다.';
+
+  @override
+  String virtBackupVerified(String state) {
+    return '검증: $state';
+  }
+
+  @override
+  String get virtBackupRestoreOverwrites => '복원하면 현재 디스크를 덮어씁니다';
+
+  @override
+  String get virtBackupStopFirst => '복원하기 전에 종료하세요.';
+
+  @override
+  String get virtBackupRestoreAgain => '게스트의 디스크와 구성이 백업의 것으로 바뀝니다.';
+
+  @override
+  String get virtBackupDeleteConfirm => '백업 삭제';
+
+  @override
+  String get virtBackupRestoreNew => '새로 복원';
+
+  @override
+  String get virtBackupRestoreConfirm => '덮어써서 복원';
+
+  @override
+  String get virtBackupDone => '백업 완료';
+
+  @override
+  String get virtBackupDeleted => '백업을 삭제했습니다';
+
+  @override
+  String virtBackupRestored(String time) {
+    return '$time에서 복원했습니다';
+  }
+
+  @override
+  String pveNeedsPrivilege(
+    String account,
+    String privilege,
+    String path,
+    String command,
+  ) {
+    return '$account에게 $path의 $privilege 권한이 없습니다. PVE 호스트에서 부여하세요:\n$command';
+  }
+
+  @override
+  String get virtCanDelete => '삭제할 수 있음';
+
+  @override
+  String get virtInUse => '사용 중';
+
+  @override
+  String get virtOps => '작업';
+
+  @override
+  String get virtPool => '스토리지 풀';
+
+  @override
+  String get virtPoolNew => '새 스토리지 풀';
+
+  @override
+  String get virtStorageAdd => '스토리지 추가';
+
+  @override
+  String virtPoolUsedPct(String pct) {
+    return '$pct% 사용';
+  }
+
+  @override
+  String get virtPoolInUse => '가상 머신이 여기 볼륨을 사용 중이라 풀을 중지하거나 제거할 수 없습니다.';
+
+  @override
+  String get virtPoolDelete => '풀 삭제';
+
+  @override
+  String get virtStorageRemove => '스토리지 제거';
+
+  @override
+  String virtPoolDeleteAsk(String name) {
+    return '풀 $name을(를) 제거할까요? 정의는 삭제되고 볼륨은 그대로 남습니다.';
+  }
+
+  @override
+  String virtStorageRemoveAsk(String name) {
+    return 'PVE 설정에서 스토리지 $name을(를) 제거할까요? 안의 데이터는 남습니다.';
+  }
+
+  @override
+  String virtPoolDeleteKeepsVolumes(int count) {
+    return '볼륨 $count개는 디스크에 남습니다.';
+  }
+
+  @override
+  String get virtPoolDeleteStorage => '디렉터리도 삭제(비어 있을 때만)';
+
+  @override
+  String virtPoolStopAsk(String name) {
+    return '풀 $name을(를) 중지할까요? 다시 시작할 때까지 볼륨을 나열하거나 만들 수 없습니다.';
+  }
+
+  @override
+  String virtStorageDisableAsk(String name) {
+    return '스토리지 $name을(를) 비활성화할까요? 다시 활성화할 때까지 여기에 디스크가 있는 가상 머신은 시작할 수 없습니다.';
+  }
+
+  @override
+  String get virtPoolLogicalNote => '기존 볼륨 그룹을 그대로 사용하며 아무것도 포맷하지 않습니다.';
+
+  @override
+  String get virtPoolMountPoint => '마운트 지점';
+
+  @override
+  String get virtPoolSourceNfs => '소스 (host:/path)';
+
+  @override
+  String get virtPoolSourceVg => '볼륨 그룹';
+
+  @override
+  String get virtPoolSourceThin => '볼륨 그룹 / thin pool';
+
+  @override
+  String get virtPoolSourceZfs => 'ZFS 풀';
+
+  @override
+  String get virtPoolTypeVg => 'LVM 볼륨 그룹';
+
+  @override
+  String get virtResNameEmpty => '이름을 입력하세요';
+
+  @override
+  String get virtResNameInvalid => '이 호스트가 받지 않는 이름입니다(문자, 숫자, . _ -)';
+
+  @override
+  String get virtResSourceInvalid => '유효한 경로나 소스가 아닙니다';
+
+  @override
+  String get virtResTargetInvalid => '절대 경로여야 합니다';
+
+  @override
+  String get virtResCidrInvalid => '접두사가 있는 주소(예: 192.168.150.1/24)';
+
+  @override
+  String get virtResDhcpInvalid => '네트워크 안의 두 주소(순서대로, 호스트 주소 제외)';
+
+  @override
+  String get virtResSubnetTaken => '다른 네트워크가 이 서브넷을 사용 중입니다';
+
+  @override
+  String get virtResBridgeInvalid => '인터페이스 이름이 아닙니다';
+
+  @override
+  String get virtResFormat => '이 풀은 해당 형식을 지원하지 않습니다';
+
+  @override
+  String get virtVolNew => '새 볼륨';
+
+  @override
+  String virtVolCount(int count) {
+    return '볼륨 $count개';
+  }
+
+  @override
+  String get virtVolNone => '이 풀에는 아직 볼륨이 없습니다.';
+
+  @override
+  String get virtVolEmptyAttach => '새 볼륨은 나중에 어느 가상 머신에든 연결할 수 있습니다';
+
+  @override
+  String get virtVolEmptyUpload => 'ISO를 바로 업로드할 수도 있습니다';
+
+  @override
+  String get virtVolPveName =>
+      'PVE는 볼륨 이름을 소속 가상 머신 기준으로 짓습니다: vm-<VMID>-disk-<N>';
+
+  @override
+  String get virtVolUsers => '사용 중인 곳';
+
+  @override
+  String get virtVolAllocated => '할당됨';
+
+  @override
+  String get virtVolGrowFromGuest => '가상 머신이 사용 중입니다. 해당 가상 머신의 하드웨어 화면에서 늘리세요';
+
+  @override
+  String get virtVolInUse => '가상 머신이 이 볼륨을 사용 중입니다';
+
+  @override
+  String get virtVolAttach => '가상 머신에 연결';
+
+  @override
+  String get virtVolAttachNote => '첫 번째 디스크와 같은 버스에 새 디스크로 연결됩니다';
+
+  @override
+  String virtVolAttached(String name) {
+    return '$name에 연결했습니다';
+  }
+
+  @override
+  String get virtVolInsert => 'CD-ROM에 삽입';
+
+  @override
+  String virtVolInserted(String name) {
+    return '$name의 CD-ROM에 삽입했습니다';
+  }
+
+  @override
+  String virtVolNoCdrom(String name) {
+    return '$name에는 CD-ROM 드라이브가 없습니다';
+  }
+
+  @override
+  String virtVolDeleteAsk(String name, String pool) {
+    return '$pool에서 볼륨 $name을(를) 삭제할까요? 안의 데이터는 영구히 사라집니다.';
+  }
+
+  @override
+  String get virtUploadIso => 'ISO 업로드';
+
+  @override
+  String virtUploadTo(String pool) {
+    return '$pool에 업로드';
+  }
+
+  @override
+  String virtUploadDone(String name) {
+    return '$name 업로드 완료';
+  }
+
+  @override
+  String get virtNetConfig => '구성';
+
+  @override
+  String get virtNetInternal => '내부';
+
+  @override
+  String get virtNetBridgePorts => '브리지 포트';
+
+  @override
+  String get virtNetHostBridge => '호스트 브리지';
+
+  @override
+  String get virtNetPortsHint => 'eno2, 비우면 내부 브리지';
+
+  @override
+  String get virtNetDhcpRange => 'DHCP 범위';
+
+  @override
+  String get virtNetDhcpTip => 'dnsmasq가 가상 머신에 주소를 할당합니다';
+
+  @override
+  String get virtNetVlanTip => '가상 머신 NIC에 VLAN 태그를 쓸 수 있습니다';
+
+  @override
+  String get virtNetNatTip => '호스트 경유: 가상 머신은 밖으로 나가지만 밖에서는 들어올 수 없습니다';
+
+  @override
+  String get virtNetRoutedTip => 'NAT 없이 호스트가 라우팅: LAN에 돌아오는 경로가 필요합니다';
+
+  @override
+  String get virtNetIsolatedTip => '가상 머신끼리와 호스트만 서로 통신합니다';
+
+  @override
+  String get virtNetBridgedTip => '가상 머신이 호스트 브리지에 붙어 물리 네트워크에 연결됩니다';
+
+  @override
+  String get virtNetNew => '새 네트워크';
+
+  @override
+  String get virtNetNewBridge => '새 Linux 브리지';
+
+  @override
+  String get virtNetVirtual => '가상 네트워크';
+
+  @override
+  String get virtNetDelete => '네트워크 삭제';
+
+  @override
+  String virtNetDeleteAsk(String name) {
+    return '네트워크 $name을(를) 삭제할까요? 중지되고 정의가 제거됩니다.';
+  }
+
+  @override
+  String virtNetDeleteAskPve(String name, String node) {
+    return '$node에서 브리지 $name을(를) 제거할까요? 지금은 대기 중인 구성에서 빠지고, 적용하면 호스트에서 사라집니다.';
+  }
+
+  @override
+  String virtNetInUse(int count) {
+    return '연결된 가상 머신: $count. 삭제할 수 없습니다.';
+  }
+
+  @override
+  String virtNetStopAsk(String name, int count) {
+    return '$name을(를) 중지할까요? 연결된 가상 머신 $count대는 다시 시작할 때까지 네트워크를 잃습니다.';
+  }
+
+  @override
+  String get virtNetInactivePve => '비활성: 새 브리지는 적용될 때까지 대기 중인 구성에 있습니다.';
+
+  @override
+  String get virtNetPveApplyNote =>
+      '대기 중인 변경으로 저장되며, 구성을 적용하면 반영됩니다(ifreload -a).';
+
+  @override
+  String get virtNetPendingSaved => '대기 중으로 저장했습니다. 구성을 적용해야 반영됩니다';
+
+  @override
+  String virtNetPendingTitle(String node) {
+    return '$node의 대기 중인 네트워크 변경';
+  }
+
+  @override
+  String get virtNetPendingTip =>
+      'PVE는 네트워크 변경을 적용할 때까지 interfaces.new에 보관합니다.';
+
+  @override
+  String get virtNetPendingShow => '변경 보기';
+
+  @override
+  String get virtNetApply => '구성 적용';
+
+  @override
+  String virtNetApplyAsk(String node) {
+    return '$node의 대기 중인 네트워크 구성을 적용할까요? PVE가 호스트 네트워크를 다시 불러옵니다(ifreload -a). 잘못되면 호스트 연결이 끊길 수 있습니다.';
+  }
+
+  @override
+  String virtNetRevertAsk(String node) {
+    return '$node의 대기 중인 네트워크 구성을 버릴까요?';
+  }
+
+  @override
+  String get pveTokenTipStorage =>
+      '스토리지 관리에는 /storage의 Datastore.Allocate(추가, 비활성화, 제거), Datastore.AllocateSpace(볼륨), Datastore.AllocateTemplate(업로드)가 필요하고, Linux 브리지와 네트워크 구성 적용에는 노드의 Sys.Modify가 필요합니다.';
+
+  @override
+  String get virtCreateUnnamed => '이름 없음';
+
+  @override
+  String get virtCreateNotChosen => '선택 안 됨';
+
+  @override
+  String get virtCreateKindVmSub => 'qm · 완전한 KVM 가상 머신';
+
+  @override
+  String get virtCreateKindLxcSub => 'pct · 호스트 커널 공유, 더 가벼움';
+
+  @override
+  String get virtCloudImage => '클라우드 이미지';
+
+  @override
+  String get virtCloudImageTip =>
+      '시스템이 설치된 디스크: 복사한 뒤 저장소의 크기로 늘리고, 첫 부팅 때 cloud-init이 설정합니다. 이미지 자체는 그대로 둡니다.';
+
+  @override
+  String get virtNoCloudImagesLibvirt =>
+      '클라우드 이미지가 없습니다: 어떤 VM도 쓰지 않는 qcow2 또는 raw 이미지를 풀에 넣으세요(저장소에서 업로드).';
+
+  @override
+  String get virtNoCloudImagesPve =>
+      '클라우드 이미지가 없습니다: qcow2, raw 또는 vmdk 이미지를 Import 콘텐츠 유형의 저장소에 업로드하세요(PVE 8.2+).';
+
+  @override
+  String get virtCreateWindowsTitle => 'Windows 11에는 UEFI와 TPM 2.0이 필요합니다';
+
+  @override
+  String get virtCreateWindowsBody => '위에서 UEFI를 선택하고 TPM을 켜세요.';
+
+  @override
+  String get virtCreateWindowsNoTpm =>
+      '이 호스트에는 소프트웨어 TPM(swtpm)이 없습니다. VM에 주려면 설치하세요.';
+
+  @override
+  String virtCreateImageSize(String size) {
+    return '이미지가 $size입니다. 디스크는 최소 그만큼 커야 합니다.';
+  }
+
+  @override
+  String get virtCreateImageMissing => '클라우드 이미지를 선택하세요.';
+
+  @override
+  String get virtCreateIncomplete => '먼저 주황색으로 표시된 부분을 채우세요.';
+
+  @override
+  String virtCreateOn(String host) {
+    return '$host에 생성';
+  }
+
+  @override
+  String get virtCiTip => 'sudo 권한이 있는 계정으로, 비밀번호, SSH 키 또는 둘 다로 로그인합니다.';
+
+  @override
+  String get virtCiUserInvalid => '소문자, 숫자, _, -만 가능하며 문자 또는 _로 시작';
+
+  @override
+  String get virtCiCredentialsMissing => '비밀번호나 SSH 키를 설정하세요.';
+
+  @override
+  String get virtCiHostnamePve => '호스트 이름은 VM 이름입니다.';
+
+  @override
+  String get virtCiStatic => '고정';
+
+  @override
+  String get virtCiAddressInvalid => '접두사가 있는 IPv4 주소(예: 10.0.0.5/24)';
+
+  @override
+  String get virtCiGatewayInvalid => 'IPv4 주소(예: 10.0.0.1)';
+
+  @override
+  String get virtCiDnsFromDhcp => '비우면 DHCP에서';
+
+  @override
+  String get virtCiDnsInvalid => 'IP 주소(공백이나 쉼표로 구분)';
+
+  @override
+  String get virtCiSearch => '검색 도메인';
+
+  @override
+  String get virtCiSeedNote =>
+      '디스크 옆의 작은 ISO에 기록해 CD-ROM으로 연결하며 VM과 함께 삭제합니다. 비밀번호는 해시만 저장합니다.';
+
+  @override
+  String get virtCiNoToolTitle => '호스트에 cloud-init 데이터를 만들 도구가 없습니다';
+
+  @override
+  String virtCiNoToolBody(String tools) {
+    return '호스트에 $tools 중 하나를 설치하세요. cloud-init 없이는 로그인할 계정 없이 시작됩니다.';
+  }
+
+  @override
+  String get virtHwCloudInitNote =>
+      'cloud-init이 첫 부팅 때 읽는 데이터입니다. 설치 미디어가 아니므로 여기서 넣을 것이 없습니다.';
+
+  @override
+  String get virtHwCdromLater =>
+      '실행 중에는 다음 시작 때 드라이브가 추가됩니다(SATA와 IDE는 핫플러그 불가).';
+
+  @override
+  String virtCreateDiskKept(String size) {
+    return '디스크는 이미지 자체 크기인 $size로 유지됐습니다(요청보다 큼). 디스크를 안의 시스템보다 작게 줄이지 않습니다.';
+  }
+
+  @override
+  String get virtCiEditTip =>
+      'cloud-init이 이 VM에서 설정하는 내용: sudo 권한 계정, 로그인 방법, 호스트 이름과 주소.';
+
+  @override
+  String get virtCiForeignTitle => '이 seed에는 이 앱이 쓰지 않는 설정이 있습니다';
+
+  @override
+  String get virtCiForeignBody =>
+      '다른 곳에서 만든 설정(패키지, 명령, 다른 계정)은 여기에 표시되지 않습니다. 저장하면 seed가 여기 표시된 내용으로 바뀝니다.';
+
+  @override
+  String get virtCiPasswordKept => '설정됨. 비워 두면 유지합니다';
+
+  @override
+  String get virtCiRemovePassword => '비밀번호 제거';
+
+  @override
+  String get virtCiRemovePasswordNote => 'SSH 키로만 로그인';
+
+  @override
+  String get virtCiKeysAdded =>
+      '키는 계정에 추가됩니다. 여기서 뺀 키는 시스템 안에서 지울 때까지 남아 있고, 새 사용자 이름은 기존 계정 옆에 새 계정을 만듭니다.';
+
+  @override
+  String get virtCiEffectTitle => '다음 부팅 때 적용';
+
+  @override
+  String get virtCiEffectLibvirt => '저장하면 새 인스턴스 ID로 새 seed를 씁니다.';
+
+  @override
+  String get virtCiEffectPve =>
+      'PVE는 cloud-init 드라이브를 즉시 다시 씁니다. 인스턴스 ID는 이 설정에서 계산되므로 여기서 바꾸면 항상 새 ID가 됩니다.';
+
+  @override
+  String get virtCiNewInstance =>
+      '다음 부팅 때 cloud-init은 시스템을 새 인스턴스로 다룹니다. 호스트 이름을 다시 설정하고, 계정이 없으면 만들고, 비밀번호를 설정하고, 키를 추가하고, 네트워크 설정을 다시 씁니다. SSH 호스트 키도 새로 만들므로 SSH 클라이언트가 호스트 키가 바뀌었다고 경고합니다. 그 부팅 전에는 아무것도 바뀌지 않습니다.';
+
+  @override
+  String get virtCiSaved => '저장했습니다. 다음 부팅 때 적용됩니다.';
 }

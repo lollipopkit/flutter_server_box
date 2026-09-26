@@ -1,0 +1,50 @@
+[
+  {
+    "vmid": 100,
+    "size": 4194304,
+    "format": "raw",
+    "content": "images",
+    "volid": "local-lvm:vm-100-cloudinit",
+    "ctime": "1790324416"
+  },
+  {
+    "size": 21474836480,
+    "vmid": 100,
+    "ctime": "1790324412",
+    "volid": "local-lvm:vm-100-disk-0",
+    "content": "images",
+    "format": "raw"
+  },
+  {
+    "ctime": "1790330525",
+    "content": "images",
+    "volid": "local-lvm:vm-101-cloudinit",
+    "format": "raw",
+    "size": 4194304,
+    "vmid": 101
+  },
+  {
+    "vmid": 101,
+    "size": 8589934592,
+    "volid": "local-lvm:vm-101-disk-0",
+    "content": "images",
+    "ctime": "1790335998",
+    "format": "raw"
+  },
+  {
+    "ctime": "1790335983",
+    "volid": "local-lvm:vm-101-state-sbx-mem",
+    "content": "images",
+    "format": "raw",
+    "size": 2671771648,
+    "vmid": 101
+  },
+  {
+    "size": 4294967296,
+    "vmid": 200,
+    "ctime": "1790335565",
+    "volid": "local-lvm:vm-200-disk-0",
+    "content": "rootdir",
+    "format": "raw"
+  }
+]

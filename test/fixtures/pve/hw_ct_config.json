@@ -1,0 +1,1 @@
+{"arch":"amd64","cores":2,"digest":"6e225a58f2ae4c3ea0bb66d8c901cae2d87ef92d","hostname":"sbhw-e2e-ct","memory":384,"mp0":"local-lvm:vm-9902-disk-1,mp=/mnt/e2e,size=1G","net0":"name=eth0,bridge=vmbr0,hwaddr=BC:24:11:3E:AA:6A,ip=dhcp,type=veth","ostype":"alpine","rootfs":"local-lvm:vm-9902-disk-0,size=1G","swap":128,"unprivileged":1}

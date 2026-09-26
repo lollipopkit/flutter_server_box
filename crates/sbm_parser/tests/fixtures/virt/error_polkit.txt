@@ -1,0 +1,2 @@
+error: failed to connect to the hypervisor
+error: authentication unavailable: no polkit agent available to authenticate action 'org.libvirt.unix.manage'

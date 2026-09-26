@@ -1,31 +1,37 @@
-import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/app.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/setting.dart';
+
+import '../helpers/test_db.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   late SettingStore setting;
 
   setUp(() async {
-    SqliteDb.openInMemory();
+    // The tables, not only a connection: the intro's Virtualization page
+    // reads the PVE table to decide what to say.
+    await openTestDb();
     setting = SettingStore('setting_test');
     getIt.registerSingleton<SettingStore>(setting);
+    getIt.registerSingleton<PveStore>(PveStore());
     FlutterSecureStorage.setMockInitialValues({});
   });
 
   tearDown(() async {
     await getIt.reset();
-    await SqliteDb.close();
+    await closeTestDb();
   });
 
   testWidgets('updates the onboarding locale when the setting changes', (
     tester,
   ) async {
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(const ProviderScope(child: MyApp()));
     await tester.pumpAndSettle();
 
     expect(find.text('Initialize'), findsOneWidget);

@@ -1048,9 +1048,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Docker\'ın doluluk durumunu ayrıştırmak oldukça yavaş.';
 
   @override
-  String get plugInType => 'Eklenti Türü';
-
-  @override
   String get preferDiskAmount => 'Disk kapasitesini öncelikli olarak göster';
 
   @override
@@ -1190,24 +1187,12 @@ class AppLocalizationsTr extends AppLocalizations {
       'Etkinleştirilmesi önerilmez, güvenlik risklerine dikkat edin! PVE\'den varsayılan sertifikayı kullanıyorsanız, bu seçeneği etkinleştirmeniz gerekir.';
 
   @override
-  String get pveServerClientMissing =>
-      'Bu sunucunun SSH istemcisi kullanılamıyor.';
-
-  @override
-  String get pveAddressMissing =>
-      'PVE adresi eksik. Lütfen sunucu ayarlarından yapılandır.';
-
-  @override
   String get pvePasswordRequired =>
       'PVE parolası gerekli. Lütfen sunucu ayarlarında belirle.';
 
   @override
   String get pveOtpRequired =>
       'Bu PVE sunucusunda iki adımlı doğrulama açık. Lütfen OTP kodunu gir.';
-
-  @override
-  String get pveOtpChallengeExpired =>
-      'OTP isteğinin süresi doldu. Lütfen yenileyip tekrar dene.';
 
   @override
   String get pveOtpCodeRequired => 'OTP kodu gerekli.';
@@ -1233,19 +1218,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get pveMissingAuthTicket =>
       'PVE oturumu açıldı ancak kimlik doğrulama bileti döndürülmedi.';
-
-  @override
-  String get pveVersionLow =>
-      'Bu özellik şu anda test aşamasında ve yalnızca PVE 8+ üzerinde test edildi. Lütfen dikkatli kullanın.';
-
-  @override
-  String get pveLoadingForwarding => 'SSH tüneli kuruluyor...';
-
-  @override
-  String get pveLoadingLogin => 'PVE ile kimlik doğrulanıyor...';
-
-  @override
-  String get pveLoadingData => 'Küme verileri alınıyor...';
 
   @override
   String get pveLoadingConnect => 'Bağlanıyor...';
@@ -1720,9 +1692,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get sortByJoinTime => 'Eklenme zamanına göre';
-
-  @override
-  String get portForwardBetaTitle => 'Port Yönlendirme (Beta)';
 
   @override
   String get tmuxAutoAttach => 'tmux\'a otomatik bağlan';
@@ -3295,4 +3264,1546 @@ class AppLocalizationsTr extends AppLocalizations {
   String appearanceThemeModeLocked(String mode) {
     return 'Bu tema yalnızca $mode modunu destekler. Modu değiştirmek için başka bir tema seçin.';
   }
+
+  @override
+  String get pveAuthToken => 'API belirteci';
+
+  @override
+  String get pveVersionLow =>
+      'Bu özellik şu anda test aşamasında ve yalnızca PVE 8+ üzerinde test edildi. Lütfen dikkatli kullanın.';
+
+  @override
+  String get pveTokenId => 'Belirteç kimliği';
+
+  @override
+  String get pveTokenSecret => 'Belirteç gizli anahtarı';
+
+  @override
+  String get pveTokenTip =>
+      'PVE\'de Veri Merkezi → İzinler → API Tokens altında oluşturun. Gösterilecek yollarda VM.Audit, VM.PowerMgmt, VM.Console, VM.Snapshot, VM.Snapshot.Rollback, Datastore.Audit ve Sys.Audit gerekir; ayrıcalık ayrımı açıksa bunları belirtecin kendisine verin.';
+
+  @override
+  String pveTokenNoPrivileges(String account, String command) {
+    return '$account belirteci bu ana makinede hiçbir şey göremiyor. Yetki ayrımı açık bir belirteç, kullanıcısının izinlerini almaz; PVE ana makinesinde izin verin:\n$command\nya da belirteçte \"Privilege Separation\" seçeneğini kaldırın.';
+  }
+
+  @override
+  String pveUserNoPrivileges(String account, String command) {
+    return '$account bu ana makinede hiçbir şey göremiyor. PVE ana makinesinde izin verin:\n$command';
+  }
+
+  @override
+  String get pveTokenIdInvalid =>
+      'Belirteç kimliği user@realm!tokenid biçiminde olmalıdır';
+
+  @override
+  String get pvePasswordAuthTip =>
+      'PAM realm\'inde SSH kullanıcısı olarak SSH parolasıyla, SSH anahtar kullanıyorsa aşağıdaki PVE parolasıyla oturum açar. Gerektiğinde iki aşamalı doğrulama kodu istenir.';
+
+  @override
+  String get pveCertUnpinned =>
+      'Henüz onaylanmış bir sertifika yok. Güvenilir bir CA imzalamadıysa, sonraki bağlantı sertifikayı onay için gösterir.';
+
+  @override
+  String get pveCertForget => 'Sertifikayı unut';
+
+  @override
+  String get pveCertForgetTip =>
+      'Sonraki bağlantı PVE sertifikasını yeniden onay için gösterecek.';
+
+  @override
+  String get virtualization => 'Sanallaştırma';
+
+  @override
+  String get virtIntro =>
+      'Proxmox VE ve libvirt/KVM ana makinelerindeki sanal makineleri ve kapsayıcıları yönetin: durum, güç işlemleri ve konsollar.';
+
+  @override
+  String get virtIntroPveMoved =>
+      'Proxmox VE sunucu sayfasından bu sekmeye taşındı. Bir sunucunun PVE kartı onu burada açar.';
+
+  @override
+  String get virtIntroLibvirt =>
+      'libvirt\'in virsh aracı kurulu bir sunucu, QEMU/KVM sanal makineleriyle birlikte ana makine olarak görünür.';
+
+  @override
+  String get virtIntroTransports =>
+      'İkisi de SSH üzerinden, bir Monitor ajanı aracılığıyla veya bu cihazda çalışır.';
+
+  @override
+  String get virtIntroTokens =>
+      'PVE, parola yerine bir API belirteciyle oturum açabilir. Sunucunun düzenleme sayfasında, PVE altında ayarlayın.';
+
+  @override
+  String get virtIntroInBar => 'Sekme çubuğuna eklendi.';
+
+  @override
+  String get virtIntroInMore =>
+      'Daha fazla altında. Ayarlardaki Ana Sayfa Sekmeleri ile sekme çubuğuna taşıyabilirsiniz.';
+
+  @override
+  String get virtGuests => 'Sanal makineler';
+
+  @override
+  String get virtHosts => 'Ana makineler';
+
+  @override
+  String get virtCheckServer => 'Bu sunucuyu denetle';
+
+  @override
+  String get virtCheckAll => 'Tüm sunucuları denetle';
+
+  @override
+  String get virtProbeNotChecked => 'Henüz denetlenmedi';
+
+  @override
+  String get virtProbeAbsent => 'Ana makine değil';
+
+  @override
+  String virtProbeContainer(String kind) {
+    return '$kind kapsayıcısı';
+  }
+
+  @override
+  String get virtProbeContainerTip =>
+      'Bu sunucu bir kapsayıcıda çalışıyor, yani ana makine değil konuk. Onu çalıştıran ana makineden yönetilir.';
+
+  @override
+  String get virtProbePve => 'PVE, ayarlanmadı';
+
+  @override
+  String virtPveSetupTip(String version) {
+    return 'Bu sunucuda $version çalışıyor. Sanal makinelerini ve kapsayıcılarını burada yönetmek için sunucu ayarlarında API erişimini girin (API belirteci önerilir).';
+  }
+
+  @override
+  String get virtNoHosts => 'Sanallaştırma ana makinesi yok';
+
+  @override
+  String get virtNoHostsTip =>
+      'Proxmox VE çalıştıran ve API erişimi girilmiş bir sunucu ana makinedir; virsh\'in yanıt verdiği sunucu da öyledir. Diğer sunucular ana makine değiştiriciden denetlenebilir.';
+
+  @override
+  String get virtNoGuests => 'Sanal makine veya konteyner yok';
+
+  @override
+  String get virtPaused => 'Duraklatıldı';
+
+  @override
+  String get virtStarting => 'Başlatılıyor…';
+
+  @override
+  String get virtStopping => 'Durduruluyor…';
+
+  @override
+  String get virtRebooting => 'Yeniden başlatılıyor…';
+
+  @override
+  String get virtMigrating => 'Taşınıyor…';
+
+  @override
+  String get virtBackingUp => 'Yedekleniyor…';
+
+  @override
+  String get virtResume => 'Sürdür';
+
+  @override
+  String get virtOverview => 'Genel bakış';
+
+  @override
+  String get virtConsole => 'Konsol';
+
+  @override
+  String get virtConsoleNone => 'Bu konuk için yapılandırılmış konsol yok';
+
+  @override
+  String get virtConsoleGraphical => 'Grafik';
+
+  @override
+  String get virtVncPasswordNeeded => 'Bu ekran bir parola istiyor';
+
+  @override
+  String get virtConsoleSerialTip =>
+      'Konuğun seri konsolunu ana makinede virsh ile açar. Bağlantıyı kes veya Ctrl+] ana makinenin kabuğuna döndürür.';
+
+  @override
+  String virtConsoleVia(String transport) {
+    return '$transport üzerinden';
+  }
+
+  @override
+  String get virtConsoleEnterTip => 'Çıktı yok mu? Enter\'a basın';
+
+  @override
+  String virtConsoleAutoEnter(int seconds) {
+    return 'İstemi göstermek için $seconds saniye içinde Enter\'a basılacak';
+  }
+
+  @override
+  String get virtConsoleEnterNow => 'Şimdi';
+
+  @override
+  String get virtOffTip =>
+      'CPU, bellek, disk ve ağı burada canlı görmek için başlatın.';
+
+  @override
+  String get virtAllocated => 'Ayrılan';
+
+  @override
+  String virtRunningCount(int running, int total) {
+    return '$running çalışıyor · toplam $total';
+  }
+
+  @override
+  String get virtTemplate => 'Şablon';
+
+  @override
+  String get virtAutostart => 'Ana makineyle başlar';
+
+  @override
+  String get virtErrUnreachable => 'Bu ana makineye ulaşılamadı';
+
+  @override
+  String get virtErrNotConfigured => 'Bu sunucunun PVE ayarları eksik';
+
+  @override
+  String get virtErrNotConfiguredTip =>
+      'Sunucu ayarlarında adresi ve parolayı ya da API belirtecini denetleyin.';
+
+  @override
+  String get virtErrAuthFailed => 'Ana makine oturum açmayı reddetti';
+
+  @override
+  String get virtErrCertUnconfirmed => 'Ana makinenin sertifikasını onaylayın';
+
+  @override
+  String get virtErrCertChanged => 'Ana makinenin sertifikası değişti';
+
+  @override
+  String get virtErrRelayNotGranted =>
+      'Monitor aracısı bağlantıları aktarmıyor';
+
+  @override
+  String get virtErrExecNotGranted => 'Monitor aracısı komut çalıştırmıyor';
+
+  @override
+  String get virtErrNotInstalled => 'Bu sunucuda virsh kurulu değil';
+
+  @override
+  String get virtErrServerRemoved => 'Bu sunucu artık mevcut değil';
+
+  @override
+  String get virtErrSudoRequired =>
+      'libvirt\'e erişmek için sudo parola istiyor';
+
+  @override
+  String get virtErrSudoRejected => 'sudo parolayı reddetti';
+
+  @override
+  String get virtErrInvalidResponse =>
+      'Ana makine beklenmeyen biçimde yanıt verdi';
+
+  @override
+  String get virtErrActionFailed => 'Ana makine işlemi reddetti';
+
+  @override
+  String get remoteSessionIdleTimeout => 'Ayrılınca kapat';
+
+  @override
+  String get remoteSessionIdleTimeoutTip =>
+      'Uzak masaüstünden veya bir konuğun konsolundan ayrıldıktan sonra bağlantının ne kadar süre açık kalacağı. Kapanmadan önce bir bildirim, bağlantıyı korumanız için 10 saniye verir.';
+
+  @override
+  String get remoteSessionKeepAlive => 'Açık tut';
+
+  @override
+  String get remoteSessionClosedAway => 'Boşta kaldığı için kapatıldı';
+
+  @override
+  String remoteSessionClosingIn(int seconds) {
+    return '$seconds sn içinde kapanıyor';
+  }
+
+  @override
+  String get reopen => 'Yeniden aç';
+
+  @override
+  String get virtSnapshots => 'Anlık görüntüler';
+
+  @override
+  String get virtSnapshotCreate => 'Anlık görüntü al';
+
+  @override
+  String get virtSnapshotNone => 'Henüz anlık görüntü yok';
+
+  @override
+  String get virtSnapshotWithMemory => 'Diskler ve bellek';
+
+  @override
+  String get virtSnapshotDiskOnly => 'Yalnızca diskler';
+
+  @override
+  String get virtSnapshotParent => 'Üst';
+
+  @override
+  String get virtSnapshotRevert => 'Geri dön';
+
+  @override
+  String get virtSnapshotMemory => 'Belleği dahil et';
+
+  @override
+  String get virtSnapshotMemoryTip =>
+      'Geri dönüldüğünde konuk bu andan devam eder.';
+
+  @override
+  String get virtSnapshotMemoryAlways =>
+      'Burada çalışan bir konuğun anlık görüntüsü her zaman belleğini içerir.';
+
+  @override
+  String get virtSnapshotMemoryOff =>
+      'Konuk çalışmıyor, bu yüzden yalnızca diskleri kaydedilir.';
+
+  @override
+  String get virtSnapshotNameInvalid =>
+      'Önce bir harf, sonra harf, rakam, - veya _; 2 ile 40 karakter.';
+
+  @override
+  String get virtSnapshotNameTaken => 'Bu adda bir anlık görüntü zaten var.';
+
+  @override
+  String get virtSnapshotRevertTip =>
+      'Geri dönmek, anlık görüntüden sonraki tüm değişiklikleri siler.';
+
+  @override
+  String virtSnapshotRevertAsk(String guest, String snapshot) {
+    return '$guest, $snapshot anına geri döndürülsün mü? O zamandan beri yapılan tüm değişiklikler kaybolur.';
+  }
+
+  @override
+  String virtSnapshotRevertStops(String guest) {
+    return 'Bu anlık görüntüde bellek yok: $guest durdurulacak.';
+  }
+
+  @override
+  String get virtSnapshotStartAfter => 'Ardından başlat';
+
+  @override
+  String get virtVolumes => 'Birimler';
+
+  @override
+  String get virtNoPools => 'Depolama havuzu yok';
+
+  @override
+  String get virtNoNetworks => 'Ağ yok';
+
+  @override
+  String get virtPoolInactive =>
+      'Havuz etkin değil, bu yüzden birimleri listelenemiyor.';
+
+  @override
+  String get virtShared => 'Düğümler arasında paylaşılan';
+
+  @override
+  String get virtBackingFile => 'Temel dosya';
+
+  @override
+  String get virtNetIsolated => 'Yalıtılmış';
+
+  @override
+  String get virtNetBridged => 'Köprülü';
+
+  @override
+  String get virtNetRouted => 'Yönlendirilmiş';
+
+  @override
+  String get virtBridge => 'Köprü';
+
+  @override
+  String get virtPorts => 'Bağlantı noktaları';
+
+  @override
+  String get virtAttachedGuests => 'Bağlı konuklar';
+
+  @override
+  String get virtNoAttachedGuests => 'Bağlı konuk yok';
+
+  @override
+  String get virtCreateVm => 'Yeni sanal makine';
+
+  @override
+  String get virtCreateLxc => 'Yeni kapsayıcı';
+
+  @override
+  String get virtCreateGuest => 'Yeni sanal makine veya kapsayıcı';
+
+  @override
+  String get virtKindVm => 'Sanal makine';
+
+  @override
+  String get virtKindLxc => 'Kapsayıcı';
+
+  @override
+  String get virtHostname => 'Ana makine adı';
+
+  @override
+  String get virtInstallMedia => 'Kurulum ortamı';
+
+  @override
+  String get virtNoIsos => 'Bu ana makinede ISO kalıbı yok';
+
+  @override
+  String get virtNoTemplates =>
+      'Bu ana makinede kapsayıcı şablonu yok. PVE\'de bir depolamanın CT Şablonları\'ndan indirilebilir.';
+
+  @override
+  String get virtNoDiskStorage =>
+      'Bu ana makinede yeni disk alan bir depolama yok';
+
+  @override
+  String get virtStartAfterCreate => 'Oluşturunca başlat';
+
+  @override
+  String get virtUnprivileged => 'Ayrıcalıksız kapsayıcı';
+
+  @override
+  String get virtUnprivilegedTip =>
+      'root\'u ana makinede sıradan bir kullanıcıdır.';
+
+  @override
+  String get virtSshKeys => 'SSH açık anahtarları';
+
+  @override
+  String get virtCredentialsTip => 'root parolası, SSH anahtarları veya ikisi.';
+
+  @override
+  String virtCreated(String name) {
+    return '$name oluşturuldu';
+  }
+
+  @override
+  String virtCreatedNotStarted(String name) {
+    return '$name oluşturuldu ama başlamadı';
+  }
+
+  @override
+  String get virtErrExists => 'Bu adda bir konuk veya disk zaten var';
+
+  @override
+  String get virtCreateNameInvalidLibvirt =>
+      'Harf, rakam, ., _ ve -, harf veya rakamla başlar; en fazla 63 karakter.';
+
+  @override
+  String get virtCreateNameInvalidPve =>
+      'Harf, rakam ve -, noktalarla ayrılmış parçalar; en fazla 63 karakter.';
+
+  @override
+  String get virtCreateNameTaken => 'Bu adda bir konuk var.';
+
+  @override
+  String get virtCreateVmidInvalid => '100 ile 999999999 arası.';
+
+  @override
+  String get virtCreateVmidTaken => 'Bu VMID kullanımda.';
+
+  @override
+  String get virtCreateCoresInvalid =>
+      'Bu ana makinenin izin verdiğinden fazla çekirdek.';
+
+  @override
+  String get virtCreateMemoryInvalid => 'Bellek yetersiz.';
+
+  @override
+  String get virtCreateStorageMissing => 'Diskinin nereye gideceğini seçin.';
+
+  @override
+  String get virtCreateDiskInvalid => '1 GiB ile 64 TiB arası.';
+
+  @override
+  String get virtCreateTemplateMissing => 'Bir şablon seçin.';
+
+  @override
+  String get virtCreateCredentialsMissing =>
+      'Bir root parolası veya SSH anahtarı belirleyin.';
+
+  @override
+  String virtCreatePasswordShort(int min) {
+    return 'En az $min karakter.';
+  }
+
+  @override
+  String get virtCreateSshKeysInvalid =>
+      'Her satıra bir OpenSSH açık anahtarı.';
+
+  @override
+  String get virtDeleteDisks => 'Disklerini de sil';
+
+  @override
+  String get virtDeleteDisksPve =>
+      'Diskleri onunla birlikte silinir; kurulum ortamı korunur.';
+
+  @override
+  String virtDeleted(String name) {
+    return '$name silindi';
+  }
+
+  @override
+  String get pveTokenTipCreate =>
+      'Konuk oluşturmak ve silmek için ayrıca VM.Allocate, VM.Config.*, Datastore.AllocateSpace ve SDN.Use gerekir.';
+
+  @override
+  String get pveTokenTipHardware =>
+      'Donanım düzenlemek için VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network ve VM.Config.Options gerekir; yeni diskler ve arabirimler için ayrıca Datastore.AllocateSpace ve SDN.Use gerekir. Ekran kartı ile USB ve PCI aygıtları ayrıca VM.Config.HWType gerektirir; kaynak eşlemesiyle verilen bir aygıt o eşleme üzerinde Mapping.Use, eşlemeleri listelemek için Mapping.Audit gerektirir.';
+
+  @override
+  String get pveTokenTipBackup =>
+      'Klonlama VM.Clone, yedekleme ve geri yükleme VM.Backup gerektirir; kopyanın veya yedeğin gittiği yerde Datastore.AllocateSpace de gerekir.';
+
+  @override
+  String get virtErrConflict => 'Başka yerde değişti';
+
+  @override
+  String get virtErrConflictTip =>
+      'Bu konuğun yapılandırması burada okunduktan sonra başka biri tarafından değiştirildi, bu yüzden hiçbir şey değiştirilmedi. Yeniden okundu: hâlâ gerekiyorsa değişikliği tekrar yapın.';
+
+  @override
+  String get virtHardware => 'Donanım';
+
+  @override
+  String get virtHwAddDisk => 'Disk ekle';
+
+  @override
+  String get virtHwAddMount => 'Bağlama noktası ekle';
+
+  @override
+  String get virtHwAddNic => 'Ağ arabirimi ekle';
+
+  @override
+  String get virtHwAppliesOnRestart =>
+      'Kaydedildi. Bir sonraki başlatmada geçerli olur.';
+
+  @override
+  String get virtHwAutostart => 'Ana makineyle başlat';
+
+  @override
+  String get virtHwAutostartPve => 'onboot · VMID sırasıyla başlatılır';
+
+  @override
+  String get virtHwBalloonLibvirt => 'Geçerli bellek';
+
+  @override
+  String get virtHwBalloonNote =>
+      'Bellek azaldığında ana makinenin konuğun boştaki belleğini geri almasına izin verir';
+
+  @override
+  String get virtHwBoot => 'Önyükleme';
+
+  @override
+  String get virtHwBootOrder => 'Önyükleme sırası';
+
+  @override
+  String get virtHwBootTip =>
+      'Oklar aygıtı taşır; dokunmak ondan önyüklemeyi açar veya kapatır.';
+
+  @override
+  String get virtHwCdrom => 'CD-ROM';
+
+  @override
+  String get virtHwConfigFile => 'Yapılandırma dosyası';
+
+  @override
+  String get virtHwCores => 'Çekirdekler';
+
+  @override
+  String get virtHwCpuTypeDefault => 'Varsayılan';
+
+  @override
+  String get virtHwDeleteVolume => 'Birimini de sil';
+
+  @override
+  String get virtHwDetach => 'Ayır';
+
+  @override
+  String get virtHwDiskHotplug => 'Sıcak takılabilir: çalışırken eklenebilir';
+
+  @override
+  String get virtHwDisksLxc => 'Kök disk ve bağlama noktaları';
+
+  @override
+  String get virtHwEject => 'Çıkar';
+
+  @override
+  String get virtHwEmpty => 'Ortam yok';
+
+  @override
+  String get virtHwFirewall => 'Güvenlik duvarı';
+
+  @override
+  String virtHwFree(String size) {
+    return '$size boş';
+  }
+
+  @override
+  String get virtHwGrow => 'Büyüt';
+
+  @override
+  String get virtHwGrowNote => 'Diskler yalnızca büyütülebilir.';
+
+  @override
+  String get virtHwGrowNoteRunning =>
+      'Diskler yalnızca büyür. Çalışırken büyütüldüyse bölüm konukta genişletilmelidir.';
+
+  @override
+  String get virtHwGuestUsed => 'Konuğun kullandığı';
+
+  @override
+  String virtHwHostCpus(int threads, int allocated) {
+    return 'Ana makine $threads iş parçacığı · $allocated ayrılmış';
+  }
+
+  @override
+  String virtHwHostMem(String total, String allocated) {
+    return 'Ana makine $total · $allocated ayrılmış';
+  }
+
+  @override
+  String get virtHwHotplugNow => 'Sıcak takılır: hemen geçerli olur.';
+
+  @override
+  String get virtHwIssueBootEmpty => 'En az bir aygıt işaretleyin';
+
+  @override
+  String virtHwIssueCpuCount(int max) {
+    return 'Toplam 1 ile $max vCPU arası';
+  }
+
+  @override
+  String get virtHwIssueCpuOnline => 'Etkin vCPU\'lar: 1 ile toplam arası';
+
+  @override
+  String get virtHwIssueDiskShrink =>
+      'Şimdikinden büyük olmalı: diskler yalnızca büyür';
+
+  @override
+  String get virtHwIssueDiskSize => '1 ile 65536 GiB arası';
+
+  @override
+  String virtHwIssueMemory(int min, int max) {
+    return '$min ile $max MiB arası';
+  }
+
+  @override
+  String get virtHwIssueMemoryMin => 'Bellekten fazla olamaz';
+
+  @override
+  String get virtHwIssueMountPoint => '/data gibi mutlak bir yol';
+
+  @override
+  String get virtHwIssueStorageSpace => 'Depolamanın boş alanından fazla';
+
+  @override
+  String get virtHwIssueSwap => 'Negatif olamaz';
+
+  @override
+  String get virtHwLater => 'Yeniden başlatınca geçerli';
+
+  @override
+  String get virtHwLess => 'Azalt';
+
+  @override
+  String get virtHwLinkDown => 'Bağlı değil';
+
+  @override
+  String get virtHwLinkNote =>
+      'Kapalıyken konuk kablonun çekildiğini görür; yeniden başlatma gerekmez';
+
+  @override
+  String get virtHwLinkUp => 'Bağlı';
+
+  @override
+  String get virtHwMac => 'MAC adresi';
+
+  @override
+  String get virtHwModel => 'Model';
+
+  @override
+  String get virtHwMore => 'Artır';
+
+  @override
+  String get virtHwMountFromPool =>
+      'Bağlama noktaları doğrudan bir depolamadan ayrılır';
+
+  @override
+  String get virtHwMountPoint => 'Bağlama noktası';
+
+  @override
+  String get virtHwMoveDown => 'Aşağı taşı';
+
+  @override
+  String get virtHwMoveUp => 'Yukarı taşı';
+
+  @override
+  String get virtHwNewDisk => 'Yeni disk';
+
+  @override
+  String get virtHwNewMount => 'Yeni bağlama noktası';
+
+  @override
+  String get virtHwNewNic => 'Yeni ağ arabirimi';
+
+  @override
+  String get virtHwNicHotplug => 'virtio arabirimleri sıcak takılabilir';
+
+  @override
+  String get virtHwNics => 'Ağ arabirimleri';
+
+  @override
+  String get virtHwNoMedia => 'Ortam yok';
+
+  @override
+  String get virtHwNoNetworks => 'Burada ağ veya köprü yok';
+
+  @override
+  String get virtHwNoStorage => 'Burada disk alabilen depolama yok';
+
+  @override
+  String get virtHwOnline => 'Etkin vCPU\'lar';
+
+  @override
+  String get virtHwPendingBanner =>
+      'Bazı donanım değişiklikleri yeniden başlatınca geçerli olur';
+
+  @override
+  String get virtHwPickNet => 'Bir ağ seçin';
+
+  @override
+  String get virtHwPickPool => 'Bir depolama ve boyut seçin';
+
+  @override
+  String get virtHwProcessor => 'İşlemci';
+
+  @override
+  String get virtHwRemove => 'Kaldır';
+
+  @override
+  String get virtHwRemoveCdrom => 'CD-ROM\'u kaldır';
+
+  @override
+  String virtHwRemoveDiskAsk(String disk, String guest) {
+    return '$disk, $guest konuğundan kaldırılsın mı?';
+  }
+
+  @override
+  String virtHwRemoveNicAsk(String nic, String guest) {
+    return '$nic, $guest konuğundan kaldırılsın mı?';
+  }
+
+  @override
+  String get virtHwResources => 'Kaynaklar';
+
+  @override
+  String get virtHwRestartNow => 'Şimdi yeniden başlat';
+
+  @override
+  String get virtHwRevert => 'Geri al';
+
+  @override
+  String get virtHwRevertAll => 'Tümünü geri al';
+
+  @override
+  String get virtSetRenameStopped =>
+      'Yeniden adlandırmak için konuğu kapatın: libvirt yalnızca çalışmayan bir konuğu yeniden adlandırır.';
+
+  @override
+  String virtSetIssueDescription(int max) {
+    return 'En çok $max karakter, denetim karakteri olmadan.';
+  }
+
+  @override
+  String get virtSetManualStart => 'Elle başlatılır';
+
+  @override
+  String get virtSetProtection => 'Koruma';
+
+  @override
+  String get virtSetProtectionNote =>
+      'Konuğun silinmesini ve disklerinin değiştirilmesini engeller';
+
+  @override
+  String get virtSetIrreversible => 'Geri alınamaz';
+
+  @override
+  String get virtSetDeleteStopFirst => 'Silmeden önce kapatın.';
+
+  @override
+  String get virtSetDeleteProtected =>
+      'Koruma açık: önce Genel altında kapatın.';
+
+  @override
+  String get virtSetDeleteAgain => 'Onaylamak için yeniden basın';
+
+  @override
+  String virtSetDeleteConfirm(String name) {
+    return '$name öğesini sil';
+  }
+
+  @override
+  String get virtSetDeleteVm => 'Sanal makineyi sil';
+
+  @override
+  String get virtSetDeleteLxc => 'Kapsayıcıyı sil';
+
+  @override
+  String get virtHwSockets => 'Soketler';
+
+  @override
+  String get virtHwSource => 'Kaynak';
+
+  @override
+  String get virtHwSwap => 'Takas';
+
+  @override
+  String get virtHwTopology => 'Soket × çekirdek';
+
+  @override
+  String virtHwTopologyValue(int sockets, int cores, int threads) {
+    return '$sockets soket × $cores çekirdek × $threads iş parçacığı';
+  }
+
+  @override
+  String virtHwTotal(String size) {
+    return 'toplam $size';
+  }
+
+  @override
+  String get virtHwVolumeKept =>
+      'Kaldırıldı, ancak çalışan konuk diski hâlâ kullanıyor, bu yüzden birimi korundu. Bir sonraki başlatmada ayrılacak.';
+
+  @override
+  String get virtHwBus => 'Veri yolu';
+
+  @override
+  String get virtHwCache => 'Önbellek';
+
+  @override
+  String get virtHwBusStopped =>
+      'Veri yolu yalnızca konuk durdurulmuşken değişir.';
+
+  @override
+  String get virtHwMacGenerate => 'Oluştur';
+
+  @override
+  String get virtHwIssueMac =>
+      'Tek noktaya yayın MAC adresi olmalı, örn. 52:54:00:12:34:56';
+
+  @override
+  String get virtHwIssueStopFirst => 'Önce konuğu durdurun';
+
+  @override
+  String get virtHwIssueStorageMissing => 'Önce bir depolama seçin';
+
+  @override
+  String get virtHwIssueDevice => 'Önce bir aygıt seçin';
+
+  @override
+  String get virtHwDevices => 'CD-ROM ve geçiş';
+
+  @override
+  String get virtHwDevicesEmpty => 'USB ve PCI geçişi, CD-ROM, TPM';
+
+  @override
+  String get virtHwAddDevice => 'Aygıt ekle';
+
+  @override
+  String get virtHwNewDevice => 'Yeni aygıt';
+
+  @override
+  String get virtHwUsbHotplug => 'USB geçişi çalışırken takılabilir.';
+
+  @override
+  String get virtHwPci => 'PCI geçişi';
+
+  @override
+  String get virtHwIommuOffTitle => 'Ana makinede IOMMU yok';
+
+  @override
+  String get virtHwIommuOffBody =>
+      'Önce ana makinenin BIOS\'unda VT-d ya da AMD-Vi\'yi, çekirdeğinde IOMMU\'yu açın. O zamana kadar PCI aygıtı verilen konuk başlamaz.';
+
+  @override
+  String get virtHwPciTitle => 'Ana makinede IOMMU gerekir';
+
+  @override
+  String get virtHwPciBody =>
+      'Geçirildikten sonra ana makine aygıtı kullanamaz, konuk da çalışırken taşınamaz.';
+
+  @override
+  String virtHwIommuGroup(int group) {
+    return 'IOMMU grubu $group';
+  }
+
+  @override
+  String virtHwIommuShared(int count) {
+    return 'IOMMU grubunu paylaşan $count aygıt birlikte geçirilir';
+  }
+
+  @override
+  String get virtHwNoHostDevices => 'Bu ana makinede geçirilecek aygıt yok';
+
+  @override
+  String get virtHwMappingsOnly =>
+      'Burada yalnızca kaynak eşlemeleri kullanılabilir: PVE ham aygıt geçişine yalnızca parolasıyla giriş yapan root@pam için izin verir. Eşlemeleri Veri Merkezi → Kaynak Eşlemeleri altında oluşturun.';
+
+  @override
+  String get virtHwTpmNote => 'Windows 11 TPM 2.0 gerektirir.';
+
+  @override
+  String get virtHwDisplay => 'Görüntü';
+
+  @override
+  String get virtHwProtocol => 'Protokol';
+
+  @override
+  String get virtHwListen => 'Dinleme';
+
+  @override
+  String get virtHwGpu => 'Ekran kartı';
+
+  @override
+  String get virtHwListenAllTitle => 'Konsol ağa açık';
+
+  @override
+  String get virtHwListenAllBody =>
+      'Tüm adreslerde dinlemek, ana makineye erişen herkesin konsola bağlanmasına izin verir. 127.0.0.1\'de tutun ve SSH tüneliyle bağlanın.';
+
+  @override
+  String get virtHwFirmware => 'Ürün yazılımı';
+
+  @override
+  String get virtHwUefiSub =>
+      'OVMF · Secure Boot destekli, Windows 11 için gerekli';
+
+  @override
+  String get virtHwBiosSub => 'SeaBIOS · eski sistemler ve MBR diskler';
+
+  @override
+  String get virtHwSecureBootNote =>
+      'Yalnızca imzalı çekirdek ve önyükleyicileri başlatır';
+
+  @override
+  String get virtHwFirmwareWarnTitle =>
+      'Kurulu bir sistemin ürün yazılımını değiştirmeyin';
+
+  @override
+  String get virtHwFirmwareWarnBody =>
+      'UEFI ile BIOS arasında geçiş, kurulu sistemi önyüklenemez hâle getirir.';
+
+  @override
+  String get virtHwFirmwareStopped =>
+      'Ürün yazılımı yalnızca konuk durdurulmuşken değişir.';
+
+  @override
+  String get virtHwSecureBootVars =>
+      'Secure Boot\'u açıp kapatmak EFI değişkenlerini yeniden oluşturur; içlerinde kayıtlı önyükleme girdileri kaybolur.';
+
+  @override
+  String get virtHwEfiStorage => 'EFI değişkenlerinin yeri';
+
+  @override
+  String get virtHwTpmStorage => 'TPM durumunun yeri';
+
+  @override
+  String virtHwSwitchFirmwareAsk(String guest, String firmware) {
+    return '$guest, $firmware olarak değiştirilsin mi?';
+  }
+
+  @override
+  String get virtCloneName => 'Yeni ad';
+
+  @override
+  String get virtCloneFull => 'Tam klon';
+
+  @override
+  String get virtCloneCopyDisks => 'Disk içeriğini kopyala';
+
+  @override
+  String get virtCloneLinkedNote =>
+      'Kapalı: şablonun disklerine bağlı bir bağlantılı klon';
+
+  @override
+  String get virtCloneFullOnly =>
+      'Yalnızca bir şablon bağlantılı klon olarak klonlanabilir';
+
+  @override
+  String get virtCloneEmptyNote => 'Kapalı: aynı boyutta yeni boş diskler';
+
+  @override
+  String get virtCloneStopFirst => 'Klonlamadan önce kapatın.';
+
+  @override
+  String get virtCloneFullShort => 'Tam';
+
+  @override
+  String get virtCloneLinkedShort => 'Bağlantılı';
+
+  @override
+  String get virtCloneEmptyShort => 'Boş diskler';
+
+  @override
+  String get virtCloning => 'Klonlanıyor…';
+
+  @override
+  String virtCloned(String name) {
+    return '$name olarak klonlandı';
+  }
+
+  @override
+  String get virtBackupPlan => 'Plan';
+
+  @override
+  String get virtBackupPlanWhere => 'Veri merkezi → Yedekleme';
+
+  @override
+  String get virtBackupNoPlanShort => 'Plan yok';
+
+  @override
+  String get virtBackupNoPlan =>
+      'Bu konuğu içeren zamanlanmış yedekleme işi yok. İşler veri merkezinde ayarlanır.';
+
+  @override
+  String get virtBackupKeep => 'Sakla';
+
+  @override
+  String get virtBackupJobDisabled => 'Bu iş devre dışı.';
+
+  @override
+  String virtBackupCount(int count) {
+    return '$count yedek';
+  }
+
+  @override
+  String get virtBackupNoStorage => 'Bu düğümde yedekleri tutan depolama yok.';
+
+  @override
+  String get virtBackupLiveTip => 'Çalışıyor: snapshot modu, kesinti yok';
+
+  @override
+  String get virtBackupStoppedTip => 'Kapalı: olduğu gibi yedeklenir';
+
+  @override
+  String get virtBackupNow => 'Şimdi yedekle';
+
+  @override
+  String get virtBackupNotes => 'Notlar';
+
+  @override
+  String get virtBackupProtected =>
+      'Korumalı: koruma PVE\'de kaldırılana kadar silinemez.';
+
+  @override
+  String virtBackupVerified(String state) {
+    return 'Doğrulama: $state';
+  }
+
+  @override
+  String get virtBackupRestoreOverwrites =>
+      'Geri yükleme mevcut diskleri üzerine yazar';
+
+  @override
+  String get virtBackupStopFirst => 'Geri yüklemeden önce kapatın.';
+
+  @override
+  String get virtBackupRestoreAgain =>
+      'Konuğun diskleri ve yapılandırması yedektekilerle değiştirilir.';
+
+  @override
+  String get virtBackupDeleteConfirm => 'Yedeği sil';
+
+  @override
+  String get virtBackupRestoreNew => 'Yeni olarak geri yükle';
+
+  @override
+  String get virtBackupRestoreConfirm => 'Üzerine geri yükle';
+
+  @override
+  String get virtBackupDone => 'Yedekleme tamamlandı';
+
+  @override
+  String get virtBackupDeleted => 'Yedek silindi';
+
+  @override
+  String virtBackupRestored(String time) {
+    return '$time tarihinden geri yüklendi';
+  }
+
+  @override
+  String pveNeedsPrivilege(
+    String account,
+    String privilege,
+    String path,
+    String command,
+  ) {
+    return '$account hesabının $path üzerinde $privilege yetkisi yok. PVE ana makinesinde verin:\n$command';
+  }
+
+  @override
+  String get virtCanDelete => 'Silinebilir';
+
+  @override
+  String get virtInUse => 'Kullanımda';
+
+  @override
+  String get virtOps => 'İşlemler';
+
+  @override
+  String get virtPool => 'Depolama havuzu';
+
+  @override
+  String get virtPoolNew => 'Yeni depolama havuzu';
+
+  @override
+  String get virtStorageAdd => 'Depolama ekle';
+
+  @override
+  String virtPoolUsedPct(String pct) {
+    return '%$pct kullanıldı';
+  }
+
+  @override
+  String get virtPoolInUse =>
+      'Bir VM buradaki bir birimi kullanıyor; havuz durdurulamaz veya kaldırılamaz.';
+
+  @override
+  String get virtPoolDelete => 'Havuzu sil';
+
+  @override
+  String get virtStorageRemove => 'Depolamayı kaldır';
+
+  @override
+  String virtPoolDeleteAsk(String name) {
+    return '$name havuzu kaldırılsın mı? Tanımı silinir; birimleri yerinde kalır.';
+  }
+
+  @override
+  String virtStorageRemoveAsk(String name) {
+    return '$name depolaması PVE yapılandırmasından kaldırılsın mı? İçindekiler kalır.';
+  }
+
+  @override
+  String virtPoolDeleteKeepsVolumes(int count) {
+    return '$count birimi diskte kalır.';
+  }
+
+  @override
+  String get virtPoolDeleteStorage => 'Dizinini de sil (yalnızca boşsa)';
+
+  @override
+  String virtPoolStopAsk(String name) {
+    return '$name havuzu durdurulsun mu? Yeniden başlayana kadar birimler listelenemez ve oluşturulamaz.';
+  }
+
+  @override
+  String virtStorageDisableAsk(String name) {
+    return '$name depolaması devre dışı bırakılsın mı? Diskleri üzerinde olan VM\'ler yeniden etkinleşene kadar başlamaz.';
+  }
+
+  @override
+  String get virtPoolLogicalNote =>
+      'Var olan bir birim grubu olduğu gibi kullanılır; hiçbir şey biçimlendirilmez.';
+
+  @override
+  String get virtPoolMountPoint => 'Bağlama noktası';
+
+  @override
+  String get virtPoolSourceNfs => 'Kaynak (host:/yol)';
+
+  @override
+  String get virtPoolSourceVg => 'Birim grubu';
+
+  @override
+  String get virtPoolSourceThin => 'Birim grubu / thin pool';
+
+  @override
+  String get virtPoolSourceZfs => 'ZFS havuzu';
+
+  @override
+  String get virtPoolTypeVg => 'LVM birim grubu';
+
+  @override
+  String get virtResNameEmpty => 'Bir ad girin';
+
+  @override
+  String get virtResNameInvalid =>
+      'Bu ana makinenin kabul ettiği bir ad değil (harf, rakam, . _ -)';
+
+  @override
+  String get virtResSourceInvalid => 'Geçerli bir yol veya kaynak değil';
+
+  @override
+  String get virtResTargetInvalid => 'Mutlak bir yol';
+
+  @override
+  String get virtResCidrInvalid => 'Önekli bir adres, ör. 192.168.150.1/24';
+
+  @override
+  String get virtResDhcpInvalid =>
+      'Ağda sıralı iki adres, ana makinenin adresi hariç';
+
+  @override
+  String get virtResSubnetTaken => 'Buradaki başka bir ağ bu alt ağda';
+
+  @override
+  String get virtResBridgeInvalid => 'Arabirim adı değil';
+
+  @override
+  String get virtResFormat => 'Bu havuz bu biçimi desteklemiyor';
+
+  @override
+  String get virtVolNew => 'Yeni birim';
+
+  @override
+  String virtVolCount(int count) {
+    return '$count birim';
+  }
+
+  @override
+  String get virtVolNone => 'Bu havuzda henüz birim yok.';
+
+  @override
+  String get virtVolEmptyAttach =>
+      'Yeni bir birim daha sonra herhangi bir VM\'e takılabilir';
+
+  @override
+  String get virtVolEmptyUpload => 'Doğrudan bir ISO da yüklenebilir';
+
+  @override
+  String get virtVolPveName =>
+      'PVE birimi VM\'ine göre adlandırır: vm-<VMID>-disk-<N>';
+
+  @override
+  String get virtVolUsers => 'Kullanan';
+
+  @override
+  String get virtVolAllocated => 'Ayrılmış';
+
+  @override
+  String get virtVolGrowFromGuest =>
+      'Bir VM kullanıyor: o VM\'in Donanım görünümünden büyütün';
+
+  @override
+  String get virtVolInUse => 'Bu birimi bir VM kullanıyor';
+
+  @override
+  String get virtVolAttach => 'VM\'e tak';
+
+  @override
+  String get virtVolAttachNote =>
+      'İlk diskinin bulunduğu veri yoluna yeni disk olarak takılır';
+
+  @override
+  String virtVolAttached(String name) {
+    return '$name makinesine takıldı';
+  }
+
+  @override
+  String get virtVolInsert => 'CD-ROM\'a tak';
+
+  @override
+  String virtVolInserted(String name) {
+    return '$name CD-ROM sürücüsüne takıldı';
+  }
+
+  @override
+  String virtVolNoCdrom(String name) {
+    return '$name makinesinde CD-ROM sürücüsü yok';
+  }
+
+  @override
+  String virtVolDeleteAsk(String name, String pool) {
+    return '$name birimi $pool havuzundan silinsin mi? İçeriği kalıcı olarak gider.';
+  }
+
+  @override
+  String get virtUploadIso => 'ISO yükle';
+
+  @override
+  String virtUploadTo(String pool) {
+    return '$pool konumuna yükle';
+  }
+
+  @override
+  String virtUploadDone(String name) {
+    return '$name yüklendi';
+  }
+
+  @override
+  String get virtNetConfig => 'Yapılandırma';
+
+  @override
+  String get virtNetInternal => 'Dahili';
+
+  @override
+  String get virtNetBridgePorts => 'Köprü bağlantı noktaları';
+
+  @override
+  String get virtNetHostBridge => 'Ana makine köprüsü';
+
+  @override
+  String get virtNetPortsHint => 'eno2; dahili köprü için boş';
+
+  @override
+  String get virtNetDhcpRange => 'DHCP aralığı';
+
+  @override
+  String get virtNetDhcpTip => 'dnsmasq VM\'lere adres verir';
+
+  @override
+  String get virtNetVlanTip => 'VM ağ kartları VLAN etiketi taşıyabilir';
+
+  @override
+  String get virtNetNatTip =>
+      'Ana makine üzerinden: VM\'ler dışarı çıkar, dışarıdan girilemez';
+
+  @override
+  String get virtNetRoutedTip =>
+      'NAT olmadan ana makine yönlendirir: LAN\'da dönüş rotası gerekir';
+
+  @override
+  String get virtNetIsolatedTip =>
+      'Yalnızca VM\'ler ve ana makine birbirine ulaşır';
+
+  @override
+  String get virtNetBridgedTip =>
+      'VM\'ler ana makinenin bir köprüsüne, fiziksel ağına katılır';
+
+  @override
+  String get virtNetNew => 'Yeni ağ';
+
+  @override
+  String get virtNetNewBridge => 'Yeni Linux köprüsü';
+
+  @override
+  String get virtNetVirtual => 'Sanal ağ';
+
+  @override
+  String get virtNetDelete => 'Ağı sil';
+
+  @override
+  String virtNetDeleteAsk(String name) {
+    return '$name ağı silinsin mi? Durdurulur ve tanımı kaldırılır.';
+  }
+
+  @override
+  String virtNetDeleteAskPve(String name, String node) {
+    return '$name köprüsü $node üzerinden kaldırılsın mı? Şimdi bekleyen yapılandırmadan, uygulanınca da ana makineden çıkar.';
+  }
+
+  @override
+  String virtNetInUse(int count) {
+    return 'Üzerindeki VM: $count. Silinemez.';
+  }
+
+  @override
+  String virtNetStopAsk(String name, int count) {
+    return '$name durdurulsun mu? Üzerindeki $count VM yeniden başlayana kadar ağı kaybeder.';
+  }
+
+  @override
+  String get virtNetInactivePve =>
+      'Etkin değil: yeni bir köprü uygulanana kadar bekleyen yapılandırmada durur.';
+
+  @override
+  String get virtNetPveApplyNote =>
+      'Bekleyen değişiklik olarak kaydedilir; yapılandırma uygulanınca geçerli olur (ifreload -a).';
+
+  @override
+  String get virtNetPendingSaved =>
+      'Bekleyen olarak kaydedildi: geçerli olması için yapılandırmayı uygulayın';
+
+  @override
+  String virtNetPendingTitle(String node) {
+    return '$node üzerinde bekleyen ağ değişiklikleri';
+  }
+
+  @override
+  String get virtNetPendingTip =>
+      'PVE ağ değişikliklerini uygulanana kadar interfaces.new içinde tutar.';
+
+  @override
+  String get virtNetPendingShow => 'Değişiklikleri göster';
+
+  @override
+  String get virtNetApply => 'Yapılandırmayı uygula';
+
+  @override
+  String virtNetApplyAsk(String node) {
+    return '$node üzerinde bekleyen ağ yapılandırması uygulansın mı? PVE ana makinenin ağını yeniden yükler (ifreload -a): bir hata ana makineye erişimi kesebilir.';
+  }
+
+  @override
+  String virtNetRevertAsk(String node) {
+    return '$node üzerinde bekleyen ağ yapılandırması atılsın mı?';
+  }
+
+  @override
+  String get pveTokenTipStorage =>
+      'Depolama yönetimi /storage üzerinde Datastore.Allocate (ekleme, devre dışı bırakma, kaldırma), Datastore.AllocateSpace (birimler) ve Datastore.AllocateTemplate (yüklemeler) gerektirir; Linux köprüleri ve ağ yapılandırmasını uygulamak düğümde Sys.Modify gerektirir.';
+
+  @override
+  String get virtCreateUnnamed => 'Adsız';
+
+  @override
+  String get virtCreateNotChosen => 'Seçilmedi';
+
+  @override
+  String get virtCreateKindVmSub => 'qm · tam bir KVM sanal makinesi';
+
+  @override
+  String get virtCreateKindLxcSub =>
+      'pct · ana makinenin çekirdeğini paylaşır, daha hafif';
+
+  @override
+  String get virtCloudImage => 'Bulut imajı';
+
+  @override
+  String get virtCloudImageTip =>
+      'Üzerinde sistem olan bir disk: kopyalanır, Depolama altındaki boyuta büyütülür ve ilk açılışta cloud-init ile yapılandırılır. İmajın kendisi olduğu gibi kalır.';
+
+  @override
+  String get virtNoCloudImagesLibvirt =>
+      'Burada bulut imajı yok: hiçbir VM\'nin kullanmadığı bir qcow2 veya raw imajını bir havuza koyun (Depolama\'dan yükleyin).';
+
+  @override
+  String get virtNoCloudImagesPve =>
+      'Burada bulut imajı yok: bir qcow2, raw veya vmdk imajını Import içerik türüne sahip bir depolamaya yükleyin (PVE 8.2+).';
+
+  @override
+  String get virtCreateWindowsTitle => 'Windows 11 UEFI ve TPM 2.0 gerektirir';
+
+  @override
+  String get virtCreateWindowsBody =>
+      'Yukarıda UEFI\'yi seçin ve TPM\'yi açın.';
+
+  @override
+  String get virtCreateWindowsNoTpm =>
+      'Bu ana makinede yazılım TPM\'si (swtpm) yok: VM\'ye vermek için kurun.';
+
+  @override
+  String virtCreateImageSize(String size) {
+    return 'İmaj $size: disk en az bu kadar büyük olmalı.';
+  }
+
+  @override
+  String get virtCreateImageMissing => 'Bir bulut imajı seçin.';
+
+  @override
+  String get virtCreateIncomplete =>
+      'Önce turuncu işaretli kısımları tamamlayın.';
+
+  @override
+  String virtCreateOn(String host) {
+    return '$host üzerinde oluşturulur';
+  }
+
+  @override
+  String get virtCiTip =>
+      'sudo yetkili bir hesap; parola, SSH anahtarı veya ikisiyle giriş yapılır.';
+
+  @override
+  String get virtCiUserInvalid =>
+      'Küçük harf, rakam, _ ve -; harf veya _ ile başlamalı';
+
+  @override
+  String get virtCiCredentialsMissing =>
+      'Bir parola veya SSH anahtarı belirleyin.';
+
+  @override
+  String get virtCiHostnamePve => 'Ana bilgisayar adı VM\'nin adıdır.';
+
+  @override
+  String get virtCiStatic => 'Statik';
+
+  @override
+  String get virtCiAddressInvalid =>
+      'Önekiyle bir IPv4 adresi, örneğin 10.0.0.5/24';
+
+  @override
+  String get virtCiGatewayInvalid => 'Bir IPv4 adresi, örneğin 10.0.0.1';
+
+  @override
+  String get virtCiDnsFromDhcp => 'Boş: DHCP\'den';
+
+  @override
+  String get virtCiDnsInvalid => 'Boşluk veya virgülle ayrılmış IP adresleri';
+
+  @override
+  String get virtCiSearch => 'Arama alanı';
+
+  @override
+  String get virtCiSeedNote =>
+      'Diskin yanındaki küçük bir ISO\'ya yazılır, CD-ROM olarak takılır ve VM ile birlikte silinir. Parolanın yalnızca özeti saklanır.';
+
+  @override
+  String get virtCiNoToolTitle =>
+      'Ana makinede cloud-init verisini oluşturacak araç yok';
+
+  @override
+  String virtCiNoToolBody(String tools) {
+    return 'Ana makineye $tools araçlarından birini kurun. cloud-init olmadan imaj, giriş yapılacak hesap olmadan başlar.';
+  }
+
+  @override
+  String get virtHwCloudInitNote =>
+      'cloud-init\'in ilk açılışta okuduğu veri. Kurulum ortamı değil: buraya bir şey takılmaz.';
+
+  @override
+  String get virtHwCdromLater =>
+      'Çalışırken sürücü bir sonraki açılışta eklenir (SATA ve IDE çalışırken takmayı desteklemez).';
+
+  @override
+  String virtCreateDiskKept(String size) {
+    return 'Disk, imajın kendi boyutu olan $size olarak kaldı; istenenden büyük: bir disk hiçbir zaman üzerindeki sistemden küçük kesilmez.';
+  }
+
+  @override
+  String get virtCiEditTip =>
+      'cloud-init\'in bu VM\'de kurduğu şeyler: sudo yetkili bir hesap, ona nasıl girileceği, ana makine adı ve adres.';
+
+  @override
+  String get virtCiForeignTitle =>
+      'Bu seed, bu uygulamanın yazdığından fazlasını içeriyor';
+
+  @override
+  String get virtCiForeignBody =>
+      'Başka yerde yapılan ayarlar (paketler, komutlar, diğer hesaplar) burada gösterilmez. Kaydetmek seedi burada gösterilenle değiştirir.';
+
+  @override
+  String get virtCiPasswordKept => 'Ayarlı. Korumak için boş bırakın';
+
+  @override
+  String get virtCiRemovePassword => 'Parolayı kaldır';
+
+  @override
+  String get virtCiRemovePasswordNote => 'Yalnızca SSH anahtarıyla giriş';
+
+  @override
+  String get virtCiKeysAdded =>
+      'Anahtarlar hesaba eklenir. Burada çıkarılan bir anahtar, orada silinene kadar sistemde kalır; yeni bir kullanıcı adı eskisinin yanında yeni bir hesap açar.';
+
+  @override
+  String get virtCiEffectTitle => 'Bir sonraki açılışta geçerli olur';
+
+  @override
+  String get virtCiEffectLibvirt =>
+      'Kaydetmek, yeni bir örnek kimliğiyle yeni bir seed yazar.';
+
+  @override
+  String get virtCiEffectPve =>
+      'PVE cloud-init sürücüsünü hemen yeniden yazar; örnek kimliği bu ayarlardan türetilir, bu yüzden buradaki her değişiklik yenisini oluşturur.';
+
+  @override
+  String get virtCiNewInstance =>
+      'Bir sonraki açılışta cloud-init sistemi yeni bir örnek olarak ele alır: ana makine adını yeniden ayarlar, hesap yoksa oluşturur, parolasını ayarlar, anahtarları ekler ve ağ yapılandırmasını yeniden yazar. Yeni SSH ana makine anahtarları da üretir; bu yüzden SSH istemcileri ana makine anahtarının değiştiği uyarısını verir. O açılıştan önce hiçbir şey değişmez.';
+
+  @override
+  String get virtCiSaved => 'Kaydedildi. Bir sonraki açılışta geçerli olur.';
 }

@@ -16,6 +16,7 @@ import 'package:server_box/src/rust/api/remote_desktop.dart';
 import 'package:server_box/src/rust/api/script.dart';
 import 'package:server_box/src/rust/api/ssh_asym.dart';
 import 'package:server_box/src/rust/api/ssh_crypto.dart';
+import 'package:server_box/src/rust/api/virt.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
 abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
@@ -170,7 +171,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int? dco_decode_opt_box_autoadd_u_32(dynamic raw);
 
   @protected
+  List<String>? dco_decode_opt_list_String(dynamic raw);
+
+  @protected
   List<CustomCmd>? dco_decode_opt_list_custom_cmd(dynamic raw);
+
+  @protected
+  Uint8List? dco_decode_opt_list_prim_u_8_strict(dynamic raw);
 
   @protected
   RdpSessionParams dco_decode_rdp_session_params(dynamic raw);
@@ -212,6 +219,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   BigInt dco_decode_usize(dynamic raw);
+
+  @protected
+  VirtActionKind dco_decode_virt_action_kind(dynamic raw);
+
+  @protected
+  VirtErrorKind dco_decode_virt_error_kind(dynamic raw);
+
+  @protected
+  VirtFfiError dco_decode_virt_ffi_error(dynamic raw);
+
+  @protected
+  VirtUploadEntryKind dco_decode_virt_upload_entry_kind(dynamic raw);
 
   @protected
   VncSessionParams dco_decode_vnc_session_params(dynamic raw);
@@ -363,7 +382,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int? sse_decode_opt_box_autoadd_u_32(SseDeserializer deserializer);
 
   @protected
+  List<String>? sse_decode_opt_list_String(SseDeserializer deserializer);
+
+  @protected
   List<CustomCmd>? sse_decode_opt_list_custom_cmd(SseDeserializer deserializer);
+
+  @protected
+  Uint8List? sse_decode_opt_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
   RdpSessionParams sse_decode_rdp_session_params(SseDeserializer deserializer);
@@ -411,6 +436,20 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   BigInt sse_decode_usize(SseDeserializer deserializer);
+
+  @protected
+  VirtActionKind sse_decode_virt_action_kind(SseDeserializer deserializer);
+
+  @protected
+  VirtErrorKind sse_decode_virt_error_kind(SseDeserializer deserializer);
+
+  @protected
+  VirtFfiError sse_decode_virt_ffi_error(SseDeserializer deserializer);
+
+  @protected
+  VirtUploadEntryKind sse_decode_virt_upload_entry_kind(
+    SseDeserializer deserializer,
+  );
 
   @protected
   VncSessionParams sse_decode_vnc_session_params(SseDeserializer deserializer);
@@ -591,8 +630,17 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_opt_box_autoadd_u_32(int? self, SseSerializer serializer);
 
   @protected
+  void sse_encode_opt_list_String(List<String>? self, SseSerializer serializer);
+
+  @protected
   void sse_encode_opt_list_custom_cmd(
     List<CustomCmd>? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_list_prim_u_8_strict(
+    Uint8List? self,
     SseSerializer serializer,
   );
 
@@ -649,6 +697,24 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_usize(BigInt self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_virt_action_kind(
+    VirtActionKind self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_virt_error_kind(VirtErrorKind self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_virt_ffi_error(VirtFfiError self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_virt_upload_entry_kind(
+    VirtUploadEntryKind self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_vnc_session_params(

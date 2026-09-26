@@ -3,9 +3,9 @@ title: 系统架构
 description: Server Box 如何组织界面、状态、存储和平台层
 ---
 
-Server Box 采用分层结构，将界面、状态协调、本地数据和外部连接分别处理。这样既方便跨平台实现，也让 SSH、Monitor agent 和本机终端能够共用上层 UI。
+Server Box 将 UI、状态协调、本地存储和外部连接分层处理。SSH、Monitor agent 和本机终端因此可以共用 UI，同时把平台相关逻辑留在边缘层。
 
-本页介绍系统层面的模型：分层结构，以及影响大多数行为的两个决定——一台服务器可以同时暴露两种 transport，状态也可以从任一边到达。模块布局、入口、依赖注入与 Rust 集成请参阅[实现架构](/docs/zh/development/architecture/)。
+本页介绍系统模型，以及影响多数功能的两个设计选择：一台服务器可以配置两种 transport，状态也可以经由任一 transport 提供。源码目录、App 入口、依赖注入和 Rust 集成请参阅[实现架构](/docs/zh/development/architecture/)。
 
 ## 架构分层
 
@@ -36,9 +36,9 @@ Server Box 采用分层结构，将界面、状态协调、本地数据和外部
 
 ## 连接方式和能力模型
 
-服务器可以配置 SSH、Monitor HTTP，或同时配置两者。`preferredTransport` 只决定连接尝试顺序；优先连接失败时，App 可以回退到另一种方式。
+服务器可以配置 SSH、Monitor HTTP，或同时配置两者。`preferredTransport` 决定 App 优先尝试哪种连接，但不会关闭另一种；首选方式连接失败时，App 可以尝试备用方式。
 
-UI 根据 `ServerCapabilities` 判断服务器支持哪些功能，而不是直接判断当前使用的 transport：
+UI 根据 `ServerCapabilities` 判断可用功能，不直接根据当前使用的 transport 推断：
 
 | 能力 | SSH | Monitor HTTP |
 |---|---|---|
@@ -48,9 +48,9 @@ UI 根据 `ServerCapabilities` 判断服务器支持哪些功能，而不是直�
 | Byte stream（SFTP、端口转发） | 支持 | 不支持 |
 | App 连接前的历史数据 | 不提供 | 提供 |
 
-同时配置两种方式时，服务器的能力取两者的 union。因此 Monitor HTTP 即使被设为优先，也不会隐藏 SSH 提供的 SFTP 或端口转发能力。
+同时配置两种方式时，服务器会提供两边能力的 union。例如，优先使用 Monitor HTTP 时，SSH 提供的 SFTP 和端口转发仍然可用。
 
-连接服务器的 byte stream 来源是另一项独立设置：SSH 文件操作默认使用 SFTP，也可以选择 SCP；仅配置 Monitor HTTP 的服务器使用 agent 的文件 API，不提供 SFTP 或端口转发。
+文件传输协议与 transport 优先顺序分开配置。SSH 文件操作默认使用 SFTP；主机没有 SFTP subsystem 时可以选 SCP。仅配置 Monitor HTTP 的服务器使用 agent 文件 API，无法提供 SFTP 或端口转发。
 
 ## 状态采集和解析
 
@@ -78,20 +78,20 @@ UI 根据 `ServerCapabilities` 判断服务器支持哪些功能，而不是直�
   → UI 重建
 ```
 
-App 的 SSH 路径通过 `crates/sbm_ffi` 调用共享 Rust parser。Monitor agent 在服务器本机使用 `crates/sbm_native` 获取 CPU、内存、磁盘、网络等核心指标，并在较慢的扩展周期使用共享脚本获取仍需要 CLI 工具的数据。两条路径共享部分状态模型，但采样方式、字段精度和语义可能不同，不能假定两者是完全相同的解析流程。
+App 的 SSH 路径通过 `crates/sbm_ffi` 调用共享 Rust parser。Monitor agent 在运行主机上用 `crates/sbm_native` 采集 CPU、内存、磁盘和网络等核心指标，并在较慢的扩展周期运行共享脚本，补充仍需 CLI 工具才能读取的值。两条路径共用部分状态模型，但采样和解析行为不同。
 
-parser 以纯函数形式工作，只返回原始计数；差分和滑动窗口计算也由纯函数完成，FFI 边界不保存可变状态。
+parser 由纯函数组成，返回原始计数。差分与时间窗口计算也使用纯函数；可变状态不会跨越 FFI 边界。
 
 ## 存储迁移
 
-`SchemaVersion` 管理 App 的存储布局，Drift 的 `schemaVersion` 固定为 `1`。迁移还需要读取旧 Hive box、生成新的 ID 并重写引用，这些工作超出了 Drift migration 的范围。
+App 的存储布局由 `SchemaVersion` 管理。Drift 的 `schemaVersion` 保持为 `1`，因为 App migration 除了更新 Drift table，还要导入旧 Hive box、生成 ID 并重写引用。
 
-迁移会先由 `HiveImport` 将旧安装的 Hive 数据导入 `kv`，再由已注册的 schema migration 将 key-value 数据拆分到 entity 表。`lib/hive/legacy_adapters.dart` 中的旧版 adapter 是冻结的读取器，不能用当前 model 重新生成。
+升级时，`HiveImport` 先将旧安装中的 Hive 数据导入 `kv`，再由已注册的 schema migration 把关系型数据迁入 entity table。`lib/hive/legacy_adapters.dart` 中的 adapter 用于读取已发布版本的数据格式，必须保持冻结，不能用当前 model 重新生成。
 
-每个存储迁移都必须保留永久 regression test，并使用旧 release 实际写出的 bytes。当前 adapter 重新生成 fixture 只能证明当前版本与自身一致，不能证明它还能读取旧版本数据。
+每项存储迁移都要保留 regression test，并使用待迁移 release 实际写出的 bytes。用当前 adapter 生成的 fixture 只能验证当前代码自身，不能证明旧版本数据仍可读取。
 
 ## 安全
 
-- **凭据和已信任的主机指纹**保存在加密的 SQLite 数据库中（主机指纹位于设置存储的 `sshKnownHostFingerprints`）；数据库密钥保存在平台安全存储（Keychain/Keystore）中。
-- **Session 不会持久化。**
-- **App 始终验证主机密钥**，包括通过 jump server 或 `ProxyCommand` 连接时。
+- **凭据和已信任的 host fingerprint**保存在加密 SQLite 数据库中。设置存储使用 `sshKnownHostFingerprints` 保存 fingerprint；数据库密钥保存在平台安全存储（Keychain 或 Keystore）中。
+- **Session** 不会持久化。
+- **App 会验证每次连接的 host key**，包括经 jump server 或 `ProxyCommand` 建立的连接。

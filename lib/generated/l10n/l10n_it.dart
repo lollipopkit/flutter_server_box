@@ -1055,9 +1055,6 @@ class AppLocalizationsIt extends AppLocalizations {
       'L\'analisi dello stato di occupazione di Docker è relativamente lenta.';
 
   @override
-  String get plugInType => 'Tipo di inserimento';
-
-  @override
   String get preferDiskAmount => 'Priorità visualizzazione capacità disco';
 
   @override
@@ -1197,24 +1194,12 @@ class AppLocalizationsIt extends AppLocalizations {
       'Non si consiglia di abilitare, attento ai rischi per la sicurezza! Se stai usando il certificato predefinito da PVE, devi abilitare questa opzione.';
 
   @override
-  String get pveServerClientMissing =>
-      'Il client SSH per questo server non è disponibile.';
-
-  @override
-  String get pveAddressMissing =>
-      'Manca l\'indirizzo PVE. Configuralo nelle impostazioni del server.';
-
-  @override
   String get pvePasswordRequired =>
       'È richiesta la password PVE. Impostala nelle impostazioni del server.';
 
   @override
   String get pveOtpRequired =>
       'Su questo server PVE è attiva l\'autenticazione a due fattori. Inserisci il codice OTP.';
-
-  @override
-  String get pveOtpChallengeExpired =>
-      'La richiesta OTP è scaduta. Aggiorna e riprova.';
 
   @override
   String get pveOtpCodeRequired => 'Il codice OTP è obbligatorio.';
@@ -1240,19 +1225,6 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get pveMissingAuthTicket =>
       'Il login PVE è riuscito ma non è stato restituito alcun ticket di autenticazione.';
-
-  @override
-  String get pveVersionLow =>
-      'Questa funzionalità è attualmente nella fase di test ed è stata testata solo su PVE 8+. Usala con cautela.';
-
-  @override
-  String get pveLoadingForwarding => 'Creazione del tunnel SSH...';
-
-  @override
-  String get pveLoadingLogin => 'Autenticazione con PVE...';
-
-  @override
-  String get pveLoadingData => 'Recupero dei dati del cluster...';
 
   @override
   String get pveLoadingConnect => 'Connessione...';
@@ -1734,9 +1706,6 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get sortByJoinTime => 'Per data di aggiunta';
-
-  @override
-  String get portForwardBetaTitle => 'Inoltro porte (Beta)';
 
   @override
   String get tmuxAutoAttach => 'Collegamento automatico a tmux';
@@ -3340,4 +3309,1564 @@ class AppLocalizationsIt extends AppLocalizations {
   String appearanceThemeModeLocked(String mode) {
     return 'Questo tema supporta solo $mode. Seleziona un altro tema per cambiare modalità.';
   }
+
+  @override
+  String get pveAuthToken => 'Token API';
+
+  @override
+  String get pveVersionLow =>
+      'Questa funzionalità è attualmente nella fase di test ed è stata testata solo su PVE 8+. Usala con cautela.';
+
+  @override
+  String get pveTokenId => 'ID token';
+
+  @override
+  String get pveTokenSecret => 'Segreto del token';
+
+  @override
+  String get pveTokenTip =>
+      'Crealo in PVE in Datacenter → Permessi → API Tokens. Servono VM.Audit, VM.PowerMgmt, VM.Console, VM.Snapshot, VM.Snapshot.Rollback, Datastore.Audit e Sys.Audit sui percorsi da mostrare; con la separazione dei privilegi attiva, assegnali al token stesso.';
+
+  @override
+  String pveTokenNoPrivileges(String account, String command) {
+    return 'Il token $account non può vedere nulla su questo host. Un token con separazione dei privilegi non ha i permessi del suo utente; concedigliene sull\'host PVE:\n$command\noppure togli la spunta a «Privilege Separation» per il token.';
+  }
+
+  @override
+  String pveUserNoPrivileges(String account, String command) {
+    return '$account non può vedere nulla su questo host. Concedigli i permessi sull\'host PVE:\n$command';
+  }
+
+  @override
+  String get pveTokenIdInvalid =>
+      'L\'ID del token deve avere la forma user@realm!tokenid';
+
+  @override
+  String get pvePasswordAuthTip =>
+      'Accede come utente SSH nel realm PAM, con la password SSH, oppure con la password PVE qui sotto quando SSH usa una chiave. Se serve, viene chiesto un codice a due fattori.';
+
+  @override
+  String get pveCertUnpinned =>
+      'Nessuno confermato finora. Se non è firmato da una CA attendibile, la prossima connessione mostrerà il certificato per la conferma.';
+
+  @override
+  String get pveCertForget => 'Dimentica certificato';
+
+  @override
+  String get pveCertForgetTip =>
+      'La prossima connessione mostrerà di nuovo il certificato PVE per la conferma.';
+
+  @override
+  String get virtualization => 'Virtualizzazione';
+
+  @override
+  String get virtIntro =>
+      'Gestisci macchine virtuali e container su host Proxmox VE e libvirt/KVM: stato, azioni di alimentazione e console.';
+
+  @override
+  String get virtIntroPveMoved =>
+      'Proxmox VE è passato dalla pagina del server a questa scheda. La scheda PVE di un server la apre qui.';
+
+  @override
+  String get virtIntroLibvirt =>
+      'Un server con virsh di libvirt installato compare come host, con le sue macchine virtuali QEMU/KVM.';
+
+  @override
+  String get virtIntroTransports =>
+      'Entrambi funzionano via SSH, tramite un agente Monitor o su questo dispositivo.';
+
+  @override
+  String get virtIntroTokens =>
+      'PVE può accedere con un token API invece di una password. Impostalo nella pagina di modifica del server, sotto PVE.';
+
+  @override
+  String get virtIntroInBar => 'È stata aggiunta alla barra delle schede.';
+
+  @override
+  String get virtIntroInMore =>
+      'Si trova in Altro. Schede home, nelle impostazioni, può spostarla nella barra delle schede.';
+
+  @override
+  String get virtGuests => 'Macchine virtuali';
+
+  @override
+  String get virtHosts => 'Host';
+
+  @override
+  String get virtCheckServer => 'Controlla questo server';
+
+  @override
+  String get virtCheckAll => 'Controlla tutti i server';
+
+  @override
+  String get virtProbeNotChecked => 'Non ancora controllato';
+
+  @override
+  String get virtProbeAbsent => 'Non è un host';
+
+  @override
+  String virtProbeContainer(String kind) {
+    return 'Container $kind';
+  }
+
+  @override
+  String get virtProbeContainerTip =>
+      'Questo server gira in un container, quindi è un guest e non un host. Si gestisce dall\'host che lo esegue.';
+
+  @override
+  String get virtProbePve => 'PVE, non configurato';
+
+  @override
+  String virtPveSetupTip(String version) {
+    return 'Su questo server è in esecuzione $version. Inserisci l\'accesso API nelle impostazioni del server (è consigliato un token API) per gestire qui le sue macchine virtuali e i suoi container.';
+  }
+
+  @override
+  String get virtNoHosts => 'Nessun host di virtualizzazione';
+
+  @override
+  String get virtNoHostsTip =>
+      'Un server con Proxmox VE e l\'accesso API inserito è un host, e lo è anche uno dove virsh risponde. Gli altri server si possono controllare dal selettore degli host.';
+
+  @override
+  String get virtNoGuests => 'Nessuna macchina virtuale o container';
+
+  @override
+  String get virtPaused => 'In pausa';
+
+  @override
+  String get virtStarting => 'Avvio…';
+
+  @override
+  String get virtStopping => 'Arresto…';
+
+  @override
+  String get virtRebooting => 'Riavvio…';
+
+  @override
+  String get virtMigrating => 'Migrazione…';
+
+  @override
+  String get virtBackingUp => 'Backup in corso…';
+
+  @override
+  String get virtResume => 'Riprendi';
+
+  @override
+  String get virtOverview => 'Panoramica';
+
+  @override
+  String get virtConsole => 'Console';
+
+  @override
+  String get virtConsoleNone => 'Nessuna console configurata per questo guest';
+
+  @override
+  String get virtConsoleGraphical => 'Grafica';
+
+  @override
+  String get virtVncPasswordNeeded => 'Questo display richiede una password';
+
+  @override
+  String get virtConsoleSerialTip =>
+      'Apre la console seriale del guest con virsh sull\'host. Disconnetti, o Ctrl+], torna alla shell dell\'host.';
+
+  @override
+  String virtConsoleVia(String transport) {
+    return 'tramite $transport';
+  }
+
+  @override
+  String get virtConsoleEnterTip => 'Nessun output? Premi Invio';
+
+  @override
+  String virtConsoleAutoEnter(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other: '$seconds secondi',
+      one: '1 secondo',
+    );
+    return 'Invio verrà premuto tra $_temp0 per mostrare il prompt';
+  }
+
+  @override
+  String get virtConsoleEnterNow => 'Ora';
+
+  @override
+  String get virtOffTip =>
+      'Avviala per vedere qui CPU, memoria, disco e rete in tempo reale.';
+
+  @override
+  String get virtAllocated => 'Allocato';
+
+  @override
+  String virtRunningCount(int running, int total) {
+    return '$running in esecuzione · $total in totale';
+  }
+
+  @override
+  String get virtTemplate => 'Modello';
+
+  @override
+  String get virtAutostart => 'Si avvia con l\'host';
+
+  @override
+  String get virtErrUnreachable => 'Impossibile raggiungere questo host';
+
+  @override
+  String get virtErrNotConfigured =>
+      'Le impostazioni PVE di questo server sono incomplete';
+
+  @override
+  String get virtErrNotConfiguredTip =>
+      'Controlla l\'indirizzo e la password o il token API nelle impostazioni del server.';
+
+  @override
+  String get virtErrAuthFailed => 'L\'host ha rifiutato l\'accesso';
+
+  @override
+  String get virtErrCertUnconfirmed => 'Conferma il certificato dell\'host';
+
+  @override
+  String get virtErrCertChanged => 'Il certificato dell\'host è cambiato';
+
+  @override
+  String get virtErrRelayNotGranted =>
+      'L\'agent Monitor non inoltra le connessioni';
+
+  @override
+  String get virtErrExecNotGranted => 'L\'agent Monitor non esegue comandi';
+
+  @override
+  String get virtErrNotInstalled => 'virsh non è installato su questo server';
+
+  @override
+  String get virtErrServerRemoved => 'Questo server non esiste più';
+
+  @override
+  String get virtErrSudoRequired =>
+      'sudo richiede una password per accedere a libvirt';
+
+  @override
+  String get virtErrSudoRejected => 'sudo ha rifiutato la password';
+
+  @override
+  String get virtErrInvalidResponse =>
+      'L\'host ha risposto in una forma inattesa';
+
+  @override
+  String get virtErrActionFailed => 'L\'host ha rifiutato l\'azione';
+
+  @override
+  String get remoteSessionIdleTimeout => 'Chiudi quando lasciata';
+
+  @override
+  String get remoteSessionIdleTimeoutTip =>
+      'Per quanto tempo un desktop remoto o la console di un guest resta connesso dopo che lo lasci. Prima della chiusura, un avviso ti dà 10 secondi per mantenerlo.';
+
+  @override
+  String get remoteSessionKeepAlive => 'Mantieni';
+
+  @override
+  String get remoteSessionClosedAway => 'Chiuso per inattività';
+
+  @override
+  String remoteSessionClosingIn(int seconds) {
+    return 'Chiusura tra $seconds s';
+  }
+
+  @override
+  String get reopen => 'Riapri';
+
+  @override
+  String get virtSnapshots => 'Snapshot';
+
+  @override
+  String get virtSnapshotCreate => 'Crea snapshot';
+
+  @override
+  String get virtSnapshotNone => 'Nessuno snapshot';
+
+  @override
+  String get virtSnapshotWithMemory => 'Dischi e memoria';
+
+  @override
+  String get virtSnapshotDiskOnly => 'Solo dischi';
+
+  @override
+  String get virtSnapshotParent => 'Padre';
+
+  @override
+  String get virtSnapshotRevert => 'Ripristina';
+
+  @override
+  String get virtSnapshotMemory => 'Includi la memoria';
+
+  @override
+  String get virtSnapshotMemoryTip =>
+      'Il ripristino riprende il guest da questo momento.';
+
+  @override
+  String get virtSnapshotMemoryAlways =>
+      'Qui uno snapshot di un guest in esecuzione include sempre la sua memoria.';
+
+  @override
+  String get virtSnapshotMemoryOff =>
+      'Il guest non è in esecuzione, quindi vengono salvati solo i dischi.';
+
+  @override
+  String get virtSnapshotNameInvalid =>
+      'Prima una lettera, poi lettere, cifre, - o _; da 2 a 40 caratteri.';
+
+  @override
+  String get virtSnapshotNameTaken =>
+      'Esiste già uno snapshot con questo nome.';
+
+  @override
+  String get virtSnapshotRevertTip =>
+      'Il ripristino scarta tutte le modifiche fatte dopo lo snapshot.';
+
+  @override
+  String virtSnapshotRevertAsk(String guest, String snapshot) {
+    return 'Ripristinare $guest a $snapshot? Tutte le modifiche da allora andranno perse.';
+  }
+
+  @override
+  String virtSnapshotRevertStops(String guest) {
+    return 'Questo snapshot non ha memoria: $guest verrà arrestato.';
+  }
+
+  @override
+  String get virtSnapshotStartAfter => 'Avvialo dopo';
+
+  @override
+  String get virtVolumes => 'Volumi';
+
+  @override
+  String get virtNoPools => 'Nessun pool di archiviazione';
+
+  @override
+  String get virtNoNetworks => 'Nessuna rete';
+
+  @override
+  String get virtPoolInactive =>
+      'Il pool non è attivo, quindi i suoi volumi non possono essere elencati.';
+
+  @override
+  String get virtShared => 'Condiviso tra i nodi';
+
+  @override
+  String get virtBackingFile => 'File di base';
+
+  @override
+  String get virtNetIsolated => 'Isolata';
+
+  @override
+  String get virtNetBridged => 'Bridge';
+
+  @override
+  String get virtNetRouted => 'Instradata';
+
+  @override
+  String get virtBridge => 'Bridge';
+
+  @override
+  String get virtPorts => 'Porte';
+
+  @override
+  String get virtAttachedGuests => 'Guest collegati';
+
+  @override
+  String get virtNoAttachedGuests => 'Nessun guest collegato';
+
+  @override
+  String get virtCreateVm => 'Nuova macchina virtuale';
+
+  @override
+  String get virtCreateLxc => 'Nuovo container';
+
+  @override
+  String get virtCreateGuest => 'Nuova macchina virtuale o nuovo container';
+
+  @override
+  String get virtKindVm => 'Macchina virtuale';
+
+  @override
+  String get virtKindLxc => 'Container';
+
+  @override
+  String get virtHostname => 'Nome host';
+
+  @override
+  String get virtInstallMedia => 'Supporto di installazione';
+
+  @override
+  String get virtNoIsos => 'Nessuna immagine ISO su questo host';
+
+  @override
+  String get virtNoTemplates =>
+      'Nessun modello di container su questo host. I modelli CT di uno storage in PVE permettono di scaricarne uno.';
+
+  @override
+  String get virtNoDiskStorage =>
+      'Nessuno storage di questo host accetta un nuovo disco';
+
+  @override
+  String get virtStartAfterCreate => 'Avviala dopo la creazione';
+
+  @override
+  String get virtUnprivileged => 'Container non privilegiato';
+
+  @override
+  String get virtUnprivilegedTip =>
+      'Il suo root è un utente normale sull\'host.';
+
+  @override
+  String get virtSshKeys => 'Chiavi pubbliche SSH';
+
+  @override
+  String get virtCredentialsTip =>
+      'Una password di root, chiavi SSH o entrambe.';
+
+  @override
+  String virtCreated(String name) {
+    return '$name creato';
+  }
+
+  @override
+  String virtCreatedNotStarted(String name) {
+    return '$name è stato creato ma non si è avviato';
+  }
+
+  @override
+  String get virtErrExists => 'Esiste già un guest o un disco con questo nome';
+
+  @override
+  String get virtCreateNameInvalidLibvirt =>
+      'Lettere, cifre, ., _ e -, iniziando con una lettera o una cifra; fino a 63 caratteri.';
+
+  @override
+  String get virtCreateNameInvalidPve =>
+      'Lettere, cifre e -, in parti separate da punti; fino a 63 caratteri.';
+
+  @override
+  String get virtCreateNameTaken => 'Esiste già un guest con questo nome.';
+
+  @override
+  String get virtCreateVmidInvalid => 'Da 100 a 999999999.';
+
+  @override
+  String get virtCreateVmidTaken => 'Questo VMID è occupato.';
+
+  @override
+  String get virtCreateCoresInvalid =>
+      'Più core di quanti ne consenta questo host.';
+
+  @override
+  String get virtCreateMemoryInvalid => 'Memoria insufficiente.';
+
+  @override
+  String get virtCreateStorageMissing => 'Scegli dove va il suo disco.';
+
+  @override
+  String get virtCreateDiskInvalid => 'Da 1 GiB a 64 TiB.';
+
+  @override
+  String get virtCreateTemplateMissing => 'Scegli un modello.';
+
+  @override
+  String get virtCreateCredentialsMissing =>
+      'Imposta una password di root o una chiave SSH.';
+
+  @override
+  String virtCreatePasswordShort(int min) {
+    return 'Almeno $min caratteri.';
+  }
+
+  @override
+  String get virtCreateSshKeysInvalid =>
+      'Una chiave pubblica OpenSSH per riga.';
+
+  @override
+  String get virtDeleteDisks => 'Elimina anche i suoi dischi';
+
+  @override
+  String get virtDeleteDisksPve =>
+      'I suoi dischi vengono eliminati con esso; il supporto di installazione viene conservato.';
+
+  @override
+  String virtDeleted(String name) {
+    return '$name eliminato';
+  }
+
+  @override
+  String get pveTokenTipCreate =>
+      'Creare ed eliminare guest richiede anche VM.Allocate, VM.Config.*, Datastore.AllocateSpace e SDN.Use.';
+
+  @override
+  String get pveTokenTipHardware =>
+      'Modificare l\'hardware richiede VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network e VM.Config.Options; nuovi dischi e interfacce richiedono anche Datastore.AllocateSpace e SDN.Use. La scheda video e i dispositivi USB e PCI richiedono anche VM.Config.HWType; un dispositivo passato tramite una mappatura di risorse richiede Mapping.Use su di essa, e Mapping.Audit per elencarle.';
+
+  @override
+  String get pveTokenTipBackup =>
+      'La clonazione richiede VM.Clone, il backup e il ripristino VM.Backup, con Datastore.AllocateSpace dove va la copia o il backup.';
+
+  @override
+  String get virtErrConflict => 'Modificato altrove';
+
+  @override
+  String get virtErrConflictTip =>
+      'Qualcuno ha modificato la configurazione di questo guest dopo che è stata letta qui, quindi non è stato cambiato nulla. È stata riletta: ripeti la modifica se serve ancora.';
+
+  @override
+  String get virtHardware => 'Hardware';
+
+  @override
+  String get virtHwAddDisk => 'Aggiungi disco';
+
+  @override
+  String get virtHwAddMount => 'Aggiungi punto di montaggio';
+
+  @override
+  String get virtHwAddNic => 'Aggiungi interfaccia di rete';
+
+  @override
+  String get virtHwAppliesOnRestart =>
+      'Salvato. Avrà effetto al prossimo avvio.';
+
+  @override
+  String get virtHwAutostart => 'Avvia con l\'host';
+
+  @override
+  String get virtHwAutostartPve => 'onboot · avviati in ordine di VMID';
+
+  @override
+  String get virtHwBalloonLibvirt => 'Memoria attuale';
+
+  @override
+  String get virtHwBalloonNote =>
+      'Consente all\'host di riprendersi la memoria inutilizzata del guest quando scarseggia';
+
+  @override
+  String get virtHwBoot => 'Avvio';
+
+  @override
+  String get virtHwBootOrder => 'Ordine di avvio';
+
+  @override
+  String get virtHwBootTip =>
+      'Le frecce spostano un dispositivo; toccandolo si attiva o disattiva l\'avvio da esso.';
+
+  @override
+  String get virtHwCdrom => 'CD-ROM';
+
+  @override
+  String get virtHwConfigFile => 'File di configurazione';
+
+  @override
+  String get virtHwCores => 'Core';
+
+  @override
+  String get virtHwCpuTypeDefault => 'Predefinito';
+
+  @override
+  String get virtHwDeleteVolume => 'Elimina anche il volume';
+
+  @override
+  String get virtHwDetach => 'Scollega';
+
+  @override
+  String get virtHwDiskHotplug =>
+      'Hot-plug: si può aggiungere anche in esecuzione';
+
+  @override
+  String get virtHwDisksLxc => 'Disco root e punti di montaggio';
+
+  @override
+  String get virtHwEject => 'Espelli';
+
+  @override
+  String get virtHwEmpty => 'Nessun supporto';
+
+  @override
+  String get virtHwFirewall => 'Firewall';
+
+  @override
+  String virtHwFree(String size) {
+    return '$size liberi';
+  }
+
+  @override
+  String get virtHwGrow => 'Espandi';
+
+  @override
+  String get virtHwGrowNote => 'I dischi possono solo crescere.';
+
+  @override
+  String get virtHwGrowNoteRunning =>
+      'I dischi possono solo crescere. Se espanso in esecuzione, la partizione va estesa nel guest.';
+
+  @override
+  String get virtHwGuestUsed => 'Usata dal guest';
+
+  @override
+  String virtHwHostCpus(int threads, int allocated) {
+    return 'Host $threads thread · $allocated assegnati';
+  }
+
+  @override
+  String virtHwHostMem(String total, String allocated) {
+    return 'Host $total · $allocated assegnati';
+  }
+
+  @override
+  String get virtHwHotplugNow => 'Hot-plug: effettivo subito.';
+
+  @override
+  String get virtHwIssueBootEmpty => 'Seleziona almeno un dispositivo';
+
+  @override
+  String virtHwIssueCpuCount(int max) {
+    return 'Da 1 a $max vCPU in totale';
+  }
+
+  @override
+  String get virtHwIssueCpuOnline => 'vCPU attive: da 1 al totale';
+
+  @override
+  String get virtHwIssueDiskShrink =>
+      'Più grande di ora: i dischi possono solo crescere';
+
+  @override
+  String get virtHwIssueDiskSize => 'Da 1 a 65536 GiB';
+
+  @override
+  String virtHwIssueMemory(int min, int max) {
+    return 'Da $min a $max MiB';
+  }
+
+  @override
+  String get virtHwIssueMemoryMin => 'Non più della memoria';
+
+  @override
+  String get virtHwIssueMountPoint => 'Un percorso assoluto, come /data';
+
+  @override
+  String get virtHwIssueStorageSpace => 'Più dello spazio libero dello storage';
+
+  @override
+  String get virtHwIssueSwap => 'Non negativo';
+
+  @override
+  String get virtHwLater => 'Effettivo al riavvio';
+
+  @override
+  String get virtHwLess => 'Meno';
+
+  @override
+  String get virtHwLinkDown => 'Disconnessa';
+
+  @override
+  String get virtHwLinkNote =>
+      'Spento, il guest vede il cavo scollegato; nessun riavvio';
+
+  @override
+  String get virtHwLinkUp => 'Connessa';
+
+  @override
+  String get virtHwMac => 'Indirizzo MAC';
+
+  @override
+  String get virtHwModel => 'Modello';
+
+  @override
+  String get virtHwMore => 'Più';
+
+  @override
+  String get virtHwMountFromPool =>
+      'I punti di montaggio sono allocati direttamente da uno storage';
+
+  @override
+  String get virtHwMountPoint => 'Punto di montaggio';
+
+  @override
+  String get virtHwMoveDown => 'Sposta giù';
+
+  @override
+  String get virtHwMoveUp => 'Sposta su';
+
+  @override
+  String get virtHwNewDisk => 'Nuovo disco';
+
+  @override
+  String get virtHwNewMount => 'Nuovo punto di montaggio';
+
+  @override
+  String get virtHwNewNic => 'Nuova interfaccia di rete';
+
+  @override
+  String get virtHwNicHotplug => 'Le interfacce virtio supportano l\'hot-plug';
+
+  @override
+  String get virtHwNics => 'Interfacce di rete';
+
+  @override
+  String get virtHwNoMedia => 'Nessun supporto';
+
+  @override
+  String get virtHwNoNetworks => 'Nessuna rete o bridge qui';
+
+  @override
+  String get virtHwNoStorage => 'Nessuno storage qui accetta dischi';
+
+  @override
+  String get virtHwOnline => 'vCPU attive';
+
+  @override
+  String get virtHwPendingBanner =>
+      'Alcune modifiche hardware hanno effetto al riavvio';
+
+  @override
+  String get virtHwPickNet => 'Scegli una rete';
+
+  @override
+  String get virtHwPickPool => 'Scegli uno storage e una dimensione';
+
+  @override
+  String get virtHwProcessor => 'Processore';
+
+  @override
+  String get virtHwRemove => 'Rimuovi';
+
+  @override
+  String get virtHwRemoveCdrom => 'Rimuovi CD-ROM';
+
+  @override
+  String virtHwRemoveDiskAsk(String disk, String guest) {
+    return 'Rimuovere $disk da $guest?';
+  }
+
+  @override
+  String virtHwRemoveNicAsk(String nic, String guest) {
+    return 'Rimuovere $nic da $guest?';
+  }
+
+  @override
+  String get virtHwResources => 'Risorse';
+
+  @override
+  String get virtHwRestartNow => 'Riavvia ora';
+
+  @override
+  String get virtHwRevert => 'Annulla';
+
+  @override
+  String get virtHwRevertAll => 'Annulla tutto';
+
+  @override
+  String get virtSetRenameStopped =>
+      'Spegni il guest per rinominarlo: libvirt rinomina solo un guest non in esecuzione.';
+
+  @override
+  String virtSetIssueDescription(int max) {
+    return 'Al massimo $max caratteri, senza caratteri di controllo.';
+  }
+
+  @override
+  String get virtSetManualStart => 'Avvio manuale';
+
+  @override
+  String get virtSetProtection => 'Protezione';
+
+  @override
+  String get virtSetProtectionNote =>
+      'Impedisce di eliminare il guest e di modificarne i dischi';
+
+  @override
+  String get virtSetIrreversible => 'Non si può annullare';
+
+  @override
+  String get virtSetDeleteStopFirst => 'Spegnilo prima di eliminarlo.';
+
+  @override
+  String get virtSetDeleteProtected =>
+      'La protezione è attiva: disattivala prima in Generale.';
+
+  @override
+  String get virtSetDeleteAgain => 'Premi di nuovo per confermare';
+
+  @override
+  String virtSetDeleteConfirm(String name) {
+    return 'Elimina $name';
+  }
+
+  @override
+  String get virtSetDeleteVm => 'Elimina macchina virtuale';
+
+  @override
+  String get virtSetDeleteLxc => 'Elimina container';
+
+  @override
+  String get virtHwSockets => 'Socket';
+
+  @override
+  String get virtHwSource => 'Origine';
+
+  @override
+  String get virtHwSwap => 'Swap';
+
+  @override
+  String get virtHwTopology => 'Socket × core';
+
+  @override
+  String virtHwTopologyValue(int sockets, int cores, int threads) {
+    return '$sockets socket × $cores core × $threads thread';
+  }
+
+  @override
+  String virtHwTotal(String size) {
+    return '$size in totale';
+  }
+
+  @override
+  String get virtHwVolumeKept =>
+      'Rimosso, ma il guest in esecuzione usa ancora il disco, quindi il volume è stato mantenuto. Verrà scollegato al prossimo avvio.';
+
+  @override
+  String get virtHwBus => 'Bus';
+
+  @override
+  String get virtHwCache => 'Cache';
+
+  @override
+  String get virtHwBusStopped => 'Il bus cambia solo a guest fermo.';
+
+  @override
+  String get virtHwMacGenerate => 'Genera';
+
+  @override
+  String get virtHwIssueMac =>
+      'Deve essere un indirizzo MAC unicast, ad es. 52:54:00:12:34:56';
+
+  @override
+  String get virtHwIssueStopFirst => 'Ferma prima il guest';
+
+  @override
+  String get virtHwIssueStorageMissing => 'Scegli prima uno storage';
+
+  @override
+  String get virtHwIssueDevice => 'Scegli prima un dispositivo';
+
+  @override
+  String get virtHwDevices => 'CD-ROM e passthrough';
+
+  @override
+  String get virtHwDevicesEmpty => 'Passthrough USB e PCI, CD-ROM, TPM';
+
+  @override
+  String get virtHwAddDevice => 'Aggiungi dispositivo';
+
+  @override
+  String get virtHwNewDevice => 'Nuovo dispositivo';
+
+  @override
+  String get virtHwUsbHotplug => 'Il passthrough USB supporta l\'hot plug.';
+
+  @override
+  String get virtHwPci => 'Passthrough PCI';
+
+  @override
+  String get virtHwIommuOffTitle => 'L\'host non ha IOMMU';
+
+  @override
+  String get virtHwIommuOffBody =>
+      'Attiva prima VT-d o AMD-Vi nel BIOS dell\'host e l\'IOMMU nel suo kernel. Fino ad allora un guest con un dispositivo PCI non si avvia.';
+
+  @override
+  String get virtHwPciTitle => 'Richiede IOMMU sull\'host';
+
+  @override
+  String get virtHwPciBody =>
+      'Una volta passato, l\'host non può più usare il dispositivo e il guest non può migrare a caldo.';
+
+  @override
+  String virtHwIommuGroup(int group) {
+    return 'Gruppo IOMMU $group';
+  }
+
+  @override
+  String virtHwIommuShared(int count) {
+    return '$count dispositivi condividono il suo gruppo IOMMU e passano insieme';
+  }
+
+  @override
+  String get virtHwNoHostDevices =>
+      'Nessun dispositivo da passare su questo host';
+
+  @override
+  String get virtHwMappingsOnly =>
+      'Qui si possono usare solo mappature di risorse: PVE consente solo a root@pam, con la sua password, di passare un dispositivo grezzo. Crea le mappature in Datacenter → Mappature risorse.';
+
+  @override
+  String get virtHwTpmNote => 'Windows 11 richiede TPM 2.0.';
+
+  @override
+  String get virtHwDisplay => 'Display';
+
+  @override
+  String get virtHwProtocol => 'Protocollo';
+
+  @override
+  String get virtHwListen => 'Ascolto';
+
+  @override
+  String get virtHwGpu => 'Scheda video';
+
+  @override
+  String get virtHwListenAllTitle => 'La console è esposta alla rete';
+
+  @override
+  String get virtHwListenAllBody =>
+      'In ascolto su tutti gli indirizzi, chiunque raggiunga l\'host può aprire la console. Tieni 127.0.0.1 e collegati tramite un tunnel SSH.';
+
+  @override
+  String get virtHwFirmware => 'Firmware';
+
+  @override
+  String get virtHwUefiSub =>
+      'OVMF · supporta Secure Boot, richiesto da Windows 11';
+
+  @override
+  String get virtHwBiosSub => 'SeaBIOS · sistemi datati e dischi MBR';
+
+  @override
+  String get virtHwSecureBootNote => 'Avvia solo kernel e boot loader firmati';
+
+  @override
+  String get virtHwFirmwareWarnTitle =>
+      'Non cambiare il firmware di un sistema installato';
+
+  @override
+  String get virtHwFirmwareWarnBody =>
+      'Passare tra UEFI e BIOS rende un sistema installato non avviabile.';
+
+  @override
+  String get virtHwFirmwareStopped => 'Il firmware cambia solo a guest fermo.';
+
+  @override
+  String get virtHwSecureBootVars =>
+      'Attivare o disattivare Secure Boot ricrea le variabili EFI; le voci di avvio salvate al loro interno vanno perse.';
+
+  @override
+  String get virtHwEfiStorage => 'Dove vanno le variabili EFI';
+
+  @override
+  String get virtHwTpmStorage => 'Dove va lo stato TPM';
+
+  @override
+  String virtHwSwitchFirmwareAsk(String guest, String firmware) {
+    return 'Passare $guest a $firmware?';
+  }
+
+  @override
+  String get virtCloneName => 'Nuovo nome';
+
+  @override
+  String get virtCloneFull => 'Clone completo';
+
+  @override
+  String get virtCloneCopyDisks => 'Copia il contenuto dei dischi';
+
+  @override
+  String get virtCloneLinkedNote =>
+      'Disattivato: un clone collegato, che dipende dai dischi del modello';
+
+  @override
+  String get virtCloneFullOnly =>
+      'Solo un modello può essere clonato come clone collegato';
+
+  @override
+  String get virtCloneEmptyNote =>
+      'Disattivato: nuovi dischi vuoti della stessa dimensione';
+
+  @override
+  String get virtCloneStopFirst => 'Spegnila prima di clonarla.';
+
+  @override
+  String get virtCloneFullShort => 'Completo';
+
+  @override
+  String get virtCloneLinkedShort => 'Collegato';
+
+  @override
+  String get virtCloneEmptyShort => 'Dischi vuoti';
+
+  @override
+  String get virtCloning => 'Clonazione…';
+
+  @override
+  String virtCloned(String name) {
+    return 'Clonato come $name';
+  }
+
+  @override
+  String get virtBackupPlan => 'Pianificazione';
+
+  @override
+  String get virtBackupPlanWhere => 'Datacenter → Backup';
+
+  @override
+  String get virtBackupNoPlanShort => 'Nessuna pianificazione';
+
+  @override
+  String get virtBackupNoPlan =>
+      'Nessun job di backup pianificato include questo guest. I job si configurano nel datacenter.';
+
+  @override
+  String get virtBackupKeep => 'Conserva';
+
+  @override
+  String get virtBackupJobDisabled => 'Questo job è disattivato.';
+
+  @override
+  String virtBackupCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count backup',
+      one: '1 backup',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get virtBackupNoStorage =>
+      'Nessuno storage di questo nodo contiene backup.';
+
+  @override
+  String get virtBackupLiveTip =>
+      'In esecuzione: modalità snapshot, senza fermo';
+
+  @override
+  String get virtBackupStoppedTip => 'Spento: salvato così com\'è';
+
+  @override
+  String get virtBackupNow => 'Esegui backup ora';
+
+  @override
+  String get virtBackupNotes => 'Note';
+
+  @override
+  String get virtBackupProtected =>
+      'Protetto: non può essere eliminato finché la protezione non viene rimossa in PVE.';
+
+  @override
+  String virtBackupVerified(String state) {
+    return 'Verifica: $state';
+  }
+
+  @override
+  String get virtBackupRestoreOverwrites =>
+      'Il ripristino sovrascrive i dischi attuali';
+
+  @override
+  String get virtBackupStopFirst => 'Spegnila prima di ripristinare.';
+
+  @override
+  String get virtBackupRestoreAgain =>
+      'Dischi e configurazione del guest vengono sostituiti da quelli del backup.';
+
+  @override
+  String get virtBackupDeleteConfirm => 'Elimina backup';
+
+  @override
+  String get virtBackupRestoreNew => 'Ripristina come nuovo';
+
+  @override
+  String get virtBackupRestoreConfirm => 'Ripristina sopra';
+
+  @override
+  String get virtBackupDone => 'Backup completato';
+
+  @override
+  String get virtBackupDeleted => 'Backup eliminato';
+
+  @override
+  String virtBackupRestored(String time) {
+    return 'Ripristinato da $time';
+  }
+
+  @override
+  String pveNeedsPrivilege(
+    String account,
+    String privilege,
+    String path,
+    String command,
+  ) {
+    return 'A $account manca $privilege su $path. Concedilo sull\'host PVE:\n$command';
+  }
+
+  @override
+  String get virtCanDelete => 'Può essere eliminato';
+
+  @override
+  String get virtInUse => 'In uso';
+
+  @override
+  String get virtOps => 'Operazioni';
+
+  @override
+  String get virtPool => 'Pool di archiviazione';
+
+  @override
+  String get virtPoolNew => 'Nuovo pool di archiviazione';
+
+  @override
+  String get virtStorageAdd => 'Aggiungi archiviazione';
+
+  @override
+  String virtPoolUsedPct(String pct) {
+    return '$pct% usato';
+  }
+
+  @override
+  String get virtPoolInUse =>
+      'Una VM usa un volume qui, quindi il pool non può essere fermato né rimosso.';
+
+  @override
+  String get virtPoolDelete => 'Elimina pool';
+
+  @override
+  String get virtStorageRemove => 'Rimuovi archiviazione';
+
+  @override
+  String virtPoolDeleteAsk(String name) {
+    return 'Rimuovere il pool $name? La definizione viene eliminata; i volumi restano dove sono.';
+  }
+
+  @override
+  String virtStorageRemoveAsk(String name) {
+    return 'Rimuovere l\'archiviazione $name dalla configurazione di PVE? Il contenuto resta.';
+  }
+
+  @override
+  String virtPoolDeleteKeepsVolumes(int count) {
+    return 'I suoi $count volumi restano sul disco.';
+  }
+
+  @override
+  String get virtPoolDeleteStorage =>
+      'Elimina anche la directory (solo se vuota)';
+
+  @override
+  String virtPoolStopAsk(String name) {
+    return 'Fermare il pool $name? Non si potranno elencare né creare volumi finché non riparte.';
+  }
+
+  @override
+  String virtStorageDisableAsk(String name) {
+    return 'Disattivare l\'archiviazione $name? Le VM con dischi su di essa non partiranno finché non verrà riattivata.';
+  }
+
+  @override
+  String get virtPoolLogicalNote =>
+      'Si usa un gruppo di volumi esistente così com\'è; non viene formattato nulla.';
+
+  @override
+  String get virtPoolMountPoint => 'Punto di montaggio';
+
+  @override
+  String get virtPoolSourceNfs => 'Origine (host:/percorso)';
+
+  @override
+  String get virtPoolSourceVg => 'Gruppo di volumi';
+
+  @override
+  String get virtPoolSourceThin => 'Gruppo di volumi / thin pool';
+
+  @override
+  String get virtPoolSourceZfs => 'Pool ZFS';
+
+  @override
+  String get virtPoolTypeVg => 'Gruppo di volumi LVM';
+
+  @override
+  String get virtResNameEmpty => 'Inserisci un nome';
+
+  @override
+  String get virtResNameInvalid =>
+      'Nome non accettato da questo host (lettere, cifre, . _ -)';
+
+  @override
+  String get virtResSourceInvalid => 'Percorso o origine non valida';
+
+  @override
+  String get virtResTargetInvalid => 'Un percorso assoluto';
+
+  @override
+  String get virtResCidrInvalid =>
+      'Un indirizzo con prefisso, es. 192.168.150.1/24';
+
+  @override
+  String get virtResDhcpInvalid =>
+      'Due indirizzi della rete, in ordine, senza quello dell\'host';
+
+  @override
+  String get virtResSubnetTaken => 'Un\'altra rete qui è su questa sottorete';
+
+  @override
+  String get virtResBridgeInvalid => 'Non è un nome di interfaccia';
+
+  @override
+  String get virtResFormat => 'Questo pool non supporta quel formato';
+
+  @override
+  String get virtVolNew => 'Nuovo volume';
+
+  @override
+  String virtVolCount(int count) {
+    return '$count volumi';
+  }
+
+  @override
+  String get virtVolNone => 'Questo pool non ha ancora volumi.';
+
+  @override
+  String get virtVolEmptyAttach =>
+      'Un nuovo volume può essere collegato in seguito a qualsiasi VM';
+
+  @override
+  String get virtVolEmptyUpload => 'Si può anche caricare direttamente un ISO';
+
+  @override
+  String get virtVolPveName =>
+      'PVE nomina un volume in base alla sua VM: vm-<VMID>-disk-<N>';
+
+  @override
+  String get virtVolUsers => 'Usato da';
+
+  @override
+  String get virtVolAllocated => 'Allocato';
+
+  @override
+  String get virtVolGrowFromGuest =>
+      'Lo usa una VM: ingrandiscilo dalla vista Hardware di quella VM';
+
+  @override
+  String get virtVolInUse => 'Una VM usa questo volume';
+
+  @override
+  String get virtVolAttach => 'Collega alla VM';
+
+  @override
+  String get virtVolAttachNote =>
+      'Collegato come nuovo disco, sul bus del suo primo disco';
+
+  @override
+  String virtVolAttached(String name) {
+    return 'Collegato a $name';
+  }
+
+  @override
+  String get virtVolInsert => 'Inserisci nel CD-ROM';
+
+  @override
+  String virtVolInserted(String name) {
+    return 'Inserito nel CD-ROM di $name';
+  }
+
+  @override
+  String virtVolNoCdrom(String name) {
+    return '$name non ha un\'unità CD-ROM';
+  }
+
+  @override
+  String virtVolDeleteAsk(String name, String pool) {
+    return 'Eliminare il volume $name da $pool? Il contenuto andrà perso per sempre.';
+  }
+
+  @override
+  String get virtUploadIso => 'Carica ISO';
+
+  @override
+  String virtUploadTo(String pool) {
+    return 'Carica su $pool';
+  }
+
+  @override
+  String virtUploadDone(String name) {
+    return '$name caricato';
+  }
+
+  @override
+  String get virtNetConfig => 'Configurazione';
+
+  @override
+  String get virtNetInternal => 'Interna';
+
+  @override
+  String get virtNetBridgePorts => 'Porte del bridge';
+
+  @override
+  String get virtNetHostBridge => 'Bridge dell\'host';
+
+  @override
+  String get virtNetPortsHint => 'eno2; vuoto per un bridge interno';
+
+  @override
+  String get virtNetDhcpRange => 'Intervallo DHCP';
+
+  @override
+  String get virtNetDhcpTip => 'dnsmasq assegna gli indirizzi alle VM';
+
+  @override
+  String get virtNetVlanTip =>
+      'Le schede di rete delle VM possono avere un tag VLAN';
+
+  @override
+  String get virtNetNatTip =>
+      'Tramite l\'host: le VM escono, dall\'esterno non si entra';
+
+  @override
+  String get virtNetRoutedTip =>
+      'Instradato dall\'host senza NAT: la LAN ha bisogno di una rotta di ritorno';
+
+  @override
+  String get virtNetIsolatedTip => 'Solo le VM e l\'host comunicano tra loro';
+
+  @override
+  String get virtNetBridgedTip =>
+      'Le VM si uniscono a un bridge dell\'host, sulla sua rete fisica';
+
+  @override
+  String get virtNetNew => 'Nuova rete';
+
+  @override
+  String get virtNetNewBridge => 'Nuovo Linux bridge';
+
+  @override
+  String get virtNetVirtual => 'Rete virtuale';
+
+  @override
+  String get virtNetDelete => 'Elimina rete';
+
+  @override
+  String virtNetDeleteAsk(String name) {
+    return 'Eliminare la rete $name? Viene fermata e la definizione rimossa.';
+  }
+
+  @override
+  String virtNetDeleteAskPve(String name, String node) {
+    return 'Rimuovere il bridge $name da $node? Esce ora dalla configurazione in sospeso, e dall\'host quando questa viene applicata.';
+  }
+
+  @override
+  String virtNetInUse(int count) {
+    return 'VM collegate: $count. Non può essere eliminata.';
+  }
+
+  @override
+  String virtNetStopAsk(String name, int count) {
+    return 'Fermare $name? Le $count VM collegate perdono la rete finché non riparte.';
+  }
+
+  @override
+  String get virtNetInactivePve =>
+      'Non attivo: un nuovo bridge attende nella configurazione in sospeso finché non viene applicata.';
+
+  @override
+  String get virtNetPveApplyNote =>
+      'Salvato come modifica in sospeso: ha effetto quando la configurazione viene applicata (ifreload -a).';
+
+  @override
+  String get virtNetPendingSaved =>
+      'Salvato in sospeso: applica la configurazione perché abbia effetto';
+
+  @override
+  String virtNetPendingTitle(String node) {
+    return 'Modifiche di rete in sospeso su $node';
+  }
+
+  @override
+  String get virtNetPendingTip =>
+      'PVE tiene le modifiche di rete in interfaces.new finché non vengono applicate.';
+
+  @override
+  String get virtNetPendingShow => 'Mostra modifiche';
+
+  @override
+  String get virtNetApply => 'Applica configurazione';
+
+  @override
+  String virtNetApplyAsk(String node) {
+    return 'Applicare la configurazione di rete in sospeso su $node? PVE ricarica la rete dell\'host (ifreload -a): un errore può isolare l\'host.';
+  }
+
+  @override
+  String virtNetRevertAsk(String node) {
+    return 'Scartare la configurazione di rete in sospeso su $node?';
+  }
+
+  @override
+  String get pveTokenTipStorage =>
+      'Gestire l\'archiviazione richiede Datastore.Allocate su /storage (aggiunta, disattivazione, rimozione), Datastore.AllocateSpace (volumi) e Datastore.AllocateTemplate (caricamenti); i Linux bridge e l\'applicazione della configurazione di rete richiedono Sys.Modify sul nodo.';
+
+  @override
+  String get virtCreateUnnamed => 'Senza nome';
+
+  @override
+  String get virtCreateNotChosen => 'Non scelto';
+
+  @override
+  String get virtCreateKindVmSub => 'qm · una macchina virtuale KVM completa';
+
+  @override
+  String get virtCreateKindLxcSub =>
+      'pct · condivide il kernel dell\'host, più leggero';
+
+  @override
+  String get virtCloudImage => 'Immagine cloud';
+
+  @override
+  String get virtCloudImageTip =>
+      'Un disco con un sistema già installato: copiato, ingrandito alla dimensione indicata in Archiviazione e configurato da cloud-init al primo avvio. L\'immagine resta com\'è.';
+
+  @override
+  String get virtNoCloudImagesLibvirt =>
+      'Nessuna immagine cloud qui: metti un\'immagine qcow2 o raw in un pool (caricala in Archiviazione) che nessuna VM usi.';
+
+  @override
+  String get virtNoCloudImagesPve =>
+      'Nessuna immagine cloud qui: carica un\'immagine qcow2, raw o vmdk in uno storage con il tipo di contenuto Import (PVE 8.2+).';
+
+  @override
+  String get virtCreateWindowsTitle => 'Windows 11 richiede UEFI e TPM 2.0';
+
+  @override
+  String get virtCreateWindowsBody => 'Scegli UEFI e attiva il TPM qui sopra.';
+
+  @override
+  String get virtCreateWindowsNoTpm =>
+      'Questo host non ha un TPM software (swtpm): installalo per darne uno alla VM.';
+
+  @override
+  String virtCreateImageSize(String size) {
+    return 'L\'immagine è di $size: il disco deve essere almeno così grande.';
+  }
+
+  @override
+  String get virtCreateImageMissing => 'Scegli un\'immagine cloud.';
+
+  @override
+  String get virtCreateIncomplete =>
+      'Completa prima le parti segnate in arancione.';
+
+  @override
+  String virtCreateOn(String host) {
+    return 'Creato su $host';
+  }
+
+  @override
+  String get virtCiTip =>
+      'Un account con sudo, a cui si accede con la password, una chiave SSH o entrambe.';
+
+  @override
+  String get virtCiUserInvalid =>
+      'Minuscole, cifre, _ e -, iniziando con una lettera o _';
+
+  @override
+  String get virtCiCredentialsMissing =>
+      'Imposta una password o una chiave SSH.';
+
+  @override
+  String get virtCiHostnamePve => 'Il nome host è il nome della VM.';
+
+  @override
+  String get virtCiStatic => 'Statico';
+
+  @override
+  String get virtCiAddressInvalid =>
+      'Un indirizzo IPv4 con il prefisso, come 10.0.0.5/24';
+
+  @override
+  String get virtCiGatewayInvalid => 'Un indirizzo IPv4, come 10.0.0.1';
+
+  @override
+  String get virtCiDnsFromDhcp => 'Vuoto: da DHCP';
+
+  @override
+  String get virtCiDnsInvalid => 'Indirizzi IP, separati da spazi o virgole';
+
+  @override
+  String get virtCiSearch => 'Dominio di ricerca';
+
+  @override
+  String get virtCiSeedNote =>
+      'Scritto in una piccola ISO accanto al disco, collegata come CD-ROM ed eliminata con la VM. Si conserva solo l\'hash della password.';
+
+  @override
+  String get virtCiNoToolTitle =>
+      'Nessuno strumento sull\'host per creare i dati cloud-init';
+
+  @override
+  String virtCiNoToolBody(String tools) {
+    return 'Installa uno tra $tools sull\'host. Senza cloud-init l\'immagine si avvia senza un account per accedere.';
+  }
+
+  @override
+  String get virtHwCloudInitNote =>
+      'Ciò che cloud-init legge al primo avvio. Non è un supporto di installazione: qui non si inserisce nulla.';
+
+  @override
+  String get virtHwCdromLater =>
+      'Mentre è in esecuzione, l\'unità viene aggiunta al prossimo avvio (SATA e IDE non ne accettano a caldo).';
+
+  @override
+  String virtCreateDiskKept(String size) {
+    return 'Il disco è rimasto a $size, la dimensione dell\'immagine stessa, più di quanto richiesto: un disco non viene mai ridotto sotto il sistema che contiene.';
+  }
+
+  @override
+  String get virtCiEditTip =>
+      'Ciò che cloud-init configura in questa VM: un account con sudo, come accedervi, il nome host e l\'indirizzo.';
+
+  @override
+  String get virtCiForeignTitle =>
+      'Questo seed contiene più di quanto scrive questa app';
+
+  @override
+  String get virtCiForeignBody =>
+      'Le impostazioni fatte altrove (pacchetti, comandi, altri account) non sono mostrate qui. Salvare sostituisce il seed con ciò che è mostrato.';
+
+  @override
+  String get virtCiPasswordKept => 'Impostata. Lasciare vuoto per mantenerla';
+
+  @override
+  String get virtCiRemovePassword => 'Rimuovi la password';
+
+  @override
+  String get virtCiRemovePasswordNote => 'Accesso solo con chiave SSH';
+
+  @override
+  String get virtCiKeysAdded =>
+      'Le chiavi vengono aggiunte all\'account. Una chiave tolta qui resta nel sistema finché non la si toglie lì, e un nuovo nome utente crea un nuovo account accanto al vecchio.';
+
+  @override
+  String get virtCiEffectTitle => 'Ha effetto al prossimo avvio';
+
+  @override
+  String get virtCiEffectLibvirt =>
+      'Salvare scrive un nuovo seed con un nuovo ID d\'istanza.';
+
+  @override
+  String get virtCiEffectPve =>
+      'PVE riscrive subito la sua unità cloud-init, con un ID d\'istanza ricavato da queste impostazioni: ogni modifica qui ne crea uno nuovo.';
+
+  @override
+  String get virtCiNewInstance =>
+      'Al prossimo avvio cloud-init tratta il sistema come una nuova istanza: reimposta il nome host, crea l\'account se manca, ne imposta la password, aggiunge le chiavi e riscrive la configurazione di rete. Crea anche nuove chiavi host SSH, quindi i client SSH avviseranno che la chiave host è cambiata. Nulla cambia prima di quell\'avvio.';
+
+  @override
+  String get virtCiSaved => 'Salvato. Ha effetto al prossimo avvio.';
 }

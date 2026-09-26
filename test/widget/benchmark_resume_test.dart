@@ -369,7 +369,10 @@ void main() {
     final tile = tester.widget<BenchmarkHistoryTile>(
       find.byType(BenchmarkHistoryTile).first,
     );
-    expect(tile.run.startedAt.toAgoStr(), contains(libL10n.day));
+    expect(
+      tile.run.startedAt.toAgoStr(),
+      libL10n.agoFmt(libL10n.durationDays(3)),
+    );
     // The timestamp is gone from the row.
     expect(find.textContaining(RegExp(r'\d{4}-\d{2}-\d{2}')), findsNothing);
     await close(tester);

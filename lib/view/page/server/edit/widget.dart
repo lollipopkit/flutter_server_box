@@ -499,7 +499,7 @@ extension _Widgets on _ServerEditPageState {
         _buildOptionalTile(
           icon: Icons.tune,
           title: l10n.sshAdvanced,
-          summary: l10n.sshAdvancedTip,
+          summary: Text(l10n.sshAdvancedTip),
           children: [
             _buildAltUrl(),
             _buildProxyCommand(),
@@ -513,7 +513,7 @@ extension _Widgets on _ServerEditPageState {
         _buildOptionalTile(
           icon: Icons.image_outlined,
           title: l10n.appearanceAndPlace,
-          summary: l10n.appearanceAndPlaceTip,
+          summary: Text(l10n.appearanceAndPlaceTip),
           children: [
             Input(
               controller: _logoUrlCtrl,
@@ -532,7 +532,7 @@ extension _Widgets on _ServerEditPageState {
         _buildOptionalTile(
           icon: MingCute.dashboard_line,
           title: l10n.statusCollection,
-          summary: l10n.statusCollectionTip,
+          summary: Text(l10n.statusCollectionTip),
           children: [
             _buildDisabledCmdTypes(),
             _buildCustomCmds(),
@@ -541,26 +541,29 @@ extension _Widgets on _ServerEditPageState {
           ],
         ),
         _buildOptionalTile(
+          key: _pveKey,
           icon: MingCute.server_line,
           title: 'PVE',
-          summary: 'Proxmox VE',
+          summary: const Text('Proxmox VE'),
+          initiallyExpanded: widget.args?.section == ServerEditSection.pve,
           children: [_buildPVEs()],
         ),
         _buildOptionalTile(
           icon: MingCute.chip_line,
           title: 'BMC (Redfish)',
-          // The word, not the sentence: a right-aligned summary is a phrase
-          // read at a glance. The sentence is under the heading's `?`, first,
-          // because what matters about this one is that nothing here is
-          // guaranteed and this is where someone decides to turn it on.
-          summary: 'Beta',
+          // The mark, not the word: a right-aligned summary is a phrase read
+          // at a glance, and this one is the same word in every locale. The
+          // sentence is under the heading's `?`, first, because what matters
+          // about this one is that nothing here is guaranteed and this is
+          // where someone decides to turn it on.
+          summary: const BetaTag(),
           tip: '${l10n.betaTip}\n\n${l10n.bmcTip}',
           children: [_buildBmc()],
         ),
         _buildOptionalTile(
           icon: Icons.power_settings_new,
           title: 'Wake on LAN',
-          summary: 'Beta',
+          summary: const BetaTag(),
           tip: '${l10n.betaTip}\n\n${l10n.wolTip}',
           children: [_buildWOLs()],
         ),
@@ -584,14 +587,18 @@ extension _Widgets on _ServerEditPageState {
   Widget _buildOptionalTile({
     required IconData icon,
     required String title,
-    required String summary,
+    required Widget summary,
     required List<Widget> children,
     String? tip,
+    Key? key,
+    bool initiallyExpanded = false,
   }) {
     return ExpandableTile(
+      key: key,
+      initiallyExpanded: initiallyExpanded,
       leading: Icon(icon),
       title: tip == null ? Text(title) : TipText(title, tip),
-      summary: Text(summary),
+      summary: summary,
       children: children,
     );
   }
@@ -828,45 +835,133 @@ extension _Widgets on _ServerEditPageState {
     });
   }
 
+  /// The PVE address, how to log in, and the certificate that was confirmed.
+  ///
+  /// Token first: it is what a new configuration gets, and what PVE itself
+  /// recommends for an app — its permissions are its own and it never asks for
+  /// a TOTP code. The password stays for configurations that already use it.
   Widget _buildPVEs() {
-    const addr = 'https://127.0.0.1:8006';
+    const addr = PveConfig.localAddr;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Input(
+          controller: _pveAddrCtrl,
+          type: TextInputType.url,
+          icon: MingCute.web_line,
+          label: 'URL',
+          hint: addr,
+          suggestion: false,
+        ),
+        _buildPveAuthMode(),
+        _pveUseToken.listenVal((useToken) {
+          if (useToken) return _buildPveToken();
+          return _buildPvePassword();
+        }),
+        _buildPveCert(),
+      ],
+    );
+  }
+
+  Widget _buildPveAuthMode() {
+    return _pveUseToken.listenVal((useToken) {
+      final token = l10n.pveAuthToken;
+      final pwd = libL10n.pwd;
+      return ListTile(
+        leading: const Icon(MingCute.key_2_line),
+        title: TipText(
+          libL10n.login,
+          useToken
+              ? [
+                  l10n.pveTokenTip,
+                  l10n.pveTokenTipCreate,
+                  l10n.pveTokenTipHardware,
+                  l10n.pveTokenTipBackup,
+                  l10n.pveTokenTipStorage,
+                ].join('\n')
+              : l10n.pvePasswordAuthTip,
+        ),
+        trailing: PopupMenu<bool>(
+          initialValue: useToken,
+          items: [
+            PopupMenuItem(value: true, child: Text(token)),
+            PopupMenuItem(value: false, child: Text(pwd)),
+          ],
+          onSelected: (value) => _pveUseToken.value = value,
+          child: Text(useToken ? token : pwd),
+        ),
+      ).cardx;
+    });
+  }
+
+  Widget _buildPveToken() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Input(
+          controller: _pveTokenIdCtrl,
+          type: TextInputType.text,
+          icon: MingCute.user_2_line,
+          label: l10n.pveTokenId,
+          hint: 'root@pam!serverbox',
+          suggestion: false,
+        ),
+        Input(
+          controller: _pveTokenSecretCtrl,
+          type: TextInputType.visiblePassword,
+          icon: MingCute.lock_line,
+          label: l10n.pveTokenSecret,
+          hint: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+          obscureText: true,
+          suggestion: false,
+        ),
+      ],
+    );
+  }
+
+  /// The PVE password, only where the SSH login has none to lend: with a
+  /// password there, that is what is sent.
+  Widget _buildPvePassword() {
     return _keyIdx.listenVal((v) {
       final useKeyAuth = v != null && v >= 0;
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Input(
-            controller: _pveAddrCtrl,
-            type: TextInputType.url,
-            icon: MingCute.web_line,
-            label: 'URL',
-            hint: addr,
-            suggestion: false,
-          ),
-          if (useKeyAuth)
-            Input(
-              controller: _pvePwdCtrl,
-              type: TextInputType.visiblePassword,
-              icon: MingCute.lock_line,
-              label: l10n.pvePassword,
-              hint: l10n.pvePasswordHint,
-              obscureText: true,
-              suggestion: false,
-            ),
-          ListTile(
-            leading: const Icon(MingCute.certificate_line),
-            title: TipText('PVE ${l10n.ignoreCert}', l10n.pveIgnoreCertTip),
-            trailing: _pveIgnoreCert.listenVal(
-              (v) => SwitchX(
-                value: v,
-                onChanged: (val) {
-                  _pveIgnoreCert.value = val;
-                },
-              ),
-            ),
-          ).cardx,
-        ],
+      if (!useKeyAuth) return UIs.placeholder;
+      return Input(
+        controller: _pvePwdCtrl,
+        type: TextInputType.visiblePassword,
+        icon: MingCute.lock_line,
+        label: l10n.pvePassword,
+        hint: l10n.pvePasswordHint,
+        obscureText: true,
+        suggestion: false,
       );
+    });
+  }
+
+  /// The certificate the user confirmed, and the way to make the next
+  /// connection ask again.
+  ///
+  /// Nothing here sets it. PVE's certificate is seen when the app connects,
+  /// through whichever transport the server uses — which this page cannot
+  /// reach — so the confirmation is asked for there.
+  Widget _buildPveCert() {
+    return _pveCert.listenVal((pinned) {
+      final has = pinned != null && pinned.isNotEmpty;
+      return ListTile(
+        leading: Icon(has ? Icons.verified_user : MingCute.certificate_line),
+        title: Text(l10n.bmcCert),
+        subtitle: has
+            ? SelectableText(
+                'SHA-256: ${prettyCertFingerprint(pinned)}',
+                style: UIs.textGrey,
+              )
+            : Text(l10n.pveCertUnpinned, style: UIs.textGrey),
+        trailing: has
+            ? Btn.icon(
+                icon: const Icon(Icons.delete_outline),
+                onTap: _onTapForgetPveCert,
+              )
+            : null,
+      ).cardx;
     });
   }
 

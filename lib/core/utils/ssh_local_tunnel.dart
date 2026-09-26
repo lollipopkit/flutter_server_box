@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
@@ -22,11 +24,22 @@ abstract interface class SshTunnelChannel {
 /// ephemeral IPv4 loopback port. [bind] also serves the existing configurable
 /// port-forward feature, which may intentionally expose a chosen interface and
 /// port.
+///
+/// **An authenticated tunnel** ([accessToken] set) is one for a client inside
+/// this app — the remote desktop engine. A loopback port is open to every
+/// process on the device, and without this the first one to connect would get
+/// the remote end: a guest's console, a desktop. So such a tunnel carries only
+/// a connection whose first [accessTokenLength] bytes are the token, compared
+/// in constant time within [accessTimeout]; any other connection is dropped
+/// before anything is dialled, and the token is never on the wire beyond this
+/// device's loopback. The engine gets the token in-process, through FFI.
 class SshLocalTunnel {
   SshLocalTunnel._({
     required ServerSocket listener,
     required SshTunnelDialer dialer,
     required Future<void> sshDone,
+    this.accessToken,
+    this.once = false,
   }) : _listener = listener,
        _dialer = dialer {
     _subscription = _listener.listen(_accept, onError: _listenerError);
@@ -36,13 +49,24 @@ class SshLocalTunnel {
   final ServerSocket _listener;
   final SshTunnelDialer _dialer;
   final Set<Socket> _pendingSockets = {};
-  final Set<_TunnelConnection> _connections = {};
+  final Set<SshTunnelBridge> _connections = {};
   final Set<Future<void>> _bridges = {};
   final _openingStops = <Completer<SshTunnelChannel>>{};
   final Completer<void> _done = Completer<void>();
   StreamSubscription<Socket>? _subscription;
   Future<void>? _closing;
   bool _closed = false;
+
+  static const accessTokenLength = 32;
+  static const accessTimeout = Duration(seconds: 5);
+
+  /// What a connection must present first; null for a tunnel open to any
+  /// local client (the port-forward feature, which is meant to be).
+  final Uint8List? accessToken;
+
+  /// Stops listening once one connection has been carried: for a remote end
+  /// that takes one (a console ticket's websocket).
+  final bool once;
 
   InternetAddress get address => _listener.address;
   int get port => _listener.port;
@@ -72,39 +96,161 @@ class SshLocalTunnel {
     bindHost: bindHost,
     bindPort: bindPort,
     sshDone: client.done,
-    dialer: () async => _DartSshTunnelChannel(
-      await client.forwardLocal(remoteHost, remotePort),
-    ),
+    dialer: () => forward(client, remoteHost, remotePort),
   );
 
+  /// A direct-tcpip channel on [client] to [remoteHost]:[remotePort].
+  static Future<SshTunnelChannel> forward(
+    SSHClient client,
+    String remoteHost,
+    int remotePort,
+  ) async =>
+      _DartSshTunnelChannel(await client.forwardLocal(remoteHost, remotePort));
+
   /// The lifecycle seam used by tests and alternative SSH transports.
+  ///
+  /// [authenticated] makes it a tunnel with an [accessToken] — see the class.
   static Future<SshLocalTunnel> bindWithDialer({
     required String bindHost,
     int bindPort = 0,
     required Future<void> sshDone,
     required SshTunnelDialer dialer,
+    bool authenticated = false,
+    bool once = false,
   }) async {
     final listener = await ServerSocket.bind(bindHost, bindPort);
     return SshLocalTunnel._(
       listener: listener,
       dialer: dialer,
       sshDone: sshDone,
+      accessToken: authenticated ? _newToken() : null,
+      once: once,
     );
   }
 
+  static Uint8List _newToken() {
+    final random = Random.secure();
+    return Uint8List.fromList([
+      for (var i = 0; i < accessTokenLength; i++) random.nextInt(256),
+    ]);
+  }
+
+  /// A connection has been let through, for [once].
+  var _carried = false;
+
   void _accept(Socket socket) {
-    if (_closed) {
+    if (_closed || (once && _carried)) {
       socket.destroy();
       return;
     }
     _pendingSockets.add(socket);
     late final Future<void> bridge;
-    bridge = _bridge(socket).whenComplete(() => _bridges.remove(bridge));
+    bridge = _admit(socket).whenComplete(() => _bridges.remove(bridge));
     _bridges.add(bridge);
     unawaited(bridge);
   }
 
-  Future<void> _bridge(Socket socket) async {
+  /// [socket]'s bytes after the token, or all of them for a tunnel without
+  /// one; null for a connection that did not present it.
+  Future<void> _admit(Socket socket) async {
+    final token = accessToken;
+    final Stream<List<int>>? incoming;
+    if (token == null) {
+      incoming = socket.cast<List<int>>();
+    } else {
+      incoming = await _presented(socket, token);
+      if (incoming == null) {
+        _pendingSockets.remove(socket);
+        socket.destroy();
+        return;
+      }
+    }
+    if (once) {
+      if (_carried) {
+        _pendingSockets.remove(socket);
+        socket.destroy();
+        return;
+      }
+      _carried = true;
+      // Nothing more to take: no port left open for the life of the session.
+      unawaited(_stopListening());
+    }
+    await _bridge(socket, incoming);
+  }
+
+  Future<void> _stopListening() async {
+    await _subscription?.cancel();
+    _subscription = null;
+    await _listener.close().catchError((_) => _listener);
+  }
+
+  /// Reads [token]'s length from [socket] and compares it with [token]:
+  /// the rest of the stream when they match, null otherwise — a mismatch,
+  /// the socket ending first, or [accessTimeout] passing.
+  static Future<Stream<List<int>>?> _presented(
+    Socket socket,
+    Uint8List token,
+  ) async {
+    final head = BytesBuilder(copy: false);
+    final rest = StreamController<List<int>>();
+    final verdict = Completer<bool>();
+    late final StreamSubscription<Uint8List> sub;
+    sub = socket.listen(
+      (chunk) {
+        if (verdict.isCompleted) {
+          rest.add(chunk);
+          return;
+        }
+        head.add(chunk);
+        if (head.length < token.length) return;
+        final bytes = head.takeBytes();
+        final ok = _sameBytes(Uint8List.sublistView(bytes, 0, token.length), token);
+        verdict.complete(ok);
+        if (ok && bytes.length > token.length) {
+          rest.add(Uint8List.sublistView(bytes, token.length));
+        }
+      },
+      onError: (Object e, StackTrace s) {
+        if (!verdict.isCompleted) {
+          verdict.complete(false);
+        } else {
+          rest.addError(e, s);
+        }
+      },
+      onDone: () {
+        if (!verdict.isCompleted) verdict.complete(false);
+        unawaited(rest.close());
+      },
+    );
+    // Whoever reads the rest sets the pace, as reading the socket would.
+    rest
+      ..onPause = sub.pause
+      ..onResume = sub.resume
+      ..onCancel = sub.cancel;
+    final ok = await verdict.future.timeout(
+      accessTimeout,
+      onTimeout: () => false,
+    );
+    if (ok) return rest.stream;
+    await sub.cancel();
+    // Not awaited: nobody listens to it, and a close with no listener never
+    // completes.
+    unawaited(rest.close());
+    return null;
+  }
+
+  /// Every byte compared, whatever the first difference: how long this takes
+  /// says nothing about how much of a guess was right.
+  static bool _sameBytes(Uint8List a, Uint8List b) {
+    if (a.length != b.length) return false;
+    var diff = 0;
+    for (var i = 0; i < a.length; i++) {
+      diff |= a[i] ^ b[i];
+    }
+    return diff == 0;
+  }
+
+  Future<void> _bridge(Socket socket, Stream<List<int>> incoming) async {
     SshTunnelChannel? channel;
     late final Future<SshTunnelChannel> opening;
     try {
@@ -147,7 +293,7 @@ class SshLocalTunnel {
         return;
       }
 
-      final connection = _TunnelConnection(socket, channel);
+      final connection = SshTunnelBridge(socket, channel, incoming: incoming);
       _connections.add(connection);
       await connection.pipe();
       _connections.remove(connection);
@@ -186,8 +332,7 @@ class SshLocalTunnel {
         stopped.completeError(StateError('Tunnel closed'));
       }
     }
-    await _subscription?.cancel();
-    await _listener.close();
+    await _stopListening();
 
     for (final socket in _pendingSockets.toList()) {
       socket.destroy();
@@ -220,16 +365,23 @@ class _DartSshTunnelChannel implements SshTunnelChannel {
   Future<void> close() => _channel.close();
 }
 
-class _TunnelConnection {
-  _TunnelConnection(this.socket, this.channel);
+/// Carries bytes between a local [socket] and a tunnel [channel], both ways,
+/// until either side ends; then tears both down.
+class SshTunnelBridge {
+  SshTunnelBridge(this.socket, this.channel, {Stream<List<int>>? incoming})
+    : _incoming = incoming ?? socket.cast<List<int>>();
 
   final Socket socket;
   final SshTunnelChannel channel;
+
+  /// What [socket] sends: the socket itself, or what is left of it once a
+  /// tunnel has read its access token off the front.
+  final Stream<List<int>> _incoming;
   bool _closed = false;
 
   Future<void> pipe() => Future.wait([
     channel.stream.pipe(socket).catchError((_) => close()),
-    socket.cast<List<int>>().pipe(channel.sink).catchError((_) => close()),
+    _incoming.pipe(channel.sink).catchError((_) => close()),
   ]);
 
   Future<void> close() async {

@@ -495,7 +495,7 @@ pub const WINDOWS_INSTALL_EOF: &str = "SrvBoxSep.__install_eof__";
 ///
 /// `test/platform/windows_install_ssh_e2e_test.dart` is the regression test, over the
 /// same client the app uses.
-fn shell_quote_unix(s: &str) -> String {
+pub(crate) fn shell_quote_unix(s: &str) -> String {
     format!("'{}'", s.replace('\'', "'\\''"))
 }
 fn shell_quote_ps(s: &str) -> String {

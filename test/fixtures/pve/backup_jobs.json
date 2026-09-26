@@ -1,0 +1,16 @@
+[
+    {
+        "compress": "zstd",
+        "enabled": 0,
+        "id": "sbbk-job",
+        "mode": "snapshot",
+        "next-run": 1790445600,
+        "prune-backups": {
+            "keep-last": "7"
+        },
+        "schedule": "02:00",
+        "storage": "local",
+        "type": "vzdump",
+        "vmid": "9941"
+    }
+]

@@ -295,6 +295,12 @@ class KvToTablesMigration implements SchemaMigration {
     return ids;
   }
 
+  /// Whether `server` still has the PVE columns m030 moves out — see the
+  /// insert in [_migrateServerRow].
+  bool get _serverHasPveColumns => _db
+      .select('PRAGMA table_info(server);')
+      .any((row) => row['name'] == 'pve_addr');
+
   ({String id, String? storedId, List<String> jumps})? _migrateServerRow(
     ({String key, Map<String, dynamic> value, int updatedAt}) row,
     Map<String, String> keyIds,
@@ -343,6 +349,14 @@ class KvToTablesMigration implements SchemaMigration {
         ? oldKeyId
         : ssh?['keyPath'] as String?;
 
+    // Which table PVE goes into depends on the shape this runs against. The
+    // tables are created at today's shape before any step runs, so a Hive
+    // import meets `server_pve` and a `server` without PVE columns; a database
+    // an older build created and left before this step finished still has the
+    // columns, and m030 moves them out afterwards.
+    final pveInServer = _serverHasPveColumns;
+    final pveAddr = custom['pveAddr'] as String?;
+    final pvePwd = custom['pvePwd'] as String?;
     _db.execute(
       'INSERT INTO server ('
       'id, name, auto_connect, system_type, '
@@ -351,10 +365,11 @@ class KvToTablesMigration implements SchemaMigration {
       'monitor_addr, monitor_user, monitor_pwd, monitor_ignore_cert, '
       'monitor_allow_insecure, '
       'wol_mac, wol_ip, wol_pwd, '
-      'pve_addr, pve_ignore_cert, pve_pwd, prefer_temp_dev, '
+      '${pveInServer ? 'pve_addr, pve_ignore_cert, pve_pwd, ' : ''}'
+      'prefer_temp_dev, '
       'temp_is_celsius, logo_url, net_dev, script_dir, updated_at'
       ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '
-      '?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+      '?, ${pveInServer ? '?, ?, ?, ' : ''}?, ?, ?, ?, ?, ?);',
       [
         id,
         v['name'] as String? ?? id,
@@ -376,9 +391,11 @@ class KvToTablesMigration implements SchemaMigration {
         wol?['mac'] as String?,
         wol?['ip'] as String?,
         wol?['pwd'] as String?,
-        custom['pveAddr'] as String?,
-        _bool(custom['pveIgnoreCert']),
-        custom['pvePwd'] as String?,
+        if (pveInServer) ...[
+          pveAddr,
+          _bool(custom['pveIgnoreCert']),
+          pvePwd,
+        ],
         custom['preferTempDev'] as String?,
         _bool(custom['tempIsCelsius'], fallback: true),
         custom['logoUrl'] as String?,
@@ -387,6 +404,17 @@ class KvToTablesMigration implements SchemaMigration {
         row.updatedAt,
       ],
     );
+    // m030's copy, for the shape that has no columns to copy from: a password
+    // login, no pin whatever `pveIgnoreCert` said, and the PVE password only
+    // where the SSH login uses a stored key — m030's rule, for its reason.
+    if (!pveInServer && pveAddr != null && pveAddr.trim().isNotEmpty) {
+      final keepPwd = newKeyId != null && pvePwd != null && pvePwd.isNotEmpty;
+      _db.execute(
+        'INSERT OR IGNORE INTO server_pve (server_id, addr, auth, pwd) '
+        "VALUES (?, ?, 'password', ?);",
+        [id, pveAddr, keepPwd ? pvePwd : null],
+      );
+    }
 
     for (final tag in (v['tags'] as List? ?? const []).whereType<String>()) {
       _db.execute('INSERT OR IGNORE INTO server_tag VALUES (?, ?);', [id, tag]);

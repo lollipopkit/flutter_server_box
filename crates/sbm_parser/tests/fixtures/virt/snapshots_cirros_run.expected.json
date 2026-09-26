@@ -1,0 +1,32 @@
+[
+  {
+    "name": "sbx-a",
+    "description": "first one",
+    "parent": null,
+    "state": "running",
+    "creation_time": 1790335495,
+    "memory": true,
+    "external": false,
+    "current": true
+  },
+  {
+    "name": "sbx-b",
+    "description": null,
+    "parent": "sbx-off",
+    "state": "running",
+    "creation_time": 1790335511,
+    "memory": true,
+    "external": false,
+    "current": false
+  },
+  {
+    "name": "sbx-off",
+    "description": "while off",
+    "parent": "sbx-a",
+    "state": "shutoff",
+    "creation_time": 1790335508,
+    "memory": false,
+    "external": false,
+    "current": false
+  }
+]

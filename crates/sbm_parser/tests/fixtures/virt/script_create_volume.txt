@@ -1,0 +1,7 @@
+SrvBoxSep.b64.dmlydC52b2wuY3JlYXRl
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC52b2wucGF0aA==
+/var/lib/libvirt/images/sbm-create-test.qcow2
+
+SbVirtRc=0

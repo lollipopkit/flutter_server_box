@@ -64,11 +64,17 @@ final class SshPageArgs {
   /// The server behind [source], when there is one.
   Spi? get spi => switch (source) {
     ServerSource(:final spi) => spi,
-    LocalSource() => null,
+    LocalSource() || ConsoleSource() => null,
   };
 
   final String? initCmd;
   final Snippet? initSnippet;
+
+  /// What ends the program [initCmd] started without ending the shell under
+  /// it — `virsh console`'s escape, Ctrl+]. Given, the bar offers it as
+  /// "Disconnect", since the key itself is two presses away on a phone and
+  /// nothing on screen says it exists.
+  final List<int>? detachInput;
 
   /// A shell that is already running, to be shown here instead of opening one.
   ///
@@ -76,6 +82,15 @@ final class SshPageArgs {
   /// everything printed into it are the session's, not the page's, so the page
   /// showing them can change without the shell noticing.
   final TerminalSession? session;
+
+  /// Where the session goes when this page does, instead of being closed.
+  ///
+  /// For a shell that is meant to outlive the page showing it — a guest's text
+  /// console, kept running for a while after it is left (`VirtTextConsoles`).
+  /// Given the session as it is: still connected, still writing into its
+  /// terminal, and with nothing called when its shell ends. Called after the
+  /// frame that removed the page, so it may write to a provider.
+  final void Function(TerminalSession session)? onLeave;
   final bool notFromTab;
   final Function()? onSessionEnd;
   final GlobalKey<TerminalViewState>? terminalKey;
@@ -92,11 +107,17 @@ final class SshPageArgs {
   /// something per session instead.
   final String? restorationId;
 
+  /// The home tab a page shown in place ([notFromTab] false) lives in: what
+  /// "on screen" is checked against, with [visibleListenable].
+  final AppTab homeTab;
+
   const SshPageArgs({
     required this.source,
     this.initCmd,
     this.initSnippet,
+    this.detachInput,
     this.session,
+    this.onLeave,
     this.notFromTab = true,
     this.onSessionEnd,
     this.terminalKey,
@@ -106,10 +127,37 @@ final class SshPageArgs {
     this.tmuxWindow,
     this.onTmuxStateChanged,
     this.restorationId,
+    this.homeTab = AppTab.ssh,
   }) : assert(
          notFromTab || visibleListenable != null,
          'visibleListenable is required when notFromTab is false',
        );
+
+  /// These arguments for a page shown in place inside [homeTab] rather than
+  /// pushed: no bar of its own, on screen while [visible] says so and the tab
+  /// is the one showing, and [onSessionEnd] instead of popping when the shell
+  /// ends.
+  SshPageArgs embeddedIn(
+    AppTab homeTab, {
+    required ValueListenable<bool> visible,
+    FocusNode? focusNode,
+    VoidCallback? onSessionEnd,
+    String? restorationId,
+  }) => SshPageArgs(
+    source: source,
+    initCmd: initCmd,
+    initSnippet: initSnippet,
+    detachInput: detachInput,
+    session: session,
+    onLeave: onLeave,
+    notFromTab: false,
+    onSessionEnd: onSessionEnd,
+    terminalKey: terminalKey,
+    focusNode: focusNode,
+    visibleListenable: visible,
+    restorationId: restorationId,
+    homeTab: homeTab,
+  );
 }
 
 class SSHPage extends ConsumerStatefulWidget {
@@ -381,9 +429,28 @@ class SSHPageState extends ConsumerState<SSHPage>
     // a page that no longer exists is one nothing else can close.
     _reconnectCancelled = true;
     _dismissReconnectingDialog(deferred: true);
-    // Not `close`: the connection may be the status poller's, shared with the
-    // rest of the app, and a terminal going away is not a reason to hang it up.
-    _sess.dispose();
+    // A page opened on its own made its session, and nothing else can reach
+    // it once the page is gone: its shell goes with it, and so does its
+    // connection when the session opened that — a console's websocket, or an
+    // SSH client the status poller did not have. `close` leaves a borrowed
+    // connection alone.
+    //
+    // Otherwise not `close`: a tab's session may be handed on (the floating
+    // window), and one this page adopted belongs to whoever started it.
+    //
+    // Neither for a page with somewhere to leave its session: that session
+    // keeps running, and its output keeps landing in the terminal a later page
+    // will show.
+    final onLeave = widget.args.onLeave;
+    if (onLeave != null) {
+      // This page's own handler would run on a page that no longer exists.
+      session.onForegroundDone = null;
+      WidgetsBinding.instance.addPostFrameCallback((_) => onLeave(session));
+    } else if (widget.args.notFromTab && !_adopted) {
+      _sess.close();
+    } else {
+      _sess.dispose();
+    }
     _removeVisibilityListener();
     Stores.setting.virtKeyRows.listenable().removeListener(
       _handleVirtKeySettingsChanged,
@@ -759,8 +826,23 @@ class SSHPageState extends ConsumerState<SSHPage>
     );
   }
 
+  /// The terminal this page shows, for a host that watches what it draws.
+  Terminal get terminal => _terminal;
+
+  /// Sends [SshPageArgs.detachInput], for a host showing this page without
+  /// its bar — where the button for it is.
+  void detach() {
+    if (widget.args.detachInput case final detach?) _session?.write(detach);
+  }
+
   List<Widget> _buildAppBarActions() {
     final actions = <Widget>[
+      if (widget.args.detachInput != null)
+        IconButton(
+          onPressed: detach,
+          tooltip: l10n.disconnect,
+          icon: const Icon(Icons.link_off),
+        ),
       // The agent's tools all name a server, so on this device the button
       // would look tappable and do nothing. Snippets are different: the ones
       // that do not mention a server run here fine — see [_pickSnippet].
@@ -1058,7 +1140,7 @@ class SSHPageState extends ConsumerState<SSHPage>
       return route?.isCurrent ?? true;
     }
     if (widget.args.visibleListenable?.value != true) return false;
-    return ref.read(currentHomeTabProvider) == AppTab.ssh;
+    return ref.read(currentHomeTabProvider) == widget.args.homeTab;
   }
 
   /// Puts the cursor back in this terminal, and on a phone raises the keyboard

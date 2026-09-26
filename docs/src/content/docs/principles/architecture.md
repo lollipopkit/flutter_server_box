@@ -3,9 +3,15 @@ title: System Architecture
 description: How Server Box connects its UI, state, storage, and platform layers
 ---
 
-Server Box separates UI, state coordination, local data, and external connections by responsibility. This lets SSH, Monitor agent, and local terminal backends share the same UI while keeping platform-specific code at the edges.
+Server Box assigns UI, state coordination, local storage, and external
+connections to separate layers. SSH, Monitor agent, and local terminal can
+therefore use the same UI while platform-specific work stays at the edges.
 
-This page is the system-level model: the layers, and the two decisions that shape most of the app — a server can expose two transports, and status arrives over either. For the module layout, entry point, dependency injection and Rust integration, see [Implementation architecture](/docs/development/architecture/).
+This page describes the system model and two design choices that shape most
+features: a server may provide two transports, and either transport may
+provide status. For source directories, the App entry point, dependency
+injection, and Rust integration, see
+[Implementation architecture](/docs/development/architecture/).
 
 ## Architecture layers
 
@@ -36,9 +42,13 @@ This page is the system-level model: the layers, and the two decisions that shap
 
 ## Connection methods and capabilities
 
-A server can have SSH configured, Monitor HTTP configured, or both. `preferredTransport` controls which connection is tried first; it does not disable the other one. If the first connection fails, the App can try the other.
+A server may have SSH, Monitor HTTP, or both configured. The
+`preferredTransport` setting chooses which one the App tries first. It does
+not turn the other transport off; the App may fall back to it if the first
+connection fails.
 
-The UI uses `ServerCapabilities` to decide which features to offer instead of checking the active transport directly:
+The UI checks `ServerCapabilities` to decide which actions are available. It
+does not infer them from the transport currently in use:
 
 | Capability | SSH | Monitor HTTP |
 |---|---|---|
@@ -48,9 +58,14 @@ The UI uses `ServerCapabilities` to decide which features to offer instead of ch
 | Byte streams (SFTP and port forwarding) | Available | Not available |
 | History from before the App connected | Not available | Available |
 
-When both transports are configured, the server exposes the union of their capabilities. Making Monitor HTTP the preferred transport therefore does not hide SFTP or port forwarding provided by SSH.
+With both transports configured, the server exposes the capabilities of both.
+For example, preferring Monitor HTTP does not remove SFTP or port forwarding
+available through SSH.
 
-The protocol used for SSH file operations is a separate setting. SFTP is the default; SCP can be selected for hosts without an SFTP subsystem. A server configured only through Monitor HTTP uses the agent's file API and does not provide SFTP or port forwarding.
+The file protocol is configured separately from the transport preference. SSH
+file operations use SFTP by default; choose SCP for hosts without an SFTP
+subsystem. A Monitor HTTP-only server uses the agent's file API and has no
+SFTP or port forwarding.
 
 ## Status collection and parsing
 
@@ -78,20 +93,38 @@ Timer
   → UI rebuild
 ```
 
-The App's SSH path calls the shared Rust parser in `crates/sbm_ffi`. Monitor agent uses `crates/sbm_native` on the server for core metrics such as CPU, memory, disk, and network, and uses the shared script on its slower extended cycle for values that still need CLI tools. The two paths share parts of the status model, but they are not identical sampling or parsing pipelines.
+The App's SSH path calls the shared Rust parser through `crates/sbm_ffi`.
+Monitor agent samples core metrics such as CPU, memory, disk, and network on
+its host with `crates/sbm_native`. On a slower extended cycle, it also runs the
+shared script to collect values that still require CLI tools. The paths reuse
+parts of the status model but have different sampling and parsing behavior.
 
-The parser is made of pure functions. It returns raw counters; diff and window calculations are also pure functions, and mutable state does not cross the FFI boundary.
+The parser uses pure functions and returns raw counters. Difference and
+window calculations are pure as well. Mutable state does not cross the FFI
+boundary.
 
 ## Storage migrations
 
-`SchemaVersion` manages the App's storage layout while Drift's `schemaVersion` remains `1`. App migrations also read old Hive boxes, generate IDs, and rewrite references, which is outside the scope of a Drift migration.
+`SchemaVersion` controls the App's storage layout. Drift's `schemaVersion`
+stays at `1` because App migrations do more than change Drift tables: they
+import old Hive boxes, generate IDs, and rewrite references.
 
-`HiveImport` first imports data from an upgrading installation into `kv`. Registered schema migrations then split that data into entity tables. The adapters in `lib/hive/legacy_adapters.dart` are frozen readers for old releases and must not be regenerated from current models.
+During an upgrade, `HiveImport` first copies data from the old installation
+into `kv`. Registered schema migrations then move relational data into entity
+tables. The adapters in `lib/hive/legacy_adapters.dart` are frozen readers for
+released formats; do not regenerate them from current models.
 
-Every storage migration needs a permanent regression test using bytes written by the release being migrated from. A fixture generated by the current adapter only proves that the current code agrees with itself; it does not prove that an old release can still be read.
+Keep a regression test for every storage migration, using bytes written by
+the release being migrated from. A fixture created by the current adapter
+tests only the current code against itself; it does not prove compatibility
+with an older release.
 
 ## Security
 
-- **Credentials and trusted host fingerprints** live in the encrypted SQLite database (`sshKnownHostFingerprints` on the setting store); the database key itself is in platform secure storage (Keychain / Keystore).
-- **Sessions are not persisted.**
-- **Host key verification** is performed by the App in every case, including through a jump server or a `ProxyCommand`.
+- **Credentials and trusted host fingerprints** are stored in the encrypted
+  SQLite database. The setting store keeps fingerprints in
+  `sshKnownHostFingerprints`; the database key is held in platform secure
+  storage (Keychain or Keystore).
+- **Sessions** are not persisted.
+- **Host keys** are verified by the App for every connection, including
+  connections through a jump server or `ProxyCommand`.

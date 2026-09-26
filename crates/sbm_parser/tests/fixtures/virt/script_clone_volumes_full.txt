@@ -1,0 +1,9 @@
+SrvBoxSep.b64.dmlydC5jbG9uZS5zdGF0ZQ==
+shut off
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5jbG9uZS52b2w=
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC52b2wucGF0aA==
+/var/lib/libvirt/images/sbcl-full.qcow2
+SbVirtRc=0

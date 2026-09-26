@@ -1,0 +1,8 @@
+SrvBoxSep.b64.dmlydC5kZWZpbmU=
+error: Failed to define domain from /tmp/tmp.SQTuBGs54e
+error: XML error: No PCI buses available
+
+SbVirtRc=1
+SrvBoxSep.b64.dmlydC5yb2xsYmFjaw==
+
+SbVirtRc=0

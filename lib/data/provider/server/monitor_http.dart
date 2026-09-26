@@ -284,20 +284,27 @@ class MonitorHttpClient {
         // Both are told apart from a generic failure because they are the ones
         // the user can do something about, and because retrying neither will
         // ever help.
-        final message = switch (e.response?.statusCode) {
-          403 =>
-            'The monitor agent refuses to run commands — full access is off '
-                'in its config.',
-          404 =>
-            'This monitor agent has no command endpoint. It is older than '
-                'this app expects; update the agent.',
-          _ => null,
-        };
-        if (message == null) rethrow;
-        throw MonitorHttpErr(
-          type: MonitorHttpErrType.unknown,
-          message: '$message\n$e',
-        );
+        switch (e.response?.statusCode) {
+          case 403:
+            // Typed rather than worded: a caller has to tell "the agent said
+            // no" from "the agent could not be reached", and only the type
+            // survives being wrapped on the way up.
+            throw const MonitorHttpErr(
+              type: MonitorHttpErrType.notGranted,
+              message:
+                  'The monitor agent refuses to run commands — full access is '
+                  'off in its config.',
+            );
+          case 404:
+            throw MonitorHttpErr(
+              type: MonitorHttpErrType.unknown,
+              message:
+                  'This monitor agent has no command endpoint. It is older '
+                  'than this app expects; update the agent.\n$e',
+            );
+          default:
+            rethrow;
+        }
       }
     });
   }
@@ -639,10 +646,25 @@ class MonitorHttpClient {
     String path = '/api/v1/terminal/ws',
   }) {
     return _authed(() async {
-      final resp = await _object(
-        '/api/v1/ws-ticket',
-        post: {'purpose': purpose},
-      );
+      final Map<String, dynamic> resp;
+      try {
+        resp = await _object('/api/v1/ws-ticket', post: {'purpose': purpose});
+      } on DioException catch (e) {
+        // The agent mints a ticket only for an endpoint it will serve, so a
+        // 403 here is its grant speaking (`full access not available`,
+        // `terminal not available`) — what a caller that has not read
+        // `/capabilities` yet learns instead, and must be able to tell from a
+        // link that failed.
+        if (e.response?.statusCode != 403) rethrow;
+        final body = e.response?.data;
+        final said = body is Map ? body['error'] : null;
+        throw MonitorHttpErr(
+          type: MonitorHttpErrType.notGranted,
+          message: said is String && said.isNotEmpty
+              ? 'The monitor agent refused: $said'
+              : 'The monitor agent refused the $purpose endpoint',
+        );
+      }
       final ticket = resp['ticket'] as String?;
       if (ticket == null || ticket.isEmpty) {
         throw const MonitorHttpErr(

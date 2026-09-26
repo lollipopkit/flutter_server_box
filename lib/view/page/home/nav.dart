@@ -145,7 +145,7 @@ extension _HomePageStrip on _HomePageState {
         for (final tab in overflow)
           ListTile(
             leading: tab.icon,
-            title: Text(tab.label),
+            title: tab.listTitle,
             selected: _tabs.indexOf(tab) == selected,
             onTap: () {
               // The sheet closes itself; the page it came from is what
@@ -308,6 +308,19 @@ extension _HomePageNav on _HomePageState {
             icon: MingCute.unlink_2_line,
             destructive: true,
             onTap: () => unawaited(_confirmCloseAllTerminals()),
+          ),
+        ],
+      ),
+      // Every server asked again whether it is a host: the one thing to do to
+      // the whole set, and otherwise a trip into the host switcher.
+      AppTab.virt => (
+        title: l10n.virtualization,
+        actions: [
+          ContextMenuAction(
+            text: l10n.virtCheckAll,
+            icon: MingCute.refresh_2_line,
+            onTap: () =>
+                unawaited(ref.read(virtHostsProvider.notifier).refresh()),
           ),
         ],
       ),

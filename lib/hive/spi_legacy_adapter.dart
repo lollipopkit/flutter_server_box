@@ -108,6 +108,13 @@ class LegacySpiV2 {
     customSystemType: customSystemType,
     disabledCmdTypes: disabledCmdTypes,
   );
+
+  /// [toSpi]'s JSON with `custom` as that build wrote it: [Spi] no longer
+  /// holds PVE, and this is the only place the import can still read it from.
+  Map<String, dynamic> toJson() => {
+    ...toSpi().toJson(),
+    'custom': ?custom?.toJson(),
+  };
 }
 
 /// Read-only decoder for the typeId `Spi` used through schema v2.
@@ -210,6 +217,13 @@ class LegacySpiV3 {
     customSystemType: customSystemType,
     disabledCmdTypes: disabledCmdTypes,
   );
+
+  /// [toSpi]'s JSON with `custom` as that build wrote it: [Spi] no longer
+  /// holds PVE, and this is the only place the import can still read it from.
+  Map<String, dynamic> toJson() => {
+    ...toSpi().toJson(),
+    'custom': ?custom?.toJson(),
+  };
 }
 
 class SpiNestedLegacyAdapter extends TypeAdapter<LegacySpiV3> {

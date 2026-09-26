@@ -20,6 +20,9 @@ pub mod linux;
 pub mod script;
 pub mod smart;
 pub mod types;
+pub mod virt;
+pub mod virt_cloud_init;
+pub mod virt_manage;
 pub mod windows;
 
 use std::collections::HashMap;

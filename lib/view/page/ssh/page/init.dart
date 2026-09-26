@@ -234,6 +234,7 @@ extension _Init on SSHPageState {
                 : TerminalConnectionStep.connectionFailed,
             detail: switch (error) {
               TerminalRemoteAccessUnavailable() => l10n.monitorNoRemoteAccess,
+              TerminalConsoleErr(:final message) => message,
               LocalServerErr() => error.solution,
               _ => null,
             },
@@ -723,6 +724,13 @@ extension _Init on SSHPageState {
 
   Future<TmuxLaunchPlan> _resolveForegroundLaunchPlan() async {
     if (!Stores.setting.tmuxAuto.fetch() || !_canTmux) {
+      return const TmuxLaunchPlan.none();
+    }
+    // A page opened to run something — a container's shell, a VM's serial
+    // console, a command from the file browser — runs it in a plain shell.
+    // [_initTerminal] types [SshPageArgs.initCmd] only when no tmux session
+    // was attached, so with tmux on it was silently never run.
+    if (widget.args.initCmd != null || widget.args.initSnippet != null) {
       return const TmuxLaunchPlan.none();
     }
 

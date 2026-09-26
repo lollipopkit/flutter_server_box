@@ -1,0 +1,240 @@
+SrvBoxSep.b64.dmlydC52b2wueG1s
+cirros.img
+<volume type='file'>
+  <name>cirros.img</name>
+  <key>/var/lib/libvirt/images/cirros.img</key>
+  <capacity unit='bytes'>117440512</capacity>
+  <allocation unit='bytes'>21692416</allocation>
+  <physical unit='bytes'>21692416</physical>
+  <target>
+    <path>/var/lib/libvirt/images/cirros.img</path>
+    <format type='qcow2'/>
+    <permissions>
+      <mode>0644</mode>
+      <owner>64055</owner>
+      <group>64055</group>
+    </permissions>
+    <timestamps>
+      <atime>1790324701.499733501</atime>
+      <mtime>1790324698.823726175</mtime>
+      <ctime>1790324701.483733457</ctime>
+      <btime>0</btime>
+    </timestamps>
+    <compat>1.1</compat>
+    <clusterSize unit='B'>65536</clusterSize>
+    <features/>
+  </target>
+</volume>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC52b2wueG1s
+data1.qcow2
+<volume type='file'>
+  <name>data1.qcow2</name>
+  <key>/var/lib/libvirt/images/data1.qcow2</key>
+  <capacity unit='bytes'>117440512</capacity>
+  <allocation unit='bytes'>200704</allocation>
+  <physical unit='bytes'>196616</physical>
+  <target>
+    <path>/var/lib/libvirt/images/data1.qcow2</path>
+    <format type='qcow2'/>
+    <permissions>
+      <mode>0644</mode>
+      <owner>0</owner>
+      <group>0</group>
+    </permissions>
+    <timestamps>
+      <atime>1790324700.831731677</atime>
+      <mtime>1790324698.895726373</mtime>
+      <ctime>1790324698.895726373</ctime>
+      <btime>0</btime>
+    </timestamps>
+    <compat>1.1</compat>
+    <clusterSize unit='B'>65536</clusterSize>
+    <features/>
+  </target>
+  <backingStore>
+    <path>/var/lib/libvirt/images/cirros.img</path>
+    <format type='qcow2'/>
+    <permissions>
+      <mode>0644</mode>
+      <owner>64055</owner>
+      <group>64055</group>
+    </permissions>
+    <timestamps>
+      <atime>1790324701.499733501</atime>
+      <mtime>1790324698.823726175</mtime>
+      <ctime>1790324701.483733457</ctime>
+      <btime>0</btime>
+    </timestamps>
+  </backingStore>
+</volume>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC52b2wueG1s
+extra.qcow2
+<volume type='file'>
+  <name>extra.qcow2</name>
+  <key>/var/lib/libvirt/images/extra.qcow2</key>
+  <capacity unit='bytes'>1073741824</capacity>
+  <allocation unit='bytes'>225280</allocation>
+  <physical unit='bytes'>524502</physical>
+  <target>
+    <path>/var/lib/libvirt/images/extra.qcow2</path>
+    <format type='qcow2'/>
+    <permissions>
+      <mode>0644</mode>
+      <owner>64055</owner>
+      <group>64055</group>
+    </permissions>
+    <timestamps>
+      <atime>1790335512.916287149</atime>
+      <mtime>1790335512.960286780</mtime>
+      <ctime>1790335512.960286780</ctime>
+      <btime>0</btime>
+    </timestamps>
+    <compat>1.1</compat>
+    <clusterSize unit='B'>65536</clusterSize>
+    <features/>
+  </target>
+</volume>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC52b2wueG1s
+off1.qcow2
+<volume type='file'>
+  <name>off1.qcow2</name>
+  <key>/var/lib/libvirt/images/off1.qcow2</key>
+  <capacity unit='bytes'>117440512</capacity>
+  <allocation unit='bytes'>200704</allocation>
+  <physical unit='bytes'>327750</physical>
+  <target>
+    <path>/var/lib/libvirt/images/off1.qcow2</path>
+    <format type='qcow2'/>
+    <permissions>
+      <mode>0644</mode>
+      <owner>0</owner>
+      <group>0</group>
+    </permissions>
+    <timestamps>
+      <atime>1790335514.044277692</atime>
+      <mtime>1790335514.048277659</mtime>
+      <ctime>1790335514.048277659</ctime>
+      <btime>0</btime>
+    </timestamps>
+    <compat>1.1</compat>
+    <clusterSize unit='B'>65536</clusterSize>
+    <features/>
+  </target>
+  <backingStore>
+    <path>/var/lib/libvirt/images/cirros.img</path>
+    <format type='qcow2'/>
+    <permissions>
+      <mode>0644</mode>
+      <owner>64055</owner>
+      <group>64055</group>
+    </permissions>
+    <timestamps>
+      <atime>1790324701.499733501</atime>
+      <mtime>1790324698.823726175</mtime>
+      <ctime>1790324701.483733457</ctime>
+      <btime>0</btime>
+    </timestamps>
+  </backingStore>
+</volume>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC52b2wueG1s
+paused1.qcow2
+<volume type='file'>
+  <name>paused1.qcow2</name>
+  <key>/var/lib/libvirt/images/paused1.qcow2</key>
+  <capacity unit='bytes'>117440512</capacity>
+  <allocation unit='bytes'>29437952</allocation>
+  <physical unit='bytes'>167968768</physical>
+  <target>
+    <path>/var/lib/libvirt/images/paused1.qcow2</path>
+    <format type='qcow2'/>
+    <permissions>
+      <mode>0644</mode>
+      <owner>64055</owner>
+      <group>64055</group>
+    </permissions>
+    <timestamps>
+      <atime>1790335514.016277926</atime>
+      <mtime>1790335514.020277893</mtime>
+      <ctime>1790335514.020277893</ctime>
+      <btime>0</btime>
+    </timestamps>
+    <compat>1.1</compat>
+    <clusterSize unit='B'>65536</clusterSize>
+    <features/>
+  </target>
+  <backingStore>
+    <path>/var/lib/libvirt/images/cirros.img</path>
+    <format type='qcow2'/>
+    <permissions>
+      <mode>0644</mode>
+      <owner>64055</owner>
+      <group>64055</group>
+    </permissions>
+    <timestamps>
+      <atime>1790324701.499733501</atime>
+      <mtime>1790324698.823726175</mtime>
+      <ctime>1790324701.483733457</ctime>
+      <btime>0</btime>
+    </timestamps>
+  </backingStore>
+</volume>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC52b2wueG1s
+run1.qcow2
+<volume type='file'>
+  <name>run1.qcow2</name>
+  <key>/var/lib/libvirt/images/run1.qcow2</key>
+  <capacity unit='bytes'>117440512</capacity>
+  <allocation unit='bytes'>239235072</allocation>
+  <physical unit='bytes'>239534294</physical>
+  <target>
+    <path>/var/lib/libvirt/images/run1.qcow2</path>
+    <format type='qcow2'/>
+    <permissions>
+      <mode>0644</mode>
+      <owner>64055</owner>
+      <group>64055</group>
+    </permissions>
+    <timestamps>
+      <atime>1790335512.964286746</atime>
+      <mtime>1790335512.960286780</mtime>
+      <ctime>1790335512.960286780</ctime>
+      <btime>0</btime>
+    </timestamps>
+    <compat>1.1</compat>
+    <clusterSize unit='B'>65536</clusterSize>
+    <features/>
+  </target>
+  <backingStore>
+    <path>/var/lib/libvirt/images/cirros.img</path>
+    <format type='qcow2'/>
+    <permissions>
+      <mode>0644</mode>
+      <owner>64055</owner>
+      <group>64055</group>
+    </permissions>
+    <timestamps>
+      <atime>1790324701.499733501</atime>
+      <mtime>1790324698.823726175</mtime>
+      <ctime>1790324701.483733457</ctime>
+      <btime>0</btime>
+    </timestamps>
+  </backingStore>
+</volume>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC52b2wueG1s
+gone.qcow2
+error: failed to get vol 'gone.qcow2'
+error: Storage volume not found: no storage vol with matching path 'gone.qcow2'
+
+SbVirtRc=1

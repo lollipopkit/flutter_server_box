@@ -1943,12 +1943,6 @@ abstract class AppLocalizations {
   /// **'Parsing the occupancy status of Docker is relatively slow.'**
   String get parseContainerStatsTip;
 
-  /// User-facing label or message for plug in type.
-  ///
-  /// In en, this message translates to:
-  /// **'Insertion Type'**
-  String get plugInType;
-
   /// User-facing label or message for prefer disk amount.
   ///
   /// In en, this message translates to:
@@ -2183,18 +2177,6 @@ abstract class AppLocalizations {
   /// **'Not recommended to enable, beware of security risks! If you are using the default certificate from PVE, you need to enable this option.'**
   String get pveIgnoreCertTip;
 
-  /// User-facing label or message for pve server client missing.
-  ///
-  /// In en, this message translates to:
-  /// **'The SSH client for this server is not available.'**
-  String get pveServerClientMissing;
-
-  /// User-facing label or message for pve address missing.
-  ///
-  /// In en, this message translates to:
-  /// **'The PVE address is missing. Please configure it in server settings.'**
-  String get pveAddressMissing;
-
   /// User-facing label or message for pve password required.
   ///
   /// In en, this message translates to:
@@ -2206,12 +2188,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Two-factor authentication is enabled on this PVE server. Please enter the OTP code.'**
   String get pveOtpRequired;
-
-  /// User-facing label or message for pve otp challenge expired.
-  ///
-  /// In en, this message translates to:
-  /// **'The OTP challenge has expired. Please refresh and try again.'**
-  String get pveOtpChallengeExpired;
 
   /// User-facing label or message for pve otp code required.
   ///
@@ -2254,30 +2230,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'PVE login succeeded but no authentication ticket was returned.'**
   String get pveMissingAuthTicket;
-
-  /// User-facing label or message for pve version low.
-  ///
-  /// In en, this message translates to:
-  /// **'This feature is currently in the testing phase and has only been tested on PVE 8+. Please use it with caution.'**
-  String get pveVersionLow;
-
-  /// User-facing label or message for pve loading forwarding.
-  ///
-  /// In en, this message translates to:
-  /// **'Establishing SSH tunnel...'**
-  String get pveLoadingForwarding;
-
-  /// User-facing label or message for pve loading login.
-  ///
-  /// In en, this message translates to:
-  /// **'Authenticating with PVE...'**
-  String get pveLoadingLogin;
-
-  /// User-facing label or message for pve loading data.
-  ///
-  /// In en, this message translates to:
-  /// **'Fetching cluster data...'**
-  String get pveLoadingData;
 
   /// User-facing label or message for pve loading connect.
   ///
@@ -3063,12 +3015,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'By join time'**
   String get sortByJoinTime;
-
-  /// Title shown for the port forward beta dialog or section.
-  ///
-  /// In en, this message translates to:
-  /// **'Port Forward (Beta)'**
-  String get portForwardBetaTitle;
 
   /// User-facing label or message for tmux auto attach.
   ///
@@ -5691,6 +5637,2639 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This theme only supports {mode}. Select another theme to change the mode.'**
   String appearanceThemeModeLocked(String mode);
+
+  /// Label for logging in to Proxmox VE with an API token.
+  ///
+  /// In en, this message translates to:
+  /// **'API token'**
+  String get pveAuthToken;
+
+  /// Notice on a Proxmox VE host older than 8.0: the feature was only tested on PVE 8 and later.
+  ///
+  /// In en, this message translates to:
+  /// **'This feature is currently in the testing phase and has only been tested on PVE 8+. Please use it with caution.'**
+  String get pveVersionLow;
+
+  /// Label for the Proxmox VE API token ID field (user@realm!tokenid).
+  ///
+  /// In en, this message translates to:
+  /// **'Token ID'**
+  String get pveTokenId;
+
+  /// Label for the Proxmox VE API token secret field.
+  ///
+  /// In en, this message translates to:
+  /// **'Token secret'**
+  String get pveTokenSecret;
+
+  /// Help text explaining how to create a Proxmox VE API token and which privileges it needs.
+  ///
+  /// In en, this message translates to:
+  /// **'Create one in PVE under Datacenter → Permissions → API Tokens. It needs VM.Audit, VM.PowerMgmt, VM.Console, VM.Snapshot, VM.Snapshot.Rollback, Datastore.Audit and Sys.Audit on the paths to show; with privilege separation on, grant them to the token itself.'**
+  String get pveTokenTip;
+
+  /// A PVE API token that may see nothing: explains privilege separation and gives the command that grants it permissions.
+  ///
+  /// In en, this message translates to:
+  /// **'The token {account} may not see anything on this host. A token with privilege separation does not have its user\'s permissions; grant it some, on the PVE host:\n{command}\nor untick \"Privilege Separation\" for the token.'**
+  String pveTokenNoPrivileges(String account, String command);
+
+  /// A PVE user that may see nothing: gives the command that grants it permissions.
+  ///
+  /// In en, this message translates to:
+  /// **'{account} may not see anything on this host. Grant it permissions, on the PVE host:\n{command}'**
+  String pveUserNoPrivileges(String account, String command);
+
+  /// Error shown when the Proxmox VE API token ID has the wrong format.
+  ///
+  /// In en, this message translates to:
+  /// **'The token ID must look like user@realm!tokenid'**
+  String get pveTokenIdInvalid;
+
+  /// Help text for logging in to Proxmox VE with a password.
+  ///
+  /// In en, this message translates to:
+  /// **'Logs in as the SSH user in the PAM realm, with the SSH password, or with the PVE password below when SSH uses a key. A two-factor code is asked for when needed.'**
+  String get pvePasswordAuthTip;
+
+  /// Shown when no Proxmox VE certificate has been confirmed yet.
+  ///
+  /// In en, this message translates to:
+  /// **'None confirmed yet. Unless a trusted CA signed it, the next connection shows the certificate for confirmation.'**
+  String get pveCertUnpinned;
+
+  /// Action that forgets the confirmed Proxmox VE certificate.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget certificate'**
+  String get pveCertForget;
+
+  /// Confirmation text for forgetting the confirmed Proxmox VE certificate.
+  ///
+  /// In en, this message translates to:
+  /// **'The next connection will show the PVE certificate for confirmation again.'**
+  String get pveCertForgetTip;
+
+  /// Name of the Virtualization tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Virtualization'**
+  String get virtualization;
+
+  /// Intro page text describing the Virtualization tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage virtual machines and containers on Proxmox VE and libvirt/KVM hosts: their state, power actions and consoles.'**
+  String get virtIntro;
+
+  /// Intro page text telling Proxmox VE users where PVE moved.
+  ///
+  /// In en, this message translates to:
+  /// **'Proxmox VE has moved from the server page into this tab. A server\'s PVE card opens it there.'**
+  String get virtIntroPveMoved;
+
+  /// Intro page text about libvirt/KVM hosts.
+  ///
+  /// In en, this message translates to:
+  /// **'A server with libvirt\'s virsh installed shows up as a host, with its QEMU/KVM virtual machines.'**
+  String get virtIntroLibvirt;
+
+  /// Intro page text about the transports the Virtualization tab works over.
+  ///
+  /// In en, this message translates to:
+  /// **'Both work over SSH, through a Monitor agent, or on this device.'**
+  String get virtIntroTransports;
+
+  /// Intro page text about Proxmox VE API token support.
+  ///
+  /// In en, this message translates to:
+  /// **'PVE can log in with an API token instead of a password. Set it in a server\'s edit page, under PVE.'**
+  String get virtIntroTokens;
+
+  /// Intro page text saying the Virtualization tab is in the tab bar.
+  ///
+  /// In en, this message translates to:
+  /// **'It has been added to the tab bar.'**
+  String get virtIntroInBar;
+
+  /// Intro page text saying the Virtualization tab is under More.
+  ///
+  /// In en, this message translates to:
+  /// **'It is under More. Home Tabs in Settings can move it to the tab bar.'**
+  String get virtIntroInMore;
+
+  /// Section of the Virtualization tab listing virtual machines.
+  ///
+  /// In en, this message translates to:
+  /// **'Virtual machines'**
+  String get virtGuests;
+
+  /// Heading over the virtualization hosts in the host switcher.
+  ///
+  /// In en, this message translates to:
+  /// **'Hosts'**
+  String get virtHosts;
+
+  /// Heading over servers not known to be virtualization hosts; tapping one checks it for virsh.
+  ///
+  /// In en, this message translates to:
+  /// **'Check this server'**
+  String get virtCheckServer;
+
+  /// Action that checks every server for libvirt again.
+  ///
+  /// In en, this message translates to:
+  /// **'Check all servers'**
+  String get virtCheckAll;
+
+  /// A server not yet checked for libvirt.
+  ///
+  /// In en, this message translates to:
+  /// **'Not checked yet'**
+  String get virtProbeNotChecked;
+
+  /// A server checked for virtualization that has neither Proxmox VE nor virsh.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a host'**
+  String get virtProbeAbsent;
+
+  /// A checked server that is itself a container (a guest), e.g. 'LXC container'.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind} container'**
+  String virtProbeContainer(String kind);
+
+  /// Tooltip on a checked server that runs in a container.
+  ///
+  /// In en, this message translates to:
+  /// **'This server runs in a container, so it is a guest rather than a host. It is managed from the host that runs it.'**
+  String get virtProbeContainerTip;
+
+  /// A checked server that runs Proxmox VE but has no PVE API access configured.
+  ///
+  /// In en, this message translates to:
+  /// **'PVE, not set up'**
+  String get virtProbePve;
+
+  /// Dialog body offering to configure PVE API access for a server found running Proxmox VE.
+  ///
+  /// In en, this message translates to:
+  /// **'{version} is running on this server. Fill in its API access in the server\'s settings (an API token is recommended) to manage its virtual machines and containers here.'**
+  String virtPveSetupTip(String version);
+
+  /// Shown when no server is a virtualization host.
+  ///
+  /// In en, this message translates to:
+  /// **'No virtualization hosts'**
+  String get virtNoHosts;
+
+  /// Explains which servers count as virtualization hosts.
+  ///
+  /// In en, this message translates to:
+  /// **'A server running Proxmox VE, with its API access filled in, is a host, and so is one where virsh answers. The other servers can be checked from the host switcher.'**
+  String get virtNoHostsTip;
+
+  /// Shown when a virtualization host has no guests.
+  ///
+  /// In en, this message translates to:
+  /// **'No virtual machines or containers'**
+  String get virtNoGuests;
+
+  /// A guest that is paused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get virtPaused;
+
+  /// A guest that is starting.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting…'**
+  String get virtStarting;
+
+  /// A guest that is stopping.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopping…'**
+  String get virtStopping;
+
+  /// A guest that is rebooting.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebooting…'**
+  String get virtRebooting;
+
+  /// A guest that is migrating to another node.
+  ///
+  /// In en, this message translates to:
+  /// **'Migrating…'**
+  String get virtMigrating;
+
+  /// A guest held by a running backup.
+  ///
+  /// In en, this message translates to:
+  /// **'Backing up…'**
+  String get virtBackingUp;
+
+  /// Power action that resumes a paused guest.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get virtResume;
+
+  /// View of a guest with its readings and facts.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get virtOverview;
+
+  /// View of a guest with its console.
+  ///
+  /// In en, this message translates to:
+  /// **'Console'**
+  String get virtConsole;
+
+  /// Shown in a guest's console view when it has neither a text nor a graphical console.
+  ///
+  /// In en, this message translates to:
+  /// **'No console is configured for this guest'**
+  String get virtConsoleNone;
+
+  /// Toggle for a guest's graphical (VNC) console, beside the text one.
+  ///
+  /// In en, this message translates to:
+  /// **'Graphical'**
+  String get virtConsoleGraphical;
+
+  /// Over a guest's graphical console whose VNC server refused the connection for a password; beside a button to enter it.
+  ///
+  /// In en, this message translates to:
+  /// **'This display asks for a password'**
+  String get virtVncPasswordNeeded;
+
+  /// Under the button that opens a libvirt guest's serial console in the terminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Opens the guest\'s serial console with virsh on the host. Disconnect, or Ctrl+], returns to the host\'s shell.'**
+  String get virtConsoleSerialTip;
+
+  /// Under a guest's text console: what the connection goes through, e.g. 'via SSH'.
+  ///
+  /// In en, this message translates to:
+  /// **'via {transport}'**
+  String virtConsoleVia(String transport);
+
+  /// Under a guest's text console: a serial console prints nothing until it is sent a key, so Enter brings up its prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'No output? Press Enter'**
+  String get virtConsoleEnterTip;
+
+  /// Countdown under a silent serial console: Enter will be pressed automatically to make the guest draw its login prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Pressing Enter in {seconds, plural, =1{1 second} other{{seconds} seconds}} to bring up the prompt'**
+  String virtConsoleAutoEnter(int seconds);
+
+  /// Button beside the auto-Enter countdown: press Enter now instead of waiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Now'**
+  String get virtConsoleEnterNow;
+
+  /// Shown for a guest that is not running, in place of its charts.
+  ///
+  /// In en, this message translates to:
+  /// **'Start it to see live CPU, memory, disk and network here.'**
+  String get virtOffTip;
+
+  /// Card showing what running guests hold of the host.
+  ///
+  /// In en, this message translates to:
+  /// **'Allocated'**
+  String get virtAllocated;
+
+  /// How many guests are running, of how many.
+  ///
+  /// In en, this message translates to:
+  /// **'{running} running · {total} in total'**
+  String virtRunningCount(int running, int total);
+
+  /// A PVE template: a guest image that does not run.
+  ///
+  /// In en, this message translates to:
+  /// **'Template'**
+  String get virtTemplate;
+
+  /// A guest that starts with its host.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts with the host'**
+  String get virtAutostart;
+
+  /// Error: the virtualization host could not be reached.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not reach this host'**
+  String get virtErrUnreachable;
+
+  /// Error: the PVE configuration of a server is incomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'The PVE settings of this server are incomplete'**
+  String get virtErrNotConfigured;
+
+  /// What to do about incomplete PVE settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the address, and the password or API token, in the server\'s settings.'**
+  String get virtErrNotConfiguredTip;
+
+  /// Error: the virtualization host refused the login.
+  ///
+  /// In en, this message translates to:
+  /// **'The host refused the login'**
+  String get virtErrAuthFailed;
+
+  /// Error: the PVE certificate has to be confirmed first.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm the host\'s certificate'**
+  String get virtErrCertUnconfirmed;
+
+  /// Error: the PVE certificate is not the one confirmed before.
+  ///
+  /// In en, this message translates to:
+  /// **'The host\'s certificate has changed'**
+  String get virtErrCertChanged;
+
+  /// Error: the Monitor agent does not relay TCP connections to PVE.
+  ///
+  /// In en, this message translates to:
+  /// **'The Monitor agent does not relay connections'**
+  String get virtErrRelayNotGranted;
+
+  /// Error: the Monitor agent does not run commands (its full access is off), so libvirt cannot be reached through it.
+  ///
+  /// In en, this message translates to:
+  /// **'The Monitor agent does not run commands'**
+  String get virtErrExecNotGranted;
+
+  /// Error: virsh is not installed on the server.
+  ///
+  /// In en, this message translates to:
+  /// **'virsh is not installed on this server'**
+  String get virtErrNotInstalled;
+
+  /// Error: the server this virtualization host belonged to has been deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'This server no longer exists'**
+  String get virtErrServerRemoved;
+
+  /// Error: reaching libvirt needs sudo, and sudo needs a password.
+  ///
+  /// In en, this message translates to:
+  /// **'sudo needs a password to reach libvirt'**
+  String get virtErrSudoRequired;
+
+  /// Error: sudo rejected the password given.
+  ///
+  /// In en, this message translates to:
+  /// **'sudo rejected the password'**
+  String get virtErrSudoRejected;
+
+  /// Error: the virtualization host answered with something unreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'The host answered in an unexpected form'**
+  String get virtErrInvalidResponse;
+
+  /// Error: the host refused a power action or it failed.
+  ///
+  /// In en, this message translates to:
+  /// **'The host refused the action'**
+  String get virtErrActionFailed;
+
+  /// Settings row: how long a remote desktop or guest console stays connected after the user leaves it.
+  ///
+  /// In en, this message translates to:
+  /// **'Close when left idle'**
+  String get remoteSessionIdleTimeout;
+
+  /// Help text for the remote session idle timeout setting.
+  ///
+  /// In en, this message translates to:
+  /// **'How long a remote desktop or a guest\'s console stays connected after you leave it. Before it closes, a notice gives you 10 seconds to keep it.'**
+  String get remoteSessionIdleTimeoutTip;
+
+  /// Button on the notice before an idle remote session closes: keeps it open for another full timeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep alive'**
+  String get remoteSessionKeepAlive;
+
+  /// Toast title when the app comes back: an idle remote session (remote desktop, guest console) was closed while the app was in the background. The body names the session.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed while you were away'**
+  String get remoteSessionClosedAway;
+
+  /// Countdown on the notice before an idle remote session closes.
+  ///
+  /// In en, this message translates to:
+  /// **'Closing in {seconds} s'**
+  String remoteSessionClosingIn(int seconds);
+
+  /// Button: show a console that is still running again.
+  ///
+  /// In en, this message translates to:
+  /// **'Reopen'**
+  String get reopen;
+
+  /// A guest view and its heading: the guest's snapshots.
+  ///
+  /// In en, this message translates to:
+  /// **'Snapshots'**
+  String get virtSnapshots;
+
+  /// Button that opens the form for a new snapshot, and the form's confirm button.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a snapshot'**
+  String get virtSnapshotCreate;
+
+  /// Shown when a guest has no snapshots.
+  ///
+  /// In en, this message translates to:
+  /// **'No snapshots yet'**
+  String get virtSnapshotNone;
+
+  /// What a snapshot holds: the disks and the running memory.
+  ///
+  /// In en, this message translates to:
+  /// **'Disks and memory'**
+  String get virtSnapshotWithMemory;
+
+  /// What a snapshot holds: the disks only, no memory.
+  ///
+  /// In en, this message translates to:
+  /// **'Disks only'**
+  String get virtSnapshotDiskOnly;
+
+  /// The snapshot another one was taken on top of.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent'**
+  String get virtSnapshotParent;
+
+  /// Action: revert the guest to a snapshot.
+  ///
+  /// In en, this message translates to:
+  /// **'Revert'**
+  String get virtSnapshotRevert;
+
+  /// Switch in the snapshot form: also save the guest's memory.
+  ///
+  /// In en, this message translates to:
+  /// **'Include memory'**
+  String get virtSnapshotMemory;
+
+  /// Under the memory switch: what saving memory gives.
+  ///
+  /// In en, this message translates to:
+  /// **'Reverting resumes the guest at this moment.'**
+  String get virtSnapshotMemoryTip;
+
+  /// Under the memory switch on libvirt: an internal snapshot of a running guest always includes its memory.
+  ///
+  /// In en, this message translates to:
+  /// **'A snapshot of a running guest always includes its memory here.'**
+  String get virtSnapshotMemoryAlways;
+
+  /// Snapshot form of a guest that is not running: only disks are saved.
+  ///
+  /// In en, this message translates to:
+  /// **'The guest is not running, so only its disks are saved.'**
+  String get virtSnapshotMemoryOff;
+
+  /// Error under the snapshot name field.
+  ///
+  /// In en, this message translates to:
+  /// **'A letter first, then letters, digits, - or _; 2 to 40 characters.'**
+  String get virtSnapshotNameInvalid;
+
+  /// Error under the snapshot name field.
+  ///
+  /// In en, this message translates to:
+  /// **'A snapshot with this name exists.'**
+  String get virtSnapshotNameTaken;
+
+  /// Note under the snapshot list.
+  ///
+  /// In en, this message translates to:
+  /// **'Reverting discards every change made since the snapshot.'**
+  String get virtSnapshotRevertTip;
+
+  /// Revert confirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Revert {guest} to {snapshot}? Every change since it was taken is lost.'**
+  String virtSnapshotRevertAsk(String guest, String snapshot);
+
+  /// Revert confirmation when the snapshot has no memory and the guest is running.
+  ///
+  /// In en, this message translates to:
+  /// **'This snapshot has no memory: {guest} will be stopped.'**
+  String virtSnapshotRevertStops(String guest);
+
+  /// Switch in the revert confirmation: start the guest after reverting to a snapshot without memory.
+  ///
+  /// In en, this message translates to:
+  /// **'Start it afterwards'**
+  String get virtSnapshotStartAfter;
+
+  /// Heading over the volumes of a storage pool.
+  ///
+  /// In en, this message translates to:
+  /// **'Volumes'**
+  String get virtVolumes;
+
+  /// Shown when a host has no storage pools.
+  ///
+  /// In en, this message translates to:
+  /// **'No storage pools'**
+  String get virtNoPools;
+
+  /// Shown when a host has no networks.
+  ///
+  /// In en, this message translates to:
+  /// **'No networks'**
+  String get virtNoNetworks;
+
+  /// A storage pool that is not active: its volumes cannot be listed.
+  ///
+  /// In en, this message translates to:
+  /// **'The pool is not active, so its volumes cannot be listed.'**
+  String get virtPoolInactive;
+
+  /// A PVE storage shared between cluster nodes.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared between nodes'**
+  String get virtShared;
+
+  /// The file a qcow2 volume is layered on.
+  ///
+  /// In en, this message translates to:
+  /// **'Backing file'**
+  String get virtBackingFile;
+
+  /// libvirt network mode: guests reach each other and the host only.
+  ///
+  /// In en, this message translates to:
+  /// **'Isolated'**
+  String get virtNetIsolated;
+
+  /// libvirt network mode: guests are on a host bridge.
+  ///
+  /// In en, this message translates to:
+  /// **'Bridged'**
+  String get virtNetBridged;
+
+  /// libvirt network mode: routed without NAT.
+  ///
+  /// In en, this message translates to:
+  /// **'Routed'**
+  String get virtNetRouted;
+
+  /// A network's bridge device.
+  ///
+  /// In en, this message translates to:
+  /// **'Bridge'**
+  String get virtBridge;
+
+  /// The devices a bridge or bond uses.
+  ///
+  /// In en, this message translates to:
+  /// **'Ports'**
+  String get virtPorts;
+
+  /// Heading over the guests with a NIC on a network.
+  ///
+  /// In en, this message translates to:
+  /// **'Guests on it'**
+  String get virtAttachedGuests;
+
+  /// No guest has a NIC on this network.
+  ///
+  /// In en, this message translates to:
+  /// **'No guest is on it'**
+  String get virtNoAttachedGuests;
+
+  /// Title and action: create a new virtual machine.
+  ///
+  /// In en, this message translates to:
+  /// **'New virtual machine'**
+  String get virtCreateVm;
+
+  /// Title: create a new Proxmox VE container.
+  ///
+  /// In en, this message translates to:
+  /// **'New container'**
+  String get virtCreateLxc;
+
+  /// Tooltip of the add button on a PVE host, where a VM or a container can be created.
+  ///
+  /// In en, this message translates to:
+  /// **'New virtual machine or container'**
+  String get virtCreateGuest;
+
+  /// Segment choosing to create a virtual machine.
+  ///
+  /// In en, this message translates to:
+  /// **'Virtual machine'**
+  String get virtKindVm;
+
+  /// Segment choosing to create a container.
+  ///
+  /// In en, this message translates to:
+  /// **'Container'**
+  String get virtKindLxc;
+
+  /// Label: a new container's hostname.
+  ///
+  /// In en, this message translates to:
+  /// **'Hostname'**
+  String get virtHostname;
+
+  /// Heading: the ISO a new VM boots from.
+  ///
+  /// In en, this message translates to:
+  /// **'Install media'**
+  String get virtInstallMedia;
+
+  /// Shown when the host has no ISO images to install from.
+  ///
+  /// In en, this message translates to:
+  /// **'No ISO images on this host'**
+  String get virtNoIsos;
+
+  /// Shown when the PVE host has no container templates.
+  ///
+  /// In en, this message translates to:
+  /// **'No container templates on this host. A storage\'s CT Templates in PVE can download one.'**
+  String get virtNoTemplates;
+
+  /// Shown when no storage on the host can hold a new disk.
+  ///
+  /// In en, this message translates to:
+  /// **'Nowhere on this host takes a new disk'**
+  String get virtNoDiskStorage;
+
+  /// Switch: start the new guest once it is created.
+  ///
+  /// In en, this message translates to:
+  /// **'Start it once created'**
+  String get virtStartAfterCreate;
+
+  /// Switch: create an unprivileged container.
+  ///
+  /// In en, this message translates to:
+  /// **'Unprivileged container'**
+  String get virtUnprivileged;
+
+  /// Explains what an unprivileged container is.
+  ///
+  /// In en, this message translates to:
+  /// **'Its root is an ordinary user on the host.'**
+  String get virtUnprivilegedTip;
+
+  /// Label: SSH public keys for a new container's root.
+  ///
+  /// In en, this message translates to:
+  /// **'SSH public keys'**
+  String get virtSshKeys;
+
+  /// Explains a new container needs a root password, SSH keys or both.
+  ///
+  /// In en, this message translates to:
+  /// **'A root password, SSH keys, or both.'**
+  String get virtCredentialsTip;
+
+  /// Toast after a guest was created.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} created'**
+  String virtCreated(String name);
+
+  /// Toast title when a guest was created but failed to start; the host's error follows.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} was created but did not start'**
+  String virtCreatedNotStarted(String name);
+
+  /// Error title: the new guest's name, VMID or disk already exists on the host.
+  ///
+  /// In en, this message translates to:
+  /// **'A guest or disk with this name already exists'**
+  String get virtErrExists;
+
+  /// Rule for a new libvirt guest's name.
+  ///
+  /// In en, this message translates to:
+  /// **'Letters, digits, ., _ and -, starting with a letter or digit; up to 63 characters.'**
+  String get virtCreateNameInvalidLibvirt;
+
+  /// Rule for a new PVE guest's name (a DNS name).
+  ///
+  /// In en, this message translates to:
+  /// **'Letters, digits and -, in parts separated by dots; up to 63 characters.'**
+  String get virtCreateNameInvalidPve;
+
+  /// The new guest's name is already used.
+  ///
+  /// In en, this message translates to:
+  /// **'A guest with this name exists.'**
+  String get virtCreateNameTaken;
+
+  /// The VMID is out of PVE's range.
+  ///
+  /// In en, this message translates to:
+  /// **'From 100 to 999999999.'**
+  String get virtCreateVmidInvalid;
+
+  /// The VMID is already used.
+  ///
+  /// In en, this message translates to:
+  /// **'This VMID is taken.'**
+  String get virtCreateVmidTaken;
+
+  /// More cores than the host allows.
+  ///
+  /// In en, this message translates to:
+  /// **'More cores than this host allows.'**
+  String get virtCreateCoresInvalid;
+
+  /// Too little memory for a new guest.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough memory.'**
+  String get virtCreateMemoryInvalid;
+
+  /// No storage chosen for the new disk.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose where its disk goes.'**
+  String get virtCreateStorageMissing;
+
+  /// Disk size out of range.
+  ///
+  /// In en, this message translates to:
+  /// **'From 1 GiB to 64 TiB.'**
+  String get virtCreateDiskInvalid;
+
+  /// No container template chosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a template.'**
+  String get virtCreateTemplateMissing;
+
+  /// A new container needs a root password or an SSH key.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a root password or an SSH key.'**
+  String get virtCreateCredentialsMissing;
+
+  /// The container's root password is too short.
+  ///
+  /// In en, this message translates to:
+  /// **'At least {min} characters.'**
+  String virtCreatePasswordShort(int min);
+
+  /// The SSH keys field has a line that is not an OpenSSH public key.
+  ///
+  /// In en, this message translates to:
+  /// **'One OpenSSH public key per line.'**
+  String get virtCreateSshKeysInvalid;
+
+  /// Checkbox: delete the guest's disks as well.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete its disks too'**
+  String get virtDeleteDisks;
+
+  /// On PVE a guest's disks always go with it.
+  ///
+  /// In en, this message translates to:
+  /// **'Its disks are deleted with it; install media is kept.'**
+  String get virtDeleteDisksPve;
+
+  /// Toast after a guest was deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} deleted'**
+  String virtDeleted(String name);
+
+  /// Second part of the PVE API token help: the extra privileges creating and deleting guests needs.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating and deleting guests also needs VM.Allocate, VM.Config.*, Datastore.AllocateSpace and SDN.Use.'**
+  String get pveTokenTipCreate;
+
+  /// Token help: privileges for the Hardware view.
+  ///
+  /// In en, this message translates to:
+  /// **'Editing hardware needs VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network and VM.Config.Options; new disks and interfaces also need Datastore.AllocateSpace and SDN.Use. The video card and USB and PCI devices also need VM.Config.HWType; a device given through a resource mapping needs Mapping.Use on it, and Mapping.Audit to list mappings.'**
+  String get pveTokenTipHardware;
+
+  /// PVE API token help: the privileges cloning and backups need (verified on PVE 9.2).
+  ///
+  /// In en, this message translates to:
+  /// **'Cloning needs VM.Clone, and backing up and restoring VM.Backup, with Datastore.AllocateSpace where the copy or the backup goes.'**
+  String get pveTokenTipBackup;
+
+  /// Error title: the guest's configuration changed since it was read.
+  ///
+  /// In en, this message translates to:
+  /// **'Changed elsewhere'**
+  String get virtErrConflict;
+
+  /// Explains the conflict.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone changed this guest\'s configuration after it was read here, so nothing was changed. It has been read again: make the change again if it still applies.'**
+  String get virtErrConflictTip;
+
+  /// The guest view showing and changing CPU, memory, disks and network interfaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Hardware'**
+  String get virtHardware;
+
+  /// Button and dialog title.
+  ///
+  /// In en, this message translates to:
+  /// **'Add disk'**
+  String get virtHwAddDisk;
+
+  /// Button: add a container mount point.
+  ///
+  /// In en, this message translates to:
+  /// **'Add mount point'**
+  String get virtHwAddMount;
+
+  /// Button and dialog title.
+  ///
+  /// In en, this message translates to:
+  /// **'Add network interface'**
+  String get virtHwAddNic;
+
+  /// Toast: the running guest could not take the change.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved. It takes effect at the next start.'**
+  String get virtHwAppliesOnRestart;
+
+  /// Autostart / onboot.
+  ///
+  /// In en, this message translates to:
+  /// **'Start with the host'**
+  String get virtHwAutostart;
+
+  /// Note under PVE's start-with-host switch.
+  ///
+  /// In en, this message translates to:
+  /// **'onboot · started in VMID order'**
+  String get virtHwAutostartPve;
+
+  /// libvirt currentMemory: what the balloon gives the guest.
+  ///
+  /// In en, this message translates to:
+  /// **'Current memory'**
+  String get virtHwBalloonLibvirt;
+
+  /// Explains the virtio-balloon switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Lets the host take back the guest\'s idle memory when memory runs short'**
+  String get virtHwBalloonNote;
+
+  /// Group title: booting.
+  ///
+  /// In en, this message translates to:
+  /// **'Boot'**
+  String get virtHwBoot;
+
+  /// Label.
+  ///
+  /// In en, this message translates to:
+  /// **'Boot order'**
+  String get virtHwBootOrder;
+
+  /// Explains the boot order rows.
+  ///
+  /// In en, this message translates to:
+  /// **'The arrows move a device; tapping it switches booting from it on or off.'**
+  String get virtHwBootTip;
+
+  /// A CD-ROM drive; also the group title.
+  ///
+  /// In en, this message translates to:
+  /// **'CD-ROM'**
+  String get virtHwCdrom;
+
+  /// Group title: the configuration as the host has it.
+  ///
+  /// In en, this message translates to:
+  /// **'Configuration file'**
+  String get virtHwConfigFile;
+
+  /// CPU cores (per socket for a VM).
+  ///
+  /// In en, this message translates to:
+  /// **'Cores'**
+  String get virtHwCores;
+
+  /// No CPU model set: the host's default.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get virtHwCpuTypeDefault;
+
+  /// Checkbox: delete the disk image as well.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete its volume too'**
+  String get virtHwDeleteVolume;
+
+  /// Action: take a disk off the guest.
+  ///
+  /// In en, this message translates to:
+  /// **'Detach'**
+  String get virtHwDetach;
+
+  /// Empty row in a VM's disk group.
+  ///
+  /// In en, this message translates to:
+  /// **'Hot-pluggable: can be added while it runs'**
+  String get virtHwDiskHotplug;
+
+  /// Group title: a container's root disk and mount points.
+  ///
+  /// In en, this message translates to:
+  /// **'Root disk and mount points'**
+  String get virtHwDisksLxc;
+
+  /// Menu item: empty the CD-ROM.
+  ///
+  /// In en, this message translates to:
+  /// **'Eject'**
+  String get virtHwEject;
+
+  /// Choice: no media in the CD-ROM.
+  ///
+  /// In en, this message translates to:
+  /// **'No media'**
+  String get virtHwEmpty;
+
+  /// PVE firewall on a NIC.
+  ///
+  /// In en, this message translates to:
+  /// **'Firewall'**
+  String get virtHwFirewall;
+
+  /// A storage's free space.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} free'**
+  String virtHwFree(String size);
+
+  /// Menu item and dialog title: make a disk larger.
+  ///
+  /// In en, this message translates to:
+  /// **'Grow'**
+  String get virtHwGrow;
+
+  /// Under a stopped guest's disk.
+  ///
+  /// In en, this message translates to:
+  /// **'Disks only grow from their size.'**
+  String get virtHwGrowNote;
+
+  /// Under a running guest's disk.
+  ///
+  /// In en, this message translates to:
+  /// **'Disks only grow from their size. Grown while running, the partition has to be grown inside the guest.'**
+  String get virtHwGrowNoteRunning;
+
+  /// Memory the running guest uses.
+  ///
+  /// In en, this message translates to:
+  /// **'Used by the guest'**
+  String get virtHwGuestUsed;
+
+  /// Group note: the host's threads and the vCPUs given to guests.
+  ///
+  /// In en, this message translates to:
+  /// **'Host {threads} threads · {allocated} allocated'**
+  String virtHwHostCpus(int threads, int allocated);
+
+  /// Group note: the host's memory and what guests are given.
+  ///
+  /// In en, this message translates to:
+  /// **'Host {total} · {allocated} allocated'**
+  String virtHwHostMem(String total, String allocated);
+
+  /// Under an add block while the guest runs.
+  ///
+  /// In en, this message translates to:
+  /// **'Hot-plugged: it takes effect at once.'**
+  String get virtHwHotplugNow;
+
+  /// Form error.
+  ///
+  /// In en, this message translates to:
+  /// **'Tick at least one device'**
+  String get virtHwIssueBootEmpty;
+
+  /// Form error.
+  ///
+  /// In en, this message translates to:
+  /// **'Between 1 and {max} vCPUs in total'**
+  String virtHwIssueCpuCount(int max);
+
+  /// Form error.
+  ///
+  /// In en, this message translates to:
+  /// **'Online vCPUs: from 1 to the total'**
+  String get virtHwIssueCpuOnline;
+
+  /// Form error.
+  ///
+  /// In en, this message translates to:
+  /// **'Larger than it is: disks only grow'**
+  String get virtHwIssueDiskShrink;
+
+  /// Form error.
+  ///
+  /// In en, this message translates to:
+  /// **'From 1 to 65536 GiB'**
+  String get virtHwIssueDiskSize;
+
+  /// Form error.
+  ///
+  /// In en, this message translates to:
+  /// **'From {min} to {max} MiB'**
+  String virtHwIssueMemory(int min, int max);
+
+  /// Form error.
+  ///
+  /// In en, this message translates to:
+  /// **'Not more than the memory'**
+  String get virtHwIssueMemoryMin;
+
+  /// Form error.
+  ///
+  /// In en, this message translates to:
+  /// **'An absolute path, like /data'**
+  String get virtHwIssueMountPoint;
+
+  /// Form error.
+  ///
+  /// In en, this message translates to:
+  /// **'More than the storage has free'**
+  String get virtHwIssueStorageSpace;
+
+  /// Form error.
+  ///
+  /// In en, this message translates to:
+  /// **'Not negative'**
+  String get virtHwIssueSwap;
+
+  /// Group note: changes here take effect at the next restart.
+  ///
+  /// In en, this message translates to:
+  /// **'Applies at restart'**
+  String get virtHwLater;
+
+  /// Stepper button: less.
+  ///
+  /// In en, this message translates to:
+  /// **'Less'**
+  String get virtHwLess;
+
+  /// A NIC whose link is down.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnected'**
+  String get virtHwLinkDown;
+
+  /// Explains the link switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Off, the guest sees its cable pulled; no restart needed'**
+  String get virtHwLinkNote;
+
+  /// Switch: the NIC's link is up.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get virtHwLinkUp;
+
+  /// A NIC's MAC address.
+  ///
+  /// In en, this message translates to:
+  /// **'MAC address'**
+  String get virtHwMac;
+
+  /// A VM's CPU model.
+  ///
+  /// In en, this message translates to:
+  /// **'Model'**
+  String get virtHwModel;
+
+  /// Stepper button: more.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get virtHwMore;
+
+  /// Empty row in a container's disk group.
+  ///
+  /// In en, this message translates to:
+  /// **'Mount points are allocated straight from a storage'**
+  String get virtHwMountFromPool;
+
+  /// Where a container's new volume appears.
+  ///
+  /// In en, this message translates to:
+  /// **'Mount point'**
+  String get virtHwMountPoint;
+
+  /// Boot order: move down.
+  ///
+  /// In en, this message translates to:
+  /// **'Move down'**
+  String get virtHwMoveDown;
+
+  /// Boot order: move up.
+  ///
+  /// In en, this message translates to:
+  /// **'Move up'**
+  String get virtHwMoveUp;
+
+  /// Header of the new disk block.
+  ///
+  /// In en, this message translates to:
+  /// **'New disk'**
+  String get virtHwNewDisk;
+
+  /// Header of the new mount point block.
+  ///
+  /// In en, this message translates to:
+  /// **'New mount point'**
+  String get virtHwNewMount;
+
+  /// Header of the new NIC block.
+  ///
+  /// In en, this message translates to:
+  /// **'New network interface'**
+  String get virtHwNewNic;
+
+  /// Empty row in the NIC group.
+  ///
+  /// In en, this message translates to:
+  /// **'virtio NICs are hot-pluggable'**
+  String get virtHwNicHotplug;
+
+  /// Group title: network interfaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Network interfaces'**
+  String get virtHwNics;
+
+  /// An empty CD-ROM drive.
+  ///
+  /// In en, this message translates to:
+  /// **'No media'**
+  String get virtHwNoMedia;
+
+  /// Nothing to attach a NIC to.
+  ///
+  /// In en, this message translates to:
+  /// **'No networks or bridges here'**
+  String get virtHwNoNetworks;
+
+  /// No storage can hold a new disk.
+  ///
+  /// In en, this message translates to:
+  /// **'No storage here takes disks'**
+  String get virtHwNoStorage;
+
+  /// How many of a VM's vCPUs are online.
+  ///
+  /// In en, this message translates to:
+  /// **'Online vCPUs'**
+  String get virtHwOnline;
+
+  /// Notice above a guest's views.
+  ///
+  /// In en, this message translates to:
+  /// **'Some hardware changes take effect at restart'**
+  String get virtHwPendingBanner;
+
+  /// Summary of the new NIC block.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a network'**
+  String get virtHwPickNet;
+
+  /// Summary of the new disk block.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a storage and a size'**
+  String get virtHwPickPool;
+
+  /// Group title: a VM's CPU.
+  ///
+  /// In en, this message translates to:
+  /// **'Processor'**
+  String get virtHwProcessor;
+
+  /// Action: remove a NIC.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get virtHwRemove;
+
+  /// Action: remove the CD-ROM drive.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove CD-ROM'**
+  String get virtHwRemoveCdrom;
+
+  /// Confirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {disk} from {guest}?'**
+  String virtHwRemoveDiskAsk(String disk, String guest);
+
+  /// Confirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {nic} from {guest}?'**
+  String virtHwRemoveNicAsk(String nic, String guest);
+
+  /// A container's hardware view.
+  ///
+  /// In en, this message translates to:
+  /// **'Resources'**
+  String get virtHwResources;
+
+  /// Button: restart the guest so pending changes apply.
+  ///
+  /// In en, this message translates to:
+  /// **'Restart now'**
+  String get virtHwRestartNow;
+
+  /// Button: drop one pending change.
+  ///
+  /// In en, this message translates to:
+  /// **'Revert'**
+  String get virtHwRevert;
+
+  /// Button: drop every pending change.
+  ///
+  /// In en, this message translates to:
+  /// **'Revert all'**
+  String get virtHwRevertAll;
+
+  /// Settings view: libvirt can rename a guest only when it is shut off.
+  ///
+  /// In en, this message translates to:
+  /// **'Shut the guest down to rename it: libvirt renames only a guest that is not running.'**
+  String get virtSetRenameStopped;
+
+  /// Settings view: the guest's description is too long or has control characters.
+  ///
+  /// In en, this message translates to:
+  /// **'At most {max} characters, and no control characters.'**
+  String virtSetIssueDescription(int max);
+
+  /// Settings view index note: the guest does not start with the host.
+  ///
+  /// In en, this message translates to:
+  /// **'Started by hand'**
+  String get virtSetManualStart;
+
+  /// Settings view: PVE's protection flag.
+  ///
+  /// In en, this message translates to:
+  /// **'Protection'**
+  String get virtSetProtection;
+
+  /// Settings view: what PVE's protection flag does.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocks deleting the guest and changing its disks'**
+  String get virtSetProtectionNote;
+
+  /// Settings view: deleting a guest cannot be undone.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot be undone'**
+  String get virtSetIrreversible;
+
+  /// Settings view: a running guest must be shut down before it can be deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Shut it down before deleting it.'**
+  String get virtSetDeleteStopFirst;
+
+  /// Settings view: deletion is blocked while PVE protection is on.
+  ///
+  /// In en, this message translates to:
+  /// **'Protection is on: turn it off under General first.'**
+  String get virtSetDeleteProtected;
+
+  /// Settings view: the delete button was pressed once; pressing again deletes.
+  ///
+  /// In en, this message translates to:
+  /// **'Press again to confirm'**
+  String get virtSetDeleteAgain;
+
+  /// Settings view: the delete button's second, confirming label.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name}'**
+  String virtSetDeleteConfirm(String name);
+
+  /// Settings view: button that deletes a virtual machine.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete virtual machine'**
+  String get virtSetDeleteVm;
+
+  /// Settings view: button that deletes a container.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete container'**
+  String get virtSetDeleteLxc;
+
+  /// CPU sockets of a VM.
+  ///
+  /// In en, this message translates to:
+  /// **'Sockets'**
+  String get virtHwSockets;
+
+  /// Where a disk's data is: its volume or file.
+  ///
+  /// In en, this message translates to:
+  /// **'Source'**
+  String get virtHwSource;
+
+  /// A container's swap.
+  ///
+  /// In en, this message translates to:
+  /// **'Swap'**
+  String get virtHwSwap;
+
+  /// Label for a VM's CPU topology.
+  ///
+  /// In en, this message translates to:
+  /// **'Sockets × cores'**
+  String get virtHwTopology;
+
+  /// CPU topology.
+  ///
+  /// In en, this message translates to:
+  /// **'{sockets} sockets × {cores} cores × {threads} threads'**
+  String virtHwTopologyValue(int sockets, int cores, int threads);
+
+  /// Group note: the disks' total size.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} total'**
+  String virtHwTotal(String size);
+
+  /// Toast after removing a disk the running guest holds.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed, but the running guest still uses the disk, so its volume was kept. It is detached at the next start.'**
+  String get virtHwVolumeKept;
+
+  /// Hardware view (virtualization): Bus
+  ///
+  /// In en, this message translates to:
+  /// **'Bus'**
+  String get virtHwBus;
+
+  /// Hardware view (virtualization): Cache
+  ///
+  /// In en, this message translates to:
+  /// **'Cache'**
+  String get virtHwCache;
+
+  /// Hardware view (virtualization): BusStopped
+  ///
+  /// In en, this message translates to:
+  /// **'The bus changes only while the guest is stopped.'**
+  String get virtHwBusStopped;
+
+  /// Hardware view (virtualization): MacGenerate
+  ///
+  /// In en, this message translates to:
+  /// **'Generate'**
+  String get virtHwMacGenerate;
+
+  /// Hardware view (virtualization): IssueMac
+  ///
+  /// In en, this message translates to:
+  /// **'Must be a unicast MAC address, such as 52:54:00:12:34:56'**
+  String get virtHwIssueMac;
+
+  /// Hardware view (virtualization): IssueStopFirst
+  ///
+  /// In en, this message translates to:
+  /// **'Stop the guest first'**
+  String get virtHwIssueStopFirst;
+
+  /// Hardware view (virtualization): IssueStorageMissing
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a storage for it first'**
+  String get virtHwIssueStorageMissing;
+
+  /// Hardware view (virtualization): IssueDevice
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a device first'**
+  String get virtHwIssueDevice;
+
+  /// Hardware view (virtualization): Devices
+  ///
+  /// In en, this message translates to:
+  /// **'CD-ROM and passthrough'**
+  String get virtHwDevices;
+
+  /// Hardware view (virtualization): DevicesEmpty
+  ///
+  /// In en, this message translates to:
+  /// **'USB and PCI passthrough, CD-ROM, TPM'**
+  String get virtHwDevicesEmpty;
+
+  /// Hardware view (virtualization): AddDevice
+  ///
+  /// In en, this message translates to:
+  /// **'Add device'**
+  String get virtHwAddDevice;
+
+  /// Hardware view (virtualization): NewDevice
+  ///
+  /// In en, this message translates to:
+  /// **'New device'**
+  String get virtHwNewDevice;
+
+  /// Hardware view (virtualization): UsbHotplug
+  ///
+  /// In en, this message translates to:
+  /// **'USB passthrough is hot-pluggable.'**
+  String get virtHwUsbHotplug;
+
+  /// Hardware view (virtualization): Pci
+  ///
+  /// In en, this message translates to:
+  /// **'PCI passthrough'**
+  String get virtHwPci;
+
+  /// Hardware view (virtualization): IommuOffTitle
+  ///
+  /// In en, this message translates to:
+  /// **'The host has no IOMMU'**
+  String get virtHwIommuOffTitle;
+
+  /// Hardware view (virtualization): IommuOffBody
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on VT-d or AMD-Vi in the host\'s BIOS and IOMMU in its kernel first. Until then, a guest given a PCI device won\'t start.'**
+  String get virtHwIommuOffBody;
+
+  /// Hardware view (virtualization): PciTitle
+  ///
+  /// In en, this message translates to:
+  /// **'Needs IOMMU on the host'**
+  String get virtHwPciTitle;
+
+  /// Hardware view (virtualization): PciBody
+  ///
+  /// In en, this message translates to:
+  /// **'Once passed through, the host can\'t use the device, and the guest can\'t migrate while running.'**
+  String get virtHwPciBody;
+
+  /// Hardware view (virtualization): IommuGroup
+  ///
+  /// In en, this message translates to:
+  /// **'IOMMU group {group}'**
+  String virtHwIommuGroup(int group);
+
+  /// Hardware view (virtualization): IommuShared
+  ///
+  /// In en, this message translates to:
+  /// **'{count} devices share its IOMMU group and are passed through together'**
+  String virtHwIommuShared(int count);
+
+  /// Hardware view (virtualization): NoHostDevices
+  ///
+  /// In en, this message translates to:
+  /// **'No devices to pass through on this host'**
+  String get virtHwNoHostDevices;
+
+  /// Hardware view (virtualization): MappingsOnly
+  ///
+  /// In en, this message translates to:
+  /// **'Only resource mappings can be used here: PVE lets only root@pam, signed in with its password, pass a raw device through. Create mappings under Datacenter → Resource Mappings.'**
+  String get virtHwMappingsOnly;
+
+  /// Hardware view (virtualization): TpmNote
+  ///
+  /// In en, this message translates to:
+  /// **'Windows 11 needs TPM 2.0.'**
+  String get virtHwTpmNote;
+
+  /// Hardware view (virtualization): Display
+  ///
+  /// In en, this message translates to:
+  /// **'Display'**
+  String get virtHwDisplay;
+
+  /// Hardware view (virtualization): Protocol
+  ///
+  /// In en, this message translates to:
+  /// **'Protocol'**
+  String get virtHwProtocol;
+
+  /// Hardware view (virtualization): Listen
+  ///
+  /// In en, this message translates to:
+  /// **'Listen'**
+  String get virtHwListen;
+
+  /// Hardware view (virtualization): Gpu
+  ///
+  /// In en, this message translates to:
+  /// **'Video card'**
+  String get virtHwGpu;
+
+  /// Hardware view (virtualization): ListenAllTitle
+  ///
+  /// In en, this message translates to:
+  /// **'The console is open to the network'**
+  String get virtHwListenAllTitle;
+
+  /// Hardware view (virtualization): ListenAllBody
+  ///
+  /// In en, this message translates to:
+  /// **'Listening on all addresses lets anyone who can reach the host connect to the console. Keep 127.0.0.1 and connect through an SSH tunnel.'**
+  String get virtHwListenAllBody;
+
+  /// Hardware view (virtualization): Firmware
+  ///
+  /// In en, this message translates to:
+  /// **'Firmware'**
+  String get virtHwFirmware;
+
+  /// Hardware view (virtualization): UefiSub
+  ///
+  /// In en, this message translates to:
+  /// **'OVMF · Secure Boot capable, needed by Windows 11'**
+  String get virtHwUefiSub;
+
+  /// Hardware view (virtualization): BiosSub
+  ///
+  /// In en, this message translates to:
+  /// **'SeaBIOS · older systems and MBR disks'**
+  String get virtHwBiosSub;
+
+  /// Hardware view (virtualization): SecureBootNote
+  ///
+  /// In en, this message translates to:
+  /// **'Boots only signed kernels and boot loaders'**
+  String get virtHwSecureBootNote;
+
+  /// Hardware view (virtualization): FirmwareWarnTitle
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t switch the firmware of an installed system'**
+  String get virtHwFirmwareWarnTitle;
+
+  /// Hardware view (virtualization): FirmwareWarnBody
+  ///
+  /// In en, this message translates to:
+  /// **'Switching between UEFI and BIOS leaves an installed system unable to boot.'**
+  String get virtHwFirmwareWarnBody;
+
+  /// Hardware view (virtualization): FirmwareStopped
+  ///
+  /// In en, this message translates to:
+  /// **'The firmware changes only while the guest is stopped.'**
+  String get virtHwFirmwareStopped;
+
+  /// Note under the Secure Boot switch: switching it recreates the guest's EFI variables (PVE's EFI disk, libvirt's variables file), losing saved boot entries.
+  ///
+  /// In en, this message translates to:
+  /// **'Turning Secure Boot on or off makes the EFI variables anew; boot entries saved in them are lost.'**
+  String get virtHwSecureBootVars;
+
+  /// Hardware view (virtualization): EfiStorage
+  ///
+  /// In en, this message translates to:
+  /// **'Where the EFI variables go'**
+  String get virtHwEfiStorage;
+
+  /// Hardware view (virtualization): TpmStorage
+  ///
+  /// In en, this message translates to:
+  /// **'Where the TPM state goes'**
+  String get virtHwTpmStorage;
+
+  /// Hardware view (virtualization): SwitchFirmwareAsk
+  ///
+  /// In en, this message translates to:
+  /// **'Switch {guest} to {firmware}?'**
+  String virtHwSwitchFirmwareAsk(String guest, String firmware);
+
+  /// Clone group (guest Settings): the new guest's name field.
+  ///
+  /// In en, this message translates to:
+  /// **'New name'**
+  String get virtCloneName;
+
+  /// PVE clone switch: full clone (off = linked clone).
+  ///
+  /// In en, this message translates to:
+  /// **'Full clone'**
+  String get virtCloneFull;
+
+  /// libvirt clone switch: copy the disks' contents (off = new empty disks).
+  ///
+  /// In en, this message translates to:
+  /// **'Copy disk contents'**
+  String get virtCloneCopyDisks;
+
+  /// Note under the PVE full-clone switch on a template.
+  ///
+  /// In en, this message translates to:
+  /// **'Off: a linked clone, which depends on the template\'s disks'**
+  String get virtCloneLinkedNote;
+
+  /// Note under the PVE full-clone switch on a guest that is not a template: linked clones need a template.
+  ///
+  /// In en, this message translates to:
+  /// **'Only a template can be cloned as a linked clone'**
+  String get virtCloneFullOnly;
+
+  /// Note under the libvirt copy-disks switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Off: new empty disks of the same size'**
+  String get virtCloneEmptyNote;
+
+  /// libvirt: why the Clone button is disabled while the guest runs.
+  ///
+  /// In en, this message translates to:
+  /// **'Shut it down before cloning.'**
+  String get virtCloneStopFirst;
+
+  /// Index note for the Clone group: full clone.
+  ///
+  /// In en, this message translates to:
+  /// **'Full'**
+  String get virtCloneFullShort;
+
+  /// Index note for the Clone group: linked clone.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked'**
+  String get virtCloneLinkedShort;
+
+  /// Index note for the Clone group: new empty disks.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty disks'**
+  String get virtCloneEmptyShort;
+
+  /// The Clone button while a clone runs.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloning…'**
+  String get virtCloning;
+
+  /// Toast after a clone.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloned as {name}'**
+  String virtCloned(String name);
+
+  /// Backup view: title of the group showing the scheduled backup job.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan'**
+  String get virtBackupPlan;
+
+  /// Backup view: where backup jobs are configured in PVE, shown beside the Plan title.
+  ///
+  /// In en, this message translates to:
+  /// **'Datacenter → Backup'**
+  String get virtBackupPlanWhere;
+
+  /// Index note: no scheduled backup job takes the guest.
+  ///
+  /// In en, this message translates to:
+  /// **'No plan'**
+  String get virtBackupNoPlanShort;
+
+  /// Backup view: no scheduled backup job takes the guest.
+  ///
+  /// In en, this message translates to:
+  /// **'No scheduled backup job takes this guest. Jobs are set up in the datacenter.'**
+  String get virtBackupNoPlan;
+
+  /// Backup job: how many backups are kept (retention).
+  ///
+  /// In en, this message translates to:
+  /// **'Keep'**
+  String get virtBackupKeep;
+
+  /// Backup job: the job is disabled.
+  ///
+  /// In en, this message translates to:
+  /// **'This job is disabled.'**
+  String get virtBackupJobDisabled;
+
+  /// Number of backups of a guest.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 backup} other{{count} backups}}'**
+  String virtBackupCount(int count);
+
+  /// Backup view: no storage on the node accepts backups.
+  ///
+  /// In en, this message translates to:
+  /// **'No storage on this node holds backups.'**
+  String get virtBackupNoStorage;
+
+  /// Backup view: a running guest is backed up in snapshot mode, without stopping it.
+  ///
+  /// In en, this message translates to:
+  /// **'Running: snapshot mode, no downtime'**
+  String get virtBackupLiveTip;
+
+  /// Backup view: a stopped guest is backed up as it is.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped: backed up as it is'**
+  String get virtBackupStoppedTip;
+
+  /// Backup view: button starting a backup now.
+  ///
+  /// In en, this message translates to:
+  /// **'Back up now'**
+  String get virtBackupNow;
+
+  /// A backup's notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get virtBackupNotes;
+
+  /// A protected backup cannot be deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Protected: it cannot be deleted until protection is removed in PVE.'**
+  String get virtBackupProtected;
+
+  /// A backup's verification state from PVE (ok / failed).
+  ///
+  /// In en, this message translates to:
+  /// **'Verification: {state}'**
+  String virtBackupVerified(String state);
+
+  /// Warning: restoring a backup over the guest replaces its disks.
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring overwrites the current disks'**
+  String get virtBackupRestoreOverwrites;
+
+  /// Why Restore is disabled while the guest runs.
+  ///
+  /// In en, this message translates to:
+  /// **'Shut it down before restoring.'**
+  String get virtBackupStopFirst;
+
+  /// Second-press confirmation body for restoring over the guest.
+  ///
+  /// In en, this message translates to:
+  /// **'The guest\'s disks and configuration are replaced by the backup\'s.'**
+  String get virtBackupRestoreAgain;
+
+  /// Second press of a backup's delete button.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete backup'**
+  String get virtBackupDeleteConfirm;
+
+  /// Restore a backup as a new guest (new VMID).
+  ///
+  /// In en, this message translates to:
+  /// **'Restore as new'**
+  String get virtBackupRestoreNew;
+
+  /// Second press of the restore-over-the-guest button.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore over it'**
+  String get virtBackupRestoreConfirm;
+
+  /// Toast: a backup finished.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup finished'**
+  String get virtBackupDone;
+
+  /// Toast: a backup was deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup deleted'**
+  String get virtBackupDeleted;
+
+  /// Toast: restored from the backup taken at a time.
+  ///
+  /// In en, this message translates to:
+  /// **'Restored from {time}'**
+  String virtBackupRestored(String time);
+
+  /// PVE refused a storage or network change for want of a privilege: who, which, where, and the command that grants it.
+  ///
+  /// In en, this message translates to:
+  /// **'{account} lacks {privilege} on {path}. Grant it, on the PVE host:\n{command}'**
+  String pveNeedsPrivilege(
+    String account,
+    String privilege,
+    String path,
+    String command,
+  );
+
+  /// Index note of the operations group: nothing stops deleting it.
+  ///
+  /// In en, this message translates to:
+  /// **'Can be deleted'**
+  String get virtCanDelete;
+
+  /// Index note: a guest uses it.
+  ///
+  /// In en, this message translates to:
+  /// **'In use'**
+  String get virtInUse;
+
+  /// Group title: what can be done to a pool or network (stop, delete).
+  ///
+  /// In en, this message translates to:
+  /// **'Operations'**
+  String get virtOps;
+
+  /// A libvirt storage pool; group title.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage pool'**
+  String get virtPool;
+
+  /// Button and title: a new libvirt storage pool.
+  ///
+  /// In en, this message translates to:
+  /// **'New storage pool'**
+  String get virtPoolNew;
+
+  /// Button and title: a new PVE storage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add storage'**
+  String get virtStorageAdd;
+
+  /// Index note: how full a pool is.
+  ///
+  /// In en, this message translates to:
+  /// **'{pct}% used'**
+  String virtPoolUsedPct(String pct);
+
+  /// Why a pool cannot be stopped or removed.
+  ///
+  /// In en, this message translates to:
+  /// **'A guest uses a volume here, so the pool cannot be stopped or removed.'**
+  String get virtPoolInUse;
+
+  /// Button: remove a libvirt pool.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete pool'**
+  String get virtPoolDelete;
+
+  /// Button: remove a PVE storage from the configuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove storage'**
+  String get virtStorageRemove;
+
+  /// Confirm removing a libvirt pool.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the pool {name}? Its definition goes; its volumes stay where they are.'**
+  String virtPoolDeleteAsk(String name);
+
+  /// Confirm removing a PVE storage.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the storage {name} from PVE\'s configuration? What is on it stays.'**
+  String virtStorageRemoveAsk(String name);
+
+  /// Under the delete question: the volumes stay.
+  ///
+  /// In en, this message translates to:
+  /// **'Its {count} volumes are kept on disk.'**
+  String virtPoolDeleteKeepsVolumes(int count);
+
+  /// Checkbox: pool-delete, which removes an empty directory.
+  ///
+  /// In en, this message translates to:
+  /// **'Also delete its directory (only when empty)'**
+  String get virtPoolDeleteStorage;
+
+  /// Confirm stopping a libvirt pool.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop the pool {name}? Its volumes cannot be listed or created until it starts again.'**
+  String virtPoolStopAsk(String name);
+
+  /// Confirm disabling a PVE storage.
+  ///
+  /// In en, this message translates to:
+  /// **'Disable the storage {name}? Guests with disks on it cannot start until it is enabled again.'**
+  String virtStorageDisableAsk(String name);
+
+  /// Under the new-pool form for an LVM volume group.
+  ///
+  /// In en, this message translates to:
+  /// **'An existing volume group is used as it is; nothing is formatted.'**
+  String get virtPoolLogicalNote;
+
+  /// Field: where an NFS pool is mounted.
+  ///
+  /// In en, this message translates to:
+  /// **'Mount point'**
+  String get virtPoolMountPoint;
+
+  /// Field: an NFS export.
+  ///
+  /// In en, this message translates to:
+  /// **'Source (host:/path)'**
+  String get virtPoolSourceNfs;
+
+  /// Field: an LVM volume group.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume group'**
+  String get virtPoolSourceVg;
+
+  /// Field: an LVM volume group and its thin pool, vg/thinpool.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume group / thin pool'**
+  String get virtPoolSourceThin;
+
+  /// Field: a ZFS pool or dataset.
+  ///
+  /// In en, this message translates to:
+  /// **'ZFS pool'**
+  String get virtPoolSourceZfs;
+
+  /// Pool type choice: an LVM volume group.
+  ///
+  /// In en, this message translates to:
+  /// **'LVM volume group'**
+  String get virtPoolTypeVg;
+
+  /// Form error.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name'**
+  String get virtResNameEmpty;
+
+  /// Form error: a pool, volume or network name the host does not take.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a name this host takes (letters, digits, . _ -)'**
+  String get virtResNameInvalid;
+
+  /// Form error: the path, export, volume group or pool of a new pool.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a path or source the host takes'**
+  String get virtResSourceInvalid;
+
+  /// Form error: the mount point must be an absolute path.
+  ///
+  /// In en, this message translates to:
+  /// **'An absolute path'**
+  String get virtResTargetInvalid;
+
+  /// Form error: the IPv4 address with prefix.
+  ///
+  /// In en, this message translates to:
+  /// **'An address with its prefix, e.g. 192.168.150.1/24'**
+  String get virtResCidrInvalid;
+
+  /// Form error: the DHCP range.
+  ///
+  /// In en, this message translates to:
+  /// **'Two addresses in the network, in order, without the host\'s own'**
+  String get virtResDhcpInvalid;
+
+  /// Form error: another network overlaps.
+  ///
+  /// In en, this message translates to:
+  /// **'Another network here is on this subnet'**
+  String get virtResSubnetTaken;
+
+  /// Form error: an interface name.
+  ///
+  /// In en, this message translates to:
+  /// **'Not an interface name'**
+  String get virtResBridgeInvalid;
+
+  /// Form error: the pool cannot hold that format.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a format this pool holds'**
+  String get virtResFormat;
+
+  /// Button and form title: a new volume.
+  ///
+  /// In en, this message translates to:
+  /// **'New volume'**
+  String get virtVolNew;
+
+  /// Index note: how many volumes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} volumes'**
+  String virtVolCount(int count);
+
+  /// A pool with no volumes.
+  ///
+  /// In en, this message translates to:
+  /// **'This pool has no volumes yet.'**
+  String get virtVolNone;
+
+  /// Dashed row beside "New volume".
+  ///
+  /// In en, this message translates to:
+  /// **'A new volume can be attached to any VM later'**
+  String get virtVolEmptyAttach;
+
+  /// Dashed row beside "New volume" where uploads are offered.
+  ///
+  /// In en, this message translates to:
+  /// **'An ISO can also be uploaded directly'**
+  String get virtVolEmptyUpload;
+
+  /// Under the volume name on PVE.
+  ///
+  /// In en, this message translates to:
+  /// **'PVE names a volume for its VM: vm-<VMID>-disk-<N>'**
+  String get virtVolPveName;
+
+  /// Field: the guests using a volume.
+  ///
+  /// In en, this message translates to:
+  /// **'Used by'**
+  String get virtVolUsers;
+
+  /// Meter: how much of a volume takes space on the host.
+  ///
+  /// In en, this message translates to:
+  /// **'Allocated'**
+  String get virtVolAllocated;
+
+  /// Why a used volume is not grown here.
+  ///
+  /// In en, this message translates to:
+  /// **'A guest uses it: grow it from that guest\'s Hardware view'**
+  String get virtVolGrowFromGuest;
+
+  /// A guest uses this volume: not deleted, not attached again.
+  ///
+  /// In en, this message translates to:
+  /// **'A guest uses this volume'**
+  String get virtVolInUse;
+
+  /// Button: attach a volume to a VM as a disk.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach to VM'**
+  String get virtVolAttach;
+
+  /// Under the VM choice for attaching a volume.
+  ///
+  /// In en, this message translates to:
+  /// **'Attached as a new disk, on the bus its first disk is on'**
+  String get virtVolAttachNote;
+
+  /// Toast after attaching.
+  ///
+  /// In en, this message translates to:
+  /// **'Attached to {name}'**
+  String virtVolAttached(String name);
+
+  /// Button: insert an ISO into a VM's CD-ROM drive.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert into CD-ROM'**
+  String get virtVolInsert;
+
+  /// Toast after inserting an ISO.
+  ///
+  /// In en, this message translates to:
+  /// **'Inserted into {name}\'s CD-ROM drive'**
+  String virtVolInserted(String name);
+
+  /// A VM without a CD-ROM drive to insert into.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} has no CD-ROM drive'**
+  String virtVolNoCdrom(String name);
+
+  /// Confirm deleting a volume.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the volume {name} from {pool}? What is in it is gone for good.'**
+  String virtVolDeleteAsk(String name, String pool);
+
+  /// Bar button: upload an ISO from this device.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload ISO'**
+  String get virtUploadIso;
+
+  /// Dialog title: the name an upload takes.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload to {pool}'**
+  String virtUploadTo(String pool);
+
+  /// Toast: an upload finished.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} uploaded'**
+  String virtUploadDone(String name);
+
+  /// Group title: how a network is set up.
+  ///
+  /// In en, this message translates to:
+  /// **'Configuration'**
+  String get virtNetConfig;
+
+  /// A bridge with no ports, a network with no bridge of the host's.
+  ///
+  /// In en, this message translates to:
+  /// **'Internal'**
+  String get virtNetInternal;
+
+  /// Field: a PVE bridge's ports.
+  ///
+  /// In en, this message translates to:
+  /// **'Bridge ports'**
+  String get virtNetBridgePorts;
+
+  /// Field: the host bridge a libvirt bridge-mode network uses.
+  ///
+  /// In en, this message translates to:
+  /// **'Host bridge'**
+  String get virtNetHostBridge;
+
+  /// Hint for a PVE bridge's ports.
+  ///
+  /// In en, this message translates to:
+  /// **'eno2; empty for an internal bridge'**
+  String get virtNetPortsHint;
+
+  /// Field: a network's DHCP range.
+  ///
+  /// In en, this message translates to:
+  /// **'DHCP range'**
+  String get virtNetDhcpRange;
+
+  /// Under the DHCP switch.
+  ///
+  /// In en, this message translates to:
+  /// **'dnsmasq gives guests their addresses'**
+  String get virtNetDhcpTip;
+
+  /// Under the VLAN aware switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Guests\' NICs may carry a VLAN tag'**
+  String get virtNetVlanTip;
+
+  /// NAT network: what it does.
+  ///
+  /// In en, this message translates to:
+  /// **'Through the host: guests reach out, nothing reaches in'**
+  String get virtNetNatTip;
+
+  /// Routed network: what it does.
+  ///
+  /// In en, this message translates to:
+  /// **'Routed by the host without NAT: the LAN needs a route back'**
+  String get virtNetRoutedTip;
+
+  /// Isolated network: what it does.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the guests and the host reach each other'**
+  String get virtNetIsolatedTip;
+
+  /// Bridged network: what it does.
+  ///
+  /// In en, this message translates to:
+  /// **'Guests join a bridge of the host\'s, on its physical network'**
+  String get virtNetBridgedTip;
+
+  /// Button and title: a new libvirt network.
+  ///
+  /// In en, this message translates to:
+  /// **'New network'**
+  String get virtNetNew;
+
+  /// Button and title: a new PVE Linux bridge.
+  ///
+  /// In en, this message translates to:
+  /// **'New Linux bridge'**
+  String get virtNetNewBridge;
+
+  /// Group title of the new libvirt network form.
+  ///
+  /// In en, this message translates to:
+  /// **'Virtual network'**
+  String get virtNetVirtual;
+
+  /// Button: delete a network.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete network'**
+  String get virtNetDelete;
+
+  /// Confirm deleting a libvirt network.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the network {name}? It is stopped and its definition removed.'**
+  String virtNetDeleteAsk(String name);
+
+  /// Confirm removing a PVE bridge.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the bridge {name} from {node}? It leaves the pending configuration now, and the host once that is applied.'**
+  String virtNetDeleteAskPve(String name, String node);
+
+  /// Why a network cannot be deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Guests on it: {count}. It cannot be deleted.'**
+  String virtNetInUse(int count);
+
+  /// Confirm stopping a network with guests on it.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop {name}? The {count} guests on it lose their network until it starts again.'**
+  String virtNetStopAsk(String name, int count);
+
+  /// A PVE interface that is not active.
+  ///
+  /// In en, this message translates to:
+  /// **'Not active: a new bridge waits in the pending configuration until it is applied.'**
+  String get virtNetInactivePve;
+
+  /// Under the new PVE bridge form.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved as a pending change: it takes effect when the configuration is applied (ifreload -a).'**
+  String get virtNetPveApplyNote;
+
+  /// Toast after a PVE bridge was created or removed.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved as pending: apply the configuration for it to take effect'**
+  String get virtNetPendingSaved;
+
+  /// Card title: PVE network changes not applied yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending network changes on {node}'**
+  String virtNetPendingTitle(String node);
+
+  /// Card text: where PVE keeps them.
+  ///
+  /// In en, this message translates to:
+  /// **'PVE keeps network changes in interfaces.new until they are applied.'**
+  String get virtNetPendingTip;
+
+  /// Button: show the pending diff.
+  ///
+  /// In en, this message translates to:
+  /// **'Show changes'**
+  String get virtNetPendingShow;
+
+  /// Button: PVE Apply Configuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply configuration'**
+  String get virtNetApply;
+
+  /// Confirm applying PVE network changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply the pending network configuration on {node}? PVE reloads the host\'s network (ifreload -a): a mistake in it can cut the host off.'**
+  String virtNetApplyAsk(String node);
+
+  /// Confirm dropping PVE network changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop the pending network configuration on {node}?'**
+  String virtNetRevertAsk(String node);
+
+  /// PVE API token help: the privileges managing storage and networks needs (verified on PVE 9.2).
+  ///
+  /// In en, this message translates to:
+  /// **'Managing storage needs Datastore.Allocate on /storage (adding, disabling, removing), Datastore.AllocateSpace (volumes) and Datastore.AllocateTemplate (uploads); Linux bridges and applying the network configuration need Sys.Modify on the node.'**
+  String get pveTokenTipStorage;
+
+  /// Index note of the create form's general group: no name typed yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Unnamed'**
+  String get virtCreateUnnamed;
+
+  /// Index note: nothing chosen yet in that group.
+  ///
+  /// In en, this message translates to:
+  /// **'Not chosen'**
+  String get virtCreateNotChosen;
+
+  /// Create form, PVE: what a virtual machine is (qm is the command).
+  ///
+  /// In en, this message translates to:
+  /// **'qm · a full KVM virtual machine'**
+  String get virtCreateKindVmSub;
+
+  /// Create form, PVE: what a container is (pct is the command).
+  ///
+  /// In en, this message translates to:
+  /// **'pct · shares the host\'s kernel, lighter'**
+  String get virtCreateKindLxcSub;
+
+  /// Where a VM's system comes from: a disk image with a system already on it, set up by cloud-init.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud image'**
+  String get virtCloudImage;
+
+  /// Create form: what choosing a cloud image does.
+  ///
+  /// In en, this message translates to:
+  /// **'A disk with a system on it: copied, grown to the size under Storage, and set up by cloud-init at its first boot. The image itself is left as it is.'**
+  String get virtCloudImageTip;
+
+  /// Create form, libvirt: no cloud image volume in any pool.
+  ///
+  /// In en, this message translates to:
+  /// **'No cloud images here: put a qcow2 or raw image in a pool (upload it in Storage), one no guest uses.'**
+  String get virtNoCloudImagesLibvirt;
+
+  /// Create form, PVE: no image in a storage with Import content.
+  ///
+  /// In en, this message translates to:
+  /// **'No cloud images here: upload a qcow2, raw or vmdk image to a storage with the Import content type (PVE 8.2+).'**
+  String get virtNoCloudImagesPve;
+
+  /// Create form callout when a Windows ISO is chosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Windows 11 needs UEFI and TPM 2.0'**
+  String get virtCreateWindowsTitle;
+
+  /// Create form callout body: turn both on here.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose UEFI and turn the TPM on above.'**
+  String get virtCreateWindowsBody;
+
+  /// Create form callout body: this libvirt host has no software TPM.
+  ///
+  /// In en, this message translates to:
+  /// **'This host has no software TPM (swtpm): install it to give the guest one.'**
+  String get virtCreateWindowsNoTpm;
+
+  /// Create form: the disk asked for is smaller than the cloud image.
+  ///
+  /// In en, this message translates to:
+  /// **'The image is {size}: the disk must be at least that big.'**
+  String virtCreateImageSize(String size);
+
+  /// Create form: no cloud image chosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a cloud image.'**
+  String get virtCreateImageMissing;
+
+  /// Create form: something above still needs filling in (the orange groups).
+  ///
+  /// In en, this message translates to:
+  /// **'Complete the parts marked orange first.'**
+  String get virtCreateIncomplete;
+
+  /// Create form, confirm group: which server it is created on.
+  ///
+  /// In en, this message translates to:
+  /// **'Created on {host}'**
+  String virtCreateOn(String host);
+
+  /// cloud-init group: what the account is.
+  ///
+  /// In en, this message translates to:
+  /// **'An account with sudo, logged in to with its password, an SSH key, or both.'**
+  String get virtCiTip;
+
+  /// cloud-init user name rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Lowercase letters, digits, _ and -, starting with a letter or _'**
+  String get virtCiUserInvalid;
+
+  /// cloud-init: neither a password nor a key.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a password or an SSH key.'**
+  String get virtCiCredentialsMissing;
+
+  /// cloud-init on PVE: the hostname is the VM name.
+  ///
+  /// In en, this message translates to:
+  /// **'The hostname is the VM\'s name.'**
+  String get virtCiHostnamePve;
+
+  /// cloud-init network: a fixed address rather than DHCP.
+  ///
+  /// In en, this message translates to:
+  /// **'Static'**
+  String get virtCiStatic;
+
+  /// cloud-init: not an IPv4 address with prefix.
+  ///
+  /// In en, this message translates to:
+  /// **'An IPv4 address with its prefix, like 10.0.0.5/24'**
+  String get virtCiAddressInvalid;
+
+  /// cloud-init: gateway is not an IPv4 address.
+  ///
+  /// In en, this message translates to:
+  /// **'An IPv4 address, like 10.0.0.1'**
+  String get virtCiGatewayInvalid;
+
+  /// cloud-init DNS field hint with DHCP: empty takes what DHCP gives.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty: from DHCP'**
+  String get virtCiDnsFromDhcp;
+
+  /// cloud-init DNS servers rule.
+  ///
+  /// In en, this message translates to:
+  /// **'IP addresses, separated by spaces or commas'**
+  String get virtCiDnsInvalid;
+
+  /// cloud-init: DNS search domain field.
+  ///
+  /// In en, this message translates to:
+  /// **'Search domain'**
+  String get virtCiSearch;
+
+  /// cloud-init on libvirt: where its data goes and what is kept of the password.
+  ///
+  /// In en, this message translates to:
+  /// **'Written to a small ISO next to the disk, attached as a CD-ROM and deleted with the VM. Only the password\'s hash is stored.'**
+  String get virtCiSeedNote;
+
+  /// cloud-init on libvirt: the host has no tool to make the seed ISO.
+  ///
+  /// In en, this message translates to:
+  /// **'No tool on the host to make the cloud-init data'**
+  String get virtCiNoToolTitle;
+
+  /// cloud-init on libvirt: which tools to install; without one the image boots unconfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Install one of {tools} on the host. Without cloud-init the image starts with no account to log in with.'**
+  String virtCiNoToolBody(String tools);
+
+  /// Hardware view: a cloud-init drive row.
+  ///
+  /// In en, this message translates to:
+  /// **'What cloud-init reads at the first boot. Not install media: nothing to insert here.'**
+  String get virtHwCloudInitNote;
+
+  /// Hardware view: a new CD-ROM drive on a running VM arrives at its next start.
+  ///
+  /// In en, this message translates to:
+  /// **'While it runs, the drive is added at its next start (SATA and IDE take none live).'**
+  String get virtHwCdromLater;
+
+  /// Create form, after creating from a cloud image bigger than the disk asked for: the disk keeps the image size.
+  ///
+  /// In en, this message translates to:
+  /// **'The disk was kept at {size}, the image\'s own size, which is more than was asked for: a disk is never cut below the system on it.'**
+  String virtCreateDiskKept(String size);
+
+  /// Settings view, cloud-init group: what it edits.
+  ///
+  /// In en, this message translates to:
+  /// **'What cloud-init sets up in this VM: an account with sudo, how to log in to it, the hostname and the address.'**
+  String get virtCiEditTip;
+
+  /// Settings view, cloud-init on libvirt: the seed holds settings the app does not write.
+  ///
+  /// In en, this message translates to:
+  /// **'This seed holds more than this app writes'**
+  String get virtCiForeignTitle;
+
+  /// Settings view, cloud-init on libvirt: what saving does to a seed with settings the app does not write.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings made elsewhere (packages, commands, other accounts) are not shown here. Saving replaces the seed with what is shown.'**
+  String get virtCiForeignBody;
+
+  /// Settings view, cloud-init: hint of the password field when a password is set (never shown).
+  ///
+  /// In en, this message translates to:
+  /// **'Set. Leave empty to keep it'**
+  String get virtCiPasswordKept;
+
+  /// Settings view, cloud-init: switch that removes the account password.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the password'**
+  String get virtCiRemovePassword;
+
+  /// Settings view, cloud-init: note under the remove-password switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Log in with an SSH key only'**
+  String get virtCiRemovePasswordNote;
+
+  /// Settings view, cloud-init: what cloud-init does with keys and a renamed account at the next boot.
+  ///
+  /// In en, this message translates to:
+  /// **'Keys are added to the account. A key taken out here stays in the system until it is removed there, and a new user name makes a new account beside the old one.'**
+  String get virtCiKeysAdded;
+
+  /// Settings view, cloud-init: title of the note on when a change takes effect.
+  ///
+  /// In en, this message translates to:
+  /// **'Takes effect at the next boot'**
+  String get virtCiEffectTitle;
+
+  /// Settings view, cloud-init on libvirt: first sentence of the note on saving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving writes a new seed with a new instance ID.'**
+  String get virtCiEffectLibvirt;
+
+  /// Settings view, cloud-init on PVE: first sentence of the note on saving (PVE derives the instance ID from the settings).
+  ///
+  /// In en, this message translates to:
+  /// **'PVE writes its cloud-init drive at once, with an instance ID derived from these settings, so any change here makes a new one.'**
+  String get virtCiEffectPve;
+
+  /// Settings view, cloud-init: what cloud-init does at the next boot with a new instance ID.
+  ///
+  /// In en, this message translates to:
+  /// **'At the next boot cloud-init treats the system as a new instance: it sets the hostname again, makes the account if it is missing, sets its password, adds the keys and writes the network configuration again. It also makes new SSH host keys, so SSH clients warn that the host key changed. Nothing changes before that boot.'**
+  String get virtCiNewInstance;
+
+  /// Toast after saving cloud-init settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved. It takes effect at the next boot.'**
+  String get virtCiSaved;
 }
 
 class _AppLocalizationsDelegate

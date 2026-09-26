@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/server.dart';
-import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
@@ -43,7 +42,7 @@ List<ContextMenuAction> serverActions(
     ContextMenuAction(
       icon: Icons.edit,
       text: libL10n.edit,
-      onTap: () => ServerEditPage.route.go(context, args: SpiRequiredArgs(spi)),
+      onTap: () => ServerEditPage.route.go(context, args: ServerEditArgs(spi)),
     ),
     ContextMenuAction(
       icon: Icons.copy,

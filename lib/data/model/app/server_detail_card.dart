@@ -44,4 +44,31 @@ enum ServerDetailCards {
     bmc => 'BMC',
     custom => libL10n.cmd,
   };
+
+  /// The mark that this card's feature is still in beta, where the card is
+  /// *listed* rather than drawn.
+  ///
+  /// Not on the card itself: that one is drawn beside a name the server page
+  /// reads in the same breath as the reading, and carries its own mark. This
+  /// is for the row that switches the card on and off.
+  Widget? get mark => switch (this) {
+    bmc => const BetaTag(),
+    _ => null,
+  };
+
+  /// [toStr] with [mark], for a row that lists the card rather than drawing it.
+  Widget get listTitle {
+    final mark_ = mark;
+    if (mark_ == null) return Text(toStr);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(
+          child: Text(toStr, maxLines: 1, overflow: TextOverflow.ellipsis),
+        ),
+        const SizedBox(width: 7),
+        mark_,
+      ],
+    );
+  }
 }

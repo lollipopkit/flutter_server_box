@@ -17,19 +17,30 @@ enum AppTab {
   @HiveField(5)
   benchmark,
   @HiveField(6)
-  remoteDesktop;
+  remoteDesktop,
 
-  /// Indices that named a tab which no longer exists.
+  /// Libvirt/KVM and Proxmox VE guests.
+  ///
+  /// Index 7 by position, the one `monitorSettings` held — see
+  /// [_retiredIndices], which is why an integer 7 still resolves to nothing
+  /// rather than to this.
+  @HiveField(7)
+  virt;
+
+  /// Indices that named a tab which no longer exists, and so are never
+  /// resolved as an integer.
   ///
   /// 7 was `monitorSettings`, a whole tab for a `monitor` agent's own
   /// configuration. It is reached from the agent's server instead — one button
   /// in that page's bar — which is where someone already is when they want it.
   ///
-  /// Listed rather than held open by a placeholder case, which would need a
-  /// branch in every exhaustive switch to say it is not a real tab. It has to
-  /// be listed at all because [values] is positional: the next case appended
-  /// below `remoteDesktop` becomes index 7, and without this an install that
-  /// had the old tab in its bar would silently get that new tab in its place.
+  /// [values] is positional, so [virt], appended next, took index 7. It stays
+  /// listed anyway, and that is safe in both directions: every build since
+  /// the SQLite migration stores tabs by name, so no record written by one
+  /// holds an integer at all, and the builds that stored integers (Hive) came
+  /// before either tab existed. No stored bar can hold a 7, then, and one
+  /// that turns up anyway resolves to nothing rather than to a tab nobody
+  /// chose.
   // TODO(migration): drop once no stored tab order can still hold it.
   static const _retiredIndices = {7};
 
@@ -37,9 +48,9 @@ enum AppTab {
   /// list cannot be read.
   ///
   /// **A subset, not every tab.** This list *is* the bar: what is not in it is
-  /// behind "more". Four, because that is where `NavigationBar` stops fitting
-  /// labels on a phone — not a cap the code enforces, since the user may add a
-  /// fifth and live with it, but the number to start from.
+  /// behind "more". Four was the number to start from, because that is where
+  /// `NavigationBar` stops fitting labels on a phone; it is not a cap the code
+  /// enforces, and Virtualization made it five (below).
   ///
   /// **Not the declaration order, and it cannot be.** The declaration order is
   /// the `@HiveField` index and what `_parseAppTabFromElement` resolves an
@@ -50,7 +61,12 @@ enum AppTab {
   /// run against a server, from the server's own page, and the tab is where
   /// they are written and kept. Benchmark is out because a run takes a quarter
   /// of an hour and is started deliberately.
-  static const defaultOrder = [server, ssh, file, agent];
+  ///
+  /// Virtualization is the fifth. A bar the user arranged is stored and keeps
+  /// its own tabs (schema step m030 adds this one only where a PVE host was
+  /// configured); one never arranged is this list, read at launch, so it gets
+  /// the tab like a fresh install does.
+  static const defaultOrder = [server, ssh, file, agent, virt];
 
   /// The tabs not in [enabled], in declaration order — what "more" holds.
   ///

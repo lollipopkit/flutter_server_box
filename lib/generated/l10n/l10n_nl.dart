@@ -1051,9 +1051,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Het parsen van de bezettingsstatus van Docker is relatief langzaam.';
 
   @override
-  String get plugInType => 'Invoegingstype';
-
-  @override
   String get preferDiskAmount =>
       'Geef de schijfcapaciteit prioriteit bij weergave';
 
@@ -1195,24 +1192,12 @@ class AppLocalizationsNl extends AppLocalizations {
       'Niet aanbevolen om in te schakelen, let op beveiligingsrisico\'s! Als u de standaardcertificaat van PVE gebruikt, moet u deze optie inschakelen.';
 
   @override
-  String get pveServerClientMissing =>
-      'De SSH-client voor deze server is niet beschikbaar.';
-
-  @override
-  String get pveAddressMissing =>
-      'Het PVE-adres ontbreekt. Stel het in bij de serverinstellingen.';
-
-  @override
   String get pvePasswordRequired =>
       'Het PVE-wachtwoord is vereist. Stel het in bij de serverinstellingen.';
 
   @override
   String get pveOtpRequired =>
       'Op deze PVE-server staat tweestapsverificatie aan. Voer de OTP-code in.';
-
-  @override
-  String get pveOtpChallengeExpired =>
-      'De OTP-aanvraag is verlopen. Vernieuw en probeer het opnieuw.';
 
   @override
   String get pveOtpCodeRequired => 'OTP-code is vereist.';
@@ -1238,19 +1223,6 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get pveMissingAuthTicket =>
       'De PVE-aanmelding is gelukt, maar er is geen authenticatieticket teruggegeven.';
-
-  @override
-  String get pveVersionLow =>
-      'Deze functie bevindt zich momenteel in de testfase en is alleen getest op PVE 8+. Gebruik het met voorzichtigheid.';
-
-  @override
-  String get pveLoadingForwarding => 'SSH-tunnel opzetten...';
-
-  @override
-  String get pveLoadingLogin => 'Aanmelden bij PVE...';
-
-  @override
-  String get pveLoadingData => 'Clustergegevens ophalen...';
 
   @override
   String get pveLoadingConnect => 'Verbinden...';
@@ -1727,9 +1699,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get sortByJoinTime => 'Op moment van toevoegen';
-
-  @override
-  String get portForwardBetaTitle => 'Poortdoorsturing (bèta)';
 
   @override
   String get tmuxAutoAttach => 'tmux automatisch koppelen';
@@ -3330,4 +3299,1565 @@ class AppLocalizationsNl extends AppLocalizations {
   String appearanceThemeModeLocked(String mode) {
     return 'Dit thema ondersteunt alleen $mode. Kies een ander thema om de modus te wijzigen.';
   }
+
+  @override
+  String get pveAuthToken => 'API-token';
+
+  @override
+  String get pveVersionLow =>
+      'Deze functie bevindt zich momenteel in de testfase en is alleen getest op PVE 8+. Gebruik het met voorzichtigheid.';
+
+  @override
+  String get pveTokenId => 'Token-ID';
+
+  @override
+  String get pveTokenSecret => 'Tokengeheim';
+
+  @override
+  String get pveTokenTip =>
+      'Maak er een aan in PVE onder Datacenter → Rechten → API Tokens. Het heeft VM.Audit, VM.PowerMgmt, VM.Console, VM.Snapshot, VM.Snapshot.Rollback, Datastore.Audit en Sys.Audit nodig op de paden die getoond worden; met privilegescheiding aan moeten ze aan het token zelf worden toegekend.';
+
+  @override
+  String pveTokenNoPrivileges(String account, String command) {
+    return 'Token $account mag op deze host niets zien. Een token met rechtenscheiding heeft niet de rechten van zijn gebruiker; ken ze toe op de PVE-host:\n$command\nof zet \"Privilege Separation\" uit voor het token.';
+  }
+
+  @override
+  String pveUserNoPrivileges(String account, String command) {
+    return '$account mag op deze host niets zien. Ken rechten toe op de PVE-host:\n$command';
+  }
+
+  @override
+  String get pveTokenIdInvalid =>
+      'Het token-ID moet de vorm user@realm!tokenid hebben';
+
+  @override
+  String get pvePasswordAuthTip =>
+      'Meldt aan als de SSH-gebruiker in de PAM-realm, met het SSH-wachtwoord, of met het PVE-wachtwoord hieronder als SSH een sleutel gebruikt. Een tweefactorcode wordt gevraagd wanneer nodig.';
+
+  @override
+  String get pveCertUnpinned =>
+      'Nog niets bevestigd. Tenzij een vertrouwde CA het heeft ondertekend, toont de volgende verbinding het certificaat ter bevestiging.';
+
+  @override
+  String get pveCertForget => 'Certificaat vergeten';
+
+  @override
+  String get pveCertForgetTip =>
+      'De volgende verbinding toont het PVE-certificaat opnieuw ter bevestiging.';
+
+  @override
+  String get virtualization => 'Virtualisatie';
+
+  @override
+  String get virtIntro =>
+      'Beheer virtuele machines en containers op Proxmox VE- en libvirt/KVM-hosts: hun status, energieacties en consoles.';
+
+  @override
+  String get virtIntroPveMoved =>
+      'Proxmox VE is van de serverpagina naar dit tabblad verhuisd. De PVE-kaart van een server opent het hier.';
+
+  @override
+  String get virtIntroLibvirt =>
+      'Een server met virsh van libvirt geïnstalleerd verschijnt als host, met zijn QEMU/KVM-VM\'s.';
+
+  @override
+  String get virtIntroTransports =>
+      'Beide werken via SSH, via een Monitor-agent of op dit apparaat.';
+
+  @override
+  String get virtIntroTokens =>
+      'PVE kan aanmelden met een API-token in plaats van een wachtwoord. Stel het in op de bewerkpagina van een server, onder PVE.';
+
+  @override
+  String get virtIntroInBar => 'Het is aan de tabbalk toegevoegd.';
+
+  @override
+  String get virtIntroInMore =>
+      'Het staat onder Meer. Home-tabbladen in de instellingen kan het naar de tabbalk verplaatsen.';
+
+  @override
+  String get virtGuests => 'Virtuele machines';
+
+  @override
+  String get virtHosts => 'Hosts';
+
+  @override
+  String get virtCheckServer => 'Deze server controleren';
+
+  @override
+  String get virtCheckAll => 'Alle servers controleren';
+
+  @override
+  String get virtProbeNotChecked => 'Nog niet gecontroleerd';
+
+  @override
+  String get virtProbeAbsent => 'Geen host';
+
+  @override
+  String virtProbeContainer(String kind) {
+    return '$kind-container';
+  }
+
+  @override
+  String get virtProbeContainerTip =>
+      'Deze server draait in een container en is dus een gast, geen host. Hij wordt beheerd vanaf de host waarop hij draait.';
+
+  @override
+  String get virtProbePve => 'PVE, niet ingesteld';
+
+  @override
+  String virtPveSetupTip(String version) {
+    return 'Op deze server draait $version. Vul de API-toegang in bij de serverinstellingen (een API-token wordt aanbevolen) om de virtuele machines en containers hier te beheren.';
+  }
+
+  @override
+  String get virtNoHosts => 'Geen virtualisatiehosts';
+
+  @override
+  String get virtNoHostsTip =>
+      'Een server met Proxmox VE en ingevulde API-toegang is een host, net als een server waarop virsh antwoordt. De overige servers kun je controleren via de hostwisselaar.';
+
+  @override
+  String get virtNoGuests => 'Geen virtuele machines of containers';
+
+  @override
+  String get virtPaused => 'Gepauzeerd';
+
+  @override
+  String get virtStarting => 'Starten…';
+
+  @override
+  String get virtStopping => 'Stoppen…';
+
+  @override
+  String get virtRebooting => 'Herstarten…';
+
+  @override
+  String get virtMigrating => 'Migreren…';
+
+  @override
+  String get virtBackingUp => 'Back-up maken…';
+
+  @override
+  String get virtResume => 'Hervatten';
+
+  @override
+  String get virtOverview => 'Overzicht';
+
+  @override
+  String get virtConsole => 'Console';
+
+  @override
+  String get virtConsoleNone => 'Voor deze gast is geen console ingesteld';
+
+  @override
+  String get virtConsoleGraphical => 'Grafisch';
+
+  @override
+  String get virtVncPasswordNeeded => 'Dit scherm vraagt om een wachtwoord';
+
+  @override
+  String get virtConsoleSerialTip =>
+      'Opent de seriële console van de gast met virsh op de host. Verbreken, of Ctrl+], keert terug naar de shell van de host.';
+
+  @override
+  String virtConsoleVia(String transport) {
+    return 'via $transport';
+  }
+
+  @override
+  String get virtConsoleEnterTip => 'Geen uitvoer? Druk op Enter';
+
+  @override
+  String virtConsoleAutoEnter(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other: '$seconds seconden',
+      one: '1 seconde',
+    );
+    return 'Over $_temp0 wordt Enter gedrukt om de prompt te tonen';
+  }
+
+  @override
+  String get virtConsoleEnterNow => 'Nu';
+
+  @override
+  String get virtOffTip =>
+      'Start deze om hier live CPU, geheugen, schijf en netwerk te zien.';
+
+  @override
+  String get virtAllocated => 'Toegewezen';
+
+  @override
+  String virtRunningCount(int running, int total) {
+    return '$running actief · $total in totaal';
+  }
+
+  @override
+  String get virtTemplate => 'Sjabloon';
+
+  @override
+  String get virtAutostart => 'Start met de host';
+
+  @override
+  String get virtErrUnreachable => 'Deze host is niet bereikbaar';
+
+  @override
+  String get virtErrNotConfigured =>
+      'De PVE-instellingen van deze server zijn onvolledig';
+
+  @override
+  String get virtErrNotConfiguredTip =>
+      'Controleer het adres en het wachtwoord of API-token in de instellingen van de server.';
+
+  @override
+  String get virtErrAuthFailed => 'De host heeft de aanmelding geweigerd';
+
+  @override
+  String get virtErrCertUnconfirmed => 'Bevestig het certificaat van de host';
+
+  @override
+  String get virtErrCertChanged => 'Het certificaat van de host is gewijzigd';
+
+  @override
+  String get virtErrRelayNotGranted =>
+      'De Monitor-agent stuurt geen verbindingen door';
+
+  @override
+  String get virtErrExecNotGranted =>
+      'De Monitor-agent voert geen opdrachten uit';
+
+  @override
+  String get virtErrNotInstalled =>
+      'virsh is niet geïnstalleerd op deze server';
+
+  @override
+  String get virtErrServerRemoved => 'Deze server bestaat niet meer';
+
+  @override
+  String get virtErrSudoRequired =>
+      'sudo heeft een wachtwoord nodig voor libvirt';
+
+  @override
+  String get virtErrSudoRejected => 'sudo heeft het wachtwoord geweigerd';
+
+  @override
+  String get virtErrInvalidResponse =>
+      'De host antwoordde in een onverwachte vorm';
+
+  @override
+  String get virtErrActionFailed => 'De host heeft de actie geweigerd';
+
+  @override
+  String get remoteSessionIdleTimeout => 'Sluiten na verlaten';
+
+  @override
+  String get remoteSessionIdleTimeoutTip =>
+      'Hoe lang een extern bureaublad of de console van een gast verbonden blijft nadat je die verlaat. Voor het sluiten geeft een melding je 10 seconden om het open te houden.';
+
+  @override
+  String get remoteSessionKeepAlive => 'Openhouden';
+
+  @override
+  String get remoteSessionClosedAway => 'Gesloten wegens inactiviteit';
+
+  @override
+  String remoteSessionClosingIn(int seconds) {
+    return 'Sluit over $seconds s';
+  }
+
+  @override
+  String get reopen => 'Opnieuw openen';
+
+  @override
+  String get virtSnapshots => 'Snapshots';
+
+  @override
+  String get virtSnapshotCreate => 'Snapshot maken';
+
+  @override
+  String get virtSnapshotNone => 'Nog geen snapshots';
+
+  @override
+  String get virtSnapshotWithMemory => 'Schijven en geheugen';
+
+  @override
+  String get virtSnapshotDiskOnly => 'Alleen schijven';
+
+  @override
+  String get virtSnapshotParent => 'Bovenliggend';
+
+  @override
+  String get virtSnapshotRevert => 'Terugzetten';
+
+  @override
+  String get virtSnapshotMemory => 'Geheugen opnemen';
+
+  @override
+  String get virtSnapshotMemoryTip =>
+      'Terugzetten hervat de gast vanaf dit moment.';
+
+  @override
+  String get virtSnapshotMemoryAlways =>
+      'Hier bevat een snapshot van een draaiende gast altijd het geheugen.';
+
+  @override
+  String get virtSnapshotMemoryOff =>
+      'De gast draait niet, dus alleen de schijven worden opgeslagen.';
+
+  @override
+  String get virtSnapshotNameInvalid =>
+      'Eerst een letter, dan letters, cijfers, - of _; 2 tot 40 tekens.';
+
+  @override
+  String get virtSnapshotNameTaken =>
+      'Er bestaat al een snapshot met deze naam.';
+
+  @override
+  String get virtSnapshotRevertTip =>
+      'Terugzetten verwijdert alle wijzigingen sinds de snapshot.';
+
+  @override
+  String virtSnapshotRevertAsk(String guest, String snapshot) {
+    return '$guest terugzetten naar $snapshot? Alle wijzigingen sindsdien gaan verloren.';
+  }
+
+  @override
+  String virtSnapshotRevertStops(String guest) {
+    return 'Deze snapshot heeft geen geheugen: $guest wordt gestopt.';
+  }
+
+  @override
+  String get virtSnapshotStartAfter => 'Daarna starten';
+
+  @override
+  String get virtVolumes => 'Volumes';
+
+  @override
+  String get virtNoPools => 'Geen opslagpools';
+
+  @override
+  String get virtNoNetworks => 'Geen netwerken';
+
+  @override
+  String get virtPoolInactive =>
+      'De pool is niet actief, dus de volumes kunnen niet worden weergegeven.';
+
+  @override
+  String get virtShared => 'Gedeeld tussen nodes';
+
+  @override
+  String get virtBackingFile => 'Basisbestand';
+
+  @override
+  String get virtNetIsolated => 'Geïsoleerd';
+
+  @override
+  String get virtNetBridged => 'Gebrugd';
+
+  @override
+  String get virtNetRouted => 'Gerouteerd';
+
+  @override
+  String get virtBridge => 'Bridge';
+
+  @override
+  String get virtPorts => 'Poorten';
+
+  @override
+  String get virtAttachedGuests => 'Gasten erop';
+
+  @override
+  String get virtNoAttachedGuests => 'Geen gasten erop';
+
+  @override
+  String get virtCreateVm => 'Nieuwe virtuele machine';
+
+  @override
+  String get virtCreateLxc => 'Nieuwe container';
+
+  @override
+  String get virtCreateGuest => 'Nieuwe virtuele machine of container';
+
+  @override
+  String get virtKindVm => 'Virtuele machine';
+
+  @override
+  String get virtKindLxc => 'Container';
+
+  @override
+  String get virtHostname => 'Hostnaam';
+
+  @override
+  String get virtInstallMedia => 'Installatiemedium';
+
+  @override
+  String get virtNoIsos => 'Geen ISO-images op deze host';
+
+  @override
+  String get virtNoTemplates =>
+      'Geen containersjablonen op deze host. Via CT-sjablonen van een opslag in PVE kun je er een downloaden.';
+
+  @override
+  String get virtNoDiskStorage =>
+      'Geen opslag op deze host neemt een nieuwe schijf aan';
+
+  @override
+  String get virtStartAfterCreate => 'Na aanmaken starten';
+
+  @override
+  String get virtUnprivileged => 'Niet-geprivilegieerde container';
+
+  @override
+  String get virtUnprivilegedTip =>
+      'Zijn root is een gewone gebruiker op de host.';
+
+  @override
+  String get virtSshKeys => 'Openbare SSH-sleutels';
+
+  @override
+  String get virtCredentialsTip =>
+      'Een root-wachtwoord, SSH-sleutels of beide.';
+
+  @override
+  String virtCreated(String name) {
+    return '$name aangemaakt';
+  }
+
+  @override
+  String virtCreatedNotStarted(String name) {
+    return '$name is aangemaakt maar niet gestart';
+  }
+
+  @override
+  String get virtErrExists => 'Er bestaat al een gast of schijf met deze naam';
+
+  @override
+  String get virtCreateNameInvalidLibvirt =>
+      'Letters, cijfers, ., _ en -, beginnend met een letter of cijfer; tot 63 tekens.';
+
+  @override
+  String get virtCreateNameInvalidPve =>
+      'Letters, cijfers en -, in delen gescheiden door punten; tot 63 tekens.';
+
+  @override
+  String get virtCreateNameTaken => 'Er bestaat al een gast met deze naam.';
+
+  @override
+  String get virtCreateVmidInvalid => 'Van 100 tot 999999999.';
+
+  @override
+  String get virtCreateVmidTaken => 'Deze VMID is bezet.';
+
+  @override
+  String get virtCreateCoresInvalid => 'Meer cores dan deze host toestaat.';
+
+  @override
+  String get virtCreateMemoryInvalid => 'Te weinig geheugen.';
+
+  @override
+  String get virtCreateStorageMissing => 'Kies waar de schijf komt.';
+
+  @override
+  String get virtCreateDiskInvalid => 'Van 1 GiB tot 64 TiB.';
+
+  @override
+  String get virtCreateTemplateMissing => 'Kies een sjabloon.';
+
+  @override
+  String get virtCreateCredentialsMissing =>
+      'Stel een root-wachtwoord of een SSH-sleutel in.';
+
+  @override
+  String virtCreatePasswordShort(int min) {
+    return 'Minstens $min tekens.';
+  }
+
+  @override
+  String get virtCreateSshKeysInvalid =>
+      'Eén openbare OpenSSH-sleutel per regel.';
+
+  @override
+  String get virtDeleteDisks => 'Ook de schijven verwijderen';
+
+  @override
+  String get virtDeleteDisksPve =>
+      'De schijven worden mee verwijderd; installatiemedium blijft behouden.';
+
+  @override
+  String virtDeleted(String name) {
+    return '$name verwijderd';
+  }
+
+  @override
+  String get pveTokenTipCreate =>
+      'Gasten aanmaken en verwijderen vraagt ook VM.Allocate, VM.Config.*, Datastore.AllocateSpace en SDN.Use.';
+
+  @override
+  String get pveTokenTipHardware =>
+      'Hardware bewerken vereist VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network en VM.Config.Options; nieuwe schijven en interfaces vereisen ook Datastore.AllocateSpace en SDN.Use. De videokaart en USB- en PCI-apparaten vereisen ook VM.Config.HWType; een apparaat via een resourcekoppeling vereist Mapping.Use daarop, en Mapping.Audit om koppelingen te tonen.';
+
+  @override
+  String get pveTokenTipBackup =>
+      'Klonen vraagt VM.Clone, back-uppen en herstellen VM.Backup, met Datastore.AllocateSpace waar de kopie of back-up heen gaat.';
+
+  @override
+  String get virtErrConflict => 'Elders gewijzigd';
+
+  @override
+  String get virtErrConflictTip =>
+      'Iemand heeft de configuratie van deze gast gewijzigd nadat die hier is gelezen, dus er is niets gewijzigd. Hij is opnieuw gelezen: voer de wijziging opnieuw uit als die nog nodig is.';
+
+  @override
+  String get virtHardware => 'Hardware';
+
+  @override
+  String get virtHwAddDisk => 'Schijf toevoegen';
+
+  @override
+  String get virtHwAddMount => 'Koppelpunt toevoegen';
+
+  @override
+  String get virtHwAddNic => 'Netwerkinterface toevoegen';
+
+  @override
+  String get virtHwAppliesOnRestart =>
+      'Opgeslagen. Van kracht bij de volgende start.';
+
+  @override
+  String get virtHwAutostart => 'Starten met de host';
+
+  @override
+  String get virtHwAutostartPve => 'onboot · gestart in VMID-volgorde';
+
+  @override
+  String get virtHwBalloonLibvirt => 'Huidig geheugen';
+
+  @override
+  String get virtHwBalloonNote =>
+      'Laat de host ongebruikt geheugen van de gast terugnemen als het krap wordt';
+
+  @override
+  String get virtHwBoot => 'Opstarten';
+
+  @override
+  String get virtHwBootOrder => 'Opstartvolgorde';
+
+  @override
+  String get virtHwBootTip =>
+      'De pijlen verplaatsen een apparaat; tikken zet opstarten ervan aan of uit.';
+
+  @override
+  String get virtHwCdrom => 'Cd-rom';
+
+  @override
+  String get virtHwConfigFile => 'Configuratiebestand';
+
+  @override
+  String get virtHwCores => 'Kernen';
+
+  @override
+  String get virtHwCpuTypeDefault => 'Standaard';
+
+  @override
+  String get virtHwDeleteVolume => 'Ook het volume verwijderen';
+
+  @override
+  String get virtHwDetach => 'Loskoppelen';
+
+  @override
+  String get virtHwDiskHotplug =>
+      'Hot-plug: ook toe te voegen terwijl hij draait';
+
+  @override
+  String get virtHwDisksLxc => 'Rootschijf en koppelpunten';
+
+  @override
+  String get virtHwEject => 'Uitwerpen';
+
+  @override
+  String get virtHwEmpty => 'Geen medium';
+
+  @override
+  String get virtHwFirewall => 'Firewall';
+
+  @override
+  String virtHwFree(String size) {
+    return '$size vrij';
+  }
+
+  @override
+  String get virtHwGrow => 'Vergroten';
+
+  @override
+  String get virtHwGrowNote => 'Schijven worden alleen groter.';
+
+  @override
+  String get virtHwGrowNoteRunning =>
+      'Schijven worden alleen groter. Vergroot terwijl hij draait, moet de partitie in de gast worden vergroot.';
+
+  @override
+  String get virtHwGuestUsed => 'Gebruikt door de gast';
+
+  @override
+  String virtHwHostCpus(int threads, int allocated) {
+    return 'Host $threads threads · $allocated toegewezen';
+  }
+
+  @override
+  String virtHwHostMem(String total, String allocated) {
+    return 'Host $total · $allocated toegewezen';
+  }
+
+  @override
+  String get virtHwHotplugNow => 'Hot-plug: direct van kracht.';
+
+  @override
+  String get virtHwIssueBootEmpty => 'Vink minstens één apparaat aan';
+
+  @override
+  String virtHwIssueCpuCount(int max) {
+    return 'In totaal 1 tot $max vCPU\'s';
+  }
+
+  @override
+  String get virtHwIssueCpuOnline => 'Actieve vCPU\'s: van 1 tot het totaal';
+
+  @override
+  String get virtHwIssueDiskShrink =>
+      'Groter dan nu: schijven worden alleen groter';
+
+  @override
+  String get virtHwIssueDiskSize => 'Van 1 tot 65536 GiB';
+
+  @override
+  String virtHwIssueMemory(int min, int max) {
+    return 'Van $min tot $max MiB';
+  }
+
+  @override
+  String get virtHwIssueMemoryMin => 'Niet meer dan het geheugen';
+
+  @override
+  String get virtHwIssueMountPoint => 'Een absoluut pad, zoals /data';
+
+  @override
+  String get virtHwIssueStorageSpace => 'Meer dan de opslag vrij heeft';
+
+  @override
+  String get virtHwIssueSwap => 'Niet negatief';
+
+  @override
+  String get virtHwLater => 'Van kracht na herstart';
+
+  @override
+  String get virtHwLess => 'Minder';
+
+  @override
+  String get virtHwLinkDown => 'Verbroken';
+
+  @override
+  String get virtHwLinkNote =>
+      'Uit ziet de gast een losgetrokken kabel; geen herstart nodig';
+
+  @override
+  String get virtHwLinkUp => 'Verbonden';
+
+  @override
+  String get virtHwMac => 'MAC-adres';
+
+  @override
+  String get virtHwModel => 'Model';
+
+  @override
+  String get virtHwMore => 'Meer';
+
+  @override
+  String get virtHwMountFromPool =>
+      'Koppelpunten worden direct uit een opslag toegewezen';
+
+  @override
+  String get virtHwMountPoint => 'Koppelpunt';
+
+  @override
+  String get virtHwMoveDown => 'Omlaag';
+
+  @override
+  String get virtHwMoveUp => 'Omhoog';
+
+  @override
+  String get virtHwNewDisk => 'Nieuwe schijf';
+
+  @override
+  String get virtHwNewMount => 'Nieuw koppelpunt';
+
+  @override
+  String get virtHwNewNic => 'Nieuwe netwerkinterface';
+
+  @override
+  String get virtHwNicHotplug => 'virtio-interfaces zijn hot-plug';
+
+  @override
+  String get virtHwNics => 'Netwerkinterfaces';
+
+  @override
+  String get virtHwNoMedia => 'Geen medium';
+
+  @override
+  String get virtHwNoNetworks => 'Geen netwerken of bridges hier';
+
+  @override
+  String get virtHwNoStorage => 'Geen opslag hier neemt schijven aan';
+
+  @override
+  String get virtHwOnline => 'Actieve vCPU\'s';
+
+  @override
+  String get virtHwPendingBanner =>
+      'Sommige hardwarewijzigingen gelden na een herstart';
+
+  @override
+  String get virtHwPickNet => 'Kies een netwerk';
+
+  @override
+  String get virtHwPickPool => 'Kies een opslag en een grootte';
+
+  @override
+  String get virtHwProcessor => 'Processor';
+
+  @override
+  String get virtHwRemove => 'Verwijderen';
+
+  @override
+  String get virtHwRemoveCdrom => 'Cd-rom verwijderen';
+
+  @override
+  String virtHwRemoveDiskAsk(String disk, String guest) {
+    return '$disk verwijderen uit $guest?';
+  }
+
+  @override
+  String virtHwRemoveNicAsk(String nic, String guest) {
+    return '$nic verwijderen uit $guest?';
+  }
+
+  @override
+  String get virtHwResources => 'Middelen';
+
+  @override
+  String get virtHwRestartNow => 'Nu herstarten';
+
+  @override
+  String get virtHwRevert => 'Terugdraaien';
+
+  @override
+  String get virtHwRevertAll => 'Alles terugdraaien';
+
+  @override
+  String get virtSetRenameStopped =>
+      'Zet de gast uit om hem te hernoemen: libvirt hernoemt alleen een gast die niet draait.';
+
+  @override
+  String virtSetIssueDescription(int max) {
+    return 'Hoogstens $max tekens, zonder stuurtekens.';
+  }
+
+  @override
+  String get virtSetManualStart => 'Handmatig gestart';
+
+  @override
+  String get virtSetProtection => 'Beveiliging';
+
+  @override
+  String get virtSetProtectionNote =>
+      'Voorkomt het verwijderen van de gast en wijzigingen aan zijn schijven';
+
+  @override
+  String get virtSetIrreversible => 'Kan niet ongedaan worden gemaakt';
+
+  @override
+  String get virtSetDeleteStopFirst => 'Zet hem uit voordat je hem verwijdert.';
+
+  @override
+  String get virtSetDeleteProtected =>
+      'Beveiliging staat aan: zet die eerst uit onder Algemeen.';
+
+  @override
+  String get virtSetDeleteAgain => 'Druk nogmaals om te bevestigen';
+
+  @override
+  String virtSetDeleteConfirm(String name) {
+    return '$name verwijderen';
+  }
+
+  @override
+  String get virtSetDeleteVm => 'Virtuele machine verwijderen';
+
+  @override
+  String get virtSetDeleteLxc => 'Container verwijderen';
+
+  @override
+  String get virtHwSockets => 'Sockets';
+
+  @override
+  String get virtHwSource => 'Bron';
+
+  @override
+  String get virtHwSwap => 'Swap';
+
+  @override
+  String get virtHwTopology => 'Sockets × kernen';
+
+  @override
+  String virtHwTopologyValue(int sockets, int cores, int threads) {
+    return '$sockets sockets × $cores kernen × $threads threads';
+  }
+
+  @override
+  String virtHwTotal(String size) {
+    return '$size totaal';
+  }
+
+  @override
+  String get virtHwVolumeKept =>
+      'Verwijderd, maar de draaiende gast gebruikt de schijf nog, dus het volume is bewaard. Bij de volgende start wordt hij losgekoppeld.';
+
+  @override
+  String get virtHwBus => 'Bus';
+
+  @override
+  String get virtHwCache => 'Cache';
+
+  @override
+  String get virtHwBusStopped =>
+      'De bus verandert alleen als de gast is gestopt.';
+
+  @override
+  String get virtHwMacGenerate => 'Genereren';
+
+  @override
+  String get virtHwIssueMac =>
+      'Moet een unicast-MAC-adres zijn, zoals 52:54:00:12:34:56';
+
+  @override
+  String get virtHwIssueStopFirst => 'Stop eerst de gast';
+
+  @override
+  String get virtHwIssueStorageMissing => 'Kies eerst een opslag';
+
+  @override
+  String get virtHwIssueDevice => 'Kies eerst een apparaat';
+
+  @override
+  String get virtHwDevices => 'Cd-rom en passthrough';
+
+  @override
+  String get virtHwDevicesEmpty => 'USB- en PCI-passthrough, cd-rom, TPM';
+
+  @override
+  String get virtHwAddDevice => 'Apparaat toevoegen';
+
+  @override
+  String get virtHwNewDevice => 'Nieuw apparaat';
+
+  @override
+  String get virtHwUsbHotplug => 'USB-passthrough is hot-pluggable.';
+
+  @override
+  String get virtHwPci => 'PCI-passthrough';
+
+  @override
+  String get virtHwIommuOffTitle => 'De host heeft geen IOMMU';
+
+  @override
+  String get virtHwIommuOffBody =>
+      'Zet eerst VT-d of AMD-Vi aan in de BIOS van de host en IOMMU in de kernel. Tot dan start een gast met een PCI-apparaat niet.';
+
+  @override
+  String get virtHwPciTitle => 'Vereist IOMMU op de host';
+
+  @override
+  String get virtHwPciBody =>
+      'Eenmaal doorgegeven kan de host het apparaat niet gebruiken en kan de gast niet live migreren.';
+
+  @override
+  String virtHwIommuGroup(int group) {
+    return 'IOMMU-groep $group';
+  }
+
+  @override
+  String virtHwIommuShared(int count) {
+    return '$count apparaten delen de IOMMU-groep en gaan samen door';
+  }
+
+  @override
+  String get virtHwNoHostDevices =>
+      'Geen apparaten om door te geven op deze host';
+
+  @override
+  String get virtHwMappingsOnly =>
+      'Hier zijn alleen resourcekoppelingen mogelijk: PVE laat alleen root@pam met wachtwoord een ruw apparaat doorgeven. Maak koppelingen onder Datacenter → Resourcekoppelingen.';
+
+  @override
+  String get virtHwTpmNote => 'Windows 11 vereist TPM 2.0.';
+
+  @override
+  String get virtHwDisplay => 'Weergave';
+
+  @override
+  String get virtHwProtocol => 'Protocol';
+
+  @override
+  String get virtHwListen => 'Luisteren';
+
+  @override
+  String get virtHwGpu => 'Videokaart';
+
+  @override
+  String get virtHwListenAllTitle => 'De console staat open voor het netwerk';
+
+  @override
+  String get virtHwListenAllBody =>
+      'Luisteren op alle adressen laat iedereen die de host bereikt de console openen. Houd 127.0.0.1 en verbind via een SSH-tunnel.';
+
+  @override
+  String get virtHwFirmware => 'Firmware';
+
+  @override
+  String get virtHwUefiSub =>
+      'OVMF · ondersteunt Secure Boot, vereist door Windows 11';
+
+  @override
+  String get virtHwBiosSub => 'SeaBIOS · oudere systemen en MBR-schijven';
+
+  @override
+  String get virtHwSecureBootNote =>
+      'Start alleen ondertekende kernels en bootloaders';
+
+  @override
+  String get virtHwFirmwareWarnTitle =>
+      'Wissel de firmware van een geïnstalleerd systeem niet';
+
+  @override
+  String get virtHwFirmwareWarnBody =>
+      'Wisselen tussen UEFI en BIOS maakt een geïnstalleerd systeem onopstartbaar.';
+
+  @override
+  String get virtHwFirmwareStopped =>
+      'De firmware verandert alleen als de gast is gestopt.';
+
+  @override
+  String get virtHwSecureBootVars =>
+      'Secure Boot in- of uitschakelen maakt de EFI-variabelen opnieuw aan; opgeslagen opstartitems gaan verloren.';
+
+  @override
+  String get virtHwEfiStorage => 'Waar de EFI-variabelen komen';
+
+  @override
+  String get virtHwTpmStorage => 'Waar de TPM-status komt';
+
+  @override
+  String virtHwSwitchFirmwareAsk(String guest, String firmware) {
+    return '$guest omzetten naar $firmware?';
+  }
+
+  @override
+  String get virtCloneName => 'Nieuwe naam';
+
+  @override
+  String get virtCloneFull => 'Volledige kloon';
+
+  @override
+  String get virtCloneCopyDisks => 'Schijfinhoud kopiëren';
+
+  @override
+  String get virtCloneLinkedNote =>
+      'Uit: een gekoppelde kloon, afhankelijk van de schijven van de sjabloon';
+
+  @override
+  String get virtCloneFullOnly =>
+      'Alleen een sjabloon kan als gekoppelde kloon worden gekloond';
+
+  @override
+  String get virtCloneEmptyNote =>
+      'Uit: nieuwe lege schijven van dezelfde grootte';
+
+  @override
+  String get virtCloneStopFirst => 'Sluit hem af voordat je kloont.';
+
+  @override
+  String get virtCloneFullShort => 'Volledig';
+
+  @override
+  String get virtCloneLinkedShort => 'Gekoppeld';
+
+  @override
+  String get virtCloneEmptyShort => 'Lege schijven';
+
+  @override
+  String get virtCloning => 'Klonen…';
+
+  @override
+  String virtCloned(String name) {
+    return 'Gekloond als $name';
+  }
+
+  @override
+  String get virtBackupPlan => 'Planning';
+
+  @override
+  String get virtBackupPlanWhere => 'Datacenter → Back-up';
+
+  @override
+  String get virtBackupNoPlanShort => 'Geen planning';
+
+  @override
+  String get virtBackupNoPlan =>
+      'Geen geplande back-uptaak neemt deze gast mee. Taken stel je in het datacenter in.';
+
+  @override
+  String get virtBackupKeep => 'Bewaren';
+
+  @override
+  String get virtBackupJobDisabled => 'Deze taak is uitgeschakeld.';
+
+  @override
+  String virtBackupCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count back-ups',
+      one: '1 back-up',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get virtBackupNoStorage =>
+      'Geen opslag op deze node bewaart back-ups.';
+
+  @override
+  String get virtBackupLiveTip => 'Actief: snapshotmodus, zonder uitval';
+
+  @override
+  String get virtBackupStoppedTip => 'Uit: wordt geback-upt zoals hij is';
+
+  @override
+  String get virtBackupNow => 'Nu back-uppen';
+
+  @override
+  String get virtBackupNotes => 'Notities';
+
+  @override
+  String get virtBackupProtected =>
+      'Beveiligd: kan pas worden verwijderd als de beveiliging in PVE is opgeheven.';
+
+  @override
+  String virtBackupVerified(String state) {
+    return 'Verificatie: $state';
+  }
+
+  @override
+  String get virtBackupRestoreOverwrites =>
+      'Herstellen overschrijft de huidige schijven';
+
+  @override
+  String get virtBackupStopFirst => 'Sluit hem af voordat je herstelt.';
+
+  @override
+  String get virtBackupRestoreAgain =>
+      'De schijven en configuratie van de gast worden vervangen door die van de back-up.';
+
+  @override
+  String get virtBackupDeleteConfirm => 'Back-up verwijderen';
+
+  @override
+  String get virtBackupRestoreNew => 'Als nieuw herstellen';
+
+  @override
+  String get virtBackupRestoreConfirm => 'Eroverheen herstellen';
+
+  @override
+  String get virtBackupDone => 'Back-up voltooid';
+
+  @override
+  String get virtBackupDeleted => 'Back-up verwijderd';
+
+  @override
+  String virtBackupRestored(String time) {
+    return 'Hersteld van $time';
+  }
+
+  @override
+  String pveNeedsPrivilege(
+    String account,
+    String privilege,
+    String path,
+    String command,
+  ) {
+    return '$account mist $privilege op $path. Verleen het op de PVE-host:\n$command';
+  }
+
+  @override
+  String get virtCanDelete => 'Kan worden verwijderd';
+
+  @override
+  String get virtInUse => 'In gebruik';
+
+  @override
+  String get virtOps => 'Bewerkingen';
+
+  @override
+  String get virtPool => 'Opslagpool';
+
+  @override
+  String get virtPoolNew => 'Nieuwe opslagpool';
+
+  @override
+  String get virtStorageAdd => 'Opslag toevoegen';
+
+  @override
+  String virtPoolUsedPct(String pct) {
+    return '$pct% gebruikt';
+  }
+
+  @override
+  String get virtPoolInUse =>
+      'Een VM gebruikt hier een volume; de pool kan niet worden gestopt of verwijderd.';
+
+  @override
+  String get virtPoolDelete => 'Pool verwijderen';
+
+  @override
+  String get virtStorageRemove => 'Opslag verwijderen';
+
+  @override
+  String virtPoolDeleteAsk(String name) {
+    return 'Pool $name verwijderen? De definitie verdwijnt; de volumes blijven waar ze zijn.';
+  }
+
+  @override
+  String virtStorageRemoveAsk(String name) {
+    return 'Opslag $name uit de PVE-configuratie verwijderen? Wat erop staat, blijft.';
+  }
+
+  @override
+  String virtPoolDeleteKeepsVolumes(int count) {
+    return 'De $count volumes blijven op de schijf.';
+  }
+
+  @override
+  String get virtPoolDeleteStorage =>
+      'Ook de map verwijderen (alleen als die leeg is)';
+
+  @override
+  String virtPoolStopAsk(String name) {
+    return 'Pool $name stoppen? Tot hij weer start, kunnen er geen volumes worden getoond of gemaakt.';
+  }
+
+  @override
+  String virtStorageDisableAsk(String name) {
+    return 'Opslag $name uitschakelen? VM\'s met schijven erop starten pas weer als die is ingeschakeld.';
+  }
+
+  @override
+  String get virtPoolLogicalNote =>
+      'Een bestaande volumegroep wordt gebruikt zoals die is; er wordt niets geformatteerd.';
+
+  @override
+  String get virtPoolMountPoint => 'Koppelpunt';
+
+  @override
+  String get virtPoolSourceNfs => 'Bron (host:/pad)';
+
+  @override
+  String get virtPoolSourceVg => 'Volumegroep';
+
+  @override
+  String get virtPoolSourceThin => 'Volumegroep / thin pool';
+
+  @override
+  String get virtPoolSourceZfs => 'ZFS-pool';
+
+  @override
+  String get virtPoolTypeVg => 'LVM-volumegroep';
+
+  @override
+  String get virtResNameEmpty => 'Voer een naam in';
+
+  @override
+  String get virtResNameInvalid =>
+      'Geen naam die deze host accepteert (letters, cijfers, . _ -)';
+
+  @override
+  String get virtResSourceInvalid => 'Geen geldig pad of bron';
+
+  @override
+  String get virtResTargetInvalid => 'Een absoluut pad';
+
+  @override
+  String get virtResCidrInvalid => 'Een adres met prefix, bv. 192.168.150.1/24';
+
+  @override
+  String get virtResDhcpInvalid =>
+      'Twee adressen in het netwerk, op volgorde, zonder dat van de host';
+
+  @override
+  String get virtResSubnetTaken => 'Een ander netwerk hier zit op dit subnet';
+
+  @override
+  String get virtResBridgeInvalid => 'Geen interfacenaam';
+
+  @override
+  String get virtResFormat => 'Deze pool ondersteunt dat formaat niet';
+
+  @override
+  String get virtVolNew => 'Nieuw volume';
+
+  @override
+  String virtVolCount(int count) {
+    return '$count volumes';
+  }
+
+  @override
+  String get virtVolNone => 'Deze pool heeft nog geen volumes.';
+
+  @override
+  String get virtVolEmptyAttach =>
+      'Een nieuw volume kan later aan elke VM worden gekoppeld';
+
+  @override
+  String get virtVolEmptyUpload => 'Een ISO kan ook direct worden geüpload';
+
+  @override
+  String get virtVolPveName =>
+      'PVE geeft een volume de naam van zijn VM: vm-<VMID>-disk-<N>';
+
+  @override
+  String get virtVolUsers => 'Gebruikt door';
+
+  @override
+  String get virtVolAllocated => 'Toegewezen';
+
+  @override
+  String get virtVolGrowFromGuest =>
+      'Een VM gebruikt het: vergroot het in de hardwareweergave van die VM';
+
+  @override
+  String get virtVolInUse => 'Een VM gebruikt dit volume';
+
+  @override
+  String get virtVolAttach => 'Aan VM koppelen';
+
+  @override
+  String get virtVolAttachNote =>
+      'Gekoppeld als nieuwe schijf, op de bus van de eerste schijf';
+
+  @override
+  String virtVolAttached(String name) {
+    return 'Gekoppeld aan $name';
+  }
+
+  @override
+  String get virtVolInsert => 'In cd-rom plaatsen';
+
+  @override
+  String virtVolInserted(String name) {
+    return 'In de cd-romspeler van $name geplaatst';
+  }
+
+  @override
+  String virtVolNoCdrom(String name) {
+    return '$name heeft geen cd-romspeler';
+  }
+
+  @override
+  String virtVolDeleteAsk(String name, String pool) {
+    return 'Volume $name uit $pool verwijderen? De inhoud is voorgoed weg.';
+  }
+
+  @override
+  String get virtUploadIso => 'ISO uploaden';
+
+  @override
+  String virtUploadTo(String pool) {
+    return 'Uploaden naar $pool';
+  }
+
+  @override
+  String virtUploadDone(String name) {
+    return '$name geüpload';
+  }
+
+  @override
+  String get virtNetConfig => 'Configuratie';
+
+  @override
+  String get virtNetInternal => 'Intern';
+
+  @override
+  String get virtNetBridgePorts => 'Bridgepoorten';
+
+  @override
+  String get virtNetHostBridge => 'Hostbridge';
+
+  @override
+  String get virtNetPortsHint => 'eno2; leeg voor een interne bridge';
+
+  @override
+  String get virtNetDhcpRange => 'DHCP-bereik';
+
+  @override
+  String get virtNetDhcpTip => 'dnsmasq geeft de VM\'s hun adressen';
+
+  @override
+  String get virtNetVlanTip => 'NIC\'s van VM\'s mogen een VLAN-tag dragen';
+
+  @override
+  String get virtNetNatTip =>
+      'Via de host: VM\'s kunnen naar buiten, van buiten kan niets naar binnen';
+
+  @override
+  String get virtNetRoutedTip =>
+      'Door de host gerouteerd zonder NAT: het LAN heeft een route terug nodig';
+
+  @override
+  String get virtNetIsolatedTip => 'Alleen de VM\'s en de host bereiken elkaar';
+
+  @override
+  String get virtNetBridgedTip =>
+      'VM\'s komen op een bridge van de host, in het fysieke netwerk';
+
+  @override
+  String get virtNetNew => 'Nieuw netwerk';
+
+  @override
+  String get virtNetNewBridge => 'Nieuwe Linux-bridge';
+
+  @override
+  String get virtNetVirtual => 'Virtueel netwerk';
+
+  @override
+  String get virtNetDelete => 'Netwerk verwijderen';
+
+  @override
+  String virtNetDeleteAsk(String name) {
+    return 'Netwerk $name verwijderen? Het wordt gestopt en de definitie verwijderd.';
+  }
+
+  @override
+  String virtNetDeleteAskPve(String name, String node) {
+    return 'Bridge $name van $node verwijderen? Die verdwijnt nu uit de wachtende configuratie, en van de host zodra die wordt toegepast.';
+  }
+
+  @override
+  String virtNetInUse(int count) {
+    return 'VM\'s erop: $count. Het kan niet worden verwijderd.';
+  }
+
+  @override
+  String virtNetStopAsk(String name, int count) {
+    return '$name stoppen? De $count VM\'s erop verliezen hun netwerk tot het weer start.';
+  }
+
+  @override
+  String get virtNetInactivePve =>
+      'Niet actief: een nieuwe bridge wacht in de wachtende configuratie tot die wordt toegepast.';
+
+  @override
+  String get virtNetPveApplyNote =>
+      'Opgeslagen als wachtende wijziging: van kracht zodra de configuratie wordt toegepast (ifreload -a).';
+
+  @override
+  String get virtNetPendingSaved =>
+      'Opgeslagen als wachtend: pas de configuratie toe om het te laten werken';
+
+  @override
+  String virtNetPendingTitle(String node) {
+    return 'Wachtende netwerkwijzigingen op $node';
+  }
+
+  @override
+  String get virtNetPendingTip =>
+      'PVE bewaart netwerkwijzigingen in interfaces.new tot ze worden toegepast.';
+
+  @override
+  String get virtNetPendingShow => 'Wijzigingen tonen';
+
+  @override
+  String get virtNetApply => 'Configuratie toepassen';
+
+  @override
+  String virtNetApplyAsk(String node) {
+    return 'Wachtende netwerkconfiguratie op $node toepassen? PVE herlaadt het netwerk van de host (ifreload -a): een fout kan de host afsluiten.';
+  }
+
+  @override
+  String virtNetRevertAsk(String node) {
+    return 'Wachtende netwerkconfiguratie op $node weggooien?';
+  }
+
+  @override
+  String get pveTokenTipStorage =>
+      'Opslagbeheer vereist Datastore.Allocate op /storage (toevoegen, uitschakelen, verwijderen), Datastore.AllocateSpace (volumes) en Datastore.AllocateTemplate (uploads); Linux-bridges en het toepassen van de netwerkconfiguratie vereisen Sys.Modify op de node.';
+
+  @override
+  String get virtCreateUnnamed => 'Naamloos';
+
+  @override
+  String get virtCreateNotChosen => 'Niet gekozen';
+
+  @override
+  String get virtCreateKindVmSub => 'qm · een volledige KVM-VM';
+
+  @override
+  String get virtCreateKindLxcSub =>
+      'pct · deelt de kernel van de host, lichter';
+
+  @override
+  String get virtCloudImage => 'Cloud-image';
+
+  @override
+  String get virtCloudImageTip =>
+      'Een schijf met een systeem erop: gekopieerd, vergroot tot de grootte onder Opslag en bij de eerste start door cloud-init ingericht. De image zelf blijft ongewijzigd.';
+
+  @override
+  String get virtNoCloudImagesLibvirt =>
+      'Geen cloud-images hier: zet een qcow2- of raw-image in een pool (upload bij Opslag) die door geen VM wordt gebruikt.';
+
+  @override
+  String get virtNoCloudImagesPve =>
+      'Geen cloud-images hier: upload een qcow2-, raw- of vmdk-image naar een opslag met het inhoudstype Import (PVE 8.2+).';
+
+  @override
+  String get virtCreateWindowsTitle => 'Windows 11 vereist UEFI en TPM 2.0';
+
+  @override
+  String get virtCreateWindowsBody => 'Kies hierboven UEFI en zet de TPM aan.';
+
+  @override
+  String get virtCreateWindowsNoTpm =>
+      'Deze host heeft geen software-TPM (swtpm): installeer die om de VM er een te geven.';
+
+  @override
+  String virtCreateImageSize(String size) {
+    return 'De image is $size: de schijf moet minstens zo groot zijn.';
+  }
+
+  @override
+  String get virtCreateImageMissing => 'Kies een cloud-image.';
+
+  @override
+  String get virtCreateIncomplete =>
+      'Vul eerst de oranje gemarkeerde delen in.';
+
+  @override
+  String virtCreateOn(String host) {
+    return 'Wordt aangemaakt op $host';
+  }
+
+  @override
+  String get virtCiTip =>
+      'Een account met sudo, aan te melden met het wachtwoord, een SSH-sleutel of beide.';
+
+  @override
+  String get virtCiUserInvalid =>
+      'Kleine letters, cijfers, _ en -, beginnend met een letter of _';
+
+  @override
+  String get virtCiCredentialsMissing =>
+      'Stel een wachtwoord of een SSH-sleutel in.';
+
+  @override
+  String get virtCiHostnamePve => 'De hostnaam is de naam van de VM.';
+
+  @override
+  String get virtCiStatic => 'Statisch';
+
+  @override
+  String get virtCiAddressInvalid =>
+      'Een IPv4-adres met prefix, zoals 10.0.0.5/24';
+
+  @override
+  String get virtCiGatewayInvalid => 'Een IPv4-adres, zoals 10.0.0.1';
+
+  @override
+  String get virtCiDnsFromDhcp => 'Leeg: via DHCP';
+
+  @override
+  String get virtCiDnsInvalid =>
+      'IP-adressen, gescheiden door spaties of komma\'s';
+
+  @override
+  String get virtCiSearch => 'Zoekdomein';
+
+  @override
+  String get virtCiSeedNote =>
+      'Geschreven naar een kleine ISO naast de schijf, gekoppeld als cd-rom en verwijderd met de VM. Alleen de hash van het wachtwoord wordt bewaard.';
+
+  @override
+  String get virtCiNoToolTitle =>
+      'Geen hulpmiddel op de host voor de cloud-init-gegevens';
+
+  @override
+  String virtCiNoToolBody(String tools) {
+    return 'Installeer een van $tools op de host. Zonder cloud-init start de image zonder account om mee aan te melden.';
+  }
+
+  @override
+  String get virtHwCloudInitNote =>
+      'Wat cloud-init bij de eerste start leest. Geen installatiemedium: hier wordt niets geplaatst.';
+
+  @override
+  String get virtHwCdromLater =>
+      'Terwijl ze draait, wordt het station bij de volgende start toegevoegd (SATA en IDE nemen er live geen).';
+
+  @override
+  String virtCreateDiskKept(String size) {
+    return 'De schijf bleef $size, de grootte van de image zelf, meer dan gevraagd: een schijf wordt nooit kleiner gemaakt dan het systeem erop.';
+  }
+
+  @override
+  String get virtCiEditTip =>
+      'Wat cloud-init in deze VM inricht: een account met sudo, hoe je erop aanmeldt, de hostnaam en het adres.';
+
+  @override
+  String get virtCiForeignTitle => 'Deze seed bevat meer dan deze app schrijft';
+
+  @override
+  String get virtCiForeignBody =>
+      'Elders gemaakte instellingen (pakketten, opdrachten, andere accounts) worden hier niet getoond. Opslaan vervangt de seed door wat hier staat.';
+
+  @override
+  String get virtCiPasswordKept => 'Ingesteld. Leeg laten om het te houden';
+
+  @override
+  String get virtCiRemovePassword => 'Wachtwoord verwijderen';
+
+  @override
+  String get virtCiRemovePasswordNote => 'Alleen aanmelden met een SSH-sleutel';
+
+  @override
+  String get virtCiKeysAdded =>
+      'Sleutels worden aan het account toegevoegd. Een hier verwijderde sleutel blijft in het systeem tot hij daar wordt verwijderd, en een nieuwe gebruikersnaam maakt een nieuw account naast het oude.';
+
+  @override
+  String get virtCiEffectTitle => 'Werkt bij de volgende start';
+
+  @override
+  String get virtCiEffectLibvirt =>
+      'Opslaan schrijft een nieuwe seed met een nieuwe instantie-ID.';
+
+  @override
+  String get virtCiEffectPve =>
+      'PVE schrijft zijn cloud-init-station meteen opnieuw, met een instantie-ID afgeleid van deze instellingen, dus elke wijziging hier maakt een nieuwe.';
+
+  @override
+  String get virtCiNewInstance =>
+      'Bij de volgende start behandelt cloud-init het systeem als een nieuwe instantie: het stelt de hostnaam opnieuw in, maakt het account als het ontbreekt, zet het wachtwoord, voegt de sleutels toe en schrijft de netwerkconfiguratie opnieuw. Het maakt ook nieuwe SSH-hostsleutels, dus SSH-clients waarschuwen dat de hostsleutel is veranderd. Vóór die start verandert er niets.';
+
+  @override
+  String get virtCiSaved => 'Opgeslagen. Werkt bij de volgende start.';
 }

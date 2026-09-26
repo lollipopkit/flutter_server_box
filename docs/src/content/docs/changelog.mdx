@@ -1,0 +1,351 @@
+---
+title: Changelog
+description: What changed in each released version
+---
+
+Every released version, newest first. Downloads and per-release notes are on
+[GitHub Releases](https://github.com/lollipopkit/flutter_server_box/releases).
+
+## v1.0.1617 — 2026-09-12
+
+### Added
+
+- **One macOS build per architecture.** Apple silicon gets
+  `ServerBox-<version>-arm64.dmg` and Intel gets `ServerBox-<version>-amd64.dmg`.
+  The App Store build supports Apple silicon only. All macOS builds now require
+  macOS 13 or later.
+- **Users and scheduled tasks.** Two new entries in a server's function row.
+  *Users* creates, edits and removes system accounts — UID, primary and
+  supplementary groups, login shell, home directory, password. *Scheduled
+  tasks* reads and writes crontabs, keeping comments, environment variables and
+  lines it does not recognise. Both run through `sudo`, and both support Linux
+  servers only.
+- **A switch for Live Activities**, at **Settings → App → iOS → Live Activity**
+  and off by default. Previously one appeared whenever a terminal connected,
+  with nothing to turn it off.
+- Azerbaijani (`az`).
+
+### Changed
+
+- **The API version in the Agent's endpoint is yours to write.** The app no
+  longer inserts `v1` into an address that lacks it, which broke providers
+  such as Zhipu (`/api/paas/v4`). Upgrading writes the old guess into stored
+  values, so an existing setup keeps working.
+- **Long Agent conversations are summarised** rather than dropped.
+  **Settings → App → AI** gained *Summarise at* and *Context size*, and a
+  *Model table* fed from models.dev.
+- **Plain-HTTP AI endpoints can be allowed** at
+  **Settings → App → AI → Allow plain HTTP**, for a self-hosted Ollama or vLLM
+  on a LAN. The API key and any terminal context are sent unencrypted;
+  localhost is unaffected.
+- The pre-release update switch is now *Receive pre-release updates*, and the
+  raw JSON editor is no longer in release builds.
+
+### Fixed
+
+- **A shared server's QR code can be scanned.** The payload was not
+  compressed, so a server carrying a key produced a symbol up to 177 modules
+  across that a scanner could not read. It is deflated before encrypting now,
+  at a lower error-correction level and a hard size cap.
+- **Turning the app lock off requires authentication.** The check never
+  worked — the new value was written whether or not the prompt succeeded, so
+  removing the lock took no authentication at all.
+- **A downgraded install shows a way out.** A build older than its data used
+  to stop before drawing anything: no window, no message, the reason only in a
+  log the user could not reach. It now names both versions and offers an
+  encrypted backup, an unencrypted export, or deleting all data.
+- **A device that cannot authenticate is no longer locked out of the app.**
+  Restoring a backup onto hardware without biometrics left the lock screen
+  with nothing to open it and the settings switch hidden, so the app was
+  unusable and the control that would fix it was missing.
+- **A turn with several Agent tool calls no longer breaks the conversation.**
+  Calls left unanswered meant more tool results than the API accepts, which
+  rejected the whole request. Each skipped call now returns an explicit
+  result.
+- Agent command previews no longer draw over their own **Allow**/**Deny**
+  buttons.
+
+## v1.0.1574 — 2026-09-06
+
+### Added
+
+- **Globe view.** A globe button above the server list draws servers where
+  their addresses resolve to. Placement needs a city dataset of about 25 MB
+  that is not bundled and is never downloaded on its own — the confirmation
+  dialog quotes the current sizes first. Servers that cannot be placed sit in a
+  strip below, labelled *Private address* or *No location data*, and a manually
+  entered coordinate beats every automatic source. Addresses are never sent to
+  a geolocation service. See [Globe view](/docs/advanced/globe/).
+- **Benchmark.** Runs Yet Another Bench Script on a server and keeps
+  structured, comparable results. A full run takes 10–20 minutes and continues
+  if you leave the page or close the app. Geekbench is off by default, since it
+  downloads a proprietary binary and publishes the result to a public page;
+  the iperf run is reduced and IP lookup is off, for the same reason.
+- **A status icon on desktop.** The macOS menu bar, the Windows tray and the
+  Linux panel show one row per server with a state glyph, readings and a
+  sparkline. Linux shows a single line and no chart.
+- **Share a server to another device.** A server record — including a private
+  key held in the key store — travels as a QR code or as a `.sbxsrv` file. The
+  QR carries a 6-digit one-time code shown separately and expires after 10
+  minutes; the file uses a passphrase you choose and does not expire. Jump
+  servers, key file paths and BMC credentials are not included.
+- **Crash reports.** After a crash, **Settings → App → Privacy → Crash report**
+  appears — the row exists only when there is a report, so its presence is the
+  news. Nothing is uploaded: the dialog offers delete, copy, or copy and open a
+  GitHub issue. Uploading is a separate *Diagnostic data* setting with three
+  levels, and known server names, addresses and usernames are replaced with
+  placeholders wherever data is recorded.
+
+### Changed
+
+- **The list column folds away, and search happens in place.** Search no
+  longer pushes a page over the list; it takes the switcher's place in the bar
+  and narrows the list as you type. The server list can be ordered by name or
+  by connection state, and the default stays the order set on the settings
+  page.
+- **Virtual filesystems no longer appear in the disk list.** Snap revisions,
+  swap areas, container layers and `fuse-overlayfs` are excluded, and a disk's
+  source is judged separately from its filesystem type — a ZFS pool named
+  `tmpfspool` is storage, not a filesystem to hide.
+
+### Fixed
+
+- Restored the missing virtual key options in the terminal.
+- Geo data updates and globe refreshes are hardened against a failed or partial
+  download.
+
+## v1.0.1553 — 2026-08-29
+
+### Changed
+
+- **Remote backups require a backup password.** Uploading to iCloud, WebDAV or
+  Gist with an empty password is refused, and so is deleting the password while
+  any remote sync is on. An existing unencrypted remote backup still restores
+  and is replaced by an encrypted one on the next upload. Local file and
+  clipboard backups can still be left unencrypted.
+- **Services replaces the Systemd page**, and reads the manager it finds on the
+  server: systemd, procd or OpenRC. s6, runit, upstart, launchd and sysvinit
+  are detected and reported as unsupported. Actions on procd and OpenRC units
+  always need root; systemd needs it only for system-scope units. Where the
+  account has no user session bus, only system units are listed and the page
+  says so.
+- **SSH cryptography moved to Rust.** The record cipher and the per-connection
+  cryptography (x25519, Ed25519 and ECDSA, bcrypt_pbkdf) no longer run on the
+  frame-drawing isolate. Measured on AOT, the record layer went from 15 to
+  486 MB/s at 32 KiB packets, Ed25519 verify from 1.215 ms to 0.019 ms, and
+  ECDSA P-256 verify from 3.900 ms to 0.084 ms. Parsed private keys are also
+  cached across connections now. AES-GCM, ChaCha20-Poly1305 and RSA stay on the
+  Dart implementation.
+
+### Fixed
+
+- On Android, system Back inside a terminal no longer closes the whole
+  terminal, and the foreground service is serialized so an empty session list
+  cannot start and stop it in the same breath — which Android 16 could treat as
+  a broken contract and kill the app over.
+- Server refreshes no longer overlap at startup. Startup, lifecycle handling
+  and the auto-refresh timer could each start their own pool, multiplying
+  concurrency; one scheduler owns the queue now.
+- A false *incomplete* verdict on SSH command output is gone, and the container
+  page hides partial output instead of presenting truncated stdout as the
+  reason something failed.
+- Settings and Logs back navigation pops one level instead of leaving the
+  section.
+- The foreground service no longer re-requests notification permission on
+  every session sync.
+
+## v1.0.1538 — 2026-08-26
+
+This release carries everything since v1.0.1466, including the two pre-releases
+v1.0.1480 and v1.0.1491.
+
+:::caution
+This release moves stored data from Hive to an encrypted SQLite database. The
+move is one-way — a build older than your data will not open it, and at this
+version a downgrade stops at launch with nothing on screen. Export a backup
+before updating if you might need to go back. (v1.0.1617 added a screen that
+explains the situation and lets you export or wipe.)
+:::
+
+### Added
+
+- **BMC over Redfish.** Enterprise management hardware from about 2016 on
+  usually speaks Redfish, and the server detail page can now show its power
+  state and sensors — inlet and CPU temperatures, fan speeds, chassis draw —
+  and act on power: power on, shut down, force off, restart, power cycle, each
+  behind a confirmation naming the reset type. There is no *ignore
+  certificate* option: trust is on first use, with the fingerprint shown for
+  you to compare. Accounts are shared records, managed at **Settings → BMC
+  accounts**, each showing how many servers use it. Marked Beta.
+- **Several Linux systems at once on iOS.** **Settings → Terminal → Linux
+  (Beta)** installs distributions side by side, each a row with its own mark
+  and version; tapping one selects where a *new* terminal opens. Distributions
+  and versions come from a signed manifest verified against a key compiled into
+  the app.
+- **Generate SSH key pairs in the app.** **Settings → Private Key** now offers
+  *Generate key pair* or *Import*: Ed25519 (the default), ECDSA P-256, RSA
+  2048 and RSA 4096. The generated page shows the public key with a copy
+  button and the line to append to `authorized_keys`. Private keys are stored
+  as they were given now, so an imported encrypted key stays encrypted and its
+  passphrase is asked on first use rather than being stripped at import.
+- **SCP file transfer**, for an old or embedded host whose SSH server has no
+  SFTP subsystem. Chosen per server in the editor as a *File* row with an
+  **SFTP**/**SCP** popup; it needs the `scp` command and the usual file
+  utilities on the server. The browser says so when an SFTP session is what
+  failed to open.
+- **Floating terminal.** The picture-in-picture button in the terminal's action
+  bar moves it into a window that floats over every tab — draggable and
+  resizable on desktop, a pill that opens into a sheet on a phone. It is the
+  same session, so the tab draws a placeholder rather than a second view, and
+  a floating terminal is marked as such in the tab.
+- **An Agent workspace across servers**, the *Agent* tab, with tools that read
+  the app's own state: the server list, connection status, connect and
+  disconnect, and keeping a temporary connection as a new server. A temporary
+  host asks for its password in the app rather than in the conversation, and
+  says plainly when that host and password will be saved on the device.
+- **Distribution marks.** The app identifies the far end's distribution and
+  can draw a small mark beside a server's name — off by default, at
+  **Settings → Server → Distribution marks**. With no *Mark URL* configured it
+  uses one of four bundled marks (Debian, Gentoo, Alpine, NixOS) and a generic
+  icon for everything else. Turning it on shows a terms dialog first, since a
+  mark says only what this device read from the remote system.
+- **Combined key and password authentication**, and keyboard-interactive
+  authentication for servers that offer it.
+
+### Changed
+
+- **Storage moved from Hive to one encrypted SQLite database.** The move runs
+  at launch with no prompt and copies rather than deletes, so the old data is
+  still on disk afterwards. A record that fails to convert is skipped, and the
+  app carries on with that store empty.
+- **Watch and home widgets read the agent's authenticated API.** A hand-typed
+  `/status` address is not enough to reach an authenticated endpoint, and the
+  login it would need is what those addresses existed to avoid, so they no
+  longer work and cannot be converted — a one-time dialog says so, and
+  configuring the server in the app once feeds every watch and widget. An
+  agent is required. Watch servers moved from opt-in to opt-out: every server
+  with an agent syncs by default, with exclusions at
+  **Settings → App → iOS → Watch app**. The iOS home widget now needs iOS 17,
+  and the watch app and complication need watchOS 10.
+- **Android keeps SSH alive in the background** through a foreground service
+  instead of dropping every connection within seconds of switching apps. If
+  notification permission is off, a row under *Run in background* says an
+  ongoing notification is required and opens system settings.
+- Android Auto Backup no longer applies: the database is encrypted with a
+  device-bound key that a cross-device restore would not carry. Recovery
+  between devices is the app's own encrypted export.
+
+### Fixed
+
+- Servers without a home directory are handled.
+- tmux rendering is correct for UTF-8, and its UI is localized.
+- The Windows IME candidate window's text reaches the terminal.
+- `systemctl` is used to list units, so units that `systemctl list-units`
+  alone would miss are shown.
+- Splitting an Android build no longer breaks reproducibility, and the probe
+  for Impeller support runs before startup rather than after.
+
+## v1.0.1466 — 2026-07-16
+
+### Changed
+
+- **Update checks read GitHub Releases** instead of a vendor manifest, with the
+  App Store lookup used on iOS. The dialog now shows the notes of every version
+  between the one installed and the one offered, not only the newest. A
+  release published only to the CDN is no longer seen.
+- The Docker host field is now *Edit CONTAINER_HOST* on a Podman server and
+  *Edit DOCKER_HOST* on a Docker one, with separate storage keys, so one
+  server's Docker and Podman hosts no longer overwrite each other.
+
+### Fixed
+
+- **Backups can be restored.** Serialization fell back to `toString()` for any
+  object it could not encode, so servers, snippets, private keys, port
+  forwards and Wake-on-LAN configs were written as `Instance of 'Spi'`-style
+  strings — a backup that completed and could not be restored. Each model now
+  has an explicit case, and anything unsupported fails loudly instead of
+  degrading. Backups written by versions 1.0.1448–1.0.1450 are affected and
+  cannot be fully restored.
+- Container names or images containing spaces no longer shift the columns of
+  the whole container list.
+- Korean is complete for this release.
+
+## v1.0.1450 — 2026-06-27
+
+:::caution
+Upgrading asks you to re-confirm the SSH host key of every server, once per
+key type. The stored fingerprint was an MD5 digest and is now a SHA256 one;
+the app reads the change as a mismatch and asks before continuing. This is
+expected and not a sign of an attack.
+:::
+
+### Added
+
+- **tmux in the terminal.** Auto-attach on connect, a session and window
+  picker, and a default session name — all off by default under **Settings →
+  Terminal → tmux auto-attach**. The terminal's virtual key strip gained a
+  tmux key, and it says so when tmux is not installed on the server.
+- **Auto-reconnect.** A dropped connection reconnects with a cancellable
+  progress dialog and re-attaches tmux. A shell without tmux also reconnects,
+  to a fresh shell, which means its state is lost.
+- **Built-in terminal or system SSH, on every desktop platform.** The switch
+  is at **Settings → Terminal → General**: built-in uses the app's own
+  terminal, system SSH launches the system `ssh` command in an external
+  terminal emulator. On macOS the external terminal is Terminal.app and is no
+  longer configurable; that row is Linux-only now.
+
+### Fixed
+
+- SFTP downloads show throughput (`transferred / size – percent – speed`) and
+  run faster: the chunk size went from 16 KB to 32 KB and in-flight requests
+  from 1 to 64.
+- The sudo password autofill recognises the prompt in more forms, including a
+  fullwidth colon, and says when no prompt is active instead of doing nothing.
+- The terminal no longer injects a locale the user did not configure; only the
+  server's own environment variables are passed.
+
+## v1.0.1426 — 2026-06-05
+
+### Added
+
+- **Per-process disk I/O rates** appear on the Process page as sortable *R/s*
+  and *W/s* columns. They need a window at least 1100 px wide, a server that
+  reports the counters, and two samples, so the first reading after opening the
+  page is empty.
+
+### Fixed
+
+- SFTP downloads no longer stall, and the persistent SFTP channel is closed
+  when the page is disposed.
+- The sudo password prompt is detected in more cases in the virtual keyboard.
+
+## v1.0.1409 — 2026-05-12
+
+### Added
+
+- **Pull an image** from the container page: an image row's menu offers *Pull*
+  and *Delete*. A dangling image, which has no repository or tag, pulls
+  nothing and says so.
+- **Two jump servers, tried in order.** The server editor's SSH advanced
+  section takes up to two jump servers, numbered in the order they are tried;
+  the first that forwards wins. Timeouts, refused connections and forwarding
+  failures advance to the next candidate, while authentication and permission
+  errors stop rather than trying the other. A selection that would form a cycle
+  is not offered, and jump servers and `ProxyCommand` cannot both be set.
+- File tap opens the editor, and long-press keeps the action menu. Files over
+  1 MB are refused by the editor.
+- An AI API endpoint can be given as a full `.../chat/completions` URL or as a
+  service base URL; `v1` and the path are appended as needed.
+
+### Changed
+
+- The terminal's *Theme* setting gained **Auto**, which follows the app's own
+  theme rather than the system's.
+
+### Fixed
+
+- A temporary private key written for the desktop system-SSH path is now
+  tightened on Windows as well, using `icacls`; if that fails the launch is
+  aborted with an error rather than proceeding with a readable key.
+- A status command that times out no longer wedges the shared shell for the
+  rest of the connection — the app falls back to a one-shot channel.

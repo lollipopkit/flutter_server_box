@@ -169,6 +169,13 @@ List<SettingsNode> _buildNodes() {
       icon: Icons.inbox_outlined,
       page: () => const AppSettingsPage(section: SettingsSection.container),
     ),
+    SettingsNode.leaf(
+      id: 'remoteDesktop',
+      title: l10n.remoteDesktop,
+      icon: Icons.desktop_windows_outlined,
+      page: () =>
+          const AppSettingsPage(section: SettingsSection.remoteDesktop),
+    ),
     SettingsNode.branch(
       id: 'backup',
       title: libL10n.backup,

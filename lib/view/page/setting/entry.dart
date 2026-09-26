@@ -86,6 +86,7 @@ part 'entries/editor.dart';
 part 'entries/full_screen.dart';
 part 'entries/globe.dart';
 part 'entries/linux.dart';
+part 'entries/remote_desktop.dart';
 part 'entries/server.dart';
 part 'entries/sftp.dart';
 part 'entries/ssh.dart';

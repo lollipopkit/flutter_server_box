@@ -1,0 +1,338 @@
+SrvBoxSep.b64.dmlydC5jYXBz
+kvm
+<domainCapabilities>
+  <path>/usr/bin/qemu-system-x86_64</path>
+  <domain>kvm</domain>
+  <machine>pc-q35-10.0</machine>
+  <arch>x86_64</arch>
+  <vcpu max='4096'/>
+  <iothreads supported='yes'/>
+  <os supported='yes'>
+    <enum name='firmware'>
+      <value>efi</value>
+    </enum>
+    <loader supported='yes'>
+      <value>/usr/share/OVMF/OVMF_CODE_4M.ms.fd</value>
+      <value>/usr/share/OVMF/OVMF_CODE_4M.secboot.fd</value>
+      <value>/usr/share/OVMF/OVMF_CODE_4M.fd</value>
+      <enum name='type'>
+        <value>rom</value>
+        <value>pflash</value>
+      </enum>
+      <enum name='readonly'>
+        <value>yes</value>
+        <value>no</value>
+      </enum>
+      <enum name='secure'>
+        <value>yes</value>
+        <value>no</value>
+      </enum>
+    </loader>
+  </os>
+  <devices>
+    <disk supported='yes'>
+      <enum name='diskDevice'>
+        <value>disk</value>
+        <value>cdrom</value>
+        <value>floppy</value>
+        <value>lun</value>
+      </enum>
+      <enum name='bus'>
+        <value>fdc</value>
+        <value>scsi</value>
+        <value>virtio</value>
+        <value>usb</value>
+        <value>sata</value>
+      </enum>
+      <enum name='model'>
+        <value>virtio</value>
+        <value>virtio-transitional</value>
+        <value>virtio-non-transitional</value>
+      </enum>
+    </disk>
+    <graphics supported='yes'>
+      <enum name='type'>
+        <value>sdl</value>
+        <value>vnc</value>
+        <value>egl-headless</value>
+        <value>dbus</value>
+      </enum>
+    </graphics>
+    <video supported='yes'>
+      <enum name='modelType'>
+        <value>vga</value>
+        <value>cirrus</value>
+        <value>vmvga</value>
+        <value>virtio</value>
+        <value>none</value>
+        <value>bochs</value>
+        <value>ramfb</value>
+      </enum>
+    </video>
+    <hostdev supported='yes'/>
+    <tpm supported='yes'>
+      <enum name='model'>
+        <value>tpm-tis</value>
+        <value>tpm-crb</value>
+      </enum>
+      <enum name='backendModel'>
+        <value>passthrough</value>
+      </enum>
+    </tpm>
+  </devices>
+</domainCapabilities>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5jYXBz
+kvm
+<domainCapabilities>
+  <path>/usr/bin/qemu-system-x86_64</path>
+  <domain>kvm</domain>
+  <machine>pc-i440fx-10.0</machine>
+  <arch>x86_64</arch>
+  <vcpu max='255'/>
+  <iothreads supported='yes'/>
+  <os supported='yes'>
+    <enum name='firmware'>
+      <value>efi</value>
+    </enum>
+    <loader supported='yes'>
+      <value>/usr/share/OVMF/OVMF_CODE_4M.fd</value>
+      <enum name='type'>
+        <value>rom</value>
+        <value>pflash</value>
+      </enum>
+      <enum name='readonly'>
+        <value>yes</value>
+        <value>no</value>
+      </enum>
+      <enum name='secure'>
+        <value>no</value>
+      </enum>
+    </loader>
+  </os>
+  <devices>
+    <disk supported='yes'>
+      <enum name='diskDevice'>
+        <value>disk</value>
+        <value>cdrom</value>
+        <value>floppy</value>
+        <value>lun</value>
+      </enum>
+      <enum name='bus'>
+        <value>ide</value>
+        <value>fdc</value>
+        <value>scsi</value>
+        <value>virtio</value>
+        <value>usb</value>
+        <value>sata</value>
+      </enum>
+      <enum name='model'>
+        <value>virtio</value>
+        <value>virtio-transitional</value>
+        <value>virtio-non-transitional</value>
+      </enum>
+    </disk>
+    <graphics supported='yes'>
+      <enum name='type'>
+        <value>sdl</value>
+        <value>vnc</value>
+        <value>egl-headless</value>
+        <value>dbus</value>
+      </enum>
+    </graphics>
+    <video supported='yes'>
+      <enum name='modelType'>
+        <value>vga</value>
+        <value>cirrus</value>
+        <value>vmvga</value>
+        <value>virtio</value>
+        <value>none</value>
+        <value>bochs</value>
+        <value>ramfb</value>
+      </enum>
+    </video>
+    <hostdev supported='yes'/>
+    <tpm supported='yes'>
+      <enum name='model'>
+        <value>tpm-tis</value>
+        <value>tpm-crb</value>
+      </enum>
+      <enum name='backendModel'>
+        <value>passthrough</value>
+      </enum>
+    </tpm>
+  </devices>
+</domainCapabilities>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5jYXBz
+qemu
+<domainCapabilities>
+  <path>/usr/bin/qemu-system-x86_64</path>
+  <domain>qemu</domain>
+  <machine>pc-q35-10.0</machine>
+  <arch>x86_64</arch>
+  <vcpu max='4096'/>
+  <iothreads supported='yes'/>
+  <os supported='yes'>
+    <enum name='firmware'>
+      <value>efi</value>
+    </enum>
+    <loader supported='yes'>
+      <value>/usr/share/OVMF/OVMF_CODE_4M.ms.fd</value>
+      <value>/usr/share/OVMF/OVMF_CODE_4M.secboot.fd</value>
+      <value>/usr/share/OVMF/OVMF_CODE_4M.fd</value>
+      <enum name='type'>
+        <value>rom</value>
+        <value>pflash</value>
+      </enum>
+      <enum name='readonly'>
+        <value>yes</value>
+        <value>no</value>
+      </enum>
+      <enum name='secure'>
+        <value>yes</value>
+        <value>no</value>
+      </enum>
+    </loader>
+  </os>
+  <devices>
+    <disk supported='yes'>
+      <enum name='diskDevice'>
+        <value>disk</value>
+        <value>cdrom</value>
+        <value>floppy</value>
+        <value>lun</value>
+      </enum>
+      <enum name='bus'>
+        <value>fdc</value>
+        <value>scsi</value>
+        <value>virtio</value>
+        <value>usb</value>
+        <value>sata</value>
+      </enum>
+      <enum name='model'>
+        <value>virtio</value>
+        <value>virtio-transitional</value>
+        <value>virtio-non-transitional</value>
+      </enum>
+    </disk>
+    <graphics supported='yes'>
+      <enum name='type'>
+        <value>sdl</value>
+        <value>vnc</value>
+        <value>egl-headless</value>
+        <value>dbus</value>
+      </enum>
+    </graphics>
+    <video supported='yes'>
+      <enum name='modelType'>
+        <value>vga</value>
+        <value>cirrus</value>
+        <value>vmvga</value>
+        <value>virtio</value>
+        <value>none</value>
+        <value>bochs</value>
+        <value>ramfb</value>
+      </enum>
+    </video>
+    <hostdev supported='yes'/>
+    <tpm supported='yes'>
+      <enum name='model'>
+        <value>tpm-tis</value>
+        <value>tpm-crb</value>
+      </enum>
+      <enum name='backendModel'>
+        <value>passthrough</value>
+      </enum>
+    </tpm>
+  </devices>
+</domainCapabilities>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5jYXBz
+qemu
+<domainCapabilities>
+  <path>/usr/bin/qemu-system-x86_64</path>
+  <domain>qemu</domain>
+  <machine>pc-i440fx-10.0</machine>
+  <arch>x86_64</arch>
+  <vcpu max='255'/>
+  <iothreads supported='yes'/>
+  <os supported='yes'>
+    <enum name='firmware'>
+      <value>efi</value>
+    </enum>
+    <loader supported='yes'>
+      <value>/usr/share/OVMF/OVMF_CODE_4M.fd</value>
+      <enum name='type'>
+        <value>rom</value>
+        <value>pflash</value>
+      </enum>
+      <enum name='readonly'>
+        <value>yes</value>
+        <value>no</value>
+      </enum>
+      <enum name='secure'>
+        <value>no</value>
+      </enum>
+    </loader>
+  </os>
+  <devices>
+    <disk supported='yes'>
+      <enum name='diskDevice'>
+        <value>disk</value>
+        <value>cdrom</value>
+        <value>floppy</value>
+        <value>lun</value>
+      </enum>
+      <enum name='bus'>
+        <value>ide</value>
+        <value>fdc</value>
+        <value>scsi</value>
+        <value>virtio</value>
+        <value>usb</value>
+        <value>sata</value>
+      </enum>
+      <enum name='model'>
+        <value>virtio</value>
+        <value>virtio-transitional</value>
+        <value>virtio-non-transitional</value>
+      </enum>
+    </disk>
+    <graphics supported='yes'>
+      <enum name='type'>
+        <value>sdl</value>
+        <value>vnc</value>
+        <value>egl-headless</value>
+        <value>dbus</value>
+      </enum>
+    </graphics>
+    <video supported='yes'>
+      <enum name='modelType'>
+        <value>vga</value>
+        <value>cirrus</value>
+        <value>vmvga</value>
+        <value>virtio</value>
+        <value>none</value>
+        <value>bochs</value>
+        <value>ramfb</value>
+      </enum>
+    </video>
+    <hostdev supported='yes'/>
+    <tpm supported='yes'>
+      <enum name='model'>
+        <value>tpm-tis</value>
+        <value>tpm-crb</value>
+      </enum>
+      <enum name='backendModel'>
+        <value>passthrough</value>
+      </enum>
+    </tpm>
+  </devices>
+</domainCapabilities>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5zZWVkLnRvb2w=
+genisoimage
