@@ -113,7 +113,7 @@ void main() {
     );
   });
 
-  test('no reading is drawn twice, and the count of the rest is right', () {
+  test('no reading is drawn twice, and the five slots are what is drawn', () {
     // Nothing but what every card draws: the slot that varies has no
     // candidate, and the network must not be taken for one.
     final r = serverCardReadings(state(net: true));
@@ -123,13 +123,17 @@ void main() {
       ServerMetricKind.disk,
       ServerMetricKind.net,
     ]);
-    expect(r.more, 0);
+    // Everything the machine reports has a place, so nothing is left over.
+    expect(r.shown.length, r.all.length);
 
     final full = serverCardReadings(
       state(net: true, swap: true, diskIo: true, temp: true),
     );
     expect(kinds(full.shown).toSet().length, full.shown.length);
     expect(full.shown.length, 5);
-    expect(full.more, full.all.length - 5);
+    // A sixth reading exists and is not in the slots. How many are unseen is
+    // counted from what is drawn, not from this — see `ServerCardReadings`,
+    // which has no count of its own for that reason.
+    expect(full.all.length, greaterThan(full.shown.length));
   });
 }

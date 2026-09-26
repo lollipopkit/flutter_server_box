@@ -983,6 +983,14 @@ fn uptime_parse_formats() {
         ("19:39:15 up 2:34,  1 user,  load average: 0.00, 0.00, 0.00", Some("2:34")),
         ("19:39:15 up 34 min,  1 user,  load average: 0.00, 0.00, 0.00", Some("34 min")),
         ("19:39:15 up 5 days,  1 user,  load average: 0.00, 0.00, 0.00", Some("5 days")),
+        // A zero hour or minute prints a unit instead of `H:MM`: procps and
+        // busybox `min`, BSD and macOS `hr[s]`, `min[s]`, `sec[s]`.
+        ("19:39:15 up 5 days, 10 min,  1 user,  load average: 0.00, 0.00, 0.00", Some("5 days, 10 min")),
+        ("10:01  up 2 days, 3 hrs, 2 users, load averages: 1.00 1.00 1.00", Some("2 days, 3 hrs")),
+        ("10:01  up 1 day, 1 hr, 2 users, load averages: 1.00 1.00 1.00", Some("1 day, 1 hr")),
+        ("10:01  up 3 days, 14 mins, 2 users, load averages: 1.00 1.00 1.00", Some("3 days, 14 mins")),
+        ("10:01  up 14 mins, 2 users, load averages: 1.00 1.00 1.00", Some("14 mins")),
+        ("10:01  up 30 secs, 2 users, load averages: 1.00 1.00 1.00", Some("30 secs")),
         ("invalid uptime format", None),
         ("", None),
     ];

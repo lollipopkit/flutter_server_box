@@ -24,6 +24,9 @@ abstract interface class ShellSession {
 
   void write(List<int> data);
 
+  /// Tells the far end the terminal's new size. Advisory, and must not throw
+  /// once the session has ended: it is called from the terminal's layout, and
+  /// a session that is gone says so through [done].
   void resizeTerminal(int width, int height);
 
   /// Completes when the shell is gone for good. A source that can recover
@@ -132,8 +135,14 @@ class SshShellSession implements ShellSession {
       session.write(data is Uint8List ? data : Uint8List.fromList(data));
 
   @override
-  void resizeTerminal(int width, int height) =>
+  void resizeTerminal(int width, int height) {
+    try {
       session.resizeTerminal(width, height);
+    } on SSHStateError {
+      // The transport closed under the channel. Nothing to tell a session that
+      // is gone, and [done] is what reports it.
+    }
+  }
 
   @override
   Future<void> get done => session.done;

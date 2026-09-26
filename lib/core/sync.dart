@@ -1,11 +1,14 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart';
 import 'package:server_box/core/diag.dart';
-import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/service/report_filter.dart';
 import 'package:server_box/data/model/app/bak/backup.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/bak/utils.dart';
+import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/schema.dart';
@@ -21,18 +24,18 @@ final class BakSyncer extends SyncIface {
 
   /// Set by [fromFile] when the remote payload came from a newer build.
   ///
-  /// `SyncIface._sync` catches merge failures, logs them, and then uploads
-  /// unconditionally — so a device that could not read the remote data would
-  /// overwrite it with its own older copy, silently discarding whatever it
-  /// didn't understand. [backup] is the one hook available for refusing that
-  /// without forking the whole cycle.
+  /// `SyncIface._sync` already skips the upload after a failed merge. The
+  /// case left is `_inheritLegacyRemote`, which reads a remote file outside
+  /// that cycle: after it found newer data, the next sync would upload this
+  /// device's older copy, silently discarding whatever it didn't understand.
+  /// [backup] is the one hook available for refusing that without forking the
+  /// whole cycle.
   ///
   /// Static because the syncer is a single instance shared by every caller.
   static SchemaTooNewException? _remoteTooNew;
 
   /// Whether the last sync attempt aborted because the remote data is newer
-  /// than this build understands. The UI surfaces this — a silently skipped
-  /// sync is indistinguishable from a working one.
+  /// than this build understands.
   static SchemaTooNewException? get remoteTooNew => _remoteTooNew;
 
   @override
@@ -52,10 +55,58 @@ final class BakSyncer extends SyncIface {
     bool includeSettings = true,
   }) async {
     final pwd = await SecureStoreProps.bakPwd.read();
-    if (pwd == null || pwd.isEmpty) {
-      throw StateError(l10n.remoteBackupPasswordRequired);
-    }
+    if (pwd == null || pwd.isEmpty) throw const RemoteBackupPasswordMissing();
     return BackupV2.backup(name, pwd, includeSettings);
+  }
+
+  /// The sync an edit starts, which nobody waits for.
+  ///
+  /// Its failures are nearly all the remote's — a WebDAV server that does not
+  /// answer, iCloud signed out — and with no caller they reached the zone as
+  /// uncaught errors (SERVERBOX-8B). Handled here instead: logged, and
+  /// reported only when [ReportFilter] says it is a defect of this app.
+  void syncSoon({RemoteStorage? rs}) {
+    unawaited(
+      sync(milliDelay: 1000, rs: rs).catchError((Object e, StackTrace s) {
+        if (ReportFilter.isDefect(e)) {
+          Diag.error(e, s, 'Background sync');
+        } else {
+          Loggers.app.warning('Background sync', e, s);
+          Diag.crumb(SbDiag.sync, 'failed', data: {
+            'error': e.runtimeType.toString(),
+          });
+        }
+      }),
+    );
+  }
+
+  /// Skipped outright without a backup password, rather than attempted.
+  ///
+  /// Syncs are started on every edit and nobody awaits them, so each attempt
+  /// ended as an unhandled [RemoteBackupPasswordMissing] — hundreds per install
+  /// — after downloading and trying to merge a remote it had no key for. The
+  /// backup page already says the backup is unencrypted, which is the state
+  /// to fix.
+  @override
+  Future<void> sync({
+    int throttleMilli = 5000,
+    RemoteStorage? rs,
+    int milliDelay = 0,
+  }) async {
+    // Only with somewhere to sync to: without a remote the base returns at
+    // once, and there is no password question to ask.
+    if ((rs ?? remoteStorage) != null) {
+      final pwd = await SecureStoreProps.bakPwd.read();
+      if (pwd == null || pwd.isEmpty) {
+        Diag.crumb(SbDiag.sync, 'skipped', data: {'why': 'no password'});
+        return;
+      }
+    }
+    return super.sync(
+      throttleMilli: throttleMilli,
+      rs: rs,
+      milliDelay: milliDelay,
+    );
   }
 
   @override
@@ -65,35 +116,26 @@ final class BakSyncer extends SyncIface {
     final pwd = await SecureStoreProps.bakPwd.read();
     final includeSettings = PrefProps.syncAppSettings.get();
     try {
-      if (Cryptor.isEncrypted(content)) {
-        final mergeable = MergeableUtils.fromJsonString(content, pwd).$1;
-        return _normalizeSyncPayload(
-          mergeable,
-          includeSettings: includeSettings,
-        );
-      }
-      // Backups uploaded before remote encryption became mandatory are
-      // plaintext. Keep accepting them; only new remote writes are required
-      // to be encrypted.
-      final mergeable = MergeableUtils.fromJsonString(content).$1;
+      // Only decrypting and decoding leave this isolate: they read nothing but
+      // their arguments. Prefs, secure storage and [_remoteTooNew] belong to
+      // this one — in a worker the pref answered its default and dropped every
+      // synced setting, with no error anywhere (#1562).
+      //
+      // A plaintext backup, uploaded before remote encryption became
+      // mandatory, is still accepted: the password is only used on an
+      // encrypted payload.
+      final mergeable = await compute(_parse, (content, pwd));
       return _normalizeSyncPayload(mergeable, includeSettings: includeSettings);
     } on SchemaTooNewException catch (e) {
-      // Not a parse problem — retrying without the password would decode the
-      // same too-new payload, and falling through to the v1 reader would
-      // decode it wrong. Record it so `backup` refuses to upload over it.
+      // Recorded so `backup` refuses to upload over data this build cannot
+      // read.
       _remoteTooNew = e;
       rethrow;
-    } catch (e, s) {
-      Loggers.app.warning(
-        'Failed to parse backup file with password, trying without password',
-        e,
-        s,
-      );
-      // Fallback: try without password if detection failed
-      final mergeable = MergeableUtils.fromJsonString(content).$1;
-      return _normalizeSyncPayload(mergeable, includeSettings: includeSettings);
     }
   }
+
+  static Mergeable _parse((String, String?) args) =>
+      MergeableUtils.fromJsonString(args.$1, args.$2).$1;
 
   Mergeable _normalizeSyncPayload(
     Mergeable mergeable, {

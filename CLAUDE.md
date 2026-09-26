@@ -24,6 +24,16 @@ Flutter app for managing servers, in a Rust workspace monorepo. Feature-specific
 - Size the view, not the surface, for breakpoints: `tester.view.physicalSize` + `devicePixelRatio`.
 - `pumpAndSettle` never returns with a text field or other always-scheduling widget — count frames with `pump(duration)`.
 
+### CI
+
+- **The native app builds run only by hand**: `iOS Linux engine`, `macOS build` and `Windows build` in `analysis.yml` are `workflow_dispatch`-only. Each holds a platform runner for 10-45 minutes, and `check` already analyzes and tests every Dart change on a pull request.
+- **Deciding whether a PR needs them is part of opening it.** When the diff reaches something only a native build can answer, run `gh workflow run analysis.yml --ref <branch>` and wait for it before marking the PR ready; otherwise say in the PR that it was not needed.
+  - iOS Linux engine: `ios/`, `third_party/`, `crates/sbm_ffi/`, `scripts/build-ish-ios.sh`, `scripts/check-ish-linkage.sh`, and the submodules with iOS code (`packages/flutter_pty`, `plain_notification_token`, `watch_connectivity`).
+  - macOS / Windows build: `macos/` or `windows/`, `hook/`, `crates/`, `Cargo.{toml,lock}`, `packages/flutter_pty`.
+  - All three: `pubspec.{yaml,lock}` (a new plugin brings native code), `.github/actions/`, and `analysis.yml` itself.
+  - Not a reason on its own: `lib/`, `test/`, or a gitlink move of a pure-Dart submodule (`fl_lib`, `dartssh2`, `xterm`, `fl_build`). `check` compiles those, and a native dependency they add shows up in `pubspec.lock`.
+- **Rust caching depends on who runs cargo, and every cache saves from main only.** A job's own `cargo` gets `kunobi-ninja/kache-action` (as `RUSTC_WRAPPER`), with a `cache-key-prefix` of its own. A `flutter build`/`flutter test` builds `sbm_ffi` through the build hook instead, which kache never sees — hooks_runner passes an environment allowlist, and neither `RUSTC_WRAPPER` nor `RUSTUP_TOOLCHAIN` is on it — so it gets `.github/actions/build-hook-cache` (`step: restore` before, `step: save` after). rust-cache is gone: it cached a `target/` the hook does not build into.
+
 ### Rust / FFI
 
 - `cargo build -p sbm_ffi` before FFI tests (`test/helpers/rust_lib_helper.dart` loads the dylib from `target/`), and again after codegen.

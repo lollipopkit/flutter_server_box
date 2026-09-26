@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
-import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/status_history.dart';
 import 'package:server_box/data/model/server/system.dart';
@@ -388,8 +387,10 @@ List<DetailMetric> serverDetailMetrics(
     );
   }
 
-  if (ss.disk.isNotEmpty) {
-    final usage = DiskUsage.parse(ss.disk);
+  // `diskUsage` is the one reading the card's row, the chart's disk line and
+  // the overview also draw — see [ServerStatus.diskUsage]. Null with no disks
+  // or an unreadable list, and then there is no row.
+  if (ss.diskUsage case final usage?) {
     final used = usage.usedPercent;
     views.add(
       DetailMetric(

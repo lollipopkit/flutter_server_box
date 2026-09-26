@@ -140,9 +140,18 @@ jobs:
       - name: Add Rust target
         run: rustup target add ${{ matrix.target }}
 
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+      # kache rather than rust-cache: see `rustTests` in analysis.yml. Only a
+      # run from main saves, so a tag's release build restores what main left
+      # and a one-off dispatch adds nothing. The profile is in the prefix
+      # because `verifyMonitor` in build.yml builds the same target under
+      # `release`, and the first job to save under a shared key keeps it.
+      - uses: kunobi-ninja/kache-action@ad7317540dcdd71c904f7a60a87b620a0c0e67ed # v1
         with:
-          key: ${{ matrix.target }}
+          version: 0.26.3
+          cache-key-prefix: kache-monitor-release-monitor-${{ matrix.target }}
+          save-cache: ${{ github.ref == 'refs/heads/main' }}
+          pr-comment: false
+          cache-dir: ${{ runner.os == 'Windows' && format('{0}/kache', runner.temp) || '' }}
 
       # `release-monitor`, not `release`: fat LTO and one codegen unit, which
       # are profile-wide settings and so cannot be asked for on the shared

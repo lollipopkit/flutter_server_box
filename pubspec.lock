@@ -884,7 +884,7 @@ packages:
     source: hosted
     version: "4.1.2"
   icloud_storage_plus:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: icloud_storage_plus
       sha256: ecc784594a454340900059f7395cf872e79849d5d369d09efa3eccaa810d763e

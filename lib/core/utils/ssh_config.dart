@@ -325,20 +325,29 @@ abstract final class SSHConfig {
     return servers;
   }
 
+  /// Splits an option's value the way OpenSSH's `argv_split` does.
+  ///
+  /// A backslash escapes only a quote, another backslash, or — outside
+  /// quotes — a space; before anything else it is itself. Treating every
+  /// backslash as an escape turned a Windows `IdentityFile
+  /// C:\Users\me\.ssh\id` into `C:Usersme.sshid`, a key file that does
+  /// not exist.
   static List<String> _splitWords(String value) {
     final words = <String>[];
     final current = StringBuffer();
     String? quote;
-    var escaped = false;
     var started = false;
-    for (final rune in value.runes) {
-      final char = String.fromCharCode(rune);
-      if (escaped) {
-        current.write(char);
-        escaped = false;
-        started = true;
-      } else if (char == r'\') {
-        escaped = true;
+    final chars = value.runes.map(String.fromCharCode).toList();
+    for (var i = 0; i < chars.length; i++) {
+      final char = chars[i];
+      final next = i + 1 < chars.length ? chars[i + 1] : null;
+      if (char == r'\' &&
+          (next == '"' ||
+              next == "'" ||
+              next == r'\' ||
+              (quote == null && next == ' '))) {
+        current.write(next);
+        i++;
         started = true;
       } else if (quote != null) {
         if (char == quote) {
@@ -361,7 +370,6 @@ abstract final class SSHConfig {
         started = true;
       }
     }
-    if (escaped) current.write(r'\');
     if (started) words.add(current.toString());
     return words;
   }

@@ -216,6 +216,30 @@ Host keyserver
       expect(server.ssh?.keyId, isNull);
     });
 
+    test('a Windows path keeps its backslashes, as OpenSSH reads it', () async {
+      // OpenSSH's `argv_split` escapes only a quote, a backslash, or a space
+      // outside quotes. Every backslash used to be an escape, and this path
+      // arrived as `C:Usersme.sshid_ed25519` — a key file that is not there.
+      await configFile.writeAsString(r'''
+Host win
+  HostName 10.0.0.1
+  IdentityFile C:\Users\me\.ssh\id_ed25519
+Host quoted
+  HostName 10.0.0.2
+  IdentityFile "C:\Program Files\keys\a b"
+Host escaped
+  HostName 10.0.0.3
+  IdentityFile ~/keys/with\ space\\and\"quote
+''');
+
+      final servers = await SSHConfig.parseConfig(configFile.path);
+      final paths = {for (final s in servers) s.name: s.ssh?.keyPath};
+
+      expect(paths['win'], r'C:\Users\me\.ssh\id_ed25519');
+      expect(paths['quoted'], r'C:\Program Files\keys\a b');
+      expect(paths['escaped'], r'~/keys/with space\and"quote');
+    });
+
     test('expands supported IdentityFile tokens', () {
       final localUser =
           Platform.environment['USER'] ??

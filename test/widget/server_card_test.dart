@@ -391,7 +391,6 @@ void main() {
       );
 
       final readings = readingsOf(everything: true);
-      expect(readings.more, 1, reason: 'the swap, which the sensor displaced');
       expect(
         find.byType(MetricRow),
         findsNWidgets(readings.shown.length - 1),
@@ -403,10 +402,11 @@ void main() {
     testWidgets('a reading promoted from outside the slots is not counted', (
       tester,
     ) async {
-      // `more` is what did not fit in the five slots, and was what the card
-      // said was unseen. A reading from outside them that is drawn in full is
-      // not in a slot and is on screen, so the count was one too many — which
-      // the control beside the name makes an ordinary thing to do.
+      // What the card says is unseen is counted from what is not drawn, not
+      // from how many of the five slots are left. A reading from outside them
+      // that is drawn in full is not in a slot and is on screen, so counting
+      // slots called it unseen — which the control beside the name makes an
+      // ordinary thing to do.
       final readings = readingsOf(everything: true);
       final outside = readings.all.firstWhereOrNull(
         (m) => !readings.shown.contains(m),
@@ -421,9 +421,8 @@ void main() {
         sensor: true,
       );
       // All five are on screen: the one drawn in full, and a row for each of
-      // the four slots. So there is nothing to count, where `more` says one.
+      // the four slots. So there is nothing to count, and nothing is said.
       expect(find.byType(MetricRow), findsNWidgets(readings.shown.length));
-      expect(readings.more, 1);
       expect(find.textContaining(libL10n.more), findsNothing);
       expect(fold, findsOneWidget);
     });

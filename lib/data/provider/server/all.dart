@@ -354,7 +354,7 @@ class ServersNotifier extends _$ServersNotifier {
       }
     }
     unawaited(refresh(spi: spi));
-    bakSync.sync(milliDelay: 1000);
+    bakSync.syncSoon();
   }
 
   Future<void> delServer(String id) => _mutate(() => _delServer(id));
@@ -415,7 +415,7 @@ class ServersNotifier extends _$ServersNotifier {
     final sessionId = 'ssh_$id';
     TermSessionManager.remove(sessionId);
 
-    bakSync.sync(milliDelay: 1000);
+    bakSync.syncSoon();
   }
 
   Future<void> _clearServerData(String id) async {
@@ -454,7 +454,7 @@ class ServersNotifier extends _$ServersNotifier {
 
     Stores.setting.serverOrder.put(newOrder);
     state = state.copyWith(serverOrder: newOrder);
-    bakSync.sync(milliDelay: 1000);
+    bakSync.syncSoon();
   }
 
   bool _isSameOrder(List<String> a, List<String> b) {
@@ -567,6 +567,6 @@ class ServersNotifier extends _$ServersNotifier {
         unawaited(refresh(spi: newSpi));
       }
     }
-    bakSync.sync(milliDelay: 1000);
+    bakSync.syncSoon();
   }
 }

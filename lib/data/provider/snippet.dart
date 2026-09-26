@@ -102,6 +102,6 @@ class SnippetNotifier extends _$SnippetNotifier {
   Future<void> renameTag(String old, String newOne) async {
     Stores.snippet.renameTag(old, newOne);
     state = _load();
-    bakSync.sync(milliDelay: 1000);
+    bakSync.syncSoon();
   }
 }

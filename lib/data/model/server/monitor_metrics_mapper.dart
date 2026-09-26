@@ -198,11 +198,6 @@ void _applyDisks(ServerStatus ss, MonitorMetrics m) {
         .where((d) => d.isStorage)
         .toList();
   }
-  try {
-    ss.diskUsage = ss.disk.isEmpty ? null : DiskUsage.parse(ss.disk);
-  } catch (e, s) {
-    Loggers.app.warning(e, s);
-  }
 }
 
 void _applyNet(ServerStatus ss, MonitorMetrics m, int time) {

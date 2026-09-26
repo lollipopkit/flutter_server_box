@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
-import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/gpu.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -168,16 +167,21 @@ abstract final class ServerCardExpanded {
   }
 }
 
-/// What one card shows: the readings it has room for, and how many it has not.
+/// What one card shows: the readings it has room for, and everything the
+/// machine reports.
+///
+/// No count of what did not fit. There was one — `all.length - shown.length` —
+/// and nothing read it: every count drawn is taken from what that place is
+/// actually drawing, which is not the same arithmetic. The card counts
+/// `others.length`, the fold `others.length - shown.length`, the in-card line
+/// `inBar`. A field whose value disagrees with all three is worse than absent,
+/// because the next place that needs a count finds it and is subtly wrong.
 typedef ServerCardReadings = ({
   /// In the order every card draws them — see [serverCardReadings].
   List<ServerMetric> shown,
 
   /// Every reading this machine reports, for the detail and the row picker.
   List<ServerMetric> all,
-
-  /// How many of [all] did not fit in [shown].
-  int more,
 });
 
 /// Whether this server has said anything about itself yet.
@@ -304,7 +308,7 @@ ServerCardReadings serverCardReadings(ServerState srv) {
     for (final m in all)
       if (kinds.contains(m.kind)) m,
   ];
-  return (shown: shown, all: all, more: all.length - shown.length);
+  return (shown: shown, all: all);
 }
 
 /// Returns the status color used by server indicators.
@@ -490,8 +494,7 @@ List<ServerMetric> _readings(ServerState srv) {
     );
   }
 
-  if (ss.disk.isNotEmpty) {
-    final usage = ss.diskUsage ?? DiskUsage.parse(ss.disk);
+  if (ss.diskUsage case final usage?) {
     final used = usage.usedPercent;
     out.add(
       ServerMetric(

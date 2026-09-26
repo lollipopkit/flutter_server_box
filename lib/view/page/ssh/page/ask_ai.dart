@@ -349,10 +349,12 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
             AgentCommandPreview(text: command.command),
           ],
         ),
-        actions: [
-          TextButton(onPressed: context.popDialog, child: Text(libL10n.cancel)),
+        // The dialog's own context: the panel can close while this is up, and
+        // its context goes with it.
+        actionsBuilder: (dialog) => [
+          TextButton(onPressed: dialog.pop, child: Text(libL10n.cancel)),
           FilledButton(
-            onPressed: () => context.popDialog(true),
+            onPressed: () => dialog.pop(true),
             child: Text(libL10n.run),
           ),
         ],
