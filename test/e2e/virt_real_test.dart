@@ -83,6 +83,22 @@
 ///   secret is its base32. **Disabled and enabled again**; about four codes
 ///   are used, so the group waits for new 30 s steps.
 ///
+/// Storage and networks, groups of their own (`--plain-name 'storage and
+/// networks'`) that touch nothing existing: on the libvirt host a pool in a
+/// fresh `/var/lib/libvirt/sbxe2e-*` with volumes, uploads, a VM to attach
+/// to, and `sbxe2e-net-*` networks on 10.231.78.0/24 and 10.231.79.0/24; on
+/// the PVE node a directory storage in a fresh `/var/lib/sbxe2e-*`, a VM and
+/// a bridge `sbxe2e*` on 10.231.77.0/24 with no ports, **applied** to the
+/// node's network and removed again (it refuses to start while changes are
+/// pending there already). The PVE token then needs `Datastore.Allocate`,
+/// `Datastore.AllocateSpace`, `Datastore.AllocateTemplate` and `Sys.Modify`
+/// on `/nodes/<node>`; the `SBM_E2E_PVE_HOST` login must be root.
+///
+/// - `SBM_E2E_LIBVIRT_SUDO_USER`, `SBM_E2E_LIBVIRT_SUDO_PASSWORD`: an account
+///   on the libvirt host outside the `libvirt` group, with sudo, and its
+///   password. The `SBM_E2E_LIBVIRT_HOST` login must be root: the upload runs
+///   as that account through `su`, and so through sudo with the password.
+///
 /// Run with `flutter test test/e2e/virt_real_test.dart`, after
 /// `cargo build -p sbm_ffi`.
 @Timeout(Duration(minutes: 10))
@@ -94,6 +110,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart' show sha256;
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pointycastle/export.dart'
@@ -105,6 +122,7 @@ import 'package:server_box/core/utils/ssh_exec.dart';
 import 'package:server_box/core/utils/websocket_tunnel.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
+import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/model/virt/virt.dart';
@@ -112,6 +130,7 @@ import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_hardware.dart';
+import 'package:server_box/data/model/virt/virt_manage.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/virt/libvirt_backend.dart';
 import 'package:server_box/data/provider/virt/pve_backend.dart';
@@ -125,6 +144,8 @@ import '../helpers/tunnel_client.dart';
 Future<void> main() async {
   // Standing alone: `--plain-name 'create and delete'` runs only these.
   await _libvirtCreate();
+  await _libvirtManage();
+  await _pveManage();
   await _pveCreate();
   await _pvePassthrough();
   await _libvirt();
@@ -2468,4 +2489,745 @@ String _totp(String secret, int step) {
   final code =
       ByteData.sublistView(hash, offset, offset + 4).getUint32(0) & 0x7fffffff;
   return (code % 1000000).toString().padLeft(6, '0');
+}
+
+// -----------------------------------------------------------------------------
+// Storage and networks (phase 6)
+// -----------------------------------------------------------------------------
+
+/// Deterministic bytes of [size], in chunks, for an upload.
+Stream<List<int>> _bytes(int size, {int chunk = 64 << 10}) async* {
+  for (var at = 0; at < size; at += chunk) {
+    final n = min(chunk, size - at);
+    yield Uint8List.fromList(
+      List<int>.generate(n, (i) => ((at + i) * 31 + (at + i) ~/ 7) & 0xff),
+    );
+  }
+}
+
+Future<String> _sha256(Stream<List<int>> data) async =>
+    (await sha256.bind(data).first).toString();
+
+/// Everything as [user], from a root login, through `su`: the account
+/// outside the `libvirt` group that the sudo path is for.
+class _AsUser implements ServerByteExec {
+  _AsUser(this.inner, this.user);
+
+  final SshExec inner;
+  final String user;
+
+  String _wrap(String command) =>
+      "su -s /bin/sh $user -c '${command.replaceAll("'", r"'\''")}'";
+
+  @override
+  Future<ExecResult> run(
+    String script, {
+    String? entry,
+    Map<String, String>? env,
+    String? stdin,
+    OnExecOutput? onStdout,
+    OnExecOutput? onStderr,
+    Future<void>? cancel,
+  }) => inner.run(
+    entry == null ? _wrap(script) : script,
+    entry: entry == null ? null : _wrap(entry),
+    env: env,
+    stdin: stdin,
+    onStdout: onStdout,
+    onStderr: onStderr,
+    cancel: cancel,
+  );
+
+  @override
+  Future<ExecSession> start(String command) => inner.start(_wrap(command));
+}
+
+/// Pools, volumes, uploads and networks of the test's own on the libvirt
+/// host (`sbxe2e-*`, a pool in a fresh `/var/lib/libvirt/sbxe2e-*`), over
+/// the backend the app uses on SSH; with `SBM_E2E_LIBVIRT_SUDO_USER` and
+/// `SBM_E2E_LIBVIRT_SUDO_PASSWORD` also as that account, through sudo.
+/// Nothing that exists already is touched; everything is removed again.
+Future<void> _libvirtManage() async {
+  final host = e2eEnv('SBM_E2E_LIBVIRT_HOST');
+  if (host == null) return;
+  final ready = await prepareSshE2e(host);
+  final target = ready.target;
+  if (target == null) return;
+  final sudoUser = e2eEnv('SBM_E2E_LIBVIRT_SUDO_USER');
+  final sudoPassword = e2eEnv('SBM_E2E_LIBVIRT_SUDO_PASSWORD');
+
+  group('storage and networks: libvirt over SSH', () {
+    SSHClient? client;
+    late LibvirtBackend virt;
+    final stamp = DateTime.now().millisecondsSinceEpoch % 100000;
+    final poolName = 'sbxe2e-pool-$stamp';
+    final poolDir = '/var/lib/libvirt/sbxe2e-$stamp';
+    final net = 'sbxe2e-net-$stamp';
+    final vm = 'sbxe2e-vm-$stamp';
+    const iso = 'sbxe2e-upload.iso';
+
+    Future<String> sh(String command) async =>
+        (await execSshE2e(client!, command, null)).stdout;
+    Future<VirtStoragePool?> findPool() async => (await virt.storagePools())
+        .where((p) => p.name == poolName)
+        .firstOrNull;
+    Future<VirtStoragePool> pool() async =>
+        (await findPool()) ?? fail('no pool $poolName');
+    Future<List<VirtVolume>> vols() async => virt.volumes(await pool());
+    Future<VirtNetwork?> findNet(String name) async =>
+        (await virt.networks()).where((n) => n.name == name).firstOrNull;
+
+    setUpAll(() async {
+      await initRustLibForTest();
+      final c = await connectSshE2e(target, ready.identities);
+      client = c;
+      virt = LibvirtBackend(
+        serverId: 'e2e-libvirt-manage',
+        exec: () async => SshExec(c),
+        byteExec: () async => SshExec(c),
+        canStream: () => true,
+      );
+      // A fresh directory, and addresses nothing on the host has.
+      expect(await sh("test -e '$poolDir' && echo taken"), isEmpty);
+      final routes = await sh('ip -4 route');
+      expect(routes, isNot(contains('10.231.78.')));
+      expect(routes, isNot(contains('10.231.79.')));
+    });
+
+    tearDownAll(() async {
+      final c = client;
+      if (c == null) return;
+      Future<void> virsh(String args) => execSshE2e(
+        c,
+        'LC_ALL=C virsh --connect qemu:///system -q $args </dev/null',
+        null,
+      );
+      // Only what this group made, by name: never storage deleted by a
+      // domain's definition.
+      await virsh("destroy '$vm'");
+      await virsh("undefine '$vm' --nvram");
+      final left = await sh(
+        "virsh --connect qemu:///system -q vol-list --pool '$poolName' 2>/dev/null | awk '{print \$1}'",
+      );
+      for (final v in left.split('\n').where((l) => l.startsWith('sbxe2e'))) {
+        await virsh("vol-delete --pool '$poolName' --vol '$v'");
+      }
+      await virsh("pool-destroy '$poolName'");
+      await virsh("pool-undefine '$poolName'");
+      await sh("rmdir '$poolDir' 2>/dev/null; true");
+      for (final n in [net, '$net-iso', '$net-br', '$net-bad']) {
+        await virsh("net-destroy '$n'");
+        await virsh("net-undefine '$n'");
+      }
+      await virt.close();
+      c.close();
+    });
+
+    test('a dir pool: made, stopped, started, autostart off, refreshed', () async {
+      final snap = await virt.load();
+      expect(snap.capabilities.storageEdit, isTrue);
+      expect(snap.capabilities.upload, isTrue);
+      await virt.manage(
+        VirtPoolCreate(name: poolName, type: 'dir', source: poolDir),
+      );
+      var p = await pool();
+      expect(p.active, isTrue);
+      expect(p.autostart, isTrue);
+      expect(p.path, poolDir);
+      expect(await sh("stat -c %U '$poolDir'"), contains('root'));
+
+      final taken = await _virtErr(
+        virt.manage(VirtPoolCreate(name: poolName, type: 'dir', source: poolDir)),
+      );
+      expect(taken.type, VirtErrType.exists);
+
+      await virt.manage(VirtPoolSetActive(p, active: false));
+      p = await pool();
+      expect(p.active, isFalse);
+      await virt.manage(VirtPoolSetActive(p, active: true));
+      await virt.manage(VirtPoolSetAutostart(await pool(), on: false));
+      p = await pool();
+      expect(p.active, isTrue);
+      expect(p.autostart, isFalse);
+      // A file put there by other means appears after a refresh.
+      await sh("head -c 1024 /dev/zero > '$poolDir/sbxe2e-byhand.img'");
+      await virt.manage(VirtPoolRefresh(p));
+      expect((await vols()).map((v) => v.name), contains('sbxe2e-byhand.img'));
+      await virt.manage(
+        VirtVolumeDelete(p, (await vols()).firstWhere((v) => v.name == 'sbxe2e-byhand.img')),
+      );
+    });
+
+    test('volumes: made, grown, copied, deleted; a name taken is exists', () async {
+      final p = await pool();
+      await virt.manage(
+        VirtVolumeCreate(p, name: 'sbxe2e-a.qcow2', gib: 1, format: 'qcow2'),
+      );
+      var v = (await vols()).firstWhere((v) => v.name == 'sbxe2e-a.qcow2');
+      expect(v.format, 'qcow2');
+      expect(v.capacity, 1 << 30);
+      final taken = await _virtErr(
+        virt.manage(
+          VirtVolumeCreate(p, name: 'sbxe2e-a.qcow2', gib: 1, format: 'qcow2'),
+        ),
+      );
+      expect(taken.type, VirtErrType.exists);
+
+      await virt.manage(VirtVolumeResize(p, v, bytes: 2 << 30));
+      v = (await vols()).firstWhere((v) => v.name == 'sbxe2e-a.qcow2');
+      expect(v.capacity, 2 << 30);
+
+      await virt.manage(VirtVolumeClone(p, v, name: 'sbxe2e-a-clone.qcow2'));
+      final clone = (await vols()).firstWhere(
+        (v) => v.name == 'sbxe2e-a-clone.qcow2',
+      );
+      expect(clone.capacity, 2 << 30);
+      await virt.manage(VirtVolumeDelete(p, clone));
+      expect(
+        (await vols()).where((v) => v.name == 'sbxe2e-a-clone.qcow2'),
+        isEmpty,
+      );
+    });
+
+    test('upload: an ISO streamed in whole; a cancelled one leaves nothing', () async {
+      final p = await pool();
+      const size = 3 << 20;
+      final sent = <int>[];
+      final done = await virt.upload(
+        VirtUpload(pool: p, name: iso, size: size, open: () => _bytes(size)),
+        onProgress: sent.add,
+      );
+      expect(done, isTrue);
+      expect(sent.last, size);
+      final v = (await vols()).firstWhere((v) => v.name == iso);
+      expect(v.capacity, size);
+      expect(
+        (await sh("sha256sum '$poolDir/$iso'")).split(' ').first,
+        await _sha256(_bytes(size)),
+      );
+
+      // Stopped a few MiB in: the volume it went into is gone again.
+      final cancel = Completer<void>();
+      const big = 256 << 20;
+      final cancelled = await virt.upload(
+        VirtUpload(
+          pool: p,
+          name: 'sbxe2e-cancel.iso',
+          size: big,
+          open: () => _bytes(big),
+        ),
+        cancel: cancel.future,
+        onProgress: (n) {
+          if (n > 8 << 20 && !cancel.isCompleted) cancel.complete();
+        },
+      );
+      expect(cancelled, isFalse);
+      expect((await vols()).where((v) => v.name == 'sbxe2e-cancel.iso'), isEmpty);
+      expect(await sh("ls '$poolDir'"), isNot(contains('sbxe2e-cancel')));
+
+      // A name taken is refused before anything is sent.
+      final taken = await _virtErr(
+        virt.upload(
+          VirtUpload(pool: p, name: iso, size: 10, open: () => _bytes(10)),
+        ),
+      );
+      expect(taken.type, VirtErrType.exists);
+      expect(await sh("sha256sum '$poolDir/$iso'"), contains(await _sha256(_bytes(size))));
+    });
+
+    test('a volume attached to a VM as a disk, the ISO put in its CD-ROM', () async {
+      final p = await pool();
+      final media = (await vols()).firstWhere((v) => v.name == iso);
+      final spec = VirtCreateSpec(
+        kind: VirtGuestKind.qemu,
+        name: vm,
+        cores: 1,
+        memoryMiB: 256,
+        storage: p,
+        diskGiB: 1,
+        media: media,
+      );
+      final created = await virt.create(spec);
+      final g = (await virt.load()).guests.firstWhere((g) => g.id == created.id);
+      final disk = (await vols()).firstWhere((v) => v.name == 'sbxe2e-a.qcow2');
+      expect(disk.users, isEmpty);
+
+      var hw = await virt.hardware(g);
+      await virt.changeHardware(
+        g,
+        hw,
+        VirtHwAttachVolume(storage: p, volume: disk),
+      );
+      hw = await virt.hardware(g);
+      final attached = hw.disks.firstWhere((d) => d.source == disk.path);
+      expect(attached.kind, VirtHwDiskKind.disk);
+      expect(attached.format, 'qcow2');
+      // Now used: the pool says by whom, and deleting it is refused before
+      // the host is asked.
+      await virt.storagePools();
+      final used = (await vols()).firstWhere((v) => v.name == 'sbxe2e-a.qcow2');
+      expect(used.users.single.guestId, g.id);
+      expect(
+        virtResourceIssue(VirtVolumeDelete(p, used), host: VirtHostKind.libvirt),
+        VirtResIssue.inUse,
+      );
+
+      // The CD-ROM: ejected, and the uploaded ISO put back.
+      final cd = hw.disks.firstWhere((d) => d.kind == VirtHwDiskKind.cdrom);
+      await virt.changeHardware(g, hw, VirtHwSetMedia(key: cd.key));
+      hw = await virt.hardware(g);
+      expect(hw.disk(cd.key)?.source, isNull);
+      await virt.changeHardware(g, hw, VirtHwSetMedia(key: cd.key, media: media));
+      hw = await virt.hardware(g);
+      expect(hw.disk(cd.key)?.source, media.path);
+
+      // Detached, kept; then the VM deleted with its own disk only.
+      await virt.changeHardware(
+        g,
+        hw,
+        VirtHwRemoveDisk(key: attached.key, deleteVolume: false),
+      );
+      await virt.delete(g);
+      final left = (await vols()).map((v) => v.name).toList();
+      expect(left, containsAll(['sbxe2e-a.qcow2', iso]));
+      expect(left, isNot(contains('$vm.qcow2')));
+    });
+
+    if (sudoUser != null && sudoPassword != null) {
+      test('upload through sudo, as $sudoUser outside the libvirt group', () async {
+        final c = client!;
+        final asUser = LibvirtBackend(
+          serverId: 'e2e-libvirt-sudo',
+          exec: () async => _AsUser(SshExec(c), sudoUser),
+          byteExec: () async => _AsUser(SshExec(c), sudoUser),
+          canStream: () => true,
+        );
+        try {
+          final refused = await _virtErr(asUser.storagePools());
+          expect(refused.type, VirtErrType.sudoPasswordRequired);
+          asUser.provideSudoPassword(sudoPassword);
+          final p = (await asUser.storagePools()).firstWhere(
+            (p) => p.name == poolName,
+          );
+          const size = 1 << 20;
+          final done = await asUser.upload(
+            VirtUpload(
+              pool: p,
+              name: 'sbxe2e-sudo.iso',
+              size: size,
+              open: () => _bytes(size),
+            ),
+          );
+          expect(done, isTrue);
+          // The bytes, and not the password, are what the volume holds.
+          expect(
+            (await sh("sha256sum '$poolDir/sbxe2e-sudo.iso'")).split(' ').first,
+            await _sha256(_bytes(size)),
+          );
+          final v = (await asUser.volumes(p)).firstWhere(
+            (v) => v.name == 'sbxe2e-sudo.iso',
+          );
+          await asUser.manage(VirtVolumeDelete(p, v));
+
+          // A wrong password is refused, and nothing is left behind.
+          final wrong = LibvirtBackend(
+            serverId: 'e2e-libvirt-sudo-wrong',
+            exec: () async => _AsUser(SshExec(c), sudoUser),
+            byteExec: () async => _AsUser(SshExec(c), sudoUser),
+            canStream: () => true,
+          )..provideSudoPassword('${sudoPassword}x');
+          final rejected = await _virtErr(
+            wrong.upload(
+              VirtUpload(
+                pool: p,
+                name: 'sbxe2e-wrong.iso',
+                size: 10,
+                open: () => _bytes(10),
+              ),
+            ),
+          );
+          expect(rejected.type, VirtErrType.sudoPasswordRejected);
+          expect(await sh("ls '$poolDir'"), isNot(contains('sbxe2e-wrong')));
+        } finally {
+          await asUser.close();
+        }
+      });
+    }
+
+    test('the pool deleted with its directory', () async {
+      final p = await pool();
+      for (final v in await vols()) {
+        await virt.manage(VirtVolumeDelete(p, v));
+      }
+      await virt.manage(VirtPoolDelete(await pool(), deleteStorage: true));
+      expect(await findPool(), isNull);
+      expect(await sh("test -e '$poolDir' || echo gone"), contains('gone'));
+    });
+
+    test('networks: NAT with DHCP, isolated, a host bridge; an address in use is rolled back', () async {
+      await virt.manage(
+        VirtNetworkCreate(
+          name: net,
+          mode: 'nat',
+          cidr: '10.231.78.1/24',
+          dhcpStart: '10.231.78.100',
+          dhcpEnd: '10.231.78.200',
+        ),
+      );
+      var n = (await findNet(net))!;
+      expect(n.mode, 'nat');
+      expect(n.active, isTrue);
+      expect(n.autostart, isTrue);
+      expect(n.cidrs, ['10.231.78.1/24']);
+      expect(n.dhcpRanges, ['10.231.78.100-10.231.78.200']);
+      expect(n.bridge, startsWith('virbr'));
+      expect(await sh('ip -4 -br addr'), contains('10.231.78.1/24'));
+
+      await virt.manage(VirtNetworkSetAutostart(n, on: false));
+      await virt.manage(VirtNetworkSetActive((await findNet(net))!, active: false));
+      n = (await findNet(net))!;
+      expect(n.active, isFalse);
+      expect(n.autostart, isFalse);
+      expect(await sh('ip -4 -br addr'), isNot(contains('10.231.78.1/24')));
+      await virt.manage(VirtNetworkSetActive(n, active: true));
+      expect((await findNet(net))!.active, isTrue);
+
+      await virt.manage(
+        VirtNetworkCreate(name: '$net-iso', mode: 'isolated', cidr: '10.231.79.1/24'),
+      );
+      expect((await findNet('$net-iso'))!.mode, 'isolated');
+      await virt.manage(
+        VirtNetworkCreate(name: '$net-br', mode: 'bridge', bridge: 'sbxe2ebr0'),
+      );
+      final br = (await findNet('$net-br'))!;
+      expect(br.mode, 'bridge');
+      expect(br.bridge, 'sbxe2ebr0');
+
+      // The first network's subnet: refused by the host at the start, and
+      // not left defined.
+      final used = await _virtErr(
+        virt.manage(
+          VirtNetworkCreate(name: '$net-bad', mode: 'nat', cidr: '10.231.78.1/24'),
+        ),
+      );
+      expect(used.type, VirtErrType.actionFailed);
+      expect(await findNet('$net-bad'), isNull);
+      // The form refuses it before the host is asked.
+      expect(
+        virtResourceIssue(
+          VirtNetworkCreate(name: 'x', mode: 'nat', cidr: '10.231.78.9/24'),
+          host: VirtHostKind.libvirt,
+          networks: await virt.networks(),
+        ),
+        VirtResIssue.subnetTaken,
+      );
+
+      for (final name in [net, '$net-iso', '$net-br']) {
+        await virt.manage(VirtNetworkDelete((await findNet(name))!));
+        expect(await findNet(name), isNull);
+      }
+      expect(await sh('ip -4 -br addr'), isNot(contains('10.231.78.1/24')));
+    });
+  });
+}
+
+/// A storage, volumes, an upload and a Linux bridge of the test's own on the
+/// PVE node (`sbxe2e*`, a directory storage in a fresh `/var/lib/sbxe2e-*`),
+/// through the token over SSH, as the app makes them. The bridge has no
+/// ports, and SSH is checked after every apply. Refuses to start while the
+/// node has network changes pending — reverting would drop someone else's.
+/// The privilege test puts `NoAccess` on `/storage` for the token and takes
+/// it away again.
+Future<void> _pveManage() async {
+  final host = e2eEnv('SBM_E2E_PVE_HOST');
+  final tokenId = e2eEnv('SBM_E2E_PVE_TOKEN_ID');
+  final tokenSecret = e2eEnv('SBM_E2E_PVE_TOKEN_SECRET');
+  if (host == null || tokenId == null || tokenSecret == null) return;
+  final ready = await prepareSshE2e(host);
+  final target = ready.target;
+  if (target == null) return;
+
+  group('storage and networks: PVE over SSH', () {
+    SSHClient? client;
+    late PveBackend pve;
+    late String node;
+    final stamp = DateTime.now().millisecondsSinceEpoch % 100000;
+    final store = 'sbxe2e-dir-$stamp';
+    final dir = '/var/lib/sbxe2e-$stamp';
+    final bridge = 'sbxe2e$stamp';
+    int? vmid;
+    var noAccess = false;
+
+    Future<String> sh(String command) async =>
+        (await execSshE2e(client!, command, null)).stdout;
+    Future<VirtStoragePool?> findStore() async => (await pve.storagePools())
+        .where((p) => p.name == store && p.node == node)
+        .firstOrNull;
+    Future<VirtStoragePool> storage() async =>
+        (await findStore()) ?? fail('no storage $store');
+    Future<List<VirtVolume>> vols() async => pve.volumes(await storage());
+    Future<VirtNetwork?> findBridge() async => (await pve.networks())
+        .where((n) => n.name == bridge && n.node == node)
+        .firstOrNull;
+    Future<void> apply() async {
+      await pve.manage(VirtNetworkApply(node));
+      // The node is still there after its network reloaded.
+      expect(await sh('echo ssh-ok'), contains('ssh-ok'));
+      expect(await pve.networkChanges(), isEmpty);
+    }
+
+    setUpAll(() async {
+      await initRustLibForTest();
+      final c = await connectSshE2e(target, ready.identities);
+      client = c;
+      final d = _pvePaths(target, () => c, '')['over SSH']!.dialer();
+      pve = PveBackend(
+        serverId: 'e2e-pve-manage',
+        config: PveConfig(
+          addr: 'https://localhost:8006',
+          auth: PveAuth.token,
+          tokenId: tokenId,
+          tokenSecret: tokenSecret,
+        ),
+        connect: d.startConnect,
+        onClose: d.close,
+        taskPoll: const Duration(milliseconds: 500),
+        taskTimeout: const Duration(minutes: 3),
+      );
+      final e = await _virtErr(pve.load());
+      expect(e.type, VirtErrType.certUnconfirmed);
+      await pve.confirmCert(e.cert!.fingerprint);
+      final snap = await pve.load();
+      node = snap.host.nodes.first.name;
+      expect(await sh("test -e '$dir' && echo taken"), isEmpty);
+      expect(
+        await sh('ls /etc/network/interfaces.new 2>/dev/null'),
+        isEmpty,
+        reason: 'network changes are pending on the node already',
+      );
+    });
+
+    tearDownAll(() async {
+      final c = client;
+      if (c == null) return;
+      if (noAccess) {
+        await sh("pveum acl delete /storage --tokens '$tokenId' --roles NoAccess");
+      }
+      if (vmid != null) {
+        // A disk on this group's storage, which may be gone already, keeps
+        // `qm destroy` from running: taken off first.
+        await sh(
+          "for k in \$(qm config $vmid 2>/dev/null | grep '$store' | cut -d: -f1); do qm set $vmid --delete \$k; done; qm destroy $vmid --purge 2>/dev/null",
+        );
+      }
+      // The bridge: out of the pending configuration, and out of the running
+      // one if it got there.
+      if ((await sh('ls /etc/network/interfaces.new 2>/dev/null')).isNotEmpty) {
+        await sh('pvesh delete /nodes/$node/network');
+      }
+      if ((await sh("grep -c 'iface $bridge ' /etc/network/interfaces")).trim() != '0') {
+        await sh(
+          'pvesh delete /nodes/$node/network/$bridge && pvesh set /nodes/$node/network',
+        );
+      }
+      await sh(
+        "for v in \$(pvesm list '$store' 2>/dev/null | awk 'NR>1{print \$1}'); do pvesm free \"\$v\"; done",
+      );
+      await sh("pvesm remove '$store' 2>/dev/null; rm -rf -- '$dir'");
+      await pve.close();
+      c.close();
+    });
+
+    test('a dir storage: added, disabled, enabled', () async {
+      final caps = (await pve.load()).capabilities;
+      expect(caps.storageEdit, isTrue);
+      expect(caps.networkApply, isTrue);
+      await pve.manage(
+        VirtPoolCreate(
+          name: store,
+          type: 'dir',
+          source: dir,
+          node: node,
+          content: const ['images', 'iso'],
+        ),
+      );
+      var s = await storage();
+      expect(s.active, isTrue);
+      expect(s.path, dir);
+      expect(s.content, containsAll(['images', 'iso']));
+      final taken = await _virtErr(
+        pve.manage(VirtPoolCreate(name: store, type: 'dir', source: dir, node: node)),
+      );
+      expect(taken.type, VirtErrType.exists);
+
+      await pve.manage(VirtPoolSetActive(s, active: false));
+      s = await storage();
+      expect(s.active, isFalse);
+      expect(s.enabled, isFalse);
+      await pve.manage(VirtPoolSetActive(s, active: true));
+      expect((await storage()).active, isTrue);
+    });
+
+    test('volumes: allocated for a VMID, uploaded, deleted; a cancelled upload leaves nothing', () async {
+      final s = await storage();
+      final next = (await pve.nextVmid())!;
+      final name = 'vm-$next-disk-0';
+      await pve.manage(VirtVolumeCreate(s, name: name, gib: 1, format: 'qcow2'));
+      final v = (await vols()).firstWhere((v) => v.name == '$name.qcow2');
+      expect(v.capacity, 1 << 30);
+      expect(v.format, 'qcow2');
+      // Its VMID has no guest: not in use.
+      expect(v.users.single.vmid, next);
+
+      const size = 3 << 20;
+      final sent = <int>[];
+      expect(
+        await pve.upload(
+          VirtUpload(
+            pool: s,
+            name: 'sbxe2e-upload.iso',
+            size: size,
+            open: () => _bytes(size),
+          ),
+          onProgress: sent.add,
+        ),
+        isTrue,
+      );
+      expect(sent.last, greaterThanOrEqualTo(size));
+      final iso = (await vols()).firstWhere((v) => v.name == 'sbxe2e-upload.iso');
+      expect(iso.content, 'iso');
+      expect(
+        (await sh("sha256sum '$dir/template/iso/sbxe2e-upload.iso'")).split(' ').first,
+        await _sha256(_bytes(size)),
+      );
+
+      final cancel = Completer<void>();
+      const big = 256 << 20;
+      expect(
+        await pve.upload(
+          VirtUpload(
+            pool: s,
+            name: 'sbxe2e-cancel.iso',
+            size: big,
+            open: () => _bytes(big),
+          ),
+          cancel: cancel.future,
+          onProgress: (n) {
+            if (n > 8 << 20 && !cancel.isCompleted) cancel.complete();
+          },
+        ),
+        isFalse,
+      );
+      expect((await vols()).where((v) => v.name == 'sbxe2e-cancel.iso'), isEmpty);
+      // The session outlived the cancel.
+      await pve.load();
+
+      await pve.manage(VirtVolumeDelete(s, iso));
+      await pve.manage(VirtVolumeDelete(s, v));
+      expect(await vols(), isEmpty);
+    });
+
+    test('a volume allocated for a VM, attached to it and deleted with it', () async {
+      final s = await storage();
+      final lvm = (await pve.storagePools()).firstWhere(
+        (p) => p.node == node && p.active && p.content.contains('images') && p.name != store,
+      );
+      final id = (await pve.nextVmid())!;
+      vmid = id;
+      await pve.create(
+        VirtCreateSpec(
+          kind: VirtGuestKind.qemu,
+          name: 'sbxe2e-attach',
+          node: node,
+          vmid: id,
+          cores: 1,
+          memoryMiB: 256,
+          storage: lvm,
+          diskGiB: 1,
+        ),
+      );
+      await pve.manage(
+        VirtVolumeCreate(s, name: 'vm-$id-disk-1', gib: 1, format: 'raw'),
+      );
+      final v = (await vols()).firstWhere((v) => v.name == 'vm-$id-disk-1.raw');
+      // `/cluster/resources` names a new guest a moment after its task.
+      late VirtGuest g;
+      for (var i = 0; i < 30; i++) {
+        final found = (await pve.load()).guests.where((g) => g.vmid == id);
+        if (found.firstOrNull?.state == VirtGuestState.stopped) {
+          g = found.first;
+          break;
+        }
+        if (i == 29) fail('VM $id never read as stopped');
+        await Future<void>.delayed(const Duration(seconds: 1));
+      }
+      var hw = await pve.hardware(g);
+      await pve.changeHardware(g, hw, VirtHwAttachVolume(storage: s, volume: v));
+      hw = await pve.hardware(g);
+      expect(hw.disks.map((d) => d.source), contains(v.id));
+      await _whileLocked(() => pve.delete(g));
+      vmid = null;
+      expect(await vols(), isEmpty);
+    });
+
+    test('a privilege missing is named, with the command that grants it', () async {
+      await sh("pveum acl modify /storage --tokens '$tokenId' --roles NoAccess");
+      noAccess = true;
+      final e = await _virtErr(
+        pve.manage(
+          VirtPoolCreate(name: '$store-x', type: 'dir', source: '$dir-x', node: node),
+        ),
+      );
+      await sh("pveum acl delete /storage --tokens '$tokenId' --roles NoAccess");
+      noAccess = false;
+      expect(e.type, VirtErrType.permissionDenied);
+      expect(e.message, contains('Datastore.Allocate'));
+      expect(e.message, contains("pveum acl modify /storage --tokens '$tokenId' --roles PVEDatastoreAdmin"));
+      expect(await findStore(), isNotNull);
+    });
+
+    test('the storage removed; what was in it stays', () async {
+      await sh("touch '$dir/sbxe2e-kept'");
+      await pve.manage(VirtPoolDelete(await storage()));
+      expect(await findStore(), isNull);
+      expect(await sh("ls '$dir'"), contains('sbxe2e-kept'));
+    });
+
+    test('a Linux bridge: pending, reverted; made again, applied, deleted, applied', () async {
+      await pve.manage(
+        VirtNetworkCreate(name: bridge, mode: 'bridge', node: node, cidr: '10.231.77.1/24'),
+      );
+      var changes = await pve.networkChanges();
+      expect(changes.single.node, node);
+      expect(changes.single.diff, contains('iface $bridge'));
+      var b = (await findBridge())!;
+      expect(b.active, isFalse);
+      expect(b.cidrs, ['10.231.77.1/24']);
+      await pve.manage(VirtNetworkRevert(node));
+      expect(await pve.networkChanges(), isEmpty);
+      expect(await findBridge(), isNull);
+
+      await pve.manage(
+        VirtNetworkCreate(
+          name: bridge,
+          mode: 'bridge',
+          node: node,
+          cidr: '10.231.77.1/24',
+          vlanAware: true,
+        ),
+      );
+      await apply();
+      b = (await findBridge())!;
+      expect(b.active, isTrue);
+      expect(b.vlanAware, isTrue);
+      expect(await sh('ip -4 -br addr show $bridge'), contains('10.231.77.1/24'));
+
+      await pve.manage(VirtNetworkDelete(b));
+      changes = await pve.networkChanges();
+      expect(changes.single.diff, contains('-iface $bridge'));
+      await apply();
+      expect(await findBridge(), isNull);
+      expect(await sh('ip link show $bridge 2>&1'), contains('does not exist'));
+    });
+  });
 }

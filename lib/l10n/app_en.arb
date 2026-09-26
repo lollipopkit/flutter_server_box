@@ -5695,5 +5695,487 @@
         "example": "2026-09-24 02:00"
       }
     }
+  },
+  "pveNeedsPrivilege": "{account} lacks {privilege} on {path}. Grant it, on the PVE host:\n{command}",
+  "@pveNeedsPrivilege": {
+    "description": "PVE refused a storage or network change for want of a privilege: who, which, where, and the command that grants it.",
+    "placeholders": {
+      "account": {
+        "type": "String",
+        "example": "root@pam!serverbox"
+      },
+      "privilege": {
+        "type": "String",
+        "example": "Sys.Modify"
+      },
+      "path": {
+        "type": "String",
+        "example": "/nodes/pve"
+      },
+      "command": {
+        "type": "String",
+        "example": "pveum acl modify /nodes/pve --tokens 'root@pam!serverbox' --roles PVEAdmin"
+      }
+    }
+  },
+  "virtCanDelete": "Can be deleted",
+  "@virtCanDelete": {
+    "description": "Index note of the operations group: nothing stops deleting it."
+  },
+  "virtInUse": "In use",
+  "@virtInUse": {
+    "description": "Index note: a guest uses it."
+  },
+  "virtOps": "Operations",
+  "@virtOps": {
+    "description": "Group title: what can be done to a pool or network (stop, delete)."
+  },
+  "virtPool": "Storage pool",
+  "@virtPool": {
+    "description": "A libvirt storage pool; group title."
+  },
+  "virtPoolNew": "New storage pool",
+  "@virtPoolNew": {
+    "description": "Button and title: a new libvirt storage pool."
+  },
+  "virtStorageAdd": "Add storage",
+  "@virtStorageAdd": {
+    "description": "Button and title: a new PVE storage."
+  },
+  "virtPoolUsedPct": "{pct}% used",
+  "@virtPoolUsedPct": {
+    "description": "Index note: how full a pool is.",
+    "placeholders": {
+      "pct": {
+        "type": "String",
+        "example": "42.5"
+      }
+    }
+  },
+  "virtPoolInUse": "A guest uses a volume here, so the pool cannot be stopped or removed.",
+  "@virtPoolInUse": {
+    "description": "Why a pool cannot be stopped or removed."
+  },
+  "virtPoolDelete": "Delete pool",
+  "@virtPoolDelete": {
+    "description": "Button: remove a libvirt pool."
+  },
+  "virtStorageRemove": "Remove storage",
+  "@virtStorageRemove": {
+    "description": "Button: remove a PVE storage from the configuration."
+  },
+  "virtPoolDeleteAsk": "Remove the pool {name}? Its definition goes; its volumes stay where they are.",
+  "@virtPoolDeleteAsk": {
+    "description": "Confirm removing a libvirt pool.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "images"
+      }
+    }
+  },
+  "virtStorageRemoveAsk": "Remove the storage {name} from PVE's configuration? What is on it stays.",
+  "@virtStorageRemoveAsk": {
+    "description": "Confirm removing a PVE storage.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "nfs-backup"
+      }
+    }
+  },
+  "virtPoolDeleteKeepsVolumes": "Its {count} volumes are kept on disk.",
+  "@virtPoolDeleteKeepsVolumes": {
+    "description": "Under the delete question: the volumes stay.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "virtPoolDeleteStorage": "Also delete its directory (only when empty)",
+  "@virtPoolDeleteStorage": {
+    "description": "Checkbox: pool-delete, which removes an empty directory."
+  },
+  "virtPoolStopAsk": "Stop the pool {name}? Its volumes cannot be listed or created until it starts again.",
+  "@virtPoolStopAsk": {
+    "description": "Confirm stopping a libvirt pool.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "images"
+      }
+    }
+  },
+  "virtStorageDisableAsk": "Disable the storage {name}? Guests with disks on it cannot start until it is enabled again.",
+  "@virtStorageDisableAsk": {
+    "description": "Confirm disabling a PVE storage.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "local"
+      }
+    }
+  },
+  "virtPoolLogicalNote": "An existing volume group is used as it is; nothing is formatted.",
+  "@virtPoolLogicalNote": {
+    "description": "Under the new-pool form for an LVM volume group."
+  },
+  "virtPoolMountPoint": "Mount point",
+  "@virtPoolMountPoint": {
+    "description": "Field: where an NFS pool is mounted."
+  },
+  "virtPoolSourceNfs": "Source (host:/path)",
+  "@virtPoolSourceNfs": {
+    "description": "Field: an NFS export."
+  },
+  "virtPoolSourceVg": "Volume group",
+  "@virtPoolSourceVg": {
+    "description": "Field: an LVM volume group."
+  },
+  "virtPoolSourceThin": "Volume group / thin pool",
+  "@virtPoolSourceThin": {
+    "description": "Field: an LVM volume group and its thin pool, vg/thinpool."
+  },
+  "virtPoolSourceZfs": "ZFS pool",
+  "@virtPoolSourceZfs": {
+    "description": "Field: a ZFS pool or dataset."
+  },
+  "virtPoolTypeVg": "LVM volume group",
+  "@virtPoolTypeVg": {
+    "description": "Pool type choice: an LVM volume group."
+  },
+  "virtResNameEmpty": "Enter a name",
+  "@virtResNameEmpty": {
+    "description": "Form error."
+  },
+  "virtResNameInvalid": "Not a name this host takes (letters, digits, . _ -)",
+  "@virtResNameInvalid": {
+    "description": "Form error: a pool, volume or network name the host does not take."
+  },
+  "virtResSourceInvalid": "Not a path or source the host takes",
+  "@virtResSourceInvalid": {
+    "description": "Form error: the path, export, volume group or pool of a new pool."
+  },
+  "virtResTargetInvalid": "An absolute path",
+  "@virtResTargetInvalid": {
+    "description": "Form error: the mount point must be an absolute path."
+  },
+  "virtResCidrInvalid": "An address with its prefix, e.g. 192.168.150.1/24",
+  "@virtResCidrInvalid": {
+    "description": "Form error: the IPv4 address with prefix."
+  },
+  "virtResDhcpInvalid": "Two addresses in the network, in order, without the host's own",
+  "@virtResDhcpInvalid": {
+    "description": "Form error: the DHCP range."
+  },
+  "virtResSubnetTaken": "Another network here is on this subnet",
+  "@virtResSubnetTaken": {
+    "description": "Form error: another network overlaps."
+  },
+  "virtResBridgeInvalid": "Not an interface name",
+  "@virtResBridgeInvalid": {
+    "description": "Form error: an interface name."
+  },
+  "virtResFormat": "Not a format this pool holds",
+  "@virtResFormat": {
+    "description": "Form error: the pool cannot hold that format."
+  },
+  "virtVolNew": "New volume",
+  "@virtVolNew": {
+    "description": "Button and form title: a new volume."
+  },
+  "virtVolCount": "{count} volumes",
+  "@virtVolCount": {
+    "description": "Index note: how many volumes.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "4"
+      }
+    }
+  },
+  "virtVolNone": "This pool has no volumes yet.",
+  "@virtVolNone": {
+    "description": "A pool with no volumes."
+  },
+  "virtVolEmptyAttach": "A new volume can be attached to any VM later",
+  "@virtVolEmptyAttach": {
+    "description": "Dashed row beside \"New volume\"."
+  },
+  "virtVolEmptyUpload": "An ISO can also be uploaded directly",
+  "@virtVolEmptyUpload": {
+    "description": "Dashed row beside \"New volume\" where uploads are offered."
+  },
+  "virtVolPveName": "PVE names a volume for its VM: vm-<VMID>-disk-<N>",
+  "@virtVolPveName": {
+    "description": "Under the volume name on PVE."
+  },
+  "virtVolUsers": "Used by",
+  "@virtVolUsers": {
+    "description": "Field: the guests using a volume."
+  },
+  "virtVolAllocated": "Allocated",
+  "@virtVolAllocated": {
+    "description": "Meter: how much of a volume takes space on the host."
+  },
+  "virtVolGrowFromGuest": "A guest uses it: grow it from that guest's Hardware view",
+  "@virtVolGrowFromGuest": {
+    "description": "Why a used volume is not grown here."
+  },
+  "virtVolInUse": "A guest uses this volume",
+  "@virtVolInUse": {
+    "description": "A guest uses this volume: not deleted, not attached again."
+  },
+  "virtVolAttach": "Attach to VM",
+  "@virtVolAttach": {
+    "description": "Button: attach a volume to a VM as a disk."
+  },
+  "virtVolAttachNote": "Attached as a new disk, on the bus its first disk is on",
+  "@virtVolAttachNote": {
+    "description": "Under the VM choice for attaching a volume."
+  },
+  "virtVolAttached": "Attached to {name}",
+  "@virtVolAttached": {
+    "description": "Toast after attaching.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "debian-13"
+      }
+    }
+  },
+  "virtVolInsert": "Insert into CD-ROM",
+  "@virtVolInsert": {
+    "description": "Button: insert an ISO into a VM's CD-ROM drive."
+  },
+  "virtVolInserted": "Inserted into {name}'s CD-ROM drive",
+  "@virtVolInserted": {
+    "description": "Toast after inserting an ISO.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "debian-13"
+      }
+    }
+  },
+  "virtVolNoCdrom": "{name} has no CD-ROM drive",
+  "@virtVolNoCdrom": {
+    "description": "A VM without a CD-ROM drive to insert into.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "debian-13"
+      }
+    }
+  },
+  "virtVolDeleteAsk": "Delete the volume {name} from {pool}? What is in it is gone for good.",
+  "@virtVolDeleteAsk": {
+    "description": "Confirm deleting a volume.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "data.qcow2"
+      },
+      "pool": {
+        "type": "String",
+        "example": "images"
+      }
+    }
+  },
+  "virtUploadIso": "Upload ISO",
+  "@virtUploadIso": {
+    "description": "Bar button: upload an ISO from this device."
+  },
+  "virtUploadTo": "Upload to {pool}",
+  "@virtUploadTo": {
+    "description": "Dialog title: the name an upload takes.",
+    "placeholders": {
+      "pool": {
+        "type": "String",
+        "example": "local"
+      }
+    }
+  },
+  "virtUploadDone": "{name} uploaded",
+  "@virtUploadDone": {
+    "description": "Toast: an upload finished.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "debian-13.iso"
+      }
+    }
+  },
+  "virtNetConfig": "Configuration",
+  "@virtNetConfig": {
+    "description": "Group title: how a network is set up."
+  },
+  "virtNetInternal": "Internal",
+  "@virtNetInternal": {
+    "description": "A bridge with no ports, a network with no bridge of the host's."
+  },
+  "virtNetBridgePorts": "Bridge ports",
+  "@virtNetBridgePorts": {
+    "description": "Field: a PVE bridge's ports."
+  },
+  "virtNetHostBridge": "Host bridge",
+  "@virtNetHostBridge": {
+    "description": "Field: the host bridge a libvirt bridge-mode network uses."
+  },
+  "virtNetPortsHint": "eno2; empty for an internal bridge",
+  "@virtNetPortsHint": {
+    "description": "Hint for a PVE bridge's ports."
+  },
+  "virtNetDhcpRange": "DHCP range",
+  "@virtNetDhcpRange": {
+    "description": "Field: a network's DHCP range."
+  },
+  "virtNetDhcpTip": "dnsmasq gives guests their addresses",
+  "@virtNetDhcpTip": {
+    "description": "Under the DHCP switch."
+  },
+  "virtNetVlanTip": "Guests' NICs may carry a VLAN tag",
+  "@virtNetVlanTip": {
+    "description": "Under the VLAN aware switch."
+  },
+  "virtNetNatTip": "Through the host: guests reach out, nothing reaches in",
+  "@virtNetNatTip": {
+    "description": "NAT network: what it does."
+  },
+  "virtNetRoutedTip": "Routed by the host without NAT: the LAN needs a route back",
+  "@virtNetRoutedTip": {
+    "description": "Routed network: what it does."
+  },
+  "virtNetIsolatedTip": "Only the guests and the host reach each other",
+  "@virtNetIsolatedTip": {
+    "description": "Isolated network: what it does."
+  },
+  "virtNetBridgedTip": "Guests join a bridge of the host's, on its physical network",
+  "@virtNetBridgedTip": {
+    "description": "Bridged network: what it does."
+  },
+  "virtNetNew": "New network",
+  "@virtNetNew": {
+    "description": "Button and title: a new libvirt network."
+  },
+  "virtNetNewBridge": "New Linux bridge",
+  "@virtNetNewBridge": {
+    "description": "Button and title: a new PVE Linux bridge."
+  },
+  "virtNetVirtual": "Virtual network",
+  "@virtNetVirtual": {
+    "description": "Group title of the new libvirt network form."
+  },
+  "virtNetDelete": "Delete network",
+  "@virtNetDelete": {
+    "description": "Button: delete a network."
+  },
+  "virtNetDeleteAsk": "Delete the network {name}? It is stopped and its definition removed.",
+  "@virtNetDeleteAsk": {
+    "description": "Confirm deleting a libvirt network.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "lab"
+      }
+    }
+  },
+  "virtNetDeleteAskPve": "Remove the bridge {name} from {node}? It leaves the pending configuration now, and the host once that is applied.",
+  "@virtNetDeleteAskPve": {
+    "description": "Confirm removing a PVE bridge.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "vmbr2"
+      },
+      "node": {
+        "type": "String",
+        "example": "pve"
+      }
+    }
+  },
+  "virtNetInUse": "Guests on it: {count}. It cannot be deleted.",
+  "@virtNetInUse": {
+    "description": "Why a network cannot be deleted.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "virtNetStopAsk": "Stop {name}? The {count} guests on it lose their network until it starts again.",
+  "@virtNetStopAsk": {
+    "description": "Confirm stopping a network with guests on it.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "default"
+      },
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "virtNetInactivePve": "Not active: a new bridge waits in the pending configuration until it is applied.",
+  "@virtNetInactivePve": {
+    "description": "A PVE interface that is not active."
+  },
+  "virtNetPveApplyNote": "Saved as a pending change: it takes effect when the configuration is applied (ifreload -a).",
+  "@virtNetPveApplyNote": {
+    "description": "Under the new PVE bridge form."
+  },
+  "virtNetPendingSaved": "Saved as pending: apply the configuration for it to take effect",
+  "@virtNetPendingSaved": {
+    "description": "Toast after a PVE bridge was created or removed."
+  },
+  "virtNetPendingTitle": "Pending network changes on {node}",
+  "@virtNetPendingTitle": {
+    "description": "Card title: PVE network changes not applied yet.",
+    "placeholders": {
+      "node": {
+        "type": "String",
+        "example": "pve"
+      }
+    }
+  },
+  "virtNetPendingTip": "PVE keeps network changes in interfaces.new until they are applied.",
+  "@virtNetPendingTip": {
+    "description": "Card text: where PVE keeps them."
+  },
+  "virtNetPendingShow": "Show changes",
+  "@virtNetPendingShow": {
+    "description": "Button: show the pending diff."
+  },
+  "virtNetApply": "Apply configuration",
+  "@virtNetApply": {
+    "description": "Button: PVE Apply Configuration."
+  },
+  "virtNetApplyAsk": "Apply the pending network configuration on {node}? PVE reloads the host's network (ifreload -a): a mistake in it can cut the host off.",
+  "@virtNetApplyAsk": {
+    "description": "Confirm applying PVE network changes.",
+    "placeholders": {
+      "node": {
+        "type": "String",
+        "example": "pve"
+      }
+    }
+  },
+  "virtNetRevertAsk": "Drop the pending network configuration on {node}?",
+  "@virtNetRevertAsk": {
+    "description": "Confirm dropping PVE network changes.",
+    "placeholders": {
+      "node": {
+        "type": "String",
+        "example": "pve"
+      }
+    }
+  },
+  "pveTokenTipStorage": "Managing storage needs Datastore.Allocate on /storage (adding, disabling, removing), Datastore.AllocateSpace (volumes) and Datastore.AllocateTemplate (uploads); Linux bridges and applying the network configuration need Sys.Modify on the node.",
+  "@pveTokenTipStorage": {
+    "description": "PVE API token help: the privileges managing storage and networks needs (verified on PVE 9.2)."
   }
 }

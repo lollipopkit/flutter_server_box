@@ -250,53 +250,61 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView> {
               if (!_open.remove(snap.name)) _open.add(snap.name);
             }),
           ),
-          if (open)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(17, 0, 17, 9),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (when != null) VirtFact(libL10n.time, when.simple()),
-                  VirtFact(l10n.virtSnapshotParent, snap.parent ?? '--'),
-                  if (snap.description case final d?)
-                    VirtFact(libL10n.description, d),
-                  if (stops)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 5),
-                      child: Text(
-                        l10n.virtSnapshotRevertStops(widget.guest.name),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: StatePalette.warn,
+          Reveal(
+            open: open,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(17, 0, 17, 9),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (when != null) VirtFact(libL10n.time, when.simple()),
+                    VirtFact(l10n.virtSnapshotParent, snap.parent ?? '--'),
+                    if (snap.description case final d?)
+                      VirtFact(libL10n.description, d),
+                    if (stops)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 5),
+                        child: Text(
+                          l10n.virtSnapshotRevertStops(widget.guest.name),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: StatePalette.warn,
+                          ),
                         ),
                       ),
+                    UIs.height7,
+                    Wrap(
+                      alignment: WrapAlignment.end,
+                      spacing: 7,
+                      runSpacing: 7,
+                      children: [
+                        TextButton.icon(
+                          key: ValueKey('snapshot:delete:${snap.name}'),
+                          onPressed: busy
+                              ? null
+                              : () => unawaited(_delete(snap)),
+                          icon: Icon(Icons.delete_outline, color: scheme.error),
+                          label: Text(
+                            libL10n.delete,
+                            style: TextStyle(color: scheme.error),
+                          ),
+                        ),
+                        FilledButton.tonalIcon(
+                          key: ValueKey('snapshot:revert:${snap.name}'),
+                          onPressed: busy
+                              ? null
+                              : () => unawaited(_revert(snap)),
+                          icon: const Icon(Icons.restore, size: 18),
+                          label: Text(l10n.virtSnapshotRevert),
+                        ),
+                      ],
                     ),
-                  UIs.height7,
-                  Wrap(
-                    alignment: WrapAlignment.end,
-                    spacing: 7,
-                    runSpacing: 7,
-                    children: [
-                      TextButton.icon(
-                        key: ValueKey('snapshot:delete:${snap.name}'),
-                        onPressed: busy ? null : () => unawaited(_delete(snap)),
-                        icon: Icon(Icons.delete_outline, color: scheme.error),
-                        label: Text(
-                          libL10n.delete,
-                          style: TextStyle(color: scheme.error),
-                        ),
-                      ),
-                      FilledButton.tonalIcon(
-                        key: ValueKey('snapshot:revert:${snap.name}'),
-                        onPressed: busy ? null : () => unawaited(_revert(snap)),
-                        icon: const Icon(Icons.restore, size: 18),
-                        label: Text(l10n.virtSnapshotRevert),
-                      ),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+            ],
+          ),
         ],
       ),
     );

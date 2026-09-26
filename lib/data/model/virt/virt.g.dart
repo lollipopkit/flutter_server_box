@@ -170,6 +170,25 @@ _VirtCapabilities _$VirtCapabilitiesFromJson(Map<String, dynamic> json) =>
       deleteKeepsDisks: json['deleteKeepsDisks'] as bool? ?? false,
       hardware: json['hardware'] as bool? ?? false,
       hardwareRevert: json['hardwareRevert'] as bool? ?? false,
+      storageEdit: json['storageEdit'] as bool? ?? false,
+      poolTypes:
+          (json['poolTypes'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const <String>[],
+      poolAutostart: json['poolAutostart'] as bool? ?? false,
+      poolDeleteStorage: json['poolDeleteStorage'] as bool? ?? false,
+      volumeResize: json['volumeResize'] as bool? ?? false,
+      volumeClone: json['volumeClone'] as bool? ?? false,
+      upload: json['upload'] as bool? ?? false,
+      networkEdit: json['networkEdit'] as bool? ?? false,
+      networkModes:
+          (json['networkModes'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const <String>[],
+      networkStart: json['networkStart'] as bool? ?? false,
+      networkApply: json['networkApply'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$VirtCapabilitiesToJson(_VirtCapabilities instance) =>
@@ -192,4 +211,15 @@ Map<String, dynamic> _$VirtCapabilitiesToJson(_VirtCapabilities instance) =>
       'deleteKeepsDisks': instance.deleteKeepsDisks,
       'hardware': instance.hardware,
       'hardwareRevert': instance.hardwareRevert,
+      'storageEdit': instance.storageEdit,
+      'poolTypes': instance.poolTypes,
+      'poolAutostart': instance.poolAutostart,
+      'poolDeleteStorage': instance.poolDeleteStorage,
+      'volumeResize': instance.volumeResize,
+      'volumeClone': instance.volumeClone,
+      'upload': instance.upload,
+      'networkEdit': instance.networkEdit,
+      'networkModes': instance.networkModes,
+      'networkStart': instance.networkStart,
+      'networkApply': instance.networkApply,
     };

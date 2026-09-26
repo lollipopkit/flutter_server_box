@@ -4067,6 +4067,303 @@ class AppLocalizationsZh extends AppLocalizations {
   String virtBackupRestored(String time) {
     return '已从 $time 还原';
   }
+
+  @override
+  String pveNeedsPrivilege(
+    String account,
+    String privilege,
+    String path,
+    String command,
+  ) {
+    return '$account 在 $path 上没有 $privilege 权限。请在 PVE 主机上授予：\n$command';
+  }
+
+  @override
+  String get virtCanDelete => '可以删除';
+
+  @override
+  String get virtInUse => '使用中';
+
+  @override
+  String get virtOps => '操作';
+
+  @override
+  String get virtPool => '存储池';
+
+  @override
+  String get virtPoolNew => '新建存储池';
+
+  @override
+  String get virtStorageAdd => '添加存储';
+
+  @override
+  String virtPoolUsedPct(String pct) {
+    return '已用 $pct%';
+  }
+
+  @override
+  String get virtPoolInUse => '有卷正被虚拟机使用，不能停用或删除。';
+
+  @override
+  String get virtPoolDelete => '删除存储池';
+
+  @override
+  String get virtStorageRemove => '移除存储';
+
+  @override
+  String virtPoolDeleteAsk(String name) {
+    return '删除存储池 $name？会删除它的定义，卷保留在原处。';
+  }
+
+  @override
+  String virtStorageRemoveAsk(String name) {
+    return '从 PVE 配置中移除存储 $name？其中的数据保留。';
+  }
+
+  @override
+  String virtPoolDeleteKeepsVolumes(int count) {
+    return '其中的 $count 个卷会保留在磁盘上。';
+  }
+
+  @override
+  String get virtPoolDeleteStorage => '同时删除其目录（仅当为空时）';
+
+  @override
+  String virtPoolStopAsk(String name) {
+    return '停用存储池 $name？在重新启用前无法列出或创建其中的卷。';
+  }
+
+  @override
+  String virtStorageDisableAsk(String name) {
+    return '停用存储 $name？在重新启用前，磁盘在其上的虚拟机无法启动。';
+  }
+
+  @override
+  String get virtPoolLogicalNote => '使用已有的卷组，不会格式化任何设备。';
+
+  @override
+  String get virtPoolMountPoint => '挂载点';
+
+  @override
+  String get virtPoolSourceNfs => '源 (host:/path)';
+
+  @override
+  String get virtPoolSourceVg => '卷组';
+
+  @override
+  String get virtPoolSourceThin => '卷组 / thin pool';
+
+  @override
+  String get virtPoolSourceZfs => 'ZFS 池';
+
+  @override
+  String get virtPoolTypeVg => 'LVM 卷组';
+
+  @override
+  String get virtResNameEmpty => '请输入名称';
+
+  @override
+  String get virtResNameInvalid => '主机不接受此名称（字母、数字、. _ -）';
+
+  @override
+  String get virtResSourceInvalid => '不是有效的路径或来源';
+
+  @override
+  String get virtResTargetInvalid => '需要绝对路径';
+
+  @override
+  String get virtResCidrInvalid => '需要带前缀的地址，例如 192.168.150.1/24';
+
+  @override
+  String get virtResDhcpInvalid => '需要网段内、按顺序、且不含宿主机地址的两个地址';
+
+  @override
+  String get virtResSubnetTaken => '已有网络使用此网段';
+
+  @override
+  String get virtResBridgeInvalid => '不是有效的网络接口名';
+
+  @override
+  String get virtResFormat => '这个存储池不支持此格式';
+
+  @override
+  String get virtVolNew => '新建卷';
+
+  @override
+  String virtVolCount(int count) {
+    return '$count 个卷';
+  }
+
+  @override
+  String get virtVolNone => '这个存储池还没有卷。';
+
+  @override
+  String get virtVolEmptyAttach => '新卷可以之后挂载到任意虚拟机';
+
+  @override
+  String get virtVolEmptyUpload => '也可以直接上传 ISO';
+
+  @override
+  String get virtVolPveName => 'PVE 按所属虚拟机命名卷：vm-<VMID>-disk-<N>';
+
+  @override
+  String get virtVolUsers => '使用者';
+
+  @override
+  String get virtVolAllocated => '已分配';
+
+  @override
+  String get virtVolGrowFromGuest => '有虚拟机在使用：请在该虚拟机的硬件页扩容';
+
+  @override
+  String get virtVolInUse => '有虚拟机正在使用此卷';
+
+  @override
+  String get virtVolAttach => '挂载到虚拟机';
+
+  @override
+  String get virtVolAttachNote => '作为新磁盘挂载到其第一块磁盘所在的总线';
+
+  @override
+  String virtVolAttached(String name) {
+    return '已挂载到 $name';
+  }
+
+  @override
+  String get virtVolInsert => '插入光驱';
+
+  @override
+  String virtVolInserted(String name) {
+    return '已插入 $name 的光驱';
+  }
+
+  @override
+  String virtVolNoCdrom(String name) {
+    return '$name 没有光驱';
+  }
+
+  @override
+  String virtVolDeleteAsk(String name, String pool) {
+    return '从 $pool 删除卷 $name？其中的数据将永久丢失。';
+  }
+
+  @override
+  String get virtUploadIso => '上传 ISO';
+
+  @override
+  String virtUploadTo(String pool) {
+    return '上传到 $pool';
+  }
+
+  @override
+  String virtUploadDone(String name) {
+    return '$name 上传完成';
+  }
+
+  @override
+  String get virtNetConfig => '配置';
+
+  @override
+  String get virtNetInternal => '内部';
+
+  @override
+  String get virtNetBridgePorts => '桥接端口';
+
+  @override
+  String get virtNetHostBridge => '宿主机网桥';
+
+  @override
+  String get virtNetPortsHint => 'eno2，留空为内部网桥';
+
+  @override
+  String get virtNetDhcpRange => 'DHCP 范围';
+
+  @override
+  String get virtNetDhcpTip => 'dnsmasq 为虚拟机分配地址';
+
+  @override
+  String get virtNetVlanTip => '允许虚拟机网卡带 VLAN tag';
+
+  @override
+  String get virtNetNatTip => '经宿主机转发，虚拟机能上网但外部不可达';
+
+  @override
+  String get virtNetRoutedTip => '经宿主机路由，不做 NAT：局域网需要回程路由';
+
+  @override
+  String get virtNetIsolatedTip => '只有虚拟机之间和宿主机能通信';
+
+  @override
+  String get virtNetBridgedTip => '直接接入宿主机网桥，与物理网络同网段';
+
+  @override
+  String get virtNetNew => '新建网络';
+
+  @override
+  String get virtNetNewBridge => '新建 Linux bridge';
+
+  @override
+  String get virtNetVirtual => '虚拟网络';
+
+  @override
+  String get virtNetDelete => '删除网络';
+
+  @override
+  String virtNetDeleteAsk(String name) {
+    return '删除网络 $name？它会被停止并删除定义。';
+  }
+
+  @override
+  String virtNetDeleteAskPve(String name, String node) {
+    return '从 $node 移除网桥 $name？它会先从待生效配置中移除，应用配置后才从宿主机上删除。';
+  }
+
+  @override
+  String virtNetInUse(int count) {
+    return '$count 台在使用，不能删除。';
+  }
+
+  @override
+  String virtNetStopAsk(String name, int count) {
+    return '停用 $name？其上的 $count 台虚拟机会断网，直到重新启用。';
+  }
+
+  @override
+  String get virtNetInactivePve => '未激活：新网桥在应用配置前处于待生效状态。';
+
+  @override
+  String get virtNetPveApplyNote => '保存为待生效的变更，应用配置（ifreload -a）后生效。';
+
+  @override
+  String get virtNetPendingSaved => '已保存为待生效，应用配置后生效';
+
+  @override
+  String virtNetPendingTitle(String node) {
+    return '$node 上有待生效的网络变更';
+  }
+
+  @override
+  String get virtNetPendingTip => 'PVE 会把网络变更保存在 interfaces.new 中，应用后才生效。';
+
+  @override
+  String get virtNetPendingShow => '查看变更';
+
+  @override
+  String get virtNetApply => '应用配置';
+
+  @override
+  String virtNetApplyAsk(String node) {
+    return '应用 $node 上待生效的网络配置？PVE 会重新加载宿主机网络（ifreload -a），配置有误可能导致宿主机断网。';
+  }
+
+  @override
+  String virtNetRevertAsk(String node) {
+    return '丢弃 $node 上待生效的网络配置？';
+  }
+
+  @override
+  String get pveTokenTipStorage =>
+      '管理存储需要 /storage 上的 Datastore.Allocate（添加、停用、移除）、Datastore.AllocateSpace（卷）和 Datastore.AllocateTemplate（上传）；Linux bridge 和应用网络配置需要节点上的 Sys.Modify。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -8131,4 +8428,301 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String virtBackupRestored(String time) {
     return '已從 $time 還原';
   }
+
+  @override
+  String pveNeedsPrivilege(
+    String account,
+    String privilege,
+    String path,
+    String command,
+  ) {
+    return '$account 在 $path 上沒有 $privilege 權限。請在 PVE 主機上授予：\n$command';
+  }
+
+  @override
+  String get virtCanDelete => '可以刪除';
+
+  @override
+  String get virtInUse => '使用中';
+
+  @override
+  String get virtOps => '操作';
+
+  @override
+  String get virtPool => '儲存池';
+
+  @override
+  String get virtPoolNew => '新增儲存池';
+
+  @override
+  String get virtStorageAdd => '新增儲存';
+
+  @override
+  String virtPoolUsedPct(String pct) {
+    return '已用 $pct%';
+  }
+
+  @override
+  String get virtPoolInUse => '有磁碟區正被虛擬機器使用，無法停用或刪除。';
+
+  @override
+  String get virtPoolDelete => '刪除儲存池';
+
+  @override
+  String get virtStorageRemove => '移除儲存';
+
+  @override
+  String virtPoolDeleteAsk(String name) {
+    return '刪除儲存池 $name？會刪除其定義，磁碟區保留在原處。';
+  }
+
+  @override
+  String virtStorageRemoveAsk(String name) {
+    return '從 PVE 設定中移除儲存 $name？其中的資料保留。';
+  }
+
+  @override
+  String virtPoolDeleteKeepsVolumes(int count) {
+    return '其中的 $count 個磁碟區會保留在磁碟上。';
+  }
+
+  @override
+  String get virtPoolDeleteStorage => '同時刪除其目錄（僅當為空時）';
+
+  @override
+  String virtPoolStopAsk(String name) {
+    return '停用儲存池 $name？重新啟用前無法列出或建立其中的磁碟區。';
+  }
+
+  @override
+  String virtStorageDisableAsk(String name) {
+    return '停用儲存 $name？重新啟用前，磁碟在其上的虛擬機器無法啟動。';
+  }
+
+  @override
+  String get virtPoolLogicalNote => '使用現有的磁碟區群組，不會格式化任何裝置。';
+
+  @override
+  String get virtPoolMountPoint => '掛載點';
+
+  @override
+  String get virtPoolSourceNfs => '來源 (host:/path)';
+
+  @override
+  String get virtPoolSourceVg => '磁碟區群組';
+
+  @override
+  String get virtPoolSourceThin => '磁碟區群組 / thin pool';
+
+  @override
+  String get virtPoolSourceZfs => 'ZFS 池';
+
+  @override
+  String get virtPoolTypeVg => 'LVM 磁碟區群組';
+
+  @override
+  String get virtResNameEmpty => '請輸入名稱';
+
+  @override
+  String get virtResNameInvalid => '主機不接受此名稱（字母、數字、. _ -）';
+
+  @override
+  String get virtResSourceInvalid => '不是有效的路徑或來源';
+
+  @override
+  String get virtResTargetInvalid => '需要絕對路徑';
+
+  @override
+  String get virtResCidrInvalid => '需要帶前綴的位址，例如 192.168.150.1/24';
+
+  @override
+  String get virtResDhcpInvalid => '需要網段內、依序、且不含主機位址的兩個位址';
+
+  @override
+  String get virtResSubnetTaken => '已有網路使用此網段';
+
+  @override
+  String get virtResBridgeInvalid => '不是有效的網路介面名稱';
+
+  @override
+  String get virtResFormat => '這個儲存池不支援此格式';
+
+  @override
+  String get virtVolNew => '新增磁碟區';
+
+  @override
+  String virtVolCount(int count) {
+    return '$count 個磁碟區';
+  }
+
+  @override
+  String get virtVolNone => '這個儲存池還沒有磁碟區。';
+
+  @override
+  String get virtVolEmptyAttach => '新磁碟區之後可以掛載到任一虛擬機器';
+
+  @override
+  String get virtVolEmptyUpload => '也可以直接上傳 ISO';
+
+  @override
+  String get virtVolPveName => 'PVE 依所屬虛擬機器命名磁碟區：vm-<VMID>-disk-<N>';
+
+  @override
+  String get virtVolUsers => '使用者';
+
+  @override
+  String get virtVolAllocated => '已配置';
+
+  @override
+  String get virtVolGrowFromGuest => '有虛擬機器在使用：請在該虛擬機器的硬體頁擴充';
+
+  @override
+  String get virtVolInUse => '有虛擬機器正在使用此磁碟區';
+
+  @override
+  String get virtVolAttach => '掛載到虛擬機器';
+
+  @override
+  String get virtVolAttachNote => '作為新磁碟掛載到其第一顆磁碟所在的匯流排';
+
+  @override
+  String virtVolAttached(String name) {
+    return '已掛載到 $name';
+  }
+
+  @override
+  String get virtVolInsert => '插入光碟機';
+
+  @override
+  String virtVolInserted(String name) {
+    return '已插入 $name 的光碟機';
+  }
+
+  @override
+  String virtVolNoCdrom(String name) {
+    return '$name 沒有光碟機';
+  }
+
+  @override
+  String virtVolDeleteAsk(String name, String pool) {
+    return '從 $pool 刪除磁碟區 $name？其中的資料將永久遺失。';
+  }
+
+  @override
+  String get virtUploadIso => '上傳 ISO';
+
+  @override
+  String virtUploadTo(String pool) {
+    return '上傳到 $pool';
+  }
+
+  @override
+  String virtUploadDone(String name) {
+    return '$name 上傳完成';
+  }
+
+  @override
+  String get virtNetConfig => '設定';
+
+  @override
+  String get virtNetInternal => '內部';
+
+  @override
+  String get virtNetBridgePorts => '橋接埠';
+
+  @override
+  String get virtNetHostBridge => '主機網橋';
+
+  @override
+  String get virtNetPortsHint => 'eno2，留空為內部網橋';
+
+  @override
+  String get virtNetDhcpRange => 'DHCP 範圍';
+
+  @override
+  String get virtNetDhcpTip => 'dnsmasq 為虛擬機器分配位址';
+
+  @override
+  String get virtNetVlanTip => '允許虛擬機器網卡帶 VLAN tag';
+
+  @override
+  String get virtNetNatTip => '經主機轉送，虛擬機器可上網但外部無法連入';
+
+  @override
+  String get virtNetRoutedTip => '經主機路由，不做 NAT：區域網路需要回程路由';
+
+  @override
+  String get virtNetIsolatedTip => '只有虛擬機器之間和主機能通訊';
+
+  @override
+  String get virtNetBridgedTip => '直接接入主機網橋，與實體網路同網段';
+
+  @override
+  String get virtNetNew => '新增網路';
+
+  @override
+  String get virtNetNewBridge => '新增 Linux bridge';
+
+  @override
+  String get virtNetVirtual => '虛擬網路';
+
+  @override
+  String get virtNetDelete => '刪除網路';
+
+  @override
+  String virtNetDeleteAsk(String name) {
+    return '刪除網路 $name？它會被停止並刪除定義。';
+  }
+
+  @override
+  String virtNetDeleteAskPve(String name, String node) {
+    return '從 $node 移除網橋 $name？它會先從待生效設定中移除，套用設定後才從主機上刪除。';
+  }
+
+  @override
+  String virtNetInUse(int count) {
+    return '$count 台在使用，無法刪除。';
+  }
+
+  @override
+  String virtNetStopAsk(String name, int count) {
+    return '停用 $name？其上的 $count 台虛擬機器會斷網，直到重新啟用。';
+  }
+
+  @override
+  String get virtNetInactivePve => '未啟用：新網橋在套用設定前處於待生效狀態。';
+
+  @override
+  String get virtNetPveApplyNote => '儲存為待生效的變更，套用設定（ifreload -a）後生效。';
+
+  @override
+  String get virtNetPendingSaved => '已儲存為待生效，套用設定後生效';
+
+  @override
+  String virtNetPendingTitle(String node) {
+    return '$node 上有待生效的網路變更';
+  }
+
+  @override
+  String get virtNetPendingTip => 'PVE 會把網路變更保存在 interfaces.new 中，套用後才生效。';
+
+  @override
+  String get virtNetPendingShow => '查看變更';
+
+  @override
+  String get virtNetApply => '套用設定';
+
+  @override
+  String virtNetApplyAsk(String node) {
+    return '套用 $node 上待生效的網路設定？PVE 會重新載入主機網路（ifreload -a），設定有誤可能導致主機斷線。';
+  }
+
+  @override
+  String virtNetRevertAsk(String node) {
+    return '捨棄 $node 上待生效的網路設定？';
+  }
+
+  @override
+  String get pveTokenTipStorage =>
+      '管理儲存需要 /storage 上的 Datastore.Allocate（新增、停用、移除）、Datastore.AllocateSpace（磁碟區）和 Datastore.AllocateTemplate（上傳）；Linux bridge 和套用網路設定需要節點上的 Sys.Modify。';
 }

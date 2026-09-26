@@ -728,6 +728,55 @@ void main() {
     });
   });
 
+  testWidgets('a device\'s own rows are spaced like the group\'s', (
+    tester,
+  ) async {
+    // The pane's gap between rows is a padding the *group* puts under each
+    // element of its list. A `Reveal` is one element, so its children would
+    // draw against one another with nothing between them unless they bring it
+    // themselves.
+    await open(tester, 'web-01');
+    await tap(tester, _key('hw:disc:scsi0'));
+
+    // Two rows of the same fold, one after the other: the capacity stepper and
+    // the bus choice under it.
+    final step = tester.getRect(_key('hw:step:grow:scsi0'));
+    final bus = tester.getRect(_key('hw:seg:disk:scsi0:bus'));
+    expect(bus.top, greaterThan(step.bottom));
+    expect(
+      bus.top - step.bottom,
+      moreOrLessEquals(7, epsilon: 0.5),
+      reason: 'the gap the group draws between rows outside a fold',
+    );
+  });
+
+  testWidgets('a device\'s rows unfold rather than appearing', (tester) async {
+    await open(tester, 'web-01');
+    final row = _key('hw:disc:scsi0');
+    await tester.ensureVisible(row);
+    await tester.pump();
+    // A row that is only there while the disk is open, and where the NICs
+    // group sits above/below it.
+    final source = text(app_locale.l10n.virtHwSource);
+    expect(source, findsNothing);
+
+    await tester.tap(row);
+    await tester.pump();
+    // Built at once — the fold is the space they take, not how much of each
+    // row is drawn.
+    expect(source, findsOneWidget);
+    final below = tester.getTopLeft(_key('hw:disc:net0')).dy;
+    await tester.pump(const Duration(milliseconds: 60));
+    // Part way: the rows are coming in and the group below has started moving,
+    // rather than the two having swapped between frames.
+    final part = tester.getTopLeft(_key('hw:disc:net0')).dy;
+    expect(part, greaterThan(below));
+
+    await _settle(tester);
+    expect(tester.getTopLeft(_key('hw:disc:net0')).dy, greaterThan(part));
+    expect(source, findsOneWidget);
+  });
+
   testWidgets('disks: the bus waits for a stop, the cache is set at once', (
     tester,
   ) async {

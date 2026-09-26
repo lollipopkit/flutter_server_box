@@ -4334,4 +4334,317 @@ class AppLocalizationsTr extends AppLocalizations {
   String virtBackupRestored(String time) {
     return '$time tarihinden geri yüklendi';
   }
+
+  @override
+  String pveNeedsPrivilege(
+    String account,
+    String privilege,
+    String path,
+    String command,
+  ) {
+    return '$account hesabının $path üzerinde $privilege yetkisi yok. PVE ana makinesinde verin:\n$command';
+  }
+
+  @override
+  String get virtCanDelete => 'Silinebilir';
+
+  @override
+  String get virtInUse => 'Kullanımda';
+
+  @override
+  String get virtOps => 'İşlemler';
+
+  @override
+  String get virtPool => 'Depolama havuzu';
+
+  @override
+  String get virtPoolNew => 'Yeni depolama havuzu';
+
+  @override
+  String get virtStorageAdd => 'Depolama ekle';
+
+  @override
+  String virtPoolUsedPct(String pct) {
+    return '%$pct kullanıldı';
+  }
+
+  @override
+  String get virtPoolInUse =>
+      'Bir VM buradaki bir birimi kullanıyor; havuz durdurulamaz veya kaldırılamaz.';
+
+  @override
+  String get virtPoolDelete => 'Havuzu sil';
+
+  @override
+  String get virtStorageRemove => 'Depolamayı kaldır';
+
+  @override
+  String virtPoolDeleteAsk(String name) {
+    return '$name havuzu kaldırılsın mı? Tanımı silinir; birimleri yerinde kalır.';
+  }
+
+  @override
+  String virtStorageRemoveAsk(String name) {
+    return '$name depolaması PVE yapılandırmasından kaldırılsın mı? İçindekiler kalır.';
+  }
+
+  @override
+  String virtPoolDeleteKeepsVolumes(int count) {
+    return '$count birimi diskte kalır.';
+  }
+
+  @override
+  String get virtPoolDeleteStorage => 'Dizinini de sil (yalnızca boşsa)';
+
+  @override
+  String virtPoolStopAsk(String name) {
+    return '$name havuzu durdurulsun mu? Yeniden başlayana kadar birimler listelenemez ve oluşturulamaz.';
+  }
+
+  @override
+  String virtStorageDisableAsk(String name) {
+    return '$name depolaması devre dışı bırakılsın mı? Diskleri üzerinde olan VM\'ler yeniden etkinleşene kadar başlamaz.';
+  }
+
+  @override
+  String get virtPoolLogicalNote =>
+      'Var olan bir birim grubu olduğu gibi kullanılır; hiçbir şey biçimlendirilmez.';
+
+  @override
+  String get virtPoolMountPoint => 'Bağlama noktası';
+
+  @override
+  String get virtPoolSourceNfs => 'Kaynak (host:/yol)';
+
+  @override
+  String get virtPoolSourceVg => 'Birim grubu';
+
+  @override
+  String get virtPoolSourceThin => 'Birim grubu / thin pool';
+
+  @override
+  String get virtPoolSourceZfs => 'ZFS havuzu';
+
+  @override
+  String get virtPoolTypeVg => 'LVM birim grubu';
+
+  @override
+  String get virtResNameEmpty => 'Bir ad girin';
+
+  @override
+  String get virtResNameInvalid =>
+      'Bu ana makinenin kabul ettiği bir ad değil (harf, rakam, . _ -)';
+
+  @override
+  String get virtResSourceInvalid => 'Geçerli bir yol veya kaynak değil';
+
+  @override
+  String get virtResTargetInvalid => 'Mutlak bir yol';
+
+  @override
+  String get virtResCidrInvalid => 'Önekli bir adres, ör. 192.168.150.1/24';
+
+  @override
+  String get virtResDhcpInvalid =>
+      'Ağda sıralı iki adres, ana makinenin adresi hariç';
+
+  @override
+  String get virtResSubnetTaken => 'Buradaki başka bir ağ bu alt ağda';
+
+  @override
+  String get virtResBridgeInvalid => 'Arabirim adı değil';
+
+  @override
+  String get virtResFormat => 'Bu havuz bu biçimi desteklemiyor';
+
+  @override
+  String get virtVolNew => 'Yeni birim';
+
+  @override
+  String virtVolCount(int count) {
+    return '$count birim';
+  }
+
+  @override
+  String get virtVolNone => 'Bu havuzda henüz birim yok.';
+
+  @override
+  String get virtVolEmptyAttach =>
+      'Yeni bir birim daha sonra herhangi bir VM\'e takılabilir';
+
+  @override
+  String get virtVolEmptyUpload => 'Doğrudan bir ISO da yüklenebilir';
+
+  @override
+  String get virtVolPveName =>
+      'PVE birimi VM\'ine göre adlandırır: vm-<VMID>-disk-<N>';
+
+  @override
+  String get virtVolUsers => 'Kullanan';
+
+  @override
+  String get virtVolAllocated => 'Ayrılmış';
+
+  @override
+  String get virtVolGrowFromGuest =>
+      'Bir VM kullanıyor: o VM\'in Donanım görünümünden büyütün';
+
+  @override
+  String get virtVolInUse => 'Bu birimi bir VM kullanıyor';
+
+  @override
+  String get virtVolAttach => 'VM\'e tak';
+
+  @override
+  String get virtVolAttachNote =>
+      'İlk diskinin bulunduğu veri yoluna yeni disk olarak takılır';
+
+  @override
+  String virtVolAttached(String name) {
+    return '$name makinesine takıldı';
+  }
+
+  @override
+  String get virtVolInsert => 'CD-ROM\'a tak';
+
+  @override
+  String virtVolInserted(String name) {
+    return '$name CD-ROM sürücüsüne takıldı';
+  }
+
+  @override
+  String virtVolNoCdrom(String name) {
+    return '$name makinesinde CD-ROM sürücüsü yok';
+  }
+
+  @override
+  String virtVolDeleteAsk(String name, String pool) {
+    return '$name birimi $pool havuzundan silinsin mi? İçeriği kalıcı olarak gider.';
+  }
+
+  @override
+  String get virtUploadIso => 'ISO yükle';
+
+  @override
+  String virtUploadTo(String pool) {
+    return '$pool konumuna yükle';
+  }
+
+  @override
+  String virtUploadDone(String name) {
+    return '$name yüklendi';
+  }
+
+  @override
+  String get virtNetConfig => 'Yapılandırma';
+
+  @override
+  String get virtNetInternal => 'Dahili';
+
+  @override
+  String get virtNetBridgePorts => 'Köprü bağlantı noktaları';
+
+  @override
+  String get virtNetHostBridge => 'Ana makine köprüsü';
+
+  @override
+  String get virtNetPortsHint => 'eno2; dahili köprü için boş';
+
+  @override
+  String get virtNetDhcpRange => 'DHCP aralığı';
+
+  @override
+  String get virtNetDhcpTip => 'dnsmasq VM\'lere adres verir';
+
+  @override
+  String get virtNetVlanTip => 'VM ağ kartları VLAN etiketi taşıyabilir';
+
+  @override
+  String get virtNetNatTip =>
+      'Ana makine üzerinden: VM\'ler dışarı çıkar, dışarıdan girilemez';
+
+  @override
+  String get virtNetRoutedTip =>
+      'NAT olmadan ana makine yönlendirir: LAN\'da dönüş rotası gerekir';
+
+  @override
+  String get virtNetIsolatedTip =>
+      'Yalnızca VM\'ler ve ana makine birbirine ulaşır';
+
+  @override
+  String get virtNetBridgedTip =>
+      'VM\'ler ana makinenin bir köprüsüne, fiziksel ağına katılır';
+
+  @override
+  String get virtNetNew => 'Yeni ağ';
+
+  @override
+  String get virtNetNewBridge => 'Yeni Linux köprüsü';
+
+  @override
+  String get virtNetVirtual => 'Sanal ağ';
+
+  @override
+  String get virtNetDelete => 'Ağı sil';
+
+  @override
+  String virtNetDeleteAsk(String name) {
+    return '$name ağı silinsin mi? Durdurulur ve tanımı kaldırılır.';
+  }
+
+  @override
+  String virtNetDeleteAskPve(String name, String node) {
+    return '$name köprüsü $node üzerinden kaldırılsın mı? Şimdi bekleyen yapılandırmadan, uygulanınca da ana makineden çıkar.';
+  }
+
+  @override
+  String virtNetInUse(int count) {
+    return 'Üzerindeki VM: $count. Silinemez.';
+  }
+
+  @override
+  String virtNetStopAsk(String name, int count) {
+    return '$name durdurulsun mu? Üzerindeki $count VM yeniden başlayana kadar ağı kaybeder.';
+  }
+
+  @override
+  String get virtNetInactivePve =>
+      'Etkin değil: yeni bir köprü uygulanana kadar bekleyen yapılandırmada durur.';
+
+  @override
+  String get virtNetPveApplyNote =>
+      'Bekleyen değişiklik olarak kaydedilir; yapılandırma uygulanınca geçerli olur (ifreload -a).';
+
+  @override
+  String get virtNetPendingSaved =>
+      'Bekleyen olarak kaydedildi: geçerli olması için yapılandırmayı uygulayın';
+
+  @override
+  String virtNetPendingTitle(String node) {
+    return '$node üzerinde bekleyen ağ değişiklikleri';
+  }
+
+  @override
+  String get virtNetPendingTip =>
+      'PVE ağ değişikliklerini uygulanana kadar interfaces.new içinde tutar.';
+
+  @override
+  String get virtNetPendingShow => 'Değişiklikleri göster';
+
+  @override
+  String get virtNetApply => 'Yapılandırmayı uygula';
+
+  @override
+  String virtNetApplyAsk(String node) {
+    return '$node üzerinde bekleyen ağ yapılandırması uygulansın mı? PVE ana makinenin ağını yeniden yükler (ifreload -a): bir hata ana makineye erişimi kesebilir.';
+  }
+
+  @override
+  String virtNetRevertAsk(String node) {
+    return '$node üzerinde bekleyen ağ yapılandırması atılsın mı?';
+  }
+
+  @override
+  String get pveTokenTipStorage =>
+      'Depolama yönetimi /storage üzerinde Datastore.Allocate (ekleme, devre dışı bırakma, kaldırma), Datastore.AllocateSpace (birimler) ve Datastore.AllocateTemplate (yüklemeler) gerektirir; Linux köprüleri ve ağ yapılandırmasını uygulamak düğümde Sys.Modify gerektirir.';
 }

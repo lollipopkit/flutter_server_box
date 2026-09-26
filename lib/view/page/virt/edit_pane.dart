@@ -6,58 +6,50 @@ const _indexFrom = 860.0;
 /// How far a device's own rows sit in from its row.
 const _indent = 26.0;
 
-/// The design's sectioned edit pane, as the Hardware and Settings views both
-/// draw it: groups under a title and a rule, the rows the design has (a
-/// field, a stepper, a switch, a device that opens), and every change made
-/// through [_apply] against the one hardware read both views share — the
-/// same pending changes, the same revision sent back, the same conflict.
-mixin _EditPane<W extends ConsumerStatefulWidget> on ConsumerState<W> {
-  String get _serverId;
-  VirtGuest get _guest;
-  VirtCapabilities get _caps;
+/// Between the rows of a group.
+///
+/// Outside each row rather than a separator between them, so a row whose
+/// height changes — a fold, a loading row — carries its own gap with it.
+const _rowGap = 7.0;
 
+/// [rows] with [_rowGap] under each, as a group draws what it is given.
+///
+/// For a stack the group's own per-row padding does not reach: it wraps each
+/// element of `_Group.rows`, and a `Reveal` is one element, as the rows inside
+/// an add block are. Both have to space themselves or their rows draw against
+/// one another with nothing between them.
+List<Widget> _gapped(List<Widget> rows) => [
+  for (final row in rows)
+    Padding(padding: const EdgeInsets.only(bottom: _rowGap), child: row),
+];
+
+/// The design's sectioned pane, as every view of it draws it — a guest's
+/// Hardware, Settings and Backup views, a pool, a network: groups under a
+/// title and a rule, the index of them beside where there is room, and the
+/// rows the design has (a field, a stepper, a switch, a device that opens).
+mixin _PaneRows<W extends StatefulWidget> on State<W> {
   /// Open device rows, by key; `config` for the configuration file.
   final _open = <String>{};
   final _groupKeys = <String, GlobalKey>{};
 
   /// The index column's width: dragged at its seam, kept for this view only.
-  /// Not stored — the index is a way around one guest's groups, not a layout
-  /// anyone sets up.
+  /// Not stored — the index is a way around one subject's groups, not a
+  /// layout anyone sets up.
   double _indexWidth = 206;
   static const _indexMin = 160.0;
   static const _indexMax = 320.0;
 
-  VirtHostNotifier get _notifier =>
-      ref.read(virtHostProvider(_serverId).notifier);
-
-  VirtHardwareProvider get _provider =>
-      virtHardwareProvider(_serverId, _guest.id);
-
-  bool get _lxc => _guest.kind == VirtGuestKind.lxc;
-
-  VirtHostKind? get _host => ref.read(virtHostProvider(_serverId)).kind;
-
-  bool get _pve => _host == VirtHostKind.pve;
-
-  /// The pane: [groupsOf]'s groups under their titles, with the index
-  /// beside them where there is room, once the hardware is read.
-  Widget _buildEditPane(
-    List<_Group> Function(VirtHardware hw, bool busy) groupsOf,
-  ) {
-    final async = ref.watch(_provider);
-    final busy = ref.watch(
-      virtHostProvider(
-        _serverId,
-      ).select((s) => s.isBusy(_guest.id)),
-    );
-    final hw = async.value;
-    if (async.error case final e?) return _buildError(e);
-    if (hw == null) return const Center(child: SizedLoading.medium);
-    final groups = groupsOf(hw, busy);
+  /// [groups] under their titles, with the index beside them where there
+  /// is room; a pull runs [onRefresh].
+  Widget _buildGroups(
+    List<_Group> groups, {
+    required Future<void> Function() onRefresh,
+    List<Widget> header = const [],
+  }) {
     return LayoutBuilder(
       builder: (context, cons) {
         final pane = RefreshIndicator(
-          onRefresh: () => ref.refresh(_provider.future),
+          onRefresh: onRefresh,
           child: ListView(
             padding: const EdgeInsets.fromLTRB(13, 0, 13, 17),
             children: [
@@ -67,6 +59,7 @@ mixin _EditPane<W extends ConsumerStatefulWidget> on ConsumerState<W> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      ...header,
                       for (final g in groups)
                         Column(
                           key: _groupKeys.putIfAbsent(g.key, GlobalKey.new),
@@ -77,11 +70,7 @@ mixin _EditPane<W extends ConsumerStatefulWidget> on ConsumerState<W> {
                               right: g.right.isEmpty ? null : g.right,
                               rightColor: g.warn ? StatePalette.warn : null,
                             ),
-                            for (final r in g.rows)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 7),
-                                child: r,
-                              ),
+                            ..._gapped(g.rows),
                           ],
                         ),
                     ],
@@ -173,7 +162,8 @@ mixin _EditPane<W extends ConsumerStatefulWidget> on ConsumerState<W> {
     );
   }
 
-  Widget _buildError(Object e) {
+  /// A failure where the groups would be, with a way to ask again.
+  Widget _buildError(Object e, {required VoidCallback onRetry}) {
     return ListView(
       padding: const EdgeInsets.all(13),
       children: [
@@ -183,7 +173,7 @@ mixin _EditPane<W extends ConsumerStatefulWidget> on ConsumerState<W> {
           trailing: Btn.icon(
             text: libL10n.retry,
             icon: const Icon(Icons.refresh, size: 18),
-            onTap: () => ref.invalidate(_provider),
+            onTap: onRetry,
           ),
           children: [
             if (e is VirtErr)
@@ -194,101 +184,6 @@ mixin _EditPane<W extends ConsumerStatefulWidget> on ConsumerState<W> {
           ],
         ),
       ],
-    );
-  }
-
-  // --- Pending ---
-
-  static const _cpuKeys = {
-    'cpu', 'cores', 'sockets', 'vcpus', 'cpulimit', 'cpuunits', 'numa',
-    'affinity',
-  };
-  static const _memKeys = {'memory', 'balloon', 'swap', 'shares'};
-  static const _bootKeys = {'boot', 'bootdisk'};
-  static const _settingsKeys = {
-    'name', 'hostname', 'description', 'onboot', 'protection',
-  };
-  static final _nicKey = RegExp(
-    r'^net\d+$|^([0-9a-f]{2}:){5}[0-9a-f]{2}$',
-    caseSensitive: false,
-  );
-  static final _diskKey = RegExp(
-    r'^((ide|sata|scsi|virtio|mp|unused|efidisk|tpmstate)\d+|rootfs|(vd|sd|hd|xvd)[a-z]+)$',
-  );
-
-  /// Which part of the pane a pending change is shown in: beside the field
-  /// or device it changes, so what waits for a restart is read where it is
-  /// set. A key none of them has — an option this app does not edit — is
-  /// [_PendingPlace.other], shown with the configuration file.
-  _PendingPlace _placeOf(VirtHardware hw, String key) {
-    if (_cpuKeys.contains(key)) return _PendingPlace.cpu;
-    if (_memKeys.contains(key)) return _PendingPlace.memory;
-    if (_bootKeys.contains(key)) return _PendingPlace.boot;
-    if (_settingsKeys.contains(key)) return _PendingPlace.settings;
-    if (hw.nic(key) != null || _nicKey.hasMatch(key)) return _PendingPlace.nic;
-    if (hw.disk(key) != null || _diskKey.hasMatch(key)) {
-      return _PendingPlace.disk;
-    }
-    return _PendingPlace.other;
-  }
-
-  /// The pending changes [where] picks, one row each.
-  List<Widget> _pendingRows(
-    VirtHardware hw,
-    bool busy,
-    bool Function(VirtPendingField p) where, {
-    bool indent = false,
-  }) => [
-    for (final p in hw.pending)
-      if (where(p)) _pendingRow(hw, p, busy, indent: indent),
-  ];
-
-  /// One pending change: what the guest runs with now, what the next start
-  /// gets, and — where the host keeps such a list (PVE) — dropping it.
-  Widget _pendingRow(
-    VirtHardware hw,
-    VirtPendingField p,
-    bool busy, {
-    bool indent = false,
-  }) {
-    final value = p.delete
-        ? '${p.current ?? ''} → ${libL10n.delete}'
-        : '${p.current ?? '—'} → ${p.pending ?? '—'}';
-    return _box(
-      key: ValueKey('hw:pending:${p.key}'),
-      indent: indent,
-      color: StatePalette.warn.withValues(alpha: 0.1),
-      padding: const EdgeInsets.fromLTRB(13, 5, 5, 5),
-      child: Row(
-        children: [
-          _icon(Icons.schedule, color: StatePalette.warn),
-          UIs.width13,
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${p.key} · ${l10n.virtHwLater}',
-                  style: UIs.text11.copyWith(color: StatePalette.warn),
-                ),
-                Text(
-                  value,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: UIs.text12,
-                ),
-              ],
-            ),
-          ),
-          if (_caps.hardwareRevert)
-            Btn.icon(
-              key: ValueKey('hw:revert:${p.key}'),
-              text: l10n.virtHwRevert,
-              icon: const Icon(Icons.undo, size: 17),
-              onTap: busy ? null : () => _apply(hw, VirtHwRevert([p.key])),
-            ),
-        ],
-      ),
     );
   }
 
@@ -366,6 +261,63 @@ mixin _EditPane<W extends ConsumerStatefulWidget> on ConsumerState<W> {
             ),
           ),
           ?trailing,
+        ],
+      ),
+    );
+  }
+
+  /// How full something is: what it is, the figure, the bar, and what is
+  /// left — the design's meter row.
+  Widget _meter(
+    IconData icon,
+    String label,
+    String value,
+    double? fraction, {
+    String? note,
+    Key? key,
+    bool indent = false,
+  }) {
+    final f = fraction?.clamp(0.0, 1.0);
+    return _box(
+      key: key,
+      indent: indent,
+      child: Row(
+        children: [
+          _icon(icon),
+          UIs.width13,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Text(label, style: UIs.text11Grey),
+                    UIs.width7,
+                    Expanded(
+                      child: Text(
+                        value,
+                        textAlign: TextAlign.end,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontFeatures: [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (f != null) ...[
+                  const SizedBox(height: 5),
+                  ProgressLine(value: f),
+                ],
+                if (note != null && note.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(note, style: UIs.text11Grey),
+                ],
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -596,6 +548,17 @@ mixin _EditPane<W extends ConsumerStatefulWidget> on ConsumerState<W> {
     );
   }
 
+  /// The rows a [_disc] opened, unfolded under it rather than put on screen
+  /// between two frames.
+  ///
+  /// A [Reveal] per device rather than one around all of them, so a fold moves
+  /// one group of rows and the rest of the pane stays where it is.
+  ///
+  /// Spaced by [_gapped], since a `Reveal` is one element of the group's row
+  /// list and the group's per-row padding stops at its edge.
+  Widget _reveal(String key, List<Widget> rows) =>
+      Reveal(open: _open.contains(key), children: _gapped(rows));
+
   /// A device's row, which opens and closes its own rows under it.
   Widget _disc(
     String key,
@@ -787,6 +750,145 @@ mixin _EditPane<W extends ConsumerStatefulWidget> on ConsumerState<W> {
       ),
     );
   }
+}
+
+/// The guest views' pane: the rows above, and every change made through
+/// [_apply] against the one hardware read those views share — the same
+/// pending changes, the same revision sent back, the same conflict.
+mixin _EditPane<W extends ConsumerStatefulWidget>
+    on ConsumerState<W>, _PaneRows<W> {
+  String get _serverId;
+  VirtGuest get _guest;
+  VirtCapabilities get _caps;
+
+  VirtHostNotifier get _notifier =>
+      ref.read(virtHostProvider(_serverId).notifier);
+
+  VirtHardwareProvider get _provider =>
+      virtHardwareProvider(_serverId, _guest.id);
+
+  bool get _lxc => _guest.kind == VirtGuestKind.lxc;
+
+  VirtHostKind? get _host => ref.read(virtHostProvider(_serverId)).kind;
+
+  bool get _pve => _host == VirtHostKind.pve;
+
+  /// The pane: [groupsOf]'s groups under their titles, with the index
+  /// beside them where there is room, once the hardware is read.
+  Widget _buildEditPane(
+    List<_Group> Function(VirtHardware hw, bool busy) groupsOf,
+  ) {
+    final async = ref.watch(_provider);
+    final busy = ref.watch(
+      virtHostProvider(
+        _serverId,
+      ).select((s) => s.isBusy(_guest.id)),
+    );
+    final hw = async.value;
+    if (async.error case final e?) {
+      return _buildError(e, onRetry: () => ref.invalidate(_provider));
+    }
+    if (hw == null) return const Center(child: SizedLoading.medium);
+    return _buildGroups(
+      groupsOf(hw, busy),
+      onRefresh: () => ref.refresh(_provider.future),
+    );
+  }
+
+  // --- Pending ---
+
+  static const _cpuKeys = {
+    'cpu', 'cores', 'sockets', 'vcpus', 'cpulimit', 'cpuunits', 'numa',
+    'affinity',
+  };
+  static const _memKeys = {'memory', 'balloon', 'swap', 'shares'};
+  static const _bootKeys = {'boot', 'bootdisk'};
+  static const _settingsKeys = {
+    'name', 'hostname', 'description', 'onboot', 'protection',
+  };
+  static final _nicKey = RegExp(
+    r'^net\d+$|^([0-9a-f]{2}:){5}[0-9a-f]{2}$',
+    caseSensitive: false,
+  );
+  static final _diskKey = RegExp(
+    r'^((ide|sata|scsi|virtio|mp|unused|efidisk|tpmstate)\d+|rootfs|(vd|sd|hd|xvd)[a-z]+)$',
+  );
+
+  /// Which part of the pane a pending change is shown in: beside the field
+  /// or device it changes, so what waits for a restart is read where it is
+  /// set. A key none of them has — an option this app does not edit — is
+  /// [_PendingPlace.other], shown with the configuration file.
+  _PendingPlace _placeOf(VirtHardware hw, String key) {
+    if (_cpuKeys.contains(key)) return _PendingPlace.cpu;
+    if (_memKeys.contains(key)) return _PendingPlace.memory;
+    if (_bootKeys.contains(key)) return _PendingPlace.boot;
+    if (_settingsKeys.contains(key)) return _PendingPlace.settings;
+    if (hw.nic(key) != null || _nicKey.hasMatch(key)) return _PendingPlace.nic;
+    if (hw.disk(key) != null || _diskKey.hasMatch(key)) {
+      return _PendingPlace.disk;
+    }
+    return _PendingPlace.other;
+  }
+
+  /// The pending changes [where] picks, one row each.
+  List<Widget> _pendingRows(
+    VirtHardware hw,
+    bool busy,
+    bool Function(VirtPendingField p) where, {
+    bool indent = false,
+  }) => [
+    for (final p in hw.pending)
+      if (where(p)) _pendingRow(hw, p, busy, indent: indent),
+  ];
+
+  /// One pending change: what the guest runs with now, what the next start
+  /// gets, and — where the host keeps such a list (PVE) — dropping it.
+  Widget _pendingRow(
+    VirtHardware hw,
+    VirtPendingField p,
+    bool busy, {
+    bool indent = false,
+  }) {
+    final value = p.delete
+        ? '${p.current ?? ''} → ${libL10n.delete}'
+        : '${p.current ?? '—'} → ${p.pending ?? '—'}';
+    return _box(
+      key: ValueKey('hw:pending:${p.key}'),
+      indent: indent,
+      color: StatePalette.warn.withValues(alpha: 0.1),
+      padding: const EdgeInsets.fromLTRB(13, 5, 5, 5),
+      child: Row(
+        children: [
+          _icon(Icons.schedule, color: StatePalette.warn),
+          UIs.width13,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${p.key} · ${l10n.virtHwLater}',
+                  style: UIs.text11.copyWith(color: StatePalette.warn),
+                ),
+                Text(
+                  value,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: UIs.text12,
+                ),
+              ],
+            ),
+          ),
+          if (_caps.hardwareRevert)
+            Btn.icon(
+              key: ValueKey('hw:revert:${p.key}'),
+              text: l10n.virtHwRevert,
+              icon: const Icon(Icons.undo, size: 17),
+              onTap: busy ? null : () => _apply(hw, VirtHwRevert([p.key])),
+            ),
+        ],
+      ),
+    );
+  }
 
   String? _issueText(VirtHardware hw, VirtHwIssue? issue) {
     final hostCpus = hw.limits.hostCpus;
@@ -819,6 +921,7 @@ mixin _EditPane<W extends ConsumerStatefulWidget> on ConsumerState<W> {
       VirtHwIssue.stopFirst => l10n.virtHwIssueStopFirst,
       VirtHwIssue.storageMissing => l10n.virtHwIssueStorageMissing,
       VirtHwIssue.device => l10n.virtHwIssueDevice,
+      VirtHwIssue.volumeInUse => l10n.virtVolInUse,
     };
   }
 

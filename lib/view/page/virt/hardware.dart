@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math' show Random;
 
 import 'package:fl_lib/fl_lib.dart';
@@ -10,15 +11,21 @@ import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_backup.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_hardware.dart';
+import 'package:server_box/data/model/virt/virt_manage.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
+import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/view/page/virt/common.dart';
+import 'package:server_box/view/page/virt/resources.dart';
 import 'package:server_box/view/widget/group_title.dart';
+import 'package:server_box/view/widget/progress_line.dart';
 
 part 'backups.dart';
 part 'edit_pane.dart';
+part 'network.dart';
 part 'settings.dart';
+part 'storage.dart';
 
 /// A guest's hardware, and changing it — the design's sectioned edit pane:
 /// groups under a title and a rule, each saying on the right what it amounts
@@ -69,7 +76,7 @@ class _MemDraft {
 }
 
 class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
-    with _EditPane<VirtHardwareView> {
+    with _PaneRows<VirtHardwareView>, _EditPane<VirtHardwareView> {
   @override
   String get _serverId => widget.serverId;
   @override
@@ -515,7 +522,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
     return [
       _disc(d.key, Icons.storage, d.key, summary),
       ..._pendingRows(hw, busy, (p) => p.key == d.key, indent: true),
-      if (_open.contains(d.key)) ...[
+      _reveal(d.key, [
         _field(
           Icons.folder_outlined,
           l10n.virtHwSource,
@@ -610,7 +617,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
               onTap: busy ? null : () => _removeDisk(hw, d),
             ),
         ]),
-      ],
+      ]),
     ];
   }
 
@@ -747,7 +754,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
         [?n.model, ?n.source, if (!n.linkUp) l10n.virtHwLinkDown].join(' · '),
       ),
       ..._pendingRows(hw, busy, (p) => p.key == n.key, indent: true),
-      if (_open.contains(n.key)) ...[
+      _reveal(n.key, [
         if (editable && nets != null && nets.isNotEmpty)
           _seg(
             Icons.hub_outlined,
@@ -837,7 +844,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
             onTap: busy ? null : () => _removeNic(hw, n, _nicName(n, i)),
           ),
         ]),
-      ],
+      ]),
     ];
   }
 
@@ -933,7 +940,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
             },
           ),
           ..._pendingRows(hw, busy, (p) => p.key == d.key, indent: true),
-          if (_open.contains(d.key)) ...[
+          _reveal(d.key, [
             FutureBuilder<List<VirtVolume>>(
               future: _isos,
               builder: (_, snap) {
@@ -991,7 +998,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                 onTap: busy ? null : () => _removeDisk(hw, d),
               ),
             ]),
-          ],
+          ]),
         ],
         for (final d in hw.devices) ..._deviceRows(hw, d, busy),
         if (_adding == 'dev')
@@ -1022,7 +1029,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
   List<Widget> _deviceRows(VirtHardware hw, VirtHwDevice d, bool busy) => [
     _disc(d.key, _deviceIcon(d.kind), _deviceName(d.kind), d.detail ?? d.key),
     ..._pendingRows(hw, busy, (p) => p.key == d.key, indent: true),
-    if (_open.contains(d.key)) ...[
+    _reveal(d.key, [
       _field(
         Icons.tag,
         d.kind == VirtHwDeviceKind.pci ? libL10n.addr : libL10n.device,
@@ -1049,7 +1056,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
           onTap: busy ? null : () => _removeDevice(hw, d),
         ),
       ]),
-    ],
+    ]),
   ];
 
   /// The add block: the kind, then the device (USB, PCI) or the storage for
@@ -1103,7 +1110,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
               children: [
                 if (kind == VirtHwDeviceKind.pci)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 7),
+                    padding: const EdgeInsets.only(bottom: _rowGap),
                     child: devs.iommu
                         ? _callout(l10n.virtHwPciTitle, l10n.virtHwPciBody, indent: true)
                         : _callout(
@@ -1115,7 +1122,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                   ),
                 if (devs.mappingsOnly)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 7),
+                    padding: const EdgeInsets.only(bottom: _rowGap),
                     child: _text(l10n.virtHwMappingsOnly, indent: true),
                   ),
                 if (list.isEmpty)
@@ -1455,7 +1462,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
           (p) => _placeOf(hw, p.key) == _PendingPlace.other,
         ),
         _disc('config', Icons.code, name, open ? '' : path),
-        if (open)
+        _reveal('config', [
           Container(
             key: const ValueKey('hw:config:text'),
             padding: const EdgeInsets.all(13),
@@ -1471,6 +1478,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
               ),
             ),
           ),
+        ]),
       ],
     );
   }

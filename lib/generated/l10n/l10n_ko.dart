@@ -4144,4 +4144,304 @@ class AppLocalizationsKo extends AppLocalizations {
   String virtBackupRestored(String time) {
     return '$time에서 복원했습니다';
   }
+
+  @override
+  String pveNeedsPrivilege(
+    String account,
+    String privilege,
+    String path,
+    String command,
+  ) {
+    return '$account에게 $path의 $privilege 권한이 없습니다. PVE 호스트에서 부여하세요:\n$command';
+  }
+
+  @override
+  String get virtCanDelete => '삭제할 수 있음';
+
+  @override
+  String get virtInUse => '사용 중';
+
+  @override
+  String get virtOps => '작업';
+
+  @override
+  String get virtPool => '스토리지 풀';
+
+  @override
+  String get virtPoolNew => '새 스토리지 풀';
+
+  @override
+  String get virtStorageAdd => '스토리지 추가';
+
+  @override
+  String virtPoolUsedPct(String pct) {
+    return '$pct% 사용';
+  }
+
+  @override
+  String get virtPoolInUse => '가상 머신이 여기 볼륨을 사용 중이라 풀을 중지하거나 제거할 수 없습니다.';
+
+  @override
+  String get virtPoolDelete => '풀 삭제';
+
+  @override
+  String get virtStorageRemove => '스토리지 제거';
+
+  @override
+  String virtPoolDeleteAsk(String name) {
+    return '풀 $name을(를) 제거할까요? 정의는 삭제되고 볼륨은 그대로 남습니다.';
+  }
+
+  @override
+  String virtStorageRemoveAsk(String name) {
+    return 'PVE 설정에서 스토리지 $name을(를) 제거할까요? 안의 데이터는 남습니다.';
+  }
+
+  @override
+  String virtPoolDeleteKeepsVolumes(int count) {
+    return '볼륨 $count개는 디스크에 남습니다.';
+  }
+
+  @override
+  String get virtPoolDeleteStorage => '디렉터리도 삭제(비어 있을 때만)';
+
+  @override
+  String virtPoolStopAsk(String name) {
+    return '풀 $name을(를) 중지할까요? 다시 시작할 때까지 볼륨을 나열하거나 만들 수 없습니다.';
+  }
+
+  @override
+  String virtStorageDisableAsk(String name) {
+    return '스토리지 $name을(를) 비활성화할까요? 다시 활성화할 때까지 여기에 디스크가 있는 가상 머신은 시작할 수 없습니다.';
+  }
+
+  @override
+  String get virtPoolLogicalNote => '기존 볼륨 그룹을 그대로 사용하며 아무것도 포맷하지 않습니다.';
+
+  @override
+  String get virtPoolMountPoint => '마운트 지점';
+
+  @override
+  String get virtPoolSourceNfs => '소스 (host:/path)';
+
+  @override
+  String get virtPoolSourceVg => '볼륨 그룹';
+
+  @override
+  String get virtPoolSourceThin => '볼륨 그룹 / thin pool';
+
+  @override
+  String get virtPoolSourceZfs => 'ZFS 풀';
+
+  @override
+  String get virtPoolTypeVg => 'LVM 볼륨 그룹';
+
+  @override
+  String get virtResNameEmpty => '이름을 입력하세요';
+
+  @override
+  String get virtResNameInvalid => '이 호스트가 받지 않는 이름입니다(문자, 숫자, . _ -)';
+
+  @override
+  String get virtResSourceInvalid => '유효한 경로나 소스가 아닙니다';
+
+  @override
+  String get virtResTargetInvalid => '절대 경로여야 합니다';
+
+  @override
+  String get virtResCidrInvalid => '접두사가 있는 주소(예: 192.168.150.1/24)';
+
+  @override
+  String get virtResDhcpInvalid => '네트워크 안의 두 주소(순서대로, 호스트 주소 제외)';
+
+  @override
+  String get virtResSubnetTaken => '다른 네트워크가 이 서브넷을 사용 중입니다';
+
+  @override
+  String get virtResBridgeInvalid => '인터페이스 이름이 아닙니다';
+
+  @override
+  String get virtResFormat => '이 풀은 해당 형식을 지원하지 않습니다';
+
+  @override
+  String get virtVolNew => '새 볼륨';
+
+  @override
+  String virtVolCount(int count) {
+    return '볼륨 $count개';
+  }
+
+  @override
+  String get virtVolNone => '이 풀에는 아직 볼륨이 없습니다.';
+
+  @override
+  String get virtVolEmptyAttach => '새 볼륨은 나중에 어느 가상 머신에든 연결할 수 있습니다';
+
+  @override
+  String get virtVolEmptyUpload => 'ISO를 바로 업로드할 수도 있습니다';
+
+  @override
+  String get virtVolPveName =>
+      'PVE는 볼륨 이름을 소속 가상 머신 기준으로 짓습니다: vm-<VMID>-disk-<N>';
+
+  @override
+  String get virtVolUsers => '사용 중인 곳';
+
+  @override
+  String get virtVolAllocated => '할당됨';
+
+  @override
+  String get virtVolGrowFromGuest => '가상 머신이 사용 중입니다. 해당 가상 머신의 하드웨어 화면에서 늘리세요';
+
+  @override
+  String get virtVolInUse => '가상 머신이 이 볼륨을 사용 중입니다';
+
+  @override
+  String get virtVolAttach => '가상 머신에 연결';
+
+  @override
+  String get virtVolAttachNote => '첫 번째 디스크와 같은 버스에 새 디스크로 연결됩니다';
+
+  @override
+  String virtVolAttached(String name) {
+    return '$name에 연결했습니다';
+  }
+
+  @override
+  String get virtVolInsert => 'CD-ROM에 삽입';
+
+  @override
+  String virtVolInserted(String name) {
+    return '$name의 CD-ROM에 삽입했습니다';
+  }
+
+  @override
+  String virtVolNoCdrom(String name) {
+    return '$name에는 CD-ROM 드라이브가 없습니다';
+  }
+
+  @override
+  String virtVolDeleteAsk(String name, String pool) {
+    return '$pool에서 볼륨 $name을(를) 삭제할까요? 안의 데이터는 영구히 사라집니다.';
+  }
+
+  @override
+  String get virtUploadIso => 'ISO 업로드';
+
+  @override
+  String virtUploadTo(String pool) {
+    return '$pool에 업로드';
+  }
+
+  @override
+  String virtUploadDone(String name) {
+    return '$name 업로드 완료';
+  }
+
+  @override
+  String get virtNetConfig => '구성';
+
+  @override
+  String get virtNetInternal => '내부';
+
+  @override
+  String get virtNetBridgePorts => '브리지 포트';
+
+  @override
+  String get virtNetHostBridge => '호스트 브리지';
+
+  @override
+  String get virtNetPortsHint => 'eno2, 비우면 내부 브리지';
+
+  @override
+  String get virtNetDhcpRange => 'DHCP 범위';
+
+  @override
+  String get virtNetDhcpTip => 'dnsmasq가 가상 머신에 주소를 할당합니다';
+
+  @override
+  String get virtNetVlanTip => '가상 머신 NIC에 VLAN 태그를 쓸 수 있습니다';
+
+  @override
+  String get virtNetNatTip => '호스트 경유: 가상 머신은 밖으로 나가지만 밖에서는 들어올 수 없습니다';
+
+  @override
+  String get virtNetRoutedTip => 'NAT 없이 호스트가 라우팅: LAN에 돌아오는 경로가 필요합니다';
+
+  @override
+  String get virtNetIsolatedTip => '가상 머신끼리와 호스트만 서로 통신합니다';
+
+  @override
+  String get virtNetBridgedTip => '가상 머신이 호스트 브리지에 붙어 물리 네트워크에 연결됩니다';
+
+  @override
+  String get virtNetNew => '새 네트워크';
+
+  @override
+  String get virtNetNewBridge => '새 Linux 브리지';
+
+  @override
+  String get virtNetVirtual => '가상 네트워크';
+
+  @override
+  String get virtNetDelete => '네트워크 삭제';
+
+  @override
+  String virtNetDeleteAsk(String name) {
+    return '네트워크 $name을(를) 삭제할까요? 중지되고 정의가 제거됩니다.';
+  }
+
+  @override
+  String virtNetDeleteAskPve(String name, String node) {
+    return '$node에서 브리지 $name을(를) 제거할까요? 지금은 대기 중인 구성에서 빠지고, 적용하면 호스트에서 사라집니다.';
+  }
+
+  @override
+  String virtNetInUse(int count) {
+    return '연결된 가상 머신: $count. 삭제할 수 없습니다.';
+  }
+
+  @override
+  String virtNetStopAsk(String name, int count) {
+    return '$name을(를) 중지할까요? 연결된 가상 머신 $count대는 다시 시작할 때까지 네트워크를 잃습니다.';
+  }
+
+  @override
+  String get virtNetInactivePve => '비활성: 새 브리지는 적용될 때까지 대기 중인 구성에 있습니다.';
+
+  @override
+  String get virtNetPveApplyNote =>
+      '대기 중인 변경으로 저장되며, 구성을 적용하면 반영됩니다(ifreload -a).';
+
+  @override
+  String get virtNetPendingSaved => '대기 중으로 저장했습니다. 구성을 적용해야 반영됩니다';
+
+  @override
+  String virtNetPendingTitle(String node) {
+    return '$node의 대기 중인 네트워크 변경';
+  }
+
+  @override
+  String get virtNetPendingTip =>
+      'PVE는 네트워크 변경을 적용할 때까지 interfaces.new에 보관합니다.';
+
+  @override
+  String get virtNetPendingShow => '변경 보기';
+
+  @override
+  String get virtNetApply => '구성 적용';
+
+  @override
+  String virtNetApplyAsk(String node) {
+    return '$node의 대기 중인 네트워크 구성을 적용할까요? PVE가 호스트 네트워크를 다시 불러옵니다(ifreload -a). 잘못되면 호스트 연결이 끊길 수 있습니다.';
+  }
+
+  @override
+  String virtNetRevertAsk(String node) {
+    return '$node의 대기 중인 네트워크 구성을 버릴까요?';
+  }
+
+  @override
+  String get pveTokenTipStorage =>
+      '스토리지 관리에는 /storage의 Datastore.Allocate(추가, 비활성화, 제거), Datastore.AllocateSpace(볼륨), Datastore.AllocateTemplate(업로드)가 필요하고, Linux 브리지와 네트워크 구성 적용에는 노드의 Sys.Modify가 필요합니다.';
 }

@@ -303,6 +303,46 @@ abstract class VirtCapabilities with _$VirtCapabilities {
     /// libvirt keeps no such list: what is pending is the difference between
     /// two definitions.
     @Default(false) bool hardwareRevert,
+
+    /// Pools (PVE: storages) can be added, stopped or disabled, started or
+    /// enabled, and removed; volumes created and deleted in them.
+    @Default(false) bool storageEdit,
+
+    /// The pool types a new pool can be: libvirt `dir`, `netfs`, `logical`;
+    /// PVE `dir`, `lvmthin`, `nfs`, `zfspool`. Empty where none can be made.
+    @Default(<String>[]) List<String> poolTypes,
+
+    /// A pool starts with the host or not (libvirt `pool-autostart`).
+    @Default(false) bool poolAutostart,
+
+    /// Removing a pool can delete what it is on too (libvirt `pool-delete`:
+    /// an empty directory, a mount point).
+    @Default(false) bool poolDeleteStorage,
+
+    /// A volume can be grown and copied in its pool (libvirt `vol-resize`,
+    /// `vol-clone`). PVE grows a disk only as a guest's.
+    @Default(false) bool volumeResize,
+    @Default(false) bool volumeClone,
+
+    /// A file from this device can be uploaded into a pool: PVE's upload,
+    /// or libvirt's `vol-upload` over a channel that carries bytes (SSH, or
+    /// this device), which a monitor agent's `/exec` does not.
+    @Default(false) bool upload,
+
+    /// Networks can be created and deleted.
+    @Default(false) bool networkEdit,
+
+    /// What a new network can be: libvirt `nat`, `route`, `isolated`,
+    /// `bridge`; PVE `bridge` (a Linux bridge).
+    @Default(<String>[]) List<String> networkModes,
+
+    /// A network can be started and stopped, and marked to start with the
+    /// host (libvirt).
+    @Default(false) bool networkStart,
+
+    /// Network changes are written as pending and take effect when applied,
+    /// or are dropped (PVE's `/etc/network/interfaces.new`).
+    @Default(false) bool networkApply,
   }) = _VirtCapabilities;
 
   factory VirtCapabilities.fromJson(Map<String, dynamic> json) =>

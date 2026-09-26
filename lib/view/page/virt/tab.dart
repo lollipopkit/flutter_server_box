@@ -16,6 +16,7 @@ import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/virt/common.dart';
 import 'package:server_box/view/page/virt/create.dart';
 import 'package:server_box/view/page/virt/guest.dart';
+import 'package:server_box/view/page/virt/hardware.dart';
 import 'package:server_box/view/page/virt/host_error.dart';
 import 'package:server_box/view/page/virt/resources.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
@@ -59,8 +60,9 @@ class _VirtTabPageState extends ConsumerState<VirtTabPage>
   String? _poolId;
   String? _netId;
 
-  /// A new guest is being filled in beside the list (two columns; one column
-  /// pushes a page instead). Takes the place of the guest open there.
+  /// Something new is being filled in beside the list — a guest, a pool or
+  /// a network, as the section on screen says (two columns; one column
+  /// pushes a page instead). Takes the place of what is open there.
   bool _creating = false;
 
   /// The host switcher, opened inside the list column (two columns only; one
@@ -130,7 +132,7 @@ class _VirtTabPageState extends ConsumerState<VirtTabPage>
         // as well, because the same id on two hosts is two different guests
         // and a pool may share a network's name.
         detailId: switch (_openId) {
-          _ when _creating && hostId != null => '$hostId/create',
+          _ when _creating && hostId != null => '$hostId/${_section.name}/create',
           final id? when hostId != null => '$hostId/${_section.name}/$id',
           _ => null,
         },
@@ -177,16 +179,37 @@ class _VirtTabPageState extends ConsumerState<VirtTabPage>
 
   Widget _buildDetail(String? hostId) {
     if (_creating && hostId != null) {
-      return VirtCreateView(
-        key: ValueKey('$hostId/create'),
-        serverId: hostId,
-        onCancel: () => setState(() => _creating = false),
-        onCreated: (id) => setState(() {
-          _creating = false;
-          _section = VirtSection.guests;
-          _guestId = id;
-        }),
-      );
+      final key = ValueKey('$hostId/${_section.name}/create');
+      void cancel() => setState(() => _creating = false);
+      return switch (_section) {
+        VirtSection.guests => VirtCreateView(
+          key: key,
+          serverId: hostId,
+          onCancel: cancel,
+          onCreated: (id) => setState(() {
+            _creating = false;
+            _guestId = id;
+          }),
+        ),
+        VirtSection.storage => VirtPoolCreateView(
+          key: key,
+          serverId: hostId,
+          onCancel: cancel,
+          onCreated: (id) => setState(() {
+            _creating = false;
+            _poolId = id;
+          }),
+        ),
+        VirtSection.network => VirtNetworkCreateView(
+          key: key,
+          serverId: hostId,
+          onCancel: cancel,
+          onCreated: (id) => setState(() {
+            _creating = false;
+            _netId = id;
+          }),
+        ),
+      };
     }
     final id = _openId;
     if (hostId == null || id == null) {
@@ -205,12 +228,14 @@ class _VirtTabPageState extends ConsumerState<VirtTabPage>
         key: key,
         serverId: hostId,
         poolId: id,
+        onDeleted: () => setState(() => _poolId = null),
       ),
       VirtSection.network => VirtNetworkView(
         key: key,
         serverId: hostId,
         netId: id,
         onOpenGuest: (guestId) => _openGuest(hostId, guestId, true),
+        onDeleted: () => setState(() => _netId = null),
       ),
     };
   }
@@ -255,22 +280,31 @@ extension _Actions on _VirtTabPageState {
     });
   }
 
-  /// The form for a new guest: beside the list with two columns, over it
-  /// with one — and then the new guest, as it would be opened from the list.
+  /// The form for a new guest, pool or network — whichever the section on
+  /// screen lists: beside the list with two columns, over it with one — and
+  /// then what was made, as it would be opened from the list.
   Future<void> _startCreate(String hostId, bool split) async {
     if (split) {
-      setState(() {
-        _section = VirtSection.guests;
-        _creating = true;
-      });
+      setState(() => _creating = true);
       return;
     }
-    final id = await VirtCreatePage.route.go(
-      context,
-      VirtCreateArgs(serverId: hostId),
-    );
+    final section = _section;
+    final id = switch (section) {
+      VirtSection.guests => await VirtCreatePage.route.go(
+        context,
+        VirtCreateArgs(serverId: hostId),
+      ),
+      VirtSection.storage || VirtSection.network =>
+        await VirtResourceCreatePage.route.go(
+          context,
+          VirtResourceCreateArgs(
+            serverId: hostId,
+            network: section == VirtSection.network,
+          ),
+        ),
+    };
     if (id == null || !mounted) return;
-    _openGuest(hostId, id, false);
+    _openResource(hostId, id, false);
   }
 
   /// Opens [guestId]: beside the list with two columns, over it with one.

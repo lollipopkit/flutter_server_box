@@ -4349,4 +4349,316 @@ class AppLocalizationsAz extends AppLocalizations {
   String virtBackupRestored(String time) {
     return '$time tarixindən bərpa edildi';
   }
+
+  @override
+  String pveNeedsPrivilege(
+    String account,
+    String privilege,
+    String path,
+    String command,
+  ) {
+    return '$account hesabının $path üzərində $privilege icazəsi yoxdur. PVE hostunda verin:\n$command';
+  }
+
+  @override
+  String get virtCanDelete => 'Silinə bilər';
+
+  @override
+  String get virtInUse => 'İstifadədədir';
+
+  @override
+  String get virtOps => 'Əməliyyatlar';
+
+  @override
+  String get virtPool => 'Yaddaş hovuzu';
+
+  @override
+  String get virtPoolNew => 'Yeni yaddaş hovuzu';
+
+  @override
+  String get virtStorageAdd => 'Yaddaş əlavə et';
+
+  @override
+  String virtPoolUsedPct(String pct) {
+    return '$pct% istifadə olunub';
+  }
+
+  @override
+  String get virtPoolInUse =>
+      'Bir VM buradakı həcmdən istifadə edir, hovuzu dayandırmaq və ya silmək olmaz.';
+
+  @override
+  String get virtPoolDelete => 'Hovuzu sil';
+
+  @override
+  String get virtStorageRemove => 'Yaddaşı çıxar';
+
+  @override
+  String virtPoolDeleteAsk(String name) {
+    return '$name hovuzu silinsin? Tərifi silinir, həcmləri yerində qalır.';
+  }
+
+  @override
+  String virtStorageRemoveAsk(String name) {
+    return '$name yaddaşı PVE konfiqurasiyasından çıxarılsın? İçindəkilər qalır.';
+  }
+
+  @override
+  String virtPoolDeleteKeepsVolumes(int count) {
+    return '$count həcmi diskdə qalır.';
+  }
+
+  @override
+  String get virtPoolDeleteStorage => 'Qovluğunu da sil (yalnız boşdursa)';
+
+  @override
+  String virtPoolStopAsk(String name) {
+    return '$name hovuzu dayandırılsın? Yenidən başlayana qədər həcmlər siyahılanmır və yaradılmır.';
+  }
+
+  @override
+  String virtStorageDisableAsk(String name) {
+    return '$name yaddaşı söndürülsün? Diskləri orada olan VM-lər yenidən aktivləşənə qədər başlamaz.';
+  }
+
+  @override
+  String get virtPoolLogicalNote =>
+      'Mövcud həcm qrupu olduğu kimi istifadə olunur; heç nə formatlanmır.';
+
+  @override
+  String get virtPoolMountPoint => 'Bağlama nöqtəsi';
+
+  @override
+  String get virtPoolSourceNfs => 'Mənbə (host:/yol)';
+
+  @override
+  String get virtPoolSourceVg => 'Həcm qrupu';
+
+  @override
+  String get virtPoolSourceThin => 'Həcm qrupu / thin pool';
+
+  @override
+  String get virtPoolSourceZfs => 'ZFS hovuzu';
+
+  @override
+  String get virtPoolTypeVg => 'LVM həcm qrupu';
+
+  @override
+  String get virtResNameEmpty => 'Ad daxil edin';
+
+  @override
+  String get virtResNameInvalid =>
+      'Bu hostun qəbul etdiyi ad deyil (hərf, rəqəm, . _ -)';
+
+  @override
+  String get virtResSourceInvalid => 'Etibarlı yol və ya mənbə deyil';
+
+  @override
+  String get virtResTargetInvalid => 'Mütləq yol';
+
+  @override
+  String get virtResCidrInvalid => 'Prefiksli ünvan, məs. 192.168.150.1/24';
+
+  @override
+  String get virtResDhcpInvalid =>
+      'Şəbəkədə ardıcıl iki ünvan, hostun ünvanı olmadan';
+
+  @override
+  String get virtResSubnetTaken => 'Buradakı başqa şəbəkə bu alt şəbəkədədir';
+
+  @override
+  String get virtResBridgeInvalid => 'İnterfeys adı deyil';
+
+  @override
+  String get virtResFormat => 'Bu hovuz bu formatı dəstəkləmir';
+
+  @override
+  String get virtVolNew => 'Yeni həcm';
+
+  @override
+  String virtVolCount(int count) {
+    return '$count həcm';
+  }
+
+  @override
+  String get virtVolNone => 'Bu hovuzda hələ həcm yoxdur.';
+
+  @override
+  String get virtVolEmptyAttach =>
+      'Yeni həcmi sonra istənilən VM-ə qoşmaq olar';
+
+  @override
+  String get virtVolEmptyUpload => 'ISO birbaşa da yüklənə bilər';
+
+  @override
+  String get virtVolPveName =>
+      'PVE həcmi VM-inə görə adlandırır: vm-<VMID>-disk-<N>';
+
+  @override
+  String get virtVolUsers => 'İstifadə edən';
+
+  @override
+  String get virtVolAllocated => 'Ayrılıb';
+
+  @override
+  String get virtVolGrowFromGuest =>
+      'VM istifadə edir: həmin VM-in Avadanlıq görünüşündən böyüdün';
+
+  @override
+  String get virtVolInUse => 'Bu həcmdən VM istifadə edir';
+
+  @override
+  String get virtVolAttach => 'VM-ə qoş';
+
+  @override
+  String get virtVolAttachNote =>
+      'İlk diskinin olduğu şinə yeni disk kimi qoşulur';
+
+  @override
+  String virtVolAttached(String name) {
+    return '$name maşınına qoşuldu';
+  }
+
+  @override
+  String get virtVolInsert => 'CD-ROM-a tax';
+
+  @override
+  String virtVolInserted(String name) {
+    return '$name CD-ROM sürücüsünə taxıldı';
+  }
+
+  @override
+  String virtVolNoCdrom(String name) {
+    return '$name maşınında CD-ROM sürücüsü yoxdur';
+  }
+
+  @override
+  String virtVolDeleteAsk(String name, String pool) {
+    return '$name həcmi $pool hovuzundan silinsin? İçindəkilər həmişəlik itir.';
+  }
+
+  @override
+  String get virtUploadIso => 'ISO yüklə';
+
+  @override
+  String virtUploadTo(String pool) {
+    return '$pool hovuzuna yüklə';
+  }
+
+  @override
+  String virtUploadDone(String name) {
+    return '$name yükləndi';
+  }
+
+  @override
+  String get virtNetConfig => 'Konfiqurasiya';
+
+  @override
+  String get virtNetInternal => 'Daxili';
+
+  @override
+  String get virtNetBridgePorts => 'Körpü portları';
+
+  @override
+  String get virtNetHostBridge => 'Host körpüsü';
+
+  @override
+  String get virtNetPortsHint => 'eno2; daxili körpü üçün boş';
+
+  @override
+  String get virtNetDhcpRange => 'DHCP aralığı';
+
+  @override
+  String get virtNetDhcpTip => 'dnsmasq VM-lərə ünvan verir';
+
+  @override
+  String get virtNetVlanTip => 'VM şəbəkə kartları VLAN teqi daşıya bilər';
+
+  @override
+  String get virtNetNatTip =>
+      'Host vasitəsilə: VM-lər çölə çıxır, çöldən daxil olmaq olmur';
+
+  @override
+  String get virtNetRoutedTip =>
+      'NAT olmadan host yönləndirir: LAN-da geri marşrut lazımdır';
+
+  @override
+  String get virtNetIsolatedTip => 'Yalnız VM-lər və host bir-birinə çatır';
+
+  @override
+  String get virtNetBridgedTip =>
+      'VM-lər hostun körpüsünə, fiziki şəbəkəsinə qoşulur';
+
+  @override
+  String get virtNetNew => 'Yeni şəbəkə';
+
+  @override
+  String get virtNetNewBridge => 'Yeni Linux körpüsü';
+
+  @override
+  String get virtNetVirtual => 'Virtual şəbəkə';
+
+  @override
+  String get virtNetDelete => 'Şəbəkəni sil';
+
+  @override
+  String virtNetDeleteAsk(String name) {
+    return '$name şəbəkəsi silinsin? Dayandırılır və tərifi silinir.';
+  }
+
+  @override
+  String virtNetDeleteAskPve(String name, String node) {
+    return '$name körpüsü $node üzərindən çıxarılsın? İndi gözləyən konfiqurasiyadan, tətbiq ediləndə isə hostdan çıxır.';
+  }
+
+  @override
+  String virtNetInUse(int count) {
+    return 'Üzərindəki VM: $count. Silinə bilməz.';
+  }
+
+  @override
+  String virtNetStopAsk(String name, int count) {
+    return '$name dayandırılsın? Üzərindəki $count VM yenidən başlayana qədər şəbəkəsiz qalır.';
+  }
+
+  @override
+  String get virtNetInactivePve =>
+      'Aktiv deyil: yeni körpü tətbiq olunana qədər gözləyən konfiqurasiyadadır.';
+
+  @override
+  String get virtNetPveApplyNote =>
+      'Gözləyən dəyişiklik kimi saxlanılır; konfiqurasiya tətbiq olunanda qüvvəyə minir (ifreload -a).';
+
+  @override
+  String get virtNetPendingSaved =>
+      'Gözləyən kimi saxlanıldı: qüvvəyə minməsi üçün konfiqurasiyanı tətbiq edin';
+
+  @override
+  String virtNetPendingTitle(String node) {
+    return '$node üzərində gözləyən şəbəkə dəyişiklikləri';
+  }
+
+  @override
+  String get virtNetPendingTip =>
+      'PVE şəbəkə dəyişikliklərini tətbiq olunana qədər interfaces.new-da saxlayır.';
+
+  @override
+  String get virtNetPendingShow => 'Dəyişiklikləri göstər';
+
+  @override
+  String get virtNetApply => 'Konfiqurasiyanı tətbiq et';
+
+  @override
+  String virtNetApplyAsk(String node) {
+    return '$node üzərində gözləyən şəbəkə konfiqurasiyası tətbiq edilsin? PVE hostun şəbəkəsini yenidən yükləyir (ifreload -a): səhv hostu əlçatmaz edə bilər.';
+  }
+
+  @override
+  String virtNetRevertAsk(String node) {
+    return '$node üzərində gözləyən şəbəkə konfiqurasiyası atılsın?';
+  }
+
+  @override
+  String get pveTokenTipStorage =>
+      'Yaddaşın idarəsi /storage üzərində Datastore.Allocate (əlavə, söndürmə, çıxarma), Datastore.AllocateSpace (həcmlər) və Datastore.AllocateTemplate (yükləmələr) tələb edir; Linux körpüləri və şəbəkə konfiqurasiyasının tətbiqi node-da Sys.Modify tələb edir.';
 }

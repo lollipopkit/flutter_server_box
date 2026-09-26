@@ -597,7 +597,10 @@ mixin _$VirtHostState {
  Map<String, VirtSnapshotOp> get snapshotOps;/// Guests being deleted.
  Set<String> get deleting;/// Guests with a hardware change in flight.
  Set<String> get editing;/// Guests being cloned, backed up or restored, and which.
- Map<String, VirtCopyOp> get copyOps;/// This session's readings per guest, oldest first, capped at
+ Map<String, VirtCopyOp> get copyOps;/// Storage and network changes in flight, by [VirtResourceChange.scope]:
+/// one per pool, per network, and one create of each at a time.
+ Set<String> get resourceOps;/// Uploads in flight, by pool id.
+ Map<String, VirtUploadProgress> get uploads;/// This session's readings per guest, oldest first, capped at
 /// [VirtHostNotifier.sampleLimit] — the chart for a host without
 /// `storedHistory`, and the live tail for one with it.
  Map<String, List<VirtStats>> get samples; DateTime? get updatedAt;
@@ -611,16 +614,16 @@ $VirtHostStateCopyWith<VirtHostState> get copyWith => _$VirtHostStateCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHostState&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.data, data) || other.data == data)&&(identical(other.error, error) || other.error == error)&&(identical(other.loading, loading) || other.loading == loading)&&const DeepCollectionEquality().equals(other.busy, busy)&&const DeepCollectionEquality().equals(other.snapshotOps, snapshotOps)&&const DeepCollectionEquality().equals(other.deleting, deleting)&&const DeepCollectionEquality().equals(other.editing, editing)&&const DeepCollectionEquality().equals(other.copyOps, copyOps)&&const DeepCollectionEquality().equals(other.samples, samples)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHostState&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.data, data) || other.data == data)&&(identical(other.error, error) || other.error == error)&&(identical(other.loading, loading) || other.loading == loading)&&const DeepCollectionEquality().equals(other.busy, busy)&&const DeepCollectionEquality().equals(other.snapshotOps, snapshotOps)&&const DeepCollectionEquality().equals(other.deleting, deleting)&&const DeepCollectionEquality().equals(other.editing, editing)&&const DeepCollectionEquality().equals(other.copyOps, copyOps)&&const DeepCollectionEquality().equals(other.resourceOps, resourceOps)&&const DeepCollectionEquality().equals(other.uploads, uploads)&&const DeepCollectionEquality().equals(other.samples, samples)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,serverId,kind,data,error,loading,const DeepCollectionEquality().hash(busy),const DeepCollectionEquality().hash(snapshotOps),const DeepCollectionEquality().hash(deleting),const DeepCollectionEquality().hash(editing),const DeepCollectionEquality().hash(copyOps),const DeepCollectionEquality().hash(samples),updatedAt);
+int get hashCode => Object.hash(runtimeType,serverId,kind,data,error,loading,const DeepCollectionEquality().hash(busy),const DeepCollectionEquality().hash(snapshotOps),const DeepCollectionEquality().hash(deleting),const DeepCollectionEquality().hash(editing),const DeepCollectionEquality().hash(copyOps),const DeepCollectionEquality().hash(resourceOps),const DeepCollectionEquality().hash(uploads),const DeepCollectionEquality().hash(samples),updatedAt);
 
 @override
 String toString() {
-  return 'VirtHostState(serverId: $serverId, kind: $kind, data: $data, error: $error, loading: $loading, busy: $busy, snapshotOps: $snapshotOps, deleting: $deleting, editing: $editing, copyOps: $copyOps, samples: $samples, updatedAt: $updatedAt)';
+  return 'VirtHostState(serverId: $serverId, kind: $kind, data: $data, error: $error, loading: $loading, busy: $busy, snapshotOps: $snapshotOps, deleting: $deleting, editing: $editing, copyOps: $copyOps, resourceOps: $resourceOps, uploads: $uploads, samples: $samples, updatedAt: $updatedAt)';
 }
 
 
@@ -631,7 +634,7 @@ abstract mixin class $VirtHostStateCopyWith<$Res>  {
   factory $VirtHostStateCopyWith(VirtHostState value, $Res Function(VirtHostState) _then) = _$VirtHostStateCopyWithImpl;
 @useResult
 $Res call({
- String serverId, VirtHostKind? kind, VirtSnapshot? data, VirtErr? error, bool loading, Map<String, VirtPowerAction> busy, Map<String, VirtSnapshotOp> snapshotOps, Set<String> deleting, Set<String> editing, Map<String, VirtCopyOp> copyOps, Map<String, List<VirtStats>> samples, DateTime? updatedAt
+ String serverId, VirtHostKind? kind, VirtSnapshot? data, VirtErr? error, bool loading, Map<String, VirtPowerAction> busy, Map<String, VirtSnapshotOp> snapshotOps, Set<String> deleting, Set<String> editing, Map<String, VirtCopyOp> copyOps, Set<String> resourceOps, Map<String, VirtUploadProgress> uploads, Map<String, List<VirtStats>> samples, DateTime? updatedAt
 });
 
 
@@ -648,7 +651,7 @@ class _$VirtHostStateCopyWithImpl<$Res>
 
 /// Create a copy of VirtHostState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? serverId = null,Object? kind = freezed,Object? data = freezed,Object? error = freezed,Object? loading = null,Object? busy = null,Object? snapshotOps = null,Object? deleting = null,Object? editing = null,Object? copyOps = null,Object? samples = null,Object? updatedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? serverId = null,Object? kind = freezed,Object? data = freezed,Object? error = freezed,Object? loading = null,Object? busy = null,Object? snapshotOps = null,Object? deleting = null,Object? editing = null,Object? copyOps = null,Object? resourceOps = null,Object? uploads = null,Object? samples = null,Object? updatedAt = freezed,}) {
   return _then(_self.copyWith(
 serverId: null == serverId ? _self.serverId : serverId // ignore: cast_nullable_to_non_nullable
 as String,kind: freezed == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
@@ -660,7 +663,9 @@ as Map<String, VirtPowerAction>,snapshotOps: null == snapshotOps ? _self.snapsho
 as Map<String, VirtSnapshotOp>,deleting: null == deleting ? _self.deleting : deleting // ignore: cast_nullable_to_non_nullable
 as Set<String>,editing: null == editing ? _self.editing : editing // ignore: cast_nullable_to_non_nullable
 as Set<String>,copyOps: null == copyOps ? _self.copyOps : copyOps // ignore: cast_nullable_to_non_nullable
-as Map<String, VirtCopyOp>,samples: null == samples ? _self.samples : samples // ignore: cast_nullable_to_non_nullable
+as Map<String, VirtCopyOp>,resourceOps: null == resourceOps ? _self.resourceOps : resourceOps // ignore: cast_nullable_to_non_nullable
+as Set<String>,uploads: null == uploads ? _self.uploads : uploads // ignore: cast_nullable_to_non_nullable
+as Map<String, VirtUploadProgress>,samples: null == samples ? _self.samples : samples // ignore: cast_nullable_to_non_nullable
 as Map<String, List<VirtStats>>,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,
   ));
@@ -759,10 +764,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String serverId,  VirtHostKind? kind,  VirtSnapshot? data,  VirtErr? error,  bool loading,  Map<String, VirtPowerAction> busy,  Map<String, VirtSnapshotOp> snapshotOps,  Set<String> deleting,  Set<String> editing,  Map<String, VirtCopyOp> copyOps,  Map<String, List<VirtStats>> samples,  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String serverId,  VirtHostKind? kind,  VirtSnapshot? data,  VirtErr? error,  bool loading,  Map<String, VirtPowerAction> busy,  Map<String, VirtSnapshotOp> snapshotOps,  Set<String> deleting,  Set<String> editing,  Map<String, VirtCopyOp> copyOps,  Set<String> resourceOps,  Map<String, VirtUploadProgress> uploads,  Map<String, List<VirtStats>> samples,  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _VirtHostState() when $default != null:
-return $default(_that.serverId,_that.kind,_that.data,_that.error,_that.loading,_that.busy,_that.snapshotOps,_that.deleting,_that.editing,_that.copyOps,_that.samples,_that.updatedAt);case _:
+return $default(_that.serverId,_that.kind,_that.data,_that.error,_that.loading,_that.busy,_that.snapshotOps,_that.deleting,_that.editing,_that.copyOps,_that.resourceOps,_that.uploads,_that.samples,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -780,10 +785,10 @@ return $default(_that.serverId,_that.kind,_that.data,_that.error,_that.loading,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String serverId,  VirtHostKind? kind,  VirtSnapshot? data,  VirtErr? error,  bool loading,  Map<String, VirtPowerAction> busy,  Map<String, VirtSnapshotOp> snapshotOps,  Set<String> deleting,  Set<String> editing,  Map<String, VirtCopyOp> copyOps,  Map<String, List<VirtStats>> samples,  DateTime? updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String serverId,  VirtHostKind? kind,  VirtSnapshot? data,  VirtErr? error,  bool loading,  Map<String, VirtPowerAction> busy,  Map<String, VirtSnapshotOp> snapshotOps,  Set<String> deleting,  Set<String> editing,  Map<String, VirtCopyOp> copyOps,  Set<String> resourceOps,  Map<String, VirtUploadProgress> uploads,  Map<String, List<VirtStats>> samples,  DateTime? updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _VirtHostState():
-return $default(_that.serverId,_that.kind,_that.data,_that.error,_that.loading,_that.busy,_that.snapshotOps,_that.deleting,_that.editing,_that.copyOps,_that.samples,_that.updatedAt);case _:
+return $default(_that.serverId,_that.kind,_that.data,_that.error,_that.loading,_that.busy,_that.snapshotOps,_that.deleting,_that.editing,_that.copyOps,_that.resourceOps,_that.uploads,_that.samples,_that.updatedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -800,10 +805,10 @@ return $default(_that.serverId,_that.kind,_that.data,_that.error,_that.loading,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String serverId,  VirtHostKind? kind,  VirtSnapshot? data,  VirtErr? error,  bool loading,  Map<String, VirtPowerAction> busy,  Map<String, VirtSnapshotOp> snapshotOps,  Set<String> deleting,  Set<String> editing,  Map<String, VirtCopyOp> copyOps,  Map<String, List<VirtStats>> samples,  DateTime? updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String serverId,  VirtHostKind? kind,  VirtSnapshot? data,  VirtErr? error,  bool loading,  Map<String, VirtPowerAction> busy,  Map<String, VirtSnapshotOp> snapshotOps,  Set<String> deleting,  Set<String> editing,  Map<String, VirtCopyOp> copyOps,  Set<String> resourceOps,  Map<String, VirtUploadProgress> uploads,  Map<String, List<VirtStats>> samples,  DateTime? updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _VirtHostState() when $default != null:
-return $default(_that.serverId,_that.kind,_that.data,_that.error,_that.loading,_that.busy,_that.snapshotOps,_that.deleting,_that.editing,_that.copyOps,_that.samples,_that.updatedAt);case _:
+return $default(_that.serverId,_that.kind,_that.data,_that.error,_that.loading,_that.busy,_that.snapshotOps,_that.deleting,_that.editing,_that.copyOps,_that.resourceOps,_that.uploads,_that.samples,_that.updatedAt);case _:
   return null;
 
 }
@@ -815,7 +820,7 @@ return $default(_that.serverId,_that.kind,_that.data,_that.error,_that.loading,_
 
 
 class _VirtHostState extends VirtHostState {
-  const _VirtHostState({required this.serverId, this.kind, this.data, this.error, this.loading = false, final  Map<String, VirtPowerAction> busy = const <String, VirtPowerAction>{}, final  Map<String, VirtSnapshotOp> snapshotOps = const <String, VirtSnapshotOp>{}, final  Set<String> deleting = const <String>{}, final  Set<String> editing = const <String>{}, final  Map<String, VirtCopyOp> copyOps = const <String, VirtCopyOp>{}, final  Map<String, List<VirtStats>> samples = const <String, List<VirtStats>>{}, this.updatedAt}): _busy = busy,_snapshotOps = snapshotOps,_deleting = deleting,_editing = editing,_copyOps = copyOps,_samples = samples,super._();
+  const _VirtHostState({required this.serverId, this.kind, this.data, this.error, this.loading = false, final  Map<String, VirtPowerAction> busy = const <String, VirtPowerAction>{}, final  Map<String, VirtSnapshotOp> snapshotOps = const <String, VirtSnapshotOp>{}, final  Set<String> deleting = const <String>{}, final  Set<String> editing = const <String>{}, final  Map<String, VirtCopyOp> copyOps = const <String, VirtCopyOp>{}, final  Set<String> resourceOps = const <String>{}, final  Map<String, VirtUploadProgress> uploads = const <String, VirtUploadProgress>{}, final  Map<String, List<VirtStats>> samples = const <String, List<VirtStats>>{}, this.updatedAt}): _busy = busy,_snapshotOps = snapshotOps,_deleting = deleting,_editing = editing,_copyOps = copyOps,_resourceOps = resourceOps,_uploads = uploads,_samples = samples,super._();
   
 
 @override final  String serverId;
@@ -876,6 +881,26 @@ class _VirtHostState extends VirtHostState {
   return EqualUnmodifiableMapView(_copyOps);
 }
 
+/// Storage and network changes in flight, by [VirtResourceChange.scope]:
+/// one per pool, per network, and one create of each at a time.
+ final  Set<String> _resourceOps;
+/// Storage and network changes in flight, by [VirtResourceChange.scope]:
+/// one per pool, per network, and one create of each at a time.
+@override@JsonKey() Set<String> get resourceOps {
+  if (_resourceOps is EqualUnmodifiableSetView) return _resourceOps;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableSetView(_resourceOps);
+}
+
+/// Uploads in flight, by pool id.
+ final  Map<String, VirtUploadProgress> _uploads;
+/// Uploads in flight, by pool id.
+@override@JsonKey() Map<String, VirtUploadProgress> get uploads {
+  if (_uploads is EqualUnmodifiableMapView) return _uploads;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_uploads);
+}
+
 /// This session's readings per guest, oldest first, capped at
 /// [VirtHostNotifier.sampleLimit] — the chart for a host without
 /// `storedHistory`, and the live tail for one with it.
@@ -901,16 +926,16 @@ _$VirtHostStateCopyWith<_VirtHostState> get copyWith => __$VirtHostStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtHostState&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.data, data) || other.data == data)&&(identical(other.error, error) || other.error == error)&&(identical(other.loading, loading) || other.loading == loading)&&const DeepCollectionEquality().equals(other._busy, _busy)&&const DeepCollectionEquality().equals(other._snapshotOps, _snapshotOps)&&const DeepCollectionEquality().equals(other._deleting, _deleting)&&const DeepCollectionEquality().equals(other._editing, _editing)&&const DeepCollectionEquality().equals(other._copyOps, _copyOps)&&const DeepCollectionEquality().equals(other._samples, _samples)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtHostState&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.data, data) || other.data == data)&&(identical(other.error, error) || other.error == error)&&(identical(other.loading, loading) || other.loading == loading)&&const DeepCollectionEquality().equals(other._busy, _busy)&&const DeepCollectionEquality().equals(other._snapshotOps, _snapshotOps)&&const DeepCollectionEquality().equals(other._deleting, _deleting)&&const DeepCollectionEquality().equals(other._editing, _editing)&&const DeepCollectionEquality().equals(other._copyOps, _copyOps)&&const DeepCollectionEquality().equals(other._resourceOps, _resourceOps)&&const DeepCollectionEquality().equals(other._uploads, _uploads)&&const DeepCollectionEquality().equals(other._samples, _samples)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,serverId,kind,data,error,loading,const DeepCollectionEquality().hash(_busy),const DeepCollectionEquality().hash(_snapshotOps),const DeepCollectionEquality().hash(_deleting),const DeepCollectionEquality().hash(_editing),const DeepCollectionEquality().hash(_copyOps),const DeepCollectionEquality().hash(_samples),updatedAt);
+int get hashCode => Object.hash(runtimeType,serverId,kind,data,error,loading,const DeepCollectionEquality().hash(_busy),const DeepCollectionEquality().hash(_snapshotOps),const DeepCollectionEquality().hash(_deleting),const DeepCollectionEquality().hash(_editing),const DeepCollectionEquality().hash(_copyOps),const DeepCollectionEquality().hash(_resourceOps),const DeepCollectionEquality().hash(_uploads),const DeepCollectionEquality().hash(_samples),updatedAt);
 
 @override
 String toString() {
-  return 'VirtHostState(serverId: $serverId, kind: $kind, data: $data, error: $error, loading: $loading, busy: $busy, snapshotOps: $snapshotOps, deleting: $deleting, editing: $editing, copyOps: $copyOps, samples: $samples, updatedAt: $updatedAt)';
+  return 'VirtHostState(serverId: $serverId, kind: $kind, data: $data, error: $error, loading: $loading, busy: $busy, snapshotOps: $snapshotOps, deleting: $deleting, editing: $editing, copyOps: $copyOps, resourceOps: $resourceOps, uploads: $uploads, samples: $samples, updatedAt: $updatedAt)';
 }
 
 
@@ -921,7 +946,7 @@ abstract mixin class _$VirtHostStateCopyWith<$Res> implements $VirtHostStateCopy
   factory _$VirtHostStateCopyWith(_VirtHostState value, $Res Function(_VirtHostState) _then) = __$VirtHostStateCopyWithImpl;
 @override @useResult
 $Res call({
- String serverId, VirtHostKind? kind, VirtSnapshot? data, VirtErr? error, bool loading, Map<String, VirtPowerAction> busy, Map<String, VirtSnapshotOp> snapshotOps, Set<String> deleting, Set<String> editing, Map<String, VirtCopyOp> copyOps, Map<String, List<VirtStats>> samples, DateTime? updatedAt
+ String serverId, VirtHostKind? kind, VirtSnapshot? data, VirtErr? error, bool loading, Map<String, VirtPowerAction> busy, Map<String, VirtSnapshotOp> snapshotOps, Set<String> deleting, Set<String> editing, Map<String, VirtCopyOp> copyOps, Set<String> resourceOps, Map<String, VirtUploadProgress> uploads, Map<String, List<VirtStats>> samples, DateTime? updatedAt
 });
 
 
@@ -938,7 +963,7 @@ class __$VirtHostStateCopyWithImpl<$Res>
 
 /// Create a copy of VirtHostState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? serverId = null,Object? kind = freezed,Object? data = freezed,Object? error = freezed,Object? loading = null,Object? busy = null,Object? snapshotOps = null,Object? deleting = null,Object? editing = null,Object? copyOps = null,Object? samples = null,Object? updatedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? serverId = null,Object? kind = freezed,Object? data = freezed,Object? error = freezed,Object? loading = null,Object? busy = null,Object? snapshotOps = null,Object? deleting = null,Object? editing = null,Object? copyOps = null,Object? resourceOps = null,Object? uploads = null,Object? samples = null,Object? updatedAt = freezed,}) {
   return _then(_VirtHostState(
 serverId: null == serverId ? _self.serverId : serverId // ignore: cast_nullable_to_non_nullable
 as String,kind: freezed == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
@@ -950,7 +975,9 @@ as Map<String, VirtPowerAction>,snapshotOps: null == snapshotOps ? _self._snapsh
 as Map<String, VirtSnapshotOp>,deleting: null == deleting ? _self._deleting : deleting // ignore: cast_nullable_to_non_nullable
 as Set<String>,editing: null == editing ? _self._editing : editing // ignore: cast_nullable_to_non_nullable
 as Set<String>,copyOps: null == copyOps ? _self._copyOps : copyOps // ignore: cast_nullable_to_non_nullable
-as Map<String, VirtCopyOp>,samples: null == samples ? _self._samples : samples // ignore: cast_nullable_to_non_nullable
+as Map<String, VirtCopyOp>,resourceOps: null == resourceOps ? _self._resourceOps : resourceOps // ignore: cast_nullable_to_non_nullable
+as Set<String>,uploads: null == uploads ? _self._uploads : uploads // ignore: cast_nullable_to_non_nullable
+as Map<String, VirtUploadProgress>,samples: null == samples ? _self._samples : samples // ignore: cast_nullable_to_non_nullable
 as Map<String, List<VirtStats>>,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,
   ));

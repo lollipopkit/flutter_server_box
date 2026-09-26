@@ -4376,4 +4376,316 @@ class AppLocalizationsUk extends AppLocalizations {
   String virtBackupRestored(String time) {
     return 'Відновлено з $time';
   }
+
+  @override
+  String pveNeedsPrivilege(
+    String account,
+    String privilege,
+    String path,
+    String command,
+  ) {
+    return '$account не має $privilege на $path. Надайте на хості PVE:\n$command';
+  }
+
+  @override
+  String get virtCanDelete => 'Можна видалити';
+
+  @override
+  String get virtInUse => 'Використовується';
+
+  @override
+  String get virtOps => 'Дії';
+
+  @override
+  String get virtPool => 'Пул зберігання';
+
+  @override
+  String get virtPoolNew => 'Новий пул зберігання';
+
+  @override
+  String get virtStorageAdd => 'Додати сховище';
+
+  @override
+  String virtPoolUsedPct(String pct) {
+    return 'Зайнято $pct%';
+  }
+
+  @override
+  String get virtPoolInUse =>
+      'Віртуальна машина використовує том тут, тому пул не можна зупинити чи видалити.';
+
+  @override
+  String get virtPoolDelete => 'Видалити пул';
+
+  @override
+  String get virtStorageRemove => 'Прибрати сховище';
+
+  @override
+  String virtPoolDeleteAsk(String name) {
+    return 'Видалити пул $name? Видаляється його визначення; томи лишаються на місці.';
+  }
+
+  @override
+  String virtStorageRemoveAsk(String name) {
+    return 'Прибрати сховище $name з конфігурації PVE? Дані на ньому лишаться.';
+  }
+
+  @override
+  String virtPoolDeleteKeepsVolumes(int count) {
+    return 'Його томи ($count) лишаються на диску.';
+  }
+
+  @override
+  String get virtPoolDeleteStorage => 'Видалити й каталог (лише якщо порожній)';
+
+  @override
+  String virtPoolStopAsk(String name) {
+    return 'Зупинити пул $name? До запуску не можна буде переглядати й створювати томи.';
+  }
+
+  @override
+  String virtStorageDisableAsk(String name) {
+    return 'Вимкнути сховище $name? ВМ із дисками на ньому не запустяться, доки його знову не ввімкнуть.';
+  }
+
+  @override
+  String get virtPoolLogicalNote =>
+      'Використовується наявна група томів як є; нічого не форматується.';
+
+  @override
+  String get virtPoolMountPoint => 'Точка монтування';
+
+  @override
+  String get virtPoolSourceNfs => 'Джерело (host:/шлях)';
+
+  @override
+  String get virtPoolSourceVg => 'Група томів';
+
+  @override
+  String get virtPoolSourceThin => 'Група томів / thin pool';
+
+  @override
+  String get virtPoolSourceZfs => 'Пул ZFS';
+
+  @override
+  String get virtPoolTypeVg => 'Група томів LVM';
+
+  @override
+  String get virtResNameEmpty => 'Введіть назву';
+
+  @override
+  String get virtResNameInvalid =>
+      'Такої назви хост не прийме (літери, цифри, . _ -)';
+
+  @override
+  String get virtResSourceInvalid => 'Недійсний шлях або джерело';
+
+  @override
+  String get virtResTargetInvalid => 'Потрібен абсолютний шлях';
+
+  @override
+  String get virtResCidrInvalid =>
+      'Адреса з префіксом, наприклад 192.168.150.1/24';
+
+  @override
+  String get virtResDhcpInvalid =>
+      'Дві адреси в мережі за порядком, без адреси хоста';
+
+  @override
+  String get virtResSubnetTaken => 'Цю підмережу вже займає інша мережа';
+
+  @override
+  String get virtResBridgeInvalid => 'Недійсна назва інтерфейсу';
+
+  @override
+  String get virtResFormat => 'Пул не підтримує цей формат';
+
+  @override
+  String get virtVolNew => 'Новий том';
+
+  @override
+  String virtVolCount(int count) {
+    return 'Томів: $count';
+  }
+
+  @override
+  String get virtVolNone => 'У цьому пулі ще немає томів.';
+
+  @override
+  String get virtVolEmptyAttach =>
+      'Новий том можна згодом під\'єднати до будь-якої ВМ';
+
+  @override
+  String get virtVolEmptyUpload => 'Можна також одразу завантажити ISO';
+
+  @override
+  String get virtVolPveName => 'PVE називає том за його ВМ: vm-<VMID>-disk-<N>';
+
+  @override
+  String get virtVolUsers => 'Використовує';
+
+  @override
+  String get virtVolAllocated => 'Виділено';
+
+  @override
+  String get virtVolGrowFromGuest =>
+      'Використовується ВМ: збільште його в розділі «Обладнання» цієї ВМ';
+
+  @override
+  String get virtVolInUse => 'Цей том використовує ВМ';
+
+  @override
+  String get virtVolAttach => 'Під\'єднати до ВМ';
+
+  @override
+  String get virtVolAttachNote =>
+      'Під\'єднується як новий диск до шини першого диска';
+
+  @override
+  String virtVolAttached(String name) {
+    return 'Під\'єднано до $name';
+  }
+
+  @override
+  String get virtVolInsert => 'Вставити в CD-ROM';
+
+  @override
+  String virtVolInserted(String name) {
+    return 'Вставлено в CD-ROM $name';
+  }
+
+  @override
+  String virtVolNoCdrom(String name) {
+    return 'У $name немає приводу CD-ROM';
+  }
+
+  @override
+  String virtVolDeleteAsk(String name, String pool) {
+    return 'Видалити том $name з $pool? Його вміст буде втрачено назавжди.';
+  }
+
+  @override
+  String get virtUploadIso => 'Завантажити ISO';
+
+  @override
+  String virtUploadTo(String pool) {
+    return 'Завантажити в $pool';
+  }
+
+  @override
+  String virtUploadDone(String name) {
+    return '$name завантажено';
+  }
+
+  @override
+  String get virtNetConfig => 'Конфігурація';
+
+  @override
+  String get virtNetInternal => 'Внутрішня';
+
+  @override
+  String get virtNetBridgePorts => 'Порти мосту';
+
+  @override
+  String get virtNetHostBridge => 'Міст хоста';
+
+  @override
+  String get virtNetPortsHint => 'eno2; порожньо — внутрішній міст';
+
+  @override
+  String get virtNetDhcpRange => 'Діапазон DHCP';
+
+  @override
+  String get virtNetDhcpTip => 'dnsmasq роздає ВМ адреси';
+
+  @override
+  String get virtNetVlanTip => 'Мережеві карти ВМ можуть мати VLAN-тег';
+
+  @override
+  String get virtNetNatTip =>
+      'Через хост: ВМ виходять назовні, ззовні до них не потрапити';
+
+  @override
+  String get virtNetRoutedTip =>
+      'Маршрутизується хостом без NAT: у LAN потрібен зворотний маршрут';
+
+  @override
+  String get virtNetIsolatedTip => 'Зв\'язок лише між ВМ і хостом';
+
+  @override
+  String get virtNetBridgedTip =>
+      'ВМ під\'єднуються до мосту хоста, у його фізичну мережу';
+
+  @override
+  String get virtNetNew => 'Нова мережа';
+
+  @override
+  String get virtNetNewBridge => 'Новий міст Linux';
+
+  @override
+  String get virtNetVirtual => 'Віртуальна мережа';
+
+  @override
+  String get virtNetDelete => 'Видалити мережу';
+
+  @override
+  String virtNetDeleteAsk(String name) {
+    return 'Видалити мережу $name? Її буде зупинено, а визначення видалено.';
+  }
+
+  @override
+  String virtNetDeleteAskPve(String name, String node) {
+    return 'Прибрати міст $name з $node? Зараз він вийде з очікуваної конфігурації, а з хоста — після її застосування.';
+  }
+
+  @override
+  String virtNetInUse(int count) {
+    return 'ВМ у цій мережі: $count. Видалити не можна.';
+  }
+
+  @override
+  String virtNetStopAsk(String name, int count) {
+    return 'Зупинити $name? $count ВМ у ній втратять мережу до повторного запуску.';
+  }
+
+  @override
+  String get virtNetInactivePve =>
+      'Не активний: новий міст чекає в очікуваній конфігурації до її застосування.';
+
+  @override
+  String get virtNetPveApplyNote =>
+      'Зберігається як очікувана зміна й набуває чинності після застосування конфігурації (ifreload -a).';
+
+  @override
+  String get virtNetPendingSaved =>
+      'Збережено як очікуване: застосуйте конфігурацію, щоб зміна набула чинності';
+
+  @override
+  String virtNetPendingTitle(String node) {
+    return 'Очікувані зміни мережі на $node';
+  }
+
+  @override
+  String get virtNetPendingTip =>
+      'PVE зберігає зміни мережі в interfaces.new до їх застосування.';
+
+  @override
+  String get virtNetPendingShow => 'Показати зміни';
+
+  @override
+  String get virtNetApply => 'Застосувати конфігурацію';
+
+  @override
+  String virtNetApplyAsk(String node) {
+    return 'Застосувати очікувану конфігурацію мережі на $node? PVE перезавантажить мережу хоста (ifreload -a): помилка може відрізати хост.';
+  }
+
+  @override
+  String virtNetRevertAsk(String node) {
+    return 'Скасувати очікувану конфігурацію мережі на $node?';
+  }
+
+  @override
+  String get pveTokenTipStorage =>
+      'Керування сховищем потребує Datastore.Allocate на /storage (додавання, вимкнення, видалення), Datastore.AllocateSpace (томи) і Datastore.AllocateTemplate (завантаження); мости Linux і застосування мережевої конфігурації потребують Sys.Modify на вузлі.';
 }

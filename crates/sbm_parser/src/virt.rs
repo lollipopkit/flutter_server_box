@@ -73,7 +73,7 @@ const DOMSTATS_ARGS: &str = "domstats --raw --nowait --state --cpu-total --ballo
 
 /// Preamble shared by every script: C locale, the missing-`virsh` section, and
 /// the `V` wrapper that appends the exit status.
-fn prelude() -> String {
+pub(crate) fn prelude() -> String {
     format!(
         "export LC_ALL=C\n\
          if ! command -v virsh >/dev/null 2>&1; then echo '{missing}'; exit 0; fi\n\
@@ -386,7 +386,7 @@ impl Section {
 
 /// The sections of a script's output, keyed by section key. `Err` when the
 /// script found no `virsh`.
-fn sections(raw: &str) -> Result<Vec<(String, Section)>, VirtError> {
+pub(crate) fn sections(raw: &str) -> Result<Vec<(String, Section)>, VirtError> {
     let segs = script::parse_script_segments(raw);
     if segs.iter().any(|(k, _)| k == KEY_MISSING) {
         return Err(VirtError::NotInstalled);
@@ -397,7 +397,7 @@ fn sections(raw: &str) -> Result<Vec<(String, Section)>, VirtError> {
         .collect())
 }
 
-fn take<'a>(secs: &'a [(String, Section)], key: &str, raw: &str) -> Result<&'a Section, VirtError> {
+pub(crate) fn take<'a>(secs: &'a [(String, Section)], key: &str, raw: &str) -> Result<&'a Section, VirtError> {
     secs.iter()
         .find(|(k, _)| k == key)
         .map(|(_, s)| s)
@@ -2280,7 +2280,7 @@ impl VirtCreateSpec {
 /// `&`, `<`, `>`, `"` and `'` as entities, for text and attribute values
 /// alike. Control characters other than tab and newline have no place in
 /// XML 1.0 at all; [`VirtCreateSpec::check`] keeps them out of names.
-fn xml_escape(s: &str) -> String {
+pub(crate) fn xml_escape(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
     for c in s.chars() {
         match c {
@@ -2367,7 +2367,7 @@ pub fn domain_xml(spec: &VirtCreateSpec) -> String {
     x
 }
 
-fn run_fn() -> String {
+pub(crate) fn run_fn() -> String {
     format!(
         "R() {{ virsh --connect {CONNECT_URI} -q \"$@\" </dev/null 2>&1; r=$?; printf '\\n{RC_PREFIX}%s\\n' \"$r\"; }}\n"
     )
@@ -3526,6 +3526,14 @@ pub enum VirtHwChange {
         target: String,
         bus: String,
     },
+    /// Attaches the existing volume at `path` as `target`: made by someone
+    /// else, so never deleted here if the attach fails
+    AttachVolume {
+        path: String,
+        format: String,
+        target: String,
+        bus: String,
+    },
     /// Detaches `target`, and deletes the volume at `delete_path` once
     /// nothing uses it
     RemoveDisk {
@@ -3772,6 +3780,11 @@ impl VirtHwChange {
                 }
                 if !is_target(target) || !is_token(bus) {
                     return bad("target");
+                }
+            }
+            VirtHwChange::AttachVolume { path, format, target, bus } => {
+                if !is_host_path(path) || !is_token(format) || !is_target(target) || !is_token(bus) {
+                    return bad("volume");
                 }
             }
             VirtHwChange::RemoveDisk { target, delete_path, .. } => {
@@ -4553,6 +4566,19 @@ pub fn hardware_change_script(
                  if [ \"$r\" != 0 ]; then virsh --connect {CONNECT_URI} -q vol-delete --pool {pool} --vol {vol} </dev/null >/dev/null 2>&1; exit 0; fi\n",
                 script::cmd_marker(KEY_HW_STEP),
             ));
+            if running {
+                s.push_str(&hw_live_step(&format!("{attach} --live")));
+            }
+        }
+        VirtHwChange::AttachVolume { path, format, target, bus } => {
+            let attach = format!(
+                "attach-disk {d} --source {} --target {} --targetbus {} --driver qemu --subdriver {}",
+                q(path),
+                q(target),
+                q(bus),
+                q(format)
+            );
+            s.push_str(&hw_step(&format!("{attach} --config")));
             if running {
                 s.push_str(&hw_live_step(&format!("{attach} --live")));
             }

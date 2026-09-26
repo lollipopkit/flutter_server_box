@@ -7,7 +7,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `json_err`, `spec_of`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `clone`, `eq`, `fmt`, `fmt`, `from`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `clone`, `eq`, `fmt`, `fmt`, `from`, `from`, `from`
 
 /// Host probe: Proxmox VE, a container, or `virsh` answering this user
 String virtProbeScript() => RustLib.instance.api.crateApiVirtVirtProbeScript();
@@ -216,6 +216,41 @@ String virtHostDevicesScript() =>
 Future<String> parseVirtHostDevicesJson({required String raw}) =>
     RustLib.instance.api.crateApiVirtParseVirtHostDevicesJson(raw: raw);
 
+/// One change to the host's storage or networks; `op_json` is a
+/// `VirtResourceOp`. Parse with [`parse_virt_resource`].
+String virtResourceScript({required String opJson}) =>
+    RustLib.instance.api.crateApiVirtVirtResourceScript(opJson: opJson);
+
+/// [`virt_resource_script`]'s output: `Ok` when every step ran
+void parseVirtResource({required String raw}) =>
+    RustLib.instance.api.crateApiVirtParseVirtResource(raw: raw);
+
+/// The command writing its stdin into a volume, for a channel that carries
+/// bytes; see `sbm_parser::virt_manage::vol_upload_command` for what goes
+/// on stdin, in which order
+String virtVolUploadCommand({
+  required String pool,
+  required String name,
+  required VirtUploadEntryKind entry,
+}) => RustLib.instance.api.crateApiVirtVirtVolUploadCommand(
+  pool: pool,
+  name: name,
+  entry: entry,
+);
+
+/// [`virt_vol_upload_command`]'s output: `true` uploaded, `false` stopped
+/// before virsh because the first line was not the go line
+bool parseVirtVolUpload({required String raw}) =>
+    RustLib.instance.api.crateApiVirtParseVirtVolUpload(raw: raw);
+
+/// The line sent before an upload's bytes
+String virtUploadGoLine() =>
+    RustLib.instance.api.crateApiVirtVirtUploadGoLine();
+
+/// What the upload command prints once the bytes may follow
+String virtUploadReadyMarker() =>
+    RustLib.instance.api.crateApiVirtVirtUploadReadyMarker();
+
 /// Power actions (mirrors sbm_parser::virt::VirtAction)
 enum VirtActionKind {
   start,
@@ -279,4 +314,17 @@ class VirtFfiError implements FrbException {
           runtimeType == other.runtimeType &&
           kind == other.kind &&
           message == other.message;
+}
+
+/// How the upload command reaches the daemon (mirrors
+/// sbm_parser::virt_manage::VirtUploadEntry)
+enum VirtUploadEntryKind {
+  /// As this account
+  direct,
+
+  /// `sudo -n`
+  sudoNoPassword,
+
+  /// `sudo -S`, the password first on stdin
+  sudoPassword,
 }

@@ -16,6 +16,7 @@ import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
+import 'package:server_box/data/model/virt/virt_manage.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
 import 'package:server_box/data/res/store.dart';
@@ -25,6 +26,7 @@ import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/virt/guest.dart';
+import 'package:server_box/view/page/virt/hardware.dart';
 import 'package:server_box/view/page/virt/resources.dart';
 import 'package:server_box/view/page/virt/tab.dart';
 
@@ -77,6 +79,24 @@ const _allCaps = VirtCapabilities(
   storage: true,
   network: true,
 );
+
+/// What PVE offers for managing them.
+const _manageCaps = VirtCapabilities(
+  lxc: true,
+  pause: true,
+  snapshots: true,
+  storage: true,
+  network: true,
+  storageEdit: true,
+  poolTypes: ['dir', 'lvmthin', 'nfs', 'zfspool'],
+  upload: true,
+  networkEdit: true,
+  networkModes: ['bridge'],
+  networkApply: true,
+);
+
+/// A node's pending network configuration, when set.
+List<VirtNetworkChanges> _changes = const [];
 
 final _snaps = <String, List<VirtGuestSnapshot>>{};
 final _calls = <String>[];
@@ -217,6 +237,26 @@ class _FakeHost extends VirtHostNotifier {
   Future<List<VirtNetwork>> networks() async {
     _calls.add('networks');
     return _networks;
+  }
+
+  @override
+  Future<List<VirtNetworkChanges>> networkChanges() async => _changes;
+
+  @override
+  Future<int?> nextVmid() async => 105;
+
+  @override
+  Future<void> manage(VirtResourceChange change) async {
+    _calls.add(switch (change) {
+      VirtVolumeCreate(:final name, :final gib, :final format) =>
+        'manage volume $name $gib $format',
+      VirtVolumeDelete(:final volume) => 'manage delete ${volume.id}',
+      VirtPoolCreate(:final name, :final type, :final source) =>
+        'manage pool $name $type $source',
+      VirtNetworkCreate(:final name, :final node) => 'manage bridge $name $node',
+      VirtNetworkApply(:final node) => 'manage apply $node',
+      _ => 'manage ${change.runtimeType} ${change.scope}',
+    });
   }
 }
 
@@ -555,7 +595,8 @@ void main() {
       expect(find.byType(VirtPoolView), findsOneWidget);
       expect(find.byType(VirtPoolPage), findsNothing);
       expect(_calls, contains('volumes pve/local-lvm'));
-      expect(find.text('${app_locale.l10n.virtVolumes} · 2'), findsOneWidget);
+      expect(find.text(app_locale.l10n.virtVolumes), findsOneWidget);
+      expect(find.text('2'), findsOneWidget);
       // The owner by name; a volume nobody uses says so.
       expect(find.textContaining('web-01'), findsOneWidget);
       expect(find.textContaining(app_locale.l10n.unused), findsOneWidget);
@@ -600,7 +641,7 @@ void main() {
       expect(find.text('192.168.31.20/24'), findsOneWidget);
       expect(find.text('nic0'), findsWidgets);
       expect(
-        find.text('${app_locale.l10n.virtAttachedGuests} · 1'),
+        find.text(app_locale.l10n.virtAttachedGuests.toUpperCase()),
         findsOneWidget,
       );
 
@@ -632,6 +673,148 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('netguest:0')));
       await _settle(tester);
       expect(find.byType(VirtGuestPage), findsOneWidget);
+    });
+  });
+
+  group('managing', () {
+    setUp(() {
+      _state = _state.copyWith(data: _snapshot(_manageCaps));
+      _changes = const [];
+    });
+
+    Future<void> openPool(WidgetTester tester) async {
+      await tester.tap(segment(libL10n.storage));
+      await _settle(tester);
+      await tester.tap(find.byKey(const ValueKey('pool:pve/local-lvm')));
+      await _settle(tester);
+    }
+
+    Btn btn(WidgetTester tester, String key) =>
+        tester.widget<Btn>(find.byKey(ValueKey(key)));
+
+    testWidgets('a volume a guest uses cannot be deleted, nor the pool stopped', (
+      tester,
+    ) async {
+      await pump(tester, wide: true);
+      await openPool(tester);
+      await tester.tap(find.byKey(const ValueKey('hw:disc:vol:local-lvm:vm-100-disk-0')));
+      await _settle(tester);
+      expect(btn(tester, 'pool:vol:vm-100-disk-0:delete').onTap, isNull);
+      expect(find.text(app_locale.l10n.virtVolInUse), findsOneWidget);
+      expect(btn(tester, 'pool:stop').onTap, isNull);
+      expect(btn(tester, 'pool:delete').onTap, isNull);
+      expect(find.text(app_locale.l10n.virtPoolInUse), findsOneWidget);
+    });
+
+    testWidgets('an unused volume is deleted after a red confirmation', (
+      tester,
+    ) async {
+      await pump(tester, wide: true);
+      await openPool(tester);
+      await tester.tap(find.byKey(const ValueKey('hw:disc:vol:local-lvm:vm-999-disk-0')));
+      await _settle(tester);
+      await tester.ensureVisible(find.byKey(const ValueKey('pool:vol:vm-999-disk-0:delete')));
+      await _settle(tester);
+      await tester.tap(find.byKey(const ValueKey('pool:vol:vm-999-disk-0:delete')));
+      await _settle(tester);
+      expect(find.text(app_locale.l10n.virtVolDeleteAsk('vm-999-disk-0', 'local-lvm')), findsOneWidget);
+      await tester.tap(find.text(libL10n.cancel));
+      await _settle(tester);
+      expect(_calls.where((c) => c.startsWith('manage')), isEmpty);
+      await tester.tap(find.byKey(const ValueKey('pool:vol:vm-999-disk-0:delete')));
+      await _settle(tester);
+      await tester.tap(find.text(libL10n.ok));
+      await _settle(tester);
+      expect(_calls, contains('manage delete local-lvm:vm-999-disk-0'));
+    });
+
+    testWidgets('a new volume: named for the next VMID, raw on thin LVM', (
+      tester,
+    ) async {
+      await pump(tester, wide: true);
+      await openPool(tester);
+      await tester.tap(find.byKey(const ValueKey('pool:vol:new')));
+      await _settle(tester);
+      expect(find.text('vm-105-disk-0'), findsOneWidget);
+      await tester.ensureVisible(find.byKey(const ValueKey('pool:vol:create')));
+      await _settle(tester);
+      await tester.tap(find.byKey(const ValueKey('pool:vol:create')));
+      await _settle(tester);
+      expect(_calls, contains('manage volume vm-105-disk-0 20 raw'));
+    });
+
+    testWidgets('a new storage: the form beside the list, then the storage', (
+      tester,
+    ) async {
+      await pump(tester, wide: true);
+      await tester.tap(segment(libL10n.storage));
+      await _settle(tester);
+      await tester.tap(find.byKey(const ValueKey('virt:create')));
+      await _settle(tester);
+      expect(find.byType(VirtPoolCreateView), findsOneWidget);
+      final create = find.byKey(const ValueKey('pool:new:create'));
+      expect(tester.widget<Btn>(create).onTap, isNull);
+      await tester.enterText(find.byKey(const ValueKey('pool:new:name')), 'Bad Name');
+      await _settle(tester);
+      expect(find.text(app_locale.l10n.virtResNameInvalid), findsOneWidget);
+      await tester.enterText(find.byKey(const ValueKey('pool:new:name')), 'data-2');
+      await tester.enterText(find.byKey(const ValueKey('pool:new:source')), '/srv/data');
+      await _settle(tester);
+      await tester.tap(create);
+      await _settle(tester);
+      expect(_calls, contains('manage pool data-2 dir /srv/data'));
+      expect(find.byType(VirtPoolCreateView), findsNothing);
+    });
+
+    testWidgets('narrow: the new network form is pushed over the list', (
+      tester,
+    ) async {
+      await pump(tester, wide: false);
+      await tester.tap(segment(libL10n.network));
+      await _settle(tester);
+      await tester.tap(find.byKey(const ValueKey('virt:create')));
+      await _settle(tester);
+      expect(find.byType(VirtResourceCreatePage), findsOneWidget);
+      expect(find.byType(VirtNetworkCreateView), findsOneWidget);
+      expect(find.byType(BackButton), findsOneWidget);
+    });
+
+    testWidgets('a network in use cannot be deleted', (tester) async {
+      await pump(tester, wide: true);
+      await tester.tap(segment(libL10n.network));
+      await _settle(tester);
+      await tester.tap(find.byKey(const ValueKey('net:pve/vmbr0')));
+      await _settle(tester);
+      expect(btn(tester, 'net:delete').onTap, isNull);
+      expect(find.text(app_locale.l10n.virtNetInUse(1)), findsOneWidget);
+    });
+
+    testWidgets('PVE: a new bridge, the pending changes, applied after asking', (
+      tester,
+    ) async {
+      _changes = const [
+        VirtNetworkChanges(node: 'pve', diff: '+auto vmbr1\n+iface vmbr1 inet manual'),
+      ];
+      await pump(tester, wide: true);
+      await tester.tap(segment(libL10n.network));
+      await _settle(tester);
+      expect(find.text(app_locale.l10n.virtNetPendingTitle('pve')), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('virt:create')));
+      await _settle(tester);
+      expect(find.byType(VirtNetworkCreateView), findsOneWidget);
+      // The next free name, as the design fills it in.
+      expect(find.text('vmbr1'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('net:new:create')));
+      await _settle(tester);
+      expect(_calls, contains('manage bridge vmbr1 pve'));
+
+      await tester.tap(find.byKey(const ValueKey('net:pending:pve:apply')).first);
+      await _settle(tester);
+      expect(find.text(app_locale.l10n.virtNetApplyAsk('pve')), findsOneWidget);
+      await tester.tap(find.text(libL10n.ok));
+      await _settle(tester);
+      expect(_calls, contains('manage apply pve'));
     });
   });
 

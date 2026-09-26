@@ -22,6 +22,7 @@ import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_hardware.dart';
+import 'package:server_box/data/model/virt/virt_manage.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/virt/pve_backend.dart';
 
@@ -2185,6 +2186,242 @@ void main() {
       expect(root.usb.map((d) => d.id), ['sbhwb-bt', '0bda:b023']);
       expect(root.pci.length, 1 + (fixture('hardware_pci.json')! as List).length);
       expect(root.pci.last.iommuGroup, isNull);
+    });
+  });
+
+  group('storage and network management', () {
+    const token = PveConfig(
+      addr: 'https://pve.lan:8006',
+      auth: PveAuth.token,
+      tokenId: 'root@pam!sb',
+      tokenSecret: 's3cret',
+    );
+    const local = VirtStoragePool(
+      id: 'pve/local',
+      name: 'local',
+      node: 'pve',
+      type: 'dir',
+      content: ['iso', 'vztmpl', 'images'],
+    );
+    const lvm = VirtStoragePool(
+      id: 'pve/local-lvm',
+      name: 'local-lvm',
+      node: 'pve',
+      type: 'lvmthin',
+      content: ['images', 'rootdir'],
+    );
+    Map<String, String> form(String body) => Uri.splitQueryString(body);
+    _Api api0() => _Api()
+      ..routes['GET /nodes'] = ((_) => [
+        {'node': 'pve', 'status': 'online'},
+      ]);
+
+    test('a storage: its type\'s fields, its node, the design\'s content', () async {
+      final api = api0()..routes['POST /storage'] = (_) => {'storage': 'x'};
+      final pve = api.backend(token);
+      await pve.manage(
+        const VirtPoolCreate(name: 'data', type: 'dir', source: '/srv/data', node: 'pve'),
+      );
+      await pve.manage(
+        const VirtPoolCreate(name: 'nas', type: 'nfs', source: '10.0.0.5:/export/pve', node: 'pve'),
+      );
+      await pve.manage(
+        const VirtPoolCreate(name: 'thin', type: 'lvmthin', source: 'pve/data', node: 'pve'),
+      );
+      final sent = [
+        for (final (i, p) in api.paths.indexed)
+          if (p == 'POST /storage') form(api.bodies[i]),
+      ];
+      expect(sent[0], {
+        'storage': 'data',
+        'type': 'dir',
+        'path': '/srv/data',
+        'content': 'images,rootdir',
+        'nodes': 'pve',
+      });
+      expect(sent[1], containsPair('server', '10.0.0.5'));
+      expect(sent[1], containsPair('export', '/export/pve'));
+      expect(sent[1], containsPair('content', 'backup,iso'));
+      expect(sent[2], containsPair('vgname', 'pve'));
+      expect(sent[2], containsPair('thinpool', 'data'));
+    });
+
+    test('disabled and enabled; removed', () async {
+      final api = api0()
+        ..routes['PUT /storage/local'] = ((_) => null)
+        ..routes['DELETE /storage/local'] = ((_) => null);
+      final pve = api.backend(token);
+      await pve.manage(const VirtPoolSetActive(local, active: false));
+      await pve.manage(const VirtPoolSetActive(local, active: true));
+      await pve.manage(const VirtPoolDelete(local));
+      final puts = [
+        for (final (i, p) in api.paths.indexed)
+          if (p == 'PUT /storage/local') form(api.bodies[i])['disable'],
+      ];
+      expect(puts, ['1', '0']);
+      expect(api.paths, contains('DELETE /storage/local'));
+      // What PVE has no call for is refused before anything is sent.
+      final e = await _err(pve.manage(const VirtPoolSetAutostart(local, on: true)));
+      expect(e.type, VirtErrType.unsupported);
+    });
+
+    test('a volume: for its VMID, with the extension a directory wants; deleted with its task', () async {
+      final api = api0()
+        ..routes['POST /nodes/pve/storage/local/content'] = ((_) => 'local:105/vm-105-disk-0.qcow2')
+        ..routes['POST /nodes/pve/storage/local-lvm/content'] = ((_) => 'local-lvm:vm-105-disk-1')
+        ..routes['DELETE /nodes/pve/storage/local/content/${Uri.encodeComponent('local:105/vm-105-disk-0.qcow2')}'] =
+            (_) => _Api.upid;
+      final pve = api.backend(token);
+      await pve.manage(
+        const VirtVolumeCreate(local, name: 'vm-105-disk-0', gib: 4, format: 'qcow2'),
+      );
+      await pve.manage(
+        const VirtVolumeCreate(lvm, name: 'vm-105-disk-1', gib: 8, format: 'raw'),
+      );
+      final bodies = [
+        for (final (i, p) in api.paths.indexed)
+          if (p.endsWith('/content')) form(api.bodies[i]),
+      ];
+      expect(bodies[0], {
+        'vmid': '105',
+        'filename': 'vm-105-disk-0.qcow2',
+        'size': '4G',
+        'format': 'qcow2',
+      });
+      expect(bodies[1], containsPair('filename', 'vm-105-disk-1'));
+      await pve.manage(
+        const VirtVolumeDelete(
+          local,
+          VirtVolume(id: 'local:105/vm-105-disk-0.qcow2', name: 'vm-105-disk-0.qcow2'),
+        ),
+      );
+      expect(api.paths.last, startsWith('GET /nodes/pve/tasks/'));
+    });
+
+    test('a privilege missing: which, where, and the command that grants it', () async {
+      final api = api0()
+        ..routes['POST /storage'] = ((_) => _Api._status(
+          403,
+          message: 'Permission check failed (/storage, Datastore.Allocate)\n',
+        ))
+        ..routes['POST /nodes/pve/network'] = ((_) => _Api._status(
+          403,
+          message: 'Permission check failed (/nodes/pve, Sys.Modify)\n',
+        ));
+      final pve = api.backend(token);
+      final e = await _err(
+        pve.manage(const VirtPoolCreate(name: 'd', type: 'dir', source: '/d', node: 'pve')),
+      );
+      expect(e.type, VirtErrType.permissionDenied);
+      expect(e.message, contains('Datastore.Allocate'));
+      expect(
+        e.message,
+        contains("pveum acl modify /storage --tokens 'root@pam!sb' --roles PVEDatastoreAdmin"),
+      );
+      expect(e.message, isNot(contains('s3cret')));
+      final n = await _err(
+        pve.manage(const VirtNetworkCreate(name: 'vmbr9', mode: 'bridge', node: 'pve')),
+      );
+      expect(n.type, VirtErrType.permissionDenied);
+      // Only Administrator holds Sys.Modify among the built-in roles: a
+      // role of its own.
+      expect(n.message, contains('pveum role add ServerBox-SysModify --privs Sys.Modify'));
+      expect(n.message, contains('/nodes/pve'));
+      // The session stays: a refusal is not a failed login.
+      expect(api.closed, 0);
+    });
+
+    test('a name taken is exists', () async {
+      final api = api0()
+        ..routes['POST /storage'] = ((_) => _Api._status(
+          500,
+          message: "create storage failed: storage ID 'local' already defined\n",
+        ));
+      final e = await _err(
+        api.backend(token).manage(
+          const VirtPoolCreate(name: 'local', type: 'dir', source: '/d', node: 'pve'),
+        ),
+      );
+      expect(e.type, VirtErrType.exists);
+    });
+
+    test('a bridge: pending; its changes read, applied with a task, reverted', () async {
+      final api = api0()
+        ..routes['POST /nodes/pve/network'] = ((_) => null)
+        ..routes['PUT /nodes/pve/network'] = ((_) => _Api.upid)
+        ..routes['DELETE /nodes/pve/network'] = ((_) => null)
+        ..routes['DELETE /nodes/pve/network/vmbr9'] = ((_) => null)
+        ..routes['GET /nodes/pve/network'] = ((_) => ResponseBody.fromString(
+          jsonEncode({
+            'data': [
+              {'iface': 'vmbr9', 'type': 'bridge', 'autostart': 1},
+            ],
+            'changes': '--- a\n+++ b\n+auto vmbr9\n+iface vmbr9 inet manual\n',
+          }),
+          200,
+          headers: {
+            Headers.contentTypeHeader: [Headers.jsonContentType],
+          },
+        ));
+      final pve = api.backend(token);
+      await pve.manage(
+        const VirtNetworkCreate(
+          name: 'vmbr9',
+          mode: 'bridge',
+          node: 'pve',
+          cidr: '10.20.0.1/24',
+          vlanAware: true,
+        ),
+      );
+      expect(form(api.bodies[api.paths.indexOf('POST /nodes/pve/network')]), {
+        'iface': 'vmbr9',
+        'type': 'bridge',
+        'autostart': '1',
+        'cidr': '10.20.0.1/24',
+        'bridge_vlan_aware': '1',
+      });
+      final changes = await pve.networkChanges();
+      expect(changes.single.node, 'pve');
+      expect(changes.single.diff, contains('+iface vmbr9'));
+      await pve.manage(const VirtNetworkApply('pve'));
+      expect(api.paths.last, startsWith('GET /nodes/pve/tasks/'));
+      await pve.manage(const VirtNetworkRevert('pve'));
+      await pve.manage(
+        const VirtNetworkDelete(
+          VirtNetwork(id: 'pve/vmbr9', name: 'vmbr9', node: 'pve', mode: 'bridge'),
+        ),
+      );
+      expect(api.paths, containsAll(['DELETE /nodes/pve/network', 'DELETE /nodes/pve/network/vmbr9']));
+    });
+
+    test('upload: multipart as pveproxy reads it, the file last; progress; its task', () async {
+      final api = api0()
+        ..routes['POST /nodes/pve/storage/local/upload'] = ((_) => _Api.upid);
+      final pve = api.backend(token);
+      final sent = <int>[];
+      final data = utf8.encode('iso bytes ' * 100);
+      expect(
+        await pve.upload(
+          VirtUpload(
+            pool: local,
+            name: 'debian.iso',
+            size: data.length,
+            open: () => Stream.value(data),
+          ),
+          onProgress: sent.add,
+        ),
+        isTrue,
+      );
+      final body = api.bodies[api.paths.indexOf('POST /nodes/pve/storage/local/upload')];
+      // pveproxy's pattern is case-sensitive.
+      expect(body, contains('Content-Disposition: form-data; name="content"'));
+      expect(
+        body.indexOf('name="content"'),
+        lessThan(body.indexOf('name="filename"; filename="debian.iso"')),
+      );
+      expect(body, contains('iso bytes iso bytes'));
+      expect(sent, isNotEmpty);
+      expect(api.paths.last, startsWith('GET /nodes/pve/tasks/'));
     });
   });
 }

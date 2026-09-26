@@ -318,7 +318,7 @@ final class VirtHostNotifierProvider
   }
 }
 
-String _$virtHostNotifierHash() => r'c178b9ecc613a85afba1f104ca31ce0e349842b3';
+String _$virtHostNotifierHash() => r'af118ab68944babeda622bfdf16aa58621926c19';
 
 /// One virtualization host: its backend, periodic refresh, actions in flight
 /// and the answers the user gives (TOTP, certificate, sudo password).
@@ -417,6 +417,142 @@ abstract class _$VirtHostNotifier extends $Notifier<VirtHostState> {
               Object?
             >;
     return element.handleCreate(ref, () => build(_$args));
+  }
+}
+
+/// A count the host's notifier moves on after it changed what one of the
+/// providers below read — [storage], [network], or one guest's hardware
+/// (`hw:<guest id>`) — which they watch and so read again.
+///
+/// The notifier cannot invalidate them itself: they watch it (for its
+/// backend), and Riverpod refuses a provider invalidating one that depends
+/// on it as a cycle (`CircularDependencyError`, in debug builds).
+
+@ProviderFor(VirtRevision)
+final virtRevisionProvider = VirtRevisionFamily._();
+
+/// A count the host's notifier moves on after it changed what one of the
+/// providers below read — [storage], [network], or one guest's hardware
+/// (`hw:<guest id>`) — which they watch and so read again.
+///
+/// The notifier cannot invalidate them itself: they watch it (for its
+/// backend), and Riverpod refuses a provider invalidating one that depends
+/// on it as a cycle (`CircularDependencyError`, in debug builds).
+final class VirtRevisionProvider extends $NotifierProvider<VirtRevision, int> {
+  /// A count the host's notifier moves on after it changed what one of the
+  /// providers below read — [storage], [network], or one guest's hardware
+  /// (`hw:<guest id>`) — which they watch and so read again.
+  ///
+  /// The notifier cannot invalidate them itself: they watch it (for its
+  /// backend), and Riverpod refuses a provider invalidating one that depends
+  /// on it as a cycle (`CircularDependencyError`, in debug builds).
+  VirtRevisionProvider._({
+    required VirtRevisionFamily super.from,
+    required (String, String) super.argument,
+  }) : super(
+         retry: null,
+         name: r'virtRevisionProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$virtRevisionHash();
+
+  @override
+  String toString() {
+    return r'virtRevisionProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  VirtRevision create() => VirtRevision();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(int value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<int>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is VirtRevisionProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$virtRevisionHash() => r'e9874e5c40a05423d22b735752ea23b0c1831896';
+
+/// A count the host's notifier moves on after it changed what one of the
+/// providers below read — [storage], [network], or one guest's hardware
+/// (`hw:<guest id>`) — which they watch and so read again.
+///
+/// The notifier cannot invalidate them itself: they watch it (for its
+/// backend), and Riverpod refuses a provider invalidating one that depends
+/// on it as a cycle (`CircularDependencyError`, in debug builds).
+
+final class VirtRevisionFamily extends $Family
+    with $ClassFamilyOverride<VirtRevision, int, int, int, (String, String)> {
+  VirtRevisionFamily._()
+    : super(
+        retry: null,
+        name: r'virtRevisionProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// A count the host's notifier moves on after it changed what one of the
+  /// providers below read — [storage], [network], or one guest's hardware
+  /// (`hw:<guest id>`) — which they watch and so read again.
+  ///
+  /// The notifier cannot invalidate them itself: they watch it (for its
+  /// backend), and Riverpod refuses a provider invalidating one that depends
+  /// on it as a cycle (`CircularDependencyError`, in debug builds).
+
+  VirtRevisionProvider call(String serverId, String what) =>
+      VirtRevisionProvider._(argument: (serverId, what), from: this);
+
+  @override
+  String toString() => r'virtRevisionProvider';
+}
+
+/// A count the host's notifier moves on after it changed what one of the
+/// providers below read — [storage], [network], or one guest's hardware
+/// (`hw:<guest id>`) — which they watch and so read again.
+///
+/// The notifier cannot invalidate them itself: they watch it (for its
+/// backend), and Riverpod refuses a provider invalidating one that depends
+/// on it as a cycle (`CircularDependencyError`, in debug builds).
+
+abstract class _$VirtRevision extends $Notifier<int> {
+  late final _$args = ref.$arg as (String, String);
+  String get serverId => _$args.$1;
+  String get what => _$args.$2;
+
+  int build(String serverId, String what);
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<int, int>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<int, int>,
+              int,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, () => build(_$args.$1, _$args.$2));
   }
 }
 
@@ -579,7 +715,7 @@ final class VirtHardwareProvider
   }
 }
 
-String _$virtHardwareHash() => r'dccc8de29434dde75b4ee6987a273d5303e939b8';
+String _$virtHardwareHash() => r'0342d3e127f24835382a6abba7530e408add83ca';
 
 /// The hardware of one guest. Invalidated by the view after each change and
 /// by [VirtHostNotifier.power]. Kept once read: the guest view shows the
@@ -671,7 +807,7 @@ final class VirtStoragePoolsProvider
   }
 }
 
-String _$virtStoragePoolsHash() => r'fd7699ce3557d08ce0ec5314f8b38f3401ae06b1';
+String _$virtStoragePoolsHash() => r'08630c3a281dc6b49744044ef883e17a029108af';
 
 /// The host's storage pools.
 
@@ -845,7 +981,7 @@ final class VirtNetworksProvider
   }
 }
 
-String _$virtNetworksHash() => r'e667f3a4cdc50391318e31681aaf235fc7f0c97d';
+String _$virtNetworksHash() => r'dee54cbd2250ff054ed9e97c39a1f19b3926935d';
 
 /// The host's networks, with the guests on each.
 
@@ -867,4 +1003,96 @@ final class VirtNetworksFamily extends $Family
 
   @override
   String toString() => r'virtNetworksProvider';
+}
+
+/// Network configuration waiting to be applied, per node (PVE). Read again
+/// with [virtNetworksProvider] after every network change.
+
+@ProviderFor(virtNetworkChanges)
+final virtNetworkChangesProvider = VirtNetworkChangesFamily._();
+
+/// Network configuration waiting to be applied, per node (PVE). Read again
+/// with [virtNetworksProvider] after every network change.
+
+final class VirtNetworkChangesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<VirtNetworkChanges>>,
+          List<VirtNetworkChanges>,
+          FutureOr<List<VirtNetworkChanges>>
+        >
+    with
+        $FutureModifier<List<VirtNetworkChanges>>,
+        $FutureProvider<List<VirtNetworkChanges>> {
+  /// Network configuration waiting to be applied, per node (PVE). Read again
+  /// with [virtNetworksProvider] after every network change.
+  VirtNetworkChangesProvider._({
+    required VirtNetworkChangesFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: _noRetry,
+         name: r'virtNetworkChangesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$virtNetworkChangesHash();
+
+  @override
+  String toString() {
+    return r'virtNetworkChangesProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<VirtNetworkChanges>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<VirtNetworkChanges>> create(Ref ref) {
+    final argument = this.argument as String;
+    return virtNetworkChanges(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is VirtNetworkChangesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$virtNetworkChangesHash() =>
+    r'2940216d72db2ea9e350136098062d4fa618c2a4';
+
+/// Network configuration waiting to be applied, per node (PVE). Read again
+/// with [virtNetworksProvider] after every network change.
+
+final class VirtNetworkChangesFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<VirtNetworkChanges>>, String> {
+  VirtNetworkChangesFamily._()
+    : super(
+        retry: _noRetry,
+        name: r'virtNetworkChangesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Network configuration waiting to be applied, per node (PVE). Read again
+  /// with [virtNetworksProvider] after every network change.
+
+  VirtNetworkChangesProvider call(String serverId) =>
+      VirtNetworkChangesProvider._(argument: serverId, from: this);
+
+  @override
+  String toString() => r'virtNetworkChangesProvider';
 }

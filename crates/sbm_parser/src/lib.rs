@@ -21,6 +21,7 @@ pub mod script;
 pub mod smart;
 pub mod types;
 pub mod virt;
+pub mod virt_manage;
 pub mod windows;
 
 use std::collections::HashMap;

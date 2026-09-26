@@ -4337,4 +4337,318 @@ class AppLocalizationsId extends AppLocalizations {
   String virtBackupRestored(String time) {
     return 'Dipulihkan dari $time';
   }
+
+  @override
+  String pveNeedsPrivilege(
+    String account,
+    String privilege,
+    String path,
+    String command,
+  ) {
+    return '$account tidak memiliki $privilege pada $path. Berikan di host PVE:\n$command';
+  }
+
+  @override
+  String get virtCanDelete => 'Dapat dihapus';
+
+  @override
+  String get virtInUse => 'Sedang digunakan';
+
+  @override
+  String get virtOps => 'Operasi';
+
+  @override
+  String get virtPool => 'Pool penyimpanan';
+
+  @override
+  String get virtPoolNew => 'Pool penyimpanan baru';
+
+  @override
+  String get virtStorageAdd => 'Tambah penyimpanan';
+
+  @override
+  String virtPoolUsedPct(String pct) {
+    return '$pct% terpakai';
+  }
+
+  @override
+  String get virtPoolInUse =>
+      'Sebuah VM memakai volume di sini, jadi pool tidak dapat dihentikan atau dihapus.';
+
+  @override
+  String get virtPoolDelete => 'Hapus pool';
+
+  @override
+  String get virtStorageRemove => 'Hapus penyimpanan';
+
+  @override
+  String virtPoolDeleteAsk(String name) {
+    return 'Hapus pool $name? Definisinya dihapus; volumenya tetap di tempatnya.';
+  }
+
+  @override
+  String virtStorageRemoveAsk(String name) {
+    return 'Hapus penyimpanan $name dari konfigurasi PVE? Isinya tetap ada.';
+  }
+
+  @override
+  String virtPoolDeleteKeepsVolumes(int count) {
+    return '$count volumenya tetap disimpan di disk.';
+  }
+
+  @override
+  String get virtPoolDeleteStorage =>
+      'Hapus juga direktorinya (hanya jika kosong)';
+
+  @override
+  String virtPoolStopAsk(String name) {
+    return 'Hentikan pool $name? Volumenya tidak dapat didaftar atau dibuat sampai dijalankan lagi.';
+  }
+
+  @override
+  String virtStorageDisableAsk(String name) {
+    return 'Nonaktifkan penyimpanan $name? VM dengan disk di sana tidak dapat dijalankan sampai diaktifkan lagi.';
+  }
+
+  @override
+  String get virtPoolLogicalNote =>
+      'Volume group yang ada dipakai apa adanya; tidak ada yang diformat.';
+
+  @override
+  String get virtPoolMountPoint => 'Titik kait';
+
+  @override
+  String get virtPoolSourceNfs => 'Sumber (host:/path)';
+
+  @override
+  String get virtPoolSourceVg => 'Volume group';
+
+  @override
+  String get virtPoolSourceThin => 'Volume group / thin pool';
+
+  @override
+  String get virtPoolSourceZfs => 'Pool ZFS';
+
+  @override
+  String get virtPoolTypeVg => 'Volume group LVM';
+
+  @override
+  String get virtResNameEmpty => 'Masukkan nama';
+
+  @override
+  String get virtResNameInvalid =>
+      'Bukan nama yang diterima host ini (huruf, angka, . _ -)';
+
+  @override
+  String get virtResSourceInvalid => 'Bukan path atau sumber yang valid';
+
+  @override
+  String get virtResTargetInvalid => 'Path absolut';
+
+  @override
+  String get virtResCidrInvalid =>
+      'Alamat dengan prefiks, mis. 192.168.150.1/24';
+
+  @override
+  String get virtResDhcpInvalid =>
+      'Dua alamat di jaringan, berurutan, tanpa alamat host';
+
+  @override
+  String get virtResSubnetTaken => 'Jaringan lain di sini memakai subnet ini';
+
+  @override
+  String get virtResBridgeInvalid => 'Bukan nama antarmuka';
+
+  @override
+  String get virtResFormat => 'Pool ini tidak mendukung format itu';
+
+  @override
+  String get virtVolNew => 'Volume baru';
+
+  @override
+  String virtVolCount(int count) {
+    return '$count volume';
+  }
+
+  @override
+  String get virtVolNone => 'Pool ini belum punya volume.';
+
+  @override
+  String get virtVolEmptyAttach =>
+      'Volume baru bisa dipasang ke VM mana pun nanti';
+
+  @override
+  String get virtVolEmptyUpload => 'ISO juga bisa diunggah langsung';
+
+  @override
+  String get virtVolPveName =>
+      'PVE menamai volume sesuai VM-nya: vm-<VMID>-disk-<N>';
+
+  @override
+  String get virtVolUsers => 'Dipakai oleh';
+
+  @override
+  String get virtVolAllocated => 'Teralokasi';
+
+  @override
+  String get virtVolGrowFromGuest =>
+      'Dipakai sebuah VM: perbesar dari tampilan Perangkat Keras VM itu';
+
+  @override
+  String get virtVolInUse => 'Sebuah VM memakai volume ini';
+
+  @override
+  String get virtVolAttach => 'Pasang ke VM';
+
+  @override
+  String get virtVolAttachNote =>
+      'Dipasang sebagai disk baru, di bus disk pertamanya';
+
+  @override
+  String virtVolAttached(String name) {
+    return 'Terpasang ke $name';
+  }
+
+  @override
+  String get virtVolInsert => 'Masukkan ke CD-ROM';
+
+  @override
+  String virtVolInserted(String name) {
+    return 'Dimasukkan ke CD-ROM $name';
+  }
+
+  @override
+  String virtVolNoCdrom(String name) {
+    return '$name tidak punya CD-ROM';
+  }
+
+  @override
+  String virtVolDeleteAsk(String name, String pool) {
+    return 'Hapus volume $name dari $pool? Isinya hilang selamanya.';
+  }
+
+  @override
+  String get virtUploadIso => 'Unggah ISO';
+
+  @override
+  String virtUploadTo(String pool) {
+    return 'Unggah ke $pool';
+  }
+
+  @override
+  String virtUploadDone(String name) {
+    return '$name terunggah';
+  }
+
+  @override
+  String get virtNetConfig => 'Konfigurasi';
+
+  @override
+  String get virtNetInternal => 'Internal';
+
+  @override
+  String get virtNetBridgePorts => 'Port bridge';
+
+  @override
+  String get virtNetHostBridge => 'Bridge host';
+
+  @override
+  String get virtNetPortsHint => 'eno2; kosongkan untuk bridge internal';
+
+  @override
+  String get virtNetDhcpRange => 'Rentang DHCP';
+
+  @override
+  String get virtNetDhcpTip => 'dnsmasq memberi alamat ke VM';
+
+  @override
+  String get virtNetVlanTip => 'NIC VM boleh membawa tag VLAN';
+
+  @override
+  String get virtNetNatTip =>
+      'Lewat host: VM bisa keluar, dari luar tidak bisa masuk';
+
+  @override
+  String get virtNetRoutedTip =>
+      'Dirutekan host tanpa NAT: LAN perlu rute balik';
+
+  @override
+  String get virtNetIsolatedTip => 'Hanya VM dan host yang saling terhubung';
+
+  @override
+  String get virtNetBridgedTip =>
+      'VM bergabung ke bridge host, di jaringan fisiknya';
+
+  @override
+  String get virtNetNew => 'Jaringan baru';
+
+  @override
+  String get virtNetNewBridge => 'Linux bridge baru';
+
+  @override
+  String get virtNetVirtual => 'Jaringan virtual';
+
+  @override
+  String get virtNetDelete => 'Hapus jaringan';
+
+  @override
+  String virtNetDeleteAsk(String name) {
+    return 'Hapus jaringan $name? Jaringan dihentikan dan definisinya dihapus.';
+  }
+
+  @override
+  String virtNetDeleteAskPve(String name, String node) {
+    return 'Hapus bridge $name dari $node? Dihapus dari konfigurasi tertunda sekarang, dan dari host setelah diterapkan.';
+  }
+
+  @override
+  String virtNetInUse(int count) {
+    return 'VM di dalamnya: $count. Tidak dapat dihapus.';
+  }
+
+  @override
+  String virtNetStopAsk(String name, int count) {
+    return 'Hentikan $name? $count VM di dalamnya kehilangan jaringan sampai dijalankan lagi.';
+  }
+
+  @override
+  String get virtNetInactivePve =>
+      'Tidak aktif: bridge baru menunggu di konfigurasi tertunda sampai diterapkan.';
+
+  @override
+  String get virtNetPveApplyNote =>
+      'Disimpan sebagai perubahan tertunda: berlaku saat konfigurasi diterapkan (ifreload -a).';
+
+  @override
+  String get virtNetPendingSaved =>
+      'Disimpan sebagai tertunda: terapkan konfigurasi agar berlaku';
+
+  @override
+  String virtNetPendingTitle(String node) {
+    return 'Perubahan jaringan tertunda di $node';
+  }
+
+  @override
+  String get virtNetPendingTip =>
+      'PVE menyimpan perubahan jaringan di interfaces.new sampai diterapkan.';
+
+  @override
+  String get virtNetPendingShow => 'Lihat perubahan';
+
+  @override
+  String get virtNetApply => 'Terapkan konfigurasi';
+
+  @override
+  String virtNetApplyAsk(String node) {
+    return 'Terapkan konfigurasi jaringan tertunda di $node? PVE memuat ulang jaringan host (ifreload -a): kesalahan bisa memutus host.';
+  }
+
+  @override
+  String virtNetRevertAsk(String node) {
+    return 'Buang konfigurasi jaringan tertunda di $node?';
+  }
+
+  @override
+  String get pveTokenTipStorage =>
+      'Mengelola penyimpanan butuh Datastore.Allocate pada /storage (tambah, nonaktifkan, hapus), Datastore.AllocateSpace (volume) dan Datastore.AllocateTemplate (unggahan); Linux bridge dan menerapkan konfigurasi jaringan butuh Sys.Modify pada node.';
 }

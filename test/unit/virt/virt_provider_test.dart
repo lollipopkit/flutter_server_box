@@ -19,6 +19,7 @@ import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/virt/virt.dart';
+import 'package:server_box/data/model/virt/virt_manage.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/virt/pve_backend.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
@@ -286,6 +287,69 @@ void main() {
     gate.complete();
     await create;
     expect(c.read(provider).snapshotOps, isEmpty);
+  });
+
+  test('a storage or network change: one per pool at a time; lists read again',
+      () async {
+    Stores.server.put(_spi('kvm'));
+    final gate = Completer<void>();
+    var storageReads = 0;
+    var networkReads = 0;
+    final exec = _Exec((call) async {
+      if (call.script.contains('vol-create-as')) {
+        await gate.future;
+        return _ok(_section('virt.res.step', ''));
+      }
+      if (call.script.contains('net-define')) {
+        return _ok(_section('virt.res.step', '') * 3);
+      }
+      if (call.script.contains('pool-list')) {
+        storageReads++;
+        return _ok(_fixture('script_storage.txt'));
+      }
+      if (call.script.contains('net-list')) {
+        networkReads++;
+        return _ok(_fixture('script_networks.txt'));
+      }
+      return _ok(_overview());
+    });
+    final c = container({'kvm': exec});
+    final provider = virtHostProvider('kvm');
+    final sub = c.listen(provider, (_, _) {});
+    addTearDown(sub.close);
+    final pools = c.listen(virtStoragePoolsProvider('kvm'), (_, _) {});
+    addTearDown(pools.close);
+    final nets = c.listen(virtNetworksProvider('kvm'), (_, _) {});
+    addTearDown(nets.close);
+    await _until(() => c.read(provider).data != null);
+    final pool = (await c.read(virtStoragePoolsProvider('kvm').future)).first;
+    await c.read(virtNetworksProvider('kvm').future);
+    expect(c.read(provider).data!.capabilities.storageEdit, isTrue);
+    final before = (storageReads, networkReads);
+
+    final notifier = c.read(provider.notifier);
+    final create = notifier.manage(
+      VirtVolumeCreate(pool, name: 'a.qcow2', gib: 1, format: 'qcow2'),
+    );
+    await _until(() => c.read(provider).resourceOps.isNotEmpty);
+    expect(c.read(provider).resourceOps, {'pool:${pool.id}'});
+    await expectLater(
+      notifier.manage(VirtPoolRefresh(pool)),
+      throwsA(
+        isA<VirtErr>().having((e) => e.type, 'type', VirtErrType.unsupported),
+      ),
+    );
+    // Another pool's, or a network's, is not held up.
+    await notifier.manage(
+      const VirtNetworkCreate(name: 'lab', mode: 'isolated'),
+    );
+    gate.complete();
+    await create;
+    expect(c.read(provider).resourceOps, isEmpty);
+    await c.read(virtStoragePoolsProvider('kvm').future);
+    await c.read(virtNetworksProvider('kvm').future);
+    expect(storageReads, greaterThan(before.$1));
+    expect(networkReads, greaterThan(before.$2));
   });
 
   group('what is probed without being asked', () {

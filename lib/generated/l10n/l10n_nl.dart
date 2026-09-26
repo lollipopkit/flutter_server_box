@@ -4389,4 +4389,317 @@ class AppLocalizationsNl extends AppLocalizations {
   String virtBackupRestored(String time) {
     return 'Hersteld van $time';
   }
+
+  @override
+  String pveNeedsPrivilege(
+    String account,
+    String privilege,
+    String path,
+    String command,
+  ) {
+    return '$account mist $privilege op $path. Verleen het op de PVE-host:\n$command';
+  }
+
+  @override
+  String get virtCanDelete => 'Kan worden verwijderd';
+
+  @override
+  String get virtInUse => 'In gebruik';
+
+  @override
+  String get virtOps => 'Bewerkingen';
+
+  @override
+  String get virtPool => 'Opslagpool';
+
+  @override
+  String get virtPoolNew => 'Nieuwe opslagpool';
+
+  @override
+  String get virtStorageAdd => 'Opslag toevoegen';
+
+  @override
+  String virtPoolUsedPct(String pct) {
+    return '$pct% gebruikt';
+  }
+
+  @override
+  String get virtPoolInUse =>
+      'Een VM gebruikt hier een volume; de pool kan niet worden gestopt of verwijderd.';
+
+  @override
+  String get virtPoolDelete => 'Pool verwijderen';
+
+  @override
+  String get virtStorageRemove => 'Opslag verwijderen';
+
+  @override
+  String virtPoolDeleteAsk(String name) {
+    return 'Pool $name verwijderen? De definitie verdwijnt; de volumes blijven waar ze zijn.';
+  }
+
+  @override
+  String virtStorageRemoveAsk(String name) {
+    return 'Opslag $name uit de PVE-configuratie verwijderen? Wat erop staat, blijft.';
+  }
+
+  @override
+  String virtPoolDeleteKeepsVolumes(int count) {
+    return 'De $count volumes blijven op de schijf.';
+  }
+
+  @override
+  String get virtPoolDeleteStorage =>
+      'Ook de map verwijderen (alleen als die leeg is)';
+
+  @override
+  String virtPoolStopAsk(String name) {
+    return 'Pool $name stoppen? Tot hij weer start, kunnen er geen volumes worden getoond of gemaakt.';
+  }
+
+  @override
+  String virtStorageDisableAsk(String name) {
+    return 'Opslag $name uitschakelen? VM\'s met schijven erop starten pas weer als die is ingeschakeld.';
+  }
+
+  @override
+  String get virtPoolLogicalNote =>
+      'Een bestaande volumegroep wordt gebruikt zoals die is; er wordt niets geformatteerd.';
+
+  @override
+  String get virtPoolMountPoint => 'Koppelpunt';
+
+  @override
+  String get virtPoolSourceNfs => 'Bron (host:/pad)';
+
+  @override
+  String get virtPoolSourceVg => 'Volumegroep';
+
+  @override
+  String get virtPoolSourceThin => 'Volumegroep / thin pool';
+
+  @override
+  String get virtPoolSourceZfs => 'ZFS-pool';
+
+  @override
+  String get virtPoolTypeVg => 'LVM-volumegroep';
+
+  @override
+  String get virtResNameEmpty => 'Voer een naam in';
+
+  @override
+  String get virtResNameInvalid =>
+      'Geen naam die deze host accepteert (letters, cijfers, . _ -)';
+
+  @override
+  String get virtResSourceInvalid => 'Geen geldig pad of bron';
+
+  @override
+  String get virtResTargetInvalid => 'Een absoluut pad';
+
+  @override
+  String get virtResCidrInvalid => 'Een adres met prefix, bv. 192.168.150.1/24';
+
+  @override
+  String get virtResDhcpInvalid =>
+      'Twee adressen in het netwerk, op volgorde, zonder dat van de host';
+
+  @override
+  String get virtResSubnetTaken => 'Een ander netwerk hier zit op dit subnet';
+
+  @override
+  String get virtResBridgeInvalid => 'Geen interfacenaam';
+
+  @override
+  String get virtResFormat => 'Deze pool ondersteunt dat formaat niet';
+
+  @override
+  String get virtVolNew => 'Nieuw volume';
+
+  @override
+  String virtVolCount(int count) {
+    return '$count volumes';
+  }
+
+  @override
+  String get virtVolNone => 'Deze pool heeft nog geen volumes.';
+
+  @override
+  String get virtVolEmptyAttach =>
+      'Een nieuw volume kan later aan elke VM worden gekoppeld';
+
+  @override
+  String get virtVolEmptyUpload => 'Een ISO kan ook direct worden geüpload';
+
+  @override
+  String get virtVolPveName =>
+      'PVE geeft een volume de naam van zijn VM: vm-<VMID>-disk-<N>';
+
+  @override
+  String get virtVolUsers => 'Gebruikt door';
+
+  @override
+  String get virtVolAllocated => 'Toegewezen';
+
+  @override
+  String get virtVolGrowFromGuest =>
+      'Een VM gebruikt het: vergroot het in de hardwareweergave van die VM';
+
+  @override
+  String get virtVolInUse => 'Een VM gebruikt dit volume';
+
+  @override
+  String get virtVolAttach => 'Aan VM koppelen';
+
+  @override
+  String get virtVolAttachNote =>
+      'Gekoppeld als nieuwe schijf, op de bus van de eerste schijf';
+
+  @override
+  String virtVolAttached(String name) {
+    return 'Gekoppeld aan $name';
+  }
+
+  @override
+  String get virtVolInsert => 'In cd-rom plaatsen';
+
+  @override
+  String virtVolInserted(String name) {
+    return 'In de cd-romspeler van $name geplaatst';
+  }
+
+  @override
+  String virtVolNoCdrom(String name) {
+    return '$name heeft geen cd-romspeler';
+  }
+
+  @override
+  String virtVolDeleteAsk(String name, String pool) {
+    return 'Volume $name uit $pool verwijderen? De inhoud is voorgoed weg.';
+  }
+
+  @override
+  String get virtUploadIso => 'ISO uploaden';
+
+  @override
+  String virtUploadTo(String pool) {
+    return 'Uploaden naar $pool';
+  }
+
+  @override
+  String virtUploadDone(String name) {
+    return '$name geüpload';
+  }
+
+  @override
+  String get virtNetConfig => 'Configuratie';
+
+  @override
+  String get virtNetInternal => 'Intern';
+
+  @override
+  String get virtNetBridgePorts => 'Bridgepoorten';
+
+  @override
+  String get virtNetHostBridge => 'Hostbridge';
+
+  @override
+  String get virtNetPortsHint => 'eno2; leeg voor een interne bridge';
+
+  @override
+  String get virtNetDhcpRange => 'DHCP-bereik';
+
+  @override
+  String get virtNetDhcpTip => 'dnsmasq geeft de VM\'s hun adressen';
+
+  @override
+  String get virtNetVlanTip => 'NIC\'s van VM\'s mogen een VLAN-tag dragen';
+
+  @override
+  String get virtNetNatTip =>
+      'Via de host: VM\'s kunnen naar buiten, van buiten kan niets naar binnen';
+
+  @override
+  String get virtNetRoutedTip =>
+      'Door de host gerouteerd zonder NAT: het LAN heeft een route terug nodig';
+
+  @override
+  String get virtNetIsolatedTip => 'Alleen de VM\'s en de host bereiken elkaar';
+
+  @override
+  String get virtNetBridgedTip =>
+      'VM\'s komen op een bridge van de host, in het fysieke netwerk';
+
+  @override
+  String get virtNetNew => 'Nieuw netwerk';
+
+  @override
+  String get virtNetNewBridge => 'Nieuwe Linux-bridge';
+
+  @override
+  String get virtNetVirtual => 'Virtueel netwerk';
+
+  @override
+  String get virtNetDelete => 'Netwerk verwijderen';
+
+  @override
+  String virtNetDeleteAsk(String name) {
+    return 'Netwerk $name verwijderen? Het wordt gestopt en de definitie verwijderd.';
+  }
+
+  @override
+  String virtNetDeleteAskPve(String name, String node) {
+    return 'Bridge $name van $node verwijderen? Die verdwijnt nu uit de wachtende configuratie, en van de host zodra die wordt toegepast.';
+  }
+
+  @override
+  String virtNetInUse(int count) {
+    return 'VM\'s erop: $count. Het kan niet worden verwijderd.';
+  }
+
+  @override
+  String virtNetStopAsk(String name, int count) {
+    return '$name stoppen? De $count VM\'s erop verliezen hun netwerk tot het weer start.';
+  }
+
+  @override
+  String get virtNetInactivePve =>
+      'Niet actief: een nieuwe bridge wacht in de wachtende configuratie tot die wordt toegepast.';
+
+  @override
+  String get virtNetPveApplyNote =>
+      'Opgeslagen als wachtende wijziging: van kracht zodra de configuratie wordt toegepast (ifreload -a).';
+
+  @override
+  String get virtNetPendingSaved =>
+      'Opgeslagen als wachtend: pas de configuratie toe om het te laten werken';
+
+  @override
+  String virtNetPendingTitle(String node) {
+    return 'Wachtende netwerkwijzigingen op $node';
+  }
+
+  @override
+  String get virtNetPendingTip =>
+      'PVE bewaart netwerkwijzigingen in interfaces.new tot ze worden toegepast.';
+
+  @override
+  String get virtNetPendingShow => 'Wijzigingen tonen';
+
+  @override
+  String get virtNetApply => 'Configuratie toepassen';
+
+  @override
+  String virtNetApplyAsk(String node) {
+    return 'Wachtende netwerkconfiguratie op $node toepassen? PVE herlaadt het netwerk van de host (ifreload -a): een fout kan de host afsluiten.';
+  }
+
+  @override
+  String virtNetRevertAsk(String node) {
+    return 'Wachtende netwerkconfiguratie op $node weggooien?';
+  }
+
+  @override
+  String get pveTokenTipStorage =>
+      'Opslagbeheer vereist Datastore.Allocate op /storage (toevoegen, uitschakelen, verwijderen), Datastore.AllocateSpace (volumes) en Datastore.AllocateTemplate (uploads); Linux-bridges en het toepassen van de netwerkconfiguratie vereisen Sys.Modify op de node.';
 }

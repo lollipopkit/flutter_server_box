@@ -4382,4 +4382,319 @@ class AppLocalizationsPt extends AppLocalizations {
   String virtBackupRestored(String time) {
     return 'Restaurado de $time';
   }
+
+  @override
+  String pveNeedsPrivilege(
+    String account,
+    String privilege,
+    String path,
+    String command,
+  ) {
+    return '$account não tem $privilege em $path. Conceda-o no host PVE:\n$command';
+  }
+
+  @override
+  String get virtCanDelete => 'Pode ser eliminado';
+
+  @override
+  String get virtInUse => 'Em uso';
+
+  @override
+  String get virtOps => 'Operações';
+
+  @override
+  String get virtPool => 'Pool de armazenamento';
+
+  @override
+  String get virtPoolNew => 'Novo pool de armazenamento';
+
+  @override
+  String get virtStorageAdd => 'Adicionar armazenamento';
+
+  @override
+  String virtPoolUsedPct(String pct) {
+    return '$pct% usado';
+  }
+
+  @override
+  String get virtPoolInUse =>
+      'Uma VM usa um volume aqui, por isso o pool não pode ser parado nem removido.';
+
+  @override
+  String get virtPoolDelete => 'Eliminar pool';
+
+  @override
+  String get virtStorageRemove => 'Remover armazenamento';
+
+  @override
+  String virtPoolDeleteAsk(String name) {
+    return 'Remover o pool $name? A definição é apagada; os volumes ficam onde estão.';
+  }
+
+  @override
+  String virtStorageRemoveAsk(String name) {
+    return 'Remover o armazenamento $name da configuração do PVE? O conteúdo mantém-se.';
+  }
+
+  @override
+  String virtPoolDeleteKeepsVolumes(int count) {
+    return 'Os seus $count volumes mantêm-se no disco.';
+  }
+
+  @override
+  String get virtPoolDeleteStorage =>
+      'Eliminar também o diretório (só se estiver vazio)';
+
+  @override
+  String virtPoolStopAsk(String name) {
+    return 'Parar o pool $name? Não será possível listar nem criar volumes até voltar a iniciar.';
+  }
+
+  @override
+  String virtStorageDisableAsk(String name) {
+    return 'Desativar o armazenamento $name? As VM com discos nele não arrancam até ser reativado.';
+  }
+
+  @override
+  String get virtPoolLogicalNote =>
+      'Usa-se um grupo de volumes existente tal como está; nada é formatado.';
+
+  @override
+  String get virtPoolMountPoint => 'Ponto de montagem';
+
+  @override
+  String get virtPoolSourceNfs => 'Origem (host:/caminho)';
+
+  @override
+  String get virtPoolSourceVg => 'Grupo de volumes';
+
+  @override
+  String get virtPoolSourceThin => 'Grupo de volumes / thin pool';
+
+  @override
+  String get virtPoolSourceZfs => 'Pool ZFS';
+
+  @override
+  String get virtPoolTypeVg => 'Grupo de volumes LVM';
+
+  @override
+  String get virtResNameEmpty => 'Introduza um nome';
+
+  @override
+  String get virtResNameInvalid =>
+      'Não é um nome aceite por este host (letras, dígitos, . _ -)';
+
+  @override
+  String get virtResSourceInvalid => 'Não é um caminho ou origem válido';
+
+  @override
+  String get virtResTargetInvalid => 'Um caminho absoluto';
+
+  @override
+  String get virtResCidrInvalid =>
+      'Um endereço com prefixo, p. ex. 192.168.150.1/24';
+
+  @override
+  String get virtResDhcpInvalid =>
+      'Dois endereços da rede, por ordem, sem o do host';
+
+  @override
+  String get virtResSubnetTaken => 'Outra rede aqui está nesta sub-rede';
+
+  @override
+  String get virtResBridgeInvalid => 'Não é um nome de interface';
+
+  @override
+  String get virtResFormat => 'Este pool não suporta esse formato';
+
+  @override
+  String get virtVolNew => 'Novo volume';
+
+  @override
+  String virtVolCount(int count) {
+    return '$count volumes';
+  }
+
+  @override
+  String get virtVolNone => 'Este pool ainda não tem volumes.';
+
+  @override
+  String get virtVolEmptyAttach =>
+      'Um volume novo pode ser ligado mais tarde a qualquer VM';
+
+  @override
+  String get virtVolEmptyUpload =>
+      'Também é possível carregar um ISO diretamente';
+
+  @override
+  String get virtVolPveName =>
+      'O PVE nomeia um volume pela sua VM: vm-<VMID>-disk-<N>';
+
+  @override
+  String get virtVolUsers => 'Usado por';
+
+  @override
+  String get virtVolAllocated => 'Alocado';
+
+  @override
+  String get virtVolGrowFromGuest =>
+      'Uma VM usa-o: aumente-o na vista Hardware dessa VM';
+
+  @override
+  String get virtVolInUse => 'Uma VM usa este volume';
+
+  @override
+  String get virtVolAttach => 'Ligar à VM';
+
+  @override
+  String get virtVolAttachNote =>
+      'Ligado como disco novo, no barramento do primeiro disco';
+
+  @override
+  String virtVolAttached(String name) {
+    return 'Ligado a $name';
+  }
+
+  @override
+  String get virtVolInsert => 'Inserir no CD-ROM';
+
+  @override
+  String virtVolInserted(String name) {
+    return 'Inserido no CD-ROM de $name';
+  }
+
+  @override
+  String virtVolNoCdrom(String name) {
+    return '$name não tem unidade de CD-ROM';
+  }
+
+  @override
+  String virtVolDeleteAsk(String name, String pool) {
+    return 'Eliminar o volume $name de $pool? O conteúdo perde-se para sempre.';
+  }
+
+  @override
+  String get virtUploadIso => 'Carregar ISO';
+
+  @override
+  String virtUploadTo(String pool) {
+    return 'Carregar para $pool';
+  }
+
+  @override
+  String virtUploadDone(String name) {
+    return '$name carregado';
+  }
+
+  @override
+  String get virtNetConfig => 'Configuração';
+
+  @override
+  String get virtNetInternal => 'Interna';
+
+  @override
+  String get virtNetBridgePorts => 'Portas da bridge';
+
+  @override
+  String get virtNetHostBridge => 'Bridge do host';
+
+  @override
+  String get virtNetPortsHint => 'eno2; vazio para uma bridge interna';
+
+  @override
+  String get virtNetDhcpRange => 'Intervalo DHCP';
+
+  @override
+  String get virtNetDhcpTip => 'O dnsmasq atribui os endereços das VM';
+
+  @override
+  String get virtNetVlanTip => 'As NIC das VM podem levar etiqueta VLAN';
+
+  @override
+  String get virtNetNatTip =>
+      'Através do host: as VM saem, de fora não se entra';
+
+  @override
+  String get virtNetRoutedTip =>
+      'Encaminhado pelo host sem NAT: a LAN precisa de uma rota de volta';
+
+  @override
+  String get virtNetIsolatedTip => 'Só as VM e o host comunicam entre si';
+
+  @override
+  String get virtNetBridgedTip =>
+      'As VM ligam-se a uma bridge do host, na rede física';
+
+  @override
+  String get virtNetNew => 'Nova rede';
+
+  @override
+  String get virtNetNewBridge => 'Nova Linux bridge';
+
+  @override
+  String get virtNetVirtual => 'Rede virtual';
+
+  @override
+  String get virtNetDelete => 'Eliminar rede';
+
+  @override
+  String virtNetDeleteAsk(String name) {
+    return 'Eliminar a rede $name? É parada e a definição removida.';
+  }
+
+  @override
+  String virtNetDeleteAskPve(String name, String node) {
+    return 'Remover a bridge $name de $node? Sai agora da configuração pendente, e do host quando esta for aplicada.';
+  }
+
+  @override
+  String virtNetInUse(int count) {
+    return 'VM ligadas: $count. Não pode ser eliminada.';
+  }
+
+  @override
+  String virtNetStopAsk(String name, int count) {
+    return 'Parar $name? As $count VM ligadas perdem a rede até voltar a iniciar.';
+  }
+
+  @override
+  String get virtNetInactivePve =>
+      'Inativo: uma bridge nova espera na configuração pendente até ser aplicada.';
+
+  @override
+  String get virtNetPveApplyNote =>
+      'Guardado como alteração pendente: tem efeito quando a configuração for aplicada (ifreload -a).';
+
+  @override
+  String get virtNetPendingSaved =>
+      'Guardado como pendente: aplique a configuração para ter efeito';
+
+  @override
+  String virtNetPendingTitle(String node) {
+    return 'Alterações de rede pendentes em $node';
+  }
+
+  @override
+  String get virtNetPendingTip =>
+      'O PVE guarda as alterações de rede em interfaces.new até serem aplicadas.';
+
+  @override
+  String get virtNetPendingShow => 'Ver alterações';
+
+  @override
+  String get virtNetApply => 'Aplicar configuração';
+
+  @override
+  String virtNetApplyAsk(String node) {
+    return 'Aplicar a configuração de rede pendente em $node? O PVE recarrega a rede do host (ifreload -a): um erro pode deixar o host inacessível.';
+  }
+
+  @override
+  String virtNetRevertAsk(String node) {
+    return 'Descartar a configuração de rede pendente em $node?';
+  }
+
+  @override
+  String get pveTokenTipStorage =>
+      'Gerir o armazenamento requer Datastore.Allocate em /storage (adicionar, desativar, remover), Datastore.AllocateSpace (volumes) e Datastore.AllocateTemplate (carregamentos); as Linux bridges e aplicar a configuração de rede requerem Sys.Modify no nó.';
 }

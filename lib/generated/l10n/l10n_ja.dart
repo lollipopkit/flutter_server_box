@@ -4135,4 +4135,303 @@ class AppLocalizationsJa extends AppLocalizations {
   String virtBackupRestored(String time) {
     return '$time から復元しました';
   }
+
+  @override
+  String pveNeedsPrivilege(
+    String account,
+    String privilege,
+    String path,
+    String command,
+  ) {
+    return '$account には $path での $privilege 権限がありません。PVE ホストで付与してください:\n$command';
+  }
+
+  @override
+  String get virtCanDelete => '削除できます';
+
+  @override
+  String get virtInUse => '使用中';
+
+  @override
+  String get virtOps => '操作';
+
+  @override
+  String get virtPool => 'ストレージプール';
+
+  @override
+  String get virtPoolNew => '新しいストレージプール';
+
+  @override
+  String get virtStorageAdd => 'ストレージを追加';
+
+  @override
+  String virtPoolUsedPct(String pct) {
+    return '$pct% 使用';
+  }
+
+  @override
+  String get virtPoolInUse => 'ここのボリュームを仮想マシンが使用中のため、プールを停止・削除できません。';
+
+  @override
+  String get virtPoolDelete => 'プールを削除';
+
+  @override
+  String get virtStorageRemove => 'ストレージを削除';
+
+  @override
+  String virtPoolDeleteAsk(String name) {
+    return 'プール $name を削除しますか？定義は削除され、ボリュームはそのまま残ります。';
+  }
+
+  @override
+  String virtStorageRemoveAsk(String name) {
+    return 'PVE の設定からストレージ $name を削除しますか？中身は残ります。';
+  }
+
+  @override
+  String virtPoolDeleteKeepsVolumes(int count) {
+    return '$count 個のボリュームはディスクに残ります。';
+  }
+
+  @override
+  String get virtPoolDeleteStorage => 'ディレクトリも削除する（空の場合のみ）';
+
+  @override
+  String virtPoolStopAsk(String name) {
+    return 'プール $name を停止しますか？再開するまでボリュームの一覧表示や作成はできません。';
+  }
+
+  @override
+  String virtStorageDisableAsk(String name) {
+    return 'ストレージ $name を無効にしますか？再度有効にするまで、ここにディスクがある仮想マシンは起動できません。';
+  }
+
+  @override
+  String get virtPoolLogicalNote => '既存のボリュームグループをそのまま使用し、何もフォーマットしません。';
+
+  @override
+  String get virtPoolMountPoint => 'マウントポイント';
+
+  @override
+  String get virtPoolSourceNfs => 'ソース (host:/path)';
+
+  @override
+  String get virtPoolSourceVg => 'ボリュームグループ';
+
+  @override
+  String get virtPoolSourceThin => 'ボリュームグループ / thin pool';
+
+  @override
+  String get virtPoolSourceZfs => 'ZFS プール';
+
+  @override
+  String get virtPoolTypeVg => 'LVM ボリュームグループ';
+
+  @override
+  String get virtResNameEmpty => '名前を入力してください';
+
+  @override
+  String get virtResNameInvalid => 'このホストでは使えない名前です（英数字、. _ -）';
+
+  @override
+  String get virtResSourceInvalid => '有効なパスまたはソースではありません';
+
+  @override
+  String get virtResTargetInvalid => '絶対パスを指定してください';
+
+  @override
+  String get virtResCidrInvalid => 'プレフィックス付きアドレス（例: 192.168.150.1/24）';
+
+  @override
+  String get virtResDhcpInvalid => 'ネットワーク内の 2 つのアドレス（昇順、ホスト自身のアドレスを除く）';
+
+  @override
+  String get virtResSubnetTaken => 'このサブネットは別のネットワークが使用中です';
+
+  @override
+  String get virtResBridgeInvalid => 'インターフェース名ではありません';
+
+  @override
+  String get virtResFormat => 'このプールはこの形式に対応していません';
+
+  @override
+  String get virtVolNew => '新しいボリューム';
+
+  @override
+  String virtVolCount(int count) {
+    return '$count 個のボリューム';
+  }
+
+  @override
+  String get virtVolNone => 'このプールにはまだボリュームがありません。';
+
+  @override
+  String get virtVolEmptyAttach => '新しいボリュームは後で任意の仮想マシンに接続できます';
+
+  @override
+  String get virtVolEmptyUpload => 'ISO を直接アップロードすることもできます';
+
+  @override
+  String get virtVolPveName => 'PVE はボリュームを所属する仮想マシンで命名します: vm-<VMID>-disk-<N>';
+
+  @override
+  String get virtVolUsers => '使用中の仮想マシン';
+
+  @override
+  String get virtVolAllocated => '割り当て済み';
+
+  @override
+  String get virtVolGrowFromGuest => '仮想マシンが使用中です。その仮想マシンのハードウェア画面から拡張してください';
+
+  @override
+  String get virtVolInUse => 'このボリュームは仮想マシンが使用中です';
+
+  @override
+  String get virtVolAttach => '仮想マシンに接続';
+
+  @override
+  String get virtVolAttachNote => '最初のディスクと同じバスに新しいディスクとして接続します';
+
+  @override
+  String virtVolAttached(String name) {
+    return '$name に接続しました';
+  }
+
+  @override
+  String get virtVolInsert => 'CD-ROM に挿入';
+
+  @override
+  String virtVolInserted(String name) {
+    return '$name の CD-ROM に挿入しました';
+  }
+
+  @override
+  String virtVolNoCdrom(String name) {
+    return '$name には CD-ROM ドライブがありません';
+  }
+
+  @override
+  String virtVolDeleteAsk(String name, String pool) {
+    return '$pool からボリューム $name を削除しますか？中身は完全に失われます。';
+  }
+
+  @override
+  String get virtUploadIso => 'ISO をアップロード';
+
+  @override
+  String virtUploadTo(String pool) {
+    return '$pool にアップロード';
+  }
+
+  @override
+  String virtUploadDone(String name) {
+    return '$name をアップロードしました';
+  }
+
+  @override
+  String get virtNetConfig => '構成';
+
+  @override
+  String get virtNetInternal => '内部';
+
+  @override
+  String get virtNetBridgePorts => 'ブリッジポート';
+
+  @override
+  String get virtNetHostBridge => 'ホストのブリッジ';
+
+  @override
+  String get virtNetPortsHint => 'eno2。空欄なら内部ブリッジ';
+
+  @override
+  String get virtNetDhcpRange => 'DHCP 範囲';
+
+  @override
+  String get virtNetDhcpTip => 'dnsmasq が仮想マシンにアドレスを割り当てます';
+
+  @override
+  String get virtNetVlanTip => '仮想マシンの NIC で VLAN タグを使用できます';
+
+  @override
+  String get virtNetNatTip => 'ホスト経由: 仮想マシンは外に出られますが、外部からは届きません';
+
+  @override
+  String get virtNetRoutedTip => 'NAT なしでホストがルーティング: LAN 側に戻りの経路が必要です';
+
+  @override
+  String get virtNetIsolatedTip => '仮想マシン同士とホストのみが通信できます';
+
+  @override
+  String get virtNetBridgedTip => '仮想マシンはホストのブリッジに参加し、物理ネットワークに直接つながります';
+
+  @override
+  String get virtNetNew => '新しいネットワーク';
+
+  @override
+  String get virtNetNewBridge => '新しい Linux ブリッジ';
+
+  @override
+  String get virtNetVirtual => '仮想ネットワーク';
+
+  @override
+  String get virtNetDelete => 'ネットワークを削除';
+
+  @override
+  String virtNetDeleteAsk(String name) {
+    return 'ネットワーク $name を削除しますか？停止され、定義が削除されます。';
+  }
+
+  @override
+  String virtNetDeleteAskPve(String name, String node) {
+    return '$node からブリッジ $name を削除しますか？今は保留中の構成から外れ、適用後にホストから消えます。';
+  }
+
+  @override
+  String virtNetInUse(int count) {
+    return '接続中の仮想マシン: $count。削除できません。';
+  }
+
+  @override
+  String virtNetStopAsk(String name, int count) {
+    return '$name を停止しますか？接続中の $count 台の仮想マシンは再開するまでネットワークを失います。';
+  }
+
+  @override
+  String get virtNetInactivePve => '非アクティブ: 新しいブリッジは適用されるまで保留中の構成にあります。';
+
+  @override
+  String get virtNetPveApplyNote =>
+      '保留中の変更として保存され、構成を適用すると有効になります（ifreload -a）。';
+
+  @override
+  String get virtNetPendingSaved => '保留中として保存しました。構成を適用すると有効になります';
+
+  @override
+  String virtNetPendingTitle(String node) {
+    return '$node の保留中のネットワーク変更';
+  }
+
+  @override
+  String get virtNetPendingTip =>
+      'PVE はネットワーク変更を適用されるまで interfaces.new に保持します。';
+
+  @override
+  String get virtNetPendingShow => '変更を表示';
+
+  @override
+  String get virtNetApply => '構成を適用';
+
+  @override
+  String virtNetApplyAsk(String node) {
+    return '$node の保留中のネットワーク構成を適用しますか？PVE はホストのネットワークを再読み込みします（ifreload -a）。誤りがあるとホストに接続できなくなることがあります。';
+  }
+
+  @override
+  String virtNetRevertAsk(String node) {
+    return '$node の保留中のネットワーク構成を破棄しますか？';
+  }
+
+  @override
+  String get pveTokenTipStorage =>
+      'ストレージの管理には /storage での Datastore.Allocate（追加・無効化・削除）、Datastore.AllocateSpace（ボリューム）、Datastore.AllocateTemplate（アップロード）が必要です。Linux ブリッジとネットワーク構成の適用にはノードでの Sys.Modify が必要です。';
 }

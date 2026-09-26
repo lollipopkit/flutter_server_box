@@ -5,7 +5,9 @@ import 'dart:math';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:server_box/core/utils/local_server.dart';
 import 'package:server_box/core/utils/privileged_exec.dart';
+import 'package:server_box/core/utils/ssh_exec.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/virt/libvirt.dart';
@@ -15,6 +17,7 @@ import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_hardware.dart';
+import 'package:server_box/data/model/virt/virt_manage.dart';
 import 'package:server_box/data/model/virt/virt_rates.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -37,14 +40,31 @@ class LibvirtBackend implements VirtBackend {
   LibvirtBackend({
     required this.serverId,
     required Future<ServerExec> Function() exec,
+    Future<ServerByteExec> Function()? byteExec,
+    bool Function()? canStream,
     DateTime Function()? now,
   }) : _exec = exec,
+       _byteExec = byteExec,
+       _canStream = canStream,
        _now = now ?? DateTime.now;
 
-  factory LibvirtBackend.of(Ref ref, String serverId) => LibvirtBackend(
-    serverId: serverId,
-    exec: () => ref.read(serverProvider(serverId).notifier).ensureExec(),
-  );
+  /// Uploads go over whatever of the server carries bytes: its SSH
+  /// connection, whichever transport leads for everything else, or this
+  /// device's own process.
+  factory LibvirtBackend.of(Ref ref, String serverId) {
+    bool local() => ref.read(serverProvider(serverId)).spi.local;
+    return LibvirtBackend(
+      serverId: serverId,
+      exec: () => ref.read(serverProvider(serverId).notifier).ensureExec(),
+      canStream: () =>
+          local() || ref.read(serverProvider(serverId)).capabilities.byteStream,
+      byteExec: () async => local()
+          ? LocalServer.exec()
+          : SshExec(
+              await ref.read(serverProvider(serverId).notifier).ensureShellClient(),
+            ),
+    );
+  }
 
   @override
   final String serverId;
@@ -53,6 +73,8 @@ class LibvirtBackend implements VirtBackend {
   VirtHostKind get kind => VirtHostKind.libvirt;
 
   final Future<ServerExec> Function() _exec;
+  final Future<ServerByteExec> Function()? _byteExec;
+  final bool Function()? _canStream;
   final DateTime Function() _now;
   final _rates = VirtRateTracker();
 
@@ -116,7 +138,7 @@ class LibvirtBackend implements VirtBackend {
       ),
       guests: guests,
       stats: stats,
-      capabilities: const VirtCapabilities(
+      capabilities: VirtCapabilities(
         pause: true,
         snapshots: true,
         snapshotMemoryRequired: true,
@@ -128,6 +150,16 @@ class LibvirtBackend implements VirtBackend {
         deleteKeepsDisks: true,
         hardware: true,
         clone: true,
+        storageEdit: true,
+        poolTypes: const ['dir', 'netfs', 'logical'],
+        poolAutostart: true,
+        poolDeleteStorage: true,
+        volumeResize: true,
+        volumeClone: true,
+        upload: _byteExec != null && (_canStream?.call() ?? false),
+        networkEdit: true,
+        networkModes: const ['nat', 'route', 'isolated', 'bridge'],
+        networkStart: true,
       ),
     );
   }
@@ -744,6 +776,371 @@ class LibvirtBackend implements VirtBackend {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Managing storage and networks
+  // ---------------------------------------------------------------------------
+
+  @override
+  Future<void> manage(VirtResourceChange change) async {
+    final op = opJson(change);
+    try {
+      await _run(
+        _script(() => ffi.virtResourceScript(opJson: jsonEncode(op))),
+        _parseResource,
+        action: true,
+      );
+    } on VirtErr catch (e) {
+      throw _existsOr(e);
+    } finally {
+      // What a pool holds, and which, is listed again.
+      _storage = null;
+    }
+  }
+
+  static Future<String> _parseResource({required String raw}) async {
+    ffi.parseVirtResource(raw: raw);
+    return '';
+  }
+
+  /// [change] as `sbm_parser::virt_manage::VirtResourceOp` JSON.
+  @visibleForTesting
+  static Map<String, Object?> opJson(VirtResourceChange change) {
+    switch (change) {
+      case VirtPoolCreate(:final name, :final type, :final source, :final target, :final autostart):
+        return {
+          'op': 'pool_create',
+          'name': name,
+          'pool_type': type,
+          'target': switch (type) {
+            'dir' => source,
+            'netfs' => target,
+            _ => null,
+          },
+          'source': type == 'dir' ? null : source,
+          'autostart': autostart,
+        };
+      case VirtPoolSetActive(:final pool, :final active):
+        return {'op': active ? 'pool_start' : 'pool_stop', 'name': pool.id};
+      case VirtPoolSetAutostart(:final pool, :final on):
+        return {'op': 'pool_autostart', 'name': pool.id, 'on': on};
+      case VirtPoolRefresh(:final pool):
+        return {'op': 'pool_refresh', 'name': pool.id};
+      case VirtPoolDelete(:final pool, :final deleteStorage):
+        return {
+          'op': 'pool_delete',
+          'name': pool.id,
+          'active': pool.active,
+          'delete_storage': deleteStorage,
+        };
+      case VirtVolumeCreate(:final pool, :final name, :final gib, :final format):
+        return {
+          'op': 'vol_create',
+          'pool': pool.id,
+          'name': name,
+          'bytes': gib << 30,
+          'format': format,
+        };
+      case VirtVolumeDelete(:final pool, :final volume):
+        return {'op': 'vol_delete', 'pool': pool.id, 'name': volume.name};
+      case VirtVolumeResize(:final pool, :final volume, :final bytes):
+        return {
+          'op': 'vol_resize',
+          'pool': pool.id,
+          'name': volume.name,
+          'bytes': bytes,
+        };
+      case VirtVolumeClone(:final pool, :final volume, :final name):
+        return {
+          'op': 'vol_clone',
+          'pool': pool.id,
+          'name': volume.name,
+          'new_name': name,
+        };
+      case VirtNetworkCreate(
+        :final name,
+        :final mode,
+        :final bridge,
+        :final cidr,
+        :final dhcpStart,
+        :final dhcpEnd,
+        :final autostart,
+      ):
+        final ip = cidr == null || cidr.trim().isEmpty
+            ? null
+            : cidr.trim().split('/');
+        return {
+          'op': 'net_create',
+          'name': name,
+          'mode': mode,
+          'bridge': mode == 'bridge' ? bridge?.trim() : null,
+          'ipv4': mode == 'bridge' || ip == null
+              ? null
+              : {
+                  'address': ip.first,
+                  'prefix': int.parse(ip.last),
+                  'dhcp_start': dhcpStart,
+                  'dhcp_end': dhcpEnd,
+                },
+          'autostart': autostart,
+        };
+      case VirtNetworkSetActive(:final network, :final active):
+        return {'op': active ? 'net_start' : 'net_stop', 'name': network.id};
+      case VirtNetworkSetAutostart(:final network, :final on):
+        return {'op': 'net_autostart', 'name': network.id, 'on': on};
+      case VirtNetworkDelete(:final network):
+        return {'op': 'net_delete', 'name': network.id, 'active': network.active};
+      case VirtNetworkApply() || VirtNetworkRevert():
+        // libvirt changes a network when told to: nothing waits.
+        throw const VirtErr(type: VirtErrType.unsupported);
+    }
+  }
+
+  /// libvirt applies every change as it is made.
+  @override
+  Future<List<VirtNetworkChanges>> networkChanges() async => const [];
+
+  /// A raw volume of the file's size, then the file into it with
+  /// `vol-upload` over a channel that carries bytes (see
+  /// `sbm_parser::virt_manage::vol_upload_command`): through sudo when
+  /// libvirt needs it, the password ahead of the file on the same stdin. A
+  /// failed or cancelled upload deletes the volume, which holds part of a
+  /// file at best.
+  @override
+  Future<bool> upload(
+    VirtUpload upload, {
+    void Function(int sent)? onProgress,
+    Future<void>? cancel,
+  }) async {
+    final open = _byteExec;
+    if (open == null || !(_canStream?.call() ?? false)) {
+      throw const VirtErr(type: VirtErrType.unsupported);
+    }
+    final pool = upload.pool.id;
+    Future<void> op(Map<String, Object?> json) => _run(
+      _script(() => ffi.virtResourceScript(opJson: jsonEncode(json))),
+      _parseResource,
+      action: true,
+    );
+    try {
+      await op({
+        'op': 'vol_create',
+        'pool': pool,
+        'name': upload.name,
+        'bytes': upload.size,
+        'format': 'raw',
+      });
+    } on VirtErr catch (e) {
+      throw _existsOr(e);
+    }
+    var done = false;
+    try {
+      final exec = await open().catchError(
+        (Object e) => throw _unreachable(e),
+      );
+      // Decided by the volume just made: it went through sudo if libvirt
+      // needed it.
+      var entry = !_viaSudo
+          ? ffi.VirtUploadEntryKind.direct
+          : _sudoPassword != null
+          ? ffi.VirtUploadEntryKind.sudoPassword
+          : ffi.VirtUploadEntryKind.sudoNoPassword;
+      var result = await _stream(
+        exec,
+        upload,
+        entry,
+        onProgress: onProgress,
+        cancel: cancel,
+      );
+      // sudo did not ask for the password it was given (cached, or
+      // NOPASSWD): nothing was written; once more without it.
+      if (result == _Streamed.notStarted &&
+          entry == ffi.VirtUploadEntryKind.sudoPassword) {
+        entry = ffi.VirtUploadEntryKind.sudoNoPassword;
+        result = await _stream(
+          exec,
+          upload,
+          entry,
+          onProgress: onProgress,
+          cancel: cancel,
+        );
+      }
+      switch (result) {
+        case _Streamed.done:
+          done = true;
+          return true;
+        case _Streamed.cancelled:
+          return false;
+        case _Streamed.notStarted:
+          throw const VirtErr(
+            type: VirtErrType.actionFailed,
+            message: 'The upload did not start',
+          );
+      }
+    } finally {
+      _storage = null;
+      if (!done) {
+        try {
+          await op({'op': 'vol_delete', 'pool': pool, 'name': upload.name});
+        } catch (e, s) {
+          Loggers.app.warning('Deleting the unfinished upload ${upload.name}', e, s);
+        }
+      }
+    }
+  }
+
+  /// One attempt: the preamble, the go line, and — once the host says it is
+  /// ready — the file.
+  Future<_Streamed> _stream(
+    ServerByteExec exec,
+    VirtUpload upload,
+    ffi.VirtUploadEntryKind entry, {
+    void Function(int sent)? onProgress,
+    Future<void>? cancel,
+  }) async {
+    final command = _script(
+      () => ffi.virtVolUploadCommand(
+        pool: upload.pool.id,
+        name: upload.name,
+        entry: entry,
+      ),
+    );
+    final ExecSession session;
+    try {
+      session = await exec.start(command);
+    } catch (e) {
+      throw _unreachable(e);
+    }
+    final marker = ffi.virtUploadReadyMarker();
+    final out = StringBuffer();
+    final err = StringBuffer();
+    final ready = Completer<bool>();
+    final outDone = Completer<void>();
+    final errDone = Completer<void>();
+    final outSub = session.stdout.listen(
+      (chunk) {
+        out.write(chunk);
+        if (!ready.isCompleted && out.toString().contains(marker)) {
+          ready.complete(true);
+        }
+      },
+      onDone: outDone.complete,
+      onError: (Object _) => outDone.complete(),
+    );
+    var rejected = false;
+    final errSub = session.stderr.listen(
+      (chunk) {
+        err.write(chunk);
+        // A refused password: sudo asks again on the same stdin, and the go
+        // line would be its next guess. Nothing more is sent.
+        if (entry == ffi.VirtUploadEntryKind.sudoPassword &&
+            !rejected &&
+            _sudoRejected.any(err.toString().contains)) {
+          rejected = true;
+          if (!ready.isCompleted) ready.complete(false);
+          session.kill();
+        }
+      },
+      onDone: errDone.complete,
+      onError: (Object _) => errDone.complete(),
+    );
+    var cancelled = false;
+    unawaited(
+      cancel?.then((_) {
+        cancelled = true;
+        if (!ready.isCompleted) ready.complete(false);
+        session.kill();
+      }),
+    );
+    final exited = session.done;
+    unawaited(exited.then((_) {
+      if (!ready.isCompleted) ready.complete(false);
+    }, onError: (Object _) {
+      if (!ready.isCompleted) ready.complete(false);
+    }));
+    int? code;
+    try {
+      final password = _sudoPassword;
+      try {
+        if (entry == ffi.VirtUploadEntryKind.sudoPassword &&
+            password != null) {
+          await session.write(utf8.encode('$password\n'));
+        }
+        await session.write(utf8.encode('${ffi.virtUploadGoLine()}\n'));
+      } catch (_) {
+        // The command ended before it read them — the script turning the
+        // password away as its go line, sudo refusing: its output says
+        // which, and no file follows.
+      }
+      final go = await ready.future.timeout(
+        uploadReadyTimeout,
+        onTimeout: () => false,
+      );
+      if (go && !cancelled) {
+        var sent = 0;
+        await for (final chunk in upload.open()) {
+          if (cancelled) break;
+          await session.write(chunk);
+          sent += chunk.length;
+          onProgress?.call(sent);
+        }
+      }
+      if (!go && !cancelled) {
+        // Whatever holds it up, it gets no file: ended here.
+        session.kill();
+      } else if (!cancelled) {
+        await session.closeStdin();
+      }
+      code = await exited;
+    } catch (e) {
+      if (cancelled) return _Streamed.cancelled;
+      throw _unreachable(e);
+    } finally {
+      await Future.wait([
+        outDone.future,
+        errDone.future,
+      ]).timeout(const Duration(seconds: 5), onTimeout: () => const []);
+      await outSub.cancel();
+      await errSub.cancel();
+      session.kill();
+    }
+    if (cancelled) return _Streamed.cancelled;
+    final stderr = err.toString();
+    if (rejected) {
+      _sudoPassword = null;
+      throw const VirtErr(
+        type: VirtErrType.sudoPasswordRejected,
+        message: 'sudo rejected the password',
+      );
+    }
+    try {
+      final uploaded = ffi.parseVirtVolUpload(raw: '$out$stderr');
+      return uploaded ? _Streamed.done : _Streamed.notStarted;
+    } on ffi.VirtFfiError catch (e) {
+      if (e.kind == ffi.VirtErrorKind.malformed) {
+        // Nothing of the script's: the shell or sudo itself refused.
+        throw VirtErr(
+          type: entry == ffi.VirtUploadEntryKind.direct
+              ? VirtErrType.actionFailed
+              : VirtErrType.permissionDenied,
+          message: [stderr.trim(), 'exit $code'].where((m) => m.isNotEmpty).join('\n'),
+          cause: e,
+        );
+      }
+      throw _toErr(e, action: true);
+    }
+  }
+
+  /// How long the upload command may take to say it is ready: a shell,
+  /// sudo and `read` — seconds at most.
+  static const uploadReadyTimeout = Duration(seconds: 60);
+
+  /// What sudo prints when it will not take the password, as
+  /// `ServerExecSudo.runWithSudo` watches for.
+  static const _sudoRejected = [
+    'Sorry, try again.',
+    'incorrect password attempt',
+  ];
+
   @override
   Future<List<VirtStats>?> history(
     VirtGuest guest, {
@@ -1106,6 +1503,33 @@ class LibvirtBackend implements VirtBackend {
           'target': target,
           'bus': bus,
         };
+      case VirtHwAttachVolume(:final volume):
+        final path = volume.path;
+        if (path == null) {
+          throw VirtErr(
+            type: VirtErrType.unsupported,
+            message: 'No path for ${volume.name}',
+          );
+        }
+        final taken = {
+          for (final d in [...config.disks, ...?live?.disks]) d.target,
+        };
+        final bus = config.disks
+                .where((d) => d.device == 'disk')
+                .firstOrNull
+                ?.bus ??
+            'virtio';
+        return {
+          'op': 'attach_volume',
+          'path': path,
+          // What the image is, as the pool read it; an ISO's bytes are raw.
+          'format': switch (volume.format) {
+            final f? when f != 'iso' && f != 'unknown' => f,
+            _ => 'raw',
+          },
+          'target': _freeTarget(_busPrefix(bus), taken),
+          'bus': bus,
+        };
       case VirtHwRemoveDisk(:final key, :final deleteVolume):
         final disk = diskIn(config, key) ?? diskIn(live, key);
         // A CD-ROM's image, or a read-only disk, is somebody's media: not
@@ -1437,3 +1861,6 @@ class LibvirtBackend implements VirtBackend {
 
   static int? _kib(int? kib) => kib == null ? null : kib * 1024;
 }
+
+/// What one upload attempt came to.
+enum _Streamed { done, cancelled, notStarted }

@@ -395,6 +395,22 @@ final class VirtHwAddDisk extends VirtHwChange {
   final String? mountPoint;
 }
 
+/// An existing volume of [storage] attached as a new disk, on the bus the
+/// guest's first disk is on (a container: as a mount point at
+/// [mountPoint]). The volume is not this change's: a refused attach leaves
+/// it where it was.
+final class VirtHwAttachVolume extends VirtHwChange {
+  const VirtHwAttachVolume({
+    required this.storage,
+    required this.volume,
+    this.mountPoint,
+  });
+
+  final VirtStoragePool storage;
+  final VirtVolume volume;
+  final String? mountPoint;
+}
+
 final class VirtHwRemoveDisk extends VirtHwChange {
   const VirtHwRemoveDisk({required this.key, this.deleteVolume = false});
 
@@ -608,6 +624,9 @@ enum VirtHwIssue {
 
   /// No device picked, or a second TPM.
   device,
+
+  /// The volume is another guest's disk already.
+  volumeInUse,
 }
 
 /// A unicast MAC: six octets, the first even, not all zero.
@@ -667,6 +686,12 @@ VirtHwIssue? virtHwIssue(
       if (available != null && gib * (1 << 30) > available) {
         return VirtHwIssue.storageSpace;
       }
+      if (hw.kind == VirtGuestKind.lxc &&
+          !virtMountPointPattern.hasMatch(mountPoint ?? '')) {
+        return VirtHwIssue.mountPoint;
+      }
+    case VirtHwAttachVolume(:final volume, :final mountPoint):
+      if (volume.users.isNotEmpty) return VirtHwIssue.volumeInUse;
       if (hw.kind == VirtGuestKind.lxc &&
           !virtMountPointPattern.hasMatch(mountPoint ?? '')) {
         return VirtHwIssue.mountPoint;

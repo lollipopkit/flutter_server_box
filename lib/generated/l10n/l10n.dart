@@ -7509,6 +7509,509 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Restored from {time}'**
   String virtBackupRestored(String time);
+
+  /// PVE refused a storage or network change for want of a privilege: who, which, where, and the command that grants it.
+  ///
+  /// In en, this message translates to:
+  /// **'{account} lacks {privilege} on {path}. Grant it, on the PVE host:\n{command}'**
+  String pveNeedsPrivilege(
+    String account,
+    String privilege,
+    String path,
+    String command,
+  );
+
+  /// Index note of the operations group: nothing stops deleting it.
+  ///
+  /// In en, this message translates to:
+  /// **'Can be deleted'**
+  String get virtCanDelete;
+
+  /// Index note: a guest uses it.
+  ///
+  /// In en, this message translates to:
+  /// **'In use'**
+  String get virtInUse;
+
+  /// Group title: what can be done to a pool or network (stop, delete).
+  ///
+  /// In en, this message translates to:
+  /// **'Operations'**
+  String get virtOps;
+
+  /// A libvirt storage pool; group title.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage pool'**
+  String get virtPool;
+
+  /// Button and title: a new libvirt storage pool.
+  ///
+  /// In en, this message translates to:
+  /// **'New storage pool'**
+  String get virtPoolNew;
+
+  /// Button and title: a new PVE storage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add storage'**
+  String get virtStorageAdd;
+
+  /// Index note: how full a pool is.
+  ///
+  /// In en, this message translates to:
+  /// **'{pct}% used'**
+  String virtPoolUsedPct(String pct);
+
+  /// Why a pool cannot be stopped or removed.
+  ///
+  /// In en, this message translates to:
+  /// **'A guest uses a volume here, so the pool cannot be stopped or removed.'**
+  String get virtPoolInUse;
+
+  /// Button: remove a libvirt pool.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete pool'**
+  String get virtPoolDelete;
+
+  /// Button: remove a PVE storage from the configuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove storage'**
+  String get virtStorageRemove;
+
+  /// Confirm removing a libvirt pool.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the pool {name}? Its definition goes; its volumes stay where they are.'**
+  String virtPoolDeleteAsk(String name);
+
+  /// Confirm removing a PVE storage.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the storage {name} from PVE\'s configuration? What is on it stays.'**
+  String virtStorageRemoveAsk(String name);
+
+  /// Under the delete question: the volumes stay.
+  ///
+  /// In en, this message translates to:
+  /// **'Its {count} volumes are kept on disk.'**
+  String virtPoolDeleteKeepsVolumes(int count);
+
+  /// Checkbox: pool-delete, which removes an empty directory.
+  ///
+  /// In en, this message translates to:
+  /// **'Also delete its directory (only when empty)'**
+  String get virtPoolDeleteStorage;
+
+  /// Confirm stopping a libvirt pool.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop the pool {name}? Its volumes cannot be listed or created until it starts again.'**
+  String virtPoolStopAsk(String name);
+
+  /// Confirm disabling a PVE storage.
+  ///
+  /// In en, this message translates to:
+  /// **'Disable the storage {name}? Guests with disks on it cannot start until it is enabled again.'**
+  String virtStorageDisableAsk(String name);
+
+  /// Under the new-pool form for an LVM volume group.
+  ///
+  /// In en, this message translates to:
+  /// **'An existing volume group is used as it is; nothing is formatted.'**
+  String get virtPoolLogicalNote;
+
+  /// Field: where an NFS pool is mounted.
+  ///
+  /// In en, this message translates to:
+  /// **'Mount point'**
+  String get virtPoolMountPoint;
+
+  /// Field: an NFS export.
+  ///
+  /// In en, this message translates to:
+  /// **'Source (host:/path)'**
+  String get virtPoolSourceNfs;
+
+  /// Field: an LVM volume group.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume group'**
+  String get virtPoolSourceVg;
+
+  /// Field: an LVM volume group and its thin pool, vg/thinpool.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume group / thin pool'**
+  String get virtPoolSourceThin;
+
+  /// Field: a ZFS pool or dataset.
+  ///
+  /// In en, this message translates to:
+  /// **'ZFS pool'**
+  String get virtPoolSourceZfs;
+
+  /// Pool type choice: an LVM volume group.
+  ///
+  /// In en, this message translates to:
+  /// **'LVM volume group'**
+  String get virtPoolTypeVg;
+
+  /// Form error.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name'**
+  String get virtResNameEmpty;
+
+  /// Form error: a pool, volume or network name the host does not take.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a name this host takes (letters, digits, . _ -)'**
+  String get virtResNameInvalid;
+
+  /// Form error: the path, export, volume group or pool of a new pool.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a path or source the host takes'**
+  String get virtResSourceInvalid;
+
+  /// Form error: the mount point must be an absolute path.
+  ///
+  /// In en, this message translates to:
+  /// **'An absolute path'**
+  String get virtResTargetInvalid;
+
+  /// Form error: the IPv4 address with prefix.
+  ///
+  /// In en, this message translates to:
+  /// **'An address with its prefix, e.g. 192.168.150.1/24'**
+  String get virtResCidrInvalid;
+
+  /// Form error: the DHCP range.
+  ///
+  /// In en, this message translates to:
+  /// **'Two addresses in the network, in order, without the host\'s own'**
+  String get virtResDhcpInvalid;
+
+  /// Form error: another network overlaps.
+  ///
+  /// In en, this message translates to:
+  /// **'Another network here is on this subnet'**
+  String get virtResSubnetTaken;
+
+  /// Form error: an interface name.
+  ///
+  /// In en, this message translates to:
+  /// **'Not an interface name'**
+  String get virtResBridgeInvalid;
+
+  /// Form error: the pool cannot hold that format.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a format this pool holds'**
+  String get virtResFormat;
+
+  /// Button and form title: a new volume.
+  ///
+  /// In en, this message translates to:
+  /// **'New volume'**
+  String get virtVolNew;
+
+  /// Index note: how many volumes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} volumes'**
+  String virtVolCount(int count);
+
+  /// A pool with no volumes.
+  ///
+  /// In en, this message translates to:
+  /// **'This pool has no volumes yet.'**
+  String get virtVolNone;
+
+  /// Dashed row beside "New volume".
+  ///
+  /// In en, this message translates to:
+  /// **'A new volume can be attached to any VM later'**
+  String get virtVolEmptyAttach;
+
+  /// Dashed row beside "New volume" where uploads are offered.
+  ///
+  /// In en, this message translates to:
+  /// **'An ISO can also be uploaded directly'**
+  String get virtVolEmptyUpload;
+
+  /// Under the volume name on PVE.
+  ///
+  /// In en, this message translates to:
+  /// **'PVE names a volume for its VM: vm-<VMID>-disk-<N>'**
+  String get virtVolPveName;
+
+  /// Field: the guests using a volume.
+  ///
+  /// In en, this message translates to:
+  /// **'Used by'**
+  String get virtVolUsers;
+
+  /// Meter: how much of a volume takes space on the host.
+  ///
+  /// In en, this message translates to:
+  /// **'Allocated'**
+  String get virtVolAllocated;
+
+  /// Why a used volume is not grown here.
+  ///
+  /// In en, this message translates to:
+  /// **'A guest uses it: grow it from that guest\'s Hardware view'**
+  String get virtVolGrowFromGuest;
+
+  /// A guest uses this volume: not deleted, not attached again.
+  ///
+  /// In en, this message translates to:
+  /// **'A guest uses this volume'**
+  String get virtVolInUse;
+
+  /// Button: attach a volume to a VM as a disk.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach to VM'**
+  String get virtVolAttach;
+
+  /// Under the VM choice for attaching a volume.
+  ///
+  /// In en, this message translates to:
+  /// **'Attached as a new disk, on the bus its first disk is on'**
+  String get virtVolAttachNote;
+
+  /// Toast after attaching.
+  ///
+  /// In en, this message translates to:
+  /// **'Attached to {name}'**
+  String virtVolAttached(String name);
+
+  /// Button: insert an ISO into a VM's CD-ROM drive.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert into CD-ROM'**
+  String get virtVolInsert;
+
+  /// Toast after inserting an ISO.
+  ///
+  /// In en, this message translates to:
+  /// **'Inserted into {name}\'s CD-ROM drive'**
+  String virtVolInserted(String name);
+
+  /// A VM without a CD-ROM drive to insert into.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} has no CD-ROM drive'**
+  String virtVolNoCdrom(String name);
+
+  /// Confirm deleting a volume.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the volume {name} from {pool}? What is in it is gone for good.'**
+  String virtVolDeleteAsk(String name, String pool);
+
+  /// Bar button: upload an ISO from this device.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload ISO'**
+  String get virtUploadIso;
+
+  /// Dialog title: the name an upload takes.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload to {pool}'**
+  String virtUploadTo(String pool);
+
+  /// Toast: an upload finished.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} uploaded'**
+  String virtUploadDone(String name);
+
+  /// Group title: how a network is set up.
+  ///
+  /// In en, this message translates to:
+  /// **'Configuration'**
+  String get virtNetConfig;
+
+  /// A bridge with no ports, a network with no bridge of the host's.
+  ///
+  /// In en, this message translates to:
+  /// **'Internal'**
+  String get virtNetInternal;
+
+  /// Field: a PVE bridge's ports.
+  ///
+  /// In en, this message translates to:
+  /// **'Bridge ports'**
+  String get virtNetBridgePorts;
+
+  /// Field: the host bridge a libvirt bridge-mode network uses.
+  ///
+  /// In en, this message translates to:
+  /// **'Host bridge'**
+  String get virtNetHostBridge;
+
+  /// Hint for a PVE bridge's ports.
+  ///
+  /// In en, this message translates to:
+  /// **'eno2; empty for an internal bridge'**
+  String get virtNetPortsHint;
+
+  /// Field: a network's DHCP range.
+  ///
+  /// In en, this message translates to:
+  /// **'DHCP range'**
+  String get virtNetDhcpRange;
+
+  /// Under the DHCP switch.
+  ///
+  /// In en, this message translates to:
+  /// **'dnsmasq gives guests their addresses'**
+  String get virtNetDhcpTip;
+
+  /// Under the VLAN aware switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Guests\' NICs may carry a VLAN tag'**
+  String get virtNetVlanTip;
+
+  /// NAT network: what it does.
+  ///
+  /// In en, this message translates to:
+  /// **'Through the host: guests reach out, nothing reaches in'**
+  String get virtNetNatTip;
+
+  /// Routed network: what it does.
+  ///
+  /// In en, this message translates to:
+  /// **'Routed by the host without NAT: the LAN needs a route back'**
+  String get virtNetRoutedTip;
+
+  /// Isolated network: what it does.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the guests and the host reach each other'**
+  String get virtNetIsolatedTip;
+
+  /// Bridged network: what it does.
+  ///
+  /// In en, this message translates to:
+  /// **'Guests join a bridge of the host\'s, on its physical network'**
+  String get virtNetBridgedTip;
+
+  /// Button and title: a new libvirt network.
+  ///
+  /// In en, this message translates to:
+  /// **'New network'**
+  String get virtNetNew;
+
+  /// Button and title: a new PVE Linux bridge.
+  ///
+  /// In en, this message translates to:
+  /// **'New Linux bridge'**
+  String get virtNetNewBridge;
+
+  /// Group title of the new libvirt network form.
+  ///
+  /// In en, this message translates to:
+  /// **'Virtual network'**
+  String get virtNetVirtual;
+
+  /// Button: delete a network.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete network'**
+  String get virtNetDelete;
+
+  /// Confirm deleting a libvirt network.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the network {name}? It is stopped and its definition removed.'**
+  String virtNetDeleteAsk(String name);
+
+  /// Confirm removing a PVE bridge.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the bridge {name} from {node}? It leaves the pending configuration now, and the host once that is applied.'**
+  String virtNetDeleteAskPve(String name, String node);
+
+  /// Why a network cannot be deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Guests on it: {count}. It cannot be deleted.'**
+  String virtNetInUse(int count);
+
+  /// Confirm stopping a network with guests on it.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop {name}? The {count} guests on it lose their network until it starts again.'**
+  String virtNetStopAsk(String name, int count);
+
+  /// A PVE interface that is not active.
+  ///
+  /// In en, this message translates to:
+  /// **'Not active: a new bridge waits in the pending configuration until it is applied.'**
+  String get virtNetInactivePve;
+
+  /// Under the new PVE bridge form.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved as a pending change: it takes effect when the configuration is applied (ifreload -a).'**
+  String get virtNetPveApplyNote;
+
+  /// Toast after a PVE bridge was created or removed.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved as pending: apply the configuration for it to take effect'**
+  String get virtNetPendingSaved;
+
+  /// Card title: PVE network changes not applied yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending network changes on {node}'**
+  String virtNetPendingTitle(String node);
+
+  /// Card text: where PVE keeps them.
+  ///
+  /// In en, this message translates to:
+  /// **'PVE keeps network changes in interfaces.new until they are applied.'**
+  String get virtNetPendingTip;
+
+  /// Button: show the pending diff.
+  ///
+  /// In en, this message translates to:
+  /// **'Show changes'**
+  String get virtNetPendingShow;
+
+  /// Button: PVE Apply Configuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply configuration'**
+  String get virtNetApply;
+
+  /// Confirm applying PVE network changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply the pending network configuration on {node}? PVE reloads the host\'s network (ifreload -a): a mistake in it can cut the host off.'**
+  String virtNetApplyAsk(String node);
+
+  /// Confirm dropping PVE network changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop the pending network configuration on {node}?'**
+  String virtNetRevertAsk(String node);
+
+  /// PVE API token help: the privileges managing storage and networks needs (verified on PVE 9.2).
+  ///
+  /// In en, this message translates to:
+  /// **'Managing storage needs Datastore.Allocate on /storage (adding, disabling, removing), Datastore.AllocateSpace (volumes) and Datastore.AllocateTemplate (uploads); Linux bridges and applying the network configuration need Sys.Modify on the node.'**
+  String get pveTokenTipStorage;
 }
 
 class _AppLocalizationsDelegate

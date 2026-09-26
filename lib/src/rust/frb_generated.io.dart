@@ -225,6 +225,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   VirtFfiError dco_decode_virt_ffi_error(dynamic raw);
 
   @protected
+  VirtUploadEntryKind dco_decode_virt_upload_entry_kind(dynamic raw);
+
+  @protected
   VncSessionParams dco_decode_vnc_session_params(dynamic raw);
 
   @protected
@@ -434,6 +437,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   VirtFfiError sse_decode_virt_ffi_error(SseDeserializer deserializer);
+
+  @protected
+  VirtUploadEntryKind sse_decode_virt_upload_entry_kind(
+    SseDeserializer deserializer,
+  );
 
   @protected
   VncSessionParams sse_decode_vnc_session_params(SseDeserializer deserializer);
@@ -690,6 +698,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_virt_ffi_error(VirtFfiError self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_virt_upload_entry_kind(
+    VirtUploadEntryKind self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_vnc_session_params(

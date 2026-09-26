@@ -20,6 +20,7 @@ import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_hardware.dart';
+import 'package:server_box/data/model/virt/virt_manage.dart';
 import 'package:server_box/data/model/virt/virt_rates.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/virt/backend.dart';
@@ -256,6 +257,12 @@ class PveBackend implements VirtBackend {
         clone: true,
         linkedClone: true,
         backup: true,
+        storageEdit: true,
+        poolTypes: const ['dir', 'lvmthin', 'nfs', 'zfspool'],
+        upload: true,
+        networkEdit: true,
+        networkModes: const ['bridge'],
+        networkApply: true,
       ),
     );
   }
@@ -1198,6 +1205,23 @@ class PveBackend implements VirtBackend {
             value = '${storage.name}:$gib';
           }
           await _setConfig(guest, {key: value}, digest: digest);
+        case VirtHwAttachVolume(:final volume, :final mountPoint):
+          final config = await rawConfig();
+          final String key;
+          final String value;
+          if (lxc) {
+            key = _freeKey(config, 'mp', 256);
+            value = '${volume.id},mp=$mountPoint';
+          } else {
+            final bus = base.disks
+                    .where((d) => d.kind == VirtHwDiskKind.disk)
+                    .firstOrNull
+                    ?.bus ??
+                'scsi';
+            key = _freeKey(config, bus, _busSlots[bus] ?? 1);
+            value = volume.id;
+          }
+          await _setConfig(guest, {key: value}, digest: digest);
         case VirtHwRemoveDisk(:final key, :final deleteVolume):
           final volume = switch (rawOf(await rawConfig(), key)) {
             final String v => PveResources.volumeOf(v),
@@ -1698,8 +1722,13 @@ class PveBackend implements VirtBackend {
             users.putIfAbsent(key, () => []).addAll(value);
           }
         } on VirtErr catch (e) {
-          // One guest this account may not read leaves only that guest out.
-          if (e.type != VirtErrType.authFailed) rethrow;
+          // One guest this account may not read, or one deleted since the
+          // last load listed it ("Configuration file ... does not exist"),
+          // leaves only that guest out.
+          if (e.type != VirtErrType.authFailed &&
+              e.type != VirtErrType.invalidResponse) {
+            rethrow;
+          }
         }
       }
     }
@@ -1711,6 +1740,302 @@ class PveBackend implements VirtBackend {
       list.sort((a, b) => (a.vmid ?? 0).compareTo(b.vmid ?? 0));
     }
     return users;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Managing storage and networks
+  // ---------------------------------------------------------------------------
+
+  static final _form = Options(contentType: Headers.formUrlEncodedContentType);
+
+  /// A storage is cluster configuration (`/storage`), limited to the node it
+  /// was made on; a volume and a bridge are a node's. Network changes wait in
+  /// the node's `interfaces.new` until [VirtNetworkApply].
+  @override
+  Future<void> manage(VirtResourceChange change) async {
+    try {
+      switch (change) {
+        case VirtPoolCreate(:final name, :final type, :final source, :final node, :final content):
+          final lvm = source.split('/');
+          final nfs = source.indexOf(':/');
+          await _call(
+            (dio) => dio.post(
+              _url('/storage'),
+              data: {
+                'storage': name,
+                'type': type,
+                ...switch (type) {
+                  'dir' => {'path': source},
+                  'nfs' => {
+                    'server': source.substring(0, nfs),
+                    'export': source.substring(nfs + 1),
+                  },
+                  'lvmthin' => {'vgname': lvm.first, 'thinpool': lvm.last},
+                  'zfspool' => {'pool': source},
+                  _ => throw const VirtErr(type: VirtErrType.unsupported),
+                },
+                'content': (content.isNotEmpty
+                        ? content
+                        : type == 'nfs'
+                        ? const ['backup', 'iso']
+                        : const ['images', 'rootdir'])
+                    .join(','),
+                'nodes': ?node,
+              },
+              options: _form,
+            ),
+            action: true,
+          );
+        case VirtPoolSetActive(:final pool, :final active):
+          await _call(
+            (dio) => dio.put(
+              _url('/storage/${_seg(pool.name)}'),
+              data: {'disable': active ? 0 : 1},
+              options: _form,
+            ),
+            action: true,
+          );
+        case VirtPoolDelete(:final pool):
+          await _call(
+            (dio) => dio.delete(_url('/storage/${_seg(pool.name)}')),
+            action: true,
+          );
+        case VirtPoolRefresh():
+          // PVE reads a storage's contents on every listing.
+          break;
+        case VirtVolumeCreate(:final pool, :final name, :final gib, :final format):
+          await _call(
+            (dio) => dio.post(
+              _url('${_storagePath(pool)}/content'),
+              data: {
+                'vmid': virtPveVolumeVmid(name),
+                'filename': virtVolumeFileName(pool, name, format),
+                'size': '${gib}G',
+                'format': format,
+              },
+              options: _form,
+            ),
+            action: true,
+          );
+        case VirtVolumeDelete(:final pool, :final volume):
+          await _nodeTask(
+            pool.node!,
+            (dio) => dio.delete(
+              _url('${_storagePath(pool)}/content/${_seg(volume.id)}'),
+            ),
+          );
+        case VirtNetworkCreate(
+          :final name,
+          :final node,
+          :final bridge,
+          :final cidr,
+          :final vlanAware,
+          :final autostart,
+          :final mode,
+        ):
+          if (mode != 'bridge' || node == null) {
+            throw const VirtErr(type: VirtErrType.unsupported);
+          }
+          final ports = bridge?.trim() ?? '';
+          final address = cidr?.trim() ?? '';
+          await _call(
+            (dio) => dio.post(
+              _url('/nodes/${_seg(node)}/network'),
+              data: {
+                'iface': name,
+                'type': 'bridge',
+                'autostart': autostart ? 1 : 0,
+                'bridge_ports': ?(ports.isEmpty ? null : ports),
+                'cidr': ?(address.isEmpty ? null : address),
+                'bridge_vlan_aware': ?(vlanAware ? 1 : null),
+              },
+              options: _form,
+            ),
+            action: true,
+          );
+        case VirtNetworkDelete(:final network):
+          await _call(
+            (dio) => dio.delete(
+              _url(
+                '/nodes/${_seg(network.node!)}/network/${_seg(network.name)}',
+              ),
+            ),
+            action: true,
+          );
+        case VirtNetworkApply(:final node):
+          await _nodeTask(
+            node,
+            (dio) => dio.put(_url('/nodes/${_seg(node)}/network')),
+          );
+        case VirtNetworkRevert(:final node):
+          await _call(
+            (dio) => dio.delete(_url('/nodes/${_seg(node)}/network')),
+            action: true,
+          );
+        case VirtPoolSetAutostart() ||
+            VirtVolumeResize() ||
+            VirtVolumeClone() ||
+            VirtNetworkSetActive() ||
+            VirtNetworkSetAutostart():
+          throw const VirtErr(type: VirtErrType.unsupported);
+      }
+    } on VirtErr catch (e) {
+      throw _manageErr(e);
+    }
+  }
+
+  String _storagePath(VirtStoragePool pool) {
+    final node = pool.node;
+    if (node == null) {
+      throw VirtErr(
+        type: VirtErrType.invalidResponse,
+        message: 'No node for storage ${pool.name}',
+      );
+    }
+    return '/nodes/${_seg(node)}/storage/${_seg(pool.name)}';
+  }
+
+  /// [request] on [node], which answers a UPID or, for a change PVE makes at
+  /// once, nothing; the task waited for.
+  Future<void> _nodeTask(
+    String node,
+    Future<Response<dynamic>> Function(Dio dio) request,
+  ) async {
+    final upid = await _call(request, action: true);
+    if (upid is String && upid.startsWith('UPID:')) {
+      await _waitTask(node, upid);
+    }
+  }
+
+  static final _permissionCheck = RegExp(
+    r'Permission check failed \(([^,()]+), ([A-Za-z.]+)\)',
+  );
+
+  /// A name taken as [VirtErrType.exists]; PVE's permission refusal as
+  /// [VirtErrType.permissionDenied] naming the privilege, where, and how to
+  /// grant it — the refusal alone says which, not what to type.
+  VirtErr _manageErr(VirtErr e) {
+    final message = e.message ?? '';
+    if (message.contains('already exists') ||
+        message.contains('already defined')) {
+      return VirtErr(type: VirtErrType.exists, message: message, cause: e.cause);
+    }
+    final m = _permissionCheck.firstMatch(message);
+    if (m == null) return _changeErr(e);
+    final path = m[1]!.trim();
+    final privilege = m[2]!;
+    final token = _config.auth == PveAuth.token;
+    final account = token ? _config.tokenId ?? '' : _userFields()['username']!;
+    final qualified = token || account.contains('@') ? account : '$account@pam';
+    final who = "--${token ? 'tokens' : 'users'} '$qualified'";
+    final command = switch (pvePrivilegeRole(privilege)) {
+      final role? => 'pveum acl modify $path $who --roles $role',
+      // No built-in role holds it without far more: a role of its own.
+      null =>
+        "pveum role add ServerBox-${privilege.replaceAll('.', '')} "
+            '--privs $privilege\n'
+            'pveum acl modify $path $who '
+            '--roles ServerBox-${privilege.replaceAll('.', '')}',
+    };
+    return VirtErr(
+      type: VirtErrType.permissionDenied,
+      message: l10n.pveNeedsPrivilege(qualified, privilege, path, command),
+      cause: e.cause,
+    );
+  }
+
+  /// The narrowest built-in PVE role holding [privilege]; null where only
+  /// `Administrator` does (`Sys.Modify`).
+  @visibleForTesting
+  static String? pvePrivilegeRole(String privilege) => switch (privilege) {
+    'Datastore.AllocateSpace' || 'Datastore.Audit' => 'PVEDatastoreUser',
+    'Datastore.Allocate' || 'Datastore.AllocateTemplate' => 'PVEDatastoreAdmin',
+    'Sys.Audit' => 'PVEAuditor',
+    'SDN.Use' => 'PVESDNUser',
+    final p when p.startsWith('VM.') => 'PVEVMAdmin',
+    _ => null,
+  };
+
+  /// Each online node's pending network configuration: the `changes` PVE
+  /// puts beside the interfaces it lists.
+  @override
+  Future<List<VirtNetworkChanges>> networkChanges() async {
+    final out = <VirtNetworkChanges>[];
+    for (final node in await _onlineNodes()) {
+      final body = await _call(
+        (dio) => dio.get(_url('/nodes/${_seg(node)}/network')),
+        whole: true,
+      );
+      if (body case {'changes': final String diff}
+          when diff.trim().isNotEmpty) {
+        out.add(VirtNetworkChanges(node: node, diff: diff));
+      }
+    }
+    return out;
+  }
+
+  /// How long PVE may take to answer an upload once it has the bytes: it
+  /// checks the file and starts the task that moves it into place.
+  static const uploadReplyTimeout = Duration(minutes: 5);
+
+  /// `POST .../upload`, multipart, the file last as PVE wants it; no send
+  /// timeout (the file takes as long as it takes). PVE spools the upload to
+  /// a temporary file and removes it when the connection breaks, so a
+  /// cancelled one leaves nothing; a finished one is moved into place by a
+  /// task, waited for.
+  @override
+  Future<bool> upload(
+    VirtUpload upload, {
+    void Function(int sent)? onProgress,
+    Future<void>? cancel,
+  }) async {
+    final pool = upload.pool;
+    final token = CancelToken();
+    var cancelled = false;
+    unawaited(
+      cancel?.then((_) {
+        cancelled = true;
+        token.cancel();
+      }),
+    );
+    try {
+      await _nodeTask(
+        pool.node!,
+        (dio) => dio.post(
+          _url('${_storagePath(pool)}/upload'),
+          // Made per attempt: a repeated request reads the file again.
+          // `Content-Disposition` capitalised: pveproxy finds the parts with
+          // a case-sensitive pattern, and Dio's default lowercase header
+          // leaves it waiting for a part it never sees until the upload
+          // fails (PVE 9.2).
+          data: FormData.fromMap(
+            {
+              'content': upload.content,
+              'filename': MultipartFile.fromStream(
+                upload.open,
+                upload.size,
+                filename: upload.name,
+              ),
+            },
+            ListFormat.multi,
+            true,
+          ),
+          cancelToken: token,
+          onSendProgress: (sent, _) => onProgress?.call(sent),
+          options: Options(
+            sendTimeout: Duration.zero,
+            receiveTimeout: uploadReplyTimeout,
+          ),
+        ),
+      );
+      return true;
+    } on VirtErr catch (e) {
+      if (cancelled) return false;
+      throw _manageErr(e);
+    } catch (_) {
+      if (cancelled) return false;
+      rethrow;
+    }
   }
 
   @override
@@ -2113,11 +2438,12 @@ class PveBackend implements VirtBackend {
   Future<Object?> _call(
     Future<Response<dynamic>> Function(Dio dio) request, {
     bool action = false,
+    bool whole = false,
   }) async {
     final before = _session;
     final session = await _ensureSession();
     try {
-      return await _send(session, request, action: action);
+      return await _send(session, request, action: action, whole: whole);
     } on VirtErr catch (e) {
       final reused = identical(before, session) && session.ticket != null;
       final cause = e.cause;
@@ -2126,14 +2452,22 @@ class PveBackend implements VirtBackend {
           cause is DioException &&
           cause.response?.statusCode == 401;
       if (!reused || !refused) rethrow;
-      return _send(await _ensureSession(), request, action: action);
+      return _send(
+        await _ensureSession(),
+        request,
+        action: action,
+        whole: whole,
+      );
     }
   }
 
+  /// [whole]: the response body itself, for what PVE puts beside `data`
+  /// (the network listing's `changes`).
   Future<Object?> _send(
     _Session session,
     Future<Response<dynamic>> Function(Dio dio) request, {
     required bool action,
+    bool whole = false,
   }) async {
     try {
       final resp = await request(session.dio);
@@ -2144,7 +2478,7 @@ class PveBackend implements VirtBackend {
           message: l10n.pveInvalidResponseBody,
         );
       }
-      return body['data'];
+      return whole ? body : body['data'];
     } catch (e) {
       final status = e is DioException ? e.response?.statusCode : null;
       if (status == 403) {
@@ -2157,6 +2491,8 @@ class PveBackend implements VirtBackend {
         );
       }
       final err = _toErr(e);
+      // Cancelled here (an upload stopped): the session is fine.
+      if (e is DioException && e.type == DioExceptionType.cancel) throw err;
       if (err.type == VirtErrType.authFailed ||
           err.type == VirtErrType.unreachable ||
           err.type == VirtErrType.relayNotGranted ||

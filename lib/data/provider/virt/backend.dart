@@ -4,6 +4,7 @@ import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_hardware.dart';
+import 'package:server_box/data/model/virt/virt_manage.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 
 /// One virtualization host, as the Virtualization tab talks to it.
@@ -79,6 +80,28 @@ abstract interface class VirtBackend {
 
   /// Networks with the guests on each. Only where `VirtCapabilities.network`.
   Future<List<VirtNetwork>> networks();
+
+  /// Makes [change] to the host's storage or networks (checked with
+  /// `virtResourceIssue` first) and returns once the host has. Throws
+  /// `VirtErrType.exists` for a name taken, `VirtErrType.permissionDenied`
+  /// with the privilege and how to grant it (PVE), and
+  /// `VirtErrType.actionFailed` with the host's words. Only where the
+  /// capability for it is (`storageEdit`, `networkEdit`, `networkApply`, …).
+  Future<void> manage(VirtResourceChange change);
+
+  /// Writes [upload] into a new volume of its pool, reporting the bytes sent
+  /// to [onProgress]; true once the host has it all. [cancel] completing
+  /// stops it — false — and what was written is deleted, as it is when the
+  /// upload fails. Only where `VirtCapabilities.upload`.
+  Future<bool> upload(
+    VirtUpload upload, {
+    void Function(int sent)? onProgress,
+    Future<void>? cancel,
+  });
+
+  /// Network configuration written but not applied yet, per node (PVE);
+  /// empty where there is none, and on a host without such a thing.
+  Future<List<VirtNetworkChanges>> networkChanges();
 
   /// The VMID PVE would give a new guest (`/cluster/nextid`); null where the
   /// host has no such thing.

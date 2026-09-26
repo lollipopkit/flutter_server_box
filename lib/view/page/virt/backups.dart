@@ -27,7 +27,7 @@ class VirtBackupView extends ConsumerStatefulWidget {
 }
 
 class _VirtBackupViewState extends ConsumerState<VirtBackupView>
-    with _EditPane<VirtBackupView> {
+    with _PaneRows<VirtBackupView>, _EditPane<VirtBackupView> {
   @override
   String get _serverId => widget.serverId;
   @override
@@ -72,7 +72,9 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
 
   @override
   Widget build(BuildContext context) {
-    if (_error case final e?) return _buildError(e);
+    if (_error case final e?) {
+      return _buildError(e, onRetry: () => unawaited(_load()));
+    }
     if (_backups == null) return const Center(child: SizedLoading.medium);
     return _buildEditPane((hw, busy) => [_planGroup(), _listGroup(busy)]);
   }
@@ -163,7 +165,7 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
     final restoring = _confirm == 'restore:${b.id}';
     return [
       _disc(key, Icons.backup_outlined, _when(b), summary),
-      if (_open.contains(key)) ...[
+      _reveal(key, [
         _field(Icons.description_outlined, libL10n.file, b.fileName, mono: true, indent: true),
         if (b.notes case final notes?)
           _field(Icons.notes, l10n.virtBackupNotes, notes, indent: true),
@@ -215,7 +217,7 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
           ],
           indent: true,
         ),
-      ],
+      ]),
     ];
   }
 

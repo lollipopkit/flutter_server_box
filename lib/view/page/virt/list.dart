@@ -50,14 +50,12 @@ extension _List on _VirtTabPageState {
                 icon: const Icon(Icons.refresh, size: 18),
                 onTap: () => _refresh(hostId),
               ),
-              // With the guests, where a new one lands; the host's answer
-              // says whether it takes one.
-              if (_section == VirtSection.guests && (caps?.create ?? false))
+              // In the section a new one lands in; the host's answer says
+              // whether it takes one.
+              if (_createLabel(caps) case final label?)
                 Btn.icon(
                   key: const ValueKey('virt:create'),
-                  text: (caps?.lxc ?? false)
-                      ? l10n.virtCreateGuest
-                      : l10n.virtCreateVm,
+                  text: label,
                   icon: const Icon(Icons.add, size: 18),
                   onTap: () => unawaited(_startCreate(hostId, split)),
                 ),
@@ -100,6 +98,24 @@ extension _List on _VirtTabPageState {
       ),
       body: body,
     );
+  }
+
+  /// What the add button makes in the section on screen, as the design
+  /// names it; null where the host makes none.
+  String? _createLabel(VirtCapabilities? caps) {
+    if (caps == null) return null;
+    // PVE's pending network configuration is the mark of its words: a
+    // storage is added, a network is a Linux bridge.
+    final pve = caps.networkApply;
+    return switch (_section) {
+      VirtSection.guests when caps.create =>
+        caps.lxc ? l10n.virtCreateGuest : l10n.virtCreateVm,
+      VirtSection.storage when caps.storageEdit && caps.poolTypes.isNotEmpty =>
+        pve ? l10n.virtStorageAdd : l10n.virtPoolNew,
+      VirtSection.network when caps.networkEdit && caps.networkModes.isNotEmpty =>
+        pve ? l10n.virtNetNewBridge : l10n.virtNetNew,
+      _ => null,
+    };
   }
 
   /// No server is a host yet — or none has answered yet.

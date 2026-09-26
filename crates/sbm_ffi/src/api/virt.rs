@@ -6,7 +6,7 @@
 //! shape later; a failure crosses as [`VirtFfiError`], whose `kind` is what
 //! the app branches on (retry with sudo on `PermissionDenied`).
 
-use sbm_parser::virt;
+use sbm_parser::{virt, virt_manage};
 
 /// Power actions (mirrors sbm_parser::virt::VirtAction)
 pub enum VirtActionKind {
@@ -328,4 +328,70 @@ pub fn virt_host_devices_script() -> String {
 /// [`virt_host_devices_script`]'s output → `VirtHostDevices` JSON
 pub fn parse_virt_host_devices_json(raw: String) -> Result<String, VirtFfiError> {
     serde_json::to_string(&virt::parse_host_devices(&raw)?).map_err(json_err)
+}
+
+/// How the upload command reaches the daemon (mirrors
+/// sbm_parser::virt_manage::VirtUploadEntry)
+pub enum VirtUploadEntryKind {
+    /// As this account
+    Direct,
+    /// `sudo -n`
+    SudoNoPassword,
+    /// `sudo -S`, the password first on stdin
+    SudoPassword,
+}
+
+impl From<VirtUploadEntryKind> for virt_manage::VirtUploadEntry {
+    fn from(kind: VirtUploadEntryKind) -> Self {
+        match kind {
+            VirtUploadEntryKind::Direct => virt_manage::VirtUploadEntry::Direct,
+            VirtUploadEntryKind::SudoNoPassword => virt_manage::VirtUploadEntry::SudoNoPassword,
+            VirtUploadEntryKind::SudoPassword => virt_manage::VirtUploadEntry::SudoPassword,
+        }
+    }
+}
+
+/// One change to the host's storage or networks; `op_json` is a
+/// `VirtResourceOp`. Parse with [`parse_virt_resource`].
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_resource_script(op_json: String) -> Result<String, VirtFfiError> {
+    let op: virt_manage::VirtResourceOp = serde_json::from_str(&op_json).map_err(json_err)?;
+    Ok(virt_manage::resource_script(&op)?)
+}
+
+/// [`virt_resource_script`]'s output: `Ok` when every step ran
+#[flutter_rust_bridge::frb(sync)]
+pub fn parse_virt_resource(raw: String) -> Result<(), VirtFfiError> {
+    Ok(virt_manage::parse_resource(&raw)?)
+}
+
+/// The command writing its stdin into a volume, for a channel that carries
+/// bytes; see `sbm_parser::virt_manage::vol_upload_command` for what goes
+/// on stdin, in which order
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_vol_upload_command(
+    pool: String,
+    name: String,
+    entry: VirtUploadEntryKind,
+) -> Result<String, VirtFfiError> {
+    Ok(virt_manage::vol_upload_command(&pool, &name, entry.into())?)
+}
+
+/// [`virt_vol_upload_command`]'s output: `true` uploaded, `false` stopped
+/// before virsh because the first line was not the go line
+#[flutter_rust_bridge::frb(sync)]
+pub fn parse_virt_vol_upload(raw: String) -> Result<bool, VirtFfiError> {
+    Ok(virt_manage::parse_vol_upload(&raw)?)
+}
+
+/// The line sent before an upload's bytes
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_upload_go_line() -> String {
+    virt_manage::UPLOAD_GO.to_string()
+}
+
+/// What the upload command prints once the bytes may follow
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_upload_ready_marker() -> String {
+    virt_manage::UPLOAD_READY.to_string()
 }

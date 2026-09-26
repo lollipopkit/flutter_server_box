@@ -18,6 +18,7 @@ import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_hardware.dart';
+import 'package:server_box/data/model/virt/virt_manage.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -371,6 +372,14 @@ abstract class VirtHostState with _$VirtHostState {
     /// Guests being cloned, backed up or restored, and which.
     @Default(<String, VirtCopyOp>{}) Map<String, VirtCopyOp> copyOps,
 
+    /// Storage and network changes in flight, by [VirtResourceChange.scope]:
+    /// one per pool, per network, and one create of each at a time.
+    @Default(<String>{}) Set<String> resourceOps,
+
+    /// Uploads in flight, by pool id.
+    @Default(<String, VirtUploadProgress>{})
+    Map<String, VirtUploadProgress> uploads,
+
     /// This session's readings per guest, oldest first, capped at
     /// [VirtHostNotifier.sampleLimit] — the chart for a host without
     /// `storedHistory`, and the live tail for one with it.
@@ -520,6 +529,11 @@ class VirtHostNotifier extends _$VirtHostNotifier {
     ref.onDispose(() {
       _timer?.cancel();
       _timer = null;
+      // An upload nobody watches any more is stopped, and what it wrote
+      // deleted, rather than left running with no way to cancel it.
+      for (final c in _uploadCancels.values) {
+        if (!c.isCompleted) c.complete();
+      }
       unawaited(backend.close());
     });
     final interval = serverStatusRefreshInterval();
@@ -642,7 +656,7 @@ class VirtHostNotifier extends _$VirtHostNotifier {
         state = state.copyWith(busy: {...state.busy}..remove(guestId));
         // A start takes up what was pending: the hardware read before it
         // says otherwise.
-        ref.invalidate(virtHardwareProvider(serverId, guestId));
+        _bump('hw:$guestId');
         unawaited(refresh());
       }
     }
@@ -882,6 +896,103 @@ class VirtHostNotifier extends _$VirtHostNotifier {
     }
   }
 
+  /// Makes [change] to the host's storage or networks, then reads them
+  /// again. One change per pool or network at a time. Throws [VirtErr].
+  Future<void> manage(VirtResourceChange change) async {
+    final scope = change.scope;
+    if (state.resourceOps.contains(scope)) {
+      throw VirtErr(type: VirtErrType.unsupported, message: '$scope is busy');
+    }
+    state = state.copyWith(resourceOps: {...state.resourceOps, scope});
+    try {
+      await _backend.manage(change);
+    } finally {
+      if (ref.mounted) {
+        state = state.copyWith(
+          resourceOps: {...state.resourceOps}..remove(scope),
+        );
+        _invalidateResources(change);
+      }
+    }
+  }
+
+  void _invalidateResources(VirtResourceChange change) {
+    switch (change) {
+      case VirtPoolCreate() ||
+          VirtPoolSetActive() ||
+          VirtPoolSetAutostart() ||
+          VirtPoolRefresh() ||
+          VirtPoolDelete() ||
+          VirtVolumeCreate() ||
+          VirtVolumeDelete() ||
+          VirtVolumeResize() ||
+          VirtVolumeClone():
+        // The volumes follow: they watch the pools.
+        _bump(VirtRevision.storage);
+      case VirtNetworkCreate() ||
+          VirtNetworkSetActive() ||
+          VirtNetworkSetAutostart() ||
+          VirtNetworkDelete() ||
+          VirtNetworkApply() ||
+          VirtNetworkRevert():
+        _bump(VirtRevision.network);
+    }
+  }
+
+  /// Has the providers of [what] read again — see [VirtRevision].
+  void _bump(String what) =>
+      ref.read(virtRevisionProvider(serverId, what).notifier).bump();
+
+  /// Cancels the upload into each pool, by pool id.
+  final _uploadCancels = <String, Completer<void>>{};
+
+  /// How often an upload's progress is published: often enough to move,
+  /// seldom enough not to rebuild the tab for every chunk.
+  static const uploadTick = Duration(milliseconds: 250);
+
+  /// Uploads [upload] into its pool, with its progress in
+  /// [VirtHostState.uploads] meanwhile; one upload per pool. True once the
+  /// host has it; false when [cancelUpload] stopped it. Throws [VirtErr].
+  Future<bool> upload(VirtUpload upload) async {
+    final pool = upload.pool.id;
+    if (state.uploads.containsKey(pool)) {
+      throw VirtErr(type: VirtErrType.unsupported, message: '$pool is busy');
+    }
+    final cancel = Completer<void>();
+    _uploadCancels[pool] = cancel;
+    var progress = VirtUploadProgress(name: upload.name, size: upload.size);
+    state = state.copyWith(uploads: {...state.uploads, pool: progress});
+    var published = DateTime.now();
+    try {
+      return await _backend.upload(
+        upload,
+        cancel: cancel.future,
+        onProgress: (sent) {
+          progress = progress.copyWith(sent: sent);
+          final now = DateTime.now();
+          if (!ref.mounted || now.difference(published) < uploadTick) return;
+          published = now;
+          state = state.copyWith(uploads: {...state.uploads, pool: progress});
+        },
+      );
+    } finally {
+      _uploadCancels.remove(pool);
+      if (ref.mounted) {
+        state = state.copyWith(uploads: {...state.uploads}..remove(pool));
+        _bump(VirtRevision.storage);
+      }
+    }
+  }
+
+  /// Stops the upload into [poolId]; what it wrote is deleted.
+  void cancelUpload(String poolId) {
+    final c = _uploadCancels[poolId];
+    if (c != null && !c.isCompleted) c.complete();
+  }
+
+  Future<List<VirtNetworkChanges>> networkChanges() =>
+      _backend.networkChanges();
+
   Future<List<VirtStoragePool>> storagePools() => _backend.storagePools();
 
   Future<List<VirtVolume>> volumes(VirtStoragePool pool) =>
@@ -1066,6 +1177,19 @@ final class _MissingBackend implements VirtBackend {
   Future<List<VirtNetwork>> networks() async => _fail();
 
   @override
+  Future<void> manage(VirtResourceChange change) async => _fail();
+
+  @override
+  Future<bool> upload(
+    VirtUpload upload, {
+    void Function(int sent)? onProgress,
+    Future<void>? cancel,
+  }) async => _fail();
+
+  @override
+  Future<List<VirtNetworkChanges>> networkChanges() async => _fail();
+
+  @override
   Future<void> reset() async {}
 
   @override
@@ -1075,6 +1199,24 @@ final class _MissingBackend implements VirtBackend {
 // -----------------------------------------------------------------------------
 // Snapshots, storage and networks of one host
 // -----------------------------------------------------------------------------
+
+/// A count the host's notifier moves on after it changed what one of the
+/// providers below read — [storage], [network], or one guest's hardware
+/// (`hw:<guest id>`) — which they watch and so read again.
+///
+/// The notifier cannot invalidate them itself: they watch it (for its
+/// backend), and Riverpod refuses a provider invalidating one that depends
+/// on it as a cycle (`CircularDependencyError`, in debug builds).
+@riverpod
+class VirtRevision extends _$VirtRevision {
+  static const storage = 'storage';
+  static const network = 'network';
+
+  @override
+  int build(String serverId, String what) => 0;
+
+  void bump() => state++;
+}
 
 /// No automatic retry for the providers below: each attempt is a round trip
 /// that may run `virsh` through sudo or log in to PVE, and a failure is shown
@@ -1111,6 +1253,7 @@ Future<VirtHardware> virtHardware(
   String serverId,
   String guestId,
 ) async {
+  ref.watch(virtRevisionProvider(serverId, 'hw:$guestId'));
   final host = _hostOf(ref, serverId);
   await host.firstLoad;
   return host.hardware(guestId);
@@ -1119,6 +1262,7 @@ Future<VirtHardware> virtHardware(
 /// The host's storage pools.
 @Riverpod(retry: _noRetry)
 Future<List<VirtStoragePool>> virtStoragePools(Ref ref, String serverId) async {
+  ref.watch(virtRevisionProvider(serverId, VirtRevision.storage));
   final host = _hostOf(ref, serverId);
   await host.firstLoad;
   return host.storagePools();
@@ -1143,7 +1287,23 @@ Future<List<VirtVolume>> virtVolumes(
 /// The host's networks, with the guests on each.
 @Riverpod(retry: _noRetry)
 Future<List<VirtNetwork>> virtNetworks(Ref ref, String serverId) async {
+  ref.watch(virtRevisionProvider(serverId, VirtRevision.network));
   final host = _hostOf(ref, serverId);
   await host.firstLoad;
   return host.networks();
+}
+
+/// Network configuration waiting to be applied, per node (PVE). Read again
+/// with [virtNetworksProvider] after every network change.
+@Riverpod(retry: _noRetry)
+Future<List<VirtNetworkChanges>> virtNetworkChanges(
+  Ref ref,
+  String serverId,
+) async {
+  ref.watch(virtRevisionProvider(serverId, VirtRevision.network));
+  final host = _hostOf(ref, serverId);
+  await host.firstLoad;
+  final caps = ref.read(virtHostProvider(serverId)).data?.capabilities;
+  if (!(caps?.networkApply ?? false)) return const [];
+  return host.networkChanges();
 }

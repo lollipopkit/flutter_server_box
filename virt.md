@@ -18,7 +18,7 @@ Design: Claude Design project `2a6eadf3-ac6c-4925-bb18-8f763a0c3ead`,
 | libvirt access | `virsh` run through `ServerExec`. libvirt has no HTTP API enabled by default, so there is nothing to tunnel. |
 | PVE auth | Password (+ TOTP), as today, **plus API token** (`PVEAPIToken=user@realm!tokenid=secret`). New configurations are pointed at tokens. |
 | Phase 1 scope | Tab, host switcher, guest list and state, power actions, overview (charts), console, IntroPage, migration of the old PVE entry. |
-| Phase 2 scope | Snapshots (list, create, revert, delete) for both backends; Storage and Network sections, read-only: pools/storages with their volumes, networks/interfaces with the guests on them. |
+| Phase 2 scope | Snapshots (list, create, revert, delete) for both backends; Storage and Network sections, read-only: pools/storages with their volumes, networks/interfaces with the guests on them (managed since phase 6). |
 | libvirt snapshots | Internal (`snapshot-create-as` without `--disk-only`): every writable disk must be qcow2, and an active domain's snapshot always holds its memory — QEMU refuses an internal one without it, so the form shows the memory switch on and fixed. External snapshots are left out: reverting them needs libvirt ≥ 9.9 and they add overlay files to every disk. |
 | Snapshot names | PVE's `pve-configid` rule (a letter, then letters, digits, `-`, `_`; 2–40), for both backends, and never `current` (PVE's "you are here" entry). A name never needs quoting to be read back. |
 
@@ -594,6 +594,123 @@ Verified on real hosts (temporary guests only, all removed):
   go with it. The app's delete never uses it (writable disks by target only);
   a test must not either.
 
+### Storage and networks management (phase 6)
+
+The Storage and Network sections manage what they list, on both backends,
+as the design's pool and network views have it: the same sectioned pane as
+the Hardware view (groups under a rule, an index beside them from 860 pt —
+`_PaneRows` in `edit_pane.dart`, shared by every pane now), and new pools
+and networks as forms in the detail pane (a page with one column), from the
+list bar's add button. Views: `lib/view/page/virt/storage.dart`,
+`network.dart`; changes: `VirtResourceChange` (`virt_manage.dart`), checked
+with `virtResourceIssue` before they are sent, made by `VirtBackend.manage`.
+What each host offers is capabilities: `storageEdit`, `poolTypes`,
+`poolAutostart`, `poolDeleteStorage`, `volumeResize`, `volumeClone`,
+`upload`, `networkEdit`, `networkModes`, `networkStart`, `networkApply`.
+
+| | libvirt (`sbm_parser::virt_manage`, one `virsh` round trip each) | PVE (HTTP API) |
+| --- | --- | --- |
+| New pool | `pool-define` (XML through a `mktemp` file) → `pool-build` (`dir`, `netfs`; never `logical`: its build formats devices, an existing volume group is used as it is) → `pool-start` → `pool-autostart`; a failed build or start undefines it again | `POST /storage` (`dir` `path`; `nfs` `server`/`export`; `lvmthin` `vgname`/`thinpool`; `zfspool` `pool`), `nodes=<node>`, content `images,rootdir` (`backup,iso` for NFS, as the design) |
+| Stop / start | `pool-destroy` / `pool-start` | `PUT /storage/{id}` `disable=1/0` |
+| Autostart, refresh | `pool-autostart [--disable]`, `pool-refresh` | none (PVE reads a storage on every listing) |
+| Remove | `pool-destroy` (active), `pool-delete` only when asked and the pool is empty (an empty directory), `pool-undefine` | `DELETE /storage/{id}`: the configuration only |
+| New volume | `vol-create-as --capacity <bytes>B --format qcow2/raw` | `POST .../storage/{id}/content` `vmid` (from the name, `vm-<VMID>-…`), `filename` (with `.qcow2`/`.raw` on a file storage: PVE refuses one without), `size`, `format` |
+| Delete / grow / copy | `vol-delete`; `vol-resize` (grow only); `vol-clone` | `DELETE .../content/{volid}` (a task); PVE grows a disk only as a guest's |
+| Upload | A raw volume of the file's size, then `vol-upload --file /dev/stdin` on an exec channel that carries bytes (see below); a failure or a cancel deletes the volume | `POST .../upload`, multipart (`content` then the file), no send timeout, then the `imgcopy` task |
+| Attach | `VirtHwAttachVolume` through the hardware path: `attach-disk --source <path>` on the first disk's bus, both definitions while running; never deleted when refused. An ISO goes into a CD-ROM drive with the existing `VirtHwSetMedia` | The same change: `<bus>N: <volid>` in the config (`mpN` for a container) |
+| New network | `net-define` (NAT, routed, isolated with or without IPv4, or `<forward mode='bridge'/>` onto a host bridge; libvirt picks `virbrN`) → `net-start` (a refusal undefines it again) → `net-autostart` | `POST /nodes/{n}/network` `type=bridge`, `bridge_ports`, `cidr`, `bridge_vlan_aware`, `autostart` — **pending** |
+| Stop / start, autostart | `net-destroy` / `net-start`, `net-autostart` | none |
+| Delete | `net-destroy` (active), `net-undefine` | `DELETE /nodes/{n}/network/{iface}` — pending |
+| Pending | none: libvirt applies each change | The listing's top-level `changes` (the diff of `interfaces.new`) per node, shown above the list and the network with "Show changes", Revert (`DELETE /nodes/{n}/network`) and Apply (`PUT /nodes/{n}/network`, `ifreload -a`, a task), each asked first |
+
+Decisions:
+
+- **Uploads to libvirt stream through `vol-upload`, not SFTP into the
+  pool's directory.** It works for every pool type (a directory, an LVM
+  volume group, an NFS mount), writes once with libvirt's own ownership and
+  labels, needs no staging copy or space on the host, and needs no write
+  access to the pool for the SSH account — only what the rest of the tab
+  uses (libvirt, through sudo when needed). It needs an exec channel that
+  carries bytes (`ServerByteExec`: `SshExec`, the local `ProcessExec`); a
+  server reached only through a monitor agent (its `/exec` takes stdin
+  whole) is not offered uploads (`VirtCapabilities.upload` false).
+- The upload command is `sh -c 'eval "$(echo <base64> | base64 -d)"'`
+  (single quotes with nothing fish reads differently), `sudo -S -p ''` or
+  `sudo -n` in front as `PrivilegedExec` decided. On stdin: the sudo
+  password line, then a go line, then — once the script has printed that it
+  is ready — the file. `sudo -S` and `read` both stop at the newline, so the
+  password never reaches `virsh`; when sudo did not ask (cached,
+  `NOPASSWD`), the script finds the password where the go line belongs,
+  stops before `virsh` runs, and the upload goes again with `sudo -n`. A
+  refused password stops it at once (sudo would take the go line as its
+  next guess). SSH writes flush every MiB, so a file is not buffered in
+  memory; a cancel kills the channel and deletes the volume.
+- **A signal on an SSH channel the server has already freed ends the whole
+  connection** (OpenSSH: `server_input_channel_req: unknown channel`, seen
+  in testing). `SshExec` now sends none after the command has ended.
+- PVE's upload parser matches `Content-Disposition` case-sensitively; Dio
+  writes it lowercase by default, and pveproxy then fails the upload with
+  "No space left on device" in its log (PVE 9.2.2, seen). The form data is
+  built with the capitalised header.
+- A PVE permission refusal (`Permission check failed (<path>, <priv>)`) is
+  `permissionDenied` naming the privilege, the path and the command that
+  grants it: the narrowest built-in role (`PVEDatastoreUser` for
+  `Datastore.AllocateSpace`, `PVEDatastoreAdmin` for `Datastore.Allocate`
+  and `Datastore.AllocateTemplate`), or, for `Sys.Modify` (which only
+  `Administrator` holds), a role of its own. Token help: `Datastore.Allocate`
+  on `/storage` (add, disable, remove), `Datastore.AllocateSpace` (volumes),
+  `Datastore.AllocateTemplate` (uploads), `Sys.Modify` on `/nodes/{n}`
+  (bridges, apply, revert).
+- What a guest uses is refused before the host is asked: a volume in use is
+  not deleted, grown here or attached again; a pool with a volume in use is
+  not stopped or removed; a network with guests on it is not deleted, and
+  stopping it is asked in red. A PVE volume is "used" by the guest its VMID
+  names only while that guest exists. A network address overlapping
+  another network of the host's is refused by the form; one overlapping the
+  host's own interfaces is refused by libvirt at `net-start`, which undefines
+  it again.
+- The providers of pools, volumes, networks and pending changes read again
+  after a change through `VirtRevision` (a count they watch), not by the
+  host notifier invalidating them: they watch the notifier, and Riverpod
+  refuses that as a cycle in debug builds — which also hit the existing
+  hardware refresh after a power action.
+- PVE's network listing now leaves out a guest deleted since the last load
+  (its config answers "does not exist") instead of failing.
+
+Verified 2026-09-26 by the "storage and networks" groups of
+`test/e2e/virt_real_test.dart`, everything named `sbxe2e*` and removed
+afterwards:
+
+- **libvirt 11.3** over SSH as root: a `dir` pool in a fresh directory made
+  (built, started, autostart), a name taken → `exists`, stopped, started,
+  autostart off, a file put there by hand listed after a refresh; volumes
+  made, grown, cloned, deleted; a 3 MiB upload byte for byte (sha256), a
+  256 MiB one cancelled at 8 MiB leaving no volume; a volume attached to a
+  new VM (used by it, delete refused), its CD-ROM ejected and the uploaded
+  ISO put back, detached and the VM deleted with its own disk only; the
+  pool removed with its directory; NAT (with DHCP), isolated and host-bridge
+  networks made, stopped, started, autostart off, deleted, and one on a
+  subnet in use refused at start and not left defined. **Through sudo**, as
+  the agent's account outside the `libvirt` group (`su` from root): the
+  listing asks for the password, an upload with it lands byte for byte (no
+  password in it), and a wrong one is `sudoPasswordRejected` with nothing
+  left behind.
+- **PVE 9.2.2** over SSH with a privilege-separated token: a directory
+  storage added, a name taken → `exists`, disabled, enabled; a volume
+  allocated for a VMID and deleted; a 3 MiB ISO uploaded byte for byte, a
+  cancelled one leaving nothing and the session kept; a volume attached to a
+  new VM and deleted with it; `NoAccess` on `/storage` → `permissionDenied`
+  naming `Datastore.Allocate` and the command; the storage removed with its
+  files kept; a bridge (no ports, an address of its own) pending, its diff
+  read, reverted; made again, applied (SSH checked after), deleted,
+  applied. PVE's apply rewrites `/etc/network/interfaces` in its own layout
+  (a header comment, every interface listed): the same configuration.
+
+Not verified on a real host: libvirt `netfs` and `logical` pools (no NFS
+server, no LVM on the test host) and routed networks; PVE `nfs`, `lvmthin`
+and `zfspool` storages, bridges with ports, clusters; uploads from this
+device as a libvirt host (`ProcessExec`).
+
 ## Verified against real hosts
 
 `test/e2e/virt_real_test.dart` (opt-in; its header lists the variables) and
@@ -723,6 +840,28 @@ Follows the repo's tab conventions (`CLAUDE.md` → Tabs):
     it is the change most likely to leave a guest unbootable;
   - a NIC's MAC is a row that opens a dialog with "generate", not an inline
     field: one typed character is not one change to send.
+- Design deviations in the Storage and Network views (phase 6), and why:
+  - a pool with volumes can be removed (the design wants it empty): removing
+    a definition keeps the volumes, and the dialog says so; deleting the
+    directory is a separate box, only for an empty pool;
+  - a volume's capacity is a draft with Grow / Cancel, only for a volume no
+    guest uses (a used one grows from the guest's Hardware view), and
+    libvirt only;
+  - attaching from the pool view offers VMs, not containers (a mount point
+    would be one more question); cloning a volume is libvirt only;
+  - a network's configuration is read-only once made (the design edits it in
+    place): a change means restarting the network under its guests, or a
+    pending PVE change — a later phase. The design's "configuration file"
+    group is left out for the same reason;
+  - the new libvirt network form has a routed mode and the DHCP range fields
+    (the design has three modes and the range only in the detail); a netfs
+    pool asks for its mount point (prefilled `/mnt/<name>`);
+  - PVE's pending network changes are a card above the network list and the
+    network (Show changes, Revert, Apply), where the design has one line of
+    text;
+  - PVE volume formats follow the storage (qcow2 on a directory), where the
+    design offers raw only; upload is offered on every libvirt pool of files,
+    not only one already holding ISOs.
 - Power actions with confirmation, as the PVE page does today; busy states
   (`starting`, `stopping`, …) show progress and disable conflicting actions.
   PVE actions return a UPID; poll `GET .../tasks/{upid}/status` until done.
@@ -808,8 +947,11 @@ page, so feature pages use the `featureIntroVer` counter.
 
 ## Later phases
 
-- Storage and network management: create, start/stop, delete pools, volumes
-  and networks; upload an ISO; attach a volume; PVE SDN.
+- Storage and networks: PVE SDN (zones, VNets); editing an existing
+  network's configuration (libvirt `net-update`/redefine, PVE `PUT
+  .../network/{iface}`); a volume's contents copied on PVE; uploads over a
+  monitor agent (needs a byte-stream endpoint on the agent); PVE storage
+  types beyond dir/LVM-thin/NFS/ZFS, content kinds chosen in the form.
 - Snapshots: external libvirt snapshots (disk-only while running), a
   snapshot's configuration diff, PVE's per-storage snapshot support shown
   before trying.

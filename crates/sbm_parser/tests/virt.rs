@@ -1454,6 +1454,32 @@ fn hardware_change_scripts_under_sh_with_hostile_names() {
     assert!(log().contains(&format!("vol-delete\n--pool\n{name}\n--vol\nvm-vdb.qcow2\n")), "{}", log());
     std::fs::remove_file(d.join("fail_attach-disk")).unwrap();
 
+    // An existing volume is attached by its path in both definitions, and
+    // left alone when the attach is refused: it is not this change's to
+    // delete.
+    let attach = C::AttachVolume {
+        path: file.clone(),
+        format: "raw".into(),
+        target: "vdc".into(),
+        bus: "virtio".into(),
+    };
+    reset();
+    assert_eq!(run(true, &attach), Ok(Default::default()));
+    assert!(log().contains(&format!("attach-disk\n--domain\n{name}\n--source\n{file}\n--target\nvdc\n--targetbus\nvirtio\n--driver\nqemu\n--subdriver\nraw\n--config\n")), "{}", log());
+    assert!(log().contains("--subdriver\nraw\n--live\n"), "{}", log());
+    std::fs::write(d.join("fail_attach-disk"), "").unwrap();
+    reset();
+    assert!(run(false, &attach).is_err());
+    assert!(!log().contains("vol-delete") && !log().contains("--live"), "{}", log());
+    std::fs::remove_file(d.join("fail_attach-disk")).unwrap();
+    assert!(virt::hardware_change_script(
+        "vm",
+        true,
+        None,
+        &C::AttachVolume { path: "rel/x".into(), format: "raw".into(), target: "vdc".into(), bus: "virtio".into() }
+    )
+    .is_err());
+
     // A disk the running guest still holds is kept.
     let remove = C::RemoveDisk { target: "vdb".into(), delete_path: Some(file.clone()), config: true, live: true };
     std::fs::write(d.join("still"), "").unwrap();
@@ -1939,5 +1965,168 @@ esac
     let raw = run_sh(&virt::clone_volumes_script(&spec(true)).unwrap(), &path);
     assert!(matches!(virt::parse_clone_volumes(&raw), Err(VirtError::Command { .. })), "{raw}");
     assert!(log().contains(&format!("vol-delete\n--vol\n/pool/{name} copy.qcow2\n")), "{}", log());
+    let _ = std::fs::remove_dir_all(&d);
+}
+
+// ---------------------------------------------------------------------------
+// Managing storage and networks, and uploading, under a real sh
+// ---------------------------------------------------------------------------
+
+/// A fake virsh for the storage and network scripts: logs its arguments one
+/// per line, keeps what a `define --file` was given, writes what
+/// `vol-upload` reads into `uploaded`, and fails the commands listed in
+/// `$dir/fail`.
+#[cfg(unix)]
+fn manage_stub(tag: &str) -> PathBuf {
+    let d = std::env::temp_dir().join(format!("sbm_virt_manage_{tag}_{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&d);
+    std::fs::create_dir_all(&d).unwrap();
+    let stub = r#"#!/bin/sh
+dir="$(dirname "$0")"
+for a in "$@"; do printf '%s\n' "$a" >> "$dir/log"; done
+echo --- >> "$dir/log"
+shift 3
+if [ -f "$dir/fail" ] && grep -qx "$1" "$dir/fail"; then echo "error: $1 refused" >&2; exit 1; fi
+case "$1" in
+  pool-define|net-define) cp "$3" "$dir/defined.xml" ;;
+  vol-upload) cat > "$dir/uploaded" ;;
+  *) cat >> "$dir/stdin" ;;
+esac
+"#;
+    let path = d.join("virsh");
+    std::fs::write(&path, stub).unwrap();
+    Command::new("chmod").arg("+x").arg(&path).status().unwrap();
+    d
+}
+
+#[cfg(unix)]
+#[test]
+fn manage_scripts_under_sh_with_hostile_names() {
+    use sbm_parser::virt_manage::{self as m, VirtResourceOp as Op};
+    let d = manage_stub("hostile");
+    let path = format!("{}:/usr/bin:/bin", d.display());
+    let hostile = "it's \"odd\"; touch pwned $(id) `id`";
+    let log = || std::fs::read_to_string(d.join("log")).unwrap_or_default();
+
+    // Existing objects are named by whatever libvirt calls them.
+    for op in [
+        Op::PoolStart { name: hostile.into() },
+        Op::PoolAutostart { name: hostile.into(), on: false },
+        Op::VolDelete { pool: hostile.into(), name: hostile.into() },
+        Op::VolResize { pool: hostile.into(), name: hostile.into(), bytes: 5 << 30 },
+        Op::NetDelete { name: hostile.into(), active: true },
+    ] {
+        assert_eq!(m::parse_resource(&run_sh(&m::resource_script(&op).unwrap(), &path)), Ok(()), "{op:?}");
+    }
+    let l = log();
+    assert!(l.contains(&format!("pool-start\n--pool\n{hostile}\n---")), "{l}");
+    assert!(l.contains(&format!("pool-autostart\n--pool\n{hostile}\n--disable\n---")), "{l}");
+    assert!(l.contains(&format!("vol-delete\n--pool\n{hostile}\n--vol\n{hostile}\n---")), "{l}");
+    assert!(l.contains("--capacity\n5368709120B\n"), "{l}");
+    assert!(l.contains(&format!("net-destroy\n--network\n{hostile}\n---\n")), "{l}");
+    assert!(l.contains(&format!("net-undefine\n--network\n{hostile}\n---\n")), "{l}");
+    assert!(!d.join("pwned").exists() && !std::path::Path::new("pwned").exists());
+    assert_eq!(std::fs::read_to_string(d.join("stdin")).unwrap_or_default(), "");
+
+    // A create: defined from the XML byte for byte, built, started, autostart
+    std::fs::remove_file(d.join("log")).unwrap();
+    let create = Op::PoolCreate {
+        name: "sbxe2e-p".into(),
+        pool_type: "dir".into(),
+        target: Some("/var/lib/libvirt/sbxe2e-p & q".into()),
+        source: None,
+        autostart: true,
+    };
+    assert_eq!(m::parse_resource(&run_sh(&m::resource_script(&create).unwrap(), &path)), Ok(()));
+    assert_eq!(
+        std::fs::read_to_string(d.join("defined.xml")).unwrap(),
+        m::pool_xml("sbxe2e-p", "dir", Some("/var/lib/libvirt/sbxe2e-p & q"), None)
+    );
+    let l = log();
+    let order: Vec<&str> = l
+        .lines()
+        .filter(|x| x.starts_with("pool-"))
+        .collect();
+    assert_eq!(order, ["pool-define", "pool-build", "pool-start", "pool-autostart"], "{l}");
+
+    // The start refused: undefined again, and the error is the start's
+    std::fs::remove_file(d.join("log")).unwrap();
+    std::fs::write(d.join("fail"), "net-start\n").unwrap();
+    let net = Op::NetCreate {
+        name: "sbxe2e-n".into(),
+        mode: "nat".into(),
+        bridge: None,
+        ipv4: Some(m::VirtNetIpv4 {
+            address: "10.231.78.1".into(),
+            prefix: 24,
+            dhcp_start: Some("10.231.78.100".into()),
+            dhcp_end: Some("10.231.78.200".into()),
+        }),
+        autostart: true,
+    };
+    let e = m::parse_resource(&run_sh(&m::resource_script(&net).unwrap(), &path)).unwrap_err();
+    assert!(e.message().contains("net-start refused"), "{e:?}");
+    let l = log();
+    assert!(l.contains("net-undefine\n--network\nsbxe2e-n\n") && !l.contains("net-autostart"), "{l}");
+    let _ = std::fs::remove_dir_all(&d);
+}
+
+/// Runs `command` the way an SSH server does — the login shell's `-c` —
+/// with `input` on its stdin.
+#[cfg(unix)]
+fn run_command(command: &str, path: &str, input: &[u8]) -> String {
+    use std::io::Write;
+    let mut child = Command::new("/bin/sh")
+        .arg("-c")
+        .arg(command)
+        .env("PATH", path)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    let mut stdin = child.stdin.take().unwrap();
+    // The script may stop before reading it all: a closed pipe is its answer.
+    let _ = stdin.write_all(input);
+    drop(stdin);
+    let out = child.wait_with_output().unwrap();
+    String::from_utf8(out.stdout).unwrap()
+}
+
+#[cfg(unix)]
+#[test]
+fn upload_streams_stdin_into_the_volume() {
+    use sbm_parser::virt_manage::{self as m, VirtUploadEntry};
+    let d = manage_stub("upload");
+    let path = format!("{}:/usr/bin:/bin", d.display());
+    let hostile = "it's \"odd\" \\ $(id) `id`.iso";
+    let command = m::vol_upload_command("images", hostile, VirtUploadEntry::Direct).unwrap();
+
+    // Binary content, a line that looks like the go line included
+    let mut data: Vec<u8> = (0..=255u8).cycle().take(300_000).collect();
+    data.extend_from_slice(format!("\n{}\n", m::UPLOAD_GO).as_bytes());
+    let mut input = format!("{}\n", m::UPLOAD_GO).into_bytes();
+    input.extend_from_slice(&data);
+    let out = run_command(&command, &path, &input);
+    assert!(out.contains(m::UPLOAD_READY), "{out}");
+    assert_eq!(m::parse_vol_upload(&out), Ok(true), "{out}");
+    assert_eq!(std::fs::read(d.join("uploaded")).unwrap(), data);
+    let l = std::fs::read_to_string(d.join("log")).unwrap();
+    assert!(l.contains(&format!("vol-upload\n--pool\nimages\n--vol\n{hostile}\n--file\n/dev/stdin\n")), "{l}");
+    assert!(l.contains("pool-refresh\n--pool\nimages\n"), "{l}");
+
+    // Something else first — a password sudo did not ask for: virsh never
+    // runs, and nothing reaches a volume.
+    std::fs::remove_file(d.join("uploaded")).unwrap();
+    std::fs::remove_file(d.join("log")).unwrap();
+    let out = run_command(&command, &path, b"hunter2\nSbVirtUploadGo\nbytes");
+    assert_eq!(m::parse_vol_upload(&out), Ok(false), "{out}");
+    assert!(!out.contains(m::UPLOAD_READY), "{out}");
+    assert!(!d.join("uploaded").exists() && !d.join("log").exists());
+
+    // Refused by the host
+    std::fs::write(d.join("fail"), "vol-upload\n").unwrap();
+    let out = run_command(&command, &path, &input);
+    assert!(matches!(m::parse_vol_upload(&out), Err(VirtError::Command { .. })), "{out}");
     let _ = std::fs::remove_dir_all(&d);
 }

@@ -34,7 +34,7 @@ class VirtSettingsView extends ConsumerStatefulWidget {
 }
 
 class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
-    with _EditPane<VirtSettingsView> {
+    with _PaneRows<VirtSettingsView>, _EditPane<VirtSettingsView> {
   @override
   String get _serverId => widget.serverId;
   @override
