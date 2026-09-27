@@ -4912,151 +4912,136 @@ class AppLocalizationsKo extends AppLocalizations {
   String get virtBackupExcludeTip => '노드의 모든 게스트가 대상입니다. 끄면 제외됩니다.';
 
   @override
-  String get virtNetEdit => 'Edit configuration';
+  String get virtNetEdit => '구성 편집';
 
   @override
   String virtNetEditAsk(int count) {
-    return 'The running network keeps what it has until it is restarted. Restarting cuts off the $count guests on it.';
+    return '실행 중인 네트워크는 재시작할 때까지 현재 상태를 유지합니다. 재시작하면 연결된 가상 머신($count)의 연결이 끊깁니다.';
   }
 
   @override
-  String get virtNetEditAskNoGuest =>
-      'The running network keeps what it has until it is restarted.';
+  String get virtNetEditAskNoGuest => '실행 중인 네트워크는 재시작할 때까지 현재 상태를 유지합니다.';
 
   @override
-  String get virtNetEditRestart => 'Restart it to apply now';
+  String get virtNetEditRestart => '재시작하여 지금 적용';
 
   @override
-  String get virtNetEditRestartNote =>
-      'The guests on it lose their network while it restarts.';
+  String get virtNetEditRestartNote => '재시작하는 동안 연결된 가상 머신은 네트워크를 잃습니다.';
 
   @override
-  String get virtNetEditSave => 'Save to the definition';
+  String get virtNetEditPending => '정의에 실행 중인 네트워크에 아직 반영되지 않은 변경이 있습니다.';
 
   @override
-  String get virtNetEditPending =>
-      'The definition has a change the running network is not on yet.';
-
-  @override
-  String get virtNetRestart => 'Restart';
+  String get virtNetRestart => '재시작';
 
   @override
   String virtNetRestartAsk(String name, int count) {
-    return 'Restart $name? The $count guests on it lose their network until it is back.';
+    return '$name을(를) 재시작할까요? 연결된 가상 머신($count)은 다시 올라올 때까지 네트워크를 잃습니다.';
   }
 
   @override
   String virtNetRestartAskNone(String name) {
-    return 'Restart $name? Nothing is on it.';
+    return '$name을(를) 재시작할까요? 연결된 것이 없습니다.';
   }
 
   @override
-  String get virtNetHosts => 'Static addresses';
+  String get virtNetHosts => '고정 주소';
 
   @override
-  String get virtNetHostAdd => 'Add an address';
+  String get virtNetHostAdd => '주소 추가';
 
   @override
   String get virtNetHostMac => 'MAC';
 
   @override
-  String get virtNetHostIp => 'Address';
+  String get virtNetHostIp => '주소';
 
   @override
-  String get virtNetHostName => 'Name (optional)';
+  String get virtNetHostName => '이름(선택)';
 
   @override
   String get virtNetHostEmpty =>
-      'No address is handed to a MAC of its own: every guest gets one from the DHCP range.';
+      '고유 주소가 지정된 MAC이 없습니다: 모든 가상 머신은 DHCP 범위에서 주소를 받습니다.';
 
   @override
   String get virtNetHostInvalid =>
-      'A MAC, an address or a name the host would refuse, or the same MAC twice.';
+      '호스트가 거부할 MAC, 주소 또는 이름이 있거나 같은 MAC이 두 번 있습니다.';
 
   @override
   String get virtNetManagementIface =>
-      'This interface carries the host\'s own address. Editing or applying it would cut the host off.';
+      '이 인터페이스에는 호스트 자체 주소가 있습니다. 편집하거나 적용하면 호스트 연결이 끊깁니다.';
 
   @override
   String get virtNetManagementTip =>
-      'It carries the host\'s management address: the app does not edit it.';
+      '호스트의 관리 트래픽을 전달하거나 이를 전달하는 인터페이스 아래에 있습니다: 앱에서 편집하지 않습니다.';
 
   @override
-  String get virtNetIfname => 'Interface';
+  String get virtNetPhysicalTip => '물리 인터페이스는 호스트 자체의 것입니다: 앱은 브리지만 편집합니다.';
 
   @override
-  String get virtNetAddressCleared => 'cleared';
+  String get virtNetVlanAware => 'VLAN 인식';
 
   @override
-  String get virtNetPveEditNote =>
-      'Written into the node\'s pending configuration; apply it for the host to take it.';
+  String get virtNetPveEditNote => '노드의 대기 중인 구성에 기록됩니다. 호스트에 반영하려면 적용하세요.';
 
   @override
-  String get virtCiExpire => 'The password expires';
+  String get virtCiExpire => '비밀번호 만료';
 
   @override
   String get virtCiExpireNote =>
-      'The first login with it has to set a new one. libvirt only: PVE writes \"expire: false\" and has no option for it.';
+      '이 비밀번호로 처음 로그인할 때 새 비밀번호를 설정해야 합니다. libvirt 전용: PVE는 \"expire: false\"를 기록하며 이 옵션이 없습니다.';
 
   @override
   String get virtCiSearchHint => 'lab.example dev.lab.example';
 
   @override
-  String get virtCiSearchTip =>
-      'Several, separated by a space; resolv.conf keeps the first few.';
-
-  @override
-  String get virtCiNics => 'Interfaces';
+  String get virtCiSearchTip => '여러 개는 공백으로 구분합니다. resolv.conf에는 앞의 몇 개만 남습니다.';
 
   @override
   String virtCiNicsTip(int count) {
-    return '$count NICs in the seed\'s network config; the form edits the first.';
+    return 'seed 네트워크 구성에 NIC $count개가 있습니다. 양식은 첫 번째를 편집합니다.';
   }
 
   @override
-  String get virtUsbByVendor => 'By vendor and product';
+  String get virtUsbByVendor => '공급업체와 제품으로';
 
   @override
-  String get virtUsbByAddress => 'By address';
-
-  @override
-  String get virtUsbAddress => 'Bus and device';
+  String get virtUsbByAddress => '주소로';
 
   @override
   String get virtUsbAddressTip =>
-      'The device follows this address: whatever is plugged there is given to the guest. libvirt names a USB hostdev by bus and device number.';
+      '장치는 이 주소를 따릅니다: 그 자리에 꽂힌 것이 가상 머신에 전달됩니다. libvirt는 USB hostdev를 버스 번호와 장치 번호로 지정합니다.';
 
   @override
   String virtUsbPortNote(int bus, String port) {
-    return 'bus $bus · port $port';
+    return '버스 $bus · 포트 $port';
   }
 
   @override
   String get virtSbUnsupported =>
-      'The host\'s firmware descriptors have no Secure Boot firmware with enrolled keys, so a domain with it cannot start.';
+      '호스트 펌웨어 디스크립터에 키가 등록된 Secure Boot 펌웨어가 없어, 이를 사용하는 도메인은 시작할 수 없습니다.';
 
   @override
   String get virtCreateSecureBoot => 'Secure Boot';
 
   @override
-  String get virtCreateSecureBootNote =>
-      'Only signed kernels and bootloaders are booted.';
+  String get virtCreateSecureBootNote => '서명된 커널과 부트로더만 부팅합니다.';
 
   @override
   String virtUsbAddressNote(int bus, int device) {
-    return 'bus $bus · device $device';
+    return '버스 $bus · 장치 $device';
   }
 
   @override
-  String get virtHwRevertPendingTitle => 'Discard the pending changes';
+  String get virtHwRevertPendingTitle => '대기 중인 변경 취소';
 
   @override
   String virtHwRevertPendingBody(String name) {
-    return '$name is put back on what it is running: the definition is written again from the running one, and the next start gets exactly what this one has. Its NVRAM file and firmware stay as they are.';
+    return '$name을(를) 실행 중인 상태로 되돌립니다: 실행 중인 정의로 정의를 다시 작성하므로 다음 시작은 현재와 똑같은 구성을 갖습니다. NVRAM 파일과 펌웨어는 그대로 유지됩니다.';
   }
 
   @override
   String virtHwRevertAllAsk(String name) {
-    return 'Drop every change waiting for $name\'s next start?';
+    return '$name의 다음 시작을 기다리는 변경을 모두 버릴까요?';
   }
 }

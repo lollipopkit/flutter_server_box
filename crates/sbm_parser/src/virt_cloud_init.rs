@@ -246,11 +246,19 @@ impl VirtCloudInit {
         // A password is for logging in with; images ship with SSH password
         // logins off.
         s.push_str(&format!("ssh_pwauth: {}\n", self.password_hash.is_some()));
-        // cloud-init's `chpasswd: expire:`: the first login with the
-        // password has to set a new one. Written as a block of its own,
-        // after the account, which is where cloud-init reads it from.
-        if self.password_hash.is_some() && self.password_expire {
-            s.push_str("chpasswd:\n  expire: true\n");
+        // The first login with the password has to set a new one.
+        // cloud-init's `chpasswd: expire:` expires only the passwords
+        // `chpasswd` itself set (`cc_set_passwords`), not a `hashed_passwd`,
+        // so the same hash is set there too, for this account. A cloud-init
+        // older than `chpasswd: users:` (22.3) ignores it and still has the
+        // password from `hashed_passwd`, unexpired.
+        if let Some(h) = &self.password_hash
+            && self.password_expire
+        {
+            s.push_str("chpasswd:\n  expire: true\n  users:\n");
+            s.push_str(&format!("    - name: {}\n", j(&self.user)));
+            s.push_str(&format!("      password: {}\n", j(h)));
+            s.push_str("      type: hash\n");
         }
         s
     }
@@ -960,7 +968,10 @@ fn parse_seed(files: &[(String, Vec<u8>)]) -> VirtSeedRead {
             let y = yaml(&text);
             foreign |= y == Y::Null;
             for k in y.keys() {
-                foreign |= !matches!(k, "hostname" | "manage_etc_hosts" | "user" | "users" | "ssh_pwauth");
+                foreign |= !matches!(
+                    k,
+                    "hostname" | "manage_etc_hosts" | "user" | "users" | "ssh_pwauth" | "chpasswd"
+                );
             }
             ci.hostname = y.get("hostname").and_then(Y::str).unwrap_or_default().to_string();
             foreign |= !is(y.get("manage_etc_hosts"), "true");
@@ -998,6 +1009,23 @@ fn parse_seed(files: &[(String, Vec<u8>)]) -> VirtSeedRead {
                     }
                 }
                 _ => foreign = true,
+            }
+            // The expiry, as [`VirtCloudInit::user_data`] writes it: this
+            // account's own hash, set again by `chpasswd` and expired.
+            if let Some(c) = y.get("chpasswd") {
+                let users = match c.get("users") {
+                    Some(Y::Seq(users)) => users.as_slice(),
+                    _ => &[],
+                };
+                let ours = matches!(users, [u] if
+                    is(u.get("name"), &ci.user)
+                    && ci.password_hash.as_deref().is_some_and(|h| is(u.get("password"), h))
+                    && is(u.get("type"), "hash")
+                    && u.keys().iter().all(|k| matches!(*k, "name" | "password" | "type")));
+                foreign |= !ours
+                    || !is(c.get("expire"), "true")
+                    || c.keys().iter().any(|k| !matches!(*k, "expire" | "users"));
+                ci.password_expire = ours && is(c.get("expire"), "true");
             }
         }
         _ => foreign = true,

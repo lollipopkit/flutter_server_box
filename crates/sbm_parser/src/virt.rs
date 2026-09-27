@@ -2373,9 +2373,14 @@ pub struct VirtCreateSpec {
     pub nic_model: Option<String>,
     #[serde(default)]
     pub mac: Option<String>,
-    /// UEFI by firmware autoselection, Secure Boot off; BIOS otherwise
+    /// UEFI by firmware autoselection; BIOS otherwise
     #[serde(default)]
     pub efi: bool,
+    /// Secure Boot on that UEFI, with the vendor's keys enrolled: the
+    /// firmware autoselected is one whose descriptor has both features, and
+    /// SMM is on (Secure Boot needs it, on a q35 machine).
+    #[serde(default)]
+    pub secure_boot: bool,
     /// A software TPM 2.0 (swtpm)
     #[serde(default)]
     pub tpm: bool,
@@ -2463,6 +2468,11 @@ impl VirtCreateSpec {
         };
         if !token(&self.host.machine) || !token(&self.host.arch) {
             return bad("machine");
+        }
+        // Secure Boot is a UEFI feature, and its SMM needs a q35 machine:
+        // libvirt refuses the definition otherwise.
+        if self.secure_boot && (!self.efi || !self.host.machine.contains("q35")) {
+            return bad("secure boot");
         }
         if self.disk_pool.is_empty() || self.disk_pool.chars().any(char::is_control) {
             return bad("pool");
@@ -2583,9 +2593,10 @@ pub fn domain_xml(spec: &VirtCreateSpec) -> String {
         e(&spec.host.machine)
     ));
     if spec.efi {
-        x.push_str(
-            "    <firmware><feature enabled='no' name='enrolled-keys'/><feature enabled='no' name='secure-boot'/></firmware>\n",
-        );
+        let on = if spec.secure_boot { "yes" } else { "no" };
+        x.push_str(&format!(
+            "    <firmware><feature enabled='{on}' name='enrolled-keys'/><feature enabled='{on}' name='secure-boot'/></firmware>\n",
+        ));
     }
     x.push_str("    <boot dev='hd'/>\n");
     // A seed is read by the system on the disk, never booted from.
@@ -2593,7 +2604,11 @@ pub fn domain_xml(spec: &VirtCreateSpec) -> String {
         x.push_str("    <boot dev='cdrom'/>\n");
     }
     x.push_str("  </os>\n");
-    x.push_str("  <features><acpi/><apic/></features>\n");
+    x.push_str(if spec.efi && spec.secure_boot {
+        "  <features><acpi/><apic/><smm state='on'/></features>\n"
+    } else {
+        "  <features><acpi/><apic/></features>\n"
+    });
     if spec.host.domain_type == "kvm" {
         x.push_str("  <cpu mode='host-passthrough'/>\n");
     }
@@ -5081,44 +5096,47 @@ pub fn is_libvirt_nvram(path: &str) -> bool {
 }
 
 /// `live_xml` (a running domain's `dumpxml`) as a definition `define`
-/// takes: what libvirt prints for a running domain and not for a
-/// definition, removed.
+/// takes, with what the running domain's XML says of the running process
+/// replaced by the definition's (`definition_xml`, the `--inactive` one):
 ///
-/// - `<domain>`'s `id` (the running domain's number).
+/// - `<domain>`'s `id` (the running domain's number) goes, cut out of the
+///   start tag as written, namespace declarations (`xmlns:qemu`) kept.
 /// - `<resource><partition>` — the runtime cgroup, which a definition
 ///   refuses (`unsupported configuration: Resource partition configuration
-///   is not supported`).
-/// - The CPU's runtime feature list and its `check` attribute: a definition
-///   gets `check='none'` and the model alone, or libvirt refuses to define a
-///   domain whose CPU lists features it computes itself.
-/// - Every `<alias>`, and every runtime device the running domain has that
-///   a definition may not carry: `<seclabel>`.
-/// - The disk's `index` attribute and a `<backingStore/>` (a statement
-///   about the chain, written by QEMU when it opened the file).
+///   is not supported`) — goes.
+/// - An `<alias>` libvirt made goes; one the user named (`ua-…`) stays.
+/// - The domain's own `<seclabel>`s are the definition's: the running ones
+///   carry the label libvirt generated for this process. A device's
+///   `<seclabel>` (`relabel='no'` on a disk) is configuration and stays.
+/// - `<cpu>` is the definition's, with the running domain's `<topology>`:
+///   the running one is what libvirt expanded (`host-model` printed as
+///   `custom` with the host's model and features, a `check`), which written
+///   into a definition would pin today's host CPU. The topology is the one
+///   part of it a pending change moves.
+/// - A disk's runtime `index` and a `<backingStore/>` (a statement about the
+///   chain, written by QEMU when it opened the file) go.
 /// - A device's runtime `<address type='pci' …/>` is kept: libvirt writes
 ///   addresses into the definition too, and dropping them would reshuffle
 ///   the guest's hardware.
-///
-/// `nvram` (the definition's own `<nvram>` element, as it was) is written
-/// back in place of whatever the live XML had, so the variables file and its
-/// template stay exactly as the guest knows them.
-pub fn definition_of_live_xml(
-    live_xml: &str,
-    nvram: Option<&str>,
-) -> Result<String, VirtError> {
+/// - `<nvram>` is the definition's own element, so the variables file and
+///   its template stay exactly as the guest knows them.
+pub fn definition_of_live_xml(live_xml: &str, definition_xml: &str) -> Result<String, VirtError> {
     let (xml, doc) = domain_doc(live_xml)?;
     let root = doc.root_element();
+    let (def_xml, def_doc) = domain_doc(definition_xml)?;
+    let def_root = def_doc.root_element();
     // The lines that go, as a set: an element and everything under it is one
     // entry, so nothing is left half-removed.
     let mut drop: Vec<std::ops::Range<usize>> = Vec::new();
     for n in root.descendants().filter(|n| n.is_element() && n.range().start != root.range().start) {
         match n.tag_name().name() {
             // The running domain's cgroup: the element and what it holds.
-            "resource" => drop.push(element_lines(xml, n)),
-            // What libvirt computes at start: a definition does not carry
-            // them. A `<seclabel>` is a runtime label, an `<alias>` a name
-            // libvirt makes.
-            "alias" | "seclabel" | "backingStore" => drop.push(whole_line(xml, n)),
+            "resource" if n.parent() == Some(root) => drop.push(element_lines(xml, n)),
+            "alias" if !n.attribute("name").is_some_and(|a| a.starts_with("ua-")) => {
+                drop.push(whole_line(xml, n))
+            }
+            "seclabel" if n.parent() == Some(root) => drop.push(element_lines(xml, n)),
+            "backingStore" => drop.push(whole_line(xml, n)),
             _ => {}
         }
     }
@@ -5134,9 +5152,22 @@ pub fn definition_of_live_xml(
     }
     let mut edits: Vec<(std::ops::Range<usize>, String)> =
         merged.into_iter().map(|r| (r, String::new())).collect();
+    // The definition's own seclabels, where the running ones were (or at
+    // the end of the domain, where it has some and the running XML none).
+    let def_labels: Vec<String> = def_root
+        .children()
+        .filter(|n| n.has_tag_name("seclabel"))
+        .map(|n| format!("\n{}", &def_xml[element_lines(def_xml, n)].trim_start_matches(['\n', '\r'])))
+        .collect();
+    if !def_labels.is_empty() {
+        let at = root.last_child().map(|c| c.range().start).unwrap_or(root.range().end);
+        let at = xml[..at].trim_end().len();
+        edits.push((at..at, def_labels.concat()));
+    }
     // <domain id='…'>: the running domain's number.
-    if root.attribute("id").is_some() {
-        edits.push((start_tag_range(root), start_tag_less(root, &["id"])));
+    if let Some(a) = root.attributes().find(|a| a.name() == "id" && a.namespace().is_none()) {
+        let r = a.range();
+        edits.push((xml[..r.start].trim_end().len()..r.end, String::new()));
     }
     // A disk's runtime `index`: QEMU's own numbering of the files it
     // opened, which a definition does not carry and libvirt writes again.
@@ -5146,28 +5177,55 @@ pub fn definition_of_live_xml(
     {
         edits.push((start_tag_range(src), start_tag_less(src, &["index"])));
     }
-    // The CPU: the model and its `check`, and the runtime feature list.
-    // libvirt computes a running domain's features itself, and writing them
-    // into a definition pins them; what the definition carries is the model.
-    if let Some(cpu) = child(root, "cpu") {
-        let check = cpu.attribute("check");
-        let keep_check = check == Some("none") || check == Some("partial");
-        let tag = start_tag_less(cpu, if keep_check { &[] } else { &["check"] });
-        if tag != xml[start_tag_range(cpu)] {
-            edits.push((start_tag_range(cpu), tag));
+    // The CPU: the definition's, with the running topology.
+    let live_topology = child(root, "cpu")
+        .and_then(|c| child(c, "topology"))
+        .map(|t| xml[t.range()].to_string());
+    let def_cpu = child(def_root, "cpu");
+    let cpu_text = match def_cpu {
+        Some(cpu) => {
+            let text = &def_xml[cpu.range()];
+            let base = cpu.range().start;
+            match (child(cpu, "topology"), &live_topology) {
+                (Some(t), Some(live)) => {
+                    let r = t.range();
+                    Some(format!("{}{live}{}", &text[..r.start - base], &text[r.end - base..]))
+                }
+                (Some(t), None) => {
+                    let r = whole_line(def_xml, t);
+                    Some(format!("{}{}", &text[..r.start - base], &text[r.end - base..]))
+                }
+                (None, Some(live)) if cpu.first_child().is_some() => {
+                    let at = cpu.first_child().unwrap().range().start - base;
+                    Some(format!("{}{live}{}", &text[..at], &text[at..]))
+                }
+                (None, Some(live)) => {
+                    // `<cpu …/>`: opened to take the topology.
+                    let open = text.trim_end_matches("/>").trim_end();
+                    Some(format!("{open}>{live}</cpu>"))
+                }
+                (None, None) => Some(text.to_string()),
+            }
         }
-        for f in cpu
-            .children()
-            .filter(|n| n.is_element() && n.tag_name().name() == "feature")
-        {
-            edits.push((whole_line(xml, f), String::new()));
+        None => live_topology.as_ref().map(|t| format!("<cpu>{t}</cpu>")),
+    };
+    match (child(root, "cpu"), cpu_text) {
+        (Some(cpu), Some(text)) => edits.push((cpu.range(), text)),
+        (Some(cpu), None) => edits.push((element_lines(xml, cpu), String::new())),
+        (None, Some(text)) => {
+            let at = child(root, "features")
+                .or_else(|| child(root, "os"))
+                .map(|n| n.range().end)
+                .unwrap_or(root.range().end);
+            edits.push((at..at, format!("\n  {text}")));
         }
+        (None, None) => {}
     }
     // The `<nvram>` goes back to the definition's own, in its place: a
     // plain `define` of the live XML would drop it, and libvirt would make a
     // new variables file at the next start.
+    let nvram = nvram_element(definition_xml);
     if let Some(nvram_node) = child(root, "os").and_then(|os| child(os, "nvram")) {
-        // The definition's own element, whole line for whole line.
         let text = match nvram {
             Some(text) => format!("\n{text}"),
             None => String::new(),
@@ -5175,7 +5233,6 @@ pub fn definition_of_live_xml(
         edits.push((whole_line(xml, nvram_node), text));
     }
     let out = remove_blank_lines(edited(xml, edits)?);
-    let _ = &out;
     roxmltree::Document::parse(&out).map_err(|e| VirtError::Malformed {
         message: format!("the definition made from the running XML: {e}"),
     })?;
@@ -5692,13 +5749,31 @@ pub fn hardware_change_script(
                 });
             }
             let base = base()?;
-            // The definition's own `<nvram>`, kept: a plain `define` of the
-            // live XML would drop it, and libvirt would make a new variables
-            // file — with the guest's boot entries and its Secure Boot state
-            // gone with the old one.
-            let nvram = nvram_element(base);
-            let xml = definition_of_live_xml(live_xml, nvram.as_deref())?;
+            let xml = definition_of_live_xml(live_xml, base)?;
             s.push_str(&hw_guard(domain, base));
+            // The running domain the XML was read from, still: a guest
+            // stopped and started since runs its definition — the change
+            // this would undo is applied by then, and writing the old
+            // running XML back would reverse it. A reboot inside the guest
+            // keeps the process, its id and its XML.
+            let id = domain_doc(live_xml)?
+                .1
+                .root_element()
+                .attribute("id")
+                .map(str::to_string)
+                .ok_or_else(|| VirtError::Malformed {
+                    message: "the running XML has no domain id".into(),
+                })?;
+            s.push_str(&format!(
+                "echo '{step}'\nid=$(virsh --connect {CONNECT_URI} -q domid {d} </dev/null 2>&1); r=$?\n\
+                 if [ \"$r\" != 0 ]; then printf '%s\\n{RC_PREFIX}%s\\n' \"$id\" \"$r\"; exit 0; fi\n\
+                 printf '\\n{RC_PREFIX}0\\n'\n\
+                 if [ \"$id\" != {want} ]; then echo '{conflict}'; exit 0; fi\n",
+                step = script::cmd_marker(KEY_HW_STEP),
+                d = domain_arg(domain),
+                want = shell_quote_unix(&id),
+                conflict = script::cmd_marker(KEY_HW_CONFLICT),
+            ));
             define(&mut s, &xml);
         }
     }

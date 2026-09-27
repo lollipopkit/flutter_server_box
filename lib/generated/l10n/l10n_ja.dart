@@ -4901,151 +4901,137 @@ class AppLocalizationsJa extends AppLocalizations {
   String get virtBackupExcludeTip => 'ノード上のすべてのゲストが対象です。オフにすると除外されます。';
 
   @override
-  String get virtNetEdit => 'Edit configuration';
+  String get virtNetEdit => '構成を編集';
 
   @override
   String virtNetEditAsk(int count) {
-    return 'The running network keeps what it has until it is restarted. Restarting cuts off the $count guests on it.';
+    return '実行中のネットワークは再起動するまで現在の状態を保ちます。再起動すると接続中の仮想マシン ($count) が切断されます。';
   }
 
   @override
-  String get virtNetEditAskNoGuest =>
-      'The running network keeps what it has until it is restarted.';
+  String get virtNetEditAskNoGuest => '実行中のネットワークは再起動するまで現在の状態を保ちます。';
 
   @override
-  String get virtNetEditRestart => 'Restart it to apply now';
+  String get virtNetEditRestart => '再起動して今すぐ適用';
 
   @override
-  String get virtNetEditRestartNote =>
-      'The guests on it lose their network while it restarts.';
+  String get virtNetEditRestartNote => '再起動中、接続中の仮想マシンはネットワークを失います。';
 
   @override
-  String get virtNetEditSave => 'Save to the definition';
+  String get virtNetEditPending => '定義に、実行中のネットワークにまだ反映されていない変更があります。';
 
   @override
-  String get virtNetEditPending =>
-      'The definition has a change the running network is not on yet.';
-
-  @override
-  String get virtNetRestart => 'Restart';
+  String get virtNetRestart => '再起動';
 
   @override
   String virtNetRestartAsk(String name, int count) {
-    return 'Restart $name? The $count guests on it lose their network until it is back.';
+    return '$name を再起動しますか？接続中の仮想マシン ($count) は復帰までネットワークを失います。';
   }
 
   @override
   String virtNetRestartAskNone(String name) {
-    return 'Restart $name? Nothing is on it.';
+    return '$name を再起動しますか？何も接続されていません。';
   }
 
   @override
-  String get virtNetHosts => 'Static addresses';
+  String get virtNetHosts => '静的アドレス';
 
   @override
-  String get virtNetHostAdd => 'Add an address';
+  String get virtNetHostAdd => 'アドレスを追加';
 
   @override
   String get virtNetHostMac => 'MAC';
 
   @override
-  String get virtNetHostIp => 'Address';
+  String get virtNetHostIp => 'アドレス';
 
   @override
-  String get virtNetHostName => 'Name (optional)';
+  String get virtNetHostName => '名前 (任意)';
 
   @override
   String get virtNetHostEmpty =>
-      'No address is handed to a MAC of its own: every guest gets one from the DHCP range.';
+      '専用のアドレスを持つ MAC はありません: すべての仮想マシンは DHCP 範囲からアドレスを受け取ります。';
 
   @override
-  String get virtNetHostInvalid =>
-      'A MAC, an address or a name the host would refuse, or the same MAC twice.';
+  String get virtNetHostInvalid => 'ホストが拒否する MAC、アドレス、名前、または重複した MAC があります。';
 
   @override
   String get virtNetManagementIface =>
-      'This interface carries the host\'s own address. Editing or applying it would cut the host off.';
+      'このインターフェースはホスト自身のアドレスを持っています。編集または適用するとホストへの接続が切れます。';
 
   @override
   String get virtNetManagementTip =>
-      'It carries the host\'s management address: the app does not edit it.';
+      'ホストの管理トラフィックを担っているか、それを担うインターフェースの配下にあります: アプリでは編集しません。';
 
   @override
-  String get virtNetIfname => 'Interface';
+  String get virtNetPhysicalTip =>
+      '物理インターフェースはホスト自身のものです: アプリで編集できるのはブリッジのみです。';
 
   @override
-  String get virtNetAddressCleared => 'cleared';
+  String get virtNetVlanAware => 'VLAN 対応';
 
   @override
-  String get virtNetPveEditNote =>
-      'Written into the node\'s pending configuration; apply it for the host to take it.';
+  String get virtNetPveEditNote => 'ノードの保留中の構成に書き込まれます。ホストに反映するには適用してください。';
 
   @override
-  String get virtCiExpire => 'The password expires';
+  String get virtCiExpire => 'パスワードを期限切れにする';
 
   @override
   String get virtCiExpireNote =>
-      'The first login with it has to set a new one. libvirt only: PVE writes \"expire: false\" and has no option for it.';
+      'このパスワードでの初回ログイン時に新しいパスワードの設定が必要です。libvirt のみ: PVE は \"expire: false\" を書き込み、この設定項目はありません。';
 
   @override
   String get virtCiSearchHint => 'lab.example dev.lab.example';
 
   @override
   String get virtCiSearchTip =>
-      'Several, separated by a space; resolv.conf keeps the first few.';
-
-  @override
-  String get virtCiNics => 'Interfaces';
+      '複数指定する場合はスペースで区切ります。resolv.conf には先頭のいくつかが残ります。';
 
   @override
   String virtCiNicsTip(int count) {
-    return '$count NICs in the seed\'s network config; the form edits the first.';
+    return 'seed のネットワーク構成に NIC が $count 個あります。フォームでは最初の 1 つを編集します。';
   }
 
   @override
-  String get virtUsbByVendor => 'By vendor and product';
+  String get virtUsbByVendor => 'ベンダーと製品で指定';
 
   @override
-  String get virtUsbByAddress => 'By address';
-
-  @override
-  String get virtUsbAddress => 'Bus and device';
+  String get virtUsbByAddress => 'アドレスで指定';
 
   @override
   String get virtUsbAddressTip =>
-      'The device follows this address: whatever is plugged there is given to the guest. libvirt names a USB hostdev by bus and device number.';
+      'デバイスはこのアドレスに従います: そこに接続されたものが仮想マシンに渡されます。libvirt は USB hostdev をバス番号とデバイス番号で指定します。';
 
   @override
   String virtUsbPortNote(int bus, String port) {
-    return 'bus $bus · port $port';
+    return 'バス $bus · ポート $port';
   }
 
   @override
   String get virtSbUnsupported =>
-      'The host\'s firmware descriptors have no Secure Boot firmware with enrolled keys, so a domain with it cannot start.';
+      'ホストのファームウェア記述子に、鍵が登録済みの Secure Boot ファームウェアがないため、これを有効にしたドメインは起動できません。';
 
   @override
   String get virtCreateSecureBoot => 'Secure Boot';
 
   @override
-  String get virtCreateSecureBootNote =>
-      'Only signed kernels and bootloaders are booted.';
+  String get virtCreateSecureBootNote => '署名済みのカーネルとブートローダーのみ起動します。';
 
   @override
   String virtUsbAddressNote(int bus, int device) {
-    return 'bus $bus · device $device';
+    return 'バス $bus · デバイス $device';
   }
 
   @override
-  String get virtHwRevertPendingTitle => 'Discard the pending changes';
+  String get virtHwRevertPendingTitle => '保留中の変更を破棄';
 
   @override
   String virtHwRevertPendingBody(String name) {
-    return '$name is put back on what it is running: the definition is written again from the running one, and the next start gets exactly what this one has. Its NVRAM file and firmware stay as they are.';
+    return '$name を実行中の状態に戻します: 実行中の定義から定義を書き直し、次回起動時は現在とまったく同じ構成になります。NVRAM ファイルとファームウェアはそのままです。';
   }
 
   @override
   String virtHwRevertAllAsk(String name) {
-    return 'Drop every change waiting for $name\'s next start?';
+    return '$name の次回起動を待っている変更をすべて破棄しますか？';
   }
 }

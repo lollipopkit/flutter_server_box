@@ -84,7 +84,7 @@ throwaway domain `sbxe2e-f1` with a qcow2 disk in `images` and a second pool
 | `script_snap_chain_overlay.txt` | The same script with one external snapshot: the overlay in its own pool, backing the disk's file |
 | `script_snap_chain_chain.txt` | Two external snapshots: three layers, each naming the one below |
 | `script_snap_chain_raw.txt` | A raw disk: one layer, format `raw` — what the refusal is read from |
-| `script_snap_delete_running_denied.txt` | `snap_delete_check_script` for `ext2` (2026-09-27; run by name, when the script still read the UUID with `domuuid` — each section's output is the same) of a running domain restarted on the chain `ov2` → `ov1` → `base`: its AppArmor profile denies writing `ov1` and `base`, and the host refused this delete |
+| `script_snap_delete_running_denied.txt` | `snap_check_script` for `ext2` (2026-09-27; run by name, when the script still read the UUID with `domuuid` — each section's output is the same) of a running domain restarted on the chain `ov2` → `ov1` → `base`: its AppArmor profile denies writing `ov1` and `base`, and the host refused this delete |
 | `script_snap_delete_shut_off.txt` | The same domain shut off: `dominfo` has no security model, the host's `<secmodel>` is `apparmor`; the host refused this delete |
 | `script_snap_delete_running_clear.txt` | A fresh domain with `ext1` and `ext2` taken while it ran: no `deny` line, and the host deleted `ext2` |
 | `script_snapshots_external.txt` | `snapshots_script` after two external snapshots: each carries its `layers` from `<disks>` |

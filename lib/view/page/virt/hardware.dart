@@ -1071,7 +1071,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
   /// Where a USB device is, as the label of the address form: its bus and
   /// its address on it.
   String _addressLabel(VirtHostDevice d) => _host == VirtHostKind.pve
-      ? 'bus ${d.usbBus} · port ${d.usbPort}'
+      ? l10n.virtUsbPortNote(d.usbBus ?? 0, d.usbPort ?? '')
       : l10n.virtUsbAddressNote(d.usbBus ?? 0, d.usbDevice ?? 0);
 
   String _newDeviceName(_NewDevice kind) => switch (kind) {

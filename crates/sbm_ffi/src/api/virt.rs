@@ -199,18 +199,25 @@ pub fn parse_virt_snap_chain_json(raw: String) -> Result<String, VirtFfiError> {
     serde_json::to_string(&virt_snapshot::parse_snap_chain(&raw)?).map_err(json_err)
 }
 
-/// What deciding whether the host would refuse deleting snapshot `name`
-/// needs: its layers, the chain, the security model and the AppArmor
-/// profile's `deny` lines. Parse with [`parse_virt_snap_delete_refusal`].
+/// What deciding whether the host would refuse deleting or reverting to
+/// snapshot `name` needs: its layers, the chain, the security model and the
+/// AppArmor profile's `deny` lines. Parse with
+/// [`parse_virt_snap_delete_refusal`] or [`parse_virt_snap_revert_refusal`].
 #[flutter_rust_bridge::frb(sync)]
-pub fn virt_snap_delete_check_script(domain: String, name: String) -> String {
-    virt_snapshot::snap_delete_check_script(&domain, &name)
+pub fn virt_snap_check_script(domain: String, name: String) -> String {
+    virt_snapshot::snap_check_script(&domain, &name)
 }
 
-/// [`virt_snap_delete_check_script`]'s output → why the host would refuse
-/// the delete (AppArmor denying the commit), or `None`
+/// [`virt_snap_check_script`]'s output → why the host would refuse the
+/// delete (AppArmor denying the commit), or `None`
 pub fn parse_virt_snap_delete_refusal(raw: String) -> Result<Option<String>, VirtFfiError> {
     Ok(virt_snapshot::snap_delete_refusal(&raw)?)
+}
+
+/// [`virt_snap_check_script`]'s output → why a revert would leave the guest
+/// unable to start (AppArmor's helper refused the new overlay), or `None`
+pub fn parse_virt_snap_revert_refusal(raw: String) -> Result<Option<String>, VirtFfiError> {
+    Ok(virt_snapshot::snap_revert_refusal(&raw)?)
 }
 
 /// An external snapshot (disks only, `--atomic`), `overlays` being

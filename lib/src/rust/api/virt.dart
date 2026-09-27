@@ -108,21 +108,25 @@ String virtSnapChainScript({required String domain}) =>
 Future<String> parseVirtSnapChainJson({required String raw}) =>
     RustLib.instance.api.crateApiVirtParseVirtSnapChainJson(raw: raw);
 
-/// What deciding whether the host would refuse deleting snapshot `name`
-/// needs: its layers, the chain, the security model and the AppArmor
-/// profile's `deny` lines. Parse with [`parse_virt_snap_delete_refusal`].
-String virtSnapDeleteCheckScript({
-  required String domain,
-  required String name,
-}) => RustLib.instance.api.crateApiVirtVirtSnapDeleteCheckScript(
-  domain: domain,
-  name: name,
-);
+/// What deciding whether the host would refuse deleting or reverting to
+/// snapshot `name` needs: its layers, the chain, the security model and the
+/// AppArmor profile's `deny` lines. Parse with
+/// [`parse_virt_snap_delete_refusal`] or [`parse_virt_snap_revert_refusal`].
+String virtSnapCheckScript({required String domain, required String name}) =>
+    RustLib.instance.api.crateApiVirtVirtSnapCheckScript(
+      domain: domain,
+      name: name,
+    );
 
-/// [`virt_snap_delete_check_script`]'s output → why the host would refuse
-/// the delete (AppArmor denying the commit), or `None`
+/// [`virt_snap_check_script`]'s output → why the host would refuse the
+/// delete (AppArmor denying the commit), or `None`
 Future<String?> parseVirtSnapDeleteRefusal({required String raw}) =>
     RustLib.instance.api.crateApiVirtParseVirtSnapDeleteRefusal(raw: raw);
+
+/// [`virt_snap_check_script`]'s output → why a revert would leave the guest
+/// unable to start (AppArmor's helper refused the new overlay), or `None`
+Future<String?> parseVirtSnapRevertRefusal({required String raw}) =>
+    RustLib.instance.api.crateApiVirtParseVirtSnapRevertRefusal(raw: raw);
 
 /// An external snapshot (disks only, `--atomic`), `overlays` being
 /// `(target, path)` per disk. Parse with [`parse_virt_action`].

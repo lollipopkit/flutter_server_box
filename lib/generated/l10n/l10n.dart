@@ -8871,12 +8871,6 @@ abstract class AppLocalizations {
   /// **'The guests on it lose their network while it restarts.'**
   String get virtNetEditRestartNote;
 
-  /// Edit form: the button that saves without restarting.
-  ///
-  /// In en, this message translates to:
-  /// **'Save to the definition'**
-  String get virtNetEditSave;
-
   /// Network view: the running network is not on its definition.
   ///
   /// In en, this message translates to:
@@ -8952,20 +8946,20 @@ abstract class AppLocalizations {
   /// Network view: why a PVE interface is not editable.
   ///
   /// In en, this message translates to:
-  /// **'It carries the host\'s management address: the app does not edit it.'**
+  /// **'It carries the host\'s management traffic, or sits under an interface that does: the app does not edit it.'**
   String get virtNetManagementTip;
 
-  /// The interface name.
+  /// PVE network view: why a physical interface cannot be edited.
   ///
   /// In en, this message translates to:
-  /// **'Interface'**
-  String get virtNetIfname;
+  /// **'A physical interface is the host\'s own: the app edits bridges only.'**
+  String get virtNetPhysicalTip;
 
-  /// A field that was cleared is written as such.
+  /// PVE bridge setting: bridge-vlan-aware.
   ///
   /// In en, this message translates to:
-  /// **'cleared'**
-  String get virtNetAddressCleared;
+  /// **'VLAN aware'**
+  String get virtNetVlanAware;
 
   /// Under the PVE bridge edit form.
   ///
@@ -8997,12 +8991,6 @@ abstract class AppLocalizations {
   /// **'Several, separated by a space; resolv.conf keeps the first few.'**
   String get virtCiSearchTip;
 
-  /// cloud-init: the interfaces group.
-  ///
-  /// In en, this message translates to:
-  /// **'Interfaces'**
-  String get virtCiNics;
-
   /// cloud-init: how many NICs the seed configures.
   ///
   /// In en, this message translates to:
@@ -9021,19 +9009,13 @@ abstract class AppLocalizations {
   /// **'By address'**
   String get virtUsbByAddress;
 
-  /// USB passthrough: the bus and device fields.
-  ///
-  /// In en, this message translates to:
-  /// **'Bus and device'**
-  String get virtUsbAddress;
-
   /// USB passthrough: what an address-based hostdev does.
   ///
   /// In en, this message translates to:
   /// **'The device follows this address: whatever is plugged there is given to the guest. libvirt names a USB hostdev by bus and device number.'**
   String get virtUsbAddressTip;
 
-  /// USB passthrough: where on the host the device is plugged.
+  /// USB passthrough on PVE: the address a device is named by (bus and port chain).
   ///
   /// In en, this message translates to:
   /// **'bus {bus} · port {port}'**

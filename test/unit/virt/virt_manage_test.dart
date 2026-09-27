@@ -377,44 +377,141 @@ void main() {
       ),
     ];
 
+    // What the node itself printed (captured on PVE 9.2.2, 2026-09-27),
+    // with a second connection over a VPN bridge and a VLAN on vmbr0.
+    const probe = '''
+@host pve
+@addr
+1: lo    inet 127.0.0.1/8 scope host lo\\       valid_lft forever preferred_lft forever
+4: vmbr0    inet 192.168.31.20/24 scope global vmbr0\\       valid_lft forever preferred_lft forever
+4: vmbr0    inet6 fe80::8286:f2ff:fec9:5882/64 scope link proto kernel_ll \\       valid_lft forever preferred_lft forever
+7: sbxe2e0    inet 10.77.0.1/24 scope global sbxe2e0\\       valid_lft forever preferred_lft forever
+9: vmbr1    inet 10.8.0.5/24 scope global vmbr1\\       valid_lft forever preferred_lft forever
+@route
+default via 192.168.31.1 dev vmbr0 proto kernel onlink 
+@conn
+0      0      192.168.31.20:22 192.168.31.183:62036
+0      0      [::ffff:10.8.0.5]:22 [::ffff:10.8.0.9]:50110
+0      0      127.0.0.1:8006 127.0.0.1:41234
+@lower
+vmbr0 nic0
+vmbr0 tap100i0
+@end
+''';
+
+    test('the live probe: routes, connections and what sits under them', () {
+      final live = virtPveParseLiveNet(probe)!;
+      expect(live.host, 'pve');
+      expect(live.routed, {'vmbr0'});
+      // The loopback relay the app's API calls come through is not one.
+      expect(live.connected, {'vmbr0', 'vmbr1'});
+      expect(live.lower['vmbr0'], {'nic0', 'tap100i0'});
+      // Cut short: nothing is concluded from it.
+      expect(virtPveParseLiveNet(probe.replaceFirst('@end', '')), isNull);
+    });
+
     test('the one carrying the host address is not editable', () {
-      final m = virtPveManagementIfaces(nets, connectedAddr: '192.168.31.20');
-      expect(m, {'vmbr0'});
-      // A bridge of the app's own is; a physical interface never is.
-      for (final n in nets) {
+      final live = virtPveParseLiveNet(probe)!;
+      final withVpn = [
+        ...nets,
+        const VirtNetwork(
+          id: 'pve/vmbr1',
+          name: 'vmbr1',
+          node: 'pve',
+          mode: 'bridge',
+          cidrs: ['10.8.0.5/24'],
+        ),
+      ];
+      final m = virtPveManagementIfaces(withVpn, live: live);
+      // The default route's, and the VPN bridge this app may be connected
+      // through (it has no gateway), with the port under vmbr0.
+      expect(m, containsAll(['vmbr0', 'vmbr1', 'nic0']));
+      expect(m, isNot(contains('sbxe2e0')));
+      // A bridge of the app's own is editable; a physical interface never is.
+      for (final n in withVpn) {
         expect(
           virtPveManagedIface(n, management: m),
           n.name == 'sbxe2e0',
           reason: n.name,
         );
       }
-      // Connected over a second address (a VPN), the default route still
-      // counts: applying that interface would cut the host off.
+      // The node did not answer: every interface with an address is kept.
       expect(
-        virtPveManagementIfaces(nets, connectedAddr: '10.8.0.5'),
-        {'vmbr0'},
+        virtPveManagementIfaces(withVpn),
+        containsAll(['vmbr0', 'vmbr1', 'sbxe2e0']),
       );
-      // A node with no gateway and an address this device is not behind:
-      // nothing is known to be the management one.
-      expect(virtPveManagementIfaces(const [
-        VirtNetwork(id: 'pve/vmbr1', name: 'vmbr1', node: 'pve', mode: 'bridge'),
-      ]), isEmpty);
-      // The address this app is connected to, where the host does not name
-      // a gateway.
-      expect(
-        virtPveManagementIfaces(
-          const [
-            VirtNetwork(
-              id: 'pve/vmbr2',
-              name: 'vmbr2',
-              node: 'pve',
-              mode: 'bridge',
-              cidrs: ['10.9.9.2/24'],
-            ),
-          ],
-          connectedAddr: '10.9.9.2',
+      // A VLAN interface carrying the address protects the bridge it is on:
+      // turning VLAN awareness off there would cut it.
+      const vlan = [
+        VirtNetwork(
+          id: 'pve/vmbr0',
+          name: 'vmbr0',
+          node: 'pve',
+          mode: 'bridge',
+          vlanAware: true,
+          ports: ['nic0'],
         ),
-        {'vmbr2'},
+        VirtNetwork(
+          id: 'pve/vmbr0.10',
+          name: 'vmbr0.10',
+          node: 'pve',
+          mode: 'vlan',
+          cidrs: ['10.10.0.2/24'],
+          gateway: '10.10.0.1',
+        ),
+      ];
+      expect(virtPveManagementIfaces(vlan), containsAll(['vmbr0.10', 'vmbr0', 'nic0']));
+      // An IPv6-only node: its `gateway6` counts.
+      expect(
+        virtPveManagementIfaces(const [
+          VirtNetwork(id: 'pve/vmbr2', name: 'vmbr2', node: 'pve', mode: 'bridge'),
+        ], live: live, gateways6: {'vmbr2'}),
+        contains('vmbr2'),
+      );
+    });
+
+    test('which interfaces a pending diff touches', () {
+      const diff = '''
+--- /etc/network/interfaces\t2026-09-27
++++ /etc/network/interfaces.new\t2026-09-27
+@@ -10,6 +10,7 @@
+ auto vmbr0
+ iface vmbr0 inet static
+ \taddress 192.168.31.20/24
++\tbridge-vlan-aware yes
+ \tgateway 192.168.31.1
+@@ -20,3 +21,8 @@
++
++auto vmbr9
++iface vmbr9 inet manual
++\tbridge-ports none
+''';
+      final t = virtPveDiffIfaces(diff);
+      expect(t.ifaces, {'vmbr0', 'vmbr9'});
+      expect(t.unknown, isFalse);
+      // A hunk whose change comes before any stanza line: not known.
+      const midDiff = '@@ -5,3 +5,4 @@\n \tbridge-ports nic0\n \tbridge-stp off\n \tbridge-fd 0\n+\tbridge-vlan-aware yes\n';
+      final mid = virtPveDiffIfaces(midDiff);
+      expect(mid.unknown, isTrue);
+      // ... unless the file as it is says which stanza line 5 is under.
+      const file = 'auto lo\niface lo inet loopback\n\niface vmbr0 inet static\n\tbridge-ports nic0\n'
+          '\tbridge-stp off\n\tbridge-fd 0\n';
+      final placed = virtPveDiffIfaces(midDiff, interfaces: file);
+      expect(placed.ifaces, {'vmbr0'});
+      expect(placed.unknown, isFalse);
+      // Placed after `lo`'s stanza, a hunk starting on line 3 is still lo's.
+      final early = virtPveDiffIfaces('@@ -3,1 +3,2 @@\n \n+# note\n+\tmtu 9000\n', interfaces: file);
+      expect(early.ifaces, {'lo'});
+      // A comment is its stanza's: PVE writes `comments` there.
+      final comment = virtPveDiffIfaces(
+        '@@ -5,3 +5,4 @@\n \tbridge-ports nic0\n \tbridge-stp off\n \tbridge-fd 0\n+#note\n',
+        interfaces: file,
+      );
+      expect(comment.ifaces, {'vmbr0'});
+      // The probe carries the file.
+      expect(
+        virtPveParseLiveNet('@host pve\n@route\n@file\n$file@end\n')!.interfaces,
+        contains('iface vmbr0 inet static'),
       );
     });
   });
@@ -498,7 +595,7 @@ void main() {
       expect(() => op(const VirtNetworkApply('pve')), throwsA(isA<VirtErr>()));
     });
 
-    test('an existing network\'s edit as the parser takes it', () {
+    test('an existing network\'s edit as the parser takes it', () async {
       const net = VirtNetwork(
         id: 'lab',
         name: 'lab',
@@ -569,11 +666,9 @@ void main() {
       final live = ffi.virtNetChangeScript(opJson: jsonEncode(hostsOnly));
       expect(live, contains('net-update'));
       expect(live, isNot(contains('net-define')));
-      expect(
-        () => ffi.parseVirtNetChange(
-          raw: _section('virt.net.step', ''),
-        ),
-        returnsNormally,
+      await expectLater(
+        ffi.parseVirtNetChange(raw: _section('virt.net.step', '')),
+        completes,
       );
       // A restart is its own op: `net-destroy` and `net-start`, no
       // definition written either way.
@@ -591,6 +686,34 @@ void main() {
         ),
         throwsA(isA<VirtErr>()),
       );
+    });
+
+    test('a network change the host refuses reaches the caller', () async {
+      // The start refused, and the network started again as it ran: an
+      // error, never a success.
+      final exec = _Exec(
+        (_) => _ok(
+          [
+            _section('virt.net.step', ''),
+            _section(
+              'virt.net.step',
+              'error: Failed to start network lab\nerror: internal error: Network is already in use by interface eth0',
+              1,
+            ),
+            '${_marker('virt.net.rollback')}\n${_marker('virt.net.restored')}\n',
+          ].join(),
+        ),
+      );
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      const net = VirtNetwork(
+        id: 'lab',
+        name: 'lab',
+        mode: 'nat',
+        active: true,
+        xml: '<network>\n  <name>lab</name>\n</network>\n',
+      );
+      final e = await _err(virt.manage(const VirtNetworkRestart(net)));
+      expect(e.message, contains('started again as it ran before'));
     });
 
     test('a name taken is exists; a refusal is the host\'s words', () async {

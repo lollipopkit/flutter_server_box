@@ -796,6 +796,26 @@ fn what_a_seed_says_that_the_app_does_not_write() {
     let md5 = ud.replace(&c.password_hash.clone().unwrap(), "$1$abc$def");
     let r = read(files(&md5, &md, Some(&nc)));
     assert!(r.foreign && r.cloud_init.password_hash.is_none());
+
+    // The password's expiry reads back as it was written, so a save keeps
+    // it; `chpasswd` for another account, or another hash, is somebody
+    // else's.
+    let mut expiring = c.clone();
+    expiring.password_expire = true;
+    let eud = expiring.user_data();
+    assert!(eud.contains("chpasswd:\n  expire: true\n  users:\n"), "{eud}");
+    let r = read(files(&eud, &md, Some(&nc)));
+    assert!(!r.foreign, "{eud}");
+    assert!(r.cloud_init.password_expire);
+    assert!(!read(files(&ud, &md, Some(&nc))).cloud_init.password_expire);
+    for other in [
+        eud.replace("    - name: \"", "    - name: \"x"),
+        eud.replace("      type: hash\n", "      type: text\n"),
+        eud.replace("  expire: true\n", "  expire: false\n"),
+        format!("{ud}chpasswd:\n  expire: true\n"),
+    ] {
+        assert!(read(files(&other, &md, Some(&nc))).foreign, "{other}");
+    }
 }
 
 /// A minimal ISO 9660 image of `files` with Joliet names, as the reader

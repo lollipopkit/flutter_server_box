@@ -2664,7 +2664,7 @@ Future<void> _libvirtManage() async {
       await virsh("pool-destroy '$poolName'");
       await virsh("pool-undefine '$poolName'");
       await sh("rmdir '$poolDir' 2>/dev/null; true");
-      for (final n in [net, '$net-iso', '$net-br', '$net-bad']) {
+      for (final n in [net, '$net-iso', '$net-br', '$net-bad', '$net-ed']) {
         await virsh("net-destroy '$n'");
         await virsh("net-undefine '$n'");
       }
@@ -2913,6 +2913,143 @@ Future<void> _libvirtManage() async {
       expect(await sh("test -e '$poolDir' || echo gone"), contains('gone'));
     });
 
+    test('a network edited: a host live, the address with a restart, and every refusal undone', () async {
+      final name = '$net-ed';
+      await virt.manage(
+        VirtNetworkCreate(
+          name: name,
+          mode: 'nat',
+          cidr: '10.231.79.1/24',
+          dhcpStart: '10.231.79.100',
+          dhcpEnd: '10.231.79.200',
+        ),
+      );
+      // Something the form does not edit, written by hand: it must survive
+      // every edit below.
+      await sh(
+        "f=\$(mktemp); virsh --connect qemu:///system -q net-dumpxml --inactive '$name' | "
+        "sed \"s|<range start='10.231.79.100' end='10.231.79.200'/>|&<range start='10.231.79.210' end='10.231.79.220'/>|\" > \$f && "
+        r'virsh --connect qemu:///system -q net-define $f >/dev/null; rm -f $f',
+      );
+      var n = (await findNet(name))!;
+      expect(n.xml, contains("start='10.231.79.210'"));
+
+      // A static host: live, no restart.
+      await virt.manage(
+        VirtNetworkEdit(
+          n,
+          mode: 'nat',
+          address: '10.231.79.1',
+          prefix: 24,
+          dhcpStart: '10.231.79.100',
+          dhcpEnd: '10.231.79.200',
+          hosts: const [VirtNetHost(mac: '52:54:00:aa:bb:e1', ip: '10.231.79.50', name: 'sbxe2e-h1')],
+        ),
+      );
+      n = (await findNet(name))!;
+      expect(n.hosts.single.ip, '10.231.79.50');
+      expect(n.pendingRestart, isFalse);
+      expect(await sh("virsh --connect qemu:///system -q net-dumpxml '$name'"), contains('sbxe2e-h1'));
+
+      // The first range moved, with a restart: the running network takes it
+      // and the second range is still there.
+      await virt.manage(
+        VirtNetworkEdit(
+          n,
+          mode: 'nat',
+          address: '10.231.79.1',
+          prefix: 24,
+          dhcpStart: '10.231.79.110',
+          dhcpEnd: '10.231.79.190',
+          hosts: n.hosts,
+          restart: true,
+        ),
+      );
+      n = (await findNet(name))!;
+      expect(n.pendingRestart, isFalse);
+      final live = await sh("virsh --connect qemu:///system -q net-dumpxml '$name'");
+      expect(live, contains("start='10.231.79.110'"));
+      expect(live, contains("start='10.231.79.210'"));
+      expect(live, contains('sbxe2e-h1'));
+
+      // An address the host's own LAN is on. First with the hand-written
+      // second range still there, which is outside the new subnet: the new
+      // definition is refused while the network still runs, so nothing is
+      // stopped and nothing changes.
+      final lan = (await sh("ip -4 -o addr show scope global | awk '{print \$4}' | head -1")).trim();
+      final lanNet = lan.split('/').first.split('.').take(3).join('.');
+      VirtNetworkEdit toLan(VirtNetwork n) => VirtNetworkEdit(
+        n,
+        mode: 'nat',
+        address: '$lanNet.1',
+        prefix: 24,
+        dhcpStart: '$lanNet.230',
+        dhcpEnd: '$lanNet.240',
+        restart: true,
+      );
+      final undefined = await _virtErr(virt.manage(toLan(n)));
+      expect(undefined.message, contains('not entirely within'));
+      n = (await findNet(name))!;
+      expect((n.active, n.address, n.pendingRestart), (true, '10.231.79.1', false));
+
+      // Without it: the definition is written, the start refused (the LAN
+      // is in use), and the network started again as it ran, the old
+      // definition back.
+      await sh(
+        "f=\$(mktemp); virsh --connect qemu:///system -q net-dumpxml --inactive '$name' | "
+        "sed \"s|<range start='10.231.79.210' end='10.231.79.220'/>||\" > \$f && "
+        r'virsh --connect qemu:///system -q net-define $f >/dev/null; rm -f $f',
+      );
+      n = (await findNet(name))!;
+      final refused = await _virtErr(virt.manage(toLan(n)));
+      expect(refused.message, contains('started again as it ran before'));
+      n = (await findNet(name))!;
+      expect(n.active, isTrue, reason: 'never left down');
+      expect(n.address, '10.231.79.1');
+      expect(await sh('ip -4 -br addr'), contains('10.231.79.1/24'));
+
+      // To a host bridge (libvirt 11.3 starts a bridge-mode network whether
+      // the bridge exists or not): the addressing, the <mac> and the ranges
+      // go with the mode, which libvirt refuses there. Then back to NAT.
+      await virt.manage(VirtNetworkEdit(n, mode: 'bridge', bridge: 'sbxnobr0', restart: true));
+      n = (await findNet(name))!;
+      expect((n.active, n.mode, n.bridge, n.pendingRestart), (true, 'bridge', 'sbxnobr0', false));
+      expect(n.xml, isNot(contains('<ip')));
+      expect(n.xml, isNot(contains('<mac')));
+      await virt.manage(
+        VirtNetworkEdit(
+          n,
+          mode: 'nat',
+          address: '10.231.79.1',
+          prefix: 24,
+          dhcpStart: '10.231.79.100',
+          dhcpEnd: '10.231.79.200',
+          restart: true,
+        ),
+      );
+      n = (await findNet(name))!;
+      expect((n.active, n.mode, n.address), (true, 'nat', '10.231.79.1'));
+      expect(await sh('ip -4 -br addr'), contains('10.231.79.1/24'));
+
+      // A restart of its own onto a definition that cannot start: written
+      // by hand, then restarted from the app — back as it ran.
+      await sh(
+        "f=\$(mktemp); virsh --connect qemu:///system -q net-dumpxml --inactive '$name' | "
+        "sed 's/10.231.79/$lanNet/g' > \$f && virsh --connect qemu:///system -q net-define \$f >/dev/null; rm -f \$f",
+      );
+      n = (await findNet(name))!;
+      expect(n.pendingRestart, isTrue);
+      final restart = await _virtErr(virt.manage(VirtNetworkRestart(n)));
+      expect(restart.message, contains('started again as it ran before'));
+      n = (await findNet(name))!;
+      expect(n.active, isTrue);
+      expect(await sh('ip -4 -br addr'), contains('10.231.79.1/24'));
+
+      await virt.manage(VirtNetworkSetActive(n, active: false));
+      await virt.manage(VirtNetworkDelete((await findNet(name))!));
+      expect(await findNet(name), isNull);
+    });
+
     test('networks: NAT with DHCP, isolated, a host bridge; an address in use is rolled back', () async {
       await virt.manage(
         VirtNetworkCreate(
@@ -3039,6 +3176,8 @@ Future<void> _pveManage() async {
           tokenSecret: tokenSecret,
         ),
         connect: d.startConnect,
+        // What the node says of its own interfaces, over the same SSH.
+        exec: () async => SshExec(c),
         onClose: d.close,
         taskPoll: const Duration(milliseconds: 500),
         taskTimeout: const Duration(minutes: 3),
@@ -3277,6 +3416,65 @@ Future<void> _pveManage() async {
       await apply();
       expect(await findBridge(), isNull);
       expect(await sh('ip link show $bridge 2>&1'), contains('does not exist'));
+    });
+
+    test('an edit keeps the addresses; the management bridge and an apply touching it are refused', () async {
+      // A dual-stack bridge of the run's own, applied.
+      await pve.manage(
+        VirtNetworkCreate(name: bridge, mode: 'bridge', node: node, cidr: '10.231.78.1/24'),
+      );
+      await sh(
+        'pvesh set /nodes/$node/network/$bridge --type bridge '
+        '--cidr 10.231.78.1/24 --cidr6 fd31:78::1/64',
+      );
+      await apply();
+      expect(await sh('ip -br addr show $bridge'), allOf(contains('10.231.78.1/24'), contains('fd31:78::1/64')));
+
+      // Only VLAN awareness edited: PVE would drop both addresses from a
+      // request without them. Both are in the pending stanza, and applied.
+      final b = (await findBridge())!;
+      expect(b.managementEditable, isTrue, reason: 'no traffic of the node on it');
+      await pve.manage(VirtNetworkEditBridge(b, vlanAware: true));
+      final pending = await sh('cat /etc/network/interfaces.new');
+      final stanza = pending.substring(pending.indexOf('iface $bridge inet'));
+      expect(stanza, contains('10.231.78.1/24'));
+      expect(pending, contains('iface $bridge inet6 static'));
+      expect(pending, contains('fd31:78::1/64'));
+      await apply();
+      expect(await sh('ip -br addr show $bridge'), allOf(contains('10.231.78.1/24'), contains('fd31:78::1/64')));
+
+      // The node's own bridge: the node says its default route and this SSH
+      // session are on it, so it is not editable, and an edit is refused
+      // before anything is written.
+      final nets = await pve.networks();
+      final mgmt = nets.firstWhere((n) => n.node == node && n.gateway != null);
+      expect(mgmt.managementEditable, isFalse, reason: mgmt.name);
+      final e = await _virtErr(pve.manage(VirtNetworkEditBridge(mgmt, vlanAware: true)));
+      expect(e.type, VirtErrType.unsupported);
+      expect(await pve.networkChanges(), isEmpty);
+
+      // A pending change to it made elsewhere (here with pvesh, as PVE's web
+      // UI would): the app refuses to apply it. The change itself is a
+      // comment on the same addresses, harmless even if it went through.
+      final cidr = mgmt.cidrs.firstWhere((c) => !c.contains(':'));
+      await sh(
+        'pvesh set /nodes/$node/network/${mgmt.name} --type bridge '
+        '--cidr $cidr --gateway ${mgmt.gateway} '
+        '${mgmt.ports.isEmpty ? '' : '--bridge_ports "${mgmt.ports.join(' ')}"'} '
+        '--comments sbxe2e',
+      );
+      expect(await pve.networkChanges(), isNotEmpty);
+      final refused = await _virtErr(pve.manage(VirtNetworkApply(node)));
+      expect(refused.type, VirtErrType.unsupported);
+      expect(refused.message, contains(mgmt.name));
+      expect(await sh('ls /etc/network/interfaces.new 2>/dev/null'), isNotEmpty, reason: 'not applied');
+      await pve.manage(VirtNetworkRevert(node));
+      expect(await pve.networkChanges(), isEmpty);
+      expect(await sh('echo ssh-ok'), contains('ssh-ok'));
+
+      await pve.manage(VirtNetworkDelete((await findBridge())!));
+      await apply();
+      expect(await findBridge(), isNull);
     });
   });
 }
@@ -4120,8 +4318,11 @@ Future<void> _p8Libvirt() async {
     SSHClient? client;
     late LibvirtBackend virt;
     final name = _e2eName('snap');
-    final poolName = 'sbxe2e-p8p';
-    final poolDir = '/var/lib/libvirt/$poolName';
+    // Under /var/lib/libvirt/images: an AppArmor host's `virt-aa-helper`
+    // reads any file there, which a revert's new overlay (named without an
+    // extension) needs — elsewhere the app refuses the revert.
+    final poolName = 'sbxe2e-p8i';
+    final poolDir = '/var/lib/libvirt/images/$poolName';
     late VirtStoragePool pool;
     VirtGuest? guest;
 
@@ -4175,8 +4376,14 @@ Future<void> _p8Libvirt() async {
           }
           await virt.delete((await find())!, removeDisks: true);
         }
-        // The pool itself stays: it is a directory the run made, and the
-        // next run reuses it. Its volumes went with the guest.
+      } catch (_) {}
+      // The pool the run made, now empty: its volumes went with the guest.
+      try {
+        await onHost(
+          "virsh --connect qemu:///system -q pool-destroy '$poolName'; "
+          "virsh --connect qemu:///system -q pool-undefine '$poolName'; "
+          "rmdir '$poolDir'",
+        );
       } catch (_) {}
       try {
         await virt.close();
@@ -4333,6 +4540,33 @@ Future<void> _p8Libvirt() async {
         );
         expect(marked.trim(), '0');
       }
+    });
+
+    test('pending changes discarded; refused once the guest ran its definition', () async {
+      var g = (await find())!;
+      expect(g.state, VirtGuestState.running);
+      final before = await virt.hardware(g);
+      await virt.changeHardware(g, before, VirtHwSetMemory(mib: before.memory.mib + 128));
+      final pending = await virt.hardware(g);
+      expect(pending.pending.map((p) => p.key), contains('memory'));
+      await virt.revertPending(g, pending);
+      final back = await virt.hardware(g);
+      expect(back.pending, isEmpty);
+      expect(back.memory.mib, before.memory.mib);
+
+      // Pending again, read, and then the guest stopped and started — it
+      // now runs its definition, and the running XML that was read is not
+      // its any more: writing it back would undo the applied change.
+      await virt.changeHardware(g, back, VirtHwSetMemory(mib: before.memory.mib + 128));
+      final stale = await virt.hardware(g);
+      await onHost(
+        "virsh --connect qemu:///system -q destroy '$name' && "
+        "virsh --connect qemu:///system -q start '$name'",
+      );
+      g = await settle((g) => g.state == VirtGuestState.running);
+      final e = await _virtErr(virt.revertPending(g, stale));
+      expect(e.type, VirtErrType.conflict, reason: e.message);
+      expect((await virt.hardware(g)).memory.mib, before.memory.mib + 128);
     });
 
     test('a raw disk is refused before anything is sent', () async {

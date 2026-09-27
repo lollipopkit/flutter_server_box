@@ -6822,7 +6822,6 @@
   "virtNetEditAskNoGuest": "The running network keeps what it has until it is restarted.",
   "virtNetEditRestart": "Restart it to apply now",
   "virtNetEditRestartNote": "The guests on it lose their network while it restarts.",
-  "virtNetEditSave": "Save to the definition",
   "virtNetEditPending": "The definition has a change the running network is not on yet.",
   "virtNetRestart": "Restart",
   "virtNetRestartAsk": "Restart {name}? The {count} guests on it lose their network until it is back.",
@@ -6835,19 +6834,23 @@
   "virtNetHostEmpty": "No address is handed to a MAC of its own: every guest gets one from the DHCP range.",
   "virtNetHostInvalid": "A MAC, an address or a name the host would refuse, or the same MAC twice.",
   "virtNetManagementIface": "This interface carries the host's own address. Editing or applying it would cut the host off.",
-  "virtNetManagementTip": "It carries the host's management address: the app does not edit it.",
-  "virtNetIfname": "Interface",
-  "virtNetAddressCleared": "cleared",
+  "virtNetManagementTip": "It carries the host's management traffic, or sits under an interface that does: the app does not edit it.",
+  "virtNetPhysicalTip": "A physical interface is the host's own: the app edits bridges only.",
+  "@virtNetPhysicalTip": {
+    "description": "PVE network view: why a physical interface cannot be edited."
+  },
+  "virtNetVlanAware": "VLAN aware",
+  "@virtNetVlanAware": {
+    "description": "PVE bridge setting: bridge-vlan-aware."
+  },
   "virtNetPveEditNote": "Written into the node's pending configuration; apply it for the host to take it.",
   "virtCiExpire": "The password expires",
   "virtCiExpireNote": "The first login with it has to set a new one. libvirt only: PVE writes \"expire: false\" and has no option for it.",
   "virtCiSearchHint": "lab.example dev.lab.example",
   "virtCiSearchTip": "Several, separated by a space; resolv.conf keeps the first few.",
-  "virtCiNics": "Interfaces",
   "virtCiNicsTip": "{count} NICs in the seed's network config; the form edits the first.",
   "virtUsbByVendor": "By vendor and product",
   "virtUsbByAddress": "By address",
-  "virtUsbAddress": "Bus and device",
   "virtUsbAddressTip": "The device follows this address: whatever is plugged there is given to the guest. libvirt names a USB hostdev by bus and device number.",
   "virtUsbPortNote": "bus {bus} · port {port}",
   "virtSbUnsupported": "The host's firmware descriptors have no Secure Boot firmware with enrolled keys, so a domain with it cannot start.",
@@ -6873,9 +6876,6 @@
   },
   "@virtNetEditRestartNote": {
     "description": "Edit form: under that switch."
-  },
-  "@virtNetEditSave": {
-    "description": "Edit form: the button that saves without restarting."
   },
   "@virtNetEditPending": {
     "description": "Network view: the running network is not on its definition."
@@ -6932,12 +6932,6 @@
   "@virtNetManagementTip": {
     "description": "Network view: why a PVE interface is not editable."
   },
-  "@virtNetIfname": {
-    "description": "The interface name."
-  },
-  "@virtNetAddressCleared": {
-    "description": "A field that was cleared is written as such."
-  },
   "@virtNetPveEditNote": {
     "description": "Under the PVE bridge edit form."
   },
@@ -6952,9 +6946,6 @@
   },
   "@virtCiSearchTip": {
     "description": "cloud-init: how several search domains are separated."
-  },
-  "@virtCiNics": {
-    "description": "cloud-init: the interfaces group."
   },
   "@virtCiNicsTip": {
     "description": "cloud-init: how many NICs the seed configures.",
@@ -6971,14 +6962,11 @@
   "@virtUsbByAddress": {
     "description": "USB passthrough: name the device by the address it sits at."
   },
-  "@virtUsbAddress": {
-    "description": "USB passthrough: the bus and device fields."
-  },
   "@virtUsbAddressTip": {
     "description": "USB passthrough: what an address-based hostdev does."
   },
   "@virtUsbPortNote": {
-    "description": "USB passthrough: where on the host the device is plugged.",
+    "description": "USB passthrough on PVE: the address a device is named by (bus and port chain).",
     "placeholders": {
       "bus": {
         "type": "int",
@@ -6986,7 +6974,7 @@
       },
       "port": {
         "type": "String",
-        "example": "4"
+        "example": "1.2"
       }
     }
   },

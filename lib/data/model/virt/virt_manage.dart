@@ -478,35 +478,216 @@ bool virtPveManagedIface(VirtNetwork network, {Set<String> management = const {}
   return !management.contains(network.name);
 }
 
-/// PVE: the interfaces that carry a node's management address, from the
-/// node's own network listing and the address this app reaches PVE at.
-///
-/// Two sources, because either alone misses the case:
-///
-/// - an interface with a `gateway` is the one the node's default route goes
-///   through — PVE writes it in the interfaces file, and it is the address a
-///   console-less host is reached at;
-/// - the interface whose address is the one this app is connected to (the
-///   host of `pveAddr`), which is what a connection over a second address —
-///   a VPN, another subnet — would otherwise be missing.
-///
-/// A node listing nothing is nobody's fault but its own: the set is empty
-/// then, and [virtPveManagedIface] refuses every interface as usual when a
-/// listing answers nothing at all.
-Set<String> virtPveManagementIfaces(
-  Iterable<VirtNetwork> networks, {
-  String? connectedAddr,
-}) {
-  final ip = connectedAddr == null ? null : virtParseIpv4(connectedAddr.split(':').first);
-  final out = <String>{};
-  for (final n in networks) {
-    if (n.gateway != null && n.gateway!.isNotEmpty) out.add(n.name);
-    if (ip == null) continue;
-    for (final cidr in n.cidrs) {
-      if (virtParseIpv4(cidr.split('/').first) == ip) out.add(n.name);
+/// The script [virtPveParseLiveNet] reads: what the node itself says of the
+/// interfaces it is using right now — addresses, default routes, the local
+/// address of every established TCP connection, and which device sits on
+/// which (`/sys/class/net/*/lower_*`: a VLAN on its parent, a bridge on its
+/// ports, a bond on its slaves), and the interfaces file as it is — what a
+/// pending diff's line numbers count in. All of it readable without root.
+const virtPveLiveNetScript = r'''
+echo "@host $(hostname)"
+echo '@addr'; ip -o addr show 2>/dev/null
+echo '@route'; ip -o route show default 2>/dev/null; ip -o -6 route show default 2>/dev/null
+echo '@conn'; ss -Htn state established 2>/dev/null
+echo '@lower'; for d in /sys/class/net/*; do n=${d##*/}; for l in "$d"/lower_*; do [ -e "$l" ] && printf '%s %s\n' "$n" "${l##*/lower_}"; done; done
+echo '@file'; cat /etc/network/interfaces 2>/dev/null
+echo '@end'
+''';
+
+/// What [virtPveLiveNetScript] printed.
+final class VirtPveLiveNet {
+  const VirtPveLiveNet({
+    required this.host,
+    required this.routed,
+    required this.connected,
+    required this.lower,
+    this.interfaces = '',
+  });
+
+  /// The node it was read on (`hostname`, which is a PVE node's name): the
+  /// only node this says anything about.
+  final String host;
+
+  /// The devices a default route (IPv4 or IPv6) goes through.
+  final Set<String> routed;
+
+  /// The devices carrying the local address of an established TCP
+  /// connection — this app's among them, whatever it came through (SSH, the
+  /// agent, a NAT in front of the node).
+  final Set<String> connected;
+
+  /// Each device's lower devices.
+  final Map<String, Set<String>> lower;
+
+  /// `/etc/network/interfaces` as it is now (not the pending `.new`).
+  final String interfaces;
+}
+
+/// [virtPveLiveNetScript]'s output; null when it did not run to the end.
+VirtPveLiveNet? virtPveParseLiveNet(String out) {
+  if (!out.contains('@end')) return null;
+  String? section;
+  var host = '';
+  final addrs = <String, String>{}; // address -> device
+  final routed = <String>{};
+  final local = <String>{};
+  final lower = <String, Set<String>>{};
+  final file = <String>[];
+  String dev(String name) => name.split('@').first;
+  String bare(String addr) {
+    // `[::ffff:10.0.0.1]:22`, `10.0.0.1:22`, `[fe80::1%vmbr0]:22`
+    var a = addr.trim();
+    final port = a.lastIndexOf(':');
+    if (port > 0) a = a.substring(0, port);
+    a = a.replaceAll('[', '').replaceAll(']', '');
+    final zone = a.indexOf('%');
+    if (zone >= 0) a = a.substring(0, zone);
+    if (a.startsWith('::ffff:') && a.contains('.')) a = a.substring(7);
+    return a.toLowerCase();
+  }
+
+  for (final line in out.split('\n')) {
+    final t = line.trim();
+    if (section == '@file' && t != '@end') {
+      file.add(line);
+      continue;
+    }
+    if (t.startsWith('@host ')) {
+      host = t.substring(6).trim();
+      continue;
+    }
+    if (t.startsWith('@')) {
+      section = t;
+      continue;
+    }
+    if (t.isEmpty) continue;
+    final w = t.split(RegExp(r'\s+'));
+    switch (section) {
+      case '@addr' when w.length >= 4 && (w[2] == 'inet' || w[2] == 'inet6'):
+        addrs[w[3].split('/').first.toLowerCase()] = dev(w[1]);
+      case '@route':
+        final at = w.indexOf('dev');
+        if (at >= 0 && at + 1 < w.length) routed.add(dev(w[at + 1]));
+      case '@conn' when w.length >= 3:
+        local.add(bare(w[2]));
+      case '@lower' when w.length == 2:
+        lower.putIfAbsent(w[0], () => {}).add(w[1]);
     }
   }
+  final connected = {
+    for (final a in local)
+      if (addrs[a] case final d? when d != 'lo') d,
+  };
+  if (host.isEmpty) return null;
+  return VirtPveLiveNet(
+    host: host,
+    routed: routed..remove('lo'),
+    connected: connected,
+    lower: lower,
+    interfaces: file.join('\n'),
+  );
+}
+
+/// PVE: the interfaces that carry a node's management traffic, and every
+/// device they sit on — the ones an edit or an apply must not touch.
+///
+/// Where the node answered [live]: the devices its default routes go
+/// through, and the ones carrying the local address of an established TCP
+/// connection — this app's connection among them, whatever it came through
+/// (SSH, the agent, a NAT or a VPN in front of the node), which a match on
+/// the address the app dialled cannot see. Without it: every interface with
+/// an address. Either way, every interface the listing gives a gateway
+/// (`gateway`, and `gateway6` in [gateways6]) — the pending configuration's
+/// default route.
+///
+/// Then down to what each sits on: a VLAN's parent (`vmbr0` under
+/// `vmbr0.10`, where turning VLAN awareness off would cut it), a bridge's
+/// ports, a bond's slaves — from the node's own `lower_*` links and from the
+/// listing (`bridge_ports`, `vlan-raw-device`, a `name.N` VLAN).
+Set<String> virtPveManagementIfaces(
+  Iterable<VirtNetwork> networks, {
+  VirtPveLiveNet? live,
+  Set<String> gateways6 = const {},
+}) {
+  final seeds = <String>{
+    ...gateways6,
+    for (final n in networks)
+      if (n.gateway?.isNotEmpty ?? false) n.name,
+    if (live != null) ...live.routed,
+    if (live != null) ...live.connected,
+    if (live == null)
+      for (final n in networks)
+        if (n.cidrs.isNotEmpty) n.name,
+  };
+  final lower = <String, Set<String>>{
+    for (final e in (live?.lower ?? const <String, Set<String>>{}).entries)
+      e.key: {...e.value},
+  };
+  for (final n in networks) {
+    final under = lower.putIfAbsent(n.name, () => {});
+    under.addAll(n.ports);
+    if (n.vlanDevice case final d? when d.isNotEmpty) under.add(d);
+    final dot = n.name.lastIndexOf('.');
+    if (dot > 0 && int.tryParse(n.name.substring(dot + 1)) != null) {
+      under.add(n.name.substring(0, dot));
+    }
+  }
+  final out = <String>{};
+  final todo = [...seeds];
+  while (todo.isNotEmpty) {
+    final n = todo.removeLast();
+    if (!out.add(n)) continue;
+    todo.addAll(lower[n] ?? const {});
+  }
   return out;
+}
+
+/// The interfaces a PVE pending-configuration diff (the network listing's
+/// `changes`, a unified diff of `/etc/network/interfaces`) touches: the
+/// stanza (`auto`/`iface`/`allow-*` line) each added or removed line is
+/// under. A hunk that starts inside a stanza is placed by its old line
+/// number in [interfaces] (the file as it is now); without that, or before
+/// any stanza, [unknown] says the diff does not tell whose lines they are.
+({Set<String> ifaces, bool unknown}) virtPveDiffIfaces(
+  String diff, {
+  String? interfaces,
+}) {
+  final stanza = RegExp(r'^(?:auto|iface|allow-\S+)\s+(\S+)');
+  final hunk = RegExp(r'^@@ -(\d+)');
+  final before = interfaces?.split('\n');
+  final out = <String>{};
+  var unknown = false;
+  String? current;
+  for (final line in diff.split('\n')) {
+    if (line.startsWith('---') || line.startsWith('+++')) continue;
+    if (line.startsWith('@@')) {
+      current = null;
+      // The last stanza line above where the hunk starts in the old file.
+      final from = int.tryParse(hunk.firstMatch(line)?[1] ?? '');
+      if (before != null && from != null) {
+        for (final l in before.take((from - 1).clamp(0, before.length))) {
+          if (stanza.firstMatch(l.trim()) case final m?) current = m[1];
+        }
+      }
+      continue;
+    }
+    if (line.isEmpty) continue;
+    final mark = line[0];
+    final body = line.substring(1).trim();
+    if (stanza.firstMatch(body) case final m?) current = m[1];
+    if (mark == '+' || mark == '-') {
+      if (body.isEmpty) continue;
+      if (current != null) {
+        // A `#` line is the stanza's too: PVE writes an interface's
+        // `comments` as the lines after its own.
+        out.add(current);
+      } else if (!body.startsWith('#')) {
+        // A comment above every stanza is the file's header.
+        unknown = true;
+      }
+    }
+  }
+  return (ifaces: out, unknown: unknown);
 }
 
 /// The VMID a PVE volume name belongs to; null when it is not one.
@@ -732,15 +913,18 @@ VirtResIssue? virtResourceIssue(
           return VirtResIssue.bridgeInvalid;
         }
       }
-      final c = address?.trim() ?? '';
+      // The address comes without its prefix (as the listing has it), the
+      // prefix on its own: checked as the one CIDR they make.
+      final bare = address?.trim() ?? '';
+      final c = bare.isEmpty ? '' : '$bare/${prefix ?? ''}';
+      (int, int)? subnet;
       if (!pve && mode != 'bridge') {
         if (c.isEmpty) {
           if (mode != 'isolated') return VirtResIssue.cidrInvalid;
         } else {
           final parsed = virtParseCidr(c);
-          if (parsed == null || prefix != null && parsed.$2 != prefix) {
-            return VirtResIssue.cidrInvalid;
-          }
+          if (parsed == null) return VirtResIssue.cidrInvalid;
+          subnet = parsed;
           for (final n in networks) {
             // Its own subnet is not somebody else's.
             if (n.id == network.id) continue;
@@ -769,9 +953,23 @@ VirtResIssue? virtResourceIssue(
         }
       }
       final macs = <String>{};
+      final ips = <int>{};
       for (final h in hosts) {
+        final ip = virtParseIpv4(h.ip);
+        // Handed out on the network's own subnet, off its own addresses:
+        // without one (or outside it) dnsmasq never serves it.
+        final inSubnet = switch (subnet) {
+          (final addr, final pfx) when ip != null =>
+            ip & _mask(pfx) == addr & _mask(pfx) &&
+                ip != addr &&
+                ip != (addr & _mask(pfx)) &&
+                ip != ((addr & _mask(pfx)) | (~_mask(pfx) & 0xFFFFFFFF)),
+          _ => false,
+        };
         if (!RegExp(r'^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$').hasMatch(h.mac) ||
-            virtParseIpv4(h.ip) == null ||
+            ip == null ||
+            (!pve && !inSubnet) ||
+            !ips.add(ip) ||
             !macs.add(h.mac.toLowerCase()) ||
             switch (h.name) {
               final n? when n.isNotEmpty => !_hostName.hasMatch(n),

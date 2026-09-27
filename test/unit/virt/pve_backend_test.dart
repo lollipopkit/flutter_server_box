@@ -15,6 +15,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
+import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/virt/pve_resources.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_backup.dart';
@@ -1194,6 +1195,8 @@ void main() {
         'searchdomain': 'lab.example',
       });
       expect(body['sshkeys'], 'ssh-ed25519%20AAAAC3NzaC1lZDI1NTE5%20me%40x%0A');
+      // Secure Boot is offered, and is the EFI disk with the keys enrolled.
+      expect((await api.backend(token).createOptions()).secureBoot, isTrue);
       // Grown to the size asked for, then started.
       final resize = api.paths.indexOf('PUT /nodes/pve/qemu/107/resize');
       expect(form(api.bodies[resize]), {'disk': 'scsi0', 'size': '16G'});
@@ -2663,6 +2666,29 @@ void main() {
         ),
       );
       expect(sent(api)['usb2'], 'mapping=bt');
+      // A device by vendor and product (the default), or by where it sits.
+      const dongle = VirtHostDevice(id: '0bda:b023', label: 'bt', usbBus: 1, usbPort: '1.2');
+      await pve.changeHardware(vm, hw, const VirtHwAddDevice(kind: VirtHwDeviceKind.usb, host: dongle));
+      expect(sent(api)['usb2'], 'host=0bda:b023');
+      await pve.changeHardware(
+        vm,
+        hw,
+        const VirtHwAddDevice(kind: VirtHwDeviceKind.usb, host: dongle, usbNaming: VirtUsbNaming.address),
+      );
+      expect(sent(api)['usb2'], 'host=1-1.2');
+      // No port from the host: no address to give it by.
+      final e = await _err(
+        pve.changeHardware(
+          vm,
+          hw,
+          const VirtHwAddDevice(
+            kind: VirtHwDeviceKind.usb,
+            host: VirtHostDevice(id: '0bda:b023', label: 'bt', usbBus: 1),
+            usbNaming: VirtUsbNaming.address,
+          ),
+        ),
+      );
+      expect(e.type, VirtErrType.unsupported);
       await pve.changeHardware(
         vm,
         hw,
@@ -2923,6 +2949,106 @@ void main() {
       expect(api.paths, containsAll(['DELETE /nodes/pve/network', 'DELETE /nodes/pve/network/vmbr9']));
     });
 
+    test('an apply touching the management interface is refused', () async {
+      Map<String, Object?> listing(String changes) => {
+        'data': [
+          {
+            'iface': 'vmbr0',
+            'type': 'bridge',
+            'cidr': '192.168.31.20/24',
+            'gateway': '192.168.31.1',
+            'bridge_ports': 'nic0',
+          },
+          {'iface': 'vmbr9', 'type': 'bridge'},
+        ],
+        'changes': changes,
+      };
+      var changes = '--- a\n+++ b\n@@ -1,3 +1,4 @@\n iface vmbr0 inet static\n+\tbridge-vlan-aware yes\n';
+      final api = api0()
+        ..routes['PUT /nodes/pve/network'] = ((_) => _Api.upid)
+        ..routes['GET /nodes/pve/network'] = ((_) => ResponseBody.fromString(
+          jsonEncode(listing(changes)),
+          200,
+          headers: {
+            Headers.contentTypeHeader: [Headers.jsonContentType],
+          },
+        ));
+      final pve = api.backend(token);
+      final e = await _err(pve.manage(const VirtNetworkApply('pve')));
+      expect(e.type, VirtErrType.unsupported);
+      expect(e.message, contains('vmbr0'));
+      expect(api.paths, isNot(contains('PUT /nodes/pve/network')));
+      // A change to its port is one to it too.
+      changes = '--- a\n+++ b\n@@ -1,3 +1,3 @@\n iface nic0 inet manual\n-\tmtu 1500\n+\tmtu 9000\n';
+      expect((await _err(pve.manage(const VirtNetworkApply('pve')))).message, contains('nic0'));
+      // A hunk that does not say whose lines it changes.
+      changes = '--- a\n+++ b\n@@ -3,2 +3,2 @@\n-\tmtu 1500\n+\tmtu 9000\n';
+      expect((await _err(pve.manage(const VirtNetworkApply('pve')))).type, VirtErrType.unsupported);
+      // A comment on it is a change to it too (PVE writes `comments` as
+      // `#` lines in its stanza).
+      changes = '--- a\n+++ b\n@@ -1,3 +1,4 @@\n iface vmbr0 inet static\n \tbridge-fd 0\n+#note\n';
+      expect((await _err(pve.manage(const VirtNetworkApply('pve')))).message, contains('vmbr0'));
+      // Another bridge's change goes through.
+      changes = '--- a\n+++ b\n+auto vmbr9\n+iface vmbr9 inet manual\n';
+      await pve.manage(const VirtNetworkApply('pve'));
+      expect(api.paths, contains('PUT /nodes/pve/network'));
+    });
+
+    test('a bridge edit sends the addresses it has back', () async {
+      final api = api0()
+        ..routes['GET /nodes/pve/network'] = ((_) => [
+          {'iface': 'vmbr0', 'type': 'bridge', 'cidr': '192.168.31.20/24', 'gateway': '192.168.31.1'},
+          {'iface': 'vmbr7', 'type': 'bridge', 'cidr': '10.7.0.1/24', 'cidr6': 'fd07::1/64'},
+        ])
+        ..routes['GET /nodes/pve/network/vmbr7'] = ((_) => {
+          'iface': 'vmbr7',
+          'type': 'bridge',
+          'cidr': '10.7.0.1/24',
+          'cidr6': 'fd07::1/64',
+        })
+        ..routes['PUT /nodes/pve/network/vmbr7'] = ((_) => null);
+      // The node says it is reached through vmbr0; vmbr7 carries nothing
+      // of its own traffic.
+      final pve = api.backend(
+        token,
+        liveNet: '@host pve\n@addr\n4: vmbr0    inet 192.168.31.20/24 scope global vmbr0\n'
+            '5: vmbr7    inet 10.7.0.1/24 scope global vmbr7\n'
+            '@route\ndefault via 192.168.31.1 dev vmbr0\n'
+            '@conn\n0 0 192.168.31.20:22 192.168.31.183:62036\n@lower\n@end\n',
+      );
+      const net = VirtNetwork(id: 'pve/vmbr7', name: 'vmbr7', node: 'pve', mode: 'bridge');
+      // Only the ports: PVE would drop both addresses from a request
+      // without them (`update_network` sets `method` from the request).
+      await pve.manage(const VirtNetworkEditBridge(net, ports: 'nic1'));
+      expect(form(api.bodies[api.paths.lastIndexOf('PUT /nodes/pve/network/vmbr7')]), {
+        'type': 'bridge',
+        'bridge_ports': 'nic1',
+        'cidr': '10.7.0.1/24',
+        'cidr6': 'fd07::1/64',
+      });
+      // A new IPv4 address: that one, and the IPv6 one still.
+      await pve.manage(const VirtNetworkEditBridge(net, cidr: '10.7.1.1/24'));
+      final sent = form(api.bodies[api.paths.lastIndexOf('PUT /nodes/pve/network/vmbr7')]);
+      expect(sent['cidr'], '10.7.1.1/24');
+      expect(sent['cidr6'], 'fd07::1/64');
+      // Cleared: deleted, not sent.
+      await pve.manage(const VirtNetworkEditBridge(net, cidr: ''));
+      final cleared = form(api.bodies[api.paths.lastIndexOf('PUT /nodes/pve/network/vmbr7')]);
+      expect(cleared.containsKey('cidr'), isFalse);
+      expect(cleared['delete'], contains('cidr'));
+      // The management bridge is refused before anything is sent.
+      final e = await _err(
+        pve.manage(
+          const VirtNetworkEditBridge(
+            VirtNetwork(id: 'pve/vmbr0', name: 'vmbr0', node: 'pve', mode: 'bridge'),
+            ports: 'nic1',
+          ),
+        ),
+      );
+      expect(e.type, VirtErrType.unsupported);
+      expect(api.paths, isNot(contains('PUT /nodes/pve/network/vmbr0')));
+    });
+
     test('upload: multipart as pveproxy reads it, the file last; progress; its task', () async {
       final api = api0()
         ..routes['POST /nodes/pve/storage/local/upload'] = ((_) => _Api.upid);
@@ -3016,12 +3142,14 @@ class _Api {
     String? sshKeyId,
     String sshPassword = 'sshpw',
     DateTime Function()? now,
+    String? liveNet,
   }) => PveBackend(
     serverId: 'srv',
     config: config,
     user: user,
     sshKeyId: sshKeyId,
     sshPassword: sshPassword,
+    exec: liveNet == null ? null : () async => _Probe(liveNet),
     connect: (_, _) => throw StateError('no network in this test'),
     adapter: () => _Adapter(this),
     taskPoll: const Duration(milliseconds: 1),
@@ -3180,3 +3308,21 @@ VirtNetwork _bridge(String name) =>
 
 VirtVolume _iso(String id) =>
     VirtVolume(id: id, name: id.split('/').last, content: 'iso');
+
+/// What the node's live network probe printed.
+class _Probe implements ServerExec {
+  _Probe(this.out);
+
+  final String out;
+
+  @override
+  Future<ExecResult> run(
+    String script, {
+    String? entry,
+    Map<String, String>? env,
+    String? stdin,
+    OnExecOutput? onStdout,
+    OnExecOutput? onStderr,
+    Future<void>? cancel,
+  }) async => ExecResult(exitCode: 0, stdout: out, stderr: '');
+}

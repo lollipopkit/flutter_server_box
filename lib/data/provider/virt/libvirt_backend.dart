@@ -596,14 +596,27 @@ class LibvirtBackend implements VirtBackend {
     return path;
   }
 
+  /// Refused before it is sent where the revert would leave the guest
+  /// unable to start (`snap_revert_refusal`: an AppArmor host whose helper
+  /// cannot read the new overlay libvirt names without an extension) — the
+  /// host would fail it after deleting the overlay the guest runs on.
   @override
   Future<void> revertSnapshot(
     VirtGuest guest,
     String name, {
     bool start = false,
-  }) => _action1(
-    ffi.virtSnapshotRevertScript(domain: guest.id, name: name, running: start),
-  );
+  }) async {
+    final why = await _run(
+      ffi.virtSnapCheckScript(domain: guest.id, name: name),
+      ffi.parseVirtSnapRevertRefusal,
+    );
+    if (why != null) {
+      throw VirtErr(type: VirtErrType.unsupported, message: why);
+    }
+    await _action1(
+      ffi.virtSnapshotRevertScript(domain: guest.id, name: name, running: start),
+    );
+  }
 
   /// Refused before it is sent where the host's AppArmor profile would deny
   /// the commit it needs (`snap_delete_refusal`): the host would refuse it
@@ -611,7 +624,7 @@ class LibvirtBackend implements VirtBackend {
   @override
   Future<void> deleteSnapshot(VirtGuest guest, String name) async {
     final why = await _run(
-      ffi.virtSnapDeleteCheckScript(domain: guest.id, name: name),
+      ffi.virtSnapCheckScript(domain: guest.id, name: name),
       ffi.parseVirtSnapDeleteRefusal,
     );
     if (why != null) {
@@ -1271,7 +1284,7 @@ class LibvirtBackend implements VirtBackend {
   }
 
   static Future<String> _parseNetChange({required String raw}) async {
-    ffi.parseVirtNetChange(raw: raw);
+    await ffi.parseVirtNetChange(raw: raw);
     return '';
   }
 
@@ -1854,7 +1867,7 @@ class LibvirtBackend implements VirtBackend {
         ),
       ),
       ({required String raw}) async {
-        ffi.parseVirtHardwareChangeJson(raw: raw);
+        await ffi.parseVirtHardwareChangeJson(raw: raw);
         return '';
       },
       action: true,
@@ -2403,6 +2416,10 @@ class LibvirtBackend implements VirtBackend {
               id: '${u.vendor}:${u.product}',
               label: name(u.vendorName, u.productName, '${u.vendor}:${u.product}'),
               detail: '${u.vendor}:${u.product}',
+              // Where it sits: what passing it through by address takes.
+              usbBus: u.bus,
+              usbDevice: u.device,
+              usbPort: u.port,
             ),
       ],
       pci: [

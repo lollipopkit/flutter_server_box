@@ -1219,7 +1219,7 @@ void _p10LibvirtNetwork(_Agent agent) {
         ),
       );
       expect(refused.type, VirtErrType.actionFailed);
-      expect(refused.message, contains('put back and started again'));
+      expect(refused.message, contains('started again as it ran before'));
       final after = (await w.host.networks()).firstWhere((n) => n.name == other);
       expect(after.active, isTrue, reason: 'the network is never left down');
       expect(after.address, '192.168.251.1');

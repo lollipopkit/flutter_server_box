@@ -59,7 +59,8 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
           ? () => unawaited(_pick(all, switchTo))
           : null,
       actions: [
-        if (net != null && caps.networkEditExisting)
+        // A PVE interface the app must not touch is not offered at all.
+        if (net != null && caps.networkEditExisting && net.managementEditable)
           Btn.icon(
             key: const ValueKey('net:edit'),
             text: l10n.virtNetEdit,
@@ -171,7 +172,7 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
             mono: true,
           ),
         if (net.vlanAware case final v?)
-          _field(Icons.segment, 'VLAN aware', v ? libL10n.enabled : libL10n.disabled),
+          _field(Icons.segment, l10n.virtNetVlanAware, v ? libL10n.enabled : libL10n.disabled),
         if (net.vlanId case final id?)
           _field(Icons.segment, 'VLAN', [id, ?net.vlanDevice].join(' · ')),
         if (net.bondMode case final m?) _field(Icons.merge_type, libL10n.mode, m),
@@ -197,7 +198,11 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
           ),
         if (caps.networkApply && !net.active) _text(l10n.virtNetInactivePve),
         if (caps.networkApply && net.node != null && !net.managementEditable)
-          _text(l10n.virtNetManagementTip),
+          _text(
+            net.mode == 'bridge'
+                ? l10n.virtNetManagementTip
+                : l10n.virtNetPhysicalTip,
+          ),
         if (caps.networkRestart && net.pendingRestart) ...[
           _text(l10n.virtNetEditPending, error: true),
           _actions([
@@ -316,7 +321,9 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
             key: 'net:delete',
             icon: Icons.delete_outline,
             danger: true,
-            onTap: busy || inUse ? null : () => unawaited(_delete(net, caps)),
+            onTap: busy || inUse || !net.managementEditable
+                ? null
+                : () => unawaited(_delete(net, caps)),
           ),
         ]),
       ],
@@ -336,13 +343,9 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
   ///
   /// PVE: a bridge's ports, address, VLAN awareness and autostart, written
   /// into the node's pending configuration — the same pending/apply model
-  /// the app already uses. A bridge carrying the node's management address
-  /// is not offered at all.
+  /// the app already uses. A bridge carrying the node's management traffic
+  /// is not offered at all (the bar has no edit action for it).
   Future<void> _edit(VirtNetwork net) async {
-    if (!net.managementEditable) {
-      Toast.warn(l10n.virtNetManagementIface);
-      return;
-    }
     await showVirtNetworkEdit(
       context,
       ref,
@@ -856,7 +859,7 @@ class _VirtNetworkCreateViewState extends ConsumerState<VirtNetworkCreateView>
                     if (pve) ...[
                       _toggle(
                         Icons.segment,
-                        'VLAN aware',
+                        l10n.virtNetVlanAware,
                         _vlanAware,
                         key: 'net:new:vlan',
                         note: l10n.virtNetVlanTip,
@@ -948,31 +951,41 @@ Future<void> showVirtNetworkEdit(
   required String serverId,
   required VirtNetwork network,
 }) async {
-  // The form publishes what it would send on every rebuild; OK sends that,
-  // and is held back while the host would refuse it.
-  var draft = const _NetworkDraft(null, null);
-  final change = await context.showRoundDialog<VirtResourceChange>(
-    title: l10n.virtNetEdit,
-    child: _VirtNetworkEditForm(
-      serverId: serverId,
-      network: network,
-      onChanged: (d) => draft = d,
-    ),
-    actions: [
-      Btn.cancel(),
-      Btn.ok(
-        onTap: draft.issue != null
-            ? null
-            : () => context.popDialog<VirtResourceChange>(draft.change),
+  // The form publishes what it would send whenever it changes; OK sends
+  // that, and is held back while the host would refuse it.
+  final draft = ValueNotifier(const _NetworkDraft(null, null));
+  final VirtResourceChange? change;
+  try {
+    change = await context.showRoundDialog<VirtResourceChange>(
+      title: l10n.virtNetEdit,
+      child: _VirtNetworkEditForm(
+        serverId: serverId,
+        network: network,
+        draft: draft,
       ),
-    ],
-  );
+      actions: [
+        Btn.cancel(),
+        ValueListenableBuilder(
+          valueListenable: draft,
+          builder: (context, d, _) => Btn.ok(
+            onTap: switch (d) {
+              _NetworkDraft(change: final c?, issue: null) =>
+                () => context.popDialog<VirtResourceChange>(c),
+              _ => null,
+            },
+          ),
+        ),
+      ],
+    );
+  } finally {
+    draft.dispose();
+  }
   if (change == null) return;
   await virtManage(ref, serverId, change);
 }
 
 /// What the edit form would send, and why it cannot: read by the dialog's
-/// OK button, which the form publishes on every rebuild.
+/// OK button, published by the form whenever it changes.
 final class _NetworkDraft {
   const _NetworkDraft(this.change, this.issue);
 
@@ -986,14 +999,14 @@ class _VirtNetworkEditForm extends ConsumerStatefulWidget {
   const _VirtNetworkEditForm({
     required this.serverId,
     required this.network,
-    required this.onChanged,
+    required this.draft,
   });
 
   final String serverId;
   final VirtNetwork network;
 
-  /// Called with what the form would send, every time it changes.
-  final ValueChanged<_NetworkDraft> onChanged;
+  /// Given what the form would send, every time it changes.
+  final ValueNotifier<_NetworkDraft> draft;
 
   @override
   ConsumerState<_VirtNetworkEditForm> createState() =>
@@ -1031,6 +1044,30 @@ class _VirtNetworkEditFormState extends ConsumerState<_VirtNetworkEditForm> {
   bool get _pve => widget.network.node != null;
 
   @override
+  void initState() {
+    super.initState();
+    // After the first frame: the dialog's button is being built with it.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _publish();
+    });
+  }
+
+  /// Every change to the form goes through here, so the OK button follows.
+  @override
+  void setState(VoidCallback fn) {
+    super.setState(fn);
+    _publish();
+  }
+
+  void _publish() => widget.draft.value = _NetworkDraft(_change, _issue);
+
+  /// The address with its prefix, as a CIDR; empty when there is none.
+  String get _cidr {
+    final address = _address.text.trim();
+    return address.isEmpty ? '' : '$address/${_prefix.text.trim()}';
+  }
+
+  @override
   void dispose() {
     for (final f in [
       _bridge,
@@ -1053,7 +1090,7 @@ class _VirtNetworkEditFormState extends ConsumerState<_VirtNetworkEditForm> {
       return VirtNetworkEditBridge(
         widget.network,
         ports: _ports.text.trim(),
-        cidr: _address.text.trim().isEmpty ? '' : _address.text.trim(),
+        cidr: _cidr,
         vlanAware: _vlanAware,
         autostart: _autostart,
       );
@@ -1069,8 +1106,10 @@ class _VirtNetworkEditFormState extends ConsumerState<_VirtNetworkEditForm> {
       dhcpStart: _dhcp && _mode != 'bridge' ? _dhcpStart.text.trim() : null,
       dhcpEnd: _dhcp && _mode != 'bridge' ? _dhcpEnd.text.trim() : null,
       hosts: [
+        // A row left wholly empty is no host; one with anything in it is,
+        // and is checked as one rather than dropped.
         for (final h in _hosts)
-          if (h.mac.text.trim().isNotEmpty)
+          if ([h.mac, h.ip, h.name].any((c) => c.text.trim().isNotEmpty))
             VirtNetHost(
               mac: h.mac.text.trim().toLowerCase(),
               ip: h.ip.text.trim(),
@@ -1082,30 +1121,23 @@ class _VirtNetworkEditFormState extends ConsumerState<_VirtNetworkEditForm> {
   }
 
   /// Whether the running network has to be restarted for what is in the
-  /// form to apply. Only the static hosts do not: `net-update` takes them
-  /// live. A field the form does not show (`bridge` in another mode) is
-  /// compared against what the network is, so turning a switch that is not
-  /// there is never a restart.
+  /// form to apply — the same question `VirtNetEdit::needs_restart` answers
+  /// on the host. The static hosts never do: `net-update` takes them live.
+  /// A field the form does not show (`bridge` in another mode) is compared
+  /// against what the network is, so turning a switch that is not there is
+  /// never a restart.
   bool get _needsRestart {
     final n = widget.network;
     final change = _change;
     if (change is! VirtNetworkEdit) return false;
     final address = change.address?.trim() ?? '';
     final saved = n.address ?? '';
-    final hosts = change.hosts;
     return change.mode != n.mode ||
         (change.mode == 'bridge' && change.bridge != n.bridge) ||
         address != saved ||
         (address.isNotEmpty && change.prefix != n.prefix) ||
         (change.dhcpStart ?? '') != (n.dhcpRange?.$1 ?? '') ||
-        (change.dhcpEnd ?? '') != (n.dhcpRange?.$2 ?? '') ||
-        hosts.length != n.hosts.length ||
-        [
-          for (var i = 0; i < hosts.length; i++)
-            hosts[i].mac == n.hosts[i].mac &&
-                hosts[i].ip == n.hosts[i].ip &&
-                hosts[i].name == n.hosts[i].name,
-        ].any((same) => !same);
+        (change.dhcpEnd ?? '') != (n.dhcpRange?.$2 ?? '');
   }
 
   VirtResIssue? get _issue => virtResourceIssue(
@@ -1117,11 +1149,9 @@ class _VirtNetworkEditFormState extends ConsumerState<_VirtNetworkEditForm> {
   @override
   Widget build(BuildContext context) {
     final issue = _issue;
-    widget.onChanged(_NetworkDraft(_change, issue));
     String? on(Set<VirtResIssue> which) => which.contains(issue)
         ? virtResIssueText(issue, pve: _pve)
         : null;
-    final restarting = !_pve && _restart && widget.network.active;
     return SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1145,7 +1175,7 @@ class _VirtNetworkEditFormState extends ConsumerState<_VirtNetworkEditForm> {
             ),
             _toggle(
               Icons.segment,
-              'VLAN aware',
+              l10n.virtNetVlanAware,
               _vlanAware,
               key: 'net:edit:vlan',
               onChanged: (v) => setState(() => _vlanAware = v),
@@ -1276,7 +1306,7 @@ class _VirtNetworkEditFormState extends ConsumerState<_VirtNetworkEditForm> {
               note: l10n.virtNetEditRestartNote,
               onChanged: (v) => setState(() => _restart = v),
             ),
-          if (issue != null && !restarting)
+          if (issue != null)
             _note(virtResIssueText(issue, pve: _pve) ?? '', error: true),
           if (virtNetworkConfigText(widget.network) case final text?)
             _fold(text),

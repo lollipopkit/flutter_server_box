@@ -12,9 +12,13 @@
 //! `net-define` on an active network replaces the definition only: the
 //! running network keeps its address, its bridge and its dnsmasq until it is
 //! restarted, and a restart cuts every guest on it off. So the restart is
-//! asked for, never assumed, and a network that fails to start on the new
-//! definition is put back on the old one and started again
-//! ([`KEY_NET_ROLLBACK`]) — this never leaves it down.
+//! asked for, never assumed. A restart writes the new definition *before*
+//! stopping anything (a definition the host refuses leaves the running
+//! network as it was), keeps the running network's own XML, and a network
+//! that then fails to start is started again from that XML (`net-create`,
+//! which libvirt 11.3 takes for a persistent network that is down: verified,
+//! the network running exactly as before and still persistent) with the old
+//! definition put back ([`KEY_NET_ROLLBACK`]).
 //!
 //! The definition edited is the one `net-dumpxml` printed, with only the
 //! elements this app writes replaced: everything else in it (an IPv6
@@ -33,8 +37,10 @@ pub const KEY_NET_STEP: &str = "virt.net.step";
 pub const KEY_NET_CONFLICT: &str = "virt.net.conflict";
 /// The network did not start on the new definition; the old one is back.
 pub const KEY_NET_ROLLBACK: &str = "virt.net.rollback";
-/// The old definition was put back and started.
+/// The network was started again as it ran before.
 pub const KEY_NET_RESTORED: &str = "virt.net.restored";
+/// The old definition could not be put back: the new one stays.
+pub const KEY_NET_DEF_KEPT: &str = "virt.net.def_kept";
 
 /// A static DHCP host entry: one address handed to one MAC.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -170,7 +176,12 @@ impl VirtNetEdit {
                 if self.bridge.as_deref().is_none_or(|b| !is_ifname(b)) {
                     return bad("bridge");
                 }
-                if self.address.is_some() || self.prefix.is_some() || self.dhcp_start.is_some() || self.dhcp_end.is_some() {
+                if self.address.is_some()
+                    || self.prefix.is_some()
+                    || self.dhcp_start.is_some()
+                    || self.dhcp_end.is_some()
+                    || !self.hosts.is_empty()
+                {
                     return bad("bridge addressing");
                 }
             }
@@ -192,6 +203,18 @@ impl VirtNetEdit {
                         let broadcast = net | !mask;
                         if addr == net || addr == broadcast {
                             return bad("address");
+                        }
+                        // A static host is handed out on this subnet: one
+                        // outside it, or on the network's own addresses,
+                        // is one dnsmasq never serves.
+                        for h in &self.hosts {
+                            let Ok(ip) = h.ip.parse::<std::net::Ipv4Addr>() else {
+                                return bad("static host");
+                            };
+                            let ip = u32::from(ip);
+                            if ip & mask != net || ip == net || ip == broadcast || ip == addr {
+                                return bad("static host outside the subnet");
+                            }
                         }
                         match (&self.dhcp_start, &self.dhcp_end) {
                             (None, None) => {}
@@ -216,9 +239,13 @@ impl VirtNetEdit {
                         }
                     }
                     (None, None) => {
-                        // A range needs an address to serve it on.
+                        // A range and a static host need an address to be
+                        // served on: without one they would be dropped.
                         if self.dhcp_start.is_some() || self.dhcp_end.is_some() {
                             return bad("dhcp range");
+                        }
+                        if !self.hosts.is_empty() {
+                            return bad("static host without an address");
                         }
                         if self.mode == "nat" || self.mode == "route" {
                             return bad("address");
@@ -229,9 +256,16 @@ impl VirtNetEdit {
             }
             _ => return bad("mode"),
         }
-        for h in &self.hosts {
+        for (i, h) in self.hosts.iter().enumerate() {
             if !is_mac(&h.mac) || !is_ipv4(&h.ip) || h.name.as_deref().is_some_and(|n| !is_host_name(n)) {
                 return bad("static host");
+            }
+            // libvirt refuses a second entry for a MAC or an address.
+            if self.hosts[..i]
+                .iter()
+                .any(|o| o.mac.eq_ignore_ascii_case(&h.mac) || o.ip == h.ip)
+            {
+                return bad("duplicate static host");
             }
         }
         Ok(())
@@ -318,29 +352,15 @@ pub fn parse_net_section(raw: &str) -> Result<VirtNetSection, VirtError> {
     })
 }
 
-/// `node`'s start tag, minus the attributes in `drop`. libvirt prints
-/// `connections=` on an active network's XML, which is a count of the live
-/// interfaces and not part of the definition: written into one it would be
-/// a number that never changes.
-fn start_tag_less(node: roxmltree::Node<'_, '_>, drop: &[&str]) -> String {
-    let mut tag = format!("<{}", node.tag_name().name());
-    for a in node.attributes() {
-        if drop.contains(&a.name()) {
-            continue;
-        }
-        tag.push_str(&format!(" {}='{}'", a.name(), xml_escape(a.value())));
-    }
-    // A `<network/>` with no children of its own comes out self-closing.
-    tag.push_str(if node.first_child().is_none() { "/>" } else { ">" });
-    tag
-}
-
-/// The byte range of `node`'s start tag.
-fn start_tag_range(node: roxmltree::Node<'_, '_>) -> std::ops::Range<usize> {
-    match node.first_child() {
-        Some(c) => node.range().start..c.range().start,
-        None => node.range(),
-    }
+/// `xml` with the attribute `name` of `node` cut out, as the host wrote the
+/// rest: namespace declarations (`xmlns:dnsmasq`) included, which
+/// roxmltree does not list as attributes.
+fn without_attribute(xml: &str, node: roxmltree::Node<'_, '_>, name: &str) -> Option<String> {
+    let a = node.attributes().find(|a| a.name() == name && a.namespace().is_none())?;
+    let r = a.range();
+    // The whitespace before it goes with it.
+    let start = xml[..r.start].trim_end().len();
+    Some(format!("{}{}", &xml[..start], &xml[r.end..]))
 }
 
 /// `base_xml` — the definition `net-dumpxml` printed — with what [edit] sets
@@ -401,10 +421,11 @@ pub fn edit_network_xml(base_xml: &str, edit: &VirtNetEdit) -> Result<String, Vi
 
     // `connections=` counts the live interfaces and belongs to no
     // definition: the one `net-dumpxml` printed would be written as a
-    // number that never changes.
-    let tag = start_tag_less(root, &["connections"]);
-    if tag != xml[start_tag_range(root)] {
-        out[first_line(root)] = Some(tag);
+    // number that never changes. (An `--inactive` read, which is what the
+    // app edits, has none.)
+    if let Some(cut) = without_attribute(xml, root, "connections") {
+        // `xml` starts at `<network`, whose start tag is libvirt's first line.
+        out[0] = cut.lines().next().map(str::to_string);
     }
 
     // <forward>: the mode. A network of its own gets none.
@@ -436,41 +457,36 @@ pub fn edit_network_xml(base_xml: &str, edit: &VirtNetEdit) -> Result<String, Vi
         (None, Some(x)) => added.push(format!("  {x}")),
         (None, None) => {}
     }
-    // <mac>: the device's, which only a network of its own has. libvirt
-    // refuses one on a bridge-mode network ("Unsupported <mac> element in
-    // network … with forward mode='bridge'"), so it goes with the mode.
-    if edit.mode == "bridge"
-        && let Some(mac) = child("mac")
-    {
-        set_element(&mut out, xml, mac, None);
-    }
-
-    // The first IPv4 <ip>: the address, the range and the static hosts. A
-    // second subnet and every IPv6 address are kept.
-    let first4 = root
-        .children()
-        .find(|n| n.is_element() && n.tag_name().name() == "ip" && n.attribute("family") != Some("ipv6"));
-    // A host bridge has the host's own addressing: nothing to write.
-    let address = if edit.mode == "bridge" { None } else { edit.address.as_deref() };
-    match (first4, address) {
-        (Some(ip), Some(address)) => {
-            // The lines the old <ip> took, which the new one takes too —
-            // the element spans from its own line to that of the last
-            // thing under it (a `<dhcp>`, a `<range>`, a `<host>`).
-            let to = ip
-                .descendants()
-                .filter(|n| n.is_element())
-                .map(last_line)
-                .max()
-                .unwrap_or_else(|| last_line(ip));
-            let mut body: Vec<Option<String>> =
-                ip_lines(edit, address).into_iter().map(Some).collect();
-            body.resize(body.len().max(to + 1 - first_line(ip)), None);
-            out.splice(first_line(ip)..=to, body);
+    if edit.mode == "bridge" {
+        // A host bridge has the host's own addressing. libvirt refuses an
+        // `<ip>` (IPv6 too), a `<dns>`, a `<domain>` and a `<mac>` on a
+        // bridge-mode network (`virNetworkDefParseXML`: "Unsupported <…>
+        // element in network … with forward mode='bridge'"), so they go
+        // with the mode.
+        for n in root.children().filter(|n| {
+            n.is_element() && matches!(n.tag_name().name(), "ip" | "dns" | "domain" | "mac")
+        }) {
+            set_element(&mut out, xml, n, None);
         }
-        (Some(ip), None) => set_element(&mut out, xml, ip, None),
-        (None, Some(address)) => added.extend(ip_lines(edit, address)),
-        (None, None) => {}
+    } else {
+        // The first IPv4 <ip>: the address, the first range and the static
+        // hosts. A second subnet and every IPv6 address are kept.
+        let first4 = root.children().find(|n| {
+            n.is_element() && n.tag_name().name() == "ip" && n.attribute("family") != Some("ipv6")
+        });
+        match (first4, edit.address.as_deref()) {
+            (Some(ip), Some(address)) => {
+                let (first, last) = (first_line(ip), last_line(ip));
+                let mut body: Vec<Option<String>> =
+                    ip_element(xml, Some(ip), edit, address).into_iter().map(Some).collect();
+                // The lines it took, padded so later line numbers still hold.
+                body.resize(body.len().max(last + 1 - first), None);
+                out.splice(first..=last, body);
+            }
+            (Some(ip), None) => set_element(&mut out, xml, ip, None),
+            (None, Some(address)) => added.extend(ip_element(xml, None, edit, address)),
+            (None, None) => {}
+        }
     }
 
     let mut lines: Vec<&str> = out.iter().filter_map(|l| l.as_deref()).collect();
@@ -486,25 +502,71 @@ pub fn edit_network_xml(base_xml: &str, edit: &VirtNetEdit) -> Result<String, Vi
     Ok(text)
 }
 
-/// The lines an `<ip>` element is written as.
-fn ip_lines(edit: &VirtNetEdit, address: &str) -> Vec<String> {
+/// The lines the first IPv4 `<ip>` is written as: the address, the prefix,
+/// the first DHCP range and the static hosts from `edit`. Of the element it
+/// replaces (`base`), everything else is kept as the host wrote it — its
+/// other attributes (`localPtr=`), a second range, a range's `<lease>`,
+/// `<tftp>`, `<bootp>`. A kept range outside the new subnet is the host's to
+/// refuse; the definition is written before the network is stopped, so a
+/// refusal leaves it running as it was.
+fn ip_element<'a, 'i>(
+    xml: &str,
+    base: Option<roxmltree::Node<'a, 'i>>,
+    edit: &VirtNetEdit,
+    address: &str,
+) -> Vec<String> {
+    fn elements<'a, 'i>(n: roxmltree::Node<'a, 'i>) -> Vec<roxmltree::Node<'a, 'i>> {
+        n.children().filter(|c| c.is_element()).collect()
+    }
     let e = xml_escape;
     let prefix = edit.prefix.unwrap_or(24);
-    let mut body = vec![format!("  <ip address='{}' prefix='{prefix}'>", e(address))];
-    let range = match (&edit.dhcp_start, &edit.dhcp_end) {
-        (Some(s), Some(end)) => Some((s, end)),
-        _ => None,
-    };
-    if range.is_some() || !edit.hosts.is_empty() {
-        body.push("    <dhcp>".to_string());
-        if let Some((s, end)) = range {
-            body.push(format!("      <range start='{}' end='{}'/>", e(s), e(end)));
+    let src = |n: roxmltree::Node<'_, '_>| xml[n.range()].to_string();
+    let mut attrs = String::new();
+    for a in base.iter().flat_map(|b| b.attributes()) {
+        if !matches!(a.name(), "address" | "prefix" | "netmask") {
+            attrs.push_str(&format!(" {}='{}'", a.name(), e(a.value())));
         }
-        for h in &edit.hosts {
-            body.push(format!("      {}", host_xml(h, false)));
-        }
-        body.push("    </dhcp>".to_string());
     }
+    let mut body = vec![format!("  <ip address='{}' prefix='{prefix}'{attrs}>", e(address))];
+
+    let dhcp = base.and_then(|b| elements(b).into_iter().find(|c| c.tag_name().name() == "dhcp"));
+    let old_ranges: Vec<_> = dhcp
+        .map(|d| elements(d).into_iter().filter(|c| c.tag_name().name() == "range").collect())
+        .unwrap_or_default();
+    let mut dhcp_lines: Vec<String> = Vec::new();
+    if let (Some(s), Some(end)) = (&edit.dhcp_start, &edit.dhcp_end) {
+        let bounds = format!("start='{}' end='{}'", e(s), e(end));
+        // The first range keeps what is under it (a `<lease>`).
+        match old_ranges.first().filter(|r| r.has_children()) {
+            Some(r) => {
+                let inner = &xml[r.first_child().unwrap().range().start..r.last_child().unwrap().range().end];
+                dhcp_lines.push(format!("<range {bounds}>{inner}</range>"));
+            }
+            None => dhcp_lines.push(format!("<range {bounds}/>")),
+        }
+    }
+    dhcp_lines.extend(old_ranges.iter().skip(1).map(|r| src(*r)));
+    dhcp_lines.extend(edit.hosts.iter().map(|h| host_xml(h, false)));
+    // Anything else under <dhcp> (`<bootp>`).
+    if let Some(d) = dhcp {
+        dhcp_lines.extend(
+            elements(d)
+                .into_iter()
+                .filter(|c| !matches!(c.tag_name().name(), "range" | "host"))
+                .map(src),
+        );
+    }
+    let mut children: Vec<String> = Vec::new();
+    if !dhcp_lines.is_empty() {
+        children.push("<dhcp>".to_string());
+        children.extend(dhcp_lines.into_iter().map(|l| format!("  {l}")));
+        children.push("</dhcp>".to_string());
+    }
+    // Anything else under <ip> (`<tftp>`).
+    if let Some(b) = base {
+        children.extend(elements(b).into_iter().filter(|c| c.tag_name().name() != "dhcp").map(src));
+    }
+    body.extend(children.into_iter().map(|c| format!("    {c}")));
     body.push("  </ip>".to_string());
     body
 }
@@ -559,15 +621,58 @@ fn host_xml(host: &VirtNetHost, for_delete: bool) -> String {
 }
 
 /// `define --file` of `xml` through a temporary file, as a step: the script
-/// is on `sh`'s stdin, which no command here may read.
+/// is on `sh`'s stdin, which no command here may read. Its failure ends the
+/// script; see [`define_try`] for one that does not.
 fn define_step(xml: &str) -> String {
+    format!("{}[ \"$r\" = 0 ] || exit 0\n", define_try(xml))
+}
+
+/// [`define_step`] whose failure is left in `$r` for the caller.
+fn define_try(xml: &str) -> String {
     format!(
         "echo '{}'\nf=$(mktemp 2>&1) || {{ printf '%s\\n{RC_PREFIX}1\\n' \"$f\"; f=; r=1; }}\n\
-         if [ -n \"$f\" ]; then printf '%s' {} >\"$f\"; R net-define \"$f\"; rm -f \"$f\"; fi\n\
-         [ \"$r\" = 0 ] || exit 0\n",
+         if [ -n \"$f\" ]; then printf '%s' {} >\"$f\"; R net-define \"$f\"; rm -f \"$f\"; fi\n",
         script::cmd_marker(KEY_NET_STEP),
         shell_quote_unix(xml),
     )
+}
+
+/// The running network's own XML, kept in `$live` (removed when the script
+/// ends) to start it again from if a restart fails. A step.
+fn save_live(n: &str) -> String {
+    format!(
+        "echo '{}'\nlive=$(mktemp 2>&1); r=$?\n\
+         if [ \"$r\" = 0 ]; then trap 'rm -f \"$live\"' EXIT; \
+         virsh --connect {CONNECT_URI} -q net-dumpxml --network {n} </dev/null >\"$live\" 2>&1; r=$?; \
+         [ \"$r\" = 0 ] || cat \"$live\"; else printf '%s\\n' \"$live\"; fi\n\
+         printf '\\n{RC_PREFIX}%s\\n' \"$r\"\n[ \"$r\" = 0 ] || exit 0\n",
+        script::cmd_marker(KEY_NET_STEP),
+    )
+}
+
+/// The network stopped and started again; a start that fails is answered by
+/// `restore` (the definition put back, for an edit) and a `net-create` of
+/// the XML [`save_live`] kept. Ends the script.
+fn restart_steps(n: &str, restore: Option<&str>) -> String {
+    let mut s = step(&format!("net-destroy --network {n}"));
+    s.push_str(&format!(
+        "echo '{}'\nR net-start --network {n}\nif [ \"$r\" = 0 ]; then exit 0; fi\n",
+        script::cmd_marker(KEY_NET_STEP)
+    ));
+    s.push_str(&format!("echo '{}'\n", script::cmd_marker(KEY_NET_ROLLBACK)));
+    if let Some(xml) = restore {
+        s.push_str(&define_try(xml));
+        s.push_str(&format!(
+            "[ \"$r\" = 0 ] || echo '{}'\n",
+            script::cmd_marker(KEY_NET_DEF_KEPT)
+        ));
+    }
+    s.push_str(&format!(
+        "echo '{}'\nR net-create \"$live\"\n[ \"$r\" = 0 ] && echo '{}'\nexit 0\n",
+        script::cmd_marker(KEY_NET_STEP),
+        script::cmd_marker(KEY_NET_RESTORED),
+    ));
+    s
 }
 
 /// The definition a change was made from, read again: a change made
@@ -618,8 +723,8 @@ pub fn net_change_script(op: &VirtNetOp) -> Result<String, VirtError> {
             // else since this was read is not restarted onto it blind.
             s.push_str(&guard(name, base_xml));
         }
-        s.push_str(&step(&format!("net-destroy --network {n}")));
-        s.push_str(&step(&format!("net-start --network {n}")));
+        s.push_str(&save_live(&n));
+        s.push_str(&restart_steps(&n, None));
         return Ok(s);
     }
     let VirtNetOp::Edit { name, edit, base_xml, active, restart, force_restart } = op else {
@@ -654,10 +759,16 @@ pub fn net_change_script(op: &VirtNetOp) -> Result<String, VirtError> {
     // written.
     let flags = if *active { " --live --config" } else { " --config" };
     for h in &delete {
-        s.push_str(&step(&format!("net-update {n} delete ip-dhcp-host {}{flags}", q(&host_xml(h, true)))));
+        s.push_str(&step(&format!(
+            "net-update --network {n} delete ip-dhcp-host {}{flags}",
+            q(&host_xml(h, true))
+        )));
     }
     for h in &add {
-        s.push_str(&step(&format!("net-update {n} add ip-dhcp-host {}{flags}", q(&host_xml(h, false)))));
+        s.push_str(&step(&format!(
+            "net-update --network {n} add ip-dhcp-host {}{flags}",
+            q(&host_xml(h, false))
+        )));
     }
     if !restarts {
         return Ok(s);
@@ -669,17 +780,14 @@ pub fn net_change_script(op: &VirtNetOp) -> Result<String, VirtError> {
         s.push_str(&define_step(&edited));
         return Ok(s);
     }
-    // The network is running and is to take the change now: stopped,
-    // defined, started. A start that fails is answered by putting the
-    // definition it had back and starting that — a network whose guests are
-    // on it is never left down, and neither is one that was already.
-    s.push_str(&step(&format!("net-destroy --network {n}")));
+    // The network is running and is to take the change now. Its own XML
+    // kept and the new definition written while it still runs — a
+    // definition the host refuses stops the script with nothing stopped —
+    // then stopped and started. A start that fails puts the old definition
+    // back and starts the network again as it ran.
+    s.push_str(&save_live(&n));
     s.push_str(&define_step(&edited));
-    s.push_str(&format!("echo '{step}'\nR net-start --network {n}\nif [ \"$r\" = 0 ]; then exit 0; fi\n", step = script::cmd_marker(KEY_NET_STEP)));
-    s.push_str(&format!("echo '{}'\n", script::cmd_marker(KEY_NET_ROLLBACK)));
-    s.push_str(&define_step(base_xml));
-    s.push_str(&step(&format!("net-start --network {n}")));
-    s.push_str(&format!("echo '{}'\n", script::cmd_marker(KEY_NET_RESTORED)));
+    s.push_str(&restart_steps(&n, Some(base_xml)));
     Ok(s)
 }
 
@@ -702,18 +810,20 @@ pub fn parse_net_change(raw: &str) -> Result<(), VirtError> {
     if let Some(e) = &failed
         && segs.iter().any(|(k, _)| k == KEY_NET_ROLLBACK)
     {
-        let restored = segs.iter().any(|(k, _)| k == KEY_NET_RESTORED);
-        return Err(VirtError::Command {
-            message: format!(
-                "{}\n{}",
-                e.message(),
-                if restored {
-                    "The network did not start on the new configuration; the one it had was put back and started again."
-                } else {
-                    "The network did not start on the new configuration, and putting the previous one back failed too."
-                }
-            ),
-        });
+        let has = |key: &str| segs.iter().any(|(k, _)| k == key);
+        let mut message = format!(
+            "{}\n{}",
+            e.message(),
+            if has(KEY_NET_RESTORED) {
+                "The network did not start; it was started again as it ran before."
+            } else {
+                "The network did not start, and starting it again as it ran before failed too: it is down."
+            }
+        );
+        if has(KEY_NET_DEF_KEPT) {
+            message.push_str(" Its saved configuration is the new one: putting the previous one back failed.");
+        }
+        return Err(VirtError::Command { message });
     }
     match failed {
         Some(e) => Err(e),
@@ -812,7 +922,9 @@ mod tests {
         assert!(out.contains("<forward mode='bridge'/>"), "{out}");
         assert!(out.contains("<bridge name='br0'/>"), "{out}");
         assert!(!out.contains("192.168.150.1"), "{out}");
-        assert!(out.contains("<ip family='ipv6'"), "{out}");
+        // Every <ip>, the <mac>: libvirt refuses them in this mode.
+        assert!(!out.contains("<ip"), "{out}");
+        assert!(!out.contains("<mac"), "{out}");
 
         // Out of bridge mode again: libvirt's own device comes back.
         let bridged = "<network>\n  <name>b</name>\n  <forward mode='bridge'/>\n  <bridge name='br0'/>\n  <ip family='ipv6' address='fd00::1' prefix='64'/>\n</network>\n";
@@ -829,6 +941,53 @@ mod tests {
         let out = edit_network_xml(BASE, &none).unwrap();
         assert!(!out.contains("<ip address"), "{out}");
         assert!(out.contains("<ip family='ipv6'"), "{out}");
+    }
+
+    /// What the form does not edit stays: a second range, a range's lease,
+    /// `<tftp>`, `<bootp>`, `localPtr=`, a namespace declaration, and — in
+    /// a mode that allows them — `<dns>` and `<domain>`. A bridge-mode edit
+    /// drops the ones libvirt refuses there.
+    #[test]
+    fn edits_keep_the_rest_of_the_ip() {
+        let base = "<network xmlns:dnsmasq='http://libvirt.org/schemas/network/dnsmasq/1.0'>\n  <name>lab</name>\n  <uuid>0d1c</uuid>\n  <forward mode='nat'/>\n  <bridge name='virbr1' stp='on' delay='0'/>\n  <mac address='52:54:00:53:b8:f5'/>\n  <domain name='lab.test' localOnly='yes'/>\n  <dns>\n    <host ip='192.168.150.1'>\n      <hostname>gw</hostname>\n    </host>\n  </dns>\n  <ip address='192.168.150.1' netmask='255.255.255.0' localPtr='yes'>\n    <tftp root='/srv/tftp'/>\n    <dhcp>\n      <range start='192.168.150.100' end='192.168.150.150'>\n        <lease expiry='1' unit='hours'/>\n      </range>\n      <range start='192.168.150.160' end='192.168.150.170'/>\n      <host mac='52:54:00:aa:bb:01' ip='192.168.150.10'/>\n      <bootp file='pxelinux.0'/>\n    </dhcp>\n  </ip>\n  <dnsmasq:options>\n    <dnsmasq:option value='log-queries'/>\n  </dnsmasq:options>\n</network>\n";
+        let mut e = edit("nat");
+        e.address = Some("192.168.150.1".into());
+        e.prefix = Some(24);
+        e.dhcp_start = Some("192.168.150.110".into());
+        e.dhcp_end = Some("192.168.150.140".into());
+        e.hosts = vec![VirtNetHost { mac: "52:54:00:aa:bb:02".into(), ip: "192.168.150.11".into(), name: None }];
+        let out = edit_network_xml(base, &e).unwrap();
+        for kept in [
+            "xmlns:dnsmasq='http://libvirt.org/schemas/network/dnsmasq/1.0'",
+            "<dnsmasq:option value='log-queries'/>",
+            "localPtr='yes'",
+            "<tftp root='/srv/tftp'/>",
+            "<lease expiry='1' unit='hours'/>",
+            "<range start='192.168.150.160' end='192.168.150.170'/>",
+            "<bootp file='pxelinux.0'/>",
+            "<domain name='lab.test' localOnly='yes'/>",
+            "<hostname>gw</hostname>",
+        ] {
+            assert!(out.contains(kept), "{kept}\n{out}");
+        }
+        assert!(out.contains("<range start='192.168.150.110' end='192.168.150.140'>"), "{out}");
+        assert!(out.contains("<ip address='192.168.150.1' prefix='24' localPtr='yes'>"), "{out}");
+        assert!(!out.contains("netmask="), "{out}");
+        // The hosts are the edit's.
+        assert!(out.contains("<host mac='52:54:00:aa:bb:02' ip='192.168.150.11'/>"), "{out}");
+        assert!(!out.contains("52:54:00:aa:bb:01"), "{out}");
+        let back = section(&out);
+        assert_eq!(back.dhcp_start.as_deref(), Some("192.168.150.110"));
+        assert_eq!(back.prefix, Some(24));
+
+        // To a host bridge: what libvirt refuses there goes.
+        let mut br = edit("bridge");
+        br.bridge = Some("br0".into());
+        let out = edit_network_xml(base, &br).unwrap();
+        for gone in ["<ip", "<dns>", "<domain", "<mac", "stp="] {
+            assert!(!out.contains(gone), "{gone}\n{out}");
+        }
+        assert!(out.contains("<dnsmasq:option value='log-queries'/>"), "{out}");
     }
 
     #[test]
@@ -917,13 +1076,38 @@ mod tests {
         br.bridge = Some("br0; id".into());
         assert!(br.check().is_err());
         // Static hosts.
+        let host = |mac: &str, ip: &str, name: Option<&str>| VirtNetHost {
+            mac: mac.into(),
+            ip: ip.into(),
+            name: name.map(str::to_string),
+        };
         let mut h = edit("isolated");
-        h.hosts = vec![VirtNetHost { mac: "nope".into(), ip: "10.0.0.5".into(), name: None }];
+        h.address = Some("10.0.0.1".into());
+        h.prefix = Some(24);
+        h.hosts = vec![host("nope", "10.0.0.5", None)];
         assert!(h.check().is_err());
-        h.hosts = vec![VirtNetHost { mac: "52:54:00:aa:bb:01".into(), ip: "10.0.0.5".into(), name: Some("a b".into()) }];
+        h.hosts = vec![host("52:54:00:aa:bb:01", "10.0.0.5", Some("a b"))];
         assert!(h.check().is_err());
-        h.hosts = vec![VirtNetHost { mac: "52:54:00:aa:bb:01".into(), ip: "10.0.0.5".into(), name: Some("h1".into()) }];
+        h.hosts = vec![host("52:54:00:aa:bb:01", "10.0.0.5", Some("h1"))];
         assert!(h.check().is_ok());
+        // Outside the subnet, on its own addresses, or twice.
+        for ip in ["8.8.8.8", "10.0.0.0", "10.0.0.255", "10.0.0.1"] {
+            h.hosts = vec![host("52:54:00:aa:bb:01", ip, None)];
+            assert!(h.check().is_err(), "{ip}");
+        }
+        h.hosts = vec![host("52:54:00:aa:bb:01", "10.0.0.5", None), host("52:54:00:AA:BB:01", "10.0.0.6", None)];
+        assert!(h.check().is_err());
+        h.hosts = vec![host("52:54:00:aa:bb:01", "10.0.0.5", None), host("52:54:00:aa:bb:02", "10.0.0.5", None)];
+        assert!(h.check().is_err());
+        // Without an address they would be dropped: refused. So on a bridge.
+        h.address = None;
+        h.prefix = None;
+        h.hosts = vec![host("52:54:00:aa:bb:01", "10.0.0.5", None)];
+        assert!(h.check().is_err());
+        let mut br = edit("bridge");
+        br.bridge = Some("br0".into());
+        br.hosts = h.hosts.clone();
+        assert!(br.check().is_err());
         // A mode this app does not write, and an address a NAT needs.
         assert!(edit("open").check().is_err());
         let mut nat = edit("nat");
@@ -1014,8 +1198,12 @@ mod tests {
             base_xml: String::new(),
         })
         .unwrap();
-        assert!(!bare.contains("net-dumpxml"), "{bare}");
+        // (The running network's own XML is still read, to start it again
+        // from if the start fails.)
+        assert!(!bare.contains("net-dumpxml --inactive"), "{bare}");
+        assert!(bare.contains("net-dumpxml --network 'lab'"), "{bare}");
         assert!(bare.contains("net-destroy"), "{bare}");
+        assert!(bare.contains("net-create \"$live\""), "{bare}");
 
         // `force_restart` on an edit whose definition is already what the
         // definition says: it is put on the running network, and the
@@ -1078,7 +1266,19 @@ mod tests {
         );
         let e = parse_net_change(&raw).unwrap_err();
         assert!(e.message().contains("failed to start network lab"), "{e:?}");
-        assert!(e.message().contains("put back and started again"), "{e:?}");
+        assert!(e.message().contains("started again as it ran before"), "{e:?}");
+        assert!(!e.message().contains("saved configuration"), "{e:?}");
+        // ... with the old definition refused on the way back
+        let raw = format!(
+            "{}{}{}\n{}\n{}",
+            step("", 0),
+            step("error: failed to start network lab", 1),
+            script::cmd_marker(KEY_NET_ROLLBACK),
+            script::cmd_marker(KEY_NET_DEF_KEPT),
+            script::cmd_marker(KEY_NET_RESTORED),
+        );
+        let e = parse_net_change(&raw).unwrap_err();
+        assert!(e.message().contains("saved configuration is the new one"), "{e:?}");
         // ... and the rollback itself failed
         let raw = format!(
             "{}{}{}",
@@ -1087,6 +1287,6 @@ mod tests {
             script::cmd_marker(KEY_NET_ROLLBACK),
         );
         let e = parse_net_change(&raw).unwrap_err();
-        assert!(e.message().contains("failed too"), "{e:?}");
+        assert!(e.message().contains("it is down"), "{e:?}");
     }
 }

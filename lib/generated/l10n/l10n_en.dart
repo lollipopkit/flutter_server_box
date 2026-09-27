@@ -5159,9 +5159,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'The guests on it lose their network while it restarts.';
 
   @override
-  String get virtNetEditSave => 'Save to the definition';
-
-  @override
   String get virtNetEditPending =>
       'The definition has a change the running network is not on yet.';
 
@@ -5207,13 +5204,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get virtNetManagementTip =>
-      'It carries the host\'s management address: the app does not edit it.';
+      'It carries the host\'s management traffic, or sits under an interface that does: the app does not edit it.';
 
   @override
-  String get virtNetIfname => 'Interface';
+  String get virtNetPhysicalTip =>
+      'A physical interface is the host\'s own: the app edits bridges only.';
 
   @override
-  String get virtNetAddressCleared => 'cleared';
+  String get virtNetVlanAware => 'VLAN aware';
 
   @override
   String get virtNetPveEditNote =>
@@ -5234,9 +5232,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Several, separated by a space; resolv.conf keeps the first few.';
 
   @override
-  String get virtCiNics => 'Interfaces';
-
-  @override
   String virtCiNicsTip(int count) {
     return '$count NICs in the seed\'s network config; the form edits the first.';
   }
@@ -5246,9 +5241,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get virtUsbByAddress => 'By address';
-
-  @override
-  String get virtUsbAddress => 'Bus and device';
 
   @override
   String get virtUsbAddressTip =>

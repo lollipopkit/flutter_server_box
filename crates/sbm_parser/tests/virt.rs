@@ -709,17 +709,13 @@ fn firmware_descriptors_of_a_real_host() {
 fn live_xml_as_a_definition() {
     let live = fixture("dumpxml_revert_live.xml");
     let expected = fixture("dumpxml_revert_definition.xml");
-    let nvram = live
-        .lines()
-        .find(|l| l.contains("<nvram"))
-        .map(|l| l.trim_end().to_string());
-    let made = virt::definition_of_live_xml(&live, nvram.as_deref()).unwrap();
+    // The definition the host kept is what the expected output is (it was
+    // defined on that host and accepted): made from it, the running XML
+    // comes back as exactly that.
+    let made = virt::definition_of_live_xml(&live, &expected).unwrap();
     assert_eq!(made.trim_end(), expected.trim_end());
     // Every time, not just once: the edit is a function of the two.
-    assert_eq!(
-        virt::definition_of_live_xml(&live, nvram.as_deref()).unwrap(),
-        made
-    );
+    assert_eq!(virt::definition_of_live_xml(&live, &expected).unwrap(), made);
     // Readable as a domain, and what it is:
     let hw = virt::parse_hw_xml(&made, &[]).unwrap();
     assert!(hw.disks.iter().any(|d| d.target == "vda"));
@@ -733,33 +729,68 @@ fn live_xml_as_a_definition() {
             "{name} is still there"
         );
     }
-    // The NVRAM element and its path are exactly as the definition had them.
-    let nv = root
-        .descendants()
-        .find(|n| n.has_tag_name("nvram"))
-        .expect("the NVRAM element is kept");
-    assert_eq!(
-        nv.text().map(str::trim),
-        Some("/var/lib/libvirt/qemu/nvram/sbxe2e-dom_VARS.fd")
-    );
-    assert_eq!(nv.attribute("template"), Some("/usr/share/OVMF/OVMF_VARS_4M.ms.fd"));
-    // A CPU's `check` goes; a BIOS domain without one keeps nothing odd.
-    let cpu = root.descendants().find(|n| n.has_tag_name("cpu")).unwrap();
-    assert_eq!(cpu.attribute("check"), None);
-    // The CPU's own feature list goes; the firmware's `<os><firmware>`
-    // features are the definition's and stay.
-    assert!(
-        cpu.children()
-            .filter(|n| n.is_element())
-            .all(|n| n.has_tag_name("model"))
-    );
-    assert!(root.descendants().any(|n| n.has_tag_name("firmware")));
-    // The disk's runtime index goes with them.
     assert!(
         root.descendants()
             .filter(|n| n.has_tag_name("source"))
             .all(|n| n.attribute("index").is_none())
     );
+
+    // What the definition has that the running XML says otherwise: its own
+    // <nvram> path, a host-model CPU (printed running as `custom` with the
+    // host's model and features), a CPU feature of the user's, a domain
+    // seclabel opted out, a disk's `relabel='no'` and a user alias.
+    let definition = expected
+        .replace(
+            "/var/lib/libvirt/qemu/nvram/sbxe2e-dom_VARS.fd",
+            "/var/lib/libvirt/qemu/nvram/other_VARS.fd",
+        )
+        .replacen(
+            "</devices>",
+            "</devices>\n  <seclabel type='none'/>",
+            1,
+        );
+    let def_cpu_start = definition.find("<cpu").unwrap();
+    let def_cpu_end = definition.find("</cpu>").map(|i| i + "</cpu>".len()).unwrap_or_else(|| {
+        definition[def_cpu_start..].find("/>").unwrap() + def_cpu_start + 2
+    });
+    let definition = format!(
+        "{}<cpu mode='host-model' check='partial'>\n    <feature policy='disable' name='vmx'/>\n  </cpu>{}",
+        &definition[..def_cpu_start],
+        &definition[def_cpu_end..]
+    );
+    let live = live.replacen(
+        "<source file=",
+        "<seclabel model='dac' relabel='no'/>\n      <source file=",
+        1,
+    );
+    let live = live.replacen("<alias name='virtio-disk0'/>", "<alias name='ua-boot'/>", 1);
+    let live = live.replacen(
+        "</cpu>",
+        "  <topology sockets='1' dies='1' clusters='1' cores='2' threads='1'/>\n  </cpu>",
+        1,
+    );
+    let made = virt::definition_of_live_xml(&live, &definition).unwrap();
+    let doc = roxmltree::Document::parse(&made).unwrap();
+    let root = doc.root_element();
+    let cpu = root.children().find(|n| n.has_tag_name("cpu")).unwrap();
+    assert_eq!(cpu.attribute("mode"), Some("host-model"), "{made}");
+    assert_eq!(cpu.attribute("check"), Some("partial"), "{made}");
+    assert!(made.contains("<feature policy='disable' name='vmx'/>"), "{made}");
+    // The running topology: what a pending change moves.
+    let topo = cpu.children().find(|n| n.has_tag_name("topology")).unwrap();
+    assert_eq!(topo.attribute("cores"), Some("2"), "{made}");
+    assert!(made.contains("/var/lib/libvirt/qemu/nvram/other_VARS.fd"), "{made}");
+    assert!(root.children().any(|n| n.has_tag_name("seclabel") && n.attribute("type") == Some("none")), "{made}");
+    assert!(made.contains("<seclabel model='dac' relabel='no'/>"), "{made}");
+    assert!(made.contains("<alias name='ua-boot'/>"), "{made}");
+    assert!(!made.contains("libvirt-"), "the running label goes: {made}");
+
+    // A namespace the domain declares is kept.
+    let ns = live.replacen("<domain type='kvm'", "<domain type='kvm' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'", 1);
+    let made = virt::definition_of_live_xml(&ns, &expected).unwrap();
+    assert!(made.contains("xmlns:qemu="), "{made}");
+    assert!(!made.contains("<domain type='kvm' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0' id="), "{made}");
+    assert_eq!(roxmltree::Document::parse(&made).unwrap().root_element().attribute("id"), None);
 
     // A definition without an NVRAM element: the live one goes, and nothing
     // is put in its place.
@@ -767,13 +798,36 @@ fn live_xml_as_a_definition() {
         "    <nvram template='/usr/share/OVMF/OVMF_VARS_4M.ms.fd' templateFormat='raw' format='raw'>/var/lib/libvirt/qemu/nvram/sbxe2e-dom_VARS.fd</nvram>\n",
         "",
     );
-    let made = virt::definition_of_live_xml(&bios, None).unwrap();
+    let bios_def = expected.replace(
+        "    <nvram template='/usr/share/OVMF/OVMF_VARS_4M.ms.fd' templateFormat='raw' format='raw'>/var/lib/libvirt/qemu/nvram/sbxe2e-dom_VARS.fd</nvram>\n",
+        "",
+    );
+    let made = virt::definition_of_live_xml(&bios, &bios_def).unwrap();
     assert!(!made.contains("<nvram"), "{made}");
     assert!(!made.contains("resource"), "{made}");
     // Not a domain at all.
-    assert!(virt::definition_of_live_xml("not xml", None).is_err());
+    assert!(virt::definition_of_live_xml("not xml", "<domain/>").is_err());
     // An empty one is readable and comes out empty: nothing to write.
-    assert_eq!(virt::definition_of_live_xml("<domain/>", None).unwrap(), "<domain/>\n");
+    assert_eq!(virt::definition_of_live_xml("<domain/>", "<domain/>").unwrap(), "<domain/>\n");
+}
+
+/// Discarding the pending changes stops where the running XML is not the
+/// running domain's any more: stopped and started since, it runs the
+/// definition, and writing the old running XML back would reverse it.
+#[test]
+fn a_revert_checks_the_running_domain_is_the_one_read() {
+    let live = fixture("dumpxml_revert_live.xml");
+    let definition = fixture("dumpxml_revert_definition.xml");
+    let change = serde_json::json!({"op": "revert_live", "live_xml": live});
+    let change: virt::VirtHwChange = serde_json::from_value(change).unwrap();
+    let s = virt::hardware_change_script("dom", true, Some(&definition), &change).unwrap();
+    let id = roxmltree::Document::parse(&live).unwrap().root_element().attribute("id").unwrap().to_string();
+    assert!(s.contains("domid --domain 'dom'"), "{s}");
+    assert!(s.contains(&format!("if [ \"$id\" != '{id}' ]")), "{s}");
+    // The id is checked before anything is defined.
+    assert!(s.find("domid").unwrap() < s.find("define").unwrap(), "{s}");
+    // Not running: nothing to revert to.
+    assert!(virt::hardware_change_script("dom", false, Some(&definition), &change).is_err());
 }
 
 /// A definition-only edit writes the saved definition, so what the listing
@@ -2869,8 +2923,8 @@ fn snap_delete_refused_where_apparmor_denies_the_commit() {
 /// The check script under sh: a hostile name stays one word, and only the
 /// profile's `deny` lines are printed.
 #[test]
-fn snap_delete_check_script_quotes_and_filters() {
-    let s = virt_snapshot::snap_delete_check_script("vm'x", "a b'c");
+fn snap_check_script_quotes_and_filters() {
+    let s = virt_snapshot::snap_check_script("vm'x", "a b'c");
     assert!(s.contains("snapshot-dumpxml --domain 'vm'\\''x' --snapshotname 'a b'\\''c'"), "{s}");
     assert!(s.contains("grep -F 'deny \"'"), "{s}");
     // The app names a domain by its UUID, which `domuuid` refuses (captured:
@@ -2878,4 +2932,157 @@ fn snap_delete_check_script_quotes_and_filters() {
     // `dominfo`.
     assert!(!s.contains("domuuid"), "{s}");
     assert!(s.contains("sed -n 's/^UUID: *//p'"), "{s}");
+}
+
+// ---------------------------------------------------------------------------
+// Network editing: what the scripts do when a step is refused
+// ---------------------------------------------------------------------------
+
+/// A fake virsh for the network scripts: logs each command, prints the
+/// definition it was given for `net-dumpxml`, and refuses the commands
+/// listed one per line in `fail`.
+#[cfg(unix)]
+fn net_stub(tag: &str, base: &str, fail: &[&str]) -> PathBuf {
+    let d = std::env::temp_dir().join(format!("sbm_virt_net_{tag}_{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&d);
+    std::fs::create_dir_all(&d).unwrap();
+    std::fs::write(d.join("base.xml"), base).unwrap();
+    std::fs::write(d.join("fail"), fail.join("\n") + "\n").unwrap();
+    let stub = r#"#!/bin/sh
+dir="$(dirname "$0")"
+shift 3
+echo "$1" >> "$dir/log"
+if grep -qx "$1" "$dir/fail"; then echo "error: $1 refused" >&2; exit 1; fi
+case "$1" in
+  net-dumpxml) cat "$dir/base.xml" ;;
+esac
+"#;
+    let path = d.join("virsh");
+    std::fs::write(&path, stub).unwrap();
+    Command::new("chmod").arg("+x").arg(&path).status().unwrap();
+    d
+}
+
+#[cfg(unix)]
+fn net_edit_op(base: &str, restart: bool) -> sbm_parser::virt_net::VirtNetOp {
+    let mut edit = sbm_parser::virt_net::VirtNetEdit {
+        mode: "nat".into(),
+        ..Default::default()
+    };
+    edit.address = Some("10.30.0.1".into());
+    edit.prefix = Some(24);
+    sbm_parser::virt_net::VirtNetOp::Edit {
+        name: "lab".into(),
+        edit,
+        base_xml: base.into(),
+        active: true,
+        restart,
+        force_restart: false,
+    }
+}
+
+/// A restart never leaves the network down on a refusal: a definition the
+/// host refuses stops everything before the network is stopped, and a start
+/// that fails is answered by the old definition and a `net-create` of the
+/// running network's own XML.
+#[cfg(unix)]
+#[test]
+fn a_network_restart_is_undone_on_every_refusal() {
+    use sbm_parser::virt_net::{net_change_script, parse_net_change};
+    let base = "<network>\n  <name>lab</name>\n  <forward mode='nat'/>\n  <ip address='10.20.0.1' prefix='24'/>\n</network>";
+    let log = |d: &PathBuf| std::fs::read_to_string(d.join("log")).unwrap_or_default();
+    let script = net_change_script(&net_edit_op(base, true)).unwrap();
+
+    // Everything goes through.
+    let d = net_stub("ok", base, &[]);
+    let path = format!("{}:/usr/bin:/bin", d.display());
+    assert_eq!(parse_net_change(&run_sh(&script, &path)), Ok(()));
+    assert_eq!(log(&d), "net-dumpxml\nnet-dumpxml\nnet-define\nnet-destroy\nnet-start\n");
+
+    // The new definition refused: nothing is stopped.
+    let d = net_stub("define", base, &["net-define"]);
+    let path = format!("{}:/usr/bin:/bin", d.display());
+    let e = parse_net_change(&run_sh(&script, &path)).unwrap_err();
+    assert!(e.message().contains("net-define refused"), "{e:?}");
+    assert!(!log(&d).contains("net-destroy"), "{}", log(&d));
+
+    // The start refused: the old definition back, the running XML created.
+    let d = net_stub("start", base, &["net-start"]);
+    let path = format!("{}:/usr/bin:/bin", d.display());
+    let e = parse_net_change(&run_sh(&script, &path)).unwrap_err();
+    assert!(e.message().contains("started again as it ran before"), "{e:?}");
+    assert_eq!(
+        log(&d),
+        "net-dumpxml\nnet-dumpxml\nnet-define\nnet-destroy\nnet-start\nnet-define\nnet-create\n"
+    );
+
+    // ... and the way back refused too: said so, not hidden.
+    let d = net_stub("down", base, &["net-start", "net-create"]);
+    let path = format!("{}:/usr/bin:/bin", d.display());
+    let e = parse_net_change(&run_sh(&script, &path)).unwrap_err();
+    assert!(e.message().contains("it is down"), "{e:?}");
+
+    // A restart of its own: the same way back, with no definition written.
+    let restart = net_change_script(&sbm_parser::virt_net::VirtNetOp::Restart {
+        name: "lab".into(),
+        base_xml: base.into(),
+    })
+    .unwrap();
+    let d = net_stub("restart", base, &["net-start"]);
+    let path = format!("{}:/usr/bin:/bin", d.display());
+    let e = parse_net_change(&run_sh(&restart, &path)).unwrap_err();
+    assert!(e.message().contains("started again as it ran before"), "{e:?}");
+    assert_eq!(log(&d), "net-dumpxml\nnet-dumpxml\nnet-destroy\nnet-start\nnet-create\n");
+    let _ = std::fs::remove_dir_all(&d);
+}
+
+/// Secure Boot in the create form: both firmware features on, so libvirt
+/// autoselects a firmware with the vendor's keys, and SMM with them. Off, or
+/// on BIOS, it is what it always was.
+#[test]
+fn create_with_secure_boot() {
+    let mut spec = create_spec("sb");
+    spec.efi = true;
+    let off = virt::domain_xml(&spec);
+    assert!(off.contains("<feature enabled='no' name='secure-boot'/>"), "{off}");
+    assert!(!off.contains("<smm"), "{off}");
+    spec.secure_boot = true;
+    let on = virt::domain_xml(&spec);
+    assert!(on.contains("<feature enabled='yes' name='enrolled-keys'/><feature enabled='yes' name='secure-boot'/>"), "{on}");
+    assert!(on.contains("<smm state='on'/>"), "{on}");
+    // What the hardware view reads back from it.
+    let hw = virt::parse_hw_xml(&on, &[]).unwrap();
+    assert!(hw.efi && hw.secure_boot);
+    assert!(virt::define_script(&spec).is_ok());
+    // Without UEFI, or on a machine without SMM: refused before a host.
+    spec.efi = false;
+    assert!(virt::define_script(&spec).is_err());
+    spec.efi = true;
+    spec.host.machine = "pc-i440fx-10.0".into();
+    assert!(virt::define_script(&spec).is_err());
+}
+
+/// A revert on an AppArmor host puts the guest on a new file named without
+/// a known extension beside the kept one: outside the directories
+/// `virt-aa-helper` reads any name in, it would not start. The captured
+/// chains are in `/var/lib/libvirt/sbxe2e-exp`, which is outside them.
+#[test]
+fn snap_revert_refused_where_apparmor_cannot_read_the_new_file() {
+    for f in ["script_snap_delete_running_denied.txt", "script_snap_delete_shut_off.txt"] {
+        let why = virt_snapshot::snap_revert_refusal(&fixture(f)).unwrap().unwrap();
+        assert!(why.contains("beside /var/lib/libvirt/sbxe2e-exp/"), "{f}: {why}");
+        // Moved into the default pool's directory: nothing to refuse.
+        let images = fixture(f).replace("/var/lib/libvirt/sbxe2e-exp/", "/var/lib/libvirt/images/sbxe2e-exp/");
+        assert_eq!(virt_snapshot::snap_revert_refusal(&images), Ok(None), "{f}");
+        // Another security driver: nothing to refuse either.
+        let selinux = fixture(f)
+            .replace("Security model: apparmor", "Security model: selinux")
+            .replace("<model>apparmor</model>", "<model>selinux</model>");
+        assert_eq!(virt_snapshot::snap_revert_refusal(&selinux), Ok(None), "{f}");
+    }
+    // Under /srv, /opt, a home directory: read whatever the name.
+    for dir in ["/srv/vms/", "/opt/vm/", "/home/me/vms/", "/root/vms/"] {
+        let moved = fixture("script_snap_delete_running_clear.txt").replace("/var/lib/libvirt/sbxe2e-exp/", dir);
+        assert_eq!(virt_snapshot::snap_revert_refusal(&moved), Ok(None), "{dir}");
+    }
 }

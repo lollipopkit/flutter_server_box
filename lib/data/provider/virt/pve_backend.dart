@@ -12,6 +12,7 @@ import 'package:server_box/core/utils/server_tcp.dart';
 import 'package:server_box/core/utils/version.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
+import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/virt/pve_resources.dart';
 import 'package:server_box/data/model/virt/virt.dart';
@@ -24,6 +25,7 @@ import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/model/virt/virt_manage.dart';
 import 'package:server_box/data/model/virt/virt_rates.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
+import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/virt/backend.dart';
 import 'package:server_box/data/res/store.dart';
 
@@ -73,6 +75,7 @@ class PveBackend implements VirtBackend {
     this.sshKeyId,
     this.sshPassword,
     this.securityContext,
+    Future<ServerExec> Function()? exec,
     void Function(String fingerprint)? onCertConfirmed,
     void Function()? onClose,
     @visibleForTesting HttpClientAdapter Function()? adapter,
@@ -83,6 +86,7 @@ class PveBackend implements VirtBackend {
        _connect = connect,
        _onCertConfirmed = onCertConfirmed,
        _onClose = onClose,
+       _exec = exec,
        _adapter = adapter,
        _now = now ?? DateTime.now;
 
@@ -97,6 +101,7 @@ class PveBackend implements VirtBackend {
       user: spi.ssh?.user,
       sshKeyId: spi.ssh?.keyId,
       sshPassword: spi.ssh?.pwd,
+      exec: () => ref.read(serverProvider(spi.id).notifier).ensureExec(),
       onClose: dialer.close,
       onCertConfirmed: (fingerprint) {
         // Re-read rather than writing this backend's copy back: the editor
@@ -936,6 +941,10 @@ class PveBackend implements VirtBackend {
       buses: virtPveCreateBuses,
       nicModels: virtCreateNicModels,
       uefi: true,
+      // Every 4m EFI disk runs PVE's `OVMF_CODE_4M.secboot.fd`; what turns
+      // Secure Boot on is the variables template with the keys enrolled
+      // (`pre-enrolled-keys=1`, `PVE::QemuServer::OVMF`, 9.2.2).
+      secureBoot: true,
       tpm: true,
       cloudImages:
           release == null || !isVersionLessThan(release, importContentSince),
@@ -1959,7 +1968,7 @@ class PveBackend implements VirtBackend {
           await _setConfig(guest, {
             'vga': [gpu, if (memory != null && gpu != 'none') 'memory=$memory'].join(','),
           }, digest: digest);
-        case VirtHwAddDevice(:final kind, :final host, :final storage):
+        case VirtHwAddDevice(:final kind, :final host, :final storage, :final usbNaming):
           final config = await rawConfig();
           switch (kind) {
             case VirtHwDeviceKind.tpm:
@@ -1967,15 +1976,29 @@ class PveBackend implements VirtBackend {
                 'tpmstate0': '$storage:1,version=v2.0',
               }, digest: digest);
             case VirtHwDeviceKind.usb:
-              // PVE's own form of the address is `bus-port` (`host=1-1.2`),
-              // which is what its web UI writes and what its mapping uses
-              // (`PVE::Mapping::USB`: `"$busnum-$usbpath"`). The device the
-              // app holds carries the port chain, so the address is built
-              // from it rather than from the device number.
+              // By vendor and product (`host=0bda:b023`: that device wherever
+              // it is plugged), or by where it sits — PVE's own form of the
+              // address is `bus-port` (`host=1-1.2`), which is what its web
+              // UI writes and what its mapping uses (`PVE::Mapping::USB`:
+              // `"$busnum-$usbpath"`), so it is built from the port chain
+              // rather than the device number. A device the host gave no
+              // port for has no such address.
+              final String value;
+              if (host!.mapping) {
+                value = 'mapping=${host.id}';
+              } else if (usbNaming == VirtUsbNaming.address) {
+                if (host.usbBus == null || host.usbPort == null) {
+                  throw const VirtErr(
+                    type: VirtErrType.unsupported,
+                    message: 'The host gave no port for this USB device',
+                  );
+                }
+                value = 'host=${virtUsbAddress(host, VirtHostKind.pve)}';
+              } else {
+                value = 'host=${host.id}';
+              }
               await _setConfig(guest, {
-                _freeKey(config, 'usb', 14): host!.mapping
-                    ? 'mapping=${host.id}'
-                    : 'host=${virtUsbAddress(host, VirtHostKind.pve)}',
+                _freeKey(config, 'usb', 14): value,
               }, digest: digest);
             case VirtHwDeviceKind.pci:
               final id = host!.id;
@@ -2392,11 +2415,7 @@ class PveBackend implements VirtBackend {
         for (final g in _guests)
           if (g.node == node) g,
       ]);
-      final management = virtPveManagementIfaces(
-        PveResources.parseNetworks(node, data),
-        connectedAddr: _base.host.isEmpty ? null : _base.host,
-      );
-      _managementIfaces[node] = management;
+      final management = await _managementOf(node, data);
       out.addAll(PveResources.parseNetworks(node, data, users: users, management: management));
     }
     return out;
@@ -2573,7 +2592,26 @@ class PveBackend implements VirtBackend {
           }
           final address = cidr?.trim();
           final gw = gateway?.trim();
-          // PVE keeps what is not sent, and a `0` is not sent: turning
+          // PVE's `update_network` sets the interface's `method`/`method6`
+          // and its address families from this request alone
+          // (`$param->{method} = $param->{address} ? 'static' : 'manual'`,
+          // pve-manager 9.2.2): an address not sent is an address dropped.
+          // So the ones it has now go back with it — the IPv4 one unless
+          // this edit changes it, and the IPv6 one, which the form does not
+          // edit. Read fresh: the listing may be a while old.
+          final now = await _call(
+            (dio) => dio.get(
+              _url('/nodes/${_seg(node)}/network/${_seg(network.name)}'),
+            ),
+          );
+          String? current(String key) {
+            final v = now is Map ? now[key] : null;
+            final text = v?.toString().trim() ?? '';
+            return text.isEmpty ? null : text;
+          }
+          final cidr4 = address ?? current('cidr');
+          final cidr6 = current('cidr6');
+          // Everything else PVE keeps, and a `0` is not sent: turning
           // something off means naming the key in `delete`.
           final delete = <String>[
             if (address != null && address.isEmpty) 'cidr,gateway',
@@ -2588,7 +2626,8 @@ class PveBackend implements VirtBackend {
               data: {
                 'type': network.mode,
                 if (ports != null) 'bridge_ports': ports.trim(),
-                if (address != null && address.isNotEmpty) 'cidr': address,
+                if (cidr4 != null && cidr4.isNotEmpty) 'cidr': cidr4,
+                'cidr6': ?cidr6,
                 if (gw != null && gw.isNotEmpty) 'gateway': gw,
                 if (vlanAware == true) 'bridge_vlan_aware': 1,
                 if (autostart != null) 'autostart': autostart ? 1 : 0,
@@ -2614,6 +2653,7 @@ class PveBackend implements VirtBackend {
             action: true,
           );
         case VirtNetworkApply(:final node):
+          await _checkApply(node);
           await _nodeTask(
             node,
             (dio) => dio.put(_url('/nodes/${_seg(node)}/network')),
@@ -2638,22 +2678,60 @@ class PveBackend implements VirtBackend {
     }
   }
 
-  /// The interfaces that carry a node's management address, from the node's
-  /// own listing: the one the default route goes through, and the one this
-  /// app is connected to. Cached per node for this session — the listing is
-  /// read again on every network load anyway, and this is the same answer.
+  /// Runs a command on the server this backend reaches PVE through, for
+  /// what the API does not say ([_liveNet]); null in tests.
+  final Future<ServerExec> Function()? _exec;
+
+  /// The interfaces that carry a node's management traffic
+  /// ([virtPveManagementIfaces]), from its listing and — for the node this
+  /// app is connected through — what the node itself says it is using.
+  /// Kept per node: an edit or a delete asks without reading them again.
   final _managementIfaces = <String, Set<String>>{};
 
-  /// Whether [network] may be edited, applied or deleted through this app.
+  Future<Set<String>> _managementOf(String node, Object? listing) async {
+    final raw = listing is List ? listing : const <Object?>[];
+    final live = await _liveNet();
+    final management = virtPveManagementIfaces(
+      PveResources.parseNetworks(node, raw),
+      live: live?.host == node ? live : null,
+      gateways6: {
+        for (final e in raw)
+          if (e case {'iface': final String iface, 'gateway6': final Object g}
+              when '$g'.isNotEmpty)
+            iface,
+      },
+    );
+    _managementIfaces[node] = management;
+    return management;
+  }
+
+  /// What [_liveNet] last read.
+  VirtPveLiveNet? _lastLive;
+
+  /// [virtPveLiveNetScript] on the server; null when it could not be run or
+  /// read, which [virtPveManagementIfaces] answers by protecting every
+  /// interface with an address.
+  Future<VirtPveLiveNet?> _liveNet() async {
+    final exec = _exec;
+    if (exec == null) return null;
+    try {
+      final r = await (await exec()).run(virtPveLiveNetScript, entry: 'sh');
+      return _lastLive = virtPveParseLiveNet(r.stdout);
+    } catch (e) {
+      Loggers.app.info('PVE live network probe: $e');
+      return _lastLive = null;
+    }
+  }
+
+  /// Whether [network] may be edited or deleted through this app.
   ///
   /// PVE allows a bridge; a physical interface's own settings belong to the
-  /// host. And never one carrying the node's own address — its default
-  /// route, or the address this app is connected to: applying its
-  /// configuration would cut the host off, with no console to fix it from.
+  /// host. And never one carrying the node's management traffic, or one it
+  /// sits on ([virtPveManagementIfaces]): applying its configuration would
+  /// cut the host off, with no console to fix it from.
   ///
-  /// The set comes from the node's listing, read when this session has not
-  /// seen one. A listing that cannot be read refuses the interface, which
-  /// is what an unknown management address deserves.
+  /// A listing that cannot be read refuses the interface, which is what an
+  /// unknown management address deserves.
   Future<bool> _mayEditIfaceRead(String node, VirtNetwork network) async {
     if (network.mode != 'bridge') return false;
     var known = _managementIfaces[node];
@@ -2662,17 +2740,45 @@ class PveBackend implements VirtBackend {
         final data = await _call(
           (dio) => dio.get(_url('/nodes/${_seg(node)}/network')),
         );
-        known = virtPveManagementIfaces(
-          PveResources.parseNetworks(node, data is List ? data : const []),
-          connectedAddr: _base.host.isEmpty ? null : _base.host,
-        );
-        _managementIfaces[node] = known;
+        known = await _managementOf(node, data);
       } on VirtErr catch (e) {
         Loggers.app.info('PVE network listing for $node: ${e.message}');
         return false;
       }
     }
     return virtPveManagedIface(network, management: known);
+  }
+
+  /// Refuses applying [node]'s pending network configuration when it touches
+  /// a management interface ([virtPveManagementIfaces]) — made in the app or
+  /// anywhere else, PVE's web UI included — or when the diff does not say
+  /// whose lines it changes. Read fresh: an apply is the moment it matters.
+  Future<void> _checkApply(String node) async {
+    final body = await _call(
+      (dio) => dio.get(_url('/nodes/${_seg(node)}/network')),
+      whole: true,
+    );
+    final diff = body is Map ? body['changes'] : null;
+    if (diff is! String || diff.trim().isEmpty) return;
+    final management = await _managementOf(node, body is Map ? body['data'] : null);
+    final live = _lastLive;
+    final touched = virtPveDiffIfaces(
+      diff,
+      interfaces: live != null && live.host == node ? live.interfaces : null,
+    );
+    final hit = touched.ifaces.intersection(management);
+    if (touched.unknown || hit.isNotEmpty) {
+      throw VirtErr(
+        type: VirtErrType.unsupported,
+        message: hit.isNotEmpty
+            ? 'The pending configuration changes ${hit.join(', ')}, which '
+                  "carries the host's management traffic: apply it from "
+                  "the host's console or PVE's own interface"
+            : 'Which interfaces the pending configuration changes cannot be '
+                  "told from its diff: apply it from the host's console or "
+                  "PVE's own interface",
+      );
+    }
   }
 
   String _storagePath(VirtStoragePool pool) {

@@ -404,7 +404,7 @@ pub fn snapshot_refusal(chain: &VirtSnapChain) -> Option<String> {
 }
 
 // ---------------------------------------------------------------------------
-// Deleting an external snapshot on an AppArmor host
+// Deleting and reverting an external snapshot on an AppArmor host
 // ---------------------------------------------------------------------------
 
 pub const KEY_DEL_SNAP: &str = "virt.snap.del.snap";
@@ -412,13 +412,14 @@ pub const KEY_DEL_INFO: &str = "virt.snap.del.info";
 pub const KEY_DEL_SECMODEL: &str = "virt.snap.del.secmodel";
 pub const KEY_DEL_DENY: &str = "virt.snap.del.deny";
 
-/// What deciding [`snap_delete_refusal`] needs, in one round trip: the
-/// snapshot's layers, the chain (as [`snap_chain_script`]), `dominfo` (state
-/// and the running domain's security model), the host's `<secmodel>`s from
-/// `capabilities`, and the `deny` lines of the domain's AppArmor profile.
-/// Only those lines are printed: a profile file names every path the guest
-/// may touch, and none of the rest is needed.
-pub fn snap_delete_check_script(domain: &str, name: &str) -> String {
+/// What deciding [`snap_delete_refusal`] and [`snap_revert_refusal`] needs,
+/// in one round trip: the snapshot's layers, the chain (as
+/// [`snap_chain_script`]), `dominfo` (state and the running domain's
+/// security model), the host's `<secmodel>`s from `capabilities`, and the
+/// `deny` lines of the domain's AppArmor profile. Only those lines are
+/// printed: a profile file names every path the guest may touch, and none of
+/// the rest is needed.
+pub fn snap_check_script(domain: &str, name: &str) -> String {
     let d = domain_arg(domain);
     let mut s = prelude();
     s.push_str(&format!(
@@ -450,8 +451,87 @@ pub fn snap_delete_check_script(domain: &str, name: &str) -> String {
     s
 }
 
-/// Why deleting the snapshot [`snap_delete_check_script`] was run for would
-/// be refused by the host, or `None` when it may be asked.
+/// What [`snap_check_script`] printed, as both refusals read it.
+struct SnapCheck {
+    /// For each of the snapshot's external layers on the current chain, the
+    /// file below it: what a delete commits into, and what a revert puts a
+    /// new overlay on.
+    kept: Vec<String>,
+    running: bool,
+    /// libvirt confines this domain with AppArmor.
+    apparmor: bool,
+    /// The running domain's profile's `deny … w` files; none when it is not
+    /// running or the profile could not be read.
+    denied: Vec<String>,
+}
+
+impl SnapCheck {
+    /// `None` where there is nothing the refusals could say: an internal
+    /// snapshot, a layer not on the chain, a state that could not be read.
+    fn read(raw: &str) -> Result<Option<SnapCheck>, VirtError> {
+        let secs = sections(raw)?;
+        let snap = take(&secs, KEY_DEL_SNAP, raw)?.ok()?;
+        let doc = parse_xml_doc(snap, "domainsnapshot", "snapshot-dumpxml")?;
+        let root = doc.root_element();
+        let files: Vec<String> = layers_of(root, "disks")
+            .into_iter()
+            .chain(layers_of(root, "revertDisks"))
+            .filter(|l| l.snapshot.as_deref() == Some("external"))
+            .filter_map(|l| l.file)
+            .collect();
+        if files.is_empty() {
+            return Ok(None);
+        }
+        let chain = parse_snap_chain(raw)?;
+        let kept: Vec<String> = chain
+            .disks_iter()
+            .flat_map(|d| d.files.iter())
+            .filter(|f| files.contains(&f.path))
+            .filter_map(|f| f.backing.clone())
+            .collect();
+        if kept.is_empty() {
+            return Ok(None);
+        }
+        let Ok(info) = take(&secs, KEY_DEL_INFO, raw).and_then(|s| s.ok()) else {
+            return Ok(None);
+        };
+        let field = |key: &str| {
+            info.lines()
+                .find_map(|l| l.split_once(':').filter(|(k, _)| k.trim() == key))
+                .map(|(_, v)| v.trim())
+        };
+        let running = field("State") == Some("running");
+        let apparmor = if running {
+            field("Security model") == Some("apparmor")
+        } else {
+            // Shut off, `dominfo` names no model: the host's first one is
+            // what the domain gets, unless it opted out.
+            let caps = take(&secs, KEY_DEL_SECMODEL, raw)
+                .and_then(|s| s.ok())
+                .map(|c| format!("<caps>{c}</caps>"))
+                .unwrap_or_default();
+            let model = roxmltree::Document::parse(&caps).ok().and_then(|d| {
+                d.descendants()
+                    .find(|n| n.has_tag_name("secmodel"))
+                    .and_then(|m| child(m, "model"))
+                    .and_then(|m| m.text().map(str::to_string))
+            });
+            model.as_deref() == Some("apparmor") && !chain_domain_unconfined(raw)
+        };
+        let denied = match take(&secs, KEY_DEL_DENY, raw).and_then(|s| s.ok()) {
+            Ok(deny) if running => deny
+                .lines()
+                .filter_map(|l| l.trim().strip_prefix("deny \"")?.strip_suffix("\" w,"))
+                .map(str::to_string)
+                .collect(),
+            _ => Vec::new(),
+        };
+        Ok(Some(SnapCheck { kept, running, apparmor, denied }))
+    }
+}
+
+/// Why deleting the snapshot [`snap_check_script`] was run for would be
+/// refused by the host, or `None` when it may be asked.
 ///
 /// A delete commits each external layer into the file below it. libvirt's
 /// AppArmor helper denies QEMU writing every file that was already a backing
@@ -469,76 +549,71 @@ pub fn snap_delete_check_script(domain: &str, name: &str) -> String {
 /// An internal snapshot, a layer not on the current chain, or anything this
 /// could not read is left to the host.
 pub fn snap_delete_refusal(raw: &str) -> Result<Option<String>, VirtError> {
-    let secs = sections(raw)?;
-    let snap = take(&secs, KEY_DEL_SNAP, raw)?.ok()?;
-    let doc = parse_xml_doc(snap, "domainsnapshot", "snapshot-dumpxml")?;
-    let root = doc.root_element();
-    let files: Vec<String> = layers_of(root, "disks")
-        .into_iter()
-        .chain(layers_of(root, "revertDisks"))
-        .filter(|l| l.snapshot.as_deref() == Some("external"))
-        .filter_map(|l| l.file)
-        .collect();
-    if files.is_empty() {
+    let Some(c) = SnapCheck::read(raw)? else {
         return Ok(None);
-    }
-    let chain = parse_snap_chain(raw)?;
-    // Each layer on the chain, and the file its commit writes into.
-    let targets: Vec<&str> = chain
-        .disks_iter()
-        .flat_map(|d| d.files.iter())
-        .filter(|f| files.contains(&f.path))
-        .filter_map(|f| f.backing.as_deref())
-        .collect();
-    if targets.is_empty() {
-        return Ok(None);
-    }
-    let Ok(info) = take(&secs, KEY_DEL_INFO, raw).and_then(|s| s.ok()) else {
-        return Ok(None);
-    };
-    let field = |key: &str| {
-        info.lines()
-            .find_map(|l| l.split_once(':').filter(|(k, _)| k.trim() == key))
-            .map(|(_, v)| v.trim())
     };
     const WHY: &str = "libvirt's AppArmor profile denies QEMU writing \
                        (Debian bug #932456): the host would refuse the delete, \
                        and every later delete on that disk after it";
-    if field("State") == Some("running") {
-        if field("Security model") != Some("apparmor") {
-            return Ok(None);
-        }
-        let Ok(deny) = take(&secs, KEY_DEL_DENY, raw).and_then(|s| s.ok()) else {
-            return Ok(None);
-        };
-        let denied: Vec<&str> = deny
-            .lines()
-            .filter_map(|l| l.trim().strip_prefix("deny \"")?.strip_suffix("\" w,"))
-            .collect();
-        return Ok(targets.iter().find(|t| denied.contains(t)).map(|t| {
+    if !c.apparmor {
+        return Ok(None);
+    }
+    if c.running {
+        return Ok(c.kept.iter().find(|t| c.denied.contains(t)).map(|t| {
             format!("Deleting it writes into {t}, which {WHY}")
         }));
     }
-    let Ok(caps) = take(&secs, KEY_DEL_SECMODEL, raw).and_then(|s| s.ok()) else {
-        return Ok(None);
-    };
-    let caps = format!("<caps>{caps}</caps>");
-    let Ok(caps) = roxmltree::Document::parse(&caps) else {
-        return Ok(None);
-    };
-    let apparmor = caps
-        .descendants()
-        .find(|n| n.has_tag_name("secmodel"))
-        .and_then(|m| child(m, "model"))
-        .and_then(|m| m.text())
-        == Some("apparmor");
-    if !apparmor || chain_domain_unconfined(raw) {
-        return Ok(None);
-    }
     Ok(Some(format!(
         "Deleting it while the guest is shut off writes into {}, which {WHY}",
-        targets[0]
+        c.kept[0]
     )))
+}
+
+/// Where the AppArmor profile of libvirt's `virt-aa-helper` (Debian 13's
+/// and Ubuntu's `usr.lib.libvirt.virt-aa-helper`) lets it read a file of
+/// any name: `/var/lib/libvirt/images/**`, `@{HOME}/**`,
+/// `/{media,mnt,opt,srv}/**`. Elsewhere only a known extension is read
+/// (`.qcow2`, `.img`, `.raw`, …) or a file named `disk`.
+fn aa_helper_reads(path: &str) -> bool {
+    const ANY_NAME: &[&str] = &["/var/lib/libvirt/images/", "/root/", "/media/", "/mnt/", "/opt/", "/srv/"];
+    ANY_NAME.iter().any(|p| path.starts_with(p))
+        || path.strip_prefix("/home/").is_some_and(|rest| rest.contains('/'))
+        || path.rsplit('/').next().is_some_and(|name| name == "disk" || name.starts_with("disk."))
+}
+
+/// Why reverting to the snapshot [`snap_check_script`] was run for would
+/// fail on the host, or `None` when it may be asked.
+///
+/// A revert starts the guest on a new overlay of the file the snapshot
+/// kept, named after it with its extension replaced by a timestamp
+/// (`web.qcow2` → `web.1790504997`), in that file's directory. On a host
+/// that confines QEMU with AppArmor, libvirt's `virt-aa-helper` has to read
+/// that file to write the guest's profile, and outside the directories its
+/// own profile opens to any name ([`aa_helper_reads`]) a name without a
+/// known extension is refused to it. The guest then cannot open the kept
+/// file (`Could not open '<file>': Permission denied`): the revert fails,
+/// leaving the guest shut off with the overlay it was running on deleted,
+/// and it does not start again (libvirt 11.3, Debian 13: verified in a pool
+/// outside `/var/lib/libvirt/images`, and not in one inside it).
+pub fn snap_revert_refusal(raw: &str) -> Result<Option<String>, VirtError> {
+    let Some(c) = SnapCheck::read(raw)? else {
+        return Ok(None);
+    };
+    if !c.apparmor {
+        return Ok(None);
+    }
+    Ok(c.kept.iter().find(|k| {
+        let dir = k.rsplit_once('/').map(|(d, _)| d).unwrap_or("");
+        !aa_helper_reads(&format!("{dir}/x"))
+    }).map(|k| {
+        format!(
+            "Reverting it puts the guest on a new file beside {k}, where libvirt's \
+             AppArmor helper cannot read a file of that name: the guest would not \
+             start, and what it wrote since the snapshot would be lost. A disk in \
+             /var/lib/libvirt/images (or /srv, /opt, /mnt, /media, a home \
+             directory) does not have this."
+        )
+    }))
 }
 
 /// Whether the domain opts out of confinement: a `<seclabel type='none'>`

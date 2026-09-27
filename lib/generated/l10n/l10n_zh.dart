@@ -4840,9 +4840,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtNetEditRestartNote => '重启期间其上的虚拟机将断网。';
 
   @override
-  String get virtNetEditSave => '只保存配置';
-
-  @override
   String get virtNetEditPending => '配置中已有改动，运行中的网络尚未生效。';
 
   @override
@@ -4883,13 +4880,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtNetManagementIface => '此接口承载宿主机自身的地址。编辑或应用它会中断宿主机的连接。';
 
   @override
-  String get virtNetManagementTip => '它承载宿主机的管理地址：应用不会编辑它。';
+  String get virtNetManagementTip => '它承载宿主机的管理流量，或位于承载管理流量的接口之下：应用不会编辑它。';
 
   @override
-  String get virtNetIfname => '接口';
+  String get virtNetPhysicalTip => '物理接口属于宿主机本身：应用只编辑网桥。';
 
   @override
-  String get virtNetAddressCleared => '已清空';
+  String get virtNetVlanAware => 'VLAN 感知';
 
   @override
   String get virtNetPveEditNote => '写入节点的待生效配置；应用后宿主机才会采用。';
@@ -4908,9 +4905,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtCiSearchTip => '可填多个，用空格分隔；resolv.conf 只保留前几个。';
 
   @override
-  String get virtCiNics => '网卡';
-
-  @override
   String virtCiNicsTip(int count) {
     return 'seed 的 network-config 中有 $count 块网卡；表单编辑第一块。';
   }
@@ -4920,9 +4914,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtUsbByAddress => '按地址';
-
-  @override
-  String get virtUsbAddress => '总线与设备号';
 
   @override
   String get virtUsbAddressTip =>
@@ -9798,9 +9789,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtNetEditRestartNote => '重新啟動期間其上的虛擬機器將斷網。';
 
   @override
-  String get virtNetEditSave => '只儲存設定';
-
-  @override
   String get virtNetEditPending => '設定中已有變更，執行中的網路尚未生效。';
 
   @override
@@ -9841,13 +9829,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtNetManagementIface => '此介面承載主機系統本身的位址。編輯或套用它會中斷主機系統的連線。';
 
   @override
-  String get virtNetManagementTip => '它承載主機系統的管理位址：應用不會編輯它。';
+  String get virtNetManagementTip => '它承載主機的管理流量，或位於承載管理流量的介面之下：應用程式不會編輯它。';
 
   @override
-  String get virtNetIfname => '介面';
+  String get virtNetPhysicalTip => '實體介面屬於主機本身：應用程式只編輯網橋。';
 
   @override
-  String get virtNetAddressCleared => '已清空';
+  String get virtNetVlanAware => 'VLAN 感知';
 
   @override
   String get virtNetPveEditNote => '寫入節點的待生效設定；套用後主機系統才會採用。';
@@ -9866,9 +9854,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtCiSearchTip => '可填多個，以空格分隔；resolv.conf 只保留前幾個。';
 
   @override
-  String get virtCiNics => '網路卡';
-
-  @override
   String virtCiNicsTip(int count) {
     return 'seed 的 network-config 中有 $count 張網路卡；表單編輯第一張。';
   }
@@ -9880,15 +9865,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtUsbByAddress => '依位址';
 
   @override
-  String get virtUsbAddress => '匯流排與裝置編號';
-
-  @override
   String get virtUsbAddressTip =>
       '裝置跟隨此位址：插在該處的裝置會交給虛擬機器。libvirt 以匯流排與裝置編號標識 USB hostdev。';
 
   @override
   String virtUsbPortNote(int bus, String port) {
-    return '匯流排 $bus · 埠 $port';
+    return '匯流排 $bus · 連接埠 $port';
   }
 
   @override

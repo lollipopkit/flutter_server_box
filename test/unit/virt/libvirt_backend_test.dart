@@ -430,9 +430,15 @@ void main() {
     test('create, revert and delete run their virsh command', () async {
       final exec = _Exec((call) {
         if (call.script.contains('domstats')) return _ok(_overview());
-        // The delete's check first: a host that would allow it.
+        // The check a revert and a delete make first: a host that allows
+        // both (the chain in the default pool's directory).
         if (call.script.contains('snapshot-dumpxml')) {
-          return _ok(_fixture('script_snap_delete_running_clear.txt'));
+          return _ok(
+            _fixture('script_snap_delete_running_clear.txt').replaceAll(
+              '/var/lib/libvirt/sbxe2e-exp/',
+              '/var/lib/libvirt/images/sbxe2e-exp/',
+            ),
+          );
         }
         return _ok(_section('virt.action', 'ok'));
       });
@@ -465,6 +471,22 @@ void main() {
       final e = await _err(virt.createSnapshot(web, name: "x'; reboot"));
       expect(e.type, VirtErrType.unsupported);
       expect(exec.calls, hasLength(calls));
+    });
+
+    test('a revert AppArmor would fail is refused before it is sent', () async {
+      final exec = _Exec((call) {
+        if (call.script.contains('domstats')) return _ok(_overview());
+        if (call.script.contains('snapshot-dumpxml')) {
+          return _ok(_fixture('script_snap_delete_running_clear.txt'));
+        }
+        return _fail('unexpected script');
+      });
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      final web = (await virt.load()).guests.firstWhere((g) => g.id == _run);
+      final e = await _err(virt.revertSnapshot(web, 'ext2', start: true));
+      expect(e.type, VirtErrType.unsupported);
+      expect(e.message, contains('/var/lib/libvirt/images'));
+      expect(exec.calls.where((c) => c.script.contains('snapshot-revert')), isEmpty);
     });
 
     test('a delete AppArmor would refuse is refused before it is sent',
@@ -1423,6 +1445,18 @@ void main() {
       expect(out.volumeKept, isTrue);
     });
 
+    test('discarding the pending changes: a refusal reaches the caller', () async {
+      // The host answers the revert with a conflict (the definition, or the
+      // running domain, is not the one read): an error, never a success.
+      final (:virt, :exec) = backend((_) => _ok(_fixture('script_hw_conflict.txt')));
+      final hw = await virt.hardware(guest);
+      final err = await _err(virt.revertPending(guest, hw));
+      expect(err.type, VirtErrType.conflict);
+      final script = exec.calls.last.script;
+      expect(script, contains('domid'));
+      expect(script, contains('define'));
+    });
+
     test('a definition changed since the read is a conflict', () async {
       final (:virt, :exec) = backend((_) => _ok(_fixture('script_hw_conflict.txt')));
       final hw = await virt.hardware(guest);
@@ -1622,6 +1656,33 @@ void main() {
       expect(devs.iommu, isFalse);
       expect(devs.usb, isEmpty);
       expect(devs.pci.firstWhere((p) => p.id == '0000:00:01.2').label, contains('PIIX3 USB'));
+    });
+
+    test('host devices: a USB device carries where it sits', () async {
+      // `nodedev-dumpxml` of one device, as the host prints it.
+      const usb = '''
+SrvBoxSep.b64.dmlydC5ob3N0LnVzYg==
+usb_device_1a86_7523_2_1_2
+<device>
+  <name>usb_device_1a86_7523_2_1_2</name>
+  <capability type='usb_device'>
+    <bus>2</bus>
+    <device>7</device>
+    <port>1.2</port>
+    <product id='0x7523'>CH340 serial converter</product>
+    <vendor id='0x1a86'>QinHeng Electronics</vendor>
+  </capability>
+</device>
+
+SbVirtRc=0
+''';
+      final exec = _Exec((_) => _ok(usb));
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      final d = (await virt.hostDevices(guest)).usb.single;
+      expect((d.usbBus, d.usbDevice, d.usbPort), (2, 7, '1.2'));
+      // So it is offered by address, as libvirt writes one.
+      expect(virtUsbHasAddress(d), isTrue);
+      expect(virtUsbAddress(d, VirtHostKind.libvirt), '2:7');
     });
   });
 }
