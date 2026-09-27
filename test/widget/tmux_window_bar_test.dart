@@ -114,6 +114,7 @@ final class _FakeTmuxShell implements ShellSession {
   final _done = Completer<void>();
   final writes = <String>[];
   bool splitPanes = false;
+  int historyLimit = 100000;
 
   @override
   Stream<Uint8List>? get stdout => _stdout.stream;
@@ -130,7 +131,7 @@ final class _FakeTmuxShell implements ShellSession {
     if (command.isEmpty) return;
     writes.add(command);
     if (command.startsWith('display-message')) {
-      _result(r'$0	main');
+      _result(r'$0	main	$historyLimit');
     } else if (command.startsWith('list-sessions')) {
       _result(r'$0	main	2	1');
     } else if (command.startsWith('list-windows')) {

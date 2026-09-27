@@ -52,6 +52,7 @@ final class TmuxControlPane {
   final bool active;
   final int cursorX;
   final int cursorY;
+  final int height;
 
   const TmuxControlPane({
     required this.id,
@@ -61,6 +62,7 @@ final class TmuxControlPane {
     required this.active,
     this.cursorX = 0,
     this.cursorY = 0,
+    this.height = 24,
   });
 
   String get displayName {

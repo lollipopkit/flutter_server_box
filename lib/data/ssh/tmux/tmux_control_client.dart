@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:server_box/data/model/server/shell_backend.dart';
@@ -20,6 +21,13 @@ final class TmuxControlClient {
   static const _startupTimeout = Duration(seconds: 5);
   static const _inputChunkBytes = 1024;
 
+  /// The local terminal's scrollback capacity.
+  ///
+  /// tmux may retain more history than the app-side `xterm` buffer can hold;
+  /// replay is clamped to the smaller of the two so the oldest line is not
+  /// immediately discarded after being written.
+  final int maxScrollbackLines;
+
   final ShellSession _session;
   final TmuxControlProtocolParser _parser = TmuxControlProtocolParser();
   late final TmuxCommandExecutor _commands = TmuxCommandExecutor(
@@ -35,6 +43,9 @@ final class TmuxControlClient {
   bool _captureAfterRefresh = false;
   TmuxControlSnapshot? _snapshot;
 
+  /// The current session's `history-limit`, refreshed with session identity.
+  int _historyLimit = 2000;
+
   /// Called for fire-and-forget commands (notably keyboard input) which fail.
   void Function(String command, Object error)? onCommandError;
 
@@ -47,7 +58,8 @@ final class TmuxControlClient {
   /// close is false: the page must preserve restoration state for reconnect.
   void Function(bool cleanExit)? onClosed;
 
-  TmuxControlClient(this._session) {
+  TmuxControlClient(this._session, {this.maxScrollbackLines = 1000}) {
+    _historyLimit = maxScrollbackLines;
     _outputSubscription = _session.stdout?.listen(
       _handleData,
       onError: _handleStreamError,
@@ -330,7 +342,8 @@ final class TmuxControlClient {
     _refreshing = true;
     try {
       final current = await runRequired(
-        "display-message -p '#{session_id}\t#{q:session_name}'",
+        "display-message -p '#{session_id}\t#{q:session_name}"
+        "\t#{history-limit}'",
       );
       final currentParts = splitTmuxFields(current.output);
       if (currentParts.length < 2) {
@@ -355,6 +368,10 @@ final class TmuxControlClient {
         unescapeTmuxField(currentParts[0]),
       );
       final sessionName = unescapeTmuxField(currentParts[1]);
+      final historyLimit = currentParts.length > 2
+          ? int.tryParse(currentParts[2]) ?? maxScrollbackLines
+          : maxScrollbackLines;
+      _historyLimit = historyLimit < 0 ? 0 : historyLimit;
       if (sessionId == null) {
         throw const TmuxControlCommandException(
           'display-message',
@@ -393,7 +410,7 @@ final class TmuxControlClient {
       final panesResult = await runRequired(
         "list-panes -t '${activeWindow.id}' -F '#{pane_id}\t#{pane_index}"
         '\t#{pane_active}\t#{q:pane_title}\t#{q:pane_current_command}'
-        "\t#{cursor_x}\t#{cursor_y}'",
+        "\t#{cursor_x}\t#{cursor_y}\t#{pane_height}'",
       );
       final panes = <TmuxControlPane>[];
       for (final line in panesResult.lines) {
@@ -459,27 +476,60 @@ final class TmuxControlClient {
     // can arrive between the capture and its control-mode result and then be
     // erased when the older captured screen is replayed.
     await runRequired("refresh-client -A '$paneId:pause'");
-    final TmuxControlCommandResult result;
-    try {
-      result = await runRequired("capture-pane -p -e -t '$paneId'");
-    } catch (error) {
-      _resumePaneOutput(paneId);
-      rethrow;
-    }
-    // Replay each captured row at its absolute screen position. Advancing with
-    // LF/CR would work on an empty terminal, but a viewport resize or an
-    // output race can turn trailing blank rows into scrollback and leave the
-    // prompt detached from its tmux row.
-    final captured = StringBuffer();
-    for (var row = 0; row < result.lines.length; row++) {
-      captured
-        ..write('\x1b[${row + 1};1H')
-        ..write(result.lines[row]);
-    }
     final mode = _snapshot?.mode ?? const TmuxPaneModeSnapshot();
     final activePane = _snapshot?.activeWindow?.panes
         .where((pane) => pane.id == paneId)
         .firstOrNull;
+    final paneHeight = activePane?.height ?? 24;
+    final effectiveHistoryLimit = math.min(_historyLimit, maxScrollbackLines);
+    // Alternate-screen applications own their screen and have no scrollback in
+    // xterm, so replaying tmux history there would only throw lines away.
+    final captureHistory = !mode.alternateScreen && effectiveHistoryLimit > 0;
+    final command = captureHistory
+        ? "capture-pane -p -e -S -$effectiveHistoryLimit -t '$paneId'"
+        : "capture-pane -p -e -t '$paneId'";
+    final TmuxControlCommandResult result;
+    try {
+      result = await runRequired(command);
+    } catch (error) {
+      _resumePaneOutput(paneId);
+      rethrow;
+    }
+
+    // Replay history in pane-sized chunks. Each chunk is written by absolute
+    // row so escapes in the captured line cannot move later rows, then the
+    // cursor is moved to the bottom and the chunk is scrolled off with exactly
+    // chunk.length line feeds. This preserves the chunk in scrollback without
+    // leaving blank lines between history and the live screen.
+    final captured = StringBuffer();
+    final historyCount = captureHistory && result.lines.length > paneHeight
+        ? result.lines.length - paneHeight
+        : 0;
+    for (var at = 0; at < historyCount; at += paneHeight) {
+      var end = at + paneHeight;
+      if (end > historyCount) end = historyCount;
+      final chunk = result.lines.sublist(at, end);
+      for (var row = 0; row < chunk.length; row++) {
+        captured
+          ..write('\x1b[${row + 1};1H')
+          ..write(chunk[row]);
+      }
+      captured
+        ..write('\x1b[$paneHeight;1H')
+        ..write('\r\n' * chunk.length);
+    }
+
+    // Replay the live screen at its absolute rows. Advancing with LF/CR would
+    // work on an empty terminal, but a viewport resize or an output race can
+    // turn trailing blank rows into scrollback and leave the prompt detached
+    // from its tmux row.
+    final screenStart = historyCount;
+    for (var row = screenStart; row < result.lines.length; row++) {
+      captured
+        ..write('\x1b[${row - screenStart + 1};1H')
+        ..write(result.lines[row]);
+    }
+
     final cursorX = activePane?.cursorX ?? 0;
     final cursorY = activePane?.cursorY ?? 0;
     final restoreCursor = '\x1b[${cursorY + 1};${cursorX + 1}H';
@@ -544,6 +594,9 @@ final class TmuxControlClient {
     final cursorY = fields.length > 6
         ? int.tryParse(unescapeTmuxField(fields[6])) ?? 0
         : 0;
+    final height = fields.length > 7
+        ? int.tryParse(unescapeTmuxField(fields[7])) ?? 24
+        : 24;
     return TmuxControlPane(
       id: id,
       index: index,
@@ -552,6 +605,7 @@ final class TmuxControlClient {
       active: active > 0,
       cursorX: cursorX < 0 ? 0 : cursorX,
       cursorY: cursorY < 0 ? 0 : cursorY,
+      height: height <= 0 ? 24 : height,
     );
   }
 

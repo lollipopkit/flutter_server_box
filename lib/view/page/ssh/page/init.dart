@@ -165,7 +165,10 @@ extension _Init on SSHPageState {
     final sshSession = await _sess.execute(command);
     if (sshSession == null) return null;
 
-    final client = TmuxControlClient(sshSession);
+    final client = TmuxControlClient(
+      sshSession,
+      maxScrollbackLines: _terminal.maxLines,
+    );
     client.onCommandError = (failedCommand, error) {
       Loggers.app.warning('tmux control command failed: $failedCommand', error);
     };

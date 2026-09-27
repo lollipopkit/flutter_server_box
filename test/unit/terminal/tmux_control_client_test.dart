@@ -37,7 +37,10 @@ void main() {
       expect(snapshot.activeWindow!.panes.single.displayName, 'shell');
       expect(
         shell.writes,
-        contains(r"display-message -p '#{session_id}	#{q:session_name}'"),
+        contains(
+          r"display-message -p '#{session_id}	#{q:session_name}"
+          "\t#{history-limit}'",
+        ),
       );
       expect(
         shell.writes,
@@ -45,9 +48,11 @@ void main() {
           r"list-windows -t '$0' -F '#{window_id}	#{window_index}	#{q:window_name}	#{window_active}'",
         ),
       );
-      expect(shell.writes, contains("capture-pane -p -e -t '%0'"));
+      expect(shell.writes, contains("capture-pane -p -e -S -1000 -t '%0'"));
       final pauseAt = shell.writes.indexOf("refresh-client -A '%0:pause'");
-      final captureAt = shell.writes.indexOf("capture-pane -p -e -t '%0'");
+      final captureAt = shell.writes.indexOf(
+        "capture-pane -p -e -S -1000 -t '%0'",
+      );
       final continueAt = shell.writes.indexOf(
         "refresh-client -A '%0:continue'",
       );
@@ -121,6 +126,68 @@ void main() {
         shell.close();
       },
     );
+
+    test('replays tmux history into xterm scrollback', () async {
+      final shell = _FakeTmuxShell();
+      shell.paneHeight = 5;
+      shell.historyLimit = 12;
+      shell.captureOutput = [
+        for (var i = 0; i < 12; i++) 'history $i',
+        for (var i = 0; i < 5; i++) 'screen $i',
+      ].join('\n');
+      final client = TmuxControlClient(shell, maxScrollbackLines: 100);
+      final output = <List<int>>[];
+      final subscription = client.paneOutput.listen(
+        (event) => output.add(event.data),
+      );
+
+      final initialized = client.initialize();
+      shell.emit('\x1bP1000p%begin 1 100 1\n%end 1 100 1\n');
+      await initialized;
+      await _pumpEventQueue();
+
+      expect(shell.writes, contains("capture-pane -p -e -S -12 -t '%0'"));
+      final terminal = Terminal(maxLines: 100)..resize(80, 5);
+      terminal.write(utf8.decode(output.last));
+
+      expect(terminal.buffer.height, 17);
+      expect(terminal.buffer.lines[0].getText(), '%0 history 0');
+      for (var i = 1; i < 12; i++) {
+        expect(terminal.buffer.lines[i].getText(), 'history $i');
+      }
+      for (var i = 0; i < 5; i++) {
+        expect(terminal.buffer.lines[12 + i].getText(), 'screen $i');
+      }
+      expect(terminal.buffer.cursorX, 5);
+      expect(terminal.buffer.cursorY, 2);
+
+      await subscription.cancel();
+      await client.dispose();
+      shell.close();
+    });
+
+    test('uses the smaller of tmux and local scrollback limits', () async {
+      final shell = _FakeTmuxShell();
+      shell.paneHeight = 5;
+      shell.historyLimit = 100000;
+      shell.captureOutput = 'history\nscreen';
+      final client = TmuxControlClient(shell, maxScrollbackLines: 7);
+      final output = <List<int>>[];
+      final subscription = client.paneOutput.listen(
+        (event) => output.add(event.data),
+      );
+
+      final initialized = client.initialize();
+      shell.emit('\x1bP1000p%begin 1 100 1\n%end 1 100 1\n');
+      await initialized;
+      await _pumpEventQueue();
+
+      expect(shell.writes, contains("capture-pane -p -e -S -7 -t '%0'"));
+
+      await subscription.cancel();
+      await client.dispose();
+      shell.close();
+    });
 
     test(
       'queries pane modes and restores them before captured screen content',
@@ -245,7 +312,7 @@ void main() {
       expect(shell.writes, contains("select-window -t '@1'"));
       expect(client.snapshot!.activeWindowId, TmuxWindowId('@1'));
       expect(client.snapshot!.activePaneId, TmuxPaneId('%3'));
-      expect(shell.writes, contains("capture-pane -p -e -t '%3'"));
+      expect(shell.writes, contains("capture-pane -p -e -S -1000 -t '%3'"));
       await client.dispose();
       shell.close();
     });
@@ -269,7 +336,7 @@ void main() {
         contains(
           'list-panes -t \'@0\' -F \'#{pane_id}\t#{pane_index}\t#{pane_active}'
           '\t#{q:pane_title}\t#{q:pane_current_command}'
-          '\t#{cursor_x}\t#{cursor_y}\'',
+          '\t#{cursor_x}\t#{cursor_y}\t#{pane_height}\'',
         ),
       );
 
@@ -278,7 +345,7 @@ void main() {
       expect(shell.writes, contains("select-pane -t '%3'"));
       expect(client.snapshot!.activePaneId, TmuxPaneId('%3'));
       expect(client.snapshot!.activeWindow!.panes.last.active, isTrue);
-      expect(shell.writes, contains("capture-pane -p -e -t '%3'"));
+      expect(shell.writes, contains("capture-pane -p -e -S -1000 -t '%3'"));
       await client.dispose();
       shell.close();
     });
@@ -374,10 +441,10 @@ void main() {
 
       expect(client.snapshot!.activeWindowId, TmuxWindowId('@1'));
       expect(client.snapshot!.activePaneId, TmuxPaneId('%3'));
-      expect(shell.writes, contains("capture-pane -p -e -t '%3'"));
+      expect(shell.writes, contains("capture-pane -p -e -S -1000 -t '%3'"));
 
       final capturesBefore = shell.writes
-          .where((command) => command == "capture-pane -p -e -t '%3'")
+          .where((command) => command == "capture-pane -p -e -S -1000 -t '%3'")
           .length;
       shell.emit('%layout-change @1 ca2a,80x24,0,0,0 80x24,0,0,0 *\n');
       await Future<void>.delayed(const Duration(milliseconds: 80));
@@ -385,7 +452,9 @@ void main() {
 
       expect(
         shell.writes
-            .where((command) => command == "capture-pane -p -e -t '%3'")
+            .where(
+              (command) => command == "capture-pane -p -e -S -1000 -t '%3'",
+            )
             .length,
         capturesBefore + 1,
       );
@@ -574,12 +643,14 @@ final class _FakeTmuxShell implements ShellSession {
   String activePaneId = '%0';
   String sessionId = r'$0';
   String sessionName = 'main';
+  int historyLimit = 100000;
   String nextWindowId = '@2';
   bool splitPanes = false;
   bool errorNextCommand = false;
   bool exitBeforeNextCommandResult = false;
   bool onlyOneWindow = false;
   String captureOutput = 'main prompt';
+  int paneHeight = 24;
   String paneModeOutput =
       '0\t0\t0\t1\t0\tdefault\t0\t0\t0\t1\t0\t0\t0'
       '\t0\t0\t0\t0\t0\t0\tVT10x';
@@ -635,7 +706,7 @@ final class _FakeTmuxShell implements ShellSession {
         _result(paneModeOutput);
         return;
       }
-      _result('$sessionId\t$sessionName');
+      _result('$sessionId\t$sessionName\t$historyLimit');
       return;
     }
     if (command.startsWith('list-sessions')) {
@@ -658,14 +729,14 @@ final class _FakeTmuxShell implements ShellSession {
     }
     if (command.startsWith('list-panes')) {
       if (activeWindowId == '@1') {
-        _result('%3\t0\t1\tlogs\tcat\t0\t0');
+        _result('%3\t0\t1\tlogs\tcat\t0\t0\t$paneHeight');
       } else if (splitPanes) {
         _result(
-          '%0\t0\t${activePaneId == '%0' ? 1 : 0}\tshell\tzsh\t5\t2\n'
-          '%3\t1\t${activePaneId == '%3' ? 1 : 0}\tlogs\tcat\t0\t0',
+          '%0\t0\t${activePaneId == '%0' ? 1 : 0}\tshell\tzsh\t5\t2\t$paneHeight\n'
+          '%3\t1\t${activePaneId == '%3' ? 1 : 0}\tlogs\tcat\t0\t0\t$paneHeight',
         );
       } else {
-        _result('$activePaneId\t0\t1\tshell\tzsh\t5\t2');
+        _result('$activePaneId\t0\t1\tshell\tzsh\t5\t2\t$paneHeight');
       }
       return;
     }
