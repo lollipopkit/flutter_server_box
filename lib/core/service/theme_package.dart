@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -171,7 +172,7 @@ final class BuiltinThemeLoader {
       _loaded[theme] = package;
       return package;
     } finally {
-      _pending.remove(theme);
+      unawaited(_pending.remove(theme));
     }
   }
 

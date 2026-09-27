@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -248,7 +249,11 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     _notifySqliteStore(Stores.history, historyNotifications);
     _notifySqliteStore(Stores.setting, settingNotifications);
 
-    if (serversChanged) GlobalRef.gRef?.read(serversProvider.notifier).reload();
+    // Not awaited: the reload reconnects every server, which a merge has no
+    // reason to wait for.
+    if (serversChanged) {
+      unawaited(GlobalRef.gRef?.read(serversProvider.notifier).reload());
+    }
     if (snippetsChanged) {
       GlobalRef.gRef?.read(snippetProvider.notifier).reload();
     }

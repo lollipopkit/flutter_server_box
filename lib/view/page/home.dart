@@ -535,14 +535,16 @@ class _HomePageState extends ConsumerState<HomePage>
     final authed = _authed = _goAuth(showGuide: false);
 
     if (Stores.setting.autoCheckAppUpdate.fetch()) {
-      AppUpdateIface.doUpdate(
-        build: BuildData.build,
-        githubReleasesUrl: Urls.githubReleasesApi,
-        storeUrl: Urls.appStore,
-        context: context,
-        noticeBuilder: (ctx) => DmgNotice.forUpdate(
-          ctx,
-          build: AppUpdateIface.newestBuild.value ?? BuildData.build,
+      unawaited(
+        AppUpdateIface.doUpdate(
+          build: BuildData.build,
+          githubReleasesUrl: Urls.githubReleasesApi,
+          storeUrl: Urls.appStore,
+          context: context,
+          noticeBuilder: (ctx) => DmgNotice.forUpdate(
+            ctx,
+            build: AppUpdateIface.newestBuild.value ?? BuildData.build,
+          ),
         ),
       );
     }

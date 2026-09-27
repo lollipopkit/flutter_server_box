@@ -1330,7 +1330,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     await _initTerminal();
     if (!mounted) return;
 
-    if (Stores.setting.sshWakeLock.fetch()) WakelockPlus.enable();
+    if (Stores.setting.sshWakeLock.fetch()) unawaited(WakelockPlus.enable());
 
     _keyboardHandlerReady = true;
     _attachKeyboardHandler();

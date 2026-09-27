@@ -343,13 +343,15 @@ class _RemoteForwardEntry extends _ForwardEntry {
             .cast<List<int>>()
             .pipe(channel.sink)
             .catchError((_) {});
-        Future.wait([pipe1, pipe2]).whenComplete(() {
-          _connections.remove(conn);
-          conn.close();
-        });
+        unawaited(
+          Future.wait([pipe1, pipe2]).whenComplete(() {
+            _connections.remove(conn);
+            return conn.close();
+          }),
+        );
       } catch (e, s) {
         Loggers.app.warning('Remote forward connection failed', e, s);
-        channel.close();
+        unawaited(channel.close().catchError((_) {}));
       }
     });
   }

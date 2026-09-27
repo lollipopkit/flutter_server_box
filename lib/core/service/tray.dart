@@ -271,7 +271,7 @@ class TrayService with WindowListener, WidgetsBindingObserver {
     await _showWindow();
     final context = AppNavigator.context;
     if (context == null || !context.mounted) return;
-    SettingsPage.route.go(context);
+    unawaited(SettingsPage.route.go(context));
   }
 
   /// Brings the window forward on that server.

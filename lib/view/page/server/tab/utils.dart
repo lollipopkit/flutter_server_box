@@ -137,7 +137,7 @@ extension _Actions on _ServerPageState {
 
     switch (way) {
       case _AddServerWay.manual:
-        ServerEditPage.route.go(context);
+        unawaited(ServerEditPage.route.go(context));
       case _AddServerWay.qr:
         await ServerShareUi.receiveFromQr(context, ref);
       case _AddServerWay.file:

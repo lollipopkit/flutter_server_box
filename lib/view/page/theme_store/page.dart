@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
@@ -484,7 +486,7 @@ extension on _ThemeStorePageState {
     }
     // Removing the theme in use put the app back on the default, so the frame
     // it is drawing is one whose files are gone.
-    RNodes.app.notify();
+    unawaited(RNodes.app.notify());
     Toast.show(libL10n.success);
   }
 

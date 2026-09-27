@@ -158,8 +158,8 @@ class Backup implements Mergeable {
 
     // After the commit, since the rows were written without announcing it.
     Stores.pve.invalidate();
-    Provider.reload();
-    RNodes.app.notify();
+    await Provider.reload();
+    await RNodes.app.notify();
 
     _logger.info('Restore success');
   }

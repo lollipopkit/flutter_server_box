@@ -38,7 +38,9 @@ void main() {
     tempDir = await Directory.systemTemp.createTemp('server-box-agent-scope-');
     await openTestDb();
     await getIt.reset();
-    getIt.registerSingleton<SettingStore>(SettingStore('setting_test')..init());
+    final settings = SettingStore('setting_test');
+    await settings.init();
+    getIt.registerSingleton<SettingStore>(settings);
     getIt.registerSingleton<ServerStore>(ServerStore());
     conversationStore = AgentConversationStore();
     getIt.registerSingleton<AgentConversationStore>(conversationStore);

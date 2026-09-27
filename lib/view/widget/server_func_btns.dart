@@ -517,13 +517,13 @@ void runServerFunc(
         if (!await _ensureExec(context, spi.id, ref)) return;
         if (!context.mounted) return;
         final args = SpiRequiredArgs(spi);
-        ContainerPage.route.go(context, args);
+        unawaited(ContainerPage.route.go(context, args));
         break;
       case ServerFuncBtn.process:
         if (!await _ensureExec(context, spi.id, ref)) return;
         if (!context.mounted) return;
         final args = SpiRequiredArgs(spi);
-        ProcessPage.route.go(context, args);
+        unawaited(ProcessPage.route.go(context, args));
         break;
       case ServerFuncBtn.terminal:
         _gotoSSH(spi, context, ref);
@@ -532,13 +532,13 @@ void runServerFunc(
         // Only a form until it is submitted, and what it opens then is a
         // terminal — so nothing to connect here either.
         final args = SpiRequiredArgs(spi);
-        IPerfPage.route.go(context, args);
+        unawaited(IPerfPage.route.go(context, args));
         break;
       case ServerFuncBtn.systemd:
         if (!await _ensureExec(context, spi.id, ref)) return;
         if (!context.mounted) return;
         final args = SpiRequiredArgs(spi);
-        ServicesPage.route.go(context, args);
+        unawaited(ServicesPage.route.go(context, args));
         break;
       case ServerFuncBtn.power:
         if (!await _ensureExec(context, spi.id, ref)) return;
@@ -551,19 +551,19 @@ void runServerFunc(
         if (!await _ensureSshClient(context, spi.id, ref)) return;
         if (!context.mounted) return;
         final args = SpiRequiredArgs(spi);
-        PortForwardPage.route.go(context, args);
+        unawaited(PortForwardPage.route.go(context, args));
         break;
       case ServerFuncBtn.users:
         if (!await _ensureExec(context, spi.id, ref)) return;
         if (!context.mounted) return;
         final args = SpiRequiredArgs(spi);
-        UsersPage.route.go(context, args);
+        unawaited(UsersPage.route.go(context, args));
         break;
       case ServerFuncBtn.scheduledTasks:
         if (!await _ensureExec(context, spi.id, ref)) return;
         if (!context.mounted) return;
         final args = SpiRequiredArgs(spi);
-        ScheduledTasksPage.route.go(context, args);
+        unawaited(ScheduledTasksPage.route.go(context, args));
         break;
       case ServerFuncBtn.remoteDesktop:
         // A monitor-backed server has nothing to connect here: the agent dials
@@ -577,7 +577,9 @@ void runServerFunc(
           return;
         }
         if (!context.mounted) return;
-        RemoteDesktopProfilesPage.route.go(context, SpiRequiredArgs(spi));
+        unawaited(
+          RemoteDesktopProfilesPage.route.go(context, SpiRequiredArgs(spi)),
+        );
         break;
   }
 }

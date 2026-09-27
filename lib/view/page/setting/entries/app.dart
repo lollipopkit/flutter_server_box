@@ -564,7 +564,7 @@ extension _App on _AppSettingsPageState {
           _setting.appIconStyle.put(style);
           _setting.appThemePackage.put('');
           _markCustomTheme();
-          RNodes.app.notify();
+          unawaited(RNodes.app.notify());
         },
       ),
       keywords: 'icons MingCute Classic',
@@ -628,7 +628,7 @@ extension _App on _AppSettingsPageState {
           if (radius == null) return;
           property.put(radius);
           _markCustomTheme();
-          RNodes.app.notify();
+          unawaited(RNodes.app.notify());
         },
       ),
       keywords: 'card tile button radius',
@@ -692,7 +692,7 @@ extension _App on _AppSettingsPageState {
       _setting.appThemePreset.put(ThemePackages.customPreset);
       _markCustomTheme();
       setStateSafe(() {});
-      RNodes.app.notify();
+      unawaited(RNodes.app.notify());
       unawaited(_deleteOwnedAppBackground(oldPath));
     } catch (error, stack) {
       Loggers.app.warning('Import background failed at $stage', error, stack);
@@ -734,7 +734,7 @@ extension _App on _AppSettingsPageState {
           if (opacity == null) return;
           _setting.appBackgroundOpacity.put(opacity);
           _markCustomTheme();
-          RNodes.app.notify();
+          unawaited(RNodes.app.notify());
         },
       ),
     );
@@ -782,7 +782,7 @@ extension _App on _AppSettingsPageState {
             if (selected == null) return;
             _setting.appBackgroundBlur.put(selected);
             _markCustomTheme();
-            RNodes.app.notify();
+            unawaited(RNodes.app.notify());
           },
         ),
       ),
@@ -834,7 +834,7 @@ extension _App on _AppSettingsPageState {
             );
             if (value == null || !mounted) return;
             AppFont.saveFamilies(value.split(RegExp(r'[\r\n]+')));
-            RNodes.app.notify();
+            unawaited(RNodes.app.notify());
           } finally {
             controller.dispose();
           }
@@ -859,7 +859,7 @@ extension _App on _AppSettingsPageState {
                   icon: const Icon(Icons.close),
                   onPressed: () async {
                     await AppFont.removeImported();
-                    RNodes.app.notify();
+                    unawaited(RNodes.app.notify());
                   },
                 ),
         ),
@@ -893,7 +893,7 @@ extension _App on _AppSettingsPageState {
             Toast.error(libL10n.invalid);
             return;
           }
-          RNodes.app.notify();
+          unawaited(RNodes.app.notify());
           Toast.show(libL10n.success);
         },
       ),
@@ -1046,7 +1046,7 @@ extension _App on _AppSettingsPageState {
                       ThemePackages.customPreset) {
                     _saveCustomTheme();
                   }
-                  RNodes.app.notify();
+                  unawaited(RNodes.app.notify());
                 }
               },
         trailing: ValBuilder(
@@ -1090,7 +1090,7 @@ extension _App on _AppSettingsPageState {
             // returning a selection means — so popping here closed the settings
             // page behind it. `notify` is what makes the new language take
             // effect; nothing has to be dismissed for that.
-            RNodes.app.notify();
+            unawaited(RNodes.app.notify());
           }
         },
         trailing: ListenBuilder(
@@ -1334,8 +1334,9 @@ extension _App on _AppSettingsPageState {
                   e.toString().contains('incorrect password')
               ? l10n.backupPasswordWrong
               : '${libL10n.error}:\n$e';
-          context.showRoundDialog(title: libL10n.fail, child: Text(msg));
           Loggers.app.warning('Decrypt raw settings failed', e, stack);
+          if (!mounted) return;
+          await context.showRoundDialog(title: libL10n.fail, child: Text(msg));
           return;
         }
       }

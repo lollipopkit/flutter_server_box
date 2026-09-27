@@ -25,7 +25,7 @@ void main() {
   setUp(() async {
     await openTestDb();
     GetIt.instance.registerSingleton<SettingStore>(
-      SettingStore('setting_test')..init(),
+      SettingStore('setting_test'),
     );
     // Off by default, and every case below is about what is drawn when it is
     // on. The off case has a group of its own.

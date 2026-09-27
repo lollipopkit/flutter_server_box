@@ -582,7 +582,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
           title: libL10n.snippet,
           modelDef: Snippet.example.toJson(),
         );
-        if (data == null) return;
+        if (data == null || !context.mounted) return;
         String str;
         try {
           str = utf8.decode(data);
@@ -597,7 +597,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
             return json.decode(s) as List;
           }, text),
         );
-        if (list == null || list.isEmpty) return;
+        if (list == null || list.isEmpty || !context.mounted) return;
         final snippets = <Snippet>[];
         final errs = <String>[];
         for (final item in list) {
@@ -613,7 +613,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
           return;
         }
         if (errs.isNotEmpty) {
-          context.showRoundDialog(
+          await context.showRoundDialog(
             title: libL10n.error,
             child: SingleChildScrollView(child: Text(errs.join('\n'))),
           );

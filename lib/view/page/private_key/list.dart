@@ -116,9 +116,9 @@ extension on _PrivateKeyListState {
     );
     if (generate == null || !mounted) return;
     if (generate) {
-      PrivateKeyGeneratePage.route.go(context);
+      unawaited(PrivateKeyGeneratePage.route.go(context));
     } else {
-      PrivateKeyEditPage.route.go(context);
+      unawaited(PrivateKeyEditPage.route.go(context));
     }
   }
 
@@ -134,7 +134,8 @@ extension on _PrivateKeyListState {
         name: 'system',
         key: await idRsaFile.readAsString(),
       );
-      context.showRoundDialog(
+      if (!mounted) return;
+      await context.showRoundDialog(
         title: libL10n.attention,
         child: Text(l10n.addSystemPrivateKeyTip),
         actions: Btn.ok(

@@ -610,7 +610,7 @@ extension _Actions on _SftpPageState {
   ) async {
     final cmd = _getDecompressCmd(fullPath);
     if (cmd == null) {
-      context.showRoundDialog(
+      await context.showRoundDialog(
         title: libL10n.error,
         child: Text('${libL10n.unsupported}: ${entry.name}'),
         actions: Btnx.oks,

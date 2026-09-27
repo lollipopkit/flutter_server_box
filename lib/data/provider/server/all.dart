@@ -409,7 +409,7 @@ class ServersNotifier extends _$ServersNotifier {
       ref.read(serverSelectionProvider.notifier).select(null);
     }
     ref.invalidate(serverProvider(id));
-    forgetHostKeyFingerprints(id);
+    await forgetHostKeyFingerprints(id);
 
     // Remove SSH session when server is deleted
     final sessionId = 'ssh_$id';

@@ -122,7 +122,7 @@ extension _Bulk on _ServerPageState {
     const manual = ServerSortOrder(ServerSortField.manual, ascending: true);
     if (!manual.isCurrentFor(_tag.value)) {
       manual.save(_tag.value);
-      _sortVersion.notify();
+      unawaited(_sortVersion.notify());
     }
     _endSelecting();
   }

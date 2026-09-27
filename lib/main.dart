@@ -253,7 +253,14 @@ Future<void> _initData() async {
 
   if (Stores.setting.betaTest.fetch()) AppUpdate.chan = AppUpdateChan.beta;
 
-  FontUtils.loadFrom(Stores.setting.fontPath.fetch());
+  // Not awaited: only the terminal uses it, and a broken font file is the
+  // user's, not a defect to report.
+  final fontPath = Stores.setting.fontPath.fetch();
+  unawaited(
+    FontUtils.loadFrom(fontPath).catchError((Object e, StackTrace s) {
+      Loggers.app.warning('Could not load the terminal font', e, s);
+    }),
+  );
   await ThemePackages.prepareSelectedTheme();
   ThemePackages.reconcileSelection();
   await AppFont.loadStored();

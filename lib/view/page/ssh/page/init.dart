@@ -250,32 +250,50 @@ extension _Init on SSHPageState {
       _openingTerminal = false;
     }
 
+    // Not awaited: a snippet can `${sleep N}`, and the page must not wait for
+    // it before taking keyboard input.
+    if (_tmuxCurrentSession == null) unawaited(_runStartupInput());
+
+    _focusTerminal(keyboard: false);
+  }
+
+  /// Auto-run snippets, then `initCmd`, then `initSnippet`, one after another:
+  /// a snippet with placeholders types across awaits, so running them
+  /// concurrently would interleave their input.
+  Future<void> _runStartupInput() async {
     // Snippets name the server they run on, and their scripts are written
     // against one. A terminal on this device has neither.
     final spi = widget.args.spi;
     final snippets = ref.read(snippetProvider.select((p) => p.snippets));
-    if (spi != null && _tmuxCurrentSession == null) {
+    if (spi != null) {
       for (final snippet in snippets) {
         if (snippet.autoRunOn?.contains(spi.id) == true) {
-          snippet.runInTerm(_terminal, spi);
+          if (!await _runStartupSnippet(snippet, spi)) return;
         }
       }
     }
 
     final initCmd = widget.args.initCmd;
-    if (initCmd != null && _tmuxCurrentSession == null) {
+    if (initCmd != null) {
       _terminal.textInput(initCmd);
       _terminal.keyInput(TerminalKey.enter);
     }
 
     final initSnippet = widget.args.initSnippet;
-    if (initSnippet != null &&
-        (spi != null || !initSnippet.needsServer) &&
-        _tmuxCurrentSession == null) {
-      initSnippet.runInTerm(_terminal, spi);
+    if (initSnippet != null && (spi != null || !initSnippet.needsServer)) {
+      await _runStartupSnippet(initSnippet, spi);
     }
+  }
 
-    _focusTerminal(keyboard: false);
+  /// Whether the page is still up to carry on.
+  Future<bool> _runStartupSnippet(Snippet snippet, Spi? spi) async {
+    try {
+      await snippet.runInTerm(_terminal, spi);
+    } catch (e, s) {
+      if (!mounted) return false;
+      context.showErrDialog(e, s, '${libL10n.snippet}: ${snippet.name}');
+    }
+    return mounted;
   }
 
   void _setupDiscontinuityTimer() {
