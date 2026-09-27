@@ -38,7 +38,7 @@ enum VirtSection { guests, storage, network, backup }
 /// narrow window — the host's guest list is what a single column is for, and
 /// the other hosts are behind the switcher at its head. The Storage and
 /// Network sections swap the list for the host's pools or networks, the same
-/// way. See virt.md, "UI".
+/// way. See docs/dev/virt.md, "UI".
 class VirtTabPage extends ConsumerStatefulWidget {
   const VirtTabPage({super.key});
 

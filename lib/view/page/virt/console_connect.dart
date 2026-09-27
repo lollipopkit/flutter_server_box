@@ -20,7 +20,7 @@ import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/virt/common.dart';
 
-/// How each console a guest has is opened (virt.md, "Console (phase 1)").
+/// How each console a guest has is opened (docs/dev/virt.md, "Console (phase 1)").
 ///
 /// | Host    | Console | Carried by                                          |
 /// | ------- | ------- | --------------------------------------------------- |

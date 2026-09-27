@@ -9,6 +9,7 @@ sites and copies this site's output into `website/dist/docs/`.
 
 ```
 docs/
+├── dev/                    # Developer notes, not part of the site (virt.md)
 ├── public/                 # Static assets (favicons, ...)
 ├── src/content/docs/       # Pages — English at the top level
 │   ├── advanced/

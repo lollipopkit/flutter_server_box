@@ -92,4 +92,4 @@ A server is reached over SSH, a `monitor` agent's HTTP API, both, or is this dev
 
 ## Feature notes
 
-`crates/sbm_ffi/CLAUDE.md` (native SSH crypto) · `ios/CLAUDE.md` (privacy manifests, iSH engine, LLDB) · `macos/CLAUDE.md` (per-arch builds, deployment target) · `android/CLAUDE.md` (foreground service, signing, reproducible builds) · `lib/data/store/CLAUDE.md` · `lib/data/model/file/CLAUDE.md` (SFTP/SCP) · `lib/data/model/server/benchmark/CLAUDE.md` (yabs) · `lib/core/service/CLAUDE.md` (watch and home widgets) · `lib/view/page/server/monitor_settings/CLAUDE.md` · `virt.md` (Virtualization tab) · `monitor/CLAUDE.md`.
+`crates/sbm_ffi/CLAUDE.md` (native SSH crypto) · `ios/CLAUDE.md` (privacy manifests, iSH engine, LLDB) · `macos/CLAUDE.md` (per-arch builds, deployment target) · `android/CLAUDE.md` (foreground service, signing, reproducible builds) · `lib/data/store/CLAUDE.md` · `lib/data/model/file/CLAUDE.md` (SFTP/SCP) · `lib/data/model/server/benchmark/CLAUDE.md` (yabs) · `lib/core/service/CLAUDE.md` (watch and home widgets) · `lib/view/page/server/monitor_settings/CLAUDE.md` · `docs/dev/virt.md` (Virtualization tab) · `monitor/CLAUDE.md`.
