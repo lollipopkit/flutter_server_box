@@ -6,7 +6,7 @@
 //! shape later; a failure crosses as [`VirtFfiError`], whose `kind` is what
 //! the app branches on (retry with sudo on `PermissionDenied`).
 
-use sbm_parser::{virt, virt_manage, virt_snapshot};
+use sbm_parser::{virt, virt_manage, virt_net, virt_snapshot};
 
 /// Power actions (mirrors sbm_parser::virt::VirtAction)
 pub enum VirtActionKind {
@@ -199,6 +199,20 @@ pub fn parse_virt_snap_chain_json(raw: String) -> Result<String, VirtFfiError> {
     serde_json::to_string(&virt_snapshot::parse_snap_chain(&raw)?).map_err(json_err)
 }
 
+/// What deciding whether the host would refuse deleting snapshot `name`
+/// needs: its layers, the chain, the security model and the AppArmor
+/// profile's `deny` lines. Parse with [`parse_virt_snap_delete_refusal`].
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_snap_delete_check_script(domain: String, name: String) -> String {
+    virt_snapshot::snap_delete_check_script(&domain, &name)
+}
+
+/// [`virt_snap_delete_check_script`]'s output → why the host would refuse
+/// the delete (AppArmor denying the commit), or `None`
+pub fn parse_virt_snap_delete_refusal(raw: String) -> Result<Option<String>, VirtFfiError> {
+    Ok(virt_snapshot::snap_delete_refusal(&raw)?)
+}
+
 /// An external snapshot (disks only, `--atomic`), `overlays` being
 /// `(target, path)` per disk. Parse with [`parse_virt_action`].
 #[flutter_rust_bridge::frb(sync)]
@@ -223,17 +237,20 @@ pub fn parse_virt_snap_diff_json(raw: String) -> Result<String, VirtFfiError> {
     serde_json::to_string(&virt_snapshot::parse_snap_diff(&raw)?).map_err(json_err)
 }
 
-/// A pool's own target directory (`pool-dumpxml`), for placing an overlay in
-/// it
-pub fn parse_virt_pool_target(raw: String) -> Result<Option<String>, VirtFfiError> {
-    Ok(virt_snapshot::parse_pool_target(&raw))
-}
-
 /// Why an external snapshot cannot be taken, from a `VirtSnapChain` JSON
+#[flutter_rust_bridge::frb(sync)]
 pub fn virt_external_snapshot_refusal(chain_json: String) -> Result<Option<String>, VirtFfiError> {
     let chain: virt_snapshot::VirtSnapChain =
         serde_json::from_str(&chain_json).map_err(json_err)?;
     Ok(virt_snapshot::external_snapshot_refusal(&chain))
+}
+
+/// Why no snapshot at all can be taken, from a `VirtSnapChain` JSON
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_snapshot_refusal(chain_json: String) -> Result<Option<String>, VirtFfiError> {
+    let chain: virt_snapshot::VirtSnapChain =
+        serde_json::from_str(&chain_json).map_err(json_err)?;
+    Ok(virt_snapshot::snapshot_refusal(&chain))
 }
 
 /// Pools, volume names and every domain's disks
@@ -267,6 +284,20 @@ pub fn virt_networks_script() -> String {
 /// [`virt_networks_script`]'s output → `VirtNetworks` JSON
 pub fn parse_virt_networks_json(raw: String) -> Result<String, VirtFfiError> {
     serde_json::to_string(&virt::parse_networks(&raw)?).map_err(json_err)
+}
+
+/// Editing an existing network (phase 10): `op_json` is a
+/// `sbm_parser::virt_net::VirtNetOp`. Parse with [`parse_virt_net_change`].
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_net_change_script(op_json: String) -> Result<String, VirtFfiError> {
+    let op: virt_net::VirtNetOp = serde_json::from_str(&op_json).map_err(json_err)?;
+    Ok(virt_net::net_change_script(&op)?)
+}
+
+/// [`virt_net_change_script`]'s output: `Ok` once the definition (and, when
+/// asked for, the running network) has the change
+pub fn parse_virt_net_change(raw: String) -> Result<(), VirtFfiError> {
+    Ok(virt_net::parse_net_change(&raw)?)
 }
 
 fn spec_of(json: &str) -> Result<virt::VirtCreateSpec, VirtFfiError> {
@@ -342,15 +373,18 @@ pub fn parse_virt_create_json(raw: String) -> Result<String, VirtFfiError> {
 }
 
 /// `undefine`, with the volumes of the disk targets in `storage` (none keeps
-/// them all), and the domain's own cloud-init `seed` after it. Parse with
-/// [`parse_virt_undefine`].
+/// them all), and the domain's own cloud-init `seed` and the `chain` files
+/// its external snapshots left (after refreshing `pools`) after it. Parse
+/// with [`parse_virt_undefine`].
 #[flutter_rust_bridge::frb(sync)]
 pub fn virt_undefine_script(
     domain: String,
     storage: Vec<String>,
     seed: Option<String>,
+    pools: Vec<String>,
+    chain: Vec<String>,
 ) -> Result<String, VirtFfiError> {
-    Ok(virt::undefine_script(&domain, &storage, seed.as_deref())?)
+    Ok(virt::undefine_script(&domain, &storage, seed.as_deref(), &pools, &chain)?)
 }
 
 /// [`virt_undefine_script`]'s output: `Ok` once the domain (and its seed)
@@ -433,6 +467,19 @@ pub fn virt_hardware_change_script(
 /// [`virt_hardware_change_script`]'s output → `VirtHwOutcome` JSON
 pub fn parse_virt_hardware_change_json(raw: String) -> Result<String, VirtFfiError> {
     serde_json::to_string(&virt::parse_hardware_change(&raw)?).map_err(json_err)
+}
+
+/// The host's firmware descriptors (`/usr/share/qemu/firmware/*.json`), for
+/// what a new domain can boot with. Parse with
+/// [`parse_virt_firmware_json`].
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_firmware_script() -> String {
+    virt::firmware_script()
+}
+
+/// [`virt_firmware_script`]'s output → `Vec<FirmwareDescriptor>` JSON
+pub fn parse_virt_firmware_json(raw: String) -> Result<String, VirtFfiError> {
+    Ok(serde_json::to_string(&virt::parse_firmware_descriptors(&raw)).map_err(json_err)?)
 }
 
 /// The host's USB and PCI devices, for passing one to a guest

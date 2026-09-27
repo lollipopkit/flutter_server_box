@@ -1160,7 +1160,7 @@ void main() {
             address: '10.0.0.5/24',
             gateway: '10.0.0.1',
             dns: ['1.1.1.1', '9.9.9.9'],
-            searchDomain: 'lab.example',
+            searchDomains: ['lab.example'],
           ),
           start: true,
         ),
@@ -1454,7 +1454,7 @@ void main() {
       expect(ci.sshKeys, ['ssh-ed25519 AAAA one', 'ssh-ed25519 BBBB two']);
       expect((ci.address, ci.gateway), ('10.0.0.5/24', '10.0.0.1'));
       expect(ci.dns, ['1.1.1.1', '9.9.9.9']);
-      expect(ci.searchDomain, 'lab.example');
+      expect(ci.searchDomains, ['lab.example']);
       expect((ci.passwordSet, ci.network, ci.hostname), (true, true, null));
       expect(ci.revision, 'd1');
       expect('$ci', isNot(contains('**')));
@@ -1614,6 +1614,94 @@ void main() {
       );
       final taken = await _err(pve.clone(vm, const VirtCloneRequest(name: 'x', vmid: 120)));
       expect(taken.type, VirtErrType.exists);
+    });
+
+    test('a job keeps the one selection it has: pool, all or a list', () async {
+      final api = _Api();
+      api.routes['PUT /cluster/backup/j1'] = (_) => null;
+      final pve = api.backend(token);
+      VirtBackupJobEdit edit({String? pool, bool all = false, List<int> vmids = const [], List<int> exclude = const []}) =>
+          VirtBackupJobEdit(
+            id: 'j1',
+            node: null,
+            storage: 'local',
+            schedule: 'sat 03:00',
+            pool: pool,
+            all: all,
+            vmids: vmids,
+            exclude: exclude,
+          );
+      Map<String, String> sent() =>
+          form(api.bodies[api.paths.lastIndexOf('PUT /cluster/backup/j1')]);
+      Set<String> deleted() => sent()['delete']!.split(',').toSet();
+
+      // A pool job saved with only its schedule changed stays a pool job.
+      await pve.editBackupJob(edit(pool: 'prod', all: true, vmids: [1]));
+      expect(sent()['pool'], 'prod');
+      expect(sent()['all'], '0');
+      expect(sent().containsKey('vmid'), isFalse);
+      expect(deleted(), containsAll(['vmid', 'exclude']));
+      expect(deleted(), isNot(contains('pool')));
+
+      await pve.editBackupJob(edit(all: true, exclude: [101, 102]));
+      expect(sent()['all'], '1');
+      expect(sent()['exclude'], '101,102');
+      expect(deleted(), containsAll(['vmid', 'pool']));
+      expect(deleted(), isNot(contains('exclude')));
+
+      // A list is sent and not deleted in the same request.
+      await pve.editBackupJob(edit(vmids: [100, 200]));
+      expect(sent()['vmid'], '100,200');
+      expect(sent()['all'], '0');
+      expect(deleted(), containsAll(['exclude', 'pool']));
+      expect(deleted(), isNot(contains('vmid')));
+    });
+
+    test("run now: the job's node, or every online node", () async {
+      final api = _Api();
+      api.resources = [
+        {'id': 'node/pve', 'type': 'node', 'node': 'pve', 'status': 'online'},
+        {'id': 'node/pve2', 'type': 'node', 'node': 'pve2', 'status': 'online'},
+        {'id': 'node/pve3', 'type': 'node', 'node': 'pve3', 'status': 'offline'},
+        {'id': 'qemu/9', 'type': 'qemu', 'vmid': 9, 'node': 'pve2', 'status': 'stopped'},
+      ];
+      for (final n in ['pve', 'pve2', 'pve3']) {
+        api.routes['POST /nodes/$n/vzdump'] = (_) => _Api.upid;
+      }
+      final pve = api.backend(token);
+      await pve.load();
+      Iterable<String> runs() =>
+          api.paths.where((p) => p.endsWith('/vzdump'));
+
+      // No node: vzdump takes only the guests on the node it runs on, so
+      // each online node is asked — the offline one is not.
+      await pve.runBackupJob(
+        const VirtBackupJob(id: 'j', storage: 'nfs', all: true, exclude: [9]),
+      );
+      expect(runs(), ['POST /nodes/pve/vzdump', 'POST /nodes/pve2/vzdump']);
+      final body = form(api.bodies[api.paths.indexOf('POST /nodes/pve2/vzdump')]);
+      expect(body, containsPair('all', '1'));
+      expect(body, containsPair('exclude', '9'));
+      expect(body.containsKey('vmid'), isFalse);
+
+      // A node of its own: there only, and refused when it is offline.
+      api.paths.clear();
+      api.bodies.clear();
+      await pve.runBackupJob(
+        const VirtBackupJob(id: 'j', storage: 'nfs', node: 'pve2', pool: 'prod'),
+      );
+      expect(runs(), ['POST /nodes/pve2/vzdump']);
+      expect(
+        form(api.bodies[api.paths.lastIndexOf('POST /nodes/pve2/vzdump')]),
+        containsPair('pool', 'prod'),
+      );
+      api.paths.clear();
+      api.bodies.clear();
+      final e = await _err(
+        pve.runBackupJob(const VirtBackupJob(id: 'j', node: 'pve3', all: true)),
+      );
+      expect(e.type, VirtErrType.unsupported);
+      expect(runs(), isEmpty);
     });
 
     test('back up now, list, restore over and as new, delete', () async {
@@ -2067,8 +2155,15 @@ void main() {
         'hasFeature': 0,
         'nodes': ['pve'],
       };
-      api.routes['GET /nodes/pve/qemu/100/config'] =
-          (_) => {'scsi0': 'local-lvm:vm-100-disk-0,size=20G'};
+      // Only the disks a snapshot takes name a storage: not a NIC's MAC, a
+      // description with a colon, a CD-ROM or an unused volume.
+      api.routes['GET /nodes/pve/qemu/100/config'] = (_) => {
+        'scsi0': 'local-lvm:vm-100-disk-0,size=20G',
+        'net0': 'virtio=BC:24:11:AA:BB:CC,bridge=vmbr0',
+        'description': 'Note: prod',
+        'ide2': 'local:iso/debian.iso,media=cdrom',
+        'unused0': 'nfs:100/vm-100-disk-1.qcow2',
+      };
       final backend = api.backend(token);
       const guest = VirtGuest(
         id: 'qemu/100',
@@ -2080,8 +2175,7 @@ void main() {
       );
       expect(await backend.snapshotSupported(guest), isFalse);
       final refusal = await backend.snapshotRefusal(guest);
-      expect(refusal, contains('snapshot feature is not available'));
-      expect(refusal, contains('local-lvm'));
+      expect(refusal, 'snapshot feature is not available: local-lvm');
       // The create is refused before any task is started, with the reason.
       final e = await _err(
         backend.createSnapshot(guest, name: 'pre-up'),

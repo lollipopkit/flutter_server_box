@@ -64,7 +64,7 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView> {
   /// empty row or the bar's button.
   VirtSnapshotForm _form = VirtSnapshotForm.internal;
 
-  /// The pool an external snapshot's overlays go in; null: the guest's own.
+  /// The pool an external snapshot's overlays go in; null: beside each disk.
   String? _pool;
 
   /// Open rows, by snapshot name.
@@ -141,12 +141,16 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView> {
 
   /// The count, what reverting costs, and the way to a new one.
   Widget _buildHead(List<VirtGuestSnapshot>? list, bool busy) {
-    // Where the host says the guest cannot be snapshotted at all (PVE asks
-    // its own storage), the form is not offered: the reason is said instead.
-    final refusal = ref.watch(
-      virtSnapshotRefusalProvider(widget.serverId, widget.guest.id),
-    );
-    final unsupported = refusal.value;
+    // Where the host says the guest cannot be snapshotted at all, the form is
+    // not offered: the reason is said instead. libvirt's answer is the chain
+    // this view already reads; PVE asks its own storage.
+    final unsupported = widget.caps.snapshotExternal
+        ? ref.watch(_chainProvider).value?.refusal
+        : ref
+              .watch(
+                virtSnapshotRefusalProvider(widget.serverId, widget.guest.id),
+              )
+              .value;
     return VirtCard(
       icon: Icons.history,
       title: list == null
@@ -196,6 +200,7 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView> {
     };
     final chain = ref.watch(_chainProvider).value;
     final pools = chain?.pools ?? const <String>[];
+    final externalRefusal = chain?.externalRefusal;
     return [
       UIs.height13,
       Input(
@@ -227,7 +232,17 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView> {
           },
           _form,
           (v) => setState(() => _form = v),
+          disabled: {
+            if (externalRefusal != null) VirtSnapshotForm.external,
+          },
         ),
+        if (externalRefusal != null) ...[
+          UIs.height7,
+          Text(
+            externalRefusal,
+            style: const TextStyle(fontSize: 12, color: StatePalette.warn),
+          ),
+        ],
         UIs.height7,
         Text(
           external
@@ -245,7 +260,7 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView> {
         ],
         if (external && pools.isNotEmpty) ...[
           UIs.height7,
-          _poolPicker(pools, chain),
+          _poolPicker(pools),
         ],
       ],
       if (memory != VirtSnapshotMemory.none)
@@ -291,8 +306,9 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView> {
     String label,
     Map<T, String> options,
     T current,
-    ValueChanged<T> onPick,
-  ) {
+    ValueChanged<T> onPick, {
+    Set<T> disabled = const {},
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -307,7 +323,9 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView> {
                 key: ValueKey('snapshot:form:${e.key}'),
                 label: Text(e.value, style: UIs.text12),
                 selected: e.key == current,
-                onSelected: (_) => onPick(e.key),
+                onSelected: disabled.contains(e.key)
+                    ? null
+                    : (_) => onPick(e.key),
               ),
           ],
         ),
@@ -315,21 +333,23 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView> {
     );
   }
 
-  /// Where an external snapshot's overlays go: the guest's own pool, or
-  /// another one that holds files.
-  Widget _poolPicker(List<String> pools, VirtSnapChain? chain) {
-    final current = _pool ?? pools.first;
+  /// Where an external snapshot's overlays go: beside each disk (no
+  /// `--diskspec`, libvirt's own placement), or a pool that holds files.
+  Widget _poolPicker(List<String> pools) {
     return Row(
       children: [
         Text(l10n.virtSnapshotOverlayPool, style: UIs.text12Grey),
         UIs.width7,
         Expanded(
-          child: DropdownButton<String>(
+          child: DropdownButton<String?>(
             key: const ValueKey('snapshot:pool'),
-            value: current,
+            value: pools.contains(_pool) ? _pool : null,
             isExpanded: true,
             style: UIs.text13,
             items: [
+              DropdownMenuItem(
+                child: Text(l10n.virtSnapshotOverlayBeside, style: UIs.text13),
+              ),
               for (final p in pools)
                 DropdownMenuItem(value: p, child: Text(p, style: UIs.text13)),
             ],
@@ -373,19 +393,13 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView> {
             const Center(child: SizedLoading.small)
           else ...[
             for (final d in value.disks) _buildChainDisk(d),
-            if (value.refusal case final why?)
+            // A refusal of every snapshot is said at the top of the view; here
+            // only what refuses the external kind alone.
+            if (value.refusal == null && value.externalRefusal != null)
               Padding(
                 padding: const EdgeInsets.only(top: 5),
                 child: Text(
-                  why,
-                  style: const TextStyle(fontSize: 12, color: StatePalette.warn),
-                ),
-              ),
-            if (value.blocked case final why?)
-              Padding(
-                padding: const EdgeInsets.only(top: 5),
-                child: Text(
-                  why,
+                  value.externalRefusal!,
                   style: const TextStyle(fontSize: 12, color: StatePalette.warn),
                 ),
               ),
@@ -572,7 +586,7 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView> {
                           ),
                         ),
                       )
-                    else if (stops)
+                    else if (snap.external)
                       Text(
                         l10n.virtSnapshotRevertChain,
                         style: UIs.text11Grey,
@@ -701,8 +715,12 @@ extension _Actions on _VirtSnapshotsViewState {
       _creating = true;
       // A guest already on a chain keeps it: a second snapshot deepens it,
       // and an internal one on a chain would be a different kind of thing.
+      final chain = ref.read(_chainProvider).value;
       _form =
-          widget.caps.snapshotExternal && (ref.read(_chainProvider).value?.hasOverlays ?? false)
+          widget.caps.snapshotExternal &&
+              chain != null &&
+              chain.hasOverlays &&
+              chain.externalRefusal == null
           ? VirtSnapshotForm.external
           : VirtSnapshotForm.internal;
     });
@@ -719,8 +737,12 @@ extension _Actions on _VirtSnapshotsViewState {
         name: name,
         description: desc.isEmpty ? null : desc,
         form: _form,
-        overlayPool: _form == VirtSnapshotForm.external
-            ? (_pool ?? ref.read(_chainProvider).value?.disks.firstOrNull?.pool)
+        // What the picker shows: a pool gone from the list is "beside each
+        // disk", not a name the host no longer has.
+        overlayPool:
+            _form == VirtSnapshotForm.external &&
+                (ref.read(_chainProvider).value?.pools.contains(_pool) ?? false)
+            ? _pool
             : null,
         memory: switch (memory) {
           VirtSnapshotMemory.none => false,

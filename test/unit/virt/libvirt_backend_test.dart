@@ -430,6 +430,10 @@ void main() {
     test('create, revert and delete run their virsh command', () async {
       final exec = _Exec((call) {
         if (call.script.contains('domstats')) return _ok(_overview());
+        // The delete's check first: a host that would allow it.
+        if (call.script.contains('snapshot-dumpxml')) {
+          return _ok(_fixture('script_snap_delete_running_clear.txt'));
+        }
         return _ok(_section('virt.action', 'ok'));
       });
       final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
@@ -452,11 +456,39 @@ void main() {
         exec.calls.last.script,
         contains("V snapshot-delete --domain '$_run' --snapshotname 'pre-up'"),
       );
+      expect(
+        exec.calls[exec.calls.length - 2].script,
+        contains("snapshot-dumpxml --domain '$_run' --snapshotname 'pre-up'"),
+      );
       // A name the form would not allow never reaches the host.
       final calls = exec.calls.length;
       final e = await _err(virt.createSnapshot(web, name: "x'; reboot"));
       expect(e.type, VirtErrType.unsupported);
       expect(exec.calls, hasLength(calls));
+    });
+
+    test('a delete AppArmor would refuse is refused before it is sent',
+        () async {
+      for (final f in [
+        'script_snap_delete_running_denied.txt',
+        'script_snap_delete_shut_off.txt',
+      ]) {
+        final exec = _Exec((call) {
+          if (call.script.contains('domstats')) return _ok(_overview());
+          if (call.script.contains('snapshot-dumpxml')) return _ok(_fixture(f));
+          return _fail('unexpected script');
+        });
+        final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+        final web = (await virt.load()).guests.firstWhere((g) => g.id == _run);
+        final e = await _err(virt.deleteSnapshot(web, 'ext2'));
+        expect(e.type, VirtErrType.unsupported, reason: f);
+        expect(e.message, contains('#932456'), reason: f);
+        expect(
+          exec.calls.where((c) => c.script.contains('snapshot-delete')),
+          isEmpty,
+          reason: f,
+        );
+      }
     });
 
     test('the chain is read back, and a raw disk is refused', () async {
@@ -476,9 +508,12 @@ void main() {
       expect(chain.depth, 2);
       expect(chain.hasOverlays, isTrue);
       expect(chain.refusal, isNull);
+      expect(chain.externalRefusal, isNull);
       final disk = chain.disks.first;
       expect(disk.target, 'vda');
-      expect(disk.pool, 'sbxe2e-p8q');
+      // The overlay is in /var/lib/libvirt/sbxe2e-p8q, which is no pool the
+      // listing has: named by the pool list, never guessed from the path.
+      expect(disk.pool, isNull);
       expect(disk.files.first.active, isTrue);
       expect(disk.files.first.snap, 'sx1');
       // The base image is not anyone's snapshot.
@@ -501,6 +536,7 @@ void main() {
       final web2 = (await virt2.load()).guests.firstWhere((g) => g.id == _run);
       final rawChain = await virt2.snapshotChain(web2);
       expect(rawChain.refusal, contains('raw'));
+      expect(rawChain.externalRefusal, contains('raw'));
       expect(await virt2.snapshotSupported(web2), isFalse);
     });
 
@@ -546,6 +582,48 @@ void main() {
       expect(picked, contains('--diskspec'));
       expect(picked, contains('snapshot=external'));
       expect(picked, contains("file='/var/lib/libvirt/images/sx1.qcow2.pre-up'"));
+
+      // A name that is no pool of files is refused before the host is asked.
+      final calls = exec.calls.length;
+      final e = await _err(
+        virt.createSnapshot(
+          web,
+          name: 'pre-up',
+          form: VirtSnapshotForm.external,
+          overlayPool: 'sbxe2e-p8q',
+        ),
+      );
+      expect(e.type, VirtErrType.unsupported);
+      expect(
+        exec.calls.skip(calls).where((c) => c.script.contains('snapshot-create-as')),
+        isEmpty,
+      );
+    });
+
+    test('an overlay goes only in an active pool of files', () {
+      VirtStoragePool pool(String type, String? path, {bool active = true}) =>
+          VirtStoragePool(
+            id: type,
+            name: type,
+            type: type,
+            path: path,
+            active: active,
+          );
+      final dir = pool('dir', '/var/lib/libvirt/images/');
+      final netfs = pool('netfs', '/mnt/nfs');
+      final lvm = pool('logical', '/dev/vg0');
+      final off = pool('fs', '/mnt/off', active: false);
+      expect(virtPoolHoldsFiles(dir), isTrue);
+      expect(virtPoolHoldsFiles(netfs), isTrue);
+      // An LVM pool's target is its /dev directory: no file goes there.
+      expect(virtPoolHoldsFiles(lvm), isFalse);
+      expect(virtPoolHoldsFiles(off), isFalse);
+      final pools = [dir, netfs, lvm, off];
+      // By the directory the file is in, trailing slash or not.
+      expect(virtPoolOfFile(pools, '/var/lib/libvirt/images/a.qcow2'), dir);
+      expect(virtPoolOfFile(pools, '/var/lib/libvirt/images/sub/a.qcow2'), isNull);
+      expect(virtPoolOfFile(pools, '/dev/vg0/lv'), isNull);
+      expect(virtPoolOfFile(pools, '/mnt/off/a.qcow2'), off);
     });
 
     test('a diff is read and grouped by what changed', () async {
@@ -848,7 +926,7 @@ void main() {
           address: '10.0.0.5/24',
           gateway: '10.0.0.1',
           dns: ['1.1.1.1'],
-          searchDomain: 'lab',
+          searchDomains: ['lab'],
         ),
         name: spec.name,
         mac: '52:54:00:00:00:02',
@@ -890,6 +968,9 @@ void main() {
       );
       final exec = _Exec((call) {
         if (call.script.contains('domstats')) return _ok(_overview());
+        if (call.script.contains('snapshot-list')) {
+          return _ok(_fixture('script_snapshots_none.txt'));
+        }
         if (call.script.contains('dumpxml')) {
           return _ok(
             _section('virt.display', _fixture('error_display_not_running.txt'), 1) +
@@ -914,6 +995,9 @@ void main() {
         'with its writable disks only', () async {
       final exec = _Exec((call) {
         if (call.script.contains('domstats')) return _ok(_overview());
+        if (call.script.contains('snapshot-list')) {
+          return _ok(_fixture('script_snapshots_none.txt'));
+        }
         if (call.script.contains('dumpxml')) {
           return _ok(
             _section(
@@ -944,7 +1028,60 @@ void main() {
       await virt.delete(odd, removeDisks: false);
       expect(exec.calls.last.script, contains('--keep-nvram'));
       expect(exec.calls.last.script, isNot(contains('--storage')));
-      expect(exec.calls.where((c) => c.script.contains('dumpxml')), hasLength(1));
+      expect(
+        exec.calls.where(
+          (c) => c.script.contains('dumpxml') && !c.script.contains('snapshot-list'),
+        ),
+        hasLength(1),
+      );
+    });
+
+    test('delete: the files external snapshots left under a disk go with '
+        'it, down to the disk the first one was taken of', () async {
+      final exec = _Exec((call) {
+        if (call.script.contains('domstats')) return _ok(_overview());
+        if (call.script.contains('qemu-img')) {
+          // The overlay's disk is one of the guest's writable ones.
+          return _ok(
+            _fixture('script_snap_chain_overlay.txt').replaceAll("dev='vda'", "dev='vdb'"),
+          );
+        }
+        if (call.script.contains('pool-list')) {
+          return _ok(_fixture('script_storage.txt'));
+        }
+        if (call.script.contains('snapshot-list')) {
+          return _ok(_fixture('script_snapshots_external.txt'));
+        }
+        if (call.script.contains('dumpxml')) {
+          return _ok(
+            _section('virt.display', _fixture('error_display_not_running.txt'), 1) +
+                _section('virt.xml', _fixture('dumpxml_win11.xml')),
+          );
+        }
+        if (call.script.contains('undefine')) {
+          return _ok(_fixture('script_undefine.txt'));
+        }
+        return _fail('unexpected script');
+      });
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      final odd = (await virt.load()).guests.firstWhere((g) => g.id == _odd);
+      await virt.delete(odd);
+      final undefine = exec.calls.last.script;
+      // The overlay is what vdb is on: `--storage` deletes it. Below it,
+      // the disk the snapshot was taken of, in the `images` pool.
+      expect(undefine, contains('--storage sda,sdb,vdb,vdc'));
+      expect(undefine, contains("pool-refresh --pool 'images'"));
+      expect(
+        undefine,
+        contains("vol-delete --vol '/var/lib/libvirt/images/sbxe2e-f1.qcow2'"),
+      );
+      expect(undefine, isNot(contains("vol-delete --vol '/var/lib/libvirt/sbxe2e-p8q/sx1.qcow2'")));
+
+      // Kept with the disks: nothing is read, nothing deleted.
+      final calls = exec.calls.length;
+      await virt.delete(odd, removeDisks: false);
+      expect(exec.calls, hasLength(calls + 1));
+      expect(exec.calls.last.script, isNot(contains('vol-delete')));
     });
   });
 
@@ -1413,7 +1550,7 @@ void main() {
       expect(ci.sshKeys, hasLength(2));
       expect((ci.address, ci.gateway), ('10.231.80.5/24', '10.231.80.1'));
       expect(ci.dns, ['10.231.80.1', '2606:4700:4700::1111']);
-      expect(ci.searchDomain, 'lab.example');
+      expect(ci.searchDomains, ['lab.example']);
       expect((ci.passwordSet, ci.network, ci.foreign), (true, true, false));
       expect(ci.revision, '4155283651 69632');
       // The hash is not what the view gets.

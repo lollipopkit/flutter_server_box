@@ -678,6 +678,157 @@ fn blk_and_if_lists() {
     assert_eq!((i[1].interface.as_deref(), i[1].source.as_deref()), (None, None));
 }
 
+/// A running domain's `dumpxml` as a definition a `define` takes: what the
+/// revert discards a pending change with.
+/// The firmware descriptors a real host printed, as `hardware_script`
+/// collects them alongside a domain's hardware.
+#[test]
+fn firmware_descriptors_of_a_real_host() {
+    let raw = fixture("script_hardware.txt");
+    let info = virt::parse_hardware(&raw).unwrap();
+    // The test host's three descriptors, as captured: the one with the
+    // vendor's keys is what Secure Boot is offered on.
+    assert_eq!(info.firmware.len(), 3, "{:?}", info.firmware);
+    let names: Vec<&str> = info.firmware.iter().map(|f| f.name.as_str()).collect();
+    assert!(names.iter().any(|n| n.contains("secure-enrolled")), "{names:?}");
+    assert!(names.iter().any(|n| n.contains("secure") && !n.contains("enrolled")), "{names:?}");
+    let enrolled = info
+        .firmware
+        .iter()
+        .find(|f| f.enrolled_keys)
+        .expect("one carries the keys");
+    assert!(enrolled.secure_boot);
+    // The domain the fixture is of, read from the same output: a running
+    // BIOS domain (`cirros-run`), whose descriptors are its own host's.
+    assert!(!info.config.efi);
+    assert!(info.live.is_some(), "it was running");
+    assert!(info.config.nics.len() >= 1 || !info.config.disks.is_empty());
+}
+
+#[test]
+fn live_xml_as_a_definition() {
+    let live = fixture("dumpxml_revert_live.xml");
+    let expected = fixture("dumpxml_revert_definition.xml");
+    let nvram = live
+        .lines()
+        .find(|l| l.contains("<nvram"))
+        .map(|l| l.trim_end().to_string());
+    let made = virt::definition_of_live_xml(&live, nvram.as_deref()).unwrap();
+    assert_eq!(made.trim_end(), expected.trim_end());
+    // Every time, not just once: the edit is a function of the two.
+    assert_eq!(
+        virt::definition_of_live_xml(&live, nvram.as_deref()).unwrap(),
+        made
+    );
+    // Readable as a domain, and what it is:
+    let hw = virt::parse_hw_xml(&made, &[]).unwrap();
+    assert!(hw.disks.iter().any(|d| d.target == "vda"));
+    let doc = roxmltree::Document::parse(&made).unwrap();
+    let root = doc.root_element();
+    assert_eq!(root.attribute("id"), None, "the running domain's number goes");
+    assert_eq!(root.attribute("type"), Some("kvm"));
+    for name in ["alias", "seclabel", "resource", "backingStore"] {
+        assert!(
+            root.descendants().all(|n| !n.has_tag_name(name)),
+            "{name} is still there"
+        );
+    }
+    // The NVRAM element and its path are exactly as the definition had them.
+    let nv = root
+        .descendants()
+        .find(|n| n.has_tag_name("nvram"))
+        .expect("the NVRAM element is kept");
+    assert_eq!(
+        nv.text().map(str::trim),
+        Some("/var/lib/libvirt/qemu/nvram/sbxe2e-dom_VARS.fd")
+    );
+    assert_eq!(nv.attribute("template"), Some("/usr/share/OVMF/OVMF_VARS_4M.ms.fd"));
+    // A CPU's `check` goes; a BIOS domain without one keeps nothing odd.
+    let cpu = root.descendants().find(|n| n.has_tag_name("cpu")).unwrap();
+    assert_eq!(cpu.attribute("check"), None);
+    // The CPU's own feature list goes; the firmware's `<os><firmware>`
+    // features are the definition's and stay.
+    assert!(
+        cpu.children()
+            .filter(|n| n.is_element())
+            .all(|n| n.has_tag_name("model"))
+    );
+    assert!(root.descendants().any(|n| n.has_tag_name("firmware")));
+    // The disk's runtime index goes with them.
+    assert!(
+        root.descendants()
+            .filter(|n| n.has_tag_name("source"))
+            .all(|n| n.attribute("index").is_none())
+    );
+
+    // A definition without an NVRAM element: the live one goes, and nothing
+    // is put in its place.
+    let bios = live.replace(" firmware='efi'", "").replace(
+        "    <nvram template='/usr/share/OVMF/OVMF_VARS_4M.ms.fd' templateFormat='raw' format='raw'>/var/lib/libvirt/qemu/nvram/sbxe2e-dom_VARS.fd</nvram>\n",
+        "",
+    );
+    let made = virt::definition_of_live_xml(&bios, None).unwrap();
+    assert!(!made.contains("<nvram"), "{made}");
+    assert!(!made.contains("resource"), "{made}");
+    // Not a domain at all.
+    assert!(virt::definition_of_live_xml("not xml", None).is_err());
+    // An empty one is readable and comes out empty: nothing to write.
+    assert_eq!(virt::definition_of_live_xml("<domain/>", None).unwrap(), "<domain/>\n");
+}
+
+/// A definition-only edit writes the saved definition, so what the listing
+/// reports is the definition — not the running network, which is still on
+/// the old one until it is restarted.
+#[test]
+fn a_saved_definition_is_what_the_listing_reports() {
+    let m = sbm_parser::script::cmd_marker;
+    let net_xml = |address: &str, range: &str| {
+        format!(
+            "<network>\n  <name>lab</name>\n  <forward mode='nat'/>\n  \
+             <ip address='{address}' prefix='24'>\n    <dhcp>\n      \
+             <range start='{range}.100' end='{range}.200'/>\n    </dhcp>\n  </ip>\n</network>\n"
+        )
+    };
+    // What `networks_script` prints: the running XML, then the definition as
+    // saved. The definition has 151, the running one still 150.
+    let running = net_xml("192.168.150.1", "192.168.150");
+    let saved = net_xml("192.168.151.1", "192.168.151");
+    let raw = format!(
+        "{nets}\nlab\n{rc}0\n{active}\nlab\n{rc}0\n{auto}\nlab\n{rc}0\n\
+         {xml}\nlab\n{running}{rc}0\n{cfg}\nlab\n{saved}{rc}0\n",
+        nets = m(virt::KEY_NETS),
+        active = m(virt::KEY_NETS_ACTIVE),
+        auto = m(virt::KEY_NETS_AUTOSTART),
+        xml = m(virt::KEY_NET_XML),
+        cfg = m(virt::KEY_NET_CONFIG),
+        rc = virt::RC_PREFIX,
+    );
+    let nets = virt::parse_networks(&raw).unwrap();
+    let lab = nets.networks.iter().find(|n| n.name == "lab").unwrap();
+    // The definition is what is shown; the running network differs.
+    assert_eq!(lab.ips[0].cidr, "192.168.151.1/24");
+    assert_eq!(lab.ips[0].dhcp_ranges, ["192.168.151.100-192.168.151.200"]);
+    assert!(lab.pending_restart, "{lab:?}");
+    assert_eq!(lab.xml, saved.trim_end());
+
+    // The same definition either side: nothing waits, and the running
+    // network's own text is not what an edit is made from.
+    let same = format!(
+        "{nets}\nlab\n{rc}0\n{active}\nlab\n{rc}0\n{auto}\nlab\n{rc}0\n\
+         {xml}\nlab\n{running}{rc}0\n{cfg}\nlab\n{running}{rc}0\n",
+        nets = m(virt::KEY_NETS),
+        active = m(virt::KEY_NETS_ACTIVE),
+        auto = m(virt::KEY_NETS_AUTOSTART),
+        xml = m(virt::KEY_NET_XML),
+        cfg = m(virt::KEY_NET_CONFIG),
+        rc = virt::RC_PREFIX,
+    );
+    let nets = virt::parse_networks(&same).unwrap();
+    let lab = nets.networks.iter().find(|n| n.name == "lab").unwrap();
+    assert_eq!(lab.ips[0].cidr, "192.168.150.1/24");
+    assert!(!lab.pending_restart, "{lab:?}");
+}
+
 #[test]
 fn networks_modes_ips_leases() {
     let n = virt::parse_networks(&fixture("script_networks.txt")).unwrap();
@@ -1010,13 +1161,14 @@ fn create_specs_refused_before_running() {
     assert!(virt::create_volume_script(&spec).is_ok());
     assert!(matches!(virt::define_script(&spec), Err(VirtError::Malformed { .. })));
 
-    assert!(virt::undefine_script("vm", &["vda,sda".into()], None).is_err());
-    assert!(virt::undefine_script("vm", &["".into()], None).is_err());
-    assert!(virt::undefine_script("vm", &[], Some("seed.iso")).is_err());
-    let keep = virt::undefine_script("vm", &[], None).unwrap();
+    assert!(virt::undefine_script("vm", &["vda,sda".into()], None, &[], &[]).is_err());
+    assert!(virt::undefine_script("vm", &["".into()], None, &[], &[]).is_err());
+    assert!(virt::undefine_script("vm", &[], Some("seed.iso"), &[], &[]).is_err());
+    assert!(virt::undefine_script("vm", &[], None, &[], &["rel.qcow2".into()]).is_err());
+    let keep = virt::undefine_script("vm", &[], None, &[], &[]).unwrap();
     assert!(keep.contains("--keep-nvram") && !keep.contains("--storage"), "{keep}");
     assert!(!keep.contains("vol-delete"), "{keep}");
-    let all = virt::undefine_script("vm", &["vda".into(), "vdb".into()], None).unwrap();
+    let all = virt::undefine_script("vm", &["vda".into(), "vdb".into()], None, &[], &[]).unwrap();
     assert!(all.contains("--nvram --storage vda,vdb"), "{all}");
 }
 
@@ -1088,10 +1240,52 @@ fn create_scripts_under_sh_with_a_hostile_name() {
     let log = std::fs::read_to_string(d.join("log")).unwrap();
     assert!(!log.contains("vol-create-as"), "{log}");
 
-    let undefine = virt::undefine_script(name, &["vda".into()], None).unwrap();
+    let undefine = virt::undefine_script(name, &["vda".into()], None, &[], &[]).unwrap();
     assert_eq!(virt::parse_undefine(&run_sh(&undefine, &path)), Ok(()));
     let log = std::fs::read_to_string(d.join("log")).unwrap();
     assert!(log.contains(&format!("undefine\n--domain\n{name}\n--managed-save\n")), "{log}");
+    let _ = std::fs::remove_dir_all(&d);
+}
+
+/// The pools are refreshed before the undefine (so `--storage` knows the
+/// file a disk is on), the files under the disks go after it; one the host
+/// refuses is reported, and a refused undefine deletes none of them.
+#[cfg(unix)]
+#[test]
+fn undefine_deletes_the_chain_files_after_the_domain() {
+    let d = create_stub("chain");
+    let path = format!("{}:/usr/bin:/bin", d.display());
+    let pools = ["p o".to_string()];
+    let chain = ["/p o/a b.qcow2".to_string(), "/p o/base.qcow2".to_string()];
+    let script = virt::undefine_script("vm", &["vda".into()], None, &pools, &chain).unwrap();
+    // pool-refresh is not in the stub: it fails, which is not reported.
+    assert_eq!(virt::parse_undefine(&run_sh(&script, &path)), Ok(()));
+    let log = std::fs::read_to_string(d.join("log")).unwrap();
+    let refresh = log.find("pool-refresh\n--pool\np o\n").unwrap();
+    let undefine = log.find("undefine\n").unwrap();
+    let first = log.find("vol-delete\n--vol\n/p o/a b.qcow2\n").unwrap();
+    let second = log.find("vol-delete\n--vol\n/p o/base.qcow2\n").unwrap();
+    assert!(refresh < undefine && undefine < first && first < second, "{log}");
+
+    // A refused delete: the domain is gone, the file is named.
+    let stub = |from: &str, to: &str| {
+        let f = d.join("virsh");
+        let text = std::fs::read_to_string(&f).unwrap().replace(from, to);
+        std::fs::write(&f, text).unwrap();
+    };
+    stub("start|vol-delete|undefine)", "start|undefine)");
+    let err = virt::parse_undefine(&run_sh(&script, &path)).unwrap_err();
+    assert!(
+        matches!(&err, VirtError::Command { message } if message.contains("2 file(s)") && message.contains("unexpected vol-delete")),
+        "{err:?}"
+    );
+
+    // A refused undefine: nothing after it runs.
+    std::fs::remove_file(d.join("log")).unwrap();
+    stub("start|undefine)", "start)");
+    assert!(virt::parse_undefine(&run_sh(&script, &path)).is_err());
+    let log = std::fs::read_to_string(d.join("log")).unwrap();
+    assert!(!log.contains("vol-delete"), "{log}");
     let _ = std::fs::remove_dir_all(&d);
 }
 
@@ -1774,7 +1968,7 @@ fn display_and_device_edits() {
     let (without, element) = virt::remove_device_xml(&with, "pci:0000:01:00.0").unwrap();
     assert!(hw_of(&without).hostdevs.is_empty());
     assert_eq!(element, added);
-    let usb = virt::VirtHwNewDevice::Usb { vendor: "0bda".into(), product: "b023".into() }.xml();
+    let usb = virt::VirtHwNewDevice::Usb { vendor: Some("0bda".into()), product: Some("b023".into()), bus: None, device: None }.xml();
     let with = base.replacen("</devices>", &format!("{usb}</devices>"), 1);
     assert_eq!(hw_of(&with).hostdevs[0].key, "usb:0bda:b023");
     assert!(virt::remove_device_xml(&base, "tpm").is_err());
@@ -1803,7 +1997,7 @@ fn second_part_changes_refuse_what_must_not_reach_a_shell() {
     for bad in [
         D::Pci { address: "0000:01:00.0'/>".into() },
         D::Pci { address: "0000:01:20.0".into() },
-        D::Usb { vendor: "0bda".into(), product: "b02".into() },
+        D::Usb { vendor: Some("0bda".into()), product: Some("b02".into()), bus: None, device: None },
         D::Tpm { model: "tpm-crb' x='".into() },
     ] {
         assert!(script(&C::AddDevice { device: bad.clone() }).is_err(), "{bad:?}");
@@ -1834,7 +2028,7 @@ fn second_part_scripts_under_sh_with_a_hostile_name() {
     assert!(log().contains(&format!("dumpxml\n--inactive\n--domain\n{name}\n")), "{}", log());
 
     // A USB device goes to the running guest too; a PCI one does not.
-    let usb = C::AddDevice { device: virt::VirtHwNewDevice::Usb { vendor: "0bda".into(), product: "b023".into() } };
+    let usb = C::AddDevice { device: virt::VirtHwNewDevice::Usb { vendor: Some("0bda".into()), product: Some("b023".into()), bus: None, device: None } };
     let _ = std::fs::remove_file(d.join("log"));
     assert_eq!(run(true, &usb), Ok(Default::default()));
     assert!(log().contains(&format!("attach-device\n--domain\n{name}\n")), "{}", log());
@@ -2255,12 +2449,11 @@ fn upload_streams_stdin_into_the_volume() {
 #[test]
 fn snap_chain_of_an_overlay_and_a_plain_disk() {
     let chain = virt_snapshot::parse_snap_chain(&fixture("script_snap_chain_overlay.txt")).unwrap();
-    assert_eq!(chain.blocked, None);
     assert_eq!(chain.depth(), 2);
     assert!(chain.has_overlays());
     let d = chain.disks_iter().next().unwrap();
     assert_eq!(d.target, "vda");
-    assert_eq!(d.pool.as_deref(), Some("sbxe2e-p8q"));
+    assert_eq!(d.error, None);
     // Topmost first: the overlay the guest writes to, then its base
     assert_eq!(d.files[0].path, "/var/lib/libvirt/sbxe2e-p8q/sx1.qcow2");
     assert_eq!(d.files[0].format.as_deref(), Some("qcow2"));
@@ -2268,6 +2461,7 @@ fn snap_chain_of_an_overlay_and_a_plain_disk() {
         d.files[0].backing.as_deref(),
         Some("/var/lib/libvirt/images/sbxe2e-f1.qcow2")
     );
+    assert_eq!(d.files[0].backing_format.as_deref(), Some("qcow2"));
     assert_eq!(d.files[0].capacity, Some(268435456));
     assert_eq!(d.files[1].path, "/var/lib/libvirt/images/sbxe2e-f1.qcow2");
     assert_eq!(d.files[1].backing, None);
@@ -2300,6 +2494,8 @@ fn snap_chain_refuses_a_raw_disk() {
     assert_eq!(top.format.as_deref(), Some("raw"));
     let refusal = virt_snapshot::external_snapshot_refusal(&chain).unwrap();
     assert!(refusal.contains("vda") && refusal.contains("raw"), "{refusal}");
+    // An internal snapshot needs qcow2 too: the same refusal for both forms
+    assert_eq!(virt_snapshot::snapshot_refusal(&chain), Some(refusal));
     assert_expected(&chain, "snap_chain_raw.expected.json");
 }
 
@@ -2316,46 +2512,46 @@ fn snap_chain_of_a_plain_qcow2_is_one_layer() {
 
 #[test]
 fn external_snapshot_refusal_says_what_is_wrong() {
+    let disk = |files, error: Option<&str>| virt_snapshot::VirtSnapChain {
+        disks: vec![virt_snapshot::VirtSnapChainDisk {
+            target: "vda".into(),
+            files,
+            error: error.map(Into::into),
+        }],
+    };
+    let file = |format: Option<&str>, backing: Option<&str>, backing_format: Option<&str>| {
+        virt_snapshot::VirtSnapChainFile {
+            path: "/x.qcow2".into(),
+            format: format.map(Into::into),
+            backing: backing.map(Into::into),
+            backing_format: backing_format.map(Into::into),
+            allocation: None,
+            capacity: None,
+        }
+    };
     // No disk at all
     let empty = virt_snapshot::VirtSnapChain::default();
     assert!(virt_snapshot::external_snapshot_refusal(&empty).is_some());
-    // A disk QEMU would not open at all
-    let blocked = virt_snapshot::VirtSnapChain {
-        disks: vec![virt_snapshot::VirtSnapChainDisk {
-            target: "vda".into(),
-            files: vec![],
-            pool: None,
-        }],
-        blocked: Some("qemu-img: Could not open 'x': Permission denied".into()),
-    };
-    assert!(virt_snapshot::external_snapshot_refusal(&blocked).is_some());
-    // An overlay whose format QEMU could not name
-    let unset = virt_snapshot::VirtSnapChain {
-        disks: vec![virt_snapshot::VirtSnapChainDisk {
-            target: "vda".into(),
-            files: vec![virt_snapshot::VirtSnapChainFile {
-                path: "/x.qcow2".into(),
-                format: None,
-                backing: Some("/base.qcow2".into()),
-                allocation: None,
-                capacity: None,
-            }],
-            pool: None,
-        }],
-        blocked: None,
-    };
-    assert!(virt_snapshot::external_snapshot_refusal(&unset).is_some());
-}
-
-#[test]
-fn revert_is_refused_on_a_snapshot_with_children() {
-    use virt_snapshot::RevertRefusal;
-    assert_eq!(virt_snapshot::revert_refusal(false, true), None);
-    assert_eq!(virt_snapshot::revert_refusal(true, false), None);
-    assert_eq!(
-        virt_snapshot::revert_refusal(true, true),
-        Some(RevertRefusal::HasChildren)
+    // A disk qemu-img could not read: its words are the refusal, and only the
+    // external form is refused — virsh does not need qemu-img
+    let unread = disk(
+        vec![file(None, None, None)],
+        Some("qemu-img: Could not open '/x.qcow2': Permission denied"),
     );
+    let why = virt_snapshot::external_snapshot_refusal(&unread).unwrap();
+    assert!(why.contains("vda") && why.contains("Permission denied"), "{why}");
+    assert_eq!(virt_snapshot::snapshot_refusal(&unread), None);
+    // An overlay whose backing format is not recorded
+    let probed = disk(vec![file(Some("qcow2"), Some("/base.qcow2"), None)], None);
+    let why = virt_snapshot::external_snapshot_refusal(&probed).unwrap();
+    assert!(why.contains("backing format"), "{why}");
+    assert_eq!(virt_snapshot::snapshot_refusal(&probed), None);
+    // Recorded: allowed
+    let ok = disk(
+        vec![file(Some("qcow2"), Some("/base.qcow2"), Some("qcow2"))],
+        None,
+    );
+    assert_eq!(virt_snapshot::external_snapshot_refusal(&ok), None);
 }
 
 #[test]
@@ -2412,19 +2608,6 @@ fn snapshot_listing_reads_revert_disks() {
     );
 }
 
-#[test]
-fn pool_target_of_a_directory_pool() {
-    assert_eq!(
-        virt_snapshot::parse_pool_target(&fixture("pool_dumpxml_dir.txt")).as_deref(),
-        Some("/var/lib/libvirt/sbxe2e-p8q")
-    );
-    // A pool of block devices names no target path
-    assert_eq!(
-        virt_snapshot::parse_pool_target("<pool type='logical'><name>x</name></pool>"),
-        None
-    );
-}
-
 /// A `virsh` and a `qemu-img` for the chain script: the domain's disks, and
 /// every path handed to `qemu-img` logged so the test sees it arrive whole.
 #[cfg(unix)]
@@ -2445,10 +2628,10 @@ shift 2
 [ "$1" = "-q" ] && shift
 case "$1" in
   dumpxml) cat <<'XML'
-<domain><devices><disk type='file' device='disk'><source file="/var/lib/libvirt/images/evil's.qcow2"/><target dev='vda' bus='virtio'/></disk><disk type='file' device='cdrom'><target dev='sda' bus='sata'/></disk></devices></domain>
+<domain><devices><disk type='file' device='disk'><source file="/var/lib/libvirt/images/evil's.qcow2"/><target dev='vda' bus='virtio'/></disk><disk type='file' device='disk'><source file="/p/a  b *.qcow2"/><target dev='vdb' bus='virtio'/></disk><disk type='file' device='cdrom'><target dev='sda' bus='sata'/></disk></devices></domain>
 XML
   ;;
-  domblklist) printf ' Type   Device   Target   Source\n--------------------------------------------\n file   disk     vda      /var/lib/libvirt/images/evil'\''s.qcow2\n file   cdrom    sda      -\n' ;;
+  domblklist) printf ' Type   Device   Target   Source\n--------------------------------------------\n file   disk     vda      /var/lib/libvirt/images/evil'\''s.qcow2\n file   disk     vdb      /p/a  b *.qcow2\n file   cdrom    sda      -\n' ;;
   *) : ;;
 esac
 "#,
@@ -2460,7 +2643,10 @@ log="$(dirname "$0")/log"
 for a in "$@"; do printf '%s\n' "$a" >> "$log"; done
 echo --- >> "$log"
 cat >> "$(dirname "$0")/stdin"
-printf '{"filename": "%s", "format": "qcow2", "virtual-size": 1024, "actual-size": 512}\n' "$5"
+case "$5" in
+  */a*) echo "qemu-img: Could not open '$5': Permission denied" >&2; exit 1 ;;
+esac
+printf '[{"filename": "%s", "format": "qcow2", "virtual-size": 1024, "actual-size": 512}]\n' "$5"
 "#,
         ),
     ] {
@@ -2482,10 +2668,22 @@ fn chain_script_under_sh_keeps_a_hostile_path_whole() {
         &path,
     ))
     .unwrap();
-    // A CD-ROM is not a chain: one disk, with the file the definition names
-    assert_eq!(chain.disks_iter().count(), 1);
-    assert_eq!(chain.disks_iter().next().unwrap().target, "vda");
-    assert_eq!(chain.blocked, None);
+    // A CD-ROM is not a chain: two disks, each with the file it names
+    let disks: Vec<_> = chain.disks_iter().collect();
+    assert_eq!(disks.len(), 2);
+    assert_eq!(disks[0].target, "vda");
+    assert_eq!(disks[0].error, None);
+    assert_eq!(disks[0].files[0].format.as_deref(), Some("qcow2"));
+    // qemu-img's refusal (rc 1) is kept in its words, for the path whole
+    assert_eq!(disks[1].target, "vdb");
+    assert_eq!(disks[1].files[0].path, "/p/a  b *.qcow2");
+    assert_eq!(
+        disks[1].error.as_deref(),
+        Some("qemu-img: Could not open '/p/a  b *.qcow2': Permission denied")
+    );
+    let why = virt_snapshot::external_snapshot_refusal(&chain).unwrap();
+    assert!(why.starts_with("disk vdb: ") && why.contains("Permission denied"), "{why}");
+    assert_eq!(virt_snapshot::snapshot_refusal(&chain), None);
     let log = std::fs::read_to_string(d.join("log")).unwrap();
     assert!(log.contains("info\n-U\n--backing-chain\n--output=json\n"), "{log}");
     // The path with a quote in it arrives as one argument
@@ -2493,6 +2691,8 @@ fn chain_script_under_sh_keeps_a_hostile_path_whole() {
         log.contains("/var/lib/libvirt/images/evil's.qcow2\n---\n"),
         "{log}"
     );
+    // Spaces kept, the `*` not globbed
+    assert!(log.contains("/p/a  b *.qcow2\n---\n"), "{log}");
     assert!(!d.join("pwned").exists() && !std::path::Path::new("pwned").exists());
     assert_eq!(std::fs::read_to_string(d.join("stdin")).unwrap(), "");
     let _ = std::fs::remove_dir_all(&d);
@@ -2575,6 +2775,28 @@ fn snap_diff_of_the_same_definition_is_empty() {
 }
 
 #[test]
+fn snap_diff_tells_namesake_devices_apart() {
+    let dom = |devices: &str| format!("<domain><devices>{devices}</devices></domain>");
+    let root = "<controller type='pci' index='0' model='pcie-root'/>";
+    let port = "<controller type='pci' index='1' model='pcie-root-port'/>";
+    let usb = |bus: &str| {
+        format!("<hostdev mode='subsystem' type='usb'><source><address bus='{bus}' device='2'/></source></hostdev>")
+    };
+    let before = format!("<domainsnapshot>{}</domainsnapshot>", dom(root));
+    // A second PCI controller: its own key, not folded into the first
+    let diff = virt_snapshot::diff_domain_xml(&before, &dom(&format!("{root}{port}")));
+    assert_eq!(diff.len(), 1, "{diff:?}");
+    assert_eq!(diff[0].key, "controller:pci:1");
+    assert!(diff[0].added);
+    // A second USB device: counted, not overwritten
+    let before = format!("<domainsnapshot>{}</domainsnapshot>", dom(&usb("1")));
+    let diff = virt_snapshot::diff_domain_xml(&before, &dom(&format!("{}{}", usb("1"), usb("3"))));
+    assert_eq!(diff.len(), 1, "{diff:?}");
+    assert_eq!(diff[0].key, "hostdev:usb#2");
+    assert!(diff[0].added);
+}
+
+#[test]
 fn snap_diff_script_and_its_refusals() {
     let s = virt_snapshot::snap_diff_script("it's", "snap-1");
     assert!(
@@ -2598,3 +2820,62 @@ fn snap_diff_script_and_its_refusals() {
     assert_eq!(virt_snapshot::parse_snap_diff(&raw), Err(VirtError::NotInstalled));
 }
 
+
+/// Captured on libvirt 11.3 with AppArmor: a delete the profile would refuse
+/// is refused before it is sent, running or shut off; one it allows is not.
+#[test]
+fn snap_delete_refused_where_apparmor_denies_the_commit() {
+    let why = virt_snapshot::snap_delete_refusal(&fixture("script_snap_delete_running_denied.txt"))
+        .unwrap()
+        .unwrap();
+    assert!(why.contains("writes into /var/lib/libvirt/sbxe2e-exp/ov1.qcow2"), "{why}");
+    assert!(why.contains("#932456"), "{why}");
+
+    let why = virt_snapshot::snap_delete_refusal(&fixture("script_snap_delete_shut_off.txt"))
+        .unwrap()
+        .unwrap();
+    assert!(why.contains("shut off"), "{why}");
+    assert!(why.contains("/var/lib/libvirt/sbxe2e-exp/ov1.qcow2"), "{why}");
+
+    assert_eq!(
+        virt_snapshot::snap_delete_refusal(&fixture("script_snap_delete_running_clear.txt")),
+        Ok(None)
+    );
+
+    // A domain opted out of confinement is left to the host.
+    let off = fixture("script_snap_delete_shut_off.txt");
+    // In the domain's own definition, not the snapshot's copy of it.
+    let at = off.find("SrvBoxSep.b64.dmlydC54bWw=").unwrap();
+    let off = format!(
+        "{}{}",
+        &off[..at],
+        off[at..].replacen("<devices>", "<seclabel type='none'/><devices>", 1)
+    );
+    assert_eq!(virt_snapshot::snap_delete_refusal(&off), Ok(None));
+    // So is a host whose driver is not AppArmor.
+    let selinux = fixture("script_snap_delete_shut_off.txt")
+        .replace("<model>apparmor</model>", "<model>selinux</model>");
+    assert_eq!(virt_snapshot::snap_delete_refusal(&selinux), Ok(None));
+    // And a running domain whose profile could not be read.
+    let unread = fixture("script_snap_delete_running_denied.txt");
+    let at = unread.find("SrvBoxSep.b64.dmlydC5zbmFwLmRlbC5kZW55").unwrap();
+    let unread = format!(
+        "{}SrvBoxSep.b64.dmlydC5zbmFwLmRlbC5kZW55\nno profile\n\nSbVirtRc=1\n",
+        &unread[..at]
+    );
+    assert_eq!(virt_snapshot::snap_delete_refusal(&unread), Ok(None));
+}
+
+/// The check script under sh: a hostile name stays one word, and only the
+/// profile's `deny` lines are printed.
+#[test]
+fn snap_delete_check_script_quotes_and_filters() {
+    let s = virt_snapshot::snap_delete_check_script("vm'x", "a b'c");
+    assert!(s.contains("snapshot-dumpxml --domain 'vm'\\''x' --snapshotname 'a b'\\''c'"), "{s}");
+    assert!(s.contains("grep -F 'deny \"'"), "{s}");
+    // The app names a domain by its UUID, which `domuuid` refuses (captured:
+    // `failed to get domain '<uuid>'`); the profile's UUID comes from
+    // `dominfo`.
+    assert!(!s.contains("domuuid"), "{s}");
+    assert!(s.contains("sed -n 's/^UUID: *//p'"), "{s}");
+}

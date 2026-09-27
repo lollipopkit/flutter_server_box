@@ -26,6 +26,7 @@ final class VirtCreateSpec {
     this.bus,
     this.nicModel,
     this.uefi = false,
+    this.secureBoot = false,
     this.tpm = false,
     this.cloudInit,
     this.start = false,
@@ -70,8 +71,11 @@ final class VirtCreateSpec {
   final String? bus;
   final String? nicModel;
 
-  /// A VM booting from UEFI (Secure Boot off), and with a TPM 2.0.
+  /// A VM booting from UEFI, with Secure Boot or without it, and with a
+  /// TPM 2.0. Secure Boot is only offered where the host's firmware
+  /// descriptors can back it ([VirtCreateOptions.secureBoot]).
   final bool uefi;
+  final bool secureBoot;
   final bool tpm;
 
   /// What a cloud [image] is told at its first boot.
@@ -92,7 +96,7 @@ final class VirtCloudInit {
     this.address,
     this.gateway,
     this.dns = const [],
-    this.searchDomain,
+    this.searchDomains = const [],
   });
 
   final String user;
@@ -112,7 +116,10 @@ final class VirtCloudInit {
   final String? address;
   final String? gateway;
   final List<String> dns;
-  final String? searchDomain;
+
+  /// The search domains, in order; empty for none. cloud-init takes a list
+  /// and `resolv.conf` keeps the first few.
+  final List<String> searchDomains;
 
   List<String> get keys => [
     for (final l in (sshKeys ?? '').split('\n'))
@@ -131,6 +138,7 @@ final class VirtCreateOptions {
     this.buses = const [],
     this.nicModels = const [],
     this.uefi = false,
+    this.secureBoot = false,
     this.tpm = false,
     this.cloudImages = false,
     this.cloudInit = false,
@@ -146,6 +154,15 @@ final class VirtCreateOptions {
   /// UEFI firmware is installed (libvirt: OVMF), and a software TPM (swtpm).
   final bool uefi;
   final bool tpm;
+
+  /// Secure Boot can be turned on: the host has a firmware that carries its
+  /// enrolled keys. libvirt: a descriptor under `/usr/share/qemu/firmware`
+  /// with both `secure-boot` and `enrolled-keys`
+  /// (`<feature enabled='yes' name='enrolled-keys'/>` needs exactly that, or
+  /// libvirt autoselection finds no firmware and refuses the definition).
+  /// PVE: `efidisk0` with `pre-enrolled-keys=1`, which its own UEFI default
+  /// writes.
+  final bool secureBoot;
 
   /// A VM's disk can be a copy of a cloud image.
   final bool cloudImages;
@@ -183,8 +200,10 @@ final class VirtCloudInitState {
     this.address,
     this.gateway,
     this.dns = const [],
-    this.searchDomain,
+    this.searchDomains = const [],
+    this.nics = 0,
     this.passwordSet = false,
+    this.passwordExpires = false,
     this.network = false,
     this.foreign = false,
     required this.revision,
@@ -201,10 +220,21 @@ final class VirtCloudInitState {
   final String? address;
   final String? gateway;
   final List<String> dns;
-  final String? searchDomain;
+
+  /// The search domains, in order.
+  final List<String> searchDomains;
+
+  /// How many NICs the seed configures. More than one is read; the view
+  /// edits the first and says how many there are.
+  final int nics;
 
   /// The account has a password.
   final bool passwordSet;
+
+  /// The password expires at the first login (cloud-init's `chpasswd:
+  /// expire: true`). Always false on PVE, which writes `expire: false` and
+  /// has no option for it.
+  final bool passwordExpires;
 
   /// The guest has the NIC the address settings apply to: PVE's `net0`,
   /// on libvirt the NIC the seed's network config names (or the first).
@@ -228,10 +258,18 @@ final class VirtCloudInitState {
 /// `password` is a new one, or null to keep the one set — unless
 /// [removePassword], which leaves the account keys only.
 final class VirtCloudInitEdit {
-  const VirtCloudInitEdit(this.values, {this.removePassword = false});
+  const VirtCloudInitEdit(
+    this.values, {
+    this.removePassword = false,
+    this.passwordExpires = false,
+  });
 
   final VirtCloudInit values;
   final bool removePassword;
+
+  /// The account's password expires at the first login (cloud-init's
+  /// `chpasswd: expire: true`). libvirt only: PVE has no such option.
+  final bool passwordExpires;
 }
 
 /// Why a [VirtCreateSpec] cannot be sent. First wins; see [virtCreateIssue].
@@ -253,6 +291,9 @@ enum VirtCreateIssue {
   /// A cloud image not picked, or bigger than the disk asked for.
   image,
   imageSize,
+
+  /// Secure Boot asked for without UEFI.
+  secureBoot,
 
   /// cloud-init: the account's name, its way in, the hostname, the address.
   ciUser,
@@ -326,6 +367,8 @@ VirtCreateIssue? virtCreateIssue(
     return VirtCreateIssue.cores;
   }
   if (spec.kind == VirtGuestKind.qemu) {
+    // Secure Boot is UEFI's: a BIOS guest has nothing to enable it on.
+    if (spec.secureBoot && !spec.uefi) return VirtCreateIssue.secureBoot;
     final image = spec.image;
     if (spec.cloudInit != null && image == null) return VirtCreateIssue.image;
     // A copy is grown, never cut.
@@ -404,8 +447,7 @@ VirtCreateIssue? virtCloudInitIssue(
     if (gw != null && !_ipv4.hasMatch(gw)) return VirtCreateIssue.ciGateway;
   }
   if (!ci.dns.every(_isIp)) return VirtCreateIssue.ciDns;
-  final search = ci.searchDomain;
-  if (search != null && !virtPveNamePattern.hasMatch(search)) {
+  if (!ci.searchDomains.every(virtPveNamePattern.hasMatch)) {
     return VirtCreateIssue.ciSearch;
   }
   return null;

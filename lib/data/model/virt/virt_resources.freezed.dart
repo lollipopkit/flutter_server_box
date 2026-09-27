@@ -1495,6 +1495,271 @@ as List<VirtGuestRef>,
 }
 
 /// @nodoc
+mixin _$VirtNetHost {
+
+ String get mac; String get ip;/// The name dnsmasq is told, where one is given.
+ String? get name;
+/// Create a copy of VirtNetHost
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$VirtNetHostCopyWith<VirtNetHost> get copyWith => _$VirtNetHostCopyWithImpl<VirtNetHost>(this as VirtNetHost, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtNetHost&&(identical(other.mac, mac) || other.mac == mac)&&(identical(other.ip, ip) || other.ip == ip)&&(identical(other.name, name) || other.name == name));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,mac,ip,name);
+
+@override
+String toString() {
+  return 'VirtNetHost(mac: $mac, ip: $ip, name: $name)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $VirtNetHostCopyWith<$Res>  {
+  factory $VirtNetHostCopyWith(VirtNetHost value, $Res Function(VirtNetHost) _then) = _$VirtNetHostCopyWithImpl;
+@useResult
+$Res call({
+ String mac, String ip, String? name
+});
+
+
+
+
+}
+/// @nodoc
+class _$VirtNetHostCopyWithImpl<$Res>
+    implements $VirtNetHostCopyWith<$Res> {
+  _$VirtNetHostCopyWithImpl(this._self, this._then);
+
+  final VirtNetHost _self;
+  final $Res Function(VirtNetHost) _then;
+
+/// Create a copy of VirtNetHost
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? mac = null,Object? ip = null,Object? name = freezed,}) {
+  return _then(_self.copyWith(
+mac: null == mac ? _self.mac : mac // ignore: cast_nullable_to_non_nullable
+as String,ip: null == ip ? _self.ip : ip // ignore: cast_nullable_to_non_nullable
+as String,name: freezed == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [VirtNetHost].
+extension VirtNetHostPatterns on VirtNetHost {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _VirtNetHost value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _VirtNetHost() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _VirtNetHost value)  $default,){
+final _that = this;
+switch (_that) {
+case _VirtNetHost():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _VirtNetHost value)?  $default,){
+final _that = this;
+switch (_that) {
+case _VirtNetHost() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String mac,  String ip,  String? name)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _VirtNetHost() when $default != null:
+return $default(_that.mac,_that.ip,_that.name);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String mac,  String ip,  String? name)  $default,) {final _that = this;
+switch (_that) {
+case _VirtNetHost():
+return $default(_that.mac,_that.ip,_that.name);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String mac,  String ip,  String? name)?  $default,) {final _that = this;
+switch (_that) {
+case _VirtNetHost() when $default != null:
+return $default(_that.mac,_that.ip,_that.name);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _VirtNetHost implements VirtNetHost {
+  const _VirtNetHost({required this.mac, required this.ip, this.name});
+  
+
+@override final  String mac;
+@override final  String ip;
+/// The name dnsmasq is told, where one is given.
+@override final  String? name;
+
+/// Create a copy of VirtNetHost
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$VirtNetHostCopyWith<_VirtNetHost> get copyWith => __$VirtNetHostCopyWithImpl<_VirtNetHost>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtNetHost&&(identical(other.mac, mac) || other.mac == mac)&&(identical(other.ip, ip) || other.ip == ip)&&(identical(other.name, name) || other.name == name));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,mac,ip,name);
+
+@override
+String toString() {
+  return 'VirtNetHost(mac: $mac, ip: $ip, name: $name)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$VirtNetHostCopyWith<$Res> implements $VirtNetHostCopyWith<$Res> {
+  factory _$VirtNetHostCopyWith(_VirtNetHost value, $Res Function(_VirtNetHost) _then) = __$VirtNetHostCopyWithImpl;
+@override @useResult
+$Res call({
+ String mac, String ip, String? name
+});
+
+
+
+
+}
+/// @nodoc
+class __$VirtNetHostCopyWithImpl<$Res>
+    implements _$VirtNetHostCopyWith<$Res> {
+  __$VirtNetHostCopyWithImpl(this._self, this._then);
+
+  final _VirtNetHost _self;
+  final $Res Function(_VirtNetHost) _then;
+
+/// Create a copy of VirtNetHost
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? mac = null,Object? ip = null,Object? name = freezed,}) {
+  return _then(_VirtNetHost(
+mac: null == mac ? _self.mac : mac // ignore: cast_nullable_to_non_nullable
+as String,ip: null == ip ? _self.ip : ip // ignore: cast_nullable_to_non_nullable
+as String,name: freezed == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+
+}
+
+/// @nodoc
 mixin _$VirtNetwork {
 
 /// Unique on the host: libvirt's network name, PVE `<node>/<iface>`.
@@ -1509,7 +1774,21 @@ mixin _$VirtNetwork {
  List<String> get ports;/// PVE `bridge_vlan_aware`.
  bool? get vlanAware;/// PVE: the VLAN tag and the device it is on.
  int? get vlanId; String? get vlanDevice;/// PVE bond mode (`active-backup`, `802.3ad`, ...).
- String? get bondMode; bool get active; bool? get autostart; String? get comment;/// Guests with a NIC on it.
+ String? get bondMode; bool get active; bool? get autostart; String? get comment;/// The static DHCP entries it hands out (libvirt). Empty where there
+/// are none, and on PVE, which keeps no such list here.
+ List<VirtNetHost> get hosts;/// libvirt: the definition **as saved** (`net-dumpxml --inactive`),
+/// which is what an edit is made from and what a restart puts the
+/// running network on. Refused once the host's has changed since.
+/// Empty where the host did not say (PVE).
+ String get xml;/// Whether the running network is on something other than its
+/// definition: libvirt applies `net-define` at the next start, so a
+/// change made while it runs waits, and the view offers the restart
+/// that applies it.
+ bool get pendingRestart;/// Whether this app may change it at all. PVE: a bridge, and not the
+/// interface carrying the node's management address — applying that
+/// would cut the host off. libvirt: every network. The backend decides
+/// (`virtPveManagedIface`), so the view never re-derives it.
+ bool get managementEditable;/// Guests with a NIC on it.
  List<VirtGuestRef> get users;
 /// Create a copy of VirtNetwork
 /// with the given fields replaced by the non-null parameter values.
@@ -1521,16 +1800,16 @@ $VirtNetworkCopyWith<VirtNetwork> get copyWith => _$VirtNetworkCopyWithImpl<Virt
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtNetwork&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.node, node) || other.node == node)&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.bridge, bridge) || other.bridge == bridge)&&const DeepCollectionEquality().equals(other.cidrs, cidrs)&&(identical(other.gateway, gateway) || other.gateway == gateway)&&const DeepCollectionEquality().equals(other.dhcpRanges, dhcpRanges)&&const DeepCollectionEquality().equals(other.ports, ports)&&(identical(other.vlanAware, vlanAware) || other.vlanAware == vlanAware)&&(identical(other.vlanId, vlanId) || other.vlanId == vlanId)&&(identical(other.vlanDevice, vlanDevice) || other.vlanDevice == vlanDevice)&&(identical(other.bondMode, bondMode) || other.bondMode == bondMode)&&(identical(other.active, active) || other.active == active)&&(identical(other.autostart, autostart) || other.autostart == autostart)&&(identical(other.comment, comment) || other.comment == comment)&&const DeepCollectionEquality().equals(other.users, users));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtNetwork&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.node, node) || other.node == node)&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.bridge, bridge) || other.bridge == bridge)&&const DeepCollectionEquality().equals(other.cidrs, cidrs)&&(identical(other.gateway, gateway) || other.gateway == gateway)&&const DeepCollectionEquality().equals(other.dhcpRanges, dhcpRanges)&&const DeepCollectionEquality().equals(other.ports, ports)&&(identical(other.vlanAware, vlanAware) || other.vlanAware == vlanAware)&&(identical(other.vlanId, vlanId) || other.vlanId == vlanId)&&(identical(other.vlanDevice, vlanDevice) || other.vlanDevice == vlanDevice)&&(identical(other.bondMode, bondMode) || other.bondMode == bondMode)&&(identical(other.active, active) || other.active == active)&&(identical(other.autostart, autostart) || other.autostart == autostart)&&(identical(other.comment, comment) || other.comment == comment)&&const DeepCollectionEquality().equals(other.hosts, hosts)&&(identical(other.xml, xml) || other.xml == xml)&&(identical(other.pendingRestart, pendingRestart) || other.pendingRestart == pendingRestart)&&(identical(other.managementEditable, managementEditable) || other.managementEditable == managementEditable)&&const DeepCollectionEquality().equals(other.users, users));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,node,mode,bridge,const DeepCollectionEquality().hash(cidrs),gateway,const DeepCollectionEquality().hash(dhcpRanges),const DeepCollectionEquality().hash(ports),vlanAware,vlanId,vlanDevice,bondMode,active,autostart,comment,const DeepCollectionEquality().hash(users));
+int get hashCode => Object.hashAll([runtimeType,id,name,node,mode,bridge,const DeepCollectionEquality().hash(cidrs),gateway,const DeepCollectionEquality().hash(dhcpRanges),const DeepCollectionEquality().hash(ports),vlanAware,vlanId,vlanDevice,bondMode,active,autostart,comment,const DeepCollectionEquality().hash(hosts),xml,pendingRestart,managementEditable,const DeepCollectionEquality().hash(users)]);
 
 @override
 String toString() {
-  return 'VirtNetwork(id: $id, name: $name, node: $node, mode: $mode, bridge: $bridge, cidrs: $cidrs, gateway: $gateway, dhcpRanges: $dhcpRanges, ports: $ports, vlanAware: $vlanAware, vlanId: $vlanId, vlanDevice: $vlanDevice, bondMode: $bondMode, active: $active, autostart: $autostart, comment: $comment, users: $users)';
+  return 'VirtNetwork(id: $id, name: $name, node: $node, mode: $mode, bridge: $bridge, cidrs: $cidrs, gateway: $gateway, dhcpRanges: $dhcpRanges, ports: $ports, vlanAware: $vlanAware, vlanId: $vlanId, vlanDevice: $vlanDevice, bondMode: $bondMode, active: $active, autostart: $autostart, comment: $comment, hosts: $hosts, xml: $xml, pendingRestart: $pendingRestart, managementEditable: $managementEditable, users: $users)';
 }
 
 
@@ -1541,7 +1820,7 @@ abstract mixin class $VirtNetworkCopyWith<$Res>  {
   factory $VirtNetworkCopyWith(VirtNetwork value, $Res Function(VirtNetwork) _then) = _$VirtNetworkCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String? node, String mode, String? bridge, List<String> cidrs, String? gateway, List<String> dhcpRanges, List<String> ports, bool? vlanAware, int? vlanId, String? vlanDevice, String? bondMode, bool active, bool? autostart, String? comment, List<VirtGuestRef> users
+ String id, String name, String? node, String mode, String? bridge, List<String> cidrs, String? gateway, List<String> dhcpRanges, List<String> ports, bool? vlanAware, int? vlanId, String? vlanDevice, String? bondMode, bool active, bool? autostart, String? comment, List<VirtNetHost> hosts, String xml, bool pendingRestart, bool managementEditable, List<VirtGuestRef> users
 });
 
 
@@ -1558,7 +1837,7 @@ class _$VirtNetworkCopyWithImpl<$Res>
 
 /// Create a copy of VirtNetwork
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? node = freezed,Object? mode = null,Object? bridge = freezed,Object? cidrs = null,Object? gateway = freezed,Object? dhcpRanges = null,Object? ports = null,Object? vlanAware = freezed,Object? vlanId = freezed,Object? vlanDevice = freezed,Object? bondMode = freezed,Object? active = null,Object? autostart = freezed,Object? comment = freezed,Object? users = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? node = freezed,Object? mode = null,Object? bridge = freezed,Object? cidrs = null,Object? gateway = freezed,Object? dhcpRanges = null,Object? ports = null,Object? vlanAware = freezed,Object? vlanId = freezed,Object? vlanDevice = freezed,Object? bondMode = freezed,Object? active = null,Object? autostart = freezed,Object? comment = freezed,Object? hosts = null,Object? xml = null,Object? pendingRestart = null,Object? managementEditable = null,Object? users = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -1576,7 +1855,11 @@ as String?,bondMode: freezed == bondMode ? _self.bondMode : bondMode // ignore: 
 as String?,active: null == active ? _self.active : active // ignore: cast_nullable_to_non_nullable
 as bool,autostart: freezed == autostart ? _self.autostart : autostart // ignore: cast_nullable_to_non_nullable
 as bool?,comment: freezed == comment ? _self.comment : comment // ignore: cast_nullable_to_non_nullable
-as String?,users: null == users ? _self.users : users // ignore: cast_nullable_to_non_nullable
+as String?,hosts: null == hosts ? _self.hosts : hosts // ignore: cast_nullable_to_non_nullable
+as List<VirtNetHost>,xml: null == xml ? _self.xml : xml // ignore: cast_nullable_to_non_nullable
+as String,pendingRestart: null == pendingRestart ? _self.pendingRestart : pendingRestart // ignore: cast_nullable_to_non_nullable
+as bool,managementEditable: null == managementEditable ? _self.managementEditable : managementEditable // ignore: cast_nullable_to_non_nullable
+as bool,users: null == users ? _self.users : users // ignore: cast_nullable_to_non_nullable
 as List<VirtGuestRef>,
   ));
 }
@@ -1662,10 +1945,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String? node,  String mode,  String? bridge,  List<String> cidrs,  String? gateway,  List<String> dhcpRanges,  List<String> ports,  bool? vlanAware,  int? vlanId,  String? vlanDevice,  String? bondMode,  bool active,  bool? autostart,  String? comment,  List<VirtGuestRef> users)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String? node,  String mode,  String? bridge,  List<String> cidrs,  String? gateway,  List<String> dhcpRanges,  List<String> ports,  bool? vlanAware,  int? vlanId,  String? vlanDevice,  String? bondMode,  bool active,  bool? autostart,  String? comment,  List<VirtNetHost> hosts,  String xml,  bool pendingRestart,  bool managementEditable,  List<VirtGuestRef> users)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _VirtNetwork() when $default != null:
-return $default(_that.id,_that.name,_that.node,_that.mode,_that.bridge,_that.cidrs,_that.gateway,_that.dhcpRanges,_that.ports,_that.vlanAware,_that.vlanId,_that.vlanDevice,_that.bondMode,_that.active,_that.autostart,_that.comment,_that.users);case _:
+return $default(_that.id,_that.name,_that.node,_that.mode,_that.bridge,_that.cidrs,_that.gateway,_that.dhcpRanges,_that.ports,_that.vlanAware,_that.vlanId,_that.vlanDevice,_that.bondMode,_that.active,_that.autostart,_that.comment,_that.hosts,_that.xml,_that.pendingRestart,_that.managementEditable,_that.users);case _:
   return orElse();
 
 }
@@ -1683,10 +1966,10 @@ return $default(_that.id,_that.name,_that.node,_that.mode,_that.bridge,_that.cid
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String? node,  String mode,  String? bridge,  List<String> cidrs,  String? gateway,  List<String> dhcpRanges,  List<String> ports,  bool? vlanAware,  int? vlanId,  String? vlanDevice,  String? bondMode,  bool active,  bool? autostart,  String? comment,  List<VirtGuestRef> users)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String? node,  String mode,  String? bridge,  List<String> cidrs,  String? gateway,  List<String> dhcpRanges,  List<String> ports,  bool? vlanAware,  int? vlanId,  String? vlanDevice,  String? bondMode,  bool active,  bool? autostart,  String? comment,  List<VirtNetHost> hosts,  String xml,  bool pendingRestart,  bool managementEditable,  List<VirtGuestRef> users)  $default,) {final _that = this;
 switch (_that) {
 case _VirtNetwork():
-return $default(_that.id,_that.name,_that.node,_that.mode,_that.bridge,_that.cidrs,_that.gateway,_that.dhcpRanges,_that.ports,_that.vlanAware,_that.vlanId,_that.vlanDevice,_that.bondMode,_that.active,_that.autostart,_that.comment,_that.users);case _:
+return $default(_that.id,_that.name,_that.node,_that.mode,_that.bridge,_that.cidrs,_that.gateway,_that.dhcpRanges,_that.ports,_that.vlanAware,_that.vlanId,_that.vlanDevice,_that.bondMode,_that.active,_that.autostart,_that.comment,_that.hosts,_that.xml,_that.pendingRestart,_that.managementEditable,_that.users);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1703,10 +1986,10 @@ return $default(_that.id,_that.name,_that.node,_that.mode,_that.bridge,_that.cid
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String? node,  String mode,  String? bridge,  List<String> cidrs,  String? gateway,  List<String> dhcpRanges,  List<String> ports,  bool? vlanAware,  int? vlanId,  String? vlanDevice,  String? bondMode,  bool active,  bool? autostart,  String? comment,  List<VirtGuestRef> users)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String? node,  String mode,  String? bridge,  List<String> cidrs,  String? gateway,  List<String> dhcpRanges,  List<String> ports,  bool? vlanAware,  int? vlanId,  String? vlanDevice,  String? bondMode,  bool active,  bool? autostart,  String? comment,  List<VirtNetHost> hosts,  String xml,  bool pendingRestart,  bool managementEditable,  List<VirtGuestRef> users)?  $default,) {final _that = this;
 switch (_that) {
 case _VirtNetwork() when $default != null:
-return $default(_that.id,_that.name,_that.node,_that.mode,_that.bridge,_that.cidrs,_that.gateway,_that.dhcpRanges,_that.ports,_that.vlanAware,_that.vlanId,_that.vlanDevice,_that.bondMode,_that.active,_that.autostart,_that.comment,_that.users);case _:
+return $default(_that.id,_that.name,_that.node,_that.mode,_that.bridge,_that.cidrs,_that.gateway,_that.dhcpRanges,_that.ports,_that.vlanAware,_that.vlanId,_that.vlanDevice,_that.bondMode,_that.active,_that.autostart,_that.comment,_that.hosts,_that.xml,_that.pendingRestart,_that.managementEditable,_that.users);case _:
   return null;
 
 }
@@ -1717,8 +2000,8 @@ return $default(_that.id,_that.name,_that.node,_that.mode,_that.bridge,_that.cid
 /// @nodoc
 
 
-class _VirtNetwork implements VirtNetwork {
-  const _VirtNetwork({required this.id, required this.name, this.node, required this.mode, this.bridge, final  List<String> cidrs = const <String>[], this.gateway, final  List<String> dhcpRanges = const <String>[], final  List<String> ports = const <String>[], this.vlanAware, this.vlanId, this.vlanDevice, this.bondMode, this.active = true, this.autostart, this.comment, final  List<VirtGuestRef> users = const <VirtGuestRef>[]}): _cidrs = cidrs,_dhcpRanges = dhcpRanges,_ports = ports,_users = users;
+class _VirtNetwork extends VirtNetwork {
+  const _VirtNetwork({required this.id, required this.name, this.node, required this.mode, this.bridge, final  List<String> cidrs = const <String>[], this.gateway, final  List<String> dhcpRanges = const <String>[], final  List<String> ports = const <String>[], this.vlanAware, this.vlanId, this.vlanDevice, this.bondMode, this.active = true, this.autostart, this.comment, final  List<VirtNetHost> hosts = const <VirtNetHost>[], this.xml = '', this.pendingRestart = false, this.managementEditable = true, final  List<VirtGuestRef> users = const <VirtGuestRef>[]}): _cidrs = cidrs,_dhcpRanges = dhcpRanges,_ports = ports,_hosts = hosts,_users = users,super._();
   
 
 /// Unique on the host: libvirt's network name, PVE `<node>/<iface>`.
@@ -1770,6 +2053,32 @@ class _VirtNetwork implements VirtNetwork {
 @override@JsonKey() final  bool active;
 @override final  bool? autostart;
 @override final  String? comment;
+/// The static DHCP entries it hands out (libvirt). Empty where there
+/// are none, and on PVE, which keeps no such list here.
+ final  List<VirtNetHost> _hosts;
+/// The static DHCP entries it hands out (libvirt). Empty where there
+/// are none, and on PVE, which keeps no such list here.
+@override@JsonKey() List<VirtNetHost> get hosts {
+  if (_hosts is EqualUnmodifiableListView) return _hosts;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_hosts);
+}
+
+/// libvirt: the definition **as saved** (`net-dumpxml --inactive`),
+/// which is what an edit is made from and what a restart puts the
+/// running network on. Refused once the host's has changed since.
+/// Empty where the host did not say (PVE).
+@override@JsonKey() final  String xml;
+/// Whether the running network is on something other than its
+/// definition: libvirt applies `net-define` at the next start, so a
+/// change made while it runs waits, and the view offers the restart
+/// that applies it.
+@override@JsonKey() final  bool pendingRestart;
+/// Whether this app may change it at all. PVE: a bridge, and not the
+/// interface carrying the node's management address — applying that
+/// would cut the host off. libvirt: every network. The backend decides
+/// (`virtPveManagedIface`), so the view never re-derives it.
+@override@JsonKey() final  bool managementEditable;
 /// Guests with a NIC on it.
  final  List<VirtGuestRef> _users;
 /// Guests with a NIC on it.
@@ -1790,16 +2099,16 @@ _$VirtNetworkCopyWith<_VirtNetwork> get copyWith => __$VirtNetworkCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtNetwork&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.node, node) || other.node == node)&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.bridge, bridge) || other.bridge == bridge)&&const DeepCollectionEquality().equals(other._cidrs, _cidrs)&&(identical(other.gateway, gateway) || other.gateway == gateway)&&const DeepCollectionEquality().equals(other._dhcpRanges, _dhcpRanges)&&const DeepCollectionEquality().equals(other._ports, _ports)&&(identical(other.vlanAware, vlanAware) || other.vlanAware == vlanAware)&&(identical(other.vlanId, vlanId) || other.vlanId == vlanId)&&(identical(other.vlanDevice, vlanDevice) || other.vlanDevice == vlanDevice)&&(identical(other.bondMode, bondMode) || other.bondMode == bondMode)&&(identical(other.active, active) || other.active == active)&&(identical(other.autostart, autostart) || other.autostart == autostart)&&(identical(other.comment, comment) || other.comment == comment)&&const DeepCollectionEquality().equals(other._users, _users));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtNetwork&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.node, node) || other.node == node)&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.bridge, bridge) || other.bridge == bridge)&&const DeepCollectionEquality().equals(other._cidrs, _cidrs)&&(identical(other.gateway, gateway) || other.gateway == gateway)&&const DeepCollectionEquality().equals(other._dhcpRanges, _dhcpRanges)&&const DeepCollectionEquality().equals(other._ports, _ports)&&(identical(other.vlanAware, vlanAware) || other.vlanAware == vlanAware)&&(identical(other.vlanId, vlanId) || other.vlanId == vlanId)&&(identical(other.vlanDevice, vlanDevice) || other.vlanDevice == vlanDevice)&&(identical(other.bondMode, bondMode) || other.bondMode == bondMode)&&(identical(other.active, active) || other.active == active)&&(identical(other.autostart, autostart) || other.autostart == autostart)&&(identical(other.comment, comment) || other.comment == comment)&&const DeepCollectionEquality().equals(other._hosts, _hosts)&&(identical(other.xml, xml) || other.xml == xml)&&(identical(other.pendingRestart, pendingRestart) || other.pendingRestart == pendingRestart)&&(identical(other.managementEditable, managementEditable) || other.managementEditable == managementEditable)&&const DeepCollectionEquality().equals(other._users, _users));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,node,mode,bridge,const DeepCollectionEquality().hash(_cidrs),gateway,const DeepCollectionEquality().hash(_dhcpRanges),const DeepCollectionEquality().hash(_ports),vlanAware,vlanId,vlanDevice,bondMode,active,autostart,comment,const DeepCollectionEquality().hash(_users));
+int get hashCode => Object.hashAll([runtimeType,id,name,node,mode,bridge,const DeepCollectionEquality().hash(_cidrs),gateway,const DeepCollectionEquality().hash(_dhcpRanges),const DeepCollectionEquality().hash(_ports),vlanAware,vlanId,vlanDevice,bondMode,active,autostart,comment,const DeepCollectionEquality().hash(_hosts),xml,pendingRestart,managementEditable,const DeepCollectionEquality().hash(_users)]);
 
 @override
 String toString() {
-  return 'VirtNetwork(id: $id, name: $name, node: $node, mode: $mode, bridge: $bridge, cidrs: $cidrs, gateway: $gateway, dhcpRanges: $dhcpRanges, ports: $ports, vlanAware: $vlanAware, vlanId: $vlanId, vlanDevice: $vlanDevice, bondMode: $bondMode, active: $active, autostart: $autostart, comment: $comment, users: $users)';
+  return 'VirtNetwork(id: $id, name: $name, node: $node, mode: $mode, bridge: $bridge, cidrs: $cidrs, gateway: $gateway, dhcpRanges: $dhcpRanges, ports: $ports, vlanAware: $vlanAware, vlanId: $vlanId, vlanDevice: $vlanDevice, bondMode: $bondMode, active: $active, autostart: $autostart, comment: $comment, hosts: $hosts, xml: $xml, pendingRestart: $pendingRestart, managementEditable: $managementEditable, users: $users)';
 }
 
 
@@ -1810,7 +2119,7 @@ abstract mixin class _$VirtNetworkCopyWith<$Res> implements $VirtNetworkCopyWith
   factory _$VirtNetworkCopyWith(_VirtNetwork value, $Res Function(_VirtNetwork) _then) = __$VirtNetworkCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String? node, String mode, String? bridge, List<String> cidrs, String? gateway, List<String> dhcpRanges, List<String> ports, bool? vlanAware, int? vlanId, String? vlanDevice, String? bondMode, bool active, bool? autostart, String? comment, List<VirtGuestRef> users
+ String id, String name, String? node, String mode, String? bridge, List<String> cidrs, String? gateway, List<String> dhcpRanges, List<String> ports, bool? vlanAware, int? vlanId, String? vlanDevice, String? bondMode, bool active, bool? autostart, String? comment, List<VirtNetHost> hosts, String xml, bool pendingRestart, bool managementEditable, List<VirtGuestRef> users
 });
 
 
@@ -1827,7 +2136,7 @@ class __$VirtNetworkCopyWithImpl<$Res>
 
 /// Create a copy of VirtNetwork
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? node = freezed,Object? mode = null,Object? bridge = freezed,Object? cidrs = null,Object? gateway = freezed,Object? dhcpRanges = null,Object? ports = null,Object? vlanAware = freezed,Object? vlanId = freezed,Object? vlanDevice = freezed,Object? bondMode = freezed,Object? active = null,Object? autostart = freezed,Object? comment = freezed,Object? users = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? node = freezed,Object? mode = null,Object? bridge = freezed,Object? cidrs = null,Object? gateway = freezed,Object? dhcpRanges = null,Object? ports = null,Object? vlanAware = freezed,Object? vlanId = freezed,Object? vlanDevice = freezed,Object? bondMode = freezed,Object? active = null,Object? autostart = freezed,Object? comment = freezed,Object? hosts = null,Object? xml = null,Object? pendingRestart = null,Object? managementEditable = null,Object? users = null,}) {
   return _then(_VirtNetwork(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -1845,7 +2154,11 @@ as String?,bondMode: freezed == bondMode ? _self.bondMode : bondMode // ignore: 
 as String?,active: null == active ? _self.active : active // ignore: cast_nullable_to_non_nullable
 as bool,autostart: freezed == autostart ? _self.autostart : autostart // ignore: cast_nullable_to_non_nullable
 as bool?,comment: freezed == comment ? _self.comment : comment // ignore: cast_nullable_to_non_nullable
-as String?,users: null == users ? _self._users : users // ignore: cast_nullable_to_non_nullable
+as String?,hosts: null == hosts ? _self._hosts : hosts // ignore: cast_nullable_to_non_nullable
+as List<VirtNetHost>,xml: null == xml ? _self.xml : xml // ignore: cast_nullable_to_non_nullable
+as String,pendingRestart: null == pendingRestart ? _self.pendingRestart : pendingRestart // ignore: cast_nullable_to_non_nullable
+as bool,managementEditable: null == managementEditable ? _self.managementEditable : managementEditable // ignore: cast_nullable_to_non_nullable
+as bool,users: null == users ? _self._users : users // ignore: cast_nullable_to_non_nullable
 as List<VirtGuestRef>,
   ));
 }
@@ -2139,8 +2452,9 @@ as bool,
 mixin _$VirtSnapChainDisk {
 
  String get target;/// Topmost first: `files.first` is what the guest writes to now.
- List<VirtSnapChainFile> get files;/// The pool the topmost file is in, where it is in one.
- String? get pool;
+ List<VirtSnapChainFile> get files;/// The pool whose directory holds the topmost file, where one does.
+ String? get pool;/// Why the host could not read the disk's chain, in its words.
+ String? get error;
 /// Create a copy of VirtSnapChainDisk
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2151,16 +2465,16 @@ $VirtSnapChainDiskCopyWith<VirtSnapChainDisk> get copyWith => _$VirtSnapChainDis
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtSnapChainDisk&&(identical(other.target, target) || other.target == target)&&const DeepCollectionEquality().equals(other.files, files)&&(identical(other.pool, pool) || other.pool == pool));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtSnapChainDisk&&(identical(other.target, target) || other.target == target)&&const DeepCollectionEquality().equals(other.files, files)&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.error, error) || other.error == error));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,target,const DeepCollectionEquality().hash(files),pool);
+int get hashCode => Object.hash(runtimeType,target,const DeepCollectionEquality().hash(files),pool,error);
 
 @override
 String toString() {
-  return 'VirtSnapChainDisk(target: $target, files: $files, pool: $pool)';
+  return 'VirtSnapChainDisk(target: $target, files: $files, pool: $pool, error: $error)';
 }
 
 
@@ -2171,7 +2485,7 @@ abstract mixin class $VirtSnapChainDiskCopyWith<$Res>  {
   factory $VirtSnapChainDiskCopyWith(VirtSnapChainDisk value, $Res Function(VirtSnapChainDisk) _then) = _$VirtSnapChainDiskCopyWithImpl;
 @useResult
 $Res call({
- String target, List<VirtSnapChainFile> files, String? pool
+ String target, List<VirtSnapChainFile> files, String? pool, String? error
 });
 
 
@@ -2188,11 +2502,12 @@ class _$VirtSnapChainDiskCopyWithImpl<$Res>
 
 /// Create a copy of VirtSnapChainDisk
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? target = null,Object? files = null,Object? pool = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? target = null,Object? files = null,Object? pool = freezed,Object? error = freezed,}) {
   return _then(_self.copyWith(
 target: null == target ? _self.target : target // ignore: cast_nullable_to_non_nullable
 as String,files: null == files ? _self.files : files // ignore: cast_nullable_to_non_nullable
 as List<VirtSnapChainFile>,pool: freezed == pool ? _self.pool : pool // ignore: cast_nullable_to_non_nullable
+as String?,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -2278,10 +2593,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String target,  List<VirtSnapChainFile> files,  String? pool)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String target,  List<VirtSnapChainFile> files,  String? pool,  String? error)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _VirtSnapChainDisk() when $default != null:
-return $default(_that.target,_that.files,_that.pool);case _:
+return $default(_that.target,_that.files,_that.pool,_that.error);case _:
   return orElse();
 
 }
@@ -2299,10 +2614,10 @@ return $default(_that.target,_that.files,_that.pool);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String target,  List<VirtSnapChainFile> files,  String? pool)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String target,  List<VirtSnapChainFile> files,  String? pool,  String? error)  $default,) {final _that = this;
 switch (_that) {
 case _VirtSnapChainDisk():
-return $default(_that.target,_that.files,_that.pool);case _:
+return $default(_that.target,_that.files,_that.pool,_that.error);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -2319,10 +2634,10 @@ return $default(_that.target,_that.files,_that.pool);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String target,  List<VirtSnapChainFile> files,  String? pool)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String target,  List<VirtSnapChainFile> files,  String? pool,  String? error)?  $default,) {final _that = this;
 switch (_that) {
 case _VirtSnapChainDisk() when $default != null:
-return $default(_that.target,_that.files,_that.pool);case _:
+return $default(_that.target,_that.files,_that.pool,_that.error);case _:
   return null;
 
 }
@@ -2334,7 +2649,7 @@ return $default(_that.target,_that.files,_that.pool);case _:
 
 
 class _VirtSnapChainDisk extends VirtSnapChainDisk {
-  const _VirtSnapChainDisk({required this.target, final  List<VirtSnapChainFile> files = const <VirtSnapChainFile>[], this.pool}): _files = files,super._();
+  const _VirtSnapChainDisk({required this.target, final  List<VirtSnapChainFile> files = const <VirtSnapChainFile>[], this.pool, this.error}): _files = files,super._();
   
 
 @override final  String target;
@@ -2347,8 +2662,10 @@ class _VirtSnapChainDisk extends VirtSnapChainDisk {
   return EqualUnmodifiableListView(_files);
 }
 
-/// The pool the topmost file is in, where it is in one.
+/// The pool whose directory holds the topmost file, where one does.
 @override final  String? pool;
+/// Why the host could not read the disk's chain, in its words.
+@override final  String? error;
 
 /// Create a copy of VirtSnapChainDisk
 /// with the given fields replaced by the non-null parameter values.
@@ -2360,16 +2677,16 @@ _$VirtSnapChainDiskCopyWith<_VirtSnapChainDisk> get copyWith => __$VirtSnapChain
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtSnapChainDisk&&(identical(other.target, target) || other.target == target)&&const DeepCollectionEquality().equals(other._files, _files)&&(identical(other.pool, pool) || other.pool == pool));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtSnapChainDisk&&(identical(other.target, target) || other.target == target)&&const DeepCollectionEquality().equals(other._files, _files)&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.error, error) || other.error == error));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,target,const DeepCollectionEquality().hash(_files),pool);
+int get hashCode => Object.hash(runtimeType,target,const DeepCollectionEquality().hash(_files),pool,error);
 
 @override
 String toString() {
-  return 'VirtSnapChainDisk(target: $target, files: $files, pool: $pool)';
+  return 'VirtSnapChainDisk(target: $target, files: $files, pool: $pool, error: $error)';
 }
 
 
@@ -2380,7 +2697,7 @@ abstract mixin class _$VirtSnapChainDiskCopyWith<$Res> implements $VirtSnapChain
   factory _$VirtSnapChainDiskCopyWith(_VirtSnapChainDisk value, $Res Function(_VirtSnapChainDisk) _then) = __$VirtSnapChainDiskCopyWithImpl;
 @override @useResult
 $Res call({
- String target, List<VirtSnapChainFile> files, String? pool
+ String target, List<VirtSnapChainFile> files, String? pool, String? error
 });
 
 
@@ -2397,11 +2714,12 @@ class __$VirtSnapChainDiskCopyWithImpl<$Res>
 
 /// Create a copy of VirtSnapChainDisk
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? target = null,Object? files = null,Object? pool = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? target = null,Object? files = null,Object? pool = freezed,Object? error = freezed,}) {
   return _then(_VirtSnapChainDisk(
 target: null == target ? _self.target : target // ignore: cast_nullable_to_non_nullable
 as String,files: null == files ? _self._files : files // ignore: cast_nullable_to_non_nullable
 as List<VirtSnapChainFile>,pool: freezed == pool ? _self.pool : pool // ignore: cast_nullable_to_non_nullable
+as String?,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -2412,10 +2730,12 @@ as String?,
 /// @nodoc
 mixin _$VirtSnapChain {
 
- List<VirtSnapChainDisk> get disks;/// A disk QEMU would not open, in the host's words.
- String? get blocked;/// Why an external snapshot cannot be taken, asked of the host's own
-/// read: a raw disk, a disk that is not a file.
- String? get refusal;/// The pools an overlay can be placed in, by name.
+ List<VirtSnapChainDisk> get disks;/// Why no snapshot at all can be taken: a disk known not to be qcow2.
+ String? get refusal;/// Why an external snapshot cannot be taken, asked of the host's own
+/// read: everything [refusal] says, and a disk whose chain could not be
+/// read or cannot be trusted.
+ String? get externalRefusal;/// The pools an overlay can be placed in, by name: active pools that
+/// hold files in a directory (`virtPoolHoldsFiles`).
  List<String> get pools;
 /// Create a copy of VirtSnapChain
 /// with the given fields replaced by the non-null parameter values.
@@ -2427,16 +2747,16 @@ $VirtSnapChainCopyWith<VirtSnapChain> get copyWith => _$VirtSnapChainCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtSnapChain&&const DeepCollectionEquality().equals(other.disks, disks)&&(identical(other.blocked, blocked) || other.blocked == blocked)&&(identical(other.refusal, refusal) || other.refusal == refusal)&&const DeepCollectionEquality().equals(other.pools, pools));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtSnapChain&&const DeepCollectionEquality().equals(other.disks, disks)&&(identical(other.refusal, refusal) || other.refusal == refusal)&&(identical(other.externalRefusal, externalRefusal) || other.externalRefusal == externalRefusal)&&const DeepCollectionEquality().equals(other.pools, pools));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(disks),blocked,refusal,const DeepCollectionEquality().hash(pools));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(disks),refusal,externalRefusal,const DeepCollectionEquality().hash(pools));
 
 @override
 String toString() {
-  return 'VirtSnapChain(disks: $disks, blocked: $blocked, refusal: $refusal, pools: $pools)';
+  return 'VirtSnapChain(disks: $disks, refusal: $refusal, externalRefusal: $externalRefusal, pools: $pools)';
 }
 
 
@@ -2447,7 +2767,7 @@ abstract mixin class $VirtSnapChainCopyWith<$Res>  {
   factory $VirtSnapChainCopyWith(VirtSnapChain value, $Res Function(VirtSnapChain) _then) = _$VirtSnapChainCopyWithImpl;
 @useResult
 $Res call({
- List<VirtSnapChainDisk> disks, String? blocked, String? refusal, List<String> pools
+ List<VirtSnapChainDisk> disks, String? refusal, String? externalRefusal, List<String> pools
 });
 
 
@@ -2464,11 +2784,11 @@ class _$VirtSnapChainCopyWithImpl<$Res>
 
 /// Create a copy of VirtSnapChain
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? disks = null,Object? blocked = freezed,Object? refusal = freezed,Object? pools = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? disks = null,Object? refusal = freezed,Object? externalRefusal = freezed,Object? pools = null,}) {
   return _then(_self.copyWith(
 disks: null == disks ? _self.disks : disks // ignore: cast_nullable_to_non_nullable
-as List<VirtSnapChainDisk>,blocked: freezed == blocked ? _self.blocked : blocked // ignore: cast_nullable_to_non_nullable
-as String?,refusal: freezed == refusal ? _self.refusal : refusal // ignore: cast_nullable_to_non_nullable
+as List<VirtSnapChainDisk>,refusal: freezed == refusal ? _self.refusal : refusal // ignore: cast_nullable_to_non_nullable
+as String?,externalRefusal: freezed == externalRefusal ? _self.externalRefusal : externalRefusal // ignore: cast_nullable_to_non_nullable
 as String?,pools: null == pools ? _self.pools : pools // ignore: cast_nullable_to_non_nullable
 as List<String>,
   ));
@@ -2555,10 +2875,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<VirtSnapChainDisk> disks,  String? blocked,  String? refusal,  List<String> pools)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<VirtSnapChainDisk> disks,  String? refusal,  String? externalRefusal,  List<String> pools)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _VirtSnapChain() when $default != null:
-return $default(_that.disks,_that.blocked,_that.refusal,_that.pools);case _:
+return $default(_that.disks,_that.refusal,_that.externalRefusal,_that.pools);case _:
   return orElse();
 
 }
@@ -2576,10 +2896,10 @@ return $default(_that.disks,_that.blocked,_that.refusal,_that.pools);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<VirtSnapChainDisk> disks,  String? blocked,  String? refusal,  List<String> pools)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<VirtSnapChainDisk> disks,  String? refusal,  String? externalRefusal,  List<String> pools)  $default,) {final _that = this;
 switch (_that) {
 case _VirtSnapChain():
-return $default(_that.disks,_that.blocked,_that.refusal,_that.pools);case _:
+return $default(_that.disks,_that.refusal,_that.externalRefusal,_that.pools);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -2596,10 +2916,10 @@ return $default(_that.disks,_that.blocked,_that.refusal,_that.pools);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<VirtSnapChainDisk> disks,  String? blocked,  String? refusal,  List<String> pools)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<VirtSnapChainDisk> disks,  String? refusal,  String? externalRefusal,  List<String> pools)?  $default,) {final _that = this;
 switch (_that) {
 case _VirtSnapChain() when $default != null:
-return $default(_that.disks,_that.blocked,_that.refusal,_that.pools);case _:
+return $default(_that.disks,_that.refusal,_that.externalRefusal,_that.pools);case _:
   return null;
 
 }
@@ -2611,7 +2931,7 @@ return $default(_that.disks,_that.blocked,_that.refusal,_that.pools);case _:
 
 
 class _VirtSnapChain extends VirtSnapChain {
-  const _VirtSnapChain({final  List<VirtSnapChainDisk> disks = const <VirtSnapChainDisk>[], this.blocked, this.refusal, final  List<String> pools = const <String>[]}): _disks = disks,_pools = pools,super._();
+  const _VirtSnapChain({final  List<VirtSnapChainDisk> disks = const <VirtSnapChainDisk>[], this.refusal, this.externalRefusal, final  List<String> pools = const <String>[]}): _disks = disks,_pools = pools,super._();
   
 
  final  List<VirtSnapChainDisk> _disks;
@@ -2621,14 +2941,17 @@ class _VirtSnapChain extends VirtSnapChain {
   return EqualUnmodifiableListView(_disks);
 }
 
-/// A disk QEMU would not open, in the host's words.
-@override final  String? blocked;
-/// Why an external snapshot cannot be taken, asked of the host's own
-/// read: a raw disk, a disk that is not a file.
+/// Why no snapshot at all can be taken: a disk known not to be qcow2.
 @override final  String? refusal;
-/// The pools an overlay can be placed in, by name.
+/// Why an external snapshot cannot be taken, asked of the host's own
+/// read: everything [refusal] says, and a disk whose chain could not be
+/// read or cannot be trusted.
+@override final  String? externalRefusal;
+/// The pools an overlay can be placed in, by name: active pools that
+/// hold files in a directory (`virtPoolHoldsFiles`).
  final  List<String> _pools;
-/// The pools an overlay can be placed in, by name.
+/// The pools an overlay can be placed in, by name: active pools that
+/// hold files in a directory (`virtPoolHoldsFiles`).
 @override@JsonKey() List<String> get pools {
   if (_pools is EqualUnmodifiableListView) return _pools;
   // ignore: implicit_dynamic_type
@@ -2646,16 +2969,16 @@ _$VirtSnapChainCopyWith<_VirtSnapChain> get copyWith => __$VirtSnapChainCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtSnapChain&&const DeepCollectionEquality().equals(other._disks, _disks)&&(identical(other.blocked, blocked) || other.blocked == blocked)&&(identical(other.refusal, refusal) || other.refusal == refusal)&&const DeepCollectionEquality().equals(other._pools, _pools));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtSnapChain&&const DeepCollectionEquality().equals(other._disks, _disks)&&(identical(other.refusal, refusal) || other.refusal == refusal)&&(identical(other.externalRefusal, externalRefusal) || other.externalRefusal == externalRefusal)&&const DeepCollectionEquality().equals(other._pools, _pools));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_disks),blocked,refusal,const DeepCollectionEquality().hash(_pools));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_disks),refusal,externalRefusal,const DeepCollectionEquality().hash(_pools));
 
 @override
 String toString() {
-  return 'VirtSnapChain(disks: $disks, blocked: $blocked, refusal: $refusal, pools: $pools)';
+  return 'VirtSnapChain(disks: $disks, refusal: $refusal, externalRefusal: $externalRefusal, pools: $pools)';
 }
 
 
@@ -2666,7 +2989,7 @@ abstract mixin class _$VirtSnapChainCopyWith<$Res> implements $VirtSnapChainCopy
   factory _$VirtSnapChainCopyWith(_VirtSnapChain value, $Res Function(_VirtSnapChain) _then) = __$VirtSnapChainCopyWithImpl;
 @override @useResult
 $Res call({
- List<VirtSnapChainDisk> disks, String? blocked, String? refusal, List<String> pools
+ List<VirtSnapChainDisk> disks, String? refusal, String? externalRefusal, List<String> pools
 });
 
 
@@ -2683,11 +3006,11 @@ class __$VirtSnapChainCopyWithImpl<$Res>
 
 /// Create a copy of VirtSnapChain
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? disks = null,Object? blocked = freezed,Object? refusal = freezed,Object? pools = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? disks = null,Object? refusal = freezed,Object? externalRefusal = freezed,Object? pools = null,}) {
   return _then(_VirtSnapChain(
 disks: null == disks ? _self._disks : disks // ignore: cast_nullable_to_non_nullable
-as List<VirtSnapChainDisk>,blocked: freezed == blocked ? _self.blocked : blocked // ignore: cast_nullable_to_non_nullable
-as String?,refusal: freezed == refusal ? _self.refusal : refusal // ignore: cast_nullable_to_non_nullable
+as List<VirtSnapChainDisk>,refusal: freezed == refusal ? _self.refusal : refusal // ignore: cast_nullable_to_non_nullable
+as String?,externalRefusal: freezed == externalRefusal ? _self.externalRefusal : externalRefusal // ignore: cast_nullable_to_non_nullable
 as String?,pools: null == pools ? _self._pools : pools // ignore: cast_nullable_to_non_nullable
 as List<String>,
   ));

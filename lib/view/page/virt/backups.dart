@@ -47,6 +47,10 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
   List<VirtBackup>? _backups;
   List<VirtBackupJob> _jobs = const [];
   List<VirtStoragePool> _storages = const [];
+
+  /// The host's storages, for where a restore puts the disks: those that
+  /// hold guest disks (`images`, `rootdir`), which a backup storage need not.
+  List<VirtStoragePool> _diskPools = const [];
   Object? _error;
 
   /// A backup's delete or restore asked once: the second press does it.
@@ -100,6 +104,15 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
         _error = null;
         _storage ??= _defaultTarget?.name;
       });
+      // Only the restore's storage picker needs them, so a refusal (an
+      // account without `Datastore.Audit` on some storage) leaves it out
+      // rather than taking the view with it.
+      try {
+        final pools = await _notifier.storagePools();
+        if (mounted) setState(() => _diskPools = pools);
+      } on VirtErr catch (e) {
+        Loggers.app.info('PVE storages for a restore: ${e.message}');
+      }
     } on ParallelWaitError<
       (List<VirtBackup>?, List<VirtBackupJob>?, List<VirtStoragePool>?),
       dynamic
@@ -310,6 +323,12 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
     final notes = _notesDraft[b.id];
     final notesOpen = notes != null;
     final restoreTo = _restoreStorage[b.id];
+    final diskStorages = virtDiskStorages(
+      _diskPools,
+      host: VirtHostKind.pve,
+      kind: b.kind ?? _guest.kind,
+      node: _guest.node,
+    );
     return [
       _disc(key, Icons.backup_outlined, _when(b), summary),
       _reveal(key, [
@@ -368,13 +387,13 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
         // Where a restore as a new guest puts the disks. Over the guest
         // itself PVE has no storage to give (`force=1` restores in place),
         // so the row is only under the "as a new guest" action.
-        if (restoreTo != null || _storages.length > 1)
+        if (restoreTo != null || diskStorages.isNotEmpty)
           _seg(
             Icons.storage_outlined,
             l10n.virtBackupRestoreStorage,
             [
               l10n.virtBackupRestoreStorageSame,
-              for (final s in _storages) s.name,
+              for (final s in diskStorages) s.name,
             ],
             restoreTo ?? l10n.virtBackupRestoreStorageSame,
             key: '$key:restore-storage',
@@ -476,8 +495,9 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
       _guest.id,
       VirtBackupRequest(
         storage: target,
-        // A running guest keeps running; one that is off is copied as it is.
-        mode: _live && _mode == 'snapshot' ? 'snapshot' : _mode,
+        // The mode picked: for a guest that is off, vzdump copies it as it
+        // is whichever mode is sent.
+        mode: _mode,
         compress: _compress,
         notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
         protected: _protect,

@@ -1,0 +1,405 @@
+SrvBoxSep.b64.dmlydC5zbmFwLmRlbC5zbmFw
+<domainsnapshot>
+  <name>ext2</name>
+  <state>disk-snapshot</state>
+  <parent>
+    <name>ext1</name>
+  </parent>
+  <creationTime>1790506164</creationTime>
+  <memory snapshot='no'/>
+  <disks>
+    <disk name='vda' snapshot='external' type='file'>
+      <driver type='qcow2'/>
+      <source file='/var/lib/libvirt/sbxe2e-exp/ov2.qcow2'/>
+    </disk>
+  </disks>
+  <domain type='kvm'>
+    <name>sbxe2e-exp</name>
+    <uuid>fbc32098-43da-4a3c-af84-00da035de5b4</uuid>
+    <memory unit='KiB'>131072</memory>
+    <currentMemory unit='KiB'>131072</currentMemory>
+    <vcpu placement='static'>1</vcpu>
+    <resource>
+      <partition>/machine</partition>
+    </resource>
+    <os>
+      <type arch='x86_64' machine='pc-q35-10.0'>hvm</type>
+      <boot dev='hd'/>
+    </os>
+    <cpu mode='custom' match='exact' check='none'>
+      <model fallback='forbid'>qemu64</model>
+    </cpu>
+    <clock offset='utc'/>
+    <on_poweroff>destroy</on_poweroff>
+    <on_reboot>restart</on_reboot>
+    <on_crash>destroy</on_crash>
+    <devices>
+      <emulator>/usr/bin/qemu-system-x86_64</emulator>
+      <disk type='file' device='disk'>
+        <driver name='qemu' type='qcow2'/>
+        <source file='/var/lib/libvirt/sbxe2e-exp/ov1.qcow2'/>
+        <backingStore type='file'>
+          <format type='qcow2'/>
+          <source file='/var/lib/libvirt/sbxe2e-exp/base.qcow2'/>
+        </backingStore>
+        <target dev='vda' bus='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x02' slot='0x00' function='0x0'/>
+      </disk>
+      <controller type='usb' index='0' model='qemu-xhci'>
+        <address type='pci' domain='0x0000' bus='0x01' slot='0x00' function='0x0'/>
+      </controller>
+      <controller type='sata' index='0'>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x1f' function='0x2'/>
+      </controller>
+      <controller type='pci' index='0' model='pcie-root'/>
+      <controller type='pci' index='1' model='pcie-root-port'>
+        <model name='pcie-root-port'/>
+        <target chassis='1' port='0x10'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0' multifunction='on'/>
+      </controller>
+      <controller type='pci' index='2' model='pcie-root-port'>
+        <model name='pcie-root-port'/>
+        <target chassis='2' port='0x11'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x1'/>
+      </controller>
+      <controller type='pci' index='3' model='pcie-root-port'>
+        <model name='pcie-root-port'/>
+        <target chassis='3' port='0x12'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x2'/>
+      </controller>
+      <controller type='pci' index='4' model='pcie-root-port'>
+        <model name='pcie-root-port'/>
+        <target chassis='4' port='0x13'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x3'/>
+      </controller>
+      <input type='mouse' bus='ps2'/>
+      <input type='keyboard' bus='ps2'/>
+      <graphics type='vnc' port='-1' autoport='yes'>
+        <listen type='address'/>
+      </graphics>
+      <audio id='1' type='none'/>
+      <video>
+        <model type='cirrus' vram='16384' heads='1' primary='yes'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x0'/>
+      </video>
+      <watchdog model='itco' action='reset'/>
+      <memballoon model='virtio'>
+        <address type='pci' domain='0x0000' bus='0x03' slot='0x00' function='0x0'/>
+      </memballoon>
+    </devices>
+    <seclabel type='dynamic' model='apparmor' relabel='yes'/>
+  </domain>
+  <inactiveDomain type='kvm'>
+    <name>sbxe2e-exp</name>
+    <uuid>fbc32098-43da-4a3c-af84-00da035de5b4</uuid>
+    <memory unit='KiB'>131072</memory>
+    <currentMemory unit='KiB'>131072</currentMemory>
+    <vcpu placement='static'>1</vcpu>
+    <os>
+      <type arch='x86_64' machine='pc-q35-10.0'>hvm</type>
+      <boot dev='hd'/>
+    </os>
+    <cpu mode='custom' match='exact' check='none'>
+      <model fallback='forbid'>qemu64</model>
+    </cpu>
+    <clock offset='utc'/>
+    <on_poweroff>destroy</on_poweroff>
+    <on_reboot>restart</on_reboot>
+    <on_crash>destroy</on_crash>
+    <devices>
+      <emulator>/usr/bin/qemu-system-x86_64</emulator>
+      <disk type='file' device='disk'>
+        <driver name='qemu' type='qcow2'/>
+        <source file='/var/lib/libvirt/sbxe2e-exp/ov1.qcow2'/>
+        <backingStore type='file'>
+          <format type='qcow2'/>
+          <source file='/var/lib/libvirt/sbxe2e-exp/base.qcow2'/>
+        </backingStore>
+        <target dev='vda' bus='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x02' slot='0x00' function='0x0'/>
+      </disk>
+      <controller type='usb' index='0' model='qemu-xhci'>
+        <address type='pci' domain='0x0000' bus='0x01' slot='0x00' function='0x0'/>
+      </controller>
+      <controller type='sata' index='0'>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x1f' function='0x2'/>
+      </controller>
+      <controller type='pci' index='0' model='pcie-root'/>
+      <controller type='pci' index='1' model='pcie-root-port'>
+        <model name='pcie-root-port'/>
+        <target chassis='1' port='0x10'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0' multifunction='on'/>
+      </controller>
+      <controller type='pci' index='2' model='pcie-root-port'>
+        <model name='pcie-root-port'/>
+        <target chassis='2' port='0x11'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x1'/>
+      </controller>
+      <controller type='pci' index='3' model='pcie-root-port'>
+        <model name='pcie-root-port'/>
+        <target chassis='3' port='0x12'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x2'/>
+      </controller>
+      <controller type='pci' index='4' model='pcie-root-port'>
+        <model name='pcie-root-port'/>
+        <target chassis='4' port='0x13'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x3'/>
+      </controller>
+      <input type='mouse' bus='ps2'/>
+      <input type='keyboard' bus='ps2'/>
+      <graphics type='vnc' port='-1' autoport='yes'>
+        <listen type='address'/>
+      </graphics>
+      <audio id='1' type='none'/>
+      <video>
+        <model type='cirrus' vram='16384' heads='1' primary='yes'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x0'/>
+      </video>
+      <watchdog model='itco' action='reset'/>
+      <memballoon model='virtio'>
+        <address type='pci' domain='0x0000' bus='0x03' slot='0x00' function='0x0'/>
+      </memballoon>
+    </devices>
+  </inactiveDomain>
+</domainsnapshot>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC54bWw=
+<domain type='kvm'>
+  <name>sbxe2e-exp</name>
+  <uuid>fbc32098-43da-4a3c-af84-00da035de5b4</uuid>
+  <memory unit='KiB'>131072</memory>
+  <currentMemory unit='KiB'>131072</currentMemory>
+  <vcpu placement='static'>1</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc-q35-10.0'>hvm</type>
+    <boot dev='hd'/>
+  </os>
+  <cpu mode='custom' match='exact' check='none'>
+    <model fallback='forbid'>qemu64</model>
+  </cpu>
+  <clock offset='utc'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>destroy</on_crash>
+  <devices>
+    <emulator>/usr/bin/qemu-system-x86_64</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/sbxe2e-exp/ov2.qcow2'/>
+      <backingStore type='file'>
+        <format type='qcow2'/>
+        <source file='/var/lib/libvirt/sbxe2e-exp/ov1.qcow2'/>
+        <backingStore type='file'>
+          <format type='qcow2'/>
+          <source file='/var/lib/libvirt/sbxe2e-exp/base.qcow2'/>
+        </backingStore>
+      </backingStore>
+      <target dev='vda' bus='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x02' slot='0x00' function='0x0'/>
+    </disk>
+    <controller type='usb' index='0' model='qemu-xhci'>
+      <address type='pci' domain='0x0000' bus='0x01' slot='0x00' function='0x0'/>
+    </controller>
+    <controller type='sata' index='0'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x1f' function='0x2'/>
+    </controller>
+    <controller type='pci' index='0' model='pcie-root'/>
+    <controller type='pci' index='1' model='pcie-root-port'>
+      <model name='pcie-root-port'/>
+      <target chassis='1' port='0x10'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0' multifunction='on'/>
+    </controller>
+    <controller type='pci' index='2' model='pcie-root-port'>
+      <model name='pcie-root-port'/>
+      <target chassis='2' port='0x11'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x1'/>
+    </controller>
+    <controller type='pci' index='3' model='pcie-root-port'>
+      <model name='pcie-root-port'/>
+      <target chassis='3' port='0x12'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x2'/>
+    </controller>
+    <controller type='pci' index='4' model='pcie-root-port'>
+      <model name='pcie-root-port'/>
+      <target chassis='4' port='0x13'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x3'/>
+    </controller>
+    <input type='mouse' bus='ps2'/>
+    <input type='keyboard' bus='ps2'/>
+    <graphics type='vnc' port='-1' autoport='yes'>
+      <listen type='address'/>
+    </graphics>
+    <audio id='1' type='none'/>
+    <video>
+      <model type='cirrus' vram='16384' heads='1' primary='yes'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x0'/>
+    </video>
+    <watchdog model='itco' action='reset'/>
+    <memballoon model='virtio'>
+      <address type='pci' domain='0x0000' bus='0x03' slot='0x00' function='0x0'/>
+    </memballoon>
+  </devices>
+</domain>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5zbmFwLmNoYWlu
+/var/lib/libvirt/sbxe2e-exp/ov2.qcow2
+[
+    {
+        "children": [
+            {
+                "name": "file",
+                "info": {
+                    "children": [
+                    ],
+                    "virtual-size": 197120,
+                    "filename": "/var/lib/libvirt/sbxe2e-exp/ov2.qcow2",
+                    "format": "file",
+                    "actual-size": 200704,
+                    "format-specific": {
+                        "type": "file",
+                        "data": {
+                        }
+                    },
+                    "dirty-flag": false
+                }
+            }
+        ],
+        "backing-filename-format": "qcow2",
+        "virtual-size": 67108864,
+        "filename": "/var/lib/libvirt/sbxe2e-exp/ov2.qcow2",
+        "cluster-size": 65536,
+        "format": "qcow2",
+        "actual-size": 200704,
+        "format-specific": {
+            "type": "qcow2",
+            "data": {
+                "compat": "1.1",
+                "compression-type": "zlib",
+                "lazy-refcounts": false,
+                "refcount-bits": 16,
+                "corrupt": false,
+                "extended-l2": false
+            }
+        },
+        "full-backing-filename": "/var/lib/libvirt/sbxe2e-exp/ov1.qcow2",
+        "backing-filename": "/var/lib/libvirt/sbxe2e-exp/ov1.qcow2",
+        "dirty-flag": false
+    },
+    {
+        "children": [
+            {
+                "name": "file",
+                "info": {
+                    "children": [
+                    ],
+                    "virtual-size": 197120,
+                    "filename": "/var/lib/libvirt/sbxe2e-exp/ov1.qcow2",
+                    "format": "file",
+                    "actual-size": 200704,
+                    "format-specific": {
+                        "type": "file",
+                        "data": {
+                        }
+                    },
+                    "dirty-flag": false
+                }
+            }
+        ],
+        "backing-filename-format": "qcow2",
+        "virtual-size": 67108864,
+        "filename": "/var/lib/libvirt/sbxe2e-exp/ov1.qcow2",
+        "cluster-size": 65536,
+        "format": "qcow2",
+        "actual-size": 200704,
+        "format-specific": {
+            "type": "qcow2",
+            "data": {
+                "compat": "1.1",
+                "compression-type": "zlib",
+                "lazy-refcounts": false,
+                "refcount-bits": 16,
+                "corrupt": false,
+                "extended-l2": false
+            }
+        },
+        "full-backing-filename": "/var/lib/libvirt/sbxe2e-exp/base.qcow2",
+        "backing-filename": "/var/lib/libvirt/sbxe2e-exp/base.qcow2",
+        "dirty-flag": false
+    },
+    {
+        "children": [
+            {
+                "name": "file",
+                "info": {
+                    "children": [
+                    ],
+                    "virtual-size": 197120,
+                    "filename": "/var/lib/libvirt/sbxe2e-exp/base.qcow2",
+                    "format": "file",
+                    "actual-size": 200704,
+                    "format-specific": {
+                        "type": "file",
+                        "data": {
+                        }
+                    },
+                    "dirty-flag": false
+                }
+            }
+        ],
+        "virtual-size": 67108864,
+        "filename": "/var/lib/libvirt/sbxe2e-exp/base.qcow2",
+        "cluster-size": 65536,
+        "format": "qcow2",
+        "actual-size": 200704,
+        "format-specific": {
+            "type": "qcow2",
+            "data": {
+                "compat": "1.1",
+                "compression-type": "zlib",
+                "lazy-refcounts": false,
+                "refcount-bits": 16,
+                "corrupt": false,
+                "extended-l2": false
+            }
+        },
+        "dirty-flag": false
+    }
+]
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5zbmFwLmRlbC5pbmZv
+Id:             -
+Name:           sbxe2e-exp
+UUID:           fbc32098-43da-4a3c-af84-00da035de5b4
+OS Type:        hvm
+State:          shut off
+CPU(s):         1
+Max memory:     131072 KiB
+Used memory:    131072 KiB
+Persistent:     yes
+Autostart:      disable
+Autostart Once: disable
+Managed save:   no
+Security model: apparmor
+Security DOI:   0
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5zbmFwLmRlbC5zZWNtb2RlbA==
+    <secmodel>
+      <model>apparmor</model>
+      <doi>0</doi>
+    </secmodel>
+    <secmodel>
+      <model>dac</model>
+      <doi>0</doi>
+      <baselabel type='kvm'>+64055:+64055</baselabel>
+      <baselabel type='qemu'>+64055:+64055</baselabel>
+    </secmodel>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5zbmFwLmRlbC5kZW55
+no profile
+
+SbVirtRc=1

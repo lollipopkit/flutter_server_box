@@ -381,13 +381,55 @@ class _VirtGuestViewState extends ConsumerState<VirtGuestView> {
   }
 
   /// Drops every pending change, then reads the hardware again.
+  ///
+  /// PVE drops its list item by item; libvirt has no list, so the
+  /// definition is written again from the running XML — which is what a
+  /// `virsh` user does, and which the NVRAM file and the firmware survive
+  /// ([VirtHwRevertPending]). What is discarded is shown first, the same
+  /// rows the Hardware view shows under each field.
   Future<void> _revertAll(VirtGuest guest, VirtHardware hw) async {
+    final revertPending = ref.read(
+      virtHostProvider(widget.serverId).select(
+        (s) => s.data?.capabilities.hardwareRevertPending ?? false,
+      ),
+    );
+    final ok = await context.showRoundDialog<bool>(
+      title: revertPending
+          ? l10n.virtHwRevertPendingTitle
+          : l10n.virtHwRevertAll,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            revertPending
+                ? l10n.virtHwRevertPendingBody(guest.name)
+                : l10n.virtHwRevertAllAsk(guest.name),
+            style: UIs.text13,
+          ),
+          const SizedBox(height: 7),
+          for (final p in hw.pending)
+            VirtFact(
+              p.key,
+              p.delete
+                  ? '${p.current ?? ''} → ${libL10n.delete}'
+                  : '${p.current ?? '—'} → ${p.pending ?? '—'}',
+            ),
+        ],
+      ),
+      actions: Btnx.cancelRedOk,
+    );
+    if (ok != true || !mounted) return;
     try {
-      await _notifier.changeHardware(
-        guest.id,
-        hw,
-        VirtHwRevert([for (final p in hw.pending) p.key]),
-      );
+      if (revertPending) {
+        await _notifier.revertPending(guest.id, hw);
+      } else {
+        await _notifier.changeHardware(
+          guest.id,
+          hw,
+          VirtHwRevert([for (final p in hw.pending) p.key]),
+        );
+      }
       Toast.success(libL10n.success);
     } on VirtErr catch (e) {
       Toast.error(e.title, body: e.detail);

@@ -8301,6 +8301,12 @@ abstract class AppLocalizations {
   /// **'Overlay pool'**
   String get virtSnapshotOverlayPool;
 
+  /// Snapshot form, overlay pool picker: no pool picked; each overlay goes in the directory of the disk it backs.
+  ///
+  /// In en, this message translates to:
+  /// **'Beside each disk'**
+  String get virtSnapshotOverlayBeside;
+
   /// Snapshot form: an external snapshot never holds memory.
   ///
   /// In en, this message translates to:
@@ -8834,6 +8840,246 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Every guest on the node is taken. Turn one off to leave it out.'**
   String get virtBackupExcludeTip;
+
+  /// Network view: the button that opens the edit form.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit configuration'**
+  String get virtNetEdit;
+
+  /// Edit dialog: what a restart does, with guests on the network.
+  ///
+  /// In en, this message translates to:
+  /// **'The running network keeps what it has until it is restarted. Restarting cuts off the {count} guests on it.'**
+  String virtNetEditAsk(int count);
+
+  /// Edit dialog: what a restart does, with nothing on the network.
+  ///
+  /// In en, this message translates to:
+  /// **'The running network keeps what it has until it is restarted.'**
+  String get virtNetEditAskNoGuest;
+
+  /// Edit form: the switch that restarts the network to apply the change now.
+  ///
+  /// In en, this message translates to:
+  /// **'Restart it to apply now'**
+  String get virtNetEditRestart;
+
+  /// Edit form: under that switch.
+  ///
+  /// In en, this message translates to:
+  /// **'The guests on it lose their network while it restarts.'**
+  String get virtNetEditRestartNote;
+
+  /// Edit form: the button that saves without restarting.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to the definition'**
+  String get virtNetEditSave;
+
+  /// Network view: the running network is not on its definition.
+  ///
+  /// In en, this message translates to:
+  /// **'The definition has a change the running network is not on yet.'**
+  String get virtNetEditPending;
+
+  /// Network view: restart the network.
+  ///
+  /// In en, this message translates to:
+  /// **'Restart'**
+  String get virtNetRestart;
+
+  /// Confirm restarting a network with guests on it.
+  ///
+  /// In en, this message translates to:
+  /// **'Restart {name}? The {count} guests on it lose their network until it is back.'**
+  String virtNetRestartAsk(String name, int count);
+
+  /// Confirm restarting a network with nothing on it.
+  ///
+  /// In en, this message translates to:
+  /// **'Restart {name}? Nothing is on it.'**
+  String virtNetRestartAskNone(String name);
+
+  /// Network view: the static DHCP entries group.
+  ///
+  /// In en, this message translates to:
+  /// **'Static addresses'**
+  String get virtNetHosts;
+
+  /// Network view: add a static DHCP entry.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an address'**
+  String get virtNetHostAdd;
+
+  /// Static entry: the MAC field.
+  ///
+  /// In en, this message translates to:
+  /// **'MAC'**
+  String get virtNetHostMac;
+
+  /// Static entry: the address field.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get virtNetHostIp;
+
+  /// Static entry: the name field.
+  ///
+  /// In en, this message translates to:
+  /// **'Name (optional)'**
+  String get virtNetHostName;
+
+  /// Static entries: none is set.
+  ///
+  /// In en, this message translates to:
+  /// **'No address is handed to a MAC of its own: every guest gets one from the DHCP range.'**
+  String get virtNetHostEmpty;
+
+  /// A static entry the host would refuse.
+  ///
+  /// In en, this message translates to:
+  /// **'A MAC, an address or a name the host would refuse, or the same MAC twice.'**
+  String get virtNetHostInvalid;
+
+  /// A PVE interface carrying the host's own address: refused.
+  ///
+  /// In en, this message translates to:
+  /// **'This interface carries the host\'s own address. Editing or applying it would cut the host off.'**
+  String get virtNetManagementIface;
+
+  /// Network view: why a PVE interface is not editable.
+  ///
+  /// In en, this message translates to:
+  /// **'It carries the host\'s management address: the app does not edit it.'**
+  String get virtNetManagementTip;
+
+  /// The interface name.
+  ///
+  /// In en, this message translates to:
+  /// **'Interface'**
+  String get virtNetIfname;
+
+  /// A field that was cleared is written as such.
+  ///
+  /// In en, this message translates to:
+  /// **'cleared'**
+  String get virtNetAddressCleared;
+
+  /// Under the PVE bridge edit form.
+  ///
+  /// In en, this message translates to:
+  /// **'Written into the node\'s pending configuration; apply it for the host to take it.'**
+  String get virtNetPveEditNote;
+
+  /// cloud-init: the password expires switch.
+  ///
+  /// In en, this message translates to:
+  /// **'The password expires'**
+  String get virtCiExpire;
+
+  /// cloud-init: what the switch means, and that PVE has no such option.
+  ///
+  /// In en, this message translates to:
+  /// **'The first login with it has to set a new one. libvirt only: PVE writes \"expire: false\" and has no option for it.'**
+  String get virtCiExpireNote;
+
+  /// cloud-init: several search domains.
+  ///
+  /// In en, this message translates to:
+  /// **'lab.example dev.lab.example'**
+  String get virtCiSearchHint;
+
+  /// cloud-init: how several search domains are separated.
+  ///
+  /// In en, this message translates to:
+  /// **'Several, separated by a space; resolv.conf keeps the first few.'**
+  String get virtCiSearchTip;
+
+  /// cloud-init: the interfaces group.
+  ///
+  /// In en, this message translates to:
+  /// **'Interfaces'**
+  String get virtCiNics;
+
+  /// cloud-init: how many NICs the seed configures.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} NICs in the seed\'s network config; the form edits the first.'**
+  String virtCiNicsTip(int count);
+
+  /// USB passthrough: name the device by vendor and product.
+  ///
+  /// In en, this message translates to:
+  /// **'By vendor and product'**
+  String get virtUsbByVendor;
+
+  /// USB passthrough: name the device by the address it sits at.
+  ///
+  /// In en, this message translates to:
+  /// **'By address'**
+  String get virtUsbByAddress;
+
+  /// USB passthrough: the bus and device fields.
+  ///
+  /// In en, this message translates to:
+  /// **'Bus and device'**
+  String get virtUsbAddress;
+
+  /// USB passthrough: what an address-based hostdev does.
+  ///
+  /// In en, this message translates to:
+  /// **'The device follows this address: whatever is plugged there is given to the guest. libvirt names a USB hostdev by bus and device number.'**
+  String get virtUsbAddressTip;
+
+  /// USB passthrough: where on the host the device is plugged.
+  ///
+  /// In en, this message translates to:
+  /// **'bus {bus} · port {port}'**
+  String virtUsbPortNote(int bus, String port);
+
+  /// Create form: Secure Boot cannot be offered here.
+  ///
+  /// In en, this message translates to:
+  /// **'The host\'s firmware descriptors have no Secure Boot firmware with enrolled keys, so a domain with it cannot start.'**
+  String get virtSbUnsupported;
+
+  /// Create form: the Secure Boot switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Secure Boot'**
+  String get virtCreateSecureBoot;
+
+  /// Create form: what Secure Boot does.
+  ///
+  /// In en, this message translates to:
+  /// **'Only signed kernels and bootloaders are booted.'**
+  String get virtCreateSecureBootNote;
+
+  /// USB passthrough: the address a device is named by.
+  ///
+  /// In en, this message translates to:
+  /// **'bus {bus} · device {device}'**
+  String virtUsbAddressNote(int bus, int device);
+
+  /// Revert-all dialog: the title where the host reverts by rewriting the definition (libvirt).
+  ///
+  /// In en, this message translates to:
+  /// **'Discard the pending changes'**
+  String get virtHwRevertPendingTitle;
+
+  /// Revert-all dialog: what a libvirt revert does.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is put back on what it is running: the definition is written again from the running one, and the next start gets exactly what this one has. Its NVRAM file and firmware stay as they are.'**
+  String virtHwRevertPendingBody(String name);
+
+  /// Revert-all dialog: what a PVE revert does.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop every change waiting for {name}\'s next start?'**
+  String virtHwRevertAllAsk(String name);
 }
 
 class _AppLocalizationsDelegate

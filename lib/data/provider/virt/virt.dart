@@ -821,6 +821,28 @@ class VirtHostNotifier extends _$VirtHostNotifier {
     }
   }
 
+  /// Discards every pending change to [guestId], made from [base] (the read
+  /// the view was shown), then has the hardware read again. One hardware
+  /// operation per guest at a time, as [changeHardware]. Throws [VirtErr].
+  Future<void> revertPending(String guestId, VirtHardware base) async {
+    final guest = _guest(guestId);
+    if (state.isBusy(guestId)) {
+      throw VirtErr(
+        type: VirtErrType.unsupported,
+        message: '${guest.name} is busy',
+      );
+    }
+    state = state.copyWith(editing: {...state.editing, guestId});
+    try {
+      await _backend.revertPending(guest, base);
+    } finally {
+      if (ref.mounted) {
+        state = state.copyWith(editing: {...state.editing}..remove(guestId));
+        _bump('hw:$guestId');
+      }
+    }
+  }
+
   /// See [VirtBackend.cloudInit].
   Future<VirtCloudInitState> cloudInit(String guestId) =>
       _backend.cloudInit(_guest(guestId));
@@ -1030,7 +1052,10 @@ class VirtHostNotifier extends _$VirtHostNotifier {
           VirtNetworkSetAutostart() ||
           VirtNetworkDelete() ||
           VirtNetworkApply() ||
-          VirtNetworkRevert():
+          VirtNetworkRevert() ||
+          VirtNetworkEdit() ||
+          VirtNetworkEditBridge() ||
+          VirtNetworkRestart():
         _bump(VirtRevision.network);
     }
   }
@@ -1191,6 +1216,10 @@ final class _MissingBackend implements VirtBackend {
 
   @override
   Future<VirtHardware> hardware(VirtGuest guest) async => _fail();
+
+  @override
+  Future<void> revertPending(VirtGuest guest, VirtHardware base) async =>
+      _fail();
 
   @override
   Future<VirtHwOutcome> changeHardware(

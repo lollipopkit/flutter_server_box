@@ -104,6 +104,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
 
   /// Null until chosen: the host's default then.
   bool? _uefi;
+  var _secureBoot = false;
   var _tpm = false;
   String? _bus;
   String? _nicModel;
@@ -266,6 +267,8 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
         ? _nicModel
         : options.nicModels.firstOrNull;
     final uefi = options.uefi && (_uefi ?? true);
+    // Secure Boot is UEFI's, and only where the host's firmware can back it.
+    final secureBoot = uefi && options.secureBoot && _secureBoot;
     final tpm = options.tpm && _tpm;
 
     return FutureBuilder<List<VirtVolume>>(
@@ -311,6 +314,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
                 bus: lxc ? null : bus,
                 nicModel: lxc ? null : nicModel,
                 uefi: !lxc && uefi,
+                secureBoot: !lxc && secureBoot,
                 tpm: !lxc && tpm,
                 cloudInit: ci,
                 start: _start,
@@ -354,6 +358,8 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
               image: image,
               fromImage: fromImage,
               uefi: uefi,
+              secureBoot: secureBoot,
+              secureBootSupported: options.secureBoot,
               tpm: tpm,
               issue: issue,
               ok: systemOk,
@@ -409,7 +415,6 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
     ];
     final static = withNic && _ciStatic;
     final gateway = _ciGateway.text.trim();
-    final search = _ciSearch.text.trim();
     return VirtCloudInit(
       user: _ciUser.text.trim(),
       password: _ciPassword.text.isEmpty ? null : _ciPassword.text,
@@ -418,7 +423,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
       address: static ? _ciAddress.text.trim() : null,
       gateway: static && gateway.isNotEmpty ? gateway : null,
       dns: withNic ? words(_ciDns.text) : const [],
-      searchDomain: withNic && search.isNotEmpty ? search : null,
+      searchDomains: withNic ? words(_ciSearch.text) : const [],
     );
   }
 
@@ -533,6 +538,8 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
     required VirtVolume? image,
     required bool fromImage,
     required bool uefi,
+    required bool secureBoot,
+    required bool secureBootSupported,
     required bool tpm,
     required VirtCreateIssue? issue,
     required bool ok,
@@ -661,6 +668,17 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
             key: 'create:firmware',
             onSelected: (f) => setState(() => _uefi = f == 'UEFI'),
           ),
+        if (options.uefi && options.secureBoot)
+          _toggle(
+            Icons.verified_user_outlined,
+            l10n.virtCreateSecureBoot,
+            secureBoot,
+            key: 'create:secure-boot',
+            note: l10n.virtCreateSecureBootNote,
+            onChanged: (v) => setState(() => _secureBoot = v),
+          ),
+        if (options.uefi && !options.secureBoot)
+          _text(l10n.virtSbUnsupported),
         if (options.tpm)
           _toggle(
             Icons.shield_outlined,

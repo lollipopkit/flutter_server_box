@@ -6394,6 +6394,10 @@
   "@virtSnapshotOverlayPool": {
     "description": "Snapshot form: the pool an external snapshot puts its overlays in."
   },
+  "virtSnapshotOverlayBeside": "Beside each disk",
+  "@virtSnapshotOverlayBeside": {
+    "description": "Snapshot form, overlay pool picker: no pool picked; each overlay goes in the directory of the disk it backs."
+  },
   "virtSnapshotExternalNoMemory": "An external snapshot never holds the memory: the guest is not stopped.",
   "@virtSnapshotExternalNoMemory": {
     "description": "Snapshot form: an external snapshot never holds memory."
@@ -6812,5 +6816,225 @@
   "virtBackupExcludeTip": "Every guest on the node is taken. Turn one off to leave it out.",
   "@virtBackupExcludeTip": {
     "description": "Job editor: what the switches mean with \"all guests\" on."
+  },
+  "virtNetEdit": "Edit configuration",
+  "virtNetEditAsk": "The running network keeps what it has until it is restarted. Restarting cuts off the {count} guests on it.",
+  "virtNetEditAskNoGuest": "The running network keeps what it has until it is restarted.",
+  "virtNetEditRestart": "Restart it to apply now",
+  "virtNetEditRestartNote": "The guests on it lose their network while it restarts.",
+  "virtNetEditSave": "Save to the definition",
+  "virtNetEditPending": "The definition has a change the running network is not on yet.",
+  "virtNetRestart": "Restart",
+  "virtNetRestartAsk": "Restart {name}? The {count} guests on it lose their network until it is back.",
+  "virtNetRestartAskNone": "Restart {name}? Nothing is on it.",
+  "virtNetHosts": "Static addresses",
+  "virtNetHostAdd": "Add an address",
+  "virtNetHostMac": "MAC",
+  "virtNetHostIp": "Address",
+  "virtNetHostName": "Name (optional)",
+  "virtNetHostEmpty": "No address is handed to a MAC of its own: every guest gets one from the DHCP range.",
+  "virtNetHostInvalid": "A MAC, an address or a name the host would refuse, or the same MAC twice.",
+  "virtNetManagementIface": "This interface carries the host's own address. Editing or applying it would cut the host off.",
+  "virtNetManagementTip": "It carries the host's management address: the app does not edit it.",
+  "virtNetIfname": "Interface",
+  "virtNetAddressCleared": "cleared",
+  "virtNetPveEditNote": "Written into the node's pending configuration; apply it for the host to take it.",
+  "virtCiExpire": "The password expires",
+  "virtCiExpireNote": "The first login with it has to set a new one. libvirt only: PVE writes \"expire: false\" and has no option for it.",
+  "virtCiSearchHint": "lab.example dev.lab.example",
+  "virtCiSearchTip": "Several, separated by a space; resolv.conf keeps the first few.",
+  "virtCiNics": "Interfaces",
+  "virtCiNicsTip": "{count} NICs in the seed's network config; the form edits the first.",
+  "virtUsbByVendor": "By vendor and product",
+  "virtUsbByAddress": "By address",
+  "virtUsbAddress": "Bus and device",
+  "virtUsbAddressTip": "The device follows this address: whatever is plugged there is given to the guest. libvirt names a USB hostdev by bus and device number.",
+  "virtUsbPortNote": "bus {bus} · port {port}",
+  "virtSbUnsupported": "The host's firmware descriptors have no Secure Boot firmware with enrolled keys, so a domain with it cannot start.",
+  "virtCreateSecureBoot": "Secure Boot",
+  "virtCreateSecureBootNote": "Only signed kernels and bootloaders are booted.",
+  "@virtNetEdit": {
+    "description": "Network view: the button that opens the edit form."
+  },
+  "@virtNetEditAsk": {
+    "description": "Edit dialog: what a restart does, with guests on the network.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "@virtNetEditAskNoGuest": {
+    "description": "Edit dialog: what a restart does, with nothing on the network."
+  },
+  "@virtNetEditRestart": {
+    "description": "Edit form: the switch that restarts the network to apply the change now."
+  },
+  "@virtNetEditRestartNote": {
+    "description": "Edit form: under that switch."
+  },
+  "@virtNetEditSave": {
+    "description": "Edit form: the button that saves without restarting."
+  },
+  "@virtNetEditPending": {
+    "description": "Network view: the running network is not on its definition."
+  },
+  "@virtNetRestart": {
+    "description": "Network view: restart the network."
+  },
+  "@virtNetRestartAsk": {
+    "description": "Confirm restarting a network with guests on it.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "vmbr2"
+      },
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "@virtNetRestartAskNone": {
+    "description": "Confirm restarting a network with nothing on it.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "vmbr2"
+      }
+    }
+  },
+  "@virtNetHosts": {
+    "description": "Network view: the static DHCP entries group."
+  },
+  "@virtNetHostAdd": {
+    "description": "Network view: add a static DHCP entry."
+  },
+  "@virtNetHostMac": {
+    "description": "Static entry: the MAC field."
+  },
+  "@virtNetHostIp": {
+    "description": "Static entry: the address field."
+  },
+  "@virtNetHostName": {
+    "description": "Static entry: the name field."
+  },
+  "@virtNetHostEmpty": {
+    "description": "Static entries: none is set."
+  },
+  "@virtNetHostInvalid": {
+    "description": "A static entry the host would refuse."
+  },
+  "@virtNetManagementIface": {
+    "description": "A PVE interface carrying the host's own address: refused."
+  },
+  "@virtNetManagementTip": {
+    "description": "Network view: why a PVE interface is not editable."
+  },
+  "@virtNetIfname": {
+    "description": "The interface name."
+  },
+  "@virtNetAddressCleared": {
+    "description": "A field that was cleared is written as such."
+  },
+  "@virtNetPveEditNote": {
+    "description": "Under the PVE bridge edit form."
+  },
+  "@virtCiExpire": {
+    "description": "cloud-init: the password expires switch."
+  },
+  "@virtCiExpireNote": {
+    "description": "cloud-init: what the switch means, and that PVE has no such option."
+  },
+  "@virtCiSearchHint": {
+    "description": "cloud-init: several search domains."
+  },
+  "@virtCiSearchTip": {
+    "description": "cloud-init: how several search domains are separated."
+  },
+  "@virtCiNics": {
+    "description": "cloud-init: the interfaces group."
+  },
+  "@virtCiNicsTip": {
+    "description": "cloud-init: how many NICs the seed configures.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "@virtUsbByVendor": {
+    "description": "USB passthrough: name the device by vendor and product."
+  },
+  "@virtUsbByAddress": {
+    "description": "USB passthrough: name the device by the address it sits at."
+  },
+  "@virtUsbAddress": {
+    "description": "USB passthrough: the bus and device fields."
+  },
+  "@virtUsbAddressTip": {
+    "description": "USB passthrough: what an address-based hostdev does."
+  },
+  "@virtUsbPortNote": {
+    "description": "USB passthrough: where on the host the device is plugged.",
+    "placeholders": {
+      "bus": {
+        "type": "int",
+        "example": "1"
+      },
+      "port": {
+        "type": "String",
+        "example": "4"
+      }
+    }
+  },
+  "@virtSbUnsupported": {
+    "description": "Create form: Secure Boot cannot be offered here."
+  },
+  "@virtCreateSecureBoot": {
+    "description": "Create form: the Secure Boot switch."
+  },
+  "@virtCreateSecureBootNote": {
+    "description": "Create form: what Secure Boot does."
+  },
+  "virtUsbAddressNote": "bus {bus} · device {device}",
+  "@virtUsbAddressNote": {
+    "description": "USB passthrough: the address a device is named by.",
+    "placeholders": {
+      "bus": {
+        "type": "int",
+        "example": "1"
+      },
+      "device": {
+        "type": "int",
+        "example": "4"
+      }
+    }
+  },
+  "virtHwRevertPendingTitle": "Discard the pending changes",
+  "virtHwRevertPendingBody": "{name} is put back on what it is running: the definition is written again from the running one, and the next start gets exactly what this one has. Its NVRAM file and firmware stay as they are.",
+  "virtHwRevertAllAsk": "Drop every change waiting for {name}'s next start?",
+  "@virtHwRevertPendingTitle": {
+    "description": "Revert-all dialog: the title where the host reverts by rewriting the definition (libvirt)."
+  },
+  "@virtHwRevertPendingBody": {
+    "description": "Revert-all dialog: what a libvirt revert does.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "web-01"
+      }
+    }
+  },
+  "@virtHwRevertAllAsk": {
+    "description": "Revert-all dialog: what a PVE revert does.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "web-01"
+      }
+    }
   }
 }

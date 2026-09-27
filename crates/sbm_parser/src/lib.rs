@@ -23,6 +23,7 @@ pub mod types;
 pub mod virt;
 pub mod virt_cloud_init;
 pub mod virt_manage;
+pub mod virt_net;
 pub mod virt_snapshot;
 pub mod windows;
 

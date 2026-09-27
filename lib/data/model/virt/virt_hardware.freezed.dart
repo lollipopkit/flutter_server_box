@@ -3101,7 +3101,11 @@ mixin _$VirtHostDevice {
 /// What attaching sends: `0bda:b023`, `0000:01:00.0`, or a PVE
 /// mapping's name.
  String get id; String get label; String? get detail;/// A PVE resource mapping rather than a raw device.
- bool get mapping; int? get iommuGroup;/// Devices sharing its IOMMU group, itself included: all of them go to
+ bool get mapping;/// USB: the bus it is on, and the port chain it sits at (`4`, or `1.2`
+/// behind a hub), as the host reports them.
+ int? get usbBus; String? get usbPort;/// USB: the device number on that bus, where the host reports one
+/// (libvirt's `nodedev-dumpxml`; PVE names a device by its port).
+ int? get usbDevice; int? get iommuGroup;/// Devices sharing its IOMMU group, itself included: all of them go to
 /// the guest together.
  int get groupSize;
 /// Create a copy of VirtHostDevice
@@ -3114,16 +3118,16 @@ $VirtHostDeviceCopyWith<VirtHostDevice> get copyWith => _$VirtHostDeviceCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHostDevice&&(identical(other.id, id) || other.id == id)&&(identical(other.label, label) || other.label == label)&&(identical(other.detail, detail) || other.detail == detail)&&(identical(other.mapping, mapping) || other.mapping == mapping)&&(identical(other.iommuGroup, iommuGroup) || other.iommuGroup == iommuGroup)&&(identical(other.groupSize, groupSize) || other.groupSize == groupSize));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHostDevice&&(identical(other.id, id) || other.id == id)&&(identical(other.label, label) || other.label == label)&&(identical(other.detail, detail) || other.detail == detail)&&(identical(other.mapping, mapping) || other.mapping == mapping)&&(identical(other.usbBus, usbBus) || other.usbBus == usbBus)&&(identical(other.usbPort, usbPort) || other.usbPort == usbPort)&&(identical(other.usbDevice, usbDevice) || other.usbDevice == usbDevice)&&(identical(other.iommuGroup, iommuGroup) || other.iommuGroup == iommuGroup)&&(identical(other.groupSize, groupSize) || other.groupSize == groupSize));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,label,detail,mapping,iommuGroup,groupSize);
+int get hashCode => Object.hash(runtimeType,id,label,detail,mapping,usbBus,usbPort,usbDevice,iommuGroup,groupSize);
 
 @override
 String toString() {
-  return 'VirtHostDevice(id: $id, label: $label, detail: $detail, mapping: $mapping, iommuGroup: $iommuGroup, groupSize: $groupSize)';
+  return 'VirtHostDevice(id: $id, label: $label, detail: $detail, mapping: $mapping, usbBus: $usbBus, usbPort: $usbPort, usbDevice: $usbDevice, iommuGroup: $iommuGroup, groupSize: $groupSize)';
 }
 
 
@@ -3134,7 +3138,7 @@ abstract mixin class $VirtHostDeviceCopyWith<$Res>  {
   factory $VirtHostDeviceCopyWith(VirtHostDevice value, $Res Function(VirtHostDevice) _then) = _$VirtHostDeviceCopyWithImpl;
 @useResult
 $Res call({
- String id, String label, String? detail, bool mapping, int? iommuGroup, int groupSize
+ String id, String label, String? detail, bool mapping, int? usbBus, String? usbPort, int? usbDevice, int? iommuGroup, int groupSize
 });
 
 
@@ -3151,13 +3155,16 @@ class _$VirtHostDeviceCopyWithImpl<$Res>
 
 /// Create a copy of VirtHostDevice
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? label = null,Object? detail = freezed,Object? mapping = null,Object? iommuGroup = freezed,Object? groupSize = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? label = null,Object? detail = freezed,Object? mapping = null,Object? usbBus = freezed,Object? usbPort = freezed,Object? usbDevice = freezed,Object? iommuGroup = freezed,Object? groupSize = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,label: null == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
 as String,detail: freezed == detail ? _self.detail : detail // ignore: cast_nullable_to_non_nullable
 as String?,mapping: null == mapping ? _self.mapping : mapping // ignore: cast_nullable_to_non_nullable
-as bool,iommuGroup: freezed == iommuGroup ? _self.iommuGroup : iommuGroup // ignore: cast_nullable_to_non_nullable
+as bool,usbBus: freezed == usbBus ? _self.usbBus : usbBus // ignore: cast_nullable_to_non_nullable
+as int?,usbPort: freezed == usbPort ? _self.usbPort : usbPort // ignore: cast_nullable_to_non_nullable
+as String?,usbDevice: freezed == usbDevice ? _self.usbDevice : usbDevice // ignore: cast_nullable_to_non_nullable
+as int?,iommuGroup: freezed == iommuGroup ? _self.iommuGroup : iommuGroup // ignore: cast_nullable_to_non_nullable
 as int?,groupSize: null == groupSize ? _self.groupSize : groupSize // ignore: cast_nullable_to_non_nullable
 as int,
   ));
@@ -3244,10 +3251,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String label,  String? detail,  bool mapping,  int? iommuGroup,  int groupSize)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String label,  String? detail,  bool mapping,  int? usbBus,  String? usbPort,  int? usbDevice,  int? iommuGroup,  int groupSize)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _VirtHostDevice() when $default != null:
-return $default(_that.id,_that.label,_that.detail,_that.mapping,_that.iommuGroup,_that.groupSize);case _:
+return $default(_that.id,_that.label,_that.detail,_that.mapping,_that.usbBus,_that.usbPort,_that.usbDevice,_that.iommuGroup,_that.groupSize);case _:
   return orElse();
 
 }
@@ -3265,10 +3272,10 @@ return $default(_that.id,_that.label,_that.detail,_that.mapping,_that.iommuGroup
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String label,  String? detail,  bool mapping,  int? iommuGroup,  int groupSize)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String label,  String? detail,  bool mapping,  int? usbBus,  String? usbPort,  int? usbDevice,  int? iommuGroup,  int groupSize)  $default,) {final _that = this;
 switch (_that) {
 case _VirtHostDevice():
-return $default(_that.id,_that.label,_that.detail,_that.mapping,_that.iommuGroup,_that.groupSize);case _:
+return $default(_that.id,_that.label,_that.detail,_that.mapping,_that.usbBus,_that.usbPort,_that.usbDevice,_that.iommuGroup,_that.groupSize);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -3285,10 +3292,10 @@ return $default(_that.id,_that.label,_that.detail,_that.mapping,_that.iommuGroup
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String label,  String? detail,  bool mapping,  int? iommuGroup,  int groupSize)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String label,  String? detail,  bool mapping,  int? usbBus,  String? usbPort,  int? usbDevice,  int? iommuGroup,  int groupSize)?  $default,) {final _that = this;
 switch (_that) {
 case _VirtHostDevice() when $default != null:
-return $default(_that.id,_that.label,_that.detail,_that.mapping,_that.iommuGroup,_that.groupSize);case _:
+return $default(_that.id,_that.label,_that.detail,_that.mapping,_that.usbBus,_that.usbPort,_that.usbDevice,_that.iommuGroup,_that.groupSize);case _:
   return null;
 
 }
@@ -3300,7 +3307,7 @@ return $default(_that.id,_that.label,_that.detail,_that.mapping,_that.iommuGroup
 
 
 class _VirtHostDevice implements VirtHostDevice {
-  const _VirtHostDevice({required this.id, required this.label, this.detail, this.mapping = false, this.iommuGroup, this.groupSize = 0});
+  const _VirtHostDevice({required this.id, required this.label, this.detail, this.mapping = false, this.usbBus, this.usbPort, this.usbDevice, this.iommuGroup, this.groupSize = 0});
   
 
 /// What attaching sends: `0bda:b023`, `0000:01:00.0`, or a PVE
@@ -3310,6 +3317,13 @@ class _VirtHostDevice implements VirtHostDevice {
 @override final  String? detail;
 /// A PVE resource mapping rather than a raw device.
 @override@JsonKey() final  bool mapping;
+/// USB: the bus it is on, and the port chain it sits at (`4`, or `1.2`
+/// behind a hub), as the host reports them.
+@override final  int? usbBus;
+@override final  String? usbPort;
+/// USB: the device number on that bus, where the host reports one
+/// (libvirt's `nodedev-dumpxml`; PVE names a device by its port).
+@override final  int? usbDevice;
 @override final  int? iommuGroup;
 /// Devices sharing its IOMMU group, itself included: all of them go to
 /// the guest together.
@@ -3325,16 +3339,16 @@ _$VirtHostDeviceCopyWith<_VirtHostDevice> get copyWith => __$VirtHostDeviceCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtHostDevice&&(identical(other.id, id) || other.id == id)&&(identical(other.label, label) || other.label == label)&&(identical(other.detail, detail) || other.detail == detail)&&(identical(other.mapping, mapping) || other.mapping == mapping)&&(identical(other.iommuGroup, iommuGroup) || other.iommuGroup == iommuGroup)&&(identical(other.groupSize, groupSize) || other.groupSize == groupSize));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtHostDevice&&(identical(other.id, id) || other.id == id)&&(identical(other.label, label) || other.label == label)&&(identical(other.detail, detail) || other.detail == detail)&&(identical(other.mapping, mapping) || other.mapping == mapping)&&(identical(other.usbBus, usbBus) || other.usbBus == usbBus)&&(identical(other.usbPort, usbPort) || other.usbPort == usbPort)&&(identical(other.usbDevice, usbDevice) || other.usbDevice == usbDevice)&&(identical(other.iommuGroup, iommuGroup) || other.iommuGroup == iommuGroup)&&(identical(other.groupSize, groupSize) || other.groupSize == groupSize));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,label,detail,mapping,iommuGroup,groupSize);
+int get hashCode => Object.hash(runtimeType,id,label,detail,mapping,usbBus,usbPort,usbDevice,iommuGroup,groupSize);
 
 @override
 String toString() {
-  return 'VirtHostDevice(id: $id, label: $label, detail: $detail, mapping: $mapping, iommuGroup: $iommuGroup, groupSize: $groupSize)';
+  return 'VirtHostDevice(id: $id, label: $label, detail: $detail, mapping: $mapping, usbBus: $usbBus, usbPort: $usbPort, usbDevice: $usbDevice, iommuGroup: $iommuGroup, groupSize: $groupSize)';
 }
 
 
@@ -3345,7 +3359,7 @@ abstract mixin class _$VirtHostDeviceCopyWith<$Res> implements $VirtHostDeviceCo
   factory _$VirtHostDeviceCopyWith(_VirtHostDevice value, $Res Function(_VirtHostDevice) _then) = __$VirtHostDeviceCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String label, String? detail, bool mapping, int? iommuGroup, int groupSize
+ String id, String label, String? detail, bool mapping, int? usbBus, String? usbPort, int? usbDevice, int? iommuGroup, int groupSize
 });
 
 
@@ -3362,13 +3376,16 @@ class __$VirtHostDeviceCopyWithImpl<$Res>
 
 /// Create a copy of VirtHostDevice
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? label = null,Object? detail = freezed,Object? mapping = null,Object? iommuGroup = freezed,Object? groupSize = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? label = null,Object? detail = freezed,Object? mapping = null,Object? usbBus = freezed,Object? usbPort = freezed,Object? usbDevice = freezed,Object? iommuGroup = freezed,Object? groupSize = null,}) {
   return _then(_VirtHostDevice(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,label: null == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
 as String,detail: freezed == detail ? _self.detail : detail // ignore: cast_nullable_to_non_nullable
 as String?,mapping: null == mapping ? _self.mapping : mapping // ignore: cast_nullable_to_non_nullable
-as bool,iommuGroup: freezed == iommuGroup ? _self.iommuGroup : iommuGroup // ignore: cast_nullable_to_non_nullable
+as bool,usbBus: freezed == usbBus ? _self.usbBus : usbBus // ignore: cast_nullable_to_non_nullable
+as int?,usbPort: freezed == usbPort ? _self.usbPort : usbPort // ignore: cast_nullable_to_non_nullable
+as String?,usbDevice: freezed == usbDevice ? _self.usbDevice : usbDevice // ignore: cast_nullable_to_non_nullable
+as int?,iommuGroup: freezed == iommuGroup ? _self.iommuGroup : iommuGroup // ignore: cast_nullable_to_non_nullable
 as int?,groupSize: null == groupSize ? _self.groupSize : groupSize // ignore: cast_nullable_to_non_nullable
 as int,
   ));

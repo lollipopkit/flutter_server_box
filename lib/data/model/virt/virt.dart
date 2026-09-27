@@ -327,6 +327,11 @@ abstract class VirtCapabilities with _$VirtCapabilities {
     /// two definitions.
     @Default(false) bool hardwareRevert,
 
+    /// Every pending change can be discarded at once, by writing the
+    /// definition again from the running one (libvirt; see
+    /// [VirtHwRevertPending]). PVE drops them item by item instead.
+    @Default(false) bool hardwareRevertPending,
+
     /// Pools (PVE: storages) can be added, stopped or disabled, started or
     /// enabled, and removed; volumes created and deleted in them.
     @Default(false) bool storageEdit,
@@ -366,6 +371,16 @@ abstract class VirtCapabilities with _$VirtCapabilities {
     /// Network changes are written as pending and take effect when applied,
     /// or are dropped (PVE's `/etc/network/interfaces.new`).
     @Default(false) bool networkApply,
+
+    /// An existing network's configuration can be edited (phase 10).
+    /// libvirt: the mode, the address, the DHCP range and the static hosts.
+    /// PVE: a bridge's ports, address, VLAN awareness and autostart.
+    @Default(false) bool networkEditExisting,
+
+    /// Editing a network takes a restart of the running one to apply
+    /// (libvirt: `net-define` writes the definition; `net-destroy` and
+    /// `net-start` make it what is running, and cut off the guests on it).
+    @Default(false) bool networkRestart,
   }) = _VirtCapabilities;
 
   factory VirtCapabilities.fromJson(Map<String, dynamic> json) =>

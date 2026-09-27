@@ -157,6 +157,7 @@ class LibvirtBackend implements VirtBackend {
         create: true,
         deleteKeepsDisks: true,
         hardware: true,
+        hardwareRevertPending: true,
         clone: true,
         cloneTarget: true,
         storageEdit: true,
@@ -167,6 +168,8 @@ class LibvirtBackend implements VirtBackend {
         volumeClone: true,
         upload: _byteExec != null && (_canStream?.call() ?? false),
         networkEdit: true,
+        networkEditExisting: true,
+        networkRestart: true,
         networkModes: const ['nat', 'route', 'isolated', 'bridge'],
         networkStart: true,
       ),
@@ -435,26 +438,29 @@ class LibvirtBackend implements VirtBackend {
         if (top != null) owner.putIfAbsent(top.path, () => current.name);
       }
     }
-    // Where an overlay can go: the pools of files the host has. A pool of
-    // block devices has no directory to write one into, which its own target
-    // path says (it is null or not a path).
-    List<String> pools;
+    // Where an overlay can go (the pools of files the host has), and which
+    // pool each disk is in: the pool whose directory holds its topmost file.
+    List<VirtStoragePool> pools;
     try {
-      pools = [
-        for (final p in await storagePools())
-          if ((p.path ?? '').startsWith('/') && p.active) p.name,
-      ];
+      pools = await storagePools();
     } on VirtErr catch (e) {
       Loggers.app.info('libvirt pools for a snapshot overlay: ${e.message}');
       pools = const [];
     }
     return VirtSnapChain(
-      pools: pools,
+      pools: [
+        for (final p in pools)
+          if (virtPoolHoldsFiles(p)) p.name,
+      ],
       disks: [
         for (final d in chain.disks)
           VirtSnapChainDisk(
             target: d.target,
-            pool: d.pool,
+            pool: switch (d.files.firstOrNull) {
+              final top? => virtPoolOfFile(pools, top.path)?.name,
+              null => null,
+            },
+            error: d.error,
             files: [
               for (var i = 0; i < d.files.length; i++)
                 VirtSnapChainFile(
@@ -468,23 +474,21 @@ class LibvirtBackend implements VirtBackend {
             ],
           ),
       ],
-      blocked: chain.blocked,
-      refusal: await ffi.virtExternalSnapshotRefusal(chainJson: json),
+      refusal: ffi.virtSnapshotRefusal(chainJson: json),
+      externalRefusal: ffi.virtExternalSnapshotRefusal(chainJson: json),
     );
   }
 
   /// libvirt has nothing to ask: whether a snapshot can be taken is what the
-  /// chain's own read says (a raw disk, a disk QEMU will not open).
+  /// chain's own read says (a disk QEMU opened as raw). A disk the read could
+  /// not open refuses only the external form ([VirtSnapChain.externalRefusal]).
   @override
   Future<bool?> snapshotSupported(VirtGuest guest) async =>
       (await snapshotChain(guest)).refusal == null;
 
   @override
-  Future<String?> snapshotRefusal(VirtGuest guest) async => switch (guest.state) {
-    // An external snapshot of a shut-off domain is a disk-only snapshot of
-    // the same files: allowed, and it is what the form offers.
-    _ => (await snapshotChain(guest)).refusal,
-  };
+  Future<String?> snapshotRefusal(VirtGuest guest) async =>
+      (await snapshotChain(guest)).refusal;
 
   /// `snapshot-dumpxml`'s `<domain>` against `dumpxml --inactive`, in one
   /// round trip. Only what the view can name is listed (processor, memory,
@@ -545,7 +549,7 @@ class LibvirtBackend implements VirtBackend {
       return;
     }
     final chain = await snapshotChain(guest);
-    if (chain.refusal case final why?) {
+    if (chain.externalRefusal case final why?) {
       throw VirtErr(type: VirtErrType.unsupported, message: why);
     }
     // Where the overlays go. **No pool picked: no `--diskspec` at all** —
@@ -576,13 +580,14 @@ class LibvirtBackend implements VirtBackend {
   }
 
   /// Where a pool keeps its files: its target directory, from the listing
-  /// the Storage view already reads (a pool of block devices has none, and
-  /// no overlay can be put in it by path).
+  /// the Storage view already reads. Only an active pool of files
+  /// ([virtPoolHoldsFiles]): a pool of block devices has a `/dev/...` target,
+  /// and a file written there is not in the pool.
   Future<String> _poolTarget(String pool) async {
     final pools = await storagePools();
-    final found = pools.firstWhereOrNull((p) => p.id == pool || p.name == pool);
+    final found = pools.firstWhereOrNull((p) => p.name == pool);
     final path = found?.path;
-    if (path == null || path.isEmpty) {
+    if (found == null || path == null || !virtPoolHoldsFiles(found)) {
       throw VirtErr(
         type: VirtErrType.unsupported,
         message: 'Pool $pool has no directory an overlay can go in',
@@ -600,10 +605,20 @@ class LibvirtBackend implements VirtBackend {
     ffi.virtSnapshotRevertScript(domain: guest.id, name: name, running: start),
   );
 
+  /// Refused before it is sent where the host's AppArmor profile would deny
+  /// the commit it needs (`snap_delete_refusal`): the host would refuse it
+  /// too, and then refuse every later delete on that disk.
   @override
-  Future<void> deleteSnapshot(VirtGuest guest, String name) => _action1(
-    ffi.virtSnapshotDeleteScript(domain: guest.id, name: name),
-  );
+  Future<void> deleteSnapshot(VirtGuest guest, String name) async {
+    final why = await _run(
+      ffi.virtSnapDeleteCheckScript(domain: guest.id, name: name),
+      ffi.parseVirtSnapDeleteRefusal,
+    );
+    if (why != null) {
+      throw VirtErr(type: VirtErrType.unsupported, message: why);
+    }
+    await _action1(ffi.virtSnapshotDeleteScript(domain: guest.id, name: name));
+  }
 
   static void _checkName(String name) {
     if (!virtSnapshotNamePattern.hasMatch(name)) {
@@ -639,6 +654,12 @@ class LibvirtBackend implements VirtBackend {
       _decode(await _run(ffi.virtCreateHostScript(), ffi.parseVirtCreateHostJson)),
     );
     final caps = host.caps;
+    // Secure Boot is not `domcapabilities`' answer alone: libvirt's
+    // firmware autoselection needs a descriptor carrying the enrolled keys.
+    // A host with `secure='yes'` in its loader but no `enrolled-keys`
+    // descriptor cannot start a domain with the feature on.
+    final secureBoot = (caps?.secureBoot ?? false) &&
+        await _secureBootFirmware();
     final buses = [
       for (final b in virtCreateBuses)
         if (caps == null
@@ -651,6 +672,7 @@ class LibvirtBackend implements VirtBackend {
       buses: buses,
       nicModels: virtCreateNicModels,
       uefi: caps?.efi ?? false,
+      secureBoot: secureBoot,
       tpm: caps?.tpmEmulator ?? false,
       cloudImages: true,
       cloudInit: host.seedTool != null,
@@ -658,6 +680,25 @@ class LibvirtBackend implements VirtBackend {
           ? 'genisoimage, xorriso, mkisofs, cloud-localds'
           : null,
     );
+  }
+
+  /// Whether the host has a firmware that carries Secure Boot's enrolled
+  /// keys, from the descriptors QEMU ships. Read per call — it is one round
+  /// trip, and a host's firmware does not change under a running app.
+  Future<bool> _secureBootFirmware() async {
+    try {
+      final json = await _run(
+        ffi.virtFirmwareScript(),
+        ffi.parseVirtFirmwareJson,
+      );
+      return _decodeList(json).any(
+        (f) => (f['secure_boot'] as bool? ?? false) &&
+            (f['enrolled_keys'] as bool? ?? false),
+      );
+    } catch (e, s) {
+      Loggers.app.info('Virtualization firmware descriptors: $e', e, s);
+      return false;
+    }
   }
 
   /// Three round trips: what the host runs a domain as (`domcapabilities`:
@@ -709,6 +750,7 @@ class LibvirtBackend implements VirtBackend {
       'nic_model': spec.nicModel,
       'mac': mac,
       'efi': spec.uefi,
+      'secure_boot': spec.uefi && spec.secureBoot,
       'tpm': spec.tpm,
       'cloud_init': ci == null
           ? null
@@ -766,6 +808,10 @@ class LibvirtBackend implements VirtBackend {
     required String? mac,
     String? keepHash,
     Random? random,
+    /// The seed's own extra NICs, written back as they are: the form edits
+    /// the first, and a save must not drop the rest.
+    List<Map<String, Object?>> extraNetworks = const [],
+    bool passwordExpire = false,
   }) {
     final r = random ?? Random.secure();
     const alphabet =
@@ -794,16 +840,19 @@ class LibvirtBackend implements VirtBackend {
                   ? null
                   : {'address': address, 'gateway': ci.gateway},
               'dns': ci.dns,
-              'search': [?ci.searchDomain],
+              'search': ci.searchDomains,
             },
+      'extra_networks': mac == null ? const [] : extraNetworks,
+      'password_expire': passwordExpire,
     };
   }
 
   /// Snapshots' metadata and a managed save go with it; with [removeDisks]
   /// the volumes of its writable disks, its NVRAM and its own cloud-init
   /// seed too — not a CD-ROM's image or a read-only disk, which are install
-  /// media or shared. Refused while it runs: `undefine` would leave it
-  /// running, transient.
+  /// media or shared — and the files its external snapshots left under
+  /// those disks ([_snapshotFiles]). Refused while it runs: `undefine` would
+  /// leave it running, transient.
   @override
   Future<void> delete(VirtGuest guest, {bool removeDisks = true}) async {
     if (guest.state != VirtGuestState.stopped) {
@@ -814,6 +863,7 @@ class LibvirtBackend implements VirtBackend {
     }
     final targets = <String>[];
     String? seed;
+    var chain = (pools: const <String>[], files: const <String>[]);
     if (removeDisks) {
       final xml = (await _domainDetail(guest)).xml;
       for (final d in xml.disks) {
@@ -823,6 +873,7 @@ class LibvirtBackend implements VirtBackend {
         }
       }
       seed = xml.seed;
+      chain = await _snapshotFiles(guest, targets);
     }
     await _run(
       _script(
@@ -830,6 +881,8 @@ class LibvirtBackend implements VirtBackend {
           domain: guest.id,
           storage: targets,
           seed: seed,
+          pools: chain.pools,
+          chain: chain.files,
         ),
       ),
       ({required String raw}) async {
@@ -838,6 +891,61 @@ class LibvirtBackend implements VirtBackend {
       },
       action: true,
     );
+  }
+
+  /// The files under [targets]' disks that the guest's external snapshots
+  /// made, and the pools of every file of those chains: `undefine --storage`
+  /// deletes only the file each disk is on now, and skips even that when its
+  /// pool was not refreshed since a snapshot or a revert made it.
+  ///
+  /// Per disk, the chain down to the file the deepest snapshot layer on it
+  /// backs: that file is the disk the first snapshot was taken of. Anything
+  /// further down was there before any snapshot (an image the disk was made
+  /// on, which other guests may share) and stays.
+  Future<({List<String> pools, List<String> files})> _snapshotFiles(
+    VirtGuest guest,
+    List<String> targets,
+  ) async {
+    const none = (pools: <String>[], files: <String>[]);
+    final layers = {
+      for (final s in await snapshots(guest))
+        if (s.external)
+          for (final l in s.layers)
+            if (l.file != null) l.file!,
+    };
+    if (layers.isEmpty) return none;
+    final chain = LibvirtSnapChain.fromJson(
+      _decode(
+        await _run(
+          ffi.virtSnapChainScript(domain: guest.id),
+          ffi.parseVirtSnapChainJson,
+        ),
+      ),
+    );
+    final files = <String>[];
+    final tops = <String>[];
+    for (final d in chain.disks) {
+      if (!targets.contains(d.target)) continue;
+      if (d.error != null) {
+        Loggers.app.warning(
+          'Deleting ${guest.name}: the chain of ${d.target} is unreadable, '
+          'its snapshot files stay: ${d.error}',
+        );
+        continue;
+      }
+      final deepest = d.files.lastIndexWhere((f) => layers.contains(f.path));
+      if (deepest < 0) continue;
+      tops.add(d.files.first.path);
+      for (var i = 1; i <= deepest + 1 && i < d.files.length; i++) {
+        files.add(d.files[i].path);
+      }
+    }
+    if (files.isEmpty) return none;
+    final all = await storagePools();
+    final pools = {
+      for (final f in [...tops, ...files]) ?virtPoolOfFile(all, f)?.name,
+    };
+    return (pools: pools.toList(), files: files);
   }
 
   // ---------------------------------------------------------------------------
@@ -1110,6 +1218,11 @@ class LibvirtBackend implements VirtBackend {
       ports: n.forwardDevs,
       active: n.active,
       autostart: n.autostart,
+      hosts: [
+        for (final h in n.hosts) VirtNetHost(mac: h.mac, ip: h.ip, name: h.name),
+      ],
+      xml: n.xml,
+      pendingRestart: n.pendingRestart,
       users: [
         for (final i in all.ifaces)
           if (on(i))
@@ -1133,6 +1246,17 @@ class LibvirtBackend implements VirtBackend {
   Future<void> manage(VirtResourceChange change) async {
     final op = opJson(change);
     try {
+      // An existing network's edit is its own script (`virt_net`): it
+      // rewrites the definition and, when told to, restarts the network on
+      // it, with the rollback that keeps it up.
+      if (change is VirtNetworkEdit || change is VirtNetworkRestart) {
+        await _run(
+          _script(() => ffi.virtNetChangeScript(opJson: jsonEncode(op))),
+          _parseNetChange,
+          action: true,
+        );
+        return;
+      }
       await _run(
         _script(() => ffi.virtResourceScript(opJson: jsonEncode(op))),
         _parseResource,
@@ -1144,6 +1268,11 @@ class LibvirtBackend implements VirtBackend {
       // What a pool holds, and which, is listed again.
       _storage = null;
     }
+  }
+
+  static Future<String> _parseNetChange({required String raw}) async {
+    ffi.parseVirtNetChange(raw: raw);
+    return '';
   }
 
   static Future<String> _parseResource({required String raw}) async {
@@ -1236,10 +1365,57 @@ class LibvirtBackend implements VirtBackend {
         return {'op': active ? 'net_start' : 'net_stop', 'name': network.id};
       case VirtNetworkSetAutostart(:final network, :final on):
         return {'op': 'net_autostart', 'name': network.id, 'on': on};
+      case VirtNetworkEdit(
+        :final network,
+        :final mode,
+        :final bridge,
+        :final address,
+        :final prefix,
+        :final dhcpStart,
+        :final dhcpEnd,
+        :final hosts,
+        :final restart,
+      ):
+        return {
+          'op': 'edit',
+          'name': network.id,
+          'edit': {
+            'mode': mode,
+            'bridge': mode == 'bridge' ? bridge?.trim() : null,
+            'address': address?.trim().isEmpty ?? true ? null : address!.trim(),
+            'prefix': prefix,
+            'dhcp_start': dhcpStart?.trim().isEmpty ?? true ? null : dhcpStart!.trim(),
+            'dhcp_end': dhcpEnd?.trim().isEmpty ?? true ? null : dhcpEnd!.trim(),
+            'hosts': [
+              for (final h in hosts)
+                {
+                  'mac': h.mac.toLowerCase(),
+                  'ip': h.ip,
+                  if ((h.name ?? '').isNotEmpty) 'name': h.name,
+                },
+            ],
+          },
+          'base_xml': network.xml,
+          'active': network.active,
+          'restart': restart,
+        };
+      case VirtNetworkRestart(:final network):
+        // Its own op: `net-destroy` then `net-start`, with no definition
+        // written either way — what is to be restarted onto is already in
+        // it (`VirtNetworkEdit(restart: true)` is the one that writes and
+        // restarts in one round trip).
+        return {
+          'op': 'restart',
+          'name': network.id,
+          'base_xml': network.xml,
+        };
       case VirtNetworkDelete(:final network):
         return {'op': 'net_delete', 'name': network.id, 'active': network.active};
-      case VirtNetworkApply() || VirtNetworkRevert():
-        // libvirt changes a network when told to: nothing waits.
+      case VirtNetworkApply() ||
+          VirtNetworkRevert() ||
+          VirtNetworkEditBridge():
+        // libvirt changes a network when told to: nothing waits, and a PVE
+        // bridge is not its.
         throw const VirtErr(type: VirtErrType.unsupported);
     }
   }
@@ -1520,8 +1696,12 @@ class LibvirtBackend implements VirtBackend {
   /// One round trip: both definitions, autostart, the host's CPUs and
   /// memory, and each disk's size. See `sbm_parser::virt::hardware_script`.
   @override
-  Future<VirtHardware> hardware(VirtGuest guest) async =>
-      hardwareOf(await _hardwareInfo(guest), name: guest.name);
+  Future<VirtHardware> hardware(VirtGuest guest) async {
+    final info = await _hardwareInfo(guest);
+    _lastHwRevision[guest.id] = info.configXml;
+    _lastLiveXml[guest.id] = info.liveXml;
+    return hardwareOf(info, name: guest.name);
+  }
 
   Future<LibvirtHardwareInfo> _hardwareInfo(VirtGuest guest) async {
     final info = LibvirtHardwareInfo.fromJson(
@@ -1639,6 +1819,45 @@ class LibvirtBackend implements VirtBackend {
       tpm: caps?.tpmEmulator ?? false,
       usb: caps?.hostdev ?? false,
       pci: caps?.hostdev ?? false,
+    );
+  }
+
+  /// Discards every pending change: the definition is written again from
+  /// the running XML (see [VirtHwRevertPending]). The read is the store;
+  /// [base] must be the one [hardware] last returned.
+  @override
+  Future<void> revertPending(VirtGuest guest, VirtHardware base) async {
+    if (base.revision != _lastHwRevision[guest.id]) {
+      throw const VirtErr(
+        type: VirtErrType.conflict,
+        message: 'Read the hardware again',
+      );
+    }
+    final live = _lastLiveXml[guest.id];
+    if (live == null || live.isEmpty) {
+      throw const VirtErr(
+        type: VirtErrType.unsupported,
+        message: 'The guest is not running: there is nothing to revert to',
+      );
+    }
+    final json = <String, Object?>{
+      'op': 'revert_live',
+      'live_xml': live,
+    };
+    await _run(
+      _script(
+        () => ffi.virtHardwareChangeScript(
+          domain: guest.id,
+          running: true,
+          baseXml: base.revision,
+          changeJson: jsonEncode(json),
+        ),
+      ),
+      ({required String raw}) async {
+        ffi.parseVirtHardwareChangeJson(raw: raw);
+        return '';
+      },
+      action: true,
     );
   }
 
@@ -1799,6 +2018,11 @@ class LibvirtBackend implements VirtBackend {
     );
   }
 
+  /// The hardware read last returned per guest: its revision (the
+  /// definition) and the running XML, which a revert is made from.
+  final _lastHwRevision = <String, String>{};
+  final _lastLiveXml = <String, String>{};
+
   /// The last seed read per guest, with the password's hash in it: what an
   /// edit keeps when no new password is typed. The hash stays here; the
   /// view is told only that there is one.
@@ -1849,11 +2073,15 @@ class LibvirtBackend implements VirtBackend {
       address: ipv4?['address'] as String?,
       gateway: ipv4?['gateway'] as String?,
       dns: strs(net?['dns']),
-      searchDomain: search.firstOrNull,
+      searchDomains: search,
+      nics: [
+        ?net,
+        ...?(ci['extra_networks'] as List?),
+      ].length,
       passwordSet: ci['password_hash'] != null,
+      passwordExpires: ci['password_expire'] as bool? ?? false,
       network: nicMacs.isNotEmpty,
-      // The view edits one search domain; more are more than it shows.
-      foreign: (read['foreign'] as bool? ?? false) || search.length > 1,
+      foreign: read['foreign'] as bool? ?? false,
       revision: read['revision'] as String? ?? '',
     );
   }
@@ -1886,6 +2114,13 @@ class LibvirtBackend implements VirtBackend {
       name: guest.name,
       mac: base.network ? mac : null,
       keepHash: edit.removePassword ? null : ci['password_hash'] as String?,
+      // The NICs after the first are kept as they are: the form edits the
+      // first, and saving must not drop the rest.
+      extraNetworks: [
+        for (final x in (ci['extra_networks'] as List?) ?? const [])
+          (x as Map).cast<String, Object?>(),
+      ],
+      passwordExpire: edit.passwordExpires,
     );
     await _run(
       _script(
@@ -2105,22 +2340,33 @@ class LibvirtBackend implements VirtBackend {
         return {'op': 'firmware', 'efi': uefi, 'secure_boot': uefi && secureBoot};
       case VirtHwSetDisplay(:final protocol, :final listen, :final gpu):
         return {'op': 'display', 'graphics': protocol, 'listen': listen, 'video': gpu};
-      case VirtHwAddDevice(:final kind, :final host):
+      case VirtHwAddDevice(:final kind, :final host, :final usbNaming):
         return {
           'op': 'add_device',
           'device': switch (kind) {
             VirtHwDeviceKind.tpm => {'kind': 'tpm', 'model': 'tpm-crb'},
+            // `usb:0bda:b023`, or `1:4` for the bus and device number the
+            // device sits at.
             VirtHwDeviceKind.usb => {
               'kind': 'usb',
-              'vendor': host!.id.split(':').first,
-              'product': host.id.split(':').last,
+              if (usbNaming == VirtUsbNaming.address) ...{
+                'bus': host!.usbBus,
+                'device': host.usbDevice,
+              } else ...{
+                'vendor': host!.id.split(':').first,
+                'product': host.id.split(':').last,
+              },
             },
             VirtHwDeviceKind.pci => {'kind': 'pci', 'address': host!.id},
           },
         };
       case VirtHwRemoveDevice(:final key):
         return {'op': 'remove_device', 'key': key};
-      case VirtHwSetProtection() || VirtHwRevert():
+      case VirtHwSetProtection() ||
+          VirtHwRevert() ||
+          // A revert to the running definition is its own call
+          // (`LibvirtBackend.revertPending`), not a change.
+          VirtHwRevertPending():
         throw const VirtErr(type: VirtErrType.unsupported);
     }
   }
@@ -2193,9 +2439,9 @@ class LibvirtBackend implements VirtBackend {
 
   /// Runs [script] and parses its output, going through sudo when the daemon
   /// refuses this account.
-  Future<String> _run(
+  Future<T> _run<T>(
     String script,
-    Future<String> Function({required String raw}) parse, {
+    Future<T> Function({required String raw}) parse, {
     bool action = false,
   }) async {
     final ServerExec exec;

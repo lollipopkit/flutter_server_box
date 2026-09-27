@@ -353,6 +353,72 @@ void main() {
     });
   });
 
+  group('a PVE interface', () {
+    // The listing of the real PVE 9.2.2 host this was written against.
+    const nets = [
+      VirtNetwork(id: 'pve/nic0', name: 'nic0', node: 'pve', mode: 'eth', active: true),
+      VirtNetwork(id: 'pve/wlp5s0', name: 'wlp5s0', node: 'pve', mode: 'eth'),
+      VirtNetwork(
+        id: 'pve/sbxe2e0',
+        name: 'sbxe2e0',
+        node: 'pve',
+        mode: 'bridge',
+        cidrs: ['10.77.0.1/24'],
+      ),
+      VirtNetwork(
+        id: 'pve/vmbr0',
+        name: 'vmbr0',
+        node: 'pve',
+        mode: 'bridge',
+        cidrs: ['192.168.31.20/24'],
+        gateway: '192.168.31.1',
+        active: true,
+        ports: ['nic0'],
+      ),
+    ];
+
+    test('the one carrying the host address is not editable', () {
+      final m = virtPveManagementIfaces(nets, connectedAddr: '192.168.31.20');
+      expect(m, {'vmbr0'});
+      // A bridge of the app's own is; a physical interface never is.
+      for (final n in nets) {
+        expect(
+          virtPveManagedIface(n, management: m),
+          n.name == 'sbxe2e0',
+          reason: n.name,
+        );
+      }
+      // Connected over a second address (a VPN), the default route still
+      // counts: applying that interface would cut the host off.
+      expect(
+        virtPveManagementIfaces(nets, connectedAddr: '10.8.0.5'),
+        {'vmbr0'},
+      );
+      // A node with no gateway and an address this device is not behind:
+      // nothing is known to be the management one.
+      expect(virtPveManagementIfaces(const [
+        VirtNetwork(id: 'pve/vmbr1', name: 'vmbr1', node: 'pve', mode: 'bridge'),
+      ]), isEmpty);
+      // The address this app is connected to, where the host does not name
+      // a gateway.
+      expect(
+        virtPveManagementIfaces(
+          const [
+            VirtNetwork(
+              id: 'pve/vmbr2',
+              name: 'vmbr2',
+              node: 'pve',
+              mode: 'bridge',
+              cidrs: ['10.9.9.2/24'],
+            ),
+          ],
+          connectedAddr: '10.9.9.2',
+        ),
+        {'vmbr2'},
+      );
+    });
+  });
+
   group('libvirt', () {
     test('each change as the parser takes it', () {
       Map<String, Object?> op(VirtResourceChange c) => LibvirtBackend.opJson(c);
@@ -429,8 +495,100 @@ void main() {
           reason: '$c',
         );
       }
+      expect(() => op(const VirtNetworkApply('pve')), throwsA(isA<VirtErr>()));
+    });
+
+    test('an existing network\'s edit as the parser takes it', () {
+      const net = VirtNetwork(
+        id: 'lab',
+        name: 'lab',
+        mode: 'nat',
+        active: true,
+        cidrs: ['192.168.150.1/24'],
+        dhcpRanges: ['192.168.150.100-192.168.150.200'],
+        bridge: 'virbr1',
+        xml: '<network>\n'
+            '  <name>lab</name>\n'
+            "  <forward mode='nat'/>\n"
+            "  <bridge name='virbr1'/>\n"
+            "  <ip address='192.168.150.1' prefix='24'>\n"
+            '    <dhcp>\n'
+            "      <range start='192.168.150.100' end='192.168.150.200'/>\n"
+            '    </dhcp>\n'
+            '  </ip>\n'
+            '</network>\n',
+      );
+      final edit = VirtNetworkEdit(
+        net,
+        mode: 'nat',
+        address: '192.168.151.1',
+        prefix: 24,
+        dhcpStart: '192.168.151.100',
+        dhcpEnd: '192.168.151.200',
+        hosts: const [
+          VirtNetHost(mac: '52:54:00:AA:BB:01', ip: '192.168.151.10', name: 'h1'),
+        ],
+      );
+      final json = LibvirtBackend.opJson(edit);
+      expect(json['op'], 'edit');
+      expect(json['name'], 'lab');
+      expect(json['active'], isTrue);
+      expect(json['restart'], isFalse);
+      expect(json['base_xml'], contains('<name>lab</name>'));
+      expect(json['edit'], {
+        'mode': 'nat',
+        'bridge': null,
+        'address': '192.168.151.1',
+        'prefix': 24,
+        'dhcp_start': '192.168.151.100',
+        'dhcp_end': '192.168.151.200',
+        'hosts': [
+          {'mac': '52:54:00:aa:bb:01', 'ip': '192.168.151.10', 'name': 'h1'},
+        ],
+      });
+      // The script is the network module's, not the resource one.
+      final script = ffi.virtNetChangeScript(opJson: jsonEncode(json));
+      expect(script, contains('net-define'));
+      // The address moves, so the static hosts go into the definition with
+      // it: `net-update` would check them against the old subnet.
+      expect(script, isNot(contains('net-update')));
+      // A static host alone takes the live path.
+      final hostsOnly = LibvirtBackend.opJson(
+        VirtNetworkEdit(
+          net,
+          mode: 'nat',
+          address: '192.168.150.1',
+          prefix: 24,
+          dhcpStart: '192.168.150.100',
+          dhcpEnd: '192.168.150.200',
+          hosts: const [
+            VirtNetHost(mac: '52:54:00:aa:bb:01', ip: '192.168.150.10'),
+          ],
+        ),
+      );
+      final live = ffi.virtNetChangeScript(opJson: jsonEncode(hostsOnly));
+      expect(live, contains('net-update'));
+      expect(live, isNot(contains('net-define')));
       expect(
-        () => op(const VirtNetworkApply('pve')),
+        () => ffi.parseVirtNetChange(
+          raw: _section('virt.net.step', ''),
+        ),
+        returnsNormally,
+      );
+      // A restart is its own op: `net-destroy` and `net-start`, no
+      // definition written either way.
+      final restart = LibvirtBackend.opJson(const VirtNetworkRestart(net));
+      expect(restart['op'], 'restart');
+      expect(restart['name'], 'lab');
+      expect(restart['base_xml'], contains('<name>lab</name>'));
+      final restarted = ffi.virtNetChangeScript(opJson: jsonEncode(restart));
+      expect(restarted, contains('net-destroy'));
+      expect(restarted, contains('net-start'));
+      expect(restarted, isNot(contains('net-define')));
+      expect(
+        () => LibvirtBackend.opJson(
+          const VirtNetworkEditBridge(net, cidr: '10.0.0.1/24'),
+        ),
         throwsA(isA<VirtErr>()),
       );
     });

@@ -4526,6 +4526,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtSnapshotOverlayPool => '覆盖层存储池';
 
   @override
+  String get virtSnapshotOverlayBeside => '各磁盘所在目录';
+
+  @override
   String get virtSnapshotExternalNoMemory => '外部快照不含内存：虚拟机不会停机。';
 
   @override
@@ -4818,6 +4821,145 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtBackupExcludeTip => '该节点上的所有虚拟机都会备份。关闭某个即可排除它。';
+
+  @override
+  String get virtNetEdit => '编辑配置';
+
+  @override
+  String virtNetEditAsk(int count) {
+    return '运行中的网络在重启前保持原样。重启会中断其上的 $count 台虚拟机。';
+  }
+
+  @override
+  String get virtNetEditAskNoGuest => '运行中的网络在重启前保持原样。';
+
+  @override
+  String get virtNetEditRestart => '立即重启以生效';
+
+  @override
+  String get virtNetEditRestartNote => '重启期间其上的虚拟机将断网。';
+
+  @override
+  String get virtNetEditSave => '只保存配置';
+
+  @override
+  String get virtNetEditPending => '配置中已有改动，运行中的网络尚未生效。';
+
+  @override
+  String get virtNetRestart => '重启';
+
+  @override
+  String virtNetRestartAsk(String name, int count) {
+    return '重启 $name？其上的 $count 台虚拟机将断网，直到它重新启动。';
+  }
+
+  @override
+  String virtNetRestartAskNone(String name) {
+    return '重启 $name？其上没有虚拟机。';
+  }
+
+  @override
+  String get virtNetHosts => '静态地址';
+
+  @override
+  String get virtNetHostAdd => '添加地址';
+
+  @override
+  String get virtNetHostMac => 'MAC';
+
+  @override
+  String get virtNetHostIp => '地址';
+
+  @override
+  String get virtNetHostName => '名称（可选）';
+
+  @override
+  String get virtNetHostEmpty => '未给任何 MAC 分配固定地址：所有虚拟机都从 DHCP 范围中获取。';
+
+  @override
+  String get virtNetHostInvalid => '宿主机会拒绝的 MAC、地址或名称，或同一个 MAC 出现两次。';
+
+  @override
+  String get virtNetManagementIface => '此接口承载宿主机自身的地址。编辑或应用它会中断宿主机的连接。';
+
+  @override
+  String get virtNetManagementTip => '它承载宿主机的管理地址：应用不会编辑它。';
+
+  @override
+  String get virtNetIfname => '接口';
+
+  @override
+  String get virtNetAddressCleared => '已清空';
+
+  @override
+  String get virtNetPveEditNote => '写入节点的待生效配置；应用后宿主机才会采用。';
+
+  @override
+  String get virtCiExpire => '密码过期';
+
+  @override
+  String get virtCiExpireNote =>
+      '首次用该密码登录时必须设置新密码。仅 libvirt 支持：PVE 固定写入 \"expire: false\"，没有对应选项。';
+
+  @override
+  String get virtCiSearchHint => 'lab.example dev.lab.example';
+
+  @override
+  String get virtCiSearchTip => '可填多个，用空格分隔；resolv.conf 只保留前几个。';
+
+  @override
+  String get virtCiNics => '网卡';
+
+  @override
+  String virtCiNicsTip(int count) {
+    return 'seed 的 network-config 中有 $count 块网卡；表单编辑第一块。';
+  }
+
+  @override
+  String get virtUsbByVendor => '按厂商和产品';
+
+  @override
+  String get virtUsbByAddress => '按地址';
+
+  @override
+  String get virtUsbAddress => '总线与设备号';
+
+  @override
+  String get virtUsbAddressTip =>
+      '设备跟随此地址：插在该处的设备会交给虚拟机。libvirt 用总线号和设备号标识 USB hostdev。';
+
+  @override
+  String virtUsbPortNote(int bus, String port) {
+    return '总线 $bus · 端口 $port';
+  }
+
+  @override
+  String get virtSbUnsupported =>
+      '宿主机的固件描述文件中没有带已注册密钥的 Secure Boot 固件，开启后虚拟机无法启动。';
+
+  @override
+  String get virtCreateSecureBoot => 'Secure Boot';
+
+  @override
+  String get virtCreateSecureBootNote => '只引导已签名的内核和引导程序。';
+
+  @override
+  String virtUsbAddressNote(int bus, int device) {
+    return '总线 $bus · 设备号 $device';
+  }
+
+  @override
+  String get virtHwRevertPendingTitle => '丢弃待生效的修改';
+
+  @override
+  String virtHwRevertPendingBody(String name) {
+    return '$name 将回到正在运行的状态：用运行中的定义重新写入配置，下次启动得到的与这次完全相同。其 NVRAM 文件与固件保持不变。';
+  }
+
+  @override
+  String virtHwRevertAllAsk(String name) {
+    return '丢弃 $name 所有等待下次启动的修改？';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -9342,6 +9484,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtSnapshotOverlayPool => '覆蓋層儲存池';
 
   @override
+  String get virtSnapshotOverlayBeside => '各磁碟所在目錄';
+
+  @override
   String get virtSnapshotExternalNoMemory => '外部快照不含記憶體：虛擬機器不會停機。';
 
   @override
@@ -9634,4 +9779,143 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtBackupExcludeTip => '該節點上的所有虛擬機器都會備份。關閉某個即可排除它。';
+
+  @override
+  String get virtNetEdit => '編輯設定';
+
+  @override
+  String virtNetEditAsk(int count) {
+    return '執行中的網路在重新啟動前維持原樣。重新啟動會中斷其上的 $count 台虛擬機器。';
+  }
+
+  @override
+  String get virtNetEditAskNoGuest => '執行中的網路在重新啟動前維持原樣。';
+
+  @override
+  String get virtNetEditRestart => '立即重新啟動以生效';
+
+  @override
+  String get virtNetEditRestartNote => '重新啟動期間其上的虛擬機器將斷網。';
+
+  @override
+  String get virtNetEditSave => '只儲存設定';
+
+  @override
+  String get virtNetEditPending => '設定中已有變更，執行中的網路尚未生效。';
+
+  @override
+  String get virtNetRestart => '重新啟動';
+
+  @override
+  String virtNetRestartAsk(String name, int count) {
+    return '重新啟動 $name？其上的 $count 台虛擬機器將斷網，直到它重新啟動。';
+  }
+
+  @override
+  String virtNetRestartAskNone(String name) {
+    return '重新啟動 $name？其上沒有虛擬機器。';
+  }
+
+  @override
+  String get virtNetHosts => '靜態位址';
+
+  @override
+  String get virtNetHostAdd => '新增位址';
+
+  @override
+  String get virtNetHostMac => 'MAC';
+
+  @override
+  String get virtNetHostIp => '位址';
+
+  @override
+  String get virtNetHostName => '名稱（選填）';
+
+  @override
+  String get virtNetHostEmpty => '未給任何 MAC 分配固定位址：所有虛擬機器都從 DHCP 範圍中取得。';
+
+  @override
+  String get virtNetHostInvalid => '主機系統會拒絕的 MAC、位址或名稱，或同一個 MAC 出現兩次。';
+
+  @override
+  String get virtNetManagementIface => '此介面承載主機系統本身的位址。編輯或套用它會中斷主機系統的連線。';
+
+  @override
+  String get virtNetManagementTip => '它承載主機系統的管理位址：應用不會編輯它。';
+
+  @override
+  String get virtNetIfname => '介面';
+
+  @override
+  String get virtNetAddressCleared => '已清空';
+
+  @override
+  String get virtNetPveEditNote => '寫入節點的待生效設定；套用後主機系統才會採用。';
+
+  @override
+  String get virtCiExpire => '密碼過期';
+
+  @override
+  String get virtCiExpireNote =>
+      '首次以該密碼登入時必須設定新密碼。僅 libvirt 支援：PVE 固定寫入 \"expire: false\"，沒有對應選項。';
+
+  @override
+  String get virtCiSearchHint => 'lab.example dev.lab.example';
+
+  @override
+  String get virtCiSearchTip => '可填多個，以空格分隔；resolv.conf 只保留前幾個。';
+
+  @override
+  String get virtCiNics => '網路卡';
+
+  @override
+  String virtCiNicsTip(int count) {
+    return 'seed 的 network-config 中有 $count 張網路卡；表單編輯第一張。';
+  }
+
+  @override
+  String get virtUsbByVendor => '依廠商與產品';
+
+  @override
+  String get virtUsbByAddress => '依位址';
+
+  @override
+  String get virtUsbAddress => '匯流排與裝置編號';
+
+  @override
+  String get virtUsbAddressTip =>
+      '裝置跟隨此位址：插在該處的裝置會交給虛擬機器。libvirt 以匯流排與裝置編號標識 USB hostdev。';
+
+  @override
+  String virtUsbPortNote(int bus, String port) {
+    return '匯流排 $bus · 埠 $port';
+  }
+
+  @override
+  String get virtSbUnsupported =>
+      '主機系統的韌體描述檔中沒有帶已註冊金鑰的 Secure Boot 韌體，開啟後虛擬機器無法啟動。';
+
+  @override
+  String get virtCreateSecureBoot => 'Secure Boot';
+
+  @override
+  String get virtCreateSecureBootNote => '只引導已簽署的核心與引導程式。';
+
+  @override
+  String virtUsbAddressNote(int bus, int device) {
+    return '匯流排 $bus · 裝置編號 $device';
+  }
+
+  @override
+  String get virtHwRevertPendingTitle => '丟棄待生效的變更';
+
+  @override
+  String virtHwRevertPendingBody(String name) {
+    return '$name 將回到正在執行的狀態：以執行中的定義重新寫入設定，下次啟動得到的與這次完全相同。其 NVRAM 檔案與韌體保持不變。';
+  }
+
+  @override
+  String virtHwRevertAllAsk(String name) {
+    return '丟棄 $name 所有等待下次啟動的變更？';
+  }
 }

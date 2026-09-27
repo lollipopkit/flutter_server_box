@@ -142,6 +142,13 @@ void main() {
         'mon 02:30:15',
         '0/15',
         'mon..sun 02:30',
+        // From PVE's documentation (Schedule Format), not put to the host:
+        // a weekday, a date and a time together, and ranges in the date and
+        // the time.
+        'sat *-1..7 15:00',
+        'mon..fri 8..17,22:0/15',
+        '2015-10-21 01:00',
+        'mon *-*-* 02:00',
       ]) {
         expect(virtScheduleIssue(ok), isNull, reason: ok);
       }
@@ -165,6 +172,8 @@ void main() {
         'a\nb',
         'daily 02:30',
         'mon 02:30 extra',
+        '02:30 *-*-*',
+        'mon mon',
         // None of these are a calendar event, and one of them would be an
         // argument to `pvesh` had the value not been refused: the host is
         // never asked with them.

@@ -7,6 +7,7 @@
           "path": "/var/lib/libvirt/images/run1.qcow2",
           "format": "qcow2",
           "backing": "/var/lib/libvirt/images/cirros.img",
+          "backing_format": "qcow2",
           "allocation": 155529216,
           "capacity": 117440512
         },
@@ -14,11 +15,12 @@
           "path": "/var/lib/libvirt/images/cirros.img",
           "format": "qcow2",
           "backing": null,
+          "backing_format": null,
           "allocation": 21692416,
           "capacity": 117440512
         }
       ],
-      "pool": "images"
+      "error": null
     },
     {
       "target": "vdb",
@@ -27,12 +29,12 @@
           "path": "/var/lib/libvirt/images/extra.qcow2",
           "format": "qcow2",
           "backing": null,
+          "backing_format": null,
           "allocation": 208896,
           "capacity": 1073741824
         }
       ],
-      "pool": "images"
+      "error": null
     }
-  ],
-  "blocked": null
+  ]
 }

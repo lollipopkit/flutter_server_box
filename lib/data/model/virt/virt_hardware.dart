@@ -300,6 +300,23 @@ abstract class VirtHwSupport with _$VirtHwSupport {
 }
 
 /// A host device a guest can be given.
+/// How a USB device is named when it is given to a guest.
+enum VirtUsbNaming {
+  /// By vendor and product: the device wherever it is plugged in.
+  vendorProduct,
+
+  /// By the bus and device number it sits at: the address keeps the device
+  /// slot, whatever fills it. libvirt's `usbaddress` takes exactly these two.
+  address,
+}
+
+/// One host device a guest can be given, named the way its backend does:
+///
+/// - PCI: `0000:01:00.0`.
+/// - USB: the vendor and product pair (`0bda:b023`) in [id], with where the
+///   device sits in [usbBus], [usbDevice] and [usbPort] — the address a
+///   guest can be given instead of the device ([VirtUsbNaming]).
+/// - A PVE resource mapping: its name.
 @freezed
 abstract class VirtHostDevice with _$VirtHostDevice {
   const factory VirtHostDevice({
@@ -311,6 +328,15 @@ abstract class VirtHostDevice with _$VirtHostDevice {
 
     /// A PVE resource mapping rather than a raw device.
     @Default(false) bool mapping,
+
+    /// USB: the bus it is on, and the port chain it sits at (`4`, or `1.2`
+    /// behind a hub), as the host reports them.
+    int? usbBus,
+    String? usbPort,
+
+    /// USB: the device number on that bus, where the host reports one
+    /// (libvirt's `nodedev-dumpxml`; PVE names a device by its port).
+    int? usbDevice,
     int? iommuGroup,
 
     /// Devices sharing its IOMMU group, itself included: all of them go to
@@ -556,15 +582,25 @@ final class VirtHwSetDisplay extends VirtHwChange {
 
 /// A host device, or a TPM.
 final class VirtHwAddDevice extends VirtHwChange {
-  const VirtHwAddDevice({required this.kind, this.host, this.storage});
+  const VirtHwAddDevice({
+    required this.kind,
+    this.host,
+    this.storage,
+    this.usbNaming = VirtUsbNaming.vendorProduct,
+  });
 
   final VirtHwDeviceKind kind;
 
-  /// The device, for USB and PCI.
+  /// The device, for USB and PCI. A USB device's [VirtHostDevice.id] is
+  /// `0bda:b023` or `bus:device`, by [usbNaming].
   final VirtHostDevice? host;
 
   /// PVE: the storage's name (`local-lvm`) the TPM's state goes on.
   final String? storage;
+
+  /// How a USB device is named. PVE's `usb0: host=1-1.2` is its own form,
+  /// which the backend writes from the same id.
+  final VirtUsbNaming usbNaming;
 }
 
 final class VirtHwRemoveDevice extends VirtHwChange {
@@ -578,6 +614,20 @@ final class VirtHwRevert extends VirtHwChange {
   const VirtHwRevert(this.keys);
 
   final List<String> keys;
+}
+
+/// Discards every pending change: the definition is written again from what
+/// the guest is *running* (`dumpxml` live → `define`), which is what a
+/// `virsh` user does to drop an edit. libvirt only: PVE drops its pending
+/// list item by item ([VirtHwRevert]).
+///
+/// The NVRAM file and the firmware are not touched: a plain `define` of the
+/// live XML drops `<nvram>`, and libvirt would then make a new variables
+/// file at the next start — losing the guest's boot entries, and its
+/// Secure Boot state with them. The file the definition names is written
+/// back as it is, unchanged.
+final class VirtHwRevertPending extends VirtHwChange {
+  const VirtHwRevertPending();
 }
 
 /// What a change came to, beyond succeeding.
@@ -640,6 +690,21 @@ enum VirtHwIssue {
   /// The volume is another guest's disk already.
   volumeInUse,
 }
+
+/// Whether [device] can be given by its address: the host said where it
+/// sits.
+bool virtUsbHasAddress(VirtHostDevice device) =>
+    device.usbBus != null && (device.usbPort != null || device.usbDevice != null);
+
+/// The address [device] is given by, as its backend writes it: libvirt's
+/// `<address bus='1' device='4'/>` (a bus and the device number on it —
+/// `usbaddress` takes exactly those two), PVE's `host=1-1.2` (the bus and
+/// the port chain, which is what its web UI writes and what a mapping
+/// stores).
+String virtUsbAddress(VirtHostDevice device, VirtHostKind host) =>
+    host == VirtHostKind.pve
+    ? '${device.usbBus}-${device.usbPort}'
+    : '${device.usbBus}:${device.usbDevice}';
 
 /// A unicast MAC: six octets, the first even, not all zero.
 bool virtIsUnicastMac(String mac) {
@@ -754,7 +819,10 @@ VirtHwIssue? virtHwIssue(
         VirtHwUpdateNic() ||
         VirtHwSetAutostart() ||
         VirtHwSetProtection() ||
-        VirtHwRevert():
+        VirtHwRevert() ||
+        // Made through its own call, not as a change
+        // (`VirtBackend.revertPending`).
+        VirtHwRevertPending():
       break;
   }
   return null;

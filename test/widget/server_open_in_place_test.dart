@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
 import 'package:extended_image/extended_image.dart';
@@ -697,10 +698,18 @@ void main() {
       tester.getRect(find.text('CPU').first),
       rectMoreOrLessEquals(grownLabel, epsilon: 2),
     );
-    // Under the image, which is a share of the column's width.
+    // Two columns: the image heads the facts column, beside the readings
+    // rather than above them, so no chart is pushed down by it. Its height
+    // is a share of that column's width, capped.
     final image = tester.getRect(find.byType(ExtendedImage));
-    expect(image.height, moreOrLessEquals(image.width * 0.3, epsilon: 1));
-    expect(grownLabel.top, greaterThan(image.bottom));
+    expect(image.left, greaterThanOrEqualTo(grownChart.right));
+    expect(
+      image.height,
+      moreOrLessEquals(
+        math.min(image.width * 0.3, ServerCardSizes.logoMaxHeight),
+        epsilon: 1,
+      ),
+    );
     expect(tester.takeException(), isNull);
   });
 

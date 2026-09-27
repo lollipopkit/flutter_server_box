@@ -91,6 +91,8 @@ const _manageCaps = VirtCapabilities(
   poolTypes: ['dir', 'lvmthin', 'nfs', 'zfspool'],
   upload: true,
   networkEdit: true,
+  networkEditExisting: true,
+  networkRestart: true,
   networkModes: ['bridge'],
   networkApply: true,
 );
@@ -142,7 +144,11 @@ final _volumes = <String, List<VirtVolume>>{
   ],
 };
 
-const _networks = [
+/// The host's networks, as the fake backend lists them; a test that needs
+/// others replaces this and puts it back.
+List<VirtNetwork> _networks = _defaultNetworks;
+
+const _defaultNetworks = [
   VirtNetwork(
     id: 'pve/vmbr0',
     name: 'vmbr0',
@@ -152,6 +158,8 @@ const _networks = [
     gateway: '192.168.31.1',
     ports: ['nic0'],
     autostart: true,
+    // It carries the host's own address: the app does not edit it.
+    managementEditable: false,
     users: [
       VirtGuestRef(
         guestId: 'qemu/100',
@@ -865,6 +873,7 @@ void main() {
     expect(_calls.where((c) => c == 'pools').length, 2);
   });
 
+  _phase10(pump);
   _phase8(pump, openSnapshots);
 }
 
@@ -886,13 +895,20 @@ const _libvirtCaps = VirtCapabilities(
   snapshotExternal: true,
   storage: true,
   network: true,
+  networkEdit: true,
+  networkEditExisting: true,
+  networkRestart: true,
 );
 
 /// A guest on a two-layer chain, as an external snapshot leaves it.
-VirtSnapChain _chainOf({String? refusal, List<String> pools = const ['images']}) =>
-    VirtSnapChain(
+VirtSnapChain _chainOf({
+  String? refusal,
+  String? externalRefusal,
+  List<String> pools = const ['images'],
+}) => VirtSnapChain(
       pools: pools,
       refusal: refusal,
+      externalRefusal: externalRefusal ?? refusal,
       disks: [
         const VirtSnapChainDisk(
           target: 'vda',
@@ -915,6 +931,110 @@ VirtSnapChain _chainOf({String? refusal, List<String> pools = const ['images']})
         ),
       ],
     );
+
+/// The network edit form on a libvirt host: an existing network is edited
+/// in place instead of being read-only.
+void _phase10(
+  Future<void> Function(WidgetTester, {required bool wide}) pump,
+) {
+  group('network editing', () {
+    setUp(() {
+      _state = VirtHostState(
+        serverId: _pve,
+        kind: VirtHostKind.libvirt,
+        data: _snapshot(_libvirtCaps),
+      );
+    });
+    tearDown(() {
+      _networks = _defaultNetworks;
+    });
+
+    testWidgets('the form, the definition, and the restart', (tester) async {
+      addTearDown(() => _networks = _defaultNetworks);
+      _networks = const [
+        VirtNetwork(
+          id: 'lab',
+          name: 'lab',
+          // No node: a libvirt network.
+          mode: 'nat',
+          active: true,
+          cidrs: ['192.168.150.1/24'],
+          dhcpRanges: ['192.168.150.100-192.168.150.200'],
+          bridge: 'virbr1',
+          hosts: [
+            VirtNetHost(mac: '52:54:00:aa:bb:01', ip: '192.168.150.10', name: 'h1'),
+          ],
+          xml:
+              '<network>\n'
+              '  <name>lab</name>\n'
+              "  <forward mode='nat'/>\n"
+              '  <ip address=\'192.168.150.1\' prefix=\'24\'>\n'
+              '    <dhcp>\n'
+              '      <range start=\'192.168.150.100\' end=\'192.168.150.200\'/>\n'
+              '    </dhcp>\n'
+              '  </ip>\n'
+              '</network>\n',
+          users: [
+            VirtGuestRef(guestId: 'qemu/100', device: 'vnet0', mac: '52:54:00:11:22:33'),
+          ],
+        ),
+      ];
+      await pump(tester, wide: true);
+      await tester.tap(segment(libL10n.network));
+      await _settle(tester);
+      await tester.tap(find.byKey(const ValueKey('net:lab')));
+      await _settle(tester);
+      expect(find.byKey(const ValueKey('net:edit')), findsOneWidget);
+      // The edit button opens the form.
+      await tester.tap(find.byKey(const ValueKey('net:edit')));
+      await _settle(tester);
+      // Its own definition is shown, folded.
+      expect(find.byKey(const ValueKey('net:edit:config')), findsOneWidget);
+      expect(find.text(libL10n.ok), findsOneWidget);
+      // The restart is offered (the network is active) and says what it
+      // costs. It sits below the fold of a dialog, so it is scrolled to.
+      // The form's rows, as the dialog draws them: the mode, the address,
+      // the static entry and the restart.
+      for (final k in ['net:edit:mode:nat', 'net:edit:address']) {
+        expect(find.byKey(ValueKey(k)), findsOneWidget, reason: k);
+      }
+      // The rows below the fold: a dialog scrolls, so they are reached by
+      // scrolling the form itself.
+      // The static entry, and a change that needs a restart (the address).
+      // The rows below the fold: the dialog scrolls, so they are reached by
+      // dragging it. `skipOffstage: false` counts what is built but not on
+      // screen.
+      await tester.enterText(
+        find.byKey(const ValueKey('net:edit:address')),
+        '192.168.151.1',
+      );
+      await _settle(tester);
+      for (final k in ['net:edit:host:0:mac', 'net:edit:restart']) {
+        final row = find.byKey(ValueKey(k), skipOffstage: false);
+        expect(row, findsOneWidget, reason: k);
+      }
+      await tester.dragUntilVisible(
+        find.byKey(const ValueKey('net:edit:restart'), skipOffstage: false),
+        find.byType(ListView).first,
+        const Offset(0, -60),
+      );
+      await _settle(tester);
+      expect(find.byKey(const ValueKey('net:edit:restart')), findsOneWidget);
+      expect(
+        find.text(app_locale.l10n.virtNetEditRestartNote),
+        findsOneWidget,
+      );
+      expect(
+        find.text(app_locale.l10n.virtNetEditRestartNote),
+        findsOneWidget,
+      );
+      await tester.tap(find.text(libL10n.cancel));
+      await _settle(tester);
+      expect(_calls.where((c) => c.startsWith('manage')), isEmpty);
+    });
+
+  });
+}
 
 void _phase8(
   Future<void> Function(WidgetTester, {required bool wide}) pump,
@@ -966,10 +1086,12 @@ void _phase8(
       );
       await pump(tester, wide: true);
       await openSnapshots(tester, 'web-01');
+      // Said once, at the top; neither kind of snapshot is offered.
       expect(
         find.textContaining('disk vda is raw'),
         findsOneWidget,
       );
+      expect(find.byKey(const ValueKey('snapshot:new')), findsNothing);
     });
 
     testWidgets('the form offers the external kind and the overlay pool', (
@@ -1001,14 +1123,63 @@ void _phase8(
         'pre-upgrade',
       );
       await _settle(tester);
+      // Nothing picked: the picker says "beside each disk", and that is what
+      // is sent — no pool, so libvirt places each overlay by its disk.
+      expect(
+        find.text(app_locale.l10n.virtSnapshotOverlayBeside),
+        findsOneWidget,
+      );
       await tester.tap(find.byKey(const ValueKey('snapshot:create')));
       await _settle(tester);
       expect(
         _calls,
         contains(
           'create qemu/100 pre-upgrade null memory=false '
-          'form=external pool=images',
+          'form=external pool=null',
         ),
+      );
+    });
+
+    testWidgets('a picked overlay pool is the one sent', (tester) async {
+      await pump(tester, wide: true);
+      await openSnapshots(tester, 'web-01');
+      await tester.tap(find.byKey(const ValueKey('snapshot:new')));
+      await _settle(tester);
+      await tester.tap(find.byKey(const ValueKey('snapshot:pool')));
+      await _settle(tester);
+      await tester.tap(find.text('images').last);
+      await _settle(tester);
+      await tester.tap(find.byKey(const ValueKey('snapshot:create')));
+      await _settle(tester);
+      expect(
+        _calls.where((c) => c.startsWith('create ')).single,
+        endsWith('form=external pool=images'),
+      );
+    });
+
+    testWidgets('an unreadable chain refuses only the external kind', (
+      tester,
+    ) async {
+      const why = "disk vda: qemu-img: Could not open 'x': Permission denied";
+      _FakeHost._chain['qemu/100'] = _chainOf(externalRefusal: why);
+      await pump(tester, wide: true);
+      await openSnapshots(tester, 'web-01');
+      // The form is still offered, and opens on the internal kind.
+      await tester.tap(find.byKey(const ValueKey('snapshot:new')));
+      await _settle(tester);
+      final external = tester.widget<ChoiceChip>(
+        find.byKey(const ValueKey('snapshot:form:VirtSnapshotForm.external')),
+      );
+      expect(external.onSelected, isNull);
+      expect(external.selected, isFalse);
+      expect(find.byKey(const ValueKey('snapshot:memory')), findsOneWidget);
+      // Said in the form and in the chain group.
+      expect(find.text(why), findsNWidgets(2));
+      await tester.tap(find.byKey(const ValueKey('snapshot:create')));
+      await _settle(tester);
+      expect(
+        _calls.where((c) => c.startsWith('create ')).single,
+        contains('form=internal'),
       );
     });
 

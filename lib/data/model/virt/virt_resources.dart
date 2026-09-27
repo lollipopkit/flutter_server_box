@@ -37,8 +37,9 @@ abstract class VirtGuestSnapshot with _$VirtGuestSnapshot {
   const VirtGuestSnapshot._();
 
   /// Whether a later snapshot sits on this one. Reverting to a snapshot that
-  /// has one is refused: a libvirt revert on a chain flattens it and leaves
-  /// every later snapshot pointing at a file that is gone.
+  /// has one is refused: on libvirt 11.3 such a revert of an external
+  /// snapshot failed, leaving the guest shut off on a new file and its
+  /// running overlay deleted (see `sbm_parser::virt_snapshot`).
   bool hasChildren(Iterable<VirtGuestSnapshot> all) =>
       all.any((s) => s.parent == name);
 }
@@ -261,9 +262,23 @@ abstract class VirtVolume with _$VirtVolume {
   }) = _VirtVolume;
 }
 
+/// A static DHCP host entry: one address handed to one MAC (libvirt).
+@freezed
+abstract class VirtNetHost with _$VirtNetHost {
+  const factory VirtNetHost({
+    required String mac,
+    required String ip,
+
+    /// The name dnsmasq is told, where one is given.
+    String? name,
+  }) = _VirtNetHost;
+}
+
 /// A virtual network (libvirt) or a node network interface (PVE).
 @freezed
 abstract class VirtNetwork with _$VirtNetwork {
+  const VirtNetwork._();
+
   const factory VirtNetwork({
     /// Unique on the host: libvirt's network name, PVE `<node>/<iface>`.
     required String id,
@@ -302,9 +317,57 @@ abstract class VirtNetwork with _$VirtNetwork {
     bool? autostart,
     String? comment,
 
+    /// The static DHCP entries it hands out (libvirt). Empty where there
+    /// are none, and on PVE, which keeps no such list here.
+    @Default(<VirtNetHost>[]) List<VirtNetHost> hosts,
+
+    /// libvirt: the definition **as saved** (`net-dumpxml --inactive`),
+    /// which is what an edit is made from and what a restart puts the
+    /// running network on. Refused once the host's has changed since.
+    /// Empty where the host did not say (PVE).
+    @Default('') String xml,
+
+    /// Whether the running network is on something other than its
+    /// definition: libvirt applies `net-define` at the next start, so a
+    /// change made while it runs waits, and the view offers the restart
+    /// that applies it.
+    @Default(false) bool pendingRestart,
+
+    /// Whether this app may change it at all. PVE: a bridge, and not the
+    /// interface carrying the node's management address — applying that
+    /// would cut the host off. libvirt: every network. The backend decides
+    /// (`virtPveManagedIface`), so the view never re-derives it.
+    @Default(true) bool managementEditable,
+
     /// Guests with a NIC on it.
     @Default(<VirtGuestRef>[]) List<VirtGuestRef> users,
   }) = _VirtNetwork;
+
+  /// The address without its prefix (`192.168.150.1` of
+  /// `192.168.150.1/24`); null where there is none to take apart.
+  String? get address {
+    final cidr = cidrs.firstOrNull;
+    if (cidr == null) return null;
+    final parts = cidr.split('/');
+    return parts.length == 2 ? parts.first : null;
+  }
+
+  /// The prefix of the first address; null where there is none.
+  int? get prefix {
+    final cidr = cidrs.firstOrNull;
+    if (cidr == null) return null;
+    return int.tryParse(cidr.split('/').last);
+  }
+
+  /// The first DHCP range, as its two ends; null where there is none.
+  (String, String)? get dhcpRange {
+    final range = dhcpRanges.firstOrNull;
+    if (range == null) return null;
+    final at = range.indexOf('-');
+    if (at < 0) return null;
+    return (range.substring(0, at), range.substring(at + 1));
+  }
+
 }
 
 /// One file in the chain a guest's disk is on: the file the guest writes to,
@@ -350,8 +413,11 @@ abstract class VirtSnapChainDisk with _$VirtSnapChainDisk {
     /// Topmost first: `files.first` is what the guest writes to now.
     @Default(<VirtSnapChainFile>[]) List<VirtSnapChainFile> files,
 
-    /// The pool the topmost file is in, where it is in one.
+    /// The pool whose directory holds the topmost file, where one does.
     String? pool,
+
+    /// Why the host could not read the disk's chain, in its words.
+    String? error,
   }) = _VirtSnapChainDisk;
 
   const VirtSnapChainDisk._();
@@ -367,14 +433,16 @@ abstract class VirtSnapChain with _$VirtSnapChain {
   const factory VirtSnapChain({
     @Default(<VirtSnapChainDisk>[]) List<VirtSnapChainDisk> disks,
 
-    /// A disk QEMU would not open, in the host's words.
-    String? blocked,
-
-    /// Why an external snapshot cannot be taken, asked of the host's own
-    /// read: a raw disk, a disk that is not a file.
+    /// Why no snapshot at all can be taken: a disk known not to be qcow2.
     String? refusal,
 
-    /// The pools an overlay can be placed in, by name.
+    /// Why an external snapshot cannot be taken, asked of the host's own
+    /// read: everything [refusal] says, and a disk whose chain could not be
+    /// read or cannot be trusted.
+    String? externalRefusal,
+
+    /// The pools an overlay can be placed in, by name: active pools that
+    /// hold files in a directory (`virtPoolHoldsFiles`).
     @Default(<String>[]) List<String> pools,
   }) = _VirtSnapChain;
 
@@ -426,6 +494,33 @@ String virtSnapshotOverlayPath(String diskPath, String snapshot, [String? dir]) 
   final at = diskPath.lastIndexOf('/');
   final base = dir ?? (at < 0 ? '' : diskPath.substring(0, at));
   return base.isEmpty ? name : '$base/$name';
+}
+
+/// libvirt pool types whose volumes are files in the pool's target directory.
+/// The rest (`logical`, `disk`, `zfs`, `rbd`, ...) hold block devices or
+/// objects: their target path, where there is one, is `/dev/...`, and a file
+/// written there is not a volume of the pool.
+const _libvirtFilePoolTypes = {'dir', 'fs', 'netfs'};
+
+bool _isFilePool(VirtStoragePool pool) =>
+    _libvirtFilePoolTypes.contains(pool.type) &&
+    (pool.path?.startsWith('/') ?? false);
+
+/// Whether an external snapshot's overlay can be written into [pool] by path:
+/// an active libvirt pool of files.
+bool virtPoolHoldsFiles(VirtStoragePool pool) =>
+    pool.active && _isFilePool(pool);
+
+/// The libvirt pool of files whose directory holds [file] itself, or null.
+VirtStoragePool? virtPoolOfFile(Iterable<VirtStoragePool> pools, String file) {
+  final at = file.lastIndexOf('/');
+  if (at <= 0) return null;
+  final dir = file.substring(0, at);
+  String trim(String p) => p.length > 1 && p.endsWith('/') ? trim(p.substring(0, p.length - 1)) : p;
+  for (final p in pools) {
+    if (_isFilePool(p) && trim(p.path!) == dir) return p;
+  }
+  return null;
 }
 
 /// Why a snapshot cannot be taken, from what the host answered about its

@@ -108,6 +108,22 @@ String virtSnapChainScript({required String domain}) =>
 Future<String> parseVirtSnapChainJson({required String raw}) =>
     RustLib.instance.api.crateApiVirtParseVirtSnapChainJson(raw: raw);
 
+/// What deciding whether the host would refuse deleting snapshot `name`
+/// needs: its layers, the chain, the security model and the AppArmor
+/// profile's `deny` lines. Parse with [`parse_virt_snap_delete_refusal`].
+String virtSnapDeleteCheckScript({
+  required String domain,
+  required String name,
+}) => RustLib.instance.api.crateApiVirtVirtSnapDeleteCheckScript(
+  domain: domain,
+  name: name,
+);
+
+/// [`virt_snap_delete_check_script`]'s output → why the host would refuse
+/// the delete (AppArmor denying the commit), or `None`
+Future<String?> parseVirtSnapDeleteRefusal({required String raw}) =>
+    RustLib.instance.api.crateApiVirtParseVirtSnapDeleteRefusal(raw: raw);
+
 /// An external snapshot (disks only, `--atomic`), `overlays` being
 /// `(target, path)` per disk. Parse with [`parse_virt_action`].
 String virtSnapshotExternalScript({
@@ -134,16 +150,15 @@ String virtSnapDiffScript({required String domain, required String name}) =>
 Future<String> parseVirtSnapDiffJson({required String raw}) =>
     RustLib.instance.api.crateApiVirtParseVirtSnapDiffJson(raw: raw);
 
-/// A pool's own target directory (`pool-dumpxml`), for placing an overlay in
-/// it
-Future<String?> parseVirtPoolTarget({required String raw}) =>
-    RustLib.instance.api.crateApiVirtParseVirtPoolTarget(raw: raw);
-
 /// Why an external snapshot cannot be taken, from a `VirtSnapChain` JSON
-Future<String?> virtExternalSnapshotRefusal({required String chainJson}) =>
-    RustLib.instance.api.crateApiVirtVirtExternalSnapshotRefusal(
-      chainJson: chainJson,
-    );
+String? virtExternalSnapshotRefusal({required String chainJson}) => RustLib
+    .instance
+    .api
+    .crateApiVirtVirtExternalSnapshotRefusal(chainJson: chainJson);
+
+/// Why no snapshot at all can be taken, from a `VirtSnapChain` JSON
+String? virtSnapshotRefusal({required String chainJson}) =>
+    RustLib.instance.api.crateApiVirtVirtSnapshotRefusal(chainJson: chainJson);
 
 /// Pools, volume names and every domain's disks
 String virtStorageScript() =>
@@ -171,6 +186,16 @@ String virtNetworksScript() =>
 /// [`virt_networks_script`]'s output → `VirtNetworks` JSON
 Future<String> parseVirtNetworksJson({required String raw}) =>
     RustLib.instance.api.crateApiVirtParseVirtNetworksJson(raw: raw);
+
+/// Editing an existing network (phase 10): `op_json` is a
+/// `sbm_parser::virt_net::VirtNetOp`. Parse with [`parse_virt_net_change`].
+String virtNetChangeScript({required String opJson}) =>
+    RustLib.instance.api.crateApiVirtVirtNetChangeScript(opJson: opJson);
+
+/// [`virt_net_change_script`]'s output: `Ok` once the definition (and, when
+/// asked for, the running network) has the change
+Future<void> parseVirtNetChange({required String raw}) =>
+    RustLib.instance.api.crateApiVirtParseVirtNetChange(raw: raw);
 
 /// What the host can run a new domain as (`domcapabilities`)
 String virtCreateHostScript() =>
@@ -229,16 +254,21 @@ Future<String> parseVirtCreateJson({required String raw}) =>
     RustLib.instance.api.crateApiVirtParseVirtCreateJson(raw: raw);
 
 /// `undefine`, with the volumes of the disk targets in `storage` (none keeps
-/// them all), and the domain's own cloud-init `seed` after it. Parse with
-/// [`parse_virt_undefine`].
+/// them all), and the domain's own cloud-init `seed` and the `chain` files
+/// its external snapshots left (after refreshing `pools`) after it. Parse
+/// with [`parse_virt_undefine`].
 String virtUndefineScript({
   required String domain,
   required List<String> storage,
   String? seed,
+  required List<String> pools,
+  required List<String> chain,
 }) => RustLib.instance.api.crateApiVirtVirtUndefineScript(
   domain: domain,
   storage: storage,
   seed: seed,
+  pools: pools,
+  chain: chain,
 );
 
 /// [`virt_undefine_script`]'s output: `Ok` once the domain (and its seed)
@@ -305,6 +335,16 @@ String virtHardwareChangeScript({
 /// [`virt_hardware_change_script`]'s output → `VirtHwOutcome` JSON
 Future<String> parseVirtHardwareChangeJson({required String raw}) =>
     RustLib.instance.api.crateApiVirtParseVirtHardwareChangeJson(raw: raw);
+
+/// The host's firmware descriptors (`/usr/share/qemu/firmware/*.json`), for
+/// what a new domain can boot with. Parse with
+/// [`parse_virt_firmware_json`].
+String virtFirmwareScript() =>
+    RustLib.instance.api.crateApiVirtVirtFirmwareScript();
+
+/// [`virt_firmware_script`]'s output → `Vec<FirmwareDescriptor>` JSON
+Future<String> parseVirtFirmwareJson({required String raw}) =>
+    RustLib.instance.api.crateApiVirtParseVirtFirmwareJson(raw: raw);
 
 /// The host's USB and PCI devices, for passing one to a guest
 String virtHostDevicesScript() =>

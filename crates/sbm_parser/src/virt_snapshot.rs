@@ -34,33 +34,45 @@
 //! writes. On this app's watch, the old file is never modified again, so the
 //! snapshot is the old file exactly as it was at that moment.
 //!
-//! # Reverting a chain (verified on libvirt 11.3)
+//! # Reverting a chain (verified on libvirt 11.3, Debian 13)
 //!
 //! `snapshot-revert` on an external snapshot does **not** put the guest back
-//! on the file the snapshot recorded:
+//! on the file the snapshot recorded, and commits nothing:
 //!
-//! 1. libvirt commits the running overlay into its backing file — the base
-//!    image becomes the current disk contents — and deletes the overlay.
-//! 2. It then starts the guest on a **new** file in the directory the base
-//!    image is in, named `<domain>.<timestamp>`. That file is owned by
-//!    **root**, not by the QEMU user, because libvirt makes it as the daemon.
-//! 3. Every snapshot *after* the one reverted to is left pointing at a file
-//!    that is now gone. A later revert to one of them fails inside QEMU, and
-//!    so does a later delete of any layer, with
-//!    `block-commit: Could not open '<file>': Permission denied` — the
-//!    profile that lets QEMU write where libvirt put it is not written.
-//! 4. The chain is flattened: the file the guest ends up on backs the base
-//!    image directly, and the layers in between are gone from disk.
+//! 1. libvirt deletes the file the guest was writing to (the top overlay),
+//!    and with it whatever was written since the snapshot.
+//! 2. It starts the guest on a **new** overlay of the file the snapshot
+//!    kept, named after that file with its extension replaced by a
+//!    timestamp (`ov1.qcow2` → `ov1.1790504997`), and records it as the
+//!    snapshot's layer. The chain is as deep as before: reverting the
+//!    newest of two snapshots leaves `ov1.<ts>` → `ov1.qcow2` → the base.
+//! 3. Reverting to a snapshot that has a child failed on this host: QEMU
+//!    was refused the base image (`Could not open '<base>': Permission
+//!    denied`, AppArmor's `virt-aa-helper` having been denied the new
+//!    `<base>.<ts>` file). The guest is left shut off on that new file, and
+//!    the overlay it was running on is gone.
 //!
-//! So a revert is safe only on the newest snapshot (a leaf: nothing sits on
-//! it, and the collapse replaces the overlay it was already running on) and
-//! is refused on any snapshot that has a child. That is the rule
-//! [`revert_refusal`] states, and it is enforced before the host is asked.
+//! So a revert is offered only on the newest snapshot (a leaf) and is
+//! refused on any snapshot that has a child. The app enforces it before the
+//! host is asked (`VirtGuestSnapshot.hasChildren`, Dart).
+//!
+//! # Deleting (AppArmor hosts)
+//!
+//! Deleting an external snapshot is a `block-commit` of its overlay into the
+//! file below. On a host whose libvirt confines QEMU with AppArmor (Debian;
+//! Debian bug #932456, libvirt issue #806) `virt-aa-helper` writes `deny
+//! "<file>" w` for every file that was already a backing file when QEMU
+//! started, so a commit into one is refused (`block-commit: Could not open
+//! '<file>': Permission denied`), running or shut off. What still commits is
+//! the newest snapshot taken while the guest ran, into the overlay the
+//! previous one left. A refused delete leaves `<snapshotDeleteInProgress/>`
+//! in the snapshot below, whose delete libvirt then refuses (`snapshot disk
+//! 'vda' was target of not completed snapshot delete`). So the app asks
+//! first: [`snap_delete_refusal`].
 
 use crate::script::{self, shell_quote_unix};
 use crate::virt::{
     CONNECT_URI, RC_PREFIX, VirtError, child, domain_arg, parse_xml_doc, prelude, sections, take,
-    text_of,
 };
 use serde::{Deserialize, Serialize};
 
@@ -70,9 +82,6 @@ use serde::{Deserialize, Serialize};
 pub struct VirtSnapChain {
     /// One entry per disk, by its target (`vda`).
     pub disks: Vec<VirtSnapChainDisk>,
-    /// A disk QEMU would not open, as the host says it: no external snapshot
-    /// of this guest can be taken.
-    pub blocked: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -81,8 +90,10 @@ pub struct VirtSnapChainDisk {
     pub target: String,
     /// Topmost first; the first entry is the file the guest writes to now.
     pub files: Vec<VirtSnapChainFile>,
-    /// The pool the topmost file was found in, when it is in one.
-    pub pool: Option<String>,
+    /// Why `qemu-img` could not read the disk, in its own words (a lock, a
+    /// permission, the tool missing). `files` is then the definition's file
+    /// alone, with no format.
+    pub error: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -92,6 +103,9 @@ pub struct VirtSnapChainFile {
     pub format: Option<String>,
     /// The file it sits on, when it is an overlay.
     pub backing: Option<String>,
+    /// The format the overlay's header records for `backing`; `None` on an
+    /// overlay means QEMU probes the layer below.
+    pub backing_format: Option<String>,
     /// Bytes the file takes on the host.
     pub allocation: Option<u64>,
     /// Bytes the guest sees through it.
@@ -128,8 +142,15 @@ pub const KEY_SNAP_CHAIN: &str = "virt.snap.chain";
 /// holds), so what it prints is what QEMU would open, not what the XML
 /// claims.
 pub fn snap_chain_script(domain: &str) -> String {
-    let d = domain_arg(domain);
     let mut s = prelude();
+    s.push_str(&chain_sections(&domain_arg(domain)));
+    s
+}
+
+/// [`snap_chain_script`] without its prelude, for scripts that read the
+/// chain among other things.
+fn chain_sections(d: &str) -> String {
+    let mut s = String::new();
     s.push_str(&format!(
         "echo '{}'\nV dumpxml {d}\n",
         script::cmd_marker(crate::virt::KEY_XML),
@@ -137,19 +158,20 @@ pub fn snap_chain_script(domain: &str) -> String {
     // One section per device: its path on the first line, then the chain.
     // `domblklist --details` prints `Type Device Target Source`; only a
     // regular file is a candidate for an external snapshot, and only a disk
-    // (a CD-ROM is read-only). `qemu-img info` is run through `L`, which
-    // adds the exit status, so a refusal is told from an empty answer.
+    // (a CD-ROM is read-only). `read` leaves the rest of the line in `src`,
+    // so a path with spaces stays one word and is never globbed. `qemu-img
+    // info` is run through `L`, which adds the exit status, so a refusal is
+    // told from an answer.
     s.push_str(&format!(
         "L() {{ qemu-img info -U --backing-chain --output=json \"$@\" </dev/null 2>&1; \
          printf '\\n{rc}%s\\n' \"$?\"; }}\n\
          virsh --connect {CONNECT_URI} -q domblklist {d} --details </dev/null 2>/dev/null | \
-         while IFS= read -r line; do\n\
-         set -- $line\n\
-         [ \"$1\" = file ] || continue\n\
-         [ \"$2\" = disk ] || continue\n\
+         while read -r type device target src; do\n\
+         [ \"$type\" = file ] || continue\n\
+         [ \"$device\" = disk ] || continue\n\
          echo '{key}'\n\
-         printf '%s\\n' \"$4\"\n\
-         L \"$4\"\n\
+         printf '%s\\n' \"$src\"\n\
+         L \"$src\"\n\
          done\n",
         rc = RC_PREFIX,
         key = script::cmd_marker(KEY_SNAP_CHAIN),
@@ -168,13 +190,15 @@ struct QemuImgInfo {
     actual_size: Option<u64>,
     #[serde(rename = "backing-filename")]
     backing_filename: Option<String>,
+    #[serde(rename = "backing-filename-format")]
+    backing_format: Option<String>,
 }
 
 /// [`snap_chain_script`]'s output.
 ///
-/// A disk QEMU refuses to open (`qemu-img`'s own error text, no JSON) is
-/// recorded as [`VirtSnapChain::blocked`] rather than dropped: a guest with a
-/// disk nothing can read is a guest no external snapshot is taken of.
+/// A disk `qemu-img` could not read keeps the host's words in
+/// [`VirtSnapChainDisk::error`] rather than being dropped: nothing is known
+/// about its format, so no external snapshot is taken of it.
 pub fn parse_snap_chain(raw: &str) -> Result<VirtSnapChain, VirtError> {
     let secs = sections(raw)?;
     let mut out = VirtSnapChain::default();
@@ -202,144 +226,106 @@ pub fn parse_snap_chain(raw: &str) -> Result<VirtSnapChain, VirtError> {
             }
         }
     }
-    // The chains QEMU answered, by the path each was asked about.
-    let mut chains: Vec<(String, Vec<VirtSnapChainFile>)> = Vec::new();
+    // What QEMU answered, by the path each was asked about: the chain, or why
+    // it would not open the file.
+    let mut answers: Vec<(String, Result<Vec<VirtSnapChainFile>, String>)> = Vec::new();
     for sec in secs
         .iter()
         .filter(|(k, _)| k == KEY_SNAP_CHAIN)
         .map(|(_, s)| s)
     {
-        let Ok(body) = sec.ok() else { continue };
-        let Some((path, json)) = body.split_once('\n') else {
-            continue;
-        };
-        let path = path.trim().to_string();
+        let (path, rest) = sec.body.split_once('\n').unwrap_or((&sec.body, ""));
+        let path = path.trim();
         if path.is_empty() {
             continue;
         }
-        let json = json.trim();
-        let files = qemu_img_chain(json);
-        if files.is_empty() {
-            // Not JSON: `qemu-img`'s refusal (a raw disk, a lock it cannot
-            // take). The first one is what the view shows.
-            if !json.is_empty() && !json.starts_with('{') && out.blocked.is_none() {
-                out.blocked = Some(json.to_string());
-            }
-            continue;
-        }
-        chains.push((path, files));
+        let rest = rest.trim();
+        let answer = match (sec.rc, qemu_img_chain(rest)) {
+            (Some(0), Some(files)) if !files.is_empty() => Ok(files),
+            // A refusal (a lock, a permission, `qemu-img` missing) or output
+            // that is not the chain: the host's words, or what little there is.
+            (_, _) if !rest.is_empty() => Err(rest.to_string()),
+            _ => Err("qemu-img gave no answer".to_string()),
+        };
+        answers.push((path.to_string(), answer));
     }
     for (target, defined_file) in defined {
         // The device's chain is the one QEMU answered for the path the
         // definition names, or — after an external snapshot, which moves the
         // guest onto an overlay the definition does not name yet — for a
-        // chain whose topmost file sits where that disk is. Where nothing
-        // matched (a disk QEMU would not open), the definition's own file is
-        // kept as the single layer, so a raw disk still shows as what it is.
-        let found = chains
+        // chain whose base is that file.
+        let found = answers
             .iter()
             .position(|(path, _)| Some(path.as_str()) == defined_file.as_deref())
             .or_else(|| {
-                // The definition names a file the read did not answer for:
-                // the guest is on an overlay the definition does not name yet
-                // (a snapshot taken under it), so the chain whose *base* is
-                // that file is this disk's.
-                chains.iter().position(|(_, files)| {
-                    files
-                        .last()
-                        .is_some_and(|base| Some(base.path.as_str()) == defined_file.as_deref())
+                answers.iter().position(|(_, a)| {
+                    a.as_ref().is_ok_and(|files| {
+                        files
+                            .last()
+                            .is_some_and(|base| Some(base.path.as_str()) == defined_file.as_deref())
+                    })
                 })
             });
-        let files = match found {
-            Some(i) => chains.remove(i).1,
-            None => defined_file
-                .map(|p| {
-                    vec![VirtSnapChainFile {
-                        path: p,
-                        ..Default::default()
-                    }]
-                })
-                .unwrap_or_default(),
+        // Where nothing was read, the definition's own file is kept as the
+        // single layer with no format, so a disk still shows as what it is.
+        let lone = |path: Option<String>| {
+            path.map(|p| {
+                vec![VirtSnapChainFile {
+                    path: p,
+                    ..Default::default()
+                }]
+            })
+            .unwrap_or_default()
         };
-        let pool = files.first().and_then(|f| pool_of(&f.path));
+        let (files, error) = match found.map(|i| answers.remove(i)) {
+            Some((_, Ok(files))) => (files, None),
+            Some((path, Err(e))) => (lone(Some(path)), Some(e)),
+            None => (lone(defined_file), None),
+        };
         out.disks.push(VirtSnapChainDisk {
             target,
             files,
-            pool,
+            error,
         });
     }
-    // A chain QEMU answered for a path no disk claimed (a definition that
-    // changed under the read): kept, so it is not silently lost.
-    for (path, files) in chains {
+    // An answer for a path no disk claimed (a definition that changed under
+    // the read): kept, so it is not silently lost.
+    for (path, answer) in answers {
+        let (files, error) = match answer {
+            Ok(files) => (files, None),
+            Err(e) => (Vec::new(), Some(e)),
+        };
         out.disks.push(VirtSnapChainDisk {
             target: path,
-            pool: files.first().and_then(|f| pool_of(&f.path)),
             files,
+            error,
         });
     }
     Ok(out)
 }
 
-/// The pool a file is in, by name, for the common `images`-style directory:
-/// the app does not read the host's pool list here, so this only names the
-/// directory the file sits in, which is what the view shows.
-fn pool_of(path: &str) -> Option<String> {
-    let dir = path.rsplit_once('/')?.0;
-    Some(dir.rsplit_once('/')?.1.to_string())
-}
-
-/// `--backing-chain --output=json` prints one document per layer, newest
-/// first, each naming the file it sits on in `backing-filename`. All of them
-/// are read; a layer without one ends the chain.
-fn qemu_img_chain(json: &str) -> Vec<VirtSnapChainFile> {
-    let mut out: Vec<VirtSnapChainFile> = Vec::new();
-    for doc in json_docs(json) {
-        let Ok(info) = serde_json::from_str::<QemuImgInfo>(&doc) else {
-            continue;
-        };
+/// `--backing-chain --output=json` prints an array, one object per layer,
+/// newest first, each naming the file it sits on in `backing-filename`. A
+/// layer without one ends the chain. `None` when the output is not that array.
+fn qemu_img_chain(json: &str) -> Option<Vec<VirtSnapChainFile>> {
+    let infos: Vec<QemuImgInfo> = serde_json::from_str(json).ok()?;
+    let mut out = Vec::new();
+    for info in infos {
         let Some(path) = info.filename else { continue };
+        let last = info.backing_filename.is_none();
         out.push(VirtSnapChainFile {
             path,
             format: info.format,
-            backing: info.backing_filename.clone(),
+            backing: info.backing_filename,
+            backing_format: info.backing_format,
             allocation: info.actual_size,
             capacity: info.virtual_size,
         });
-        if info.backing_filename.is_none() {
+        if last {
             break;
         }
     }
-    out
-}
-
-/// Splits concatenated JSON documents (`--backing-chain` prints one per
-/// layer, one after another with nothing between them). A brace counter is
-/// enough: `qemu-img`'s JSON holds no braces inside strings that are not
-/// balanced.
-fn json_docs(raw: &str) -> Vec<String> {
-    let mut out = Vec::new();
-    let mut depth = 0usize;
-    let mut start: Option<usize> = None;
-    for (i, c) in raw.char_indices() {
-        match c {
-            '{' => {
-                if depth == 0 {
-                    start = Some(i);
-                }
-                depth += 1;
-            }
-            '}' => {
-                depth = depth.saturating_sub(1);
-                if depth == 0 {
-                    if let Some(s) = start.take() {
-                        out.push(raw[s..=i].to_string());
-                    }
-                }
-            }
-            _ => {}
-        }
-    }
-    out
+    Some(out)
 }
 
 /// Why an external snapshot of this guest cannot be taken, or `None` when one
@@ -358,66 +344,220 @@ fn json_docs(raw: &str) -> Vec<String> {
 /// qcow2 file is a chain QEMU reads as raw (`backing file format: raw`,
 /// captured), which is exactly the case whose chain cannot be trusted.
 pub fn external_snapshot_refusal(chain: &VirtSnapChain) -> Option<String> {
+    if let Some(why) = snapshot_refusal(chain) {
+        return Some(why);
+    }
     if chain.disks_iter().next().is_none() {
         return Some("the guest has no disk to snapshot".into());
     }
     for disk in chain.disks_iter() {
+        if let Some(e) = &disk.error {
+            return Some(format!("disk {}: {e}", disk.target));
+        }
         let Some(top) = disk.files.first() else {
             return Some(format!(
                 "disk {} is not an image libvirt can overlay",
                 disk.target
             ));
         };
-        match top.format.as_deref() {
-            Some("qcow2") => {}
-            Some(other) => {
-                return Some(format!(
-                    "disk {} is {other}: an external snapshot needs a qcow2 image",
-                    disk.target
-                ));
-            }
-            None => {
-                return Some(format!(
-                    "disk {} has no format QEMU could open",
-                    disk.target
-                ));
-            }
+        if top.format.is_none() {
+            return Some(format!(
+                "disk {} has no format QEMU could open",
+                disk.target
+            ));
         }
-        // An overlay whose backing format is not recorded cannot be read back
+        // A layer whose backing format is not recorded cannot be read back
         // without QEMU guessing: the layer below would be opened as the wrong
         // format on a host that does not probe.
-        if top.backing.is_some() && top.format.is_none() {
+        if disk
+            .files
+            .iter()
+            .any(|f| f.backing.is_some() && f.backing_format.is_none())
+        {
             return Some(format!(
                 "disk {} is an overlay with no backing format recorded",
                 disk.target
             ));
         }
     }
-    chain.blocked.clone()
-}
-
-/// Why the guest cannot be reverted to this snapshot, or `None` when it can.
-///
-/// Only a leaf may be reverted to on a chain: libvirt's revert flattens the
-/// chain and leaves every *later* snapshot pointing at a file that is gone —
-/// see the module comment. `children` is whether the snapshot has any.
-///
-/// A snapshot with no external layer at all (an internal one, taken before
-/// this app wrote external ones) is reverted to as it always was.
-pub fn revert_refusal(external: bool, children: bool) -> Option<RevertRefusal> {
-    if external && children {
-        return Some(RevertRefusal::HasChildren);
-    }
     None
 }
 
-/// Why a revert is refused, for the UI to say in the user's language.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum RevertRefusal {
-    /// A later snapshot sits on this one; reverting would leave it (and every
-    /// delete after it) unusable.
-    HasChildren,
+/// Why no snapshot at all — internal or external — can be taken, or `None`
+/// when one may be.
+///
+/// Only what is known refuses: a disk QEMU opened as something other than
+/// qcow2 (both forms need one). A disk whose format could not be read (the
+/// tool missing, a permission) refuses the external form only, through
+/// [`external_snapshot_refusal`]; `virsh snapshot-create-as` does not need
+/// `qemu-img` and is left to answer for itself.
+pub fn snapshot_refusal(chain: &VirtSnapChain) -> Option<String> {
+    chain.disks_iter().find_map(|disk| {
+        match disk.files.first()?.format.as_deref()? {
+            "qcow2" => None,
+            other => Some(format!(
+                "disk {} is {other}: a snapshot needs a qcow2 image",
+                disk.target
+            )),
+        }
+    })
+}
+
+// ---------------------------------------------------------------------------
+// Deleting an external snapshot on an AppArmor host
+// ---------------------------------------------------------------------------
+
+pub const KEY_DEL_SNAP: &str = "virt.snap.del.snap";
+pub const KEY_DEL_INFO: &str = "virt.snap.del.info";
+pub const KEY_DEL_SECMODEL: &str = "virt.snap.del.secmodel";
+pub const KEY_DEL_DENY: &str = "virt.snap.del.deny";
+
+/// What deciding [`snap_delete_refusal`] needs, in one round trip: the
+/// snapshot's layers, the chain (as [`snap_chain_script`]), `dominfo` (state
+/// and the running domain's security model), the host's `<secmodel>`s from
+/// `capabilities`, and the `deny` lines of the domain's AppArmor profile.
+/// Only those lines are printed: a profile file names every path the guest
+/// may touch, and none of the rest is needed.
+pub fn snap_delete_check_script(domain: &str, name: &str) -> String {
+    let d = domain_arg(domain);
+    let mut s = prelude();
+    s.push_str(&format!(
+        "echo '{}'\nV snapshot-dumpxml {d} --snapshotname {}\n",
+        script::cmd_marker(KEY_DEL_SNAP),
+        shell_quote_unix(name),
+    ));
+    s.push_str(&chain_sections(&d));
+    s.push_str(&format!(
+        // The profile is named by the UUID, taken from `dominfo`: `domuuid`
+        // refuses a UUID as its argument, and the app names domains by one.
+        "echo '{info}'\n\
+         i=$(virsh --connect {CONNECT_URI} -q dominfo {d} </dev/null 2>&1); r=$?\n\
+         printf '%s\\n\\n{rc}%s\\n' \"$i\" \"$r\"\n\
+         u=$(printf '%s\\n' \"$i\" | sed -n 's/^UUID: *//p')\n\
+         echo '{secmodel}'\n\
+         c=$(virsh --connect {CONNECT_URI} -q capabilities </dev/null 2>&1); r=$?\n\
+         printf '%s\\n' \"$c\" | sed -n '/<secmodel>/,/<\\/secmodel>/p'\n\
+         printf '\\n{rc}%s\\n' \"$r\"\n\
+         f=\"/etc/apparmor.d/libvirt/libvirt-$u.files\"\n\
+         echo '{deny}'\n\
+         if [ -n \"$u\" ] && [ -r \"$f\" ]; then grep -F 'deny \"' \"$f\"; printf '\\n{rc}0\\n'; \
+         else printf 'no profile\\n\\n{rc}1\\n'; fi\n",
+        info = script::cmd_marker(KEY_DEL_INFO),
+        secmodel = script::cmd_marker(KEY_DEL_SECMODEL),
+        deny = script::cmd_marker(KEY_DEL_DENY),
+        rc = RC_PREFIX,
+    ));
+    s
+}
+
+/// Why deleting the snapshot [`snap_delete_check_script`] was run for would
+/// be refused by the host, or `None` when it may be asked.
+///
+/// A delete commits each external layer into the file below it. libvirt's
+/// AppArmor helper denies QEMU writing every file that was already a backing
+/// file when QEMU started (`deny "<file>" w`; Debian bug #932456), so such a
+/// commit fails with `Permission denied` and leaves the snapshot below
+/// marked `snapshotDeleteInProgress`, refusing its own delete afterwards.
+/// Refused here, before that happens:
+///
+/// - running, confined by AppArmor: a layer whose commit target the
+///   profile denies writing;
+/// - shut off, on a host whose driver is AppArmor and a domain not opted out
+///   (`<seclabel type='none'>`): any external layer, since libvirt starts
+///   QEMU for the commit with the whole chain already below.
+///
+/// An internal snapshot, a layer not on the current chain, or anything this
+/// could not read is left to the host.
+pub fn snap_delete_refusal(raw: &str) -> Result<Option<String>, VirtError> {
+    let secs = sections(raw)?;
+    let snap = take(&secs, KEY_DEL_SNAP, raw)?.ok()?;
+    let doc = parse_xml_doc(snap, "domainsnapshot", "snapshot-dumpxml")?;
+    let root = doc.root_element();
+    let files: Vec<String> = layers_of(root, "disks")
+        .into_iter()
+        .chain(layers_of(root, "revertDisks"))
+        .filter(|l| l.snapshot.as_deref() == Some("external"))
+        .filter_map(|l| l.file)
+        .collect();
+    if files.is_empty() {
+        return Ok(None);
+    }
+    let chain = parse_snap_chain(raw)?;
+    // Each layer on the chain, and the file its commit writes into.
+    let targets: Vec<&str> = chain
+        .disks_iter()
+        .flat_map(|d| d.files.iter())
+        .filter(|f| files.contains(&f.path))
+        .filter_map(|f| f.backing.as_deref())
+        .collect();
+    if targets.is_empty() {
+        return Ok(None);
+    }
+    let Ok(info) = take(&secs, KEY_DEL_INFO, raw).and_then(|s| s.ok()) else {
+        return Ok(None);
+    };
+    let field = |key: &str| {
+        info.lines()
+            .find_map(|l| l.split_once(':').filter(|(k, _)| k.trim() == key))
+            .map(|(_, v)| v.trim())
+    };
+    const WHY: &str = "libvirt's AppArmor profile denies QEMU writing \
+                       (Debian bug #932456): the host would refuse the delete, \
+                       and every later delete on that disk after it";
+    if field("State") == Some("running") {
+        if field("Security model") != Some("apparmor") {
+            return Ok(None);
+        }
+        let Ok(deny) = take(&secs, KEY_DEL_DENY, raw).and_then(|s| s.ok()) else {
+            return Ok(None);
+        };
+        let denied: Vec<&str> = deny
+            .lines()
+            .filter_map(|l| l.trim().strip_prefix("deny \"")?.strip_suffix("\" w,"))
+            .collect();
+        return Ok(targets.iter().find(|t| denied.contains(t)).map(|t| {
+            format!("Deleting it writes into {t}, which {WHY}")
+        }));
+    }
+    let Ok(caps) = take(&secs, KEY_DEL_SECMODEL, raw).and_then(|s| s.ok()) else {
+        return Ok(None);
+    };
+    let caps = format!("<caps>{caps}</caps>");
+    let Ok(caps) = roxmltree::Document::parse(&caps) else {
+        return Ok(None);
+    };
+    let apparmor = caps
+        .descendants()
+        .find(|n| n.has_tag_name("secmodel"))
+        .and_then(|m| child(m, "model"))
+        .and_then(|m| m.text())
+        == Some("apparmor");
+    if !apparmor || chain_domain_unconfined(raw) {
+        return Ok(None);
+    }
+    Ok(Some(format!(
+        "Deleting it while the guest is shut off writes into {}, which {WHY}",
+        targets[0]
+    )))
+}
+
+/// Whether the domain opts out of confinement: a `<seclabel type='none'>`
+/// for AppArmor, or for every driver (no `model`).
+fn chain_domain_unconfined(raw: &str) -> bool {
+    let Ok(secs) = sections(raw) else { return false };
+    let Ok(xml) = take(&secs, crate::virt::KEY_XML, raw) else {
+        return false;
+    };
+    let Ok(doc) = parse_xml_doc(&xml.body, "domain", "dumpxml") else {
+        return false;
+    };
+    doc.root_element()
+        .children()
+        .filter(|n| n.has_tag_name("seclabel"))
+        .any(|n| {
+            n.attribute("type") == Some("none")
+                && n.attribute("model").is_none_or(|m| m == "apparmor")
+        })
 }
 
 /// An external snapshot: the disks only (the guest keeps running), one
@@ -485,17 +625,6 @@ pub(crate) fn layers_of(root: roxmltree::Node<'_, '_>, element: &str) -> Vec<Vir
             snapshot: disk.attribute("snapshot").map(str::to_string),
         })
         .collect()
-}
-
-/// The pool target directory `pool-dumpxml` names, for placing an overlay in
-/// it. `None` for a pool of block devices (LVM, ZFS zvols, RBD), which no
-/// overlay can be written into by path.
-pub fn parse_pool_target(raw: &str) -> Option<String> {
-    let doc = parse_xml_doc(raw, "pool", "pool-dumpxml").ok()?;
-    let root = doc.root_element();
-    child(root, "target")
-        .and_then(|t| text_of(t, "path"))
-        .or_else(|| text_of(root, "path"))
 }
 
 /// A snapshot's configuration and the guest's current one, in one round
@@ -748,10 +877,17 @@ fn device_map(
 
 /// Every device that is not a disk or an interface, by `tag:name`, so a
 /// controller or a TPM is compared too.
+///
+/// Several devices share a `tag:name` (every `<controller type='pci'>`, two
+/// `<hostdev>`s): a controller is told apart by its `index`, which is its
+/// identity in the definition, and anything else by its place among its
+/// namesakes (`#2`, `#3`), so an added or removed one is never folded into
+/// another.
 fn other_devices(
     devices: Option<roxmltree::Node<'_, '_>>,
 ) -> std::collections::BTreeMap<String, String> {
     let mut out = std::collections::BTreeMap::new();
+    let mut seen = std::collections::HashMap::<String, usize>::new();
     let Some(devices) = devices else { return out };
     for dev in devices.children().filter(|n| n.is_element()) {
         let tag = dev.tag_name().name();
@@ -763,7 +899,16 @@ fn other_devices(
             .map(str::to_string)
             .or_else(|| dev.attribute("type").map(str::to_string))
             .unwrap_or_else(|| tag.to_string());
-        out.insert(format!("{tag}:{name}"), describe(dev, tag));
+        let mut key = match dev.attribute("index") {
+            Some(index) => format!("{tag}:{name}:{index}"),
+            None => format!("{tag}:{name}"),
+        };
+        let n = seen.entry(key.clone()).or_insert(0);
+        *n += 1;
+        if *n > 1 {
+            key = format!("{key}#{n}");
+        }
+        out.insert(key, describe(dev, tag));
     }
     out
 }

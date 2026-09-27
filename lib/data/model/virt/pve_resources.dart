@@ -566,6 +566,7 @@ abstract final class PveResources {
     String node,
     List<Object?> raw, {
     Map<String, List<VirtGuestRef>> users = const {},
+    Set<String> management = const {},
   }) {
     List<String> words(Object? v) => [
       for (final w in (_str(v) ?? '').split(RegExp(r'[\s,]+')))
@@ -601,6 +602,7 @@ abstract final class PveResources {
           active: _int(e['active']) == 1,
           autostart: _int(e['autostart']) == 1,
           comment: _str(e['comments'])?.trim(),
+          managementEditable: type == 'bridge' && !management.contains(iface),
           users: users[iface] ?? const [],
         ),
       );
@@ -1024,15 +1026,27 @@ abstract final class PveResources {
         for (final w in (_str(config['nameserver']) ?? '').split(RegExp(r'[\s,]+')))
           if (w.isNotEmpty) w,
       ],
-      searchDomain: switch (_str(config['searchdomain'])?.trim()) {
-        final s? when s.isNotEmpty => s,
-        _ => null,
-      },
+      // PVE keeps one property string; several domains are a
+      // space-separated list.
+      searchDomains: [
+        for (final w in (_str(config['searchdomain']) ?? '').split(RegExp(r'[\s,]+')))
+          if (w.isNotEmpty) w,
+      ],
+      nics: [
+        for (var i = 0; i < _maxNics; i++)
+          if (config['net$i'] is String) i,
+      ].length,
       passwordSet: _str(config['cipassword'])?.isNotEmpty ?? false,
+      // PVE writes `chpasswd: expire: false` for every VM and has no option
+      // for it: a password never expires there.
+      passwordExpires: false,
       network: config['net0'] is String,
       revision: _str(config['digest']) ?? '',
     );
   }
+
+  /// How many `net` keys are looked at when counting a VM's NICs.
+  static const _maxNics = 32;
 
   /// PVE sizes, for [VirtHwGrowDisk]: whole GiB where it is, KiB otherwise.
   static String sizeArg(int bytes) => bytes % (1 << 30) == 0

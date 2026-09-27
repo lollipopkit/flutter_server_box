@@ -78,6 +78,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
   final _ciGateway = TextEditingController();
   final _ciDns = TextEditingController();
   final _ciSearch = TextEditingController();
+  var _ciExpire = false;
   var _ciStatic = false;
   var _ciRemovePassword = false;
   var _ciSaving = false;
@@ -347,7 +348,8 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
     _ciAddress.text = ci.address ?? '';
     _ciGateway.text = ci.gateway ?? '';
     _ciDns.text = ci.dns.join(' ');
-    _ciSearch.text = ci.searchDomain ?? '';
+    _ciSearch.text = ci.searchDomains.join(' ');
+    _ciExpire = ci.passwordExpires;
     _ciRemovePassword = false;
     _ciBase = ci;
   }
@@ -361,7 +363,6 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
     ];
     final static = ci.network && _ciStatic;
     final gateway = _ciGateway.text.trim();
-    final search = _ciSearch.text.trim();
     return VirtCloudInitEdit(
       VirtCloudInit(
         user: _ciUser.text.trim(),
@@ -375,11 +376,10 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
             ? (static && gateway.isNotEmpty ? gateway : null)
             : ci.gateway,
         dns: ci.network ? words(_ciDns.text) : ci.dns,
-        searchDomain: ci.network
-            ? (search.isEmpty ? null : search)
-            : ci.searchDomain,
+        searchDomains: ci.network ? words(_ciSearch.text) : ci.searchDomains,
       ),
       removePassword: _ciRemovePassword,
+      passwordExpires: _ciExpire,
     );
   }
 
@@ -394,7 +394,8 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
         v.address != ci.address ||
         v.gateway != ci.gateway ||
         !listEquals(v.dns, ci.dns) ||
-        v.searchDomain != ci.searchDomain;
+        !listEquals(v.searchDomains, ci.searchDomains) ||
+        edit.passwordExpires != ci.passwordExpires;
   }
 
   _Group _cloudInitGroup(bool busy) {
@@ -496,6 +497,18 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
                     if (on) _ciPassword.clear();
                   }),
           ),
+        // The expiry is cloud-init's own `chpasswd: expire:`. PVE writes
+        // `expire: false` for every VM and has no option for it, so it is
+        // offered on libvirt only.
+        if (!_pve && !_ciRemovePassword)
+          _toggle(
+            Icons.update_outlined,
+            l10n.virtCiExpire,
+            _ciExpire,
+            key: 'ci:expire',
+            note: l10n.virtCiExpireNote,
+            onChanged: locked ? null : (on) => setState(() => _ciExpire = on),
+          ),
         Input(
           key: const ValueKey('ci:keys'),
           controller: _ciKeys,
@@ -578,13 +591,15 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
             controller: _ciSearch,
             label: l10n.virtCiSearch,
             icon: Icons.travel_explore,
-            hint: 'lab.example',
+            hint: l10n.virtCiSearchHint,
             noWrap: true,
             suggestion: false,
             enabled: !locked,
             errorText: on(VirtCreateIssue.ciSearch, l10n.virtCreateNameInvalidPve),
             onChanged: (_) => setState(() {}),
           ),
+          _text(l10n.virtCiSearchTip),
+          if (ci.nics > 1) _text(l10n.virtCiNicsTip(ci.nics)),
         ],
         // cloud-init runs most of what it does once per instance: what
         // saving here does, and when.

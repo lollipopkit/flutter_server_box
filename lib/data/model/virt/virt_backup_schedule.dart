@@ -12,10 +12,15 @@
 /// mon..fri 02:30              weekdays (mon,tue,wed,thu,fri also works)
 /// mon,wed 03:00               two days
 /// sat 03:00                   one day
-/// *-*-* 04:00                 the date part is accepted and ignored
+/// *-*-* 04:00                 a date part
 /// hourly  daily  weekly  monthly  yearly     systemd's shorthands
 /// *:0/15  */5                 intervals
 /// ```
+///
+/// The whole shape is `[WEEKDAY] [[YYYY-]MM-DD] [HH:MM[:SS]]`, each part
+/// optional and in that order, with `..` ranges in any of them — PVE's own
+/// documentation (Schedule Format) lists `sat *-1..7 15:00` (the first
+/// Saturday of each month), `mon..fri 8..17,22:0/15` and `2015-10-21 01:00`.
 ///
 /// Refused, in PVE's own words (`schedule-analyze`, the same call its
 /// editor's "Simulate" button makes): `nope` (`invalid calendar event`, with
@@ -33,7 +38,8 @@
 ///
 /// The 32 values `test/unit/virt/virt_backup_job_test.dart` checks were each
 /// put to that endpoint on PVE 9.2.2, and the local check's answer matches
-/// the host's on every one of them.
+/// the host's on every one of them. The documentation's own examples it also
+/// checks were not put to a host.
 library;
 
 /// The shorthands systemd and PVE both take as a whole schedule.
@@ -56,16 +62,16 @@ const _dayNames = {'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'};
 /// reach is checked in [_isTime], which is where PVE's own bounds live.
 final _time = RegExp(r'^\d{1,3}(?::\d{1,3}(?::\d{1,3})?)?$');
 
-/// The same field, but with an interval or a list in any of its parts:
-/// `*:0/15`, `0/15`, `0,30:0`.
+/// The same field, but with an interval, a list or a range in any of its
+/// parts: `*:0/15`, `0/15`, `0,30:0`, `8..17,22:0/15`.
 final _timeInterval = RegExp(
-  r'^(?:[\d,/\-]+|\*)(?::(?:[\d,/\-]+|\*)(?::(?:[\d,/\-]+|\*))?)?$',
+  r'^(?:[\d,/.\-]+|\*)(?::(?:[\d,/.\-]+|\*)(?::(?:[\d,/.\-]+|\*))?)?$',
 );
 
-/// A date part (`*-*-*`, `2026-10-01`), which PVE accepts and ignores. It
-/// always holds a `-`: a bare `*` is a weekday list, and a weekday list is
-/// never `*` (`invalid calendar event at '*'`, verified).
-final _datePart = RegExp(r'^[*0-9,\-]*-[*0-9,\-]+$');
+/// A date part (`*-*-*`, `2026-10-01`, `*-1..7`). It always holds a `-`: a
+/// bare `*` is a weekday list, and a weekday list is never `*` (`invalid
+/// calendar event at '*'`, verified).
+final _datePart = RegExp(r'^[*0-9,./]*-[*0-9,./\-]+$');
 
 /// The interval a list or a range carries: `*/5`, `0/15`, `1-5/2`, or none.
 final _intervalAt = RegExp(r'/(\d+)');
@@ -85,24 +91,12 @@ VirtBackupScheduleIssue? virtScheduleIssue(String schedule) {
   // unreadable.
   if (RegExp(r'[;\n\r]').hasMatch(s)) return VirtBackupScheduleIssue.invalid;
   final parts = s.split(RegExp(r'\s+'));
-  if (parts.length > 2) return VirtBackupScheduleIssue.invalid;
-  final last = parts.last;
-  if (parts.length == 2) {
-    final head = parts.first;
-    // `*-*-* 04:00`: a date part, which PVE accepts and ignores. Otherwise
-    // the head names days.
-    if (!_datePart.hasMatch(head) && !_isDayList(head)) {
-      return VirtBackupScheduleIssue.invalid;
-    }
-    return _isTime(last) || _isDayList(last)
-        ? null
-        : VirtBackupScheduleIssue.invalid;
-  }
-  if (_isTime(last)) return null;
-  // systemd's shorthands, which PVE also takes as a whole schedule on their
-  // own (`virtScheduleShorthands` catches them first).
-  if (last == 'hourly' || last == 'daily' || last == 'weekly') return null;
-  return _isDayList(last) ? null : VirtBackupScheduleIssue.invalid;
+  // `[WEEKDAY] [DATE] [TIME]`: each in its place, none twice.
+  var i = 0;
+  if (i < parts.length && _isDayList(parts[i])) i++;
+  if (i < parts.length && _datePart.hasMatch(parts[i])) i++;
+  if (i < parts.length && _isTime(parts[i])) i++;
+  return i == parts.length ? null : VirtBackupScheduleIssue.invalid;
 }
 
 /// A time field: `02:30`, `02:30:15`, `*:0/15`, `0/15`, `0,30`, `1-5`.

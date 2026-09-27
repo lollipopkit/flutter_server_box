@@ -957,6 +957,8 @@ String? virtResIssueText(VirtResIssue? issue, {required bool pve}) =>
       VirtResIssue.format => l10n.virtResFormat,
       VirtResIssue.inUse => l10n.virtVolInUse,
       VirtResIssue.shrink => l10n.virtHwIssueDiskShrink,
+      VirtResIssue.hostInvalid => l10n.virtNetHostInvalid,
+      VirtResIssue.managementIface => l10n.virtNetManagementIface,
     };
 
 /// A new pool (libvirt) or storage (PVE) — the design's form in the detail

@@ -177,6 +177,55 @@ class SshE2eTarget {
   }
 }
 
+/// Whether [host]:[port] accepts a TCP connection within [within].
+///
+/// The suites below reach hosts that are virtual machines themselves — a PVE
+/// node's guest is the libvirt host the virt tests use — and one left shut
+/// down does not fail them: it makes every connection attempt sit in
+/// `SYN_SENT` until something times it out. That is a machine that is not
+/// there, which reads as a broken test run rather than as a switched-off VM,
+/// and it costs the whole `@Timeout` before saying so.
+///
+/// So a suite asks first, with a bound, and skips when nothing answers. Not a
+/// failure: the host being down is the operator's own state, not a defect in
+/// the change under test.
+Future<bool> e2eReachable(
+  String host,
+  int port, {
+  Duration within = const Duration(seconds: 5),
+}) async {
+  try {
+    final socket = await Socket.connect(host, port, timeout: within);
+    socket.destroy();
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+/// [host]'s SSH destination and a loaded identity, or a skip that names what
+/// is missing — [prepareSshE2e] plus the TCP check above.
+///
+/// Use this instead of [prepareSshE2e] in a suite that talks to the host
+/// itself: it turns "the machine is off" into an immediate, named skip rather
+/// than a run that appears to hang.
+Future<({SshE2eTarget? target, List<SSHKeyPair> identities, String? skip, String? failure})>
+prepareReachableSshE2e(String host) async {
+  final ready = await prepareSshE2e(host);
+  final target = ready.target;
+  if (target == null) return ready;
+  if (!await e2eReachable(target.hostname, target.port)) {
+    return (
+      target: null,
+      identities: const <SSHKeyPair>[],
+      skip: '${target.hostname}:${target.port} is not reachable '
+          '(the host may be shut down)',
+      failure: null,
+    );
+  }
+  return ready;
+}
+
 Future<SSHClient> connectSshE2e(SshE2eTarget target, List<SSHKeyPair> identities) async {
   final socket = await SSHSocket.connect(
     target.hostname,
@@ -198,23 +247,31 @@ Future<SSHClient> connectSshE2e(SshE2eTarget target, List<SSHKeyPair> identities
 /// Run [command], write [input] to its stdin, close it, and collect what came
 /// back. The shape the app uses in `ServerNotifier`: `stdin.add` then
 /// `stdin.close`, with nothing read until the command is done.
+///
+/// Bounded by [within], because `session.done` never completes on a
+/// connection that died under it — a host that goes down mid-run would
+/// otherwise leave this awaiting forever. The suites here are [`@Timeout`]d,
+/// but that clock covers the test body; the *teardown* that restores the
+/// host's guests runs after it, and an unbounded await there hangs the whole
+/// run with no verdict at all.
 Future<({int? exitCode, String stdout, String stderr})> execSshE2e(
   SSHClient client,
   String command,
-  Uint8List? input,
-) async {
+  Uint8List? input, {
+  Duration within = const Duration(seconds: 30),
+}) async {
   final session = await client.execute(command);
   final stdout = <int>[];
   final stderr = <int>[];
   final collected = Future.wait([
     session.stdout.forEach(stdout.addAll),
     session.stderr.forEach(stderr.addAll),
-  ]);
+  ]).timeout(within, onTimeout: () => const []);
   if (input != null) {
     session.stdin.add(input);
     await session.stdin.close();
   }
-  await session.done;
+  await session.done.timeout(within, onTimeout: () {});
   await collected;
   return (
     exitCode: session.exitCode,

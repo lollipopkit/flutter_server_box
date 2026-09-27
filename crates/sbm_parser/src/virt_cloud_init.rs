@@ -54,7 +54,12 @@ pub struct VirtCiIpv4 {
     pub gateway: Option<String>,
 }
 
-/// The one NIC's configuration, matched by its MAC.
+/// One NIC's configuration, matched by its MAC.
+///
+/// A seed may describe more than one (`network-config`'s `ethernets`), which
+/// is how a guest with two interfaces is given an address on both. The
+/// first is the one the form edits; the rest are kept as they are, and the
+/// file is written with all of them.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct VirtCiNetwork {
     pub mac: String,
@@ -62,6 +67,8 @@ pub struct VirtCiNetwork {
     pub ipv4: Option<VirtCiIpv4>,
     #[serde(default)]
     pub dns: Vec<String>,
+    /// The search domains, in order. cloud-init takes a list; `resolv.conf`
+    /// keeps the first few.
     #[serde(default)]
     pub search: Vec<String>,
 }
@@ -81,6 +88,15 @@ pub struct VirtCloudInit {
     pub instance_id: String,
     /// None: no NIC, no network-config
     pub network: Option<VirtCiNetwork>,
+    /// The NICs after the first: written to the seed's `network-config` and
+    /// not edited by the form. Empty for the common one-NIC guest.
+    #[serde(default)]
+    pub extra_networks: Vec<VirtCiNetwork>,
+    /// The account's password expires, so the first login has to change it
+    /// (cloud-init's `chpasswd: expire:`). PVE always writes `expire: false`
+    /// and has no option for it, so this is libvirt's own.
+    #[serde(default)]
+    pub password_expire: bool,
 }
 
 /// Leaves the hash out: this is printed in test failures and logs.
@@ -169,10 +185,11 @@ impl VirtCloudInit {
         {
             return bad("instance id");
         }
-        if let Some(n) = &self.network {
+        let mut macs = std::collections::HashSet::new();
+        for n in self.networks() {
             let mac_ok = n.mac.split(':').count() == 6
                 && n.mac.split(':').all(|p| p.len() == 2 && p.chars().all(|c| c.is_ascii_hexdigit()));
-            if !mac_ok {
+            if !mac_ok || !macs.insert(n.mac.to_ascii_lowercase()) {
                 return bad("mac");
             }
             if let Some(ip) = &n.ipv4
@@ -188,6 +205,11 @@ impl VirtCloudInit {
             }
         }
         Ok(())
+    }
+
+    /// Every NIC the seed describes, the edited one first.
+    pub fn networks(&self) -> impl Iterator<Item = &VirtCiNetwork> {
+        self.network.iter().chain(self.extra_networks.iter())
     }
 
     /// `user-data`: the account, its password hash and keys, the hostname.
@@ -224,6 +246,12 @@ impl VirtCloudInit {
         // A password is for logging in with; images ship with SSH password
         // logins off.
         s.push_str(&format!("ssh_pwauth: {}\n", self.password_hash.is_some()));
+        // cloud-init's `chpasswd: expire:`: the first login with the
+        // password has to set a new one. Written as a block of its own,
+        // after the account, which is where cloud-init reads it from.
+        if self.password_hash.is_some() && self.password_expire {
+            s.push_str("chpasswd:\n  expire: true\n");
+        }
         s
     }
 
@@ -235,32 +263,39 @@ impl VirtCloudInit {
         )
     }
 
-    /// Network config version 2 for the one NIC, found by its MAC; none
+    /// Network config version 2 for the NICs, each found by its MAC; none
     /// without a NIC.
+    ///
+    /// `nic0`, `nic1`, … by order. The one-NIC output is byte for byte what
+    /// it always was: the name and the indentation of the first entry do not
+    /// change when a second appears.
     pub fn network_config(&self) -> Option<String> {
-        let n = self.network.as_ref()?;
+        self.network.as_ref()?;
         let j = json;
-        let mut s = String::from("version: 2\nethernets:\n  nic0:\n");
-        s.push_str(&format!("    match:\n      macaddress: {}\n", j(&n.mac.to_ascii_lowercase())));
-        match &n.ipv4 {
-            None => s.push_str("    dhcp4: true\n"),
-            Some(ip) => {
-                s.push_str("    dhcp4: false\n");
-                s.push_str(&format!("    addresses: [{}]\n", j(&ip.address)));
-                if let Some(gw) = &ip.gateway {
-                    // `to: default` needs a newer cloud-init than this.
-                    s.push_str(&format!("    routes:\n      - to: \"0.0.0.0/0\"\n        via: {}\n", j(gw)));
+        let mut s = String::from("version: 2\nethernets:\n");
+        for (i, n) in self.networks().enumerate() {
+            s.push_str(&format!("  nic{i}:\n"));
+            s.push_str(&format!("    match:\n      macaddress: {}\n", j(&n.mac.to_ascii_lowercase())));
+            match &n.ipv4 {
+                None => s.push_str("    dhcp4: true\n"),
+                Some(ip) => {
+                    s.push_str("    dhcp4: false\n");
+                    s.push_str(&format!("    addresses: [{}]\n", j(&ip.address)));
+                    if let Some(gw) = &ip.gateway {
+                        // `to: default` needs a newer cloud-init than this.
+                        s.push_str(&format!("    routes:\n      - to: \"0.0.0.0/0\"\n        via: {}\n", j(gw)));
+                    }
                 }
             }
-        }
-        if !n.dns.is_empty() || !n.search.is_empty() {
-            let list = |v: &[String]| v.iter().map(|x| j(x)).collect::<Vec<_>>().join(", ");
-            s.push_str("    nameservers:\n");
-            if !n.dns.is_empty() {
-                s.push_str(&format!("      addresses: [{}]\n", list(&n.dns)));
-            }
-            if !n.search.is_empty() {
-                s.push_str(&format!("      search: [{}]\n", list(&n.search)));
+            if !n.dns.is_empty() || !n.search.is_empty() {
+                let list = |v: &[String]| v.iter().map(|x| j(x)).collect::<Vec<_>>().join(", ");
+                s.push_str("    nameservers:\n");
+                if !n.dns.is_empty() {
+                    s.push_str(&format!("      addresses: [{}]\n", list(&n.dns)));
+                }
+                if !n.search.is_empty() {
+                    s.push_str(&format!("      search: [{}]\n", list(&n.search)));
+                }
             }
         }
         Some(s)
@@ -869,6 +904,44 @@ fn yaml(text: &str) -> Y {
 
 /// What [`VirtCloudInit`] writes, read back from the seed's files. Anything
 /// it does not write, or writes otherwise, makes the read `foreign`.
+
+/// One NIC as the seed writes it ([`VirtCiNetwork`]); `None` for an entry
+/// this app does not write (an unknown key, no MAC, several addresses, DHCP
+/// together with one).
+fn nic_of(nic: &Y) -> Option<VirtCiNetwork> {
+    let known = |k: &str| matches!(k, "match" | "dhcp4" | "addresses" | "routes" | "nameservers");
+    if nic.keys().iter().any(|k| !known(k)) {
+        return None;
+    }
+    let mac = nic.get("match").and_then(|m| m.get("macaddress")).and_then(Y::str)?;
+    let dhcp = nic.get("dhcp4").and_then(Y::str) == Some("true");
+    let address = nic.get("addresses").and_then(Y::strs).unwrap_or_default();
+    if address.len() > 1 || (dhcp && !address.is_empty()) {
+        return None;
+    }
+    let gateway = match nic.get("routes") {
+        Some(Y::Seq(routes)) => routes
+            .iter()
+            .find(|r| matches!(r.get("to").and_then(Y::str), Some("0.0.0.0/0" | "default")))
+            .and_then(|r| r.get("via").and_then(Y::str))
+            .map(str::to_string),
+        _ => None,
+    };
+    let ns = nic.get("nameservers");
+    Some(VirtCiNetwork {
+        mac: mac.to_string(),
+        ipv4: match (dhcp, address.first()) {
+            (false, Some(a)) => Some(VirtCiIpv4 {
+                address: a.clone(),
+                gateway,
+            }),
+            _ => None,
+        },
+        dns: ns.and_then(|n| n.get("addresses")).and_then(Y::strs).unwrap_or_default(),
+        search: ns.and_then(|n| n.get("search")).and_then(Y::strs).unwrap_or_default(),
+    })
+}
+
 fn parse_seed(files: &[(String, Vec<u8>)]) -> VirtSeedRead {
     let file = |name: &str| {
         files
@@ -940,46 +1013,37 @@ fn parse_seed(files: &[(String, Vec<u8>)]) -> VirtSeedRead {
             if ci.hostname.is_empty() {
                 ci.hostname = y.get("local-hostname").and_then(Y::str).unwrap_or_default().to_string();
             }
+            foreign |= !matches!(y.get("local-hostname").and_then(Y::str), Some(h) if h == ci.hostname);
         }
         None => foreign = true,
     }
     if let Some(text) = file("network-config") {
         let y = yaml(&text);
-        let nics = y.get("ethernets");
-        let one = match nics {
-            Some(Y::Map(m)) if m.len() == 1 => Some(&m[0].1),
-            _ => None,
-        };
-        foreign |= !is(y.get("version"), "2") || one.is_none() || y.keys().len() != 2;
-        if let Some(nic) = one {
-            for k in nic.keys() {
-                foreign |= !matches!(k, "match" | "dhcp4" | "addresses" | "routes" | "nameservers");
+        let nics = match y.get("ethernets") {
+            Some(Y::Map(m)) if !m.is_empty() => m,
+            _ => {
+                foreign = true;
+                &Vec::new()
             }
-            let mac = nic.get("match").and_then(|m| m.get("macaddress")).and_then(Y::str);
-            let dhcp = is(nic.get("dhcp4"), "true");
-            let address = nic.get("addresses").and_then(Y::strs).unwrap_or_default();
-            let gateway = match nic.get("routes") {
-                Some(Y::Seq(routes)) => routes
-                    .iter()
-                    .find(|r| matches!(r.get("to").and_then(Y::str), Some("0.0.0.0/0" | "default")))
-                    .and_then(|r| r.get("via").and_then(Y::str))
-                    .map(str::to_string),
-                _ => None,
-            };
-            let ns = nic.get("nameservers");
-            foreign |= address.len() > 1 || (dhcp && !address.is_empty());
-            ci.network = mac.map(|mac| VirtCiNetwork {
-                mac: mac.to_string(),
-                ipv4: match (dhcp, address.first()) {
-                    (false, Some(a)) => Some(VirtCiIpv4 {
-                        address: a.clone(),
-                        gateway,
-                    }),
-                    _ => None,
-                },
-                dns: ns.and_then(|n| n.get("addresses")).and_then(Y::strs).unwrap_or_default(),
-                search: ns.and_then(|n| n.get("search")).and_then(Y::strs).unwrap_or_default(),
-            });
+        };
+        foreign |= !is(y.get("version"), "2") || y.keys().len() != 2;
+        for (i, (_, nic)) in nics.iter().enumerate() {
+            if i > 0 {
+                // Every NIC but the first is read and kept, and is not
+                // something the app failed to write.
+                if let Some(net) = nic_of(nic) {
+                    ci.extra_networks.push(net);
+                } else {
+                    foreign = true;
+                }
+                continue;
+            }
+            match nic_of(nic) {
+                Some(net) => ci.network = Some(net),
+                None => foreign = true,
+            }
+            // A NIC the seed describes but this app cannot read as one: the
+            // rest of the seed is still shown.
             foreign |= ci.network.is_none();
         }
     }
@@ -1155,6 +1219,8 @@ mod tests {
                 dns: vec![],
                 search: vec![],
             }),
+            extra_networks: Vec::new(),
+            password_expire: false,
         }
     }
 

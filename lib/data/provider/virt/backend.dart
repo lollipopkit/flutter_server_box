@@ -169,6 +169,12 @@ abstract interface class VirtBackend {
   /// `VirtCapabilities.hardware`.
   Future<VirtHardware> hardware(VirtGuest guest);
 
+  /// Discards every pending change to [guest] by writing the definition
+  /// again from what it is running ([VirtHwRevertPending]); read [hardware]
+  /// again afterwards. Only where `VirtCapabilities.revertPending`
+  /// (libvirt): PVE drops its pending list item by item.
+  Future<void> revertPending(VirtGuest guest, VirtHardware base);
+
   /// Makes [change] (checked with `virtHwIssue` first) to [guest], from
   /// [base] — what [hardware] last read — and returns once the host has.
   /// What the running guest cannot take waits for its next start: read

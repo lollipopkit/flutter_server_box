@@ -265,9 +265,6 @@ abstract class LibvirtSnapChain with _$LibvirtSnapChain {
   @JsonSerializable(fieldRename: FieldRename.snake)
   const factory LibvirtSnapChain({
     @Default(<LibvirtSnapChainDisk>[]) List<LibvirtSnapChainDisk> disks,
-
-    /// A disk QEMU would not open, as the host says it.
-    String? blocked,
   }) = _LibvirtSnapChain;
 
   factory LibvirtSnapChain.fromJson(Map<String, dynamic> json) =>
@@ -284,7 +281,9 @@ abstract class LibvirtSnapChainDisk with _$LibvirtSnapChainDisk {
     /// Topmost first: the file the guest writes to now, then its backing
     /// store, down to the base image.
     @Default(<LibvirtSnapChainFile>[]) List<LibvirtSnapChainFile> files,
-    String? pool,
+
+    /// Why `qemu-img` could not read the disk, in its words.
+    String? error,
   }) = _LibvirtSnapChainDisk;
 
   factory LibvirtSnapChainDisk.fromJson(Map<String, dynamic> json) =>
@@ -397,6 +396,19 @@ abstract class LibvirtNetIp with _$LibvirtNetIp {
       _$LibvirtNetIpFromJson(json);
 }
 
+/// One static DHCP entry (`sbm_parser::virt_net::VirtNetHost`).
+@freezed
+abstract class LibvirtNetHost with _$LibvirtNetHost {
+  const factory LibvirtNetHost({
+    required String mac,
+    required String ip,
+    String? name,
+  }) = _LibvirtNetHost;
+
+  factory LibvirtNetHost.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtNetHostFromJson(json);
+}
+
 /// `sbm_parser::virt::VirtNetworkInfo`.
 @freezed
 abstract class LibvirtNetwork with _$LibvirtNetwork {
@@ -410,7 +422,15 @@ abstract class LibvirtNetwork with _$LibvirtNetwork {
     String? bridge,
     @Default(<String>[]) List<String> forwardDevs,
     @Default(<LibvirtNetIp>[]) List<LibvirtNetIp> ips,
+    @Default(<LibvirtNetHost>[]) List<LibvirtNetHost> hosts,
     int? connections,
+
+    /// The definition as saved (`net-dumpxml --inactive`), which an edit is
+    /// made from.
+    @Default('') String xml,
+
+    /// The running network is on something other than its definition.
+    @Default(false) bool pendingRestart,
   }) = _LibvirtNetwork;
 
   factory LibvirtNetwork.fromJson(Map<String, dynamic> json) =>
@@ -623,6 +643,23 @@ abstract class LibvirtCreateHost with _$LibvirtCreateHost {
       _$LibvirtCreateHostFromJson(json);
 }
 
+/// One of QEMU's firmware descriptors (`/usr/share/qemu/firmware/*.json`):
+/// what libvirt's `firmware='efi'` autoselection can pick.
+@freezed
+abstract class LibvirtFirmware with _$LibvirtFirmware {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory LibvirtFirmware({
+    required String name,
+    @Default(false) bool secureBoot,
+
+    /// Carries the vendor's keys, which a domain with Secure Boot on needs.
+    @Default(false) bool enrolledKeys,
+  }) = _LibvirtFirmware;
+
+  factory LibvirtFirmware.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtFirmwareFromJson(json);
+}
+
 /// `sbm_parser::virt::VirtHostDevices`.
 @freezed
 abstract class LibvirtHostDevices with _$LibvirtHostDevices {
@@ -645,8 +682,14 @@ abstract class LibvirtHostUsb with _$LibvirtHostUsb {
     required String product,
     String? vendorName,
     String? productName,
+
+    /// Where it sits, for an address-based hostdev: the bus and the device
+    /// number on it.
     int? bus,
     int? device,
+
+    /// The port chain (`4`, or `1.2` behind a hub), for the label.
+    String? port,
   }) = _LibvirtHostUsb;
 
   factory LibvirtHostUsb.fromJson(Map<String, dynamic> json) =>
@@ -679,11 +722,20 @@ abstract class LibvirtHardwareInfo with _$LibvirtHardwareInfo {
     required LibvirtHwConfig config,
     LibvirtHwConfig? live,
     required String configXml,
+
+    /// `dumpxml` (the running definition) as read; empty while the domain
+    /// is not running. What a revert to the running definition is made
+    /// from.
+    @Default('') String liveXml,
     @Default(false) bool autostart,
     String? description,
     int? hostCpus,
     int? hostMemoryKib,
     LibvirtHwCaps? caps,
+
+    /// QEMU's firmware descriptors: what the host can boot with, and which
+    /// carry Secure Boot's enrolled keys.
+    @Default(<LibvirtFirmware>[]) List<LibvirtFirmware> firmware,
   }) = _LibvirtHardwareInfo;
 
   factory LibvirtHardwareInfo.fromJson(Map<String, dynamic> json) =>

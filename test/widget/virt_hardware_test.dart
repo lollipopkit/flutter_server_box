@@ -104,6 +104,14 @@ const _job = VirtBackupJob(
   keep: 'keep-last=7',
   vmids: [100],
 );
+/// A job that takes a pool's guests: the app lists no pools, so it can only
+/// keep this one.
+const _poolJob = VirtBackupJob(
+  id: 'by-pool',
+  schedule: 'sat 03:00',
+  storage: 'local',
+  pool: 'prod',
+);
 const _pool = VirtStoragePool(
   id: 'pve/local',
   name: 'local',
@@ -346,13 +354,16 @@ class _FakeHost extends VirtHostNotifier {
   Future<List<VirtBackupJob>> backupJobs(String guestId) async => const [_job];
 
   @override
-  Future<List<VirtBackupJob>> allBackupJobs() async => const [_job];
+  Future<List<VirtBackupJob>> allBackupJobs() async => [_job, _poolJob];
 
   @override
   Future<void> editBackupJob(
     VirtBackupJobEdit edit, {
     bool remove = false,
-  }) async => _calls.add('job ${edit.id} remove=$remove ${edit.schedule}');
+  }) async => _calls.add(
+    'job ${edit.id} remove=$remove ${edit.schedule} '
+    'pool=${edit.pool} all=${edit.all} vmids=${edit.vmids}',
+  );
 
   @override
   Future<VirtScheduleCheck> checkSchedule(String schedule) async =>
@@ -513,9 +524,13 @@ void main() {
     expect(id, 'qemu/100');
     expect((change as VirtHwRevert).keys, ['cores']);
 
-    // Every one at once, from the banner.
+    // Every one at once, from the banner: a dialog first, showing what is
+    // discarded.
     _changes.clear();
     await tester.tap(_key('hw:revert-all'));
+    await _settle(tester);
+    expect(find.text(libL10n.ok), findsOneWidget);
+    await tester.tap(find.text(libL10n.ok));
     await _settle(tester);
     expect((_changes.single.$2 as VirtHwRevert).keys, ['cores', 'boot']);
 
@@ -707,6 +722,63 @@ void main() {
       await tap(tester, delete);
       expect(_calls, ['delete backup qemu/101']);
     });
+  });
+
+  testWidgets('a pool job saved with a new schedule keeps its pool', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final container = ProviderContainer(
+      overrides: [
+        virtHostsProvider.overrideWith(_FakeHosts.new),
+        virtHostProvider.overrideWith2((_) => _FakeHost()),
+      ],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          localizationsDelegates: const [
+            LibLocalizations.delegate,
+            ...AppLocalizations.localizationsDelegates,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          builder: ResponsivePoints.builder,
+          home: Builder(
+            builder: (context) {
+              app_locale.l10n = AppLocalizations.of(context)!;
+              context.setLibL10n();
+              return const Scaffold(
+                body: VirtBackupJobView(serverId: _pve, jobId: 'by-pool'),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+    addTearDown(() => tester.pumpWidget(const SizedBox.shrink()));
+    await _settle(tester);
+
+    // The pool is the selection shown, and no guest is there to pick.
+    expect(text('pool:prod'), findsWidgets);
+    expect(find.byKey(const ValueKey('job:guest:qemu/100')), findsNothing);
+
+    await tester.enterText(
+      find.descendant(
+        of: _key('job:schedule'),
+        matching: find.byType(TextField),
+      ),
+      'sun 04:00',
+    );
+    await _settle(tester);
+    await tap(tester, _key('job:save'));
+    expect(
+      _calls,
+      contains('job by-pool remove=false sun 04:00 pool=prod all=false vmids=[]'),
+    );
   });
 
   group('settings', () {

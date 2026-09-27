@@ -4874,6 +4874,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get virtSnapshotOverlayPool => 'Pool de sobreposição';
 
   @override
+  String get virtSnapshotOverlayBeside => 'Ao lado de cada disco';
+
+  @override
   String get virtSnapshotExternalNoMemory =>
       'Um snapshot externo nunca guarda a memória: o convidado não é parado.';
 
@@ -5181,4 +5184,153 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get virtBackupExcludeTip =>
       'Todos os convidados do nó são incluídos. Desative um para o excluir.';
+
+  @override
+  String get virtNetEdit => 'Edit configuration';
+
+  @override
+  String virtNetEditAsk(int count) {
+    return 'The running network keeps what it has until it is restarted. Restarting cuts off the $count guests on it.';
+  }
+
+  @override
+  String get virtNetEditAskNoGuest =>
+      'The running network keeps what it has until it is restarted.';
+
+  @override
+  String get virtNetEditRestart => 'Restart it to apply now';
+
+  @override
+  String get virtNetEditRestartNote =>
+      'The guests on it lose their network while it restarts.';
+
+  @override
+  String get virtNetEditSave => 'Save to the definition';
+
+  @override
+  String get virtNetEditPending =>
+      'The definition has a change the running network is not on yet.';
+
+  @override
+  String get virtNetRestart => 'Restart';
+
+  @override
+  String virtNetRestartAsk(String name, int count) {
+    return 'Restart $name? The $count guests on it lose their network until it is back.';
+  }
+
+  @override
+  String virtNetRestartAskNone(String name) {
+    return 'Restart $name? Nothing is on it.';
+  }
+
+  @override
+  String get virtNetHosts => 'Static addresses';
+
+  @override
+  String get virtNetHostAdd => 'Add an address';
+
+  @override
+  String get virtNetHostMac => 'MAC';
+
+  @override
+  String get virtNetHostIp => 'Address';
+
+  @override
+  String get virtNetHostName => 'Name (optional)';
+
+  @override
+  String get virtNetHostEmpty =>
+      'No address is handed to a MAC of its own: every guest gets one from the DHCP range.';
+
+  @override
+  String get virtNetHostInvalid =>
+      'A MAC, an address or a name the host would refuse, or the same MAC twice.';
+
+  @override
+  String get virtNetManagementIface =>
+      'This interface carries the host\'s own address. Editing or applying it would cut the host off.';
+
+  @override
+  String get virtNetManagementTip =>
+      'It carries the host\'s management address: the app does not edit it.';
+
+  @override
+  String get virtNetIfname => 'Interface';
+
+  @override
+  String get virtNetAddressCleared => 'cleared';
+
+  @override
+  String get virtNetPveEditNote =>
+      'Written into the node\'s pending configuration; apply it for the host to take it.';
+
+  @override
+  String get virtCiExpire => 'The password expires';
+
+  @override
+  String get virtCiExpireNote =>
+      'The first login with it has to set a new one. libvirt only: PVE writes \"expire: false\" and has no option for it.';
+
+  @override
+  String get virtCiSearchHint => 'lab.example dev.lab.example';
+
+  @override
+  String get virtCiSearchTip =>
+      'Several, separated by a space; resolv.conf keeps the first few.';
+
+  @override
+  String get virtCiNics => 'Interfaces';
+
+  @override
+  String virtCiNicsTip(int count) {
+    return '$count NICs in the seed\'s network config; the form edits the first.';
+  }
+
+  @override
+  String get virtUsbByVendor => 'By vendor and product';
+
+  @override
+  String get virtUsbByAddress => 'By address';
+
+  @override
+  String get virtUsbAddress => 'Bus and device';
+
+  @override
+  String get virtUsbAddressTip =>
+      'The device follows this address: whatever is plugged there is given to the guest. libvirt names a USB hostdev by bus and device number.';
+
+  @override
+  String virtUsbPortNote(int bus, String port) {
+    return 'bus $bus · port $port';
+  }
+
+  @override
+  String get virtSbUnsupported =>
+      'The host\'s firmware descriptors have no Secure Boot firmware with enrolled keys, so a domain with it cannot start.';
+
+  @override
+  String get virtCreateSecureBoot => 'Secure Boot';
+
+  @override
+  String get virtCreateSecureBootNote =>
+      'Only signed kernels and bootloaders are booted.';
+
+  @override
+  String virtUsbAddressNote(int bus, int device) {
+    return 'bus $bus · device $device';
+  }
+
+  @override
+  String get virtHwRevertPendingTitle => 'Discard the pending changes';
+
+  @override
+  String virtHwRevertPendingBody(String name) {
+    return '$name is put back on what it is running: the definition is written again from the running one, and the next start gets exactly what this one has. Its NVRAM file and firmware stay as they are.';
+  }
+
+  @override
+  String virtHwRevertAllAsk(String name) {
+    return 'Drop every change waiting for $name\'s next start?';
+  }
 }

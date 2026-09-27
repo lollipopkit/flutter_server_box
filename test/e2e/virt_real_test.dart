@@ -213,7 +213,7 @@ Future<void> _libvirt() async {
     test('libvirt e2e', () {}, skip: 'SBM_E2E_LIBVIRT_HOST not set');
     return;
   }
-  final ready = await prepareSshE2e(host);
+  final ready = await prepareReachableSshE2e(host);
   final target = ready.target;
   if (target == null) {
     final failure = ready.failure;
@@ -604,7 +604,7 @@ Future<void> _pve() async {
     );
     return;
   }
-  final ready = await prepareSshE2e(host);
+  final ready = await prepareReachableSshE2e(host);
   final target = ready.target;
   if (target == null) {
     final failure = ready.failure;
@@ -945,7 +945,7 @@ Future<void> _pveTestVm() async {
     );
     return;
   }
-  final ready = await prepareSshE2e(host);
+  final ready = await prepareReachableSshE2e(host);
   final target = ready.target;
   if (target == null) {
     final failure = ready.failure;
@@ -1445,7 +1445,7 @@ String _e2eName(String kind) =>
 Future<void> _libvirtCreate() async {
   final host = e2eEnv('SBM_E2E_LIBVIRT_HOST');
   if (host == null) return;
-  final ready = await prepareSshE2e(host);
+  final ready = await prepareReachableSshE2e(host);
   final target = ready.target;
   if (target == null) return;
 
@@ -1566,7 +1566,7 @@ Future<void> _pvePassthrough() async {
   final pci = e2eEnv('SBM_E2E_PVE_PCI');
   if (host == null || tokenId == null || tokenSecret == null) return;
   if (usb == null && pci == null) return;
-  final ready = await prepareSshE2e(host);
+  final ready = await prepareReachableSshE2e(host);
   final target = ready.target;
   if (target == null) return;
 
@@ -1758,7 +1758,7 @@ Future<void> _pveCreate() async {
   final tokenId = e2eEnv('SBM_E2E_PVE_TOKEN_ID');
   final tokenSecret = e2eEnv('SBM_E2E_PVE_TOKEN_SECRET');
   if (host == null || tokenId == null || tokenSecret == null) return;
-  final ready = await prepareSshE2e(host);
+  final ready = await prepareReachableSshE2e(host);
   final target = ready.target;
   if (target == null) return;
 
@@ -1934,7 +1934,7 @@ Future<void> _pvePassword() async {
     );
     return;
   }
-  final ready = await prepareSshE2e(host);
+  final ready = await prepareReachableSshE2e(host);
   final target = ready.target;
   if (target == null) {
     final failure = ready.failure;
@@ -2599,7 +2599,7 @@ class _AsUser implements ServerByteExec {
 Future<void> _libvirtManage() async {
   final host = e2eEnv('SBM_E2E_LIBVIRT_HOST');
   if (host == null) return;
-  final ready = await prepareSshE2e(host);
+  final ready = await prepareReachableSshE2e(host);
   final target = ready.target;
   if (target == null) return;
   final sudoUser = e2eEnv('SBM_E2E_LIBVIRT_SUDO_USER');
@@ -2992,7 +2992,7 @@ Future<void> _pveManage() async {
   final tokenId = e2eEnv('SBM_E2E_PVE_TOKEN_ID');
   final tokenSecret = e2eEnv('SBM_E2E_PVE_TOKEN_SECRET');
   if (host == null || tokenId == null || tokenSecret == null) return;
-  final ready = await prepareSshE2e(host);
+  final ready = await prepareReachableSshE2e(host);
   final target = ready.target;
   if (target == null) return;
 
@@ -3402,7 +3402,7 @@ Future<void> _libvirtCloudInit() async {
   final host = e2eEnv('SBM_E2E_LIBVIRT_HOST');
   final imagePath = e2eEnv('SBM_E2E_LIBVIRT_CLOUD_IMAGE');
   if (host == null || imagePath == null) return;
-  final ready = await prepareSshE2e(host);
+  final ready = await prepareReachableSshE2e(host);
   final target = ready.target;
   if (target == null) return;
 
@@ -3549,7 +3549,7 @@ Future<void> _libvirtCloudImages() async {
   final diskPoolName = e2eEnv('SBM_E2E_LIBVIRT_DISK_POOL');
   final tools = list('SBM_E2E_LIBVIRT_SEED_TOOLS');
   final tpm = e2eEnv('SBM_E2E_LIBVIRT_TPM') == '1';
-  final ready = await prepareSshE2e(host);
+  final ready = await prepareReachableSshE2e(host);
   final target = ready.target;
   if (target == null) return;
 
@@ -3830,7 +3830,7 @@ Future<void> _pveCloudInit() async {
   final addr = e2eEnv('SBM_E2E_PVE_CLOUD_ADDR');
   final gw = e2eEnv('SBM_E2E_PVE_CLOUD_GW');
   if ([host, tokenId, tokenSecret, imageId, addr, gw].contains(null)) return;
-  final ready = await prepareSshE2e(host!);
+  final ready = await prepareReachableSshE2e(host!);
   final target = ready.target;
   if (target == null) return;
 
@@ -4112,7 +4112,7 @@ Future<void> _p8Snapshots() async {
 Future<void> _p8Libvirt() async {
   final host = e2eEnv('SBM_E2E_LIBVIRT_HOST');
   if (host == null) return;
-  final ready = await prepareSshE2e(host);
+  final ready = await prepareReachableSshE2e(host);
   final target = ready.target;
   if (target == null) return;
 
@@ -4137,7 +4137,7 @@ Future<void> _p8Libvirt() async {
       fail('$name never settled');
     }
 
-    Future<void> onHost(String command) async {
+    Future<String> onHost(String command) async {
       final session = await client!.execute(command);
       final (out, err) = await (
         utf8.decodeStream(session.stdout),
@@ -4145,6 +4145,7 @@ Future<void> _p8Libvirt() async {
       ).wait;
       await session.done;
       expect(session.exitCode, 0, reason: '$command\n$out$err');
+      return out;
     }
 
     setUpAll(() async {
@@ -4183,7 +4184,7 @@ Future<void> _p8Libvirt() async {
       client?.close();
     });
 
-    test('a disk-only snapshot while running: chain read back, diff, revert, delete',
+    test('a disk-only snapshot while running: chain read back, diff, revert',
         () async {
       final snap = await virt.load();
       expect(snap.capabilities.snapshotExternal, isTrue);
@@ -4254,7 +4255,7 @@ Future<void> _p8Libvirt() async {
         isTrue,
         reason: '$diff',
       );
-      // The diff of the guest's *own* definition against itself is empty.
+      // Read again from the host, the change is still there.
       expect(
         await virt.snapshotDiff(
           (await virt.load()).guests.firstWhere((g) => g.id == guestId),
@@ -4273,39 +4274,65 @@ Future<void> _p8Libvirt() async {
         (await virt.load()).guests.firstWhere((g) => g.id == guestId),
       );
       expect(deeper.depth, 3);
+      final ext1File = after.disks.single.files.first.path;
+      expect(deeper.disks.single.files[1].path, ext1File);
 
-      // Reverting to the newest (a leaf) is allowed and flattens the chain.
+      // Reverting to the newest (a leaf) drops the overlay the guest was
+      // writing and starts it on a new one over the file ext2 kept (ext1's
+      // overlay): as deep as before, on a file that was not there.
       await virt.revertSnapshot(stillRunning, 'sbxe2e-ext2', start: true);
       final reverted = await settle((g) => g.state == VirtGuestState.running);
-      final flat = await virt.snapshotChain(reverted);
-      expect(
-        flat.depth,
-        lessThan(3),
-        reason: 'a revert collapses the chain (libvirt 11.3)',
-      );
-      expect(flat.disks.single.isChain, isTrue);
+      final back = (await virt.snapshotChain(reverted)).disks.single;
+      expect(back.files, hasLength(3));
+      expect(back.files.first.path, isNot(deeper.disks.single.files.first.path));
+      expect(back.files.first.backing, ext1File);
+      expect(back.files.first.format, 'qcow2');
 
-      // The first snapshot now has a child: its revert is refused by the
-      // app's own rule before the host is asked.
+      // The first snapshot has a child: its revert is refused by the app's
+      // own rule before the host is asked.
       final left = await virt.snapshots(reverted);
       expect(
-        left
-            .singleWhere((s) => s.name == 'sbxe2e-ext1')
-            .hasChildren(left),
+        left.singleWhere((s) => s.name == 'sbxe2e-ext1').hasChildren(left),
         isTrue,
-        reason: 'the older snapshot now has a child, so its revert would '
-            'strand it',
+      );
+      expect(
+        left.singleWhere((s) => s.name == 'sbxe2e-ext2').layers.single.file,
+        back.files.first.path,
+        reason: 'the snapshot now names the file the revert made',
       );
 
-      // Both go, while the guest runs.
-      await virt.deleteSnapshot(reverted, 'sbxe2e-ext2');
-      await virt.deleteSnapshot(reverted, 'sbxe2e-ext1');
-      final cleaned = await virt.load();
-      final after2 = await virt.snapshotChain(
-        cleaned.guests.firstWhere((g) => g.id == guestId),
-      );
-      expect(after2.disks.single.isChain, isFalse);
-      expect(await virt.snapshots(cleaned.guests.firstWhere((g) => g.id == guestId)), isEmpty);
+      // Deleting it commits the overlay into ext1's, which was a backing
+      // file when QEMU started. On an AppArmor host the profile denies that
+      // (`deny ... w`, Debian #932456) and the app refuses it before the
+      // host is asked — the host would refuse it too, and mark the disk.
+      // Elsewhere it goes, and the chain is one shorter.
+      final confined = (await onHost(
+        'cat /sys/module/apparmor/parameters/enabled 2>/dev/null || true',
+      )).trim() == 'Y';
+      try {
+        await virt.deleteSnapshot(reverted, 'sbxe2e-ext2');
+        expect(confined, isFalse, reason: 'the delete went through');
+        final shorter = await virt.snapshotChain(
+          (await virt.load()).guests.firstWhere((g) => g.id == guestId),
+        );
+        expect(shorter.depth, 2);
+      } on VirtErr catch (e) {
+        expect(confined, isTrue, reason: e.message);
+        expect(e.type, VirtErrType.unsupported, reason: e.message);
+        expect(e.message, contains('#932456'));
+        expect(e.message, contains(ext1File));
+        expect(
+          (await virt.snapshots(reverted)).map((s) => s.name),
+          contains('sbxe2e-ext2'),
+        );
+        // Nothing was sent: no snapshot is marked by a failed delete.
+        final marked = await onHost(
+          'for s in sbxe2e-ext1 sbxe2e-ext2; do virsh -q snapshot-dumpxml '
+          "--domain '$name' --snapshotname \$s; done | "
+          'grep -c snapshotDeleteInProgress || true',
+        );
+        expect(marked.trim(), '0');
+      }
     });
 
     test('a raw disk is refused before anything is sent', () async {
@@ -4322,6 +4349,22 @@ Future<void> _p8Libvirt() async {
       // Rust tests; here it is only that the read answers.
       expect(chain.disks, isNotEmpty);
     });
+
+    test('deleting the guest takes the files its snapshots left', () async {
+      final g = await find();
+      expect(g, isNotNull);
+      if (g!.state != VirtGuestState.stopped) {
+        await virt.power(g, VirtPowerAction.forceStop);
+      }
+      final stopped = await settle((g) => g.state == VirtGuestState.stopped);
+      await virt.delete(stopped, removeDisks: true);
+      expect(await find(), isNull);
+      // The pool is the run's own: nothing of the guest is left in it.
+      await virt.manage(VirtPoolRefresh(pool));
+      final pools = await virt.storagePools();
+      final vols = await virt.volumes(pools.firstWhere((p) => p.name == poolName));
+      expect(vols, isEmpty, reason: '${vols.map((v) => v.path)}');
+    });
   });
 }
 
@@ -4330,7 +4373,7 @@ Future<void> _p8Pve() async {
   final tokenId = e2eEnv('SBM_E2E_PVE_TOKEN_ID');
   final tokenSecret = e2eEnv('SBM_E2E_PVE_TOKEN_SECRET');
   if (host == null || tokenId == null || tokenSecret == null) return;
-  final ready = await prepareSshE2e(host);
+  final ready = await prepareReachableSshE2e(host);
   final target = ready.target;
   if (target == null) return;
 

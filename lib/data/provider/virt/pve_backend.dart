@@ -689,16 +689,18 @@ class PveBackend implements VirtBackend {
     try {
       final data = await _call((dio) => dio.get(_url('${_guestPath(guest)}/config')));
       if (data is! Map) return const [];
-      final out = <String>{};
-      for (final value in data.values) {
-        if (value is! String) continue;
-        // `<storage>:<volume>` — an id, then the volume name.
-        final at = value.indexOf(':');
-        if (at <= 0) continue;
-        final storage = value.substring(0, at);
-        if (storage.contains(',')) continue;
-        out.add(storage);
-      }
+      // The disks a snapshot takes: not a CD-ROM, not an unused volume, and
+      // named `<storage>:<volume>` rather than by a host path.
+      final out = <String>{
+        for (final d in PveResources.parseConfig(
+          data.cast<String, Object?>(),
+          guest.kind,
+        ).disks)
+          if (d.device != 'cdrom' && !(d.target?.startsWith('unused') ?? false))
+            if (d.source case final src?
+                when !src.startsWith('/') && src.indexOf(':') > 0)
+              src.substring(0, src.indexOf(':')),
+      };
       return out.toList()..sort();
     } on VirtErr catch (e) {
       Loggers.app.info('PVE config of ${guest.vmid}: ${e.message}');
@@ -1107,7 +1109,11 @@ class PveBackend implements VirtBackend {
       'boot': 'order=${[disk, if (iso != null) 'ide2'].join(';')}',
       if (spec.uefi) ...{
         'bios': 'ovmf',
-        'efidisk0': '$storage:1,efitype=4m,pre-enrolled-keys=0',
+        // Keys are enrolled when the EFI disk is made: Secure Boot is the
+        // disk with `pre-enrolled-keys=1`, which is what PVE's own UEFI
+        // default writes.
+        'efidisk0':
+            '$storage:1,efitype=4m,pre-enrolled-keys=${spec.secureBoot ? 1 : 0}',
       },
       if (spec.tpm) 'tpmstate0': '$storage:1,version=v2.0',
       if (ci != null) ...{
@@ -1120,7 +1126,7 @@ class PveBackend implements VirtBackend {
             ? 'ip=dhcp'
             : ['ip=$address', if (ci.gateway case final gw?) 'gw=$gw'].join(','),
         if (ci.dns.isNotEmpty) 'nameserver': ci.dns.join(' '),
-        'searchdomain': ?ci.searchDomain,
+        'searchdomain': ?(ci.searchDomains.isEmpty ? null : ci.searchDomains.join(' ')),
       },
     };
   }
@@ -1342,14 +1348,19 @@ class PveBackend implements VirtBackend {
       );
       return;
     }
-    // PVE's own `PUT` keeps what it is not sent, so a field this edit left
-    // empty is named in `delete` — what its web UI's `deleteEmpty` does per
+    final which = _jobGuests(
+      pool: edit.pool,
+      all: edit.all,
+      vmids: edit.vmids,
+      exclude: edit.exclude,
+    );
+    // PVE's own `PUT` keeps what it is not sent, so a field this edit does
+    // not set is named in `delete` — what its web UI's `deleteEmpty` does per
     // field. Deleting one that was not set is a no-op, and a create takes
     // none (there is nothing to clear).
     final deletes = <String>[
-      if (!edit.all || edit.vmids.isEmpty) 'vmid',
-      if (edit.exclude.isEmpty) 'exclude',
-      if (edit.pool == null) 'pool',
+      for (final k in const ['vmid', 'exclude', 'pool'])
+        if (!which.containsKey(k)) k,
       if (edit.node == null) 'node',
       if (edit.comment == null) 'comment',
       if (edit.notesTemplate == null) 'notes-template',
@@ -1361,12 +1372,9 @@ class PveBackend implements VirtBackend {
       'mode': edit.mode,
       'compress': edit.compress,
       'enabled': edit.enabled ? 1 : 0,
-      'all': edit.all ? 1 : 0,
-      'vmid': ?edit.all || edit.vmids.isEmpty ? null : edit.vmids.join(','),
-      'exclude': ?edit.all && edit.exclude.isNotEmpty
-          ? edit.exclude.join(',')
-          : null,
-      'pool': ?edit.pool,
+      // Cleared unless [which] takes all guests, which sets it to 1.
+      'all': 0,
+      ...which,
       'node': ?edit.node,
       'comment': ?edit.comment,
       'notes-template': ?edit.notesTemplate,
@@ -1446,36 +1454,65 @@ class PveBackend implements VirtBackend {
     });
   }
 
-  /// A job's "Run now": what PVE's own web UI does — the job's fields without
-  /// the ones that describe the schedule, posted to `vzdump` on every online
-  /// node the job could run on (`/cluster/backup/{id}/included_volumes` is
-  /// what its detail view *lists*, not what runs it).
-  ///
-  /// A job with a node runs there; one without runs on this host, which is
-  /// the node the guest view is about. Every online node would mean a backup
-  /// per node for a job that has no node — PVE's own UI does that, and its
-  /// `all` on each of them is the same set of guests.
+  /// Which guests a job takes, as `vzdump` and `/cluster/backup` name
+  /// them: a pool, all of them (less `exclude`), or a list — one of the
+  /// three, the pool first. PVE's own editor offers the same three.
+  static Map<String, Object> _jobGuests({
+    required String? pool,
+    required bool all,
+    required List<int> vmids,
+    required List<int> exclude,
+  }) => switch (pool) {
+    final pool? => {'pool': pool},
+    null when all => {
+      'all': 1,
+      if (exclude.isNotEmpty) 'exclude': exclude.join(','),
+    },
+    null => {if (vmids.isNotEmpty) 'vmid': vmids.join(',')},
+  };
+
+  /// A job's "Run now", as PVE's own web UI does it (`run_backup_now` in
+  /// `dc/Backup.js`): the job's fields without the ones that describe the
+  /// schedule, posted to `vzdump` on the job's node — refused when it is not
+  /// online — or, for a job with no node, on every online node. `vzdump`
+  /// takes only the guests on the node it runs on, so one request per node
+  /// is what covers a cluster. (`/cluster/backup/{id}/included_volumes` is
+  /// what its detail view *lists*, not what runs it.)
   @override
   Future<void> runBackupJob(VirtBackupJob job) async {
-    final node = job.node ?? _nodes.firstOrNull?.name;
-    if (node == null) {
+    final online = [
+      for (final n in _nodes)
+        if (n.online) n.name,
+    ];
+    final nodes = switch (job.node) {
+      final node? when online.contains(node) => [node],
+      final node? => throw VirtErr(
+        type: VirtErrType.unsupported,
+        message: "Node '$node' of backup job ${job.id} is not online",
+      ),
+      null => online,
+    };
+    if (nodes.isEmpty) {
       throw const VirtErr(
         type: VirtErrType.unsupported,
-        message: 'No node to run the job on',
+        message: 'No online node to run the job on',
       );
     }
-    await _runVzdump(node, {
+    final body = {
       'storage': ?job.storage,
       'mode': ?job.mode,
       'compress': ?job.compress,
-      'all': ?job.all ? 1 : null,
-      'vmid': ?job.all || job.vmids.isEmpty ? null : job.vmids.join(','),
-      'exclude': ?job.exclude.isEmpty ? null : job.exclude.join(','),
-      'pool': ?job.pool,
+      ..._jobGuests(
+        pool: job.pool,
+        all: job.all,
+        vmids: job.vmids,
+        exclude: job.exclude,
+      ),
       'notes-template': ?job.notesTemplate,
       'mailnotification': ?job.mailNotification,
       'prune-backups': ?job.prune,
-    });
+    };
+    await Future.wait([for (final n in nodes) _runVzdump(n, body)]);
   }
 
   /// One `vzdump` request, waited for. It is the node's task rather than a
@@ -1930,9 +1967,15 @@ class PveBackend implements VirtBackend {
                 'tpmstate0': '$storage:1,version=v2.0',
               }, digest: digest);
             case VirtHwDeviceKind.usb:
-              final id = host!.id;
+              // PVE's own form of the address is `bus-port` (`host=1-1.2`),
+              // which is what its web UI writes and what its mapping uses
+              // (`PVE::Mapping::USB`: `"$busnum-$usbpath"`). The device the
+              // app holds carries the port chain, so the address is built
+              // from it rather than from the device number.
               await _setConfig(guest, {
-                _freeKey(config, 'usb', 14): host.mapping ? 'mapping=$id' : 'host=$id',
+                _freeKey(config, 'usb', 14): host!.mapping
+                    ? 'mapping=${host.id}'
+                    : 'host=${virtUsbAddress(host, VirtHostKind.pve)}',
               }, digest: digest);
             case VirtHwDeviceKind.pci:
               final id = host!.id;
@@ -1940,6 +1983,9 @@ class PveBackend implements VirtBackend {
                 _freeKey(config, 'hostpci', 16): host.mapping ? 'mapping=$id' : id,
               }, digest: digest);
           }
+        case VirtHwRevertPending():
+          // PVE drops changes item by item; there is nothing to write back.
+          throw const VirtErr(type: VirtErrType.unsupported);
         case VirtHwRemoveDevice(:final key):
           if (key.startsWith('tpmstate')) {
             // The state is the TPM: removing it removes what it held.
@@ -1952,6 +1998,16 @@ class PveBackend implements VirtBackend {
       throw _changeErr(e);
     }
     return const VirtHwOutcome();
+  }
+
+  /// PVE drops pending changes item by item (`revert`); there is no
+  /// "write it all back" — its `pending` list is the authority, and a
+  /// config key set again is enough.
+  @override
+  Future<void> revertPending(VirtGuest guest, VirtHardware base) async {
+    final keys = [for (final p in base.pending) p.key];
+    if (keys.isEmpty) return;
+    await changeHardware(guest, base, VirtHwRevert(keys));
   }
 
   /// PVE's `ci*` options, from the VM's configuration.
@@ -1990,7 +2046,7 @@ class PveBackend implements VirtBackend {
         final raw? when raw.isNotEmpty => PveResources.withOptions(raw, ip),
         _ => [for (final e in ip.entries) if (e.value != null) '${e.key}=${e.value}'].join(','),
       };
-      final search = ci.searchDomain;
+      final search = ci.searchDomains.join(' ');
       await _setConfig(
         guest,
         {
@@ -2000,14 +2056,14 @@ class PveBackend implements VirtBackend {
           if (keys.isNotEmpty) 'sshkeys': Uri.encodeComponent('${keys.join('\n')}\n'),
           if (base.network) 'ipconfig0': ipconfig,
           if (ci.dns.isNotEmpty) 'nameserver': ci.dns.join(' '),
-          'searchdomain': ?search,
+          'searchdomain': ?(search.isEmpty ? null : search),
         },
         delete: [
           if (edit.removePassword && password.isEmpty && rawOf('cipassword') != null)
             'cipassword',
           if (keys.isEmpty && rawOf('sshkeys') != null) 'sshkeys',
           if (ci.dns.isEmpty && rawOf('nameserver') != null) 'nameserver',
-          if (search == null && rawOf('searchdomain') != null) 'searchdomain',
+          if (search.isEmpty && rawOf('searchdomain') != null) 'searchdomain',
         ],
         digest: base.revision.isEmpty ? null : base.revision,
       );
@@ -2110,6 +2166,11 @@ class PveBackend implements VirtBackend {
               id: '${u['vendid']}:${u['prodid']}',
               label: [u['manufacturer'], u['product']].nonNulls.join(' ').trim(),
               detail: '${u['vendid']}:${u['prodid']}',
+              usbBus: _intOf(u['busnum']),
+              usbPort: switch (u['usbpath']) {
+                final p? => '$p',
+                _ => null,
+              },
             ),
       ],
       pci: [
@@ -2331,7 +2392,12 @@ class PveBackend implements VirtBackend {
         for (final g in _guests)
           if (g.node == node) g,
       ]);
-      out.addAll(PveResources.parseNetworks(node, data, users: users));
+      final management = virtPveManagementIfaces(
+        PveResources.parseNetworks(node, data),
+        connectedAddr: _base.host.isEmpty ? null : _base.host,
+      );
+      _managementIfaces[node] = management;
+      out.addAll(PveResources.parseNetworks(node, data, users: users, management: management));
     }
     return out;
   }
@@ -2488,7 +2554,57 @@ class PveBackend implements VirtBackend {
             ),
             action: true,
           );
+        case VirtNetworkEditBridge(
+          :final network,
+          :final ports,
+          :final cidr,
+          :final gateway,
+          :final vlanAware,
+          :final autostart,
+        ):
+          final node = network.node!;
+          // The interface carries the node's management address: PVE would
+          // cut itself off applying this, and there is no console here.
+          if (!await _mayEditIfaceRead(node, network)) {
+            throw const VirtErr(
+              type: VirtErrType.unsupported,
+              message: 'This interface carries the host\'s own address',
+            );
+          }
+          final address = cidr?.trim();
+          final gw = gateway?.trim();
+          // PVE keeps what is not sent, and a `0` is not sent: turning
+          // something off means naming the key in `delete`.
+          final delete = <String>[
+            if (address != null && address.isEmpty) 'cidr,gateway',
+            // VLAN awareness is a pair of properties: PVE's own editor
+            // clears the allowed-VLAN list with it (`bridge_vids` is what
+            // writes the `bridge-vids` line, and pvesh drops a bare `0`).
+            if (vlanAware == false) 'bridge_vlan_aware,bridge_vids',
+          ];
+          await _call(
+            (dio) => dio.put(
+              _url('/nodes/${_seg(node)}/network/${_seg(network.name)}'),
+              data: {
+                'type': network.mode,
+                if (ports != null) 'bridge_ports': ports.trim(),
+                if (address != null && address.isNotEmpty) 'cidr': address,
+                if (gw != null && gw.isNotEmpty) 'gateway': gw,
+                if (vlanAware == true) 'bridge_vlan_aware': 1,
+                if (autostart != null) 'autostart': autostart ? 1 : 0,
+                if (delete.isNotEmpty) 'delete': delete.join(','),
+              },
+              options: _form,
+            ),
+            action: true,
+          );
         case VirtNetworkDelete(:final network):
+          if (!await _mayEditIfaceRead(network.node!, network)) {
+            throw const VirtErr(
+              type: VirtErrType.unsupported,
+              message: 'This interface carries the host\'s own address',
+            );
+          }
           await _call(
             (dio) => dio.delete(
               _url(
@@ -2511,12 +2627,52 @@ class PveBackend implements VirtBackend {
             VirtVolumeResize() ||
             VirtVolumeClone() ||
             VirtNetworkSetActive() ||
-            VirtNetworkSetAutostart():
+            VirtNetworkSetAutostart() ||
+            VirtNetworkRestart() ||
+            // libvirt's network edit: PVE has its own (`VirtNetworkEditBridge`).
+            VirtNetworkEdit():
           throw const VirtErr(type: VirtErrType.unsupported);
       }
     } on VirtErr catch (e) {
       throw _manageErr(e);
     }
+  }
+
+  /// The interfaces that carry a node's management address, from the node's
+  /// own listing: the one the default route goes through, and the one this
+  /// app is connected to. Cached per node for this session — the listing is
+  /// read again on every network load anyway, and this is the same answer.
+  final _managementIfaces = <String, Set<String>>{};
+
+  /// Whether [network] may be edited, applied or deleted through this app.
+  ///
+  /// PVE allows a bridge; a physical interface's own settings belong to the
+  /// host. And never one carrying the node's own address — its default
+  /// route, or the address this app is connected to: applying its
+  /// configuration would cut the host off, with no console to fix it from.
+  ///
+  /// The set comes from the node's listing, read when this session has not
+  /// seen one. A listing that cannot be read refuses the interface, which
+  /// is what an unknown management address deserves.
+  Future<bool> _mayEditIfaceRead(String node, VirtNetwork network) async {
+    if (network.mode != 'bridge') return false;
+    var known = _managementIfaces[node];
+    if (known == null) {
+      try {
+        final data = await _call(
+          (dio) => dio.get(_url('/nodes/${_seg(node)}/network')),
+        );
+        known = virtPveManagementIfaces(
+          PveResources.parseNetworks(node, data is List ? data : const []),
+          connectedAddr: _base.host.isEmpty ? null : _base.host,
+        );
+        _managementIfaces[node] = known;
+      } on VirtErr catch (e) {
+        Loggers.app.info('PVE network listing for $node: ${e.message}');
+        return false;
+      }
+    }
+    return virtPveManagedIface(network, management: known);
   }
 
   String _storagePath(VirtStoragePool pool) {

@@ -37,6 +37,8 @@ fn cloud_init() -> VirtCloudInit {
             dns: vec!["10.231.80.1".into()],
             search: vec!["lab.example".into()],
         }),
+        extra_networks: Vec::new(),
+        password_expire: false,
     }
 }
 
@@ -421,7 +423,7 @@ fn only_the_apps_own_seed_element_is_read() {
 fn deleting_a_domain_deletes_its_seed_and_nothing_else() {
     let d = bin_dir("undefine", None);
     let seed = format!("/pool/{NAME}-cidata.iso");
-    let script = virt::undefine_script(NAME, &["sda".into()], Some(&seed)).unwrap();
+    let script = virt::undefine_script(NAME, &["sda".into()], Some(&seed), &[], &[]).unwrap();
     assert_eq!(virt::parse_undefine(&run_sh(&script, &d)), Ok(()));
     let log = read(&d, "log");
     assert!(log.contains(&format!("undefine\n--domain\n{NAME}\n")), "{log}");
@@ -644,6 +646,76 @@ fn a_seed_read_is_what_was_written() {
     assert!(ci::iso_root_files(&[0u8; 40000]).is_err());
     // Cut short after the descriptors: out of range, not a panic.
     assert!(ci::iso_root_files(&fixture_bytes("seed_genisoimage.iso")[..20 * 2048]).is_err());
+}
+
+#[test]
+fn several_nics_and_several_search_domains() {
+    let mut ci = cloud_init();
+    ci.network.as_mut().unwrap().search = vec!["lab.example".into(), "dev.lab.example".into()];
+    ci.extra_networks = vec![VirtCiNetwork {
+        mac: "52:54:00:00:00:02".into(),
+        ipv4: None,
+        dns: Vec::new(),
+        search: Vec::new(),
+    }];
+    ci.password_expire = true;
+    // Both NICs, in order, and the search domains as a list. Spelled out
+    // line by line, so a change in the layout is a failing test.
+    let expected: Vec<&str> = vec![
+        "version: 2",
+        "ethernets:",
+        "  nic0:",
+        "    match:",
+        "      macaddress: \"52:54:00:12:34:56\"",
+        "    dhcp4: false",
+        "    addresses: [\"10.231.80.5/24\"]",
+        "    routes:",
+        "      - to: \"0.0.0.0/0\"",
+        "        via: \"10.231.80.1\"",
+        "    nameservers:",
+        "      addresses: [\"10.231.80.1\"]",
+        "      search: [\"lab.example\", \"dev.lab.example\"]",
+        "  nic1:",
+        "    match:",
+        "      macaddress: \"52:54:00:00:00:02\"",
+        "    dhcp4: true",
+    ];
+    assert_eq!(ci.network_config().unwrap(), expected.join("\n") + "\n");
+    // The expiry is cloud-init's own `chpasswd: expire:`; without it,
+    // nothing of the sort is written.
+    assert!(ci.user_data().contains("chpasswd:\n  expire: true\n"), "{}", ci.user_data());
+    ci.password_expire = false;
+    assert!(!ci.user_data().contains("chpasswd"), "{}", ci.user_data());
+
+    // A single NIC's network-config is byte for byte what it always was.
+    let expected_one: Vec<&str> = expected[..13].to_vec();
+    assert_eq!(
+        cloud_init().network_config().unwrap(),
+        expected_one.join("\n").replacen("\"lab.example\", \"dev.lab.example\"", "\"lab.example\"", 1) + "\n"
+    );
+
+    // A MAC twice, a MAC that is not one, a search domain that is not one:
+    // all refused before a host.
+    let mut bad = cloud_init();
+    bad.extra_networks = vec![bad.network.clone().unwrap()];
+    assert!(bad.check().is_err());
+    let mut bad = cloud_init();
+    bad.extra_networks = vec![VirtCiNetwork { mac: "zz".into(), ..Default::default() }];
+    assert!(bad.check().is_err());
+    let mut bad = cloud_init();
+    bad.network.as_mut().unwrap().search = vec!["a b".into()];
+    assert!(bad.check().is_err());
+    let mut ok = cloud_init();
+    ok.network.as_mut().unwrap().search = vec!["a.example".into(), "b.example".into()];
+    assert!(ok.check().is_ok());
+
+    // The seed is made of all of it: both NICs are in the file the tools are
+    // given, and the second one is not dropped.
+    ci.password_expire = true;
+    let script = ci::seed_script(&ci, "pool", "vol", "", &["genisoimage"]).unwrap();
+    assert!(script.contains("network-config"), "{script}");
+    assert!(script.contains("52:54:00:00:00:02"), "{script}");
+    assert!(script.contains("expire: true"), "{script}");
 }
 
 #[cfg(unix)]

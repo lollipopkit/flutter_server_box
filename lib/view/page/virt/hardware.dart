@@ -132,6 +132,10 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
 
   /// A new CD-ROM's media; null for an empty drive.
   VirtVolume? _cdMedia;
+
+  /// How a USB device is named, where both are on offer (libvirt): by what
+  /// it is, or by where it is plugged in.
+  var _usbByAddress = false;
   Future<VirtHostDevices>? _hostDevs;
 
 
@@ -1064,6 +1068,12 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
     ]),
   ];
 
+  /// Where a USB device is, as the label of the address form: its bus and
+  /// its address on it.
+  String _addressLabel(VirtHostDevice d) => _host == VirtHostKind.pve
+      ? 'bus ${d.usbBus} · port ${d.usbPort}'
+      : l10n.virtUsbAddressNote(d.usbBus ?? 0, d.usbDevice ?? 0);
+
   String _newDeviceName(_NewDevice kind) => switch (kind) {
     _NewDevice.cdrom => l10n.virtHwCdrom,
     _NewDevice.usb => _deviceName(VirtHwDeviceKind.usb),
@@ -1134,6 +1144,9 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
         kind: kind.hw!,
         host: pick,
         storage: _addPool?.name,
+        usbNaming: _usbByAddress
+            ? VirtUsbNaming.address
+            : VirtUsbNaming.vendorProduct,
       ),
     };
     final issue = change == null ? null : virtHwIssue(hw, change, host: _host);
@@ -1189,6 +1202,21 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
       ],
       if (kind == _NewDevice.tpm && _pve) ..._storageChoice(),
       if (kind == _NewDevice.tpm) _text(l10n.virtHwTpmNote, indent: true),
+      if (kind == _NewDevice.usb)
+        _seg(
+          Icons.usb,
+          l10n.virtUsbByVendor,
+          [l10n.virtUsbByVendor, l10n.virtUsbByAddress],
+          _usbByAddress ? l10n.virtUsbByAddress : l10n.virtUsbByVendor,
+          key: 'dev:add:usb-naming',
+          indent: true,
+          onSelected: (v) => setState(() {
+            _usbByAddress = v == l10n.virtUsbByAddress;
+            _devPick = null;
+          }),
+        ),
+      if (kind == _NewDevice.usb && _usbByAddress)
+        _text(l10n.virtUsbAddressTip, indent: true),
       if (kind == _NewDevice.usb || kind == _NewDevice.pci)
         FutureBuilder<VirtHostDevices>(
           future: _hostDevs,
@@ -1203,7 +1231,20 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                 child: Center(child: SizedLoading.small),
               );
             }
-            final list = kind == _NewDevice.usb ? devs.usb : devs.pci;
+            // The address form needs the bus and the device number, which
+            // a host that did not report them cannot give: the two are
+            // offered as the backend named them, and the view only filters
+            // to the ones that fit the naming chosen.
+            final all = kind == _NewDevice.usb ? devs.usb : devs.pci;
+            final list = kind != _NewDevice.usb
+                ? all
+                : [
+                    for (final x in all)
+                      // The address form needs where the host said the
+                      // device sits; a device it did not is offered by
+                      // vendor and product only.
+                      if (!_usbByAddress || virtUsbHasAddress(x)) x,
+                  ];
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -1234,7 +1275,13 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                         icon: x.mapping ? Icons.link : _deviceIcon(kind!.hw!),
                         label: x.label,
                         sub: [
-                          x.detail,
+                          if (_usbByAddress && virtUsbHasAddress(x))
+                            _addressLabel(x)
+                          else ...[
+                            ?x.detail,
+                            if (x.usbPort case final p?)
+                              l10n.virtUsbPortNote(x.usbBus ?? 0, p),
+                          ],
                           if (x.iommuGroup case final g?) l10n.virtHwIommuGroup(g),
                           if (x.groupSize > 1) l10n.virtHwIommuShared(x.groupSize),
                         ].nonNulls.join(' · '),

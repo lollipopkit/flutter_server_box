@@ -207,6 +207,93 @@ final class VirtNetworkCreate extends VirtResourceChange {
   String get scope => 'nets';
 }
 
+/// What an existing network is edited to (phase 10).
+///
+/// libvirt: mode, host bridge, IPv4 address and prefix, the DHCP range and
+/// the static hosts, written into the definition by `net-define`. The
+/// running network takes it at its next start unless [restart], which stops
+/// and starts it — and cuts off every guest on it meanwhile.
+final class VirtNetworkEdit extends VirtResourceChange {
+  const VirtNetworkEdit(
+    this.network, {
+    required this.mode,
+    this.bridge,
+    this.address,
+    this.prefix,
+    this.dhcpStart,
+    this.dhcpEnd,
+    this.hosts = const [],
+    this.restart = false,
+  });
+
+  final VirtNetwork network;
+
+  /// One of `VirtCapabilities.networkModes`.
+  final String mode;
+
+  /// `bridge` mode: the host bridge guests are handed to.
+  final String? bridge;
+
+  /// The host's address on it, without its prefix; null for an isolated
+  /// network without one.
+  final String? address;
+  final int? prefix;
+  final String? dhcpStart;
+  final String? dhcpEnd;
+
+  /// The static DHCP entries the network ends up with.
+  final List<VirtNetHost> hosts;
+
+  /// Stop and start the network so the running one takes the change.
+  final bool restart;
+
+  @override
+  String get scope => 'net:${network.id}';
+}
+
+/// PVE: writes [bridge]'s configuration (`PUT /nodes/{node}/network/{iface}`)
+/// into the node's pending one; applied with [VirtNetworkApply].
+///
+/// Only a bridge PVE made and the app may edit: a physical interface, and
+/// any interface carrying the address the app is connected to, is refused
+/// before this is built ([virtPveManagedIface]).
+final class VirtNetworkEditBridge extends VirtResourceChange {
+  const VirtNetworkEditBridge(
+    this.network, {
+    this.ports,
+    this.cidr,
+    this.gateway,
+    this.vlanAware,
+    this.autostart,
+  });
+
+  final VirtNetwork network;
+
+  /// Space-separated ports; null keeps them, empty clears them.
+  final String? ports;
+
+  /// `a.b.c.d/prefix`; null keeps the address, empty clears it.
+  final String? cidr;
+  final String? gateway;
+  final bool? vlanAware;
+  final bool? autostart;
+
+  @override
+  String get scope => 'net:${network.id}';
+}
+
+/// libvirt: stops (`net-destroy`) and starts (`net-start`) the network, so
+/// its definition applies to the running one. Asked for, never automatic:
+/// the guests on it lose their link meanwhile.
+final class VirtNetworkRestart extends VirtResourceChange {
+  const VirtNetworkRestart(this.network);
+
+  final VirtNetwork network;
+
+  @override
+  String get scope => 'net:${network.id}';
+}
+
 final class VirtNetworkSetActive extends VirtResourceChange {
   const VirtNetworkSetActive(this.network, {required this.active});
 
@@ -329,6 +416,14 @@ enum VirtResIssue {
 
   /// Only a new size larger than the volume's.
   shrink,
+
+  /// A static DHCP entry with a MAC, an address or a name the host would
+  /// refuse, or two entries for one MAC.
+  hostInvalid,
+
+  /// The interface carries the address this app is connected to, or the
+  /// node's default route: editing it would cut the host off.
+  managementIface,
 }
 
 /// libvirt pool and network names: what `sbm_parser::virt_manage` takes.
@@ -365,6 +460,53 @@ String virtVolumeFileName(VirtStoragePool pool, String name, String format) {
   if (!_qcow2Types.contains(pool.type)) return name;
   final ext = '.$format';
   return name.endsWith(ext) ? name : '$name$ext';
+}
+
+/// A dnsmasq host name: what libvirt writes into a static entry's `name`.
+final _hostName = RegExp(r'^[A-Za-z0-9_][A-Za-z0-9_-]{0,62}$');
+
+/// PVE: whether [network] may be edited and applied by this app at all.
+///
+/// A physical interface's own settings are the host's, not the app's: the
+/// app manages bridges. And **no interface carrying the management address**
+/// may be touched — the one the app is connected to, or the one the node's
+/// default route goes through — because applying its configuration would cut
+/// the host off, and there is nobody at the console to fix it.
+bool virtPveManagedIface(VirtNetwork network, {Set<String> management = const {}}) {
+  if (network.node == null) return false;
+  if (network.mode != 'bridge') return false;
+  return !management.contains(network.name);
+}
+
+/// PVE: the interfaces that carry a node's management address, from the
+/// node's own network listing and the address this app reaches PVE at.
+///
+/// Two sources, because either alone misses the case:
+///
+/// - an interface with a `gateway` is the one the node's default route goes
+///   through — PVE writes it in the interfaces file, and it is the address a
+///   console-less host is reached at;
+/// - the interface whose address is the one this app is connected to (the
+///   host of `pveAddr`), which is what a connection over a second address —
+///   a VPN, another subnet — would otherwise be missing.
+///
+/// A node listing nothing is nobody's fault but its own: the set is empty
+/// then, and [virtPveManagedIface] refuses every interface as usual when a
+/// listing answers nothing at all.
+Set<String> virtPveManagementIfaces(
+  Iterable<VirtNetwork> networks, {
+  String? connectedAddr,
+}) {
+  final ip = connectedAddr == null ? null : virtParseIpv4(connectedAddr.split(':').first);
+  final out = <String>{};
+  for (final n in networks) {
+    if (n.gateway != null && n.gateway!.isNotEmpty) out.add(n.name);
+    if (ip == null) continue;
+    for (final cidr in n.cidrs) {
+      if (virtParseIpv4(cidr.split('/').first) == ip) out.add(n.name);
+    }
+  }
+  return out;
 }
 
 /// The VMID a PVE volume name belongs to; null when it is not one.
@@ -574,6 +716,83 @@ VirtResIssue? virtResourceIssue(
           (address >= s && address <= e)) {
         return VirtResIssue.dhcpInvalid;
       }
+    case VirtNetworkEdit(
+      :final network,
+      :final mode,
+      :final bridge,
+      :final address,
+      :final prefix,
+      :final dhcpStart,
+      :final dhcpEnd,
+      :final hosts,
+    ):
+      final ifname = RegExp(r'^[A-Za-z0-9][A-Za-z0-9_.-]{0,14}$');
+      if (!pve && mode == 'bridge') {
+        if (!ifname.hasMatch(bridge?.trim() ?? '')) {
+          return VirtResIssue.bridgeInvalid;
+        }
+      }
+      final c = address?.trim() ?? '';
+      if (!pve && mode != 'bridge') {
+        if (c.isEmpty) {
+          if (mode != 'isolated') return VirtResIssue.cidrInvalid;
+        } else {
+          final parsed = virtParseCidr(c);
+          if (parsed == null || prefix != null && parsed.$2 != prefix) {
+            return VirtResIssue.cidrInvalid;
+          }
+          for (final n in networks) {
+            // Its own subnet is not somebody else's.
+            if (n.id == network.id) continue;
+            if (n.cidrs.any((other) => _overlaps(other, c))) {
+              return VirtResIssue.subnetTaken;
+            }
+          }
+          if (dhcpStart != null || dhcpEnd != null) {
+            final (addr, pfx) = parsed;
+            final mask = _mask(pfx);
+            final net = addr & mask;
+            final broadcast = net | (~mask & 0xFFFFFFFF);
+            final s2 = virtParseIpv4(dhcpStart ?? '');
+            final e2 = virtParseIpv4(dhcpEnd ?? '');
+            if (s2 == null ||
+                e2 == null ||
+                s2 > e2 ||
+                s2 & mask != net ||
+                e2 & mask != net ||
+                s2 == net ||
+                e2 == broadcast ||
+                (addr >= s2 && addr <= e2)) {
+              return VirtResIssue.dhcpInvalid;
+            }
+          }
+        }
+      }
+      final macs = <String>{};
+      for (final h in hosts) {
+        if (!RegExp(r'^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$').hasMatch(h.mac) ||
+            virtParseIpv4(h.ip) == null ||
+            !macs.add(h.mac.toLowerCase()) ||
+            switch (h.name) {
+              final n? when n.isNotEmpty => !_hostName.hasMatch(n),
+              _ => false,
+            }) {
+          return VirtResIssue.hostInvalid;
+        }
+      }
+      if (hosts.isNotEmpty && !(pve || mode != 'bridge')) {
+        // A bridge hands guests to the host's own network; it serves no
+        // DHCP of its own.
+        return VirtResIssue.hostInvalid;
+      }
+    case VirtNetworkEditBridge(:final cidr, :final gateway):
+      final c = cidr?.trim();
+      if (c != null && c.isNotEmpty && virtParseCidr(c) == null) {
+        return VirtResIssue.cidrInvalid;
+      }
+      if (gateway != null && gateway.isNotEmpty && virtParseIpv4(gateway) == null) {
+        return VirtResIssue.cidrInvalid;
+      }
     case VirtNetworkDelete(:final network) ||
         VirtNetworkSetActive(:final network, active: false):
       if (network.users.isNotEmpty) return VirtResIssue.inUse;
@@ -583,7 +802,8 @@ VirtResIssue? virtResourceIssue(
         VirtNetworkSetActive() ||
         VirtNetworkSetAutostart() ||
         VirtNetworkApply() ||
-        VirtNetworkRevert():
+        VirtNetworkRevert() ||
+        VirtNetworkRestart():
       break;
   }
   return null;

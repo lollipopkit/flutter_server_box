@@ -38,6 +38,7 @@
 //! so a name that itself ends in spaces is only ambiguous on libvirt < 7.0.
 
 use crate::script::{self, shell_quote_unix};
+use crate::virt_net::{VirtNetHost, parse_net_section};
 use serde::{Deserialize, Serialize};
 
 /// Connection URI every command uses. Session (`qemu:///session`) guests are
@@ -102,7 +103,8 @@ fn section(key: &str, virsh_args: &str) -> String {
 pub fn probe_script() -> String {
     let mut s = format!(
         "export LC_ALL=C\n\
-         if command -v pveversion >/dev/null 2>&1; then echo '{pve}'; pveversion 2>/dev/null </dev/null; exit 0; fi\n\
+         pv=$(command -v pveversion 2>/dev/null || echo /usr/sbin/pveversion)\n\
+         if [ -x \"$pv\" ]; then echo '{pve}'; \"$pv\" 2>/dev/null </dev/null; exit 0; fi\n\
          echo '{container}'\n\
          systemd-detect-virt -c 2>/dev/null </dev/null\n\
          cat /run/systemd/container 2>/dev/null; echo\n\
@@ -1878,6 +1880,9 @@ pub const KEY_NETS: &str = "virt.nets";
 pub const KEY_NETS_ACTIVE: &str = "virt.nets.active";
 pub const KEY_NETS_AUTOSTART: &str = "virt.nets.autostart";
 pub const KEY_NET_XML: &str = "virt.net.xml";
+/// The definition as saved (`net-dumpxml --inactive`): what the next start
+/// of the network gets.
+pub const KEY_NET_CONFIG: &str = "virt.net.config";
 pub const KEY_LEASES: &str = "virt.net.leases";
 pub const KEY_IFLIST: &str = "virt.iflist";
 
@@ -1911,6 +1916,19 @@ pub struct VirtNetworkInfo {
     pub ips: Vec<VirtNetIp>,
     /// Interfaces attached now (`connections=`), while active
     pub connections: Option<u32>,
+    /// The static DHCP entries it hands out
+    #[serde(default)]
+    pub hosts: Vec<VirtNetHost>,
+    /// The definition *as saved* (`net-dumpxml --inactive`), for an edit
+    /// made from this read (phase 10): a `net-define` goes into it at once,
+    /// while the running network keeps what it has until it is restarted.
+    /// Empty where it could not be read.
+    #[serde(default)]
+    pub xml: String,
+    /// The running network is on something other than its definition: a
+    /// `net-define` went in while it ran and waits for a restart.
+    #[serde(default)]
+    pub pending_restart: bool,
 }
 
 /// One interface of one domain, from `domiflist`.
@@ -1956,6 +1974,13 @@ pub fn networks_script() -> String {
         "net-list --all --name",
         "n",
         &item_section(KEY_NET_XML, "n", "net-dumpxml --network \"$n\""),
+    ));
+    // The definition as saved, next to what is running: an active network
+    // whose two differ has a `net-define` waiting for its next start.
+    s.push_str(&each(
+        "net-list --all --name",
+        "n",
+        &item_section(KEY_NET_CONFIG, "n", "net-dumpxml --inactive --network \"$n\""),
     ));
     s.push_str(&each(
         "net-list --name",
@@ -2034,6 +2059,23 @@ pub fn parse_network_xml(raw: &str) -> Result<VirtNetworkInfo, VirtError> {
             })
         })
         .collect();
+    let hosts = root
+        .children()
+        .filter(|n| n.is_element() && n.tag_name().name() == "ip")
+        .filter_map(|ip| child(ip, "dhcp"))
+        .flat_map(|d| {
+            d.children()
+                .filter(|n| n.is_element() && n.tag_name().name() == "host")
+                .filter_map(|h| {
+                    Some(VirtNetHost {
+                        mac: h.attribute("mac")?.to_ascii_lowercase(),
+                        ip: h.attribute("ip")?.to_string(),
+                        name: h.attribute("name").map(str::to_string),
+                    })
+                })
+                .collect::<Vec<_>>()
+        })
+        .collect();
     Ok(VirtNetworkInfo {
         name: text_of(root, "name").unwrap_or_default(),
         uuid: text_of(root, "uuid"),
@@ -2041,6 +2083,7 @@ pub fn parse_network_xml(raw: &str) -> Result<VirtNetworkInfo, VirtError> {
         bridge: child(root, "bridge").and_then(|b| b.attribute("name")).map(str::to_string),
         forward_devs,
         ips,
+        hosts,
         connections: root.attribute("connections").and_then(|c| c.parse().ok()),
         ..Default::default()
     })
@@ -2102,13 +2145,22 @@ pub fn parse_networks(raw: &str) -> Result<VirtNetworks, VirtError> {
     };
     let active = set(KEY_NETS_ACTIVE);
     let autostart = set(KEY_NETS_AUTOSTART);
-    let mut xmls: Vec<(String, VirtNetworkInfo)> = Vec::new();
+    let mut xmls: Vec<(String, VirtNetworkInfo, String)> = Vec::new();
     for sec in all_items(&secs, KEY_NET_XML) {
         let (item, _) = split_item(&sec.body);
         if let Ok(body) = sec.ok()
             && let Ok(net) = parse_network_xml(split_item(body).1)
         {
-            xmls.push((item.to_string(), net));
+            xmls.push((item.to_string(), net, split_item(&body).1.trim_end().to_string()));
+        }
+    }
+    // The saved definition, which is what an edit is made from and what the
+    // running network is compared with.
+    let mut configs: Vec<(String, String)> = Vec::new();
+    for sec in all_items(&secs, KEY_NET_CONFIG) {
+        let (item, _) = split_item(&sec.body);
+        if let Ok(body) = sec.ok() {
+            configs.push((item.to_string(), split_item(body).1.trim_end().to_string()));
         }
     }
     let networks = names
@@ -2116,8 +2168,8 @@ pub fn parse_networks(raw: &str) -> Result<VirtNetworks, VirtError> {
         .map(|name| {
             let mut net = xmls
                 .iter()
-                .find(|(n, _)| *n == name)
-                .map(|(_, x)| x.clone())
+                .find(|(n, _, _)| *n == name)
+                .map(|(_, x, _)| x.clone())
                 .unwrap_or_else(|| VirtNetworkInfo {
                     mode: "isolated".into(),
                     ..Default::default()
@@ -2126,6 +2178,41 @@ pub fn parse_networks(raw: &str) -> Result<VirtNetworks, VirtError> {
             net.autostart = autostart.contains(&name);
             if !net.active {
                 net.connections = None;
+            }
+            // The saved definition is the one an edit is made from; the
+            // running one (`net-dumpxml`) is what an active network is
+            // compared with for a change waiting on a restart.
+            // The saved definition is what everything but the running
+            // state comes from: a `net-define` goes into it at once, while
+            // the running network keeps the old address, mode and DHCP
+            // until it is restarted. Showing the running one's address
+            // beside the new definition reads as a change that never
+            // happened — and an edit made from it would write the old value
+            // back.
+            //
+            // `pending_restart` is what the two disagree *about*, not
+            // whether their text differs: libvirt writes runtime detail
+            // into a running network's XML (a NAT `<port>` range, a
+            // `portid=`) that is not a change anybody made.
+            let live = xmls.iter().find(|(n, _, _)| *n == name).map(|(_, _, x)| x.as_str());
+            let live_section = live.and_then(|x| parse_net_section(x).ok());
+            match configs.iter().find(|(n, _)| *n == name) {
+                Some((_, config)) => {
+                    let saved = parse_net_section(config).ok();
+                    net.pending_restart = net.active
+                        && saved.as_ref().is_some_and(|c| live_section.as_ref() != Some(c));
+                    // The saved definition's own addresses and DHCP entries
+                    // (`parse_network_xml` keeps every `<ip>`, IPv6
+                    // included; the section is what an edit compares).
+                    if let Ok(saved) = parse_network_xml(config) {
+                        net.mode = saved.mode;
+                        net.bridge = saved.bridge;
+                        net.ips = saved.ips;
+                        net.hosts = saved.hosts;
+                    }
+                    net.xml = config.clone();
+                }
+                None => net.xml = live.unwrap_or_default().to_string(),
             }
             net.name = name;
             net
@@ -3204,10 +3291,29 @@ pub fn clone_define_script(base_xml: &str, name: &str, disks: &[(String, String)
 /// CD-ROM still holds it or not. A running domain is not stopped by this —
 /// `undefine` would leave it running, transient — so the caller stops it
 /// first. Parse with [`parse_undefine`].
-pub fn undefine_script(domain: &str, storage: &[String], seed: Option<&str>) -> Result<String, VirtError> {
-    if seed.is_some_and(|p| !p.starts_with('/') || p.chars().any(char::is_control)) {
+///
+/// `chain` are the files under the disks that the domain's external
+/// snapshots left behind: `--storage` deletes only the file a disk is on
+/// now, never its backing files. They go once the domain is gone. `pools`
+/// are refreshed first: libvirt knows a file a snapshot or a revert made as
+/// a volume only once its pool was, and `--storage` skips one it does not
+/// know with a warning and rc 0.
+pub fn undefine_script(
+    domain: &str,
+    storage: &[String],
+    seed: Option<&str>,
+    pools: &[String],
+    chain: &[String],
+) -> Result<String, VirtError> {
+    let bad_path = |p: &str| !p.starts_with('/') || p.chars().any(char::is_control);
+    if seed.is_some_and(bad_path) {
         return Err(VirtError::Malformed {
             message: "invalid seed path".into(),
+        });
+    }
+    if chain.iter().any(|p| bad_path(p)) {
+        return Err(VirtError::Malformed {
+            message: format!("invalid chain file in {chain:?}"),
         });
     }
     if storage
@@ -3229,19 +3335,40 @@ pub fn undefine_script(domain: &str, storage: &[String], seed: Option<&str>) -> 
     }
     let mut s = prelude();
     s.push_str(&run_fn());
-    s.push_str(&format!("echo '{}'\nR {args}\n", script::cmd_marker(KEY_ACTION)));
+    for p in pools {
+        s.push_str(&format!(
+            "echo '{}'; R pool-refresh --pool {}\n",
+            script::cmd_marker(KEY_CHAIN_REFRESH),
+            shell_quote_unix(p)
+        ));
+    }
+    // `u`: the undefine's own rc, which each later step checks.
+    s.push_str(&format!("echo '{}'\nR {args}\nu=$r\n", script::cmd_marker(KEY_ACTION)));
     if let Some(seed) = seed {
         // Only once the domain is gone: a refused undefine keeps its seed.
         s.push_str(&format!(
-            "if [ \"$r\" = 0 ]; then echo '{}'; R vol-delete --vol {}; fi\n",
+            "if [ \"$u\" = 0 ]; then echo '{}'; R vol-delete --vol {}; fi\n",
             script::cmd_marker(KEY_SEED_DELETE),
             shell_quote_unix(seed)
         ));
+    }
+    if !chain.is_empty() {
+        s.push_str("if [ \"$u\" = 0 ]; then\n");
+        for f in chain {
+            s.push_str(&format!(
+                "echo '{}'; R vol-delete --vol {}\n",
+                script::cmd_marker(KEY_CHAIN_DELETE),
+                shell_quote_unix(f)
+            ));
+        }
+        s.push_str("fi\n");
     }
     Ok(s)
 }
 
 pub const KEY_SEED_DELETE: &str = "virt.seed.delete";
+pub const KEY_CHAIN_REFRESH: &str = "virt.chain.refresh";
+pub const KEY_CHAIN_DELETE: &str = "virt.chain.delete";
 
 /// [`undefine_script`]'s output. The domain is gone once this is `Ok`; a
 /// seed that could not be deleted is an error naming it — the domain is gone
@@ -3255,7 +3382,25 @@ pub fn parse_undefine(raw: &str) -> Result<(), VirtError> {
         Some(Err(e)) => Err(VirtError::Command {
             message: format!("The guest was deleted, its cloud-init seed was not: {}", e.message()),
         }),
+    }?;
+    // A refused refresh is not reported: it shows as the deletes it leaves
+    // refused.
+    let kept: Vec<String> = secs
+        .iter()
+        .filter(|(k, _)| k == KEY_CHAIN_DELETE)
+        .filter_map(|(_, s)| s.ok().err())
+        .map(|e| e.message())
+        .collect();
+    if kept.is_empty() {
+        return Ok(());
     }
+    Err(VirtError::Command {
+        message: format!(
+            "The guest was deleted, {} file(s) under its snapshots were not: {}",
+            kept.len(),
+            kept.join("; ")
+        ),
+    })
 }
 
 // ---------------------------------------------------------------------------
@@ -3415,9 +3560,39 @@ pub struct VirtHwCaps {
     pub hostdev: bool,
 }
 
+/// Where QEMU's firmware descriptors live: one JSON per firmware, naming the
+/// code, the variables template and the features (`secure-boot`,
+/// `enrolled-keys`). libvirt reads them for `firmware='efi'`
+/// autoselection, so this is what the host can actually boot.
+pub const QEMU_FIRMWARE_DIR: &str = "/usr/share/qemu/firmware";
+
+/// Which firmware the host can actually boot with: one JSON per firmware in
+/// QEMU's descriptors, the two features this app cares about among them
+/// ([`QEMU_FIRMWARE_DIR`]). `grep -q` over each file, so nothing here reads
+/// one whole. A section of its own; parse with
+/// [`parse_firmware_descriptors`].
+fn firmware_probe() -> String {
+    format!(
+        "echo '{fw}'\nfor f in {dir}/*.json; do [ -f \"$f\" ] || continue\n\
+         printf '%s ' \"$f\"\n\
+         if grep -q '\"secure-boot\"' \"$f\" 2>/dev/null; then printf 'secure-boot '; fi\n\
+         if grep -q '\"enrolled-keys\"' \"$f\" 2>/dev/null; then printf 'enrolled-keys '; fi\n\
+         printf '\n'\ndone\n",
+        fw = script::cmd_marker(KEY_HW_FIRMWARE),
+        dir = QEMU_FIRMWARE_DIR,
+    )
+}
+
 /// What [`hardware_script`] yields.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct VirtHardwareInfo {
+    /// QEMU's firmware descriptors: what the host can boot with, and which
+    /// of them carry Secure Boot's enrolled keys. A TPM-less host with
+    /// `caps.secure_boot` but no descriptor with `enrolled_keys` cannot run
+    /// a domain with `<feature enabled='yes' name='secure-boot'/>` — libvirt
+    /// autoselection finds no firmware and refuses the definition.
+    #[serde(default)]
+    pub firmware: Vec<FirmwareDescriptor>,
     /// The persistent definition: what the next boot gets
     pub config: VirtHwConfig,
     /// The running definition; none while the domain is not running
@@ -3426,6 +3601,11 @@ pub struct VirtHardwareInfo {
     /// made from it, and refused when the host's has changed since — a
     /// digest in all but name
     pub config_xml: String,
+    /// `dumpxml` (the running definition) as read; empty while the domain
+    /// is not running. What a revert to the running definition is made
+    /// from ([`VirtHwChange::RevertLive`]).
+    #[serde(default)]
+    pub live_xml: String,
     pub autostart: bool,
     /// The persistent definition's `<description>`, the note shown with the
     /// domain; none when it has none
@@ -3468,7 +3648,68 @@ V domcapabilities ${{t:+--virttype "$t"}} ${{a:+--arch "$a"}} ${{m:+--machine "$
          while read -r kind dev target src; do [ -n \"$target\" ] && [ \"$src\" != - ] || continue\n{}done\n",
         item_section(KEY_HW_BLK, "target", &format!("domblkinfo {d} --device \"$target\""))
     ));
+    // Which firmware the host can actually boot with: one JSON per firmware
+    // in QEMU's descriptors, the two features this app cares about among
+    // them. `grep -l` over the directory, so nothing here reads a file.
+    s.push_str(&format!(
+        "echo '{fw}'
+for f in {dir}/*.json; do [ -f \"$f\" ] || continue
+         printf '%s ' \"$f\"
+         if grep -q '\"secure-boot\"' \"$f\" 2>/dev/null; then printf 'secure-boot '; fi
+         if grep -q '\"enrolled-keys\"' \"$f\" 2>/dev/null; then printf 'enrolled-keys '; fi
+         printf '\n'
+done
+",
+        fw = script::cmd_marker(KEY_HW_FIRMWARE),
+        dir = QEMU_FIRMWARE_DIR,
+    ));
     s
+}
+
+/// [`hardware_script`]'s firmware descriptors, one line per file.
+pub const KEY_HW_FIRMWARE: &str = "virt.hw.firmware";
+
+/// The host's firmware descriptors alone, for a new domain: what
+/// [`hardware_script`] reads, without a domain to read it for. Parse with
+/// [`parse_firmware_descriptors`].
+pub fn firmware_script() -> String {
+    let mut s = prelude();
+    s.push_str(&firmware_probe());
+    s
+}
+
+/// The descriptors [`hardware_script`] printed: the features of every
+/// firmware QEMU has, by file name. Empty on a host with none (a QEMU that
+/// names its firmware nowhere this reads: the files are the modern way).
+pub fn parse_firmware_descriptors(raw: &str) -> Vec<FirmwareDescriptor> {
+    let mut out = Vec::new();
+    for line in raw.lines() {
+        let mut it = line.split_whitespace();
+        let Some(path) = it.next() else { continue };
+        if !path.ends_with(".json") {
+            continue;
+        }
+        let features: Vec<String> = it.map(str::to_string).collect();
+        out.push(FirmwareDescriptor {
+            name: path.rsplit('/').next().unwrap_or(path).to_string(),
+            secure_boot: features.iter().any(|f| f == "secure-boot"),
+            enrolled_keys: features.iter().any(|f| f == "enrolled-keys"),
+        });
+    }
+    out
+}
+
+/// One of QEMU's firmware descriptors ([`QEMU_FIRMWARE_DIR`]).
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct FirmwareDescriptor {
+    /// The file's name, e.g. `40-edk2-x86_64-secure-enrolled.json`
+    pub name: String,
+    pub secure_boot: bool,
+    /// Carries the vendor's keys, which is what a domain with
+    /// `<feature enabled='yes' name='enrolled-keys'/>` needs: libvirt picks
+    /// a descriptor with both features, and refuses the domain when there is
+    /// none (`unsupported configuration: …`).
+    pub enrolled_keys: bool,
 }
 
 /// A `<memory>`-like element in KiB.
@@ -3776,6 +4017,19 @@ pub fn parse_domcaps(raw: &str) -> Option<VirtHwCaps> {
 }
 
 /// A host USB device a guest can be given.
+///
+/// Two ways to name it, and the app offers both:
+///
+/// - **by address**: `<hostdev><source><address bus='1' device='4'/></source>`,
+///   which names where the device sits rather than what it is. libvirt's
+///   `usbaddress` schema takes a bus and a *device* number and nothing else —
+///   there is no `port` attribute on a hostdev's source (`domaincommon.rng`,
+///   libvirt 11.3: `usbportaddress` exists for the device's own `<address>`
+///   inside the guest, not here), so the bus and device number are what this
+///   writes. On a bus with nothing between the ports and the guest, the
+///   device number is the port.
+/// - **by vendor and product**: `<vendor id='0x…'/><product id='0x…'/>`,
+///   which follows the device wherever it is plugged in.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct VirtHostUsb {
     /// `0bda`
@@ -3784,8 +4038,13 @@ pub struct VirtHostUsb {
     pub product: String,
     pub vendor_name: Option<String>,
     pub product_name: Option<String>,
+    /// The bus and the device number, for an address-based hostdev
     pub bus: Option<u32>,
     pub device: Option<u32>,
+    /// The port chain the device sits at (`4`, or `1.2` behind a hub), for
+    /// the label: it is where in the machine it is plugged, which is what
+    /// someone choosing by address is looking at.
+    pub port: Option<String>,
 }
 
 /// A host PCI device a guest can be given.
@@ -3858,6 +4117,7 @@ pub fn parse_host_devices(raw: &str) -> Result<VirtHostDevices, VirtError> {
             product,
             bus: text_of(cap, "bus").and_then(|v| v.parse().ok()),
             device: text_of(cap, "device").and_then(|v| v.parse().ok()),
+            port: text_of(cap, "port"),
         });
     }
     for body in bodies(KEY_HOST_PCI) {
@@ -3917,8 +4177,9 @@ pub fn parse_hardware(raw: &str) -> Result<VirtHardwareInfo, VirtError> {
         .collect();
     let config_xml = take(&secs, KEY_HW_CONFIG, raw)?.ok()?;
     let config = parse_hw_xml(config_xml, &capacity)?;
+    let live_xml = take(&secs, KEY_HW_LIVE, raw)?.ok()?.trim_end().to_string();
     let live = if active {
-        Some(parse_hw_xml(take(&secs, KEY_HW_LIVE, raw)?.ok()?, &capacity)?)
+        Some(parse_hw_xml(&live_xml, &capacity)?)
     } else {
         None
     };
@@ -3931,11 +4192,19 @@ pub fn parse_hardware(raw: &str) -> Result<VirtHardwareInfo, VirtError> {
         .find(|(k, _)| k == KEY_HW_CAPS)
         .and_then(|(_, s)| s.ok().ok())
         .and_then(parse_domcaps);
+    let firmware = secs
+        .iter()
+        .find(|(k, _)| k == KEY_HW_FIRMWARE)
+        .and_then(|(_, s)| s.ok().ok())
+        .map(parse_firmware_descriptors)
+        .unwrap_or_default();
     Ok(VirtHardwareInfo {
+        firmware,
         caps,
         config,
         live,
         config_xml: config_xml.to_string(),
+        live_xml,
         autostart,
         description,
         host_cpus,
@@ -4076,6 +4345,22 @@ pub enum VirtHwChange {
     /// Removes the TPM (`tpm`) or a host device by [`VirtHwHostdev::key`];
     /// made from `base_xml`
     RemoveDevice { key: String },
+    /// Writes the definition again from what the domain is **running**
+    /// (`dumpxml` live), which is how a `virsh` user discards an edit:
+    /// libvirt keeps no pending list to drop, so what waits for the next
+    /// start is undone by making the persistent definition the running one.
+    ///
+    /// Two things the live XML has and a definition must not:
+    /// the runtime addresses and aliases libvirt prints for a running
+    /// domain, and the `<nvram>` element, which a plain `define` of the live
+    /// XML drops — libvirt would then make a *new* variables file of its own
+    /// template at the next start, losing the guest's boot entries and its
+    /// Secure Boot state with them. The definition's own `<nvram>` is put
+    /// back as it was, and the file itself is never touched.
+    RevertLive {
+        /// The running definition, as `dumpxml` printed it
+        live_xml: String,
+    },
 }
 
 /// A device [`VirtHwChange::AddDevice`] adds.
@@ -4084,8 +4369,18 @@ pub enum VirtHwChange {
 pub enum VirtHwNewDevice {
     /// A software TPM 2.0 (swtpm)
     Tpm { model: String },
-    /// A host USB device by vendor and product
-    Usb { vendor: String, product: String },
+    /// A host USB device by vendor and product, or by the bus and device
+    /// number it sits at
+    Usb {
+        #[serde(default)]
+        vendor: Option<String>,
+        #[serde(default)]
+        product: Option<String>,
+        #[serde(default)]
+        bus: Option<u32>,
+        #[serde(default)]
+        device: Option<u32>,
+    },
     /// A host PCI device by address, `0000:01:00.0`
     Pci { address: String },
 }
@@ -4112,7 +4407,13 @@ impl VirtHwNewDevice {
     fn valid(&self) -> bool {
         match self {
             VirtHwNewDevice::Tpm { model } => matches!(model.as_str(), "tpm-crb" | "tpm-tis"),
-            VirtHwNewDevice::Usb { vendor, product } => is_hex4(vendor) && is_hex4(product),
+            VirtHwNewDevice::Usb { vendor, product, bus, device } => match (vendor, product, bus, device) {
+                // By vendor and product, or by address — never both, and
+                // never half of either.
+                (Some(v), Some(p), None, None) => is_hex4(v) && is_hex4(p),
+                (None, None, Some(_), Some(d)) => *d > 0 && *d <= 0xffff,
+                _ => false,
+            },
             VirtHwNewDevice::Pci { address } => pci_parts(address).is_some(),
         }
     }
@@ -4124,9 +4425,16 @@ impl VirtHwNewDevice {
                 "<tpm model='{}'><backend type='emulator' version='2.0'/></tpm>",
                 xml_escape(model)
             ),
-            VirtHwNewDevice::Usb { vendor, product } => format!(
+            VirtHwNewDevice::Usb { vendor: Some(vendor), product: Some(product), .. } => format!(
                 "<hostdev mode='subsystem' type='usb' managed='yes'><source><vendor id='0x{vendor}'/><product id='0x{product}'/></source></hostdev>"
             ),
+            // By address: the bus and the device number on it, which is
+            // what libvirt's `usbaddress` takes (`bus` and `device`; a
+            // `port` is not in that schema).
+            VirtHwNewDevice::Usb { bus: Some(bus), device: Some(device), .. } => format!(
+                "<hostdev mode='subsystem' type='usb' managed='yes'><source><address bus='{bus}' device='{device}'/></source></hostdev>"
+            ),
+            VirtHwNewDevice::Usb { .. } => String::new(),
             VirtHwNewDevice::Pci { address } => {
                 let (d, b, s, f) = pci_parts(address).unwrap_or_default();
                 format!(
@@ -4346,6 +4654,11 @@ impl VirtHwChange {
                 }
             }
             VirtHwChange::Firmware { .. } => {}
+            VirtHwChange::RevertLive { live_xml } => {
+                if live_xml.trim().is_empty() {
+                    return bad("live definition");
+                }
+            }
             VirtHwChange::Display { graphics, listen, video } => {
                 if graphics.as_deref().is_some_and(|g| !matches!(g, "vnc" | "spice")) {
                     return bad("graphics");
@@ -4589,6 +4902,40 @@ fn edited(xml: &str, edits: Vec<(std::ops::Range<usize>, String)>) -> Result<Str
     Ok(out)
 }
 
+/// Every line `node` occupies, from its own line to that of the last thing
+/// under it: a whole element, not just the one its start tag is on.
+fn element_lines(xml: &str, node: roxmltree::Node<'_, '_>) -> std::ops::Range<usize> {
+    // The element's own range covers its closing tag; a descendant on a
+    // later line reaches past it.
+    let from = whole_line(xml, node).start;
+    let last = node
+        .descendants()
+        .map(|n| n.range().end)
+        .chain([node.range().end])
+        .max()
+        .unwrap_or(node.range().end);
+    from..last
+}
+
+/// The byte range that takes `node`'s line out of `xml`: the indentation and
+/// the newline before it, then the element.
+///
+/// The newline *after* it stays with the line that follows — taking both
+/// would join that line to the one before this, and an element removed from
+/// the middle of a document would take its neighbours' separation with it.
+fn whole_line(xml: &str, node: roxmltree::Node<'_, '_>) -> std::ops::Range<usize> {
+    let start = node.range().start;
+    let mut at = start;
+    while at > 0 && matches!(xml.as_bytes()[at - 1], b' ' | b'\t') {
+        at -= 1;
+    }
+    let from = match at.checked_sub(1).map(|i| xml.as_bytes()[i]) {
+        Some(b'\n') => at - 1,
+        _ => start,
+    };
+    from..node.range().end
+}
+
 /// Where `node`'s start tag is: up to its first child, or all of it for an
 /// element with none.
 fn start_tag_range(node: roxmltree::Node<'_, '_>) -> std::ops::Range<usize> {
@@ -4596,6 +4943,20 @@ fn start_tag_range(node: roxmltree::Node<'_, '_>) -> std::ops::Range<usize> {
         Some(c) => node.range().start..c.range().start,
         None => node.range(),
     }
+}
+
+/// `node`'s start tag, minus the attributes in `drop`: what a definition
+/// takes and a running domain's XML carries anyway (`id`, a CPU's `check`).
+fn start_tag_less(node: roxmltree::Node<'_, '_>, drop: &[&str]) -> String {
+    let mut tag = format!("<{}", node.tag_name().name());
+    for a in node.attributes() {
+        if drop.contains(&a.name()) {
+            continue;
+        }
+        tag.push_str(&format!(" {}='{}'", a.name(), xml_escape(a.value())));
+    }
+    tag.push_str(if node.first_child().is_none() { "/>" } else { ">" });
+    tag
 }
 
 /// `node`'s start tag rewritten: its attributes but `skip`, then `extra`. An
@@ -4717,6 +5078,122 @@ pub fn is_libvirt_nvram(path: &str) -> bool {
         && path.contains("/libvirt/qemu/nvram/")
         && !path.split('/').any(|seg| seg == "..")
         && !path.chars().any(char::is_control)
+}
+
+/// `live_xml` (a running domain's `dumpxml`) as a definition `define`
+/// takes: what libvirt prints for a running domain and not for a
+/// definition, removed.
+///
+/// - `<domain>`'s `id` (the running domain's number).
+/// - `<resource><partition>` — the runtime cgroup, which a definition
+///   refuses (`unsupported configuration: Resource partition configuration
+///   is not supported`).
+/// - The CPU's runtime feature list and its `check` attribute: a definition
+///   gets `check='none'` and the model alone, or libvirt refuses to define a
+///   domain whose CPU lists features it computes itself.
+/// - Every `<alias>`, and every runtime device the running domain has that
+///   a definition may not carry: `<seclabel>`.
+/// - The disk's `index` attribute and a `<backingStore/>` (a statement
+///   about the chain, written by QEMU when it opened the file).
+/// - A device's runtime `<address type='pci' …/>` is kept: libvirt writes
+///   addresses into the definition too, and dropping them would reshuffle
+///   the guest's hardware.
+///
+/// `nvram` (the definition's own `<nvram>` element, as it was) is written
+/// back in place of whatever the live XML had, so the variables file and its
+/// template stay exactly as the guest knows them.
+pub fn definition_of_live_xml(
+    live_xml: &str,
+    nvram: Option<&str>,
+) -> Result<String, VirtError> {
+    let (xml, doc) = domain_doc(live_xml)?;
+    let root = doc.root_element();
+    // The lines that go, as a set: an element and everything under it is one
+    // entry, so nothing is left half-removed.
+    let mut drop: Vec<std::ops::Range<usize>> = Vec::new();
+    for n in root.descendants().filter(|n| n.is_element() && n.range().start != root.range().start) {
+        match n.tag_name().name() {
+            // The running domain's cgroup: the element and what it holds.
+            "resource" => drop.push(element_lines(xml, n)),
+            // What libvirt computes at start: a definition does not carry
+            // them. A `<seclabel>` is a runtime label, an `<alias>` a name
+            // libvirt makes.
+            "alias" | "seclabel" | "backingStore" => drop.push(whole_line(xml, n)),
+            _ => {}
+        }
+    }
+    // Adjacent removals overlap by the newline between them; merged, one
+    // replace covers both and nothing of the line after them goes.
+    let mut merged: Vec<std::ops::Range<usize>> = Vec::new();
+    drop.sort_by_key(|r| r.start);
+    for r in drop {
+        match merged.last_mut() {
+            Some(last) if r.start <= last.end => last.end = last.end.max(r.end),
+            _ => merged.push(r),
+        }
+    }
+    let mut edits: Vec<(std::ops::Range<usize>, String)> =
+        merged.into_iter().map(|r| (r, String::new())).collect();
+    // <domain id='…'>: the running domain's number.
+    if root.attribute("id").is_some() {
+        edits.push((start_tag_range(root), start_tag_less(root, &["id"])));
+    }
+    // A disk's runtime `index`: QEMU's own numbering of the files it
+    // opened, which a definition does not carry and libvirt writes again.
+    for src in root
+        .descendants()
+        .filter(|n| n.is_element() && n.tag_name().name() == "source" && n.attribute("index").is_some())
+    {
+        edits.push((start_tag_range(src), start_tag_less(src, &["index"])));
+    }
+    // The CPU: the model and its `check`, and the runtime feature list.
+    // libvirt computes a running domain's features itself, and writing them
+    // into a definition pins them; what the definition carries is the model.
+    if let Some(cpu) = child(root, "cpu") {
+        let check = cpu.attribute("check");
+        let keep_check = check == Some("none") || check == Some("partial");
+        let tag = start_tag_less(cpu, if keep_check { &[] } else { &["check"] });
+        if tag != xml[start_tag_range(cpu)] {
+            edits.push((start_tag_range(cpu), tag));
+        }
+        for f in cpu
+            .children()
+            .filter(|n| n.is_element() && n.tag_name().name() == "feature")
+        {
+            edits.push((whole_line(xml, f), String::new()));
+        }
+    }
+    // The `<nvram>` goes back to the definition's own, in its place: a
+    // plain `define` of the live XML would drop it, and libvirt would make a
+    // new variables file at the next start.
+    if let Some(nvram_node) = child(root, "os").and_then(|os| child(os, "nvram")) {
+        // The definition's own element, whole line for whole line.
+        let text = match nvram {
+            Some(text) => format!("\n{text}"),
+            None => String::new(),
+        };
+        edits.push((whole_line(xml, nvram_node), text));
+    }
+    let out = remove_blank_lines(edited(xml, edits)?);
+    let _ = &out;
+    roxmltree::Document::parse(&out).map_err(|e| VirtError::Malformed {
+        message: format!("the definition made from the running XML: {e}"),
+    })?;
+    Ok(out)
+}
+
+/// `xml` with every line that holds nothing but whitespace removed: what a
+/// removed element leaves behind.
+fn remove_blank_lines(xml: String) -> String {
+    let mut out = String::with_capacity(xml.len());
+    for line in xml.lines() {
+        if line.trim().is_empty() {
+            continue;
+        }
+        out.push_str(line);
+        out.push('\n');
+    }
+    out
 }
 
 /// `base_xml` booting from UEFI or BIOS, with Secure Boot or without, by
@@ -5205,8 +5682,38 @@ pub fn hardware_change_script(
                 s.push_str(&hw_step_with_file(&element, &format!("detach-device {d} --file \"$f\" --live"), true));
             }
         }
+        VirtHwChange::RevertLive { live_xml } => {
+            // Refused where the domain is not running: there is no running
+            // definition to write back, and "revert to nothing" would be a
+            // second way to delete it.
+            if !running {
+                return Err(VirtError::InvalidState {
+                    message: "the domain is not running: there is nothing to revert to".into(),
+                });
+            }
+            let base = base()?;
+            // The definition's own `<nvram>`, kept: a plain `define` of the
+            // live XML would drop it, and libvirt would make a new variables
+            // file — with the guest's boot entries and its Secure Boot state
+            // gone with the old one.
+            let nvram = nvram_element(base);
+            let xml = definition_of_live_xml(live_xml, nvram.as_deref())?;
+            s.push_str(&hw_guard(domain, base));
+            define(&mut s, &xml);
+        }
     }
     Ok(s)
+}
+
+/// The `<nvram>` element of a definition, as it was written, with its
+/// indentation; none where the definition has none.
+fn nvram_element(base_xml: &str) -> Option<String> {
+    let (xml, doc) = domain_doc(base_xml).ok()?;
+    let os = child(doc.root_element(), "os")?;
+    let nvram = child(os, "nvram")?;
+    let range = whole_line(xml, nvram);
+    // The line as written, without the newline `whole_line` includes.
+    Some(xml[range].trim_end_matches(['\n', '\r']).to_string())
 }
 
 /// [`hardware_change_script`]'s output. `Err` with the host's words when a
@@ -5318,6 +5825,89 @@ mod tests {
     }
 
     #[test]
+    fn usb_devices_read_their_port() {
+        let marker = script::cmd_marker(KEY_HOST_USB);
+        let raw = format!(
+            "{marker}\nusb_device_0bda_b023_1_4\n\
+             <device>\n  <name>usb_device_0bda_b023_1_4</name>\n\
+             <capability type='usb_device'>\n    <bus>1</bus>\n    <device>5</device>\n    <port>4</port>\n\
+             <product id='0xb023'>Bluetooth Radio </product>\n\
+             <vendor id='0x0bda'>Realtek </vendor>\n  </capability>\n</device>\n\n{RC_PREFIX}0\n\
+             {marker}\nusb_device_1a86_7523_2_1_2\n\
+             <device>\n  <name>usb_device_1a86_7523_2_1_2</name>\n\
+             <capability type='usb_device'>\n    <bus>2</bus>\n    <device>7</device>\n    <port>1.2</port>\n\
+             <product id='0x7523'>CH340 serial converter</product>\n\
+             <vendor id='0x1a86'>QinHeng Electronics</vendor>\n  </capability>\n</device>\n\n{RC_PREFIX}0\n"
+        );
+        let d = parse_host_devices(&raw).unwrap();
+        assert_eq!(d.usb.len(), 2, "{d:?}");
+        assert_eq!(d.usb[0].vendor, "0bda");
+        assert_eq!((d.usb[0].bus, d.usb[0].device), (Some(1), Some(5)));
+        assert_eq!(d.usb[0].port.as_deref(), Some("4"));
+        assert_eq!(d.usb[0].vendor_name.as_deref(), Some("Realtek"));
+        // Behind a hub the port is a chain, kept as the host prints it.
+        assert_eq!((d.usb[1].bus, d.usb[1].device), (Some(2), Some(7)));
+        assert_eq!(d.usb[1].port.as_deref(), Some("1.2"));
+        // No PCI device and no IOMMU
+        assert!(d.pci.is_empty() && !d.iommu);
+    }
+
+    #[test]
+    fn firmware_descriptors() {
+        let raw = "/usr/share/qemu/firmware/40-edk2-x86_64-secure-enrolled.json secure-boot enrolled-keys \n\
+                   /usr/share/qemu/firmware/50-edk2-x86_64-secure.json secure-boot \n\
+                   /usr/share/qemu/firmware/60-edk2-x86_64.json \n";
+        let fw = parse_firmware_descriptors(raw);
+        assert_eq!(fw.len(), 3);
+        assert_eq!(fw[0].name, "40-edk2-x86_64-secure-enrolled.json");
+        assert!(fw[0].secure_boot && fw[0].enrolled_keys);
+        assert!(fw[1].secure_boot && !fw[1].enrolled_keys);
+        assert!(!fw[2].secure_boot && !fw[2].enrolled_keys);
+        // A host with no descriptors (an older QEMU layout)
+        assert!(parse_firmware_descriptors("").is_empty());
+        assert!(parse_firmware_descriptors("\n").is_empty());
+    }
+
+    #[test]
+    fn usb_addresses() {
+        // By vendor and product
+        let vp = VirtHwNewDevice::Usb {
+            vendor: Some("0bda".into()),
+            product: Some("b023".into()),
+            bus: None,
+            device: None,
+        };
+        assert!(vp.valid());
+        assert_eq!(
+            vp.xml(),
+            "<hostdev mode='subsystem' type='usb' managed='yes'><source><vendor id='0x0bda'/><product id='0xb023'/></source></hostdev>"
+        );
+        assert!(vp.hotplug());
+        // By address: the bus and the device number on it, which is what
+        // libvirt's `usbaddress` takes.
+        let addr = VirtHwNewDevice::Usb { vendor: None, product: None, bus: Some(1), device: Some(4) };
+        assert!(addr.valid());
+        assert_eq!(
+            addr.xml(),
+            "<hostdev mode='subsystem' type='usb' managed='yes'><source><address bus='1' device='4'/></source></hostdev>"
+        );
+        assert!(addr.hotplug());
+        // Half of either is refused, and both at once
+        for bad in [
+            VirtHwNewDevice::Usb { vendor: Some("0bda".into()), product: None, bus: None, device: None },
+            VirtHwNewDevice::Usb { vendor: None, product: Some("b023".into()), bus: None, device: None },
+            VirtHwNewDevice::Usb { vendor: None, product: None, bus: Some(1), device: None },
+            VirtHwNewDevice::Usb { vendor: None, product: None, bus: None, device: Some(4) },
+            VirtHwNewDevice::Usb { vendor: Some("0bda".into()), product: Some("b023".into()), bus: Some(1), device: Some(4) },
+            // Not hex, and device 0
+            VirtHwNewDevice::Usb { vendor: Some("zzzz".into()), product: Some("b023".into()), bus: None, device: None },
+            VirtHwNewDevice::Usb { vendor: None, product: None, bus: Some(1), device: Some(0) },
+        ] {
+            assert!(!bad.valid(), "{bad:?}");
+        }
+    }
+
+    #[test]
     fn domain_args_are_quoted() {
         let s = action_script(VirtAction::Start, "it's; rm -rf / #");
         assert!(s.contains("V start --domain 'it'\\''s; rm -rf / #'\n"), "{s}");
@@ -5351,6 +5941,16 @@ mod tests {
         let d = parse_display("spice://localhost?tls-port=5903").unwrap();
         assert_eq!((d.port, d.tls_port), (None, Some(5903)));
         assert!(parse_display("").is_none());
+    }
+
+    #[test]
+    fn the_probe_looks_where_pve_installs_pveversion() {
+        // A PVE host's `pveversion` is in /usr/sbin, which a monitor agent's
+        // user may not have on PATH: the probe names the path rather than
+        // only asking `command -v`.
+        let s = probe_script();
+        assert!(s.contains("/usr/sbin/pveversion"), "{s}");
+        assert!(s.contains("command -v pveversion"), "{s}");
     }
 
     #[test]

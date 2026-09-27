@@ -57,6 +57,14 @@
 /// writes it anew and deletes the VM — through the agent, and so through
 /// sudo for an account outside the `libvirt` group.
 ///
+/// The phase-10 groups make a network `sbme2e-net-*` (libvirt) or
+/// `sbxe2e*` (PVE), edit it, restart it where the change needs one, and
+/// take it away; the libvirt one also discards a pending change from a
+/// guest of the run's own. `SBM_E2E_PVE_TOKEN_ID` / `_SECRET` are needed for
+/// the PVE group as they are for the other PVE ones, and its server carries
+/// the agent's credentials plus that `PveConfig` (the API is reached
+/// through the relay at `https://localhost:8006`).
+///
 /// Every agent is expected to serve TLS with a certificate this device does
 /// not trust (`[server.tls]` with a self-signed pair), so the credential sets
 /// `ignoreCert`. Plain HTTP would need both opt-ins (`allowInsecure` here,
@@ -108,9 +116,9 @@ Future<void> main() async {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   final user = e2eEnv('SBM_E2E_MONITOR_USER') ?? 'admin';
-  final libvirt = _Agent.fromEnv('LIBVIRT', user);
-  final pve = _Agent.fromEnv('PVE', user);
-  final restricted = _Agent.fromEnv(
+  final libvirt = await _Agent.probe('LIBVIRT', user);
+  final pve = await _Agent.probe('PVE', user);
+  final restricted = await _Agent.probe(
     'RESTRICTED',
     user,
     fallbackPassword: e2eEnv('SBM_E2E_MONITOR_LIBVIRT_PASSWORD'),
@@ -119,7 +127,7 @@ Future<void> main() async {
     test(
       'virt over monitor e2e',
       () {},
-      skip: 'no SBM_E2E_MONITOR_*_ADDR / _PASSWORD pair is set',
+      skip: 'no SBM_E2E_MONITOR_*_ADDR / _PASSWORD pair is set, or no agent answers',
     );
     return;
   }
@@ -149,15 +157,22 @@ Future<void> main() async {
   if (libvirt != null) _libvirtHardware(libvirt);
   if (libvirt != null) _libvirtHardwareDevices(libvirt);
   if (libvirt != null) _libvirtClone(libvirt);
+  if (libvirt != null) _p10LibvirtNetwork(libvirt);
+  if (libvirt != null) _p10LibvirtRevert(libvirt);
   if (pve != null) _p8Pve(pve);
   if (pve != null) _pveCreate(pve);
   if (pve != null) _pveCloneBackup(pve);
+  if (pve != null) _p10PveNetwork(pve);
   if (pve != null) _pveHardware(pve);
   if (pve != null) _pveHardwareDevices(pve);
   if (libvirt != null) {
     _libvirt(libvirt);
   } else {
-    test('libvirt over monitor', () {}, skip: 'SBM_E2E_MONITOR_LIBVIRT_* unset');
+    test(
+      'libvirt over monitor',
+      () {},
+      skip: 'SBM_E2E_MONITOR_LIBVIRT_* unset, or its agent is not reachable',
+    );
   }
   if (libvirt != null) _p8Libvirt(libvirt);
 
@@ -165,7 +180,11 @@ Future<void> main() async {
     _pve(pve);
     _pveTestVm(pve);
   } else {
-    test('PVE over monitor', () {}, skip: 'SBM_E2E_MONITOR_PVE_* unset');
+    test(
+      'PVE over monitor',
+      () {},
+      skip: 'SBM_E2E_MONITOR_PVE_* unset, or its agent is not reachable',
+    );
   }
   if (restricted != null) {
     _restricted(restricted);
@@ -173,7 +192,7 @@ Future<void> main() async {
     test(
       'agent without full access',
       () {},
-      skip: 'SBM_E2E_MONITOR_RESTRICTED_* unset',
+      skip: 'SBM_E2E_MONITOR_RESTRICTED_* unset, or its agent is not reachable',
     );
   }
 }
@@ -192,6 +211,32 @@ class _Agent {
         e2eEnv('SBM_E2E_MONITOR_${name}_PASSWORD') ?? fallbackPassword;
     if (addr == null || password == null) return null;
     return _Agent(addr, user, password);
+  }
+
+  /// [fromEnv], and then whether the agent answers at all.
+  ///
+  /// These agents run on hosts that are virtual machines here, so the common
+  /// case of a run that goes nowhere is a host left shut down. Every request
+  /// to it then waits out its own timeout, one after another, for as long as
+  /// the suite has groups — which reads as a hang. One bounded probe up front
+  /// says which it is, and the group is skipped by name.
+  ///
+  /// A literal host address, so the check does not go through the same
+  /// transport the suite is about to exercise.
+  static Future<_Agent?> probe(
+    String name,
+    String user, {
+    String? fallbackPassword,
+  }) async {
+    final agent = fromEnv(name, user, fallbackPassword: fallbackPassword);
+    if (agent == null) return null;
+    final uri = Uri.tryParse(agent.addr);
+    final host = uri?.host;
+    if (host == null || host.isEmpty) return agent;
+    if (await e2eReachable(host, uri!.port)) return agent;
+    // ignore: avoid_print
+    print('SBM_E2E_MONITOR_${name}_ADDR ($host:${uri.port}) is not reachable');
+    return null;
   }
 
   MonitorHttpCredential get credential => MonitorHttpCredential(
@@ -971,6 +1016,464 @@ void _libvirtClone(_Agent agent) {
         isNot(contains('$name-cross.qcow2')),
       );
     });
+  });
+}
+
+/// Phase 10: an existing network edited through the providers — its mode,
+/// its address, its DHCP range and its static hosts — and the running one
+/// restarted onto the change. Everything is named `sbxe2e*` and removed
+/// again.
+void _p10LibvirtNetwork(_Agent agent) {
+  final sudoPassword = e2eEnv('SBM_E2E_MONITOR_SUDO_PASSWORD');
+
+  group('network editing: libvirt over the monitor agent', () {
+    late _World w;
+    final name = _e2eName('net');
+
+    /// Takes away every network this group made, whether the test passed or
+    /// not: one left behind has its subnet, and the next test's create is
+    /// refused for it.
+    Future<void> cleanup() async {
+      for (final n in await w.host.networks()) {
+        if (!n.name.startsWith('sbme2e-net')) continue;
+        if (n.active) {
+          try {
+            await w.host.manage(VirtNetworkSetActive(n, active: false));
+          } catch (_) {}
+        }
+        try {
+          await w.host.manage(
+            VirtNetworkDelete(
+              (await w.host.networks()).firstWhere(
+                (x) => x.name == n.name,
+                orElse: () => n,
+              ),
+            ),
+          );
+        } catch (_) {}
+      }
+    }
+
+    setUpAll(() async {
+      w = _World(agent.spi('e2e-monitor-libvirt-net'));
+      await w.host.firstLoad;
+      if (w.state.error?.type == VirtErrType.sudoPasswordRequired &&
+          sudoPassword != null) {
+        await w.host.provideSudoPassword(sudoPassword);
+      }
+      expect(w.state.error, isNull, reason: '${w.state.error}');
+    });
+    tearDown(cleanup);
+    tearDownAll(() async {
+      await cleanup();
+      await w.dispose();
+    });
+
+    test('a NAT network: mode, address, range and static hosts', () async {
+      const cidr = '192.168.249.1/24';
+      await w.host.manage(
+        VirtNetworkCreate(
+          name: name,
+          mode: 'nat',
+          cidr: cidr,
+          dhcpStart: '192.168.249.100',
+          dhcpEnd: '192.168.249.200',
+        ),
+      );
+      var net = (await w.host.networks()).firstWhere((n) => n.name == name);
+      expect((net.active, net.mode), (true, 'nat'));
+      expect(net.address, '192.168.249.1');
+      expect(net.prefix, 24);
+      expect(net.dhcpRange, ('192.168.249.100', '192.168.249.200'));
+      expect(net.xml, contains('<forward mode=\'nat\'/>'));
+      expect(net.pendingRestart, isFalse);
+
+      // A static host, live: `net-update`, no restart.
+      await w.host.manage(
+        VirtNetworkEdit(
+          net,
+          mode: 'nat',
+          address: '192.168.249.1',
+          prefix: 24,
+          dhcpStart: '192.168.249.100',
+          dhcpEnd: '192.168.249.200',
+          hosts: const [
+            VirtNetHost(mac: '52:54:00:aa:bb:e1', ip: '192.168.249.150', name: 'sbxe2e-h1'),
+          ],
+        ),
+      );
+      net = (await w.host.networks()).firstWhere((n) => n.name == name);
+      expect(net.hosts.single.mac, '52:54:00:aa:bb:e1');
+      expect(net.hosts.single.ip, '192.168.249.150');
+      expect(net.pendingRestart, isFalse);
+
+      // The address and the range: the definition first, then a restart.
+      // The static host moves with it.
+      await w.host.manage(
+        VirtNetworkEdit(
+          net,
+          mode: 'nat',
+          address: '192.168.250.1',
+          prefix: 24,
+          dhcpStart: '192.168.250.100',
+          dhcpEnd: '192.168.250.200',
+          hosts: const [
+            VirtNetHost(mac: '52:54:00:aa:bb:e1', ip: '192.168.250.150', name: 'sbxe2e-h1'),
+          ],
+        ),
+      );
+      net = (await w.host.networks()).firstWhere((n) => n.name == name);
+      // The definition is the new one; the running network is not on it.
+      expect(net.address, '192.168.250.1');
+      expect(net.pendingRestart, isTrue, reason: 'the running network is on the old definition');
+
+      await w.host.manage(VirtNetworkRestart(net));
+      net = (await w.host.networks()).firstWhere((n) => n.name == name);
+      expect(net.pendingRestart, isFalse);
+      expect(net.hosts.single.ip, '192.168.250.150');
+
+      // A change that only the definition takes until the network is
+      // restarted: the mode goes to routed, and stays pending.
+      await w.host.manage(
+        VirtNetworkEdit(
+          net,
+          mode: 'route',
+          address: '192.168.250.1',
+          prefix: 24,
+          hosts: net.hosts,
+        ),
+      );
+      net = (await w.host.networks()).firstWhere((n) => n.name == name);
+      expect(net.mode, 'route');
+      expect(net.pendingRestart, isTrue);
+      await w.host.manage(VirtNetworkRestart(net));
+      net = (await w.host.networks()).firstWhere((n) => n.name == name);
+      expect(net.pendingRestart, isFalse);
+      expect(net.mode, 'route');
+
+      // A change made from a read the host has moved past: refused, and
+      // nothing written.
+      final stale = await _virtErr(
+        w.host.manage(
+          VirtNetworkEdit(
+            net,
+            mode: 'isolated',
+            address: '10.99.99.1',
+            prefix: 24,
+          ),
+        ),
+      );
+      expect(stale.type, VirtErrType.conflict);
+      expect(
+        (await w.host.networks()).firstWhere((n) => n.name == name).mode,
+        'route',
+      );
+
+      // A subnet another network of the host's is on: refused before it is
+      // sent.
+      final issue = virtResourceIssue(
+        VirtNetworkEdit(net, mode: 'nat', address: '192.168.122.9', prefix: 24),
+        host: VirtHostKind.libvirt,
+        networks: await w.host.networks(),
+      );
+      expect(issue, VirtResIssue.subnetTaken);
+
+      if ((await w.host.networks()).any((n) => n.name == name && n.active)) {
+        await w.host.manage(VirtNetworkSetActive(
+          (await w.host.networks()).firstWhere((n) => n.name == name),
+          active: false,
+        ));
+      }
+      await w.host.manage(
+        VirtNetworkDelete((await w.host.networks()).firstWhere((n) => n.name == name)),
+      );
+      expect((await w.host.networks()).any((n) => n.name == name), isFalse);
+    }, timeout: const Timeout(Duration(minutes: 5)));
+
+    test('an address a guest is on: the restart keeps it up', () async {
+      // A refusal at start is rolled back: the host's own subnet is in use.
+      const cidr = '192.168.251.1/24';
+      final other = '$name-b';
+      await w.host.manage(
+        VirtNetworkCreate(
+          name: other,
+          mode: 'nat',
+          cidr: cidr,
+          dhcpStart: '192.168.251.100',
+          dhcpEnd: '192.168.251.200',
+        ),
+      );
+      final net = (await w.host.networks()).firstWhere((n) => n.name == other);
+      // The host's own LAN, which libvirt refuses a bridge on: the restart
+      // puts the old definition back and starts that.
+      final refused = await _virtErr(
+        w.host.manage(
+          VirtNetworkEdit(
+            net,
+            mode: 'nat',
+            address: '192.168.31.1',
+            prefix: 24,
+            dhcpStart: '192.168.31.100',
+            dhcpEnd: '192.168.31.200',
+          ),
+        ),
+      );
+      expect(refused.type, VirtErrType.actionFailed);
+      expect(refused.message, contains('put back and started again'));
+      final after = (await w.host.networks()).firstWhere((n) => n.name == other);
+      expect(after.active, isTrue, reason: 'the network is never left down');
+      expect(after.address, '192.168.251.1');
+      await w.host.manage(VirtNetworkSetActive(after, active: false));
+      await w.host.manage(VirtNetworkDelete(after));
+    }, timeout: const Timeout(Duration(minutes: 5)));
+  });
+}
+
+/// Phase 10: a domain's pending change discarded by redefining it from the
+/// running XML, with the NVRAM file and the firmware left as they are.
+void _p10LibvirtRevert(_Agent agent) {
+  final sudoPassword = e2eEnv('SBM_E2E_MONITOR_SUDO_PASSWORD');
+
+  group('revert pending: libvirt over the monitor agent', () {
+    late _World w;
+    final name = _e2eName('rev');
+    late VirtStoragePool pool;
+
+    setUpAll(() async {
+      w = _World(agent.spi('e2e-monitor-libvirt-rev'));
+      await w.host.firstLoad;
+      if (w.state.error?.type == VirtErrType.sudoPasswordRequired &&
+          sudoPassword != null) {
+        await w.host.provideSudoPassword(sudoPassword);
+      }
+      expect(w.state.error, isNull, reason: '${w.state.error}');
+      pool = virtDiskStorages(
+        await w.host.storagePools(),
+        host: VirtHostKind.libvirt,
+        kind: VirtGuestKind.qemu,
+      ).first;
+    });
+    tearDownAll(() async {
+      for (final g in w.state.data?.guests.where((g) => g.name == name) ?? const <VirtGuest>[]) {
+        try {
+          if (g.state != VirtGuestState.stopped) {
+            await w.host.power(g.id, VirtPowerAction.forceStop);
+            await w.host.refresh();
+          }
+          await w.host.delete(g.id);
+        } catch (_) {}
+      }
+      await w.dispose();
+    });
+
+    test('a memory change with the guest running is discarded', () async {
+      final options = await w.host.createOptions();
+      // UEFI where the host has it: the NVRAM file is what the revert must
+      // leave alone.
+      final uefi = options.uefi;
+      final created = await w.host.create(
+        VirtCreateSpec(
+          kind: VirtGuestKind.qemu,
+          name: name,
+          cores: 1,
+          memoryMiB: 256,
+          storage: pool,
+          diskGiB: 1,
+          uefi: uefi,
+          start: true,
+        ),
+      );
+      expect(created.startError, isNull);
+      final g = await w.settle(
+        (g) => g.id == created.id,
+        name,
+        (g) => g.state == VirtGuestState.running,
+      );
+      final before = await w.host.hardware(g.id);
+      expect(before.pending, isEmpty);
+      expect(before.firmware?.uefi ?? false, uefi);
+
+      // A change the running guest does not take: it waits.
+      final out = await w.host.changeHardware(
+        g.id,
+        before,
+        const VirtHwSetMemory(mib: 768),
+      );
+      expect(out.liveError, isNull);
+      final pending = await w.host.hardware(g.id);
+      expect(pending.pending.map((p) => p.key), contains('memory'));
+      expect(pending.memory.mib, 768);
+
+      // The revert: the definition is the live XML again.
+      await w.host.revertPending(g.id, pending);
+      final after = await w.host.hardware(g.id);
+      expect(after.pending, isEmpty);
+      expect(after.memory.mib, before.memory.mib);
+      // Still running, and its own memory is untouched.
+      await w.host.refresh();
+      expect(w.state.guest(g.id)?.state, VirtGuestState.running);
+      await w.host.power(g.id, VirtPowerAction.forceStop);
+      await w.settle((x) => x.id == g.id, name, (x) => x.state == VirtGuestState.stopped);
+      await w.host.delete(g.id);
+    }, timeout: const Timeout(Duration(minutes: 6)));
+  });
+}
+
+/// Phase 10: a PVE bridge edited through the pending model, applied, and the
+/// interface carrying the host's own address refused.
+void _p10PveNetwork(_Agent agent) {
+  final tokenId = e2eEnv('SBM_E2E_PVE_TOKEN_ID');
+  final tokenSecret = e2eEnv('SBM_E2E_PVE_TOKEN_SECRET');
+  if (tokenId == null || tokenSecret == null) return;
+
+  group('network editing: PVE over the monitor agent relay', () {
+    late _World w;
+    // A Linux interface name is at most 15 characters, which PVE checks:
+    // `sbme2e-br-82086` is too long for one.
+    final name = 'sbxe2e${DateTime.now().millisecondsSinceEpoch % 10000}';
+    final node = 'pve';
+
+    setUpAll(() async {
+      w = _World(agent.spi('e2e-monitor-pve-net'));
+      // A server carrying a PVE configuration is a PVE host: the address is
+      // resolved on the agent's side of the relay.
+      Stores.pve.put(
+        w.id,
+        PveConfig(
+          addr: 'https://localhost:8006',
+          auth: PveAuth.token,
+          tokenId: tokenId,
+          tokenSecret: tokenSecret,
+        ),
+      );
+      await w.host.firstLoad;
+      final cert = w.state.error?.cert;
+      if (cert != null) await w.host.confirmCert(cert.fingerprint);
+      expect(w.state.error, isNull, reason: '${w.state.error}');
+    });
+    /// Takes the bridge away, applied or not, and drops whatever waits in
+    /// the node's pending configuration: one left behind is a bridge on the
+    /// host, and a subnet the next run's form refuses.
+    Future<void> cleanup() async {
+      try {
+        if ((await w.host.networks()).any((n) => n.name == name)) {
+          await w.host.manage(
+            VirtNetworkDelete(
+              (await w.host.networks()).firstWhere((n) => n.name == name),
+            ),
+          );
+        }
+      } catch (_) {}
+      try {
+        await w.host.manage(VirtNetworkRevert(node));
+      } catch (_) {}
+      try {
+        await w.host.manage(VirtNetworkApply(node));
+      } catch (_) {}
+    }
+
+    tearDown(cleanup);
+    tearDownAll(() async {
+      await cleanup();
+      await w.dispose();
+    });
+
+    test('a bridge: edited pending, applied, and the management one refused', () async {
+      await w.host.manage(
+        VirtNetworkCreate(
+          name: name,
+          mode: 'bridge',
+          node: node,
+          cidr: '10.88.0.1/24',
+          autostart: false,
+        ),
+      );
+      var nets = await w.host.networks();
+      var net = nets.firstWhere((n) => n.name == name);
+      expect(net.active, isFalse, reason: 'a new PVE bridge waits');
+      expect(net.managementEditable, isTrue);
+
+      // Edited while pending: the address and the VLAN flag.
+      await w.host.manage(
+        VirtNetworkEditBridge(
+          net,
+          cidr: '10.89.0.1/24',
+          vlanAware: false,
+          autostart: false,
+        ),
+      );
+      nets = await w.host.networks();
+      net = nets.firstWhere((n) => n.name == name);
+      expect(net.address, '10.89.0.1');
+      expect((await w.host.networkChanges()).map((c) => c.diff).join(), contains(name));
+
+      // Reverted: nothing applied, and the interface is gone from the
+      // pending configuration.
+      await w.host.manage(VirtNetworkRevert(node));
+      expect((await w.host.networks()).any((n) => n.name == name), isFalse);
+
+      // Made again and applied.
+      await w.host.manage(
+        VirtNetworkCreate(
+          name: name,
+          mode: 'bridge',
+          node: node,
+          cidr: '10.88.0.1/24',
+          autostart: false,
+        ),
+      );
+      net = (await w.host.networks()).firstWhere((n) => n.name == name);
+      await w.host.manage(
+        VirtNetworkEditBridge(net, cidr: '10.90.0.1/24', vlanAware: true),
+      );
+      await w.host.manage(VirtNetworkApply(node));
+      net = (await w.host.networks()).firstWhere((n) => n.name == name);
+      // What was applied is the configuration: PVE's listing answers with
+      // the file it wrote. A bridge with no ports and no `auto` line is not
+      // brought up by `ifreload` — that is PVE's own behaviour, and not
+      // this app's to change.
+      expect(net.address, '10.90.0.1');
+      expect(net.vlanAware, isTrue);
+      expect(
+        net.ports,
+        isEmpty,
+        reason: 'no port was given, so none was written',
+      );
+
+      // Removed and applied.
+      await w.host.manage(VirtNetworkDelete(net));
+      await w.host.manage(VirtNetworkApply(node));
+      expect((await w.host.networks()).any((n) => n.name == name), isFalse);
+    }, timeout: const Timeout(Duration(minutes: 5)));
+
+    test('the interface carrying the host address is refused', () async {
+      final nets = await w.host.networks();
+      final mgmt = nets.where((n) => !n.managementEditable).toList();
+      // vmbr0 carries PVE's own address (and a physical interface is never
+      // the app's to edit): neither may be written or removed.
+      expect(mgmt, isNotEmpty, reason: 'no management interface was found');
+      expect(
+        mgmt.map((n) => n.name),
+        contains('vmbr0'),
+        reason: 'the bridge holding the default route is one of them',
+      );
+      for (final m in mgmt) {
+        final e = await _virtErr(
+          w.host.manage(VirtNetworkEditBridge(m, cidr: '10.77.0.1/24')),
+        );
+        expect(e.type, VirtErrType.unsupported, reason: m.name);
+        final d = await _virtErr(w.host.manage(VirtNetworkDelete(m)));
+        expect(d.type, VirtErrType.unsupported, reason: m.name);
+      }
+      // Nothing was written, and the node is still reachable: the bridge
+      // that carries its own address is untouched.
+      final after = (await w.host.networks())
+          .firstWhere((n) => n.name == 'vmbr0');
+      final before = nets.firstWhere((n) => n.name == 'vmbr0');
+      expect(after.address, before.address);
+      expect(after.gateway, before.gateway);
+      expect(after.active, isTrue);
+    }, timeout: const Timeout(Duration(minutes: 3)));
   });
 }
 
@@ -3309,12 +3812,13 @@ void _p8Libvirt(_Agent agent) {
       );
       expect((await w.host.snapshotChain(lean.id)).depth, 2);
 
-      // Reverting to it (a leaf) puts the guest back and collapses the chain.
+      // Reverting to it (a leaf) drops the overlay the guest was writing and
+      // starts it on a new one over the file the snapshot kept: two layers.
       await w.host.revertSnapshot(running.id, 'sbxe2e-ext', start: true);
       await w.settle((x) => x.name == name, name, (x) => true);
       final back = w.guest((x) => x.name == name, name);
       final flat = await w.host.snapshotChain(back.id);
-      expect(flat.disks.first.files.length, lessThan(3));
+      expect(flat.disks.first.files, hasLength(2));
       // The chain is still readable, which is the app's own rule: a guest is
       // never left on one it cannot read back.
       expect(flat.disks.first.isChain, isTrue);
@@ -3322,13 +3826,14 @@ void _p8Libvirt(_Agent agent) {
       // And the guest is on a file that is there.
       expect(flat.disks.first.files.first.path, isNotEmpty);
 
-      // Deleting the snapshot that was reverted to is refused by libvirt
-      // itself: its layer's file is gone (the revert collapsed the chain),
-      // and `block-commit` cannot open the base as the QEMU user. The app
-      // says so in the host's words rather than pretending it worked.
+      // Deleting the snapshot that was reverted to would commit its overlay
+      // into the base, which AppArmor's profile denies QEMU writing (`deny
+      // ... w` for a file that was already a backing file when QEMU
+      // started; Debian #932456). The app refuses it before the host is
+      // asked, which would refuse it too and mark the disk.
       final e = await _virtErr(w.host.deleteSnapshot(back.id, 'sbxe2e-ext'));
-      expect(e.type, VirtErrType.permissionDenied);
-      expect(e.message, contains('block-commit'));
+      expect(e.type, VirtErrType.unsupported);
+      expect(e.message, contains('#932456'));
       expect(
         (await w.host.snapshots(back.id)).map((s) => s.name),
         contains('sbxe2e-ext'),

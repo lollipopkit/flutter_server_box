@@ -279,11 +279,10 @@ _LibvirtSnapChain _$LibvirtSnapChainFromJson(Map<String, dynamic> json) =>
               )
               .toList() ??
           const <LibvirtSnapChainDisk>[],
-      blocked: json['blocked'] as String?,
     );
 
 Map<String, dynamic> _$LibvirtSnapChainToJson(_LibvirtSnapChain instance) =>
-    <String, dynamic>{'disks': instance.disks, 'blocked': instance.blocked};
+    <String, dynamic>{'disks': instance.disks};
 
 _LibvirtSnapChainDisk _$LibvirtSnapChainDiskFromJson(
   Map<String, dynamic> json,
@@ -294,7 +293,7 @@ _LibvirtSnapChainDisk _$LibvirtSnapChainDiskFromJson(
           ?.map((e) => LibvirtSnapChainFile.fromJson(e as Map<String, dynamic>))
           .toList() ??
       const <LibvirtSnapChainFile>[],
-  pool: json['pool'] as String?,
+  error: json['error'] as String?,
 );
 
 Map<String, dynamic> _$LibvirtSnapChainDiskToJson(
@@ -302,7 +301,7 @@ Map<String, dynamic> _$LibvirtSnapChainDiskToJson(
 ) => <String, dynamic>{
   'target': instance.target,
   'files': instance.files,
-  'pool': instance.pool,
+  'error': instance.error,
 };
 
 _LibvirtSnapChainFile _$LibvirtSnapChainFileFromJson(
@@ -440,6 +439,20 @@ Map<String, dynamic> _$LibvirtNetIpToJson(_LibvirtNetIp instance) =>
       'dhcp_ranges': instance.dhcpRanges,
     };
 
+_LibvirtNetHost _$LibvirtNetHostFromJson(Map<String, dynamic> json) =>
+    _LibvirtNetHost(
+      mac: json['mac'] as String,
+      ip: json['ip'] as String,
+      name: json['name'] as String?,
+    );
+
+Map<String, dynamic> _$LibvirtNetHostToJson(_LibvirtNetHost instance) =>
+    <String, dynamic>{
+      'mac': instance.mac,
+      'ip': instance.ip,
+      'name': instance.name,
+    };
+
 _LibvirtNetwork _$LibvirtNetworkFromJson(Map<String, dynamic> json) =>
     _LibvirtNetwork(
       name: json['name'] as String,
@@ -458,7 +471,14 @@ _LibvirtNetwork _$LibvirtNetworkFromJson(Map<String, dynamic> json) =>
               ?.map((e) => LibvirtNetIp.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const <LibvirtNetIp>[],
+      hosts:
+          (json['hosts'] as List<dynamic>?)
+              ?.map((e) => LibvirtNetHost.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const <LibvirtNetHost>[],
       connections: (json['connections'] as num?)?.toInt(),
+      xml: json['xml'] as String? ?? '',
+      pendingRestart: json['pending_restart'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$LibvirtNetworkToJson(_LibvirtNetwork instance) =>
@@ -471,7 +491,10 @@ Map<String, dynamic> _$LibvirtNetworkToJson(_LibvirtNetwork instance) =>
       'bridge': instance.bridge,
       'forward_devs': instance.forwardDevs,
       'ips': instance.ips,
+      'hosts': instance.hosts,
       'connections': instance.connections,
+      'xml': instance.xml,
+      'pending_restart': instance.pendingRestart,
     };
 
 _LibvirtIfaceUse _$LibvirtIfaceUseFromJson(Map<String, dynamic> json) =>
@@ -766,6 +789,20 @@ Map<String, dynamic> _$LibvirtCreateHostToJson(_LibvirtCreateHost instance) =>
       'seed_tool': instance.seedTool,
     };
 
+_LibvirtFirmware _$LibvirtFirmwareFromJson(Map<String, dynamic> json) =>
+    _LibvirtFirmware(
+      name: json['name'] as String,
+      secureBoot: json['secure_boot'] as bool? ?? false,
+      enrolledKeys: json['enrolled_keys'] as bool? ?? false,
+    );
+
+Map<String, dynamic> _$LibvirtFirmwareToJson(_LibvirtFirmware instance) =>
+    <String, dynamic>{
+      'name': instance.name,
+      'secure_boot': instance.secureBoot,
+      'enrolled_keys': instance.enrolledKeys,
+    };
+
 _LibvirtHostDevices _$LibvirtHostDevicesFromJson(Map<String, dynamic> json) =>
     _LibvirtHostDevices(
       usb:
@@ -796,6 +833,7 @@ _LibvirtHostUsb _$LibvirtHostUsbFromJson(Map<String, dynamic> json) =>
       productName: json['product_name'] as String?,
       bus: (json['bus'] as num?)?.toInt(),
       device: (json['device'] as num?)?.toInt(),
+      port: json['port'] as String?,
     );
 
 Map<String, dynamic> _$LibvirtHostUsbToJson(_LibvirtHostUsb instance) =>
@@ -806,6 +844,7 @@ Map<String, dynamic> _$LibvirtHostUsbToJson(_LibvirtHostUsb instance) =>
       'product_name': instance.productName,
       'bus': instance.bus,
       'device': instance.device,
+      'port': instance.port,
     };
 
 _LibvirtHostPci _$LibvirtHostPciFromJson(Map<String, dynamic> json) =>
@@ -839,6 +878,7 @@ _LibvirtHardwareInfo _$LibvirtHardwareInfoFromJson(Map<String, dynamic> json) =>
           ? null
           : LibvirtHwConfig.fromJson(json['live'] as Map<String, dynamic>),
       configXml: json['config_xml'] as String,
+      liveXml: json['live_xml'] as String? ?? '',
       autostart: json['autostart'] as bool? ?? false,
       description: json['description'] as String?,
       hostCpus: (json['host_cpus'] as num?)?.toInt(),
@@ -846,6 +886,11 @@ _LibvirtHardwareInfo _$LibvirtHardwareInfoFromJson(Map<String, dynamic> json) =>
       caps: json['caps'] == null
           ? null
           : LibvirtHwCaps.fromJson(json['caps'] as Map<String, dynamic>),
+      firmware:
+          (json['firmware'] as List<dynamic>?)
+              ?.map((e) => LibvirtFirmware.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const <LibvirtFirmware>[],
     );
 
 Map<String, dynamic> _$LibvirtHardwareInfoToJson(
@@ -854,9 +899,11 @@ Map<String, dynamic> _$LibvirtHardwareInfoToJson(
   'config': instance.config,
   'live': instance.live,
   'config_xml': instance.configXml,
+  'live_xml': instance.liveXml,
   'autostart': instance.autostart,
   'description': instance.description,
   'host_cpus': instance.hostCpus,
   'host_memory_kib': instance.hostMemoryKib,
   'caps': instance.caps,
+  'firmware': instance.firmware,
 };

@@ -122,6 +122,11 @@ class _VirtBackupJobViewState extends ConsumerState<VirtBackupJobView>
   String _mail = 'failure';
   var _enabled = true;
   var _all = true;
+
+  /// The pool a job takes its guests from, kept as it was: the app does not
+  /// list PVE's pools, so it is only ever the job's own. Null when the job
+  /// takes all guests or a list, or when the user switched it to one.
+  String? _pool;
   final _vmids = <int>{};
   final _exclude = <int>{};
   var _saving = false;
@@ -173,7 +178,8 @@ class _VirtBackupJobViewState extends ConsumerState<VirtBackupJobView>
     _node = job.node;
     _mail = job.mailNotification ?? 'failure';
     _enabled = job.enabled;
-    _all = job.all || job.pool != null;
+    _pool = job.pool;
+    _all = job.pool == null && job.all;
     _vmids
       ..clear()
       ..addAll(job.vmids);
@@ -442,15 +448,15 @@ class _VirtBackupJobViewState extends ConsumerState<VirtBackupJobView>
         _Group(
           key: 'guests',
           title: l10n.virtBackupSelection,
-          right: _all
-              ? l10n.virtBackupSelectionAll
-              : l10n.virtBackupSelected(_selectedCount),
+          right: _selectionLabel,
           warn: false,
-          indexNote: _all
-              ? _exclude.isEmpty
-                    ? l10n.virtBackupSelectionAll
-                    : '${l10n.virtBackupSelectionAll} − ${_exclude.length}'
-              : '${_vmids.length}',
+          indexNote: switch ((_pool, _all)) {
+            (final pool?, _) => 'pool:$pool',
+            (null, true) => _exclude.isEmpty
+                ? l10n.virtBackupSelectionAll
+                : '${l10n.virtBackupSelectionAll} − ${_exclude.length}',
+            (null, false) => '${_vmids.length}',
+          },
           rows: [
             _seg(
               Icons.group_outlined,
@@ -458,23 +464,30 @@ class _VirtBackupJobViewState extends ConsumerState<VirtBackupJobView>
               [
                 l10n.virtBackupSelectionAll,
                 l10n.virtBackupSelectionList,
+                if (job?.pool case final pool?) 'pool:$pool',
               ],
-              _all ? l10n.virtBackupSelectionAll : l10n.virtBackupSelectionList,
+              _selectionLabel,
               key: 'job:all',
               onSelected: busy
                   ? null
-                  : (v) => setState(
-                      () => _all = v == l10n.virtBackupSelectionAll,
-                    ),
+                  : (v) => setState(() {
+                      _pool = v == l10n.virtBackupSelectionAll ||
+                              v == l10n.virtBackupSelectionList
+                          ? null
+                          : job?.pool;
+                      _all = _pool == null && v == l10n.virtBackupSelectionAll;
+                    }),
             ),
-            if (_all)
+            // A pool's members are PVE's to say: nothing to pick.
+            if (_pool == null && _all)
               _text(
                 l10n.virtBackupExcludeTip,
               )
-            else if (_vmids.isEmpty)
+            else if (_pool == null && _vmids.isEmpty)
               _text(l10n.virtBackupSelectionNone, error: true),
-            for (final g in guests)
-              _toggle(
+            if (_pool == null)
+              for (final g in guests)
+                _toggle(
                 g.kind == VirtGuestKind.lxc
                     ? Icons.inventory_2_outlined
                     : Icons.memory,
@@ -540,10 +553,14 @@ class _VirtBackupJobViewState extends ConsumerState<VirtBackupJobView>
     );
   }
 
-  int get _selectedCount => _all ? 0 : _vmids.length;
+  String get _selectionLabel => switch ((_pool, _all)) {
+    (final pool?, _) => 'pool:$pool',
+    (null, true) => l10n.virtBackupSelectionAll,
+    (null, false) => l10n.virtBackupSelected(_vmids.length),
+  };
 
   bool _canSave(List<VirtStoragePool> storages) =>
-      storages.isNotEmpty && (_all || _vmids.isNotEmpty);
+      storages.isNotEmpty && (_pool != null || _all || _vmids.isNotEmpty);
 
   /// The guests a job can take: the host's, less a template (PVE refuses to
   /// back one up: `you can't backup a template`) and less a guest with no
@@ -595,7 +612,8 @@ class _VirtBackupJobViewState extends ConsumerState<VirtBackupJobView>
       compress: _compress,
       enabled: _enabled,
       all: _all,
-      vmids: _all ? const [] : (_vmids.toList()..sort()),
+      pool: _pool,
+      vmids: _all || _pool != null ? const [] : (_vmids.toList()..sort()),
       exclude: _all ? (_exclude.toList()..sort()) : const [],
       comment: _comment.text.trim().isEmpty ? null : _comment.text.trim(),
       notesTemplate: _notes.text.trim().isEmpty ? null : _notes.text.trim(),

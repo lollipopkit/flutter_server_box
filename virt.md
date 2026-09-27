@@ -322,7 +322,7 @@ own lists — `virtDiskStorages`, `virtMediaStorages` + `virtIsMedia`,
 | | libvirt | PVE |
 | --- | --- | --- |
 | Create | 1. `create_host_script`: `domcapabilities` for KVM/q35, KVM, QEMU/q35, QEMU, the first the host accepts. 2. `create_volume_script`: stops if the name is defined, `vol-create-as` (qcow2, raw on LVM/ZFS/RBD pools), `vol-path`. 3. `define_script`: the XML (`domain_xml`, escaped) through a `mktemp` file, `define --file`, `domuuid`, `start`; a refused define deletes the volume again. | `POST /nodes/{node}/qemu` (`scsi0` on the storage, `ide2` the ISO, `net0` virtio on the bridge, `serial0: socket`, `ostype l26`) or `/lxc` (`ostemplate`, `rootfs`, `net0` DHCP, `unprivileged`), the task; then `status/start` as its own request |
-| Delete | `undefine --managed-save --snapshots-metadata`, with `--nvram --storage <targets>` of the writable disks (never a CD-ROM or a read-only disk), or `--keep-nvram` keeping them | `DELETE` with `purge=1&destroy-unreferenced-disks=1`, the task. Its own disks always go (`deleteKeepsDisks` false) |
+| Delete | `undefine --managed-save --snapshots-metadata`, with `--nvram --storage <targets>` of the writable disks (never a CD-ROM or a read-only disk), or `--keep-nvram` keeping them. A guest with external snapshots: the pools of its chain files are refreshed first (`--storage` skips a file its pool does not know yet — one a snapshot or a revert made — with a warning and rc 0), and the files below each disk go after it, down to the disk the first snapshot was taken of; an image below that stays | `DELETE` with `purge=1&destroy-unreferenced-disks=1`, the task. Its own disks always go (`deleteKeepsDisks` false) |
 
 - Disks by path, not `type='volume'`: on the Debian/AppArmor libvirt host a
   volume disk failed to start with "Permission denied" on its own image
@@ -400,7 +400,7 @@ PVE's fixed list (`PveResources.pveQemuSupport`), libvirt's from the host's
 | Display | `edit_display_xml`: protocol (VNC/SPICE where offered), listen address (127.0.0.1 / 0.0.0.0 — the latter warned about, as the design has it), primary video model; a VNC password and keymap are kept | `vga` type (its `memory=` kept); PVE has no protocol or listen address to set here: VNC through its proxy, SPICE comes with `qxl` |
 | Firmware | Stopped only, asked first ("don't switch the firmware of an installed system"). `edit_firmware_xml`: `<os firmware='efi'>` with `enrolled-keys`/`secure-boot` features and no `<loader>`/`<nvram>` of its own, so libvirt autoselects (verified: `OVMF_CODE_4M.ms.fd` with SMM on for Secure Boot, `OVMF_CODE_4M.fd` without). **libvirt reuses a variables file whatever template made it**, and keys are enrolled only when one is made, so a change of Secure Boot keeps `<nvram>`'s path and deletes the file after the define: libvirt makes it from the right template at the next start (boot entries go, as on PVE; the view says so on both) | `bios=ovmf` plus an `efidisk0` (`<storage>:1,efitype=4m,pre-enrolled-keys=0/1`) on the storage the old one was on, or one picked. Keys are enrolled when the disk is made: turning Secure Boot on or off **replaces the EFI disk** (the old one detached and its `unusedN` deleted; the view says boot entries go with it). BIOS keeps the EFI disk |
 | TPM | `<tpm model='tpm-crb'><backend type='emulator' version='2.0'/>` — only where swtpm is there; config only, pending | `tpmstate0: <storage>:1,version=v2.0`; removing it deletes the state volume too |
-| USB | `nodedev-list --cap usb_device` + `nodedev-dumpxml` each (root hubs left out); a `<hostdev>` by vendor/product, live as well while running | Resource mappings (`/cluster/mapping/usb`); the node's own devices only for root@pam with its password |
+| USB | `nodedev-list --cap usb_device` + `nodedev-dumpxml` each (root hubs left out); a `<hostdev>` by vendor/product or by the bus and device number (phase 10), live as well while running | Resource mappings (`/cluster/mapping/usb`); the node's own devices only for root@pam with its password |
 | PCI | `nodedev-list --cap pci` with IOMMU groups (and how many share one); a managed `<hostdev>` by address, config only | Mappings (`/cluster/mapping/pci`); the node's devices (`/nodes/{n}/hardware/pci`, which also says whether there is an IOMMU) for root@pam only |
 
 - **PVE lets only root@pam give a guest a raw device**: a token (or any
@@ -621,7 +621,7 @@ What each host offers is capabilities: `storageEdit`, `poolTypes`,
 | New network | `net-define` (NAT, routed, isolated with or without IPv4, or `<forward mode='bridge'/>` onto a host bridge; libvirt picks `virbrN`) → `net-start` (a refusal undefines it again) → `net-autostart` | `POST /nodes/{n}/network` `type=bridge`, `bridge_ports`, `cidr`, `bridge_vlan_aware`, `autostart` — **pending** |
 | Stop / start, autostart | `net-destroy` / `net-start`, `net-autostart` | none |
 | Delete | `net-destroy` (active), `net-undefine` | `DELETE /nodes/{n}/network/{iface}` — pending |
-| Pending | none: libvirt applies each change | The listing's top-level `changes` (the diff of `interfaces.new`) per node, shown above the list and the network with "Show changes", Revert (`DELETE /nodes/{n}/network`) and Apply (`PUT /nodes/{n}/network`, `ifreload -a`, a task), each asked first |
+| Pending | `net-define` writes the definition and the running network keeps what it has until it is restarted (phase 10: `pendingRestart`, and the restart that applies it) | The listing's top-level `changes` (the diff of `interfaces.new`) per node, shown above the list and the network with "Show changes", Revert (`DELETE /nodes/{n}/network`) and Apply (`PUT /nodes/{n}/network`, `ifreload -a`, a task), each asked first |
 
 Decisions:
 
@@ -939,12 +939,17 @@ the same `snapshot-dumpxml` the phase-2 script already collects.
 | Chain | `snap_chain_script`, one round trip: `dumpxml` (the definition's `<backingStore>` chain), `domblklist --details` (where each device is *now*), then `qemu-img info -U --backing-chain --output=json` per disk — QEMU's own reader, so it is the chain QEMU would open, not what the XML claims. `-U` skips the lock a running guest holds | none: a PVE snapshot is taken by the storage, per volume, and there is no chain to show |
 | Create (external) | `snapshot-create-as --disk-only --atomic` **with** metadata, `--diskspec <target>,file=<path>,snapshot=external` per writable disk when a pool was picked | n/a (`snapshotExternal` false) |
 | Create (internal) | as phase 2: `snapshot-create-as`, memory on for an active domain | `POST .../snapshot`, `vmstate=1` |
-| Storage support | `snapshot_chain_script`'s own read: a raw disk, a disk QEMU will not open, or an overlay with no recorded format is refused with the reason | `GET .../{qemu,lxc}/{vmid}/feature?feature=snapshot` — the question PVE's own web UI asks before it offers the button. `hasFeature` over each of the guest's volumes |
+| Storage support | `snapshot_chain_script`'s own read, in two answers: `snapshot_refusal` (a disk QEMU opened as something other than qcow2 — neither kind can be taken, so the form is not offered) and `external_snapshot_refusal` (that, plus a disk `qemu-img` could not read — a lock, a permission, the tool missing — in its own words, or an overlay with no recorded backing format: only the external kind is disabled, the internal one needs no `qemu-img`) | `GET .../{qemu,lxc}/{vmid}/feature?feature=snapshot` — the question PVE's own web UI asks before it offers the button. `hasFeature` over each of the guest's volumes |
 | Config diff | `snap_diff_script`: `snapshot-dumpxml` (whose `<domain>` is the definition at the time) and `dumpxml --inactive`, compared in Rust over the parsed structure | `GET .../snapshot/{name}/config` against `GET .../config`, key by key |
 
 **What the app writes, and why.** `--disk-only --atomic`, with metadata (no
-`--no-metadata`), the overlay named by `--diskspec` into a pool the user
-picks:
+`--no-metadata`). The overlay pool picker starts on "beside each disk": no
+`--diskspec`, and libvirt puts `<disk>.<snapshot>` in the disk's own
+directory. A pool picked instead is one of the host's active pools of files
+(`dir`, `fs`, `netfs`: a `logical` pool's `/dev/<vg>` target is no place for
+a file), and every overlay goes in its directory by `--diskspec`. The pool a
+disk is shown in is the one whose directory holds its file, read from the
+pool list — never guessed from the path.
 
 - **With metadata.** The layer then appears in `snapshot-list` like any other
   snapshot, `snapshot-dumpxml` names the file it was left on, and a revert can
@@ -963,30 +968,62 @@ picks:
   cannot disagree with what libvirt writes into its own metadata. A picked
   pool is resolved to its directory from the storage listing, once.
 
-**Reverting a chain — verified on libvirt 11.3.** `snapshot-revert` on an
-external snapshot does **not** put the guest back on the file the snapshot
-recorded:
+**Reverting a chain — verified on libvirt 11.3 (Debian 13, AppArmor).**
+`snapshot-revert` on an external snapshot does **not** put the guest back on
+the file the snapshot recorded, and commits nothing:
 
-1. libvirt commits the running overlay into its backing file (the base image
-   becomes the current contents) and deletes the overlay;
-2. it starts the guest on a **new** file in the base image's directory, named
-   `<domain>.<timestamp>`;
-3. the chain is flattened, and every snapshot *after* the one reverted to is
-   left pointing at a file that is now gone — a later revert to one of them
-   fails inside QEMU
+1. libvirt deletes the overlay the guest was writing to, with whatever was
+   written since the snapshot;
+2. it starts the guest on a **new** overlay of the file the snapshot kept,
+   named after that file with its extension replaced by a timestamp
+   (`ov1.qcow2` → `ov1.1790504997`), and the snapshot's layer now names it.
+   The chain is as deep as before: reverting the newest of two snapshots
+   leaves `ov1.<ts>` → `ov1.qcow2` → the base;
+3. reverting to a snapshot that **has a child** failed: QEMU was refused the
+   base image (`Could not open '<base>': Permission denied`; AppArmor denied
+   `virt-aa-helper` reading the new `<base>.<ts>`). The guest was left shut
+   off on that new file, the overlay it had been running on deleted.
 
 So the app offers a revert only on a **leaf** (a snapshot with no children),
-which is what `VirtGuestSnapshot.hasChildren` and
-`virt_snapshot::revert_refusal` state, and the view disables the button with
+which is what `VirtGuestSnapshot.hasChildren` states, and the view disables the button with
 the reason rather than letting the host fail. The snapshot listing's `<disks>`
 carries a `<revertDisks>` element once it has been reverted to, naming where a
 *further* revert would go; the parser reads that instead when it is there.
 
+**Deleting on an AppArmor host.** A delete is a `block-commit` of the
+snapshot's overlay into the file below it. libvirt's `virt-aa-helper` writes
+`deny "<file>" w` into the domain's profile for every file that was already
+a backing file when QEMU started, so a commit into one is refused
+(`block-commit: Could not open '<file>': Permission denied`), running or shut
+off: Debian bug #932456, libvirt issue #806, still in Debian 13's 11.3.
+Ubuntu carries a patch; upstream has none. On such a host only the newest
+snapshot taken while the guest ran deletes. A refused delete leaves
+`<snapshotDeleteInProgress/>` in the snapshot below, and libvirt refuses that
+one's delete afterwards (`snapshot disk 'vda' was target of not completed
+snapshot delete`); how to clear it was not established.
+
+So the app asks before sending (`snap_delete_check_script` /
+`snap_delete_refusal`, one round trip) and refuses a delete the host would
+refuse, naming the file and the bug:
+
+- **running**, `dominfo` saying `Security model: apparmor`: refused when the
+  domain's profile (`/etc/apparmor.d/libvirt/libvirt-<uuid>.files`, world
+  readable; only its `deny` lines are printed) denies writing a layer's
+  commit target — the file below the snapshot's layer on the current chain;
+- **shut off**, the host's first `<secmodel>` being `apparmor` and the domain
+  without `<seclabel type='none'>`: always refused, since libvirt starts QEMU
+  for the commit with the whole chain already below.
+
+Anything it cannot read (no profile, an internal snapshot, a layer not on the
+chain) is left to the host. The profile's UUID is read from `dominfo`:
+`virsh domuuid` refuses a UUID as its argument, and the app names domains by
+one.
+
 **Not a chain the app cannot read back.** `external_snapshot_refusal` refuses,
-before anything is sent: a guest with no disk, a disk that is not a
-regular file QEMU will open, a disk whose format is not qcow2 (an external
-snapshot needs a qcow2 base), and an overlay whose backing format is not
-recorded. The last one is the subtle case: a definition without a
+before anything is sent: a guest with no disk, a disk `qemu-img` could not
+read (its refusal is kept per disk, in its words), a disk whose format is not
+qcow2 (an external snapshot needs a qcow2 base), and a layer whose backing
+format is not recorded (`backing-filename-format`). The last one is the subtle case: a definition without a
 `<driver type>` on a qcow2 file is a chain QEMU reads as raw (`backing file
 format: raw`, verified), which is exactly a chain whose layers would be opened
 as the wrong format.
@@ -1029,10 +1066,10 @@ relay), everything named `sbxe2e*` and removed afterwards:
   listing carries that file; a memory change in the definition shows in the
   diff as a memory row and nothing else; a second snapshot deepens the chain
   to three and **deletes cleanly** (depth back to two); reverting to the
-  newest collapses it and the guest is back on a readable chain; deleting the
-  snapshot that was reverted to is refused by libvirt itself
-  (`block-commit: Could not open '<file>': Permission denied`, the layer's
-  file having gone with the collapse) and the app shows the host's words.
+  newest leaves the guest on a new overlay over the file that snapshot kept
+  (two layers, readable); deleting the snapshot that was reverted to is
+  refused by the host (`block-commit: Could not open '<file>': Permission
+  denied`, AppArmor's `deny ... w` on the base) and the app shows its words.
 - **PVE 9.2.2**, through the relay with a privilege-separated token: a VM on
   `lvmthin` answers `hasFeature` and snapshots; a memory change in the
   configuration reads as a memory row in the diff, with `digest`/`snaptime`
@@ -1046,6 +1083,21 @@ By hand on the libvirt host (fixtures): the external snapshot's exact naming
 one-, two- and three-layer chain and for a raw disk, `domblklist --details`, a
 pool's `pool-dumpxml`, a snapshot's `<revertDisks>`, and the diff script
 before and after a vCPU, memory and NIC-model change.
+
+Verified again 2026-09-27 over SSH (`test/e2e/virt_real_test.dart`, the
+"snapshots: external, chain and diff" and "storage support and the config
+diff" groups, all passing): on libvirt 11.3 two external snapshots with no
+pool picked (each overlay beside the disk), a revert to the newest leaving
+three layers on a new file, the delete after it refused by the app before
+it was sent (no `snapshotDeleteInProgress` left on either snapshot), and the
+guest's delete leaving nothing in its pool; the check's three captured
+states (running with `deny` lines, shut off, running without) matching what
+the host then did with the delete in each; on PVE
+9.2.2 the `lvmthin` snapshot and diff, and a raw disk on a `dir` storage
+refused naming the storage. By hand, through the parser: a disk at a path
+with two spaces and a `*` read with its backing file, and a missing disk
+file kept as that disk's error in qemu-img's words (`Could not open ...: No
+such file or directory`), refusing the external form only.
 
 Not verified on a real host: an external snapshot of a guest with more than
 one writable disk (the scripts and the parser handle a list of them; only one
@@ -1126,7 +1178,7 @@ on the libvirt host is outside the `libvirt` group.
 | Snapshots, storage, networks | libvirt through the agent's `/exec` and `sudo -S`: pools with their volumes, networks, and a snapshot of the shut-off domain taken and deleted. PVE through the relay: storage with the volumes of VM 100, bridges with VM 100 and CT 200 on them. |
 | `full_access` off | libvirt: `/exec` answers 403 → `execNotGranted` (was `unreachable` with a DioException's text). PVE: the relay is `relayNotGranted` whether the grant was read (refused before dialling) or not (the agent refuses the stream ticket with 403; was `unreachable`). |
 | Refused before dialling | The dialer failed its socket future before `HttpClient` listened to it, and so did `PveBackend`'s TLS future on top: the load failed correctly *and* the zone got an uncaught error. Both futures are now marked handled. |
-| External snapshots (phase 8) | libvirt through the agent's `/exec` and `sudo -S`, the whole flow through the providers: a guest of the run's own, a disk-only snapshot while it runs, the chain read back, a memory change read as a diff, a second snapshot, a clean delete of it, a revert that collapses the chain, and the host's own refusal to delete the snapshot that was reverted to. PVE through the relay: a VM on `lvmthin` snapshotting and its memory change read as a diff; a VM on a `dir` storage added for the run with a raw disk answered `hasFeature: 0` and refused before any task. |
+| External snapshots (phase 8) | libvirt through the agent's `/exec` and `sudo -S`, the whole flow through the providers: a guest of the run's own, a disk-only snapshot while it runs, the chain read back, a memory change read as a diff, a second snapshot, a clean delete of it, a revert onto a new overlay, and the app's refusal, before sending, to delete the snapshot that was reverted to (AppArmor). PVE through the relay: a VM on `lvmthin` snapshotting and its memory change read as a diff; a VM on a `dir` storage added for the run with a raw disk answered `hasFeature: 0` and refused before any task. |
 
 Not verified on a real host: a ticket that expired on the server's clock (the 2 h expiry and the
 renewal were driven by the backend's injected clock against real tickets), a
@@ -1197,10 +1249,11 @@ Follows the repo's tab conventions (`CLAUDE.md` → Tabs):
     libvirt only;
   - attaching from the pool view offers VMs, not containers (a mount point
     would be one more question); cloning a volume is libvirt only;
-  - a network's configuration is read-only once made (the design edits it in
-    place): a change means restarting the network under its guests, or a
-    pending PVE change — a later phase. The design's "configuration file"
-    group is left out for the same reason;
+  - a network's configuration is edited in phase 10 (the design edits it in
+    place): the form says that a libvirt change waits for a restart unless
+    the restart is asked for, and that a PVE one waits in the node's pending
+    configuration. The design's "configuration file" group is the definition
+    the edit is made from, folded under the form;
   - the new libvirt network form has a routed mode and the DHCP range fields
     (the design has three modes and the range only in the detail); a netfs
     pool asks for its mount point (prefilled `/mnt/<name>`);
@@ -1227,10 +1280,47 @@ Follows the repo's tab conventions (`CLAUDE.md` → Tabs):
     the design's `field` rows (name left, value right) grouped under the
     design's own headings;
   - a revert is **disabled** on a snapshot with children, with the reason
-    under it, where the design always offers it: on a chain libvirt's revert
-    strands every later snapshot (see the phase-8 section);
+    under it, where the design always offers it: such a revert failed on
+    libvirt 11.3 and left the guest shut off (see the phase-8 section);
   - a guest whose storage the host says cannot be snapshotted (PVE) gets the
     reason instead of the create row, where the design always offers it.
+
+- Design deviations in the network editing, the revert and the small items
+  (phase 10), and why:
+  - the edit form is a **dialog**, where the design edits the network in
+    place: the view it opens from is already the network's own pane, and
+    every other confirmation in the tab is a dialog. The design's
+    "configuration file" group is the definition the edit is made from,
+    folded under the fields (the design's own fold row);
+  - the **restart is a switch of its own**, on by default and shown only
+    where the change actually waits for one (a static host alone applies
+    live), with what it does to the guests on the network under it: the
+    design's edit applies at once, which for libvirt means the running
+    network is left on the old configuration until someone restarts it;
+  - a **static host** is a MAC, an address and an optional name, added and
+    removed in the form (the design has no such group): libvirt's static
+    DHCP entries are what a guest is pinned to an address by, and they are
+    the one part of a network that applies live;
+  - **PVE's management interface is not offered at all** (the design would
+    edit whatever is listed): applying the interface that carries the
+    host's own address cuts it off, and the row says so instead;
+  - the **revert-all dialog shows what is discarded** — the same rows the
+    Hardware view shows under each field, where the design has a notice and
+    a button: a revert that rewrites the definition from the running one is
+    the moment the difference matters;
+  - **Secure Boot is offered only where the host's firmware descriptors
+    back it**, with the reason under the switch where they do not (the
+    design always offers it): libvirt refuses a definition whose firmware
+    is not there;
+  - the cloud-init group **counts the NICs the seed configures** and edits
+    the first (the design has one address group): a save keeps the rest as
+    they are, and saying how many there are is what stops it looking like
+    one;
+  - **a password's expiry is libvirt-only**, and the switch says so in its
+    note: PVE writes `expire: False` itself and has no option for it;
+  - USB passthrough is offered **by vendor and product or by the address
+    the device sits at**, as the design's device list has one entry per
+    device.
 
 - Design deviations in the Templates, Clone and Backup work (phase 9), and
   why:
@@ -1398,7 +1488,7 @@ node of its own.
 | Clone target | `vol-create-from` on the target pool, with `--inputpool` naming the source's (a `vol-clone` only ever clones within one pool). The XML is the name, `vol-info --bytes`'s capacity and the source's format, written to a `mktemp` file on the host | `POST .../clone` with `storage` (where the copy's disks go) and `target` (the node it is made on); both are refused on a linked clone (`parameter 'storage' not allowed for linked clones`) |
 | Backup jobs | none | `GET/POST /cluster/backup`, `PUT/DELETE /cluster/backup/{id}`; a run now is `POST /nodes/{n}/vzdump` with the job's fields minus the schedule — what PVE's own "Run now" does (`/cluster/backup/{id}/included_volumes` is what its detail view *lists*) |
 | A backup's own fields | none | `PUT /nodes/{n}/storage/{id}/content/{volid}`: `notes`, `protected` |
-| Restore onto a storage | none | `POST /nodes/{n}/{qemu,lxc}` with `archive`/`ostemplate` + `storage` (PVE's "Default storage") |
+| Restore onto a storage | none | `POST /nodes/{n}/{qemu,lxc}` with `archive`/`ostemplate` + `storage` (PVE's "Default storage"), picked among the node's storages that hold guest disks (`images` for a VM, `rootdir` for a container) — not the backup storages, which need not |
 
 Decisions:
 
@@ -1435,18 +1525,27 @@ Decisions:
   of `mon..fri`, a field's part above 59). All 32 values the unit test
   checks were put to the host on PVE 9.2.2 and the local answer matches its
   every time — including `mon 25:00`, which PVE **accepts** (the hour is not
-  range-checked the way the minute is).
+  range-checked the way the minute is). The shape is `[weekday] [date]
+  [time]`, each optional and in that order, with `..` ranges: the
+  documentation's own `sat *-1..7 15:00` and `mon..fri 8..17,22:0/15` pass
+  (not put to a host).
 - **A job that takes every guest is not a guest's.** `VirtBackupJob.takes`
   answers for `all` (less `exclude`) and for a `vmid` list, and returns
   false for a pool job: which guests a pool holds is not in
   `/cluster/backup`'s answer, so a guest's Plan group cannot claim one takes
   it. The datacenter's own list shows them all.
-- **A run now is the job's fields without its schedule**, on the job's own
-  node (or this host when the job names none) — PVE's own UI clones the job
-  and deletes `enabled`, `starttime`, `dow`, `id`, `schedule`, `type`,
-  `node`, `comment`, `next-run` and `repeat-missed` before posting it. Its
-  UI posts to every online node; this app posts to one, since a job with no
-  node runs on each of them and the guests would be backed up once per node.
+- **A run now is the job's fields without its schedule**, as PVE's own UI
+  sends it — it clones the job and deletes `enabled`, `starttime`, `dow`,
+  `id`, `schedule`, `type`, `node`, `comment`, `next-run` and
+  `repeat-missed` before posting it — and to the same nodes: the job's own
+  (refused when it is not online), or every online node for a job that
+  names none. `vzdump` takes only the guests on the node it runs on (`all`
+  is "all known guest systems on this host"), so one request per node is
+  what covers a cluster, and no guest is backed up twice.
+- **A job takes one of pool, all (less `exclude`) or a list**, the pool
+  first. An edit keeps the one it has — the app lists no PVE pools, so a
+  pool job offers its own pool beside "all" and "selected" — and names the
+  other two in `delete`.
 - **A backup's notes and protection are written together.** PVE's `PUT`
   keeps what is not sent, so an emptied note has to be written as one:
   `VirtBackupEdit` carries both and the backend sends both.
@@ -1488,35 +1587,181 @@ guest named `sbme2e*`/`sbxe2e*` and removed afterwards):
   protected backup's own refusal, a restore onto a storage other than the
   archive's, and `no such cluster node` / `does not support vm images` for
   the two bad clone targets.
+- **By hand on PVE 9.2.2, 2026-09-27** (`pvesh`, the parameters the app
+  sends): a job switched from a guest list to a **pool**, to all guests with
+  an exclusion, back to a list, and to a pool with a node — each `PUT` with
+  `all=0` and `delete` naming the absent selection fields, each leaving only
+  the one selection; a run now of the pool job (`vzdump --pool` on the node)
+  backing up the pool's guest alone; that archive restored as a new VM onto
+  `local-lvm`, the one storage with `images` content, which is what the
+  restore's storage list offers.
 
 Not verified on a real host: a clone to **another node** (the test host is a
 single node, so only the app's own refusal and PVE's `no such cluster node`
-were seen); a job by **pool** (the fixture is hand-written from the field);
+were seen); a run now of a job with no node on a **cluster** (one request
+per online node; the test host is a single node);
 a guest with snapshots being refused as a template by PVE itself (the app
 refuses it first, and the snapshot listing is only read where that view has
 been opened); libvirt's `vol-create-from` into a **block** pool (the second
 pool was a `dir`).
 
+### Network editing, pending changes and the rest (phase 10)
+
+An existing network is editable, a libvirt guest's pending changes can be
+discarded, and four smaller items: Secure Boot in the create form, several
+search domains and NICs in cloud-init, a password's expiry, and USB
+passthrough by address.
+
+#### Editing an existing network
+
+The Network section's view gains an edit action, and the form behind it is
+the design's own: libvirt's mode, IPv4 address and prefix, DHCP range and
+static hosts; PVE's bridge ports, address, VLAN awareness and autostart.
+What each backend does with the answer differs, and the form says which:
+
+| | libvirt (`sbm_parser::virt_net`, one `virsh` round trip) | PVE (HTTP API) |
+| --- | --- | --- |
+| Which fields go where | mode, host bridge, address, prefix and DHCP range through `net-define`; the static hosts through `net-update add/delete ip-dhcp-host` | `PUT /nodes/{n}/network/{iface}` — ports, `cidr`, `gateway`, `bridge_vlan_aware`, `autostart` |
+| When it applies | `net-define` writes the definition; the **running** network keeps its address, its bridge and its dnsmasq until it is restarted. A restart is offered as a switch of its own, and the form says what it does to the guests on it | Pending, like every other PVE network change: the node's `interfaces.new`, applied with the card above the list |
+| The restart | `net-destroy`, `net-define`, `net-start` in one round trip (or `net-destroy` + `net-start` alone, `VirtNetworkRestart`, when the definition already has the change). A start the host refuses puts the old definition back and starts that: **an active network is never left down** | none: applying the configuration is the change |
+| A refused edit | `VirtErrType.conflict` when the definition changed since it was read (the guard reads `net-dumpxml --inactive`, which is what the app was given) | `digest`-less `PUT`; a parameter PVE refuses comes back in its own words |
+| Never touched | – | a physical interface, and **any interface carrying the node's own address** — its default route, or the address this app is connected to. `virtPveManagedIface` refuses it, and the view says so instead of offering the form |
+
+Decisions:
+
+- **`net-define` for the address and `net-update` for the static hosts.**
+  libvirt has no `net-update` command for the mode or the address at all,
+  and its `ip-dhcp-range` is checked against the *running* network's
+  subnet — which is the old one until the network is restarted, so an
+  address change and its range cannot go through it. The static hosts are
+  the opposite: `net-update add/delete ip-dhcp-host` applies live *and*
+  writes the definition, and its check is against the definition, so it is
+  what a host-only change uses (verified on libvirt 11.3).
+- **The definition, not the running XML, is what the view shows and what an
+  edit is made from.** A `net-define` goes into the definition at once
+  while the running network keeps the old address; showing the running one
+  beside the new definition reads as a change that never happened, and an
+  edit made from it would write the old address back. `pendingRestart` is
+  the difference between the two, compared over the fields an edit touches
+  (libvirt writes runtime detail — a NAT `<port>` range, a `portid=` — into
+  a running network's XML that is not a change anybody made).
+- **`--live --config` on every `net-update`** (and `--config` alone on an
+  inactive network, which refuses `--live`): without it libvirt applies the
+  entry to neither, and the change is silently lost.
+- **The edited definition is the one the host wrote, line for line.** Only
+  the elements this app sets are replaced (`<forward>`, `<bridge>`, the
+  first IPv4 `<ip>` with its range and hosts); an IPv6 address, a `<dns>`,
+  a `<domain>` and everything else stay as they are, and `connections=`
+  goes (it counts live interfaces, and is not a definition).
+- **PVE allows a bridge, and no interface carrying the management
+  address.** The app detects it from the node's own listing — an interface
+  with a `gateway` is what the default route goes through, and the address
+  in `pveAddr` names the one it is connected to — and refuses the edit,
+  the deletion and the apply. Applying that interface would cut the host
+  off, and there is no console to fix it from. A bridge of the app's own
+  (`sbxe2e*`) is what the tests edit instead.
+- **`bridge_vlan_aware` off is a `delete`, not a `0`.** PVE keeps what is
+  not sent, and its own editor clears the allowed-VLAN list with it
+  (`bridge_vlan_aware,bridge_vids` in `delete`).
+
+#### libvirt: discarding a pending change
+
+`dumpxml` live → `define`, which is what a `virsh` user does to drop an edit
+libvirt keeps no pending list to drop. `VirtHwRevertPending`, made by
+`VirtBackend.revertPending` (PVE keeps dropping its list item by item), from
+the Hardware read the view already has; `VirtCapabilities.hardwareRevertPending`.
+
+- The definition is written from the **running** XML, so differences like
+  the running XML's `<domain id>`, its `<resource>` cgroup, every
+  `<alias>`, a `<seclabel>`, a disk's runtime `index` and a
+  `<backingStore/>` go, and the addresses libvirt wrote into the definition
+  stay. libvirt computes a running domain's CPU features itself, so its
+  feature list goes too.
+- **The NVRAM file and the firmware are not touched.** A plain `define` of
+  the live XML drops `<nvram>`, and libvirt then makes a *new* variables
+  file of its own template at the next start — losing the guest's boot
+  entries and its Secure Boot state with them. The definition's own
+  `<nvram>` element is written back as it was, and the file itself is never
+  read or written. Verified on libvirt 11.3: a pending memory change
+  discarded with the guest running, the NVRAM file's sha256 unchanged, the
+  guest still running.
+- Refused where the guest is not running: there is no running definition to
+  write back, and "revert to nothing" would be a second way to delete it.
+  The banner's revert-all is offered only from a read the Hardware view has
+  (`hardwareRevertPending`), and what is discarded is shown first: the same
+  rows the view shows under each field.
+
+#### Small items
+
+| Item | libvirt | PVE |
+| --- | --- | --- |
+| Secure Boot in the create form | offered only where a firmware descriptor (`/usr/share/qemu/firmware/*.json`) carries **both** `secure-boot` and `enrolled-keys` — the feature needs a firmware with the vendor's keys, and libvirt refuses the definition otherwise (`read in one `grep -q` per file, `virt::firmware_script`) | `efidisk0` with `pre-enrolled-keys=1`, its own UEFI default |
+| Several search domains | `network-config` v2 `nameservers.search` as a list; the settings field takes several, space-separated | `searchdomain`, space-separated (PVE's own form) |
+| Several NICs | `network-config`'s `ethernets` — one entry per NIC, by MAC. The form edits the first and says how many there are; the rest are kept as they are through a save | `ipconfigN`, one per `netN`. PVE's own cloud-init writes them all |
+| A password's expiry | cloud-init's `chpasswd: expire: true`, a switch in the settings (and the create form has none: only the settings view offers it) | **not offered**: PVE writes `expire: False` for every VM (`PVE::QemuServer::Cloudinit`, PVE 9.2.2) and has no option for it |
+| USB passthrough by address | `<hostdev><source><address bus='1' device='4'/></source>` — libvirt's `usbaddress` takes exactly a bus and a device number (`domaincommon.rng`, libvirt 11.3: there is no `port` attribute on a hostdev's source), and the add block offers the device by vendor/product or by that address. The bus and device number come from `nodedev-dumpxml`; the port chain (`4`, `1.2` behind a hub) is shown as the label | `usb0: host=1-1.2`, PVE's own form: the bus and the port chain, which is what its web UI writes and what a mapping stores |
+
+#### Verified against the real hosts (2026-09-27)
+
+Everything named `sbxe2e*` and removed afterwards; the temporary PVE API
+token, its ACLs and its role deleted.
+
+| What | libvirt 11.3 (agent + sudo) | PVE 9.2.2 (SSH, the host's own agent) |
+| --- | --- | --- |
+| A network edited | a NAT network made, its mode, address, range and a static host edited; the static host applied live (`net-update`, no restart, the definition and dnsmasq both carrying it); the address and range written to the definition, `pendingRestart` true, the running network still on the old address; `VirtNetworkRestart` applied it and `pendingRestart` went false; the definition reworked to `route` and restarted; a stale edit refused as `conflict` | a bridge made pending, its address and VLAN flag edited through the pending model, its diff read, reverted (nothing applied, the interface gone from the listing), made again, edited, applied (`ssh pve` and `vmbr0` checked after every apply), deleted and applied |
+| A refused restart | an address on the host's own LAN refused at `net-start` (`Network is already in use by interface eth0`): the old definition put back and started, the network still active and its address unchanged | – |
+| The management interface | – | `vmbr0` (the default route, and the address the app is connected to) and every physical interface refused for edit and delete, nothing written |
+| A pending change discarded | a memory change with the guest running, seen in the inactive XML, reverted: the inactive XML matched the live one again, the guest still running, the NVRAM file's sha256 unchanged | – |
+
+Scripts and parsers run under real `sh` with hostile values in
+`sbm_parser::virt_net`'s tests; fixtures captured from the libvirt host
+(`script_hardware.txt`, and `dumpxml_revert_live.xml` /
+`dumpxml_revert_definition.xml` for the revert transform, the latter defined
+on that host and accepted).
+
+The two libvirt failures the first e2e run found — the listing reporting the
+*running* network's address instead of the saved definition's, and
+`VirtNetworkRestart` re-sending the same edit instead of restarting — are
+fixed and pinned by Rust and widget tests
+(`a_saved_definition_is_what_the_listing_reports`,
+`a_restart_writes_no_definition`, and the manage test's restart op); they
+were not re-run on the libvirt host, which its own PVE node's reboot took
+down mid-session (guest 100, which this work is not allowed to start). The
+PVE group was re-run and passes.
+
+Not verified on a real host: libvirt's routed-network restart (the mode was
+exercised; a `route` mode change needs no different script), a PVE bridge
+with **ports** through the app (the manual edit and apply used portless
+bridges, which is what the app's own form offers on a host with no spare
+interface), the multi-NIC cloud-init on a booted guest (the seed's
+`network-config` is unit-tested for one, two and several NICs; a real
+second NIC needs a host with a spare bridge), and USB passthrough by address
+on either host (the libvirt host has no USB device at all, and the PVE
+host's only one is the node's own Bluetooth adapter — the XML is
+unit-tested and its form verified against `nodedev-dumpxml`'s own fields).
+
 ## Later phases
 
-- Storage and networks: PVE SDN (zones, VNets); editing an existing
-  network's configuration (libvirt `net-update`/redefine, PVE `PUT
-  .../network/{iface}`); a volume's contents copied on PVE; uploads over a
-  monitor agent (needs a byte-stream endpoint on the agent); PVE storage
-  types beyond dir/LVM-thin/NFS/ZFS, content kinds chosen in the form.
+- Storage and networks: PVE SDN (zones, VNets); a volume's contents copied
+  on PVE; uploads over a monitor agent (needs a byte-stream endpoint on the
+  agent); PVE storage types beyond dir/LVM-thin/NFS/ZFS, content kinds
+  chosen in the form. (Editing an existing network's configuration is phase
+  10.)
 - Snapshots: a chain's merge/commit from the app (libvirt `blockcommit`, so
   an old layer can be dropped without reverting); an external snapshot of a
   guest whose disks are on more than one pool (the form picks one pool for
   all of them); deleting a snapshot that was reverted to (libvirt refuses it
   while the layer's file is gone — a `blockcommit` of the live file is the
   way out).
-- Hardware: libvirt revert (redefine from the running XML); USB passthrough
-  by port rather than vendor/product.
-- cloud-init: more than one search domain and NIC; PVE's `cicustom`
-  snippets and `ciupgrade` in the form; a password's expiry.
+- Hardware: USB passthrough by *port* rather than by the bus and device
+  number libvirt's `usbaddress` takes (a host whose device number differs
+  from its port). (The libvirt revert and USB by address are phase 10.)
+- cloud-init: PVE's `cicustom` snippets and `ciupgrade` in the form. (More
+  than one search domain and NIC, and libvirt's password expiry, are phase
+  10.)
 - Migrate (PVE cluster; the design's Migrate group in Settings) — which is
-  also what a clone to another node needs a cluster for. Create: Secure Boot
-  in the form.
+  also what a clone to another node needs a cluster for. (Secure Boot in the
+  create form is phase 10.)
 - Clone: a **linked** clone from the app's own form choice on libvirt (an
   overlay on the source's disks: the design's switch, refused here because
   it pins the source image — see phase 7's "a copy, not a qcow2 overlay").

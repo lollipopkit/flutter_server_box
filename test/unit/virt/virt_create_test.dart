@@ -254,7 +254,7 @@ void main() {
       expect(ci(const VirtCloudInit(user: 'u', password: 'x', hostname: 'ci_01')), VirtCreateIssue.ciHostname);
       // PVE names the host after the VM: no hostname of its own.
       expect(ci(const VirtCloudInit(user: 'u', password: 'x'), VirtHostKind.pve), isNull);
-      VirtCloudInit net({String? address, String? gateway, List<String> dns = const [], String? search}) =>
+      VirtCloudInit net({String? address, String? gateway, List<String> dns = const [], List<String> search = const []}) =>
           VirtCloudInit(
             user: 'u',
             password: 'x',
@@ -262,7 +262,7 @@ void main() {
             address: address,
             gateway: gateway,
             dns: dns,
-            searchDomain: search,
+            searchDomains: search,
           );
       expect(ci(net(address: '10.0.0.5')), VirtCreateIssue.ciAddress);
       expect(ci(net(address: '10.0.0.256/24')), VirtCreateIssue.ciAddress);
@@ -271,7 +271,10 @@ void main() {
       expect(ci(net(address: '10.0.0.5/24', gateway: '10.0.0.1')), isNull);
       expect(ci(net(dns: ['1.1.1.1', '2606:4700::1111'])), isNull);
       expect(ci(net(dns: ['one.one'])), VirtCreateIssue.ciDns);
-      expect(ci(net(search: 'lab example')), VirtCreateIssue.ciSearch);
+      expect(ci(net(search: ['lab example'])), VirtCreateIssue.ciSearch);
+      // Several search domains are fine; one that is not a name is not.
+      expect(ci(net(search: ['lab.example', 'dev.lab.example'])), isNull);
+      expect(ci(net(search: ['lab.example', 'a b'])), VirtCreateIssue.ciSearch);
       // Never printed.
       expect('${net()}', isNot(contains('x,')));
       expect('${net()}', contains('[redacted]'));

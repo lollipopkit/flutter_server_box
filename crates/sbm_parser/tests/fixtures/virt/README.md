@@ -35,6 +35,8 @@ real scripts and is the check that the formats hold; the Dart one is
 | `dumpxml_odd.xml` | captured | `dumpxml` | shut off, no graphics, serial console, XML-escaped name |
 | `dumpxml_win11.xml` | hand-written | `dumpxml` | file, cdrom, rbd and pool-volume disks, bridge and macvtap NICs, SPICE with TLS |
 | `dumpxml_inactive_vnc.xml` | hand-written | `dumpxml` | autoport VNC plus a socket VNC |
+| `dumpxml_revert_live.xml` | captured | `dumpxml` | a running q35 UEFI domain: `<domain id>`, a `<resource>`, a CPU with `check='full'` and its feature list, every `<alias>`, a disk's `index` and `<backingStore/>`, two `<seclabel>`s |
+| `dumpxml_revert_definition.xml` | the app's own output | `definition_of_live_xml` over the file above, with its `<nvram>` line | what `define` takes: the NVRAM element kept, everything else a definition does not carry gone. **Defined on the same host and accepted** (2026-09-27), with the pending memory change it held discarded and the NVRAM file's sha256 unchanged; libvirt re-dumps it in its own shape (`<controller></controller>`, `<source portid=… bridge=…>`, `<input></input>`), which is why this is not a captured file |
 | `domdisplay_cirros_run.txt` | captured | `domdisplay` | `vnc://127.0.0.1:0`, no trailing newline |
 | `domdisplay_win11.txt` | hand-written | `domdisplay` | SPICE with `tls-port` |
 | `error_display_not_running.txt`, `error_display_no_graphics.txt` | captured | `domdisplay` | shut off / running without graphics |
@@ -70,6 +72,7 @@ network `sbx-bridge`; `it's-"odd"` with a second NIC on `sbx-isolated` and
 | `script_volumes_images.txt` | `volumes_script` | qcow2 overlays with a backing file, and `gone.qcow2`, which does not exist |
 | `script_volumes_sbx_iso.txt` | `volumes_script` | the name with a space, a raw `.iso` |
 | `script_networks.txt` | `networks_script` | NAT, isolated with IPv6, inactive bridge mode, two DHCP leases |
+| `script_hardware.txt` | `hardware_script` | `hardware_script` against `cirros-run`, captured 2026-09-27 from the same host (dominfo, nodeinfo, both definitions, `domcapabilities`, `domblkinfo` per disk). The trailing firmware section was **not** in the capture — it predates the probe — and was written from that host's own `ls /usr/share/qemu/firmware` (three descriptors, `40-edk2-…-secure-enrolled` the one with both features) |
 
 External snapshots (phase 8), captured 2026-09-26 on the same host from a
 throwaway domain `sbxe2e-f1` with a qcow2 disk in `images` and a second pool
@@ -81,9 +84,11 @@ throwaway domain `sbxe2e-f1` with a qcow2 disk in `images` and a second pool
 | `script_snap_chain_overlay.txt` | The same script with one external snapshot: the overlay in its own pool, backing the disk's file |
 | `script_snap_chain_chain.txt` | Two external snapshots: three layers, each naming the one below |
 | `script_snap_chain_raw.txt` | A raw disk: one layer, format `raw` — what the refusal is read from |
+| `script_snap_delete_running_denied.txt` | `snap_delete_check_script` for `ext2` (2026-09-27; run by name, when the script still read the UUID with `domuuid` — each section's output is the same) of a running domain restarted on the chain `ov2` → `ov1` → `base`: its AppArmor profile denies writing `ov1` and `base`, and the host refused this delete |
+| `script_snap_delete_shut_off.txt` | The same domain shut off: `dominfo` has no security model, the host's `<secmodel>` is `apparmor`; the host refused this delete |
+| `script_snap_delete_running_clear.txt` | A fresh domain with `ext1` and `ext2` taken while it ran: no `deny` line, and the host deleted `ext2` |
 | `script_snapshots_external.txt` | `snapshots_script` after two external snapshots: each carries its `layers` from `<disks>` |
 | `snapshot_revert_disks.xml` | `snapshot-dumpxml` of a snapshot already reverted to once: `<revertDisks>` names where a further revert would go |
-| `pool_dumpxml_dir.txt` | `pool-dumpxml` of a directory pool: the target path an overlay is placed in |
 | `script_snap_diff.txt` | `snap_diff_script` after a vCPU, memory and NIC-model change: what the diff is read from |
 
 `snap_chain_*.expected.json`, `snap_diff.expected.json` and
