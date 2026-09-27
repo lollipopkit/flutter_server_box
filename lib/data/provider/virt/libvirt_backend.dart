@@ -95,6 +95,28 @@ class LibvirtBackend implements VirtBackend {
 
   bool get needsSudo => _viaSudo;
 
+  /// The pool types the daemon has a backend for, read once
+  /// (`pool-capabilities`); null until read, or where the host could not
+  /// say (every type is offered then).
+  List<String>? _poolTypes;
+  bool _poolTypesRead = false;
+
+  /// [_poolTypes], read on the first [load] that gets this far. A daemon
+  /// that gains a backend (LVM installed, the daemon restarted) is seen by
+  /// a new backend: this one keeps what it read.
+  Future<void> _readPoolTypes() async {
+    if (_poolTypesRead) return;
+    try {
+      _poolTypes = await _run(
+        ffi.virtPoolTypesScript(),
+        ({required String raw}) async => ffi.parseVirtPoolTypes(raw: raw),
+      );
+      _poolTypesRead = true;
+    } on VirtErr catch (e, s) {
+      Loggers.app.info('Virtualization pool capabilities: $e', e, s);
+    }
+  }
+
   /// The sudo password for this server, typed by the user after
   /// [VirtErrType.sudoPasswordRequired]. Kept in memory for this backend's
   /// life; a rejected one is forgotten.
@@ -122,6 +144,7 @@ class LibvirtBackend implements VirtBackend {
     );
     final at = _now();
     final overview = LibvirtOverview.fromJson(_decode(json));
+    await _readPoolTypes();
     final guests = <VirtGuest>[];
     final stats = <String, VirtStats>{};
     _stateCodes.clear();
@@ -161,7 +184,7 @@ class LibvirtBackend implements VirtBackend {
         clone: true,
         cloneTarget: true,
         storageEdit: true,
-        poolTypes: const ['dir', 'netfs', 'logical'],
+        poolTypes: _poolTypes ?? const ['dir', 'netfs', 'logical'],
         poolAutostart: true,
         poolDeleteStorage: true,
         volumeResize: true,
@@ -621,16 +644,41 @@ class LibvirtBackend implements VirtBackend {
   /// Refused before it is sent where the host's AppArmor profile would deny
   /// the commit it needs (`snap_delete_refusal`): the host would refuse it
   /// too, and then refuse every later delete on that disk.
+  ///
+  /// A snapshot on a branch the guest left (a revert to an internal
+  /// snapshot taken before it) is deleted by libvirt without its overlays,
+  /// which nothing names afterwards (`snap_delete_leftovers`): they are
+  /// deleted with it, in the same round trip.
   @override
   Future<void> deleteSnapshot(VirtGuest guest, String name) async {
-    final why = await _run(
+    final check = await _run(
       ffi.virtSnapCheckScript(domain: guest.id, name: name),
-      ffi.parseVirtSnapDeleteRefusal,
+      ({required String raw}) async => (
+        refusal: await ffi.parseVirtSnapDeleteRefusal(raw: raw),
+        leftovers: await ffi.parseVirtSnapDeleteLeftovers(raw: raw),
+      ),
     );
-    if (why != null) {
+    if (check.refusal case final why?) {
       throw VirtErr(type: VirtErrType.unsupported, message: why);
     }
-    await _action1(ffi.virtSnapshotDeleteScript(domain: guest.id, name: name));
+    final leftovers = check.leftovers;
+    final all = leftovers.isEmpty ? const <VirtStoragePool>[] : await storagePools();
+    final pools = {for (final f in leftovers) ?virtPoolOfFile(all, f)?.name};
+    await _run(
+      _script(
+        () => ffi.virtSnapshotDeleteScript(
+          domain: guest.id,
+          name: name,
+          pools: pools.toList(),
+          leftovers: leftovers,
+        ),
+      ),
+      ({required String raw}) async {
+        await ffi.parseVirtSnapshotDelete(raw: raw);
+        return '';
+      },
+      action: true,
+    );
   }
 
   static void _checkName(String name) {
@@ -914,18 +962,21 @@ class LibvirtBackend implements VirtBackend {
   /// Per disk, the chain down to the file the deepest snapshot layer on it
   /// backs: that file is the disk the first snapshot was taken of. Anything
   /// further down was there before any snapshot (an image the disk was made
-  /// on, which other guests may share) and stays.
+  /// on, which other guests may share) and stays. And every layer on those
+  /// disks that is off the chain: a branch the guest left by reverting to
+  /// an internal snapshot taken before it.
   Future<({List<String> pools, List<String> files})> _snapshotFiles(
     VirtGuest guest,
     List<String> targets,
   ) async {
     const none = (pools: <String>[], files: <String>[]);
-    final layers = {
+    final byTarget = [
       for (final s in await snapshots(guest))
         if (s.external)
           for (final l in s.layers)
-            if (l.file != null) l.file!,
-    };
+            if (l.file case final f?) (target: l.target, file: f),
+    ];
+    final layers = {for (final l in byTarget) l.file};
     if (layers.isEmpty) return none;
     final chain = LibvirtSnapChain.fromJson(
       _decode(
@@ -945,6 +996,14 @@ class LibvirtBackend implements VirtBackend {
           'its snapshot files stay: ${d.error}',
         );
         continue;
+      }
+      final onChain = {
+        for (final f in d.files) ...[f.path, ?f.backing],
+      };
+      for (final l in byTarget) {
+        if (l.target == d.target && !onChain.contains(l.file) && !files.contains(l.file)) {
+          files.add(l.file);
+        }
       }
       final deepest = d.files.lastIndexWhere((f) => layers.contains(f.path));
       if (deepest < 0) continue;
@@ -997,12 +1056,17 @@ class LibvirtBackend implements VirtBackend {
         'format': d.format == 'qcow2' || d.format == 'raw' ? d.format : null,
       });
     }
+    final target = switch (request.targetPool) {
+      final name? => (await storagePools()).firstWhereOrNull((p) => p.name == name),
+      null => null,
+    };
     final spec = {
       'source': guest.id,
       'name': request.name,
       'full': request.full,
       'disks': disks,
       'target_pool': ?request.targetPool,
+      'target_block': target != null && !virtPoolHoldsFiles(target),
     };
     final List<Object?> paths;
     try {
@@ -1150,16 +1214,39 @@ class LibvirtBackend implements VirtBackend {
   /// (listed again when there is none), with the domains whose disks are
   /// those volumes.
   @override
+  ///
+  /// A volume libvirt lists but cannot read (its file removed behind
+  /// libvirt's back: `vol-list` answers from the pool's cache, `vol-dumpxml`
+  /// says "Storage volume not found") means the pool's list is stale: the
+  /// pool is refreshed (`pool-refresh`, what libvirt does at its own start)
+  /// and read again, once, so the count the pool shows and the volumes
+  /// listed agree.
   Future<List<VirtVolume>> volumes(VirtStoragePool pool) async {
     var storage = _storage;
     if (storage == null || !storage.pools.any((p) => p.name == pool.id)) {
       await storagePools();
       storage = _storage!;
     }
+    var (read, missing) = await _volumes(storage, pool);
+    if (missing && pool.active) {
+      await manage(VirtPoolRefresh(pool));
+      await storagePools();
+      storage = _storage!;
+      (read, _) = await _volumes(storage, pool);
+    }
+    return read;
+  }
+
+  /// [pool]'s volumes as [storage] lists them, and whether one of them did
+  /// not read.
+  Future<(List<VirtVolume>, bool)> _volumes(
+    LibvirtStorage storage,
+    VirtStoragePool pool,
+  ) async {
     final listed = storage.pools
         .firstWhereOrNull((p) => p.name == pool.id)
         ?.volumes;
-    if (listed == null || listed.isEmpty) return const [];
+    if (listed == null || listed.isEmpty) return (const <VirtVolume>[], false);
     final json = await _run(
       ffi.virtVolumesScript(
         pool: pool.id,
@@ -1168,10 +1255,11 @@ class LibvirtBackend implements VirtBackend {
       ffi.parseVirtVolumesJson,
     );
     final disks = storage.disks;
-    return [
+    final read = [
       for (final v in _decodeList(json))
         volumeOf(LibvirtVolume.fromJson(v), pool.id, disks),
     ];
+    return (read, read.length < listed.length);
   }
 
   static VirtVolume volumeOf(
@@ -1334,6 +1422,12 @@ class LibvirtBackend implements VirtBackend {
       case VirtVolumeDelete(:final pool, :final volume):
         return {'op': 'vol_delete', 'pool': pool.id, 'name': volume.name};
       case VirtVolumeResize(:final pool, :final volume, :final bytes):
+        if (!virtVolumeResizable(pool, VirtHostKind.libvirt)) {
+          throw VirtErr(
+            type: VirtErrType.unsupported,
+            message: 'libvirt cannot resize a volume of a ${pool.type} pool',
+          );
+        }
         return {
           'op': 'vol_resize',
           'pool': pool.id,
@@ -1423,7 +1517,7 @@ class LibvirtBackend implements VirtBackend {
           'base_xml': network.xml,
         };
       case VirtNetworkDelete(:final network):
-        return {'op': 'net_delete', 'name': network.id, 'active': network.active};
+        return {'op': 'net_delete', 'name': network.id};
       case VirtNetworkApply() ||
           VirtNetworkRevert() ||
           VirtNetworkEditBridge():

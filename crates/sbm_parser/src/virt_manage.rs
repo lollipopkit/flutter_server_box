@@ -116,7 +116,9 @@ pub enum VirtResourceOp {
     /// `net-destroy`: the guests on it lose their link until it starts again
     NetStop { name: String },
     NetAutostart { name: String, on: bool },
-    NetDelete { name: String, active: bool },
+    /// Stopped first where it runs — asked of the host at that moment, not
+    /// of a listing that may be older than a stop made since.
+    NetDelete { name: String },
 }
 
 /// A pool, network or bridge name: letters, digits, `.`, `_`, `-`, not
@@ -455,11 +457,13 @@ pub fn resource_script(op: &VirtResourceOp) -> Result<String, VirtError> {
             let disable = if *on { "" } else { " --disable" };
             s.push_str(&step(&format!("net-autostart --network {}{disable}", q(name)), None));
         }
-        VirtResourceOp::NetDelete { name, active } => {
+        VirtResourceOp::NetDelete { name } => {
             let n = q(name);
-            if *active {
-                s.push_str(&step(&format!("net-destroy --network {n}"), None));
-            }
+            s.push_str(&format!(
+                "a=$(virsh --connect {CONNECT_URI} -q net-info --network {n} </dev/null 2>/dev/null | sed -n 's/^Active: *//p')\n\
+                 if [ \"$a\" = yes ]; then\n{}fi\n",
+                step(&format!("net-destroy --network {n}"), None)
+            ));
             s.push_str(&step(&format!("net-undefine --network {n}"), None));
         }
     }

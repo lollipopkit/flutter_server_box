@@ -1487,13 +1487,24 @@ class PveBackend implements VirtBackend {
   /// takes only the guests on the node it runs on, so one request per node
   /// is what covers a cluster. (`/cluster/backup/{id}/included_volumes` is
   /// what its detail view *lists*, not what runs it.)
+  ///
+  /// The job is read again for it: [VirtBackupJob] models what the form
+  /// edits, and a job also carries what only PVE's editor sets (`bwlimit`,
+  /// `ionice`, `performance`, `fleecing`, ...), which a run must keep.
   @override
   Future<void> runBackupJob(VirtBackupJob job) async {
+    final raw = await _call(
+      (dio) => dio.get(_url('/cluster/backup/${_seg(job.id)}')),
+    );
+    if (raw is! Map) {
+      throw const VirtErr(type: VirtErrType.invalidResponse);
+    }
     final online = [
       for (final n in _nodes)
         if (n.online) n.name,
     ];
-    final nodes = switch (job.node) {
+    final nodes = switch (raw['node']) {
+      '' => online,
       final node? when online.contains(node) => [node],
       final node? => throw VirtErr(
         type: VirtErrType.unsupported,
@@ -1507,20 +1518,7 @@ class PveBackend implements VirtBackend {
         message: 'No online node to run the job on',
       );
     }
-    final body = {
-      'storage': ?job.storage,
-      'mode': ?job.mode,
-      'compress': ?job.compress,
-      ..._jobGuests(
-        pool: job.pool,
-        all: job.all,
-        vmids: job.vmids,
-        exclude: job.exclude,
-      ),
-      'notes-template': ?job.notesTemplate,
-      'mailnotification': ?job.mailNotification,
-      'prune-backups': ?job.prune,
-    };
+    final body = PveResources.vzdumpOfJob(raw.cast<String, Object?>());
     await Future.wait([for (final n in nodes) _runVzdump(n, body)]);
   }
 
@@ -3390,6 +3388,20 @@ class PveBackend implements VirtBackend {
       final err = _toErr(e);
       // Cancelled here (an upload stopped): the session is fine.
       if (e is DioException && e.type == DioExceptionType.cancel) throw err;
+      // An action PVE answered with a refusal of its own (`unable to create
+      // template, because VM contains snapshots`, a 500 before any task) is
+      // the action refused, in PVE's words, not a response this app
+      // cannot read.
+      if (action &&
+          err.type == VirtErrType.invalidResponse &&
+          e is DioException &&
+          e.response != null) {
+        throw VirtErr(
+          type: VirtErrType.actionFailed,
+          message: err.message,
+          cause: e,
+        );
+      }
       if (err.type == VirtErrType.authFailed ||
           err.type == VirtErrType.unreachable ||
           err.type == VirtErrType.relayNotGranted ||

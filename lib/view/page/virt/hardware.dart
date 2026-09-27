@@ -556,7 +556,9 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
           mono: true,
           indent: true,
         ),
-        if (size != null)
+        if (size != null && !virtHwDiskGrowable(d))
+          _field(Icons.straighten, libL10n.capacity, size.bytes2Str, indent: true)
+        else if (size != null)
           _step(
             Icons.straighten,
             libL10n.capacity,
@@ -609,10 +611,11 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                     ),
             ),
         ],
-        _text(
-          hw.running ? l10n.virtHwGrowNoteRunning : l10n.virtHwGrowNote,
-          indent: true,
-        ),
+        if (virtHwDiskGrowable(d))
+          _text(
+            hw.running ? l10n.virtHwGrowNoteRunning : l10n.virtHwGrowNote,
+            indent: true,
+          ),
         _actions(indent: true, [
           if (grown != null) ...[
             _Action(

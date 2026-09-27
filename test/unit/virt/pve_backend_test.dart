@@ -1660,6 +1660,24 @@ void main() {
       expect(deleted(), isNot(contains('vmid')));
     });
 
+    test("a template PVE refuses itself: the action refused, in PVE's words", () async {
+      final api = _Api();
+      api.resources = [
+        {'id': 'node/pve', 'type': 'node', 'node': 'pve', 'status': 'online'},
+        {'id': 'qemu/9', 'type': 'qemu', 'vmid': 9, 'node': 'pve', 'status': 'stopped', 'name': 'a'},
+      ];
+      // PVE 9.2.2, answered before any task.
+      api.routes['POST /nodes/pve/qemu/9/template'] = (_) => _Api._status(
+        500,
+        message: 'unable to create template, because VM contains snapshots',
+      );
+      final pve = api.backend(token);
+      final vm = (await pve.load()).guests.single;
+      final e = await _err(pve.makeTemplate(vm));
+      expect(e.type, VirtErrType.actionFailed);
+      expect(e.message, 'unable to create template, because VM contains snapshots');
+    });
+
     test("run now: the job's node, or every online node", () async {
       final api = _Api();
       api.resources = [
@@ -1678,21 +1696,45 @@ void main() {
 
       // No node: vzdump takes only the guests on the node it runs on, so
       // each online node is asked — the offline one is not.
-      await pve.runBackupJob(
-        const VirtBackupJob(id: 'j', storage: 'nfs', all: true, exclude: [9]),
-      );
+      // The job as PVE has it, read again: what the model does not carry
+      // (`bwlimit`, `performance`, ...) runs with it, as PVE's own "Run
+      // now" sends it; what describes the schedule does not.
+      var job = <String, Object?>{
+        'id': 'j',
+        'type': 'vzdump',
+        'schedule': 'sat 03:00',
+        'enabled': 0,
+        'next-run': 1790967600,
+        'comment': 'nightly',
+        'storage': 'nfs',
+        'all': 1,
+        'exclude': '9',
+        'bwlimit': 4096,
+        'ionice': 5,
+        'performance': {'max-workers': '2'},
+        'prune-backups': {'keep-last': '2', 'keep-daily': '4'},
+        'fleecing': {'enabled': 0},
+      };
+      api.routes['GET /cluster/backup/j'] = (_) => job;
+      await pve.runBackupJob(const VirtBackupJob(id: 'j', all: true));
       expect(runs(), ['POST /nodes/pve/vzdump', 'POST /nodes/pve2/vzdump']);
       final body = form(api.bodies[api.paths.indexOf('POST /nodes/pve2/vzdump')]);
-      expect(body, containsPair('all', '1'));
-      expect(body, containsPair('exclude', '9'));
-      expect(body.containsKey('vmid'), isFalse);
+      expect(body, {
+        'storage': 'nfs',
+        'all': '1',
+        'exclude': '9',
+        'bwlimit': '4096',
+        'ionice': '5',
+        'performance': 'max-workers=2',
+        'prune-backups': 'keep-last=2,keep-daily=4',
+        'fleecing': 'enabled=0',
+      });
 
       // A node of its own: there only, and refused when it is offline.
       api.paths.clear();
       api.bodies.clear();
-      await pve.runBackupJob(
-        const VirtBackupJob(id: 'j', storage: 'nfs', node: 'pve2', pool: 'prod'),
-      );
+      job = {'id': 'j', 'type': 'vzdump', 'storage': 'nfs', 'node': 'pve2', 'pool': 'prod'};
+      await pve.runBackupJob(const VirtBackupJob(id: 'j'));
       expect(runs(), ['POST /nodes/pve2/vzdump']);
       expect(
         form(api.bodies[api.paths.lastIndexOf('POST /nodes/pve2/vzdump')]),
@@ -1700,9 +1742,8 @@ void main() {
       );
       api.paths.clear();
       api.bodies.clear();
-      final e = await _err(
-        pve.runBackupJob(const VirtBackupJob(id: 'j', node: 'pve3', all: true)),
-      );
+      job = {'id': 'j', 'type': 'vzdump', 'node': 'pve3', 'all': 1};
+      final e = await _err(pve.runBackupJob(const VirtBackupJob(id: 'j')));
       expect(e.type, VirtErrType.unsupported);
       expect(runs(), isEmpty);
     });

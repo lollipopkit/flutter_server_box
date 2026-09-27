@@ -87,6 +87,7 @@ throwaway domain `sbxe2e-f1` with a qcow2 disk in `images` and a second pool
 | `script_snap_delete_running_denied.txt` | `snap_check_script` for `ext2` (2026-09-27; run by name, when the script still read the UUID with `domuuid` — each section's output is the same) of a running domain restarted on the chain `ov2` → `ov1` → `base`: its AppArmor profile denies writing `ov1` and `base`, and the host refused this delete |
 | `script_snap_delete_shut_off.txt` | The same domain shut off: `dominfo` has no security model, the host's `<secmodel>` is `apparmor`; the host refused this delete |
 | `script_snap_delete_running_clear.txt` | A fresh domain with `ext1` and `ext2` taken while it ran: no `deny` line, and the host deleted `ext2` |
+| `script_snap_delete_off_chain.txt` | `snap_check_script` for `m2` (2026-09-27, by UUID) of a running domain with `i1` (internal) and `m2` (external, `ov2.qcow2`) taken in that order, then reverted to `i1`: `m2`'s overlay is off the chain, and libvirt deleted `m2` keeping it |
 | `script_snapshots_external.txt` | `snapshots_script` after two external snapshots: each carries its `layers` from `<disks>` |
 | `snapshot_revert_disks.xml` | `snapshot-dumpxml` of a snapshot already reverted to once: `<revertDisks>` names where a further revert would go |
 | `script_snap_diff.txt` | `snap_diff_script` after a vCPU, memory and NIC-model change: what the diff is read from |

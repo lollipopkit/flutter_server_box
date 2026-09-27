@@ -578,7 +578,10 @@ fn snapshot_actions() {
         virt::snapshot_revert_script("d", "n", true)
             .contains("V snapshot-revert --domain 'd' --snapshotname 'n' --running\n")
     );
-    assert!(virt::snapshot_delete_script("d", "-n").contains("V snapshot-delete --domain 'd' --snapshotname '-n'\n"));
+    let del = virt::snapshot_delete_script("d", "-n", &[], &[]).unwrap();
+    assert!(del.contains("R snapshot-delete --domain 'd' --snapshotname '-n'\n"), "{del}");
+    assert!(!del.contains("vol-delete"), "{del}");
+    assert!(virt::snapshot_delete_script("d", "n", &[], &["rel/x".into()]).is_err());
 
     // Captured refusals: all "the host said no", with its words
     for (file, needle) in [
@@ -702,7 +705,7 @@ fn firmware_descriptors_of_a_real_host() {
     // BIOS domain (`cirros-run`), whose descriptors are its own host's.
     assert!(!info.config.efi);
     assert!(info.live.is_some(), "it was running");
-    assert!(info.config.nics.len() >= 1 || !info.config.disks.is_empty());
+    assert!(!info.config.nics.is_empty() || !info.config.disks.is_empty());
 }
 
 #[test]
@@ -2160,6 +2163,12 @@ fn clone_xml_is_a_new_domain_on_new_disks() {
     }
     assert_eq!(src(disks[0]), (Some("file"), Some("/var/lib/libvirt/images/new.qcow2")));
     assert_eq!(src(disks[1]), (Some("block"), Some("/dev/vg0/new-1")));
+    // A copy on a block device is raw, and says so; a file keeps its format.
+    fn driver<'a>(d: roxmltree::Node<'a, 'a>) -> Option<&'a str> {
+        d.children().find(|n| n.has_tag_name("driver")).and_then(|n| n.attribute("type"))
+    }
+    assert_eq!(driver(disks[0]), Some("qcow2"));
+    assert_eq!(driver(disks[1]), Some("raw"));
     assert_eq!(src(disks[2]), (Some("file"), Some("/iso/cirros.img")), "a CD-ROM keeps its image");
     // Its own variables file, made by libvirt from the same template.
     let nvram = el("nvram").unwrap();
@@ -2208,6 +2217,7 @@ esac
             VirtCloneDisk { target: "vdb".into(), source: "/pool/data".into(), format: Some("raw".into()) },
         ],
         target_pool: None,
+        target_block: false,
     };
 
     let raw = run_sh(&virt::clone_volumes_script(&spec(true)).unwrap(), &path);
@@ -2254,6 +2264,7 @@ fn clone_to_another_pool_under_sh() {
             format: Some("qcow2".into()),
         }],
         target_pool: Some("sbxe2e-p9 #2".into()),
+        target_block: false,
     };
 
     // Full: copied out of `pool` (what `vol-pool` answered) into the target.
@@ -2292,6 +2303,18 @@ fn clone_to_another_pool_under_sh() {
     assert!(l.contains("vol-create-as\n"), "{l}");
     assert!(l.contains("--pool\nsbxe2e-p9 #2\n"), "{l}");
     assert!(l.contains("--capacity\n1073741824\n--format\nqcow2\n"), "{l}");
+
+    // Into a pool of block devices: raw, named `.img`, whatever the source
+    // was (libvirt converts it to raw there anyway).
+    let _ = std::fs::remove_file(d.join("log"));
+    let block = VirtCloneSpec { target_block: true, ..spec(true) };
+    let raw = run_sh(&virt::clone_volumes_script(&block).unwrap(), &path);
+    assert_eq!(virt::parse_clone_volumes(&raw), Ok(vec![format!("/pool/{name}.img")]), "{raw}");
+    assert!(std::fs::read_to_string(d.join("xml")).unwrap().contains("<format type='raw'/>"));
+    let _ = std::fs::remove_file(d.join("log"));
+    let raw = run_sh(&virt::clone_volumes_script(&VirtCloneSpec { full: false, ..block }).unwrap(), &path);
+    assert_eq!(virt::parse_clone_volumes(&raw).unwrap().len(), 1);
+    assert!(log().contains("--capacity\n1073741824\n--format\nraw\n"), "{}", log());
 
     // The copy refused: nothing is left, and the error is the host's.
     let _ = std::fs::remove_file(d.join("log"));
@@ -2355,6 +2378,7 @@ if [ -f "$dir/fail" ] && grep -qx "$1" "$dir/fail"; then echo "error: $1 refused
 case "$1" in
   pool-define|net-define) cp "$3" "$dir/defined.xml" ;;
   vol-upload) cat > "$dir/uploaded" ;;
+  net-info) if [ -f "$dir/inactive" ]; then echo 'Active:         no'; else echo 'Active:         yes'; fi ;;
   *) cat >> "$dir/stdin" ;;
 esac
 "#;
@@ -2379,7 +2403,7 @@ fn manage_scripts_under_sh_with_hostile_names() {
         Op::PoolAutostart { name: hostile.into(), on: false },
         Op::VolDelete { pool: hostile.into(), name: hostile.into() },
         Op::VolResize { pool: hostile.into(), name: hostile.into(), bytes: 5 << 30 },
-        Op::NetDelete { name: hostile.into(), active: true },
+        Op::NetDelete { name: hostile.into() },
     ] {
         assert_eq!(m::parse_resource(&run_sh(&m::resource_script(&op).unwrap(), &path)), Ok(()), "{op:?}");
     }
@@ -2390,6 +2414,16 @@ fn manage_scripts_under_sh_with_hostile_names() {
     assert!(l.contains("--capacity\n5368709120B\n"), "{l}");
     assert!(l.contains(&format!("net-destroy\n--network\n{hostile}\n---\n")), "{l}");
     assert!(l.contains(&format!("net-undefine\n--network\n{hostile}\n---\n")), "{l}");
+    // Stopped since the listing that showed it running: not stopped again
+    // (libvirt would refuse: `network is not active`), just undefined.
+    std::fs::write(d.join("inactive"), "").unwrap();
+    std::fs::remove_file(d.join("log")).unwrap();
+    let op = Op::NetDelete { name: hostile.into() };
+    assert_eq!(m::parse_resource(&run_sh(&m::resource_script(&op).unwrap(), &path)), Ok(()));
+    let l = log();
+    assert!(!l.contains("net-destroy"), "{l}");
+    assert!(l.contains(&format!("net-undefine\n--network\n{hostile}\n---\n")), "{l}");
+    std::fs::remove_file(d.join("inactive")).unwrap();
     assert!(!d.join("pwned").exists() && !std::path::Path::new("pwned").exists());
     assert_eq!(std::fs::read_to_string(d.join("stdin")).unwrap_or_default(), "");
 
@@ -2920,6 +2954,100 @@ fn snap_delete_refused_where_apparmor_denies_the_commit() {
     assert_eq!(virt_snapshot::snap_delete_refusal(&unread), Ok(None));
 }
 
+/// `pool-capabilities` captured on a host whose daemon started before LVM
+/// was installed: `logical` unsupported, so it is not offered.
+#[test]
+fn pool_types_are_the_ones_the_daemon_supports() {
+    let caps = fixture("pool_capabilities.xml");
+    let raw = |body: &str, rc: i32| format!("SrvBoxSep.b64.dmlydC5wb29sLmNhcHM=\n{body}\n\nSbVirtRc={rc}\n");
+    assert!(virt::pool_types_script().contains("V pool-capabilities\n"));
+    assert_eq!(virt::parse_pool_types(&raw(&caps, 0)), Some(vec!["dir".to_string(), "netfs".to_string()]));
+    let all = caps.replace("type='logical' supported='no'", "type='logical' supported='yes'");
+    assert_eq!(
+        virt::parse_pool_types(&raw(&all, 0)),
+        Some(vec!["dir".to_string(), "netfs".to_string(), "logical".to_string()])
+    );
+    // A libvirt before 5.2 has no such command: it cannot say.
+    assert_eq!(virt::parse_pool_types(&raw("error: unknown command: 'pool-capabilities'", 1)), None);
+    assert_eq!(virt::parse_pool_types(&raw("<capabilities/>", 0)), None);
+}
+
+/// A snapshot on a branch the guest left (captured: `i1` internal, `m2`
+/// external over it, then a revert to `i1`): libvirt deletes it and keeps
+/// its overlay, which is named to be deleted with it. On the chain, nothing
+/// is: the commit libvirt makes takes care of it.
+#[test]
+fn snap_delete_names_the_overlay_libvirt_leaves_off_the_chain() {
+    let raw = fixture("script_snap_delete_off_chain.txt");
+    assert_eq!(
+        virt_snapshot::snap_delete_leftovers(&raw),
+        Ok(vec!["/var/lib/libvirt/sbxe2e-exp/ov2.qcow2".to_string()])
+    );
+    // Off the chain, nothing is committed: no refusal either.
+    assert_eq!(virt_snapshot::snap_delete_refusal(&raw), Ok(None));
+    for on_chain in [
+        "script_snap_delete_running_denied.txt",
+        "script_snap_delete_shut_off.txt",
+        "script_snap_delete_running_clear.txt",
+    ] {
+        assert_eq!(virt_snapshot::snap_delete_leftovers(&fixture(on_chain)), Ok(vec![]), "{on_chain}");
+    }
+    // A chain that could not be read: a file on it would look off it.
+    let from = raw.find("SrvBoxSep.b64.dmlydC5zbmFwLmNoYWlu").unwrap();
+    let to = raw.find("SrvBoxSep.b64.dmlydC5zbmFwLmRlbC5pbmZv").unwrap();
+    let unread = format!(
+        "{}SrvBoxSep.b64.dmlydC5zbmFwLmNoYWlu\n/var/lib/libvirt/sbxe2e-exp/base.qcow2\n\
+         qemu-img: Could not open: Permission denied\n\nSbVirtRc=1\n{}",
+        &raw[..from],
+        &raw[to..]
+    );
+    assert_eq!(virt_snapshot::snap_delete_leftovers(&unread), Ok(vec![]));
+}
+
+/// The delete under sh with a stub virsh: the leftovers go after the
+/// snapshot, through their pool refreshed first; a refused snapshot delete
+/// deletes none of them, and a refused file delete is named.
+#[cfg(unix)]
+#[test]
+fn snapshot_delete_deletes_the_leftovers_after_the_snapshot() {
+    let d = create_stub("snapdel");
+    let path = format!("{}:/usr/bin:/bin", d.display());
+    let stub = |from: &str, to: &str| {
+        let f = d.join("virsh");
+        let text = std::fs::read_to_string(&f).unwrap().replace(from, to);
+        std::fs::write(&f, text).unwrap();
+    };
+    stub("start|vol-delete|undefine)", "start|vol-delete|undefine|snapshot-delete|pool-refresh)");
+    let script = virt::snapshot_delete_script(
+        "vm",
+        "m 2",
+        &["p o".to_string()],
+        &["/p o/vm.m 2".to_string()],
+    )
+    .unwrap();
+    assert_eq!(virt::parse_snapshot_delete(&run_sh(&script, &path)), Ok(()));
+    let log = std::fs::read_to_string(d.join("log")).unwrap();
+    let del = log.find("snapshot-delete\n--domain\nvm\n--snapshotname\nm 2\n").unwrap();
+    let refresh = log.find("pool-refresh\n--pool\np o\n").unwrap();
+    let vol = log.find("vol-delete\n--vol\n/p o/vm.m 2\n").unwrap();
+    assert!(del < refresh && refresh < vol, "{log}");
+
+    // A refused file delete: the snapshot is gone, the file is named.
+    stub("|vol-delete|", "|");
+    let err = virt::parse_snapshot_delete(&run_sh(&script, &path)).unwrap_err();
+    assert!(
+        matches!(&err, VirtError::Command { message } if message.contains("1 file(s)") && message.contains("unexpected vol-delete")),
+        "{err:?}"
+    );
+
+    // A refused snapshot delete: nothing after it runs.
+    std::fs::remove_file(d.join("log")).unwrap();
+    stub("|snapshot-delete|", "|");
+    assert!(virt::parse_snapshot_delete(&run_sh(&script, &path)).is_err());
+    let log = std::fs::read_to_string(d.join("log")).unwrap();
+    assert!(!log.contains("vol-delete") && !log.contains("pool-refresh"), "{log}");
+}
+
 /// The check script under sh: a hostile name stays one word, and only the
 /// profile's `deny` lines are printed.
 #[test]
@@ -3085,4 +3213,42 @@ fn snap_revert_refused_where_apparmor_cannot_read_the_new_file() {
         let moved = fixture("script_snap_delete_running_clear.txt").replace("/var/lib/libvirt/sbxe2e-exp/", dir);
         assert_eq!(virt_snapshot::snap_revert_refusal(&moved), Ok(None), "{dir}");
     }
+}
+
+/// Memory past the running guest's maximum is a change for the next start:
+/// the live `setmem` is not asked for (libvirt would refuse it), and within
+/// it the balloon takes the change live.
+#[cfg(unix)]
+#[test]
+fn memory_past_the_running_maximum_waits_for_the_next_start() {
+    let d = std::env::temp_dir().join(format!("sbm_virt_mem_{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&d);
+    std::fs::create_dir_all(&d).unwrap();
+    let stub = r#"#!/bin/sh
+dir="$(dirname "$0")"
+shift 3
+printf '%s ' "$@" >> "$dir/log"; echo >> "$dir/log"
+case "$1" in
+  dominfo) printf 'Name:           vm\nMax memory:     262144 KiB\nUsed memory:    262144 KiB\n' ;;
+esac
+"#;
+    std::fs::write(d.join("virsh"), stub).unwrap();
+    Command::new("chmod").arg("+x").arg(d.join("virsh")).status().unwrap();
+    let path = format!("{}:/usr/bin:/bin", d.display());
+    let run = |mib: u64| {
+        let _ = std::fs::remove_file(d.join("log"));
+        let change: virt::VirtHwChange =
+            serde_json::from_value(serde_json::json!({"op": "memory", "memory_mib": mib})).unwrap();
+        let script = virt::hardware_change_script("vm", true, None, &change).unwrap();
+        let out = virt::parse_hardware_change(&run_sh(&script, &path)).unwrap();
+        (out.live_error, std::fs::read_to_string(d.join("log")).unwrap())
+    };
+    let (err, log) = run(768);
+    assert_eq!(err, None);
+    assert!(log.contains("setmaxmem --domain vm --size 768MiB --config"), "{log}");
+    assert!(!log.contains("--live"), "{log}");
+    let (err, log) = run(128);
+    assert_eq!(err, None);
+    assert!(log.contains("setmem --domain vm --size 128MiB --live"), "{log}");
+    let _ = std::fs::remove_dir_all(&d);
 }

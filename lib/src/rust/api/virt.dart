@@ -90,14 +90,25 @@ String virtSnapshotRevertScript({
   running: running,
 );
 
-/// Delete one snapshot. Parse with [`parse_virt_action`].
+/// Delete one snapshot, then the files libvirt leaves behind
+/// ([`parse_virt_snap_delete_leftovers`]) through their `pools`. Parse with
+/// [`parse_virt_snapshot_delete`].
 String virtSnapshotDeleteScript({
   required String domain,
   required String name,
+  required List<String> pools,
+  required List<String> leftovers,
 }) => RustLib.instance.api.crateApiVirtVirtSnapshotDeleteScript(
   domain: domain,
   name: name,
+  pools: pools,
+  leftovers: leftovers,
 );
+
+/// [`virt_snapshot_delete_script`]'s output: `Ok` once the snapshot is gone;
+/// a file it left that could not be deleted is an error naming it
+Future<void> parseVirtSnapshotDelete({required String raw}) =>
+    RustLib.instance.api.crateApiVirtParseVirtSnapshotDelete(raw: raw);
 
 /// The disk chain of a domain (external snapshots): the definition, where
 /// each device is now, and each one's chain as QEMU resolves it
@@ -122,6 +133,12 @@ String virtSnapCheckScript({required String domain, required String name}) =>
 /// delete (AppArmor denying the commit), or `None`
 Future<String?> parseVirtSnapDeleteRefusal({required String raw}) =>
     RustLib.instance.api.crateApiVirtParseVirtSnapDeleteRefusal(raw: raw);
+
+/// [`virt_snap_check_script`]'s output → the files deleting the snapshot
+/// leaves behind (its overlays off the current chain), for
+/// [`virt_snapshot_delete_script`] to delete
+Future<List<String>> parseVirtSnapDeleteLeftovers({required String raw}) =>
+    RustLib.instance.api.crateApiVirtParseVirtSnapDeleteLeftovers(raw: raw);
 
 /// [`virt_snap_check_script`]'s output → why a revert would leave the guest
 /// unable to start (AppArmor's helper refused the new overlay), or `None`
@@ -339,6 +356,16 @@ String virtHardwareChangeScript({
 /// [`virt_hardware_change_script`]'s output → `VirtHwOutcome` JSON
 Future<String> parseVirtHardwareChangeJson({required String raw}) =>
     RustLib.instance.api.crateApiVirtParseVirtHardwareChangeJson(raw: raw);
+
+/// Which pool types the daemon has a backend for (`pool-capabilities`).
+/// Parse with [`parse_virt_pool_types`].
+String virtPoolTypesScript() =>
+    RustLib.instance.api.crateApiVirtVirtPoolTypesScript();
+
+/// [`virt_pool_types_script`]'s output → the pool types this app makes that
+/// the host supports, in the order offered; `None` where it could not say
+List<String>? parseVirtPoolTypes({required String raw}) =>
+    RustLib.instance.api.crateApiVirtParseVirtPoolTypes(raw: raw);
 
 /// The host's firmware descriptors (`/usr/share/qemu/firmware/*.json`), for
 /// what a new domain can boot with. Parse with

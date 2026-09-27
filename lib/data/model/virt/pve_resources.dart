@@ -487,6 +487,37 @@ abstract final class PveResources {
     _ => null,
   };
 
+  /// The `vzdump` request a job's "Run now" sends, from the job as
+  /// `GET /cluster/backup/{id}` has it: what PVE's own web UI sends
+  /// (`run_backup_now`, pve-manager 9.2) — every field but the ones that
+  /// describe the schedule, `all` as `1`/`0`, and the fields PVE answers as
+  /// objects (`performance`, `prune-backups`, `fleecing`) as the property
+  /// strings `vzdump` takes.
+  static Map<String, Object?> vzdumpOfJob(Map<String, Object?> job) => {
+    for (final MapEntry(:key, :value) in job.entries)
+      if (!_jobScheduleKeys.contains(key) && value != null)
+        key: switch (value) {
+          _ when key == 'all' => value == true || value == 1 || value == '1' ? 1 : 0,
+          final Map m => [
+            for (final MapEntry(:key, :value) in m.entries) '$key=$value',
+          ].join(','),
+          _ => value,
+        },
+  };
+
+  static const _jobScheduleKeys = {
+    'enabled',
+    'starttime',
+    'dow',
+    'id',
+    'schedule',
+    'type',
+    'node',
+    'comment',
+    'next-run',
+    'repeat-missed',
+  };
+
   /// A comma-separated list of VMIDs, as PVE stores `vmid` and `exclude`.
   /// Null and an empty string are both "none", `all` names no single guest,
   /// and anything that is not a number is skipped rather than costing the

@@ -147,11 +147,16 @@ void main() {
       });
       final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
       expect((await virt.load()).guests, hasLength(3));
+      // The refused overview, sudo's check, the overview again; then the
+      // pool types (read once), after sudo's check as every call.
       expect(exec.calls.map((c) => c.entry), [
         'sh',
         'sudo -n sh',
         'sudo -n sh',
+        'sudo -n sh',
+        'sudo -n sh',
       ]);
+      expect(exec.calls.last.script, contains('pool-capabilities'));
       expect(virt.needsSudo, isTrue);
 
       exec.calls.clear();
@@ -460,7 +465,7 @@ void main() {
       await virt.deleteSnapshot(web, 'pre-up');
       expect(
         exec.calls.last.script,
-        contains("V snapshot-delete --domain '$_run' --snapshotname 'pre-up'"),
+        contains("R snapshot-delete --domain '$_run' --snapshotname 'pre-up'"),
       );
       expect(
         exec.calls[exec.calls.length - 2].script,
@@ -511,6 +516,30 @@ void main() {
           reason: f,
         );
       }
+    });
+
+    test('a snapshot off the chain is deleted with the overlay libvirt '
+        'leaves', () async {
+      final exec = _Exec((call) {
+        if (call.script.contains('domstats')) return _ok(_overview());
+        if (call.script.contains('snapshot-dumpxml')) {
+          return _ok(_fixture('script_snap_delete_off_chain.txt'));
+        }
+        if (call.script.contains('pool-list')) {
+          return _ok(_fixture('script_storage.txt'));
+        }
+        return _ok(_section('virt.action', 'ok'));
+      });
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      final web = (await virt.load()).guests.firstWhere((g) => g.id == _run);
+      await virt.deleteSnapshot(web, 'm2');
+      final del = exec.calls.last.script;
+      expect(del, contains("R snapshot-delete --domain '$_run' --snapshotname 'm2'"));
+      expect(del, contains("R vol-delete --vol '/var/lib/libvirt/sbxe2e-exp/ov2.qcow2'"));
+      expect(
+        del.indexOf('snapshot-delete'),
+        lessThan(del.indexOf('vol-delete')),
+      );
     });
 
     test('the chain is read back, and a raw disk is refused', () async {
@@ -1172,6 +1201,34 @@ void main() {
       final tiny = iso.firstWhere((v) => v.name == 'tiny.iso');
       expect(tiny.users, [const VirtGuestRef(guestId: _odd, device: 'hdc')]);
       expect(await virt.volumes(pools.last), isEmpty);
+    });
+
+    test('a listed volume that does not read refreshes the pool, once', () async {
+      final full = _fixture('script_volumes_images.txt');
+      // `cirros.img` gone behind libvirt's back: `vol-dumpxml` refuses it.
+      final at = full.indexOf('SrvBoxSep', 1);
+      final stale =
+          'SrvBoxSep.b64.dmlydC52b2wueG1s\ncirros.img\n'
+          "error: Storage volume not found: no storage vol with matching path '/var/lib/libvirt/images/cirros.img'\n"
+          '\nSbVirtRc=1\n${full.substring(at)}';
+      var refreshed = false;
+      final exec = _Exec((call) {
+        if (call.script.contains('pool-refresh')) {
+          refreshed = true;
+          return _ok(_section('virt.res.step', 'Pool images refreshed'));
+        }
+        if (call.script.contains('pool-list')) return _ok(_fixture('script_storage.txt'));
+        if (call.script.contains("vol-dumpxml --pool 'images'")) {
+          return _ok(refreshed ? full : stale);
+        }
+        return _fail('unexpected ${call.script}');
+      });
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      final pools = await virt.storagePools();
+      final vols = await virt.volumes(pools.first);
+      expect(refreshed, isTrue);
+      expect(exec.calls.where((c) => c.script.contains('pool-refresh')), hasLength(1));
+      expect(vols, hasLength(6));
     });
 
     test('volumes without a listing first list the pools', () async {

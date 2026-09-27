@@ -194,6 +194,7 @@ Future<void> main() async {
   await _pveCloudInit();
   await _p8Snapshots();
   await _libvirtManage();
+  await _libvirtBlockPools();
   await _pveManage();
   await _pveCreate();
   await _pvePassthrough();
@@ -1322,7 +1323,7 @@ Future<VirtGuest> _pveVm(PveBackend pve, int vmid) async =>
 
 /// A start straight after a stop leaves `qmeventd`'s cleanup of the old
 /// QEMU process holding the VM's config lock for 30 s, and every action in
-/// that window fails on it after 10 s (PVE 9.2, see virt.md). The cleanup
+/// that window fails on it after 10 s (PVE 9.2, see docs/dev/virt.md). The cleanup
 /// takes well under a second when nothing has started yet.
 Future<void> _afterStop() => Future<void>.delayed(const Duration(seconds: 5));
 
@@ -1477,15 +1478,17 @@ Future<void> _libvirtCreate() async {
     });
     tearDownAll(() async {
       // Whatever a failed test left.
-      try {
-        final g = await find();
-        if (g != null) {
-          if (g.state != VirtGuestState.stopped) {
-            await virt.power(g, VirtPowerAction.forceStop);
+      for (final n in [name, '$name-hw']) {
+        try {
+          final g = (await virt.load()).guests.where((g) => g.name == n).firstOrNull;
+          if (g != null) {
+            if (g.state != VirtGuestState.stopped) {
+              await virt.power(g, VirtPowerAction.forceStop);
+            }
+            await virt.delete((await virt.load()).guests.firstWhere((g) => g.name == n));
           }
-          await virt.delete((await find())!);
-        }
-      } catch (_) {}
+        } catch (_) {}
+      }
       await virt.close();
       client?.close();
     });
@@ -1552,6 +1555,90 @@ Future<void> _libvirtCreate() async {
       expect(await find(), isNull);
       final vols = await virt.volumes(pool);
       expect(vols.where((v) => v.name == '$name.qcow2'), isEmpty);
+    });
+
+    test('shut off: a topology with dies and clusters read and kept; a '
+        'CD-ROM on SCSI; USB given by its address', () async {
+      final hwName = '$name-hw';
+      Future<String> sh(String command) async =>
+          (await execSshE2e(client!, command, null)).stdout;
+      Future<String> inactive(VirtGuest g) =>
+          sh("virsh --connect qemu:///system dumpxml --inactive '${g.id}'");
+      final pool = virtDiskStorages(
+        await virt.storagePools(),
+        host: VirtHostKind.libvirt,
+        kind: VirtGuestKind.qemu,
+      ).first;
+      await virt.create(VirtCreateSpec(
+        kind: VirtGuestKind.qemu,
+        name: hwName,
+        cores: 1,
+        memoryMiB: 256,
+        storage: pool,
+        diskGiB: 1,
+      ));
+      var g = (await virt.load()).guests.firstWhere((g) => g.name == hwName);
+
+      // A topology the form does not make: 1 socket, 2 dies, 2 clusters,
+      // 1 core, 1 thread — 4 vCPUs. Written by hand, as virsh edit would.
+      final xml = await inactive(g);
+      final edited = xml
+          .replaceFirst(RegExp(r'<vcpu[^>]*>\d+</vcpu>'), "<vcpu placement='static'>4</vcpu>")
+          .replaceFirst(RegExp(r'<cpu\b[^>]*/>|<cpu\b[\s\S]*?</cpu>'), '')
+          .replaceFirst('</features>', "</features><cpu mode='host-passthrough'><topology sockets='1' dies='2' clusters='2' cores='1' threads='1'/></cpu>");
+      await execSshE2e(
+        client!,
+        r'f=$(mktemp) && cat > "$f" && virsh --connect qemu:///system -q define "$f" >/dev/null; r=$?; rm -f "$f"; exit $r',
+        Uint8List.fromList(utf8.encode(edited)),
+      );
+      var hw = await virt.hardware(g);
+      // Dies and clusters count as threads: 1 × 1 × 4.
+      expect((hw.cpu.sockets, hw.cpu.cores, hw.cpu.threads), (1, 1, 4));
+      // A memory change keeps the topology as it is.
+      await virt.changeHardware(g, hw, VirtHwSetMemory(mib: 384));
+      expect(await inactive(g), contains("dies='2' clusters='2'"));
+      // Two sockets: the host takes the definition (libvirt checks the
+      // vCPU count against the topology), dies and clusters kept.
+      hw = await virt.hardware(g);
+      await virt.changeHardware(g, hw, const VirtHwSetCpu(sockets: 2, cores: 1));
+      final after = await inactive(g);
+      final topo = RegExp(r'<topology[^>]*/>').firstMatch(after)![0]!;
+      final vcpus = RegExp(r'<vcpu[^>]*>(\d+)</vcpu>').firstMatch(after)![1]!;
+      int attr(String a) => int.parse(RegExp("$a='(\\d+)'").firstMatch(topo)![1]!);
+      expect(attr('sockets'), 2, reason: topo);
+      expect(int.parse(vcpus), attr('sockets') * attr('dies') * attr('clusters') * attr('cores') * attr('threads'), reason: after);
+      hw = await virt.hardware(g);
+      expect(hw.cpu.sockets * hw.cpu.cores * hw.cpu.threads, int.parse(vcpus));
+
+      // A CD-ROM, moved to SCSI and back.
+      await virt.changeHardware(g, hw, const VirtHwAddCdrom());
+      hw = await virt.hardware(g);
+      var cd = hw.disks.singleWhere((d) => d.kind == VirtHwDiskKind.cdrom);
+      expect(cd.bus, 'sata');
+      await virt.changeHardware(g, hw, VirtHwUpdateDisk(key: cd.key, bus: 'scsi'));
+      hw = await virt.hardware(g);
+      cd = hw.disks.singleWhere((d) => d.kind == VirtHwDiskKind.cdrom);
+      expect(cd.bus, 'scsi');
+      expect(cd.key, startsWith('sd'));
+      expect(await inactive(g), contains("<controller type='scsi'"));
+      await virt.changeHardware(g, hw, VirtHwRemoveDisk(key: cd.key));
+
+      // USB by address. The host has no USB device, so the address is one
+      // nothing sits at: the definition takes it (the device is looked for
+      // at start), which is what is checked here.
+      hw = await virt.hardware(g);
+      const dev = VirtHostDevice(id: '1:7', label: 'sbxe2e', usbBus: 1, usbDevice: 7, usbPort: '3');
+      await virt.changeHardware(g, hw, const VirtHwAddDevice(kind: VirtHwDeviceKind.usb, host: dev, usbNaming: VirtUsbNaming.address));
+      final withUsb = await inactive(g);
+      expect(withUsb, contains("<address bus='1' device='7'/>"), reason: withUsb);
+      hw = await virt.hardware(g);
+      final usb = hw.devices.singleWhere((d) => d.kind == VirtHwDeviceKind.usb);
+      await virt.changeHardware(g, hw, VirtHwRemoveDevice(key: usb.key));
+      expect(await inactive(g), isNot(contains('<hostdev')));
+
+      g = (await virt.load()).guests.firstWhere((g) => g.name == hwName);
+      await virt.delete(g);
+      expect((await virt.load()).guests.where((g) => g.name == hwName), isEmpty);
     });
   });
 }
@@ -2591,6 +2678,282 @@ class _AsUser implements ServerByteExec {
   Future<ExecSession> start(String command) => inner.start(_wrap(command));
 }
 
+/// Pools that are not a directory on the libvirt host, each opt-in:
+///
+/// - `SBM_E2E_LIBVIRT_VG`: a volume group the test may make logical volumes
+///   in (`sbxe2e-*`, all removed) — a pool of block devices: a pool made of
+///   it, a VM from a cloud image with its disk and cloud-init seed on it
+///   (with `SBM_E2E_LIBVIRT_CLOUD_IMAGE`), external snapshots refused there,
+///   and a copy of a VM into it.
+/// - `SBM_E2E_LIBVIRT_NFS`: an NFS export (`host:/path`) the host can mount,
+///   for a `netfs` pool.
+Future<void> _libvirtBlockPools() async {
+  final host = e2eEnv('SBM_E2E_LIBVIRT_HOST');
+  final vg = e2eEnv('SBM_E2E_LIBVIRT_VG');
+  final nfs = e2eEnv('SBM_E2E_LIBVIRT_NFS');
+  final imagePath = e2eEnv('SBM_E2E_LIBVIRT_CLOUD_IMAGE');
+  if (host == null || (vg == null && nfs == null)) return;
+  final ready = await prepareReachableSshE2e(host);
+  final target = ready.target;
+  if (target == null) return;
+
+  group('block and network pools: libvirt over SSH', () {
+    SSHClient? client;
+    late LibvirtBackend virt;
+    final run = DateTime.now().millisecondsSinceEpoch % 100000;
+    final lvPool = 'sbxe2e-lv-$run';
+    final nfsPool = 'sbxe2e-nfs-$run';
+    final nfsDir = '/var/lib/libvirt/sbxe2e-nfs-$run';
+    final made = <String>[];
+
+    Future<String> sh(String command) async =>
+        (await execSshE2e(client!, command, null)).stdout;
+    Future<VirtStoragePool?> findPool(String name) async =>
+        (await virt.storagePools()).where((p) => p.name == name).firstOrNull;
+    Future<VirtGuest?> find(String name) async =>
+        (await virt.load()).guests.where((g) => g.name == name).firstOrNull;
+    Future<VirtStoragePool?> lv() async {
+      final p = await findPool(lvPool);
+      if (p != null) return p;
+      // Offered only where the daemon has the backend (`pool-capabilities`):
+      // one started before LVM was installed has not.
+      final types = (await virt.load()).capabilities.poolTypes;
+      if (!types.contains('logical')) {
+        markTestSkipped('the daemon has no logical backend: $types');
+        return null;
+      }
+      await virt.manage(VirtPoolCreate(name: lvPool, type: 'logical', source: vg!));
+      return (await findPool(lvPool))!;
+    }
+
+    setUpAll(() async {
+      await initRustLibForTest();
+      final c = await connectSshE2e(target, ready.identities);
+      client = c;
+      virt = LibvirtBackend(serverId: 'e2e-libvirt-block', exec: () async => SshExec(c));
+    });
+    tearDownAll(() async {
+      final c = client;
+      if (c == null) return;
+      Future<void> virsh(String args) =>
+          execSshE2e(c, 'LC_ALL=C virsh --connect qemu:///system -q $args </dev/null', null);
+      // The run's own domains, with the volumes they were made on (a failed
+      // clone's source is in the directory pool).
+      for (final n in made) {
+        await virsh("destroy '$n'");
+        await virsh("undefine '$n' --nvram --remove-all-storage");
+      }
+      if (vg != null) {
+        await execSshE2e(c, "for l in \$(lvs --noheadings -o lv_name '$vg' | grep sbxe2e); do lvremove -fy '$vg'/\$l; done", null);
+      }
+      for (final p in [lvPool, nfsPool]) {
+        await virsh("pool-destroy '$p'");
+        await virsh("pool-undefine '$p'");
+      }
+      await execSshE2e(c, "rmdir '$nfsDir' 2>/dev/null", null);
+      await virt.close();
+      c.close();
+    });
+
+    test('a logical pool from a volume group: a raw volume made, its resize '
+        'refused before the host is asked, deleted', () async {
+      if (vg == null) return markTestSkipped('SBM_E2E_LIBVIRT_VG unset');
+      final pool = await lv();
+      if (pool == null) return;
+      expect((await virt.load()).capabilities.poolTypes, contains('logical'));
+      expect((pool.type, pool.active), ('logical', true));
+      expect(virtPoolHoldsFiles(pool), isFalse);
+      expect(virtVolumeFormats(pool), ['raw']);
+      await virt.manage(VirtVolumeCreate(pool, name: 'sbxe2e-v', gib: 1, format: 'raw'));
+      final v = (await virt.volumes(pool)).singleWhere((v) => v.name == 'sbxe2e-v');
+      expect(v.path, '/dev/$vg/sbxe2e-v');
+      expect(v.capacity, 1 << 30);
+      // libvirt's logical backend has no resize ("storage pool does not
+      // support changing of volume capacity"): not offered, and refused.
+      expect(virtVolumeResizable(pool, VirtHostKind.libvirt), isFalse);
+      final e = await _virtErr(virt.manage(VirtVolumeResize(pool, v, bytes: 2 << 30)));
+      expect(e.type, VirtErrType.unsupported);
+      expect(await sh("lvs --noheadings --units b -o lv_size '$vg/sbxe2e-v'"), contains('${1 << 30}B'));
+      await virt.manage(VirtVolumeDelete(pool, v));
+      expect(await sh("lvs --noheadings -o lv_name '$vg' | grep -c sbxe2e-v || true"), startsWith('0'));
+    });
+
+    test('a VM from a cloud image on the logical pool: disk and seed are '
+        'LVs; the seed edited and taken; external snapshots refused', () async {
+      if (vg == null || imagePath == null) {
+        return markTestSkipped('SBM_E2E_LIBVIRT_VG or SBM_E2E_LIBVIRT_CLOUD_IMAGE unset');
+      }
+      final pool = await lv();
+      if (pool == null) return;
+      VirtVolume? image;
+      for (final p in await virt.storagePools()) {
+        if (!p.active) continue;
+        image ??= (await virt.volumes(p)).where((v) => v.path == imagePath).firstOrNull;
+      }
+      final login = await _guestLogin();
+      final name = 'sbxe2e-lvci-$run';
+      made.add(name);
+      final net = (await virt.networks()).firstWhere((n) => n.name == 'default');
+      final created = await virt.create(VirtCreateSpec(
+        kind: VirtGuestKind.qemu,
+        name: name,
+        cores: 1,
+        memoryMiB: 1024,
+        storage: pool,
+        diskGiB: 4,
+        image: image!,
+        network: net,
+        bus: 'virtio',
+        uefi: true,
+        cloudInit: VirtCloudInit(user: 'sbxe', password: login.password, sshKeys: login.publicKey, hostname: name),
+        start: true,
+      ));
+      expect(created.startError, isNull);
+      var g = (await find(name))!;
+      final hw = await virt.hardware(g);
+      final disk = hw.disks.singleWhere((d) => d.kind == VirtHwDiskKind.disk && !d.cloudInit);
+      final seed = hw.disks.singleWhere((d) => d.cloudInit);
+      expect(disk.source, '/dev/$vg/$name.img');
+      expect(disk.format, 'raw');
+      expect(seed.source, '/dev/$vg/$name-cidata.iso');
+      expect(virtHwDiskGrowable(disk), isFalse);
+      final xml = await sh("virsh --connect qemu:///system dumpxml '${g.id}'");
+      expect(xml, contains("<disk type='block' device='disk'>"));
+      expect(xml, contains("<disk type='block' device='cdrom'>"));
+
+      Future<String> ip() async {
+        final mac = (await virt.detail(g)).nics.first.mac!;
+        final lease = RegExp('^\\s*(\\S+ \\S+)\\s+${RegExp.escape(mac)}\\s+ipv4\\s+([0-9.]+)/', multiLine: true);
+        for (var i = 0; i < 80; i++) {
+          final found = [for (final m in lease.allMatches(await sh('virsh --connect qemu:///system -q net-dhcp-leases default'))) (m[1]!, m[2]!)]
+            ..sort((a, b) => a.$1.compareTo(b.$1));
+          if (found.lastOrNull case (_, final ip)) return ip;
+          await Future<void>.delayed(const Duration(seconds: 3));
+        }
+        fail('no DHCP lease for $mac');
+      }
+
+      var addr = await ip();
+      final facts = await _guestFacts(client!, addr, 'sbxe', login.key, 'vda', login.password);
+      expect((facts['host'], facts['disk']), (name, '${4 << 30}'));
+
+      // The seed on a block device: read back, written anew (grown first
+      // where the new one is bigger), taken at the next boot.
+      final ci = await virt.cloudInit(g);
+      expect((ci.user, ci.hostname, ci.foreign), ('sbxe', name, false));
+      await virt.setCloudInit(
+        g,
+        ci,
+        VirtCloudInitEdit(VirtCloudInit(
+          user: 'sbxe',
+          sshKeys: '${login.publicKey}\n${login.publicKey.replaceFirst('sbxe2e', 'sbxe2e-second-line-to-grow-the-seed')}',
+          hostname: '$name-b',
+          dns: const ['1.1.1.1'],
+          searchDomains: const ['a.sbxe2e.test', 'b.sbxe2e.test'],
+        )),
+      );
+      expect((await virt.cloudInit(g)).hostname, '$name-b');
+      await _guestRun(client!, addr, 'sbxe', login.key, '(sleep 1; sudo -n reboot) >/dev/null 2>&1 &');
+      await Future<void>.delayed(const Duration(seconds: 10));
+      Map<String, String>? again;
+      final deadline = DateTime.now().add(const Duration(minutes: 5));
+      while (again?['host'] != '$name-b') {
+        addr = await ip();
+        try {
+          again = await _guestFacts(client!, addr, 'sbxe', login.key, 'vda', login.password,
+              within: const Duration(seconds: 20));
+        } catch (_) {
+          if (DateTime.now().isAfter(deadline)) rethrow;
+        }
+      }
+      final resolv = await _guestRun(client!, addr, 'sbxe', login.key, 'cat /etc/resolv.conf; resolvectl domain 2>/dev/null');
+      expect(resolv, allOf(contains('a.sbxe2e.test'), contains('b.sbxe2e.test')));
+
+      // No overlay can go on a pool of block devices, and the disk is raw.
+      final chain = await virt.snapshotChain(g);
+      expect(chain.externalRefusal, isNotNull);
+      final e = await _virtErr(virt.createSnapshot(g, name: 'sbxe2e-x', form: VirtSnapshotForm.external));
+      expect(e.type, VirtErrType.unsupported, reason: e.message);
+      expect(await virt.snapshots(g), isEmpty);
+
+      await virt.power(g, VirtPowerAction.forceStop);
+      g = (await find(name))!;
+      await virt.delete(g);
+      made.remove(name);
+      expect(await sh("lvs --noheadings -o lv_name '$vg' | grep -c '$name' || true"), startsWith('0'));
+    }, timeout: const Timeout(Duration(minutes: 15)));
+
+    test('a VM copied into the logical pool: a raw LV, a block disk',
+        () async {
+      if (vg == null) return markTestSkipped('SBM_E2E_LIBVIRT_VG unset');
+      final pool = await lv();
+      if (pool == null) return;
+      final source = virtDiskStorages(
+        await virt.storagePools(),
+        host: VirtHostKind.libvirt,
+        kind: VirtGuestKind.qemu,
+      ).firstWhere((p) => virtPoolHoldsFiles(p));
+      final name = 'sbxe2e-cp-$run';
+      made.addAll([name, '$name-lv']);
+      await virt.create(VirtCreateSpec(
+        kind: VirtGuestKind.qemu,
+        name: name,
+        cores: 1,
+        memoryMiB: 128,
+        storage: source,
+        diskGiB: 1,
+      ));
+      final src = (await find(name))!;
+      final id = await virt.clone(src, VirtCloneRequest(name: '$name-lv', targetPool: pool.name));
+      final copy = (await virt.load()).guests.firstWhere((g) => g.id == id);
+      final disk = (await virt.detail(copy)).disks.firstWhere((d) => d.device == 'disk');
+      // Raw on the LV, as libvirt converts it there, and said so: a block
+      // disk with a raw driver (a qcow2 driver over raw data reads garbage).
+      expect(disk.source, '/dev/$vg/$name-lv.img');
+      expect(disk.format, 'raw');
+      expect(await sh("qemu-img info --output=json '${disk.source}'"), contains('"format": "raw"'));
+      expect(await sh("virsh --connect qemu:///system dumpxml --inactive '${copy.id}'"), contains("<disk type='block' device='disk'>"));
+      for (final g in [copy, src]) {
+        await virt.delete((await virt.load()).guests.firstWhere((x) => x.id == g.id));
+        made.remove(g.name);
+      }
+      expect(await sh("lvs --noheadings -o lv_name '$vg' | grep -c '$name' || true"), startsWith('0'));
+      // The pool is the run's own; deleting it leaves the group.
+      await virt.manage(VirtPoolDelete((await findPool(lvPool))!));
+      expect(await findPool(lvPool), isNull);
+      expect(await sh("vgs --noheadings -o vg_name '$vg'"), contains(vg));
+    });
+
+    test('a netfs pool: mounted, a volume made in the export, unmounted when '
+        'stopped, deleted', () async {
+      if (nfs == null) return markTestSkipped('SBM_E2E_LIBVIRT_NFS unset');
+      final change = VirtPoolCreate(name: nfsPool, type: 'netfs', source: nfs, target: nfsDir);
+      expect(
+        virtResourceIssue(change, host: VirtHostKind.libvirt, pools: await virt.storagePools()),
+        isNull,
+      );
+      await sh("mkdir -p '$nfsDir'");
+      await virt.manage(change);
+      var pool = (await findPool(nfsPool))!;
+      expect((pool.type, pool.active, virtPoolHoldsFiles(pool)), ('netfs', true, true));
+      expect(await sh("findmnt -n -o SOURCE '$nfsDir'"), contains(nfs));
+      await virt.manage(VirtVolumeCreate(pool, name: 'sbxe2e-n.qcow2', gib: 1, format: 'qcow2'));
+      final v = (await virt.volumes(pool)).singleWhere((v) => v.name == 'sbxe2e-n.qcow2');
+      expect(v.format, 'qcow2');
+      final export = nfs.substring(nfs.indexOf(':/') + 1);
+      expect(await sh("ls '$export'"), contains('sbxe2e-n.qcow2'));
+      await virt.manage(VirtVolumeDelete(pool, v));
+      expect(await sh("ls -A '$export'"), isEmpty);
+      await virt.manage(VirtPoolSetActive(pool, active: false));
+      pool = (await findPool(nfsPool))!;
+      expect(pool.active, isFalse);
+      expect(await sh("findmnt -n '$nfsDir' || true"), isEmpty);
+      await virt.manage(VirtPoolDelete(pool));
+      expect(await findPool(nfsPool), isNull);
+    });
+  });
+}
+
 /// Pools, volumes, uploads and networks of the test's own on the libvirt
 /// host (`sbxe2e-*`, a pool in a fresh `/var/lib/libvirt/sbxe2e-*`), over
 /// the backend the app uses on SSH; with `SBM_E2E_LIBVIRT_SUDO_USER` and
@@ -2902,6 +3265,20 @@ Future<void> _libvirtManage() async {
         }
       });
     }
+
+    test('a volume removed behind libvirt\'s back: the pool refreshed, and '
+        'its count and its volumes agree', () async {
+      await virt.manage(VirtVolumeCreate(await pool(), name: 'sbxe2e-gone.qcow2', gib: 1, format: 'qcow2'));
+      await sh("rm '$poolDir/sbxe2e-gone.qcow2'");
+      // libvirt still lists it from its cache.
+      expect(await sh("virsh --connect qemu:///system -q vol-list '$poolName'"), contains('sbxe2e-gone.qcow2'));
+      final listed = (await pool()).volumeCount!;
+      final read = await vols();
+      expect(read.map((v) => v.name), isNot(contains('sbxe2e-gone.qcow2')));
+      expect(await sh("virsh --connect qemu:///system -q vol-list '$poolName'"), isNot(contains('sbxe2e-gone.qcow2')));
+      expect((await pool()).volumeCount, read.length);
+      expect(read.length, listed - 1);
+    });
 
     test('the pool deleted with its directory', () async {
       final p = await pool();
@@ -3483,6 +3860,19 @@ Future<void> _pveManage() async {
 // Cloud images and cloud-init
 // -----------------------------------------------------------------------------
 
+/// VM [vmid] as the listing has it once it has caught up with its creation:
+/// PVE's resource list trails a new VM by a few seconds (a placeholder
+/// `VM <id>` name, the default memory, no action while it still reads as
+/// locked).
+Future<VirtGuest> _pveStartable(PveBackend pve, int vmid, String name) async {
+  for (var i = 0; i < 30; i++) {
+    final g = (await pve.load()).guests.where((g) => g.vmid == vmid).firstOrNull;
+    if (g != null && g.name == name && g.actions.contains(VirtPowerAction.start)) return g;
+    await Future<void>.delayed(const Duration(seconds: 1));
+  }
+  fail('VM $vmid never listed as $name, startable');
+}
+
 /// A key pair and a password for a guest's cloud-init, made for this run.
 /// The password is never printed.
 Future<({SSHKeyPair key, String publicKey, String password})> _guestLogin() async {
@@ -3544,6 +3934,9 @@ Future<Map<String, String>> _guestFacts(
           r'''command -v perl >/dev/null && perl -e '$p = <STDIN>; chomp $p; print "pw=ok\n" if length $ARGV[0] && crypt($p, $ARGV[0]) eq $ARGV[0]' "$h"''',
           Uint8List.fromList(utf8.encode('$password\n')),
         )).stdout;
+        // A session cut short — cloud-init's first boot restarts sshd with
+        // its new host keys — printed nothing: not in yet, tried again.
+        if (!out.contains('host=')) throw StateError('no answer from $ip yet');
         return {
           for (final l in const LineSplitter().convert(out))
             if (l.contains('=')) l.substring(0, l.indexOf('=')): l.substring(l.indexOf('=') + 1),
@@ -3757,6 +4150,8 @@ Future<void> _libvirtCloudImages() async {
     final run = DateTime.now().millisecondsSinceEpoch % 100000;
     final made = <String>[];
     String? diskPool;
+    // An isolated network of the run's own, for a second NIC.
+    final net2 = 'sbxe2e-n2-$run';
 
     Future<String> sh(String command) async =>
         (await execSshE2e(client!, command, null)).stdout;
@@ -3775,6 +4170,8 @@ Future<void> _libvirtCloudImages() async {
       Future<void> virsh(String args) =>
           execSshE2e(c, 'LC_ALL=C virsh --connect qemu:///system -q $args </dev/null', null);
       // Only what this group made, by name; never `--remove-all-storage`.
+      await virsh("net-destroy '$net2'");
+      await virsh("net-undefine '$net2'");
       for (final name in made) {
         await virsh("destroy '$name'");
         await virsh("undefine '$name' --nvram");
@@ -3813,7 +4210,7 @@ Future<void> _libvirtCloudImages() async {
     /// with a new DHCP client ID, and so another address, beside the old
     /// lease.
     Future<String> ipOf(VirtGuest g) async {
-      final mac = (await virt.detail(g)).nics.single.mac!;
+      final mac = (await virt.detail(g)).nics.first.mac!;
       final lease = RegExp(
         '^\\s*(\\S+ \\S+)\\s+${RegExp.escape(mac)}\\s+ipv4\\s+([0-9.]+)/',
         multiLine: true,
@@ -3837,6 +4234,7 @@ Future<void> _libvirtCloudImages() async {
       LibvirtBackend? b,
       int gib = 4,
       bool tpm = false,
+      bool secureBoot = false,
     }) async {
       final backend = b ?? virt;
       final name = 'sbxe2e-ci-$tag-$run';
@@ -3859,6 +4257,7 @@ Future<void> _libvirtCloudImages() async {
           network: net,
           bus: 'virtio',
           uefi: !bios,
+          secureBoot: secureBoot,
           tpm: tpm,
           cloudInit: VirtCloudInit(
             user: 'sbxe',
@@ -3968,7 +4367,10 @@ Future<void> _libvirtCloudImages() async {
       final sizes = [for (final p in images) ((await imageAt(p)).capacity ?? 0, p)]..sort((a, b) => b.$1.compareTo(a.$1));
       final (bytes, path) = sizes.first;
       expect(bytes, greaterThan(1 << 30));
-      final gib = (bytes >> 30).clamp(1, 1 << 20);
+      // Strictly smaller than the image, a whole-GiB one (Debian 13's is
+      // 3 GiB exactly) included.
+      final gib = ((bytes - 1) >> 30).clamp(1, 1 << 20);
+      expect(gib << 30, lessThan(bytes));
       final login = await _guestLogin();
       final (g, created, pool) = await make('kept', path, login, gib: gib);
       expect(created.diskKeptBytes, bytes);
@@ -4000,6 +4402,154 @@ Future<void> _libvirtCloudImages() async {
         await remove(g, pool);
       }, timeout: const Timeout(Duration(minutes: 10)));
     }
+
+    test('Secure Boot on; a second NIC from the seed, kept through a save; '
+        'a password that expires at the first login', () async {
+      final path = images.firstWhere((p) => !p.contains('alpine'), orElse: () => images.first);
+      final options = await virt.createOptions();
+      // ignore: avoid_print
+      print('Secure Boot offered: ${options.secureBoot}');
+      final login = await _guestLogin();
+      final (g, _, pool) = await make('sb', path, login, secureBoot: options.secureBoot);
+      if (options.secureBoot) {
+        expect((await virt.hardware(g)).firmware, const VirtHwFirmware(uefi: true, secureBoot: true));
+        final xml = await sh("virsh --connect qemu:///system dumpxml '${g.id}'");
+        expect(xml, contains("<feature enabled='yes' name='secure-boot'/>"));
+        expect(xml, contains("<feature enabled='yes' name='enrolled-keys'/>"));
+        expect(xml, contains("<smm state='on'/>"));
+      }
+      var ip = await ipOf(g);
+      await _guestFacts(client!, ip, 'sbxe', login.key, 'vda', login.password);
+      if (options.secureBoot) {
+        // The firmware's own variable: its last byte is 1 with Secure Boot on.
+        final sb = await _guestRun(
+          client!, ip, 'sbxe', login.key,
+          'od -An -tu1 /sys/firmware/efi/efivars/SecureBoot-8be4df61-93ca-11d2-aa0d-00e098032b8c',
+        );
+        expect(sb.trim().split(RegExp(r'\s+')).last, '1', reason: sb);
+      }
+
+      // A second NIC, on a network of the run's own, while it runs.
+      await virt.manage(VirtNetworkCreate(name: net2, mode: 'isolated', cidr: '10.231.79.1/24'));
+      final n2 = (await virt.networks()).firstWhere((n) => n.name == net2);
+      await virt.changeHardware(g, await virt.hardware(g), VirtHwAddNic(network: n2));
+      final nics = (await virt.detail(g)).nics;
+      expect(nics, hasLength(2));
+      final (mac1, mac2) = (nics[0].mac!, nics[1].mac!);
+
+      // A seed with both NICs, as one written elsewhere would have them: the
+      // app's own script with an extra network the form does not edit.
+      final hw = await virt.hardware(g);
+      final seed = hw.disks.singleWhere((d) => d.cloudInit).source!;
+      final one = await virt.cloudInit(g);
+      expect(one.nics, 1);
+      final json = LibvirtBackend.cloudInitJson(
+        VirtCloudInit(user: 'sbxe', password: login.password, sshKeys: login.publicKey, hostname: g.name),
+        name: g.name,
+        mac: mac1,
+        extraNetworks: [
+          {
+            'mac': mac2,
+            'ipv4': {'address': '10.231.79.10/24', 'gateway': null},
+            'dns': <String>[],
+            'search': <String>[],
+          },
+        ],
+      );
+      final out = (await execSshE2e(
+        client!,
+        'sh -s',
+        Uint8List.fromList(utf8.encode(ffi.virtSeedUpdateScript(
+          seed: seed,
+          revision: one.revision,
+          cloudInitJson: jsonEncode(json),
+        ))),
+      )).stdout;
+      ffi.parseVirtSeedUpdate(raw: out);
+
+      // Read back: two NICs. A save from the form (a new hostname) keeps
+      // the second.
+      final two = await virt.cloudInit(g);
+      expect((two.nics, two.foreign), (2, false));
+      await virt.setCloudInit(
+        g,
+        two,
+        VirtCloudInitEdit(VirtCloudInit(user: 'sbxe', sshKeys: login.publicKey, hostname: '${g.name}-b')),
+      );
+      final saved = await virt.cloudInit(g);
+      expect((saved.nics, saved.hostname, saved.passwordExpires), (2, '${g.name}-b', false));
+
+      Future<void> reboot() async {
+        await _guestRun(client!, ip, 'sbxe', login.key, '(sleep 1; sudo -n reboot) >/dev/null 2>&1 &');
+        await Future<void>.delayed(const Duration(seconds: 10));
+      }
+
+      // The next boot takes both: the second NIC has its static address.
+      await reboot();
+      Map<String, String>? rebooted;
+      final deadline = DateTime.now().add(const Duration(minutes: 5));
+      while (rebooted?['host'] != '${g.name}-b') {
+        ip = await ipOf(g);
+        try {
+          rebooted = await _guestFacts(
+            client!, ip, 'sbxe', login.key, 'vda', login.password,
+            within: const Duration(seconds: 20),
+          );
+        } catch (_) {
+          if (DateTime.now().isAfter(deadline)) rethrow;
+        }
+      }
+      final addrs = await _guestRun(client!, ip, 'sbxe', login.key, 'ip -4 -o addr show');
+      expect(addrs, contains('10.231.79.10/24'), reason: addrs);
+
+      // The password set to expire: read back so, both NICs still there.
+      await virt.setCloudInit(
+        g,
+        saved,
+        VirtCloudInitEdit(
+          VirtCloudInit(user: 'sbxe', sshKeys: login.publicKey, hostname: '${g.name}-b'),
+          passwordExpires: true,
+        ),
+      );
+      final expiring = await virt.cloudInit(g);
+      expect((expiring.passwordExpires, expiring.nics, expiring.passwordSet), (true, 2, true));
+
+      // At the next boot, a login is made to change it first: sshd asks for
+      // it on a terminal (and refuses a command without one).
+      await reboot();
+      String? prompt;
+      final until = DateTime.now().add(const Duration(minutes: 5));
+      while (prompt == null) {
+        if (DateTime.now().isAfter(until)) fail('never asked to change the password');
+        try {
+          ip = await ipOf(g);
+          final guest = SSHClient(
+            await client!.forwardLocal(ip, 22),
+            username: 'sbxe',
+            identities: [login.key],
+            onVerifyHostKey: (_, _) => true,
+          );
+          try {
+            final shell = await guest.shell(pty: const SSHPtyConfig());
+            final text = StringBuffer();
+            final sub = shell.stdout.listen((b) => text.write(utf8.decode(b, allowMalformed: true)));
+            await Future<void>.delayed(const Duration(seconds: 8));
+            await sub.cancel();
+            shell.close();
+            final t = text.toString();
+            if (t.contains('change your password') || t.contains('password has expired')) prompt = t;
+          } finally {
+            guest.close();
+          }
+        } catch (_) {}
+        if (prompt == null) await Future<void>.delayed(const Duration(seconds: 5));
+      }
+      // ignore: avoid_print
+      print('expired: ${prompt.trim().split('\n').where((l) => l.contains('password')).join(' | ')}');
+
+      await remove((await find(virt, g.name))!, pool);
+      await virt.manage(VirtNetworkDelete((await virt.networks()).firstWhere((n) => n.name == net2)));
+    }, timeout: const Timeout(Duration(minutes: 20)));
 
     if (tpm) {
       test('a TPM: swtpm runs it, and the system sees one', () async {
@@ -4131,11 +4681,16 @@ Future<void> _pveCloudInit() async {
           gateway: gw,
           dns: [gw!],
         ),
-        start: true,
+        // Started below, once PVE's first-boot package upgrade is off: it
+        // (`ciupgrade`, on by default) holds cloud-init's final stage on
+        // the network, which is not what this checks.
+        start: false,
       );
       expect(virtCreateIssue(spec, host: VirtHostKind.pve, guests: snap.guests), isNull);
       final created = await pve.create(spec);
       expect(created.startError, isNull);
+      await sh('qm set $vmid --ciupgrade 0');
+      await pve.power(await _pveStartable(pve, vmid!, name), VirtPowerAction.start);
 
       final config = await sh('qm config $vmid');
       expect(config, contains('scsi0: ${storage.name}:vm-$vmid-disk-'));
@@ -4230,13 +4785,19 @@ Future<void> _pveCloudInit() async {
             gateway: gw,
             dns: [gw!],
           ),
-          start: true,
+          // Started below, with PVE's first-boot package upgrade off (see
+          // the test above).
+          start: false,
         ),
       );
       // Kept at the image's size: not cut, not failed, started.
       expect(created.startError, isNull);
+      await sh('qm set $id --ciupgrade 0');
+      await pve.power(await _pveStartable(pve, id, name2), VirtPowerAction.start);
       expect(created.diskKeptBytes, bytes);
-      expect(await sh('qm config $id | grep "^scsi0:"'), contains('size=${bytes >> 20}M'));
+      // PVE prints a whole GiB as `G` and anything else as `M`.
+      final written = RegExp(r'size=(\d+)([MG])').firstMatch(await sh('qm config $id | grep "^scsi0:"'))!;
+      expect(int.parse(written[1]!) << (written[2] == 'G' ? 30 : 20), bytes);
 
       final before = await _guestFacts(client!, ip, 'sbxe', login.key, 'sda', login.password);
       expect(before['host'], name2);
@@ -4326,17 +4887,27 @@ Future<void> _p8Libvirt() async {
     late VirtStoragePool pool;
     VirtGuest? guest;
 
-    Future<VirtGuest?> find() async =>
-        (await virt.load()).guests.where((g) => g.name == name).firstOrNull;
+    // Two more guests of the run's own: one with two disks, one in a pool
+    // outside the directories libvirt's AppArmor helper reads.
+    final twoDisks = '$name-2';
+    final outside = '$name-o';
+    final outsideName = 'sbxe2e-p8o';
+    final outsideDir = '/var/lib/$outsideName';
 
-    Future<VirtGuest> settle(bool Function(VirtGuest g) test) async {
+    Future<VirtGuest?> findNamed(String n) async =>
+        (await virt.load()).guests.where((g) => g.name == n).firstOrNull;
+    Future<VirtGuest?> find() => findNamed(name);
+
+    Future<VirtGuest> settleNamed(String n, bool Function(VirtGuest g) test) async {
       for (var i = 0; i < 60; i++) {
-        final g = await find();
+        final g = await findNamed(n);
         if (g != null && test(g)) return g;
         await Future<void>.delayed(const Duration(milliseconds: 500));
       }
-      fail('$name never settled');
+      fail('$n never settled');
     }
+
+    Future<VirtGuest> settle(bool Function(VirtGuest g) test) => settleNamed(name, test);
 
     Future<String> onHost(String command) async {
       final session = await client!.execute(command);
@@ -4368,23 +4939,28 @@ Future<void> _p8Libvirt() async {
       pool = (await virt.storagePools()).firstWhere((p) => p.name == poolName);
     });
     tearDownAll(() async {
-      try {
-        final g = await find();
-        if (g != null) {
-          if (g.state != VirtGuestState.stopped) {
-            await virt.power(g, VirtPowerAction.forceStop);
+      for (final n in [name, twoDisks, outside]) {
+        try {
+          final g = await findNamed(n);
+          if (g != null) {
+            if (g.state != VirtGuestState.stopped) {
+              await virt.power(g, VirtPowerAction.forceStop);
+            }
+            await virt.delete((await findNamed(n))!, removeDisks: true);
           }
-          await virt.delete((await find())!, removeDisks: true);
-        }
-      } catch (_) {}
-      // The pool the run made, now empty: its volumes went with the guest.
-      try {
-        await onHost(
-          "virsh --connect qemu:///system -q pool-destroy '$poolName'; "
-          "virsh --connect qemu:///system -q pool-undefine '$poolName'; "
-          "rmdir '$poolDir'",
-        );
-      } catch (_) {}
+        } catch (_) {}
+      }
+      // The pools the run made, now empty: their volumes went with the
+      // guests.
+      for (final (p, dir) in [(poolName, poolDir), (outsideName, outsideDir)]) {
+        try {
+          await onHost(
+            "virsh --connect qemu:///system -q pool-destroy '$p'; "
+            "virsh --connect qemu:///system -q pool-undefine '$p'; "
+            "rmdir '$dir'",
+          );
+        } catch (_) {}
+      }
       try {
         await virt.close();
       } catch (_) {}
@@ -4583,6 +5159,158 @@ Future<void> _p8Libvirt() async {
       // Rust tests; here it is only that the read answers.
       expect(chain.disks, isNotEmpty);
     });
+
+    test('two writable disks: both overlaid and reverted; an internal '
+        'snapshot after the external ones, reverted to; nothing left', () async {
+      final spec = VirtCreateSpec(
+        kind: VirtGuestKind.qemu,
+        name: twoDisks,
+        cores: 1,
+        memoryMiB: 256,
+        storage: pool,
+        diskGiB: 1,
+      );
+      await virt.create(spec);
+      var g = await settleNamed(twoDisks, (g) => g.state == VirtGuestState.stopped);
+      await virt.changeHardware(g, await virt.hardware(g), VirtHwAddDisk(storage: pool, gib: 1));
+      await virt.power(g, VirtPowerAction.start);
+      g = await settleNamed(twoDisks, (g) => g.state == VirtGuestState.running);
+      final plain = await virt.snapshotChain(g);
+      expect(plain.disks, hasLength(2));
+      expect(plain.disks.every((d) => !d.isChain), isTrue);
+
+      // One external snapshot overlays every writable disk, in the pool.
+      await virt.createSnapshot(g, name: 'sbxe2e-m1', form: VirtSnapshotForm.external);
+      final m1 = await virt.snapshotChain(g);
+      expect(m1.depth, 2);
+      for (final (i, d) in m1.disks.indexed) {
+        expect(d.isChain, isTrue, reason: d.target);
+        expect(d.files.first.backing, plain.disks[i].files.first.path);
+        expect(d.files.first.path, startsWith('$poolDir/'));
+      }
+      final m1Snap = (await virt.snapshots(g)).singleWhere((s) => s.name == 'sbxe2e-m1');
+      expect(m1Snap.layers, hasLength(2));
+
+      // Reverted to (a leaf): both disks on new overlays over the files the
+      // snapshot kept.
+      await virt.revertSnapshot(g, 'sbxe2e-m1', start: true);
+      g = await settleNamed(twoDisks, (g) => g.state == VirtGuestState.running);
+      final back = await virt.snapshotChain(g);
+      for (final (i, d) in back.disks.indexed) {
+        expect(d.files, hasLength(2), reason: d.target);
+        expect(d.files.first.path, isNot(m1.disks[i].files.first.path));
+        expect(d.files.first.backing, plain.disks[i].files.first.path);
+      }
+
+      // An internal snapshot on the overlays, with the memory; an external
+      // one over it; then back to the internal one — libvirt puts the disks
+      // on the files the internal snapshot is in (verified by hand on
+      // libvirt 11.3: an internal revert after an external one is allowed).
+      await virt.createSnapshot(g, name: 'sbxe2e-i1', form: VirtSnapshotForm.internal);
+      await virt.createSnapshot(g, name: 'sbxe2e-m2', form: VirtSnapshotForm.external);
+      final m2 = await virt.snapshotChain(g);
+      expect(m2.depth, 3);
+      final snaps = await virt.snapshots(g);
+      final i1 = snaps.singleWhere((s) => s.name == 'sbxe2e-i1');
+      expect((i1.external, i1.withMemory), (false, true));
+      await virt.revertSnapshot(g, 'sbxe2e-i1');
+      g = await settleNamed(twoDisks, (g) => g.state == VirtGuestState.running);
+      final onI1 = await virt.snapshotChain(g);
+      for (final (i, d) in onI1.disks.indexed) {
+        expect(d.files.first.path, back.disks[i].files.first.path, reason: d.target);
+      }
+
+      // m2 is now on a branch the guest left: nothing to commit, so no
+      // refusal. libvirt deletes it keeping its overlays, which the app
+      // deletes with it.
+      final m2Files = [for (final d in m2.disks) d.files.first.path];
+      await virt.deleteSnapshot(g, 'sbxe2e-m2');
+      expect((await virt.snapshots(g)).map((s) => s.name), isNot(contains('sbxe2e-m2')));
+      for (final f in m2Files) {
+        expect(await onHost("ls '$f' 2>/dev/null || true"), isEmpty, reason: f);
+      }
+
+      // Another branch left the same way, kept: deleting the guest takes
+      // its overlays below.
+      await virt.createSnapshot(g, name: 'sbxe2e-m3', form: VirtSnapshotForm.external);
+      final m3Files = [for (final d in (await virt.snapshotChain(g)).disks) d.files.first.path];
+      await virt.revertSnapshot(g, 'sbxe2e-i1');
+      g = await settleNamed(twoDisks, (g) => g.state == VirtGuestState.running);
+      for (final f in m3Files) {
+        expect(await onHost("ls '$f'"), contains(f));
+      }
+
+      // Shut off, a delete of the external snapshot on the chain is refused
+      // on an AppArmor host before anything is sent (the commit would be
+      // denied).
+      await virt.power(g, VirtPowerAction.forceStop);
+      g = await settleNamed(twoDisks, (g) => g.state == VirtGuestState.stopped);
+      final confined = (await onHost(
+        'cat /sys/module/apparmor/parameters/enabled 2>/dev/null || true',
+      )).trim() == 'Y';
+      if (confined) {
+        final e = await _virtErr(virt.deleteSnapshot(g, 'sbxe2e-m1'));
+        expect(e.type, VirtErrType.unsupported, reason: e.message);
+        expect(e.message, contains('shut off'));
+        expect((await virt.snapshots(g)).map((s) => s.name), contains('sbxe2e-m1'));
+      }
+
+      // Deleted with its disks: every file of every snapshot goes, the
+      // overlays the internal revert left behind among them.
+      await virt.delete(g, removeDisks: true);
+      expect(await findNamed(twoDisks), isNull);
+      await virt.manage(VirtPoolRefresh(pool));
+      final left = [
+        for (final v in await virt.volumes((await virt.storagePools()).firstWhere((p) => p.name == poolName)))
+          if (v.name.startsWith(twoDisks)) v.path,
+      ];
+      expect(left, isEmpty);
+      expect(await onHost("ls '$poolDir' | grep -c '^$twoDisks' || true"), startsWith('0'));
+    }, timeout: const Timeout(Duration(minutes: 5)));
+
+    test('a pool outside the AppArmor helper\'s directories: the revert '
+        'refused before anything is sent', () async {
+      final confined = (await onHost(
+        'cat /sys/module/apparmor/parameters/enabled 2>/dev/null || true',
+      )).trim() == 'Y';
+      await onHost('mkdir -p $outsideDir');
+      await virt.manage(VirtPoolCreate(name: outsideName, type: 'dir', source: outsideDir));
+      final opool = (await virt.storagePools()).firstWhere((p) => p.name == outsideName);
+      await virt.create(VirtCreateSpec(
+        kind: VirtGuestKind.qemu,
+        name: outside,
+        cores: 1,
+        memoryMiB: 256,
+        storage: opool,
+        diskGiB: 1,
+        start: true,
+      ));
+      var g = await settleNamed(outside, (g) => g.state == VirtGuestState.running);
+      await virt.createSnapshot(g, name: 'sbxe2e-o1', form: VirtSnapshotForm.external);
+      final before = await virt.snapshotChain(g);
+      expect(before.depth, 2);
+      final top = before.disks.single.files.first.path;
+      expect(top, startsWith('$outsideDir/'));
+      if (!confined) {
+        // Nothing to refuse without AppArmor: the revert goes through.
+        await virt.revertSnapshot(g, 'sbxe2e-o1', start: true);
+      } else {
+        final e = await _virtErr(virt.revertSnapshot(g, 'sbxe2e-o1', start: true));
+        expect(e.type, VirtErrType.unsupported, reason: e.message);
+        expect(e.message, contains('AppArmor'));
+        // Nothing sent: still running, on the same overlay.
+        g = (await findNamed(outside))!;
+        expect(g.state, VirtGuestState.running);
+        expect((await virt.snapshotChain(g)).disks.single.files.first.path, top);
+      }
+      await virt.power((await findNamed(outside))!, VirtPowerAction.forceStop);
+      g = await settleNamed(outside, (g) => g.state == VirtGuestState.stopped);
+      await virt.delete(g, removeDisks: true);
+      expect(await findNamed(outside), isNull);
+      expect(await onHost("ls -A '$outsideDir'"), isEmpty);
+      await virt.manage(VirtPoolDelete((await virt.storagePools()).firstWhere((p) => p.name == outsideName)));
+      await onHost("rmdir '$outsideDir'");
+    }, timeout: const Timeout(Duration(minutes: 5)));
 
     test('deleting the guest takes the files its snapshots left', () async {
       final g = await find();

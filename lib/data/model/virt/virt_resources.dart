@@ -506,6 +506,13 @@ bool _isFilePool(VirtStoragePool pool) =>
     _libvirtFilePoolTypes.contains(pool.type) &&
     (pool.path?.startsWith('/') ?? false);
 
+/// Whether a volume of [pool] can be resized on its host. libvirt resizes
+/// only a pool of files (its `logical` backend, among others, has no resize
+/// at all: "storage pool does not support changing of volume capacity",
+/// libvirt 11.3); PVE resizes a disk on any storage.
+bool virtVolumeResizable(VirtStoragePool pool, VirtHostKind host) =>
+    host == VirtHostKind.pve || _libvirtFilePoolTypes.contains(pool.type);
+
 /// Whether an external snapshot's overlay can be written into [pool] by path:
 /// an active libvirt pool of files.
 bool virtPoolHoldsFiles(VirtStoragePool pool) =>

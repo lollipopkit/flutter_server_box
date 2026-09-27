@@ -460,7 +460,10 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
             note: v.format,
             indent: true,
           ),
-        if (disk && caps.volumeResize && v.capacity != null)
+        if (disk &&
+            caps.volumeResize &&
+            v.capacity != null &&
+            virtVolumeResizable(pool, _pve ? VirtHostKind.pve : VirtHostKind.libvirt))
           ..._resizeRows(pool, v, users, locked),
         if (caps.storageEdit || iso) ..._useRows(pool, v, host, users, iso: iso, disk: disk, locked: locked),
         _actions(indent: true, [

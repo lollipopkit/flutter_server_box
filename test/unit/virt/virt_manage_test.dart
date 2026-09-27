@@ -567,7 +567,7 @@ vmbr0 tap100i0
         allOf(containsPair('bridge', 'br0'), containsPair('ipv4', null)),
       );
       const net = VirtNetwork(id: 'lab', name: 'lab', mode: 'nat', active: false);
-      expect(op(const VirtNetworkDelete(net)), {'op': 'net_delete', 'name': 'lab', 'active': false});
+      expect(op(const VirtNetworkDelete(net)), {'op': 'net_delete', 'name': 'lab'});
       expect(
         op(const VirtPoolDelete(_dir, deleteStorage: true)),
         {'op': 'pool_delete', 'name': 'images', 'active': true, 'delete_storage': true},

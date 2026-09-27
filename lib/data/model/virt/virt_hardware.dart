@@ -691,6 +691,13 @@ enum VirtHwIssue {
   volumeInUse,
 }
 
+/// Whether [disk] can be grown from here: not a host block device (an LV of
+/// a libvirt `logical` pool, a disk passed through by its `/dev` path),
+/// which libvirt cannot resize (its `logical` backend has no resize, and
+/// QEMU cannot grow a block device) and PVE's resize does not take.
+bool virtHwDiskGrowable(VirtHwDisk disk) =>
+    !(disk.source?.startsWith('/dev/') ?? false);
+
 /// Whether [device] can be given by its address: the host said where it
 /// sits.
 bool virtUsbHasAddress(VirtHostDevice device) =>
@@ -754,6 +761,9 @@ VirtHwIssue? virtHwIssue(
       }
       if (swapMib != null && swapMib < 0) return VirtHwIssue.swap;
     case VirtHwGrowDisk(:final key, :final bytes):
+      if (hw.disk(key) case final d? when !virtHwDiskGrowable(d)) {
+        return VirtHwIssue.diskSize;
+      }
       final size = hw.disk(key)?.size;
       if (size != null && bytes <= size) return VirtHwIssue.diskShrink;
       if (bytes > 1 << 50) return VirtHwIssue.diskSize;

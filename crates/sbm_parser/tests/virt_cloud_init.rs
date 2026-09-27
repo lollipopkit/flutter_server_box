@@ -72,7 +72,7 @@ fn bin_dir(tag: &str, iso_tool: Option<&str>) -> PathBuf {
     let _ = std::fs::remove_dir_all(&d);
     std::fs::create_dir_all(&d).unwrap();
     for tool in [
-        "mktemp", "rm", "wc", "tr", "cat", "cp", "ls", "dirname", "chmod", "sh", "sed", "cksum", "base64",
+        "mktemp", "rm", "wc", "tr", "cat", "cp", "ls", "dirname", "chmod", "sh", "sed", "cksum", "base64", "head", "od",
     ] {
         let found = ["/usr/bin", "/bin"]
             .iter()
@@ -745,6 +745,32 @@ fn a_seed_is_read_under_sh() {
     assert!(ci::seed_read_script("relative.iso").is_err());
     assert!(ci::seed_read_script("/a/../b.iso").is_err());
     assert!(ci::seed_read_script("/a\nb.iso").is_err());
+}
+
+/// A seed on a block device (an LV, 4 MiB at the least) reads as the ISO at
+/// its start: the rest is not sent, nor counted against the cap.
+#[test]
+fn a_seed_on_a_device_bigger_than_it_is_read() {
+    let d = bin_dir("read_dev", None);
+    let c = captured();
+    let files = vec![
+        ("user-data".to_string(), c.user_data().into_bytes()),
+        ("meta-data".to_string(), c.meta_data().into_bytes()),
+        ("network-config".to_string(), c.network_config().unwrap().into_bytes()),
+    ];
+    let mut iso = iso_of(&files);
+    let len = iso.len();
+    // The primary descriptor's own size, as a real image has it.
+    iso[16 * 2048 + 80..16 * 2048 + 84].copy_from_slice(&((len / 2048) as u32).to_le_bytes());
+    iso[16 * 2048 + 128..16 * 2048 + 130].copy_from_slice(&2048u16.to_le_bytes());
+    iso.resize(4 << 20, 0);
+    std::fs::write(d.join("current.iso"), &iso).unwrap();
+    let raw = run_sh(&ci::seed_read_script("/dev/vg/x-cidata.iso").unwrap(), &d);
+    let read = ci::parse_seed_read(&raw).unwrap();
+    assert_eq!(read.cloud_init, c);
+    // Only the image went out as base64.
+    assert!(raw.len() < len * 2, "{} bytes printed for a {len}-byte image", raw.len());
+    let _ = std::fs::remove_dir_all(&d);
 }
 
 fn read_log_has(d: &Path, args: &[&str]) -> bool {

@@ -448,6 +448,19 @@ pub const KEY_SEED_GROW: &str = "virt.seed.grow";
 /// A failed upload, and the old seed written back.
 pub const KEY_SEED_RESTORE: &str = "virt.seed.restore";
 
+/// Narrows `$size` to the ISO 9660 image at the start of `$d/seed.iso`: its
+/// volume space size (the primary volume descriptor at sector 16, bytes
+/// 80..84, little-endian) times its logical block size (bytes 128..130). A
+/// seed on a block device is the whole device — an LV of a `logical` pool is
+/// 4 MiB at the least, the extent size — and the image is only its start;
+/// the bytes after it are nothing the system reads. Read byte by byte, so
+/// the host's own byte order does not matter. Left as it is where the
+/// header says nothing sensible.
+const ISO_SIZE_SH: &str = "set -- $(od -An -tu1 -j 32848 -N 4 <\"$d/seed.iso\" 2>/dev/null) \
+     $(od -An -tu1 -j 32896 -N 2 <\"$d/seed.iso\" 2>/dev/null)\n\
+     if [ $# = 6 ]; then iso=$(( ($1 + $2 * 256 + $3 * 65536 + $4 * 16777216) * ($5 + $6 * 256) )); \
+     if [ \"$iso\" -gt 0 ] && [ \"$iso\" -le \"$size\" ]; then size=$iso; fi; fi\n";
+
 /// The largest seed read back. The app's are about 370 KiB (the tools pad
 /// an ISO to 150 sectors and more); the cap keeps the base64 (4/3 of it)
 /// under the 1 MiB a monitor agent returns at the least.
@@ -478,8 +491,9 @@ pub fn seed_read_script(seed: &str) -> Result<String, VirtError> {
          echo '{sum}'\nout=$(cksum <\"$d/seed.iso\" 2>&1); r=$?; printf '%s\\n{RC_PREFIX}%s\\n' \"$out\" \"$r\"\n\
          [ \"$r\" = 0 ] || exit 0\n\
          echo '{data}'\nsize=$(wc -c <\"$d/seed.iso\" | tr -d ' ')\n\
-         if [ \"$size\" -gt {SEED_READ_MAX} ]; then printf 'seed too large: %s bytes\\n{RC_PREFIX}1\\n' \"$size\"; exit 0; fi\n\
-         base64 <\"$d/seed.iso\"; printf '\\n{RC_PREFIX}%s\\n' \"$?\"\n",
+         {iso_size}         if [ \"$size\" -gt {SEED_READ_MAX} ]; then printf 'seed too large: %s bytes\\n{RC_PREFIX}1\\n' \"$size\"; exit 0; fi\n\
+         head -c \"$size\" <\"$d/seed.iso\" | base64; printf '\\n{RC_PREFIX}%s\\n' \"$?\"\n",
+        iso_size = ISO_SIZE_SH,
         sum = m(KEY_SEED_SUM),
         data = m(KEY_SEED_DATA),
     ));
@@ -910,9 +924,6 @@ fn yaml(text: &str) -> Y {
     y
 }
 
-/// What [`VirtCloudInit`] writes, read back from the seed's files. Anything
-/// it does not write, or writes otherwise, makes the read `foreign`.
-
 /// One NIC as the seed writes it ([`VirtCiNetwork`]); `None` for an entry
 /// this app does not write (an unknown key, no MAC, several addresses, DHCP
 /// together with one).
@@ -950,6 +961,8 @@ fn nic_of(nic: &Y) -> Option<VirtCiNetwork> {
     })
 }
 
+/// What [`VirtCloudInit`] writes, read back from the seed's files. Anything
+/// it does not write, or writes otherwise, makes the read `foreign`.
 fn parse_seed(files: &[(String, Vec<u8>)]) -> VirtSeedRead {
     let file = |name: &str| {
         files

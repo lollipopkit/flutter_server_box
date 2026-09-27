@@ -205,8 +205,8 @@ pub fn parse_snap_chain(raw: &str) -> Result<VirtSnapChain, VirtError> {
     // The disks the definition has, in its order, so the view lists them the
     // way the Hardware view does. A CD-ROM is not one of them.
     let mut defined: Vec<(String, Option<String>)> = Vec::new();
-    if let Ok(xml) = take(&secs, crate::virt::KEY_XML, raw) {
-        if let Ok(doc) = parse_xml_doc(&xml.body, "domain", "dumpxml") {
+    if let Ok(xml) = take(&secs, crate::virt::KEY_XML, raw)
+        && let Ok(doc) = parse_xml_doc(&xml.body, "domain", "dumpxml") {
             for disk in doc
                 .root_element()
                 .descendants()
@@ -225,7 +225,6 @@ pub fn parse_snap_chain(raw: &str) -> Result<VirtSnapChain, VirtError> {
                 defined.push((target.to_string(), file));
             }
         }
-    }
     // What QEMU answered, by the path each was asked about: the chain, or why
     // it would not open the file.
     let mut answers: Vec<(String, Result<Vec<VirtSnapChainFile>, String>)> = Vec::new();
@@ -616,6 +615,46 @@ pub fn snap_revert_refusal(raw: &str) -> Result<Option<String>, VirtError> {
     }))
 }
 
+/// The files deleting the snapshot [`snap_check_script`] was run for would
+/// leave behind: its external layers' files that are on no disk's current
+/// chain. That is a snapshot on a branch the guest left — a revert to an
+/// internal snapshot taken before it, or to another branch — and libvirt
+/// (11.3, verified) deletes it without them: its metadata goes, and the
+/// overlay the branch was written to stays, which nothing names afterwards.
+/// libvirt refuses such a snapshot while it has children ("deletion of
+/// non-leaf external snapshot that is not in active chain"), so only a
+/// leaf's are named, and no other snapshot has them as a backing file.
+///
+/// Empty where a disk's chain could not be read: a file on it would look
+/// off the chain.
+pub fn snap_delete_leftovers(raw: &str) -> Result<Vec<String>, VirtError> {
+    let secs = sections(raw)?;
+    let snap = take(&secs, KEY_DEL_SNAP, raw)?.ok()?;
+    let doc = parse_xml_doc(snap, "domainsnapshot", "snapshot-dumpxml")?;
+    let root = doc.root_element();
+    let chain = parse_snap_chain(raw)?;
+    if chain.disks_iter().any(|d| d.error.is_some()) {
+        return Ok(Vec::new());
+    }
+    let on_chain: Vec<&str> = chain
+        .disks_iter()
+        .flat_map(|d| d.files.iter())
+        .flat_map(|f| std::iter::once(f.path.as_str()).chain(f.backing.as_deref()))
+        .collect();
+    let mut out: Vec<String> = Vec::new();
+    for f in layers_of(root, "disks")
+        .into_iter()
+        .chain(layers_of(root, "revertDisks"))
+        .filter(|l| l.snapshot.as_deref() == Some("external"))
+        .filter_map(|l| l.file)
+    {
+        if !on_chain.contains(&f.as_str()) && !out.contains(&f) {
+            out.push(f);
+        }
+    }
+    Ok(out)
+}
+
 /// Whether the domain opts out of confinement: a `<seclabel type='none'>`
 /// for AppArmor, or for every driver (no `model`).
 fn chain_domain_unconfined(raw: &str) -> bool {
@@ -885,11 +924,10 @@ fn push(
 
 fn cpu_of(root: roxmltree::Node<'_, '_>) -> Option<String> {
     let cpu = child(root, "cpu")?;
-    if let Some(mode) = cpu.attribute("mode") {
-        if mode != "custom" && mode != "host-passthrough" && mode != "host-model" {
+    if let Some(mode) = cpu.attribute("mode")
+        && mode != "custom" && mode != "host-passthrough" && mode != "host-model" {
             return Some(mode.to_string());
         }
-    }
     child(cpu, "model").map(|m| match m.attribute("fallback") {
         Some(f) => format!("{} ({f})", m.text().unwrap_or("").trim()),
         None => m.text().unwrap_or("").trim().to_string(),
@@ -1026,15 +1064,14 @@ fn describe(dev: roxmltree::Node<'_, '_>, tag: &str) -> String {
     }
     // A pool volume is named by pool and volume rather than by a path, and
     // neither moves under a snapshot.
-    if let Some(src) = child(dev, "source") {
-        if src.attribute("file").is_none() && src.attribute("dev").is_none() {
+    if let Some(src) = child(dev, "source")
+        && src.attribute("file").is_none() && src.attribute("dev").is_none() {
             for attr in ["volume", "pool", "dir", "name"] {
                 if let Some(v) = src.attribute(attr) {
                     parts.push(v.to_string());
                 }
             }
         }
-    }
     if let Some(driver) = child(dev, "driver") {
         let mut d = Vec::new();
         for attr in ["name", "type", "cache"] {

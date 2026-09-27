@@ -65,6 +65,19 @@
 /// the agent's credentials plus that `PveConfig` (the API is reached
 /// through the relay at `https://localhost:8006`).
 ///
+/// The PVE group of what earlier runs left unverified also needs
+/// `SBM_E2E_PVE_HOST` (the node over the system `ssh`, as root: `qm config`,
+/// a disk filled, a cloud image converted, and a root@pam ticket the node
+/// issues, which stands in for root's password — PVE gives only that
+/// account a raw USB device). With `SBM_E2E_PVE_CLOUD_IMAGE`, `_ADDR` and
+/// `_GW` (as in `virt_real_test.dart`) it boots VMs `sbxe2e-l-*` (VMIDs
+/// 970-979) from that image — one on SATA with Secure Boot, one from a
+/// `vmdk` made of it next to it in the `import` directory — and logs in to
+/// them through the agent's relay; with `SBM_E2E_PVE_USB` it adds that
+/// device to a **stopped** VM by vendor/product and by address and takes it
+/// off again, never starting it. A backup job `sbxe2e-l-*` is made, run and
+/// deleted with its backup. Everything it makes is removed.
+///
 /// Every agent is expected to serve TLS with a certificate this device does
 /// not trust (`[server.tls]` with a self-signed pair), so the credential sets
 /// `ignoreCert`. Plain HTTP would need both opt-ins (`allowInsecure` here,
@@ -81,12 +94,15 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' as riverpod show Provider;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pointycastle/export.dart' show DESedeEngine, KeyParameter;
 import 'package:server_box/core/utils/monitor_terminal.dart';
 import 'package:server_box/core/utils/privileged_exec.dart';
+import 'package:server_box/core/utils/server_tcp.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
@@ -102,6 +118,7 @@ import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/remote_desktop.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/virt/libvirt_backend.dart';
+import 'package:server_box/data/provider/virt/pve_backend.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/terminal_session.dart';
@@ -165,6 +182,7 @@ Future<void> main() async {
   if (pve != null) _p10PveNetwork(pve);
   if (pve != null) _pveHardware(pve);
   if (pve != null) _pveHardwareDevices(pve);
+  if (pve != null) _pveUnverified(pve);
   if (libvirt != null) {
     _libvirt(libvirt);
   } else {
@@ -1151,8 +1169,21 @@ void _p10LibvirtNetwork(_Agent agent) {
       expect(net.pendingRestart, isFalse);
       expect(net.mode, 'route');
 
-      // A change made from a read the host has moved past: refused, and
-      // nothing written.
+      // A change made from a read the host has moved past: one edit made
+      // from `net` (a static host, live), then another from the same read —
+      // refused, and nothing written.
+      await w.host.manage(
+        VirtNetworkEdit(
+          net,
+          mode: 'route',
+          address: '192.168.250.1',
+          prefix: 24,
+          hosts: const [
+            VirtNetHost(mac: '52:54:00:aa:bb:e2', ip: '192.168.250.151'),
+            VirtNetHost(mac: '52:54:00:aa:bb:e1', ip: '192.168.250.150', name: 'sbxe2e-h1'),
+          ],
+        ),
+      );
       final stale = await _virtErr(
         w.host.manage(
           VirtNetworkEdit(
@@ -1215,6 +1246,7 @@ void _p10LibvirtNetwork(_Agent agent) {
             prefix: 24,
             dhcpStart: '192.168.31.100',
             dhcpEnd: '192.168.31.200',
+            restart: true,
           ),
         ),
       );
@@ -1535,7 +1567,8 @@ void _libvirtCloudInit(_Agent agent) {
         cores: 1,
         memoryMiB: 512,
         storage: pool,
-        diskGiB: 2,
+        // The image's own size or more: the form refuses to cut one.
+        diskGiB: max(2, ((image!.capacity ?? 0) + (1 << 30) - 1) >> 30),
         image: image,
         network: net,
         uefi: false,
@@ -3351,7 +3384,7 @@ void _pveTestVm(_Agent agent) {
       }
       expect(g.actions, {VirtPowerAction.start});
       // A start straight after a stop meets `qmeventd`'s cleanup holding
-      // the config lock for 30 s (virt.md).
+      // the config lock for 30 s (docs/dev/virt.md).
       await Future<void>.delayed(const Duration(seconds: 5));
       await w.host.power(g.id, VirtPowerAction.start);
       g = await settle((g) => g.state == VirtGuestState.running);
@@ -3459,7 +3492,7 @@ void _pveTestVm(_Agent agent) {
     });
 
     test('shutdown (ACPI), start, force stop', () async {
-      // Past the boot: an ACPI request during it is lost (virt.md).
+      // Past the boot: an ACPI request during it is lost (docs/dev/virt.md).
       for (var i = 0; i < 60 && (vm().uptime?.inSeconds ?? 0) < 30; i++) {
         await Future<void>.delayed(const Duration(seconds: 1));
         await w.host.refresh();
@@ -3880,8 +3913,19 @@ void _p8Pve(_Agent agent) {
     tearDownAll(() async {
       await w.host.refresh();
       for (final id in made) {
-        final g = w.state.guest(id);
-        if (g == null) continue;
+        // The listing names a guest a moment after its task: asked again
+        // before it is given up on, or its disk outlives the storage.
+        var g = w.state.guest(id);
+        for (var i = 0; g == null && i < 10; i++) {
+          await Future<void>.delayed(const Duration(seconds: 1));
+          await w.host.refresh();
+          g = w.state.guest(id);
+        }
+        if (g == null) {
+          // ignore: avoid_print
+          print('$id was never listed again; left on the node');
+          continue;
+        }
         try {
           for (final s in await w.host.snapshots(id)) {
             await w.host.deleteSnapshot(id, s.name);
@@ -3893,15 +3937,31 @@ void _p8Pve(_Agent agent) {
             await w.host.refresh();
           }
           await w.host.delete(id);
-        } catch (_) {}
+        } catch (e) {
+          // ignore: avoid_print
+          print('$id not deleted: $e');
+        }
       }
-      for (final (store, _) in madeDir) {
+      for (final (store, path) in madeDir) {
         try {
           final p = (await w.host.storagePools()).firstWhere(
             (x) => x.name == store,
           );
           await w.host.manage(VirtPoolDelete(p, deleteStorage: true));
-        } catch (_) {}
+          // PVE removes the configuration only. The directory it made is
+          // root's and the agent's account is not (no sudo on a PVE node):
+          // said, so it is removed by hand. The next run reuses the path.
+          if (path.startsWith('/var/lib/sbxe2e-')) {
+            final r = await (await w.server.ensureExec()).run("rm -rf -- '$path'");
+            if (!r.succeeded) {
+              // ignore: avoid_print
+              print('$path is left on the node (root owns it): ${r.stderr.trim()}');
+            }
+          }
+        } catch (e) {
+          // ignore: avoid_print
+          print('storage $store not removed: $e');
+        }
       }
       await w.dispose();
     });
@@ -4043,5 +4103,671 @@ void _p8Pve(_Agent agent) {
         reason: 'no task was started',
       );
     });
+  });
+}
+
+// -----------------------------------------------------------------------------
+// PVE: what earlier runs left unverified
+// -----------------------------------------------------------------------------
+
+/// Runs [command] on the PVE node [host] as the system `ssh` logs in there
+/// (root): what the app has no call for — the node's own view of a VM's
+/// configuration, a disk filled, a cloud image converted — and never what
+/// is under test.
+Future<String> _pveNode(String host, String command) async {
+  final r = await Process.run('ssh', ['-o', 'BatchMode=yes', host, command]);
+  expect(r.exitCode, 0, reason: '$command\n${r.stdout}${r.stderr}');
+  return r.stdout as String;
+}
+
+/// A dart:io socket as dartssh2's transport: a guest's sshd reached through
+/// the agent's relay.
+class _RelaySocket implements SSHSocket {
+  _RelaySocket(this._socket);
+
+  final Socket _socket;
+
+  @override
+  Stream<Uint8List> get stream => _socket;
+
+  @override
+  StreamSink<List<int>> get sink => _socket;
+
+  @override
+  Future<void> get done => _socket.done;
+
+  @override
+  Future<void> close() => _socket.close();
+
+  @override
+  void destroy() => _socket.destroy();
+
+  @override
+  Future<void> flush() => _socket.flush();
+}
+
+/// A key pair and a password for a guest's cloud-init, made for this run.
+/// The password is never printed.
+Future<({SSHKeyPair key, String publicKey, String password})> _ciLogin() async {
+  final dir = await Directory.systemTemp.createTemp('sbxe2e-key');
+  addTearDown(() => dir.delete(recursive: true));
+  final path = '${dir.path}/id';
+  final r = await Process.run('ssh-keygen', ['-q', '-t', 'ed25519', '-N', '', '-C', 'sbxe2e', '-f', path]);
+  expect(r.exitCode, 0, reason: '${r.stderr}');
+  final rnd = Random.secure();
+  return (
+    key: SSHKeyPair.fromPem(await File(path).readAsString()).single,
+    publicKey: (await File('$path.pub').readAsString()).trim(),
+    password: base64Url.encode([for (var i = 0; i < 18; i++) rnd.nextInt(256)]),
+  );
+}
+
+/// [command] run in the guest [ip] as `sbxe` with [key], through [dialer]
+/// (the agent's relay), tried again until the guest lets it in and it
+/// prints [until] — a first boot restarts sshd with new host keys, which
+/// cuts a session short — or [within] is up.
+Future<String> _relayGuestRun(
+  ServerTcpDialer dialer,
+  String ip,
+  SSHKeyPair key,
+  String command, {
+  String until = '',
+  Duration within = const Duration(minutes: 5),
+  Duration each = const Duration(seconds: 60),
+}) async {
+  final deadline = DateTime.now().add(within);
+  while (true) {
+    Object? error;
+    try {
+      final guest = SSHClient(
+        _RelaySocket(await dialer.connect(ip, 22)),
+        username: 'sbxe',
+        identities: [key],
+        onVerifyHostKey: (_, _) => true,
+      );
+      try {
+        final out = (await execSshE2e(guest, command, null, within: each)).stdout;
+        if (out.contains(until)) return out;
+        error = 'no "$until" in: $out';
+      } finally {
+        guest.close();
+      }
+    } catch (e) {
+      error = e;
+    }
+    if (DateTime.now().isAfter(deadline)) fail('$ip: $error');
+    await Future<void>.delayed(const Duration(seconds: 5));
+  }
+}
+
+/// The relay dialer for a server, as remote desktop and PVE get it.
+final _dialerProvider = riverpod.Provider.family<ServerTcpDialer, Spi>(
+  (ref, spi) => ServerTcpDialer.of(ref, spi),
+);
+
+/// Runs [op] again while PVE refuses it on the guest's config lock (`can't
+/// lock file ... got timeout`), for up to a minute: a stop leaves
+/// `qmeventd`'s cleanup of the old QEMU process holding it for as long as
+/// 30 s (PVE 9.2, see docs/dev/virt.md).
+Future<T> _pveWhileLocked<T>(Future<T> Function() op) async {
+  final deadline = DateTime.now().add(const Duration(minutes: 1));
+  while (true) {
+    try {
+      return await op();
+    } on VirtErr catch (e) {
+      if (!(e.message ?? '').contains("can't lock file") || DateTime.now().isAfter(deadline)) rethrow;
+      await Future<void>.delayed(const Duration(seconds: 3));
+    }
+  }
+}
+
+/// [bytes] written to [path] in the guest [ip] over SFTP, through [dialer],
+/// tried again while the guest's sshd is still being restarted.
+Future<void> _relayGuestPut(
+  ServerTcpDialer dialer,
+  String ip,
+  SSHKeyPair key,
+  String path,
+  Uint8List bytes,
+) async {
+  final deadline = DateTime.now().add(const Duration(minutes: 2));
+  while (true) {
+    SSHClient? guest;
+    try {
+      guest = SSHClient(
+        _RelaySocket(await dialer.connect(ip, 22)),
+        username: 'sbxe',
+        identities: [key],
+        onVerifyHostKey: (_, _) => true,
+      );
+      final sftp = await guest.sftp();
+      final file = await sftp.open(
+        path,
+        mode: SftpFileOpenMode.create | SftpFileOpenMode.write | SftpFileOpenMode.truncate,
+      );
+      await file.writeBytes(bytes);
+      await file.close();
+      await sftp.close();
+      return;
+    } catch (e) {
+      if (DateTime.now().isAfter(deadline)) rethrow;
+      // ignore: avoid_print
+      print('SFTP to $ip: $e; again');
+      await Future<void>.delayed(const Duration(seconds: 5));
+    } finally {
+      guest?.close();
+    }
+  }
+}
+
+void _pveUnverified(_Agent agent) {
+  final tokenId = e2eEnv('SBM_E2E_PVE_TOKEN_ID');
+  final tokenSecret = e2eEnv('SBM_E2E_PVE_TOKEN_SECRET');
+  final nodeHost = e2eEnv('SBM_E2E_PVE_HOST');
+  if (tokenId == null || tokenSecret == null || nodeHost == null) return;
+  final imageId = e2eEnv('SBM_E2E_PVE_CLOUD_IMAGE');
+  final addr = e2eEnv('SBM_E2E_PVE_CLOUD_ADDR');
+  final gw = e2eEnv('SBM_E2E_PVE_CLOUD_GW');
+  final usbId = e2eEnv('SBM_E2E_PVE_USB');
+
+  group('PVE over the monitor agent relay: Secure Boot, SATA/IDE cloud-init, '
+      'vmdk, USB by address, a template refused, a backup job\'s lock', () {
+    late _World w;
+    late ServerTcpDialer dialer;
+    late String node;
+    late VirtStoragePool storage;
+    late VirtNetwork bridge;
+    final run = DateTime.now().millisecondsSinceEpoch % 100000;
+    // Every VM this group made, by VMID and name; removed at the end only
+    // while it still has that name.
+    final made = <(int, String)>[];
+    final vmdk = '/var/lib/vz/import/sbxe2e-$run.vmdk';
+
+    Future<String> sh(String command) => _pveNode(nodeHost, command);
+
+    /// A free VMID of the 97x range, as PVE and the node both say.
+    Future<int> freeVmid() async {
+      await w.host.refresh();
+      for (var id = 970; id < 980; id++) {
+        if (w.state.data!.guests.any((g) => g.vmid == id)) continue;
+        if ((await sh('qm status $id 2>/dev/null; pct status $id 2>/dev/null; true')).isEmpty) return id;
+      }
+      fail('no free VMID in 970-979');
+    }
+
+    Future<VirtGuest> guestOf(int vmid, bool Function(VirtGuest g) test) =>
+        w.settle((g) => g.vmid == vmid, 'VM $vmid', test);
+
+    /// Stopped by force where it runs, then deleted through the app.
+    Future<void> remove(int vmid) async {
+      var g = await guestOf(vmid, (g) => g.actions.isNotEmpty || g.template);
+      if (g.state != VirtGuestState.stopped) {
+        await w.host.power(g.id, VirtPowerAction.forceStop);
+        g = await guestOf(vmid, (g) => g.state == VirtGuestState.stopped);
+      }
+      await _pveWhileLocked(() => w.host.delete(g.id));
+      expect(w.state.guest(g.id), isNull);
+      made.removeWhere((m) => m.$1 == vmid);
+    }
+
+    Future<VirtVolume> imageVolume(String id) async {
+      final pools = await w.host.storagePools();
+      for (final p in virtImageStorages(pools, host: VirtHostKind.pve, node: node)) {
+        final v = (await w.host.volumes(p)).where((v) => v.id == id).firstOrNull;
+        if (v != null) return v;
+      }
+      fail('no $id with import content');
+    }
+
+    setUpAll(() async {
+      w = _World(agent.spi('e2e-monitor-pve-unverified'));
+      Stores.pve.put(
+        w.id,
+        PveConfig(
+          addr: 'https://localhost:8006',
+          auth: PveAuth.token,
+          tokenId: tokenId,
+          tokenSecret: tokenSecret,
+        ),
+      );
+      await w.poll();
+      await w.host.firstLoad;
+      final cert = w.state.error?.cert;
+      if (cert != null) await w.host.confirmCert(cert.fingerprint);
+      expect(w.state.error, isNull, reason: '${w.state.error}');
+      node = w.state.data!.host.nodes.firstWhere((n) => n.online).name;
+      final disks = virtDiskStorages(
+        await w.host.storagePools(),
+        host: VirtHostKind.pve,
+        kind: VirtGuestKind.qemu,
+        node: node,
+      );
+      storage = disks.firstWhere((p) => p.name == 'local-lvm', orElse: () => disks.first);
+      bridge = virtCreateNetworks(await w.host.networks(), host: VirtHostKind.pve, node: node)
+          .firstWhere((n) => n.name == 'vmbr0');
+      dialer = w.container.read(_dialerProvider(w.spi));
+    });
+    tearDownAll(() async {
+      for (final (id, name) in [...made]) {
+        try {
+          if ((await sh('qm config $id 2>/dev/null | grep "^name: " || true')).contains(name)) {
+            await sh('qm stop $id 2>/dev/null; qm destroy $id --purge 2>/dev/null; true');
+          }
+        } catch (e) {
+          // ignore: avoid_print
+          print('teardown of VM $id: $e');
+        }
+      }
+      try {
+        await sh("rm -rf '$vmdk' /tmp/sbxe2e-qga.*; pvesh get /cluster/backup --output-format json | "
+            "grep -o '\"id\":\"sbxe2e-l-[^\"]*\"' | cut -d'\"' -f4 | "
+            'while read j; do pvesh delete /cluster/backup/\$j; done; true');
+      } catch (e) {
+        // ignore: avoid_print
+        print('teardown: $e');
+      }
+      dialer.close();
+      await w.dispose();
+    });
+
+    test('Secure Boot on SATA with cloud-init: the keys enrolled and the '
+        'firmware enforcing, the cloud-init edit taken at a reboot, and a '
+        'shutdown through the guest agent', () async {
+      if (imageId == null || addr == null || gw == null) {
+        markTestSkipped('SBM_E2E_PVE_CLOUD_IMAGE / _ADDR / _GW unset');
+        return;
+      }
+      final ip = addr.split('/').first;
+      expect(await sh('ping -c 2 -W 1 $ip >/dev/null 2>&1 && echo answered || true'), isEmpty, reason: '$ip is in use');
+      final options = await w.host.createOptions();
+      expect((options.uefi, options.secureBoot), (true, true));
+      expect(options.buses, contains('sata'));
+      final vmid = await freeVmid();
+      final name = 'sbxe2e-l-sb-$run';
+      made.add((vmid, name));
+      final login = await _ciLogin();
+      final spec = VirtCreateSpec(
+        kind: VirtGuestKind.qemu,
+        name: name,
+        node: node,
+        vmid: vmid,
+        cores: 1,
+        memoryMiB: 1024,
+        storage: storage,
+        diskGiB: 4,
+        image: await imageVolume(imageId),
+        network: bridge,
+        bus: 'sata',
+        uefi: true,
+        secureBoot: true,
+        cloudInit: VirtCloudInit(
+          user: 'sbxe',
+          password: login.password,
+          sshKeys: login.publicKey,
+          address: addr,
+          gateway: gw,
+          dns: [gw],
+        ),
+        // Started below, with PVE's first-boot package upgrade off: the
+        // hosts' network is slow, and that is not what this checks.
+        start: false,
+      );
+      expect(virtCreateIssue(spec, host: VirtHostKind.pve, guests: w.state.data!.guests), isNull);
+      await w.host.create(spec);
+      final config = await sh('qm config $vmid');
+      expect(config, contains('sata0: ${storage.name}:vm-$vmid-disk-'));
+      // The cloud-init drive on the disk's own bus: Debian's cloud kernel
+      // reads SATA, and has no IDE driver.
+      expect(config, contains('sata1: ${storage.name}:vm-$vmid-cloudinit'));
+      expect(RegExp(r'^efidisk0: .*pre-enrolled-keys=1', multiLine: true).hasMatch(config), isTrue, reason: config);
+      expect(config, contains('bios: ovmf'));
+      await sh('qm set $vmid --ciupgrade 0');
+      var g = await guestOf(vmid, (g) => g.name == name && g.actions.contains(VirtPowerAction.start));
+      final hw = await w.host.hardware(g.id);
+      expect((hw.firmware!.uefi, hw.firmware!.secureBoot), (true, true));
+      expect(hw.disk('sata1')!.cloudInit, isTrue);
+      await w.host.power(g.id, VirtPowerAction.start);
+
+      // The firmware says Secure Boot is on (the variable's last byte), and
+      // the kernel that booted was the signed one it let through.
+      const sbVar = '/sys/firmware/efi/efivars/SecureBoot-8be4df61-93ca-11d2-aa0d-00e098032b8c';
+      final first = await _relayGuestRun(
+        dialer,
+        ip,
+        login.key,
+        'cloud-init status --wait >/dev/null 2>&1; echo "host=\$(hostname)"; '
+        'echo "sb=\$(od -An -t u1 $sbVar | awk \'{print \$NF}\')"; '
+        'echo "iid=\$(cat /var/lib/cloud/data/instance-id)"; '
+        'echo "sda=\$((\$(cat /sys/block/sda/size) * 512))"',
+        until: 'iid=',
+      );
+      expect(first, contains('host=$name'));
+      expect(first, contains('sb=1'), reason: first);
+      expect(first, contains('sda=${4 << 30}'));
+      final iid = RegExp(r'iid=(\S+)').firstMatch(first)![1];
+
+      // The cloud-init edit on the SATA drive: a new key and a second DNS
+      // server, written at once and taken by the next boot.
+      g = w.state.guest(g.id)!;
+      final ci = await w.host.cloudInit(g.id);
+      expect((ci.user, ci.address, ci.network), ('sbxe', addr, true));
+      final next = await _ciLogin();
+      final edit = VirtCloudInitEdit(
+        VirtCloudInit(user: 'sbxe', sshKeys: next.publicKey, address: addr, gateway: gw, dns: [gw, '1.1.1.1']),
+      );
+      expect(virtCloudInitEditIssue(ci, edit, host: VirtHostKind.pve), isNull);
+      await w.host.setCloudInit(g.id, ci, edit);
+      expect((await w.host.cloudInit(g.id)).dns, [gw, '1.1.1.1']);
+      await _relayGuestRun(dialer, ip, login.key, '(sleep 1; sudo -n reboot) >/dev/null 2>&1 & echo ok', until: 'ok');
+      await Future<void>.delayed(const Duration(seconds: 10));
+      final rebooted = await _relayGuestRun(
+        dialer,
+        ip,
+        next.key,
+        'cloud-init status --wait >/dev/null 2>&1; echo "iid=\$(cat /var/lib/cloud/data/instance-id)"; '
+        'cat /etc/resolv.conf; resolvectl dns 2>/dev/null; true',
+        until: 'iid=',
+      );
+      expect(rebooted, isNot(contains('iid=$iid\n')));
+      expect(rebooted, contains('1.1.1.1'));
+
+      // The guest agent, from packages the node fetches (its mirror answers
+      // in seconds; a guest's first apt run here takes many minutes), copied
+      // in over SFTP and installed.
+      final debs = (await sh(
+        'd=\$(mktemp -d /tmp/sbxe2e-qga.XXXX) && cd \$d && '
+        'apt-get -qq download qemu-guest-agent libnuma1 liburing2 libglib2.0-0t64 >/dev/null 2>&1; echo \$d',
+      )).trim();
+      for (final deb in const LineSplitter().convert(await sh('ls $debs'))) {
+        final r = await Process.run('ssh', ['-o', 'BatchMode=yes', nodeHost, "cat '$debs/$deb'"], stdoutEncoding: null);
+        expect(r.exitCode, 0, reason: deb);
+        await _relayGuestPut(dialer, ip, next.key, '/tmp/$deb', Uint8List.fromList(r.stdout as List<int>));
+      }
+      await sh("rm -rf '$debs'");
+      final installed = await _relayGuestRun(
+        dialer,
+        ip,
+        next.key,
+        'sudo -n dpkg -i /tmp/*.deb >/tmp/qga.log 2>&1; '
+        'dpkg-query -W -f=\'\${Status}\' qemu-guest-agent 2>/dev/null; echo; tail -n 5 /tmp/qga.log; echo done',
+        until: 'done',
+      );
+      expect(installed, contains('install ok installed'), reason: installed);
+      g = await guestOf(vmid, (g) => g.state == VirtGuestState.running);
+      await w.host.power(g.id, VirtPowerAction.shutdown);
+      g = await guestOf(vmid, (g) => g.state == VirtGuestState.stopped);
+      // `qm set` waits 10 s for the lock a stop's cleanup may hold longer.
+      await sh('for i in 1 2 3 4 5 6; do qm set $vmid --agent 1 && exit 0; sleep 5; done; exit 1');
+      await _pveWhileLocked(() => w.host.power(g.id, VirtPowerAction.start));
+      final deadline = DateTime.now().add(const Duration(minutes: 3));
+      while ((await sh('qm agent $vmid ping >/dev/null 2>&1 && echo up || true')).trim() != 'up') {
+        if (DateTime.now().isAfter(deadline)) fail('the guest agent never answered');
+        await Future<void>.delayed(const Duration(seconds: 3));
+      }
+      g = await guestOf(vmid, (g) => g.state == VirtGuestState.running);
+      await w.host.power(g.id, VirtPowerAction.shutdown);
+      g = await guestOf(vmid, (g) => g.state == VirtGuestState.stopped);
+      // Who carried it out, as the guest recorded it: the agent logs the
+      // call it was given (an ACPI shutdown would leave no such line).
+      await _pveWhileLocked(() => w.host.power(g.id, VirtPowerAction.start));
+      final log = await _relayGuestRun(
+        dialer,
+        ip,
+        next.key,
+        'sudo -n journalctl -b -1 -o cat -u qemu-guest-agent 2>&1; echo done',
+        until: 'done',
+      );
+      expect(log, contains('guest-shutdown called'), reason: log);
+      g = await guestOf(vmid, (g) => g.state == VirtGuestState.running);
+      await remove(vmid);
+      expect(await sh('pvesm list ${storage.name} | grep -c "vm-$vmid-" || true'), contains('0'));
+    }, timeout: const Timeout(Duration(minutes: 30)));
+
+    test('a vmdk cloud image: offered, imported, booted', () async {
+      if (imageId == null || addr == null || gw == null) {
+        markTestSkipped('SBM_E2E_PVE_CLOUD_IMAGE / _ADDR / _GW unset');
+        return;
+      }
+      final ip = addr.split('/').first;
+      final qcow2 = (await sh("pvesm path '$imageId'")).trim();
+      await sh("qemu-img convert -O vmdk '$qcow2' '$vmdk'");
+      final image = await imageVolume('local:import/${vmdk.split('/').last}');
+      expect(image.format, 'vmdk');
+      expect(virtIsCloudImage(image, VirtHostKind.pve), isTrue);
+      final vmid = await freeVmid();
+      final name = 'sbxe2e-l-vmdk-$run';
+      made.add((vmid, name));
+      final login = await _ciLogin();
+      await w.host.create(
+        VirtCreateSpec(
+          kind: VirtGuestKind.qemu,
+          name: name,
+          node: node,
+          vmid: vmid,
+          cores: 1,
+          memoryMiB: 1024,
+          storage: storage,
+          diskGiB: 4,
+          image: image,
+          network: bridge,
+          cloudInit: VirtCloudInit(
+            user: 'sbxe',
+            sshKeys: login.publicKey,
+            address: addr,
+            gateway: gw,
+            dns: [gw],
+          ),
+        ),
+      );
+      expect(await sh('qm config $vmid'), contains('scsi0: ${storage.name}:vm-$vmid-disk-'));
+      await sh('qm set $vmid --ciupgrade 0');
+      final g = await guestOf(vmid, (g) => g.name == name && g.actions.contains(VirtPowerAction.start));
+      await w.host.power(g.id, VirtPowerAction.start);
+      final out = await _relayGuestRun(
+        dialer,
+        ip,
+        login.key,
+        'cloud-init status --wait >/dev/null 2>&1; echo "host=\$(hostname)"; '
+        'echo "sda=\$((\$(cat /sys/block/sda/size) * 512))"',
+        until: 'sda=',
+      );
+      expect(out, contains('host=$name'));
+      expect(out, contains('sda=${4 << 30}'));
+      await remove(vmid);
+      await sh("rm -f '$vmdk'");
+    }, timeout: const Timeout(Duration(minutes: 15)));
+
+    test('IDE: the disk and the cloud-init drive on it, and the cloud-init edit', () async {
+      final vmid = await freeVmid();
+      final name = 'sbxe2e-l-ide-$run';
+      made.add((vmid, name));
+      final login = await _ciLogin();
+      await w.host.create(
+        VirtCreateSpec(
+          kind: VirtGuestKind.qemu,
+          name: name,
+          node: node,
+          vmid: vmid,
+          cores: 1,
+          memoryMiB: 256,
+          storage: storage,
+          diskGiB: 1,
+          image: imageId == null ? null : await imageVolume(imageId),
+          network: bridge,
+          bus: 'ide',
+          cloudInit: VirtCloudInit(user: 'sbxe', sshKeys: login.publicKey),
+        ),
+      );
+      final config = await sh('qm config $vmid');
+      expect(config, contains('ide0: ${storage.name}:vm-$vmid-disk-'));
+      expect(config, contains('ide2: ${storage.name}:vm-$vmid-cloudinit'));
+      final g = await guestOf(vmid, (g) => g.name == name);
+      expect((await w.host.hardware(g.id)).disk('ide2')!.cloudInit, isTrue);
+      final ci = await w.host.cloudInit(g.id);
+      expect((ci.user, ci.address, ci.network), ('sbxe', null, true));
+      final edit = VirtCloudInitEdit(
+        VirtCloudInit(user: 'sbxe2', sshKeys: login.publicKey, address: '10.231.79.5/24', gateway: '10.231.79.1'),
+      );
+      expect(virtCloudInitEditIssue(ci, edit, host: VirtHostKind.pve), isNull);
+      await w.host.setCloudInit(g.id, ci, edit);
+      final after = await w.host.cloudInit(g.id);
+      expect((after.user, after.address, after.gateway), ('sbxe2', '10.231.79.5/24', '10.231.79.1'));
+      // The drive itself carries it, not only the configuration.
+      final drive = await sh('qm cloudinit dump $vmid user; qm cloudinit dump $vmid network');
+      expect(drive, contains('sbxe2'));
+      expect(drive, contains('10.231.79.5'));
+    });
+
+    test('USB by vendor/product and by address on a stopped VM, as root@pam; '
+        'never started with it', () async {
+      if (usbId == null) {
+        markTestSkipped('SBM_E2E_PVE_USB unset');
+        return;
+      }
+      final vmid = made.lastWhere((m) => m.$2.startsWith('sbxe2e-l-ide-'), orElse: () => fail('no IDE VM')).$1;
+      // PVE lets only root@pam logged in with a password give a guest a raw
+      // USB device. A ticket the node itself issues for root@pam is what
+      // stands in for the password: PVE takes a valid ticket as the
+      // password of a login (its own web UI renews tickets that way). Read
+      // here, never printed.
+      final ticket = (await sh(r"perl -MPVE::AccessControl -e 'print PVE::AccessControl::assemble_ticket(q(root@pam))'")).trim();
+      final root = PveBackend(
+        serverId: 'e2e-pve-root',
+        config: const PveConfig(addr: 'https://localhost:8006'),
+        user: 'root@pam',
+        // What a server logged in to with a password lends PVE.
+        sshPassword: ticket,
+        connect: dialer.startConnect,
+        taskPoll: const Duration(milliseconds: 500),
+      );
+      addTearDown(root.close);
+      final e = await _virtErr(root.load());
+      expect(e.type, VirtErrType.certUnconfirmed);
+      await root.confirmCert(e.cert!.fingerprint);
+      Future<VirtGuest> guest() async => (await root.load()).guests.firstWhere((g) => g.vmid == vmid);
+      var g = await guest();
+      expect(g.state, VirtGuestState.stopped);
+
+      final devs = await root.hostDevices(g);
+      expect(devs.mappingsOnly, isFalse);
+      final dev = devs.usb.firstWhere((d) => d.id == usbId, orElse: () => fail('$usbId not listed: ${devs.usb.map((d) => d.id)}'));
+      final sysfs = (await sh(
+        'for d in /sys/bus/usb/devices/*; do [ "\$(cat \$d/idVendor 2>/dev/null):\$(cat \$d/idProduct 2>/dev/null)" = $usbId ] && basename \$d; done; true',
+      )).trim();
+      // `1-13`: the bus, then the port chain.
+      expect('${dev.usbBus}-${dev.usbPort}', sysfs);
+
+      var hw = await root.hardware(g);
+      await root.changeHardware(g, hw, VirtHwAddDevice(kind: VirtHwDeviceKind.usb, host: dev));
+      g = await guest();
+      hw = await root.hardware(g);
+      await root.changeHardware(
+        g,
+        hw,
+        VirtHwAddDevice(kind: VirtHwDeviceKind.usb, host: dev, usbNaming: VirtUsbNaming.address),
+      );
+      final usb = await sh("qm config $vmid | grep -E '^usb[0-9]+:'");
+      expect(usb, contains('usb0: host=$usbId'));
+      expect(usb, contains('usb1: host=$sysfs'));
+      hw = await root.hardware(await guest());
+      expect(hw.devices.where((d) => d.kind == VirtHwDeviceKind.usb).map((d) => d.key), ['usb0', 'usb1']);
+      for (final key in ['usb0', 'usb1']) {
+        g = await guest();
+        await root.changeHardware(g, await root.hardware(g), VirtHwRemoveDevice(key: key));
+      }
+      expect(await sh("qm config $vmid | grep -cE '^usb[0-9]+:' || true"), contains('0'));
+      expect((await guest()).state, VirtGuestState.stopped);
+    });
+
+    test('a VM with a snapshot made a template: PVE\'s own refusal, in its words', () async {
+      final vmid = made.lastWhere((m) => m.$2.startsWith('sbxe2e-l-ide-'), orElse: () => fail('no IDE VM')).$1;
+      var g = await guestOf(vmid, (g) => g.state == VirtGuestState.stopped);
+      await w.host.createSnapshot(g.id, name: 'sbxe2e_t');
+      // A second app instance, which has never read the snapshot listing:
+      // nothing of its own stops the request, and PVE answers it.
+      final other = _World(agent.spi('e2e-monitor-pve-unverified-2'));
+      addTearDown(other.dispose);
+      Stores.pve.put(other.id, Stores.pve.fetch(w.id)!);
+      await other.host.firstLoad;
+      expect(other.state.error, isNull, reason: '${other.state.error}');
+      g = other.guest((x) => x.vmid == vmid, 'VM $vmid');
+      final e = await _virtErr(other.host.makeTemplate(g.id));
+      // ignore: avoid_print
+      print('PVE on a template with a snapshot: ${e.type} ${e.message}');
+      expect(e.type, VirtErrType.actionFailed);
+      expect(e.message, contains('snapshots'));
+      expect(await sh("qm config $vmid | grep -c '^template:' || true"), contains('0'));
+      await remove(vmid);
+    });
+
+    test("a backup job's run: the guest locked while it runs, every action "
+        'refused, then unlocked; the job run as PVE has it (bwlimit)', () async {
+      final storages = await w.host.allBackupStorages();
+      final target = storages.firstWhere((s) => s.node == node && s.name == 'local', orElse: () => storages.first);
+      final vmid = await freeVmid();
+      final name = 'sbxe2e-l-bk-$run';
+      made.add((vmid, name));
+      await w.host.create(
+        VirtCreateSpec(
+          kind: VirtGuestKind.qemu,
+          name: name,
+          node: node,
+          vmid: vmid,
+          cores: 1,
+          memoryMiB: 128,
+          storage: storage,
+          diskGiB: 1,
+        ),
+      );
+      var g = await guestOf(vmid, (g) => g.name == name && g.actions.contains(VirtPowerAction.start));
+      // Data a backup has to read and cannot compress away: 384 MiB at
+      // 8 MiB/s is some 48 s.
+      await sh(r'dd if=/dev/urandom of="$(pvesm path ' "'${storage.name}:vm-$vmid-disk-0'" r')" bs=1M count=384 oflag=direct status=none');
+      final id = 'sbxe2e-l-$run';
+      await w.host.editBackupJob(
+        VirtBackupJobEdit(
+          id: id,
+          isNew: true,
+          node: node,
+          storage: target.name,
+          schedule: 'sat 03:00',
+          mode: 'stop',
+          compress: 'zstd',
+          enabled: false,
+          vmids: [vmid],
+        ),
+      );
+      // A field PVE's editor sets and the app's form does not.
+      await sh('pvesh set /cluster/backup/$id --bwlimit 8192');
+      final job = (await w.host.allBackupJobs()).firstWhere((j) => j.id == id);
+
+      final started = DateTime.now();
+      final running = w.host.runBackupJob(job);
+      // Another app instance's listing, as anyone else's would see it.
+      final other = _World(agent.spi('e2e-monitor-pve-unverified-3'));
+      addTearDown(other.dispose);
+      Stores.pve.put(other.id, Stores.pve.fetch(w.id)!);
+      await other.host.firstLoad;
+      final locked = await other.settle((x) => x.vmid == vmid, name, (x) => x.stateReason == 'backup');
+      expect(locked.actions, isEmpty);
+      final refused = await _virtErr(other.host.power(locked.id, VirtPowerAction.start));
+      expect(refused.type, VirtErrType.unsupported);
+      await running;
+      final took = DateTime.now().difference(started);
+      // ignore: avoid_print
+      print('backup job run took ${took.inSeconds} s');
+      expect(took, greaterThan(const Duration(seconds: 30)), reason: 'the bwlimit was not sent');
+      g = await other.settle((x) => x.vmid == vmid, name, (x) => x.stateReason == null);
+      expect(g.actions, contains(VirtPowerAction.start));
+      expect(await sh("qm config $vmid | grep -c '^lock:' || true"), contains('0'));
+
+      final backups = await w.host.backups(g.id);
+      expect(backups, hasLength(1));
+      for (final b in backups) {
+        await w.host.deleteBackup(g.id, b);
+      }
+      await w.host.editBackupJob(_jobEditOf(job), remove: true);
+      await remove(vmid);
+    }, timeout: const Timeout(Duration(minutes: 10)));
   });
 }

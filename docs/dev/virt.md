@@ -544,10 +544,8 @@ the "hardware" groups of `test/e2e/virt_monitor_test.dart`, 2026-09-26:
 | PVE VM | Cores, sockets and the boot order go to pending while running; the balloon floor applies at once; `revert` drops each. A hot-plugged NIC applies at once. |
 | PVE container | Cores, memory and swap apply at once; removing a mount point from a running container is pending (`delete: 1`), its volume kept. |
 
-Not verified: libvirt topologies with dies/clusters (folded into threads,
-kept as they are), a CD-ROM on SATA/SCSI, PVE clusters, and hardware over
-SSH (the read-only groups in `virt_real_test.dart` need an SSH key the test
-can open).
+Not verified: PVE clusters. (Dies/clusters, a CD-ROM on SCSI and hardware
+over SSH were run later: "Second pass", phase 10.)
 
 ### Clone and backups (phase 5)
 
@@ -706,10 +704,10 @@ afterwards:
   applied. PVE's apply rewrites `/etc/network/interfaces` in its own layout
   (a header comment, every interface listed): the same configuration.
 
-Not verified on a real host: libvirt `netfs` and `logical` pools (no NFS
-server, no LVM on the test host) and routed networks; PVE `nfs`, `lvmthin`
-and `zfspool` storages, bridges with ports, clusters; uploads from this
-device as a libvirt host (`ProcessExec`).
+Not verified on a real host: PVE `nfs` and `zfspool` storages, bridges with
+ports, clusters; uploads from this device as a libvirt host (`ProcessExec`,
+which needs libvirt on the device itself). libvirt `netfs` and `logical`
+pools and routed networks were run later ("Second pass", phase 10).
 
 ### Cloud images, cloud-init and create options (phase 7)
 
@@ -918,10 +916,11 @@ The libvirt host had `genisoimage`, `xorriso` and `cloud-image-utils`
 already; `swtpm` and `swtpm-tools` (and their eight dependencies) were
 installed for the TPM run and removed again.
 
-Not verified on a real host: a seed on an LVM or other block pool (the
-growth before the upload is written for it), a failed upload putting the
-old seed back (stubbed in the Rust tests only), PVE `vmdk` import images, and
-PVE's cloud-init on SATA or IDE disks with the edit.
+Not verified on a real host: a failed upload putting the old seed back
+(stubbed in the Rust tests only), and a seed growing past its LV (libvirt's
+`logical` backend has no `vol-resize`; the app's seed is far below the 4 MiB
+extent). A seed on LVM, PVE `vmdk` images and cloud-init on SATA and IDE
+were run later ("Second pass", phase 10).
 
 ### Snapshots: external, config diff, storage support (phase 8)
 
@@ -1107,12 +1106,10 @@ with two spaces and a `*` read with its backing file, and a missing disk
 file kept as that disk's error in qemu-img's words (`Could not open ...: No
 such file or directory`), refusing the external form only.
 
-Not verified on a real host: an external snapshot of a guest with more than
-one writable disk (the scripts and the parser handle a list of them; only one
-was run), a snapshot on a pool of block devices (LVM, ZFS zvols: refused by
-the pool's own target path being absent), a revert of an internal snapshot
-after an external one on the same guest, and PVE's `zfspool` and `rbd`
-storages (only `lvmthin` and `dir` were available).
+Not verified on a real host: PVE's `zfspool` and `rbd` storages (only
+`lvmthin` and `dir` were available). Two writable disks, an external
+snapshot refused on LVM, and an internal revert after an external one were
+run later ("Second pass", phase 10).
 
 
 ## Verified against real hosts
@@ -1189,11 +1186,11 @@ on the libvirt host is outside the `libvirt` group.
 | External snapshots (phase 8) | libvirt through the agent's `/exec` and `sudo -S`, the whole flow through the providers: a guest of the run's own, a disk-only snapshot while it runs, the chain read back, a memory change read as a diff, a second snapshot, a clean delete of it, a revert onto a new overlay, and the app's refusal, before sending, to delete the snapshot that was reverted to (AppArmor). PVE through the relay: a VM on `lvmthin` snapshotting and its memory change read as a diff; a VM on a `dir` storage added for the run with a raw disk answered `hasFeature: 0` and refused before any task. |
 
 Not verified on a real host: a ticket that expired on the server's clock (the 2 h expiry and the
-renewal were driven by the backend's injected clock against real tickets), a
-real backup job (the lock was set by hand), the guest agent's shutdown,
-clusters (storage and networks per node), PVE before 9.2, libvirt pools other
-than `dir`, and PVE bonds, VLANs and OVS
-(parsed from hand-written payloads only).
+renewal were driven by the backend's injected clock against real tickets),
+clusters (storage and networks per node), PVE before 9.2, and PVE bonds,
+VLANs and OVS (parsed from hand-written payloads only). A real backup job's
+lock, the guest agent's shutdown and libvirt's `logical`/`netfs` pools were
+run later ("Second pass", phase 10).
 
 ## UI
 
@@ -1608,10 +1605,8 @@ Not verified on a real host: a clone to **another node** (the test host is a
 single node, so only the app's own refusal and PVE's `no such cluster node`
 were seen); a run now of a job with no node on a **cluster** (one request
 per online node; the test host is a single node);
-a guest with snapshots being refused as a template by PVE itself (the app
-refuses it first, and the snapshot listing is only read where that view has
-been opened); libvirt's `vol-create-from` into a **block** pool (the second
-pool was a `dir`).
+a template refused by PVE itself and a copy into a block pool were run
+later ("Second pass", phase 10).
 
 ### Network editing, pending changes and the rest (phase 10)
 
@@ -1810,16 +1805,82 @@ were not re-run on the libvirt host, which its own PVE node's reboot took
 down mid-session (guest 100, which this work is not allowed to start). The
 PVE group was re-run and passes.
 
-Not verified on a real host: libvirt's routed-network restart (the mode was
-exercised; a `route` mode change needs no different script), a PVE bridge
-with **ports** through the app (the manual edit and apply used portless
-bridges, which is what the app's own form offers on a host with no spare
-interface), the multi-NIC cloud-init on a booted guest (the seed's
-`network-config` is unit-tested for one, two and several NICs; a real
-second NIC needs a host with a spare bridge), and USB passthrough by address
-on either host (the libvirt host has no USB device at all, and the PVE
-host's only one is the node's own Bluetooth adapter — the XML is
-unit-tested and its form verified against `nodedev-dumpxml`'s own fields).
+Not verified on a real host: a PVE bridge with **ports** through the app
+(the test node has no spare interface), and a USB device passed to a
+*running* guest by address (the libvirt host has no USB device; on PVE the
+only one is the node's own Bluetooth adapter, written to a stopped VM's
+configuration and never started with). The routed-network restart ran in
+the monitor group (`virt_monitor_test.dart`, a `route` mode change and
+restart).
+
+#### Second pass (2026-09-28)
+
+Everything the sections above listed as not verified that the two test
+hosts can do, as e2e tests of its own (`virt_real_test.dart` for libvirt
+over SSH, the `_pveUnverified` group of `virt_monitor_test.dart` for PVE
+through the agent's relay). The libvirt host got LVM (a loop-backed VG,
+`SBM_E2E_LIBVIRT_VG`), an NFS export (`SBM_E2E_LIBVIRT_NFS`) and
+`libvirt-daemon-driver-storage-logical` for the run, all removed afterwards;
+both hosts ended as they began.
+
+| What | Result |
+| --- | --- |
+| libvirt: two writable disks | one external snapshot overlays both, a revert puts both on new overlays |
+| libvirt: internal after external | an internal snapshot (with memory) on the overlays, an external one over it, a revert to the internal one: both disks back on its files |
+| libvirt: a pool outside the AppArmor helper's directories | the revert refused before anything was sent, the guest still running on the same overlay |
+| libvirt: Secure Boot at create | both firmware features and `<smm state='on'/>` in the definition; the guest's `SecureBoot` efivar is 1 |
+| libvirt: a second NIC | a seed with two NICs (the app's script, one extra network) read as two, kept through a save from the form; after a reboot the second NIC has its static address |
+| libvirt: a password that expires | saved, read back, and at the next boot sshd asks for a new one ("You are required to change your password immediately") |
+| libvirt: dies and clusters | 1×2×2×1×1 read as 1 socket, 1 core, 4 threads; a memory change keeps the topology, a CPU change keeps dies and clusters and the host takes the vCPU count |
+| libvirt: a CD-ROM on SCSI, USB by address | moved to SCSI (a `virtio-scsi` controller added) and back; `<address bus='1' device='7'/>` taken by the definition and removed |
+| libvirt: `logical` pool | made from a VG; a raw volume; a VM from a cloud image with its disk and seed on LVs booted, its seed edited and taken at a reboot (two search domains in `resolv.conf`); external snapshots refused there; a copy of a VM into it |
+| libvirt: `netfs` pool | mounted, a qcow2 volume in the export, unmounted when stopped, deleted |
+| libvirt: a volume removed behind libvirt's back | the pool refreshed, its count and its volumes agree |
+| PVE: Secure Boot on SATA with cloud-init | `efidisk0` with `pre-enrolled-keys=1`, the efivar 1 in the guest; the cloud-init edit taken at a reboot |
+| PVE: the guest agent's shutdown | `agent: 1`, the app's shutdown stopped it, the guest's journal has `guest-shutdown called` |
+| PVE: IDE, `vmdk` | the disk and the cloud-init drive on IDE with the edit (not booted: Debian's cloud kernel has no IDE driver); a `vmdk` offered, imported and booted |
+| PVE: USB by vendor/product and by address | `host=0bda:b023` and `host=1-13` (matching sysfs) on a stopped VM, as `root@pam`; removed, never started |
+| PVE: a template refused by PVE | a backend that never read the snapshots gets `unable to create template, because VM contains snapshots` |
+| PVE: a real backup job's lock | run now: `backup` lock, no action offered, start refused; unlocked after; the job's own `bwlimit` applied |
+
+What the pass found, fixed and pinned by Rust and Dart tests:
+
+- **Overlays left behind.** A snapshot on a branch the guest left (a revert
+  to an internal snapshot taken before it) is deleted by libvirt 11.3
+  without its overlay — and deleting the *leaf* of such a branch removed the
+  file below it instead (`snap_delete_leftovers`, captured in
+  `script_snap_delete_off_chain.txt`). A delete now removes the overlays off
+  the chain after libvirt, and deleting the guest takes every snapshot's
+  layer on its disks, off the chain too.
+- **`logical` offered where the daemon has no backend.** Debian ships it as
+  `libvirt-daemon-driver-storage-logical`; without it a define fails with
+  "missing backend for pool type". The pool types come from
+  `pool-capabilities` now, read once per backend.
+- **A disk on LVM was a `file` disk**, which QEMU refuses; a volume under
+  `/dev` is a `block` disk (`dev=`) in a new definition, a seed and a
+  CD-ROM included.
+- **A copy into a block pool kept `qcow2`** on data libvirt had converted to
+  raw; it is raw, named `.img`, with a raw driver now
+  (`VirtCloneSpec::target_block`).
+- **No resize on LVM**: libvirt's `logical` backend has none. Not offered
+  for a volume there, nor growing a disk on a `/dev` path.
+- **A seed on an LV read as "too large"**: the whole 4 MiB device was read;
+  only the ISO's own size is now.
+- **A stale pool**: a volume whose file was removed outside libvirt was
+  dropped from the list while the count kept it; the pool is refreshed and
+  read again.
+- **PVE Run now dropped a job's options** (`bwlimit`, `ionice`,
+  `performance`, `fleecing`, …): the job is read and sent whole, as PVE's
+  web UI does.
+- **PVE refusals before a task** came back as `invalidResponse`; they are
+  `actionFailed` with PVE's words.
+- **The agent's relay dropped a connection sending more than 64 KiB at
+  once** (ntex's default frame limit, which `ws::start` gives no way to
+  raise; the terminal endpoint too, on a large paste). The agent upgrades
+  through a copy of ntex's `start` with a 4 MiB limit now
+  (`monitor/src/api/ws/upgrade.rs`), and the app splits what it sends to
+  either endpoint into 64 KiB frames for agents before that
+  (`monitorWsAddBinary`).
 
 ## Later phases
 

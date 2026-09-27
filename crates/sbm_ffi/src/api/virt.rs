@@ -181,10 +181,23 @@ pub fn virt_snapshot_revert_script(domain: String, name: String, running: bool) 
     virt::snapshot_revert_script(&domain, &name, running)
 }
 
-/// Delete one snapshot. Parse with [`parse_virt_action`].
+/// Delete one snapshot, then the files libvirt leaves behind
+/// ([`parse_virt_snap_delete_leftovers`]) through their `pools`. Parse with
+/// [`parse_virt_snapshot_delete`].
 #[flutter_rust_bridge::frb(sync)]
-pub fn virt_snapshot_delete_script(domain: String, name: String) -> String {
-    virt::snapshot_delete_script(&domain, &name)
+pub fn virt_snapshot_delete_script(
+    domain: String,
+    name: String,
+    pools: Vec<String>,
+    leftovers: Vec<String>,
+) -> Result<String, VirtFfiError> {
+    Ok(virt::snapshot_delete_script(&domain, &name, &pools, &leftovers)?)
+}
+
+/// [`virt_snapshot_delete_script`]'s output: `Ok` once the snapshot is gone;
+/// a file it left that could not be deleted is an error naming it
+pub fn parse_virt_snapshot_delete(raw: String) -> Result<(), VirtFfiError> {
+    Ok(virt::parse_snapshot_delete(&raw)?)
 }
 
 /// The disk chain of a domain (external snapshots): the definition, where
@@ -212,6 +225,13 @@ pub fn virt_snap_check_script(domain: String, name: String) -> String {
 /// delete (AppArmor denying the commit), or `None`
 pub fn parse_virt_snap_delete_refusal(raw: String) -> Result<Option<String>, VirtFfiError> {
     Ok(virt_snapshot::snap_delete_refusal(&raw)?)
+}
+
+/// [`virt_snap_check_script`]'s output → the files deleting the snapshot
+/// leaves behind (its overlays off the current chain), for
+/// [`virt_snapshot_delete_script`] to delete
+pub fn parse_virt_snap_delete_leftovers(raw: String) -> Result<Vec<String>, VirtFfiError> {
+    Ok(virt_snapshot::snap_delete_leftovers(&raw)?)
 }
 
 /// [`virt_snap_check_script`]'s output → why a revert would leave the guest
@@ -474,6 +494,20 @@ pub fn virt_hardware_change_script(
 /// [`virt_hardware_change_script`]'s output → `VirtHwOutcome` JSON
 pub fn parse_virt_hardware_change_json(raw: String) -> Result<String, VirtFfiError> {
     serde_json::to_string(&virt::parse_hardware_change(&raw)?).map_err(json_err)
+}
+
+/// Which pool types the daemon has a backend for (`pool-capabilities`).
+/// Parse with [`parse_virt_pool_types`].
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_pool_types_script() -> String {
+    virt::pool_types_script()
+}
+
+/// [`virt_pool_types_script`]'s output → the pool types this app makes that
+/// the host supports, in the order offered; `None` where it could not say
+#[flutter_rust_bridge::frb(sync)]
+pub fn parse_virt_pool_types(raw: String) -> Option<Vec<String>> {
+    virt::parse_pool_types(&raw)
 }
 
 /// The host's firmware descriptors (`/usr/share/qemu/firmware/*.json`), for

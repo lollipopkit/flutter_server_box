@@ -1425,18 +1425,93 @@ pub fn snapshot_revert_script(domain: &str, name: &str, running: bool) -> String
 }
 
 /// `snapshot-delete`: the snapshot only; its children move up to its parent.
-/// Parse with [`parse_action`].
-pub fn snapshot_delete_script(domain: &str, name: &str) -> String {
+///
+/// `leftovers` are the files libvirt leaves behind deleting it
+/// ([`crate::virt_snapshot::snap_delete_leftovers`]): deleted once the
+/// snapshot is, through the pools they are in (`pools`, refreshed first — a
+/// file a revert or a snapshot made is not a volume until then). Parse with
+/// [`parse_snapshot_delete`].
+pub fn snapshot_delete_script(
+    domain: &str,
+    name: &str,
+    pools: &[String],
+    leftovers: &[String],
+) -> Result<String, VirtError> {
+    check_chain_files(leftovers)?;
     let mut s = prelude();
-    s.push_str(&section(
-        KEY_ACTION,
-        &format!(
-            "snapshot-delete {} --snapshotname {}",
-            domain_arg(domain),
-            shell_quote_unix(name)
-        ),
+    s.push_str(&run_fn());
+    s.push_str(&format!(
+        "echo '{}'\nR snapshot-delete {} --snapshotname {}\nu=$r\n",
+        script::cmd_marker(KEY_ACTION),
+        domain_arg(domain),
+        shell_quote_unix(name)
     ));
+    s.push_str(&chain_delete_steps(pools, leftovers));
+    Ok(s)
+}
+
+/// [`snapshot_delete_script`]'s output. The snapshot is gone once this is
+/// `Ok`; a file it left that could not be deleted is an error naming it,
+/// and one already gone is not.
+pub fn parse_snapshot_delete(raw: &str) -> Result<(), VirtError> {
+    let secs = sections(raw)?;
+    take(&secs, KEY_ACTION, raw)?.ok()?;
+    let kept = chain_delete_failures(&secs);
+    if kept.is_empty() {
+        return Ok(());
+    }
+    Err(VirtError::Command {
+        message: format!(
+            "The snapshot was deleted, {} file(s) it left were not: {}",
+            kept.len(),
+            kept.join("; ")
+        ),
+    })
+}
+
+fn check_chain_files(files: &[String]) -> Result<(), VirtError> {
+    if files.iter().any(|p| !p.starts_with('/') || p.chars().any(char::is_control)) {
+        return Err(VirtError::Malformed {
+            message: format!("invalid chain file in {files:?}"),
+        });
+    }
+    Ok(())
+}
+
+/// Once the step before succeeded (`$u` is 0): `pools` refreshed, then each
+/// of `files` deleted as a volume.
+fn chain_delete_steps(pools: &[String], files: &[String]) -> String {
+    if files.is_empty() {
+        return String::new();
+    }
+    let mut s = String::from("if [ \"$u\" = 0 ]; then\n");
+    for p in pools {
+        s.push_str(&format!(
+            "echo '{}'; R pool-refresh --pool {}\n",
+            script::cmd_marker(KEY_CHAIN_REFRESH),
+            shell_quote_unix(p)
+        ));
+    }
+    for f in files {
+        s.push_str(&format!(
+            "echo '{}'; R vol-delete --vol {}\n",
+            script::cmd_marker(KEY_CHAIN_DELETE),
+            shell_quote_unix(f)
+        ));
+    }
+    s.push_str("fi\n");
     s
+}
+
+/// The chain deletes [`chain_delete_steps`] ran that the host refused, in
+/// its words. A refused refresh is not reported: it shows as the deletes it
+/// leaves refused.
+fn chain_delete_failures(secs: &[(String, Section)]) -> Vec<String> {
+    secs.iter()
+        .filter(|(k, _)| k == KEY_CHAIN_DELETE)
+        .filter_map(|(_, s)| s.ok().err())
+        .map(|e| e.message())
+        .collect()
 }
 
 /// `snapshot-dumpxml`. The embedded `<domain>` is ignored.
@@ -1466,11 +1541,10 @@ pub fn parse_snapshot_xml(raw: &str) -> Result<VirtSnapshotInfo, VirtError> {
     // A snapshot reverted to once names the file a *further* revert would use
     // in `<revertDisks>`; that is the one a chain view has to show.
     for reverted in crate::virt_snapshot::layers_of(root, "revertDisks") {
-        if let Some(layer) = layers.iter_mut().find(|l| l.target == reverted.target) {
-            if reverted.file.is_some() {
+        if let Some(layer) = layers.iter_mut().find(|l| l.target == reverted.target)
+            && reverted.file.is_some() {
                 layer.file = reverted.file;
             }
-        }
     }
     Ok(VirtSnapshotInfo {
         description: text_of(root, "description"),
@@ -1637,6 +1711,48 @@ pub fn storage_script() -> String {
         &item_section(KEY_BLKLIST, "d", "domblklist --details --domain \"$d\""),
     ));
     s
+}
+
+pub const KEY_POOL_CAPS: &str = "virt.pool.caps";
+
+/// The pool types this app makes on a libvirt host, in the order offered.
+pub const POOL_TYPES: &[&str] = &["dir", "netfs", "logical"];
+
+/// `pool-capabilities` (libvirt 5.2+): which pool types the daemon has a
+/// backend for. A storage driver built without one, or one whose tools were
+/// missing when it started (`logical` without LVM), says `supported='no'`,
+/// and defining such a pool fails ("missing backend for pool type").
+/// Parse with [`parse_pool_types`].
+pub fn pool_types_script() -> String {
+    let mut s = prelude();
+    s.push_str(&section(KEY_POOL_CAPS, "pool-capabilities"));
+    s
+}
+
+/// [`pool_types_script`]'s output: the [`POOL_TYPES`] the host supports, in
+/// that order. `None` where it could not say (a libvirt before 5.2, a
+/// refused command): every type is offered then, and the host's own words
+/// are what a define it cannot do comes back with.
+pub fn parse_pool_types(raw: &str) -> Option<Vec<String>> {
+    let secs = sections(raw).ok()?;
+    let body = take(&secs, KEY_POOL_CAPS, raw).ok()?.ok().ok()?;
+    let doc = roxmltree::Document::parse(body.trim()).ok()?;
+    let root = doc.root_element();
+    if !root.has_tag_name("storagepoolCapabilities") {
+        return None;
+    }
+    let supported: Vec<&str> = root
+        .children()
+        .filter(|n| n.has_tag_name("pool") && n.attribute("supported") == Some("yes"))
+        .filter_map(|n| n.attribute("type"))
+        .collect();
+    Some(
+        POOL_TYPES
+            .iter()
+            .filter(|t| supported.contains(t))
+            .map(|t| t.to_string())
+            .collect(),
+    )
 }
 
 /// `vol-dumpxml` for each of `names` in `pool`. Parse with [`parse_volumes`].
@@ -2151,7 +2267,7 @@ pub fn parse_networks(raw: &str) -> Result<VirtNetworks, VirtError> {
         if let Ok(body) = sec.ok()
             && let Ok(net) = parse_network_xml(split_item(body).1)
         {
-            xmls.push((item.to_string(), net, split_item(&body).1.trim_end().to_string()));
+            xmls.push((item.to_string(), net, split_item(body).1.trim_end().to_string()));
         }
     }
     // The saved definition, which is what an edit is made from and what the
@@ -2620,21 +2736,21 @@ pub fn domain_xml(spec: &VirtCreateSpec) -> String {
     if bus == "scsi" || (cd.is_some() && cdrom_bus == "scsi") {
         x.push_str("    <controller type='scsi' model='virtio-scsi'/>\n");
     }
-    x.push_str("    <disk type='file' device='disk'>\n");
+    let disk_path = spec.disk_path.as_deref().unwrap_or_default();
+    let (kind, attr) = disk_source_kind(disk_path);
+    x.push_str(&format!("    <disk type='{kind}' device='disk'>\n"));
     x.push_str(&format!(
         "      <driver name='qemu' type='{}'/>\n",
         e(&spec.disk_format)
     ));
-    x.push_str(&format!(
-        "      <source file='{}'/>\n",
-        e(spec.disk_path.as_deref().unwrap_or_default())
-    ));
+    x.push_str(&format!("      <source {attr}='{}'/>\n", e(disk_path)));
     x.push_str(&format!("      <target dev='{disk_target}' bus='{bus}'/>\n"));
     x.push_str("    </disk>\n");
     if let Some(cd) = cd {
-        x.push_str("    <disk type='file' device='cdrom'>\n");
+        let (kind, attr) = disk_source_kind(cd);
+        x.push_str(&format!("    <disk type='{kind}' device='cdrom'>\n"));
         x.push_str("      <driver name='qemu' type='raw'/>\n");
-        x.push_str(&format!("      <source file='{}'/>\n", e(cd)));
+        x.push_str(&format!("      <source {attr}='{}'/>\n", e(cd)));
         x.push_str(&format!("      <target dev='{cdrom_target}' bus='{cdrom_bus}'/>\n"));
         x.push_str("      <readonly/>\n");
         x.push_str("    </disk>\n");
@@ -2667,6 +2783,14 @@ pub fn domain_xml(spec: &VirtCreateSpec) -> String {
     x.push_str("  </devices>\n");
     x.push_str("</domain>\n");
     x
+}
+
+/// A disk's `type` and its `<source>` attribute for `path`: a volume of a
+/// pool of block devices (`logical`, `disk`: its path is under `/dev`) is a
+/// `block` disk on `dev` — QEMU's `file` driver refuses one ("requires ... to
+/// be a regular file", libvirt 11.3, verified) — anything else a `file`.
+fn disk_source_kind(path: &str) -> (&'static str, &'static str) {
+    if path.starts_with("/dev/") { ("block", "dev") } else { ("file", "file") }
 }
 
 pub(crate) fn run_fn() -> String {
@@ -2955,6 +3079,13 @@ pub struct VirtCloneSpec {
     /// pool a directory is.
     #[serde(default)]
     pub target_pool: Option<String>,
+    /// [`Self::target_pool`] holds block devices (`logical`, `disk`): each
+    /// copy there is raw — libvirt converts what it copies into one to raw,
+    /// whatever format the description asks for (verified on libvirt 11.3:
+    /// a qcow2 copied into a logical pool came out raw) — and is named
+    /// `.img`, as a new disk there is.
+    #[serde(default)]
+    pub target_block: bool,
 }
 
 impl VirtCloneSpec {
@@ -3010,6 +3141,9 @@ impl VirtCloneSpec {
             .map(|(_, e)| e)
             .filter(|e| !e.is_empty() && e.len() <= 6 && e.chars().all(|c| c.is_ascii_alphanumeric()));
         let suffix = if i == 0 { String::new() } else { format!("-{i}") };
+        if self.target_block {
+            return format!("{}{suffix}.img", self.name);
+        }
         match ext {
             Some(ext) => format!("{}{suffix}.{ext}", self.name),
             None => format!("{}{suffix}", self.name),
@@ -3088,7 +3222,7 @@ pub fn clone_volumes_script(spec: &VirtCloneSpec) -> Result<String, VirtError> {
             // `vol-path` and every rollback below address the volume where
             // it actually is.
             (Some(dst), full) => {
-                let format = d.format.as_deref().unwrap_or("qcow2");
+                let format = if spec.target_block { "raw" } else { d.format.as_deref().unwrap_or("qcow2") };
                 // The section this runs in was opened above, with the
                 // `vol-pool` that resolved the source: whatever fails here
                 // — no capacity, no temporary file, the copy itself — is
@@ -3141,7 +3275,7 @@ pub fn clone_volumes_script(spec: &VirtCloneSpec) -> Result<String, VirtError> {
                 s.push_str(&format!("[ \"$r\" = 0 ] || {};\npool={dst}\n", rollback(i)));
             }
         }
-        if !matches!(target, Some(_)) {
+        if !target.is_some() {
             s.push_str(&format!("[ \"$r\" = 0 ] || {}\n", rollback(i)));
         }
         s.push_str(&format!(
@@ -3220,16 +3354,21 @@ pub fn clone_domain_xml(base_xml: &str, name: &str, disks: &[(String, String)]) 
             .filter(|n| n.is_element() && n.tag_name().name() == "disk")
             .find(|n| child(*n, "target").and_then(|t| t.attribute("dev")) == Some(target.as_str()))
             .ok_or_else(|| not_found(&format!("disk {target}")))?;
-        let block = path.starts_with("/dev/");
+        let (kind, attr) = disk_source_kind(path);
         edits.push((
             start_tag_range(disk),
-            start_tag(disk, &["type"], &[("type", if block { "block" } else { "file" }.to_string())]),
+            start_tag(disk, &["type"], &[("type", kind.to_string())]),
         ));
-        let source = format!(
-            "<source {}='{}'/>",
-            if block { "dev" } else { "file" },
-            xml_escape(path)
-        );
+        // A copy on a block device is raw ([`VirtCloneSpec::target_block`]).
+        if kind == "block"
+            && let Some(driver) = child(disk, "driver")
+        {
+            edits.push((
+                start_tag_range(driver),
+                start_tag(driver, &["type"], &[("type", "raw".to_string())]),
+            ));
+        }
+        let source = format!("<source {attr}='{}'/>", xml_escape(path));
         match child(disk, "source") {
             Some(src) => edits.push((src.range(), source)),
             None => {
@@ -3326,11 +3465,7 @@ pub fn undefine_script(
             message: "invalid seed path".into(),
         });
     }
-    if chain.iter().any(|p| bad_path(p)) {
-        return Err(VirtError::Malformed {
-            message: format!("invalid chain file in {chain:?}"),
-        });
-    }
+    check_chain_files(chain)?;
     if storage
         .iter()
         .any(|t| t.is_empty() || !t.chars().all(|c| c.is_ascii_alphanumeric()))
@@ -3350,6 +3485,7 @@ pub fn undefine_script(
     }
     let mut s = prelude();
     s.push_str(&run_fn());
+    // Before the undefine, which reads the pools for `--storage`.
     for p in pools {
         s.push_str(&format!(
             "echo '{}'; R pool-refresh --pool {}\n",
@@ -3367,17 +3503,8 @@ pub fn undefine_script(
             shell_quote_unix(seed)
         ));
     }
-    if !chain.is_empty() {
-        s.push_str("if [ \"$u\" = 0 ]; then\n");
-        for f in chain {
-            s.push_str(&format!(
-                "echo '{}'; R vol-delete --vol {}\n",
-                script::cmd_marker(KEY_CHAIN_DELETE),
-                shell_quote_unix(f)
-            ));
-        }
-        s.push_str("fi\n");
-    }
+    // The pools were refreshed above.
+    s.push_str(&chain_delete_steps(&[], chain));
     Ok(s)
 }
 
@@ -3398,14 +3525,7 @@ pub fn parse_undefine(raw: &str) -> Result<(), VirtError> {
             message: format!("The guest was deleted, its cloud-init seed was not: {}", e.message()),
         }),
     }?;
-    // A refused refresh is not reported: it shows as the deletes it leaves
-    // refused.
-    let kept: Vec<String> = secs
-        .iter()
-        .filter(|(k, _)| k == KEY_CHAIN_DELETE)
-        .filter_map(|(_, s)| s.ok().err())
-        .map(|e| e.message())
-        .collect();
+    let kept = chain_delete_failures(&secs);
     if kept.is_empty() {
         return Ok(());
     }
@@ -5157,7 +5277,7 @@ pub fn definition_of_live_xml(live_xml: &str, definition_xml: &str) -> Result<St
     let def_labels: Vec<String> = def_root
         .children()
         .filter(|n| n.has_tag_name("seclabel"))
-        .map(|n| format!("\n{}", &def_xml[element_lines(def_xml, n)].trim_start_matches(['\n', '\r'])))
+        .map(|n| format!("\n{}", def_xml[element_lines(def_xml, n)].trim_start_matches(['\n', '\r'])))
         .collect();
     if !def_labels.is_empty() {
         let at = root.last_child().map(|c| c.range().start).unwrap_or(root.range().end);
@@ -5534,9 +5654,18 @@ pub fn hardware_change_script(
             let current = current_mib.unwrap_or(*memory_mib);
             s.push_str(&hw_step(&format!("setmaxmem {d} --size {memory_mib}MiB --config")));
             s.push_str(&hw_step(&format!("setmem {d} --size {current}MiB --config")));
-            // The maximum is fixed while QEMU runs; the balloon moves.
+            // The maximum is fixed while QEMU runs; the balloon moves, up to
+            // it. Past it the running guest cannot take the change at all
+            // (`cannot set memory higher than max memory`): that is a change
+            // for the next start, as the definition already has it, not a
+            // failure. The running maximum is `dominfo`'s.
             if running {
-                s.push_str(&hw_live_step(&format!("setmem {d} --size {current}MiB --live")));
+                s.push_str(&format!(
+                    "mx=$(virsh --connect {CONNECT_URI} -q dominfo {d} </dev/null 2>/dev/null | sed -n 's/^Max memory: *\\([0-9]*\\) KiB$/\\1/p')\n\
+                     if [ -z \"$mx\" ] || [ \"$mx\" -ge {kib} ]; then\n{live}fi\n",
+                    kib = current * 1024,
+                    live = hw_live_step(&format!("setmem {d} --size {current}MiB --live")),
+                ));
             }
         }
         VirtHwChange::GrowDisk { target, bytes, path, live } => {
@@ -5617,12 +5746,13 @@ pub fn hardware_change_script(
         }
         VirtHwChange::AddCdrom { target, bus, source } => {
             let e = xml_escape;
+            let (kind, attr) = disk_source_kind(source.as_deref().unwrap_or_default());
             let source = source
                 .as_deref()
-                .map(|p| format!("<source file='{}'/>", e(p)))
+                .map(|p| format!("<source {attr}='{}'/>", e(p)))
                 .unwrap_or_default();
             let xml = format!(
-                "<disk type='file' device='cdrom'><driver name='qemu' type='raw'/>{source}<target dev='{}' bus='{}'/><readonly/></disk>",
+                "<disk type='{kind}' device='cdrom'><driver name='qemu' type='raw'/>{source}<target dev='{}' bus='{}'/><readonly/></disk>",
                 e(target),
                 e(bus)
             );

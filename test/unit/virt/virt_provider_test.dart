@@ -452,8 +452,8 @@ void main() {
     Stores.server.put(_spi('kvm'));
     final exec = _Exec((_) => _ok(_overview()));
     final c = container({'kvm': exec});
-    // Every exec is the overview script: one per load.
-    int loads() => exec.calls.length;
+    // One overview script per load (the pool types are read once, besides).
+    int loads() => exec.calls.where((c) => c.script.contains('domstats')).length;
 
     // Nothing watches the host: this call is what builds it, and building it
     // starts a load. Asking for a second on top of it was two full loads per
