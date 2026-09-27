@@ -438,7 +438,11 @@ pub fn parse_sensors(raw: &str) -> Vec<SensorItem> {
 
     groups
         .into_iter()
-        .filter(|lines| lines.len() >= 3)
+        // A chip is its name, then `Adapter: …`, then its readings. The
+        // script carries `sensors`' stderr too, and a host without chips
+        // prints three lines there ("No sensors found!" and two hints):
+        // not a device.
+        .filter(|lines| lines.len() >= 3 && lines[1].trim_start().starts_with("Adapter:"))
         .map(|lines| {
             let adapter = lines[1].split(':').next_back().unwrap_or("").trim().to_string();
             let details = lines[2..]

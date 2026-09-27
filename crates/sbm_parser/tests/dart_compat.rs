@@ -1681,3 +1681,11 @@ fn windows_battery_status_follows_the_win32_enumeration() {
     assert_eq!(status_of(1), BatteryStatus::Discharging);
     assert_eq!(status_of(5), BatteryStatus::Discharging);
 }
+
+/// A host without sensor chips: `sensors` prints its three-line notice on
+/// stderr, which the status script carries along. Not a device.
+#[test]
+fn sensors_none_found() {
+    let raw = "No sensors found!\nMake sure you loaded all the kernel drivers you need.\nTry sensors-detect to find out which these are.\n";
+    assert!(sbm_parser::linux::parse_sensors(raw).is_empty());
+}
