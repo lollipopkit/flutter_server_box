@@ -4,12 +4,15 @@
 #
 # Scoped to this crate rather than the workspace root: `sbm_parser`,
 # `sbm_native` and `monitor` are built by cargo directly and have no reason to
-# be pinned to whatever the app's build hook happens to need.
+# be pinned to whatever the app's build hook happens to need. CI's Rust tests
+# and clippy read `channel` from here, though (`analysis.yml`): a lint that
+# arrives with a new stable fails a pull request only once this is bumped,
+# not on the day rustup ships it.
 #
 # `targets` is every platform the app ships to. A target missing here is not a
 # build error, it is a build that silently falls back to the host.
 [toolchain]
-channel = "1.97.1"
+channel = "1.98.1"
 targets = [
   "aarch64-apple-darwin",
   "x86_64-apple-darwin",

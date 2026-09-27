@@ -30,8 +30,8 @@
 #   second `fetchNpmDeps` were added for.
 # - The Rust half **needs a newer rustc than nixpkgs 25.11 ships**. That
 #   channel has 1.91.1; `sqlx` asks for 1.94 and `sysinfo` for 1.95, so cargo
-#   refuses before compiling anything. nixpkgs-unstable has 1.97.1 — the same
-#   version `crates/sbm_ffi/rust-toolchain.toml` pins — and is accepted.
+#   refuses before compiling anything. nixpkgs-unstable has 1.97.1 — the
+#   version `crates/sbm_ffi/rust-toolchain.toml` pinned then — and is accepted.
 # - Against unstable the Rust build then proceeds and was **not seen to
 #   finish**: the machine it ran on exhausted its disk while compiling
 #   `libsqlite3-sys`. That is a property of that machine, not of this file, and
