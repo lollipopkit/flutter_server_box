@@ -357,6 +357,29 @@ async fn a_password_login_produces_a_working_shell() {
     );
 }
 
+/// A paste bigger than ntex's default 64 KiB frame limit arrives as one
+/// frame: the shell gets all of it, and the connection stays up.
+#[ntex::test]
+async fn a_paste_bigger_than_64_kib_reaches_the_shell() {
+    let sshd = fake_sshd::start(false).await;
+    let state = app_state(true, &sshd).await;
+    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let srv = test_server(state).await;
+    let (io, codec, _) = open_shell(&srv, &ticket).await;
+    read_until(&io, &codec, fake_sshd::BANNER).await;
+
+    let mut paste = vec![b'a'; 200 << 10];
+    paste.extend_from_slice(b"sbm-paste-end");
+    io.send(ws::Message::Binary(ntex::util::Bytes::from(paste)), &codec)
+        .await
+        .unwrap();
+    let echoed = read_until(&io, &codec, b"sbm-paste-end").await;
+    assert!(
+        echoed.windows(13).any(|w| w == b"sbm-paste-end"),
+        "the whole paste should reach the shell and come back"
+    );
+}
+
 #[ntex::test]
 async fn a_wrong_password_is_reported_as_an_auth_failure() {
     let sshd = fake_sshd::start(false).await;

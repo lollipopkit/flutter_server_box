@@ -31,7 +31,9 @@ use ntex::rt::spawn;
 use ntex::service::{fn_factory_with_config, fn_service};
 use ntex::time::{sleep, timeout};
 use ntex::util::{ByteString, Bytes};
-use ntex::web::ws::{self, CloseCode, Frame, Message, WsSink};
+use ntex::web::ws::{self, CloseCode, Frame, Message};
+
+use super::upgrade::WsSink;
 use ntex::web::{self, HttpRequest, HttpResponse};
 use ntex::ws::Item;
 use serde::{Deserialize, Serialize};
@@ -232,7 +234,7 @@ pub async fn terminal_ws(
         secure,
     });
 
-    let upgraded = ws::start::<_, _, &str, web::Error>(
+    let upgraded = super::upgrade::start::<_, _, web::Error>(
         req,
         Some(&protocol),
         fn_factory_with_config(move |sink: WsSink| {

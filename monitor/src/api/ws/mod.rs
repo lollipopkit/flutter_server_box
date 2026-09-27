@@ -8,6 +8,7 @@ pub mod session;
 pub mod stream;
 pub mod terminal;
 pub mod ticket;
+pub mod upgrade;
 
 use std::net::IpAddr;
 

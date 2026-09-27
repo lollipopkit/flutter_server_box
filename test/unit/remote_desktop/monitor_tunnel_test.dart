@@ -8,11 +8,13 @@
 /// session needs from it.
 library;
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/monitor_tunnel.dart';
+import 'package:server_box/core/utils/monitor_ws_frames.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
@@ -35,6 +37,9 @@ class _FakeAgent {
   final requests = <Map<String, dynamic>>[];
 
   List<int>? lastBytes;
+
+  /// The length of every Binary frame received, in order.
+  final frames = <int>[];
 
   Uri get url => Uri.parse('http://127.0.0.1:${_server.port}');
 
@@ -95,6 +100,7 @@ class _FakeAgent {
         // Bytes going the other way are echoed back with a marker, so a test
         // can tell a round trip from a local echo.
         lastBytes = (frame as List<int>).toList();
+        frames.add(lastBytes!.length);
         socket.add([...lastBytes!, 0x21]);
       });
     });
@@ -182,6 +188,42 @@ void main() {
         [1, 2, 3, 0x21],
       );
       expect(agent.lastBytes, [1, 2, 3]);
+    });
+  });
+
+  test('a write bigger than the agent takes in one frame goes as several',
+      () async {
+    // The agent's codec (ntex) drops the connection on a frame over 64 KiB;
+    // an SSH upload through the relay writes more than that at once.
+    final agent = await _FakeAgent.start(target: '127.0.0.1:22');
+    addTearDown(agent.close);
+
+    await realHttp(() async {
+      final channel = await MonitorTunnelChannel.dial(
+        client: _clientFor(agent),
+        remoteHost: '127.0.0.1',
+        remotePort: 22,
+      );
+      addTearDown(channel.close);
+
+      const size = 3 * monitorWsMaxFrameBytes + 5;
+      final echoed = <int>[];
+      final done = Completer<void>();
+      channel.stream.listen((chunk) {
+        echoed.addAll(chunk);
+        if (echoed.length == size + 4 && !done.isCompleted) done.complete();
+      });
+      channel.sink.add(List.generate(size, (i) => i % 251));
+      await done.future.timeout(const Duration(seconds: 5));
+
+      expect(agent.frames, [
+        monitorWsMaxFrameBytes,
+        monitorWsMaxFrameBytes,
+        monitorWsMaxFrameBytes,
+        5,
+      ]);
+      // Each frame echoed with its marker: every byte there, in order.
+      expect(agent.lastBytes, List.generate(5, (i) => (size - 5 + i) % 251));
     });
   });
 

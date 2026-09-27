@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/utils/monitor_ws_frames.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
@@ -364,7 +365,7 @@ class MonitorShellSession implements ShellSession {
     // input is worse than one that missed it.
     if (socket == null) return;
     try {
-      socket.add(data);
+      monitorWsAddBinary(socket, data);
     } catch (e, s) {
       Loggers.app.warning('Monitor terminal write failed', e, s);
     }

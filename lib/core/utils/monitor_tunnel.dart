@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/utils/monitor_ws_frames.dart';
 import 'package:server_box/core/utils/ssh_local_tunnel.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
@@ -176,7 +177,7 @@ class MonitorTunnelChannel implements SshTunnelChannel {
   void _write(List<int> data) {
     if (_finished || data.isEmpty) return;
     try {
-      _socket.add(data);
+      monitorWsAddBinary(_socket, data);
     } catch (e, s) {
       Loggers.app.warning('Monitor stream write failed', e, s);
       _finish();
