@@ -702,7 +702,7 @@ pub fn iso_root_files(iso: &[u8]) -> Result<Vec<(String, Vec<u8>)>, VirtError> {
             continue;
         }
         let name = if ucs2 {
-            let units: Vec<u16> = raw_name.chunks_exact(2).map(|c| u16::from_be_bytes([c[0], c[1]])).collect();
+            let units: Vec<u16> = raw_name.as_chunks::<2>().0.iter().map(|c| u16::from_be_bytes(*c)).collect();
             Some(String::from_utf16_lossy(&units))
         } else {
             // Rock Ridge: the system use area after the name (and its pad).

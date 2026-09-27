@@ -749,6 +749,7 @@ fn a_seed_is_read_under_sh() {
 
 /// A seed on a block device (an LV, 4 MiB at the least) reads as the ISO at
 /// its start: the rest is not sent, nor counted against the cap.
+#[cfg(unix)]
 #[test]
 fn a_seed_on_a_device_bigger_than_it_is_read() {
     let d = bin_dir("read_dev", None);

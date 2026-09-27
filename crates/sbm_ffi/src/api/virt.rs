@@ -520,7 +520,7 @@ pub fn virt_firmware_script() -> String {
 
 /// [`virt_firmware_script`]'s output → `Vec<FirmwareDescriptor>` JSON
 pub fn parse_virt_firmware_json(raw: String) -> Result<String, VirtFfiError> {
-    Ok(serde_json::to_string(&virt::parse_firmware_descriptors(&raw)).map_err(json_err)?)
+    serde_json::to_string(&virt::parse_firmware_descriptors(&raw)).map_err(json_err)
 }
 
 /// The host's USB and PCI devices, for passing one to a guest
