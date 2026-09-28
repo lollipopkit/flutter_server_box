@@ -1,0 +1,9 @@
+# The official theme repository, as the theme store reads it.
+#
+# This folder is the source; what the app downloads is a tarball of it that the
+# website build writes (`website/package.json`, `prebuild`) and serves at
+# https://serverbox.lollipopkit.com/store.tar.gz, the address
+# `assets/catalog/repos.toml` lists. A theme is `themes/<id>.toml`, listing its
+# versions, beside `themes/<id>/`, the folder `scripts/publish-themes.py` packs.
+schema = 1
+name = "ServerBox official"

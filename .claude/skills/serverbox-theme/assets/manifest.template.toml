@@ -1,0 +1,46 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/fsbt-manifest.schema.json
+# Only id, name, modes and [schema] are required. Delete what you do not use:
+# an omitted table keeps the app's default, and an unknown one is an error.
+
+id = "yourname.mytheme"
+name = "My Theme"
+# ["dark"], ["light"] or ["light", "dark"]. One mode locks the app to it.
+modes = ["light", "dark"]
+
+# The theme schema range this package is readable at, not the theme's version.
+# Use min = 2 if you add an SVG icon, [icons.colors] or [splash].
+[schema]
+min = 1
+max = 2
+
+[colors]
+# 0 = follow the system, 1 = light, 2 = dark. A single mode overrides this.
+mode = 0
+# ARGB. Every role the palettes below do not set is generated from it.
+seed = 0xFF5E81AC
+
+# Explicit roles, per brightness. Port a scheme here; see references/porting.md.
+# surfaceTint = 0x00000000 keeps elevated surfaces the color you chose.
+[colors.palette.light]
+primary = 0xFF5E81AC
+onPrimary = 0xFFFFFFFF
+surface = 0xFFECEFF4
+onSurface = 0xFF2E3440
+surfaceTint = 0x00000000
+
+[colors.palette.dark]
+primary = 0xFF88C0D0
+onPrimary = 0xFF2E3440
+surface = 0xFF2E3440
+onSurface = 0xFFECEFF4
+surfaceTint = 0x00000000
+
+# Corner radii, 0-40. Defaults 12, 8, 10.
+# [shapes]
+# card = 12
+# tile = 8
+# button = 10
+
+# "none", "gradient" (from the palette) or "image" with image = "background.png".
+# [background]
+# type = "gradient"

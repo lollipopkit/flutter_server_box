@@ -51,6 +51,14 @@ type RootTranslation = {
 		 */
 		docs: string
 		/**
+		 * T​h​e​m​e​s
+		 */
+		themes: string
+		/**
+		 * P​l​u​g​i​n​s
+		 */
+		plugins: string
+		/**
 		 * L​a​n​g​u​a​g​e
 		 */
 		languageLabel: string
@@ -192,6 +200,159 @@ type RootTranslation = {
 		 */
 		installReleasePrompt: string
 	}
+	themes: {
+		/**
+		 * M​a​k​e​ ​i​t​ ​y​o​u​r​s​.
+		 */
+		title: string
+		/**
+		 * O​f​f​i​c​i​a​l​ ​t​h​e​m​e​s​ ​f​o​r​ ​S​e​r​v​e​r​B​o​x​,​ ​t​h​e​ ​s​a​m​e​ ​o​n​e​s​ ​t​h​e​ ​a​p​p​'​s​ ​t​h​e​m​e​ ​s​t​o​r​e​ ​o​f​f​e​r​s​.​ ​I​n​s​t​a​l​l​ ​t​h​e​m​ ​i​n​ ​t​h​e​ ​a​p​p​ ​f​r​o​m​ ​S​e​t​t​i​n​g​s​ ​→​ ​A​p​p​e​a​r​a​n​c​e​ ​→​ ​T​h​e​m​e​ ​s​t​o​r​e​,​ ​o​r​ ​d​o​w​n​l​o​a​d​ ​a​ ​p​a​c​k​a​g​e​ ​a​n​d​ ​c​h​o​o​s​e​ ​I​n​s​t​a​l​l​ ​t​h​e​m​e​ ​→​ ​F​i​l​e​.
+		 */
+		subtitle: string
+		/**
+		 * N​o​ ​o​f​f​i​c​i​a​l​ ​t​h​e​m​e​s​ ​y​e​t​.​ ​A​ ​t​h​e​m​e​ ​i​s​ ​a​ ​f​o​l​d​e​r​ ​w​i​t​h​ ​a​ ​m​a​n​i​f​e​s​t​.​t​o​m​l​:​ ​c​o​l​o​r​s​ ​f​o​r​ ​l​i​g​h​t​ ​a​n​d​ ​d​a​r​k​,​ ​c​o​m​p​o​n​e​n​t​ ​s​t​y​l​e​s​,​ ​i​c​o​n​s​,​ ​a​ ​b​a​c​k​g​r​o​u​n​d​ ​a​n​d​ ​a​ ​s​p​l​a​s​h​.​ ​T​h​e​ ​g​u​i​d​e​ ​c​o​v​e​r​s​ ​m​a​k​i​n​g​ ​o​n​e​ ​a​n​d​ ​g​e​t​t​i​n​g​ ​i​t​ ​i​n​t​o​ ​t​h​e​ ​s​t​o​r​e​.
+		 */
+		empty: string
+		/**
+		 * T​h​e​ ​a​p​p​ ​c​h​e​c​k​s​ ​e​v​e​r​y​ ​s​t​o​r​e​ ​p​a​c​k​a​g​e​ ​a​g​a​i​n​s​t​ ​i​t​s​ ​S​H​A​-​2​5​6​ ​b​e​f​o​r​e​ ​i​n​s​t​a​l​l​i​n​g​ ​i​t​.
+		 */
+		note: string
+		/**
+		 * M​a​k​e​ ​a​ ​t​h​e​m​e
+		 */
+		authoring: string
+		/**
+		 * D​o​w​n​l​o​a​d​ ​.​f​s​b​t
+		 */
+		download: string
+		/**
+		 * S​o​u​r​c​e
+		 */
+		source: string
+		/**
+		 * L​i​g​h​t
+		 */
+		light: string
+		/**
+		 * D​a​r​k
+		 */
+		dark: string
+		/**
+		 * S​e​a​r​c​h​ ​t​h​e​m​e​s
+		 */
+		search: string
+		/**
+		 * M​o​d​e
+		 */
+		modeLabel: string
+		/**
+		 * A​l​l
+		 */
+		all: string
+		/**
+		 * S​o​r​t
+		 */
+		sortLabel: string
+		/**
+		 * N​a​m​e
+		 */
+		sortName: string
+		/**
+		 * R​e​c​e​n​t​l​y​ ​u​p​d​a​t​e​d
+		 */
+		sortUpdated: string
+		/**
+		 * N​o​ ​t​h​e​m​e​ ​m​a​t​c​h​e​s​.​ ​T​r​y​ ​a​n​o​t​h​e​r​ ​n​a​m​e​ ​o​r​ ​m​o​d​e​.
+		 */
+		noMatch: string
+		/**
+		 * T​h​e​m​e​ ​s​t​o​r​e
+		 */
+		storeTitle: string
+		/**
+		 * E​v​e​r​y​ ​o​f​f​i​c​i​a​l​ ​S​e​r​v​e​r​B​o​x​ ​t​h​e​m​e​,​ ​d​r​a​w​n​ ​t​h​e​ ​w​a​y​ ​t​h​e​ ​a​p​p​ ​d​r​a​w​s​ ​i​t​:​ ​i​t​s​ ​c​o​l​o​r​s​,​ ​c​o​m​p​o​n​e​n​t​s​,​ ​i​c​o​n​s​ ​a​n​d​ ​s​p​l​a​s​h​.​ ​I​n​s​t​a​l​l​ ​f​r​o​m​ ​t​h​e​ ​a​p​p​'​s​ ​t​h​e​m​e​ ​s​t​o​r​e​ ​o​r​ ​d​o​w​n​l​o​a​d​ ​t​h​e​ ​p​a​c​k​a​g​e​.
+		 */
+		storeSubtitle: string
+		/**
+		 * O​p​e​n​ ​t​h​e​ ​t​h​e​m​e​ ​s​t​o​r​e
+		 */
+		browse: string
+		/**
+		 * A​l​l​ ​t​h​e​m​e​s
+		 */
+		back: string
+		/**
+		 * D​e​t​a​i​l​s
+		 */
+		details: string
+		/**
+		 * I​c​o​n​s
+		 */
+		icons: string
+		/**
+		 * T​a​b​s​,​ ​a​n​d​ ​w​h​e​n​ ​s​e​l​e​c​t​e​d
+		 */
+		tabIcons: string
+		/**
+		 * S​y​m​b​o​l​s
+		 */
+		navIcons: string
+		/**
+		 * P​a​l​e​t​t​e
+		 */
+		palette: string
+		/**
+		 * C​o​m​p​o​n​e​n​t​s
+		 */
+		components: string
+		/**
+		 * S​p​l​a​s​h​ ​s​c​r​e​e​n
+		 */
+		splash: string
+		/**
+		 * I​n​s​t​a​l​l
+		 */
+		install: string
+		/**
+		 * I​n​ ​t​h​e​ ​a​p​p​,​ ​o​p​e​n​ ​S​e​t​t​i​n​g​s​ ​→​ ​A​p​p​e​a​r​a​n​c​e​ ​→​ ​T​h​e​m​e​ ​s​t​o​r​e​ ​a​n​d​ ​p​i​c​k​ ​{​n​a​m​e​}​.​ ​O​r​ ​d​o​w​n​l​o​a​d​ ​t​h​e​ ​p​a​c​k​a​g​e​ ​a​n​d​ ​c​h​o​o​s​e​ ​I​n​s​t​a​l​l​ ​t​h​e​m​e​ ​→​ ​F​i​l​e​.
+		 * @param {unknown} name
+		 */
+		installSteps: RequiredParams<'name'>
+		/**
+		 * D​e​f​a​u​l​t
+		 */
+		base: string
+		/**
+		 * H​o​v​e​r​e​d
+		 */
+		hovered: string
+		/**
+		 * P​r​e​s​s​e​d
+		 */
+		pressed: string
+		/**
+		 * D​i​s​a​b​l​e​d
+		 */
+		disabled: string
+	}
+	plugins: {
+		/**
+		 * P​l​u​g​i​n​s​.
+		 */
+		title: string
+		/**
+		 * O​f​f​i​c​i​a​l​ ​p​l​u​g​i​n​s​ ​f​o​r​ ​S​e​r​v​e​r​B​o​x​,​ ​i​n​s​t​a​l​l​e​d​ ​f​r​o​m​ ​t​h​e​ ​a​p​p​'​s​ ​p​l​u​g​i​n​ ​s​t​o​r​e​.
+		 */
+		subtitle: string
+		/**
+		 * N​o​ ​o​f​f​i​c​i​a​l​ ​p​l​u​g​i​n​s​ ​y​e​t​.
+		 */
+		empty: string
+		/**
+		 * D​o​w​n​l​o​a​d
+		 */
+		download: string
+	}
 	download: {
 		/**
 		 * E​v​e​r​y​ ​p​l​a​t​f​o​r​m​,​ ​e​v​e​r​y​ ​s​o​u​r​c​e​.
@@ -280,6 +441,14 @@ export type TranslationFunctions = {
 		 * Docs
 		 */
 		docs: () => LocalizedString
+		/**
+		 * Themes
+		 */
+		themes: () => LocalizedString
+		/**
+		 * Plugins
+		 */
+		plugins: () => LocalizedString
 		/**
 		 * Language
 		 */
@@ -420,6 +589,158 @@ export type TranslationFunctions = {
 		 * # Android, Linux, and Windows
 		 */
 		installReleasePrompt: () => LocalizedString
+	}
+	themes: {
+		/**
+		 * Make it yours.
+		 */
+		title: () => LocalizedString
+		/**
+		 * Official themes for ServerBox, the same ones the app's theme store offers. Install them in the app from Settings → Appearance → Theme store, or download a package and choose Install theme → File.
+		 */
+		subtitle: () => LocalizedString
+		/**
+		 * No official themes yet. A theme is a folder with a manifest.toml: colors for light and dark, component styles, icons, a background and a splash. The guide covers making one and getting it into the store.
+		 */
+		empty: () => LocalizedString
+		/**
+		 * The app checks every store package against its SHA-256 before installing it.
+		 */
+		note: () => LocalizedString
+		/**
+		 * Make a theme
+		 */
+		authoring: () => LocalizedString
+		/**
+		 * Download .fsbt
+		 */
+		download: () => LocalizedString
+		/**
+		 * Source
+		 */
+		source: () => LocalizedString
+		/**
+		 * Light
+		 */
+		light: () => LocalizedString
+		/**
+		 * Dark
+		 */
+		dark: () => LocalizedString
+		/**
+		 * Search themes
+		 */
+		search: () => LocalizedString
+		/**
+		 * Mode
+		 */
+		modeLabel: () => LocalizedString
+		/**
+		 * All
+		 */
+		all: () => LocalizedString
+		/**
+		 * Sort
+		 */
+		sortLabel: () => LocalizedString
+		/**
+		 * Name
+		 */
+		sortName: () => LocalizedString
+		/**
+		 * Recently updated
+		 */
+		sortUpdated: () => LocalizedString
+		/**
+		 * No theme matches. Try another name or mode.
+		 */
+		noMatch: () => LocalizedString
+		/**
+		 * Theme store
+		 */
+		storeTitle: () => LocalizedString
+		/**
+		 * Every official ServerBox theme, drawn the way the app draws it: its colors, components, icons and splash. Install from the app's theme store or download the package.
+		 */
+		storeSubtitle: () => LocalizedString
+		/**
+		 * Open the theme store
+		 */
+		browse: () => LocalizedString
+		/**
+		 * All themes
+		 */
+		back: () => LocalizedString
+		/**
+		 * Details
+		 */
+		details: () => LocalizedString
+		/**
+		 * Icons
+		 */
+		icons: () => LocalizedString
+		/**
+		 * Tabs, and when selected
+		 */
+		tabIcons: () => LocalizedString
+		/**
+		 * Symbols
+		 */
+		navIcons: () => LocalizedString
+		/**
+		 * Palette
+		 */
+		palette: () => LocalizedString
+		/**
+		 * Components
+		 */
+		components: () => LocalizedString
+		/**
+		 * Splash screen
+		 */
+		splash: () => LocalizedString
+		/**
+		 * Install
+		 */
+		install: () => LocalizedString
+		/**
+		 * In the app, open Settings → Appearance → Theme store and pick {name}. Or download the package and choose Install theme → File.
+		 */
+		installSteps: (arg: { name: unknown }) => LocalizedString
+		/**
+		 * Default
+		 */
+		base: () => LocalizedString
+		/**
+		 * Hovered
+		 */
+		hovered: () => LocalizedString
+		/**
+		 * Pressed
+		 */
+		pressed: () => LocalizedString
+		/**
+		 * Disabled
+		 */
+		disabled: () => LocalizedString
+	}
+	plugins: {
+		/**
+		 * Plugins.
+		 */
+		title: () => LocalizedString
+		/**
+		 * Official plugins for ServerBox, installed from the app's plugin store.
+		 */
+		subtitle: () => LocalizedString
+		/**
+		 * No official plugins yet.
+		 */
+		empty: () => LocalizedString
+		/**
+		 * Download
+		 */
+		download: () => LocalizedString
 	}
 	download: {
 		/**

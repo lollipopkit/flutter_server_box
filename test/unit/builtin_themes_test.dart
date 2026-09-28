@@ -63,19 +63,18 @@ void main() {
         bundle: bundle,
         rootDirectory: '${root.path}/lazy',
       );
-      expect(lazy.loaded(BuiltinTheme.oneDarkPro), isNull);
+      expect(lazy.loaded(BuiltinTheme.amoled), isNull);
       final themes = await Future.wait([
-        lazy.load(BuiltinTheme.oneDarkPro),
-        lazy.load(BuiltinTheme.oneDarkPro),
+        lazy.load(BuiltinTheme.amoled),
+        lazy.load(BuiltinTheme.amoled),
       ]);
       expect(themes.first, same(themes.last));
       expect(bundle.paths.where((path) => path.startsWith('assets/themes/')), [
-        'assets/themes/one-dark-pro/manifest.toml',
+        'assets/themes/amoled/manifest.toml',
       ]);
       final count = bundle.paths.length;
-      expect(await lazy.load(BuiltinTheme.oneDarkPro), same(themes.first));
+      expect(await lazy.load(BuiltinTheme.amoled), same(themes.first));
       expect(bundle.paths.length, count);
-      expect(lazy.loaded(BuiltinTheme.dracula), isNull);
     },
   );
 
@@ -99,9 +98,9 @@ void main() {
       bundle: bundle,
       rootDirectory: '${root.path}/retry',
     );
-    await expectLater(lazy.load(BuiltinTheme.dracula), throwsFormatException);
-    expect(lazy.loaded(BuiltinTheme.dracula), isNull);
-    expect((await lazy.load(BuiltinTheme.dracula)).id, 'dracula');
+    await expectLater(lazy.load(BuiltinTheme.amoled), throwsFormatException);
+    expect(lazy.loaded(BuiltinTheme.amoled), isNull);
+    expect((await lazy.load(BuiltinTheme.amoled)).id, 'amoled');
   });
 
   for (final folder in Directory(

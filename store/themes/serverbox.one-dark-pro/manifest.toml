@@ -1,0 +1,188 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/fsbt-manifest.schema.json
+id = "serverbox.one-dark-pro"
+name = "One Dark Pro"
+modes = ["dark"]
+
+# SVG icons, icon colors and a splash: schema 2 features.
+[schema]
+min = 2
+max = 2
+
+[colors]
+mode = 2
+seed = 0xFF61AFEF
+
+# The editor's background for cards, the sidebar's for the page, and
+# its syntax colors as accents.
+[colors.palette.dark]
+primary = 0xFF61AFEF
+onPrimary = 0xFF21252B
+primaryContainer = 0xFF2C3E54
+onPrimaryContainer = 0xFFD7E9FB
+secondary = 0xFFC678DD
+onSecondary = 0xFF21252B
+secondaryContainer = 0xFF45304F
+onSecondaryContainer = 0xFFF1D9F8
+tertiary = 0xFF98C379
+onTertiary = 0xFF21252B
+tertiaryContainer = 0xFF34432B
+onTertiaryContainer = 0xFFDCEFCF
+error = 0xFFE06C75
+onError = 0xFF21252B
+errorContainer = 0xFF552C31
+onErrorContainer = 0xFFFAD6D9
+surface = 0xFF21252B
+surfaceDim = 0xFF1E2227
+surfaceBright = 0xFF3E4451
+surfaceContainerLowest = 0xFF1B1E23
+surfaceContainerLow = 0xFF262A31
+surfaceContainer = 0xFF282C34
+surfaceContainerHigh = 0xFF2F343D
+surfaceContainerHighest = 0xFF353B45
+onSurface = 0xFFABB2BF
+onSurfaceVariant = 0xFF9DA5B4
+outline = 0xFF7F848E
+outlineVariant = 0xFF3E4452
+inverseSurface = 0xFFABB2BF
+onInverseSurface = 0xFF21252B
+inversePrimary = 0xFF2B6CB0
+shadow = 0xFF000000
+scrim = 0xFF000000
+surfaceTint = 0
+
+[icons]
+style = "classic"
+
+[icons.images]
+"tab.server" = "icons/tab_server.svg"
+"tab.server.selected" = "icons/tab_server_selected.svg"
+"tab.ssh" = "icons/tab_ssh.svg"
+"tab.ssh.selected" = "icons/tab_ssh_selected.svg"
+"tab.file" = "icons/tab_file.svg"
+"tab.file.selected" = "icons/tab_file_selected.svg"
+"tab.snippet" = "icons/tab_snippet.svg"
+"tab.snippet.selected" = "icons/tab_snippet_selected.svg"
+"tab.agent" = "icons/tab_agent.svg"
+"tab.agent.selected" = "icons/tab_agent_selected.svg"
+"tab.benchmark" = "icons/tab_benchmark.svg"
+"tab.benchmark.selected" = "icons/tab_benchmark_selected.svg"
+"tab.remoteDesktop" = "icons/tab_remoteDesktop.svg"
+"tab.remoteDesktop.selected" = "icons/tab_remoteDesktop_selected.svg"
+"tab.virt" = "icons/tab_virt.svg"
+"tab.virt.selected" = "icons/tab_virt_selected.svg"
+"nav.more" = "icons/nav_more.svg"
+"nav.settings" = "icons/nav_settings.svg"
+"nav.tune" = "icons/nav_tune.svg"
+"nav.privacy" = "icons/nav_privacy.svg"
+"nav.agent" = "icons/nav_agent.svg"
+"nav.tabs" = "icons/nav_tabs.svg"
+"nav.server" = "icons/nav_server.svg"
+"nav.sort" = "icons/nav_sort.svg"
+"nav.terminal" = "icons/nav_terminal.svg"
+"nav.folder" = "icons/nav_folder.svg"
+"nav.cloud" = "icons/nav_cloud.svg"
+"nav.snippet" = "icons/nav_snippet.svg"
+"nav.inbox" = "icons/nav_inbox.svg"
+"nav.key" = "icons/nav_key.svg"
+"nav.info" = "icons/nav_info.svg"
+"nav.download" = "icons/nav_download.svg"
+"nav.desktop" = "icons/nav_desktop.svg"
+
+# Syntax colors: strings green, keywords purple, classes yellow, numbers orange,
+# support cyan. Hex where One Dark has a color Material has no role for.
+[icons.colors]
+"tab.server.selected" = "primary"
+"tab.ssh.selected" = "tertiary"
+"tab.file.selected" = 0xFFE5C07B
+"tab.snippet.selected" = "secondary"
+"tab.agent.selected" = "secondary"
+"tab.benchmark.selected" = 0xFFD19A66
+"tab.remoteDesktop.selected" = 0xFF56B6C2
+"tab.virt.selected" = "primary"
+"nav.terminal" = "tertiary"
+"nav.key" = 0xFFE5C07B
+"nav.cloud" = 0xFF56B6C2
+"nav.agent" = "secondary"
+"nav.download" = "tertiary"
+"nav.folder" = 0xFFE5C07B
+
+[splash]
+color = "surface"
+logo = "splash_logo.svg"
+duration = 600
+
+[shapes]
+card = 8
+tile = 6
+button = 6
+
+[components.card]
+backgroundColor = "surfaceContainer"
+radius = 8
+borderWidth = 0
+elevation = 0
+surfaceTintColor = 0
+margin = [5, 4, 5, 4]
+
+[components.tile]
+selectedTileColor = 0xFF2C313C
+selectedColor = "onSurface"
+iconColor = "onSurfaceVariant"
+radius = 6
+
+[components.button]
+backgroundColor = "primary"
+foregroundColor = "onPrimary"
+radius = 6
+elevation = 0
+padding = [16, 9, 16, 9]
+
+[components.button.hovered]
+backgroundColor = 0xFF7CBDF2
+
+[components.button.pressed]
+overlayColor = 0x26000000
+
+[components.button.focused]
+borderColor = "secondary"
+borderWidth = 2
+
+[components.button.disabled]
+backgroundColor = "surfaceContainerHighest"
+foregroundColor = "outline"
+
+[components.input]
+filled = true
+fillColor = 0xFF1D1F23
+radius = 6
+borderColor = "outlineVariant"
+borderWidth = 1
+focusedBorderColor = "primary"
+errorBorderColor = "error"
+padding = [12, 8, 12, 8]
+
+[components.navigation]
+backgroundColor = "surfaceContainerLowest"
+indicatorColor = "primaryContainer"
+indicatorRadius = 8
+selectedIconColor = "primary"
+unselectedIconColor = "outline"
+selectedLabelColor = "primary"
+unselectedLabelColor = "onSurfaceVariant"
+elevation = 0
+
+[components.dialog]
+backgroundColor = "surfaceContainerHigh"
+radius = 10
+borderColor = "outlineVariant"
+borderWidth = 1
+elevation = 0
+surfaceTintColor = 0
+barrierColor = 0x99000000
+
+[components.sheet]
+backgroundColor = "surfaceContainer"
+radius = 14
+elevation = 0
+surfaceTintColor = 0
+dragHandleColor = "outline"

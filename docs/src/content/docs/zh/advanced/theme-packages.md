@@ -3,7 +3,8 @@ title: 主题使用
 description: 选择、安装和管理主题
 ---
 
-Server Box 内置了多款主题，也支持从主题商店或主题文件安装更多主题。主题相关设置位于
+Server Box 内置 Default 和 AMOLED 两款主题，也支持从主题商店或主题文件安装更多主题，
+例如 Midnight、One Dark Pro、GitHub Dark 和 Dracula。主题相关设置位于
 **Settings → Appearance**。
 
 ## 选择主题

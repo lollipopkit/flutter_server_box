@@ -13,18 +13,23 @@ attributions are listed in the authoring guide.
 ## Built-in themes
 
 `BuiltinTheme` (`lib/data/model/app/builtin_theme.dart`) lists the packages
-bundled with this build and their labels in the picker. `Default` is a Dart
-constant and does not read an asset. The other five themes each have a source
-folder under `assets/themes/<id>/` containing a `manifest.toml`; each folder is
-registered in `pubspec.yaml`.
+bundled with this build: only what the app needs without a network. `Default`
+is a Dart constant and does not read an asset; its picker label is localized
+(fl_lib `defaultLabel`). AMOLED, which legacy AMOLED theme modes migrate
+to, has a source folder under `assets/themes/amoled/` containing a
+`manifest.toml`, registered in `pubspec.yaml`. Every other official theme is in
+the theme store (see [Official themes](#official-themes)); a saved preset that
+names a bundled theme this build no longer carries falls back to Default
+(`ThemePackages.reconcileSelection`).
 
 Bundled folders use the same installer as imported folders and `.fsbt`
 archives, so built-in themes support the same fields as installed themes. The
 folders are committed as source and bundled directly by Flutter; no archive or
 other binary asset is committed for them.
 
-To add a theme, create its folder, register it in `pubspec.yaml`, and add a
-`BuiltinTheme` case with its picker label.
+A new official theme goes to the store, not here. Bundle one only if the app
+must have it offline, by creating its folder, registering it in `pubspec.yaml`,
+and adding a `BuiltinTheme` case.
 
 ## Loading
 
@@ -86,17 +91,49 @@ in either case.
 
 ## Official themes
 
-`lollipopkit/serverbox-plugins` stores official themes in `themes/`, with one
-source folder and one listing per theme. The `plugins/` directory sits beside
-it.
+Official themes live in `store/` in this repository: `store/repo.toml`, and
+for each theme a listing `store/themes/<id>.toml` beside its source folder
+`store/themes/<id>/`. `test/unit/theme_store_tree_test.dart` reads the folder
+the way the store does, so a listing the reader would drop fails a test rather
+than disappearing from the store.
 
-`scripts/publish-themes.sh <id> <version>` publishes one version. It reads the
-id and `[schema]` range from the manifest, then packages the folder with `zip`.
-The `-X` option excludes machine-specific file attributes. The script computes
-the digest and size, creates a release tagged `<id>-<version>` with
-`<tag>.fsbt` as its asset, and appends a `[[version]]` block to the listing.
+The app does not download this repository. The website build runs
+`scripts/store-tarball.sh`, which writes `store/` at `HEAD` with `git archive`
+to `public/store.tar.gz`, and the catalog lists
+`https://serverbox.lollipopkit.com/store.tar.gz`. A change to `store/` reaches
+the store when the website is deployed: the Cloudflare Pages project builds on
+changes under `store/` as well as `website/` and `docs/`. The same build lists
+the themes on the site (`website/store-data.js`). `git archive` is used rather than `tar`
+because macOS `tar` writes binary xattr records the reader refuses.
 
-The script enforces two ordering and integrity rules. It uploads the release
-before updating the listing, so the listing never points to a missing asset. It
-also refuses to republish a recorded version with a different digest; each
-version must continue to identify the same bytes.
+`scripts/publish-themes.py` publishes every theme that changed since its newest
+recorded version, in one run. It runs the serverbox-theme skill's
+`scripts/publish.py` with `store/` as the theme repository — the same publisher
+a third-party author runs in their own repository, where their themes are
+released; only official themes are released from this repository. It packs each folder and compares the package's
+digest with the newest version in the listing: the same digest means nothing
+changed, and the theme is skipped. A changed theme gets the next patch version
+(`--bump minor|major` for another part, `<id>=<version>` for an exact one, 1.0.0
+for a theme with no version yet). `--dry-run` shows the plan; naming ids limits
+the run to those themes.
+
+Comparing digests works because the package is deterministic: entries sorted,
+one fixed timestamp and permission, and stored rather than deflated, so the
+bytes depend on the files alone and not on a checkout's modification times or a
+machine's zlib.
+
+All new packages are uploaded together, as `<id>-<version>.fsbt`, to one
+release of this repository tagged `themes`; then each listing gets a
+`[[version]]` block with the digest and size, and the listings are committed
+afterwards. One release holds every package: the app's update check reads this
+repository's releases, a tag without a build number is skipped there, and a
+release per theme version would push the app's releases off the first page. The
+release is a pre-release, created with `--latest=false`, and is never this
+repository's Latest: GitHub does not mark a pre-release Latest, so Latest is
+always an app release, and the script checks that after each run.
+
+The script keeps two ordering and integrity rules. It uploads packages before
+updating the listings, so a listing never points to a missing asset. It never
+replaces an uploaded asset — one left by an interrupted run is accepted only if
+its bytes are the same — and never records a version number for a second set of
+bytes.

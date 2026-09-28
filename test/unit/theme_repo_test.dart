@@ -144,10 +144,16 @@ void main() {
         isNotEmpty,
         reason: 'the bundled catalog offers no repository',
       );
+      // `store/`, served by the website build (scripts/store-tarball.sh).
       expect(
-        catalog.repos.single.url.host,
-        'github.com',
-        reason: 'the official repository moved off github',
+        catalog.repos.single.url.toString(),
+        'https://serverbox.lollipopkit.com/store.tar.gz',
+        reason: 'the official repository moved',
+      );
+      expect(
+        ThemeRepos.archiveUrlOf(catalog.repos.single.url.toString()),
+        catalog.repos.single.url.toString(),
+        reason: 'an address naming a tarball is fetched as it is',
       );
     });
   });

@@ -36,8 +36,8 @@ import 'package:toml/toml.dart';
 /// Where a theme's file lives, and which theme a path is for.
 ///
 /// **The path is the id**, and it is the same id the package inside carries —
-/// [ThemePackages.idPattern], which is why `themes/serverbox.ember.toml`
-/// describes the theme whose manifest says `id = "serverbox.ember"`. Two
+/// [ThemePackages.idPattern], which is why `themes/example.amethyst.toml`
+/// describes the theme whose manifest says `id = "example.amethyst"`. Two
 /// repositories may offer a theme by the same id, which costs nothing — what is
 /// installed is content-addressed, so they are two packages and not one
 /// shadowing the other.

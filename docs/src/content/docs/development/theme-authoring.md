@@ -267,8 +267,9 @@ The logo is one file named `splash_logo.png`, `splash_logo.jpg`,
 `splash_logo.jpeg` or `splash_logo.svg` at the archive root — a name, not a
 path. A PNG or JPEG is at most 2048 × 2048 pixels and 512 KiB, an SVG 512 KiB
 and the same document checks as an icon. It is drawn at 96 logical pixels,
-centered, tinted like an icon only when it is an SVG — a raster logo keeps its
-own colors.
+centered, in its own colors: unlike an icon, it is not tinted. In an SVG,
+`currentColor` is the palette's `onSurface`, so a logo can mix fixed colors with
+one that follows the theme.
 
 `duration` is how long the splash stays up before it fades, and what it delays
 is the launch, which is why the ceiling is low. It is read once, when the app
@@ -318,7 +319,7 @@ schema = 1
 name = "ServerBox themes"
 
 [[repo]]
-url = "https://github.com/lollipopkit/serverbox-plugins"
+url = "https://serverbox.lollipopkit.com/store.tar.gz"
 ```
 
 Repository URLs must use HTTPS and point to either a git repository or a
@@ -326,9 +327,10 @@ tarball. Git repositories are fetched from
 `<address>/archive/HEAD.tar.gz`, which uses the repository's default branch
 without assuming its name.
 
-The bundled repository is
-[`lollipopkit/serverbox-plugins`](https://github.com/lollipopkit/serverbox-plugins),
-which contains the official themes and plugins in one tree.
+The bundled catalog lists the official repository, which is the
+[`store/`](https://github.com/lollipopkit/flutter_server_box/tree/main/store)
+folder of this repository served as a tarball by the website. To offer an
+official theme, see [Themes](/docs/development/themes/#official-themes).
 
 ### A theme repository
 
@@ -377,8 +379,15 @@ an explanation. Versions using schema 2 features must set `schema_min = 2`;
 setting it to 1 could offer older apps a package that installs but silently
 loses its icon, color, or splash screen.
 
-Publish each theme version as a separate release tagged `<id>-<version>` and
-attach its `.fsbt` archive. To add a repository to the app's catalog, open a
+A third-party theme is released from its author's own repository; only official
+themes are released from this one. The serverbox-theme skill's
+`scripts/publish.py` does it the way the official themes are published: it
+detects which themes changed, uploads their packages to one pre-release of the
+author's repository (never its Latest) and appends the versions to the
+listings. A package can also be hosted anywhere else that serves it over
+HTTPS. The listing's `sha256` is what binds
+the address to the bytes: the store installs nothing without one, and nothing
+whose digest does not match. To add a repository to the app's catalog, open a
 pull request to this repository that adds a `[[repo]]` entry.
 
 Repositories may contain a `plugins/` section alongside `themes/`. This build
@@ -391,8 +400,9 @@ Catalog and repository tree size limits are documented in
 
 ## Theme sources
 
-ServerBox adapts the UI palettes of these VS Code themes to Material surfaces,
-selection states, cards and buttons. These are independent adaptations, not
+The official One Dark Pro, GitHub Dark and Dracula themes in the theme store
+adapt the UI palettes of these VS Code themes to Material surfaces, selection
+states, cards and buttons. These are independent adaptations, not
 VS Code extension bundles. Fonts and terminal/editor color settings remain
 separate. Midnight and AMOLED are original ServerBox palettes. AMOLED uses black
 surfaces in dark mode and generated colors in light mode, allowing System

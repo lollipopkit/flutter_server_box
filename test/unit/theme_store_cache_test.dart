@@ -331,5 +331,16 @@ void main() {
       expect(setting.appThemePreset.fetch(), BuiltinTheme.defaultTheme.id);
       expect(setting.appThemePackage.fetch(), isEmpty);
     });
+
+    test('a bundled theme this build no longer carries falls back', () {
+      // Midnight, One Dark Pro, GitHub Dark and Dracula moved to the store.
+      setting.appThemePreset.put('dracula');
+      ThemePackages.reconcileSelection();
+      expect(setting.appThemePreset.fetch(), BuiltinTheme.defaultTheme.id);
+
+      setting.appThemePreset.put(BuiltinTheme.amoled.id);
+      ThemePackages.reconcileSelection();
+      expect(setting.appThemePreset.fetch(), BuiltinTheme.amoled.id);
+    });
   });
 }

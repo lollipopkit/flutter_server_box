@@ -1039,6 +1039,12 @@ abstract final class ThemePackages {
         when installed(installationId) == null) {
       // TODO(appearance): package assets can be restored with backups later.
       _selectDefaultFallback();
+    } else if (installationIdOf(preset) == null &&
+        preset != customPreset &&
+        BuiltinTheme.fromId(preset) == null) {
+      // A bundled theme this build no longer carries (the ones that moved to
+      // the theme store), or a preset from a newer build: nothing to show it.
+      _selectDefaultFallback();
     }
     final background = Stores.setting.appBackgroundPath.fetch();
     if (preset == customPreset &&

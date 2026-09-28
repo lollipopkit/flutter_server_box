@@ -469,7 +469,15 @@ void main() {
       await settle(tester);
       late ThemePackage theme;
       await tester.runAsync(() async {
-        await tester.tap(find.text(builtin.label).last);
+        await tester.tap(
+          find
+              .text(
+                builtin == BuiltinTheme.defaultTheme
+                    ? libL10n.defaultLabel
+                    : builtin.label,
+              )
+              .last,
+        );
         theme = await ThemePackages.loadBuiltin(builtin);
       });
       await settle(tester);

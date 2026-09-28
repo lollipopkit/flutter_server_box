@@ -81,7 +81,7 @@ extension _App on _AppSettingsPageState {
         title: Text(label),
         trailing: _setting.appThemePreset.listenable().listenVal(
           (preset) => Text(
-            BuiltinTheme.fromId(preset)?.label ??
+            _presetLabel(BuiltinTheme.fromId(preset)) ??
                 switch (ThemePackages.installationIdOf(preset)) {
                   final installationId? =>
                     ThemePackages.installed(installationId)?.name ??
@@ -137,7 +137,7 @@ extension _App on _AppSettingsPageState {
                 ])
                   SheetChoiceTile(
                     title:
-                        BuiltinTheme.fromId(value)?.label ??
+                        _presetLabel(BuiltinTheme.fromId(value)) ??
                         (value == ThemePackages.customPreset
                             ? libL10n.custom
                             : names[value] ?? libL10n.invalid),
@@ -176,9 +176,18 @@ extension _App on _AppSettingsPageState {
         },
       ),
       keywords:
-          '${BuiltinTheme.values.map((theme) => theme.label).join(' ')} custom theme',
+          '${BuiltinTheme.values.map((theme) => theme.label).join(' ')} '
+          '${libL10n.defaultLabel} custom theme',
     );
   }
+
+  /// What a bundled theme is called in the picker: "Default" in the user's
+  /// language, and the rest by their own names.
+  String? _presetLabel(BuiltinTheme? theme) => switch (theme) {
+    null => null,
+    BuiltinTheme.defaultTheme => libL10n.defaultLabel,
+    _ => theme.label,
+  };
 
   /// Opens the catalog, which is reached from its own row in the appearance
   /// page and from nowhere else.

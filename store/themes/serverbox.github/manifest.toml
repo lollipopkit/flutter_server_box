@@ -1,0 +1,230 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/fsbt-manifest.schema.json
+id = "serverbox.github"
+name = "GitHub"
+# Primer's light and dark defaults, the way github.com looks in each.
+modes = ["light", "dark"]
+
+# SVG icons, icon colors and a splash: schema 2 features.
+[schema]
+min = 2
+max = 2
+
+[colors]
+mode = 0
+seed = 0xFF0969DA
+
+[colors.palette.light]
+primary = 0xFF0969DA
+onPrimary = 0xFFFFFFFF
+primaryContainer = 0xFFDDF4FF
+onPrimaryContainer = 0xFF0A3069
+secondary = 0xFF8250DF
+onSecondary = 0xFFFFFFFF
+secondaryContainer = 0xFFFBEFFF
+onSecondaryContainer = 0xFF3E1F79
+tertiary = 0xFF1F883D
+onTertiary = 0xFFFFFFFF
+tertiaryContainer = 0xFFDAFBE1
+onTertiaryContainer = 0xFF044F1E
+error = 0xFFD1242F
+onError = 0xFFFFFFFF
+errorContainer = 0xFFFFEBE9
+onErrorContainer = 0xFF82071E
+surface = 0xFFFFFFFF
+surfaceDim = 0xFFEAEEF2
+surfaceBright = 0xFFFFFFFF
+surfaceContainerLowest = 0xFFFFFFFF
+surfaceContainerLow = 0xFFF6F8FA
+surfaceContainer = 0xFFF1F3F5
+surfaceContainerHigh = 0xFFEAEEF2
+surfaceContainerHighest = 0xFFE3E8ED
+onSurface = 0xFF1F2328
+onSurfaceVariant = 0xFF59636E
+outline = 0xFF818B98
+outlineVariant = 0xFFD0D7DE
+inverseSurface = 0xFF24292F
+onInverseSurface = 0xFFF6F8FA
+inversePrimary = 0xFF4493F8
+shadow = 0xFF1F2328
+scrim = 0xFF1F2328
+surfaceTint = 0
+
+[colors.palette.dark]
+primary = 0xFF4493F8
+onPrimary = 0xFF0D1117
+primaryContainer = 0xFF17314F
+onPrimaryContainer = 0xFFCAE8FF
+secondary = 0xFFAB7DF8
+onSecondary = 0xFF0D1117
+secondaryContainer = 0xFF2E2350
+onSecondaryContainer = 0xFFE6D8FF
+tertiary = 0xFF3FB950
+onTertiary = 0xFF0D1117
+tertiaryContainer = 0xFF12361F
+onTertiaryContainer = 0xFFAFF5B4
+error = 0xFFF85149
+onError = 0xFF0D1117
+errorContainer = 0xFF4A1618
+onErrorContainer = 0xFFFFD8D3
+surface = 0xFF0D1117
+surfaceDim = 0xFF0D1117
+surfaceBright = 0xFF2A313C
+surfaceContainerLowest = 0xFF010409
+surfaceContainerLow = 0xFF151B23
+surfaceContainer = 0xFF161B22
+surfaceContainerHigh = 0xFF1C2128
+surfaceContainerHighest = 0xFF262C36
+onSurface = 0xFFE6EDF3
+onSurfaceVariant = 0xFF9198A1
+outline = 0xFF6E7681
+outlineVariant = 0xFF30363D
+inverseSurface = 0xFFE6EDF3
+onInverseSurface = 0xFF0D1117
+inversePrimary = 0xFF0969DA
+shadow = 0xFF010409
+scrim = 0xFF010409
+surfaceTint = 0
+
+[icons]
+style = "classic"
+
+# Fine lines and crisp corners, after Primer's octicons.
+[icons.images]
+"tab.server" = "icons/tab_server.svg"
+"tab.server.selected" = "icons/tab_server_selected.svg"
+"tab.ssh" = "icons/tab_ssh.svg"
+"tab.ssh.selected" = "icons/tab_ssh_selected.svg"
+"tab.file" = "icons/tab_file.svg"
+"tab.file.selected" = "icons/tab_file_selected.svg"
+"tab.snippet" = "icons/tab_snippet.svg"
+"tab.snippet.selected" = "icons/tab_snippet_selected.svg"
+"tab.agent" = "icons/tab_agent.svg"
+"tab.agent.selected" = "icons/tab_agent_selected.svg"
+"tab.benchmark" = "icons/tab_benchmark.svg"
+"tab.benchmark.selected" = "icons/tab_benchmark_selected.svg"
+"tab.remoteDesktop" = "icons/tab_remoteDesktop.svg"
+"tab.remoteDesktop.selected" = "icons/tab_remoteDesktop_selected.svg"
+"tab.virt" = "icons/tab_virt.svg"
+"tab.virt.selected" = "icons/tab_virt_selected.svg"
+"nav.more" = "icons/nav_more.svg"
+"nav.settings" = "icons/nav_settings.svg"
+"nav.tune" = "icons/nav_tune.svg"
+"nav.privacy" = "icons/nav_privacy.svg"
+"nav.agent" = "icons/nav_agent.svg"
+"nav.tabs" = "icons/nav_tabs.svg"
+"nav.server" = "icons/nav_server.svg"
+"nav.sort" = "icons/nav_sort.svg"
+"nav.terminal" = "icons/nav_terminal.svg"
+"nav.folder" = "icons/nav_folder.svg"
+"nav.cloud" = "icons/nav_cloud.svg"
+"nav.snippet" = "icons/nav_snippet.svg"
+"nav.inbox" = "icons/nav_inbox.svg"
+"nav.key" = "icons/nav_key.svg"
+"nav.info" = "icons/nav_info.svg"
+"nav.download" = "icons/nav_download.svg"
+"nav.desktop" = "icons/nav_desktop.svg"
+
+# Copilot purple for the agent, success green where something finishes.
+[icons.colors]
+"tab.agent.selected" = "secondary"
+"nav.agent" = "secondary"
+"nav.download" = "tertiary"
+"nav.privacy" = "tertiary"
+
+[splash]
+color = "surface"
+logo = "splash_logo.svg"
+duration = 600
+
+[shapes]
+card = 6
+tile = 6
+button = 6
+
+[components.card]
+backgroundColor = "surface"
+radius = 6
+borderColor = "outlineVariant"
+borderWidth = 1
+elevation = 0
+surfaceTintColor = 0
+margin = [4, 4, 4, 4]
+
+[components.tile]
+selectedTileColor = "surfaceContainerHigh"
+selectedColor = "onSurface"
+iconColor = "onSurfaceVariant"
+radius = 6
+
+# The primary button is green, as on github.com.
+[components.button]
+backgroundColor = "tertiary"
+foregroundColor = "onTertiary"
+radius = 6
+borderColor = 0x26000000
+borderWidth = 1
+elevation = 0
+padding = [16, 8, 16, 8]
+
+[components.button.pressed]
+overlayColor = 0x1F000000
+
+[components.button.focused]
+borderColor = "primary"
+borderWidth = 2
+
+[components.button.disabled]
+backgroundColor = "surfaceContainerHigh"
+foregroundColor = "onSurfaceVariant"
+borderColor = "outlineVariant"
+
+[components.light.button.hovered]
+backgroundColor = 0xFF1C8139
+
+[components.dark.button.hovered]
+backgroundColor = 0xFF29903B
+
+[components.input]
+filled = true
+fillColor = "surface"
+radius = 6
+borderColor = "outlineVariant"
+borderWidth = 1
+focusedBorderColor = "primary"
+errorBorderColor = "error"
+padding = [12, 7, 12, 7]
+
+[components.navigation]
+backgroundColor = "surfaceContainerLow"
+indicatorColor = "surfaceContainerHighest"
+indicatorRadius = 6
+selectedIconColor = "onSurface"
+unselectedIconColor = "onSurfaceVariant"
+selectedLabelColor = "onSurface"
+unselectedLabelColor = "onSurfaceVariant"
+elevation = 0
+
+[components.dialog]
+backgroundColor = "surface"
+radius = 12
+borderColor = "outlineVariant"
+borderWidth = 1
+elevation = 8
+shadowColor = "shadow"
+surfaceTintColor = 0
+insetPadding = [20, 24, 20, 24]
+
+[components.sheet]
+backgroundColor = "surface"
+radius = 12
+borderColor = "outlineVariant"
+borderWidth = 1
+elevation = 0
+surfaceTintColor = 0
+dragHandleColor = "outline"
+
+[components.light.dialog]
+barrierColor = 0x661F2328
+
+[components.dark.dialog]
+barrierColor = 0x99010409
