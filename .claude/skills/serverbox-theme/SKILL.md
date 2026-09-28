@@ -16,8 +16,10 @@ my-theme/
 ```
 
 A theme changes the app's colors (the Material 3 ColorScheme, per light and
-dark), component styles (cards, tiles, buttons, inputs, navigation, dialogs,
-sheets), corner radii, in-app icons, a background, and a launch splash. It does
+dark), component styles (cards, tiles, buttons, inputs, search fields, the top
+bar, navigation, the side bar, segmented tabs, menus, dialogs, sheets, toasts,
+switches, sliders, progress, badges, chips, dividers, scrollbars), control
+density, corner radii, in-app icons, a background, and a launch splash. It does
 **not** change fonts, the launcher icon, or terminal/editor colors — say so if
 the request asks for those, rather than inventing fields: the installer rejects
 unknown tables and fields.
@@ -52,9 +54,11 @@ fill it in. Its first line is a schema directive, so editors with Taplo/Even
 Better TOML/Tombi report mistakes as you type. For every field, its range and
 default, read `references/manifest.md`.
 
-Schema range: `[schema] min = 1, max = 2` unless the theme uses an SVG icon,
+Schema range: `[schema] min = 1, max = 3` unless the theme uses an SVG icon,
 `[icons.colors]` or `[splash]` — those are schema 2 features and need
-`min = 2`, or an older app installs the theme and silently drops them.
+`min = 2`, or an older app installs the theme and silently drops them. Any
+component beyond card, tile, button, input, navigation, dialog and sheet, a
+button `minHeight`, or `[layout]` is schema 3 and needs `min = 3`.
 
 ### 3. Colors
 
@@ -93,8 +97,13 @@ Only when asked; details in `references/manifest.md`.
 - **Splash**: `[splash] color`, optional `logo = "splash_logo.svg"`,
   `duration` 100–3000 ms. It is shown only at launch.
 - **Shapes and components**: radii 0–40, border widths 0–8, elevations 0–24,
-  insets `[left, top, right, bottom]` 0–64. Prefer role names over hex in
-  components so both modes follow their palette.
+  sizes 0–96, thicknesses 0–16, insets `[left, top, right, bottom]` 0–64.
+  Prefer role names over hex in components so both modes follow their palette.
+- **Buttons**: `button` is the primary (filled/elevated) button only. Give text
+  and icon buttons their own `textButton`/`iconButton` tables if they need a
+  look; don't expect `button` to reach them.
+- **Search fields**: style them with `search`, not `input` — `input` is for form
+  fields, and the search pill's inner field ignores it.
 
 ### 5. Validate
 
@@ -105,6 +114,7 @@ python3 <skill>/scripts/validate.py path/to/my-theme
 It runs the published JSON Schema (via `uvx`/`pipx` `check-jsonschema`; it
 tells you if neither is installed) and then the rules only the installer
 knows: icon color keys without an image, schema 2 features under `min = 1`,
+schema 3 components or `[layout]` under `min < 3`,
 file names, sizes, image dimensions, SVG content, stray files, and contrast.
 Fix every error; read every warning and either fix it or tell the user why it
 stays. Don't hand over a theme that has not passed.
@@ -178,7 +188,7 @@ The app's message names the rule. Common ones: an unknown table/field (typo, or
 a field from a newer schema), an icon path that is not
 `icons/<key_with_underscores>.<png|svg>`, `icons.colors` for an icon with no
 image, a schema range that does not overlap the app's (the app currently reads
-v1–v2), a file in the folder the installer has no name for, or SVG content it
+v1–v3), a file in the folder the installer has no name for, or SVG content it
 refuses. Run the validator on the folder; it reports all of these at once.
 
 ## Source of truth

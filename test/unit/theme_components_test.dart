@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/service/theme_components.dart';
@@ -204,6 +205,196 @@ void main() {
     },
   );
 
+  test('button is the primary button only; the others have their own', () {
+    final theme = ThemeComponents.parse(<String, dynamic>{
+      'button': {'backgroundColor': 'primary', 'minHeight': 44},
+      'textButton': {'foregroundColor': 'tertiary', 'minHeight': 28},
+      'iconButton': {'iconSize': 18},
+    }).apply(ThemeData());
+    final scheme = theme.colorScheme;
+    for (final style in [
+      theme.elevatedButtonTheme.style!,
+      theme.filledButtonTheme.style!,
+    ]) {
+      expect(style.backgroundColor!.resolve({}), scheme.primary);
+      expect(style.minimumSize!.resolve({}), const Size(0, 44));
+    }
+    final text = theme.textButtonTheme.style!;
+    expect(text.backgroundColor, isNull, reason: 'a text button stays flat');
+    expect(text.foregroundColor!.resolve({}), scheme.tertiary);
+    expect(text.minimumSize!.resolve({}), const Size(0, 28));
+    expect(theme.outlinedButtonTheme.style, isNull);
+    expect(theme.iconButtonTheme.style!.iconSize!.resolve({}), 18);
+  });
+
+  test('a field inside a search pill ignores the input theme', () {
+    // One Dark Pro's settings search: `input` sets enabledBorder and a fill,
+    // and a field that only said `border: InputBorder.none` drew a box inside
+    // the pill it sits in.
+    final field = ThemeComponents.parse(<String, dynamic>{
+      'input': {
+        'filled': true,
+        'fillColor': 'surfaceContainer',
+        'borderColor': 'outline',
+        'focusedBorderColor': 'primary',
+      },
+    }).apply(ThemeData()).inputDecorationTheme;
+    final bare = bareInputDecoration(hintText: 'Search').applyDefaults(field);
+    expect(bare.filled, isFalse);
+    for (final border in [
+      bare.border,
+      bare.enabledBorder,
+      bare.focusedBorder,
+      bare.errorBorder,
+      bare.focusedErrorBorder,
+      bare.disabledBorder,
+    ]) {
+      expect(border, InputBorder.none);
+    }
+  });
+
+  test('schema 3 is needed past what schema 2 had', () {
+    int needed(Map<String, dynamic> raw, {Object? layout}) =>
+        ThemeComponents.parse(raw, layout: layout).neededSchema;
+    expect(needed({}), 1);
+    expect(
+      needed({
+        'card': {'radius': 4},
+        'button': {
+          'radius': 4,
+          'hovered': {'elevation': 2},
+        },
+        'dark': {
+          'sheet': {'radius': 4},
+        },
+      }),
+      1,
+    );
+    expect(needed({'search': {'height': 30}}), 3);
+    expect(needed({'button': {'minHeight': 30}}), 3);
+    expect(
+      needed({
+        'button': {
+          'hovered': {'minHeight': 30},
+        },
+      }),
+      3,
+      reason: 'a new field inside a state table',
+    );
+    expect(
+      needed({
+        'light': {
+          'divider': {'thickness': 1},
+        },
+      }),
+      3,
+    );
+    expect(needed({}, layout: {'density': 'compact'}), 3);
+  });
+
+  test('layout density applies and roundtrips; bad layouts fail', () {
+    final config = ThemeComponents.parse(null, layout: {'density': 'compact'});
+    expect(config.density, ThemeDensity.compact);
+    expect(config.layoutMap(), {'density': 'compact'});
+    expect(
+      config.apply(ThemeData()).visualDensity,
+      VisualDensity.compact,
+    );
+    expect(ThemeComponents.parse(null, layout: <String, dynamic>{}).layoutMap(),
+        isNull);
+    for (final layout in <Object>[
+      [],
+      {'density': 'tiny'},
+      {'density': 1},
+      {'gap': 4},
+    ]) {
+      expect(
+        () => ThemeComponents.parse(null, layout: layout),
+        throwsFormatException,
+        reason: '$layout',
+      );
+    }
+  });
+
+  test('schema 3 components reach their Material themes', () {
+    final theme = ThemeComponents.parse(<String, dynamic>{
+      'appBar': {'backgroundColor': 'surface', 'iconColor': 'primary'},
+      'segmented': {'selectedColor': 'secondaryContainer', 'radius': 6},
+      'menu': {'backgroundColor': 'surfaceContainer', 'radius': 5},
+      'tooltip': {'backgroundColor': 'tertiary', 'padding': [1, 2, 3, 4]},
+      'toast': {'backgroundColor': 'inverseSurface', 'radius': 7},
+      'switch': {'thumbColor': 'outline', 'selectedThumbColor': 'onPrimary'},
+      'slider': {'trackHeight': 3},
+      'progress': {'thickness': 5, 'trackColor': 'surfaceContainerHighest'},
+      'badge': {'backgroundColor': 'error', 'largeSize': 18},
+      'chip': {'selectedColor': 'secondaryContainer', 'borderWidth': 1},
+      'divider': {'color': 'outlineVariant', 'thickness': 2},
+      'scrollbar': {'thickness': 6, 'radius': 3},
+    }).apply(ThemeData());
+    final scheme = theme.colorScheme;
+    expect(theme.appBarTheme.backgroundColor, scheme.surface);
+    expect(theme.appBarTheme.actionsIconTheme!.color, scheme.primary);
+    expect(
+      theme.segmentedButtonTheme.style!.backgroundColor!.resolve({
+        WidgetState.selected,
+      }),
+      scheme.secondaryContainer,
+    );
+    expect(theme.popupMenuTheme.color, scheme.surfaceContainer);
+    expect(
+      (theme.popupMenuTheme.shape! as RoundedRectangleBorder).borderRadius,
+      BorderRadius.circular(5),
+    );
+    expect(
+      (theme.tooltipTheme.decoration! as BoxDecoration).color,
+      scheme.tertiary,
+    );
+    expect(theme.tooltipTheme.padding, const EdgeInsets.fromLTRB(1, 2, 3, 4));
+    expect(theme.snackBarTheme.backgroundColor, scheme.inverseSurface);
+    expect(theme.switchTheme.thumbColor!.resolve({}), scheme.outline);
+    expect(
+      theme.switchTheme.thumbColor!.resolve({WidgetState.selected}),
+      scheme.onPrimary,
+    );
+    expect(theme.sliderTheme.trackHeight, 3);
+    expect(theme.progressIndicatorTheme.linearMinHeight, 5);
+    expect(theme.badgeTheme.backgroundColor, scheme.error);
+    expect(theme.badgeTheme.largeSize, 18);
+    expect(theme.chipTheme.selectedColor, scheme.secondaryContainer);
+    expect(theme.dividerTheme.color, scheme.outlineVariant);
+    expect(theme.dividerTheme.thickness, 2);
+    expect(theme.scrollbarTheme.thickness!.resolve({}), 6);
+
+    final styles = theme.extension<ComponentStyles>()!;
+    expect(styles.segmented.selectedColor, scheme.secondaryContainer);
+    expect(styles.segmented.radius, 6);
+    expect(styles.toast.radius, 7);
+  });
+
+  test('the library styles follow the brightness, and replace a stale one', () {
+    final config = ThemeComponents.parse(<String, dynamic>{
+      'search': {'height': 30},
+      'dark': {
+        'search': {'backgroundColor': 'surfaceContainerHigh'},
+      },
+    });
+    final dark = config.apply(
+      ThemeData(
+        brightness: Brightness.dark,
+        extensions: const [ComponentStyles(search: SearchFieldStyle(height: 1))],
+      ),
+    );
+    final styles = dark.extensions.values.whereType<ComponentStyles>();
+    expect(styles, hasLength(1));
+    expect(styles.single.search.height, 30);
+    expect(
+      styles.single.search.backgroundColor,
+      dark.colorScheme.surfaceContainerHigh,
+    );
+    final light = config.apply(ThemeData());
+    expect(light.extension<ComponentStyles>()!.search.backgroundColor, isNull);
+  });
+
   test('invalid component fields, colors, states and numeric bounds fail', () {
     for (final raw in <Object?>[
       [],
@@ -261,6 +452,20 @@ void main() {
       {
         'sheet': {
           'hovered': {'backgroundColor': 'primary'},
+        },
+      },
+      {
+        'search': {'height': 97},
+      },
+      {
+        'divider': {'thickness': 17},
+      },
+      {
+        'appBar': {'height': 40},
+      },
+      {
+        'textButton': {
+          'hovered': {'iconSize': 20},
         },
       },
     ]) {

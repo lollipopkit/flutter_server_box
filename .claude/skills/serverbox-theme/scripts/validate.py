@@ -10,7 +10,8 @@ Two layers:
    `uvx` or `pipx`. The schema is as strict as the installer on everything a
    single table can say: unknown fields, ranges, enums, icon paths.
 2. What the schema cannot say, checked here: an `icons.colors` key without an
-   image, schema 2 features under `min = 1`, the files themselves (names, sizes,
+   image, schema 2 features under `min = 1`, schema 3 components or `[layout]`
+   under `min < 3`, the files themselves (names, sizes,
    PNG/JPEG dimensions, SVG content), stray files the installer refuses, and
    the contrast of the text pairs a palette sets.
 
@@ -40,8 +41,53 @@ SCHEMA_URL = (
     "docs/schemas/fsbt-manifest.schema.json"
 )
 # The app's supported theme schema range. Raise with the app.
-APP_SCHEMA = (1, 2)
+APP_SCHEMA = (1, 3)
 FEATURE_SCHEMA = 2
+COMPONENT_SCHEMA = 3
+
+# The components and fields schema 2 had (ThemeComponents.schema2 in the app).
+# Anything else under [components], and [layout], needs schema.min = 3.
+_SHAPE = {"radius", "borderColor", "borderWidth"}
+_SURFACE = {"backgroundColor", "elevation", "shadowColor", "surfaceTintColor"}
+SCHEMA2_COMPONENTS = {
+    "card": _SHAPE | _SURFACE | {"margin"},
+    "tile": _SHAPE | {"backgroundColor", "selectedTileColor", "textColor", "iconColor", "selectedColor", "padding"},
+    "button": _SHAPE | _SURFACE | {"foregroundColor", "overlayColor", "padding"},
+    "input": _SHAPE | {"filled", "fillColor", "focusedBorderColor", "errorBorderColor", "disabledBorderColor", "padding"},
+    "navigation": {"backgroundColor", "indicatorColor", "indicatorRadius", "selectedIconColor",
+                   "unselectedIconColor", "selectedLabelColor", "unselectedLabelColor", "elevation"},
+    "dialog": _SHAPE | _SURFACE | {"barrierColor", "insetPadding"},
+    "sheet": _SHAPE | _SURFACE | {"barrierColor", "dragHandleColor"},
+}
+BUTTON_STATES = {"disabled", "pressed", "hovered", "focused", "selected"}
+
+
+def schema3_uses(manifest: dict) -> list[str]:
+    """What in the manifest schema 2 did not have, as dotted paths."""
+    found = []
+    if manifest.get("layout"):
+        found.append("[layout]")
+    components = manifest.get("components") or {}
+
+    def table(name: str, fields: dict, path: str) -> None:
+        allowed = SCHEMA2_COMPONENTS.get(name)
+        if allowed is None:
+            found.append(path)
+            return
+        for key, value in fields.items():
+            if name == "button" and key in BUTTON_STATES and isinstance(value, dict):
+                found.extend(f"{path}.{key}.{k}" for k in value if k not in allowed)
+            elif key not in allowed:
+                found.append(f"{path}.{key}")
+
+    for name, fields in components.items():
+        if name in ("light", "dark") and isinstance(fields, dict):
+            for inner, inner_fields in fields.items():
+                if isinstance(inner_fields, dict):
+                    table(inner, inner_fields, f"components.{name}.{inner}")
+        elif isinstance(fields, dict):
+            table(name, fields, f"components.{name}")
+    return found
 
 KIB = 1024
 MIB = 1024 * KIB
@@ -359,6 +405,14 @@ def main() -> int:
     )
     if uses_v2 and isinstance(lo, int) and lo < FEATURE_SCHEMA:
         rep.error("SVG icons, icons.colors and [splash] are schema 2 features: set schema.min = 2")
+
+    # Schema 3: the components beyond schema 2's seven, new fields, [layout].
+    # A build that reads only 2 refuses these outright, so the store has to
+    # know before the download.
+    uses_v3 = schema3_uses(manifest)
+    if uses_v3 and isinstance(lo, int) and lo < COMPONENT_SCHEMA:
+        shown = ", ".join(uses_v3[:4]) + (" ..." if len(uses_v3) > 4 else "")
+        rep.error(f"{shown}: schema 3 features, set schema.min = 3")
 
     # Modes vs palettes: a palette for a mode the theme does not declare is
     # never shown.

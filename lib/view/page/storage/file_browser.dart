@@ -1317,10 +1317,9 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
                   textInputAction: TextInputAction.go,
                   onSubmitted: _gotoTyped,
                   style: Theme.of(context).textTheme.bodyMedium,
-                  decoration: const InputDecoration(
+                  decoration: bareInputDecoration(
                     isDense: true,
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(vertical: 10),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
                   ),
                 ),
               ),

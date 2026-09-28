@@ -32,7 +32,7 @@
       "items": { "enum": ["light", "dark"] }
     },
     "schema": {
-      "description": "Inclusive range of theme schema versions this package is readable at, not the theme's own version. min is what a reader has to understand: a package that uses a schema 2 feature and says min = 1 is refused. See \"Schema versions\" in https://serverbox.lollipopkit.com/docs/development/theme-authoring/",
+      "description": "Inclusive range of theme schema versions this package is readable at, not the theme's own version. min is what a reader has to understand: a package that uses a schema 2 feature and says min = 1 is refused, and so is one that uses a schema 3 component, field or [layout] and says a min below 3. See \"Schema versions\" in https://serverbox.lollipopkit.com/docs/development/theme-authoring/",
       "type": "object",
       "additionalProperties": false,
       "required": ["min", "max"],
@@ -226,12 +226,40 @@
         "card": { "$ref": "#/definitions/card" },
         "tile": { "$ref": "#/definitions/tile" },
         "button": { "$ref": "#/definitions/button" },
+        "textButton": { "$ref": "#/definitions/textButton" },
+        "outlinedButton": { "$ref": "#/definitions/outlinedButton" },
+        "iconButton": { "$ref": "#/definitions/iconButton" },
         "input": { "$ref": "#/definitions/input" },
+        "search": { "$ref": "#/definitions/search" },
         "navigation": { "$ref": "#/definitions/navigation" },
+        "appBar": { "$ref": "#/definitions/appBar" },
+        "segmented": { "$ref": "#/definitions/segmented" },
+        "sidebar": { "$ref": "#/definitions/sidebar" },
         "dialog": { "$ref": "#/definitions/dialog" },
         "sheet": { "$ref": "#/definitions/sheet" },
+        "menu": { "$ref": "#/definitions/menu" },
+        "tooltip": { "$ref": "#/definitions/tooltip" },
+        "toast": { "$ref": "#/definitions/toast" },
+        "switch": { "$ref": "#/definitions/switch" },
+        "slider": { "$ref": "#/definitions/slider" },
+        "progress": { "$ref": "#/definitions/progress" },
+        "badge": { "$ref": "#/definitions/badge" },
+        "chip": { "$ref": "#/definitions/chip" },
+        "divider": { "$ref": "#/definitions/divider" },
+        "scrollbar": { "$ref": "#/definitions/scrollbar" },
         "light": { "$ref": "#/definitions/brightnessGroup" },
         "dark": { "$ref": "#/definitions/brightnessGroup" }
+      }
+    },
+    "layout": {
+      "description": "Schema 3. App-wide layout.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "density": {
+          "description": "Spacing of Material controls. Omitted keeps the platform's default.",
+          "enum": ["compact", "standard", "comfortable"]
+        }
       }
     }
   },
@@ -257,6 +285,18 @@
       "minimum": 0,
       "maximum": 24
     },
+    "size": {
+      "description": "Logical pixels, 0-96.",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 96
+    },
+    "thickness": {
+      "description": "Logical pixels, 0-16.",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 16
+    },
     "inset": {
       "description": "[left, top, right, bottom], each 0-64 logical pixels.",
       "type": "array",
@@ -268,6 +308,7 @@
         "maximum": 64
       }
     },
+    "flag": { "type": "boolean" },
     "color": {
       "description": "An ARGB integer (0xAARRGGBB) or the name of a ColorScheme role.",
       "oneOf": [
@@ -393,10 +434,10 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "backgroundColor": { "$ref": "#/definitions/color" },
         "radius": { "$ref": "#/definitions/ratio" },
         "borderColor": { "$ref": "#/definitions/color" },
         "borderWidth": { "$ref": "#/definitions/borderWidth" },
+        "backgroundColor": { "$ref": "#/definitions/color" },
         "elevation": { "$ref": "#/definitions/elevation" },
         "shadowColor": { "$ref": "#/definitions/color" },
         "surfaceTintColor": { "$ref": "#/definitions/color" },
@@ -407,32 +448,33 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "radius": { "$ref": "#/definitions/ratio" },
+        "borderColor": { "$ref": "#/definitions/color" },
+        "borderWidth": { "$ref": "#/definitions/borderWidth" },
         "backgroundColor": { "$ref": "#/definitions/color" },
         "selectedTileColor": { "$ref": "#/definitions/color" },
         "textColor": { "$ref": "#/definitions/color" },
         "iconColor": { "$ref": "#/definitions/color" },
         "selectedColor": { "$ref": "#/definitions/color" },
-        "radius": { "$ref": "#/definitions/ratio" },
-        "borderColor": { "$ref": "#/definitions/color" },
-        "borderWidth": { "$ref": "#/definitions/borderWidth" },
         "padding": { "$ref": "#/definitions/inset" }
       }
     },
     "button": {
-      "description": "Applies to Material elevated, filled, outlined and text buttons, and to Btn.elevated. The state tables merge with these values; per property the priority is disabled > pressed > hovered > focused > selected > base.",
+      "description": "Primary buttons: Material elevated and filled buttons, and Btn.elevated. The state tables merge with these values; per property the priority is disabled > pressed > hovered > focused > selected > base. minHeight needs schema 3.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "backgroundColor": { "$ref": "#/definitions/color" },
-        "foregroundColor": { "$ref": "#/definitions/color" },
-        "overlayColor": { "$ref": "#/definitions/color" },
         "radius": { "$ref": "#/definitions/ratio" },
         "borderColor": { "$ref": "#/definitions/color" },
         "borderWidth": { "$ref": "#/definitions/borderWidth" },
+        "backgroundColor": { "$ref": "#/definitions/color" },
         "elevation": { "$ref": "#/definitions/elevation" },
         "shadowColor": { "$ref": "#/definitions/color" },
         "surfaceTintColor": { "$ref": "#/definitions/color" },
+        "foregroundColor": { "$ref": "#/definitions/color" },
+        "overlayColor": { "$ref": "#/definitions/color" },
         "padding": { "$ref": "#/definitions/inset" },
+        "minHeight": { "$ref": "#/definitions/size" },
         "disabled": { "$ref": "#/definitions/buttonState" },
         "pressed": { "$ref": "#/definitions/buttonState" },
         "hovered": { "$ref": "#/definitions/buttonState" },
@@ -445,30 +487,173 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "backgroundColor": { "$ref": "#/definitions/color" },
-        "foregroundColor": { "$ref": "#/definitions/color" },
-        "overlayColor": { "$ref": "#/definitions/color" },
         "radius": { "$ref": "#/definitions/ratio" },
         "borderColor": { "$ref": "#/definitions/color" },
         "borderWidth": { "$ref": "#/definitions/borderWidth" },
+        "backgroundColor": { "$ref": "#/definitions/color" },
         "elevation": { "$ref": "#/definitions/elevation" },
         "shadowColor": { "$ref": "#/definitions/color" },
         "surfaceTintColor": { "$ref": "#/definitions/color" },
-        "padding": { "$ref": "#/definitions/inset" }
+        "foregroundColor": { "$ref": "#/definitions/color" },
+        "overlayColor": { "$ref": "#/definitions/color" },
+        "padding": { "$ref": "#/definitions/inset" },
+        "minHeight": { "$ref": "#/definitions/size" }
+      }
+    },
+    "textButton": {
+      "description": "Schema 3. Text buttons and Btn.text. Same fields and state tables as button.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "radius": { "$ref": "#/definitions/ratio" },
+        "borderColor": { "$ref": "#/definitions/color" },
+        "borderWidth": { "$ref": "#/definitions/borderWidth" },
+        "backgroundColor": { "$ref": "#/definitions/color" },
+        "elevation": { "$ref": "#/definitions/elevation" },
+        "shadowColor": { "$ref": "#/definitions/color" },
+        "surfaceTintColor": { "$ref": "#/definitions/color" },
+        "foregroundColor": { "$ref": "#/definitions/color" },
+        "overlayColor": { "$ref": "#/definitions/color" },
+        "padding": { "$ref": "#/definitions/inset" },
+        "minHeight": { "$ref": "#/definitions/size" },
+        "disabled": { "$ref": "#/definitions/textButtonState" },
+        "pressed": { "$ref": "#/definitions/textButtonState" },
+        "hovered": { "$ref": "#/definitions/textButtonState" },
+        "focused": { "$ref": "#/definitions/textButtonState" },
+        "selected": { "$ref": "#/definitions/textButtonState" }
+      }
+    },
+    "textButtonState": {
+      "description": "One textButton state. Supports the same fields as components.textButton, without further nesting.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "radius": { "$ref": "#/definitions/ratio" },
+        "borderColor": { "$ref": "#/definitions/color" },
+        "borderWidth": { "$ref": "#/definitions/borderWidth" },
+        "backgroundColor": { "$ref": "#/definitions/color" },
+        "elevation": { "$ref": "#/definitions/elevation" },
+        "shadowColor": { "$ref": "#/definitions/color" },
+        "surfaceTintColor": { "$ref": "#/definitions/color" },
+        "foregroundColor": { "$ref": "#/definitions/color" },
+        "overlayColor": { "$ref": "#/definitions/color" },
+        "padding": { "$ref": "#/definitions/inset" },
+        "minHeight": { "$ref": "#/definitions/size" }
+      }
+    },
+    "outlinedButton": {
+      "description": "Schema 3. Outlined buttons. Same fields and state tables as button.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "radius": { "$ref": "#/definitions/ratio" },
+        "borderColor": { "$ref": "#/definitions/color" },
+        "borderWidth": { "$ref": "#/definitions/borderWidth" },
+        "backgroundColor": { "$ref": "#/definitions/color" },
+        "elevation": { "$ref": "#/definitions/elevation" },
+        "shadowColor": { "$ref": "#/definitions/color" },
+        "surfaceTintColor": { "$ref": "#/definitions/color" },
+        "foregroundColor": { "$ref": "#/definitions/color" },
+        "overlayColor": { "$ref": "#/definitions/color" },
+        "padding": { "$ref": "#/definitions/inset" },
+        "minHeight": { "$ref": "#/definitions/size" },
+        "disabled": { "$ref": "#/definitions/outlinedButtonState" },
+        "pressed": { "$ref": "#/definitions/outlinedButtonState" },
+        "hovered": { "$ref": "#/definitions/outlinedButtonState" },
+        "focused": { "$ref": "#/definitions/outlinedButtonState" },
+        "selected": { "$ref": "#/definitions/outlinedButtonState" }
+      }
+    },
+    "outlinedButtonState": {
+      "description": "One outlinedButton state. Supports the same fields as components.outlinedButton, without further nesting.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "radius": { "$ref": "#/definitions/ratio" },
+        "borderColor": { "$ref": "#/definitions/color" },
+        "borderWidth": { "$ref": "#/definitions/borderWidth" },
+        "backgroundColor": { "$ref": "#/definitions/color" },
+        "elevation": { "$ref": "#/definitions/elevation" },
+        "shadowColor": { "$ref": "#/definitions/color" },
+        "surfaceTintColor": { "$ref": "#/definitions/color" },
+        "foregroundColor": { "$ref": "#/definitions/color" },
+        "overlayColor": { "$ref": "#/definitions/color" },
+        "padding": { "$ref": "#/definitions/inset" },
+        "minHeight": { "$ref": "#/definitions/size" }
+      }
+    },
+    "iconButton": {
+      "description": "Schema 3. Icon buttons. The fields and state tables of button, plus iconSize.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "radius": { "$ref": "#/definitions/ratio" },
+        "borderColor": { "$ref": "#/definitions/color" },
+        "borderWidth": { "$ref": "#/definitions/borderWidth" },
+        "backgroundColor": { "$ref": "#/definitions/color" },
+        "elevation": { "$ref": "#/definitions/elevation" },
+        "shadowColor": { "$ref": "#/definitions/color" },
+        "surfaceTintColor": { "$ref": "#/definitions/color" },
+        "foregroundColor": { "$ref": "#/definitions/color" },
+        "overlayColor": { "$ref": "#/definitions/color" },
+        "padding": { "$ref": "#/definitions/inset" },
+        "minHeight": { "$ref": "#/definitions/size" },
+        "iconSize": { "$ref": "#/definitions/size" },
+        "disabled": { "$ref": "#/definitions/iconButtonState" },
+        "pressed": { "$ref": "#/definitions/iconButtonState" },
+        "hovered": { "$ref": "#/definitions/iconButtonState" },
+        "focused": { "$ref": "#/definitions/iconButtonState" },
+        "selected": { "$ref": "#/definitions/iconButtonState" }
+      }
+    },
+    "iconButtonState": {
+      "description": "One iconButton state. Supports the same fields as components.iconButton, without further nesting.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "radius": { "$ref": "#/definitions/ratio" },
+        "borderColor": { "$ref": "#/definitions/color" },
+        "borderWidth": { "$ref": "#/definitions/borderWidth" },
+        "backgroundColor": { "$ref": "#/definitions/color" },
+        "elevation": { "$ref": "#/definitions/elevation" },
+        "shadowColor": { "$ref": "#/definitions/color" },
+        "surfaceTintColor": { "$ref": "#/definitions/color" },
+        "foregroundColor": { "$ref": "#/definitions/color" },
+        "overlayColor": { "$ref": "#/definitions/color" },
+        "padding": { "$ref": "#/definitions/inset" },
+        "minHeight": { "$ref": "#/definitions/size" },
+        "iconSize": { "$ref": "#/definitions/size" }
       }
     },
     "input": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "filled": { "type": "boolean" },
-        "fillColor": { "$ref": "#/definitions/color" },
         "radius": { "$ref": "#/definitions/ratio" },
         "borderColor": { "$ref": "#/definitions/color" },
         "borderWidth": { "$ref": "#/definitions/borderWidth" },
+        "filled": { "$ref": "#/definitions/flag" },
+        "fillColor": { "$ref": "#/definitions/color" },
         "focusedBorderColor": { "$ref": "#/definitions/color" },
         "errorBorderColor": { "$ref": "#/definitions/color" },
         "disabledBorderColor": { "$ref": "#/definitions/color" },
+        "padding": { "$ref": "#/definitions/inset" }
+      }
+    },
+    "search": {
+      "description": "Schema 3. Search fields that draw their own pill: the settings search, the server switcher and the in-bar search. The field inside never takes the input component's border or fill.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "radius": { "$ref": "#/definitions/ratio" },
+        "borderColor": { "$ref": "#/definitions/color" },
+        "borderWidth": { "$ref": "#/definitions/borderWidth" },
+        "backgroundColor": { "$ref": "#/definitions/color" },
+        "elevation": { "$ref": "#/definitions/elevation" },
+        "iconColor": { "$ref": "#/definitions/color" },
+        "textColor": { "$ref": "#/definitions/color" },
+        "hintColor": { "$ref": "#/definitions/color" },
+        "height": { "$ref": "#/definitions/size" },
         "padding": { "$ref": "#/definitions/inset" }
       }
     },
@@ -487,14 +672,57 @@
         "elevation": { "$ref": "#/definitions/elevation" }
       }
     },
-    "dialog": {
+    "appBar": {
+      "description": "Schema 3. The top bar of each page.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "backgroundColor": { "$ref": "#/definitions/color" },
+        "foregroundColor": { "$ref": "#/definitions/color" },
+        "titleColor": { "$ref": "#/definitions/color" },
+        "iconColor": { "$ref": "#/definitions/color" },
+        "elevation": { "$ref": "#/definitions/elevation" },
+        "shadowColor": { "$ref": "#/definitions/color" },
+        "surfaceTintColor": { "$ref": "#/definitions/color" }
+      }
+    },
+    "segmented": {
+      "description": "Schema 3. Segmented buttons and the app's own segmented tabs.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
         "radius": { "$ref": "#/definitions/ratio" },
         "borderColor": { "$ref": "#/definitions/color" },
         "borderWidth": { "$ref": "#/definitions/borderWidth" },
+        "backgroundColor": { "$ref": "#/definitions/color" },
+        "selectedColor": { "$ref": "#/definitions/color" },
+        "textColor": { "$ref": "#/definitions/color" },
+        "selectedTextColor": { "$ref": "#/definitions/color" }
+      }
+    },
+    "sidebar": {
+      "description": "Schema 3. Rows of the side bar and the settings menu.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "backgroundColor": { "$ref": "#/definitions/color" },
+        "selectedColor": { "$ref": "#/definitions/color" },
+        "textColor": { "$ref": "#/definitions/color" },
+        "selectedTextColor": { "$ref": "#/definitions/color" },
+        "iconColor": { "$ref": "#/definitions/color" },
+        "selectedIconColor": { "$ref": "#/definitions/color" },
+        "radius": { "$ref": "#/definitions/ratio" },
+        "padding": { "$ref": "#/definitions/inset" }
+      }
+    },
+    "dialog": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "radius": { "$ref": "#/definitions/ratio" },
+        "borderColor": { "$ref": "#/definitions/color" },
+        "borderWidth": { "$ref": "#/definitions/borderWidth" },
+        "backgroundColor": { "$ref": "#/definitions/color" },
         "elevation": { "$ref": "#/definitions/elevation" },
         "shadowColor": { "$ref": "#/definitions/color" },
         "surfaceTintColor": { "$ref": "#/definitions/color" },
@@ -506,15 +734,137 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "backgroundColor": { "$ref": "#/definitions/color" },
         "radius": { "$ref": "#/definitions/ratio" },
         "borderColor": { "$ref": "#/definitions/color" },
         "borderWidth": { "$ref": "#/definitions/borderWidth" },
+        "backgroundColor": { "$ref": "#/definitions/color" },
         "elevation": { "$ref": "#/definitions/elevation" },
         "shadowColor": { "$ref": "#/definitions/color" },
         "surfaceTintColor": { "$ref": "#/definitions/color" },
         "barrierColor": { "$ref": "#/definitions/color" },
         "dragHandleColor": { "$ref": "#/definitions/color" }
+      }
+    },
+    "menu": {
+      "description": "Schema 3. Popup and context menus.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "radius": { "$ref": "#/definitions/ratio" },
+        "borderColor": { "$ref": "#/definitions/color" },
+        "borderWidth": { "$ref": "#/definitions/borderWidth" },
+        "backgroundColor": { "$ref": "#/definitions/color" },
+        "elevation": { "$ref": "#/definitions/elevation" },
+        "shadowColor": { "$ref": "#/definitions/color" },
+        "surfaceTintColor": { "$ref": "#/definitions/color" },
+        "textColor": { "$ref": "#/definitions/color" }
+      }
+    },
+    "tooltip": {
+      "description": "Schema 3.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "radius": { "$ref": "#/definitions/ratio" },
+        "borderColor": { "$ref": "#/definitions/color" },
+        "borderWidth": { "$ref": "#/definitions/borderWidth" },
+        "backgroundColor": { "$ref": "#/definitions/color" },
+        "textColor": { "$ref": "#/definitions/color" },
+        "padding": { "$ref": "#/definitions/inset" }
+      }
+    },
+    "toast": {
+      "description": "Schema 3. Toasts and snack bars.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "radius": { "$ref": "#/definitions/ratio" },
+        "borderColor": { "$ref": "#/definitions/color" },
+        "borderWidth": { "$ref": "#/definitions/borderWidth" },
+        "backgroundColor": { "$ref": "#/definitions/color" },
+        "textColor": { "$ref": "#/definitions/color" },
+        "elevation": { "$ref": "#/definitions/elevation" }
+      }
+    },
+    "switch": {
+      "description": "Schema 3. The selected* fields apply while the switch is on.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "thumbColor": { "$ref": "#/definitions/color" },
+        "trackColor": { "$ref": "#/definitions/color" },
+        "trackOutlineColor": { "$ref": "#/definitions/color" },
+        "selectedThumbColor": { "$ref": "#/definitions/color" },
+        "selectedTrackColor": { "$ref": "#/definitions/color" },
+        "selectedTrackOutlineColor": { "$ref": "#/definitions/color" }
+      }
+    },
+    "slider": {
+      "description": "Schema 3.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "activeTrackColor": { "$ref": "#/definitions/color" },
+        "inactiveTrackColor": { "$ref": "#/definitions/color" },
+        "thumbColor": { "$ref": "#/definitions/color" },
+        "overlayColor": { "$ref": "#/definitions/color" },
+        "trackHeight": { "$ref": "#/definitions/thickness" }
+      }
+    },
+    "progress": {
+      "description": "Schema 3. Linear and circular progress indicators; radius applies to linear ones.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "color": { "$ref": "#/definitions/color" },
+        "trackColor": { "$ref": "#/definitions/color" },
+        "thickness": { "$ref": "#/definitions/thickness" },
+        "radius": { "$ref": "#/definitions/ratio" }
+      }
+    },
+    "badge": {
+      "description": "Schema 3. Count badges, including the navigation rail's.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "backgroundColor": { "$ref": "#/definitions/color" },
+        "textColor": { "$ref": "#/definitions/color" },
+        "smallSize": { "$ref": "#/definitions/size" },
+        "largeSize": { "$ref": "#/definitions/size" }
+      }
+    },
+    "chip": {
+      "description": "Schema 3.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "radius": { "$ref": "#/definitions/ratio" },
+        "borderColor": { "$ref": "#/definitions/color" },
+        "borderWidth": { "$ref": "#/definitions/borderWidth" },
+        "backgroundColor": { "$ref": "#/definitions/color" },
+        "selectedColor": { "$ref": "#/definitions/color" },
+        "textColor": { "$ref": "#/definitions/color" },
+        "padding": { "$ref": "#/definitions/inset" }
+      }
+    },
+    "divider": {
+      "description": "Schema 3. Dividers and hairlines.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "color": { "$ref": "#/definitions/color" },
+        "thickness": { "$ref": "#/definitions/thickness" }
+      }
+    },
+    "scrollbar": {
+      "description": "Schema 3.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "thumbColor": { "$ref": "#/definitions/color" },
+        "trackColor": { "$ref": "#/definitions/color" },
+        "radius": { "$ref": "#/definitions/ratio" },
+        "thickness": { "$ref": "#/definitions/thickness" }
       }
     },
     "brightnessGroup": {
@@ -525,10 +875,27 @@
         "card": { "$ref": "#/definitions/card" },
         "tile": { "$ref": "#/definitions/tile" },
         "button": { "$ref": "#/definitions/button" },
+        "textButton": { "$ref": "#/definitions/textButton" },
+        "outlinedButton": { "$ref": "#/definitions/outlinedButton" },
+        "iconButton": { "$ref": "#/definitions/iconButton" },
         "input": { "$ref": "#/definitions/input" },
+        "search": { "$ref": "#/definitions/search" },
         "navigation": { "$ref": "#/definitions/navigation" },
+        "appBar": { "$ref": "#/definitions/appBar" },
+        "segmented": { "$ref": "#/definitions/segmented" },
+        "sidebar": { "$ref": "#/definitions/sidebar" },
         "dialog": { "$ref": "#/definitions/dialog" },
-        "sheet": { "$ref": "#/definitions/sheet" }
+        "sheet": { "$ref": "#/definitions/sheet" },
+        "menu": { "$ref": "#/definitions/menu" },
+        "tooltip": { "$ref": "#/definitions/tooltip" },
+        "toast": { "$ref": "#/definitions/toast" },
+        "switch": { "$ref": "#/definitions/switch" },
+        "slider": { "$ref": "#/definitions/slider" },
+        "progress": { "$ref": "#/definitions/progress" },
+        "badge": { "$ref": "#/definitions/badge" },
+        "chip": { "$ref": "#/definitions/chip" },
+        "divider": { "$ref": "#/definitions/divider" },
+        "scrollbar": { "$ref": "#/definitions/scrollbar" }
       }
     }
   }

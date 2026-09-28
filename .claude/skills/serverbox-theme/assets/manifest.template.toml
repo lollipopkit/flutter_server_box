@@ -8,10 +8,12 @@ name = "My Theme"
 modes = ["light", "dark"]
 
 # The theme schema range this package is readable at, not the theme's version.
-# Use min = 2 if you add an SVG icon, [icons.colors] or [splash].
+# Use min = 2 if you add an SVG icon, [icons.colors] or [splash], and min = 3
+# for any component beyond card/tile/button/input/navigation/dialog/sheet, a
+# button minHeight, or [layout].
 [schema]
 min = 1
-max = 2
+max = 3
 
 [colors]
 # 0 = follow the system, 1 = light, 2 = dark. A single mode overrides this.

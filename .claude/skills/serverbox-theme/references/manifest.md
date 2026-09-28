@@ -9,7 +9,7 @@ Condensed from the theme authoring guide and the JSON Schema
 - [colors] and palette roles
 - [icons]
 - [background], [splash], [shapes]
-- [components]
+- [components] and [layout]
 - Package limits
 - Theme store
 
@@ -21,10 +21,12 @@ Condensed from the theme authoring guide and the JSON Schema
 | `name` | yes | shown in Theme preset |
 | `modes` | yes | `["light"]`, `["dark"]` or `["light", "dark"]`; no duplicates |
 | `format` | no | `1` (default) |
-| `[schema] min`, `max` | yes | inclusive range; the app reads 1–2 and needs overlap |
+| `[schema] min`, `max` | yes | inclusive range; the app reads 1–3 and needs overlap |
 
 Schema 2 added SVG icons, `[icons.colors]` and `[splash]`; a package using any
-of them declares `min = 2`.
+of them declares `min = 2`. Schema 3 added the components marked ³ below,
+`minHeight` on button tables, and `[layout]`; a package using any of them
+declares `min = 3`.
 
 Unknown top-level tables and fields are rejected. Explicit zero values are
 kept; invalid values are errors, never replaced by defaults.
@@ -101,21 +103,55 @@ checked like an icon), drawn at 96 px in its own colors — not tinted;
 
 `[components.<name>]` applies to both modes; `[components.light.<name>]` and
 `[components.dark.<name>]` override per brightness. Colors: ARGB or role name.
-Radii 0–40, `borderWidth` 0–8, `elevation` 0–24, insets `[l, t, r, b]` 0–64.
+Radii 0–40, `borderWidth` 0–8, `elevation` 0–24, sizes (`minHeight`, `height`,
+`iconSize`, badge sizes) 0–96, thicknesses (`thickness`, `trackHeight`) 0–16,
+insets `[l, t, r, b]` 0–64.
 
 | Component | Fields |
 |---|---|
 | `card` | backgroundColor radius borderColor borderWidth elevation shadowColor surfaceTintColor margin |
 | `tile` | backgroundColor selectedTileColor textColor iconColor selectedColor radius borderColor borderWidth padding |
-| `button` | backgroundColor foregroundColor overlayColor radius borderColor borderWidth elevation shadowColor surfaceTintColor padding |
+| `button` | backgroundColor foregroundColor overlayColor radius borderColor borderWidth elevation shadowColor surfaceTintColor padding minHeight³ |
 | `input` | filled fillColor radius borderColor borderWidth focusedBorderColor errorBorderColor disabledBorderColor padding |
 | `navigation` | backgroundColor indicatorColor indicatorRadius selectedIconColor unselectedIconColor selectedLabelColor unselectedLabelColor elevation |
 | `dialog` | backgroundColor radius borderColor borderWidth elevation shadowColor surfaceTintColor barrierColor insetPadding |
 | `sheet` | backgroundColor radius borderColor borderWidth elevation shadowColor surfaceTintColor barrierColor dragHandleColor |
+| `textButton`³ `outlinedButton`³ | the `button` fields |
+| `iconButton`³ | the `button` fields, iconSize |
+| `search`³ | backgroundColor radius borderColor borderWidth elevation iconColor textColor hintColor height padding |
+| `appBar`³ | backgroundColor foregroundColor titleColor iconColor elevation shadowColor surfaceTintColor |
+| `segmented`³ | backgroundColor selectedColor textColor selectedTextColor radius borderColor borderWidth |
+| `sidebar`³ | backgroundColor selectedColor textColor selectedTextColor iconColor selectedIconColor radius padding |
+| `menu`³ | backgroundColor textColor radius borderColor borderWidth elevation shadowColor surfaceTintColor |
+| `tooltip`³ | backgroundColor textColor radius borderColor borderWidth padding |
+| `toast`³ | backgroundColor textColor radius borderColor borderWidth elevation |
+| `switch`³ | thumbColor trackColor trackOutlineColor selectedThumbColor selectedTrackColor selectedTrackOutlineColor |
+| `slider`³ | activeTrackColor inactiveTrackColor thumbColor overlayColor trackHeight |
+| `progress`³ | color trackColor thickness radius |
+| `badge`³ | backgroundColor textColor smallSize largeSize |
+| `chip`³ | backgroundColor selectedColor textColor radius borderColor borderWidth padding |
+| `divider`³ | color thickness |
+| `scrollbar`³ | thumbColor trackColor radius thickness |
 
-Button states: `[components.button.hovered|pressed|focused|selected|disabled]`
-take the button fields; priority disabled > pressed > hovered > focused >
+³ schema 3.
+
+`button` is the primary button only (elevated, filled, Btn.elevated). Text,
+outlined and icon buttons keep the app's style unless their own table sets
+them — a filled `button` no longer turns text actions into filled ones.
+`search` is the pill-shaped search fields (settings, server switcher, in-bar);
+the field inside never takes `input`'s border or fill. `sidebar` is the side
+bar and settings menu rows; `segmented` also the app's segmented tabs; `toast`
+also snack bars; `divider` also hairlines.
+
+States: `[components.<button|textButton|outlinedButton|iconButton>.hovered|pressed|focused|selected|disabled]`
+take that table's fields; priority disabled > pressed > hovered > focused >
 selected > base.
+
+## [layout] (schema 3)
+
+| Field | Values |
+|---|---|
+| `density` | `"compact"`, `"standard"`, `"comfortable"`; omitted = platform default |
 
 ## Package limits
 
@@ -146,7 +182,7 @@ license = "MIT"
 [[version]]
 version = "1.0.0"
 schema_min = 1          # the package's own [schema] range
-schema_max = 2
+schema_max = 3
 url = "https://…/yourname.mytheme-1.0.0.fsbt"   # or path = "packages/….fsbt" in the tree
 sha256 = "…64 hex…"     # required; the store refuses a mismatch
 size = 1234

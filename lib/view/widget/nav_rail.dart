@@ -539,12 +539,15 @@ class NavRailBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final badge = BadgeTheme.of(context);
+    final bg = badge.backgroundColor ?? scheme.primaryContainer;
+    final fg = badge.textColor ?? scheme.onPrimaryContainer;
     return SizedBox(
-      height: 15,
+      height: badge.largeSize ?? 15,
       child: DecoratedBox(
         decoration: ShapeDecoration(
           shape: const StadiumBorder(),
-          color: scheme.primaryContainer.withValues(alpha: opacity),
+          color: bg.withValues(alpha: bg.a * opacity),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -559,7 +562,7 @@ class NavRailBadge extends StatelessWidget {
                 fontSize: 10,
                 height: 1,
                 fontWeight: FontWeight.w500,
-                color: scheme.onPrimaryContainer.withValues(alpha: opacity),
+                color: fg.withValues(alpha: fg.a * opacity),
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),

@@ -6,6 +6,7 @@ import 'package:archive/archive.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/service/app_font.dart';
+import 'package:server_box/core/service/theme_components.dart';
 import 'package:server_box/core/service/theme_package.dart';
 import 'package:server_box/data/model/app/theme_style.dart';
 import 'package:toml/toml.dart';
@@ -326,7 +327,7 @@ void main() {
 
       for (final schema in [
         null,
-        {'min': 3, 'max': 3},
+        {'min': 4, 'max': 4},
         {'min': 2, 'max': 1},
         {'min': 0, 'max': 1},
         {'min': 1},
@@ -345,7 +346,7 @@ void main() {
 
       final stored = File('${installed.directory}/manifest.toml');
       final profile = TomlDocument.parse(await stored.readAsString()).toMap();
-      profile['schema'] = {'min': 3, 'max': 3};
+      profile['schema'] = {'min': 4, 'max': 4};
       await stored.writeAsString(TomlDocument.fromMap(profile).toString());
       expect(
         ThemePackages.installed(
@@ -885,6 +886,75 @@ void main() {
             'icons/tab_server.svg';
       }, icon, schema: const {'min': 1, 'max': 2});
       expect(ThemePackages.listInstalled(rootDirectory: root.path), isEmpty);
+    } finally {
+      await root.delete(recursive: true);
+    }
+  });
+
+  test('refuses a schema 3 component or layout declared below 3', () async {
+    final root = await Directory.systemTemp.createTemp('fsbt-component-schema-');
+    try {
+      for (final edit in <void Function(Map<String, Object?>)>[
+        (data) => data['components'] = {
+          'search': {'height': 30},
+        },
+        (data) => data['components'] = {
+          'button': {'minHeight': 40},
+        },
+        (data) => data['layout'] = {'density': 'compact'},
+      ]) {
+        for (final schema in [
+          {'min': 2, 'max': 3},
+          {'min': 1, 'max': 1},
+        ]) {
+          final data = package()..['schema'] = schema;
+          edit(data);
+          await expectLater(
+            ThemePackages.install(bundle(data), rootDirectory: root.path),
+            throwsFormatException,
+            reason: '$data',
+          );
+        }
+      }
+      expect(ThemePackages.listInstalled(rootDirectory: root.path), isEmpty);
+
+      // Schema 2's own components stay readable by 1.
+      final old = package()
+        ..['components'] = {
+          'button': {'radius': 4},
+        };
+      await ThemePackages.install(bundle(old), rootDirectory: root.path);
+    } finally {
+      await root.delete(recursive: true);
+    }
+  });
+
+  test('schema 3 components and layout survive the installed manifest',
+      () async {
+    final root = await Directory.systemTemp.createTemp('fsbt-layout-');
+    try {
+      final data = package()
+        ..['schema'] = {'min': 3, 'max': 3}
+        ..['components'] = {
+          'search': {'height': 30, 'backgroundColor': 'surfaceContainer'},
+          'dark': {
+            'textButton': {
+              'hovered': {'minHeight': 30},
+            },
+          },
+        }
+        ..['layout'] = {'density': 'comfortable'};
+      final installed = await ThemePackages.install(
+        bundle(data),
+        rootDirectory: root.path,
+      );
+      final restored = ThemePackages.installed(
+        installed.installationId,
+        rootDirectory: root.path,
+      )!;
+      expect(restored.components.density, ThemeDensity.comfortable);
+      expect(restored.components.toMap(), installed.components.toMap());
+      expect(restored.components.neededSchema, 3);
     } finally {
       await root.delete(recursive: true);
     }

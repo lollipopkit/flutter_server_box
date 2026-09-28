@@ -207,13 +207,20 @@ abstract final class ThemePackages {
   static final preview = ValueNotifier<ThemePackage?>(null);
 
   static const supportedSchemaMin = 1;
-  static const supportedSchemaMax = 2;
+  static const supportedSchemaMax = 3;
 
   /// What schema 2 added: SVG icons, per-icon colors, and [ThemeSplash]. A
   /// package that uses one of them has to say it needs 2, because a build that
   /// reads only schema 1 installs the same bytes and then drops the feature
   /// without saying so.
   static const featureSchema = 2;
+
+  /// What schema 3 added: the components beyond schema 2's seven, the fields
+  /// they gained (`button.minHeight`), and `[layout]`. See
+  /// [ThemeComponents.neededSchema]. A build that reads only 2 refuses such a
+  /// package outright (an unknown table), so saying so up front is what lets
+  /// the store show it as needing a newer app rather than failing to install.
+  static const componentSchema = 3;
   static String get supportedSchemaRange =>
       'v$supportedSchemaMin–v$supportedSchemaMax';
 
@@ -241,6 +248,7 @@ abstract final class ThemePackages {
     'background',
     'shapes',
     'components',
+    'layout',
     'splash',
   };
   /// The fields `[icons]` and `[splash]` may carry, held against the schema's
@@ -595,7 +603,10 @@ abstract final class ThemePackages {
     }
     final paletteLight = _palette(palette[Brightness.light.name]);
     final paletteDark = _palette(palette[Brightness.dark.name]);
-    final components = ThemeComponents.parse(data['components']);
+    final components = ThemeComponents.parse(
+      data['components'],
+      layout: data['layout'],
+    );
     final icons = _map(data['icons'], 'icons');
     if (!icons.keys.every(iconFields.contains)) {
       throw const FormatException('Unknown icon field');
@@ -680,6 +691,7 @@ abstract final class ThemePackages {
       iconFiles: iconFiles.values,
       iconColors: iconColors,
       splash: splash,
+      components: components,
     );
 
     final rootPath = rootDirectory ?? root;
@@ -718,6 +730,7 @@ abstract final class ThemePackages {
         'name': name,
         'modes': modes.map((mode) => mode.name).toList(),
         'components': components.toMap(),
+        'layout': ?components.layoutMap(),
         'colors': {
           'mode': mode,
           'seed': seed,
@@ -815,6 +828,10 @@ abstract final class ThemePackages {
       final palette = colors['palette'] == null
           ? <String, dynamic>{}
           : _map(colors['palette'], 'palette');
+      final components = ThemeComponents.parse(
+        data['components'],
+        layout: data['layout'],
+      );
       final icons = _map(data['icons'], 'icons');
       final background = _map(data['background'], 'background');
       final shapes = _map(data['shapes'], 'shapes');
@@ -852,6 +869,7 @@ abstract final class ThemePackages {
         iconFiles: iconFiles.values,
         iconColors: iconColors,
         splash: splash,
+        components: components,
       );
       final package = ThemePackage(
         installationId: installationId,
@@ -865,7 +883,7 @@ abstract final class ThemePackages {
         systemColor: colors['systemColor'] as bool,
         paletteLight: _palette(palette[Brightness.light.name]),
         paletteDark: _palette(palette[Brightness.dark.name]),
-        components: ThemeComponents.parse(data['components']),
+        components: components,
         iconStyle: style,
         iconFiles: iconFiles,
         iconColors: iconColors,
@@ -1232,7 +1250,11 @@ abstract final class ThemePackages {
     required Iterable<String> iconFiles,
     required Map<String, Object> iconColors,
     required ThemeSplash? splash,
+    required ThemeComponents components,
   }) {
+    if (min < componentSchema && components.neededSchema >= componentSchema) {
+      throw const FormatException('This theme needs schema $componentSchema');
+    }
     final uses =
         iconFiles.any((name) => name.endsWith('.svg')) ||
         iconColors.isNotEmpty ||

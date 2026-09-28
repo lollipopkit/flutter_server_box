@@ -107,10 +107,10 @@ function preview(dir, manifest) {
       palette,
       iconColors,
       components: Object.fromEntries(
-        ['card', 'tile', 'button', 'input', 'navigation', 'dialog', 'sheet'].map((n) => [
-          n,
-          component(manifest.components, mode, n, palette),
-        ]),
+        Object.keys(manifest.components ?? {})
+          .filter((n) => n !== 'light' && n !== 'dark')
+          .concat(Object.keys(manifest.components?.[mode] ?? {}))
+          .map((n) => [n, component(manifest.components, mode, n, palette)]),
       ),
       splash: splash ? { color: color(splash.color ?? 'surface', palette) ?? palette.surface } : null,
     }

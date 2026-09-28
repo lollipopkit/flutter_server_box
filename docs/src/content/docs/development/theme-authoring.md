@@ -100,7 +100,7 @@ Legacy AMOLED settings migrate to Dark + AMOLED; Auto AMOLED migrates to
 System + AMOLED. AMOLED is no longer a ThemeMode option.
 `format` versions the ZIP manifest structure. `schema` is the inclusive range
 of theme UI schema versions the package supports. The app currently supports
-schema **v1–v2** and shows this range in the **Install theme** help text. The
+schema **v1–v3** and shows this range in the **Install theme** help text. The
 installer requires the package range to overlap the app range and checks it again when
 loading an installed theme. Both `schema.min` and `schema.max` are required.
 `seed` and palette colors are ARGB integers; hexadecimal TOML values such as
@@ -154,8 +154,16 @@ Schema **2** added SVG icons, `icons.colors`, and the `splash` table. A package
 using any of these features must declare `min = 2`. Otherwise, a schema 1 build
 could install the package but silently discard those features: SVG icons would
 fall back to built-in glyphs, and custom colors and splash screens would not
-appear. The current ceiling is `max = 2`; a package whose range extends beyond
-it can still be installed if the ranges overlap.
+appear.
+
+Schema **3** added the components beyond schema 2's seven (`textButton`,
+`outlinedButton`, `iconButton`, `search`, `appBar`, `segmented`, `sidebar`,
+`menu`, `tooltip`, `toast`, `switch`, `slider`, `progress`, `badge`, `chip`,
+`divider`, `scrollbar`), the `minHeight` field of button tables, and the
+`[layout]` table. A package using any of them must declare `min = 3`: a schema
+2 build refuses an unknown table, and the store needs to know that before the
+download. The current ceiling is `max = 3`; a package whose range extends
+beyond it can still be installed if the ranges overlap.
 
 ## Icons
 
@@ -226,29 +234,74 @@ Unknown component names, fields, states and role names are rejected.
 | --- | --- |
 | `card` | `backgroundColor`, `radius`, `borderColor`, `borderWidth`, `elevation`, `shadowColor`, `surfaceTintColor`, `margin` |
 | `tile` | `backgroundColor`, `selectedTileColor`, `textColor`, `iconColor`, `selectedColor`, `radius`, `borderColor`, `borderWidth`, `padding` |
-| `button` | `backgroundColor`, `foregroundColor`, `overlayColor`, `radius`, `borderColor`, `borderWidth`, `elevation`, `shadowColor`, `surfaceTintColor`, `padding` |
+| `button` | `backgroundColor`, `foregroundColor`, `overlayColor`, `radius`, `borderColor`, `borderWidth`, `elevation`, `shadowColor`, `surfaceTintColor`, `padding`, `minHeight`³ |
 | `input` | `filled`, `fillColor`, `radius`, `borderColor`, `borderWidth`, `focusedBorderColor`, `errorBorderColor`, `disabledBorderColor`, `padding` |
 | `navigation` | `backgroundColor`, `indicatorColor`, `indicatorRadius`, `selectedIconColor`, `unselectedIconColor`, `selectedLabelColor`, `unselectedLabelColor`, `elevation` |
 | `dialog` | `backgroundColor`, `radius`, `borderColor`, `borderWidth`, `elevation`, `shadowColor`, `surfaceTintColor`, `barrierColor`, `insetPadding` |
 | `sheet` | `backgroundColor`, `radius`, `borderColor`, `borderWidth`, `elevation`, `shadowColor`, `surfaceTintColor`, `barrierColor`, `dragHandleColor` |
+| `textButton`³, `outlinedButton`³ | The fields of `button` |
+| `iconButton`³ | The fields of `button`, `iconSize` |
+| `search`³ | `backgroundColor`, `radius`, `borderColor`, `borderWidth`, `elevation`, `iconColor`, `textColor`, `hintColor`, `height`, `padding` |
+| `appBar`³ | `backgroundColor`, `foregroundColor`, `titleColor`, `iconColor`, `elevation`, `shadowColor`, `surfaceTintColor` |
+| `segmented`³ | `backgroundColor`, `selectedColor`, `textColor`, `selectedTextColor`, `radius`, `borderColor`, `borderWidth` |
+| `sidebar`³ | `backgroundColor`, `selectedColor`, `textColor`, `selectedTextColor`, `iconColor`, `selectedIconColor`, `radius`, `padding` |
+| `menu`³ | `backgroundColor`, `textColor`, `radius`, `borderColor`, `borderWidth`, `elevation`, `shadowColor`, `surfaceTintColor` |
+| `tooltip`³ | `backgroundColor`, `textColor`, `radius`, `borderColor`, `borderWidth`, `padding` |
+| `toast`³ | `backgroundColor`, `textColor`, `radius`, `borderColor`, `borderWidth`, `elevation` |
+| `switch`³ | `thumbColor`, `trackColor`, `trackOutlineColor`, `selectedThumbColor`, `selectedTrackColor`, `selectedTrackOutlineColor` |
+| `slider`³ | `activeTrackColor`, `inactiveTrackColor`, `thumbColor`, `overlayColor`, `trackHeight` |
+| `progress`³ | `color`, `trackColor`, `thickness`, `radius` |
+| `badge`³ | `backgroundColor`, `textColor`, `smallSize`, `largeSize` |
+| `chip`³ | `backgroundColor`, `selectedColor`, `textColor`, `radius`, `borderColor`, `borderWidth`, `padding` |
+| `divider`³ | `color`, `thickness` |
+| `scrollbar`³ | `thumbColor`, `trackColor`, `radius`, `thickness` |
 
-Radii are 0–40, border widths 0–8, elevations 0–24. Insets (`padding`, `margin`,
-`insetPadding`) are four numbers `[left, top, right, bottom]`, each 0–64.
-Numbers must be finite. `filled` is a boolean. Fonts remain separate settings.
+³ Schema 3.
 
-Button state tables (`[components.button.hovered]`, `.pressed`, `.focused`,
-`.selected`, `.disabled`) accept the same fields as the base button table.
+Radii are 0–40, border widths 0–8, elevations 0–24, sizes (`minHeight`,
+`height`, `iconSize`, badge sizes) 0–96, thicknesses (`thickness`,
+`trackHeight`) 0–16. Insets (`padding`, `margin`, `insetPadding`) are four
+numbers `[left, top, right, bottom]`, each 0–64. Numbers must be finite.
+`filled` is a boolean. Fonts remain separate settings.
+
+`button` styles the primary buttons: Material elevated and filled buttons, and
+Btn.elevated. Text buttons (and Btn.text), outlined buttons and icon buttons
+keep the app's style unless `textButton`, `outlinedButton` or `iconButton` says
+otherwise, so a filled primary button does not turn every text action into one.
+
+`search` styles the search fields that draw their own pill: the settings
+search, the server switcher and the search in a list's bar. The text field
+inside the pill never takes `input`'s border or fill. `segmented` covers
+segmented buttons and the app's segmented tabs; `sidebar` the rows of the side
+bar and the settings menu; `toast` toasts and snack bars; `menu` popup and
+context menus; `divider` dividers and hairlines; `badge` also the navigation
+rail's count badges.
+
+The state tables (`[components.button.hovered]`, `.pressed`, `.focused`,
+`.selected`, `.disabled`) exist on `button`, `textButton`, `outlinedButton` and
+`iconButton`, and accept the same fields as their base table.
 State tables merge across common and brightness-specific configuration.
 For each property, priority is disabled > pressed > hovered > focused > selected
 > base. Unspecified properties inherit the existing button theme and Flutter defaults.
 
 These styles apply to Material components. The custom NavigationRail also uses
 navigation colors and indicator shape; CardX honors card shape and elevation;
-Input honors input borders and padding; SideBarTile honors tile colors and borders
+Input honors input borders and padding; SideBarTile honors `sidebar`, then tile colors and borders,
 while retaining its compact spacing. Btn.elevated honors the button style;
 compact Btn rows/columns retain their layout and use the themed radius.
 Explicit per-widget overrides still take priority. Theme preview uses these
 same settings in memory; dismissing the picker restores the previous appearance.
+
+### Layout
+
+Schema 3. `[layout]` holds app-wide settings that are not a component:
+
+```toml
+[layout]
+# "compact", "standard" or "comfortable" spacing of Material controls.
+# Omitted keeps the platform's default.
+density = "compact"
+```
 
 ## Splash screen
 
@@ -377,7 +430,8 @@ app installs the newest version it can read**, which may not be the newest
 version listed. Themes with only newer, unreadable versions remain listed with
 an explanation. Versions using schema 2 features must set `schema_min = 2`;
 setting it to 1 could offer older apps a package that installs but silently
-loses its icon, color, or splash screen.
+loses its icon, color, or splash screen. Versions using schema 3 components or
+`[layout]` must set `schema_min = 3`.
 
 A third-party theme is released from its author's own repository; only official
 themes are released from this one. The serverbox-theme skill's

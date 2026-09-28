@@ -321,17 +321,26 @@ final class _SettingsPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    // A row of these is a segmented control, and themed as one.
+    final style = ComponentStyles.of(context).segmented;
+    final ShapeBorder shape = style.radius == null
+        ? const StadiumBorder()
+        : RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(style.radius!),
+          );
     return Semantics(
       selected: selected,
       child: InkWell(
         onTap: onTap,
-        customBorder: const StadiumBorder(),
+        customBorder: shape,
         child: Container(
           height: 26,
           padding: const EdgeInsets.symmetric(horizontal: 11),
           decoration: ShapeDecoration(
-            shape: const StadiumBorder(),
-            color: selected ? scheme.secondaryContainer : Colors.transparent,
+            shape: shape,
+            color: selected
+                ? style.selectedColor ?? scheme.secondaryContainer
+                : Colors.transparent,
           ),
           child: Center(
             widthFactor: 1,
@@ -341,7 +350,9 @@ final class _SettingsPill extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
-                color: selected ? scheme.onSecondaryContainer : Colors.grey,
+                color: selected
+                    ? style.selectedTextColor ?? scheme.onSecondaryContainer
+                    : style.textColor ?? Colors.grey,
               ),
             ),
           ),

@@ -68,6 +68,7 @@ class _SwitcherSheetState extends ConsumerState<_SwitcherSheet> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final search = ComponentStyles.of(context).search;
 
     // Grouped by tag, and a machine with several is under each of them: a tag
     // is not a folder, so putting it in only the first would hide it from the
@@ -102,32 +103,46 @@ class _SwitcherSheetState extends ConsumerState<_SwitcherSheet> {
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(13, 0, 13, 9),
-                child: SizedBox(
-                  height: 34,
+                // The pill is drawn here and the field inside it is bare, so a
+                // theme's form-input border does not draw a second box in it.
+                child: Container(
+                  height: search.height ?? 34,
+                  padding: search.padding,
+                  alignment: Alignment.center,
+                  decoration: ShapeDecoration(
+                    shape: search.shape(const StadiumBorder()),
+                    color: search.backgroundColor ?? scheme.surfaceContainerLow,
+                  ),
                   child: TextField(
                     controller: _controller,
                     autofocus: true,
-                    style: const TextStyle(fontSize: 13, height: 1),
+                    style: TextStyle(
+                      fontSize: 13,
+                      height: 1,
+                      color: search.textColor,
+                    ),
                     // Off, or the field's own baseline makes the hint and the
                     // value sit at two different heights in a 34pt pill.
                     strutStyle: StrutStyle.disabled,
-                    decoration: InputDecoration(
+                    decoration: bareInputDecoration(
                       isDense: true,
-                      filled: true,
-                      fillColor: scheme.surfaceContainerLow,
                       hintText: '${libL10n.search} · #${libL10n.tag}',
-                      hintStyle: const TextStyle(fontSize: 13, height: 1),
-                      prefixIcon: const Icon(Icons.search, size: 17),
+                      hintStyle: TextStyle(
+                        fontSize: 13,
+                        height: 1,
+                        color: search.hintColor,
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        size: 17,
+                        color: search.iconColor,
+                      ),
                       prefixIconConstraints: const BoxConstraints(
                         minWidth: 34,
                         minHeight: 34,
                       ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 11,
-                      ),
-                      border: const OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(17)),
-                        borderSide: BorderSide.none,
                       ),
                     ),
                     onChanged: (value) =>
