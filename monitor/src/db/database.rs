@@ -60,12 +60,14 @@ pub async fn init(database_url: &str) -> Result<SqlitePool> {
 
     let pool = SqlitePoolOptions::new().connect_with(options).await?;
 
-    // Run migrations
-    sqlx::migrate!("./migrations").run(&pool).await?;
-
-    // After the first connection, which is what creates `-wal` and `-shm`.
+    // After the first connection, which is what creates `-wal` and `-shm`,
+    // and before anything else: a migration that fails must not leave them
+    // readable by others.
     #[cfg(unix)]
     restrict_to_owner(&file)?;
+
+    // Run migrations
+    sqlx::migrate!("./migrations").run(&pool).await?;
 
     info!("Database initialized");
     Ok(pool)

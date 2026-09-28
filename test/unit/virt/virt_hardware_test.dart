@@ -46,6 +46,7 @@ void main() {
   test('disks only grow, and fit the storage', () {
     expect(virtHwIssue(vm, const VirtHwGrowDisk(key: 'vda', bytes: 2 << 30)), isNull);
     expect(virtHwIssue(vm, const VirtHwGrowDisk(key: 'vda', bytes: 1 << 30)), VirtHwIssue.diskShrink);
+    expect(virtHwIssue(vm, const VirtHwGrowDisk(key: 'vdz', bytes: 2 << 30)), VirtHwIssue.diskSize);
     expect(virtHwIssue(vm, const VirtHwAddDisk(storage: pool, gib: 10)), isNull);
     expect(virtHwIssue(vm, const VirtHwAddDisk(storage: pool, gib: 11)), VirtHwIssue.storageSpace);
     expect(virtHwIssue(vm, const VirtHwAddDisk(storage: pool, gib: 0)), VirtHwIssue.diskSize);

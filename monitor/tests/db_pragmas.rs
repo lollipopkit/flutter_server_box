@@ -236,6 +236,13 @@ async fn the_database_files_are_owner_only() -> Result<()> {
     std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o644))?;
     let pool = database::init(&format!("sqlite:{}", path.display())).await?;
     assert_eq!(mode(&path), 0o600);
+
+    // One whose migrations fail is tightened all the same: the files were
+    // opened before the failure.
+    sqlx::query("UPDATE _sqlx_migrations SET checksum = x'00'").execute(&pool).await?;
     pool.close().await;
+    std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o644))?;
+    assert!(database::init(&format!("sqlite:{}", path.display())).await.is_err());
+    assert_eq!(mode(&path), 0o600);
     Ok(())
 }

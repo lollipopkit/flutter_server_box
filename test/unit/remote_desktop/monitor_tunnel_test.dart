@@ -223,7 +223,13 @@ void main() {
         5,
       ]);
       // Each frame echoed with its marker: every byte there, in order.
-      expect(agent.lastBytes, List.generate(5, (i) => (size - 5 + i) % 251));
+      final sent = List.generate(size, (i) => i % 251);
+      expect(echoed, [
+        for (var at = 0; at < size; at += monitorWsMaxFrameBytes) ...[
+          ...sent.skip(at).take(monitorWsMaxFrameBytes),
+          0x21,
+        ],
+      ]);
     });
   });
 

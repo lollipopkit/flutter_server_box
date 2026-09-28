@@ -271,7 +271,9 @@ Future<({int? exitCode, String stdout, String stderr})> execSshE2e(
     session.stdin.add(input);
     await session.stdin.close();
   }
-  await session.done.timeout(within, onTimeout: () {});
+  // Past [within] the command is ended here, not left running into the
+  // teardown that follows with its channel open.
+  await session.done.timeout(within, onTimeout: session.close);
   await collected;
   return (
     exitCode: session.exitCode,

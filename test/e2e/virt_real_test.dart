@@ -1984,8 +1984,16 @@ Future<void> _pveCreate() async {
           virtCreateIssue(spec, host: VirtHostKind.pve, guests: snap.guests),
           isNull,
         );
-        final result = await pve.create(spec);
+        // Recorded before the create, which may make the guest and fail
+        // after — but not when the id turned out to be taken by another.
         created[kind] = vmid;
+        final VirtCreated result;
+        try {
+          result = await pve.create(spec);
+        } on VirtErr catch (e) {
+          if (e.type == VirtErrType.exists) created.remove(kind);
+          rethrow;
+        }
         expect(result.startError, isNull);
         final g = await settle(
           kind,
@@ -5342,8 +5350,11 @@ Future<void> _p8Pve() async {
   group('snapshots: storage support and the config diff (PVE over SSH)', () {
     SSHClient? client;
     late PveBackend pve;
-    final vmid = 970 + (DateTime.now().millisecondsSinceEpoch % 20);
-    final name = 'sbxe2e-p8-$vmid';
+    // Ids PVE hands out as free, never a guessed range: a teardown destroys
+    // what is at them.
+    late int vmid;
+    late String name;
+    var made = false;
     VirtGuest? created;
 
     Future<void> onNode(String command) async {
@@ -5398,18 +5409,22 @@ Future<void> _p8Pve() async {
         pin = pve.config.certSha256;
       }
       // A VM of the test's own on a storage that supports snapshots.
+      vmid = (await pve.nextVmid())!;
+      name = 'sbxe2e-p8-$vmid';
       await onNode(
         'qm create $vmid --name $name --memory 512 --cores 1 '
-        '--net0 virtio,bridge=vmbr0 --scsihw virtio-scsi-pci --ostype l26 '
-        '|| true',
+        '--net0 virtio,bridge=vmbr0 --scsihw virtio-scsi-pci --ostype l26',
       );
-      await onNode('qm set $vmid --scsi0 local-lvm:1 --format qcow2 || true');
+      made = true;
+      await onNode('qm set $vmid --scsi0 local-lvm:1');
       created = await settle((_) => true);
     });
     tearDownAll(() async {
       try {
-        await onNode('qm stop $vmid --overrule-shutdown 1 || true');
-        await onNode('qm destroy $vmid --purge 1 || true');
+        if (made) {
+          await onNode('qm stop $vmid --overrule-shutdown 1 || true');
+          await onNode('qm destroy $vmid --purge 1 || true');
+        }
       } catch (_) {}
       try {
         await pve.close();
@@ -5450,18 +5465,24 @@ Future<void> _p8Pve() async {
         () async {
       // A second VM whose disk is raw on a `dir` storage: PVE's own feature
       // answer says no, and the app refuses before starting a task.
-      final rawId = vmid + 1;
+      final rawId = (await pve.nextVmid())!;
       final rawName = 'sbxe2e-p8r-$rawId';
       final dir = '/var/lib/$rawName';
-      await onNode(
-        'pvesm add dir $rawName --path $dir --content images 2>/dev/null || true',
-      );
+      await onNode('pvesm add dir $rawName --path $dir --content images');
+      addTearDown(() async {
+        await onNode('pvesm remove $rawName || true');
+        await onNode('rm -rf $dir');
+      });
       await onNode('mkdir -p $dir');
       await onNode(
         'qm create $rawId --name $rawName --memory 512 --cores 1 '
-        '--net0 virtio,bridge=vmbr0 --scsihw virtio-scsi-pci --ostype l26 || true',
+        '--net0 virtio,bridge=vmbr0 --scsihw virtio-scsi-pci --ostype l26',
       );
-      await onNode('qm set $rawId --scsi0 $rawName:1,format=raw || true');
+      addTearDown(() async {
+        await onNode('qm stop $rawId --overrule-shutdown 1 || true');
+        await onNode('qm destroy $rawId --purge 1 || true');
+      });
+      await onNode('qm set $rawId --scsi0 $rawName:1,format=raw');
       final raw = (await pve.load()).guests
           .where((g) => g.vmid == rawId)
           .firstOrNull;
@@ -5476,11 +5497,6 @@ Future<void> _p8Pve() async {
       expect(why, contains(rawName));
       final e = await _virtErr(pve.createSnapshot(raw, name: 'sbxe2e-p8raw'));
       expect(e.type, VirtErrType.unsupported);
-
-      await onNode('qm stop $rawId --overrule-shutdown 1 || true');
-      await onNode('qm destroy $rawId --purge 1 || true');
-      await onNode('pvesm remove $rawName || true');
-      await onNode('rm -rf $dir');
     });
   });
 }

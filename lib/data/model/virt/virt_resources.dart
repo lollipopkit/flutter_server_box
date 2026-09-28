@@ -97,10 +97,12 @@ List<(VirtGuestSnapshot, int)> virtSnapshotTree(
   }
 
   walk(null, 0);
-  // Whatever a cycle kept out of reach of the roots.
+  // Whatever a cycle kept out of reach of the roots, each with what hangs
+  // under it.
   for (final s in snapshots) {
     if (seen.add(s.name)) {
       out.add((s, 0));
+      walk(s.name, 1);
     }
   }
   return out;

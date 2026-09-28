@@ -761,10 +761,12 @@ VirtHwIssue? virtHwIssue(
       }
       if (swapMib != null && swapMib < 0) return VirtHwIssue.swap;
     case VirtHwGrowDisk(:final key, :final bytes):
-      if (hw.disk(key) case final d? when !virtHwDiskGrowable(d)) {
+      // A disk this guest does not have would be grown at no path.
+      final disk = hw.disk(key);
+      if (disk == null || !virtHwDiskGrowable(disk)) {
         return VirtHwIssue.diskSize;
       }
-      final size = hw.disk(key)?.size;
+      final size = disk.size;
       if (size != null && bytes <= size) return VirtHwIssue.diskShrink;
       if (bytes > 1 << 50) return VirtHwIssue.diskSize;
     case VirtHwAddDisk(:final storage, :final gib, :final mountPoint):

@@ -20,6 +20,11 @@ void main() {
   });
 
   tearDown(() async {
+    // The binding outlives the test: one left hidden would start the next
+    // with the app off screen.
+    TestWidgetsFlutterBinding.instance.handleAppLifecycleStateChanged(
+      AppLifecycleState.resumed,
+    );
     await getIt.reset();
     await closeTestDb();
   });

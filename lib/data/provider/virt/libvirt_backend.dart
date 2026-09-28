@@ -45,6 +45,7 @@ class LibvirtBackend implements VirtBackend {
     bool Function()? canStream,
     DateTime Function()? now,
     @visibleForTesting this.seedTools,
+    @visibleForTesting this.uploadReadyTimeout = const Duration(seconds: 60),
   }) : _exec = exec,
        _byteExec = byteExec,
        _canStream = canStream,
@@ -54,6 +55,10 @@ class LibvirtBackend implements VirtBackend {
   /// of them, in `sbm_parser`'s order. The end-to-end tests narrow it to
   /// make a seed with each tool in turn.
   final List<String>? seedTools;
+
+  /// How long the upload command may take to say it is ready: a shell,
+  /// sudo and `read` — seconds at most.
+  final Duration uploadReadyTimeout;
 
   /// Uploads go over whatever of the server carries bytes: its SSH
   /// connection, whichever transport leads for everything else, or this
@@ -1690,6 +1695,9 @@ class LibvirtBackend implements VirtBackend {
       if (!ready.isCompleted) ready.complete(false);
     }));
     int? code;
+    // No ready line within [uploadReadyTimeout]: what it printed by then is
+    // no answer, and reading it as one would report a refusal.
+    var stalled = false;
     try {
       final password = _sudoPassword;
       try {
@@ -1705,7 +1713,10 @@ class LibvirtBackend implements VirtBackend {
       }
       final go = await ready.future.timeout(
         uploadReadyTimeout,
-        onTimeout: () => false,
+        onTimeout: () {
+          stalled = true;
+          return false;
+        },
       );
       if (go && !cancelled) {
         var sent = 0;
@@ -1744,6 +1755,12 @@ class LibvirtBackend implements VirtBackend {
         message: 'sudo rejected the password',
       );
     }
+    if (stalled) {
+      throw VirtErr(
+        type: VirtErrType.actionFailed,
+        message: 'The upload command was not ready within $uploadReadyTimeout',
+      );
+    }
     try {
       final uploaded = ffi.parseVirtVolUpload(raw: '$out$stderr');
       return uploaded ? _Streamed.done : _Streamed.notStarted;
@@ -1762,9 +1779,6 @@ class LibvirtBackend implements VirtBackend {
     }
   }
 
-  /// How long the upload command may take to say it is ready: a shell,
-  /// sudo and `read` — seconds at most.
-  static const uploadReadyTimeout = Duration(seconds: 60);
 
   /// What sudo prints when it will not take the password, as
   /// `ServerExecSudo.runWithSudo` watches for.

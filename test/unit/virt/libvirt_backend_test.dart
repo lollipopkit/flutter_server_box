@@ -6,6 +6,7 @@
 /// Parsing goes through the real FFI: `cargo build -p sbm_ffi` first.
 library;
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -18,6 +19,7 @@ import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_hardware.dart';
+import 'package:server_box/data/model/virt/virt_manage.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/virt/libvirt_backend.dart';
 import 'package:server_box/src/rust/api/script.dart' as script;
@@ -1742,6 +1744,33 @@ SbVirtRc=0
       expect(virtUsbAddress(d, VirtHostKind.libvirt), '2:7');
     });
   });
+
+  test('upload: a command that never gets ready is a timeout, not a refusal', () async {
+    final exec = _Exec((_) => _ok(_section('virt.res.step', 'Vol made')));
+    final session = _SilentSession();
+    final virt = LibvirtBackend(
+      serverId: 's',
+      exec: () async => exec,
+      byteExec: () async => _ByteExec(exec, session),
+      canStream: () => true,
+      uploadReadyTimeout: const Duration(milliseconds: 50),
+    );
+    final e = await _err(
+      virt.upload(
+        VirtUpload(
+          pool: const VirtStoragePool(id: 'images', name: 'images', type: 'dir', path: '/i', active: true),
+          name: 'a.iso',
+          size: 3,
+          open: () => Stream.value(const [1, 2, 3]),
+        ),
+      ),
+    );
+
+    expect(e.message, contains('not ready within'));
+    expect(session.killed, isTrue);
+    expect(session.written, everyElement(isNot(equals(const [1, 2, 3]))), reason: 'no file sent');
+    expect(exec.calls.last.script, contains('vol-delete'), reason: 'the volume made for it is removed');
+  });
 }
 
 Future<VirtErr> _err(Future<Object?> future) async {
@@ -1760,6 +1789,61 @@ ExecResult _fail(String stderr) =>
     ExecResult(exitCode: 1, stdout: '', stderr: stderr);
 
 typedef _Call = ({String script, String? entry, String? stdin});
+
+/// Streams through [_Exec] for everything but [start].
+class _ByteExec implements ServerByteExec {
+  _ByteExec(this.exec, this.session);
+
+  final _Exec exec;
+  final ExecSession session;
+
+  @override
+  Future<ExecSession> start(String command) async => session;
+
+  @override
+  Future<ExecResult> run(
+    String script, {
+    String? entry,
+    Map<String, String>? env,
+    String? stdin,
+    OnExecOutput? onStdout,
+    OnExecOutput? onStderr,
+    Future<void>? cancel,
+  }) => exec.run(script, entry: entry, env: env, stdin: stdin, onStdout: onStdout, onStderr: onStderr, cancel: cancel);
+}
+
+/// A command that prints nothing, and ends only when killed.
+class _SilentSession implements ExecSession {
+  final _out = StreamController<String>();
+  final _err = StreamController<String>();
+  final _done = Completer<int?>();
+  final written = <List<int>>[];
+  var killed = false;
+
+  @override
+  Stream<String> get stdout => _out.stream;
+
+  @override
+  Stream<String> get stderr => _err.stream;
+
+  @override
+  Future<void> write(List<int> data) async => written.add(data);
+
+  @override
+  Future<void> closeStdin() async {}
+
+  @override
+  Future<int?> get done => _done.future;
+
+  @override
+  void kill() {
+    if (killed) return;
+    killed = true;
+    unawaited(_out.close());
+    unawaited(_err.close());
+    _done.complete(null);
+  }
+}
 
 class _Exec implements ServerExec {
   _Exec(this.answer);

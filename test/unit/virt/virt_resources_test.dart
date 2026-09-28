@@ -30,10 +30,10 @@ void main() {
       _s('orphan', 'deleted'),
       _s('x', 'y'),
       _s('y', 'x'),
+      _s('under', 'y'),
       _s('self', 'self'),
     ]);
-    expect(tree.map((e) => e.$1.name), unorderedEquals(['orphan', 'x', 'y', 'self']));
-    expect(tree.firstWhere((e) => e.$1.name == 'orphan').$2, 0);
+    expect(tree.map((e) => '${e.$1.name}${e.$2}'), ['orphan0', 'self0', 'x0', 'y1', 'under2']);
   });
 
   test('names: PVE\'s rule, and not one taken or reserved', () {
