@@ -105,6 +105,9 @@ final _calls = <String>[];
 
 /// Every change `manage` was handed, whole: what a form sent.
 final _sent = <VirtResourceChange>[];
+
+/// What `manage` throws after taking a change, when set.
+VirtErr? _manageErr;
 late VirtHostState _state;
 
 final _pools = [
@@ -290,6 +293,7 @@ class _FakeHost extends VirtHostNotifier {
   @override
   Future<void> manage(VirtResourceChange change) async {
     _sent.add(change);
+    if (_manageErr case final e?) throw e;
     _calls.add(switch (change) {
       VirtVolumeCreate(:final name, :final gib, :final format) =>
         'manage volume $name $gib $format',
@@ -1103,8 +1107,8 @@ VirtSnapChain _chainOf({
       ],
     );
 
-/// The network edit form on a libvirt host: an existing network is edited
-/// in place instead of being read-only.
+/// Editing an existing network in place: its configuration rows are a
+/// draft, held in the view until Save and dropped by Revert.
 void _phase10(
   Future<void> Function(WidgetTester, {required bool wide}) pump,
 ) {
@@ -1118,21 +1122,51 @@ void _phase10(
     });
     tearDown(() {
       _networks = _defaultNetworks;
+      _manageErr = null;
     });
 
-    testWidgets('the form, the definition, and the restart', (tester) async {
-      addTearDown(() => _networks = _defaultNetworks);
-      _networks = const [
+    /// Built rows, on screen or not: the pane is one scrolling column.
+    Finder key(String k) => find.byKey(ValueKey(k), skipOffstage: false);
+
+    Future<void> tap(WidgetTester tester, String k) async {
+      await tester.ensureVisible(key(k));
+      await _settle(tester);
+      await tester.tap(key(k));
+      await _settle(tester);
+    }
+
+    Future<void> type(WidgetTester tester, String k, String text) async {
+      await tester.ensureVisible(key(k));
+      await _settle(tester);
+      await tester.enterText(key(k), text);
+      await _settle(tester);
+    }
+
+    String text(WidgetTester tester, String k) =>
+        tester.widget<Input>(key(k)).controller!.text;
+
+    Btn btn(WidgetTester tester, String k) => tester.widget<Btn>(key(k));
+
+    Future<void> open(WidgetTester tester, String id) async {
+      await pump(tester, wide: true);
+      await tester.tap(segment(libL10n.network));
+      await _settle(tester);
+      await tester.tap(find.byKey(ValueKey('net:$id')));
+      await _settle(tester);
+    }
+
+    /// A libvirt NAT network with a DHCP range and a static host.
+    VirtNetwork lab({bool active = true, List<VirtGuestRef> users = const []}) =>
         VirtNetwork(
           id: 'lab',
           name: 'lab',
           // No node: a libvirt network.
           mode: 'nat',
-          active: true,
-          cidrs: ['192.168.150.1/24'],
-          dhcpRanges: ['192.168.150.100-192.168.150.200'],
+          active: active,
+          cidrs: const ['192.168.150.1/24'],
+          dhcpRanges: const ['192.168.150.100-192.168.150.200'],
           bridge: 'virbr1',
-          hosts: [
+          hosts: const [
             VirtNetHost(mac: '52:54:00:aa:bb:01', ip: '192.168.150.10', name: 'h1'),
           ],
           xml:
@@ -1145,83 +1179,129 @@ void _phase10(
               '    </dhcp>\n'
               '  </ip>\n'
               '</network>\n',
-          users: [
+          users: users,
+        );
+
+    testWidgets('the rows, the definition, and the restart', (tester) async {
+      _networks = [
+        lab(
+          users: const [
             VirtGuestRef(guestId: 'qemu/100', device: 'vnet0', mac: '52:54:00:11:22:33'),
           ],
         ),
       ];
-      await pump(tester, wide: true);
-      await tester.tap(segment(libL10n.network));
-      await _settle(tester);
-      await tester.tap(find.byKey(const ValueKey('net:lab')));
-      await _settle(tester);
-      expect(find.byKey(const ValueKey('net:edit')), findsOneWidget);
-      // The edit button opens the form.
-      await tester.tap(find.byKey(const ValueKey('net:edit')));
-      await _settle(tester);
-      // Its own definition is shown, folded.
-      expect(find.byKey(const ValueKey('net:edit:config')), findsOneWidget);
-      expect(find.text(libL10n.ok), findsOneWidget);
-      // The restart is offered (the network is active) and says what it
-      // costs. It sits below the fold of a dialog, so it is scrolled to.
-      // The form's rows, as the dialog draws them: the mode, the address,
-      // the static entry and the restart.
-      for (final k in ['net:edit:mode:nat', 'net:edit:address']) {
-        expect(find.byKey(ValueKey(k)), findsOneWidget, reason: k);
+      await open(tester, 'lab');
+      // The configuration is its rows, edited in place: no form to open,
+      // and nothing to save until something changes.
+      for (final k in [
+        'net:edit:mode:nat',
+        'net:edit:cidr',
+        'hw:toggle:net:edit:dhcp',
+        'net:edit:dhcp:start',
+        'net:edit:host:0:mac',
+      ]) {
+        expect(key(k), findsOneWidget, reason: k);
       }
-      // The rows below the fold: a dialog scrolls, so they are reached by
-      // scrolling the form itself.
-      // The static entry, and a change that needs a restart (the address).
-      // The rows below the fold: the dialog scrolls, so they are reached by
-      // dragging it. `skipOffstage: false` counts what is built but not on
-      // screen.
-      // An address that is not one: shown, and OK sends nothing.
-      await tester.enterText(find.byKey(const ValueKey('net:edit:address')), 'garbage');
-      await _settle(tester);
-      await tester.tap(find.text(libL10n.ok));
-      await _settle(tester);
+      expect(text(tester, 'net:edit:cidr'), '192.168.150.1/24');
+      expect(key('net:edit:save'), findsNothing);
+      // Its own definition, folded in a group of its own.
+      expect(key('hw:disc:config'), findsOneWidget);
+      await tap(tester, 'hw:disc:config');
+      expect(find.textContaining("<forward mode='nat'/>"), findsOneWidget);
+
+      // An address that is not one: Save is held back, and says why.
+      await type(tester, 'net:edit:cidr', 'garbage');
+      expect(btn(tester, 'net:edit:save').onTap, isNull);
       expect(_sent, isEmpty);
-      expect(find.byKey(const ValueKey('net:edit:config')), findsOneWidget, reason: 'still open');
       // Back to what it was, and only the static host's name changed: valid
-      // as the network is (its address and prefix are one CIDR), and no
-      // restart — `net-update` takes a host live.
-      await tester.enterText(find.byKey(const ValueKey('net:edit:address')), '192.168.150.1');
-      await _settle(tester);
-      await tester.enterText(
-        find.byKey(const ValueKey('net:edit:host:0:name'), skipOffstage: false),
-        'h2',
-      );
-      await _settle(tester);
-      expect(find.byKey(const ValueKey('net:edit:restart'), skipOffstage: false), findsNothing);
-      await tester.tap(find.text(libL10n.ok));
-      await _settle(tester);
+      // as the network is, and no restart — `net-update` takes a host live.
+      await type(tester, 'net:edit:cidr', '192.168.150.1/24');
+      await type(tester, 'net:edit:host:0:name', 'h2');
+      expect(key('hw:toggle:net:edit:restart'), findsNothing);
+      await tap(tester, 'net:edit:save');
       final sent = _sent.single as VirtNetworkEdit;
       expect((sent.address, sent.prefix), ('192.168.150.1', 24));
       expect((sent.dhcpStart, sent.dhcpEnd), ('192.168.150.100', '192.168.150.200'));
       expect(sent.hosts.single.name, 'h2');
+      // Saved: no draft is left, and the rows are the network's again.
+      expect(key('net:edit:save'), findsNothing);
+      expect(text(tester, 'net:edit:host:0:name'), 'h1');
 
-      // Again, with a new address: now a restart is offered and says what
-      // it costs, and the range and the host must move with it.
+      // A new address: now a restart is offered and says what it costs, and
+      // the range and the host must move with it.
       _sent.clear();
-      await tester.tap(find.byKey(const ValueKey('net:edit')));
-      await _settle(tester);
-      await tester.enterText(find.byKey(const ValueKey('net:edit:address')), '192.168.151.1');
-      await _settle(tester);
-      expect(find.byKey(const ValueKey('net:edit:restart'), skipOffstage: false), findsOneWidget);
-      expect(find.text(app_locale.l10n.virtNetEditRestartNote, skipOffstage: false), findsOneWidget);
+      await type(tester, 'net:edit:cidr', '192.168.151.1/24');
+      expect(key('hw:toggle:net:edit:restart'), findsOneWidget);
+      expect(
+        find.text(app_locale.l10n.virtNetEditRestartNote, skipOffstage: false),
+        findsOneWidget,
+      );
+      expect(
+        find.text(app_locale.l10n.virtNetEditAsk(1), skipOffstage: false),
+        findsOneWidget,
+      );
       // The old range is outside the new subnet: refused until it moves.
-      await tester.tap(find.text(libL10n.ok));
-      await _settle(tester);
+      expect(btn(tester, 'net:edit:save').onTap, isNull);
+      await tap(tester, 'net:edit:revert');
+      expect(text(tester, 'net:edit:cidr'), '192.168.150.1/24');
+      expect(key('hw:toggle:net:edit:restart'), findsNothing);
+      expect(_sent, isEmpty, reason: 'reverted');
+    });
+
+    testWidgets('an edit is a draft until Save; Revert discards it', (
+      tester,
+    ) async {
+      _networks = [lab(active: false)];
+      await open(tester, 'lab');
+      await tap(tester, 'net:edit:mode:isolated');
+      await type(tester, 'net:edit:cidr', '10.9.0.1/24');
+      await tap(tester, 'hw:toggle:net:edit:dhcp');
+      // Nothing is sent while it is edited.
       expect(_sent, isEmpty);
-      await tester.tap(find.text(libL10n.cancel));
-      await _settle(tester);
-      expect(_sent, isEmpty, reason: 'cancelled');
+      expect(key('net:edit:revert'), findsOneWidget);
+      expect(key('hw:toggle:net:edit:dhcp'), findsOneWidget);
+
+      await tap(tester, 'net:edit:revert');
+      expect(_sent, isEmpty);
+      expect(key('net:edit:save'), findsNothing);
+      expect(text(tester, 'net:edit:cidr'), '192.168.150.1/24');
+      expect(key('net:edit:dhcp:start'), findsOneWidget, reason: 'DHCP on again');
+
+      // Made again and saved: sent once, as the rows say.
+      await tap(tester, 'net:edit:mode:isolated');
+      await tap(tester, 'net:edit:save');
+      final sent = _sent.single as VirtNetworkEdit;
+      expect((sent.mode, sent.address, sent.prefix), ('isolated', '192.168.150.1', 24));
+      // Inactive: nothing runs to restart.
+      expect(key('hw:toggle:net:edit:restart'), findsNothing);
+    });
+
+    testWidgets('a failed save keeps the draft; a conflict drops it', (
+      tester,
+    ) async {
+      _networks = [lab(active: false)];
+      await open(tester, 'lab');
+      _manageErr = const VirtErr(type: VirtErrType.unreachable, message: 'timeout');
+      await type(tester, 'net:edit:cidr', '192.168.152.1/24');
+      await type(tester, 'net:edit:dhcp:start', '192.168.152.100');
+      await type(tester, 'net:edit:dhcp:end', '192.168.152.200');
+      await type(tester, 'net:edit:host:0:ip', '192.168.152.10');
+      await tap(tester, 'net:edit:save');
+      expect(_sent, hasLength(1));
+      expect(text(tester, 'net:edit:cidr'), '192.168.152.1/24', reason: 'kept to retry');
+      expect(key('net:edit:save'), findsOneWidget);
+
+      // Changed on the host since it was read: the draft's base is gone.
+      _manageErr = const VirtErr(type: VirtErrType.conflict);
+      await tap(tester, 'net:edit:save');
+      expect(_sent, hasLength(2));
+      expect(text(tester, 'net:edit:cidr'), '192.168.150.1/24');
+      expect(key('net:edit:save'), findsNothing);
     });
 
     testWidgets('bridge mode sends no static hosts, and keeps them', (
       tester,
     ) async {
-      addTearDown(() => _networks = _defaultNetworks);
       _networks = const [
         VirtNetwork(
           id: 'lab',
@@ -1233,19 +1313,16 @@ void _phase10(
           ],
         ),
       ];
-      await pump(tester, wide: true);
-      await tester.tap(segment(libL10n.network));
-      await _settle(tester);
-      await tester.tap(find.byKey(const ValueKey('net:lab')));
-      await _settle(tester);
-      await tester.tap(find.byKey(const ValueKey('net:edit')));
-      await _settle(tester);
-      await tester.tap(find.byKey(const ValueKey('net:edit:mode:bridge')));
-      await _settle(tester);
-      await tester.enterText(find.byKey(const ValueKey('net:edit:bridge')), 'br0');
-      await _settle(tester);
-      await tester.tap(find.text(libL10n.ok));
-      await _settle(tester);
+      await open(tester, 'lab');
+      await tap(tester, 'net:edit:mode:bridge');
+      // Bridge mode serves no DHCP: the static hosts are not shown…
+      expect(key('net:edit:host:0:mac'), findsNothing);
+      // …and are still there when it switches back.
+      await tap(tester, 'net:edit:mode:nat');
+      expect(text(tester, 'net:edit:host:0:mac'), '52:54:00:aa:bb:01');
+      await tap(tester, 'net:edit:mode:bridge');
+      await type(tester, 'net:edit:bridge', 'br0');
+      await tap(tester, 'net:edit:save');
       final sent = _sent.single as VirtNetworkEdit;
       expect((sent.mode, sent.bridge), ('bridge', 'br0'));
       expect(sent.hosts, isEmpty);
@@ -1254,7 +1331,6 @@ void _phase10(
     testWidgets('PVE: a bridge with only IPv6 has no IPv4 address to fix', (
       tester,
     ) async {
-      addTearDown(() => _networks = _defaultNetworks);
       _state = VirtHostState(serverId: _pve, kind: VirtHostKind.pve, data: _snapshot(_manageCaps));
       _networks = const [
         VirtNetwork(
@@ -1267,22 +1343,13 @@ void _phase10(
           ports: ['nic2'],
         ),
       ];
-      await pump(tester, wide: true);
-      await tester.tap(segment(libL10n.network));
-      await _settle(tester);
-      await tester.tap(find.byKey(const ValueKey('net:pve/vmbr6')));
-      await _settle(tester);
-      await tester.tap(find.byKey(const ValueKey('net:edit')));
-      await _settle(tester);
-      expect(
-        tester.widget<Input>(find.byKey(const ValueKey('net:edit:address'))).controller!.text,
-        isEmpty,
-      );
-      // A ports-only edit goes through; the IPv6 address is the host's to keep.
-      await tester.enterText(find.byKey(const ValueKey('net:edit:ports')), 'nic2 nic3');
-      await _settle(tester);
-      await tester.tap(find.text(libL10n.ok));
-      await _settle(tester);
+      await open(tester, 'pve/vmbr6');
+      expect(text(tester, 'net:edit:cidr'), isEmpty);
+      // The IPv6 address is shown, and is the host's to keep.
+      expect(find.text('fd00:6::1/64', skipOffstage: false), findsOneWidget);
+      // A ports-only edit goes through.
+      await type(tester, 'net:edit:ports', 'nic2 nic3');
+      await tap(tester, 'net:edit:save');
       final sent = _sent.single as VirtNetworkEditBridge;
       expect((sent.ports, sent.cidr), ('nic2 nic3', ''));
     });
@@ -1290,7 +1357,6 @@ void _phase10(
     testWidgets('PVE: the address goes with its prefix; the host\'s own is not offered', (
       tester,
     ) async {
-      addTearDown(() => _networks = _defaultNetworks);
       _state = VirtHostState(serverId: _pve, kind: VirtHostKind.pve, data: _snapshot(_manageCaps));
       _networks = const [
         VirtNetwork(
@@ -1313,28 +1379,57 @@ void _phase10(
           managementEditable: false,
         ),
       ];
-      await pump(tester, wide: true);
-      await tester.tap(segment(libL10n.network));
-      await _settle(tester);
-      await tester.tap(find.byKey(const ValueKey('net:pve/vmbr7')));
-      await _settle(tester);
-      await tester.tap(find.byKey(const ValueKey('net:edit')));
-      await _settle(tester);
-      await tester.enterText(find.byKey(const ValueKey('net:edit:prefix')), '16');
-      await _settle(tester);
-      await tester.tap(find.text(libL10n.ok));
-      await _settle(tester);
+      await open(tester, 'pve/vmbr7');
+      // As the design has it: saved as pending, applied with ifreload.
+      expect(find.text(app_locale.l10n.virtNetPveApplyNote, skipOffstage: false), findsOneWidget);
+      await type(tester, 'net:edit:cidr', '10.89.0.1/16');
+      await tap(tester, 'net:edit:save');
       final sent = _sent.single as VirtNetworkEditBridge;
       expect(sent.cidr, '10.89.0.1/16');
       expect(sent.ports, 'nic1');
 
-      // The management bridge: no edit, no delete, and why.
+      // The management bridge: no rows to edit, no delete, and why.
       await tester.tap(find.byKey(const ValueKey('net:pve/vmbr0')));
       await _settle(tester);
-      expect(find.byKey(const ValueKey('net:edit')), findsNothing);
+      expect(key('net:edit:ports'), findsNothing);
+      expect(key('net:edit:cidr'), findsNothing);
       expect(find.text(app_locale.l10n.virtNetManagementTip, skipOffstage: false), findsOneWidget);
     });
 
+    testWidgets('PVE: nothing is edited while the node\'s networks are busy', (
+      tester,
+    ) async {
+      _state = VirtHostState(
+        serverId: _pve,
+        kind: VirtHostKind.pve,
+        data: _snapshot(_manageCaps),
+        resourceOps: {VirtResourceChange.netNodeScope('pve')},
+      );
+      _networks = const [
+        VirtNetwork(
+          id: 'pve/vmbr7',
+          name: 'vmbr7',
+          node: 'pve',
+          mode: 'bridge',
+          cidrs: ['10.89.0.1/24'],
+          ports: ['nic1'],
+        ),
+      ];
+      await open(tester, 'pve/vmbr7');
+      expect(tester.widget<Input>(key('net:edit:ports')).enabled, isFalse);
+      expect(tester.widget<Input>(key('net:edit:cidr')).enabled, isFalse);
+      expect(
+        tester
+            .widget<SwitchX>(
+              find.descendant(
+                of: key('hw:toggle:net:edit:vlan'),
+                matching: find.byType(SwitchX),
+              ),
+            )
+            .onChanged,
+        isNull,
+      );
+    });
   });
 }
 

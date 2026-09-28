@@ -3586,7 +3586,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get virtErrConflictTip =>
-      'ここで読み込んだ後にこのゲストの設定が他の誰かに変更されたため、何も変更していません。再読み込みしたので、必要なら改めて変更してください。';
+      'ここで読み込んだ後にこの設定が他の誰かに変更されたため、何も変更していません。再読み込みしたので、必要なら改めて変更してください。';
 
   @override
   String get virtHardware => 'ハードウェア';
@@ -4071,7 +4071,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get virtBackupNoPlanShort => 'スケジュールなし';
 
   @override
-  String get virtBackupNoPlan => 'このゲストを含む定期バックアップジョブはありません。ジョブはデータセンターで設定します。';
+  String get virtBackupNoPlan => 'このゲストを含む定期バックアップジョブはありません。';
 
   @override
   String get virtBackupKeep => '保持';
@@ -4352,6 +4352,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get virtNetConfig => '構成';
+
+  @override
+  String get virtNetConfigFile => '設定ファイル';
 
   @override
   String get virtNetInternal => '内部';
@@ -4923,9 +4926,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get virtBackupExcludeTip => 'ノード上のすべてのゲストが対象です。オフにすると除外されます。';
 
   @override
-  String get virtNetEdit => '構成を編集';
-
-  @override
   String virtNetEditAsk(int count) {
     return '実行中のネットワークは再起動するまで現在の状態を保ちます。再起動すると接続中の仮想マシン ($count) が切断されます。';
   }
@@ -4975,6 +4975,9 @@ class AppLocalizationsJa extends AppLocalizations {
       '専用のアドレスを持つ MAC はありません: すべての仮想マシンは DHCP 範囲からアドレスを受け取ります。';
 
   @override
+  String get virtNetHostOthers => 'その他の仮想マシンは DHCP 範囲からアドレスを受け取ります。';
+
+  @override
   String get virtNetHostInvalid => 'ホストが拒否する MAC、アドレス、名前、または重複した MAC があります。';
 
   @override
@@ -4991,9 +4994,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get virtNetVlanAware => 'VLAN 対応';
-
-  @override
-  String get virtNetPveEditNote => 'ノードの保留中の構成に書き込まれます。ホストに反映するには適用してください。';
 
   @override
   String get virtCiExpire => 'パスワードを期限切れにする';
@@ -5055,5 +5055,22 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String virtHwRevertAllAsk(String name) {
     return '$name の次回起動を待っている変更をすべて破棄しますか？';
+  }
+
+  @override
+  String get virtBackupPlanNew => '新しい計画';
+
+  @override
+  String get virtBackupPlanNewTip => 'このゲストだけをバックアップするスケジュール。';
+
+  @override
+  String virtBackupPlanOthers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '他の $count 台のゲストもバックアップします',
+      zero: '他のゲストはありません',
+    );
+    return '$_temp0';
   }
 }

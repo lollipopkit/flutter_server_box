@@ -3523,7 +3523,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtErrConflict => '已在别处修改';
 
   @override
-  String get virtErrConflictTip => '此虚拟机的配置在读取后被他人修改，因此未做任何更改。已重新读取，如仍需要请再次修改。';
+  String get virtErrConflictTip => '此配置在读取后被他人修改，因此未做任何更改。已重新读取，如仍需要请再次修改。';
 
   @override
   String get virtHardware => '硬件';
@@ -4003,7 +4003,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtBackupNoPlanShort => '无计划';
 
   @override
-  String get virtBackupNoPlan => '没有包含它的定时备份任务。任务在数据中心里设置。';
+  String get virtBackupNoPlan => '没有包含它的定时备份任务。';
 
   @override
   String get virtBackupKeep => '保留';
@@ -4284,6 +4284,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtNetConfig => '配置';
+
+  @override
+  String get virtNetConfigFile => '配置文件';
 
   @override
   String get virtNetInternal => '内部';
@@ -4845,9 +4848,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtBackupExcludeTip => '该节点上的所有虚拟机都会备份。关闭某个即可排除它。';
 
   @override
-  String get virtNetEdit => '编辑配置';
-
-  @override
   String virtNetEditAsk(int count) {
     return '运行中的网络在重启前保持原样。重启会中断其上的 $count 台虚拟机。';
   }
@@ -4896,6 +4896,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtNetHostEmpty => '未给任何 MAC 分配固定地址：所有虚拟机都从 DHCP 范围中获取。';
 
   @override
+  String get virtNetHostOthers => '其余虚拟机都从 DHCP 范围中获取地址。';
+
+  @override
   String get virtNetHostInvalid => '宿主机会拒绝的 MAC、地址或名称，或同一个 MAC 出现两次。';
 
   @override
@@ -4909,9 +4912,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtNetVlanAware => 'VLAN 感知';
-
-  @override
-  String get virtNetPveEditNote => '写入节点的待生效配置；应用后宿主机才会采用。';
 
   @override
   String get virtCiExpire => '密码过期';
@@ -4972,6 +4972,23 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String virtHwRevertAllAsk(String name) {
     return '丢弃 $name 所有等待下次启动的修改？';
+  }
+
+  @override
+  String get virtBackupPlanNew => '新建计划';
+
+  @override
+  String get virtBackupPlanNewTip => '只备份这台虚拟机的定时计划。';
+
+  @override
+  String virtBackupPlanOthers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '还备份另外 $count 台虚拟机',
+      zero: '没有其他虚拟机',
+    );
+    return '$_temp0';
   }
 }
 
@@ -8491,8 +8508,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtErrConflict => '已在別處修改';
 
   @override
-  String get virtErrConflictTip =>
-      '此虛擬機器的設定在讀取後被他人修改，因此未做任何變更。已重新讀取，如仍需要請再次修改。';
+  String get virtErrConflictTip => '此設定在讀取後被他人修改，因此未做任何變更。已重新讀取，如仍需要請再次修改。';
 
   @override
   String get virtHardware => '硬體';
@@ -8973,7 +8989,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtBackupNoPlanShort => '無排程';
 
   @override
-  String get virtBackupNoPlan => '沒有包含它的定時備份工作。工作在資料中心中設定。';
+  String get virtBackupNoPlan => '沒有包含它的定時備份工作。';
 
   @override
   String get virtBackupKeep => '保留';
@@ -9254,6 +9270,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtNetConfig => '設定';
+
+  @override
+  String get virtNetConfigFile => '設定檔';
 
   @override
   String get virtNetInternal => '內部';
@@ -9816,9 +9835,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtBackupExcludeTip => '該節點上的所有虛擬機器都會備份。關閉某個即可排除它。';
 
   @override
-  String get virtNetEdit => '編輯設定';
-
-  @override
   String virtNetEditAsk(int count) {
     return '執行中的網路在重新啟動前維持原樣。重新啟動會中斷其上的 $count 台虛擬機器。';
   }
@@ -9867,6 +9883,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtNetHostEmpty => '未給任何 MAC 分配固定位址：所有虛擬機器都從 DHCP 範圍中取得。';
 
   @override
+  String get virtNetHostOthers => '其餘虛擬機器都從 DHCP 範圍中取得位址。';
+
+  @override
   String get virtNetHostInvalid => '主機系統會拒絕的 MAC、位址或名稱，或同一個 MAC 出現兩次。';
 
   @override
@@ -9880,9 +9899,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtNetVlanAware => 'VLAN 感知';
-
-  @override
-  String get virtNetPveEditNote => '寫入節點的待生效設定；套用後主機系統才會採用。';
 
   @override
   String get virtCiExpire => '密碼過期';
@@ -9943,5 +9959,22 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String virtHwRevertAllAsk(String name) {
     return '丟棄 $name 所有等待下次啟動的變更？';
+  }
+
+  @override
+  String get virtBackupPlanNew => '新增計畫';
+
+  @override
+  String get virtBackupPlanNewTip => '只備份這台虛擬機器的定時計畫。';
+
+  @override
+  String virtBackupPlanOthers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '還備份另外 $count 台虛擬機器',
+      zero: '沒有其他虛擬機器',
+    );
+    return '$_temp0';
   }
 }

@@ -3594,7 +3594,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get virtErrConflictTip =>
-      '여기서 읽은 뒤 다른 사람이 이 게스트의 구성을 변경해서 아무것도 바꾸지 않았습니다. 다시 읽었으니 여전히 필요하면 다시 변경하세요.';
+      '여기서 읽은 뒤 다른 사람이 이 구성을 변경해서 아무것도 바꾸지 않았습니다. 다시 읽었으니 여전히 필요하면 다시 변경하세요.';
 
   @override
   String get virtHardware => '하드웨어';
@@ -4079,8 +4079,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get virtBackupNoPlanShort => '일정 없음';
 
   @override
-  String get virtBackupNoPlan =>
-      '이 게스트를 포함하는 예약 백업 작업이 없습니다. 작업은 데이터센터에서 설정합니다.';
+  String get virtBackupNoPlan => '이 게스트를 포함하는 예약 백업 작업이 없습니다.';
 
   @override
   String get virtBackupKeep => '보존';
@@ -4362,6 +4361,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get virtNetConfig => '구성';
+
+  @override
+  String get virtNetConfigFile => '구성 파일';
 
   @override
   String get virtNetInternal => '내부';
@@ -4934,9 +4936,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get virtBackupExcludeTip => '노드의 모든 게스트가 대상입니다. 끄면 제외됩니다.';
 
   @override
-  String get virtNetEdit => '구성 편집';
-
-  @override
   String virtNetEditAsk(int count) {
     return '실행 중인 네트워크는 재시작할 때까지 현재 상태를 유지합니다. 재시작하면 연결된 가상 머신($count)의 연결이 끊깁니다.';
   }
@@ -4986,6 +4985,9 @@ class AppLocalizationsKo extends AppLocalizations {
       '고유 주소가 지정된 MAC이 없습니다: 모든 가상 머신은 DHCP 범위에서 주소를 받습니다.';
 
   @override
+  String get virtNetHostOthers => '다른 모든 가상 머신은 DHCP 범위에서 주소를 받습니다.';
+
+  @override
   String get virtNetHostInvalid =>
       '호스트가 거부할 MAC, 주소 또는 이름이 있거나 같은 MAC이 두 번 있습니다.';
 
@@ -5002,9 +5004,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get virtNetVlanAware => 'VLAN 인식';
-
-  @override
-  String get virtNetPveEditNote => '노드의 대기 중인 구성에 기록됩니다. 호스트에 반영하려면 적용하세요.';
 
   @override
   String get virtCiExpire => '비밀번호 만료';
@@ -5065,5 +5064,22 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String virtHwRevertAllAsk(String name) {
     return '$name의 다음 시작을 기다리는 변경을 모두 버릴까요?';
+  }
+
+  @override
+  String get virtBackupPlanNew => '새 계획';
+
+  @override
+  String get virtBackupPlanNewTip => '이 게스트만 백업하는 일정입니다.';
+
+  @override
+  String virtBackupPlanOthers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '다른 게스트 $count대도 백업합니다',
+      zero: '다른 게스트 없음',
+    );
+    return '$_temp0';
   }
 }

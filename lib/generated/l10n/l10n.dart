@@ -6496,10 +6496,10 @@ abstract class AppLocalizations {
   /// **'Changed elsewhere'**
   String get virtErrConflict;
 
-  /// Explains the conflict.
+  /// Explains a conflict: a guest's, a network's or a cloud-init configuration changed on the host after it was read.
   ///
   /// In en, this message translates to:
-  /// **'Someone changed this guest\'s configuration after it was read here, so nothing was changed. It has been read again: make the change again if it still applies.'**
+  /// **'Someone changed this configuration after it was read here, so nothing was changed. It has been read again: make the change again if it still applies.'**
   String get virtErrConflictTip;
 
   /// The guest view showing and changing CPU, memory, disks and network interfaces.
@@ -7393,7 +7393,7 @@ abstract class AppLocalizations {
   /// Backup view: no scheduled backup job takes the guest.
   ///
   /// In en, this message translates to:
-  /// **'No scheduled backup job takes this guest. Jobs are set up in the datacenter.'**
+  /// **'No scheduled backup job takes this guest.'**
   String get virtBackupNoPlan;
 
   /// Backup job: how many backups are kept (retention).
@@ -7874,6 +7874,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Configuration'**
   String get virtNetConfig;
+
+  /// Network view: group title over the network's definition as the host keeps it (libvirt XML, PVE interfaces entry).
+  ///
+  /// In en, this message translates to:
+  /// **'Configuration file'**
+  String get virtNetConfigFile;
 
   /// A bridge with no ports, a network with no bridge of the host's.
   ///
@@ -8877,12 +8883,6 @@ abstract class AppLocalizations {
   /// **'Every guest on the node is taken. Turn one off to leave it out.'**
   String get virtBackupExcludeTip;
 
-  /// Network view: the button that opens the edit form.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit configuration'**
-  String get virtNetEdit;
-
   /// Edit dialog: what a restart does, with guests on the network.
   ///
   /// In en, this message translates to:
@@ -8967,6 +8967,12 @@ abstract class AppLocalizations {
   /// **'No address is handed to a MAC of its own: every guest gets one from the DHCP range.'**
   String get virtNetHostEmpty;
 
+  /// Static entries: some are set; beside the button that adds another.
+  ///
+  /// In en, this message translates to:
+  /// **'Every other guest gets one from the DHCP range.'**
+  String get virtNetHostOthers;
+
   /// A static entry the host would refuse.
   ///
   /// In en, this message translates to:
@@ -8996,12 +9002,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'VLAN aware'**
   String get virtNetVlanAware;
-
-  /// Under the PVE bridge edit form.
-  ///
-  /// In en, this message translates to:
-  /// **'Written into the node\'s pending configuration; apply it for the host to take it.'**
-  String get virtNetPveEditNote;
 
   /// cloud-init: the password expires switch.
   ///
@@ -9098,6 +9098,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Drop every change waiting for {name}\'s next start?'**
   String virtHwRevertAllAsk(String name);
+
+  /// Backup view, Plan group: make a scheduled backup job that takes this guest alone.
+  ///
+  /// In en, this message translates to:
+  /// **'New plan'**
+  String get virtBackupPlanNew;
+
+  /// Backup view, Plan group: what a new plan is, beside its button and above its form.
+  ///
+  /// In en, this message translates to:
+  /// **'A schedule that backs up this guest alone.'**
+  String get virtBackupPlanNewTip;
+
+  /// Backup view, Plan group: a job that takes this guest takes this many others too; tapping it opens the job.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No other guest} =1{Also backs up 1 other guest} other{Also backs up {count} other guests}}'**
+  String virtBackupPlanOthers(int count);
 }
 
 class _AppLocalizationsDelegate

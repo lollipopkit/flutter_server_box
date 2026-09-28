@@ -119,6 +119,7 @@ class VirtGuestView extends ConsumerStatefulWidget {
     this.leading,
     this.onDeleted,
     this.onOpenGuest,
+    this.onOpenBackupJob,
   });
 
   final String serverId;
@@ -130,6 +131,11 @@ class VirtGuestView extends ConsumerStatefulWidget {
   /// Opens another of the host's guests where this one is — what the tab
   /// does with a list beside it. Null: this view switches to it itself.
   final ValueChanged<String>? onOpenGuest;
+
+  /// Opens a backup job in the tab's Backup section, beside the list. Null:
+  /// this view pushes the job's page over itself, as the section does with
+  /// one column.
+  final ValueChanged<String>? onOpenBackupJob;
 
   /// Whether the name in the bar opens the host's other guests — with one
   /// column, where the list is not beside this.
@@ -263,6 +269,7 @@ class _VirtGuestViewState extends ConsumerState<VirtGuestView> {
                 guest: guest,
                 caps: st.data!.capabilities,
                 onOpenGuest: _openGuest,
+                onOpenJob: _openBackupJob,
               ),
               VirtGuestViewKind.snapshots => VirtSnapshotsView(
                 key: ValueKey('snapshots:${guest.id}'),
@@ -593,6 +600,21 @@ extension _GuestActions on _VirtGuestViewState {
     }
     _switchTo(guestId);
     setState(() => _view = VirtGuestViewKind.overview);
+  }
+
+  /// A backup job a plan of this guest's belongs to — one that takes other
+  /// guests too, which the Backup section edits.
+  void _openBackupJob(String jobId) {
+    if (widget.onOpenBackupJob case final open?) {
+      open(jobId);
+      return;
+    }
+    unawaited(
+      VirtBackupJobPage.route.go(
+        context,
+        VirtBackupJobArgs(serverId: widget.serverId, jobId: jobId),
+      ),
+    );
   }
 
   void _switchTo(String guestId) {

@@ -3819,7 +3819,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get virtErrConflictTip =>
-      'Jemand hat die Konfiguration dieses Gasts geändert, nachdem sie hier gelesen wurde, daher wurde nichts geändert. Sie wurde neu gelesen: Ändere es erneut, falls es noch nötig ist.';
+      'Jemand hat diese Konfiguration geändert, nachdem sie hier gelesen wurde, daher wurde nichts geändert. Sie wurde neu gelesen: Ändere es erneut, falls es noch nötig ist.';
 
   @override
   String get virtHardware => 'Hardware';
@@ -4325,7 +4325,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get virtBackupNoPlan =>
-      'Kein geplanter Backup-Job sichert diesen Gast. Jobs werden im Rechenzentrum eingerichtet.';
+      'Kein geplanter Backup-Job sichert diesen Gast.';
 
   @override
   String get virtBackupKeep => 'Aufbewahren';
@@ -4637,6 +4637,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get virtNetConfig => 'Konfiguration';
+
+  @override
+  String get virtNetConfigFile => 'Konfigurationsdatei';
 
   @override
   String get virtNetInternal => 'Intern';
@@ -5240,9 +5243,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Alle Gäste des Knotens werden gesichert. Schalten Sie einen ab, um ihn auszulassen.';
 
   @override
-  String get virtNetEdit => 'Konfiguration bearbeiten';
-
-  @override
   String virtNetEditAsk(int count) {
     return 'Das laufende Netzwerk behält seinen Stand, bis es neu gestartet wird. Ein Neustart trennt die VMs darauf ($count) vom Netz.';
   }
@@ -5295,6 +5295,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Keine MAC erhält eine eigene Adresse: jede VM bekommt eine aus dem DHCP-Bereich.';
 
   @override
+  String get virtNetHostOthers =>
+      'Jede andere VM bekommt eine aus dem DHCP-Bereich.';
+
+  @override
   String get virtNetHostInvalid =>
       'Eine MAC, Adresse oder ein Name, den der Host ablehnen würde, oder dieselbe MAC doppelt.';
 
@@ -5312,10 +5316,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get virtNetVlanAware => 'VLAN-aware';
-
-  @override
-  String get virtNetPveEditNote =>
-      'Wird in die ausstehende Konfiguration des Knotens geschrieben; wende sie an, damit der Host sie übernimmt.';
 
   @override
   String get virtCiExpire => 'Passwort läuft ab';
@@ -5378,5 +5378,24 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String virtHwRevertAllAsk(String name) {
     return 'Alle Änderungen verwerfen, die auf den nächsten Start von $name warten?';
+  }
+
+  @override
+  String get virtBackupPlanNew => 'Neuer Plan';
+
+  @override
+  String get virtBackupPlanNewTip =>
+      'Ein Zeitplan, der nur diesen Gast sichert.';
+
+  @override
+  String virtBackupPlanOthers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Sichert auch $count weitere Gäste',
+      one: 'Sichert auch 1 weiteren Gast',
+      zero: 'Kein anderer Gast',
+    );
+    return '$_temp0';
   }
 }

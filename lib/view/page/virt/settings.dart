@@ -155,7 +155,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
       warn: waits,
       indexNote: hw.autostart ? l10n.virtHwAutostart : l10n.virtSetManualStart,
       rows: [
-        Input(
+        _inputRow([Input(
           key: const ValueKey('set:name'),
           controller: _name,
           label: _lxc ? l10n.virtHostname : libL10n.name,
@@ -165,7 +165,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
           enabled: !renameLocked && !busy,
           errorText: nameIssue,
           onChanged: (_) => setState(() {}),
-        ),
+        )]),
         if (renameLocked) _text(l10n.virtSetRenameStopped),
         if (nameChanged)
           _actions([
@@ -183,7 +183,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
                   : () => _apply(hw, VirtHwSetName(name)),
             ),
           ]),
-        Input(
+        _inputRow([Input(
           key: const ValueKey('set:desc'),
           controller: _desc,
           label: libL10n.description,
@@ -195,7 +195,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
           enabled: !busy,
           errorText: descIssue,
           onChanged: (_) => setState(() {}),
-        ),
+        )]),
         if (descChanged)
           _actions([
             _Action(
@@ -464,7 +464,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
             l10n.virtCiForeignBody,
             key: const ValueKey('ci:foreign'),
           ),
-        Input(
+        _inputRow([Input(
           key: const ValueKey('ci:user'),
           controller: _ciUser,
           label: libL10n.user,
@@ -474,8 +474,8 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
           enabled: !locked,
           errorText: on(VirtCreateIssue.ciUser, l10n.virtCiUserInvalid),
           onChanged: (_) => setState(() {}),
-        ),
-        Input(
+        )]),
+        _inputRow([Input(
           key: const ValueKey('ci:password'),
           controller: _ciPassword,
           label: libL10n.pwd,
@@ -486,7 +486,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
           suggestion: false,
           enabled: !locked && !_ciRemovePassword,
           onChanged: (_) => setState(() {}),
-        ),
+        )]),
         if (ci.passwordSet)
           _toggle(
             Icons.no_encryption_outlined,
@@ -513,7 +513,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
             note: l10n.virtCiExpireNote,
             onChanged: locked ? null : (on) => setState(() => _ciExpire = on),
           ),
-        Input(
+        _inputRow([Input(
           key: const ValueKey('ci:keys'),
           controller: _ciKeys,
           label: l10n.virtSshKeys,
@@ -521,18 +521,19 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
           hint: 'ssh-ed25519 AAAA…',
           minLines: 1,
           maxLines: 4,
+          noWrap: true,
           suggestion: false,
           enabled: !locked,
           errorText: on(VirtCreateIssue.sshKeys, l10n.virtCreateSshKeysInvalid),
           onChanged: (_) => setState(() {}),
-        ),
+        )]),
         _text(l10n.virtCiKeysAdded),
         if (issue == VirtCreateIssue.ciCredentials)
           _text(l10n.virtCiCredentialsMissing, error: true),
         if (_pve)
           _text(l10n.virtCiHostnamePve)
         else
-          Input(
+          _inputRow([Input(
             key: const ValueKey('ci:hostname'),
             controller: _ciHostname,
             label: l10n.virtHostname,
@@ -542,7 +543,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
             enabled: !locked,
             errorText: on(VirtCreateIssue.ciHostname, l10n.virtCreateNameInvalidPve),
             onChanged: (_) => setState(() {}),
-          ),
+          )]),
         if (ci.network) ...[
           _seg(
             Icons.lan_outlined,
@@ -553,7 +554,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
             onSelected: locked ? null : (v) => setState(() => _ciStatic = v != 'DHCP'),
           ),
           if (_ciStatic) ...[
-            Input(
+            _inputRow([Input(
               key: const ValueKey('ci:address'),
               controller: _ciAddress,
               label: 'IPv4 / CIDR',
@@ -564,8 +565,8 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
               enabled: !locked,
               errorText: on(VirtCreateIssue.ciAddress, l10n.virtCiAddressInvalid),
               onChanged: (_) => setState(() {}),
-            ),
-            Input(
+            )]),
+            _inputRow([Input(
               key: const ValueKey('ci:gateway'),
               controller: _ciGateway,
               label: libL10n.gateway,
@@ -576,9 +577,9 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
               enabled: !locked,
               errorText: on(VirtCreateIssue.ciGateway, l10n.virtCiGatewayInvalid),
               onChanged: (_) => setState(() {}),
-            ),
+            )]),
           ],
-          Input(
+          _inputRow([Input(
             key: const ValueKey('ci:dns'),
             controller: _ciDns,
             label: 'DNS',
@@ -589,8 +590,8 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
             enabled: !locked,
             errorText: on(VirtCreateIssue.ciDns, l10n.virtCiDnsInvalid),
             onChanged: (_) => setState(() {}),
-          ),
-          Input(
+          )]),
+          _inputRow([Input(
             key: const ValueKey('ci:search'),
             controller: _ciSearch,
             label: l10n.virtCiSearch,
@@ -601,7 +602,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
             enabled: !locked,
             errorText: on(VirtCreateIssue.ciSearch, l10n.virtCreateNameInvalidPve),
             onChanged: (_) => setState(() {}),
-          ),
+          )]),
           _text(l10n.virtCiSearchTip),
           if (ci.nics > 1) _text(l10n.virtCiNicsTip(ci.nics)),
         ],
@@ -718,7 +719,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
           ? l10n.virtCloneLinkedShort
           : l10n.virtCloneEmptyShort,
       rows: [
-        Input(
+        _inputRow([Input(
           key: const ValueKey('clone:name'),
           controller: _cloneName,
           label: l10n.virtCloneName,
@@ -728,7 +729,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
           enabled: !_cloning,
           errorText: name.isEmpty ? null : nameIssue,
           onChanged: (_) => setState(() {}),
-        ),
+        )]),
         _toggle(
           Icons.file_copy_outlined,
           _pve ? l10n.virtCloneFull : l10n.virtCloneCopyDisks,

@@ -553,7 +553,7 @@ Following the design: **Clone** is a group of the Settings view (new name,
 "Full clone" on PVE / "Copy disk contents" on libvirt, the Clone button; the
 copy opens on its overview afterwards), and **Backup** is a guest view of its
 own on PVE, between Snapshots and Settings (the Plan group — the scheduled
-jobs that take the guest, read only, "Datacenter → Backup" — and the Backup
+jobs that take the guest, "Datacenter → Backup" — and the Backup
 list: "Back up now" and each backup's file, notes, protection, verification,
 Delete and Restore). Capabilities: `clone` (both), `linkedClone` and `backup`
 (PVE). A clone, a backup and a restore are a guest's one operation in flight
@@ -1254,11 +1254,8 @@ Follows the repo's tab conventions (`CLAUDE.md` → Tabs):
     libvirt only;
   - attaching from the pool view offers VMs, not containers (a mount point
     would be one more question); cloning a volume is libvirt only;
-  - a network's configuration is edited in phase 10 (the design edits it in
-    place): the form says that a libvirt change waits for a restart unless
-    the restart is asked for, and that a PVE one waits in the node's pending
-    configuration. The design's "configuration file" group is the definition
-    the edit is made from, folded under the form;
+  - a network's configuration is edited in phase 10, in place as the
+    design has it, but as a draft with Save and Revert (below);
   - the new libvirt network form has a routed mode and the DHCP range fields
     (the design has three modes and the range only in the detail); a netfs
     pool asks for its mount point (prefilled `/mnt/<name>`);
@@ -1292,18 +1289,22 @@ Follows the repo's tab conventions (`CLAUDE.md` → Tabs):
 
 - Design deviations in the network editing, the revert and the small items
   (phase 10), and why:
-  - the edit form is a **dialog**, where the design edits the network in
-    place: the view it opens from is already the network's own pane, and
-    every other confirmation in the tab is a dialog. The design's
-    "configuration file" group is the definition the edit is made from,
-    folded under the fields (the design's own fold row);
+  - the configuration rows are edited in place, as the design's `cfg`
+    group, but as a **draft with Save and Revert**, where the design applies
+    each change at once: a real host takes a network change in one write
+    (`net-define`, or one `PUT` into PVE's pending configuration), and a
+    half-typed address must not reach it. Save is held back, with the
+    reason under the rows, while the host would refuse the draft. libvirt's
+    autostart is the one row applied at once: it is marked on the network,
+    outside the definition the draft writes. The design's "configuration
+    file" group is the definition as saved, folded;
   - the **restart is a switch of its own**, on by default and shown only
     where the change actually waits for one (a static host alone applies
     live), with what it does to the guests on the network under it: the
     design's edit applies at once, which for libvirt means the running
     network is left on the old configuration until someone restarts it;
   - a **static host** is a MAC, an address and an optional name, added and
-    removed in the form (the design has no such group): libvirt's static
+    removed in the configuration rows (the design has no such group): libvirt's static
     DHCP entries are what a guest is pinned to an address by, and they are
     the one part of a network that applies live;
   - **PVE's management interface is not offered at all** (the design would
@@ -1332,7 +1333,13 @@ Follows the repo's tab conventions (`CLAUDE.md` → Tabs):
   - **a Backup section of the tab** (PVE), where the design's Plan group is
     read-only and points at "数据中心 → 备份": a job that takes every guest
     (or a pool) belongs to no guest, and a guest's own Plan group can only
-    say "one of them takes you". The section is the same `SegmentedTabs` the
+    say "one of them takes you". A job that takes the guest alone
+    (`VirtBackupJob.takesOnly`) is the exception: the Plan group makes,
+    edits and deletes one in place, with the section's own rows (`_JobForm`,
+    less the node and the guests; a new one has no node, so it runs wherever
+    the guest is). A job that takes other guests too is read there, says
+    whom else it takes, and opens in the section (a page with one column).
+    The section is the same `SegmentedTabs` the
     Storage and Network sections are, and a job is edited on the design's own
     sectioned pane (the Hardware view's groups and index) rather than in a
     dialog;
@@ -1482,7 +1489,8 @@ page, so feature pages use the `featureIntroVer` counter.
 The design's Plan group becomes something the app manages a level up: a
 **Backup** section of the tab (PVE, `VirtCapabilities.backupJobs`) lists the
 datacenter's jobs, makes, edits, runs and deletes them, and a guest's own
-Plan group reads the jobs that take it and runs one. A **template** is a
+Plan group reads the jobs that take it, runs one, and edits the ones that
+take it alone. A **template** is a
 state of a guest (`POST .../template`), shown in the list and the bar, with
 no power action and no console; a **clone** can be sent to a storage and a
 node of its own.
@@ -1617,15 +1625,16 @@ passthrough by address.
 
 #### Editing an existing network
 
-The Network section's view gains an edit action, and the form behind it is
-the design's own: libvirt's mode, IPv4 address and prefix, DHCP range and
-static hosts; PVE's bridge ports, address, VLAN awareness and autostart.
-What each backend does with the answer differs, and the form says which:
+The Network section's view edits the network in place, in the design's
+configuration rows: libvirt's mode, IPv4 address with its prefix, DHCP range
+and static hosts; PVE's bridge ports, address, VLAN awareness and autostart.
+The rows are a draft until Save. What each backend does with it differs, and
+the rows say which:
 
 | | libvirt (`sbm_parser::virt_net`, one `virsh` round trip) | PVE (HTTP API) |
 | --- | --- | --- |
 | Which fields go where | mode, host bridge, address, prefix and DHCP range through `net-define`; the static hosts through `net-update add/delete ip-dhcp-host` | `PUT /nodes/{n}/network/{iface}` — ports, `cidr`, `gateway`, `bridge_vlan_aware`, `autostart`, and the interface's current `cidr`/`cidr6` sent back with every edit (below) |
-| When it applies | `net-define` writes the definition; the **running** network keeps its address, its bridge and its dnsmasq until it is restarted. A restart is offered as a switch of its own, and the form says what it does to the guests on it | Pending, like every other PVE network change: the node's `interfaces.new`, applied with the card above the list |
+| When it applies | `net-define` writes the definition; the **running** network keeps its address, its bridge and its dnsmasq until it is restarted. A restart is offered as a switch of its own beside Save, and the rows say what it does to the guests on it | Pending, like every other PVE network change: the node's `interfaces.new`, applied with the card above the list |
 | The restart | In one round trip: the running network's own XML kept, the new definition written **while it still runs** (a definition the host refuses stops there, nothing stopped), then `net-destroy` and `net-start`. A start the host refuses puts the old definition back and starts the network again from the kept XML (`net-create`, which libvirt 11.3 takes for a persistent network that is down — verified: running exactly as before, still persistent). `VirtNetworkRestart` alone, when the definition already has the change, is the same without a definition written. **An active network is never left down** unless the way back is refused too, which the error then says | none: applying the configuration is the change |
 | A refused edit | `VirtErrType.conflict` when the definition changed since it was read (the guard reads `net-dumpxml --inactive`, which is what the app was given) | `digest`-less `PUT`; a parameter PVE refuses comes back in its own words |
 | Never touched | – | a physical interface, and **any interface carrying the node's management traffic or sitting under one** (below). `virtPveManagedIface` refuses the edit and the deletion, `_checkApply` an apply whose diff touches one, and the view offers neither and says why |

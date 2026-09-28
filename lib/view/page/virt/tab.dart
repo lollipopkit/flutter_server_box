@@ -266,6 +266,13 @@ class _VirtTabPageState extends ConsumerState<VirtTabPage>
         guestId: id,
         onDeleted: () => setState(() => _guestId = null),
         onOpenGuest: (guestId) => _openGuest(hostId, guestId, true),
+        // The job in the Backup section, beside its list; the guest stays
+        // open under the guests section for the way back.
+        onOpenBackupJob: (jobId) => setState(() {
+          _section = VirtSection.backup;
+          _jobId = jobId;
+          _creating = false;
+        }),
       ),
       VirtSection.storage => VirtPoolView(
         key: key,

@@ -229,6 +229,47 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
     );
   }
 
+  /// A row that is typed into, in the same box as the rows around it.
+  ///
+  /// fl_lib's `Input(noWrap: true)` draws a bare field, which between boxed
+  /// rows read as loose text rather than a row of the pane. The field's own
+  /// content padding (7 above and below) already gives most of a [_box]'s 9,
+  /// so the box adds the 2 left: a field with its risen label is then as tall
+  /// as a [_field] row beside it.
+  ///
+  /// Several [inputs] share one row side by side (a range's two ends, a
+  /// host's address and name), 13 apart; one already in an `Expanded` or
+  /// `Flexible` keeps its flex, the rest take equal shares. [trailing] sits
+  /// after them (a Remove button), with the right edge of a [_step] row.
+  Widget _inputRow(
+    List<Widget> inputs, {
+    bool indent = false,
+    Key? key,
+    Widget? trailing,
+  }) {
+    return _box(
+      key: key,
+      indent: indent,
+      padding: EdgeInsets.fromLTRB(13, 2, trailing == null ? 13 : 7, 2),
+      child: _inputLine(inputs, trailing: trailing),
+    );
+  }
+
+  /// The inside of an [_inputRow], for a box that stacks more than one line
+  /// of fields.
+  Widget _inputLine(List<Widget> inputs, {Widget? trailing}) {
+    if (inputs.length == 1 && trailing == null) return inputs.single;
+    return Row(
+      children: [
+        for (final (i, input) in inputs.indexed) ...[
+          if (i > 0) UIs.width13,
+          if (input is Flexible) input else Expanded(child: input),
+        ],
+        ?trailing,
+      ],
+    );
+  }
+
   Widget _icon(IconData icon, {Color? color}) => Icon(
     icon,
     size: 19,
@@ -697,6 +738,9 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
               Btn.row(
                 key: a.key == null ? null : ValueKey<String>(a.key!),
                 text: a.text,
+                // Its own width: at the row's, each took a line of its own,
+                // left-aligned, instead of sitting together at the end.
+                mainAxisSize: MainAxisSize.min,
                 icon: Icon(
                   a.icon ?? Icons.check,
                   size: 17,

@@ -241,31 +241,25 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView>
         libL10n.cancel,
         onTap: close,
       ),
-      Padding(
-        padding: const EdgeInsets.only(left: _indent),
-        child: Input(
-          key: const ValueKey('snapshot:name'),
-          controller: _name,
-          label: libL10n.name,
-          icon: Icons.label_outline,
-          noWrap: true,
-          suggestion: false,
-          errorText: nameError,
-          onChanged: (_) => setState(() {}),
-        ),
-      ),
-      Padding(
-        padding: const EdgeInsets.only(left: _indent),
-        child: Input(
-          key: const ValueKey('snapshot:desc'),
-          controller: _desc,
-          label: libL10n.description,
-          icon: Icons.notes,
-          noWrap: true,
-          minLines: 1,
-          maxLines: 3,
-        ),
-      ),
+      _inputRow([Input(
+        key: const ValueKey('snapshot:name'),
+        controller: _name,
+        label: libL10n.name,
+        icon: Icons.label_outline,
+        noWrap: true,
+        suggestion: false,
+        errorText: nameError,
+        onChanged: (_) => setState(() {}),
+      )], indent: true),
+      _inputRow([Input(
+        key: const ValueKey('snapshot:desc'),
+        controller: _desc,
+        label: libL10n.description,
+        icon: Icons.notes,
+        noWrap: true,
+        minLines: 1,
+        maxLines: 3,
+      )], indent: true),
       if (widget.caps.snapshotExternal) ...[
         // Each kind says what it is; the one refused says why instead.
         _choice([

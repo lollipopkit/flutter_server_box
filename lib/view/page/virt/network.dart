@@ -1,11 +1,22 @@
 part of 'hardware.dart';
 
-/// One network — the design's network view: how it is set up, the guests on
-/// it, and what can be done to it.
+/// One network — the design's network view: its configuration, edited in
+/// place, the guests on it, its configuration file, and what can be done to
+/// it.
 ///
-/// libvirt applies a change as it is made. PVE writes it to the node's
-/// `interfaces.new` and applies it only when told to, as its own web UI
-/// does: [VirtNetworkPendingCard] says what waits, with Apply and Revert.
+/// The configuration rows are a draft held here, as Hardware's are: nothing
+/// reaches the host until Save, and Revert puts them back to what the
+/// network is. What saving costs is said beside Save:
+///
+/// - libvirt writes the definition (`net-define`); the running network
+///   keeps what it has until it is restarted, and restarting it cuts off
+///   its guests. Both are stated, and the restart is a switch of its own.
+/// - PVE writes the node's pending configuration
+///   (`PUT /nodes/{node}/network/{iface}`) and applies it only when told
+///   to, as its own web UI does: [VirtNetworkPendingCard] says what waits,
+///   with Apply and Revert. A bridge carrying the node's management
+///   traffic, and any interface that is not a bridge, is shown read-only.
+///
 /// A network with guests on it cannot be deleted.
 class VirtNetworkView extends ConsumerStatefulWidget {
   const VirtNetworkView({
@@ -39,22 +50,172 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
     with _PaneRows<VirtNetworkView> {
   String get _serverId => widget.serverId;
 
+  // --- The configuration draft ---
+
+  /// The read the rows were filled from: what the draft is compared with,
+  /// and the base Save sends unless a newer read has the same definition
+  /// ([_save]). Null until a build fills the rows.
+  VirtNetwork? _seeded;
+
+  final _bridge = TextEditingController();
+  final _cidr = TextEditingController();
+  final _ports = TextEditingController();
+  final _dhcpStart = TextEditingController();
+  final _dhcpEnd = TextEditingController();
+  var _mode = '';
+  var _dhcp = false;
+  var _vlanAware = false;
+  var _autostart = true;
+
+  /// Restart the running network on Save, where the change waits for one.
+  var _restartOnSave = true;
+
+  /// The static hosts, as drafts of their own: a MAC, an address, a name.
+  /// Kept through bridge mode, which does not send them, for switching
+  /// back.
+  var _hosts = <_HostDraft>[];
+  var _saving = false;
+
+  @override
+  void dispose() {
+    for (final c in [_bridge, _cidr, _ports, _dhcpStart, _dhcpEnd]) {
+      c.dispose();
+    }
+    for (final h in _hosts) {
+      h.dispose();
+    }
+    super.dispose();
+  }
+
+  /// Fills the rows from [net], leaving no draft.
+  void _seed(VirtNetwork net) {
+    _seeded = net;
+    _bridge.text = net.bridge ?? '';
+    // The IPv4 address the rows edit; an IPv6 one is left to the host.
+    _cidr.text = net.ipv4Cidr ?? '';
+    _ports.text = net.ports.join(' ');
+    _dhcpStart.text = net.dhcpRange?.$1 ?? '';
+    _dhcpEnd.text = net.dhcpRange?.$2 ?? '';
+    _mode = net.mode;
+    _dhcp = net.dhcpRange != null;
+    _vlanAware = net.vlanAware ?? false;
+    _autostart = net.autostart ?? true;
+    _restartOnSave = true;
+    for (final h in _hosts) {
+      h.dispose();
+    }
+    _hosts = [for (final h in net.hosts) _HostDraft(h.mac, h.ip, h.name)];
+  }
+
+  /// Whether the rows say something other than [_seeded]: a draft to save
+  /// or revert.
+  bool get _dirty {
+    final n = _seeded;
+    if (n == null) return false;
+    final cidr = _cidr.text.trim() != (n.ipv4Cidr ?? '');
+    if (n.node != null) {
+      return cidr ||
+          _ports.text.trim() != n.ports.join(' ') ||
+          _vlanAware != (n.vlanAware ?? false) ||
+          _autostart != (n.autostart ?? true);
+    }
+    return cidr ||
+        _mode != n.mode ||
+        _bridge.text.trim() != (n.bridge ?? '') ||
+        _dhcp != (n.dhcpRange != null) ||
+        _dhcpStart.text.trim() != (n.dhcpRange?.$1 ?? '') ||
+        _dhcpEnd.text.trim() != (n.dhcpRange?.$2 ?? '') ||
+        !listEquals(
+          [for (final h in _hosts) h.entry],
+          [for (final h in n.hosts) (h.mac, h.ip, h.name ?? '')],
+        );
+  }
+
+  /// What Save sends, made from [base].
+  VirtResourceChange _change(VirtNetwork base) {
+    final cidr = _cidr.text.trim();
+    if (base.node != null) {
+      return VirtNetworkEditBridge(
+        base,
+        ports: _ports.text.trim(),
+        cidr: cidr,
+        vlanAware: _vlanAware,
+        autostart: _autostart,
+      );
+    }
+    final bridged = _mode == 'bridge';
+    // One row for the address and its prefix, as the design has it; the
+    // host takes them apart. A missing or unreadable prefix is null, which
+    // [virtResourceIssue] refuses as the CIDR it is not.
+    final at = cidr.indexOf('/');
+    final address = at < 0 ? cidr : cidr.substring(0, at);
+    return VirtNetworkEdit(
+      base,
+      mode: _mode,
+      bridge: bridged ? _bridge.text.trim() : null,
+      address: bridged ? null : address,
+      prefix: bridged || address.isEmpty || at < 0
+          ? null
+          : int.tryParse(cidr.substring(at + 1)),
+      dhcpStart: _dhcp && !bridged ? _dhcpStart.text.trim() : null,
+      dhcpEnd: _dhcp && !bridged ? _dhcpEnd.text.trim() : null,
+      hosts: [
+        // A row left wholly empty is no host; one with anything in it is,
+        // and is checked as one rather than dropped.
+        // Bridge mode serves no DHCP: the drafts stay for switching back,
+        // and are not sent.
+        for (final h in _hosts)
+          if (!bridged && h.entry != ('', '', ''))
+            VirtNetHost(
+              mac: h.entry.$1.toLowerCase(),
+              ip: h.entry.$2,
+              name: h.entry.$3.isEmpty ? null : h.entry.$3,
+            ),
+      ],
+      restart: _restartOnSave,
+    );
+  }
+
+  /// Whether the running network has to be restarted for [change] to
+  /// apply — the same question `VirtNetEdit::needs_restart` answers on the
+  /// host. The static hosts never do: `net-update` takes them live. A field
+  /// the rows do not show (`bridge` in another mode) is compared against
+  /// what the network is, so a row that is not there is never a restart.
+  bool _needsRestart(VirtResourceChange change) {
+    final n = _seeded;
+    if (n == null || change is! VirtNetworkEdit) return false;
+    final address = change.address?.trim() ?? '';
+    return change.mode != n.mode ||
+        (change.mode == 'bridge' && change.bridge != n.bridge) ||
+        address != (n.address ?? '') ||
+        (address.isNotEmpty && change.prefix != n.prefix) ||
+        (change.dhcpStart ?? '') != (n.dhcpRange?.$1 ?? '') ||
+        (change.dhcpEnd ?? '') != (n.dhcpRange?.$2 ?? '');
+  }
+
   @override
   Widget build(BuildContext context) {
     final nets = ref.watch(virtNetworksProvider(_serverId));
     final all = nets.value ?? const <VirtNetwork>[];
     final net = all.firstWhereOrNull((n) => n.id == widget.netId);
+    // Another network, or a new read of this one with no draft on it: the
+    // rows follow. A draft stays on the read it was made from.
+    if (net != null &&
+        (_seeded?.id != net.id || (_seeded != net && !_dirty))) {
+      _seed(net);
+    }
     final at = net == null ? -1 : all.indexOf(net);
     final host = ref.watch(virtHostProvider(_serverId));
     final caps = host.data?.capabilities ?? const VirtCapabilities();
     final switchTo = widget.onSwitch;
     final busy =
+        _saving ||
         net != null &&
-        (host.resourceOps.contains('net:${net.id}') ||
-            (net.node != null &&
-                host.resourceOps.contains(
-                  VirtResourceChange.netNodeScope(net.node!),
-                )));
+            (host.resourceOps.contains('net:${net.id}') ||
+                (net.node != null &&
+                    host.resourceOps.contains(
+                      VirtResourceChange.netNodeScope(net.node!),
+                    )));
     final bar = virtResourceBar(
       name: net?.name ?? '',
       icon: Icons.lan_outlined,
@@ -65,14 +226,6 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
           ? () => unawaited(_pick(all, switchTo))
           : null,
       actions: [
-        // A PVE interface the app must not touch is not offered at all.
-        if (net != null && caps.networkEditExisting && net.managementEditable)
-          Btn.icon(
-            key: const ValueKey('net:edit'),
-            text: l10n.virtNetEdit,
-            icon: const Icon(Icons.edit_outlined, size: 18),
-            onTap: busy ? null : () => unawaited(_edit(net)),
-          ),
         if (net != null && caps.networkStart)
           Btn.icon(
             key: const ValueKey('net:toggle'),
@@ -113,8 +266,10 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
           Expanded(
             child: _buildGroups(
               [
-                _configGroup(net, caps, busy),
+                _configGroup(net, all, caps, busy),
                 if (net.takesGuests) _usersGroup(net, host),
+                if (virtNetworkConfigText(net) case final text?)
+                  _fileGroup(net, text),
                 if (caps.networkEdit && net.takesGuests)
                   _opsGroup(net, caps, busy),
               ],
@@ -139,8 +294,22 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
     );
   }
 
-  _Group _configGroup(VirtNetwork net, VirtCapabilities caps, bool busy) {
-    final pveBridge = net.node != null && net.mode == 'bridge';
+  /// The design's `cfg` group: the rows that edit the network where the app
+  /// may edit it, what it is otherwise, and the draft's Save and Revert.
+  _Group _configGroup(
+    VirtNetwork net,
+    List<VirtNetwork> all,
+    VirtCapabilities caps,
+    bool busy,
+  ) {
+    final pve = net.node != null;
+    final pveBridge = pve && net.mode == 'bridge';
+    // A PVE interface the app must not touch, or one that is not a bridge,
+    // is not offered at all.
+    final editable =
+        caps.networkEditExisting &&
+        net.managementEditable &&
+        (!pve || pveBridge);
     return _Group(
       key: 'cfg',
       title: pveBridge ? 'Linux bridge' : l10n.virtNetConfig,
@@ -149,61 +318,14 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
       dot: net.active ? StatePalette.running : StatePalette.idle,
       indexNote: [net.modeLabel, net.bridge ?? l10n.virtNetInternal].join(' · '),
       rows: [
-        _field(Icons.router_outlined, libL10n.mode, net.modeLabel),
-        if (net.node case final n?) _field(Icons.dns_outlined, libL10n.node, n),
-        if (net.bridge case final b?)
-          _field(Icons.settings_ethernet, l10n.virtBridge, b, mono: true),
-        if (pveBridge)
-          _field(
-            Icons.settings_ethernet,
-            l10n.virtNetBridgePorts,
-            net.ports.isEmpty ? l10n.virtNetInternal : net.ports.join(' '),
-            mono: true,
-          )
-        else if (net.ports.isNotEmpty)
-          _field(Icons.settings_ethernet, l10n.virtPorts, net.ports.join(', '), mono: true),
-        _field(
-          Icons.language,
-          'IPv4 / CIDR',
-          net.cidrs.isEmpty ? '--' : net.cidrs.join('\n'),
-          mono: true,
-        ),
-        if (net.gateway case final g?)
-          _field(Icons.alt_route, libL10n.gateway, g, mono: true),
-        if (net.dhcpRanges.isNotEmpty)
-          _field(
-            Icons.format_list_numbered,
-            l10n.virtNetDhcpRange,
-            net.dhcpRanges.join('\n'),
-            mono: true,
-          ),
-        if (net.vlanAware case final v?)
-          _field(Icons.segment, l10n.virtNetVlanAware, v ? libL10n.enabled : libL10n.disabled),
-        if (net.vlanId case final id?)
-          _field(Icons.segment, 'VLAN', [id, ?net.vlanDevice].join(' · ')),
-        if (net.bondMode case final m?) _field(Icons.merge_type, libL10n.mode, m),
-        if (net.comment case final c? when c.isNotEmpty)
-          _field(Icons.notes, libL10n.note, c),
-        if (caps.networkStart)
-          _toggle(
-            Icons.power_settings_new,
-            l10n.virtHwAutostart,
-            net.autostart ?? false,
-            key: 'net:autostart',
-            onChanged: busy
-                ? null
-                : (on) => unawaited(
-                    _manage(VirtNetworkSetAutostart(net, on: on)),
-                  ),
-          )
-        else if (net.autostart case final a?)
-          _field(
-            Icons.power_settings_new,
-            l10n.virtHwAutostart,
-            a ? libL10n.enabled : libL10n.disabled,
-          ),
+        if (!editable)
+          ..._facts(net, caps, busy)
+        else if (pve)
+          ..._pveRows(net, all, busy)
+        else
+          ..._libvirtRows(net, all, caps, busy),
         if (caps.networkApply && !net.active) _text(l10n.virtNetInactivePve),
-        if (caps.networkApply && net.node != null && !net.managementEditable)
+        if (caps.networkApply && pve && !net.managementEditable)
           _text(
             net.mode == 'bridge'
                 ? l10n.virtNetManagementTip
@@ -220,20 +342,394 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
             ),
           ]),
         ],
-        if (net.hosts.isNotEmpty) ...[
-          _text(l10n.virtNetHosts),
-          for (final (i, h) in net.hosts.indexed)
-            _field(
-              Icons.link,
-              h.name?.isNotEmpty ?? false ? h.name! : h.mac,
-              '${h.mac} → ${h.ip}',
-              key: ValueKey('net:host:$i'),
-              mono: true,
-            ),
-        ] else if (net.node == null)
-          _text(l10n.virtNetHostEmpty),
       ],
     );
+  }
+
+  /// What [net] is, read-only: where the app does not edit it.
+  List<Widget> _facts(VirtNetwork net, VirtCapabilities caps, bool busy) {
+    final pveBridge = net.node != null && net.mode == 'bridge';
+    return [
+      _field(Icons.router_outlined, libL10n.mode, net.modeLabel),
+      if (net.node case final n?) _field(Icons.dns_outlined, libL10n.node, n),
+      if (net.bridge case final b?)
+        _field(Icons.settings_ethernet, l10n.virtBridge, b, mono: true),
+      if (pveBridge)
+        _field(
+          Icons.settings_ethernet,
+          l10n.virtNetBridgePorts,
+          net.ports.isEmpty ? l10n.virtNetInternal : net.ports.join(' '),
+          mono: true,
+        )
+      else if (net.ports.isNotEmpty)
+        _field(Icons.settings_ethernet, l10n.virtPorts, net.ports.join(', '), mono: true),
+      _field(
+        Icons.language,
+        'IPv4 / CIDR',
+        net.cidrs.isEmpty ? '--' : net.cidrs.join('\n'),
+        mono: true,
+      ),
+      if (net.gateway case final g?)
+        _field(Icons.alt_route, libL10n.gateway, g, mono: true),
+      if (net.dhcpRanges.isNotEmpty)
+        _field(
+          Icons.format_list_numbered,
+          l10n.virtNetDhcpRange,
+          net.dhcpRanges.join('\n'),
+          mono: true,
+        ),
+      if (net.vlanAware case final v?)
+        _field(Icons.segment, l10n.virtNetVlanAware, v ? libL10n.enabled : libL10n.disabled),
+      if (net.vlanId case final id?)
+        _field(Icons.segment, 'VLAN', [id, ?net.vlanDevice].join(' · ')),
+      if (net.bondMode case final m?) _field(Icons.merge_type, libL10n.mode, m),
+      if (net.comment case final c? when c.isNotEmpty)
+        _field(Icons.notes, libL10n.note, c),
+      _autostartRow(net, caps, busy),
+      if (net.hosts.isNotEmpty) ...[
+        _text(l10n.virtNetHosts),
+        for (final (i, h) in net.hosts.indexed)
+          _field(
+            Icons.link,
+            h.name?.isNotEmpty ?? false ? h.name! : h.mac,
+            '${h.mac} → ${h.ip}',
+            key: ValueKey('net:host:$i'),
+            mono: true,
+          ),
+      ] else if (net.node == null)
+        _text(l10n.virtNetHostEmpty),
+    ];
+  }
+
+  /// libvirt's autostart: marked on the network itself, at once, outside the
+  /// definition the draft edits.
+  Widget _autostartRow(VirtNetwork net, VirtCapabilities caps, bool busy) {
+    if (caps.networkStart) {
+      return _toggle(
+        Icons.power_settings_new,
+        l10n.virtHwAutostart,
+        net.autostart ?? false,
+        key: 'net:autostart',
+        onChanged: busy
+            ? null
+            : (on) => unawaited(_manage(VirtNetworkSetAutostart(net, on: on))),
+      );
+    }
+    return _field(
+      Icons.power_settings_new,
+      l10n.virtHwAutostart,
+      (net.autostart ?? false) ? libL10n.enabled : libL10n.disabled,
+    );
+  }
+
+  /// libvirt's rows, as the design's: the mode, the address or the host
+  /// bridge, DHCP and its range, autostart — and the static hosts, which
+  /// the design leaves out and the host takes.
+  List<Widget> _libvirtRows(
+    VirtNetwork net,
+    List<VirtNetwork> all,
+    VirtCapabilities caps,
+    bool busy,
+  ) {
+    final bridged = _mode == 'bridge';
+    final (issue, text) = _issue(net, all);
+    String? on(Set<VirtResIssue> which) => which.contains(issue) ? text : null;
+    final change = _change(_seeded ?? net);
+    return [
+      _choice([
+        for (final (m, icon, label, sub) in [
+          ('nat', Icons.router_outlined, 'NAT', l10n.virtNetNatTip),
+          ('route', Icons.alt_route, l10n.virtNetRouted, l10n.virtNetRoutedTip),
+          ('isolated', Icons.link_off, l10n.virtNetIsolated, l10n.virtNetIsolatedTip),
+          ('bridge', Icons.lan_outlined, l10n.virtNetBridged, l10n.virtNetBridgedTip),
+        ])
+          _Choice(
+            key: 'net:edit:mode:$m',
+            icon: icon,
+            label: label,
+            sub: sub,
+            selected: m == _mode,
+            onTap: busy ? null : () => setState(() => _mode = m),
+          ),
+      ]),
+      if (bridged)
+        _inputRow([Input(
+          key: const ValueKey('net:edit:bridge'),
+          controller: _bridge,
+          label: l10n.virtNetHostBridge,
+          icon: Icons.settings_ethernet,
+          hint: 'br0',
+          noWrap: true,
+          suggestion: false,
+          enabled: !busy,
+          errorText: on(const {VirtResIssue.bridgeInvalid}),
+          onChanged: (_) => setState(() {}),
+        )])
+      else ...[
+        _cidrInput(busy, hint: '192.168.150.1/24', errorText: on(const {
+          VirtResIssue.cidrInvalid,
+          VirtResIssue.subnetTaken,
+        })),
+        // The device libvirt makes for it: not edited here.
+        if (net.bridge case final b?)
+          _field(Icons.settings_ethernet, l10n.virtBridge, b, mono: true),
+        _toggle(
+          Icons.dns_outlined,
+          'DHCP',
+          _dhcp,
+          key: 'net:edit:dhcp',
+          note: l10n.virtNetDhcpTip,
+          onChanged: busy ? null : (v) => setState(() => _dhcp = v),
+        ),
+        if (_dhcp)
+          _inputRow([
+            Input(
+              key: const ValueKey('net:edit:dhcp:start'),
+              controller: _dhcpStart,
+              label: l10n.virtNetDhcpRange,
+              icon: Icons.format_list_numbered,
+              noWrap: true,
+              suggestion: false,
+              enabled: !busy,
+              errorText: on(const {VirtResIssue.dhcpInvalid}),
+              onChanged: (_) => setState(() {}),
+            ),
+            Input(
+              key: const ValueKey('net:edit:dhcp:end'),
+              controller: _dhcpEnd,
+              label: '–',
+              noWrap: true,
+              suggestion: false,
+              enabled: !busy,
+              onChanged: (_) => setState(() {}),
+            ),
+          ]),
+      ],
+      _autostartRow(net, caps, busy),
+      if (!bridged) ...[
+        _text(l10n.virtNetHosts),
+        for (final (i, h) in _hosts.indexed)
+          _hostRow(i, h, busy, bad: issue == VirtResIssue.hostInvalid),
+        _empty(
+          _hosts.isEmpty ? l10n.virtNetHostEmpty : l10n.virtNetHostOthers,
+          l10n.virtNetHostAdd,
+          key: 'net:edit:host:add',
+          onTap: busy ? null : () => setState(() => _hosts.add(_HostDraft())),
+        ),
+      ],
+      // Only where the change waits for one: a static host alone applies
+      // live, and a switch that did nothing would be a lie.
+      if (_dirty && net.active && _needsRestart(change)) ...[
+        _callout(
+          libL10n.attention,
+          net.users.isEmpty
+              ? l10n.virtNetEditAskNoGuest
+              : l10n.virtNetEditAsk(net.users.length),
+        ),
+        _toggle(
+          Icons.restart_alt,
+          l10n.virtNetEditRestart,
+          _restartOnSave,
+          key: 'net:edit:restart',
+          note: l10n.virtNetEditRestartNote,
+          onChanged: busy ? null : (v) => setState(() => _restartOnSave = v),
+        ),
+      ],
+      ..._draftRows(net, busy, issue, text),
+    ];
+  }
+
+  /// A PVE bridge's rows, as the design's: its ports, its address, VLAN
+  /// awareness and autostart, and that they wait for the configuration to
+  /// be applied.
+  List<Widget> _pveRows(VirtNetwork net, List<VirtNetwork> all, bool busy) {
+    final (issue, text) = _issue(net, all);
+    String? on(Set<VirtResIssue> which) => which.contains(issue) ? text : null;
+    final ipv4 = net.ipv4Cidr;
+    final others = [for (final c in net.cidrs) if (c != ipv4) c];
+    return [
+      _field(Icons.dns_outlined, libL10n.node, net.node!),
+      _inputRow([Input(
+        key: const ValueKey('net:edit:ports'),
+        controller: _ports,
+        label: l10n.virtNetBridgePorts,
+        icon: Icons.settings_ethernet,
+        hint: l10n.virtNetPortsHint,
+        noWrap: true,
+        suggestion: false,
+        enabled: !busy,
+        errorText: on(const {VirtResIssue.bridgeInvalid}),
+        onChanged: (_) => setState(() {}),
+      )]),
+      _cidrInput(busy, hint: '10.20.0.1/24', errorText: on(const {VirtResIssue.cidrInvalid})),
+      // Sent back as they are: the rows edit IPv4 only.
+      if (others.isNotEmpty)
+        _field(Icons.language, 'IPv6', others.join('\n'), mono: true),
+      if (net.gateway case final g?)
+        _field(Icons.alt_route, libL10n.gateway, g, mono: true),
+      _toggle(
+        Icons.segment,
+        l10n.virtNetVlanAware,
+        _vlanAware,
+        key: 'net:edit:vlan',
+        note: l10n.virtNetVlanTip,
+        onChanged: busy ? null : (v) => setState(() => _vlanAware = v),
+      ),
+      _toggle(
+        Icons.power_settings_new,
+        l10n.virtHwAutostart,
+        _autostart,
+        key: 'net:edit:autostart',
+        onChanged: busy ? null : (v) => setState(() => _autostart = v),
+      ),
+      if (net.comment case final c? when c.isNotEmpty)
+        _field(Icons.notes, libL10n.note, c),
+      _text(l10n.virtNetPveApplyNote),
+      ..._draftRows(net, busy, issue, text),
+    ];
+  }
+
+  Widget _cidrInput(bool busy, {required String hint, String? errorText}) {
+    return _inputRow([Input(
+      key: const ValueKey('net:edit:cidr'),
+      controller: _cidr,
+      label: 'IPv4 / CIDR',
+      icon: Icons.language,
+      hint: hint,
+      noWrap: true,
+      suggestion: false,
+      enabled: !busy,
+      errorText: errorText,
+      onChanged: (_) => setState(() {}),
+    )]);
+  }
+
+  /// Why the draft cannot be saved, and that said for the rows; nothing
+  /// while there is no draft — the network as the host has it is not the
+  /// user's to fix.
+  (VirtResIssue?, String?) _issue(VirtNetwork net, List<VirtNetwork> all) {
+    if (!_dirty) return (null, null);
+    final pve = net.node != null;
+    final issue = virtResourceIssue(
+      _change(_seeded ?? net),
+      host: pve ? VirtHostKind.pve : VirtHostKind.libvirt,
+      networks: all,
+    );
+    return (issue, issue == null ? null : virtResIssueText(issue, pve: pve));
+  }
+
+  /// Save and Revert, with why Save is held back; nothing without a draft.
+  List<Widget> _draftRows(
+    VirtNetwork net,
+    bool busy,
+    VirtResIssue? issue,
+    String? text,
+  ) {
+    if (!_dirty) return const [];
+    return [
+      if (issue != null) _text(text ?? libL10n.fail, error: true),
+      _actions([
+        _Action(
+          l10n.virtHwRevert,
+          key: 'net:edit:revert',
+          icon: Icons.undo,
+          onTap: _saving ? null : () => setState(() => _seed(net)),
+        ),
+        _Action(
+          libL10n.save,
+          key: 'net:edit:save',
+          primary: true,
+          onTap: busy || issue != null ? null : () => unawaited(_save(net)),
+        ),
+      ]),
+    ];
+  }
+
+  /// One static host: its MAC, its address and its name, with Remove — one
+  /// box, since the two lines of fields are one entry.
+  Widget _hostRow(int i, _HostDraft h, bool busy, {required bool bad}) {
+    return _box(
+      key: ValueKey('net:edit:host:$i'),
+      padding: const EdgeInsets.fromLTRB(13, 2, 7, 2),
+      child: Column(
+        children: [
+          Input(
+            key: ValueKey('net:edit:host:$i:mac'),
+            controller: h.mac,
+            label: l10n.virtNetHostMac,
+            icon: Icons.tag,
+            hint: '52:54:00:00:00:01',
+            noWrap: true,
+            suggestion: false,
+            enabled: !busy,
+            errorText: bad ? l10n.virtNetHostInvalid : null,
+            onChanged: (_) => setState(() {}),
+          ),
+          _inputLine(
+            [
+              Expanded(
+                flex: 3,
+                child: Input(
+                  key: ValueKey('net:edit:host:$i:ip'),
+                  controller: h.ip,
+                  label: l10n.virtNetHostIp,
+                  icon: Icons.language,
+                  noWrap: true,
+                  suggestion: false,
+                  enabled: !busy,
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+              Expanded(
+                flex: 4,
+                child: Input(
+                  key: ValueKey('net:edit:host:$i:name'),
+                  controller: h.name,
+                  label: l10n.virtNetHostName,
+                  icon: Icons.label_outline,
+                  noWrap: true,
+                  suggestion: false,
+                  enabled: !busy,
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+            ],
+            trailing: Btn.icon(
+              key: ValueKey('net:edit:host:$i:remove'),
+              text: l10n.virtHwRemove,
+              icon: const Icon(Icons.delete_outline, size: 18),
+              onTap: busy
+                  ? null
+                  : () => setState(() => _hosts.removeAt(i).dispose()),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Saves the draft.
+  ///
+  /// Made from the read the rows were filled from, unless a newer one has
+  /// the same definition: nothing the draft edits changed under it. Where
+  /// it did change, libvirt refuses the old one as a conflict, which drops
+  /// the draft — its base is gone. Any other failure keeps it, to be saved
+  /// again. PVE's pending configuration has no revision to send; it is
+  /// made from the newest read.
+  Future<void> _save(VirtNetwork net) async {
+    final seeded = _seeded;
+    if (seeded == null) return;
+    final base = seeded.xml == net.xml ? net : seeded;
+    setState(() => _saving = true);
+    final applied = await _virtManageFor(ref, _serverId, _change(base));
+    if (!mounted) return;
+    setState(() {
+      _saving = false;
+      // Filled again from the network as it is read next.
+      if (applied == _Applied.done || applied == _Applied.conflict) {
+        _seeded = null;
+      }
+    });
   }
 
   _Group _usersGroup(VirtNetwork net, VirtHostState host) {
@@ -336,29 +832,40 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
     );
   }
 
-  Future<bool> _manage(VirtResourceChange change) =>
-      virtManage(ref, _serverId, change);
-
-  /// Opens the configuration of [net] for editing: the design's own form in
-  /// the detail pane, with everything it costs said before it is saved.
-  ///
-  /// libvirt: the mode, the address, the DHCP range and the static hosts.
-  /// The running network keeps what it has until it is restarted, so the
-  /// restart is a choice of its own, and a network with guests on it says
-  /// what restarting does to them.
-  ///
-  /// PVE: a bridge's ports, address, VLAN awareness and autostart, written
-  /// into the node's pending configuration — the same pending/apply model
-  /// the app already uses. A bridge carrying the node's management traffic
-  /// is not offered at all (the bar has no edit action for it).
-  Future<void> _edit(VirtNetwork net) async {
-    await showVirtNetworkEdit(
-      context,
-      ref,
-      serverId: _serverId,
-      network: net,
+  /// The design's `file` group: the definition as the host keeps it,
+  /// folded — what the rows above are read from.
+  _Group _fileGroup(VirtNetwork net, String text) {
+    final libvirt = net.node == null;
+    return _Group(
+      key: 'file',
+      title: l10n.virtNetConfigFile,
+      right: '',
+      warn: false,
+      indexNote: libvirt ? 'net-dumpxml' : 'interfaces',
+      rows: [
+        _disc(
+          'config',
+          Icons.code,
+          libvirt ? 'virsh net-dumpxml ${net.name}' : '/etc/network/interfaces',
+          '',
+        ),
+        _reveal('config', [
+          _box(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: SelectableText(
+                text.trimRight(),
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
+              ),
+            ),
+          ),
+        ]),
+      ],
     );
   }
+
+  Future<bool> _manage(VirtResourceChange change) =>
+      virtManage(ref, _serverId, change);
 
   /// Stops and starts the network so its definition is what runs — what a
   /// change written without a restart waits for. Asked first, with the
@@ -428,10 +935,20 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
     onSwitch(picked);
   }
 }
-
 /// Makes [change] through the host's notifier and says what came of it.
 /// True when the host took it.
 Future<bool> virtManage(
+  WidgetRef ref,
+  String serverId,
+  VirtResourceChange change, {
+  bool quiet = false,
+}) async =>
+    await _virtManageFor(ref, serverId, change, quiet: quiet) == _Applied.done;
+
+/// [virtManage], saying why it did not: a draft is kept through a failure
+/// that retrying could get past, and dropped on a conflict, which says the
+/// read it was made from is gone.
+Future<_Applied> _virtManageFor(
   WidgetRef ref,
   String serverId,
   VirtResourceChange change, {
@@ -449,14 +966,18 @@ Future<bool> virtManage(
     if (!quiet) {
       Toast.success(pending ? l10n.virtNetPendingSaved : libL10n.success);
     }
-    return true;
+    return _Applied.done;
   } on VirtErr catch (e) {
+    if (e.type == VirtErrType.conflict) {
+      Toast.warn(e.title, body: e.detail);
+      return _Applied.conflict;
+    }
     Toast.error(e.title, body: e.detail);
   } catch (e, s) {
     Loggers.app.warning('Virtualization storage or network', e, s);
     Toast.error(libL10n.fail, body: '$e');
   }
-  return false;
+  return _Applied.failed;
 }
 
 /// A node's network configuration written but not applied (PVE), with the
@@ -754,7 +1275,7 @@ class _VirtNetworkCreateViewState extends ConsumerState<VirtNetworkCreateView>
                   warn: false,
                   indexNote: mode,
                   rows: [
-                    Input(
+                    _inputRow([Input(
                       key: const ValueKey('net:new:name'),
                       controller: _name,
                       label: libL10n.name,
@@ -766,7 +1287,7 @@ class _VirtNetworkCreateViewState extends ConsumerState<VirtNetworkCreateView>
                           ? null
                           : on(const {VirtResIssue.nameInvalid, VirtResIssue.nameTaken}),
                       onChanged: (_) => setState(() {}),
-                    ),
+                    )]),
                     if (pve && nodes.length > 1)
                       _seg(
                         Icons.dns_outlined,
@@ -804,7 +1325,7 @@ class _VirtNetworkCreateViewState extends ConsumerState<VirtNetworkCreateView>
                           ),
                       ]),
                     if (pve || hostBridge)
-                      Input(
+                      _inputRow([Input(
                         key: const ValueKey('net:new:bridge'),
                         controller: _bridge,
                         label: pve ? l10n.virtNetBridgePorts : l10n.virtNetHostBridge,
@@ -814,9 +1335,9 @@ class _VirtNetworkCreateViewState extends ConsumerState<VirtNetworkCreateView>
                         suggestion: false,
                         errorText: on(const {VirtResIssue.bridgeInvalid}),
                         onChanged: (_) => setState(() {}),
-                      ),
+                      )]),
                     if (!hostBridge)
-                      Input(
+                      _inputRow([Input(
                         key: const ValueKey('net:new:cidr'),
                         controller: _cidr,
                         label: 'IPv4 / CIDR',
@@ -829,7 +1350,7 @@ class _VirtNetworkCreateViewState extends ConsumerState<VirtNetworkCreateView>
                           VirtResIssue.subnetTaken,
                         }),
                         onChanged: (_) => setState(_fillRange),
-                      ),
+                      )]),
                     if (!pve && !hostBridge) ...[
                       _toggle(
                         Icons.dns_outlined,
@@ -840,32 +1361,26 @@ class _VirtNetworkCreateViewState extends ConsumerState<VirtNetworkCreateView>
                         onChanged: (v) => setState(() => _dhcp = v),
                       ),
                       if (_dhcp)
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Input(
-                                key: const ValueKey('net:new:dhcp:start'),
-                                controller: _dhcpStart,
-                                label: l10n.virtNetDhcpRange,
-                                icon: Icons.format_list_numbered,
-                                noWrap: true,
-                                suggestion: false,
-                                errorText: on(const {VirtResIssue.dhcpInvalid}),
-                                onChanged: (_) => setState(() => _rangeTyped = true),
-                              ),
-                            ),
-                            Expanded(
-                              child: Input(
-                                key: const ValueKey('net:new:dhcp:end'),
-                                controller: _dhcpEnd,
-                                label: '–',
-                                noWrap: true,
-                                suggestion: false,
-                                onChanged: (_) => setState(() => _rangeTyped = true),
-                              ),
-                            ),
-                          ],
-                        ),
+                        _inputRow([
+                          Input(
+                            key: const ValueKey('net:new:dhcp:start'),
+                            controller: _dhcpStart,
+                            label: l10n.virtNetDhcpRange,
+                            icon: Icons.format_list_numbered,
+                            noWrap: true,
+                            suggestion: false,
+                            errorText: on(const {VirtResIssue.dhcpInvalid}),
+                            onChanged: (_) => setState(() => _rangeTyped = true),
+                          ),
+                          Input(
+                            key: const ValueKey('net:new:dhcp:end'),
+                            controller: _dhcpEnd,
+                            label: '–',
+                            noWrap: true,
+                            suggestion: false,
+                            onChanged: (_) => setState(() => _rangeTyped = true),
+                          ),
+                        ]),
                     ],
                     if (pve) ...[
                       _toggle(
@@ -921,11 +1436,7 @@ class _VirtNetworkCreateViewState extends ConsumerState<VirtNetworkCreateView>
 }
 
 /// The configuration file of a network, as the design's "配置文件" group: the
-/// definition libvirt would write, or PVE's `/etc/network/interfaces` entry,
-/// with the one edit that changes it.
-///
-/// Shown from [showVirtNetworkEdit] as a fold, so what is being changed is
-/// readable while it is changed.
+/// definition libvirt would write, or PVE's `/etc/network/interfaces` entry.
 String? virtNetworkConfigText(VirtNetwork net) {
   if (net.xml.isNotEmpty) return net.xml;
   if (net.node == null) return null;
@@ -945,566 +1456,6 @@ String? virtNetworkConfigText(VirtNetwork net) {
   return lines.join('\n');
 }
 
-/// Opens [network]'s configuration for editing, as the design's form in the
-/// detail pane.
-///
-/// One dialog for both backends, because it is one question — what the
-/// network is — and the answers differ only in which of them apply. What
-/// each backend then does with the answer differs, and is said in the
-/// dialog:
-///
-/// - libvirt writes the definition (`net-define`); the running network
-///   keeps what it has until it is restarted, and restarting it cuts off
-///   its guests. Both are stated, and the restart is a switch of its own.
-/// - PVE writes the node's pending configuration
-///   (`PUT /nodes/{node}/network/{iface}`), which applies with the
-///   configuration as a whole — the card above the list, as before.
-Future<void> showVirtNetworkEdit(
-  BuildContext context,
-  WidgetRef ref, {
-  required String serverId,
-  required VirtNetwork network,
-}) async {
-  // The form publishes what it would send whenever it changes; OK sends
-  // that, and is held back while the host would refuse it.
-  final draft = ValueNotifier(const _NetworkDraft(null, null));
-  final VirtResourceChange? change;
-  try {
-    change = await context.showRoundDialog<VirtResourceChange>(
-      title: l10n.virtNetEdit,
-      child: _VirtNetworkEditForm(
-        serverId: serverId,
-        network: network,
-        draft: draft,
-      ),
-      actions: [
-        Btn.cancel(),
-        ValueListenableBuilder(
-          valueListenable: draft,
-          builder: (context, d, _) => Btn.ok(
-            onTap: switch (d) {
-              _NetworkDraft(change: final c?, issue: null) =>
-                () => context.popDialog<VirtResourceChange>(c),
-              _ => null,
-            },
-          ),
-        ),
-      ],
-    );
-  } finally {
-    draft.dispose();
-  }
-  if (change == null || !context.mounted) return;
-  await virtManage(ref, serverId, change);
-}
-
-/// What the edit form would send, and why it cannot: read by the dialog's
-/// OK button, published by the form whenever it changes.
-final class _NetworkDraft {
-  const _NetworkDraft(this.change, this.issue);
-
-  final VirtResourceChange? change;
-  final VirtResIssue? issue;
-}
-
-/// The edit form itself: a dialog's body, wide enough for a phone and no
-/// wider.
-class _VirtNetworkEditForm extends ConsumerStatefulWidget {
-  const _VirtNetworkEditForm({
-    required this.serverId,
-    required this.network,
-    required this.draft,
-  });
-
-  final String serverId;
-  final VirtNetwork network;
-
-  /// Given what the form would send, every time it changes.
-  final ValueNotifier<_NetworkDraft> draft;
-
-  @override
-  ConsumerState<_VirtNetworkEditForm> createState() =>
-      _VirtNetworkEditFormState();
-}
-
-class _VirtNetworkEditFormState extends ConsumerState<_VirtNetworkEditForm> {
-  late final _bridge = TextEditingController(text: widget.network.bridge ?? '');
-  /// The IPv4 address the form edits; an IPv6 one is left to the host.
-  late final _ipv4 = widget.network.ipv4Cidr?.split('/');
-  late final _address = TextEditingController(text: _ipv4?.first ?? '');
-  late final _prefix = TextEditingController(text: _ipv4?.last ?? '24');
-  late final _ports = TextEditingController(
-    text: widget.network.ports.join(' '),
-  );
-  late final _dhcpStart = TextEditingController(
-    text: widget.network.dhcpRange?.$1 ?? '',
-  );
-  late final _dhcpEnd = TextEditingController(
-    text: widget.network.dhcpRange?.$2 ?? '',
-  );
-  late String _mode = widget.network.mode;
-  late bool _dhcp = widget.network.dhcpRange != null;
-  late bool _vlanAware = widget.network.vlanAware ?? false;
-  late bool _autostart = widget.network.autostart ?? true;
-  var _restart = true;
-
-  /// The static hosts, as drafts of their own: a MAC, an address, a name.
-  late final List<_HostDraft> _hosts = [
-    for (final h in widget.network.hosts) _HostDraft(h.mac, h.ip, h.name),
-  ];
-
-  bool get _pve => widget.network.node != null;
-
-  @override
-  void initState() {
-    super.initState();
-    // After the first frame: the dialog's button is being built with it.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _publish();
-    });
-  }
-
-  /// Every change to the form goes through here, so the OK button follows.
-  @override
-  void setState(VoidCallback fn) {
-    super.setState(fn);
-    _publish();
-  }
-
-  void _publish() => widget.draft.value = _NetworkDraft(_change, _issue);
-
-  /// The address with its prefix, as a CIDR; empty when there is none.
-  String get _cidr {
-    final address = _address.text.trim();
-    return address.isEmpty ? '' : '$address/${_prefix.text.trim()}';
-  }
-
-  @override
-  void dispose() {
-    for (final f in [
-      _bridge,
-      _address,
-      _prefix,
-      _ports,
-      _dhcpStart,
-      _dhcpEnd,
-    ]) {
-      f.dispose();
-    }
-    for (final h in _hosts) {
-      h.dispose();
-    }
-    super.dispose();
-  }
-
-  VirtResourceChange get _change {
-    if (_pve) {
-      return VirtNetworkEditBridge(
-        widget.network,
-        ports: _ports.text.trim(),
-        cidr: _cidr,
-        vlanAware: _vlanAware,
-        autostart: _autostart,
-      );
-    }
-    return VirtNetworkEdit(
-      widget.network,
-      mode: _mode,
-      bridge: _mode == 'bridge' ? _bridge.text.trim() : null,
-      address: _mode == 'bridge' ? null : _address.text.trim(),
-      prefix: _mode == 'bridge' || _address.text.trim().isEmpty
-          ? null
-          : int.tryParse(_prefix.text.trim()),
-      dhcpStart: _dhcp && _mode != 'bridge' ? _dhcpStart.text.trim() : null,
-      dhcpEnd: _dhcp && _mode != 'bridge' ? _dhcpEnd.text.trim() : null,
-      hosts: [
-        // A row left wholly empty is no host; one with anything in it is,
-        // and is checked as one rather than dropped.
-        // Bridge mode serves no DHCP: the drafts stay for switching back,
-        // and are not sent.
-        for (final h in _hosts)
-          if (_mode != 'bridge' &&
-              [h.mac, h.ip, h.name].any((c) => c.text.trim().isNotEmpty))
-            VirtNetHost(
-              mac: h.mac.text.trim().toLowerCase(),
-              ip: h.ip.text.trim(),
-              name: h.name.text.trim().isEmpty ? null : h.name.text.trim(),
-            ),
-      ],
-      restart: _restart,
-    );
-  }
-
-  /// Whether the running network has to be restarted for what is in the
-  /// form to apply — the same question `VirtNetEdit::needs_restart` answers
-  /// on the host. The static hosts never do: `net-update` takes them live.
-  /// A field the form does not show (`bridge` in another mode) is compared
-  /// against what the network is, so turning a switch that is not there is
-  /// never a restart.
-  bool get _needsRestart {
-    final n = widget.network;
-    final change = _change;
-    if (change is! VirtNetworkEdit) return false;
-    final address = change.address?.trim() ?? '';
-    final saved = n.ipv4Cidr?.split('/');
-    return change.mode != n.mode ||
-        (change.mode == 'bridge' && change.bridge != n.bridge) ||
-        address != (saved?.first ?? '') ||
-        (address.isNotEmpty && '${change.prefix}' != saved?.last) ||
-        (change.dhcpStart ?? '') != (n.dhcpRange?.$1 ?? '') ||
-        (change.dhcpEnd ?? '') != (n.dhcpRange?.$2 ?? '');
-  }
-
-  VirtResIssue? get _issue => virtResourceIssue(
-    _change,
-    host: _pve ? VirtHostKind.pve : VirtHostKind.libvirt,
-    networks: ref.read(virtNetworksProvider(widget.serverId)).value ?? const [],
-  );
-
-  @override
-  Widget build(BuildContext context) {
-    final issue = _issue;
-    String? on(Set<VirtResIssue> which) => which.contains(issue)
-        ? virtResIssueText(issue, pve: _pve)
-        : null;
-    return SingleChildScrollView(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (!_pve) ...[
-            _label(libL10n.mode),
-            _modes(),
-          ],
-          if (_pve) ...[
-            Input(
-              key: const ValueKey('net:edit:ports'),
-              controller: _ports,
-              label: l10n.virtNetBridgePorts,
-              icon: Icons.settings_ethernet,
-              hint: l10n.virtNetPortsHint,
-              noWrap: true,
-              suggestion: false,
-              errorText: on(const {VirtResIssue.bridgeInvalid}),
-              onChanged: (_) => setState(() {}),
-            ),
-            _toggle(
-              Icons.segment,
-              l10n.virtNetVlanAware,
-              _vlanAware,
-              key: 'net:edit:vlan',
-              onChanged: (v) => setState(() => _vlanAware = v),
-            ),
-          ],
-          if (!_pve && _mode == 'bridge')
-            Input(
-              key: const ValueKey('net:edit:bridge'),
-              controller: _bridge,
-              label: l10n.virtNetHostBridge,
-              icon: Icons.settings_ethernet,
-              hint: 'br0',
-              noWrap: true,
-              suggestion: false,
-              errorText: on(const {VirtResIssue.bridgeInvalid}),
-              onChanged: (_) => setState(() {}),
-            )
-          else ...[
-            Row(
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: Input(
-                    key: const ValueKey('net:edit:address'),
-                    controller: _address,
-                    label: 'IPv4',
-                    icon: Icons.language,
-                    hint: '10.20.0.1',
-                    noWrap: true,
-                    suggestion: false,
-                    errorText: on(const {
-                      VirtResIssue.cidrInvalid,
-                      VirtResIssue.subnetTaken,
-                    }),
-                    onChanged: (_) => setState(() {}),
-                  ),
-                ),
-                Expanded(
-                  child: Input(
-                    key: const ValueKey('net:edit:prefix'),
-                    controller: _prefix,
-                    label: '/',
-                    noWrap: true,
-                    suggestion: false,
-                    onChanged: (_) => setState(() {}),
-                  ),
-                ),
-              ],
-            ),
-            if (!_pve) ...[
-              _toggle(
-                Icons.dns_outlined,
-                'DHCP',
-                _dhcp,
-                key: 'net:edit:dhcp',
-                note: l10n.virtNetDhcpTip,
-                onChanged: (v) => setState(() => _dhcp = v),
-              ),
-              if (_dhcp)
-                Row(
-                  children: [
-                    Expanded(
-                      child: Input(
-                        key: const ValueKey('net:edit:dhcp:start'),
-                        controller: _dhcpStart,
-                        label: l10n.virtNetDhcpRange,
-                        icon: Icons.format_list_numbered,
-                        noWrap: true,
-                        suggestion: false,
-                        errorText: on(const {VirtResIssue.dhcpInvalid}),
-                        onChanged: (_) => setState(() {}),
-                      ),
-                    ),
-                    Expanded(
-                      child: Input(
-                        key: const ValueKey('net:edit:dhcp:end'),
-                        controller: _dhcpEnd,
-                        label: '–',
-                        noWrap: true,
-                        suggestion: false,
-                        onChanged: (_) => setState(() {}),
-                      ),
-                    ),
-                  ],
-                ),
-            ],
-          ],
-          _toggle(
-            Icons.power_settings_new,
-            l10n.virtHwAutostart,
-            _autostart,
-            key: 'net:edit:autostart',
-            onChanged: _pve ? (v) => setState(() => _autostart = v) : null,
-          ),
-          if (!_pve && _mode != 'bridge') ...[
-            _label(l10n.virtNetHosts),
-            for (final (i, h) in _hosts.indexed)
-              _hostRow(i, h, issue == VirtResIssue.hostInvalid),
-            if (_hosts.isEmpty) _note(l10n.virtNetHostEmpty),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Btn.text(
-                key: const ValueKey('net:edit:host:add'),
-                text: l10n.virtNetHostAdd,
-                onTap: () => setState(() => _hosts.add(_HostDraft())),
-              ),
-            ),
-          ],
-          const SizedBox(height: 7),
-          _note(
-            _pve
-                ? l10n.virtNetPveEditNote
-                : widget.network.active
-                ? (widget.network.users.isEmpty
-                      ? l10n.virtNetEditAskNoGuest
-                      : l10n.virtNetEditAsk(widget.network.users.length))
-                : l10n.virtNetEditAsk(widget.network.users.length),
-            warn: !_pve && widget.network.active,
-          ),
-          // Only where the change waits for one: a static host alone
-          // applies live, and a switch that did nothing would be a lie.
-          if (!_pve && widget.network.active && _needsRestart)
-            _toggle(
-              Icons.restart_alt,
-              l10n.virtNetEditRestart,
-              _restart,
-              key: 'net:edit:restart',
-              note: l10n.virtNetEditRestartNote,
-              onChanged: (v) => setState(() => _restart = v),
-            ),
-          if (issue != null)
-            _note(virtResIssueText(issue, pve: _pve) ?? '', error: true),
-          if (virtNetworkConfigText(widget.network) case final text?)
-            _fold(text),
-        ],
-      ),
-    );
-  }
-
-  Widget _label(String text) => Padding(
-    padding: const EdgeInsets.only(top: 7, bottom: 3),
-    child: Text(text, style: UIs.text12Grey),
-  );
-
-  Widget _note(String text, {bool warn = false, bool error = false}) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 3),
-    child: Text(
-      text,
-      style: UIs.text12Grey.copyWith(
-        color: error
-            ? Theme.of(context).colorScheme.error
-            : warn
-            ? StatePalette.warn
-            : null,
-      ),
-    ),
-  );
-
-  /// The four modes as rows, the designs' choice: a label, what it means,
-  /// and a tick on the one chosen.
-  Widget _modes() {
-    final scheme = Theme.of(context).colorScheme;
-    return Column(
-      children: [
-        for (final (m, icon, label, sub) in const [
-          ('nat', Icons.router_outlined, 'NAT', 'virtNetNatTip'),
-          ('route', Icons.alt_route, 'virtNetRouted', 'virtNetRoutedTip'),
-          ('isolated', Icons.link_off, 'virtNetIsolated', 'virtNetIsolatedTip'),
-          ('bridge', Icons.lan_outlined, 'virtNetBridged', 'virtNetBridgedTip'),
-        ])
-          Material(
-            key: ValueKey('net:edit:mode:$m'),
-            color: m == _mode ? scheme.secondaryContainer : Colors.transparent,
-            borderRadius: BorderRadius.circular(13),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: () => setState(() => _mode = m),
-              child: Padding(
-                padding: const EdgeInsets.all(9),
-                child: Row(
-                  children: [
-                    Icon(
-                      icon,
-                      size: 19,
-                      color: m == _mode ? scheme.onSecondaryContainer : null,
-                    ),
-                    UIs.width13,
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            switch (label) {
-                              'virtNetRouted' => l10n.virtNetRouted,
-                              'virtNetIsolated' => l10n.virtNetIsolated,
-                              'virtNetBridged' => l10n.virtNetBridged,
-                              _ => label,
-                            },
-                            style: UIs.text13.copyWith(fontWeight: FontWeight.w500),
-                          ),
-                          Text(
-                            switch (sub) {
-                              'virtNetNatTip' => l10n.virtNetNatTip,
-                              'virtNetRoutedTip' => l10n.virtNetRoutedTip,
-                              'virtNetIsolatedTip' => l10n.virtNetIsolatedTip,
-                              _ => l10n.virtNetBridgedTip,
-                            },
-                            style: UIs.text11Grey,
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (m == _mode) const Icon(Icons.check, size: 17),
-                  ],
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  /// One static host: its MAC, its address and its name, with Remove.
-  Widget _hostRow(int i, _HostDraft h, bool bad) {
-    return Padding(
-      key: ValueKey('net:edit:host:$i'),
-      padding: const EdgeInsets.only(bottom: 3),
-      child: Column(
-        children: [
-          Input(
-            key: ValueKey('net:edit:host:$i:mac'),
-            controller: h.mac,
-            label: l10n.virtNetHostMac,
-            icon: Icons.tag,
-            hint: '52:54:00:00:00:01',
-            noWrap: true,
-            suggestion: false,
-            errorText: bad ? l10n.virtNetHostInvalid : null,
-            onChanged: (_) => setState(() {}),
-          ),
-          Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: Input(
-                  key: ValueKey('net:edit:host:$i:ip'),
-                  controller: h.ip,
-                  label: l10n.virtNetHostIp,
-                  icon: Icons.language,
-                  noWrap: true,
-                  suggestion: false,
-                  onChanged: (_) => setState(() {}),
-                ),
-              ),
-              Expanded(
-                flex: 4,
-                child: Input(
-                  key: ValueKey('net:edit:host:$i:name'),
-                  controller: h.name,
-                  label: l10n.virtNetHostName,
-                  icon: Icons.label_outline,
-                  noWrap: true,
-                  suggestion: false,
-                  onChanged: (_) => setState(() {}),
-                ),
-              ),
-              Btn.icon(
-                key: ValueKey('net:edit:host:$i:remove'),
-                text: l10n.virtHwRemove,
-                icon: const Icon(Icons.delete_outline, size: 18),
-                onTap: () => setState(() {
-                  _hosts.removeAt(i).dispose();
-                }),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// The definition the change is made from, folded: what is being edited,
-  /// readable while it is edited.
-  Widget _fold(String text) {
-    return _Fold(
-      title: l10n.virtNetConfig,
-      text: text,
-      right: widget.network.node == null
-          ? 'net-dumpxml'
-          : '/etc/network/interfaces',
-    );
-  }
-
-  Widget _toggle(
-    IconData icon,
-    String label,
-    bool value, {
-    String? key,
-    String? note,
-    ValueChanged<bool>? onChanged,
-  }) {
-    return SwitchListTile(
-      key: key == null ? null : ValueKey(key),
-      dense: true,
-      contentPadding: EdgeInsets.zero,
-      secondary: Icon(icon, size: 19),
-      value: value,
-      title: Text(label, style: UIs.text13),
-      subtitle: note == null ? null : Text(note, style: UIs.text11Grey),
-      onChanged: onChanged,
-    );
-  }
-}
-
 /// A static DHCP entry being typed.
 class _HostDraft {
   _HostDraft([String mac = '', String ip = '', String? name])
@@ -1516,53 +1467,13 @@ class _HostDraft {
   final TextEditingController ip;
   final TextEditingController name;
 
+  /// What it says, trimmed: the MAC, the address, the name.
+  (String, String, String) get entry =>
+      (mac.text.trim(), ip.text.trim(), name.text.trim());
+
   void dispose() {
     mac.dispose();
     ip.dispose();
     name.dispose();
-  }
-}
-
-/// A fold of read-only text, as the design's "配置文件" group: a row that
-/// opens the definition under it.
-class _Fold extends StatefulWidget {
-  const _Fold({required this.title, required this.text, this.right});
-
-  final String title;
-  final String text;
-  final String? right;
-
-  @override
-  State<_Fold> createState() => _FoldState();
-}
-
-class _FoldState extends State<_Fold> {
-  var _open = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        ListTile(
-          key: const ValueKey('net:edit:config'),
-          dense: true,
-          contentPadding: EdgeInsets.zero,
-          leading: const Icon(Icons.code, size: 19),
-          title: Text(widget.title, style: UIs.text13),
-          subtitle: widget.right == null ? null : Text(widget.right!, style: UIs.text11Grey),
-          trailing: Icon(_open ? Icons.expand_less : Icons.expand_more, size: 17),
-          onTap: () => setState(() => _open = !_open),
-        ),
-        if (_open)
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SelectableText(
-              widget.text.trimRight(),
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
-            ),
-          ),
-      ],
-    );
   }
 }

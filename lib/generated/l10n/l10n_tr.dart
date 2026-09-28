@@ -3763,7 +3763,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtErrConflictTip =>
-      'Bu konuğun yapılandırması burada okunduktan sonra başka biri tarafından değiştirildi, bu yüzden hiçbir şey değiştirilmedi. Yeniden okundu: hâlâ gerekiyorsa değişikliği tekrar yapın.';
+      'Bu yapılandırma burada okunduktan sonra başka biri tarafından değiştirildi, bu yüzden hiçbir şey değiştirilmedi. Yeniden okundu: hâlâ gerekiyorsa değişikliği tekrar yapın.';
 
   @override
   String get virtHardware => 'Donanım';
@@ -4267,7 +4267,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtBackupNoPlan =>
-      'Bu konuğu içeren zamanlanmış yedekleme işi yok. İşler veri merkezinde ayarlanır.';
+      'Bu konuğu içeren zamanlanmış yedekleme işi yok.';
 
   @override
   String get virtBackupKeep => 'Sakla';
@@ -4561,6 +4561,9 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtNetConfig => 'Yapılandırma';
+
+  @override
+  String get virtNetConfigFile => 'Yapılandırma dosyası';
 
   @override
   String get virtNetInternal => 'Dahili';
@@ -5160,9 +5163,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Düğümdeki tüm guest\'ler alınır. Birini kapatırsanız dışarıda kalır.';
 
   @override
-  String get virtNetEdit => 'Yapılandırmayı düzenle';
-
-  @override
   String virtNetEditAsk(int count) {
     return 'Çalışan ağ, yeniden başlatılana kadar mevcut durumunu korur. Yeniden başlatmak üzerindeki VM\'lerin ($count) bağlantısını keser.';
   }
@@ -5215,6 +5215,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'Hiçbir MAC\'e kendi adresi verilmiyor: her VM, DHCP aralığından bir adres alır.';
 
   @override
+  String get virtNetHostOthers =>
+      'Diğer her VM, DHCP aralığından bir adres alır.';
+
+  @override
   String get virtNetHostInvalid =>
       'Ana makinenin reddedeceği bir MAC, adres veya ad ya da iki kez aynı MAC.';
 
@@ -5232,10 +5236,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtNetVlanAware => 'VLAN farkında';
-
-  @override
-  String get virtNetPveEditNote =>
-      'Düğümün bekleyen yapılandırmasına yazılır; ana makinenin alması için uygulayın.';
 
   @override
   String get virtCiExpire => 'Parolanın süresi dolar';
@@ -5298,5 +5298,23 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String virtHwRevertAllAsk(String name) {
     return '$name için bir sonraki başlatmayı bekleyen tüm değişiklikler atılsın mı?';
+  }
+
+  @override
+  String get virtBackupPlanNew => 'Yeni plan';
+
+  @override
+  String get virtBackupPlanNewTip =>
+      'Yalnızca bu konuğu yedekleyen bir zamanlama.';
+
+  @override
+  String virtBackupPlanOthers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count başka konuğu da yedekler',
+      zero: 'Başka konuk yok',
+    );
+    return '$_temp0';
   }
 }

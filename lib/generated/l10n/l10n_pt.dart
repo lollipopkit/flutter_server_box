@@ -3804,7 +3804,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get virtErrConflictTip =>
-      'Alguém alterou a configuração deste convidado depois que ela foi lida aqui, então nada foi alterado. Ela foi lida de novo: refaça a alteração se ainda for o caso.';
+      'Alguém alterou esta configuração depois que ela foi lida aqui, então nada foi alterado. Ela foi lida de novo: refaça a alteração se ainda for o caso.';
 
   @override
   String get virtHardware => 'Hardware';
@@ -4308,7 +4308,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get virtBackupNoPlan =>
-      'Nenhuma tarefa agendada de backup inclui este convidado. As tarefas são configuradas no datacenter.';
+      'Nenhuma tarefa agendada de backup inclui este convidado.';
 
   @override
   String get virtBackupKeep => 'Manter';
@@ -4618,6 +4618,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get virtNetConfig => 'Configuração';
+
+  @override
+  String get virtNetConfigFile => 'Arquivo de configuração';
 
   @override
   String get virtNetInternal => 'Interna';
@@ -5216,9 +5219,6 @@ class AppLocalizationsPt extends AppLocalizations {
       'Todos os convidados do nó são incluídos. Desative um para o excluir.';
 
   @override
-  String get virtNetEdit => 'Editar configuração';
-
-  @override
   String virtNetEditAsk(int count) {
     return 'A rede em execução mantém o que tem até ser reiniciada. Reiniciar desliga as VM ligadas ($count).';
   }
@@ -5271,6 +5271,9 @@ class AppLocalizationsPt extends AppLocalizations {
       'Nenhum MAC tem endereço próprio: cada VM recebe um do intervalo DHCP.';
 
   @override
+  String get virtNetHostOthers => 'As demais VMs recebem um do intervalo DHCP.';
+
+  @override
   String get virtNetHostInvalid =>
       'Um MAC, endereço ou nome que o host recusaria, ou o mesmo MAC duas vezes.';
 
@@ -5288,10 +5291,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get virtNetVlanAware => 'Com suporte a VLAN';
-
-  @override
-  String get virtNetPveEditNote =>
-      'Escrito na configuração pendente do nó; aplique-a para o host a adotar.';
 
   @override
   String get virtCiExpire => 'A palavra-passe expira';
@@ -5354,5 +5353,24 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String virtHwRevertAllAsk(String name) {
     return 'Descartar todas as alterações à espera do próximo arranque de $name?';
+  }
+
+  @override
+  String get virtBackupPlanNew => 'Novo plano';
+
+  @override
+  String get virtBackupPlanNewTip =>
+      'Um agendamento que faz backup apenas deste convidado.';
+
+  @override
+  String virtBackupPlanOthers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Também faz backup de $count outros convidados',
+      one: 'Também faz backup de 1 outro convidado',
+      zero: 'Nenhum outro convidado',
+    );
+    return '$_temp0';
   }
 }

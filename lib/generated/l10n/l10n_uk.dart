@@ -3795,7 +3795,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get virtErrConflictTip =>
-      'Хтось змінив конфігурацію цього гостя після того, як її було прочитано тут, тому нічого не змінено. Її прочитано знову: повторіть зміну, якщо вона ще потрібна.';
+      'Хтось змінив цю конфігурацію після того, як її було прочитано тут, тому нічого не змінено. Її прочитано знову: повторіть зміну, якщо вона ще потрібна.';
 
   @override
   String get virtHardware => 'Обладнання';
@@ -4301,7 +4301,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get virtBackupNoPlan =>
-      'Жодне планове завдання резервного копіювання не охоплює цей гостьовий хост. Завдання налаштовуються в датацентрі.';
+      'Жодне планове завдання резервного копіювання не охоплює цей гостьовий хост.';
 
   @override
   String get virtBackupKeep => 'Зберігати';
@@ -4610,6 +4610,9 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get virtNetConfig => 'Конфігурація';
+
+  @override
+  String get virtNetConfigFile => 'Файл конфігурації';
 
   @override
   String get virtNetInternal => 'Внутрішня';
@@ -5208,9 +5211,6 @@ class AppLocalizationsUk extends AppLocalizations {
       'Беруться всі гості вузла. Вимкніть одного, щоб виключити його.';
 
   @override
-  String get virtNetEdit => 'Змінити конфігурацію';
-
-  @override
   String virtNetEditAsk(int count) {
     return 'Запущена мережа зберігає поточний стан до перезапуску. Перезапуск від\'єднає ВМ у цій мережі ($count).';
   }
@@ -5263,6 +5263,10 @@ class AppLocalizationsUk extends AppLocalizations {
       'Жодному MAC не призначено власної адреси: кожна ВМ отримує адресу з діапазону DHCP.';
 
   @override
+  String get virtNetHostOthers =>
+      'Кожна інша ВМ отримує адресу з діапазону DHCP.';
+
+  @override
   String get virtNetHostInvalid =>
       'MAC, адреса чи ім\'я, які хост відхилить, або той самий MAC двічі.';
 
@@ -5280,10 +5284,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get virtNetVlanAware => 'Підтримка VLAN';
-
-  @override
-  String get virtNetPveEditNote =>
-      'Записується в очікувану конфігурацію вузла; застосуйте її, щоб хост її прийняв.';
 
   @override
   String get virtCiExpire => 'Термін дії пароля спливає';
@@ -5346,5 +5346,25 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String virtHwRevertAllAsk(String name) {
     return 'Скасувати всі зміни, що очікують наступного запуску $name?';
+  }
+
+  @override
+  String get virtBackupPlanNew => 'Новий план';
+
+  @override
+  String get virtBackupPlanNewTip =>
+      'Розклад, за яким копіюється лише цей гостьовий хост.';
+
+  @override
+  String virtBackupPlanOthers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Також копіює ще $count гостей',
+      few: 'Також копіює ще $count гостей',
+      one: 'Також копіює ще $count гостя',
+      zero: 'Інших гостей немає',
+    );
+    return '$_temp0';
   }
 }

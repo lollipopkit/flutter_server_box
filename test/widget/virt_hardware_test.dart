@@ -90,6 +90,7 @@ VirtSnapshot _snapshot() => VirtSnapshot(
     linkedClone: true,
     cloneTarget: true,
     backup: true,
+    backupJobs: true,
   ),
 );
 
@@ -756,7 +757,9 @@ void main() {
         (tester) async {
       await openBackups(tester, 'web-01');
       expect(title(app_locale.l10n.virtBackupPlan), findsOneWidget);
-      expect(text('02:00'), findsOneWidget);
+      // One line until opened.
+      expect(text('keep-last=7'), findsNothing);
+      await tap(tester, _key('hw:disc:plan:nightly'));
       expect(text('keep-last=7'), findsOneWidget);
       expect(text(app_locale.l10n.virtBackupLiveTip), findsOneWidget);
 
@@ -793,6 +796,119 @@ void main() {
       expect(_calls, isEmpty);
       await tap(tester, delete);
       expect(_calls, ['delete backup qemu/101']);
+    });
+
+    Finder field(String key) => find.descendant(
+      of: _key(key),
+      matching: find.byType(TextField),
+    );
+
+    testWidgets('a plan for this guest alone, made in place', (tester) async {
+      _jobList = const [];
+      await openBackups(tester, 'dns-01');
+      expect(text(app_locale.l10n.virtBackupNoPlan), findsOneWidget);
+
+      await tap(tester, _key('plan:new'));
+      // The Backup section's rows, less the node and the guests.
+      expect(_key('hw:seg:plan:new:storage'), findsOneWidget);
+      expect(_key('hw:seg:job:all'), findsNothing);
+      expect(
+        tester.widget<Btn>(_key('plan:new:save')).onTap,
+        isNull,
+        reason: 'no schedule yet',
+      );
+
+      await tester.enterText(field('plan:new:schedule'), 'sat 03:00');
+      await _settle(tester);
+      await tap(tester, _segOpt('plan:new:mode', 'stop'));
+      await tester.enterText(field('plan:new:prune'), 'keep-last=3');
+      await _settle(tester);
+      await tap(tester, _key('plan:new:save'));
+
+      final edit = _jobEdits.single;
+      expect(edit.isNew, isTrue);
+      expect(edit.id, isNull);
+      expect((edit.all, edit.pool), (false, null));
+      expect(edit.vmids, [200]);
+      expect(edit.exclude, isEmpty);
+      // Runs wherever the guest is, onto the storage its row showed.
+      expect((edit.node, edit.storage), (null, 'local'));
+      expect((edit.schedule, edit.mode, edit.prune), (
+        'sat 03:00',
+        'stop',
+        'keep-last=3',
+      ));
+      // Closed once the host has it.
+      expect(_key('plan:new:schedule'), findsNothing);
+    });
+
+    testWidgets('a plan of this guest alone: edited and deleted in place', (
+      tester,
+    ) async {
+      await openBackups(tester, 'web-01');
+      await tap(tester, _key('hw:disc:plan:nightly'));
+      // Its own: no line into the datacenter's list.
+      expect(_key('plan:nightly:open'), findsNothing);
+
+      await tap(tester, _key('plan:nightly:edit'));
+      expect(
+        tester.widget<TextField>(field('plan:nightly:schedule')).controller!.text,
+        '02:00',
+      );
+      await tester.enterText(field('plan:nightly:schedule'), 'sun 04:00');
+      await _settle(tester);
+      await tap(tester, _segOpt('plan:nightly:compress', 'gzip'));
+      await tap(tester, _key('plan:nightly:save'));
+      final edit = _jobEdits.single;
+      expect((edit.id, edit.isNew), ('nightly', false));
+      expect(edit.vmids, [100]);
+      expect((edit.schedule, edit.compress), ('sun 04:00', 'gzip'));
+      expect(_key('plan:nightly:schedule'), findsNothing);
+
+      _calls.clear();
+      final delete = _key('plan:nightly:delete');
+      await tap(tester, delete);
+      expect(_calls, isEmpty, reason: 'asked first');
+      expect(_key('plan:nightly:confirm'), findsOneWidget);
+      await tap(tester, delete);
+      expect(_calls, [
+        'job nightly remove=true 02:00 pool=null all=false vmids=[]',
+      ]);
+    });
+
+    const shared = VirtBackupJob(
+      id: 'shared',
+      schedule: '03:00',
+      storage: 'local',
+      vmids: [100, 200],
+    );
+
+    testWidgets('a plan shared with other guests is read, and opens its job '
+        'beside the list', (tester) async {
+      _jobList = const [shared];
+      await open(tester, 'web-01', wide: true, segmentLabel: libL10n.backup);
+      await tap(tester, _key('hw:disc:plan:shared'));
+      expect(text(app_locale.l10n.virtBackupPlanOthers(1)), findsOneWidget);
+      expect(_key('plan:shared:edit'), findsNothing);
+      expect(_key('plan:shared:delete'), findsNothing);
+      expect(_key('plan:shared:run'), findsOneWidget);
+
+      await tap(tester, _key('plan:shared:open'));
+      expect(
+        find.byWidgetPredicate(
+          (w) => w is VirtBackupJobView && w.jobId == 'shared',
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('a plan shared with other guests opens its job page with one '
+        'column', (tester) async {
+      _jobList = const [shared];
+      await openBackups(tester, 'web-01');
+      await tap(tester, _key('hw:disc:plan:shared'));
+      await tap(tester, _key('plan:shared:open'));
+      expect(find.byType(VirtBackupJobPage), findsOneWidget);
     });
   });
 
@@ -1385,6 +1501,24 @@ void main() {
       await tap(tester, _key('job:save'));
       final edit = _jobEdits.single;
       expect((edit.node, edit.storage), ('pve', 'local'));
+    });
+
+    testWidgets('a new job: the index names the storage its row shows', (
+      tester,
+    ) async {
+      await openJob(tester, null);
+      final tabs =
+          tester.widget(
+                find.descendant(
+                  of: _key('hw:seg:job:storage'),
+                  matching: find.byWidgetPredicate((w) => w is SegmentedTabs),
+                ),
+              )
+              as SegmentedTabs;
+      expect(tabs.selected, 'local');
+      // The index beside the groups: the same storage, not "none".
+      expect(text(app_locale.l10n.virtBackupNoStorage), findsNothing);
+      expect(text('local'), findsNWidgets(2));
     });
   });
 

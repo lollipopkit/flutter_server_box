@@ -3808,7 +3808,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get virtErrConflictTip =>
-      'Iemand heeft de configuratie van deze gast gewijzigd nadat die hier is gelezen, dus er is niets gewijzigd. Hij is opnieuw gelezen: voer de wijziging opnieuw uit als die nog nodig is.';
+      'Iemand heeft deze configuratie gewijzigd nadat die hier is gelezen, dus er is niets gewijzigd. Hij is opnieuw gelezen: voer de wijziging opnieuw uit als die nog nodig is.';
 
   @override
   String get virtHardware => 'Hardware';
@@ -4315,7 +4315,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get virtBackupNoPlan =>
-      'Geen geplande back-uptaak neemt deze gast mee. Taken stel je in het datacenter in.';
+      'Geen geplande back-uptaak neemt deze gast mee.';
 
   @override
   String get virtBackupKeep => 'Bewaren';
@@ -4623,6 +4623,9 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get virtNetConfig => 'Configuratie';
+
+  @override
+  String get virtNetConfigFile => 'Configuratiebestand';
 
   @override
   String get virtNetInternal => 'Intern';
@@ -5219,9 +5222,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Alle gasten op het knooppunt worden meegenomen. Zet er een uit om die over te slaan.';
 
   @override
-  String get virtNetEdit => 'Configuratie bewerken';
-
-  @override
   String virtNetEditAsk(int count) {
     return 'Het draaiende netwerk houdt wat het heeft tot het herstart. Herstarten verbreekt de VM\'s erop ($count).';
   }
@@ -5274,6 +5274,10 @@ class AppLocalizationsNl extends AppLocalizations {
       'Geen MAC krijgt een eigen adres: elke VM krijgt er een uit het DHCP-bereik.';
 
   @override
+  String get virtNetHostOthers =>
+      'Elke andere VM krijgt er een uit het DHCP-bereik.';
+
+  @override
   String get virtNetHostInvalid =>
       'Een MAC, adres of naam die de host zou weigeren, of dezelfde MAC twee keer.';
 
@@ -5291,10 +5295,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get virtNetVlanAware => 'VLAN-aware';
-
-  @override
-  String get virtNetPveEditNote =>
-      'Wordt in de wachtende configuratie van de node geschreven; pas die toe zodat de host haar overneemt.';
 
   @override
   String get virtCiExpire => 'Wachtwoord verloopt';
@@ -5357,5 +5357,24 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String virtHwRevertAllAsk(String name) {
     return 'Alle wijzigingen verwerpen die wachten op de volgende start van $name?';
+  }
+
+  @override
+  String get virtBackupPlanNew => 'Nieuw plan';
+
+  @override
+  String get virtBackupPlanNewTip =>
+      'Een schema dat alleen deze gast back-upt.';
+
+  @override
+  String virtBackupPlanOthers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Back-upt ook $count andere gasten',
+      one: 'Back-upt ook 1 andere gast',
+      zero: 'Geen andere gast',
+    );
+    return '$_temp0';
   }
 }

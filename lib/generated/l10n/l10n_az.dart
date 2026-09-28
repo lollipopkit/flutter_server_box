@@ -3778,7 +3778,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get virtErrConflictTip =>
-      'Bu qonağın konfiqurasiyası burada oxunandan sonra başqası tərəfindən dəyişdirildi, ona görə heç nə dəyişdirilmədi. Yenidən oxundu: hələ lazımdırsa dəyişikliyi təkrar edin.';
+      'Bu konfiqurasiya burada oxunandan sonra başqası tərəfindən dəyişdirildi, ona görə heç nə dəyişdirilmədi. Yenidən oxundu: hələ lazımdırsa dəyişikliyi təkrar edin.';
 
   @override
   String get virtHardware => 'Avadanlıq';
@@ -4282,7 +4282,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get virtBackupNoPlan =>
-      'Bu qonağı əhatə edən planlı ehtiyat nüsxə işi yoxdur. İşlər məlumat mərkəzində qurulur.';
+      'Bu qonağı əhatə edən planlı ehtiyat nüsxə işi yoxdur.';
 
   @override
   String get virtBackupKeep => 'Saxla';
@@ -4576,6 +4576,9 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get virtNetConfig => 'Konfiqurasiya';
+
+  @override
+  String get virtNetConfigFile => 'Konfiqurasiya faylı';
 
   @override
   String get virtNetInternal => 'Daxili';
@@ -5171,9 +5174,6 @@ class AppLocalizationsAz extends AppLocalizations {
       'Node-dakı bütün qonaqlar götürülür. Birini söndürsəniz kənarda qalır.';
 
   @override
-  String get virtNetEdit => 'Konfiqurasiyanı redaktə et';
-
-  @override
   String virtNetEditAsk(int count) {
     return 'İşləyən şəbəkə yenidən başladılana qədər mövcud vəziyyətini saxlayır. Yenidən başlatma üzərindəki VM-lərin ($count) bağlantısını kəsir.';
   }
@@ -5226,6 +5226,9 @@ class AppLocalizationsAz extends AppLocalizations {
       'Heç bir MAC-a öz ünvanı verilmir: hər VM DHCP aralığından ünvan alır.';
 
   @override
+  String get virtNetHostOthers => 'Digər hər VM DHCP aralığından ünvan alır.';
+
+  @override
   String get virtNetHostInvalid =>
       'Hostun rədd edəcəyi MAC, ünvan və ya ad, ya da eyni MAC iki dəfə.';
 
@@ -5243,10 +5246,6 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get virtNetVlanAware => 'VLAN dəstəyi';
-
-  @override
-  String get virtNetPveEditNote =>
-      'Düyünün gözləyən konfiqurasiyasına yazılır; hostun qəbul etməsi üçün onu tətbiq edin.';
 
   @override
   String get virtCiExpire => 'Parolun müddəti bitir';
@@ -5309,5 +5308,23 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String virtHwRevertAllAsk(String name) {
     return '$name üçün növbəti başlanğıcı gözləyən bütün dəyişikliklər atılsın?';
+  }
+
+  @override
+  String get virtBackupPlanNew => 'Yeni plan';
+
+  @override
+  String get virtBackupPlanNewTip =>
+      'Yalnız bu qonağın ehtiyat nüsxəsini çıxaran cədvəl.';
+
+  @override
+  String virtBackupPlanOthers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Daha $count qonağın da ehtiyat nüsxəsini çıxarır',
+      zero: 'Başqa qonaq yoxdur',
+    );
+    return '$_temp0';
   }
 }

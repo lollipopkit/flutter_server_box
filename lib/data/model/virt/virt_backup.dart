@@ -114,6 +114,17 @@ abstract class VirtBackupJob with _$VirtBackupJob {
     if (all) return !exclude.contains(vmid);
     return vmids.contains(vmid);
   }
+
+  /// Whether this job takes [vmid] and no other guest: a list of exactly
+  /// that VMID, not `all`, not a pool. Such a job is the guest's own plan,
+  /// which its Plan group edits; any other job is the datacenter's.
+  bool takesOnly(int? vmid) =>
+      vmid != null &&
+      !all &&
+      pool == null &&
+      exclude.isEmpty &&
+      vmids.length == 1 &&
+      vmids.single == vmid;
 }
 
 /// What the datacenter's Backup view edits: one scheduled job, sent as PVE's

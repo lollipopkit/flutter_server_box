@@ -766,18 +766,15 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
           onInc: () => setState(() => _addGib += 8),
         ),
         if (_lxc)
-          Padding(
-            padding: const EdgeInsets.only(left: _indent),
-            child: Input(
-              key: const ValueKey('hw:disk:mount'),
-              controller: _mount,
-              label: l10n.virtHwMountPoint,
-              icon: Icons.folder_open,
-              noWrap: true,
-              suggestion: false,
-              onChanged: (_) => setState(() {}),
-            ),
-          ),
+          _inputRow([Input(
+            key: const ValueKey('hw:disk:mount'),
+            controller: _mount,
+            label: l10n.virtHwMountPoint,
+            icon: Icons.folder_open,
+            noWrap: true,
+            suggestion: false,
+            onChanged: (_) => setState(() {}),
+          )], indent: true),
         if (hw.running) _text(l10n.virtHwHotplugNow, indent: true),
         if (issue != null) _text(issue, indent: true, error: true),
       ],

@@ -508,7 +508,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
                 }),
               ),
           ]),
-        Input(
+        _inputRow([Input(
           key: const ValueKey('create:name'),
           controller: _name,
           label: lxc ? l10n.virtHostname : libL10n.name,
@@ -520,7 +520,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
             // The hostname follows the name until it is typed.
             if (!_hostnameTyped) _ciHostname.text = _hostname();
           }),
-        ),
+        )]),
         if (pve)
           _step(
             Icons.tag,
@@ -776,7 +776,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
     } else {
       rows.addAll([
         _text(l10n.virtCiTip),
-        Input(
+        _inputRow([Input(
           key: const ValueKey('create:ci:user'),
           controller: _ciUser,
           label: libL10n.user,
@@ -786,8 +786,8 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
           suggestion: false,
           errorText: on(VirtCreateIssue.ciUser, l10n.virtCiUserInvalid, _ciUser),
           onChanged: (_) => setState(() {}),
-        ),
-        Input(
+        )]),
+        _inputRow([Input(
           key: const ValueKey('create:ci:password'),
           controller: _ciPassword,
           label: libL10n.pwd,
@@ -796,8 +796,8 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
           noWrap: true,
           suggestion: false,
           onChanged: (_) => setState(() {}),
-        ),
-        Input(
+        )]),
+        _inputRow([Input(
           key: const ValueKey('create:ci:keys'),
           controller: _ciKeys,
           label: l10n.virtSshKeys,
@@ -805,17 +805,18 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
           hint: 'ssh-ed25519 AAAA…',
           minLines: 1,
           maxLines: 4,
+          noWrap: true,
           suggestion: false,
           errorText: issue == VirtCreateIssue.sshKeys
               ? l10n.virtCreateSshKeysInvalid
               : null,
           onChanged: (_) => setState(() {}),
-        ),
+        )]),
         if (issue == VirtCreateIssue.ciCredentials &&
             _ciUser.text.trim().isNotEmpty)
           _text(l10n.virtCiCredentialsMissing, error: true),
         if (!pve)
-          Input(
+          _inputRow([Input(
             key: const ValueKey('create:ci:hostname'),
             controller: _ciHostname,
             label: l10n.virtHostname,
@@ -826,7 +827,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
                 ? l10n.virtCreateNameInvalidPve
                 : null,
             onChanged: (_) => setState(() => _hostnameTyped = true),
-          )
+          )])
         else
           _text(l10n.virtCiHostnamePve),
         if (network != null) ...[
@@ -839,7 +840,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
             onSelected: (v) => setState(() => _ciStatic = v != 'DHCP'),
           ),
           if (_ciStatic) ...[
-            Input(
+            _inputRow([Input(
               key: const ValueKey('create:ci:address'),
               controller: _ciAddress,
               label: 'IPv4 / CIDR',
@@ -849,8 +850,8 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
               suggestion: false,
               errorText: on(VirtCreateIssue.ciAddress, l10n.virtCiAddressInvalid, _ciAddress),
               onChanged: (_) => setState(() {}),
-            ),
-            Input(
+            )]),
+            _inputRow([Input(
               key: const ValueKey('create:ci:gateway'),
               controller: _ciGateway,
               label: libL10n.gateway,
@@ -860,9 +861,9 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
               suggestion: false,
               errorText: on(VirtCreateIssue.ciGateway, l10n.virtCiGatewayInvalid, _ciGateway),
               onChanged: (_) => setState(() {}),
-            ),
+            )]),
           ],
-          Input(
+          _inputRow([Input(
             key: const ValueKey('create:ci:dns'),
             controller: _ciDns,
             label: 'DNS',
@@ -872,8 +873,8 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
             suggestion: false,
             errorText: on(VirtCreateIssue.ciDns, l10n.virtCiDnsInvalid, _ciDns),
             onChanged: (_) => setState(() {}),
-          ),
-          Input(
+          )]),
+          _inputRow([Input(
             key: const ValueKey('create:ci:search'),
             controller: _ciSearch,
             label: l10n.virtCiSearch,
@@ -883,7 +884,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
             suggestion: false,
             errorText: on(VirtCreateIssue.ciSearch, l10n.virtCreateNameInvalidPve, _ciSearch),
             onChanged: (_) => setState(() {}),
-          ),
+          )]),
         ],
         if (!pve) _text(l10n.virtCiSeedNote),
       ]);
@@ -917,7 +918,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
       dot: _dot(ok),
       rows: [
         _text(l10n.virtCredentialsTip),
-        Input(
+        _inputRow([Input(
           key: const ValueKey('create:password'),
           controller: _password,
           label: libL10n.pwd,
@@ -929,8 +930,8 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
               ? l10n.virtCreatePasswordShort(virtLxcPasswordMin)
               : null,
           onChanged: (_) => setState(() {}),
-        ),
-        Input(
+        )]),
+        _inputRow([Input(
           key: const ValueKey('create:keys'),
           controller: _keys,
           label: l10n.virtSshKeys,
@@ -938,12 +939,13 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
           hint: 'ssh-ed25519 AAAA…',
           minLines: 1,
           maxLines: 4,
+          noWrap: true,
           suggestion: false,
           errorText: issue == VirtCreateIssue.sshKeys
               ? l10n.virtCreateSshKeysInvalid
               : null,
           onChanged: (_) => setState(() {}),
-        ),
+        )]),
       ],
     );
   }

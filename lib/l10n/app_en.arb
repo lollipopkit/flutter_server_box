@@ -4884,9 +4884,9 @@
   "@virtErrConflict": {
     "description": "Error title: the guest's configuration changed since it was read."
   },
-  "virtErrConflictTip": "Someone changed this guest's configuration after it was read here, so nothing was changed. It has been read again: make the change again if it still applies.",
+  "virtErrConflictTip": "Someone changed this configuration after it was read here, so nothing was changed. It has been read again: make the change again if it still applies.",
   "@virtErrConflictTip": {
-    "description": "Explains the conflict."
+    "description": "Explains a conflict: a guest's, a network's or a cloud-init configuration changed on the host after it was read."
   },
   "virtHardware": "Hardware",
   "@virtHardware": {
@@ -5598,7 +5598,7 @@
   "@virtBackupNoPlanShort": {
     "description": "Index note: no scheduled backup job takes the guest."
   },
-  "virtBackupNoPlan": "No scheduled backup job takes this guest. Jobs are set up in the datacenter.",
+  "virtBackupNoPlan": "No scheduled backup job takes this guest.",
   "@virtBackupNoPlan": {
     "description": "Backup view: no scheduled backup job takes the guest."
   },
@@ -6042,6 +6042,10 @@
   "virtNetConfig": "Configuration",
   "@virtNetConfig": {
     "description": "Group title: how a network is set up."
+  },
+  "virtNetConfigFile": "Configuration file",
+  "@virtNetConfigFile": {
+    "description": "Network view: group title over the network's definition as the host keeps it (libvirt XML, PVE interfaces entry)."
   },
   "virtNetInternal": "Internal",
   "@virtNetInternal": {
@@ -6848,7 +6852,6 @@
   "@virtBackupExcludeTip": {
     "description": "Job editor: what the switches mean with \"all guests\" on."
   },
-  "virtNetEdit": "Edit configuration",
   "virtNetEditAsk": "The running network keeps what it has until it is restarted. Restarting cuts off the {count} guests on it.",
   "virtNetEditAskNoGuest": "The running network keeps what it has until it is restarted.",
   "virtNetEditRestart": "Restart it to apply now",
@@ -6863,6 +6866,7 @@
   "virtNetHostIp": "Address",
   "virtNetHostName": "Name (optional)",
   "virtNetHostEmpty": "No address is handed to a MAC of its own: every guest gets one from the DHCP range.",
+  "virtNetHostOthers": "Every other guest gets one from the DHCP range.",
   "virtNetHostInvalid": "A MAC, an address or a name the host would refuse, or the same MAC twice.",
   "virtNetManagementIface": "This interface carries the host's own address. Editing or applying it would cut the host off.",
   "virtNetManagementTip": "It carries the host's management traffic, or sits under an interface that does: the app does not edit it.",
@@ -6874,7 +6878,6 @@
   "@virtNetVlanAware": {
     "description": "PVE bridge setting: bridge-vlan-aware."
   },
-  "virtNetPveEditNote": "Written into the node's pending configuration; apply it for the host to take it.",
   "virtCiExpire": "The password expires",
   "virtCiExpireNote": "The first login with it has to set a new one. libvirt only: PVE writes \"expire: false\" and has no option for it.",
   "virtCiSearchHint": "lab.example dev.lab.example",
@@ -6887,9 +6890,6 @@
   "virtSbUnsupported": "The host's firmware descriptors have no Secure Boot firmware with enrolled keys, so a domain with it cannot start.",
   "virtCreateSecureBoot": "Secure Boot",
   "virtCreateSecureBootNote": "Only signed kernels and bootloaders are booted.",
-  "@virtNetEdit": {
-    "description": "Network view: the button that opens the edit form."
-  },
   "@virtNetEditAsk": {
     "description": "Edit dialog: what a restart does, with guests on the network.",
     "placeholders": {
@@ -6954,6 +6954,9 @@
   "@virtNetHostEmpty": {
     "description": "Static entries: none is set."
   },
+  "@virtNetHostOthers": {
+    "description": "Static entries: some are set; beside the button that adds another."
+  },
   "@virtNetHostInvalid": {
     "description": "A static entry the host would refuse."
   },
@@ -6962,9 +6965,6 @@
   },
   "@virtNetManagementTip": {
     "description": "Network view: why a PVE interface is not editable."
-  },
-  "@virtNetPveEditNote": {
-    "description": "Under the PVE bridge edit form."
   },
   "@virtCiExpire": {
     "description": "cloud-init: the password expires switch."
@@ -7053,6 +7053,23 @@
       "name": {
         "type": "String",
         "example": "web-01"
+      }
+    }
+  },
+  "virtBackupPlanNew": "New plan",
+  "@virtBackupPlanNew": {
+    "description": "Backup view, Plan group: make a scheduled backup job that takes this guest alone."
+  },
+  "virtBackupPlanNewTip": "A schedule that backs up this guest alone.",
+  "@virtBackupPlanNewTip": {
+    "description": "Backup view, Plan group: what a new plan is, beside its button and above its form."
+  },
+  "virtBackupPlanOthers": "{count, plural, =0{No other guest} =1{Also backs up 1 other guest} other{Also backs up {count} other guests}}",
+  "@virtBackupPlanOthers": {
+    "description": "Backup view, Plan group: a job that takes this guest takes this many others too; tapping it opens the job.",
+    "placeholders": {
+      "count": {
+        "type": "int"
       }
     }
   }

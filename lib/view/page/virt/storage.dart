@@ -380,20 +380,17 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
         libL10n.cancel,
         onTap: () => setState(() => _adding = false),
       ),
-      Padding(
-        padding: const EdgeInsets.only(left: _indent),
-        child: Input(
-          key: const ValueKey('pool:vol:name'),
-          controller: _volName,
-          label: libL10n.name,
-          icon: Icons.label_outline,
-          hint: _pve ? 'vm-100-disk-1' : 'data.qcow2',
-          noWrap: true,
-          suggestion: false,
-          errorText: issue,
-          onChanged: (_) => setState(() {}),
-        ),
-      ),
+      _inputRow([Input(
+        key: const ValueKey('pool:vol:name'),
+        controller: _volName,
+        label: libL10n.name,
+        icon: Icons.label_outline,
+        hint: _pve ? 'vm-100-disk-1' : 'data.qcow2',
+        noWrap: true,
+        suggestion: false,
+        errorText: issue,
+        onChanged: (_) => setState(() {}),
+      )], indent: true),
       _seg(
         Icons.description_outlined,
         libL10n.format,
@@ -1147,7 +1144,7 @@ class _VirtPoolCreateViewState extends ConsumerState<VirtPoolCreateView>
                   warn: false,
                   indexNote: type ?? '',
                   rows: [
-                    Input(
+                    _inputRow([Input(
                       key: const ValueKey('pool:new:name'),
                       controller: _name,
                       label: libL10n.name,
@@ -1157,7 +1154,7 @@ class _VirtPoolCreateViewState extends ConsumerState<VirtPoolCreateView>
                       suggestion: false,
                       errorText: name.isEmpty ? null : nameIssue,
                       onChanged: (_) => setState(() {}),
-                    ),
+                    )]),
                     if (pve && nodes.length > 1)
                       _seg(
                         Icons.dns_outlined,
@@ -1178,7 +1175,7 @@ class _VirtPoolCreateViewState extends ConsumerState<VirtPoolCreateView>
                           onTap: () => setState(() => _type = t),
                         ),
                     ]),
-                    Input(
+                    _inputRow([Input(
                       key: const ValueKey('pool:new:source'),
                       controller: _source,
                       label: sourceLabel,
@@ -1188,9 +1185,9 @@ class _VirtPoolCreateViewState extends ConsumerState<VirtPoolCreateView>
                       suggestion: false,
                       errorText: sourceIssue,
                       onChanged: (_) => setState(() {}),
-                    ),
+                    )]),
                     if (type == 'netfs')
-                      Input(
+                      _inputRow([Input(
                         key: const ValueKey('pool:new:mount'),
                         controller: _mount,
                         label: l10n.virtPoolMountPoint,
@@ -1202,7 +1199,7 @@ class _VirtPoolCreateViewState extends ConsumerState<VirtPoolCreateView>
                             ? virtResIssueText(issue, pve: pve)
                             : null,
                         onChanged: (_) => setState(() {}),
-                      ),
+                      )]),
                     if (type == 'logical') _text(l10n.virtPoolLogicalNote),
                     _actions([
                       _Action(

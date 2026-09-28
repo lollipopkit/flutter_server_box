@@ -3765,7 +3765,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get virtErrConflictTip =>
-      'Seseorang mengubah konfigurasi tamu ini setelah dibaca di sini, jadi tidak ada yang diubah. Konfigurasi telah dibaca ulang: ulangi perubahan jika masih diperlukan.';
+      'Seseorang mengubah konfigurasi ini setelah dibaca di sini, jadi tidak ada yang diubah. Konfigurasi telah dibaca ulang: ulangi perubahan jika masih diperlukan.';
 
   @override
   String get virtHardware => 'Perangkat keras';
@@ -4270,7 +4270,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get virtBackupNoPlan =>
-      'Tidak ada tugas cadangan terjadwal yang mencakup tamu ini. Tugas diatur di pusat data.';
+      'Tidak ada tugas cadangan terjadwal yang mencakup tamu ini.';
 
   @override
   String get virtBackupKeep => 'Simpan';
@@ -4566,6 +4566,9 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get virtNetConfig => 'Konfigurasi';
+
+  @override
+  String get virtNetConfigFile => 'Berkas konfigurasi';
 
   @override
   String get virtNetInternal => 'Internal';
@@ -5163,9 +5166,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Semua guest di node diambil. Matikan satu untuk mengecualikannya.';
 
   @override
-  String get virtNetEdit => 'Edit konfigurasi';
-
-  @override
   String virtNetEditAsk(int count) {
     return 'Jaringan yang berjalan mempertahankan kondisinya sampai dimulai ulang. Mulai ulang memutus VM di dalamnya ($count).';
   }
@@ -5218,6 +5218,10 @@ class AppLocalizationsId extends AppLocalizations {
       'Tidak ada MAC yang diberi alamat sendiri: setiap VM mendapat alamat dari rentang DHCP.';
 
   @override
+  String get virtNetHostOthers =>
+      'Setiap VM lainnya mendapat alamat dari rentang DHCP.';
+
+  @override
   String get virtNetHostInvalid =>
       'MAC, alamat, atau nama yang akan ditolak host, atau MAC yang sama dua kali.';
 
@@ -5235,10 +5239,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get virtNetVlanAware => 'VLAN aware';
-
-  @override
-  String get virtNetPveEditNote =>
-      'Ditulis ke konfigurasi tertunda node; terapkan agar host memakainya.';
 
   @override
   String get virtCiExpire => 'Kata sandi kedaluwarsa';
@@ -5301,5 +5301,22 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String virtHwRevertAllAsk(String name) {
     return 'Buang semua perubahan yang menunggu start berikutnya dari $name?';
+  }
+
+  @override
+  String get virtBackupPlanNew => 'Rencana baru';
+
+  @override
+  String get virtBackupPlanNewTip => 'Jadwal yang mencadangkan tamu ini saja.';
+
+  @override
+  String virtBackupPlanOthers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Juga mencadangkan $count tamu lain',
+      zero: 'Tidak ada tamu lain',
+    );
+    return '$_temp0';
   }
 }

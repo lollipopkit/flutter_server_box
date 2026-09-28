@@ -3766,7 +3766,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get virtErrConflictTip =>
-      'Someone changed this guest\'s configuration after it was read here, so nothing was changed. It has been read again: make the change again if it still applies.';
+      'Someone changed this configuration after it was read here, so nothing was changed. It has been read again: make the change again if it still applies.';
 
   @override
   String get virtHardware => 'Hardware';
@@ -4268,8 +4268,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get virtBackupNoPlanShort => 'No plan';
 
   @override
-  String get virtBackupNoPlan =>
-      'No scheduled backup job takes this guest. Jobs are set up in the datacenter.';
+  String get virtBackupNoPlan => 'No scheduled backup job takes this guest.';
 
   @override
   String get virtBackupKeep => 'Keep';
@@ -4577,6 +4576,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get virtNetConfig => 'Configuration';
+
+  @override
+  String get virtNetConfigFile => 'Configuration file';
 
   @override
   String get virtNetInternal => 'Internal';
@@ -5170,9 +5172,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Every guest on the node is taken. Turn one off to leave it out.';
 
   @override
-  String get virtNetEdit => 'Edit configuration';
-
-  @override
   String virtNetEditAsk(int count) {
     return 'The running network keeps what it has until it is restarted. Restarting cuts off the $count guests on it.';
   }
@@ -5225,6 +5224,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'No address is handed to a MAC of its own: every guest gets one from the DHCP range.';
 
   @override
+  String get virtNetHostOthers =>
+      'Every other guest gets one from the DHCP range.';
+
+  @override
   String get virtNetHostInvalid =>
       'A MAC, an address or a name the host would refuse, or the same MAC twice.';
 
@@ -5242,10 +5245,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get virtNetVlanAware => 'VLAN aware';
-
-  @override
-  String get virtNetPveEditNote =>
-      'Written into the node\'s pending configuration; apply it for the host to take it.';
 
   @override
   String get virtCiExpire => 'The password expires';
@@ -5308,5 +5307,24 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String virtHwRevertAllAsk(String name) {
     return 'Drop every change waiting for $name\'s next start?';
+  }
+
+  @override
+  String get virtBackupPlanNew => 'New plan';
+
+  @override
+  String get virtBackupPlanNewTip =>
+      'A schedule that backs up this guest alone.';
+
+  @override
+  String virtBackupPlanOthers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Also backs up $count other guests',
+      one: 'Also backs up 1 other guest',
+      zero: 'No other guest',
+    );
+    return '$_temp0';
   }
 }
