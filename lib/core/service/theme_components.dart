@@ -427,13 +427,12 @@ final class ThemeComponents {
         borderRadius: input.number('radius') != null
             ? BorderRadius.circular(input.number('radius')!)
             : border?.borderRadius ?? BorderRadius.circular(8),
-        borderSide: BorderSide(
-          color:
-              input.color(colorKey) ??
+        borderSide: themeBorderSide(
+          input.color(colorKey) ??
               input.color('borderColor') ??
               border?.borderSide.color ??
               base.colorScheme.outline,
-          width: input.number('borderWidth') ?? border?.borderSide.width ?? 1,
+          input.number('borderWidth') ?? border?.borderSide.width ?? 1,
         ),
       );
     }
@@ -788,11 +787,12 @@ final class ThemeComponents {
                     base.colorScheme.inverseSurface,
                 borderRadius: BorderRadius.circular(tooltip.number('radius') ?? 4),
                 border: tooltip.hasAny({'borderColor', 'borderWidth'})
-                    ? Border.all(
-                        color:
-                            tooltip.color('borderColor') ??
-                            base.colorScheme.outline,
-                        width: tooltip.number('borderWidth') ?? 1,
+                    ? Border.fromBorderSide(
+                        themeBorderSide(
+                          tooltip.color('borderColor') ??
+                              base.colorScheme.outline,
+                          tooltip.number('borderWidth') ?? 1,
+                        ),
                       )
                     : null,
               ),
@@ -921,10 +921,9 @@ final class _Style {
       borderRadius: number('radius') != null
           ? BorderRadius.circular(number('radius')!)
           : rounded?.borderRadius ?? BorderRadius.circular(12),
-      side: BorderSide(
-        color: color('borderColor') ?? rounded?.side.color ?? scheme.outline,
-        width:
-            number('borderWidth') ??
+      side: themeBorderSide(
+        color('borderColor') ?? rounded?.side.color ?? scheme.outline,
+        number('borderWidth') ??
             (values.containsKey('borderColor') ? 1 : rounded?.side.width ?? 0),
       ),
     );
@@ -1009,13 +1008,11 @@ final class _Style {
               if (!style.hasAny({'borderColor', 'borderWidth'})) {
                 return base?.side?.resolve(states);
               }
-              return BorderSide(
-                color:
-                    style.color('borderColor') ??
+              return themeBorderSide(
+                style.color('borderColor') ??
                     base?.side?.resolve(states)?.color ??
                     scheme.outline,
-                width:
-                    style.number('borderWidth') ??
+                style.number('borderWidth') ??
                     base?.side?.resolve(states)?.width ??
                     1,
               );

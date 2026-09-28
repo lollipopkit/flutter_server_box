@@ -960,6 +960,59 @@ void main() {
     }
   });
 
+  test('a background tile is schema 3, needs an image, and roundtrips', () async {
+    final root = await Directory.systemTemp.createTemp('fsbt-tile-');
+    try {
+      final image = {'background.png': await png()};
+      Map<String, Object?> tiled(Object? tile, {int min = 3}) => package()
+        ..['schema'] = {'min': min, 'max': 3}
+        ..['background'] = {
+          'type': 'image',
+          'image': 'background.png',
+          'opacity': 0.2,
+          'blur': 0,
+          'tile': ?tile,
+        };
+
+      for (final (data, files) in [
+        (tiled(96, min: 2), image),
+        (tiled(8), image),
+        (tiled(2048), image),
+        (tiled('96'), image),
+        (package()
+          ..['schema'] = {'min': 3, 'max': 3}
+          ..['background'] = {'type': 'gradient', 'tile': 96}, <String, List<int>>{}),
+        (package()
+          ..['background'] = {'type': 'gradient', 'repeat': true}, <String, List<int>>{}),
+      ]) {
+        await expectLater(
+          ThemePackages.install(bundle(data, files), rootDirectory: root.path),
+          throwsFormatException,
+          reason: '$data',
+        );
+      }
+
+      final installed = await ThemePackages.install(
+        bundle(tiled(96), image),
+        rootDirectory: root.path,
+      );
+      expect(installed.backgroundTile, 96);
+      final restored = ThemePackages.installed(
+        installed.installationId,
+        rootDirectory: root.path,
+      )!;
+      expect(restored.backgroundTile, 96);
+
+      final once = await ThemePackages.install(
+        bundle(tiled(null, min: 1)..['schema'] = {'min': 1, 'max': 3}, image),
+        rootDirectory: root.path,
+      );
+      expect(once.backgroundTile, 0);
+    } finally {
+      await root.delete(recursive: true);
+    }
+  });
+
   test('installs a splash with its logo and reads it back', () async {
     final root = await Directory.systemTemp.createTemp('fsbt-splash-test-');
     try {

@@ -80,6 +80,7 @@ are rejected rather than replaced with defaults.
 | `background.type` | `"none"` |
 | `background.opacity` | `0.18` |
 | `background.blur` | `0` |
+| `background.tile` | Absent (the image is drawn once, cover-fitted) |
 | `shapes.card`, `shapes.tile`, `shapes.button` | `12`, `8`, `10` |
 | `components` | Empty (inherit app styles) |
 
@@ -107,7 +108,11 @@ loading an installed theme. Both `schema.min` and `schema.max` are required.
 `0xFF61AFEF` are supported. `icons.style` is `classic` or `mingcute` and is used
 where the package does not provide an image. `background.type` is `none`,
 `gradient`, or `image`; omit `image` unless the type is `image`. Opacity is
-0–0.6, blur is 0–30, and each shape radius is 0–40.
+0–0.6, blur is 0–30, and each shape radius is 0–40. `background.tile`
+(schema 3, image only, 16–1024) repeats the image as a pattern, each repeat that
+many logical pixels wide from the top left, instead of stretching one copy over
+the window: draw a seamless tile with a transparent background, and the
+surface color shows through it.
 Image paths must match the fixed names above. The installer rejects other
 archive entries, duplicate paths, symlinks, encrypted files, and path traversal.
 Unknown top-level tables are rejected, so misspelled sections produce an error
@@ -159,8 +164,8 @@ appear.
 Schema **3** added the components beyond schema 2's seven (`textButton`,
 `outlinedButton`, `iconButton`, `search`, `appBar`, `segmented`, `sidebar`,
 `menu`, `tooltip`, `toast`, `switch`, `slider`, `progress`, `badge`, `chip`,
-`divider`, `scrollbar`), the `minHeight` field of button tables, and the
-`[layout]` table. A package using any of them must declare `min = 3`: a schema
+`divider`, `scrollbar`), the `minHeight` field of button tables,
+`background.tile`, and the `[layout]` table. A package using any of them must declare `min = 3`: a schema
 2 build refuses an unknown table, and the store needs to know that before the
 download. The current ceiling is `max = 3`; a package whose range extends
 beyond it can still be installed if the ranges overlap.

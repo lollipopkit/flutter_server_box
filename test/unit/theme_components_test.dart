@@ -253,6 +253,29 @@ void main() {
     }
   });
 
+  test('a border of width 0, or none at all, draws no line', () {
+    // Flutter draws a solid `BorderSide(width: 0)` as a one-pixel hairline, so
+    // a tile given only a radius came out outlined.
+    final theme = ThemeComponents.parse(<String, dynamic>{
+      'tile': {'radius': 14},
+      'card': {'radius': 0, 'borderWidth': 0, 'borderColor': 'outline'},
+      'button': {'borderWidth': 0},
+      'tooltip': {'borderWidth': 0},
+    }).apply(ThemeData());
+    RoundedRectangleBorder rounded(ShapeBorder? s) => s! as RoundedRectangleBorder;
+    expect(rounded(theme.listTileTheme.shape).side, BorderSide.none);
+    expect(
+      rounded(theme.listTileTheme.shape).borderRadius,
+      BorderRadius.circular(14),
+    );
+    expect(rounded(theme.cardTheme.shape).side, BorderSide.none);
+    expect(theme.elevatedButtonTheme.style!.side!.resolve({}), BorderSide.none);
+    expect(
+      (theme.tooltipTheme.decoration! as BoxDecoration).border,
+      const Border.fromBorderSide(BorderSide.none),
+    );
+  });
+
   test('schema 3 is needed past what schema 2 had', () {
     int needed(Map<String, dynamic> raw, {Object? layout}) =>
         ThemeComponents.parse(raw, layout: layout).neededSchema;

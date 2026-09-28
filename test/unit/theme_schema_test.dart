@@ -132,6 +132,11 @@ void main() {
           ThemePackages.maxBackgroundOpacity);
       expect(bound(background['blur'], 'maximum'),
           ThemePackages.maxBackgroundBlur);
+      expect(bound(background['tile'], 'minimum'),
+          ThemePackages.minBackgroundTile);
+      expect(bound(background['tile'], 'maximum'),
+          ThemePackages.maxBackgroundTile);
+      expect(background.keys.toSet(), ThemePackages.backgroundFields);
     });
 
     test('splash duration', () {

@@ -700,6 +700,8 @@ extension _App on _AppSettingsPageState {
       _setting.appThemePaletteEnabled.put(false);
       _setting.appBackgroundPath.put(dest.path);
       _setting.appBackgroundStyle.put(BackgroundStyle.image);
+      // The user's own picture is drawn once, not repeated like a theme's tile.
+      _setting.appBackgroundTile.put(0);
       _setting.appThemePreset.put(ThemePackages.customPreset);
       _markCustomTheme();
       setStateSafe(() {});

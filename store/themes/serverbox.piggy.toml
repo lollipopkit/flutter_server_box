@@ -1,0 +1,8 @@
+id = "serverbox.piggy"
+name = "Piggy"
+description = "Soft pink with a repeating pattern of little outline pigs, rounded everything, and a piggy splash."
+homepage = "https://github.com/lollipopkit/flutter_server_box/tree/main/store/themes/serverbox.piggy"
+license = "MIT"
+
+# Versions are appended by scripts/publish-themes.py, which packs the folder
+# beside this file and records the digest of what it built.

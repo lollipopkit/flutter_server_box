@@ -58,7 +58,7 @@ Schema range: `[schema] min = 1, max = 3` unless the theme uses an SVG icon,
 `[icons.colors]` or `[splash]` — those are schema 2 features and need
 `min = 2`, or an older app installs the theme and silently drops them. Any
 component beyond card, tile, button, input, navigation, dialog and sheet, a
-button `minHeight`, or `[layout]` is schema 3 and needs `min = 3`.
+button `minHeight`, `background.tile`, or `[layout]` is schema 3 and needs `min = 3`.
 
 ### 3. Colors
 
@@ -93,7 +93,9 @@ Only when asked; details in `references/manifest.md`.
   may not contain `<script>`, `<style>`, `<foreignObject>`, a DTD, or any
   `href`/`url(…)` that is not a `#fragment` of the same file.
 - **Background**: `type = "gradient"` (from the palette) or `"image"` with
-  `image = "background.png"`, `opacity` 0–0.6, `blur` 0–30.
+  `image = "background.png"`, `opacity` 0–0.6, `blur` 0–30. For a repeating
+  pattern add `tile` (16–1024 logical px, schema 3) and draw one seamless,
+  transparent tile; `store/themes/serverbox.piggy` is a worked example.
 - **Splash**: `[splash] color`, optional `logo = "splash_logo.svg"`,
   `duration` 100–3000 ms. It is shown only at launch.
 - **Shapes and components**: radii 0–40, border widths 0–8, elevations 0–24,

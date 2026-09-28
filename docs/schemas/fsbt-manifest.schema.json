@@ -184,6 +184,12 @@
           "type": "number",
           "minimum": 0,
           "maximum": 30
+        },
+        "tile": {
+          "description": "Schema 3. Repeat the image as a pattern, each repeat this many logical pixels wide, from the top left. Omitted draws the image once, cover-fitted. Only valid when type is \"image\".",
+          "type": "number",
+          "minimum": 16,
+          "maximum": 1024
         }
       }
     },

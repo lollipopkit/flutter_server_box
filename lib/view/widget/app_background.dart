@@ -78,13 +78,34 @@ class AppBackground extends StatelessWidget {
           0.0,
           30.0,
         );
-    final image = Image.file(
-      File(path),
-      fit: BoxFit.cover,
-      cacheWidth: 4096,
-      cacheHeight: 4096,
-      errorBuilder: (_, _, _) => const SizedBox.shrink(),
-    );
+    final tile =
+        preview?.backgroundTile ?? Stores.setting.appBackgroundTile.fetch();
+    final Widget image;
+    if (tile > 0) {
+      // A pattern: decoded at one repeat's width in physical pixels and drawn
+      // at that size from the top left, so it keeps its size on any window
+      // rather than growing with it the way a `cover`-fitted picture does.
+      final ratio = MediaQuery.devicePixelRatioOf(context);
+      image = Image(
+        image: ResizeImage(
+          FileImage(File(path), scale: ratio),
+          width: (tile * ratio).round(),
+          allowUpscaling: true,
+        ),
+        fit: BoxFit.none,
+        alignment: Alignment.topLeft,
+        repeat: ImageRepeat.repeat,
+        errorBuilder: (_, _, _) => const SizedBox.shrink(),
+      );
+    } else {
+      image = Image.file(
+        File(path),
+        fit: BoxFit.cover,
+        cacheWidth: 4096,
+        cacheHeight: 4096,
+        errorBuilder: (_, _, _) => const SizedBox.shrink(),
+      );
+    }
     // The image is faint and the colour under it is not: what makes a page
     // opaque enough to stand over the one below is this box, not the image.
     return ColoredBox(

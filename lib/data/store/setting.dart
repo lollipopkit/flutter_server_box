@@ -133,6 +133,10 @@ class SettingStore extends SqliteStore {
   );
   late final appBackgroundBlur = propertyDefault('appBackgroundBlur', 0.0);
 
+  /// The logical width the background image repeats at; 0 draws it once,
+  /// `cover`-fitted. Set by a theme package, never by the settings page.
+  late final appBackgroundTile = propertyDefault('appBackgroundTile', 0.0);
+
   /// Font names are tried in order; the platform's default follows the list.
   late final appFontFamilies = listProperty<String>('appFontFamilies');
   late final appImportedFontPath = propertyDefault('appImportedFontPath', '');

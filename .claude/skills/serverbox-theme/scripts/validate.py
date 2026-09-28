@@ -67,6 +67,8 @@ def schema3_uses(manifest: dict) -> list[str]:
     found = []
     if manifest.get("layout"):
         found.append("[layout]")
+    if (manifest.get("background") or {}).get("tile") is not None:
+        found.append("background.tile")
     components = manifest.get("components") or {}
 
     def table(name: str, fields: dict, path: str) -> None:

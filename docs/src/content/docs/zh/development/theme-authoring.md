@@ -75,6 +75,7 @@ duration = 900
 | `background.type` | `"none"` |
 | `background.opacity` | `0.18` |
 | `background.blur` | `0` |
+| `background.tile` | 不存在（图片只绘制一次，cover 铺满） |
 | `shapes.card`、`shapes.tile`、`shapes.button` | `12`、`8`、`10` |
 | `components` | 空（沿用应用样式） |
 
@@ -99,6 +100,9 @@ Light 和 Dark 均可选。
 `icons.style` 取 `classic` 或 `mingcute`，用于该包没有提供 image 的 icon。
 `background.type` 取 `none`、`gradient` 或 `image`；type 不是 `image` 时不要写
 `image`。不透明度 0–0.6，模糊 0–30，各圆角 0–40。
+`background.tile`（schema 3，仅用于 image，16–1024）把图片作为图案重复绘制，每个重复
+单元宽为该数值的逻辑像素，从左上角开始，而不是把一张图拉伸铺满窗口。请绘制可无缝拼接、
+背景透明的 tile，surface 颜色会从透明处露出。
 image 路径必须使用上文列出的固定文件名。安装器会拒绝其他归档条目、重复路径、符号
 链接、加密文件和路径穿越。未知的顶层表也会被拒绝，因此拼错的 section 会明确报错，
 不会被静默忽略。
@@ -141,7 +145,7 @@ SVG icon 会退回内置字形，指定颜色和 splash 也不会生效。
 Schema **3** 增加了 schema 2 七个组件之外的组件（`textButton`、`outlinedButton`、
 `iconButton`、`search`、`appBar`、`segmented`、`sidebar`、`menu`、`tooltip`、
 `toast`、`switch`、`slider`、`progress`、`badge`、`chip`、`divider`、`scrollbar`）、
-按钮表的 `minHeight` 字段，以及 `[layout]` 表。使用其中任一项的包必须声明
+按钮表的 `minHeight` 字段、`background.tile`，以及 `[layout]` 表。使用其中任一项的包必须声明
 `min = 3`：schema 2 的构建会拒绝未知的表，商店需要在下载前得知这一点。当前上限为
 `max = 3`；即使包的范围高于该值，只要与应用支持的范围有交集，仍可安装。
 

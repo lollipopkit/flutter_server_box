@@ -120,6 +120,17 @@ function preview(dir, manifest) {
     images,
     shapes: { card: 12, tile: 8, button: 10, ...(manifest.shapes ?? {}) },
     background: manifest.background?.type ?? 'none',
+    // An image background as the app draws it: faint over the surface, once
+    // and cover-fitted, or repeated every `tile` logical pixels.
+    backgroundImage:
+      manifest.background?.type === 'image' && existsSync(path.join(dir, manifest.background.image))
+        ? {
+            src: dataUri(path.join(dir, manifest.background.image)),
+            opacity: manifest.background.opacity ?? 0.18,
+            blur: manifest.background.blur ?? 0,
+            tile: manifest.background.tile ?? 0,
+          }
+        : null,
     splash: splash ? { logo, duration: splash.duration ?? 600 } : null,
     style: icons.style ?? 'classic',
   }

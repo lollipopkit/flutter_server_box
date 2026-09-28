@@ -24,6 +24,11 @@
       : c.surface,
   )
 
+  // The picture is a phone about 390 logical pixels wide drawn 248 wide, so a
+  // tile keeps its size relative to the screen.
+  const phone = 248 / 390
+  const image = $derived(p.backgroundImage)
+
   const inset = (v, fallback) => (v ? `${v[1]}px ${v[2]}px ${v[3]}px ${v[0]}px` : fallback)
 
   const icon = (key) => p.images[key] ?? null
@@ -38,6 +43,12 @@
 </script>
 
 <div class="tp" style={`--s:${scale}; background:${background}; color:${c.onSurface};`}>
+  {#if image}
+    <div
+      class="tp-image"
+      style={`background-image:url("${image.src}"); opacity:${image.opacity}; filter:${image.blur ? `blur(${image.blur * phone}px)` : 'none'}; ${image.tile ? `background-repeat:repeat; background-position:0 0; background-size:${image.tile * phone}px auto;` : 'background-size:cover; background-position:center;'}`}
+    ></div>
+  {/if}
   <div class="tp-bar" style={`background:${appBar.backgroundColor ?? 'transparent'}; color:${appBar.titleColor ?? appBar.foregroundColor ?? c.onSurface};`}>
     <span class="tp-title">Servers</span>
     <span class="tp-actions">
@@ -124,6 +135,8 @@
   /* Drawn at one phone size and scaled as a whole, so every radius and gap
      keeps its proportion to the rest. */
   .tp {
+    position: relative;
+    isolation: isolate;
     zoom: var(--s);
     width: 248px;
     height: 470px;
@@ -134,6 +147,13 @@
     font-family: var(--font-body);
     font-size: 12px;
     box-shadow: 0 0 0 1px rgba(127, 127, 127, 0.25);
+  }
+
+  .tp-image {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
   }
 
   .tp-bar {

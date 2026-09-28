@@ -214,6 +214,9 @@ type = "gradient"
 opacity = 0.18
 # Image blur radius (0–30, default 0); does not affect the generated gradient.
 blur = 0
+# Schema 3, image only: repeat the image as a pattern, each repeat this many
+# logical pixels wide (16–1024). Omitted draws it once, cover-fitted.
+# tile = 160
 
 # The splash shown while the app takes its first frames. Omit the whole table
 # for no splash. It is read once, at launch, so it does not replay when this

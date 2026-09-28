@@ -25,7 +25,7 @@ Condensed from the theme authoring guide and the JSON Schema
 
 Schema 2 added SVG icons, `[icons.colors]` and `[splash]`; a package using any
 of them declares `min = 2`. Schema 3 added the components marked ³ below,
-`minHeight` on button tables, and `[layout]`; a package using any of them
+`minHeight` on button tables, `background.tile`, and `[layout]`; a package using any of them
 declares `min = 3`.
 
 Unknown top-level tables and fields are rejected. Explicit zero values are
@@ -84,7 +84,10 @@ back to the built-in glyph.
 `type` `"none"` (default), `"gradient"` (from the palette) or `"image"`.
 `image` only with `type = "image"`: `background.png`, `.jpg` or `.jpeg`
 (≤ 8 MiB, ≤ 8192 px a side, ≤ 64 megapixels). `opacity` 0–0.6 (default
-0.18) and `blur` 0–30 (default 0) apply to the image only.
+0.18) and `blur` 0–30 (default 0) apply to the image only. `tile` 16–1024
+(schema 3, image only) repeats the image every that many logical pixels from
+the top left instead of cover-fitting one copy — for a pattern: draw a seamless
+tile on a transparent background; the surface shows through.
 
 ## [splash] (schema 2)
 

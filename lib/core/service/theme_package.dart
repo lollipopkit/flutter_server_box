@@ -81,6 +81,7 @@ final class ThemePackage {
     this.iconColors = const {},
     this.splash,
     this.backgroundFile,
+    this.backgroundTile = 0,
     this.components = const ThemeComponents.empty(),
   });
 
@@ -123,6 +124,10 @@ final class ThemePackage {
   final String directory;
   final ThemeSplash? splash;
   final String? backgroundFile;
+
+  /// The logical width the background image is repeated at, or 0 to draw it
+  /// once, `cover`-fitted. Schema 3.
+  final double backgroundTile;
   final ThemeComponents components;
 
   String? get backgroundPath =>
@@ -254,6 +259,7 @@ abstract final class ThemePackages {
   /// The fields `[icons]` and `[splash]` may carry, held against the schema's
   /// properties by the same test that holds the enums above.
   static const iconFields = {'style', 'images', 'colors'};
+  static const backgroundFields = {'type', 'image', 'opacity', 'blur', 'tile'};
   static const splashFields = {'color', 'logo', 'duration'};
 
   /// What the format allows where a value is one of a few, which
@@ -292,6 +298,10 @@ abstract final class ThemePackages {
   /// held equal by the same test. The splash's own range is on [ThemeSplash].
   static const maxBackgroundOpacity = 0.6;
   static const maxBackgroundBlur = 30.0;
+
+  /// The range of `background.tile`, the logical width of one repeat.
+  static const minBackgroundTile = 16.0;
+  static const maxBackgroundTile = 1024.0;
 
   /// The one logo a splash may name, kept here so the test that holds this
   /// list and the schema's together can read it.
@@ -628,12 +638,16 @@ abstract final class ThemePackages {
     );
     final splash = _splash(data['splash']);
     final background = _map(data['background'], 'background');
+    if (!background.keys.every(backgroundFields.contains)) {
+      throw const FormatException('Unknown background field');
+    }
     final backgroundStyle = BackgroundStyle.parse(background['type']);
     if (backgroundStyle == null) {
       throw const FormatException('Invalid background type');
     }
     final opacity = _fraction(background['opacity'], maxBackgroundOpacity);
     final blur = _fraction(background['blur'], maxBackgroundBlur);
+    final backgroundTile = _backgroundTile(background, backgroundStyle);
     final shapes = _map(data['shapes'], 'shapes');
     final card = _fraction(shapes['card'], ThemeComponents.maxRadius);
     final tile = _fraction(shapes['tile'], ThemeComponents.maxRadius);
@@ -692,6 +706,7 @@ abstract final class ThemePackages {
       iconColors: iconColors,
       splash: splash,
       components: components,
+      backgroundTile: backgroundTile,
     );
 
     final rootPath = rootDirectory ?? root;
@@ -749,6 +764,7 @@ abstract final class ThemePackages {
           'type': backgroundStyle.name,
           'opacity': opacity,
           'blur': blur,
+          if (backgroundTile > 0) 'tile': backgroundTile,
         },
         'shapes': {'card': card, 'tile': tile, 'button': button},
         if (splash != null)
@@ -840,6 +856,7 @@ abstract final class ThemePackages {
       final style = IconStyle.parse(icons['style']);
       final bgStyle = BackgroundStyle.parse(background['type']);
       if (style == null || bgStyle == null) return null;
+      final backgroundTile = _backgroundTile(background, bgStyle);
       // The manifest names keys and not files, so which format each icon is in
       // is a question for the directory. Both are asked for, in the order a
       // package would have been written either way.
@@ -870,6 +887,7 @@ abstract final class ThemePackages {
         iconColors: iconColors,
         splash: splash,
         components: components,
+        backgroundTile: backgroundTile,
       );
       final package = ThemePackage(
         installationId: installationId,
@@ -890,6 +908,7 @@ abstract final class ThemePackages {
         backgroundStyle: bgStyle,
         opacity: _fraction(background['opacity'], maxBackgroundOpacity),
         blur: _fraction(background['blur'], maxBackgroundBlur),
+        backgroundTile: backgroundTile,
         cardRadius: _fraction(shapes['card'], ThemeComponents.maxRadius),
         tileRadius: _fraction(shapes['tile'], ThemeComponents.maxRadius),
         buttonRadius: _fraction(shapes['button'], ThemeComponents.maxRadius),
@@ -1009,6 +1028,7 @@ abstract final class ThemePackages {
     settings.appBackgroundPath.put(theme.backgroundPath ?? '');
     settings.appBackgroundOpacity.put(theme.opacity);
     settings.appBackgroundBlur.put(theme.blur);
+    settings.appBackgroundTile.put(theme.backgroundTile);
     settings.appCardRadius.put(theme.cardRadius);
     settings.appTileRadius.put(theme.tileRadius);
     settings.appButtonRadius.put(theme.buttonRadius);
@@ -1165,6 +1185,23 @@ abstract final class ThemePackages {
     return (min, max);
   }
 
+  /// `background.tile`: 0 when absent, and only on an image background.
+  static double _backgroundTile(
+    Map<String, dynamic> background,
+    BackgroundStyle style,
+  ) {
+    final raw = background['tile'];
+    if (raw == null) return 0;
+    if (style != BackgroundStyle.image) {
+      throw const FormatException('A background tile needs an image');
+    }
+    final tile = _fraction(raw, maxBackgroundTile);
+    if (tile < minBackgroundTile) {
+      throw const FormatException('Invalid background tile');
+    }
+    return tile;
+  }
+
   static double _fraction(Object? value, double max) {
     if (value is! num || !value.isFinite || value < 0 || value > max) {
       throw const FormatException('Invalid number');
@@ -1251,8 +1288,10 @@ abstract final class ThemePackages {
     required Map<String, Object> iconColors,
     required ThemeSplash? splash,
     required ThemeComponents components,
+    required double backgroundTile,
   }) {
-    if (min < componentSchema && components.neededSchema >= componentSchema) {
+    if (min < componentSchema &&
+        (components.neededSchema >= componentSchema || backgroundTile > 0)) {
       throw const FormatException('This theme needs schema $componentSchema');
     }
     final uses =
