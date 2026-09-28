@@ -369,6 +369,419 @@ body {
   grid-column: span 2;
 }
 
+/* Themes and plugins from store/ (virtual:store). A theme is shown as the app
+   would draw it (lib/ThemePreview.svelte); the rules here lay those out. */
+.store-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.store-card {
+  gap: 0.75rem;
+}
+
+.store-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+
+.store-search {
+  flex: 1 1 16rem;
+  min-width: 0;
+  border: 1px solid var(--light-gray);
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  color: var(--near-black);
+  font: 500 0.9rem var(--font-body);
+  padding: 0.6rem 1rem;
+}
+
+.store-search::placeholder {
+  color: var(--silver);
+}
+
+.store-search:focus-visible,
+.store-modes button:focus-visible {
+  outline: 2px solid var(--ring-blue);
+  outline-offset: 2px;
+}
+
+.store-modes {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.store-modes button {
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+.store-modes button.active {
+  background: var(--near-black);
+  border-color: var(--near-black);
+  color: var(--white);
+}
+
+.store-meta,
+.store-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.store-meta .protocol-badge {
+  padding: 0.25rem 0.7rem;
+  font-size: 0.75rem;
+}
+
+.store-digest {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--stone);
+  word-break: break-all;
+}
+
+.store-empty {
+  border-radius: var(--radius-container);
+  border: 1px dashed var(--border-light);
+  background: var(--snow);
+  padding: 1.5rem;
+  color: var(--stone);
+  line-height: 1.6;
+}
+
+.store-footer {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.store-footer .download-note {
+  margin-top: 0;
+}
+
+.preview-note {
+  color: var(--stone);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  margin: 0 0 0.9rem;
+}
+
+.detail-preview .preview-note {
+  max-width: 286px;
+  margin: 0.8rem 0 0;
+  text-align: center;
+}
+
+.store-grid-wide {
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+}
+
+.store-preview-link,
+.theme-strip-item {
+  text-decoration: none;
+  color: inherit;
+}
+
+.store-preview-link {
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 0;
+  border-radius: var(--radius-container);
+  background: var(--snow);
+}
+
+.store-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.store-card-head a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.store-modes.small .protocol-badge {
+  padding: 0.2rem 0.6rem;
+  font-size: 0.72rem;
+}
+
+.store-title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--black);
+}
+
+.site-nav a[aria-current='page'] {
+  color: var(--black);
+  font-weight: 600;
+}
+
+/* The landing page's glimpse of the store. */
+.theme-strip {
+  display: flex;
+  gap: 1.25rem;
+  overflow-x: auto;
+  padding: 0.25rem 0.25rem 1rem;
+  scroll-snap-type: x proximity;
+}
+
+.theme-strip-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--near-black);
+  text-decoration: none;
+  font-weight: 500;
+  scroll-snap-align: start;
+  transition: transform 0.2s ease;
+}
+
+.theme-strip-item:hover {
+  transform: translateY(-3px);
+}
+
+/* A theme's own page. */
+.store-back {
+  margin-bottom: 1.5rem;
+}
+
+.detail-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.detail-head h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: 700;
+  color: var(--black);
+}
+
+.detail-head p {
+  margin: 0.5rem 0 0.9rem;
+  color: var(--stone);
+  max-width: 60ch;
+  line-height: 1.6;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.detail-preview {
+  position: sticky;
+  top: 5.5rem;
+}
+
+.detail-sections {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.detail-card {
+  border-radius: var(--radius-container);
+  border: 1px solid var(--light-gray);
+  background: var(--white);
+  padding: 1.25rem 1.4rem;
+}
+
+.detail-card h2 {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.9rem;
+}
+
+.detail-card h3 {
+  font-size: 0.78rem;
+  font-weight: 500;
+  margin: 0.8rem 0 0.5rem;
+}
+
+.icon-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.icon-cell {
+  display: flex;
+  gap: 0.45rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, currentColor 6%, transparent);
+}
+
+.swatch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.5rem;
+}
+
+.swatch {
+  border-radius: 10px;
+  padding: 0.7rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  box-shadow: inset 0 0 0 1px rgba(127, 127, 127, 0.2);
+}
+
+.swatch code {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  opacity: 0.85;
+}
+
+.comp-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.comp-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.comp-button {
+  padding: 0.55rem 1.2rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.comp-input {
+  flex: 1 1 12rem;
+  padding: 0.55rem 0.8rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.comp-stage {
+  position: relative;
+  height: 230px;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 1.4rem;
+}
+
+.comp-dialog {
+  width: min(280px, 80%);
+  padding: 1.1rem 1.2rem 0.9rem;
+  font-size: 0.85rem;
+}
+
+.comp-dialog p {
+  margin: 0.4rem 0 0.9rem;
+  font-size: 0.8rem;
+}
+
+.comp-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1.2rem;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.comp-sheet {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 0;
+  height: 62px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding-top: 0.55rem;
+  font-size: 0.82rem;
+}
+
+.comp-sheet i {
+  width: 32px;
+  height: 4px;
+  border-radius: 2px;
+  opacity: 0.6;
+}
+
+.splash-box {
+  height: 180px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 0 1px rgba(127, 127, 127, 0.2);
+}
+
+.muted {
+  color: var(--stone);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.store-digest-full {
+  margin-top: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 100%;
+  border: 1px dashed var(--border-light);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--stone);
+  padding: 0.45rem 0.7rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.store-digest-full code {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  word-break: break-all;
+}
+
+@media (max-width: 860px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-preview {
+    position: static;
+    display: flex;
+    justify-content: center;
+  }
+}
+
 /* Use one native <details> per device class so collapsing works without JS and
    lazy-loaded images remain outside the viewport until their group opens. */
 .gallery {

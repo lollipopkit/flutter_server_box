@@ -100,6 +100,15 @@ List<SettingsNode> _buildNodes() {
           icon: Icons.sort,
           page: () => const ServerOrdersPage(embedded: true),
         ),
+        // A server's desktop and its guests' consoles are sessions on a
+        // server: how long one stays open once it is left is set here.
+        SettingsNode.leaf(
+          id: 'server.remoteDesktop',
+          title: l10n.remoteDesktop,
+          icon: Icons.desktop_windows_outlined,
+          page: () =>
+              const AppSettingsPage(section: SettingsSection.remoteDesktop),
+        ),
       ],
     ),
     SettingsNode.branch(
@@ -168,13 +177,6 @@ List<SettingsNode> _buildNodes() {
       title: libL10n.container,
       icon: Icons.inbox_outlined,
       page: () => const AppSettingsPage(section: SettingsSection.container),
-    ),
-    SettingsNode.leaf(
-      id: 'remoteDesktop',
-      title: l10n.remoteDesktop,
-      icon: Icons.desktop_windows_outlined,
-      page: () =>
-          const AppSettingsPage(section: SettingsSection.remoteDesktop),
     ),
     SettingsNode.branch(
       id: 'backup',

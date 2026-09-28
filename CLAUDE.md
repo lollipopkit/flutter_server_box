@@ -49,6 +49,7 @@ Flutter app for managing servers, in a Rust workspace monorepo. Feature-specific
 - `monitor/` — server-side agent (Rust + Svelte), own `monitor/CLAUDE.md`. Serves status plus opt-in `POST /exec`, `/terminal/ws`, `/fs/*`, `/stream/ws`.
 - `lib/core/` utilities; `lib/view/` pages and widgets; `lib/data/{model,provider,store}/` models (freezed), Riverpod providers, stores; `lib/src/rust/` generated; `lib/hive/` legacy adapters kept only for `HiveImport` (TODO: remove with it).
 - `packages/` — vendored Dart forks as submodules (dartssh2, xterm, fl_lib, fl_build, flutter_pty, redfish, …); `packages/webui` is an in-repo Svelte package. `third_party/` — `ish-arm64` (iOS Linux engine, C/meson) and `ironrdp`. `website/` — Svelte + bun.
+- `store/` — the official theme repository the app's theme store reads, served by the website build as `/store.tar.gz` (`scripts/store-tarball.sh`) and listed on the site; packages are assets of the one `themes` pre-release, never Latest (`scripts/publish-themes.py`, which runs the `serverbox-theme` skill's `publish.py`). Details: `docs/src/content/docs/development/themes.md`. Authoring a theme: the `serverbox-theme` skill.
 - `lollipopkit/shellbox-rootfs` is deliberately **not** a submodule: the app consumes its signed release manifest at runtime. `assets/rootfs_manifest.json` is the offline floor; the signing key's public half is `RootfsManifestTrust.publicKey`.
 - `fl_build` regenerates `lib/data/res/build_data.dart` on every build; `ScriptConstants.version` and the `v<N>` in `ScriptConstants.scriptFile` must stay equal.
 

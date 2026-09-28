@@ -12,6 +12,8 @@ const en: BaseTranslation = {
     capabilities: 'Capabilities',
     download: 'Download',
     docs: 'Docs',
+    themes: 'Themes',
+    plugins: 'Plugins',
     languageLabel: 'Language',
   },
   hero: {
@@ -71,6 +73,57 @@ const en: BaseTranslation = {
       'ServerBox keeps terminal access, file transfer, service checks, hardware health, and device-native alerts in the same workflow.',
     installIosPrompt: '# iOS',
     installReleasePrompt: '# Android, Linux, and Windows',
+  },
+  themes: {
+    title: 'Make it yours.',
+    subtitle:
+      'Official themes for ServerBox, the same ones the app\'s theme store offers. Install them in the app from Settings → Appearance → Theme store, or download a package and choose Install theme → File.',
+    empty:
+      'No official themes yet. A theme is a folder with a manifest.toml: colors for light and dark, component styles, icons, a background and a splash. The guide covers making one and getting it into the store.',
+    note:
+      'The app checks every store package against its SHA-256 before installing it.',
+    authoring: 'Make a theme',
+    download: 'Download .fsbt',
+    source: 'Source',
+    light: 'Light',
+    dark: 'Dark',
+    search: 'Search themes',
+    modeLabel: 'Mode',
+    all: 'All',
+    sortLabel: 'Sort',
+    sortName: 'Name',
+    sortUpdated: 'Recently updated',
+    noMatch: 'No theme matches. Try another name or mode.',
+    storeTitle: 'Theme store',
+    storeSubtitle:
+      'Every official ServerBox theme, drawn the way the app draws it: its colors, components, icons and splash. Install from the app\'s theme store or download the package.',
+    browse: 'Open the theme store',
+    back: 'All themes',
+    details: 'Details',
+    icons: 'Icons',
+    tabIcons: 'Tabs, and when selected',
+    navIcons: 'Symbols',
+    palette: 'Palette',
+    components: 'Components',
+    splash: 'Splash screen',
+    install: 'Install',
+    installSteps:
+      'In the app, open Settings → Appearance → Theme store and pick {name}. Or download the package and choose Install theme → File.',
+    base: 'Default',
+    hovered: 'Hovered',
+    pressed: 'Pressed',
+    disabled: 'Disabled',
+    loadFailed: 'This theme\'s preview could not be loaded.',
+    retry: 'Try again',
+    previewNote:
+      'Previews show the theme\'s icons and colors; the rest of the interface is illustrative.',
+  },
+  plugins: {
+    title: 'Plugins.',
+    subtitle:
+      'Official plugins for ServerBox, installed from the app\'s plugin store.',
+    empty: 'No official plugins yet.',
+    download: 'Download',
   },
   download: {
     title: 'Every platform, every source.',

@@ -10,15 +10,18 @@ description: 内置主题如何打包、加载与分发
 ## 内置主题
 
 `BuiltinTheme`（`lib/data/model/app/builtin_theme.dart`）列出本构建内置的主题及其在
-选择器中的标签。`Default` 是 Dart const，不读取 asset。其余五个主题各有一个位于
-`assets/themes/<id>/` 的源目录，目录中包含 `manifest.toml`，并在 `pubspec.yaml` 中注册。
+选择器中的标签，只包含离线也必须可用的主题。`Default` 是 Dart const，不读取 asset，
+它在选择器中的标签已本地化（fl_lib 的 `defaultLabel`）。AMOLED 是旧版 AMOLED 主题模式
+迁移的目标，源目录位于 `assets/themes/amoled/`，其中包含 `manifest.toml`，并在
+`pubspec.yaml` 中注册。其他官方主题都在主题商店中（见[官方主题](#官方主题)）；如果保存的
+预设指向本构建已不再内置的主题，会回退到 Default（`ThemePackages.reconcileSelection`）。
 
 内置目录与导入目录和 `.fsbt` 压缩包共用同一个安装器，因此内置主题和已安装主题支持
 相同的字段。这些目录以源码形式入库，由 Flutter 直接打包；仓库不提交对应的压缩包或
 其他二进制 asset。
 
-新增主题时，除主题目录外，还需在 `pubspec.yaml` 中注册目录，并添加一个带选择器标签的
-`BuiltinTheme` case。
+新的官方主题应放进主题商店，而不是内置。只有离线也必须可用的主题才需要内置：创建
+目录，在 `pubspec.yaml` 中注册，并添加一个 `BuiltinTheme` case。
 
 ## 加载
 
@@ -70,14 +73,38 @@ repository 文件（`ThemeStoreItem.index` 为 null），所以安装目录树�
 
 ## 官方主题
 
-`lollipopkit/serverbox-plugins` 在 `themes/` 中存放官方主题，每个主题各有一个源目录和
-一个 listing；`plugins/` 与该目录并列。
+官方主题放在本仓库的 `store/` 中：`store/repo.toml`，以及每个主题的 listing
+`store/themes/<id>.toml` 和与之并列的源目录 `store/themes/<id>/`。
+`test/unit/theme_store_tree_test.dart` 按商店的方式读取该目录，读取器会丢弃的 listing
+会让测试失败，而不是从商店里消失。
 
-`scripts/publish-themes.sh <id> <version>` 用于发布一个版本。脚本从 manifest 读取 id 和
-`[schema]` 范围，确保 listing 记录包自身声明的内容；再用 `zip` 打包目录。`-X` 选项会
-排除机器相关的文件属性。随后脚本计算 digest 和大小，创建 tag 为 `<id>-<version>` 的
-release，并将 `<tag>.fsbt` 作为 asset，最后向 listing 追加一个 `[[version]]` 块。
+应用不会下载整个仓库。官网构建时运行 `scripts/store-tarball.sh`，用 `git archive` 把
+`HEAD` 的 `store/` 写成 `public/store.tar.gz`，catalog 列出的地址是
+`https://serverbox.lollipopkit.com/store.tar.gz`。对 `store/` 的改动在官网部署后生效：
+Cloudflare Pages 项目在 `store/`、`website/` 和 `docs/` 有改动时都会重新构建。同一次构建
+也会在官网上列出这些主题（`website/store-data.js`）。
+使用 `git archive` 而不是 `tar`，是因为 macOS `tar` 会写入读取器拒绝的二进制 xattr 记录。
 
-脚本会强制执行两项顺序与完整性规则：先上传 release，再更新引用它的 listing，避免
-listing 指向不存在的 asset；如果已记录版本的 digest 不同，则拒绝重新发布，确保同一个
-版本号始终对应相同内容。
+`scripts/publish-themes.py` 一次发布所有自最新记录版本以来有变化的主题。它以 `store/`
+作为主题 repository，调用 serverbox-theme skill 的 `scripts/publish.py`；第三方作者在
+自己的仓库里发布主题时用的也是这个脚本。只有官方主题在本仓库发布。它打包每个
+目录，把包的 digest 与 listing 中最新版本的 digest 比较：相同表示没有变化，跳过该主题；
+不同则发布新版本，默认递增补丁号（`--bump minor|major` 递增其他部分，`<id>=<version>`
+指定确切版本，尚无版本的主题从 1.0.0 开始）。`--dry-run` 只显示计划；在参数中写明 id
+可以只处理这些主题。
+
+能用 digest 判断是否变化，是因为打包结果是确定的：条目按名称排序，使用固定的时间戳和
+权限，并且不压缩（stored），因此字节只取决于文件内容，与 checkout 的修改时间和机器上的
+zlib 版本无关。
+
+所有新包以 `<id>-<version>.fsbt` 为名一起上传到本仓库 tag 为 `themes` 的 release，
+然后向各 listing 追加带 digest 和大小的 `[[version]]` 块，之后提交 listing。所有包放在
+同一个 release 中：应用的更新检查读取本仓库的 release 列表，tag 中没有构建号的 release
+会被跳过；如果每个主题版本各发一个 release，应用自己的 release 会被挤出第一页。该
+release 是 pre-release，以 `--latest=false` 创建，永远不会成为本仓库的 Latest：GitHub
+不会把 pre-release 标为 Latest，因此 Latest 始终是应用的 release；脚本在上传任何内容之前
+也会检查这一点。
+
+脚本会遵守两项顺序与完整性规则：先上传包，再更新引用它的 listing，避免 listing 指向
+不存在的 asset；从不覆盖已上传的 asset（中断的运行留下的 asset，只有字节相同时才会被
+接受），也从不让同一个版本号对应第二份内容。

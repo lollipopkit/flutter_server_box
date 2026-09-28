@@ -69,8 +69,6 @@ outlineVariant = 0xFFD3C4B8
 error = 0xFFB3261E
 onError = 0xFFFFFFFF
 
-# Same roles as the light palette, used for dark brightness.
-
 # Additional accent, fixed, inverse, error-container, shadow and scrim roles.
 # Fixed roles intentionally use the same values in both palettes.
 primaryFixed = 0xFFFAE0FF
@@ -97,6 +95,7 @@ inverseSurface = 0xFF332D37
 onInverseSurface = 0xFFF7EEF9
 inversePrimary = 0xFFD8A3E8
 
+# Same roles as the light palette, used for dark brightness.
 [colors.palette.dark]
 primary = 0xFFB758F5
 onPrimary = 0xFF1F072F
@@ -121,7 +120,6 @@ outline = 0xFF998BA3
 outlineVariant = 0xFF4C4055
 error = 0xFFFFB4AB
 onError = 0xFF690005
-
 
 # Additional accent, fixed, inverse, error-container, shadow and scrim roles.
 # Fixed roles intentionally use the same values in both palettes.

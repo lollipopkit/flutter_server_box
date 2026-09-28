@@ -236,7 +236,8 @@ duration = 900             # 毫秒，100–3000，默认 600
 logo 是压缩包根目录下名为 `splash_logo.png`、`splash_logo.jpg`、`splash_logo.jpeg`
 或 `splash_logo.svg` 的单个文件，此处只能写文件名。PNG 或 JPEG 最大 2048 × 2048
 像素、512 KiB；SVG 最大 512 KiB，并按 icon 同样的文档规则校验。它以 96 逻辑像素
-居中绘制；只有 SVG 会被染色，光栅 logo 保留自身颜色。
+居中绘制，保留自身颜色：与 icon 不同，logo 不会被染色。SVG 中的 `currentColor` 取调色板的
+`onSurface`，因此 logo 可以同时使用固定颜色和随主题变化的颜色。
 
 `duration` 表示 splash 淡出前的显示时长，会延后应用启动，因此上限设得较低。该值只在
 应用绘制首帧时读取一次：之后切换主题不会再次显示 splash，启动过程中选中的主题包也
@@ -280,15 +281,16 @@ schema = 1
 name = "ServerBox themes"
 
 [[repo]]
-url = "https://github.com/lollipopkit/serverbox-plugins"
+url = "https://serverbox.lollipopkit.com/store.tar.gz"
 ```
 
 repository URL 必须使用 HTTPS，可以指向 git 仓库或 tarball。对于 git 仓库，应用从
 `<address>/archive/HEAD.tar.gz` 获取内容，以使用仓库的默认分支而不假设分支名称。
 
-随应用提供的是
-[`lollipopkit/serverbox-plugins`](https://github.com/lollipopkit/serverbox-plugins)，
-官方主题和官方插件放在同一个树里。
+随应用提供的 catalog 列出官方 repository，即本仓库的
+[`store/`](https://github.com/lollipopkit/flutter_server_box/tree/main/store)
+目录，由官网以 tarball 形式提供。发布官方主题的方法见
+[主题](/docs/zh/development/themes/#官方主题)。
 
 ### 主题 repository
 
@@ -333,9 +335,13 @@ sha256 = "1111111111111111111111111111111111111111111111111111111111111111"
 版本必须设置 `schema_min = 2`；若误设为 1，旧版应用可能安装后静默丢弃 icon、颜色或
 splash。
 
-每个主题版本都通过独立的 release 发布，tag 格式为 `<id>-<version>`，并附带 `.fsbt`
-文件。若要将 repository 加入应用 catalog，请向本仓库提交包含新增 `[[repo]]` 条目的
-pull request。
+第三方主题在作者自己的仓库发布，只有官方主题在本仓库发布。serverbox-theme skill 的
+`scripts/publish.py` 按官方主题的方式发布：检测哪些主题有变化，把包上传到作者仓库的
+一个 pre-release（永远不会成为 Latest），并向 listing 追加版本。主题包也可以放在任何
+通过 HTTPS 提供下载的位置。listing
+中的 `sha256` 把地址和内容对应起来：没有 `sha256` 的版本，商店不会安装；digest 不一致
+的内容，同样不会安装。若要将 repository 加入应用 catalog，请向本仓库提交包含新增
+`[[repo]]` 条目的 pull request。
 
 repository 可在 `themes/` 旁边包含 `plugins/` 目录。本构建只读取主题，因此会跳过该
 目录，不会因此拒绝整个 repository。
@@ -346,15 +352,12 @@ repository 可在 `themes/` 旁边包含 `plugins/` 目录。本构建只读取�
 
 ## 主题来源
 
-ServerBox 把下面这些 VS Code 主题的 UI 调色板改编到 Material 的表面、选中态、卡片
-和按钮上。这些改编与 VS Code 扩展包无关。字体和终端/编辑器配色仍是单独的设置。
-Midnight 和 AMOLED 是 ServerBox 原创的调色板。AMOLED 在 dark 下使用纯黑表面、在
-light 下使用生成色，因此支持 System 外观。
+主题商店中的官方主题 One Dark Pro，把下面这个 VS Code 主题的 UI 调色板改编到
+Material 的表面、选中态、卡片和按钮上。这一改编与 VS Code 扩展包无关。字体和
+终端/编辑器配色仍是单独的设置。AMOLED 是 ServerBox 原创的调色板，在 dark 下使用
+纯黑表面、在 light 下使用生成色，因此支持 System 外观。
 
-入选依据是 Marketplace 上独立配色主题的安装量，已排除 icon 主题和随语言工具分发的
-主题。GitHub Theme、One Dark Pro 和 Dracula 是这次比较中排名最前的三个。GitHub
-Dark 使用 GitHub Theme 的 dark 调色板。必要时会调整次要文字颜色，使正常文字的对比度
-不低于 4.5:1。
+必要时会调整次要文字颜色，使正常文字的对比度不低于 4.5:1。
 
 <details>
 <summary>上游署名</summary>
@@ -384,57 +387,5 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-
-**GitHub Theme**
-
-Source: [GitHub Theme](https://github.com/primer/github-vscode-theme)
-
-MIT License
-
-Copyright (c) 2020 Primer
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-**Dracula**
-
-Source: [Dracula](https://github.com/dracula/visual-studio-code)
-
-The MIT License (MIT)
-
-Copyright (c) 2016 Dracula Theme
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
 
 </details>

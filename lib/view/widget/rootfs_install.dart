@@ -104,20 +104,25 @@ Future<bool> installRootfs(
   unawaited(
     context.showRoundDialog(
       title: libL10n.download,
-      child: ValueListenableBuilder(
-        valueListenable: progress,
-        builder: (_, value, _) => Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            LinearProgressIndicator(value: value),
-            UIs.height13,
-            // Indeterminate until the server says how large it is, which it
-            // may never do.
-            Text(
-              value == null ? '...' : '${(value * 100).toStringAsFixed(0)}%',
-              style: UIs.text13Grey,
-            ),
-          ],
+      // Disposed with the dialog, which is still animating out when the work
+      // below returns. See [DisposeWith].
+      child: DisposeWith(
+        notifiers: [progress],
+        child: ValueListenableBuilder(
+          valueListenable: progress,
+          builder: (_, value, _) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              LinearProgressIndicator(value: value),
+              UIs.height13,
+              // Indeterminate until the server says how large it is, which it
+              // may never do.
+              Text(
+                value == null ? '...' : '${(value * 100).toStringAsFixed(0)}%',
+                style: UIs.text13Grey,
+              ),
+            ],
+          ),
         ),
       ),
       barrierDismiss: false,
@@ -149,8 +154,6 @@ Future<bool> installRootfs(
     context.popDialog();
     if (!cancelled) context.showErrDialog(e, s);
     return false;
-  } finally {
-    progress.dispose();
   }
 }
 

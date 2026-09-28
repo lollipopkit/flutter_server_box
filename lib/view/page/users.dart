@@ -797,23 +797,35 @@ extension on _UsersPageState {
   Future<ServerUserDraft?> _showEditor(ServerUser? user) async {
     final catalog = _catalog;
     if (catalog == null) return null;
-    final nameCtrl = TextEditingController(text: user?.name);
-    final commentCtrl = TextEditingController(text: user?.comment);
-    final homeCtrl = TextEditingController(text: user?.home);
-    final shellCtrl = TextEditingController(text: user?.shell ?? '/bin/bash');
-    final primaryGroupCtrl = TextEditingController(text: user?.primaryGroup);
-    final groupsCtrl = TextEditingController(
-      text: user?.supplementaryGroups.join(','),
-    );
-    final passwordCtrl = TextEditingController();
+    // What is typed, kept between dialogs: a draft the checks below refuse
+    // opens the editor again with it. Each dialog has controllers of its own,
+    // disposed with its fields rather than when it answers — see [DisposeWith].
+    var name = user?.name ?? '';
+    var comment = user?.comment ?? '';
+    var home = user?.home ?? '';
+    var shell = user?.shell ?? '/bin/bash';
+    var primaryGroup = user?.primaryGroup ?? '';
+    var groupsText = user?.supplementaryGroups.join(',') ?? '';
+    var password = '';
     var createHome = true;
     var moveHome = false;
     var systemAccount = user?.isSystem(catalog.uidMin) ?? false;
 
-    try {
-      while (mounted) {
-        final submitted = await context.showRoundDialog<bool>(
-          title: user == null ? libL10n.add : libL10n.edit,
+    while (mounted) {
+      final nameCtrl = TextEditingController(text: name);
+      final commentCtrl = TextEditingController(text: comment);
+      final homeCtrl = TextEditingController(text: home);
+      final shellCtrl = TextEditingController(text: shell);
+      final primaryGroupCtrl = TextEditingController(text: primaryGroup);
+      final groupsCtrl = TextEditingController(text: groupsText);
+      final passwordCtrl = TextEditingController(text: password);
+      final submitted = await context.showRoundDialog<bool>(
+        title: user == null ? libL10n.add : libL10n.edit,
+        child: DisposeWith(
+          notifiers: [
+            nameCtrl, commentCtrl, homeCtrl, shellCtrl, primaryGroupCtrl, //
+            groupsCtrl, passwordCtrl,
+          ],
           child: ConstrainedBox(
             constraints: BoxConstraints(
               maxWidth: 520,
@@ -915,49 +927,47 @@ extension on _UsersPageState {
               ),
             ),
           ),
-          actions: Btnx.cancelOk,
-        );
-        if (submitted != true || !mounted) return null;
+        ),
+        actions: Btnx.cancelOk,
+      );
+      name = nameCtrl.text;
+      comment = commentCtrl.text;
+      home = homeCtrl.text;
+      shell = shellCtrl.text;
+      primaryGroup = primaryGroupCtrl.text;
+      groupsText = groupsCtrl.text;
+      password = passwordCtrl.text;
+      if (submitted != true || !mounted) return null;
 
-        final groups = groupsCtrl.text
-            .split(',')
-            .map((value) => value.trim())
-            .where((value) => value.isNotEmpty)
-            .toSet()
-            .toList()
-          ..sort();
-        final password = passwordCtrl.text;
-        final draft = ServerUserDraft(
-          name: nameCtrl.text.trim(),
-          comment: commentCtrl.text.trim(),
-          home: homeCtrl.text.trim(),
-          shell: shellCtrl.text.trim(),
-          primaryGroup: primaryGroupCtrl.text.trim(),
-          supplementaryGroups: groups,
-          createHome: createHome,
-          moveHome: moveHome,
-          system: systemAccount,
-          password: password.isEmpty ? null : password,
-        );
-        final duplicate =
-            user == null &&
-            catalog.users.any((existing) => existing.name == draft.name);
-        final validation = UserManager.validateDraft(draft);
-        if (validation != null || duplicate) {
-          Toast.error(validation ?? l10n.nameAlreadyExistsFmt(draft.name));
-          continue;
-        }
-        return draft;
+      final groups = groupsText
+          .split(',')
+          .map((value) => value.trim())
+          .where((value) => value.isNotEmpty)
+          .toSet()
+          .toList()
+        ..sort();
+      final draft = ServerUserDraft(
+        name: name.trim(),
+        comment: comment.trim(),
+        home: home.trim(),
+        shell: shell.trim(),
+        primaryGroup: primaryGroup.trim(),
+        supplementaryGroups: groups,
+        createHome: createHome,
+        moveHome: moveHome,
+        system: systemAccount,
+        password: password.isEmpty ? null : password,
+      );
+      final duplicate =
+          user == null &&
+          catalog.users.any((existing) => existing.name == draft.name);
+      final validation = UserManager.validateDraft(draft);
+      if (validation != null || duplicate) {
+        Toast.error(validation ?? l10n.nameAlreadyExistsFmt(draft.name));
+        continue;
       }
-      return null;
-    } finally {
-      nameCtrl.dispose();
-      commentCtrl.dispose();
-      homeCtrl.dispose();
-      shellCtrl.dispose();
-      primaryGroupCtrl.dispose();
-      groupsCtrl.dispose();
-      passwordCtrl.dispose();
+      return draft;
     }
+    return null;
   }
 }

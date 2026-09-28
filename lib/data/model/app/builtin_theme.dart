@@ -1,12 +1,12 @@
-/// Stable package IDs and picker labels for bundled themes.
+/// Stable package IDs and manifest names for bundled themes.
 /// Theme resources are loaded separately, on demand.
+///
+/// Only what the app needs without a network: the default, and AMOLED, which
+/// a legacy theme mode migrates to. Every other official theme is in the theme
+/// store (`store/themes/`).
 enum BuiltinTheme {
   defaultTheme('default', 'Default'),
-  amoled('amoled', 'AMOLED'),
-  midnight('midnight', 'Midnight'),
-  oneDarkPro('one-dark-pro', 'One Dark Pro'),
-  githubDark('github-dark', 'GitHub Dark'),
-  dracula('dracula', 'Dracula');
+  amoled('amoled', 'AMOLED');
 
   const BuiltinTheme(this.id, this.label);
 

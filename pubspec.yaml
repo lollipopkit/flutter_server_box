@@ -172,10 +172,6 @@ flutter:
     # own address does not answer. The list itself is read over HTTPS.
     - assets/catalog/
     - assets/themes/amoled/
-    - assets/themes/midnight/
-    - assets/themes/one-dark-pro/
-    - assets/themes/github-dark/
-    - assets/themes/dracula/
     # Model id to context window, generated from models.dev by
     # `scripts/update-model-context.sh`. Stale between releases on purpose —
     # an unknown model falls back to a conservative default rather than to a

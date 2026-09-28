@@ -52,10 +52,12 @@ Future<AdHocSshCredential?> promptAdHocSshCredential({
   // there are no keys, so the common case stays one field.
   String? keyId;
 
-  try {
-    return await ctx.showRoundDialog<AdHocSshCredential>(
-      title: ctx.l10n.agentSshConnectTitle,
-      barrierDismiss: false,
+  // Disposed with the field, not when the dialog answers. See [DisposeWith].
+  return await ctx.showRoundDialog<AdHocSshCredential>(
+    title: ctx.l10n.agentSshConnectTitle,
+    barrierDismiss: false,
+    child: DisposeWith(
+      notifiers: [controller],
       child: StatefulBuilder(
         builder: (context, setDialogState) => Column(
           mainAxisSize: MainAxisSize.min,
@@ -94,21 +96,19 @@ Future<AdHocSshCredential?> promptAdHocSshCredential({
           ],
         ),
       ),
-      actionsBuilder: (dialogContext) => [
-        Btn.cancel(),
-        Btn.text(
-          text: libL10n.ok,
-          onTap: () => dialogContext.pop(
-            keyId == null
-                ? AdHocSshCredential.password(controller.text)
-                : AdHocSshCredential.privateKey(keyId!),
-          ),
+    ),
+    actionsBuilder: (dialogContext) => [
+      Btn.cancel(),
+      Btn.text(
+        text: libL10n.ok,
+        onTap: () => dialogContext.pop(
+          keyId == null
+              ? AdHocSshCredential.password(controller.text)
+              : AdHocSshCredential.privateKey(keyId!),
         ),
-      ],
-    );
-  } finally {
-    controller.dispose();
-  }
+      ),
+    ],
+  );
 }
 
 /// What the user decided to save an ad-hoc host as.

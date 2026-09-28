@@ -12,6 +12,8 @@ const it: Translation = {
     capabilities: 'Capacità',
     download: 'Scarica',
     docs: 'Documenti',
+    themes: 'Temi',
+    plugins: 'Plugin',
     languageLabel: 'Lingua',
   },
   hero: {
@@ -71,6 +73,57 @@ const it: Translation = {
       'ServerBox tiene terminale, trasferimento file, servizi, salute hardware e avvisi nello stesso flusso.',
     installIosPrompt: '# iOS',
     installReleasePrompt: '# Android, Linux e Windows',
+  },
+  themes: {
+    title: 'A modo tuo.',
+    subtitle:
+      'I temi ufficiali di ServerBox, gli stessi offerti dal Negozio temi dell’app. Installali da Impostazioni → Aspetto → Negozio temi, oppure scarica un pacchetto e scegli Installa tema → File.',
+    empty:
+      'Non ci sono ancora temi ufficiali. Un tema è una cartella con un manifest.toml: colori chiari e scuri, stili dei componenti, icone, sfondo e schermata iniziale. La guida spiega come crearne uno e pubblicarlo nel Negozio temi.',
+    note:
+      'L’app verifica lo SHA-256 di ogni pacchetto del Negozio temi prima di installarlo.',
+    authoring: 'Crea un tema',
+    download: 'Scarica .fsbt',
+    source: 'Sorgente',
+    light: 'Chiaro',
+    dark: 'Scuro',
+    search: 'Cerca temi',
+    modeLabel: 'Modalità',
+    all: 'Tutti',
+    sortLabel: 'Ordina',
+    sortName: 'Nome',
+    sortUpdated: 'Aggiornati di recente',
+    noMatch: 'Nessun tema corrisponde. Prova un altro nome o un’altra modalità.',
+    storeTitle: 'Negozio temi',
+    storeSubtitle:
+      'Tutti i temi ufficiali di ServerBox, disegnati come li disegna l’app: colori, componenti, icone e schermata iniziale. Installali dal Negozio temi dell’app o scarica il pacchetto.',
+    browse: 'Apri il Negozio temi',
+    back: 'Tutti i temi',
+    details: 'Dettagli',
+    icons: 'Icone',
+    tabIcons: 'Schede e stato selezionato',
+    navIcons: 'Simboli',
+    palette: 'Palette',
+    components: 'Componenti',
+    splash: 'Schermata iniziale',
+    install: 'Installa',
+    installSteps:
+      'Nell’app apri Impostazioni → Aspetto → Negozio temi e scegli {name}. Oppure scarica il pacchetto e scegli Installa tema → File.',
+    base: 'Normale',
+    hovered: 'Al passaggio',
+    pressed: 'Premuto',
+    disabled: 'Disattivato',
+    loadFailed: 'Impossibile caricare l’anteprima di questo tema.',
+    retry: 'Riprova',
+    previewNote:
+      'Le anteprime mostrano icone e colori del tema; il resto dell’interfaccia è indicativo.',
+  },
+  plugins: {
+    title: 'Plugin.',
+    subtitle:
+      'I plugin ufficiali di ServerBox, installati dallo store dei plugin dell’app.',
+    empty: 'Non ci sono ancora plugin ufficiali.',
+    download: 'Scarica',
   },
   download: {
     title: 'Ogni piattaforma, ogni sorgente.',

@@ -60,7 +60,7 @@ enum SettingsSection {
     SettingsSection.sftp => '${libL10n.file} › SFTP',
     SettingsSection.editor => '${libL10n.file} › ${libL10n.editor}',
     SettingsSection.container => libL10n.container,
-    SettingsSection.remoteDesktop => l10n.remoteDesktop,
+    SettingsSection.remoteDesktop => '${libL10n.server} › ${l10n.remoteDesktop}',
   };
 
   /// Whether this build has this group at all.

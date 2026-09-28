@@ -81,7 +81,7 @@ extension _App on _AppSettingsPageState {
         title: Text(label),
         trailing: _setting.appThemePreset.listenable().listenVal(
           (preset) => Text(
-            BuiltinTheme.fromId(preset)?.label ??
+            _presetLabel(BuiltinTheme.fromId(preset)) ??
                 switch (ThemePackages.installationIdOf(preset)) {
                   final installationId? =>
                     ThemePackages.installed(installationId)?.name ??
@@ -137,7 +137,7 @@ extension _App on _AppSettingsPageState {
                 ])
                   SheetChoiceTile(
                     title:
-                        BuiltinTheme.fromId(value)?.label ??
+                        _presetLabel(BuiltinTheme.fromId(value)) ??
                         (value == ThemePackages.customPreset
                             ? libL10n.custom
                             : names[value] ?? libL10n.invalid),
@@ -176,9 +176,18 @@ extension _App on _AppSettingsPageState {
         },
       ),
       keywords:
-          '${BuiltinTheme.values.map((theme) => theme.label).join(' ')} custom theme',
+          '${BuiltinTheme.values.map((theme) => theme.label).join(' ')} '
+          '${libL10n.defaultLabel} custom theme',
     );
   }
+
+  /// What a bundled theme is called in the picker: "Default" in the user's
+  /// language, and the rest by their own names.
+  String? _presetLabel(BuiltinTheme? theme) => switch (theme) {
+    null => null,
+    BuiltinTheme.defaultTheme => libL10n.defaultLabel,
+    _ => theme.label,
+  };
 
   /// Opens the catalog, which is reached from its own row in the appearance
   /// page and from nowhere else.
@@ -289,23 +298,25 @@ extension _App on _AppSettingsPageState {
     String? hint,
   }) async {
     final controller = TextEditingController(text: initial);
-    try {
-      return (await context.showRoundDialog<String>(
-        title: title,
+    // Disposed with the field, not when the dialog answers: what the answer
+    // starts (installing a theme, which rebuilds the app) runs while the
+    // dialog is still animating out. See [DisposeWith].
+    return (await context.showRoundDialog<String>(
+      title: title,
+      child: DisposeWith(
+        notifiers: [controller],
         child: Input(
           controller: controller,
           autoFocus: true,
           hint: hint,
           onSubmitted: (_) => context.popDialog(controller.text.trim()),
         ),
-        actions: [
-          Btn.cancel(),
-          Btn.ok(onTap: () => context.popDialog(controller.text.trim())),
-        ],
-      ))?.trim();
-    } finally {
-      controller.dispose();
-    }
+      ),
+      actions: [
+        Btn.cancel(),
+        Btn.ok(onTap: () => context.popDialog(controller.text.trim())),
+      ],
+    ))?.trim();
   }
 
   Future<void> _applyThemePreset(BuiltinTheme preset) async {
@@ -813,9 +824,12 @@ extension _App on _AppSettingsPageState {
           final controller = TextEditingController(
             text: AppFont.families.join('\n'),
           );
-          try {
-            final value = await context.showRoundDialog<String>(
-              title: label,
+          // With the field: the answer rebuilds the whole app while the
+          // dialog is still leaving. See [DisposeWith].
+          final value = await context.showRoundDialog<String>(
+            title: label,
+            child: DisposeWith(
+              notifiers: [controller],
               child: TextField(
                 controller: controller,
                 autofocus: true,
@@ -827,17 +841,15 @@ extension _App on _AppSettingsPageState {
                   helperText: l10n.appearanceFontFamiliesTip,
                 ),
               ),
-              actions: [
-                Btn.cancel(),
-                Btn.ok(onTap: () => context.popDialog(controller.text)),
-              ],
-            );
-            if (value == null || !mounted) return;
-            AppFont.saveFamilies(value.split(RegExp(r'[\r\n]+')));
-            unawaited(RNodes.app.notify());
-          } finally {
-            controller.dispose();
-          }
+            ),
+            actions: [
+              Btn.cancel(),
+              Btn.ok(onTap: () => context.popDialog(controller.text)),
+            ],
+          );
+          if (value == null || !mounted) return;
+          AppFont.saveFamilies(value.split(RegExp(r'[\r\n]+')));
+          unawaited(RNodes.app.notify());
         },
       ),
       keywords: 'global font fallback families',
@@ -1282,30 +1294,29 @@ extension _App on _AppSettingsPageState {
       final backupPwd = await SecureStoreProps.bakPwd.read();
       if (backupPwd?.isNotEmpty == true) return backupPwd;
       final controller = TextEditingController();
-      try {
-        final result = await context.showRoundDialog<String>(
-          title: libL10n.pwd,
+      final result = await context.showRoundDialog<String>(
+        title: libL10n.pwd,
+        child: DisposeWith(
+          notifiers: [controller],
           child: Input(
             controller: controller,
             label: libL10n.pwd,
             obscureText: true,
             onSubmitted: (_) => context.popDialog(controller.text.trim()),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => context.popDialog(null),
-              child: Text(libL10n.cancel),
-            ),
-            TextButton(
-              onPressed: () => context.popDialog(controller.text.trim()),
-              child: Text(libL10n.ok),
-            ),
-          ],
-        );
-        return result?.trim();
-      } finally {
-        controller.dispose();
-      }
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => context.popDialog(null),
+            child: Text(libL10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => context.popDialog(controller.text.trim()),
+            child: Text(libL10n.ok),
+          ),
+        ],
+      );
+      return result?.trim();
     }
 
     for (final entry in map.entries) {

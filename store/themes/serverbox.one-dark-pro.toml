@@ -1,0 +1,24 @@
+id = "serverbox.one-dark-pro"
+name = "One Dark Pro"
+description = "Atom's One Dark, after the One Dark Pro VS Code theme by Binaryify (MIT): syntax colors as accents, editor-style icons and tight corners."
+homepage = "https://github.com/lollipopkit/flutter_server_box/tree/main/store/themes/serverbox.one-dark-pro"
+license = "MIT"
+
+# Versions are appended by scripts/publish-themes.py, which packs the folder
+# beside this file and records the digest of what it built.
+
+[[version]]
+version = "1.0.0"
+schema_min = 2
+schema_max = 2
+url = "https://github.com/lollipopkit/flutter_server_box/releases/download/themes/serverbox.one-dark-pro-1.0.0.fsbt"
+sha256 = "68fb77a9459420c35bd3af55446f76a8b23733cf0f1e8d52607cb4cbdd1b74bc"
+size = 21145
+
+[[version]]
+version = "1.0.1"
+schema_min = 2
+schema_max = 2
+url = "https://github.com/lollipopkit/flutter_server_box/releases/download/themes/serverbox.one-dark-pro-1.0.1.fsbt"
+sha256 = "dfda3d6e963bf546b7354b1452c2563c0faf2dc3ce8617fdadf0f902957d8f3d"
+size = 22398

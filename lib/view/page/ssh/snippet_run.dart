@@ -38,13 +38,16 @@ Future<TerminalSession?> showSnippetRun(
     ..adopt(server.client, granted: granted);
 
   // Whether there is still a shell to carry on with. A snippet that has run to
-  // completion leaves output worth reading but nothing worth moving.
+  // completion leaves output worth reading but nothing worth moving. Disposed
+  // with the dialog, whose button listens to it while the dialog animates out
+  // — see [DisposeWith].
   final running = ValueNotifier(true);
 
-  try {
-    final carryOn = await context.showRoundDialog<bool>(
-      title: snippet.name,
-      contentPadding: const EdgeInsets.fromLTRB(11, 11, 11, 0),
+  final carryOn = await context.showRoundDialog<bool>(
+    title: snippet.name,
+    contentPadding: const EdgeInsets.fromLTRB(11, 11, 11, 0),
+    child: DisposeWith(
+      notifiers: [running],
       child: _SnippetRunView(
         session: session,
         snippet: snippet,
@@ -52,26 +55,24 @@ Future<TerminalSession?> showSnippetRun(
         granted: granted,
         running: running,
       ),
-      actions: [
-        ListenBuilder(
-          listenable: running,
-          builder: () => TextButton(
-            onPressed: running.value
-                ? () => context.popDialog(true)
-                : null,
-            child: Text(l10n.continueInTerminal),
-          ),
+    ),
+    actions: [
+      ListenBuilder(
+        listenable: running,
+        builder: () => TextButton(
+          onPressed: running.value
+              ? () => context.popDialog(true)
+              : null,
+          child: Text(l10n.continueInTerminal),
         ),
-        Btn.ok(onTap: () => context.popDialog(false)),
-      ],
-    );
+      ),
+      Btn.ok(onTap: () => context.popDialog(false)),
+    ],
+  );
 
-    if (carryOn == true) return session;
-    session.close();
-    return null;
-  } finally {
-    running.dispose();
-  }
+  if (carryOn == true) return session;
+  session.close();
+  return null;
 }
 
 final class SnippetRunPageArgs {

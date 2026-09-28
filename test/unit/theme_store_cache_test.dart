@@ -331,5 +331,16 @@ void main() {
       expect(setting.appThemePreset.fetch(), BuiltinTheme.defaultTheme.id);
       expect(setting.appThemePackage.fetch(), isEmpty);
     });
+
+    test('a bundled theme this build no longer carries falls back', () {
+      // A bundled theme of an earlier build, since moved to the store.
+      setting.appThemePreset.put('dracula');
+      ThemePackages.reconcileSelection();
+      expect(setting.appThemePreset.fetch(), BuiltinTheme.defaultTheme.id);
+
+      setting.appThemePreset.put(BuiltinTheme.amoled.id);
+      ThemePackages.reconcileSelection();
+      expect(setting.appThemePreset.fetch(), BuiltinTheme.amoled.id);
+    });
   });
 }

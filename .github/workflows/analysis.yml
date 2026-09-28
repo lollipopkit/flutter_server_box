@@ -105,12 +105,17 @@ jobs:
           # `docs/schemas/` because `test/unit/theme_schema_test.dart` reads the
           # manifest schema and holds it against the parser; a schema-only
           # change is exactly what that test is for.
-          emit dart "$shared|^lib/|^test/|^integration_test/|^crates/|^macos/|^Cargo\.(toml|lock)$|^analysis_options\.yaml$|^docs/schemas/"
+          #
+          # `store/` because `test/unit/theme_store_tree_test.dart` reads the
+          # official theme repository the way the store does.
+          emit dart "$shared|^lib/|^test/|^integration_test/|^crates/|^macos/|^Cargo\.(toml|lock)$|^analysis_options\.yaml$|^docs/schemas/|^store/"
           emit frontend "$shared|^monitor/frontend/|^packages/webui/"
-          # `assets/` for the theme manifests the docs job validates against
-          # that same schema; nothing else in either job reads them.
-          emit docs "$shared|^docs/|^assets/(themes|catalog)/"
-          emit website "$shared|^website/|^packages/webui/"
+          # `assets/` and `store/` for the theme manifests the docs job
+          # validates against that same schema.
+          emit docs "$shared|^docs/|^assets/(themes|catalog)/|^store/"
+          # `store/` because the website build packs it into the store's
+          # tarball (scripts/store-tarball.sh).
+          emit website "$shared|^website/|^packages/webui/|^store/|^scripts/store-tarball\.sh$"
 
   reproducibilityCheck:
     # These are deterministic-input guards, not a reproducibility proof. The
@@ -286,10 +291,14 @@ jobs:
       # side of this same file.
       - name: Check the theme manifests against the schema
         run: |
+          # `store/` may hold no theme; an unmatched glob is then dropped
+          # rather than passed on as a file name.
+          shopt -s nullglob
           pipx run --spec check-jsonschema==0.38.2 check-jsonschema \
             --schemafile docs/schemas/fsbt-manifest.schema.json \
             docs/examples/aurora/manifest.toml \
-            assets/themes/*/manifest.toml
+            assets/themes/*/manifest.toml \
+            store/themes/*/manifest.toml
 
   website:
     name: Project website

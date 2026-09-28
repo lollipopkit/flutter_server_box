@@ -56,28 +56,28 @@ extension _AgentHistoryActions on _AskAiPanelState {
         baseOffset: 0,
         extentOffset: conversation.title.length,
       );
-    try {
-      final title = await context.showRoundDialog<String>(
-        title: context.l10n.askAiRenameConversation,
+    // Disposed with the field, not when the dialog answers. See [DisposeWith].
+    final title = await context.showRoundDialog<String>(
+      title: context.l10n.askAiRenameConversation,
+      child: DisposeWith(
+        notifiers: [controller],
         child: Input(
           controller: controller,
           autoFocus: true,
           label: context.l10n.askAiRenameConversation,
           onSubmitted: (_) => context.popDialog(controller.text.trim()),
         ),
-        actions: [
-          TextButton(onPressed: context.popDialog, child: Text(libL10n.cancel)),
-          FilledButton(
-            onPressed: () => context.popDialog(controller.text.trim()),
-            child: Text(libL10n.ok),
-          ),
-        ],
-      );
-      if (title == null || title.trim().isEmpty) return;
-      await _notifier.renameConversation(conversation.id, title);
-    } finally {
-      controller.dispose();
-    }
+      ),
+      actions: [
+        TextButton(onPressed: context.popDialog, child: Text(libL10n.cancel)),
+        FilledButton(
+          onPressed: () => context.popDialog(controller.text.trim()),
+          child: Text(libL10n.ok),
+        ),
+      ],
+    );
+    if (title == null || title.trim().isEmpty) return;
+    await _notifier.renameConversation(conversation.id, title);
   }
 
   Future<void> _deleteConversation(AgentConversation conversation) async {

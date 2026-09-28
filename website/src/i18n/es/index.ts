@@ -12,6 +12,8 @@ const es: Translation = {
     capabilities: 'Capacidades',
     download: 'Descargar',
     docs: 'Documentación',
+    themes: 'Temas',
+    plugins: 'Plugins',
     languageLabel: 'Idioma',
   },
   hero: {
@@ -71,6 +73,57 @@ const es: Translation = {
       'ServerBox mantiene terminal, transferencia de archivos, servicios, salud de hardware y alertas en el mismo flujo.',
     installIosPrompt: '# iOS',
     installReleasePrompt: '# Android, Linux y Windows',
+  },
+  themes: {
+    title: 'A tu manera.',
+    subtitle:
+      'Los temas oficiales de ServerBox, los mismos que ofrece la tienda de temas de la app. Instálalos desde Ajustes → Apariencia → Tienda de temas, o descarga un paquete y elige Instalar tema → Archivo.',
+    empty:
+      'Todavía no hay temas oficiales. Un tema es una carpeta con un manifest.toml: colores claros y oscuros, estilos de componentes, iconos, fondo y pantalla de inicio. La guía explica cómo crear uno y publicarlo en la tienda.',
+    note:
+      'La app comprueba el SHA-256 de cada paquete de la tienda antes de instalarlo.',
+    authoring: 'Crear un tema',
+    download: 'Descargar .fsbt',
+    source: 'Código',
+    light: 'Claro',
+    dark: 'Oscuro',
+    search: 'Buscar temas',
+    modeLabel: 'Modo',
+    all: 'Todos',
+    sortLabel: 'Ordenar',
+    sortName: 'Nombre',
+    sortUpdated: 'Actualizados recientemente',
+    noMatch: 'Ningún tema coincide. Prueba con otro nombre u otro modo.',
+    storeTitle: 'Tienda de temas',
+    storeSubtitle:
+      'Todos los temas oficiales de ServerBox, dibujados como los dibuja la app: colores, componentes, iconos y pantalla de inicio. Instálalos desde la tienda de la app o descarga el paquete.',
+    browse: 'Abrir la tienda de temas',
+    back: 'Todos los temas',
+    details: 'Detalles',
+    icons: 'Iconos',
+    tabIcons: 'Pestañas y su estado seleccionado',
+    navIcons: 'Símbolos',
+    palette: 'Paleta',
+    components: 'Componentes',
+    splash: 'Pantalla de inicio',
+    install: 'Instalar',
+    installSteps:
+      'En la app, abre Ajustes → Apariencia → Tienda de temas y elige {name}. O descarga el paquete y elige Instalar tema → Archivo.',
+    base: 'Normal',
+    hovered: 'Al pasar',
+    pressed: 'Pulsado',
+    disabled: 'Desactivado',
+    loadFailed: 'No se pudo cargar la vista previa de este tema.',
+    retry: 'Reintentar',
+    previewNote:
+      'Las vistas previas muestran los iconos y colores del tema; el resto de la interfaz es orientativo.',
+  },
+  plugins: {
+    title: 'Plugins.',
+    subtitle:
+      'Los plugins oficiales de ServerBox, instalados desde la tienda de plugins de la app.',
+    empty: 'Todavía no hay plugins oficiales.',
+    download: 'Descargar',
   },
   download: {
     title: 'Cada plataforma, cada fuente.',

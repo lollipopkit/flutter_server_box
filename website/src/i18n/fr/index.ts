@@ -12,6 +12,8 @@ const fr: Translation = {
     capabilities: 'Capacités',
     download: 'Télécharger',
     docs: 'Documentation',
+    themes: 'Thèmes',
+    plugins: 'Plugins',
     languageLabel: 'Langue',
   },
   hero: {
@@ -71,6 +73,57 @@ const fr: Translation = {
       'ServerBox garde terminal, transfert de fichiers, services, santé matérielle et alertes dans le même flux.',
     installIosPrompt: '# iOS',
     installReleasePrompt: '# Android, Linux et Windows',
+  },
+  themes: {
+    title: 'À votre image.',
+    subtitle:
+      'Les thèmes officiels de ServerBox, les mêmes que ceux de la boutique de thèmes de l’app. Installez-les depuis Réglages → Apparence → Boutique de thèmes, ou téléchargez un paquet et choisissez Installer un thème → Fichier.',
+    empty:
+      'Pas encore de thème officiel. Un thème est un dossier avec un manifest.toml : couleurs claires et sombres, styles des composants, icônes, arrière-plan et écran de démarrage. Le guide explique comment en créer un et le publier dans la boutique.',
+    note:
+      'L’app vérifie le SHA-256 de chaque paquet de la boutique avant de l’installer.',
+    authoring: 'Créer un thème',
+    download: 'Télécharger le .fsbt',
+    source: 'Source',
+    light: 'Clair',
+    dark: 'Sombre',
+    search: 'Rechercher un thème',
+    modeLabel: 'Mode',
+    all: 'Tous',
+    sortLabel: 'Trier',
+    sortName: 'Nom',
+    sortUpdated: 'Mis à jour récemment',
+    noMatch: 'Aucun thème ne correspond. Essayez un autre nom ou un autre mode.',
+    storeTitle: 'Boutique de thèmes',
+    storeSubtitle:
+      'Tous les thèmes officiels de ServerBox, dessinés comme l’app les dessine : couleurs, composants, icônes et écran de démarrage. Installez-les depuis la boutique de l’app ou téléchargez le paquet.',
+    browse: 'Ouvrir la boutique de thèmes',
+    back: 'Tous les thèmes',
+    details: 'Détails',
+    icons: 'Icônes',
+    tabIcons: 'Onglets, et sélectionnés',
+    navIcons: 'Symboles',
+    palette: 'Palette',
+    components: 'Composants',
+    splash: 'Écran de démarrage',
+    install: 'Installer',
+    installSteps:
+      'Dans l’app, ouvrez Réglages → Apparence → Boutique de thèmes et choisissez {name}. Ou téléchargez le paquet et choisissez Installer un thème → Fichier.',
+    base: 'Normal',
+    hovered: 'Survolé',
+    pressed: 'Pressé',
+    disabled: 'Désactivé',
+    loadFailed: 'Impossible de charger l’aperçu de ce thème.',
+    retry: 'Réessayer',
+    previewNote:
+      'Les aperçus montrent les icônes et les couleurs du thème ; le reste de l’interface est indicatif.',
+  },
+  plugins: {
+    title: 'Plugins.',
+    subtitle:
+      'Les plugins officiels de ServerBox, installés depuis la boutique de plugins de l’app.',
+    empty: 'Pas encore de plugin officiel.',
+    download: 'Télécharger',
   },
   download: {
     title: 'Toutes les plateformes, toutes les sources.',

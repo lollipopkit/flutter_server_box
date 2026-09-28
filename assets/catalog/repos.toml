@@ -11,9 +11,8 @@
 schema = 1
 name = "ServerBox themes"
 
-# The official repository, and one repository serves both kinds: its `themes/`
-# section is what this app reads, and the `plugins/` beside it is skipped rather
-# than refused. A third party publishes in their own repository and adds a line
-# here.
+# The official repository: `store/` in this repository, served as a tarball by
+# the website build, so the app downloads the store and not this whole tree. A
+# third party publishes in their own repository and adds a line here.
 [[repo]]
-url = "https://github.com/lollipopkit/serverbox-plugins"
+url = "https://serverbox.lollipopkit.com/store.tar.gz"

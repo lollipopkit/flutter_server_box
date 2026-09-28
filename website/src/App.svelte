@@ -13,6 +13,13 @@
     localeStorageKey,
     syncLocaleToUrl,
   } from './lib/i18n'
+  // store/ at build time: see store-data.js.
+  import store from 'virtual:store'
+  import LazyThemePreview from './lib/LazyThemePreview.svelte'
+
+  // TODO: show once the plugin system ships in the app; until then a plugin
+  // listed here would be one nobody can install.
+  const showPlugins = false
 
   // Keep product and protocol names untranslated. This list is the single
   // source of truth; locale-specific copies would appear editable but be unused.
@@ -214,6 +221,10 @@
       <nav>
         <a href="#features" onclick={(event) => scrollToSection(event, 'features')}>{$LL.nav.features()}</a>
         <a href="#capabilities" onclick={(event) => scrollToSection(event, 'capabilities')}>{$LL.nav.capabilities()}</a>
+        <a href="#themes" onclick={(event) => scrollToSection(event, 'themes')}>{$LL.nav.themes()}</a>
+        {#if showPlugins}
+          <a href="#plugins" onclick={(event) => scrollToSection(event, 'plugins')}>{$LL.nav.plugins()}</a>
+        {/if}
         <a href="#download" onclick={(event) => scrollToSection(event, 'download')}>{$LL.nav.download()}</a>
         <a href="/docs/">{$LL.nav.docs()}</a>
       </nav>
@@ -333,6 +344,81 @@
       </div>
     </section>
 
+    <section class="page-section" id="themes">
+      <div class="section-head">
+        <h2>{$LL.themes.title()}</h2>
+        <p>{$LL.themes.subtitle()}</p>
+      </div>
+
+      {#if store.themes.length}
+        <!-- A glimpse, drawn from the themes themselves; the store page has
+             the rest: search, every mode, icons, components. -->
+        <p class="preview-note">{$LL.themes.previewNote()}</p>
+        <div class="theme-strip">
+          {#each store.themes.slice(0, 4) as theme (theme.id)}
+            <a class="theme-strip-item" href={`/themes/?lang=${locale}#${theme.id}`}>
+              <LazyThemePreview {theme} mode={theme.modes.includes('dark') ? 'dark' : theme.modes[0]} scale={0.72} />
+              <span>{theme.name}</span>
+            </a>
+          {/each}
+        </div>
+      {:else}
+        <div class="store-empty">
+          <p>{$LL.themes.empty()}</p>
+        </div>
+      {/if}
+
+      <div class="store-footer">
+        <p class="download-note">{$LL.themes.note()}</p>
+        <div class="store-actions">
+          <a class="download-icon-btn" href="/docs/development/theme-authoring/">
+            <span>{$LL.themes.authoring()}</span>
+            <ExternalLink size={14} strokeWidth={1.8} aria-hidden="true" />
+          </a>
+          <Button href={`/themes/?lang=${locale}`}>{$LL.themes.browse()}</Button>
+        </div>
+      </div>
+    </section>
+
+    {#if showPlugins}
+      <section class="page-section" id="plugins">
+        <div class="section-head">
+          <h2>{$LL.plugins.title()}</h2>
+          <p>{$LL.plugins.subtitle()}</p>
+        </div>
+
+        {#if store.plugins.length}
+          <div class="store-grid">
+            {#each store.plugins as plugin (plugin.id)}
+              <article class="feature-card store-card">
+                <h3>{plugin.name}</h3>
+                {#if plugin.description}<p>{plugin.description}</p>{/if}
+                <div class="store-meta">
+                  <span class="protocol-badge">v{plugin.latest.version}</span>
+                  {#if plugin.license}<span class="protocol-badge">{plugin.license}</span>{/if}
+                </div>
+                {#if plugin.latest.url}
+                  <div class="store-actions">
+                    <a class="download-icon-btn" href={plugin.latest.url}>
+                      <span>{$LL.plugins.download()}</span>
+                      <ExternalLink size={14} strokeWidth={1.8} aria-hidden="true" />
+                    </a>
+                  </div>
+                {/if}
+                {#if plugin.latest.sha256}
+                  <code class="store-digest" title={plugin.latest.sha256}>SHA-256 {plugin.latest.sha256.slice(0, 16)}…</code>
+                {/if}
+              </article>
+            {/each}
+          </div>
+        {:else}
+          <div class="store-empty">
+            <p>{$LL.plugins.empty()}</p>
+          </div>
+        {/if}
+      </section>
+    {/if}
+
     <section class="download-section" id="download">
       <div class="section-head">
         <h2>{$LL.download.title()}</h2>
@@ -399,6 +485,7 @@
       <div class="footer-links">
         <a href="#features" onclick={(event) => scrollToSection(event, 'features')}>{$LL.footer.features()}</a>
         <a href="#capabilities" onclick={(event) => scrollToSection(event, 'capabilities')}>{$LL.footer.capabilities()}</a>
+        <a href="#themes" onclick={(event) => scrollToSection(event, 'themes')}>{$LL.nav.themes()}</a>
         <a href="https://github.com/lollipopkit/flutter_server_box">GitHub</a>
         <a href="https://github.com/lollipopkit/flutter_server_box/releases">{$LL.footer.releases()}</a>
       </div>

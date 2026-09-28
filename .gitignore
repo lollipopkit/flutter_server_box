@@ -116,3 +116,6 @@ android/app/.cxx
 # history: it churns every session, and what belongs in the repo is the TODO
 # beside the code it is about.
 /TODOS.md
+
+# Written by the website build from store/ (scripts/store-tarball.sh).
+website/public/store.tar.gz
