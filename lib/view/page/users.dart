@@ -108,6 +108,9 @@ extension on _UsersPageState {
         enabled: canMutate,
         icon: const Icon(Icons.sort, size: 18),
         initialValue: _sort,
+        // Its initial value is scrolled into view: from the page's own
+        // navigator, inside the home's tab pages, that scrolled the tabs.
+        useRootNavigator: true,
         itemBuilder: (_) => [
           PopupMenuItem(value: _UserSort.uid, child: Text(l10n.userUid)),
           PopupMenuItem(value: _UserSort.name, child: Text(libL10n.sortByName)),
