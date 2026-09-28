@@ -1,11 +1,18 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/view/page/home_tab.dart';
 import 'package:server_box/view/page/setting/entries/home_tabs.dart';
 
+import '../../helpers/test_db.dart';
+
 void main() {
+  group('the bottom bar', _bottomBarMarks);
+
   group('the default order', () {
     test('is the bar, and the rest are behind "more"', () {
       // The list *is* the bar now, so it is a subset rather than everything.
@@ -287,5 +294,44 @@ void main() {
       };
       expect(marked, {ServerFuncBtn.remoteDesktop});
     });
+  });
+}
+
+/// The bottom bar hides a tab's label unless it is selected, so a beta tab
+/// is marked on its icon's corner instead.
+void _bottomBarMarks() {
+  setUp(() async {
+    await openTestDb();
+    getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
+  });
+  tearDown(() async {
+    await getIt.reset();
+    await closeTestDb();
+  });
+
+  testWidgets('a beta tab carries the mark on the bar, another does not', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          bottomNavigationBar: NavigationBar(
+            destinations: [
+              AppTab.ssh.navDestination(),
+              AppTab.virt.navDestination(),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    Finder mark(AppTab tab) => find.descendant(
+      of: find.byWidgetPredicate(
+        (w) => w is NavigationDestination && w.label == tab.label,
+      ),
+      matching: find.descendant(of: find.byType(Badge), matching: find.text('Beta')),
+    );
+    expect(mark(AppTab.virt), findsOneWidget);
+    expect(mark(AppTab.ssh), findsNothing);
   });
 }

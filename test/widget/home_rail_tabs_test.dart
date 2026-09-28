@@ -11,6 +11,7 @@
 /// behind "more".
 library;
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -373,6 +374,13 @@ void main() {
                         opacity: opacity,
                       ),
                     ),
+                    // A name long enough to be clipped, and a mark after it.
+                    NavRailItem(
+                      icon: const Icon(Icons.circle),
+                      selectedIcon: const Icon(Icons.circle),
+                      label: 'a name longer than the pill has room for',
+                      mark: (opacity) => BetaTag(opacity: opacity),
+                    ),
                   ],
                 ),
                 const Expanded(child: SizedBox()),
@@ -382,6 +390,8 @@ void main() {
         ),
       );
       await tester.pump();
+      // Shut, no mark: it is after the name, and there is none.
+      expect(find.byType(BetaTag), findsNothing);
 
       final pointer = TestPointer(1, PointerDeviceKind.mouse);
       await tester.sendEventToBinding(
@@ -393,6 +403,14 @@ void main() {
         await tester.pump(const Duration(milliseconds: 8));
         expect(tester.takeException(), isNull, reason: 'opening, frame $i');
       }
+      // Open, it is whole, and the clipped name ends before it.
+      await tester.pumpAndSettle();
+      final mark = tester.getRect(find.byType(BetaTag));
+      expect(mark.width, greaterThan(0));
+      expect(
+        tester.getRect(find.textContaining('a name longer')).right,
+        lessThanOrEqualTo(mark.left),
+      );
       await tester.sendEventToBinding(pointer.hover(const Offset(600, 300)));
       for (var i = 0; i < 30; i++) {
         await tester.pump(const Duration(milliseconds: 8));

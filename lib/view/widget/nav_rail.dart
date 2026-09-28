@@ -68,6 +68,7 @@ class NavRailItem {
     required this.selectedIcon,
     required this.label,
     this.badge,
+    this.mark,
     this.onMenu,
   });
 
@@ -88,6 +89,12 @@ class NavRailItem {
   /// rather than wrapped in one, because an `Opacity` is a `saveLayer` and
   /// this is redrawn on every frame of the rail opening.
   final Widget Function(double opacity)? badge;
+
+  /// What the item is, rather than what it holds — a beta tag. After the
+  /// name, and only once there is one: on the shut rail's corner it would be
+  /// a second badge over a glyph the count already sits on. Faded like
+  /// [badge], for the same reason.
+  final Widget Function(double opacity)? mark;
 
   /// A long press, and a right-click on a desktop.
   final ContextMenuOpener? onMenu;
@@ -452,6 +459,19 @@ class _NavRailTile extends StatelessWidget {
                     ),
                   ),
                 ),
+                // Narrowed as it fades rather than only faded, like the
+                // badge below.
+                if (item.mark case final mark?)
+                  ClipRect(
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      widthFactor: inline,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 5),
+                        child: mark(inline),
+                      ),
+                    ),
+                  ),
                 // Narrowed as it fades rather than only faded: a badge at
                 // opacity zero is still as wide as a badge, and this one
                 // arrives in a pill that has not finished widening.

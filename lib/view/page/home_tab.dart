@@ -60,20 +60,20 @@ extension AppTabViewX on AppTab {
     };
   }
 
+  /// Whether the tab is still in beta.
+  // TODO: move to the Feature abstraction (next PR).
+  bool get beta => switch (this) {
+    AppTab.remoteDesktop || AppTab.agent || AppTab.benchmark || AppTab.virt =>
+      true,
+    _ => false,
+  };
+
   /// The mark a tab carries, where the tab is *listed* — the settings page
   /// that arranges them, and the sheet the bar opens for the ones it cannot
-  /// hold.
-  ///
-  /// Not on the destination itself: `NavigationDestination.label` and
-  /// [NavRailItem.label] are strings, and a bar that has to fit four of them
-  /// on a phone is the last place with room for a second glyph.
-  Widget? get mark => switch (this) {
-    AppTab.remoteDesktop ||
-    AppTab.agent ||
-    AppTab.benchmark ||
-    AppTab.virt => const BetaTag(),
-    _ => null,
-  };
+  /// hold — and after its name in the open rail ([navRailItem]). The bottom
+  /// bar, whose label is a string and mostly hidden, carries it on the icon's
+  /// corner instead ([navDestination]).
+  Widget? get mark => beta ? const BetaTag() : null;
 
   /// [label] with [mark], for a row that lists the tab rather than opening it.
   Widget get listTitle {
@@ -101,8 +101,8 @@ extension AppTabViewX on AppTab {
   Widget navDestination({ContextMenuOpener? onMenu}) {
     return _withMenu(
       NavigationDestination(
-        icon: _counted(icon),
-        selectedIcon: _counted(selectedIcon),
+        icon: _badged(icon),
+        selectedIcon: _badged(selectedIcon),
         label: label,
       ),
       onMenu,
@@ -123,6 +123,7 @@ extension AppTabViewX on AppTab {
       badge: this == AppTab.server
           ? (opacity) => ConnCountRailBadge(opacity: opacity)
           : null,
+      mark: beta ? (opacity) => BetaTag(opacity: opacity) : null,
       onMenu: onMenu,
     );
   }
@@ -140,12 +141,35 @@ extension AppTabViewX on AppTab {
     );
   }
 
-  /// Adds the connection count to the server tab, and to nothing else.
+  /// The connection count on the server tab, the beta mark on a beta one:
+  /// on the icon's corner, the one place the bar has for it.
   ///
   /// Only where the tab is a control. In a list of tabs to reorder, a count
-  /// would be answering a question the row is not about.
-  Widget _counted(Widget icon) =>
-      this == AppTab.server ? ConnCountBadge(child: icon) : icon;
+  /// would be answering a question the row is not about, and the mark is
+  /// beside the name there already.
+  Widget _badged(Widget icon) {
+    if (this == AppTab.server) return ConnCountBadge(child: icon);
+    return beta ? _BetaBadge(child: icon) : icon;
+  }
+}
+
+/// Material's badge, as the connection count is, in [BetaTag]'s colours and
+/// word.
+class _BetaBadge extends StatelessWidget {
+  const _BetaBadge({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Badge(
+      label: const Text('Beta'),
+      backgroundColor: scheme.tertiaryContainer,
+      textColor: scheme.onTertiaryContainer,
+      child: child,
+    );
+  }
 }
 
 class _AppTabIcon extends StatelessWidget {
