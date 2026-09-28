@@ -190,6 +190,10 @@ struct QemuImgInfo {
     actual_size: Option<u64>,
     #[serde(rename = "backing-filename")]
     backing_filename: Option<String>,
+    /// `backing-filename` resolved the way QEMU opens it: the header may
+    /// record a path relative to the overlay's directory.
+    #[serde(rename = "full-backing-filename")]
+    full_backing_filename: Option<String>,
     #[serde(rename = "backing-filename-format")]
     backing_format: Option<String>,
 }
@@ -200,13 +204,26 @@ struct QemuImgInfo {
 /// [`VirtSnapChainDisk::error`] rather than being dropped: nothing is known
 /// about its format, so no external snapshot is taken of it.
 pub fn parse_snap_chain(raw: &str) -> Result<VirtSnapChain, VirtError> {
+    read_snap_chain(raw).map(|(chain, _)| chain)
+}
+
+/// [`parse_snap_chain`], and whether the chain is **complete**: the
+/// definition was read, it has a disk, and QEMU answered with a whole chain
+/// for every disk it has (a CD-ROM aside). A failed `dumpxml` or
+/// `domblklist` (whose status the script does not keep), a disk that is not
+/// a regular file (`domblklist` is not asked about it), and a refusal from
+/// `qemu-img` all leave it incomplete: some layer the guest uses may then be
+/// missing from the answer.
+fn read_snap_chain(raw: &str) -> Result<(VirtSnapChain, bool), VirtError> {
     let secs = sections(raw)?;
     let mut out = VirtSnapChain::default();
     // The disks the definition has, in its order, so the view lists them the
     // way the Hardware view does. A CD-ROM is not one of them.
     let mut defined: Vec<(String, Option<String>)> = Vec::new();
-    if let Ok(xml) = take(&secs, crate::virt::KEY_XML, raw)
-        && let Ok(doc) = parse_xml_doc(&xml.body, "domain", "dumpxml") {
+    let mut complete = false;
+    if let Ok(xml) = take(&secs, crate::virt::KEY_XML, raw).and_then(|s| s.ok())
+        && let Ok(doc) = parse_xml_doc(xml, "domain", "dumpxml") {
+            complete = true;
             for disk in doc
                 .root_element()
                 .descendants()
@@ -217,6 +234,8 @@ pub fn parse_snap_chain(raw: &str) -> Result<VirtSnapChain, VirtError> {
                 }
                 let Some(target) = child(disk, "target").and_then(|t| t.attribute("dev"))
                 else {
+                    // A disk this cannot name is one whose chain is unknown.
+                    complete = false;
                     continue;
                 };
                 let file = child(disk, "source")
@@ -277,9 +296,18 @@ pub fn parse_snap_chain(raw: &str) -> Result<VirtSnapChain, VirtError> {
             .unwrap_or_default()
         };
         let (files, error) = match found.map(|i| answers.remove(i)) {
-            Some((_, Ok(files))) => (files, None),
-            Some((path, Err(e))) => (lone(Some(path)), Some(e)),
-            None => (lone(defined_file), None),
+            Some((_, Ok(files))) => {
+                complete &= files.last().is_some_and(|base| base.backing.is_none());
+                (files, None)
+            }
+            Some((path, Err(e))) => {
+                complete = false;
+                (lone(Some(path)), Some(e))
+            }
+            None => {
+                complete = false;
+                (lone(defined_file), None)
+            }
         };
         out.disks.push(VirtSnapChainDisk {
             target,
@@ -289,6 +317,7 @@ pub fn parse_snap_chain(raw: &str) -> Result<VirtSnapChain, VirtError> {
     }
     // An answer for a path no disk claimed (a definition that changed under
     // the read): kept, so it is not silently lost.
+    complete &= !out.disks.is_empty();
     for (path, answer) in answers {
         let (files, error) = match answer {
             Ok(files) => (files, None),
@@ -300,22 +329,34 @@ pub fn parse_snap_chain(raw: &str) -> Result<VirtSnapChain, VirtError> {
             error,
         });
     }
-    Ok(out)
+    Ok((out, complete))
 }
 
 /// `--backing-chain --output=json` prints an array, one object per layer,
 /// newest first, each naming the file it sits on in `backing-filename`. A
-/// layer without one ends the chain. `None` when the output is not that array.
+/// layer without one ends the chain. `None` when the output is not that
+/// array, or a layer in it names no file.
+///
+/// The backing file is the absolute path QEMU opens (`full-backing-filename`),
+/// never a header's relative one: it is compared with absolute paths (the
+/// AppArmor profile's, the other layers').
 fn qemu_img_chain(json: &str) -> Option<Vec<VirtSnapChainFile>> {
     let infos: Vec<QemuImgInfo> = serde_json::from_str(json).ok()?;
     let mut out = Vec::new();
     for info in infos {
-        let Some(path) = info.filename else { continue };
-        let last = info.backing_filename.is_none();
+        let path = info.filename?;
+        let backing = info.full_backing_filename.or_else(|| {
+            let b = info.backing_filename?;
+            Some(match path.rsplit_once('/') {
+                Some((dir, _)) if !b.starts_with('/') && !b.contains(':') => format!("{dir}/{b}"),
+                _ => b,
+            })
+        });
+        let last = backing.is_none();
         out.push(VirtSnapChainFile {
             path,
             format: info.format,
-            backing: info.backing_filename,
+            backing,
             backing_format: info.backing_format,
             allocation: info.actual_size,
             capacity: info.virtual_size,
@@ -625,15 +666,17 @@ pub fn snap_revert_refusal(raw: &str) -> Result<Option<String>, VirtError> {
 /// non-leaf external snapshot that is not in active chain"), so only a
 /// leaf's are named, and no other snapshot has them as a backing file.
 ///
-/// Empty where a disk's chain could not be read: a file on it would look
-/// off the chain.
+/// Empty unless the chain is complete (see [`read_snap_chain`]): these
+/// files are deleted, and a layer missing from an incomplete answer — a
+/// failed read, a disk that is not a file, a refusal from `qemu-img` — would
+/// look off the chain while the guest still uses it.
 pub fn snap_delete_leftovers(raw: &str) -> Result<Vec<String>, VirtError> {
     let secs = sections(raw)?;
     let snap = take(&secs, KEY_DEL_SNAP, raw)?.ok()?;
     let doc = parse_xml_doc(snap, "domainsnapshot", "snapshot-dumpxml")?;
     let root = doc.root_element();
-    let chain = parse_snap_chain(raw)?;
-    if chain.disks_iter().any(|d| d.error.is_some()) {
+    let (chain, complete) = read_snap_chain(raw)?;
+    if !complete || chain.disks_iter().any(|d| d.error.is_some()) {
         return Ok(Vec::new());
     }
     let on_chain: Vec<&str> = chain
@@ -694,11 +737,13 @@ pub fn snapshot_external_script(
     if let Some(desc) = description.filter(|d| !d.trim().is_empty()) {
         args.push_str(&format!(" --description {}", shell_quote_unix(desc)));
     }
+    // `--diskspec` is a comma-separated list to virsh (`vshStringToArray`),
+    // where a literal comma is written twice.
+    let spec = |v: &str| v.replace(',', ",,");
     for (target, file) in overlays {
         args.push_str(&format!(
-            " --diskspec {},file={},snapshot=external",
-            shell_quote_unix(target),
-            shell_quote_unix(file)
+            " --diskspec {}",
+            shell_quote_unix(&format!("{},file={},snapshot=external", spec(target), spec(file)))
         ));
     }
     let mut s = prelude();
@@ -922,16 +967,23 @@ fn push(
     });
 }
 
+/// The processor as one line: a custom CPU by its model, any other mode
+/// (`host-passthrough`, `host-model`, `maximum`) by the mode and the model
+/// it names, if any — those modes usually name none, and two of them must
+/// still read as different.
 fn cpu_of(root: roxmltree::Node<'_, '_>) -> Option<String> {
     let cpu = child(root, "cpu")?;
-    if let Some(mode) = cpu.attribute("mode")
-        && mode != "custom" && mode != "host-passthrough" && mode != "host-model" {
-            return Some(mode.to_string());
-        }
-    child(cpu, "model").map(|m| match m.attribute("fallback") {
+    let model = child(cpu, "model").map(|m| match m.attribute("fallback") {
         Some(f) => format!("{} ({f})", m.text().unwrap_or("").trim()),
         None => m.text().unwrap_or("").trim().to_string(),
-    })
+    });
+    match cpu.attribute("mode").unwrap_or("custom") {
+        "custom" => model,
+        mode => Some(match model.filter(|m| !m.is_empty()) {
+            Some(m) => format!("{mode} {m}"),
+            None => mode.to_string(),
+        }),
+    }
 }
 
 fn os_of(root: roxmltree::Node<'_, '_>) -> Option<String> {
@@ -1035,6 +1087,14 @@ fn other_devices(
 /// moves the guest onto an overlay, so the path always differs and is never a
 /// configuration change (the chain view is what shows the files). What a disk
 /// line says is its bus, device kind, driver and read-only flag.
+///
+/// Every device also says the model it is (`model=` on the element, as a
+/// controller or a watchdog writes it, or a `<model>` child's attributes, as
+/// a video card does) and its `<backend>` (a TPM's, an RNG's); a passed-
+/// through host device says which one: its vendor and product where the
+/// definition names it by those (a running guest's USB device also carries
+/// the bus address it was found at, which is not the configuration), its
+/// address otherwise.
 fn describe(dev: roxmltree::Node<'_, '_>, tag: &str) -> String {
     let mut parts: Vec<String> = Vec::new();
     if tag == "interface" {
@@ -1085,6 +1145,34 @@ fn describe(dev: roxmltree::Node<'_, '_>, tag: &str) -> String {
     }
     if child(dev, "readonly").is_some() {
         parts.push("read-only".to_string());
+    }
+    let attrs = |n: roxmltree::Node<'_, '_>| {
+        n.attributes()
+            .map(|a| format!("{}={}", a.name(), a.value()))
+            .collect::<Vec<_>>()
+            .join(" ")
+    };
+    if let Some(model) = dev.attribute("model") {
+        parts.push(format!("model={model}"));
+    }
+    if let Some(model) = child(dev, "model").filter(|m| m.attributes().len() > 0) {
+        parts.push(format!("model({})", attrs(model)));
+    }
+    if let Some(backend) = child(dev, "backend") {
+        let text = backend.text().map(str::trim).filter(|t| !t.is_empty());
+        parts.push(format!("backend({}{})", attrs(backend), text.map(|t| format!(" {t}")).unwrap_or_default()));
+    }
+    if tag == "hostdev"
+        && let Some(src) = child(dev, "source")
+    {
+        let named = child(src, "vendor").is_some() || child(src, "product").is_some();
+        for n in src.descendants().filter(|n| n.is_element() && *n != src) {
+            let name = n.tag_name().name();
+            if named && name == "address" {
+                continue;
+            }
+            parts.push(format!("{name}({})", attrs(n)));
+        }
     }
     parts.join(" · ")
 }

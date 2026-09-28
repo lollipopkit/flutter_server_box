@@ -73,6 +73,7 @@ fn bin_dir(tag: &str, iso_tool: Option<&str>) -> PathBuf {
     std::fs::create_dir_all(&d).unwrap();
     for tool in [
         "mktemp", "rm", "wc", "tr", "cat", "cp", "ls", "dirname", "chmod", "sh", "sed", "cksum", "base64", "head", "od",
+        "sleep",
     ] {
         let found = ["/usr/bin", "/bin"]
             .iter()
@@ -81,8 +82,20 @@ fn bin_dir(tag: &str, iso_tool: Option<&str>) -> PathBuf {
             .unwrap_or_else(|| panic!("no {tool}"));
         std::os::unix::fs::symlink(found, d.join(tool)).unwrap();
     }
+    // flock(1): the host's where it has one (Linux); else the same
+    // `flock -n FD` on the shell's own descriptor, by perl (macOS has none).
+    match ["/usr/bin/flock", "/bin/flock"].iter().find(|p| Path::new(p).exists()) {
+        Some(flock) => std::os::unix::fs::symlink(flock, d.join("flock")).unwrap(),
+        None => write_exec(
+            &d.join("flock"),
+            "#!/usr/bin/perl\nuse Fcntl ':flock';\nmy $nb = grep { $_ eq '-n' } @ARGV;\n\
+             my ($fd) = grep { /^\\d+$/ } @ARGV;\nopen(my $fh, '>>&=', $fd) or die \"flock: $fd: $!\\n\";\n\
+             flock($fh, LOCK_EX | ($nb ? LOCK_NB : 0)) or exit 1;\n",
+        ),
+    }
     // virsh: logs its arguments, keeps what it is given, fails what the
-    // test asks it to (a file `fail_<command>`).
+    // test asks it to (a file `fail_<command>`). With `persist`, an upload
+    // is the volume's new content; with `slow_<command>`, it takes a second.
     let virsh = r#"#!/bin/sh
 dir="$(dirname "$0")"
 for a in "$@"; do printf '%s\n' "$a" >> "$dir/log"; done
@@ -91,13 +104,15 @@ cat >> "$dir/stdin"
 shift 3
 [ -f "$dir/fail_$1" ] && { echo "error: $1 refused" >&2; exit 1; }
 [ -f "$dir/failonce_$1" ] && { rm "$dir/failonce_$1"; echo "error: $1 refused once" >&2; exit 1; }
+[ -f "$dir/slow_$1" ] && sleep 1
 file=; prev=
 for a; do [ "$prev" = --file ] && file=$a; prev=$a; done
 case "$1" in
   domuuid) [ -f "$dir/defined.xml" ] || { echo "error: failed to get domain" >&2; exit 1; }
            echo be27edda-481c-401d-88df-57e7b8756364 ;;
   vol-create-from) cp "$file" "$dir/vol.xml" ;;
-  vol-upload) cp "$file" "$dir/uploaded.iso"; cat "$file" >> "$dir/uploads" ;;
+  vol-upload) cp "$file" "$dir/uploaded.iso"; cat "$file" >> "$dir/uploads"
+              if [ -f "$dir/persist" ]; then cp "$file" "$dir/current.iso"; fi ;;
   vol-download) cp "$dir/current.iso" "$file" ;;
   vol-info) if [ -f "$dir/capacity" ]; then printf 'Name:           x\nType:           file\nCapacity:       %s bytes\nAllocation:     4096 bytes\n\n' "$(cat "$dir/capacity")"; fi ;;
   vol-path) echo "/pool/$5" ;;
@@ -589,12 +604,13 @@ fn seeds_each_tool_made_read_back() {
         "seed_cloud_localds.iso",
         "seed_rock_ridge.iso",
     ] {
-        let files = ci::iso_root_files(&fixture_bytes(iso)).unwrap();
+        let bytes = fixture_bytes(iso);
+        let files = ci::iso_root_files(&bytes).unwrap();
         let get = |n: &str| {
             files
                 .iter()
                 .find(|(f, _)| f == n)
-                .map(|(_, b)| String::from_utf8(b.clone()).unwrap())
+                .map(|(_, b)| String::from_utf8(b.to_vec()).unwrap())
                 .unwrap_or_else(|| panic!("{iso}: no {n} in {:?}", files.iter().map(|f| &f.0).collect::<Vec<_>>()))
         };
         assert_eq!(get("user-data"), legacy, "{iso}");
@@ -816,6 +832,69 @@ fn what_a_seed_says_that_the_app_does_not_write() {
     assert!(read(files(&ud, &format!("{md}public-keys: x\n"), Some(&nc))).foreign);
     let two = nc.replace("ethernets:\n", "ethernets:\n  eth9:\n    dhcp4: true\n");
     assert!(read(files(&ud, &md, Some(&two))).foreign);
+
+    // The password's switches other than the hash implies: a save would
+    // write them back as the hash has them, unlocking the account or
+    // opening SSH to passwords, so the read says so.
+    let plain_md = "instance-id: iid-1\nlocal-hostname: sbx-web\n";
+    for (switched, text) in [
+        (ud.replace("lock_passwd: false", "lock_passwd: true"), &md),
+        (ud.replace("ssh_pwauth: true", "ssh_pwauth: false"), &md),
+        (ud.replace("ssh_pwauth: true\n", ""), &md),
+        (plain.replace("lock_passwd: true", "lock_passwd: false"), &plain_md.to_string()),
+        (plain.replace("ssh_pwauth: false", "ssh_pwauth: true"), &plain_md.to_string()),
+        (plain.replace("  lock_passwd: true\n", ""), &plain_md.to_string()),
+    ] {
+        let r = read(files(&switched, text, None));
+        assert!(r.foreign, "{switched}");
+        // What a save of it would write is not what it says.
+        assert_ne!(r.cloud_init.user_data(), switched);
+    }
+
+    // A NIC is read only as the app writes one: anything more of routing,
+    // matching or addressing would be dropped, or turned into DHCP, by a
+    // save.
+    assert!(nc.contains("        via: \"10.231.80.1\"\n"), "{nc}");
+    for other in [
+        // A second route, a route's metric, a route not the default.
+        nc.replace("        via: \"10.231.80.1\"\n", "        via: \"10.231.80.1\"\n      - to: \"10.9.0.0/16\"\n        via: \"10.231.80.2\"\n"),
+        nc.replace("        via: \"10.231.80.1\"\n", "        via: \"10.231.80.1\"\n        metric: 100\n"),
+        nc.replace("to: \"0.0.0.0/0\"", "to: \"10.9.0.0/16\""),
+        nc.replace("    routes:\n      - to", "    routes:\n      - via: \"10.231.80.9\"\n      - to"),
+        // Another match criterion.
+        nc.replace("      macaddress:", "      name: \"eth0\"\n      macaddress:"),
+        // No address with DHCP off, DHCP left out, DHCP with a route.
+        nc.replace("    addresses: [\"10.231.80.5/24\"]\n", ""),
+        nc.replace("    dhcp4: false\n", ""),
+        nc.replace("    dhcp4: false\n    addresses: [\"10.231.80.5/24\"]\n", "    dhcp4: true\n"),
+        nc.replace("dhcp4: false", "dhcp4: no"),
+        // Addresses that are not a list, nameservers with more.
+        nc.replace("[\"10.231.80.5/24\"]", "\"10.231.80.5/24\""),
+        nc.replace("      search:", "      options: [\"x\"]\n      search:"),
+        nc.replace("      addresses: [\"10.231.80.1\", \"2606:4700:4700::1111\"]", "      addresses: \"10.231.80.1\""),
+    ] {
+        assert_ne!(other, nc);
+        assert!(read(files(&ud, &md, Some(&other))).foreign, "{other}");
+    }
+
+    // One of the files twice.
+    let mut twice = files(&ud, &md, Some(&nc));
+    twice.push(("user-data".into(), b"#cloud-config\nruncmd: [[x]]\n".to_vec()));
+    assert!(read(twice).foreign);
+
+    // What the subset does not read — a nested flow sequence, a flow
+    // mapping, anchors and tags — is not taken as text of the same spelling.
+    for other in [
+        ud.replace("ssh_authorized_keys:\n", "ssh_authorized_keys: [[\"a\"], \"b\"]\nx:\n"),
+        ud.replace("\"sbx-web\"", "{a: b}"),
+        ud.replace("\"sbx-web\"", "&h sbx-web"),
+        ud.replace("\"sbx-web\"", "!!str sbx-web"),
+    ] {
+        assert!(read(files(&other, &md, Some(&nc))).foreign, "{other}");
+    }
+    let keys = "#cloud-config\nhostname: sbx-web\nmanage_etc_hosts: true\nuser:\n  name: debian\n  sudo: \"ALL=(ALL) NOPASSWD:ALL\"\n  lock_passwd: true\n  ssh_authorized_keys: [{a: b}, [c]]\nssh_pwauth: false\n";
+    let r = read(files(keys, plain_md, None));
+    assert!(r.foreign && r.cloud_init.ssh_keys.is_empty(), "{r:?}");
     let mut extra_file = files(&ud, &md, Some(&nc));
     extra_file.push(("vendor-data".into(), b"#cloud-config\n".to_vec()));
     assert!(read(extra_file).foreign);
@@ -1017,4 +1096,168 @@ fn a_seed_update_that_fails_leaves_the_old_one() {
     let mut bad = cloud_init();
     bad.hostname = "a b".into();
     assert!(ci::seed_update_script(seed, "1 2", &bad, ci::SEED_TOOLS).is_err());
+}
+
+/// Nesting deep enough to overflow the stack, in a seed well under the read
+/// cap: a flow sequence in a flow sequence, and blocks each indented one
+/// more. A foreign seed, not a crash.
+#[test]
+fn a_deeply_nested_seed_is_foreign() {
+    let c = captured();
+    let md = c.meta_data();
+    let read = |ud: &str| {
+        let f = vec![
+            ("user-data".to_string(), ud.as_bytes().to_vec()),
+            ("meta-data".to_string(), md.as_bytes().to_vec()),
+        ];
+        ci::parse_seed_read(&read_output(&iso_of(&f), "1 1")).unwrap()
+    };
+    let depth = 200_000;
+    let flow = format!("#cloud-config\nhostname: {}x{}\n", "[".repeat(depth), "]".repeat(depth));
+    assert!(read(&flow).foreign);
+    let mut block = String::from("#cloud-config\n");
+    for i in 0..1_000 {
+        block.push_str(&format!("{}a:\n", " ".repeat(i)));
+    }
+    assert!(read(&block).foreign);
+    // The same shapes the app does write are read as ever.
+    assert!(!read(&c.user_data()).foreign);
+}
+
+/// Directory records may name one file's extent any number of times; the
+/// files are the image's own bytes, not a copy each.
+#[test]
+fn files_named_many_times_are_not_copied() {
+    const S: usize = 2048;
+    let (dir_lba, records, file_lba, file_len) = (20usize, 200usize, 40usize, 256 << 10);
+    let mut iso = vec![0u8; file_lba * S + file_len];
+    let record = |lba: usize, len: usize, name: &[u8], dir: bool| {
+        let mut r = vec![0u8; 33 + name.len() + (1 - name.len() % 2)];
+        r[0] = r.len() as u8;
+        r[2..6].copy_from_slice(&(lba as u32).to_le_bytes());
+        r[10..14].copy_from_slice(&(len as u32).to_le_bytes());
+        r[25] = if dir { 2 } else { 0 };
+        r[32] = name.len() as u8;
+        r[33..33 + name.len()].copy_from_slice(name);
+        r
+    };
+    let name: Vec<u8> = "user-data".encode_utf16().flat_map(u16::to_be_bytes).collect();
+    let mut dir = vec![];
+    for _ in 0..records {
+        let r = record(file_lba, file_len, &name, false);
+        // Records do not cross sectors.
+        if dir.len() % S + r.len() > S {
+            dir.resize(dir.len().div_ceil(S) * S, 0);
+        }
+        dir.extend(r);
+    }
+    assert!(dir_lba * S + dir.len() <= file_lba * S);
+    iso[dir_lba * S..dir_lba * S + dir.len()].copy_from_slice(&dir);
+    let d = &mut iso[16 * S..17 * S];
+    d[0] = 2;
+    d[1..6].copy_from_slice(b"CD001");
+    d[88..91].copy_from_slice(b"%/E");
+    d[156..190].copy_from_slice(&record(dir_lba, dir.len(), &[0], true)[..34]);
+    iso[17 * S] = 255;
+    iso[17 * S + 1..17 * S + 6].copy_from_slice(b"CD001");
+
+    let files = ci::iso_root_files(&iso).unwrap();
+    assert_eq!(files.len(), records);
+    let range = iso.as_ptr_range();
+    assert!(files.iter().all(|(n, b)| n == "user-data" && b.len() == file_len && range.contains(&b.as_ptr())));
+}
+
+/// The ISO tools are checked by the script builders themselves: each is
+/// put into the script as it is.
+#[test]
+fn the_script_builders_check_the_tools() {
+    let c = cloud_init();
+    for tools in [&[][..], &["genisoimage; touch pwned"][..], &["xorriso", "xorriso"][..]] {
+        assert!(ci::seed_script(&c, "pool", "vol", "", tools).is_err(), "{tools:?}");
+        assert!(ci::seed_update_script("/pool/vm-cidata.iso", "1 2", &c, tools).is_err(), "{tools:?}");
+    }
+    assert!(ci::seed_script(&c, "pool", "vol", "", &["xorriso"]).is_ok());
+}
+
+/// `mktemp` gives a staging directory where `user-data` cannot be written
+/// (a directory of that name, which not even root writes over).
+#[cfg(unix)]
+fn unwritable_staging(d: &Path) {
+    let stage = d.join("stage");
+    let _ = std::fs::remove_file(d.join("mktemp"));
+    write_exec(
+        &d.join("mktemp"),
+        &format!("#!/bin/sh\n/bin/mkdir -p '{s}/user-data' && echo '{s}'\n", s = stage.display()),
+    );
+}
+
+/// A seed file that cannot be written stops the script before any ISO is
+/// made of what was: at creation the disk is taken back, at an update
+/// nothing is uploaded.
+#[cfg(unix)]
+#[test]
+fn a_seed_file_not_written_stops_the_seed() {
+    let m = sbm_parser::script::cmd_marker;
+    let d = bin_dir("stage-create", Some("genisoimage"));
+    unwritable_staging(&d);
+    let script = ci::seed_script(&cloud_init(), "pool", "vol", "echo ROLLED-BACK; ", ci::SEED_TOOLS).unwrap();
+    let raw = run_sh(&script, &d);
+    assert!(raw.contains("ROLLED-BACK"), "{raw}");
+    let iso = raw.split(&m(ci::KEY_SEED_ISO)).nth(1).unwrap_or_default();
+    assert!(iso.contains(&format!("{}1", virt::RC_PREFIX)), "{raw}");
+    assert_eq!(read(&d, "iso_args"), "");
+    assert!(!read(&d, "log").contains("vol-create-as"), "{}", read(&d, "log"));
+    let _ = std::fs::remove_dir_all(&d);
+
+    let (d, rev) = update_dir("stage-update");
+    unwritable_staging(&d);
+    let raw = run_sh(&ci::seed_update_script("/pool/stage-cidata.iso", &rev, &cloud_init(), ci::SEED_TOOLS).unwrap(), &d);
+    assert!(matches!(ci::parse_seed_update(&raw), Err(VirtError::Command { .. })), "{raw}");
+    assert_eq!(read(&d, "iso_args"), "");
+    assert!(!read(&d, "log").contains("vol-upload"), "{}", read(&d, "log"));
+    let _ = std::fs::remove_dir_all(&d);
+}
+
+/// Two updates of one seed made from the same read, the second started
+/// while the first is under way: the second waits for the first, then finds
+/// the seed changed. Without the lock both would pass the check and the
+/// second would overwrite the first.
+#[cfg(unix)]
+#[test]
+fn overlapping_seed_updates_do_not_both_write() {
+    use std::io::Write;
+    let seed = format!("/pool/race-{}-cidata.iso", std::process::id());
+    let (d, rev) = update_dir("race");
+    std::fs::write(d.join("persist"), "").unwrap();
+    std::fs::write(d.join("slow_vol-upload"), "").unwrap();
+    let spawn = |hostname: &str| {
+        let mut next = cloud_init();
+        next.hostname = hostname.into();
+        let script = ci::seed_update_script(&seed, &rev, &next, ci::SEED_TOOLS).unwrap();
+        let mut child = Command::new("/bin/sh")
+            .env("PATH", &d)
+            .current_dir(&d)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .unwrap();
+        child.stdin.take().unwrap().write_all(script.as_bytes()).unwrap();
+        child
+    };
+    let first = spawn("sbx-first");
+    // The first has the seed downloaded, so it holds the lock.
+    let t = std::time::Instant::now();
+    while !read(&d, "log").contains("vol-download") {
+        assert!(t.elapsed().as_secs() < 10, "the first update never started");
+        std::thread::sleep(std::time::Duration::from_millis(20));
+    }
+    let second = spawn("sbx-second");
+    let out = |c: std::process::Child| String::from_utf8(c.wait_with_output().unwrap().stdout).unwrap();
+    let (a, b) = (out(first), out(second));
+    ci::parse_seed_update(&a).unwrap();
+    assert!(matches!(ci::parse_seed_update(&b), Err(VirtError::Conflict { .. })), "{b}");
+    let uploads = read(&d, "uploads");
+    assert!(uploads.contains("sbx-first") && !uploads.contains("sbx-second"), "{uploads}");
+    let _ = std::fs::remove_dir_all(&d);
 }

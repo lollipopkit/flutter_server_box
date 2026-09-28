@@ -951,7 +951,7 @@ pub fn parse_display(raw: &str) -> Option<VirtDisplay> {
     display.host = Some(host.to_string()).filter(|h| !h.is_empty());
     display.port = port.and_then(|p| p.parse::<i32>().ok()).and_then(|p| {
         // virsh prints `port - 5900` for VNC
-        let p = if protocol == "vnc" { p + 5900 } else { p };
+        let p = if protocol == "vnc" { p.checked_add(5900)? } else { p };
         u16::try_from(p).ok().filter(|&p| p > 0)
     });
     Some(display)
@@ -3704,17 +3704,19 @@ pub const QEMU_FIRMWARE_DIR: &str = "/usr/share/qemu/firmware";
 /// Which firmware the host can actually boot with: one JSON per firmware in
 /// QEMU's descriptors, the two features this app cares about among them
 /// ([`QEMU_FIRMWARE_DIR`]). `grep -q` over each file, so nothing here reads
-/// one whole. A section of its own; parse with
-/// [`parse_firmware_descriptors`].
+/// one whole. A section of its own, ending in a status line as every other
+/// does (a directory with no descriptor is an answer, not a failure); parse
+/// with [`parse_firmware_descriptors`].
 fn firmware_probe() -> String {
     format!(
         "echo '{fw}'\nfor f in {dir}/*.json; do [ -f \"$f\" ] || continue\n\
          printf '%s ' \"$f\"\n\
          if grep -q '\"secure-boot\"' \"$f\" 2>/dev/null; then printf 'secure-boot '; fi\n\
          if grep -q '\"enrolled-keys\"' \"$f\" 2>/dev/null; then printf 'enrolled-keys '; fi\n\
-         printf '\n'\ndone\n",
+         printf '\n'\ndone\nprintf '\n{rc}0\n'\n",
         fw = script::cmd_marker(KEY_HW_FIRMWARE),
         dir = QEMU_FIRMWARE_DIR,
+        rc = RC_PREFIX,
     )
 }
 
@@ -3732,13 +3734,20 @@ pub struct VirtHardwareInfo {
     pub config: VirtHwConfig,
     /// The running definition; none while the domain is not running
     pub live: Option<VirtHwConfig>,
-    /// `dumpxml --inactive` as read. Edits that rewrite the definition are
-    /// made from it, and refused when the host's has changed since — a
-    /// digest in all but name
+    /// `dumpxml --inactive --security-info` as read. Edits that rewrite the
+    /// definition are made from it, and refused when the host's has changed
+    /// since — a digest in all but name. **Carries secrets** (a VNC or SPICE
+    /// `passwd`): without them a rewritten definition would drop them, so
+    /// it is never shown or logged — [`VirtHardwareInfo::config_text`] is.
     pub config_xml: String,
-    /// `dumpxml` (the running definition) as read; empty while the domain
-    /// is not running. What a revert to the running definition is made
-    /// from ([`VirtHwChange::RevertLive`]).
+    /// [`VirtHardwareInfo::config_xml`] without its secrets: what a view
+    /// shows of the definition.
+    #[serde(default)]
+    pub config_text: String,
+    /// `dumpxml --security-info` (the running definition) as read; empty
+    /// while the domain is not running. What a revert to the running
+    /// definition is made from ([`VirtHwChange::RevertLive`]); carries
+    /// secrets as `config_xml` does.
     #[serde(default)]
     pub live_xml: String,
     pub autostart: bool,
@@ -3759,8 +3768,10 @@ pub fn hardware_script(domain: &str) -> String {
     let mut s = prelude();
     s.push_str(&section(KEY_HW_INFO, &format!("dominfo {d}")));
     s.push_str(&section(KEY_HW_NODE, "nodeinfo"));
-    s.push_str(&section(KEY_HW_CONFIG, &format!("dumpxml --inactive {d}")));
-    s.push_str(&section(KEY_HW_LIVE, &format!("dumpxml {d}")));
+    // `--security-info`: a definition written back from these keeps its
+    // console password, which a plain dump leaves out.
+    s.push_str(&section(KEY_HW_CONFIG, &format!("dumpxml --inactive --security-info {d}")));
+    s.push_str(&section(KEY_HW_LIVE, &format!("dumpxml --security-info {d}")));
     // For the domain's own virt type, arch and machine: Secure Boot is a
     // q35 thing, and what the host offers differs between them. The values
     // are cut to the characters those names have before reaching a shell
@@ -3783,21 +3794,7 @@ V domcapabilities ${{t:+--virttype "$t"}} ${{a:+--arch "$a"}} ${{m:+--machine "$
          while read -r kind dev target src; do [ -n \"$target\" ] && [ \"$src\" != - ] || continue\n{}done\n",
         item_section(KEY_HW_BLK, "target", &format!("domblkinfo {d} --device \"$target\""))
     ));
-    // Which firmware the host can actually boot with: one JSON per firmware
-    // in QEMU's descriptors, the two features this app cares about among
-    // them. `grep -l` over the directory, so nothing here reads a file.
-    s.push_str(&format!(
-        "echo '{fw}'
-for f in {dir}/*.json; do [ -f \"$f\" ] || continue
-         printf '%s ' \"$f\"
-         if grep -q '\"secure-boot\"' \"$f\" 2>/dev/null; then printf 'secure-boot '; fi
-         if grep -q '\"enrolled-keys\"' \"$f\" 2>/dev/null; then printf 'enrolled-keys '; fi
-         printf '\n'
-done
-",
-        fw = script::cmd_marker(KEY_HW_FIRMWARE),
-        dir = QEMU_FIRMWARE_DIR,
-    ));
+    s.push_str(&firmware_probe());
     s
 }
 
@@ -4339,12 +4336,29 @@ pub fn parse_hardware(raw: &str) -> Result<VirtHardwareInfo, VirtError> {
         config,
         live,
         config_xml: config_xml.to_string(),
+        config_text: without_secrets(config_xml),
         live_xml,
         autostart,
         description,
         host_cpus,
         host_memory_kib,
     })
+}
+
+/// `xml` without what only `--security-info` prints: every `passwd`
+/// attribute (a `<graphics>`'s), cut out with the space before it, the rest
+/// as written.
+pub fn without_secrets(xml: &str) -> String {
+    let Ok(doc) = roxmltree::Document::parse(xml.trim_end()) else {
+        return String::new();
+    };
+    let edits = doc
+        .descendants()
+        .flat_map(|n| n.attributes())
+        .filter(|a| a.name() == "passwd" && a.namespace().is_none())
+        .map(|a| (xml[..a.range().start].trim_end().len()..a.range().end, String::new()))
+        .collect();
+    splice(xml, edits)
 }
 
 /// One change to a domain's hardware; see [`hardware_change_script`].
@@ -4649,7 +4663,7 @@ impl VirtHwChange {
         };
         match self {
             VirtHwChange::Cpu { sockets, cores, current } => {
-                if *sockets == 0 || *cores == 0 || sockets * cores > 4096 {
+                if *sockets == 0 || *cores == 0 || sockets.checked_mul(*cores).is_none_or(|n| n > 4096) {
                     return bad("topology");
                 }
                 if current.is_some_and(|c| c == 0) {
@@ -5291,10 +5305,14 @@ pub fn definition_of_live_xml(live_xml: &str, definition_xml: &str) -> Result<St
     }
     // A disk's runtime `index`: QEMU's own numbering of the files it
     // opened, which a definition does not carry and libvirt writes again.
-    for src in root
-        .descendants()
-        .filter(|n| n.is_element() && n.tag_name().name() == "source" && n.attribute("index").is_some())
-    {
+    // A source inside a `<backingStore>` goes with it, and an edit inside a
+    // range already removed would overlap it.
+    for src in root.descendants().filter(|n| {
+        n.is_element()
+            && n.tag_name().name() == "source"
+            && n.attribute("index").is_some()
+            && !n.ancestors().any(|a| a.has_tag_name("backingStore"))
+    }) {
         edits.push((start_tag_range(src), start_tag_less(src, &["index"])));
     }
     // The CPU: the definition's, with the running topology.
@@ -5385,6 +5403,12 @@ fn remove_blank_lines(xml: String) -> String {
 /// template at the next start. Leaving UEFI deletes it too. Keeping the old
 /// one for going back left a file per switch that nothing ever removed —
 /// deleting the guest removes only the file its definition names.
+///
+/// Only a file in libvirt's NVRAM directory ([`is_libvirt_nvram`]) is ever
+/// deleted. Where no reset is asked for, the `<nvram>` stays exactly as
+/// written, wherever its file is (its `format='qcow2'` and template too);
+/// a Secure Boot change on a file elsewhere is refused, since the file
+/// could not be made again and a new path would lose its boot entries.
 pub fn edit_firmware_xml(
     base_xml: &str,
     efi: bool,
@@ -5394,13 +5418,19 @@ pub fn edit_firmware_xml(
     let root = doc.root_element();
     let os = child(root, "os").ok_or_else(|| not_found("<os>"))?;
     let before = parse_hw_xml(base_xml, &[])?;
-    let vars = child(os, "nvram")
-        .and_then(|n| n.text())
-        .map(str::trim)
-        .filter(|p| is_libvirt_nvram(p));
-    let drop_vars = match vars {
-        Some(path) if before.efi && (!efi || before.secure_boot != secure_boot) => {
-            Some(path.to_string())
+    let nvram = child(os, "nvram");
+    let path = nvram.and_then(|n| n.text()).map(str::trim).filter(|p| !p.is_empty());
+    // The variables file is made again: Secure Boot's keys go in only then.
+    let reset = before.efi && (!efi || before.secure_boot != secure_boot);
+    let drop_vars = match path {
+        Some(p) if reset && is_libvirt_nvram(p) => Some(p.to_string()),
+        Some(p) if reset && efi => {
+            return Err(VirtError::Command {
+                message: format!(
+                    "The UEFI variables file {p} is outside libvirt's NVRAM directory: \
+                     it cannot be made again with the new Secure Boot keys"
+                ),
+            });
         }
         _ => None,
     };
@@ -5428,18 +5458,28 @@ pub fn edit_firmware_xml(
                 yes(secure)
             ),
         ));
-        // The same path either way: made again there when dropped.
-        if let Some(path) = vars {
-            edits.push((at..at, format!("<nvram>{}</nvram>", xml_escape(path))));
+        // The same path either way: made again there when dropped, from
+        // the template the new features select; kept as written otherwise.
+        match (&drop_vars, nvram) {
+            (Some(path), _) => edits.push((at..at, format!("<nvram>{}</nvram>", xml_escape(path)))),
+            (None, Some(n)) => edits.push((at..at, xml[n.range()].to_string())),
+            (None, None) => {}
         }
     }
     if secure {
         match child(root, "features") {
-            Some(f) if child(f, "smm").is_none() => match closing_tag_at(xml, f) {
-                Some(at) => edits.push((at..at, "<smm state='on'/>".into())),
-                None => edits.push((f.range(), "<features><smm state='on'/></features>".into())),
+            Some(f) => match child(f, "smm") {
+                // Turned off: on, with what it holds (`<tseg>`) kept. `<smm/>`
+                // is on already.
+                Some(smm) if smm.attribute("state") == Some("off") => {
+                    edits.push((start_tag_range(smm), start_tag(smm, &["state"], &[("state", "on".into())])))
+                }
+                Some(_) => {}
+                None => match closing_tag_at(xml, f) {
+                    Some(at) => edits.push((at..at, "<smm state='on'/>".into())),
+                    None => edits.push((f.range(), "<features><smm state='on'/></features>".into())),
+                },
             },
-            Some(_) => {}
             None => {
                 let at = os.range().end;
                 edits.push((at..at, "\n  <features><smm state='on'/></features>".into()));
@@ -5590,10 +5630,12 @@ fn hw_step_with_file(content: &str, args: &str, live: bool) -> String {
 
 /// Reads the persistent definition, as a step so that a refusal is the
 /// daemon's (and sudo's cue), then stops with a conflict when it is not
-/// `base_xml` any more.
+/// `base_xml` any more. Read with `--security-info`, as
+/// [`VirtHardwareInfo::config_xml`] is: the two forms never compare equal
+/// on a domain with a console password. Neither is ever printed.
 fn hw_guard(domain: &str, base_xml: &str) -> String {
     format!(
-        "echo '{step}'\ncur=$(virsh --connect {CONNECT_URI} -q dumpxml --inactive {d} </dev/null 2>&1); r=$?\n\
+        "echo '{step}'\ncur=$(virsh --connect {CONNECT_URI} -q dumpxml --inactive --security-info {d} </dev/null 2>&1); r=$?\n\
          if [ \"$r\" != 0 ]; then printf '%s\\n{RC_PREFIX}%s\\n' \"$cur\" \"$r\"; exit 0; fi\n\
          printf '\\n{RC_PREFIX}0\\n'\n\
          if [ \"$cur\" != {base} ]; then echo '{conflict}'; exit 0; fi\n",
@@ -5729,16 +5771,19 @@ pub fn hardware_change_script(
             if let Some(path) = delete_path {
                 // A guest that has not let go of the disk yet (an unplug is
                 // the guest's to finish) keeps it: deleting it under a
-                // running QEMU is not something to do to anyone's data.
-                let still = if running {
-                    format!(
-                        "virsh --connect {CONNECT_URI} -q domblklist {d} </dev/null 2>/dev/null | awk -v t={t} '$1==t{{f=1}} END{{exit !f}}'"
+                // running QEMU is not something to do to anyone's data. A
+                // `domblklist` that fails says nothing either way, so the
+                // disk is kept then too.
+                let (read, still) = if running {
+                    (
+                        format!("b=$(virsh --connect {CONNECT_URI} -q domblklist {d} </dev/null 2>/dev/null); u=$?\n"),
+                        format!("[ \"$u\" != 0 ] || printf '%s\\n' \"$b\" | awk -v t={t} '$1==t{{f=1}} END{{exit !f}}'"),
                     )
                 } else {
-                    "false".to_string()
+                    (String::new(), "false".to_string())
                 };
                 s.push_str(&format!(
-                    "if {still}; then echo '{kept}'; else\n{step}fi\n",
+                    "{read}if {still}; then echo '{kept}'; else\n{step}fi\n",
                     kept = script::cmd_marker(KEY_HW_KEPT),
                     step = hw_step(&format!("vol-delete --vol {}", q(path))),
                 ));

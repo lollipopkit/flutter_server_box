@@ -238,7 +238,9 @@ Future<String> parseVirtCreateVolumesJson({required String raw}) =>
 
 /// `$6$<salt>$…`: a cloud-init password as SHA-512 crypt, so only the hash
 /// ever leaves the app. `salt` is up to 16 of `./0-9A-Za-z`, drawn from a
-/// secure source by the caller.
+/// secure source by the caller. Synchronous: the password is at most
+/// `PASSWORD_MAX` (1 KiB) bytes, which bounds the hashing to milliseconds;
+/// a longer one is refused.
 String virtHashPassword({required String password, required String salt}) =>
     RustLib.instance.api.crateApiVirtVirtHashPassword(
       password: password,

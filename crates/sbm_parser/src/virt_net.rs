@@ -319,13 +319,7 @@ pub fn parse_net_section(raw: &str) -> Result<VirtNetSection, VirtError> {
                 .map(|d| {
                     d.children()
                         .filter(|n| n.is_element() && n.tag_name().name() == "host")
-                        .filter_map(|h| {
-                            Some(VirtNetHost {
-                                mac: h.attribute("mac")?.to_ascii_lowercase(),
-                                ip: h.attribute("ip")?.to_string(),
-                                name: h.attribute("name").map(str::to_string),
-                            })
-                        })
+                        .filter_map(host_of)
                         .collect()
                 })
                 .unwrap_or_default();
@@ -428,7 +422,9 @@ pub fn edit_network_xml(base_xml: &str, edit: &VirtNetEdit) -> Result<String, Vi
         out[0] = cut.lines().next().map(str::to_string);
     }
 
-    // <forward>: the mode. A network of its own gets none.
+    // <forward>: the mode. A network of its own gets none. An unchanged
+    // mode keeps the element as the host wrote it: its `dev=`, its `<nat>`
+    // addresses and port range are not the form's to drop.
     let forward_xml = match edit.mode.as_str() {
         "nat" => "<forward mode='nat'/>",
         "route" => "<forward mode='route'/>",
@@ -436,6 +432,7 @@ pub fn edit_network_xml(base_xml: &str, edit: &VirtNetEdit) -> Result<String, Vi
         _ => "<forward mode='bridge'/>",
     };
     match (child("forward"), forward_xml.is_empty()) {
+        (Some(_), _) if edit.mode == base_mode => {}
         (Some(f), true) => set_element(&mut out, xml, f, None),
         (Some(f), false) => set_element(&mut out, xml, f, Some(forward_xml.to_string())),
         (None, false) => added.push(format!("  {forward_xml}")),
@@ -546,7 +543,39 @@ fn ip_element<'a, 'i>(
         }
     }
     dhcp_lines.extend(old_ranges.iter().skip(1).map(|r| src(*r)));
-    dhcp_lines.extend(edit.hosts.iter().map(|h| host_xml(h, false)));
+    // The static hosts: an entry the edit leaves as it was keeps the host's
+    // own text (a `<lease>` under it, attributes the form does not show), and
+    // one the form never saw — no MAC, or no address (`id=`, a name alone) —
+    // is kept whole. Only a changed entry is rewritten, in its place; a
+    // removed one goes, and a new one is added after them.
+    let mut written = vec![false; edit.hosts.len()];
+    for h in dhcp
+        .map(elements)
+        .unwrap_or_default()
+        .into_iter()
+        .filter(|c| c.tag_name().name() == "host")
+    {
+        let Some(old) = host_of(h) else {
+            dhcp_lines.push(src(h));
+            continue;
+        };
+        let Some(i) = edit.hosts.iter().position(|n| n.mac.eq_ignore_ascii_case(&old.mac)) else {
+            continue;
+        };
+        written[i] = true;
+        dhcp_lines.push(if same_host(&old, &edit.hosts[i]) {
+            src(h)
+        } else {
+            host_xml(&edit.hosts[i], false)
+        });
+    }
+    dhcp_lines.extend(
+        edit.hosts
+            .iter()
+            .zip(&written)
+            .filter(|(_, w)| !**w)
+            .map(|(h, _)| host_xml(h, false)),
+    );
     // Anything else under <dhcp> (`<bootp>`).
     if let Some(d) = dhcp {
         dhcp_lines.extend(
@@ -578,17 +607,12 @@ fn ip_element<'a, 'i>(
 /// what libvirt refuses a duplicate of. An entry rewritten under the same
 /// MAC is a delete and an add.
 pub fn host_changes(base: &VirtNetSection, edit: &VirtNetEdit) -> (Vec<VirtNetHost>, Vec<VirtNetHost>) {
-    /// The same host, whatever the case it was written in: a MAC is read
-    /// without one, and libvirt writes it lowercase.
-    fn same(a: &VirtNetHost, b: &VirtNetHost) -> bool {
-        a.mac.eq_ignore_ascii_case(&b.mac) && a.ip == b.ip && a.name == b.name
-    }
     let find = |list: &[VirtNetHost], mac: &str| list.iter().find(|h| h.mac.eq_ignore_ascii_case(mac)).cloned();
     let mut add = Vec::new();
     let mut delete = Vec::new();
     for h in &edit.hosts {
         match find(&base.hosts, &h.mac) {
-            Some(old) if same(&old, h) => {}
+            Some(old) if same_host(&old, h) => {}
             Some(old) => {
                 delete.push(old);
                 add.push(h.clone());
@@ -602,6 +626,22 @@ pub fn host_changes(base: &VirtNetSection, edit: &VirtNetEdit) -> (Vec<VirtNetHo
         }
     }
     (add, delete)
+}
+
+/// The same host, whatever the case it was written in: a MAC is read
+/// without one, and libvirt writes it lowercase.
+fn same_host(a: &VirtNetHost, b: &VirtNetHost) -> bool {
+    a.mac.eq_ignore_ascii_case(&b.mac) && a.ip == b.ip && a.name == b.name
+}
+
+/// A `<dhcp>` `<host>` as [`VirtNetHost`]: `None` for an entry the form
+/// cannot show (no MAC, or no address).
+fn host_of(h: roxmltree::Node<'_, '_>) -> Option<VirtNetHost> {
+    Some(VirtNetHost {
+        mac: h.attribute("mac")?.to_ascii_lowercase(),
+        ip: h.attribute("ip")?.to_string(),
+        name: h.attribute("name").map(str::to_string),
+    })
 }
 
 /// The `<host>` element `net-update` takes. A delete matches on the MAC
@@ -883,7 +923,8 @@ mod tests {
             name: Some("h1".into()),
         }];
         let out = edit_network_xml(BASE, &e).unwrap();
-        assert!(out.contains("<forward mode='nat'/>"), "{out}");
+        // The mode is unchanged: the host's `<forward>` stays whole.
+        assert!(out.contains("<forward mode='nat'>\n    <nat>\n      <port start='1024' end='65535'/>"), "{out}");
         assert!(out.contains("<bridge name='virbr1' stp='on' delay='0'/>"), "{out}");
         assert!(out.contains("<ip address='192.168.151.1' prefix='24'>"), "{out}");
         assert!(out.contains("<range start='192.168.151.100' end='192.168.151.200'/>"), "{out}");
@@ -988,6 +1029,56 @@ mod tests {
             assert!(!out.contains(gone), "{gone}\n{out}");
         }
         assert!(out.contains("<dnsmasq:option value='log-queries'/>"), "{out}");
+    }
+
+    /// An unchanged mode keeps `<forward>` as written (`dev=`, `<nat>`'s
+    /// address and port range); unchanged static hosts keep theirs (a
+    /// `<lease>`), and a host the form cannot show (no MAC) is kept.
+    #[test]
+    fn an_edit_rewrites_only_what_changed() {
+        let base = "<network>\n  <name>lab</name>\n  <forward mode='nat' dev='eth1'>\n    <nat>\n      <address start='203.0.113.10' end='203.0.113.20'/>\n      <port start='2000' end='3000'/>\n    </nat>\n  </forward>\n  <ip address='192.168.150.1' prefix='24'>\n    <dhcp>\n      <range start='192.168.150.100' end='192.168.150.200'/>\n      <host mac='52:54:00:aa:bb:01' name='h1' ip='192.168.150.10'>\n        <lease expiry='2' unit='hours'/>\n      </host>\n      <host id='0:1:0:1:2:3:4:5' name='by-id' ip='192.168.150.11'/>\n      <host mac='52:54:00:aa:bb:03' ip='192.168.150.13'/>\n      <host mac='52:54:00:aa:bb:04' ip='192.168.150.14'/>\n    </dhcp>\n  </ip>\n</network>\n";
+        let mut e = edit("nat");
+        e.address = Some("192.168.150.1".into());
+        e.prefix = Some(24);
+        e.dhcp_start = Some("192.168.150.120".into());
+        e.dhcp_end = Some("192.168.150.180".into());
+        let host = |mac: &str, ip: &str, name: Option<&str>| VirtNetHost {
+            mac: mac.into(),
+            ip: ip.into(),
+            name: name.map(str::to_string),
+        };
+        e.hosts = vec![
+            // Unchanged, written in another case.
+            host("52:54:00:AA:BB:01", "192.168.150.10", Some("h1")),
+            // Changed: .03 → .33. `.04` removed. `.05` new.
+            host("52:54:00:aa:bb:03", "192.168.150.33", None),
+            host("52:54:00:aa:bb:05", "192.168.150.15", None),
+        ];
+        let out = edit_network_xml(base, &e).unwrap();
+        for kept in [
+            "<forward mode='nat' dev='eth1'>",
+            "<address start='203.0.113.10' end='203.0.113.20'/>",
+            "<port start='2000' end='3000'/>",
+            "<lease expiry='2' unit='hours'/>",
+            "<host id='0:1:0:1:2:3:4:5' name='by-id' ip='192.168.150.11'/>",
+            "<host mac='52:54:00:aa:bb:03' ip='192.168.150.33'/>",
+            "<host mac='52:54:00:aa:bb:05' ip='192.168.150.15'/>",
+            "<range start='192.168.150.120' end='192.168.150.180'/>",
+        ] {
+            assert!(out.contains(kept), "{kept}\n{out}");
+        }
+        assert!(!out.contains("192.168.150.13'"), "{out}");
+        assert!(!out.contains("bb:04"), "{out}");
+        let back = section(&out);
+        assert_eq!(
+            back.hosts.iter().map(|h| h.ip.as_str()).collect::<Vec<_>>(),
+            ["192.168.150.10", "192.168.150.33", "192.168.150.15"]
+        );
+        // A mode change writes the new mode's element.
+        let mut route = e.clone();
+        route.mode = "route".into();
+        let out = edit_network_xml(base, &route).unwrap();
+        assert!(out.contains("<forward mode='route'/>") && !out.contains("<nat>"), "{out}");
     }
 
     #[test]

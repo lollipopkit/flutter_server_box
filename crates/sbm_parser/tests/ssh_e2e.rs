@@ -778,7 +778,7 @@ fn run_virt(host: &str, script: &str) -> String {
 #[test]
 #[ignore = "requires SBM_E2E_SSH_HOST and a reachable SSH server"]
 fn ssh_e2e_virt() {
-    use sbm_parser::virt::{self, VirtAction, VirtError, VirtState};
+    use sbm_parser::virt::{self, VirtError, VirtState};
 
     let host =
         ssh_host().expect("SBM_E2E_SSH_HOST must be set in the environment or workspace-root .env");
@@ -858,9 +858,11 @@ fn ssh_e2e_virt() {
         .unwrap_or_else(|e| panic!("detail of {}: {e:?}", dom.name));
         assert_eq!(detail.xml.uuid.as_deref(), Some(dom.uuid.as_str()));
         assert_eq!(detail.xml.name.as_deref(), Some(dom.name.as_str()));
-        if dom.state != VirtState::Running {
+        // A paused guest's QEMU keeps its display; only an inactive one has none.
+        if dom.state == VirtState::Stopped {
             assert!(detail.display.is_none());
-        } else if detail.xml.graphics.iter().any(|g| g.kind == "vnc" && g.socket.is_none()) {
+        } else if dom.state == VirtState::Running
+            && detail.xml.graphics.iter().any(|g| g.kind == "vnc" && g.socket.is_none()) {
             // A running TCP VNC display resolves to a real port
             let display = detail.display.as_ref().expect("running VNC display");
             assert_eq!(display.protocol, "vnc");
@@ -868,9 +870,11 @@ fn ssh_e2e_virt() {
         }
     }
 
-    let missing = virt::parse_action(&run_virt(
+    // A domain that is not there, asked read-only: a power action here
+    // would start whatever the host has under this UUID.
+    let missing = virt::parse_domain_detail(&run_virt(
         &host,
-        &virt::action_script(VirtAction::Start, "00000000-0000-4000-8000-00000000e2e0"),
+        &virt::domain_detail_script("00000000-0000-4000-8000-00000000e2e0"),
     ));
     assert!(
         matches!(missing, Err(VirtError::DomainNotFound { .. })),

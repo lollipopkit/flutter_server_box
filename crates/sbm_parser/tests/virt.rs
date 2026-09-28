@@ -246,6 +246,8 @@ fn detail_running_vnc() {
     assert_eq!(display.protocol, "vnc");
     assert_eq!(display.host.as_deref(), Some("127.0.0.1"));
     assert_eq!(display.port, Some(5900));
+    // A display number past `i32` once 5900 is added: no port, not a panic.
+    assert_eq!(virt::parse_display("vnc://localhost:2147483647").map(|d| d.port), Some(None));
     let x = &d.xml;
     assert_eq!(x.name.as_deref(), Some("cirros-run"));
     assert_eq!(x.title, None);
@@ -513,8 +515,10 @@ fn scripts_without_virsh() {
     std::fs::create_dir_all(&empty).unwrap();
     let raw = run_sh(&virt::overview_script(), &empty.display().to_string());
     assert_eq!(virt::parse_overview(&raw), Err(VirtError::NotInstalled));
-    let probe = virt::parse_probe(&run_sh(&virt::probe_script(), &empty.display().to_string()));
-    assert_eq!(probe, Ok(virt::VirtHostProbe::default()));
+    // Only what PATH decides: the container and PVE checks also read fixed
+    // paths (`/.dockerenv`, `/usr/sbin/pveversion`), which are the runner's.
+    let probe = virt::parse_probe(&run_sh(&virt::probe_script(), &empty.display().to_string())).unwrap();
+    assert_eq!(probe.libvirt, None);
     let _ = std::fs::remove_dir_all(&empty);
 }
 
@@ -708,6 +712,69 @@ fn firmware_descriptors_of_a_real_host() {
     assert!(!info.config.nics.is_empty() || !info.config.disks.is_empty());
 }
 
+/// The firmware section `hardware_script` writes is read back by
+/// `parse_hardware`: framed like every other section, so a host's
+/// descriptors are not dropped as a cut-off answer.
+#[cfg(unix)]
+#[test]
+fn hardware_script_firmware_reaches_the_parser() {
+    let d = hardware_stub("fw", &base_xml());
+    let fw = d.join("firmware");
+    std::fs::create_dir_all(&fw).unwrap();
+    std::fs::write(fw.join("50-edk2-ovmf-4m.json"), "{}").unwrap();
+    std::fs::write(fw.join("30-edk2-ovmf-4m-secure-enrolled.json"), r#"{"features": ["secure-boot", "enrolled-keys"]}"#)
+        .unwrap();
+    let script = virt::hardware_script("vm").replace(virt::QEMU_FIRMWARE_DIR, &fw.display().to_string());
+    let path = format!("{}:/usr/bin:/bin", d.display());
+    let info = virt::parse_hardware(&run_sh(&script, &path)).unwrap();
+    let mut names: Vec<_> = info.firmware.iter().map(|f| (f.name.as_str(), f.enrolled_keys)).collect();
+    names.sort();
+    assert_eq!(
+        names,
+        [("30-edk2-ovmf-4m-secure-enrolled.json", true), ("50-edk2-ovmf-4m.json", false)]
+    );
+    // No descriptor at all is an empty list, not a failure.
+    std::fs::remove_dir_all(&fw).unwrap();
+    assert!(virt::parse_hardware(&run_sh(&script, &path)).unwrap().firmware.is_empty());
+    let _ = std::fs::remove_dir_all(&d);
+}
+
+/// A definition rewritten from what the hardware read keeps the console's
+/// password: read with `--security-info`, guarded in the same form, and
+/// written back with it. What a view shows of it has none.
+#[cfg(unix)]
+#[test]
+fn a_rewritten_definition_keeps_the_console_password() {
+    use virt::VirtHwChange as C;
+    let secret = base_xml().replacen(
+        "<graphics type='vnc' port='-1' autoport='yes' listen='127.0.0.1'>",
+        "<graphics type='vnc' port='-1' autoport='yes' listen='127.0.0.1' passwd='s3cr&apos;t'>",
+        1,
+    );
+    assert!(secret.contains("passwd="));
+    let d = hardware_stub("secret", &secret);
+    let path = format!("{}:/usr/bin:/bin", d.display());
+    let info = virt::parse_hardware(&run_sh(&virt::hardware_script("vm"), &path)).unwrap();
+    assert!(info.config_xml.contains("passwd='s3cr&apos;t'"), "{}", info.config_xml);
+    assert!(!info.config_text.contains("passwd") && !info.config_text.contains("s3cr"), "{}", info.config_text);
+    assert_eq!(info.config_text, virt::without_secrets(&secret));
+    assert!(info.config_text.contains("<graphics type='vnc' port='-1' autoport='yes' listen='127.0.0.1'>"));
+    for change in [
+        C::Cpu { sockets: 1, cores: 2, current: None },
+        C::Boot { order: vec!["vda".into()] },
+    ] {
+        let _ = std::fs::remove_file(d.join("given_define.xml"));
+        let script = virt::hardware_change_script("vm", false, Some(&info.config_xml), &change).unwrap();
+        let out = run_sh(&script, &path);
+        assert_eq!(virt::parse_hardware_change(&out), Ok(Default::default()), "{change:?}");
+        let given = std::fs::read_to_string(d.join("given_define.xml")).unwrap();
+        assert!(given.contains("passwd='s3cr&apos;t'"), "{change:?}: {given}");
+        // Neither the secret nor the definition is in what the script printed.
+        assert!(!out.contains("s3cr"), "{out}");
+    }
+    let _ = std::fs::remove_dir_all(&d);
+}
+
 #[test]
 fn live_xml_as_a_definition() {
     let live = fixture("dumpxml_revert_live.xml");
@@ -812,6 +879,20 @@ fn live_xml_as_a_definition() {
     assert!(virt::definition_of_live_xml("not xml", "<domain/>").is_err());
     // An empty one is readable and comes out empty: nothing to write.
     assert_eq!(virt::definition_of_live_xml("<domain/>", "<domain/>").unwrap(), "<domain/>\n");
+    // A populated `<backingStore>` whose sources carry an `index` as well:
+    // the whole chain goes, and nothing around it.
+    let chained = live.replacen(
+        "      <backingStore/>\n",
+        "      <backingStore type='file' index='2'>\n        <format type='qcow2'/>\n        \
+         <source file='/var/lib/libvirt/images/base.qcow2' index='2'/>\n        \
+         <backingStore type='file' index='3'>\n          <format type='raw'/>\n          \
+         <source file='/var/lib/libvirt/images/root.raw' index='3'/>\n          \
+         <backingStore/>\n        </backingStore>\n      </backingStore>\n",
+        1,
+    );
+    assert_ne!(chained, live);
+    let made = virt::definition_of_live_xml(&chained, &expected).unwrap();
+    assert_eq!(made, virt::definition_of_live_xml(&live, &expected).unwrap());
 }
 
 /// Discarding the pending changes stops where the running XML is not the
@@ -1599,6 +1680,8 @@ fn hardware_changes_refuse_what_must_not_reach_a_shell() {
     })
     .is_err());
     assert!(script(&C::Memory { memory_mib: 512, current_mib: Some(1024) }).is_err());
+    // A topology whose product overflows is refused, not a panic.
+    assert!(script(&C::Cpu { sockets: 65536, cores: 65536, current: None }).is_err());
     assert!(script(&C::Boot { order: vec![] }).is_err());
     // Rewriting the definition needs the one it is made from.
     assert!(virt::hardware_change_script("vm", false, None, &C::Cpu { sockets: 1, cores: 1, current: None }).is_err());
@@ -1637,11 +1720,14 @@ cat >> "$dir/stdin"
 shift 3
 [ -f "$dir/fail_$1" ] && { echo "error: $1 refused" >&2; exit 1; }
 case "$1" in
-  dumpxml) cat "$dir/base.xml" ;;
+  dumpxml) case " $* " in
+      *" --security-info "*) cat "$dir/base.xml" ;;
+      *) sed "s/ passwd='[^']*'//" "$dir/base.xml" ;;
+    esac ;;
   define) cp "$3" "$dir/given_define.xml" ;;
   update-device) cp "$5" "$dir/given_update-device.xml" ;;
   vol-path) echo "/pool/$5" ;;
-  domblklist) [ -f "$dir/still" ] && echo " vdb /pool/x" ;;
+  domblklist) [ -f "$dir/still" ] && echo " vdb /pool/x"; exit 0 ;;
   *) ;;
 esac
 "#;
@@ -1676,7 +1762,7 @@ fn hardware_change_scripts_under_sh_with_hostile_names() {
         std::fs::read_to_string(d.join("given_define.xml")).unwrap(),
         virt::edit_cpu_xml(&base, 1, 4, Some(2)).unwrap()
     );
-    assert!(log().contains(&format!("dumpxml\n--inactive\n--domain\n{name}\n")), "{}", log());
+    assert!(log().contains(&format!("dumpxml\n--inactive\n--security-info\n--domain\n{name}\n")), "{}", log());
     assert!(log().contains(&format!("setvcpus\n--domain\n{name}\n--count\n2\n--live\n")), "{}", log());
     // …and it is not, when it changed.
     std::fs::write(d.join("base.xml"), base.replace("<on_crash>destroy", "<on_crash>restart")).unwrap();
@@ -1757,6 +1843,17 @@ fn hardware_change_scripts_under_sh_with_hostile_names() {
     reset();
     assert!(!run(true, &remove).unwrap().volume_kept);
     assert!(log().contains(&format!("vol-delete\n--vol\n{file}\n")), "{}", log());
+    // The unplug refused and the disk list unread (the connection gone): it
+    // cannot be told whether QEMU still holds it, so it is kept.
+    let live_only = C::RemoveDisk { target: "vdb".into(), delete_path: Some(file.clone()), config: false, live: true };
+    std::fs::write(d.join("fail_detach-disk"), "").unwrap();
+    std::fs::write(d.join("fail_domblklist"), "").unwrap();
+    reset();
+    let out = run(true, &live_only).unwrap();
+    assert!(out.volume_kept && out.live_error.is_some(), "{out:?}");
+    assert!(!log().contains("vol-delete"), "{}", log());
+    std::fs::remove_file(d.join("fail_detach-disk")).unwrap();
+    std::fs::remove_file(d.join("fail_domblklist")).unwrap();
 
     // An interface's source with quotes lands in the XML escaped, with the
     // link state and each definition's own boot order.
@@ -1949,6 +2046,37 @@ fn firmware_edits() {
     assert!(virt::is_libvirt_nvram(
         "/home/u/.config/libvirt/qemu/nvram/vm_VARS.fd"
     ));
+    // A variables file elsewhere (or a qcow2 one) is the guest's all the
+    // same: an edit that resets nothing keeps its element as written…
+    const ELSEWHERE: &str = "<nvram template='/t.fd' format='qcow2'>/srv/vm/vm_VARS.qcow2</nvram>";
+    let kept = ran.replacen(&format!("<nvram template='/t.fd'>{VARS}</nvram>"), ELSEWHERE, 1);
+    assert_ne!(kept, ran);
+    let same = virt::edit_firmware_xml(&kept, true, false).unwrap();
+    assert!(same.xml.contains(ELSEWHERE), "{}", same.xml);
+    assert_eq!(same.drop_vars, None);
+    // …and one in libvirt's directory keeps its attributes too.
+    let same = virt::edit_firmware_xml(&ran, true, false).unwrap();
+    assert!(same.xml.contains(&format!("<nvram template='/t.fd'>{VARS}</nvram>")), "{}", same.xml);
+    // A Secure Boot change on it cannot make the file again: refused, not a
+    // new path.
+    assert!(matches!(
+        virt::edit_firmware_xml(&kept, true, true),
+        Err(VirtError::Command { message }) if message.contains("/srv/vm/vm_VARS.qcow2")
+    ));
+    // Leaving UEFI keeps the file where it is, deleting nothing.
+    let bios = virt::edit_firmware_xml(&kept, false, false).unwrap();
+    assert!(!bios.xml.contains("<nvram") && bios.drop_vars.is_none(), "{}", bios.xml);
+
+    // Secure Boot on a definition whose SMM is turned off turns it on.
+    let smm_off = virt::edit_firmware_xml(&base, true, false)
+        .unwrap()
+        .xml
+        .replacen("<smm state='on'/>", "", 1)
+        .replacen("<features>", "<features><smm state='off'><tseg unit='MiB'>48</tseg></smm>", 1);
+    assert!(smm_off.contains("<smm state='off'>"), "{smm_off}");
+    let on = virt::edit_firmware_xml(&smm_off, true, true).unwrap();
+    assert!(on.xml.contains("<smm state='on'><tseg unit='MiB'>48</tseg></smm>"), "{}", on.xml);
+    assert!(!on.xml.contains("state='off'"), "{}", on.xml);
 
     // The change script deletes it after the definition, quoted.
     let script = virt::hardware_change_script(
@@ -2082,7 +2210,7 @@ fn second_part_scripts_under_sh_with_a_hostile_name() {
         std::fs::read_to_string(d.join("given_define.xml")).unwrap(),
         virt::edit_disk_xml(&base, "vda", None, None, Some("none")).unwrap()
     );
-    assert!(log().contains(&format!("dumpxml\n--inactive\n--domain\n{name}\n")), "{}", log());
+    assert!(log().contains(&format!("dumpxml\n--inactive\n--security-info\n--domain\n{name}\n")), "{}", log());
 
     // A USB device goes to the running guest too; a PCI one does not.
     let usb = C::AddDevice { device: virt::VirtHwNewDevice::Usb { vendor: Some("0bda".into()), product: Some("b023".into()), bus: None, device: None } };
@@ -2654,7 +2782,7 @@ fn external_snapshot_script_quotes_everything() {
         s.contains(
             "V snapshot-create-as --domain 'it'\\''s' --name 'snap-1' --disk-only --atomic \
              --description 'two\nlines' \
-             --diskspec 'vda',file='/p/a b.qcow2',snapshot=external\n"
+             --diskspec 'vda,file=/p/a b.qcow2,snapshot=external'\n"
         ),
         "{s}"
     );
@@ -2797,7 +2925,10 @@ fn external_snapshot_script_under_sh_keeps_a_hostile_name_whole() {
             evil,
             evil,
             Some(evil),
-            &[("vda".into(), format!("/p/{evil}.qcow2"))],
+            &[
+                ("vda".into(), format!("/p/{evil}.qcow2")),
+                ("vdb".into(), "/srv/vm,images/disk.snap".into()),
+            ],
         ),
         &path,
     );
@@ -2807,6 +2938,8 @@ fn external_snapshot_script_under_sh_keeps_a_hostile_name_whole() {
     assert!(log.contains(&format!("snapshot-create-as\n--domain\n{evil}\n")), "{log}");
     assert!(log.contains(&format!("--name\n{evil}\n")), "{log}");
     assert!(log.contains(&format!("--diskspec\nvda,file=/p/{evil}.qcow2,snapshot=external\n")), "{log}");
+    // A comma in the path is virsh's escaped `,,`, not a new field.
+    assert!(log.contains("--diskspec\nvdb,file=/srv/vm,,images/disk.snap,snapshot=external\n"), "{log}");
     assert!(!d.join("pwned").exists() && !std::path::Path::new("pwned").exists());
     assert!(out.contains(&format!("{}{}\n", virt::RC_PREFIX, 0)), "{out}");
     let _ = std::fs::remove_dir_all(&d);
@@ -2882,6 +3015,65 @@ fn snap_diff_tells_namesake_devices_apart() {
     assert_eq!(diff.len(), 1, "{diff:?}");
     assert_eq!(diff[0].key, "hostdev:usb#2");
     assert!(diff[0].added);
+}
+
+/// A device changed in place is a change: a controller's model, a passed-
+/// through device's source, a CPU mode that names no model.
+#[test]
+fn snap_diff_reads_a_device_modified_in_place() {
+    let snap = |inner: &str| format!("<domainsnapshot><domain>{inner}</domain></domainsnapshot>");
+    let dom = |inner: &str| format!("<domain>{inner}</domain>");
+    let devs = |d: &str| format!("<devices>{d}</devices>");
+    let one = |before: &str, after: &str| {
+        let diff = virt_snapshot::diff_domain_xml(&snap(before), &dom(after));
+        assert_eq!(diff.len(), 1, "{before} → {after}: {diff:?}");
+        diff.into_iter().next().unwrap()
+    };
+    let d = one(
+        &devs("<controller type='usb' index='0' model='ich9-ehci1'/>"),
+        &devs("<controller type='usb' index='0' model='qemu-xhci'/>"),
+    );
+    assert_eq!((d.group.as_str(), d.key.as_str()), ("other", "controller:usb:0"));
+    assert!(d.before.unwrap().contains("ich9-ehci1") && d.after.unwrap().contains("qemu-xhci"));
+    let usb = |bus: &str| {
+        format!("<hostdev mode='subsystem' type='usb'><source><address bus='{bus}' device='2'/></source></hostdev>")
+    };
+    let d = one(&devs(&usb("1")), &devs(&usb("3")));
+    assert_eq!(d.key, "hostdev:usb");
+    // Named by vendor and product: the address a running guest's definition
+    // adds is not a change.
+    let named = |addr: &str| {
+        format!(
+            "<hostdev mode='subsystem' type='usb'><source><vendor id='0x1d6b'/><product id='0x0002'/>{addr}</source></hostdev>"
+        )
+    };
+    assert_eq!(
+        virt_snapshot::diff_domain_xml(
+            &snap(&devs(&named("<address bus='1' device='4'/>"))),
+            &dom(&devs(&named("")))
+        ),
+        vec![]
+    );
+    let d = one(
+        &devs("<video><model type='vga' vram='16384' heads='1' primary='yes'/></video>"),
+        &devs("<video><model type='virtio' heads='1' primary='yes'/></video>"),
+    );
+    assert_eq!(d.key, "video:video");
+    let d = one(
+        &devs("<tpm model='tpm-tis'><backend type='emulator' version='1.2'/></tpm>"),
+        &devs("<tpm model='tpm-crb'><backend type='emulator' version='2.0'/></tpm>"),
+    );
+    assert_eq!(d.key, "tpm:tpm");
+    // host-passthrough ↔ host-model: neither names a model.
+    let d = one("<cpu mode='host-passthrough' check='none'/>", "<cpu mode='host-model'/>");
+    assert_eq!((d.group.as_str(), d.key.as_str()), ("cpu", "model"));
+    assert_eq!((d.before.as_deref(), d.after.as_deref()), (Some("host-passthrough"), Some("host-model")));
+    let d = one(
+        "<cpu mode='custom'><model fallback='forbid'>qemu64</model></cpu>",
+        "<cpu mode='host-model'><model fallback='allow'>Skylake</model></cpu>",
+    );
+    assert_eq!(d.before.as_deref(), Some("qemu64 (forbid)"));
+    assert_eq!(d.after.as_deref(), Some("host-model Skylake (allow)"));
 }
 
 #[test]
@@ -3002,6 +3194,106 @@ fn snap_delete_names_the_overlay_libvirt_leaves_off_the_chain() {
         &raw[to..]
     );
     assert_eq!(virt_snapshot::snap_delete_leftovers(&unread), Ok(vec![]));
+}
+
+/// The part of `raw` from the section `from` up to the section `to`.
+fn cut_sections(raw: &str, from: &str, to: &str) -> (usize, usize) {
+    let at = |k: &str| raw.find(&script::cmd_marker(k)).unwrap_or_else(|| panic!("{k}"));
+    (at(from), at(to))
+}
+
+/// The leftovers are deleted, so an incomplete chain answer names none: a
+/// snapshot whose layer is `ov1` — the running guest's backing file — must
+/// never be named when the chain that shows it in use was not read.
+#[test]
+fn snap_delete_leftovers_fail_closed_on_an_incomplete_chain() {
+    // The captured running guest on ov2 → ov1 → base, and a snapshot whose
+    // layer is ov1, which is on that chain.
+    let raw = fixture("script_snap_delete_running_denied.txt").replacen(
+        "<source file='/var/lib/libvirt/sbxe2e-exp/ov2.qcow2'/>",
+        "<source file='/var/lib/libvirt/sbxe2e-exp/ov1.qcow2'/>",
+        1,
+    );
+    assert_eq!(virt_snapshot::snap_delete_leftovers(&raw), Ok(vec![]));
+    // `domblklist` failed (its status is not kept): no chain section, and the
+    // definition names only the top file.
+    let (from, to) = cut_sections(&raw, virt_snapshot::KEY_SNAP_CHAIN, virt_snapshot::KEY_DEL_INFO);
+    let no_list = format!("{}{}", &raw[..from], &raw[to..]);
+    assert_eq!(virt_snapshot::snap_delete_leftovers(&no_list), Ok(vec![]));
+    // `dumpxml` refused as well.
+    let (from, to) = cut_sections(&no_list, virt::KEY_XML, virt_snapshot::KEY_DEL_INFO);
+    let no_xml = format!(
+        "{}{}{}",
+        &no_list[..from],
+        section(virt::KEY_XML, "error: failed to get domain 'x'", 1),
+        &no_list[to..]
+    );
+    assert_eq!(virt_snapshot::snap_delete_leftovers(&no_xml), Ok(vec![]));
+    // A disk `domblklist` is not asked about (not a regular file) has no
+    // answer, so its chain is unknown.
+    let block = raw.replacen(
+        "<emulator>/usr/bin/qemu-system-x86_64</emulator>",
+        "<emulator>/usr/bin/qemu-system-x86_64</emulator>\
+         <disk type='block' device='disk'><source dev='/dev/vg/vdb'/><target dev='vdb'/></disk>",
+        3,
+    );
+    let off = block.replacen(
+        "<source file='/var/lib/libvirt/sbxe2e-exp/ov1.qcow2'/>",
+        "<source file='/var/lib/libvirt/sbxe2e-exp/gone.qcow2'/>",
+        1,
+    );
+    assert_eq!(virt_snapshot::snap_delete_leftovers(&off), Ok(vec![]));
+    // The same with the block disk gone: the off-chain file is named.
+    let off = raw.replacen(
+        "<source file='/var/lib/libvirt/sbxe2e-exp/ov1.qcow2'/>",
+        "<source file='/var/lib/libvirt/sbxe2e-exp/gone.qcow2'/>",
+        1,
+    );
+    assert_eq!(
+        virt_snapshot::snap_delete_leftovers(&off),
+        Ok(vec!["/var/lib/libvirt/sbxe2e-exp/gone.qcow2".to_string()])
+    );
+    // A chain that does not end in a base (its last layer still names a
+    // backing file) is not a whole one.
+    let (from, to) = cut_sections(&off, virt_snapshot::KEY_SNAP_CHAIN, virt_snapshot::KEY_DEL_INFO);
+    let json = r#"[{"filename": "/var/lib/libvirt/sbxe2e-exp/ov2.qcow2", "format": "qcow2", "full-backing-filename": "/var/lib/libvirt/sbxe2e-exp/ov1.qcow2", "backing-filename-format": "qcow2"}]"#;
+    let cut = format!(
+        "{}{}{}",
+        &off[..from],
+        section(virt_snapshot::KEY_SNAP_CHAIN, &format!("/var/lib/libvirt/sbxe2e-exp/ov2.qcow2\n{json}\n"), 0),
+        &off[to..]
+    );
+    assert_eq!(virt_snapshot::snap_delete_leftovers(&cut), Ok(vec![]));
+}
+
+/// A header may record its backing file relative to the overlay's
+/// directory (`qemu-img create -b ov1.qcow2`); the chain carries the path
+/// QEMU opens, so it matches the profile's absolute `deny` entries.
+#[test]
+fn snap_chain_backing_is_the_absolute_path() {
+    let raw = fixture("script_snap_delete_running_denied.txt")
+        .replace(
+            "\"backing-filename\": \"/var/lib/libvirt/sbxe2e-exp/ov1.qcow2\"",
+            "\"backing-filename\": \"ov1.qcow2\"",
+        )
+        .replace(
+            "\"backing-filename\": \"/var/lib/libvirt/sbxe2e-exp/base.qcow2\"",
+            "\"backing-filename\": \"base.qcow2\"",
+        );
+    let why = virt_snapshot::snap_delete_refusal(&raw).unwrap().unwrap();
+    assert!(why.contains("/var/lib/libvirt/sbxe2e-exp/ov1.qcow2"), "{why}");
+    // Without `full-backing-filename` (an older qemu-img), the relative name
+    // is resolved against the overlay's directory.
+    let old = raw
+        .lines()
+        .filter(|l| !l.contains("\"full-backing-filename\""))
+        .collect::<Vec<_>>()
+        .join("\n");
+    let chain = virt_snapshot::parse_snap_chain(&old).unwrap();
+    let files = &chain.disks[0].files;
+    assert_eq!(files[0].backing.as_deref(), Some("/var/lib/libvirt/sbxe2e-exp/ov1.qcow2"));
+    assert_eq!(files[1].backing.as_deref(), Some("/var/lib/libvirt/sbxe2e-exp/base.qcow2"));
+    assert!(virt_snapshot::snap_delete_refusal(&old).unwrap().is_some());
 }
 
 /// The delete under sh with a stub virsh: the leftovers go after the

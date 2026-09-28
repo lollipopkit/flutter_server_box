@@ -333,9 +333,9 @@ pub fn parse_seed_tool(segments: &[(String, String)]) -> Option<String> {
 /// Whether `tools` is a usable ISO tool order: some of [`SEED_TOOLS`], none
 /// twice. The order is [`SEED_TOOLS`]' unless a caller narrows it (the
 /// end-to-end tests make a seed with each tool in turn).
-pub fn check_tools(tools: &[String]) -> Result<(), VirtError> {
-    let known = tools.iter().all(|t| SEED_TOOLS.contains(&t.as_str()));
-    let unique = tools.iter().enumerate().all(|(i, t)| !tools[..i].contains(t));
+pub fn check_tools<S: AsRef<str>>(tools: &[S]) -> Result<(), VirtError> {
+    let known = tools.iter().all(|t| SEED_TOOLS.contains(&t.as_ref()));
+    let unique = tools.iter().enumerate().all(|(i, t)| !tools[..i].iter().any(|u| u.as_ref() == t.as_ref()));
     if tools.is_empty() || !known || !unique {
         return Err(VirtError::Malformed {
             message: "invalid cloud-init seed tools".into(),
@@ -356,19 +356,23 @@ fn staging(fail: &str) -> String {
 
 /// The seed's files in `$d` ([`staging`]), and `$d/seed.iso` made of them by
 /// the first of `tools` the host has, its output and status the current
-/// section's. `fail` runs before the script stops: when the tool fails, or
-/// when there is none (a [`KEY_SEED_NO_TOOL`] section then).
+/// section's. `fail` runs before the script stops: when a file cannot be
+/// written whole (a full disk: an ISO of a cut-short `user-data` would
+/// replace a good seed), when the tool fails, or when there is none (a
+/// [`KEY_SEED_NO_TOOL`] section then). `tools` is checked ([`check_tools`]).
 fn iso_script(ci: &VirtCloudInit, tools: &[&str], fail: &str) -> String {
     let q = shell_quote_unix;
-    let mut s = format!(
-        "(umask 077\nprintf '%s' {} >\"$d/user-data\"\nprintf '%s' {} >\"$d/meta-data\"\n",
+    let mut files = format!(
+        "umask 077 && printf '%s' {} >\"$d/user-data\" && printf '%s' {} >\"$d/meta-data\"",
         q(&ci.user_data()),
         q(&ci.meta_data())
     );
     if let Some(n) = ci.network_config() {
-        s.push_str(&format!("printf '%s' {} >\"$d/network-config\"\n", q(&n)));
+        files.push_str(&format!(" && printf '%s' {} >\"$d/network-config\"", q(&n)));
     }
-    s.push_str(")\n");
+    let mut s = format!(
+        "out=$( ({files}) 2>&1) || {{ printf '%s\\n{RC_PREFIX}1\\n' \"${{out:-writing the seed files failed}}\"; {fail}exit 0; }}\n"
+    );
     let net = if ci.network.is_some() { " network-config" } else { "" };
     let net_ld = if ci.network.is_some() { "-N network-config " } else { "" };
     let mkisofs = format!("-output seed.iso -volid cidata -joliet -rock user-data meta-data{net}");
@@ -407,6 +411,7 @@ pub fn seed_script(
     tools: &[&str],
 ) -> Result<String, VirtError> {
     ci.check()?;
+    check_tools(tools)?;
     let q = shell_quote_unix;
     let m = script::cmd_marker;
     let (pool, vol) = (q(pool), q(volume));
@@ -545,9 +550,16 @@ pub fn parse_seed_read(raw: &str) -> Result<VirtSeedRead, VirtError> {
 /// would not), then uploaded over it — and a failed upload puts the old one
 /// back. A shorter ISO leaves the old one's tail after it, which nothing
 /// reads: an ISO 9660 image says its own size.
+///
+/// All of it — the download, the check, the upload and the one put back —
+/// holds a lock on the host for this seed ([`SEED_LOCK_SH`]): two updates
+/// of one seed at once would each pass the check against the same read,
+/// and the one whose upload failed would put its old seed back over the
+/// other's new one.
 pub fn seed_update_script(seed: &str, revision: &str, ci: &VirtCloudInit, tools: &[&str]) -> Result<String, VirtError> {
     check_seed_path(seed)?;
     ci.check()?;
+    check_tools(tools)?;
     if revision.is_empty() || revision.chars().any(|c| !(c.is_ascii_digit() || c == ' ')) {
         return Err(VirtError::Malformed {
             message: "invalid seed revision".into(),
@@ -560,6 +572,10 @@ pub fn seed_update_script(seed: &str, revision: &str, ci: &VirtCloudInit, tools:
     s.push_str(&crate::virt::run_fn());
     s.push_str(&format!("echo '{}'\n", m(KEY_SEED_BACKUP)));
     s.push_str(&staging(""));
+    s.push_str(&format!(
+        "seed={seed}\n{lock}",
+        lock = SEED_LOCK_SH.replace("{RC}", RC_PREFIX).replace("{CONFLICT}", &m(KEY_SEED_CONFLICT)),
+    ));
     s.push_str(&format!(
         "R vol-download --vol {seed} --file \"$d/old.iso\"\n[ \"$r\" = 0 ] || exit 0\n\
          if [ \"$(cksum <\"$d/old.iso\")\" != {rev} ]; then echo '{conflict}'; exit 0; fi\n\
@@ -585,18 +601,33 @@ pub fn seed_update_script(seed: &str, revision: &str, ci: &VirtCloudInit, tools:
     Ok(s)
 }
 
+/// Takes the lock of the seed at `$seed` as fd 9, held until the script
+/// ends: `flock(1)` (util-linux, and busybox's) on a file in the temporary
+/// directory named by the path's `cksum`. A lock dies with its process, so
+/// an update cut short leaves none behind. Waits a minute for an update
+/// under way, then reads as a conflict, which by then it is. Updates by
+/// different accounts of the host do not see each other's locks (each
+/// file is its creator's alone); the app reaches a host as one.
+const SEED_LOCK_SH: &str = "lock=\"${TMPDIR:-/tmp}/sbm-seed-$(printf '%s' \"$seed\" | cksum | tr ' ' -).lock\"\n\
+     command -v flock >/dev/null 2>&1 || { printf 'flock not found on the host\\n{RC}1\\n'; exit 0; }\n\
+     { (umask 077; : >>\"$lock\") && command exec 9>>\"$lock\"; } 2>/dev/null \
+     || { printf 'cannot open %s\\n{RC}1\\n' \"$lock\"; exit 0; }\n\
+     n=0; until flock -n 9; do n=$((n + 1)); [ \"$n\" -lt 60 ] || { echo '{CONFLICT}'; exit 0; }; sleep 1; done\n";
+
 /// [`seed_update_script`]'s output: `Conflict` when the seed changed since
 /// it was read; the host's words for a step that failed, and whether the old
 /// seed is back when the upload did.
 pub fn parse_seed_update(raw: &str) -> Result<(), VirtError> {
     let segs = script::parse_script_segments(raw);
     let secs = crate::virt::sections(raw)?;
-    crate::virt::take(&secs, KEY_SEED_BACKUP, raw)?.ok()?;
+    // Before the backup's own status: a lock not had in time is a conflict
+    // said before the download ran.
     if segs.iter().any(|(k, _)| k == KEY_SEED_CONFLICT) {
         return Err(VirtError::Conflict {
             message: "The cloud-init seed changed since it was read".into(),
         });
     }
+    crate::virt::take(&secs, KEY_SEED_BACKUP, raw)?.ok()?;
     if segs.iter().any(|(k, _)| k == KEY_SEED_NO_TOOL) {
         return Err(no_tool_error());
     }
@@ -650,11 +681,26 @@ fn le32(b: &[u8], at: usize) -> Result<usize, VirtError> {
         .ok_or_else(|| iso_err("truncated"))
 }
 
+/// `len` bytes of `iso` from sector `lba`: the fields are the image's own,
+/// so the arithmetic is checked — on a 32-bit target `lba * 2048` of a
+/// `u32` overflows `usize`, and a wrapped offset would be some other, valid,
+/// part of the image.
+fn extent<'a>(iso: &'a [u8], lba: usize, len: usize, what: &str) -> Result<&'a [u8], VirtError> {
+    lba.checked_mul(SECTOR)
+        .and_then(|start| Some(start..start.checked_add(len)?))
+        .and_then(|range| iso.get(range))
+        .ok_or_else(|| iso_err(&format!("{what} out of range")))
+}
+
 /// The regular files in an ISO 9660 image's root directory, by the names a
 /// seed's files have: Joliet's where the image has them, else Rock Ridge's
 /// (`NM`). Every seed tool here writes both (`-joliet -rock`); an image with
 /// neither has only 8.3 names, which no seed file has.
-pub fn iso_root_files(iso: &[u8]) -> Result<Vec<(String, Vec<u8>)>, VirtError> {
+///
+/// The files are borrowed from `iso`, not copied: records may name the same
+/// extent any number of times, and a copy each would turn an image under the
+/// read cap ([`SEED_READ_MAX`]) into gigabytes.
+pub fn iso_root_files(iso: &[u8]) -> Result<Vec<(String, &[u8])>, VirtError> {
     // Volume descriptors from sector 16 to the terminator.
     let mut primary = None;
     let mut joliet = None;
@@ -677,10 +723,7 @@ pub fn iso_root_files(iso: &[u8]) -> Result<Vec<(String, Vec<u8>)>, VirtError> {
         (None, None) => return Err(iso_err("no primary volume descriptor")),
     };
     let root = &desc[156..190];
-    let (lba, len) = (le32(root, 2)?, le32(root, 10)?);
-    let dir = iso
-        .get(lba * SECTOR..lba * SECTOR + len)
-        .ok_or_else(|| iso_err("root directory out of range"))?;
+    let dir = extent(iso, le32(root, 2)?, le32(root, 10)?, "root directory")?;
     let mut out = Vec::new();
     let mut at = 0;
     while at < dir.len() {
@@ -711,11 +754,7 @@ pub fn iso_root_files(iso: &[u8]) -> Result<Vec<(String, Vec<u8>)>, VirtError> {
         };
         let Some(name) = name else { continue };
         let name = name.split(';').next().unwrap_or_default().to_string();
-        let (flba, flen) = (le32(rec, 2)?, le32(rec, 10)?);
-        let data = iso
-            .get(flba * SECTOR..flba * SECTOR + flen)
-            .ok_or_else(|| iso_err("file out of range"))?;
-        out.push((name, data.to_vec()));
+        out.push((name, extent(iso, le32(rec, 2)?, le32(rec, 10)?, "file")?));
     }
     Ok(out)
 }
@@ -781,34 +820,45 @@ impl Y {
 }
 
 /// A scalar as YAML reads it: double-quoted (JSON's escapes, which is what
-/// the app writes), single-quoted, or plain; `~`/`null` for nothing.
-fn yaml_scalar(s: &str) -> Y {
+/// the app writes), single-quoted, or plain; `~`/`null` for nothing; or a
+/// flow sequence of those. `None` for what the subset does not read: a flow
+/// sequence inside another, a flow mapping, and every other construct a
+/// plain scalar cannot start with (anchors, aliases, tags, block scalars) —
+/// read as text, each would be written back as a string it never was. The
+/// flow sequence does not nest, so this does not recurse more than once.
+fn yaml_scalar(s: &str) -> Option<Y> {
+    yaml_value(s, true)
+}
+
+fn yaml_value(s: &str, flow: bool) -> Option<Y> {
     let s = s.trim();
     if s.starts_with('"') {
-        return serde_json::from_str::<String>(s).map(Y::Str).unwrap_or_else(|_| Y::Str(s.to_string()));
+        return Some(serde_json::from_str::<String>(s).map(Y::Str).unwrap_or_else(|_| Y::Str(s.to_string())));
     }
     if let Some(inner) = s.strip_prefix('\'').and_then(|x| x.strip_suffix('\'')) {
-        return Y::Str(inner.replace("''", "'"));
+        return Some(Y::Str(inner.replace("''", "'")));
     }
-    if let Some(inner) = s.strip_prefix('[').and_then(|x| x.strip_suffix(']')) {
+    if flow && let Some(inner) = s.strip_prefix('[').and_then(|x| x.strip_suffix(']')) {
         if let Ok(v) = serde_json::from_str::<Vec<String>>(s) {
-            return Y::Seq(v.into_iter().map(Y::Str).collect());
+            return Some(Y::Seq(v.into_iter().map(Y::Str).collect()));
         }
-        return Y::Seq(
-            inner
-                .split(',')
-                .map(str::trim)
-                .filter(|x| !x.is_empty())
-                .map(yaml_scalar)
-                .collect(),
-        );
+        return inner
+            .split(',')
+            .map(str::trim)
+            .filter(|x| !x.is_empty())
+            .map(|x| yaml_value(x, false))
+            .collect::<Option<Vec<_>>>()
+            .map(Y::Seq);
+    }
+    if s.starts_with(['[', ']', '{', '}', '&', '*', '!', '|', '>', '%', '@', '`']) {
+        return None;
     }
     // A comment after a plain scalar.
     let s = s.split(" #").next().unwrap_or_default().trim_end();
-    match s {
+    Some(match s {
         "" | "~" | "null" => Y::Null,
         _ => Y::Str(s.to_string()),
-    }
+    })
 }
 
 /// `key: rest` of a mapping line, where the key is plain: a colon followed
@@ -823,9 +873,18 @@ fn yaml_key(line: &str) -> Option<(&str, &str)> {
     Some((line[..at.0].trim(), line[at.0 + 1..].trim()))
 }
 
+/// The deepest block nesting read. A seed the app writes is four deep
+/// (`ethernets`, a NIC, `routes`, a route); indentation alone bounds the
+/// recursion only by the file's size, which is enough lines to overflow the
+/// stack.
+const YAML_MAX_DEPTH: usize = 16;
+
 struct YLines {
     lines: Vec<(usize, String)>,
     at: usize,
+    depth: usize,
+    /// Something the subset does not read was met: the document is none.
+    bad: bool,
 }
 
 impl YLines {
@@ -841,27 +900,39 @@ impl YLines {
                 (indent, l.trim().to_string())
             })
             .collect();
-        YLines { lines, at: 0 }
+        YLines {
+            lines,
+            at: 0,
+            depth: 0,
+            bad: false,
+        }
     }
 
     fn peek(&self) -> Option<&(usize, String)> {
         self.lines.get(self.at)
     }
 
+    fn scalar(&mut self, s: &str) -> Y {
+        yaml_scalar(s).unwrap_or_else(|| {
+            self.bad = true;
+            Y::Null
+        })
+    }
+
     /// The block at `indent`: a sequence where it starts with `-`, a mapping
     /// otherwise.
     fn block(&mut self, indent: usize) -> Y {
-        match self.peek() {
-            Some((i, l)) if *i == indent && (l == "-" || l.starts_with("- ")) => self.seq(indent),
-            Some((i, _)) if *i == indent => self.map(indent, None),
+        self.nested(|y| match y.peek() {
+            Some((i, l)) if *i == indent && (l == "-" || l.starts_with("- ")) => y.seq(indent),
+            Some((i, _)) if *i == indent => y.map(indent, None),
             _ => Y::Null,
-        }
+        })
     }
 
     fn seq(&mut self, indent: usize) -> Y {
         let mut items = Vec::new();
         while let Some((i, l)) = self.peek().cloned() {
-            if i != indent || !(l == "-" || l.starts_with("- ")) {
+            if self.bad || i != indent || !(l == "-" || l.starts_with("- ")) {
                 break;
             }
             self.at += 1;
@@ -872,18 +943,30 @@ impl YLines {
             } else if let Some((k, v)) = yaml_key(rest) {
                 // A mapping item: its first key on the dash's line, the rest
                 // under it where that key stands.
-                items.push(self.map(indent + 2, Some((k.to_string(), v.to_string()))));
+                items.push(self.nested(|y| y.map(indent + 2, Some((k.to_string(), v.to_string())))));
             } else {
-                items.push(yaml_scalar(rest));
+                items.push(self.scalar(rest));
             }
         }
         Y::Seq(items)
     }
 
+    /// `f` one level deeper: past [`YAML_MAX_DEPTH`], the document is none.
+    fn nested(&mut self, f: impl FnOnce(&mut YLines) -> Y) -> Y {
+        if self.depth >= YAML_MAX_DEPTH {
+            self.bad = true;
+            return Y::Null;
+        }
+        self.depth += 1;
+        let y = f(self);
+        self.depth -= 1;
+        y
+    }
+
     fn map(&mut self, indent: usize, first: Option<(String, String)>) -> Y {
         let mut out = Vec::new();
         let mut pending = first;
-        loop {
+        while !self.bad {
             let (k, v) = match pending.take() {
                 Some(kv) => kv,
                 None => match self.peek().cloned() {
@@ -901,11 +984,13 @@ impl YLines {
                 match self.peek().cloned() {
                     Some((ci, _)) if ci > indent => self.block(ci),
                     // `key:` then `- item` at the key's own indent.
-                    Some((ci, l)) if ci == indent && (l == "-" || l.starts_with("- ")) => self.seq(ci),
+                    Some((ci, l)) if ci == indent && (l == "-" || l.starts_with("- ")) => {
+                        self.nested(|y| y.seq(ci))
+                    }
                     _ => Y::Null,
                 }
             } else {
-                yaml_scalar(&v)
+                self.scalar(&v)
             };
             out.push((k, value));
         }
@@ -913,66 +998,88 @@ impl YLines {
     }
 }
 
+/// The document, or [`Y::Null`] where any of it is outside the subset.
 fn yaml(text: &str) -> Y {
     let mut lines = YLines::new(text);
     let first = lines.peek().map(|(i, _)| *i).unwrap_or(0);
     let y = lines.block(first);
-    if lines.at < lines.lines.len() {
-        // Lines the subset did not take: read as a mapping of what was.
+    if lines.bad || lines.at < lines.lines.len() {
+        // Lines the subset did not take, or a value it does not read.
         return Y::Null;
     }
     y
 }
 
-/// One NIC as the seed writes it ([`VirtCiNetwork`]); `None` for an entry
-/// this app does not write (an unknown key, no MAC, several addresses, DHCP
-/// together with one).
+/// One NIC as the seed writes it ([`VirtCloudInit::network_config`]);
+/// `None` for anything else, so the read is foreign rather than a save
+/// changing what the guest's network does. What is read is exactly what is
+/// written: matched by the MAC alone; `dhcp4: true` with nothing else of the
+/// address, or `dhcp4: false` with one address and at most the one default
+/// route through a gateway; nameservers of addresses and search domains.
 fn nic_of(nic: &Y) -> Option<VirtCiNetwork> {
-    let known = |k: &str| matches!(k, "match" | "dhcp4" | "addresses" | "routes" | "nameservers");
-    if nic.keys().iter().any(|k| !known(k)) {
+    let only = |y: &Y, keys: &[&str]| matches!(y, Y::Map(_)) && y.keys().iter().all(|k| keys.contains(k));
+    if !only(nic, &["match", "dhcp4", "addresses", "routes", "nameservers"]) {
         return None;
     }
-    let mac = nic.get("match").and_then(|m| m.get("macaddress")).and_then(Y::str)?;
-    let dhcp = nic.get("dhcp4").and_then(Y::str) == Some("true");
-    let address = nic.get("addresses").and_then(Y::strs).unwrap_or_default();
-    if address.len() > 1 || (dhcp && !address.is_empty()) {
+    let m = nic.get("match")?;
+    if !only(m, &["macaddress"]) {
         return None;
     }
-    let gateway = match nic.get("routes") {
-        Some(Y::Seq(routes)) => routes
-            .iter()
-            .find(|r| matches!(r.get("to").and_then(Y::str), Some("0.0.0.0/0" | "default")))
-            .and_then(|r| r.get("via").and_then(Y::str))
-            .map(str::to_string),
-        _ => None,
+    let mac = m.get("macaddress").and_then(Y::str)?;
+    let ipv4 = match (nic.get("dhcp4").and_then(Y::str)?, nic.get("addresses"), nic.get("routes")) {
+        ("true", None, None) => None,
+        ("false", Some(addresses), routes) => {
+            let [address] = addresses.strs()?.try_into().ok()?;
+            let gateway = match routes {
+                None => None,
+                Some(Y::Seq(routes)) => match routes.as_slice() {
+                    [route]
+                        if only(route, &["to", "via"])
+                            && matches!(route.get("to").and_then(Y::str), Some("0.0.0.0/0" | "default")) =>
+                    {
+                        Some(route.get("via").and_then(Y::str)?.to_string())
+                    }
+                    _ => return None,
+                },
+                Some(_) => return None,
+            };
+            Some(VirtCiIpv4 { address, gateway })
+        }
+        _ => return None,
     };
-    let ns = nic.get("nameservers");
+    let (dns, search) = match nic.get("nameservers") {
+        None => (Vec::new(), Vec::new()),
+        Some(ns) => {
+            if !only(ns, &["addresses", "search"]) {
+                return None;
+            }
+            let list = |k: &str| ns.get(k).map_or(Some(Vec::new()), Y::strs);
+            (list("addresses")?, list("search")?)
+        }
+    };
     Some(VirtCiNetwork {
         mac: mac.to_string(),
-        ipv4: match (dhcp, address.first()) {
-            (false, Some(a)) => Some(VirtCiIpv4 {
-                address: a.clone(),
-                gateway,
-            }),
-            _ => None,
-        },
-        dns: ns.and_then(|n| n.get("addresses")).and_then(Y::strs).unwrap_or_default(),
-        search: ns.and_then(|n| n.get("search")).and_then(Y::strs).unwrap_or_default(),
+        ipv4,
+        dns,
+        search,
     })
 }
 
 /// What [`VirtCloudInit`] writes, read back from the seed's files. Anything
 /// it does not write, or writes otherwise, makes the read `foreign`.
-fn parse_seed(files: &[(String, Vec<u8>)]) -> VirtSeedRead {
+fn parse_seed(files: &[(String, &[u8])]) -> VirtSeedRead {
     let file = |name: &str| {
         files
             .iter()
             .find(|(n, _)| n == name)
             .map(|(_, b)| String::from_utf8_lossy(b).into_owned())
     };
-    let mut foreign = files
-        .iter()
-        .any(|(n, _)| !matches!(n.as_str(), "user-data" | "meta-data" | "network-config"));
+    // Another file, or one of these twice: which of two a guest reads is
+    // not this reader's to decide.
+    let mut seen = std::collections::HashSet::new();
+    let mut foreign = files.iter().any(|(n, _)| {
+        !matches!(n.as_str(), "user-data" | "meta-data" | "network-config") || !seen.insert(n)
+    });
     let mut ci = VirtCloudInit::default();
     let is = |y: Option<&Y>, want: &str| y.and_then(Y::str) == Some(want);
 
@@ -1023,6 +1130,12 @@ fn parse_seed(files: &[(String, Vec<u8>)]) -> VirtSeedRead {
                 }
                 _ => foreign = true,
             }
+            // The password's two switches, as [`VirtCloudInit::user_data`]
+            // derives them from the hash: a save writes them so, and must
+            // not unlock an account or open SSH to passwords unannounced.
+            let hashed = ci.password_hash.is_some();
+            foreign |= !account.is_some_and(|(u, _)| is(u.get("lock_passwd"), if hashed { "false" } else { "true" }));
+            foreign |= !is(y.get("ssh_pwauth"), if hashed { "true" } else { "false" });
             // The expiry, as [`VirtCloudInit::user_data`] writes it: this
             // account's own hash, set again by `chpasswd` and expired.
             if let Some(c) = y.get("chpasswd") {
@@ -1106,13 +1219,27 @@ pub fn is_crypt_salt(salt: &str) -> bool {
     (1..=16).contains(&salt.len()) && salt.bytes().all(|b| ITOA64.contains(&b))
 }
 
+/// The longest password [`sha512_crypt`] takes, in bytes. The algorithm
+/// hashes the password's length times the password (its `P` sequence),
+/// then the password twice in each of the 5000 rounds: a long paste would
+/// hold the caller — the app's UI isolate, on a synchronous FFI call — for
+/// seconds. 1 KiB is far past any password typed or generated, and is
+/// milliseconds.
+pub const PASSWORD_MAX: usize = 1024;
+
 /// `$6$<salt>$<hash>`: SHA-512 crypt (Ulrich Drepper's specification, the
 /// `crypt(3)` glibc and cloud-init's `hashed_passwd` read) with the default
-/// 5000 rounds. `salt` is the caller's, drawn from a secure source.
+/// 5000 rounds. `salt` is the caller's, drawn from a secure source; the
+/// password is up to [`PASSWORD_MAX`] bytes.
 pub fn sha512_crypt(password: &str, salt: &str) -> Result<String, VirtError> {
     if !is_crypt_salt(salt) {
         return Err(VirtError::Malformed {
             message: "invalid crypt salt".into(),
+        });
+    }
+    if password.len() > PASSWORD_MAX {
+        return Err(VirtError::Malformed {
+            message: format!("password longer than {PASSWORD_MAX} bytes"),
         });
     }
     Ok(sha512_crypt_rounds(password.as_bytes(), salt.as_bytes(), None))
@@ -1245,6 +1372,26 @@ mod tests {
         );
         assert!(sha512_crypt("pw", "bad salt").is_err());
         assert!(sha512_crypt("pw", "").is_err());
+    }
+
+    /// A pasted wall of text is refused, not hashed for seconds.
+    #[test]
+    fn sha512_crypt_bounds_the_password() {
+        sha512_crypt(&"x".repeat(PASSWORD_MAX), "abcdefgh").unwrap();
+        assert!(sha512_crypt(&"x".repeat(PASSWORD_MAX + 1), "abcdefgh").is_err());
+        assert!(sha512_crypt(&"x".repeat(1 << 20), "abcdefgh").is_err());
+    }
+
+    /// An extent's fields are the image's: an offset that overflows is out
+    /// of range, not a panic nor a wrap to some other part of the image (a
+    /// `u32` sector times 2048 overflows a 32-bit `usize`).
+    #[test]
+    fn an_extent_that_overflows_is_out_of_range() {
+        let iso = [0u8; 4096];
+        assert_eq!(extent(&iso, 1, 2048, "file").unwrap().len(), 2048);
+        assert!(extent(&iso, usize::MAX / SECTOR + 1, 1, "file").is_err());
+        assert!(extent(&iso, 1, usize::MAX - 10, "file").is_err());
+        assert!(extent(&iso, 2, 1, "file").is_err());
     }
 
     fn ci() -> VirtCloudInit {

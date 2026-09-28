@@ -357,7 +357,9 @@ pub fn parse_virt_create_volumes_json(raw: String) -> Result<String, VirtFfiErro
 
 /// `$6$<salt>$…`: a cloud-init password as SHA-512 crypt, so only the hash
 /// ever leaves the app. `salt` is up to 16 of `./0-9A-Za-z`, drawn from a
-/// secure source by the caller.
+/// secure source by the caller. Synchronous: the password is at most
+/// `PASSWORD_MAX` (1 KiB) bytes, which bounds the hashing to milliseconds;
+/// a longer one is refused.
 #[flutter_rust_bridge::frb(sync)]
 pub fn virt_hash_password(password: String, salt: String) -> Result<String, VirtFfiError> {
     Ok(sbm_parser::virt_cloud_init::sha512_crypt(&password, &salt)?)
@@ -449,11 +451,9 @@ pub fn virt_seed_update_script(
 ) -> Result<String, VirtFfiError> {
     use sbm_parser::virt_cloud_init as ci;
     let c: ci::VirtCloudInit = serde_json::from_str(&cloud_init_json).map_err(json_err)?;
+    // Checked by the script builder itself.
     let tools: Vec<&str> = match &tools {
-        Some(t) => {
-            ci::check_tools(t)?;
-            t.iter().map(String::as_str).collect()
-        }
+        Some(t) => t.iter().map(String::as_str).collect(),
         None => ci::SEED_TOOLS.to_vec(),
     };
     Ok(ci::seed_update_script(&seed, &revision, &c, &tools)?)

@@ -148,10 +148,11 @@ fn is_ifname(s: &str) -> bool {
         && s.chars().all(|c| c.is_ascii_alphanumeric() || "._-".contains(c))
 }
 
-/// An absolute path that is not `/` and does not climb.
+/// An absolute path that is not `/` and does not climb. `//`, `/./` and the
+/// like are `/` too: some component must be neither empty nor `.`.
 fn is_dir_path(p: &str) -> bool {
     p.starts_with('/')
-        && p.len() > 1
+        && p.split('/').any(|seg| !seg.is_empty() && seg != ".")
         && p.len() <= 4096
         && !p.chars().any(char::is_control)
         && !p.split('/').any(|seg| seg == "..")
@@ -441,6 +442,11 @@ pub fn resource_script(op: &VirtResourceOp) -> Result<String, VirtError> {
             ));
         }
         VirtResourceOp::NetCreate { name, mode, bridge, ipv4, autostart } => {
+            // The rollback only ever undefines this create's own network:
+            // the XML carries no UUID, so libvirt gives it a new one and
+            // refuses the define when the name is taken ("network 'x'
+            // already exists with uuid …", as `pool-define` does), and the
+            // script ends there.
             let n = q(name);
             s.push_str(&define_step(
                 &network_xml(name, mode, bridge.as_deref(), ipv4.as_ref()),
@@ -627,7 +633,11 @@ mod tests {
             autostart: true,
         };
         assert!(pool("dir", Some("/var/lib/libvirt/p1"), None).check().is_ok());
-        assert!(pool("dir", Some("/"), None).check().is_err());
+        for root in ["/", "//", "/./", "///./", "/.//."] {
+            assert!(pool("dir", Some(root), None).check().is_err(), "{root}");
+            assert!(pool("netfs", Some(root), Some("nas.lan:/export/vm")).check().is_err(), "{root}");
+        }
+        assert!(pool("dir", Some("/./srv//p1"), None).check().is_ok());
         assert!(pool("dir", Some("/var/../etc"), None).check().is_err());
         assert!(pool("dir", Some("relative"), None).check().is_err());
         assert!(pool("netfs", Some("/mnt/p1"), Some("nas.lan:/export/vm")).check().is_ok());
