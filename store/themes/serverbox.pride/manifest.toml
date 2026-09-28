@@ -1,0 +1,454 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/fsbt-manifest.schema.json
+# Pride: one package, one theme per flag. Everything below [variants] is what
+# the variants share; each variant draws its colors and its tile over it, and
+# carries its own stripes and heart in variants/<key>/.
+
+id = "serverbox.pride"
+name = "Pride"
+modes = ["light", "dark"]
+
+# [variants], background.tile and the schema 3 components.
+[schema]
+min = 3
+max = 3
+
+[colors]
+mode = 0
+
+[icons]
+style = "classic"
+
+# The flag's stripes at 45 degrees, one period per tile, faint over the
+# surface. Each variant's background.png is in variants/<key>/.
+[background]
+type = "image"
+image = "background.png"
+opacity = 0.12
+blur = 0
+
+[splash]
+color = "surface"
+logo = "splash_logo.svg"
+duration = 900
+
+[shapes]
+card = 16
+tile = 12
+button = 20
+
+# Solid cards and sheets over the stripes, so what is on them reads first.
+[components.card]
+backgroundColor = "surfaceContainerLowest"
+radius = 16
+borderColor = "outlineVariant"
+borderWidth = 1
+elevation = 0
+surfaceTintColor = 0x00000000
+
+[components.dark.card]
+backgroundColor = "surfaceContainerLow"
+
+[components.tile]
+selectedTileColor = "primaryContainer"
+selectedColor = "onPrimaryContainer"
+iconColor = "onSurfaceVariant"
+radius = 12
+
+[components.button]
+backgroundColor = "primary"
+foregroundColor = "onPrimary"
+radius = 20
+elevation = 0
+minHeight = 38
+
+[components.button.hovered]
+backgroundColor = "secondary"
+foregroundColor = "onSecondary"
+
+[components.button.disabled]
+backgroundColor = "surfaceContainerHighest"
+foregroundColor = "outline"
+
+[components.textButton]
+foregroundColor = "primary"
+radius = 14
+padding = [10, 5, 10, 5]
+minHeight = 30
+
+[components.outlinedButton]
+foregroundColor = "primary"
+borderColor = "outlineVariant"
+borderWidth = 1
+radius = 20
+
+[components.iconButton]
+foregroundColor = "onSurfaceVariant"
+radius = 14
+
+[components.iconButton.hovered]
+foregroundColor = "primary"
+
+[components.input]
+filled = true
+fillColor = "surfaceContainerLow"
+radius = 12
+borderColor = "outlineVariant"
+borderWidth = 1
+focusedBorderColor = "primary"
+errorBorderColor = "error"
+
+[components.search]
+backgroundColor = "surfaceContainer"
+radius = 17
+borderColor = "outlineVariant"
+borderWidth = 1
+iconColor = "primary"
+hintColor = "outline"
+
+[components.appBar]
+backgroundColor = 0x00000000
+iconColor = "primary"
+elevation = 0
+surfaceTintColor = 0x00000000
+
+[components.navigation]
+backgroundColor = "surfaceContainerLow"
+indicatorColor = "primaryContainer"
+indicatorRadius = 16
+selectedIconColor = "onPrimaryContainer"
+unselectedIconColor = "onSurfaceVariant"
+selectedLabelColor = "primary"
+unselectedLabelColor = "onSurfaceVariant"
+elevation = 0
+
+[components.segmented]
+backgroundColor = "surfaceContainer"
+selectedColor = "secondaryContainer"
+textColor = "onSurfaceVariant"
+selectedTextColor = "onSecondaryContainer"
+radius = 14
+
+[components.sidebar]
+selectedColor = "primaryContainer"
+selectedTextColor = "onPrimaryContainer"
+selectedIconColor = "primary"
+radius = 12
+
+[components.dialog]
+backgroundColor = "surfaceContainerLowest"
+radius = 24
+borderColor = "outlineVariant"
+borderWidth = 1
+elevation = 0
+surfaceTintColor = 0x00000000
+
+[components.dark.dialog]
+backgroundColor = "surfaceContainer"
+
+[components.sheet]
+backgroundColor = "surfaceContainerLowest"
+radius = 24
+elevation = 0
+surfaceTintColor = 0x00000000
+dragHandleColor = "outlineVariant"
+
+[components.dark.sheet]
+backgroundColor = "surfaceContainer"
+
+[components.menu]
+backgroundColor = "surfaceContainerLowest"
+radius = 14
+borderColor = "outlineVariant"
+borderWidth = 1
+elevation = 2
+surfaceTintColor = 0x00000000
+
+[components.dark.menu]
+backgroundColor = "surfaceContainerHigh"
+
+[components.tooltip]
+backgroundColor = "inverseSurface"
+textColor = "onInverseSurface"
+radius = 10
+
+[components.toast]
+backgroundColor = "inverseSurface"
+textColor = "onInverseSurface"
+radius = 16
+elevation = 2
+
+[components.switch]
+selectedThumbColor = "onPrimary"
+selectedTrackColor = "primary"
+selectedTrackOutlineColor = 0x00000000
+
+[components.slider]
+activeTrackColor = "primary"
+inactiveTrackColor = "primaryContainer"
+thumbColor = "primary"
+
+[components.progress]
+color = "primary"
+trackColor = "primaryContainer"
+thickness = 5
+radius = 3
+
+[components.badge]
+backgroundColor = "secondary"
+textColor = "onSecondary"
+
+[components.chip]
+selectedColor = "secondaryContainer"
+radius = 12
+
+[components.divider]
+color = "outlineVariant"
+
+# Monica Helms' transgender flag (1999): free for anyone to use. The stripes and the heart are drawn
+# for ServerBox.
+[variants.trans]
+name = "Trans"
+
+[variants.trans.colors]
+seed = 0xFF1F74A8
+
+[variants.trans.colors.palette.light]
+primary = 0xFF1F74A8
+onPrimary = 0xFFFFFFFF
+primaryContainer = 0xFFD4EEFD
+onPrimaryContainer = 0xFF003550
+secondary = 0xFFB0406A
+onSecondary = 0xFFFFFFFF
+secondaryContainer = 0xFFFFDDE5
+onSecondaryContainer = 0xFF3F0020
+tertiary = 0xFF7A5790
+onTertiary = 0xFFFFFFFF
+tertiaryContainer = 0xFFF1DBFF
+onTertiaryContainer = 0xFF2F1245
+surface = 0xFFF8FBFD
+surfaceDim = 0xFFD8DEE3
+surfaceBright = 0xFFF8FBFD
+surfaceContainerLowest = 0xFFFFFFFF
+surfaceContainerLow = 0xFFF2F7FA
+surfaceContainer = 0xFFECF3F8
+surfaceContainerHigh = 0xFFE6EEF4
+surfaceContainerHighest = 0xFFE0E9F0
+onSurface = 0xFF1B2530
+onSurfaceVariant = 0xFF46535F
+outline = 0xFF76838F
+outlineVariant = 0xFFC6D1DA
+inverseSurface = 0xFF2A3138
+onInverseSurface = 0xFFEDF2F7
+inversePrimary = 0xFF5BCEFA
+error = 0xFFBA1A1A
+onError = 0xFFFFFFFF
+errorContainer = 0xFFFFDAD6
+onErrorContainer = 0xFF410002
+shadow = 0xFF000000
+scrim = 0xFF000000
+surfaceTint = 0x00000000
+
+[variants.trans.colors.palette.dark]
+primary = 0xFF5BCEFA
+onPrimary = 0xFF00344B
+primaryContainer = 0xFF124A66
+onPrimaryContainer = 0xFFCDEEFF
+secondary = 0xFFF5A9B8
+onSecondary = 0xFF5A1428
+secondaryContainer = 0xFF6F2A3D
+onSecondaryContainer = 0xFFFFD9E1
+tertiary = 0xFFDCBCF0
+onTertiary = 0xFF412757
+tertiaryContainer = 0xFF593E70
+onTertiaryContainer = 0xFFF1DBFF
+surface = 0xFF12171C
+surfaceDim = 0xFF0E1216
+surfaceBright = 0xFF353D45
+surfaceContainerLowest = 0xFF0C1014
+surfaceContainerLow = 0xFF181E24
+surfaceContainer = 0xFF1C232A
+surfaceContainerHigh = 0xFF262E36
+surfaceContainerHighest = 0xFF313A42
+onSurface = 0xFFE1E8EF
+onSurfaceVariant = 0xFFC0C9D2
+outline = 0xFF8A949E
+outlineVariant = 0xFF3E4852
+inverseSurface = 0xFFE1E8EF
+onInverseSurface = 0xFF2A3138
+inversePrimary = 0xFF1F74A8
+error = 0xFFFFB4AB
+onError = 0xFF690005
+errorContainer = 0xFF93000A
+onErrorContainer = 0xFFFFDAD6
+shadow = 0xFF000000
+scrim = 0xFF000000
+surfaceTint = 0x00000000
+
+[variants.trans.background]
+tile = 120
+
+# Kye Rowan's nonbinary flag (2014): free for anyone to use. The stripes and the heart are drawn
+# for ServerBox.
+[variants.nonbinary]
+name = "Nonbinary"
+
+[variants.nonbinary.colors]
+seed = 0xFF7340A8
+
+[variants.nonbinary.colors.palette.light]
+primary = 0xFF7340A8
+onPrimary = 0xFFFFFFFF
+primaryContainer = 0xFFEDDCFF
+onPrimaryContainer = 0xFF2B0052
+secondary = 0xFF6B6300
+onSecondary = 0xFFFFFFFF
+secondaryContainer = 0xFFF7EE7A
+onSecondaryContainer = 0xFF1F1C00
+tertiary = 0xFF5C5C66
+onTertiary = 0xFFFFFFFF
+tertiaryContainer = 0xFFE1E1EA
+onTertiaryContainer = 0xFF191A22
+surface = 0xFFFCFAF5
+surfaceDim = 0xFFDDDAD4
+surfaceBright = 0xFFFCFAF5
+surfaceContainerLowest = 0xFFFFFFFF
+surfaceContainerLow = 0xFFF7F4EE
+surfaceContainer = 0xFFF1EEE8
+surfaceContainerHigh = 0xFFEBE8E2
+surfaceContainerHighest = 0xFFE5E2DC
+onSurface = 0xFF1E1B22
+onSurfaceVariant = 0xFF4B4553
+outline = 0xFF7C7585
+outlineVariant = 0xFFCEC6D6
+inverseSurface = 0xFF322F36
+onInverseSurface = 0xFFF5EFF6
+inversePrimary = 0xFFC9A0F0
+error = 0xFFBA1A1A
+onError = 0xFFFFFFFF
+errorContainer = 0xFFFFDAD6
+onErrorContainer = 0xFF410002
+shadow = 0xFF000000
+scrim = 0xFF000000
+surfaceTint = 0x00000000
+
+[variants.nonbinary.colors.palette.dark]
+primary = 0xFFC9A0F0
+onPrimary = 0xFF3E1470
+primaryContainer = 0xFF5A2E8C
+onPrimaryContainer = 0xFFF0DBFF
+secondary = 0xFFFCF434
+onSecondary = 0xFF363300
+secondaryContainer = 0xFF4F4B00
+onSecondaryContainer = 0xFFFFF7A8
+tertiary = 0xFFC5C5D0
+onTertiary = 0xFF2E2F37
+tertiaryContainer = 0xFF45464F
+onTertiaryContainer = 0xFFE1E1EA
+surface = 0xFF16141A
+surfaceDim = 0xFF111014
+surfaceBright = 0xFF3B3842
+surfaceContainerLowest = 0xFF0F0E12
+surfaceContainerLow = 0xFF1D1B21
+surfaceContainer = 0xFF221F26
+surfaceContainerHigh = 0xFF2C2931
+surfaceContainerHighest = 0xFF37343C
+onSurface = 0xFFE8E1EA
+onSurfaceVariant = 0xFFCDC4D3
+outline = 0xFF968E9D
+outlineVariant = 0xFF4A4550
+inverseSurface = 0xFFE8E1EA
+onInverseSurface = 0xFF322F36
+inversePrimary = 0xFF7340A8
+error = 0xFFFFB4AB
+onError = 0xFF690005
+errorContainer = 0xFF93000A
+onErrorContainer = 0xFFFFDAD6
+shadow = 0xFF000000
+scrim = 0xFF000000
+surfaceTint = 0x00000000
+
+[variants.nonbinary.background]
+tile = 120
+
+# Gilbert Baker's six-stripe rainbow flag (1979): free for anyone to use. The stripes and the heart are drawn
+# for ServerBox.
+[variants.rainbow]
+name = "Rainbow"
+
+[variants.rainbow.colors]
+seed = 0xFF1F49D6
+
+[variants.rainbow.colors.palette.light]
+primary = 0xFF1F49D6
+onPrimary = 0xFFFFFFFF
+primaryContainer = 0xFFDCE2FF
+onPrimaryContainer = 0xFF001552
+secondary = 0xFF8A3FA0
+onSecondary = 0xFFFFFFFF
+secondaryContainer = 0xFFF6D9FF
+onSecondaryContainer = 0xFF33003F
+tertiary = 0xFF1A7A35
+onTertiary = 0xFFFFFFFF
+tertiaryContainer = 0xFFB8F0C4
+onTertiaryContainer = 0xFF002109
+surface = 0xFFFCFCFF
+surfaceDim = 0xFFDCDCE2
+surfaceBright = 0xFFFCFCFF
+surfaceContainerLowest = 0xFFFFFFFF
+surfaceContainerLow = 0xFFF6F6FB
+surfaceContainer = 0xFFF0F0F6
+surfaceContainerHigh = 0xFFEAEAF0
+surfaceContainerHighest = 0xFFE4E4EA
+onSurface = 0xFF1B1B21
+onSurfaceVariant = 0xFF45464F
+outline = 0xFF767680
+outlineVariant = 0xFFC6C6D0
+inverseSurface = 0xFF303036
+onInverseSurface = 0xFFF2F0F7
+inversePrimary = 0xFFB7C4FF
+error = 0xFFBA1A1A
+onError = 0xFFFFFFFF
+errorContainer = 0xFFFFDAD6
+onErrorContainer = 0xFF410002
+shadow = 0xFF000000
+scrim = 0xFF000000
+surfaceTint = 0x00000000
+
+[variants.rainbow.colors.palette.dark]
+primary = 0xFFB7C4FF
+onPrimary = 0xFF002683
+primaryContainer = 0xFF1B3BAF
+onPrimaryContainer = 0xFFDCE2FF
+secondary = 0xFFEFB0FF
+onSecondary = 0xFF510064
+secondaryContainer = 0xFF6D1E82
+onSecondaryContainer = 0xFFF9D8FF
+tertiary = 0xFF8FD89E
+onTertiary = 0xFF00391A
+tertiaryContainer = 0xFF005228
+onTertiaryContainer = 0xFFABF5B8
+surface = 0xFF131318
+surfaceDim = 0xFF0F0F13
+surfaceBright = 0xFF39393F
+surfaceContainerLowest = 0xFF0E0E12
+surfaceContainerLow = 0xFF1B1B20
+surfaceContainer = 0xFF1F1F25
+surfaceContainerHigh = 0xFF2A2A2F
+surfaceContainerHighest = 0xFF35353A
+onSurface = 0xFFE4E1E9
+onSurfaceVariant = 0xFFC6C5D0
+outline = 0xFF90909A
+outlineVariant = 0xFF45464F
+inverseSurface = 0xFFE4E1E9
+onInverseSurface = 0xFF303036
+inversePrimary = 0xFF1F49D6
+error = 0xFFFFB4AB
+onError = 0xFF690005
+errorContainer = 0xFF93000A
+onErrorContainer = 0xFFFFDAD6
+shadow = 0xFF000000
+scrim = 0xFF000000
+surfaceTint = 0x00000000
+
+[variants.rainbow.background]
+tile = 180

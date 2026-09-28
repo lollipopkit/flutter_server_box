@@ -48,10 +48,13 @@ final class ThemeRow {
   /// search for the manifest id or the repository finds it as well.
   String get searchText => [
     name,
-    if (installed case final theme?) theme.id,
+    if (installed case final theme?) ...[
+      theme.id,
+      for (final variant in theme.variants) variant.name,
+    ],
     if (item case final item?) ...[
       item.listing.id,
-      item.listing.description,
+      ...item.listing.description.all,
       item.repo,
     ],
   ].join('\n').toLowerCase();

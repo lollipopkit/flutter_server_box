@@ -6,12 +6,14 @@
 /// a word on screen, so this is where it is found instead.
 library;
 
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/service/theme_package.dart';
 import 'package:server_box/core/service/theme_repo.dart';
+import 'package:toml/toml.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -22,6 +24,17 @@ void main() {
       f.path.substring(store.path.length + 1): f.readAsBytesSync(),
   };
   final listed = files.keys.where((p) => ThemeRepoLayout.idOf(p) != null);
+
+  /// The listings with a version to offer. One with none is a theme not yet
+  /// published — `scripts/publish-themes.py` appends its first — and the store
+  /// rightly offers nothing for it; its folder is still checked below.
+  final published = [
+    for (final path in listed)
+      if (TomlDocument.parse(utf8.decode(files[path]!))
+              .toMap()['version']
+          case final List<Object?> versions when versions.isNotEmpty)
+        path,
+  ];
 
   late Directory root;
   setUpAll(() async {
@@ -34,7 +47,7 @@ void main() {
     expect(index.name, 'ServerBox official');
     expect(
       [for (final t in index.themes) ThemeRepoLayout.pathOf(t.id)],
-      unorderedEquals(listed),
+      unorderedEquals(published),
       reason: 'a file the reader dropped is missing here',
     );
     for (final theme in index.themes) {

@@ -145,7 +145,7 @@ SVG icon 会退回内置字形，指定颜色和 splash 也不会生效。
 Schema **3** 增加了 schema 2 七个组件之外的组件（`textButton`、`outlinedButton`、
 `iconButton`、`search`、`appBar`、`segmented`、`sidebar`、`menu`、`tooltip`、
 `toast`、`switch`、`slider`、`progress`、`badge`、`chip`、`divider`、`scrollbar`）、
-按钮表的 `minHeight` 字段、`background.tile`，以及 `[layout]` 表。使用其中任一项的包必须声明
+按钮表的 `minHeight` 字段、`background.tile`，以及 `[layout]` 和 `[variants]` 表。使用其中任一项的包必须声明
 `min = 3`：schema 2 的构建会拒绝未知的表，商店需要在下载前得知这一点。当前上限为
 `max = 3`；即使包的范围高于该值，只要与应用支持的范围有交集，仍可安装。
 
@@ -312,6 +312,39 @@ background 或 iOS 的 launch storyboard）在构建应用时确定，只能随�
 写入隔离的内容寻址安装目录前，安装器会检查每张图片：解码 PNG/JPEG，并按文档结构
 解析 SVG。
 
+## 变体
+
+Schema 3。一个主题包可以包含多个主题，例如 Pride 的 Trans、Nonbinary 和 Rainbow。
+整个包只安装、更新一次，只有一个版本号。主题方案选择器把每个变体作为独立主题列出
+（`Pride · Trans`），商店和官网只显示一次这个包，用分段按钮切换变体。
+
+`[variants]` 之外的内容由所有变体共享。每个 `[variants.<key>]` 表包含 `name`，以及
+`colors`、`icons`、`background`、`splash`、`shapes`、`components`、`layout` 中的
+任意几项，覆盖在共享表之上：表按键合并，其他值直接替换共享值。key 只能用小写字母、
+数字、`-` 和 `_`，最多 8 个。
+
+```toml
+[background]
+type = "image"
+image = "background.png"
+opacity = 0.12
+
+[variants.trans]
+name = "Trans"
+
+[variants.trans.colors.palette.light]
+primary = 0xFF1F74A8
+
+[variants.trans.background]
+tile = 120
+```
+
+`variants/<key>/` 中的文件会替换该变体下包里同名的文件：`variants/trans/background.png`
+就是 Trans 变体的 `background.png`，没有提供时使用包自己的文件。只有背景和 splash logo
+可以这样替换。icon 文件由所有变体共享，因此变体可以设置 `icons.style` 和
+`icons.colors`，但不能设置 `icons.images`。安装器会把每个变体当作完整主题检查，并拒绝
+没有任何变体使用的文件。新安装时应用第一个变体。
+
 ## 主题商店
 
 商店分两层读取。第一层是 **catalog**，即逐条列出 repository 的 TOML 文件，不包含
@@ -376,6 +409,17 @@ schema_min = 1
 schema_max = 1
 path = "packages/amethyst-1.1.0.fsbt"
 sha256 = "1111111111111111111111111111111111111111111111111111111111111111"
+```
+
+`description` 可以是字符串，在所有语言下原样显示；也可以是以语言标签为键的表。商店
+按应用语言查找：先找完整标签（`zh-TW`），再找只含语言的标签（`zh`），然后是 `en`，
+最后取第一项。标签中的 `-` 和 `_` 等价。
+
+```toml
+[description]
+en = "A purple palette"
+zh = "紫色调色板"
+zh-TW = "紫色調色盤"
 ```
 
 每个版本必须提供 `url`（指向该版本的 release）或 `path`（指向 repository 树中的

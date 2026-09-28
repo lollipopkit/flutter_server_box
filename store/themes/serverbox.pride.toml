@@ -1,0 +1,12 @@
+id = "serverbox.pride"
+name = "Pride"
+homepage = "https://github.com/lollipopkit/flutter_server_box/tree/main/store/themes/serverbox.pride"
+license = "MIT"
+
+[description]
+en = "Three flags in one theme: Trans, Nonbinary and the six-stripe Rainbow, each as faint diagonal stripes behind the app and a striped heart at launch."
+zh = "一个主题包含三面旗帜：跨性别、非二元和六色彩虹，每个变体都以淡淡的斜向条纹铺在应用背后，并在启动时显示条纹爱心。"
+zh-TW = "一個主題包含三面旗幟：跨性別、非二元與六色彩虹，每個變體都以淡淡的斜向條紋鋪在應用背後，並在啟動時顯示條紋愛心。"
+
+# Versions are appended by scripts/publish-themes.py, which packs the folder
+# beside this file and records the digest of what it built.

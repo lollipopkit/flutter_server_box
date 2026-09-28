@@ -10,6 +10,7 @@ Condensed from the theme authoring guide and the JSON Schema
 - [icons]
 - [background], [splash], [shapes]
 - [components] and [layout]
+- [variants]
 - Package limits
 - Theme store
 
@@ -25,7 +26,7 @@ Condensed from the theme authoring guide and the JSON Schema
 
 Schema 2 added SVG icons, `[icons.colors]` and `[splash]`; a package using any
 of them declares `min = 2`. Schema 3 added the components marked ³ below,
-`minHeight` on button tables, `background.tile`, and `[layout]`; a package using any of them
+`minHeight` on button tables, `background.tile`, `[layout]` and `[variants]`; a package using any of them
 declares `min = 3`.
 
 Unknown top-level tables and fields are rejected. Explicit zero values are
@@ -156,6 +157,24 @@ selected > base.
 |---|---|
 | `density` | `"compact"`, `"standard"`, `"comfortable"`; omitted = platform default |
 
+## [variants] (schema 3)
+
+Several themes in one package (one install, one version); the picker offers
+each as `<name> · <variant>`. Everything outside `[variants]` is shared.
+
+| Field | Values |
+|---|---|
+| key | `^[a-z0-9][a-z0-9_-]{0,31}$`, at most 8 variants |
+| `name` | required, the variant's label, e.g. `"Trans"` |
+| `colors` `icons` `background` `splash` `shapes` `components` `layout` | drawn over the shared tables: tables merge key by key, other values replace |
+
+`variants/<key>/background.png` (or `.jpg`/`.jpeg`) and
+`variants/<key>/splash_logo.svg|png` replace the package's file of that name
+for that variant. Icon files are shared: a variant may set `icons.style` and
+`icons.colors`, never `icons.images`. Every variant must be a complete theme,
+and a file no variant uses is refused. Worked example:
+`store/themes/serverbox.pride`.
+
 ## Package limits
 
 The `.fsbt` and the unpacked total are each ≤ 16 MiB; `manifest.toml`
@@ -178,7 +197,7 @@ name = "Somebody's themes"
 # themes/<id>.toml — the file name is the theme's id
 id = "yourname.mytheme"
 name = "My Theme"
-description = "One line"
+description = "One line"  # or a table: [description] en = "…" zh = "…"
 homepage = "https://…"
 license = "MIT"
 
@@ -190,6 +209,9 @@ url = "https://…/yourname.mytheme-1.0.0.fsbt"   # or path = "packages/….fsbt
 sha256 = "…64 hex…"     # required; the store refuses a mismatch
 size = 1234
 ```
+
+`description` as a table is looked up by the app's (or site's) language: the
+full tag (`zh-TW`), the language (`zh`), `en`, then the first entry.
 
 `scripts/publish.py` writes these `[[version]]` blocks: it packs each changed
 theme, uploads it to the repository's `themes` pre-release and appends the

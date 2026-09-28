@@ -14,6 +14,11 @@ Open **Theme preset** to choose a built-in theme, an installed theme, or
 Select a theme to apply it. Dismiss the picker to keep the theme you had before
 opening it.
 
+Some theme packages contain several variants, such as the Trans, Nonbinary and
+Rainbow variants of Pride. Each variant is listed separately, as
+`Pride · Trans`, and can be chosen like any other theme. The package is
+installed and updated once for all of its variants.
+
 **Custom** lets you choose a local background image and adjust app icons, corner
 radii, opacity, and blur. These options are separate from the read-only values
 in a packaged theme.
@@ -37,7 +42,10 @@ Open **Settings → Appearance → Install theme**. Choose one of these sources:
   theme.
 
 After installation, the theme is applied and appears in **Theme preset**.
-Installing a newer package does not remove other installed themes.
+Installing a theme that is already installed, such as a newer version or a
+theme folder imported again after editing, replaces the earlier installation;
+if that theme was in use, the new one stays selected. Other installed themes
+are not affected.
 
 ## Browse the theme store
 
@@ -48,11 +56,24 @@ to apply it. Use the button beside a theme to install or remove it, depending
 on its current state. Removing the theme in use returns the app to its default
 theme.
 
+Use the expand button on a row to preview the theme before installing it. The
+preview uses the theme's colors, component styles, background and icons;
+segmented controls above it switch between Light and Dark and between the
+package's variants. A
+theme that is not installed is downloaded for the preview and checked like an
+install; nothing is installed or applied. Previews are closed by default, and
+downloaded preview files are deleted when the store is closed.
+
+For an installed package with variants, the row shows a segmented control
+with one segment per variant; select a segment to apply that variant.
+
 The store remembers its latest results between launches, so previously loaded
 themes remain visible while offline. The caption below the app bar shows when
 the list was last updated; each catalog theme's row shows its repository and
 version. Use the refresh button in the app bar or pull down on the list to check
-for updates. Search matches theme names, descriptions, and repository names;
+for updates. Descriptions are shown in the app's language when the theme
+provides one. Search matches theme names, variant names, descriptions in any
+language, and repository names;
 the sort control can put the active theme first or sort by name.
 
 Some themes may require a newer app version. They remain visible in the store,

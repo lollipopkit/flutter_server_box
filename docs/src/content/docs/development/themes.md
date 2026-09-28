@@ -89,6 +89,23 @@ include repository files (`ThemeStoreItem.index` is null), so installing a
 version stored in a repository fetches its tarball again. The digest is checked
 in either case.
 
+A listing's `description` is a string or a table of language tags
+(`ThemeText`); the page resolves it with the app's locale, and the cache keeps
+the table. A row's preview (`view/page/theme_store/preview.dart`) is built only
+while the row is expanded. It renders real widgets under the `ThemeData` that
+`buildAppTheme` (`view/widget/app_theme.dart`) makes from the package, the same
+function the app uses for itself with `AppThemeSource.current()`. An
+uninstalled theme is installed for the preview under
+`Paths.cache/theme_preview`, apart from the user's themes, and that directory is
+deleted when the page is disposed.
+
+A package with `[variants]` installs once; each variant is written as a
+complete, normalized theme directory under `variants/<key>/` of the
+installation, so `ThemePackages.installed(id, variant: key)` reads it with the
+same code as a package without variants. The preset carries the variant as
+`package:<installation id>#<key>`; `appThemePackage` keeps the installation id
+alone.
+
 ## Official themes
 
 Official themes live in `store/` in this repository: `store/repo.toml`, and

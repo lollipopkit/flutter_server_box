@@ -42,6 +42,21 @@ void main() {
       expect(properties['id']['pattern'], ThemePackages.idPattern.pattern);
     });
 
+    test('a variant takes the tables the parser merges, keyed as it reads', () {
+      final variants = _map(properties['variants']);
+      expect(variants['maxProperties'], ThemePackages.maxVariants);
+      expect(
+        _map(variants['propertyNames'])['pattern'],
+        ThemePackages.variantKeyPattern.pattern,
+      );
+      final variant = _map(variants['additionalProperties']);
+      expect(keysOf(variant), unorderedEquals(ThemePackages.variantFields));
+      expect(variant['required'], ['name']);
+      final name = _map(_map(variant['properties'])['name']);
+      expect(name['maxLength'], ThemePackages.maxNameLength);
+      expect(name['pattern'], properties['name']['pattern']);
+    });
+
     test('a name is the same label the parser accepts', () {
       expect(properties['name']['maxLength'], ThemePackages.maxNameLength);
       expect(

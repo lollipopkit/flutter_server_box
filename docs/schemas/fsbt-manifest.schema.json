@@ -267,6 +267,42 @@
           "enum": ["compact", "standard", "comfortable"]
         }
       }
+    },
+    "variants": {
+      "description": "Schema 3. Several themes in one package, e.g. the Trans, Nonbinary and Rainbow variants of Pride. Each variant is the package's own tables with its table drawn over them (tables merge, anything else replaces), and is offered in the picker as a theme of its own. Files in variants/<key>/ replace the package's file of the same name for that variant.",
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 8,
+      "propertyNames": { "pattern": "^[a-z0-9][a-z0-9_-]{0,31}$" },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "pattern": "^[^\\u0000-\\u001f]+$",
+            "description": "What this variant is called, e.g. \"Trans\"."
+          },
+          "colors": { "$ref": "#/properties/colors" },
+          "icons": {
+            "description": "The package's icon files are shared: a variant may set the style and colors, not images.",
+            "allOf": [
+              { "$ref": "#/properties/icons" },
+              {
+                "not": { "required": ["images"] }
+              }
+            ]
+          },
+          "background": { "$ref": "#/properties/background" },
+          "splash": { "$ref": "#/properties/splash" },
+          "shapes": { "$ref": "#/properties/shapes" },
+          "components": { "$ref": "#/properties/components" },
+          "layout": { "$ref": "#/properties/layout" }
+        }
+      }
     }
   },
   "definitions": {

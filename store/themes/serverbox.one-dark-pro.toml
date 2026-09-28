@@ -1,8 +1,12 @@
 id = "serverbox.one-dark-pro"
 name = "One Dark Pro"
-description = "Atom's One Dark, after the One Dark Pro VS Code theme by Binaryify (MIT): syntax colors as accents, editor-style icons and tight corners."
 homepage = "https://github.com/lollipopkit/flutter_server_box/tree/main/store/themes/serverbox.one-dark-pro"
 license = "MIT"
+
+[description]
+en = "Atom's One Dark, after the One Dark Pro VS Code theme by Binaryify (MIT): syntax colors as accents, editor-style icons and tight corners."
+zh = "Atom 的 One Dark，取自 Binaryify 的 VS Code 主题 One Dark Pro（MIT）：以语法高亮色作强调色，编辑器风格的图标和紧凑的圆角。"
+zh-TW = "Atom 的 One Dark，取自 Binaryify 的 VS Code 主題 One Dark Pro（MIT）：以語法高亮色作強調色，編輯器風格的圖示和緊湊的圓角。"
 
 # Versions are appended by scripts/publish-themes.py, which packs the folder
 # beside this file and records the digest of what it built.

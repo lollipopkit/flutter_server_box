@@ -20,6 +20,9 @@ class ThemeIconAsset extends StatelessWidget {
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: Listenable.merge([
       Stores.setting.appThemePackage.listenable(),
+      // A variant of the same package changes the preset and not the package,
+      // and its icon colors can differ.
+      Stores.setting.appThemePreset.listenable(),
       ThemePackages.preview,
     ]),
     builder: (context, _) {

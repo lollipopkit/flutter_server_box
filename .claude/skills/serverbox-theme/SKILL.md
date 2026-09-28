@@ -58,7 +58,7 @@ Schema range: `[schema] min = 1, max = 3` unless the theme uses an SVG icon,
 `[icons.colors]` or `[splash]` — those are schema 2 features and need
 `min = 2`, or an older app installs the theme and silently drops them. Any
 component beyond card, tile, button, input, navigation, dialog and sheet, a
-button `minHeight`, `background.tile`, or `[layout]` is schema 3 and needs `min = 3`.
+button `minHeight`, `background.tile`, `[layout]`, or `[variants]` is schema 3 and needs `min = 3`.
 
 ### 3. Colors
 

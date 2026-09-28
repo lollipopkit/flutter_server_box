@@ -136,7 +136,7 @@ void main() {
       expect(item.repoUrl, 'https://example.org/aurora');
       expect(item.listing.id, 'aurora');
       expect(item.listing.name, 'Aurora');
-      expect(item.listing.description, 'Green');
+      expect(item.listing.description.resolve(null), 'Green');
       expect(item.release?.version, '1.0.0');
       expect(item.release?.url, 'https://example.org/aurora-1.0.0.fsbt');
       expect(item.release?.sha256, _digest);

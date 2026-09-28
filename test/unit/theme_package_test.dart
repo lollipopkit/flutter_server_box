@@ -1013,6 +1013,153 @@ void main() {
     }
   });
 
+  test('variants install as one package and read back one by one', () async {
+    final root = await Directory.systemTemp.createTemp('fsbt-variants-');
+    try {
+      final image = await png();
+      Map<String, Object?> pride(Map<String, Object?> variants, {int min = 3}) =>
+          package(background: 'none')
+            ..['schema'] = {'min': min, 'max': 3}
+            ..['name'] = 'Pride'
+            ..['variants'] = variants;
+      final good = {
+        'trans': {
+          'name': 'Trans',
+          'colors': {
+            'palette': {
+              'light': {'primary': 0xFF5BCEFA},
+            },
+          },
+          'background': {
+            'type': 'image',
+            'image': 'background.png',
+            'tile': 120,
+          },
+        },
+        'rainbow': {
+          'name': 'Rainbow',
+          'shapes': {'card': 4},
+        },
+      };
+      final files = {'variants/trans/background.png': image};
+
+      for (final (data, assets) in [
+        (pride(good, min: 2), files),
+        (pride({}), files),
+        (pride({'Trans!': {'name': 'x'}}), <String, List<int>>{}),
+        (pride({'trans': {'colors': {}}}), <String, List<int>>{}),
+        (pride({'trans': {'name': 'x', 'id': 'other.id'}}), <String, List<int>>{}),
+        (pride({
+          'trans': {
+            'name': 'x',
+            'icons': {'images': <String, String>{}},
+          },
+        }), <String, List<int>>{}),
+        // A file no variant draws.
+        (pride({'rainbow': {'name': 'Rainbow'}}), files),
+        // A variant naming a background nothing carries for it.
+        (pride({
+          'rainbow': {
+            'name': 'Rainbow',
+            'background': {'type': 'image', 'image': 'background.png'},
+          },
+        }), <String, List<int>>{}),
+      ]) {
+        await expectLater(
+          ThemePackages.install(bundle(data, assets), rootDirectory: root.path),
+          throwsFormatException,
+          reason: '$data',
+        );
+      }
+      expect(ThemePackages.listInstalled(rootDirectory: root.path), isEmpty);
+
+      final installed = await ThemePackages.install(
+        bundle(pride(good), files),
+        rootDirectory: root.path,
+      );
+      const trans = ThemeVariant('trans', 'Trans');
+      const rainbow = ThemeVariant('rainbow', 'Rainbow');
+      expect(installed.variants, [trans, rainbow]);
+      expect(installed.variant, trans, reason: 'the first is the default');
+      expect(installed.label, 'Pride · Trans');
+      expect(installed.paletteLight['primary'], 0xFF5BCEFA);
+      expect(installed.backgroundTile, 120);
+      expect(File(installed.backgroundPath!).existsSync(), isTrue);
+      expect(installed.cardRadius, 13, reason: "the base's shape");
+
+      final other = ThemePackages.installed(
+        installed.installationId,
+        variant: 'rainbow',
+        rootDirectory: root.path,
+      )!;
+      expect(other.variant, rainbow);
+      expect(other.paletteLight, isEmpty);
+      expect(other.backgroundPath, isNull, reason: "the base's background");
+      expect(other.cardRadius, 4);
+      expect(other.preset, 'package:${installed.installationId}#rainbow');
+
+      expect(
+        ThemePackages.installed(
+          installed.installationId,
+          variant: 'gone',
+          rootDirectory: root.path,
+        )!.variant,
+        trans,
+      );
+      expect(
+        ThemePackages.installedPresetNames(rootDirectory: root.path),
+        {
+          'package:${installed.installationId}#trans': 'Pride · Trans',
+          'package:${installed.installationId}#rainbow': 'Pride · Rainbow',
+        },
+      );
+      expect(ThemePackages.listInstalled(rootDirectory: root.path), hasLength(1));
+    } finally {
+      await root.delete(recursive: true);
+    }
+  });
+
+  test('installing a theme again replaces the earlier installation', () async {
+    // A folder edited and imported once more is new bytes, so a new
+    // installation id; it used to sit beside the first as a second copy of
+    // the same theme.
+    final root = await Directory.systemTemp.createTemp('fsbt-replace-');
+    try {
+      final first = await ThemePackages.install(
+        bundle(package()),
+        rootDirectory: root.path,
+      );
+      final second = await ThemePackages.install(
+        bundle(package()..['shapes'] = {'card': 3, 'tile': 0, 'button': 20}),
+        rootDirectory: root.path,
+      );
+      expect(second.installationId, isNot(first.installationId));
+      final left = ThemePackages.listInstalled(rootDirectory: root.path);
+      expect(left.map((t) => t.installationId), [second.installationId]);
+      expect(left.single.cardRadius, 3);
+
+      // Another theme is left alone.
+      await ThemePackages.install(
+        bundle(package()..['id'] = 'example.other'),
+        rootDirectory: root.path,
+      );
+      expect(ThemePackages.listInstalled(rootDirectory: root.path), hasLength(2));
+    } finally {
+      await root.delete(recursive: true);
+    }
+  });
+
+  test('a preset carries the variant, and the installation id without it', () {
+    const id = 'package:abc';
+    expect(ThemePackages.presetOf('abc'), id);
+    expect(ThemePackages.presetOf('abc', variant: 'trans'), '$id#trans');
+    expect(ThemePackages.installationIdOf('$id#trans'), 'abc');
+    expect(ThemePackages.installationIdOf(id), 'abc');
+    expect(ThemePackages.variantOf('$id#trans'), 'trans');
+    expect(ThemePackages.variantOf(id), isNull);
+    expect(ThemePackages.variantOf('custom'), isNull);
+  });
+
   test('installs a splash with its logo and reads it back', () async {
     final root = await Directory.systemTemp.createTemp('fsbt-splash-test-');
     try {

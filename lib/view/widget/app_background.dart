@@ -56,6 +56,58 @@ class AppBackground extends StatelessWidget {
   }
 
   Widget _layer(BuildContext context, BackgroundStyle style, String path) {
+    if (ThemePackages.preview.value case final preview?) {
+      return BackgroundLayer.of(preview) ?? const SizedBox.shrink();
+    }
+    final settings = Stores.setting;
+    return BackgroundLayer(
+      style: style,
+      path: path,
+      opacity: settings.appBackgroundOpacity.fetch(),
+      blur: settings.appBackgroundBlur.fetch(),
+      tile: settings.appBackgroundTile.fetch(),
+    );
+  }
+}
+
+/// One background as the app draws it: the gradient from the ambient scheme,
+/// or the image faint over the surface, once and cover-fitted or repeated
+/// every [tile] logical pixels. What [AppBackground] draws behind the app, and
+/// what the theme store draws behind a preview.
+class BackgroundLayer extends StatelessWidget {
+  const BackgroundLayer({
+    super.key,
+    required this.style,
+    required this.path,
+    required this.opacity,
+    required this.blur,
+    this.tile = 0,
+  });
+
+  final BackgroundStyle style;
+  final String path;
+  final double opacity;
+  final double blur;
+  final double tile;
+
+  /// [package]'s background, or null for a package without one.
+  static BackgroundLayer? of(ThemePackage package) {
+    final path = package.backgroundPath ?? '';
+    if (package.backgroundStyle == BackgroundStyle.none ||
+        (package.backgroundStyle == BackgroundStyle.image && path.isEmpty)) {
+      return null;
+    }
+    return BackgroundLayer(
+      style: package.backgroundStyle,
+      path: path,
+      opacity: package.opacity,
+      blur: package.blur,
+      tile: package.backgroundTile,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     if (style == BackgroundStyle.gradient) {
       return DecoratedBox(
@@ -72,14 +124,7 @@ class AppBackground extends StatelessWidget {
         ),
       );
     }
-    final preview = ThemePackages.preview.value;
-    final blur =
-        (preview?.blur ?? Stores.setting.appBackgroundBlur.fetch()).clamp(
-          0.0,
-          30.0,
-        );
-    final tile =
-        preview?.backgroundTile ?? Stores.setting.appBackgroundTile.fetch();
+    final blur = this.blur.clamp(0.0, 30.0);
     final Widget image;
     if (tile > 0) {
       // A pattern: decoded at one repeat's width in physical pixels and drawn
@@ -111,8 +156,7 @@ class AppBackground extends StatelessWidget {
     return ColoredBox(
       color: scheme.surface,
       child: Opacity(
-        opacity: (preview?.opacity ?? Stores.setting.appBackgroundOpacity.fetch())
-            .clamp(0.0, 0.6),
+        opacity: opacity.clamp(0.0, 0.6),
         child: blur == 0
             ? image
             : ImageFiltered(

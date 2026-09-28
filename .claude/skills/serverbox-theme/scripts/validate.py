@@ -67,6 +67,8 @@ def schema3_uses(manifest: dict) -> list[str]:
     found = []
     if manifest.get("layout"):
         found.append("[layout]")
+    if manifest.get("variants"):
+        found.append("[variants]")
     if (manifest.get("background") or {}).get("tile") is not None:
         found.append("background.tile")
     components = manifest.get("components") or {}
@@ -292,6 +294,108 @@ def check_contrast(manifest: dict, rep: Report) -> list[str]:
     return lines
 
 
+def merge(base: dict, overrides: dict) -> dict:
+    """The installer's merge: tables merge key by key, anything else replaces."""
+    out = dict(base)
+    for k, v in overrides.items():
+        out[k] = merge(out[k], v) if isinstance(out.get(k), dict) and isinstance(v, dict) else v
+    return out
+
+
+def check_theme(manifest: dict, folder: Path, key: str | None, lo, rep: Report, where: str):
+    """One theme's own rules; answers the package files it used and its contrast lines."""
+    used: set[str] = set()
+
+    def locate(name: str) -> tuple[Path, str]:
+        if key:
+            rel = f"variants/{key}/{name}"
+            if (folder / rel).is_file():
+                return folder / rel, rel
+        return folder / name, name
+
+    icons = manifest.get("icons") or {}
+    images = icons.get("images") or {}
+    colors = icons.get("colors") or {}
+    splash = manifest.get("splash")
+    background = manifest.get("background") or {}
+
+    # Icons.
+    for ikey, rel in images.items():
+        f = folder / str(rel)
+        used.add(str(rel))
+        if not f.is_file():
+            rep.error(f"{where}icons.images.{ikey}: {rel} does not exist (the app would show the built-in glyph)")
+            continue
+        data = f.read_bytes()
+        if len(data) > LIMITS["icon"]:
+            rep.error(f"{rel}: {len(data)} bytes, over 256 KiB")
+        if str(rel).endswith(".svg"):
+            check_svg(f, data, rep)
+        else:
+            check_raster(f, data, 512, 512 * 512, rep)
+    for ikey in colors:
+        if ikey not in images:
+            rep.error(f'{where}icons.colors."{ikey}" names an icon the package carries no image for')
+
+    # Background and splash.
+    if background.get("type") == "image":
+        f, rel = locate(str(background.get("image")))
+        used.add(rel)
+        if not f.is_file():
+            rep.error(f"{where}background.image: {background.get('image')} does not exist")
+        else:
+            data = f.read_bytes()
+            if len(data) > LIMITS["background"]:
+                rep.error(f"{rel}: over 8 MiB")
+            check_raster(f, data, 8192, 64 * MIB, rep)
+    if isinstance(splash, dict) and splash.get("logo"):
+        name = str(splash["logo"])
+        f, rel = locate(name)
+        used.add(rel)
+        if not f.is_file():
+            rep.error(f"{where}splash.logo: {name} does not exist")
+        else:
+            data = f.read_bytes()
+            if len(data) > LIMITS["splash"]:
+                rep.error(f"{rel}: over 512 KiB")
+            if name.endswith(".svg"):
+                # A splash logo is drawn in its own colors; only an unset
+                # currentColor follows the theme (onSurface).
+                check_svg(f, data, rep, tinted=False)
+            else:
+                check_raster(f, data, 2048, 2048 * 2048, rep)
+
+    # Schema 2 features need min = 2, or an older app installs the package and
+    # silently drops them.
+    uses_v2 = (
+        any(str(v).endswith(".svg") for v in images.values())
+        or bool(colors)
+        or splash is not None
+    )
+    if uses_v2 and isinstance(lo, int) and lo < FEATURE_SCHEMA:
+        rep.error(f"{where}SVG icons, icons.colors and [splash] are schema 2 features: set schema.min = 2")
+
+    # Schema 3: the components beyond schema 2's seven, new fields, [layout].
+    # A build that reads only 2 refuses these outright, so the store has to
+    # know before the download.
+    uses_v3 = schema3_uses(manifest)
+    if uses_v3 and isinstance(lo, int) and lo < COMPONENT_SCHEMA:
+        shown = ", ".join(uses_v3[:4]) + (" ..." if len(uses_v3) > 4 else "")
+        rep.error(f"{where}{shown}: schema 3 features, set schema.min = 3")
+
+    # Modes vs palettes: a palette for a mode the theme does not declare is
+    # never shown.
+    modes = manifest.get("modes") or []
+    palettes = (manifest.get("colors") or {}).get("palette") or {}
+    for b in ("light", "dark"):
+        if palettes.get(b) and b not in modes:
+            rep.warn(f"{where}colors.palette.{b} is set but modes has no '{b}'; it is never shown")
+        if b in modes and not palettes.get(b):
+            rep.warn(f"{where}'{b}' mode has no palette: every role is generated from the seed")
+
+    return used, check_contrast(manifest, rep)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("folder")
@@ -329,15 +433,32 @@ def main() -> int:
         if hi < APP_SCHEMA[0] or lo > APP_SCHEMA[1]:
             rep.error(f"schema {lo}..{hi} does not overlap the app's {APP_SCHEMA[0]}..{APP_SCHEMA[1]}")
 
-    # Files: only the names the installer accepts.
-    icons = manifest.get("icons") or {}
-    images = icons.get("images") or {}
-    colors = icons.get("colors") or {}
-    splash = manifest.get("splash")
-    background = manifest.get("background") or {}
+    # The themes the package installs as: itself, or each of its variants —
+    # the base tables with the variant's drawn over them, reading
+    # variants/<key>/<file> in place of the package's file of that name.
+    variants = manifest.get("variants")
+    themes = []  # (label, manifest, key or None)
+    if isinstance(variants, dict) and variants:
+        base = {k: v for k, v in manifest.items() if k != "variants"}
+        for key, table in variants.items():
+            if not isinstance(table, dict):
+                continue
+            if isinstance(table.get("icons"), dict) and "images" in table["icons"]:
+                rep.error(f"variants.{key}.icons.images: a variant shares the package's icon files")
+            overrides = {k: v for k, v in table.items() if k != "name"}
+            themes.append((f"variant {key}", merge(base, overrides), key))
+    else:
+        themes.append(("", manifest, None))
+    if variants and isinstance(lo, int) and lo < COMPONENT_SCHEMA:
+        rep.error("[variants] is a schema 3 feature: set schema.min = 3")
 
+    # Files: only the names the installer accepts, and each used by a theme.
+    keys = [k for _, _, k in themes if k]
     allowed = {"manifest.toml", *BACKGROUNDS, *SPLASH_LOGOS}
+    allowed |= {f"variants/{k}/{n}" for k in keys for n in (*BACKGROUNDS, *SPLASH_LOGOS)}
+    images = ((manifest.get("icons") or {}).get("images")) or {}
     allowed |= {v for v in images.values() if isinstance(v, str)}
+    present = []
     total = 0
     for f in sorted(folder.rglob("*")):
         rel = f.relative_to(folder).as_posix()
@@ -351,82 +472,23 @@ def main() -> int:
         total += f.stat().st_size
         if rel not in allowed:
             rep.error(f"{rel}: the installer refuses files it has no name for; remove it")
+        else:
+            present.append(rel)
     if total > LIMITS["package"]:
         rep.error(f"the folder holds {total} bytes, over 16 MiB")
 
-    # Icons.
-    for key, rel in images.items():
-        f = folder / str(rel)
-        if not f.is_file():
-            rep.error(f"icons.images.{key}: {rel} does not exist (the app would show the built-in glyph)")
-            continue
-        data = f.read_bytes()
-        if len(data) > LIMITS["icon"]:
-            rep.error(f"{rel}: {len(data)} bytes, over 256 KiB")
-        if str(rel).endswith(".svg"):
-            check_svg(f, data, rep)
-        else:
-            check_raster(f, data, 512, 512 * 512, rep)
-    for key in colors:
-        if key not in images:
-            rep.error(f'icons.colors."{key}" names an icon the package carries no image for')
-
-    # Background and splash.
-    if background.get("type") == "image":
-        name = background.get("image")
-        f = folder / str(name)
-        if not f.is_file():
-            rep.error(f"background.image: {name} does not exist")
-        else:
-            data = f.read_bytes()
-            if len(data) > LIMITS["background"]:
-                rep.error(f"{name}: over 8 MiB")
-            check_raster(f, data, 8192, 64 * MIB, rep)
-    if isinstance(splash, dict) and splash.get("logo"):
-        name = splash["logo"]
-        f = folder / str(name)
-        if not f.is_file():
-            rep.error(f"splash.logo: {name} does not exist")
-        else:
-            data = f.read_bytes()
-            if len(data) > LIMITS["splash"]:
-                rep.error(f"{name}: over 512 KiB")
-            if name.endswith(".svg"):
-                # A splash logo is drawn in its own colors; only an unset
-                # currentColor follows the theme (onSurface).
-                check_svg(f, data, rep, tinted=False)
-            else:
-                check_raster(f, data, 2048, 2048 * 2048, rep)
-
-    # Schema 2 features need min = 2, or an older app installs the package and
-    # silently drops them.
-    uses_v2 = (
-        any(str(v).endswith(".svg") for v in images.values())
-        or bool(colors)
-        or splash is not None
-    )
-    if uses_v2 and isinstance(lo, int) and lo < FEATURE_SCHEMA:
-        rep.error("SVG icons, icons.colors and [splash] are schema 2 features: set schema.min = 2")
-
-    # Schema 3: the components beyond schema 2's seven, new fields, [layout].
-    # A build that reads only 2 refuses these outright, so the store has to
-    # know before the download.
-    uses_v3 = schema3_uses(manifest)
-    if uses_v3 and isinstance(lo, int) and lo < COMPONENT_SCHEMA:
-        shown = ", ".join(uses_v3[:4]) + (" ..." if len(uses_v3) > 4 else "")
-        rep.error(f"{shown}: schema 3 features, set schema.min = 3")
-
-    # Modes vs palettes: a palette for a mode the theme does not declare is
-    # never shown.
-    modes = manifest.get("modes") or []
-    palettes = (manifest.get("colors") or {}).get("palette") or {}
-    for b in ("light", "dark"):
-        if palettes.get(b) and b not in modes:
-            rep.warn(f"colors.palette.{b} is set but modes has no '{b}'; it is never shown")
-        if b in modes and not palettes.get(b):
-            rep.warn(f"'{b}' mode has no palette: every role is generated from the seed")
-
-    lines = check_contrast(manifest, rep)
+    used = {"manifest.toml"}
+    lines = []
+    for label, theme, key in themes:
+        where = f"{label}: " if label else ""
+        found, contrast_lines = check_theme(theme, folder, key, lo, rep, where)
+        used |= found
+        if label:
+            lines.append(f"  [{label}]")
+        lines += contrast_lines
+    for rel in present:
+        if rel not in used:
+            rep.error(f"{rel}: no theme in the package uses it, and the installer refuses it")
 
     print(f"theme  {tid}  ({manifest_path})")
     print(f"schema {schema_ref}")

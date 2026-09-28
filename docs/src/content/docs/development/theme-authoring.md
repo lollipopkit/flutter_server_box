@@ -165,7 +165,7 @@ Schema **3** added the components beyond schema 2's seven (`textButton`,
 `outlinedButton`, `iconButton`, `search`, `appBar`, `segmented`, `sidebar`,
 `menu`, `tooltip`, `toast`, `switch`, `slider`, `progress`, `badge`, `chip`,
 `divider`, `scrollbar`), the `minHeight` field of button tables,
-`background.tile`, and the `[layout]` table. A package using any of them must declare `min = 3`: a schema
+`background.tile`, and the `[layout]` and `[variants]` tables. A package using any of them must declare `min = 3`: a schema
 2 build refuses an unknown table, and the store needs to know that before the
 download. The current ceiling is `max = 3`; a package whose range extends
 beyond it can still be installed if the ranges overlap.
@@ -354,6 +354,44 @@ megapixels. The installer checks every image — decoding a PNG or JPEG, reading
 an SVG as a document — before writing an isolated, content-addressed
 installation directory.
 
+## Variants
+
+Schema 3. One package can carry several themes, such as Pride's Trans,
+Nonbinary and Rainbow. The package installs and updates once, as one version.
+The preset picker offers each variant as a theme of its own
+(`Pride · Trans`), and the store and the website show the package once with a
+segment per variant.
+
+Everything outside `[variants]` is what the variants share. Each
+`[variants.<key>]` table has a `name` and any of `colors`, `icons`,
+`background`, `splash`, `shapes`, `components` and `layout`, drawn over the
+shared tables: a table merges key by key, and any other value replaces the
+shared one. Keys are lowercase letters, digits, `-` and `_`; at most 8.
+
+```toml
+[background]
+type = "image"
+image = "background.png"
+opacity = 0.12
+
+[variants.trans]
+name = "Trans"
+
+[variants.trans.colors.palette.light]
+primary = 0xFF1F74A8
+
+[variants.trans.background]
+tile = 120
+```
+
+A file in `variants/<key>/` replaces the package's file of the same name for
+that variant: `variants/trans/background.png` is the Trans variant's
+`background.png`, and a variant without one uses the package's. Only
+backgrounds and splash logos can be replaced this way. Icon files are shared,
+so a variant may set `icons.style` and `icons.colors` but not `icons.images`.
+The installer checks every variant as a complete theme and refuses a file
+that no variant uses. The first variant is the one a new install applies.
+
 ## Theme store
 
 The store reads two levels. A **catalog** is a TOML file that lists
@@ -423,6 +461,18 @@ schema_min = 1
 schema_max = 1
 path = "packages/amethyst-1.1.0.fsbt"
 sha256 = "1111111111111111111111111111111111111111111111111111111111111111"
+```
+
+`description` is a string, shown as it is in every language, or a table of
+language tags. The store looks a table up by the app's language: the full tag
+(`zh-TW`), then the language alone (`zh`), then `en`, then the first entry.
+Tags may be written with `-` or `_`.
+
+```toml
+[description]
+en = "A purple palette"
+zh = "紫色调色板"
+zh-TW = "紫色調色盤"
 ```
 
 Each version specifies either `url`, pointing to its release, or `path`, naming
