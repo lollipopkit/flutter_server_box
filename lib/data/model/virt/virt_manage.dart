@@ -16,6 +16,16 @@ sealed class VirtResourceChange {
   /// What the change is to, for "one change per thing at a time":
   /// `pool:<id>`, `net:<id>`, or the host's pools / networks as a whole.
   String get scope;
+
+  /// PVE: the node whose network configuration this changes, as
+  /// [netNodeScope]; null otherwise. Every such change waits on the others
+  /// on that node, besides [scope]: Apply and Revert take all of the node's
+  /// pending configuration at once, so an edit made while one runs would be
+  /// applied unchecked or thrown away.
+  String? get nodeScope => null;
+
+  /// [nodeScope] of a change to [node]'s networks.
+  static String netNodeScope(String node) => 'netnode:$node';
 }
 
 /// A new pool (libvirt) or storage (PVE).
@@ -205,6 +215,12 @@ final class VirtNetworkCreate extends VirtResourceChange {
 
   @override
   String get scope => 'nets';
+
+  @override
+  String? get nodeScope => switch (node) {
+    final node? => VirtResourceChange.netNodeScope(node),
+    null => null,
+  };
 }
 
 /// What an existing network is edited to (phase 10).
@@ -249,6 +265,12 @@ final class VirtNetworkEdit extends VirtResourceChange {
 
   @override
   String get scope => 'net:${network.id}';
+
+  @override
+  String? get nodeScope => switch (network.node) {
+    final node? => VirtResourceChange.netNodeScope(node),
+    null => null,
+  };
 }
 
 /// PVE: writes [bridge]'s configuration (`PUT /nodes/{node}/network/{iface}`)
@@ -280,6 +302,12 @@ final class VirtNetworkEditBridge extends VirtResourceChange {
 
   @override
   String get scope => 'net:${network.id}';
+
+  @override
+  String? get nodeScope => switch (network.node) {
+    final node? => VirtResourceChange.netNodeScope(node),
+    null => null,
+  };
 }
 
 /// libvirt: stops (`net-destroy`) and starts (`net-start`) the network, so
@@ -292,6 +320,12 @@ final class VirtNetworkRestart extends VirtResourceChange {
 
   @override
   String get scope => 'net:${network.id}';
+
+  @override
+  String? get nodeScope => switch (network.node) {
+    final node? => VirtResourceChange.netNodeScope(node),
+    null => null,
+  };
 }
 
 final class VirtNetworkSetActive extends VirtResourceChange {
@@ -302,6 +336,12 @@ final class VirtNetworkSetActive extends VirtResourceChange {
 
   @override
   String get scope => 'net:${network.id}';
+
+  @override
+  String? get nodeScope => switch (network.node) {
+    final node? => VirtResourceChange.netNodeScope(node),
+    null => null,
+  };
 }
 
 final class VirtNetworkSetAutostart extends VirtResourceChange {
@@ -312,6 +352,12 @@ final class VirtNetworkSetAutostart extends VirtResourceChange {
 
   @override
   String get scope => 'net:${network.id}';
+
+  @override
+  String? get nodeScope => switch (network.node) {
+    final node? => VirtResourceChange.netNodeScope(node),
+    null => null,
+  };
 }
 
 /// libvirt: stopped when active, undefined. PVE: the bridge removed from the
@@ -323,6 +369,12 @@ final class VirtNetworkDelete extends VirtResourceChange {
 
   @override
   String get scope => 'net:${network.id}';
+
+  @override
+  String? get nodeScope => switch (network.node) {
+    final node? => VirtResourceChange.netNodeScope(node),
+    null => null,
+  };
 }
 
 /// PVE: makes [node]'s pending network configuration the running one
@@ -334,6 +386,9 @@ final class VirtNetworkApply extends VirtResourceChange {
 
   @override
   String get scope => 'nets';
+
+  @override
+  String get nodeScope => VirtResourceChange.netNodeScope(node);
 }
 
 /// PVE: drops [node]'s pending network configuration.
@@ -344,6 +399,9 @@ final class VirtNetworkRevert extends VirtResourceChange {
 
   @override
   String get scope => 'nets';
+
+  @override
+  String get nodeScope => VirtResourceChange.netNodeScope(node);
 }
 
 /// A file from this device going into [pool] as [name].

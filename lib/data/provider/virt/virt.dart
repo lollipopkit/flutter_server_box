@@ -1095,22 +1095,26 @@ class VirtHostNotifier extends _$VirtHostNotifier {
   }
 
   /// Makes [change] to the host's storage or networks, then reads them
-  /// again. One change per pool or network at a time, and none to a pool
-  /// while something is uploaded into it ([upload]). Throws [VirtErr].
+  /// again. One change per pool or network at a time, one per PVE node's
+  /// networks, and none to a pool while something is uploaded into it
+  /// ([upload]). Throws [VirtErr].
   Future<void> manage(VirtResourceChange change) async {
     final scope = change.scope;
-    if (state.resourceOps.contains(scope) ||
+    // A PVE network change holds its node's networks too
+    // ([VirtResourceChange.nodeScope]).
+    final scopes = {scope, ?change.nodeScope};
+    if (scopes.any(state.resourceOps.contains) ||
         state.uploads.keys.any((pool) => _poolScope(pool) == scope)) {
       throw VirtErr(type: VirtErrType.unsupported, message: '$scope is busy');
     }
-    state = state.copyWith(resourceOps: {...state.resourceOps, scope});
+    state = state.copyWith(resourceOps: {...state.resourceOps, ...scopes});
     final generation = _generation;
     try {
       await _backend.manage(change);
     } finally {
       if (_current(generation)) {
         state = state.copyWith(
-          resourceOps: {...state.resourceOps}..remove(scope),
+          resourceOps: {...state.resourceOps}..removeAll(scopes),
         );
         _invalidateResources(change);
       }

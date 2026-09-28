@@ -48,7 +48,13 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
     final host = ref.watch(virtHostProvider(_serverId));
     final caps = host.data?.capabilities ?? const VirtCapabilities();
     final switchTo = widget.onSwitch;
-    final busy = net != null && host.resourceOps.contains('net:${net.id}');
+    final busy =
+        net != null &&
+        (host.resourceOps.contains('net:${net.id}') ||
+            (net.node != null &&
+                host.resourceOps.contains(
+                  VirtResourceChange.netNodeScope(net.node!),
+                )));
     final bar = virtResourceBar(
       name: net?.name ?? '',
       icon: Icons.lan_outlined,
@@ -467,9 +473,13 @@ class VirtNetworkPendingCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final changes = ref.watch(virtNetworkChangesProvider(serverId)).value;
-    final busy = ref.watch(
-      virtHostProvider(serverId).select((s) => s.resourceOps.contains('nets')),
+    final ops = ref.watch(
+      virtHostProvider(serverId).select((s) => s.resourceOps),
     );
+    // Any change to a node's networks holds its Apply and Revert.
+    bool busyOn(String node) =>
+        ops.contains('nets') ||
+        ops.contains(VirtResourceChange.netNodeScope(node));
     final shown = [
       for (final c in changes ?? const <VirtNetworkChanges>[])
         if (node == null || c.node == node) c,
@@ -517,14 +527,14 @@ class VirtNetworkPendingCard extends ConsumerWidget {
                         key: ValueKey('net:pending:${c.node}:revert'),
                         text: l10n.virtHwRevert,
                         textStyle: TextStyle(color: Theme.of(context).colorScheme.error),
-                        onTap: busy
+                        onTap: busyOn(c.node)
                             ? null
                             : () => unawaited(_revert(context, ref, c)),
                       ),
                       Btn.text(
                         key: ValueKey('net:pending:${c.node}:apply'),
                         text: l10n.virtNetApply,
-                        onTap: busy
+                        onTap: busyOn(c.node)
                             ? null
                             : () => unawaited(_apply(context, ref, c)),
                       ),

@@ -20,6 +20,7 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_manage.dart';
+import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/virt/pve_backend.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
@@ -618,6 +619,58 @@ void main() {
       notifier.manage(VirtPoolSetActive(pool, active: false)),
       throwsA(busy),
     );
+  });
+
+  test('a PVE node\'s networks take one change at a time', () async {
+    Stores.server.put(_spi('kvm'));
+    final c = container({'kvm': _Exec((_) async => _ok(_overview()))});
+    final provider = virtHostProvider('kvm');
+    final sub = c.listen(provider, (_, _) {});
+    addTearDown(sub.close);
+    await _until(() => c.read(provider).data != null);
+    final notifier = c.read(provider.notifier);
+    bool busy(Object e) => e is VirtErr && (e.message ?? '').contains('busy');
+
+    const bridge = VirtNetwork(
+      id: 'pve/vmbr1',
+      name: 'vmbr1',
+      node: 'pve',
+      mode: 'bridge',
+    );
+    expect(
+      const VirtNetworkEditBridge(bridge).nodeScope,
+      VirtResourceChange.netNodeScope('pve'),
+    );
+    expect(const VirtNetworkApply('pve').nodeScope, VirtResourceChange.netNodeScope('pve'));
+    // A libvirt network belongs to no node, and holds only itself.
+    expect(
+      const VirtNetworkSetActive(
+        VirtNetwork(id: 'lab', name: 'lab', mode: 'isolated'),
+        active: false,
+      ).nodeScope,
+      isNull,
+    );
+
+    // A bridge edit in flight on `pve`, as the state shows it.
+    // ignore: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
+    notifier.state = c.read(provider).copyWith(
+      resourceOps: {'net:pve/vmbr1', VirtResourceChange.netNodeScope('pve')},
+    );
+    for (final change in [
+      const VirtNetworkApply('pve'),
+      const VirtNetworkRevert('pve'),
+      const VirtNetworkEditBridge(
+        VirtNetwork(id: 'pve/vmbr2', name: 'vmbr2', node: 'pve', mode: 'bridge'),
+      ),
+    ]) {
+      final e = await notifier.manage(change).then<Object?>((_) => null, onError: (Object e) => e);
+      expect(e, predicate(busy), reason: '$change');
+    }
+    // Another node's are not held up: this one reaches the backend.
+    final other = await notifier
+        .manage(const VirtNetworkApply('pve2'))
+        .then<Object?>((_) => null, onError: (Object e) => e);
+    expect(other == null || !busy(other), isTrue, reason: '$other');
   });
 
   group('what is probed without being asked', () {
