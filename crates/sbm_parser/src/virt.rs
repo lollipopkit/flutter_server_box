@@ -3720,8 +3720,9 @@ fn firmware_probe() -> String {
     )
 }
 
-/// What [`hardware_script`] yields.
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+/// What [`hardware_script`] yields. Its `Debug` leaves out the two
+/// definitions that carry secrets.
+#[derive(Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct VirtHardwareInfo {
     /// QEMU's firmware descriptors: what the host can boot with, and which
     /// of them carry Secure Boot's enrolled keys. A TPM-less host with
@@ -3759,6 +3760,24 @@ pub struct VirtHardwareInfo {
     pub host_memory_kib: Option<u64>,
     /// What the host can give this domain; none when it would not say
     pub caps: Option<VirtHwCaps>,
+}
+
+impl std::fmt::Debug for VirtHardwareInfo {
+    /// Without `config_xml` and `live_xml`, which carry the display
+    /// passwords: a `{:?}` in a log line must not print them.
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("VirtHardwareInfo")
+            .field("firmware", &self.firmware)
+            .field("config", &self.config)
+            .field("live", &self.live)
+            .field("config_text", &self.config_text)
+            .field("autostart", &self.autostart)
+            .field("description", &self.description)
+            .field("host_cpus", &self.host_cpus)
+            .field("host_memory_kib", &self.host_memory_kib)
+            .field("caps", &self.caps)
+            .finish_non_exhaustive()
+    }
 }
 
 /// Everything [`VirtHardwareInfo`] needs, in one round trip. Parse with

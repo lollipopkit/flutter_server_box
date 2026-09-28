@@ -759,6 +759,9 @@ fn a_rewritten_definition_keeps_the_console_password() {
     assert!(!info.config_text.contains("passwd") && !info.config_text.contains("s3cr"), "{}", info.config_text);
     assert_eq!(info.config_text, virt::without_secrets(&secret));
     assert!(info.config_text.contains("<graphics type='vnc' port='-1' autoport='yes' listen='127.0.0.1'>"));
+    // Nor printed as `{:?}` in a log line or a failed assertion.
+    let debug = format!("{info:?}");
+    assert!(!debug.contains("s3cr") && !debug.contains("passwd"), "{debug}");
     for change in [
         C::Cpu { sockets: 1, cores: 2, current: None },
         C::Boot { order: vec!["vda".into()] },
