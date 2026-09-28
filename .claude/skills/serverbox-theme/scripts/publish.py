@@ -34,8 +34,8 @@ Rules it keeps:
 
 - **The themes release is never the repository's Latest.** It is created as a
   pre-release, which GitHub never marks Latest, and with `--latest=false`; the
-  Latest release stays the one the repository's own software ships. After each
-  run the script checks that.
+  Latest release stays the one the repository's own software ships. The script
+  checks that before it uploads anything.
 - Packages go up before the listings name them: a listing pointing at an
   address that answers 404 is broken for everybody, a package nothing lists is
   harmless.
@@ -213,6 +213,9 @@ def main() -> int:
            "--notes", "Theme packages for the ServerBox theme store, one asset per version. "
                       "Listed in the repository's themes/ folder.")
         print(f"created release {release} (pre-release, never Latest)")
+    # Before anything goes up: a themes release that is Latest is a mistake to
+    # fix first, not one to publish more packages into.
+    check_latest(repo, release)
     up = json.loads(gh("release", "view", release, "--repo", repo, "--json", "assets").stdout)["assets"]
     uploaded = {a["name"] for a in up}
 
@@ -249,7 +252,6 @@ def main() -> int:
             )
         print(f"  {tid} {version} added to themes/{tid}.toml")
 
-    check_latest(repo, release)
     print("commit and push the listings")
     return 0
 

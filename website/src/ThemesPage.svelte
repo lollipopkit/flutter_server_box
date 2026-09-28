@@ -54,12 +54,22 @@
   let openId = $state(null)
   const open = $derived(store.themes.find((t) => t.id === openId) ?? null)
   let detailMode = $state('dark')
-  // The open theme's preview data, fetched when it is opened.
+  // The open theme's preview data, fetched when it is opened. A failure is
+  // the open theme's only while it is still the one open, and a retry starts
+  // over (previews.js drops a failed fetch from its cache).
   let openPreview = $state(null)
+  let openFailed = $state(false)
+  let attempt = $state(0)
   $effect(() => {
     const t = open
+    attempt
     openPreview = null
-    if (t) loadPreview(t).then((p) => { if (open === t) openPreview = p })
+    openFailed = false
+    if (!t) return
+    loadPreview(t).then(
+      (p) => { if (open === t) openPreview = p },
+      () => { if (open === t) openFailed = true },
+    )
   })
 
   // `#<id>` opens a theme, `#<id>:light` in that mode, so a link can say which.
@@ -135,7 +145,17 @@
     </div>
   </header>
 
-  {#if open && !openPreview}
+  {#if open && openFailed}
+    <section class="page-section store-detail">
+      <div class="store-empty">
+        <p>{$LL.themes.loadFailed()}</p>
+        <div class="store-actions">
+          <button type="button" class="download-icon-btn" onclick={() => attempt++}>{$LL.themes.retry()}</button>
+          <a class="download-icon-btn" href="#">{$LL.themes.back()}</a>
+        </div>
+      </div>
+    </section>
+  {:else if open && !openPreview}
     <section class="page-section store-detail"><p class="muted">…</p></section>
   {:else if open}
     {@const pv = openPreview}
@@ -175,6 +195,7 @@
       <div class="detail-grid">
         <div class="detail-preview">
           <ThemePreview preview={pv} mode={detailMode} scale={1.15} />
+          <p class="preview-note">{$LL.themes.previewNote()}</p>
         </div>
 
         <div class="detail-sections">
@@ -312,6 +333,10 @@
           </select>
         </label>
       </div>
+
+      {#if store.themes.length}
+        <p class="preview-note">{$LL.themes.previewNote()}</p>
+      {/if}
 
       {#if !store.themes.length}
         <div class="store-empty"><p>{$LL.themes.empty()}</p></div>

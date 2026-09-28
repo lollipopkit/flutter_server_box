@@ -3,10 +3,10 @@
 The goal is that someone who uses the source scheme recognises the app at a
 glance: same background, same accent, same text color. Material's generated
 palette will not do that — `seed` alone gives Material's reading of one color —
-so a port writes the palette roles explicitly. The bundled ports
-(`assets/themes/dracula`, `one-dark-pro`, `github-dark`) are worked examples of
-the level of detail that is enough: about 25 roles per brightness, the rest
-generated from `seed` (set `seed` to the source's accent).
+so a port writes the palette roles explicitly. The official store port
+`store/themes/serverbox.one-dark-pro` is a worked example of the level of
+detail that is enough: about 35 roles per brightness, the rest generated from
+`seed` (set `seed` to the source's accent).
 
 ## Role map
 

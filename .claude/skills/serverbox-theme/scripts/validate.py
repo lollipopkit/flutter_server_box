@@ -27,7 +27,6 @@ import shutil
 import struct
 import subprocess
 import sys
-import urllib.request
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -110,8 +109,8 @@ def find_schema(explicit: str | None) -> Path | None:
 def load_schema(path: Path | None) -> tuple[dict, str]:
     if path is not None:
         return json.loads(path.read_text()), str(path)
-    with urllib.request.urlopen(SCHEMA_URL, timeout=20) as r:  # noqa: S310
-        return json.loads(r.read()), SCHEMA_URL
+    # check-jsonschema fetches the URL itself, and says so when it cannot.
+    return {}, SCHEMA_URL
 
 
 def run_check_jsonschema(manifest: Path, schema_ref: str, rep: Report) -> None:
