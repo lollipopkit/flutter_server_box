@@ -336,11 +336,21 @@ def check_theme(manifest: dict, folder: Path, key: str | None, lo, rep: Report, 
                 return f, rel
         return safe_file(folder, name), name
 
-    icons = manifest.get("icons") or {}
-    images = icons.get("images") or {}
-    colors = icons.get("colors") or {}
+    # Tables the checks below walk, which the schema check may not have run on:
+    # one that is not a table is reported and read as empty, so the rest of the
+    # checks still run.
+    for table in ("components", "background", "icons"):
+        if table in manifest and not isinstance(manifest[table], dict):
+            rep.error(f"{where}{table} must be a table")
+
+    def table_of(value) -> dict:
+        return value if isinstance(value, dict) else {}
+
+    icons = table_of(manifest.get("icons"))
+    images = table_of(icons.get("images"))
+    colors = table_of(icons.get("colors"))
     splash = manifest.get("splash")
-    background = manifest.get("background") or {}
+    background = table_of(manifest.get("background"))
 
     # Icons.
     for ikey, rel in images.items():
@@ -398,11 +408,6 @@ def check_theme(manifest: dict, folder: Path, key: str | None, lo, rep: Report, 
     if uses_v2 and isinstance(lo, int) and lo < FEATURE_SCHEMA:
         rep.error(f"{where}SVG icons, icons.colors and [splash] are schema 2 features: set schema.min = 2")
 
-    # Tables the checks below walk, which the schema check may not have run on.
-    for table in ("components", "background"):
-        if table in manifest and not isinstance(manifest[table], dict):
-            rep.error(f"{where}{table} must be a table")
-
     # Schema 3: the components beyond schema 2's seven, new fields, [layout].
     # A build that reads only 2 refuses these outright, so the store has to
     # know before the download.
@@ -453,7 +458,10 @@ def main() -> int:
     tid = manifest.get("id")
     if not isinstance(tid, str) or not ID_PATTERN.match(tid):
         rep.error("id must be lowercase letters, digits, '.', '_' or '-', starting with a letter or digit")
-    sch = manifest.get("schema") or {}
+    sch = manifest.get("schema")
+    if not isinstance(sch, dict):
+        rep.error("schema must be a table with min and max")
+        sch = {}
     lo, hi = sch.get("min"), sch.get("max")
     if isinstance(lo, int) and isinstance(hi, int):
         if lo > hi:
@@ -484,8 +492,10 @@ def main() -> int:
     keys = [k for _, _, k in themes if k]
     allowed = {"manifest.toml", *BACKGROUNDS, *SPLASH_LOGOS}
     allowed |= {f"variants/{k}/{n}" for k in keys for n in (*BACKGROUNDS, *SPLASH_LOGOS)}
-    images = ((manifest.get("icons") or {}).get("images")) or {}
-    allowed |= {v for v in images.values() if isinstance(v, str)}
+    icons = manifest.get("icons")
+    images = icons.get("images") if isinstance(icons, dict) else None
+    if isinstance(images, dict):
+        allowed |= {v for v in images.values() if isinstance(v, str)}
     present = []
     total = 0
     for f in sorted(folder.rglob("*")):

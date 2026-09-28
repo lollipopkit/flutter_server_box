@@ -209,7 +209,7 @@ void main() {
     final theme = ThemeComponents.parse(<String, dynamic>{
       'button': {'backgroundColor': 'primary', 'minHeight': 44},
       'textButton': {'foregroundColor': 'tertiary', 'minHeight': 28},
-      'iconButton': {'iconSize': 18},
+      'iconButton': {'iconSize': 18, 'minHeight': 36},
     }).apply(ThemeData());
     final scheme = theme.colorScheme;
     for (final style in [
@@ -217,14 +217,37 @@ void main() {
       theme.filledButtonTheme.style!,
     ]) {
       expect(style.backgroundColor!.resolve({}), scheme.primary);
-      expect(style.minimumSize!.resolve({}), const Size(0, 44));
+      expect(
+        style.minimumSize!.resolve({}),
+        const Size(64, 44),
+        reason: 'a height, and Material\'s own minimum width',
+      );
     }
     final text = theme.textButtonTheme.style!;
     expect(text.backgroundColor, isNull, reason: 'a text button stays flat');
     expect(text.foregroundColor!.resolve({}), scheme.tertiary);
-    expect(text.minimumSize!.resolve({}), const Size(0, 28));
+    expect(text.minimumSize!.resolve({}), const Size(64, 28));
     expect(theme.outlinedButtonTheme.style, isNull);
     expect(theme.iconButtonTheme.style!.iconSize!.resolve({}), 18);
+    expect(
+      theme.iconButtonTheme.style!.minimumSize!.resolve({}),
+      const Size(40, 36),
+    );
+
+    // A width the app's own style already sets is kept.
+    final kept = ThemeComponents.parse(<String, dynamic>{
+      'textButton': {'minHeight': 30},
+    }).apply(
+      ThemeData(
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(minimumSize: const Size(20, 50)),
+        ),
+      ),
+    );
+    expect(
+      kept.textButtonTheme.style!.minimumSize!.resolve({}),
+      const Size(20, 30),
+    );
   });
 
   test('a field inside a search pill ignores the input theme', () {

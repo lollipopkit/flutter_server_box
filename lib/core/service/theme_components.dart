@@ -588,7 +588,8 @@ final class ThemeComponents {
         style: textButton.button(base.textButtonTheme.style),
       ),
       iconButtonTheme: IconButtonThemeData(
-        style: iconButton.button(base.iconButtonTheme.style),
+        // Material's icon button is 40 wide at the least, not 64.
+        style: iconButton.button(base.iconButtonTheme.style, minWidth: 40),
       ),
       inputDecorationTheme: field.copyWith(
         filled: input.values['filled'] as bool?,
@@ -939,7 +940,10 @@ final class _Style {
     return _Style(merged, scheme);
   }
 
-  ButtonStyle? button(ButtonStyle? base) {
+  /// [minWidth] is the width a `minHeight` keeps when [base] names none:
+  /// Material's own for the button, since `minHeight` sets a height and
+  /// nothing else.
+  ButtonStyle? button(ButtonStyle? base, {double minWidth = 64}) {
     if (values.isEmpty) return base;
     bool has(String key) =>
         values.containsKey(key) ||
@@ -989,13 +993,14 @@ final class _Style {
         base?.elevation,
       ),
       padding: prop('padding', (s) => s.insets('padding'), base?.padding),
-      minimumSize: prop(
-        'minHeight',
-        (s) => s.number('minHeight') == null
-            ? null
-            : Size(0, s.number('minHeight')!),
-        base?.minimumSize,
-      ),
+      minimumSize: !has('minHeight')
+          ? null
+          : WidgetStateProperty.resolveWith((states) {
+              final existing = base?.minimumSize?.resolve(states);
+              final height = state(states).number('minHeight');
+              if (height == null) return existing;
+              return Size(existing?.width ?? minWidth, height);
+            }),
       iconSize: prop('iconSize', (s) => s.number('iconSize'), base?.iconSize),
       shape: ThemeComponents._shape.any(has)
           ? WidgetStateProperty.resolveWith(

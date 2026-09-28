@@ -73,7 +73,9 @@ function component(components, mode, name, palette) {
   const flat = (t) => Object.fromEntries(Object.entries(t).filter(([k]) => !states.includes(k)))
   const resolve = (t) =>
     Object.fromEntries(
-      Object.entries(t).map(([k, v]) => [k, k.endsWith('Color') ? color(v, palette) : v]),
+      // Every color field, as the app reads them: `...Color`, and the ones
+      // named just `color` (progress, divider).
+      Object.entries(t).map(([k, v]) => [k, k === 'color' || k.endsWith('Color') ? color(v, palette) : v]),
     )
   const out = resolve({ ...flat(common), ...flat(own) })
   for (const state of states) {
