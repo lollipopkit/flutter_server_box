@@ -69,9 +69,13 @@ def schema3_uses(manifest: dict) -> list[str]:
         found.append("[layout]")
     if manifest.get("variants"):
         found.append("[variants]")
-    if (manifest.get("background") or {}).get("tile") is not None:
+    background = manifest.get("background")
+    if isinstance(background, dict) and background.get("tile") is not None:
         found.append("background.tile")
-    components = manifest.get("components") or {}
+    # Not a table is reported by check_theme; here it only has nothing to walk.
+    components = manifest.get("components")
+    if not isinstance(components, dict):
+        return found
 
     def table(name: str, fields: dict, path: str) -> None:
         allowed = SCHEMA2_COMPONENTS.get(name)
@@ -393,6 +397,11 @@ def check_theme(manifest: dict, folder: Path, key: str | None, lo, rep: Report, 
     )
     if uses_v2 and isinstance(lo, int) and lo < FEATURE_SCHEMA:
         rep.error(f"{where}SVG icons, icons.colors and [splash] are schema 2 features: set schema.min = 2")
+
+    # Tables the checks below walk, which the schema check may not have run on.
+    for table in ("components", "background"):
+        if table in manifest and not isinstance(manifest[table], dict):
+            rep.error(f"{where}{table} must be a table")
 
     # Schema 3: the components beyond schema 2's seven, new fields, [layout].
     # A build that reads only 2 refuses these outright, so the store has to

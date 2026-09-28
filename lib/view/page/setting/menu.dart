@@ -325,7 +325,11 @@ final class _SettingsMenuRow extends StatelessWidget {
                     '${node.children.length}',
                     style: TextStyle(
                       fontSize: 11,
-                      color: scheme.outline,
+                      // With the theme's side bar colors, the row's own; they
+                      // may not read against `outline`.
+                      color: bar.textColor != null || bar.selectedTextColor != null
+                          ? fg
+                          : scheme.outline,
                       fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),

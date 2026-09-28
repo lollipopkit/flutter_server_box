@@ -75,9 +75,11 @@ final class _ThemeStorePageState extends State<ThemeStorePage> {
   /// preview is a whole themed screen, built only for the rows looked at.
   final _expanded = <String>{};
 
-  /// Packages fetched to preview a theme this device does not have, by listing
-  /// id and version, installed under [_previewRoot] rather than beside the
-  /// user's themes. Kept for the page's life so reopening a row is instant.
+  /// Packages fetched to preview a theme this device does not have, by the
+  /// package's digest — two repositories can offer one id and version with
+  /// different bytes — each installed in a directory of its own under
+  /// [_previewRoot], apart from the user's themes and from one another.
+  /// Kept for the page's life so reopening a row is instant.
   final _previews = <String, Future<ThemePackage>>{};
 
   /// The query, and whether the bar is a field.
@@ -533,15 +535,23 @@ extension on _ThemeStorePageState {
       return ThemeStorePreview(theme: theme);
     }
     final item = row.item!;
+    // A release without a digest is refused by the install before anything
+    // is fetched, so its key only has to be its own.
+    final key =
+        item.release!.sha256 ??
+        '${item.repo}\n${item.listing.id}@${item.release!.version}';
+    final root = _previewRoot.joinPath(
+      item.release!.sha256 ?? 'unverifiable',
+    );
     final future = _previews.putIfAbsent(
-      '${item.listing.id}@${item.release!.version}',
-      () => ThemeRepos.install(item, rootDirectory: _previewRoot),
+      key,
+      () => ThemeRepos.install(item, rootDirectory: root),
     );
     return FutureBuilder<ThemePackage>(
       future: future,
       builder: (context, snapshot) {
         if (snapshot.data case final theme?) {
-          return ThemeStorePreview(theme: theme, rootDirectory: _previewRoot);
+          return ThemeStorePreview(theme: theme, rootDirectory: root);
         }
         if (snapshot.hasError) {
           return Padding(
@@ -553,9 +563,7 @@ extension on _ThemeStorePageState {
                   text: libL10n.retry,
                   icon: const Icon(Icons.refresh, size: 18),
                   onTap: () => _rebuild(
-                    () => _previews.remove(
-                      '${item.listing.id}@${item.release!.version}',
-                    ),
+                    () => _previews.remove(key),
                   ),
                 ),
               ],
