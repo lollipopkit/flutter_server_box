@@ -18,7 +18,9 @@ import 'package:xterm/xterm.dart';
 ///   draws in the alternate one);
 /// - the last non-empty line above it, blank lines skipped, is a banner in
 ///   [banners] — PVE's `starting serial terminal on interface serialN` (any
-///   port), libvirt's `Escape character is ^]`;
+///   port), libvirt's `Escape character is ^]` — or the screen is empty with a
+///   session bound to it: a PVE container's default console (`cmode: tty`,
+///   `lxc-console`) joins the getty on its tty1 and prints nothing at all;
 /// - the terminal has been still for [quiet].
 ///
 /// Then [remaining] counts down from [countdown] and Enter is sent at zero.
@@ -88,14 +90,17 @@ class SerialWake extends ChangeNotifier {
     _reset();
   }
 
-  /// The banner line the cursor is waiting under, if the conditions hold.
+  /// The banner line the cursor is waiting under, if the conditions hold; on
+  /// an empty screen, the cursor's own line, once a session is [bound].
   @visibleForTesting
-  static BufferLine? waitingBanner(Terminal terminal) {
+  static BufferLine? waitingBanner(Terminal terminal, {bool bound = true}) {
     if (terminal.isUsingAltBuffer) return null;
     final buffer = terminal.buffer;
     final cursor = buffer.absoluteCursorY;
     if (cursor < 0 || cursor >= buffer.height) return null;
-    if (buffer.lines[cursor].getText().trim().isNotEmpty) return null;
+    final line = buffer.lines[cursor];
+    if (line.getText().trim().isNotEmpty) return null;
+    if (_isBlank(terminal)) return bound ? line : null;
     for (var i = cursor - 1; i >= 0 && i >= cursor - _lookBack; i--) {
       final line = buffer.lines[i];
       final text = line.getText().trim();
@@ -103,6 +108,14 @@ class SerialWake extends ChangeNotifier {
       return banners.any((re) => re.hasMatch(text)) ? line : null;
     }
     return null;
+  }
+
+  static bool _isBlank(Terminal terminal) {
+    final lines = terminal.buffer.lines;
+    for (var i = 0; i < lines.length; i++) {
+      if (lines[i].getText().trim().isNotEmpty) return false;
+    }
+    return true;
   }
 
   /// Wraps the terminal's `onOutput` rather than observing the screen: what
@@ -119,8 +132,15 @@ class SerialWake extends ChangeNotifier {
   void _onChange() {
     _hookInput();
     _reset();
-    final banner = waitingBanner(terminal);
-    if (banner == null || _done.contains(banner)) return;
+    final banner = waitingBanner(terminal, bound: _forward != null);
+    if (banner == null) {
+      // `TerminalSession.bindForeground` clears the screen and binds its
+      // session without the terminal saying so, and a console that prints
+      // nothing never says anything after: an empty screen is looked at again.
+      if (_isBlank(terminal)) _quietTimer = Timer(quiet, _onChange);
+      return;
+    }
+    if (_done.contains(banner)) return;
     _banner = banner;
     _quietTimer = Timer(quiet, () => _start(banner));
   }

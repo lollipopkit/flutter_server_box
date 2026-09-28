@@ -10,7 +10,7 @@ part of 'guest.dart';
 ///   has, with its virtual keys, theme and reconnect, given a console instead
 ///   of a shell (PVE), or a shell on the host with `virsh console` typed into
 ///   it (libvirt). A bar under it says what it is connected through, and that
-///   a serial console prints nothing until it is sent something. Leaving it
+///   a console prints nothing until it is sent something. Leaving it
 ///   leaves the console running ([VirtTextConsoles]), and coming back takes it
 ///   up again.
 /// - **Graphical** is the remote desktop viewer, in place here. Its toolbar
@@ -169,18 +169,11 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
 
   final _textPage = GlobalKey<SSHPageState>();
 
-  /// Enter for a serial console that waits silently, on [_textPage]'s
-  /// terminal. Null for a console that is not a serial port (a PVE
-  /// container's) and while no terminal is shown.
+  /// Enter for a console that waits silently, on [_textPage]'s terminal:
+  /// a serial port (libvirt's `virsh console`, a PVE VM's `serialN`), and a
+  /// PVE container's default console, which joins a getty that drew its
+  /// prompt long ago. Null while no terminal is shown.
   SerialWake? _wake;
-
-  /// Whether [widget.guest]'s text console is a serial port: every libvirt
-  /// one (`virsh console`), and a PVE VM's (`serialN`); a PVE container's is
-  /// its own console, which draws a prompt when connected.
-  bool get _serial => switch (ref.read(virtHostProvider(widget.serverId)).kind) {
-    VirtHostKind.pve => widget.guest.kind == VirtGuestKind.qemu,
-    _ => true,
-  };
 
   /// How many of these are mounted per graphical session.
   ///
@@ -352,7 +345,7 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
     };
   }
 
-  /// Watches the shown terminal for a silent serial console — a new one when
+  /// Watches the shown terminal for a silent console — a new one when
   /// the page shows another terminal, none once no page does.
   void _attachWake() {
     if (!mounted) return;
@@ -361,7 +354,7 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
         : _textPage.currentState?.terminal;
     if (identical(_wake?.terminal, terminal)) return;
     _wake?.dispose();
-    _wake = terminal == null || !_serial
+    _wake = terminal == null
         ? null
         : (SerialWake(terminal)..addListener(_onWake));
   }
@@ -411,9 +404,9 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
     }
   }
 
-  /// The countdown to Enter on a silent serial console, with its two
-  /// answers; otherwise the hint to press it — a serial port prints nothing
-  /// until written to, whatever this saw.
+  /// The countdown to Enter on a silent console, with its two answers;
+  /// otherwise the hint to press it — a console prints nothing until written
+  /// to, whatever this saw.
   List<Widget> _buildWake() {
     final wake = _wake;
     final left = wake?.remaining;

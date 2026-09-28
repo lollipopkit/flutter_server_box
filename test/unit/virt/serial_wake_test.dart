@@ -183,6 +183,40 @@ void main() {
     });
   });
 
+  test('an empty screen, once a session is bound to it', () {
+    fakeAsync((time) {
+      // What a PVE container's console looks like: termproxy's `OK`, then
+      // nothing — `lxc-console` joins a getty that drew its prompt at boot.
+      final terminal = Terminal();
+      final wake = SerialWake(terminal);
+      time.elapse(const Duration(seconds: 5));
+      expect(wake.remaining, isNull, reason: 'no session yet');
+      // `TerminalSession.bindForeground`: a cleared screen and a session, and
+      // no word from the terminal.
+      final sent = <String>[];
+      terminal.buffer.clear();
+      terminal.onOutput = sent.add;
+      time.elapse(const Duration(seconds: 2));
+      expect(wake.remaining, isNotNull);
+      time.elapse(const Duration(seconds: 3));
+      expect(sent, ['\r']);
+      time.elapse(const Duration(seconds: 10));
+      expect(sent, ['\r'], reason: 'once: the guest did not answer');
+      wake.dispose();
+    });
+  });
+
+  test('an empty screen that fills is left alone', () {
+    fakeAsync((time) {
+      final (terminal, sent, wake) = setUp('');
+      // A container with `cmode: shell` draws its prompt at once.
+      terminal.write('/ # ');
+      time.elapse(const Duration(seconds: 10));
+      expect(sent, isEmpty);
+      wake.dispose();
+    });
+  });
+
   test('not armed: something typed, another last line, a full-screen app', () {
     fakeAsync((time) {
       for (final printed in [
