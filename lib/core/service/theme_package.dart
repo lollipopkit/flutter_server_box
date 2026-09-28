@@ -454,6 +454,52 @@ abstract final class ThemePackages {
     }
   }
 
+  /// Where the store themes shipped with the app are: one `<id>.fsbt` each,
+  /// the exact bytes the store publishes for that version.
+  static const bundledDir = 'assets/store_themes/';
+
+  /// Installs each theme the app ships that this device has not had yet.
+  ///
+  /// A bundled theme is an ordinary installation, as if from the store: the
+  /// same bytes, so the same installation id the store's listing records, and
+  /// the store updates it like any theme it installed. Each is installed once:
+  /// one the user removed stays removed, and one already on the device — from
+  /// the store, or a newer version — is left as it is.
+  static Future<void> seedBundled({
+    AssetBundle? bundle,
+    String? rootDirectory,
+  }) async {
+    final assets = bundle ?? rootBundle;
+    final seeded = Stores.setting.bundledThemesSeeded;
+    final done = {...seeded.fetch()};
+    final manifest = await AssetManifest.loadFromAssetBundle(assets);
+    for (final path in manifest.listAssets()) {
+      if (!path.startsWith(bundledDir) || !path.endsWith('.fsbt')) continue;
+      final id = path.substring(bundledDir.length, path.length - '.fsbt'.length);
+      if (done.contains(id)) continue;
+      try {
+        final onDevice = listInstalled(
+          rootDirectory: rootDirectory,
+        ).any((theme) => theme.id == id);
+        if (!onDevice) {
+          final data = await assets.load(path);
+          final theme = await install(
+            data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+            rootDirectory: rootDirectory,
+          );
+          if (theme.id != id) {
+            throw FormatException('$path installs as ${theme.id}');
+          }
+        }
+        done.add(id);
+      } catch (error, stack) {
+        // Tried again at the next launch: nothing was recorded.
+        Loggers.app.warning('Installing bundled theme $id', error, stack);
+      }
+    }
+    seeded.put(done.toList()..sort());
+  }
+
   /// The icon keys a package may carry an image or a color for, and what the
   /// schema's `icons.images` and `icons.colors` offer as keys.
   ///

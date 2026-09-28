@@ -172,6 +172,9 @@ flutter:
     # own address does not answer. The list itself is read over HTTPS.
     - assets/catalog/
     - assets/themes/amoled/
+    # Store themes shipped with the app, installed once on first launch as if
+    # from the store — see `ThemePackages.seedBundled`.
+    - assets/store_themes/
     # Model id to context window, generated from models.dev by
     # `scripts/update-model-context.sh`. Stale between releases on purpose —
     # an unknown model falls back to a conservative default rather than to a

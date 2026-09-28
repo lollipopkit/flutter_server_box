@@ -83,6 +83,22 @@ listing 的 `description` 可以是字符串，也可以是以语言标签为键
 使用同一段代码。预设值以 `package:<installation id>#<key>` 携带变体；`appThemePackage`
 只保存 installation id。
 
+## 随应用附带的商店主题
+
+商店主题可以随应用附带：`assets/store_themes/<id>.fsbt`，即 `scripts/publish-themes.py`
+从 `store/themes/<id>/` 构建出的同一个包（打包是确定性的，因此 digest 与 listing 记录的
+一致）。`ThemePackages.seedBundled` 在启动时把每个包安装一次到普通主题目录；若设备上已有
+相同 manifest id 的主题则跳过，并记录在 `SettingStore.bundledThemesSeeded`（仅本设备）中，
+用户删除后不会再次安装。之后它就是普通的已安装主题；当 release 的 digest 与 installation
+id 不同时，商店会提供更新。
+
+附带的包与其 store 文件夹不再逐字节一致时，`test/unit/theme_bundled_test.dart` 会失败：
+修改这类主题后，用 serverbox-theme skill 的 `scripts/pack.py -o
+assets/store_themes/<id>.fsbt` 重新打包。
+
+安装已安装的 manifest id 会替换之前的安装（`_replaceOlder`），若旧安装正在使用，会把选择
+转移到新安装。
+
 ## 官方主题
 
 官方主题放在本仓库的 `store/` 中：`store/repo.toml`，以及每个主题的 listing

@@ -106,6 +106,25 @@ same code as a package without variants. The preset carries the variant as
 `package:<installation id>#<key>`; `appThemePackage` keeps the installation id
 alone.
 
+## Bundled store themes
+
+A store theme can ship with the app: `assets/store_themes/<id>.fsbt`, the
+exact package `scripts/publish-themes.py` builds from `store/themes/<id>/`
+(the packing is deterministic, so it is the same digest the listing records).
+`ThemePackages.seedBundled` installs each one once at launch into the ordinary
+themes directory, unless the device already has that manifest id, and records
+it in `SettingStore.bundledThemesSeeded` (device-local) so a removed theme stays
+removed. From then on it is an installed theme like any other, and the store
+offers an update when its release digest differs from the installation id.
+
+`test/unit/theme_bundled_test.dart` fails when a bundled package no longer
+matches its store folder byte for byte: after editing such a theme, repack it
+with the serverbox-theme skill's `scripts/pack.py -o
+assets/store_themes/<id>.fsbt`.
+
+Installing a manifest id that is already installed replaces the earlier
+installation (`_replaceOlder`), handing over the selection when it was in use.
+
 ## Official themes
 
 Official themes live in `store/` in this repository: `store/repo.toml`, and

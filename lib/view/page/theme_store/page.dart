@@ -420,18 +420,15 @@ extension on _ThemeStorePageState {
               dimension: 16,
               child: CircularProgressIndicator(strokeWidth: 2),
             )
-          else if (row.installed case final theme?)
-            Btn.icon(
-              text: libL10n.delete,
-              icon: const Icon(Icons.delete_outline, size: 18),
-              onTap: () => _delete(theme),
-            )
-          else if (row.item case final item?)
-            Btn.icon(
-              text: l10n.appearanceThemeInstall,
-              icon: const Icon(Icons.file_download_outlined, size: 18),
-              onTap: () => _install(item),
-            ),
+          else ...[
+            if (row.updatable)
+              Btn.icon(
+                text: libL10n.update,
+                icon: const Icon(Icons.system_update_alt, size: 18),
+                onTap: () => _update(row.item!),
+              ),
+            ?_trailingAction(row),
+          ],
         ],
       ),
       onTap: busy || row.inUse
@@ -442,6 +439,25 @@ extension on _ThemeStorePageState {
               _ => null,
             },
     );
+    return _withVariants(row, tile, busy);
+  }
+
+  Widget? _trailingAction(ThemeRow row) => switch ((row.installed, row.item)) {
+    (final theme?, _) => Btn.icon(
+      text: libL10n.delete,
+      icon: const Icon(Icons.delete_outline, size: 18),
+      onTap: () => _delete(theme),
+    ),
+    (_, final item?) => Btn.icon(
+      text: l10n.appearanceThemeInstall,
+      icon: const Icon(Icons.file_download_outlined, size: 18),
+      onTap: () => _install(item),
+    ),
+    _ => null,
+  };
+
+  /// [tile], and under it the package's variants and the row's preview.
+  Widget _withVariants(ThemeRow row, Widget tile, bool busy) {
     // A package of several themes: one chip each, and picking one applies it.
     // The variants are known once the package is on this device; before, the
     // row installs it and the first variant is what it applies.
@@ -610,6 +626,24 @@ extension on _ThemeStorePageState {
       return;
     }
     _apply(theme);
+    Toast.show(libL10n.success);
+  }
+
+  /// Installs the store's version over the one on this device. The theme in
+  /// use stays in use, now drawn from the new version; one that is not in use
+  /// is not applied — updating is not choosing.
+  Future<void> _update(ThemeStoreItem item) async {
+    final (theme, error) = await context.showLoadingDialog<ThemePackage>(
+      timeout: null,
+      fn: () => ThemeRepos.install(item),
+    );
+    if (!mounted) return;
+    if (theme == null) {
+      Loggers.app.warning('Updating ${item.label} failed: $error');
+      return;
+    }
+    _rebuild(() => _installed = ThemePackages.listInstalled());
+    unawaited(RNodes.app.notify());
     Toast.show(libL10n.success);
   }
 

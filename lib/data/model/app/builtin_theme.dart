@@ -3,7 +3,8 @@
 ///
 /// Only what the app needs without a network: the default, and AMOLED, which
 /// a legacy theme mode migrates to. Every other official theme is in the theme
-/// store (`store/themes/`).
+/// store (`store/themes/`); a few of those also ship with the app, installed
+/// once as ordinary packages — see `ThemePackages.seedBundled`.
 enum BuiltinTheme {
   defaultTheme('default', 'Default'),
   amoled('amoled', 'AMOLED');

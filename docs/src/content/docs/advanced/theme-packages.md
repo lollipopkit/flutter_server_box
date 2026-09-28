@@ -5,7 +5,9 @@ description: Choose, install, and manage themes
 
 Server Box includes the Default and AMOLED themes and lets you install more,
 such as One Dark Pro, from the theme store or
-from a theme file. Theme settings are under **Settings → Appearance**.
+from a theme file. Some store themes, such as Piggy, come with the app: they
+are installed on first launch and updated from the theme store like any theme
+installed from it. A bundled theme you remove is not installed again. Theme settings are under **Settings → Appearance**.
 
 ## Choose a theme
 
@@ -75,6 +77,10 @@ for updates. Descriptions are shown in the app's language when the theme
 provides one. Search matches theme names, variant names, descriptions in any
 language, and repository names;
 the sort control can put the active theme first or sort by name.
+
+When the store offers a different version of an installed theme, its row shows
+an update button. Updating replaces the installed version; if the theme is in
+use, it stays in use.
 
 Some themes may require a newer app version. They remain visible in the store,
 with an explanation when they cannot be installed.

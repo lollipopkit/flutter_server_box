@@ -386,6 +386,14 @@ class SettingStore extends SqliteStore {
     'watchExcludedServerIds',
   );
 
+  /// The bundled store themes already installed once, by manifest id, so one
+  /// the user removed is not installed again at the next launch.
+  late final bundledThemesSeeded = listProperty<String>(
+    'bundledThemesSeeded',
+    // Written by the app, not the user.
+    updateLastModified: false,
+  );
+
   /// Raw Go-compat `/status` URLs typed by hand in builds before the watch
   /// could read a server record.
   ///
@@ -676,6 +684,8 @@ class SettingStore extends SqliteStore {
     'appThemePackage',
     'appImportedFontPath',
     'themeStoreCache',
+    // What this device's themes directory holds, like `appThemePackage`.
+    'bundledThemesSeeded',
   };
 
   /// The floating Agent's placement and size, as one row.
