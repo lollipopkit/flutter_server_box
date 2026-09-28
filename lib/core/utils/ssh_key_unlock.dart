@@ -205,10 +205,12 @@ abstract final class PrivateKeyUnlock {
     if (context == null || !context.mounted) return null;
 
     final controller = TextEditingController();
-    try {
-      return await context.showRoundDialog<String>(
-        title: libL10n.authRequired,
-        childBuilder: (dialogContext) => Column(
+    // Disposed with the field, not when the dialog answers. See [DisposeWith].
+    return await context.showRoundDialog<String>(
+      title: libL10n.authRequired,
+      childBuilder: (dialogContext) => DisposeWith(
+        notifiers: [controller],
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -235,19 +237,17 @@ abstract final class PrivateKeyUnlock {
             ),
           ],
         ),
-        actionsBuilder: (dialogContext) => [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(libL10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(controller.text),
-            child: Text(libL10n.ok),
-          ),
-        ],
-      );
-    } finally {
-      controller.dispose();
-    }
+      ),
+      actionsBuilder: (dialogContext) => [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(),
+          child: Text(libL10n.cancel),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(controller.text),
+          child: Text(libL10n.ok),
+        ),
+      ],
+    );
   }
 }

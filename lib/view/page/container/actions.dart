@@ -201,9 +201,11 @@ extension on _ContainerPageState {
         ? 'CONTAINER_HOST'
         : 'DOCKER_HOST';
     final ctrl = TextEditingController(text: host);
-    try {
-      await context.showRoundDialog(
-        title: libL10n.edit,
+    // Disposed with the field, not when the dialog answers. See [DisposeWith].
+    await context.showRoundDialog(
+      title: libL10n.edit,
+      child: DisposeWith(
+        notifiers: [ctrl],
         child: Input(
           maxLines: 2,
           controller: ctrl,
@@ -213,11 +215,9 @@ extension on _ContainerPageState {
               : 'unix:///run/user/1000/docker.sock',
           suggestion: false,
         ),
-        actions: Btn.ok(onTap: () => _onSaveContainerHost(ctrl.text)).toList,
-      );
-    } finally {
-      ctrl.dispose();
-    }
+      ),
+      actions: Btn.ok(onTap: () => _onSaveContainerHost(ctrl.text)).toList,
+    );
   }
 
   void _onSaveContainerHost(String val) {

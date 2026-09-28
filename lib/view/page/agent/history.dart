@@ -81,27 +81,27 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
         baseOffset: 0,
         extentOffset: conversation.title.length,
       );
-    try {
-      final title = await context.showRoundDialog<String>(
-        title: context.l10n.askAiRenameConversation,
-        childBuilder: (dialogContext) => TextField(
+    // Disposed with the field, not when the dialog answers. See [DisposeWith].
+    final title = await context.showRoundDialog<String>(
+      title: context.l10n.askAiRenameConversation,
+      childBuilder: (dialogContext) => DisposeWith(
+        notifiers: [controller],
+        child: TextField(
           controller: controller,
           autofocus: true,
           onSubmitted: (value) => dialogContext.pop(value.trim()),
         ),
-        actionsBuilder: (dialogContext) => [
-          Btn.text(text: libL10n.cancel),
-          Btn.text(
-            text: libL10n.ok,
-            onTap: () => dialogContext.pop(controller.text.trim()),
-          ),
-        ],
-      );
-      if (title == null || title.isEmpty || !mounted) return;
-      await _notifier.renameConversation(conversation.id, title);
-    } finally {
-      controller.dispose();
-    }
+      ),
+      actionsBuilder: (dialogContext) => [
+        Btn.text(text: libL10n.cancel),
+        Btn.text(
+          text: libL10n.ok,
+          onTap: () => dialogContext.pop(controller.text.trim()),
+        ),
+      ],
+    );
+    if (title == null || title.isEmpty || !mounted) return;
+    await _notifier.renameConversation(conversation.id, title);
   }
 
   Future<void> _delete(AgentConversation conversation) async {

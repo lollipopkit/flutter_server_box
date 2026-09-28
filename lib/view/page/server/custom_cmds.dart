@@ -280,12 +280,18 @@ extension on _CustomCmdsPageState {
   /// [editingIdx] is the entry being edited, excluded from the duplicate-name
   /// check so that renaming nothing is not a conflict with itself.
   Future<_Cmd?> _showEditDialog({_Cmd? initial, int? editingIdx}) async {
-    final nameCtrl = TextEditingController(text: initial?.name);
-    final cmdCtrl = TextEditingController(text: initial?.cmd);
-    try {
-      while (true) {
-        final ok = await context.showRoundDialog<bool>(
-          title: initial == null ? libL10n.add : libL10n.edit,
+    // What is typed, kept between dialogs: an entry the check refuses opens
+    // the editor again with it. Each dialog has controllers of its own,
+    // disposed with its fields rather than when it answers — see [DisposeWith].
+    var nameText = initial?.name ?? '';
+    var cmdText = initial?.cmd ?? '';
+    while (true) {
+      final nameCtrl = TextEditingController(text: nameText);
+      final cmdCtrl = TextEditingController(text: cmdText);
+      final ok = await context.showRoundDialog<bool>(
+        title: initial == null ? libL10n.add : libL10n.edit,
+        child: DisposeWith(
+          notifiers: [nameCtrl, cmdCtrl],
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -304,22 +310,21 @@ extension on _CustomCmdsPageState {
               ),
             ],
           ),
-          actions: Btnx.cancelOk,
-        );
-        if (ok != true || !mounted) return null;
+        ),
+        actions: Btnx.cancelOk,
+      );
+      nameText = nameCtrl.text;
+      cmdText = cmdCtrl.text;
+      if (ok != true || !mounted) return null;
 
-        final name = nameCtrl.text.trim();
-        final cmd = cmdCtrl.text.trim();
-        final err = _validate(name, cmd, editingIdx);
-        if (err != null) {
-          Toast.error(err);
-          continue;
-        }
-        return (name: name, cmd: cmd);
+      final name = nameText.trim();
+      final cmd = cmdText.trim();
+      final err = _validate(name, cmd, editingIdx);
+      if (err != null) {
+        Toast.error(err);
+        continue;
       }
-    } finally {
-      nameCtrl.dispose();
-      cmdCtrl.dispose();
+      return (name: name, cmd: cmd);
     }
   }
 
