@@ -276,6 +276,9 @@ class PveBackend implements VirtBackend {
         networkEdit: true,
         networkModes: const ['bridge'],
         networkApply: true,
+        // A bridge's ports, address, VLAN awareness and autostart
+        // (`VirtNetworkEditBridge`), written into the pending configuration.
+        networkEditExisting: true,
       ),
     );
   }

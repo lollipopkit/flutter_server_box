@@ -314,6 +314,8 @@ void main() {
       final snap = await pve.load();
       expect(snap.guests, hasLength(6));
       expect(snap.host.version, '8.2.4');
+      // A bridge's configuration is edited in place: the view reads this.
+      expect(snap.capabilities.networkEditExisting, isTrue);
       expect(api.paths, ['GET /version', 'GET /cluster/resources']);
       for (final headers in api.headers) {
         expect(headers['Authorization'], 'PVEAPIToken=root@pam!sb=s3cret');
