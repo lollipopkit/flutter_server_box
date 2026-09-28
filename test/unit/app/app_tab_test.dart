@@ -1,4 +1,3 @@
-import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
@@ -309,13 +308,15 @@ void _bottomBarMarks() {
     await closeTestDb();
   });
 
-  testWidgets('a beta tab carries the mark on the bar, another does not', (
+  testWidgets('a beta tab carries the mark while selected, another never', (
     tester,
   ) async {
-    await tester.pumpWidget(
+    var selected = 0;
+    Future<void> pump() => tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
           bottomNavigationBar: NavigationBar(
+            selectedIndex: selected,
             destinations: [
               AppTab.ssh.navDestination(),
               AppTab.virt.navDestination(),
@@ -324,13 +325,19 @@ void _bottomBarMarks() {
         ),
       ),
     );
-    await tester.pump();
+    await pump();
+    await tester.pumpAndSettle();
     Finder mark(AppTab tab) => find.descendant(
       of: find.byWidgetPredicate(
         (w) => w is NavigationDestination && w.label == tab.label,
       ),
       matching: find.descendant(of: find.byType(Badge), matching: find.text('Beta')),
     );
+    // Not selected: no mark.
+    expect(mark(AppTab.virt), findsNothing);
+    selected = 1;
+    await pump();
+    await tester.pumpAndSettle();
     expect(mark(AppTab.virt), findsOneWidget);
     expect(mark(AppTab.ssh), findsNothing);
   });

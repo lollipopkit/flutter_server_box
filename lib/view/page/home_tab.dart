@@ -102,7 +102,7 @@ extension AppTabViewX on AppTab {
     return _withMenu(
       NavigationDestination(
         icon: _badged(icon),
-        selectedIcon: _badged(selectedIcon),
+        selectedIcon: _badged(selectedIcon, selected: true),
         label: label,
       ),
       onMenu,
@@ -142,14 +142,16 @@ extension AppTabViewX on AppTab {
   }
 
   /// The connection count on the server tab, the beta mark on a beta one:
-  /// on the icon's corner, the one place the bar has for it.
+  /// on the icon's corner, the one place the bar has for it. The mark only
+  /// while the tab is [selected] — as the bar's label is — so a row of beta
+  /// tabs is not a row of marks.
   ///
   /// Only where the tab is a control. In a list of tabs to reorder, a count
   /// would be answering a question the row is not about, and the mark is
   /// beside the name there already.
-  Widget _badged(Widget icon) {
+  Widget _badged(Widget icon, {bool selected = false}) {
     if (this == AppTab.server) return ConnCountBadge(child: icon);
-    return beta ? _BetaBadge(child: icon) : icon;
+    return beta && selected ? _BetaBadge(child: icon) : icon;
   }
 }
 
