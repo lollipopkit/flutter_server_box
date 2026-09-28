@@ -271,6 +271,12 @@ abstract final class ThemePackages {
   /// Temporary appearance only; preview never writes settings.
   static final preview = ValueNotifier<ThemePackage?>(null);
 
+  /// Bumped whenever a theme is installed or removed, so a list of installed
+  /// themes on screen can read it again. Installs happen off screen too: a
+  /// bundled theme is installed after launch, while a page restored at
+  /// launch may already be showing the list without it.
+  static final installedChanged = ValueNotifier<int>(0);
+
   static const supportedSchemaMin = 1;
   static const supportedSchemaMax = 3;
 
@@ -847,6 +853,7 @@ abstract final class ThemePackages {
       _activeId = null;
       final package = installed(installationId, rootDirectory: rootPath)!;
       await _replaceOlder(package, rootDirectory: rootDirectory);
+      installedChanged.value++;
       return package;
     } finally {
       if (await staging.exists()) await staging.delete(recursive: true);
@@ -1375,6 +1382,7 @@ abstract final class ThemePackages {
       _active = null;
     }
     reconcileSelection();
+    installedChanged.value++;
     return true;
   }
 

@@ -337,7 +337,12 @@ class ServerCard extends StatelessWidget {
         // The name goes as the page's own bar takes it: by the time the
         // readings are the page, what they are of is at the top of the window
         // with the switcher between machines beside it.
-        ServerCardTitle(srv: srv, openness: t, selected: selected),
+        ServerCardTitle(
+          srv: srv,
+          openness: t,
+          selected: selected,
+          heroName: !opensInPlace,
+        ),
         if (notice != null)
           ServerCardNotice(
             notice: notice,
@@ -584,6 +589,7 @@ class ServerCard extends StatelessWidget {
             focus: focus,
             stale: stale != null,
             selected: selected,
+            heroName: !opensInPlace,
           )
         : ServerCardLine(
             srv: srv,
@@ -591,6 +597,7 @@ class ServerCard extends StatelessWidget {
             focus: focus,
             stale: stale,
             selected: selected,
+            heroName: !opensInPlace,
           );
   }
 

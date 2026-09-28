@@ -64,6 +64,9 @@ void main() {
     });
 
     test('installs once, and not again once removed', () async {
+      // What a page showing the installed list listens to, since the install
+      // happens after launch and off that page.
+      final before = ThemePackages.installedChanged.value;
       await ThemePackages.seedBundled(
         bundle: rootBundle,
         rootDirectory: root.path,
@@ -75,8 +78,12 @@ void main() {
         contains('serverbox.piggy'),
       );
 
+      expect(ThemePackages.installedChanged.value, greaterThan(before));
+
       final piggy = first.firstWhere((t) => t.id == 'serverbox.piggy');
+      final installedAt = ThemePackages.installedChanged.value;
       await ThemePackages.remove(piggy.installationId, rootDirectory: root.path);
+      expect(ThemePackages.installedChanged.value, installedAt + 1);
       await ThemePackages.seedBundled(
         bundle: rootBundle,
         rootDirectory: root.path,

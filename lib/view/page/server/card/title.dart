@@ -9,6 +9,7 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/server/card/arrival.dart';
+import 'package:server_box/view/page/server/card/name_hero.dart';
 import 'package:server_box/view/page/server/card/sizes.dart';
 import 'package:server_box/view/page/server/reading_text.dart';
 import 'package:server_box/view/widget/built_from.dart';
@@ -27,9 +28,13 @@ class ServerCardTitle extends StatelessWidget {
     required this.srv,
     required this.openness,
     this.selected,
+    this.heroName = false,
   });
 
   final ServerState srv;
+
+  /// Whether the name flies to the page's bar — see [ServerNameHero].
+  final bool heroName;
 
   /// How far the card is on its way to the page — see `ServerCard.openness`.
   final double openness;
@@ -61,6 +66,7 @@ class ServerCardTitle extends StatelessWidget {
         srv.needsInteractiveAuth,
         selected,
         Stores.setting.showDistMark.fetch(),
+        heroName,
       ],
       builder: (_) => _titleRow(line),
     );
@@ -89,15 +95,19 @@ class ServerCardTitle extends StatelessWidget {
                   null => null,
                 },
                 Flexible(
-                  child: Text(
-                    srv.spi.name,
-                    style: const TextStyle(
-                      fontSize: ServerCardSizes.name,
-                      fontWeight: FontWeight.w500,
-                      height: 1.2,
+                  child: ServerNameHero(
+                    id: srv.spi.id,
+                    enabled: heroName,
+                    child: Text(
+                      srv.spi.name,
+                      style: const TextStyle(
+                        fontSize: ServerCardSizes.name,
+                        fontWeight: FontWeight.w500,
+                        height: 1.2,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 const Icon(Icons.chevron_right, size: 17, color: Colors.grey),

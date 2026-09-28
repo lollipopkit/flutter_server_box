@@ -8,6 +8,7 @@ import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
+import 'package:server_box/view/page/server/card/name_hero.dart';
 import 'package:server_box/view/page/server/card/pressure.dart';
 import 'package:server_box/view/page/server/card/sizes.dart';
 import 'package:server_box/view/page/server/card/title.dart';
@@ -40,9 +41,13 @@ class ServerCardLine extends StatelessWidget {
     required this.focus,
     this.stale,
     this.selected,
+    this.heroName = false,
   });
 
   final ServerState srv;
+
+  /// Whether the name flies to the page's bar — see [ServerNameHero].
+  final bool heroName;
 
   /// What there is to draw, or null before the machine has answered with a
   /// sample.
@@ -91,15 +96,19 @@ class ServerCardLine extends StatelessWidget {
                 const SizedBox(width: 11),
                 SizedBox(
                   width: 96,
-                  child: Text(
-                    srv.spi.name,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      height: 1.2,
-                      fontWeight: FontWeight.w500,
+                  child: ServerNameHero(
+                    id: srv.spi.id,
+                    enabled: heroName,
+                    child: Text(
+                      srv.spi.name,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.2,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 const SizedBox(width: 13),
@@ -391,9 +400,13 @@ class ServerCardTile extends StatelessWidget {
     required this.focus,
     this.stale = false,
     this.selected,
+    this.heroName = false,
   });
 
   final ServerState srv;
+
+  /// Whether the name flies to the page's bar — see [ServerNameHero].
+  final bool heroName;
 
   /// What there is to draw, or null before the machine has answered with a
   /// sample.
@@ -434,15 +447,19 @@ class ServerCardTile extends StatelessWidget {
                 ),
                 const SizedBox(width: 5),
                 Expanded(
-                  child: Text(
-                    srv.spi.name,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      height: 1.2,
-                      fontWeight: FontWeight.w500,
+                  child: ServerNameHero(
+                    id: srv.spi.id,
+                    enabled: heroName,
+                    child: Text(
+                      srv.spi.name,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        height: 1.2,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 const SizedBox(width: 5),

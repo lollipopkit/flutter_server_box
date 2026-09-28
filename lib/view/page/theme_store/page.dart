@@ -8,6 +8,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/theme_package.dart';
 import 'package:server_box/core/service/theme_repo.dart';
 import 'package:server_box/data/model/app/theme_sort.dart';
+import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
 import 'package:server_box/view/page/theme_store/preview.dart';
@@ -41,7 +42,11 @@ const _expandDuration = Duration(milliseconds: 250);
 
 /// Where a theme fetched only to be previewed is installed: apart from the
 /// user's themes, and removed when the page closes.
-String get _previewRoot => Paths.cache.joinPath('theme_preview');
+///
+/// The system's temporary directory: `Paths.cache` is only set for an app that
+/// asks `Paths.init` for it, and this one does not.
+String get _previewRoot =>
+    Paths.temp.joinPath('${BuildData.name}_theme_preview');
 
 final class ThemeStorePage extends StatefulWidget {
   const ThemeStorePage({super.key});
@@ -99,6 +104,7 @@ final class _ThemeStorePageState extends State<ThemeStorePage> {
   void initState() {
     super.initState();
     _installed = ThemePackages.listInstalled();
+    ThemePackages.installedChanged.addListener(_readInstalled);
     _store = _readCache();
     // The cache is on screen from the first frame; this only brings it up to
     // date, so a launch with no network still shows the themes there were, and
@@ -108,8 +114,15 @@ final class _ThemeStorePageState extends State<ThemeStorePage> {
     }
   }
 
+  /// What this device has, read again after any install or removal — including
+  /// one this page did not make, like a bundled theme installed after launch.
+  void _readInstalled() {
+    if (mounted) setState(() => _installed = ThemePackages.listInstalled());
+  }
+
   @override
   void dispose() {
+    ThemePackages.installedChanged.removeListener(_readInstalled);
     _search.dispose();
     // What was fetched only to be looked at: nothing reads it after the page.
     unawaited(
