@@ -462,7 +462,8 @@ def main() -> int:
     if not isinstance(tid, str) or not ID_PATTERN.match(tid):
         rep.error("id must be lowercase letters, digits, '.', '_' or '-', starting with a letter or digit")
     sch = manifest.get("schema")
-    if not isinstance(sch, dict):
+    schema_table = isinstance(sch, dict)
+    if not schema_table:
         rep.error("schema must be a table with min and max")
         sch = {}
     lo, hi = sch.get("min"), sch.get("max")
@@ -471,7 +472,8 @@ def main() -> int:
     # (`bool` is an `int` to Python, and not to TOML or the app.)
     def schema_int(v) -> bool:
         return isinstance(v, int) and not isinstance(v, bool) and v >= 1
-    if sch and (set(sch) != {"min", "max"} or not (schema_int(lo) and schema_int(hi))):
+    # An empty `[schema]` too: a table without its bounds is not a range.
+    if schema_table and (set(sch) != {"min", "max"} or not (schema_int(lo) and schema_int(hi))):
         rep.error("schema must hold exactly min and max, each an integer from 1")
         lo = hi = None
     if isinstance(lo, int) and isinstance(hi, int):
@@ -485,10 +487,17 @@ def main() -> int:
     # variants/<key>/<file> in place of the package's file of that name.
     variants = manifest.get("variants")
     themes = []  # (label, manifest, key or None)
+    # The installer refuses each of these outright rather than reading the
+    # package as one without variants.
+    if "variants" in manifest and not isinstance(variants, dict):
+        rep.error("variants must be a table of [variants.<key>] tables")
+    elif isinstance(variants, dict) and not variants:
+        rep.error("[variants] is empty: give it at least one [variants.<key>] table, or remove it")
     if isinstance(variants, dict) and variants:
         base = {k: v for k, v in manifest.items() if k != "variants"}
         for key, table in variants.items():
             if not isinstance(table, dict):
+                rep.error(f"variants.{key} must be a table")
                 continue
             if isinstance(table.get("icons"), dict) and "images" in table["icons"]:
                 rep.error(f"variants.{key}.icons.images: a variant shares the package's icon files")
