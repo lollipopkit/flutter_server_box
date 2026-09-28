@@ -309,15 +309,17 @@ class _World {
     String what,
     bool Function(VirtGuest g) test,
   ) async {
-    late VirtGuest g;
+    VirtGuest? g;
     for (var i = 0; i < 30; i++) {
       await host.refresh();
       expect(state.error, isNull, reason: '${state.error}');
-      g = guest(find, what);
-      if (test(g)) return g;
+      // Not listed yet is one more unsettled sample: PVE names a new guest
+      // in `/cluster/resources` a moment after the task that made it.
+      g = state.data!.guests.where(find).firstOrNull;
+      if (g != null && test(g)) return g;
       await Future<void>.delayed(const Duration(milliseconds: 500));
     }
-    fail('$what never settled; last: ${g.state}');
+    fail('$what never settled; last: ${g?.state ?? 'not listed'}');
   }
 
   Future<void> dispose() async {
@@ -1047,13 +1049,16 @@ void _p10LibvirtNetwork(_Agent agent) {
   group('network editing: libvirt over the monitor agent', () {
     late _World w;
     final name = _e2eName('net');
+    // The networks this group made, recorded once made: another run's (or
+    // anyone's) under a similar name is not this group's to remove.
+    final owned = <String>{};
 
     /// Takes away every network this group made, whether the test passed or
     /// not: one left behind has its subnet, and the next test's create is
     /// refused for it.
     Future<void> cleanup() async {
       for (final n in await w.host.networks()) {
-        if (!n.name.startsWith('sbme2e-net')) continue;
+        if (!owned.contains(n.name)) continue;
         if (n.active) {
           try {
             await w.host.manage(VirtNetworkSetActive(n, active: false));
@@ -1068,6 +1073,7 @@ void _p10LibvirtNetwork(_Agent agent) {
               ),
             ),
           );
+          owned.remove(n.name);
         } catch (_) {}
       }
     }
@@ -1080,6 +1086,8 @@ void _p10LibvirtNetwork(_Agent agent) {
         await w.host.provideSudoPassword(sudoPassword);
       }
       expect(w.state.error, isNull, reason: '${w.state.error}');
+      final taken = (await w.host.networks()).map((n) => n.name).toSet();
+      expect(taken.intersection({name, '$name-b'}), isEmpty);
     });
     tearDown(cleanup);
     tearDownAll(() async {
@@ -1098,6 +1106,7 @@ void _p10LibvirtNetwork(_Agent agent) {
           dhcpEnd: '192.168.249.200',
         ),
       );
+      owned.add(name);
       var net = (await w.host.networks()).firstWhere((n) => n.name == name);
       expect((net.active, net.mode), (true, 'nat'));
       expect(net.address, '192.168.249.1');
@@ -1234,6 +1243,7 @@ void _p10LibvirtNetwork(_Agent agent) {
           dhcpEnd: '192.168.251.200',
         ),
       );
+      owned.add(other);
       final net = (await w.host.networks()).firstWhere((n) => n.name == other);
       // The host's own LAN, which libvirt refuses a bridge on: the restart
       // puts the old definition back and starts that.
@@ -1364,6 +1374,12 @@ void _p10PveNetwork(_Agent agent) {
     // `sbme2e-br-82086` is too long for one.
     final name = 'sbxe2e${DateTime.now().millisecondsSinceEpoch % 10000}';
     final node = 'pve';
+    // The node's pending configuration is node-wide, and a revert or an apply
+    // takes all of it. So this group runs only on a node with nothing
+    // pending and no interface of its name, and its cleanup acts only once a
+    // test staged something: then whatever is pending is this group's.
+    var clean = false;
+    var staged = false;
 
     setUpAll(() async {
       w = _World(agent.spi('e2e-monitor-pve-net'));
@@ -1382,25 +1398,36 @@ void _p10PveNetwork(_Agent agent) {
       final cert = w.state.error?.cert;
       if (cert != null) await w.host.confirmCert(cert.fingerprint);
       expect(w.state.error, isNull, reason: '${w.state.error}');
+      expect(
+        (await w.host.networkChanges()).where((c) => c.node == node),
+        isEmpty,
+        reason: 'network changes are pending on $node already',
+      );
+      expect(
+        (await w.host.networks()).where((n) => n.name == name),
+        isEmpty,
+        reason: '$name exists already',
+      );
+      clean = true;
     });
-    /// Takes the bridge away, applied or not, and drops whatever waits in
-    /// the node's pending configuration: one left behind is a bridge on the
-    /// host, and a subnet the next run's form refuses.
+    /// Takes the bridge away, applied or not: one left behind is a bridge on
+    /// the host, and a subnet the next run's form refuses. The unapplied
+    /// changes are reverted first; a bridge still there after that was
+    /// applied, and goes by a deletion of its own, applied — reverting after
+    /// staging that deletion would cancel it.
     Future<void> cleanup() async {
+      if (!clean || !staged) return;
       try {
-        if ((await w.host.networks()).any((n) => n.name == name)) {
-          await w.host.manage(
-            VirtNetworkDelete(
-              (await w.host.networks()).firstWhere((n) => n.name == name),
-            ),
-          );
+        if ((await w.host.networkChanges()).any((c) => c.node == node)) {
+          await w.host.manage(VirtNetworkRevert(node));
         }
       } catch (_) {}
       try {
-        await w.host.manage(VirtNetworkRevert(node));
-      } catch (_) {}
-      try {
-        await w.host.manage(VirtNetworkApply(node));
+        final left = (await w.host.networks()).where((n) => n.name == name);
+        if (left.isNotEmpty) {
+          await w.host.manage(VirtNetworkDelete(left.first));
+          await w.host.manage(VirtNetworkApply(node));
+        }
       } catch (_) {}
     }
 
@@ -1411,6 +1438,7 @@ void _p10PveNetwork(_Agent agent) {
     });
 
     test('a bridge: edited pending, applied, and the management one refused', () async {
+      staged = true;
       await w.host.manage(
         VirtNetworkCreate(
           name: name,
@@ -1918,6 +1946,76 @@ void _pveHardware(_Agent agent) {
 
     Future<VirtHardware> hw(VirtGuest g) => w.host.hardware(g.id);
 
+    // The guests are the environment's, not this group's: what they were
+    // before the first test, and the devices a test added to them, so that
+    // teardown puts them back however far a test got.
+    final saved = <String, VirtHardware>{};
+    final addedDisks = <String, Set<String>>{};
+    final addedNics = <String, Set<String>>{};
+
+    /// The keys [after] has and [before] had not: what an add made, rather
+    /// than the first device other than the default one, which may be one
+    /// the guest already had.
+    String addedKey(Iterable<String> before, Iterable<String> after) =>
+        after.toSet().difference(before.toSet()).single;
+
+    /// The pending entries this group made: the ones there before it ran
+    /// are someone else's, and a removal it staged itself (a running
+    /// container's mount point) is kept.
+    List<String> ownPending(VirtGuest g, VirtHardware h) {
+      final before = {for (final p in saved[g.id]?.pending ?? const <VirtPendingField>[]) p.key};
+      final devices = {...?addedDisks[g.id], ...?addedNics[g.id]};
+      return [
+        for (final p in h.pending)
+          if (!before.contains(p.key) && !devices.contains(p.key)) p.key,
+      ];
+    }
+
+    Future<void> restore(VirtGuest g) async {
+      final was = saved[g.id];
+      if (was == null) return;
+      Future<void> step(VirtHwChange? Function(VirtHardware h) change) async {
+        try {
+          final h = await hw(g);
+          final c = change(h);
+          if (c != null) await w.host.changeHardware(g.id, h, c);
+        } catch (_) {}
+      }
+
+      for (final key in addedDisks[g.id] ?? const <String>{}) {
+        await step((h) => h.disk(key) == null ? null : VirtHwRemoveDisk(key: key, deleteVolume: true));
+      }
+      for (final key in addedNics[g.id] ?? const <String>{}) {
+        await step((h) => h.nic(key) == null ? null : VirtHwRemoveNic(key: key));
+      }
+      await step((h) {
+        final keys = ownPending(g, h);
+        return keys.isEmpty ? null : VirtHwRevert(keys);
+      });
+      // What took effect at once (a container's CPU and memory, the
+      // settings) is set back to what it was.
+      await step((h) => (h.cpu.sockets, h.cpu.cores) == (was.cpu.sockets, was.cpu.cores)
+          ? null
+          : VirtHwSetCpu(sockets: was.cpu.sockets, cores: was.cpu.cores));
+      await step((h) => (h.memory.mib, h.memory.minMib, h.memory.swapMib) ==
+              (was.memory.mib, was.memory.minMib, was.memory.swapMib)
+          ? null
+          : VirtHwSetMemory(mib: was.memory.mib, minMib: was.memory.minMib, swapMib: was.memory.swapMib));
+      await step((h) => was.name == null || h.name == was.name ? null : VirtHwSetName(was.name!));
+      await step((h) => h.description == was.description
+          ? null
+          : VirtHwSetDescription(was.description ?? ''));
+      await step((h) => h.autostart == was.autostart ? null : VirtHwSetAutostart(was.autostart));
+      await step((h) => (h.protection ?? false) == (was.protection ?? false)
+          ? null
+          : VirtHwSetProtection(was.protection ?? false));
+      // A value set back on a running VM waits as a pending one.
+      await step((h) {
+        final keys = ownPending(g, h);
+        return keys.isEmpty ? null : VirtHwRevert(keys);
+      });
+    }
+
     setUpAll(() async {
       w = _World(agent.spi('e2e-monitor-pve-hw'));
       Stores.pve.put(
@@ -1949,8 +2047,14 @@ void _pveHardware(_Agent agent) {
         host: VirtHostKind.pve,
         node: node,
       ).first;
+      saved[vm.id] = await hw(vm);
+      saved[ct.id] = await hw(ct);
     });
-    tearDownAll(() => w.dispose());
+    tearDownAll(() async {
+      await restore(vm);
+      await restore(ct);
+      await w.dispose();
+    });
 
     test('a VM: read with the node\'s limits and CPU models', () async {
       final h = await hw(vm);
@@ -2050,15 +2154,17 @@ void _pveHardware(_Agent agent) {
 
     test('a VM: a disk added, grown, removed with its volume', () async {
       var h = await hw(vm);
+      final before = h.disks.map((d) => d.key);
       await w.host.changeHardware(
         vm.id,
         h,
         VirtHwAddDisk(storage: storage, gib: 1),
       );
       h = await hw(vm);
-      final added = h.disks.firstWhere(
-        (d) => d.kind == VirtHwDiskKind.disk && d.key != 'scsi0',
-      );
+      final key = addedKey(before, h.disks.map((d) => d.key));
+      (addedDisks[vm.id] ??= {}).add(key);
+      final added = h.disk(key)!;
+      expect(added.kind, VirtHwDiskKind.disk);
       expect(added.size, 1 << 30);
       await w.host.changeHardware(
         vm.id,
@@ -2113,9 +2219,12 @@ void _pveHardware(_Agent agent) {
     test('a VM: a NIC added, disconnected behind a firewall, removed',
         () async {
       var h = await hw(vm);
+      final before = h.nics.map((n) => n.key);
       await w.host.changeHardware(vm.id, h, VirtHwAddNic(network: bridge));
       h = await hw(vm);
-      final nic = h.nics.firstWhere((n) => n.key != 'net0');
+      final key = addedKey(before, h.nics.map((n) => n.key));
+      (addedNics[vm.id] ??= {}).add(key);
+      final nic = h.nic(key)!;
       final mac = nic.mac;
       expect(mac, isNotNull);
       await w.host.changeHardware(
@@ -2140,14 +2249,10 @@ void _pveHardware(_Agent agent) {
       h = await hw(vm);
       expect(h.boot, ['ide2', 'scsi0']);
       expect(h.pending.map((p) => p.key), contains('boot'));
-      await w.host.changeHardware(
-        vm.id,
-        h,
-        VirtHwRevert([for (final p in h.pending) p.key]),
-      );
+      await w.host.changeHardware(vm.id, h, VirtHwRevert(ownPending(vm, h)));
       h = await hw(vm);
-      expect(h.pending, isEmpty);
-      expect(h.memory.mib, 512);
+      expect(ownPending(vm, h), isEmpty);
+      expect(h.memory.mib, saved[vm.id]!.memory.mib);
     });
 
     test('a container: cores, memory and swap, a mount point, a NIC', () async {
@@ -2175,13 +2280,17 @@ void _pveHardware(_Agent agent) {
         kind: VirtGuestKind.lxc,
         node: node,
       ).first;
+      final disksBefore = h.disks.map((d) => d.key);
       await w.host.changeHardware(
         ct.id,
         h,
         VirtHwAddDisk(storage: ctStorage, gib: 1, mountPoint: '/mnt/e2e'),
       );
       h = await hw(ct);
-      final mp = h.disks.firstWhere((d) => d.kind == VirtHwDiskKind.mount);
+      final mpKey = addedKey(disksBefore, h.disks.map((d) => d.key));
+      (addedDisks[ct.id] ??= {}).add(mpKey);
+      final mp = h.disk(mpKey)!;
+      expect(mp.kind, VirtHwDiskKind.mount);
       expect(mp.mountPoint, '/mnt/e2e');
       final removed = await w.host.changeHardware(
         ct.id,
@@ -2199,19 +2308,21 @@ void _pveHardware(_Agent agent) {
       }
       expect(h.disk(mp.key), isNull);
 
+      final nicsBefore = h.nics.map((n) => n.key);
       await w.host.changeHardware(ct.id, h, VirtHwAddNic(network: bridge));
       h = await hw(ct);
-      final nic = h.nics.firstWhere((n) => n.key != 'net0');
-      expect(nic.name, 'eth1');
+      final nicKey = addedKey(nicsBefore, h.nics.map((n) => n.key));
+      (addedNics[ct.id] ??= {}).add(nicKey);
+      final nic = h.nic(nicKey)!;
+      expect(nic.name, startsWith('eth'));
       await w.host.changeHardware(ct.id, h, VirtHwRemoveNic(key: nic.key));
       h = await hw(ct);
       expect(h.nic(nic.key), isNull);
-      if (h.pending.isNotEmpty) {
-        await w.host.changeHardware(
-          ct.id,
-          h,
-          VirtHwRevert([for (final p in h.pending) p.key]),
-        );
+      // This test's own pending entries only; the staged removal of its
+      // mount point stays, and teardown sets the CPU and memory back.
+      final own = ownPending(ct, h);
+      if (own.isNotEmpty) {
+        await w.host.changeHardware(ct.id, h, VirtHwRevert(own));
       }
     });
   });
@@ -3072,6 +3183,7 @@ void _pveCloneBackup(_Agent agent) {
       expect(refused.error, isNotNull);
 
       final before = await w.host.allBackupJobs();
+      expect(before.map((j) => j.id), isNot(contains('$name-job')));
       await w.host.editBackupJob(
         VirtBackupJobEdit(
           id: '$name-job',
@@ -3088,6 +3200,17 @@ void _pveCloneBackup(_Agent agent) {
           prune: 'keep-last=2',
         ),
       );
+      // Removed however far the test gets: the group's teardown takes
+      // guests and backups, not jobs, and a job left names a VMID that may
+      // be handed out again.
+      addTearDown(() async {
+        try {
+          final left = (await w.host.allBackupJobs()).where((j) => j.id == '$name-job');
+          if (left.isNotEmpty) {
+            await w.host.editBackupJob(_jobEditOf(left.first), remove: true);
+          }
+        } catch (_) {}
+      });
       final jobs = await w.host.allBackupJobs();
       expect(jobs, hasLength(before.length + 1));
       final job = jobs.firstWhere((j) => j.id == '$name-job');
@@ -4282,6 +4405,11 @@ void _pveUnverified(_Agent agent) {
     // while it still has that name.
     final made = <(int, String)>[];
     final vmdk = '/var/lib/vz/import/sbxe2e-$run.vmdk';
+    // The backup jobs and the files on the node this group made, recorded
+    // once made: removed at the end by exact name, never by a pattern
+    // another run's would match.
+    final jobs = <String>{};
+    final files = <String>{};
 
     Future<String> sh(String command) => _pveNode(nodeHost, command);
 
@@ -4359,9 +4487,12 @@ void _pveUnverified(_Agent agent) {
         }
       }
       try {
-        await sh("rm -rf '$vmdk' /tmp/sbxe2e-qga.*; pvesh get /cluster/backup --output-format json | "
-            "grep -o '\"id\":\"sbxe2e-l-[^\"]*\"' | cut -d'\"' -f4 | "
-            'while read j; do pvesh delete /cluster/backup/\$j; done; true');
+        for (final j in jobs) {
+          await sh("pvesh delete '/cluster/backup/$j' 2>/dev/null; true");
+        }
+        for (final f in files) {
+          await sh("rm -rf -- '$f'");
+        }
       } catch (e) {
         // ignore: avoid_print
         print('teardown: $e');
@@ -4478,12 +4609,15 @@ void _pveUnverified(_Agent agent) {
         'd=\$(mktemp -d /tmp/sbxe2e-qga.XXXX) && cd \$d && '
         'apt-get -qq download qemu-guest-agent libnuma1 liburing2 libglib2.0-0t64 >/dev/null 2>&1; echo \$d',
       )).trim();
+      expect(debs, startsWith('/tmp/sbxe2e-qga.'));
+      files.add(debs);
       for (final deb in const LineSplitter().convert(await sh('ls $debs'))) {
         final r = await Process.run('ssh', ['-o', 'BatchMode=yes', nodeHost, "cat '$debs/$deb'"], stdoutEncoding: null);
         expect(r.exitCode, 0, reason: deb);
         await _relayGuestPut(dialer, ip, next.key, '/tmp/$deb', Uint8List.fromList(r.stdout as List<int>));
       }
       await sh("rm -rf '$debs'");
+      files.remove(debs);
       final installed = await _relayGuestRun(
         dialer,
         ip,
@@ -4530,6 +4664,8 @@ void _pveUnverified(_Agent agent) {
       }
       final ip = addr.split('/').first;
       final qcow2 = (await sh("pvesm path '$imageId'")).trim();
+      expect(await sh("test -e '$vmdk' && echo taken || true"), isEmpty, reason: '$vmdk exists already');
+      files.add(vmdk);
       await sh("qemu-img convert -O vmdk '$qcow2' '$vmdk'");
       final image = await imageVolume('local:import/${vmdk.split('/').last}');
       expect(image.format, 'vmdk');
@@ -4575,6 +4711,7 @@ void _pveUnverified(_Agent agent) {
       expect(out, contains('sda=${4 << 30}'));
       await remove(vmid);
       await sh("rm -f '$vmdk'");
+      files.remove(vmdk);
     }, timeout: const Timeout(Duration(minutes: 15)));
 
     test('IDE: the disk and the cloud-init drive on it, and the cloud-init edit', () async {
@@ -4724,6 +4861,11 @@ void _pveUnverified(_Agent agent) {
       // 8 MiB/s is some 48 s.
       await sh(r'dd if=/dev/urandom of="$(pvesm path ' "'${storage.name}:vm-$vmid-disk-0'" r')" bs=1M count=384 oflag=direct status=none');
       final id = 'sbxe2e-l-$run';
+      expect(
+        (await w.host.allBackupJobs()).map((j) => j.id),
+        isNot(contains(id)),
+        reason: 'the job $id exists already',
+      );
       await w.host.editBackupJob(
         VirtBackupJobEdit(
           id: id,
@@ -4737,6 +4879,7 @@ void _pveUnverified(_Agent agent) {
           vmids: [vmid],
         ),
       );
+      jobs.add(id);
       // A field PVE's editor sets and the app's form does not.
       await sh('pvesh set /cluster/backup/$id --bwlimit 8192');
       final job = (await w.host.allBackupJobs()).firstWhere((j) => j.id == id);
@@ -4767,6 +4910,7 @@ void _pveUnverified(_Agent agent) {
         await w.host.deleteBackup(g.id, b);
       }
       await w.host.editBackupJob(_jobEditOf(job), remove: true);
+      jobs.remove(id);
       await remove(vmid);
     }, timeout: const Timeout(Duration(minutes: 10)));
   });

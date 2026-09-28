@@ -15,21 +15,33 @@ void main() {
       final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
       final frames = <int>[];
       final got = Completer<void>();
-      server.listen((req) async {
-        final ws = await WebSocketTransformer.upgrade(req);
-        var total = 0;
-        ws.listen((m) {
-          frames.add((m as List<int>).length);
-          total += m.length;
-          if (total == data.length) got.complete();
+      final accepted = <WebSocket>[];
+      WebSocket? client;
+      // Released on every path, a timeout included.
+      try {
+        server.listen((req) async {
+          final ws = await WebSocketTransformer.upgrade(req);
+          accepted.add(ws);
+          var total = 0;
+          ws.listen((m) {
+            frames.add((m as List<int>).length);
+            total += m.length;
+            if (total == data.length) got.complete();
+          });
         });
-      });
-      final client = await WebSocket.connect('ws://127.0.0.1:${server.port}');
-      monitorWsAddBinary(client, data);
-      await got.future.timeout(const Duration(seconds: 5));
-      await client.close();
-      await server.close(force: true);
-      return frames;
+        client = await WebSocket.connect(
+          'ws://127.0.0.1:${server.port}',
+        ).timeout(const Duration(seconds: 5));
+        monitorWsAddBinary(client, data);
+        await got.future.timeout(const Duration(seconds: 5));
+        return frames;
+      } finally {
+        await client?.close();
+        for (final ws in accepted) {
+          await ws.close();
+        }
+        await server.close(force: true);
+      }
     },
     _RealHttp(),
   );

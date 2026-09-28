@@ -2713,6 +2713,11 @@ Future<void> _libvirtBlockPools() async {
     final nfsPool = 'sbxe2e-nfs-$run';
     final nfsDir = '/var/lib/libvirt/sbxe2e-nfs-$run';
     final made = <String>[];
+    // What this run made, by exact name, and nothing else: teardown removes
+    // these only. Each is claimed after checking it was not there before.
+    final ownedLvs = <String>[];
+    final ownedPools = <String>[];
+    var ownsNfsDir = false;
 
     Future<String> sh(String command) async =>
         (await execSshE2e(client!, command, null)).stdout;
@@ -2720,9 +2725,21 @@ Future<void> _libvirtBlockPools() async {
         (await virt.storagePools()).where((p) => p.name == name).firstOrNull;
     Future<VirtGuest?> find(String name) async =>
         (await virt.load()).guests.where((g) => g.name == name).firstOrNull;
+    Future<bool> lvExists(String name) async =>
+        (await execSshE2e(client!, "lvs '$vg/$name' >/dev/null 2>&1", null)).exitCode == 0;
+    /// [names] as this run's, refusing any that already exist.
+    Future<void> claimLvs(List<String> names) async {
+      for (final n in names) {
+        expect(await lvExists(n), isFalse, reason: '$vg/$n exists already; not ours');
+      }
+      ownedLvs.addAll(names);
+    }
     Future<VirtStoragePool?> lv() async {
       final p = await findPool(lvPool);
-      if (p != null) return p;
+      if (p != null) {
+        expect(ownedPools, contains(lvPool), reason: '$lvPool exists already; not ours');
+        return p;
+      }
       // Offered only where the daemon has the backend (`pool-capabilities`):
       // one started before LVM was installed has not.
       final types = (await virt.load()).capabilities.poolTypes;
@@ -2731,6 +2748,7 @@ Future<void> _libvirtBlockPools() async {
         return null;
       }
       await virt.manage(VirtPoolCreate(name: lvPool, type: 'logical', source: vg!));
+      ownedPools.add(lvPool);
       return (await findPool(lvPool))!;
     }
 
@@ -2751,14 +2769,14 @@ Future<void> _libvirtBlockPools() async {
         await virsh("destroy '$n'");
         await virsh("undefine '$n' --nvram --remove-all-storage");
       }
-      if (vg != null) {
-        await execSshE2e(c, "for l in \$(lvs --noheadings -o lv_name '$vg' | grep sbxe2e); do lvremove -fy '$vg'/\$l; done", null);
+      for (final l in ownedLvs) {
+        await execSshE2e(c, "lvs '$vg/$l' >/dev/null 2>&1 && lvremove -fy '$vg/$l'", null);
       }
-      for (final p in [lvPool, nfsPool]) {
+      for (final p in ownedPools) {
         await virsh("pool-destroy '$p'");
         await virsh("pool-undefine '$p'");
       }
-      await execSshE2e(c, "rmdir '$nfsDir' 2>/dev/null", null);
+      if (ownsNfsDir) await execSshE2e(c, "rmdir '$nfsDir' 2>/dev/null", null);
       await virt.close();
       c.close();
     });
@@ -2772,18 +2790,20 @@ Future<void> _libvirtBlockPools() async {
       expect((pool.type, pool.active), ('logical', true));
       expect(virtPoolHoldsFiles(pool), isFalse);
       expect(virtVolumeFormats(pool), ['raw']);
-      await virt.manage(VirtVolumeCreate(pool, name: 'sbxe2e-v', gib: 1, format: 'raw'));
-      final v = (await virt.volumes(pool)).singleWhere((v) => v.name == 'sbxe2e-v');
-      expect(v.path, '/dev/$vg/sbxe2e-v');
+      final vol = 'sbxe2e-v-$run';
+      await claimLvs([vol]);
+      await virt.manage(VirtVolumeCreate(pool, name: vol, gib: 1, format: 'raw'));
+      final v = (await virt.volumes(pool)).singleWhere((v) => v.name == vol);
+      expect(v.path, '/dev/$vg/$vol');
       expect(v.capacity, 1 << 30);
       // libvirt's logical backend has no resize ("storage pool does not
       // support changing of volume capacity"): not offered, and refused.
       expect(virtVolumeResizable(pool, VirtHostKind.libvirt), isFalse);
       final e = await _virtErr(virt.manage(VirtVolumeResize(pool, v, bytes: 2 << 30)));
       expect(e.type, VirtErrType.unsupported);
-      expect(await sh("lvs --noheadings --units b -o lv_size '$vg/sbxe2e-v'"), contains('${1 << 30}B'));
+      expect(await sh("lvs --noheadings --units b -o lv_size '$vg/$vol'"), contains('${1 << 30}B'));
       await virt.manage(VirtVolumeDelete(pool, v));
-      expect(await sh("lvs --noheadings -o lv_name '$vg' | grep -c sbxe2e-v || true"), startsWith('0'));
+      expect(await lvExists(vol), isFalse);
     });
 
     test('a VM from a cloud image on the logical pool: disk and seed are '
@@ -2800,6 +2820,8 @@ Future<void> _libvirtBlockPools() async {
       }
       final login = await _guestLogin();
       final name = 'sbxe2e-lvci-$run';
+      expect(await find(name), isNull, reason: '$name exists already; not ours');
+      await claimLvs(['$name.img', '$name-cidata.iso']);
       made.add(name);
       final net = (await virt.networks()).firstWhere((n) => n.name == 'default');
       final created = await virt.create(VirtCreateSpec(
@@ -2866,6 +2888,11 @@ Future<void> _libvirtBlockPools() async {
       Map<String, String>? again;
       final deadline = DateTime.now().add(const Duration(minutes: 5));
       while (again?['host'] != '$name-b') {
+        // Checked on every pass: a guest that answers with its old hostname
+        // never throws, and would otherwise loop until the test's timeout.
+        if (DateTime.now().isAfter(deadline)) {
+          fail('the guest still answers as ${again?['host']}');
+        }
         addr = await ip();
         try {
           again = await _guestFacts(client!, addr, 'sbxe', login.key, 'vda', login.password,
@@ -2902,6 +2929,10 @@ Future<void> _libvirtBlockPools() async {
         kind: VirtGuestKind.qemu,
       ).firstWhere((p) => virtPoolHoldsFiles(p));
       final name = 'sbxe2e-cp-$run';
+      for (final n in [name, '$name-lv']) {
+        expect(await find(n), isNull, reason: '$n exists already; not ours');
+      }
+      await claimLvs(['$name-lv.img']);
       made.addAll([name, '$name-lv']);
       await virt.create(VirtCreateSpec(
         kind: VirtGuestKind.qemu,
@@ -2928,6 +2959,7 @@ Future<void> _libvirtBlockPools() async {
       expect(await sh("lvs --noheadings -o lv_name '$vg' | grep -c '$name' || true"), startsWith('0'));
       // The pool is the run's own; deleting it leaves the group.
       await virt.manage(VirtPoolDelete((await findPool(lvPool))!));
+      ownedPools.remove(lvPool);
       expect(await findPool(lvPool), isNull);
       expect(await sh("vgs --noheadings -o vg_name '$vg'"), contains(vg));
     });
@@ -2940,23 +2972,31 @@ Future<void> _libvirtBlockPools() async {
         virtResourceIssue(change, host: VirtHostKind.libvirt, pools: await virt.storagePools()),
         isNull,
       );
-      await sh("mkdir -p '$nfsDir'");
+      expect(await findPool(nfsPool), isNull, reason: '$nfsPool exists already; not ours');
+      // `mkdir` without `-p`: an existing directory is someone else's.
+      final mk = await execSshE2e(client!, "mkdir '$nfsDir'", null);
+      expect(mk.exitCode, 0, reason: 'could not make $nfsDir: ${mk.stderr}');
+      ownsNfsDir = true;
       await virt.manage(change);
+      ownedPools.add(nfsPool);
       var pool = (await findPool(nfsPool))!;
       expect((pool.type, pool.active, virtPoolHoldsFiles(pool)), ('netfs', true, true));
       expect(await sh("findmnt -n -o SOURCE '$nfsDir'"), contains(nfs));
-      await virt.manage(VirtVolumeCreate(pool, name: 'sbxe2e-n.qcow2', gib: 1, format: 'qcow2'));
-      final v = (await virt.volumes(pool)).singleWhere((v) => v.name == 'sbxe2e-n.qcow2');
+      final vol = 'sbxe2e-n-$run.qcow2';
+      await virt.manage(VirtVolumeCreate(pool, name: vol, gib: 1, format: 'qcow2'));
+      final v = (await virt.volumes(pool)).singleWhere((v) => v.name == vol);
       expect(v.format, 'qcow2');
-      final export = nfs.substring(nfs.indexOf(':/') + 1);
-      expect(await sh("ls '$export'"), contains('sbxe2e-n.qcow2'));
+      // The export as this host sees it: mounted at the pool's target. Its
+      // path is one on the NFS server, not here.
+      expect(await sh("ls -A '$nfsDir'"), contains(vol));
       await virt.manage(VirtVolumeDelete(pool, v));
-      expect(await sh("ls -A '$export'"), isEmpty);
+      expect(await sh("ls -A '$nfsDir'"), isNot(contains(vol)));
       await virt.manage(VirtPoolSetActive(pool, active: false));
       pool = (await findPool(nfsPool))!;
       expect(pool.active, isFalse);
       expect(await sh("findmnt -n '$nfsDir' || true"), isEmpty);
       await virt.manage(VirtPoolDelete(pool));
+      ownedPools.remove(nfsPool);
       expect(await findPool(nfsPool), isNull);
     });
   });
@@ -2996,6 +3036,11 @@ Future<void> _libvirtManage() async {
     Future<List<VirtVolume>> vols() async => virt.volumes(await pool());
     Future<VirtNetwork?> findNet(String name) async =>
         (await virt.networks()).where((n) => n.name == name).firstOrNull;
+    final nets = [net, '$net-iso', '$net-br', '$net-bad', '$net-ed'];
+    // Set once setup has seen that none of the names below exist: before
+    // that, whatever answers to them is someone else's, and teardown leaves
+    // the host alone.
+    var clean = false;
 
     setUpAll(() async {
       await initRustLibForTest();
@@ -3007,16 +3052,31 @@ Future<void> _libvirtManage() async {
         byteExec: () async => SshExec(c),
         canStream: () => true,
       );
-      // A fresh directory, and addresses nothing on the host has.
+      // A fresh directory, names nothing on the host has, and addresses
+      // nothing on the host routes.
       expect(await sh("test -e '$poolDir' && echo taken"), isEmpty);
+      expect(await findPool(), isNull, reason: '$poolName exists already');
+      final taken = (await virt.networks()).map((n) => n.name).toSet();
+      expect(taken.intersection(nets.toSet()), isEmpty);
+      expect(
+        (await virt.load()).guests.where((g) => g.name == vm),
+        isEmpty,
+        reason: '$vm exists already',
+      );
       final routes = await sh('ip -4 route');
       expect(routes, isNot(contains('10.231.78.')));
       expect(routes, isNot(contains('10.231.79.')));
+      clean = true;
     });
 
     tearDownAll(() async {
       final c = client;
       if (c == null) return;
+      if (!clean) {
+        await virt.close();
+        c.close();
+        return;
+      }
       Future<void> virsh(String args) => execSshE2e(
         c,
         'LC_ALL=C virsh --connect qemu:///system -q $args </dev/null',
@@ -3035,7 +3095,7 @@ Future<void> _libvirtManage() async {
       await virsh("pool-destroy '$poolName'");
       await virsh("pool-undefine '$poolName'");
       await sh("rmdir '$poolDir' 2>/dev/null; true");
-      for (final n in [net, '$net-iso', '$net-br', '$net-bad', '$net-ed']) {
+      for (final n in nets) {
         await virsh("net-destroy '$n'");
         await virsh("net-undefine '$n'");
       }
@@ -3528,6 +3588,15 @@ Future<void> _pveManage() async {
     final bridge = 'sbxe2e$stamp';
     int? vmid;
     var noAccess = false;
+    // Set by setup once it has seen the storage, its directory and the bridge
+    // absent and nothing pending on the node's network: before that, teardown
+    // touches none of it — a refused preflight must not discard what it
+    // refused over.
+    var clean = false;
+    var ownsStore = false;
+    // Whether a test of this group got as far as staging network changes;
+    // the node's pending configuration is only reverted then.
+    var stagedNetwork = false;
 
     Future<String> sh(String command) async =>
         (await execSshE2e(client!, command, null)).stdout;
@@ -3573,11 +3642,14 @@ Future<void> _pveManage() async {
       final snap = await pve.load();
       node = snap.host.nodes.first.name;
       expect(await sh("test -e '$dir' && echo taken"), isEmpty);
+      expect(await findStore(), isNull, reason: '$store exists already');
+      expect(await findBridge(), isNull, reason: '$bridge exists already');
       expect(
         await sh('ls /etc/network/interfaces.new 2>/dev/null'),
         isEmpty,
         reason: 'network changes are pending on the node already',
       );
+      clean = true;
     });
 
     tearDownAll(() async {
@@ -3593,20 +3665,28 @@ Future<void> _pveManage() async {
           "for k in \$(qm config $vmid 2>/dev/null | grep '$store' | cut -d: -f1); do qm set $vmid --delete \$k; done; qm destroy $vmid --purge 2>/dev/null",
         );
       }
-      // The bridge: out of the pending configuration, and out of the running
-      // one if it got there.
-      if ((await sh('ls /etc/network/interfaces.new 2>/dev/null')).isNotEmpty) {
-        await sh('pvesh delete /nodes/$node/network');
+      if (clean && stagedNetwork) {
+        // The bridge: out of the pending configuration, and out of the
+        // running one if it got there. The pending file was empty when setup
+        // looked, so what is pending now is this group's.
+        if ((await sh('ls /etc/network/interfaces.new 2>/dev/null')).isNotEmpty) {
+          await sh('pvesh delete /nodes/$node/network');
+        }
+        if ((await sh("grep -c 'iface $bridge ' /etc/network/interfaces")).trim() != '0') {
+          await sh(
+            'pvesh delete /nodes/$node/network/$bridge && pvesh set /nodes/$node/network',
+          );
+        }
       }
-      if ((await sh("grep -c 'iface $bridge ' /etc/network/interfaces")).trim() != '0') {
+      if (ownsStore) {
         await sh(
-          'pvesh delete /nodes/$node/network/$bridge && pvesh set /nodes/$node/network',
+          "for v in \$(pvesm list '$store' 2>/dev/null | awk 'NR>1{print \$1}'); do pvesm free \"\$v\"; done",
         );
+        await sh("pvesm remove '$store' 2>/dev/null");
       }
-      await sh(
-        "for v in \$(pvesm list '$store' 2>/dev/null | awk 'NR>1{print \$1}'); do pvesm free \"\$v\"; done",
-      );
-      await sh("pvesm remove '$store' 2>/dev/null; rm -rf -- '$dir'");
+      // Absent when setup looked, so whatever is there now this group made
+      // (the storage creates it, and outlives its removal).
+      if (clean) await sh("rm -rf -- '$dir'");
       await pve.close();
       c.close();
     });
@@ -3624,6 +3704,7 @@ Future<void> _pveManage() async {
           content: const ['images', 'iso'],
         ),
       );
+      ownsStore = true;
       var s = await storage();
       expect(s.active, isTrue);
       expect(s.path, dir);
@@ -3706,7 +3787,6 @@ Future<void> _pveManage() async {
         (p) => p.node == node && p.active && p.content.contains('images') && p.name != store,
       );
       final id = (await pve.nextVmid())!;
-      vmid = id;
       await pve.create(
         VirtCreateSpec(
           kind: VirtGuestKind.qemu,
@@ -3719,6 +3799,9 @@ Future<void> _pveManage() async {
           diskGiB: 1,
         ),
       );
+      // Only once PVE made it: an ID taken meanwhile is refused, and the
+      // guest holding it is not this group's to destroy.
+      vmid = id;
       await pve.manage(
         VirtVolumeCreate(s, name: 'vm-$id-disk-1', gib: 1, format: 'raw'),
       );
@@ -3762,11 +3845,13 @@ Future<void> _pveManage() async {
     test('the storage removed; what was in it stays', () async {
       await sh("touch '$dir/sbxe2e-kept'");
       await pve.manage(VirtPoolDelete(await storage()));
+      ownsStore = false;
       expect(await findStore(), isNull);
       expect(await sh("ls '$dir'"), contains('sbxe2e-kept'));
     });
 
     test('a Linux bridge: pending, reverted; made again, applied, deleted, applied', () async {
+      stagedNetwork = true;
       await pve.manage(
         VirtNetworkCreate(name: bridge, mode: 'bridge', node: node, cidr: '10.231.77.1/24'),
       );
@@ -3805,6 +3890,7 @@ Future<void> _pveManage() async {
 
     test('an edit keeps the addresses; the management bridge and an apply touching it are refused', () async {
       // A dual-stack bridge of the run's own, applied.
+      stagedNetwork = true;
       await pve.manage(
         VirtNetworkCreate(name: bridge, mode: 'bridge', node: node, cidr: '10.231.78.1/24'),
       );
@@ -4497,6 +4583,11 @@ Future<void> _libvirtCloudImages() async {
       Map<String, String>? rebooted;
       final deadline = DateTime.now().add(const Duration(minutes: 5));
       while (rebooted?['host'] != '${g.name}-b') {
+        // Checked on every pass: a guest that answers with its old hostname
+        // never throws, and would otherwise loop until the test's timeout.
+        if (DateTime.now().isAfter(deadline)) {
+          fail('the guest still answers as ${rebooted?['host']}');
+        }
         ip = await ipOf(g);
         try {
           rebooted = await _guestFacts(
@@ -4890,7 +4981,8 @@ Future<void> _p8Libvirt() async {
     // Under /var/lib/libvirt/images: an AppArmor host's `virt-aa-helper`
     // reads any file there, which a revert's new overlay (named without an
     // extension) needs — elsewhere the app refuses the revert.
-    final poolName = 'sbxe2e-p8i';
+    final stamp = name.substring(name.lastIndexOf('-') + 1);
+    final poolName = 'sbxe2e-p8i-$stamp';
     final poolDir = '/var/lib/libvirt/images/$poolName';
     late VirtStoragePool pool;
     VirtGuest? guest;
@@ -4899,8 +4991,12 @@ Future<void> _p8Libvirt() async {
     // outside the directories libvirt's AppArmor helper reads.
     final twoDisks = '$name-2';
     final outside = '$name-o';
-    final outsideName = 'sbxe2e-p8o';
+    final outsideName = 'sbxe2e-p8o-$stamp';
     final outsideDir = '/var/lib/$outsideName';
+
+    // What this run made, recorded once made: teardown removes these only.
+    final ownedGuests = <String>{};
+    final ownedPools = <(String, String)>{};
 
     Future<VirtGuest?> findNamed(String n) async =>
         (await virt.load()).guests.where((g) => g.name == n).firstOrNull;
@@ -4936,18 +5032,23 @@ Future<void> _p8Libvirt() async {
         serverId: 'e2e-libvirt-snap',
         exec: () async => SshExec(c),
       );
+      // None of the names is taken: a guest or pool answering to one is
+      // someone else's.
+      final taken = (await virt.load()).guests.map((g) => g.name).toSet();
+      expect(taken.intersection({name, twoDisks, outside}), isEmpty);
+      final pools = (await virt.storagePools()).map((p) => p.name).toSet();
+      expect(pools.intersection({poolName, outsideName}), isEmpty);
       // A pool of the test's own, so nothing it makes is left in `images`.
-      await onHost('mkdir -p $poolDir');
-      final existing = await virt.storagePools();
-      if (!existing.any((p) => p.name == poolName)) {
-        await virt.manage(
-          VirtPoolCreate(name: poolName, type: 'dir', source: poolDir),
-        );
-      }
+      // `mkdir` without `-p`: a directory there already is not this run's.
+      await onHost("mkdir '$poolDir'");
+      await virt.manage(
+        VirtPoolCreate(name: poolName, type: 'dir', source: poolDir),
+      );
+      ownedPools.add((poolName, poolDir));
       pool = (await virt.storagePools()).firstWhere((p) => p.name == poolName);
     });
     tearDownAll(() async {
-      for (final n in [name, twoDisks, outside]) {
+      for (final n in ownedGuests) {
         try {
           final g = await findNamed(n);
           if (g != null) {
@@ -4960,7 +5061,7 @@ Future<void> _p8Libvirt() async {
       }
       // The pools the run made, now empty: their volumes went with the
       // guests.
-      for (final (p, dir) in [(poolName, poolDir), (outsideName, outsideDir)]) {
+      for (final (p, dir) in ownedPools) {
         try {
           await onHost(
             "virsh --connect qemu:///system -q pool-destroy '$p'; "
@@ -4991,6 +5092,7 @@ Future<void> _p8Libvirt() async {
         start: true,
       );
       await virt.create(spec);
+      ownedGuests.add(name);
       guest = await settle((g) => g.state == VirtGuestState.running);
       final before = (await virt.snapshotChain(guest!)).disks.single;
       expect(before.isChain, isFalse, reason: 'a plain qcow2 disk to start');
@@ -5179,6 +5281,7 @@ Future<void> _p8Libvirt() async {
         diskGiB: 1,
       );
       await virt.create(spec);
+      ownedGuests.add(twoDisks);
       var g = await settleNamed(twoDisks, (g) => g.state == VirtGuestState.stopped);
       await virt.changeHardware(g, await virt.hardware(g), VirtHwAddDisk(storage: pool, gib: 1));
       await virt.power(g, VirtPowerAction.start);
@@ -5266,6 +5369,7 @@ Future<void> _p8Libvirt() async {
       // Deleted with its disks: every file of every snapshot goes, the
       // overlays the internal revert left behind among them.
       await virt.delete(g, removeDisks: true);
+      ownedGuests.remove(twoDisks);
       expect(await findNamed(twoDisks), isNull);
       await virt.manage(VirtPoolRefresh(pool));
       final left = [
@@ -5281,8 +5385,9 @@ Future<void> _p8Libvirt() async {
       final confined = (await onHost(
         'cat /sys/module/apparmor/parameters/enabled 2>/dev/null || true',
       )).trim() == 'Y';
-      await onHost('mkdir -p $outsideDir');
+      await onHost("mkdir '$outsideDir'");
       await virt.manage(VirtPoolCreate(name: outsideName, type: 'dir', source: outsideDir));
+      ownedPools.add((outsideName, outsideDir));
       final opool = (await virt.storagePools()).firstWhere((p) => p.name == outsideName);
       await virt.create(VirtCreateSpec(
         kind: VirtGuestKind.qemu,
@@ -5293,6 +5398,7 @@ Future<void> _p8Libvirt() async {
         diskGiB: 1,
         start: true,
       ));
+      ownedGuests.add(outside);
       var g = await settleNamed(outside, (g) => g.state == VirtGuestState.running);
       await virt.createSnapshot(g, name: 'sbxe2e-o1', form: VirtSnapshotForm.external);
       final before = await virt.snapshotChain(g);
@@ -5314,10 +5420,12 @@ Future<void> _p8Libvirt() async {
       await virt.power((await findNamed(outside))!, VirtPowerAction.forceStop);
       g = await settleNamed(outside, (g) => g.state == VirtGuestState.stopped);
       await virt.delete(g, removeDisks: true);
+      ownedGuests.remove(outside);
       expect(await findNamed(outside), isNull);
       expect(await onHost("ls -A '$outsideDir'"), isEmpty);
       await virt.manage(VirtPoolDelete((await virt.storagePools()).firstWhere((p) => p.name == outsideName)));
       await onHost("rmdir '$outsideDir'");
+      ownedPools.remove((outsideName, outsideDir));
     }, timeout: const Timeout(Duration(minutes: 5)));
 
     test('deleting the guest takes the files its snapshots left', () async {
@@ -5328,6 +5436,7 @@ Future<void> _p8Libvirt() async {
       }
       final stopped = await settle((g) => g.state == VirtGuestState.stopped);
       await virt.delete(stopped, removeDisks: true);
+      ownedGuests.remove(name);
       expect(await find(), isNull);
       // The pool is the run's own: nothing of the guest is left in it.
       await virt.manage(VirtPoolRefresh(pool));
@@ -5468,6 +5577,9 @@ Future<void> _p8Pve() async {
       final rawId = (await pve.nextVmid())!;
       final rawName = 'sbxe2e-p8r-$rawId';
       final dir = '/var/lib/$rawName';
+      // A directory there already is someone else's: the teardown below
+      // removes it.
+      await onNode('test ! -e $dir');
       await onNode('pvesm add dir $rawName --path $dir --content images');
       addTearDown(() async {
         await onNode('pvesm remove $rawName || true');

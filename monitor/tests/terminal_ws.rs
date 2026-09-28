@@ -368,15 +368,23 @@ async fn a_paste_bigger_than_64_kib_reaches_the_shell() {
     let (io, codec, _) = open_shell(&srv, &ticket).await;
     read_until(&io, &codec, fake_sshd::BANNER).await;
 
+    let marker = b"sbm-paste-end";
     let mut paste = vec![b'a'; 200 << 10];
-    paste.extend_from_slice(b"sbm-paste-end");
-    io.send(ws::Message::Binary(ntex::util::Bytes::from(paste)), &codec)
-        .await
-        .unwrap();
-    let echoed = read_until(&io, &codec, b"sbm-paste-end").await;
+    paste.extend_from_slice(marker);
+    io.send(
+        ws::Message::Binary(ntex::util::Bytes::from(paste.clone())),
+        &codec,
+    )
+    .await
+    .unwrap();
+    // The fake shell echoes verbatim, so the whole paste comes back: a dropped
+    // or duplicated frame changes the bytes, not just whether the marker shows.
+    let echoed = read_until(&io, &codec, marker).await;
     assert!(
-        echoed.windows(13).any(|w| w == b"sbm-paste-end"),
-        "the whole paste should reach the shell and come back"
+        echoed == paste,
+        "the whole paste should reach the shell and come back; got {} of {} bytes",
+        echoed.len(),
+        paste.len()
     );
 }
 

@@ -172,7 +172,8 @@ Future<void> main() async {
           client!,
           installCmd,
           bytes,
-        ).timeout(_installTimeout);
+          within: _installTimeout,
+        );
         final took = DateTime.now().difference(started);
         // ignore: avoid_print
         print('round $round: exit ${result.exitCode} in ${took.inMilliseconds}ms');
@@ -208,12 +209,17 @@ Future<void> main() async {
     );
 
     final started = DateTime.now();
-    final result = await execSshE2e(client!, installCmd, bytes).timeout(
-      _installTimeout,
-      onTimeout: () => throw TimeoutException(
+    final result = await execSshE2e(
+      client!,
+      installCmd,
+      bytes,
+      within: _installTimeout,
+    ).catchError(
+      (Object _) => throw TimeoutException(
         'the install hung on 32 KiB',
         _installTimeout,
       ),
+      test: (e) => e is TimeoutException,
     );
     // ignore: avoid_print
     print(

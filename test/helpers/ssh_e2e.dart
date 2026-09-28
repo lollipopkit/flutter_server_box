@@ -8,6 +8,7 @@
 /// - `SBM_E2E_SSH_KEY_PASSPHRASE`: the passphrase of an encrypted key.
 library;
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -248,35 +249,62 @@ Future<SSHClient> connectSshE2e(SshE2eTarget target, List<SSHKeyPair> identities
 /// back. The shape the app uses in `ServerNotifier`: `stdin.add` then
 /// `stdin.close`, with nothing read until the command is done.
 ///
-/// Bounded by [within], because `session.done` never completes on a
-/// connection that died under it — a host that goes down mid-run would
+/// Bounded by [within] as a whole — opening the channel, the exec request,
+/// stdin and the output included — because `session.done` never completes on
+/// a connection that died under it, and a host that goes down mid-run would
 /// otherwise leave this awaiting forever. The suites here are [`@Timeout`]d,
 /// but that clock covers the test body; the *teardown* that restores the
 /// host's guests runs after it, and an unbounded await there hangs the whole
 /// run with no verdict at all.
+///
+/// Past [within] this throws [TimeoutException] after closing the session, so
+/// a caller never mistakes partial output for a finished command, and the
+/// next command does not start beside one still running.
 Future<({int? exitCode, String stdout, String stderr})> execSshE2e(
   SSHClient client,
   String command,
   Uint8List? input, {
   Duration within = const Duration(seconds: 30),
 }) async {
-  final session = await client.execute(command);
+  SSHSession? session;
+  var abandoned = false;
   final stdout = <int>[];
   final stderr = <int>[];
-  final collected = Future.wait([
-    session.stdout.forEach(stdout.addAll),
-    session.stderr.forEach(stderr.addAll),
-  ]).timeout(within, onTimeout: () => const []);
-  if (input != null) {
-    session.stdin.add(input);
-    await session.stdin.close();
+  final subs = <StreamSubscription<Uint8List>>[];
+  Future<void> run() async {
+    final s = await client.execute(command);
+    // The deadline passed while the channel was opening: nobody is waiting.
+    if (abandoned) {
+      s.close();
+      return;
+    }
+    session = s;
+    final out = Completer<void>();
+    final err = Completer<void>();
+    subs
+      ..add(s.stdout.listen(stdout.addAll, onDone: out.complete))
+      ..add(s.stderr.listen(stderr.addAll, onDone: err.complete));
+    if (input != null) {
+      s.stdin.add(input);
+      await s.stdin.close();
+    }
+    await s.done;
+    await Future.wait([out.future, err.future]);
   }
-  // Past [within] the command is ended here, not left running into the
-  // teardown that follows with its channel open.
-  await session.done.timeout(within, onTimeout: session.close);
-  await collected;
+
+  try {
+    await run().timeout(within);
+  } on TimeoutException {
+    abandoned = true;
+    throw TimeoutException('`$command` did not finish', within);
+  } finally {
+    for (final sub in subs) {
+      await sub.cancel();
+    }
+    session?.close();
+  }
   return (
-    exitCode: session.exitCode,
+    exitCode: session?.exitCode,
     stdout: utf8.decode(stdout, allowMalformed: true),
     stderr: utf8.decode(stderr, allowMalformed: true),
   );

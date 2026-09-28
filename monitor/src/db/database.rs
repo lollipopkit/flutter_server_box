@@ -58,13 +58,15 @@ pub async fn init(database_url: &str) -> Result<SqlitePool> {
         create_owner_only(&file)?;
     }
 
-    let pool = SqlitePoolOptions::new().connect_with(options).await?;
-
-    // After the first connection, which is what creates `-wal` and `-shm`,
-    // and before anything else: a migration that fails must not leave them
-    // readable by others.
+    // Before SQLite opens anything: a connection or migration that fails must
+    // not leave a legacy 0644 database, or the sidecars an earlier run left
+    // beside it, readable by others. SQLite gives a `-wal`/`-shm` it creates
+    // the database file's own mode, so the ones the first connection creates
+    // are owner-only as well.
     #[cfg(unix)]
     restrict_to_owner(&file)?;
+
+    let pool = SqlitePoolOptions::new().connect_with(options).await?;
 
     // Run migrations
     sqlx::migrate!("./migrations").run(&pool).await?;
@@ -146,19 +148,27 @@ fn create_owner_only(path: &std::path::Path) -> Result<()> {
 /// new `-wal`/`-shm` the database file's own mode, so after this they stay so.
 #[cfg(unix)]
 fn restrict_to_owner(path: &std::path::Path) -> Result<()> {
+    use anyhow::Context as _;
     use std::os::unix::fs::PermissionsExt;
 
     for suffix in ["", "-wal", "-shm"] {
         let mut name = path.as_os_str().to_os_string();
         name.push(suffix);
         let file = std::path::PathBuf::from(name);
-        let Ok(meta) = std::fs::metadata(&file) else {
-            continue;
+        // Only a missing file is nothing to do; any other failure means the
+        // file's access could not be verified.
+        let meta = match std::fs::metadata(&file) {
+            Ok(meta) => meta,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => continue,
+            Err(e) => {
+                return Err(e).with_context(|| format!("Failed to inspect {}", file.display()));
+            }
         };
         if !meta.is_file() || meta.permissions().mode() & 0o077 == 0 {
             continue;
         }
-        std::fs::set_permissions(&file, std::fs::Permissions::from_mode(0o600))?;
+        std::fs::set_permissions(&file, std::fs::Permissions::from_mode(0o600))
+            .with_context(|| format!("Failed to restrict {}", file.display()))?;
         info!("Restricted {} to its owner", file.display());
     }
     Ok(())
