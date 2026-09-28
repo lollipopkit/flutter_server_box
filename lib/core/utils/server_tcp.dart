@@ -157,7 +157,12 @@ class ServerTcpDialer {
   /// `SshLocalTunnel.accessToken` first, which the engine is handed with the
   /// port. Another process on this device gets nothing from the port.
   ///
-  /// The transport is chosen when the listener is bound, not per connection.
+  /// The transport is chosen when the listener is bound, not per connection,
+  /// and the choice is made by opening the first connection to [host]:[port]
+  /// then: a transport that can bind a listener but not reach the target
+  /// fails here, where the other can still be tried, rather than at the
+  /// client's first connect, where nothing would try it. That connection is
+  /// what the first accepted socket is carried over; later ones dial again.
   /// The tunnel closes itself when an SSH connection under it ends.
   Future<SshLocalTunnel> loopback(String host, int port) =>
       _either((credential) => _loopbackOver(credential, host, port));
@@ -187,7 +192,11 @@ class ServerTcpDialer {
     // Reached for a transport that will not carry this as well as for one
     // that failed: both mean "not this way".
     final fallback = ServerConnectCredential.fallbackOf(spi);
-    if (fallback == null) Error.throwWithStackTrace(first, firstTrace);
+    // Closed while the first attempt was pending: [close] has run, and
+    // nothing would release what a second attempt opens.
+    if (fallback == null || _closed) {
+      Error.throwWithStackTrace(first, firstTrace);
+    }
     if (first.type == ServerTcpErrType.dial) {
       Loggers.app.info(
         'TCP over ${first.transport.name} for ${spi.name} failed, '
@@ -314,55 +323,71 @@ class ServerTcpDialer {
     String host,
     int port,
   ) async {
-    final bindHost = InternetAddress.loopbackIPv4.address;
+    final SshTunnelDialer dial;
+    final Future<void> done;
+    void Function()? release;
     switch (credential) {
       case ServerConnectCredentialSsh():
         final ssh = await _ssh();
-        return SshLocalTunnel.bindWithDialer(
-          bindHost: bindHost,
-          sshDone: ssh.done,
-          dialer: () => ssh.forward(host, port),
-          authenticated: true,
-        );
+        dial = () => _opened(ssh.forward(host, port));
+        done = ssh.done;
       case ServerConnectCredentialMonitorHttp(:final monitor):
         // One client for the tunnel's life rather than one per dial: it holds
         // the login the relay socket is authorised with, and a fresh one per
         // attempt would log in again each time.
         final client = MonitorHttpClient(monitor);
-        final SshLocalTunnel tunnel;
-        try {
-          tunnel = await SshLocalTunnel.bindWithDialer(
-            bindHost: bindHost,
-            dialer: () => MonitorTunnelChannel.dial(
-              client: client,
-              remoteHost: host,
-              remotePort: port,
-            ),
-            // No SSH connection to outlive: the relay socket is opened per
-            // accepted connection, and `MonitorTunnelChannel.close` ends it.
-            sshDone: Completer<void>().future,
-            authenticated: true,
-          );
-        } catch (_) {
-          client.dispose();
-          rethrow;
-        }
-        unawaited(tunnel.done.whenComplete(client.dispose));
-        return tunnel;
-      case ServerConnectCredentialLocal():
-        return SshLocalTunnel.bindWithDialer(
-          bindHost: bindHost,
-          dialer: () async => _SocketChannel(
-            await Socket.connect(host, port, timeout: openTimeout),
-          ),
-          sshDone: Completer<void>().future,
-          authenticated: true,
+        dial = () => MonitorTunnelChannel.dial(
+          client: client,
+          remoteHost: host,
+          remotePort: port,
+          timeout: openTimeout,
         );
+        // No SSH connection to outlive: the relay socket is opened per
+        // accepted connection, and `MonitorTunnelChannel.close` ends it.
+        done = Completer<void>().future;
+        release = client.dispose;
+      case ServerConnectCredentialLocal():
+        dial = () async => _SocketChannel(
+          await Socket.connect(host, port, timeout: openTimeout),
+        );
+        done = Completer<void>().future;
+    }
+
+    SshTunnelChannel? held;
+    try {
+      held = await dial();
+      final tunnel = await SshLocalTunnel.bindWithDialer(
+        bindHost: InternetAddress.loopbackIPv4.address,
+        sshDone: done,
+        dialer: () async {
+          final first = held;
+          held = null;
+          return first ?? await dial();
+        },
+        authenticated: true,
+      );
+      unawaited(
+        tunnel.done.whenComplete(() {
+          // Never taken: no client connected before the tunnel ended.
+          final unused = held;
+          held = null;
+          if (unused != null) unawaited(unused.close().catchError((_) {}));
+          release?.call();
+        }),
+      );
+      return tunnel;
+    } catch (_) {
+      await held?.close().catchError((_) {});
+      release?.call();
+      rethrow;
     }
   }
 
-  MonitorHttpClient _monitorClient(MonitorHttpCredential monitor) =>
-      _monitor ??= MonitorHttpClient(monitor);
+  MonitorHttpClient _monitorClient(MonitorHttpCredential monitor) {
+    // [close] has run: a client made now would never be disposed.
+    if (_closed) throw StateError('ServerTcpDialer used after close');
+    return _monitor ??= MonitorHttpClient(monitor);
+  }
 
   /// [opening] within [openTimeout]. A direct-tcpip open cannot be cancelled
   /// through dartssh2, so one that completes late is closed on arrival.

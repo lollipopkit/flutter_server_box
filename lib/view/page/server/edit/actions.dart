@@ -289,6 +289,13 @@ extension _Actions on _ServerEditPageState {
     final tokenId = _pveTokenIdCtrl.text.trim().selfNotEmptyOrNull;
     final tokenSecret = _pveTokenSecretCtrl.text.trim().selfNotEmptyOrNull;
     if (addr.isEmpty) return null;
+    // A password login is the SSH user's (`PveBackend`), and a server with no
+    // SSH host saves no SSH user: refused here rather than saved to fail on
+    // every connection.
+    if (!useToken && !_hasPveLoginUser) {
+      Toast.show('${libL10n.empty} ${libL10n.user}: ${l10n.pveAuthToken}');
+      return _pveInvalid;
+    }
     if (useToken) {
       if (tokenId == null || !PveConfig.tokenIdPattern.hasMatch(tokenId)) {
         Toast.show(l10n.pveTokenIdInvalid);
@@ -302,8 +309,9 @@ extension _Actions on _ServerEditPageState {
     // The pin is the stored one, read now rather than when the page opened:
     // this page never sets it, and the Virtualization tab may have confirmed
     // a certificate while it was open. Saving the copy read at open time
-    // wrote that confirmation away. Two things drop it: Forget, and another
-    // address — a pin names a certificate seen at one address, and keeping it
+    // wrote that confirmation away. Three things drop it: Forget, another
+    // address, and another far end ([_pveKeepsPin], once the server is
+    // built) — a pin names a certificate seen at one address, and keeping it
     // for another would turn that server's first connection into a
     // "certificate changed" error instead of the confirmation it should be.
     final stored = Stores.pve.fetch(spi?.id);
@@ -324,6 +332,34 @@ extension _Actions on _ServerEditPageState {
       tokenSecret: useToken ? tokenSecret : null,
       certSha256: cert,
     );
+  }
+
+  /// Whether saving leaves an SSH user for a PVE password login: the SSH
+  /// credential is written exactly when there is a host (see `_onSave`).
+  bool get _hasPveLoginUser => _ipController.text.trim().isNotEmpty;
+
+  /// Whether [cfg]'s pin still names the certificate it was confirmed for
+  /// once the server is saved as [next]: the API's host resolves on the far
+  /// end of the transport, so `https://127.0.0.1:8006` on another SSH host,
+  /// behind another jump or through another agent is another machine.
+  PveConfig? _pveKeepsPin(PveConfig? cfg, Spi next) {
+    if (cfg == null || cfg.certSha256 == null) return cfg;
+    final old = spi;
+    if (old != null && _pveFarEnd(old) == _pveFarEnd(next)) return cfg;
+    return cfg.copyWith(certSha256: null);
+  }
+
+  /// What decides where a PVE address resolves — see `ServerTcpDialer`.
+  static String _pveFarEnd(Spi s) {
+    final ssh = s.sshOn;
+    return [
+      s.local,
+      ssh?.ip.trim(),
+      ssh?.port,
+      ssh?.resolvedJumpIds.join(','),
+      ssh?.proxyCommand?.trim(),
+      s.monitorOn?.addr.trim(),
+    ].join('\u0000');
   }
 
   Future<void> _onTapForgetPveCert() async {
@@ -741,7 +777,7 @@ extension _Actions on _ServerEditPageState {
         await ref.read(serversProvider.notifier).updateServer(this.spi!, spi);
       }
       // A child of the server row, so only once that row exists.
-      Stores.pve.put(spi.id, pve);
+      Stores.pve.put(spi.id, _pveKeepsPin(pve, spi));
       // After this server is written, so that a failure above leaves the other
       // servers alone — and so that the state this reads back already has this
       // server's own tags in it.

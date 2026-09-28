@@ -864,34 +864,45 @@ extension _Widgets on _ServerEditPageState {
   }
 
   Widget _buildPveAuthMode() {
-    return _pveUseToken.listenVal((useToken) {
-      final token = l10n.pveAuthToken;
-      final pwd = libL10n.pwd;
-      return ListTile(
-        leading: const Icon(MingCute.key_2_line),
-        title: TipText(
-          libL10n.login,
-          useToken
-              ? [
-                  l10n.pveTokenTip,
-                  l10n.pveTokenTipCreate,
-                  l10n.pveTokenTipHardware,
-                  l10n.pveTokenTipBackup,
-                  l10n.pveTokenTipStorage,
-                ].join('\n')
-              : l10n.pvePasswordAuthTip,
-        ),
-        trailing: PopupMenu<bool>(
-          initialValue: useToken,
-          items: [
-            PopupMenuItem(value: true, child: Text(token)),
-            PopupMenuItem(value: false, child: Text(pwd)),
-          ],
-          onSelected: (value) => _pveUseToken.value = value,
-          child: Text(useToken ? token : pwd),
-        ),
-      ).cardx;
-    });
+    // A password login is the SSH user's; with no SSH host there is none, and
+    // saving refuses it (`_pveConfigToSave`).
+    return ListenableBuilder(
+      listenable: Listenable.merge([_pveUseToken, _ipController]),
+      builder: (_, _) => _buildPveAuthModeTile(_pveUseToken.value),
+    );
+  }
+
+  Widget _buildPveAuthModeTile(bool useToken) {
+    final token = l10n.pveAuthToken;
+    final pwd = libL10n.pwd;
+    return ListTile(
+      leading: const Icon(MingCute.key_2_line),
+      title: TipText(
+        libL10n.login,
+        useToken
+            ? [
+                l10n.pveTokenTip,
+                l10n.pveTokenTipCreate,
+                l10n.pveTokenTipHardware,
+                l10n.pveTokenTipBackup,
+                l10n.pveTokenTipStorage,
+              ].join('\n')
+            : l10n.pvePasswordAuthTip,
+      ),
+      trailing: PopupMenu<bool>(
+        initialValue: useToken,
+        items: [
+          PopupMenuItem(value: true, child: Text(token)),
+          PopupMenuItem(
+            value: false,
+            enabled: _hasPveLoginUser,
+            child: Text(pwd),
+          ),
+        ],
+        onSelected: (value) => _pveUseToken.value = value,
+        child: Text(useToken ? token : pwd),
+      ),
+    ).cardx;
   }
 
   Widget _buildPveToken() {

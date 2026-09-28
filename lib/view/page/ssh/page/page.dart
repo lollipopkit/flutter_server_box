@@ -68,6 +68,11 @@ final class SshPageArgs {
   };
 
   final String? initCmd;
+
+  /// Whether [initCmd] is what the shell is for, and so typed again into the
+  /// fresh shell a reconnect opens (`TerminalSession.reenter`). A guest's
+  /// serial console is; a command run once, such as a service's logs, is not.
+  final bool reenter;
   final Snippet? initSnippet;
 
   /// What ends the program [initCmd] started without ending the shell under
@@ -114,6 +119,7 @@ final class SshPageArgs {
   const SshPageArgs({
     required this.source,
     this.initCmd,
+    this.reenter = false,
     this.initSnippet,
     this.detachInput,
     this.session,
@@ -146,6 +152,7 @@ final class SshPageArgs {
   }) => SshPageArgs(
     source: source,
     initCmd: initCmd,
+    reenter: reenter,
     initSnippet: initSnippet,
     detachInput: detachInput,
     session: session,
@@ -206,7 +213,9 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// The terminal and the shell behind it. Handed in when this page is
   /// continuing a session that started elsewhere, and made here otherwise.
   late final TerminalSession _sess =
-      widget.args.session ?? TerminalSession(source: widget.args.source);
+      widget.args.session ??
+      (TerminalSession(source: widget.args.source)
+        ..reenter = widget.args.reenter ? widget.args.initCmd : null);
 
   /// Whether the session arrived already running, and so must not be started
   /// a second time.

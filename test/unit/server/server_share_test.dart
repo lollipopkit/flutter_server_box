@@ -349,6 +349,26 @@ void main() {
       expect(share.pve, const PveConfig(addr: 'https://10.0.0.9:8006'));
     });
 
+    test('a clear-text QR from an older build keeps its PVE', () {
+      final record = Map<String, dynamic>.from(
+        jsonDecode(jsonEncode(_spi(name: 'old').toJson())) as Map,
+      );
+      record['custom'] = {
+        'pveAddr': 'https://10.0.0.9:8006',
+        'pveIgnoreCert': true,
+      };
+
+      final share = ServerShareCodec.decode(jsonEncode(record));
+      expect(share.pve, const PveConfig(addr: 'https://10.0.0.9:8006'));
+
+      final result = ServerShareInstaller.install(share);
+      expect(
+        Stores.pve.fetch(result.spi.id),
+        const PveConfig(addr: 'https://10.0.0.9:8006'),
+        reason: 'no pin: the next connection asks, whatever pveIgnoreCert said',
+      );
+    });
+
     test('an older build reads it out of custom, so it is written there', () {
       final spi = _spi();
       Stores.server.put(spi);
@@ -359,7 +379,8 @@ void main() {
               as Map<String, dynamic>;
       final custom = (wire['spi'] as Map)['custom'] as Map;
       expect(custom['pveAddr'], pve.addr);
-      expect(custom['pveIgnoreCert'], isTrue);
+      // A pin is one certificate; an older build can only say "any".
+      expect(custom['pveIgnoreCert'], isFalse);
       // This build still reads the `pve` object first.
       expect(
         ServerShare.fromJson(wire).pve,

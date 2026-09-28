@@ -236,19 +236,37 @@ class ProcessExec extends LocalExec implements ServerByteExec {
       throw UnsupportedError('Byte streams run on the host, not in a userland');
     }
     final shell = LocalShellBackend.shellPath;
-    final process = await Process.start(shell, [
-      Platform.isWindows ? '/C' : '-c',
-      command,
-    ], includeParentEnvironment: true);
-    return _ProcessExecSession(process);
+    final arguments = [Platform.isWindows ? '/C' : '-c', command];
+    // A session is always cancellable, so it gets the group [run] gives a
+    // cancellable command: the shell is not the only process reading stdin
+    // (an upload runs its writer and then reads its status), and killing the
+    // shell alone would leave that writer alive with the pipe open.
+    final setsid = _setsidPath;
+    final process = await Process.start(
+      setsid ?? shell,
+      setsid == null ? arguments : [shell, ...arguments],
+      includeParentEnvironment: true,
+    );
+    return _ProcessExecSession(
+      process,
+      processGroupId: setsid == null ? null : process.pid,
+    );
   }
 }
 
 /// A local process, fed as it runs.
 final class _ProcessExecSession implements ExecSession {
-  _ProcessExecSession(this._process);
+  _ProcessExecSession(this._process, {int? processGroupId})
+    : _processGroupId = processGroupId {
+    unawaited(_process.exitCode.then((_) => _exited = true));
+  }
 
   final Process _process;
+  final int? _processGroupId;
+
+  /// Set once the shell has exited, so a late [kill] does not walk a tree
+  /// whose root pid may already belong to an unrelated process.
+  var _exited = false;
 
   static const _decoder = Utf8Decoder(allowMalformed: true);
 
@@ -276,7 +294,12 @@ final class _ProcessExecSession implements ExecSession {
   Future<int?> get done => _process.exitCode;
 
   @override
-  void kill() => _process.kill();
+  void kill() {
+    if (_exited) return;
+    // The whole tree, as [ProcessExec.run] does on cancel: the command's
+    // descendants hold the same stdin and would otherwise outlive it.
+    ProcessTree.terminate(_process, _processGroupId);
+  }
 }
 
 final String? _setsidPath = () {

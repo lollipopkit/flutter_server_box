@@ -12,6 +12,7 @@ import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/store/agent_conversation.dart';
 import 'package:server_box/data/store/entity_store.dart';
 import 'package:server_box/data/store/port_forward.dart';
+import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/remote_desktop.dart';
 import 'package:server_box/data/store/snippet.dart';
 import 'package:sqlite3/sqlite3.dart';
@@ -29,22 +30,34 @@ class ServerStore extends EntityStore<Spi> {
     RemoteDesktopStore? remoteDesktops,
     SnippetStore? snippets,
     AgentConversationStore? conversations,
+    PveStore? pve,
   }) : _portForwards = portForwards,
        _remoteDesktops = remoteDesktops,
        _snippets = snippets,
-       _conversations = conversations;
+       _conversations = conversations,
+       _pve = pve;
 
   static final instance = ServerStore(
     portForwards: PortForwardStore.instance,
     remoteDesktops: RemoteDesktopStore.instance,
     snippets: SnippetStore.instance,
     conversations: AgentConversationStore.instance,
+    pve: PveStore.instance,
   );
 
   final PortForwardStore? _portForwards;
   final RemoteDesktopStore? _remoteDesktops;
   final SnippetStore? _snippets;
   final AgentConversationStore? _conversations;
+
+  /// `server_pve` cascades with its server and moves with a rename, neither
+  /// of which goes through [PveStore], so its watchers hear it from here.
+  final PveStore? _pve;
+
+  bool _hasPve(String id) => db.select(
+    'SELECT 1 FROM server_pve WHERE server_id = ?;',
+    [id],
+  ).isNotEmpty;
 
   @override
   String get table => 'server';
@@ -478,6 +491,7 @@ class ServerStore extends EntityStore<Spi> {
       'SELECT server_id AS id FROM server_jump WHERE jump_id = ?;',
       id,
     );
+    final hadPve = _hasPve(id);
     SqliteStore.transact(() {
       final at = DateTimeX.timestamp;
       for (final pfId in pfIds) {
@@ -510,6 +524,7 @@ class ServerStore extends EntityStore<Spi> {
     if (pfIds.isNotEmpty) _portForwards?.invalidate();
     if (remoteDesktopIds.isNotEmpty) _remoteDesktops?.invalidate();
     if (snippetIds.isNotEmpty) _snippets?.invalidate();
+    if (hadPve) _pve?.invalidate();
   }
 
   /// Changes a server's stable id without exposing a state in which either
@@ -541,6 +556,7 @@ class ServerStore extends EntityStore<Spi> {
       'SELECT server_id AS id FROM server_jump WHERE jump_id = ?;',
       old.id,
     );
+    final hadPve = _hasPve(old.id);
 
     try {
       SqliteStore.transact(() {
@@ -634,6 +650,7 @@ class ServerStore extends EntityStore<Spi> {
     if (portForwardIds.isNotEmpty) _portForwards?.invalidate();
     if (remoteDesktopIds.isNotEmpty) _remoteDesktops?.invalidate();
     if (snippetIds.isNotEmpty) _snippets?.invalidate();
+    if (hadPve) _pve?.invalidate();
     _conversations?.notifyExternalChange();
   }
 

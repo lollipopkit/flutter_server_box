@@ -125,7 +125,7 @@ final class SessionKeepAliveProvider
   }
 }
 
-String _$sessionKeepAliveHash() => r'fc19bf55b712363ee27f61180cee18a32fab57d9';
+String _$sessionKeepAliveHash() => r'c342d2e212d5a540ebbdb373466f29bf57adaabb';
 
 /// Closes a remote session some time after it leaves the screen, rather than
 /// the moment it does.

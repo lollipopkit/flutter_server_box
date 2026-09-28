@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/ssh_local_tunnel.dart';
@@ -199,6 +200,38 @@ void main() {
       expect(echoed, [9, 8]);
     });
 
+    test('while the remote end is dialled, the socket is not read', () async {
+      // An authenticated sender used to be drained into memory while the
+      // dial was pending, up to the whole open timeout.
+      final dial = Completer<SshTunnelChannel>();
+      final sink = _CountingChannel();
+      final tunnel = await SshLocalTunnel.bindWithDialer(
+        bindHost: InternetAddress.loopbackIPv4.address,
+        sshDone: Completer<void>().future,
+        dialer: () => dial.future,
+        authenticated: true,
+      );
+      addTearDown(tunnel.close);
+      final socket = await Socket.connect(tunnel.address, tunnel.port);
+      addTearDown(socket.destroy);
+
+      // Beyond what the loopback's socket buffers hold.
+      const size = 64 * 1024 * 1024;
+      socket.add(tunnel.accessToken!);
+      socket.add(Uint8List(size)..fillRange(0, size, 7));
+      var flushed = false;
+      final flush = socket.flush().then((_) => flushed = true);
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+      expect(flushed, isFalse, reason: 'the tunnel stopped reading');
+
+      dial.complete(sink);
+      await flush.timeout(const Duration(seconds: 20));
+      for (var i = 0; i < 400 && sink.count < size; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 25));
+      }
+      expect(sink.count, size, reason: 'nothing lost to the pause');
+    });
+
     test('once: one connection, then no port left open', () async {
       final (tunnel, dialled) = await authed(once: true);
       final engine = await Socket.connect(tunnel.address, tunnel.port);
@@ -256,4 +289,24 @@ class _FailureChannel extends _EchoChannel {
   final input = StreamController<List<int>>()..stream.listen((_) {});
   @override
   StreamSink<List<int>> get sink => input.sink;
+}
+
+/// Counts what it is sent; sends nothing back.
+class _CountingChannel implements SshTunnelChannel {
+  _CountingChannel() {
+    _input.stream.listen((chunk) => count += chunk.length);
+  }
+
+  final _input = StreamController<List<int>>();
+  final _output = StreamController<List<int>>();
+  var count = 0;
+
+  @override
+  Stream<List<int>> get stream => _output.stream;
+
+  @override
+  StreamSink<List<int>> get sink => _input.sink;
+
+  @override
+  Future<void> close() async {}
 }

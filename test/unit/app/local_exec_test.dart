@@ -148,6 +148,40 @@ void main() {
     });
   });
 
+  group('a byte-stream session', () {
+    test('kill stops the command tree, not only the shell', () async {
+      // An upload's script runs its writer and then reads its status, so the
+      // shell cannot hand itself over to the writer. Killing the shell alone
+      // left the rest reading stdin.
+      final temp = await Directory.systemTemp.createTemp(
+        'server-box-session-tree-',
+      );
+      final marker = File('${temp.path}/survived');
+      try {
+        final session = await exec.start(
+          _posixShell(
+            '(sleep 2; printf alive > ${shellSingleQuote(marker.path)}) & '
+            'cat >/dev/null; true',
+          ),
+        );
+        await session.write(utf8.encode('chunk'));
+        await Future<void>.delayed(const Duration(milliseconds: 300));
+        session.kill();
+        await session.done.timeout(const Duration(seconds: 5));
+        await Future<void>.delayed(const Duration(seconds: 3));
+        expect(marker.existsSync(), isFalse);
+      } finally {
+        await temp.delete(recursive: true);
+      }
+    }, skip: !onPosix);
+
+    test('kill after the command has exited is a no-op', () async {
+      final session = await exec.start('true');
+      await session.done.timeout(const Duration(seconds: 5));
+      session.kill();
+    }, skip: !onPosix);
+  });
+
   group('sudo', () {
     test(
       'a rejected password is told apart from the command failing',

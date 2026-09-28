@@ -122,6 +122,42 @@ void main() {
     expect(tunnel.isClosed, isTrue);
   });
 
+  test('closing the tunnel before any client closes the websocket', () async {
+    // The console caller keeps only the tunnel; the dialer that would have
+    // handed the websocket to a connection never ran.
+    final tunnel = await WebSocketTunnelChannel.loopbackOnce(await open());
+    await accepted.future;
+
+    await tunnel.close();
+    await farEnded.future.timeout(const Duration(seconds: 5));
+  });
+
+  test('closing the tunnel with its client connected closes the websocket', () async {
+    // The client's bytes are piped into the channel's sink for the whole
+    // connection; closing the controller under that pipe threw, before the
+    // websocket was closed.
+    final tunnel = await WebSocketTunnelChannel.loopbackOnce(await open());
+    await accepted.future;
+    final client = await connectTunnel(tunnel);
+    addTearDown(client.destroy);
+    client.add(const [1]);
+    await until(() => received.isNotEmpty);
+
+    await tunnel.close().timeout(const Duration(seconds: 5));
+    await farEnded.future.timeout(const Duration(seconds: 5));
+  });
+
+  test('an error in what is piped in ends the websocket', () async {
+    final channel = await open();
+    await accepted.future;
+
+    // What `SshTunnelBridge` forwards when the local socket's read fails.
+    await channel.sink.addStream(
+      Stream<List<int>>.error(const SocketException('read failed')),
+    );
+    await farEnded.future.timeout(const Duration(seconds: 5));
+  });
+
   test('the client hanging up closes the websocket', () async {
     final tunnel = await WebSocketTunnelChannel.loopbackOnce(await open());
     addTearDown(tunnel.close);

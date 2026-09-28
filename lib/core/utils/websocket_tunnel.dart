@@ -12,7 +12,7 @@ import 'package:server_box/core/utils/ssh_local_tunnel.dart';
 /// a text frame is not part of the stream and is dropped.
 class WebSocketTunnelChannel implements SshTunnelChannel {
   WebSocketTunnelChannel(this._socket) {
-    _outgoing.stream.listen(
+    _sending = _outgoing.stream.listen(
       (bytes) {
         if (_closed) return;
         try {
@@ -21,6 +21,9 @@ class WebSocketTunnelChannel implements SshTunnelChannel {
           // Closed from the other side; the stream's end reports it.
         }
       },
+      // What is piped in failed — the local socket's read, forwarded by
+      // `SshTunnelBridge` — which ends the connection like its end does.
+      onError: (Object _) => unawaited(close()),
       onDone: () => unawaited(close()),
       cancelOnError: true,
     );
@@ -28,6 +31,7 @@ class WebSocketTunnelChannel implements SshTunnelChannel {
 
   final WebSocket _socket;
   final _outgoing = StreamController<List<int>>();
+  late final StreamSubscription<List<int>> _sending;
   var _closed = false;
 
   /// Completes when the websocket has ended, from either side.
@@ -45,7 +49,11 @@ class WebSocketTunnelChannel implements SshTunnelChannel {
   Future<void> close() async {
     if (_closed) return;
     _closed = true;
-    if (!_outgoing.isClosed) unawaited(_outgoing.close());
+    // Cancelled rather than closed: `SshTunnelBridge` pipes the local socket
+    // into [sink], and closing a controller with an `addStream` in progress
+    // throws. Cancelling ends that `addStream` instead, and the pipe then
+    // closes the controller itself.
+    unawaited(_sending.cancel());
     await _socket
         .close(WebSocketStatus.normalClosure)
         .timeout(const Duration(seconds: 3), onTimeout: () {})
@@ -59,13 +67,15 @@ class WebSocketTunnelChannel implements SshTunnelChannel {
   /// One connection because the websocket behind [channel] is one: a PVE
   /// console ticket opens one socket, and a client connecting a second time
   /// needs a new ticket — which is the caller's to fetch, with a new tunnel.
-  /// The tunnel closes when the websocket does.
+  /// The tunnel closes when the websocket does, and the websocket when the
+  /// tunnel does — also before any client took it, when nothing else would.
   static Future<SshLocalTunnel> loopbackOnce(
     WebSocketTunnelChannel channel,
   ) async {
     var taken = false;
+    final SshLocalTunnel tunnel;
     try {
-      return await SshLocalTunnel.bindWithDialer(
+      tunnel = await SshLocalTunnel.bindWithDialer(
         bindHost: InternetAddress.loopbackIPv4.address,
         sshDone: channel.done,
         authenticated: true,
@@ -82,5 +92,7 @@ class WebSocketTunnelChannel implements SshTunnelChannel {
       await channel.close();
       rethrow;
     }
+    unawaited(tunnel.done.whenComplete(channel.close));
+    return tunnel;
   }
 }

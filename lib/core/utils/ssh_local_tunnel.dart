@@ -206,9 +206,15 @@ class SshLocalTunnel {
         final bytes = head.takeBytes();
         final ok = _sameBytes(Uint8List.sublistView(bytes, 0, token.length), token);
         verdict.complete(ok);
-        if (ok && bytes.length > token.length) {
+        if (!ok) return;
+        if (bytes.length > token.length) {
           rest.add(Uint8List.sublistView(bytes, token.length));
         }
+        // Nothing reads [rest] until the remote end is dialled, which can
+        // take [SshLocalTunnel]'s whole open timeout, and a controller with
+        // no listener buffers without limit — so the socket waits instead,
+        // until [rest] has a reader.
+        sub.pause();
       },
       onError: (Object e, StackTrace s) {
         if (!verdict.isCompleted) {
@@ -224,6 +230,7 @@ class SshLocalTunnel {
     );
     // Whoever reads the rest sets the pace, as reading the socket would.
     rest
+      ..onListen = sub.resume
       ..onPause = sub.pause
       ..onResume = sub.resume
       ..onCancel = sub.cancel;

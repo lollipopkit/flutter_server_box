@@ -23,7 +23,9 @@ import 'package:xterm/xterm.dart';
 ///
 /// Then [remaining] counts down from [countdown] and Enter is sent at zero.
 /// Anything the terminal draws in the meantime — output, the echo of a key —
-/// cancels it and the conditions are checked again. Each banner line gets at
+/// cancels it and the conditions are checked again. Anything the user sends
+/// answers the banner: a console with echo off draws nothing for a key, and
+/// an Enter then would submit what they typed. Each banner line gets at
 /// most one Enter, whether sent, [cancel]led or pressed [now], for as long as
 /// the terminal lives: a guest that does not answer is not pressed again and
 /// again.
@@ -64,6 +66,7 @@ class SerialWake extends ChangeNotifier {
   Set<BufferLine> get _done => _answered[terminal] ??= Set.identity();
 
   BufferLine? _banner;
+  void Function(String data)? _forward;
   Timer? _quietTimer;
   Timer? _tick;
   int? _remaining;
@@ -102,7 +105,19 @@ class SerialWake extends ChangeNotifier {
     return null;
   }
 
+  /// Wraps the terminal's `onOutput` rather than observing the screen: what
+  /// the user sends reaches the session only through it, and the screen need
+  /// not change for it. Again on every change, since a reconnect binds a new
+  /// session with an `onOutput` of its own before drawing its banner.
+  void _hookInput() {
+    final current = terminal.onOutput;
+    if (current == _onOutput) return;
+    _forward = current;
+    terminal.onOutput = _onOutput;
+  }
+
   void _onChange() {
+    _hookInput();
     _reset();
     final banner = waitingBanner(terminal);
     if (banner == null || _done.contains(banner)) return;
@@ -112,7 +127,8 @@ class SerialWake extends ChangeNotifier {
 
   void _start(BufferLine banner) {
     _remaining = countdown.inSeconds;
-    notifyListeners();
+    // Before the listeners hear of it, so one that answers with [cancel] or
+    // [now] has a timer to stop.
     _tick = Timer.periodic(const Duration(seconds: 1), (_) {
       final left = (_remaining ?? 1) - 1;
       if (left <= 0) {
@@ -122,6 +138,16 @@ class SerialWake extends ChangeNotifier {
       _remaining = left;
       notifyListeners();
     });
+    notifyListeners();
+  }
+
+  /// Focus reports are the terminal's, not something the user typed.
+  static const _focusReports = {'\x1b[I', '\x1b[O'};
+
+  void _onOutput(String data) {
+    // The Enter [_fire] sends comes through here too, after it has reset.
+    if (!_focusReports.contains(data)) cancel();
+    _forward?.call(data);
   }
 
   void _fire(BufferLine banner) {
@@ -145,6 +171,8 @@ class SerialWake extends ChangeNotifier {
 
   @override
   void dispose() {
+    // Only if still ours: the session may have set its own since.
+    if (terminal.onOutput == _onOutput) terminal.onOutput = _forward;
     terminal.removeListener(_onChange);
     _quietTimer?.cancel();
     _tick?.cancel();

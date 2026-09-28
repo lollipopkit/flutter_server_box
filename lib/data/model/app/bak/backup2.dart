@@ -110,7 +110,6 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     late bool forwardsChanged;
     late bool remoteDesktopsChanged;
     late bool containerChanged;
-    var pveChanged = false;
     late Set<String> historyNotifications;
     late Set<String> settingNotifications;
 
@@ -190,7 +189,6 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
         if (value == null) continue;
         if (Stores.pve.restoreOne(serverId, value, notify: false)) {
           serversChanged = true;
-          pveChanged = true;
         }
       }
 
@@ -240,6 +238,9 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       Stores.portForward.invalidate();
       Stores.remoteDesktop.invalidate();
       Stores.snippet.invalidate();
+      // A PVE write sets [serversChanged]; a deleted server's row cascades
+      // without one, since `restoreOne` answers false for a server not here.
+      Stores.pve.invalidate();
     }
     if (snippetsChanged && !serversChanged) Stores.snippet.invalidate();
     if (forwardsChanged && !serversChanged) Stores.portForward.invalidate();
@@ -262,7 +263,6 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       GlobalRef.gRef?.read(bmcCredentialProvider.notifier).reload();
     }
     if (containerChanged) GlobalRef.gRef?.invalidate(containerProvider);
-    if (pveChanged) Stores.pve.invalidate();
 
     _loggerV2.info('Merge completed');
   }
@@ -613,8 +613,8 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
   bool get carriesPveSection => version > PveVirtMigration.appliedAt;
 
   /// What restoring [serverId]'s PVE configuration writes: an entry for
-  /// `PveStore.restoreOne` (empty removes the row), or null to leave the row
-  /// as it is.
+  /// `PveStore.restoreOne` (empty removes the row, unreadable is skipped
+  /// there), or null to leave the row as it is.
   ///
   /// **A file with a [pve] section** ([carriesPveSection]) is the whole
   /// truth: its entry, or none, which removes the row. That is how removing
@@ -636,17 +636,16 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
   ///   server had no PVE.
   // TODO(migration): after 5 releases every file has the section; reduce this
   // to its first branch, with `PveConfig.fromLegacyRecord` and `mergeLegacy`.
-  Map<String, Object?>? _pveToRestore(
+  Object? _pveToRestore(
     String serverId,
     Map<String, Object?> restoredPve,
     Object? server, {
     required bool force,
   }) {
     if (carriesPveSection) {
-      final entry = restoredPve[serverId];
-      return entry is Map
-          ? Map<String, Object?>.from(entry)
-          : const <String, Object?>{};
+      // A malformed entry is passed on for `PveStore.restoreOne` to skip:
+      // read as "none", it would delete the credentials here.
+      return restoredPve[serverId] ?? const <String, Object?>{};
     }
     final legacy = PveConfig.fromLegacyRecord(server);
     if (legacy != null) {

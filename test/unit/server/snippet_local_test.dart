@@ -1,9 +1,15 @@
+import 'dart:async';
+
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
+import 'package:xterm/xterm.dart';
 
 void main() {
+  group('typing', _stopsWhenReplaced);
+
   final spi = Spi(
     name: 'box',
     id: 'box-1',
@@ -58,6 +64,45 @@ void main() {
       // rather than a refusal — hence [Snippet.needsServer] filtering first.
       const snippet = Snippet(id: 'n', name: 'n', script: 'df -h');
       expect(snippet.fmtWithSpi(null), 'df -h');
+    });
+  });
+}
+
+/// A snippet that waits stops typing once the shell it began in has gone.
+void _stopsWhenReplaced() {
+  test('after a wait, nothing more once the shell is not the one', () {
+    fakeAsync((async) {
+      final typed = StringBuffer();
+      final terminal = Terminal()..onOutput = typed.write;
+      var alive = true;
+      unawaited(
+        const Snippet(
+          id: 's',
+          name: 's',
+          script: r'first ${sleep 1} second',
+        ).runInTerm(terminal, null, alive: () => alive),
+      );
+      async.flushMicrotasks();
+      expect(typed.toString(), contains('first'));
+      alive = false;
+      async.elapse(const Duration(seconds: 2));
+      expect(typed.toString(), isNot(contains('second')));
+    });
+  });
+
+  test('and all of it while it is', () {
+    fakeAsync((async) {
+      final typed = StringBuffer();
+      final terminal = Terminal()..onOutput = typed.write;
+      unawaited(
+        const Snippet(
+          id: 's',
+          name: 's',
+          script: r'first ${sleep 1} second',
+        ).runInTerm(terminal, null, alive: () => true),
+      );
+      async.elapse(const Duration(seconds: 2));
+      expect(typed.toString(), contains('second'));
     });
   });
 }

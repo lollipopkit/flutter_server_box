@@ -114,6 +114,75 @@ void main() {
     });
   });
 
+  test('a listener that answers the countdown as it appears', () {
+    fakeAsync((time) {
+      // The timer used to be installed after the listeners ran, so cancel and
+      // now from one reset nothing and an Enter followed a second later.
+      final (_, sent, wake) = setUp(_pve);
+      void onFirst() {
+        if (wake.remaining != null) wake.cancel();
+      }
+
+      wake.addListener(onFirst);
+      time.elapse(const Duration(seconds: 10));
+      expect(sent, isEmpty);
+      expect(wake.remaining, isNull);
+      wake.dispose();
+
+      final (_, sentNow, now) = setUp(_pve);
+      void onFirstNow() {
+        if (now.remaining != null) now.now();
+      }
+
+      now.addListener(onFirstNow);
+      time.elapse(const Duration(seconds: 10));
+      expect(sentNow, ['\r'], reason: 'one Enter, not a second one');
+      now.dispose();
+    });
+  });
+
+  test('typing with no echo answers the banner', () {
+    fakeAsync((time) {
+      // The session's `onOutput` sends keys; with echo off the screen does
+      // not change, and an Enter would submit the half-typed line.
+      for (final atCountdown in [false, true]) {
+        final (terminal, sent, wake) = setUp(_pve);
+        if (atCountdown) {
+          time.elapse(const Duration(seconds: 1));
+          expect(wake.remaining, 3);
+        }
+        terminal.textInput('roo');
+        expect(wake.remaining, isNull);
+        time.elapse(const Duration(seconds: 10));
+        expect(sent, ['roo'], reason: 'at countdown: $atCountdown');
+        wake.dispose();
+        expect(terminal.onOutput, isNotNull);
+        terminal.textInput('t');
+        expect(sent, ['roo', 't'], reason: 'the session is handed back');
+      }
+    });
+  });
+
+  test('typing is still seen after a reconnect binds a new session', () {
+    fakeAsync((time) {
+      final (terminal, _, wake) = setUp(_pve);
+      terminal.textInput('x');
+      // What `TerminalSession.bindForeground` does: its own `onOutput`, then
+      // the new session's banner.
+      final resent = <String>[];
+      terminal
+        ..onOutput = resent.add
+        ..write('\r\n$_pve');
+      time.elapse(const Duration(seconds: 1));
+      expect(wake.remaining, 3);
+      terminal.textInput('y');
+      expect(wake.remaining, isNull);
+      time.elapse(const Duration(seconds: 10));
+      expect(resent, ['y']);
+      wake.dispose();
+    });
+  });
+
   test('not armed: something typed, another last line, a full-screen app', () {
     fakeAsync((time) {
       for (final printed in [

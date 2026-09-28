@@ -29,7 +29,8 @@ class PveStore {
   ///
   /// [put] and [restoreOne] announce their own writes unless told not to
   /// (`notify: false`, inside a restore); whoever passed that calls
-  /// [invalidate] once the writes are committed.
+  /// [invalidate] once the writes are committed. A row that cascades with
+  /// its server or moves with a rename is announced by `ServerStore`.
   Stream<void> watch() => _changes.stream;
 
   /// Announces a change made with `notify: false`.
@@ -92,23 +93,33 @@ class PveStore {
   /// server saved from the editor without touching PVE must not look newer
   /// to a peer for it.
   void put(String serverId, PveConfig? cfg, {bool notify = true}) {
-    if (fetch(serverId) == cfg) return;
+    if (!_apply(serverId, cfg, stamp: true)) return;
+    if (notify) _announce();
+  }
+
+  void remove(String serverId, {bool notify = true}) =>
+      put(serverId, null, notify: notify);
+
+  /// Answers whether anything changed. [stamp] is false for a restore: the
+  /// server's timestamp is the one the incoming record carried, set by its
+  /// own merge, and a restored row is not an edit made here.
+  bool _apply(String serverId, PveConfig? cfg, {required bool stamp}) {
+    if (fetch(serverId) == cfg) return false;
     SqliteStore.transact(() {
       if (cfg == null) {
         _db.execute('DELETE FROM server_pve WHERE server_id = ?;', [serverId]);
       } else {
         _write(serverId, cfg);
       }
-      Stores.server.synced.stamp(serverId);
+      if (stamp) Stores.server.synced.stamp(serverId);
     });
-    if (notify) {
-      Stores.server.invalidate();
-      invalidate();
-    }
+    return true;
   }
 
-  void remove(String serverId, {bool notify = true}) =>
-      put(serverId, null, notify: notify);
+  void _announce() {
+    Stores.server.invalidate();
+    invalidate();
+  }
 
   /// Everything this store holds, keyed the way a backup carries it.
   Map<String, Object?> getAllMap() => {
@@ -117,28 +128,40 @@ class PveStore {
   };
 
   /// Writes one entry of [getAllMap] back, the complete state for that
-  /// server: a missing or empty entry removes the row. Skips a server that is
-  /// not here — the table has a foreign key, and a backup can name a server
-  /// this device deleted.
+  /// server: a missing (null) or empty entry removes the row. Skips a server
+  /// that is not here — the table has a foreign key, and a backup can name a
+  /// server this device deleted — and an entry that does not decode, which
+  /// says nothing about what the server should have and so must not remove
+  /// what is here.
+  ///
+  /// Does not stamp the server; see [_apply].
   ///
   /// Answers whether anything changed.
   bool restoreOne(String serverId, Object? value, {bool notify = true}) {
     if (!_known(serverId)) return false;
-    final desired = _decode(value);
-    if (fetch(serverId) == desired) return false;
-    put(serverId, desired, notify: notify);
+    final decoded = _decode(value);
+    if (decoded == null) return false;
+    if (!_apply(serverId, decoded.cfg, stamp: false)) return false;
+    if (notify) _announce();
     return true;
   }
 
-  static PveConfig? _decode(Object? value) {
-    if (value is! Map || value.isEmpty) return null;
+  /// `(cfg: null)` for a removal, null for an entry that does not decode.
+  static ({PveConfig? cfg})? _decode(Object? value) {
+    if (value == null || (value is Map && value.isEmpty)) return (cfg: null);
+    if (value is! Map) {
+      // The type only: the value may hold a secret.
+      Loggers.app.warning(
+        'Unreadable PVE configuration (${value.runtimeType}) was skipped',
+      );
+      return null;
+    }
     try {
       // Through JSON, so a map decoded as `Map<dynamic, dynamic>` and one
       // built in code read the same.
       final map = json.decode(json.encode(value)) as Map<String, dynamic>;
-      return PveConfig.fromJson(map);
+      return (cfg: PveConfig.fromJson(map));
     } catch (e, s) {
-      // Loses the PVE configuration, not the server or the restore.
       Loggers.app.warning('Unreadable PVE configuration was skipped', e, s);
       return null;
     }

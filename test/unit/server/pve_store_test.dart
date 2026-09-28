@@ -28,11 +28,11 @@ const _token = PveConfig(
 void main() {
   setUp(() async {
     await openTestDb();
-    if (!getIt.isRegistered<ServerStore>()) {
-      getIt.registerSingleton<ServerStore>(ServerStore());
-    }
     if (!getIt.isRegistered<PveStore>()) {
       getIt.registerSingleton<PveStore>(PveStore());
+    }
+    if (!getIt.isRegistered<ServerStore>()) {
+      getIt.registerSingleton<ServerStore>(ServerStore(pve: Stores.pve));
     }
     Stores.server.dropCache();
     Stores.server.put(_server);
@@ -100,12 +100,54 @@ void main() {
     expect(Stores.pve.fetchAll(), isEmpty);
   });
 
-  test('an unreadable restore entry loses PVE, not the restore', () {
+  test('an unreadable restore entry is skipped, not read as a removal', () {
     Stores.pve.put(_server.id, _token);
 
-    expect(Stores.pve.restoreOne(_server.id, {'auth': 'token'}), isTrue);
+    for (final bad in <Object>[
+      {'auth': 'token'},
+      'not an object',
+      42,
+    ]) {
+      expect(Stores.pve.restoreOne(_server.id, bad), isFalse, reason: '$bad');
+      expect(Stores.pve.fetch(_server.id), _token, reason: '$bad');
+    }
 
+    // What does say "none".
+    expect(Stores.pve.restoreOne(_server.id, const {}), isTrue);
     expect(Stores.pve.fetch(_server.id), isNull);
+  });
+
+  test('a restore does not stamp the server', () async {
+    final before = serverStamp();
+    await Future<void>.delayed(const Duration(milliseconds: 2));
+
+    expect(Stores.pve.restoreOne(_server.id, _token.toJson()), isTrue);
+    expect(Stores.pve.fetch(_server.id), _token);
+    expect(serverStamp(), before, reason: 'set by the server merge alone');
+
+    await Future<void>.delayed(const Duration(milliseconds: 2));
+    expect(Stores.pve.restoreOne(_server.id, null), isTrue);
+    expect(Stores.pve.fetch(_server.id), isNull);
+    expect(serverStamp(), before);
+  });
+
+  test('a cascade or a rename through the server store is announced', () async {
+    var events = 0;
+    final sub = Stores.pve.watch().listen((_) => events++);
+    addTearDown(sub.cancel);
+
+    Stores.pve.put(_server.id, _token);
+    await Future<void>.delayed(Duration.zero);
+    events = 0;
+
+    Stores.server.rename(_server, _server.copyWith(id: 'pve-2'));
+    await Future<void>.delayed(Duration.zero);
+    expect(events, 1, reason: 'the row moved to another id');
+
+    Stores.server.deleteById('pve-2');
+    await Future<void>.delayed(Duration.zero);
+    expect(events, 2, reason: 'the row cascaded away');
+    expect(Stores.pve.fetchAll(), isEmpty);
   });
 
   group('PveConfig', () {
@@ -219,9 +261,10 @@ void main() {
     });
 
     test('written the way an older build reads them', () {
+      // A pin never becomes "accept any certificate" on an older build.
       expect(_token.toLegacyCustom(), {
         'pveAddr': 'https://localhost:8006',
-        'pveIgnoreCert': true,
+        'pveIgnoreCert': false,
       });
       expect(
         const PveConfig(addr: 'https://h:8006', pwd: 'p').toLegacyCustom(),
@@ -238,8 +281,10 @@ void main() {
         _token,
         const PveConfig(addr: 'https://10.0.0.9:8006'),
       );
-      expect(moved.addr, 'https://10.0.0.9:8006');
-      expect(moved.auth, PveAuth.token);
+      // The token was never on the older device; carried to an address it
+      // chose, it would be sent to that host.
+      expect(moved, const PveConfig(addr: 'https://10.0.0.9:8006'));
+      expect(moved.tokenSecret, isNull);
       expect(moved.certSha256, isNull, reason: 'a pin names one address');
 
       const pwd = PveConfig(addr: 'https://h:8006', pwd: 'old');

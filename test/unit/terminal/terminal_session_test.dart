@@ -446,6 +446,32 @@ void main() {
       expect(backends.last.closed, isTrue, reason: 'the session owned it');
     });
 
+    test('closed while connecting: what arrives late is hung up', () async {
+      final arriving = Completer<ShellBackend>();
+      final arrived = _ConsoleBackend();
+      final session = TerminalSession(
+        source: ConsoleSource(
+          id: 'virt-console:s:qemu/100',
+          label: 'web-01',
+          connect: () => arriving.future,
+        ),
+      );
+
+      final connecting = session.connect();
+      // The page left before the console answered, and parking a session
+      // with no shell closes it.
+      session.close();
+      arriving.complete(arrived);
+
+      await expectLater(connecting, throwsA(isA<TerminalSessionClosed>()));
+      expect(arrived.closed, isTrue, reason: 'nothing else would close it');
+      expect(session.backend, isNull);
+      expect(
+        isRetryableTerminalConnectionError(const TerminalSessionClosed()),
+        isFalse,
+      );
+    });
+
     test('a failure retries only when it says it may', () {
       expect(
         isRetryableTerminalConnectionError(

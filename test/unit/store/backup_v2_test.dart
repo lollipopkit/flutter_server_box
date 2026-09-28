@@ -446,9 +446,9 @@ void main() {
                   as Map<String, dynamic>;
           final custom = (raw['spis'][server.id] as Map)['custom'] as Map;
           expect(custom['pveAddr'], pve.addr);
-          // Pinned means the certificate did not validate against a CA, and
-          // ignoring it is the only way an older build reaches such a host.
-          expect(custom['pveIgnoreCert'], isTrue);
+          // A pin is one certificate; an older build can only say "any",
+          // which would hand the login to whoever answers.
+          expect(custom['pveIgnoreCert'], isFalse);
           expect(custom.containsKey('pvePwd'), isFalse);
           expect(raw['pve'][server.id], isA<Map>());
         });
@@ -465,7 +465,7 @@ void main() {
           expect(Stores.pve.fetch(server.id), pve);
         });
 
-        test('an address changed on an older build is taken, pin dropped', () async {
+        test('an address changed on an older build is taken, token and pin dropped', () async {
           Stores.server.put(server);
           Stores.pve.put(server.id, pve);
           final back = throughOldBuild(
@@ -477,9 +477,11 @@ void main() {
 
           await BackupV2.fromJson(back).merge();
 
+          // The token was never on the older device: kept, it would be sent
+          // to the new address.
           expect(
             Stores.pve.fetch(server.id),
-            pve.copyWith(addr: 'https://10.0.0.3:8006', certSha256: null),
+            const PveConfig(addr: 'https://10.0.0.3:8006'),
           );
         });
 
@@ -528,6 +530,74 @@ void main() {
         await BackupV2.fromJson(raw).merge();
 
         expect(Stores.pve.fetch(server.id), isNull);
+      });
+
+      test('a restored row keeps the timestamp the file carried', () async {
+        Stores.server.put(server);
+        Stores.pve.put(server.id, pve);
+        final raw =
+            json.decode((await BackupV2.loadFromStore()).toJsonString())
+                as Map<String, dynamic>;
+        final ts = raw['spis'][StoreDefaults.defaultLastUpdateTsKey] as Map;
+        final incoming = (ts[server.id] as int) + 60000;
+        ts[server.id] = incoming;
+        (raw['pve'] as Map)[server.id] = pve
+            .copyWith(tokenId: 'root@pam!other')
+            .toJson();
+
+        await BackupV2.fromJson(raw).merge();
+
+        expect(Stores.pve.fetch(server.id)?.tokenId, 'root@pam!other');
+        // Stamped with now, an older file would outrank a later edit made
+        // on another device.
+        expect(Stores.server.timestamps[server.id], incoming);
+      });
+
+      test('an unreadable entry leaves the credentials here', () async {
+        Stores.server.put(server);
+        Stores.pve.put(server.id, pve);
+        for (final bad in <Object>[
+          {'auth': 'token'},
+          'not an object',
+        ]) {
+          final raw =
+              json.decode((await BackupV2.loadFromStore()).toJsonString())
+                  as Map<String, dynamic>;
+          final ts = raw['spis'][StoreDefaults.defaultLastUpdateTsKey] as Map;
+          ts[server.id] = (ts[server.id] as int) + 60000;
+          (raw['pve'] as Map)[server.id] = bad;
+
+          await BackupV2.fromJson(raw).merge();
+
+          expect(Stores.pve.fetch(server.id), pve, reason: '$bad');
+        }
+      });
+
+      test('a server deleted by a merge is announced to PVE', () async {
+        // This group's database is opened without it; the cascade is the
+        // subject here.
+        SqliteDb.instance.execute('PRAGMA foreign_keys = ON;');
+        Stores.server.put(server);
+        Stores.pve.put(server.id, pve);
+        final raw =
+            json.decode((await BackupV2.loadFromStore()).toJsonString())
+                as Map<String, dynamic>;
+        final spis = raw['spis'] as Map;
+        final ts = spis[StoreDefaults.defaultLastUpdateTsKey] as Map;
+        ts[server.id] = (ts[server.id] as int) + 60000;
+        spis.remove(server.id);
+        (raw['pve'] as Map).remove(server.id);
+
+        var events = 0;
+        final sub = Stores.pve.watch().listen((_) => events++);
+        addTearDown(sub.cancel);
+
+        await BackupV2.fromJson(raw).merge();
+        await Future<void>.delayed(Duration.zero);
+
+        expect(Stores.server.fetchOneRaw(server.id), isNull);
+        expect(Stores.pve.fetchAll(), isEmpty);
+        expect(events, greaterThan(0));
       });
     });
 

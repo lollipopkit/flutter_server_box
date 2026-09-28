@@ -259,6 +259,28 @@ void main() {
       expect(revOf(spi.id), before);
     });
 
+    test('a restore that changes something keeps the timestamp it came with', () async {
+      const spi = Spi(
+        id: 'srv-1',
+        name: 'web',
+        ssh: SshCredential(ip: '10.0.0.1'),
+      );
+      Stores.server.put(spi);
+      final before = revOf(spi.id);
+      await Future<void>.delayed(const Duration(milliseconds: 2));
+
+      // The server merge sets the incoming record's timestamp; the container
+      // rows restored under it must not replace that with now.
+      expect(
+        Stores.container.restoreOne(spi.id, const {
+          'host_docker': 'tcp://other:2375',
+        }),
+        isTrue,
+      );
+      expect(Stores.container.fetch(spi.id, ContainerType.docker), 'tcp://other:2375');
+      expect(revOf(spi.id), before);
+    });
+
     test('leaves a container host this device configured later', () async {
       const spi = Spi(
         id: 'srv-1',

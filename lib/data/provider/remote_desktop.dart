@@ -294,6 +294,10 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
   /// Not final: `build` runs again on the same notifier when the provider is
   /// rebuilt, and sets these afresh.
   late SessionKeepAlive _keepAlive;
+
+  /// This build's registrations with [SessionKeepAlive], told apart from a
+  /// later build's registrations of the same ids.
+  late Object _keepAliveOwner;
   bool _disposed = false;
   bool _appVisible = true;
   bool _surfaceVisible = false;
@@ -301,7 +305,10 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
   @override
   RemoteDesktopSessionsState build() {
     _disposed = false;
-    _keepAlive = ref.read(sessionKeepAliveProvider.notifier);
+    final keepAlive = _keepAlive = ref.read(
+      sessionKeepAliveProvider.notifier,
+    );
+    final owner = _keepAliveOwner = Object();
     final lifecycle = AppLifecycleListener(
       onResume: _resume,
       onPause: _pause,
@@ -311,10 +318,22 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
     ref.onDispose(() {
       _disposed = true;
       lifecycle.dispose();
+      final ids = _entries.keys.toList();
       for (final entry in _entries.values.toList()) {
         unawaited(_disposeEntry(entry));
       }
       _entries.clear();
+      // The keep-alive outlives this provider: left registered, its timers
+      // would put up notices for desktops already closed, and hold [close]
+      // on a notifier that is gone. After this callback, since unregistering
+      // updates that provider's state.
+      if (ids.isNotEmpty) {
+        scheduleMicrotask(() {
+          for (final id in ids) {
+            keepAlive.unregister(id, owner: owner);
+          }
+        });
+      }
     });
     return const RemoteDesktopSessionsState();
   }
@@ -330,6 +349,7 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
           ref.read(serversProvider).servers[profile.serverId]?.name ??
           profile.host,
       onClose: () => close(id),
+      owner: _keepAliveOwner,
     );
   }
 
@@ -413,7 +433,7 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
   Future<void> close(String id) async {
     final entry = _entries.remove(id);
     if (entry == null) return;
-    _keepAlive.unregister(id);
+    _keepAlive.unregister(id, owner: _keepAliveOwner);
     entry.closed = true;
     entry.generation++;
     await _disposeEntry(entry);

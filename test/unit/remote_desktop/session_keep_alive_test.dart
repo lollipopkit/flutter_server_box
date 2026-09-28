@@ -1,8 +1,13 @@
+import 'dart:async';
+
 import 'package:clock/clock.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/model/server/remote_desktop.dart';
+import 'package:server_box/data/provider/remote_desktop.dart';
+import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/session_keep_alive.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
@@ -300,6 +305,54 @@ void main() {
     });
   });
 
+  test('back after the away wait ran out, its timer not yet run: closed', () {
+    run((async, container, keepAlive, closed) {
+      keepAlive.setVisible('a', false);
+      async.elapse(const Duration(seconds: 61));
+      hide();
+      // A suspended app: hours pass by the clock, and the away timer has
+      // not had its turn when the app is shown again.
+      withClock(Clock.fixed(clock.now().add(const Duration(hours: 3))), show);
+      expect(closed, ['a'], reason: 'not another grace after hours away');
+      expect(notices(container), isEmpty);
+      expect(
+        container.read(sessionsClosedAwayProvider).map((e) => e.name),
+        ['web-01'],
+      );
+    });
+  });
+
+  test('a shorter timeout applies to a notice waiting off screen', () {
+    run((async, container, keepAlive, closed) {
+      keepAlive.setVisible('a', false);
+      // Up from 60 s, and still up at 90 s whatever the new timeout.
+      async.elapse(const Duration(seconds: 61));
+      hide();
+      async.elapse(const Duration(seconds: 20));
+
+      Stores.setting.remoteSessionIdleTimeout.put(30);
+      async.flushMicrotasks();
+      expect(notices(container), contains('a'));
+      async.elapse(const Duration(seconds: 9));
+      expect(closed, isEmpty);
+      async.elapse(const Duration(seconds: 1));
+      expect(closed, ['a'], reason: '30 s from when the wait began');
+    });
+  });
+
+  test('a timeout already passed closes a notice waiting off screen', () {
+    run((async, container, keepAlive, closed) {
+      keepAlive.setVisible('a', false);
+      async.elapse(const Duration(seconds: 61));
+      hide();
+      async.elapse(const Duration(seconds: 40));
+
+      Stores.setting.remoteSessionIdleTimeout.put(30);
+      async.flushMicrotasks();
+      expect(closed, ['a']);
+    });
+  });
+
   test('off screen with no timeout, nothing closes by itself', () {
     run((async, container, keepAlive, closed) {
       keepAlive.setVisible('a', false);
@@ -312,4 +365,66 @@ void main() {
       show();
     });
   });
+
+  test('an owner provider disposed takes its registrations with it', () {
+    fakeAsync((async) {
+      Stores.setting.remoteSessionIdleTimeout.put(60);
+      async.flushMicrotasks();
+      final container = ProviderContainer(
+        overrides: [serversProvider.overrideWith(_NoServers.new)],
+      );
+      final keepAlive = container.read(sessionKeepAliveProvider.notifier);
+      final sessions = container.read(remoteDesktopSessionsProvider.notifier);
+      final profile = RemoteDesktopProfile.defaults(
+        id: 'vm',
+        serverId: 'server',
+        name: 'vm',
+        protocol: RemoteDesktopProtocol.vnc,
+      );
+      // Never connects: what is under test is the bookkeeping.
+      sessions.openConsole(
+        profile,
+        target: () => Completer<RemoteDesktopTarget>().future,
+      );
+      expect(keepAlive.isRegistered('vm'), isTrue);
+
+      container.invalidate(remoteDesktopSessionsProvider);
+      container.read(remoteDesktopSessionsProvider);
+      async.flushMicrotasks();
+      expect(
+        keepAlive.isRegistered('vm'),
+        isFalse,
+        reason: 'no notice for a desktop already closed',
+      );
+
+      // Off screen for the timeout and the grace: nothing to show or close.
+      async.elapse(const Duration(minutes: 5));
+      expect(container.read(sessionKeepAliveProvider), isEmpty);
+
+      // A registration the rebuilt provider makes is its own.
+      container
+          .read(remoteDesktopSessionsProvider.notifier)
+          .openConsole(
+            profile,
+            target: () => Completer<RemoteDesktopTarget>().future,
+          );
+      container.invalidate(remoteDesktopSessionsProvider);
+      keepAlive.register(
+        'vm',
+        name: 'vm',
+        host: 'other owner',
+        onClose: () {},
+      );
+      async.flushMicrotasks();
+      expect(keepAlive.isRegistered('vm'), isTrue);
+
+      container.dispose();
+      async.flushTimers();
+    });
+  });
+}
+
+final class _NoServers extends ServersNotifier {
+  @override
+  ServersState build() => const ServersState();
 }

@@ -82,6 +82,37 @@ void main() {
       expect(ssh.forwarded, ['desktop:5900']);
     });
 
+    test('a reply split across writes arrives whole', () async {
+      echo.fragment = true;
+      final ssh = _FakeSsh();
+      final dialer = ServerTcpDialer(spi: _sshOnly, ssh: ssh.link);
+      addTearDown(dialer.close);
+
+      final channel = await dialer.open('db.internal', 5432);
+      addTearDown(channel.close);
+      expect(await _roundTrip(channel, [1, 2, 3, 4]), [1, 2, 3, 4]);
+
+      final socket = await dialer.connect('db.internal', 5432);
+      addTearDown(socket.destroy);
+      expect(await _socketRoundTrip(socket, [5, 6, 7]), [5, 6, 7]);
+    });
+
+    test('a loopback tunnel no client took closes its first channel', () async {
+      final ssh = _FakeSsh();
+      final dialer = ServerTcpDialer(spi: _sshOnly, ssh: ssh.link);
+      addTearDown(dialer.close);
+
+      final tunnel = await dialer.loopback('desktop', 5900);
+      // Opened when bound, so a transport that cannot reach the target
+      // fails there.
+      expect(ssh.forwarded, ['desktop:5900']);
+
+      await tunnel.close();
+      await ssh.channels.single.closed.future.timeout(
+        const Duration(seconds: 5),
+      );
+    });
+
     test('a failed client is a dial error naming SSH', () async {
       final dialer = ServerTcpDialer(
         spi: _sshOnly,
@@ -284,6 +315,71 @@ void main() {
       });
     });
 
+    test('a loopback whose leading transport cannot reach the target falls '
+        'through', () async {
+      // The grant not read yet, so the agent is tried, and refuses at the
+      // dial. Binding a listener over it proved nothing: this used to answer
+      // with a tunnel whose every connection failed, and SSH never tried.
+      final agent = await _FakeAgent.start(echo, refuse: true);
+      addTearDown(agent.close);
+
+      await _realHttp(() async {
+        final ssh = _FakeSsh();
+        final dialer = ServerTcpDialer(
+          spi: _both(agent, lead: ServerTransport.monitorHttp),
+          ssh: ssh.link,
+        );
+        addTearDown(dialer.close);
+
+        final tunnel = await dialer.loopback('localhost', 5900);
+        addTearDown(tunnel.close);
+        expect(agent.dialled, ['localhost:5900']);
+
+        final first = await connectTunnel(tunnel);
+        addTearDown(first.destroy);
+        expect(await _socketRoundTrip(first, [4, 2]), [4, 2]);
+        // The channel opened when binding carried it.
+        expect(ssh.forwarded, ['localhost:5900']);
+
+        final second = await connectTunnel(tunnel);
+        addTearDown(second.destroy);
+        expect(await _socketRoundTrip(second, [7]), [7]);
+        expect(ssh.forwarded, ['localhost:5900', 'localhost:5900']);
+      });
+    });
+
+    test('closed while the leading attempt is pending, nothing more is '
+        'tried', () async {
+      final agent = await _FakeAgent.start(echo);
+      addTearDown(agent.close);
+
+      await _realHttp(() async {
+        final sshLink = Completer<ServerTcpSsh>();
+        final dialer = ServerTcpDialer(
+          spi: _both(agent, lead: ServerTransport.ssh),
+          ssh: () => sshLink.future,
+        );
+
+        final opening = dialer.open('localhost', 8006);
+        dialer.close();
+        sshLink.completeError(const SocketException('sshd down'));
+
+        await expectLater(
+          opening,
+          throwsA(
+            isA<ServerTcpErr>().having(
+              (e) => e.transport,
+              'transport',
+              ServerTransport.ssh,
+            ),
+          ),
+        );
+        // A monitor client made after `close` would never be disposed.
+        expect(agent.logins, 0);
+        expect(agent.dialled, isEmpty);
+      });
+    });
+
     test('both failing reports both, the last tried leading', () async {
       final agent = await _FakeAgent.start(echo, refuse: true);
       addTearDown(agent.close);
@@ -467,9 +563,31 @@ class _Echo {
   _Echo._(this._server) {
     _server.listen((socket) {
       accepted++;
-      socket.listen(socket.add, onDone: socket.destroy, onError: (_) {});
+      if (!fragment) {
+        socket.listen(socket.add, onDone: socket.destroy, onError: (_) {});
+        return;
+      }
+      // One byte per write, flushed and apart, so the reply cannot arrive
+      // as the one chunk it was sent as.
+      var queue = Future<void>.value();
+      socket.listen(
+        (chunk) {
+          queue = queue.then((_) async {
+            for (final byte in chunk) {
+              socket.add([byte]);
+              await socket.flush();
+              await Future<void>.delayed(const Duration(milliseconds: 5));
+            }
+          }).catchError((_) {});
+        },
+        onDone: () => queue.whenComplete(socket.destroy),
+        onError: (_) {},
+      );
     });
   }
+
+  /// Echoes byte by byte; see the constructor.
+  var fragment = false;
 
   /// The one started for the running test, which the fakes connect to.
   static late _Echo current;
@@ -582,13 +700,34 @@ Future<void> _realHttp(Future<void> Function() body) =>
     HttpOverrides.runWithHttpOverrides(body, _RealHttp());
 
 Future<List<int>> _roundTrip(SshTunnelChannel channel, List<int> bytes) async {
-  final got = channel.stream.first;
+  final got = _collect(channel.stream, bytes.length);
   channel.sink.add(bytes);
-  return (await got.timeout(const Duration(seconds: 10))).toList();
+  return got;
 }
 
 Future<List<int>> _socketRoundTrip(Socket socket, List<int> bytes) async {
-  final got = socket.first;
+  final got = _collect(socket, bytes.length);
   socket.add(bytes);
-  return (await got.timeout(const Duration(seconds: 10))).toList();
+  return got;
+}
+
+/// The first [length] bytes of [stream], however they are split: TCP keeps
+/// their order, not the boundaries they were written with.
+Future<List<int>> _collect(Stream<List<int>> stream, int length) async {
+  final out = <int>[];
+  final done = Completer<List<int>>();
+  late final StreamSubscription<List<int>> sub;
+  sub = stream.listen(
+    (chunk) {
+      out.addAll(chunk);
+      if (out.length >= length && !done.isCompleted) {
+        done.complete(out);
+        unawaited(sub.cancel());
+      }
+    },
+    onDone: () {
+      if (!done.isCompleted) done.complete(out);
+    },
+  );
+  return done.future.timeout(const Duration(seconds: 10));
 }

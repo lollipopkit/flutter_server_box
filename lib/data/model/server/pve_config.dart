@@ -161,13 +161,14 @@ abstract class PveConfig with _$PveConfig {
   /// ignores the `pve` section and writes back only what it read, so without
   /// these a round trip through it would carry the server back without PVE.
   ///
-  /// `pveIgnoreCert` is set exactly when a certificate is pinned: a pin is
-  /// only ever made for one that did not validate against a CA, and "ignore
-  /// the certificate" is the only way an older build can reach such a server.
+  /// `pveIgnoreCert` is always false. A pin authorizes one certificate, and
+  /// the only thing an older build can express is accepting every
+  /// certificate — which would send the login to whoever answers. An older
+  /// build reaching a self-signed host needs its user to opt in there.
   // TODO(migration): remove after 5 releases, with [mergeLegacy].
   Map<String, Object?> toLegacyCustom() => {
     'pveAddr': addr,
-    'pveIgnoreCert': certSha256 != null,
+    'pveIgnoreCert': false,
     'pvePwd': ?pwd,
   };
 
@@ -195,18 +196,19 @@ abstract class PveConfig with _$PveConfig {
   /// build handing back a record it received from this one must not turn a
   /// token login into a password login or drop a confirmed certificate.
   ///
-  /// - The address is the legacy one. A different address drops the pin,
-  ///   which names a certificate seen at the old one (the editor's rule).
-  /// - The password is the legacy one for a password login; a token login
-  ///   has none and keeps none.
+  /// - A different address is [legacy] alone. The pin names a certificate
+  ///   seen at the old address, and the API token was never on the older
+  ///   device: carried along, it would be sent to a host nobody here chose.
+  /// - The same address keeps the auth method, token and pin; the password
+  ///   is the legacy one for a password login, and a token login has none
+  ///   and keeps none.
   // TODO(migration): remove after 5 releases, with [toLegacyCustom].
   static PveConfig mergeLegacy(PveConfig? existing, PveConfig legacy) {
     if (existing == null) return legacy;
-    final sameAddr = existing.addr.trim() == legacy.addr.trim();
+    if (existing.addr.trim() != legacy.addr.trim()) return legacy;
     return existing.copyWith(
       addr: legacy.addr,
       pwd: existing.auth == PveAuth.password ? legacy.pwd : existing.pwd,
-      certSha256: sameAddr ? existing.certSha256 : null,
     );
   }
 }

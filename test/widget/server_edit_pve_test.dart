@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
+import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -56,6 +57,7 @@ void main() {
     void Function()? whileOpen,
     ServerEditSection? section,
     bool save = true,
+    bool expectSaved = true,
   }) async {
     Stores.server.put(server);
     await tester.pumpWidget(
@@ -115,7 +117,13 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, libL10n.save));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.byKey(const ValueKey('open')), findsOneWidget, reason: 'saved');
+    expect(
+      find.byKey(const ValueKey('open')),
+      expectSaved ? findsOneWidget : findsNothing,
+      reason: expectSaved ? 'saved' : 'refused, the editor stays open',
+    );
+    // A refusal leaves a toast whose timer would outlive the test.
+    if (!expectSaved) await tester.pump(const Duration(seconds: 5));
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
@@ -176,6 +184,61 @@ void main() {
     );
 
     expect(Stores.pve.fetch(server.id), token.copyWith(certSha256: _pin));
+  });
+
+  testWidgets('another SSH host drops the pin, loopback URL unchanged', (
+    tester,
+  ) async {
+    // `127.0.0.1` resolves on the far end of the transport: on B it is B's
+    // API, and A's pin would make B's first connection a "certificate
+    // changed" error instead of asking.
+    final server = spiFixture(
+      name: 'pve',
+      ip: '10.0.0.1',
+      pwd: 'ssh-pw',
+      id: 'pve-id',
+    );
+    const pinned = PveConfig(
+      addr: PveConfig.localAddr,
+      auth: PveAuth.token,
+      tokenId: 'root@pam!sb',
+      tokenSecret: 's',
+      certSha256: _pin,
+    );
+    Stores.server.put(server);
+    Stores.pve.put(server.id, pinned);
+
+    await editAndSave(
+      tester,
+      server,
+      whileOpen: () {
+        final host = tester.widget<TextField>(
+          find.byWidgetPredicate(
+            (w) => w is TextField && w.controller?.text == '10.0.0.1',
+          ),
+        );
+        host.controller!.text = '10.0.0.2';
+      },
+    );
+
+    expect(Stores.pve.fetch(server.id), pinned.copyWith(certSha256: null));
+  });
+
+  testWidgets('no SSH host: a PVE password login is refused', (tester) async {
+    // `PveBackend` logs in as the SSH user, and a monitor-only server has
+    // none — saved, it failed on every connection.
+    const server = Spi(
+      id: 'pve-id',
+      name: 'pve',
+      monitorHttp: MonitorHttpCredential(addr: 'http://10.0.0.1:3770'),
+    );
+    const pwd = PveConfig(addr: PveConfig.localAddr);
+    Stores.server.put(server);
+    Stores.pve.put(server.id, pwd);
+
+    await editAndSave(tester, server, expectSaved: false);
+
+    expect(Stores.pve.fetch(server.id), pwd, reason: 'nothing was written');
   });
 
   testWidgets('SSH with a password: a stored PVE password is not kept', (

@@ -68,10 +68,16 @@ extension SnippetX on Snippet {
     });
   }
 
+  /// Types this snippet into [terminal]. A placeholder can wait (`${sleep N}`)
+  /// or wait for a key; after each one the rest is typed only while [alive]
+  /// says the shell it began in is still the one [terminal] writes to — a
+  /// reconnect or a switch to tmux replaces it, and the rest was not written
+  /// for that one.
   Future<void> runInTerm(
     Terminal terminal,
     Spi? spi, {
     bool autoEnter = false,
+    bool Function()? alive,
   }) async {
     final argsFmted = fmtWithSpi(spi);
     final matches = fmtFinder.allMatches(argsFmted);
@@ -123,11 +129,13 @@ extension SnippetX on Snippet {
       if (special != null) {
         final raw = key.substring(special.key.length + 1, key.length - 1);
         await special.value((term: terminal, raw: raw));
+        if (alive != null && !alive()) return;
       } else {
         // Remaining placeholders represent terminal keys.
         final termKey = _find(fmtTermKeys, key);
         if (termKey != null) {
           await _doTermKeys(terminal, termKey, key);
+          if (alive != null && !alive()) return;
         } else {
           // Normal input
           terminal.textInput(key);

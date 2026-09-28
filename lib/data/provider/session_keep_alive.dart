@@ -122,24 +122,36 @@ class SessionKeepAlive extends _$SessionKeepAlive {
   }
 
   /// Starts tracking session [id]. Registering an id again replaces it.
+  ///
+  /// [owner] identifies who registered it, for an [unregister] that must
+  /// not take a later owner's registration of the same id with it.
   void register(
     String id, {
     required String name,
     required String host,
     required FutureOr<void> Function() onClose,
     bool visible = true,
+    Object? owner,
   }) {
     _entries.remove(id)?.cancelTimers();
     _drop(id);
-    final entry = _KeptSession(name: name, host: host, onClose: onClose);
+    final entry = _KeptSession(
+      name: name,
+      host: host,
+      onClose: onClose,
+      owner: owner,
+    );
     _entries[id] = entry;
     if (!visible) setVisible(id, false);
   }
 
   /// Stops tracking [id] — its owner closed it, or is showing it for good.
-  void unregister(String id) {
-    final entry = _entries.remove(id);
+  /// With [owner], only a registration made with that owner.
+  void unregister(String id, {Object? owner}) {
+    final entry = _entries[id];
     if (entry == null) return;
+    if (owner != null && !identical(entry.owner, owner)) return;
+    _entries.remove(id);
     entry.cancelTimers();
     _drop(id);
   }
@@ -218,17 +230,38 @@ class SessionKeepAlive extends _$SessionKeepAlive {
     entry.closing = Timer(after, () => unawaited(_close(id, entry)));
   }
 
-  /// A notice nobody can see: closed anyway after another whole [timeout].
-  void _startAway(String id, _KeptSession entry) {
-    entry.away?.cancel();
-    entry.away = null;
+  /// A notice nobody can see: closed anyway after another whole [timeout],
+  /// counted from [since] — when the wait began, kept across a change of
+  /// [timeout] so the new one applies to the time already waited.
+  void _startAway(String id, _KeptSession entry, {DateTime? since}) {
+    entry.cancelAway();
     final timeout = SessionKeepAlive.timeout;
     if (timeout == null) return;
-    entry.away = Timer(timeout, () {
-      final expiry = state[id];
-      if (expiry != null) _closedAway.add(expiry);
-      unawaited(_close(id, entry));
-    });
+    final began = since ?? clock.now();
+    entry.awaySince = began;
+    final left = began.add(timeout).difference(clock.now());
+    if (left <= Duration.zero) {
+      _closeAway(id, entry);
+      return;
+    }
+    entry.away = Timer(left, () => _closeAway(id, entry));
+  }
+
+  /// Whether [entry]'s away wait has run out by the clock — which a suspended
+  /// app's timer may not have noticed yet.
+  static bool _awayOverdue(_KeptSession entry) {
+    final since = entry.awaySince;
+    final timeout = SessionKeepAlive.timeout;
+    if (since == null || timeout == null) return false;
+    return !since.add(timeout).isAfter(clock.now());
+  }
+
+  void _closeAway(String id, _KeptSession entry) {
+    final expiry = state[id];
+    if (expiry != null && identical(_entries[id], entry)) {
+      _closedAway.add(expiry);
+    }
+    unawaited(_close(id, entry));
   }
 
   Future<void> _close(String id, _KeptSession entry) async {
@@ -263,6 +296,12 @@ class SessionKeepAlive extends _$SessionKeepAlive {
         entry.cancelTimers();
         _drop(id);
       }
+      // A notice that stays while the app is away waits the new timeout,
+      // from when that wait began.
+      if (state.containsKey(id) && entry.awaySince != null) {
+        _startAway(id, entry, since: entry.awaySince);
+        continue;
+      }
       _schedule(id, entry);
     }
   }
@@ -294,6 +333,13 @@ class SessionKeepAlive extends _$SessionKeepAlive {
   void _onAppShown() {
     _appShown = true;
     if (!ref.mounted) return;
+    // The app may be shown before an overdue away timer fires — a suspended
+    // app's timers do not run — and resuming such a notice would grant a
+    // fresh grace after however long the app was away.
+    for (final id in state.keys.toList()) {
+      final entry = _entries[id];
+      if (entry != null && _awayOverdue(entry)) _closeAway(id, entry);
+    }
     if (_closedAway.isNotEmpty) {
       ref.read(sessionsClosedAwayProvider.notifier).add(_closedAway);
       _closedAway.clear();
@@ -306,8 +352,7 @@ class SessionKeepAlive extends _$SessionKeepAlive {
       final left = paused < graceOnReturn ? graceOnReturn : paused;
       final entry = _entries[id];
       if (entry != null) {
-        entry.away?.cancel();
-        entry.away = null;
+        entry.cancelAway();
         _startClosing(id, entry, left);
       }
       next[id] = SessionExpiry(
@@ -322,8 +367,14 @@ class SessionKeepAlive extends _$SessionKeepAlive {
 }
 
 final class _KeptSession {
-  _KeptSession({required this.name, required this.host, required this.onClose});
+  _KeptSession({
+    required this.name,
+    required this.host,
+    required this.onClose,
+    this.owner,
+  });
 
+  final Object? owner;
   final String name;
   final String host;
   final FutureOr<void> Function() onClose;
@@ -340,13 +391,21 @@ final class _KeptSession {
   /// Until the close, while the notice is up and the app off screen.
   Timer? away;
 
+  /// When the [away] wait began; null while there is none.
+  DateTime? awaySince;
+
+  void cancelAway() {
+    away?.cancel();
+    away = null;
+    awaySince = null;
+  }
+
   void cancelTimers() {
     idle?.cancel();
     idle = null;
     closing?.cancel();
     closing = null;
-    away?.cancel();
-    away = null;
+    cancelAway();
   }
 }
 

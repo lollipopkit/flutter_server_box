@@ -260,7 +260,18 @@ extension _Init on SSHPageState {
   /// Auto-run snippets, then `initCmd`, then `initSnippet`, one after another:
   /// a snippet with placeholders types across awaits, so running them
   /// concurrently would interleave their input.
+  ///
+  /// All of it is for the shell that was in front when startup began. A
+  /// snippet can wait (`${sleep N}`) through a reconnect or a switch to tmux,
+  /// and what is left must not be typed into the shell that replaced it.
   Future<void> _runStartupInput() async {
+    final shell = _session;
+    bool current() =>
+        mounted &&
+        shell != null &&
+        identical(_session, shell) &&
+        _tmuxCurrentSession == null;
+
     // Snippets name the server they run on, and their scripts are written
     // against one. A terminal on this device has neither.
     final spi = widget.args.spi;
@@ -268,11 +279,13 @@ extension _Init on SSHPageState {
     if (spi != null) {
       for (final snippet in snippets) {
         if (snippet.autoRunOn?.contains(spi.id) == true) {
-          if (!await _runStartupSnippet(snippet, spi)) return;
+          if (!current()) return;
+          await _runStartupSnippet(snippet, spi, current);
         }
       }
     }
 
+    if (!current()) return;
     final initCmd = widget.args.initCmd;
     if (initCmd != null) {
       _terminal.textInput(initCmd);
@@ -281,19 +294,22 @@ extension _Init on SSHPageState {
 
     final initSnippet = widget.args.initSnippet;
     if (initSnippet != null && (spi != null || !initSnippet.needsServer)) {
-      await _runStartupSnippet(initSnippet, spi);
+      if (!current()) return;
+      await _runStartupSnippet(initSnippet, spi, current);
     }
   }
 
-  /// Whether the page is still up to carry on.
-  Future<bool> _runStartupSnippet(Snippet snippet, Spi? spi) async {
+  Future<void> _runStartupSnippet(
+    Snippet snippet,
+    Spi? spi,
+    bool Function() current,
+  ) async {
     try {
-      await snippet.runInTerm(_terminal, spi);
+      await snippet.runInTerm(_terminal, spi, alive: current);
     } catch (e, s) {
-      if (!mounted) return false;
+      if (!mounted) return;
       context.showErrDialog(e, s, '${libL10n.snippet}: ${snippet.name}');
     }
-    return mounted;
   }
 
   void _setupDiscontinuityTimer() {
@@ -620,6 +636,12 @@ extension _Init on SSHPageState {
       return false;
     }
     _bindForegroundSession(shell);
+    // A new shell is not the program the old one was running: what the
+    // session is for is started again in it.
+    if (_sess.reenter case final cmd?) {
+      _terminal.textInput(cmd);
+      _terminal.keyInput(TerminalKey.enter);
+    }
     _setupDiscontinuityTimer();
     _focusTerminal(keyboard: false);
     return true;
