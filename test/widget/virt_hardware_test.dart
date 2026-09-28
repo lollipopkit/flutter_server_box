@@ -239,6 +239,9 @@ var _hostDevs = const VirtHostDevices();
 
 /// Whether listing the host's devices fails, and how often it was asked.
 VirtErr? _hostDevsError;
+
+/// What the next hardware change fails with, once.
+VirtErr? _changeError;
 var _hostDevReads = 0;
 
 /// Whether listing the storages, or a storage's volumes, fails.
@@ -343,6 +346,11 @@ class _FakeHost extends VirtHostNotifier {
     VirtHwChange change,
   ) async {
     // What PVE's digest and the libvirt backend's revision check do.
+    // Before the digest: a host out of reach never gets to compare it.
+    if (_changeError case final e?) {
+      _changeError = null;
+      throw e;
+    }
     if (base.revision != _hardware[guestId]!.revision) {
       throw const VirtErr(type: VirtErrType.conflict);
     }
@@ -473,6 +481,7 @@ void main() {
     _calls.clear();
     _hostDevs = const VirtHostDevices();
     _hostDevsError = null;
+    _changeError = null;
     _hostDevReads = 0;
     _poolsFail = false;
     _volumesFail = false;
@@ -1394,6 +1403,31 @@ void main() {
       await _settle(tester);
       expect(_key('hw:cpu:save'), findsOneWidget, reason: 'still a draft');
 
+      await tap(tester, _key('hw:cpu:save'));
+      expect(_changes, isEmpty, reason: 'the host refused it');
+      expect(_key('hw:cpu:save'), findsNothing);
+    });
+
+    testWidgets('one the host could not take for another reason is kept', (
+      tester,
+    ) async {
+      final container = await open(tester, 'web-01');
+      await tap(tester, _key('hw:step:cores:inc'));
+      _hardware['qemu/100'] = _vm.copyWith(
+        cpu: const VirtHwCpu(sockets: 1, cores: 4, type: 'host'),
+        revision: 'digest-9',
+      );
+      container.invalidate(virtHardwareProvider(_pve, 'qemu/100'));
+      await _settle(tester);
+
+      // The host out of reach: nothing says yet that the draft's base is
+      // gone, so it stays to be saved again.
+      _changeError = const VirtErr(type: VirtErrType.unreachable);
+      await tap(tester, _key('hw:cpu:save'));
+      expect(_changes, isEmpty);
+      expect(_key('hw:cpu:save'), findsOneWidget, reason: 'kept');
+
+      // Reached, the host says it is: then it goes.
       await tap(tester, _key('hw:cpu:save'));
       expect(_changes, isEmpty, reason: 'the host refused it');
       expect(_key('hw:cpu:save'), findsNothing);

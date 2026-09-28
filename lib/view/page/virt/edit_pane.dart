@@ -939,30 +939,37 @@ mixin _EditPane<W extends ConsumerStatefulWidget>
 
   /// Makes [change], says what came of it, and reads the hardware again.
   /// True when the host took it.
-  Future<bool> _apply(VirtHardware hw, VirtHwChange change) async {
+  Future<bool> _apply(VirtHardware hw, VirtHwChange change) async =>
+      await _applyFor(hw, change) == _Applied.done;
+
+  /// [_apply], saying why it did not: a caller holding a draft keeps it
+  /// through a failure that retrying could get past, and not through a
+  /// conflict, which says its base is gone.
+  Future<_Applied> _applyFor(VirtHardware hw, VirtHwChange change) async {
     final issue = virtHwIssue(hw, change, host: _host);
     if (issue != null) {
       Toast.warn(_issueText(hw, issue) ?? libL10n.fail);
-      return false;
+      return _Applied.refused;
     }
     final VirtHwOutcome outcome;
     try {
       outcome = await _notifier.changeHardware(_guest.id, hw, change);
     } on VirtErr catch (e) {
-      if (e.type == VirtErrType.conflict) {
+      final conflict = e.type == VirtErrType.conflict;
+      if (conflict) {
         Toast.warn(e.title, body: l10n.virtErrConflictTip);
       } else {
         Toast.error(e.title, body: e.detail);
       }
       if (mounted) ref.invalidate(_provider);
-      return false;
+      return conflict ? _Applied.conflict : _Applied.failed;
     } catch (e, s) {
       Loggers.app.warning('Virtualization hardware', e, s);
       Toast.error(libL10n.fail, body: '$e');
       if (mounted) ref.invalidate(_provider);
-      return false;
+      return _Applied.failed;
     }
-    if (!mounted) return true;
+    if (!mounted) return _Applied.done;
     final before = {for (final p in hw.pending) p.key};
     VirtHardware? after;
     try {
@@ -980,8 +987,22 @@ mixin _EditPane<W extends ConsumerStatefulWidget>
     } else {
       Toast.success(libL10n.success);
     }
-    return true;
+    return _Applied.done;
   }
+}
+
+/// How [_apply] ended.
+enum _Applied {
+  done,
+
+  /// Not sent: the change itself is not one the guest takes.
+  refused,
+
+  /// The host has changed since the read the change was made from.
+  conflict,
+
+  /// Anything else: the host could not be reached, or said no.
+  failed,
 }
 
 enum _PendingPlace { cpu, memory, disk, nic, boot, settings, other }

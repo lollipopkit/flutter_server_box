@@ -345,9 +345,9 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
   /// A newer read — [hw], after a refresh or a save of another group — is
   /// taken as the base instead where it leaves [fields] as the draft found
   /// them: nothing the draft edits changed under it. Where they did change,
-  /// the draft's own read goes back and the host refuses it as a conflict.
-  /// A draft on a read that old cannot be saved at all, so whatever the
-  /// refusal, it is dropped and what the host has now is shown.
+  /// the draft's own read goes back and the host refuses it as a conflict,
+  /// which drops the draft: its base is gone. Any other failure — the host
+  /// out of reach — keeps it, to be saved again.
   Future<void> _saveDraft(
     String draft,
     VirtHardware hw,
@@ -357,9 +357,9 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
   ) async {
     final started = _drafted[draft] ?? hw;
     final base = fields(started) == fields(hw) ? hw : started;
-    final ok = await _apply(base, change);
+    final applied = await _applyFor(base, change);
     if (!mounted) return;
-    if (ok || !identical(base, hw)) {
+    if (applied == _Applied.done || applied == _Applied.conflict) {
       setState(() {
         clear();
         _drafted.remove(draft);
