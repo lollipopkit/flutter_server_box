@@ -1173,13 +1173,14 @@ class SettingStore extends SqliteStore {
   );
 
   /// How long a remote session stays connected once it is off screen, in
-  /// seconds; 0 keeps it until it is closed. See `SessionKeepAlive`.
+  /// seconds; 0, the default, keeps it until it is closed. See
+  /// `SessionKeepAlive`.
   ///
   /// Seconds rather than an index into the choices the settings row offers,
   /// so that changing those choices never changes what a stored value means.
   late final remoteSessionIdleTimeout = propertyDefault(
     'remoteSessionIdleTimeout',
-    60,
+    0,
     fromObj: (obj) => obj is int && obj >= 0 ? obj : null,
   );
 

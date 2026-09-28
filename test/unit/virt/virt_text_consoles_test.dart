@@ -22,6 +22,8 @@ void main() {
   setUp(() async {
     await openTestDb();
     getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
+    // Never is the default; these are about a console that is closed.
+    Stores.setting.remoteSessionIdleTimeout.put(60);
   });
 
   tearDown(() async {

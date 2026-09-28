@@ -7,8 +7,9 @@ extension _RemoteDesktop on _AppSettingsPageState {
     ];
   }
 
-  /// What the idle timeout can be set to, in seconds; 0 is never.
-  static const _idleTimeouts = [30, 60, 300, 900, 1800, 0];
+  /// What the idle timeout can be set to, in seconds; 0 is never, the
+  /// default.
+  static const _idleTimeouts = [0, 30, 60, 300, 900, 1800];
 
   String _idleTimeoutLabel(int seconds) =>
       seconds <= 0 ? l10n.userNever : Duration(seconds: seconds).toAgoStr;

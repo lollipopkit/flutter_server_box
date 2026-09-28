@@ -1022,6 +1022,8 @@ void main() {
     testWidgets('graphical: a failed connection is shown with a retry', (
       tester,
     ) async {
+      // Never is the default; this is about what closing looks like.
+      Stores.setting.remoteSessionIdleTimeout.put(60);
       _details['qemu/100'] = const VirtGuestDetail(
         consoles: {VirtConsoleKind.vnc},
       );
