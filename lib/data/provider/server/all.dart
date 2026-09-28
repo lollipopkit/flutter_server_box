@@ -143,6 +143,7 @@ class ServersNotifier extends _$ServersNotifier {
   }
 
   Future<void> _clearSudoPasswordOverrideBestEffort(String id) async {
+    SudoPassword.forget(id);
     try {
       await SudoPassword.clearOverride(id);
     } catch (e, s) {
@@ -537,6 +538,9 @@ class ServersNotifier extends _$ServersNotifier {
       } else {
         final serverNotifier = ref.read(serverProvider(old.id).notifier);
         serverNotifier.updateSpi(newSpi);
+        // The login may be another account now, whose sudo password the one
+        // typed this session is not.
+        SudoPassword.forget(old.id);
       }
 
       // While the *old* credential is still known. A scoped token is revoked

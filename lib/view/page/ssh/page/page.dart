@@ -73,6 +73,10 @@ final class SshPageArgs {
   /// fresh shell a reconnect opens (`TerminalSession.reenter`). A guest's
   /// serial console is; a command run once, such as a service's logs, is not.
   final bool reenter;
+
+  /// Whether [initCmd] starts with sudo, whose prompt is then answered from
+  /// the session's sudo password (`TerminalSession.answersSudo`).
+  final bool initCmdSudo;
   final Snippet? initSnippet;
 
   /// What ends the program [initCmd] started without ending the shell under
@@ -120,6 +124,7 @@ final class SshPageArgs {
     required this.source,
     this.initCmd,
     this.reenter = false,
+    this.initCmdSudo = false,
     this.initSnippet,
     this.detachInput,
     this.session,
@@ -153,6 +158,7 @@ final class SshPageArgs {
     source: source,
     initCmd: initCmd,
     reenter: reenter,
+    initCmdSudo: initCmdSudo,
     initSnippet: initSnippet,
     detachInput: detachInput,
     session: session,
@@ -215,7 +221,8 @@ class SSHPageState extends ConsumerState<SSHPage>
   late final TerminalSession _sess =
       widget.args.session ??
       (TerminalSession(source: widget.args.source)
-        ..reenter = widget.args.reenter ? widget.args.initCmd : null);
+        ..reenter = widget.args.reenter ? widget.args.initCmd : null
+        ..answersSudo = widget.args.initCmdSudo);
 
   /// Whether the session arrived already running, and so must not be started
   /// a second time.
@@ -1264,6 +1271,29 @@ class SSHPageState extends ConsumerState<SSHPage>
     if (!mounted) return;
     _focusTerminal();
     Toast.success(libL10n.success);
+  }
+
+  /// Answers the sudo prompt the command just typed brings up, with the
+  /// password typed for this server this session — without asking, and only
+  /// for a prompt that shows within a few seconds of the command, so nothing
+  /// the program prints later is answered with it. Nothing when none was
+  /// typed: the prompt stays for the user, and the sudo key still works.
+  Future<void> _answerSudo() async {
+    final spi = widget.args.spi;
+    if (spi == null || !_sess.answersSudo) return;
+    final password = SudoPassword.typed(spi.id);
+    if (password == null) return;
+    for (final ms in const [100, 200, 400, 800, 1600, 3200]) {
+      await Future.delayed(Duration(milliseconds: ms));
+      if (!mounted) return;
+      _sess.drainOutput();
+      if (_hasPendingSudoPrompt()) {
+        _terminal.textInput(password);
+        _terminal.keyInput(TerminalKey.enter);
+        _sess.clearOutputTail();
+        return;
+      }
+    }
   }
 
   bool _hasPendingSudoPrompt() {

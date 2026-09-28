@@ -118,6 +118,7 @@ abstract final class VirtConsoleConnect {
       source: ServerSource(spi),
       initCmd: serialCommand(console),
       reenter: true,
+      initCmdSudo: console.needsRoot,
       detachInput: serialEscape,
       onLeave: onLeave,
     );

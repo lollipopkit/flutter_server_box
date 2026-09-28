@@ -431,6 +431,9 @@ extension _Actions on _ServerEditPageState {
 
   Future<bool> _persistPendingSudoPassword() async {
     if (!_sudoPasswordDirty) return true;
+    // The one saved here is the one meant from now on, not one typed earlier
+    // this session (`SudoPassword.known` tries that first).
+    SudoPassword.forget(_serverId);
     try {
       final pending = _pendingSudoPassword;
       if (pending == null || pending.isEmpty) {

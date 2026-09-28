@@ -118,6 +118,12 @@ class TerminalSession {
   /// from `VirtTextConsoles` has it too.
   String? reenter;
 
+  /// Whether the command that makes a shell this session's — the first one,
+  /// and [reenter] — runs sudo, whose prompt comes up at once: answered with
+  /// the password typed this session (`SudoPassword.typed`), where there is
+  /// one. sudo's timestamp is per terminal, so every new shell asks again.
+  bool answersSudo = false;
+
   /// Where this terminal's shell comes from. Usually SSH; for a server reached
   /// only through its monitor agent it is the agent's own PTY, which answers
   /// strictly less — see [ShellBackend.supportsExec].

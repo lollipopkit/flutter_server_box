@@ -225,7 +225,7 @@ Future<void> virtConfirmCert(
 }
 
 /// Asks for the sudo password libvirt needs on this host. Kept in memory for
-/// the host's session only, by the backend.
+/// the session, shared with the rest of the app (`SudoPassword`).
 Future<void> virtAskSudo(
   BuildContext context,
   VirtHostNotifier notifier,

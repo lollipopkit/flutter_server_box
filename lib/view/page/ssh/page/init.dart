@@ -290,6 +290,7 @@ extension _Init on SSHPageState {
     if (initCmd != null) {
       _terminal.textInput(initCmd);
       _terminal.keyInput(TerminalKey.enter);
+      await _answerSudo();
     }
 
     final initSnippet = widget.args.initSnippet;
@@ -641,6 +642,7 @@ extension _Init on SSHPageState {
     if (_sess.reenter case final cmd?) {
       _terminal.textInput(cmd);
       _terminal.keyInput(TerminalKey.enter);
+      unawaited(_answerSudo());
     }
     _setupDiscontinuityTimer();
     _focusTerminal(keyboard: false);

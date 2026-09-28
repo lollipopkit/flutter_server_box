@@ -7,6 +7,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/privileged_exec.dart';
 import 'package:server_box/core/utils/refresh_interval.dart';
+import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/app/scripts/shell_func.dart';
 import 'package:server_box/data/model/server/proc.dart';
 import 'package:server_box/data/model/server/proc_kill.dart';
@@ -1124,35 +1125,27 @@ extension _ProcessPageActions on _ProcessPageState {
 
   /// Null when the user declined the password prompt.
   Future<ProcKillOutcome?> _killWithSudo(String command) async {
-    final isRoot = widget.args.spi.isRoot;
-    var (result, _) = await context.showLoadingDialog(
-      fn: () => _runExec(
-        (exec) => PrivilegedExec.run(exec, command, isRoot: isRoot),
-      ),
-    );
-    if (!mounted || result == null) return null;
-    if (result.exitCode == kSudoPasswordRejected) {
-      final password = await context.showPwdDialog(
-        title: libL10n.sudoPassword,
-        label: widget.args.spi.ssh?.user ?? '',
-        id: '${widget.args.spi.id}_sudo_process',
-      );
-      if (!mounted || password == null || password.isEmpty) return null;
-      (result, _) = await context.showLoadingDialog(
+    final spi = widget.args.spi;
+    final result = await SudoPassword.retry(
+      context,
+      spi.id,
+      label: spi.ssh?.user,
+      attempt: (password) async => (await context.showLoadingDialog(
         fn: () => _runExec(
           (exec) => PrivilegedExec.run(
             exec,
             command,
-            isRoot: false,
+            isRoot: password == null && spi.isRoot,
             password: password,
           ),
         ),
-      );
-      if (!mounted || result == null) return null;
-      if (result.exitCode == kSudoPasswordRejected) {
-        Toast.error(libL10n.permissionDenied);
-        return null;
-      }
+      )).$1,
+      rejected: (r) => r.exitCode == kSudoPasswordRejected,
+    );
+    if (!mounted || result == null) return null;
+    if (result.exitCode == kSudoPasswordRejected) {
+      Toast.error(libL10n.permissionDenied);
+      return null;
     }
     return ProcKill.outcome(result.stdout);
   }
