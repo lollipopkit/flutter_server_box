@@ -87,6 +87,15 @@ enum VirtGuestViewKind {
   /// it. Where the host has `VirtCapabilities.hardware`: it is the same read.
   settings;
 
+  /// Whether the view holds drafts — rows edited and not yet saved — and is
+  /// kept, hidden, while another view of the same guest shows
+  /// (`_VirtGuestViewState._kept`). The overview holds none; the console
+  /// keeps its sessions itself.
+  bool get keepsDraft => switch (this) {
+    overview || console => false,
+    hardware || snapshots || backup || settings => true,
+  };
+
   /// The views [guest] has on a host with [caps].
   ///
   /// A template has no console, no hardware and no snapshots: it never runs
@@ -151,6 +160,25 @@ class _VirtGuestViewState extends ConsumerState<VirtGuestView> {
   late String _guestId = widget.guestId;
   var _view = VirtGuestViewKind.overview;
 
+  /// The views of this guest shown so far that hold drafts
+  /// ([VirtGuestViewKind.keepsDraft]): kept, hidden, while another view
+  /// shows, so switching views loses nothing typed. Cleared for another
+  /// guest.
+  final _kept = <VirtGuestViewKind>{};
+
+  /// A primary scroll controller for each view: the kept ones are in the
+  /// tree together, and one controller shared by their scroll views is
+  /// attached to several at once.
+  final _scrolls = <VirtGuestViewKind, ScrollController>{};
+
+  @override
+  void dispose() {
+    for (final c in _scrolls.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
   /// The console chosen in the Console segment's second level; null for the
   /// guest's default ([VirtConsoleView.defaultKind]).
   VirtConsoleKind? _console;
@@ -211,6 +239,7 @@ class _VirtGuestViewState extends ConsumerState<VirtGuestView> {
     // A view the guest does not have (a host that lost a capability, a guest
     // switched to a template): back to the overview.
     final view = views.contains(_view) ? _view : VirtGuestViewKind.overview;
+    if (view.keepsDraft) _kept.add(view);
 
     return Scaffold(
       appBar: _bar(st, guest),
@@ -246,54 +275,78 @@ class _VirtGuestViewState extends ConsumerState<VirtGuestView> {
             ),
           ),
           Expanded(
-            child: switch (view) {
-              VirtGuestViewKind.overview => _buildOverview(st, guest, state),
-              VirtGuestViewKind.hardware => VirtHardwareView(
-                key: ValueKey('hardware:${guest.id}'),
-                serverId: widget.serverId,
-                guest: guest,
-                caps: st.data!.capabilities,
-              ),
-              VirtGuestViewKind.settings => VirtSettingsView(
-                key: ValueKey('settings:${guest.id}'),
-                serverId: widget.serverId,
-                guest: guest,
-                caps: st.data!.capabilities,
-                onDelete: ({required removeDisks}) =>
-                    _delete(guest, removeDisks: removeDisks),
-                onCloned: _openGuest,
-              ),
-              VirtGuestViewKind.backup => VirtBackupView(
-                key: ValueKey('backup:${guest.id}'),
-                serverId: widget.serverId,
-                guest: guest,
-                caps: st.data!.capabilities,
-                onOpenGuest: _openGuest,
-                onOpenJob: _openBackupJob,
-              ),
-              VirtGuestViewKind.snapshots => VirtSnapshotsView(
-                key: ValueKey('snapshots:${guest.id}'),
-                serverId: widget.serverId,
-                guest: guest,
-                state: state,
-                caps: st.data!.capabilities,
-              ),
-              VirtGuestViewKind.console => VirtConsoleView(
-                serverId: widget.serverId,
-                guest: guest,
-                state: state,
-                detail: _detail,
-                kind: _console,
-                onStart: _startIfOffered(st, guest),
-                onRetryDetail: () => setState(() {
-                  _detail = _notifier.detail(guest.id);
-                }),
-              ),
-            },
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                for (final v in views)
+                  if (v == view || _kept.contains(v))
+                    Visibility(
+                      key: ValueKey(v),
+                      visible: v == view,
+                      maintainState: true,
+                      child: PrimaryScrollController(
+                        controller: _scrolls[v] ??= ScrollController(),
+                        child: _buildView(v, st, guest, state),
+                      ),
+                    ),
+              ],
+            ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildView(
+    VirtGuestViewKind view,
+    VirtHostState st,
+    VirtGuest guest,
+    VirtGuestState state,
+  ) {
+    return switch (view) {
+VirtGuestViewKind.overview => _buildOverview(st, guest, state),
+        VirtGuestViewKind.hardware => VirtHardwareView(
+          key: ValueKey('hardware:${guest.id}'),
+          serverId: widget.serverId,
+          guest: guest,
+          caps: st.data!.capabilities,
+        ),
+        VirtGuestViewKind.settings => VirtSettingsView(
+          key: ValueKey('settings:${guest.id}'),
+          serverId: widget.serverId,
+          guest: guest,
+          caps: st.data!.capabilities,
+          onDelete: ({required removeDisks}) =>
+              _delete(guest, removeDisks: removeDisks),
+          onCloned: _openGuest,
+        ),
+        VirtGuestViewKind.backup => VirtBackupView(
+          key: ValueKey('backup:${guest.id}'),
+          serverId: widget.serverId,
+          guest: guest,
+          caps: st.data!.capabilities,
+          onOpenGuest: _openGuest,
+          onOpenJob: _openBackupJob,
+        ),
+        VirtGuestViewKind.snapshots => VirtSnapshotsView(
+          key: ValueKey('snapshots:${guest.id}'),
+          serverId: widget.serverId,
+          guest: guest,
+          state: state,
+          caps: st.data!.capabilities,
+        ),
+        VirtGuestViewKind.console => VirtConsoleView(
+          serverId: widget.serverId,
+          guest: guest,
+          state: state,
+          detail: _detail,
+          kind: _console,
+          onStart: _startIfOffered(st, guest),
+          onRetryDetail: () => setState(() {
+            _detail = _notifier.detail(guest.id);
+          }),
+        ),
+    };
   }
 
   /// A template says so above its views, with the one action that is done
@@ -620,6 +673,7 @@ extension _GuestActions on _VirtGuestViewState {
   void _switchTo(String guestId) {
     setState(() {
       _guestId = guestId;
+      _kept.clear();
       _console = null;
       _window = null;
       _stored = null;

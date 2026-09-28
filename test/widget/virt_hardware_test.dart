@@ -271,6 +271,7 @@ const _ciRead = VirtCloudInitState(
   revision: 'd1',
 );
 var _ci = _ciRead;
+var _ciReads = 0;
 final _ciEdits = <(VirtCloudInitState, VirtCloudInitEdit)>[];
 
 final _hardware = <String, VirtHardware>{};
@@ -367,7 +368,10 @@ class _FakeHost extends VirtHostNotifier {
   }
 
   @override
-  Future<VirtCloudInitState> cloudInit(String guestId) async => _ci;
+  Future<VirtCloudInitState> cloudInit(String guestId) async {
+    _ciReads++;
+    return _ci;
+  }
 
   @override
   Future<void> setCloudInit(
@@ -497,6 +501,7 @@ void main() {
     _nodes = const [VirtNode(name: 'pve')];
     _ciEdits.clear();
     _ci = _ciRead;
+    _ciReads = 0;
   });
 
   tearDown(() async {
@@ -1024,6 +1029,22 @@ void main() {
       expect((_changes.single.$2 as VirtHwSetProtection).on, isTrue);
     });
 
+    testWidgets('a draft outlives a look at another view', (tester) async {
+      await openSettings(tester, 'web-01');
+      await tester.enterText(input('set:desc'), 'a draft');
+      await _settle(tester);
+      await tester.tap(segment(app_locale.l10n.virtOverview));
+      await _settle(tester);
+      expect(input('set:desc'), findsNothing, reason: 'hidden, not shown');
+      await tester.tap(segment(libL10n.setting));
+      await _settle(tester);
+      expect(
+        tester.widget<TextField>(input('set:desc')).controller!.text,
+        'a draft',
+      );
+      expect(_key('set:desc:save'), findsOneWidget);
+    });
+
     testWidgets('cloud-init: only with its drive; read, edited, saved', (
       tester,
     ) async {
@@ -1147,6 +1168,45 @@ void main() {
       final (base, edit) = _ciEdits.single;
       expect(base.revision, 'd1');
       expect(edit.values.user, 'sbxe');
+    });
+
+    testWidgets('cloud-init: a draft outlives the bar\'s refresh', (
+      tester,
+    ) async {
+      _hardware['qemu/100'] = _vm.copyWith(
+        disks: [
+          ..._vm.disks,
+          const VirtHwDisk(key: 'scsi1', kind: VirtHwDiskKind.cdrom, cloudInit: true),
+        ],
+      );
+      await open(tester, 'web-01', wide: true, segmentLabel: libL10n.setting);
+      await tester.enterText(input('ci:search'), 'lab.example');
+      await _settle(tester);
+
+      // Changed elsewhere: the configuration and its cloud-init both.
+      _hardware['qemu/100'] = _hardware['qemu/100']!.copyWith(revision: 'r2');
+      _ci = const VirtCloudInitState(
+        user: 'sbxe',
+        sshKeys: ['ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOld old@x'],
+        address: '10.0.0.5/24',
+        gateway: '10.0.0.1',
+        dns: ['192.168.31.1'],
+        passwordSet: true,
+        network: true,
+        revision: 'd2',
+      );
+      final reads = _ciReads;
+      await tester.tap(find.byIcon(Icons.refresh).first);
+      await _settle(tester);
+      expect(_ciReads, reads + 1, reason: 'read again with the hardware');
+      expect(
+        tester.widget<TextField>(input('ci:search')).controller!.text,
+        'lab.example',
+      );
+      // Read again, and saved against the read the draft came from: the
+      // host says it changed since.
+      await tap(tester, _key('ci:save'));
+      expect(_ciEdits.single.$1.revision, 'd1');
     });
 
     testWidgets('libvirt: a clone\'s empty disks go to the pool picked', (

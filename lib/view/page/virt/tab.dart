@@ -442,6 +442,9 @@ extension _Actions on _VirtTabPageState {
         // screen, and a pointer has no pull — this button is its refresh.
         if (_guestId case final id?) {
           ref.invalidate(virtHardwareProvider(hostId, id));
+          // PVE's cloud-init is in the same configuration. A draft stays on
+          // the read it was made from.
+          ref.invalidate(virtCloudInitProvider(hostId, id));
         }
       case VirtSection.storage:
         ref.invalidate(virtStoragePoolsProvider(hostId));
