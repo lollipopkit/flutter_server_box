@@ -3,14 +3,16 @@ import 'package:server_box/data/model/server/geo.dart';
 
 part 'custom.g.dart';
 
+/// Per-server extras.
+///
+/// PVE's settings were here as `pveAddr`, `pveIgnoreCert` and `pvePwd`. They
+/// are `PveConfig` now, in a table of their own; a record from an older build
+/// still carries them, and `PveConfig.fromLegacyRecord` reads them out of the
+/// raw JSON — this class ignores keys it does not know. This build writes them
+/// into sync files, backups and shares as well, for those builds to read
+/// (`PveConfig.toLegacyCustom`).
 @JsonSerializable(includeIfNull: false)
 final class ServerCustom {
-  final String? pveAddr;
-
-  final bool pveIgnoreCert;
-
-  final String? pvePwd;
-
   /// {"title": "cmd"}
   ///
   /// No longer where custom commands live: they are files in a directory on
@@ -47,9 +49,6 @@ final class ServerCustom {
   final GeoCoord? geo;
 
   const ServerCustom({
-    this.pveAddr,
-    this.pveIgnoreCert = false,
-    this.pvePwd,
     this.cmds,
     this.preferTempDev,
     this.tempIsCelsius = false,
@@ -63,9 +62,6 @@ final class ServerCustom {
   /// on the server, so it never sends them twice.
   // TODO(migration): delete with [cmds].
   ServerCustom withoutCmds() => ServerCustom(
-    pveAddr: pveAddr,
-    pveIgnoreCert: pveIgnoreCert,
-    pvePwd: pvePwd,
     preferTempDev: preferTempDev,
     tempIsCelsius: tempIsCelsius,
     logoUrl: logoUrl,
@@ -82,9 +78,6 @@ final class ServerCustom {
   @override
   bool operator ==(Object other) {
     return other is ServerCustom &&
-        other.pveAddr == pveAddr &&
-        other.pveIgnoreCert == pveIgnoreCert &&
-        other.pvePwd == pvePwd &&
         other.cmds == cmds &&
         other.preferTempDev == preferTempDev &&
         other.tempIsCelsius == tempIsCelsius &&
@@ -96,9 +89,6 @@ final class ServerCustom {
 
   @override
   int get hashCode =>
-      pveAddr.hashCode ^
-      pveIgnoreCert.hashCode ^
-      pvePwd.hashCode ^
       cmds.hashCode ^
       preferTempDev.hashCode ^
       tempIsCelsius.hashCode ^

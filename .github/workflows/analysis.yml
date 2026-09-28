@@ -183,6 +183,20 @@ jobs:
           # and a store that cannot hardlink into `target/` copies instead.
           cache-dir: ${{ runner.os == 'Windows' && format('{0}/kache', runner.temp) || '' }}
 
+      # The toolchain the app's build hook is pinned to, rather than the
+      # runner's `stable`: that one moves on its own, and a lint added in a new
+      # release failed pull requests that changed nothing it looks at.
+      # Hosted Windows runners check out with `core.autocrlf=true`, so the CR
+      # is stripped before the `$`-anchored match; an empty result fails here
+      # instead of as a confusing `rustup` error.
+      - name: Install the pinned Rust toolchain
+        shell: bash
+        run: |
+          v="$(tr -d '\r' < crates/sbm_ffi/rust-toolchain.toml | sed -n 's/^channel = "\(.*\)"$/\1/p')"
+          test -n "$v" || { echo "no channel in crates/sbm_ffi/rust-toolchain.toml" >&2; exit 1; }
+          rustup toolchain install "$v" --profile minimal -c clippy --no-self-update
+          echo "RUSTUP_TOOLCHAIN=$v" >> "$GITHUB_ENV"
+
       - name: Test Rust workspace
         run: cargo test --workspace --no-fail-fast
 

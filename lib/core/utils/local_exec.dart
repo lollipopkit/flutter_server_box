@@ -89,7 +89,7 @@ abstract class LocalExec implements ServerExec {
 /// That also keeps `stdout` and `stderr` apart, which a pty merges, so a caller
 /// reading only one of them gets what it asked for — `runWithSudo` watching for
 /// a rejected password is one.
-class ProcessExec extends LocalExec {
+class ProcessExec extends LocalExec implements ServerByteExec {
   const ProcessExec({this.inRootfs = false});
 
   @override
@@ -226,6 +226,79 @@ class ProcessExec extends LocalExec {
     } finally {
       guest?.release();
     }
+  }
+
+  /// On the host only: a userland's commands go through its own entry,
+  /// which [run] handles and an upload has no use for.
+  @override
+  Future<ExecSession> start(String command) async {
+    if (inRootfs) {
+      throw UnsupportedError('Byte streams run on the host, not in a userland');
+    }
+    final shell = LocalShellBackend.shellPath;
+    final arguments = [Platform.isWindows ? '/C' : '-c', command];
+    // A session is always cancellable, so it gets the group [run] gives a
+    // cancellable command: the shell is not the only process reading stdin
+    // (an upload runs its writer and then reads its status), and killing the
+    // shell alone would leave that writer alive with the pipe open.
+    final setsid = _setsidPath;
+    final process = await Process.start(
+      setsid ?? shell,
+      setsid == null ? arguments : [shell, ...arguments],
+      includeParentEnvironment: true,
+    );
+    return _ProcessExecSession(
+      process,
+      processGroupId: setsid == null ? null : process.pid,
+    );
+  }
+}
+
+/// A local process, fed as it runs.
+final class _ProcessExecSession implements ExecSession {
+  _ProcessExecSession(this._process, {int? processGroupId})
+    : _processGroupId = processGroupId {
+    unawaited(_process.exitCode.then((_) => _exited = true));
+  }
+
+  final Process _process;
+  final int? _processGroupId;
+
+  /// Set once the shell has exited, so a late [kill] does not walk a tree
+  /// whose root pid may already belong to an unrelated process.
+  var _exited = false;
+
+  static const _decoder = Utf8Decoder(allowMalformed: true);
+
+  @override
+  late final Stream<String> stdout = _decoder
+      .bind(_process.stdout)
+      .asBroadcastStream();
+
+  @override
+  late final Stream<String> stderr = _decoder
+      .bind(_process.stderr)
+      .asBroadcastStream();
+
+  @override
+  Future<void> write(List<int> data) async {
+    _process.stdin.add(data);
+    // The pipe's own buffer is the limit: flush waits for it to drain.
+    await _process.stdin.flush();
+  }
+
+  @override
+  Future<void> closeStdin() => _process.stdin.close();
+
+  @override
+  Future<int?> get done => _process.exitCode;
+
+  @override
+  void kill() {
+    if (_exited) return;
+    // The whole tree, as [ProcessExec.run] does on cancel: the command's
+    // descendants hold the same stdin and would otherwise outlive it.
+    ProcessTree.terminate(_process, _processGroupId);
   }
 }
 

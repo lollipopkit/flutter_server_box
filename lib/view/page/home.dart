@@ -15,6 +15,7 @@ import 'package:server_box/core/utils/desktop_shortcuts.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/virt/virt.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
@@ -534,14 +535,16 @@ class _HomePageState extends ConsumerState<HomePage>
     final authed = _authed = _goAuth(showGuide: false);
 
     if (Stores.setting.autoCheckAppUpdate.fetch()) {
-      AppUpdateIface.doUpdate(
-        build: BuildData.build,
-        githubReleasesUrl: Urls.githubReleasesApi,
-        storeUrl: Urls.appStore,
-        context: context,
-        noticeBuilder: (ctx) => DmgNotice.forUpdate(
-          ctx,
-          build: AppUpdateIface.newestBuild.value ?? BuildData.build,
+      unawaited(
+        AppUpdateIface.doUpdate(
+          build: BuildData.build,
+          githubReleasesUrl: Urls.githubReleasesApi,
+          storeUrl: Urls.appStore,
+          context: context,
+          noticeBuilder: (ctx) => DmgNotice.forUpdate(
+            ctx,
+            build: AppUpdateIface.newestBuild.value ?? BuildData.build,
+          ),
         ),
       );
     }

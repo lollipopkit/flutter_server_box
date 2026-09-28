@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
 import 'package:fl_lib/fl_lib.dart';
@@ -305,14 +306,23 @@ class ServerCard extends StatelessWidget {
     // The page's image, which the card has not: its room is kept from the
     // first frame, growing with the card, so what is under it lands where
     // the page puts it rather than a picture's height too high. The image
-    // itself comes in with the page — see `ServerDetailPage._buildLogo`. Its
-    // height is a share of the width the page lays it out at, which is this
-    // card's at the far end. A box of no height at rest rather than none, so
-    // the blocks under it are the same children of the same column on every
-    // frame.
-    final logoRoom = t > 0 && hasContent && srv.getLogoUrl(context) != null
-        ? ((pageWidth - 2 * ServerCardSizes.pageSide - asideAtEnd) *
-                  ServerCardSizes.logoHeightRatio +
+    // itself comes in with the page — see `ServerDetailPage._buildLogo`, which
+    // computes the same height and must keep doing so. A box of no height at
+    // rest rather than none, so the blocks under it are the same children of
+    // the same column on every frame.
+    //
+    // Only in one column. Two columns put the image at the head of the facts
+    // column instead, where it pushes nothing down: the readings beside it
+    // start at the top of the card either way. Reserving here as well would
+    // hold the readings a picture's height below where the page draws them,
+    // which is the jump this box exists to prevent.
+    final logoRoom =
+            t > 0 && hasContent && !twoColumns && srv.getLogoUrl(context) != null
+        ? (math.min(
+                    (pageWidth - 2 * ServerCardSizes.pageSide) *
+                        ServerCardSizes.logoHeightRatio,
+                    ServerCardSizes.logoMaxHeight,
+                  ) +
               2 * ServerCardSizes.logoPad) *
             t
         : 0.0;

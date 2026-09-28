@@ -1462,7 +1462,7 @@ class ServerNotifier extends _$ServerNotifier {
               systemType: detectedSystemType,
             ).uint8List;
             session.stdin.add(scriptRaw);
-            session.stdin.close();
+            unawaited(session.stdin.close());
           },
           entry: ShellFuncManager.getInstallShellCmd(
             spi.id,

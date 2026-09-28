@@ -1,8 +1,17 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/view/page/home_tab.dart';
 import 'package:server_box/view/page/setting/entries/home_tabs.dart';
 
+import '../../helpers/test_db.dart';
+
 void main() {
+  group('the bottom bar', _bottomBarMarks);
+
   group('the default order', () {
     test('is the bar, and the rest are behind "more"', () {
       // The list *is* the bar now, so it is a subset rather than everything.
@@ -11,6 +20,7 @@ void main() {
         AppTab.ssh,
         AppTab.file,
         AppTab.agent,
+        AppTab.virt,
       ]);
       // Snippets are a library rather than a place, and a benchmark is a
       // quarter of an hour started deliberately — neither is wanted a tap away.
@@ -133,6 +143,7 @@ void main() {
       AppTab.agent,
       AppTab.benchmark,
       AppTab.remoteDesktop,
+      AppTab.virt,
     ]);
   });
 
@@ -144,12 +155,15 @@ void main() {
     expect(AppTab.server.index, 0);
     expect(AppTab.benchmark.index, 5);
     expect(AppTab.remoteDesktop.index, 6);
+    expect(AppTab.virt.index, 7);
   });
 
   /// 7 was the Monitor settings tab. `values` is positional, so the next case
-  /// appended takes that index — and without the retired list an install that
-  /// had the old tab in its bar would silently get the new tab in its place.
+  /// appended took that index — Virtualization — and without the retired list
+  /// an install that had the old tab in its bar would silently get the new tab
+  /// in its place.
   test('drops a retired tab index instead of resolving it', () {
+    expect(AppTab.values[7], AppTab.virt);
     expect(AppTab.parseAppTabsFromObj([0, 7, 1]), [AppTab.server, AppTab.ssh]);
     // Nothing left is nothing stored, which is what the default is for.
     expect(AppTab.parseAppTabsFromObj([7]), AppTab.defaultOrder);
@@ -157,6 +171,15 @@ void main() {
     // dropped by the same path.
     expect(AppTab.parseAppTabsFromObj(['server', 'monitorSettings']), [
       AppTab.server,
+    ]);
+  });
+
+  test('the tab that took index 7 is reached by its name', () {
+    // Every build that knows it stores tabs by name, so this is the only way a
+    // record names it.
+    expect(AppTab.parseAppTabsFromObj(['server', 'virt']), [
+      AppTab.server,
+      AppTab.virt,
     ]);
   });
 
@@ -235,5 +258,87 @@ void main() {
         isNull,
       );
     });
+  });
+
+  group('the mark a feature carries', () {
+    // Read off the enums rather than drawn: what the mark *looks* like is
+    // fl_lib's to test, and what matters here is which entries have one. A tab
+    // that gained a mark without the row that lists it being told would draw
+    // the mark nowhere at all.
+    test('the tabs still in beta carry one, the rest carry none', () {
+      final marked = {
+        for (final tab in AppTab.values)
+          if (tab.mark != null) tab,
+      };
+      expect(marked, {
+        AppTab.remoteDesktop,
+        AppTab.agent,
+        AppTab.benchmark,
+        AppTab.virt,
+      });
+    });
+
+    test('a tab with no mark is listed as plain text', () {
+      expect(AppTab.server.mark, isNull);
+      expect(AppTab.server.listTitle, isA<Text>());
+      expect(AppTab.virt.listTitle, isNot(isA<Text>()));
+    });
+  });
+
+  group('the server function marks', () {
+    test('only the remote desktop entry is still in beta', () {
+      final marked = {
+        for (final btn in ServerFuncBtn.values)
+          if (btn.mark != null) btn,
+      };
+      expect(marked, {ServerFuncBtn.remoteDesktop});
+    });
+  });
+}
+
+/// The bottom bar hides a tab's label unless it is selected, so a beta tab
+/// is marked on its icon's corner instead.
+void _bottomBarMarks() {
+  setUp(() async {
+    await openTestDb();
+    getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
+  });
+  tearDown(() async {
+    await getIt.reset();
+    await closeTestDb();
+  });
+
+  testWidgets('a beta tab carries the mark while selected, another never', (
+    tester,
+  ) async {
+    var selected = 0;
+    Future<void> pump() => tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: selected,
+            destinations: [
+              AppTab.ssh.navDestination(),
+              AppTab.virt.navDestination(),
+            ],
+          ),
+        ),
+      ),
+    );
+    await pump();
+    await tester.pumpAndSettle();
+    Finder mark(AppTab tab) => find.descendant(
+      of: find.byWidgetPredicate(
+        (w) => w is NavigationDestination && w.label == tab.label,
+      ),
+      matching: find.descendant(of: find.byType(Badge), matching: find.text('Beta')),
+    );
+    // Not selected: no mark.
+    expect(mark(AppTab.virt), findsNothing);
+    selected = 1;
+    await pump();
+    await tester.pumpAndSettle();
+    expect(mark(AppTab.virt), findsOneWidget);
+    expect(mark(AppTab.ssh), findsNothing);
   });
 }

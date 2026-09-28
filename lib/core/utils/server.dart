@@ -141,7 +141,9 @@ Future<List<SSHKeyPair>> identitiesOf(List<String> keys) async {
       await parse;
     } finally {
       for (final key in missing) {
-        if (identical(_identityParses[key], parse)) _identityParses.remove(key);
+        if (identical(_identityParses[key], parse)) {
+          unawaited(_identityParses.remove(key));
+        }
       }
     }
   }

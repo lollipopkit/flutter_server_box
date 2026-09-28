@@ -1,0 +1,16 @@
+{
+  "boot": "order=net0",
+  "cores": 1,
+  "description": "fixture one",
+  "memory": "512",
+  "meta": "creation-qemu=11.0.0,ctime=1790415509",
+  "name": "sbxe2e-p8f",
+  "net0": "virtio=BC:24:11:CE:D8:87,bridge=vmbr0",
+  "ostype": "l26",
+  "scsi0": "local-lvm:vm-953-disk-0,size=1G",
+  "scsihw": "virtio-scsi-pci",
+  "serial0": "socket",
+  "smbios1": "uuid=54e01b19-96e3-4ed8-b241-5f567b5172ea",
+  "snaptime": 1790415588,
+  "vmgenid": "f63982ce-31a9-44fc-a9df-e27c473eaa78"
+}

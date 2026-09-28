@@ -25,7 +25,7 @@
 abstract final class Tables {
   /// Tables holding one logical record each, and so the unit of sync.
   ///
-  /// A server and its tags, envs, jump hosts and container settings move
+  /// A server and its tags, envs, jump hosts, container and PVE settings move
   /// together: the children have no independent meaning and cascade with the
   /// parent, so only the parent carries the sync columns and editing a child
   /// bumps the parent's `updated_at`. Syncing children separately would mean a
@@ -59,6 +59,7 @@ abstract final class Tables {
     'known_host',
     'container_host',
     'container_runtime',
+    'server_pve',
     'snippet',
     'snippet_tag',
     'snippet_auto_run_on',

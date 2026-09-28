@@ -1,0 +1,52 @@
+SrvBoxSep.b64.dmlydC52b2wueG1s
+my disk.qcow2
+<volume type='file'>
+  <name>my disk.qcow2</name>
+  <key>/var/lib/libvirt/sbx-iso/my disk.qcow2</key>
+  <capacity unit='bytes'>67108864</capacity>
+  <allocation unit='bytes'>200704</allocation>
+  <physical unit='bytes'>196616</physical>
+  <target>
+    <path>/var/lib/libvirt/sbx-iso/my disk.qcow2</path>
+    <format type='qcow2'/>
+    <permissions>
+      <mode>0600</mode>
+      <owner>0</owner>
+      <group>0</group>
+    </permissions>
+    <timestamps>
+      <atime>1790335917.620880742</atime>
+      <mtime>1790335917.616880775</mtime>
+      <ctime>1790335917.616880775</ctime>
+      <btime>0</btime>
+    </timestamps>
+  </target>
+</volume>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC52b2wueG1s
+tiny.iso
+<volume type='file'>
+  <name>tiny.iso</name>
+  <key>/var/lib/libvirt/sbx-iso/tiny.iso</key>
+  <capacity unit='bytes'>1048576</capacity>
+  <allocation unit='bytes'>1048576</allocation>
+  <physical unit='bytes'>1048576</physical>
+  <target>
+    <path>/var/lib/libvirt/sbx-iso/tiny.iso</path>
+    <format type='raw'/>
+    <permissions>
+      <mode>0600</mode>
+      <owner>0</owner>
+      <group>0</group>
+    </permissions>
+    <timestamps>
+      <atime>1790335917.636880606</atime>
+      <mtime>1790335917.636880606</mtime>
+      <ctime>1790335917.636880606</ctime>
+      <btime>0</btime>
+    </timestamps>
+  </target>
+</volume>
+
+SbVirtRc=0

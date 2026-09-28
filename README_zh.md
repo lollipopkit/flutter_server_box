@@ -12,10 +12,16 @@
 <p align="center">
 使用 Flutter 开发的 Linux, Unix, Windows 服务器工具箱，提供服务器状态图表和管理工具。
 <br>
-特别感谢 <a href="https://github.com/TerminalStudio/dartssh2">dartssh2</a> & <a href="https://github.com/TerminalStudio/xterm.dart">xterm.dart</a>。
+用户指南、架构说明和开发文档请参阅<a href="https://serverbox.lolli.tech/docs/">文档站</a>。
 </p>
 
-用户指南、架构说明和开发文档请参阅[文档站](https://serverbox.lolli.tech/docs/)。
+
+## 致谢
+
+特别感谢 <a href="https://github.com/TerminalStudio/dartssh2">dartssh2</a> & <a href="https://github.com/TerminalStudio/xterm.dart">xterm.dart</a>。
+感谢我的对象提供的 精神+经济 支持。
+感谢 <a href="https://openai.com">OpenAI</a> 赠送的六个月 ChatGPT Pro 20x 订阅。
+
 
 ## 截屏
 
@@ -150,16 +156,6 @@
 贡献者需要签署一次 [CLA](CLA_zh.md)（[英文原文](CLA.md)，以英文为准）：在你的第一个 PR 下留一条评论即可。它授予的权利使你的工作可以随 App Store 版本一起发布，同时源码保持 AGPLv3——你自己的版权仍然属于你。
 
 如果我忘记在贡献者列表中添加你的名字，请在你打开的 issue 或 PR 中添加评论让我知道，我会尽快添加。
-
-### 开发
-
-- 请先阅读[开发指南](https://serverbox.lolli.tech/docs/zh/development/structure/)。
-- 平台要求和发布构建方式见[构建指南](https://serverbox.lolli.tech/docs/zh/development/building/)。
-- 本地环境、检查、提交和翻译流程见 [CONTRIBUTING.md](CONTRIBUTING.md)。
-
-### 翻译
-
-- 欢迎贡献翻译，流程见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ## 协议
 

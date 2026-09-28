@@ -15,12 +15,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
+import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/disk_smart.dart';
+import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/status.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/private_key.dart';
+import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
@@ -45,6 +49,7 @@ void main() {
     await openTestDb();
     getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
     getIt.registerSingleton<ServerStore>(ServerStore());
+    getIt.registerSingleton<PveStore>(PveStore());
     getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore());
     Stores.setting.serverStatusUpdateInterval.put(0);
     Stores.server.put(spi);
@@ -234,5 +239,26 @@ void main() {
         .toList();
     expect(rows.first, 'sdh');
     expect(rows, hasLength(6));
+  });
+
+  /// The PVE page is gone; its card is the way to the same server on the
+  /// Virtualization tab.
+  testWidgets('the PVE card asks for the Virtualization tab, on this host', (
+    tester,
+  ) async {
+    Stores.pve.put(sid, const PveConfig(addr: 'https://localhost:8006'));
+    await pump(tester);
+
+    final card = find.text('PVE');
+    await tester.ensureVisible(card);
+    await tester.pump();
+    await tester.tap(card);
+    await tester.pump();
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(ServerDetailPage)),
+    );
+    expect(container.read(homeTabRequestProvider), AppTab.virt);
+    expect(container.read(virtHostRequestProvider), sid);
   });
 }

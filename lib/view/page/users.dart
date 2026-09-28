@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/privileged_exec.dart';
+import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
@@ -107,6 +108,9 @@ extension on _UsersPageState {
         enabled: canMutate,
         icon: const Icon(Icons.sort, size: 18),
         initialValue: _sort,
+        // Its initial value is scrolled into view: from the page's own
+        // navigator, inside the home's tab pages, that scrolled the tabs.
+        useRootNavigator: true,
         itemBuilder: (_) => [
           PopupMenuItem(value: _UserSort.uid, child: Text(l10n.userUid)),
           PopupMenuItem(value: _UserSort.name, child: Text(libL10n.sortByName)),
@@ -752,26 +756,22 @@ extension on _UsersPageState {
     _rebuild(() => _busy = true);
     try {
       final exec = await ref.read(_provider.notifier).ensureExec();
-      var result = await PrivilegedExec.run(
-        exec,
-        script,
-        isRoot: widget.args.spi.isRoot || _catalog?.currentUser == 'root',
-      );
-      if (result.exitCode == kSudoPasswordRejected) {
-        if (!mounted) return false;
-        final password = await context.showPwdDialog(
-          title: libL10n.sudoPassword,
-          label: widget.args.spi.ssh?.user ?? _catalog?.currentUser ?? '',
-          id: '${widget.args.spi.id}_sudo_users',
-        );
-        if (password == null || password.isEmpty) return false;
-        result = await PrivilegedExec.run(
+      final isRoot =
+          widget.args.spi.isRoot || _catalog?.currentUser == 'root';
+      if (!mounted) return false;
+      final result = await SudoPassword.retry(
+        context,
+        widget.args.spi.id,
+        label: widget.args.spi.ssh?.user ?? _catalog?.currentUser,
+        attempt: (password) => PrivilegedExec.run(
           exec,
           script,
-          isRoot: false,
+          isRoot: password == null && isRoot,
           password: password,
-        );
-      }
+        ),
+        rejected: (r) => r.exitCode == kSudoPasswordRejected,
+      );
+      if (result == null) return false;
       if (!result.succeeded) {
         if (mounted) {
           final detail = result.combined.trim();

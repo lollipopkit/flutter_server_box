@@ -53,8 +53,6 @@ void main() {
     ),
     wolCfg: WakeOnLanCfg(mac: 'AA:BB:CC:DD:EE:FF', ip: '10.0.0.255'),
     custom: ServerCustom(
-      pveAddr: 'https://pve:8006',
-      pveIgnoreCert: true,
       cmds: {'up': 'uptime'},
       tempIsCelsius: false,
       netDev: 'eth0',
@@ -80,7 +78,6 @@ void main() {
     expect(got.ssh?.pwd, 'hunter2');
     expect(got.ssh?.proxyCommand, 'nc %h %p');
     expect(got.wolCfg?.mac, 'AA:BB:CC:DD:EE:FF');
-    expect(got.custom?.pveIgnoreCert, isTrue);
     expect(got.custom?.cmds, {'up': 'uptime'});
     expect(got.custom?.tempIsCelsius, isFalse);
   });

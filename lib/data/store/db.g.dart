@@ -1153,41 +1153,6 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
       'REFERENCES bmc_credential (id) ON DELETE SET NULL',
     ),
   );
-  static const VerificationMeta _pveAddrMeta = const VerificationMeta(
-    'pveAddr',
-  );
-  @override
-  late final GeneratedColumn<String> pveAddr = GeneratedColumn<String>(
-    'pve_addr',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _pveIgnoreCertMeta = const VerificationMeta(
-    'pveIgnoreCert',
-  );
-  @override
-  late final GeneratedColumn<bool> pveIgnoreCert = GeneratedColumn<bool>(
-    'pve_ignore_cert',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("pve_ignore_cert" IN (0, 1))',
-    ),
-    defaultValue: const Constant(false),
-  );
-  static const VerificationMeta _pvePwdMeta = const VerificationMeta('pvePwd');
-  @override
-  late final GeneratedColumn<String> pvePwd = GeneratedColumn<String>(
-    'pve_pwd',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
   static const VerificationMeta _preferTempDevMeta = const VerificationMeta(
     'preferTempDev',
   );
@@ -1296,9 +1261,6 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     bmcAddr,
     bmcCertSha256,
     bmcCredId,
-    pveAddr,
-    pveIgnoreCert,
-    pvePwd,
     preferTempDev,
     tempIsCelsius,
     logoUrl,
@@ -1545,27 +1507,6 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         bmcCredId.isAcceptableOrUnknown(data['bmc_cred_id']!, _bmcCredIdMeta),
       );
     }
-    if (data.containsKey('pve_addr')) {
-      context.handle(
-        _pveAddrMeta,
-        pveAddr.isAcceptableOrUnknown(data['pve_addr']!, _pveAddrMeta),
-      );
-    }
-    if (data.containsKey('pve_ignore_cert')) {
-      context.handle(
-        _pveIgnoreCertMeta,
-        pveIgnoreCert.isAcceptableOrUnknown(
-          data['pve_ignore_cert']!,
-          _pveIgnoreCertMeta,
-        ),
-      );
-    }
-    if (data.containsKey('pve_pwd')) {
-      context.handle(
-        _pvePwdMeta,
-        pvePwd.isAcceptableOrUnknown(data['pve_pwd']!, _pvePwdMeta),
-      );
-    }
     if (data.containsKey('prefer_temp_dev')) {
       context.handle(
         _preferTempDevMeta,
@@ -1747,18 +1688,6 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         DriftSqlType.string,
         data['${effectivePrefix}bmc_cred_id'],
       ),
-      pveAddr: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}pve_addr'],
-      ),
-      pveIgnoreCert: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}pve_ignore_cert'],
-      )!,
-      pvePwd: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}pve_pwd'],
-      ),
       preferTempDev: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}prefer_temp_dev'],
@@ -1878,9 +1807,6 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
   /// leave them with an address and nothing to log in with, which the editor
   /// can then say. Same rule as [sshKeyId].
   final String? bmcCredId;
-  final String? pveAddr;
-  final bool pveIgnoreCert;
-  final String? pvePwd;
   final String? preferTempDev;
   final bool tempIsCelsius;
   final String? logoUrl;
@@ -1928,9 +1854,6 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     this.bmcAddr,
     this.bmcCertSha256,
     this.bmcCredId,
-    this.pveAddr,
-    required this.pveIgnoreCert,
-    this.pvePwd,
     this.preferTempDev,
     required this.tempIsCelsius,
     this.logoUrl,
@@ -2018,13 +1941,6 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     }
     if (!nullToAbsent || bmcCredId != null) {
       map['bmc_cred_id'] = Variable<String>(bmcCredId);
-    }
-    if (!nullToAbsent || pveAddr != null) {
-      map['pve_addr'] = Variable<String>(pveAddr);
-    }
-    map['pve_ignore_cert'] = Variable<bool>(pveIgnoreCert);
-    if (!nullToAbsent || pvePwd != null) {
-      map['pve_pwd'] = Variable<String>(pvePwd);
     }
     if (!nullToAbsent || preferTempDev != null) {
       map['prefer_temp_dev'] = Variable<String>(preferTempDev);
@@ -2125,13 +2041,6 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       bmcCredId: bmcCredId == null && nullToAbsent
           ? const Value.absent()
           : Value(bmcCredId),
-      pveAddr: pveAddr == null && nullToAbsent
-          ? const Value.absent()
-          : Value(pveAddr),
-      pveIgnoreCert: Value(pveIgnoreCert),
-      pvePwd: pvePwd == null && nullToAbsent
-          ? const Value.absent()
-          : Value(pvePwd),
       preferTempDev: preferTempDev == null && nullToAbsent
           ? const Value.absent()
           : Value(preferTempDev),
@@ -2197,9 +2106,6 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       bmcAddr: serializer.fromJson<String?>(json['bmcAddr']),
       bmcCertSha256: serializer.fromJson<String?>(json['bmcCertSha256']),
       bmcCredId: serializer.fromJson<String?>(json['bmcCredId']),
-      pveAddr: serializer.fromJson<String?>(json['pveAddr']),
-      pveIgnoreCert: serializer.fromJson<bool>(json['pveIgnoreCert']),
-      pvePwd: serializer.fromJson<String?>(json['pvePwd']),
       preferTempDev: serializer.fromJson<String?>(json['preferTempDev']),
       tempIsCelsius: serializer.fromJson<bool>(json['tempIsCelsius']),
       logoUrl: serializer.fromJson<String?>(json['logoUrl']),
@@ -2246,9 +2152,6 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       'bmcAddr': serializer.toJson<String?>(bmcAddr),
       'bmcCertSha256': serializer.toJson<String?>(bmcCertSha256),
       'bmcCredId': serializer.toJson<String?>(bmcCredId),
-      'pveAddr': serializer.toJson<String?>(pveAddr),
-      'pveIgnoreCert': serializer.toJson<bool>(pveIgnoreCert),
-      'pvePwd': serializer.toJson<String?>(pvePwd),
       'preferTempDev': serializer.toJson<String?>(preferTempDev),
       'tempIsCelsius': serializer.toJson<bool>(tempIsCelsius),
       'logoUrl': serializer.toJson<String?>(logoUrl),
@@ -2291,9 +2194,6 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     Value<String?> bmcAddr = const Value.absent(),
     Value<String?> bmcCertSha256 = const Value.absent(),
     Value<String?> bmcCredId = const Value.absent(),
-    Value<String?> pveAddr = const Value.absent(),
-    bool? pveIgnoreCert,
-    Value<String?> pvePwd = const Value.absent(),
     Value<String?> preferTempDev = const Value.absent(),
     bool? tempIsCelsius,
     Value<String?> logoUrl = const Value.absent(),
@@ -2346,9 +2246,6 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
         ? bmcCertSha256.value
         : this.bmcCertSha256,
     bmcCredId: bmcCredId.present ? bmcCredId.value : this.bmcCredId,
-    pveAddr: pveAddr.present ? pveAddr.value : this.pveAddr,
-    pveIgnoreCert: pveIgnoreCert ?? this.pveIgnoreCert,
-    pvePwd: pvePwd.present ? pvePwd.value : this.pvePwd,
     preferTempDev: preferTempDev.present
         ? preferTempDev.value
         : this.preferTempDev,
@@ -2424,11 +2321,6 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           ? data.bmcCertSha256.value
           : this.bmcCertSha256,
       bmcCredId: data.bmcCredId.present ? data.bmcCredId.value : this.bmcCredId,
-      pveAddr: data.pveAddr.present ? data.pveAddr.value : this.pveAddr,
-      pveIgnoreCert: data.pveIgnoreCert.present
-          ? data.pveIgnoreCert.value
-          : this.pveIgnoreCert,
-      pvePwd: data.pvePwd.present ? data.pvePwd.value : this.pvePwd,
       preferTempDev: data.preferTempDev.present
           ? data.preferTempDev.value
           : this.preferTempDev,
@@ -2477,9 +2369,6 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           ..write('bmcAddr: $bmcAddr, ')
           ..write('bmcCertSha256: $bmcCertSha256, ')
           ..write('bmcCredId: $bmcCredId, ')
-          ..write('pveAddr: $pveAddr, ')
-          ..write('pveIgnoreCert: $pveIgnoreCert, ')
-          ..write('pvePwd: $pvePwd, ')
           ..write('preferTempDev: $preferTempDev, ')
           ..write('tempIsCelsius: $tempIsCelsius, ')
           ..write('logoUrl: $logoUrl, ')
@@ -2524,9 +2413,6 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     bmcAddr,
     bmcCertSha256,
     bmcCredId,
-    pveAddr,
-    pveIgnoreCert,
-    pvePwd,
     preferTempDev,
     tempIsCelsius,
     logoUrl,
@@ -2570,9 +2456,6 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           other.bmcAddr == this.bmcAddr &&
           other.bmcCertSha256 == this.bmcCertSha256 &&
           other.bmcCredId == this.bmcCredId &&
-          other.pveAddr == this.pveAddr &&
-          other.pveIgnoreCert == this.pveIgnoreCert &&
-          other.pvePwd == this.pvePwd &&
           other.preferTempDev == this.preferTempDev &&
           other.tempIsCelsius == this.tempIsCelsius &&
           other.logoUrl == this.logoUrl &&
@@ -2614,9 +2497,6 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
   final Value<String?> bmcAddr;
   final Value<String?> bmcCertSha256;
   final Value<String?> bmcCredId;
-  final Value<String?> pveAddr;
-  final Value<bool> pveIgnoreCert;
-  final Value<String?> pvePwd;
   final Value<String?> preferTempDev;
   final Value<bool> tempIsCelsius;
   final Value<String?> logoUrl;
@@ -2656,9 +2536,6 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.bmcAddr = const Value.absent(),
     this.bmcCertSha256 = const Value.absent(),
     this.bmcCredId = const Value.absent(),
-    this.pveAddr = const Value.absent(),
-    this.pveIgnoreCert = const Value.absent(),
-    this.pvePwd = const Value.absent(),
     this.preferTempDev = const Value.absent(),
     this.tempIsCelsius = const Value.absent(),
     this.logoUrl = const Value.absent(),
@@ -2699,9 +2576,6 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.bmcAddr = const Value.absent(),
     this.bmcCertSha256 = const Value.absent(),
     this.bmcCredId = const Value.absent(),
-    this.pveAddr = const Value.absent(),
-    this.pveIgnoreCert = const Value.absent(),
-    this.pvePwd = const Value.absent(),
     this.preferTempDev = const Value.absent(),
     this.tempIsCelsius = const Value.absent(),
     this.logoUrl = const Value.absent(),
@@ -2743,9 +2617,6 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Expression<String>? bmcAddr,
     Expression<String>? bmcCertSha256,
     Expression<String>? bmcCredId,
-    Expression<String>? pveAddr,
-    Expression<bool>? pveIgnoreCert,
-    Expression<String>? pvePwd,
     Expression<String>? preferTempDev,
     Expression<bool>? tempIsCelsius,
     Expression<String>? logoUrl,
@@ -2788,9 +2659,6 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       if (bmcAddr != null) 'bmc_addr': bmcAddr,
       if (bmcCertSha256 != null) 'bmc_cert_sha256': bmcCertSha256,
       if (bmcCredId != null) 'bmc_cred_id': bmcCredId,
-      if (pveAddr != null) 'pve_addr': pveAddr,
-      if (pveIgnoreCert != null) 'pve_ignore_cert': pveIgnoreCert,
-      if (pvePwd != null) 'pve_pwd': pvePwd,
       if (preferTempDev != null) 'prefer_temp_dev': preferTempDev,
       if (tempIsCelsius != null) 'temp_is_celsius': tempIsCelsius,
       if (logoUrl != null) 'logo_url': logoUrl,
@@ -2833,9 +2701,6 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Value<String?>? bmcAddr,
     Value<String?>? bmcCertSha256,
     Value<String?>? bmcCredId,
-    Value<String?>? pveAddr,
-    Value<bool>? pveIgnoreCert,
-    Value<String?>? pvePwd,
     Value<String?>? preferTempDev,
     Value<bool>? tempIsCelsius,
     Value<String?>? logoUrl,
@@ -2877,9 +2742,6 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       bmcAddr: bmcAddr ?? this.bmcAddr,
       bmcCertSha256: bmcCertSha256 ?? this.bmcCertSha256,
       bmcCredId: bmcCredId ?? this.bmcCredId,
-      pveAddr: pveAddr ?? this.pveAddr,
-      pveIgnoreCert: pveIgnoreCert ?? this.pveIgnoreCert,
-      pvePwd: pvePwd ?? this.pvePwd,
       preferTempDev: preferTempDev ?? this.preferTempDev,
       tempIsCelsius: tempIsCelsius ?? this.tempIsCelsius,
       logoUrl: logoUrl ?? this.logoUrl,
@@ -2990,15 +2852,6 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     if (bmcCredId.present) {
       map['bmc_cred_id'] = Variable<String>(bmcCredId.value);
     }
-    if (pveAddr.present) {
-      map['pve_addr'] = Variable<String>(pveAddr.value);
-    }
-    if (pveIgnoreCert.present) {
-      map['pve_ignore_cert'] = Variable<bool>(pveIgnoreCert.value);
-    }
-    if (pvePwd.present) {
-      map['pve_pwd'] = Variable<String>(pvePwd.value);
-    }
     if (preferTempDev.present) {
       map['prefer_temp_dev'] = Variable<String>(preferTempDev.value);
     }
@@ -3057,9 +2910,6 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
           ..write('bmcAddr: $bmcAddr, ')
           ..write('bmcCertSha256: $bmcCertSha256, ')
           ..write('bmcCredId: $bmcCredId, ')
-          ..write('pveAddr: $pveAddr, ')
-          ..write('pveIgnoreCert: $pveIgnoreCert, ')
-          ..write('pvePwd: $pvePwd, ')
           ..write('preferTempDev: $preferTempDev, ')
           ..write('tempIsCelsius: $tempIsCelsius, ')
           ..write('logoUrl: $logoUrl, ')
@@ -7210,6 +7060,466 @@ class ContainerRuntimesCompanion extends UpdateCompanion<ContainerRuntimeRow> {
   }
 }
 
+class $ServerPvesTable extends ServerPves
+    with TableInfo<$ServerPvesTable, ServerPveRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ServerPvesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _serverIdMeta = const VerificationMeta(
+    'serverId',
+  );
+  @override
+  late final GeneratedColumn<String> serverId = GeneratedColumn<String>(
+    'server_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES server (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _addrMeta = const VerificationMeta('addr');
+  @override
+  late final GeneratedColumn<String> addr = GeneratedColumn<String>(
+    'addr',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _authMeta = const VerificationMeta('auth');
+  @override
+  late final GeneratedColumn<String> auth = GeneratedColumn<String>(
+    'auth',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _pwdMeta = const VerificationMeta('pwd');
+  @override
+  late final GeneratedColumn<String> pwd = GeneratedColumn<String>(
+    'pwd',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _tokenIdMeta = const VerificationMeta(
+    'tokenId',
+  );
+  @override
+  late final GeneratedColumn<String> tokenId = GeneratedColumn<String>(
+    'token_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _tokenSecretMeta = const VerificationMeta(
+    'tokenSecret',
+  );
+  @override
+  late final GeneratedColumn<String> tokenSecret = GeneratedColumn<String>(
+    'token_secret',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _certSha256Meta = const VerificationMeta(
+    'certSha256',
+  );
+  @override
+  late final GeneratedColumn<String> certSha256 = GeneratedColumn<String>(
+    'cert_sha256',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    serverId,
+    addr,
+    auth,
+    pwd,
+    tokenId,
+    tokenSecret,
+    certSha256,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'server_pve';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ServerPveRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('server_id')) {
+      context.handle(
+        _serverIdMeta,
+        serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_serverIdMeta);
+    }
+    if (data.containsKey('addr')) {
+      context.handle(
+        _addrMeta,
+        addr.isAcceptableOrUnknown(data['addr']!, _addrMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_addrMeta);
+    }
+    if (data.containsKey('auth')) {
+      context.handle(
+        _authMeta,
+        auth.isAcceptableOrUnknown(data['auth']!, _authMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_authMeta);
+    }
+    if (data.containsKey('pwd')) {
+      context.handle(
+        _pwdMeta,
+        pwd.isAcceptableOrUnknown(data['pwd']!, _pwdMeta),
+      );
+    }
+    if (data.containsKey('token_id')) {
+      context.handle(
+        _tokenIdMeta,
+        tokenId.isAcceptableOrUnknown(data['token_id']!, _tokenIdMeta),
+      );
+    }
+    if (data.containsKey('token_secret')) {
+      context.handle(
+        _tokenSecretMeta,
+        tokenSecret.isAcceptableOrUnknown(
+          data['token_secret']!,
+          _tokenSecretMeta,
+        ),
+      );
+    }
+    if (data.containsKey('cert_sha256')) {
+      context.handle(
+        _certSha256Meta,
+        certSha256.isAcceptableOrUnknown(data['cert_sha256']!, _certSha256Meta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {serverId};
+  @override
+  ServerPveRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ServerPveRow(
+      serverId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}server_id'],
+      )!,
+      addr: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}addr'],
+      )!,
+      auth: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}auth'],
+      )!,
+      pwd: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pwd'],
+      ),
+      tokenId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}token_id'],
+      ),
+      tokenSecret: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}token_secret'],
+      ),
+      certSha256: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cert_sha256'],
+      ),
+    );
+  }
+
+  @override
+  $ServerPvesTable createAlias(String alias) {
+    return $ServerPvesTable(attachedDatabase, alias);
+  }
+
+  @override
+  bool get withoutRowId => true;
+}
+
+class ServerPveRow extends DataClass implements Insertable<ServerPveRow> {
+  final String serverId;
+  final String addr;
+  final String auth;
+  final String? pwd;
+  final String? tokenId;
+  final String? tokenSecret;
+  final String? certSha256;
+  const ServerPveRow({
+    required this.serverId,
+    required this.addr,
+    required this.auth,
+    this.pwd,
+    this.tokenId,
+    this.tokenSecret,
+    this.certSha256,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['server_id'] = Variable<String>(serverId);
+    map['addr'] = Variable<String>(addr);
+    map['auth'] = Variable<String>(auth);
+    if (!nullToAbsent || pwd != null) {
+      map['pwd'] = Variable<String>(pwd);
+    }
+    if (!nullToAbsent || tokenId != null) {
+      map['token_id'] = Variable<String>(tokenId);
+    }
+    if (!nullToAbsent || tokenSecret != null) {
+      map['token_secret'] = Variable<String>(tokenSecret);
+    }
+    if (!nullToAbsent || certSha256 != null) {
+      map['cert_sha256'] = Variable<String>(certSha256);
+    }
+    return map;
+  }
+
+  ServerPvesCompanion toCompanion(bool nullToAbsent) {
+    return ServerPvesCompanion(
+      serverId: Value(serverId),
+      addr: Value(addr),
+      auth: Value(auth),
+      pwd: pwd == null && nullToAbsent ? const Value.absent() : Value(pwd),
+      tokenId: tokenId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tokenId),
+      tokenSecret: tokenSecret == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tokenSecret),
+      certSha256: certSha256 == null && nullToAbsent
+          ? const Value.absent()
+          : Value(certSha256),
+    );
+  }
+
+  factory ServerPveRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ServerPveRow(
+      serverId: serializer.fromJson<String>(json['serverId']),
+      addr: serializer.fromJson<String>(json['addr']),
+      auth: serializer.fromJson<String>(json['auth']),
+      pwd: serializer.fromJson<String?>(json['pwd']),
+      tokenId: serializer.fromJson<String?>(json['tokenId']),
+      tokenSecret: serializer.fromJson<String?>(json['tokenSecret']),
+      certSha256: serializer.fromJson<String?>(json['certSha256']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'serverId': serializer.toJson<String>(serverId),
+      'addr': serializer.toJson<String>(addr),
+      'auth': serializer.toJson<String>(auth),
+      'pwd': serializer.toJson<String?>(pwd),
+      'tokenId': serializer.toJson<String?>(tokenId),
+      'tokenSecret': serializer.toJson<String?>(tokenSecret),
+      'certSha256': serializer.toJson<String?>(certSha256),
+    };
+  }
+
+  ServerPveRow copyWith({
+    String? serverId,
+    String? addr,
+    String? auth,
+    Value<String?> pwd = const Value.absent(),
+    Value<String?> tokenId = const Value.absent(),
+    Value<String?> tokenSecret = const Value.absent(),
+    Value<String?> certSha256 = const Value.absent(),
+  }) => ServerPveRow(
+    serverId: serverId ?? this.serverId,
+    addr: addr ?? this.addr,
+    auth: auth ?? this.auth,
+    pwd: pwd.present ? pwd.value : this.pwd,
+    tokenId: tokenId.present ? tokenId.value : this.tokenId,
+    tokenSecret: tokenSecret.present ? tokenSecret.value : this.tokenSecret,
+    certSha256: certSha256.present ? certSha256.value : this.certSha256,
+  );
+  ServerPveRow copyWithCompanion(ServerPvesCompanion data) {
+    return ServerPveRow(
+      serverId: data.serverId.present ? data.serverId.value : this.serverId,
+      addr: data.addr.present ? data.addr.value : this.addr,
+      auth: data.auth.present ? data.auth.value : this.auth,
+      pwd: data.pwd.present ? data.pwd.value : this.pwd,
+      tokenId: data.tokenId.present ? data.tokenId.value : this.tokenId,
+      tokenSecret: data.tokenSecret.present
+          ? data.tokenSecret.value
+          : this.tokenSecret,
+      certSha256: data.certSha256.present
+          ? data.certSha256.value
+          : this.certSha256,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ServerPveRow(')
+          ..write('serverId: $serverId, ')
+          ..write('addr: $addr, ')
+          ..write('auth: $auth, ')
+          ..write('pwd: $pwd, ')
+          ..write('tokenId: $tokenId, ')
+          ..write('tokenSecret: $tokenSecret, ')
+          ..write('certSha256: $certSha256')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(serverId, addr, auth, pwd, tokenId, tokenSecret, certSha256);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ServerPveRow &&
+          other.serverId == this.serverId &&
+          other.addr == this.addr &&
+          other.auth == this.auth &&
+          other.pwd == this.pwd &&
+          other.tokenId == this.tokenId &&
+          other.tokenSecret == this.tokenSecret &&
+          other.certSha256 == this.certSha256);
+}
+
+class ServerPvesCompanion extends UpdateCompanion<ServerPveRow> {
+  final Value<String> serverId;
+  final Value<String> addr;
+  final Value<String> auth;
+  final Value<String?> pwd;
+  final Value<String?> tokenId;
+  final Value<String?> tokenSecret;
+  final Value<String?> certSha256;
+  const ServerPvesCompanion({
+    this.serverId = const Value.absent(),
+    this.addr = const Value.absent(),
+    this.auth = const Value.absent(),
+    this.pwd = const Value.absent(),
+    this.tokenId = const Value.absent(),
+    this.tokenSecret = const Value.absent(),
+    this.certSha256 = const Value.absent(),
+  });
+  ServerPvesCompanion.insert({
+    required String serverId,
+    required String addr,
+    required String auth,
+    this.pwd = const Value.absent(),
+    this.tokenId = const Value.absent(),
+    this.tokenSecret = const Value.absent(),
+    this.certSha256 = const Value.absent(),
+  }) : serverId = Value(serverId),
+       addr = Value(addr),
+       auth = Value(auth);
+  static Insertable<ServerPveRow> custom({
+    Expression<String>? serverId,
+    Expression<String>? addr,
+    Expression<String>? auth,
+    Expression<String>? pwd,
+    Expression<String>? tokenId,
+    Expression<String>? tokenSecret,
+    Expression<String>? certSha256,
+  }) {
+    return RawValuesInsertable({
+      if (serverId != null) 'server_id': serverId,
+      if (addr != null) 'addr': addr,
+      if (auth != null) 'auth': auth,
+      if (pwd != null) 'pwd': pwd,
+      if (tokenId != null) 'token_id': tokenId,
+      if (tokenSecret != null) 'token_secret': tokenSecret,
+      if (certSha256 != null) 'cert_sha256': certSha256,
+    });
+  }
+
+  ServerPvesCompanion copyWith({
+    Value<String>? serverId,
+    Value<String>? addr,
+    Value<String>? auth,
+    Value<String?>? pwd,
+    Value<String?>? tokenId,
+    Value<String?>? tokenSecret,
+    Value<String?>? certSha256,
+  }) {
+    return ServerPvesCompanion(
+      serverId: serverId ?? this.serverId,
+      addr: addr ?? this.addr,
+      auth: auth ?? this.auth,
+      pwd: pwd ?? this.pwd,
+      tokenId: tokenId ?? this.tokenId,
+      tokenSecret: tokenSecret ?? this.tokenSecret,
+      certSha256: certSha256 ?? this.certSha256,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (serverId.present) {
+      map['server_id'] = Variable<String>(serverId.value);
+    }
+    if (addr.present) {
+      map['addr'] = Variable<String>(addr.value);
+    }
+    if (auth.present) {
+      map['auth'] = Variable<String>(auth.value);
+    }
+    if (pwd.present) {
+      map['pwd'] = Variable<String>(pwd.value);
+    }
+    if (tokenId.present) {
+      map['token_id'] = Variable<String>(tokenId.value);
+    }
+    if (tokenSecret.present) {
+      map['token_secret'] = Variable<String>(tokenSecret.value);
+    }
+    if (certSha256.present) {
+      map['cert_sha256'] = Variable<String>(certSha256.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ServerPvesCompanion(')
+          ..write('serverId: $serverId, ')
+          ..write('addr: $addr, ')
+          ..write('auth: $auth, ')
+          ..write('pwd: $pwd, ')
+          ..write('tokenId: $tokenId, ')
+          ..write('tokenSecret: $tokenSecret, ')
+          ..write('certSha256: $certSha256')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $ConnStatsTable extends ConnStats
     with TableInfo<$ConnStatsTable, ConnStatRow> {
   @override
@@ -9593,6 +9903,7 @@ abstract class _$AppDb extends GeneratedDatabase {
   late final $ContainerHostsTable containerHosts = $ContainerHostsTable(this);
   late final $ContainerRuntimesTable containerRuntimes =
       $ContainerRuntimesTable(this);
+  late final $ServerPvesTable serverPves = $ServerPvesTable(this);
   late final $ConnStatsTable connStats = $ConnStatsTable(this);
   late final $ServerDistsTable serverDists = $ServerDistsTable(this);
   late final $BenchmarkRunsTable benchmarkRuns = $BenchmarkRunsTable(this);
@@ -9623,6 +9934,7 @@ abstract class _$AppDb extends GeneratedDatabase {
     remoteDesktopProfiles,
     containerHosts,
     containerRuntimes,
+    serverPves,
     connStats,
     serverDists,
     benchmarkRuns,
@@ -9744,6 +10056,13 @@ abstract class _$AppDb extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('container_runtime', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'server',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('server_pve', kind: UpdateKind.delete)],
     ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
@@ -10445,9 +10764,6 @@ typedef $$ServersTableCreateCompanionBuilder =
       Value<String?> bmcAddr,
       Value<String?> bmcCertSha256,
       Value<String?> bmcCredId,
-      Value<String?> pveAddr,
-      Value<bool> pveIgnoreCert,
-      Value<String?> pvePwd,
       Value<String?> preferTempDev,
       Value<bool> tempIsCelsius,
       Value<String?> logoUrl,
@@ -10489,9 +10805,6 @@ typedef $$ServersTableUpdateCompanionBuilder =
       Value<String?> bmcAddr,
       Value<String?> bmcCertSha256,
       Value<String?> bmcCredId,
-      Value<String?> pveAddr,
-      Value<bool> pveIgnoreCert,
-      Value<String?> pvePwd,
       Value<String?> preferTempDev,
       Value<bool> tempIsCelsius,
       Value<String?> logoUrl,
@@ -10736,6 +11049,24 @@ final class $$ServersTableReferences
     );
   }
 
+  static MultiTypedResultKey<$ServerPvesTable, List<ServerPveRow>>
+  _serverPvesRefsTable(_$AppDb db) => MultiTypedResultKey.fromTable(
+    db.serverPves,
+    aliasName: 'server__id__server_pve__server_id',
+  );
+
+  $$ServerPvesTableProcessedTableManager get serverPvesRefs {
+    final manager = $$ServerPvesTableTableManager(
+      $_db,
+      $_db.serverPves,
+    ).filter((f) => f.serverId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_serverPvesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
   static MultiTypedResultKey<$ConnStatsTable, List<ConnStatRow>>
   _connStatsRefsTable(_$AppDb db) => MultiTypedResultKey.fromTable(
     db.connStats,
@@ -10941,21 +11272,6 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
 
   ColumnFilters<String> get bmcCertSha256 => $composableBuilder(
     column: $table.bmcCertSha256,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get pveAddr => $composableBuilder(
-    column: $table.pveAddr,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get pveIgnoreCert => $composableBuilder(
-    column: $table.pveIgnoreCert,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get pvePwd => $composableBuilder(
-    column: $table.pvePwd,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -11291,6 +11607,31 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
     return f(composer);
   }
 
+  Expression<bool> serverPvesRefs(
+    Expression<bool> Function($$ServerPvesTableFilterComposer f) f,
+  ) {
+    final $$ServerPvesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.serverPves,
+      getReferencedColumn: (t) => t.serverId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServerPvesTableFilterComposer(
+            $db: $db,
+            $table: $db.serverPves,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
   Expression<bool> connStatsRefs(
     Expression<bool> Function($$ConnStatsTableFilterComposer f) f,
   ) {
@@ -11520,21 +11861,6 @@ class $$ServersTableOrderingComposer extends Composer<_$AppDb, $ServersTable> {
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get pveAddr => $composableBuilder(
-    column: $table.pveAddr,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get pveIgnoreCert => $composableBuilder(
-    column: $table.pveIgnoreCert,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get pvePwd => $composableBuilder(
-    column: $table.pvePwd,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<String> get preferTempDev => $composableBuilder(
     column: $table.preferTempDev,
     builder: (column) => ColumnOrderings(column),
@@ -11744,17 +12070,6 @@ class $$ServersTableAnnotationComposer
     column: $table.bmcCertSha256,
     builder: (column) => column,
   );
-
-  GeneratedColumn<String> get pveAddr =>
-      $composableBuilder(column: $table.pveAddr, builder: (column) => column);
-
-  GeneratedColumn<bool> get pveIgnoreCert => $composableBuilder(
-    column: $table.pveIgnoreCert,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get pvePwd =>
-      $composableBuilder(column: $table.pvePwd, builder: (column) => column);
 
   GeneratedColumn<String> get preferTempDev => $composableBuilder(
     column: $table.preferTempDev,
@@ -12080,6 +12395,31 @@ class $$ServersTableAnnotationComposer
     return f(composer);
   }
 
+  Expression<T> serverPvesRefs<T extends Object>(
+    Expression<T> Function($$ServerPvesTableAnnotationComposer a) f,
+  ) {
+    final $$ServerPvesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.serverPves,
+      getReferencedColumn: (t) => t.serverId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServerPvesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.serverPves,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
   Expression<T> connStatsRefs<T extends Object>(
     Expression<T> Function($$ConnStatsTableAnnotationComposer a) f,
   ) {
@@ -12182,6 +12522,7 @@ class $$ServersTableTableManager
             bool remoteDesktopProfilesRefs,
             bool containerHostsRefs,
             bool containerRuntimesRefs,
+            bool serverPvesRefs,
             bool connStatsRefs,
             bool serverDistsRefs,
             bool benchmarkRunsRefs,
@@ -12231,9 +12572,6 @@ class $$ServersTableTableManager
                 Value<String?> bmcAddr = const Value.absent(),
                 Value<String?> bmcCertSha256 = const Value.absent(),
                 Value<String?> bmcCredId = const Value.absent(),
-                Value<String?> pveAddr = const Value.absent(),
-                Value<bool> pveIgnoreCert = const Value.absent(),
-                Value<String?> pvePwd = const Value.absent(),
                 Value<String?> preferTempDev = const Value.absent(),
                 Value<bool> tempIsCelsius = const Value.absent(),
                 Value<String?> logoUrl = const Value.absent(),
@@ -12273,9 +12611,6 @@ class $$ServersTableTableManager
                 bmcAddr: bmcAddr,
                 bmcCertSha256: bmcCertSha256,
                 bmcCredId: bmcCredId,
-                pveAddr: pveAddr,
-                pveIgnoreCert: pveIgnoreCert,
-                pvePwd: pvePwd,
                 preferTempDev: preferTempDev,
                 tempIsCelsius: tempIsCelsius,
                 logoUrl: logoUrl,
@@ -12317,9 +12652,6 @@ class $$ServersTableTableManager
                 Value<String?> bmcAddr = const Value.absent(),
                 Value<String?> bmcCertSha256 = const Value.absent(),
                 Value<String?> bmcCredId = const Value.absent(),
-                Value<String?> pveAddr = const Value.absent(),
-                Value<bool> pveIgnoreCert = const Value.absent(),
-                Value<String?> pvePwd = const Value.absent(),
                 Value<String?> preferTempDev = const Value.absent(),
                 Value<bool> tempIsCelsius = const Value.absent(),
                 Value<String?> logoUrl = const Value.absent(),
@@ -12359,9 +12691,6 @@ class $$ServersTableTableManager
                 bmcAddr: bmcAddr,
                 bmcCertSha256: bmcCertSha256,
                 bmcCredId: bmcCredId,
-                pveAddr: pveAddr,
-                pveIgnoreCert: pveIgnoreCert,
-                pvePwd: pvePwd,
                 preferTempDev: preferTempDev,
                 tempIsCelsius: tempIsCelsius,
                 logoUrl: logoUrl,
@@ -12392,6 +12721,7 @@ class $$ServersTableTableManager
                 remoteDesktopProfilesRefs = false,
                 containerHostsRefs = false,
                 containerRuntimesRefs = false,
+                serverPvesRefs = false,
                 connStatsRefs = false,
                 serverDistsRefs = false,
                 benchmarkRunsRefs = false,
@@ -12409,6 +12739,7 @@ class $$ServersTableTableManager
                     if (remoteDesktopProfilesRefs) db.remoteDesktopProfiles,
                     if (containerHostsRefs) db.containerHosts,
                     if (containerRuntimesRefs) db.containerRuntimes,
+                    if (serverPvesRefs) db.serverPves,
                     if (connStatsRefs) db.connStats,
                     if (serverDistsRefs) db.serverDists,
                     if (benchmarkRunsRefs) db.benchmarkRuns,
@@ -12670,6 +13001,27 @@ class $$ServersTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (serverPvesRefs)
+                        await $_getPrefetchedData<
+                          ServerRow,
+                          $ServersTable,
+                          ServerPveRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ServersTableReferences
+                              ._serverPvesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ServersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).serverPvesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.serverId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                       if (connStatsRefs)
                         await $_getPrefetchedData<
                           ServerRow,
@@ -12766,6 +13118,7 @@ typedef $$ServersTableProcessedTableManager =
         bool remoteDesktopProfilesRefs,
         bool containerHostsRefs,
         bool containerRuntimesRefs,
+        bool serverPvesRefs,
         bool connStatsRefs,
         bool serverDistsRefs,
         bool benchmarkRunsRefs,
@@ -16926,6 +17279,359 @@ typedef $$ContainerRuntimesTableProcessedTableManager =
       ContainerRuntimeRow,
       PrefetchHooks Function({bool serverId})
     >;
+typedef $$ServerPvesTableCreateCompanionBuilder =
+    ServerPvesCompanion Function({
+      required String serverId,
+      required String addr,
+      required String auth,
+      Value<String?> pwd,
+      Value<String?> tokenId,
+      Value<String?> tokenSecret,
+      Value<String?> certSha256,
+    });
+typedef $$ServerPvesTableUpdateCompanionBuilder =
+    ServerPvesCompanion Function({
+      Value<String> serverId,
+      Value<String> addr,
+      Value<String> auth,
+      Value<String?> pwd,
+      Value<String?> tokenId,
+      Value<String?> tokenSecret,
+      Value<String?> certSha256,
+    });
+
+final class $$ServerPvesTableReferences
+    extends BaseReferences<_$AppDb, $ServerPvesTable, ServerPveRow> {
+  $$ServerPvesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ServersTable _serverIdTable(_$AppDb db) =>
+      db.servers.createAlias('server_pve__server_id__server__id');
+
+  $$ServersTableProcessedTableManager get serverId {
+    final $_column = $_itemColumn<String>('server_id')!;
+
+    final manager = $$ServersTableTableManager(
+      $_db,
+      $_db.servers,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_serverIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ServerPvesTableFilterComposer
+    extends Composer<_$AppDb, $ServerPvesTable> {
+  $$ServerPvesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get addr => $composableBuilder(
+    column: $table.addr,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get auth => $composableBuilder(
+    column: $table.auth,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get pwd => $composableBuilder(
+    column: $table.pwd,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tokenId => $composableBuilder(
+    column: $table.tokenId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tokenSecret => $composableBuilder(
+    column: $table.tokenSecret,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get certSha256 => $composableBuilder(
+    column: $table.certSha256,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ServersTableFilterComposer get serverId {
+    final $$ServersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableFilterComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ServerPvesTableOrderingComposer
+    extends Composer<_$AppDb, $ServerPvesTable> {
+  $$ServerPvesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get addr => $composableBuilder(
+    column: $table.addr,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get auth => $composableBuilder(
+    column: $table.auth,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get pwd => $composableBuilder(
+    column: $table.pwd,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tokenId => $composableBuilder(
+    column: $table.tokenId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tokenSecret => $composableBuilder(
+    column: $table.tokenSecret,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get certSha256 => $composableBuilder(
+    column: $table.certSha256,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ServersTableOrderingComposer get serverId {
+    final $$ServersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableOrderingComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ServerPvesTableAnnotationComposer
+    extends Composer<_$AppDb, $ServerPvesTable> {
+  $$ServerPvesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get addr =>
+      $composableBuilder(column: $table.addr, builder: (column) => column);
+
+  GeneratedColumn<String> get auth =>
+      $composableBuilder(column: $table.auth, builder: (column) => column);
+
+  GeneratedColumn<String> get pwd =>
+      $composableBuilder(column: $table.pwd, builder: (column) => column);
+
+  GeneratedColumn<String> get tokenId =>
+      $composableBuilder(column: $table.tokenId, builder: (column) => column);
+
+  GeneratedColumn<String> get tokenSecret => $composableBuilder(
+    column: $table.tokenSecret,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get certSha256 => $composableBuilder(
+    column: $table.certSha256,
+    builder: (column) => column,
+  );
+
+  $$ServersTableAnnotationComposer get serverId {
+    final $$ServersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ServerPvesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDb,
+          $ServerPvesTable,
+          ServerPveRow,
+          $$ServerPvesTableFilterComposer,
+          $$ServerPvesTableOrderingComposer,
+          $$ServerPvesTableAnnotationComposer,
+          $$ServerPvesTableCreateCompanionBuilder,
+          $$ServerPvesTableUpdateCompanionBuilder,
+          (ServerPveRow, $$ServerPvesTableReferences),
+          ServerPveRow,
+          PrefetchHooks Function({bool serverId})
+        > {
+  $$ServerPvesTableTableManager(_$AppDb db, $ServerPvesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ServerPvesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ServerPvesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ServerPvesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> serverId = const Value.absent(),
+                Value<String> addr = const Value.absent(),
+                Value<String> auth = const Value.absent(),
+                Value<String?> pwd = const Value.absent(),
+                Value<String?> tokenId = const Value.absent(),
+                Value<String?> tokenSecret = const Value.absent(),
+                Value<String?> certSha256 = const Value.absent(),
+              }) => ServerPvesCompanion(
+                serverId: serverId,
+                addr: addr,
+                auth: auth,
+                pwd: pwd,
+                tokenId: tokenId,
+                tokenSecret: tokenSecret,
+                certSha256: certSha256,
+              ),
+          createCompanionCallback:
+              ({
+                required String serverId,
+                required String addr,
+                required String auth,
+                Value<String?> pwd = const Value.absent(),
+                Value<String?> tokenId = const Value.absent(),
+                Value<String?> tokenSecret = const Value.absent(),
+                Value<String?> certSha256 = const Value.absent(),
+              }) => ServerPvesCompanion.insert(
+                serverId: serverId,
+                addr: addr,
+                auth: auth,
+                pwd: pwd,
+                tokenId: tokenId,
+                tokenSecret: tokenSecret,
+                certSha256: certSha256,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ServerPvesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({serverId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (serverId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.serverId,
+                                referencedTable: $$ServerPvesTableReferences
+                                    ._serverIdTable(db),
+                                referencedColumn: $$ServerPvesTableReferences
+                                    ._serverIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ServerPvesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDb,
+      $ServerPvesTable,
+      ServerPveRow,
+      $$ServerPvesTableFilterComposer,
+      $$ServerPvesTableOrderingComposer,
+      $$ServerPvesTableAnnotationComposer,
+      $$ServerPvesTableCreateCompanionBuilder,
+      $$ServerPvesTableUpdateCompanionBuilder,
+      (ServerPveRow, $$ServerPvesTableReferences),
+      ServerPveRow,
+      PrefetchHooks Function({bool serverId})
+    >;
 typedef $$ConnStatsTableCreateCompanionBuilder =
     ConnStatsCompanion Function({
       required String id,
@@ -18882,6 +19588,8 @@ class $AppDbManager {
       $$ContainerHostsTableTableManager(_db, _db.containerHosts);
   $$ContainerRuntimesTableTableManager get containerRuntimes =>
       $$ContainerRuntimesTableTableManager(_db, _db.containerRuntimes);
+  $$ServerPvesTableTableManager get serverPves =>
+      $$ServerPvesTableTableManager(_db, _db.serverPves);
   $$ConnStatsTableTableManager get connStats =>
       $$ConnStatsTableTableManager(_db, _db.connStats);
   $$ServerDistsTableTableManager get serverDists =>

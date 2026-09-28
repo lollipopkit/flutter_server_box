@@ -1,0 +1,20 @@
+[
+  {
+    "name": "my disk.qcow2",
+    "vol_type": "file",
+    "path": "/var/lib/libvirt/sbx-iso/my disk.qcow2",
+    "format": "qcow2",
+    "capacity": 67108864,
+    "allocation": 200704,
+    "backing": null
+  },
+  {
+    "name": "tiny.iso",
+    "vol_type": "file",
+    "path": "/var/lib/libvirt/sbx-iso/tiny.iso",
+    "format": "raw",
+    "capacity": 1048576,
+    "allocation": 1048576,
+    "backing": null
+  }
+]

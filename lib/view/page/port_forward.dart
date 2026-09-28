@@ -71,8 +71,12 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
     return Scaffold(
       appBar: CustomAppBar(
         title: TwoLineText(
-          up: l10n.portForwardBetaTitle,
+          // The word rather than `portForwardBetaTitle`, whose `(Beta)`
+          // suffix the mark beside it now says — and says in the same shape
+          // on every page that carries one.
+          up: libL10n.portForward,
           down: widget.args.spi.name,
+          mark: BetaTag(tip: context.l10n.betaTip),
         ),
         actions: [IconButton(tooltip: libL10n.add, icon: const Icon(Icons.add), onPressed: _onAdd)],
       ),

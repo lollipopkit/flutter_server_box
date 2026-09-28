@@ -1,0 +1,20 @@
+[
+    {
+        "comment": "sb e2e capture",
+        "compress": "zstd",
+        "enabled": 1,
+        "id": "sbxe2e-capture",
+        "mailnotification": "failure",
+        "mode": "snapshot",
+        "next-run": 1790533800,
+        "notes-template": "sb {{guestname}} {{vmid}}",
+        "prune-backups": {
+            "keep-daily": "4",
+            "keep-last": "7"
+        },
+        "schedule": "mon..fri 02:30",
+        "storage": "local",
+        "type": "vzdump",
+        "vmid": "911,912"
+    }
+]

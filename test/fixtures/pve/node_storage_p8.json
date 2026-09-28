@@ -1,0 +1,38 @@
+[
+  {
+    "active": 1,
+    "avail": 94746157056,
+    "content": "backup,vztmpl,iso,import",
+    "enabled": 1,
+    "shared": 0,
+    "storage": "local",
+    "total": 105089261568,
+    "type": "dir",
+    "used": 4957618176,
+    "used_fraction": 0.0471753069916861
+  },
+  {
+    "active": 1,
+    "avail": 842360609466,
+    "content": "images,rootdir",
+    "enabled": 1,
+    "shared": 0,
+    "storage": "local-lvm",
+    "total": 852332904448,
+    "type": "lvmthin",
+    "used": 9972294982,
+    "used_fraction": 0.0116999999999512
+  },
+  {
+    "active": 1,
+    "avail": 94746157056,
+    "content": "images",
+    "enabled": 1,
+    "shared": 0,
+    "storage": "sbxe2e-p8f",
+    "total": 105089261568,
+    "type": "dir",
+    "used": 4957618176,
+    "used_fraction": 0.0471753069916861
+  }
+]

@@ -143,13 +143,6 @@
   "monitorAllowInsecureHttp": "HTTP istifadəsinə icazə ver",
   "monitorAllowInsecureHttpTip": "Yalnız Tailscale kimi ötürülməni özü şifrələyən etibarlı özəl şəbəkədə",
   "monitorHttpTip": "SSH üzərindən əmrlər icra etmək əvəzinə bu serverin statusunu **monitor** agentinin HTTP API interfeysindən oxu.\n\nƏvvəlcə agent serverdə quraşdırılmalıdır. Dəyişmə qrafikləri, saat tətbiqi və ana ekran vidcetləri bu agent sayəsində işləyir.\n\n[Monitorinq agentinin quraşdırılması]({url})",
-  "@monitorHttpTip": {
-    "placeholders": {
-      "url": {
-        "type": "String"
-      }
-    }
-  },
   "backupTip": "İxrac edilən məlumatlar parolla şifrələnə bilər. \nOnları təhlükəsiz yerdə saxla.",
   "icloudBackupStatusTitle": "Ehtiyat nüsxənin statusu",
   "icloudBackupStatusLoading": "iCloud ehtiyat nüsxəsinin statusu yüklənir...",
@@ -226,9 +219,6 @@
   "homeTabsCustomizeDesc": "Ana səhifədə görünən vərəqləri və onların sırasını fərdiləşdir",
   "ignoreCert": "Sertifikatı nəzərə alma",
   "image": "Obraz",
-  "@image": {
-    "description": "A container image, as in Docker. NOT a picture — do not replace this with libL10n.image, whose German is \"Bild\" and Japanese \"画像\"."
-  },
   "macDmgBody": "App Store bu tətbiqin təcrid olunmuş mühitdə işləməsini tələb edir və belə mühit terminal aça bilmir. DMG buraxılışı bunu edə bilir.\n\nApp Store buraxılışının yenilənməsi dayandırıla bilər.",
   "macDmgImportDenied": "macOS əvvəlki buraxılışın məlumatlarını oxumağa icazə vermədi",
   "macDmgImported": "Əvvəlki buraxılışın məlumatları idxal edildi",
@@ -241,26 +231,12 @@
   "sshKeyGenerate": "Açar cütü yarat",
   "sshKeyGenerating": "Yaradılır…",
   "sshKeyLockedFmt": "[{name}] məxfi açarının kilidi açılmadı.",
-  "@sshKeyLockedFmt": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
   "sshKeyPassphraseTip": "İstəyə bağlıdır. Parol ifadəsi olan açar şifrələnmiş şəkildə saxlanılır və əlaqə bu açardan ilk dəfə istifadə etdikdə parol ifadəsi soruşulur.",
   "sshKeyPassphraseWrong": "Parol ifadəsi yanlışdır.",
   "sshKeyPublicKey": "Açıq açar",
   "sshKeyPublicKeyTip": "Bu sətri serverdə ~/.ssh/authorized_keys faylının sonuna əlavə et.",
   "sshKeyRecommended": "Tövsiyə olunur",
   "sshKeyUnlockTip": "[{name}] məxfi açarının parol ifadəsini daxil et.",
-  "@sshKeyUnlockTip": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
   "ungrouped": "Qruplaşdırılmayıb",
   "unused": "İstifadə olunmur",
   "dangling": "İstinadsız",
@@ -279,24 +255,7 @@
   "invalidHostFormat": "Host formatı yanlışdır. Yalnız IPv4, IPv6 və domen simvollarına icazə verilir.",
   "jumpServer": "Vasitəçi server",
   "jumpServersNotFoundFmt": "{serverName} üçün vasitəçi serverlər tapılmadı: {jumpIds}",
-  "@jumpServersNotFoundFmt": {
-    "placeholders": {
-      "serverName": {
-        "type": "String"
-      },
-      "jumpIds": {
-        "type": "String"
-      }
-    }
-  },
   "nameAlreadyExistsFmt": "\"{name}\" artıq mövcuddur",
-  "@nameAlreadyExistsFmt": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
   "noJumpServerAvailable": "Mövcud vasitəçi server yoxdur.",
   "jumpServerAndProxyCommandCannotBeUsedTogether": "Vasitəçi server və ProxyCommand birlikdə istifadə edilə bilməz.",
   "noConnectionMethod": "SSH, monitorinq agenti və ya hər ikisini konfiqurasiya et",
@@ -316,13 +275,6 @@
   "maxConcurrency": "Maksimum paralel əməliyyat sayı",
   "maxRetryCount": "Serverlə yenidən əlaqə cəhdlərinin sayı",
   "mismatchSystem": "Uyğun olmayan sistem: {system}",
-  "@mismatchSystem": {
-    "placeholders": {
-      "system": {
-        "type": "String"
-      }
-    }
-  },
   "mirror": "Güzgü serveri",
   "needRestart": "Tətbiq yenidən başladılmalıdır",
   "netViewType": "Şəbəkə görünüşünün növü",
@@ -334,7 +286,6 @@
   "openLastPath": "Son yolu aç",
   "openLastPathTip": "Hər server üçün çıxış zamanı açıq olan yol ayrıca yadda saxlanılır",
   "parseContainerStatsTip": "Docker resurs istifadəsi vəziyyətinin təhlili nisbətən yavaşdır.",
-  "plugInType": "Daxiletmə növü",
   "preferDiskAmount": "Disk tutumunun göstərilməsinə üstünlük ver",
   "privateKey": "Məxfi açar",
   "privateKeyNotFoundFmt": "[{keyId}] məxfi açarı tapılmadı.",
@@ -344,16 +295,6 @@
   "restart": "Yenidən başlat",
   "bmcPowerCycle": "Söndür və yenidən işə sal",
   "bmcPowerConfirm": "Bu sorğu {server} serverinə göndərilsin? Xidmətdən \"{resetType}\" istəniləcək",
-  "@bmcPowerConfirm": {
-    "placeholders": {
-      "server": {
-        "type": "String"
-      },
-      "resetType": {
-        "type": "String"
-      }
-    }
-  },
   "bmcPowerDone": "Enerji vəziyyəti dəyişdi",
   "bmcPowerAccepted": "Qəbul edildi, lakin enerji vəziyyəti dəyişməyib. Normal tamamlanma əməliyyat sistemindən asılıdır",
   "bmcPowerUnsupported": "Bu xidmət həmin əməliyyat üçün heç bir seçimə icazə vermir",
@@ -374,45 +315,18 @@
   "bmcCertChanged": "Sertifikat uyğun gəlmir. Onu yoxla.",
   "bmcCertExpired": "Müddəti bitib.",
   "bmcCertWas": "Əvvəllər qəbul edilib: {fingerprint}",
-  "@bmcCertWas": {
-    "placeholders": {
-      "fingerprint": {
-        "type": "String"
-      }
-    }
-  },
   "bmcAddrInvalid": "BMC ünvanı URL olmalıdır, məsələn, https://10.0.0.9",
   "proxyCommandSandboxed": "Bu buraxılış təcrid olunmuş mühitdə işləyir: əmr sənin ev qovluğunu deyil, boş ev qovluğunu alır, buna görə ~/.ssh yolunu oxuyan əməliyyatlar uğursuz olur. DMG buraxılışında bu məhdudiyyət yoxdur.",
   "privateKeyFileUnreadable": "{path} məxfi açar faylını oxumaq mümkün deyil: {reason}",
-  "@privateKeyFileUnreadable": {
-    "placeholders": {
-      "path": {
-        "type": "String"
-      },
-      "reason": {
-        "type": "String"
-      }
-    }
-  },
   "privateKeyFileSandboxed": "Bu buraxılış öz konteynerindən kənardakı faylları oxuya bilmir, buna görə {path} yolundakı açar əlçatmazdır. Açarı parametrlərdə idxal et və ya DMG buraxılışından istifadə et.",
-  "@privateKeyFileSandboxed": {
-    "placeholders": {
-      "path": {
-        "type": "String"
-      }
-    }
-  },
   "pushToken": "Push tokeni",
   "liveActivity": "Canlı fəaliyyət",
   "liveActivityTip": "Terminal seanslarını kilid ekranında və Dynamic Island-da göstərir. Serverin adı və bağlantı vəziyyəti kilidi açmadan görünür.",
   "liveActivitySystemDisabled": "iOS buna icazə vermir. Açarlar «Settings › ServerBox › Live Activities» və «Settings › Face ID & Passcode › Live Activities» bölmələrindədir.",
   "proxyCommandOnlySupportedOnDesktop": "ProxyCommand yalnız masaüstü platformalarda dəstəklənir.",
   "pveIgnoreCertTip": "Aktivləşdirmək tövsiyə olunmur, təhlükəsizlik risklərini nəzərə al! PVE standart sertifikatından istifadə edirsənsə, bu seçimi aktivləşdirməlisən.",
-  "pveServerClientMissing": "Bu server üçün SSH müştərisi əlçatan deyil.",
-  "pveAddressMissing": "PVE ünvanı yoxdur. Onu server parametrlərində təyin et.",
   "pvePasswordRequired": "PVE parolu tələb olunur. Onu server parametrlərində təyin et.",
   "pveOtpRequired": "Bu PVE serverində iki amilli autentifikasiya aktivdir. OTP kodunu daxil et.",
-  "pveOtpChallengeExpired": "OTP sorğusunun müddəti bitib. Yenilə və yenidən cəhd et.",
   "pveOtpCodeRequired": "OTP kodu tələb olunur.",
   "pveOtpVerificationFailed": "OTP yoxlaması uğursuz oldu. Yeni kodla yenidən cəhd et.",
   "pveOtpTitle": "OTP yoxlaması",
@@ -420,10 +334,6 @@
   "pveInvalidResponseBody": "PVE girişi etibarsız cavab gövdəsi qaytardı.",
   "pveInvalidResponseData": "PVE giriş cavabında etibarlı məlumat məzmunu yoxdur.",
   "pveMissingAuthTicket": "PVE girişi uğurlu oldu, lakin autentifikasiya bileti qaytarılmadı.",
-  "pveVersionLow": "Bu funksiya hazırda sınaq mərhələsindədir və yalnız PVE 8+ üzərində sınaqdan keçirilib. Ehtiyatla istifadə et.",
-  "pveLoadingForwarding": "SSH tuneli yaradılır...",
-  "pveLoadingLogin": "PVE ilə autentifikasiya aparılır...",
-  "pveLoadingData": "Klaster məlumatları alınır...",
   "pveLoadingConnect": "Əlaqə qurulur...",
   "pvePassword": "PVE parolu",
   "pvePasswordHint": "Açar əsaslı SSH autentifikasiyası istifadə edilərkən tələb olunur",
@@ -433,45 +343,9 @@
   "rememberPwdInMemTip": "Konteynerlər, yuxu rejimi və s. üçün istifadə olunur.",
   "remotePath": "Uzaq yol",
   "rootfsUpdateTip": "{distro} {installed} quraşdırılıb; {latest} mövcuddur. Yeniləmə bütün konteyneri əvəz edir: {pm} məlumatları itirilir",
-  "@rootfsUpdateTip": {
-    "placeholders": {
-      "distro": {
-        "type": "String"
-      },
-      "installed": {
-        "type": "String"
-      },
-      "latest": {
-        "type": "String"
-      },
-      "pm": {
-        "type": "String"
-      }
-    }
-  },
   "linuxSystemInUse": "{name} sistemini silməzdən əvvəl ondakı terminalları bağla",
-  "@linuxSystemInUse": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
   "rootfsSubtitle": "Bu cihazda Linux istifadəçi mühiti",
   "rootfsInstallTip": "{distro} {version} endirilir (təxminən {size} MB) və bu cihazda arxivdən çıxarılır.",
-  "@rootfsInstallTip": {
-    "placeholders": {
-      "distro": {
-        "type": "String"
-      },
-      "version": {
-        "type": "String"
-      },
-      "size": {
-        "type": "int"
-      }
-    }
-  },
   "sameIdServerExist": "Eyni ID ilə server artıq mövcuddur",
   "second": "san",
   "serverFilesUnavailableTip": "Bu serverlə SSH əlaqəsi və ya fayl API interfeysi aktiv olan server_box_monitor quraşdırılması tələb olunur.",
@@ -498,22 +372,8 @@
   "shareOmittedTip": "Daxil edilməyib; alıcı bunları konfiqurasiya etməlidir:",
   "sharePassphraseTip": "Bu parol ifadəsi faylı şifrələyir. Serveri idxal etmək üçün alıcıya bu ifadə lazımdır və onu bərpa etmək mümkün deyil.",
   "shareQrTip": "Bu QR kodundakı əlaqə təfərrüatları şifrələnib. Paylaşımın müddəti {minutes} dəqiqədən sonra bitir.",
-  "@shareQrTip": {
-    "placeholders": {
-      "minutes": {
-        "type": "int"
-      }
-    }
-  },
   "shareScanQr": "QR kodunu skan et",
   "shareServerExists": "Bu cihazdakı “{name}” artıq bu ünvandan istifadə edir. Yenə də idxal edilsin?",
-  "@shareServerExists": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
   "shareTooBigForQr": "QR kodu üçün çox böyükdür. Fayl kimi paylaş.",
   "shareTooNew": "Bu paylaşım ServerBox tətbiqinin daha yeni versiyası ilə yaradılıb. Açmaq üçün tətbiqi yenilə.",
   "shareUnreadable": "Bu, etibarlı ServerBox paylaşımı deyil.",
@@ -546,15 +406,9 @@
   "sshKnownHostKeysTip": "Bu tətbiqin qəbul etdiyi host açarları",
   "sshLegacyAlgorithms": "Köhnə alqoritmlər",
   "sshLegacyAlgorithmsTip": "Yalnız SHA-1 `ssh-rsa` host açarı və ya SHA-1 açar mübadiləsi təklif edən köhnə SSH serverləri (örnəyin, router və ya switch) üçündür. Təhlükəsizliyi daha aşağıdır; yalnız cihaz bunu tələb etdikdə aktivləşdirin.",
-  "@sshHostKeyType": {
-    "description": "Label for the SSH host key type displayed in the host key verification dialog."
-  },
   "sshHostKeyNewDesc": "{serverName} serverindən yeni SSH host açarı alındı. Etibar etməzdən əvvəl barmaq izini yoxla.",
   "sshHostKeyStoredFingerprint": "Saxlanmış barmaq izi: {fingerprint}",
   "sshVerificationCode": "Təsdiqləmə kodu",
-  "@sshVerificationCode": {
-    "description": "Label for a one-time verification code requested during SSH keyboard-interactive authentication."
-  },
   "sshConfigManualSelect": "SSH konfiqurasiya faylını əl ilə seçmək istəyirsən?",
   "sshConfigNoServers": "SSH konfiqurasiyasında server tapılmadı",
   "sshConfigPermissionDenied": "macOS icazələrinə görə SSH konfiqurasiya faylına daxil olmaq mümkün deyil.",
@@ -612,7 +466,6 @@
   "portForward_deleteConfirmFmt": "{name} silinsin?",
   "sponsor": "Sponsor ol",
   "sortByJoinTime": "Əlavə edilmə vaxtına görə",
-  "portForwardBetaTitle": "Port yönləndirmə (beta)",
   "tmuxAutoAttach": "tmux sessiyasına avtomatik qoşulma",
   "tmuxAuto": "Avtomatik tmux",
   "tmuxAutoTip": "SSH ilə əlaqə qurarkən tmux sessiyasını avtomatik başlat və ya ona qoşul",
@@ -626,58 +479,16 @@
   "tmuxNewWindow": "Yeni pəncərə",
   "tmuxNoWindowsFound": "Pəncərə tapılmadı",
   "tmuxWindowCount": "{count, plural, one{1 pəncərə} other{{count} pəncərə}}",
-  "@tmuxWindowCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "tmuxPaneCount": "{count, plural, one{1 bölmə} other{{count} bölmə}}",
-  "@tmuxPaneCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "tmuxAttached": "Qoşulub",
   "tmuxActive": "Aktivdir",
   "tmuxActiveAt": "aktivdir: {time}",
-  "@tmuxActiveAt": {
-    "placeholders": {
-      "time": {
-        "type": "String"
-      }
-    }
-  },
   "tmuxAttachedAt": "qoşulub: {time}",
-  "@tmuxAttachedAt": {
-    "placeholders": {
-      "time": {
-        "type": "String"
-      }
-    }
-  },
   "tmuxSkip": "Keç",
   "tmuxNotAvailable": "tmux əlçatan deyil",
   "containerSegmentsMismatch": "Konteyner cavabında gözlənilməyən bölmə sayı: {count}",
-  "@containerSegmentsMismatch": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "containerOperationInProgress": "Başqa konteyner əməliyyatı artıq davam edir",
   "processCount": "{count, plural, one{1 proses} other{{count} proses}}",
-  "@processCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "processParseUnsupportedOutput": "Proses siyahısının formatı dəstəklənmir.",
   "processParseInvalidRows": "Bəzi proses qeydlərini oxumaq mümkün olmadı.",
   "processParseInvalidWindowsJson": "Windows prosesləri haqqında cavabı oxumaq mümkün olmadı.",
@@ -697,13 +508,6 @@
   "serviceManagerUnsupported": "Dəstəklənməyən servis idarəedicisi",
   "serviceManagerUnsupportedTip": "Bu server ServerBox tərəfindən hələ dəstəklənməyən servis idarəedicisindən istifadə edir. Dəstəklənən idarəedicilər: systemd, procd və OpenRC.",
   "serviceManagerFmt": "{manager} tərəfindən idarə olunur",
-  "@serviceManagerFmt": {
-    "placeholders": {
-      "manager": {
-        "type": "String"
-      }
-    }
-  },
   "serviceListFailed": "Servis siyahısını almaq mümkün olmadı",
   "serviceDetailsUnavailable": "Servislərlə bağlı bəzi təfərrüatlar əlçatan deyil",
   "serviceDetailsUnavailableTip": "Servis siyahısından istifadə etmək mümkündür, lakin idarəedici bütün status və ya başlanğıc məlumatlarını qaytarmadı.",
@@ -720,33 +524,12 @@
   "agentLocalExecTip": "Agentin ServerBox işləyən kompüterdə işləməsinə icazə verir. Yalnız oxuma əmrləri də yoxlanılır",
   "agentLocalExecRootfsTip": "Agentin yerli olaraq, ServerBox tərəfindən quraşdırılmış Linux konteyneri daxilində işləməsinə icazə verir",
   "macDmgImportedPartly": "Əvvəllər quraşdırılmış versiyanın məlumatları idxal edildi. Endirilmiş fayllar əvvəlki yerində, {path} qovluğunda saxlanıldı.",
-  "@macDmgImportedPartly": {
-    "placeholders": {
-      "path": {
-        "type": "String"
-      }
-    }
-  },
   "bmcAccount": "Hesab",
   "bmcAccountUnset": "Heç biri seçilməyib. Seçmək və ya yaratmaq üçün toxun",
   "bmcAccountShared": "{count} server tərəfindən istifadə olunur",
-  "@bmcAccountShared": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "bmcAccounts": "BMC hesabları",
   "bmcAccountSharedTip": "Buradakı dəyişikliklər bütün bu serverlərin istifadə etdiyi hesab məlumatlarını dəyişir.",
   "bmcAccountInUse": "{count} server bu hesabdan istifadə edir. Onların ünvanları qalacaq, hesab isə silinəcək.",
-  "@bmcAccountInUse": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "bmcStaleWrite": "Məlumat yazılarkən BMC dəyişdi. Yenidən cəhd et.",
   "send": "Göndər",
   "privacyBlur": "Arxa planda məxfilik",
@@ -765,24 +548,7 @@
   "geoDataUnreachable": "Məlumatları almaq mümkün olmadı.",
   "geoDataRemoveFailed": "Məlumatları silmək mümkün olmadı.",
   "geoDataCurrent": "{month} artıq quraşdırılıb.",
-  "@geoDataCurrent": {
-    "placeholders": {
-      "month": {
-        "type": "String"
-      }
-    }
-  },
   "geoDataConsent": "**Endirmə: {download} · Cihazda tutulan yer: {disk}.** Tam məlumat toplusu bu cihazda saxlanılır və sonrakı bütün coğrafi mövqe sorğuları yerli olaraq icra olunur. Server ünvanları və sorğu fəaliyyəti endirmə servisinə göndərilmir.\n\nHər ay yenilənir. Yeni versiya əlavə nüsxə saxlamadan quraşdırılmış məlumatları əvəz edir. Məlumatları istənilən vaxt silə bilərsən.",
-  "@geoDataConsent": {
-    "placeholders": {
-      "download": {
-        "type": "String"
-      },
-      "disk": {
-        "type": "String"
-      }
-    }
-  },
   "benchmark": "Benchmark",
   "benchmarkIntro": "Bu serverdə disk, şəbəkə və CPU üçün Yet Another Bench Script işə salınır. Tam icra 10 ilə 20 dəqiqə arasında vaxt aparır və bu səhifədən çıxsan və ya tətbiqi bağlasan da davam edir.",
   "benchmarkNoRuns": "Hələ benchmark yoxdur.",
@@ -795,16 +561,6 @@
   "benchmarkNetworkTip": "İctimai serverlərlə iperf3 sınağı, təxminən 4 dəqiqə.",
   "benchmarkReducedNetwork": "Daha az məkan",
   "benchmarkReducedNetworkTip": "Yeddi əvəzinə üç məkan. Təxmini trafik həcmi {full} əvəzinə {reduced} olacaq.",
-  "@benchmarkReducedNetworkTip": {
-    "placeholders": {
-      "full": {
-        "type": "String"
-      },
-      "reduced": {
-        "type": "String"
-      }
-    }
-  },
   "benchmarkCpuTip": "Qapalı mənbəli Geekbench proqramını endirir və **nəticəni geekbench.com saytında hamıya açıq səhifədə dərc edir**, CPU modeli, nüvə sayı və yaddaş məlumatları da daxil olmaqla.",
   "benchmarkSensitiveOptions": "Aşağıdakı seçimlər bu serverə üçüncü tərəf proqramlarını endirib işə salır və ya server məlumatlarını üçüncü tərəflərə göndərir. Standart olaraq söndürülüb.",
   "benchmarkIpInfoTip": "Bu serverin ictimai ünvanını şifrələnməmiş HTTP ilə ip-api.com saytına göndərir.",
@@ -814,21 +570,7 @@
   "benchmarkWorkDir": "İş qovluğu",
   "benchmarkWorkDirTip": "Disk sınağının hansı fayl sistemini ölçəcəyini müəyyən edir. Boş saxlanıldıqda daxil olduğun hesabın ev qovluğu istifadə olunur.",
   "benchmarkEstimatedTime": "Təxminən {minutes} dəq",
-  "@benchmarkEstimatedTime": {
-    "placeholders": {
-      "minutes": {
-        "type": "int"
-      }
-    }
-  },
   "benchmarkEstimatedTraffic": "Təxminən {size} trafik",
-  "@benchmarkEstimatedTraffic": {
-    "placeholders": {
-      "size": {
-        "type": "String"
-      }
-    }
-  },
   "benchmarkPhaseSystem": "Sistem məlumatları oxunur",
   "benchmarkPhaseDisk": "Disk sınaqdan keçirilir",
   "benchmarkPhaseNetwork": "Şəbəkə sınaqdan keçirilir",
@@ -846,13 +588,6 @@
   "benchmarkVirt": "Virtuallaşdırma",
   "benchmarkRawLog": "İcra jurnalı",
   "benchmarkUpstream": "Yet Another Bench Script ({version}) əsasında işləyir",
-  "@benchmarkUpstream": {
-    "placeholders": {
-      "version": {
-        "type": "String"
-      }
-    }
-  },
   "benchmarkPhaseStarting": "Başladılır",
   "benchmarkNoOutputYet": "Hələ çıxış yoxdur. İlk sətri göstərməzdən əvvəl YABS google.com və icanhazip.com saytlarının əlçatanlığını yoxlayır. Bu saytlardan hər hansı birini bloklayan şəbəkələrdə bu, bir neçə dəqiqə çəkə bilər.",
   "tagsEmptyTip": "Hələ etiket yoxdur. Serveri redaktə edərkən etiket əlavə et, burada görünəcək.",
@@ -1183,25 +918,583 @@
   "remoteDesktopCertificateIssuer": "Veren: {issuer}",
   "remoteDesktopCertificateValidity": "Etibarlıdır: {start} – {end}",
   "appearanceThemeModeLocked": "Bu mövzu yalnız {mode} rejimini dəstəkləyir. Rejimi dəyişmək üçün başqa mövzu seçin.",
-  "@processShowKernelThreads": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@serviceOtherUnits": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@serviceJournalRecent": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  }
+  "pveAuthToken": "API tokeni",
+  "pveVersionLow": "Bu funksiya hazırda sınaq mərhələsindədir və yalnız PVE 8+ üzərində sınaqdan keçirilib. Ehtiyatla istifadə et.",
+  "pveTokenId": "Token ID",
+  "pveTokenSecret": "Token sirri",
+  "pveTokenTip": "PVE-də Datacenter → Permissions → API Tokens bölməsində yaradın. Göstəriləcək yollarda VM.Audit, VM.PowerMgmt, VM.Console, VM.Snapshot, VM.Snapshot.Rollback, Datastore.Audit və Sys.Audit lazımdır; imtiyaz ayrılması açıqdırsa, bunları tokenin özünə verin.",
+  "pveTokenNoPrivileges": "{account} tokeni bu hostda heç nə görə bilmir. İmtiyaz ayrılığı olan token istifadəçisinin icazələrini almır; PVE hostunda icazə verin:\n{command}\nvə ya tokendə \"Privilege Separation\" seçimini götürün.",
+  "pveUserNoPrivileges": "{account} bu hostda heç nə görə bilmir. PVE hostunda icazə verin:\n{command}",
+  "pveTokenIdInvalid": "Token ID user@realm!tokenid formatında olmalıdır",
+  "pvePasswordAuthTip": "PAM realm-də SSH istifadəçisi kimi SSH parolu ilə, SSH açar istifadə edirsə aşağıdakı PVE parolu ilə daxil olur. Lazım olduqda iki faktorlu kod soruşulur.",
+  "pveCertUnpinned": "Hələ təsdiqlənməyib. Etibarlı CA imzalamayıbsa, növbəti bağlantı sertifikatı təsdiq üçün göstərəcək.",
+  "pveCertForget": "Sertifikatı unut",
+  "pveCertForgetTip": "Növbəti bağlantı PVE sertifikatını yenidən təsdiq üçün göstərəcək.",
+  "virtualization": "Virtuallaşdırma",
+  "virtIntro": "Proxmox VE və libvirt/KVM hostlarında virtual maşınları və konteynerləri idarə edin: vəziyyət, enerji əməliyyatları və konsollar.",
+  "virtIntroPveMoved": "Proxmox VE server səhifəsindən bu vərəqə köçürüldü. Serverin PVE kartı onu burada açır.",
+  "virtIntroLibvirt": "libvirt-in virsh aləti quraşdırılmış server QEMU/KVM virtual maşınları ilə birlikdə host kimi görünür.",
+  "virtIntroTransports": "Hər ikisi SSH ilə, Monitor agenti vasitəsilə və ya bu cihazda işləyir.",
+  "virtIntroTokens": "PVE parol əvəzinə API tokeni ilə daxil ola bilər. Bunu serverin redaktə səhifəsində, PVE bölməsində təyin edin.",
+  "virtIntroInBar": "Vərəq panelinə əlavə edildi.",
+  "virtIntroInMore": "Daha çox bölməsindədir. Ayarlardakı Ana səhifə vərəqləri onu vərəq panelinə köçürə bilər.",
+  "virtGuests": "Virtual maşınlar",
+  "virtHosts": "Hostlar",
+  "virtCheckServer": "Bu serveri yoxla",
+  "virtCheckAll": "Bütün serverləri yoxla",
+  "virtProbeNotChecked": "Hələ yoxlanılmayıb",
+  "virtProbeAbsent": "Host deyil",
+  "virtProbeContainer": "{kind} konteyneri",
+  "virtProbeContainerTip": "Bu server konteynerdə işləyir, yəni host deyil, qonaqdır. Onu işlədən hostdan idarə olunur.",
+  "virtProbePve": "PVE, qurulmayıb",
+  "virtPveSetupTip": "Bu serverdə {version} işləyir. Virtual maşınlarını və konteynerlərini burada idarə etmək üçün server ayarlarında API girişini doldurun (API tokeni tövsiyə olunur).",
+  "virtNoHosts": "Virtualizasiya hostu yoxdur",
+  "virtNoHostsTip": "Proxmox VE işlədən və API girişi doldurulmuş server hostdur, virsh cavab verən server də. Digər serverləri host dəyişdiricisindən yoxlamaq olar.",
+  "virtNoGuests": "Virtual maşın və ya konteyner yoxdur",
+  "virtPaused": "Dayandırılıb",
+  "virtStarting": "Başladılır…",
+  "virtStopping": "Dayandırılır…",
+  "virtRebooting": "Yenidən başladılır…",
+  "virtMigrating": "Köçürülür…",
+  "virtBackingUp": "Ehtiyat nüsxə çıxarılır…",
+  "virtResume": "Davam et",
+  "virtOverview": "İcmal",
+  "virtConsole": "Konsol",
+  "virtConsoleNone": "Bu qonaq üçün konsol qurulmayıb",
+  "virtConsoleGraphical": "Qrafik",
+  "virtVncPasswordNeeded": "Bu ekran parol tələb edir",
+  "virtConsoleSerialTip": "Qonağın seriya konsolunu hostda virsh ilə açır. Bağlantını kəs və ya Ctrl+] hostun shell-inə qaytarır.",
+  "virtConsoleVia": "{transport} vasitəsilə",
+  "virtConsoleEnterTip": "Çıxış yoxdur? Enter basın",
+  "virtConsoleAutoEnter": "Sorğunu göstərmək üçün {seconds} saniyədən sonra Enter basılacaq",
+  "virtConsoleEnterNow": "İndi",
+  "virtOffTip": "CPU, yaddaş, disk və şəbəkəni burada canlı görmək üçün başladın.",
+  "virtAllocated": "Ayrılıb",
+  "virtRunningCount": "{running} işləyir · cəmi {total}",
+  "virtTemplate": "Şablon",
+  "virtAutostart": "Hostla birlikdə başlayır",
+  "virtErrUnreachable": "Bu hosta çatmaq mümkün olmadı",
+  "virtErrNotConfigured": "Bu serverin PVE ayarları natamamdır",
+  "virtErrNotConfiguredTip": "Server ayarlarında ünvanı, həmçinin parolu və ya API tokenini yoxlayın.",
+  "virtErrAuthFailed": "Host girişi rədd etdi",
+  "virtErrCertUnconfirmed": "Hostun sertifikatını təsdiqləyin",
+  "virtErrCertChanged": "Hostun sertifikatı dəyişib",
+  "virtErrRelayNotGranted": "Monitor agenti bağlantıları ötürmür",
+  "virtErrExecNotGranted": "Monitor agenti əmrləri icra etmir",
+  "virtErrNotInstalled": "Bu serverdə virsh quraşdırılmayıb",
+  "virtErrServerRemoved": "Bu server artıq mövcud deyil",
+  "virtErrSudoRequired": "libvirt-ə çatmaq üçün sudo parol tələb edir",
+  "virtErrSudoRejected": "sudo parolu rədd etdi",
+  "virtErrInvalidResponse": "Host gözlənilməz formada cavab verdi",
+  "virtErrActionFailed": "Host əməliyyatı rədd etdi",
+  "remoteSessionIdleTimeout": "Tərk edildikdə bağla",
+  "remoteSessionIdleTimeoutTip": "Uzaq masaüstünü və ya qonağın konsolunu tərk etdikdən sonra bağlantının nə qədər açıq qalacağı. Bağlanmazdan əvvəl bildiriş onu saxlamaq üçün 10 saniyə verir.",
+  "remoteSessionKeepAlive": "Açıq saxla",
+  "remoteSessionClosedAway": "Fəaliyyətsizlik səbəbindən bağlandı",
+  "remoteSessionClosingIn": "{seconds} san sonra bağlanır",
+  "reopen": "Yenidən aç",
+  "virtSnapshots": "Snapshotlar",
+  "virtSnapshotCreate": "Snapshot yarat",
+  "virtSnapshotNone": "Hələ snapshot yoxdur",
+  "virtSnapshotWithMemory": "Disklər və yaddaş",
+  "virtSnapshotDiskOnly": "Yalnız disklər",
+  "virtSnapshotParent": "Valideyn",
+  "virtSnapshotRevert": "Geri qaytar",
+  "virtSnapshotMemory": "Yaddaşı daxil et",
+  "virtSnapshotMemoryTip": "Geri qaytardıqda qonaq bu andan davam edir.",
+  "virtSnapshotMemoryAlways": "Burada işləyən qonağın snapshotu həmişə yaddaşı daxil edir.",
+  "virtSnapshotMemoryOff": "Qonaq işləmir, ona görə yalnız diskləri saxlanılır.",
+  "virtSnapshotNameInvalid": "Əvvəl hərf, sonra hərf, rəqəm, - və ya _; 2-dən 40-a qədər simvol.",
+  "virtSnapshotNameTaken": "Bu adda snapshot artıq var.",
+  "virtSnapshotRevertTip": "Geri qaytarmaq snapshotdan sonrakı bütün dəyişiklikləri silir.",
+  "virtSnapshotRevertAsk": "{guest} {snapshot} vəziyyətinə qaytarılsın? O vaxtdan bəri bütün dəyişikliklər itəcək.",
+  "virtSnapshotRevertStops": "Bu snapshotda yaddaş yoxdur: {guest} dayandırılacaq.",
+  "virtSnapshotStartAfter": "Sonra başlat",
+  "virtVolumes": "Həcmlər",
+  "virtNoPools": "Yaddaş hovuzu yoxdur",
+  "virtNoNetworks": "Şəbəkə yoxdur",
+  "virtPoolInactive": "Hovuz aktiv deyil, ona görə həcmləri siyahılana bilmir.",
+  "virtShared": "Qovşaqlar arasında paylaşılır",
+  "virtBackingFile": "Əsas fayl",
+  "virtNetIsolated": "Təcrid olunmuş",
+  "virtNetBridged": "Körpü",
+  "virtNetRouted": "Marşrutlaşdırılmış",
+  "virtBridge": "Körpü",
+  "virtPorts": "Portlar",
+  "virtAttachedGuests": "Qoşulmuş qonaqlar",
+  "virtNoAttachedGuests": "Qoşulmuş qonaq yoxdur",
+  "virtCreateVm": "Yeni virtual maşın",
+  "virtCreateLxc": "Yeni konteyner",
+  "virtCreateGuest": "Yeni virtual maşın və ya konteyner",
+  "virtKindVm": "Virtual maşın",
+  "virtKindLxc": "Konteyner",
+  "virtHostname": "Host adı",
+  "virtInstallMedia": "Quraşdırma mediası",
+  "virtNoIsos": "Bu hostda ISO şəkli yoxdur",
+  "virtNoTemplates": "Bu hostda konteyner şablonu yoxdur. PVE-də yaddaşın CT Şablonları bölməsindən yükləmək olar.",
+  "virtNoDiskStorage": "Bu hostda yeni disk qəbul edən yaddaş yoxdur",
+  "virtStartAfterCreate": "Yaradandan sonra başlat",
+  "virtUnprivileged": "İmtiyazsız konteyner",
+  "virtUnprivilegedTip": "Onun root-u hostda adi istifadəçidir.",
+  "virtSshKeys": "SSH açıq açarları",
+  "virtCredentialsTip": "root parolu, SSH açarları və ya hər ikisi.",
+  "virtCreated": "{name} yaradıldı",
+  "virtCreatedNotStarted": "{name} yaradıldı, amma başlamadı",
+  "virtErrExists": "Bu adda qonaq və ya disk artıq var",
+  "virtCreateNameInvalidLibvirt": "Hərflər, rəqəmlər, ., _ və -, hərf və ya rəqəmlə başlayır; 63 simvola qədər.",
+  "virtCreateNameInvalidPve": "Hərflər, rəqəmlər və -, nöqtələrlə ayrılmış hissələr; 63 simvola qədər.",
+  "virtCreateNameTaken": "Bu adda qonaq var.",
+  "virtCreateVmidInvalid": "100-dən 999999999-a qədər.",
+  "virtCreateVmidTaken": "Bu VMID məşğuldur.",
+  "virtCreateCoresInvalid": "Bu hostun icazə verdiyindən çox nüvə.",
+  "virtCreateMemoryInvalid": "Yaddaş kifayət deyil.",
+  "virtCreateStorageMissing": "Diskin harada olacağını seçin.",
+  "virtCreateDiskInvalid": "1 GiB-dən 64 TiB-a qədər.",
+  "virtCreateTemplateMissing": "Şablon seçin.",
+  "virtCreateCredentialsMissing": "root parolu və ya SSH açarı təyin edin.",
+  "virtCreatePasswordShort": "Ən azı {min} simvol.",
+  "virtCreateSshKeysInvalid": "Hər sətirdə bir OpenSSH açıq açarı.",
+  "virtDeleteDisks": "Disklərini də sil",
+  "virtDeleteDisksPve": "Diskləri onunla birlikdə silinir; quraşdırma mediası saxlanılır.",
+  "virtDeleted": "{name} silindi",
+  "pveTokenTipCreate": "Qonaq yaratmaq və silmək üçün həmçinin VM.Allocate, VM.Config.*, Datastore.AllocateSpace və SDN.Use lazımdır.",
+  "pveTokenTipHardware": "Avadanlığı redaktə etmək üçün VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network və VM.Config.Options lazımdır; yeni disklər və interfeyslər üçün həmçinin Datastore.AllocateSpace və SDN.Use lazımdır. Video kart, USB və PCI cihazları üçün VM.Config.HWType da lazımdır; resurs xəritəsi ilə verilən cihaz üçün onun üzərində Mapping.Use, xəritələri siyahılamaq üçün Mapping.Audit lazımdır.",
+  "pveTokenTipBackup": "Klonlama VM.Clone, yedəkləmə və bərpa VM.Backup, şablona çevirmə VM.Allocate tələb edir; yedəkləmə işləri həmçinin oxumaq üçün Sys.Audit, yaratmaq, düzəltmək və silmək üçün / üzərində Sys.Modify tələb edir; kopyanın və ya yedəyin getdiyi yerdə Datastore.AllocateSpace də lazımdır.",
+  "virtErrConflict": "Başqa yerdə dəyişdirilib",
+  "virtErrConflictTip": "Bu konfiqurasiya burada oxunandan sonra başqası tərəfindən dəyişdirildi, ona görə heç nə dəyişdirilmədi. Yenidən oxundu: hələ lazımdırsa dəyişikliyi təkrar edin.",
+  "virtHardware": "Avadanlıq",
+  "virtHwAddDisk": "Disk əlavə et",
+  "virtHwAddMount": "Qoşulma nöqtəsi əlavə et",
+  "virtHwAddNic": "Şəbəkə interfeysi əlavə et",
+  "virtHwAppliesOnRestart": "Yadda saxlanıldı. Növbəti başlanğıcda qüvvəyə minir.",
+  "virtHwAutostart": "Hostla birlikdə başlat",
+  "virtHwAutostartPve": "onboot · VMID sırası ilə başladılır",
+  "virtHwBalloonLibvirt": "Cari yaddaş",
+  "virtHwBalloonNote": "Yaddaş azaldıqda hostun qonağın boş yaddaşını geri almasına icazə verir",
+  "virtHwBoot": "Yükləmə",
+  "virtHwBootOrder": "Yükləmə sırası",
+  "virtHwBootTip": "Oxlar cihazı yerini dəyişir; toxunmaq ondan yükləməni açır və ya bağlayır.",
+  "virtHwCdrom": "CD-ROM",
+  "virtHwConfigFile": "Konfiqurasiya faylı",
+  "virtHwCores": "Nüvələr",
+  "virtHwCpuTypeDefault": "Standart",
+  "virtHwDeleteVolume": "Həcmini də sil",
+  "virtHwDetach": "Ayır",
+  "virtHwDiskHotplug": "İsti qoşulma: işləyərkən əlavə edilə bilər",
+  "virtHwDisksLxc": "Kök disk və qoşulma nöqtələri",
+  "virtHwEject": "Çıxar",
+  "virtHwEmpty": "Daşıyıcı yoxdur",
+  "virtHwFirewall": "Təhlükəsizlik divarı",
+  "virtHwFree": "{size} boş",
+  "virtHwGrow": "Böyüt",
+  "virtHwGrowNote": "Disklər yalnız böyüdülə bilər.",
+  "virtHwGrowNoteRunning": "Disklər yalnız böyüyür. İşləyərkən böyüdülübsə, bölmə qonaqda genişləndirilməlidir.",
+  "virtHwGuestUsed": "Qonağın istifadə etdiyi",
+  "virtHwHostCpus": "Host {threads} axın · {allocated} ayrılıb",
+  "virtHwHostMem": "Host {total} · {allocated} ayrılıb",
+  "virtHwHotplugNow": "İsti qoşulma: dərhal qüvvəyə minir.",
+  "virtHwIssueBootEmpty": "Ən azı bir cihaz işarələyin",
+  "virtHwIssueCpuCount": "Cəmi 1 ilə {max} vCPU arası",
+  "virtHwIssueCpuOnline": "Aktiv vCPU-lar: 1-dən cəmə qədər",
+  "virtHwIssueDiskShrink": "İndikindən böyük olmalıdır: disklər yalnız böyüyür",
+  "virtHwIssueDiskSize": "1 ilə 65536 GiB arası",
+  "virtHwIssueMemory": "{min} ilə {max} MiB arası",
+  "virtHwIssueMemoryMin": "Yaddaşdan çox olmamalıdır",
+  "virtHwIssueMountPoint": "/data kimi mütləq yol",
+  "virtHwIssueStorageSpace": "Yaddaşdakı boş yerdən çoxdur",
+  "virtHwIssueSwap": "Mənfi olmamalıdır",
+  "virtHwLater": "Yenidən başladıqda qüvvəyə minir",
+  "virtHwLess": "Azalt",
+  "virtHwLinkDown": "Ayrılıb",
+  "virtHwLinkNote": "Söndürüldükdə qonaq kabelin çıxarıldığını görür; yenidən başlatma lazım deyil",
+  "virtHwLinkUp": "Qoşulub",
+  "virtHwMac": "MAC ünvanı",
+  "virtHwModel": "Model",
+  "virtHwMore": "Artır",
+  "virtHwMountFromPool": "Qoşulma nöqtələri birbaşa yaddaşdan ayrılır",
+  "virtHwMountPoint": "Qoşulma nöqtəsi",
+  "virtHwMoveDown": "Aşağı",
+  "virtHwMoveUp": "Yuxarı",
+  "virtHwNewDisk": "Yeni disk",
+  "virtHwNewMount": "Yeni qoşulma nöqtəsi",
+  "virtHwNewNic": "Yeni şəbəkə interfeysi",
+  "virtHwNicHotplug": "virtio interfeysləri isti qoşulmanı dəstəkləyir",
+  "virtHwNics": "Şəbəkə interfeysləri",
+  "virtHwNoMedia": "Daşıyıcı yoxdur",
+  "virtHwNoNetworks": "Burada şəbəkə və ya körpü yoxdur",
+  "virtHwNoStorage": "Burada disk qəbul edən yaddaş yoxdur",
+  "virtHwOnline": "Aktiv vCPU-lar",
+  "virtHwPendingBanner": "Bəzi avadanlıq dəyişiklikləri yenidən başladıqda qüvvəyə minir",
+  "virtHwPickNet": "Şəbəkə seçin",
+  "virtHwPickPool": "Yaddaş və ölçü seçin",
+  "virtHwProcessor": "Prosessor",
+  "virtHwRemove": "Çıxar",
+  "virtHwRemoveCdrom": "CD-ROM-u çıxar",
+  "virtHwRemoveDiskAsk": "{disk} {guest} qonağından çıxarılsın?",
+  "virtHwRemoveNicAsk": "{nic} {guest} qonağından çıxarılsın?",
+  "virtHwResources": "Resurslar",
+  "virtHwRestartNow": "İndi yenidən başlat",
+  "virtHwRevert": "Geri qaytar",
+  "virtHwRevertAll": "Hamısını geri qaytar",
+  "virtSetRenameStopped": "Adını dəyişmək üçün qonağı söndürün: libvirt yalnız işləməyən qonağın adını dəyişir.",
+  "virtSetIssueDescription": "Ən çox {max} bayt (UTF-8), idarəetmə simvolları olmadan.",
+  "virtSetManualStart": "Əllə başladılır",
+  "virtSetProtection": "Qoruma",
+  "virtSetProtectionNote": "Qonağın silinməsini və disklərinin dəyişdirilməsini qadağan edir",
+  "virtSetIrreversible": "Geri qaytarıla bilməz",
+  "virtSetDeleteStopFirst": "Silməzdən əvvəl söndürün.",
+  "virtSetDeleteProtected": "Qoruma aktivdir: əvvəlcə Ümumi bölməsində söndürün.",
+  "virtSetDeleteAgain": "Təsdiqləmək üçün yenidən basın",
+  "virtSetDeleteConfirm": "{name} sil",
+  "virtSetDeleteVm": "Virtual maşını sil",
+  "virtSetDeleteLxc": "Konteyneri sil",
+  "virtHwSockets": "Soketlər",
+  "virtHwSource": "Mənbə",
+  "virtHwSwap": "Swap",
+  "virtHwTopology": "Soket × nüvə",
+  "virtHwTopologyValue": "{sockets} soket × {cores} nüvə × {threads} axın",
+  "virtHwTotal": "cəmi {size}",
+  "virtHwVolumeKept": "Çıxarıldı, lakin işləyən qonaq diski hələ istifadə edir, ona görə həcmi saxlanıldı. Növbəti başlanğıcda ayrılacaq.",
+  "virtHwBus": "Şin",
+  "virtHwCache": "Keş",
+  "virtHwBusStopped": "Şin yalnız qonaq dayandırılanda dəyişir.",
+  "virtHwMacGenerate": "Yarat",
+  "virtHwIssueMac": "Unicast MAC ünvanı olmalıdır, məs. 52:54:00:12:34:56",
+  "virtHwIssueStopFirst": "Əvvəlcə qonağı dayandırın",
+  "virtHwIssueStorageMissing": "Əvvəlcə yaddaş seçin",
+  "virtHwIssueDevice": "Əvvəlcə cihaz seçin",
+  "virtHwDevices": "CD-ROM və ötürmə",
+  "virtHwDevicesEmpty": "USB və PCI ötürməsi, CD-ROM, TPM",
+  "virtHwAddDevice": "Cihaz əlavə et",
+  "virtHwNewDevice": "Yeni cihaz",
+  "virtHwUsbHotplug": "USB ötürməsi isti qoşulmanı dəstəkləyir.",
+  "virtHwPci": "PCI ötürməsi",
+  "virtHwIommuOffTitle": "Hostda IOMMU yoxdur",
+  "virtHwIommuOffBody": "Əvvəlcə hostun BIOS-unda VT-d və ya AMD-Vi-ni, nüvəsində IOMMU-nu açın. O vaxta qədər PCI cihazı verilmiş qonaq başlamayacaq.",
+  "virtHwPciTitle": "Hostda IOMMU tələb olunur",
+  "virtHwPciBody": "Ötürüldükdən sonra host cihazdan istifadə edə bilməz, qonaq da işləyərkən köçürülə bilməz.",
+  "virtHwIommuGroup": "IOMMU qrupu {group}",
+  "virtHwIommuShared": "IOMMU qrupunu paylaşan {count} cihaz birlikdə ötürülür",
+  "virtHwNoHostDevices": "Bu hostda ötürüləcək cihaz yoxdur",
+  "virtHwMappingsOnly": "Burada yalnız resurs xəritələri istifadə oluna bilər: PVE xam cihaz ötürməyə yalnız parolu ilə daxil olmuş root@pam-a icazə verir. Xəritələri Data mərkəzi → Resurs xəritələri bölməsində yaradın.",
+  "virtHwTpmNote": "Windows 11 TPM 2.0 tələb edir.",
+  "virtHwDisplay": "Ekran",
+  "virtHwProtocol": "Protokol",
+  "virtHwListen": "Dinləmə",
+  "virtHwGpu": "Video kart",
+  "virtHwListenAllTitle": "Konsol şəbəkəyə açıqdır",
+  "virtHwListenAllBody": "Bütün ünvanlarda dinləmək hosta çatan hər kəsə konsola qoşulmağa imkan verir. 127.0.0.1-də saxlayın və SSH tuneli ilə qoşulun.",
+  "virtHwFirmware": "Proqram təminatı",
+  "virtHwUefiSub": "OVMF · Secure Boot dəstəkli, Windows 11 üçün lazımdır",
+  "virtHwBiosSub": "SeaBIOS · köhnə sistemlər və MBR diskləri",
+  "virtHwSecureBootNote": "Yalnız imzalı nüvə və yükləyiciləri başladır",
+  "virtHwFirmwareWarnTitle": "Quraşdırılmış sistemin proqram təminatını dəyişməyin",
+  "virtHwFirmwareWarnBody": "UEFI ilə BIOS arasında keçid quraşdırılmış sistemi yüklənməz edir.",
+  "virtHwFirmwareStopped": "Proqram təminatı yalnız qonaq dayandırılanda dəyişir.",
+  "virtHwSecureBootVars": "Secure Boot-u açıb-söndürmək EFI dəyişənlərini yenidən yaradır; onlarda saxlanan yükləmə qeydləri itir.",
+  "virtHwEfiStorage": "EFI dəyişənlərinin yeri",
+  "virtHwTpmStorage": "TPM vəziyyətinin yeri",
+  "virtHwSwitchFirmwareAsk": "{guest} {firmware} rejiminə keçirilsin?",
+  "virtCloneName": "Yeni ad",
+  "virtCloneFull": "Tam klon",
+  "virtCloneCopyDisks": "Disk məzmununu kopyala",
+  "virtCloneLinkedNote": "Söndürülü: şablonun disklərindən asılı bağlı klon",
+  "virtCloneFullOnly": "Yalnız şablon bağlı klon kimi klonlana bilər",
+  "virtCloneEmptyNote": "Söndürülü: eyni ölçüdə yeni boş disklər",
+  "virtCloneStopFirst": "Klonlamadan əvvəl söndürün.",
+  "virtCloneFullShort": "Tam",
+  "virtCloneLinkedShort": "Bağlı",
+  "virtCloneEmptyShort": "Boş disklər",
+  "virtCloning": "Klonlanır…",
+  "virtCloned": "{name} kimi klonlandı",
+  "virtBackupPlan": "Plan",
+  "virtBackupPlanWhere": "Məlumat mərkəzi → Ehtiyat nüsxə",
+  "virtBackupNoPlanShort": "Plan yoxdur",
+  "virtBackupNoPlan": "Bu qonağı əhatə edən planlı ehtiyat nüsxə işi yoxdur.",
+  "virtBackupKeep": "Saxla",
+  "virtBackupJobDisabled": "Bu iş deaktivdir.",
+  "virtBackupCount": "{count} nüsxə",
+  "virtSnapshotCount": "{count} snapshot",
+  "virtBackupNoStorage": "Bu qovşaqda ehtiyat nüsxələri saxlayan anbar yoxdur.",
+  "virtBackupLiveTip": "İşləyir: snapshot rejimi, dayanmadan",
+  "virtBackupStoppedTip": "Söndürülüb: olduğu kimi nüsxələnir",
+  "virtBackupNow": "İndi nüsxələ",
+  "virtBackupNotes": "Qeydlər",
+  "virtBackupProtected": "Qorunur: qoruma PVE-də götürülənə qədər silinə bilməz.",
+  "virtBackupVerified": "Yoxlama: {state}",
+  "virtBackupRestoreOverwrites": "Bərpa cari diskləri üzərinə yazır",
+  "virtBackupStopFirst": "Bərpadan əvvəl söndürün.",
+  "virtBackupRestoreAgain": "Qonağın diskləri və konfiqurasiyası nüsxədəkilərlə əvəz olunur.",
+  "virtBackupDeleteConfirm": "Nüsxəni sil",
+  "virtBackupRestoreNew": "Yeni kimi bərpa et",
+  "virtBackupRestoreConfirm": "Üzərinə bərpa et",
+  "virtBackupDone": "Nüsxə hazırdır",
+  "virtBackupDeleted": "Nüsxə silindi",
+  "virtBackupRestored": "{time} tarixindən bərpa edildi",
+  "pveNeedsPrivilege": "{account} hesabının {path} üzərində {privilege} icazəsi yoxdur. PVE hostunda verin:\n{command}",
+  "virtCanDelete": "Silinə bilər",
+  "virtInUse": "İstifadədədir",
+  "virtOps": "Əməliyyatlar",
+  "virtPool": "Yaddaş hovuzu",
+  "virtPoolNew": "Yeni yaddaş hovuzu",
+  "virtStorageAdd": "Yaddaş əlavə et",
+  "virtPoolUsedPct": "{pct}% istifadə olunub",
+  "virtPoolInUse": "Bir VM buradakı həcmdən istifadə edir, hovuzu dayandırmaq və ya silmək olmaz.",
+  "virtPoolDelete": "Hovuzu sil",
+  "virtStorageRemove": "Yaddaşı çıxar",
+  "virtPoolDeleteAsk": "{name} hovuzu silinsin? Tərifi silinir, həcmləri yerində qalır.",
+  "virtStorageRemoveAsk": "{name} yaddaşı PVE konfiqurasiyasından çıxarılsın? İçindəkilər qalır.",
+  "virtPoolDeleteKeepsVolumes": "{count} həcmi diskdə qalır.",
+  "virtPoolDeleteStorage": "Qovluğunu da sil (yalnız boşdursa)",
+  "virtPoolStopAsk": "{name} hovuzu dayandırılsın? Yenidən başlayana qədər həcmlər siyahılanmır və yaradılmır.",
+  "virtStorageClusterWide": "Bu, klasterdə bu yaddaşa malik hər bir node-a aiddir.",
+  "virtStorageDisable": "Deaktiv et",
+  "virtStorageEnable": "Aktiv et",
+  "virtStorageDisableAsk": "{name} yaddaşı söndürülsün? Diskləri orada olan VM-lər yenidən aktivləşənə qədər başlamaz.",
+  "virtPoolLogicalNote": "Mövcud həcm qrupu olduğu kimi istifadə olunur; heç nə formatlanmır.",
+  "virtPoolMountPoint": "Bağlama nöqtəsi",
+  "virtPoolSourceNfs": "Mənbə (host:/yol)",
+  "virtPoolSourceVg": "Həcm qrupu",
+  "virtPoolSourceThin": "Həcm qrupu / thin pool",
+  "virtPoolSourceZfs": "ZFS hovuzu",
+  "virtPoolTypeVg": "LVM həcm qrupu",
+  "virtResNameEmpty": "Ad daxil edin",
+  "virtResNameInvalid": "Bu hostun qəbul etdiyi ad deyil (hərf, rəqəm, . _ -)",
+  "virtResSourceInvalid": "Etibarlı yol və ya mənbə deyil",
+  "virtResTargetInvalid": "Mütləq yol",
+  "virtResCidrInvalid": "Prefiksli ünvan, məs. 192.168.150.1/24",
+  "virtResDhcpInvalid": "Şəbəkədə ardıcıl iki ünvan, hostun ünvanı olmadan",
+  "virtResSubnetTaken": "Buradakı başqa şəbəkə bu alt şəbəkədədir",
+  "virtResBridgeInvalid": "İnterfeys adı deyil",
+  "virtResFormat": "Bu hovuz bu formatı dəstəkləmir",
+  "virtVolNew": "Yeni həcm",
+  "virtVolCount": "{count} həcm",
+  "virtVolNone": "Bu hovuzda hələ həcm yoxdur.",
+  "virtVolEmptyAttach": "Yeni həcmi sonra istənilən VM-ə qoşmaq olar",
+  "virtVolEmptyUpload": "ISO birbaşa da yüklənə bilər",
+  "virtVolPveName": "PVE həcmi VM-inə görə adlandırır: vm-<VMID>-disk-<N>",
+  "virtVolUsers": "İstifadə edən",
+  "virtVolAllocated": "Ayrılıb",
+  "virtVolGrowFromGuest": "VM istifadə edir: həmin VM-in Avadanlıq görünüşündən böyüdün",
+  "virtVolInUse": "Bu həcmdən VM istifadə edir",
+  "virtVolBackingOf": "{names} üçün əsas fayl",
+  "virtVolIsBase": "Digər həcmlər bunun üzərində qurulub; silmək onları korlayar",
+  "virtVolAttach": "VM-ə qoş",
+  "virtVolAttachNote": "İlk diskinin olduğu şinə yeni disk kimi qoşulur",
+  "virtVolAttached": "{name} maşınına qoşuldu",
+  "virtVolInsert": "CD-ROM-a tax",
+  "virtVolInserted": "{name} CD-ROM sürücüsünə taxıldı",
+  "virtVolNoCdrom": "{name} maşınında CD-ROM sürücüsü yoxdur",
+  "virtVolDeleteAsk": "{name} həcmi {pool} hovuzundan silinsin? İçindəkilər həmişəlik itir.",
+  "virtUploadIso": "ISO yüklə",
+  "virtUploadTo": "{pool} hovuzuna yüklə",
+  "virtUploadDone": "{name} yükləndi",
+  "virtNetConfig": "Konfiqurasiya",
+  "virtNetConfigFile": "Konfiqurasiya faylı",
+  "virtNetInternal": "Daxili",
+  "virtNetBridgePorts": "Körpü portları",
+  "virtNetHostBridge": "Host körpüsü",
+  "virtNetPortsHint": "eno2; daxili körpü üçün boş",
+  "virtNetDhcpRange": "DHCP aralığı",
+  "virtNetDhcpTip": "dnsmasq VM-lərə ünvan verir",
+  "virtNetVlanTip": "VM şəbəkə kartları VLAN teqi daşıya bilər",
+  "virtNetNatTip": "Host vasitəsilə: VM-lər çölə çıxır, çöldən daxil olmaq olmur",
+  "virtNetRoutedTip": "NAT olmadan host yönləndirir: LAN-da geri marşrut lazımdır",
+  "virtNetIsolatedTip": "Yalnız VM-lər və host bir-birinə çatır",
+  "virtNetBridgedTip": "VM-lər hostun körpüsünə, fiziki şəbəkəsinə qoşulur",
+  "virtNetNew": "Yeni şəbəkə",
+  "virtNetNewBridge": "Yeni Linux körpüsü",
+  "virtNetVirtual": "Virtual şəbəkə",
+  "virtNetDelete": "Şəbəkəni sil",
+  "virtNetDeleteAsk": "{name} şəbəkəsi silinsin? Dayandırılır və tərifi silinir.",
+  "virtNetDeleteAskPve": "{name} körpüsü {node} üzərindən çıxarılsın? İndi gözləyən konfiqurasiyadan, tətbiq ediləndə isə hostdan çıxır.",
+  "virtNetInUse": "Üzərindəki VM: {count}. Silinə bilməz.",
+  "virtNetStopAsk": "{name} dayandırılsın? Üzərindəki {count} VM yenidən başlayana qədər şəbəkəsiz qalır.",
+  "virtNetInactivePve": "Aktiv deyil: yeni körpü tətbiq olunana qədər gözləyən konfiqurasiyadadır.",
+  "virtNetPveApplyNote": "Gözləyən dəyişiklik kimi saxlanılır; konfiqurasiya tətbiq olunanda qüvvəyə minir (ifreload -a).",
+  "virtNetPendingSaved": "Gözləyən kimi saxlanıldı: qüvvəyə minməsi üçün konfiqurasiyanı tətbiq edin",
+  "virtNetPendingTitle": "{node} üzərində gözləyən şəbəkə dəyişiklikləri",
+  "virtNetPendingTip": "PVE şəbəkə dəyişikliklərini tətbiq olunana qədər interfaces.new-da saxlayır.",
+  "virtNetPendingShow": "Dəyişiklikləri göstər",
+  "virtNetApply": "Konfiqurasiyanı tətbiq et",
+  "virtNetApplyAsk": "{node} üzərində gözləyən şəbəkə konfiqurasiyası tətbiq edilsin? PVE hostun şəbəkəsini yenidən yükləyir (ifreload -a): səhv hostu əlçatmaz edə bilər.",
+  "virtNetRevertAsk": "{node} üzərində gözləyən şəbəkə konfiqurasiyası atılsın?",
+  "pveTokenTipStorage": "Yaddaşın idarəsi /storage üzərində Datastore.Allocate (əlavə, söndürmə, çıxarma), Datastore.AllocateSpace (həcmlər) və Datastore.AllocateTemplate (yükləmələr) tələb edir; Linux körpüləri və şəbəkə konfiqurasiyasının tətbiqi node-da Sys.Modify tələb edir.",
+  "virtCreateUnnamed": "Adsız",
+  "virtCreateNotChosen": "Seçilməyib",
+  "virtCreateKindVmSub": "qm · tam KVM virtual maşın",
+  "virtCreateKindLxcSub": "pct · hostun nüvəsini paylaşır, daha yüngül",
+  "virtCloudImage": "Bulud təsviri",
+  "virtCloudImageTip": "Üzərində sistem olan disk: kopyalanır, Yaddaş bölməsindəki ölçüyə böyüdülür və ilk açılışda cloud-init tərəfindən qurulur. Təsvirin özü olduğu kimi qalır.",
+  "virtNoCloudImagesLibvirt": "Burada bulud təsviri yoxdur: heç bir VM-in istifadə etmədiyi qcow2 və ya raw təsvirini hovuza qoyun (Yaddaşda yükləyin).",
+  "virtNoCloudImagesPve": "Burada bulud təsviri yoxdur: qcow2, raw və ya vmdk təsvirini Import məzmun növlü yaddaşa yükləyin (PVE 8.2+).",
+  "virtCreateWindowsTitle": "Windows 11 UEFI və TPM 2.0 tələb edir",
+  "virtCreateWindowsBody": "Yuxarıda UEFI seçin və TPM-i yandırın.",
+  "virtCreateWindowsNoTpm": "Bu hostda proqram TPM-i (swtpm) yoxdur: VM-ə vermək üçün quraşdırın.",
+  "virtCreateImageSize": "Təsvir {size}-dır: disk ən azı bu qədər olmalıdır.",
+  "virtCreateImageMissing": "Bulud təsviri seçin.",
+  "virtCreateIncomplete": "Əvvəlcə narıncı ilə işarələnmiş hissələri tamamlayın.",
+  "virtCreateOn": "{host} üzərində yaradılır",
+  "virtCiTip": "sudo icazəli hesab; parol, SSH açarı və ya hər ikisi ilə daxil olunur.",
+  "virtCiUserInvalid": "Kiçik hərflər, rəqəmlər, _ və -; hərf və ya _ ilə başlamalı",
+  "virtCiCredentialsMissing": "Parol və ya SSH açarı təyin edin.",
+  "virtCiHostnamePve": "Host adı VM-in adıdır.",
+  "virtCiStatic": "Statik",
+  "virtCiAddressInvalid": "Prefiksli IPv4 ünvanı, məsələn 10.0.0.5/24",
+  "virtCiGatewayInvalid": "IPv4 ünvanı, məsələn 10.0.0.1",
+  "virtCiDnsFromDhcp": "Boş: DHCP-dən",
+  "virtCiDnsInvalid": "Boşluq və ya vergüllə ayrılmış IP ünvanları",
+  "virtCiSearch": "Axtarış domeni",
+  "virtCiSeedNote": "Diskin yanındakı kiçik ISO-ya yazılır, CD-ROM kimi qoşulur və VM ilə birlikdə silinir. Parolun yalnız heşi saxlanılır.",
+  "virtCiNoToolTitle": "Hostda cloud-init məlumatını yaratmaq üçün alət yoxdur",
+  "virtCiNoToolBody": "Hosta {tools} alətlərindən birini quraşdırın. cloud-init olmadan təsvir daxil olmaq üçün hesabsız başlayır.",
+  "virtHwCloudInitNote": "cloud-init-in ilk açılışda oxuduğu məlumat. Quraşdırma mediası deyil: bura heç nə taxılmır.",
+  "virtHwCdromLater": "İşləyərkən sürücü növbəti açılışda əlavə olunur (SATA və IDE işləyərkən qoşulmanı dəstəkləmir).",
+  "virtCreateDiskKept": "Disk təsvirin öz ölçüsü olan {size} olaraq saxlanıldı, istəniləndən böyük: disk heç vaxt üzərindəki sistemdən kiçik kəsilmir.",
+  "virtCiEditTip": "cloud-init-in bu VM-də qurduqları: sudo hüquqlu hesab, ona necə daxil olmaq, host adı və ünvan.",
+  "virtCiForeignTitle": "Bu seed bu tətbiqin yazdığından artıq şey saxlayır",
+  "virtCiForeignBody": "Başqa yerdə edilmiş ayarlar (paketlər, əmrlər, digər hesablar) burada göstərilmir. Saxlamaq seedi burada göstərilənlə əvəz edir.",
+  "virtCiPasswordKept": "Təyin edilib. Saxlamaq üçün boş buraxın",
+  "virtCiRemovePassword": "Parolu sil",
+  "virtCiRemovePasswordNote": "Yalnız SSH açarı ilə giriş",
+  "virtCiKeysAdded": "Açarlar hesaba əlavə olunur. Burada çıxarılan açar orada silinənə qədər sistemdə qalır, yeni istifadəçi adı isə köhnənin yanında yeni hesab yaradır.",
+  "virtCiEffectTitle": "Növbəti açılışda qüvvəyə minir",
+  "virtCiEffectLibvirt": "Saxlamaq yeni nümunə ID-si ilə yeni seed yazır.",
+  "virtCiEffectPve": "PVE cloud-init sürücüsünü dərhal yenidən yazır; nümunə ID-si bu ayarlardan hesablanır, ona görə buradakı hər dəyişiklik yenisini yaradır.",
+  "virtCiNewInstance": "Növbəti açılışda cloud-init sistemi yeni nümunə kimi qəbul edir: host adını yenidən təyin edir, hesab yoxdursa yaradır, parolunu təyin edir, açarları əlavə edir və şəbəkə konfiqurasiyasını yenidən yazır. O, həmçinin yeni SSH host açarları yaradır, ona görə SSH müştəriləri host açarının dəyişdiyi barədə xəbərdarlıq edəcək. O açılışdan əvvəl heç nə dəyişmir.",
+  "virtCiSaved": "Saxlanıldı. Növbəti açılışda qüvvəyə minir.",
+  "virtSnapshotExternal": "İşləyərkən yalnız disk",
+  "virtSnapshotExternalTip": "Qonaq işləməyə davam edir. Hər disk seçilmiş hovuzda qcow2 örtüyü alır; qonaq zəncirdə qalır.",
+  "virtSnapshotFormInternal": "Daxili (şəkil içində)",
+  "virtSnapshotForm": "Növ",
+  "virtSnapshotOverlayPool": "Örtük hovuzu",
+  "virtSnapshotOverlayBeside": "Hər diskin yanında",
+  "virtSnapshotExternalNoMemory": "Xarici anlık görüntü yaddaşı saxlamaz: qonaq dayandırılmır.",
+  "virtSnapshotChain": "Disk zənciri",
+  "virtSnapshotChainDepth": "{count} qat",
+  "virtSnapshotChainFile": "Fayl",
+  "virtSnapshotChainActive": "Hazırda istifadə olunur",
+  "virtSnapshotChainBase": "Əsas şəkil",
+  "virtSnapshotChainRaw": "Xarici anlık görüntü qcow2 disk tələb edir. Bu disk {format}.",
+  "virtSnapshotNoSupport": "Qonağın yaddaşı anlık görüntünü dəstəkləmir, buna görə yaradıla bilməz.",
+  "virtSnapshotRevertChain": "Zəncirdə geri qaytarma işləyən örtüyü şəklə birləşdirir və sonrakı bütün anlık görüntüləri yararsız edir. Yalnız ən yeni anlık görüntüyə qayıtmaq olar.",
+  "virtSnapshotRevertHasChildren": "Sonrakı anlık görüntü bunun üzərində olduqca rədd edilir.",
+  "virtSnapshotDiff": "İndiki ilə fərqlər",
+  "virtSnapshotDiffNone": "Bu anlık görüntüdən bəri konfiqurasiya dəyişməyib.",
+  "virtSnapshotDiffShow": "İndiki ilə müqayisə et",
+  "virtSnapshotDiffGroup": "Dəyişdi",
+  "virtSnapshotDiffGroupCpu": "Prosessor",
+  "virtSnapshotDiffGroupMemory": "Yaddaş",
+  "virtSnapshotDiffGroupDisks": "Disklər",
+  "virtSnapshotDiffGroupNic": "İnterfeyslər",
+  "virtSnapshotDiffGroupFirmware": "Proqram təminatı",
+  "virtSnapshotDiffGroupBoot": "Önyükləmə",
+  "virtSnapshotDiffGroupOther": "Digər",
+  "virtSnapshotDiffValue": "{before} → {after}",
+  "virtSnapshotDiffRemoved": "silinib",
+  "virtSnapshotDiffAdded": "əlavə edildi",
+  "virtSnapshotDiffAsk": "{snapshot} vəziyyətinə qaytarsanız nə dəyişər:",
+  "virtSnapshotDiffHost": "Host nəyin fərqli olduğunu deyə bilmədi: {error}",
+  "virtSnapshotExternalExists": "Qonaq artıq {count} qatdadır; bu anlık görüntü bir daha əlavə edir.",
+  "virtToTemplate": "Şablona çevir",
+  "virtToTemplateNote": "Şablon işə salına bilməz və guest-ə geri çevrilə bilməz. Diskləri əsas şəkillərə çevrilir; bağlı klon onları paylaşır.",
+  "virtToTemplateConfirm": "{name} şablona çevrilsin?",
+  "virtToTemplateIrreversible": "Bu geri alına bilməz: şablon təkrar guest-ə çevrilə bilməz.",
+  "virtToTemplateStopped": "Əvvəlcə söndürün.",
+  "virtToTemplateSnapshots": "Anlık görüntüsü olan qonaq şablon ola bilməz.",
+  "virtTemplateCreated": "{name} artıq şablondur",
+  "virtTemplateTip": "Şablon yalnızca klonlandıqdan sonra işləyir.",
+  "virtCloneStorage": "Hədəf anbar",
+  "virtCloneStorageSame": "Mənbə ilə eyni",
+  "virtCloneNode": "Hədəf node",
+  "virtCloneNodeSame": "Mənbə ilə eyni",
+  "virtClonePool": "Hədəf hovuz",
+  "virtCloneStorageContent": "Bu anbar VM disklərini saxlamır.",
+  "virtCloneStorageShared": "Başqa node-a köçürmək üçün paylaşılan anbar lazımdır.",
+  "virtCloneNodeUnknown": "Bu hostda belə node yoxdur.",
+  "virtCloneLinkedTarget": "Bağlı klon şablonun disklərini paylaşır; ona görə anbar və ya node göstərə bilməz.",
+  "virtBackupJobs": "Yedəkləmə işləri",
+  "virtBackupJobsNone": "Zamanlanmış yedəkləmə işi yoxdur. Əlavə edin, guest-lər cədvəl üzrə yedəklənsin.",
+  "virtBackupJobNew": "Yeni iş",
+  "virtBackupJobEdit": "İşi düzəlt",
+  "virtBackupJobRun": "İndi işə sal",
+  "virtBackupJobRunAsk": "Bu yedəkləmə işi indi başladılsın?",
+  "virtBackupJobDeleteAsk": "{id} yedəkləmə işi silinsin? Yaradılan yedəklər qalır.",
+  "virtBackupJobSaved": "İş saxlanıldı",
+  "virtBackupJobDeleted": "İş silindi",
+  "virtBackupJobStarted": "Yedəkləmə işi başladı",
+  "virtBackupSchedule": "Cədvəl",
+  "virtBackupScheduleHelp": "systemd təqvim hadisələrinin alt çoxluğu: 02:30, mon..fri 02:30, sat 03:00, daily, hourly, */15.",
+  "virtBackupScheduleInvalid": "Host bu cədvəli qəbul etmir.",
+  "virtBackupScheduleNext": "Növbəti işə salmalar: {times}",
+  "virtBackupSelection": "Qonaqlar",
+  "virtBackupSelectionAll": "Bütün qonaqlar",
+  "virtBackupSelectionList": "Seçilmiş qonaqlar",
+  "virtBackupSelectionNone": "Ən azı bir qonaq seçin.",
+  "virtBackupMail": "Bildiriş",
+  "virtBackupMailAlways": "Həmişə",
+  "virtBackupMailFailure": "Xəta zamanı",
+  "virtBackupNotesTemplate": "Yedək qeydləri",
+  "virtBackupNotesTemplateTip": "Qeydlər işin yaratdığı hər yedəyə əlavə olunur. Dəyəri ilə əvəz olunanlar: {vars}.",
+  "virtBackupPrune": "Saxlama",
+  "virtBackupPruneTip": "PVE saxlama seçimləri, məs. keep-last=7,keep-daily=4. Boş: anbarın və ya node-un öz ayarı.",
+  "virtBackupNextRun": "Növbəti işə salma",
+  "virtBackupJobNode": "Node",
+  "virtBackupJobNodeAny": "Hər node",
+  "virtBackupEnabled": "Aktiv",
+  "virtBackupOptions": "Seçimlər",
+  "virtBackupProtect": "Qoru",
+  "virtBackupProtectTip": "Qorunan yedək saxlama ilə silinmir və qoruma götürülənə qədər silinə bilməz.",
+  "virtBackupEditNotes": "Qeydlər",
+  "virtBackupSaveNotes": "Saxla",
+  "virtBackupEdited": "Yedək yeniləndi",
+  "virtBackupRestoreStorage": "Anbara bərpa et",
+  "virtBackupRestoreStorageSame": "Yedəkdəki kimi",
+  "virtBackupModeSnapshotTip": "snapshot · dayanmadan",
+  "virtCloneStorageMissing": "Bu node-da VM disklərini saxlayan anbar yoxdur.",
+  "virtBackupCompress": "Sıxılma",
+  "virtBackupUnprotect": "Qorumanı götür",
+  "virtBackupModeStops": "suspend və stop kopyalama zamanı işləyən qonağı dayandırır.",
+  "virtBackupScheduleValidate": "Hostda yoxla",
+  "virtBackupSelected": "{count} seçildi",
+  "virtBackupExcludeTip": "Node-dakı bütün qonaqlar götürülür. Birini söndürsəniz kənarda qalır.",
+  "virtNetEditAsk": "İşləyən şəbəkə yenidən başladılana qədər mövcud vəziyyətini saxlayır. Yenidən başlatma üzərindəki VM-lərin ({count}) bağlantısını kəsir.",
+  "virtNetEditAskNoGuest": "İşləyən şəbəkə yenidən başladılana qədər mövcud vəziyyətini saxlayır.",
+  "virtNetEditRestart": "İndi tətbiq etmək üçün yenidən başlat",
+  "virtNetEditRestartNote": "Üzərindəki VM-lər yenidən başlatma zamanı şəbəkəni itirir.",
+  "virtNetEditPending": "Tərifdə işləyən şəbəkənin hələ qəbul etmədiyi dəyişiklik var.",
+  "virtNetRestart": "Yenidən başlat",
+  "virtNetRestartAsk": "{name} yenidən başladılsın? Üzərindəki VM-lər ({count}) şəbəkə geri qayıdana qədər bağlantısız qalır.",
+  "virtNetRestartAskNone": "{name} yenidən başladılsın? Üzərində heç nə yoxdur.",
+  "virtNetHosts": "Statik ünvanlar",
+  "virtNetHostAdd": "Ünvan əlavə et",
+  "virtNetHostMac": "MAC",
+  "virtNetHostIp": "Ünvan",
+  "virtNetHostName": "Ad (istəyə bağlı)",
+  "virtNetHostEmpty": "Heç bir MAC-a öz ünvanı verilmir: hər VM DHCP aralığından ünvan alır.",
+  "virtNetHostOthers": "Digər hər VM DHCP aralığından ünvan alır.",
+  "virtNetHostInvalid": "Hostun rədd edəcəyi MAC, ünvan və ya ad, ya da eyni MAC iki dəfə.",
+  "virtNetManagementIface": "Bu interfeys hostun öz ünvanını daşıyır. Onu redaktə etmək və ya tətbiq etmək hostla əlaqəni kəsər.",
+  "virtNetManagementTip": "Hostun idarəetmə trafikini daşıyır və ya bunu edən interfeysin altındadır: tətbiq onu redaktə etmir.",
+  "virtNetPhysicalTip": "Fiziki interfeys hostun özünündür: tətbiq yalnız körpüləri redaktə edir.",
+  "virtNetVlanAware": "VLAN dəstəyi",
+  "virtCiExpire": "Parolun müddəti bitir",
+  "virtCiExpireNote": "Onunla ilk girişdə yeni parol təyin edilməlidir. Yalnız libvirt: PVE \"expire: false\" yazır və bunun üçün seçimi yoxdur.",
+  "virtCiSearchHint": "lab.example dev.lab.example",
+  "virtCiSearchTip": "Bir neçəsi, boşluqla ayrılmış; resolv.conf ilk bir neçəsini saxlayır.",
+  "virtCiNicsTip": "Seed-in şəbəkə konfiqurasiyasında {count} NIC var; forma birincini redaktə edir.",
+  "virtUsbByVendor": "İstehsalçı və məhsula görə",
+  "virtUsbByAddress": "Ünvana görə",
+  "virtUsbAddressTip": "Cihaz bu ünvanı izləyir: ora nə taxılıbsa, VM-ə verilir. libvirt USB hostdev-i şin və cihaz nömrəsi ilə adlandırır.",
+  "virtUsbPortNote": "şin {bus} · port {port}",
+  "virtSbUnsupported": "Hostun proqram təminatı deskriptorlarında qeydiyyatlı açarları olan Secure Boot proqram təminatı yoxdur, ona görə də onunla domen başlaya bilməz.",
+  "virtCreateSecureBoot": "Secure Boot",
+  "virtCreateSecureBootNote": "Yalnız imzalanmış nüvələr və yükləyicilər işə salınır.",
+  "virtUsbAddressNote": "şin {bus} · cihaz {device}",
+  "virtHwRevertPendingTitle": "Gözləyən dəyişiklikləri at",
+  "virtHwRevertPendingBody": "{name} işlədiyi vəziyyətə qaytarılır: tərif işləyəndən yenidən yazılır və növbəti başlanğıc indikinin tam eynisini alır. NVRAM faylı və proqram təminatı olduğu kimi qalır.",
+  "virtHwRevertAllAsk": "{name} üçün növbəti başlanğıcı gözləyən bütün dəyişikliklər atılsın?",
+  "virtBackupPlanNew": "Yeni plan",
+  "virtBackupPlanNewTip": "Yalnız bu qonağın ehtiyat nüsxəsini çıxaran cədvəl.",
+  "virtBackupPlanOthers": "{count, plural, =0{Başqa qonaq yoxdur} other{Daha {count} qonağın da ehtiyat nüsxəsini çıxarır}}"
 }

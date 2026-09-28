@@ -45,6 +45,11 @@ pub struct RdpSessionParams {
     /// Loopback address of the SSH local tunnel.
     pub connect_host: String,
     pub connect_port: u16,
+    /// The tunnel's one-time token, written before anything else on the
+    /// connection: the local listener carries only a connection that
+    /// presents it, so another process on this device racing for the port
+    /// gets nothing. Never logged.
+    pub access_token: Option<Vec<u8>>,
     /// Hostname as seen by the SSH server and used for certificate checks.
     pub server_name: String,
     pub server_port: u16,
@@ -62,6 +67,8 @@ pub struct VncSessionParams {
     /// Loopback address of the SSH local tunnel.
     pub connect_host: String,
     pub connect_port: u16,
+    /// See [`RdpSessionParams::access_token`].
+    pub access_token: Option<Vec<u8>>,
     pub password: Option<String>,
     pub shared: bool,
 }
@@ -382,9 +389,6 @@ impl EventQueue {
         self.notify.notify_waiters();
     }
 
-    fn is_closed(&self) -> bool {
-        self.closed.lock().map(|closed| *closed).unwrap_or(true)
-    }
 }
 
 #[derive(Debug)]
@@ -505,10 +509,14 @@ impl RemoteDesktopSessionHandle {
                     event = events.recv() => return event,
                 changed = frames.changed() => {
                     if changed.is_err() {
-                        if events.is_closed() {
-                            return None;
-                        }
-                        continue;
+                        // The session is over, but what it said last — its
+                        // error, how it ended — may still be queued: `recv`
+                        // hands that over before it reports the end. Returning
+                        // None here lost the end reason whenever the frames
+                        // closed first (an authentication failure read as a
+                        // silent drop), and waiting on the closed frames again
+                        // would spin.
+                        return events.recv().await;
                     }
                     let frame = frames.borrow_and_update().clone();
                     if let Some(frame) = frame {
@@ -682,6 +690,9 @@ async fn run_rdp(
     }
     if let Some(domain) = params.domain.filter(|value| !value.is_empty()) {
         builder = builder.with_domain(domain);
+    }
+    if let Some(token) = params.access_token {
+        builder = builder.with_tcp_preamble(token);
     }
 
     let clipboard_state = Arc::new(Mutex::new(RdpClipboardState::default()));
@@ -1157,6 +1168,14 @@ async fn run_vnc(
             }
         }
     };
+    let mut stream = stream;
+    if let Some(token) = params.access_token.as_deref() {
+        use tokio::io::AsyncWriteExt;
+        if let Err(error) = stream.write_all(token).await {
+            finish_vnc_error(&events, error.to_string(), true);
+            return;
+        }
+    }
     let password = params.password.unwrap_or_default();
     let shared = params.shared;
     let handshake = async move {
@@ -1766,11 +1785,125 @@ mod tests {
         assert!(validate_size(4096, 4096).is_ok());
     }
 
+    /// The tunnel's token is the first thing on the wire, before anything the
+    /// server sends is waited for: the local tunnel carries nothing until it
+    /// has it.
+    #[test]
+    fn vnc_writes_the_access_token_first() {
+        use std::io::Read;
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        let token: Vec<u8> = (0..32u8).map(|b| b.wrapping_mul(7)).collect();
+        let handle = RemoteDesktopSessionHandle::start_vnc(VncSessionParams {
+            connect_host: "127.0.0.1".to_owned(),
+            connect_port: port,
+            access_token: Some(token.clone()),
+            password: None,
+            shared: true,
+        })
+        .unwrap();
+        let (mut socket, _) = listener.accept().unwrap();
+        socket
+            .set_read_timeout(Some(Duration::from_secs(5)))
+            .unwrap();
+        let mut got = vec![0u8; token.len()];
+        socket.read_exact(&mut got).unwrap();
+        assert_eq!(got, token);
+        handle.close();
+    }
+
+    /// RDP's token too, ahead of the X.224 connection request IronRDP sends
+    /// first — through its `with_tcp_preamble`.
+    #[test]
+    fn rdp_writes_the_access_token_first() {
+        use std::io::Read;
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        let token: Vec<u8> = (0..32u8).map(|b| b.wrapping_add(101)).collect();
+        let handle = RemoteDesktopSessionHandle::start_rdp(RdpSessionParams {
+            connect_host: "127.0.0.1".to_owned(),
+            connect_port: port,
+            access_token: Some(token.clone()),
+            server_name: "desktop".to_owned(),
+            server_port: 3389,
+            username: "u".to_owned(),
+            password: "p".to_owned(),
+            domain: None,
+            trusted_cert_sha256: None,
+            width: 800,
+            height: 600,
+            scale_factor: 100,
+        })
+        .unwrap();
+        let (mut socket, _) = listener.accept().unwrap();
+        socket
+            .set_read_timeout(Some(Duration::from_secs(5)))
+            .unwrap();
+        let mut got = vec![0u8; token.len()];
+        socket.read_exact(&mut got).unwrap();
+        assert_eq!(got, token);
+        // Then RDP itself: a TPKT header (version 3).
+        let mut tpkt = [0u8; 1];
+        socket.read_exact(&mut tpkt).unwrap();
+        assert_eq!(tpkt[0], 3);
+        handle.close();
+    }
+
+    /// A session that fails right away still reports how it ended before
+    /// its events stop: the frames closing first used to drop the queued end,
+    /// and a refused password read as a silent drop.
+    #[test]
+    fn a_refused_password_is_reported_before_the_end() {
+        use std::io::{Read, Write};
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        let server = std::thread::spawn(move || {
+            let (mut socket, _) = listener.accept().unwrap();
+            let mut buf = [0u8; 16];
+            socket.write_all(b"RFB 003.008\n").unwrap();
+            socket.read_exact(&mut buf[..12]).unwrap();
+            // One security type: VNC authentication.
+            socket.write_all(&[1, 2]).unwrap();
+            socket.read_exact(&mut buf[..1]).unwrap();
+            socket.write_all(&[7u8; 16]).unwrap();
+            socket.read_exact(&mut buf).unwrap();
+            // Failed, with a reason.
+            let reason = b"Authentication failed";
+            socket.write_all(&1u32.to_be_bytes()).unwrap();
+            socket.write_all(&(reason.len() as u32).to_be_bytes()).unwrap();
+            socket.write_all(reason).unwrap();
+        });
+        let handle = RemoteDesktopSessionHandle::start_vnc(VncSessionParams {
+            connect_host: "127.0.0.1".to_owned(),
+            connect_port: port,
+            access_token: None,
+            password: Some("nope".to_owned()),
+            shared: true,
+        })
+        .unwrap();
+        let runtime = tokio::runtime::Runtime::new().unwrap();
+        let mut ended = None;
+        runtime.block_on(async {
+            while let Some(event) =
+                tokio::time::timeout(Duration::from_secs(10), handle.next_event())
+                    .await
+                    .unwrap()
+            {
+                if let RemoteDesktopEvent::Ended { reason, .. } = event {
+                    ended = Some(reason);
+                }
+            }
+        });
+        server.join().unwrap();
+        assert_eq!(ended, Some(RemoteDesktopEndReason::AuthenticationFailed));
+    }
+
     #[test]
     fn vnc_password_limit_is_enforced_before_spawning() {
         let result = RemoteDesktopSessionHandle::start_vnc(VncSessionParams {
             connect_host: "127.0.0.1".to_owned(),
             connect_port: 5900,
+            access_token: None,
             password: Some("123456789".to_owned()),
             shared: true,
         });

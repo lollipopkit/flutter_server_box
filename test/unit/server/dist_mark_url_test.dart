@@ -25,7 +25,7 @@ void main() {
     // `distMarkUrl` reads the global setting through the locator, so it has to
     // be the same instance this test writes to.
     GetIt.instance.registerSingleton<SettingStore>(
-      SettingStore('setting_test')..init(),
+      SettingStore('setting_test'),
     );
   });
 

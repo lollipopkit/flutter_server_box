@@ -1,0 +1,2 @@
+error: Failed to start domain 'it's-"odd"'
+error: internal error: cannot load AppArmor profile 'libvirt-1438b9e3-f647-47ee-8ed2-6dbc3adccd68'

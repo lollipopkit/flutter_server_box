@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/local_shell.dart';
 import 'package:server_box/core/utils/rootfs.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
@@ -94,7 +93,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
       onRootfsAdd: _addRootfs,
       onRootfsRemove: _removeRootfs,
       onLongPress: (spi) =>
-          ServerEditPage.route.go(context, args: SpiRequiredArgs(spi)),
+          ServerEditPage.route.go(context, args: ServerEditArgs(spi)),
     ),
   );
 
@@ -181,7 +180,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
           onRootfsAdd: _addRootfs,
           onRootfsRemove: _removeRootfs,
           onEdit: (spi) =>
-              ServerEditPage.route.go(context, args: SpiRequiredArgs(spi)),
+              ServerEditPage.route.go(context, args: ServerEditArgs(spi)),
           onSelect: _sessions.select,
           onClose: _confirmClose,
         ),

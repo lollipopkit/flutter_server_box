@@ -1,0 +1,9 @@
+[
+  {
+    "ctime": 1790324352,
+    "volid": "local:vztmpl/alpine-3.24-default_20260714_amd64.tar.xz",
+    "content": "vztmpl",
+    "size": 3314972,
+    "format": "txz"
+  }
+]

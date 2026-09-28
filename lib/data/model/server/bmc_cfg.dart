@@ -11,8 +11,8 @@ part 'bmc_cfg.g.dart';
 /// its own network port.
 ///
 /// Nested rather than flat fields on `ServerCustom`, where PVE's settings
-/// live: flat cannot express "not configured", which is the same reason the
-/// SSH fields were extracted into [SshCredential].
+/// once lived: flat cannot express "not configured", which is the same reason
+/// the SSH fields were extracted into [SshCredential].
 ///
 /// The two fields here are the two that belong to *this device*. The account
 /// is a [BmcCredential] referenced by [credId], because a rack shares one.

@@ -1,0 +1,18 @@
+{
+  "disks": [
+    {
+      "target": "vda",
+      "files": [
+        {
+          "path": "/var/lib/libvirt/images/sbxe2e-f2.img",
+          "format": "raw",
+          "backing": null,
+          "backing_format": null,
+          "allocation": 8192,
+          "capacity": 67108864
+        }
+      ],
+      "error": null
+    }
+  ]
+}

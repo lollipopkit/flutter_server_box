@@ -9,6 +9,7 @@ import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
+import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
@@ -324,6 +325,280 @@ void main() {
       await backup.merge(force: true);
 
       expect(Stores.remoteDesktop.fetchForServer(server.id), [profile]);
+    });
+
+    group('PVE', () {
+      const server = Spi(
+        id: 'pve-host',
+        name: 'pve host',
+        ssh: SshCredential(ip: '10.0.0.2'),
+      );
+      const pve = PveConfig(
+        addr: 'https://127.0.0.1:8006',
+        auth: PveAuth.token,
+        tokenId: 'root@pam!sb',
+        tokenSecret: 'secret',
+        certSha256: 'ab12',
+      );
+
+      test('exports and restores the configuration beside its server', () async {
+        Stores.server.put(server);
+        Stores.pve.put(server.id, pve);
+
+        final backup = BackupV2.fromJsonString(
+          (await BackupV2.loadFromStore()).toJsonString(),
+        );
+        expect(backup.pve[server.id], isA<Map>());
+        Stores.pve.remove(server.id);
+        await backup.merge(force: true);
+
+        expect(Stores.pve.fetch(server.id), pve);
+      });
+
+      test('a server the backup has without PVE loses it here', () async {
+        Stores.server.put(server);
+        final backup = BackupV2.fromJsonString(
+          (await BackupV2.loadFromStore()).toJsonString(),
+        );
+        Stores.pve.put(server.id, pve);
+
+        await backup.merge(force: true);
+
+        expect(Stores.pve.fetch(server.id), isNull);
+      });
+
+      /// A file from before `server_pve`: the fields are in the server's
+      /// `custom`, and there is no `pve` key at all.
+      test('an older backup brings it in from custom', () async {
+        final serverJson = json.decode(json.encode(server.toJson())) as Map;
+        serverJson['custom'] = {
+          'pveAddr': 'https://10.0.0.9:8006',
+          'pveIgnoreCert': true,
+          'pvePwd': 'p',
+        };
+        final raw = json.decode(
+          BackupV2(
+            version: 30,
+            date: 1,
+            spis: {server.id: serverJson},
+            snippets: const {},
+            keys: const {},
+            container: const {},
+            history: const {},
+            settings: const {},
+          ).toJsonString(),
+        ) as Map<String, dynamic>;
+        raw.remove('pve');
+
+        await BackupV2.fromJson(raw).merge(force: true);
+
+        expect(
+          Stores.pve.fetch(server.id),
+          const PveConfig(addr: 'https://10.0.0.9:8006'),
+          reason:
+              'a password login with no pin, whatever pveIgnoreCert said; '
+              'and no PVE password, since SSH uses a password and that is '
+              'what a login sends',
+        );
+      });
+
+      /// Mixed versions syncing through one file. An older build ignores the
+      /// `pve` section and writes back only the server records it holds, so
+      /// what it can carry is the legacy `custom` fields — which this build
+      /// therefore writes too.
+      group('with a build from before server_pve', () {
+        final tsKey = StoreDefaults.defaultLastUpdateTsKey;
+
+        /// What an older build writes after taking [file]: no `pve` section,
+        /// its own schema version, and the server records as it read them —
+        /// renamed by its user when [rename] is set, which makes its record
+        /// the newer one.
+        Map<String, dynamic> throughOldBuild(
+          BackupV2 file, {
+          String? rename,
+          bool keepLegacy = true,
+        }) {
+          final raw = json.decode(file.toJsonString()) as Map<String, dynamic>;
+          raw
+            ..remove('pve')
+            ..['version'] = 30;
+          final spis = raw['spis'] as Map<String, dynamic>;
+          final record = spis[server.id] as Map<String, dynamic>;
+          if (!keepLegacy) {
+            (record['custom'] as Map?)?.removeWhere(
+              (k, _) => '$k'.startsWith('pve'),
+            );
+          }
+          if (rename != null) {
+            record['name'] = rename;
+            final ts = spis[tsKey] as Map<String, dynamic>;
+            ts[server.id] = (ts[server.id] as int) + 60000;
+          }
+          return raw;
+        }
+
+        test('this build writes the legacy fields as well', () async {
+          Stores.server.put(server);
+          Stores.pve.put(server.id, pve);
+
+          final raw =
+              json.decode((await BackupV2.loadFromStore()).toJsonString())
+                  as Map<String, dynamic>;
+          final custom = (raw['spis'][server.id] as Map)['custom'] as Map;
+          expect(custom['pveAddr'], pve.addr);
+          // A pin is one certificate; an older build can only say "any",
+          // which would hand the login to whoever answers.
+          expect(custom['pveIgnoreCert'], isFalse);
+          expect(custom.containsKey('pvePwd'), isFalse);
+          expect(raw['pve'][server.id], isA<Map>());
+        });
+
+        test('new → old → new keeps the token and the pin', () async {
+          Stores.server.put(server);
+          Stores.pve.put(server.id, pve);
+          final file = await BackupV2.loadFromStore();
+
+          final back = throughOldBuild(file, rename: 'renamed on an old build');
+          await BackupV2.fromJson(back).merge();
+
+          expect(Stores.server.fetchOneRaw(server.id)?.name, 'renamed on an old build');
+          expect(Stores.pve.fetch(server.id), pve);
+        });
+
+        test('an address changed on an older build is taken, token and pin dropped', () async {
+          Stores.server.put(server);
+          Stores.pve.put(server.id, pve);
+          final back = throughOldBuild(
+            await BackupV2.loadFromStore(),
+            rename: 'x',
+          );
+          final record = back['spis'][server.id] as Map;
+          (record['custom'] as Map)['pveAddr'] = 'https://10.0.0.3:8006';
+
+          await BackupV2.fromJson(back).merge();
+
+          // The token was never on the older device: kept, it would be sent
+          // to the new address.
+          expect(
+            Stores.pve.fetch(server.id),
+            const PveConfig(addr: 'https://10.0.0.3:8006'),
+          );
+        });
+
+        test('no PVE fields from an older build keeps the row here', () async {
+          Stores.server.put(server);
+          Stores.pve.put(server.id, pve);
+          final back = throughOldBuild(
+            await BackupV2.loadFromStore(),
+            rename: 'x',
+            keepLegacy: false,
+          );
+
+          await BackupV2.fromJson(back).merge();
+
+          // It cannot say "removed" any other way than "never had": absence
+          // is not read as a delete.
+          expect(Stores.server.fetchOneRaw(server.id)?.name, 'x');
+          expect(Stores.pve.fetch(server.id), pve);
+        });
+
+        test('restoring such a file is its state, PVE gone', () async {
+          Stores.server.put(server);
+          Stores.pve.put(server.id, pve);
+          final back = throughOldBuild(
+            await BackupV2.loadFromStore(),
+            keepLegacy: false,
+          );
+
+          await BackupV2.fromJson(back).merge(force: true);
+
+          expect(Stores.pve.fetch(server.id), isNull);
+        });
+      });
+
+      test('removing PVE still reaches another new build', () async {
+        Stores.server.put(server);
+        final raw =
+            json.decode((await BackupV2.loadFromStore()).toJsonString())
+                as Map<String, dynamic>;
+        // The file is the other device after it removed PVE: a newer record,
+        // no `pve` entry, and no legacy fields either.
+        final ts = raw['spis'][StoreDefaults.defaultLastUpdateTsKey] as Map;
+        ts[server.id] = (ts[server.id] as int) + 60000;
+        Stores.pve.put(server.id, pve);
+
+        await BackupV2.fromJson(raw).merge();
+
+        expect(Stores.pve.fetch(server.id), isNull);
+      });
+
+      test('a restored row keeps the timestamp the file carried', () async {
+        Stores.server.put(server);
+        Stores.pve.put(server.id, pve);
+        final raw =
+            json.decode((await BackupV2.loadFromStore()).toJsonString())
+                as Map<String, dynamic>;
+        final ts = raw['spis'][StoreDefaults.defaultLastUpdateTsKey] as Map;
+        final incoming = (ts[server.id] as int) + 60000;
+        ts[server.id] = incoming;
+        (raw['pve'] as Map)[server.id] = pve
+            .copyWith(tokenId: 'root@pam!other')
+            .toJson();
+
+        await BackupV2.fromJson(raw).merge();
+
+        expect(Stores.pve.fetch(server.id)?.tokenId, 'root@pam!other');
+        // Stamped with now, an older file would outrank a later edit made
+        // on another device.
+        expect(Stores.server.timestamps[server.id], incoming);
+      });
+
+      test('an unreadable entry leaves the credentials here', () async {
+        Stores.server.put(server);
+        Stores.pve.put(server.id, pve);
+        for (final bad in <Object>[
+          {'auth': 'token'},
+          'not an object',
+        ]) {
+          final raw =
+              json.decode((await BackupV2.loadFromStore()).toJsonString())
+                  as Map<String, dynamic>;
+          final ts = raw['spis'][StoreDefaults.defaultLastUpdateTsKey] as Map;
+          ts[server.id] = (ts[server.id] as int) + 60000;
+          (raw['pve'] as Map)[server.id] = bad;
+
+          await BackupV2.fromJson(raw).merge();
+
+          expect(Stores.pve.fetch(server.id), pve, reason: '$bad');
+        }
+      });
+
+      test('a server deleted by a merge is announced to PVE', () async {
+        // This group's database is opened without it; the cascade is the
+        // subject here.
+        SqliteDb.instance.execute('PRAGMA foreign_keys = ON;');
+        Stores.server.put(server);
+        Stores.pve.put(server.id, pve);
+        final raw =
+            json.decode((await BackupV2.loadFromStore()).toJsonString())
+                as Map<String, dynamic>;
+        final spis = raw['spis'] as Map;
+        final ts = spis[StoreDefaults.defaultLastUpdateTsKey] as Map;
+        ts[server.id] = (ts[server.id] as int) + 60000;
+        spis.remove(server.id);
+        (raw['pve'] as Map).remove(server.id);
+
+        var events = 0;
+        final sub = Stores.pve.watch().listen((_) => events++);
+        addTearDown(sub.cancel);
+
+        await BackupV2.fromJson(raw).merge();
+        await Future<void>.delayed(Duration.zero);
+
+        expect(Stores.server.fetchOneRaw(server.id), isNull);
+        expect(Stores.pve.fetchAll(), isEmpty);
+        expect(events, greaterThan(0));
+      });
     });
 
     test('leaves the Agent local-exec permission out of the file', () async {

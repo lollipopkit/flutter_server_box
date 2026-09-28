@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
 import 'package:extended_image/extended_image.dart';
@@ -24,6 +25,7 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/connection_stats.dart';
 import 'package:server_box/data/store/private_key.dart';
+import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
@@ -60,6 +62,7 @@ void main() {
     await openTestDb();
     getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
     getIt.registerSingleton<ServerStore>(ServerStore());
+    getIt.registerSingleton<PveStore>(PveStore());
     // The list draws what has happened to these machines lately, which is
     // the one thing in the app that records a time.
     getIt.registerSingleton<ConnectionStatsStore>(ConnectionStatsStore.instance);
@@ -695,10 +698,18 @@ void main() {
       tester.getRect(find.text('CPU').first),
       rectMoreOrLessEquals(grownLabel, epsilon: 2),
     );
-    // Under the image, which is a share of the column's width.
+    // Two columns: the image heads the facts column, beside the readings
+    // rather than above them, so no chart is pushed down by it. Its height
+    // is a share of that column's width, capped.
     final image = tester.getRect(find.byType(ExtendedImage));
-    expect(image.height, moreOrLessEquals(image.width * 0.3, epsilon: 1));
-    expect(grownLabel.top, greaterThan(image.bottom));
+    expect(image.left, greaterThanOrEqualTo(grownChart.right));
+    expect(
+      image.height,
+      moreOrLessEquals(
+        math.min(image.width * 0.3, ServerCardSizes.logoMaxHeight),
+        epsilon: 1,
+      ),
+    );
     expect(tester.takeException(), isNull);
   });
 

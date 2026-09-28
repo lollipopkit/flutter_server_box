@@ -1,0 +1,154 @@
+{
+  "version": {
+    "libvirt": "11.3.0",
+    "hypervisor": "QEMU",
+    "hypervisor_version": "10.0.13"
+  },
+  "domains": [
+    {
+      "uuid": "8a2ed2a2-83e1-4c41-ad0a-a57d54d0d649",
+      "name": "cirros-run",
+      "state": "running",
+      "state_code": 1,
+      "reason_code": 1,
+      "reason": "booted",
+      "autostart": true,
+      "persistent": true,
+      "vcpu_current": 2,
+      "vcpu_max": 2,
+      "mem_current_kib": 262144,
+      "mem_max_kib": 262144,
+      "counters": {
+        "cpu_time_ns": 7550532000,
+        "cpu_user_ns": 4926944000,
+        "cpu_system_ns": 2623588000,
+        "balloon_rss_kib": 285628,
+        "balloon_available_kib": 198384,
+        "balloon_unused_kib": 151264,
+        "balloon_usable_kib": 157240,
+        "blocks": [
+          {
+            "name": "vda",
+            "path": "/var/lib/libvirt/images/run1.qcow2",
+            "rd_bytes": 26923008,
+            "wr_bytes": 26714112,
+            "rd_reqs": 923,
+            "wr_reqs": 292,
+            "capacity": 117440512,
+            "allocation": 29622272,
+            "physical": 29569024
+          },
+          {
+            "name": "vdb",
+            "path": "/var/lib/libvirt/images/extra.qcow2",
+            "rd_bytes": 3219456,
+            "wr_bytes": 0,
+            "rd_reqs": 147,
+            "wr_reqs": 0,
+            "capacity": 1073741824,
+            "allocation": 0,
+            "physical": 204800
+          }
+        ],
+        "nets": [
+          {
+            "name": "vnet0",
+            "rx_bytes": 13386,
+            "tx_bytes": 7848,
+            "rx_pkts": 196,
+            "tx_pkts": 100
+          },
+          {
+            "name": "vnet1",
+            "rx_bytes": 12948,
+            "tx_bytes": 2168,
+            "rx_pkts": 187,
+            "tx_pkts": 20
+          }
+        ]
+      }
+    },
+    {
+      "uuid": "24a8bbc6-deaa-4be0-9699-a1d801faa927",
+      "name": "cirros-paused",
+      "state": "paused",
+      "state_code": 3,
+      "reason_code": 1,
+      "reason": "user",
+      "autostart": false,
+      "persistent": true,
+      "vcpu_current": 1,
+      "vcpu_max": 1,
+      "mem_current_kib": 262144,
+      "mem_max_kib": 262144,
+      "counters": {
+        "cpu_time_ns": 4500981000,
+        "cpu_user_ns": 2861724000,
+        "cpu_system_ns": 1639256000,
+        "balloon_rss_kib": 262100,
+        "balloon_available_kib": 189780,
+        "balloon_unused_kib": 143512,
+        "balloon_usable_kib": 149388,
+        "blocks": [
+          {
+            "name": "vda",
+            "path": "/var/lib/libvirt/images/paused1.qcow2",
+            "rd_bytes": 26914816,
+            "wr_bytes": 26370048,
+            "rd_reqs": 921,
+            "wr_reqs": 249,
+            "capacity": 117440512,
+            "allocation": 29425664,
+            "physical": 29372416
+          }
+        ],
+        "nets": [
+          {
+            "name": "vnet2",
+            "rx_bytes": 11626,
+            "tx_bytes": 1312,
+            "rx_pkts": 163,
+            "tx_pkts": 10
+          }
+        ]
+      }
+    },
+    {
+      "uuid": "1438b9e3-f647-47ee-8ed2-6dbc3adccd68",
+      "name": "it's-\"odd\"",
+      "state": "stopped",
+      "state_code": 5,
+      "reason_code": 6,
+      "reason": "failed",
+      "autostart": false,
+      "persistent": true,
+      "vcpu_current": 1,
+      "vcpu_max": 1,
+      "mem_current_kib": 262144,
+      "mem_max_kib": 262144,
+      "counters": {
+        "cpu_time_ns": 610000000,
+        "cpu_user_ns": 360000000,
+        "cpu_system_ns": 250000000,
+        "balloon_rss_kib": null,
+        "balloon_available_kib": null,
+        "balloon_unused_kib": null,
+        "balloon_usable_kib": null,
+        "blocks": [
+          {
+            "name": "vda",
+            "path": "/var/lib/libvirt/images/off1.qcow2",
+            "rd_bytes": null,
+            "wr_bytes": null,
+            "rd_reqs": null,
+            "wr_reqs": null,
+            "capacity": 117440512,
+            "allocation": 200704,
+            "physical": 196616
+          }
+        ],
+        "nets": []
+      }
+    }
+  ]
+}

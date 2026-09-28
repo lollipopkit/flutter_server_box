@@ -3,7 +3,9 @@ title: Implementation Architecture
 description: Implementation details for Server Box's Flutter, storage, connection, and native layers
 ---
 
-This page covers where the code lives and how the App is assembled. For the system-level model—layers, transports and capabilities, the two status paths, migrations, and security—see [System Architecture](/docs/principles/architecture/).
+This page maps the source tree to the App's implementation. For the broader
+system design—including layers, transports, capabilities, status collection,
+migrations, and security—see [System Architecture](/docs/principles/architecture/).
 
 ## Layers
 
@@ -34,35 +36,51 @@ This page covers where the code lives and how the App is assembled. For the syst
 
 ## Application foundation
 
-`lib/main.dart` initializes dependencies, opens the encrypted local database, initializes the Rust bindings, and calls `runApp`. The root Widget provides the theme, routing structure, and Riverpod `ProviderScope` used for dependency injection.
+`lib/main.dart` initializes dependencies, opens the encrypted local database,
+initializes Rust bindings, and starts Flutter with `runApp`. The root Widget
+sets up the theme and routes and creates the Riverpod `ProviderScope` used for
+dependency injection.
 
-The home page provides tabs for servers, terminals, files, and snippets. Pages display state and receive user interaction; providers, services, and stores own operations and state transitions.
+The home page provides tabs for servers, terminals, files, and snippets. Pages
+render state and handle interaction. Providers, services, and stores perform
+operations and manage state changes.
 
 ## State management: Riverpod
 
-The project uses `riverpod_generator` to generate type-safe providers:
+The project uses `riverpod_generator` to generate typed providers:
 
 - `NotifierProvider` manages synchronous state with update methods.
 - `AsyncNotifierProvider` manages loading, success, and error states.
 - `StreamProvider` exposes continuously produced data.
 - Family providers maintain independent state for different servers or other parameters.
 
-Providers do not depend on `BuildContext`, so services and business logic can be tested independently. [Riverpod patterns](/docs/development/state/) covers the declaration and lifecycle detail.
+Providers do not require `BuildContext`. This keeps services and business
+logic independent of the Widget tree. See [Riverpod patterns](/docs/development/state/)
+for provider declarations and lifecycle details.
 
 ## Data persistence: encrypted SQLite
 
-The App's authoritative local store is the encrypted SQLite file `store.db`. `SqliteDb` opens the connection and applies database encryption and the `foreign_keys` pragma.
+The encrypted SQLite file `store.db` is the App's source of truth for local
+data. `SqliteDb` opens it, configures database encryption, and enables the
+`foreign_keys` pragma.
 
 Data uses one of two shapes:
 
-- **Key-value table `kv(store, key, value, updated_at)`**: settings and history that do not need relational queries. Values are JSON and require `toJson` when written through `SqliteStore.set`.
-- **Entity tables**: servers, private keys, snippets, port forwards, connection statistics, Agent conversations, and related records. These use real columns, foreign keys, constraints, and indexes.
+- **Key-value table `kv(store, key, value, updated_at)`** holds settings and
+  history that do not need relational queries. Values are JSON; values written
+  through `SqliteStore.set` must provide `toJson`.
+- **Entity tables** hold servers, private keys, snippets, port forwards,
+  connection statistics, Agent conversations, and related records. They use
+  columns, foreign keys, constraints, and indexes.
 
-Drift owns the DDL in `lib/data/store/db.dart`, but does not open the connection or replace the hand-written synchronous store queries. Entity primary keys are generated IDs; user-provided names are ordinary unique columns. List and map fields are stored in child tables.
+Drift defines the DDL in `lib/data/store/db.dart`. `SqliteDb` manages the
+connection, and store queries remain hand-written and synchronous. Entity
+primary keys are generated IDs; user-provided names are ordinary columns with
+unique constraints. Lists and maps are stored in child tables.
 
 ## Dependency injection
 
-Services and stores are combined through:
+Services and stores receive dependencies through three patterns:
 
 1. **Providers**: expose dependencies and state to the UI.
 2. **GetIt**: provide global service instances where service location is appropriate.
@@ -70,6 +88,11 @@ Services and stores are combined through:
 
 ## Platform and Rust integration
 
-Flutter provides the cross-platform UI. Platform integrations provide notifications, background services, filesystem access, and other system features. Rust APIs are exposed to Dart through `crates/sbm_ffi` and flutter_rust_bridge; generated bindings live in `lib/src/rust/`.
+Flutter supplies the cross-platform UI. Platform integrations provide
+notifications, background services, filesystem access, and other operating
+system features. The App exposes Rust APIs to Dart through `crates/sbm_ffi`
+and flutter_rust_bridge; generated bindings are in `lib/src/rust/`.
 
-`crates/sbm_parser` is the shared pure parser. `crates/sbm_native` is used only by Monitor agent for sampling on the server itself. The App never calls `sbm_native` on a remote host.
+`crates/sbm_parser` contains parsing logic shared by the projects.
+`crates/sbm_native` collects metrics for Monitor agent on the machine running
+the agent. The App does not invoke `sbm_native` on remote servers.

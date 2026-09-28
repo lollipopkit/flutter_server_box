@@ -1,0 +1,22 @@
+[
+  {
+    "name": "sbx-disk",
+    "vmstate": 0,
+    "description": "disk only",
+    "snaptime": 1790335982
+  },
+  {
+    "description": "",
+    "snaptime": 1790335983,
+    "parent": "sbx-disk",
+    "name": "sbx-mem",
+    "vmstate": 1
+  },
+  {
+    "digest": "1f6e4d2111b8277e836b031bfddbde430bc4ebfd",
+    "name": "current",
+    "parent": "sbx-disk",
+    "description": "You are here!",
+    "running": 1
+  }
+]

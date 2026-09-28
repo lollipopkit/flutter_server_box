@@ -9,27 +9,31 @@ description: 主机无法响应时，通过带外管理访问服务器
 请把电源操作当作按下远程服务器上的物理电源按钮。
 :::
 
-BMC（Baseboard Management Controller）是服务器主板上的独立计算机，拥有独立供电和网络接口。即使主机关机、系统卡死，或尚未安装操作系统，BMC 通常仍然可以响应；SSH 和 Monitor agent 在这些情况下都无法工作。
+BMC（Baseboard Management Controller）是服务器主板上的一台小型计算机，使用独立的电源和
+网络连接。即使主机关机、无响应或尚未安装操作系统，BMC 仍可能可访问。SSH 和 Monitor agent
+依赖主机运行，因此这些情况下无法提供连接。
 
-Server Box 通过 **Redfish** 与 BMC 通信。Redfish 是企业级服务器常见的 HTTPS API。仅支持 IPMI 的旧设备不在当前支持范围内，具体原因见[BMC 工作原理](/docs/zh/principles/bmc/)。
+Server Box 通过 **Redfish** 连接 BMC。Redfish 是企业服务器使用的 HTTPS 管理 API。仅支持
+IPMI 的 BMC 暂不支持；设计原因见[BMC 工作原理](/docs/zh/principles/bmc/)。
 
 ## 可用功能
 
-- **读取电源状态**：服务器无法通过 SSH 或 Monitor agent 访问时，仍可判断主机是开机还是关机。
-- **读取硬件传感器**：包括进风口和 CPU 温度、风扇转速以及整机功耗。数据来自 BMC，而不是操作系统。
-- **电源控制**：开机、请求操作系统关机或重启，以及执行电源循环和强制断电。
+- **电源状态：**即使 SSH 和 Monitor agent 不可用，也能查看主机是开机还是关机。
+- **硬件传感器：**读取 BMC 上报的进风口和 CPU 温度、风扇转速及机箱功耗。
+- **电源控制：**开机、请求操作系统关机或重启，或直接执行电源循环和强制断电。
 
-BMC 是 SSH 的补充通道，不会替代 SSH。一台服务器可以同时配置 SSH、Monitor agent 和 BMC。
+BMC 用于补充 SSH，不会替代常规主机连接。同一台服务器可以同时配置 SSH、Monitor agent 和 BMC。
 
 ## 配置 BMC
 
-1. 打开服务器编辑页，找到 **BMC（Redfish）** 部分。
-2. 在**地址**中填写 BMC 的地址，而不是主机操作系统的地址，例如 `https://10.0.0.9`。只填写协议、主机和端口；Redfish 路径由 App 处理。
-3. 在**账户**中选择已有 BMC 账户，或创建一个新账户。
-4. 打开**证书**，将显示的 fingerprint 与 BMC 网页界面中的 fingerprint 对比，确认无误后接受。
-5. 保存服务器配置。
+1. 打开服务器编辑页，找到 **BMC（Redfish）**。
+2. 填写 BMC 地址，不要填写主机操作系统的地址。例如 `https://10.0.0.9`；只需填写协议、
+   主机和端口，Redfish 路径由 App 补全。
+3. 选择已有 BMC 账户，或新建账户。
+4. 打开**证书**，将 fingerprint 与 BMC 网页界面显示的值核对。确认设备无误后再接受证书。
+5. 保存服务器。
 
-保存后，服务器详情页会显示 BMC 卡片，并在电源操作中提供硬件级功能。
+保存后，服务器详情页会显示 BMC 卡片，其中包含 BMC 上报的状态和硬件电源控制。
 
 ## BMC 账户
 

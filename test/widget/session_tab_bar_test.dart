@@ -112,6 +112,52 @@ void main() {
     expect(find.text('Add'), findsOneWidget);
   });
 
+  testWidgets('the chevron turns while what it opens is open', (tester) async {
+    // The sheet a tap opens covers this bar, so it says nothing about that.
+    // The case this is for is the two-column Virtualization tab, whose picker
+    // opens *below* the bar and leaves it on screen as the only thing that can
+    // say it is there.
+    Future<void> pumpOpen({required bool open}) => tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(SessionTabBar.height),
+            child: SessionSwitcherLabel(
+              name: 'pve-host',
+              position: 1,
+              total: 2,
+              icon: Icons.dns_outlined,
+              open: open,
+              onTap: () {},
+            ),
+          ),
+          body: const SizedBox.shrink(),
+        ),
+      ),
+    );
+
+    await pumpOpen(open: false);
+    final down = tester.getTopLeft(find.byIcon(Icons.expand_more));
+    final centre = tester.getCenter(find.byIcon(Icons.expand_more));
+
+    await pumpOpen(open: true);
+    // Part way, not yet there: a swap to `expand_less` would jump between
+    // frames, and the same glyph going round is what makes it read as the
+    // label turning rather than as a second icon appearing beside the name.
+    await tester.pump(Durations.short3 ~/ 2);
+    final turning = tester.getTopLeft(find.byIcon(Icons.expand_more));
+    await tester.pump(Durations.short3);
+    final up = tester.getTopLeft(find.byIcon(Icons.expand_more));
+
+    expect(find.byIcon(Icons.expand_less), findsNothing, reason: 'turned');
+    expect(turning, isNot(down));
+    expect(turning, isNot(up));
+    expect(up, isNot(down));
+    // About the icon's own centre, so the label it sits in does not move. The
+    // top-left does, by the icon's own 18: that is what turning looks like.
+    expect(tester.getCenter(find.byIcon(Icons.expand_more)), centre);
+  });
+
   testWidgets('picking a row selects it, by position', (tester) async {
     final picked = <int>[];
     await pump(tester, index: 1, onTap: picked.add);

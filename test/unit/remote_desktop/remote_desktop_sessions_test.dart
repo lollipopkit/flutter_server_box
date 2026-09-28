@@ -25,6 +25,21 @@ void main() {
     expect(state.sessions.keys, ['two']);
   });
 
+  test('a console accepts input like a tab session', () {
+    // A virtual machine's graphical console lives in `consoles`; resolving
+    // input through `sessions` alone dropped every key and pointer event.
+    var state = const RemoteDesktopSessionsState();
+    state = state.put(RemoteDesktopSessionView(profile: profile('tab')));
+    state = state.putConsole(RemoteDesktopSessionView(profile: profile('vm')));
+    expect(state.acceptsInput('tab'), isTrue);
+    expect(state.acceptsInput('vm'), isTrue);
+    expect(state.acceptsInput('missing'), isFalse);
+
+    state = state.put(state.byId('vm')!.copyWith(viewOnly: true));
+    expect(state.consoles['vm']!.viewOnly, isTrue);
+    expect(state.acceptsInput('vm'), isFalse);
+  });
+
   test('session diagnostics never include frame or saved credentials', () {
     final secret = profile('one').copyWith(password: 'secret');
     final view = RemoteDesktopSessionView(

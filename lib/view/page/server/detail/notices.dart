@@ -99,7 +99,7 @@ extension on _ServerDetailPageState {
       text: libL10n.edit,
       onTap: () => ServerEditPage.route.go(
         context,
-        args: SpiRequiredArgs(si.spi),
+        args: ServerEditArgs(si.spi),
       ),
     );
 

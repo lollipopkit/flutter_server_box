@@ -190,7 +190,7 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> {
     final size = entry.size ?? (await _backend.stat(fullPath))?.size ?? 0;
     if (size > Miscs.editorMaxSize) {
       if (!mounted) return;
-      context.showRoundDialog(
+      await context.showRoundDialog(
         title: libL10n.attention,
         child: Text(
           l10n.fileTooLarge(

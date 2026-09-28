@@ -1,0 +1,252 @@
+SrvBoxSep.b64.dmlydC5ob3N0LnBjaQ==
+pci_0000_00_00_0
+<device>
+  <name>pci_0000_00_00_0</name>
+  <path>/sys/devices/pci0000:00/0000:00:00.0</path>
+  <parent>computer</parent>
+  <capability type='pci'>
+    <class>0x060000</class>
+    <domain>0</domain>
+    <bus>0</bus>
+    <slot>0</slot>
+    <function>0</function>
+    <product id='0x1237'>440FX - 82441FX PMC [Natoma]</product>
+    <vendor id='0x8086'>Intel Corporation</vendor>
+  </capability>
+</device>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5ob3N0LnBjaQ==
+pci_0000_00_01_0
+<device>
+  <name>pci_0000_00_01_0</name>
+  <path>/sys/devices/pci0000:00/0000:00:01.0</path>
+  <parent>computer</parent>
+  <capability type='pci'>
+    <class>0x060100</class>
+    <domain>0</domain>
+    <bus>0</bus>
+    <slot>1</slot>
+    <function>0</function>
+    <product id='0x7000'>82371SB PIIX3 ISA [Natoma/Triton II]</product>
+    <vendor id='0x8086'>Intel Corporation</vendor>
+  </capability>
+</device>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5ob3N0LnBjaQ==
+pci_0000_00_01_1
+<device>
+  <name>pci_0000_00_01_1</name>
+  <path>/sys/devices/pci0000:00/0000:00:01.1</path>
+  <parent>computer</parent>
+  <driver>
+    <name>ata_piix</name>
+  </driver>
+  <capability type='pci'>
+    <class>0x010180</class>
+    <domain>0</domain>
+    <bus>0</bus>
+    <slot>1</slot>
+    <function>1</function>
+    <product id='0x7010'>82371SB PIIX3 IDE [Natoma/Triton II]</product>
+    <vendor id='0x8086'>Intel Corporation</vendor>
+  </capability>
+</device>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5ob3N0LnBjaQ==
+pci_0000_00_01_2
+<device>
+  <name>pci_0000_00_01_2</name>
+  <path>/sys/devices/pci0000:00/0000:00:01.2</path>
+  <parent>computer</parent>
+  <capability type='pci'>
+    <class>0x0c0300</class>
+    <domain>0</domain>
+    <bus>0</bus>
+    <slot>1</slot>
+    <function>2</function>
+    <product id='0x7020'>82371SB PIIX3 USB [Natoma/Triton II]</product>
+    <vendor id='0x8086'>Intel Corporation</vendor>
+  </capability>
+</device>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5ob3N0LnBjaQ==
+pci_0000_00_01_3
+<device>
+  <name>pci_0000_00_01_3</name>
+  <path>/sys/devices/pci0000:00/0000:00:01.3</path>
+  <parent>computer</parent>
+  <capability type='pci'>
+    <class>0x068000</class>
+    <domain>0</domain>
+    <bus>0</bus>
+    <slot>1</slot>
+    <function>3</function>
+    <product id='0x7113'>82371AB/EB/MB PIIX4 ACPI</product>
+    <vendor id='0x8086'>Intel Corporation</vendor>
+  </capability>
+</device>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5ob3N0LnBjaQ==
+pci_0000_00_02_0
+<device>
+  <name>pci_0000_00_02_0</name>
+  <path>/sys/devices/pci0000:00/0000:00:02.0</path>
+  <parent>computer</parent>
+  <capability type='pci'>
+    <class>0x030000</class>
+    <domain>0</domain>
+    <bus>0</bus>
+    <slot>2</slot>
+    <function>0</function>
+    <product id='0x1111'/>
+    <vendor id='0x1234'/>
+  </capability>
+</device>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5ob3N0LnBjaQ==
+pci_0000_00_03_0
+<device>
+  <name>pci_0000_00_03_0</name>
+  <path>/sys/devices/pci0000:00/0000:00:03.0</path>
+  <parent>computer</parent>
+  <driver>
+    <name>virtio-pci</name>
+  </driver>
+  <capability type='pci'>
+    <class>0x00ff00</class>
+    <domain>0</domain>
+    <bus>0</bus>
+    <slot>3</slot>
+    <function>0</function>
+    <product id='0x1002'>Virtio memory balloon</product>
+    <vendor id='0x1af4'>Red Hat, Inc.</vendor>
+  </capability>
+</device>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5ob3N0LnBjaQ==
+pci_0000_00_05_0
+<device>
+  <name>pci_0000_00_05_0</name>
+  <path>/sys/devices/pci0000:00/0000:00:05.0</path>
+  <parent>computer</parent>
+  <capability type='pci'>
+    <class>0x060400</class>
+    <domain>0</domain>
+    <bus>0</bus>
+    <slot>5</slot>
+    <function>0</function>
+    <product id='0x0001'>QEMU PCI-PCI bridge</product>
+    <vendor id='0x1b36'>Red Hat, Inc.</vendor>
+    <capability type='pci-bridge'/>
+  </capability>
+</device>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5ob3N0LnBjaQ==
+pci_0000_00_08_0
+<device>
+  <name>pci_0000_00_08_0</name>
+  <path>/sys/devices/pci0000:00/0000:00:08.0</path>
+  <parent>computer</parent>
+  <driver>
+    <name>virtio-pci</name>
+  </driver>
+  <capability type='pci'>
+    <class>0x078000</class>
+    <domain>0</domain>
+    <bus>0</bus>
+    <slot>8</slot>
+    <function>0</function>
+    <product id='0x1003'>Virtio console</product>
+    <vendor id='0x1af4'>Red Hat, Inc.</vendor>
+  </capability>
+</device>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5ob3N0LnBjaQ==
+pci_0000_00_12_0
+<device>
+  <name>pci_0000_00_12_0</name>
+  <path>/sys/devices/pci0000:00/0000:00:12.0</path>
+  <parent>computer</parent>
+  <driver>
+    <name>virtio-pci</name>
+  </driver>
+  <capability type='pci'>
+    <class>0x020000</class>
+    <domain>0</domain>
+    <bus>0</bus>
+    <slot>18</slot>
+    <function>0</function>
+    <product id='0x1000'>Virtio network device</product>
+    <vendor id='0x1af4'>Red Hat, Inc.</vendor>
+  </capability>
+</device>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5ob3N0LnBjaQ==
+pci_0000_00_1e_0
+<device>
+  <name>pci_0000_00_1e_0</name>
+  <path>/sys/devices/pci0000:00/0000:00:1e.0</path>
+  <parent>computer</parent>
+  <capability type='pci'>
+    <class>0x060400</class>
+    <domain>0</domain>
+    <bus>0</bus>
+    <slot>30</slot>
+    <function>0</function>
+    <product id='0x0001'>QEMU PCI-PCI bridge</product>
+    <vendor id='0x1b36'>Red Hat, Inc.</vendor>
+    <capability type='pci-bridge'/>
+  </capability>
+</device>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5ob3N0LnBjaQ==
+pci_0000_00_1f_0
+<device>
+  <name>pci_0000_00_1f_0</name>
+  <path>/sys/devices/pci0000:00/0000:00:1f.0</path>
+  <parent>computer</parent>
+  <capability type='pci'>
+    <class>0x060400</class>
+    <domain>0</domain>
+    <bus>0</bus>
+    <slot>31</slot>
+    <function>0</function>
+    <product id='0x0001'>QEMU PCI-PCI bridge</product>
+    <vendor id='0x1b36'>Red Hat, Inc.</vendor>
+    <capability type='pci-bridge'/>
+  </capability>
+</device>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5ob3N0LnBjaQ==
+pci_0000_01_01_0
+<device>
+  <name>pci_0000_01_01_0</name>
+  <path>/sys/devices/pci0000:00/0000:00:05.0/0000:01:01.0</path>
+  <parent>pci_0000_00_05_0</parent>
+  <driver>
+    <name>virtio-pci</name>
+  </driver>
+  <capability type='pci'>
+    <class>0x010000</class>
+    <domain>0</domain>
+    <bus>1</bus>
+    <slot>1</slot>
+    <function>0</function>
+    <product id='0x1004'>Virtio SCSI</product>
+    <vendor id='0x1af4'>Red Hat, Inc.</vendor>
+  </capability>
+</device>
+
+SbVirtRc=0

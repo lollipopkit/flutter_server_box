@@ -148,7 +148,11 @@ extension _Widgets on _RemoteDesktopProfilesPageState {
                 icon: const Icon(Icons.arrow_back),
                 onPressed: widget.onBack,
               ),
-        title: TwoLineText(up: l10n.remoteDesktop, down: widget.args.spi.name),
+        title: TwoLineText(
+          up: l10n.remoteDesktop,
+          down: widget.args.spi.name,
+          mark: const BetaTag(),
+        ),
         actions: [
           Btn.icon(
             text: libL10n.add,

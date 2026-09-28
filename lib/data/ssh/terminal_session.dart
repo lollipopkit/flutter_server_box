@@ -52,13 +52,22 @@ class TerminalRemoteAccessUnavailable implements Exception {
   const TerminalRemoteAccessUnavailable();
 }
 
+/// The session was closed while [TerminalSession.connect] was on its way:
+/// the connection it made has been hung up, since nothing else would.
+class TerminalSessionClosed implements Exception {
+  const TerminalSessionClosed();
+}
+
 /// Retry transport failures after launch, but leave permission and auth
 /// failures for the user to resolve.
 bool isRetryableTerminalConnectionError(Object error) {
-  if (error is TerminalRemoteAccessUnavailable || error is SSHAuthError) {
+  if (error is TerminalRemoteAccessUnavailable ||
+      error is TerminalSessionClosed ||
+      error is SSHAuthError) {
     return false;
   }
   if (error is MonitorHttpErr) return error.type == MonitorHttpErrType.net;
+  if (error is TerminalConsoleErr) return error.retryable;
   return error is TimeoutException ||
       error is SocketException ||
       isJumpFailoverError(error);
@@ -79,6 +88,17 @@ class TerminalSession {
   TerminalSession({required this.source, ShellBackend? backend})
     : _backend = backend;
 
+  static int _serials = 0;
+
+  /// Sessions in the order they were made: a larger one was made later. What
+  /// tells a shell started before some moment from one started after it —
+  /// see `VirtTextConsoles.close`.
+  final int serial = _serials++;
+
+  /// The [serial] the next session will have: every session made so far has
+  /// a smaller one.
+  static int get nextSerial => _serials;
+
   /// Where this terminal's shell comes from — a server, or this device.
   final TerminalSource source;
 
@@ -86,10 +106,23 @@ class TerminalSession {
   /// needs one asks for it here; everything else works from [source].
   Spi? get spi => switch (source) {
     ServerSource(:final spi) => spi,
-    LocalSource() => null,
+    LocalSource() || ConsoleSource() => null,
   };
 
   final terminal = Terminal(platform: hostTerminalPlatform);
+
+  /// Typed into every shell a reconnect opens for this session: what makes a
+  /// shell this session's. A guest's `virsh console` — without it, the fresh
+  /// shell would be one on the host, under a page still showing the guest's
+  /// console. Kept here rather than on the page so that a session taken back
+  /// from `VirtTextConsoles` has it too.
+  String? reenter;
+
+  /// Whether the command that makes a shell this session's — the first one,
+  /// and [reenter] — runs sudo, whose prompt comes up at once: answered with
+  /// the password typed this session (`SudoPassword.typed`), where there is
+  /// one. sudo's timestamp is per terminal, so every new shell asks again.
+  bool answersSudo = false;
 
   /// Where this terminal's shell comes from. Usually SSH; for a server reached
   /// only through its monitor agent it is the agent's own PTY, which answers
@@ -101,6 +134,10 @@ class TerminalSession {
   ShellBackend? _backend;
 
   ShellSession? _foreground;
+
+  /// Moves on with every [close], so a [connect] that was on its way does not
+  /// install what it made into a session that has ended.
+  int _closes = 0;
 
   /// Whether closing this session should close [backend] with it.
   ///
@@ -141,6 +178,8 @@ class TerminalSession {
   /// having to know which it got.
   void adopt(SSHClient? client, {MonitorRemoteAccess? granted}) {
     if (_backend != null) return;
+    // A console is opened for itself, by [connect]: nobody else holds one.
+    if (source is ConsoleSource) return;
     // Nothing to adopt on this device: there is no connection anybody else
     // could be holding, so the shell this session opens is its own.
     if (source case final LocalSource local) {
@@ -177,8 +216,29 @@ class TerminalSession {
     MonitorRemoteAccess? granted,
     BuildContext? context,
   }) async {
-    _ownsBackend = true;
+    final closes = _closes;
     final session = Redact.id(source.id);
+
+    // Owned from the moment it is installed, and installed only if the
+    // session is still open: a close while this was connecting has already
+    // let go of the backend, and is not called again for this one.
+    ShellBackend install(ShellBackend backend) {
+      if (closes != _closes) {
+        try {
+          backend.close();
+        } catch (e, st) {
+          Loggers.app.warning('Failed to close shell backend', e, st);
+        }
+        throw const TerminalSessionClosed();
+      }
+      _ownsBackend = true;
+      return _backend = backend;
+    }
+
+    if (source case final ConsoleSource console) {
+      Diag.crumb(SbDiag.terminal, 'open console', data: {'session': session});
+      return install(await console.connect());
+    }
 
     if (source case final LocalSource local) {
       // Which of the three this is, is what a report saying "the terminal
@@ -194,7 +254,7 @@ class TerminalSession {
         'kind': kind,
         'session': session,
       });
-      return _backend = _localBackend(local);
+      return install(_localBackend(local));
     }
 
     final server = spi!;
@@ -207,7 +267,7 @@ class TerminalSession {
       Diag.crumb(SbDiag.terminal, 'open local server shell', data: {
         'session': session,
       });
-      return _backend = LocalShellBackend();
+      return install(LocalShellBackend());
     }
 
     var currentGrant = granted;
@@ -233,7 +293,7 @@ class TerminalSession {
       Diag.crumb(SbDiag.terminal, 'open agent shell', data: {
         'session': session,
       });
-      return _backend = agent;
+      return install(agent);
     }
 
     if (server.sshOn == null) throw const TerminalRemoteAccessUnavailable();
@@ -252,7 +312,7 @@ class TerminalSession {
           ),
     );
     Diag.crumb(SbDiag.terminal, 'ssh shell ready', data: {'session': session});
-    return _backend = SshShellBackend(client);
+    return install(SshShellBackend(client));
   }
 
   /// A shell on this device, in its Linux userland or on the host.
@@ -369,6 +429,7 @@ class TerminalSession {
       'session': Redact.id(source.id),
       'owns': '$_ownsBackend',
     });
+    _closes++;
     final foreground = _foreground;
     if (foreground != null) {
       try {

@@ -155,6 +155,7 @@ final class BakSyncer extends SyncIface {
         history: backup.history,
         settings: null,
         lastModTime: backup.lastModTime,
+        legacyPve: backup.legacyPve,
       ),
       _ => mergeable,
     };

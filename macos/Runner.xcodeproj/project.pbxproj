@@ -316,6 +316,7 @@
 		};
 		A1B2C3D4E5F60718293A4B5C /* Fix Objective-C Framework Resources */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);

@@ -59,7 +59,7 @@ abstract final class CrashReportDialog {
         // Copied before the page opens, so it is already on the clipboard when
         // the user gets to the text box.
         Pfs.copy(report);
-        Urls.newIssue.launchUrl();
+        await Urls.newIssue.launchUrl();
         return true;
     }
   }

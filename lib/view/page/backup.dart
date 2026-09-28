@@ -12,6 +12,7 @@ import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/model/app/bak/backup_service.dart';
 import 'package:server_box/data/model/app/bak/backup_source.dart';
 import 'package:server_box/data/model/app/bak/utils.dart';
+import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/snippet.dart';
@@ -581,7 +582,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
           title: libL10n.snippet,
           modelDef: Snippet.example.toJson(),
         );
-        if (data == null) return;
+        if (data == null || !context.mounted) return;
         String str;
         try {
           str = utf8.decode(data);
@@ -596,7 +597,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
             return json.decode(s) as List;
           }, text),
         );
-        if (list == null || list.isEmpty) return;
+        if (list == null || list.isEmpty || !context.mounted) return;
         final snippets = <Snippet>[];
         final errs = <String>[];
         for (final item in list) {
@@ -612,7 +613,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
           return;
         }
         if (errs.isNotEmpty) {
-          context.showRoundDialog(
+          await context.showRoundDialog(
             title: libL10n.error,
             child: SingleChildScrollView(child: Text(errs.join('\n'))),
           );
@@ -916,7 +917,9 @@ extension on _BackupPageState {
   void _onBulkImportServers(BuildContext context) async {
     final data = await context.showImportDialog(
       title: libL10n.server,
-      modelDef: Spix.example.toJson(),
+      // `pve` beside the server's own fields: it is a table of its own, not
+      // part of `Spi`, and this is the one place the import shape is shown.
+      modelDef: {...Spix.example.toJson(), 'pve': PveConfig.example.toJson()},
     );
     if (data == null) return;
     String text;
@@ -933,7 +936,10 @@ extension on _BackupPageState {
       final (spis, err) = await context.showLoadingDialog(
         fn: () => Computer.shared.start((val) {
           final list = json.decode(val) as List;
-          return list.map((e) => Spi.fromJson(e)).toList();
+          return [
+            for (final e in list)
+              (spi: Spi.fromJson(e), pve: PveConfig.fromServerRecord(e)),
+          ];
         }, text),
       );
       if (err != null || spis == null) return;
@@ -946,7 +952,7 @@ extension on _BackupPageState {
         final (suc, err) = await context.showLoadingDialog(
           fn: () async {
             final usedIds = <String>{};
-            for (var spi in spis) {
+            for (final (:spi, :pve) in spis) {
               // Preserve valid ids while resolving missing or duplicate ids
               // within this import.
               final isIdUsed = spi.id.isEmpty || usedIds.contains(spi.id);
@@ -954,6 +960,9 @@ extension on _BackupPageState {
                   ? spi.copyWith(id: ShortId.generate())
                   : spi;
               Stores.server.put(spiWithId);
+              // Only when the record has one: an import adds, and a record
+              // without PVE says nothing about a server that already had it.
+              if (pve != null) Stores.pve.put(spiWithId.id, pve);
               usedIds.add(spiWithId.id);
             }
             return true;

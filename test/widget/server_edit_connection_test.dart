@@ -7,15 +7,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
-import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/local_server.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
+
+import '../helpers/test_db.dart';
 
 /// The connection half of the server editor: two switches, an order, and what
 /// happens to a method's configuration when it is switched off.
@@ -24,6 +27,16 @@ import 'package:server_box/view/page/server/edit/edit.dart';
 /// on meant typing the host, the account and the key again. The whole point of
 /// these tests is that the record keeps what the form is hiding.
 void main() {
+  // The editor reads and writes the server's PVE row, which is a table of its
+  // own rather than part of the record the overridden provider persists.
+  setUp(() async {
+    await openTestDb();
+    if (!getIt.isRegistered<PveStore>()) {
+      getIt.registerSingleton<PveStore>(PveStore());
+    }
+  });
+  tearDown(closeTestDb);
+
   const both = Spi(
     name: 'lkd',
     id: 'lkd-id',
@@ -66,7 +79,7 @@ void main() {
             builder: (context) {
               app_locale.l10n = AppLocalizations.of(context)!;
               context.setLibL10n();
-              return ServerEditPage(args: SpiRequiredArgs(server));
+              return ServerEditPage(args: ServerEditArgs(server));
             },
           ),
         ),

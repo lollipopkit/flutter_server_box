@@ -338,9 +338,9 @@ void main() {
     setUp(() async {
       await openTestDb();
       await getIt.reset();
-      getIt.registerSingleton<SettingStore>(
-        SettingStore('setting_test')..init(),
-      );
+      final settings = SettingStore('setting_test');
+      await settings.init();
+      getIt.registerSingleton<SettingStore>(settings);
     });
 
     tearDown(() async {

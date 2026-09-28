@@ -1,0 +1,36 @@
+[
+  {
+    "name": "sx1",
+    "description": null,
+    "parent": null,
+    "state": "disk-snapshot",
+    "creation_time": 1790416802,
+    "memory": false,
+    "external": true,
+    "layers": [
+      {
+        "target": "vda",
+        "file": "/var/lib/libvirt/sbxe2e-p8q/sx1.qcow2",
+        "snapshot": "external"
+      }
+    ],
+    "current": false
+  },
+  {
+    "name": "sx2",
+    "description": null,
+    "parent": "sx1",
+    "state": "disk-snapshot",
+    "creation_time": 1790416934,
+    "memory": false,
+    "external": true,
+    "layers": [
+      {
+        "target": "vda",
+        "file": "/var/lib/libvirt/sbxe2e-p8q/sx2.qcow2",
+        "snapshot": "external"
+      }
+    ],
+    "current": true
+  }
+]

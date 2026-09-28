@@ -59,6 +59,7 @@ class ServerDetailReadoutCard extends StatelessWidget {
     super.key,
     required this.icon,
     required this.title,
+    this.mark,
     this.verdict,
     this.headline,
     this.rows = const [],
@@ -71,6 +72,15 @@ class ServerDetailReadoutCard extends StatelessWidget {
 
   final IconData icon;
   final String title;
+
+  /// Drawn after [title], on its line — a [BetaTag], or whatever else says
+  /// something about the name rather than about the card's reading.
+  ///
+  /// Beside the name and not appending to it: a suffix is part of what the
+  /// title is, so it ellipsises with it and reads as part of the feature's
+  /// name. A card expanded every time the page opens would also be saying it
+  /// in the one place nobody goes looking for it.
+  final Widget? mark;
 
   /// The chip beside the title.
   final ({String text, ReadoutVerdict tone})? verdict;
@@ -146,6 +156,10 @@ class ServerDetailReadoutCard extends StatelessWidget {
                         ),
                       ),
                     ),
+                    if (mark case final mark?) ...[
+                      const SizedBox(width: 7),
+                      mark,
+                    ],
                     if (verdict != null) ...[
                       const SizedBox(width: 9),
                       Flexible(child: _verdictChip(verdict, scheme)),

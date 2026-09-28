@@ -1,0 +1,77 @@
+<domain type='kvm' id='3' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'>
+  <name>win11</name>
+  <uuid>0f1e2d3c-4b5a-4968-8776-a5b4c3d2e1f0</uuid>
+  <description>Windows 11 test box
+second line</description>
+  <memory unit='KiB'>8388608</memory>
+  <currentMemory unit='KiB'>8388608</currentMemory>
+  <vcpu placement='static' current='4'>8</vcpu>
+  <os firmware='efi'>
+    <type arch='x86_64' machine='pc-q35-8.2'>hvm</type>
+    <loader readonly='yes' secure='yes' type='pflash'>/usr/share/OVMF/OVMF_CODE_4M.ms.fd</loader>
+    <nvram template='/usr/share/OVMF/OVMF_VARS_4M.ms.fd'>/var/lib/libvirt/qemu/nvram/win11_VARS.fd</nvram>
+  </os>
+  <devices>
+    <emulator>/usr/bin/qemu-system-x86_64</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/win11.qcow2' index='3'/>
+      <backingStore/>
+      <target dev='sda' bus='sata'/>
+      <alias name='sata0-0-0'/>
+      <address type='drive' controller='0' bus='0' target='0' unit='0'/>
+    </disk>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='raw' cache='none' io='native'/>
+      <source file='/srv/vm/win11-data.raw' index='2'/>
+      <backingStore/>
+      <target dev='sdb' bus='sata'/>
+      <alias name='sata0-0-1'/>
+    </disk>
+    <disk type='file' device='cdrom'>
+      <driver name='qemu' type='raw'/>
+      <target dev='sdc' bus='sata'/>
+      <readonly/>
+      <alias name='sata0-0-2'/>
+    </disk>
+    <disk type='network' device='disk'>
+      <driver name='qemu' type='raw'/>
+      <source protocol='rbd' name='vms/win11-scratch'>
+        <host name='ceph-mon1' port='6789'/>
+      </source>
+      <target dev='vdb' bus='virtio'/>
+    </disk>
+    <disk type='volume' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source pool='fast' volume='win11-swap.qcow2'/>
+      <target dev='vdc' bus='virtio'/>
+    </disk>
+    <interface type='bridge'>
+      <mac address='52:54:00:aa:bb:cc'/>
+      <source bridge='br0'/>
+      <target dev='vnet2'/>
+      <model type='e1000e'/>
+      <alias name='net0'/>
+    </interface>
+    <interface type='direct'>
+      <mac address='52:54:00:dd:ee:ff'/>
+      <source dev='enp3s0' mode='bridge'/>
+      <target dev='macvtap0'/>
+      <model type='virtio'/>
+      <alias name='net1'/>
+    </interface>
+    <graphics type='spice' port='5901' tlsPort='5902' autoport='yes' listen='0.0.0.0'>
+      <listen type='address' address='0.0.0.0'/>
+      <image compression='off'/>
+    </graphics>
+    <video>
+      <model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>
+    </video>
+    <tpm model='tpm-crb'>
+      <backend type='emulator' version='2.0'/>
+    </tpm>
+  </devices>
+  <qemu:commandline>
+    <qemu:arg value='-no-hpet'/>
+  </qemu:commandline>
+</domain>

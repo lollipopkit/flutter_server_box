@@ -395,7 +395,7 @@ class _Scanner {
       Loggers.app.warning('Failed to probe SSH at ${ip.address}', e, s);
       return null;
     } finally {
-      sub?.cancel();
+      await sub?.cancel();
       socket?.destroy();
     }
   }

@@ -1,0 +1,59 @@
+[
+  {
+    "altnames": [
+      "wlx5800e3bb9685"
+    ],
+    "families": [
+      "inet"
+    ],
+    "method6": "manual",
+    "exists": 1,
+    "iface": "wlp4s0",
+    "type": "eth",
+    "method": "manual"
+  },
+  {
+    "type": "eth",
+    "method": "manual",
+    "method6": "manual",
+    "families": [
+      "inet"
+    ],
+    "priority": 5,
+    "iface": "nic1"
+  },
+  {
+    "type": "eth",
+    "method": "manual",
+    "active": 1,
+    "altnames": [
+      "enx8086f2c95882"
+    ],
+    "method6": "manual",
+    "families": [
+      "inet"
+    ],
+    "priority": 3,
+    "exists": 1,
+    "iface": "nic0"
+  },
+  {
+    "address": "192.168.31.20",
+    "method6": "manual",
+    "families": [
+      "inet"
+    ],
+    "iface": "vmbr0",
+    "gateway": "192.168.31.1",
+    "netmask": "24",
+    "priority": 4,
+    "active": 1,
+    "bridge_fd": "0",
+    "bridge_stp": "off",
+    "method": "static",
+    "type": "bridge",
+    "cidr": "192.168.31.20/24",
+    "autostart": 1,
+    "bridge_ports": "nic0"
+  }
+]

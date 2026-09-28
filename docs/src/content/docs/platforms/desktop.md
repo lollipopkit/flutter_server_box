@@ -3,7 +3,8 @@ title: Desktop Features
 description: Platform-specific features for macOS, Linux, and Windows
 ---
 
-On desktop, Server Box provides a larger workspace, full keyboard support, and platform-specific window features.
+On desktop, Server Box provides more workspace, full keyboard support, and
+platform-specific window features.
 
 ## macOS
 
@@ -17,7 +18,8 @@ The macOS menu bar includes:
 
 ### Window management
 
-The App remembers the window size and position and restores them on the next launch.
+The app remembers the window size and position and restores them at the next
+launch.
 
 ## Linux
 
@@ -38,11 +40,12 @@ The App remembers the window size and position and restores them on the next lau
 - Dark
 - Follow system
 
-AMOLED is a built-in theme with a pure black background in dark mode and standard
-light colors in light mode. Previous AMOLED settings migrate to Dark + AMOLED;
-Auto AMOLED migrates to System + AMOLED.
-Themes declare support for light and/or dark mode. A theme supporting only one
-mode locks this setting and displays an explanation.
+AMOLED is a built-in theme. It uses a pure black background in dark mode and
+standard light colors in light mode. Existing AMOLED settings migrate to Dark +
+AMOLED; Auto AMOLED migrates to System + AMOLED.
+
+Themes declare whether they support light mode, dark mode, or both. A theme
+that supports only one mode locks the mode setting and explains why.
 
 ### Compared with mobile
 

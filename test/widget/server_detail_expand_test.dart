@@ -13,6 +13,7 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/status.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/private_key.dart';
+import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
@@ -45,6 +46,7 @@ void main() {
     await openTestDb();
     getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
     getIt.registerSingleton<ServerStore>(ServerStore());
+    getIt.registerSingleton<PveStore>(PveStore());
     getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore());
     Stores.setting.serverStatusUpdateInterval.put(0);
     // Nothing here reaches for a socket: the page is fed its status directly.

@@ -175,6 +175,18 @@ enum ServerFuncBtn {
     ];
   }
 
+  /// The mark that this entry's feature is still in beta, where the entry is
+  /// *listed* rather than tapped.
+  ///
+  /// Not on the row on the server page. That row is 17pt of glyph over one
+  /// line of 11pt text, and a pill beside a label there is taller than the
+  /// label it stands next to — the row would grow a second line of height on
+  /// every server, to say something only the first use needs to say.
+  Widget? get mark => switch (this) {
+    remoteDesktop => const BetaTag(),
+    _ => null,
+  };
+
   IconData get icon => switch (this) {
     // The file tab's own icon, since that is where this entry lands.
     files => Icons.folder_open,

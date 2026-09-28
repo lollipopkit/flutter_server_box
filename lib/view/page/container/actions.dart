@@ -23,7 +23,7 @@ extension on _ContainerPageState {
     if (!mounted) return;
     if (err != null || result != null) {
       final e = result?.message ?? err?.toString();
-      context.showRoundDialog(
+      await context.showRoundDialog(
         title: libL10n.error,
         child: Text(_errorMessage(e)),
       );
@@ -303,7 +303,7 @@ extension on _ContainerPageState {
     switch (item) {
       case ContainerMenu.rm:
         var force = false;
-        context.showRoundDialog(
+        await context.showRoundDialog(
           title: libL10n.attention,
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -358,7 +358,7 @@ extension on _ContainerPageState {
           source: ServerSource(widget.args.spi),
           initCmd: initCmd,
         );
-        SSHPage.route.go(context, args);
+        unawaited(SSHPage.route.go(context, args));
         break;
       case ContainerMenu.terminal:
         final cmd =
@@ -369,7 +369,7 @@ extension on _ContainerPageState {
           source: ServerSource(widget.args.spi),
           initCmd: initCmd,
         );
-        SSHPage.route.go(context, args);
+        unawaited(SSHPage.route.go(context, args));
         break;
     }
   }

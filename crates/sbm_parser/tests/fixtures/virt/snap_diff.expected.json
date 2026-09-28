@@ -1,0 +1,26 @@
+[
+  {
+    "group": "cpu",
+    "key": "vcpu",
+    "before": "1",
+    "after": "2",
+    "removed": false,
+    "added": false
+  },
+  {
+    "group": "memory",
+    "key": "memory",
+    "before": "262144",
+    "after": "524288",
+    "removed": false,
+    "added": false
+  },
+  {
+    "group": "interfaces",
+    "key": "52:54:00:2e:3d:88",
+    "before": null,
+    "after": "e1000e · network=default",
+    "removed": false,
+    "added": true
+  }
+]

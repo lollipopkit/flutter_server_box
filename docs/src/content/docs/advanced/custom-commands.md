@@ -3,32 +3,41 @@ title: Custom Commands
 description: Show custom command output on the server detail page
 ---
 
-You can add custom shell commands and view their output on the server detail page. The output refreshes with the server status data.
+Custom commands let you add server-specific checks to the server detail page.
+Their output is collected whenever the App refreshes that server's status.
 
 ## Storage location
 
-Each command is a file on the server under `~/.config/server_box/custom_cmds`. This is the only copy: the App does not store commands locally. The editor reads the directory from the server and writes back to it when you save.
+The commands live on each server, in
+`~/.config/server_box/custom_cmds`. The App does not keep a local copy: the
+editor loads the files from the server and writes changes back when you save.
 
-Consequences:
+This means:
 
-- **The server must be reachable while editing.** If it is unavailable, the editor explains that the changes cannot be saved.
-- **The App and Monitor agent share the same commands.** The Monitor web panel edits this directory, and the status script reads it, so no synchronization step is needed.
+- **Connect to the server before editing.** If the server is unreachable, you
+  can view the editor but cannot save changes.
+- **The App and Monitor agent use the same files.** Changes made in the
+  Monitor web panel are immediately available to the App, and vice versa.
 
 ## Editing
 
-1. Open the server edit page and choose **Custom commands → Edit**.
-2. Add, rename, edit, or drag commands to reorder them.
-3. Save.
+1. Open the server's edit page and select **Custom commands → Edit**.
+2. Add a command, change its name or shell text, or drag it to a new position.
+3. Save the changes to the server.
 
-Each entry has a name and a shell command. The name becomes the label for its output on the server detail page.
+Each entry contains a display name and a shell command. The App uses the name
+as the output label on the server detail page.
 
-**The order is saved and determines the order on the status page.** That is why the editor uses a reorderable list.
+The saved order is also the order used on the server detail page. Reorder
+commands in the editor to change how they appear.
 
 ## Special name
 
 ### `server_card_top_right`
 
-A command named `server_card_top_right` is not listed with the other custom commands. Its output appears in the top-right corner of the server card on the home page.
+The command named `server_card_top_right` is a special case. Its output is
+shown in the top-right corner of the server card on the home page rather than
+in the regular custom-command list.
 
 ## Writing commands
 
@@ -50,7 +59,8 @@ ps aux | sort -rk 3 | head -5
 uptime | awk -F'load average:' '{print $2}'
 ```
 
-**Keep execution time short.** Ideally, finish within one second; the command runs on every status refresh.
+**Keep execution time short.** Aim for less than one second because the
+command runs on every status refresh.
 
 **Limit output:**
 
@@ -60,12 +70,21 @@ tail -20 /var/log/syslog
 
 ## Security
 
-Commands run as the identity used to reach the server: the SSH user for SSH connections, or the user running Monitor agent for Monitor connections.
+Commands run with the account used for the connection: the SSH user for SSH
+connections, or the Monitor agent process user for Monitor connections.
 
-On a Monitor server, editing custom commands requires `full_access`. The agent must also have terminal access enabled, and the request must use secure transport or explicitly allow `allow_insecure`. Adding a file to this directory schedules code to run as the agent user on every refresh.
+For Monitor connections, editing commands requires `full_access`. The agent
+must also have terminal access enabled, and the request must use secure
+transport or explicitly permit `allow_insecure`. Each file in this directory
+is executable code: it runs as the agent user on every status refresh.
 
-Avoid commands that modify system state. Never put passwords, tokens, or other credentials in a custom command.
+Use read-only commands where possible. A command can affect the server with
+the permissions of its execution account. Never include passwords, tokens, or
+other credentials in a command.
 
 ## Migrating from the old format
 
-Older versions stored custom commands as a JSON object in the server settings. The App carried those entries through edits to other server fields and moved them to the server directory on the first connection. The current version no longer writes the old format.
+Older releases stored commands as a JSON object in the server settings. The
+App preserved those entries when other settings changed, then moved them into
+the server directory on the first connection. Current releases write commands
+only to that directory.

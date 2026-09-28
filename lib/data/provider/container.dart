@@ -8,6 +8,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/shell_quote.dart' as sh;
+import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/container/disk_usage.dart';
 import 'package:server_box/data/model/container/image.dart';
@@ -250,7 +251,6 @@ class ContainerNotifier extends _$ContainerNotifier {
   final _sudoCompleters = <ContainerRefreshTarget, Completer<bool>>{
     for (final t in ContainerRefreshTarget.values) t: Completer<bool>(),
   };
-  String? _cachedPassword;
   var _refreshGeneration = 0;
 
   /// The concurrency guard, kept off the state.
@@ -268,24 +268,13 @@ class ContainerNotifier extends _$ContainerNotifier {
     return ContainerState(type: type);
   }
 
+  /// The server's sudo password: the one already known (`SudoPassword`,
+  /// shared with the rest of the app), else asked for — as [userName]'s, the
+  /// label under the field.
   Future<String?> _getSudoPassword() async {
-    if (_cachedPassword != null) return _cachedPassword;
-
+    if (await SudoPassword.known(hostId) case final pwd?) return pwd;
     if (!context.mounted) return null;
-    // The title says what is being asked for; the user name is the label
-    // under the field. It used to be the title, which left the dialog with no
-    // title at all on a server whose SSH user this app does not hold — a
-    // monitor-only one, or one reached as the default user.
-    final pwd = await context.showPwdDialog(
-      title: libL10n.sudoPassword,
-      label: userName,
-      id: hostId,
-    );
-
-    if (pwd != null && pwd.isNotEmpty) {
-      _cachedPassword = pwd;
-    }
-    return pwd;
+    return SudoPassword.ask(context, hostId, label: userName);
   }
 
   bool setType(ContainerType type) {
@@ -404,7 +393,8 @@ class ContainerNotifier extends _$ContainerNotifier {
     final containerHost = Stores.container.fetch(hostId, type);
     final sudo = _sudoCompleters[ContainerRefreshTarget.containers]!;
     final needSudo = sudo.isCompleted && await sudo.future;
-    if (needSudo && _cachedPassword == null) return;
+    final password = needSudo ? SudoPassword.typed(hostId) : null;
+    if (needSudo && password == null) return;
 
     try {
       final exec = await ref.read(serverProvider(hostId).notifier).ensureExec();
@@ -415,7 +405,7 @@ class ContainerNotifier extends _$ContainerNotifier {
           type: type,
           containerHost: containerHost,
         ),
-        password: needSudo ? _cachedPassword : null,
+        password: password,
       );
       final usage = ContainerDiskUsage.parse(result.stdout);
       if (usage != null) state = state.copyWith(diskUsage: usage);
@@ -462,9 +452,11 @@ class ContainerNotifier extends _$ContainerNotifier {
       return;
     }
 
-    /// If sudo is required and auto refresh is enabled, skip the refresh.
-    /// Or this will ask for pwd again and again.
-    if (needSudo && isAuto) {
+    /// If sudo is required and auto refresh is enabled, skip the refresh
+    /// unless a password was typed this session: it would ask again and
+    /// again. The typed one is dropped on a refusal, so this does not keep
+    /// sending a wrong one.
+    if (needSudo && isAuto && SudoPassword.typed(hostId) == null) {
       await _finishRefresh(refreshGeneration);
       return;
     }
@@ -607,7 +599,7 @@ class ContainerNotifier extends _$ContainerNotifier {
 
     /// Sudo password error
     if (needSudo && result.exitCode == kSudoPasswordRejected) {
-      _cachedPassword = null;
+      SudoPassword.forget(hostId);
       _setRefreshError(
         target,
         ContainerErr(
@@ -1023,7 +1015,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     if (_isStaleRefresh(generation)) return null;
 
     if (needSudo && result.exitCode == kSudoPasswordRejected) {
-      _cachedPassword = null;
+      SudoPassword.forget(hostId);
       await _finishRun();
       return ContainerErr(
         type: ContainerErrType.sudoPasswordIncorrect,

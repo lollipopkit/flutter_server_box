@@ -92,7 +92,7 @@ Future<SshExecCollectedOutput> collectSshExecOutput({
 ///
 /// Cancelling here really stops the command: the channel carries a signal, and
 /// what is left of the output is what had already arrived.
-class SshExec implements ServerExec {
+class SshExec implements ServerByteExec {
   const SshExec(this.client);
 
   final SSHClient client;
@@ -124,8 +124,14 @@ class SshExec implements ServerExec {
     // Registered rather than awaited: this races the command, and a signal
     // that never comes must not hold the result up. `session.done` completes
     // once the channel closes either way, so there is nothing else to unwind.
+    // Not after that: a signal on a channel the server has freed ends the
+    // whole connection (OpenSSH: "server_input_channel_req: unknown
+    // channel"), every other channel on it included.
+    var ended = false;
+    unawaited(session.done.whenComplete(() => ended = true));
     unawaited(
       cancel?.then((_) {
+        if (ended) return;
         try {
           session.kill(SSHSignal.KILL);
         } catch (_) {
@@ -167,5 +173,73 @@ class SshExec implements ServerExec {
     } finally {
       session.close();
     }
+  }
+
+  @override
+  Future<ExecSession> start(String command) async =>
+      _SshExecSession(await client.execute(command));
+}
+
+/// A command on an SSH channel, fed as it runs.
+final class _SshExecSession implements ExecSession {
+  _SshExecSession(this._session) {
+    unawaited(_session.done.whenComplete(() => _ended = true));
+  }
+
+  final SSHSession _session;
+
+  /// The channel has closed: a signal on it now names a channel the server
+  /// has freed, and OpenSSH ends the whole connection for that.
+  var _ended = false;
+
+  /// Bytes handed to the channel since it last caught up: past this, a write
+  /// waits for the channel to send what it holds (the remote side's window),
+  /// so a file is not read into memory faster than it leaves.
+  static const _flushEvery = 1 << 20;
+  var _unflushed = 0;
+
+  static const _decoder = Utf8Decoder(allowMalformed: true);
+
+  @override
+  late final Stream<String> stdout = _decoder
+      .bind(_session.stdout)
+      .asBroadcastStream();
+
+  @override
+  late final Stream<String> stderr = _decoder
+      .bind(_session.stderr)
+      .asBroadcastStream();
+
+  @override
+  Future<void> write(List<int> data) async {
+    _session.stdin.add(data is Uint8List ? data : Uint8List.fromList(data));
+    _unflushed += data.length;
+    if (_unflushed >= _flushEvery) {
+      _unflushed = 0;
+      await _session.flush();
+    }
+  }
+
+  @override
+  Future<void> closeStdin() async {
+    await _session.flush();
+    await _session.stdin.close();
+  }
+
+  @override
+  Future<int?> get done async {
+    await _session.done;
+    return _session.exitCode;
+  }
+
+  @override
+  void kill() {
+    if (_ended) return;
+    try {
+      _session.kill(SSHSignal.KILL);
+    } catch (_) {
+      // Already gone; closing is still what releases the channel.
+    }
+    _session.close();
   }
 }

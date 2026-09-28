@@ -1,0 +1,208 @@
+<storagepoolCapabilities>
+  <pool type='dir' supported='yes'>
+    <volOptions>
+      <defaultFormat type='raw'/>
+      <enum name='targetFormatType'>
+        <value>none</value>
+        <value>raw</value>
+        <value>dir</value>
+        <value>bochs</value>
+        <value>cloop</value>
+        <value>dmg</value>
+        <value>iso</value>
+        <value>vpc</value>
+        <value>vdi</value>
+        <value>fat</value>
+        <value>vhd</value>
+        <value>ploop</value>
+        <value>cow</value>
+        <value>qcow</value>
+        <value>qcow2</value>
+        <value>qed</value>
+        <value>vmdk</value>
+      </enum>
+    </volOptions>
+  </pool>
+  <pool type='fs' supported='yes'>
+    <poolOptions>
+      <defaultFormat type='auto'/>
+      <enum name='sourceFormatType'>
+        <value>auto</value>
+        <value>ext2</value>
+        <value>ext3</value>
+        <value>ext4</value>
+        <value>ufs</value>
+        <value>iso9660</value>
+        <value>udf</value>
+        <value>gfs</value>
+        <value>gfs2</value>
+        <value>vfat</value>
+        <value>hfs+</value>
+        <value>xfs</value>
+        <value>ocfs2</value>
+        <value>vmfs</value>
+      </enum>
+    </poolOptions>
+    <volOptions>
+      <defaultFormat type='raw'/>
+      <enum name='targetFormatType'>
+        <value>none</value>
+        <value>raw</value>
+        <value>dir</value>
+        <value>bochs</value>
+        <value>cloop</value>
+        <value>dmg</value>
+        <value>iso</value>
+        <value>vpc</value>
+        <value>vdi</value>
+        <value>fat</value>
+        <value>vhd</value>
+        <value>ploop</value>
+        <value>cow</value>
+        <value>qcow</value>
+        <value>qcow2</value>
+        <value>qed</value>
+        <value>vmdk</value>
+      </enum>
+    </volOptions>
+  </pool>
+  <pool type='netfs' supported='yes'>
+    <poolOptions>
+      <defaultFormat type='auto'/>
+      <enum name='sourceFormatType'>
+        <value>auto</value>
+        <value>nfs</value>
+        <value>glusterfs</value>
+        <value>cifs</value>
+      </enum>
+    </poolOptions>
+    <volOptions>
+      <defaultFormat type='raw'/>
+      <enum name='targetFormatType'>
+        <value>none</value>
+        <value>raw</value>
+        <value>dir</value>
+        <value>bochs</value>
+        <value>cloop</value>
+        <value>dmg</value>
+        <value>iso</value>
+        <value>vpc</value>
+        <value>vdi</value>
+        <value>fat</value>
+        <value>vhd</value>
+        <value>ploop</value>
+        <value>cow</value>
+        <value>qcow</value>
+        <value>qcow2</value>
+        <value>qed</value>
+        <value>vmdk</value>
+      </enum>
+    </volOptions>
+  </pool>
+  <pool type='logical' supported='no'>
+    <poolOptions>
+      <defaultFormat type='lvm2'/>
+      <enum name='sourceFormatType'>
+        <value>unknown</value>
+        <value>lvm2</value>
+      </enum>
+    </poolOptions>
+  </pool>
+  <pool type='disk' supported='no'>
+    <poolOptions>
+      <defaultFormat type='unknown'/>
+      <enum name='sourceFormatType'>
+        <value>unknown</value>
+        <value>dos</value>
+        <value>dvh</value>
+        <value>gpt</value>
+        <value>mac</value>
+        <value>bsd</value>
+        <value>pc98</value>
+        <value>sun</value>
+        <value>lvm2</value>
+      </enum>
+    </poolOptions>
+    <volOptions>
+      <defaultFormat type='none'/>
+      <enum name='targetFormatType'>
+        <value>none</value>
+        <value>linux</value>
+        <value>fat16</value>
+        <value>fat32</value>
+        <value>linux-swap</value>
+        <value>linux-lvm</value>
+        <value>linux-raid</value>
+        <value>extended</value>
+      </enum>
+    </volOptions>
+  </pool>
+  <pool type='iscsi' supported='no'>
+  </pool>
+  <pool type='iscsi-direct' supported='no'>
+  </pool>
+  <pool type='scsi' supported='no'>
+  </pool>
+  <pool type='mpath' supported='no'>
+  </pool>
+  <pool type='rbd' supported='no'>
+    <volOptions>
+      <defaultFormat type='raw'/>
+      <enum name='targetFormatType'>
+      </enum>
+    </volOptions>
+  </pool>
+  <pool type='sheepdog' supported='no'>
+  </pool>
+  <pool type='gluster' supported='no'>
+    <volOptions>
+      <defaultFormat type='raw'/>
+      <enum name='targetFormatType'>
+        <value>none</value>
+        <value>raw</value>
+        <value>dir</value>
+        <value>bochs</value>
+        <value>cloop</value>
+        <value>dmg</value>
+        <value>iso</value>
+        <value>vpc</value>
+        <value>vdi</value>
+        <value>fat</value>
+        <value>vhd</value>
+        <value>ploop</value>
+        <value>cow</value>
+        <value>qcow</value>
+        <value>qcow2</value>
+        <value>qed</value>
+        <value>vmdk</value>
+      </enum>
+    </volOptions>
+  </pool>
+  <pool type='zfs' supported='no'>
+  </pool>
+  <pool type='vstorage' supported='no'>
+    <volOptions>
+      <defaultFormat type='raw'/>
+      <enum name='targetFormatType'>
+        <value>none</value>
+        <value>raw</value>
+        <value>dir</value>
+        <value>bochs</value>
+        <value>cloop</value>
+        <value>dmg</value>
+        <value>iso</value>
+        <value>vpc</value>
+        <value>vdi</value>
+        <value>fat</value>
+        <value>vhd</value>
+        <value>ploop</value>
+        <value>cow</value>
+        <value>qcow</value>
+        <value>qcow2</value>
+        <value>qed</value>
+        <value>vmdk</value>
+      </enum>
+    </volOptions>
+  </pool>
+</storagepoolCapabilities>
+

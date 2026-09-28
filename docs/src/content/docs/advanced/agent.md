@@ -1,23 +1,36 @@
 ---
 title: Agent
-description: Ask a model to diagnose and operate your servers, one reviewed action at a time
+description: Ask a model to diagnose servers and review each action before it runs
 ---
 
-Agent connects a language model to the servers you configure. The model proposes one action at a time, and the App asks you to review it before execution.
+Agent connects a language model to your servers. It suggests one action at a
+time and shows you what it plans to do before running it. You can approve or
+reject each action.
 
-Agent ships with a default API endpoint and model, so it works without initial configuration. Change either setting to use a different provider. Only providers that require authentication need an API key; when configured, the App sends it as a bearer token. Nothing is sent to the provider until you send a message.
+Agent includes a default API endpoint and model, so you can use it without
+setting up a provider first. To use another provider, change the endpoint,
+model, protocol, or API key in **Settings → App → AI**. An API key is needed
+only for providers that require authentication. The App sends a configured key
+as a bearer token and stores it in the same encrypted database as server
+passwords. A request is sent only when you send a message.
 
-## Two entry points
+## Choose an Agent
 
-**The Agent tab** works across the servers configured in the App. It can open temporary SSH connections to hosts outside the server list. It can also read Server Box's own state—for example, to identify offline servers.
+Server Box has two Agent entry points:
 
-**SSH Agent** appears in the terminal page and works with the current server. It can read the terminal context. If you select terminal output and ask a question, the selected text is sent with the question.
+- **Agent tab** can work across configured servers. It can also open a
+  temporary SSH connection to a host that is not in your server list, and read
+  App state such as the list of servers and their connection status.
+- **SSH Agent** is available from a terminal session. It works with the
+  current server and can use the terminal context. If you select terminal
+  output before asking a question, that text is sent with your message.
 
-The Agent tab can float above other tabs, so you can keep a diagnosis visible while working in the terminal or file browser. Open **Settings → App → AI → Float over other tabs**.
+The Agent tab can stay above other tabs while you work in the terminal or file
+browser. Enable **Settings → App → AI → Float over other tabs**.
 
-## Configuration
+## Configure a provider
 
-Open **Settings → App → AI**:
+Open **Settings → App → AI** to configure the provider:
 
 | Setting | Default |
 |---|---|
@@ -26,55 +39,83 @@ Open **Settings → App → AI**:
 | **API key** | Empty |
 | **Protocol** | Auto |
 
-Enter either a service base URL or a complete Chat Completions or Responses endpoint. The App completes the path for the selected protocol. **Auto** uses Responses for the official OpenAI endpoint and Chat Completions for compatible providers, so most third-party gateways need no additional configuration.
+For **API endpoint**, enter either the service's base URL or a complete Chat
+Completions or Responses endpoint. The App fills in the endpoint path for the
+selected protocol. **Auto** selects Responses for the official OpenAI endpoint
+and Chat Completions for compatible providers. Most third-party gateways work
+without additional protocol settings. The provider must support at least one of
+these protocols.
 
-Any provider that supports one of these protocols can be used. The API key is stored on the device in the same encrypted store as server passwords.
+## What Agent can do
 
-## Available tools
-
-| Tool | What it does |
+| Tool | Behavior |
 |---|---|
-| **Shell** | Runs a complete, non-interactive command |
-| **Read file** | Reads a text file from an SSH server using its configured file transport (SFTP or SCP); with local execution enabled, it can also read a local file |
-| **Write file** | Replaces a text file using its configured file transport; with local execution enabled, it can also replace a local file, and every write requires confirmation |
-| **SSH connect** | Connects to a host that is not configured in the App |
+| **Shell** | Runs a complete, non-interactive command on a server |
+| **Read file** | Reads a text file from an SSH server over its configured SFTP or SCP transport; with local execution enabled, it can read a local file too |
+| **Write file** | Replaces a text file over the configured transport; with local execution enabled, it can replace a local file too. Every write requires confirmation. |
+| **SSH connect** | Opens a temporary connection to a host not configured in the App |
 | **Disconnect SSH** | Closes a temporary SSH connection |
-| **Server Box** | Reads the App's own state, including the server list and connection status |
+| **Server Box** | Reads App state, including the server list and connection status |
 
-## Review and approval
+Agent's file tools require SSH. A server configured only with Monitor HTTP does
+not provide these tools. Its separate **File** tab can use the Monitor agent
+file API when the operator enables `[remote_access.fs]` and the requested path
+is under `roots`.
 
-Every action proposed by the model is shown before execution, including the command and the model's description of its purpose and risks. You can approve or reject it. A rejection is returned to the model so it can continue with that information.
+## Review actions
 
-**Auto-run read-only commands** is available at **Settings → App → AI**. When enabled, the App can run commands that are explicitly read-only and idempotent without asking each time. It is off by default and applies to servers only.
+Before an action runs, the App shows the command and the model's explanation of
+its purpose and risks. Read the command yourself, then approve or reject it. A
+rejection is sent back to the model so it can respond to your feedback. The
+model's safe or unsafe label is only a hint for your review.
 
-The model labels each action as safe or unsafe. The label is an input to your decision, not a replacement for reading the command yourself.
+At **Settings → App → AI**, **Auto-run read-only commands** can run server
+commands without asking each time only when both the model and the App's local
+check classify the command as read-only. The command must also be idempotent
+and non-destructive. This option is off by default and does not apply to
+commands on this device. Agent handles one action at a time: it waits for each
+result before proposing the next action.
 
-Servers configured only through Monitor HTTP do not provide Agent's SFTP file tools, because those tools require SSH. Their separate **File** tab can use Monitor agent's `/api/v1/fs/*` file API when the operator enables `[remote_access.fs]` and the path is within `roots`.
+## Connect to another host
 
-## Connecting to an unconfigured host
+Agent can open a temporary SSH connection to a host outside your server list.
+If it needs a password, the App asks for it in a separate dialog; do not enter
+the password in the conversation. Conversation text is saved on the device and
+sent to the configured model. Temporary connections are listed separately. To
+keep one, save it as a server; its host information and password are then stored
+like your other server credentials.
 
-Agent can open a temporary SSH connection. When it needs a password, the App asks for it in a separate dialog, **never in the Agent conversation**. Text entered in the conversation is stored with the conversation and sent to the model.
+## Run commands on this device
 
-Temporary connections are listed separately. If you want to keep one, save it as a server. The host information and password are then stored on the device like other server credentials.
+**Run commands on this device** is a separate option at **Settings → App → AI**
+and is off by default. Enabling it does not allow unattended commands: every
+local command requires your confirmation, even if it appears read-only or
+**Auto-run read-only commands** is enabled.
 
-## Running commands on this device
+The command target depends on the platform:
 
-**Run commands on this device** is independent of server operations and is off by default. Find it at **Settings → App → AI → Run commands on this device**. On desktop, the target is the computer itself. On mobile, the target is the Alpine Linux environment provided by the App.
+- **Desktop:** the computer running Server Box, including its files.
+- **Android and iOS:** the Alpine Linux environment provided by the App. It
+  cannot access the phone's own filesystem, App data, or user files. See
+  [Terminal on This Device](/docs/advanced/local-terminal/).
 
-Adding a server does not grant the model access to the device: the device contains the App's data, private keys, and keychain. Even after local execution is enabled, **no local command runs unattended**. Every local command requires confirmation, regardless of whether it appears read-only or the auto-run setting is enabled.
+The option is hidden on platforms that cannot run local commands. The
+App Store build of macOS cannot start a shell because it is sandboxed. An iOS
+build without the Linux engine cannot provide local command execution either.
 
-- **Desktop**: the computer running Server Box, including its files
-- **Android and iOS**: the App-provided Alpine Linux environment, which cannot see the phone's own filesystem, App data, or user files. See [Terminal on This Device](/docs/advanced/local-terminal/).
+## Conversation history
 
-The switch is not shown on platforms that cannot provide local execution. The sandboxed App Store macOS build cannot start a shell, and an iOS build without the Linux engine cannot provide this feature either.
+Agent tab conversations are stored on the device. You can reopen them or clear
+all conversations from the history screen. Messages and tool results can
+contain command output, file contents, and any terminal text you selected; they
+are sent to the configured model when used in a conversation.
 
-## History
+## Before you send a message
 
-Agent tab conversations are stored on the device. You can reopen them or clear all of them from the conversation history screen.
-
-## Important behavior
-
-- **The model can be wrong.** The App states this in each conversation; review before execution is the safety step for that reason.
-- **Command output is sent to the model.** This is required for analysis. Selected terminal output is sent as well, so check the visible content before submitting it.
-- **One action at a time.** Agent does not queue and execute a complete plan. It proposes an action, waits for the result, and then continues.
-- **Enter sends by default.** Shift+Enter starts a new line. Change this at **Settings → App → AI → Send on Enter**.
+- Models can produce incorrect advice or commands. Review every action before
+  approving it.
+- Command output, requested file contents, and selected terminal text may be
+  sent to the provider so the model can analyze them. Check for sensitive data
+  before sending a message or approving a tool action.
+- Press **Enter** to send by default; **Shift+Enter** starts a new line. Change
+  this under **Settings → App → AI → Send on Enter**.

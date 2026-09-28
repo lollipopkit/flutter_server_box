@@ -212,6 +212,14 @@ the panel password can't switch it on); shared admission checks live in
 
 Things that are easy to get wrong here, and are locked by tests:
 
+- **Both endpoints upgrade through `api/ws/upgrade.rs`, not
+  `ntex::web::ws::start`.** ntex's builds its codec with a 64 KiB limit on an
+  incoming frame and no way to change it; a bigger frame dropped the
+  connection — every relayed upload, every large paste. The copy takes
+  4 MiB (`MAX_FRAME`) and has its own `WsSink`, since ntex keeps that
+  constructor private. TODO: back to ntex's once it lets the caller set the
+  limit. `a_frame_bigger_than_64_kib_goes_through`,
+  `a_paste_bigger_than_64_kib_reaches_the_shell`.
 - **Auth for the upgrade is a single-use ticket** (`api/ws/ticket.rs`), not the
   JWT: browsers can't set headers on a WebSocket handshake, and a token in the
   query string lands in ntex's access log. Purpose-bound, ~30s, burned even on

@@ -184,9 +184,6 @@ class Servers extends Table with SyncMeta {
       .nullable()
       .references(BmcCredentials, #id, onDelete: KeyAction.setNull)();
 
-  TextColumn get pveAddr => text().nullable()();
-  BoolColumn get pveIgnoreCert => boolean().withDefault(const Constant(false))();
-  TextColumn get pvePwd => text().nullable()();
   TextColumn get preferTempDev => text().nullable()();
   BoolColumn get tempIsCelsius => boolean().withDefault(const Constant(true))();
   TextColumn get logoUrl => text().nullable()();
@@ -460,6 +457,45 @@ class ContainerHosts extends Table {
   ];
 }
 
+/// How this app reaches one server's Proxmox VE API: the address, how it logs
+/// in, and the certificate the user confirmed.
+///
+/// A child of `server` rather than columns on it, for `container_host`'s
+/// reason: it has no meaning apart from the server, cascades with it, and a
+/// change to it stamps the parent. At most one per server.
+///
+/// [auth] is a `PveAuth` name — by name, never by index. Only the chosen
+/// method's credentials are kept: [pwd] for `password` (null means the SSH
+/// password is reused), [tokenId] and [tokenSecret] for `token`.
+///
+/// [certSha256] is the SHA-256 of the certificate's DER form the user
+/// confirmed, lowercase hex. Null means nothing has been confirmed, and the
+/// next connection to a certificate no CA vouches for asks.
+@DataClassName('ServerPveRow')
+class ServerPves extends Table {
+  @override
+  String get tableName => 'server_pve';
+  @override
+  bool get withoutRowId => true;
+
+  TextColumn get serverId =>
+      text().references(Servers, #id, onDelete: KeyAction.cascade)();
+  TextColumn get addr => text()();
+  TextColumn get auth => text()();
+  TextColumn get pwd => text().nullable()();
+  TextColumn get tokenId => text().nullable()();
+  TextColumn get tokenSecret => text().nullable()();
+  TextColumn get certSha256 => text().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {serverId};
+
+  @override
+  List<String> get customConstraints => [
+    "CHECK (auth IN ('password', 'token'))",
+  ];
+}
+
 /// Which runtime the user picked for one server, where absent means the global
 /// default (`SettingStore.usePodman`).
 ///
@@ -725,6 +761,7 @@ class SyncStates extends Table {
     RemoteDesktopProfiles,
     ContainerHosts,
     ContainerRuntimes,
+    ServerPves,
     ConnStats,
     ServerDists,
     BenchmarkRuns,

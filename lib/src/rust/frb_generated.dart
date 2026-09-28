@@ -13,6 +13,7 @@ import 'package:server_box/src/rust/api/remote_desktop.dart';
 import 'package:server_box/src/rust/api/script.dart';
 import 'package:server_box/src/rust/api/ssh_asym.dart';
 import 'package:server_box/src/rust/api/ssh_crypto.dart';
+import 'package:server_box/src/rust/api/virt.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 import 'package:server_box/src/rust/frb_generated.io.dart'
     if (dart.library.js_interop) 'frb_generated.web.dart';
@@ -72,7 +73,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => 1608297972;
+  int get rustContentHash => -1893612725;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -269,6 +270,68 @@ abstract class RustLibApi extends BaseApi {
     required double tempDivisor,
   });
 
+  void crateApiVirtParseVirtAction({required String raw});
+
+  Future<List<String>> crateApiVirtParseVirtCloneVolumes({required String raw});
+
+  Future<String> crateApiVirtParseVirtCreateHostJson({required String raw});
+
+  Future<String> crateApiVirtParseVirtCreateJson({required String raw});
+
+  Future<String> crateApiVirtParseVirtCreateVolumesJson({required String raw});
+
+  Future<String> crateApiVirtParseVirtDomainDetailJson({required String raw});
+
+  Future<String> crateApiVirtParseVirtFirmwareJson({required String raw});
+
+  Future<String> crateApiVirtParseVirtHardwareChangeJson({required String raw});
+
+  Future<String> crateApiVirtParseVirtHardwareJson({required String raw});
+
+  Future<String> crateApiVirtParseVirtHostDevicesJson({required String raw});
+
+  Future<void> crateApiVirtParseVirtNetChange({required String raw});
+
+  Future<String> crateApiVirtParseVirtNetworksJson({required String raw});
+
+  Future<String> crateApiVirtParseVirtOverviewJson({required String raw});
+
+  List<String>? crateApiVirtParseVirtPoolTypes({required String raw});
+
+  Future<String> crateApiVirtParseVirtProbeJson({required String raw});
+
+  void crateApiVirtParseVirtResource({required String raw});
+
+  Future<String> crateApiVirtParseVirtSeedReadJson({required String raw});
+
+  void crateApiVirtParseVirtSeedUpdate({required String raw});
+
+  Future<String> crateApiVirtParseVirtSnapChainJson({required String raw});
+
+  Future<List<String>> crateApiVirtParseVirtSnapDeleteLeftovers({
+    required String raw,
+  });
+
+  Future<String?> crateApiVirtParseVirtSnapDeleteRefusal({required String raw});
+
+  Future<String> crateApiVirtParseVirtSnapDiffJson({required String raw});
+
+  Future<String?> crateApiVirtParseVirtSnapRevertRefusal({required String raw});
+
+  Future<void> crateApiVirtParseVirtSnapshotDelete({required String raw});
+
+  Future<String> crateApiVirtParseVirtSnapshotsJson({required String raw});
+
+  Future<String> crateApiVirtParseVirtStorageJson({required String raw});
+
+  void crateApiVirtParseVirtUndefine({required String raw});
+
+  Future<String> crateApiVirtParseVirtVncConsoleJson({required String raw});
+
+  bool crateApiVirtParseVirtVolUpload({required String raw});
+
+  Future<String> crateApiVirtParseVirtVolumesJson({required String raw});
+
   String crateApiParserParseWindowsNetSpeedJson({required String raw});
 
   String crateApiScriptReadCustomCmdsCommand({required String system});
@@ -279,6 +342,139 @@ abstract class RustLibApi extends BaseApi {
   });
 
   String crateApiScriptShellFuncFlag({required ShellFuncKind func});
+
+  String crateApiVirtVirtActionScript({
+    required VirtActionKind action,
+    required String domain,
+  });
+
+  String crateApiVirtVirtCloneDefineScript({
+    required String baseXml,
+    required String name,
+    required String disksJson,
+  });
+
+  String crateApiVirtVirtCloneVolumesScript({required String specJson});
+
+  String crateApiVirtVirtConsoleCommand({required String domain});
+
+  String crateApiVirtVirtCreateHostScript();
+
+  String crateApiVirtVirtCreateVolumeScript({required String specJson});
+
+  String crateApiVirtVirtDefineScript({required String specJson});
+
+  String crateApiVirtVirtDomainDetailScript({required String domain});
+
+  String? crateApiVirtVirtExternalSnapshotRefusal({required String chainJson});
+
+  String crateApiVirtVirtFirmwareScript();
+
+  String crateApiVirtVirtHardwareChangeScript({
+    required String domain,
+    required bool running,
+    String? baseXml,
+    required String changeJson,
+  });
+
+  String crateApiVirtVirtHardwareScript({required String domain});
+
+  String crateApiVirtVirtHashPassword({
+    required String password,
+    required String salt,
+  });
+
+  String crateApiVirtVirtHostDevicesScript();
+
+  String crateApiVirtVirtNetChangeScript({required String opJson});
+
+  String crateApiVirtVirtNetworksScript();
+
+  String crateApiVirtVirtOverviewScript();
+
+  String crateApiVirtVirtPoolTypesScript();
+
+  String crateApiVirtVirtProbeScript();
+
+  String crateApiVirtVirtResourceScript({required String opJson});
+
+  String crateApiVirtVirtSeedReadScript({required String seed});
+
+  String crateApiVirtVirtSeedUpdateScript({
+    required String seed,
+    required String revision,
+    required String cloudInitJson,
+    List<String>? tools,
+  });
+
+  String crateApiVirtVirtSnapChainScript({required String domain});
+
+  String crateApiVirtVirtSnapCheckScript({
+    required String domain,
+    required String name,
+  });
+
+  String crateApiVirtVirtSnapDiffScript({
+    required String domain,
+    required String name,
+  });
+
+  String crateApiVirtVirtSnapshotCreateScript({
+    required String domain,
+    required String name,
+    String? description,
+  });
+
+  String crateApiVirtVirtSnapshotDeleteScript({
+    required String domain,
+    required String name,
+    required List<String> pools,
+    required List<String> leftovers,
+  });
+
+  String crateApiVirtVirtSnapshotExternalScript({
+    required String domain,
+    required String name,
+    String? description,
+    required List<(String, String)> overlays,
+  });
+
+  String? crateApiVirtVirtSnapshotRefusal({required String chainJson});
+
+  String crateApiVirtVirtSnapshotRevertScript({
+    required String domain,
+    required String name,
+    required bool running,
+  });
+
+  String crateApiVirtVirtSnapshotsScript({required String domain});
+
+  String crateApiVirtVirtStorageScript();
+
+  String crateApiVirtVirtUndefineScript({
+    required String domain,
+    required List<String> storage,
+    String? seed,
+    required List<String> pools,
+    required List<String> chain,
+  });
+
+  String crateApiVirtVirtUploadGoLine();
+
+  String crateApiVirtVirtUploadReadyMarker();
+
+  String crateApiVirtVirtVncConsoleScript({required String domain});
+
+  String crateApiVirtVirtVolUploadCommand({
+    required String pool,
+    required String name,
+    required VirtUploadEntryKind entry,
+  });
+
+  String crateApiVirtVirtVolumesScript({
+    required String pool,
+    required List<String> names,
+  });
 
   X25519KeyPair crateApiSshAsymX25519Keypair();
 
@@ -1552,13 +1748,914 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  String crateApiParserParseWindowsNetSpeedJson({required String raw}) {
+  void crateApiVirtParseVirtAction({required String raw}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(raw, serializer);
           return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 39)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtActionConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtActionConstMeta =>
+      const TaskConstMeta(debugName: 'parse_virt_action', argNames: ['raw']);
+
+  @override
+  Future<List<String>> crateApiVirtParseVirtCloneVolumes({
+    required String raw,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 40,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtCloneVolumesConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtCloneVolumesConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_clone_volumes',
+        argNames: ['raw'],
+      );
+
+  @override
+  Future<String> crateApiVirtParseVirtCreateHostJson({required String raw}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 41,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtCreateHostJsonConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtCreateHostJsonConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_create_host_json',
+        argNames: ['raw'],
+      );
+
+  @override
+  Future<String> crateApiVirtParseVirtCreateJson({required String raw}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 42,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtCreateJsonConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtCreateJsonConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_create_json',
+        argNames: ['raw'],
+      );
+
+  @override
+  Future<String> crateApiVirtParseVirtCreateVolumesJson({required String raw}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 43,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtCreateVolumesJsonConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtCreateVolumesJsonConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_create_volumes_json',
+        argNames: ['raw'],
+      );
+
+  @override
+  Future<String> crateApiVirtParseVirtDomainDetailJson({required String raw}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 44,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtDomainDetailJsonConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtDomainDetailJsonConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_domain_detail_json',
+        argNames: ['raw'],
+      );
+
+  @override
+  Future<String> crateApiVirtParseVirtFirmwareJson({required String raw}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 45,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtFirmwareJsonConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtFirmwareJsonConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_firmware_json',
+        argNames: ['raw'],
+      );
+
+  @override
+  Future<String> crateApiVirtParseVirtHardwareChangeJson({
+    required String raw,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 46,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtHardwareChangeJsonConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtHardwareChangeJsonConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_hardware_change_json',
+        argNames: ['raw'],
+      );
+
+  @override
+  Future<String> crateApiVirtParseVirtHardwareJson({required String raw}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 47,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtHardwareJsonConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtHardwareJsonConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_hardware_json',
+        argNames: ['raw'],
+      );
+
+  @override
+  Future<String> crateApiVirtParseVirtHostDevicesJson({required String raw}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 48,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtHostDevicesJsonConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtHostDevicesJsonConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_host_devices_json',
+        argNames: ['raw'],
+      );
+
+  @override
+  Future<void> crateApiVirtParseVirtNetChange({required String raw}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 49,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtNetChangeConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtNetChangeConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_net_change',
+        argNames: ['raw'],
+      );
+
+  @override
+  Future<String> crateApiVirtParseVirtNetworksJson({required String raw}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 50,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtNetworksJsonConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtNetworksJsonConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_networks_json',
+        argNames: ['raw'],
+      );
+
+  @override
+  Future<String> crateApiVirtParseVirtOverviewJson({required String raw}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 51,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtOverviewJsonConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtOverviewJsonConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_overview_json',
+        argNames: ['raw'],
+      );
+
+  @override
+  List<String>? crateApiVirtParseVirtPoolTypes({required String raw}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 52)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_opt_list_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtParseVirtPoolTypesConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtPoolTypesConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_pool_types',
+        argNames: ['raw'],
+      );
+
+  @override
+  Future<String> crateApiVirtParseVirtProbeJson({required String raw}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 53,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtProbeJsonConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtProbeJsonConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_probe_json',
+        argNames: ['raw'],
+      );
+
+  @override
+  void crateApiVirtParseVirtResource({required String raw}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 54)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtResourceConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtResourceConstMeta =>
+      const TaskConstMeta(debugName: 'parse_virt_resource', argNames: ['raw']);
+
+  @override
+  Future<String> crateApiVirtParseVirtSeedReadJson({required String raw}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 55,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtSeedReadJsonConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtSeedReadJsonConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_seed_read_json',
+        argNames: ['raw'],
+      );
+
+  @override
+  void crateApiVirtParseVirtSeedUpdate({required String raw}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 56)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtSeedUpdateConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtSeedUpdateConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_seed_update',
+        argNames: ['raw'],
+      );
+
+  @override
+  Future<String> crateApiVirtParseVirtSnapChainJson({required String raw}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 57,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtSnapChainJsonConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtSnapChainJsonConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_snap_chain_json',
+        argNames: ['raw'],
+      );
+
+  @override
+  Future<List<String>> crateApiVirtParseVirtSnapDeleteLeftovers({
+    required String raw,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 58,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtSnapDeleteLeftoversConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtSnapDeleteLeftoversConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_snap_delete_leftovers',
+        argNames: ['raw'],
+      );
+
+  @override
+  Future<String?> crateApiVirtParseVirtSnapDeleteRefusal({
+    required String raw,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 59,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_opt_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtSnapDeleteRefusalConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtSnapDeleteRefusalConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_snap_delete_refusal',
+        argNames: ['raw'],
+      );
+
+  @override
+  Future<String> crateApiVirtParseVirtSnapDiffJson({required String raw}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 60,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtSnapDiffJsonConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtSnapDiffJsonConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_snap_diff_json',
+        argNames: ['raw'],
+      );
+
+  @override
+  Future<String?> crateApiVirtParseVirtSnapRevertRefusal({
+    required String raw,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 61,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_opt_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtSnapRevertRefusalConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtSnapRevertRefusalConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_snap_revert_refusal',
+        argNames: ['raw'],
+      );
+
+  @override
+  Future<void> crateApiVirtParseVirtSnapshotDelete({required String raw}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 62,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtSnapshotDeleteConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtSnapshotDeleteConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_snapshot_delete',
+        argNames: ['raw'],
+      );
+
+  @override
+  Future<String> crateApiVirtParseVirtSnapshotsJson({required String raw}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 63,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtSnapshotsJsonConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtSnapshotsJsonConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_snapshots_json',
+        argNames: ['raw'],
+      );
+
+  @override
+  Future<String> crateApiVirtParseVirtStorageJson({required String raw}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 64,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtStorageJsonConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtStorageJsonConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_storage_json',
+        argNames: ['raw'],
+      );
+
+  @override
+  void crateApiVirtParseVirtUndefine({required String raw}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 65)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtUndefineConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtUndefineConstMeta =>
+      const TaskConstMeta(debugName: 'parse_virt_undefine', argNames: ['raw']);
+
+  @override
+  Future<String> crateApiVirtParseVirtVncConsoleJson({required String raw}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 66,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtVncConsoleJsonConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtVncConsoleJsonConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_vnc_console_json',
+        argNames: ['raw'],
+      );
+
+  @override
+  bool crateApiVirtParseVirtVolUpload({required String raw}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 67)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_bool,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtVolUploadConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtVolUploadConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_vol_upload',
+        argNames: ['raw'],
+      );
+
+  @override
+  Future<String> crateApiVirtParseVirtVolumesJson({required String raw}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 68,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtParseVirtVolumesJsonConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtParseVirtVolumesJsonConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_virt_volumes_json',
+        argNames: ['raw'],
+      );
+
+  @override
+  String crateApiParserParseWindowsNetSpeedJson({required String raw}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 69)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -1584,7 +2681,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(system, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 40)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 70)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -1614,7 +2711,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(key, serializer);
           sse_encode_bool(custom, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 41)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 71)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -1640,7 +2737,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_shell_func_kind(func, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 42)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 72)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -1657,12 +2754,1094 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: 'shell_func_flag', argNames: ['func']);
 
   @override
+  String crateApiVirtVirtActionScript({
+    required VirtActionKind action,
+    required String domain,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_virt_action_kind(action, serializer);
+          sse_encode_String(domain, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 73)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtActionScriptConstMeta,
+        argValues: [action, domain],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtActionScriptConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_action_script',
+        argNames: ['action', 'domain'],
+      );
+
+  @override
+  String crateApiVirtVirtCloneDefineScript({
+    required String baseXml,
+    required String name,
+    required String disksJson,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(baseXml, serializer);
+          sse_encode_String(name, serializer);
+          sse_encode_String(disksJson, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 74)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtCloneDefineScriptConstMeta,
+        argValues: [baseXml, name, disksJson],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtCloneDefineScriptConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_clone_define_script',
+        argNames: ['baseXml', 'name', 'disksJson'],
+      );
+
+  @override
+  String crateApiVirtVirtCloneVolumesScript({required String specJson}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(specJson, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 75)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtCloneVolumesScriptConstMeta,
+        argValues: [specJson],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtCloneVolumesScriptConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_clone_volumes_script',
+        argNames: ['specJson'],
+      );
+
+  @override
+  String crateApiVirtVirtConsoleCommand({required String domain}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(domain, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 76)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtConsoleCommandConstMeta,
+        argValues: [domain],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtConsoleCommandConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_console_command',
+        argNames: ['domain'],
+      );
+
+  @override
+  String crateApiVirtVirtCreateHostScript() {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 77)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtCreateHostScriptConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtCreateHostScriptConstMeta =>
+      const TaskConstMeta(debugName: 'virt_create_host_script', argNames: []);
+
+  @override
+  String crateApiVirtVirtCreateVolumeScript({required String specJson}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(specJson, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 78)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtCreateVolumeScriptConstMeta,
+        argValues: [specJson],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtCreateVolumeScriptConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_create_volume_script',
+        argNames: ['specJson'],
+      );
+
+  @override
+  String crateApiVirtVirtDefineScript({required String specJson}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(specJson, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 79)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtDefineScriptConstMeta,
+        argValues: [specJson],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtDefineScriptConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_define_script',
+        argNames: ['specJson'],
+      );
+
+  @override
+  String crateApiVirtVirtDomainDetailScript({required String domain}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(domain, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 80)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtDomainDetailScriptConstMeta,
+        argValues: [domain],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtDomainDetailScriptConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_domain_detail_script',
+        argNames: ['domain'],
+      );
+
+  @override
+  String? crateApiVirtVirtExternalSnapshotRefusal({required String chainJson}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(chainJson, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 81)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_opt_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtExternalSnapshotRefusalConstMeta,
+        argValues: [chainJson],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtExternalSnapshotRefusalConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_external_snapshot_refusal',
+        argNames: ['chainJson'],
+      );
+
+  @override
+  String crateApiVirtVirtFirmwareScript() {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 82)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtFirmwareScriptConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtFirmwareScriptConstMeta =>
+      const TaskConstMeta(debugName: 'virt_firmware_script', argNames: []);
+
+  @override
+  String crateApiVirtVirtHardwareChangeScript({
+    required String domain,
+    required bool running,
+    String? baseXml,
+    required String changeJson,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(domain, serializer);
+          sse_encode_bool(running, serializer);
+          sse_encode_opt_String(baseXml, serializer);
+          sse_encode_String(changeJson, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 83)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtHardwareChangeScriptConstMeta,
+        argValues: [domain, running, baseXml, changeJson],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtHardwareChangeScriptConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_hardware_change_script',
+        argNames: ['domain', 'running', 'baseXml', 'changeJson'],
+      );
+
+  @override
+  String crateApiVirtVirtHardwareScript({required String domain}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(domain, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 84)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtHardwareScriptConstMeta,
+        argValues: [domain],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtHardwareScriptConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_hardware_script',
+        argNames: ['domain'],
+      );
+
+  @override
+  String crateApiVirtVirtHashPassword({
+    required String password,
+    required String salt,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(password, serializer);
+          sse_encode_String(salt, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 85)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtHashPasswordConstMeta,
+        argValues: [password, salt],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtHashPasswordConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_hash_password',
+        argNames: ['password', 'salt'],
+      );
+
+  @override
+  String crateApiVirtVirtHostDevicesScript() {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 86)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtHostDevicesScriptConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtHostDevicesScriptConstMeta =>
+      const TaskConstMeta(debugName: 'virt_host_devices_script', argNames: []);
+
+  @override
+  String crateApiVirtVirtNetChangeScript({required String opJson}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(opJson, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 87)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtNetChangeScriptConstMeta,
+        argValues: [opJson],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtNetChangeScriptConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_net_change_script',
+        argNames: ['opJson'],
+      );
+
+  @override
+  String crateApiVirtVirtNetworksScript() {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 88)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtNetworksScriptConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtNetworksScriptConstMeta =>
+      const TaskConstMeta(debugName: 'virt_networks_script', argNames: []);
+
+  @override
+  String crateApiVirtVirtOverviewScript() {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 89)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtOverviewScriptConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtOverviewScriptConstMeta =>
+      const TaskConstMeta(debugName: 'virt_overview_script', argNames: []);
+
+  @override
+  String crateApiVirtVirtPoolTypesScript() {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 90)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtPoolTypesScriptConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtPoolTypesScriptConstMeta =>
+      const TaskConstMeta(debugName: 'virt_pool_types_script', argNames: []);
+
+  @override
+  String crateApiVirtVirtProbeScript() {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 91)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtProbeScriptConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtProbeScriptConstMeta =>
+      const TaskConstMeta(debugName: 'virt_probe_script', argNames: []);
+
+  @override
+  String crateApiVirtVirtResourceScript({required String opJson}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(opJson, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 92)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtResourceScriptConstMeta,
+        argValues: [opJson],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtResourceScriptConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_resource_script',
+        argNames: ['opJson'],
+      );
+
+  @override
+  String crateApiVirtVirtSeedReadScript({required String seed}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(seed, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 93)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtSeedReadScriptConstMeta,
+        argValues: [seed],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtSeedReadScriptConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_seed_read_script',
+        argNames: ['seed'],
+      );
+
+  @override
+  String crateApiVirtVirtSeedUpdateScript({
+    required String seed,
+    required String revision,
+    required String cloudInitJson,
+    List<String>? tools,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(seed, serializer);
+          sse_encode_String(revision, serializer);
+          sse_encode_String(cloudInitJson, serializer);
+          sse_encode_opt_list_String(tools, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 94)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtSeedUpdateScriptConstMeta,
+        argValues: [seed, revision, cloudInitJson, tools],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtSeedUpdateScriptConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_seed_update_script',
+        argNames: ['seed', 'revision', 'cloudInitJson', 'tools'],
+      );
+
+  @override
+  String crateApiVirtVirtSnapChainScript({required String domain}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(domain, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 95)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtSnapChainScriptConstMeta,
+        argValues: [domain],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtSnapChainScriptConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_snap_chain_script',
+        argNames: ['domain'],
+      );
+
+  @override
+  String crateApiVirtVirtSnapCheckScript({
+    required String domain,
+    required String name,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(domain, serializer);
+          sse_encode_String(name, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 96)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtSnapCheckScriptConstMeta,
+        argValues: [domain, name],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtSnapCheckScriptConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_snap_check_script',
+        argNames: ['domain', 'name'],
+      );
+
+  @override
+  String crateApiVirtVirtSnapDiffScript({
+    required String domain,
+    required String name,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(domain, serializer);
+          sse_encode_String(name, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 97)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtSnapDiffScriptConstMeta,
+        argValues: [domain, name],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtSnapDiffScriptConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_snap_diff_script',
+        argNames: ['domain', 'name'],
+      );
+
+  @override
+  String crateApiVirtVirtSnapshotCreateScript({
+    required String domain,
+    required String name,
+    String? description,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(domain, serializer);
+          sse_encode_String(name, serializer);
+          sse_encode_opt_String(description, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 98)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtSnapshotCreateScriptConstMeta,
+        argValues: [domain, name, description],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtSnapshotCreateScriptConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_snapshot_create_script',
+        argNames: ['domain', 'name', 'description'],
+      );
+
+  @override
+  String crateApiVirtVirtSnapshotDeleteScript({
+    required String domain,
+    required String name,
+    required List<String> pools,
+    required List<String> leftovers,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(domain, serializer);
+          sse_encode_String(name, serializer);
+          sse_encode_list_String(pools, serializer);
+          sse_encode_list_String(leftovers, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 99)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtSnapshotDeleteScriptConstMeta,
+        argValues: [domain, name, pools, leftovers],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtSnapshotDeleteScriptConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_snapshot_delete_script',
+        argNames: ['domain', 'name', 'pools', 'leftovers'],
+      );
+
+  @override
+  String crateApiVirtVirtSnapshotExternalScript({
+    required String domain,
+    required String name,
+    String? description,
+    required List<(String, String)> overlays,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(domain, serializer);
+          sse_encode_String(name, serializer);
+          sse_encode_opt_String(description, serializer);
+          sse_encode_list_record_string_string(overlays, serializer);
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 100,
+          )!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtSnapshotExternalScriptConstMeta,
+        argValues: [domain, name, description, overlays],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtSnapshotExternalScriptConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_snapshot_external_script',
+        argNames: ['domain', 'name', 'description', 'overlays'],
+      );
+
+  @override
+  String? crateApiVirtVirtSnapshotRefusal({required String chainJson}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(chainJson, serializer);
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 101,
+          )!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_opt_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtSnapshotRefusalConstMeta,
+        argValues: [chainJson],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtSnapshotRefusalConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_snapshot_refusal',
+        argNames: ['chainJson'],
+      );
+
+  @override
+  String crateApiVirtVirtSnapshotRevertScript({
+    required String domain,
+    required String name,
+    required bool running,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(domain, serializer);
+          sse_encode_String(name, serializer);
+          sse_encode_bool(running, serializer);
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 102,
+          )!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtSnapshotRevertScriptConstMeta,
+        argValues: [domain, name, running],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtSnapshotRevertScriptConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_snapshot_revert_script',
+        argNames: ['domain', 'name', 'running'],
+      );
+
+  @override
+  String crateApiVirtVirtSnapshotsScript({required String domain}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(domain, serializer);
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 103,
+          )!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtSnapshotsScriptConstMeta,
+        argValues: [domain],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtSnapshotsScriptConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_snapshots_script',
+        argNames: ['domain'],
+      );
+
+  @override
+  String crateApiVirtVirtStorageScript() {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 104,
+          )!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtStorageScriptConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtStorageScriptConstMeta =>
+      const TaskConstMeta(debugName: 'virt_storage_script', argNames: []);
+
+  @override
+  String crateApiVirtVirtUndefineScript({
+    required String domain,
+    required List<String> storage,
+    String? seed,
+    required List<String> pools,
+    required List<String> chain,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(domain, serializer);
+          sse_encode_list_String(storage, serializer);
+          sse_encode_opt_String(seed, serializer);
+          sse_encode_list_String(pools, serializer);
+          sse_encode_list_String(chain, serializer);
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 105,
+          )!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtUndefineScriptConstMeta,
+        argValues: [domain, storage, seed, pools, chain],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtUndefineScriptConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_undefine_script',
+        argNames: ['domain', 'storage', 'seed', 'pools', 'chain'],
+      );
+
+  @override
+  String crateApiVirtVirtUploadGoLine() {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 106,
+          )!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtUploadGoLineConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtUploadGoLineConstMeta =>
+      const TaskConstMeta(debugName: 'virt_upload_go_line', argNames: []);
+
+  @override
+  String crateApiVirtVirtUploadReadyMarker() {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 107,
+          )!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtUploadReadyMarkerConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtUploadReadyMarkerConstMeta =>
+      const TaskConstMeta(debugName: 'virt_upload_ready_marker', argNames: []);
+
+  @override
+  String crateApiVirtVirtVncConsoleScript({required String domain}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(domain, serializer);
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 108,
+          )!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtVncConsoleScriptConstMeta,
+        argValues: [domain],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtVncConsoleScriptConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_vnc_console_script',
+        argNames: ['domain'],
+      );
+
+  @override
+  String crateApiVirtVirtVolUploadCommand({
+    required String pool,
+    required String name,
+    required VirtUploadEntryKind entry,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(pool, serializer);
+          sse_encode_String(name, serializer);
+          sse_encode_virt_upload_entry_kind(entry, serializer);
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 109,
+          )!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtVolUploadCommandConstMeta,
+        argValues: [pool, name, entry],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtVolUploadCommandConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_vol_upload_command',
+        argNames: ['pool', 'name', 'entry'],
+      );
+
+  @override
+  String crateApiVirtVirtVolumesScript({
+    required String pool,
+    required List<String> names,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(pool, serializer);
+          sse_encode_list_String(names, serializer);
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 110,
+          )!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtVolumesScriptConstMeta,
+        argValues: [pool, names],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtVolumesScriptConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_volumes_script',
+        argNames: ['pool', 'names'],
+      );
+
+  @override
   X25519KeyPair crateApiSshAsymX25519Keypair() {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 43)!;
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 111,
+          )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_x_25519_key_pair,
@@ -1689,7 +3868,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_list_prim_u_8_loose(privateKey, serializer);
           sse_encode_list_prim_u_8_loose(peerPublicKey, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 44)!;
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 112,
+          )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_prim_u_8_strict,
@@ -1993,29 +4176,42 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<String>? dco_decode_opt_list_String(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_list_String(raw);
+  }
+
+  @protected
   List<CustomCmd>? dco_decode_opt_list_custom_cmd(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_list_custom_cmd(raw);
   }
 
   @protected
+  Uint8List? dco_decode_opt_list_prim_u_8_strict(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_list_prim_u_8_strict(raw);
+  }
+
+  @protected
   RdpSessionParams dco_decode_rdp_session_params(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 11)
-      throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
+    if (arr.length != 12)
+      throw Exception('unexpected arr length: expect 12 but see ${arr.length}');
     return RdpSessionParams(
       connectHost: dco_decode_String(arr[0]),
       connectPort: dco_decode_u_16(arr[1]),
-      serverName: dco_decode_String(arr[2]),
-      serverPort: dco_decode_u_16(arr[3]),
-      username: dco_decode_String(arr[4]),
-      password: dco_decode_String(arr[5]),
-      domain: dco_decode_opt_String(arr[6]),
-      trustedCertSha256: dco_decode_opt_String(arr[7]),
-      width: dco_decode_u_16(arr[8]),
-      height: dco_decode_u_16(arr[9]),
-      scaleFactor: dco_decode_u_32(arr[10]),
+      accessToken: dco_decode_opt_list_prim_u_8_strict(arr[2]),
+      serverName: dco_decode_String(arr[3]),
+      serverPort: dco_decode_u_16(arr[4]),
+      username: dco_decode_String(arr[5]),
+      password: dco_decode_String(arr[6]),
+      domain: dco_decode_opt_String(arr[7]),
+      trustedCertSha256: dco_decode_opt_String(arr[8]),
+      width: dco_decode_u_16(arr[9]),
+      height: dco_decode_u_16(arr[10]),
+      scaleFactor: dco_decode_u_32(arr[11]),
     );
   }
 
@@ -2164,16 +4360,47 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  VirtActionKind dco_decode_virt_action_kind(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return VirtActionKind.values[raw as int];
+  }
+
+  @protected
+  VirtErrorKind dco_decode_virt_error_kind(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return VirtErrorKind.values[raw as int];
+  }
+
+  @protected
+  VirtFfiError dco_decode_virt_ffi_error(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return VirtFfiError(
+      kind: dco_decode_virt_error_kind(arr[0]),
+      message: dco_decode_String(arr[1]),
+    );
+  }
+
+  @protected
+  VirtUploadEntryKind dco_decode_virt_upload_entry_kind(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return VirtUploadEntryKind.values[raw as int];
+  }
+
+  @protected
   VncSessionParams dco_decode_vnc_session_params(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 4)
-      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
     return VncSessionParams(
       connectHost: dco_decode_String(arr[0]),
       connectPort: dco_decode_u_16(arr[1]),
-      password: dco_decode_opt_String(arr[2]),
-      shared: dco_decode_bool(arr[3]),
+      accessToken: dco_decode_opt_list_prim_u_8_strict(arr[2]),
+      password: dco_decode_opt_String(arr[3]),
+      shared: dco_decode_bool(arr[4]),
     );
   }
 
@@ -2517,6 +4744,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<String>? sse_decode_opt_list_String(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_list_String(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   List<CustomCmd>? sse_decode_opt_list_custom_cmd(
     SseDeserializer deserializer,
   ) {
@@ -2530,10 +4768,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Uint8List? sse_decode_opt_list_prim_u_8_strict(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_list_prim_u_8_strict(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   RdpSessionParams sse_decode_rdp_session_params(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final var_connectHost = sse_decode_String(deserializer);
     final var_connectPort = sse_decode_u_16(deserializer);
+    final var_accessToken = sse_decode_opt_list_prim_u_8_strict(deserializer);
     final var_serverName = sse_decode_String(deserializer);
     final var_serverPort = sse_decode_u_16(deserializer);
     final var_username = sse_decode_String(deserializer);
@@ -2546,6 +4796,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     return RdpSessionParams(
       connectHost: var_connectHost,
       connectPort: var_connectPort,
+      accessToken: var_accessToken,
       serverName: var_serverName,
       serverPort: var_serverPort,
       username: var_username,
@@ -2730,15 +4981,48 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  VirtActionKind sse_decode_virt_action_kind(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final inner = sse_decode_i_32(deserializer);
+    return VirtActionKind.values[inner];
+  }
+
+  @protected
+  VirtErrorKind sse_decode_virt_error_kind(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final inner = sse_decode_i_32(deserializer);
+    return VirtErrorKind.values[inner];
+  }
+
+  @protected
+  VirtFfiError sse_decode_virt_ffi_error(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_kind = sse_decode_virt_error_kind(deserializer);
+    final var_message = sse_decode_String(deserializer);
+    return VirtFfiError(kind: var_kind, message: var_message);
+  }
+
+  @protected
+  VirtUploadEntryKind sse_decode_virt_upload_entry_kind(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final inner = sse_decode_i_32(deserializer);
+    return VirtUploadEntryKind.values[inner];
+  }
+
+  @protected
   VncSessionParams sse_decode_vnc_session_params(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final var_connectHost = sse_decode_String(deserializer);
     final var_connectPort = sse_decode_u_16(deserializer);
+    final var_accessToken = sse_decode_opt_list_prim_u_8_strict(deserializer);
     final var_password = sse_decode_opt_String(deserializer);
     final var_shared = sse_decode_bool(deserializer);
     return VncSessionParams(
       connectHost: var_connectHost,
       connectPort: var_connectPort,
+      accessToken: var_accessToken,
       password: var_password,
       shared: var_shared,
     );
@@ -3096,6 +5380,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_list_String(
+    List<String>? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_list_String(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_list_custom_cmd(
     List<CustomCmd>? self,
     SseSerializer serializer,
@@ -3109,6 +5406,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_list_prim_u_8_strict(
+    Uint8List? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_list_prim_u_8_strict(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_rdp_session_params(
     RdpSessionParams self,
     SseSerializer serializer,
@@ -3116,6 +5426,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.connectHost, serializer);
     sse_encode_u_16(self.connectPort, serializer);
+    sse_encode_opt_list_prim_u_8_strict(self.accessToken, serializer);
     sse_encode_String(self.serverName, serializer);
     sse_encode_u_16(self.serverPort, serializer);
     sse_encode_String(self.username, serializer);
@@ -3295,6 +5606,40 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_virt_action_kind(
+    VirtActionKind self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_error_kind(
+    VirtErrorKind self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_ffi_error(VirtFfiError self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_virt_error_kind(self.kind, serializer);
+    sse_encode_String(self.message, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_upload_entry_kind(
+    VirtUploadEntryKind self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
   void sse_encode_vnc_session_params(
     VncSessionParams self,
     SseSerializer serializer,
@@ -3302,6 +5647,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.connectHost, serializer);
     sse_encode_u_16(self.connectPort, serializer);
+    sse_encode_opt_list_prim_u_8_strict(self.accessToken, serializer);
     sse_encode_opt_String(self.password, serializer);
     sse_encode_bool(self.shared, serializer);
   }

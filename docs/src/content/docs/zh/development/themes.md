@@ -3,83 +3,81 @@ title: 主题
 description: 内置主题如何打包、加载与分发
 ---
 
-本页介绍主题在本仓库中的实现与分发方式。编写主题、安装主题，以及发布你自己的
-repository 见[主题包](/docs/zh/advanced/theme-packages/)；内置主题改编自哪些上游
-调色板见[主题来源](/docs/zh/advanced/theme-packages/#主题来源)。
+本页介绍本仓库内置主题的实现与分发方式。主题包格式和发布流程见
+[主题包制作指南](/docs/zh/development/theme-authoring/)；普通用户的主题选择与安装说明见
+[主题使用指南](/docs/zh/advanced/theme-packages/)。上游调色板来源及其署名也列在制作指南中。
 
 ## 内置主题
 
-`BuiltinTheme`（`lib/data/model/app/builtin_theme.dart`）列出本构建随附的包，以及
-每个包在选择器里的标签。`Default` 是 Dart const，不读取任何 asset。其余五个是
-`assets/themes/<id>/` 下的源目录，各含一个 `manifest.toml`，并在 `pubspec.yaml`
-中注册。
+`BuiltinTheme`（`lib/data/model/app/builtin_theme.dart`）列出本构建内置的主题及其在
+选择器中的标签。`Default` 是 Dart const，不读取 asset。其余五个主题各有一个位于
+`assets/themes/<id>/` 的源目录，目录中包含 `manifest.toml`，并在 `pubspec.yaml` 中注册。
 
-内置目录走的是与导入目录、`.fsbt` 压缩包同一个安装器，所以随应用提供的主题不会
-比安装来的主题多出任何字段。这些目录以源码形式入库，Flutter 直接打包；不为它们
-提交任何压缩包或其他二进制 asset。
+内置目录与导入目录和 `.fsbt` 压缩包共用同一个安装器，因此内置主题和已安装主题支持
+相同的字段。这些目录以源码形式入库，由 Flutter 直接打包；仓库不提交对应的压缩包或
+其他二进制 asset。
 
-新增一个除了目录本身之外是两处改动：`pubspec.yaml` 里一行，以及一个
-`BuiltinTheme` case 用于选择器标签。
+新增主题时，除主题目录外，还需在 `pubspec.yaml` 中注册目录，并添加一个带选择器标签的
+`BuiltinTheme` case。
 
 ## 加载
 
-`BuiltinThemeLoader`（`lib/core/service/theme_package.dart`）按需加载。它用
-`_loaded` 保存已返回的结果，用 `_pending` 保存进行中的加载，因此同一个主题的两个
-请求共用一次解析，失败也不会被缓存，可以重试。
+`BuiltinThemeLoader`（`lib/core/service/theme_package.dart`）按需加载主题。`_loaded`
+保存已完成的结果，`_pending` 跟踪正在进行的加载，因此对同一主题的并发请求共用一次
+解析。失败结果不会缓存，可以重试。
 
-打开选择器不加载任何主题文件。一个目录在被选中时读取，或在启动时它是保存的选择时
-读取。内置 asset 与用户安装的主题使用各自独立的运行时缓存，不出现在用户安装列表
-中。
+打开选择器时不会加载主题文件。目录只会在主题被选中时读取；如果启动时恢复的是已保存
+主题，也会在启动阶段读取。内置 asset 使用独立于用户安装主题的运行时缓存，也不会显示在
+用户安装列表中。
 
 ## 解析器与编辑器 schema
 
-manifest 的语法由三个文件定义：`theme_package.dart`（顶层表、归档条目、schema
-范围）、`theme_components.dart`（组件字段、状态、以及各个数值范围），以及
-`theme_palette.dart`（未废弃的 ColorScheme role）。`docs/schemas/fsbt-manifest.schema.json`
-为编辑器镜像这些定义，所以它是照这三个文件写的，而不是照本文档写的。
+manifest 语法由三个文件定义：`theme_package.dart`（顶层表、归档条目和 schema
+范围）、`theme_components.dart`（组件字段、状态和数值范围），以及
+`theme_palette.dart`（未废弃的 ColorScheme role）。编辑器使用的
+`docs/schemas/fsbt-manifest.schema.json` 与这些定义保持一致，因此 schema 以这三个文件为
+依据，而不是以本文档为依据。
 
-它的严格程度与安装器一致，只有一条表达不了：`icons.colors` 里的颜色需要在
-`icons.images` 里有对应条目，这是跨两张表的检查，JSON Schema 没有对应的写法。
+schema 与安装器同样严格，只有一条规则无法表达：`icons.colors` 中的 key 必须在
+`icons.images` 中有对应条目。这项检查涉及两张表，JSON Schema 无法描述。
 
-所有入库的 manifest —— 内置目录和 `docs/examples/aurora/` —— 都由 CI 的 `docs`
-任务按 schema 校验；schema 本身由 `test/unit/theme_schema_test.dart` 对着解析器
-对齐：编辑器给出的字段、枚举和取值范围，就是安装时接受的。
+CI 的 `docs` 任务会按 schema 校验所有入库的 manifest，包括内置目录和
+`docs/examples/aurora/`。`test/unit/theme_schema_test.dart` 则检查 schema 与解析器是否
+一致，确保编辑器提供的字段、枚举和取值范围都与安装器接受的内容相符。
 
 ## 主题商店
 
-`ThemeRepo`（`lib/core/service/theme_repo.dart`）读取两个层级：repository 的
-catalog，以及某个 repository 的目录树。`assets/catalog/repos.toml` 是下限 ——
-首次运行且无网络时提供的内容 —— `Urls.themeCatalog` 则是该地址有响应时应用改读的
-地址。
+`ThemeRepo`（`lib/core/service/theme_repo.dart`）先读取 repository catalog，再读取各
+repository 的目录树。首次运行且无网络时，应用使用 `assets/catalog/repos.toml`；如果
+`Urls.themeCatalog` 有响应，则改用该地址提供的 catalog。
 
-repository 地址是 HTTPS，解析到一个 tarball。git 仓库按
-`<address>/archive/HEAD.tar.gz` 拉取，因为仓库把哪个分支当作默认分支不该由应用来
-猜。`ThemePackages.download` 拒绝带凭据的 URL，最多跟随三次重定向，每次都用新地址
-重新校验 HTTPS。repository 不接受明文 HTTP：它决定装上的是哪些字节。
+repository URL 必须使用 HTTPS，并指向 tarball。对于 git 仓库，应用从
+`<address>/archive/HEAD.tar.gz` 获取文件，以使用仓库的默认分支而无需假设其名称。
+`ThemePackages.download` 会拒绝包含凭据的 URL，最多跟随三次重定向，并逐一确认目标仍
+使用 HTTPS。repository URL 不接受明文 HTTP，因为它决定了要安装的内容。
 
-上限写在 `ThemeRepo` —— catalog 100 个 repository、1 MiB，repository 树 16 MiB
-压缩、64 MiB 解压、单个条目 8 MiB。本构建不认识的 section 会被跳过，而不是让整个
-repository 失败，于是一棵树可以同时带 `themes/` 和 `plugins/`，服务本应用和插件
-两项功能。
+`ThemeRepo` 设定了以下上限：每个 catalog 最多包含 100 个 repository，大小不超过
+1 MiB；每棵 repository 树压缩后不超过 16 MiB、解压后不超过 64 MiB；单个条目不超过
+8 MiB。应用会跳过不认识的 section，不会因此拒绝整个 repository，因此同一目录树可以
+同时包含供本应用使用的 `themes/` 和供插件功能使用的 `plugins/`。
 
-商店页面在 `lib/view/page/theme_store/`。列表在两次启动之间保留于
-`SettingStore.themeStoreCache`，以 `ThemeStore.toJson()` 写入，`updateLastModified:
-false`，并列入 `SettingStore.deviceLocalKeys` —— 一份 catalog 曾提供什么的缓存，既
-不是要同步的编辑，也不是要还原到另一台设备的东西。缓存中的条目不带 repository 文件
-（`ThemeStoreItem.index` 为 null），所以树内的版本会重新向它的 repository 取 tarball；
-两种情况的 digest 校验相同。
+商店页面位于 `lib/view/page/theme_store/`。主题列表保存在
+`SettingStore.themeStoreCache`，供下次启动时读取；数据通过 `ThemeStore.toJson()` 写入，
+并设置 `updateLastModified: false`。该 key 列在 `SettingStore.deviceLocalKeys` 中，
+因为它只是 catalog 内容缓存，不是需要同步或恢复到其他设备的用户数据。缓存条目不包含
+repository 文件（`ThemeStoreItem.index` 为 null），所以安装目录树中的版本时，应用会
+重新从 repository 获取 tarball。无论来源如何，都会校验 digest。
 
 ## 官方主题
 
-`lollipopkit/serverbox-plugins` 用 `themes/` 存放官方主题，一个主题一个源目录加一个
-listing，旁边是 `plugins/`。
+`lollipopkit/serverbox-plugins` 在 `themes/` 中存放官方主题，每个主题各有一个源目录和
+一个 listing；`plugins/` 与该目录并列。
 
-`scripts/publish-themes.sh <id> <version>` 发布一个版本。它从 manifest 里读出 id 和
-`[schema]` 范围，使 listing 记录的是包自己声明的内容；用 `zip` 打包目录，`-X` 避免
-把每台机器不同的文件属性写进压缩包；算出 digest 和大小；创建 tag 为
-`<id>-<version>` 的 release，asset 为 `<tag>.fsbt`；最后向 listing 追加一个
-`[[version]]` 块。
+`scripts/publish-themes.sh <id> <version>` 用于发布一个版本。脚本从 manifest 读取 id 和
+`[schema]` 范围，确保 listing 记录包自身声明的内容；再用 `zip` 打包目录。`-X` 选项会
+排除机器相关的文件属性。随后脚本计算 digest 和大小，创建 tag 为 `<id>-<version>` 的
+release，并将 `<tag>.fsbt` 作为 asset，最后向 listing 追加一个 `[[version]]` 块。
 
-它强制的两个顺序都是出问题时不报错的那些。release 先于指向它的 listing 上传，因为
-指向 404 的 listing 对每个读者都是坏的。已记录但 digest 不同的版本会被拒绝而不是
-重新发布，因为一个不再标识特定字节的版本号会让这里其余所有检查失去意义。
+脚本会强制执行两项顺序与完整性规则：先上传 release，再更新引用它的 listing，避免
+listing 指向不存在的 asset；如果已记录版本的 digest 不同，则拒绝重新发布，确保同一个
+版本号始终对应相同内容。

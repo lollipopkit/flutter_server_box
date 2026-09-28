@@ -172,7 +172,7 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
   }
 
   KeyEventResult _onKeyEvent(FocusNode _, KeyEvent event) {
-    final session = ref.read(remoteDesktopSessionsProvider).sessions[widget.sessionId];
+    final session = ref.read(remoteDesktopSessionsProvider).byId(widget.sessionId);
     if (session == null || session.viewOnly) return KeyEventResult.ignored;
     _ensureInput(session);
     return _input!.handle(event)
@@ -199,7 +199,7 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(
-      remoteDesktopSessionsProvider.select((state) => state.sessions[widget.sessionId]),
+      remoteDesktopSessionsProvider.select((state) => state.byId(widget.sessionId)),
     );
     if (session == null) return const SizedBox.shrink();
     _ensureInput(session);
@@ -679,13 +679,36 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
                 ffi.RemoteDesktopConnectionState.disconnected =>
                   l10n.remoteDesktopDisconnected,
               };
+    // Retrying is otherwise two taps deep in the toolbar's menu, and the one
+    // thing to do once automatic retries have given up.
+    final retry =
+        session.certificate == null &&
+        session.connectionState ==
+            ffi.RemoteDesktopConnectionState.disconnected;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
-        child: Text(
-          text,
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: Colors.white70),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              text,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white70),
+            ),
+            if (retry) ...[
+              const SizedBox(height: 13),
+              TextButton.icon(
+                onPressed: () => unawaited(
+                  ref
+                      .read(remoteDesktopSessionsProvider.notifier)
+                      .reconnect(session.id),
+                ),
+                icon: const Icon(Icons.refresh, size: 18),
+                label: Text(l10n.remoteDesktopReconnect),
+              ),
+            ],
+          ],
         ),
       ),
     );

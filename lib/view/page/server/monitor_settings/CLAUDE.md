@@ -1,0 +1,23 @@
+# Editing the agent's own settings
+
+`MonitorSettingsPage` (`lib/view/page/server/monitor_settings/`) edits a monitor agent's `config.toml` — intervals, alert rules, data retention, CORS origins, notification channels — through `GET/PUT /api/v1/settings` and `GET/PUT /api/v1/push`. The panel edits the same two endpoints, so the two UIs are peers over one contract; `monitor/CLAUDE.md`'s "Editing it over the API" is the authority on what they are allowed to do.
+
+**One way in: the button in a server's app bar**, beside Edit, which opens `MonitorSettingsPage` — the route, with the bar the save button sits in. Edit is this app's record of the server and this is the agent's own configuration, which is why the two are neighbours and why this is not in the function bar below the cards (that row is things done *to* the machine).
+
+- `MonitorSettingsView` is a widget with a `MonitorSettingsController` rather than a page that owns its own bar: the view's `_saving`/`_settingsDirty`/`_pushDirty` are setters so that a dozen assignments scattered across the form all reach the bar. One host left does not make the seam wrong.
+- **Which servers get it is asked of `spi.monitorHttp`, never of `ServerCapabilities`.** A both-transports server answers capability questions as the union of SSH and the agent, so a capability check would put the button on SSH-only servers.
+- It owns its own `MonitorHttpClient` and disposes it, rather than borrowing `ServerNotifier`'s: what it edits is the agent's own configuration, and `ServerConnectCredential.fromSpi` may answer SSH.
+
+**The form is four groups in a `PageColumns` grid, and each collection is a page of its own.** `view.dart` holds the form, `lists.dart` the three list editors, `widgets.dart` (`MonitorUi`) what both draw, `push_edit.dart` one channel.
+
+- Groups: **Collection** (intervals, idle pause), **Alerts** (two rows), **Storage** (retention), **Network** (CORS). A heading names the *category*, not the first row under it. Idle pause is inside Collection because what it pauses is the extended cycle two fields above it.
+- Alert rules, notification channels and CORS origins are `MonitorRulesPage` / `MonitorPushListPage` / `MonitorCorsPage`, reached from a row whose subtitle is *what is inside* — names, not a count.
+  - Each takes the list plus an `onChanged` callback rather than answering with the edited list. A page can be left by a back gesture, which answers `null` and cannot be told apart from "changed nothing", and the form's dirty flag has to be set exactly when something changed.
+  - Rows are numbered, not iconed: every row of one list had the same icon, which said what the page had already said. For a channel the position is also what the agent resolves a withheld credential against.
+- **`MonitorUi.effectNote` draws nothing for a field that takes effect on save**, and marks only the ones needing an agent restart. The cost is that `MonitorSettings.isLive` cannot tell "not live" from "this app spelled the field name differently from the agent" — `live_fields` lists what is live, not what exists — so a mistyped name is silent. There is no test covering those names.
+- **Alert rule semantics are documented on the docs site, not in the app** — `Urls.monitorRulesDoc` → `docs/.../monitor-agent.md#alert-rules` (en and zh). What matters about a rule is what a form cannot show: a threshold with no comparator means `<`, a unit that does not fit its metric never fires, and a network rule is quiet for one cycle after the agent starts. Each of those is a rule that silently never alerts. `_kRuleTypes` in `lists.dart` mirrors `RuleKind::parse` (`monitor/src/monitoring/rules.rs`) and keeps a spelling already in a rule that it no longer offers.
+
+**A push credential is write-only and the app never holds one.** `null` in `MonitorPushEntry.config` means "set on the agent, not disclosed"; sending it back keeps the stored value, which the agent resolves against `fromIndex`. `test/unit/monitor/monitor_settings_test.dart` asserts that null survives `jsonEncode` — a model that dropped it would make every save from the app clear the channel's key.
+
+- That is also why removing a channel asks first and removing a rule or an origin does not: a rule and an origin are entirely visible in the row that holds them and can be typed back, and a channel's credential was never on screen at all.
+- One Save button, two requests, each sent only if its half changed: the endpoints are separate so that an edit to a collection interval can never be what drops a credential. A failure in one is reported without claiming the other did not happen.

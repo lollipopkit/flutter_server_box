@@ -1,0 +1,125 @@
+SrvBoxSep.b64.dmlydC5wb29scw==
+images
+sbx-iso
+sbx-off
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5wb29scy5hY3RpdmU=
+images
+sbx-iso
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5wb29scy5hdXRvc3RhcnQ=
+images
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5wb29sLnhtbA==
+images
+<pool type='dir'>
+  <name>images</name>
+  <uuid>7c102738-9851-400b-b8bf-346798947910</uuid>
+  <capacity unit='bytes'>20922114048</capacity>
+  <allocation unit='bytes'>1152606208</allocation>
+  <available unit='bytes'>19769507840</available>
+  <source>
+  </source>
+  <target>
+    <path>/var/lib/libvirt/images</path>
+    <permissions>
+      <mode>0711</mode>
+      <owner>0</owner>
+      <group>0</group>
+    </permissions>
+  </target>
+</pool>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5wb29sLnZvbHM=
+images
+ Name            Path
+--------------------------------------------------------
+ cirros.img      /var/lib/libvirt/images/cirros.img
+ data1.qcow2     /var/lib/libvirt/images/data1.qcow2
+ extra.qcow2     /var/lib/libvirt/images/extra.qcow2
+ off1.qcow2      /var/lib/libvirt/images/off1.qcow2
+ paused1.qcow2   /var/lib/libvirt/images/paused1.qcow2
+ run1.qcow2      /var/lib/libvirt/images/run1.qcow2
+
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5wb29sLnhtbA==
+sbx-iso
+<pool type='dir'>
+  <name>sbx-iso</name>
+  <uuid>c21f45ee-9840-4b2f-aa90-22f3d15b8914</uuid>
+  <capacity unit='bytes'>20922114048</capacity>
+  <allocation unit='bytes'>1472385024</allocation>
+  <available unit='bytes'>19449729024</available>
+  <source>
+  </source>
+  <target>
+    <path>/var/lib/libvirt/sbx-iso</path>
+    <permissions>
+      <mode>0755</mode>
+      <owner>0</owner>
+      <group>0</group>
+    </permissions>
+  </target>
+</pool>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5wb29sLnZvbHM=
+sbx-iso
+ Name            Path
+---------------------------------------------------------
+ my disk.qcow2   /var/lib/libvirt/sbx-iso/my disk.qcow2
+ tiny.iso        /var/lib/libvirt/sbx-iso/tiny.iso
+
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5wb29sLnhtbA==
+sbx-off
+<pool type='dir'>
+  <name>sbx-off</name>
+  <uuid>5d98f8b8-d5a6-4627-bfd3-b169b5af70ea</uuid>
+  <capacity unit='bytes'>0</capacity>
+  <allocation unit='bytes'>0</allocation>
+  <available unit='bytes'>0</available>
+  <source>
+  </source>
+  <target>
+    <path>/var/lib/libvirt/sbx-off</path>
+  </target>
+</pool>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5wb29sLnZvbHM=
+sbx-off
+error: Failed to list volumes
+error: Requested operation is not valid: storage pool 'sbx-off' is not active
+
+
+SbVirtRc=1
+SrvBoxSep.b64.dmlydC5kb21haW5z
+24a8bbc6-deaa-4be0-9699-a1d801faa927
+8a2ed2a2-83e1-4c41-ad0a-a57d54d0d649
+1438b9e3-f647-47ee-8ed2-6dbc3adccd68
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5ibGtsaXN0
+24a8bbc6-deaa-4be0-9699-a1d801faa927
+ file   disk   vda   /var/lib/libvirt/images/paused1.qcow2
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5ibGtsaXN0
+8a2ed2a2-83e1-4c41-ad0a-a57d54d0d649
+ file   disk   vda   /var/lib/libvirt/images/run1.qcow2
+ file   disk   vdb   /var/lib/libvirt/images/extra.qcow2
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5ibGtsaXN0
+1438b9e3-f647-47ee-8ed2-6dbc3adccd68
+ file   disk    vda   /var/lib/libvirt/images/off1.qcow2
+ file   cdrom   hdc   /var/lib/libvirt/sbx-iso/tiny.iso
+
+SbVirtRc=0

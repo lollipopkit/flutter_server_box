@@ -155,6 +155,20 @@ void main() {
     addTearDown(() => tester.pumpWidget(const SizedBox.shrink()));
   }
 
+  testWidgets('the page title says the feature is in beta', (tester) async {
+    await pumpPage(tester, width: 620);
+
+    // Beside the title, not appended to it: the mark is the widget every other
+    // beta feature carries, and it is *not* localized — the title reads
+    // "Remote Desktop" in a locale whose word for it is elsewhere, and the
+    // mark beside it still says Beta.
+    expect(find.text('Beta'), findsOneWidget);
+    final title = tester.getRect(find.text('Remote desktop'));
+    final mark = tester.getRect(find.text('Beta'));
+    expect(mark.left, greaterThan(title.right));
+    expect(mark.center.dy, title.center.dy);
+  });
+
   testWidgets('empty profiles and the editor use Chinese translations', (
     tester,
   ) async {

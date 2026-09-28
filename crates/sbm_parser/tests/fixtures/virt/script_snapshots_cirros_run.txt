@@ -1,0 +1,630 @@
+SrvBoxSep.b64.dmlydC5zbmFwLmN1cnJlbnQ=
+sbx-a
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5zbmFwLmxpc3Q=
+sbx-a
+sbx-b
+sbx-off
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5zbmFwLnhtbA==
+sbx-a
+<domainsnapshot>
+  <name>sbx-a</name>
+  <description>first one</description>
+  <state>running</state>
+  <creationTime>1790335495</creationTime>
+  <memory snapshot='internal'/>
+  <disks>
+    <disk name='vda' snapshot='internal'/>
+    <disk name='vdb' snapshot='internal'/>
+  </disks>
+  <domain type='kvm'>
+    <name>cirros-run</name>
+    <uuid>8a2ed2a2-83e1-4c41-ad0a-a57d54d0d649</uuid>
+    <metadata>
+      <libosinfo:libosinfo xmlns:libosinfo="http://libosinfo.org/xmlns/libvirt/domain/1.0">
+        <libosinfo:os id="http://cirros-cloud.net/cirros/0.5.2"/>
+      </libosinfo:libosinfo>
+    </metadata>
+    <memory unit='KiB'>262144</memory>
+    <currentMemory unit='KiB'>262144</currentMemory>
+    <vcpu placement='static'>2</vcpu>
+    <resource>
+      <partition>/machine</partition>
+    </resource>
+    <os>
+      <type arch='x86_64' machine='pc-i440fx-10.0'>hvm</type>
+      <boot dev='hd'/>
+    </os>
+    <features>
+      <acpi/>
+      <apic/>
+    </features>
+    <cpu mode='host-passthrough' check='none' migratable='on'/>
+    <clock offset='utc'>
+      <timer name='rtc' tickpolicy='catchup'/>
+      <timer name='pit' tickpolicy='delay'/>
+      <timer name='hpet' present='no'/>
+    </clock>
+    <on_poweroff>destroy</on_poweroff>
+    <on_reboot>restart</on_reboot>
+    <on_crash>destroy</on_crash>
+    <pm>
+      <suspend-to-mem enabled='no'/>
+      <suspend-to-disk enabled='no'/>
+    </pm>
+    <devices>
+      <emulator>/usr/bin/qemu-system-x86_64</emulator>
+      <disk type='file' device='disk'>
+        <driver name='qemu' type='qcow2'/>
+        <source file='/var/lib/libvirt/images/run1.qcow2'/>
+        <target dev='vda' bus='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
+      </disk>
+      <disk type='file' device='disk'>
+        <driver name='qemu' type='qcow2'/>
+        <source file='/var/lib/libvirt/images/extra.qcow2'/>
+        <target dev='vdb' bus='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x08' function='0x0'/>
+      </disk>
+      <controller type='usb' index='0' model='ich9-ehci1'>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x7'/>
+      </controller>
+      <controller type='usb' index='0' model='ich9-uhci1'>
+        <master startport='0'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0' multifunction='on'/>
+      </controller>
+      <controller type='usb' index='0' model='ich9-uhci2'>
+        <master startport='2'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x1'/>
+      </controller>
+      <controller type='usb' index='0' model='ich9-uhci3'>
+        <master startport='4'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x2'/>
+      </controller>
+      <controller type='virtio-serial' index='0'>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0'/>
+      </controller>
+      <controller type='pci' index='0' model='pci-root'/>
+      <interface type='network'>
+        <mac address='52:54:00:6e:d2:3c'/>
+        <source network='default'/>
+        <model type='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+      </interface>
+      <interface type='network'>
+        <mac address='52:54:00:bb:c0:4b'/>
+        <source network='default'/>
+        <model type='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
+      </interface>
+      <serial type='pty'>
+        <target type='isa-serial' port='0'>
+          <model name='isa-serial'/>
+        </target>
+      </serial>
+      <console type='pty'>
+        <target type='serial' port='0'/>
+      </console>
+      <channel type='unix'>
+        <target type='virtio' name='org.qemu.guest_agent.0'/>
+        <address type='virtio-serial' controller='0' bus='0' port='1'/>
+      </channel>
+      <input type='tablet' bus='usb'>
+        <address type='usb' bus='0' port='1'/>
+      </input>
+      <input type='mouse' bus='ps2'/>
+      <input type='keyboard' bus='ps2'/>
+      <graphics type='vnc' port='-1' autoport='yes' listen='127.0.0.1'>
+        <listen type='address' address='127.0.0.1'/>
+      </graphics>
+      <audio id='1' type='none'/>
+      <video>
+        <model type='vga' vram='16384' heads='1' primary='yes'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
+      </video>
+      <memballoon model='virtio'>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x09' function='0x0'/>
+      </memballoon>
+      <rng model='virtio'>
+        <backend model='random'>/dev/urandom</backend>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x0a' function='0x0'/>
+      </rng>
+    </devices>
+    <seclabel type='dynamic' model='apparmor' relabel='yes'/>
+  </domain>
+  <inactiveDomain type='kvm'>
+    <name>cirros-run</name>
+    <uuid>8a2ed2a2-83e1-4c41-ad0a-a57d54d0d649</uuid>
+    <metadata>
+      <libosinfo:libosinfo xmlns:libosinfo="http://libosinfo.org/xmlns/libvirt/domain/1.0">
+        <libosinfo:os id="http://cirros-cloud.net/cirros/0.5.2"/>
+      </libosinfo:libosinfo>
+    </metadata>
+    <memory unit='KiB'>262144</memory>
+    <currentMemory unit='KiB'>262144</currentMemory>
+    <vcpu placement='static'>2</vcpu>
+    <os>
+      <type arch='x86_64' machine='pc-i440fx-10.0'>hvm</type>
+      <boot dev='hd'/>
+    </os>
+    <features>
+      <acpi/>
+      <apic/>
+    </features>
+    <cpu mode='host-passthrough' check='none' migratable='on'/>
+    <clock offset='utc'>
+      <timer name='rtc' tickpolicy='catchup'/>
+      <timer name='pit' tickpolicy='delay'/>
+      <timer name='hpet' present='no'/>
+    </clock>
+    <on_poweroff>destroy</on_poweroff>
+    <on_reboot>restart</on_reboot>
+    <on_crash>destroy</on_crash>
+    <pm>
+      <suspend-to-mem enabled='no'/>
+      <suspend-to-disk enabled='no'/>
+    </pm>
+    <devices>
+      <emulator>/usr/bin/qemu-system-x86_64</emulator>
+      <disk type='file' device='disk'>
+        <driver name='qemu' type='qcow2'/>
+        <source file='/var/lib/libvirt/images/run1.qcow2'/>
+        <target dev='vda' bus='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
+      </disk>
+      <disk type='file' device='disk'>
+        <driver name='qemu' type='qcow2'/>
+        <source file='/var/lib/libvirt/images/extra.qcow2'/>
+        <target dev='vdb' bus='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x08' function='0x0'/>
+      </disk>
+      <controller type='usb' index='0' model='ich9-ehci1'>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x7'/>
+      </controller>
+      <controller type='usb' index='0' model='ich9-uhci1'>
+        <master startport='0'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0' multifunction='on'/>
+      </controller>
+      <controller type='usb' index='0' model='ich9-uhci2'>
+        <master startport='2'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x1'/>
+      </controller>
+      <controller type='usb' index='0' model='ich9-uhci3'>
+        <master startport='4'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x2'/>
+      </controller>
+      <controller type='pci' index='0' model='pci-root'/>
+      <controller type='virtio-serial' index='0'>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0'/>
+      </controller>
+      <interface type='network'>
+        <mac address='52:54:00:6e:d2:3c'/>
+        <source network='default'/>
+        <model type='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+      </interface>
+      <interface type='network'>
+        <mac address='52:54:00:bb:c0:4b'/>
+        <source network='default'/>
+        <model type='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
+      </interface>
+      <serial type='pty'>
+        <target type='isa-serial' port='0'>
+          <model name='isa-serial'/>
+        </target>
+      </serial>
+      <console type='pty'>
+        <target type='serial' port='0'/>
+      </console>
+      <channel type='unix'>
+        <target type='virtio' name='org.qemu.guest_agent.0'/>
+        <address type='virtio-serial' controller='0' bus='0' port='1'/>
+      </channel>
+      <input type='tablet' bus='usb'>
+        <address type='usb' bus='0' port='1'/>
+      </input>
+      <input type='mouse' bus='ps2'/>
+      <input type='keyboard' bus='ps2'/>
+      <graphics type='vnc' port='-1' autoport='yes' listen='127.0.0.1'>
+        <listen type='address' address='127.0.0.1'/>
+      </graphics>
+      <audio id='1' type='none'/>
+      <video>
+        <model type='vga' vram='16384' heads='1' primary='yes'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
+      </video>
+      <memballoon model='virtio'>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x09' function='0x0'/>
+      </memballoon>
+      <rng model='virtio'>
+        <backend model='random'>/dev/urandom</backend>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x0a' function='0x0'/>
+      </rng>
+    </devices>
+  </inactiveDomain>
+  <cookie>
+    <cpu mode='host-passthrough' check='none' migratable='on'/>
+    <slirpHelper/>
+  </cookie>
+</domainsnapshot>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5zbmFwLnhtbA==
+sbx-b
+<domainsnapshot>
+  <name>sbx-b</name>
+  <state>running</state>
+  <parent>
+    <name>sbx-off</name>
+  </parent>
+  <creationTime>1790335511</creationTime>
+  <memory snapshot='internal'/>
+  <disks>
+    <disk name='vda' snapshot='internal'/>
+    <disk name='vdb' snapshot='internal'/>
+  </disks>
+  <domain type='kvm'>
+    <name>cirros-run</name>
+    <uuid>8a2ed2a2-83e1-4c41-ad0a-a57d54d0d649</uuid>
+    <metadata>
+      <libosinfo:libosinfo xmlns:libosinfo="http://libosinfo.org/xmlns/libvirt/domain/1.0">
+        <libosinfo:os id="http://cirros-cloud.net/cirros/0.5.2"/>
+      </libosinfo:libosinfo>
+    </metadata>
+    <memory unit='KiB'>262144</memory>
+    <currentMemory unit='KiB'>262144</currentMemory>
+    <vcpu placement='static'>2</vcpu>
+    <resource>
+      <partition>/machine</partition>
+    </resource>
+    <os>
+      <type arch='x86_64' machine='pc-i440fx-10.0'>hvm</type>
+      <boot dev='hd'/>
+    </os>
+    <features>
+      <acpi/>
+      <apic/>
+    </features>
+    <cpu mode='host-passthrough' check='none' migratable='on'/>
+    <clock offset='utc'>
+      <timer name='rtc' tickpolicy='catchup'/>
+      <timer name='pit' tickpolicy='delay'/>
+      <timer name='hpet' present='no'/>
+    </clock>
+    <on_poweroff>destroy</on_poweroff>
+    <on_reboot>restart</on_reboot>
+    <on_crash>destroy</on_crash>
+    <pm>
+      <suspend-to-mem enabled='no'/>
+      <suspend-to-disk enabled='no'/>
+    </pm>
+    <devices>
+      <emulator>/usr/bin/qemu-system-x86_64</emulator>
+      <disk type='file' device='disk'>
+        <driver name='qemu' type='qcow2'/>
+        <source file='/var/lib/libvirt/images/run1.qcow2'/>
+        <target dev='vda' bus='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
+      </disk>
+      <disk type='file' device='disk'>
+        <driver name='qemu' type='qcow2'/>
+        <source file='/var/lib/libvirt/images/extra.qcow2'/>
+        <target dev='vdb' bus='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x08' function='0x0'/>
+      </disk>
+      <controller type='usb' index='0' model='ich9-ehci1'>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x7'/>
+      </controller>
+      <controller type='usb' index='0' model='ich9-uhci1'>
+        <master startport='0'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0' multifunction='on'/>
+      </controller>
+      <controller type='usb' index='0' model='ich9-uhci2'>
+        <master startport='2'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x1'/>
+      </controller>
+      <controller type='usb' index='0' model='ich9-uhci3'>
+        <master startport='4'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x2'/>
+      </controller>
+      <controller type='virtio-serial' index='0'>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0'/>
+      </controller>
+      <controller type='pci' index='0' model='pci-root'/>
+      <interface type='network'>
+        <mac address='52:54:00:6e:d2:3c'/>
+        <source network='default'/>
+        <model type='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+      </interface>
+      <interface type='network'>
+        <mac address='52:54:00:bb:c0:4b'/>
+        <source network='default'/>
+        <model type='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
+      </interface>
+      <serial type='pty'>
+        <target type='isa-serial' port='0'>
+          <model name='isa-serial'/>
+        </target>
+      </serial>
+      <console type='pty'>
+        <target type='serial' port='0'/>
+      </console>
+      <channel type='unix'>
+        <target type='virtio' name='org.qemu.guest_agent.0'/>
+        <address type='virtio-serial' controller='0' bus='0' port='1'/>
+      </channel>
+      <input type='tablet' bus='usb'>
+        <address type='usb' bus='0' port='1'/>
+      </input>
+      <input type='mouse' bus='ps2'/>
+      <input type='keyboard' bus='ps2'/>
+      <graphics type='vnc' port='-1' autoport='yes' listen='127.0.0.1'>
+        <listen type='address' address='127.0.0.1'/>
+      </graphics>
+      <audio id='1' type='none'/>
+      <video>
+        <model type='vga' vram='16384' heads='1' primary='yes'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
+      </video>
+      <memballoon model='virtio'>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x09' function='0x0'/>
+      </memballoon>
+      <rng model='virtio'>
+        <backend model='random'>/dev/urandom</backend>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x0a' function='0x0'/>
+      </rng>
+    </devices>
+    <seclabel type='dynamic' model='apparmor' relabel='yes'/>
+  </domain>
+  <inactiveDomain type='kvm'>
+    <name>cirros-run</name>
+    <uuid>8a2ed2a2-83e1-4c41-ad0a-a57d54d0d649</uuid>
+    <metadata>
+      <libosinfo:libosinfo xmlns:libosinfo="http://libosinfo.org/xmlns/libvirt/domain/1.0">
+        <libosinfo:os id="http://cirros-cloud.net/cirros/0.5.2"/>
+      </libosinfo:libosinfo>
+    </metadata>
+    <memory unit='KiB'>262144</memory>
+    <currentMemory unit='KiB'>262144</currentMemory>
+    <vcpu placement='static'>2</vcpu>
+    <os>
+      <type arch='x86_64' machine='pc-i440fx-10.0'>hvm</type>
+      <boot dev='hd'/>
+    </os>
+    <features>
+      <acpi/>
+      <apic/>
+    </features>
+    <cpu mode='host-passthrough' check='none' migratable='on'/>
+    <clock offset='utc'>
+      <timer name='rtc' tickpolicy='catchup'/>
+      <timer name='pit' tickpolicy='delay'/>
+      <timer name='hpet' present='no'/>
+    </clock>
+    <on_poweroff>destroy</on_poweroff>
+    <on_reboot>restart</on_reboot>
+    <on_crash>destroy</on_crash>
+    <pm>
+      <suspend-to-mem enabled='no'/>
+      <suspend-to-disk enabled='no'/>
+    </pm>
+    <devices>
+      <emulator>/usr/bin/qemu-system-x86_64</emulator>
+      <disk type='file' device='disk'>
+        <driver name='qemu' type='qcow2'/>
+        <source file='/var/lib/libvirt/images/run1.qcow2'/>
+        <target dev='vda' bus='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
+      </disk>
+      <disk type='file' device='disk'>
+        <driver name='qemu' type='qcow2'/>
+        <source file='/var/lib/libvirt/images/extra.qcow2'/>
+        <target dev='vdb' bus='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x08' function='0x0'/>
+      </disk>
+      <controller type='usb' index='0' model='ich9-ehci1'>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x7'/>
+      </controller>
+      <controller type='usb' index='0' model='ich9-uhci1'>
+        <master startport='0'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0' multifunction='on'/>
+      </controller>
+      <controller type='usb' index='0' model='ich9-uhci2'>
+        <master startport='2'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x1'/>
+      </controller>
+      <controller type='usb' index='0' model='ich9-uhci3'>
+        <master startport='4'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x2'/>
+      </controller>
+      <controller type='pci' index='0' model='pci-root'/>
+      <controller type='virtio-serial' index='0'>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0'/>
+      </controller>
+      <interface type='network'>
+        <mac address='52:54:00:6e:d2:3c'/>
+        <source network='default'/>
+        <model type='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+      </interface>
+      <interface type='network'>
+        <mac address='52:54:00:bb:c0:4b'/>
+        <source network='default'/>
+        <model type='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
+      </interface>
+      <serial type='pty'>
+        <target type='isa-serial' port='0'>
+          <model name='isa-serial'/>
+        </target>
+      </serial>
+      <console type='pty'>
+        <target type='serial' port='0'/>
+      </console>
+      <channel type='unix'>
+        <target type='virtio' name='org.qemu.guest_agent.0'/>
+        <address type='virtio-serial' controller='0' bus='0' port='1'/>
+      </channel>
+      <input type='tablet' bus='usb'>
+        <address type='usb' bus='0' port='1'/>
+      </input>
+      <input type='mouse' bus='ps2'/>
+      <input type='keyboard' bus='ps2'/>
+      <graphics type='vnc' port='-1' autoport='yes' listen='127.0.0.1'>
+        <listen type='address' address='127.0.0.1'/>
+      </graphics>
+      <audio id='1' type='none'/>
+      <video>
+        <model type='vga' vram='16384' heads='1' primary='yes'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
+      </video>
+      <memballoon model='virtio'>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x09' function='0x0'/>
+      </memballoon>
+      <rng model='virtio'>
+        <backend model='random'>/dev/urandom</backend>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x0a' function='0x0'/>
+      </rng>
+    </devices>
+  </inactiveDomain>
+  <cookie>
+    <cpu mode='host-passthrough' check='none' migratable='on'/>
+    <slirpHelper/>
+  </cookie>
+</domainsnapshot>
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5zbmFwLnhtbA==
+sbx-off
+<domainsnapshot>
+  <name>sbx-off</name>
+  <description>while off</description>
+  <state>shutoff</state>
+  <parent>
+    <name>sbx-a</name>
+  </parent>
+  <creationTime>1790335508</creationTime>
+  <memory snapshot='no'/>
+  <disks>
+    <disk name='vda' snapshot='internal'/>
+    <disk name='vdb' snapshot='internal'/>
+  </disks>
+  <domain type='kvm'>
+    <name>cirros-run</name>
+    <uuid>8a2ed2a2-83e1-4c41-ad0a-a57d54d0d649</uuid>
+    <metadata>
+      <libosinfo:libosinfo xmlns:libosinfo="http://libosinfo.org/xmlns/libvirt/domain/1.0">
+        <libosinfo:os id="http://cirros-cloud.net/cirros/0.5.2"/>
+      </libosinfo:libosinfo>
+    </metadata>
+    <memory unit='KiB'>262144</memory>
+    <currentMemory unit='KiB'>262144</currentMemory>
+    <vcpu placement='static'>2</vcpu>
+    <os>
+      <type arch='x86_64' machine='pc-i440fx-10.0'>hvm</type>
+      <boot dev='hd'/>
+    </os>
+    <features>
+      <acpi/>
+      <apic/>
+    </features>
+    <cpu mode='host-passthrough' check='none' migratable='on'/>
+    <clock offset='utc'>
+      <timer name='rtc' tickpolicy='catchup'/>
+      <timer name='pit' tickpolicy='delay'/>
+      <timer name='hpet' present='no'/>
+    </clock>
+    <on_poweroff>destroy</on_poweroff>
+    <on_reboot>restart</on_reboot>
+    <on_crash>destroy</on_crash>
+    <pm>
+      <suspend-to-mem enabled='no'/>
+      <suspend-to-disk enabled='no'/>
+    </pm>
+    <devices>
+      <emulator>/usr/bin/qemu-system-x86_64</emulator>
+      <disk type='file' device='disk'>
+        <driver name='qemu' type='qcow2'/>
+        <source file='/var/lib/libvirt/images/run1.qcow2'/>
+        <target dev='vda' bus='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
+      </disk>
+      <disk type='file' device='disk'>
+        <driver name='qemu' type='qcow2'/>
+        <source file='/var/lib/libvirt/images/extra.qcow2'/>
+        <target dev='vdb' bus='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x08' function='0x0'/>
+      </disk>
+      <controller type='usb' index='0' model='ich9-ehci1'>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x7'/>
+      </controller>
+      <controller type='usb' index='0' model='ich9-uhci1'>
+        <master startport='0'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0' multifunction='on'/>
+      </controller>
+      <controller type='usb' index='0' model='ich9-uhci2'>
+        <master startport='2'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x1'/>
+      </controller>
+      <controller type='usb' index='0' model='ich9-uhci3'>
+        <master startport='4'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x2'/>
+      </controller>
+      <controller type='virtio-serial' index='0'>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0'/>
+      </controller>
+      <controller type='pci' index='0' model='pci-root'/>
+      <interface type='network'>
+        <mac address='52:54:00:6e:d2:3c'/>
+        <source network='default'/>
+        <model type='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+      </interface>
+      <interface type='network'>
+        <mac address='52:54:00:bb:c0:4b'/>
+        <source network='default'/>
+        <model type='virtio'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
+      </interface>
+      <serial type='pty'>
+        <target type='isa-serial' port='0'>
+          <model name='isa-serial'/>
+        </target>
+      </serial>
+      <console type='pty'>
+        <target type='serial' port='0'/>
+      </console>
+      <channel type='unix'>
+        <target type='virtio' name='org.qemu.guest_agent.0'/>
+        <address type='virtio-serial' controller='0' bus='0' port='1'/>
+      </channel>
+      <input type='tablet' bus='usb'>
+        <address type='usb' bus='0' port='1'/>
+      </input>
+      <input type='mouse' bus='ps2'/>
+      <input type='keyboard' bus='ps2'/>
+      <graphics type='vnc' port='-1' autoport='yes' listen='127.0.0.1'>
+        <listen type='address' address='127.0.0.1'/>
+      </graphics>
+      <audio id='1' type='none'/>
+      <video>
+        <model type='vga' vram='16384' heads='1' primary='yes'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
+      </video>
+      <memballoon model='virtio'>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x09' function='0x0'/>
+      </memballoon>
+      <rng model='virtio'>
+        <backend model='random'>/dev/urandom</backend>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x0a' function='0x0'/>
+      </rng>
+    </devices>
+  </domain>
+</domainsnapshot>
+
+SbVirtRc=0

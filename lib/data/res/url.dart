@@ -35,13 +35,11 @@ abstract final class Urls {
   /// like.
   static const customLogoDoc = '$docs/advanced/custom-logo/';
 
-  /// How a `.fsbt` is authored and published, down to what the manifest's own
-  /// keys mean.
+  /// How to author and publish a `.fsbt`, including the manifest format.
   ///
   /// Linked from the end of the theme store's list rather than restated: the
-  /// store is the one place somebody who wants a theme of their own is already
-  /// looking, and what they need next is the format, which is a document.
-  static const themePackageDoc = '$docs/advanced/theme-packages/';
+  /// store is where somebody who wants to make a theme is already looking.
+  static const themePackageDoc = '$docs/development/theme-authoring/';
 
   /// What a `monitor` agent is, and how to get one onto a server.
   ///

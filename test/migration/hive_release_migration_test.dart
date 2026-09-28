@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
+import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/migrations/all.dart';
@@ -168,8 +169,16 @@ void main() {
           expect(spi.ssh?.alterUrl, 'admin@alt.example.com:2200');
 
           final custom = spi.custom!;
-          expect(custom.pveAddr, 'https://pve.example.com:8006');
-          expect(custom.pveIgnoreCert, isTrue);
+          // PVE is a `server_pve` row now. `pveIgnoreCert: true` became "confirm
+          // the certificate on the next connection", which is no pin at all —
+          // and the login is the password one, the only kind this release had.
+          expect(
+            Stores.pve.fetch(spi.id),
+            const PveConfig(
+              addr: 'https://pve.example.com:8006',
+              auth: PveAuth.password,
+            ),
+          );
           expect(custom.cmds, {'uptime': 'uptime -p', 'who': 'w'});
           expect(custom.preferTempDev, 'coretemp');
           expect(custom.tempIsCelsius, isFalse);
@@ -266,10 +275,14 @@ void main() {
           expect(Stores.setting.termFontSize.get(), 13.0);
           expect(Stores.setting.maxRetryCount.get(), 2);
 
-          expect(Stores.setting.homeTabs.get().map((e) => e.name), [
+          // The stored names rather than the parsed tabs: m030 appends `virt`
+          // for this fixture's PVE server, and whether the parser knows that
+          // name depends on whether `AppTab.virt` exists yet.
+          expect(Stores.setting.get<List>('homeTabs'), [
             'server',
             'ssh',
             'snippet',
+            'virt',
           ]);
           // Written as `[0, 1, 2, 13, 14]` by that release and converted to
           // names by m013 — an index stops meaning the same key the moment a

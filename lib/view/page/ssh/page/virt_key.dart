@@ -152,10 +152,15 @@ extension _VirtKey on SSHPageState {
 
         while (initPath == null) {
           if (DateTime.now().difference(startTime) > timeout) {
-            contextSafe?.showRoundDialog(
-              title: libL10n.error,
-              child: Text(libL10n.empty),
-            );
+            final ctx = contextSafe;
+            if (ctx != null) {
+              unawaited(
+                ctx.showRoundDialog(
+                  title: libL10n.error,
+                  child: Text(libL10n.empty),
+                ),
+              );
+            }
             return;
           }
 
@@ -182,10 +187,13 @@ extension _VirtKey on SSHPageState {
           await Future.delayed(const Duration(milliseconds: 100));
         }
 
+        if (!mounted) return;
         if (!initPath.startsWith('/')) {
-          context.showRoundDialog(
-            title: libL10n.error,
-            child: Text('${l10n.remotePath}: $initPath'),
+          unawaited(
+            context.showRoundDialog(
+              title: libL10n.error,
+              child: Text('${l10n.remotePath}: $initPath'),
+            ),
           );
           return;
         }
@@ -195,7 +203,8 @@ extension _VirtKey on SSHPageState {
         // how a server's files are reached, so this key now works on a server
         // reached through its monitor agent — which has files and no SFTP, and
         // where opening the SFTP page directly could only fail.
-        ServerFilePage.route.go(context, args);
+        // Not awaited: it completes when the file page closes.
+        unawaited(ServerFilePage.route.go(context, args));
         break;
       case VirtualKeyFunc.sudoPassword:
         await _insertSudoPassword();

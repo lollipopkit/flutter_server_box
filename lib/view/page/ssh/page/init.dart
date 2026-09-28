@@ -234,6 +234,7 @@ extension _Init on SSHPageState {
                 : TerminalConnectionStep.connectionFailed,
             detail: switch (error) {
               TerminalRemoteAccessUnavailable() => l10n.monitorNoRemoteAccess,
+              TerminalConsoleErr(:final message) => message,
               LocalServerErr() => error.solution,
               _ => null,
             },
@@ -249,32 +250,67 @@ extension _Init on SSHPageState {
       _openingTerminal = false;
     }
 
+    // Not awaited: a snippet can `${sleep N}`, and the page must not wait for
+    // it before taking keyboard input.
+    if (_tmuxCurrentSession == null) unawaited(_runStartupInput());
+
+    _focusTerminal(keyboard: false);
+  }
+
+  /// Auto-run snippets, then `initCmd`, then `initSnippet`, one after another:
+  /// a snippet with placeholders types across awaits, so running them
+  /// concurrently would interleave their input.
+  ///
+  /// All of it is for the shell that was in front when startup began. A
+  /// snippet can wait (`${sleep N}`) through a reconnect or a switch to tmux,
+  /// and what is left must not be typed into the shell that replaced it.
+  Future<void> _runStartupInput() async {
+    final shell = _session;
+    bool current() =>
+        mounted &&
+        shell != null &&
+        identical(_session, shell) &&
+        _tmuxCurrentSession == null;
+
     // Snippets name the server they run on, and their scripts are written
     // against one. A terminal on this device has neither.
     final spi = widget.args.spi;
     final snippets = ref.read(snippetProvider.select((p) => p.snippets));
-    if (spi != null && _tmuxCurrentSession == null) {
+    if (spi != null) {
       for (final snippet in snippets) {
         if (snippet.autoRunOn?.contains(spi.id) == true) {
-          snippet.runInTerm(_terminal, spi);
+          if (!current()) return;
+          await _runStartupSnippet(snippet, spi, current);
         }
       }
     }
 
+    if (!current()) return;
     final initCmd = widget.args.initCmd;
-    if (initCmd != null && _tmuxCurrentSession == null) {
+    if (initCmd != null) {
       _terminal.textInput(initCmd);
       _terminal.keyInput(TerminalKey.enter);
+      await _answerSudo();
     }
 
     final initSnippet = widget.args.initSnippet;
-    if (initSnippet != null &&
-        (spi != null || !initSnippet.needsServer) &&
-        _tmuxCurrentSession == null) {
-      initSnippet.runInTerm(_terminal, spi);
+    if (initSnippet != null && (spi != null || !initSnippet.needsServer)) {
+      if (!current()) return;
+      await _runStartupSnippet(initSnippet, spi, current);
     }
+  }
 
-    _focusTerminal(keyboard: false);
+  Future<void> _runStartupSnippet(
+    Snippet snippet,
+    Spi? spi,
+    bool Function() current,
+  ) async {
+    try {
+      await snippet.runInTerm(_terminal, spi, alive: current);
+    } catch (e, s) {
+      if (!mounted) return;
+      context.showErrDialog(e, s, '${libL10n.snippet}: ${snippet.name}');
+    }
   }
 
   void _setupDiscontinuityTimer() {
@@ -601,6 +637,13 @@ extension _Init on SSHPageState {
       return false;
     }
     _bindForegroundSession(shell);
+    // A new shell is not the program the old one was running: what the
+    // session is for is started again in it.
+    if (_sess.reenter case final cmd?) {
+      _terminal.textInput(cmd);
+      _terminal.keyInput(TerminalKey.enter);
+      unawaited(_answerSudo());
+    }
     _setupDiscontinuityTimer();
     _focusTerminal(keyboard: false);
     return true;
@@ -723,6 +766,13 @@ extension _Init on SSHPageState {
 
   Future<TmuxLaunchPlan> _resolveForegroundLaunchPlan() async {
     if (!Stores.setting.tmuxAuto.fetch() || !_canTmux) {
+      return const TmuxLaunchPlan.none();
+    }
+    // A page opened to run something — a container's shell, a VM's serial
+    // console, a command from the file browser — runs it in a plain shell.
+    // [_initTerminal] types [SshPageArgs.initCmd] only when no tmux session
+    // was attached, so with tmux on it was silently never run.
+    if (widget.args.initCmd != null || widget.args.initSnippet != null) {
       return const TmuxLaunchPlan.none();
     }
 

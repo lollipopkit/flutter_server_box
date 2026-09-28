@@ -3,39 +3,39 @@ title: 构建指南
 description: 在不同平台构建 Server Box 和 Monitor agent
 ---
 
-Server Box 使用自定义构建工具 `fl_build` 生成各平台 App。Monitor agent 是独立的 Rust 服务，有单独的构建流程。
+Flutter App 使用仓库提供的 `fl_build` 工具构建。Monitor agent 是独立的 Rust 服务，需要单独构建。
 
 ## 前置条件
 
-- Flutter SDK（stable channel）
-- 对应平台的开发工具：iOS 需要 Xcode，Android 需要 Android Studio 和 Android SDK，Windows 需要 Visual Studio
-- Rust toolchain：App 会通过 Dart build hook、`flutter_rust_bridge_hooks` 和 native assets 构建 `crates/sbm_ffi` Rust crate
+- stable channel 的 Flutter SDK
+- 平台 SDK：iOS 需要 Xcode，Android 需要 Android Studio 和 Android SDK，Windows 需要 Visual Studio
+- Rust toolchain：App 通过 Dart build hook、`flutter_rust_bridge_hooks` 和 native assets 构建 `crates/sbm_ffi`
 
-获取 Dart 依赖前，先初始化仓库中的 Git submodule：
+获取 Dart packages 前先初始化 Git submodule：
 
 ```bash
 git submodule update --init --recursive
 ```
 
-## 开发版构建
+## 运行开发版
 
 ```bash
-# 直接运行 App
+# 在默认设备上运行
 flutter run
 
-# 在指定设备上运行
+# 明确指定设备
 flutter run -d <device-id>
 ```
 
 ## 发布版构建
 
-使用 `fl_build` 为指定平台构建：
+将目标平台传给 `fl_build`：
 
 ```bash
 dart run fl_build -p <platform>
 ```
 
-可用平台：`ios`、`android`、`macos`、`linux`、`windows`。
+支持的平台名称为 `ios`、`android`、`macos`、`linux` 和 `windows`。
 
 ## 平台要求
 
@@ -45,7 +45,7 @@ dart run fl_build -p <platform>
 dart run fl_build -p ios
 ```
 
-需要运行 macOS 的构建机、已安装 Xcode，以及用于签名的 Apple Developer 账号。
+需要 macOS 构建机和 Xcode。进行签名时还需要 Apple Developer 账号。
 
 ### Android
 
@@ -53,7 +53,7 @@ dart run fl_build -p ios
 dart run fl_build -p android
 ```
 
-需要 Android SDK、JDK 和用于发布签名的 keystore。正式 release 构建必须使用 `key.properties` 配置的 release keystore；仅用于本地验证时，才可以显式传入 `-PallowDebugReleaseSigning=true` 使用 debug signing。可重现构建和 F-Droid 构建则传入 `-PallowUnsignedRelease=true`，完全不指定签名配置；`scripts/release/android-build-env.sh` 会导出它。
+需要 Android SDK、JDK 和用于 release signing 的 keystore。Release build 必须使用 `key.properties` 中配置的 keystore。仅本地验证时，才显式传入 `-PallowDebugReleaseSigning=true` 使用 debug signing。可重现构建和 F-Droid 构建使用 `-PallowUnsignedRelease=true`，不配置任何签名；`scripts/release/android-build-env.sh` 会导出此选项。
 
 ### macOS
 
@@ -73,11 +73,11 @@ dart run fl_build -p linux
 dart run fl_build -p windows
 ```
 
-需要安装包含 Desktop development with C++ 工作负载和 ATL 支持的 Visual Studio。
+需要安装 Visual Studio，并选择 **Desktop development with C++** workload 和 ATL 支持。
 
 ## 构建 Monitor agent
 
-Monitor agent 是独立的服务端二进制，不属于 App 构建流程。
+Monitor agent 是独立的 server binary，构建步骤与 Flutter App 分开：
 
 ```bash
 # 在仓库根目录执行
@@ -89,13 +89,13 @@ npm install
 npm run build
 ```
 
-构建完成后，agent 会在存在 `frontend/dist` 时提供网页面板。在仓库根目录运行 `make monitor-dev`，可以同时启动开发环境：API 使用 `:3770`，面板的 Vite dev server 使用 `:3000`。
+网页面板构建后，Monitor agent 会在 `frontend/dist` 存在时提供该面板。开发时可在仓库根目录运行 `make monitor-dev`，同时启动 API（`:3770`）和 Vite dev server（`:3000`）。
 
-release 产物由 `monitor-release.yml` workflow 构建。该 workflow 只支持 `workflow_dispatch`；Monitor 的 `monitor-v*` tag 与 App release 相互独立。Docker 构建方式见 `monitor/Dockerfile`。
+release 产物由 `monitor-release.yml` workflow 构建，目前只能通过 `workflow_dispatch` 运行。Monitor 的 `monitor-v*` tag 与 App release 分开管理。Docker 构建方法见 `monitor/Dockerfile`。
 
 ## 构建前后处理
 
-`fl_build` 每次构建都会重新生成 `lib/data/res/build_data.dart`，根据 Git 历史推导构建号，并将版本写入 Xcode 配置。`pubspec.yaml` 中的 `fl_build:` 段用于配置 App 名称。
+每次构建时，`fl_build` 都会重新生成 `lib/data/res/build_data.dart`，根据 Git 历史计算 build number，并将版本写入 Xcode 配置。App 名称在 `pubspec.yaml` 的 `fl_build:` 段中设置。
 
 ## 故障排除
 
@@ -107,11 +107,11 @@ flutter pub get
 dart run build_runner build
 ```
 
-`flutter clean` 会删除 `build/` 下的构建产物，包括启用 iOS Linux engine 时需要的 engine libraries。此时需要重新运行相应的 `scripts/build-ish-ios.sh device`、`simulator` 或 `macos`，否则链接阶段会找不到文件。
+`flutter clean` 会删除 `build/` 下的构建产物，也包括启用 iOS Linux engine 时所需的 engine libraries。请重新运行对应的 `scripts/build-ish-ios.sh device`、`simulator` 或 `macos` 构建目标，否则链接时会因缺少这些文件而失败。
 
 ### 依赖版本不匹配
 
-确认依赖兼容后再升级：
+升级依赖前先确认版本兼容：
 
 ```bash
 flutter pub upgrade

@@ -847,12 +847,14 @@ Future<void> _closeSftpResources({
     }
   }
 
+  // Not awaited: it completes only once the server closes the channel, and
+  // the client is closed right after anyway.
   if (sftp != null) {
-    try {
-      sftp.close();
-    } catch (e, s) {
-      Loggers.app.warning('Failed to close SFTP session', e, s);
-    }
+    unawaited(
+      sftp.close().catchError((Object e, StackTrace s) {
+        Loggers.app.warning('Failed to close SFTP session', e, s);
+      }),
+    );
   }
 
   if (client != null) {

@@ -13,6 +13,7 @@ import 'package:server_box/view/page/server/tab/tab.dart';
 import 'package:server_box/view/page/snippet/list.dart';
 import 'package:server_box/view/page/ssh/tab.dart';
 import 'package:server_box/view/page/storage/tab.dart';
+import 'package:server_box/view/page/virt/tab.dart';
 import 'package:server_box/view/widget/conn_count_badge.dart';
 import 'package:server_box/view/widget/nav_rail.dart';
 import 'package:server_box/view/widget/themed_icon.dart';
@@ -27,6 +28,7 @@ extension AppTabViewX on AppTab {
       AppTab.agent => const AgentPage(),
       AppTab.benchmark => const BenchmarkTabPage(),
       AppTab.remoteDesktop => const RemoteDesktopTabPage(),
+      AppTab.virt => const VirtTabPage(),
     };
   }
 
@@ -54,7 +56,41 @@ extension AppTabViewX on AppTab {
       AppTab.agent => 'Agent',
       AppTab.benchmark => l10n.benchmark,
       AppTab.remoteDesktop => l10n.remoteDesktop,
+      AppTab.virt => l10n.virtualization,
     };
+  }
+
+  /// Whether the tab is still in beta.
+  // TODO: move to the Feature abstraction (next PR).
+  bool get beta => switch (this) {
+    AppTab.remoteDesktop || AppTab.agent || AppTab.benchmark || AppTab.virt =>
+      true,
+    _ => false,
+  };
+
+  /// The mark a tab carries, where the tab is *listed* — the settings page
+  /// that arranges them, and the sheet the bar opens for the ones it cannot
+  /// hold — and after its name in the open rail ([navRailItem]). The bottom
+  /// bar, whose label is a string and mostly hidden, carries it on the icon's
+  /// corner instead ([navDestination]).
+  Widget? get mark => beta ? const BetaTag() : null;
+
+  /// [label] with [mark], for a row that lists the tab rather than opening it.
+  Widget get listTitle {
+    final mark_ = mark;
+    if (mark_ == null) return Text(label);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Flexible, so a long name in a narrow row — or a large text scale —
+        // ellipsises against the mark instead of overflowing the row.
+        Flexible(
+          child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+        ),
+        const SizedBox(width: 7),
+        mark_,
+      ],
+    );
   }
 
   /// Returns a [Widget] rather than a [NavigationDestination] on purpose:
@@ -65,8 +101,8 @@ extension AppTabViewX on AppTab {
   Widget navDestination({ContextMenuOpener? onMenu}) {
     return _withMenu(
       NavigationDestination(
-        icon: _counted(icon),
-        selectedIcon: _counted(selectedIcon),
+        icon: _badged(icon),
+        selectedIcon: _badged(selectedIcon, selected: true),
         label: label,
       ),
       onMenu,
@@ -87,6 +123,7 @@ extension AppTabViewX on AppTab {
       badge: this == AppTab.server
           ? (opacity) => ConnCountRailBadge(opacity: opacity)
           : null,
+      mark: beta ? (opacity) => BetaTag(opacity: opacity) : null,
       onMenu: onMenu,
     );
   }
@@ -104,12 +141,37 @@ extension AppTabViewX on AppTab {
     );
   }
 
-  /// Adds the connection count to the server tab, and to nothing else.
+  /// The connection count on the server tab, the beta mark on a beta one:
+  /// on the icon's corner, the one place the bar has for it. The mark only
+  /// while the tab is [selected] — as the bar's label is — so a row of beta
+  /// tabs is not a row of marks.
   ///
   /// Only where the tab is a control. In a list of tabs to reorder, a count
-  /// would be answering a question the row is not about.
-  Widget _counted(Widget icon) =>
-      this == AppTab.server ? ConnCountBadge(child: icon) : icon;
+  /// would be answering a question the row is not about, and the mark is
+  /// beside the name there already.
+  Widget _badged(Widget icon, {bool selected = false}) {
+    if (this == AppTab.server) return ConnCountBadge(child: icon);
+    return beta && selected ? _BetaBadge(child: icon) : icon;
+  }
+}
+
+/// Material's badge, as the connection count is, in [BetaTag]'s colours and
+/// word.
+class _BetaBadge extends StatelessWidget {
+  const _BetaBadge({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Badge(
+      label: const Text('Beta'),
+      backgroundColor: scheme.tertiaryContainer,
+      textColor: scheme.onTertiaryContainer,
+      child: child,
+    );
+  }
 }
 
 class _AppTabIcon extends StatelessWidget {
@@ -148,6 +210,8 @@ class _AppTabIcon extends StatelessWidget {
                   selected ? MingCute.dashboard_fill : MingCute.dashboard_line,
                 AppTab.remoteDesktop =>
                   selected ? MingCute.computer_fill : MingCute.computer_line,
+                AppTab.virt =>
+                  selected ? MingCute.box_3_fill : MingCute.box_3_line,
               }
             : switch (tab) {
                 AppTab.server =>
@@ -164,6 +228,8 @@ class _AppTabIcon extends StatelessWidget {
                   selected
                       ? Icons.desktop_windows
                       : Icons.desktop_windows_outlined,
+                AppTab.virt =>
+                  selected ? Icons.view_in_ar : Icons.view_in_ar_outlined,
               };
         return ThemeIconAsset(
           keyName: tabIconKey(tab, selected: selected),

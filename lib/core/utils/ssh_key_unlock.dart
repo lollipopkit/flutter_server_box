@@ -97,7 +97,7 @@ abstract final class PrivateKeyUnlock {
     try {
       return await attempt;
     } finally {
-      _inFlight.remove(cacheKey);
+      unawaited(_inFlight.remove(cacheKey));
     }
   }
 

@@ -2,6 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/service.dart';
@@ -729,28 +730,20 @@ abstract final class ServiceUi {
     // A restart waits for the unit to come up, which systemd allows 90 seconds
     // by default before it gives up on it.
     const timeout = Duration(seconds: 100);
-    var (result, _) = await context.showLoadingDialog(
-      fn: () => notifier.runAction(unit, action),
-      timeout: timeout,
-    );
-    if (!context.mounted || result == null) return;
-
-    if (result.exitCode == kSudoPasswordRejected) {
-      final password = await context.showPwdDialog(
-        title: libL10n.sudoPassword,
-        label: spi.ssh?.user ?? '',
-        id: '${spi.id}_sudo_services',
-      );
-      if (!context.mounted || password == null || password.isEmpty) return;
-      (result, _) = await context.showLoadingDialog(
+    final result = await SudoPassword.retry(
+      context,
+      spi.id,
+      label: spi.ssh?.user,
+      attempt: (password) async => (await context.showLoadingDialog(
         fn: () => notifier.runAction(unit, action, password: password),
         timeout: timeout,
-      );
-      if (!context.mounted || result == null) return;
-      if (result.exitCode == kSudoPasswordRejected) {
-        Toast.error(libL10n.permissionDenied);
-        return;
-      }
+      )).$1,
+      rejected: (r) => r.exitCode == kSudoPasswordRejected,
+    );
+    if (!context.mounted || result == null) return;
+    if (result.exitCode == kSudoPasswordRejected) {
+      Toast.error(libL10n.permissionDenied);
+      return;
     }
 
     if (result.succeeded) {

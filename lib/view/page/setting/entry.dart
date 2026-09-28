@@ -86,6 +86,7 @@ part 'entries/editor.dart';
 part 'entries/full_screen.dart';
 part 'entries/globe.dart';
 part 'entries/linux.dart';
+part 'entries/remote_desktop.dart';
 part 'entries/server.dart';
 part 'entries/sftp.dart';
 part 'entries/ssh.dart';
@@ -168,7 +169,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         Toast.error(libL10n.fail);
         return;
       }
-      RNodes.app.notify();
+      unawaited(RNodes.app.notify());
       Toast.success(libL10n.success);
     } catch (e, s) {
       Loggers.app.warning('Failed to clear settings', e, s);

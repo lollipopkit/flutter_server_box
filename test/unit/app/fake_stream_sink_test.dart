@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -8,7 +9,7 @@ void main() {
   test('done completes on close and close is idempotent', () async {
     final sink = FakeStreamSink((_) {});
     var completed = false;
-    sink.done.then((_) => completed = true);
+    unawaited(sink.done.then((_) => completed = true));
 
     await sink.close();
     await sink.close();

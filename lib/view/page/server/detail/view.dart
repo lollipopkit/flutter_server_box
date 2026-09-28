@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:extended_image/extended_image.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
@@ -12,19 +13,20 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/server.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
+import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/battery.dart';
 import 'package:server_box/data/model/server/disk_smart.dart';
 import 'package:server_box/data/model/server/gpu.dart';
 import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
+import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/bmc/bmc.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
-import 'package:server_box/view/page/pve.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/card/notices.dart';
 import 'package:server_box/view/page/server/card/sizes.dart';
@@ -517,10 +519,22 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     // disagree about who has a block.
     final cardNotice = ServerNotice.onCard(si) != null;
     final cardBody = serverCardHasBody(si);
+    // Which column the image sits in, which is the whole of what `wide`
+    // changes about it. In two columns it belongs at the head of the facts:
+    // the readings column is what the page came to show and an image above
+    // them pushes every chart down by its own height. One column has no
+    // facts column to put it in, and there it leads the page as before.
+    //
+    // `_buildLogo` is handed the same width either way — the column it is
+    // laid out in — so its height follows. See `ServerCard._full` for the
+    // room the card keeps for it at the handover, which is why that
+    // reservation is a share of the readings column rather than of the card.
+    final logoAtSide = wide && logo != null;
     final metrics = <Widget>[
       // From above, the edge it sits against: the card keeps its room and
       // draws nothing in it — see `ServerCard._full`.
-      if (logo != null) _entering(logo, from: const Offset(0, -24)),
+      if (logo != null && !logoAtSide)
+        _entering(logo, from: const Offset(0, -24)),
       if (_buildErrCard(si) case final errCard?)
         _handed(errCard, byCard: cardNotice, from: const Offset(0, 24)),
       if (_buildStaleCard(si) case final stale?)
@@ -547,6 +561,9 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
       ],
     ];
     final asideItems = <Widget>[
+      // No `_entering` of its own: the column below already carries one, and
+      // two nested would compound the movement.
+      if (logoAtSide) logo,
       ..._buildInfoCards(si),
       ?noAccess,
       if (!wide) ServerDetailCardGrid(cards: cards),
@@ -653,7 +670,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
           onPressed: () async {
             final delete = await ServerEditPage.route.go(
               context,
-              args: SpiRequiredArgs(si.spi),
+              args: ServerEditArgs(si.spi),
             );
             if (delete == true) {
               context.pop();
@@ -725,30 +742,96 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
       padding: const EdgeInsets.symmetric(vertical: ServerCardSizes.logoPad),
       child: LayoutBuilder(
         builder: (_, cons) {
-          final height = cons.maxWidth * ServerCardSizes.logoHeightRatio;
-          if (logoUrl.isSvgUrl) {
-            return SvgPicture.network(
-              logoUrl,
-              height: height,
-              width: cons.maxWidth,
-              fit: BoxFit.contain,
-            );
-          }
-          final dpr = MediaQuery.devicePixelRatioOf(context);
-          return ExtendedImage.network(
-            logoUrl,
-            cache: true,
-            cacheWidth: (cons.maxWidth * dpr).round(),
-            cacheHeight: (height * dpr).round(),
-            clearMemoryCacheWhenDispose: true,
-            height: height,
+          // A share of the width, capped, and the width comes down with the
+          // cap. Without the cap the image is a band as wide as its column
+          // and a third of it tall: in two columns that is `aside` and fine,
+          // but in one it is the whole window — widest on the machines where
+          // the picture is least worth the room. Without the width following
+          // the cap, the box stays a band and the `fit` inside it centres a
+          // small image in a large empty one.
+          final height = math.min(
+            cons.maxWidth * ServerCardSizes.logoHeightRatio,
+            ServerCardSizes.logoMaxHeight,
+          );
+          final width = math.min(
+            cons.maxWidth,
+            height / ServerCardSizes.logoHeightRatio,
+          );
+          return SizedBox(
             width: cons.maxWidth,
+            child: Center(
+              child: SizedBox(
+                width: width,
+                height: height,
+                child: logoUrl.isSvgUrl
+                    ? SvgPicture.network(
+                        logoUrl,
+                        fit: BoxFit.contain,
+                        // Named for the reader that speaks the page aloud.
+                        semanticsLabel: si.spi.name,
+                      )
+                    : ExtendedImage(
+                        image: serverLogoImage(
+                          ExtendedNetworkImageProvider(logoUrl, cache: true),
+                          width: width,
+                          height: height,
+                          devicePixelRatio: MediaQuery.devicePixelRatioOf(
+                            context,
+                          ),
+                        ),
+                        // As `ExtendedImage.network` has it: the failure
+                        // below is drawn by `loadStateChanged`.
+                        enableLoadState: true,
+                        clearMemoryCacheWhenDispose: true,
+                        fit: BoxFit.contain,
+                        // The outline rather than a broken-image box, which is
+                        // what a 404 reads as: GitHub answers a missing file
+                        // with an HTML page, and the decoder has nothing to
+                        // say about why.
+                        loadStateChanged: (state) => switch (state
+                            .extendedImageLoadState) {
+                          LoadState.failed => Center(
+                            child: Icon(
+                              Icons.image_not_supported_outlined,
+                              size: height * 0.4,
+                              color: Theme.of(context).disabledColor,
+                            ),
+                          ),
+                          _ => null,
+                        },
+                      ),
+              ),
+            ),
           );
         },
       ),
     );
   }
 }
+
+/// [source] decoded no larger than a [width] by [height] box, in proportion.
+///
+/// `ResizeImagePolicy.fit`, not the default `exact` — Flutter's own words
+/// for that are "the output image will have the specified width and height
+/// regardless of whether it matches the source image's intrinsic aspect
+/// ratio", i.e. `BoxFit.fill`. A published logo is whatever shape its
+/// project drew: Debian's is a 1460x1935 portrait, which `exact` stretched to
+/// four times its width. Both dimensions bound it: the URL is the user's, and
+/// one bound alone lets a tall image decode as tall as it is.
+@visibleForTesting
+ImageProvider serverLogoImage(
+  ImageProvider source, {
+  required double width,
+  required double height,
+  required double devicePixelRatio,
+}) => ExtendedResizeImage(
+  source,
+  width: math.max(1, (width * devicePixelRatio).round()),
+  height: math.max(1, (height * devicePixelRatio).round()),
+  policy: ResizeImagePolicy.fit,
+  // Bounded by the box alone: a byte budget would shrink it again.
+  maxBytes: null,
+);
 
 extension _ViewUtils on String {
   bool get isSvgUrl {

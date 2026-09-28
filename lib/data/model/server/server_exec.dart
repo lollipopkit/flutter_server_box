@@ -154,3 +154,40 @@ extension ServerExecSudo on ServerExec {
     );
   }
 }
+
+/// A [ServerExec] whose command can be fed bytes while it runs, rather than a
+/// string written before it starts.
+///
+/// What an upload through a command needs (`virsh vol-upload --file
+/// /dev/stdin`): the file is the command's stdin, sent as it is read, with
+/// the command's own output watched meanwhile. An SSH session and a local
+/// process carry that; a monitor agent's `/exec` takes its stdin whole, in
+/// the request, so it is not one of these.
+abstract interface class ServerByteExec implements ServerExec {
+  /// Starts [command], handed to the server's own shell as the command to run
+  /// — one line with single-quoted arguments only, for the reason
+  /// [ServerExec.run] gives.
+  Future<ExecSession> start(String command);
+}
+
+/// A command started by [ServerByteExec.start].
+abstract interface class ExecSession {
+  /// What it prints, decoded; both end when it has.
+  Stream<String> get stdout;
+  Stream<String> get stderr;
+
+  /// Writes [data] to its stdin, returning once the transport has taken it:
+  /// a caller writing a large file in a loop is held back to the pace the
+  /// command reads at, rather than buffering the file in memory.
+  Future<void> write(List<int> data);
+
+  /// Ends its stdin, which is how it learns the input is complete.
+  Future<void> closeStdin();
+
+  /// Its exit status once it has ended; null where the source cannot say
+  /// (killed).
+  Future<int?> get done;
+
+  /// Stops it, and releases the channel.
+  void kill();
+}

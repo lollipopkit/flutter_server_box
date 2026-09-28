@@ -108,7 +108,7 @@ void main() {
     // client has to be loaded before there is anything to observe.
     await initRustLibForTest();
     await getIt.reset();
-    getIt.registerSingleton<SettingStore>(SettingStore('setting_test')..init());
+    getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
     getIt.registerSingleton<ServerStore>(ServerStore());
     getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore());
     getIt.registerSingleton<RemoteDesktopStore>(RemoteDesktopStore());

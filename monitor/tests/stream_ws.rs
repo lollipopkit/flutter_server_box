@@ -85,6 +85,21 @@ async fn echo_server() -> String {
     addr
 }
 
+/// A listener that takes a connection and never reads it: a target slower
+/// than anything the client can send. The sockets are kept, so the connection
+/// stays open rather than resetting.
+async fn stalled_server() -> String {
+    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap().to_string();
+    tokio::spawn(async move {
+        let mut held = Vec::new();
+        while let Ok((socket, _)) = listener.accept().await {
+            held.push(socket);
+        }
+    });
+    addr
+}
+
 /// A port nothing is listening on, so `open` fails at connect.
 fn dead_addr() -> String {
     let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
@@ -201,6 +216,69 @@ async fn bytes_travel_both_ways() {
         ws::Frame::Binary(data) => assert_eq!(&data[..], b"ping"),
         other => panic!("expected the bytes back, got {other:?}"),
     }
+}
+
+/// A frame past ntex's default 64 KiB: the relay takes it whole. With the
+/// default codec the agent dropped the connection on it, which cut every
+/// sizeable upload through the relay (an SFTP write, an HTTP body to PVE).
+#[ntex::test]
+async fn a_frame_bigger_than_64_kib_goes_through() {
+    let target = echo_server().await;
+    let state = app_state(true).await;
+    let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
+    let srv = test_server(state).await;
+    let (io, codec) = open_stream(&srv, &ticket).await;
+    assert_eq!(request(&io, &codec, &target).await["type"], "ready");
+
+    let sent: Vec<u8> = (0..1 << 20).map(|i: u32| (i % 251) as u8).collect();
+    io.send(ws::Message::Binary(Bytes::from(sent.clone())), &codec)
+        .await
+        .unwrap();
+    let mut back = Vec::new();
+    while back.len() < sent.len() {
+        let frame = timeout(Duration::from_secs(5), io.recv(&codec))
+            .await
+            .expect("the echo should come back")
+            .unwrap()
+            .expect("the connection should stay open");
+        match frame {
+            ws::Frame::Binary(data) => back.extend_from_slice(&data),
+            other => panic!("expected the bytes back, got {other:?}"),
+        }
+    }
+    assert_eq!(back, sent);
+}
+
+/// A target that does not read holds the client back: the agent stops
+/// reading the socket once its queue towards the target is full, instead of
+/// taking every frame into memory as it arrives.
+#[ntex::test]
+async fn a_target_that_does_not_read_holds_the_client_back() {
+    let target = stalled_server().await;
+    let state = app_state(true).await;
+    let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
+    let srv = test_server(state).await;
+    let (io, codec) = open_stream(&srv, &ticket).await;
+    assert_eq!(request(&io, &codec, &target).await["type"], "ready");
+
+    let frame = Bytes::from(vec![7u8; 64 * 1024]);
+    let mut sent = 0usize;
+    let sending = async {
+        loop {
+            if io
+                .send(ws::Message::Binary(frame.clone()), &codec)
+                .await
+                .is_err()
+            {
+                break;
+            }
+            sent += frame.len();
+        }
+    };
+    let _ = timeout(Duration::from_secs(3), sending).await;
+    // The queue (256 frames of 64 KiB) and the sockets' buffers, not the
+    // gigabytes three seconds of loopback would carry.
+    assert!(sent < 128 << 20, "sent {} MiB into a target that reads nothing", sent >> 20);
 }
 
 #[ntex::test]

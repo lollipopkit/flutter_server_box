@@ -357,6 +357,37 @@ async fn a_password_login_produces_a_working_shell() {
     );
 }
 
+/// A paste bigger than ntex's default 64 KiB frame limit arrives as one
+/// frame: the shell gets all of it, and the connection stays up.
+#[ntex::test]
+async fn a_paste_bigger_than_64_kib_reaches_the_shell() {
+    let sshd = fake_sshd::start(false).await;
+    let state = app_state(true, &sshd).await;
+    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let srv = test_server(state).await;
+    let (io, codec, _) = open_shell(&srv, &ticket).await;
+    read_until(&io, &codec, fake_sshd::BANNER).await;
+
+    let marker = b"sbm-paste-end";
+    let mut paste = vec![b'a'; 200 << 10];
+    paste.extend_from_slice(marker);
+    io.send(
+        ws::Message::Binary(ntex::util::Bytes::from(paste.clone())),
+        &codec,
+    )
+    .await
+    .unwrap();
+    // The fake shell echoes verbatim, so the whole paste comes back: a dropped
+    // or duplicated frame changes the bytes, not just whether the marker shows.
+    let echoed = read_until(&io, &codec, marker).await;
+    assert!(
+        echoed == paste,
+        "the whole paste should reach the shell and come back; got {} of {} bytes",
+        echoed.len(),
+        paste.len()
+    );
+}
+
 #[ntex::test]
 async fn a_wrong_password_is_reported_as_an_auth_failure() {
     let sshd = fake_sshd::start(false).await;

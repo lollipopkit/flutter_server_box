@@ -94,7 +94,9 @@ abstract final class SchemaVersion {
   /// v28: the retired SSH recent-server history removed from `kv`
   /// v29: `server.is_local`, and the "reached somehow" CHECK relaxed for it
   /// v30: the theme catalog address dropped, now that the catalog is compiled in
-  static const current = 30;
+  /// v31: PVE moved out of `server` into `server_pve` (API tokens, pinned
+  ///      certificate), and the Virtualization tab added for installs with PVE
+  static const current = 31;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

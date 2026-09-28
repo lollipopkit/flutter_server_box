@@ -1,7 +1,7 @@
 #:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/fsbt-manifest.schema.json
 # Import this folder with Install theme > Folder. Reimport after editing.
 # To distribute it, ZIP the folder contents and rename the archive to .fsbt.
-# See https://serverbox.lollipopkit.com/docs/advanced/theme-packages/ for the
+# See https://serverbox.lollipopkit.com/docs/development/theme-authoring/ for the
 # supported fields and asset limits.
 # Only id, name, modes, and schema are required; optional fields inherit defaults.
 # This reference lists every supported field, including optional defaults.
@@ -178,6 +178,8 @@ style = "mingcute"
 # "tab.benchmark.selected" = "icons/tab_benchmark_selected.png"
 # "tab.remoteDesktop" = "icons/tab_remoteDesktop.png"
 # "tab.remoteDesktop.selected" = "icons/tab_remoteDesktop_selected.png"
+# "tab.virt" = "icons/tab_virt.png"
+# "tab.virt.selected" = "icons/tab_virt_selected.png"
 # Navigation and settings icons.
 # "nav.more" = "icons/nav_more.png"
 # "nav.settings" = "icons/nav_settings.png"
