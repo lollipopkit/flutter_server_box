@@ -485,6 +485,13 @@ void main() {
     ];
     await pump(tester, kind: VirtHostKind.libvirt);
     await type(tester, 'create:name', 'vm-1');
+    // Each says which pool it is in: the two rows read alike otherwise.
+    String sub(String k) => tester
+        .widgetList<Text>(find.descendant(of: key(k), matching: find.byType(Text)))
+        .map((t) => t.data)
+        .join('|');
+    expect(sub('create:media:isos/debian.iso'), contains('isos'));
+    expect(sub('create:media:${_libvirtPool.id}/debian.iso'), contains(_libvirtPool.name));
     await tap(tester, key('create:media:isos/debian.iso'));
     final spec = await submit(tester);
     expect(spec.media?.path, '/isos/debian.iso');

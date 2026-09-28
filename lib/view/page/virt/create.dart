@@ -82,7 +82,7 @@ enum _Source { iso, image }
 /// A volume as the form offers it: with the storage it was listed in, which
 /// is what tells it apart. libvirt names a volume by itself in its pool, so
 /// two pools can each hold a `debian.iso`; PVE's storages are per node.
-typedef _PoolVolume = ({String key, VirtVolume volume});
+typedef _PoolVolume = ({String key, VirtVolume volume, String pool});
 
 class _VirtCreateViewState extends ConsumerState<VirtCreateView>
     with _PaneRows<VirtCreateView> {
@@ -303,7 +303,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
           if (loaded)
             for (final p in pools)
               for (final v in byPool[p.id]!)
-                if (keep(v)) (key: '${p.id}/${v.id}', volume: v),
+                if (keep(v)) (key: '${p.id}/${v.id}', volume: v, pool: p.name),
         ]..sort((a, b) => a.volume.name.compareTo(b.volume.name));
         final media = of(mediaPools, (v) => virtIsMedia(v, _kind));
         final images = of(imagePools, (v) => virtIsCloudImage(v, host));
@@ -591,9 +591,11 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
       return null;
     }
 
-    String sub(VirtVolume v) => [
-      if (pve) v.id.split(':').first,
+    // Where it is, on either host: two pools can hold files of one name, and
+    // the rows would otherwise read the same.
+    String sub(VirtVolume v, String pool) => [
       if (v.capacity case final size?) size.bytes2Str,
+      pool,
     ].join(' · ');
 
     final List<Widget> rows;
@@ -605,7 +607,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
           media.isEmpty
               ? _text(l10n.virtNoTemplates)
               : _choice([
-                  for (final (:key, volume: v) in media)
+                  for (final (:key, volume: v, pool: _) in media)
                     _Choice(
                       key: 'create:media:$key',
                       icon: Icons.inventory_2_outlined,
@@ -652,12 +654,12 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
               selected: chosenMedia == null,
               onTap: () => setState(() => _media = null),
             ),
-            for (final (:key, volume: v) in media)
+            for (final (:key, volume: v, :pool) in media)
               _Choice(
                 key: 'create:media:$key',
                 icon: Icons.album_outlined,
                 label: v.name,
-                sub: sub(v),
+                sub: sub(v, pool),
                 selected: chosenMedia?.key == key,
                 onTap: () => setState(() => _media = key),
               ),
@@ -670,12 +672,12 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
             _text(pve ? l10n.virtNoCloudImagesPve : l10n.virtNoCloudImagesLibvirt)
           else
             _choice([
-              for (final (:key, volume: v) in images)
+              for (final (:key, volume: v, :pool) in images)
                 _Choice(
                   key: 'create:image:$key',
                   icon: Icons.cloud_outlined,
                   label: v.name,
-                  sub: [sub(v), ?v.format].where((s) => s.isNotEmpty).join(' · '),
+                  sub: [sub(v, pool), ?v.format].where((s) => s.isNotEmpty).join(' · '),
                   selected: image?.key == key,
                   onTap: () => setState(() {
                     _image = key;
