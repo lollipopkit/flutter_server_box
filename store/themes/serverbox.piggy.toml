@@ -10,3 +10,11 @@ zh-TW = "柔和的粉色，背景是重複排列的線條小豬，圓潤的元�
 
 # Versions are appended by scripts/publish-themes.py, which packs the folder
 # beside this file and records the digest of what it built.
+
+[[version]]
+version = "1.0.0"
+schema_min = 3
+schema_max = 3
+url = "https://github.com/lollipopkit/flutter_server_box/releases/download/themes/serverbox.piggy-1.0.0.fsbt"
+sha256 = "cf723ade3ad1df3d92752e54da117addd62775762c4eaf4459e739a71281c47a"
+size = 45912

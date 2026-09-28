@@ -26,3 +26,11 @@ schema_max = 2
 url = "https://github.com/lollipopkit/flutter_server_box/releases/download/themes/serverbox.one-dark-pro-1.0.1.fsbt"
 sha256 = "dfda3d6e963bf546b7354b1452c2563c0faf2dc3ce8617fdadf0f902957d8f3d"
 size = 22398
+
+[[version]]
+version = "1.1.0"
+schema_min = 3
+schema_max = 3
+url = "https://github.com/lollipopkit/flutter_server_box/releases/download/themes/serverbox.one-dark-pro-1.1.0.fsbt"
+sha256 = "577b5066d639165c94e6d0f990a84b50bbbc368319cad6a3a6cf93ae886284b1"
+size = 25333
