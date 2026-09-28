@@ -467,6 +467,19 @@ body {
   margin-top: 0;
 }
 
+.preview-note {
+  color: var(--stone);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  margin: 0 0 0.9rem;
+}
+
+.detail-preview .preview-note {
+  max-width: 286px;
+  margin: 0.8rem 0 0;
+  text-align: center;
+}
+
 .store-grid-wide {
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
 }

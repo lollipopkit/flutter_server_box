@@ -333,7 +333,7 @@ void main() {
     });
 
     test('a bundled theme this build no longer carries falls back', () {
-      // Midnight, One Dark Pro, GitHub Dark and Dracula moved to the store.
+      // A bundled theme of an earlier build, since moved to the store.
       setting.appThemePreset.put('dracula');
       ThemePackages.reconcileSelection();
       expect(setting.appThemePreset.fetch(), BuiltinTheme.defaultTheme.id);

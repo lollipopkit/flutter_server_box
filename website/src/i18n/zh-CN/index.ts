@@ -110,6 +110,10 @@ const zhCN: Translation = {
     hovered: '悬停',
     pressed: '按下',
     disabled: '禁用',
+    loadFailed: '无法加载这个主题的预览。',
+    retry: '重试',
+    previewNote:
+      '预览仅展示主题的图标和配色，其他界面仅作示意。',
   },
   plugins: {
     title: '插件。',

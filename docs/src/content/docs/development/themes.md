@@ -130,7 +130,7 @@ repository's releases, a tag without a build number is skipped there, and a
 release per theme version would push the app's releases off the first page. The
 release is a pre-release, created with `--latest=false`, and is never this
 repository's Latest: GitHub does not mark a pre-release Latest, so Latest is
-always an app release, and the script checks that after each run.
+always an app release, and the script checks that before it uploads anything.
 
 The script keeps two ordering and integrity rules. It uploads packages before
 updating the listings, so a listing never points to a missing asset. It never

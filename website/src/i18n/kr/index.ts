@@ -112,6 +112,10 @@ const kr: Translation = {
     hovered: '호버',
     pressed: '누름',
     disabled: '비활성',
+    loadFailed: '이 테마의 미리보기를 불러오지 못했습니다.',
+    retry: '다시 시도',
+    previewNote:
+      '미리보기는 테마의 아이콘과 색상만 보여 줍니다. 나머지 화면은 참고용입니다.',
   },
   plugins: {
     title: '플러그인.',

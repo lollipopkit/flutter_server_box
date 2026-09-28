@@ -113,6 +113,10 @@ const fr: Translation = {
     hovered: 'Survolé',
     pressed: 'Pressé',
     disabled: 'Désactivé',
+    loadFailed: 'Impossible de charger l’aperçu de ce thème.',
+    retry: 'Réessayer',
+    previewNote:
+      'Les aperçus montrent les icônes et les couleurs du thème ; le reste de l’interface est indicatif.',
   },
   plugins: {
     title: 'Plugins.',

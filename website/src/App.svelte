@@ -353,6 +353,7 @@
       {#if store.themes.length}
         <!-- A glimpse, drawn from the themes themselves; the store page has
              the rest: search, every mode, icons, components. -->
+        <p class="preview-note">{$LL.themes.previewNote()}</p>
         <div class="theme-strip">
           {#each store.themes.slice(0, 4) as theme (theme.id)}
             <a class="theme-strip-item" href={`/themes/?lang=${locale}#${theme.id}`}>

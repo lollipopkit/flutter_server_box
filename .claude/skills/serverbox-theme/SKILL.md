@@ -160,7 +160,7 @@ git add themes && git commit -m "themes: release" && git push
   ones get the next patch version (`--bump minor|major`, or `<id>=<version>`).
 - All new packages go into one release of the repository, tag `themes`,
   created as a pre-release with `--latest=false`, so it never becomes the
-  repository's Latest; the script checks that after each run.
+  repository's Latest; the script checks that before uploading.
 - It never replaces an uploaded package and never gives one version number two
   sets of bytes; the store refuses a package whose sha256 differs from the
   listing's, so the recorded digest is always of the exact bytes served.

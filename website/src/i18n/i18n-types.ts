@@ -334,6 +334,18 @@ type RootTranslation = {
 		 * D​i​s​a​b​l​e​d
 		 */
 		disabled: string
+		/**
+		 * T​h​i​s​ ​t​h​e​m​e​'​s​ ​p​r​e​v​i​e​w​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​l​o​a​d​e​d​.
+		 */
+		loadFailed: string
+		/**
+		 * T​r​y​ ​a​g​a​i​n
+		 */
+		retry: string
+		/**
+		 * P​r​e​v​i​e​w​s​ ​s​h​o​w​ ​t​h​e​ ​t​h​e​m​e​'​s​ ​i​c​o​n​s​ ​a​n​d​ ​c​o​l​o​r​s​;​ ​t​h​e​ ​r​e​s​t​ ​o​f​ ​t​h​e​ ​i​n​t​e​r​f​a​c​e​ ​i​s​ ​i​l​l​u​s​t​r​a​t​i​v​e​.
+		 */
+		previewNote: string
 	}
 	plugins: {
 		/**
@@ -723,6 +735,18 @@ export type TranslationFunctions = {
 		 * Disabled
 		 */
 		disabled: () => LocalizedString
+		/**
+		 * This theme's preview could not be loaded.
+		 */
+		loadFailed: () => LocalizedString
+		/**
+		 * Try again
+		 */
+		retry: () => LocalizedString
+		/**
+		 * Previews show the theme's icons and colors; the rest of the interface is illustrative.
+		 */
+		previewNote: () => LocalizedString
 	}
 	plugins: {
 		/**

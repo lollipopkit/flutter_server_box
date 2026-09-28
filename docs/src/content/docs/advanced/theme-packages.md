@@ -4,7 +4,7 @@ description: Choose, install, and manage themes
 ---
 
 Server Box includes the Default and AMOLED themes and lets you install more,
-such as Midnight, One Dark Pro, GitHub Dark and Dracula, from the theme store or
+such as One Dark Pro, from the theme store or
 from a theme file. Theme settings are under **Settings → Appearance**.
 
 ## Choose a theme

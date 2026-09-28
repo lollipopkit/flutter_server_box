@@ -113,6 +113,10 @@ const es: Translation = {
     hovered: 'Al pasar',
     pressed: 'Pulsado',
     disabled: 'Desactivado',
+    loadFailed: 'No se pudo cargar la vista previa de este tema.',
+    retry: 'Reintentar',
+    previewNote:
+      'Las vistas previas muestran los iconos y colores del tema; el resto de la interfaz es orientativo.',
   },
   plugins: {
     title: 'Plugins.',

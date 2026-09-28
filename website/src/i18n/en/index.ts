@@ -113,6 +113,10 @@ const en: BaseTranslation = {
     hovered: 'Hovered',
     pressed: 'Pressed',
     disabled: 'Disabled',
+    loadFailed: 'This theme\'s preview could not be loaded.',
+    retry: 'Try again',
+    previewNote:
+      'Previews show the theme\'s icons and colors; the rest of the interface is illustrative.',
   },
   plugins: {
     title: 'Plugins.',

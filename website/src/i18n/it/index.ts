@@ -113,6 +113,10 @@ const it: Translation = {
     hovered: 'Al passaggio',
     pressed: 'Premuto',
     disabled: 'Disattivato',
+    loadFailed: 'Impossibile caricare l’anteprima di questo tema.',
+    retry: 'Riprova',
+    previewNote:
+      'Le anteprime mostrano icone e colori del tema; il resto dell’interfaccia è indicativo.',
   },
   plugins: {
     title: 'Plugin.',

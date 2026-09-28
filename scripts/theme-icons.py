@@ -2,7 +2,7 @@
 """Draw the official themes' icon sets into store/themes/<id>/icons/.
 
     python3 scripts/theme-icons.py            # every theme below
-    python3 scripts/theme-icons.py serverbox.dracula
+    python3 scripts/theme-icons.py serverbox.one-dark-pro
 
 One set of glyphs on a 24x24 grid, drawn per theme in that theme's hand:
 stroke width, line caps and joins, and how round a corner is. Every key a
@@ -35,14 +35,8 @@ class Hand:
 
 
 HANDS = {
-    # Soft and friendly: thick round strokes, very round boxes.
-    "serverbox.dracula": Hand(2.0, "round", "round", 1.4, 0.3),
-    # Primer-like: fine lines, crisp corners.
-    "serverbox.github": Hand(1.5, "round", "round", 0.6, 0.22),
     # Editor-like: medium strokes, modest radius.
     "serverbox.one-dark-pro": Hand(1.75, "round", "round", 1.0, 0.28),
-    # Thin and airy under a night sky.
-    "serverbox.midnight": Hand(1.35, "round", "round", 1.2, 0.26),
 }
 
 

@@ -102,8 +102,8 @@ zlib 版本无关。
 同一个 release 中：应用的更新检查读取本仓库的 release 列表，tag 中没有构建号的 release
 会被跳过；如果每个主题版本各发一个 release，应用自己的 release 会被挤出第一页。该
 release 是 pre-release，以 `--latest=false` 创建，永远不会成为本仓库的 Latest：GitHub
-不会把 pre-release 标为 Latest，因此 Latest 始终是应用的 release；脚本每次运行后也会
-检查这一点。
+不会把 pre-release 标为 Latest，因此 Latest 始终是应用的 release；脚本在上传任何内容之前
+也会检查这一点。
 
 脚本会遵守两项顺序与完整性规则：先上传包，再更新引用它的 listing，避免 listing 指向
 不存在的 asset；从不覆盖已上传的 asset（中断的运行留下的 asset，只有字节相同时才会被

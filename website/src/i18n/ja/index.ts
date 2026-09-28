@@ -112,6 +112,10 @@ const ja: Translation = {
     hovered: 'ホバー',
     pressed: '押下',
     disabled: '無効',
+    loadFailed: 'このテーマのプレビューを読み込めませんでした。',
+    retry: '再試行',
+    previewNote:
+      'プレビューで正確なのはテーマのアイコンと配色のみです。そのほかの画面は参考用です。',
   },
   plugins: {
     title: 'プラグイン。',
