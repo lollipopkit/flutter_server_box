@@ -347,6 +347,9 @@ def check_theme(manifest: dict, folder: Path, key: str | None, lo, rep: Report, 
         return value if isinstance(value, dict) else {}
 
     icons = table_of(manifest.get("icons"))
+    for sub in ("images", "colors"):
+        if sub in icons and not isinstance(icons[sub], dict):
+            rep.error(f"{where}icons.{sub} must be a table")
     images = table_of(icons.get("images"))
     colors = table_of(icons.get("colors"))
     splash = manifest.get("splash")
@@ -463,6 +466,14 @@ def main() -> int:
         rep.error("schema must be a table with min and max")
         sch = {}
     lo, hi = sch.get("min"), sch.get("max")
+    # As the installer reads it: exactly min and max, integers from 1. Without
+    # them no feature gate below can be checked, so that alone is an error.
+    # (`bool` is an `int` to Python, and not to TOML or the app.)
+    def schema_int(v) -> bool:
+        return isinstance(v, int) and not isinstance(v, bool) and v >= 1
+    if sch and (set(sch) != {"min", "max"} or not (schema_int(lo) and schema_int(hi))):
+        rep.error("schema must hold exactly min and max, each an integer from 1")
+        lo = hi = None
     if isinstance(lo, int) and isinstance(hi, int):
         if lo > hi:
             rep.error("schema.min is greater than schema.max")
