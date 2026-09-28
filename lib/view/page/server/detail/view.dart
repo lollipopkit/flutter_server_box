@@ -28,6 +28,7 @@ import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
+import 'package:server_box/view/page/server/card/name_hero.dart';
 import 'package:server_box/view/page/server/card/notices.dart';
 import 'package:server_box/view/page/server/card/sizes.dart';
 import 'package:server_box/view/page/server/chart.dart';
@@ -646,11 +647,17 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
               tooltip: libL10n.close,
               onPressed: closeDetail,
             ),
-      title: Text(
-        si.spi.name,
-        style: TextStyle(
-          fontSize: 20,
-          color: context.isDark ? Colors.white : Colors.black,
+      // Where the card's name lands when this page was pushed from it; hosted
+      // in the tab, the card grew into the page and nothing flies.
+      title: ServerNameHero(
+        id: si.spi.id,
+        enabled: !widget.bare,
+        child: Text(
+          si.spi.name,
+          style: TextStyle(
+            fontSize: 20,
+            color: context.isDark ? Colors.white : Colors.black,
+          ),
         ),
       ),
       actions: [
