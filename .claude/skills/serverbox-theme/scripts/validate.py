@@ -302,16 +302,35 @@ def merge(base: dict, overrides: dict) -> dict:
     return out
 
 
+def safe_file(folder: Path, rel: str) -> Path | None:
+    """The regular file `rel` names inside `folder`, or None.
+
+    None for a path that is absolute, climbs out with `..`, or passes through a
+    symlink at any level — checked before anything is read, so a theme folder
+    cannot point the validator at a file outside it. The installer refuses the
+    same things.
+    """
+    rel_path = Path(rel)
+    if rel_path.is_absolute() or ".." in rel_path.parts:
+        return None
+    f = folder
+    for part in rel_path.parts:
+        f = f / part
+        if f.is_symlink():
+            return None
+    return f if f.is_file() else None
+
+
 def check_theme(manifest: dict, folder: Path, key: str | None, lo, rep: Report, where: str):
     """One theme's own rules; answers the package files it used and its contrast lines."""
     used: set[str] = set()
 
-    def locate(name: str) -> tuple[Path, str]:
+    def locate(name: str) -> tuple[Path | None, str]:
         if key:
             rel = f"variants/{key}/{name}"
-            if (folder / rel).is_file():
-                return folder / rel, rel
-        return folder / name, name
+            if (f := safe_file(folder, rel)) is not None:
+                return f, rel
+        return safe_file(folder, name), name
 
     icons = manifest.get("icons") or {}
     images = icons.get("images") or {}
@@ -321,10 +340,10 @@ def check_theme(manifest: dict, folder: Path, key: str | None, lo, rep: Report, 
 
     # Icons.
     for ikey, rel in images.items():
-        f = folder / str(rel)
+        f = safe_file(folder, str(rel))
         used.add(str(rel))
-        if not f.is_file():
-            rep.error(f"{where}icons.images.{ikey}: {rel} does not exist (the app would show the built-in glyph)")
+        if f is None:
+            rep.error(f"{where}icons.images.{ikey}: {rel} does not exist or is a symlink (the app would show the built-in glyph)")
             continue
         data = f.read_bytes()
         if len(data) > LIMITS["icon"]:
@@ -341,8 +360,8 @@ def check_theme(manifest: dict, folder: Path, key: str | None, lo, rep: Report, 
     if background.get("type") == "image":
         f, rel = locate(str(background.get("image")))
         used.add(rel)
-        if not f.is_file():
-            rep.error(f"{where}background.image: {background.get('image')} does not exist")
+        if f is None:
+            rep.error(f"{where}background.image: {background.get('image')} does not exist or is a symlink")
         else:
             data = f.read_bytes()
             if len(data) > LIMITS["background"]:
@@ -352,8 +371,8 @@ def check_theme(manifest: dict, folder: Path, key: str | None, lo, rep: Report, 
         name = str(splash["logo"])
         f, rel = locate(name)
         used.add(rel)
-        if not f.is_file():
-            rep.error(f"{where}splash.logo: {name} does not exist")
+        if f is None:
+            rep.error(f"{where}splash.logo: {name} does not exist or is a symlink")
         else:
             data = f.read_bytes()
             if len(data) > LIMITS["splash"]:
@@ -405,8 +424,8 @@ def main() -> int:
     folder = Path(args.folder)
     manifest_path = folder / "manifest.toml"
     rep = Report()
-    if not manifest_path.is_file():
-        print(f"error: {manifest_path} does not exist")
+    if safe_file(folder, "manifest.toml") is None:
+        print(f"error: {manifest_path} does not exist or is a symlink")
         return 1
 
     raw = manifest_path.read_bytes()
@@ -466,6 +485,11 @@ def main() -> int:
             continue  # left out when packed
         if f.is_symlink():
             rep.error(f"{rel}: symlinks are refused")
+            continue
+        # Under a symlinked directory, which older Pythons' rglob descends
+        # into: already reported at the directory, and not this theme's.
+        parts = f.relative_to(folder).parts
+        if any((folder.joinpath(*parts[:i])).is_symlink() for i in range(1, len(parts))):
             continue
         if f.is_dir():
             continue

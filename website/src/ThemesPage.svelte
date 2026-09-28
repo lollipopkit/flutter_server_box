@@ -48,13 +48,20 @@
   function textOf(value) {
     if (typeof value === 'string') return value
     if (!value || typeof value !== 'object') return ''
+    // Only string entries, as the app reads them: anything else in the table
+    // is not text in any language.
     const table = Object.fromEntries(
-      Object.entries(value).map(([k, v]) => [k.replaceAll('_', '-').toLowerCase(), v]),
+      Object.entries(value)
+        .filter(([, v]) => typeof v === 'string')
+        .map(([k, v]) => [k.replaceAll('_', '-').toLowerCase(), v]),
     )
     const tag = locale.toLowerCase()
     return table[tag] ?? table[tag.split('-')[0]] ?? table.en ?? Object.values(table)[0] ?? ''
   }
-  const allTexts = (value) => (typeof value === 'string' ? [value] : Object.values(value ?? {}))
+  const allTexts = (value) =>
+    typeof value === 'string'
+      ? [value]
+      : Object.values(value && typeof value === 'object' ? value : {}).filter((v) => typeof v === 'string')
 
   const shown = $derived.by(() => {
     const q = query.trim().toLowerCase()

@@ -469,35 +469,41 @@ abstract final class ThemePackages {
     AssetBundle? bundle,
     String? rootDirectory,
   }) async {
-    final assets = bundle ?? rootBundle;
-    final seeded = Stores.setting.bundledThemesSeeded;
-    final done = {...seeded.fetch()};
-    final manifest = await AssetManifest.loadFromAssetBundle(assets);
-    for (final path in manifest.listAssets()) {
-      if (!path.startsWith(bundledDir) || !path.endsWith('.fsbt')) continue;
-      final id = path.substring(bundledDir.length, path.length - '.fsbt'.length);
-      if (done.contains(id)) continue;
-      try {
-        final onDevice = listInstalled(
-          rootDirectory: rootDirectory,
-        ).any((theme) => theme.id == id);
-        if (!onDevice) {
-          final data = await assets.load(path);
-          final theme = await install(
-            data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+    // Called without waiting at launch: nothing here may escape as an
+    // unhandled error, and a failure is tried again at the next launch.
+    try {
+      final assets = bundle ?? rootBundle;
+      final seeded = Stores.setting.bundledThemesSeeded;
+      final done = {...seeded.fetch()};
+      final manifest = await AssetManifest.loadFromAssetBundle(assets);
+      for (final path in manifest.listAssets()) {
+        if (!path.startsWith(bundledDir) || !path.endsWith('.fsbt')) continue;
+        final id = path.substring(bundledDir.length, path.length - '.fsbt'.length);
+        if (done.contains(id)) continue;
+        try {
+          final onDevice = listInstalled(
             rootDirectory: rootDirectory,
-          );
-          if (theme.id != id) {
-            throw FormatException('$path installs as ${theme.id}');
+          ).any((theme) => theme.id == id);
+          if (!onDevice) {
+            final data = await assets.load(path);
+            final theme = await install(
+              data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+              rootDirectory: rootDirectory,
+            );
+            if (theme.id != id) {
+              throw FormatException('$path installs as ${theme.id}');
+            }
           }
+          done.add(id);
+        } catch (error, stack) {
+          // Tried again at the next launch: nothing was recorded.
+          Loggers.app.warning('Installing bundled theme $id', error, stack);
         }
-        done.add(id);
-      } catch (error, stack) {
-        // Tried again at the next launch: nothing was recorded.
-        Loggers.app.warning('Installing bundled theme $id', error, stack);
       }
+      seeded.put(done.toList()..sort());
+    } catch (error, stack) {
+      Loggers.app.warning('Installing bundled themes', error, stack);
     }
-    seeded.put(done.toList()..sort());
   }
 
   /// The icon keys a package may carry an image or a color for, and what the
@@ -872,7 +878,11 @@ abstract final class ThemePackages {
         final variant = variantOf(Stores.setting.appThemePreset.fetch());
         final next =
             installed(package.installationId, variant: variant) ?? package;
+        // An update is not a choice of theme: the mode the user set stays,
+        // unless the new version locks one.
+        final mode = Stores.setting.themeMode.fetch();
         select(next, preset: next.preset);
+        if (next.lockedMode == null) Stores.setting.themeMode.put(mode);
       }
       await Directory(
         rootPath.joinPath(old.installationId),
