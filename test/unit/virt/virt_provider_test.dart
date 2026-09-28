@@ -45,6 +45,12 @@ String _overview() => [
   _section('virt.stats', _fixture('domstats.txt')),
 ].join();
 
+/// [_overview] with cirros-run shut off.
+String _overviewStopped() => _overview().replaceFirst(
+  "Domain: 'cirros-run'\n  state.state=1",
+  "Domain: 'cirros-run'\n  state.state=5",
+);
+
 const _run = '8a2ed2a2-83e1-4c41-ad0a-a57d54d0d649'; // cirros-run
 
 Spi _spi(String id) =>
@@ -352,6 +358,268 @@ void main() {
     expect(networkReads, greaterThan(before.$2));
   });
 
+  test('a rebuild: what ran on the old backend leaves the new one alone',
+      () async {
+    Stores.server.put(_spi('kvm'));
+    final gates = <Completer<void>>[];
+    final exec = _Exec((call) async {
+      if (call.script.contains('V snapshot-create-as')) {
+        final gate = Completer<void>();
+        gates.add(gate);
+        await gate.future;
+        return _ok(_section('virt.action', 'Domain snapshot snap-1 created'));
+      }
+      return _ok(_overview());
+    });
+    final c = container({'kvm': exec});
+    final provider = virtHostProvider('kvm');
+    final sub = c.listen(provider, (_, _) {});
+    addTearDown(sub.close);
+    await _until(() => c.read(provider).data != null);
+
+    final notifier = c.read(provider.notifier);
+    final old = notifier.createSnapshot(_run, name: 'snap-1');
+    await _until(() => gates.length == 1);
+
+    // A server edit rebuilds the host onto a new backend; the notifier, and
+    // `ref.mounted`, carry on.
+    c.invalidate(provider);
+    await _until(() => c.read(provider).data != null);
+    expect(c.read(provider).snapshotOps, isEmpty);
+    final current = notifier.createSnapshot(_run, name: 'snap-2');
+    await _until(() => gates.length == 2);
+
+    gates.first.complete();
+    await old;
+    expect(
+      c.read(provider).snapshotOps,
+      {_run: VirtSnapshotOp.create},
+      reason: "the new backend's operation is still running",
+    );
+    await expectLater(
+      notifier.power(_run, VirtPowerAction.reboot),
+      throwsA(isA<VirtErr>()),
+    );
+
+    gates.last.complete();
+    await current;
+    expect(c.read(provider).snapshotOps, isEmpty);
+  });
+
+  test('a snapshot operation has the hardware read again', () async {
+    Stores.server.put(_spi('kvm'));
+    final exec = _Exec((call) async {
+      if (call.script.contains('V snapshot-create-as')) {
+        return _ok(_section('virt.action', 'Domain snapshot snap-1 created'));
+      }
+      return _ok(_overview());
+    });
+    final c = container({'kvm': exec});
+    final provider = virtHostProvider('kvm');
+    final sub = c.listen(provider, (_, _) {});
+    addTearDown(sub.close);
+    final hw = virtRevisionProvider('kvm', 'hw:$_run');
+    final hwSub = c.listen(hw, (_, _) {});
+    addTearDown(hwSub.close);
+    await _until(() => c.read(provider).data != null);
+
+    final before = c.read(hw);
+    // An external snapshot moves the writable disks; a revert brings back
+    // another configuration. Either way the read before is out of date.
+    await c.read(provider.notifier).createSnapshot(_run, name: 'snap-1');
+    expect(c.read(hw), greaterThan(before));
+  });
+
+  group('restart to apply (libvirt)', () {
+    test('the guest stays reserved from the shutdown to the start', () async {
+      Stores.server.put(_spi('kvm'));
+      var down = false;
+      Completer<void>? wait;
+      final exec = _Exec((call) async {
+        if (call.script.contains('V shutdown')) {
+          down = true;
+          wait = Completer<void>();
+          return _ok(_section('virt.action', 'Domain is being shutdown'));
+        }
+        if (call.script.contains('V start')) {
+          down = false;
+          return _ok(_section('virt.action', 'Domain started'));
+        }
+        if (down) {
+          await wait!.future;
+          return _ok(_overviewStopped());
+        }
+        return _ok(_overview());
+      });
+      final c = container({'kvm': exec});
+      final provider = virtHostProvider('kvm');
+      final sub = c.listen(provider, (_, _) {});
+      addTearDown(sub.close);
+      await _until(() => c.read(provider).data != null);
+
+      final notifier = c.read(provider.notifier);
+      final restart = notifier.restartToApply(_run);
+      await _until(() => wait != null);
+      // Shut down, not yet seen to be off: still this call's.
+      final st = c.read(provider);
+      expect(st.busy[_run], VirtPowerAction.reboot);
+      expect(st.displayState(st.guest(_run)!), VirtGuestState.rebooting);
+      for (final second in [
+        () => notifier.restartToApply(_run),
+        () => notifier.createSnapshot(_run, name: 'mid-restart'),
+      ]) {
+        await expectLater(
+          second(),
+          throwsA(
+            isA<VirtErr>().having(
+              (e) => e.type,
+              'type',
+              VirtErrType.unsupported,
+            ),
+          ),
+        );
+      }
+
+      wait!.complete();
+      await restart;
+      expect(exec.calls.where((c) => c.script.contains('V start')), hasLength(1));
+      expect(c.read(provider).busy, isEmpty);
+    });
+
+    test('a force stop taking over ends it: the guest is not started', () async {
+      Stores.server.put(_spi('kvm'));
+      var down = false;
+      Completer<void>? wait;
+      final exec = _Exec((call) async {
+        if (call.script.contains('V shutdown')) {
+          down = true;
+          wait = Completer<void>();
+          return _ok(_section('virt.action', 'Domain is being shutdown'));
+        }
+        if (call.script.contains('V destroy')) {
+          return _ok(_section('virt.action', 'Domain destroyed'));
+        }
+        if (call.script.contains('V start')) {
+          return _ok(_section('virt.action', 'Domain started'));
+        }
+        if (down) {
+          await wait!.future;
+          return _ok(_overviewStopped());
+        }
+        return _ok(_overview());
+      });
+      final c = container({'kvm': exec});
+      final provider = virtHostProvider('kvm');
+      final sub = c.listen(provider, (_, _) {});
+      addTearDown(sub.close);
+      await _until(() => c.read(provider).data != null);
+
+      final notifier = c.read(provider.notifier);
+      final restart = notifier.restartToApply(_run);
+      await _until(() => wait != null);
+      final st = c.read(provider);
+      expect(st.actionsOf(st.guest(_run)!), {VirtPowerAction.forceStop});
+      await notifier.power(_run, VirtPowerAction.forceStop);
+
+      wait!.complete();
+      await restart;
+      expect(exec.calls.where((c) => c.script.contains('V start')), isEmpty);
+      expect(c.read(provider).busy, isEmpty);
+    });
+  });
+
+  test('the reads below the host follow a rebuild onto the same kind',
+      () async {
+    Stores.server.put(_spi('kvm'));
+    var networkReads = 0;
+    final exec = _Exec((call) async {
+      if (call.script.contains('net-list')) {
+        networkReads++;
+        return _ok(_fixture('script_networks.txt'));
+      }
+      return _ok(_overview());
+    });
+    final c = container({'kvm': exec});
+    final provider = virtHostProvider('kvm');
+    final sub = c.listen(provider, (_, _) {});
+    addTearDown(sub.close);
+    final nets = c.listen(virtNetworksProvider('kvm'), (_, _) {});
+    addTearDown(nets.close);
+    await c.read(virtNetworksProvider('kvm').future);
+    final before = networkReads;
+
+    // Still libvirt, but a new backend: what the old one read is not kept.
+    c.invalidate(provider);
+    await _until(() => networkReads > before);
+    await c.read(virtNetworksProvider('kvm').future);
+  });
+
+  test('a guest\'s hardware read does not keep the host alive', () async {
+    Stores.server.put(_spi('kvm'));
+    final c = container({'kvm': _Exec((_) => _ok(_overview()))});
+    final hw = c.listen(virtHardwareProvider('kvm', _run), (_, _) {});
+    await _until(() => !c.read(virtHardwareProvider('kvm', _run)).isLoading);
+    expect(c.exists(virtHostProvider('kvm')), isTrue);
+
+    hw.close();
+    await _until(() => !c.exists(virtHostProvider('kvm')));
+  });
+
+  test('a pool is not changed while something is uploaded into it, nor '
+      'uploaded into while it is changed', () async {
+    Stores.server.put(_spi('kvm'));
+    final gate = Completer<void>();
+    final exec = _Exec((call) async {
+      if (call.script.contains('vol-create-as')) {
+        await gate.future;
+        return _ok(_section('virt.res.step', ''));
+      }
+      if (call.script.contains('pool-list')) {
+        return _ok(_fixture('script_storage.txt'));
+      }
+      return _ok(_overview());
+    });
+    final c = container({'kvm': exec});
+    final provider = virtHostProvider('kvm');
+    final sub = c.listen(provider, (_, _) {});
+    addTearDown(sub.close);
+    await _until(() => c.read(provider).data != null);
+    final pool = (await c.read(virtStoragePoolsProvider('kvm').future)).first;
+    final notifier = c.read(provider.notifier);
+    final busy = isA<VirtErr>()
+        .having((e) => e.type, 'type', VirtErrType.unsupported)
+        .having((e) => e.message, 'message', contains('busy'));
+
+    final create = notifier.manage(
+      VirtVolumeCreate(pool, name: 'a.qcow2', gib: 1, format: 'qcow2'),
+    );
+    await _until(() => c.read(provider).resourceOps.isNotEmpty);
+    await expectLater(
+      notifier.upload(
+        VirtUpload(
+          pool: pool,
+          name: 'a.iso',
+          size: 1,
+          open: () => Stream.value(const [0]),
+        ),
+      ),
+      throwsA(busy),
+    );
+    expect(c.read(provider).uploads, isEmpty);
+    gate.complete();
+    await create;
+
+    // An upload in flight, as its progress shows it.
+    // ignore: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
+    notifier.state = c.read(provider).copyWith(
+      uploads: {pool.id: const VirtUploadProgress(name: 'a.iso', size: 1)},
+    );
+    await expectLater(
+      notifier.manage(VirtPoolSetActive(pool, active: false)),
+      throwsA(busy),
+    );
+  });
+
   group('what is probed without being asked', () {
     Spi spi({bool autoConnect = true}) => Spi(
       id: 's',
@@ -511,9 +779,12 @@ void main() {
         tokenId: 'root@pam!sb',
         tokenSecret: 's',
       );
+      final endpoint = c.read(provider).endpoint;
       Stores.pve.put('pve', edited);
       await _until(() => backend.config == edited);
       expect(identical(c.read(provider.notifier).backend, backend), isTrue);
+      // What was read through the old configuration is read again.
+      expect(c.read(provider).endpoint, greaterThan(endpoint));
     });
   });
 

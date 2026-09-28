@@ -8,12 +8,15 @@
 /// As in `virt_tab_test.dart`, the providers are replaced, not the backends.
 library;
 
+import 'dart:async';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/generated/l10n/lib_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
+import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/virt/pve_resources.dart';
 import 'package:server_box/data/model/virt/virt.dart';
@@ -30,6 +33,7 @@ import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/view/page/virt/guest.dart';
 import 'package:server_box/view/page/virt/hardware.dart';
 import 'package:server_box/view/page/virt/tab.dart';
 
@@ -59,12 +63,16 @@ VirtGuest _guest(
   ),
 );
 
+/// The host's kind and nodes: PVE with one node unless a test says so.
+var _hostKind = VirtHostKind.pve;
+var _nodes = const [VirtNode(name: 'pve')];
+
 VirtSnapshot _snapshot() => VirtSnapshot(
-  host: const VirtHost(
+  host: VirtHost(
     serverId: _pve,
-    kind: VirtHostKind.pve,
+    kind: _hostKind,
     version: '9.2',
-    nodes: [VirtNode(name: 'pve')],
+    nodes: _nodes,
   ),
   guests: [
     _guest('qemu/100', 'web-01', vmid: 100),
@@ -80,6 +88,7 @@ VirtSnapshot _snapshot() => VirtSnapshot(
     hardwareRevert: true,
     clone: true,
     linkedClone: true,
+    cloneTarget: true,
     backup: true,
   ),
 );
@@ -228,6 +237,26 @@ const _stopped = VirtHardware(
 
 var _hostDevs = const VirtHostDevices();
 
+/// Whether listing the host's devices fails, and how often it was asked.
+VirtErr? _hostDevsError;
+var _hostDevReads = 0;
+
+/// Whether listing the storages, or a storage's volumes, fails.
+var _poolsFail = false;
+var _volumesFail = false;
+
+/// The backup jobs and the storages they can write to, as the host has them
+/// now; a gate holds `backup` until the test opens it.
+var _jobList = const [_job];
+var _backupPools = const [_pool];
+Completer<void>? _backupGate;
+final _jobEdits = <VirtBackupJobEdit>[];
+final _clones = <VirtCloneRequest>[];
+
+/// How often the guest's detail was read; a gate holds `delete`.
+var _detailReads = 0;
+Completer<void>? _deleteGate;
+
 const _ciRead = VirtCloudInitState(
   user: 'sbxe',
   sshKeys: ['ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOld old@x'],
@@ -246,8 +275,7 @@ final _calls = <String>[];
 
 class _FakeHosts extends VirtHosts {
   @override
-  VirtHostsState build() =>
-      const VirtHostsState(hosts: {_pve: VirtHostKind.pve});
+  VirtHostsState build() => VirtHostsState(hosts: {_pve: _hostKind});
 
   @override
   Future<void> probeAll({
@@ -260,7 +288,7 @@ class _FakeHost extends VirtHostNotifier {
   @override
   VirtHostState build(String serverId) => VirtHostState(
     serverId: _pve,
-    kind: VirtHostKind.pve,
+    kind: _hostKind,
     data: _snapshot(),
   );
 
@@ -268,8 +296,10 @@ class _FakeHost extends VirtHostNotifier {
   Future<void> refresh({bool auto = false}) async {}
 
   @override
-  Future<VirtGuestDetail> detail(String guestId) async =>
-      const VirtGuestDetail();
+  Future<VirtGuestDetail> detail(String guestId) async {
+    _detailReads++;
+    return const VirtGuestDetail();
+  }
 
   @override
   Future<List<VirtStats>> history(
@@ -279,7 +309,9 @@ class _FakeHost extends VirtHostNotifier {
 
   /// ISOs only: no disk goes here.
   @override
-  Future<List<VirtStoragePool>> storagePools() async => const [
+  Future<List<VirtStoragePool>> storagePools() async => _poolsFail
+      ? throw const VirtErr(type: VirtErrType.unreachable, message: 'pools')
+      : const [
     VirtStoragePool(
       id: 'pve/local',
       name: 'local',
@@ -290,7 +322,9 @@ class _FakeHost extends VirtHostNotifier {
   ];
 
   @override
-  Future<List<VirtVolume>> volumes(VirtStoragePool pool) async => const [
+  Future<List<VirtVolume>> volumes(VirtStoragePool pool) async => _volumesFail
+      ? throw const VirtErr(type: VirtErrType.unreachable, message: 'volumes')
+      : const [
     VirtVolume(id: 'local:iso/debian-13.iso', name: 'debian-13.iso', content: 'iso'),
   ];
 
@@ -308,13 +342,20 @@ class _FakeHost extends VirtHostNotifier {
     VirtHardware base,
     VirtHwChange change,
   ) async {
-    expect(base.revision, _hardware[guestId]!.revision);
+    // What PVE's digest and the libvirt backend's revision check do.
+    if (base.revision != _hardware[guestId]!.revision) {
+      throw const VirtErr(type: VirtErrType.conflict);
+    }
     _changes.add((guestId, change));
     return const VirtHwOutcome();
   }
 
   @override
-  Future<VirtHostDevices> hostDevices(String guestId) async => _hostDevs;
+  Future<VirtHostDevices> hostDevices(String guestId) async {
+    _hostDevReads++;
+    if (_hostDevsError case final e?) throw e;
+    return _hostDevs;
+  }
 
   @override
   Future<VirtCloudInitState> cloudInit(String guestId) async => _ci;
@@ -331,11 +372,14 @@ class _FakeHost extends VirtHostNotifier {
       _calls.add('restart $guestId');
 
   @override
-  Future<void> delete(String guestId, {bool removeDisks = true}) async =>
-      _calls.add('delete $guestId disks=$removeDisks');
+  Future<void> delete(String guestId, {bool removeDisks = true}) async {
+    await _deleteGate?.future;
+    _calls.add('delete $guestId disks=$removeDisks');
+  }
 
   @override
   Future<String> clone(String guestId, VirtCloneRequest request) async {
+    _clones.add(request);
     _calls.add('clone $guestId ${request.name} full=${request.full}');
     return 'qemu/150';
   }
@@ -351,19 +395,22 @@ class _FakeHost extends VirtHostNotifier {
       _calls.add('template $guestId');
 
   @override
-  Future<List<VirtBackupJob>> backupJobs(String guestId) async => const [_job];
+  Future<List<VirtBackupJob>> backupJobs(String guestId) async => _jobList;
 
   @override
-  Future<List<VirtBackupJob>> allBackupJobs() async => [_job, _poolJob];
+  Future<List<VirtBackupJob>> allBackupJobs() async => [..._jobList, _poolJob];
 
   @override
   Future<void> editBackupJob(
     VirtBackupJobEdit edit, {
     bool remove = false,
-  }) async => _calls.add(
-    'job ${edit.id} remove=$remove ${edit.schedule} '
-    'pool=${edit.pool} all=${edit.all} vmids=${edit.vmids}',
-  );
+  }) async {
+    _jobEdits.add(edit);
+    _calls.add(
+      'job ${edit.id} remove=$remove ${edit.schedule} '
+      'pool=${edit.pool} all=${edit.all} vmids=${edit.vmids}',
+    );
+  }
 
   @override
   Future<VirtScheduleCheck> checkSchedule(String schedule) async =>
@@ -374,11 +421,13 @@ class _FakeHost extends VirtHostNotifier {
       const [_pool];
 
   @override
-  Future<List<VirtStoragePool>> allBackupStorages() async => const [_pool];
+  Future<List<VirtStoragePool>> allBackupStorages() async => _backupPools;
 
   @override
-  Future<void> backup(String guestId, VirtBackupRequest request) async =>
-      _calls.add('backup $guestId ${request.storage} ${request.mode}');
+  Future<void> backup(String guestId, VirtBackupRequest request) async {
+    await _backupGate?.future;
+    _calls.add('backup $guestId ${request.storage} ${request.mode}');
+  }
 
   @override
   Future<void> runBackupJob(VirtBackupJob job) async =>
@@ -423,6 +472,19 @@ void main() {
     _changes.clear();
     _calls.clear();
     _hostDevs = const VirtHostDevices();
+    _hostDevsError = null;
+    _hostDevReads = 0;
+    _poolsFail = false;
+    _volumesFail = false;
+    _jobList = const [_job];
+    _backupPools = const [_pool];
+    _backupGate = null;
+    _jobEdits.clear();
+    _clones.clear();
+    _detailReads = 0;
+    _deleteGate = null;
+    _hostKind = VirtHostKind.pve;
+    _nodes = const [VirtNode(name: 'pve')];
     _ciEdits.clear();
     _ci = _ciRead;
   });
@@ -432,7 +494,7 @@ void main() {
     await closeTestDb();
   });
 
-  Future<void> open(
+  Future<ProviderContainer> open(
     WidgetTester tester,
     String guest, {
     bool wide = false,
@@ -476,6 +538,7 @@ void main() {
     await _settle(tester);
     await tester.tap(segment(segmentLabel ?? app_locale.l10n.virtHardware));
     await _settle(tester);
+    return container;
   }
 
   Finder text(String s) => find.text(s, skipOffstage: false);
@@ -724,9 +787,9 @@ void main() {
     });
   });
 
-  testWidgets('a pool job saved with a new schedule keeps its pool', (
-    tester,
-  ) async {
+  /// The backup job [jobId] (null: a new one) on its own, as the tab shows
+  /// it beside its list.
+  Future<void> openJob(WidgetTester tester, String? jobId) async {
     tester.view.physicalSize = const Size(1400, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -751,8 +814,8 @@ void main() {
             builder: (context) {
               app_locale.l10n = AppLocalizations.of(context)!;
               context.setLibL10n();
-              return const Scaffold(
-                body: VirtBackupJobView(serverId: _pve, jobId: 'by-pool'),
+              return Scaffold(
+                body: VirtBackupJobView(serverId: _pve, jobId: jobId),
               );
             },
           ),
@@ -761,6 +824,12 @@ void main() {
     );
     addTearDown(() => tester.pumpWidget(const SizedBox.shrink()));
     await _settle(tester);
+  }
+
+  testWidgets('a pool job saved with a new schedule keeps its pool', (
+    tester,
+  ) async {
+    await openJob(tester, 'by-pool');
 
     // The pool is the selection shown, and no guest is there to pick.
     expect(text('pool:prod'), findsWidgets);
@@ -782,7 +851,7 @@ void main() {
   });
 
   group('settings', () {
-    Future<void> openSettings(WidgetTester tester, String guest) =>
+    Future<ProviderContainer> openSettings(WidgetTester tester, String guest) =>
         open(tester, guest, segmentLabel: libL10n.setting);
 
     Finder input(String key) => find.descendant(
@@ -917,6 +986,57 @@ void main() {
       expect(_key('ci:foreign'), findsOneWidget);
       // No NIC: no address rows.
       expect(_key('hw:seg:ci:ip'), findsNothing);
+    });
+
+    testWidgets('cloud-init: a draft is saved against the read it came from', (
+      tester,
+    ) async {
+      _hardware['qemu/100'] = _vm.copyWith(
+        disks: [
+          ..._vm.disks,
+          const VirtHwDisk(key: 'scsi1', kind: VirtHwDiskKind.cdrom, cloudInit: true),
+        ],
+      );
+      final container = await openSettings(tester, 'web-01');
+      const key = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINew new@x';
+      await tester.enterText(input('ci:keys'), key);
+      await _settle(tester);
+
+      // Changed elsewhere while the draft is open, and read again.
+      _ci = const VirtCloudInitState(
+        user: 'root',
+        sshKeys: ['ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOld old@x'],
+        address: '10.0.0.5/24',
+        gateway: '10.0.0.1',
+        passwordSet: true,
+        network: true,
+        revision: 'd2',
+      );
+      container.invalidate(virtCloudInitProvider(_pve, 'qemu/100'));
+      await _settle(tester);
+      expect(tester.widget<TextField>(input('ci:keys')).controller!.text, key);
+
+      // Its own read goes back: the host, not this view, decides whether
+      // the change made meanwhile is overwritten.
+      await tap(tester, _key('ci:save'));
+      final (base, edit) = _ciEdits.single;
+      expect(base.revision, 'd1');
+      expect(edit.values.user, 'sbxe');
+    });
+
+    testWidgets('libvirt: a clone\'s empty disks go to the pool picked', (
+      tester,
+    ) async {
+      _hostKind = VirtHostKind.libvirt;
+      await openSettings(tester, 'db-02');
+      await tap(tester, _key('clone:target:pve/local'));
+      await tap(tester, _key('hw:toggle:clone:full'));
+      // Still offered, and not refused as PVE's linked clone would be.
+      expect(_key('clone:target:pve/local'), findsOneWidget);
+      expect(text(app_locale.l10n.virtCloneLinkedTarget), findsNothing);
+      await tap(tester, _key('clone:go'));
+      final clone = _clones.single;
+      expect((clone.full, clone.targetPool), (false, 'local'));
     });
 
     testWidgets('a container\'s pending hostname is shown by its field', (
@@ -1060,7 +1180,7 @@ void main() {
     expect(_segOpt('dev:add:kind', 'TPM'), findsNothing);
     expect(_segOpt('dev:add:kind', app_locale.l10n.virtHwCdrom), findsNothing);
     expect(text(app_locale.l10n.virtHwMappingsOnly), findsOneWidget);
-    await tap(tester, _key('hw:dev:pick:bt'));
+    await tap(tester, _key('hw:dev:pick:mapping:bt'));
     await tap(tester, _key('hw:dev:add'));
     final add = _changes.single.$2 as VirtHwAddDevice;
     expect((add.kind, add.host?.id, add.host?.mapping), (VirtHwDeviceKind.usb, 'bt', true));
@@ -1152,6 +1272,246 @@ void main() {
     await _settle(tester);
     final fw = _changes.single.$2 as VirtHwSetFirmware;
     expect((fw.uefi, fw.secureBoot, fw.storage), (true, false, 'local-lvm'));
+  });
+
+  group('backups: what the view reads again', () {
+    Future<ProviderContainer> openBackups(WidgetTester tester, String guest) =>
+        open(tester, guest, segmentLabel: libL10n.backup);
+
+    testWidgets('the first backup takes the options too', (tester) async {
+      await openBackups(tester, 'dns-01');
+      expect(_key('hw:seg:opt:mode'), findsOneWidget);
+      await tap(tester, _segOpt('opt:mode', 'stop'));
+      await tap(tester, _key('opt:go'));
+      expect(_calls, ['backup lxc/200 local stop']);
+    });
+
+    testWidgets('a pull reads the plan and the backups again', (tester) async {
+      await openBackups(tester, 'web-01');
+      expect(text('02:00'), findsOneWidget);
+      _jobList = const [
+        VirtBackupJob(
+          id: 'nightly',
+          schedule: 'sun 05:00',
+          storage: 'local',
+          vmids: [100],
+        ),
+      ];
+      await tester.fling(
+        find
+            .ancestor(
+              of: title(app_locale.l10n.virtBackupPlan),
+              matching: find.byType(ListView),
+            )
+            .first,
+        const Offset(0, 400),
+        1000,
+      );
+      await _settle(tester);
+      expect(text('sun 05:00'), findsOneWidget);
+      expect(text('02:00'), findsNothing);
+    });
+
+    testWidgets('left while a backup runs', (tester) async {
+      _backupGate = Completer();
+      await openBackups(tester, 'web-01');
+      await tap(tester, _key('backup:now'));
+      await tester.tap(segment(libL10n.setting));
+      await _settle(tester);
+      // Finishes with the view gone: nothing is read through it.
+      _backupGate!.complete();
+      await _settle(tester);
+      expect(_calls, contains('backup qemu/100 local snapshot'));
+    });
+  });
+
+  group('backup jobs', () {
+    Finder selection() => find.descendant(
+      of: _key('hw:seg:job:all'),
+      matching: find.byWidgetPredicate((w) => w is SegmentedTabs),
+    );
+
+    testWidgets('a job of listed guests has the list option chosen', (
+      tester,
+    ) async {
+      await openJob(tester, 'nightly');
+      final tabs = tester.widget(selection()) as SegmentedTabs;
+      expect(tabs.selected, app_locale.l10n.virtBackupSelectionList);
+    });
+
+    testWidgets('the storages are the node\'s, each once', (tester) async {
+      _nodes = const [VirtNode(name: 'pve'), VirtNode(name: 'pve2')];
+      _backupPools = const [
+        _pool,
+        VirtStoragePool(
+          id: 'pve2/local',
+          name: 'local',
+          node: 'pve2',
+          type: 'dir',
+          content: ['backup'],
+        ),
+        VirtStoragePool(
+          id: 'pve2/nas',
+          name: 'nas',
+          node: 'pve2',
+          type: 'nfs',
+          content: ['backup'],
+        ),
+      ];
+      await openJob(tester, null);
+      // On any node: every storage one of them has, once.
+      expect(_segOpt('job:storage', 'local'), findsOneWidget);
+      await tap(tester, _segOpt('job:storage', 'nas'));
+      // Pinned to a node without it: not offered, and not kept.
+      await tap(tester, _segOpt('job:node', 'pve'));
+      expect(_segOpt('job:storage', 'nas'), findsNothing);
+      await tester.enterText(
+        find.descendant(
+          of: _key('job:schedule'),
+          matching: find.byType(TextField),
+        ),
+        '02:00',
+      );
+      await _settle(tester);
+      await tap(tester, _key('job:save'));
+      final edit = _jobEdits.single;
+      expect((edit.node, edit.storage), ('pve', 'local'));
+    });
+  });
+
+  group('drafts over a newer read', () {
+    testWidgets('one whose fields changed is refused, then dropped', (
+      tester,
+    ) async {
+      final container = await open(tester, 'web-01');
+      await tap(tester, _key('hw:step:cores:inc'));
+      // Someone else sets the vCPUs meanwhile; the view reads it again.
+      _hardware['qemu/100'] = _vm.copyWith(
+        cpu: const VirtHwCpu(sockets: 1, cores: 4, type: 'host'),
+        revision: 'digest-9',
+      );
+      container.invalidate(virtHardwareProvider(_pve, 'qemu/100'));
+      await _settle(tester);
+      expect(_key('hw:cpu:save'), findsOneWidget, reason: 'still a draft');
+
+      await tap(tester, _key('hw:cpu:save'));
+      expect(_changes, isEmpty, reason: 'the host refused it');
+      expect(_key('hw:cpu:save'), findsNothing);
+    });
+
+    testWidgets('one whose fields did not is saved on the newer read', (
+      tester,
+    ) async {
+      final container = await open(tester, 'web-01');
+      await tap(tester, _key('hw:step:cores:inc'));
+      _hardware['qemu/100'] = _vm.copyWith(
+        description: 'renamed tier',
+        revision: 'digest-9',
+      );
+      container.invalidate(virtHardwareProvider(_pve, 'qemu/100'));
+      await _settle(tester);
+      await tap(tester, _key('hw:cpu:save'));
+      expect((_changes.single.$2 as VirtHwSetCpu).cores, 3);
+    });
+  });
+
+  testWidgets('the balloon back on is held under the memory the draft gives', (
+    tester,
+  ) async {
+    await open(tester, 'web-01');
+    await tap(tester, _key('hw:toggle:balloon'));
+    // 2048 → 1024 → 768 → 512 MiB, under the 1024 MiB floor it had.
+    for (var i = 0; i < 3; i++) {
+      await tap(tester, _key('hw:step:memory:dec'));
+    }
+    await tap(tester, _key('hw:toggle:balloon'));
+    await tap(tester, _key('hw:memory:save'));
+    final m = _changes.single.$2 as VirtHwSetMemory;
+    expect((m.mib, m.minMib), (512, 512));
+  });
+
+  testWidgets('install media that could not be read: said, and retried', (
+    tester,
+  ) async {
+    _poolsFail = true;
+    await open(tester, 'web-01');
+    await tap(tester, _key('hw:disc:ide2'));
+    expect(_key('hw:isos:retry'), findsOneWidget);
+    _poolsFail = false;
+    await tap(tester, _key('hw:isos:retry'));
+    expect(_key('hw:media:local:iso/debian-13.iso'), findsOneWidget);
+  });
+
+  testWidgets('a storage whose media could not be listed is said', (
+    tester,
+  ) async {
+    _volumesFail = true;
+    await open(tester, 'db-02');
+    await tap(tester, _key('hw:add:dev'));
+    expect(find.textContaining(RegExp('^local: '), skipOffstage: false), findsOneWidget);
+    expect(_key('hw:cdrom:new:none'), findsOneWidget);
+  });
+
+  testWidgets('two USB devices alike are two choices', (tester) async {
+    _hostDevs = const VirtHostDevices(
+      usb: [
+        VirtHostDevice(id: '0bda:b023', label: 'Bluetooth', usbBus: 1, usbPort: '1'),
+        VirtHostDevice(id: '0bda:b023', label: 'Bluetooth', usbBus: 1, usbPort: '2'),
+      ],
+    );
+    await open(tester, 'web-01');
+    await tap(tester, _key('hw:add:dev'));
+    await tap(
+      tester,
+      _segOpt('dev:add:usb-naming', app_locale.l10n.virtUsbByAddress),
+    );
+    await tap(tester, _key('hw:dev:pick:0bda:b023:1:2'));
+    await tap(tester, _key('hw:dev:add'));
+    final add = _changes.single.$2 as VirtHwAddDevice;
+    expect((add.host?.usbPort, add.usbNaming), ('2', VirtUsbNaming.address));
+  });
+
+  testWidgets('a CD-ROM being added does not read the host\'s devices', (
+    tester,
+  ) async {
+    _hostDevsError = const VirtErr(
+      type: VirtErrType.unreachable,
+      message: 'nodedev',
+    );
+    await open(tester, 'db-02');
+    await tap(tester, _key('hw:add:dev'));
+    expect(_hostDevReads, 0);
+    // PCI reads them, and its picker says why it cannot.
+    await tap(tester, _segOpt('dev:add:kind', app_locale.l10n.virtHwPci));
+    expect(_hostDevReads, 1);
+  });
+
+  testWidgets('the detail is read again after a hardware change', (
+    tester,
+  ) async {
+    final container = await open(tester, 'web-01');
+    final before = _detailReads;
+    _hardware['qemu/100'] = _vm.copyWith(nics: const [], revision: 'digest-9');
+    container.invalidate(virtHardwareProvider(_pve, 'qemu/100'));
+    await _settle(tester);
+    expect(_detailReads, before + 1);
+  });
+
+  testWidgets('a deletion that ends after another guest was opened', (
+    tester,
+  ) async {
+    _hardware['qemu/101'] = _stopped.copyWith(protection: false);
+    _deleteGate = Completer();
+    await open(tester, 'db-02', wide: true, segmentLabel: libL10n.setting);
+    await tap(tester, _key('delete:go'));
+    await tap(tester, _key('delete:go'));
+    await tester.tap(find.text('web-01').first);
+    await _settle(tester);
+    _deleteGate!.complete();
+    await _settle(tester);
+    expect(_calls, ['delete qemu/101 disks=true']);
+    // What was opened meanwhile stays open.
+    expect(find.byType(VirtGuestView), findsOneWidget);
   });
 }
 

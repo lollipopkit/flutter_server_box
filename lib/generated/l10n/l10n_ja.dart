@@ -3831,7 +3831,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String virtSetIssueDescription(int max) {
-    return '$max 文字まで、制御文字は使えません。';
+    return '$max バイト（UTF-8）まで、制御文字は使えません。';
   }
 
   @override
@@ -4200,6 +4200,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String virtPoolStopAsk(String name) {
     return 'プール $name を停止しますか？再開するまでボリュームの一覧表示や作成はできません。';
   }
+
+  @override
+  String get virtStorageClusterWide => 'この変更は、このストレージを持つクラスタ内のすべてのノードに適用されます。';
 
   @override
   String virtStorageDisableAsk(String name) {

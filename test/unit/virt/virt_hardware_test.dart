@@ -2,11 +2,14 @@
 library;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/model/virt/libvirt.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 
 void main() {
+  group('toString', _printed);
+
   const vm = VirtHardware(
     kind: VirtGuestKind.qemu,
     running: true,
@@ -103,6 +106,23 @@ void main() {
       virtHwIssue(vm, VirtHwSetDescription('x' * (virtHwDescriptionMax + 1))),
       VirtHwIssue.description,
     );
+    // The limit is the backend's: UTF-8 bytes, not UTF-16 units. 2731 CJK
+    // characters are 8193 bytes; 2730 are 8190.
+    expect(
+      virtHwIssue(vm, VirtHwSetDescription('注' * 2731)),
+      VirtHwIssue.description,
+    );
+    expect(virtHwIssue(vm, VirtHwSetDescription('注' * 2730)), isNull);
+    expect(virtHwIssue(vm, VirtHwSetDescription('x' * virtHwDescriptionMax)), isNull);
+    // DEL and C1 controls, as Rust's `char::is_control` has them.
+    for (final c in ['\u007f', '\u0080', '\u009f']) {
+      expect(
+        virtHwIssue(vm, VirtHwSetDescription('a${c}b')),
+        VirtHwIssue.description,
+        reason: c.codeUnitAt(0).toRadixString(16),
+      );
+    }
+    expect(virtHwIssue(vm, const VirtHwSetDescription('a\u00a0é~b')), isNull);
   });
 
   test('a boot order needs a device', () {
@@ -153,5 +173,34 @@ void main() {
       devices: const [VirtHwDevice(key: 'tpm', kind: VirtHwDeviceKind.tpm)],
     );
     expect(virtHwIssue(withTpm, tpm, host: VirtHostKind.libvirt), VirtHwIssue.device);
+  });
+}
+
+void _printed() {
+  test('printed without the revision, which can hold passwords', () {
+    const hw = VirtHardware(
+      kind: VirtGuestKind.qemu,
+      running: true,
+      cpu: VirtHwCpu(sockets: 1, cores: 1),
+      memory: VirtHwMemory(mib: 512),
+      revision: "<graphics type='vnc' passwd='s3cret'/>",
+      configText: "<graphics type='vnc'/>",
+    );
+    expect('$hw', isNot(contains('s3cret')));
+    expect('$hw', contains('qemu'));
+  });
+
+  test('the libvirt read is printed without its definitions', () {
+    const secret = "<graphics type='vnc' passwd='s3cret'/>";
+    const info = LibvirtHardwareInfo(
+      config: LibvirtHwConfig(
+        cpu: LibvirtHwCpu(sockets: 1, cores: 1, max: 1, current: 1),
+        memoryKib: 1024,
+        currentMemoryKib: 1024,
+      ),
+      configXml: secret,
+      liveXml: secret,
+    );
+    expect('$info', isNot(contains('s3cret')));
   });
 }

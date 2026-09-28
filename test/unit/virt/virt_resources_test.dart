@@ -14,6 +14,8 @@ VirtGuestSnapshot _s(String name, [String? parent, int day = 1]) =>
     );
 
 void main() {
+  group('networks', _networkAddress);
+
   test('tree: depth-first, siblings oldest first', () {
     final tree = virtSnapshotTree([
       _s('c', 'a', 3),
@@ -23,6 +25,27 @@ void main() {
       _s('z', null, 9),
     ]);
     expect(tree.map((e) => '${e.$1.name}${e.$2}'), ['a0', 'b1', 'd2', 'c1', 'z0']);
+  });
+
+  test('tree: undated siblings after dated ones, whatever the input order', () {
+    final a = _s('a', null, 3);
+    final c = _s('c', null, 1);
+    const b = VirtGuestSnapshot(name: 'b');
+    const d = VirtGuestSnapshot(name: 'd');
+    for (final input in [
+      [a, b, c, d],
+      [b, c, d, a],
+      [c, d, a, b],
+      [d, a, b, c],
+      [a, c, b, d],
+      [d, b, c, a],
+    ]) {
+      expect(
+        virtSnapshotTree(input).map((e) => e.$1.name),
+        ['c', 'a', 'b', 'd'],
+        reason: input.map((s) => s.name).join(),
+      );
+    }
   });
 
   test('tree: a lost parent or a cycle is still listed, once', () {
@@ -87,5 +110,19 @@ void main() {
       virtSnapshotMemory(pve, ct, VirtGuestState.running),
       VirtSnapshotMemory.none,
     );
+  });
+}
+
+void _networkAddress() {
+  test('a network\'s address is its IPv4 one, whatever comes first', () {
+    const both = VirtNetwork(
+      id: 'pve/vmbr1',
+      name: 'vmbr1',
+      mode: 'bridge',
+      cidrs: ['fd00::1/64', '10.0.0.1/24'],
+    );
+    expect((both.ipv4Cidr, both.address, both.prefix), ('10.0.0.1/24', '10.0.0.1', 24));
+    const v6 = VirtNetwork(id: 'n', name: 'n', mode: 'bridge', cidrs: ['fd00::1/64']);
+    expect((v6.ipv4Cidr, v6.address, v6.prefix), (null, null, null));
   });
 }

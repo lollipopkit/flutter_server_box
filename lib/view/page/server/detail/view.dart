@@ -770,22 +770,18 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
                         // Named for the reader that speaks the page aloud.
                         semanticsLabel: si.spi.name,
                       )
-                    : ExtendedImage.network(
-                        logoUrl,
-                        cache: true,
-                        // Width only. Both together reach `ResizeImage`, whose
-                        // default `policy` is `exact` — Flutter's own words for
-                        // it are "the output image will have the specified width
-                        // and height regardless of whether it matches the source
-                        // image's intrinsic aspect ratio", i.e. `BoxFit.fill`. A
-                        // published logo is whatever shape its project drew:
-                        // Debian's is a 1460x1935 portrait, and a box `maxWidth`
-                        // wide by `maxWidth * 0.3` tall stretched it to four
-                        // times its width. One dimension decodes in proportion;
-                        // the `fit` places it.
-                        cacheWidth:
-                            (width * MediaQuery.devicePixelRatioOf(context))
-                                .round(),
+                    : ExtendedImage(
+                        image: serverLogoImage(
+                          ExtendedNetworkImageProvider(logoUrl, cache: true),
+                          width: width,
+                          height: height,
+                          devicePixelRatio: MediaQuery.devicePixelRatioOf(
+                            context,
+                          ),
+                        ),
+                        // As `ExtendedImage.network` has it: the failure
+                        // below is drawn by `loadStateChanged`.
+                        enableLoadState: true,
                         clearMemoryCacheWhenDispose: true,
                         fit: BoxFit.contain,
                         // The outline rather than a broken-image box, which is
@@ -812,6 +808,30 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     );
   }
 }
+
+/// [source] decoded no larger than a [width] by [height] box, in proportion.
+///
+/// `ResizeImagePolicy.fit`, not the default `exact` — Flutter's own words
+/// for that are "the output image will have the specified width and height
+/// regardless of whether it matches the source image's intrinsic aspect
+/// ratio", i.e. `BoxFit.fill`. A published logo is whatever shape its
+/// project drew: Debian's is a 1460x1935 portrait, which `exact` stretched to
+/// four times its width. Both dimensions bound it: the URL is the user's, and
+/// one bound alone lets a tall image decode as tall as it is.
+@visibleForTesting
+ImageProvider serverLogoImage(
+  ImageProvider source, {
+  required double width,
+  required double height,
+  required double devicePixelRatio,
+}) => ExtendedResizeImage(
+  source,
+  width: math.max(1, (width * devicePixelRatio).round()),
+  height: math.max(1, (height * devicePixelRatio).round()),
+  policy: ResizeImagePolicy.fit,
+  // Bounded by the box alone: a byte budget would shrink it again.
+  maxBytes: null,
+);
 
 extension _ViewUtils on String {
   bool get isSvgUrl {

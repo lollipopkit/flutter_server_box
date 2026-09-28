@@ -346,6 +346,13 @@ abstract class VirtHostState with _$VirtHostState {
     /// Null only for a server that no longer exists.
     VirtHostKind? kind,
 
+    /// Moves on whenever what the backend talks to may have changed: a new
+    /// backend (a server edit, a PVE row gained or lost), or an edited PVE
+    /// configuration handed to the running one. What the reads below the
+    /// notifier follow ([_hostOf]), so none of them outlives the endpoint it
+    /// was read from.
+    @Default(0) int endpoint,
+
     /// The last successful load. Kept while [error] is set, so the list does
     /// not blank on one failed refresh.
     VirtSnapshot? data,
@@ -469,6 +476,18 @@ class VirtHostNotifier extends _$VirtHostNotifier {
 
   /// Per guest, the latest power call's number — see [power].
   final _powerSeq = <String, int>{};
+
+  /// Which run of [build] this is. Riverpod keeps the notifier across a
+  /// rebuild (a server edit, a PVE row gained or lost) and `ref.mounted`
+  /// stays true through it, so an operation started on the previous backend
+  /// checks this before it touches the state: the state is the new backend's
+  /// by then, and an entry it clears may be another operation's. See
+  /// [_current].
+  int _generation = 0;
+
+  /// See [VirtHostState.endpoint]. Counts across rebuilds, so a rebuild onto
+  /// the same kind still reads as a change.
+  int _endpoint = 0;
   bool _refreshing = false;
 
   /// A requested refresh arrived while one was running: run once more after
@@ -493,6 +512,8 @@ class VirtHostNotifier extends _$VirtHostNotifier {
 
   @override
   VirtHostState build(String serverId) {
+    _generation++;
+    _endpoint++;
     final spi = ref.watch(
       serversProvider.select((s) => s.servers[serverId]),
     );
@@ -503,6 +524,7 @@ class VirtHostNotifier extends _$VirtHostNotifier {
       _firstLoad = Future.value();
       return VirtHostState(
         serverId: serverId,
+        endpoint: _endpoint,
         error: const VirtErr(type: VirtErrType.serverRemoved),
       );
     }
@@ -524,6 +546,8 @@ class VirtHostNotifier extends _$VirtHostNotifier {
       ref.listen(pveConfigsProvider.select((m) => m[serverId]), (_, next) {
         if (next == null || next == backend.config) return;
         backend.updateConfig(next);
+        // What was read from the old address or login is not the new one's.
+        state = state.copyWith(endpoint: ++_endpoint);
         unawaited(refresh());
       });
     }
@@ -542,8 +566,17 @@ class VirtHostNotifier extends _$VirtHostNotifier {
       _timer = Timer.periodic(interval, (_) => refresh(auto: true));
     }
     _firstLoad = Future<void>.microtask(refresh);
-    return VirtHostState(serverId: serverId, kind: backend.kind, loading: true);
+    return VirtHostState(
+      serverId: serverId,
+      kind: backend.kind,
+      endpoint: _endpoint,
+      loading: true,
+    );
   }
+
+  /// Whether an operation started in build [generation] may still write the
+  /// state — see [_generation].
+  bool _current(int generation) => ref.mounted && generation == _generation;
 
   /// Loads the host again. [auto] is the timer's: unannounced, and skipped
   /// while the error waits for the user.
@@ -634,33 +667,47 @@ class VirtHostNotifier extends _$VirtHostNotifier {
   /// [VirtErrType.unsupported].
   Future<void> power(String guestId, VirtPowerAction action) async {
     final guest = _guest(guestId);
-    final overruling =
-        action == VirtPowerAction.forceStop && state.overrulable(guestId);
-    if (state.isBusy(guestId) && !overruling) {
-      throw VirtErr(
-        type: VirtErrType.unsupported,
-        message: '${guest.name} is busy',
-      );
-    }
-    // Which call owns the guest's busy entry: a force stop taking over from
-    // a shutdown still waiting on its task leaves that call nothing to clear
-    // and nothing to report — its task was aborted on purpose.
-    final seq = (_powerSeq[guestId] ?? 0) + 1;
-    _powerSeq[guestId] = seq;
-    state = state.copyWith(busy: {...state.busy, guestId: action});
+    final seq = _claimPower(guest, action);
+    final generation = _generation;
     try {
       await _backend.power(guest, action);
     } catch (_) {
       if (_powerSeq[guestId] == seq) rethrow;
     } finally {
-      if (ref.mounted && _powerSeq[guestId] == seq) {
-        state = state.copyWith(busy: {...state.busy}..remove(guestId));
-        // A start takes up what was pending: the hardware read before it
-        // says otherwise.
-        _bump('hw:$guestId');
-        unawaited(refresh());
-      }
+      _releasePower(guestId, seq, generation);
     }
+  }
+
+  /// Marks [guest] busy with [action], and answers the call's number: which
+  /// call owns the guest's busy entry. A force stop taking over from a
+  /// shutdown still waiting on its task leaves that call nothing to clear
+  /// and nothing to report — its task was aborted on purpose.
+  ///
+  /// Throws [VirtErrType.unsupported] while anything else is in flight on it.
+  int _claimPower(VirtGuest guest, VirtPowerAction action) {
+    final overruling =
+        action == VirtPowerAction.forceStop && state.overrulable(guest.id);
+    if (state.isBusy(guest.id) && !overruling) {
+      throw VirtErr(
+        type: VirtErrType.unsupported,
+        message: '${guest.name} is busy',
+      );
+    }
+    final seq = (_powerSeq[guest.id] ?? 0) + 1;
+    _powerSeq[guest.id] = seq;
+    state = state.copyWith(busy: {...state.busy, guest.id: action});
+    return seq;
+  }
+
+  /// Ends the power call [seq] on [guestId], started in build [generation],
+  /// if it still owns the guest's busy entry.
+  void _releasePower(String guestId, int seq, int generation) {
+    if (!_current(generation) || _powerSeq[guestId] != seq) return;
+    state = state.copyWith(busy: {...state.busy}..remove(guestId));
+    // A start takes up what was pending: the hardware read before it says
+    // otherwise.
+    _bump('hw:$guestId');
+    unawaited(refresh());
   }
 
   /// How long [restartToApply] waits for a libvirt guest to shut down.
@@ -673,27 +720,49 @@ class VirtHostNotifier extends _$VirtHostNotifier {
   /// guest with the running definition — so there it is a shutdown, waited
   /// for, and a start. A guest that has not shut down after [shutdownWait]
   /// is left running and reported; force stopping it is the user's call.
+  ///
+  /// The guest is this call's from the shutdown to the start, marked as
+  /// rebooting: nothing else may start on it on its way down. A force stop
+  /// taking over (as it may from a reboot), or a rebuild onto another
+  /// backend, ends the sequence instead of the guest being started under it.
   Future<void> restartToApply(String guestId) async {
     if (state.kind == VirtHostKind.pve) {
       return power(guestId, VirtPowerAction.reboot);
     }
-    await power(guestId, VirtPowerAction.shutdown);
-    final deadline = DateTime.now().add(shutdownWait);
-    while (true) {
-      if (!ref.mounted) return;
-      await refresh();
-      final guest = state.guest(guestId);
-      if (guest == null) return;
-      if (guest.state == VirtGuestState.stopped) break;
-      if (DateTime.now().isAfter(deadline)) {
-        throw VirtErr(
-          type: VirtErrType.actionFailed,
-          message: '${guest.name} did not shut down',
-        );
+    final guest = _guest(guestId);
+    final seq = _claimPower(guest, VirtPowerAction.reboot);
+    final generation = _generation;
+    final backend = _backend;
+    bool owned() => _current(generation) && _powerSeq[guestId] == seq;
+    try {
+      await backend.power(guest, VirtPowerAction.shutdown);
+      final deadline = DateTime.now().add(shutdownWait);
+      VirtGuest? stopped;
+      while (stopped == null) {
+        if (!owned()) return;
+        await refresh();
+        if (!owned()) return;
+        final now = state.guest(guestId);
+        if (now == null) return;
+        if (now.state == VirtGuestState.stopped) {
+          // As read now: what it offers is a stopped guest's.
+          stopped = now;
+        } else if (DateTime.now().isAfter(deadline)) {
+          throw VirtErr(
+            type: VirtErrType.actionFailed,
+            message: '${guest.name} did not shut down',
+          );
+        } else {
+          await Future<void>.delayed(const Duration(seconds: 2));
+        }
       }
-      await Future<void>.delayed(const Duration(seconds: 2));
+      if (!owned()) return;
+      await backend.power(stopped, VirtPowerAction.start);
+    } catch (_) {
+      if (_powerSeq[guestId] == seq) rethrow;
+    } finally {
+      _releasePower(guestId, seq, generation);
     }
-    await power(guestId, VirtPowerAction.start);
   }
 
   Future<VirtGuestDetail> detail(String guestId) =>
@@ -775,13 +844,19 @@ class VirtHostNotifier extends _$VirtHostNotifier {
       );
     }
     state = state.copyWith(snapshotOps: {...state.snapshotOps, guestId: op});
+    final generation = _generation;
     try {
       await run(guest);
     } finally {
-      if (ref.mounted) {
+      if (_current(generation)) {
         state = state.copyWith(
           snapshotOps: {...state.snapshotOps}..remove(guestId),
         );
+        // A revert brings back the snapshot's CPU, memory and disks, and an
+        // external snapshot moves the writable disks onto new overlays: the
+        // hardware read before says otherwise, whether or not the operation
+        // got all the way.
+        _bump('hw:$guestId');
         unawaited(refresh());
       }
     }
@@ -811,10 +886,11 @@ class VirtHostNotifier extends _$VirtHostNotifier {
       );
     }
     state = state.copyWith(editing: {...state.editing, guestId});
+    final generation = _generation;
     try {
       return await _backend.changeHardware(guest, base, change);
     } finally {
-      if (ref.mounted) {
+      if (_current(generation)) {
         state = state.copyWith(editing: {...state.editing}..remove(guestId));
         unawaited(refresh());
       }
@@ -833,10 +909,11 @@ class VirtHostNotifier extends _$VirtHostNotifier {
       );
     }
     state = state.copyWith(editing: {...state.editing, guestId});
+    final generation = _generation;
     try {
       await _backend.revertPending(guest, base);
     } finally {
-      if (ref.mounted) {
+      if (_current(generation)) {
         state = state.copyWith(editing: {...state.editing}..remove(guestId));
         _bump('hw:$guestId');
       }
@@ -864,10 +941,11 @@ class VirtHostNotifier extends _$VirtHostNotifier {
       );
     }
     state = state.copyWith(editing: {...state.editing, guestId});
+    final generation = _generation;
     try {
       await _backend.setCloudInit(guest, base, edit);
     } finally {
-      if (ref.mounted) {
+      if (_current(generation)) {
         state = state.copyWith(editing: {...state.editing}..remove(guestId));
         _bump('ci:$guestId');
         _bump('hw:$guestId');
@@ -900,10 +978,11 @@ class VirtHostNotifier extends _$VirtHostNotifier {
       );
     }
     state = state.copyWith(deleting: {...state.deleting, guestId});
+    final generation = _generation;
     try {
       await _backend.delete(guest, removeDisks: removeDisks);
     } finally {
-      if (ref.mounted) {
+      if (_current(generation)) {
         state = state.copyWith(deleting: {...state.deleting}..remove(guestId));
         await refresh();
       }
@@ -1004,10 +1083,11 @@ class VirtHostNotifier extends _$VirtHostNotifier {
       );
     }
     state = state.copyWith(copyOps: {...state.copyOps, guestId: op});
+    final generation = _generation;
     try {
       return await run(guest);
     } finally {
-      if (ref.mounted) {
+      if (_current(generation)) {
         state = state.copyWith(copyOps: {...state.copyOps}..remove(guestId));
         unawaited(refresh());
       }
@@ -1015,17 +1095,20 @@ class VirtHostNotifier extends _$VirtHostNotifier {
   }
 
   /// Makes [change] to the host's storage or networks, then reads them
-  /// again. One change per pool or network at a time. Throws [VirtErr].
+  /// again. One change per pool or network at a time, and none to a pool
+  /// while something is uploaded into it ([upload]). Throws [VirtErr].
   Future<void> manage(VirtResourceChange change) async {
     final scope = change.scope;
-    if (state.resourceOps.contains(scope)) {
+    if (state.resourceOps.contains(scope) ||
+        state.uploads.keys.any((pool) => _poolScope(pool) == scope)) {
       throw VirtErr(type: VirtErrType.unsupported, message: '$scope is busy');
     }
     state = state.copyWith(resourceOps: {...state.resourceOps, scope});
+    final generation = _generation;
     try {
       await _backend.manage(change);
     } finally {
-      if (ref.mounted) {
+      if (_current(generation)) {
         state = state.copyWith(
           resourceOps: {...state.resourceOps}..remove(scope),
         );
@@ -1060,6 +1143,9 @@ class VirtHostNotifier extends _$VirtHostNotifier {
     }
   }
 
+  /// A pool's [VirtResourceChange.scope].
+  static String _poolScope(String poolId) => 'pool:$poolId';
+
   /// Has the providers of [what] read again — see [VirtRevision].
   void _bump(String what) =>
       ref.read(virtRevisionProvider(serverId, what).notifier).bump();
@@ -1072,17 +1158,20 @@ class VirtHostNotifier extends _$VirtHostNotifier {
   static const uploadTick = Duration(milliseconds: 250);
 
   /// Uploads [upload] into its pool, with its progress in
-  /// [VirtHostState.uploads] meanwhile; one upload per pool. True once the
-  /// host has it; false when [cancelUpload] stopped it. Throws [VirtErr].
+  /// [VirtHostState.uploads] meanwhile; one upload per pool, and none while
+  /// the pool itself is being changed ([manage]). True once the host has it;
+  /// false when [cancelUpload] stopped it. Throws [VirtErr].
   Future<bool> upload(VirtUpload upload) async {
     final pool = upload.pool.id;
-    if (state.uploads.containsKey(pool)) {
+    if (state.uploads.containsKey(pool) ||
+        state.resourceOps.contains(_poolScope(pool))) {
       throw VirtErr(type: VirtErrType.unsupported, message: '$pool is busy');
     }
     final cancel = Completer<void>();
     _uploadCancels[pool] = cancel;
     var progress = VirtUploadProgress(name: upload.name, size: upload.size);
     state = state.copyWith(uploads: {...state.uploads, pool: progress});
+    final generation = _generation;
     var published = DateTime.now();
     try {
       return await _backend.upload(
@@ -1091,14 +1180,19 @@ class VirtHostNotifier extends _$VirtHostNotifier {
         onProgress: (sent) {
           progress = progress.copyWith(sent: sent);
           final now = DateTime.now();
-          if (!ref.mounted || now.difference(published) < uploadTick) return;
+          if (!_current(generation) ||
+              now.difference(published) < uploadTick) {
+            return;
+          }
           published = now;
           state = state.copyWith(uploads: {...state.uploads, pool: progress});
         },
       );
     } finally {
-      _uploadCancels.remove(pool);
-      if (ref.mounted) {
+      // A rebuild cancelled this one; an upload into the same pool may have
+      // started on the new backend since, and its handle is not this one's.
+      if (identical(_uploadCancels[pool], cancel)) _uploadCancels.remove(pool);
+      if (_current(generation)) {
         state = state.copyWith(uploads: {...state.uploads}..remove(pool));
         _bump(VirtRevision.storage);
       }
@@ -1153,7 +1247,9 @@ class VirtHostNotifier extends _$VirtHostNotifier {
     try {
       await backend.submitTfa(code);
     } on VirtErr catch (e) {
-      if (ref.mounted) state = state.copyWith(error: e);
+      if (ref.mounted && identical(backend, _backend)) {
+        state = state.copyWith(error: e);
+      }
       rethrow;
     }
     await refresh();
@@ -1428,11 +1524,12 @@ Future<List<VirtStoragePool>> virtBackupStorages(Ref ref, String serverId) async
 /// with its own retry.
 Duration? _noRetry(int count, Object error) => null;
 
-/// The host's backend, for the providers below: they follow the host's kind
-/// (a server gaining a PVE row changes backend) and nothing else of its state,
-/// which changes on every refresh.
+/// The host's backend, for the providers below: they follow what the backend
+/// talks to ([VirtHostState.endpoint]: a new backend, or an edited PVE
+/// configuration) and nothing else of its state, which changes on every
+/// refresh.
 VirtHostNotifier _hostOf(Ref ref, String serverId) {
-  ref.watch(virtHostProvider(serverId).select((s) => s.kind));
+  ref.watch(virtHostProvider(serverId).select((s) => s.endpoint));
   return ref.read(virtHostProvider(serverId).notifier);
 }
 
@@ -1476,11 +1573,15 @@ Future<String?> virtSnapshotRefusal(
   return host.snapshotRefusal(guestId);
 }
 
-/// The hardware of one guest. Invalidated by the view after each change and
-/// by [VirtHostNotifier.power]. Kept once read: the guest view shows the
-/// pending banner from it, and reading it again for every guest opened would
-/// be a round trip to the host each time.
-@Riverpod(retry: _noRetry, keepAlive: true)
+/// The hardware of one guest. Invalidated by the view after each change, by
+/// [VirtHostNotifier.power] and by snapshot operations.
+///
+/// Disposed with its last listener, as the host is: kept alive, it would keep
+/// the host it watches alive with it — its refresh timer and its session —
+/// long after the Virtualization pages had gone. The guest view watches it
+/// while it is open (its pending banner included), so it is read once per
+/// visit to a guest.
+@Riverpod(retry: _noRetry)
 Future<VirtHardware> virtHardware(
   Ref ref,
   String serverId,
@@ -1551,6 +1652,9 @@ Future<List<VirtNetworkChanges>> virtNetworkChanges(
   ref.watch(virtRevisionProvider(serverId, VirtRevision.network));
   final host = _hostOf(ref, serverId);
   await host.firstLoad;
+  // Left while the host was loading: nobody is waiting for the answer, and
+  // this ref may no longer be read.
+  if (!ref.mounted) return const [];
   final caps = ref.read(virtHostProvider(serverId)).data?.capabilities;
   if (!(caps?.networkApply ?? false)) return const [];
   return host.networkChanges();

@@ -3839,7 +3839,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String virtSetIssueDescription(int max) {
-    return '최대 $max자, 제어 문자는 사용할 수 없습니다.';
+    return '최대 $max바이트(UTF-8), 제어 문자는 사용할 수 없습니다.';
   }
 
   @override
@@ -4209,6 +4209,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String virtPoolStopAsk(String name) {
     return '풀 $name을(를) 중지할까요? 다시 시작할 때까지 볼륨을 나열하거나 만들 수 없습니다.';
   }
+
+  @override
+  String get virtStorageClusterWide => '이 저장소가 있는 클러스터의 모든 노드에 적용됩니다.';
 
   @override
   String virtStorageDisableAsk(String name) {

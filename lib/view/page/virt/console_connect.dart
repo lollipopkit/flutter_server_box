@@ -117,6 +117,7 @@ abstract final class VirtConsoleConnect {
     return SshPageArgs(
       source: ServerSource(spi),
       initCmd: serialCommand(console),
+      reenter: true,
       detachInput: serialEscape,
       onLeave: onLeave,
     );

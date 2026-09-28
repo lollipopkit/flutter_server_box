@@ -240,8 +240,7 @@ abstract final class PveResources {
   ) {
     final opts = _options(value);
     final named = {for (final (k, v) in opts) k: v};
-    // The first option is the volume, written without a key.
-    final volume = opts.first.$1.isEmpty ? opts.first.$2 : named['file'];
+    final volume = volumeOf(value);
     final media = named['media'];
     final source = volume == null || volume == 'none' ? null : volume;
     final String device;
@@ -444,8 +443,13 @@ abstract final class PveResources {
   /// take it — every guest of the node (`all`, less `exclude`), it in
   /// `vmid`, or every guest of its pool (whose members are not in this
   /// answer, so one that takes the guest by pool is left out of a guest's
-  /// own Plan group).
-  static List<VirtBackupJob> parseBackupJobs(List<Object?> raw, {int? vmid}) {
+  /// own Plan group); with [node], the guest's, not those restricted to
+  /// another node ([VirtBackupJob.takes]).
+  static List<VirtBackupJob> parseBackupJobs(
+    List<Object?> raw, {
+    int? vmid,
+    String? node,
+  }) {
     final out = <VirtBackupJob>[];
     for (final item in raw) {
       if (item is! Map) continue;
@@ -471,7 +475,7 @@ abstract final class PveResources {
         mailNotification: _str(e['mailnotification']),
         prune: pruneString(prune),
       );
-      if (vmid != null && !job.takes(vmid)) continue;
+      if (vmid != null && !job.takes(vmid, node: node)) continue;
       out.add(job);
     }
     return out;
@@ -1012,11 +1016,39 @@ abstract final class PveResources {
     return out.join(',');
   }
 
-  /// The volume an option names (`local-lvm:vm-100-disk-1,size=8G`).
+  /// The volume an option names: first and without a key
+  /// (`local-lvm:vm-100-disk-1,size=8G`), or as `file=`, which PVE takes
+  /// too (`file=local-lvm:vm-100-disk-1,size=8G`).
   static String? volumeOf(String raw) {
-    final first = _options(raw).first;
-    return first.$1.isEmpty ? first.$2 : null;
+    final opts = _options(raw);
+    if (opts.first.$1.isEmpty) return opts.first.$2;
+    for (final (k, v) in opts) {
+      if (k == 'file') return v;
+    }
+    return null;
   }
+
+  /// The disk options only some buses take (qemu-server's `Drive.pm`), and
+  /// which: moving a disk to a bus that lacks one is refused, so it is
+  /// dropped on the way ([onBus]).
+  static const _busOptions = <String, Set<String>>{
+    'iothread': {'scsi', 'virtio'},
+    'ro': {'scsi', 'virtio'},
+    'ssd': {'ide', 'sata', 'scsi'},
+    'wwn': {'ide', 'sata', 'scsi'},
+    'queues': {'scsi'},
+    'product': {'scsi'},
+    'vendor': {'scsi'},
+    'scsiblock': {'scsi'},
+    'model': {'ide'},
+  };
+
+  /// Disk option [raw] as [bus] takes it: less the options that bus has not
+  /// ([_busOptions]). The rest stays as it was, in its place.
+  static String onBus(String raw, String bus) => withOptions(raw, {
+    for (final MapEntry(key: k, value: buses) in _busOptions.entries)
+      if (!buses.contains(bus)) k: null,
+  });
 
   /// The `size=` of a disk option (`local-lvm:vm-100-disk-0,size=3G`), in
   /// bytes; null where it has none.

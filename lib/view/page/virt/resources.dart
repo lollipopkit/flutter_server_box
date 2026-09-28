@@ -250,7 +250,14 @@ class VirtErrCard extends StatelessWidget {
           : Btn.icon(
               text: libL10n.retry,
               icon: const Icon(Icons.refresh, size: 18),
-              onTap: () => unawaited(retry()),
+              onTap: () async {
+                try {
+                  await retry();
+                } catch (_) {
+                  // A retry that fails again is this card's error, shown by
+                  // whatever it comes from.
+                }
+              },
             ),
       children: [
         if (e is! VirtErr)
@@ -438,7 +445,11 @@ class _VirtPoolPageState extends State<VirtPoolPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Keyed by what it shows: the view's drafts (a growth, a target guest,
+    // a new volume) are one pool's, and a libvirt volume id is a name only
+    // unique in its pool.
     return VirtPoolView(
+      key: ValueKey('${widget.args.serverId}/$_id'),
       serverId: widget.args.serverId,
       poolId: _id,
       leading: const BackButton(),
@@ -471,6 +482,7 @@ class _VirtNetworkPageState extends State<VirtNetworkPage> {
   Widget build(BuildContext context) {
     final serverId = widget.args.serverId;
     return VirtNetworkView(
+      key: ValueKey('$serverId/$_id'),
       serverId: serverId,
       netId: _id,
       leading: const BackButton(),

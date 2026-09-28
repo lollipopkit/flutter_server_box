@@ -23,7 +23,8 @@ import 'package:server_box/data/model/virt/virt_manage.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/virt/libvirt_backend.dart';
 import 'package:server_box/src/rust/api/script.dart' as script;
-import 'package:server_box/src/rust/api/virt.dart' show parseVirtHardwareJson;
+import 'package:server_box/src/rust/api/virt.dart'
+    show parseVirtHardwareJson, virtUploadGoLine, virtUploadReadyMarker;
 
 import '../../helpers/rust_lib_helper.dart';
 
@@ -634,7 +635,11 @@ void main() {
       final picked = last();
       expect(picked, contains('--diskspec'));
       expect(picked, contains('snapshot=external'));
-      expect(picked, contains("file='/var/lib/libvirt/images/sx1.qcow2.pre-up'"));
+      // One argument, quoted whole: virsh splits it at its commas.
+      expect(
+        picked,
+        contains("--diskspec 'vda,file=/var/lib/libvirt/images/sx1.qcow2.pre-up,snapshot=external'"),
+      );
 
       // A name that is no pool of files is refused before the host is asked.
       final calls = exec.calls.length;
@@ -1021,6 +1026,7 @@ void main() {
       );
       final exec = _Exec((call) {
         if (call.script.contains('domstats')) return _ok(_overview());
+        if (_storageAnswer(call) case final r?) return r;
         if (call.script.contains('snapshot-list')) {
           return _ok(_fixture('script_snapshots_none.txt'));
         }
@@ -1048,6 +1054,7 @@ void main() {
         'with its writable disks only', () async {
       final exec = _Exec((call) {
         if (call.script.contains('domstats')) return _ok(_overview());
+        if (_storageAnswer(call) case final r?) return r;
         if (call.script.contains('snapshot-list')) {
           return _ok(_fixture('script_snapshots_none.txt'));
         }
@@ -1083,7 +1090,7 @@ void main() {
       expect(exec.calls.last.script, isNot(contains('--storage')));
       expect(
         exec.calls.where(
-          (c) => c.script.contains('dumpxml') && !c.script.contains('snapshot-list'),
+          (c) => c.script.contains('V dumpxml --domain'),
         ),
         hasLength(1),
       );
@@ -1099,9 +1106,7 @@ void main() {
             _fixture('script_snap_chain_overlay.txt').replaceAll("dev='vda'", "dev='vdb'"),
           );
         }
-        if (call.script.contains('pool-list')) {
-          return _ok(_fixture('script_storage.txt'));
-        }
+        if (_storageAnswer(call) case final r?) return r;
         if (call.script.contains('snapshot-list')) {
           return _ok(_fixture('script_snapshots_external.txt'));
         }
@@ -1136,6 +1141,43 @@ void main() {
       expect(exec.calls, hasLength(calls + 1));
       expect(exec.calls.last.script, isNot(contains('vol-delete')));
     });
+  });
+
+  test('delete: a volume another guest has, or is made on, stays', () async {
+    // it's-"odd"'s sda is the file cirros-run's vdb is on; its sdb is the
+    // base image cirros-run's and others' disks are made on.
+    final storage = _fixture('script_storage.txt').replaceFirst(
+      ' file   disk    vda   /var/lib/libvirt/images/off1.qcow2',
+      ' file   disk    sda   /var/lib/libvirt/images/extra.qcow2\n'
+          ' file   disk    sdb   /var/lib/libvirt/images/cirros.img\n'
+          ' file   disk    vdc   /var/lib/libvirt/images/off1.qcow2',
+    );
+    final exec = _Exec((call) {
+      if (call.script.contains('domstats')) return _ok(_overview());
+      if (call.script.contains('pool-list')) return _ok(storage);
+      if (_storageAnswer(call) case final r?) return r;
+      if (call.script.contains('snapshot-list')) {
+        return _ok(_fixture('script_snapshots_none.txt'));
+      }
+      if (call.script.contains('dumpxml')) {
+        return _ok(
+          _section('virt.display', _fixture('error_display_not_running.txt'), 1) +
+              _section('virt.xml', _fixture('dumpxml_win11.xml')),
+        );
+      }
+      if (call.script.contains('undefine')) {
+        return _ok(_fixture('script_undefine.txt'));
+      }
+      return _fail('unexpected script');
+    });
+    final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+    final odd = (await virt.load()).guests.firstWhere((g) => g.id == _odd);
+    await virt.delete(odd);
+    final undefine = exec.calls.last.script;
+    expect(undefine, contains("undefine --domain '$_odd'"));
+    // off1.qcow2 is its own and made on cirros.img, which stays: only what
+    // nothing else needs goes.
+    expect(undefine, contains('--storage vdb,vdc'));
   });
 
   group('storage', () {
@@ -1267,6 +1309,25 @@ void main() {
     expect(iso.users.single.guestId, _odd);
     expect(nets[1].active, isFalse);
     expect(nets[1].users, isEmpty);
+  });
+
+  test('a MAC on two isolated networks gets each network\'s lease', () {
+    const mac = '52:54:00:00:00:01';
+    const all = LibvirtNetworks(
+      networks: [LibvirtNetwork(name: 'a'), LibvirtNetwork(name: 'b')],
+      ifaces: [
+        LibvirtIfaceUse(domain: 'g1', kind: 'network', source: 'a', mac: mac),
+        LibvirtIfaceUse(domain: 'g2', kind: 'network', source: 'b', mac: mac),
+      ],
+      leases: [
+        LibvirtLease(network: 'a', mac: mac, ip: '10.0.1.2/24'),
+        LibvirtLease(network: 'b', mac: mac, ip: '10.0.2.2/24'),
+      ],
+    );
+    expect(
+      LibvirtBackend.networkOf(all.networks[1], all).users.single.ip,
+      '10.0.2.2/24',
+    );
   });
 
   group('hardware', () {
@@ -1446,6 +1507,40 @@ void main() {
         'path': '/var/lib/libvirt/images/sbhw-root.qcow2',
         'live': true,
       });
+      // The definition put another file at vda while it runs: `blockresize`
+      // would grow the running, old one. The configured file, offline.
+      final swapped = info.copyWith(
+        config: info.config.copyWith(
+          disks: [
+            for (final d in info.config.disks)
+              d.target == 'vda' ? d.copyWith(source: '/var/lib/libvirt/images/new.qcow2') : d,
+          ],
+        ),
+      );
+      final grown = LibvirtBackend.changeJson(
+        swapped,
+        LibvirtBackend.hardwareOf(swapped),
+        const VirtHwGrowDisk(key: 'vda', bytes: 1 << 30),
+        guestName: 'sbhw-test',
+        mac: () => '52:54:00:00:00:01',
+      );
+      expect((grown['path'], grown['live']), ('/var/lib/libvirt/images/new.qcow2', false));
+      // A disk with no file to `vol-resize` is not offered for growing.
+      final byRef = info.copyWith(
+        config: info.config.copyWith(
+          disks: [
+            for (final d in info.config.disks)
+              d.target == 'vda' ? d.copyWith(sourceType: 'volume', source: 'images/root') : d,
+          ],
+        ),
+      );
+      final refHw = LibvirtBackend.hardwareOf(byRef);
+      expect(virtHwDiskGrowable(refHw.disk('vda')!), isFalse);
+      expect(
+        virtHwIssue(refHw, const VirtHwGrowDisk(key: 'vda', bytes: 1 << 40)),
+        VirtHwIssue.diskSize,
+      );
+      expect(virtHwDiskGrowable(hw.disk('vda')!), isTrue);
       expect(
         () => json(const VirtHwRevert(['cpu'])),
         throwsA(isA<VirtErr>().having((e) => e.type, 'type', VirtErrType.unsupported)),
@@ -1543,13 +1638,41 @@ void main() {
       expect(s.buses, ['virtio', 'scsi', 'sata']);
       expect(s.protocols, ['vnc']);
       expect(s.gpus, ['virtio', 'vga', 'cirrus', 'bochs', 'none']);
-      expect((s.uefi, s.secureBoot, s.tpm, s.usb, s.pci, s.listen, s.mac), (true, true, false, true, true, true, true));
+      // A secure loader but no descriptor with enrolled keys: a domain
+      // with Secure Boot on would not start, so it is not offered.
+      expect((s.uefi, s.secureBoot, s.tpm, s.usb, s.pci, s.listen, s.mac), (true, false, false, true, true, true, true));
       expect(hw.firmware, const VirtHwFirmware(uefi: false));
+      final enrolled = LibvirtBackend.hardwareOf(
+        (await info('script_hardware_caps_stopped.txt')).copyWith(
+          firmware: const [
+            LibvirtFirmware(name: '60-edk2-x86_64-secure.json', secureBoot: true),
+            LibvirtFirmware(name: '40-edk2-x86_64-secure-enrolled.json', secureBoot: true, enrolledKeys: true),
+          ],
+        ),
+      );
+      expect(enrolled.support.secureBoot, isTrue);
       expect(hw.display, const VirtHwDisplay(protocol: 'vnc', listen: '127.0.0.1', gpu: 'virtio'));
       // Without them: the common ground, and nothing the host may lack.
       final bare = LibvirtBackend.supportOf(null);
       expect((bare.uefi, bare.tpm, bare.pci), (false, false, false));
       expect(bare.buses, contains('virtio'));
+    });
+
+    test('the definition shown carries no display password', () async {
+      // `dumpxml --security-info`, as the read makes it: the password is in
+      // the definition a change is made from, never in what is shown.
+      final raw = _fixture('script_hardware_running.txt').replaceAll(
+        "<graphics type='vnc' port='-1'",
+        "<graphics type='vnc' passwd='s3cret' port='-1'",
+      );
+      final i = LibvirtHardwareInfo.fromJson(
+        jsonDecode(await parseVirtHardwareJson(raw: raw)) as Map<String, dynamic>,
+      );
+      expect(i.configXml, contains("passwd='s3cret'"));
+      final hw = LibvirtBackend.hardwareOf(i);
+      expect(hw.configText, isNot(contains('passwd=')));
+      expect(hw.configText, isNot(contains('s3cret')));
+      expect(hw.configText, contains("<graphics type='vnc' port='-1'"));
     });
 
     test('a cache mode changed while running is pending', () async {
@@ -1771,6 +1894,56 @@ SbVirtRc=0
     expect(session.written, everyElement(isNot(equals(const [1, 2, 3]))), reason: 'no file sent');
     expect(exec.calls.last.script, contains('vol-delete'), reason: 'the volume made for it is removed');
   });
+
+  test('upload: a cancel ends it while the file waits for its next chunk', () async {
+    final exec = _Exec((_) => _ok(_section('virt.res.step', 'Vol made')));
+    final session = _ReadySession();
+    final virt = LibvirtBackend(
+      serverId: 's',
+      exec: () async => exec,
+      byteExec: () async => _ByteExec(exec, session),
+      canStream: () => true,
+    );
+    // One chunk, then open and silent: a stalled read.
+    final source = StreamController<List<int>>()..add(const [1, 2, 3]);
+    final cancel = Completer<void>();
+    final uploading = virt.upload(
+      VirtUpload(
+        pool: const VirtStoragePool(id: 'images', name: 'images', type: 'dir', path: '/i', active: true),
+        name: 'a.iso',
+        size: 6,
+        open: () => source.stream,
+      ),
+      cancel: cancel.future,
+      onProgress: (_) {
+        if (!cancel.isCompleted) cancel.complete();
+      },
+    );
+
+    final uploaded = await uploading.timeout(
+      const Duration(seconds: 5),
+      onTimeout: () => fail('the cancel waited for a chunk that never came'),
+    );
+    expect(uploaded, isFalse);
+    expect(session.killed, isTrue);
+    expect(exec.calls.last.script, contains('vol-delete'));
+    expect(source.hasListener, isFalse, reason: 'the read is let go');
+  });
+}
+
+/// The storage scripts' answers from the captured fixtures; null for any
+/// other script.
+ExecResult? _storageAnswer(_Call call) {
+  if (call.script.contains('pool-list')) {
+    return _ok(_fixture('script_storage.txt'));
+  }
+  if (call.script.contains("vol-dumpxml --pool 'images'")) {
+    return _ok(_fixture('script_volumes_images.txt'));
+  }
+  if (call.script.contains("vol-dumpxml --pool 'sbx-iso'")) {
+    return _ok(_fixture('script_volumes_sbx_iso.txt'));
+  }
+  return null;
 }
 
 Future<VirtErr> _err(Future<Object?> future) async {
@@ -1842,6 +2015,17 @@ class _SilentSession implements ExecSession {
     unawaited(_out.close());
     unawaited(_err.close());
     _done.complete(null);
+  }
+}
+
+/// A command that says it is ready once it reads the go line.
+class _ReadySession extends _SilentSession {
+  @override
+  Future<void> write(List<int> data) async {
+    await super.write(data);
+    if (utf8.decode(data, allowMalformed: true) == '${virtUploadGoLine()}\n') {
+      _out.add('${virtUploadReadyMarker()}\n');
+    }
   }
 }
 

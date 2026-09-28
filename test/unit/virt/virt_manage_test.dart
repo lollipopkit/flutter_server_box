@@ -11,6 +11,7 @@ library;
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/error.dart';
@@ -83,7 +84,7 @@ void main() {
           cidrs: ['192.168.122.1/24'],
         ),
       ];
-      VirtResIssue? issue(VirtNetworkCreate c) => virtResourceIssue(
+      VirtResIssue? issue(VirtResourceChange c) => virtResourceIssue(
         c,
         host: VirtHostKind.libvirt,
         networks: existing,
@@ -112,6 +113,39 @@ void main() {
       // NAT and routed need an address; isolated does not.
       expect(issue(const VirtNetworkCreate(name: 'n', mode: 'nat')), VirtResIssue.cidrInvalid);
       expect(issue(const VirtNetworkCreate(name: 'n', mode: 'isolated')), isNull);
+      // ... but a DHCP range needs a subnet to be served on, on a new
+      // network and an edited one alike.
+      expect(
+        issue(
+          const VirtNetworkCreate(
+            name: 'n',
+            mode: 'isolated',
+            dhcpStart: '10.0.0.2',
+            dhcpEnd: '10.0.0.9',
+          ),
+        ),
+        VirtResIssue.dhcpInvalid,
+      );
+      expect(
+        issue(
+          const VirtNetworkEdit(
+            VirtNetwork(id: 'iso', name: 'iso', mode: 'isolated'),
+            mode: 'isolated',
+            dhcpStart: '10.0.0.2',
+            dhcpEnd: '10.0.0.9',
+          ),
+        ),
+        VirtResIssue.dhcpInvalid,
+      );
+      expect(
+        issue(
+          const VirtNetworkEdit(
+            VirtNetwork(id: 'iso', name: 'iso', mode: 'isolated'),
+            mode: 'isolated',
+          ),
+        ),
+        isNull,
+      );
       expect(
         issue(const VirtNetworkCreate(name: 'n', mode: 'route', cidr: '192.168.122.9/25')),
         VirtResIssue.subnetTaken,
@@ -266,6 +300,21 @@ void main() {
         lv(const VirtVolumeCreate(_dir, name: 'big.img', gib: 20, format: 'raw')),
         VirtResIssue.space,
       );
+      // So does anything in an LVM thin pool, raw as it is.
+      const thin = VirtStoragePool(
+        id: 'pve/local-lvm',
+        name: 'local-lvm',
+        node: 'pve',
+        type: 'lvmthin',
+        available: 10 << 30,
+      );
+      expect(
+        virtResourceIssue(
+          const VirtVolumeCreate(thin, name: 'vm-100-disk-5', gib: 20, format: 'raw'),
+          host: VirtHostKind.pve,
+        ),
+        isNull,
+      );
       expect(
         lv(
           const VirtVolumeCreate(_dir, name: 'a.qcow2', gib: 1, format: 'qcow2'),
@@ -408,6 +457,86 @@ vmbr0 tap100i0
       expect(live.lower['vmbr0'], {'nic0', 'tap100i0'});
       // Cut short: nothing is concluded from it.
       expect(virtPveParseLiveNet(probe.replaceFirst('@end', '')), isNull);
+      // `@end` is the last line or nothing: one inside the interfaces file
+      // is not the probe's.
+      expect(
+        virtPveParseLiveNet('@host pve\n@route\n@file\n@end\niface x inet manual\n'),
+        isNull,
+      );
+    });
+
+    test('the live probe says nothing when a command it needs failed',
+        () async {
+      // The script as the node runs it, with the commands it calls stubbed.
+      final dir = await Directory.systemTemp.createTemp('sbm-livenet');
+      addTearDown(() => dir.delete(recursive: true));
+      Future<String> run({bool ssFails = false, bool ip6Fails = false}) async {
+        final stubs = {
+          'hostname': 'echo pve',
+          'cat': 'echo "iface vmbr0 inet static"',
+          'ss': ssFails ? 'exit 1' : 'echo "0 0 10.0.0.2:22 10.0.0.9:5000"',
+          'ip': '''
+case "\$*" in
+  *-6*) ${ip6Fails ? 'exit 1' : 'exit 0'} ;;
+  *addr*) echo "4: vmbr0 inet 10.0.0.2/24 scope global vmbr0" ;;
+  *) echo "default via 10.0.0.1 dev vmbr0" ;;
+esac''',
+        };
+        for (final MapEntry(:key, :value) in stubs.entries) {
+          final f = File('${dir.path}/$key')..writeAsStringSync('#!/bin/sh\n$value\n');
+          await Process.run('chmod', ['+x', f.path]);
+        }
+        final r = await Process.run(
+          'sh',
+          ['-c', virtPveLiveNetScript],
+          environment: {'PATH': '${dir.path}:/usr/bin:/bin'},
+        );
+        return r.stdout as String;
+      }
+
+      final ok = virtPveParseLiveNet(await run())!;
+      expect(ok.connected, {'vmbr0'});
+      expect(ok.routed, {'vmbr0'});
+      // A kernel without IPv6 is not a failure.
+      expect(virtPveParseLiveNet(await run(ip6Fails: true)), isNotNull);
+      // No connection list: not "no connections".
+      expect(virtPveParseLiveNet(await run(ssFails: true)), isNull);
+    }, skip: Platform.isWindows);
+
+    test('pending diffs: every interface a stanza line names, file-wide '
+        'directives, and what the old side carried', () {
+      // `auto vmbr9 vmbr0` removed touches both.
+      final both = virtPveDiffIfaces(
+        '@@ -1,2 +1,1 @@\n-auto vmbr9 vmbr0\n+auto vmbr9\n',
+      );
+      expect(both.ifaces, {'vmbr9', 'vmbr0'});
+      expect(both.unknown, isFalse);
+      // A `source` line is no interface's, even under one's stanza.
+      final source = virtPveDiffIfaces(
+        '@@ -1,3 +1,4 @@\n iface vmbr9 inet manual\n \tbridge-ports none\n+source /etc/network/more\n',
+      );
+      expect(source.unknown, isTrue);
+      final afterSource = virtPveDiffIfaces(
+        '@@ -1,3 +1,4 @@\n iface vmbr9 inet manual\n source /etc/x\n+\tmtu 9000\n',
+      );
+      expect(afterSource.unknown, isTrue);
+      // The old side: the address and gateway the pending file drops.
+      final stripped = virtPveDiffIfaces(
+        '@@ -1,4 +1,2 @@\n'
+        '-iface vmbr0 inet static\n'
+        '-\taddress 192.168.31.20/24\n'
+        '-\tgateway 192.168.31.1\n'
+        '+iface vmbr0 inet manual\n'
+        ' \tbridge-ports nic0\n'
+        '@@ -9,2 +7,1 @@\n'
+        ' iface vmbr1 inet dhcp\n'
+        '-\tmtu 9000\n',
+      );
+      expect(stripped.ifaces, {'vmbr0', 'vmbr1'});
+      expect(stripped.oldAddressed, {'vmbr0'});
+      expect(stripped.oldGateways, {'vmbr0'});
+      final dhcp = virtPveDiffIfaces('@@ -1,1 +1,1 @@\n-iface vmbr1 inet dhcp\n+iface vmbr1 inet manual\n');
+      expect(dhcp.oldAddressed, {'vmbr1'});
     });
 
     test('the one carrying the host address is not editable', () {

@@ -484,14 +484,20 @@ bool virtPveManagedIface(VirtNetwork network, {Set<String> management = const {}
 /// which (`/sys/class/net/*/lower_*`: a VLAN on its parent, a bridge on its
 /// ports, a bond on its slaves), and the interfaces file as it is — what a
 /// pending diff's line numbers count in. All of it readable without root.
+///
+/// `@end` only when every command that decides what is protected succeeded:
+/// an empty `ss` or `ip` answer from a failed command would read as "no
+/// connection, no route" and protect nothing. The IPv6 route is the one
+/// allowed to fail (a kernel without IPv6).
 const virtPveLiveNetScript = r'''
+ok=1
 echo "@host $(hostname)"
-echo '@addr'; ip -o addr show 2>/dev/null
-echo '@route'; ip -o route show default 2>/dev/null; ip -o -6 route show default 2>/dev/null
-echo '@conn'; ss -Htn state established 2>/dev/null
+echo '@addr'; ip -o addr show 2>/dev/null || ok=
+echo '@route'; ip -o route show default 2>/dev/null || ok=; ip -o -6 route show default 2>/dev/null
+echo '@conn'; ss -Htn state established 2>/dev/null || ok=
 echo '@lower'; for d in /sys/class/net/*; do n=${d##*/}; for l in "$d"/lower_*; do [ -e "$l" ] && printf '%s %s\n' "$n" "${l##*/lower_}"; done; done
-echo '@file'; cat /etc/network/interfaces 2>/dev/null
-echo '@end'
+echo '@file'; cat /etc/network/interfaces 2>/dev/null || ok=
+[ -n "$ok" ] && echo '@end'
 ''';
 
 /// What [virtPveLiveNetScript] printed.
@@ -523,9 +529,11 @@ final class VirtPveLiveNet {
   final String interfaces;
 }
 
-/// [virtPveLiveNetScript]'s output; null when it did not run to the end.
+/// [virtPveLiveNetScript]'s output; null when it did not run to the end or
+/// a command it needs failed — `@end` is then not its last line.
 VirtPveLiveNet? virtPveParseLiveNet(String out) {
-  if (!out.contains('@end')) return null;
+  final last = out.trimRight().split('\n').last.trim();
+  if (last != '@end') return null;
   String? section;
   var host = '';
   final addrs = <String, String>{}; // address -> device
@@ -604,13 +612,19 @@ VirtPveLiveNet? virtPveParseLiveNet(String out) {
 /// `vmbr0.10`, where turning VLAN awareness off would cut it), a bridge's
 /// ports, a bond's slaves — from the node's own `lower_*` links and from the
 /// listing (`bridge_ports`, `vlan-raw-device`, a `name.N` VLAN).
+///
+/// [also]: interfaces known to carry it some other way — what the old side
+/// of a pending diff gave an address or a gateway ([virtPveDiffIfaces]),
+/// which the listing, being the pending configuration, no longer says.
 Set<String> virtPveManagementIfaces(
   Iterable<VirtNetwork> networks, {
   VirtPveLiveNet? live,
   Set<String> gateways6 = const {},
+  Set<String> also = const {},
 }) {
   final seeds = <String>{
     ...gateways6,
+    ...also,
     for (final n in networks)
       if (n.gateway?.isNotEmpty ?? false) n.name,
     if (live != null) ...live.routed,
@@ -645,17 +659,30 @@ Set<String> virtPveManagementIfaces(
 /// The interfaces a PVE pending-configuration diff (the network listing's
 /// `changes`, a unified diff of `/etc/network/interfaces`) touches: the
 /// stanza (`auto`/`iface`/`allow-*` line) each added or removed line is
-/// under. A hunk that starts inside a stanza is placed by its old line
-/// number in [interfaces] (the file as it is now); without that, or before
-/// any stanza, [unknown] says the diff does not tell whose lines they are.
-({Set<String> ifaces, bool unknown}) virtPveDiffIfaces(
-  String diff, {
-  String? interfaces,
-}) {
-  final stanza = RegExp(r'^(?:auto|iface|allow-\S+)\s+(\S+)');
+/// under, and every interface an `auto`/`allow-*` line it adds or removes
+/// names (`auto vmbr9 vmbr0` is both). A hunk that starts inside a stanza is
+/// placed by its old line number in [interfaces] (the file as it is now);
+/// without that, before any stanza, or under a file-wide directive
+/// (`source`, `mapping`, ...) whose effect is no one interface's, [unknown]
+/// says the diff does not tell whose lines they are.
+///
+/// The old side, for what the pending listing no longer says:
+/// [oldAddressed] are the interfaces a removed line gave an address
+/// (`address`, a `static`/`dhcp`/`auto` method), [oldGateways] the ones a
+/// removed line gave a gateway — a management interface the pending
+/// configuration strips is still one until it is applied.
+({
+  Set<String> ifaces,
+  bool unknown,
+  Set<String> oldAddressed,
+  Set<String> oldGateways,
+})
+virtPveDiffIfaces(String diff, {String? interfaces}) {
   final hunk = RegExp(r'^@@ -(\d+)');
   final before = interfaces?.split('\n');
   final out = <String>{};
+  final oldAddressed = <String>{};
+  final oldGateways = <String>{};
   var unknown = false;
   String? current;
   for (final line in diff.split('\n')) {
@@ -666,7 +693,9 @@ Set<String> virtPveManagementIfaces(
       final from = int.tryParse(hunk.firstMatch(line)?[1] ?? '');
       if (before != null && from != null) {
         for (final l in before.take((from - 1).clamp(0, before.length))) {
-          if (stanza.firstMatch(l.trim()) case final m?) current = m[1];
+          if (_ifupdownLine(l.trim()) case (final names, _)?) {
+            current = names.length == 1 ? names.single : null;
+          }
         }
       }
       continue;
@@ -674,21 +703,65 @@ Set<String> virtPveManagementIfaces(
     if (line.isEmpty) continue;
     final mark = line[0];
     final body = line.substring(1).trim();
-    if (stanza.firstMatch(body) case final m?) current = m[1];
-    if (mark == '+' || mark == '-') {
-      if (body.isEmpty) continue;
-      if (current != null) {
-        // A `#` line is the stanza's too: PVE writes an interface's
-        // `comments` as the lines after its own.
-        out.add(current);
-      } else if (!body.startsWith('#')) {
-        // A comment above every stanza is the file's header.
-        unknown = true;
+    final changed = mark == '+' || mark == '-';
+    if (_ifupdownLine(body) case (final names, final iface)?) {
+      // `auto a b` starts no stanza of its own: what follows is an
+      // `iface` line's, or, before one, no one interface's.
+      current = names.length == 1 ? names.single : null;
+      if (changed) out.addAll(names);
+      if (mark == '-' && iface && _addressedMethod.hasMatch(body)) {
+        oldAddressed.addAll(names);
       }
+      continue;
+    }
+    if (_globalDirective.hasMatch(body)) {
+      // Not an interface's option: what it does, and to which, is not in
+      // the diff.
+      current = null;
+      if (changed) unknown = true;
+      continue;
+    }
+    if (!changed || body.isEmpty) continue;
+    if (current != null) {
+      // A `#` line is the stanza's too: PVE writes an interface's
+      // `comments` as the lines after its own.
+      out.add(current);
+      if (mark == '-') {
+        if (_addressOption.hasMatch(body)) oldAddressed.add(current);
+        if (_gatewayOption.hasMatch(body)) oldGateways.add(current);
+      }
+    } else if (!body.startsWith('#')) {
+      // A comment above every stanza is the file's header.
+      unknown = true;
     }
   }
-  return (ifaces: out, unknown: unknown);
+  return (
+    ifaces: out,
+    unknown: unknown,
+    oldAddressed: oldAddressed,
+    oldGateways: oldGateways,
+  );
 }
+
+/// An `auto`/`allow-*` line's interfaces, or an `iface` line's one (and
+/// whether it is that); null for any other line.
+(List<String>, bool)? _ifupdownLine(String line) {
+  final w = line.split(RegExp(r'\s+'));
+  if (w.length < 2) return null;
+  if (w[0] == 'iface') return ([w[1]], true);
+  if (w[0] == 'auto' || w[0].startsWith('allow-')) return (w.sublist(1), false);
+  return null;
+}
+
+/// ifupdown's file-wide directives: not an interface's options.
+final _globalDirective = RegExp(
+  r'^(?:source|source-directory|mapping|no-auto-down|no-scripts|rename)\b',
+);
+
+/// An `iface` line whose method gives the interface an address.
+final _addressedMethod = RegExp(r'\binet6?\s+(?:static|dhcp|auto)\b');
+final _addressOption = RegExp(r'^address6?\b');
+final _gatewayOption = RegExp(r'^gateway6?\b');
 
 /// The VMID a PVE volume name belongs to; null when it is not one.
 int? virtPveVolumeVmid(String name) {
@@ -827,8 +900,13 @@ VirtResIssue? virtResourceIssue(
       if (!virtVolumeFormats(pool).contains(format)) return VirtResIssue.format;
       if (gib < 1 || gib > 65536) return VirtResIssue.size;
       final free = pool.available;
-      // A thin volume takes nothing yet; a raw file or LV takes it all.
-      if (format == 'raw' && free != null && gib * (1 << 30) > free) {
+      // A thin volume takes nothing yet — a qcow2 file, or anything in an
+      // LVM thin pool, whose only format is raw; a raw file or a plain LV
+      // takes it all.
+      if (format == 'raw' &&
+          pool.type != 'lvmthin' &&
+          free != null &&
+          gib * (1 << 30) > free) {
         return VirtResIssue.space;
       }
     case VirtVolumeDelete(:final volume):
@@ -871,7 +949,15 @@ VirtResIssue? virtResourceIssue(
       }
       final c = cidr?.trim() ?? '';
       final needsIp = !pve && (mode == 'nat' || mode == 'route');
-      if (c.isEmpty) return needsIp ? VirtResIssue.cidrInvalid : null;
+      if (c.isEmpty) {
+        if (needsIp) return VirtResIssue.cidrInvalid;
+        // A DHCP range is served on the network's own subnet: with none,
+        // the host refuses it.
+        if (!pve && (dhcpStart != null || dhcpEnd != null)) {
+          return VirtResIssue.dhcpInvalid;
+        }
+        return null;
+      }
       final parsed = virtParseCidr(c);
       if (parsed == null) return VirtResIssue.cidrInvalid;
       for (final n in networks) {
@@ -921,6 +1007,9 @@ VirtResIssue? virtResourceIssue(
       if (!pve && mode != 'bridge') {
         if (c.isEmpty) {
           if (mode != 'isolated') return VirtResIssue.cidrInvalid;
+          if (dhcpStart != null || dhcpEnd != null) {
+            return VirtResIssue.dhcpInvalid;
+          }
         } else {
           final parsed = virtParseCidr(c);
           if (parsed == null) return VirtResIssue.cidrInvalid;

@@ -648,6 +648,61 @@ void main() {
       );
     });
 
+    testWidgets('a host that goes away takes what was open with it', (
+      tester,
+    ) async {
+      // The same guest id on the host shown next: opening it there would be
+      // opening a guest nobody chose.
+      _states[_kvm] = _states[_kvm]!.copyWith(
+        data: _kvmSnapshot.copyWith(
+          guests: [_guest('qemu/100', 'other-web', VirtGuestState.running)],
+        ),
+      );
+      final container = await pump(tester, wide: true);
+      await tester.tap(find.text('web-01'));
+      await settle(tester);
+      expect(find.byType(VirtGuestView), findsOneWidget);
+
+      // The PVE host is no longer one: the tab moves to the next.
+      final hosts = container.read(virtHostsProvider.notifier);
+      // ignore: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
+      hosts.state = hosts.state.copyWith(hosts: {_kvm: VirtHostKind.libvirt});
+      await settle(tester);
+
+      expect(find.text('other-web'), findsOneWidget);
+      expect(find.byType(VirtGuestView), findsNothing);
+      expect(_calls, isNot(contains('$_kvm.detail qemu/100')));
+    });
+
+    testWidgets('a section the next host lacks is left, not kept behind', (
+      tester,
+    ) async {
+      _states[_pve] = _states[_pve]!.copyWith(
+        data: _pveSnapshot.copyWith(
+          capabilities: const VirtCapabilities(
+            lxc: true,
+            pause: true,
+            storage: true,
+          ),
+        ),
+      );
+      await pump(tester, wide: true);
+      await tester.tap(segment(libL10n.storage));
+      await settle(tester);
+
+      await tester.tap(find.text('pve-host'));
+      await settle(tester);
+      await tester.tap(find.text('kvm-host'));
+      await settle(tester);
+      expect(segment(libL10n.storage), findsNothing);
+
+      // A guest of the host without storage opens as a guest.
+      await tester.tap(find.text('db-01'));
+      await settle(tester);
+      expect(find.byType(VirtGuestView), findsOneWidget);
+      expect(find.byType(VirtPoolView), findsNothing);
+    });
+
     testWidgets('a request from a server page selects its host', (
       tester,
     ) async {
@@ -1108,6 +1163,59 @@ void main() {
       expect(shellClosed, isTrue);
     });
 
+    testWidgets('text: a backup leaves the console, a stop closes it', (
+      tester,
+    ) async {
+      _details['qemu/100'] = const VirtGuestDetail(
+        consoles: {VirtConsoleKind.text},
+      );
+      await pump(tester, wide: true);
+      await tester.tap(find.text('web-01'));
+      await settle(tester);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(VirtGuestView)),
+      );
+      final id = VirtConsoleConnect.textSessionId(_pve, 'qemu/100');
+      final session = TerminalSession(
+        source: ConsoleSource(
+          id: 'virt-console:$_pve:qemu/100',
+          label: 'web-01',
+          connect: () async => FakeShellBackend(),
+        ),
+        backend: FakeShellBackend(),
+      )..bindForeground(FakeShellSession());
+      container
+          .read(virtTextConsolesProvider.notifier)
+          .park(id, session, name: 'web-01', host: 'pve-host');
+      await settle(tester);
+      int detailReads() => _calls.where((c) => c.contains('.detail ')).length;
+      final reads = detailReads();
+
+      // A live backup: the guest runs on, and so does its console.
+      _states[_pve] = _states[_pve]!.copyWith(
+        copyOps: {'qemu/100': VirtCopyOp.backup},
+      );
+      container.invalidate(virtHostProvider(_pve));
+      await settle(tester);
+      expect(container.read(virtTextConsolesProvider), contains(id));
+      expect(detailReads(), reads, reason: 'nothing it shows has changed');
+
+      // Stopped: the screen it showed is gone, and so is it.
+      _states[_pve] = VirtHostState(
+        serverId: _pve,
+        kind: VirtHostKind.pve,
+        data: _pveSnapshot.copyWith(
+          guests: [
+            for (final g in _pveSnapshot.guests)
+              g.id == 'qemu/100' ? g.copyWith(state: VirtGuestState.stopped) : g,
+          ],
+        ),
+      );
+      container.invalidate(virtHostProvider(_pve));
+      await settle(tester);
+      expect(container.read(virtTextConsolesProvider), isNot(contains(id)));
+    });
+
     testWidgets('text: a silent serial console gets Enter after a countdown', (
       tester,
     ) async {
@@ -1178,6 +1286,7 @@ void main() {
       expect(pve.source.label, 'web-01');
       expect(pve.spi, isNull, reason: 'nothing of the host is offered');
       expect(pve.initCmd, isNull);
+      expect(pve.reenter, isFalse);
 
       _consoles['uuid-db'] = const LibvirtSerialConsole(
         command: "virsh --connect qemu:///system console --force --domain 'd'",
@@ -1194,6 +1303,13 @@ void main() {
         "sudo virsh --connect qemu:///system console --force --domain 'd'",
       );
       expect(kvm.detachInput, VirtConsoleConnect.serialEscape);
+      // A reconnect's fresh shell is the host's: the console is entered again
+      // there, in a page shown in place too.
+      expect(kvm.reenter, isTrue);
+      expect(
+        kvm.embeddedIn(AppTab.virt, visible: ValueNotifier(true)).reenter,
+        isTrue,
+      );
     });
   });
 }

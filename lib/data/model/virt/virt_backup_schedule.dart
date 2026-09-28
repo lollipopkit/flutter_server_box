@@ -112,8 +112,10 @@ bool _isTime(String text) {
   // An interval's step is the one number PVE checks in a field it otherwise
   // reads loosely (`*:0/0` and `*/60` are both refused).
   for (final step in _intervalAt.allMatches(text)) {
-    final n = int.parse(step.group(1)!);
-    if (n < 1 || n > 59) return false;
+    // tryParse: a step too long for an int is invalid, not a throw in the
+    // editor's build.
+    final n = int.tryParse(step.group(1)!);
+    if (n == null || n < 1 || n > 59) return false;
   }
   return true;
 }

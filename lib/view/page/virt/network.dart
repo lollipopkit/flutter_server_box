@@ -431,16 +431,17 @@ Future<bool> virtManage(
   VirtResourceChange change, {
   bool quiet = false,
 }) async {
+  // Read before the await: the page may be left while the host works, and
+  // a disposed ref throws — which would report a change that was made as
+  // failed.
+  final pending =
+      (change is VirtNetworkCreate || change is VirtNetworkDelete) &&
+      (ref.read(virtHostProvider(serverId)).data?.capabilities.networkApply ??
+          false);
   try {
     await ref.read(virtHostProvider(serverId).notifier).manage(change);
     if (!quiet) {
-      Toast.success(
-        change is VirtNetworkCreate || change is VirtNetworkDelete
-            ? (ref.read(virtHostProvider(serverId)).data?.capabilities.networkApply ?? false)
-                  ? l10n.virtNetPendingSaved
-                  : libL10n.success
-            : libL10n.success,
-      );
+      Toast.success(pending ? l10n.virtNetPendingSaved : libL10n.success);
     }
     return true;
   } on VirtErr catch (e) {
@@ -560,7 +561,7 @@ class VirtNetworkPendingCard extends ConsumerWidget {
       child: Text(l10n.virtNetApplyAsk(c.node)),
       actions: Btnx.cancelRedOk,
     );
-    if (ok != true) return;
+    if (ok != true || !context.mounted) return;
     await virtManage(ref, serverId, VirtNetworkApply(c.node));
   }
 
@@ -574,7 +575,7 @@ class VirtNetworkPendingCard extends ConsumerWidget {
       child: Text(l10n.virtNetRevertAsk(c.node)),
       actions: Btnx.cancelRedOk,
     );
-    if (ok != true) return;
+    if (ok != true || !context.mounted) return;
     await virtManage(ref, serverId, VirtNetworkRevert(c.node));
   }
 }
@@ -918,15 +919,18 @@ class _VirtNetworkCreateViewState extends ConsumerState<VirtNetworkCreateView>
 String? virtNetworkConfigText(VirtNetwork net) {
   if (net.xml.isNotEmpty) return net.xml;
   if (net.node == null) return null;
+  final ipv4 = net.ipv4Cidr;
+  final ipv6 = net.cidrs.where((c) => c != ipv4).firstOrNull;
   final lines = [
     'auto ${net.name}',
-    'iface ${net.name} inet ${net.address == null ? 'manual' : 'static'}',
-    if (net.address != null) ' address ${net.cidrs.first}',
+    'iface ${net.name} inet ${ipv4 == null ? 'manual' : 'static'}',
+    if (ipv4 != null) ' address $ipv4',
     if (net.gateway case final g?) ' gateway $g',
     ' bridge-ports ${net.ports.isEmpty ? 'none' : net.ports.join(' ')}',
     ' bridge-stp off',
     ' bridge-fd 0',
     if (net.vlanAware ?? false) ...[' bridge-vlan-aware yes', ' bridge-vids 2-4094'],
+    if (ipv6 != null) ...['', 'iface ${net.name} inet6 static', ' address $ipv6'],
   ];
   return lines.join('\n');
 }
@@ -980,7 +984,7 @@ Future<void> showVirtNetworkEdit(
   } finally {
     draft.dispose();
   }
-  if (change == null) return;
+  if (change == null || !context.mounted) return;
   await virtManage(ref, serverId, change);
 }
 
@@ -1015,12 +1019,10 @@ class _VirtNetworkEditForm extends ConsumerStatefulWidget {
 
 class _VirtNetworkEditFormState extends ConsumerState<_VirtNetworkEditForm> {
   late final _bridge = TextEditingController(text: widget.network.bridge ?? '');
-  late final _address = TextEditingController(
-    text: widget.network.address ?? '',
-  );
-  late final _prefix = TextEditingController(
-    text: '${widget.network.prefix ?? 24}',
-  );
+  /// The IPv4 address the form edits; an IPv6 one is left to the host.
+  late final _ipv4 = widget.network.ipv4Cidr?.split('/');
+  late final _address = TextEditingController(text: _ipv4?.first ?? '');
+  late final _prefix = TextEditingController(text: _ipv4?.last ?? '24');
   late final _ports = TextEditingController(
     text: widget.network.ports.join(' '),
   );
@@ -1108,8 +1110,11 @@ class _VirtNetworkEditFormState extends ConsumerState<_VirtNetworkEditForm> {
       hosts: [
         // A row left wholly empty is no host; one with anything in it is,
         // and is checked as one rather than dropped.
+        // Bridge mode serves no DHCP: the drafts stay for switching back,
+        // and are not sent.
         for (final h in _hosts)
-          if ([h.mac, h.ip, h.name].any((c) => c.text.trim().isNotEmpty))
+          if (_mode != 'bridge' &&
+              [h.mac, h.ip, h.name].any((c) => c.text.trim().isNotEmpty))
             VirtNetHost(
               mac: h.mac.text.trim().toLowerCase(),
               ip: h.ip.text.trim(),
@@ -1131,11 +1136,11 @@ class _VirtNetworkEditFormState extends ConsumerState<_VirtNetworkEditForm> {
     final change = _change;
     if (change is! VirtNetworkEdit) return false;
     final address = change.address?.trim() ?? '';
-    final saved = n.address ?? '';
+    final saved = n.ipv4Cidr?.split('/');
     return change.mode != n.mode ||
         (change.mode == 'bridge' && change.bridge != n.bridge) ||
-        address != saved ||
-        (address.isNotEmpty && change.prefix != n.prefix) ||
+        address != (saved?.first ?? '') ||
+        (address.isNotEmpty && '${change.prefix}' != saved?.last) ||
         (change.dhcpStart ?? '') != (n.dhcpRange?.$1 ?? '') ||
         (change.dhcpEnd ?? '') != (n.dhcpRange?.$2 ?? '');
   }

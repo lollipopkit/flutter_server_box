@@ -76,6 +76,10 @@ enum _NewDevice {
   };
 }
 
+/// The host's install media, and the storages whose media could not be
+/// listed, each with why.
+typedef _Isos = ({List<VirtVolume> isos, List<String> failed});
+
 class _CpuDraft {
   const _CpuDraft(this.sockets, this.cores, this.online);
 
@@ -114,6 +118,11 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
   /// Grown sizes not saved yet, by disk.
   final _grow = <String, int>{};
 
+  /// The read each open draft (`cpu`, `mem`, `boot`) was started from.
+  /// Save sends it back as the revision, so what another client changed in
+  /// the draft's fields since is the host's conflict rather than overwritten
+  /// ([_saveDraft]).
+  final _drafted = <String, VirtHardware>{};
 
   /// The add block that is open: `disk` or `nic`.
   String? _adding;
@@ -124,7 +133,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
   List<VirtNetwork>? _nets;
   VirtNetwork? _addNet;
 
-  Future<List<VirtVolume>>? _isos;
+  Future<_Isos>? _isos;
 
   /// The device add block's kind and choice, and the host's devices for it.
   _NewDevice? _devKind;
@@ -184,7 +193,10 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
     final threads = hw.cpu.threads;
     final total = d.sockets * d.cores * threads;
     final maxCpus = hw.limits.hostCpus ?? 4096;
-    void edit(_CpuDraft next) => setState(() => _cpu = next);
+    void edit(_CpuDraft next) => setState(() {
+      _drafted.putIfAbsent('cpu', () => hw);
+      _cpu = next;
+    });
     final changed =
         _cpu != null &&
         (d.sockets != saved.sockets ||
@@ -300,7 +312,10 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
             _Action(
               libL10n.cancel,
               icon: Icons.close,
-              onTap: () => setState(() => _cpu = null),
+              onTap: () => setState(() {
+                _cpu = null;
+                _drafted.remove('cpu');
+              }),
             ),
             _Action(
               libL10n.save,
@@ -308,8 +323,10 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
               primary: true,
               onTap: busy
                   ? null
-                  : () => _save(
+                  : () => _saveDraft(
+                      'cpu',
                       hw,
+                      (h) => (h.cpu.sockets, h.cpu.cores, h.cpu.online),
                       VirtHwSetCpu(
                         sockets: d.sockets,
                         cores: d.cores,
@@ -321,6 +338,33 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
           ]),
       ],
     );
+  }
+
+  /// Saves the [draft] against the read it was started from.
+  ///
+  /// A newer read — [hw], after a refresh or a save of another group — is
+  /// taken as the base instead where it leaves [fields] as the draft found
+  /// them: nothing the draft edits changed under it. Where they did change,
+  /// the draft's own read goes back and the host refuses it as a conflict.
+  /// A draft on a read that old cannot be saved at all, so whatever the
+  /// refusal, it is dropped and what the host has now is shown.
+  Future<void> _saveDraft(
+    String draft,
+    VirtHardware hw,
+    Object? Function(VirtHardware h) fields,
+    VirtHwChange change,
+    void Function() clear,
+  ) async {
+    final started = _drafted[draft] ?? hw;
+    final base = fields(started) == fields(hw) ? hw : started;
+    final ok = await _apply(base, change);
+    if (!mounted) return;
+    if (ok || !identical(base, hw)) {
+      setState(() {
+        clear();
+        _drafted.remove(draft);
+      });
+    }
   }
 
   static int? _clampOnline(int? online, int total) =>
@@ -353,7 +397,10 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
       hw.memory.swapMib,
     );
     final d = _mem ?? saved;
-    void edit(_MemDraft next) => setState(() => _mem = next);
+    void edit(_MemDraft next) => setState(() {
+      _drafted.putIfAbsent('mem', () => hw);
+      _mem = next;
+    });
     final changed =
         _mem != null &&
         (d.mib != saved.mib ||
@@ -425,7 +472,14 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
             onChanged: (on) => edit(
               _MemDraft(
                 d.mib,
-                on ? (hw.memory.minMib == 0 ? null : hw.memory.minMib) : 0,
+                // The floor it had, but never above the memory the draft
+                // gives now: the host refuses a balloon over the memory.
+                on
+                    ? switch (hw.memory.minMib) {
+                        null || 0 => null,
+                        final min => min > d.mib ? d.mib : min,
+                      }
+                    : 0,
                 d.swapMib,
               ),
             ),
@@ -479,7 +533,10 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
             _Action(
               libL10n.cancel,
               icon: Icons.close,
-              onTap: () => setState(() => _mem = null),
+              onTap: () => setState(() {
+                _mem = null;
+                _drafted.remove('mem');
+              }),
             ),
             _Action(
               libL10n.save,
@@ -487,8 +544,15 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
               primary: true,
               onTap: busy
                   ? null
-                  : () => _save(
+                  : () => _saveDraft(
+                      'mem',
                       hw,
+                      (h) => (
+                        h.memory.mib,
+                        h.memory.minMib,
+                        h.memory.swapMib,
+                        h.memory.balloon,
+                      ),
                       VirtHwSetMemory(
                         mib: d.mib,
                         minMib: d.minMib,
@@ -974,16 +1038,8 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
           ),
           ..._pendingRows(hw, busy, (p) => p.key == d.key, indent: true),
           _reveal(d.key, [
-            FutureBuilder<List<VirtVolume>>(
-              future: _isos,
-              builder: (_, snap) {
-                final isos = snap.data;
-                if (isos == null) {
-                  return const Padding(
-                    padding: EdgeInsets.all(7),
-                    child: Center(child: SizedLoading.small),
-                  );
-                }
+            _isoPicker(
+              (isos) {
                 bool inDrive(VirtVolume v) =>
                     v.id == d.source || v.path == d.source;
                 return _choice([
@@ -1077,6 +1133,17 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
       ? l10n.virtUsbPortNote(d.usbBus ?? 0, d.usbPort ?? '')
       : l10n.virtUsbAddressNote(d.usbBus ?? 0, d.usbDevice ?? 0);
 
+  /// Which host device [d] is, among its kind: a USB device's id is its
+  /// vendor and product, which two devices alike share, so where it sits
+  /// tells them apart; a mapping is named apart from a raw device.
+  static String _hostDevKey(VirtHostDevice d) => [
+    if (d.mapping) 'mapping',
+    d.id,
+    ?d.usbBus,
+    ?d.usbPort,
+    ?d.usbDevice,
+  ].join(':');
+
   String _newDeviceName(_NewDevice kind) => switch (kind) {
     _NewDevice.cdrom => l10n.virtHwCdrom,
     _NewDevice.usb => _deviceName(VirtHwDeviceKind.usb),
@@ -1137,6 +1204,9 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
     bool busy,
   ) {
     final kind = kinds.contains(_devKind) ? _devKind : kinds.firstOrNull;
+    // The kind shown may not be the one picked (a TPM added since): what it
+    // offers is read as it is shown.
+    if (kind != null) _loadFor(kind);
     final pick = _devPick;
     final VirtHwChange? change = switch (kind) {
       null => null,
@@ -1167,20 +1237,12 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
           onSelected: (name) => setState(() {
             _devKind = kinds.firstWhere((k) => _newDeviceName(k) == name);
             _devPick = null;
-            if (_devKind == _NewDevice.cdrom) _isos ??= _loadIsos();
+            _loadFor(_devKind!);
           }),
         ),
       if (kind == _NewDevice.cdrom) ...[
-        FutureBuilder<List<VirtVolume>>(
-          future: _isos,
-          builder: (_, snap) {
-            final isos = snap.data;
-            if (isos == null) {
-              return const Padding(
-                padding: EdgeInsets.all(7),
-                child: Center(child: SizedLoading.small),
-              );
-            }
+        _isoPicker(
+          (isos) {
             return _choice([
               _Choice(
                 key: 'hw:cdrom:new:none',
@@ -1274,7 +1336,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                   _choice([
                     for (final x in list)
                       _Choice(
-                        key: 'hw:dev:pick:${x.id}',
+                        key: 'hw:dev:pick:${_hostDevKey(x)}',
                         icon: x.mapping ? Icons.link : _deviceIcon(kind!.hw!),
                         label: x.label,
                         sub: [
@@ -1288,7 +1350,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                           if (x.iommuGroup case final g?) l10n.virtHwIommuGroup(g),
                           if (x.groupSize > 1) l10n.virtHwIommuShared(x.groupSize),
                         ].nonNulls.join(' · '),
-                        selected: pick?.id == x.id && pick?.mapping == x.mapping,
+                        selected: pick != null && _hostDevKey(pick) == _hostDevKey(x),
                         onTap: () => setState(() => _devPick = x),
                       ),
                   ], indent: true),
@@ -1488,6 +1550,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
         list[i] = list[j];
         list[j] = moved;
         setState(() {
+          _drafted.putIfAbsent('boot', () => hw);
           _boot = list;
           _bootOn = on;
         });
@@ -1502,6 +1565,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
             first: picked.isNotEmpty && picked.first == k,
             device: _bootDevice(hw, k),
             onToggle: () => setState(() {
+              _drafted.putIfAbsent('boot', () => hw);
               _boot = order;
               _bootOn = on.contains(k) ? ({...on}..remove(k)) : {...on, k};
             }),
@@ -1519,7 +1583,10 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
             _Action(
               libL10n.cancel,
               icon: Icons.close,
-              onTap: () => setState(() => _boot = null),
+              onTap: () => setState(() {
+                _boot = null;
+                _drafted.remove('boot');
+              }),
             ),
             _Action(
               libL10n.save,
@@ -1527,7 +1594,13 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
               primary: true,
               onTap: busy || picked.isEmpty
                   ? null
-                  : () => _save(hw, VirtHwSetBoot(picked), () => _boot = null),
+                  : () => _saveDraft(
+                      'boot',
+                      hw,
+                      (h) => (h.boot?.join(','), _bootDevices(h).join(',')),
+                      VirtHwSetBoot(picked),
+                      () => _boot = null,
+                    ),
             ),
           ]),
       ]);
@@ -1687,26 +1760,97 @@ extension _Actions on _VirtHardwareViewState {
     setState(() => _nets = nets);
   }
 
-  Future<List<VirtVolume>> _loadIsos() async {
+  /// [_readIsos], its failure left to the picker that shows it rather than
+  /// reported as uncaught before the picker's next build.
+  Future<_Isos> _loadIsos() => _readIsos()..ignore();
+
+  /// The install media on every storage that holds it. A storage that
+  /// cannot be listed leaves the others on offer, and is said.
+  Future<_Isos> _readIsos() async {
     final host = ref.read(virtHostProvider(widget.serverId)).kind;
-    if (host == null) return const [];
-    final pools = await ref.read(
-      virtStoragePoolsProvider(widget.serverId).future,
+    if (host == null) return (isos: const <VirtVolume>[], failed: const <String>[]);
+    final pools = virtMediaStorages(
+      await ref.read(virtStoragePoolsProvider(widget.serverId).future),
+      host: host,
+      kind: VirtGuestKind.qemu,
+      node: widget.guest.node,
     );
+    final failed = <String>[];
     final lists = await Future.wait([
-      for (final p in virtMediaStorages(
-        pools,
-        host: host,
-        kind: VirtGuestKind.qemu,
-        node: widget.guest.node,
-      ))
-        _notifier.volumes(p).catchError((Object _) => <VirtVolume>[]),
+      for (final p in pools)
+        _notifier.volumes(p).catchError((Object e) {
+          failed.add('${p.name}: ${e is VirtErr ? e.title : e}');
+          return <VirtVolume>[];
+        }),
     ]);
-    return [
-      for (final list in lists)
-        for (final v in list)
-          if (virtIsMedia(v, VirtGuestKind.qemu)) v,
-    ]..sort((a, b) => a.name.compareTo(b.name));
+    return (
+      isos: [
+        for (final list in lists)
+          for (final v in list)
+            if (virtIsMedia(v, VirtGuestKind.qemu)) v,
+      ]..sort((a, b) => a.name.compareTo(b.name)),
+      failed: failed,
+    );
+  }
+
+  /// A picker over [_isos]: loading, a read that failed with its retry, or
+  /// [choices] of the media with the storages that could not be listed.
+  Widget _isoPicker(Widget Function(List<VirtVolume> isos) choices) {
+    return FutureBuilder<_Isos>(
+      future: _isos,
+      builder: (_, snap) {
+        // A retry's read is waited for rather than showing the last error.
+        if (snap.connectionState != ConnectionState.done) {
+          return const Padding(
+            padding: EdgeInsets.all(7),
+            child: Center(child: SizedLoading.small),
+          );
+        }
+        if (snap.error case final e?) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: _rowGap),
+                child: _text(
+                  e is VirtErr ? [e.title, ?e.detail].join('\n') : '$e',
+                  indent: true,
+                  error: true,
+                ),
+              ),
+              _actions(indent: true, [
+                _Action(
+                  libL10n.retry,
+                  key: 'hw:isos:retry',
+                  icon: Icons.refresh,
+                  onTap: () {
+                    // The storages are read again too: their read may be
+                    // what failed.
+                    ref.invalidate(virtStoragePoolsProvider(widget.serverId));
+                    // ignore: invalid_use_of_protected_member
+                    setState(() {
+                      _isos = _loadIsos();
+                    });
+                  },
+                ),
+              ]),
+            ],
+          );
+        }
+        final read = snap.data!;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final f in read.failed)
+              Padding(
+                padding: const EdgeInsets.only(bottom: _rowGap),
+                child: _text(f, indent: true, error: true),
+              ),
+            choices(read.isos),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _pickCpuType(VirtHardware hw) async {
@@ -1781,11 +1925,27 @@ extension _Actions on _VirtHardwareViewState {
       _cdMedia = null;
       _addPools = null;
       _addPool = null;
-      _hostDevs ??= _notifier.hostDevices(widget.guest.id);
-      if (kind == _NewDevice.cdrom) _isos ??= _loadIsos();
+      _loadFor(kind);
     });
     // The TPM's state is a volume on PVE: where it goes is asked.
     if (_pve) await _loadDiskPools();
+  }
+
+  /// Starts reading what the add block offers for [kind]: the host's
+  /// devices for USB and PCI only, the kinds that show them.
+  ///
+  /// Its failure is the picker's to show; marked handled here, since a read
+  /// that fails before the picker's next build would otherwise be reported
+  /// as an uncaught error.
+  void _loadFor(_NewDevice kind) {
+    switch (kind) {
+      case _NewDevice.usb || _NewDevice.pci:
+        _hostDevs ??= _notifier.hostDevices(widget.guest.id)..ignore();
+      case _NewDevice.cdrom:
+        _isos ??= _loadIsos();
+      case _NewDevice.tpm:
+        break;
+    }
   }
 
   Future<void> _loadDiskPools() async {

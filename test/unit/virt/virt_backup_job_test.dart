@@ -182,6 +182,9 @@ void main() {
         '`id`',
         'mon 60:00',
         'mon 59:60',
+        // A step too long for an int: invalid, not a FormatException.
+        '*/999999999999999999999999',
+        'mon *:0/999999999999999999999999',
       ]) {
         expect(virtScheduleIssue(bad), isNotNull, reason: bad);
       }

@@ -717,11 +717,19 @@ abstract class LibvirtHostPci with _$LibvirtHostPci {
 /// `sbm_parser::virt::VirtHardwareInfo`.
 @freezed
 abstract class LibvirtHardwareInfo with _$LibvirtHardwareInfo {
+  const LibvirtHardwareInfo._();
+
   @JsonSerializable(fieldRename: FieldRename.snake)
   const factory LibvirtHardwareInfo({
     required LibvirtHwConfig config,
     LibvirtHwConfig? live,
+
+    /// The persistent definition with its secrets (`--security-info`): what
+    /// a change is made from and compared against. Never shown.
     required String configXml,
+
+    /// [configXml] with its secrets redacted: what the view shows.
+    @Default('') String configText,
 
     /// `dumpxml` (the running definition) as read; empty while the domain
     /// is not running. What a revert to the running definition is made
@@ -737,6 +745,12 @@ abstract class LibvirtHardwareInfo with _$LibvirtHardwareInfo {
     /// carry Secure Boot's enrolled keys.
     @Default(<LibvirtFirmware>[]) List<LibvirtFirmware> firmware,
   }) = _LibvirtHardwareInfo;
+
+  /// Without the definitions, whose secrets [configXml] and [liveXml] carry:
+  /// this reaches logs through string interpolation.
+  @override
+  String toString() =>
+      'LibvirtHardwareInfo(autostart: $autostart, running: ${liveXml.isNotEmpty})';
 
   factory LibvirtHardwareInfo.fromJson(Map<String, dynamic> json) =>
       _$LibvirtHardwareInfoFromJson(json);

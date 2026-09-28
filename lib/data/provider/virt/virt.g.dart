@@ -318,7 +318,7 @@ final class VirtHostNotifierProvider
   }
 }
 
-String _$virtHostNotifierHash() => r'b63a32b646e06ecd14bdfbb881a75eb33bd74629';
+String _$virtHostNotifierHash() => r'17bc51dda53b32d9aa3a55336ef8b8e134418b3b';
 
 /// One virtualization host: its backend, periodic refresh, actions in flight
 /// and the answers the user gives (TOTP, certificate, sudo password).
@@ -1022,18 +1022,26 @@ final class VirtSnapshotRefusalFamily extends $Family
   String toString() => r'virtSnapshotRefusalProvider';
 }
 
-/// The hardware of one guest. Invalidated by the view after each change and
-/// by [VirtHostNotifier.power]. Kept once read: the guest view shows the
-/// pending banner from it, and reading it again for every guest opened would
-/// be a round trip to the host each time.
+/// The hardware of one guest. Invalidated by the view after each change, by
+/// [VirtHostNotifier.power] and by snapshot operations.
+///
+/// Disposed with its last listener, as the host is: kept alive, it would keep
+/// the host it watches alive with it — its refresh timer and its session —
+/// long after the Virtualization pages had gone. The guest view watches it
+/// while it is open (its pending banner included), so it is read once per
+/// visit to a guest.
 
 @ProviderFor(virtHardware)
 final virtHardwareProvider = VirtHardwareFamily._();
 
-/// The hardware of one guest. Invalidated by the view after each change and
-/// by [VirtHostNotifier.power]. Kept once read: the guest view shows the
-/// pending banner from it, and reading it again for every guest opened would
-/// be a round trip to the host each time.
+/// The hardware of one guest. Invalidated by the view after each change, by
+/// [VirtHostNotifier.power] and by snapshot operations.
+///
+/// Disposed with its last listener, as the host is: kept alive, it would keep
+/// the host it watches alive with it — its refresh timer and its session —
+/// long after the Virtualization pages had gone. The guest view watches it
+/// while it is open (its pending banner included), so it is read once per
+/// visit to a guest.
 
 final class VirtHardwareProvider
     extends
@@ -1043,17 +1051,21 @@ final class VirtHardwareProvider
           FutureOr<VirtHardware>
         >
     with $FutureModifier<VirtHardware>, $FutureProvider<VirtHardware> {
-  /// The hardware of one guest. Invalidated by the view after each change and
-  /// by [VirtHostNotifier.power]. Kept once read: the guest view shows the
-  /// pending banner from it, and reading it again for every guest opened would
-  /// be a round trip to the host each time.
+  /// The hardware of one guest. Invalidated by the view after each change, by
+  /// [VirtHostNotifier.power] and by snapshot operations.
+  ///
+  /// Disposed with its last listener, as the host is: kept alive, it would keep
+  /// the host it watches alive with it — its refresh timer and its session —
+  /// long after the Virtualization pages had gone. The guest view watches it
+  /// while it is open (its pending banner included), so it is read once per
+  /// visit to a guest.
   VirtHardwareProvider._({
     required VirtHardwareFamily super.from,
     required (String, String) super.argument,
   }) : super(
          retry: _noRetry,
          name: r'virtHardwareProvider',
-         isAutoDispose: false,
+         isAutoDispose: true,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
@@ -1091,12 +1103,16 @@ final class VirtHardwareProvider
   }
 }
 
-String _$virtHardwareHash() => r'0342d3e127f24835382a6abba7530e408add83ca';
+String _$virtHardwareHash() => r'b948966c9fce4ce24351eeab6ed29b7f24c0ae52';
 
-/// The hardware of one guest. Invalidated by the view after each change and
-/// by [VirtHostNotifier.power]. Kept once read: the guest view shows the
-/// pending banner from it, and reading it again for every guest opened would
-/// be a round trip to the host each time.
+/// The hardware of one guest. Invalidated by the view after each change, by
+/// [VirtHostNotifier.power] and by snapshot operations.
+///
+/// Disposed with its last listener, as the host is: kept alive, it would keep
+/// the host it watches alive with it — its refresh timer and its session —
+/// long after the Virtualization pages had gone. The guest view watches it
+/// while it is open (its pending banner included), so it is read once per
+/// visit to a guest.
 
 final class VirtHardwareFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<VirtHardware>, (String, String)> {
@@ -1106,13 +1122,17 @@ final class VirtHardwareFamily extends $Family
         name: r'virtHardwareProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
-        isAutoDispose: false,
+        isAutoDispose: true,
       );
 
-  /// The hardware of one guest. Invalidated by the view after each change and
-  /// by [VirtHostNotifier.power]. Kept once read: the guest view shows the
-  /// pending banner from it, and reading it again for every guest opened would
-  /// be a round trip to the host each time.
+  /// The hardware of one guest. Invalidated by the view after each change, by
+  /// [VirtHostNotifier.power] and by snapshot operations.
+  ///
+  /// Disposed with its last listener, as the host is: kept alive, it would keep
+  /// the host it watches alive with it — its refresh timer and its session —
+  /// long after the Virtualization pages had gone. The guest view watches it
+  /// while it is open (its pending banner included), so it is read once per
+  /// visit to a guest.
 
   VirtHardwareProvider call(String serverId, String guestId) =>
       VirtHardwareProvider._(argument: (serverId, guestId), from: this);
@@ -1547,7 +1567,7 @@ final class VirtNetworkChangesProvider
 }
 
 String _$virtNetworkChangesHash() =>
-    r'2940216d72db2ea9e350136098062d4fa618c2a4';
+    r'6e99e07dcc03f3b19a117e9a3ab56863e625fcc8';
 
 /// Network configuration waiting to be applied, per node (PVE). Read again
 /// with [virtNetworksProvider] after every network change.

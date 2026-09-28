@@ -105,7 +105,16 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView> {
         ? ref.watch(_chainProvider)
         : null;
     return RefreshIndicator(
-      onRefresh: () => ref.refresh(_provider.future),
+      // What the view shows besides the list is read on its own: the chain
+      // and whether a snapshot can be taken, both of which the host can
+      // change as much as the list.
+      onRefresh: () {
+        ref.invalidate(_chainProvider);
+        ref.invalidate(
+          virtSnapshotRefusalProvider(widget.serverId, widget.guest.id),
+        );
+        return ref.refresh(_provider.future);
+      },
       child: ListView(
         padding: const EdgeInsets.fromLTRB(13, 0, 13, 17),
         children: [

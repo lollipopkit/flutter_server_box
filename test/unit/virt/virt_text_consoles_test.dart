@@ -112,6 +112,50 @@ void main() {
     });
   });
 
+  test('replaced by one that has ended: neither is kept, nor counted', () {
+    run((async, container, consoles) {
+      final (first, _) = session();
+      consoles.park(id, first, name: 'web-01', host: 'pve');
+      final (second, _) = session(running: false);
+      consoles.park(id, second, name: 'web-01', host: 'pve');
+
+      expect(first.foreground, isNull, reason: 'the first was closed');
+      expect(container.read(virtTextConsolesProvider), isEmpty);
+      expect(
+        container.read(sessionKeepAliveProvider.notifier).isRegistered(id),
+        isFalse,
+      );
+      // No notice later for a console that no longer exists.
+      async.elapse(const Duration(hours: 1));
+      expect(container.read(sessionKeepAliveProvider), isNot(contains(id)));
+    });
+  });
+
+  test('closed while a page showed it: closed as that page parks it', () {
+    run((async, container, consoles) {
+      // On screen when its guest stopped: nothing parked for close to end.
+      final (shown, shell) = session();
+      var shellClosed = false;
+      unawaited(shell!.done.then((_) => shellClosed = true));
+      consoles.close(id);
+
+      // The page goes after, and hands it over.
+      consoles.park(id, shown, name: 'web-01', host: 'pve');
+      async.flushMicrotasks();
+      expect(shellClosed, isTrue);
+      expect(container.read(virtTextConsolesProvider), isEmpty);
+      expect(
+        container.read(sessionKeepAliveProvider.notifier).isRegistered(id),
+        isFalse,
+      );
+
+      // A console opened after the guest started again is kept as usual.
+      final (next, _) = session();
+      consoles.park(id, next, name: 'web-01', host: 'pve');
+      expect(container.read(virtTextConsolesProvider), {id});
+    });
+  });
+
   test('its shell ending while parked ends the console', () {
     run((async, container, consoles) {
       final (s, shell) = session();

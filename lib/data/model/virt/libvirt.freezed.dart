@@ -11235,7 +11235,10 @@ as int,
 /// @nodoc
 mixin _$LibvirtHardwareInfo {
 
- LibvirtHwConfig get config; LibvirtHwConfig? get live; String get configXml;/// `dumpxml` (the running definition) as read; empty while the domain
+ LibvirtHwConfig get config; LibvirtHwConfig? get live;/// The persistent definition with its secrets (`--security-info`): what
+/// a change is made from and compared against. Never shown.
+ String get configXml;/// [configXml] with its secrets redacted: what the view shows.
+ String get configText;/// `dumpxml` (the running definition) as read; empty while the domain
 /// is not running. What a revert to the running definition is made
 /// from.
  String get liveXml; bool get autostart; String? get description; int? get hostCpus; int? get hostMemoryKib; LibvirtHwCaps? get caps;/// QEMU's firmware descriptors: what the host can boot with, and which
@@ -11253,17 +11256,13 @@ $LibvirtHardwareInfoCopyWith<LibvirtHardwareInfo> get copyWith => _$LibvirtHardw
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtHardwareInfo&&(identical(other.config, config) || other.config == config)&&(identical(other.live, live) || other.live == live)&&(identical(other.configXml, configXml) || other.configXml == configXml)&&(identical(other.liveXml, liveXml) || other.liveXml == liveXml)&&(identical(other.autostart, autostart) || other.autostart == autostart)&&(identical(other.description, description) || other.description == description)&&(identical(other.hostCpus, hostCpus) || other.hostCpus == hostCpus)&&(identical(other.hostMemoryKib, hostMemoryKib) || other.hostMemoryKib == hostMemoryKib)&&(identical(other.caps, caps) || other.caps == caps)&&const DeepCollectionEquality().equals(other.firmware, firmware));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtHardwareInfo&&(identical(other.config, config) || other.config == config)&&(identical(other.live, live) || other.live == live)&&(identical(other.configXml, configXml) || other.configXml == configXml)&&(identical(other.configText, configText) || other.configText == configText)&&(identical(other.liveXml, liveXml) || other.liveXml == liveXml)&&(identical(other.autostart, autostart) || other.autostart == autostart)&&(identical(other.description, description) || other.description == description)&&(identical(other.hostCpus, hostCpus) || other.hostCpus == hostCpus)&&(identical(other.hostMemoryKib, hostMemoryKib) || other.hostMemoryKib == hostMemoryKib)&&(identical(other.caps, caps) || other.caps == caps)&&const DeepCollectionEquality().equals(other.firmware, firmware));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,config,live,configXml,liveXml,autostart,description,hostCpus,hostMemoryKib,caps,const DeepCollectionEquality().hash(firmware));
+int get hashCode => Object.hash(runtimeType,config,live,configXml,configText,liveXml,autostart,description,hostCpus,hostMemoryKib,caps,const DeepCollectionEquality().hash(firmware));
 
-@override
-String toString() {
-  return 'LibvirtHardwareInfo(config: $config, live: $live, configXml: $configXml, liveXml: $liveXml, autostart: $autostart, description: $description, hostCpus: $hostCpus, hostMemoryKib: $hostMemoryKib, caps: $caps, firmware: $firmware)';
-}
 
 
 }
@@ -11273,7 +11272,7 @@ abstract mixin class $LibvirtHardwareInfoCopyWith<$Res>  {
   factory $LibvirtHardwareInfoCopyWith(LibvirtHardwareInfo value, $Res Function(LibvirtHardwareInfo) _then) = _$LibvirtHardwareInfoCopyWithImpl;
 @useResult
 $Res call({
- LibvirtHwConfig config, LibvirtHwConfig? live, String configXml, String liveXml, bool autostart, String? description, int? hostCpus, int? hostMemoryKib, LibvirtHwCaps? caps, List<LibvirtFirmware> firmware
+ LibvirtHwConfig config, LibvirtHwConfig? live, String configXml, String configText, String liveXml, bool autostart, String? description, int? hostCpus, int? hostMemoryKib, LibvirtHwCaps? caps, List<LibvirtFirmware> firmware
 });
 
 
@@ -11290,11 +11289,12 @@ class _$LibvirtHardwareInfoCopyWithImpl<$Res>
 
 /// Create a copy of LibvirtHardwareInfo
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? config = null,Object? live = freezed,Object? configXml = null,Object? liveXml = null,Object? autostart = null,Object? description = freezed,Object? hostCpus = freezed,Object? hostMemoryKib = freezed,Object? caps = freezed,Object? firmware = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? config = null,Object? live = freezed,Object? configXml = null,Object? configText = null,Object? liveXml = null,Object? autostart = null,Object? description = freezed,Object? hostCpus = freezed,Object? hostMemoryKib = freezed,Object? caps = freezed,Object? firmware = null,}) {
   return _then(_self.copyWith(
 config: null == config ? _self.config : config // ignore: cast_nullable_to_non_nullable
 as LibvirtHwConfig,live: freezed == live ? _self.live : live // ignore: cast_nullable_to_non_nullable
 as LibvirtHwConfig?,configXml: null == configXml ? _self.configXml : configXml // ignore: cast_nullable_to_non_nullable
+as String,configText: null == configText ? _self.configText : configText // ignore: cast_nullable_to_non_nullable
 as String,liveXml: null == liveXml ? _self.liveXml : liveXml // ignore: cast_nullable_to_non_nullable
 as String,autostart: null == autostart ? _self.autostart : autostart // ignore: cast_nullable_to_non_nullable
 as bool,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
@@ -11420,10 +11420,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( LibvirtHwConfig config,  LibvirtHwConfig? live,  String configXml,  String liveXml,  bool autostart,  String? description,  int? hostCpus,  int? hostMemoryKib,  LibvirtHwCaps? caps,  List<LibvirtFirmware> firmware)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( LibvirtHwConfig config,  LibvirtHwConfig? live,  String configXml,  String configText,  String liveXml,  bool autostart,  String? description,  int? hostCpus,  int? hostMemoryKib,  LibvirtHwCaps? caps,  List<LibvirtFirmware> firmware)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _LibvirtHardwareInfo() when $default != null:
-return $default(_that.config,_that.live,_that.configXml,_that.liveXml,_that.autostart,_that.description,_that.hostCpus,_that.hostMemoryKib,_that.caps,_that.firmware);case _:
+return $default(_that.config,_that.live,_that.configXml,_that.configText,_that.liveXml,_that.autostart,_that.description,_that.hostCpus,_that.hostMemoryKib,_that.caps,_that.firmware);case _:
   return orElse();
 
 }
@@ -11441,10 +11441,10 @@ return $default(_that.config,_that.live,_that.configXml,_that.liveXml,_that.auto
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( LibvirtHwConfig config,  LibvirtHwConfig? live,  String configXml,  String liveXml,  bool autostart,  String? description,  int? hostCpus,  int? hostMemoryKib,  LibvirtHwCaps? caps,  List<LibvirtFirmware> firmware)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( LibvirtHwConfig config,  LibvirtHwConfig? live,  String configXml,  String configText,  String liveXml,  bool autostart,  String? description,  int? hostCpus,  int? hostMemoryKib,  LibvirtHwCaps? caps,  List<LibvirtFirmware> firmware)  $default,) {final _that = this;
 switch (_that) {
 case _LibvirtHardwareInfo():
-return $default(_that.config,_that.live,_that.configXml,_that.liveXml,_that.autostart,_that.description,_that.hostCpus,_that.hostMemoryKib,_that.caps,_that.firmware);case _:
+return $default(_that.config,_that.live,_that.configXml,_that.configText,_that.liveXml,_that.autostart,_that.description,_that.hostCpus,_that.hostMemoryKib,_that.caps,_that.firmware);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -11461,10 +11461,10 @@ return $default(_that.config,_that.live,_that.configXml,_that.liveXml,_that.auto
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( LibvirtHwConfig config,  LibvirtHwConfig? live,  String configXml,  String liveXml,  bool autostart,  String? description,  int? hostCpus,  int? hostMemoryKib,  LibvirtHwCaps? caps,  List<LibvirtFirmware> firmware)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( LibvirtHwConfig config,  LibvirtHwConfig? live,  String configXml,  String configText,  String liveXml,  bool autostart,  String? description,  int? hostCpus,  int? hostMemoryKib,  LibvirtHwCaps? caps,  List<LibvirtFirmware> firmware)?  $default,) {final _that = this;
 switch (_that) {
 case _LibvirtHardwareInfo() when $default != null:
-return $default(_that.config,_that.live,_that.configXml,_that.liveXml,_that.autostart,_that.description,_that.hostCpus,_that.hostMemoryKib,_that.caps,_that.firmware);case _:
+return $default(_that.config,_that.live,_that.configXml,_that.configText,_that.liveXml,_that.autostart,_that.description,_that.hostCpus,_that.hostMemoryKib,_that.caps,_that.firmware);case _:
   return null;
 
 }
@@ -11475,13 +11475,17 @@ return $default(_that.config,_that.live,_that.configXml,_that.liveXml,_that.auto
 /// @nodoc
 
 @JsonSerializable(fieldRename: FieldRename.snake)
-class _LibvirtHardwareInfo implements LibvirtHardwareInfo {
-  const _LibvirtHardwareInfo({required this.config, this.live, required this.configXml, this.liveXml = '', this.autostart = false, this.description, this.hostCpus, this.hostMemoryKib, this.caps, final  List<LibvirtFirmware> firmware = const <LibvirtFirmware>[]}): _firmware = firmware;
+class _LibvirtHardwareInfo extends LibvirtHardwareInfo {
+  const _LibvirtHardwareInfo({required this.config, this.live, required this.configXml, this.configText = '', this.liveXml = '', this.autostart = false, this.description, this.hostCpus, this.hostMemoryKib, this.caps, final  List<LibvirtFirmware> firmware = const <LibvirtFirmware>[]}): _firmware = firmware,super._();
   factory _LibvirtHardwareInfo.fromJson(Map<String, dynamic> json) => _$LibvirtHardwareInfoFromJson(json);
 
 @override final  LibvirtHwConfig config;
 @override final  LibvirtHwConfig? live;
+/// The persistent definition with its secrets (`--security-info`): what
+/// a change is made from and compared against. Never shown.
 @override final  String configXml;
+/// [configXml] with its secrets redacted: what the view shows.
+@override@JsonKey() final  String configText;
 /// `dumpxml` (the running definition) as read; empty while the domain
 /// is not running. What a revert to the running definition is made
 /// from.
@@ -11516,17 +11520,13 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtHardwareInfo&&(identical(other.config, config) || other.config == config)&&(identical(other.live, live) || other.live == live)&&(identical(other.configXml, configXml) || other.configXml == configXml)&&(identical(other.liveXml, liveXml) || other.liveXml == liveXml)&&(identical(other.autostart, autostart) || other.autostart == autostart)&&(identical(other.description, description) || other.description == description)&&(identical(other.hostCpus, hostCpus) || other.hostCpus == hostCpus)&&(identical(other.hostMemoryKib, hostMemoryKib) || other.hostMemoryKib == hostMemoryKib)&&(identical(other.caps, caps) || other.caps == caps)&&const DeepCollectionEquality().equals(other._firmware, _firmware));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtHardwareInfo&&(identical(other.config, config) || other.config == config)&&(identical(other.live, live) || other.live == live)&&(identical(other.configXml, configXml) || other.configXml == configXml)&&(identical(other.configText, configText) || other.configText == configText)&&(identical(other.liveXml, liveXml) || other.liveXml == liveXml)&&(identical(other.autostart, autostart) || other.autostart == autostart)&&(identical(other.description, description) || other.description == description)&&(identical(other.hostCpus, hostCpus) || other.hostCpus == hostCpus)&&(identical(other.hostMemoryKib, hostMemoryKib) || other.hostMemoryKib == hostMemoryKib)&&(identical(other.caps, caps) || other.caps == caps)&&const DeepCollectionEquality().equals(other._firmware, _firmware));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,config,live,configXml,liveXml,autostart,description,hostCpus,hostMemoryKib,caps,const DeepCollectionEquality().hash(_firmware));
+int get hashCode => Object.hash(runtimeType,config,live,configXml,configText,liveXml,autostart,description,hostCpus,hostMemoryKib,caps,const DeepCollectionEquality().hash(_firmware));
 
-@override
-String toString() {
-  return 'LibvirtHardwareInfo(config: $config, live: $live, configXml: $configXml, liveXml: $liveXml, autostart: $autostart, description: $description, hostCpus: $hostCpus, hostMemoryKib: $hostMemoryKib, caps: $caps, firmware: $firmware)';
-}
 
 
 }
@@ -11536,7 +11536,7 @@ abstract mixin class _$LibvirtHardwareInfoCopyWith<$Res> implements $LibvirtHard
   factory _$LibvirtHardwareInfoCopyWith(_LibvirtHardwareInfo value, $Res Function(_LibvirtHardwareInfo) _then) = __$LibvirtHardwareInfoCopyWithImpl;
 @override @useResult
 $Res call({
- LibvirtHwConfig config, LibvirtHwConfig? live, String configXml, String liveXml, bool autostart, String? description, int? hostCpus, int? hostMemoryKib, LibvirtHwCaps? caps, List<LibvirtFirmware> firmware
+ LibvirtHwConfig config, LibvirtHwConfig? live, String configXml, String configText, String liveXml, bool autostart, String? description, int? hostCpus, int? hostMemoryKib, LibvirtHwCaps? caps, List<LibvirtFirmware> firmware
 });
 
 
@@ -11553,11 +11553,12 @@ class __$LibvirtHardwareInfoCopyWithImpl<$Res>
 
 /// Create a copy of LibvirtHardwareInfo
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? config = null,Object? live = freezed,Object? configXml = null,Object? liveXml = null,Object? autostart = null,Object? description = freezed,Object? hostCpus = freezed,Object? hostMemoryKib = freezed,Object? caps = freezed,Object? firmware = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? config = null,Object? live = freezed,Object? configXml = null,Object? configText = null,Object? liveXml = null,Object? autostart = null,Object? description = freezed,Object? hostCpus = freezed,Object? hostMemoryKib = freezed,Object? caps = freezed,Object? firmware = null,}) {
   return _then(_LibvirtHardwareInfo(
 config: null == config ? _self.config : config // ignore: cast_nullable_to_non_nullable
 as LibvirtHwConfig,live: freezed == live ? _self.live : live // ignore: cast_nullable_to_non_nullable
 as LibvirtHwConfig?,configXml: null == configXml ? _self.configXml : configXml // ignore: cast_nullable_to_non_nullable
+as String,configText: null == configText ? _self.configText : configText // ignore: cast_nullable_to_non_nullable
 as String,liveXml: null == liveXml ? _self.liveXml : liveXml // ignore: cast_nullable_to_non_nullable
 as String,autostart: null == autostart ? _self.autostart : autostart // ignore: cast_nullable_to_non_nullable
 as bool,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable

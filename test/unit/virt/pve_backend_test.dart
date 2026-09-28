@@ -632,6 +632,33 @@ void main() {
       expect(api.closed, greaterThanOrEqualTo(1));
       expect(api.headers.last['Cookie'], 'PVEAuthCookie=T2');
     });
+
+    test('an address change during a login sends none of its credentials '
+        'to the new address', () async {
+      final api = _Api()..resources = _resources;
+      final release = Completer<void>();
+      api.ticketGate = release.future;
+      const old = PveConfig(addr: 'https://old.lan:8006', pwd: 'pvepw');
+      final pve = api.backend(old);
+
+      final first = pve.load();
+      await api.ticketRequested.future.timeout(const Duration(seconds: 2));
+      pve.updateConfig(old.copyWith(addr: 'https://new.lan:8006'));
+      api.ticketGate = null;
+      release.complete();
+      await first;
+
+      expect(api.hosts.first, 'old.lan');
+      for (var i = 0; i < api.paths.length; i++) {
+        final cookie = api.headers[i]['Cookie'];
+        if (api.hosts[i] == 'new.lan') {
+          expect(cookie, isNot('PVEAuthCookie=T1'), reason: api.paths[i]);
+        } else {
+          expect(api.paths[i], 'POST /access/ticket');
+        }
+      }
+      expect(api.hosts.last, 'new.lan');
+    });
   });
 
   group('ticket lifetime', () {
@@ -803,6 +830,23 @@ void main() {
       final polls = api.paths.where((p) => p.contains('/tasks/')).toList();
       expect(polls, hasLength(3));
       expect(polls.first, contains(Uri.encodeComponent(_Api.upid)));
+    });
+
+    test('a task still running at the deadline is not reported as done, '
+        'and what depends on it does not run', () async {
+      final api = _Api()
+        ..resources = _resources
+        ..taskStates = ['running'];
+      final pve = api.backend(
+        const PveConfig(addr: 'https://pve.lan:8006'),
+        taskTimeout: const Duration(milliseconds: 20),
+      );
+      final guest = (await pve.load()).guests[2];
+      final err = await _err(pve.power(guest, VirtPowerAction.suspend));
+      expect(err.type, VirtErrType.actionFailed);
+      expect(err.message, contains(_Api.upid));
+      // The status read that follows a completed action never ran.
+      expect(api.paths.last, contains('/tasks/'));
     });
 
     test('a task ending in an error is actionFailed with its text', () async {
@@ -1585,6 +1629,29 @@ void main() {
       expect(PveResources.parseBackupJobs(all, vmid: 101), isEmpty);
     });
 
+    test('a guest\'s plan leaves out the jobs restricted to another node',
+        () async {
+      final api = _Api()
+        ..routes['GET /cluster/backup'] = ((_) => [
+          {'id': 'on-a', 'type': 'vzdump', 'all': 1, 'node': 'a'},
+          {'id': 'on-b', 'type': 'vzdump', 'all': 1, 'node': 'pve'},
+          {'id': 'any', 'type': 'vzdump', 'vmid': '9941'},
+          {'id': 'listed-on-a', 'type': 'vzdump', 'vmid': '9941', 'node': 'a'},
+        ]);
+      final jobs = await api.backend(token).backupJobs(vm);
+      expect(jobs.map((j) => j.id), ['on-b', 'any']);
+      expect(
+        PveResources.parseBackupJobs(
+          [
+            {'id': 'on-a', 'type': 'vzdump', 'all': 1, 'node': 'a'},
+          ],
+          vmid: 9941,
+          node: 'pve',
+        ),
+        isEmpty,
+      );
+    });
+
     test('clone: full unless a template asks for linked; a VMID taken', () async {
       final api = _Api();
       api.routes['GET /cluster/nextid'] = (_) => '120';
@@ -2099,6 +2166,48 @@ void main() {
         const VirtHwRemoveDisk(key: 'scsi0', deleteVolume: true),
       );
       expect(out.volumeKept, isTrue);
+    });
+
+    test('a volume written as `file=`, and a TPM state, are deleted with the '
+        'digest of the configuration they were found in', () async {
+      final api = hwApi();
+      final pve = api.backend(token);
+      final hw = await pve.hardware(vm);
+      final before = {
+        ...config('hw_vm_config.json'),
+        'scsi0': 'file=local-lvm:vm-9901-disk-0,size=1G',
+        'tpmstate0': 'local-lvm:vm-9901-disk-7,size=4M,version=v2.0',
+      };
+      final detached = Map.of(before)
+        ..remove('scsi0')
+        ..remove('tpmstate0')
+        ..['unused0'] = 'local-lvm:vm-9901-disk-0'
+        ..['unused1'] = 'local-lvm:vm-9901-disk-7'
+        ..['digest'] = 'after';
+      var reads = 0;
+      api.routes['GET /nodes/pve/qemu/9901/config'] = (_) =>
+          (reads++).isEven ? before : detached;
+      List<Map<String, String>> bodies() => [
+        for (final (i, p) in api.paths.indexed)
+          if (p == 'POST /nodes/pve/qemu/9901/config')
+            Uri.splitQueryString(api.bodies[i]),
+      ];
+
+      final out = await pve.changeHardware(
+        vm,
+        hw,
+        const VirtHwRemoveDisk(key: 'scsi0', deleteVolume: true),
+      );
+      expect(out.volumeKept, isFalse);
+      expect(bodies().last, {'delete': 'unused0', 'digest': 'after'});
+
+      await pve.changeHardware(
+        vm,
+        hw,
+        const VirtHwRemoveDevice(key: 'tpmstate0'),
+      );
+      expect(bodies()[bodies().length - 2]['delete'], 'tpmstate0');
+      expect(bodies().last, {'delete': 'unused1', 'digest': 'after'});
     });
 
     test('a container: PUT, a mount point and an interface named for it',
@@ -2688,6 +2797,22 @@ void main() {
       });
     });
 
+    test('a bus change drops what the new bus does not take', () async {
+      // `virtio0` as `qemuCreateBody` makes it, with `iothread=1`, which
+      // SATA and IDE refuse.
+      final config = (fixture('hw_vm_devices_config.json')! as Map)
+          .cast<String, Object?>();
+      config['virtio0'] = 'local-lvm:vm-9921-disk-0,iothread=1,ro=1,size=1G';
+      final api = devApi()
+        ..routes['GET /nodes/pve/qemu/9921/config'] = ((_) => config);
+      final pve = api.backend(token);
+      final hw = await pve.hardware(vm);
+      await pve.changeHardware(vm, hw, const VirtHwUpdateDisk(key: 'virtio0', bus: 'sata'));
+      expect(sent(api)['sata0'], 'local-lvm:vm-9921-disk-0,size=1G');
+      await pve.changeHardware(vm, hw, const VirtHwUpdateDisk(key: 'virtio0', bus: 'scsi'));
+      expect(sent(api)['scsi0'], 'local-lvm:vm-9921-disk-0,iothread=1,ro=1,size=1G');
+    });
+
     test('NIC model and MAC, devices, card', () async {
       final api = devApi();
       final pve = api.backend(token);
@@ -3035,6 +3160,67 @@ void main() {
       expect(api.paths, contains('PUT /nodes/pve/network'));
     });
 
+    test('a pending change stripping the management address is refused '
+        'without the node\'s own word on what it uses', () async {
+      // The listing is the pending configuration: vmbr0 has neither its
+      // address nor its gateway there any more.
+      final api = api0()
+        ..routes['PUT /nodes/pve/network'] = ((_) => _Api.upid)
+        ..routes['GET /nodes/pve/network'] = ((_) => ResponseBody.fromString(
+          jsonEncode({
+            'data': [
+              {'iface': 'vmbr0', 'type': 'bridge', 'bridge_ports': 'nic0'},
+              {'iface': 'vmbr9', 'type': 'bridge'},
+            ],
+            'changes': '--- a\n+++ b\n@@ -1,5 +1,3 @@\n'
+                '-iface vmbr0 inet static\n'
+                '-\taddress 192.168.31.20/24\n'
+                '-\tgateway 192.168.31.1\n'
+                '+iface vmbr0 inet manual\n'
+                ' \tbridge-ports nic0\n',
+          }),
+          200,
+          headers: {
+            Headers.contentTypeHeader: [Headers.jsonContentType],
+          },
+        ));
+      final e = await _err(api.backend(token).manage(const VirtNetworkApply('pve')));
+      expect(e.type, VirtErrType.unsupported);
+      expect(e.message, contains('vmbr0'));
+      expect(api.paths, isNot(contains('PUT /nodes/pve/network')));
+    });
+
+    test('a node\'s network changes run one at a time', () async {
+      final saved = Completer<void>();
+      final api = api0()
+        ..routes['GET /nodes/pve/network'] = ((_) => [
+          {'iface': 'vmbr7', 'type': 'bridge'},
+        ])
+        ..routes['GET /nodes/pve/network/vmbr7'] = ((_) => {'iface': 'vmbr7', 'type': 'bridge'})
+        ..routes['PUT /nodes/pve/network/vmbr7'] = ((_) => saved.future.then((_) => null))
+        ..routes['DELETE /nodes/pve/network'] = ((_) => null);
+      final pve = api.backend(token);
+      const net = VirtNetwork(id: 'pve/vmbr7', name: 'vmbr7', node: 'pve', mode: 'bridge');
+      final edit = pve.manage(const VirtNetworkEditBridge(net, ports: 'nic1'));
+      while (!api.paths.contains('PUT /nodes/pve/network/vmbr7')) {
+        await Future<void>.delayed(const Duration(milliseconds: 1));
+      }
+      final revert = pve.manage(const VirtNetworkRevert('pve'));
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      expect(
+        api.paths,
+        isNot(contains('DELETE /nodes/pve/network')),
+        reason: 'the revert would drop the edit being saved',
+      );
+      saved.complete();
+      await Future.wait([edit, revert]);
+      expect(api.paths.last, 'DELETE /nodes/pve/network');
+      // A failed change does not hold the next one up.
+      api.routes['PUT /nodes/pve/network/vmbr7'] = (_) => _Api._status(500);
+      await _err(pve.manage(const VirtNetworkEditBridge(net, ports: 'nic1')));
+      await pve.manage(const VirtNetworkRevert('pve'));
+    });
+
     test('a bridge edit sends the addresses it has back', () async {
       final api = api0()
         ..routes['GET /nodes/pve/network'] = ((_) => [
@@ -3167,6 +3353,7 @@ class _Api {
   Future<void>? ticketGate;
 
   final paths = <String>[];
+  final hosts = <String>[];
   final queries = <String>[];
   final bodies = <String>[];
   final headers = <Map<String, Object?>>[];
@@ -3184,6 +3371,7 @@ class _Api {
     String sshPassword = 'sshpw',
     DateTime Function()? now,
     String? liveNet,
+    Duration taskTimeout = const Duration(minutes: 10),
   }) => PveBackend(
     serverId: 'srv',
     config: config,
@@ -3194,6 +3382,7 @@ class _Api {
     connect: (_, _) => throw StateError('no network in this test'),
     adapter: () => _Adapter(this),
     taskPoll: const Duration(milliseconds: 1),
+    taskTimeout: taskTimeout,
     now: now,
   );
 
@@ -3201,11 +3390,14 @@ class _Api {
     final path = o.uri.path.replaceFirst('/api2/json', '');
     final key = '${o.method} $path';
     paths.add(key);
+    hosts.add(o.uri.host);
     queries.add(o.uri.query);
     bodies.add(body);
     headers.add(Map.of(o.headers));
     if (routes[key] case final route?) {
-      final answer = route(body);
+      var answer = route(body);
+      // A route may hold its answer back (a request still in flight).
+      if (answer is Future) answer = await answer;
       return answer is ResponseBody ? answer : _json(answer);
     }
 

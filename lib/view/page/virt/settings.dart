@@ -400,10 +400,10 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
 
   _Group _cloudInitGroup(bool busy) {
     final async = ref.watch(_ciProvider);
-    final ci = async.value;
+    final read = async.value;
     const title = 'cloud-init';
     final right = _pve ? 'cloudinit' : 'NoCloud';
-    if (ci == null) {
+    if (read == null) {
       final e = async.error;
       return _Group(
         key: 'cloud-init',
@@ -436,9 +436,13 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
     // is being edited.
     final base = _ciBase;
     if (base == null ||
-        (base.revision != ci.revision && !_ciChanges(base, _ciEditOf(base)))) {
-      _ciFill(ci);
+        (base.revision != read.revision && !_ciChanges(base, _ciEditOf(base)))) {
+      _ciFill(read);
     }
+    // The draft is an edit of the read it was filled from, and is checked
+    // and saved as one: its revision goes back, so a change made elsewhere
+    // since is the host's conflict rather than overwritten.
+    final ci = _ciBase!;
     final edit = _ciEditOf(ci);
     final changed = _ciChanges(ci, edit);
     final issue = changed
@@ -618,7 +622,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
               libL10n.cancel,
               icon: Icons.close,
               key: 'ci:cancel',
-              onTap: locked ? null : () => setState(() => _ciFill(ci)),
+              onTap: locked ? null : () => setState(() => _ciFill(read)),
             ),
             _Action(
               libL10n.save,
@@ -682,10 +686,10 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
     // pools that take a volume.
     final pools = _clonePools();
     final nodes = _cloneNodes();
-    final targetIssue = !full
+    final targetIssue = _pve && !full
         // A linked clone shares the template's disks: PVE refuses a storage
         // and a node on it (`parameter 'storage' not allowed for linked
-        // clones`).
+        // clones`). libvirt's empty disks are made in the pool picked.
         ? (_cloneStorage != null || _cloneNode != null
               ? VirtCreateIssue.cloneLinkedTarget
               : null)
@@ -699,6 +703,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
                 storages: pools,
                 storage: _cloneStorage,
                 full: full,
+                kind: _guest.kind,
                 targetNode: _cloneNode,
               )
         : null;
@@ -738,7 +743,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
               ? null
               : (on) => setState(() => _cloneFull = on),
         ),
-        if (_caps.cloneTarget && full && pools.isNotEmpty)
+        if (_caps.cloneTarget && (full || !_pve) && pools.isNotEmpty)
           _choice([
             _Choice(
               key: 'clone:target:same',

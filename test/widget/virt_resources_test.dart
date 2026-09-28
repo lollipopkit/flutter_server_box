@@ -269,6 +269,9 @@ class _FakeHost extends VirtHostNotifier {
   @override
   Future<List<VirtVolume>> volumes(VirtStoragePool pool) async {
     _calls.add('volumes ${pool.id}');
+    if (_failVolumes) {
+      throw const VirtErr(type: VirtErrType.unreachable, message: 'timeout');
+    }
     return _volumes[pool.id] ?? const [];
   }
 
@@ -747,6 +750,122 @@ void main() {
       expect(find.text(app_locale.l10n.virtPoolInUse), findsOneWidget);
     });
 
+    testWidgets('a pool whose volumes are not known cannot be stopped', (
+      tester,
+    ) async {
+      // A failed listing is no proof nothing on it is used.
+      _failVolumes = true;
+      addTearDown(() => _failVolumes = false);
+      await pump(tester, wide: true);
+      await openPool(tester);
+      expect(btn(tester, 'pool:stop').onTap, isNull);
+      expect(btn(tester, 'pool:delete').onTap, isNull);
+    });
+
+    testWidgets('PVE: a storage used on another node cannot be disabled', (
+      tester,
+    ) async {
+      // `/storage/local-lvm` is the cluster's: nothing used on this node,
+      // a guest's disk on the other.
+      final saved = _volumes['pve/local-lvm'];
+      _volumes['pve/local-lvm'] = [saved!.last];
+      _volumes['pve2/local-lvm'] = [
+        const VirtVolume(
+          id: 'local-lvm:vm-100-disk-1',
+          name: 'vm-100-disk-1',
+          format: 'raw',
+          users: [VirtGuestRef(vmid: 100)],
+        ),
+      ];
+      _pools.add(
+        const VirtStoragePool(
+          id: 'pve2/local-lvm',
+          name: 'local-lvm',
+          node: 'pve2',
+          type: 'lvmthin',
+        ),
+      );
+      addTearDown(() {
+        _volumes['pve/local-lvm'] = saved;
+        _volumes.remove('pve2/local-lvm');
+        _pools.removeLast();
+      });
+      await pump(tester, wide: true);
+      await openPool(tester);
+      expect(_calls, contains('volumes pve2/local-lvm'));
+      expect(btn(tester, 'pool:stop').onTap, isNull);
+      expect(btn(tester, 'pool:delete').onTap, isNull);
+      expect(find.text(app_locale.l10n.virtPoolInUse), findsOneWidget);
+    });
+
+    testWidgets('PVE: disabling a storage says it is the cluster\'s', (
+      tester,
+    ) async {
+      // Nothing on it used anywhere: the switch is offered, and asks.
+      final saved = _volumes['pve/local-lvm'];
+      _volumes['pve/local-lvm'] = [saved!.last];
+      addTearDown(() => _volumes['pve/local-lvm'] = saved);
+      await pump(tester, wide: true);
+      await openPool(tester);
+      expect(btn(tester, 'pool:stop').onTap, isNotNull);
+      await tester.tap(find.byKey(const ValueKey('pool:stop')));
+      await _settle(tester);
+      expect(find.text(app_locale.l10n.virtStorageClusterWide), findsOneWidget);
+      await tester.tap(find.text(libL10n.cancel));
+      await _settle(tester);
+    });
+
+    testWidgets('a left-over volume is deleted, never attached', (
+      tester,
+    ) async {
+      // VMID 999 has no guest: the volume is unused, and still 999's.
+      final saved = _volumes['pve/local-lvm'];
+      _volumes['pve/local-lvm'] = [
+        saved!.first,
+        const VirtVolume(
+          id: 'local-lvm:vm-999-disk-0',
+          name: 'vm-999-disk-0',
+          format: 'raw',
+          content: 'images',
+          capacity: 1 << 30,
+          users: [VirtGuestRef(vmid: 999)],
+        ),
+      ];
+      addTearDown(() => _volumes['pve/local-lvm'] = saved);
+      await pump(tester, wide: true);
+      await openPool(tester);
+      await tester.tap(find.byKey(const ValueKey('hw:disc:vol:local-lvm:vm-999-disk-0')));
+      await _settle(tester);
+      expect(find.byKey(const ValueKey('pool:vol:vm-999-disk-0:attach')), findsNothing);
+      expect(btn(tester, 'pool:vol:vm-999-disk-0:delete').onTap, isNotNull);
+    });
+
+    testWidgets('narrow: switching pools leaves the last one\'s form behind', (
+      tester,
+    ) async {
+      _pools.add(
+        const VirtStoragePool(
+          id: 'pve/local',
+          name: 'local',
+          node: 'pve',
+          type: 'dir',
+          content: ['images'],
+        ),
+      );
+      addTearDown(_pools.removeLast);
+      await pump(tester, wide: false);
+      await openPool(tester);
+      await tester.tap(find.byKey(const ValueKey('pool:vol:new')));
+      await _settle(tester);
+      expect(find.byKey(const ValueKey('pool:vol:create')), findsOneWidget);
+
+      await tester.tap(find.byType(SessionSwitcherLabel).last);
+      await _settle(tester);
+      await tester.tap(find.text('local'));
+      await _settle(tester);
+      expect(find.byKey(const ValueKey('pool:vol:create')), findsNothing);
+    });
+
     testWidgets('an unused volume is deleted after a red confirmation', (
       tester,
     ) async {
@@ -870,12 +989,18 @@ void main() {
     expect(find.text(app_locale.l10n.virtErrUnreachable), findsOneWidget);
     expect(find.byTooltip(libL10n.retry), findsOneWidget);
 
+    // A retry that fails again is shown in the card again, not thrown.
+    await tester.tap(find.byTooltip(libL10n.retry));
+    await _settle(tester);
+    expect(find.text(app_locale.l10n.virtErrUnreachable), findsOneWidget);
+    expect(_calls.where((c) => c == 'pools').length, 2);
+
     // Asked again on the retry, and listed once it answers.
     _failPools = false;
     await tester.tap(find.byTooltip(libL10n.retry));
     await _settle(tester);
     expect(find.byKey(const ValueKey('pool:pve/local-lvm')), findsOneWidget);
-    expect(_calls.where((c) => c == 'pools').length, 2);
+    expect(_calls.where((c) => c == 'pools').length, 3);
   });
 
   _phase10(pump);
@@ -883,6 +1008,7 @@ void main() {
 }
 
 bool _failPools = false;
+bool _failVolumes = false;
 
 Future<void> _settle(WidgetTester tester) async {
   for (var i = 0; i < 8; i++) {
@@ -1052,6 +1178,75 @@ void _phase10(
       expect(_sent, isEmpty, reason: 'cancelled');
     });
 
+    testWidgets('bridge mode sends no static hosts, and keeps them', (
+      tester,
+    ) async {
+      addTearDown(() => _networks = _defaultNetworks);
+      _networks = const [
+        VirtNetwork(
+          id: 'lab',
+          name: 'lab',
+          mode: 'nat',
+          cidrs: ['192.168.150.1/24'],
+          hosts: [
+            VirtNetHost(mac: '52:54:00:aa:bb:01', ip: '192.168.150.10'),
+          ],
+        ),
+      ];
+      await pump(tester, wide: true);
+      await tester.tap(segment(libL10n.network));
+      await _settle(tester);
+      await tester.tap(find.byKey(const ValueKey('net:lab')));
+      await _settle(tester);
+      await tester.tap(find.byKey(const ValueKey('net:edit')));
+      await _settle(tester);
+      await tester.tap(find.byKey(const ValueKey('net:edit:mode:bridge')));
+      await _settle(tester);
+      await tester.enterText(find.byKey(const ValueKey('net:edit:bridge')), 'br0');
+      await _settle(tester);
+      await tester.tap(find.text(libL10n.ok));
+      await _settle(tester);
+      final sent = _sent.single as VirtNetworkEdit;
+      expect((sent.mode, sent.bridge), ('bridge', 'br0'));
+      expect(sent.hosts, isEmpty);
+    });
+
+    testWidgets('PVE: a bridge with only IPv6 has no IPv4 address to fix', (
+      tester,
+    ) async {
+      addTearDown(() => _networks = _defaultNetworks);
+      _state = VirtHostState(serverId: _pve, kind: VirtHostKind.pve, data: _snapshot(_manageCaps));
+      _networks = const [
+        VirtNetwork(
+          id: 'pve/vmbr6',
+          name: 'vmbr6',
+          node: 'pve',
+          mode: 'bridge',
+          active: true,
+          cidrs: ['fd00:6::1/64'],
+          ports: ['nic2'],
+        ),
+      ];
+      await pump(tester, wide: true);
+      await tester.tap(segment(libL10n.network));
+      await _settle(tester);
+      await tester.tap(find.byKey(const ValueKey('net:pve/vmbr6')));
+      await _settle(tester);
+      await tester.tap(find.byKey(const ValueKey('net:edit')));
+      await _settle(tester);
+      expect(
+        tester.widget<Input>(find.byKey(const ValueKey('net:edit:address'))).controller!.text,
+        isEmpty,
+      );
+      // A ports-only edit goes through; the IPv6 address is the host's to keep.
+      await tester.enterText(find.byKey(const ValueKey('net:edit:ports')), 'nic2 nic3');
+      await _settle(tester);
+      await tester.tap(find.text(libL10n.ok));
+      await _settle(tester);
+      final sent = _sent.single as VirtNetworkEditBridge;
+      expect((sent.ports, sent.cidr), ('nic2 nic3', ''));
+    });
+
     testWidgets('PVE: the address goes with its prefix; the host\'s own is not offered', (
       tester,
     ) async {
@@ -1159,6 +1354,35 @@ void _phase8(
         findsOneWidget,
       );
       expect(find.byKey(const ValueKey('snapshot:new')), findsNothing);
+    });
+
+    testWidgets('a pull reads the chain and the refusal again', (
+      tester,
+    ) async {
+      _FakeHost._chain['qemu/100'] = _chainOf(
+        refusal: 'disk vda is raw: an external snapshot needs a qcow2 image',
+      );
+      await pump(tester, wide: true);
+      await openSnapshots(tester, 'web-01');
+      expect(find.byKey(const ValueKey('snapshot:new')), findsNothing);
+
+      // Converted on the host since: a pull says so, not only the list.
+      _FakeHost._chain['qemu/100'] = _chainOf();
+      _calls.clear();
+      await tester.fling(
+        find
+            .ancestor(
+              of: find.textContaining('disk vda is raw'),
+              matching: find.byType(ListView),
+            )
+            .first,
+        const Offset(0, 400),
+        1000,
+      );
+      await _settle(tester);
+      expect(_calls, contains('chain qemu/100'));
+      expect(find.textContaining('disk vda is raw'), findsNothing);
+      expect(find.byKey(const ValueKey('snapshot:new')), findsWidgets);
     });
 
     testWidgets('the form offers the external kind and the overlay pool', (

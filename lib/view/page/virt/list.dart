@@ -255,14 +255,9 @@ class _VirtHostColumn extends ConsumerWidget {
         (data?.guests.any((g) => st.displayState(g).isTransient) ?? false);
 
     final caps = data?.capabilities;
-    // A section the host does not have (the host changed, or its answer
-    // did): the guests, which every host has.
-    final shownSection = switch (section) {
-      VirtSection.storage when caps?.storage ?? false => section,
-      VirtSection.network when caps?.network ?? false => section,
-      VirtSection.backup when caps?.backupJobs ?? false => section,
-      _ => VirtSection.guests,
-    };
+    // The page keeps [section] to what the host has; until the host has
+    // answered, the guests — which every host has — are what is loading.
+    final shownSection = caps == null ? VirtSection.guests : section;
     final Widget body = switch (shownSection) {
       VirtSection.storage => VirtPoolList(
         serverId: serverId,

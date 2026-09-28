@@ -17,6 +17,10 @@ part 'text_consoles.g.dart';
 class VirtTextConsoles extends _$VirtTextConsoles {
   final _parked = <String, TerminalSession>{};
 
+  /// Per console id, the first [TerminalSession.serial] made after [close]
+  /// last ended it: a session older than that belongs to what was closed.
+  final _closedBefore = <String, int>{};
+
   @override
   Set<String> build() {
     ref.onDispose(() {
@@ -32,15 +36,23 @@ class VirtTextConsoles extends _$VirtTextConsoles {
   ///
   /// A session whose shell has already ended — it failed to connect, or the
   /// guest's console hung up, which is also what took the page away — has
-  /// nothing to come back to, and is closed instead.
+  /// nothing to come back to, and is closed instead. So is one that was
+  /// already running when [close] ended the console: it was on a page then,
+  /// and that page is only now handing it over.
   void park(
     String id,
     TerminalSession session, {
     required String name,
     required String host,
   }) {
-    _parked.remove(id)?.close();
-    if (session.foreground == null) {
+    final previous = _parked.remove(id);
+    if (previous != null) {
+      previous.onForegroundDone = null;
+      ref.read(sessionKeepAliveProvider.notifier).unregister(id);
+      if (!identical(previous, session)) previous.close();
+    }
+    if (session.foreground == null ||
+        session.serial < (_closedBefore[id] ?? 0)) {
       session.close();
       _publish();
       return;
@@ -71,8 +83,11 @@ class VirtTextConsoles extends _$VirtTextConsoles {
     return session;
   }
 
-  /// Ends console [id]'s shell, and its connection with it.
+  /// Ends console [id]'s shell, and its connection with it — including one a
+  /// page still shows: that page parks it as it goes, and [park] closes it
+  /// then. A console opened after this is not affected.
   void close(String id) {
+    _closedBefore[id] = TerminalSession.nextSerial;
     final session = _parked.remove(id);
     if (session == null) return;
     session.onForegroundDone = null;

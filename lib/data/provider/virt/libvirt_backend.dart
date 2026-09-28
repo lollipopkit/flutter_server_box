@@ -939,7 +939,43 @@ class LibvirtBackend implements VirtBackend {
         }
       }
       seed = xml.seed;
-      chain = await _snapshotFiles(guest, targets);
+      if (targets.isNotEmpty) {
+        final deps = await _dependents(guest);
+        final tops = deps.tops;
+        bool othersNeed(String path) =>
+            deps.backers[path]?.any((b) => !tops.values.contains(b)) ?? false;
+        targets.removeWhere((t) {
+          final use = deps.ours[t];
+          final top = tops[t];
+          final shared =
+              (use != null &&
+                  deps.others.any(
+                    (o) => o.kind == use.kind && o.source == use.source,
+                  )) ||
+              (top != null && othersNeed(top));
+          if (shared) {
+            Loggers.app.warning(
+              'Deleting ${guest.name}: ${use?.source ?? t} is another '
+              "disk's too, it stays",
+            );
+          }
+          return shared;
+        });
+        chain = await _snapshotFiles(guest, targets);
+        final ours = {...tops.values, ...chain.files};
+        final needed = chain.files.where(
+          (f) => deps.backers[f]?.any((b) => !ours.contains(b)) ?? false,
+        );
+        if (needed.isNotEmpty) {
+          // A layer something else is made on: the chain stays whole, since
+          // what that layer is made on would go from under it too.
+          Loggers.app.warning(
+            'Deleting ${guest.name}: ${needed.first} backs another volume, '
+            'its snapshot files stay',
+          );
+          chain = (pools: const <String>[], files: const <String>[]);
+        }
+      }
     }
     await _run(
       _script(
@@ -957,6 +993,57 @@ class LibvirtBackend implements VirtBackend {
       },
       action: true,
     );
+  }
+
+  /// What else on the host depends on [guest]'s disks, read before they are
+  /// deleted: `undefine --storage` deletes a volume however many domains
+  /// have it, and a volume made on another as its backing file breaks with
+  /// it.
+  ///
+  /// [ours] and [others] are the disks of this domain and of every other
+  /// one (`domblklist`); [tops] each of this domain's disks as a path (a
+  /// `type='volume'` disk resolved through its pool); [backers] each
+  /// backing file of a volume in an active pool, with the volumes made on
+  /// it.
+  Future<
+    ({
+      Map<String, LibvirtDiskUse> ours,
+      List<LibvirtDiskUse> others,
+      Map<String, String> tops,
+      Map<String, Set<String>> backers,
+    })
+  >
+  _dependents(VirtGuest guest) async {
+    final pools = await storagePools();
+    final storage = _storage!;
+    final ours = <String, LibvirtDiskUse>{};
+    final others = <LibvirtDiskUse>[];
+    for (final d in storage.disks) {
+      if (d.source == null) continue;
+      if (d.domain == guest.id || d.domain == guest.name) {
+        ours[d.target] = d;
+      } else {
+        others.add(d);
+      }
+    }
+    final byRef = <String, String>{};
+    final backers = <String, Set<String>>{};
+    for (final pool in pools) {
+      if (!pool.active) continue;
+      final (volumes, _) = await _volumes(storage, pool);
+      for (final v in volumes) {
+        final path = v.path;
+        if (path == null) continue;
+        byRef['${pool.id}/${v.name}'] = path;
+        final backing = v.backing;
+        if (backing != null) backers.putIfAbsent(backing, () => {}).add(path);
+      }
+    }
+    final tops = <String, String>{
+      for (final MapEntry(key: target, value: d) in ours.entries)
+        target: ?(d.kind == 'volume' ? byRef[d.source] : d.source),
+    };
+    return (ours: ours, others: others, tops: tops, backers: backers);
   }
 
   /// The files under [targets]' disks that the guest's external snapshots
@@ -1337,7 +1424,9 @@ class LibvirtBackend implements VirtBackend {
               device: i.interface,
               mac: i.mac,
               ip: all.leases
-                  .firstWhereOrNull((l) => l.mac == i.mac)
+                  // The leases are every network's: one MAC can be on two
+                  // isolated networks with an address on each.
+                  .firstWhereOrNull((l) => l.network == n.name && l.mac == i.mac)
                   ?.ip,
             ),
       ],
@@ -1681,10 +1770,14 @@ class LibvirtBackend implements VirtBackend {
       onError: (Object _) => errDone.complete(),
     );
     var cancelled = false;
+    // Completed on cancel, so a read of the file that waits for its next
+    // chunk ends too rather than holding the upload until one arrives.
+    final stopped = Completer<bool>();
     unawaited(
       cancel?.then((_) {
         cancelled = true;
         if (!ready.isCompleted) ready.complete(false);
+        if (!stopped.isCompleted) stopped.complete(false);
         session.kill();
       }),
     );
@@ -1720,11 +1813,19 @@ class LibvirtBackend implements VirtBackend {
       );
       if (go && !cancelled) {
         var sent = 0;
-        await for (final chunk in upload.open()) {
-          if (cancelled) break;
-          await session.write(chunk);
-          sent += chunk.length;
-          onProgress?.call(sent);
+        final chunks = StreamIterator(upload.open());
+        try {
+          while (await Future.any([chunks.moveNext(), stopped.future]) &&
+              !cancelled) {
+            final chunk = chunks.current;
+            await session.write(chunk);
+            sent += chunk.length;
+            onProgress?.call(sent);
+          }
+        } finally {
+          // Not awaited: a source stalled mid-read may take its time to let
+          // go, and the upload has already ended.
+          unawaited(chunks.cancel().catchError((Object _) => null));
         }
       }
       if (!go && !cancelled) {
@@ -1867,6 +1968,9 @@ class LibvirtBackend implements VirtBackend {
               cache: d.cache,
               cloudInit:
                   d.device == 'cdrom' && c.seed != null && d.source == c.seed,
+              // `vol-resize` takes the file; nothing else has a path to grow
+              // at while the domain is stopped (see [changeJson]).
+              resizable: d.sourceType == 'file',
             ),
       ],
       nics: [
@@ -1905,13 +2009,18 @@ class LibvirtBackend implements VirtBackend {
                 (h.vendor != null ? '${h.vendor}:${h.product}' : h.key.substring(4)),
           ),
       ],
-      support: supportOf(info.caps),
+      support: supportOf(
+        info.caps,
+        firmware: info.firmware,
+        secureBootOn: c.secureBoot,
+      ),
       name: name,
       description: info.description,
       renameRunning: false,
       pending: pendingOf(c, info.live),
       revision: info.configXml,
-      configText: info.configXml.trimRight(),
+      // Redacted: [configXml] carries the display passwords.
+      configText: info.configText.trimRight(),
       limits: VirtHwLimits(
         hostCpus: info.hostCpus,
         hostMemoryBytes: hostMem == null ? null : hostMem * 1024,
@@ -1922,8 +2031,16 @@ class LibvirtBackend implements VirtBackend {
   /// What the host's `domcapabilities` allows this domain, as the view's
   /// choices. Without them (an older libvirt, a refusal), the common ground
   /// every QEMU has.
+  ///
+  /// Secure Boot as [createOptions] decides it: a secure loader in
+  /// `domcapabilities` and a [firmware] descriptor carrying the enrolled
+  /// keys — or the domain already has it on, so it can be turned off.
   @visibleForTesting
-  static VirtHwSupport supportOf(LibvirtHwCaps? caps) {
+  static VirtHwSupport supportOf(
+    LibvirtHwCaps? caps, {
+    List<LibvirtFirmware> firmware = const [],
+    bool secureBootOn = false,
+  }) {
     List<String> pick(List<String>? have, List<String> wanted) => have == null
         ? wanted
         : [for (final w in wanted) if (have.contains(w)) w];
@@ -1936,7 +2053,10 @@ class LibvirtBackend implements VirtBackend {
       listen: true,
       gpus: pick(caps?.video, const ['virtio', 'qxl', 'vga', 'cirrus', 'bochs', 'none']),
       uefi: caps?.efi ?? false,
-      secureBoot: caps?.secureBoot ?? false,
+      secureBoot:
+          secureBootOn ||
+          ((caps?.secureBoot ?? false) &&
+              firmware.any((f) => f.secureBoot && f.enrolledKeys)),
       tpm: caps?.tpmEmulator ?? false,
       usb: caps?.hostdev ?? false,
       pci: caps?.hostdev ?? false,
@@ -2291,12 +2411,20 @@ class LibvirtBackend implements VirtBackend {
         return {'op': 'memory', 'memory_mib': mib, 'current_mib': minMib};
       case VirtHwGrowDisk(:final key, :final bytes):
         final disk = diskIn(config, key);
+        final running = diskIn(live, key);
         return {
           'op': 'grow_disk',
           'target': key,
           'bytes': bytes,
           'path': disk?.sourceType == 'file' ? disk?.source : null,
-          'live': diskIn(live, key) != null,
+          // `blockresize` grows what the running domain has at the target:
+          // only the disk the editor shows when the definition has not put
+          // another source there. Otherwise the configured file, offline.
+          'live':
+              running != null &&
+              disk != null &&
+              running.source == disk.source &&
+              running.sourceType == disk.sourceType,
         };
       case VirtHwAddDisk(:final storage, :final gib):
         final taken = {

@@ -206,7 +206,10 @@ class PveBackend implements VirtBackend {
     return Uri.parse(addr);
   }
 
-  String _url(String path) => '$_base/api2/json$path';
+  /// [path] under the API root. Relative: each client resolves it against
+  /// the address it was made for ([_newDio]), so a request of a session or
+  /// login started before [updateConfig] never reaches the new address.
+  String _url(String path) => '/api2/json$path';
 
   static String _seg(Object value) => Uri.encodeComponent('$value');
 
@@ -586,7 +589,7 @@ class PveBackend implements VirtBackend {
       for (final key in const ['Authorization', 'Cookie'])
         if (session.dio.options.headers[key] case final Object v) key: v,
     };
-    final client = _httpClient();
+    final client = _httpClient(PinnedCert(_config.certSha256));
     try {
       return await WebSocket.connect(
         url.toString(),
@@ -1321,7 +1324,10 @@ class PveBackend implements VirtBackend {
   @override
   Future<List<VirtBackupJob>> backupJobs(VirtGuest guest) async {
     final jobs = await allBackupJobs();
-    return [for (final j in jobs) if (j.takes(guest.vmid)) j];
+    return [
+      for (final j in jobs)
+        if (j.takes(guest.vmid, node: guest.node)) j,
+    ];
   }
 
   /// `/cluster/backup` for the datacenter's Backup view. The same
@@ -1775,32 +1781,13 @@ class PveBackend implements VirtBackend {
           }
           await _setConfig(guest, {key: value}, digest: digest);
         case VirtHwRemoveDisk(:final key, :final deleteVolume):
-          final volume = switch (rawOf(await rawConfig(), key)) {
-            final String v => PveResources.volumeOf(v),
-            null => null,
-          };
-          await _setConfig(guest, const {}, delete: [key], digest: digest);
-          if (!deleteVolume || volume == null) break;
-          // Detached, the volume is `unusedN`, and deleting that entry
-          // deletes it. Still attached — a running guest that cannot let go
-          // of it until it stops — it is not there, and is kept.
-          final after = await _configOf(path);
-          final unused = after.entries
-              .where(
-                (e) =>
-                    e.key.startsWith('unused') &&
-                    e.value is String &&
-                    PveResources.volumeOf(e.value! as String) == volume,
-              )
-              .map((e) => e.key)
-              .firstOrNull;
-          if (unused == null) return const VirtHwOutcome(volumeKept: true);
-          await _setConfig(
-            guest,
-            const {},
-            delete: [unused],
-            digest: after['digest'] as String?,
-          );
+          if (!deleteVolume) {
+            await _setConfig(guest, const {}, delete: [key], digest: digest);
+            break;
+          }
+          if (await _dropVolume(guest, key, digest: digest)) {
+            return const VirtHwOutcome(volumeKept: true);
+          }
         case VirtHwAddCdrom(:final media):
           // IDE's secondary master first, as PVE's own create puts one;
           // then the rest of IDE, then SATA.
@@ -1896,14 +1883,15 @@ class PveBackend implements VirtBackend {
             break;
           }
           // Another bus is another option for the same volume, set in the
-          // request that drops the old one. PVE drops the old one from the
-          // boot order too; it is put back as the new one, in its place.
+          // request that drops the old one, less what that bus does not take
+          // (`iothread` on SATA). PVE drops the old one from the boot order
+          // too; it is put back as the new one, in its place.
           final to = _freeKey(config, bus, _busSlots[bus] ?? 1);
           final order = base.boot;
           await _setConfig(
             guest,
             {
-              to: value,
+              to: PveResources.onBus(value, bus),
               if (order != null && order.contains(key))
                 'boot': 'order=${[for (final k in order) k == key ? to : k].join(';')}',
             },
@@ -2098,13 +2086,19 @@ class PveBackend implements VirtBackend {
   }
 
   /// Detaches [key] and deletes its volume: detached, it is `unusedN`, and
-  /// deleting that entry deletes it.
-  Future<void> _dropVolume(VirtGuest guest, String key, {String? digest}) async {
+  /// deleting that entry deletes it. True when the volume was kept: still
+  /// attached — a running guest that cannot let go of it until it stops —
+  /// it is not `unusedN`, and nothing is deleted.
+  ///
+  /// The entry is deleted with the digest of the configuration it was found
+  /// in: another administrator reattaching the volume in between may reuse
+  /// the slot for another volume, which is then refused, not deleted.
+  Future<bool> _dropVolume(VirtGuest guest, String key, {String? digest}) async {
     final path = _guestPath(guest);
     final raw = (await _configOf(path))[key];
     final volume = raw is String ? PveResources.volumeOf(raw) : null;
     await _setConfig(guest, const {}, delete: [key], digest: digest);
-    if (volume == null) return;
+    if (volume == null || volume == 'none') return false;
     final after = await _configOf(path);
     final unused = after.entries
         .where(
@@ -2115,8 +2109,14 @@ class PveBackend implements VirtBackend {
         )
         .map((e) => e.key)
         .firstOrNull;
-    if (unused == null) return;
-    await _setConfig(guest, const {}, delete: [unused]);
+    if (unused == null) return true;
+    await _setConfig(
+      guest,
+      const {},
+      delete: [unused],
+      digest: after['digest'] as String?,
+    );
+    return false;
   }
 
   /// Resource mappings, which any account with `Mapping.Use` can give a
@@ -2469,8 +2469,37 @@ class PveBackend implements VirtBackend {
   /// A storage is cluster configuration (`/storage`), limited to the node it
   /// was made on; a volume and a bridge are a node's. Network changes wait in
   /// the node's `interfaces.new` until [VirtNetworkApply].
+  ///
+  /// A node's network changes run one at a time: they all write the one
+  /// pending file, and an apply or a revert running beside an edit would
+  /// apply what its safety check never saw, or drop an edit just saved.
   @override
-  Future<void> manage(VirtResourceChange change) async {
+  Future<void> manage(VirtResourceChange change) {
+    final node = switch (change) {
+      VirtNetworkCreate(:final node) => node,
+      VirtNetworkEditBridge(:final network) ||
+      VirtNetworkDelete(:final network) => network.node,
+      VirtNetworkApply(:final node) || VirtNetworkRevert(:final node) => node,
+      _ => null,
+    };
+    if (node == null) return _manage(change);
+    final before = _netChanges[node] ?? Future<void>.value();
+    final run = before.then((_) => _manage(change));
+    final done = run.then<void>((_) {}, onError: (Object _) {});
+    _netChanges[node] = done;
+    unawaited(
+      done.whenComplete(() {
+        if (identical(_netChanges[node], done)) _netChanges.remove(node);
+      }),
+    );
+    return run;
+  }
+
+  /// Each node's last network change, which the next one waits for
+  /// ([manage]). Never completes with an error.
+  final _netChanges = <String, Future<void>>{};
+
+  Future<void> _manage(VirtResourceChange change) async {
     try {
       switch (change) {
         case VirtPoolCreate(:final name, :final type, :final source, :final node, :final content):
@@ -2686,12 +2715,22 @@ class PveBackend implements VirtBackend {
   /// Kept per node: an edit or a delete asks without reading them again.
   final _managementIfaces = <String, Set<String>>{};
 
-  Future<Set<String>> _managementOf(String node, Object? listing) async {
+  Future<Set<String>> _managementOf(String node, Object? listing) async =>
+      _management(node, listing, await _liveNet());
+
+  /// [_managementOf] with [live] already read; [also] as
+  /// [virtPveManagementIfaces] takes it.
+  Set<String> _management(
+    String node,
+    Object? listing,
+    VirtPveLiveNet? live, {
+    Set<String> also = const {},
+  }) {
     final raw = listing is List ? listing : const <Object?>[];
-    final live = await _liveNet();
     final management = virtPveManagementIfaces(
       PveResources.parseNetworks(node, raw),
       live: live?.host == node ? live : null,
+      also: also,
       gateways6: {
         for (final e in raw)
           if (e case {'iface': final String iface, 'gateway6': final Object g}
@@ -2703,9 +2742,6 @@ class PveBackend implements VirtBackend {
     return management;
   }
 
-  /// What [_liveNet] last read.
-  VirtPveLiveNet? _lastLive;
-
   /// [virtPveLiveNetScript] on the server; null when it could not be run or
   /// read, which [virtPveManagementIfaces] answers by protecting every
   /// interface with an address.
@@ -2714,10 +2750,10 @@ class PveBackend implements VirtBackend {
     if (exec == null) return null;
     try {
       final r = await (await exec()).run(virtPveLiveNetScript, entry: 'sh');
-      return _lastLive = virtPveParseLiveNet(r.stdout);
+      return virtPveParseLiveNet(r.stdout);
     } catch (e) {
       Loggers.app.info('PVE live network probe: $e');
-      return _lastLive = null;
+      return null;
     }
   }
 
@@ -2758,11 +2794,21 @@ class PveBackend implements VirtBackend {
     );
     final diff = body is Map ? body['changes'] : null;
     if (diff is! String || diff.trim().isEmpty) return;
-    final management = await _managementOf(node, body is Map ? body['data'] : null);
-    final live = _lastLive;
-    final touched = virtPveDiffIfaces(
-      diff,
-      interfaces: live != null && live.host == node ? live.interfaces : null,
+    final probed = await _liveNet();
+    final live = probed?.host == node ? probed : null;
+    final touched = virtPveDiffIfaces(diff, interfaces: live?.interfaces);
+    // The listing is the pending configuration: an interface it no longer
+    // gives a gateway — or, without the node's own word on what it uses, an
+    // address — may be the one the node is managed through until this is
+    // applied.
+    final management = _management(
+      node,
+      body is Map ? body['data'] : null,
+      live,
+      also: {
+        ...touched.oldGateways,
+        if (live == null) ...touched.oldAddressed,
+      },
     );
     final hit = touched.ifaces.intersection(management);
     if (touched.unknown || hit.isNotEmpty) {
@@ -3000,6 +3046,9 @@ class PveBackend implements VirtBackend {
     }
     try {
       final ticket = _setTicket(pending.dio, data);
+      if (pending.generation != _generation || !identical(_tfa, pending)) {
+        return;
+      }
       final release = await _fetchRelease(pending.dio);
       if (pending.generation != _generation || !identical(_tfa, pending)) {
         return;
@@ -3163,6 +3212,9 @@ class PveBackend implements VirtBackend {
         case PveAuth.password:
           ticket = await _login(dio, generation);
       }
+      // Stale (the configuration changed during the login): nothing more is
+      // sent with its credentials.
+      if (generation != _generation) return;
       final release = await _fetchRelease(dio);
       if (generation != _generation) return;
       _release = release ?? _release;
@@ -3433,10 +3485,17 @@ class PveBackend implements VirtBackend {
         );
       }
       if (_now().isAfter(deadline)) {
-        // Still running: the state the next refresh reads says what became
-        // of it. Not a failure.
+        // Neither a success nor a failure: the task goes on on the host. Not
+        // reported as done, so nothing that needs its result (a resize after
+        // an import, a start after a creation) runs against a guest it still
+        // locks, and a long backup is not called complete before it is.
         Loggers.app.info('PVE task still running after $taskTimeout: $upid');
-        return;
+        throw VirtErr(
+          type: VirtErrType.actionFailed,
+          message:
+              'Still running on $node after ${taskTimeout.inMinutes} min; '
+              'its task log on the host says how it ends: $upid',
+        );
       }
       await Future<void>.delayed(taskPoll);
     }
@@ -3458,16 +3517,21 @@ class PveBackend implements VirtBackend {
   // Transport and TLS
   // ---------------------------------------------------------------------------
 
+  /// A client bound to the current address and certificate pin: a
+  /// configuration edit makes new clients and never redirects this one.
   Dio _newDio() {
+    final pin = PinnedCert(_config.certSha256);
     final dio = Dio(
       BaseOptions(
+        baseUrl: '$_base',
         connectTimeout: connectTimeout,
         sendTimeout: requestTimeout,
         receiveTimeout: requestTimeout,
       ),
     );
     dio.httpClientAdapter =
-        _adapter?.call() ?? IOHttpClientAdapter(createHttpClient: _httpClient);
+        _adapter?.call() ??
+        IOHttpClientAdapter(createHttpClient: () => _httpClient(pin));
     return dio;
   }
 
@@ -3480,21 +3544,20 @@ class PveBackend implements VirtBackend {
   /// been received.
   static const idleTimeout = Duration(seconds: 3);
 
-  HttpClient _httpClient() {
+  HttpClient _httpClient(PinnedCert pin) {
     final client = HttpClient()
       ..connectionTimeout = connectTimeout
       ..idleTimeout = idleTimeout;
     client.connectionFactory = (url, proxyHost, proxyPort) async =>
-        _connectTo(url);
+        _connectTo(url, pin);
     return client;
   }
 
   /// A connection for [url]: the dialer's socket, secured here for `https` so
   /// the certificate decision is this class's and not `HttpClient`'s.
-  ConnectionTask<Socket> _connectTo(Uri url) {
+  ConnectionTask<Socket> _connectTo(Uri url, PinnedCert pin) {
     final task = _connect(url.host, url.port);
     if (!url.isScheme('https') && !url.isScheme('wss')) return task;
-    final pin = PinnedCert(_config.certSha256);
     X509Certificate? refused;
     final secure = task.socket.then((socket) async {
       try {

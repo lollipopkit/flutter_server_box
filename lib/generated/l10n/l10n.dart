@@ -6955,7 +6955,7 @@ abstract class AppLocalizations {
   /// Settings view: the guest's description is too long or has control characters.
   ///
   /// In en, this message translates to:
-  /// **'At most {max} characters, and no control characters.'**
+  /// **'At most {max} bytes (UTF-8), and no control characters.'**
   String virtSetIssueDescription(int max);
 
   /// Settings view index note: the guest does not start with the host.
@@ -7610,6 +7610,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Stop the pool {name}? Its volumes cannot be listed or created until it starts again.'**
   String virtPoolStopAsk(String name);
+
+  /// PVE storage disable/remove confirmation: the change is cluster-wide, not per node.
+  ///
+  /// In en, this message translates to:
+  /// **'This applies to every node of the cluster that has this storage.'**
+  String get virtStorageClusterWide;
 
   /// Confirm disabling a PVE storage.
   ///

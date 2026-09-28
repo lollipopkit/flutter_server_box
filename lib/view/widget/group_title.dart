@@ -95,12 +95,19 @@ class GroupTitle extends StatelessWidget {
   /// The shortest rule worth drawing between the name and the value.
   static const _ruleMin = 17.0;
 
+  /// [text]'s width as `Text` lays it out: [style] over the inherited one
+  /// (the theme's font family and fallbacks), which `Text` merges and a bare
+  /// painter does not.
   static double _measure(BuildContext context, String text, TextStyle style) {
+    final inherited = DefaultTextStyle.of(context);
     final painter = TextPainter(
-      text: TextSpan(text: text, style: style),
+      text: TextSpan(text: text, style: inherited.style.merge(style)),
       maxLines: 1,
       textDirection: Directionality.of(context),
       textScaler: MediaQuery.textScalerOf(context),
+      textWidthBasis: inherited.textWidthBasis,
+      textHeightBehavior: inherited.textHeightBehavior,
+      locale: Localizations.maybeLocaleOf(context),
     )..layout();
     final width = painter.width;
     painter.dispose();

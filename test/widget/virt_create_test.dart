@@ -5,6 +5,8 @@
 /// (`virt_hardware_test.dart`).
 library;
 
+import 'dart:async';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/generated/l10n/lib_l10n.dart';
 import 'package:flutter/material.dart';
@@ -106,6 +108,11 @@ const _libvirtContent = [
 
 var _options = const VirtCreateOptions();
 
+/// What a test puts in place of the host's nodes, storages and volumes.
+List<VirtNode>? _nodes;
+List<VirtStoragePool>? _pools;
+Future<List<VirtVolume>> Function(VirtStoragePool pool)? _volumesOf;
+
 class _FakeHost extends VirtHostNotifier {
   _FakeHost(this.kind);
 
@@ -121,7 +128,7 @@ class _FakeHost extends VirtHostNotifier {
       host: VirtHost(
         serverId: _host,
         kind: kind,
-        nodes: [if (_pve) const VirtNode(name: 'pve', maxCpu: 8)],
+        nodes: _nodes ?? [if (_pve) const VirtNode(name: 'pve', maxCpu: 8)],
       ),
       guests: [
         VirtGuest(
@@ -147,12 +154,14 @@ class _FakeHost extends VirtHostNotifier {
 
   @override
   Future<List<VirtStoragePool>> storagePools() async =>
-      _pve ? _pveStorages : const [_libvirtPool];
+      _pools ?? (_pve ? _pveStorages : const [_libvirtPool]);
 
   @override
-  Future<List<VirtVolume>> volumes(VirtStoragePool pool) async => _pve
-      ? (pool.id == 'pve/local' ? _pveContent : const [])
-      : _libvirtContent;
+  Future<List<VirtVolume>> volumes(VirtStoragePool pool) async =>
+      _volumesOf?.call(pool) ??
+      (_pve
+          ? (pool.id == 'pve/local' ? _pveContent : const [])
+          : _libvirtContent);
 
   @override
   Future<List<VirtNetwork>> networks() async => _pve
@@ -177,6 +186,9 @@ void main() {
     getIt.registerSingleton<ServerStore>(ServerStore());
     _created.clear();
     _options = const VirtCreateOptions();
+    _nodes = null;
+    _pools = null;
+    _volumesOf = null;
   });
 
   tearDown(() async {
@@ -273,7 +285,7 @@ void main() {
     await type(tester, 'create:name', 'web-02');
     // No media is a choice of its own (a network boot).
     expect(key('create:media:none'), findsOneWidget);
-    await tap(tester, key('create:media:local:iso/debian-13.iso'));
+    await tap(tester, key('create:media:pve/local/local:iso/debian-13.iso'));
     await tap(tester, key('hw:step:create-cores:inc'));
     await tap(tester, key('hw:step:create-vmid:inc'));
     await tap(tester, seg('create:bus', 'sata'));
@@ -304,7 +316,7 @@ void main() {
   ) async {
     _options = const VirtCreateOptions(uefi: true, tpm: true);
     await pump(tester);
-    await tap(tester, key('create:media:local:iso/Win11_24H2.iso'));
+    await tap(tester, key('create:media:pve/local/local:iso/Win11_24H2.iso'));
     expect(text(l10n().virtCreateWindowsTitle), findsOneWidget);
     await tap(tester, key('hw:toggle:create:tpm'));
     expect(text(l10n().virtCreateWindowsTitle), findsNothing);
@@ -353,7 +365,7 @@ void main() {
     expect(text('appliance.ova'), findsNothing);
     expect(text('debian-13.iso'), findsNothing);
     expect(text(l10n().virtCreateImageMissing), findsOneWidget);
-    await tap(tester, key('create:image:local:import/debian-13-genericcloud.qcow2'));
+    await tap(tester, key('create:image:pve/local/local:import/debian-13-genericcloud.qcow2'));
 
     // An account needs a way in.
     await type(tester, 'create:ci:user', 'Admin');
@@ -404,7 +416,7 @@ void main() {
     // An unused qcow2 only.
     expect(text('noble.img'), findsOneWidget);
     expect(text('web.qcow2'), findsNothing);
-    await tap(tester, key('create:image:noble.img'));
+    await tap(tester, key('create:image:images/noble.img'));
     // The hostname follows the name, as a DNS name.
     expect(
       tester.widget<TextField>(find.descendant(of: key('create:ci:hostname'), matching: find.byType(TextField))).controller?.text,
@@ -443,7 +455,10 @@ void main() {
     await pump(tester, kind: VirtHostKind.libvirt);
     await type(tester, 'create:name', 'plain');
     await tap(tester, seg('create:source', l10n().virtCloudImage));
-    await tap(tester, key('create:image:noble.img'));
+    // Nothing else says the image is missing: the host would make an empty
+    // disk.
+    expect(enabled(tester), isFalse);
+    await tap(tester, key('create:image:images/noble.img'));
     expect(key('create:ci:no-tool'), findsOneWidget);
     expect(key('create:ci:user'), findsNothing);
     // Neither firmware nor bus to choose: the host offers one of each.
@@ -453,6 +468,88 @@ void main() {
     expect(spec.image?.id, 'noble.img');
     expect(spec.cloudInit, isNull);
     expect(spec.uefi, isFalse);
+  });
+
+  testWidgets('libvirt: a volume named alike in two pools is two choices', (
+    tester,
+  ) async {
+    const other = VirtStoragePool(id: 'isos', name: 'isos', type: 'dir');
+    _pools = const [_libvirtPool, other];
+    _volumesOf = (pool) async => [
+      VirtVolume(
+        id: 'debian.iso',
+        name: 'debian.iso',
+        format: 'iso',
+        path: '/${pool.id}/debian.iso',
+      ),
+    ];
+    await pump(tester, kind: VirtHostKind.libvirt);
+    await type(tester, 'create:name', 'vm-1');
+    await tap(tester, key('create:media:isos/debian.iso'));
+    final spec = await submit(tester);
+    expect(spec.media?.path, '/isos/debian.iso');
+  });
+
+  testWidgets('PVE: another node\'s volumes are not offered while its own load',
+      (tester) async {
+    _nodes = const [
+      VirtNode(name: 'pve', maxCpu: 8),
+      VirtNode(name: 'pve2', maxCpu: 8),
+    ];
+    // Both nodes have a storage called `local`, as PVE installs them.
+    _pools = [
+      for (final n in ['pve', 'pve2']) ...[
+        VirtStoragePool(
+          id: '$n/local',
+          name: 'local',
+          node: n,
+          type: 'dir',
+          content: const ['vztmpl'],
+        ),
+        VirtStoragePool(
+          id: '$n/local-lvm',
+          name: 'local-lvm',
+          node: n,
+          type: 'lvmthin',
+          content: const ['images', 'rootdir'],
+          available: 100 << 30,
+        ),
+      ],
+    ];
+    final second = Completer<List<VirtVolume>>();
+    _volumesOf = (pool) async => switch (pool.id) {
+      'pve/local' => const [
+        VirtVolume(
+          id: 'local:vztmpl/alpine-3.22.tar.xz',
+          name: 'alpine-3.22.tar.xz',
+          content: 'vztmpl',
+        ),
+      ],
+      'pve2/local' => second.future,
+      _ => const <VirtVolume>[],
+    };
+    await pump(tester);
+    await tap(tester, key('create:kind:lxc'));
+    await type(tester, 'create:name', 'ct-01');
+    await type(tester, 'create:password', 'correct horse');
+    expect(enabled(tester), isTrue);
+
+    await tap(tester, seg('create:node', 'pve2'));
+    // Waiting for pve2's own: pve's template is not one of them.
+    expect(text('alpine-3.22.tar.xz'), findsNothing);
+    expect(enabled(tester), isFalse);
+
+    second.complete(const [
+      VirtVolume(
+        id: 'local:vztmpl/debian-13_amd64.tar.zst',
+        name: 'debian-13_amd64.tar.zst',
+        content: 'vztmpl',
+      ),
+    ]);
+    await settle(tester);
+    final spec = await submit(tester);
+    expect(spec.node, 'pve2');
+    expect(spec.media?.id, 'local:vztmpl/debian-13_amd64.tar.zst');
   });
 }
 

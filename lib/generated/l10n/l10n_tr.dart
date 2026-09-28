@@ -4015,7 +4015,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String virtSetIssueDescription(int max) {
-    return 'En çok $max karakter, denetim karakteri olmadan.';
+    return 'En çok $max bayt (UTF-8), denetim karakteri olmadan.';
   }
 
   @override
@@ -4400,6 +4400,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String virtPoolStopAsk(String name) {
     return '$name havuzu durdurulsun mu? Yeniden başlayana kadar birimler listelenemez ve oluşturulamaz.';
   }
+
+  @override
+  String get virtStorageClusterWide =>
+      'Bu, kümede bu depolamaya sahip her düğüm için geçerlidir.';
 
   @override
   String virtStorageDisableAsk(String name) {

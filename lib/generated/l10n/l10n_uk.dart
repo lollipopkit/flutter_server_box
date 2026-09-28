@@ -4049,7 +4049,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String virtSetIssueDescription(int max) {
-    return 'Не більше $max символів, без керувальних символів.';
+    return 'Не більше $max байтів (UTF-8), без керувальних символів.';
   }
 
   @override
@@ -4442,6 +4442,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String virtPoolStopAsk(String name) {
     return 'Зупинити пул $name? До запуску не можна буде переглядати й створювати томи.';
   }
+
+  @override
+  String get virtStorageClusterWide =>
+      'Це стосується кожного вузла кластера, де є це сховище.';
 
   @override
   String virtStorageDisableAsk(String name) {

@@ -55,7 +55,8 @@ class VirtCounterSample {
 /// ten seconds or so, so diffing every poll would alternate zeros and spikes.
 /// With it, the base for a rate is the last sample whose byte counters
 /// *changed*, and an unchanged reading repeats the last rate for up to
-/// [holdFor]; past that, unchanged counters really are idle and read as zero.
+/// [holdFor]; past that, unchanged counters really are idle and read as zero,
+/// and the base moves to that reading.
 class VirtRateTracker {
   VirtRateTracker({
     this.holdUntilChanged = false,
@@ -107,6 +108,9 @@ class VirtRateTracker {
           diskTotal: sample.diskTotal,
         );
       }
+      // Idle past the hold: re-anchored here, so the first step after it is
+      // divided by at most [holdFor] more, not by the whole idle stretch.
+      _base[id] = sample;
       return _rates[id] = _diff(base, sample, plain());
     }
     _base[id] = sample;

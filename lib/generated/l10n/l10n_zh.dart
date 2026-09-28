@@ -3766,7 +3766,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String virtSetIssueDescription(int max) {
-    return '最多 $max 个字符，且不能包含控制字符。';
+    return '最多 $max 字节（UTF-8），且不能包含控制字符。';
   }
 
   @override
@@ -4132,6 +4132,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String virtPoolStopAsk(String name) {
     return '停用存储池 $name？在重新启用前无法列出或创建其中的卷。';
   }
+
+  @override
+  String get virtStorageClusterWide => '这会作用于集群中所有配置了该存储的节点。';
 
   @override
   String virtStorageDisableAsk(String name) {
@@ -8713,7 +8716,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String virtSetIssueDescription(int max) {
-    return '最多 $max 個字元，且不能包含控制字元。';
+    return '最多 $max 位元組（UTF-8），且不能包含控制字元。';
   }
 
   @override
@@ -9080,6 +9083,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String virtPoolStopAsk(String name) {
     return '停用儲存池 $name？重新啟用前無法列出或建立其中的磁碟區。';
   }
+
+  @override
+  String get virtStorageClusterWide => '這會作用於叢集中所有設定了該儲存的節點。';
 
   @override
   String virtStorageDisableAsk(String name) {

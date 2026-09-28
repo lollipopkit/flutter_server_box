@@ -878,6 +878,7 @@ _LibvirtHardwareInfo _$LibvirtHardwareInfoFromJson(Map<String, dynamic> json) =>
           ? null
           : LibvirtHwConfig.fromJson(json['live'] as Map<String, dynamic>),
       configXml: json['config_xml'] as String,
+      configText: json['config_text'] as String? ?? '',
       liveXml: json['live_xml'] as String? ?? '',
       autostart: json['autostart'] as bool? ?? false,
       description: json['description'] as String?,
@@ -899,6 +900,7 @@ Map<String, dynamic> _$LibvirtHardwareInfoToJson(
   'config': instance.config,
   'live': instance.live,
   'config_xml': instance.configXml,
+  'config_text': instance.configText,
   'live_xml': instance.liveXml,
   'autostart': instance.autostart,
   'description': instance.description,

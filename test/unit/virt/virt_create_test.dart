@@ -346,4 +346,21 @@ void main() {
       );
     });
   });
+
+  test('a container clone goes to storage for container disks', () {
+    const rootdirOnly = VirtStoragePool(
+      id: 'ct',
+      name: 'ct',
+      type: 'dir',
+      content: ['rootdir'],
+    );
+    VirtCreateIssue? issue(VirtGuestKind kind) => virtCloneStorageIssue(
+      storages: const [rootdirOnly],
+      storage: 'ct',
+      full: true,
+      kind: kind,
+    );
+    expect(issue(VirtGuestKind.lxc), isNull);
+    expect(issue(VirtGuestKind.qemu), VirtCreateIssue.cloneStorageContent);
+  });
 }

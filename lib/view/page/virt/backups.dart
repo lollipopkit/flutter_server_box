@@ -131,12 +131,20 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
       return _buildError(e, onRetry: () => unawaited(_load()));
     }
     if (_backups == null) return const Center(child: SizedLoading.medium);
-    return _buildEditPane(
-      (hw, busy) => [
+    final busy = ref.watch(
+      virtHostProvider(_serverId).select((s) => s.isBusy(_guest.id)),
+    );
+    // Not the hardware pane's own build: nothing here is read from the
+    // hardware, and a pull reads again what these groups show — the
+    // backups, the jobs and the storages.
+    return _buildGroups(
+      [
         _planGroup(busy),
         _listGroup(busy),
-        if (_backups?.isNotEmpty ?? false) _runGroup(busy),
+        // The first backup takes these options as much as any later one.
+        _runGroup(busy),
       ],
+      onRefresh: _load,
     );
   }
 
@@ -485,8 +493,12 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
     } catch (e) {
       Toast.error(libL10n.fail, body: '$e');
     } finally {
-      if (mounted) setState(() => _working = false);
-      await _load();
+      // A view closed while this ran has nothing to show it in, and no
+      // `ref` to read the list through.
+      if (mounted) {
+        setState(() => _working = false);
+        await _load();
+      }
     }
   }
 
@@ -577,7 +589,7 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
     }, l10n.virtBackupRestored(_when(b)));
     if (id case final id? when mounted) {
       await _notifier.refresh();
-      widget.onOpenGuest(id);
+      if (mounted) widget.onOpenGuest(id);
     }
   }
 }

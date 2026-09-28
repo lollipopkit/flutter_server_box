@@ -4017,7 +4017,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String virtSetIssueDescription(int max) {
-    return 'At most $max characters, and no control characters.';
+    return 'At most $max bytes (UTF-8), and no control characters.';
   }
 
   @override
@@ -4409,6 +4409,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String virtPoolStopAsk(String name) {
     return 'Stop the pool $name? Its volumes cannot be listed or created until it starts again.';
   }
+
+  @override
+  String get virtStorageClusterWide =>
+      'This applies to every node of the cluster that has this storage.';
 
   @override
   String virtStorageDisableAsk(String name) {

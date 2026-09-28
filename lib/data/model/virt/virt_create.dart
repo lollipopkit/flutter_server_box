@@ -626,13 +626,15 @@ final class VirtCloneRequest {
 /// are the ones PVE makes before it starts the clone task, so its refusals
 /// are said in the form rather than after the task: a linked clone cannot
 /// name a storage (`parameter 'storage' not allowed for linked clones`), a
-/// storage that holds no images (`does not support vm images`), and a copy
-/// moving to another node needs a storage both see. The last one is PVE's
+/// storage that holds no disks of [kind]'s (`does not support vm images`;
+/// a container's are `rootdir`), and a copy moving to another node needs a
+/// storage both see. The last one is PVE's
 /// `can't clone VM to node '<n>' (VM uses local storage)`.
 VirtCreateIssue? virtCloneStorageIssue({
   required Iterable<VirtStoragePool> storages,
   required String? storage,
   required bool full,
+  VirtGuestKind kind = VirtGuestKind.qemu,
   String? targetNode,
 }) {
   if (!full && storage != null) return VirtCreateIssue.cloneLinkedTarget;
@@ -645,8 +647,8 @@ VirtCreateIssue? virtCloneStorageIssue({
     }
   }
   if (pool == null) return VirtCreateIssue.cloneStorage;
-  // A clone's disks are images wherever they land.
-  if (!pool.content.contains('images')) {
+  // The content [virtDiskStorages] picks the storages by.
+  if (!pool.content.contains(kind == VirtGuestKind.lxc ? 'rootdir' : 'images')) {
     return VirtCreateIssue.cloneStorageContent;
   }
   if (targetNode != null && !(pool.shared ?? false)) {

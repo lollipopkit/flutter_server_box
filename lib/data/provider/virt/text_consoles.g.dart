@@ -68,7 +68,7 @@ final class VirtTextConsolesProvider
   }
 }
 
-String _$virtTextConsolesHash() => r'0210349e01566334239fa7158f3f9d6fb894f102';
+String _$virtTextConsolesHash() => r'a62423d25c45167464114fd1a846a0c81a92c256';
 
 /// Guests' text consoles that are still running with no terminal page showing
 /// them, by console id — the ids [SessionKeepAlive] knows them by.

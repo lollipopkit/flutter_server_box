@@ -71,8 +71,13 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
     final caps = host.data?.capabilities ?? const VirtCapabilities();
     final at = pool == null ? -1 : all.indexOf(pool);
     final onSwitch = widget.onSwitch;
-    final busy = pool != null && host.resourceOps.contains('pool:${pool.id}');
+    final changing =
+        pool != null && host.resourceOps.contains('pool:${pool.id}');
     final uploading = pool == null ? null : host.uploads[pool.id];
+    // A pool is not changed while something is uploaded into it, nor
+    // uploaded into while it is changed: the provider refuses both, so
+    // neither is offered.
+    final busy = changing || uploading != null;
     final bar = virtResourceBar(
       name: pool?.name ?? '',
       icon: Icons.storage_outlined,
@@ -95,7 +100,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
             key: const ValueKey('pool:upload'),
             text: l10n.virtUploadIso,
             icon: const Icon(Icons.upload, size: 18),
-            onTap: uploading != null ? null : () => unawaited(_upload(pool)),
+            onTap: busy ? null : () => unawaited(_upload(pool)),
           ),
       ],
       // libvirt reads the pool again (files put there by other means
@@ -118,14 +123,15 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
       );
     }
     final vols = ref.watch(virtVolumesProvider(_serverId, pool.id));
-    final list = vols.value ?? const <VirtVolume>[];
+    final inUse = _poolInUse(pool, pools, host);
     return Scaffold(
       appBar: bar,
       body: Column(
         children: [
           SizedBox(
             height: 3,
-            child: pools.isLoading || vols.isLoading || busy
+            // The upload has its own progress, in the volumes group.
+            child: pools.isLoading || vols.isLoading || changing
                 ? const ProgressLine()
                 : null,
           ),
@@ -135,7 +141,8 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
                 _usageGroup(pool),
                 _infoGroup(pool, caps, busy),
                 _volumesGroup(pool, vols, host, caps, busy),
-                if (caps.storageEdit) _opsGroup(pool, list, host, caps, busy),
+                if (caps.storageEdit)
+                  _opsGroup(pool, vols.value, inUse, caps, busy),
               ],
               onRefresh: () =>
                   ref.refresh(virtStoragePoolsProvider(_serverId).future),
@@ -147,6 +154,32 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
   }
 
   bool get _pve => ref.read(virtHostProvider(_serverId)).kind == VirtHostKind.pve;
+
+  /// Whether a guest uses a volume of [pool]; null while that is not known —
+  /// an inventory still loading, or one that failed, is no proof the pool is
+  /// unused, and stopping or removing it is held back until it is.
+  ///
+  /// PVE's disable and remove act on the cluster's `/storage/<name>`, so
+  /// every node's listing of that storage counts, not only this one.
+  bool? _poolInUse(
+    VirtStoragePool pool,
+    AsyncValue<List<VirtStoragePool>> pools,
+    VirtHostState host,
+  ) {
+    if (pools.isLoading || pools.hasError) return null;
+    final scope = host.kind == VirtHostKind.pve
+        ? pools.requireValue.where((p) => p.name == pool.name)
+        : [pool];
+    var inUse = false;
+    for (final p in scope) {
+      final vols = ref.watch(virtVolumesProvider(_serverId, p.id));
+      if (vols.isLoading || vols.hasError || !vols.hasValue) return null;
+      if (vols.requireValue.any((v) => _users(host, v).isNotEmpty)) {
+        inUse = true;
+      }
+    }
+    return inUse;
+  }
 
   /// The guests [v] is really in use by: every libvirt one (a domain by
   /// UUID), and a PVE owner that exists — a volume whose VMID has no guest
@@ -560,7 +593,11 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
     required bool disk,
     required bool locked,
   }) {
-    if (!iso && !(disk && users.isEmpty)) return const [];
+    // A disk is attached only where nothing owns it — the same check
+    // `virtHwIssue` makes. A PVE volume whose VMID has no guest is left over
+    // ([_users] drops it) but still that VMID's: a guest created with it
+    // later would free the volume with itself.
+    if (!iso && !(disk && v.users.isEmpty)) return const [];
     final guests = [
       for (final g in host.data?.guests ?? const <VirtGuest>[])
         if (g.kind == VirtGuestKind.qemu &&
@@ -600,24 +637,29 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
 
   // --- Operations ---
 
+  /// [inUse] null: not known yet (see [_poolInUse]), and [vols] may be too.
   _Group _opsGroup(
     VirtStoragePool pool,
-    List<VirtVolume> vols,
-    VirtHostState host,
+    List<VirtVolume>? vols,
+    bool? inUse,
     VirtCapabilities caps,
     bool busy,
   ) {
-    final inUse = vols.any((v) => _users(host, v).isNotEmpty);
     final error = Theme.of(context).colorScheme.error;
+    final locked = busy || inUse != false;
     return _Group(
       key: 'ops',
       title: l10n.virtOps,
       right: '',
       warn: false,
       dot: error,
-      indexNote: inUse ? l10n.virtInUse : l10n.virtCanDelete,
+      indexNote: switch (inUse) {
+        true => l10n.virtInUse,
+        false => l10n.virtCanDelete,
+        null => '--',
+      },
       rows: [
-        if (inUse) _text(l10n.virtPoolInUse),
+        if (inUse == true) _text(l10n.virtPoolInUse),
         _actions([
           if (pool.active)
             _Action(
@@ -625,9 +667,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
               key: 'pool:stop',
               icon: Icons.stop_circle_outlined,
               danger: true,
-              onTap: busy || inUse
-                  ? null
-                  : () => unawaited(_stop(pool)),
+              onTap: locked ? null : () => unawaited(_stop(pool)),
             )
           else
             _Action(
@@ -643,7 +683,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
             key: 'pool:delete',
             icon: Icons.delete_outline,
             danger: true,
-            onTap: busy || inUse
+            onTap: locked || vols == null
                 ? null
                 : () => unawaited(_deletePool(pool, vols, caps)),
           ),
@@ -776,8 +816,19 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
   Future<void> _stop(VirtStoragePool pool) async {
     final ok = await context.showRoundDialog<bool>(
       title: libL10n.attention,
-      child: Text(
-        _pve ? l10n.virtStorageDisableAsk(pool.name) : l10n.virtPoolStopAsk(pool.name),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _pve ? l10n.virtStorageDisableAsk(pool.name) : l10n.virtPoolStopAsk(pool.name),
+          ),
+          // `/storage/<name>` is the cluster's, not this node's.
+          if (_pve) ...[
+            UIs.height7,
+            Text(l10n.virtStorageClusterWide, style: UIs.text12Grey),
+          ],
+        ],
       ),
       actions: Btnx.cancelRedOk,
     );
@@ -806,6 +857,10 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
                   ? l10n.virtStorageRemoveAsk(pool.name)
                   : l10n.virtPoolDeleteAsk(pool.name),
             ),
+            if (_pve) ...[
+              UIs.height7,
+              Text(l10n.virtStorageClusterWide, style: UIs.text12Grey),
+            ],
             if (vols.isNotEmpty) ...[
               UIs.height7,
               Text(l10n.virtPoolDeleteKeepsVolumes(vols.length), style: UIs.text12Grey),

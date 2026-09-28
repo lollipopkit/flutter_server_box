@@ -30,6 +30,9 @@ mixin _$VirtHardware {
  bool get renameRunning; List<VirtPendingField> get pending;/// What an edit is made from, sent back with it: PVE's `digest`, the
 /// persistent XML libvirt printed. An edit made from an older read is
 /// refused (`VirtErrType.conflict`) rather than undoing someone else's.
+///
+/// libvirt's is read with `--security-info`, so it holds the display
+/// passwords: never shown, and left out of [toString].
  String? get revision; VirtHwLimits get limits;/// PVE: the CPU models the node offers, for [VirtHwCpu.type].
  List<String> get cpuTypes;/// The configuration as the host writes it — `qm config`'s lines, the
 /// persistent XML — for the view to show as it is.
@@ -55,10 +58,6 @@ bool operator ==(Object other) {
 @override
 int get hashCode => Object.hashAll([runtimeType,kind,running,cpu,memory,const DeepCollectionEquality().hash(disks),const DeepCollectionEquality().hash(nics),const DeepCollectionEquality().hash(boot),autostart,name,description,protection,renameRunning,const DeepCollectionEquality().hash(pending),revision,limits,const DeepCollectionEquality().hash(cpuTypes),configText,firmware,display,const DeepCollectionEquality().hash(devices),support]);
 
-@override
-String toString() {
-  return 'VirtHardware(kind: $kind, running: $running, cpu: $cpu, memory: $memory, disks: $disks, nics: $nics, boot: $boot, autostart: $autostart, name: $name, description: $description, protection: $protection, renameRunning: $renameRunning, pending: $pending, revision: $revision, limits: $limits, cpuTypes: $cpuTypes, configText: $configText, firmware: $firmware, display: $display, devices: $devices, support: $support)';
-}
 
 
 }
@@ -369,6 +368,9 @@ class _VirtHardware extends VirtHardware {
 /// What an edit is made from, sent back with it: PVE's `digest`, the
 /// persistent XML libvirt printed. An edit made from an older read is
 /// refused (`VirtErrType.conflict`) rather than undoing someone else's.
+///
+/// libvirt's is read with `--security-info`, so it holds the display
+/// passwords: never shown, and left out of [toString].
 @override final  String? revision;
 @override@JsonKey() final  VirtHwLimits limits;
 /// PVE: the CPU models the node offers, for [VirtHwCpu.type].
@@ -416,10 +418,6 @@ bool operator ==(Object other) {
 @override
 int get hashCode => Object.hashAll([runtimeType,kind,running,cpu,memory,const DeepCollectionEquality().hash(_disks),const DeepCollectionEquality().hash(_nics),const DeepCollectionEquality().hash(_boot),autostart,name,description,protection,renameRunning,const DeepCollectionEquality().hash(_pending),revision,limits,const DeepCollectionEquality().hash(_cpuTypes),configText,firmware,display,const DeepCollectionEquality().hash(_devices),support]);
 
-@override
-String toString() {
-  return 'VirtHardware(kind: $kind, running: $running, cpu: $cpu, memory: $memory, disks: $disks, nics: $nics, boot: $boot, autostart: $autostart, name: $name, description: $description, protection: $protection, renameRunning: $renameRunning, pending: $pending, revision: $revision, limits: $limits, cpuTypes: $cpuTypes, configText: $configText, firmware: $firmware, display: $display, devices: $devices, support: $support)';
-}
 
 
 }
@@ -1098,7 +1096,10 @@ mixin _$VirtHwDisk {
  String? get mountPoint; String? get bus; String? get format; bool get readonly;/// The cache mode; null for the host's default.
  String? get cache;/// A CD-ROM holding the guest's cloud-init data (PVE's `cloudinit`
 /// drive, the seed the app made on libvirt): not install media to swap.
- bool get cloudInit;
+ bool get cloudInit;/// Whether the backend has a way to grow it ([virtHwDiskGrowable]):
+/// libvirt resizes a stopped domain's disk by its file, so a disk on a
+/// pool volume reference or a network source has none.
+ bool get resizable;
 /// Create a copy of VirtHwDisk
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1109,16 +1110,16 @@ $VirtHwDiskCopyWith<VirtHwDisk> get copyWith => _$VirtHwDiskCopyWithImpl<VirtHwD
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwDisk&&(identical(other.key, key) || other.key == key)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.source, source) || other.source == source)&&(identical(other.size, size) || other.size == size)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.mountPoint, mountPoint) || other.mountPoint == mountPoint)&&(identical(other.bus, bus) || other.bus == bus)&&(identical(other.format, format) || other.format == format)&&(identical(other.readonly, readonly) || other.readonly == readonly)&&(identical(other.cache, cache) || other.cache == cache)&&(identical(other.cloudInit, cloudInit) || other.cloudInit == cloudInit));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwDisk&&(identical(other.key, key) || other.key == key)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.source, source) || other.source == source)&&(identical(other.size, size) || other.size == size)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.mountPoint, mountPoint) || other.mountPoint == mountPoint)&&(identical(other.bus, bus) || other.bus == bus)&&(identical(other.format, format) || other.format == format)&&(identical(other.readonly, readonly) || other.readonly == readonly)&&(identical(other.cache, cache) || other.cache == cache)&&(identical(other.cloudInit, cloudInit) || other.cloudInit == cloudInit)&&(identical(other.resizable, resizable) || other.resizable == resizable));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,key,kind,source,size,storage,mountPoint,bus,format,readonly,cache,cloudInit);
+int get hashCode => Object.hash(runtimeType,key,kind,source,size,storage,mountPoint,bus,format,readonly,cache,cloudInit,resizable);
 
 @override
 String toString() {
-  return 'VirtHwDisk(key: $key, kind: $kind, source: $source, size: $size, storage: $storage, mountPoint: $mountPoint, bus: $bus, format: $format, readonly: $readonly, cache: $cache, cloudInit: $cloudInit)';
+  return 'VirtHwDisk(key: $key, kind: $kind, source: $source, size: $size, storage: $storage, mountPoint: $mountPoint, bus: $bus, format: $format, readonly: $readonly, cache: $cache, cloudInit: $cloudInit, resizable: $resizable)';
 }
 
 
@@ -1129,7 +1130,7 @@ abstract mixin class $VirtHwDiskCopyWith<$Res>  {
   factory $VirtHwDiskCopyWith(VirtHwDisk value, $Res Function(VirtHwDisk) _then) = _$VirtHwDiskCopyWithImpl;
 @useResult
 $Res call({
- String key, VirtHwDiskKind kind, String? source, int? size, String? storage, String? mountPoint, String? bus, String? format, bool readonly, String? cache, bool cloudInit
+ String key, VirtHwDiskKind kind, String? source, int? size, String? storage, String? mountPoint, String? bus, String? format, bool readonly, String? cache, bool cloudInit, bool resizable
 });
 
 
@@ -1146,7 +1147,7 @@ class _$VirtHwDiskCopyWithImpl<$Res>
 
 /// Create a copy of VirtHwDisk
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? key = null,Object? kind = null,Object? source = freezed,Object? size = freezed,Object? storage = freezed,Object? mountPoint = freezed,Object? bus = freezed,Object? format = freezed,Object? readonly = null,Object? cache = freezed,Object? cloudInit = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? key = null,Object? kind = null,Object? source = freezed,Object? size = freezed,Object? storage = freezed,Object? mountPoint = freezed,Object? bus = freezed,Object? format = freezed,Object? readonly = null,Object? cache = freezed,Object? cloudInit = null,Object? resizable = null,}) {
   return _then(_self.copyWith(
 key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
 as String,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
@@ -1159,6 +1160,7 @@ as String?,format: freezed == format ? _self.format : format // ignore: cast_nul
 as String?,readonly: null == readonly ? _self.readonly : readonly // ignore: cast_nullable_to_non_nullable
 as bool,cache: freezed == cache ? _self.cache : cache // ignore: cast_nullable_to_non_nullable
 as String?,cloudInit: null == cloudInit ? _self.cloudInit : cloudInit // ignore: cast_nullable_to_non_nullable
+as bool,resizable: null == resizable ? _self.resizable : resizable // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -1244,10 +1246,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String key,  VirtHwDiskKind kind,  String? source,  int? size,  String? storage,  String? mountPoint,  String? bus,  String? format,  bool readonly,  String? cache,  bool cloudInit)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String key,  VirtHwDiskKind kind,  String? source,  int? size,  String? storage,  String? mountPoint,  String? bus,  String? format,  bool readonly,  String? cache,  bool cloudInit,  bool resizable)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _VirtHwDisk() when $default != null:
-return $default(_that.key,_that.kind,_that.source,_that.size,_that.storage,_that.mountPoint,_that.bus,_that.format,_that.readonly,_that.cache,_that.cloudInit);case _:
+return $default(_that.key,_that.kind,_that.source,_that.size,_that.storage,_that.mountPoint,_that.bus,_that.format,_that.readonly,_that.cache,_that.cloudInit,_that.resizable);case _:
   return orElse();
 
 }
@@ -1265,10 +1267,10 @@ return $default(_that.key,_that.kind,_that.source,_that.size,_that.storage,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String key,  VirtHwDiskKind kind,  String? source,  int? size,  String? storage,  String? mountPoint,  String? bus,  String? format,  bool readonly,  String? cache,  bool cloudInit)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String key,  VirtHwDiskKind kind,  String? source,  int? size,  String? storage,  String? mountPoint,  String? bus,  String? format,  bool readonly,  String? cache,  bool cloudInit,  bool resizable)  $default,) {final _that = this;
 switch (_that) {
 case _VirtHwDisk():
-return $default(_that.key,_that.kind,_that.source,_that.size,_that.storage,_that.mountPoint,_that.bus,_that.format,_that.readonly,_that.cache,_that.cloudInit);case _:
+return $default(_that.key,_that.kind,_that.source,_that.size,_that.storage,_that.mountPoint,_that.bus,_that.format,_that.readonly,_that.cache,_that.cloudInit,_that.resizable);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1285,10 +1287,10 @@ return $default(_that.key,_that.kind,_that.source,_that.size,_that.storage,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String key,  VirtHwDiskKind kind,  String? source,  int? size,  String? storage,  String? mountPoint,  String? bus,  String? format,  bool readonly,  String? cache,  bool cloudInit)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String key,  VirtHwDiskKind kind,  String? source,  int? size,  String? storage,  String? mountPoint,  String? bus,  String? format,  bool readonly,  String? cache,  bool cloudInit,  bool resizable)?  $default,) {final _that = this;
 switch (_that) {
 case _VirtHwDisk() when $default != null:
-return $default(_that.key,_that.kind,_that.source,_that.size,_that.storage,_that.mountPoint,_that.bus,_that.format,_that.readonly,_that.cache,_that.cloudInit);case _:
+return $default(_that.key,_that.kind,_that.source,_that.size,_that.storage,_that.mountPoint,_that.bus,_that.format,_that.readonly,_that.cache,_that.cloudInit,_that.resizable);case _:
   return null;
 
 }
@@ -1300,7 +1302,7 @@ return $default(_that.key,_that.kind,_that.source,_that.size,_that.storage,_that
 
 
 class _VirtHwDisk implements VirtHwDisk {
-  const _VirtHwDisk({required this.key, required this.kind, this.source, this.size, this.storage, this.mountPoint, this.bus, this.format, this.readonly = false, this.cache, this.cloudInit = false});
+  const _VirtHwDisk({required this.key, required this.kind, this.source, this.size, this.storage, this.mountPoint, this.bus, this.format, this.readonly = false, this.cache, this.cloudInit = false, this.resizable = true});
   
 
 /// PVE option (`scsi0`, `rootfs`, `mp0`), libvirt target (`vda`).
@@ -1322,6 +1324,10 @@ class _VirtHwDisk implements VirtHwDisk {
 /// A CD-ROM holding the guest's cloud-init data (PVE's `cloudinit`
 /// drive, the seed the app made on libvirt): not install media to swap.
 @override@JsonKey() final  bool cloudInit;
+/// Whether the backend has a way to grow it ([virtHwDiskGrowable]):
+/// libvirt resizes a stopped domain's disk by its file, so a disk on a
+/// pool volume reference or a network source has none.
+@override@JsonKey() final  bool resizable;
 
 /// Create a copy of VirtHwDisk
 /// with the given fields replaced by the non-null parameter values.
@@ -1333,16 +1339,16 @@ _$VirtHwDiskCopyWith<_VirtHwDisk> get copyWith => __$VirtHwDiskCopyWithImpl<_Vir
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtHwDisk&&(identical(other.key, key) || other.key == key)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.source, source) || other.source == source)&&(identical(other.size, size) || other.size == size)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.mountPoint, mountPoint) || other.mountPoint == mountPoint)&&(identical(other.bus, bus) || other.bus == bus)&&(identical(other.format, format) || other.format == format)&&(identical(other.readonly, readonly) || other.readonly == readonly)&&(identical(other.cache, cache) || other.cache == cache)&&(identical(other.cloudInit, cloudInit) || other.cloudInit == cloudInit));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtHwDisk&&(identical(other.key, key) || other.key == key)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.source, source) || other.source == source)&&(identical(other.size, size) || other.size == size)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.mountPoint, mountPoint) || other.mountPoint == mountPoint)&&(identical(other.bus, bus) || other.bus == bus)&&(identical(other.format, format) || other.format == format)&&(identical(other.readonly, readonly) || other.readonly == readonly)&&(identical(other.cache, cache) || other.cache == cache)&&(identical(other.cloudInit, cloudInit) || other.cloudInit == cloudInit)&&(identical(other.resizable, resizable) || other.resizable == resizable));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,key,kind,source,size,storage,mountPoint,bus,format,readonly,cache,cloudInit);
+int get hashCode => Object.hash(runtimeType,key,kind,source,size,storage,mountPoint,bus,format,readonly,cache,cloudInit,resizable);
 
 @override
 String toString() {
-  return 'VirtHwDisk(key: $key, kind: $kind, source: $source, size: $size, storage: $storage, mountPoint: $mountPoint, bus: $bus, format: $format, readonly: $readonly, cache: $cache, cloudInit: $cloudInit)';
+  return 'VirtHwDisk(key: $key, kind: $kind, source: $source, size: $size, storage: $storage, mountPoint: $mountPoint, bus: $bus, format: $format, readonly: $readonly, cache: $cache, cloudInit: $cloudInit, resizable: $resizable)';
 }
 
 
@@ -1353,7 +1359,7 @@ abstract mixin class _$VirtHwDiskCopyWith<$Res> implements $VirtHwDiskCopyWith<$
   factory _$VirtHwDiskCopyWith(_VirtHwDisk value, $Res Function(_VirtHwDisk) _then) = __$VirtHwDiskCopyWithImpl;
 @override @useResult
 $Res call({
- String key, VirtHwDiskKind kind, String? source, int? size, String? storage, String? mountPoint, String? bus, String? format, bool readonly, String? cache, bool cloudInit
+ String key, VirtHwDiskKind kind, String? source, int? size, String? storage, String? mountPoint, String? bus, String? format, bool readonly, String? cache, bool cloudInit, bool resizable
 });
 
 
@@ -1370,7 +1376,7 @@ class __$VirtHwDiskCopyWithImpl<$Res>
 
 /// Create a copy of VirtHwDisk
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? key = null,Object? kind = null,Object? source = freezed,Object? size = freezed,Object? storage = freezed,Object? mountPoint = freezed,Object? bus = freezed,Object? format = freezed,Object? readonly = null,Object? cache = freezed,Object? cloudInit = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? key = null,Object? kind = null,Object? source = freezed,Object? size = freezed,Object? storage = freezed,Object? mountPoint = freezed,Object? bus = freezed,Object? format = freezed,Object? readonly = null,Object? cache = freezed,Object? cloudInit = null,Object? resizable = null,}) {
   return _then(_VirtHwDisk(
 key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
 as String,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
@@ -1383,6 +1389,7 @@ as String?,format: freezed == format ? _self.format : format // ignore: cast_nul
 as String?,readonly: null == readonly ? _self.readonly : readonly // ignore: cast_nullable_to_non_nullable
 as bool,cache: freezed == cache ? _self.cache : cache // ignore: cast_nullable_to_non_nullable
 as String?,cloudInit: null == cloudInit ? _self.cloudInit : cloudInit // ignore: cast_nullable_to_non_nullable
+as bool,resizable: null == resizable ? _self.resizable : resizable // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

@@ -104,9 +104,12 @@ abstract class VirtBackupJob with _$VirtBackupJob {
       ? '—'
       : vmids.join(',');
 
-  /// Whether this job takes [vmid].
-  bool takes(int? vmid) {
+  /// Whether this job takes [vmid], a guest on [node]. A job restricted to
+  /// a node backs up only the guests there: on any other its selection,
+  /// `all` included, takes nothing.
+  bool takes(int? vmid, {String? node}) {
     if (vmid == null) return false;
+    if (this.node != null && node != null && this.node != node) return false;
     if (pool != null) return false;
     if (all) return !exclude.contains(vmid);
     return vmids.contains(vmid);

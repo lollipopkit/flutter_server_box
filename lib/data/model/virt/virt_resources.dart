@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 
@@ -61,7 +62,8 @@ abstract class VirtSnapshotLayer with _$VirtSnapshotLayer {
 }
 
 /// [snapshots] depth-first from the roots, each with its depth — how the
-/// list draws a tree without drawing one. Siblings oldest first. A snapshot
+/// list draws a tree without drawing one. Siblings oldest first, undated
+/// ones last. A snapshot
 /// whose parent is not in the list (deleted, or a cycle in bad data) is a
 /// root.
 List<(VirtGuestSnapshot, int)> virtSnapshotTree(
@@ -79,7 +81,15 @@ List<(VirtGuestSnapshot, int)> virtSnapshotTree(
   int byTime(VirtGuestSnapshot a, VirtGuestSnapshot b) {
     final at = a.createdAt;
     final bt = b.createdAt;
-    if (at != null && bt != null && at != bt) return at.compareTo(bt);
+    // Undated after dated, so the order stays transitive: a dated/undated
+    // pair compared by name would not be.
+    if (at == null) {
+      if (bt != null) return 1;
+    } else if (bt == null) {
+      return -1;
+    } else if (at != bt) {
+      return at.compareTo(bt);
+    }
     return a.name.compareTo(b.name);
   }
 
@@ -345,20 +355,21 @@ abstract class VirtNetwork with _$VirtNetwork {
     @Default(<VirtGuestRef>[]) List<VirtGuestRef> users,
   }) = _VirtNetwork;
 
-  /// The address without its prefix (`192.168.150.1` of
-  /// `192.168.150.1/24`); null where there is none to take apart.
-  String? get address {
-    final cidr = cidrs.firstOrNull;
-    if (cidr == null) return null;
-    final parts = cidr.split('/');
-    return parts.length == 2 ? parts.first : null;
-  }
+  /// The first IPv4 address with its prefix (`192.168.150.1/24`); null where
+  /// there is none. PVE lists `cidr6` among [cidrs] too — first, on a bridge
+  /// with only an IPv6 one — and what reads an address here edits IPv4.
+  String? get ipv4Cidr => cidrs.firstWhereOrNull(
+    (c) => !c.contains(':') && c.split('/').length == 2,
+  );
 
-  /// The prefix of the first address; null where there is none.
+  /// [ipv4Cidr] without its prefix (`192.168.150.1`); null where there is
+  /// none.
+  String? get address => ipv4Cidr?.split('/').first;
+
+  /// [ipv4Cidr]'s prefix; null where there is none.
   int? get prefix {
-    final cidr = cidrs.firstOrNull;
-    if (cidr == null) return null;
-    return int.tryParse(cidr.split('/').last);
+    final cidr = ipv4Cidr;
+    return cidr == null ? null : int.tryParse(cidr.split('/').last);
   }
 
   /// The first DHCP range, as its two ends; null where there is none.

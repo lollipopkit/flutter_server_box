@@ -79,6 +79,11 @@ const _diskSteps = [
 /// Where a VM's system comes from.
 enum _Source { iso, image }
 
+/// A volume as the form offers it: with the storage it was listed in, which
+/// is what tells it apart. libvirt names a volume by itself in its pool, so
+/// two pools can each hold a `debian.iso`; PVE's storages are per node.
+typedef _PoolVolume = ({String key, VirtVolume volume});
+
 class _VirtCreateViewState extends ConsumerState<VirtCreateView>
     with _PaneRows<VirtCreateView> {
   var _kind = VirtGuestKind.qemu;
@@ -92,8 +97,11 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
   var _memory = _memorySteps.indexOf(2048);
   var _disk = _diskSteps.indexOf(32);
   VirtStoragePool? _storage;
-  VirtVolume? _media;
-  VirtVolume? _image;
+
+  /// The install media (or template) and the cloud image chosen, by
+  /// [_PoolVolume.key].
+  String? _media;
+  String? _image;
   VirtNetwork? _network;
 
   /// The user chose no NIC, rather than none being chosen yet.
@@ -130,6 +138,12 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
   /// Volumes per storage id, fetched once each.
   final _content = <String, Future<List<VirtVolume>>>{};
 
+  /// The volumes of the storages the form offers now, by storage id, and
+  /// which storages that read is of: the same future while they stay the
+  /// same, so a rebuild does not start it again.
+  Future<Map<String, List<VirtVolume>>>? _volumes;
+  String? _volumesOf;
+
   VirtHostNotifier get _notifier =>
       ref.read(virtHostProvider(widget.serverId).notifier);
 
@@ -142,6 +156,8 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
 
   void _load() {
     _content.clear();
+    _volumes = null;
+    _volumesOf = null;
     _pools = _notifier.storagePools();
     _networks = _notifier.networks();
     _options = _notifier.createOptions();
@@ -271,24 +287,28 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
     final secureBoot = uefi && options.secureBoot && _secureBoot;
     final tpm = options.tpm && _tpm;
 
-    return FutureBuilder<List<VirtVolume>>(
-      future: _volumesOf({...mediaPools, ...imagePools}.toList()),
+    final volumePools = {...mediaPools, ...imagePools}.toList();
+    return FutureBuilder<Map<String, List<VirtVolume>>>(
+      future: _volumesFor(volumePools),
       builder: (context, snap) {
-        final all = snap.data;
-        final media = [
-          for (final v in all ?? const <VirtVolume>[])
-            if (mediaPools.any((p) => _inPool(v, p, host)) &&
-                virtIsMedia(v, _kind))
-              v,
-        ];
-        final images = [
-          for (final v in all ?? const <VirtVolume>[])
-            if (imagePools.any((p) => _inPool(v, p, host)) &&
-                virtIsCloudImage(v, host))
-              v,
-        ];
-        final chosenMedia = media.firstWhereOrNull((v) => v.id == _media?.id);
-        final image = images.firstWhereOrNull((v) => v.id == _image?.id);
+        final byPool = snap.data;
+        // While another node's read is still what the builder holds, nothing
+        // of it is on offer: a storage named alike on this node is not it.
+        final loaded =
+            byPool != null && volumePools.every((p) => byPool.containsKey(p.id));
+        List<_PoolVolume> of(
+          List<VirtStoragePool> pools,
+          bool Function(VirtVolume v) keep,
+        ) => [
+          if (loaded)
+            for (final p in pools)
+              for (final v in byPool[p.id]!)
+                if (keep(v)) (key: '${p.id}/${v.id}', volume: v),
+        ]..sort((a, b) => a.volume.name.compareTo(b.volume.name));
+        final media = of(mediaPools, (v) => virtIsMedia(v, _kind));
+        final images = of(imagePools, (v) => virtIsCloudImage(v, host));
+        final chosenMedia = media.firstWhereOrNull((v) => v.key == _media);
+        final image = images.firstWhereOrNull((v) => v.key == _image);
         final ci = fromImage && options.cloudInit
             ? _cloudInit(pve: pve, withNic: network != null)
             : null;
@@ -304,9 +324,9 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
                 storage: storage,
                 diskGiB: _diskSteps[_disk],
                 media: lxc
-                    ? (chosenMedia ?? media.firstOrNull)
-                    : (fromImage ? null : chosenMedia),
-                image: fromImage ? image : null,
+                    ? (chosenMedia ?? media.firstOrNull)?.volume
+                    : (fromImage ? null : chosenMedia?.volume),
+                image: fromImage ? image?.volume : null,
                 network: network,
                 password: lxc ? _password.text : null,
                 sshKeys: lxc ? _keys.text : null,
@@ -321,6 +341,10 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
               );
         final issue = spec == null
             ? VirtCreateIssue.storage
+            // Without cloud-init (a host with no ISO tool) nothing else says
+            // the image is missing: the host would make an empty disk.
+            : fromImage && image == null
+            ? VirtCreateIssue.image
             : virtCreateIssue(
                 spec,
                 host: host,
@@ -351,6 +375,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
               host: host,
               options: options,
               snap: snap,
+              loaded: loaded,
               pools: mediaPools.length + imagePools.length,
               media: media,
               images: images,
@@ -373,7 +398,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
               bus,
               options,
               issue,
-              minBytes: fromImage ? image?.capacity : null,
+              minBytes: fromImage ? image?.volume.capacity : null,
             ),
             _networkGroup(nets, network, nicModel, options),
             _confirmGroup(host, spec, issue),
@@ -394,18 +419,21 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
     VirtCreateIssue.ciSearch,
   };
 
-  /// libvirt names a volume by itself, in its pool; PVE by `storage:…`.
-  static bool _inPool(VirtVolume v, VirtStoragePool p, VirtHostKind host) =>
-      host == VirtHostKind.pve ? v.id.startsWith('${p.name}:') : true;
-
-  /// The volumes of [pools], fetched once per storage, by name.
-  Future<List<VirtVolume>> _volumesOf(List<VirtStoragePool> pools) async {
-    final lists = await Future.wait([
-      for (final p in pools)
-        _content.putIfAbsent(p.id, () => _notifier.volumes(p)),
-    ]);
-    return [for (final list in lists) ...list]
-      ..sort((a, b) => a.name.compareTo(b.name));
+  /// The volumes of [pools] by storage id, each storage fetched once; the
+  /// same future for the same storages.
+  Future<Map<String, List<VirtVolume>>> _volumesFor(
+    List<VirtStoragePool> pools,
+  ) {
+    final ids = (pools.map((p) => p.id).toList()..sort()).join('\n');
+    if (_volumes case final f? when _volumesOf == ids) return f;
+    _volumesOf = ids;
+    return _volumes = () async {
+      final lists = await Future.wait([
+        for (final p in pools)
+          _content.putIfAbsent(p.id, () => _notifier.volumes(p)),
+      ]);
+      return {for (final (i, p) in pools.indexed) p.id: lists[i]};
+    }();
   }
 
   VirtCloudInit _cloudInit({required bool pve, required bool withNic}) {
@@ -530,12 +558,13 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
   _Group _systemGroup({
     required VirtHostKind host,
     required VirtCreateOptions options,
-    required AsyncSnapshot<List<VirtVolume>> snap,
+    required AsyncSnapshot<Object> snap,
+    required bool loaded,
     required int pools,
-    required List<VirtVolume> media,
-    required List<VirtVolume> images,
-    required VirtVolume? chosenMedia,
-    required VirtVolume? image,
+    required List<_PoolVolume> media,
+    required List<_PoolVolume> images,
+    required _PoolVolume? chosenMedia,
+    required _PoolVolume? image,
     required bool fromImage,
     required bool uefi,
     required bool secureBoot,
@@ -553,7 +582,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
           error: true,
         );
       }
-      if (snap.data == null) {
+      if (!loaded) {
         return const Padding(
           padding: EdgeInsets.all(7),
           child: Center(child: SizedLoading.small),
@@ -572,18 +601,18 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
       final template = chosenMedia ?? media.firstOrNull;
       rows = [
         ?waiting(),
-        if (snap.data != null)
+        if (loaded)
           media.isEmpty
               ? _text(l10n.virtNoTemplates)
               : _choice([
-                  for (final v in media)
+                  for (final (:key, volume: v) in media)
                     _Choice(
-                      key: 'create:media:${v.id}',
+                      key: 'create:media:$key',
                       icon: Icons.inventory_2_outlined,
                       label: v.name.split('_').first,
                       sub: v.name.contains('_') ? v.name : null,
-                      selected: template?.id == v.id,
-                      onTap: () => setState(() => _media = v),
+                      selected: template?.key == key,
+                      onTap: () => setState(() => _media = key),
                     ),
                 ]),
         _toggle(
@@ -597,7 +626,8 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
       ];
     } else {
       final windows =
-          !fromImage && (chosenMedia?.name.toLowerCase().contains('win') ?? false);
+          !fromImage &&
+          (chosenMedia?.volume.name.toLowerCase().contains('win') ?? false);
       rows = [
         if (options.cloudImages)
           _seg(
@@ -611,7 +641,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
             ),
           ),
         ?waiting(),
-        if (snap.data != null && !fromImage) ...[
+        if (loaded && !fromImage) ...[
           _choice([
             // Nothing to install from: a network boot, or a disk that
             // gets its system later.
@@ -622,33 +652,33 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
               selected: chosenMedia == null,
               onTap: () => setState(() => _media = null),
             ),
-            for (final v in media)
-                    _Choice(
-                      key: 'create:media:${v.id}',
-                      icon: Icons.album_outlined,
-                      label: v.name,
-                      sub: sub(v),
-                      selected: chosenMedia?.id == v.id,
-                      onTap: () => setState(() => _media = v),
-                    ),
+            for (final (:key, volume: v) in media)
+              _Choice(
+                key: 'create:media:$key',
+                icon: Icons.album_outlined,
+                label: v.name,
+                sub: sub(v),
+                selected: chosenMedia?.key == key,
+                onTap: () => setState(() => _media = key),
+              ),
           ]),
           if (media.isEmpty) _text(l10n.virtNoIsos),
         ],
-        if (snap.data != null && fromImage) ...[
+        if (loaded && fromImage) ...[
           _text(l10n.virtCloudImageTip),
           if (images.isEmpty)
             _text(pve ? l10n.virtNoCloudImagesPve : l10n.virtNoCloudImagesLibvirt)
           else
             _choice([
-              for (final v in images)
+              for (final (:key, volume: v) in images)
                 _Choice(
-                  key: 'create:image:${v.id}',
+                  key: 'create:image:$key',
                   icon: Icons.cloud_outlined,
                   label: v.name,
                   sub: [sub(v), ?v.format].where((s) => s.isNotEmpty).join(' · '),
-                  selected: image?.id == v.id,
+                  selected: image?.key == key,
                   onTap: () => setState(() {
-                    _image = v;
+                    _image = key;
                     // At least the image's own size, which it is grown from.
                     final need = v.capacity;
                     if (need != null && _diskSteps[_disk] * (1 << 30) < need) {
@@ -697,10 +727,10 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
       ];
     }
     final chosen = lxc
-        ? (chosenMedia ?? media.firstOrNull)?.name
+        ? (chosenMedia ?? media.firstOrNull)?.volume.name
         : fromImage
-        ? image?.name
-        : chosenMedia?.name;
+        ? image?.volume.name
+        : chosenMedia?.volume.name;
     return _Group(
       key: 'system',
       title: lxc ? l10n.virtTemplate : libL10n.system,
@@ -714,9 +744,9 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
       dot: _dot(ok),
       rows: [
         ...rows,
-        if (issue == VirtCreateIssue.imageSize && image?.capacity != null)
+        if (issue == VirtCreateIssue.imageSize && image?.volume.capacity != null)
           _text(
-            l10n.virtCreateImageSize(image!.capacity!.bytes2Str),
+            l10n.virtCreateImageSize(image!.volume.capacity!.bytes2Str),
             error: true,
           ),
       ],

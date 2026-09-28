@@ -4072,7 +4072,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String virtSetIssueDescription(int max) {
-    return 'Höchstens $max Zeichen, ohne Steuerzeichen.';
+    return 'Höchstens $max Byte (UTF-8), ohne Steuerzeichen.';
   }
 
   @override
@@ -4466,6 +4466,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String virtPoolStopAsk(String name) {
     return 'Pool $name stoppen? Bis zum nächsten Start lassen sich keine Volumes auflisten oder anlegen.';
   }
+
+  @override
+  String get virtStorageClusterWide =>
+      'Das gilt für jeden Knoten des Clusters, der diesen Speicher hat.';
 
   @override
   String virtStorageDisableAsk(String name) {

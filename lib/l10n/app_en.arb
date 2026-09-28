@@ -5250,7 +5250,7 @@
   "@virtSetRenameStopped": {
     "description": "Settings view: libvirt can rename a guest only when it is shut off."
   },
-  "virtSetIssueDescription": "At most {max} characters, and no control characters.",
+  "virtSetIssueDescription": "At most {max} bytes (UTF-8), and no control characters.",
   "@virtSetIssueDescription": {
     "description": "Settings view: the guest's description is too long or has control characters.",
     "placeholders": {
@@ -5807,6 +5807,10 @@
         "example": "images"
       }
     }
+  },
+  "virtStorageClusterWide": "This applies to every node of the cluster that has this storage.",
+  "@virtStorageClusterWide": {
+    "description": "PVE storage disable/remove confirmation: the change is cluster-wide, not per node."
   },
   "virtStorageDisableAsk": "Disable the storage {name}? Guests with disks on it cannot start until it is enabled again.",
   "@virtStorageDisableAsk": {

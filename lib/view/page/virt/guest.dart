@@ -160,10 +160,26 @@ class _VirtGuestViewState extends ConsumerState<VirtGuestView> {
 
   /// The state [_detail] was fetched in. A guest that starts gains a display
   /// and interface names, so the detail is fetched again when this changes.
+  /// Null where that state said neither (a backup, unknown).
   bool? _detailActive;
+
+  /// The hardware revision [_detail] was fetched after, where this session
+  /// has read the hardware: a disk, a NIC or a console added from the
+  /// Hardware or Settings view changes it, and the detail is fetched again.
+  String? _detailRevision;
 
   VirtHostNotifier get _notifier =>
       ref.read(virtHostProvider(widget.serverId).notifier);
+
+  /// The revision of [guest]'s hardware as last read, where it has been
+  /// read — watched, so a change saved from its views is seen here. Not
+  /// read for this: the provider is kept once read, and the guest views
+  /// read it themselves.
+  String? _hardwareRevision(VirtGuest guest) {
+    final provider = virtHardwareProvider(widget.serverId, guest.id);
+    if (!ref.exists(provider)) return null;
+    return ref.watch(provider.select((a) => a.value?.revision));
+  }
 
   @override
   void didUpdateWidget(VirtGuestView oldWidget) {
@@ -184,7 +200,7 @@ class _VirtGuestViewState extends ConsumerState<VirtGuestView> {
       );
     }
     final state = st.displayState(guest);
-    _syncDetail(guest, state);
+    _syncDetail(guest, state, _hardwareRevision(guest));
     final busy = st.isBusy(guest.id) || state.isTransient;
     final views = VirtGuestViewKind.of(guest, st.data?.capabilities);
     // A view the guest does not have (a host that lost a capability, a guest
@@ -588,19 +604,28 @@ extension _GuestActions on _VirtGuestViewState {
       _stored = null;
       _detail = null;
       _detailActive = null;
+      _detailRevision = null;
     });
   }
 
   /// Fetches the detail the first time, and again when the guest has started
-  /// or stopped since.
+  /// or stopped since, or its hardware was changed ([revision]).
   ///
   /// A guest seen to stop takes its consoles with it: what they showed is
   /// gone, and waiting out the idle time would only keep a notice coming for
-  /// a screen that no longer exists.
-  void _syncDetail(VirtGuest guest, VirtGuestState state) {
-    final active = state.isActive;
-    if (_detail != null && _detailActive == active) return;
-    if (_detailActive == true && !active) {
+  /// a screen that no longer exists. Only a stop the host reports: a backup
+  /// runs beside a running guest, and an unknown state says nothing either
+  /// way, so neither closes a console nor fetches the detail again.
+  void _syncDetail(VirtGuest guest, VirtGuestState state, String? revision) {
+    final known = state.isActive || state == VirtGuestState.stopped;
+    final active = known ? state.isActive : null;
+    final hardwareChanged = revision != null && revision != _detailRevision;
+    if (_detail != null &&
+        !hardwareChanged &&
+        (!known || _detailActive == active)) {
+      return;
+    }
+    if (_detailActive == true && state == VirtGuestState.stopped) {
       final container = ProviderScope.containerOf(context, listen: false);
       final serverId = widget.serverId;
       final guestId = guest.id;
@@ -613,7 +638,8 @@ extension _GuestActions on _VirtGuestViewState {
         ),
       );
     }
-    _detailActive = active;
+    if (known || _detail == null) _detailActive = active;
+    _detailRevision = revision;
     _detail = _notifier.detail(guest.id);
   }
 
@@ -623,7 +649,9 @@ extension _GuestActions on _VirtGuestViewState {
     try {
       await _notifier.delete(guest.id, removeDisks: removeDisks);
       Toast.success(l10n.virtDeleted(guest.name));
-      widget.onDeleted?.call();
+      // Only while this still shows it: a view closed since, or moved to
+      // another guest, would close what the user went to instead.
+      if (mounted && _guestId == guest.id) widget.onDeleted?.call();
     } on VirtErr catch (e) {
       Toast.error(e.title, body: e.detail);
     } catch (e, s) {

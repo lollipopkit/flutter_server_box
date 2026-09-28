@@ -4031,7 +4031,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String virtSetIssueDescription(int max) {
-    return 'Ən çox $max simvol, idarəetmə simvolları olmadan.';
+    return 'Ən çox $max bayt (UTF-8), idarəetmə simvolları olmadan.';
   }
 
   @override
@@ -4415,6 +4415,10 @@ class AppLocalizationsAz extends AppLocalizations {
   String virtPoolStopAsk(String name) {
     return '$name hovuzu dayandırılsın? Yenidən başlayana qədər həcmlər siyahılanmır və yaradılmır.';
   }
+
+  @override
+  String get virtStorageClusterWide =>
+      'Bu, klasterdə bu yaddaşa malik hər bir node-a aiddir.';
 
   @override
   String virtStorageDisableAsk(String name) {

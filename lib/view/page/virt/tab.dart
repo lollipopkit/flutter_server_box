@@ -52,6 +52,12 @@ class _VirtTabPageState extends ConsumerState<VirtTabPage>
   /// The host chosen, or null for "the first there is".
   String? _hostId;
 
+  /// The host the selection below belongs to: the one last on screen. The
+  /// host on screen can change without being chosen (see [_resolveHost]),
+  /// and an id open on one host is not the same thing on another — a VMID,
+  /// a pool or network name.
+  String? _shownHostId;
+
   /// The guest open beside the list. Null while nothing is — which is what
   /// tells `NestedNavigator` a change is the detail closing.
   String? _guestId;
@@ -115,11 +121,25 @@ class _VirtTabPageState extends ConsumerState<VirtTabPage>
     // the pane's, where a watch would subscribe the wrong widget.
     final servers = ref.watch(serversProvider).servers;
     final hostId = _resolveHost(hosts);
+    // Before anything reads the selection: what was open belongs to the host
+    // shown before, whether it was switched away from or went away.
+    if (hostId != _shownHostId) {
+      _shownHostId = hostId;
+      _clearSelection();
+    }
     final caps = hostId == null
         ? null
         : ref.watch(
             virtHostProvider(hostId).select((s) => s.data?.capabilities),
           );
+    // A section the host does not have (the host changed, or its answer
+    // did) is the guests, which every host has — here, where the list, the
+    // detail and every action read it, so none of them acts on the other.
+    // Kept while the host's answer is not in yet.
+    if (caps != null && !_section.availableOn(caps)) {
+      _section = VirtSection.guests;
+      _creating = false;
+    }
 
     return PaneSettings.listenAll((paneWidth, paneCollapsed) {
       return AdaptivePanes.detail(
@@ -169,6 +189,15 @@ class _VirtTabPageState extends ConsumerState<VirtTabPage>
     VirtSection.network => _netId,
     VirtSection.backup => _jobId,
   };
+
+  /// Nothing open, nothing being made: what [_shownHostId] had.
+  void _clearSelection() {
+    _guestId = null;
+    _poolId = null;
+    _netId = null;
+    _jobId = null;
+    _creating = false;
+  }
 
   void _closeDetail() {
     switch (_section) {
@@ -269,6 +298,14 @@ extension VirtSectionUi on VirtSection {
     VirtSection.network => Icons.lan_outlined,
     VirtSection.backup => Icons.backup_outlined,
   };
+
+  /// Whether a host with [caps] has this section.
+  bool availableOn(VirtCapabilities caps) => switch (this) {
+    VirtSection.guests => true,
+    VirtSection.storage => caps.storage,
+    VirtSection.network => caps.network,
+    VirtSection.backup => caps.backupJobs,
+  };
 }
 
 // --- Actions ---
@@ -283,14 +320,8 @@ extension _Actions on _VirtTabPageState {
 
   void _selectHost(String id) {
     if (!mounted) return;
+    // What was open is cleared by `build` when the host on screen changes.
     setState(() {
-      if (_hostId != id) {
-        _guestId = null;
-        _poolId = null;
-        _netId = null;
-        _jobId = null;
-        _creating = false;
-      }
       _hostId = id;
       _showHosts = false;
     });

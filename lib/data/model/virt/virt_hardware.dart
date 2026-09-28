@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
@@ -54,6 +56,9 @@ abstract class VirtHardware with _$VirtHardware {
     /// What an edit is made from, sent back with it: PVE's `digest`, the
     /// persistent XML libvirt printed. An edit made from an older read is
     /// refused (`VirtErrType.conflict`) rather than undoing someone else's.
+    ///
+    /// libvirt's is read with `--security-info`, so it holds the display
+    /// passwords: never shown, and left out of [toString].
     String? revision,
     @Default(VirtHwLimits()) VirtHwLimits limits,
 
@@ -76,6 +81,13 @@ abstract class VirtHardware with _$VirtHardware {
     /// What this guest can be changed to, on this host.
     @Default(VirtHwSupport()) VirtHwSupport support,
   }) = _VirtHardware;
+
+  /// Without [revision], which can hold passwords, and [configText]: this
+  /// reaches logs through string interpolation.
+  @override
+  String toString() =>
+      'VirtHardware(kind: ${kind.name}, name: $name, running: $running, '
+      'disks: ${disks.length}, nics: ${nics.length})';
 
   VirtHwDevice? device(String key) {
     for (final d in devices) {
@@ -184,6 +196,11 @@ abstract class VirtHwDisk with _$VirtHwDisk {
     /// A CD-ROM holding the guest's cloud-init data (PVE's `cloudinit`
     /// drive, the seed the app made on libvirt): not install media to swap.
     @Default(false) bool cloudInit,
+
+    /// Whether the backend has a way to grow it ([virtHwDiskGrowable]):
+    /// libvirt resizes a stopped domain's disk by its file, so a disk on a
+    /// pool volume reference or a network source has none.
+    @Default(true) bool resizable,
   }) = _VirtHwDisk;
 }
 
@@ -696,7 +713,7 @@ enum VirtHwIssue {
 /// which libvirt cannot resize (its `logical` backend has no resize, and
 /// QEMU cannot grow a block device) and PVE's resize does not take.
 bool virtHwDiskGrowable(VirtHwDisk disk) =>
-    !(disk.source?.startsWith('/dev/') ?? false);
+    disk.resizable && !(disk.source?.startsWith('/dev/') ?? false);
 
 /// Whether [device] can be given by its address: the host said where it
 /// sits.
@@ -723,7 +740,7 @@ bool virtIsUnicastMac(String mac) {
 }
 
 /// The longest note kept with a guest here: PVE's `description` is capped at
-/// 8 KiB, and libvirt's is held to the same.
+/// 8 KiB, and libvirt's is held to the same. In UTF-8 bytes.
 const virtHwDescriptionMax = 8192;
 
 /// The least memory a guest is given here.
@@ -798,8 +815,14 @@ VirtHwIssue? virtHwIssue(
       if (!ok) return VirtHwIssue.nameInvalid;
       if (hw.running && !hw.renameRunning) return VirtHwIssue.nameRunning;
     case VirtHwSetDescription(:final text):
-      if (text.length > virtHwDescriptionMax ||
-          text.runes.any((r) => r < 0x20 && r != 0x0a && r != 0x09)) {
+      // As `sbm_parser` checks it: UTF-8 bytes, and Unicode's control
+      // characters (C0, DEL, C1) but a newline and a tab.
+      if (utf8.encode(text).length > virtHwDescriptionMax ||
+          text.runes.any(
+            (r) =>
+                (r < 0x20 && r != 0x0a && r != 0x09) ||
+                (r >= 0x7f && r <= 0x9f),
+          )) {
         return VirtHwIssue.description;
       }
     case VirtHwUpdateDisk(:final bus):

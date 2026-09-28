@@ -251,8 +251,10 @@ class _VirtBackupJobViewState extends ConsumerState<VirtBackupJobView>
   Widget _buildPane(VirtBackupJob? job) {
     final guestList = ref.watch(virtHostProvider(_serverId)).data?.guests ??
         const <VirtGuest>[];
-    final storages = ref.watch(virtBackupStoragesProvider(_serverId)).value ??
-        const <VirtStoragePool>[];
+    final storages = _storagesFor(
+      ref.watch(virtBackupStoragesProvider(_serverId)).value ??
+          const <VirtStoragePool>[],
+    );
     final nodes =
         ref.watch(virtHostProvider(_serverId)).data?.host.nodes ??
         const <VirtNode>[];
@@ -347,9 +349,17 @@ class _VirtBackupJobViewState extends ConsumerState<VirtBackupJobView>
                 key: 'job:node',
                 onSelected: busy
                     ? null
-                    : (v) => setState(
-                        () => _node = v == l10n.virtBackupJobNodeAny ? null : v,
-                      ),
+                    : (v) => setState(() {
+                        _node = v == l10n.virtBackupJobNodeAny ? null : v;
+                        // A storage the node picked does not have is not
+                        // where its backups can go.
+                        final all =
+                            ref.read(virtBackupStoragesProvider(_serverId)).value ??
+                            const <VirtStoragePool>[];
+                        if (!_storagesFor(all).any((s) => s.name == _storage)) {
+                          _storage = null;
+                        }
+                      }),
               ),
           ],
         ),
@@ -466,7 +476,7 @@ class _VirtBackupJobViewState extends ConsumerState<VirtBackupJobView>
                 l10n.virtBackupSelectionList,
                 if (job?.pool case final pool?) 'pool:$pool',
               ],
-              _selectionLabel,
+              _selectionOption,
               key: 'job:all',
               onSelected: busy
                   ? null
@@ -559,6 +569,29 @@ class _VirtBackupJobViewState extends ConsumerState<VirtBackupJobView>
     (null, false) => l10n.virtBackupSelected(_vmids.length),
   };
 
+  /// Which of the selection segment's options is chosen: the option's own
+  /// text, where [_selectionLabel] counts the guests of a list.
+  String get _selectionOption => switch ((_pool, _all)) {
+    (final pool?, _) => 'pool:$pool',
+    (null, true) => l10n.virtBackupSelectionAll,
+    (null, false) => l10n.virtBackupSelectionList,
+  };
+
+  /// Where the job's backups can go, one entry per storage name: the
+  /// host lists a storage once per node that has it. A job pinned to a node
+  /// is offered that node's storages only; one that runs on any node, every
+  /// storage some node has.
+  List<VirtStoragePool> _storagesFor(List<VirtStoragePool> all) {
+    final node = _node;
+    final seen = <String>{};
+    return [
+      for (final s in all)
+        if ((node == null || s.node == null || s.node == node) &&
+            seen.add(s.name))
+          s,
+    ];
+  }
+
   bool _canSave(List<VirtStoragePool> storages) =>
       storages.isNotEmpty && (_pool != null || _all || _vmids.isNotEmpty);
 
@@ -623,9 +656,10 @@ class _VirtBackupJobViewState extends ConsumerState<VirtBackupJobView>
   }
 
   Future<void> _save() async {
-    final storages =
-        ref.read(virtBackupStoragesProvider(_serverId)).value ??
-        const <VirtStoragePool>[];
+    final storages = _storagesFor(
+      ref.read(virtBackupStoragesProvider(_serverId)).value ??
+          const <VirtStoragePool>[],
+    );
     if (storages.isEmpty) return;
     setState(() => _saving = true);
     try {

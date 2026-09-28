@@ -4092,7 +4092,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String virtSetIssueDescription(int max) {
-    return '$max caractères au plus, sans caractères de contrôle.';
+    return '$max octets (UTF-8) au plus, sans caractères de contrôle.';
   }
 
   @override
@@ -4487,6 +4487,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String virtPoolStopAsk(String name) {
     return 'Arrêter le pool $name ? Ses volumes ne pourront être ni listés ni créés avant son redémarrage.';
   }
+
+  @override
+  String get virtStorageClusterWide =>
+      'Cela s\'applique à chaque nœud du cluster qui a ce stockage.';
 
   @override
   String virtStorageDisableAsk(String name) {
