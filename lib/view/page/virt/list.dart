@@ -65,40 +65,45 @@ extension _List on _VirtTabPageState {
         child: Row(
           children: [
             Expanded(
-              child: SessionSwitcherLabel(
-                name: servers[hostId]?.name ?? l10n.virtualization,
-                icon: Icons.dns_outlined,
-                position: at < 0 ? null : at + 1,
-                total: hostIds.length,
-                // The picker below this bar, where there is a column to open
-                // it in; a sheet over it otherwise, which needs no `open`.
-                open: picking,
-                onTap: () => split
-                    ? setState(() => _showHosts = !_showHosts)
-                    : unawaited(_showHostSheet(hostId)),
+              child: FoldingBar(
+                label: SessionSwitcherLabel(
+                  name: servers[hostId]?.name ?? l10n.virtualization,
+                  icon: Icons.dns_outlined,
+                  position: at < 0 ? null : at + 1,
+                  total: hostIds.length,
+                  // The picker below this bar, where there is a column to
+                  // open it in; a sheet over it otherwise, which needs no
+                  // `open`.
+                  open: picking,
+                  onTap: () => split
+                      ? setState(() => _showHosts = !_showHosts)
+                      : unawaited(_showHostSheet(hostId)),
+                ),
+                actions: [
+                  if (hostId != null && !picking) ...[
+                    BarAction(
+                      icon: Icons.search,
+                      label: libL10n.search,
+                      onTap: _search.start,
+                    ),
+                    BarAction(
+                      icon: Icons.refresh,
+                      label: libL10n.refresh,
+                      onTap: () => _refresh(hostId),
+                    ),
+                    // In the section a new one lands in; the host's answer
+                    // says whether it takes one.
+                    if (_createLabel(caps) case final label?)
+                      BarAction(
+                        key: const ValueKey('virt:create'),
+                        icon: Icons.add,
+                        label: label,
+                        onTap: () => unawaited(_startCreate(hostId, split)),
+                      ),
+                  ],
+                ],
               ),
             ),
-            if (hostId != null && !picking) ...[
-              Btn.icon(
-                text: libL10n.search,
-                icon: const Icon(Icons.search, size: 18),
-                onTap: _search.start,
-              ),
-              Btn.icon(
-                text: libL10n.refresh,
-                icon: const Icon(Icons.refresh, size: 18),
-                onTap: () => _refresh(hostId),
-              ),
-              // In the section a new one lands in; the host's answer says
-              // whether it takes one.
-              if (_createLabel(caps) case final label?)
-                Btn.icon(
-                  key: const ValueKey('virt:create'),
-                  text: label,
-                  icon: const Icon(Icons.add, size: 18),
-                  onTap: () => unawaited(_startCreate(hostId, split)),
-                ),
-            ],
             const SizedBox(width: 7),
           ],
         ),
