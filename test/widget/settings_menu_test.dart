@@ -451,6 +451,22 @@ void main() {
     },
   );
 
+  testWidgets('remote desktop is under Server, not a subject of its own', (
+    tester,
+  ) async {
+    await pump(tester, width: 1200);
+    final l10n = AppLocalizations.of(
+      tester.element(find.byKey(settingsMenuKey)),
+    )!;
+    expect(menuRow(l10n.remoteDesktop), findsNothing);
+    await tester.tap(menuRow(libL10n.server));
+    await settle(tester);
+    expect(headerTab(l10n.remoteDesktop), findsOneWidget);
+    await tester.tap(headerTab(l10n.remoteDesktop));
+    await settle(tester);
+    expect(find.text(l10n.remoteSessionIdleTimeout), findsOneWidget);
+  });
+
   testWidgets('built-in presets apply their appearance without a package', (
     tester,
   ) async {
