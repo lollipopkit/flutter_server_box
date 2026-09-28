@@ -27,8 +27,10 @@ import 'dart:typed_data';
 import 'package:archive/archive.dart';
 import 'package:crypto/crypto.dart';
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:flutter/foundation.dart'
+    show immutable, mapEquals, visibleForTesting;
 import 'package:flutter/services.dart' show AssetBundle, rootBundle;
+import 'package:flutter/widgets.dart' show Locale;
 import 'package:server_box/core/service/theme_package.dart';
 import 'package:server_box/core/utils/bounded_output_stream.dart';
 import 'package:toml/toml.dart';
@@ -312,6 +314,79 @@ final class ThemeRelease {
 }
 
 /// One theme in a repository, with every version it offers.
+/// A listing's text in one or several languages: `description = "..."`, or a
+/// table of language tags — `[description] en = "..." zh = "..."`.
+@immutable
+final class ThemeText {
+  const ThemeText._(this._values);
+
+  /// By normalized tag (`zh-tw`, `zh`, `en`); the one string of a plain value
+  /// is under the empty tag.
+  final Map<String, String> _values;
+
+  static const empty = ThemeText._({});
+
+  /// Anything but a string or a table of strings is read as no text: this is
+  /// a description, and a listing that spells it wrong is still a theme.
+  static ThemeText parse(Object? raw) => switch (raw) {
+    final String text => ThemeText._({'': text}),
+    final Map<Object?, Object?> table => ThemeText._({
+      for (final MapEntry(:key, :value) in table.entries)
+        if (key is String && value is String && key.trim().isNotEmpty)
+          _normalize(key): value,
+    }),
+    _ => empty,
+  };
+
+  static String _normalize(String tag) =>
+      tag.trim().replaceAll('_', '-').toLowerCase();
+
+  bool get isEmpty => _values.values.every((v) => v.trim().isEmpty);
+
+  /// Every language's text, for a search to match whichever one is typed.
+  Iterable<String> get all => _values.values;
+
+  /// The text for [locale]: its full tag, then its language with the script
+  /// or the country alone, then its language, then English, then whatever the
+  /// listing has first.
+  String resolve(Locale? locale) {
+    if (_values.isEmpty) return '';
+    if (_values[''] case final plain?) return plain;
+    final candidates = <String>[];
+    if (locale != null) {
+      final language = locale.languageCode.toLowerCase();
+      candidates.add(_normalize(locale.toLanguageTag()));
+      if (locale.scriptCode case final script?) {
+        candidates.add('$language-${script.toLowerCase()}');
+      }
+      if (locale.countryCode case final country?) {
+        candidates.add('$language-${country.toLowerCase()}');
+      }
+      candidates.add(language);
+    }
+    candidates.add('en');
+    for (final tag in candidates) {
+      if (_values[tag] case final text?) return text;
+    }
+    return _values.values.first;
+  }
+
+  /// What the cache writes: the string back as a string, a table as a table.
+  Object toJson() => switch (_values) {
+    {'': final plain} when _values.length == 1 => plain,
+    _ => _values,
+  };
+
+  @override
+  bool operator ==(Object other) =>
+      other is ThemeText && mapEquals(other._values, _values);
+
+  @override
+  int get hashCode => Object.hashAllUnordered(
+    _values.entries.map((e) => Object.hash(e.key, e.value)),
+  );
+}
+
 final class ThemeListing {
   const ThemeListing({
     required this.id,
@@ -324,7 +399,9 @@ final class ThemeListing {
 
   final String id;
   final String name;
-  final String description;
+
+  /// One string, or one per language — see [ThemeText].
+  final ThemeText description;
   final String? homepage;
   final String? license;
 
@@ -385,9 +462,7 @@ final class ThemeListing {
     return ThemeListing(
       id: id,
       name: raw['name'] is String ? raw['name'] as String : id,
-      description: raw['description'] is String
-          ? raw['description'] as String
-          : '',
+      description: ThemeText.parse(raw['description']),
       homepage: raw['homepage'] is String ? raw['homepage'] as String : null,
       license: raw['license'] is String ? raw['license'] as String : null,
       releases: releases,
@@ -402,7 +477,7 @@ final class ThemeListing {
   Map<String, dynamic> toJson() => {
     'id': id,
     'name': name,
-    'description': description,
+    'description': description.toJson(),
     if (homepage != null) 'homepage': homepage,
     if (license != null) 'license': license,
     'releases': [for (final r in releases) r.toJson()],
@@ -424,9 +499,7 @@ final class ThemeListing {
     return ThemeListing(
       id: id,
       name: raw['name'] is String ? raw['name'] as String : id,
-      description: raw['description'] is String
-          ? raw['description'] as String
-          : '',
+      description: ThemeText.parse(raw['description']),
       homepage: raw['homepage'] is String ? raw['homepage'] as String : null,
       license: raw['license'] is String ? raw['license'] as String : null,
       releases: releases,

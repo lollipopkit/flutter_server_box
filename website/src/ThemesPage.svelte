@@ -37,12 +37,42 @@
   // Which mode each card shows; a theme with both starts dark.
   let cardMode = $state({})
   const modeOf = (t) => cardMode[t.id] ?? (t.modes.includes('dark') ? 'dark' : t.modes[0])
+  // Which variant each card shows; the first until one is picked.
+  let cardVariant = $state({})
+  const variantOf = (t, key = cardVariant[t.id]) => t.variants.find((v) => v.key === key) ?? t.variants[0]
+  const hasVariants = (t) => t.variants.length > 1 || t.variants[0]?.key != null
+
+  // A listing's description: a string as it is, or a table of language tags
+  // looked up by the page's language, then its language alone, then English,
+  // then whatever the listing has first — as the app does.
+  function textOf(value) {
+    if (typeof value === 'string') return value
+    if (!value || typeof value !== 'object') return ''
+    // Only string entries, as the app reads them: anything else in the table
+    // is not text in any language.
+    const table = Object.fromEntries(
+      Object.entries(value)
+        .filter(([, v]) => typeof v === 'string')
+        .map(([k, v]) => [k.replaceAll('_', '-').toLowerCase(), v]),
+    )
+    const tag = locale.toLowerCase()
+    return table[tag] ?? table[tag.split('-')[0]] ?? table.en ?? Object.values(table)[0] ?? ''
+  }
+  const allTexts = (value) =>
+    typeof value === 'string'
+      ? [value]
+      : Object.values(value && typeof value === 'object' ? value : {}).filter((v) => typeof v === 'string')
 
   const shown = $derived.by(() => {
     const q = query.trim().toLowerCase()
     return store.themes
       .filter((t) => modeFilter === 'all' || t.modes.includes(modeFilter))
-      .filter((t) => !q || [t.name, t.description, t.id].some((s) => s.toLowerCase().includes(q)))
+      .filter((t) =>
+        !q ||
+        [t.name, t.id, ...allTexts(t.description), ...t.variants.map((v) => v.name ?? '')].some((s) =>
+          s.toLowerCase().includes(q),
+        ),
+      )
       .toSorted((a, b) =>
         sort === 'updated'
           ? b.updated.localeCompare(a.updated) || a.name.localeCompare(b.name)
@@ -52,7 +82,9 @@
 
   // --- detail, by hash ---
   let openId = $state(null)
+  let openKey = $state(null)
   const open = $derived(store.themes.find((t) => t.id === openId) ?? null)
+  const openVariant = $derived(open ? variantOf(open, openKey) : null)
   let detailMode = $state('dark')
   // The open theme's preview data, fetched when it is opened. A failure is
   // the open theme's only while it is still the one open, and a retry starts
@@ -61,29 +93,38 @@
   let openFailed = $state(false)
   let attempt = $state(0)
   $effect(() => {
-    const t = open
+    const t = openVariant
     attempt
     openPreview = null
     openFailed = false
     if (!t) return
     loadPreview(t).then(
-      (p) => { if (open === t) openPreview = p },
-      () => { if (open === t) openFailed = true },
+      (p) => { if (openVariant === t) openPreview = p },
+      () => { if (openVariant === t) openFailed = true },
     )
   })
 
-  // `#<id>` opens a theme, `#<id>:light` in that mode, so a link can say which.
+  // `#<id>` opens a theme, `#<id>:light` in that mode, and `#<id>~<variant>`
+  // one of its variants, so a link can say which.
+  const hashOf = (id, key, mode) => `#${id}${key ? `~${key}` : ''}${mode ? `:${mode}` : ''}`
   function readHash() {
-    const [id, mode] = decodeURIComponent(window.location.hash.slice(1)).split(':')
+    const [target, mode] = decodeURIComponent(window.location.hash.slice(1)).split(':')
+    const [id, key] = target.split('~')
     const t = store.themes.find((x) => x.id === id)
     openId = t?.id ?? null
+    openKey = key ?? null
     if (t) detailMode = t.modes.includes(mode) ? mode : t.modes.includes('dark') ? 'dark' : t.modes[0]
     window.scrollTo({ top: 0 })
   }
 
   function showMode(mode) {
     detailMode = mode
-    history.replaceState(null, '', `${location.pathname}${location.search}#${openId}:${mode}`)
+    history.replaceState(null, '', `${location.pathname}${location.search}${hashOf(openId, openKey, mode)}`)
+  }
+
+  function showVariant(key) {
+    openKey = key
+    history.replaceState(null, '', `${location.pathname}${location.search}${hashOf(openId, key, detailMode)}`)
   }
 
   onMount(() => {
@@ -173,8 +214,16 @@
 
       <div class="detail-head">
         <div>
-          <h1>{open.name}</h1>
-          <p>{open.description}</p>
+          <h1>{open.name}{openVariant.name ? ` · ${openVariant.name}` : ''}</h1>
+          <p>{textOf(open.description)}</p>
+          {#if hasVariants(open)}
+            <div class="store-modes store-variants" role="radiogroup" aria-label={open.name}>
+              {#each open.variants as v (v.key)}
+                <button type="button" role="radio" aria-checked={v.key === openVariant.key} class="protocol-badge"
+                  class:active={v.key === openVariant.key} onclick={() => showVariant(v.key)}>{v.name}</button>
+              {/each}
+            </div>
+          {/if}
           <div class="store-meta">
             {#each open.modes as mode}<span class="protocol-badge">{modeLabel(mode)}</span>{/each}
             {#if open.latest}<span class="protocol-badge">v{open.latest.version}</span>{/if}
@@ -347,12 +396,14 @@
       <div class="store-grid store-grid-wide">
         {#each shown as theme (theme.id)}
           {@const mode = modeOf(theme)}
+          {@const variant = variantOf(theme)}
+          {@const href = hashOf(theme.id, variant.key)}
           <article class="feature-card store-card">
-            <a class="store-preview-link" href={`#${theme.id}`} aria-label={`${theme.name} — ${$LL.themes.details()}`}>
-              <LazyThemePreview {theme} {mode} scale={0.9} />
+            <a class="store-preview-link" {href} aria-label={`${theme.name} — ${$LL.themes.details()}`}>
+              {#key variant.previewUrl}<LazyThemePreview theme={variant} {mode} scale={0.9} />{/key}
             </a>
             <div class="store-card-head">
-              <h3><a href={`#${theme.id}`}>{theme.name}</a></h3>
+              <h3><a {href}>{theme.name}</a></h3>
               {#if theme.modes.length > 1}
                 <div class="store-modes small" role="radiogroup" aria-label={$LL.themes.modeLabel()}>
                   {#each theme.modes as m}
@@ -362,14 +413,22 @@
                 </div>
               {/if}
             </div>
-            {#if theme.description}<p>{theme.description}</p>{/if}
+            {#if hasVariants(theme)}
+              <div class="store-modes small store-variants" role="radiogroup" aria-label={theme.name}>
+                {#each theme.variants as v (v.key)}
+                  <button type="button" role="radio" aria-checked={v.key === variant.key} class="protocol-badge"
+                    class:active={v.key === variant.key} onclick={() => (cardVariant = { ...cardVariant, [theme.id]: v.key })}>{v.name}</button>
+                {/each}
+              </div>
+            {/if}
+            {#if textOf(theme.description)}<p>{textOf(theme.description)}</p>{/if}
             <div class="store-meta">
               {#each theme.modes as m}<span class="protocol-badge">{modeLabel(m)}</span>{/each}
               {#if theme.latest}<span class="protocol-badge">v{theme.latest.version}</span>{/if}
               {#if theme.license}<span class="protocol-badge">{theme.license}</span>{/if}
             </div>
             <div class="store-actions">
-              <a class="download-icon-btn" href={`#${theme.id}`}><span>{$LL.themes.details()}</span></a>
+              <a class="download-icon-btn" {href}><span>{$LL.themes.details()}</span></a>
               {#if theme.latest?.url}
                 <a class="download-icon-btn" href={theme.latest.url}>
                   <span>{$LL.themes.download()}</span>

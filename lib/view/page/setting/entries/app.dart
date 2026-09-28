@@ -84,7 +84,10 @@ extension _App on _AppSettingsPageState {
             _presetLabel(BuiltinTheme.fromId(preset)) ??
                 switch (ThemePackages.installationIdOf(preset)) {
                   final installationId? =>
-                    ThemePackages.installed(installationId)?.name ??
+                    ThemePackages.installed(
+                          installationId,
+                          variant: ThemePackages.variantOf(preset),
+                        )?.label ??
                         libL10n.invalid,
                   _ => libL10n.custom,
                 },
@@ -105,6 +108,7 @@ extension _App on _AppSettingsPageState {
                   : switch (ThemePackages.installationIdOf(value)) {
                       final installationId? => ThemePackages.installed(
                         installationId,
+                        variant: ThemePackages.variantOf(value),
                       ),
                       _ => await ThemePackages.loadBuiltin(
                         BuiltinTheme.fromId(value)!,
@@ -164,12 +168,15 @@ extension _App on _AppSettingsPageState {
           }
           if (ThemePackages.installationIdOf(preset)
               case final installationId?) {
-            final package = ThemePackages.installed(installationId);
+            final package = ThemePackages.installed(
+              installationId,
+              variant: ThemePackages.variantOf(preset),
+            );
             if (package == null) {
               Toast.error(l10n.appearanceInvalidTheme);
               return;
             }
-            _applyTheme(package);
+            _applyTheme(package, preset: package.preset);
             return;
           }
           await _applyThemePreset(BuiltinTheme.fromId(preset)!);
@@ -700,6 +707,8 @@ extension _App on _AppSettingsPageState {
       _setting.appThemePaletteEnabled.put(false);
       _setting.appBackgroundPath.put(dest.path);
       _setting.appBackgroundStyle.put(BackgroundStyle.image);
+      // The user's own picture is drawn once, not repeated like a theme's tile.
+      _setting.appBackgroundTile.put(0);
       _setting.appThemePreset.put(ThemePackages.customPreset);
       _markCustomTheme();
       setStateSafe(() {});

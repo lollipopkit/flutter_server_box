@@ -133,6 +133,10 @@ class SettingStore extends SqliteStore {
   );
   late final appBackgroundBlur = propertyDefault('appBackgroundBlur', 0.0);
 
+  /// The logical width the background image repeats at; 0 draws it once,
+  /// `cover`-fitted. Set by a theme package, never by the settings page.
+  late final appBackgroundTile = propertyDefault('appBackgroundTile', 0.0);
+
   /// Font names are tried in order; the platform's default follows the list.
   late final appFontFamilies = listProperty<String>('appFontFamilies');
   late final appImportedFontPath = propertyDefault('appImportedFontPath', '');
@@ -380,6 +384,14 @@ class SettingStore extends SqliteStore {
   /// choice. iOS only.
   late final watchExcludedServerIds = listProperty<String>(
     'watchExcludedServerIds',
+  );
+
+  /// The bundled store themes already installed once, by manifest id, so one
+  /// the user removed is not installed again at the next launch.
+  late final bundledThemesSeeded = listProperty<String>(
+    'bundledThemesSeeded',
+    // Written by the app, not the user.
+    updateLastModified: false,
   );
 
   /// Raw Go-compat `/status` URLs typed by hand in builds before the watch
@@ -672,6 +684,8 @@ class SettingStore extends SqliteStore {
     'appThemePackage',
     'appImportedFontPath',
     'themeStoreCache',
+    // What this device's themes directory holds, like `appThemePackage`.
+    'bundledThemesSeeded',
   };
 
   /// The floating Agent's placement and size, as one row.

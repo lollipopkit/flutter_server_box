@@ -35,6 +35,22 @@ final class ThemeRow {
 
   bool get onDevice => installed != null;
 
+  /// Whether the store offers other bytes than the ones on this device.
+  ///
+  /// A package installed from the store — or shipped with the app, which is
+  /// the same bytes — is installed under the digest of its file, which is the
+  /// digest the listing records, so a newer version is one whose digest
+  /// differs. A theme imported from a folder is under a digest of its own and
+  /// reads as updatable too: the store's copy is not the one on the device.
+  bool get updatable {
+    final release = item?.release;
+    final theme = installed;
+    return release != null &&
+        theme != null &&
+        release.sha256 != null &&
+        release.sha256 != theme.installationId;
+  }
+
   /// The manifest id: stable across versions, and what the two records of one
   /// theme are matched by.
   String get id => installed?.id ?? item!.listing.id;
@@ -48,10 +64,13 @@ final class ThemeRow {
   /// search for the manifest id or the repository finds it as well.
   String get searchText => [
     name,
-    if (installed case final theme?) theme.id,
+    if (installed case final theme?) ...[
+      theme.id,
+      for (final variant in theme.variants) variant.name,
+    ],
     if (item case final item?) ...[
       item.listing.id,
-      item.listing.description,
+      ...item.listing.description.all,
       item.repo,
     ],
   ].join('\n').toLowerCase();

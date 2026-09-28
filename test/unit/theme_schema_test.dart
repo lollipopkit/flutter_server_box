@@ -42,6 +42,21 @@ void main() {
       expect(properties['id']['pattern'], ThemePackages.idPattern.pattern);
     });
 
+    test('a variant takes the tables the parser merges, keyed as it reads', () {
+      final variants = _map(properties['variants']);
+      expect(variants['maxProperties'], ThemePackages.maxVariants);
+      expect(
+        _map(variants['propertyNames'])['pattern'],
+        ThemePackages.variantKeyPattern.pattern,
+      );
+      final variant = _map(variants['additionalProperties']);
+      expect(keysOf(variant), unorderedEquals(ThemePackages.variantFields));
+      expect(variant['required'], ['name']);
+      final name = _map(_map(variant['properties'])['name']);
+      expect(name['maxLength'], ThemePackages.maxNameLength);
+      expect(name['pattern'], properties['name']['pattern']);
+    });
+
     test('a name is the same label the parser accepts', () {
       expect(properties['name']['maxLength'], ThemePackages.maxNameLength);
       expect(
@@ -109,12 +124,17 @@ void main() {
           ThemeComponents.maxBorderWidth);
       expect(bound(definitions['elevation'], 'maximum'),
           ThemeComponents.maxElevation);
+      expect(bound(definitions['size'], 'maximum'), ThemeComponents.maxSize);
+      expect(bound(definitions['thickness'], 'maximum'),
+          ThemeComponents.maxThickness);
       expect(bound(_map(definitions['inset'])['items'], 'maximum'),
           ThemeComponents.maxInset);
       for (final node in [
         definitions['ratio'],
         definitions['borderWidth'],
         definitions['elevation'],
+        definitions['size'],
+        definitions['thickness'],
         definitions['inset']['items'],
       ]) {
         expect(bound(node, 'minimum'), 0);
@@ -127,6 +147,11 @@ void main() {
           ThemePackages.maxBackgroundOpacity);
       expect(bound(background['blur'], 'maximum'),
           ThemePackages.maxBackgroundBlur);
+      expect(bound(background['tile'], 'minimum'),
+          ThemePackages.minBackgroundTile);
+      expect(bound(background['tile'], 'maximum'),
+          ThemePackages.maxBackgroundTile);
+      expect(background.keys.toSet(), ThemePackages.backgroundFields);
     });
 
     test('splash duration', () {
@@ -148,25 +173,52 @@ void main() {
       );
     });
 
-    for (final name in const ['card', 'tile', 'input', 'navigation', 'dialog', 'sheet']) {
-      test('$name takes the fields the parser accepts', () {
-        expect(
-          keysOf(definitions[name]),
-          unorderedEquals(ThemeComponents.fields[name]!),
-        );
+    for (final MapEntry(key: name, value: kinds) in ThemeComponents.kinds.entries) {
+      test('$name takes the fields the parser accepts, each of its kind', () {
+        final node = _map(_map(definitions[name])['properties']);
+        final fields = {
+          for (final MapEntry(:key, :value) in node.entries)
+            if (!ThemeComponents.states.contains(key) ||
+                !ThemeComponents.stateful.contains(name))
+              key: value,
+        };
+        expect(fields.keys, unorderedEquals(kinds.keys));
+        for (final MapEntry(key: field, value: kind) in kinds.entries) {
+          expect(
+            fields[field]['\$ref'],
+            '#/definitions/${kind.definition}',
+            reason: '$name.$field',
+          );
+        }
       });
     }
 
-    test('button holds its base fields and its state tables', () {
-      final button = keysOf(definitions['button']);
-      expect(button, unorderedEquals({
-        ...ThemeComponents.fields['button']!,
-        ...ThemeComponents.states,
-      }));
+    test('the stateful components hold one table per state', () {
+      for (final name in ThemeComponents.stateful) {
+        final node = _map(_map(definitions[name])['properties']);
+        for (final state in ThemeComponents.states) {
+          expect(node[state]['\$ref'], '#/definitions/${name}State');
+        }
+        expect(
+          keysOf(definitions['${name}State']),
+          unorderedEquals(ThemeComponents.fields[name]!),
+          reason: 'a state table takes the same fields without nesting',
+        );
+      }
+    });
+
+    test('every kind names a definition', () {
+      for (final kind in ThemeFieldKind.values) {
+        expect(definitions, contains(kind.definition), reason: kind.name);
+      }
+    });
+
+    test('layout', () {
+      expect(keysOf(properties['layout']),
+          unorderedEquals(ThemeComponents.layoutFields));
       expect(
-        keysOf(definitions['buttonState']),
-        unorderedEquals(ThemeComponents.fields['button']!),
-        reason: 'a state table takes the same fields without nesting',
+        enumOf(properties['layout']['properties']['density']),
+        ThemeDensity.values.map((d) => d.name).toSet(),
       );
     });
 

@@ -71,6 +71,34 @@ repository URL 必须使用 HTTPS，并指向 tarball。对于 git 仓库，应�
 repository 文件（`ThemeStoreItem.index` 为 null），所以安装目录树中的版本时，应用会
 重新从 repository 获取 tarball。无论来源如何，都会校验 digest。
 
+listing 的 `description` 可以是字符串，也可以是以语言标签为键的表（`ThemeText`）；页面按
+应用语言解析，缓存会保留整张表。条目的预览（`view/page/theme_store/preview.dart`）只在
+条目展开时构建。它在 `buildAppTheme`（`view/widget/app_theme.dart`）根据主题包生成的
+`ThemeData` 下渲染真实控件，应用自身也用同一函数配合 `AppThemeSource.current()` 构建主题。
+未安装的主题会为预览安装到 `Paths.cache/theme_preview`，与用户的主题分开，页面销毁时删除
+该目录。
+
+包含 `[variants]` 的主题包只安装一次；每个变体会写成安装目录下 `variants/<key>/` 中一个
+完整、规范化的主题目录，因此 `ThemePackages.installed(id, variant: key)` 与读取无变体的包
+使用同一段代码。预设值以 `package:<installation id>#<key>` 携带变体；`appThemePackage`
+只保存 installation id。
+
+## 随应用附带的商店主题
+
+商店主题可以随应用附带：`assets/store_themes/<id>.fsbt`，即 `scripts/publish-themes.py`
+从 `store/themes/<id>/` 构建出的同一个包（打包是确定性的，因此 digest 与 listing 记录的
+一致）。`ThemePackages.seedBundled` 在启动时把每个包安装一次到普通主题目录；若设备上已有
+相同 manifest id 的主题则跳过，并记录在 `SettingStore.bundledThemesSeeded`（仅本设备）中，
+用户删除后不会再次安装。之后它就是普通的已安装主题；当 release 的 digest 与 installation
+id 不同时，商店会提供更新。
+
+附带的包与其 store 文件夹不再逐字节一致时，`test/unit/theme_bundled_test.dart` 会失败：
+修改这类主题后，用 serverbox-theme skill 的 `scripts/pack.py -o
+assets/store_themes/<id>.fsbt` 重新打包。
+
+安装已安装的 manifest id 会替换之前的安装（`_replaceOlder`），若旧安装正在使用，会把选择
+转移到新安装。
+
 ## 官方主题
 
 官方主题放在本仓库的 `store/` 中：`store/repo.toml`，以及每个主题的 listing

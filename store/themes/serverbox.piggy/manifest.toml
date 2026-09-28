@@ -1,0 +1,308 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/fsbt-manifest.schema.json
+# Piggy: soft pink, round corners, and a pattern of little outline pigs.
+# Every drawing in this package is original to ServerBox.
+
+id = "serverbox.piggy"
+name = "Piggy"
+modes = ["light", "dark"]
+
+# The repeating background (background.tile) and the schema 3 components.
+[schema]
+min = 3
+max = 3
+
+[colors]
+mode = 0
+seed = 0xFFC43C69
+
+[colors.palette.light]
+primary = 0xFFC43C69
+onPrimary = 0xFFFFFFFF
+primaryContainer = 0xFFFFD9E6
+onPrimaryContainer = 0xFF5C1030
+secondary = 0xFF9C4F7A
+onSecondary = 0xFFFFFFFF
+secondaryContainer = 0xFFFFE3EF
+onSecondaryContainer = 0xFF4A1535
+tertiary = 0xFF9A5B2D
+onTertiary = 0xFFFFFFFF
+tertiaryContainer = 0xFFFFE4D2
+onTertiaryContainer = 0xFF3D1D05
+error = 0xFFBA1A1A
+onError = 0xFFFFFFFF
+errorContainer = 0xFFFFDAD6
+onErrorContainer = 0xFF410002
+surface = 0xFFFFF6F9
+surfaceDim = 0xFFF2DCE3
+surfaceBright = 0xFFFFF9FB
+surfaceContainerLowest = 0xFFFFFFFF
+surfaceContainerLow = 0xFFFFF0F5
+surfaceContainer = 0xFFFFE9F0
+surfaceContainerHigh = 0xFFFFE2EB
+surfaceContainerHighest = 0xFFFCDAE5
+onSurface = 0xFF4A2833
+onSurfaceVariant = 0xFF7A5260
+outline = 0xFFA06A7D
+outlineVariant = 0xFFF2C4D3
+inverseSurface = 0xFF4A2833
+onInverseSurface = 0xFFFFEFF4
+inversePrimary = 0xFFFFB1C8
+shadow = 0xFF000000
+scrim = 0xFF000000
+surfaceTint = 0x00000000
+
+[colors.palette.dark]
+primary = 0xFFFF9EBF
+onPrimary = 0xFF5C1030
+primaryContainer = 0xFF7E2A4B
+onPrimaryContainer = 0xFFFFD9E6
+secondary = 0xFFF4B3D2
+onSecondary = 0xFF4A1535
+secondaryContainer = 0xFF67314F
+onSecondaryContainer = 0xFFFFD8EA
+tertiary = 0xFFFFB68E
+onTertiary = 0xFF542100
+tertiaryContainer = 0xFF723613
+onTertiaryContainer = 0xFFFFDBC9
+error = 0xFFFFB4AB
+onError = 0xFF690005
+errorContainer = 0xFF93000A
+onErrorContainer = 0xFFFFDAD6
+surface = 0xFF231419
+surfaceDim = 0xFF1D1014
+surfaceBright = 0xFF4A3139
+surfaceContainerLowest = 0xFF1B0E12
+surfaceContainerLow = 0xFF2B1A20
+surfaceContainer = 0xFF311F25
+surfaceContainerHigh = 0xFF3C2930
+surfaceContainerHighest = 0xFF48333B
+onSurface = 0xFFF7DDE5
+onSurfaceVariant = 0xFFD9B8C3
+outline = 0xFFA2818D
+outlineVariant = 0xFF5A3E48
+inverseSurface = 0xFFF7DDE5
+onInverseSurface = 0xFF3A2229
+inversePrimary = 0xFFC43C69
+shadow = 0xFF000000
+scrim = 0xFF000000
+surfaceTint = 0x00000000
+
+[icons]
+style = "classic"
+
+# The pattern: two outline pigs, hearts and sparkles on a transparent tile,
+# repeated every 150 logical pixels.
+[background]
+type = "image"
+image = "background.png"
+opacity = 0.3
+blur = 0
+tile = 150
+
+[splash]
+color = "surface"
+logo = "splash_logo.svg"
+duration = 900
+
+[shapes]
+card = 20
+tile = 0
+button = 22
+
+# Cards stay solid over the pattern, so what is on them reads first.
+[components.card]
+backgroundColor = "surfaceContainerLowest"
+radius = 20
+borderColor = "outlineVariant"
+borderWidth = 1
+elevation = 0
+surfaceTintColor = 0x00000000
+margin = [6, 5, 6, 5]
+
+[components.dark.card]
+backgroundColor = "surfaceContainerLow"
+
+[components.tile]
+selectedTileColor = "primaryContainer"
+selectedColor = "onPrimaryContainer"
+iconColor = "onSurfaceVariant"
+# Square rows with no outline: a list reads as one surface, not a stack of
+# cards.
+radius = 0
+borderWidth = 0
+
+[components.button]
+backgroundColor = "primary"
+foregroundColor = "onPrimary"
+radius = 22
+elevation = 0
+padding = [20, 10, 20, 10]
+minHeight = 38
+
+[components.button.hovered]
+backgroundColor = "secondary"
+
+[components.button.disabled]
+backgroundColor = "surfaceContainerHighest"
+foregroundColor = "outline"
+
+[components.textButton]
+foregroundColor = "primary"
+radius = 16
+padding = [10, 5, 10, 5]
+minHeight = 30
+
+[components.textButton.hovered]
+backgroundColor = "primaryContainer"
+
+[components.outlinedButton]
+foregroundColor = "primary"
+borderColor = "outlineVariant"
+borderWidth = 1.5
+radius = 22
+minHeight = 34
+
+[components.iconButton]
+foregroundColor = "onSurfaceVariant"
+radius = 16
+
+[components.iconButton.hovered]
+backgroundColor = "primaryContainer"
+foregroundColor = "primary"
+
+[components.input]
+filled = true
+fillColor = "surfaceContainerLow"
+radius = 16
+borderColor = "outlineVariant"
+borderWidth = 1
+focusedBorderColor = "primary"
+errorBorderColor = "error"
+padding = [14, 10, 14, 10]
+
+[components.search]
+backgroundColor = "surfaceContainer"
+radius = 18
+borderColor = "outlineVariant"
+borderWidth = 1
+iconColor = "primary"
+hintColor = "outline"
+height = 34
+
+[components.appBar]
+backgroundColor = 0x00000000
+titleColor = "onSurface"
+iconColor = "primary"
+elevation = 0
+surfaceTintColor = 0x00000000
+
+[components.navigation]
+backgroundColor = "surfaceContainerLow"
+indicatorColor = "primaryContainer"
+indicatorRadius = 18
+selectedIconColor = "primary"
+unselectedIconColor = "onSurfaceVariant"
+selectedLabelColor = "primary"
+unselectedLabelColor = "onSurfaceVariant"
+elevation = 0
+
+[components.segmented]
+backgroundColor = "surfaceContainer"
+selectedColor = "primaryContainer"
+textColor = "onSurfaceVariant"
+selectedTextColor = "onPrimaryContainer"
+radius = 16
+
+[components.sidebar]
+selectedColor = "primaryContainer"
+selectedTextColor = "onPrimaryContainer"
+selectedIconColor = "primary"
+iconColor = "onSurfaceVariant"
+radius = 14
+
+[components.dialog]
+backgroundColor = "surfaceContainerLowest"
+radius = 26
+borderColor = "outlineVariant"
+borderWidth = 1
+elevation = 0
+surfaceTintColor = 0x00000000
+barrierColor = 0x664A2833
+
+[components.dark.dialog]
+backgroundColor = "surfaceContainer"
+barrierColor = 0x99000000
+
+[components.sheet]
+backgroundColor = "surfaceContainerLowest"
+radius = 28
+elevation = 0
+surfaceTintColor = 0x00000000
+dragHandleColor = "outlineVariant"
+
+[components.dark.sheet]
+backgroundColor = "surfaceContainer"
+
+[components.menu]
+backgroundColor = "surfaceContainerLowest"
+radius = 16
+borderColor = "outlineVariant"
+borderWidth = 1
+elevation = 2
+surfaceTintColor = 0x00000000
+
+[components.dark.menu]
+backgroundColor = "surfaceContainerHigh"
+
+[components.tooltip]
+backgroundColor = "primary"
+textColor = "onPrimary"
+radius = 12
+padding = [10, 5, 10, 5]
+
+[components.toast]
+backgroundColor = "primaryContainer"
+textColor = "onPrimaryContainer"
+radius = 18
+elevation = 2
+
+[components.switch]
+thumbColor = "outline"
+trackColor = "surfaceContainerHighest"
+trackOutlineColor = "outlineVariant"
+selectedThumbColor = "onPrimary"
+selectedTrackColor = "primary"
+selectedTrackOutlineColor = 0x00000000
+
+[components.slider]
+activeTrackColor = "primary"
+inactiveTrackColor = "primaryContainer"
+thumbColor = "primary"
+trackHeight = 6
+
+[components.progress]
+color = "primary"
+trackColor = "primaryContainer"
+thickness = 6
+radius = 3
+
+[components.badge]
+backgroundColor = "primary"
+textColor = "onPrimary"
+
+[components.chip]
+backgroundColor = "surfaceContainerLow"
+selectedColor = "primaryContainer"
+textColor = "onSurface"
+radius = 14
+borderColor = "outlineVariant"
+borderWidth = 1
+
+[components.divider]
+color = "outlineVariant"
+thickness = 1
+
+[components.scrollbar]
+thumbColor = "outlineVariant"
+radius = 6
+thickness = 6

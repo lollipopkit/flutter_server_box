@@ -73,7 +73,9 @@ function component(components, mode, name, palette) {
   const flat = (t) => Object.fromEntries(Object.entries(t).filter(([k]) => !states.includes(k)))
   const resolve = (t) =>
     Object.fromEntries(
-      Object.entries(t).map(([k, v]) => [k, k.endsWith('Color') ? color(v, palette) : v]),
+      // Every color field, as the app reads them: `...Color`, and the ones
+      // named just `color` (progress, divider).
+      Object.entries(t).map(([k, v]) => [k, k === 'color' || k.endsWith('Color') ? color(v, palette) : v]),
     )
   const out = resolve({ ...flat(common), ...flat(own) })
   for (const state of states) {
@@ -83,8 +85,33 @@ function component(components, mode, name, palette) {
   return out
 }
 
+/** The installer's merge: tables merge key by key, anything else replaces. */
+function merge(base, overrides) {
+  const out = { ...base }
+  for (const [k, v] of Object.entries(overrides)) {
+    const b = out[k]
+    out[k] = b && v && typeof b === 'object' && typeof v === 'object' && !Array.isArray(b) && !Array.isArray(v) ? merge(b, v) : v
+  }
+  return out
+}
+
+/** The themes a package installs as: itself, or each of its variants drawn
+ *  over its base tables. */
+function themesOf(dir, manifest) {
+  const { variants, ...base } = manifest
+  if (!variants || typeof variants !== 'object') return [{ key: null, name: null, manifest, own: null }]
+  return Object.entries(variants).map(([key, { name, ...overrides }]) => ({
+    key,
+    name,
+    manifest: merge(base, overrides),
+    own: path.join(dir, 'variants', key),
+  }))
+}
+
 /** What the site draws a theme with, per mode. */
-function preview(dir, manifest) {
+function preview(dir, manifest, own = null) {
+  // A variant reads its own copy of a file first, as the installer does.
+  const find = (name) => (own && existsSync(path.join(own, name)) ? path.join(own, name) : path.join(dir, name))
   const colors = manifest.colors ?? {}
   const icons = manifest.icons ?? {}
   const images = {}
@@ -93,7 +120,7 @@ function preview(dir, manifest) {
     if (existsSync(file)) images[key] = dataUri(file)
   }
   const splash = manifest.splash
-  const logo = splash?.logo && existsSync(path.join(dir, splash.logo)) ? dataUri(path.join(dir, splash.logo)) : null
+  const logo = splash?.logo && existsSync(find(splash.logo)) ? dataUri(find(splash.logo)) : null
   const modes = {}
   for (const mode of manifest.modes ?? []) {
     const palette = { ...baseline[mode] }
@@ -107,10 +134,10 @@ function preview(dir, manifest) {
       palette,
       iconColors,
       components: Object.fromEntries(
-        ['card', 'tile', 'button', 'input', 'navigation', 'dialog', 'sheet'].map((n) => [
-          n,
-          component(manifest.components, mode, n, palette),
-        ]),
+        Object.keys(manifest.components ?? {})
+          .filter((n) => n !== 'light' && n !== 'dark')
+          .concat(Object.keys(manifest.components?.[mode] ?? {}))
+          .map((n) => [n, component(manifest.components, mode, n, palette)]),
       ),
       splash: splash ? { color: color(splash.color ?? 'surface', palette) ?? palette.surface } : null,
     }
@@ -120,6 +147,17 @@ function preview(dir, manifest) {
     images,
     shapes: { card: 12, tile: 8, button: 10, ...(manifest.shapes ?? {}) },
     background: manifest.background?.type ?? 'none',
+    // An image background as the app draws it: faint over the surface, once
+    // and cover-fitted, or repeated every `tile` logical pixels.
+    backgroundImage:
+      manifest.background?.type === 'image' && existsSync(find(manifest.background.image))
+        ? {
+            src: dataUri(find(manifest.background.image)),
+            opacity: manifest.background.opacity ?? 0.18,
+            blur: manifest.background.blur ?? 0,
+            tile: manifest.background.tile ?? 0,
+          }
+        : null,
     splash: splash ? { logo, duration: splash.duration ?? 600 } : null,
     style: icons.style ?? 'classic',
   }
@@ -167,25 +205,37 @@ function readThemes(store) {
       const latest = newest(listing.version)
       const manifestPath = path.join(dir, listing.id, 'manifest.toml')
       const manifest = existsSync(manifestPath) ? parse(readFileSync(manifestPath, 'utf8')) : {}
-      const colors = manifest.colors ?? {}
-      return {
-        id: listing.id,
-        name: listing.name,
-        description: listing.description ?? '',
-        homepage: listing.homepage ?? null,
-        license: listing.license ?? null,
-        modes: manifest.modes ?? [],
-        preview: preview(path.join(dir, listing.id), manifest),
-        // Drawn before its preview loads: the page's color and its accent.
-        placeholder: Object.fromEntries(
-          (manifest.modes ?? []).map((mode) => {
+      const themeDir = path.join(dir, listing.id)
+      // Drawn before its preview loads: the page's color and its accent.
+      const placeholder = (m) =>
+        Object.fromEntries(
+          (m.modes ?? []).map((mode) => {
+            const colors = m.colors ?? {}
             const pal = colors.palette?.[mode] ?? {}
             return [mode, {
               surface: pal.surface != null ? css(pal.surface) : baseline[mode].surface,
               primary: pal.primary != null ? css(pal.primary) : colors.seed != null ? css(colors.seed) : null,
             }]
           }),
-        ),
+        )
+      // One entry per theme the package installs as: the package itself, or
+      // each variant, which the card offers to pick from. The first is what
+      // the card shows until one is picked.
+      const variants = themesOf(themeDir, manifest).map((t) => ({
+        key: t.key,
+        name: t.name,
+        preview: preview(themeDir, t.manifest, t.own),
+        placeholder: placeholder(t.manifest),
+      }))
+      return {
+        id: listing.id,
+        name: listing.name,
+        // A string, or a table of language tags; the page picks one.
+        description: listing.description ?? '',
+        homepage: listing.homepage ?? null,
+        license: listing.license ?? null,
+        modes: manifest.modes ?? [],
+        variants,
         latest: release(latest),
         updated: updatedAt(file),
       }
@@ -225,12 +275,14 @@ export function storeData(store) {
     const themes = readThemes(store)
     const files = new Map()
     for (const t of themes) {
-      const body = JSON.stringify(t.preview)
-      const hash = createHash('sha256').update(body).digest('hex').slice(0, 12)
-      const name = `themes/preview/${t.id}.${hash}.json`
-      files.set('/' + name, body)
-      t.previewUrl = '/' + name
-      delete t.preview
+      for (const v of t.variants) {
+        const body = JSON.stringify(v.preview)
+        const hash = createHash('sha256').update(body).digest('hex').slice(0, 12)
+        const name = `themes/preview/${t.id}${v.key ? `~${v.key}` : ''}.${hash}.json`
+        files.set('/' + name, body)
+        v.previewUrl = '/' + name
+        delete v.preview
+      }
     }
     return { data: { themes, plugins: readPlugins(store) }, files }
   }

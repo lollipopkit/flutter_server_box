@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +10,7 @@ import 'package:server_box/core/service/theme_repo.dart';
 import 'package:server_box/data/model/app/theme_sort.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
+import 'package:server_box/view/page/theme_store/preview.dart';
 import 'package:server_box/view/page/theme_store/rows.dart';
 
 /// What the theme catalog offers, and what this device has.
@@ -32,6 +35,13 @@ import 'package:server_box/view/page/theme_store/rows.dart';
 /// meant to show what the first one already read. Refreshing by hand is always
 /// available, from the bar and by pulling the list.
 const _autoRefreshAfter = Duration(minutes: 5);
+
+/// How long a row's preview takes to open or close.
+const _expandDuration = Duration(milliseconds: 250);
+
+/// Where a theme fetched only to be previewed is installed: apart from the
+/// user's themes, and removed when the page closes.
+String get _previewRoot => Paths.cache.joinPath('theme_preview');
 
 final class ThemeStorePage extends StatefulWidget {
   const ThemeStorePage({super.key});
@@ -60,6 +70,17 @@ final class _ThemeStorePageState extends State<ThemeStorePage> {
   /// What a row is waiting on, by the identity of what it applies to. Either
   /// action blocks the page, so only one row is ever in this state.
   String? _working;
+
+  /// The rows whose preview is open, by [ThemeRow.key]. Closed by default: a
+  /// preview is a whole themed screen, built only for the rows looked at.
+  final _expanded = <String>{};
+
+  /// Packages fetched to preview a theme this device does not have, by the
+  /// package's digest — two repositories can offer one id and version with
+  /// different bytes — each installed in a directory of its own under
+  /// [_previewRoot], apart from the user's themes and from one another.
+  /// Kept for the page's life so reopening a row is instant.
+  final _previews = <String, Future<ThemePackage>>{};
 
   /// The query, and whether the bar is a field.
   final _search = InlineSearchController();
@@ -90,6 +111,12 @@ final class _ThemeStorePageState extends State<ThemeStorePage> {
   @override
   void dispose() {
     _search.dispose();
+    // What was fetched only to be looked at: nothing reads it after the page.
+    unawaited(
+      Directory(_previewRoot)
+          .delete(recursive: true)
+          .then<void>((_) {}, onError: (_) {}),
+    );
     super.dispose();
   }
 
@@ -228,13 +255,20 @@ extension on _ThemeStorePageState {
   /// against the other. The page is opened from settings, where the content is
   /// capped the same way, so going full-bleed after it reads as a different
   /// app.
+  ///
+  /// The list itself is the full width and only its padding centres the
+  /// column, so a wheel or a drag anywhere on the page scrolls it — not only
+  /// over the column in the middle.
   Widget _buildList(List<ThemeRow> rows) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: PageColumns.columnWidth),
-        child: ListView(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final side = math.max(
+          7.0,
+          (constraints.maxWidth - PageColumns.columnWidth) / 2 + 7,
+        );
+        return ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.only(left: 7, right: 7, top: 7, bottom: 27),
+          padding: EdgeInsets.fromLTRB(side, 7, side, 27),
           children: [
             _buildCaption(),
             if (rows.isEmpty)
@@ -244,8 +278,8 @@ extension on _ThemeStorePageState {
               _buildFooter(),
             ],
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -346,7 +380,11 @@ extension on _ThemeStorePageState {
       if (release != null) 'v${release.version}',
       if (release?.size case final size?) size.bytes2Str,
     ].join(' · ');
-    final description = row.item?.listing.description.trim() ?? '';
+    final description =
+        row.item?.listing.description
+            .resolve(Localizations.maybeLocaleOf(context))
+            .trim() ??
+        '';
     final subtitle = [
       if (description.isNotEmpty) description,
       if (facts.isNotEmpty) facts,
@@ -357,30 +395,42 @@ extension on _ThemeStorePageState {
 
     final busy = _working == row.key;
     final scheme = Theme.of(context).colorScheme;
-    return ListTile(
+    final tile = ListTile(
       title: Text(row.name),
       subtitle: Text(subtitle, maxLines: 3, overflow: TextOverflow.ellipsis),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (row.inUse) Icon(Icons.check, size: 18, color: scheme.primary),
+          if (row.installed != null || (row.item?.installable ?? false))
+            // The whole button turns, which is the chevron turning: it is
+            // round.
+            AnimatedRotation(
+              turns: _expanded.contains(row.key) ? 0.5 : 0,
+              duration: _expandDuration,
+              curve: Curves.easeOutCubic,
+              child: Btn.icon(
+                text: libL10n.preview,
+                icon: const Icon(Icons.expand_more, size: 18),
+                onTap: () => _rebuild(() {
+                  if (!_expanded.remove(row.key)) _expanded.add(row.key);
+                }),
+              ),
+            ),
           if (busy)
             const SizedBox.square(
               dimension: 16,
               child: CircularProgressIndicator(strokeWidth: 2),
             )
-          else if (row.installed case final theme?)
-            Btn.icon(
-              text: libL10n.delete,
-              icon: const Icon(Icons.delete_outline, size: 18),
-              onTap: () => _delete(theme),
-            )
-          else if (row.item case final item?)
-            Btn.icon(
-              text: l10n.appearanceThemeInstall,
-              icon: const Icon(Icons.file_download_outlined, size: 18),
-              onTap: () => _install(item),
-            ),
+          else ...[
+            if (row.updatable)
+              Btn.icon(
+                text: libL10n.update,
+                icon: const Icon(Icons.system_update_alt, size: 18),
+                onTap: () => _update(row.item!),
+              ),
+            ?_trailingAction(row),
+          ],
         ],
       ),
       onTap: busy || row.inUse
@@ -390,7 +440,139 @@ extension on _ThemeStorePageState {
               (_, final item?) => () => _install(item),
               _ => null,
             },
+    );
+    return _withVariants(row, tile, busy);
+  }
+
+  Widget? _trailingAction(ThemeRow row) => switch ((row.installed, row.item)) {
+    (final theme?, _) => Btn.icon(
+      text: libL10n.delete,
+      icon: const Icon(Icons.delete_outline, size: 18),
+      onTap: () => _delete(theme),
+    ),
+    (_, final item?) => Btn.icon(
+      text: l10n.appearanceThemeInstall,
+      icon: const Icon(Icons.file_download_outlined, size: 18),
+      onTap: () => _install(item),
+    ),
+    _ => null,
+  };
+
+  /// [tile], and under it the package's variants and the row's preview.
+  Widget _withVariants(ThemeRow row, Widget tile, bool busy) {
+    // A package of several themes: one chip each, and picking one applies it.
+    // The variants are known once the package is on this device; before, the
+    // row installs it and the first variant is what it applies.
+    // Built only while open, and animated both ways: the preview is kept
+    // through the closing animation and dropped after it.
+    final preview = AnimatedSwitcher(
+      duration: _expandDuration,
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      transitionBuilder: (child, animation) => SizeTransition(
+        sizeFactor: animation,
+        alignment: Alignment.topCenter,
+        child: FadeTransition(opacity: animation, child: child),
+      ),
+      layoutBuilder: (current, previous) => Stack(
+        alignment: Alignment.topCenter,
+        children: [...previous, ?current],
+      ),
+      child: _expanded.contains(row.key)
+          ? Padding(
+              key: const ValueKey(true),
+              padding: const EdgeInsets.fromLTRB(13, 0, 13, 13),
+              child: _preview(row),
+            )
+          : const SizedBox(key: ValueKey(false), width: double.infinity),
+    );
+    final theme = row.installed;
+    if (theme == null || theme.variants.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [tile, preview],
+      ).cardx;
+    }
+    // The variant in use, or — for a package not in use — the one tapping the
+    // row applies.
+    final active = row.inUse
+        ? ThemePackages.variantOf(_setting.appThemePreset.fetch()) ??
+              theme.variants.first.key
+        : theme.variant?.key ?? theme.variants.first.key;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        tile,
+        Padding(
+          padding: const EdgeInsets.fromLTRB(13, 0, 13, 11),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: SegmentedTabs<String>(
+              segments: [
+                for (final variant in theme.variants)
+                  SegmentedTab(value: variant.key, label: variant.name),
+              ],
+              selected: active,
+              onSelected: (key) {
+                if (busy) return;
+                _applyVariant(
+                  theme,
+                  theme.variants.firstWhere((v) => v.key == key),
+                );
+              },
+            ),
+          ),
+        ),
+        preview,
+      ],
     ).cardx;
+  }
+
+  /// The open row's preview: the installed package, or one fetched for the
+  /// purpose — checked against the listing's digest like any install.
+  Widget _preview(ThemeRow row) {
+    if (row.installed case final theme?) {
+      return ThemeStorePreview(theme: theme);
+    }
+    final item = row.item!;
+    // A release without a digest is refused by the install before anything
+    // is fetched, so its key only has to be its own.
+    final key =
+        item.release!.sha256 ??
+        '${item.repo}\n${item.listing.id}@${item.release!.version}';
+    final root = _previewRoot.joinPath(
+      item.release!.sha256 ?? 'unverifiable',
+    );
+    final future = _previews.putIfAbsent(
+      key,
+      () => ThemeRepos.install(item, rootDirectory: root),
+    );
+    return FutureBuilder<ThemePackage>(
+      future: future,
+      builder: (context, snapshot) {
+        if (snapshot.data case final theme?) {
+          return ThemeStorePreview(theme: theme, rootDirectory: root);
+        }
+        if (snapshot.hasError) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 13),
+            child: Row(
+              children: [
+                Expanded(child: Text(libL10n.fail, style: UIs.text12Grey)),
+                Btn.icon(
+                  text: libL10n.retry,
+                  icon: const Icon(Icons.refresh, size: 18),
+                  onTap: () => _rebuild(
+                    () => _previews.remove(key),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        return const SizedBox(height: 120, child: UIs.centerLoading);
+      },
+    );
   }
 }
 
@@ -455,6 +637,24 @@ extension on _ThemeStorePageState {
     Toast.show(libL10n.success);
   }
 
+  /// Installs the store's version over the one on this device. The theme in
+  /// use stays in use, now drawn from the new version; one that is not in use
+  /// is not applied — updating is not choosing.
+  Future<void> _update(ThemeStoreItem item) async {
+    final (theme, error) = await context.showLoadingDialog<ThemePackage>(
+      timeout: null,
+      fn: () => ThemeRepos.install(item),
+    );
+    if (!mounted) return;
+    if (theme == null) {
+      Loggers.app.warning('Updating ${item.label} failed: $error');
+      return;
+    }
+    _rebuild(() => _installed = ThemePackages.listInstalled());
+    unawaited(RNodes.app.notify());
+    Toast.show(libL10n.success);
+  }
+
   Future<void> _delete(ThemePackage theme) async {
     final confirmed = await context.showRoundDialog<bool>(
       title: libL10n.delete,
@@ -488,6 +688,18 @@ extension on _ThemeStorePageState {
     // it is drawing is one whose files are gone.
     unawaited(RNodes.app.notify());
     Toast.show(libL10n.success);
+  }
+
+  void _applyVariant(ThemePackage theme, ThemeVariant variant) {
+    final chosen = ThemePackages.installed(
+      theme.installationId,
+      variant: variant.key,
+    );
+    if (chosen == null) {
+      Toast.error(l10n.appearanceInvalidTheme);
+      return;
+    }
+    _apply(chosen);
   }
 
   void _apply(ThemePackage theme) {

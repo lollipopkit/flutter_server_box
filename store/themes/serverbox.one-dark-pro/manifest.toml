@@ -26,10 +26,11 @@ id = "serverbox.one-dark-pro"
 name = "One Dark Pro"
 modes = ["dark"]
 
-# SVG icons, icon colors and a splash: schema 2 features.
+# The schema 3 components (text and icon buttons, search, the side bar, ...)
+# and [layout]; schema 2's SVG icons, icon colors and splash too.
 [schema]
-min = 2
-max = 2
+min = 3
+max = 3
 
 [colors]
 mode = 2
@@ -159,6 +160,7 @@ foregroundColor = "onPrimary"
 radius = 6
 elevation = 0
 padding = [16, 9, 16, 9]
+minHeight = 34
 
 [components.button.hovered]
 backgroundColor = 0xFF7CBDF2
@@ -209,3 +211,135 @@ radius = 14
 elevation = 0
 surfaceTintColor = 0
 dragHandleColor = "outline"
+
+# Actions that are not the primary one stay flat and small, as the editor's
+# own links and toolbar buttons are.
+[components.textButton]
+foregroundColor = "primary"
+overlayColor = 0x1461AFEF
+radius = 4
+padding = [8, 4, 8, 4]
+minHeight = 28
+
+[components.textButton.disabled]
+foregroundColor = "outline"
+
+[components.outlinedButton]
+foregroundColor = "onSurface"
+borderColor = "outlineVariant"
+borderWidth = 1
+radius = 6
+padding = [14, 6, 14, 6]
+minHeight = 32
+
+[components.outlinedButton.hovered]
+borderColor = "primary"
+
+[components.iconButton]
+foregroundColor = "onSurfaceVariant"
+overlayColor = 0x14ABB2BF
+radius = 4
+iconSize = 18
+
+# The editor's input box: the field's own color and a one-pixel line.
+[components.search]
+backgroundColor = 0xFF1D1F23
+radius = 6
+borderColor = "outlineVariant"
+borderWidth = 1
+iconColor = "outline"
+textColor = "onSurface"
+hintColor = "outline"
+height = 30
+
+[components.appBar]
+backgroundColor = "surface"
+foregroundColor = "onSurface"
+iconColor = "onSurfaceVariant"
+elevation = 0
+surfaceTintColor = 0
+
+# A list's active row: the editor's selection gray, not an accent wash.
+[components.segmented]
+backgroundColor = "surfaceContainerLowest"
+selectedColor = 0xFF2C313C
+textColor = "onSurfaceVariant"
+selectedTextColor = "onSurface"
+radius = 6
+
+[components.sidebar]
+selectedColor = 0xFF2C313C
+textColor = "onSurfaceVariant"
+selectedTextColor = "onSurface"
+iconColor = "outline"
+selectedIconColor = "primary"
+radius = 4
+
+[components.menu]
+backgroundColor = "surfaceContainerLow"
+textColor = "onSurface"
+radius = 6
+borderColor = "outlineVariant"
+borderWidth = 1
+elevation = 2
+surfaceTintColor = 0
+
+[components.tooltip]
+backgroundColor = "surfaceContainerHighest"
+textColor = "onSurface"
+radius = 4
+borderColor = "outlineVariant"
+borderWidth = 1
+padding = [8, 4, 8, 4]
+
+[components.toast]
+backgroundColor = "surfaceContainerHigh"
+textColor = "onSurface"
+radius = 6
+borderColor = "outlineVariant"
+borderWidth = 1
+elevation = 2
+
+[components.switch]
+thumbColor = "outline"
+trackColor = "surfaceContainerHighest"
+trackOutlineColor = "outlineVariant"
+selectedThumbColor = "onPrimary"
+selectedTrackColor = "primary"
+selectedTrackOutlineColor = 0
+
+[components.slider]
+activeTrackColor = "primary"
+inactiveTrackColor = "outlineVariant"
+thumbColor = "primary"
+trackHeight = 3
+
+[components.progress]
+color = "primary"
+trackColor = "outlineVariant"
+thickness = 3
+radius = 2
+
+[components.badge]
+backgroundColor = "primary"
+textColor = "onPrimary"
+
+[components.chip]
+backgroundColor = "surfaceContainerHigh"
+selectedColor = 0xFF2C313C
+textColor = "onSurface"
+radius = 4
+borderWidth = 0
+
+[components.divider]
+color = "outlineVariant"
+thickness = 1
+
+# The editor's scrollbar slider: gray at half strength, square-ish.
+[components.scrollbar]
+thumbColor = 0x804E5666
+radius = 3
+thickness = 6
+
+[layout]
+density = "compact"

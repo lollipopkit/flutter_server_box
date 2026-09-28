@@ -75,6 +75,7 @@ duration = 900
 | `background.type` | `"none"` |
 | `background.opacity` | `0.18` |
 | `background.blur` | `0` |
+| `background.tile` | 不存在（图片只绘制一次，cover 铺满） |
 | `shapes.card`、`shapes.tile`、`shapes.button` | `12`、`8`、`10` |
 | `components` | 空（沿用应用样式） |
 
@@ -91,7 +92,7 @@ Light 和 Dark 均可选。
 旧的 AMOLED 设置迁移为 Dark + AMOLED，Auto AMOLED 迁移为 System + AMOLED；AMOLED
 不再是 ThemeMode 的选项。
 `format` 表示 ZIP 中 manifest 结构的版本。`schema` 表示该包支持的 theme UI schema
-版本范围，包含首尾。应用目前支持 schema **v1–v2**，并在 **Install theme** 的帮助文字
+版本范围，包含首尾。应用目前支持 schema **v1–v3**，并在 **Install theme** 的帮助文字
 中显示该范围。安装器要求包与应用支持的范围有交集；加载已安装主题时也会再次检查。
 `schema.min`
 和 `schema.max` 都是必填。
@@ -99,6 +100,9 @@ Light 和 Dark 均可选。
 `icons.style` 取 `classic` 或 `mingcute`，用于该包没有提供 image 的 icon。
 `background.type` 取 `none`、`gradient` 或 `image`；type 不是 `image` 时不要写
 `image`。不透明度 0–0.6，模糊 0–30，各圆角 0–40。
+`background.tile`（schema 3，仅用于 image，16–1024）把图片作为图案重复绘制，每个重复
+单元宽为该数值的逻辑像素，从左上角开始，而不是把一张图拉伸铺满窗口。请绘制可无缝拼接、
+背景透明的 tile，surface 颜色会从透明处露出。
 image 路径必须使用上文列出的固定文件名。安装器会拒绝其他归档条目、重复路径、符号
 链接、加密文件和路径穿越。未知的顶层表也会被拒绝，因此拼错的 section 会明确报错，
 不会被静默忽略。
@@ -136,8 +140,14 @@ schema 与安装器同样严格，只有一条规则无法表达：`icons.colors
 
 Schema **2** 增加了 SVG icon、`icons.colors` 和 `splash` 表。使用其中任一功能的包都
 必须声明 `min = 2`。否则仅支持 schema 1 的构建仍会安装这些文件，却会静默丢弃相关功能：
-SVG icon 会退回内置字形，指定颜色和 splash 也不会生效。当前上限为 `max = 2`；即使
-包的范围高于该值，只要与应用支持的范围有交集，仍可安装。
+SVG icon 会退回内置字形，指定颜色和 splash 也不会生效。
+
+Schema **3** 增加了 schema 2 七个组件之外的组件（`textButton`、`outlinedButton`、
+`iconButton`、`search`、`appBar`、`segmented`、`sidebar`、`menu`、`tooltip`、
+`toast`、`switch`、`slider`、`progress`、`badge`、`chip`、`divider`、`scrollbar`）、
+按钮表的 `minHeight` 字段、`background.tile`，以及 `[layout]` 和 `[variants]` 表。使用其中任一项的包必须声明
+`min = 3`：schema 2 的构建会拒绝未知的表，商店需要在下载前得知这一点。当前上限为
+`max = 3`；即使包的范围高于该值，只要与应用支持的范围有交集，仍可安装。
 
 ## Icons
 
@@ -200,26 +210,68 @@ inversePrimary, surfaceTint
 | --- | --- |
 | `card` | `backgroundColor`, `radius`, `borderColor`, `borderWidth`, `elevation`, `shadowColor`, `surfaceTintColor`, `margin` |
 | `tile` | `backgroundColor`, `selectedTileColor`, `textColor`, `iconColor`, `selectedColor`, `radius`, `borderColor`, `borderWidth`, `padding` |
-| `button` | `backgroundColor`, `foregroundColor`, `overlayColor`, `radius`, `borderColor`, `borderWidth`, `elevation`, `shadowColor`, `surfaceTintColor`, `padding` |
+| `button` | `backgroundColor`, `foregroundColor`, `overlayColor`, `radius`, `borderColor`, `borderWidth`, `elevation`, `shadowColor`, `surfaceTintColor`, `padding`, `minHeight`³ |
 | `input` | `filled`, `fillColor`, `radius`, `borderColor`, `borderWidth`, `focusedBorderColor`, `errorBorderColor`, `disabledBorderColor`, `padding` |
 | `navigation` | `backgroundColor`, `indicatorColor`, `indicatorRadius`, `selectedIconColor`, `unselectedIconColor`, `selectedLabelColor`, `unselectedLabelColor`, `elevation` |
 | `dialog` | `backgroundColor`, `radius`, `borderColor`, `borderWidth`, `elevation`, `shadowColor`, `surfaceTintColor`, `barrierColor`, `insetPadding` |
 | `sheet` | `backgroundColor`, `radius`, `borderColor`, `borderWidth`, `elevation`, `shadowColor`, `surfaceTintColor`, `barrierColor`, `dragHandleColor` |
+| `textButton`³, `outlinedButton`³ | 与 `button` 相同的字段 |
+| `iconButton`³ | `button` 的字段，加 `iconSize` |
+| `search`³ | `backgroundColor`, `radius`, `borderColor`, `borderWidth`, `elevation`, `iconColor`, `textColor`, `hintColor`, `height`, `padding` |
+| `appBar`³ | `backgroundColor`, `foregroundColor`, `titleColor`, `iconColor`, `elevation`, `shadowColor`, `surfaceTintColor` |
+| `segmented`³ | `backgroundColor`, `selectedColor`, `textColor`, `selectedTextColor`, `radius`, `borderColor`, `borderWidth` |
+| `sidebar`³ | `backgroundColor`, `selectedColor`, `textColor`, `selectedTextColor`, `iconColor`, `selectedIconColor`, `radius`, `padding` |
+| `menu`³ | `backgroundColor`, `textColor`, `radius`, `borderColor`, `borderWidth`, `elevation`, `shadowColor`, `surfaceTintColor` |
+| `tooltip`³ | `backgroundColor`, `textColor`, `radius`, `borderColor`, `borderWidth`, `padding` |
+| `toast`³ | `backgroundColor`, `textColor`, `radius`, `borderColor`, `borderWidth`, `elevation` |
+| `switch`³ | `thumbColor`, `trackColor`, `trackOutlineColor`, `selectedThumbColor`, `selectedTrackColor`, `selectedTrackOutlineColor` |
+| `slider`³ | `activeTrackColor`, `inactiveTrackColor`, `thumbColor`, `overlayColor`, `trackHeight` |
+| `progress`³ | `color`, `trackColor`, `thickness`, `radius` |
+| `badge`³ | `backgroundColor`, `textColor`, `smallSize`, `largeSize` |
+| `chip`³ | `backgroundColor`, `selectedColor`, `textColor`, `radius`, `borderColor`, `borderWidth`, `padding` |
+| `divider`³ | `color`, `thickness` |
+| `scrollbar`³ | `thumbColor`, `trackColor`, `radius`, `thickness` |
 
-圆角范围为 0–40，边框宽度为 0–8，elevation 为 0–24。内边距（`padding`、`margin`、
-`insetPadding`）是四个数 `[left, top, right, bottom]`，每个 0–64。数值必须有限。
-`filled` 是布尔值。字体仍是单独的设置。
+³ Schema 3。
 
-按钮状态表（`[components.button.hovered]`、`.pressed`、`.focused`、`.selected`、
-`.disabled`）接受与按钮基础表相同的字段。状态表会在公共配置和 brightness 配置之间
+圆角范围为 0–40，边框宽度为 0–8，elevation 为 0–24，尺寸（`minHeight`、`height`、
+`iconSize`、badge 尺寸）为 0–96，粗细（`thickness`、`trackHeight`）为 0–16。内边距
+（`padding`、`margin`、`insetPadding`）是四个数 `[left, top, right, bottom]`，每个
+0–64。数值必须有限。`filled` 是布尔值。字体仍是单独的设置。
+
+`button` 只作用于主按钮：Material 的 elevated、filled 按钮和 Btn.elevated。文本按钮
+（含 Btn.text）、outlined 按钮和 icon 按钮保留应用自身的样式，除非 `textButton`、
+`outlinedButton` 或 `iconButton` 另有设置。这样填充色的主按钮不会让每个文本操作都变成
+填充按钮。
+
+`search` 作用于自带胶囊外框的搜索框：设置页搜索、服务器切换器和列表栏中的搜索。胶囊内
+的文本框不会套用 `input` 的边框和填充。`segmented` 作用于 segmented 按钮和应用的
+segmented tab；`sidebar` 作用于侧栏和设置菜单的行；`toast` 作用于 toast 和 snack bar；
+`menu` 作用于弹出菜单和右键菜单；`divider` 作用于分隔线和 hairline；`badge` 也作用于
+导航栏的计数 badge。
+
+状态表（`[components.button.hovered]`、`.pressed`、`.focused`、`.selected`、
+`.disabled`）存在于 `button`、`textButton`、`outlinedButton` 和 `iconButton`，接受与
+各自基础表相同的字段。状态表会在公共配置和 brightness 配置之间
 合并。每个属性的优先级是 disabled > pressed > hovered > focused > selected > 基础值。
 未指定的属性沿用既有的按钮主题和 Flutter 默认值。
 
 这些样式适用于 Material 组件。自定义 NavigationRail 也使用 navigation 的颜色和
 指示器形状；CardX 使用 card 的形状和 elevation；Input 使用 input 的边框和内边距；
-SideBarTile 使用 tile 的颜色和边框，同时保留它的紧凑间距。Btn.elevated 使用 button
+SideBarTile 先使用 `sidebar`，再使用 tile 的颜色和边框，同时保留它的紧凑间距。Btn.elevated 使用 button
 样式；紧凑的 Btn 行/列保留自身布局并使用主题圆角。单个 Widget 的显式覆盖仍然优先。
 主题预览在内存中使用同一套设置；关闭选择器会恢复原样。
+
+### 布局
+
+Schema 3。`[layout]` 存放不属于某个组件的全局设置：
+
+```toml
+[layout]
+# Material 控件的间距："compact"、"standard" 或 "comfortable"。
+# 省略时使用平台默认值。
+density = "compact"
+```
 
 ## Splash 屏
 
@@ -259,6 +311,39 @@ background 或 iOS 的 launch storyboard）在构建应用时确定，只能随�
 256 KiB，splash logo 512 KiB，背景 8 MiB、单边 8192 像素、总计 6400 万像素。安装器
 写入隔离的内容寻址安装目录前，安装器会检查每张图片：解码 PNG/JPEG，并按文档结构
 解析 SVG。
+
+## 变体
+
+Schema 3。一个主题包可以包含多个主题，例如 Pride 的 Trans、Nonbinary 和 Rainbow。
+整个包只安装、更新一次，只有一个版本号。主题方案选择器把每个变体作为独立主题列出
+（`Pride · Trans`），商店和官网只显示一次这个包，用分段按钮切换变体。
+
+`[variants]` 之外的内容由所有变体共享。每个 `[variants.<key>]` 表包含 `name`，以及
+`colors`、`icons`、`background`、`splash`、`shapes`、`components`、`layout` 中的
+任意几项，覆盖在共享表之上：表按键合并，其他值直接替换共享值。key 只能用小写字母、
+数字、`-` 和 `_`，最多 8 个。
+
+```toml
+[background]
+type = "image"
+image = "background.png"
+opacity = 0.12
+
+[variants.trans]
+name = "Trans"
+
+[variants.trans.colors.palette.light]
+primary = 0xFF1F74A8
+
+[variants.trans.background]
+tile = 120
+```
+
+`variants/<key>/` 中的文件会替换该变体下包里同名的文件：`variants/trans/background.png`
+就是 Trans 变体的 `background.png`，没有提供时使用包自己的文件。只有背景和 splash logo
+可以这样替换。icon 文件由所有变体共享，因此变体可以设置 `icons.style` 和
+`icons.colors`，但不能设置 `icons.images`。安装器会把每个变体当作完整主题检查，并拒绝
+没有任何变体使用的文件。新安装时应用第一个变体。
 
 ## 主题商店
 
@@ -326,6 +411,17 @@ path = "packages/amethyst-1.1.0.fsbt"
 sha256 = "1111111111111111111111111111111111111111111111111111111111111111"
 ```
 
+`description` 可以是字符串，在所有语言下原样显示；也可以是以语言标签为键的表。商店
+按应用语言查找：先找完整标签（`zh-TW`），再找只含语言的标签（`zh`），然后是 `en`，
+最后取第一项。标签中的 `-` 和 `_` 等价。
+
+```toml
+[description]
+en = "A purple palette"
+zh = "紫色调色板"
+zh-TW = "紫色調色盤"
+```
+
 每个版本必须提供 `url`（指向该版本的 release）或 `path`（指向 repository 树中的
 `.fsbt` 文件）。商店安装时必须校验 `sha256`；`size` 用于在安装前显示下载大小。
 
@@ -333,7 +429,7 @@ sha256 = "1111111111111111111111111111111111111111111111111111111111111111"
 可以同时服务不同版本的应用：**应用会安装自己支持的最新主题版本**，不一定是列表中的
 最新版本。若主题只有当前应用无法读取的版本，仍会显示并注明原因。使用 schema 2 功能的
 版本必须设置 `schema_min = 2`；若误设为 1，旧版应用可能安装后静默丢弃 icon、颜色或
-splash。
+splash。使用 schema 3 组件或 `[layout]` 的版本必须设置 `schema_min = 3`。
 
 第三方主题在作者自己的仓库发布，只有官方主题在本仓库发布。serverbox-theme skill 的
 `scripts/publish.py` 按官方主题的方式发布：检测哪些主题有变化，把包上传到作者仓库的

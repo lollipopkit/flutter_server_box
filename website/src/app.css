@@ -415,6 +415,13 @@ body {
   gap: 0.4rem;
 }
 
+/* A package's variants: on a card under its title, on the detail page under
+   its description. */
+.store-variants {
+  flex-wrap: wrap;
+  margin-block: 0.6rem;
+}
+
 .store-modes button {
   cursor: pointer;
   font-family: var(--font-body);

@@ -308,8 +308,7 @@ extension on _MonitorPushEditPageState {
                 Expanded(
                   child: TextField(
                     controller: header.name,
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
+                    decoration: bareInputDecoration(
                       isDense: true,
                       hintText: 'Authorization',
                     ),
@@ -319,8 +318,7 @@ extension on _MonitorPushEditPageState {
                 Expanded(
                   child: TextField(
                     controller: header.value,
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
+                    decoration: bareInputDecoration(
                       isDense: true,
                       hintText: header.withheld ? l10n.pushSecretKeep : null,
                     ),

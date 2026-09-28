@@ -22,8 +22,8 @@ modes = ["light", "dark"]
 # min is the oldest app that may read this package: an SVG icon, a per-icon color
 # and a splash are schema 2 features, so a package using one declares min = 2.
 [schema]
-min = 2
-max = 2
+min = 3
+max = 3
 
 [colors]
 # Initial preference: 0 = system (default), 1 = light, 2 = dark.
@@ -214,6 +214,9 @@ type = "gradient"
 opacity = 0.18
 # Image blur radius (0–30, default 0); does not affect the generated gradient.
 blur = 0
+# Schema 3, image only: repeat the image as a pattern, each repeat this many
+# logical pixels wide (16–1024). Omitted draws it once, cover-fitted.
+# tile = 160
 
 # The splash shown while the app takes its first frames. Omit the whole table
 # for no splash. It is read once, at launch, so it does not replay when this
@@ -238,7 +241,9 @@ button = 24
 # Every table is optional. Missing fields retain the app's existing style.
 # Colors accept ARGB integers or the name of any ColorScheme role above.
 # Insets are [left, top, right, bottom], each 0–64 logical pixels.
-# Radius: 0–40; borderWidth: 0–8; elevation: 0–24. Explicit zero is preserved.
+# Radius: 0–40; borderWidth: 0–8; elevation: 0–24; sizes (heights, icon and
+# badge sizes): 0–96; thickness: 0–16. Explicit zero is preserved.
+# Everything from [components.button]'s minHeight on, and [layout], is schema 3.
 # Component radius overrides the corresponding [shapes] value.
 
 [components.card]
@@ -262,8 +267,8 @@ borderColor = "outlineVariant"
 borderWidth = 0
 padding = [13, 9, 13, 9]
 
-# Applies to Material elevated, filled, outlined and text buttons.
-# Btn.elevated also uses these fields; compact Btn rows use the themed radius.
+# Primary buttons: Material elevated and filled buttons, and Btn.elevated.
+# Text, outlined and icon buttons have their own tables below.
 [components.button]
 backgroundColor = "primary"
 foregroundColor = "onPrimary"
@@ -275,6 +280,7 @@ elevation = 0
 shadowColor = "shadow"
 surfaceTintColor = 0x00000000
 padding = [20, 13, 20, 13]
+minHeight = 40
 
 # Each state supports the same fields as [components.button].
 # Highest priority per field: disabled > pressed > hovered > focused > selected.
@@ -344,6 +350,179 @@ surfaceTintColor = 0x00000000
 barrierColor = 0x66000000
 dragHandleColor = "outline"
 
+# Text buttons and Btn.text. Same fields and state tables as [components.button].
+[components.textButton]
+backgroundColor = 0x00000000
+foregroundColor = "primary"
+overlayColor = 0x14000000
+radius = 10
+borderColor = "primary"
+borderWidth = 0
+elevation = 0
+shadowColor = "shadow"
+surfaceTintColor = 0x00000000
+padding = [10, 6, 10, 6]
+minHeight = 32
+
+[components.textButton.hovered]
+backgroundColor = "surfaceContainerHigh"
+
+[components.outlinedButton]
+backgroundColor = 0x00000000
+foregroundColor = "primary"
+overlayColor = 0x14000000
+radius = 24
+borderColor = "outline"
+borderWidth = 1
+elevation = 0
+shadowColor = "shadow"
+surfaceTintColor = 0x00000000
+padding = [18, 11, 18, 11]
+minHeight = 36
+
+[components.outlinedButton.hovered]
+borderColor = "primary"
+
+# The fields of [components.button] plus iconSize.
+[components.iconButton]
+backgroundColor = 0x00000000
+foregroundColor = "onSurfaceVariant"
+overlayColor = 0x14000000
+radius = 10
+borderColor = "outline"
+borderWidth = 0
+elevation = 0
+shadowColor = "shadow"
+surfaceTintColor = 0x00000000
+padding = [8, 8, 8, 8]
+minHeight = 36
+iconSize = 20
+
+[components.iconButton.selected]
+foregroundColor = "primary"
+
+# Search fields that draw their own pill (settings, server switcher, in-bar
+# search). The field inside never takes [components.input]'s border or fill.
+[components.search]
+backgroundColor = "surfaceContainerHigh"
+radius = 17
+borderColor = "outlineVariant"
+borderWidth = 1
+elevation = 0
+iconColor = "onSurfaceVariant"
+textColor = "onSurface"
+hintColor = "outline"
+height = 34
+padding = [10, 0, 10, 0]
+
+[components.appBar]
+backgroundColor = "surface"
+foregroundColor = "onSurface"
+titleColor = "onSurface"
+iconColor = "onSurfaceVariant"
+elevation = 0
+shadowColor = "shadow"
+surfaceTintColor = 0x00000000
+
+# Segmented buttons and the app's segmented tabs.
+[components.segmented]
+backgroundColor = "surfaceContainerHigh"
+selectedColor = "secondaryContainer"
+textColor = "onSurfaceVariant"
+selectedTextColor = "onSecondaryContainer"
+radius = 10
+borderColor = "outlineVariant"
+borderWidth = 0
+
+# Rows of the side bar and the settings menu.
+[components.sidebar]
+backgroundColor = 0x00000000
+selectedColor = "secondaryContainer"
+textColor = "onSurface"
+selectedTextColor = "onSecondaryContainer"
+iconColor = "onSurfaceVariant"
+selectedIconColor = "onSecondaryContainer"
+radius = 10
+padding = [8, 8, 8, 8]
+
+# Popup and context menus.
+[components.menu]
+backgroundColor = "surfaceContainer"
+textColor = "onSurface"
+radius = 12
+borderColor = "outlineVariant"
+borderWidth = 1
+elevation = 3
+shadowColor = "shadow"
+surfaceTintColor = 0x00000000
+
+[components.tooltip]
+backgroundColor = "inverseSurface"
+textColor = "onInverseSurface"
+radius = 6
+borderColor = "outline"
+borderWidth = 0
+padding = [8, 4, 8, 4]
+
+# Toasts and snack bars.
+[components.toast]
+backgroundColor = "inverseSurface"
+textColor = "onInverseSurface"
+radius = 12
+borderColor = "outline"
+borderWidth = 0
+elevation = 4
+
+# The selected* fields apply while the switch is on.
+[components.switch]
+thumbColor = "outline"
+trackColor = "surfaceContainerHighest"
+trackOutlineColor = "outline"
+selectedThumbColor = "onPrimary"
+selectedTrackColor = "primary"
+selectedTrackOutlineColor = 0x00000000
+
+[components.slider]
+activeTrackColor = "primary"
+inactiveTrackColor = "surfaceContainerHighest"
+thumbColor = "primary"
+overlayColor = 0x1F000000
+trackHeight = 4
+
+# Linear and circular indicators; radius applies to linear ones.
+[components.progress]
+color = "primary"
+trackColor = "surfaceContainerHighest"
+thickness = 4
+radius = 2
+
+# Count badges, including the navigation rail's.
+[components.badge]
+backgroundColor = "primaryContainer"
+textColor = "onPrimaryContainer"
+smallSize = 6
+largeSize = 16
+
+[components.chip]
+backgroundColor = "surfaceContainerLow"
+selectedColor = "secondaryContainer"
+textColor = "onSurface"
+radius = 8
+borderColor = "outlineVariant"
+borderWidth = 1
+padding = [8, 4, 8, 4]
+
+# Dividers and hairlines.
+[components.divider]
+color = "outlineVariant"
+thickness = 1
+
+[components.scrollbar]
+thumbColor = "outline"
+trackColor = 0x00000000
+radius = 4
+thickness = 6
+
 # Brightness-specific tables accept every component and field shown above.
 # Only supplied fields override their common values; button states merge too.
 [components.light.card]
@@ -355,3 +534,8 @@ backgroundColor = "surfaceContainer"
 [components.dark.button.hovered]
 backgroundColor = "tertiaryContainer"
 foregroundColor = "onTertiaryContainer"
+
+# App-wide layout. density: "compact", "standard" or "comfortable" spacing of
+# Material controls; omitted keeps the platform's default.
+[layout]
+density = "standard"

@@ -55,6 +55,46 @@ final class ThemeSplash {
 /// same name is a schema key and stays spelled out with the rest of them.
 const _iconsDir = 'icons';
 
+/// Where a package's variants live, one directory each: in an archive, what a
+/// variant carries in place of the package's files, and once installed, each
+/// variant as a complete theme.
+const _variantsDir = 'variants';
+
+/// One theme checked and ready to write: its normalized manifest, the files it
+/// installs (by their path once installed), and which of the package's files
+/// it used.
+final class _Prepared {
+  const _Prepared(this.profile, this.files, this.used);
+
+  final Map<String, dynamic> profile;
+  final Map<String, Uint8List> files;
+  final Set<String> used;
+}
+
+/// One of the themes a package carries under `[variants]`: `Trans` of the
+/// `Pride` package. Schema 3.
+///
+/// A package with variants is one install and one version; each variant is
+/// the package's base tables with its own drawn over them, and the picker
+/// offers each as a theme of its own.
+@immutable
+final class ThemeVariant {
+  const ThemeVariant(this.key, this.name);
+
+  /// The table's key under `[variants]`, and the directory it installs to.
+  final String key;
+
+  /// What the variant is called, e.g. `Trans`.
+  final String name;
+
+  @override
+  bool operator ==(Object other) =>
+      other is ThemeVariant && other.key == key && other.name == name;
+
+  @override
+  int get hashCode => Object.hash(key, name);
+}
+
 /// A versioned .fsbt resource bundle. Fonts and launcher icons are separate.
 final class ThemePackage {
   const ThemePackage({
@@ -81,6 +121,9 @@ final class ThemePackage {
     this.iconColors = const {},
     this.splash,
     this.backgroundFile,
+    this.backgroundTile = 0,
+    this.variant,
+    this.variants = const [],
     this.components = const ThemeComponents.empty(),
   });
 
@@ -123,7 +166,29 @@ final class ThemePackage {
   final String directory;
   final ThemeSplash? splash;
   final String? backgroundFile;
+
+  /// The logical width the background image is repeated at, or 0 to draw it
+  /// once, `cover`-fitted. Schema 3.
+  final double backgroundTile;
+
+  /// Which of the package's [variants] this is; null for a package without.
+  final ThemeVariant? variant;
+
+  /// Every variant the package carries, in the manifest's order; empty for a
+  /// package without.
+  final List<ThemeVariant> variants;
   final ThemeComponents components;
+
+  /// What a list of every theme calls this one: `Pride · Trans` for a variant,
+  /// the package's own name otherwise.
+  String get label => switch (variant) {
+    final variant? => '$name · ${variant.name}',
+    null => name,
+  };
+
+  /// The preset value that selects this theme, variant included.
+  String get preset =>
+      ThemePackages.presetOf(installationId, variant: variant?.key);
 
   String? get backgroundPath =>
       backgroundStyle == BackgroundStyle.image
@@ -207,13 +272,20 @@ abstract final class ThemePackages {
   static final preview = ValueNotifier<ThemePackage?>(null);
 
   static const supportedSchemaMin = 1;
-  static const supportedSchemaMax = 2;
+  static const supportedSchemaMax = 3;
 
   /// What schema 2 added: SVG icons, per-icon colors, and [ThemeSplash]. A
   /// package that uses one of them has to say it needs 2, because a build that
   /// reads only schema 1 installs the same bytes and then drops the feature
   /// without saying so.
   static const featureSchema = 2;
+
+  /// What schema 3 added: the components beyond schema 2's seven, the fields
+  /// they gained (`button.minHeight`), and `[layout]`. See
+  /// [ThemeComponents.neededSchema]. A build that reads only 2 refuses such a
+  /// package outright (an unknown table), so saying so up front is what lets
+  /// the store show it as needing a newer app rather than failing to install.
+  static const componentSchema = 3;
   static String get supportedSchemaRange =>
       'v$supportedSchemaMin–v$supportedSchemaMax';
 
@@ -223,6 +295,11 @@ abstract final class ThemePackages {
   static const _maxIconBytes = 256 * 1024;
   static const _maxManifestBytes = 64 * 1024;
   static const _maxIcons = 48;
+
+  /// Files a package may carry: the manifest, its icons, a background and a
+  /// splash logo, and for each variant a background, a splash logo and its
+  /// directory entry.
+  static const _maxAssets = _maxIcons + 3 + maxVariants * 3;
   static final _digestPattern = RegExp(r'^[a-f0-9]{64}$');
 
   /// Every top-level table a package may carry. One that is not here is refused
@@ -241,11 +318,30 @@ abstract final class ThemePackages {
     'background',
     'shapes',
     'components',
+    'layout',
     'splash',
+    'variants',
   };
+
+  /// What a `[variants.<key>]` table may carry: its name, and any of the
+  /// tables that draw the theme. Not what identifies the package — `id`,
+  /// `schema`, `modes` — which every variant shares.
+  static const variantFields = {
+    'name',
+    'colors',
+    'icons',
+    'background',
+    'splash',
+    'shapes',
+    'components',
+    'layout',
+  };
+  static const maxVariants = 8;
+  static final variantKeyPattern = RegExp(r'^[a-z0-9][a-z0-9_-]{0,31}$');
   /// The fields `[icons]` and `[splash]` may carry, held against the schema's
   /// properties by the same test that holds the enums above.
   static const iconFields = {'style', 'images', 'colors'};
+  static const backgroundFields = {'type', 'image', 'opacity', 'blur', 'tile'};
   static const splashFields = {'color', 'logo', 'duration'};
 
   /// What the format allows where a value is one of a few, which
@@ -284,6 +380,10 @@ abstract final class ThemePackages {
   /// held equal by the same test. The splash's own range is on [ThemeSplash].
   static const maxBackgroundOpacity = 0.6;
   static const maxBackgroundBlur = 30.0;
+
+  /// The range of `background.tile`, the logical width of one repeat.
+  static const minBackgroundTile = 16.0;
+  static const maxBackgroundTile = 1024.0;
 
   /// The one logo a splash may name, kept here so the test that holds this
   /// list and the schema's together can read it.
@@ -351,6 +451,58 @@ abstract final class ThemePackages {
         stack,
       );
       _selectDefaultFallback();
+    }
+  }
+
+  /// Where the store themes shipped with the app are: one `<id>.fsbt` each,
+  /// the exact bytes the store publishes for that version.
+  static const bundledDir = 'assets/store_themes/';
+
+  /// Installs each theme the app ships that this device has not had yet.
+  ///
+  /// A bundled theme is an ordinary installation, as if from the store: the
+  /// same bytes, so the same installation id the store's listing records, and
+  /// the store updates it like any theme it installed. Each is installed once:
+  /// one the user removed stays removed, and one already on the device — from
+  /// the store, or a newer version — is left as it is.
+  static Future<void> seedBundled({
+    AssetBundle? bundle,
+    String? rootDirectory,
+  }) async {
+    // Called without waiting at launch: nothing here may escape as an
+    // unhandled error, and a failure is tried again at the next launch.
+    try {
+      final assets = bundle ?? rootBundle;
+      final seeded = Stores.setting.bundledThemesSeeded;
+      final done = {...seeded.fetch()};
+      final manifest = await AssetManifest.loadFromAssetBundle(assets);
+      for (final path in manifest.listAssets()) {
+        if (!path.startsWith(bundledDir) || !path.endsWith('.fsbt')) continue;
+        final id = path.substring(bundledDir.length, path.length - '.fsbt'.length);
+        if (done.contains(id)) continue;
+        try {
+          final onDevice = listInstalled(
+            rootDirectory: rootDirectory,
+          ).any((theme) => theme.id == id);
+          if (!onDevice) {
+            final data = await assets.load(path);
+            final theme = await install(
+              data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+              rootDirectory: rootDirectory,
+            );
+            if (theme.id != id) {
+              throw FormatException('$path installs as ${theme.id}');
+            }
+          }
+          done.add(id);
+        } catch (error, stack) {
+          // Tried again at the next launch: nothing was recorded.
+          Loggers.app.warning('Installing bundled theme $id', error, stack);
+        }
+      }
+      seeded.put(done.toList()..sort());
+    } catch (error, stack) {
+      Loggers.app.warning('Installing bundled themes', error, stack);
     }
   }
 
@@ -509,8 +661,40 @@ abstract final class ThemePackages {
             throw const FormatException('Invalid theme icon');
           }
           await readFile(icon, '$_iconsDir/$iconName', _maxIconBytes);
-          if (assets.length > _maxIcons + 2) {
+          if (assets.length > _maxAssets) {
             throw const FormatException('Too many theme assets');
+          }
+        }
+      } else if (name == _variantsDir) {
+        // `variants/<key>/`, each with what that variant carries in place of
+        // the package's own background and splash logo.
+        if (entry is! Directory) {
+          throw const FormatException('Invalid variants directory');
+        }
+        await for (final variant in entry.list(followLinks: false)) {
+          final key = variant.uri.pathSegments
+              .where((part) => part.isNotEmpty)
+              .last;
+          if (variant is! Directory || !variantKeyPattern.hasMatch(key)) {
+            throw const FormatException('Invalid variant directory');
+          }
+          await for (final file in variant.list(followLinks: false)) {
+            final fileName = file.uri.pathSegments
+                .where((part) => part.isNotEmpty)
+                .last;
+            final max = backgroundImages.contains(fileName)
+                ? _maxBackgroundBytes
+                : splashLogos.contains(fileName)
+                ? _maxSplashLogoBytes
+                : null;
+            if (max == null) continue;
+            if (file is! File) {
+              throw const FormatException('Invalid variant asset');
+            }
+            await readFile(file, '$_variantsDir/$key/$fileName', max);
+            if (assets.length > _maxAssets) {
+              throw const FormatException('Too many theme assets');
+            }
           }
         }
       } else if (backgroundImages.contains(name)) {
@@ -537,7 +721,7 @@ abstract final class ThemePackages {
     if (manifest == null ||
         manifest.isEmpty ||
         manifest.length > _maxManifestBytes ||
-        assets.length > _maxIcons + 3 ||
+        assets.length > _maxAssets ||
         assets.values.fold<int>(0, (sum, bytes) => sum + bytes.length) >
             maxPackageBytes) {
       throw const FormatException('Invalid theme assets');
@@ -576,6 +760,145 @@ abstract final class ThemePackages {
       throw const FormatException('Unknown theme section');
     }
     final (schemaMin, schemaMax) = _schemaRange(data['schema']);
+
+    // What the package's files were used for, by their path in the package: a
+    // file no theme in it draws is refused, as it always was.
+    final used = <String>{'manifest.toml'};
+    _Prepared? single;
+    final variants = <ThemeVariant, _Prepared>{};
+    if (data['variants'] case final Object raw) {
+      if (schemaMin < componentSchema) {
+        throw const FormatException('This theme needs schema $componentSchema');
+      }
+      final table = _map(raw, 'variants');
+      if (table.isEmpty || table.length > maxVariants) {
+        throw const FormatException('Invalid theme variants');
+      }
+      final base = {...data}..remove('variants');
+      for (final MapEntry(:key, :value) in table.entries) {
+        if (!variantKeyPattern.hasMatch(key)) {
+          throw const FormatException('Invalid variant key');
+        }
+        final overrides = _map(value, 'variant');
+        if (!overrides.keys.every(variantFields.contains)) {
+          throw const FormatException('Unknown variant field');
+        }
+        // One set of icon files for the package: a variant may tint them and
+        // pick the style, and names no files of its own.
+        if (overrides['icons'] case final Map<String, dynamic> icons
+            when icons.containsKey('images')) {
+          throw const FormatException('A variant cannot carry icon images');
+        }
+        final name = _label(overrides['name'], 'variant name');
+        final (view, origin) = _variantAssets(assets, key);
+        final prepared = await _prepare(
+          _merge(base, {...overrides}..remove('name')),
+          view,
+        );
+        used.addAll(prepared.used.map((path) => origin[path] ?? path));
+        variants[ThemeVariant(key, name)] = prepared;
+      }
+    } else {
+      single = await _prepare(data, assets);
+      used.addAll(single.used);
+    }
+    if (assets.keys.any((path) => !_isDirectoryEntry(path) && !used.contains(path))) {
+      throw const FormatException('Unexpected theme asset');
+    }
+
+    final rootPath = rootDirectory ?? root;
+    final directory = rootPath.joinPath(installationId);
+    final existing = installed(installationId, rootDirectory: rootPath);
+    if (existing != null) return existing;
+    await Directory(rootPath).create(recursive: true);
+    final staging = Directory(
+      rootPath.joinPath('.installing-${DateTime.now().microsecondsSinceEpoch}'),
+    );
+    await staging.create();
+    try {
+      if (single != null) {
+        await _write(staging.path, single.profile, single.files);
+      } else {
+        // The package's own manifest names its variants; each is a complete
+        // installed theme of its own under `variants/<key>/`, read the way a
+        // package without variants is.
+        await _write(staging.path, {
+          'format': 1,
+          'schema': {'min': schemaMin, 'max': schemaMax},
+          'id': data['id'],
+          'name': data['name'],
+          'variants': [
+            for (final variant in variants.keys)
+              {'key': variant.key, 'name': variant.name},
+          ],
+        }, const {});
+        for (final MapEntry(key: variant, value: prepared) in variants.entries) {
+          await _write(
+            staging.path.joinPath(_variantsDir).joinPath(variant.key),
+            prepared.profile,
+            prepared.files,
+          );
+        }
+      }
+      if (await Directory(directory).exists()) {
+        await Directory(directory).delete(recursive: true);
+      }
+      await staging.rename(directory);
+      _activeId = null;
+      final package = installed(installationId, rootDirectory: rootPath)!;
+      await _replaceOlder(package, rootDirectory: rootDirectory);
+      return package;
+    } finally {
+      if (await staging.exists()) await staging.delete(recursive: true);
+    }
+  }
+
+  /// Removes every other installation of [package]'s manifest id: a package
+  /// installed again — a newer version, or a folder edited and imported once
+  /// more — is an update of the theme, not a second theme beside it.
+  ///
+  /// Within the directory it was installed to. In the app's own, the one in
+  /// use hands its selection to [package], variant and all, so an update never
+  /// sends the app back to the default theme.
+  static Future<void> _replaceOlder(
+    ThemePackage package, {
+    String? rootDirectory,
+  }) async {
+    // No directory given is the app's own, and the only one a selection
+    // points into.
+    final selecting = rootDirectory == null;
+    final rootPath = rootDirectory ?? root;
+    for (final old in listInstalled(rootDirectory: rootPath)) {
+      if (old.id != package.id ||
+          old.installationId == package.installationId) {
+        continue;
+      }
+      if (selecting &&
+          old.installationId == Stores.setting.appThemePackage.fetch()) {
+        final variant = variantOf(Stores.setting.appThemePreset.fetch());
+        final next =
+            installed(package.installationId, variant: variant) ?? package;
+        // An update is not a choice of theme: the mode the user set stays,
+        // unless the new version locks one.
+        final mode = Stores.setting.themeMode.fetch();
+        select(next, preset: next.preset);
+        if (next.lockedMode == null) Stores.setting.themeMode.put(mode);
+      }
+      await Directory(
+        rootPath.joinPath(old.installationId),
+      ).delete(recursive: true);
+    }
+    _activeId = null;
+    _active = null;
+  }
+
+  /// Checks one theme — a package, or one variant of one drawn over its base —
+  /// and answers the manifest and files it installs as.
+  static Future<_Prepared> _prepare(
+    Map<String, dynamic> data,
+    Map<String, Uint8List> assets,
+  ) async {
+    final (schemaMin, schemaMax) = _schemaRange(data['schema']);
     final id = data['id'];
     if (id is! String || !idPattern.hasMatch(id)) {
       throw const FormatException('Invalid theme id');
@@ -595,7 +918,10 @@ abstract final class ThemePackages {
     }
     final paletteLight = _palette(palette[Brightness.light.name]);
     final paletteDark = _palette(palette[Brightness.dark.name]);
-    final components = ThemeComponents.parse(data['components']);
+    final components = ThemeComponents.parse(
+      data['components'],
+      layout: data['layout'],
+    );
     final icons = _map(data['icons'], 'icons');
     if (!icons.keys.every(iconFields.contains)) {
       throw const FormatException('Unknown icon field');
@@ -617,18 +943,22 @@ abstract final class ThemePackages {
     );
     final splash = _splash(data['splash']);
     final background = _map(data['background'], 'background');
+    if (!background.keys.every(backgroundFields.contains)) {
+      throw const FormatException('Unknown background field');
+    }
     final backgroundStyle = BackgroundStyle.parse(background['type']);
     if (backgroundStyle == null) {
       throw const FormatException('Invalid background type');
     }
     final opacity = _fraction(background['opacity'], maxBackgroundOpacity);
     final blur = _fraction(background['blur'], maxBackgroundBlur);
+    final backgroundTile = _backgroundTile(background, backgroundStyle);
     final shapes = _map(data['shapes'], 'shapes');
     final card = _fraction(shapes['card'], ThemeComponents.maxRadius);
     final tile = _fraction(shapes['tile'], ThemeComponents.maxRadius);
     final button = _fraction(shapes['button'], ThemeComponents.maxRadius);
 
-    final usedAssets = <String>{'manifest.toml'};
+    final usedAssets = <String>{};
     Uint8List? backgroundBytes;
     if (backgroundStyle == BackgroundStyle.image) {
       final path = background['image'];
@@ -670,102 +1000,144 @@ abstract final class ThemePackages {
         );
       }
     }
-    if (assets.keys.any(
-      (path) => path != '$_iconsDir/' && !usedAssets.contains(path),
-    )) {
-      throw const FormatException('Unexpected theme asset');
-    }
     _requireFeatureSchema(
       min: schemaMin,
       iconFiles: iconFiles.values,
       iconColors: iconColors,
       splash: splash,
+      components: components,
+      backgroundTile: backgroundTile,
     );
 
-    final rootPath = rootDirectory ?? root;
-    final directory = rootPath.joinPath(installationId);
-    final existing = installed(installationId, rootDirectory: rootPath);
-    if (existing != null) return existing;
-    await Directory(rootPath).create(recursive: true);
-    final staging = Directory(
-      rootPath.joinPath('.installing-${DateTime.now().microsecondsSinceEpoch}'),
-    );
-    await staging.create();
-    try {
-      if (backgroundBytes != null) {
-        await File(
-          staging.path.joinPath('background.img'),
-        ).writeAsBytes(backgroundBytes, flush: true);
-      }
-      if (iconBytes.isNotEmpty) {
-        final iconDir = Directory(staging.path.joinPath(_iconsDir));
-        await iconDir.create();
-        for (final entry in iconBytes.entries) {
-          await File(
-            iconDir.path.joinPath(entry.key),
-          ).writeAsBytes(entry.value, flush: true);
-        }
-      }
-      if (splashLogoBytes != null) {
-        await File(
-          staging.path.joinPath(splash!.logo!),
-        ).writeAsBytes(splashLogoBytes, flush: true);
-      }
-      final profile = {
-        'format': 1,
-        'schema': {'min': schemaMin, 'max': schemaMax},
-        'id': id,
-        'name': name,
-        'modes': modes.map((mode) => mode.name).toList(),
-        'components': components.toMap(),
-        'colors': {
-          'mode': mode,
-          'seed': seed,
-          'systemColor': systemColor,
-          'palette': {
-            Brightness.light.name: paletteLight,
-            Brightness.dark.name: paletteDark,
-          },
+    final files = <String, Uint8List>{
+      'background.img': ?backgroundBytes,
+      for (final entry in iconBytes.entries)
+        '$_iconsDir/${entry.key}': entry.value,
+    };
+    if (splash?.logo case final logo?) files[logo] = splashLogoBytes!;
+    final profile = {
+      'format': 1,
+      'schema': {'min': schemaMin, 'max': schemaMax},
+      'id': id,
+      'name': name,
+      'modes': modes.map((mode) => mode.name).toList(),
+      'components': components.toMap(),
+      'layout': ?components.layoutMap(),
+      'colors': {
+        'mode': mode,
+        'seed': seed,
+        'systemColor': systemColor,
+        'palette': {
+          Brightness.light.name: paletteLight,
+          Brightness.dark.name: paletteDark,
         },
-        'icons': {
-          'style': style.name,
-          'images': iconFiles.keys.toList(),
-          if (iconColors.isNotEmpty) 'colors': iconColors,
+      },
+      'icons': {
+        'style': style.name,
+        'images': iconFiles.keys.toList(),
+        if (iconColors.isNotEmpty) 'colors': iconColors,
+      },
+      'background': {
+        'type': backgroundStyle.name,
+        'opacity': opacity,
+        'blur': blur,
+        if (backgroundTile > 0) 'tile': backgroundTile,
+      },
+      'shapes': {'card': card, 'tile': tile, 'button': button},
+      if (splash != null)
+        'splash': {
+          'color': splash.color,
+          'duration': splash.duration,
+          if (splash.logo != null) 'logo': splash.logo,
         },
-        'background': {
-          'type': backgroundStyle.name,
-          'opacity': opacity,
-          'blur': blur,
-        },
-        'shapes': {'card': card, 'tile': tile, 'button': button},
-        if (splash != null)
-          'splash': {
-            'color': splash.color,
-            'duration': splash.duration,
-            if (splash.logo != null) 'logo': splash.logo,
-          },
-      };
-      final normalized = TomlDocument.fromMap(profile).toString();
-      if (utf8.encode(normalized).length > _maxManifestBytes) {
-        throw const FormatException('Normalized manifest exceeds size limit');
-      }
-      await File(
-        staging.path.joinPath('manifest.toml'),
-      ).writeAsString(normalized, flush: true);
-      if (await Directory(directory).exists()) {
-        await Directory(directory).delete(recursive: true);
-      }
-      await staging.rename(directory);
-      _activeId = null;
-      return installed(installationId, rootDirectory: rootPath)!;
-    } finally {
-      if (await staging.exists()) await staging.delete(recursive: true);
-    }
+    };
+    return _Prepared(profile, files, usedAssets);
   }
 
-  /// The preset value that selects one installed theme.
-  static String presetOf(String installationId) =>
-      '$_packagePrefix$installationId';
+  static Future<void> _write(
+    String directory,
+    Map<String, dynamic> profile,
+    Map<String, Uint8List> files,
+  ) async {
+    final normalized = TomlDocument.fromMap(profile).toString();
+    if (utf8.encode(normalized).length > _maxManifestBytes) {
+      throw const FormatException('Normalized manifest exceeds size limit');
+    }
+    await Directory(directory).create(recursive: true);
+    for (final MapEntry(key: path, value: bytes) in files.entries) {
+      final file = File(directory.joinPath(path));
+      await file.parent.create(recursive: true);
+      await file.writeAsBytes(bytes, flush: true);
+    }
+    await File(
+      directory.joinPath('manifest.toml'),
+    ).writeAsString(normalized, flush: true);
+  }
+
+  /// The files one variant sees: the package's own, with any the variant's
+  /// directory carries in their place — `variants/trans/background.png` is
+  /// the Trans variant's `background.png`. The second map says where each
+  /// replacement came from, so what the variant used is known by its path in
+  /// the package.
+  static (Map<String, Uint8List>, Map<String, String>) _variantAssets(
+    Map<String, Uint8List> assets,
+    String key,
+  ) {
+    final prefix = '$_variantsDir/$key/';
+    final view = <String, Uint8List>{
+      for (final MapEntry(key: path, value: bytes) in assets.entries)
+        if (!path.startsWith('$_variantsDir/')) path: bytes,
+    };
+    final origin = <String, String>{};
+    for (final MapEntry(key: path, value: bytes) in assets.entries) {
+      if (!path.startsWith(prefix) || path == prefix) continue;
+      final name = path.substring(prefix.length);
+      view[name] = bytes;
+      origin[name] = path;
+    }
+    return (view, origin);
+  }
+
+  /// [base] with [overrides] drawn over it: a table merges key by key, and
+  /// anything else — a number, a string, a list — replaces what was there.
+  static Map<String, dynamic> _merge(
+    Map<String, dynamic> base,
+    Map<String, dynamic> overrides,
+  ) => {
+    ...base,
+    for (final MapEntry(:key, :value) in overrides.entries)
+      key: switch ((base[key], value)) {
+        (final Map<String, dynamic> a, final Map<String, dynamic> b) =>
+          _merge(a, b),
+        _ => value,
+      },
+  };
+
+  /// A directory entry an archive may carry: `icons/`, `variants/` and
+  /// `variants/<key>/`.
+  static bool _isDirectoryEntry(String path) =>
+      path == '$_iconsDir/' ||
+      path == '$_variantsDir/' ||
+      (path.startsWith('$_variantsDir/') &&
+          path.endsWith('/') &&
+          variantKeyPattern.hasMatch(
+            path.substring(_variantsDir.length + 1, path.length - 1),
+          ));
+
+  /// The preset value that selects one installed theme, and one of its
+  /// variants when it has them: `package:<installation id>#<variant>`.
+  static String presetOf(String installationId, {String? variant}) =>
+      variant == null
+      ? '$_packagePrefix$installationId'
+      : '$_packagePrefix$installationId#$variant';
+
+  /// The variant a preset names, or null for none — a package without
+  /// variants, or its first.
+  static String? variantOf(String preset) {
+    if (!preset.startsWith(_packagePrefix)) return null;
+    final at = preset.indexOf('#');
+    return at < 0 ? null : preset.substring(at + 1);
+  }
 
   /// The installation id a preset names, or null when it names something else —
   /// a builtin theme, or the custom one.
@@ -774,10 +1146,11 @@ abstract final class ThemePackages {
   /// a length that stops matching the prefix turns into a preset that names no
   /// install, which reads as "not installed": the user's theme is reset rather
   /// than reported.
-  static String? installationIdOf(String preset) =>
-      preset.startsWith(_packagePrefix)
-      ? preset.substring(_packagePrefix.length)
-      : null;
+  static String? installationIdOf(String preset) {
+    if (!preset.startsWith(_packagePrefix)) return null;
+    final at = preset.indexOf('#');
+    return preset.substring(_packagePrefix.length, at < 0 ? null : at);
+  }
 
   static const _packagePrefix = 'package:';
 
@@ -798,9 +1171,54 @@ abstract final class ThemePackages {
   /// and releases, and it is not the digest this looks up, so passing one here
   /// answers null without saying why. [ThemePackage.installationId] is the one
   /// to hand over; see [ThemePackage.id] for the other.
-  static ThemePackage? installed(String installationId, {String? rootDirectory}) {
+  ///
+  /// A package with variants answers [variant], or its first when that is null
+  /// or names none it has.
+  static ThemePackage? installed(
+    String installationId, {
+    String? variant,
+    String? rootDirectory,
+  }) {
     if (!_digestPattern.hasMatch(installationId)) return null;
     final directory = (rootDirectory ?? root).joinPath(installationId);
+    try {
+      final file = File(directory.joinPath('manifest.toml'));
+      if (!file.existsSync() || file.lengthSync() > _maxManifestBytes) {
+        return null;
+      }
+      final data = _decodeManifest(file.readAsStringSync());
+      if (data['variants'] case final List<Object?> list) {
+        final variants = [
+          for (final raw in list)
+            if (raw case {
+              'key': final String key,
+              'name': final String name,
+            } when variantKeyPattern.hasMatch(key))
+              ThemeVariant(key, name),
+        ];
+        if (variants.isEmpty || variants.length != list.length) return null;
+        final chosen =
+            variants.where((v) => v.key == variant).firstOrNull ??
+            variants.first;
+        return _readInstalled(
+          directory.joinPath(_variantsDir).joinPath(chosen.key),
+          installationId,
+          variant: chosen,
+          variants: variants,
+        );
+      }
+      return _readInstalled(directory, installationId);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static ThemePackage? _readInstalled(
+    String directory,
+    String installationId, {
+    ThemeVariant? variant,
+    List<ThemeVariant> variants = const [],
+  }) {
     try {
       final file = File(directory.joinPath('manifest.toml'));
       if (!file.existsSync() || file.lengthSync() > _maxManifestBytes) {
@@ -815,6 +1233,10 @@ abstract final class ThemePackages {
       final palette = colors['palette'] == null
           ? <String, dynamic>{}
           : _map(colors['palette'], 'palette');
+      final components = ThemeComponents.parse(
+        data['components'],
+        layout: data['layout'],
+      );
       final icons = _map(data['icons'], 'icons');
       final background = _map(data['background'], 'background');
       final shapes = _map(data['shapes'], 'shapes');
@@ -823,6 +1245,7 @@ abstract final class ThemePackages {
       final style = IconStyle.parse(icons['style']);
       final bgStyle = BackgroundStyle.parse(background['type']);
       if (style == null || bgStyle == null) return null;
+      final backgroundTile = _backgroundTile(background, bgStyle);
       // The manifest names keys and not files, so which format each icon is in
       // is a question for the directory. Both are asked for, in the order a
       // package would have been written either way.
@@ -852,11 +1275,15 @@ abstract final class ThemePackages {
         iconFiles: iconFiles.values,
         iconColors: iconColors,
         splash: splash,
+        components: components,
+        backgroundTile: backgroundTile,
       );
       final package = ThemePackage(
         installationId: installationId,
         id: themeId,
         name: _label(data['name'], 'name'),
+        variant: variant,
+        variants: variants,
         schemaMin: schemaMin,
         schemaMax: schemaMax,
         mode: _integer(colors['mode'], 0, 2),
@@ -865,13 +1292,14 @@ abstract final class ThemePackages {
         systemColor: colors['systemColor'] as bool,
         paletteLight: _palette(palette[Brightness.light.name]),
         paletteDark: _palette(palette[Brightness.dark.name]),
-        components: ThemeComponents.parse(data['components']),
+        components: components,
         iconStyle: style,
         iconFiles: iconFiles,
         iconColors: iconColors,
         backgroundStyle: bgStyle,
         opacity: _fraction(background['opacity'], maxBackgroundOpacity),
         blur: _fraction(background['blur'], maxBackgroundBlur),
+        backgroundTile: backgroundTile,
         cardRadius: _fraction(shapes['card'], ThemeComponents.maxRadius),
         tileRadius: _fraction(shapes['tile'], ThemeComponents.maxRadius),
         buttonRadius: _fraction(shapes['button'], ThemeComponents.maxRadius),
@@ -907,9 +1335,16 @@ abstract final class ThemePackages {
     return themes;
   }
 
+  /// Every installed theme the picker offers, by preset: one per package, or
+  /// one per variant of a package that has them.
   static Map<String, String> installedPresetNames({String? rootDirectory}) => {
     for (final theme in listInstalled(rootDirectory: rootDirectory))
-      presetOf(theme.installationId): theme.name,
+      if (theme.variants.isEmpty)
+        presetOf(theme.installationId): theme.name
+      else
+        for (final variant in theme.variants)
+          presetOf(theme.installationId, variant: variant.key):
+              '${theme.name} · ${variant.name}',
   };
 
   /// Deletes one installed theme, answering whether it was there.
@@ -935,7 +1370,7 @@ abstract final class ThemePackages {
     if (!await directory.exists()) return false;
     await directory.delete(recursive: true);
 
-    if (_activeId == installationId) {
+    if (_activeId?.split('#').first == installationId) {
       _activeId = null;
       _active = null;
     }
@@ -957,9 +1392,11 @@ abstract final class ThemePackages {
     final preset = BuiltinTheme.fromId(Stores.setting.appThemePreset.fetch());
     if (preset != null) return _builtinLoader.loaded(preset);
     final installationId = Stores.setting.appThemePackage.fetch();
-    if (_activeId != installationId) {
-      _activeId = installationId;
-      _active = installed(installationId);
+    final variant = variantOf(Stores.setting.appThemePreset.fetch());
+    final key = variant == null ? installationId : '$installationId#$variant';
+    if (_activeId != key) {
+      _activeId = key;
+      _active = installed(installationId, variant: variant);
     }
     return _active;
   }
@@ -991,6 +1428,7 @@ abstract final class ThemePackages {
     settings.appBackgroundPath.put(theme.backgroundPath ?? '');
     settings.appBackgroundOpacity.put(theme.opacity);
     settings.appBackgroundBlur.put(theme.blur);
+    settings.appBackgroundTile.put(theme.backgroundTile);
     settings.appCardRadius.put(theme.cardRadius);
     settings.appTileRadius.put(theme.tileRadius);
     settings.appButtonRadius.put(theme.buttonRadius);
@@ -1007,7 +1445,7 @@ abstract final class ThemePackages {
     if (Stores.setting.appThemePreset.fetch() == customPreset) {
       saveCustomTheme();
     }
-    select(theme, preset: preset ?? presetOf(theme.installationId));
+    select(theme, preset: preset ?? theme.preset);
   }
 
   /// Writes the settings a custom theme is made of.
@@ -1147,6 +1585,23 @@ abstract final class ThemePackages {
     return (min, max);
   }
 
+  /// `background.tile`: 0 when absent, and only on an image background.
+  static double _backgroundTile(
+    Map<String, dynamic> background,
+    BackgroundStyle style,
+  ) {
+    final raw = background['tile'];
+    if (raw == null) return 0;
+    if (style != BackgroundStyle.image) {
+      throw const FormatException('A background tile needs an image');
+    }
+    final tile = _fraction(raw, maxBackgroundTile);
+    if (tile < minBackgroundTile) {
+      throw const FormatException('Invalid background tile');
+    }
+    return tile;
+  }
+
   static double _fraction(Object? value, double max) {
     if (value is! num || !value.isFinite || value < 0 || value > max) {
       throw const FormatException('Invalid number');
@@ -1232,7 +1687,13 @@ abstract final class ThemePackages {
     required Iterable<String> iconFiles,
     required Map<String, Object> iconColors,
     required ThemeSplash? splash,
+    required ThemeComponents components,
+    required double backgroundTile,
   }) {
+    if (min < componentSchema &&
+        (components.neededSchema >= componentSchema || backgroundTile > 0)) {
+      throw const FormatException('This theme needs schema $componentSchema');
+    }
     final uses =
         iconFiles.any((name) => name.endsWith('.svg')) ||
         iconColors.isNotEmpty ||
@@ -1369,7 +1830,8 @@ abstract final class ThemePackages {
           zip.totalCentralDirectoryEntriesOnThisDisk !=
               zip.fileHeaders.length ||
           zip.fileHeaders.isEmpty ||
-          zip.fileHeaders.length > _maxIcons + 4) {
+          // The two directory entries, `icons/` and `variants/`, besides.
+          zip.fileHeaders.length > _maxAssets + 2) {
         throw const FormatException('Invalid theme ZIP');
       }
       final assets = <String, Uint8List>{};
@@ -1377,7 +1839,7 @@ abstract final class ThemePackages {
       for (final header in zip.fileHeaders) {
         final path = header.filename;
         final file = header.file;
-        if (path == '$_iconsDir/' &&
+        if (_isDirectoryEntry(path) &&
             !assets.containsKey(path) &&
             header.uncompressedSize == 0 &&
             header.compressedSize == 0 &&
@@ -1395,7 +1857,7 @@ abstract final class ThemePackages {
             ? _maxManifestBytes
             : path.startsWith('$_iconsDir/')
             ? _maxIconBytes
-            : path.startsWith('splash_logo.')
+            : path.split('/').last.startsWith('splash_logo.')
             ? _maxSplashLogoBytes
             : _maxBackgroundBytes;
         if (path.isEmpty ||

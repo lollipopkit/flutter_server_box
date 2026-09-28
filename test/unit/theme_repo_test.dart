@@ -11,6 +11,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
+import 'package:flutter/widgets.dart' show Locale;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/service/theme_package.dart';
 import 'package:server_box/core/service/theme_repo.dart';
@@ -76,6 +77,64 @@ List<int> tarGz(Map<String, String> entries, {String? top = 'owner-repo-sha'}) {
 }
 
 void main() {
+  group('description', () {
+    ThemeText read(String toml) =>
+        ThemeListing.parse(themeToml(versions: version()).replaceFirst(
+          'description = "Green"\n',
+          toml,
+        ), 'themes/aurora.toml').description;
+
+    test('a string is shown as it is, in every language', () {
+      final text = read('description = "Green"\n');
+      expect(text.resolve(const Locale('zh', 'CN')), 'Green');
+      expect(text.resolve(null), 'Green');
+    });
+
+    test('a table is looked up by language, most specific first', () {
+      final text = read(
+        '[description]\nen = "Green"\nzh = "绿色"\nzh_TW = "綠色"\n'
+        'pt-BR = "Verde"\n',
+      );
+      expect(text.resolve(const Locale('zh', 'TW')), '綠色');
+      expect(text.resolve(const Locale('zh', 'CN')), '绿色');
+      expect(text.resolve(const Locale('zh')), '绿色');
+      expect(text.resolve(const Locale('pt', 'BR')), 'Verde');
+      expect(text.resolve(const Locale('de')), 'Green', reason: 'English next');
+      expect(text.resolve(null), 'Green');
+      expect(text.all, containsAll(['Green', '绿色', '綠色', 'Verde']));
+    });
+
+    test('with no English, the first language the listing gives', () {
+      final text = read('[description]\nja = "緑"\nzh = "绿色"\n');
+      expect(text.resolve(const Locale('de')), '緑');
+    });
+
+    test('anything else is no description, and the theme still lists', () {
+      expect(read('description = 3\n').isEmpty, isTrue);
+      expect(read('').resolve(null), '');
+    });
+
+    test('the cache keeps a string a string and a table a table', () {
+      for (final toml in [
+        'description = "Green"\n',
+        '[description]\nen = "Green"\nzh = "绿色"\n',
+      ]) {
+        final text = read(toml);
+        final listing = ThemeListing.parse(
+          themeToml(versions: version()).replaceFirst(
+            'description = "Green"\n',
+            toml,
+          ),
+          'themes/aurora.toml',
+        );
+        final cached = ThemeListing.fromJson(
+          jsonDecode(jsonEncode(listing.toJson())),
+        )!;
+        expect(cached.description, text, reason: toml);
+      }
+    });
+  });
+
   group('catalog', () {
     test('reads the repositories it lists', () {
       final catalog = ThemeRepoCatalog.parse(

@@ -186,27 +186,29 @@ final class _SettingsSearchField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final style = ComponentStyles.of(context).search;
+    final iconColor = style.iconColor ?? scheme.outline;
 
     // One size and one line height for the value and the placeholder both.
     // `InputDecorator` lays the hint out in its own box and lines it up with
     // the input's baseline, so two sizes put the placeholder off the centre
     // of the pill while a typed value sat right — which is only visible on
     // the empty field somebody is about to type into.
-    const text = TextStyle(fontSize: 13, height: 1);
+    final text = TextStyle(fontSize: 13, height: 1, color: style.textColor);
 
     return Container(
-      height: 32,
-      padding: const EdgeInsets.symmetric(horizontal: 9),
+      height: style.height ?? 32,
+      padding: style.padding ?? const EdgeInsets.symmetric(horizontal: 9),
       decoration: ShapeDecoration(
-        shape: const StadiumBorder(),
-        color: scheme.surfaceContainerLow,
+        shape: style.shape(const StadiumBorder()),
+        color: style.backgroundColor ?? scheme.surfaceContainerLow,
       ),
       child: Row(
         // Explicit, because the three things in here are of three heights: a
         // 17pt glyph, a text field and a 10pt chord.
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(Icons.search, size: 17, color: scheme.outline),
+          Icon(Icons.search, size: 17, color: iconColor),
           UIs.width7,
           Expanded(
             child: TextField(
@@ -217,11 +219,12 @@ final class _SettingsSearchField extends StatelessWidget {
               // No strut, or the line box is the font's own and the field is
               // taller than the text in it — off centre again, by the leading.
               strutStyle: StrutStyle.disabled,
-              decoration: InputDecoration(
+              // Bare: the pill is the field's box, and a theme's form-input
+              // border would draw a second one inside it.
+              decoration: bareInputDecoration(
                 isCollapsed: true,
-                border: InputBorder.none,
                 hintText: '${libL10n.search} ${libL10n.setting}',
-                hintStyle: text.copyWith(color: Colors.grey),
+                hintStyle: text.copyWith(color: style.hintColor ?? Colors.grey),
               ),
             ),
           ),
@@ -231,18 +234,14 @@ final class _SettingsSearchField extends StatelessWidget {
               if (value.text.isNotEmpty) {
                 return InkWell(
                   onTap: onClear,
-                  child: Icon(Icons.close, size: 17, color: scheme.outline),
+                  child: Icon(Icons.close, size: 17, color: iconColor),
                 );
               }
               // The chord, where a field that can be reached by one says so.
               if (!isDesktop) return UIs.placeholder;
               return Text(
                 isMacOS ? '⌘F' : 'Ctrl F',
-                style: TextStyle(
-                  fontSize: 10,
-                  height: 1,
-                  color: scheme.outline,
-                ),
+                style: TextStyle(fontSize: 10, height: 1, color: iconColor),
               );
             },
           ),
@@ -274,8 +273,11 @@ final class _SettingsMenuRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final fg = selected ? scheme.onSecondaryContainer : scheme.onSurface;
-    final radius = BorderRadius.circular(9);
+    final bar = ComponentStyles.of(context).sidebar;
+    final fg = selected
+        ? bar.selectedTextColor ?? scheme.onSecondaryContainer
+        : bar.textColor ?? scheme.onSurface;
+    final radius = BorderRadius.circular(bar.radius ?? 9);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 1),
@@ -286,17 +288,21 @@ final class _SettingsMenuRow extends StatelessWidget {
           onTap: onTap,
           child: Ink(
             height: 36,
-            padding: const EdgeInsets.symmetric(horizontal: 9),
+            padding: bar.padding ?? const EdgeInsets.symmetric(horizontal: 9),
             decoration: BoxDecoration(
               borderRadius: radius,
-              color: selected ? scheme.secondaryContainer : null,
+              color: selected
+                  ? bar.selectedColor ?? scheme.secondaryContainer
+                  : bar.backgroundColor,
             ),
             child: Row(
               children: [
                 Icon(
                   node.icon,
                   size: 19,
-                  color: selected ? fg : scheme.outline,
+                  color: selected
+                      ? bar.selectedIconColor ?? fg
+                      : bar.iconColor ?? scheme.outline,
                 ),
                 const SizedBox(width: 9),
                 Expanded(
@@ -319,7 +325,11 @@ final class _SettingsMenuRow extends StatelessWidget {
                     '${node.children.length}',
                     style: TextStyle(
                       fontSize: 11,
-                      color: scheme.outline,
+                      // With the theme's side bar colors, the row's own; they
+                      // may not read against `outline`.
+                      color: bar.textColor != null || bar.selectedTextColor != null
+                          ? fg
+                          : scheme.outline,
                       fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),

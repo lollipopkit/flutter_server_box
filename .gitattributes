@@ -44,3 +44,14 @@ test/fixtures/rootfs_manifest/*.sig -text
 *.avif filter=lfs diff=lfs merge=lfs -text
 *.gif filter=lfs diff=lfs merge=lfs -text
 *.fsbt filter=lfs diff=lfs merge=lfs -text
+
+# Except what the theme store serves and what the app installs from its own
+# assets: `store/` reaches devices through `git archive` (scripts/store-tarball.sh),
+# which writes LFS pointers rather than the files, and a checkout without LFS
+# (CI's `check`, a plain clone) would ship a pointer as a bundled theme. They
+# are small; keep them regular blobs.
+store/**/*.png -filter -diff -merge -text
+store/**/*.jpg -filter -diff -merge -text
+store/**/*.jpeg -filter -diff -merge -text
+store/**/*.fsbt -filter -diff -merge -text
+assets/store_themes/*.fsbt -filter -diff -merge -text

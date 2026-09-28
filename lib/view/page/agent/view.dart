@@ -1107,11 +1107,11 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
                                 : TextInputAction.newline,
                             onSubmitted: sendOnEnter ? _submitPrompt : null,
                             enabled: canType,
-                            decoration: InputDecoration(
+                            // Bare: the composer's card is the field's box.
+                            decoration: bareInputDecoration(
                               hintText: session.pendingTool == null
                                   ? context.l10n.agentPromptHint
                                   : context.l10n.askAiReviewBeforeContinuing,
-                              border: InputBorder.none,
                               // Not for density — the padding below is
                               // unchanged — but because a field that is not
                               // dense is also never shorter than 48px, and

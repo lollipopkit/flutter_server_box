@@ -1,6 +1,6 @@
 <script>
   // A phone-sized picture of the app in one theme and mode: the server list
-  // with two cards, a tile list, a button and a field, and the bottom
+  // with two cards, a tile list, a search field and two buttons, and the bottom
   // navigation. Everything is drawn from the theme's own manifest — palette,
   // component styles, radii, background and icons — as the app would.
   import ThemeIcon from './ThemeIcon.svelte'
@@ -13,14 +13,21 @@
   const card = $derived(m.components.card ?? {})
   const tile = $derived(m.components.tile ?? {})
   const button = $derived(m.components.button ?? {})
-  const input = $derived(m.components.input ?? {})
   const nav = $derived(m.components.navigation ?? {})
+  const search = $derived(m.components.search ?? {})
+  const textButton = $derived(m.components.textButton ?? {})
+  const appBar = $derived(m.components.appBar ?? {})
 
   const background = $derived(
     p.background === 'gradient'
       ? `linear-gradient(135deg, color-mix(in srgb, ${c.primary} 22%, ${c.surface}), ${c.surface}, color-mix(in srgb, ${c.primary} 12%, ${c.surface}))`
       : c.surface,
   )
+
+  // The picture is a phone about 390 logical pixels wide drawn 248 wide, so a
+  // tile keeps its size relative to the screen.
+  const phone = 248 / 390
+  const image = $derived(p.backgroundImage)
 
   const inset = (v, fallback) => (v ? `${v[1]}px ${v[2]}px ${v[3]}px ${v[0]}px` : fallback)
 
@@ -36,11 +43,17 @@
 </script>
 
 <div class="tp" style={`--s:${scale}; background:${background}; color:${c.onSurface};`}>
-  <div class="tp-bar">
+  {#if image}
+    <div
+      class="tp-image"
+      style={`background-image:url("${image.src}"); opacity:${image.opacity}; filter:${image.blur ? `blur(${image.blur * phone}px)` : 'none'}; ${image.tile ? `background-repeat:repeat; background-position:0 0; background-size:${image.tile * phone}px auto;` : 'background-size:cover; background-position:center;'}`}
+    ></div>
+  {/if}
+  <div class="tp-bar" style={`background:${appBar.backgroundColor ?? 'transparent'}; color:${appBar.titleColor ?? appBar.foregroundColor ?? c.onSurface};`}>
     <span class="tp-title">Servers</span>
     <span class="tp-actions">
-      <ThemeIcon src={icon('nav.sort')} color={iconColor('nav.sort', c.onSurfaceVariant)} size={18} />
-      <ThemeIcon src={icon('nav.settings')} color={iconColor('nav.settings', c.onSurfaceVariant)} size={18} />
+      <ThemeIcon src={icon('nav.sort')} color={iconColor('nav.sort', appBar.iconColor ?? c.onSurfaceVariant)} size={18} />
+      <ThemeIcon src={icon('nav.settings')} color={iconColor('nav.settings', appBar.iconColor ?? c.onSurfaceVariant)} size={18} />
     </span>
   </div>
 
@@ -78,10 +91,15 @@
     </div>
 
     <div class="tp-row">
+      <!-- A search pill: its own component, never the form input's box. -->
       <span
         class="tp-input"
-        style={`border-radius:${input.radius ?? 8}px; background:${input.filled ? (input.fillColor ?? c.surfaceContainerHighest) : 'transparent'}; border:${input.borderWidth ?? 1}px solid ${input.borderColor ?? c.outline}; color:${c.onSurfaceVariant};`}
+        style={`border-radius:${search.radius ?? 999}px; background:${search.backgroundColor ?? c.surfaceContainerLow}; border:${search.borderWidth ?? 0}px solid ${search.borderColor ?? 'transparent'}; color:${search.hintColor ?? c.onSurfaceVariant};`}
       >Search</span>
+      <span
+        class="tp-button tp-text"
+        style={`border-radius:${textButton.radius ?? p.shapes.button}px; background:${textButton.backgroundColor ?? 'transparent'}; color:${textButton.foregroundColor ?? c.primary}; border:${textButton.borderWidth ?? 0}px solid ${textButton.borderColor ?? 'transparent'};`}
+      >Logs</span>
       <span
         class="tp-button"
         style={`border-radius:${button.radius ?? p.shapes.button}px; background:${button.backgroundColor ?? c.primary}; color:${button.foregroundColor ?? c.onPrimary}; border:${button.borderWidth ?? 0}px solid ${button.borderColor ?? 'transparent'};`}
@@ -117,6 +135,8 @@
   /* Drawn at one phone size and scaled as a whole, so every radius and gap
      keeps its proportion to the rest. */
   .tp {
+    position: relative;
+    isolation: isolate;
     zoom: var(--s);
     width: 248px;
     height: 470px;
@@ -127,6 +147,13 @@
     font-family: var(--font-body);
     font-size: 12px;
     box-shadow: 0 0 0 1px rgba(127, 127, 127, 0.25);
+  }
+
+  .tp-image {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
   }
 
   .tp-bar {
@@ -233,6 +260,10 @@
     padding: 7px 14px;
     font-weight: 600;
     font-size: 11px;
+  }
+
+  .tp-text {
+    padding: 7px 6px;
   }
 
   .tp-nav {

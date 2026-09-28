@@ -56,6 +56,58 @@ class AppBackground extends StatelessWidget {
   }
 
   Widget _layer(BuildContext context, BackgroundStyle style, String path) {
+    if (ThemePackages.preview.value case final preview?) {
+      return BackgroundLayer.of(preview) ?? const SizedBox.shrink();
+    }
+    final settings = Stores.setting;
+    return BackgroundLayer(
+      style: style,
+      path: path,
+      opacity: settings.appBackgroundOpacity.fetch(),
+      blur: settings.appBackgroundBlur.fetch(),
+      tile: settings.appBackgroundTile.fetch(),
+    );
+  }
+}
+
+/// One background as the app draws it: the gradient from the ambient scheme,
+/// or the image faint over the surface, once and cover-fitted or repeated
+/// every [tile] logical pixels. What [AppBackground] draws behind the app, and
+/// what the theme store draws behind a preview.
+class BackgroundLayer extends StatelessWidget {
+  const BackgroundLayer({
+    super.key,
+    required this.style,
+    required this.path,
+    required this.opacity,
+    required this.blur,
+    this.tile = 0,
+  });
+
+  final BackgroundStyle style;
+  final String path;
+  final double opacity;
+  final double blur;
+  final double tile;
+
+  /// [package]'s background, or null for a package without one.
+  static BackgroundLayer? of(ThemePackage package) {
+    final path = package.backgroundPath ?? '';
+    if (package.backgroundStyle == BackgroundStyle.none ||
+        (package.backgroundStyle == BackgroundStyle.image && path.isEmpty)) {
+      return null;
+    }
+    return BackgroundLayer(
+      style: package.backgroundStyle,
+      path: path,
+      opacity: package.opacity,
+      blur: package.blur,
+      tile: package.backgroundTile,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     if (style == BackgroundStyle.gradient) {
       return DecoratedBox(
@@ -72,26 +124,39 @@ class AppBackground extends StatelessWidget {
         ),
       );
     }
-    final preview = ThemePackages.preview.value;
-    final blur =
-        (preview?.blur ?? Stores.setting.appBackgroundBlur.fetch()).clamp(
-          0.0,
-          30.0,
-        );
-    final image = Image.file(
-      File(path),
-      fit: BoxFit.cover,
-      cacheWidth: 4096,
-      cacheHeight: 4096,
-      errorBuilder: (_, _, _) => const SizedBox.shrink(),
-    );
+    final blur = this.blur.clamp(0.0, 30.0);
+    final Widget image;
+    if (tile > 0) {
+      // A pattern: decoded at one repeat's width in physical pixels and drawn
+      // at that size from the top left, so it keeps its size on any window
+      // rather than growing with it the way a `cover`-fitted picture does.
+      final ratio = MediaQuery.devicePixelRatioOf(context);
+      image = Image(
+        image: ResizeImage(
+          FileImage(File(path), scale: ratio),
+          width: (tile * ratio).round(),
+          allowUpscaling: true,
+        ),
+        fit: BoxFit.none,
+        alignment: Alignment.topLeft,
+        repeat: ImageRepeat.repeat,
+        errorBuilder: (_, _, _) => const SizedBox.shrink(),
+      );
+    } else {
+      image = Image.file(
+        File(path),
+        fit: BoxFit.cover,
+        cacheWidth: 4096,
+        cacheHeight: 4096,
+        errorBuilder: (_, _, _) => const SizedBox.shrink(),
+      );
+    }
     // The image is faint and the colour under it is not: what makes a page
     // opaque enough to stand over the one below is this box, not the image.
     return ColoredBox(
       color: scheme.surface,
       child: Opacity(
-        opacity: (preview?.opacity ?? Stores.setting.appBackgroundOpacity.fetch())
-            .clamp(0.0, 0.6),
+        opacity: opacity.clamp(0.0, 0.6),
         child: blur == 0
             ? image
             : ImageFiltered(

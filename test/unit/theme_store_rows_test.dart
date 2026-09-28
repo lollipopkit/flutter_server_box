@@ -105,6 +105,25 @@ List<ThemeRow> _rows({
 );
 
 void main() {
+  test("a row is updatable when the store's digest is not the installed one", () {
+    final same = _rows(
+      installed: [_package(installationId: _digest)],
+      items: [_item()],
+    ).single;
+    expect(same.updatable, isFalse, reason: 'the version the store offers');
+    final older = _rows(
+      installed: [_package(installationId: 'b1e6d0f4a3c2')],
+      items: [_item()],
+    ).single;
+    expect(older.updatable, isTrue);
+    expect(
+      _rows(installed: [_package()]).single.updatable,
+      isFalse,
+      reason: 'nothing in the store to update to',
+    );
+    expect(_rows(items: [_item()]).single.updatable, isFalse);
+  });
+
   group('the catalog and this device are one list', () {
     test('a theme the store has and this device has is one row', () {
       final rows = _rows(
