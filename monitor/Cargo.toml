@@ -16,7 +16,7 @@ sbm_native = { path = "../crates/sbm_native" }
 
 # Web framework
 ntex = { version = "3", features = ["tokio", "rustls"] }
-ntex-files = "3.2"
+ntex-files = "4.0"
 
 # TLS (ring instead of aws-lc: no cmake/assembly dependency for static musl builds)
 rustls = { version = "0.23", default-features = false, features = ["ring", "logging", "std", "tls12"] }
