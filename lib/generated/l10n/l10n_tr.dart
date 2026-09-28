@@ -4281,6 +4281,11 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String virtSnapshotCount(int count) {
+    return '$count anlık görüntü';
+  }
+
+  @override
   String get virtBackupNoStorage => 'Bu düğümde yedekleri tutan depolama yok.';
 
   @override
@@ -4406,6 +4411,12 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu, kümede bu depolamaya sahip her düğüm için geçerlidir.';
 
   @override
+  String get virtStorageDisable => 'Devre dışı bırak';
+
+  @override
+  String get virtStorageEnable => 'Etkinleştir';
+
+  @override
   String virtStorageDisableAsk(String name) {
     return '$name depolaması devre dışı bırakılsın mı? Diskleri üzerinde olan VM\'ler yeniden etkinleşene kadar başlamaz.';
   }
@@ -4495,6 +4506,15 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtVolInUse => 'Bu birimi bir VM kullanıyor';
+
+  @override
+  String virtVolBackingOf(String names) {
+    return '$names için temel dosya';
+  }
+
+  @override
+  String get virtVolIsBase =>
+      'Başka birimler bunun üzerine kurulu; silmek onları bozar';
 
   @override
   String get virtVolAttach => 'VM\'e tak';

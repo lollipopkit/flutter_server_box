@@ -4296,6 +4296,11 @@ class AppLocalizationsAz extends AppLocalizations {
   }
 
   @override
+  String virtSnapshotCount(int count) {
+    return '$count snapshot';
+  }
+
+  @override
   String get virtBackupNoStorage =>
       'Bu qovşaqda ehtiyat nüsxələri saxlayan anbar yoxdur.';
 
@@ -4421,6 +4426,12 @@ class AppLocalizationsAz extends AppLocalizations {
       'Bu, klasterdə bu yaddaşa malik hər bir node-a aiddir.';
 
   @override
+  String get virtStorageDisable => 'Deaktiv et';
+
+  @override
+  String get virtStorageEnable => 'Aktiv et';
+
+  @override
   String virtStorageDisableAsk(String name) {
     return '$name yaddaşı söndürülsün? Diskləri orada olan VM-lər yenidən aktivləşənə qədər başlamaz.';
   }
@@ -4510,6 +4521,15 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get virtVolInUse => 'Bu həcmdən VM istifadə edir';
+
+  @override
+  String virtVolBackingOf(String names) {
+    return '$names üçün əsas fayl';
+  }
+
+  @override
+  String get virtVolIsBase =>
+      'Digər həcmlər bunun üzərində qurulub; silmək onları korlayar';
 
   @override
   String get virtVolAttach => 'VM-ə qoş';

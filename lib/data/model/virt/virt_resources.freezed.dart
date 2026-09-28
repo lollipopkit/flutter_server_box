@@ -1201,7 +1201,10 @@ mixin _$VirtVolume {
  String? get content;/// Bytes the guest sees.
  int? get capacity;/// Bytes it takes on the host, where the host says.
  int? get allocation;/// A qcow2 overlay's backing file (libvirt).
- String? get backing; DateTime? get createdAt; List<VirtGuestRef> get users;
+ String? get backing; DateTime? get createdAt; List<VirtGuestRef> get users;/// The volumes made on this one — whose [backing] it is — in any active
+/// pool, by path (libvirt). A base image a guest's disk is a thin clone
+/// of is attached to nothing, and deleting it breaks every one of them.
+ List<String> get backs;
 /// Create a copy of VirtVolume
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1212,16 +1215,16 @@ $VirtVolumeCopyWith<VirtVolume> get copyWith => _$VirtVolumeCopyWithImpl<VirtVol
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtVolume&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.path, path) || other.path == path)&&(identical(other.format, format) || other.format == format)&&(identical(other.content, content) || other.content == content)&&(identical(other.capacity, capacity) || other.capacity == capacity)&&(identical(other.allocation, allocation) || other.allocation == allocation)&&(identical(other.backing, backing) || other.backing == backing)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&const DeepCollectionEquality().equals(other.users, users));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtVolume&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.path, path) || other.path == path)&&(identical(other.format, format) || other.format == format)&&(identical(other.content, content) || other.content == content)&&(identical(other.capacity, capacity) || other.capacity == capacity)&&(identical(other.allocation, allocation) || other.allocation == allocation)&&(identical(other.backing, backing) || other.backing == backing)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&const DeepCollectionEquality().equals(other.users, users)&&const DeepCollectionEquality().equals(other.backs, backs));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,path,format,content,capacity,allocation,backing,createdAt,const DeepCollectionEquality().hash(users));
+int get hashCode => Object.hash(runtimeType,id,name,path,format,content,capacity,allocation,backing,createdAt,const DeepCollectionEquality().hash(users),const DeepCollectionEquality().hash(backs));
 
 @override
 String toString() {
-  return 'VirtVolume(id: $id, name: $name, path: $path, format: $format, content: $content, capacity: $capacity, allocation: $allocation, backing: $backing, createdAt: $createdAt, users: $users)';
+  return 'VirtVolume(id: $id, name: $name, path: $path, format: $format, content: $content, capacity: $capacity, allocation: $allocation, backing: $backing, createdAt: $createdAt, users: $users, backs: $backs)';
 }
 
 
@@ -1232,7 +1235,7 @@ abstract mixin class $VirtVolumeCopyWith<$Res>  {
   factory $VirtVolumeCopyWith(VirtVolume value, $Res Function(VirtVolume) _then) = _$VirtVolumeCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String? path, String? format, String? content, int? capacity, int? allocation, String? backing, DateTime? createdAt, List<VirtGuestRef> users
+ String id, String name, String? path, String? format, String? content, int? capacity, int? allocation, String? backing, DateTime? createdAt, List<VirtGuestRef> users, List<String> backs
 });
 
 
@@ -1249,7 +1252,7 @@ class _$VirtVolumeCopyWithImpl<$Res>
 
 /// Create a copy of VirtVolume
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? path = freezed,Object? format = freezed,Object? content = freezed,Object? capacity = freezed,Object? allocation = freezed,Object? backing = freezed,Object? createdAt = freezed,Object? users = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? path = freezed,Object? format = freezed,Object? content = freezed,Object? capacity = freezed,Object? allocation = freezed,Object? backing = freezed,Object? createdAt = freezed,Object? users = null,Object? backs = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -1261,7 +1264,8 @@ as int?,allocation: freezed == allocation ? _self.allocation : allocation // ign
 as int?,backing: freezed == backing ? _self.backing : backing // ignore: cast_nullable_to_non_nullable
 as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,users: null == users ? _self.users : users // ignore: cast_nullable_to_non_nullable
-as List<VirtGuestRef>,
+as List<VirtGuestRef>,backs: null == backs ? _self.backs : backs // ignore: cast_nullable_to_non_nullable
+as List<String>,
   ));
 }
 
@@ -1346,10 +1350,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String? path,  String? format,  String? content,  int? capacity,  int? allocation,  String? backing,  DateTime? createdAt,  List<VirtGuestRef> users)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String? path,  String? format,  String? content,  int? capacity,  int? allocation,  String? backing,  DateTime? createdAt,  List<VirtGuestRef> users,  List<String> backs)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _VirtVolume() when $default != null:
-return $default(_that.id,_that.name,_that.path,_that.format,_that.content,_that.capacity,_that.allocation,_that.backing,_that.createdAt,_that.users);case _:
+return $default(_that.id,_that.name,_that.path,_that.format,_that.content,_that.capacity,_that.allocation,_that.backing,_that.createdAt,_that.users,_that.backs);case _:
   return orElse();
 
 }
@@ -1367,10 +1371,10 @@ return $default(_that.id,_that.name,_that.path,_that.format,_that.content,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String? path,  String? format,  String? content,  int? capacity,  int? allocation,  String? backing,  DateTime? createdAt,  List<VirtGuestRef> users)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String? path,  String? format,  String? content,  int? capacity,  int? allocation,  String? backing,  DateTime? createdAt,  List<VirtGuestRef> users,  List<String> backs)  $default,) {final _that = this;
 switch (_that) {
 case _VirtVolume():
-return $default(_that.id,_that.name,_that.path,_that.format,_that.content,_that.capacity,_that.allocation,_that.backing,_that.createdAt,_that.users);case _:
+return $default(_that.id,_that.name,_that.path,_that.format,_that.content,_that.capacity,_that.allocation,_that.backing,_that.createdAt,_that.users,_that.backs);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1387,10 +1391,10 @@ return $default(_that.id,_that.name,_that.path,_that.format,_that.content,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String? path,  String? format,  String? content,  int? capacity,  int? allocation,  String? backing,  DateTime? createdAt,  List<VirtGuestRef> users)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String? path,  String? format,  String? content,  int? capacity,  int? allocation,  String? backing,  DateTime? createdAt,  List<VirtGuestRef> users,  List<String> backs)?  $default,) {final _that = this;
 switch (_that) {
 case _VirtVolume() when $default != null:
-return $default(_that.id,_that.name,_that.path,_that.format,_that.content,_that.capacity,_that.allocation,_that.backing,_that.createdAt,_that.users);case _:
+return $default(_that.id,_that.name,_that.path,_that.format,_that.content,_that.capacity,_that.allocation,_that.backing,_that.createdAt,_that.users,_that.backs);case _:
   return null;
 
 }
@@ -1401,8 +1405,8 @@ return $default(_that.id,_that.name,_that.path,_that.format,_that.content,_that.
 /// @nodoc
 
 
-class _VirtVolume implements VirtVolume {
-  const _VirtVolume({required this.id, required this.name, this.path, this.format, this.content, this.capacity, this.allocation, this.backing, this.createdAt, final  List<VirtGuestRef> users = const <VirtGuestRef>[]}): _users = users;
+class _VirtVolume extends VirtVolume {
+  const _VirtVolume({required this.id, required this.name, this.path, this.format, this.content, this.capacity, this.allocation, this.backing, this.createdAt, final  List<VirtGuestRef> users = const <VirtGuestRef>[], final  List<String> backs = const <String>[]}): _users = users,_backs = backs,super._();
   
 
 /// libvirt's volume name; PVE's `volid` (`local-lvm:vm-100-disk-0`).
@@ -1427,6 +1431,19 @@ class _VirtVolume implements VirtVolume {
   return EqualUnmodifiableListView(_users);
 }
 
+/// The volumes made on this one — whose [backing] it is — in any active
+/// pool, by path (libvirt). A base image a guest's disk is a thin clone
+/// of is attached to nothing, and deleting it breaks every one of them.
+ final  List<String> _backs;
+/// The volumes made on this one — whose [backing] it is — in any active
+/// pool, by path (libvirt). A base image a guest's disk is a thin clone
+/// of is attached to nothing, and deleting it breaks every one of them.
+@override@JsonKey() List<String> get backs {
+  if (_backs is EqualUnmodifiableListView) return _backs;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_backs);
+}
+
 
 /// Create a copy of VirtVolume
 /// with the given fields replaced by the non-null parameter values.
@@ -1438,16 +1455,16 @@ _$VirtVolumeCopyWith<_VirtVolume> get copyWith => __$VirtVolumeCopyWithImpl<_Vir
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtVolume&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.path, path) || other.path == path)&&(identical(other.format, format) || other.format == format)&&(identical(other.content, content) || other.content == content)&&(identical(other.capacity, capacity) || other.capacity == capacity)&&(identical(other.allocation, allocation) || other.allocation == allocation)&&(identical(other.backing, backing) || other.backing == backing)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&const DeepCollectionEquality().equals(other._users, _users));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtVolume&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.path, path) || other.path == path)&&(identical(other.format, format) || other.format == format)&&(identical(other.content, content) || other.content == content)&&(identical(other.capacity, capacity) || other.capacity == capacity)&&(identical(other.allocation, allocation) || other.allocation == allocation)&&(identical(other.backing, backing) || other.backing == backing)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&const DeepCollectionEquality().equals(other._users, _users)&&const DeepCollectionEquality().equals(other._backs, _backs));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,path,format,content,capacity,allocation,backing,createdAt,const DeepCollectionEquality().hash(_users));
+int get hashCode => Object.hash(runtimeType,id,name,path,format,content,capacity,allocation,backing,createdAt,const DeepCollectionEquality().hash(_users),const DeepCollectionEquality().hash(_backs));
 
 @override
 String toString() {
-  return 'VirtVolume(id: $id, name: $name, path: $path, format: $format, content: $content, capacity: $capacity, allocation: $allocation, backing: $backing, createdAt: $createdAt, users: $users)';
+  return 'VirtVolume(id: $id, name: $name, path: $path, format: $format, content: $content, capacity: $capacity, allocation: $allocation, backing: $backing, createdAt: $createdAt, users: $users, backs: $backs)';
 }
 
 
@@ -1458,7 +1475,7 @@ abstract mixin class _$VirtVolumeCopyWith<$Res> implements $VirtVolumeCopyWith<$
   factory _$VirtVolumeCopyWith(_VirtVolume value, $Res Function(_VirtVolume) _then) = __$VirtVolumeCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String? path, String? format, String? content, int? capacity, int? allocation, String? backing, DateTime? createdAt, List<VirtGuestRef> users
+ String id, String name, String? path, String? format, String? content, int? capacity, int? allocation, String? backing, DateTime? createdAt, List<VirtGuestRef> users, List<String> backs
 });
 
 
@@ -1475,7 +1492,7 @@ class __$VirtVolumeCopyWithImpl<$Res>
 
 /// Create a copy of VirtVolume
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? path = freezed,Object? format = freezed,Object? content = freezed,Object? capacity = freezed,Object? allocation = freezed,Object? backing = freezed,Object? createdAt = freezed,Object? users = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? path = freezed,Object? format = freezed,Object? content = freezed,Object? capacity = freezed,Object? allocation = freezed,Object? backing = freezed,Object? createdAt = freezed,Object? users = null,Object? backs = null,}) {
   return _then(_VirtVolume(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -1487,7 +1504,8 @@ as int?,allocation: freezed == allocation ? _self.allocation : allocation // ign
 as int?,backing: freezed == backing ? _self.backing : backing // ignore: cast_nullable_to_non_nullable
 as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,users: null == users ? _self._users : users // ignore: cast_nullable_to_non_nullable
-as List<VirtGuestRef>,
+as List<VirtGuestRef>,backs: null == backs ? _self._backs : backs // ignore: cast_nullable_to_non_nullable
+as List<String>,
   ));
 }
 

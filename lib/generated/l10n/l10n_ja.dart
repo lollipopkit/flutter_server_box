@@ -4085,6 +4085,11 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String virtSnapshotCount(int count) {
+    return '$count 件';
+  }
+
+  @override
   String get virtBackupNoStorage => 'このノードにはバックアップを保存できるストレージがありません。';
 
   @override
@@ -4205,6 +4210,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get virtStorageClusterWide => 'この変更は、このストレージを持つクラスタ内のすべてのノードに適用されます。';
 
   @override
+  String get virtStorageDisable => '無効化';
+
+  @override
+  String get virtStorageEnable => '有効化';
+
+  @override
   String virtStorageDisableAsk(String name) {
     return 'ストレージ $name を無効にしますか？再度有効にするまで、ここにディスクがある仮想マシンは起動できません。';
   }
@@ -4288,6 +4299,14 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get virtVolInUse => 'このボリュームは仮想マシンが使用中です';
+
+  @override
+  String virtVolBackingOf(String names) {
+    return '$names のバッキングファイル';
+  }
+
+  @override
+  String get virtVolIsBase => 'このボリュームをベースにした他のボリュームがあり、削除するとそれらが壊れます';
 
   @override
   String get virtVolAttach => '仮想マシンに接続';

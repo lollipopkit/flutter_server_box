@@ -271,7 +271,17 @@ abstract class VirtVolume with _$VirtVolume {
     String? backing,
     DateTime? createdAt,
     @Default(<VirtGuestRef>[]) List<VirtGuestRef> users,
+
+    /// The volumes made on this one — whose [backing] it is — in any active
+    /// pool, by path (libvirt). A base image a guest's disk is a thin clone
+    /// of is attached to nothing, and deleting it breaks every one of them.
+    @Default(<String>[]) List<String> backs,
   }) = _VirtVolume;
+
+  const VirtVolume._();
+
+  /// Something depends on it: a guest has it, or a volume is made on it.
+  bool get inUse => users.isNotEmpty || backs.isNotEmpty;
 }
 
 /// A static DHCP host entry: one address handed to one MAC (libvirt).
@@ -435,7 +445,10 @@ abstract class VirtSnapChainDisk with _$VirtSnapChainDisk {
 
   const VirtSnapChainDisk._();
 
-  /// Whether the disk is on an overlay: an external snapshot put it there.
+  /// Whether the disk is on an overlay: a file with a backing one. An
+  /// external snapshot puts it there, and so does a thin clone of a base
+  /// image, which has no snapshot at all — whether the guest has external
+  /// snapshots is the list's to say (`VirtGuestSnapshot.external`).
   bool get isChain => files.length > 1;
 }
 

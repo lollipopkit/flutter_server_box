@@ -968,7 +968,7 @@ VirtResIssue? virtResourceIssue(
         return VirtResIssue.space;
       }
     case VirtVolumeDelete(:final volume):
-      if (volume.users.isNotEmpty) return VirtResIssue.inUse;
+      if (volume.inUse) return VirtResIssue.inUse;
     case VirtVolumeResize(:final volume, :final bytes):
       if (volume.users.isNotEmpty) return VirtResIssue.inUse;
       if (bytes <= (volume.capacity ?? 0)) return VirtResIssue.shrink;
@@ -978,9 +978,9 @@ VirtResIssue? virtResourceIssue(
       if (!virtLibvirtVolumeName.hasMatch(name)) return VirtResIssue.nameInvalid;
       if (volumes.any((v) => v.name == name)) return VirtResIssue.nameTaken;
     case VirtPoolSetActive(:final active) when !active:
-      if (volumes.any((v) => v.users.isNotEmpty)) return VirtResIssue.inUse;
+      if (volumes.any((v) => v.inUse)) return VirtResIssue.inUse;
     case VirtPoolDelete():
-      if (volumes.any((v) => v.users.isNotEmpty)) return VirtResIssue.inUse;
+      if (volumes.any((v) => v.inUse)) return VirtResIssue.inUse;
     case VirtNetworkCreate(
       :final name,
       :final mode,

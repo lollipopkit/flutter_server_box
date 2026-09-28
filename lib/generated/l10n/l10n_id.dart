@@ -4284,6 +4284,11 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String virtSnapshotCount(int count) {
+    return '$count snapshot';
+  }
+
+  @override
   String get virtBackupNoStorage =>
       'Tidak ada penyimpanan di node ini yang menampung cadangan.';
 
@@ -4410,6 +4415,12 @@ class AppLocalizationsId extends AppLocalizations {
       'Ini berlaku untuk setiap node di klaster yang memiliki penyimpanan ini.';
 
   @override
+  String get virtStorageDisable => 'Nonaktifkan';
+
+  @override
+  String get virtStorageEnable => 'Aktifkan';
+
+  @override
   String virtStorageDisableAsk(String name) {
     return 'Nonaktifkan penyimpanan $name? VM dengan disk di sana tidak dapat dijalankan sampai diaktifkan lagi.';
   }
@@ -4500,6 +4511,15 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get virtVolInUse => 'Sebuah VM memakai volume ini';
+
+  @override
+  String virtVolBackingOf(String names) {
+    return 'Berkas dasar untuk $names';
+  }
+
+  @override
+  String get virtVolIsBase =>
+      'Volume lain dibuat di atas volume ini; menghapusnya akan merusaknya';
 
   @override
   String get virtVolAttach => 'Pasang ke VM';

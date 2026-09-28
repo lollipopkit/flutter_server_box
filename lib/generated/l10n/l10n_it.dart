@@ -4341,6 +4341,17 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String virtSnapshotCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count snapshot',
+      one: '1 snapshot',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get virtBackupNoStorage =>
       'Nessuno storage di questo nodo contiene backup.';
 
@@ -4469,6 +4480,12 @@ class AppLocalizationsIt extends AppLocalizations {
       'Si applica a ogni nodo del cluster che ha questo storage.';
 
   @override
+  String get virtStorageDisable => 'Disattiva';
+
+  @override
+  String get virtStorageEnable => 'Attiva';
+
+  @override
   String virtStorageDisableAsk(String name) {
     return 'Disattivare l\'archiviazione $name? Le VM con dischi su di essa non partiranno finché non verrà riattivata.';
   }
@@ -4559,6 +4576,15 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get virtVolInUse => 'Una VM usa questo volume';
+
+  @override
+  String virtVolBackingOf(String names) {
+    return 'File di base di $names';
+  }
+
+  @override
+  String get virtVolIsBase =>
+      'Altri volumi si basano su questo; eliminarlo li danneggerebbe';
 
   @override
   String get virtVolAttach => 'Collega alla VM';

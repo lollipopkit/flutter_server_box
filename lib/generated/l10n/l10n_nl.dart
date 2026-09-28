@@ -4335,6 +4335,17 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String virtSnapshotCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count snapshots',
+      one: '1 snapshot',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get virtBackupNoStorage =>
       'Geen opslag op deze node bewaart back-ups.';
 
@@ -4462,6 +4473,12 @@ class AppLocalizationsNl extends AppLocalizations {
       'Dit geldt voor elke node van het cluster die deze opslag heeft.';
 
   @override
+  String get virtStorageDisable => 'Uitschakelen';
+
+  @override
+  String get virtStorageEnable => 'Inschakelen';
+
+  @override
   String virtStorageDisableAsk(String name) {
     return 'Opslag $name uitschakelen? VM\'s met schijven erop starten pas weer als die is ingeschakeld.';
   }
@@ -4551,6 +4568,15 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get virtVolInUse => 'Een VM gebruikt dit volume';
+
+  @override
+  String virtVolBackingOf(String names) {
+    return 'Basisbestand van $names';
+  }
+
+  @override
+  String get virtVolIsBase =>
+      'Andere volumes zijn hierop gebaseerd; verwijderen zou ze beschadigen';
 
   @override
   String get virtVolAttach => 'Aan VM koppelen';

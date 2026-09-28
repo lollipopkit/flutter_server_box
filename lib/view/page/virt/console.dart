@@ -337,7 +337,8 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
   void Function(TerminalSession) _leaveText() {
     final consoles = ref.read(virtTextConsolesProvider.notifier);
     final id = _textId;
-    final name = widget.guest.name;
+    // Which of the guest's consoles, in the notice that says it is idle.
+    final name = '${widget.guest.name} · ${VirtConsoleKind.text.label}';
     final host =
         ref.read(serversProvider).servers[widget.serverId]?.name ??
         widget.serverId;
@@ -416,9 +417,14 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
   List<Widget> _buildWake() {
     final wake = _wake;
     final left = wake?.remaining;
+    // Bounded, not flexible: a flexible one shared the row with the label on
+    // the left, and what it left over sat after the buttons, which then
+    // stood in the middle of the bar instead of at its end.
+    const hint = BoxConstraints(maxWidth: 260);
     if (wake == null || left == null) {
       return [
-        Flexible(
+        ConstrainedBox(
+          constraints: hint,
           child: Text(
             l10n.virtConsoleEnterTip,
             maxLines: 1,
@@ -430,7 +436,8 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
       ];
     }
     return [
-      Flexible(
+      ConstrainedBox(
+        constraints: hint,
         child: Text(
           l10n.virtConsoleAutoEnter(left),
           maxLines: 1,
@@ -588,6 +595,7 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
         guestId: widget.guest.id,
         password: password,
       ),
+      keepAliveName: '${widget.guest.name} · ${VirtConsoleKind.vnc.label}',
     );
   }
 }

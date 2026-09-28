@@ -5620,6 +5620,16 @@
       }
     }
   },
+  "virtSnapshotCount": "{count, plural, =1{1 snapshot} other{{count} snapshots}}",
+  "@virtSnapshotCount": {
+    "description": "Number of snapshots of a guest.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
   "virtBackupNoStorage": "No storage on this node holds backups.",
   "@virtBackupNoStorage": {
     "description": "Backup view: no storage on the node accepts backups."
@@ -5812,6 +5822,14 @@
   "@virtStorageClusterWide": {
     "description": "PVE storage disable/remove confirmation: the change is cluster-wide, not per node."
   },
+  "virtStorageDisable": "Disable",
+  "@virtStorageDisable": {
+    "description": "PVE storage action: turn the storage off in the configuration (a verb, not the state)."
+  },
+  "virtStorageEnable": "Enable",
+  "@virtStorageEnable": {
+    "description": "PVE storage action: turn the storage back on (a verb, not the state)."
+  },
   "virtStorageDisableAsk": "Disable the storage {name}? Guests with disks on it cannot start until it is enabled again.",
   "@virtStorageDisableAsk": {
     "description": "Confirm disabling a PVE storage.",
@@ -5929,6 +5947,15 @@
     "description": "Why a used volume is not grown here."
   },
   "virtVolInUse": "A guest uses this volume",
+  "virtVolBackingOf": "Backing file of {names}",
+  "@virtVolBackingOf": {
+    "description": "Storage view: the volumes a base image is the backing file of.",
+    "placeholders": {"names": {"type": "String", "example": "run1.qcow2, data1.qcow2"}}
+  },
+  "virtVolIsBase": "Other volumes are made on this one; deleting it would break them",
+  "@virtVolIsBase": {
+    "description": "Storage view: why a base image cannot be deleted."
+  },
   "@virtVolInUse": {
     "description": "A guest uses this volume: not deleted, not attached again."
   },

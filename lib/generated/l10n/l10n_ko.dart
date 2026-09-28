@@ -4094,6 +4094,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String virtSnapshotCount(int count) {
+    return '$count개';
+  }
+
+  @override
   String get virtBackupNoStorage => '이 노드에는 백업을 저장할 스토리지가 없습니다.';
 
   @override
@@ -4214,6 +4219,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get virtStorageClusterWide => '이 저장소가 있는 클러스터의 모든 노드에 적용됩니다.';
 
   @override
+  String get virtStorageDisable => '비활성화';
+
+  @override
+  String get virtStorageEnable => '활성화';
+
+  @override
   String virtStorageDisableAsk(String name) {
     return '스토리지 $name을(를) 비활성화할까요? 다시 활성화할 때까지 여기에 디스크가 있는 가상 머신은 시작할 수 없습니다.';
   }
@@ -4298,6 +4309,14 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get virtVolInUse => '가상 머신이 이 볼륨을 사용 중입니다';
+
+  @override
+  String virtVolBackingOf(String names) {
+    return '$names의 백킹 파일';
+  }
+
+  @override
+  String get virtVolIsBase => '이 볼륨을 기반으로 하는 다른 볼륨이 있어 삭제하면 손상됩니다';
 
   @override
   String get virtVolAttach => '가상 머신에 연결';

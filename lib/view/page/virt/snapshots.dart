@@ -1,33 +1,23 @@
-import 'dart:async';
-
-import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/model/app/error.dart';
-import 'package:server_box/data/model/virt/virt.dart';
-import 'package:server_box/data/model/virt/virt_resources.dart';
-import 'package:server_box/data/provider/virt/virt.dart';
-import 'package:server_box/data/res/chart_palette.dart';
-import 'package:server_box/view/page/virt/common.dart';
+part of 'hardware.dart';
 
 /// A guest's snapshots: the tree, a new one, and reverting to or deleting
 /// one — each asked first — with the disk chain the guest is on and what a
 /// revert would change.
 ///
-/// **The design's group** is what this draws: a group under a rule, its
-/// count and where the snapshots live on the right, each snapshot a row that
-/// opens to its own facts and its actions. Two things the design has no
-/// place for are added, because the app writes forms the design does not
-/// know about:
+/// **The design's group** is what this draws, with the rows the Hardware,
+/// Settings and Backup views draw theirs with: a group under a rule, its
+/// count on the right and what reverting costs under it, the form a row
+/// that opens in the group, each snapshot a row that opens to its own facts
+/// and its actions. Two things the design has no place for are added,
+/// because the app writes forms the design does not know about:
 ///
-/// - the **disk chain** (libvirt external snapshots): which file the guest
-///   writes to now, what backs it, and how deep the chain is. A guest on a
-///   chain is one the app must be able to read back, which is what the rest
-///   of this view is built around.
+/// - the **disk chain** (libvirt), a group of its own: which file each disk
+///   is on now, what backs it, and how deep the chain is. A guest on a chain
+///   is one the app must be able to read back, which is what the rest of
+///   this view is built around.
 /// - the **configuration diff**, read from the snapshot and shown for a
 ///   revert (where the design shows the revert's own warning) and from the
-///   list.
+///   row.
 ///
 /// Reverting is asked in red when it loses more than changes: a snapshot
 /// without memory stops a guest that is running, the dialog offers to start
@@ -53,22 +43,18 @@ class VirtSnapshotsView extends ConsumerStatefulWidget {
   ConsumerState<VirtSnapshotsView> createState() => _VirtSnapshotsViewState();
 }
 
-class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView> {
+class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView>
+    with _PaneRows<VirtSnapshotsView> {
   /// The new-snapshot form is open.
   bool _creating = false;
   final _name = TextEditingController();
   final _desc = TextEditingController();
   bool _memory = true;
 
-  /// The design's "新快照" row: the form is a row of the group, opened by the
-  /// empty row or the bar's button.
   VirtSnapshotForm _form = VirtSnapshotForm.internal;
 
   /// The pool an external snapshot's overlays go in; null: beside each disk.
   String? _pool;
-
-  /// Open rows, by snapshot name.
-  final _open = <String>{};
 
   /// The diff read per snapshot, and which row asked for it.
   final _diffs = <String, AsyncValue<List<VirtSnapDiff>>>{};
@@ -82,6 +68,9 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView> {
   VirtSnapChainProvider get _chainProvider =>
       virtSnapChainProvider(widget.serverId, widget.guest.id);
 
+  VirtSnapshotRefusalProvider get _refusalProvider =>
+      virtSnapshotRefusalProvider(widget.serverId, widget.guest.id);
+
   @override
   void dispose() {
     _name.dispose();
@@ -92,6 +81,9 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView> {
   @override
   Widget build(BuildContext context) {
     final snaps = ref.watch(_provider);
+    if (snaps.error case final e?) {
+      return _buildError(e, onRetry: () => ref.invalidate(_provider));
+    }
     final busy = ref.watch(
       virtHostProvider(
         widget.serverId,
@@ -104,357 +96,484 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView> {
     final chain = widget.caps.snapshotExternal
         ? ref.watch(_chainProvider)
         : null;
-    return RefreshIndicator(
+    return _buildGroups(
+      [
+        _snapshotGroup(list, chain?.value, busy),
+        if (chain != null && list != null) _chainGroup(chain, list),
+      ],
       // What the view shows besides the list is read on its own: the chain
       // and whether a snapshot can be taken, both of which the host can
       // change as much as the list.
       onRefresh: () {
         ref.invalidate(_chainProvider);
-        ref.invalidate(
-          virtSnapshotRefusalProvider(widget.serverId, widget.guest.id),
-        );
+        ref.invalidate(_refusalProvider);
         return ref.refresh(_provider.future);
       },
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(13, 0, 13, 17),
-        children: [
-          _buildHead(list, busy),
-          if (snaps.error case final e?)
-            _buildError(e, () => ref.invalidate(_provider))
-          else if (list == null)
-            const Padding(
-              padding: EdgeInsets.all(27),
-              child: Center(child: SizedLoading.medium),
-            )
-          else ...[
-            if (chain != null) _buildChain(chain),
-            if (list.isEmpty)
-              CenterGreyTitle(l10n.virtSnapshotNone)
-            else
-              CardX(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 5),
-                  child: Column(
-                    children: [
-                      for (final (snap, depth) in virtSnapshotTree(list))
-                        _buildRow(snap, depth, list, busy),
-                    ],
-                  ),
-                ),
-              ),
-          ],
-        ],
-      ),
     );
   }
 
-  /// The count, what reverting costs, and the way to a new one.
-  Widget _buildHead(List<VirtGuestSnapshot>? list, bool busy) {
+  // --- Snapshots ---
+
+  /// The count, what reverting costs, the form or the way to it, and the
+  /// tree.
+  _Group _snapshotGroup(
+    List<VirtGuestSnapshot>? list,
+    VirtSnapChain? chain,
+    bool busy,
+  ) {
     // Where the host says the guest cannot be snapshotted at all, the form is
     // not offered: the reason is said instead. libvirt's answer is the chain
     // this view already reads; PVE asks its own storage.
     final unsupported = widget.caps.snapshotExternal
-        ? ref.watch(_chainProvider).value?.refusal
-        : ref
-              .watch(
-                virtSnapshotRefusalProvider(widget.serverId, widget.guest.id),
-              )
-              .value;
-    return VirtCard(
-      icon: Icons.history,
-      title: list == null
-          ? l10n.virtSnapshots
-          : '${l10n.virtSnapshots} · ${list.length}',
-      trailing: _creating || unsupported != null
-          ? null
-          : Btn.icon(
-              key: const ValueKey('snapshot:new'),
-              text: l10n.virtSnapshotCreate,
-              icon: const Icon(Icons.add, size: 18),
-              onTap: busy || list == null ? null : () => _openForm(list),
-            ),
-      children: [
-        if (unsupported != null)
-          Text(
-            '${l10n.virtSnapshotNoSupport}\n$unsupported',
-            style: UIs.text12Grey,
+        ? chain?.refusal
+        : ref.watch(_refusalProvider).value;
+    final current = list?.firstWhereOrNull((s) => s.current);
+    return _Group(
+      key: 'snapshots',
+      title: l10n.virtSnapshots,
+      right: list == null ? '' : l10n.virtSnapshotCount(list.length),
+      warn: false,
+      indexNote: current?.name ?? l10n.virtSnapshotNone,
+      note: unsupported == null ? l10n.virtSnapshotRevertTip : null,
+      rows: [
+        if (list == null)
+          const Padding(
+            padding: EdgeInsets.all(27),
+            child: Center(child: SizedLoading.medium),
           )
-        else
-          Text(l10n.virtSnapshotRevertTip, style: UIs.text12Grey),
-        if (_creating && list != null && unsupported == null)
-          ..._buildForm(list, busy),
+        else ...[
+          if (unsupported != null)
+            _callout(l10n.virtSnapshotNoSupport, unsupported)
+          else if (_creating)
+            ..._formRows(list, chain, busy)
+          else
+            _empty(
+              // What a snapshot taken now keeps, as the design's empty row
+              // says it, for the kind the form will open on.
+              _defaultForm(list, chain) == VirtSnapshotForm.external
+                  ? l10n.virtSnapshotExternalNoMemory
+                  : switch (_memoryOf(VirtSnapshotForm.internal)) {
+                      VirtSnapshotMemory.optional => l10n.virtSnapshotMemoryTip,
+                      VirtSnapshotMemory.always => l10n.virtSnapshotMemoryAlways,
+                      VirtSnapshotMemory.none =>
+                        widget.guest.kind == VirtGuestKind.lxc
+                            ? l10n.virtSnapshotDiskOnly
+                            : l10n.virtSnapshotMemoryOff,
+                    },
+              l10n.virtSnapshotCreate,
+              key: 'snapshot:new',
+              onTap: busy ? null : () => _openForm(list),
+            ),
+          if (list.isEmpty)
+            _text(l10n.virtSnapshotNone)
+          else
+            for (final (snap, depth) in virtSnapshotTree(list))
+              ..._snapshotRows(snap, depth, list, busy),
+        ],
       ],
     );
   }
 
-  List<Widget> _buildForm(List<VirtGuestSnapshot> list, bool busy) {
+  /// The kind the form opens on.
+  ///
+  /// A guest that already has an external snapshot keeps to that kind: an
+  /// internal one on top of an overlay is a different kind of thing, and the
+  /// chain it is on is one the next external snapshot deepens. A disk with a
+  /// backing file and no snapshot (a thin clone of a base image) is not that:
+  /// its first snapshot is internal, as on any other guest.
+  VirtSnapshotForm _defaultForm(
+    List<VirtGuestSnapshot> list,
+    VirtSnapChain? chain,
+  ) =>
+      widget.caps.snapshotExternal &&
+          chain != null &&
+          chain.externalRefusal == null &&
+          list.any((s) => s.external)
+      ? VirtSnapshotForm.external
+      : VirtSnapshotForm.internal;
+
+  /// What the host keeps of the guest's memory for a snapshot of [form].
+  ///
+  /// An external snapshot is disk-only by definition (that is what keeps the
+  /// guest running); an internal one is the user's where the host allows it.
+  VirtSnapshotMemory _memoryOf(VirtSnapshotForm form) =>
+      form == VirtSnapshotForm.external
+      ? VirtSnapshotMemory.none
+      : virtSnapshotMemory(widget.caps, widget.guest, widget.state);
+
+  /// The design's "new snapshot" rows: the row that closes them, the name
+  /// and description, the kind where the host has two, what the picked kind
+  /// keeps, and the actions.
+  List<Widget> _formRows(
+    List<VirtGuestSnapshot> list,
+    VirtSnapChain? chain,
+    bool busy,
+  ) {
     final external = _form == VirtSnapshotForm.external;
-    // Memory is the user's where the host allows it; an external snapshot is
-    // disk-only by definition (that is what keeps the guest running).
-    final memory = external
-        ? VirtSnapshotMemory.none
-        : virtSnapshotMemory(widget.caps, widget.guest, widget.state);
+    final memory = _memoryOf(_form);
     final issue = virtSnapshotNameIssue(_name.text.trim(), list);
     final nameError = switch (issue) {
       VirtSnapshotNameIssue.invalid => l10n.virtSnapshotNameInvalid,
       VirtSnapshotNameIssue.taken => l10n.virtSnapshotNameTaken,
       VirtSnapshotNameIssue.empty || null => null,
     };
-    final memoryNote = switch (memory) {
-      VirtSnapshotMemory.optional => l10n.virtSnapshotMemoryTip,
-      VirtSnapshotMemory.always => l10n.virtSnapshotMemoryAlways,
-      VirtSnapshotMemory.none => widget.guest.kind == VirtGuestKind.lxc
-          ? null
-          : l10n.virtSnapshotMemoryOff,
-    };
-    final chain = ref.watch(_chainProvider).value;
+    // Said only of the internal kind: the external one's own line already
+    // says it keeps no memory, and "the guest is not running" would be wrong
+    // for a guest that is.
+    final memoryNote = external
+        ? null
+        : switch (memory) {
+            VirtSnapshotMemory.optional => l10n.virtSnapshotMemoryTip,
+            VirtSnapshotMemory.always => l10n.virtSnapshotMemoryAlways,
+            VirtSnapshotMemory.none =>
+              widget.guest.kind == VirtGuestKind.lxc
+                  ? null
+                  : l10n.virtSnapshotMemoryOff,
+          };
     final pools = chain?.pools ?? const <String>[];
     final externalRefusal = chain?.externalRefusal;
+    void close() => setState(() => _creating = false);
     return [
-      UIs.height13,
-      Input(
-        key: const ValueKey('snapshot:name'),
-        controller: _name,
-        label: libL10n.name,
-        icon: Icons.label_outline,
-        noWrap: true,
-        errorText: nameError,
-        onChanged: (_) => setState(() {}),
+      _disc(
+        'snapshot:form',
+        Icons.add_circle_outline,
+        l10n.virtSnapshotCreate,
+        libL10n.cancel,
+        onTap: close,
       ),
-      UIs.height7,
-      Input(
-        key: const ValueKey('snapshot:desc'),
-        controller: _desc,
-        label: libL10n.description,
-        icon: Icons.notes,
-        noWrap: true,
-        minLines: 1,
-        maxLines: 3,
+      Padding(
+        padding: const EdgeInsets.only(left: _indent),
+        child: Input(
+          key: const ValueKey('snapshot:name'),
+          controller: _name,
+          label: libL10n.name,
+          icon: Icons.label_outline,
+          noWrap: true,
+          suggestion: false,
+          errorText: nameError,
+          onChanged: (_) => setState(() {}),
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.only(left: _indent),
+        child: Input(
+          key: const ValueKey('snapshot:desc'),
+          controller: _desc,
+          label: libL10n.description,
+          icon: Icons.notes,
+          noWrap: true,
+          minLines: 1,
+          maxLines: 3,
+        ),
       ),
       if (widget.caps.snapshotExternal) ...[
-        UIs.height13,
-        _segmented(
-          l10n.virtSnapshotForm,
-          {
-            VirtSnapshotForm.internal: l10n.virtSnapshotFormInternal,
-            VirtSnapshotForm.external: l10n.virtSnapshotExternal,
-          },
-          _form,
-          (v) => setState(() => _form = v),
-          disabled: {
-            if (externalRefusal != null) VirtSnapshotForm.external,
-          },
-        ),
-        if (externalRefusal != null) ...[
-          UIs.height7,
-          Text(
-            externalRefusal,
-            style: const TextStyle(fontSize: 12, color: StatePalette.warn),
+        // Each kind says what it is; the one refused says why instead.
+        _choice([
+          _Choice(
+            key: 'snapshot:form:${VirtSnapshotForm.internal}',
+            icon: Icons.save_outlined,
+            label: l10n.virtSnapshotFormInternal,
+            selected: !external,
+            onTap: () => setState(() => _form = VirtSnapshotForm.internal),
           ),
-        ],
-        UIs.height7,
-        Text(
-          external
-              ? l10n.virtSnapshotExternalTip
-              : l10n.virtSnapshotExternalNoMemory,
-          style: UIs.text12Grey,
-        ),
-        // Which file the guest ends up on, and where the new layer goes.
-        if (external && chain != null && chain.hasOverlays) ...[
-          UIs.height7,
-          Text(
-            l10n.virtSnapshotExternalExists('${chain.depth}'),
-            style: UIs.text12Grey,
+          _Choice(
+            key: 'snapshot:form:${VirtSnapshotForm.external}',
+            icon: Icons.layers_outlined,
+            label: l10n.virtSnapshotExternal,
+            sub: externalRefusal ?? l10n.virtSnapshotExternalNoMemory,
+            selected: external,
+            onTap: externalRefusal != null
+                ? null
+                : () => setState(() => _form = VirtSnapshotForm.external),
           ),
-        ],
-        if (external && pools.isNotEmpty) ...[
-          UIs.height7,
-          _poolPicker(pools),
+        ], indent: true),
+        if (external) ...[
+          _text(l10n.virtSnapshotExternalTip, indent: true),
+          // How deep the chain gets. The layers are counted as the files
+          // under each disk, whatever put them there (a snapshot or a thin
+          // clone of a base image): the new one goes on top either way.
+          if (chain != null && chain.hasOverlays)
+            _text(
+              l10n.virtSnapshotExternalExists('${chain.depth}'),
+              indent: true,
+            ),
+          if (pools.isNotEmpty) ...[
+            _text(l10n.virtSnapshotOverlayPool, indent: true),
+            _poolChoice(pools),
+          ],
         ],
       ],
       if (memory != VirtSnapshotMemory.none)
-        SwitchListTile(
+        KeyedSubtree(
           key: const ValueKey('snapshot:memory'),
-          contentPadding: EdgeInsets.zero,
-          title: Text(l10n.virtSnapshotMemory, style: UIs.text13),
-          subtitle: memoryNote == null
-              ? null
-              : Text(memoryNote, style: UIs.text12Grey),
-          value: memory == VirtSnapshotMemory.always || _memory,
-          onChanged: memory == VirtSnapshotMemory.optional
-              ? (v) => setState(() => _memory = v)
-              : null,
+          child: _toggle(
+            Icons.memory,
+            l10n.virtSnapshotMemory,
+            memory == VirtSnapshotMemory.always || _memory,
+            key: 'snapshot:memory',
+            note: memoryNote,
+            indent: true,
+            onChanged: memory == VirtSnapshotMemory.optional
+                ? (v) => setState(() => _memory = v)
+                : null,
+          ),
         )
-      else if (memoryNote != null) ...[
-        UIs.height7,
-        Text(memoryNote, style: UIs.text12Grey),
-      ],
-      UIs.height7,
-      Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Btn.text(
-            text: libL10n.cancel,
-            onTap: () => setState(() => _creating = false),
-          ),
-          UIs.width7,
-          FilledButton(
-            key: const ValueKey('snapshot:create'),
-            onPressed: issue != null || busy
-                ? null
-                : () => unawaited(_create(memory)),
-            child: Text(l10n.virtSnapshotCreate),
-          ),
-        ],
-      ),
-    ];
-  }
-
-  /// The design's segmented choice, as the rest of the tab draws one.
-  Widget _segmented<T>(
-    String label,
-    Map<T, String> options,
-    T current,
-    ValueChanged<T> onPick, {
-    Set<T> disabled = const {},
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: UIs.text12Grey),
-        UIs.height7,
-        Wrap(
-          spacing: 7,
-          runSpacing: 7,
-          children: [
-            for (final e in options.entries)
-              ChoiceChip(
-                key: ValueKey('snapshot:form:${e.key}'),
-                label: Text(e.value, style: UIs.text12),
-                selected: e.key == current,
-                onSelected: disabled.contains(e.key)
-                    ? null
-                    : (_) => onPick(e.key),
-              ),
-          ],
+      else if (memoryNote != null)
+        _text(memoryNote, indent: true),
+      _actions([
+        _Action(libL10n.cancel, icon: Icons.close, onTap: close),
+        _Action(
+          l10n.virtSnapshotCreate,
+          key: 'snapshot:create',
+          primary: true,
+          onTap: issue != null || busy ? null : () => unawaited(_create(memory)),
         ),
-      ],
-    );
+      ], indent: true),
+    ];
   }
 
   /// Where an external snapshot's overlays go: beside each disk (no
   /// `--diskspec`, libvirt's own placement), or a pool that holds files.
-  Widget _poolPicker(List<String> pools) {
-    return Row(
-      children: [
-        Text(l10n.virtSnapshotOverlayPool, style: UIs.text12Grey),
-        UIs.width7,
-        Expanded(
-          child: DropdownButton<String?>(
-            key: const ValueKey('snapshot:pool'),
-            value: pools.contains(_pool) ? _pool : null,
-            isExpanded: true,
-            style: UIs.text13,
-            items: [
-              DropdownMenuItem(
-                child: Text(l10n.virtSnapshotOverlayBeside, style: UIs.text13),
-              ),
-              for (final p in pools)
-                DropdownMenuItem(value: p, child: Text(p, style: UIs.text13)),
-            ],
-            onChanged: (v) => setState(() => _pool = v),
-          ),
+  Widget _poolChoice(List<String> pools) {
+    final picked = pools.contains(_pool) ? _pool : null;
+    return KeyedSubtree(
+      key: const ValueKey('snapshot:pool'),
+      child: _choice([
+        _Choice(
+          // A pool's name is never empty, so this key is no pool's.
+          key: 'snapshot:pool:',
+          icon: Icons.folder_copy_outlined,
+          label: l10n.virtSnapshotOverlayBeside,
+          selected: picked == null,
+          onTap: () => setState(() => _pool = null),
         ),
+        for (final p in pools)
+          _Choice(
+            key: 'snapshot:pool:$p',
+            icon: Icons.storage_outlined,
+            label: p,
+            selected: p == picked,
+            onTap: () => setState(() => _pool = p),
+          ),
+      ], indent: true),
+    );
+  }
+
+  /// One snapshot: what it holds and when; open, where it came from, what a
+  /// revert would change, and what can be done with it.
+  List<Widget> _snapshotRows(
+    VirtGuestSnapshot snap,
+    int depth,
+    List<VirtGuestSnapshot> all,
+    bool busy,
+  ) {
+    final key = 'snapshot:${snap.name}';
+    final when = snap.createdAt;
+    final summary = [
+      if (when != null) when.simple(),
+      snap.withMemory ? l10n.virtSnapshotWithMemory : l10n.virtSnapshotDiskOnly,
+      if (snap.external) l10n.virtSnapshotExternal,
+    ].join(' · ');
+    // Without memory, a revert leaves the guest stopped: worth saying before
+    // the button, not only in the dialog.
+    final stops = !snap.withMemory && widget.state.isActive;
+    // On a chain, only a leaf can be reverted to: libvirt's revert flattens
+    // the chain and leaves every later snapshot pointing at a file that is
+    // gone (see `sbm_parser::virt_snapshot`).
+    final revertRefused = snap.external && snap.hasChildren(all);
+    // Depth by indent, capped so a long chain still has room for its name;
+    // the rows it opens sit under it at the same depth.
+    final inset = EdgeInsets.only(left: 13.0 * depth.clamp(0, 4));
+    return [
+      Padding(
+        key: ValueKey(key),
+        padding: inset,
+        child: _disc(
+          key,
+          snap.withMemory ? Icons.memory : Icons.save_outlined,
+          snap.name,
+          summary,
+          marked: snap.current,
+          badge: snap.current ? VirtChip(libL10n.current) : null,
+        ),
+      ),
+      Padding(
+        padding: inset,
+        child: _reveal(key, [
+        if (when != null)
+          _field(Icons.schedule, libL10n.time, when.simple(), indent: true),
+        _field(
+          Icons.account_tree_outlined,
+          l10n.virtSnapshotParent,
+          snap.parent ?? '--',
+          indent: true,
+        ),
+        if (snap.description case final d?)
+          _field(Icons.notes, libL10n.description, d, indent: true),
+        for (final layer in snap.layers)
+          if (layer.file case final file?)
+            _field(
+              Icons.layers_outlined,
+              '${l10n.virtSnapshotChain} · ${layer.target}',
+              file,
+              mono: true,
+              indent: true,
+            ),
+        if (stops)
+          _text(l10n.virtSnapshotRevertStops(widget.guest.name), indent: true),
+        if (revertRefused)
+          _text(l10n.virtSnapshotRevertHasChildren, indent: true, error: true)
+        else if (snap.external)
+          _text(l10n.virtSnapshotRevertChain, indent: true),
+        if (_diffs[snap.name] case final diff?)
+          _box(indent: true, child: _buildDiff(diff)),
+        _actions([
+          _Action(
+            l10n.virtSnapshotDiffShow,
+            key: 'snapshot:diff:${snap.name}',
+            icon: Icons.difference_outlined,
+            onTap: () => unawaited(_readDiff(snap)),
+          ),
+          _Action(
+            libL10n.delete,
+            key: 'snapshot:delete:${snap.name}',
+            icon: Icons.delete_outline,
+            danger: true,
+            onTap: busy ? null : () => unawaited(_delete(snap)),
+          ),
+          _Action(
+            l10n.virtSnapshotRevert,
+            key: 'snapshot:revert:${snap.name}',
+            primary: true,
+            onTap: busy || revertRefused
+                ? null
+                : () => unawaited(_revert(snap)),
+          ),
+        ], indent: true),
+        ]),
+      ),
+    ];
+  }
+
+  /// What differs between the snapshot and the guest now, grouped the way the
+  /// design groups a view's rows.
+  Widget _buildDiff(AsyncValue<List<VirtSnapDiff>> diff) {
+    return switch (diff) {
+      AsyncData(:final value) when value.isEmpty => Text(
+        l10n.virtSnapshotDiffNone,
+        style: UIs.text12Grey,
+      ),
+      AsyncData(:final value) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(l10n.virtSnapshotDiff, style: UIs.text12Bold),
+          for (final group in VirtSnapDiffGroup.values)
+            if (value.any((d) => d.group == group)) ...[
+              UIs.height7,
+              Text(group.label, style: UIs.text11Grey),
+              for (final d in value)
+                if (d.group == group) VirtFact(d.key, _diffLine(d)),
+            ],
+        ],
+      ),
+      AsyncError(:final error) => Text(
+        l10n.virtSnapshotDiffHost('$error'),
+        style: UIs.text12Grey,
+      ),
+      _ => const Center(child: SizedLoading.small),
+    };
+  }
+
+  String _diffLine(VirtSnapDiff d) {
+    if (d.removed) return '${d.before} · ${l10n.virtSnapshotDiffRemoved}';
+    if (d.added) return '${d.after} · ${l10n.virtSnapshotDiffAdded}';
+    return l10n.virtSnapshotDiffValue(d.before ?? '--', d.after ?? '--');
+  }
+
+  // --- Chain ---
+
+  /// The design has no chain group; a guest on one needs it, so it is a group
+  /// of its own: each disk, and the files it is on, topmost first.
+  _Group _chainGroup(
+    AsyncValue<VirtSnapChain> chain,
+    List<VirtGuestSnapshot> list,
+  ) {
+    final value = chain.value;
+    final depth = value == null || !value.hasOverlays
+        ? ''
+        : l10n.virtSnapshotChainDepth('${value.depth}');
+    return _Group(
+      key: 'chain',
+      title: l10n.virtSnapshotChain,
+      right: depth,
+      warn: false,
+      indexNote: depth,
+      rows: [
+        if (chain.error case final e?) ...[
+          _text(e is VirtErr ? (e.detail ?? e.title) : '$e', error: true),
+          _actions([
+            _Action(
+              libL10n.retry,
+              icon: Icons.refresh,
+              onTap: () => ref.invalidate(_chainProvider),
+            ),
+          ]),
+        ] else if (value == null)
+          const Center(child: SizedLoading.small)
+        else ...[
+          for (final d in value.disks) _chainDisk(d),
+          // A refusal of every snapshot is said in the snapshot group; here
+          // only what refuses the external kind alone.
+          if (value.refusal == null && value.externalRefusal != null)
+            _text(value.externalRefusal!, error: true),
+          // The revert rule is about external snapshots, not about any file
+          // with a backing one: a thin clone of a base image is on two
+          // layers without a snapshot to revert to.
+          _text(
+            list.any((s) => s.external)
+                ? l10n.virtSnapshotRevertChain
+                : l10n.virtSnapshotExternalTip,
+          ),
+        ],
       ],
     );
   }
 
-  /// The design has no chain group; a guest on one needs it, so it is drawn
-  /// the way the design draws a device: a row that opens.
-  Widget _buildChain(AsyncValue<VirtSnapChain> chain) {
-    final value = chain.value;
-    return Padding(
-      padding: const EdgeInsets.only(top: 13),
-      child: VirtCard(
-        icon: Icons.account_tree_outlined,
-        title: l10n.virtSnapshotChain,
-        trailing: value == null || !value.hasOverlays
-            ? null
-            : VirtChip(l10n.virtSnapshotChainDepth('${value.depth}')),
-        children: [
-          if (chain.error case final e?)
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    e is VirtErr ? (e.detail ?? e.title) : '$e',
-                    style: UIs.text12Grey,
-                  ),
-                ),
-                Btn.icon(
-                  text: libL10n.retry,
-                  icon: const Icon(Icons.refresh, size: 18),
-                  onTap: () => ref.invalidate(_chainProvider),
-                ),
-              ],
-            )
-          else if (value == null)
-            const Center(child: SizedLoading.small)
-          else ...[
-            for (final d in value.disks) _buildChainDisk(d),
-            // A refusal of every snapshot is said at the top of the view; here
-            // only what refuses the external kind alone.
-            if (value.refusal == null && value.externalRefusal != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 5),
-                child: Text(
-                  value.externalRefusal!,
-                  style: const TextStyle(fontSize: 12, color: StatePalette.warn),
-                ),
-              ),
-            Text(
-              value.hasOverlays
-                  ? l10n.virtSnapshotRevertChain
-                  : l10n.virtSnapshotExternalTip,
-              style: UIs.text12Grey,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChainDisk(VirtSnapChainDisk d) {
-    final scheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.only(top: 5),
+  Widget _chainDisk(VirtSnapChainDisk d) {
+    return _box(
+      key: ValueKey('chain:disk:${d.target}'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              Icon(Icons.storage, size: 15, color: scheme.onSurfaceVariant),
-              UIs.width7,
+              _icon(Icons.storage),
+              UIs.width13,
               Expanded(
                 child: Text(
                   [d.target, ?d.pool].join(' · '),
-                  style: UIs.text12Bold,
+                  style: UIs.text13.copyWith(fontWeight: FontWeight.w500),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
+          if (d.error case final e?)
+            Padding(
+              padding: const EdgeInsets.only(left: 32, top: 3),
+              child: Text(e, style: UIs.text12Grey),
+            ),
           for (var i = 0; i < d.files.length; i++)
-            _buildChainFile(d.files[i], last: i == d.files.length - 1),
+            _chainFile(d.files[i], last: i == d.files.length - 1),
         ],
       ),
     );
   }
 
-  /// One layer, indented by depth, the way the snapshot tree is: the top one
-  /// is what the guest writes to, the last is the base image.
-  Widget _buildChainFile(VirtSnapChainFile f, {required bool last}) {
+  /// One layer: the top one is what the guest writes to, the last is the
+  /// base image, indented under the rest.
+  Widget _chainFile(VirtSnapChainFile f, {required bool last}) {
     final scheme = Theme.of(context).colorScheme;
     final label = switch (true) {
       _ when f.active => l10n.virtSnapshotChainActive,
@@ -463,7 +582,7 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView> {
     };
     return Padding(
       key: ValueKey('chain:${f.path}'),
-      padding: EdgeInsets.only(left: 13.0 * (last ? 1 : 0), top: 3),
+      padding: EdgeInsets.only(left: 32.0 + (last ? 13 : 0), top: 5),
       child: Row(
         children: [
           Icon(
@@ -494,220 +613,11 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView> {
       ),
     );
   }
-
-  /// One snapshot: what it holds and when; open, where it came from, what a
-  /// revert would change, and what can be done with it.
-  Widget _buildRow(
-    VirtGuestSnapshot snap,
-    int depth,
-    List<VirtGuestSnapshot> all,
-    bool busy,
-  ) {
-    final open = _open.contains(snap.name);
-    final scheme = Theme.of(context).colorScheme;
-    final when = snap.createdAt;
-    final sub = [
-      if (when != null) when.simple(),
-      snap.withMemory ? l10n.virtSnapshotWithMemory : l10n.virtSnapshotDiskOnly,
-      if (snap.external) l10n.virtSnapshotExternal,
-    ].join(' · ');
-    // Without memory, a revert leaves the guest stopped: worth saying before
-    // the button, not only in the dialog.
-    final stops = !snap.withMemory && widget.state.isActive;
-    // On a chain, only a leaf can be reverted to: libvirt's revert flattens
-    // the chain and leaves every later snapshot pointing at a file that is
-    // gone (see `sbm_parser::virt_snapshot`).
-    final hasChildren = snap.hasChildren(all);
-    final revertRefused = snap.external && hasChildren;
-    return Padding(
-      key: ValueKey('snapshot:${snap.name}'),
-      // Depth by indent, capped so a long chain still has room for its name.
-      padding: EdgeInsets.only(left: 13.0 * depth.clamp(0, 4)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ListTile(
-            dense: true,
-            leading: Icon(
-              snap.withMemory ? Icons.memory : Icons.save_outlined,
-              size: 20,
-              color: snap.current ? scheme.primary : null,
-            ),
-            title: Row(
-              children: [
-                Flexible(
-                  child: Text(
-                    snap.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                if (snap.current) ...[UIs.width7, VirtChip(libL10n.current)],
-              ],
-            ),
-            subtitle: Text(sub, style: UIs.text11Grey),
-            trailing: Icon(open ? Icons.expand_less : Icons.expand_more),
-            onTap: () => setState(() {
-              if (!_open.remove(snap.name)) _open.add(snap.name);
-            }),
-          ),
-          Reveal(
-            open: open,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(17, 0, 17, 9),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (when != null) VirtFact(libL10n.time, when.simple()),
-                    VirtFact(l10n.virtSnapshotParent, snap.parent ?? '--'),
-                    if (snap.description case final d?)
-                      VirtFact(libL10n.description, d),
-                    for (final layer in snap.layers)
-                      if (layer.file case final file?)
-                        VirtFact(
-                          '${l10n.virtSnapshotChain} · ${layer.target}',
-                          file,
-                        ),
-                    if (stops)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 5),
-                        child: Text(
-                          l10n.virtSnapshotRevertStops(widget.guest.name),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: StatePalette.warn,
-                          ),
-                        ),
-                      ),
-                    if (revertRefused)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 5),
-                        child: Text(
-                          l10n.virtSnapshotRevertHasChildren,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: StatePalette.warn,
-                          ),
-                        ),
-                      )
-                    else if (snap.external)
-                      Text(
-                        l10n.virtSnapshotRevertChain,
-                        style: UIs.text11Grey,
-                      ),
-                    if (_diffs[snap.name] case final diff?) _buildDiff(diff),
-                    UIs.height7,
-                    Wrap(
-                      alignment: WrapAlignment.end,
-                      spacing: 7,
-                      runSpacing: 7,
-                      children: [
-                        TextButton.icon(
-                          key: ValueKey('snapshot:diff:${snap.name}'),
-                          onPressed: () => unawaited(_readDiff(snap)),
-                          icon: const Icon(Icons.difference_outlined, size: 18),
-                          label: Text(l10n.virtSnapshotDiffShow),
-                        ),
-                        TextButton.icon(
-                          key: ValueKey('snapshot:delete:${snap.name}'),
-                          onPressed: busy
-                              ? null
-                              : () => unawaited(_delete(snap)),
-                          icon: Icon(Icons.delete_outline, color: scheme.error),
-                          label: Text(
-                            libL10n.delete,
-                            style: TextStyle(color: scheme.error),
-                          ),
-                        ),
-                        FilledButton.tonalIcon(
-                          key: ValueKey('snapshot:revert:${snap.name}'),
-                          onPressed: busy || revertRefused
-                              ? null
-                              : () => unawaited(_revert(snap)),
-                          icon: const Icon(Icons.restore, size: 18),
-                          label: Text(l10n.virtSnapshotRevert),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// What differs between the snapshot and the guest now, grouped the way the
-  /// design groups a view's rows.
-  Widget _buildDiff(AsyncValue<List<VirtSnapDiff>> diff) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 7),
-      child: switch (diff) {
-        AsyncData(:final value) when value.isEmpty => Text(
-          l10n.virtSnapshotDiffNone,
-          style: UIs.text12Grey,
-        ),
-        AsyncData(:final value) => Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(l10n.virtSnapshotDiff, style: UIs.text12Bold),
-            for (final group in VirtSnapDiffGroup.values)
-              if (value.any((d) => d.group == group)) ...[
-                UIs.height7,
-                Text(group.label, style: UIs.text11Grey),
-                for (final d in value)
-                  if (d.group == group) _buildDiffRow(d),
-              ],
-          ],
-        ),
-        AsyncError(:final error) => Text(
-          l10n.virtSnapshotDiffHost('$error'),
-          style: UIs.text12Grey,
-        ),
-        _ => const Center(child: SizedLoading.small),
-      },
-    );
-  }
-
-  Widget _buildDiffRow(VirtSnapDiff d) {
-    final value = switch (d) {
-      _ when d.removed => '${d.before} · ${l10n.virtSnapshotDiffRemoved}',
-      _ when d.added => '${d.after} · ${l10n.virtSnapshotDiffAdded}',
-      _ => l10n.virtSnapshotDiffValue(d.before ?? '--', d.after ?? '--'),
-    };
-    return VirtFact(d.key, value);
-  }
-
-  Widget _buildError(Object e, VoidCallback onRetry) {
-    return VirtCard(
-      icon: Icons.error_outline,
-      title: e is VirtErr ? e.title : libL10n.error,
-      trailing: Btn.icon(
-        text: libL10n.retry,
-        icon: const Icon(Icons.refresh, size: 18),
-        onTap: onRetry,
-      ),
-      children: [
-        if (e is VirtErr)
-          if (e.detail case final d?) Text(d, style: UIs.text12Grey)
-          else UIs.placeholder
-        else
-          Text('$e', style: UIs.text12Grey),
-      ],
-    );
-  }
 }
 
 // --- Actions ---
 
-extension _Actions on _VirtSnapshotsViewState {
+extension _SnapshotActions on _VirtSnapshotsViewState {
   // ignore: invalid_use_of_protected_member
   void _setState(VoidCallback fn) => setState(fn);
 
@@ -718,28 +628,18 @@ extension _Actions on _VirtSnapshotsViewState {
     }
     _name.text = 'snap-$n';
     _desc.clear();
-    // ignore: invalid_use_of_protected_member
-    setState(() {
+    final chain = ref.read(_chainProvider).value;
+    _setState(() {
       _memory = true;
       _creating = true;
-      // A guest already on a chain keeps it: a second snapshot deepens it,
-      // and an internal one on a chain would be a different kind of thing.
-      final chain = ref.read(_chainProvider).value;
-      _form =
-          widget.caps.snapshotExternal &&
-              chain != null &&
-              chain.hasOverlays &&
-              chain.externalRefusal == null
-          ? VirtSnapshotForm.external
-          : VirtSnapshotForm.internal;
+      _form = _defaultForm(list, chain);
     });
   }
 
   Future<void> _create(VirtSnapshotMemory memory) async {
     final name = _name.text.trim();
     final desc = _desc.text.trim();
-    // ignore: invalid_use_of_protected_member
-    setState(() => _creating = false);
+    _setState(() => _creating = false);
     await _run(
       () => _notifier.createSnapshot(
         widget.guest.id,
@@ -853,12 +753,6 @@ extension _Actions on _VirtSnapshotsViewState {
     );
   }
 
-  String _diffLine(VirtSnapDiff d) {
-    if (d.removed) return '${d.before} · ${l10n.virtSnapshotDiffRemoved}';
-    if (d.added) return '${d.after} · ${l10n.virtSnapshotDiffAdded}';
-    return l10n.virtSnapshotDiffValue(d.before ?? '--', d.after ?? '--');
-  }
-
   Future<void> _delete(VirtGuestSnapshot snap) async {
     final ok = await context.showRoundDialog<bool>(
       title: libL10n.attention,
@@ -884,9 +778,7 @@ extension _Actions on _VirtSnapshotsViewState {
       if (mounted) {
         ref.invalidate(_provider);
         ref.invalidate(_chainProvider);
-        ref.invalidate(
-          virtSnapshotRefusalProvider(widget.serverId, widget.guest.id),
-        );
+        ref.invalidate(_refusalProvider);
       }
     }
   }

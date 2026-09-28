@@ -414,21 +414,35 @@ void main() {
       );
     });
 
+    testWidgets('narrow: a long name deep in the tree is cut, not overflowed', (
+      tester,
+    ) async {
+      final long = 'a-snapshot-with-a-name-this-long-${'x' * 6}';
+      _snaps['qemu/100'] = [
+        ..._snaps['qemu/100']!.map((s) => s.copyWith(current: false)),
+        VirtGuestSnapshot(
+          name: long,
+          parent: 'with-mem',
+          createdAt: DateTime(2026, 9, 4),
+          withMemory: true,
+          current: true,
+        ),
+      ];
+      await pump(tester, wide: false);
+      await openSnapshots(tester, 'web-01');
+      expect(tester.takeException(), isNull);
+      expect(find.byKey(ValueKey('hw:disc:snapshot:$long')), findsOneWidget);
+    });
+
     testWidgets('a tree, the current one marked', (tester) async {
       await pump(tester, wide: true);
       await openSnapshots(tester, 'web-01');
 
       expect(_calls, contains('snapshots qemu/100'));
-      expect(find.text('${app_locale.l10n.virtSnapshots} · 3'), findsOneWidget);
+      expect(find.text(app_locale.l10n.virtSnapshotCount(3)), findsOneWidget);
       // Depth-first from the root, each child indented further.
-      double left(String name) => tester
-          .getTopLeft(
-            find.descendant(
-              of: find.byKey(ValueKey('snapshot:$name')),
-              matching: find.byType(ListTile),
-            ),
-          )
-          .dx;
+      double left(String name) =>
+          tester.getTopLeft(find.byKey(ValueKey('hw:disc:snapshot:$name'))).dx;
       expect(left('base'), lessThan(left('disk-only')));
       expect(left('disk-only'), lessThan(left('with-mem')));
       expect(find.text(libL10n.current), findsOneWidget);
@@ -456,26 +470,23 @@ void main() {
       );
       expect(tester.widget<TextField>(name).controller!.text, 'snap-4');
       // A running VM on PVE: memory is the user's choice, on by default.
-      final memory = tester.widget<SwitchListTile>(
-        find.byKey(const ValueKey('snapshot:memory')),
-      );
+      final memory = _memorySwitch(tester);
       expect(memory.value, isTrue);
       expect(memory.onChanged, isNotNull);
 
-      FilledButton create() => tester.widget<FilledButton>(
-        find.byKey(const ValueKey('snapshot:create')),
-      );
+      Btn create() =>
+          tester.widget<Btn>(find.byKey(const ValueKey('snapshot:create')));
       await tester.enterText(name, 'base');
       await _settle(tester);
       expect(find.text(app_locale.l10n.virtSnapshotNameTaken), findsOneWidget);
-      expect(create().onPressed, isNull);
+      expect(create().onTap, isNull);
       await tester.enterText(name, '1st try');
       await _settle(tester);
       expect(
         find.text(app_locale.l10n.virtSnapshotNameInvalid),
         findsOneWidget,
       );
-      expect(create().onPressed, isNull);
+      expect(create().onTap, isNull);
 
       await tester.enterText(name, 'pre-upgrade');
       await tester.enterText(
@@ -519,9 +530,7 @@ void main() {
       await openSnapshots(tester, 'web-01');
       await tester.tap(find.byKey(const ValueKey('snapshot:new')));
       await _settle(tester);
-      final memory = tester.widget<SwitchListTile>(
-        find.byKey(const ValueKey('snapshot:memory')),
-      );
+      final memory = _memorySwitch(tester);
       expect(memory.value, isTrue);
       expect(memory.onChanged, isNull);
       expect(
@@ -808,11 +817,42 @@ void main() {
       await pump(tester, wide: true);
       await openPool(tester);
       expect(btn(tester, 'pool:stop').onTap, isNotNull);
+      // A verb on the button, not the state it would leave.
+      expect(btn(tester, 'pool:stop').text, app_locale.l10n.virtStorageDisable);
       await tester.tap(find.byKey(const ValueKey('pool:stop')));
       await _settle(tester);
       expect(find.text(app_locale.l10n.virtStorageClusterWide), findsOneWidget);
       await tester.tap(find.text(libL10n.cancel));
       await _settle(tester);
+    });
+
+    testWidgets('a base image others are made on is in use', (tester) async {
+      // Attached to no guest, and still what other disks are made on.
+      final saved = _volumes['pve/local-lvm'];
+      _volumes['pve/local-lvm'] = [
+        saved!.first,
+        const VirtVolume(
+          id: 'local-lvm:base-9000-disk-0',
+          name: 'base-9000-disk-0',
+          format: 'raw',
+          content: 'images',
+          capacity: 1 << 30,
+          backs: ['/dev/pve/vm-101-disk-0'],
+        ),
+      ];
+      addTearDown(() => _volumes['pve/local-lvm'] = saved);
+      await pump(tester, wide: true);
+      await openPool(tester);
+      await tester.tap(find.byKey(const ValueKey('hw:disc:vol:local-lvm:base-9000-disk-0')));
+      await _settle(tester);
+      expect(btn(tester, 'pool:vol:base-9000-disk-0:delete').onTap, isNull);
+      expect(find.byKey(const ValueKey('pool:vol:base-9000-disk-0:attach')), findsNothing);
+      expect(find.text(app_locale.l10n.virtVolIsBase), findsOneWidget);
+      expect(
+        find.textContaining(app_locale.l10n.virtVolBackingOf('vm-101-disk-0')),
+        findsWidgets,
+      );
+      expect(btn(tester, 'pool:stop').onTap, isNull);
     });
 
     testWidgets('a left-over volume is deleted, never attached', (
@@ -1325,7 +1365,11 @@ void _phase8(
       await openSnapshots(tester, 'web-01');
 
       expect(_calls, contains('chain qemu/100'));
-      expect(find.text(app_locale.l10n.virtSnapshotChain), findsOneWidget);
+      // The group's title, drawn upper-case as every group title is.
+      expect(
+        find.text(app_locale.l10n.virtSnapshotChain.toUpperCase()),
+        findsOneWidget,
+      );
       expect(
         find.text(app_locale.l10n.virtSnapshotChainDepth('2')),
         findsOneWidget,
@@ -1388,16 +1432,24 @@ void _phase8(
     testWidgets('the form offers the external kind and the overlay pool', (
       tester,
     ) async {
+      _snaps['qemu/100'] = [
+        ..._snaps['qemu/100']!.map((s) => s.copyWith(current: false)),
+        VirtGuestSnapshot(
+          name: 'sx1',
+          parent: 'with-mem',
+          createdAt: DateTime(2026, 9, 4),
+          external: true,
+          current: true,
+        ),
+      ];
       await pump(tester, wide: true);
       await openSnapshots(tester, 'web-01');
       await tester.tap(find.byKey(const ValueKey('snapshot:new')));
       await _settle(tester);
 
-      // The guest is on a chain, so the external form is what opens.
-      final external = tester.widget<ChoiceChip>(
-        find.byKey(const ValueKey('snapshot:form:VirtSnapshotForm.external')),
-      );
-      expect(external.selected, isTrue);
+      // The guest already has an external snapshot, so that kind is what
+      // opens.
+      expect(_selected(_formKind(VirtSnapshotForm.external)), isTrue);
       // An external snapshot holds no memory, so the switch is gone.
       expect(find.byKey(const ValueKey('snapshot:memory')), findsNothing);
       expect(
@@ -1436,10 +1488,11 @@ void _phase8(
       await openSnapshots(tester, 'web-01');
       await tester.tap(find.byKey(const ValueKey('snapshot:new')));
       await _settle(tester);
-      await tester.tap(find.byKey(const ValueKey('snapshot:pool')));
+      await tester.tap(_formKind(VirtSnapshotForm.external));
       await _settle(tester);
-      await tester.tap(find.text('images').last);
+      await tester.tap(find.byKey(const ValueKey('snapshot:pool:images')));
       await _settle(tester);
+      expect(_selected(find.byKey(const ValueKey('snapshot:pool:images'))), isTrue);
       await tester.tap(find.byKey(const ValueKey('snapshot:create')));
       await _settle(tester);
       expect(
@@ -1458,11 +1511,9 @@ void _phase8(
       // The form is still offered, and opens on the internal kind.
       await tester.tap(find.byKey(const ValueKey('snapshot:new')));
       await _settle(tester);
-      final external = tester.widget<ChoiceChip>(
-        find.byKey(const ValueKey('snapshot:form:VirtSnapshotForm.external')),
-      );
-      expect(external.onSelected, isNull);
-      expect(external.selected, isFalse);
+      final external = _formKind(VirtSnapshotForm.external);
+      expect(_choiceTap(tester, external), isNull);
+      expect(_selected(external), isFalse);
       expect(find.byKey(const ValueKey('snapshot:memory')), findsOneWidget);
       // Said in the form and in the chain group.
       expect(find.text(why), findsNWidgets(2));
@@ -1471,6 +1522,58 @@ void _phase8(
       expect(
         _calls.where((c) => c.startsWith('create ')).single,
         contains('form=internal'),
+      );
+    });
+
+    testWidgets('a thin clone of a base image opens on the internal kind', (
+      tester,
+    ) async {
+      // The disk has a backing file (the chain has two layers) but the guest
+      // has no external snapshot: the backing file is a base image, not a
+      // snapshot's overlay, so nothing asks for the external kind.
+      expect(_snaps['qemu/100']!.any((s) => s.external), isFalse);
+      await pump(tester, wide: true);
+      await openSnapshots(tester, 'web-01');
+      await tester.tap(find.byKey(const ValueKey('snapshot:new')));
+      await _settle(tester);
+      expect(_selected(_formKind(VirtSnapshotForm.internal)), isTrue);
+      expect(_selected(_formKind(VirtSnapshotForm.external)), isFalse);
+      expect(find.byKey(const ValueKey('snapshot:memory')), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('snapshot:create')));
+      await _settle(tester);
+      expect(
+        _calls.where((c) => c.startsWith('create ')).single,
+        contains('form=internal'),
+      );
+    });
+
+    testWidgets('the external kind says nothing about a stopped guest', (
+      tester,
+    ) async {
+      await pump(tester, wide: true);
+      await openSnapshots(tester, 'web-01');
+      await tester.tap(find.byKey(const ValueKey('snapshot:new')));
+      await _settle(tester);
+      await tester.tap(_formKind(VirtSnapshotForm.external));
+      await _settle(tester);
+      // web-01 is running: "not running, only disks" would be false, and the
+      // external kind's own line already says it keeps no memory.
+      expect(find.text(app_locale.l10n.virtSnapshotMemoryOff), findsNothing);
+      expect(find.text(app_locale.l10n.virtSnapshotExternalTip), findsWidgets);
+      // The line about the external kind is that option's own, not a note
+      // under the internal one.
+      expect(
+        find.descendant(
+          of: _formKind(VirtSnapshotForm.external),
+          matching: find.text(app_locale.l10n.virtSnapshotExternalNoMemory),
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(_formKind(VirtSnapshotForm.internal));
+      await _settle(tester);
+      expect(
+        find.text(app_locale.l10n.virtSnapshotMemoryAlways),
+        findsOneWidget,
       );
     });
 
@@ -1511,17 +1614,17 @@ void _phase8(
         find.text(app_locale.l10n.virtSnapshotRevertHasChildren),
         findsOneWidget,
       );
-      final refused = tester.widget<FilledButton>(
+      final refused = tester.widget<Btn>(
         find.byKey(const ValueKey('snapshot:revert:sx1')),
       );
-      expect(refused.onPressed, isNull);
+      expect(refused.onTap, isNull);
       // The newest one is a leaf: it can be reverted to.
       await tester.tap(find.byKey(const ValueKey('snapshot:sx2')));
       await _settle(tester);
-      final ok = tester.widget<FilledButton>(
+      final ok = tester.widget<Btn>(
         find.byKey(const ValueKey('snapshot:revert:sx2')),
       );
-      expect(ok.onPressed, isNotNull);
+      expect(ok.onTap, isNotNull);
     });
 
     testWidgets('a storage without support says so and offers no form', (
@@ -1628,3 +1731,28 @@ void _phase8(
     });
   });
 }
+
+/// A kind in the snapshot form's choice.
+Finder _formKind(VirtSnapshotForm form) =>
+    find.byKey(ValueKey('snapshot:form:$form'));
+
+/// An option of an edit-pane choice is selected: it carries the check.
+bool _selected(Finder option) => find
+    .descendant(of: option, matching: find.byIcon(Icons.check))
+    .evaluate()
+    .isNotEmpty;
+
+/// What tapping an edit-pane choice's option does; null where it is refused.
+VoidCallback? _choiceTap(WidgetTester tester, Finder option) => tester
+    .widget<InkWell>(
+      find.descendant(of: option, matching: find.byType(InkWell)).first,
+    )
+    .onTap;
+
+/// The snapshot form's memory switch.
+SwitchX _memorySwitch(WidgetTester tester) => tester.widget<SwitchX>(
+  find.descendant(
+    of: find.byKey(const ValueKey('snapshot:memory')),
+    matching: find.byType(SwitchX),
+  ),
+);

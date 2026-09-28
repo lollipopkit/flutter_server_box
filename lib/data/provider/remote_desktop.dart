@@ -340,11 +340,11 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
 
   /// Hands [profile]'s session to [SessionKeepAlive], named for its notice by
   /// the profile and the server it goes through.
-  void _registerKeepAlive(RemoteDesktopProfile profile) {
+  void _registerKeepAlive(RemoteDesktopProfile profile, {String? name}) {
     final id = profile.id;
     _keepAlive.register(
       id,
-      name: profile.name,
+      name: name ?? profile.name,
       host:
           ref.read(serversProvider).servers[profile.serverId]?.name ??
           profile.host,
@@ -390,9 +390,13 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
   /// [profile] is not stored anywhere; [target] says where each connection
   /// attempt goes and with which password, in place of the profile's host,
   /// port and password. Opening an id that is already open reconnects it.
+  ///
+  /// [keepAliveName] is what the idle notice calls it, where the profile's
+  /// name alone would not say which of a guest's consoles it is.
   String openConsole(
     RemoteDesktopProfile profile, {
     required RemoteDesktopTargetOpener target,
+    String? keepAliveName,
   }) {
     final existing = _entries[profile.id];
     if (existing != null) {
@@ -408,7 +412,7 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
       target: target,
     );
     _entries[profile.id] = entry;
-    _registerKeepAlive(profile);
+    _registerKeepAlive(profile, name: keepAliveName);
     state = state.putConsole(RemoteDesktopSessionView(profile: profile));
     _syncVisibility();
     unawaited(_connect(entry));

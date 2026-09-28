@@ -30,7 +30,6 @@ import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/virt/common.dart';
 import 'package:server_box/view/page/virt/console_connect.dart';
 import 'package:server_box/view/page/virt/hardware.dart';
-import 'package:server_box/view/page/virt/snapshots.dart';
 import 'package:server_box/view/widget/progress_line.dart';
 
 part 'console.dart';

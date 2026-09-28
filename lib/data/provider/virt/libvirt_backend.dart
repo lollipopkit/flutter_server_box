@@ -8,6 +8,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/utils/local_server.dart';
 import 'package:server_box/core/utils/privileged_exec.dart';
 import 'package:server_box/core/utils/ssh_exec.dart';
+import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/virt/libvirt.dart';
@@ -44,11 +45,15 @@ class LibvirtBackend implements VirtBackend {
     Future<ServerByteExec> Function()? byteExec,
     bool Function()? canStream,
     DateTime Function()? now,
+    Future<String?> Function()? knownSudoPassword,
+    void Function()? onSudoRejected,
     @visibleForTesting this.seedTools,
     @visibleForTesting this.uploadReadyTimeout = const Duration(seconds: 60),
   }) : _exec = exec,
        _byteExec = byteExec,
        _canStream = canStream,
+       _knownSudoPassword = knownSudoPassword,
+       _onSudoRejected = onSudoRejected,
        _now = now ?? DateTime.now;
 
   /// The ISO tools a cloud-init seed may be made with, in order; null: all
@@ -68,6 +73,8 @@ class LibvirtBackend implements VirtBackend {
     return LibvirtBackend(
       serverId: serverId,
       exec: () => ref.read(serverProvider(serverId).notifier).ensureExec(),
+      knownSudoPassword: () => SudoPassword.known(serverId),
+      onSudoRejected: () => SudoPassword.forget(serverId),
       canStream: () =>
           local() || ref.read(serverProvider(serverId)).capabilities.byteStream,
       byteExec: () async => local()
@@ -93,6 +100,19 @@ class LibvirtBackend implements VirtBackend {
   /// This account reaches the daemon only through sudo.
   bool _viaSudo = false;
   String? _sudoPassword;
+
+  /// The sudo password known before this backend asks: one typed for this
+  /// server elsewhere this session, or saved with it (`SudoPassword`).
+  final Future<String?> Function()? _knownSudoPassword;
+
+  /// Told when sudo refused the password, so it is not offered again.
+  final void Function()? _onSudoRejected;
+  bool _knownSudoRead = false;
+
+  void _forgetSudoPassword() {
+    _sudoPassword = null;
+    _onSudoRejected?.call();
+  }
 
   /// State codes by guest id from the last [load], for what the mapped state
   /// hides (crashed with the process preserved).
@@ -124,7 +144,8 @@ class LibvirtBackend implements VirtBackend {
 
   /// The sudo password for this server, typed by the user after
   /// [VirtErrType.sudoPasswordRequired]. Kept in memory for this backend's
-  /// life; a rejected one is forgotten.
+  /// life, and by `SudoPassword` for the session (the provider's
+  /// `provideSudoPassword`); a rejected one is forgotten by both.
   void provideSudoPassword(String password) {
     _sudoPassword = password.isEmpty ? null : password;
     _viaSudo = true;
@@ -1326,7 +1347,34 @@ class LibvirtBackend implements VirtBackend {
       storage = _storage!;
       (read, _) = await _volumes(storage, pool);
     }
-    return read;
+    // What is made on each: a base image is attached to nothing, and its
+    // clones may be in another pool.
+    final backers = <String, List<String>>{};
+    for (final p in storage.pools) {
+      final other = VirtStoragePool(
+        id: p.name,
+        name: p.name,
+        type: p.poolType ?? '',
+        active: p.active,
+      );
+      final List<VirtVolume> vols;
+      if (p.name == pool.id) {
+        vols = read;
+      } else if (!p.active) {
+        continue;
+      } else {
+        (vols, _) = await _volumes(storage, other);
+      }
+      for (final v in vols) {
+        if ((v.backing, v.path) case (final b?, final path?)) {
+          backers.putIfAbsent(b, () => []).add(path);
+        }
+      }
+    }
+    return [
+      for (final v in read)
+        if (backers[v.path] case final backs?) v.copyWith(backs: backs) else v,
+    ];
   }
 
   /// [pool]'s volumes as [storage] lists them, and whether one of them did
@@ -1850,7 +1898,7 @@ class LibvirtBackend implements VirtBackend {
     if (cancelled) return _Streamed.cancelled;
     final stderr = err.toString();
     if (rejected) {
-      _sudoPassword = null;
+      _forgetSudoPassword();
       throw const VirtErr(
         type: VirtErrType.sudoPasswordRejected,
         message: 'sudo rejected the password',
@@ -2719,6 +2767,12 @@ class LibvirtBackend implements VirtBackend {
       }
     }
 
+    // Asked once per backend: every call through sudo passes here, and the
+    // saved password is behind a rate-limited store.
+    if (!_knownSudoRead) {
+      _knownSudoRead = true;
+      _sudoPassword ??= await _knownSudoPassword?.call();
+    }
     final password = _sudoPassword;
     final result = await _exec1(
       () => PrivilegedExec.run(
@@ -2735,7 +2789,7 @@ class LibvirtBackend implements VirtBackend {
           message: 'sudo needs a password to reach libvirt',
         );
       }
-      _sudoPassword = null;
+      _forgetSudoPassword();
       throw const VirtErr(
         type: VirtErrType.sudoPasswordRejected,
         message: 'sudo rejected the password',

@@ -174,7 +174,10 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
     for (final p in scope) {
       final vols = ref.watch(virtVolumesProvider(_serverId, p.id));
       if (vols.isLoading || vols.hasError || !vols.hasValue) return null;
-      if (vols.requireValue.any((v) => _users(host, v).isNotEmpty)) {
+      // A base image counts: stopping its pool breaks what is made on it.
+      if (vols.requireValue.any(
+        (v) => _users(host, v).isNotEmpty || v.backs.isNotEmpty,
+      )) {
         inUse = true;
       }
     }
@@ -452,10 +455,15 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
     // backups, snippets) is only listed and deleted here.
     final disk = !iso && (v.content == null || v.content == 'images' || v.content == 'rootdir');
     final users = _users(host, v);
+    // The guests that have it, and the volumes made on it: a base image is
+    // attached to nothing and is still far from unused.
     final usersText = [
       for (final u in users)
         [virtGuestLabel(host, u), ?u.device].join(' · '),
+      if (v.backs.isNotEmpty)
+        l10n.virtVolBackingOf(v.backs.map(_basename).join(', ')),
     ].join(', ');
+    final used = users.isNotEmpty || v.backs.isNotEmpty;
     final size = switch ((v.allocation, v.capacity)) {
       (final a?, final c?) when a != c => '${a.bytes2Str} / ${c.bytes2Str}',
       (_, final c?) => c.bytes2Str,
@@ -464,7 +472,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
     };
     final summary = [
       ?size,
-      users.isEmpty ? l10n.unused : usersText,
+      used ? usersText : l10n.unused,
     ].join(' · ');
     final working = _working.contains(v.id);
     final locked = busy || working;
@@ -477,7 +485,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
           _field(
             Icons.view_in_ar_outlined,
             l10n.virtVolUsers,
-            users.isEmpty ? l10n.unused : usersText,
+            used ? usersText : l10n.unused,
             indent: true,
           ),
         if (v.backing case final b?)
@@ -515,13 +523,15 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
               key: 'pool:vol:${v.name}:delete',
               icon: Icons.delete_outline,
               danger: true,
-              onTap: locked || users.isNotEmpty
+              onTap: locked || used
                   ? null
                   : () => unawaited(_deleteVolume(pool, v)),
             ),
         ]),
         if (users.isNotEmpty && caps.storageEdit)
-          _text(l10n.virtVolInUse, indent: true),
+          _text(l10n.virtVolInUse, indent: true)
+        else if (v.backs.isNotEmpty && caps.storageEdit)
+          _text(l10n.virtVolIsBase, indent: true),
       ],
     ];
   }
@@ -597,7 +607,9 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
     // `virtHwIssue` makes. A PVE volume whose VMID has no guest is left over
     // ([_users] drops it) but still that VMID's: a guest created with it
     // later would free the volume with itself.
-    if (!iso && !(disk && v.users.isEmpty)) return const [];
+    // A base image is not attached either: a guest writing to it would
+    // corrupt every volume made on it.
+    if (!iso && !(disk && !v.inUse)) return const [];
     final guests = [
       for (final g in host.data?.guests ?? const <VirtGuest>[])
         if (g.kind == VirtGuestKind.qemu &&
@@ -663,7 +675,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
         _actions([
           if (pool.active)
             _Action(
-              _pve ? libL10n.disabled : libL10n.stop,
+              _pve ? l10n.virtStorageDisable : libL10n.stop,
               key: 'pool:stop',
               icon: Icons.stop_circle_outlined,
               danger: true,
@@ -671,7 +683,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
             )
           else
             _Action(
-              _pve ? libL10n.enabled : libL10n.start,
+              _pve ? l10n.virtStorageEnable : libL10n.start,
               key: 'pool:start',
               icon: Icons.play_circle_outline,
               onTap: busy
@@ -1250,3 +1262,6 @@ class _VirtPoolCreateViewState extends ConsumerState<VirtPoolCreateView>
     }
   }
 }
+
+/// The file name of [path], for a list of volumes made on a base image.
+String _basename(String path) => path.split('/').last;

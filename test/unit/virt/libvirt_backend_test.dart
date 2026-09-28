@@ -173,6 +173,47 @@ void main() {
       expect((console as LibvirtSerialConsole).needsRoot, isTrue);
     });
 
+    test('a password already known for the server is used without asking',
+        () async {
+      const password = 'hunter2';
+      final exec = _Exec((call) {
+        if (call.entry == 'sh') return _ok(_refused());
+        if (call.entry == 'sudo -n sh') {
+          return _fail('sudo: a password is required\n');
+        }
+        if (call.entry == "sudo -S -p '' sh") {
+          if (call.stdin != '$password\n') return _fail('Sorry, try again.\n');
+          return _ok(_overview());
+        }
+        return _fail('unexpected $call');
+      });
+      var reads = 0;
+      final virt = LibvirtBackend(
+        serverId: 's',
+        exec: () async => exec,
+        // One typed for this server elsewhere this session.
+        knownSudoPassword: () async {
+          reads++;
+          return password;
+        },
+      );
+      expect((await virt.load()).guests, hasLength(3));
+      await virt.load();
+      expect(reads, 1, reason: 'read once, not on every call');
+
+      // A known one sudo refuses is forgotten where it is kept, and asked for.
+      var forgotten = 0;
+      final wrong = LibvirtBackend(
+        serverId: 's',
+        exec: () async => exec,
+        knownSudoPassword: () async => 'stale',
+        onSudoRejected: () => forgotten++,
+      );
+      expect((await _err(wrong.load())).type, VirtErrType.sudoPasswordRejected);
+      expect(forgotten, 1);
+      expect((await _err(wrong.load())).type, VirtErrType.sudoPasswordRequired);
+    });
+
     test('sudo wants a password: asked for, sent on stdin only', () async {
       const password = 'hunter2';
       final exec = _Exec((call) {
@@ -1237,8 +1278,28 @@ void main() {
         vols.firstWhere((v) => v.name == 'off1.qcow2').users.single.guestId,
         _odd,
       );
-      // A base image only others are layered on is not "used" by a disk.
-      expect(vols.firstWhere((v) => v.name == 'cirros.img').users, isEmpty);
+      // A base image only others are layered on is not "used" by a disk —
+      // but it is what they are made on, which is as good as in use.
+      final base = vols.firstWhere((v) => v.name == 'cirros.img');
+      expect(base.users, isEmpty);
+      expect(
+        base.backs.map((p) => p.split('/').last),
+        unorderedEquals([
+          'data1.qcow2',
+          'off1.qcow2',
+          'paused1.qcow2',
+          'run1.qcow2',
+        ]),
+      );
+      expect(base.inUse, isTrue);
+      expect(
+        virtResourceIssue(
+          VirtVolumeDelete(pools.first, base),
+          host: VirtHostKind.libvirt,
+        ),
+        VirtResIssue.inUse,
+      );
+      expect(vols.firstWhere((v) => v.name == 'extra.qcow2').backs, isEmpty);
 
       final iso = await virt.volumes(pools[1]);
       expect(iso.first.name, 'my disk.qcow2');
@@ -1264,6 +1325,10 @@ void main() {
         if (call.script.contains('pool-list')) return _ok(_fixture('script_storage.txt'));
         if (call.script.contains("vol-dumpxml --pool 'images'")) {
           return _ok(refreshed ? full : stale);
+        }
+        // Read too, for what is made on a volume here.
+        if (call.script.contains("vol-dumpxml --pool 'sbx-iso'")) {
+          return _ok(_fixture('script_volumes_sbx_iso.txt'));
         }
         return _fail('unexpected ${call.script}');
       });

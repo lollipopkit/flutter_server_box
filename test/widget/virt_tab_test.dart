@@ -418,6 +418,33 @@ void main() {
   });
 
   group('layout', () {
+    testWidgets('wide: the bar\'s refresh reads the open guest again', (
+      tester,
+    ) async {
+      // A pointer has no pull-to-refresh: the list's button is the way.
+      await pump(tester, wide: true);
+      await tester.tap(find.text('web-01'));
+      await settle(tester);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(VirtTabPage)),
+      );
+      final guest = _pveSnapshot.guests.firstWhere((g) => g.name == 'web-01');
+      var reads = 0;
+      final sub = container.listen(
+        virtHardwareProvider(_pve, guest.id),
+        (_, next) {
+          if (next.isLoading) reads++;
+        },
+      );
+      addTearDown(sub.close);
+      await settle(tester);
+      reads = 0;
+
+      await tester.tap(find.byIcon(Icons.refresh).first);
+      await settle(tester);
+      expect(reads, greaterThan(0));
+    });
+
     testWidgets('wide: the guest opens beside the list', (tester) async {
       await pump(tester, wide: true);
 
@@ -1036,6 +1063,11 @@ void main() {
       );
       await tester.pump(const Duration(seconds: 60));
       expect(container.read(sessionKeepAliveProvider), contains(id));
+      // Which of the guest's consoles is about to close.
+      expect(
+        container.read(sessionKeepAliveProvider)[id]!.name,
+        'web-01 · ${app_locale.l10n.virtConsoleGraphical}',
+      );
       await tester.pump(SessionKeepAlive.grace);
       await settle(tester);
       expect(container.read(remoteDesktopSessionsProvider).consoles, isEmpty);
@@ -1135,6 +1167,11 @@ void main() {
       expect(
         find.textContaining(app_locale.l10n.virtConsoleEnterTip),
         findsOneWidget,
+      );
+      // The bar's buttons at its end, not after a hint in its middle.
+      expect(
+        tester.getTopRight(find.byTooltip(libL10n.close)).dx,
+        closeTo(tester.getTopRight(find.byType(SSHPage)).dx, 20),
       );
       expect(container.read(virtTextConsolesProvider), isEmpty);
       expect(keepAlive.isRegistered(id), isFalse, reason: 'on screen');

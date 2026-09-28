@@ -797,7 +797,8 @@ VirtHwIssue? virtHwIssue(
         return VirtHwIssue.mountPoint;
       }
     case VirtHwAttachVolume(:final volume, :final mountPoint):
-      if (volume.users.isNotEmpty) return VirtHwIssue.volumeInUse;
+      // A base image too: a guest writing to it corrupts what is made on it.
+      if (volume.inUse) return VirtHwIssue.volumeInUse;
       if (hw.kind == VirtGuestKind.lxc &&
           !virtMountPointPattern.hasMatch(mountPoint ?? '')) {
         return VirtHwIssue.mountPoint;

@@ -70,6 +70,16 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
                               right: g.right.isEmpty ? null : g.right,
                               rightColor: g.warn ? StatePalette.warn : null,
                             ),
+                            if (g.note case final note?)
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  3,
+                                  0,
+                                  3,
+                                  _rowGap,
+                                ),
+                                child: Text(note, style: UIs.text12Grey),
+                              ),
                             ..._gapped(g.rows),
                           ],
                         ),
@@ -560,12 +570,17 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
       Reveal(open: _open.contains(key), children: _gapped(rows));
 
   /// A device's row, which opens and closes its own rows under it.
+  ///
+  /// [badge] sits after the label (a snapshot's "current"), and [marked]
+  /// draws the icon in the primary colour while the row is closed.
   Widget _disc(
     String key,
     IconData icon,
     String label,
     String summary, {
     VoidCallback? onTap,
+    Widget? badge,
+    bool marked = false,
   }) {
     final open = _open.contains(key);
     final scheme = Theme.of(context).colorScheme;
@@ -576,28 +591,49 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
       onTap:
           onTap ??
           () => setState(() => open ? _open.remove(key) : _open.add(key)),
-      child: Row(
-        children: [
-          _icon(icon, color: open ? scheme.primary : null),
-          UIs.width13,
-          Text(label, style: UIs.text13.copyWith(fontWeight: FontWeight.w500)),
-          UIs.width13,
-          Expanded(
-            child: Text(
-              summary,
-              textAlign: TextAlign.end,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: UIs.text12Grey,
+      // Most of the row for the label, not all of it: a long name (a
+      // snapshot's, deep in the tree, on a phone) ellipsises before the
+      // summary is gone. The summary takes whatever the label leaves.
+      child: LayoutBuilder(
+        builder: (context, cons) => Row(
+          children: [
+            _icon(icon, color: open || marked ? scheme.primary : null),
+            UIs.width13,
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: cons.maxWidth * 0.6),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: UIs.text13.copyWith(fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                  if (badge != null) ...[UIs.width7, badge],
+                ],
+              ),
             ),
-          ),
-          UIs.width7,
-          Icon(
-            open ? Icons.expand_less : Icons.expand_more,
-            size: 17,
-            color: scheme.outline,
-          ),
-        ],
+            UIs.width13,
+            Expanded(
+              child: Text(
+                summary,
+                textAlign: TextAlign.end,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: UIs.text12Grey,
+              ),
+            ),
+            UIs.width7,
+            Icon(
+              open ? Icons.expand_less : Icons.expand_more,
+              size: 17,
+              color: scheme.outline,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1017,6 +1053,7 @@ final class _Group {
     required this.indexNote,
     required this.rows,
     this.dot,
+    this.note,
   });
 
   final String key;
@@ -1033,6 +1070,10 @@ final class _Group {
   /// The index's dot, where the group's own colour says more than state
   /// does: red for the group that deletes.
   final Color? dot;
+
+  /// A line under the title about the whole group, as the design's group
+  /// note: what every row of it has in common.
+  final String? note;
 }
 
 final class _Action {

@@ -4289,6 +4289,17 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String virtSnapshotCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count snapshots',
+      one: '1 snapshot',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get virtBackupNoStorage => 'No storage on this node holds backups.';
 
   @override
@@ -4415,6 +4426,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'This applies to every node of the cluster that has this storage.';
 
   @override
+  String get virtStorageDisable => 'Disable';
+
+  @override
+  String get virtStorageEnable => 'Enable';
+
+  @override
   String virtStorageDisableAsk(String name) {
     return 'Disable the storage $name? Guests with disks on it cannot start until it is enabled again.';
   }
@@ -4505,6 +4522,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get virtVolInUse => 'A guest uses this volume';
+
+  @override
+  String virtVolBackingOf(String names) {
+    return 'Backing file of $names';
+  }
+
+  @override
+  String get virtVolIsBase =>
+      'Other volumes are made on this one; deleting it would break them';
 
   @override
   String get virtVolAttach => 'Attach to VM';

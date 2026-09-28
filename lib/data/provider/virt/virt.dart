@@ -7,6 +7,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/utils/refresh_interval.dart';
+import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server.dart' show ServerConn;
@@ -1271,12 +1272,14 @@ class VirtHostNotifier extends _$VirtHostNotifier {
 
   /// Answers [VirtErrType.sudoPasswordRequired] or
   /// [VirtErrType.sudoPasswordRejected], then loads. The password is kept in
-  /// memory for this host's session only.
+  /// memory for the session (`SudoPassword`), for this host after a switch
+  /// and for everything else in the app that runs sudo on this server.
   Future<void> provideSudoPassword(String password) async {
     final backend = _backend;
     if (backend is! LibvirtBackend) {
       throw const VirtErr(type: VirtErrType.unsupported);
     }
+    SudoPassword.remember(serverId, password);
     backend.provideSudoPassword(password);
     await refresh();
   }

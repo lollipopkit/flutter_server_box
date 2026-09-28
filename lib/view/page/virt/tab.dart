@@ -431,7 +431,11 @@ extension _Actions on _VirtTabPageState {
     unawaited(ref.read(virtHostProvider(hostId).notifier).refresh());
     switch (_section) {
       case VirtSection.guests:
-        break;
+        // The open guest's configuration too: a pull does that on a touch
+        // screen, and a pointer has no pull — this button is its refresh.
+        if (_guestId case final id?) {
+          ref.invalidate(virtHardwareProvider(hostId, id));
+        }
       case VirtSection.storage:
         ref.invalidate(virtStoragePoolsProvider(hostId));
       case VirtSection.network:

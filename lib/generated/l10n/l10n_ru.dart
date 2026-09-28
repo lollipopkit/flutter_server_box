@@ -4322,6 +4322,18 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String virtSnapshotCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count снимков',
+      few: '$count снимка',
+      one: '$count снимок',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get virtBackupNoStorage =>
       'На этом узле нет хранилища для резервных копий.';
 
@@ -4448,6 +4460,12 @@ class AppLocalizationsRu extends AppLocalizations {
       'Это относится ко всем узлам кластера, где есть это хранилище.';
 
   @override
+  String get virtStorageDisable => 'Отключить';
+
+  @override
+  String get virtStorageEnable => 'Включить';
+
+  @override
   String virtStorageDisableAsk(String name) {
     return 'Отключить хранилище $name? ВМ с дисками на нём не запустятся, пока его снова не включат.';
   }
@@ -4537,6 +4555,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get virtVolInUse => 'Этот том использует ВМ';
+
+  @override
+  String virtVolBackingOf(String names) {
+    return 'Базовый файл для $names';
+  }
+
+  @override
+  String get virtVolIsBase =>
+      'На этом томе основаны другие тома; его удаление их повредит';
 
   @override
   String get virtVolAttach => 'Подключить к ВМ';

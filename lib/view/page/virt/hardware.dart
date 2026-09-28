@@ -29,6 +29,7 @@ part 'create.dart';
 part 'edit_pane.dart';
 part 'network.dart';
 part 'settings.dart';
+part 'snapshots.dart';
 part 'storage.dart';
 
 /// A guest's hardware, and changing it — the design's sectioned edit pane:

@@ -7414,6 +7414,12 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{1 backup} other{{count} backups}}'**
   String virtBackupCount(int count);
 
+  /// Number of snapshots of a guest.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 snapshot} other{{count} snapshots}}'**
+  String virtSnapshotCount(int count);
+
   /// Backup view: no storage on the node accepts backups.
   ///
   /// In en, this message translates to:
@@ -7617,6 +7623,18 @@ abstract class AppLocalizations {
   /// **'This applies to every node of the cluster that has this storage.'**
   String get virtStorageClusterWide;
 
+  /// PVE storage action: turn the storage off in the configuration (a verb, not the state).
+  ///
+  /// In en, this message translates to:
+  /// **'Disable'**
+  String get virtStorageDisable;
+
+  /// PVE storage action: turn the storage back on (a verb, not the state).
+  ///
+  /// In en, this message translates to:
+  /// **'Enable'**
+  String get virtStorageEnable;
+
   /// Confirm disabling a PVE storage.
   ///
   /// In en, this message translates to:
@@ -7778,6 +7796,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A guest uses this volume'**
   String get virtVolInUse;
+
+  /// Storage view: the volumes a base image is the backing file of.
+  ///
+  /// In en, this message translates to:
+  /// **'Backing file of {names}'**
+  String virtVolBackingOf(String names);
+
+  /// Storage view: why a base image cannot be deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Other volumes are made on this one; deleting it would break them'**
+  String get virtVolIsBase;
 
   /// Button: attach a volume to a VM as a disk.
   ///

@@ -4017,6 +4017,11 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String virtSnapshotCount(int count) {
+    return '$count 个';
+  }
+
+  @override
   String get virtBackupNoStorage => '这个节点上没有能存放备份的存储。';
 
   @override
@@ -4137,6 +4142,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtStorageClusterWide => '这会作用于集群中所有配置了该存储的节点。';
 
   @override
+  String get virtStorageDisable => '停用';
+
+  @override
+  String get virtStorageEnable => '启用';
+
+  @override
   String virtStorageDisableAsk(String name) {
     return '停用存储 $name？在重新启用前，磁盘在其上的虚拟机无法启动。';
   }
@@ -4220,6 +4231,14 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtVolInUse => '有虚拟机正在使用此卷';
+
+  @override
+  String virtVolBackingOf(String names) {
+    return '$names 的后备文件';
+  }
+
+  @override
+  String get virtVolIsBase => '有其他卷以此卷为后备文件，删除它会损坏那些卷';
 
   @override
   String get virtVolAttach => '挂载到虚拟机';
@@ -8968,6 +8987,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
+  String virtSnapshotCount(int count) {
+    return '$count 個';
+  }
+
+  @override
   String get virtBackupNoStorage => '這個節點上沒有能存放備份的儲存。';
 
   @override
@@ -9088,6 +9112,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtStorageClusterWide => '這會作用於叢集中所有設定了該儲存的節點。';
 
   @override
+  String get virtStorageDisable => '停用';
+
+  @override
+  String get virtStorageEnable => '啟用';
+
+  @override
   String virtStorageDisableAsk(String name) {
     return '停用儲存 $name？重新啟用前，磁碟在其上的虛擬機器無法啟動。';
   }
@@ -9171,6 +9201,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtVolInUse => '有虛擬機器正在使用此磁碟區';
+
+  @override
+  String virtVolBackingOf(String names) {
+    return '$names 的後備檔案';
+  }
+
+  @override
+  String get virtVolIsBase => '有其他磁碟區以此為後備檔案，刪除它會損壞那些磁碟區';
 
   @override
   String get virtVolAttach => '掛載到虛擬機器';
