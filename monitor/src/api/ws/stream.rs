@@ -33,7 +33,7 @@ use std::rc::Rc;
 use std::sync::Arc;
 
 use ntex::rt::spawn;
-use ntex::service::{fn_factory_with_config, fn_service};
+use ntex::service::{Service, ServiceCtx, fn_factory_with_config};
 use ntex::util::{ByteString, Bytes};
 use ntex::web::ws::{self, CloseCode, Frame, Message};
 
@@ -49,14 +49,10 @@ use super::audit::{self, Action, Event, Kind, Outcome};
 use super::ticket::Purpose;
 use crate::api::server::AppState;
 
-/// How much of the remote's output may queue for a slow client before the
-/// connection is torn down.
-///
-/// Dropping is not an option the way it is for a terminal's scrollback: RDP and
-/// VNC are stateful protocols and a hole in the stream leaves the screen wrong
-/// until something reconnects. So a client that cannot keep up is disconnected,
-/// which is a failure it can see and recover from.
-const OUTPUT_QUEUE: usize = 256;
+/// How many of the client's frames may wait for a target slower than the
+/// client — a disk behind an upload — before the socket stops being read
+/// (see [`Relay::ready`]), which is what holds the client back.
+const TARGET_QUEUE: usize = 256;
 
 const TICKET_PROTOCOL_PREFIX: &str = "sbm-ticket.";
 
@@ -177,10 +173,7 @@ enum Phase {
     Done,
 }
 
-fn handler(
-    ctx: Rc<ConnCtx>,
-    sink: WsSink,
-) -> impl ntex::service::Service<Frame, Response = Option<Message>, Error = web::Error> {
+fn handler(ctx: Rc<ConnCtx>, sink: WsSink) -> Relay {
     let phase = Rc::new(RefCell::new(Phase::Idle));
 
     // The socket going away is what closes the connection: there is no session
@@ -194,29 +187,64 @@ fn handler(
         });
     }
 
-    fn_service(move |frame: Frame| {
-        let ctx = ctx.clone();
-        let sink = sink.clone();
-        let phase = phase.clone();
-        async move {
-            match frame {
-                Frame::Text(data) => Ok(on_control(&ctx, &sink, &phase, &data).await),
-                Frame::Binary(data) => Ok(on_input(&phase, data.to_vec()).await),
-                Frame::Continuation(
-                    Item::FirstBinary(data) | Item::Continue(data) | Item::Last(data),
-                ) => Ok(on_input(&phase, data.to_vec()).await),
-                Frame::Ping(payload) => Ok(Some(Message::Pong(payload))),
-                Frame::Pong(_) => Ok(None),
-                Frame::Close(_) => {
-                    *phase.borrow_mut() = Phase::Done;
-                    Ok(Some(Message::Close(Some(CloseCode::Normal.into()))))
-                }
-                Frame::Continuation(Item::FirstText(_)) => {
-                    Ok(Some(Message::Close(Some(CloseCode::Unsupported.into()))))
-                }
+    Relay { ctx, sink, phase }
+}
+
+/// One socket's frames: control, and bytes for the target.
+struct Relay {
+    ctx: Rc<ConnCtx>,
+    sink: WsSink,
+    phase: Rc<RefCell<Phase>>,
+}
+
+impl Service<Frame> for Relay {
+    type Response = Option<Message>;
+    type Error = web::Error;
+
+    /// Not ready while the queue towards the target is full.
+    ///
+    /// The dispatcher calls this service for every frame without waiting for
+    /// the last call to finish, and stops reading the socket only while this
+    /// says no. Always ready, a target slower than the client — PVE writing an
+    /// uploaded ISO to disk — left a call per frame waiting on the full queue,
+    /// each holding its frame: the upload was read into this process as fast
+    /// as the client could send it, and nothing held the client back.
+    async fn ready(&self, _: ServiceCtx<'_, Self>) -> Result<(), Self::Error> {
+        let sender = match &*self.phase.borrow() {
+            Phase::Running(sender) => Some(sender.clone()),
+            _ => None,
+        };
+        if let Some(sender) = sender {
+            // A permit taken and given back: room for one more. A closed
+            // queue is the call's to report.
+            drop(sender.reserve().await);
+        }
+        Ok(())
+    }
+
+    async fn call(
+        &self,
+        frame: Frame,
+        _: ServiceCtx<'_, Self>,
+    ) -> Result<Self::Response, Self::Error> {
+        let phase = &self.phase;
+        match frame {
+            Frame::Text(data) => Ok(on_control(&self.ctx, &self.sink, phase, &data).await),
+            Frame::Binary(data) => Ok(on_input(phase, data.to_vec()).await),
+            Frame::Continuation(
+                Item::FirstBinary(data) | Item::Continue(data) | Item::Last(data),
+            ) => Ok(on_input(phase, data.to_vec()).await),
+            Frame::Ping(payload) => Ok(Some(Message::Pong(payload))),
+            Frame::Pong(_) => Ok(None),
+            Frame::Close(_) => {
+                *phase.borrow_mut() = Phase::Done;
+                Ok(Some(Message::Close(Some(CloseCode::Normal.into()))))
+            }
+            Frame::Continuation(Item::FirstText(_)) => {
+                Ok(Some(Message::Close(Some(CloseCode::Unsupported.into()))))
             }
         }
-    })
+    }
 }
 
 async fn on_input(phase: &Rc<RefCell<Phase>>, data: Vec<u8>) -> Option<Message> {
@@ -229,9 +257,7 @@ async fn on_input(phase: &Rc<RefCell<Phase>>, data: Vec<u8>) -> Option<Message> 
     };
     match sender {
         Some(sender) => {
-            // A full queue means the remote is producing faster than the
-            // client takes it, which for RDP or VNC is a stream that is already
-            // broken.
+            // Room is what `ready` waited for; a failure is the target gone.
             if sender.send(data).await.is_err() {
                 return Some(ServerMsg::Error {
                     code: "closed",
@@ -311,7 +337,7 @@ async fn open(
     let _ = stream.set_nodelay(true);
 
     let (mut reader, mut writer) = stream.into_split();
-    let (tx, mut rx) = mpsc::channel::<Vec<u8>>(OUTPUT_QUEUE);
+    let (tx, mut rx) = mpsc::channel::<Vec<u8>>(TARGET_QUEUE);
     *phase.borrow_mut() = Phase::Running(tx);
     audit_connect(ctx, host, port, Outcome::Ok).await;
 

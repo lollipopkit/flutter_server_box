@@ -11,6 +11,7 @@ library;
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/monitor_tunnel.dart';
@@ -42,6 +43,10 @@ class _FakeAgent {
   final frames = <int>[];
 
   Uri get url => Uri.parse('http://127.0.0.1:${_server.port}');
+
+  /// Stops reading a connection once it is open: a link that has stopped
+  /// moving, which fills the socket's buffers until the writer is held back.
+  bool stalled = false;
 
   static Future<_FakeAgent> start({String? target}) async {
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
@@ -78,8 +83,13 @@ class _FakeAgent {
       final socket = await WebSocketTransformer.upgrade(
         request,
         protocolSelector: (protocols) => protocols.first,
+        // As the agent's ntex does: no permessage-deflate. With it, what the
+        // socket's buffers hold is compressed, and zeros compress a
+        // thousandfold — backpressure would look absent when it is not.
+        compression: CompressionOptions.compressionOff,
       );
-      socket.listen((frame) {
+      late final StreamSubscription<dynamic> sub;
+      sub = socket.listen((frame) {
         if (frame is String) {
           final msg = jsonDecode(frame) as Map<String, dynamic>;
           if (msg['type'] != 'open') return;
@@ -95,6 +105,7 @@ class _FakeAgent {
             return;
           }
           socket.add(jsonEncode({'type': 'ready'}));
+          if (stalled) sub.pause();
           return;
         }
         // Bytes going the other way are echoed back with a marker, so a test
@@ -230,6 +241,73 @@ void main() {
           0x21,
         ],
       ]);
+    });
+  });
+
+  test('a stream written in goes through whole', () async {
+    final agent = await _FakeAgent.start(target: '127.0.0.1:22');
+    addTearDown(agent.close);
+
+    await realHttp(() async {
+      final channel = await MonitorTunnelChannel.dial(
+        client: _clientFor(agent),
+        remoteHost: '127.0.0.1',
+        remotePort: 22,
+      );
+      addTearDown(channel.close);
+
+      const size = 8 << 20;
+      Stream<List<int>> file() async* {
+        for (var i = 0; i < size; i += 1 << 20) {
+          await Future<void>.delayed(Duration.zero);
+          yield Uint8List(1 << 20);
+        }
+      }
+
+      await channel.sink.addStream(file()).timeout(const Duration(seconds: 10));
+      int received() => agent.frames.fold(0, (a, b) => a + b);
+      for (var i = 0; i < 100 && received() < size; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      }
+      expect(received(), size);
+    });
+  });
+
+  test('a stalled link holds the writer back, and a close stops it', () async {
+    // A large upload through the relay: the file read no faster than the link
+    // takes it, not queued whole in memory, and no more read once the
+    // connection is closed.
+    final agent = await _FakeAgent.start(target: '127.0.0.1:22')
+      ..stalled = true;
+    addTearDown(agent.close);
+
+    await realHttp(() async {
+      final channel = await MonitorTunnelChannel.dial(
+        client: _clientFor(agent),
+        remoteHost: '127.0.0.1',
+        remotePort: 22,
+      );
+      addTearDown(channel.close);
+
+      var read = 0;
+      // A file's reads are I/O, each a turn of the event loop — where the
+      // socket gets to say it is full.
+      Stream<List<int>> file() async* {
+        for (var i = 0; i < 4096; i++) {
+          await Future<void>.delayed(Duration.zero);
+          read += 1 << 20;
+          yield Uint8List(1 << 20);
+        }
+      }
+
+      unawaited(channel.sink.addStream(file()).catchError((_) {}));
+      await Future<void>.delayed(const Duration(seconds: 2));
+      expect(read, lessThan(64 << 20), reason: 'no more than the buffers hold');
+
+      await channel.close();
+      final atClose = read;
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+      expect(read, lessThanOrEqualTo(atClose + (1 << 20)));
     });
   });
 

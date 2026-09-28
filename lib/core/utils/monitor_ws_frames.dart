@@ -14,8 +14,13 @@ const monitorWsMaxFrameBytes = 64 * 1024;
 /// [monitorWsMaxFrameBytes]: a write is whatever the other end wrote at once
 /// — an SSH client's upload, an HTTP body, a paste.
 void monitorWsAddBinary(WebSocket socket, List<int> data) {
+  monitorWsFrames(data).forEach(socket.add);
+}
+
+/// [data] as the Binary frames [monitorWsAddBinary] sends.
+Iterable<List<int>> monitorWsFrames(List<int> data) sync* {
   for (var at = 0; at < data.length; at += monitorWsMaxFrameBytes) {
     final end = min(at + monitorWsMaxFrameBytes, data.length);
-    socket.add(at == 0 && end == data.length ? data : data.sublist(at, end));
+    yield at == 0 && end == data.length ? data : data.sublist(at, end);
   }
 }

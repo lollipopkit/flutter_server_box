@@ -35,6 +35,16 @@ class MonitorTunnelChannel implements SshTunnelChannel {
 
   bool _finished = false;
 
+  /// The Binary frames out, bound to the socket once (`addStream`): the one
+  /// way into a dart:io WebSocket that is paced by the connection. `add`
+  /// queues without limit — a 2 GiB upload was read into memory as fast as
+  /// the disk gave it, and a cancel left what was queued still going out.
+  StreamController<List<int>>? _out;
+  Future<void>? _bound;
+
+  /// What [_DirectSink.addStream] is reading: paused while [_out] is.
+  StreamSubscription<List<int>>? _source;
+
   /// The socket's close, started once and awaited by [close].
   ///
   /// Held rather than called twice: `_finish` reaches the close from paths that
@@ -84,13 +94,14 @@ class MonitorTunnelChannel implements SshTunnelChannel {
   /// and the shell's habit of queueing a paste would only make a stalled link
   /// hold stale input.
   @override
-  StreamSink<List<int>> get sink => _DirectSink(_write);
+  StreamSink<List<int>> get sink => _DirectSink(_write, _addStream);
 
+  /// Ends it at once — nothing more is read or written — and waits a little
+  /// for the socket to close behind it, not for a stalled link to drain.
   @override
   Future<void> close() async {
     _finish();
-    final closing = _closing;
-    if (closing != null) await closing;
+    await _closing?.timeout(const Duration(seconds: 5), onTimeout: () {});
   }
 
   /// Ends the connection: the stream ends, a waiting handshake is refused, and
@@ -109,7 +120,22 @@ class MonitorTunnelChannel implements SshTunnelChannel {
     // drained, and a connection that was opened and abandoned has no listener —
     // which hung every teardown waiting on it. Readers still see the stream end.
     if (!_data.isClosed) unawaited(_data.close());
-    _closing ??= _socket.close().catchError((_) {});
+    // What was still to be read is not: a cancelled upload stops here, with
+    // at most a frame or two queued behind it.
+    unawaited(_source?.cancel());
+    _source = null;
+    final out = _out;
+    if (out != null && !out.isClosed) unawaited(out.close());
+    // A WebSocket cannot close while bound, and dart:io has no way to abort
+    // one: what was already queued — a frame or two here, the agent's own
+    // bounded queue behind it — goes out at the link's pace first. A link
+    // that is gone ends the bind with its error.
+    _closing ??= () async {
+      try {
+        await _bound;
+        await _socket.close();
+      } catch (_) {}
+    }();
     if (!_ready.isCompleted) {
       // A close before `ready` is the failure this channel reports; a caller
       // waiting on the handshake must not be left waiting for a socket that
@@ -174,14 +200,54 @@ class MonitorTunnelChannel implements SshTunnelChannel {
     }
   }
 
-  void _write(List<int> data) {
-    if (_finished || data.isEmpty) return;
-    try {
-      monitorWsAddBinary(_socket, data);
-    } catch (e, s) {
+  /// [_out], made and bound on the first write — after the `open` request,
+  /// which went straight to the socket.
+  StreamController<List<int>> _outgoing() {
+    final existing = _out;
+    if (existing != null) return existing;
+    final out = StreamController<List<int>>(
+      onPause: () => _source?.pause(),
+      onResume: () => _source?.resume(),
+    );
+    _out = out;
+    _bound = _socket.addStream(out.stream).catchError((Object e, StackTrace s) {
       Loggers.app.warning('Monitor stream write failed', e, s);
       _finish();
-    }
+    });
+    return out;
+  }
+
+  void _write(List<int> data) {
+    if (_finished || data.isEmpty) return;
+    final out = _outgoing();
+    if (out.isClosed) return;
+    monitorWsFrames(data).forEach(out.add);
+  }
+
+  /// Reads [stream] into the connection no faster than the connection takes
+  /// it: paused whenever [_out] is.
+  Future<void> _addStream(Stream<List<int>> stream) {
+    if (_finished) return Future<void>.value();
+    final out = _outgoing();
+    final done = Completer<void>();
+    final sub = stream.listen(
+      _write,
+      onError: (Object e, StackTrace s) {
+        if (!done.isCompleted) done.completeError(e, s);
+      },
+      onDone: () {
+        if (!done.isCompleted) done.complete();
+      },
+      cancelOnError: true,
+    );
+    _source = sub;
+    // Held back from the start only by a connection that is: a controller
+    // with no listener yet also reads as paused, and the socket's listening
+    // is `onListen`, which would never resume it.
+    if (out.hasListener && out.isPaused) sub.pause();
+    return done.future.whenComplete(() {
+      if (identical(_source, sub)) _source = null;
+    });
   }
 }
 
@@ -191,9 +257,10 @@ class MonitorTunnelChannel implements SshTunnelChannel {
 /// buffer for: a websocket frame either goes or the connection has failed, and
 /// pretending otherwise would make the failure arrive late.
 class _DirectSink implements StreamSink<List<int>> {
-  _DirectSink(this._write);
+  _DirectSink(this._write, this._addStream);
 
   final void Function(List<int>) _write;
+  final Future<void> Function(Stream<List<int>>) _addStream;
 
   @override
   void add(List<int> event) => _write(event);
@@ -202,9 +269,9 @@ class _DirectSink implements StreamSink<List<int>> {
   void addError(Object error, [StackTrace? stackTrace]) =>
       Loggers.app.warning('Monitor stream sink error', error, stackTrace);
 
+  /// Paced by the connection — see [MonitorTunnelChannel._out].
   @override
-  Future<void> addStream(Stream<List<int>> stream) =>
-      stream.forEach(_write);
+  Future<void> addStream(Stream<List<int>> stream) => _addStream(stream);
 
   @override
   Future<void> close() async {}
