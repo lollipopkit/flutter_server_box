@@ -1,5 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:server_box/data/res/store.dart';
 
 /// How wide the list is in every list-beside-content layout in the app.

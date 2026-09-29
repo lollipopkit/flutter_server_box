@@ -10,11 +10,11 @@ library;
 import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:fl_lib/generated/l10n/lib_l10n.dart';
 import 'package:flutter/gestures.dart' show PointerDeviceKind, kDoubleTapTimeout;
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/provider/remote_desktop.dart';
 import 'package:server_box/data/res/store.dart';
@@ -99,8 +99,7 @@ Future<void> _pumpViewer(WidgetTester tester, _RecordingSessions sessions) =>
         overrides: [remoteDesktopSessionsProvider.overrideWith(() => sessions)],
         child: MaterialApp(
           localizationsDelegates: const [
-            LibLocalizations.delegate,
-            ...AppLocalizations.localizationsDelegates,
+            ...appLocalizationsDelegates,
           ],
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(body: RemoteDesktopViewer(sessionId: _profile.id)),

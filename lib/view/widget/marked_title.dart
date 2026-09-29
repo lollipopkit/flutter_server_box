@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// [text] with a [mark] after it — a `BetaTag` — or [text] alone.
 ///

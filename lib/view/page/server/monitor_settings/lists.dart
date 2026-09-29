@@ -13,8 +13,8 @@
 library;
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/monitor_push.dart';
 import 'package:server_box/data/model/server/monitor_settings.dart';

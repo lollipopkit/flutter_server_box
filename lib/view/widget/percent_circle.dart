@@ -1,6 +1,6 @@
 import 'package:circle_chart/circle_chart.dart';
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 final class PercentCircle extends StatelessWidget {
   final double percent;

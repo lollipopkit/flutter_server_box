@@ -2,7 +2,7 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:server_box/data/model/server/geo.dart';
 import 'package:server_box/view/widget/globe/land.dart';
 import 'package:server_box/view/widget/globe/projection.dart';

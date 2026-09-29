@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// The heading over a group of rows: a name, a rule to where the group ends,
 /// and optionally what the group currently says.

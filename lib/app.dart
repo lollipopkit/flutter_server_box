@@ -4,10 +4,9 @@ import 'dart:math' as math;
 
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_lib/fl_lib.dart';
-import 'package:fl_lib/generated/l10n/lib_l10n.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
@@ -182,15 +181,19 @@ class _MyAppState extends State<MyApp> {
         //
         // Under [MotionScope], which says for everything below whether the
         // app moves less — see [AppMotion].
-        return MotionScope(
-          child: ThemeSplashGate(child: AppBackground(child: content)),
+        // TODO: remove once the dependencies below that still import
+        // package:flutter/material.dart migrate to material_ui (#1591). It
+        // hands them the theme and localizations, which they look up by the
+        // legacy types.
+        // ignore: deprecated_member_use
+        return MaterialUiCompatibilityBridge(
+          child: MotionScope(
+            child: ThemeSplashGate(child: AppBackground(child: content)),
+          ),
         );
       },
       locale: locale,
-      localizationsDelegates: const [
-        LibLocalizations.delegate,
-        ...AppLocalizations.localizationsDelegates,
-      ],
+      localizationsDelegates: appLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       localeListResolutionCallback: LocaleUtil.resolve,
       navigatorObservers: [AppRouteObserver.instance],

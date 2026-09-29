@@ -10,10 +10,9 @@ library;
 import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:fl_lib/generated/l10n/lib_l10n.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:redfish/redfish.dart' show CertInfo;
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/data/model/app/error.dart';
@@ -315,8 +314,7 @@ void main() {
         container: container,
         child: MaterialApp(
           localizationsDelegates: const [
-            LibLocalizations.delegate,
-            ...AppLocalizations.localizationsDelegates,
+            ...app_locale.appLocalizationsDelegates,
           ],
           supportedLocales: AppLocalizations.supportedLocales,
           builder: ResponsivePoints.builder,

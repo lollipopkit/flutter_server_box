@@ -10,9 +10,9 @@ library;
 import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/provider/ai/agent_session.dart';
 import 'package:server_box/data/provider/ai/ask_ai.dart';
@@ -228,7 +228,6 @@ class _AgentCommandPreviewState extends State<AgentCommandPreview> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return ConstrainedBox(
       constraints: BoxConstraints(
         maxHeight: askAiCommandPreviewMaxHeightFor(
@@ -247,7 +246,8 @@ class _AgentCommandPreviewState extends State<AgentCommandPreview> {
             // A command is read to be checked, and checking it includes
             // copying it somewhere else. The default here is not selectable.
             selectable: true,
-            styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
+            // Merged over `MarkdownStyleSheet.fromTheme` by `MarkdownBody`.
+            styleSheet: MarkdownStyleSheet(
               code: widget.style ?? const TextStyle(fontFamily: 'monospace'),
               codeblockDecoration: const BoxDecoration(),
               codeblockPadding: EdgeInsets.zero,

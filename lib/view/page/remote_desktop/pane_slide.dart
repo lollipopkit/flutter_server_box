@@ -1,16 +1,5 @@
-import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
-import 'package:flutter/material.dart';
-
-const _pageTransitions = PageTransitionsTheme(
-  builders: {
-    TargetPlatform.android: CupertinoPageTransitionsBuilder(),
-    TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-    TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
-    TargetPlatform.windows: CupertinoPageTransitionsBuilder(),
-    TargetPlatform.linux: CupertinoPageTransitionsBuilder(),
-    TargetPlatform.fuchsia: CupertinoPageTransitionsBuilder(),
-  },
-);
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/view/widget/app_background.dart';
 
 class RemoteDesktopPaneSlide extends StatelessWidget {
   const RemoteDesktopPaneSlide({super.key, required this.child});
@@ -18,8 +7,15 @@ class RemoteDesktopPaneSlide extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) => Theme(
-    data: Theme.of(context).copyWith(pageTransitionsTheme: _pageTransitions),
-    child: child,
-  );
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Theme(
+      data: theme.copyWith(
+        pageTransitionsTheme: AppPageTransitions.paneSlide(
+          theme.pageTransitionsTheme,
+        ),
+      ),
+      child: child,
+    );
+  }
 }
