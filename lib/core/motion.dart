@@ -28,7 +28,7 @@ abstract final class AppMotion {
 
   /// The app's preference, cached for [AppBinding], which is asked on every
   /// animation start and has to answer before the settings are open.
-  static final _pref = ValueNotifier(MotionPref.system);
+  static final _pref = ValueNotifier(MotionPref.full);
   static MotionPref get pref => _pref.value;
 
   /// Either of the two having changed.

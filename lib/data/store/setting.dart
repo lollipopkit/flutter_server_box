@@ -155,10 +155,11 @@ class SettingStore extends SqliteStore {
   late final themeMode = propertyDefault('themeMode', 0);
 
   /// Whether the app moves less than it would, over what the device asks —
-  /// see [MotionPref].
+  /// see [MotionPref]. Full motion unless the user turns it down here: the
+  /// app's own transitions are its design, whatever the device asks.
   late final motionPref = propertyDefault(
     'motionPref',
-    MotionPref.system,
+    MotionPref.full,
     fromObj: MotionPref.parse,
     toObj: (pref) => pref?.name,
   );
