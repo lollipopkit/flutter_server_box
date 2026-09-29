@@ -120,8 +120,12 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
-    kotlinOptions {
-        jvmTarget = '1.8'
+    // Per module since AGP 9, which dropped the project-wide defaults.
+    // BuildConfig for `ImpellerCompatibility`; resValues for the per-build-type
+    // `app_name` set in the root build.gradle.
+    buildFeatures {
+        buildConfig = true
+        resValues = true
     }
 
     sourceSets {
@@ -165,7 +169,8 @@ android {
             // With allowUnsignedRelease no signingConfig is assigned. F-Droid
             // and the reproducibility workflow compare the unsigned APK.
             minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // `-optimize`: AGP 9 refuses the unoptimized default file.
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
 
             // Native crashes reach us as a tombstone full of addresses. Without
             // symbols kept somewhere, `crash_native` is as far as a report can
@@ -203,6 +208,12 @@ android {
     }
 }
 
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8
+    }
+}
+
 flutter {
     source '../..'
 }
@@ -215,6 +226,11 @@ dependencies {
 
 ext.abiCodes = ["x86_64": 1, "armeabi-v7a": 2, "arm64-v8a": 3]
 import com.android.build.OutputFile
+// Through the legacy variant API on purpose, and it has to stay that way until
+// Flutter's own Gradle plugin moves: it sets `versionCodeOverride` on the same
+// outputs (`<abi> * 1000 + <build>`), and only a later write of the same kind
+// replaces it. A value set through `androidComponents` is overwritten.
+// TODO: move to `androidComponents` with flutter/flutter#166550.
 android.applicationVariants.all { variant ->
   variant.outputs.each { output ->
     def abiVersionCode = project.ext.abiCodes.get(output.getFilter(OutputFile.ABI))
