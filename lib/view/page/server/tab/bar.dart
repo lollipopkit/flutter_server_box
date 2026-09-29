@@ -73,7 +73,11 @@ extension _Bar on _ServerPageState {
     final spi = ref.read(serversProvider).servers[openId];
     if (spi == null) return const [];
     return [
-      for (final action in ServerPageAction.of(context, spi))
+      for (final action in ServerPageAction.of(
+        context,
+        spi,
+        onDeleted: _closeDetail,
+      ))
         Btn.icon(
           text: action.label,
           icon: Icon(action.icon, size: 18),
