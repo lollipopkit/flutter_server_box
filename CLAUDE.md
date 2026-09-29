@@ -92,6 +92,7 @@ A server is reached over SSH, a `monitor` agent's HTTP API, both, or is this dev
 
 - A dialog's buttons close the dialog; the page is closed by the code that awaited it. `showRoundDialog` uses the root navigator, so `context.pop()` from a dialog closes the page instead. Use `context.popDialog()`, or let `Btn.ok`/`Btnx.cancelOk` return a value.
 - **Trap: `Btn.ok(onTap: f)`** — `f` must pop the dialog itself (same for `Input.onSubmitted` in a dialog). First-pass greps: `rg -U 'showRoundDialog[\s\S]*?context\.pop\(' lib`, `rg -n 'Btnx?\.\w+\(onTap:' lib`.
+- **Trap: a page that embeds `SSHPage`** (the virt text console) inherits its `PopScope(canPop: false)`, which turns every pop *request* into Esc for the terminal. A plain `BackButton()` asks (`maybePop`), so it types `^[` and never leaves: give it `onPressed: () => context.pop()`, as `SSHPage`'s own bar and `VirtGuestPage` do. The system back gesture stays Esc on purpose.
 
 ## Feature notes
 
