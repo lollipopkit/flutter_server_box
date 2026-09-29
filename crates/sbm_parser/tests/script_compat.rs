@@ -1211,6 +1211,7 @@ fn windows_custom_commands_have_time_and_output_bounds() {
         }
         std::thread::sleep(Duration::from_millis(50));
     };
+    let elapsed = started.elapsed();
     let stdout = stdout_reader.join().unwrap();
     let stderr = stderr_reader.join().unwrap();
     std::fs::remove_dir_all(&home).ok();
@@ -1221,10 +1222,23 @@ fn windows_custom_commands_have_time_and_output_bounds() {
         String::from_utf8_lossy(&stderr)
     );
     let parsed = parse_script_output(&String::from_utf8(stdout).unwrap());
-    assert_eq!(
-        parsed[&script::custom_result_key("large")].len(),
-        script::CUSTOM_CMD_MAX_OUTPUT_BYTES
-    );
+    let large = &parsed[&script::custom_result_key("large")];
+    // The size bound, unless the time bound fired first. A hosted runner can
+    // spend most of `large`'s five seconds starting its nested PowerShell and
+    // be killed at the deadline with part of the output written (#1589: 57 600
+    // bytes). That is the time bound working, and it is only acceptable when
+    // `large` did use its whole deadline: `slow` always does, so the run then
+    // took at least ten seconds. A short output in less is a real truncation.
+    if large.len() < script::CUSTOM_CMD_MAX_OUTPUT_BYTES {
+        assert!(
+            elapsed >= Duration::from_secs(10),
+            "`large` was cut to {} bytes in {elapsed:?}, before its deadline",
+            large.len()
+        );
+        assert!(large.bytes().all(|b| b == b'x'));
+    } else {
+        assert_eq!(large.len(), script::CUSTOM_CMD_MAX_OUTPUT_BYTES);
+    }
     assert_eq!(parsed[&script::custom_result_key("slow")], "");
 }
 
