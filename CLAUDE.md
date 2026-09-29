@@ -16,6 +16,7 @@ Flutter app for managing servers, in a Rust workspace monorepo. Feature-specific
 ### Testing
 
 - `flutter test` (`make test-one TEST=...`), `cargo test --workspace`. Use `--timeout 30s`.
+- Android's Kotlin: JVM unit tests in `android/app/src/test`, `./gradlew :app:testDebugUnitTest` from `android/` (CI: `Android unit tests`, on `android/` changes).
 - `test/unit/` is split by **feature**, not layer (`ssh/`, `terminal/`, `file/`, `server/`, `virt/`, `store/`, `monitor/`, `app/`, …). `store/` is storage infrastructure only; `app/` is what belongs to no feature. Helpers: `test/helpers/`.
 - Opt-in e2e, silently skipped when unset:
   - SSH: `SBM_E2E_SSH_HOST` in the root `.env`, then `cargo test -p sbm_parser --test ssh_e2e -- --ignored`.

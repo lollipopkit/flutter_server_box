@@ -18,6 +18,7 @@ import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import android.appwidget.AppWidgetManager
+import tech.lolli.toolbox.linux.LinuxDocumentsProvider
 import tech.lolli.toolbox.widget.HomeWidget
 import tech.lolli.toolbox.widget.WidgetStore
 
@@ -140,6 +141,10 @@ class MainActivity: FlutterFragmentActivity() {
                     // scripts/build-proot-android.sh.
                     "nativeLibDir" -> {
                         result.success(applicationInfo.nativeLibraryDir)
+                    }
+                    "linuxSystemsChanged" -> {
+                        LinuxDocumentsProvider.notifyRootsChanged(this)
+                        result.success(null)
                     }
                     "isServiceRunning" -> {
                         result.success(ForegroundService.isRunning)

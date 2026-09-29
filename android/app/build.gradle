@@ -126,6 +126,7 @@ android {
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
+        test.java.srcDirs += 'src/test/kotlin'
     }
 
     defaultConfig {
@@ -206,7 +207,11 @@ flutter {
     source '../..'
 }
 
-dependencies {}
+dependencies {
+    // JVM unit tests only (`./gradlew :app:testDebugUnitTest`); nothing here
+    // reaches the APK.
+    testImplementation 'junit:junit:4.13.2'
+}
 
 ext.abiCodes = ["x86_64": 1, "armeabi-v7a": 2, "arm64-v8a": 3]
 import com.android.build.OutputFile

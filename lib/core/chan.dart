@@ -21,6 +21,17 @@ abstract final class MethodChans {
     }
   }
 
+  /// Tells the system file picker the installed Linux systems changed, so the
+  /// roots it lists for them follow (`LinuxDocumentsProvider`).
+  static Future<void> linuxSystemsChanged() async {
+    if (!isAndroid) return;
+    try {
+      await _channel.invokeMethod('linuxSystemsChanged');
+    } catch (e, s) {
+      Loggers.app.warning('linuxSystemsChanged', e, s);
+    }
+  }
+
   /// Stops Android's terminal foreground service after its queued starts have
   /// been handled.
   static Future<void> stopService() async {
