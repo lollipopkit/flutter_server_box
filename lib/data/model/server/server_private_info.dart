@@ -336,11 +336,15 @@ extension Spix on Spi {
   String toJsonString() => json.encode(toJson());
 
   /// Returns true if the connection info is the same as [other].
+  ///
+  /// With no SSH on either side, the monitor agent's address: comparing only
+  /// the SSH credentials answered true for any two monitor-only servers. The
+  /// one local server has neither, and is the same as itself.
   bool isSameAs(Spi other) {
     if (local != other.local) return false;
     final a = ssh, b = other.ssh;
-    if (a == null || b == null) return a == b;
-    return a.isSameAs(b);
+    if (a != null || b != null) return a != null && a.isSameAs(b);
+    return monitorHttp?.addr == other.monitorHttp?.addr;
   }
 
   /// Returns true if the connection should be re-established.
