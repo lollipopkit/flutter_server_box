@@ -217,12 +217,14 @@ extension _VirtKey on SSHPageState {
 
   void _initVirtKeys() {
     _virtKeysList.clear();
+    _virtKeysUnavailable.clear();
     final disabled = Stores.setting.sshVirtKeysDisabled.fetch().toSet();
-    // Filtered by what this session can do, not only by what the user hid.
-    // Read from the server behind the terminal rather than from a connection
-    // that may not be up yet: both questions are settled before the first key
-    // is drawn, and a key that appeared once something connected would be a
-    // strip rearranging itself under the user's thumb.
+    // What the user hid is left out; what this session cannot do is drawn
+    // disabled in its place, so the strip is laid out the same on every
+    // server. Read from the server behind the terminal rather than from a
+    // connection that may not be up yet: both questions are settled before the
+    // first key is drawn, and a key that changed once something connected
+    // would be a strip changing under the user's thumb.
     final spi = widget.args.spi;
     // The grant, not the transport: `_connectBackend` asks the same provider
     // for the same field, so whether this shell will be the agent's is known
@@ -236,8 +238,12 @@ extension _VirtKey on SSHPageState {
         );
     final virtKeys = VirtKeyX.loadFromStore()
         .where((key) => !disabled.contains(key.name))
-        .where((key) => key.worksOn(spi, shellUsesAgent: shellUsesAgent))
         .toList();
+    _virtKeysUnavailable.addAll(
+      virtKeys.where(
+        (key) => !key.worksOn(spi, shellUsesAgent: shellUsesAgent),
+      ),
+    );
     for (var at = 0; at < virtKeys.length; at += kVirtKeysPerRow) {
       _virtKeysList.add(
         virtKeys.sublist(at, math.min(at + kVirtKeysPerRow, virtKeys.length)),

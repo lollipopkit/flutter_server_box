@@ -244,6 +244,11 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   late final TerminalController _terminalController = TerminalController();
   final List<List<VirtKey>> _virtKeysList = [];
+
+  /// The keys this session cannot use — see [VirtKeyX.worksOn]. Drawn
+  /// disabled in their place rather than left out: a key left out moved every
+  /// one after it, and the last row came up a key short of the others.
+  final Set<VirtKey> _virtKeysUnavailable = {};
   late final _termKey =
       widget.args.terminalKey ?? GlobalKey<TerminalViewState>();
 
@@ -1032,18 +1037,19 @@ class SSHPageState extends ConsumerState<SSHPage>
     // The row itself is never dimmed — it is the thing being pointed at.
     final group = _introGroup;
     final lit = group == null || item.group == group;
+    final available = !_virtKeysUnavailable.contains(item);
 
     return InkWell(
-      onTap: () => _doVirtualKey(item, virtKeyNotifier),
+      onTap: available ? () => _doVirtualKey(item, virtKeyNotifier) : null,
       // Held rather than tapped, and only where there is something to say —
       // null otherwise, so a key with no help does not answer a hold with a
       // splash and nothing else. The arrows are out either way: a hold there
       // repeats the key, and their label is already the whole answer.
-      onLongPress: item.canLongPress || item.help == null
+      onLongPress: !available || item.canLongPress || item.help == null
           ? null
           : () => _showVirtKeyHelp(item),
       onTapDown: (details) {
-        if (item.canLongPress) {
+        if (available && item.canLongPress) {
           _virtKeyLongPressTimer = Timer.periodic(
             const Duration(milliseconds: 137),
             (_) => _doVirtualKey(item, virtKeyNotifier),
@@ -1053,7 +1059,11 @@ class SSHPageState extends ConsumerState<SSHPage>
       onTapCancel: () => _virtKeyLongPressTimer?.cancel(),
       onTapUp: (_) => _virtKeyLongPressTimer?.cancel(),
       child: AnimatedOpacity(
-        opacity: lit ? 1 : 0.25,
+        opacity: !lit
+            ? 0.25
+            : available
+            ? 1
+            : 0.38,
         duration: Durations.medium1,
         curve: Curves.easeOut,
         child: SizedBox(

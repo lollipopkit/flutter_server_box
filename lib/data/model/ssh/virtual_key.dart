@@ -198,7 +198,8 @@ extension VirtKeyX on VirtKey {
   ///
   /// Four of these keys act on a *server*, and on a shell that is not on one
   /// they returned without a word: the strip drew them, they took a tap, and
-  /// nothing happened. Answered here beside the rest of what a key is, rather
+  /// nothing happened. The strip now draws them disabled. Answered here beside
+  /// the rest of what a key is, rather
   /// than in the page that draws them, so the toolbar and the strip cannot
   /// come to different conclusions about the same button.
   bool worksOn(Spi? spi, {bool shellUsesAgent = false}) => switch (this) {
