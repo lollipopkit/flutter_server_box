@@ -25,6 +25,7 @@ import 'package:server_box/core/utils/rootfs.dart';
 import 'package:server_box/core/utils/rootfs_manifest_source.dart';
 import 'package:server_box/core/utils/sandbox_import.dart';
 import 'package:server_box/core/utils/ssh_native_crypto.dart';
+import 'package:server_box/core/utils/stored_path.dart';
 import 'package:server_box/data/model/ai/model_context.dart';
 import 'package:server_box/data/model/server/dist_license.dart';
 import 'package:server_box/data/res/build_data.dart';
@@ -258,6 +259,9 @@ Future<void> _initData() async {
   await _doDbMigrate();
 
   if (Stores.setting.betaTest.fetch()) AppUpdate.chan = AppUpdateChan.beta;
+
+  // Before the fonts and the theme read the paths it fixes.
+  StoredPaths.repair();
 
   // Not awaited: only the terminal uses it, and a broken font file is the
   // user's, not a defect to report.
