@@ -5330,4 +5330,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get reduceMotion => 'Hərəkəti azalt';
+
+  @override
+  String get copyLink => 'Keçidi kopyala';
 }

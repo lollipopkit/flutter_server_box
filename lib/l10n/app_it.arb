@@ -1497,5 +1497,6 @@
   "virtBackupPlanNew": "Nuovo piano",
   "virtBackupPlanNewTip": "Una pianificazione che esegue il backup solo di questo guest.",
   "virtBackupPlanOthers": "{count, plural, =0{Nessun altro guest} =1{Esegue il backup anche di 1 altro guest} other{Esegue il backup anche di altri {count} guest}}",
-  "reduceMotion": "Riduci movimento"
+  "reduceMotion": "Riduci movimento",
+  "copyLink": "Copia link"
 }

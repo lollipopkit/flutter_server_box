@@ -5368,4 +5368,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reduceMotion => 'Уменьшение движения';
+
+  @override
+  String get copyLink => 'Копировать ссылку';
 }

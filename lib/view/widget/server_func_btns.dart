@@ -488,44 +488,8 @@ void runServerFunc(
         if (snippets == null || snippets.isEmpty) return;
         final snippet = snippets.firstOrNull;
         if (snippet == null) return;
-        final fmted = snippet.fmtWithSpi(spi);
-        final sure = await context.showRoundDialog<bool>(
-          title: libL10n.attention,
-          child: SingleChildScrollView(
-            child: SimpleMarkdown(data: '```shell\n$fmted\n```'),
-          ),
-          actions: [
-            CountDownBtn(
-              onTap: () => context.popDialog(true),
-              text: libL10n.run,
-              afterColor: Colors.red,
-            ),
-          ],
-        );
-        if (sure != true) return;
         if (!context.mounted) return;
-        // Run here rather than on a page pushed over this one: a snippet is
-        // usually one command, and watching it finish should not mean leaving
-        // the server you are looking at. No pre-check — the dialog connects
-        // and reports its own failures, the same as tapping
-        // [ServerFuncBtn.terminal].
-        final session = await showSnippetRun(
-          context,
-          ref,
-          spi: spi,
-          snippet: snippet,
-        );
-        // Answered "carry on with it": the shell and everything it printed
-        // move to a tab, still connected.
-        if (session == null) return;
-        // Nowhere left to send it. Hanging up beats leaving a shell running
-        // with nothing that can ever show it again.
-        if (!context.mounted) {
-          session.close();
-          return;
-        }
-        ref.read(terminalRequestsProvider.notifier).add(spi, session: session);
-        ref.read(homeTabRequestProvider.notifier).go(AppTab.ssh);
+        await confirmAndRunSnippet(context, ref, spi, snippet);
         break;
       case ServerFuncBtn.container:
         if (!await _ensureExec(context, spi.id, ref)) return;
@@ -948,3 +912,54 @@ case "\$TERMINAL" in
     *) exec "\$TERMINAL" -e "\$@" ;;
 esac
 ''';
+
+/// Shows [snippet] as it will run on [spi], and runs it only once the user
+/// confirms — behind a countdown, since this is what a `serverbox://` link
+/// reaches too, and a link can come from anywhere.
+///
+/// The function row picks the snippet first; a link names it.
+Future<void> confirmAndRunSnippet(
+  BuildContext context,
+  WidgetRef ref,
+  Spi spi,
+  Snippet snippet,
+) async {
+  final fmted = snippet.fmtWithSpi(spi);
+  final sure = await context.showRoundDialog<bool>(
+    title: libL10n.attention,
+    child: SingleChildScrollView(
+      child: SimpleMarkdown(data: '```shell\n$fmted\n```'),
+    ),
+    actions: [
+      CountDownBtn(
+        onTap: () => context.popDialog(true),
+        text: libL10n.run,
+        afterColor: Colors.red,
+      ),
+    ],
+  );
+  if (sure != true) return;
+  if (!context.mounted) return;
+  // Run here rather than on a page pushed over this one: a snippet is
+  // usually one command, and watching it finish should not mean leaving
+  // the server you are looking at. No pre-check — the dialog connects
+  // and reports its own failures, the same as tapping
+  // [ServerFuncBtn.terminal].
+  final session = await showSnippetRun(
+    context,
+    ref,
+    spi: spi,
+    snippet: snippet,
+  );
+  // Answered "carry on with it": the shell and everything it printed
+  // move to a tab, still connected.
+  if (session == null) return;
+  // Nowhere left to send it. Hanging up beats leaving a shell running
+  // with nothing that can ever show it again.
+  if (!context.mounted) {
+    session.close();
+    return;
+  }
+  ref.read(terminalRequestsProvider.notifier).add(spi, session: session);
+  ref.read(homeTabRequestProvider.notifier).go(AppTab.ssh);
+}

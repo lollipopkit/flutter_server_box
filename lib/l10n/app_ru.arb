@@ -1497,5 +1497,6 @@
   "virtBackupPlanNew": "Новый план",
   "virtBackupPlanNewTip": "Расписание, по которому копируется только этот гостевой хост.",
   "virtBackupPlanOthers": "{count, plural, =0{Других гостей нет} one{Также копирует ещё {count} гостя} few{Также копирует ещё {count} гостей} other{Также копирует ещё {count} гостей}}",
-  "reduceMotion": "Уменьшение движения"
+  "reduceMotion": "Уменьшение движения",
+  "copyLink": "Копировать ссылку"
 }

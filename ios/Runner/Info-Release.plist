@@ -35,6 +35,25 @@
 		<false />
 		<key>LSRequiresIPhoneOS</key>
 		<true />
+		<!-- Off, or Flutter pushes every link it sees as a route name onto a
+		     navigator that has no generator for one. `IncomingShare` takes
+		     links in instead. -->
+		<key>FlutterDeepLinkingEnabled</key>
+		<false/>
+		<!-- `serverbox://` links: see `AppLink` in lib/data/model/app/app_link.dart. -->
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleTypeRole</key>
+				<string>Viewer</string>
+				<key>CFBundleURLName</key>
+				<string>tech.lolli.toolbox</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>serverbox</string>
+				</array>
+			</dict>
+		</array>
 		<key>CFBundleDocumentTypes</key>
 		<array>
 			<dict>

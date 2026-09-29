@@ -26,6 +26,7 @@ import 'package:server_box/view/page/home_tab.dart';
 import 'package:server_box/view/page/macos_menu_bar.dart';
 import 'package:server_box/view/page/setting/entries/home_tabs.dart';
 import 'package:server_box/view/page/setting/entry.dart';
+import 'package:server_box/view/widget/app_link.dart';
 import 'package:server_box/view/widget/dmg_notice.dart';
 import 'package:server_box/view/widget/legacy_status_notice.dart';
 import 'package:server_box/view/widget/nav_rail.dart';
@@ -75,15 +76,15 @@ class _HomePageState extends ConsumerState<HomePage>
   DateTime? _pausedTime;
   int _serverRefreshCycle = 0;
 
-  /// Guards against two of [_HomePageLifecycle._consumePendingShare] being up
-  /// at once.
+  /// Guards against two of [_HomePageLifecycle._consumePending] being up at
+  /// once.
   ///
   /// The launch path and a resume can both fire while the first is still
   /// waiting on the passphrase dialog, and `takeOpenedShare` clearing the
   /// native side is not enough on its own — the second call would find nothing
   /// and return, but only after the first had already been asked twice on
   /// platforms where opening a file also resumes the app.
-  var _consumingShare = false;
+  var _consumingPending = false;
 
   /// The lock screen currently up, if any. See where it is assigned.
   Future<void>? _authed;
@@ -204,9 +205,9 @@ class _HomePageState extends ConsumerState<HomePage>
     super.initState();
     SystemUIs.switchStatusBar(hide: false);
     WidgetsBinding.instance.addObserver(this);
-    // The one way in the lifecycle cannot report: a file opened into an app
-    // that never left the foreground. See [MethodChans.onShareOpened].
-    MethodChans.onShareOpened(() => unawaited(_consumePendingShare()));
+    // The one way in the lifecycle cannot report: a file or link opened into
+    // an app that never left the foreground. See [MethodChans.onOpened].
+    MethodChans.onOpened(() => unawaited(_consumePending()));
     // avoid index out of range
     if (_selectIndex.value >= _tabs.length || _selectIndex.value < 0) {
       _selectIndex.value = 0;
@@ -326,7 +327,7 @@ class _HomePageState extends ConsumerState<HomePage>
     // is the *only* edge this ever arrives on, since everything below returns
     // before it.
     if (state == AppLifecycleState.resumed) {
-      unawaited(_consumePendingShare());
+      unawaited(_consumePending());
     }
 
     if (isDesktop) return;
@@ -530,7 +531,7 @@ class _HomePageState extends ConsumerState<HomePage>
     // Explicitly, because the listener above only fires on a change: the first
     // tab is usually already the value, and nothing would have announced it.
     _publishCurrentTab();
-    // Held in a field as well as locally: [_consumePendingShare] runs on the
+    // Held in a field as well as locally: [_consumePending] runs on the
     // resume edge too, where there is no such local to await, and it must not
     // draw over the lock screen either.
     final authed = _authed = _goAuth(showGuide: false);

@@ -21,6 +21,13 @@ enum IncomingShare {
 
   private static var pending: String?
 
+  /// A `serverbox://` link, kept as its text: what it means is decided on the
+  /// Dart side (`AppLink`), which also refuses what it does not understand.
+  private static var pendingLink: String?
+
+  /// Matches `AppLink.scheme` and `CFBundleURLTypes` in the Info plist.
+  private static let linkScheme = "serverbox"
+
   /// Told to the Dart side once a payload is stored, for the case the
   /// lifecycle cannot report: an app that was already frontmost gets no
   /// resume, so nothing would ask and the payload would sit here until an
@@ -45,13 +52,30 @@ enum IncomingShare {
   /// dialog per server, so a multi-file open would queue dialogs behind each
   /// other with no way to tell which is which.
   static func accept(_ urls: [URL]) {
-    for url in urls where url.pathExtension.lowercased() == fileExt {
+    // A link is checked by scheme before anything is read: `pathExtension`
+    // would be happy with `serverbox://x/y.sbxsrv`.
+    for url in urls where url.scheme?.lowercased() == linkScheme {
+      lock.lock()
+      pendingLink = url.absoluteString
+      lock.unlock()
+      onArrival?()
+    }
+    for url in urls where url.isFileURL && url.pathExtension.lowercased() == fileExt {
       guard let text = read(url) else { continue }
       lock.lock()
       pending = text
       lock.unlock()
       onArrival?()
     }
+  }
+
+  /// The link waiting, if any. Cleared by the read, like [take].
+  static func takeLink() -> String? {
+    lock.lock()
+    defer { lock.unlock() }
+    let out = pendingLink
+    pendingLink = nil
+    return out
   }
 
   /// The payload waiting, if any. Cleared by the read, so a second resume does

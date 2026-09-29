@@ -9122,6 +9122,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reduce motion'**
   String get reduceMotion;
+
+  /// No description provided for @copyLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy link'**
+  String get copyLink;
 }
 
 class _AppLocalizationsDelegate

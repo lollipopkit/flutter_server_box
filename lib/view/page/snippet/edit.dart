@@ -5,12 +5,14 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/app_link.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/store/entity_store.dart';
 import 'package:server_box/view/page/ssh/snippet_run.dart';
+import 'package:server_box/view/widget/app_link.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
 
 final class SnippetEditPageArgs {
@@ -105,6 +107,12 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> {
         tooltip: libL10n.save,
         icon: const Icon(Icons.save),
       ),
+      if (snippet != null)
+        IconButton(
+          onPressed: () => AppLinkUi.copy(SnippetLink(snippet.id)),
+          tooltip: l10n.copyLink,
+          icon: const Icon(Icons.link),
+        ),
       if (snippet != null) _buildDeleteBtn(snippet),
     ];
   }

@@ -270,11 +270,23 @@ void main() {
         isFalse,
         reason: 'the completer answers whether it finished',
       );
-      // Nothing half-written left under a final name.
-      final left = Directory(
-        '${tempDir.path}/dst',
-      ).listSync().where((e) => e.path.contains('sb-part'));
-      expect(left, isEmpty);
+      // Nothing half-written left under a final name — eventually. The
+      // completer answers at the cancel, and the staged file goes after it:
+      // `dispose` deletes it without waiting, and a copy caught mid-file
+      // removes its own at its next chunk. A fixed wait failed under a loaded
+      // full run, so this waits for the directory instead, and a file that is
+      // really left behind still fails it.
+      // A cancel that lands before the copy made `dst` leaves no directory,
+      // which is nothing left behind rather than an error.
+      Iterable<FileSystemEntity> left() {
+        final dst = Directory('${tempDir.path}/dst');
+        if (!dst.existsSync()) return const [];
+        return dst.listSync().where((e) => e.path.contains('sb-part'));
+      }
+      for (var i = 0; i < 100 && left().isNotEmpty; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      }
+      expect(left(), isEmpty);
     });
 
     test('two transfers queued together get different ids', () async {

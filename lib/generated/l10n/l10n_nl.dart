@@ -5380,4 +5380,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get reduceMotion => 'Beperk beweging';
+
+  @override
+  String get copyLink => 'Link kopiëren';
 }

@@ -1497,5 +1497,6 @@
   "virtBackupPlanNew": "Nieuw plan",
   "virtBackupPlanNewTip": "Een schema dat alleen deze gast back-upt.",
   "virtBackupPlanOthers": "{count, plural, =0{Geen andere gast} =1{Back-upt ook 1 andere gast} other{Back-upt ook {count} andere gasten}}",
-  "reduceMotion": "Beperk beweging"
+  "reduceMotion": "Beperk beweging",
+  "copyLink": "Link kopiëren"
 }

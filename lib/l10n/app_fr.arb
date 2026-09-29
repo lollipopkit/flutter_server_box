@@ -1497,5 +1497,6 @@
   "virtBackupPlanNew": "Nouveau plan",
   "virtBackupPlanNewTip": "Une planification qui sauvegarde cet invité seul.",
   "virtBackupPlanOthers": "{count, plural, =0{Aucun autre invité} =1{Sauvegarde aussi 1 autre invité} other{Sauvegarde aussi {count} autres invités}}",
-  "reduceMotion": "Réduire les animations"
+  "reduceMotion": "Réduire les animations",
+  "copyLink": "Copier le lien"
 }

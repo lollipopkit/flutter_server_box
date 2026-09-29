@@ -34,6 +34,10 @@ class MainActivity: FlutterFragmentActivity() {
     private var notificationPermissionRequestInFlight = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Before `super`, which is where `configureFlutterEngine` reads the
+        // launch intent.
+        launchIntentIsStale = savedInstanceState != null ||
+            intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0
         val graphicsCompatibility = ImpellerCompatibility.check(this)
         disableImpeller = graphicsCompatibility.disableImpeller
         if (graphicsCompatibility.disableImpeller) {
@@ -72,7 +76,34 @@ class MainActivity: FlutterFragmentActivity() {
          * because 8 MiB is a size anything is expected to approach.
          */
         const val MAX_TOMBSTONE_BYTES = 8 * 1024 * 1024
+
+        /** Matches `AppLink.scheme` and the VIEW filter in the manifest. */
+        const val LINK_SCHEME = "serverbox"
     }
+
+    /**
+     * A `serverbox://` link this activity was opened with, until the Dart side
+     * takes it.
+     *
+     * Held rather than pushed, as on iOS and macOS: on a cold start the intent
+     * is here before Dart has a handler for anything, and a push then would be
+     * lost. Dart pulls after its first frame and on every resume; [linkChannel]
+     * only nudges it for the case neither covers, an app already in front.
+     */
+    private var pendingLink: String? = null
+    private var linkChannel: MethodChannel? = null
+
+    /**
+     * Whether the intent this activity was created with was already answered.
+     *
+     * The system keeps an activity's launch intent with its record, outside
+     * this process, and hands it back whenever it recreates the activity — a
+     * process killed in the background and reopened from Recents comes back
+     * with the same VIEW intent, and without `LAUNCHED_FROM_HISTORY` either.
+     * Clearing `intent.data` here cannot reach that copy. A saved state is what
+     * tells a recreation from a launch.
+     */
+    private var launchIntentIsStale = false
 
     // --- Privacy cover ------------------------------------------------------
     //
@@ -131,6 +162,10 @@ class MainActivity: FlutterFragmentActivity() {
         channel = MethodChannel(binaryMessenger, "tech.lolli.toolbox/main_chan")
         channel.setMethodCallHandler { method, result ->
                 when (method.method) {
+                    "takeOpenedLink" -> {
+                        result.success(pendingLink)
+                        pendingLink = null
+                    }
                     "sendToBackground" -> {
                         moveTaskToBack(true)
                         result.success(null)
@@ -265,8 +300,13 @@ class MainActivity: FlutterFragmentActivity() {
                 }
         }
 
+        // Its own channel, as on iOS and macOS: `main_chan` has one handler on
+        // the Dart side and it is already taken.
+        linkChannel = MethodChannel(binaryMessenger, "tech.lolli.toolbox/incoming_share")
+
         // Handle intent if launched via notification action
         handleActionIntent(intent)
+        if (!launchIntentIsStale) acceptLink(intent)
 
         // Register broadcast receiver for stop all connections
         setupStopAllReceiver()
@@ -500,6 +540,16 @@ class MainActivity: FlutterFragmentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handleActionIntent(intent)
+        acceptLink(intent)
+    }
+
+    /** A new intent only: see [launchIntentIsStale] for the one that is not. */
+    private fun acceptLink(intent: Intent?) {
+        if (intent == null || intent.action != Intent.ACTION_VIEW) return
+        val data = intent.data ?: return
+        if (!data.scheme.equals(LINK_SCHEME, ignoreCase = true)) return
+        pendingLink = data.toString()
+        linkChannel?.invokeMethod("opened", null)
     }
 
     private fun handleActionIntent(intent: Intent?) {

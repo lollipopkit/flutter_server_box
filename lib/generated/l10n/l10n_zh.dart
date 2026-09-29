@@ -4996,6 +4996,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get reduceMotion => '减少动态效果';
+
+  @override
+  String get copyLink => '复制链接';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -9989,4 +9992,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get reduceMotion => '減少動態效果';
+
+  @override
+  String get copyLink => '複製連結';
 }

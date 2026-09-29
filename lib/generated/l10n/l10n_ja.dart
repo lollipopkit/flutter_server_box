@@ -5077,4 +5077,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get reduceMotion => '視差効果を減らす';
+
+  @override
+  String get copyLink => 'リンクをコピー';
 }
