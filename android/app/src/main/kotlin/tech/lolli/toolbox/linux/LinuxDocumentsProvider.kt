@@ -175,11 +175,22 @@ class LinuxDocumentsProvider : DocumentsProvider() {
         return ParcelFileDescriptor.open(file, ParcelFileDescriptor.parseMode(mode))
     }
 
-    override fun isChildDocument(parentDocumentId: String, documentId: String): Boolean {
-        val parent = runCatching { parse(parentDocumentId) }.getOrNull() ?: return false
-        val doc = runCatching { parse(documentId) }.getOrNull() ?: return false
-        return parent.system == doc.system && GuestPath.isWithin(parent.path, doc.path)
-    }
+    /**
+     * What a tree grant is checked against, so it compares where the two
+     * documents actually are: `/root/up/etc` is not under `/root` when `up`
+     * links to `/`, whatever the id says. As `ExternalStorageProvider` does
+     * with canonical paths — which also means a link inside a granted tree
+     * that points out of it is outside it, for reading and for deleting.
+     */
+    override fun isChildDocument(parentDocumentId: String, documentId: String): Boolean =
+        runCatching {
+            val parent = parse(parentDocumentId)
+            val doc = parse(documentId)
+            parent.system == doc.system && GuestPath.isWithin(
+                resolve(parent, followLast = true).path,
+                resolve(doc, followLast = true).path,
+            )
+        }.getOrDefault(false)
 
     override fun createDocument(
         parentDocumentId: String,

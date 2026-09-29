@@ -84,6 +84,21 @@ class GuestPathTest {
     fun danglingLinkResolvesUnderTheRoot() =
         assertEquals("$r/nowhere", resolve("/dangling"))
 
+    /** How `isChildDocument` decides a tree grant: on resolved host paths. */
+    @Test
+    fun containmentIsJudgedOnResolvedPaths() {
+        Files.createDirectories(root.resolve("root"))
+        Files.createSymbolicLink(root.resolve("root/up"), Paths.get("/"))
+        Files.createSymbolicLink(root.resolve("root/alt"), Paths.get("/etc"))
+        val granted = resolve("/root")!!
+        // Lexically under `/root`, actually `/etc` and `/usr`.
+        assertFalse(GuestPath.isWithin(granted, resolve("/root/alt")!!))
+        assertFalse(GuestPath.isWithin(granted, resolve("/root/up/usr/bin")!!))
+        assertTrue(GuestPath.isWithin(granted, resolve("/root")!!))
+        // Through a link into it, a path elsewhere is inside.
+        assertTrue(GuestPath.isWithin(resolve("/usr")!!, resolve("/bin/mawk")!!))
+    }
+
     @Test
     fun lexicalHelpers() {
         assertEquals("/a/b/d", GuestPath.normalize("a//b/./c/../d"))
