@@ -1576,10 +1576,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get viewDetails => 'Detayları Görüntüle';
 
   @override
-  String get virtKeyHelpClipboard =>
-      'Seçili terminal boş değilse panoya kopyala, aksi takdirde panodaki içeriği terminale yapıştır.';
-
-  @override
   String get virtKeyHelpIME => 'Klavyeyi aç/kapat';
 
   @override
@@ -1602,7 +1598,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtKeyIntroCustomizeTip =>
-      'Terminal ayarlarından sıralarını değiştirebilir, hiç kullanmadıklarınızı gizleyebilirsiniz.';
+      'Terminal ayarlarından sıralarını değiştirebilir, daha fazlasını açabilir (dosyalar, sudo, F1–F12…) ya da hiç kullanmadıklarınızı gizleyebilirsiniz.';
 
   @override
   String get virtKeyIntroModifiers => 'Değiştirici tuşlar';

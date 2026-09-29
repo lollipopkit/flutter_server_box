@@ -1,6 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// The segment of a [SegmentedTabs] labelled [label]: by its text, or — in a
 /// row too narrow for its labels, icons only — by its tooltip. Within the

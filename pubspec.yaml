@@ -5,7 +5,7 @@ version: 1.0.1617+1617
 
 environment:
   sdk: ">=3.11.0"
-  flutter: ">=3.44.9"
+  flutter: ">=3.47.0"
 
 dependencies:
   flutter:
@@ -117,6 +117,13 @@ dependencies:
   fixnum: ^1.1.1
   device_info_plus: ^13.2.0
   aptabase_flutter: ^0.5.0
+  material_ui: ^1.5.0
+  ffi: any
+  path_provider: any
+  path: any
+  window_manager: any
+  cross_file: any
+  collection: any
 dev_dependencies:
   integration_test:
     sdk: flutter
@@ -156,6 +163,9 @@ dev_dependencies:
 # indexes included, but SQLCipher links OpenSSL on Windows, Linux and Android,
 # where SQLite3MultipleCiphers carries its cipher implementations in its own
 # source and needs nothing installed on any of the five platforms.
+  shared_preferences: any
+  vector_graphics_compiler: any
+  flutter_secure_storage: any
 hooks:
   user_defines:
     sqlite3:

@@ -1,12 +1,13 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/store/server.dart';
 
 class ServerDeduplication {
-  /// Removes imported servers that match an existing server.
+  /// Removes imported servers that match an existing server, or one accepted
+  /// earlier in the same batch.
   static List<Spi> deduplicateServers(
     List<Spi> importedServers, {
     List<Spi>? existingServers,
@@ -15,7 +16,8 @@ class ServerDeduplication {
     final deduplicated = <Spi>[];
 
     for (final imported in importedServers) {
-      if (!_isDuplicate(imported, existing)) {
+      if (!_isDuplicate(imported, existing) &&
+          !_isDuplicate(imported, deduplicated)) {
         deduplicated.add(imported);
       }
     }

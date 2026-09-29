@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/motion.dart';
 
 /// A server's name, carried from its card to the detail page's bar when

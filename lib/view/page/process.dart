@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/privileged_exec.dart';
@@ -331,7 +331,7 @@ extension _ProcessPageWidgets on _ProcessPageState {
           ],
           Text(_countText(), maxLines: 1, style: _metaStyle),
           const Spacer(),
-          ?_buildKernelSwitch(labelFirst: true),
+          ?_buildKernelSwitch(shrinkLabel: false),
         ],
       ),
     );
@@ -339,7 +339,7 @@ extension _ProcessPageWidgets on _ProcessPageState {
 
   Widget _buildNarrowToolbar() {
     final load = _loadText();
-    final kernelSwitch = _buildKernelSwitch(labelFirst: false);
+    final kernelSwitch = _buildKernelSwitch(shrinkLabel: true);
     return Padding(
       padding: const EdgeInsets.fromLTRB(_kPad, 7, _kPad, 9),
       child: Column(
@@ -359,7 +359,11 @@ extension _ProcessPageWidgets on _ProcessPageState {
           ],
           if (kernelSwitch != null) ...[
             const SizedBox(height: 5),
-            kernelSwitch,
+            // At the end, as in the wide bar.
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: kernelSwitch,
+            ),
           ],
         ],
       ),
@@ -385,7 +389,8 @@ extension _ProcessPageWidgets on _ProcessPageState {
               onChanged: (value) => _rebuild(() => _query = value),
               textInputAction: TextInputAction.search,
               style: const TextStyle(fontSize: 13),
-              decoration: InputDecoration.collapsed(
+              decoration: bareInputDecoration(
+                isCollapsed: true,
                 hintText: context.l10n.processSearchHint,
                 hintStyle: TextStyle(fontSize: 13, color: UIs.textGrey.color),
               ),
@@ -438,7 +443,9 @@ extension _ProcessPageWidgets on _ProcessPageState {
 
   /// Null where there is nothing to hide: every machine that is not Linux, and
   /// a Linux container, whose PID namespace has no kernel threads in it.
-  Widget? _buildKernelSwitch({required bool labelFirst}) {
+  /// [shrinkLabel] when the switch has a line of its own: the wide bar's row
+  /// lays it out unbounded, where a flexible child is an error.
+  Widget? _buildKernelSwitch({required bool shrinkLabel}) {
     final count = _kernelCount;
     if (count == 0) return null;
     final label = Text(
@@ -456,9 +463,11 @@ extension _ProcessPageWidgets on _ProcessPageState {
       onTap: () => _rebuild(() => _showKernelThreads = !_showKernelThreads),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: labelFirst
-            ? [label, const SizedBox(width: 7), toggle]
-            : [toggle, const SizedBox(width: 7), Flexible(child: label)],
+        children: [
+          if (shrinkLabel) Flexible(child: label) else label,
+          const SizedBox(width: 7),
+          toggle,
+        ],
       ),
     );
   }
@@ -645,44 +654,70 @@ extension _ProcessPageWidgets on _ProcessPageState {
     );
 
     final line = Hover(
-      builder: (hovered) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: _kPad, vertical: 7),
-        child: _tableLine(
-          layout,
-          pid: Text('${proc.pid}', style: _monoStyle(13)),
-          name: Text(
-            proc.command.isEmpty ? '—' : proc.command,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: _monoStyle(13).copyWith(
-              color: proc.isKernelThread ? scheme.onSurfaceVariant : null,
+      builder: (hovered) => Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: _kPad,
+              vertical: 7,
+            ),
+            child: _tableLine(
+              layout,
+              pid: Text('${proc.pid}', style: _monoStyle(13)),
+              name: Text(
+                proc.command.isEmpty ? '—' : proc.command,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: _monoStyle(13).copyWith(
+                  color: proc.isKernelThread ? scheme.onSurfaceVariant : null,
+                ),
+              ),
+              user: Text(
+                proc.user ?? '—',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 13),
+              ),
+              cpu: _CpuCell(percent: proc.cpu),
+              mem: end(
+                _formatPercent(proc.mem),
+                style: _isIdle(proc.mem) ? dim : null,
+              ),
+              rss: end(_formatRss(proc)),
+              read: end(_formatNullableSpeed(proc.readSpeed)),
+              write: end(_formatNullableSpeed(proc.writeSpeed)),
+              action: expanded
+                  ? Icon(
+                      Icons.expand_less,
+                      size: 18,
+                      color: UIs.textGrey.color,
+                    )
+                  : const SizedBox.shrink(),
             ),
           ),
-          user: Text(
-            proc.user ?? '—',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 13),
-          ),
-          cpu: _CpuCell(percent: proc.cpu),
-          mem: end(_formatPercent(proc.mem), style: _isIdle(proc.mem) ? dim : null),
-          rss: end(_formatRss(proc)),
-          read: end(_formatNullableSpeed(proc.readSpeed)),
-          write: end(_formatNullableSpeed(proc.writeSpeed)),
-          action: expanded
-              ? Icon(Icons.expand_less, size: 18, color: UIs.textGrey.color)
-              : hovered && canStop
-              ? Btn.icon(
+          // Over the action column rather than in it: the button is taller
+          // than the text, and the hovered row grew to hold it. Here it has
+          // the row's full height, padding included.
+          if (hovered && canStop && !expanded)
+            PositionedDirectional(
+              top: 0,
+              bottom: 0,
+              end: _kPad,
+              width: _kColAction,
+              child: Center(
+                child: Btn.icon(
                   text: '${libL10n.stop} (SIGTERM)',
                   icon: Icon(
                     Icons.stop_circle_outlined,
                     size: 18,
                     color: scheme.error,
                   ),
-                  onTap: () => _confirmKill(proc, system, _defaultSignal(system)),
-                )
-              : const SizedBox.shrink(),
-        ),
+                  onTap: () =>
+                      _confirmKill(proc, system, _defaultSignal(system)),
+                ),
+              ),
+            ),
+        ],
       ),
     );
 

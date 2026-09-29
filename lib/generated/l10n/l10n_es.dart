@@ -1595,10 +1595,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get viewDetails => 'Ver detalles';
 
   @override
-  String get virtKeyHelpClipboard =>
-      'Si el terminal tiene caracteres seleccionados, entonces copiará los caracteres seleccionados al portapapeles, de lo contrario, pegará el contenido del portapapeles al terminal.';
-
-  @override
   String get virtKeyHelpIME => 'Encender/apagar el teclado';
 
   @override
@@ -1620,7 +1616,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get virtKeyIntroCustomizeTip =>
-      'En los ajustes de la terminal puedes reordenarlas u ocultar las que no uses.';
+      'En los ajustes de la terminal puedes reordenarlas, activar más (archivos, sudo, F1–F12…) u ocultar las que no uses.';
 
   @override
   String get virtKeyIntroModifiers => 'Modificadores';

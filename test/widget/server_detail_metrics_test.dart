@@ -7,10 +7,9 @@ library;
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:fl_lib/fl_lib.dart';
-import 'package:fl_lib/generated/l10n/lib_l10n.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
@@ -32,7 +31,6 @@ import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/chart.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/server/metric_row.dart';
-
 import 'package:server_box/view/widget/server_func_btns.dart';
 
 import '../helpers/spi_fixture.dart';
@@ -121,8 +119,7 @@ void main() {
       ProviderScope(
         child: MaterialApp(
           localizationsDelegates: const [
-            LibLocalizations.delegate,
-            ...AppLocalizations.localizationsDelegates,
+            ...app_locale.appLocalizationsDelegates,
           ],
           supportedLocales: AppLocalizations.supportedLocales,
           builder: ResponsivePoints.builder,
@@ -381,8 +378,7 @@ void main() {
       ProviderScope(
         child: MaterialApp(
           localizationsDelegates: const [
-            LibLocalizations.delegate,
-            ...AppLocalizations.localizationsDelegates,
+            ...app_locale.appLocalizationsDelegates,
           ],
           supportedLocales: AppLocalizations.supportedLocales,
           builder: ResponsivePoints.builder,

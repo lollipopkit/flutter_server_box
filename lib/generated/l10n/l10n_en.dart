@@ -1563,10 +1563,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewDetails => 'View Details';
 
   @override
-  String get virtKeyHelpClipboard =>
-      'Copy to the clipboard if the selected terminal is not empty, otherwise paste the content of the clipboard to the terminal.';
-
-  @override
   String get virtKeyHelpIME => 'Turn on/off the keyboard';
 
   @override
@@ -1588,7 +1584,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get virtKeyIntroCustomizeTip =>
-      'Reorder these keys, or hide the ones you never reach for, in the terminal settings.';
+      'Reorder these keys, turn on more (the file browser, sudo, F1–F12…), or hide the ones you never reach for, in the terminal settings.';
 
   @override
   String get virtKeyIntroModifiers => 'Modifiers';

@@ -13,18 +13,17 @@ import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/material.dart'
-    show FilledButton, LinearProgressIndicator;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart'
     show FlutterSecureStorage;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart'
+    show FilledButton, LinearProgressIndicator;
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/view/page/schema_too_new.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../helpers/deny_file_deletion.dart';
-
 import '../helpers/test_db.dart';
 
 void main() {

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Supported, non-deprecated Material color roles.
 abstract final class ThemePalette {

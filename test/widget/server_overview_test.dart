@@ -1,11 +1,11 @@
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:fl_lib/generated/l10n/lib_l10n.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/conn.dart';
 import 'package:server_box/data/model/server/connection_stat.dart';
@@ -116,8 +116,7 @@ void main() {
       ProviderScope(
         child: MaterialApp(
           localizationsDelegates: const [
-            LibLocalizations.delegate,
-            ...AppLocalizations.localizationsDelegates,
+            ...appLocalizationsDelegates,
           ],
           supportedLocales: AppLocalizations.supportedLocales,
           home: const Scaffold(

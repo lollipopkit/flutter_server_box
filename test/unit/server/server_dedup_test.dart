@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:server_box/core/utils/server_dedup.dart';
+import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 
 import '../../helpers/spi_fixture.dart';
@@ -469,6 +470,51 @@ void main() {
       expect(summary.toImport, 0);
       expect(summary.hasDuplicates, isFalse);
       expect(summary.hasItemsToImport, isFalse);
+    });
+  });
+
+  // The real function, where the group above tests a copy of its logic.
+  group('deduplicateServers', () {
+    Spi monitor(String id, String addr) => Spi(
+      id: id,
+      name: id,
+      monitorHttp: MonitorHttpCredential(addr: addr),
+    );
+
+    test('the same server twice in one import is kept once', () {
+      final a = spiFixture(id: 'a', name: 'a', ip: 'h', user: 'u');
+      final b = spiFixture(id: 'b', name: 'b', ip: 'h', user: 'u');
+
+      expect(
+        ServerDeduplication.deduplicateServers([a, b], existingServers: []),
+        [a],
+      );
+    });
+
+    test('two monitor agents are two servers', () {
+      final a = monitor('a', 'https://a.example');
+      final b = monitor('b', 'https://b.example');
+
+      expect(
+        ServerDeduplication.deduplicateServers([b], existingServers: [a]),
+        [b],
+      );
+      expect(
+        ServerDeduplication.deduplicateServers([a, b], existingServers: []),
+        [a, b],
+      );
+    });
+
+    test('and one agent twice is one', () {
+      final a = monitor('a', 'https://a.example');
+
+      expect(
+        ServerDeduplication.deduplicateServers(
+          [monitor('a2', 'https://a.example')],
+          existingServers: [a],
+        ),
+        isEmpty,
+      );
     });
   });
 }

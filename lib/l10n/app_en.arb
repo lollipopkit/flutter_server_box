@@ -2021,10 +2021,6 @@
   "@viewDetails": {
     "description": "User-facing label or message for view details."
   },
-  "virtKeyHelpClipboard": "Copy to the clipboard if the selected terminal is not empty, otherwise paste the content of the clipboard to the terminal.",
-  "@virtKeyHelpClipboard": {
-    "description": "User-facing label or message for virt key help clipboard."
-  },
   "virtKeyHelpIME": "Turn on/off the keyboard",
   "@virtKeyHelpIME": {
     "description": "User-facing label or message for virt key help ime."
@@ -2049,7 +2045,7 @@
   "@virtKeyIntroActionsTip": {
     "description": "Help text for the virt key intro actions setting or action."
   },
-  "virtKeyIntroCustomizeTip": "Reorder these keys, or hide the ones you never reach for, in the terminal settings.",
+  "virtKeyIntroCustomizeTip": "Reorder these keys, turn on more (the file browser, sudo, F1–F12…), or hide the ones you never reach for, in the terminal settings.",
   "@virtKeyIntroCustomizeTip": {
     "description": "Help text for the virt key intro customize setting or action."
   },

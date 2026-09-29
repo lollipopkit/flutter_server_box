@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/server.dart';
@@ -97,7 +97,11 @@ abstract final class PrivateKeyUnlock {
     try {
       return await attempt;
     } finally {
-      unawaited(_inFlight.remove(cacheKey));
+      // Identity, not presence: [forget] may have dropped this one and a later
+      // connection put its own ask in its place, which this must not remove.
+      if (identical(_inFlight[cacheKey], attempt)) {
+        unawaited(_inFlight.remove(cacheKey));
+      }
     }
   }
 

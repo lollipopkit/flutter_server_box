@@ -1590,10 +1590,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get viewDetails => 'Visualizza dettagli';
 
   @override
-  String get virtKeyHelpClipboard =>
-      'Copia negli appunti se il terminale selezionato non è vuoto, altrimenti incolla il contenuto degli appunti nel terminale.';
-
-  @override
   String get virtKeyHelpIME => 'Accendi/spegni la tastiera';
 
   @override
@@ -1616,7 +1612,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get virtKeyIntroCustomizeTip =>
-      'Nelle impostazioni del terminale puoi riordinarli o nascondere quelli che non usi mai.';
+      'Nelle impostazioni del terminale puoi riordinarli, attivarne altri (file, sudo, F1–F12…) o nascondere quelli che non usi mai.';
 
   @override
   String get virtKeyIntroModifiers => 'Modificatori';

@@ -35,6 +35,88 @@ void registerHiveLegacyAdapters() {
   Hive.registerAdapter(LegacyMonitorHttpCredentialAdapter());
   Hive.registerAdapter(LegacySshCredentialAdapter());
   Hive.registerAdapter(LegacyServerCustomAdapter());
+  Hive.registerAdapter(LegacyVirtKeyAdapter());
+}
+
+/// typeId 4: a virtual key, by the byte the generated adapter gave it — which
+/// is its place in `hive_adapters.g.yaml`, not in the enum.
+///
+/// Frozen when `clipboard` left `VirtKey`: an adapter generated from the enum
+/// without it no longer names that byte, and the name is what the store keeps.
+class LegacyVirtKeyV1 {
+  const LegacyVirtKeyV1(this.name);
+
+  final String name;
+
+  String toJson() => name;
+}
+
+class LegacyVirtKeyAdapter extends TypeAdapter<LegacyVirtKeyV1> {
+  static const _names = [
+    'esc',
+    'alt',
+    'home',
+    'up',
+    'end',
+    'sftp',
+    'snippet',
+    'tab',
+    'ctrl',
+    'left',
+    'down',
+    'right',
+    'clipboard',
+    'ime',
+    'pgup',
+    'pgdn',
+    'slash',
+    'backSlash',
+    'underscore',
+    'plus',
+    'equal',
+    'minus',
+    'parenLeft',
+    'parenRight',
+    'bracketLeft',
+    'bracketRight',
+    'braceLeft',
+    'braceRight',
+    'chevronLeft',
+    'chevronRight',
+    'colon',
+    'semicolon',
+    'f1',
+    'f2',
+    'f3',
+    'f4',
+    'f5',
+    'f6',
+    'f7',
+    'f8',
+    'f9',
+    'f10',
+    'f11',
+    'f12',
+    'shift',
+    'sudo',
+    'tmux',
+  ];
+
+  @override
+  final typeId = 4;
+
+  /// An unknown byte is `esc`, as the generated adapter answered.
+  @override
+  LegacyVirtKeyV1 read(BinaryReader reader) {
+    final index = reader.readByte();
+    return LegacyVirtKeyV1(
+      index < _names.length ? _names[index] : _names.first,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, LegacyVirtKeyV1 obj) =>
+      throw UnsupportedError('Hive is read-only');
 }
 
 /// typeId 1, as written up to and including v1.0.1491: an id that was also the

@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:server_box/core/service/theme_package.dart';
 import 'package:server_box/view/widget/package_image.dart';

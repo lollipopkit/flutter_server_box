@@ -1,7 +1,7 @@
 import 'dart:ui' show FontFeature, lerpDouble;
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 
 /// The colour a [CardX] with nothing said about it actually paints.

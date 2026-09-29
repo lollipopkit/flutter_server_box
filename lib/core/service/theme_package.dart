@@ -8,10 +8,10 @@ import 'package:archive/archive.dart';
 import 'package:crypto/crypto.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart'
-    show Brightness, Color, ColorScheme, ThemeMode;
 import 'package:flutter/services.dart'
     show AssetBundle, AssetManifest, rootBundle;
+import 'package:material_ui/material_ui.dart'
+    show Brightness, Color, ColorScheme, ThemeMode;
 import 'package:server_box/core/service/theme_components.dart';
 import 'package:server_box/core/service/theme_palette.dart';
 import 'package:server_box/core/utils/bounded_output_stream.dart';

@@ -4,9 +4,8 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:fl_lib/fl_lib.dart';
-import 'package:fl_lib/generated/l10n/lib_l10n.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/db_rescue.dart';
 import 'package:server_box/data/store/schema.dart';
@@ -404,15 +403,11 @@ class SchemaTooNewApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      // `LibLocalizations.delegate` first, exactly as `MyApp` does it:
-      // `AppLocalizations.localizationsDelegates` does not include it, and
-      // without it every `libL10n.*` string here — the Backup button, both
-      // dialog titles, the password label, OK and Cancel — stays English while
-      // this page's own text is translated.
-      localizationsDelegates: const [
-        LibLocalizations.delegate,
-        ...AppLocalizations.localizationsDelegates,
-      ],
+      // The same list as `MyApp`: without `LibLocalizations.delegate` every
+      // `libL10n.*` string here — the Backup button, both dialog titles, the
+      // password label, OK and Cancel — stays English while this page's own
+      // text is translated.
+      localizationsDelegates: appLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       localeListResolutionCallback: LocaleUtil.resolve,
       // The system's, since the stored preference is in the database this

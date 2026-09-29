@@ -2,8 +2,8 @@
 /// went — and with less motion asked for, only crossfades them.
 library;
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:server_box/view/page/server/card/swap.dart';
 
 Widget _swap(String id, {required bool reduce}) => MaterialApp(

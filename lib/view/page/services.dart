@@ -1,6 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/service.dart';
@@ -405,7 +405,8 @@ extension on _ServicesPageState {
               onChanged: (value) => _rebuild(() => _query = value),
               textInputAction: TextInputAction.search,
               style: const TextStyle(fontSize: 13),
-              decoration: InputDecoration.collapsed(
+              decoration: bareInputDecoration(
+                isCollapsed: true,
                 hintText: context.l10n.serviceSearchHint,
                 hintStyle: TextStyle(fontSize: 13, color: UIs.textGrey.color),
               ),

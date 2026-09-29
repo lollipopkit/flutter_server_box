@@ -228,6 +228,33 @@ void main() {
     expect(askedAgain, 1, reason: 'the stale answer must not be cached');
   });
 
+  test('an old ask finishing does not drop the one that replaced it', () async {
+    final first = Completer<void>();
+    prompt = ({required keyName, required retry}) async {
+      await first.future;
+      return passphrase;
+    };
+    final stale = open(lockedPem, cacheKey: 'k', keyName: 'k');
+    PrivateKeyUnlock.forget('k');
+
+    final second = Completer<void>();
+    var asked = 0;
+    prompt = ({required keyName, required retry}) async {
+      asked++;
+      await second.future;
+      return passphrase;
+    };
+    final current = open(lockedPem, cacheKey: 'k', keyName: 'k');
+    first.complete();
+    await stale;
+
+    // Arrives while the replacement is still on screen, and joins it.
+    final joined = open(lockedPem, cacheKey: 'k', keyName: 'k');
+    second.complete();
+    await Future.wait([current, joined]);
+    expect(asked, 1);
+  });
+
   test('remember seeds what the import page already verified', () async {
     var asked = 0;
     prompt = ({required keyName, required retry}) async {

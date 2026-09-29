@@ -1468,9 +1468,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get viewDetails => '查看详情';
 
   @override
-  String get virtKeyHelpClipboard => '如果终端有选中字符，则复制选中字符至剪切板，否则粘贴剪切板内容至终端。';
-
-  @override
   String get virtKeyHelpIME => '打开/关闭键盘';
 
   @override
@@ -1489,7 +1486,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtKeyIntroActionsTip => '这些键不输入字符，而是打开对应功能。长按可查看说明。';
 
   @override
-  String get virtKeyIntroCustomizeTip => '在终端设置里可以调整顺序，或隐藏用不到的键。';
+  String get virtKeyIntroCustomizeTip =>
+      '在终端设置里可以调整顺序、开启更多键（文件、sudo、F1–F12 等），或隐藏用不到的键。';
 
   @override
   String get virtKeyIntroModifiers => '修饰键';
@@ -6466,9 +6464,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get viewDetails => '檢視詳情';
 
   @override
-  String get virtKeyHelpClipboard => '如果終端機有選中字元，則復製選中字元至剪貼簿，否則貼上剪貼簿內容至終端機。';
-
-  @override
   String get virtKeyHelpIME => '打開/關閉鍵盤';
 
   @override
@@ -6487,7 +6482,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtKeyIntroActionsTip => '這些鍵不輸入字元，而是開啟對應功能。長按可檢視說明。';
 
   @override
-  String get virtKeyIntroCustomizeTip => '在終端機設定裡可以調整順序，或隱藏用不到的鍵。';
+  String get virtKeyIntroCustomizeTip =>
+      '在終端機設定裡可以調整順序、開啟更多鍵（檔案、sudo、F1–F12 等），或隱藏用不到的鍵。';
 
   @override
   String get virtKeyIntroModifiers => '修飾鍵';

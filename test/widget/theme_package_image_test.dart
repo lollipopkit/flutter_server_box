@@ -18,9 +18,9 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/service/theme_package.dart';
 import 'package:server_box/view/widget/package_image.dart';
 import 'package:server_box/view/widget/theme_splash.dart';
