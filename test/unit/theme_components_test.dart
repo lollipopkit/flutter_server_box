@@ -417,6 +417,45 @@ void main() {
     expect(styles.toast.radius, 7);
   });
 
+  test('a text colour keeps the style its size and line height', () {
+    // A component's text style replaces the widget's default, so a colour on
+    // `ThemeData.textTheme`'s colour-only styles lost the size and the height:
+    // a chip's CJK label overflowed its line and faded out.
+    final theme = ThemeComponents.parse(<String, dynamic>{
+      'appBar': {'titleColor': 'primary'},
+      'menu': {'textColor': 'primary'},
+      'tooltip': {'textColor': 'primary'},
+      'toast': {'textColor': 'primary'},
+      'chip': {'textColor': 'primary'},
+      'navigation': {
+        'selectedLabelColor': 'primary',
+        'unselectedLabelColor': 'outline',
+      },
+    }).apply(ThemeData());
+    final geometry = Typography.material2021().englishLike;
+    void sized(TextStyle? style, TextStyle expected, String reason) {
+      expect(style?.fontSize, expected.fontSize, reason: reason);
+      expect(style?.height, expected.height, reason: reason);
+      expect(style?.color, theme.colorScheme.primary, reason: reason);
+    }
+
+    sized(theme.chipTheme.labelStyle, geometry.labelLarge!, 'chip');
+    sized(theme.appBarTheme.titleTextStyle, geometry.titleLarge!, 'app bar');
+    sized(theme.popupMenuTheme.textStyle, geometry.bodyMedium!, 'menu');
+    sized(theme.tooltipTheme.textStyle, geometry.bodySmall!, 'tooltip');
+    sized(theme.snackBarTheme.contentTextStyle, geometry.bodyMedium!, 'toast');
+    sized(
+      theme.navigationBarTheme.labelTextStyle!.resolve({WidgetState.selected}),
+      geometry.labelMedium!,
+      'navigation bar',
+    );
+    sized(
+      theme.navigationRailTheme.selectedLabelTextStyle,
+      geometry.labelMedium!,
+      'navigation rail',
+    );
+  });
+
   test('the library styles follow the brightness, and replace a stale one', () {
     final config = ThemeComponents.parse(<String, dynamic>{
       'search': {'height': 30},
