@@ -199,7 +199,10 @@ extension _App on _AppSettingsPageState {
 
   /// Opens the catalog, which is reached from its own row in the appearance
   /// page and from nowhere else.
-  void _openThemeStore() => ThemeStorePage.route.go(context);
+  void _openThemeStore() => ThemeStorePage.route.go(
+    context,
+    target: _SettingsWidth.pageTarget(context),
+  );
 
   void _applyTheme(ThemePackage package, {String? preset}) {
     ThemePackages.apply(package, preset: preset);
@@ -1475,6 +1478,7 @@ extension _App on _AppSettingsPageState {
     final editorFont = _setting.editorFontFamily.fetch();
     await EditorPage.route.go(
       context,
+      target: _SettingsWidth.pageTarget(context),
       args: EditorPageArgs(
         text: text,
         lang: ProgLang.json,

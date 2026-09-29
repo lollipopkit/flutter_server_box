@@ -78,7 +78,10 @@ extension _Server on _AppSettingsPageState {
         title: Text(label),
         subtitle: Text(l10n.connectionStatsDesc, style: UIs.textGrey),
         trailing: const Icon(Icons.keyboard_arrow_right),
-        onTap: () => ConnectionStatsPage.route.go(context),
+        onTap: () => ConnectionStatsPage.route.go(
+          context,
+          target: _SettingsWidth.pageTarget(context),
+        ),
       ),
       keywords: l10n.connectionStatsDesc,
     );
@@ -355,6 +358,7 @@ extension _Server on _AppSettingsPageState {
             final result = await KvEditor.route.go(
               context,
               KvEditorArgs(data: Map.of(map)),
+              target: _SettingsWidth.pageTarget(context),
             );
             // Null is a back-button, which is not the same as saving an empty
             // map — that is how every override is cleared.

@@ -330,12 +330,15 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         // The width `AdaptivePanes` splits at, so that a window wide enough for
         // two columns gets two columns here as well.
         final wide = constraints.maxWidth >= AdaptivePanes.kSplitWidth;
-        return _buildScaffold(
+        return _SettingsWidth(
           wide: wide,
-          menu: menu,
-          nodes: nodes,
-          selected: selected,
-          hits: hits,
+          child: _buildScaffold(
+            wide: wide,
+            menu: menu,
+            nodes: nodes,
+            selected: selected,
+            hits: hits,
+          ),
         );
       },
     );

@@ -461,3 +461,26 @@ extension _SettingsLayout on _SettingsPageState {
     );
   }
 }
+
+/// Whether the settings are in two columns, for a row that opens a page of its
+/// own.
+///
+/// One column keeps the settings' bar over the navigator the rows are in, so
+/// a page with a bar of its own pushed there showed two. It goes over the
+/// whole window instead. Beside the menu there is no settings bar, and the
+/// page takes the content column.
+final class _SettingsWidth extends InheritedWidget {
+  const _SettingsWidth({required this.wide, required super.child});
+
+  final bool wide;
+
+  /// Where a page opened from a row belongs. Outside the settings page — a
+  /// section pushed on its own, with its own bar — the nearest navigator.
+  static NavTarget pageTarget(BuildContext context) =>
+      context.getInheritedWidgetOfExactType<_SettingsWidth>()?.wide == false
+      ? NavTarget.root
+      : NavTarget.nearest;
+
+  @override
+  bool updateShouldNotify(_SettingsWidth oldWidget) => wide != oldWidget.wide;
+}
