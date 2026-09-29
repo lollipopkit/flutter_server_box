@@ -298,6 +298,12 @@ update_release_checksums() {
   for list in SHA256SUMS MD5SUMS; do
     old="$(gh api "$release_api" --jq ".assets[] | select(.name == \"$list\") | .id")"
     new="$(gh api "$release_api" --jq ".assets[] | select(.name == \"$list.new\") | .id")"
+    # Checked before the delete: without it the old list goes, and the
+    # rename below fails on an id-less URL.
+    if [[ -z "$new" ]]; then
+      echo "$list.new is not on $RELEASE_TAG after its upload; kept $list" >&2
+      exit 1
+    fi
     if [[ -n "$old" ]]; then
       gh api -X DELETE "repos/$APP_REPO_SLUG/releases/assets/$old" >/dev/null
     fi
