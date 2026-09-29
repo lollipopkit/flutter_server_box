@@ -1044,6 +1044,25 @@ abstract final class IosRootfs {
     }
   }
 
+  /// As [write], without waiting for room: takes what the terminal's input
+  /// buffer has space for and answers how many bytes that was — 0 when it is
+  /// full, negative when the session is gone.
+  ///
+  /// For a byte stream fed from this isolate, which a guest slow to read
+  /// must not stall: [write] blocks in the engine until everything fits.
+  static int tryWrite(int session, List<int> input) {
+    final write = _tryWrite;
+    if (write == null) return -1;
+    if (input.isEmpty) return 0;
+    final buffer = malloc<Uint8>(input.length);
+    try {
+      buffer.asTypedList(input.length).setAll(0, input);
+      return write(session, buffer.cast(), input.length);
+    } finally {
+      malloc.free(buffer);
+    }
+  }
+
   /// Tells [session] its terminal changed size.
   static void resize(int session, int columns, int rows) =>
       _resize?.call(session, columns, rows);
@@ -1157,6 +1176,14 @@ abstract final class IosRootfs {
           Int Function(Int, Pointer<Char>, Int),
           int Function(int, Pointer<Char>, int)
         >('sbm_ish_write'),
+  );
+  static final _tryWrite = _look(
+    'sbm_ish_try_write',
+    (p) =>
+        p.lookupFunction<
+          Int Function(Int, Pointer<Char>, Int),
+          int Function(int, Pointer<Char>, int)
+        >('sbm_ish_try_write'),
   );
   static final _resize = _look(
     'sbm_ish_resize',

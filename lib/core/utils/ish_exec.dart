@@ -67,7 +67,6 @@ class IshExec extends LocalExec {
 
   /// Whether [command] has to be run from a file rather than handed to the
   /// engine. Counted in bytes, which is what the C side counts.
-  @visibleForTesting
   static bool needsFile(String command) =>
       utf8.encode(command).length > argvLimit;
 

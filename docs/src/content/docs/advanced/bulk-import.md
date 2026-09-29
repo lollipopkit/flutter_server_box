@@ -77,7 +77,7 @@ The following fields belong inside `ssh`:
 | `keyPath` | No | Desktop-only private-key path produced by a `~/.ssh/config` import; read from disk when connecting |
 | `alterUrl` | No | Fallback address in the form `user@ip:port` |
 | `jumpIds` | No | Jump-server chain specified by server ID |
-| `proxyCommand` | No | ProxyCommand; desktop only and mutually exclusive with `jumpIds` |
+| `proxyCommand` | No | ProxyCommand; on a phone it runs in the built-in Linux environment. Mutually exclusive with `jumpIds` |
 
 The following fields belong inside `pve`:
 

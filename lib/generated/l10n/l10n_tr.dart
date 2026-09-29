@@ -1179,8 +1179,12 @@ class AppLocalizationsTr extends AppLocalizations {
       'iOS buna izin vermiyor. Anahtarlar Ayarlar › ServerBox › Canlı Etkinlikler ve Ayarlar › Face ID ve Parola › Canlı Etkinlikler bölümlerinde.';
 
   @override
-  String get proxyCommandOnlySupportedOnDesktop =>
-      'ProxyCommand yalnızca masaüstü platformlarda desteklenir.';
+  String get proxyCommandNeedsLinux =>
+      'ProxyCommand bu cihazın Linux ortamında çalışır. Önce bir Linux sistemi kurun.';
+
+  @override
+  String get proxyCommandMobileTip =>
+      'Telefonda komut seçili Linux sisteminde çalışır. Kullandığı araçları (nc, socat, …) önce oraya kurun.';
 
   @override
   String get pveIgnoreCertTip =>

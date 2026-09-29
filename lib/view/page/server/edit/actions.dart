@@ -610,10 +610,6 @@ extension _Actions on _ServerEditPageState {
       }
     }
     final proxyCommandText = _proxyCommandCtrl.text.trim();
-    if (useSsh && !isDesktop && proxyCommandText.isNotEmpty) {
-      Toast.show(l10n.proxyCommandOnlySupportedOnDesktop);
-      return;
-    }
     // Refused rather than dropped. A coordinate that does not parse is a typo
     // in something the user meant, and silently saving nothing there would
     // read as the field not working.

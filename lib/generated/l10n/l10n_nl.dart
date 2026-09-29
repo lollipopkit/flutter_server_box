@@ -1184,8 +1184,12 @@ class AppLocalizationsNl extends AppLocalizations {
       'iOS staat dit niet toe. De schakelaars staan in Instellingen › ServerBox › Live-activiteiten en Instellingen › Face ID en toegangscode › Live-activiteiten.';
 
   @override
-  String get proxyCommandOnlySupportedOnDesktop =>
-      'ProxyCommand wordt alleen op desktopplatforms ondersteund.';
+  String get proxyCommandNeedsLinux =>
+      'ProxyCommand draait in de Linux-omgeving van dit apparaat. Installeer eerst een Linux-systeem.';
+
+  @override
+  String get proxyCommandMobileTip =>
+      'Op een telefoon draait de opdracht in het geselecteerde Linux-systeem. Installeer daar eerst de hulpmiddelen die hij gebruikt (nc, socat, …).';
 
   @override
   String get pveIgnoreCertTip =>

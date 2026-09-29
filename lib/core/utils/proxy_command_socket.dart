@@ -7,9 +7,18 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/android_rootfs.dart';
+import 'package:server_box/core/utils/ish_proxy_socket.dart';
 import 'package:server_box/core/utils/process_tree.dart';
 import 'package:server_box/data/model/app/error.dart';
 
+/// An [SSHSocket] over a ProxyCommand's standard streams.
+///
+/// Where the command runs is the platform's answer to "a shell": the host's
+/// own on a desktop, and the Linux guest on a phone, where the host has none a
+/// user's tools are in. Android's guest is a process under proot and goes
+/// through this class like the desktop; iOS has no processes to start, and
+/// [IshProxySocket] runs the command in its interpreter instead.
 class ProxyCommandSocket implements SSHSocket {
   ProxyCommandSocket._({
     required Process process,
@@ -17,17 +26,31 @@ class ProxyCommandSocket implements SSHSocket {
     required Stream<Uint8List> stream,
     required IOSink sink,
     required Future<void> done,
+    void Function()? release,
   }) : _process = process,
        _processGroupId = processGroupId,
        _stream = stream,
        _sink = sink,
-       _done = done;
+       _done = done,
+       _release = release {
+    // The guest stays "in use" — and so cannot be deleted — for exactly as
+    // long as the proxy runs.
+    unawaited(_done.whenComplete(_releaseOnce).catchError((_) {}));
+  }
 
   final Process _process;
   final int? _processGroupId;
   final Stream<Uint8List> _stream;
   final IOSink _sink;
   final Future<void> _done;
+  final void Function()? _release;
+  var _released = false;
+
+  void _releaseOnce() {
+    if (_released) return;
+    _released = true;
+    _release?.call();
+  }
 
   static Future<SSHSocket> connect({
     required String command,
@@ -38,12 +61,6 @@ class ProxyCommandSocket implements SSHSocket {
     required String jump,
     Duration? timeout,
   }) async {
-    if (!isDesktop) {
-      throw SSHErr(
-        type: SSHErrType.connect,
-        message: l10n.proxyCommandOnlySupportedOnDesktop,
-      );
-    }
     if (command.length > 4096) {
       throw SSHErr(
         type: SSHErrType.connect,
@@ -59,7 +76,28 @@ class ProxyCommandSocket implements SSHSocket {
       originalHost: originalHost,
       jump: jump,
     );
-    final shellCommand = _buildShellCommand(resolvedCommand);
+    if (isIOS) {
+      return IshProxySocket.connect(
+        command: resolvedCommand,
+        timeout: timeout,
+      );
+    }
+
+    // Android: in the selected Linux system, under proot. The host has a
+    // shell, but none of the tools a ProxyCommand names — `nc`, `socat`,
+    // `ssh`, `cloudflared` are installed in the guest, not on Android.
+    final guest = isAndroid
+        ? await AndroidRootfs.enter(command: resolvedCommand)
+        : null;
+    if (isAndroid && guest == null) {
+      throw SSHErr(
+        type: SSHErrType.connect,
+        message: l10n.proxyCommandNeedsLinux,
+      );
+    }
+    final shellCommand = guest == null
+        ? _buildShellCommand(resolvedCommand)
+        : (executable: guest.executable, arguments: guest.arguments);
 
     // Not `$user@$host:$port`. This line said which account on which machine,
     // and it is an `info` — so it landed in the log of every run that used a
@@ -72,6 +110,9 @@ class ProxyCommandSocket implements SSHSocket {
     final processFuture = Process.start(
       shellCommand.executable,
       shellCommand.arguments,
+      // The guest's own PATH and home: Android's names directories that do
+      // not exist inside it, and the command would find none of its tools.
+      environment: guest == null ? null : AndroidRootfs.environment,
       // This creates a separate Unix session. The returned PID is the final
       // fork rather than the session leader, so its actual PGID is queried
       // below. Windows cleanup uses taskkill /T.
@@ -84,12 +125,15 @@ class ProxyCommandSocket implements SSHSocket {
           : await processFuture.timeout(timeout);
     } on TimeoutException {
       // Timing out this Future does not cancel process creation. Kill a child
-      // that appears later instead of leaving a detached proxy behind.
+      // that appears later instead of leaving a detached proxy behind — and
+      // only then free the guest it was running in.
       unawaited(
-        processFuture.then<void>((lateProcess) async {
-          final groupId = await ProcessTree.groupId(lateProcess);
-          ProcessTree.terminate(lateProcess, groupId);
-        }, onError: (_, _) {}),
+        processFuture
+            .then<void>((lateProcess) async {
+              final groupId = await ProcessTree.groupId(lateProcess);
+              ProcessTree.terminate(lateProcess, groupId);
+            }, onError: (_, _) {})
+            .whenComplete(() => guest?.release()),
       );
       throw SSHErr(
         type: SSHErrType.connect,
@@ -97,6 +141,9 @@ class ProxyCommandSocket implements SSHSocket {
           'ProxyCommand process start timed out after ${timeout!.inSeconds}s.',
         ),
       );
+    } catch (_) {
+      guest?.release();
+      rethrow;
     }
     final processGroupId = await ProcessTree.groupId(process);
     final stdoutController = StreamController<Uint8List>();
@@ -146,6 +193,7 @@ class ProxyCommandSocket implements SSHSocket {
       stream: stdoutController.stream,
       sink: process.stdin,
       done: done,
+      release: guest?.release,
     );
   }
 
@@ -258,6 +306,7 @@ class ProxyCommandSocket implements SSHSocket {
         Process.killPid(-_processGroupId, ProcessSignal.sigkill);
       }
     } catch (_) {}
+    _releaseOnce();
   }
 
   @override
@@ -266,6 +315,7 @@ class ProxyCommandSocket implements SSHSocket {
   @override
   void destroy() {
     ProcessTree.terminate(_process, _processGroupId);
+    _releaseOnce();
   }
 
   @override

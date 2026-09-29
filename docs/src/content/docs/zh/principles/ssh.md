@@ -31,7 +31,7 @@ final class SshCredential {
   String? keyId;           // SSH key ID
   String? alterUrl;        // 备用 URL
   List<String>? jumpIds;   // Jump server 链
-  String? proxyCommand;    // ProxyCommand，仅桌面端
+  String? proxyCommand;    // ProxyCommand
   bool allowLegacyAlgorithms; // 允许协商已被 SSH 淘汰的算法，默认关闭
 }
 ```
@@ -100,7 +100,7 @@ for (final jumpId in spi.resolvedJumpIds) {
 }
 ```
 
-**ProxyCommand**：仅桌面端可用，因为它需要启动本地进程：
+**ProxyCommand**：在本地 shell 中运行。桌面端用系统自带的 shell；Android 在内置 Linux 环境中通过 proot 运行；iOS 在 iSH 引擎中运行，终端切换为 raw 模式，SSH 的字节原样通过。手机上需要先安装一个 Linux 系统，并在其中安装命令用到的工具（`nc`、`socat` 等）：
 
 ```dart
 if (ssh.proxyCommand != null) {

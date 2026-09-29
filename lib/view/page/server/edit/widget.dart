@@ -753,15 +753,22 @@ extension _Widgets on _ServerEditPageState {
     );
     // Said here as well as in the failure, because the failure is what this
     // is meant to save someone from: on a sandboxed build the command runs
-    // and fails for a reason nothing in its output mentions.
-    if (!Pfs.isMacSandboxed) return input;
+    // and fails for a reason nothing in its output mentions; on a phone it
+    // runs in the Linux system, where `nc` and the like have to be installed
+    // before anything can.
+    final tip = Pfs.isMacSandboxed
+        ? l10n.proxyCommandSandboxed
+        : isAndroid || isIOS
+        ? l10n.proxyCommandMobileTip
+        : null;
+    if (tip == null) return input;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         input,
         ListTile(
           leading: const Icon(MingCute.question_line),
-          title: TipText(libL10n.note, l10n.proxyCommandSandboxed),
+          title: TipText(libL10n.note, tip),
         ).cardx,
       ],
     );

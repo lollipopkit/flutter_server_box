@@ -1102,7 +1102,12 @@ class AppLocalizationsZh extends AppLocalizations {
       'iOS 未允许显示。开关位于「设置 › ServerBox › 实时活动」和「设置 › 面容 ID 与密码 › 实时活动」。';
 
   @override
-  String get proxyCommandOnlySupportedOnDesktop => 'ProxyCommand 仅支持桌面平台。';
+  String get proxyCommandNeedsLinux =>
+      'ProxyCommand 在本机的 Linux 环境中运行，请先安装一个 Linux 系统。';
+
+  @override
+  String get proxyCommandMobileTip =>
+      '在手机上，该命令会在所选的 Linux 系统中运行。请先在其中安装命令用到的工具（nc、socat 等）。';
 
   @override
   String get pveIgnoreCertTip => '不推荐开启，注意安全隐患！如果你使用的 PVE 默认证书，需要开启该选项';
@@ -6092,7 +6097,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       'iOS 未允許顯示。開關位於「設定 › ServerBox › 即時動態」和「設定 › 面容 ID 與密碼 › 即時動態」。';
 
   @override
-  String get proxyCommandOnlySupportedOnDesktop => 'ProxyCommand 僅支援桌面平台。';
+  String get proxyCommandNeedsLinux =>
+      'ProxyCommand 在本機的 Linux 環境中執行，請先安裝一個 Linux 系統。';
+
+  @override
+  String get proxyCommandMobileTip =>
+      '在手機上，該指令會在所選的 Linux 系統中執行。請先在其中安裝指令用到的工具（nc、socat 等）。';
 
   @override
   String get pveIgnoreCertTip => '不建議啟用，請注意安全風險！如果您使用的是 PVE 的預設憑證，則需要啟用此選項。';

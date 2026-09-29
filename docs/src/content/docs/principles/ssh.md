@@ -31,7 +31,7 @@ final class SshCredential {
   String? keyId;           // SSH key ID
   String? alterUrl;        // Fallback URL
   List<String>? jumpIds;   // Jump-server candidates
-  String? proxyCommand;    // ProxyCommand, desktop only
+  String? proxyCommand;    // ProxyCommand
   bool allowLegacyAlgorithms; // Opt in to algorithms SSH has retired, false by default
 }
 ```
@@ -100,7 +100,7 @@ for (final jumpId in spi.resolvedJumpIds) {
 }
 ```
 
-**ProxyCommand** is available on desktop only because it starts a local process:
+**ProxyCommand** runs in a local shell: the host's on desktop, and the built-in Linux environment on Android (under proot) and iOS (in the iSH engine, its terminal switched to raw mode so SSH's bytes pass through untouched). On a phone, install a Linux system first and the tools the command names (`nc`, `socat`, …) inside it:
 
 ```dart
 if (ssh.proxyCommand != null) {

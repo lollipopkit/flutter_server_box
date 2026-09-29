@@ -1193,8 +1193,12 @@ class AppLocalizationsFr extends AppLocalizations {
       'iOS ne l’autorise pas. Les réglages se trouvent dans Réglages › ServerBox › Activités en direct et Réglages › Face ID et code › Activités en direct.';
 
   @override
-  String get proxyCommandOnlySupportedOnDesktop =>
-      'ProxyCommand n\'est pris en charge que sur les plateformes de bureau.';
+  String get proxyCommandNeedsLinux =>
+      'ProxyCommand s\'exécute dans l\'environnement Linux de cet appareil. Installez d\'abord un système Linux.';
+
+  @override
+  String get proxyCommandMobileTip =>
+      'Sur un téléphone, la commande s\'exécute dans le système Linux sélectionné. Installez-y d\'abord les outils qu\'elle utilise (nc, socat, …).';
 
   @override
   String get pveIgnoreCertTip =>
