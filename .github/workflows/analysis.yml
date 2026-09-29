@@ -325,10 +325,10 @@ jobs:
           npm ci
           npm run build
 
-  # The one path nothing else in CI compiles. `Build ios` in build.yml ships
-  # SBM_ISH = 0, so with the switch off the engine is never fed to a compiler
-  # and `sbm_ish.c` is only ever built as stubs — a change that breaks the real
-  # thing would reach a phone before it reached anyone's attention.
+  # The engine built from source, which nothing else in CI does: `Build ios` in
+  # build.yml links the libraries `scripts/ensure-ish-libs.sh` fetches from the
+  # release built for this revision, so a source change that breaks the build
+  # would reach a phone before it reached anyone's attention.
   #
   # Both settings, because each one has already failed in a way the other could
   # not show: with the switch on, the linker once dead-stripped the whole engine
@@ -362,22 +362,21 @@ jobs:
       - name: Build the engine
         run: scripts/build-ish-ios.sh device
 
-      # In an untracked local override, which is where a developer puts it too —
-      # the tracked Ish.xcconfig stays at 0 so that an accidental release build
-      # is one without the engine rather than one with it.
+      # On by default (ios/Flutter/Ish.xcconfig); the libraries built above are
+      # stamped with this revision, so the build phase keeps them rather than
+      # fetching the release.
       - name: Build the app with the engine linked
-        shell: bash
-        run: |
-          echo 'SBM_ISH = 1' > ios/Flutter/IshLocal.xcconfig
-          flutter build ios --release --no-codesign
+        run: flutter build ios --release --no-codesign
 
       - name: The engine is in the binary
         run: scripts/check-ish-linkage.sh build/ios/iphoneos/Runner.app/Runner on
 
+      # In the untracked local override, which is where a developer turns it
+      # off too.
       - name: And the switch takes it out again
         shell: bash
         run: |
-          rm ios/Flutter/IshLocal.xcconfig
+          echo 'SBM_ISH = 0' > ios/Flutter/IshLocal.xcconfig
           flutter build ios --release --no-codesign
           scripts/check-ish-linkage.sh build/ios/iphoneos/Runner.app/Runner off
 

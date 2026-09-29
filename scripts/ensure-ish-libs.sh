@@ -58,8 +58,9 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SRC_DIR="$REPO_ROOT/third_party/ish-arm64"
 REPO="lollipopkit/ShellBox"
 
-# Off is the default and is what an App Store build can be made with: the
-# engine is not linked, ISH_LDFLAGS_0 is empty, and there is nothing to fetch.
+# On in every configuration (ios/Flutter/Ish.xcconfig). Off only where a
+# checkout says so locally, and then the engine is not linked — ISH_LDFLAGS_0
+# is empty — and there is nothing to fetch.
 [ "${SBM_ISH:-0}" = "1" ] || exit 0
 
 case "${PLATFORM_NAME:-}" in
