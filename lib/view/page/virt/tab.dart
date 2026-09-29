@@ -140,6 +140,7 @@ class _VirtTabPageState extends ConsumerState<VirtTabPage>
       _section = VirtSection.guests;
       _creating = false;
     }
+    final refreshing = hostId != null && _refreshing(hostId);
 
     return PaneSettings.listenAll((paneWidth, paneCollapsed) {
       return AdaptivePanes.detail(
@@ -166,7 +167,7 @@ class _VirtTabPageState extends ConsumerState<VirtTabPage>
         // element, not this page's.
         detailBuilder: (_) => _buildDetail(hostId),
         listBuilder: (_, split) =>
-            _buildList(hosts, servers, hostId, split, caps),
+            _buildList(hosts, servers, hostId, split, caps, refreshing),
       );
     });
   }
@@ -431,6 +432,27 @@ extension _Actions on _VirtTabPageState {
           VirtBackupJobArgs(serverId: hostId, jobId: id),
         );
     }
+  }
+
+  /// Whether what the refresh button asks for is being read: the host, and
+  /// the section on screen's own list. Watched on this page's element — see
+  /// `build`.
+  bool _refreshing(String hostId) {
+    if (ref.watch(virtHostProvider(hostId).select((s) => s.loading))) {
+      return true;
+    }
+    return switch (_section) {
+      VirtSection.guests => false,
+      VirtSection.storage => ref.watch(
+        virtStoragePoolsProvider(hostId).select((a) => a.isLoading),
+      ),
+      VirtSection.network => ref.watch(
+        virtNetworksProvider(hostId).select((a) => a.isLoading),
+      ),
+      VirtSection.backup => ref.watch(
+        virtBackupJobsProvider(hostId).select((a) => a.isLoading),
+      ),
+    };
   }
 
   /// Asks the host again, and what the section on screen lists with it.

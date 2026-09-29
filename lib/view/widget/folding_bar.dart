@@ -9,6 +9,7 @@ final class BarAction {
     required this.label,
     required this.onTap,
     this.color,
+    this.loading = false,
   });
 
   /// On the button while it is in the bar.
@@ -19,6 +20,21 @@ final class BarAction {
   final String label;
   final VoidCallback onTap;
   final Color? color;
+
+  /// A spinner in place of the icon, and no tap: for a refresh that is
+  /// running, which is said where it was asked for rather than by a line
+  /// somewhere else on the page.
+  final bool loading;
+
+  static const _spinner = SizedBox.square(
+    dimension: 18,
+    child: Padding(
+      padding: EdgeInsets.all(1.5),
+      child: CircularProgressIndicator(strokeWidth: 2),
+    ),
+  );
+
+  Widget buildIcon() => loading ? _spinner : Icon(icon, size: 18, color: color);
 }
 
 /// A bar's label and its icon buttons, in however much width the bar has.
@@ -60,12 +76,23 @@ class FoldingBar extends StatelessWidget {
           children: [
             Expanded(child: label),
             for (final a in shown)
-              Btn.icon(
-                key: a.key,
-                text: a.label,
-                icon: Icon(a.icon, size: 18, color: a.color),
-                onTap: a.onTap,
-              ),
+              if (a.loading)
+                // The slot a button takes, so the bar does not shift.
+                Tooltip(
+                  key: a.key,
+                  message: a.label,
+                  child: const Padding(
+                    padding: EdgeInsets.all(7),
+                    child: BarAction._spinner,
+                  ),
+                )
+              else
+                Btn.icon(
+                  key: a.key,
+                  text: a.label,
+                  icon: Icon(a.icon, size: 18, color: a.color),
+                  onTap: a.onTap,
+                ),
             if (folded.isNotEmpty)
               PopupMenu<int>(
                 tooltip: libL10n.more,
@@ -73,9 +100,10 @@ class FoldingBar extends StatelessWidget {
                   for (final (i, a) in folded.indexed)
                     PopupMenuItem(
                       value: i,
+                      enabled: !a.loading,
                       child: Row(
                         children: [
-                          Icon(a.icon, size: 18, color: a.color),
+                          a.buildIcon(),
                           const SizedBox(width: 11),
                           Text(a.label, style: TextStyle(color: a.color)),
                         ],

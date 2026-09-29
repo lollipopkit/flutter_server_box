@@ -52,6 +52,7 @@ extension _List on _VirtTabPageState {
     String? hostId,
     bool split,
     VirtCapabilities? caps,
+    bool refreshing,
   ) {
     final hostIds = hosts.hostIds;
     final at = hostId == null ? -1 : hostIds.indexOf(hostId);
@@ -90,6 +91,9 @@ extension _List on _VirtTabPageState {
                       icon: Icons.refresh,
                       label: libL10n.refresh,
                       onTap: () => _refresh(hostId),
+                      // Where the reading is said, rather than a line under
+                      // the bar: the button asked for it.
+                      loading: refreshing,
                     ),
                     // In the section a new one lands in; the host's answer
                     // says whether it takes one.
@@ -248,11 +252,6 @@ class _VirtHostColumn extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final st = ref.watch(virtHostProvider(serverId));
     final data = st.data;
-    final busy =
-        st.loading ||
-        st.busy.isNotEmpty ||
-        st.snapshotOps.isNotEmpty ||
-        (data?.guests.any((g) => st.displayState(g).isTransient) ?? false);
 
     final caps = data?.capabilities;
     // The page keeps [section] to what the host has; until the host has
@@ -280,14 +279,10 @@ class _VirtHostColumn extends ConsumerWidget {
       VirtSection.guests => _buildGuestList(context, ref, st),
     };
 
+    // The reading is the refresh button's to show (`BarAction.loading`), and
+    // a guest's power action or snapshot is its own row's.
     return Column(
       children: [
-        SizedBox(
-          height: 3,
-          child: busy && shownSection == VirtSection.guests
-              ? const ProgressLine()
-              : null,
-        ),
         _buildSections(caps, shownSection),
         Expanded(child: body),
       ],
