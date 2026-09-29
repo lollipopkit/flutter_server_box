@@ -26,12 +26,25 @@ export TZ=UTC
 export LC_ALL=C
 export ORG_GRADLE_PROJECT_allowUnsignedRelease=true
 
-# Do not inherit an arbitrary host cache or put fetched dependencies inside the
-# source tree. F-Droid scans after `prebuild`, so an in-tree cache would either
-# fail the scanner or be deleted before the offline build can use it.
+# Do not inherit an arbitrary host cache. An explicit PUB_CACHE wins: F-Droid's
+# recipe fetches into an in-tree `.pub-cache` during `prebuild` so its scanner
+# sees the packages.
 FDROID_CACHE_DIR="${FDROID_CACHE_DIR:-${RUNNER_TEMP:-${TMPDIR:-/tmp}}/server-box-fdroid-cache}"
 export PUB_CACHE="${PUB_CACHE:-$FDROID_CACHE_DIR/pub}"
-export CARGO_HOME="${CARGO_HOME:-$FDROID_CACHE_DIR/cargo}"
-export RUSTUP_HOME="${RUSTUP_HOME:-$FDROID_CACHE_DIR/rustup}"
 export GRADLE_USER_HOME="${FDROID_GRADLE_USER_HOME:-$FDROID_CACHE_DIR/gradle}"
 export PROOT_BUILD_DIR="${PROOT_BUILD_DIR:-$FDROID_CACHE_DIR/proot}"
+# No CARGO_HOME / RUSTUP_HOME here: the native-assets hook that runs cargo gets
+# only hooks_runner's environment allowlist (HOME and PATH, not these), so it
+# always uses ~/.cargo and ~/.rustup. Setting them for the scripts alone would
+# prepare a toolchain and registry the hook never reads.
+
+# The hook runs rustup in crates/sbm_ffi, which picks this toolchain file.
+rust_toolchain_file="$REPO_ROOT/crates/sbm_ffi/rust-toolchain.toml"
+rust_toolchain="$(sed -n -E \
+  's/^[[:space:]]*channel[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' \
+  "$rust_toolchain_file")"
+[ -n "$rust_toolchain" ] || { echo "Rust toolchain is not pinned" >&2; exit 1; }
+mapfile -t rust_targets < <(sed -n -E \
+  's/^[[:space:]]*"([^"]+)",?[[:space:]]*$/\1/p' \
+  "$rust_toolchain_file")
+[ "${#rust_targets[@]}" -gt 0 ] || { echo "Rust targets are not pinned" >&2; exit 1; }

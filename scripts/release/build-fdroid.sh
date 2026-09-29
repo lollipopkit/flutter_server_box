@@ -11,9 +11,14 @@ cd "$REPO_ROOT"
 source "$REPO_ROOT/scripts/release/android-build-env.sh"
 
 offline_init_script=""
+offline_cargo_config=""
 cleanup() {
   if [ -n "$offline_init_script" ]; then
     rm -f -- "$offline_init_script"
+  fi
+  if [ -n "$offline_cargo_config" ]; then
+    rm -f -- "$offline_cargo_config"
+    rmdir -- "$(dirname "$offline_cargo_config")" 2>/dev/null || true
   fi
 }
 trap cleanup EXIT
@@ -44,7 +49,17 @@ case "$variant" in
 esac
 
 if [ "${FDROID_OFFLINE:-false}" = true ]; then
-  export CARGO_NET_OFFLINE=true
+  # The hook runs cargo with hooks_runner's environment allowlist, so
+  # CARGO_NET_OFFLINE would never reach it. Cargo does read config from its
+  # working directory, which for the hook is the package root.
+  offline_cargo_config="$REPO_ROOT/.cargo/config.toml"
+  [ ! -e "$offline_cargo_config" ] || {
+    echo "Cargo config already exists: $offline_cargo_config" >&2
+    offline_cargo_config=""
+    exit 1
+  }
+  mkdir -p "$(dirname "$offline_cargo_config")"
+  printf '[net]\noffline = true\n' > "$offline_cargo_config"
   # Flutter does not expose Gradle's --offline switch. Install a temporary init
   # script that sets the equivalent StartParameter before dependencies are
   # resolved. Keep the dead proxy as a second guard against JVM networking.
@@ -52,15 +67,26 @@ if [ "${FDROID_OFFLINE:-false}" = true ]; then
   offline_init_script="$GRADLE_USER_HOME/init.d/fdroid-offline.gradle"
   [ ! -e "$offline_init_script" ] || {
     echo "offline Gradle init script already exists: $offline_init_script" >&2
+    offline_init_script=""
     exit 1
   }
   cp "$REPO_ROOT/scripts/release/gradle-offline.init.gradle" "$offline_init_script"
   export GRADLE_OPTS="${GRADLE_OPTS:-} -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=9 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=9"
   export PROOT_OFFLINE=true
-  # If the preparation step missed the pinned Rust toolchain, fail instead of
-  # silently filling the gap from the network in this verification workflow.
-  export RUSTUP_DIST_SERVER=http://127.0.0.1:9
-  export RUSTUP_UPDATE_ROOT=http://127.0.0.1:9
+  # rustup in the hook cannot be pointed at a dead server either (same
+  # allowlist), and it installs a missing toolchain or target on its own. Fail
+  # here instead if the preparation step missed one.
+  rustup toolchain list | grep -q "^$rust_toolchain-" || {
+    echo "Rust $rust_toolchain is not installed; run prepare-fdroid.sh" >&2
+    exit 1
+  }
+  installed_targets="$(rustup target list --installed --toolchain "$rust_toolchain")"
+  for target in "${rust_targets[@]}"; do
+    grep -qxF -- "$target" <<< "$installed_targets" || {
+      echo "Rust target $target is not installed; run prepare-fdroid.sh" >&2
+      exit 1
+    }
+  done
   flutter pub get --offline --enforce-lockfile
 else
   flutter pub get --enforce-lockfile

@@ -135,8 +135,6 @@ jobs:
       - name: Check ABI isolation and native path remapping
         shell: bash
         working-directory: ${{ runner.temp }}/${{ matrix.source_directory }}
-        env:
-          FDROID_CACHE_DIR: ${{ runner.temp }}/${{ matrix.cache_directory }}
         run: |
           set -euo pipefail
           apk="build/app/outputs/apk/release/${{ matrix.apk_name }}"
@@ -154,7 +152,7 @@ jobs:
           unzip -p "$apk" "lib/${{ matrix.jni_abi }}/libsbm_ffi.so" > "$library"
           for forbidden in \
             "$RUNNER_TEMP/${{ matrix.source_directory }}" \
-            "$FDROID_CACHE_DIR/cargo"; do
+            "$HOME/.cargo"; do
             if grep -aFq -- "$forbidden" "$library"; then
               echo "::error::libsbm_ffi.so contains host path: $forbidden"
               exit 1

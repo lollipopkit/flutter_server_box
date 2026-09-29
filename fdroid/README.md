@@ -2,10 +2,9 @@
 
 The canonical metadata lives in
 [`fdroiddata/metadata/tech.lolli.toolbox.yml`](https://gitlab.com/fdroid/fdroiddata/-/blob/master/metadata/tech.lolli.toolbox.yml),
-not in this repository. It currently stops at v1.0.1466. Submit an fdroiddata
-update only after the next `v1.0.<build>` tag and its GitHub release APKs
-exist; before that, neither the immutable commit nor the reference binaries
-can be named.
+not in this repository. Submit an fdroiddata update only after a
+`v1.0.<build>` tag and its GitHub release APKs exist; before that, neither the immutable commit nor the
+reference binaries can be named.
 
 ## Pinned inputs
 
@@ -20,12 +19,24 @@ can be named.
 - `pubspec.lock`, `Cargo.lock`, Gradle's wrapper, every git dependency, and all
   submodules must remain locked at the release commit.
 - proot and talloc are fetched, authenticated, and built by
-  `scripts/build-proot-android.sh` during `prebuild`.
+  `scripts/build-proot-android.sh` during `build` (arm64 only).
 
-`scripts/release/prepare-fdroid.sh` is the only networked preparation entry
-point. It fills the Pub, Cargo, Rust, Gradle, proot, and talloc inputs.
-`FDROID_OFFLINE=true scripts/release/build-fdroid.sh <abi>` then refuses
-network fallback for those build systems and produces an unsigned split APK.
+## Build phases
+
+F-Droid's scanner runs after `prebuild`, and nothing may be compiled before it.
+So `prebuild` only runs `flutter pub get` into an in-tree `.pub-cache` (the
+scanner has to see those packages), and `build` runs
+`scripts/release/build-fdroid.sh <abi>` once. That script sets the pinned
+build environment, patches jni, builds proot and talloc for arm64, prunes
+dev-only plugins, and checks the APK set; a plain `flutter build apk` does not
+match the release.
+
+Rust is not fetched in `prebuild`: rustup installs the toolchain and targets
+from `crates/sbm_ffi/rust-toolchain.toml` when the build hook first runs.
+
+`scripts/release/prepare-fdroid.sh` and `FDROID_OFFLINE=true` are for
+`android-reproducible.yml` only, which proves the build fetches nothing. The
+preparation compiles, so it has no place in an F-Droid recipe.
 
 ## ABI and version-code mapping
 
@@ -57,7 +68,7 @@ signature.
     submodules: true
     sudo:
       - apt-get update
-      - apt-get install -y zip unzip make
+      - apt-get install -y zip unzip make rustup gcc libc-dev
     output: build/app/outputs/apk/release/app-x86_64-release-unsigned.apk
     binary:
       https://github.com/lollipopkit/flutter_server_box/releases/download/v%v/ServerBox_v%v_amd64.apk
@@ -75,13 +86,17 @@ signature.
       - '[[ $flutterVersion ]]'
       - git -C $$flutter$$ checkout -f $flutterVersion
       - export PATH=$$flutter$$/bin:$PATH
+      - export PUB_CACHE=$(pwd)/.pub-cache
       - flutter config --no-analytics
-      - scripts/release/prepare-fdroid.sh amd64
+      - flutter pub get --enforce-lockfile
     scandelete:
+      - .pub-cache
       - packages/xterm/example/assets/specs_v1.json.gz
+      - third_party/ish-arm64/benchmark/assets
     build:
       - export PATH=$$flutter$$/bin:$PATH
-      - FDROID_OFFLINE=true scripts/release/build-fdroid.sh amd64
+      - export PUB_CACHE=$(pwd)/.pub-cache
+      - scripts/release/build-fdroid.sh amd64
     target: android-36
     ndk: r28c
 
@@ -91,7 +106,7 @@ signature.
     submodules: true
     sudo:
       - apt-get update
-      - apt-get install -y zip unzip make
+      - apt-get install -y zip unzip make rustup gcc libc-dev
     output: build/app/outputs/apk/release/app-armeabi-v7a-release-unsigned.apk
     binary:
       https://github.com/lollipopkit/flutter_server_box/releases/download/v%v/ServerBox_v%v_arm.apk
@@ -109,13 +124,17 @@ signature.
       - '[[ $flutterVersion ]]'
       - git -C $$flutter$$ checkout -f $flutterVersion
       - export PATH=$$flutter$$/bin:$PATH
+      - export PUB_CACHE=$(pwd)/.pub-cache
       - flutter config --no-analytics
-      - scripts/release/prepare-fdroid.sh arm
+      - flutter pub get --enforce-lockfile
     scandelete:
+      - .pub-cache
       - packages/xterm/example/assets/specs_v1.json.gz
+      - third_party/ish-arm64/benchmark/assets
     build:
       - export PATH=$$flutter$$/bin:$PATH
-      - FDROID_OFFLINE=true scripts/release/build-fdroid.sh arm
+      - export PUB_CACHE=$(pwd)/.pub-cache
+      - scripts/release/build-fdroid.sh arm
     target: android-36
     ndk: r28c
 
@@ -125,7 +144,7 @@ signature.
     submodules: true
     sudo:
       - apt-get update
-      - apt-get install -y zip unzip make
+      - apt-get install -y zip unzip make rustup gcc libc-dev
     output: build/app/outputs/apk/release/app-arm64-v8a-release-unsigned.apk
     binary:
       https://github.com/lollipopkit/flutter_server_box/releases/download/v%v/ServerBox_v%v_arm64.apk
@@ -143,18 +162,22 @@ signature.
       - '[[ $flutterVersion ]]'
       - git -C $$flutter$$ checkout -f $flutterVersion
       - export PATH=$$flutter$$/bin:$PATH
+      - export PUB_CACHE=$(pwd)/.pub-cache
       - flutter config --no-analytics
-      - scripts/release/prepare-fdroid.sh arm64
+      - flutter pub get --enforce-lockfile
     scandelete:
+      - .pub-cache
       - packages/xterm/example/assets/specs_v1.json.gz
+      - third_party/ish-arm64/benchmark/assets
     build:
       - export PATH=$$flutter$$/bin:$PATH
-      - FDROID_OFFLINE=true scripts/release/build-fdroid.sh arm64
+      - export PUB_CACHE=$(pwd)/.pub-cache
+      - scripts/release/build-fdroid.sh arm64
     target: android-36
     ndk: r28c
 ```
 
-Before opening the fdroiddata PR, run the tag-triggered
-`Android reproducible build` workflow successfully and confirm that all three
-GitHub release APK names above exist. F-Droid's `binary:` comparison remains
+Before opening the fdroiddata MR, confirm that all three GitHub release APK
+names above exist. A published release has already passed
+`Android reproducible build`, which gates publication. F-Droid's `binary:` comparison remains
 the final cross-environment reproducibility verdict.
