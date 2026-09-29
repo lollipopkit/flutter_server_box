@@ -271,8 +271,11 @@ update_release_checksums() {
     fi
     for dmg in "$@"; do
       name="$(basename "$dmg")"
-      # By field, not by pattern: `.` in every name is a literal.
-      awk -v n="$name" '$2 != n' "$dir/$list" > "$dir/$list.tmp"
+      # The whole name after the `  ` or ` *` delimiter, compared as a
+      # string: `.` in every name is a literal, and a field would stop at a
+      # space.
+      awk -v n="$name" '{ f = $0; sub(/^[^ ]+ [ *]/, "", f) } f != n' \
+        "$dir/$list" > "$dir/$list.tmp"
       mv "$dir/$list.tmp" "$dir/$list"
       case "$list" in
         SHA256SUMS) sum="$(shasum -a 256 "$dmg" | cut -d' ' -f1)" ;;
@@ -281,9 +284,26 @@ update_release_checksums() {
       printf '%s  %s\n' "$sum" "$name" >> "$dir/$list"
     done
   done
-  gh release upload "$RELEASE_TAG" "$dir/SHA256SUMS" "$dir/MD5SUMS" \
+  # Uploaded beside the old lists and renamed over them, rather than with
+  # `--clobber`, which deletes first: a failed upload there leaves the public
+  # release with no list at all. Here it leaves the old one, and a failure
+  # after the delete leaves the new one under `.new`.
+  mv "$dir/SHA256SUMS" "$dir/SHA256SUMS.new"
+  mv "$dir/MD5SUMS" "$dir/MD5SUMS.new"
+  gh release upload "$RELEASE_TAG" "$dir/SHA256SUMS.new" "$dir/MD5SUMS.new" \
     --repo "$APP_REPO_SLUG" \
     --clobber
+  local release_api="repos/$APP_REPO_SLUG/releases/tags/$RELEASE_TAG"
+  local old new
+  for list in SHA256SUMS MD5SUMS; do
+    old="$(gh api "$release_api" --jq ".assets[] | select(.name == \"$list\") | .id")"
+    new="$(gh api "$release_api" --jq ".assets[] | select(.name == \"$list.new\") | .id")"
+    if [[ -n "$old" ]]; then
+      gh api -X DELETE "repos/$APP_REPO_SLUG/releases/assets/$old" >/dev/null
+    fi
+    gh api -X PATCH "repos/$APP_REPO_SLUG/releases/assets/$new" \
+      -f name="$list" >/dev/null
+  done
   rm -rf "$dir"
 }
 
