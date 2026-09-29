@@ -276,9 +276,13 @@ void main() {
       // removes its own at its next chunk. A fixed wait failed under a loaded
       // full run, so this waits for the directory instead, and a file that is
       // really left behind still fails it.
-      Iterable<FileSystemEntity> left() => Directory(
-        '${tempDir.path}/dst',
-      ).listSync().where((e) => e.path.contains('sb-part'));
+      // A cancel that lands before the copy made `dst` leaves no directory,
+      // which is nothing left behind rather than an error.
+      Iterable<FileSystemEntity> left() {
+        final dst = Directory('${tempDir.path}/dst');
+        if (!dst.existsSync()) return const [];
+        return dst.listSync().where((e) => e.path.contains('sb-part'));
+      }
       for (var i = 0; i < 100 && left().isNotEmpty; i++) {
         await Future<void>.delayed(const Duration(milliseconds: 50));
       }
