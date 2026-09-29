@@ -64,4 +64,17 @@ void main() {
     );
     expect(find.byType(Hero), findsNothing);
   });
+
+  testWidgets('with less motion asked for, there is no hero', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: MediaQuery(
+          data: MediaQueryData(disableAnimations: true),
+          child: ServerNameHero(id: 'a', enabled: true, child: Text('web-01')),
+        ),
+      ),
+    );
+    expect(find.byType(Hero), findsNothing);
+    expect(find.text('web-01'), findsOneWidget);
+  });
 }

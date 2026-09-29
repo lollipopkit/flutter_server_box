@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/extension/context/motion.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/server.dart';
@@ -18,7 +19,7 @@ class ServerDetailEased extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => AnimatedSize(
-    duration: Durations.short4,
+    duration: context.motion(Durations.short4),
     curve: Curves.easeOutCubic,
     alignment: Alignment.topCenter,
     child: child,

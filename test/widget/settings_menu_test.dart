@@ -103,7 +103,14 @@ void main() {
 
   /// Pushed rather than shown as the home page, which is how it is reached and
   /// what decides whether the bar has anything to go back with.
-  Future<void> pump(WidgetTester tester, {required double width}) async {
+  ///
+  /// [reduceMotion] stands in for the device's own switch, which `MotionScope`
+  /// reads in the app and nothing reads here.
+  Future<void> pump(
+    WidgetTester tester, {
+    required double width,
+    bool reduceMotion = false,
+  }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = Size(width, 900);
     addTearDown(tester.view.reset);
@@ -116,7 +123,15 @@ void main() {
             ...AppLocalizations.localizationsDelegates,
           ],
           supportedLocales: AppLocalizations.supportedLocales,
-          builder: ResponsivePoints.builder,
+          builder: (context, child) => ResponsivePoints.builder(
+            context,
+            MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(disableAnimations: reduceMotion),
+              child: child!,
+            ),
+          ),
           home: Scaffold(
             body: Builder(
               builder: (ctx) => TextButton(
@@ -697,6 +712,20 @@ void main() {
     expect(midway, greaterThan(settled));
   });
 
+  testWidgets('under reduced motion the tabs fade in where they stand', (
+    tester,
+  ) async {
+    await pump(tester, width: 500, reduceMotion: true);
+
+    await tester.tap(menuRow(libL10n.server));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 80));
+    final midway = tester.getTopLeft(find.byKey(settingsTabsKey)).dy;
+
+    await settle(tester, 20);
+    expect(tester.getTopLeft(find.byKey(settingsTabsKey)).dy, midway);
+  });
+
   testWidgets('a first-level leaf shows on its own, with no tabs', (
     tester,
   ) async {
@@ -802,6 +831,28 @@ void main() {
 
     // Where it started and where it was sent, and nothing in between.
     expect(titles, [libL10n.general, target]);
+  });
+
+  testWidgets('under reduced motion a tab goes straight to its page', (
+    tester,
+  ) async {
+    await pump(tester, width: 500, reduceMotion: true);
+
+    await tester.tap(menuRow(libL10n.app));
+    await settle(tester, 20);
+
+    final target = AppLocalizations.of(
+      tester.element(find.byKey(settingsTabsKey)),
+    )!.homeTabs;
+    await tester.ensureVisible(tabRow(target));
+    await settle(tester, 20);
+    await tester.tap(tabRow(target));
+    await tester.pump();
+
+    // In the frame the tap was handled in, with nothing scrolled past on the
+    // way and the page it landed on not selected a second time mid-build.
+    expect(barTitle(tester), target);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('the tab being shown is filled in', (tester) async {

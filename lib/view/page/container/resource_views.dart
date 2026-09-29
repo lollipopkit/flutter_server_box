@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:intl/intl.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/extension/context/motion.dart';
 import 'package:server_box/data/model/app/menu/container.dart';
 import 'package:server_box/data/model/container/image.dart';
 import 'package:server_box/data/model/container/ps.dart';
@@ -811,7 +812,7 @@ class _Collapsible extends StatelessWidget {
       child: AnimatedAlign(
         alignment: Alignment.topCenter,
         heightFactor: collapsed ? 0 : 1,
-        duration: const Duration(milliseconds: 200),
+        duration: context.motion(const Duration(milliseconds: 200)),
         curve: Curves.easeOutCubic,
         child: child,
       ),
@@ -891,7 +892,7 @@ class _ContainerGroupHeader extends StatelessWidget {
             AnimatedRotation(
               key: ValueKey('container-group-arrow-$project'),
               turns: expanded ? 0 : 0.5,
-              duration: const Duration(milliseconds: 200),
+              duration: context.motion(const Duration(milliseconds: 200)),
               child: Icon(
                 Icons.expand_less,
                 size: 15,

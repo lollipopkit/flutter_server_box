@@ -29,19 +29,27 @@ void main() {
     void Function(String)? onTap,
     int labelLimit = 14,
     GeoCoord? initial,
+    bool reduceMotion = false,
   }) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            width: 400,
-            height: 600,
-            child: GlobeView(
-              items: items,
-              cardSize: cardSize,
-              onTapItem: onTap,
-              labelLimit: labelLimit,
-              initialCoord: initial ?? GeoCoord.tryNew(0, 0),
+        home: Builder(
+          builder: (context) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(disableAnimations: reduceMotion),
+            child: Scaffold(
+              body: SizedBox(
+                width: 400,
+                height: 600,
+                child: GlobeView(
+                  items: items,
+                  cardSize: cardSize,
+                  onTapItem: onTap,
+                  labelLimit: labelLimit,
+                  initialCoord: initial ?? GeoCoord.tryNew(0, 0),
+                ),
+              ),
             ),
           ),
         ),
@@ -576,6 +584,46 @@ void main() {
         reason: 'nothing hidden any more, so nothing scheduled',
       );
       await tester.pumpWidget(const SizedBox.shrink());
+    });
+  });
+
+  /// With less movement asked for, the globe moves only under a finger.
+  group('reduced motion', () {
+    testWidgets('a server round the back does not set it turning', (
+      tester,
+    ) async {
+      await show(tester, [
+        item('near', 0, 0),
+        item('far', 0, 180),
+      ], reduceMotion: true);
+      expect(tester.binding.transientCallbackCount, 0);
+
+      final before = tester.getRect(find.byKey(const ValueKey('card-near')));
+      await tester.pump(const Duration(seconds: 2));
+      expect(tester.getRect(find.byKey(const ValueKey('card-near'))), before);
+    });
+
+    testWidgets('a flick does not coast', (tester) async {
+      await show(tester, [item('a', 0, 0)], reduceMotion: true);
+      await flick(tester);
+      expect(tester.binding.transientCallbackCount, 0);
+    });
+
+    testWidgets('dragging still turns it', (tester) async {
+      await show(tester, [item('far', 0, 180)], reduceMotion: true);
+      expect(find.byKey(const ValueKey('card-far')), findsNothing);
+
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.byType(GlobeView)),
+      );
+      for (var i = 0; i < 40; i++) {
+        await gesture.moveBy(const Offset(10, 0));
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      await gesture.up();
+      await tester.pump();
+
+      expect(find.byKey(const ValueKey('card-far')), findsOneWidget);
     });
   });
 

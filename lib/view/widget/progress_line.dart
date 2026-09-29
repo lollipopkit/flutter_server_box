@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:server_box/core/extension/context/motion.dart';
 
 /// A thin bar that says something is happening, and how far along when that is
 /// known.
@@ -39,24 +40,33 @@ class _ProgressLineState extends State<ProgressLine>
     CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
   );
 
+  /// Whether the unmeasured length is moving, which it is only while there is
+  /// no measure and the device has not asked for less movement.
+  ///
+  /// Here rather than in `initState`: the second half needs a context.
+  void _syncLoop() {
+    final loop = widget.value == null && !context.reduceMotion;
+    if (loop == _controller.isAnimating) return;
+    // Stopped rather than left running behind a measured length: it would keep
+    // a frame scheduled for the life of the row, and `pumpAndSettle` in any
+    // test that reaches this page would never return.
+    if (loop) {
+      _controller.repeat(reverse: true);
+    } else {
+      _controller.stop();
+    }
+  }
+
   @override
-  void initState() {
-    super.initState();
-    if (widget.value == null) _controller.repeat(reverse: true);
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncLoop();
   }
 
   @override
   void didUpdateWidget(ProgressLine oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if ((widget.value == null) == (oldWidget.value == null)) return;
-    // Stopped rather than left running behind a measured length: it would keep
-    // a frame scheduled for the life of the row, and `pumpAndSettle` in any
-    // test that reaches this page would never return.
-    if (widget.value == null) {
-      _controller.repeat(reverse: true);
-    } else {
-      _controller.stop();
-    }
+    _syncLoop();
   }
 
   @override
@@ -87,6 +97,12 @@ class _ProgressLineState extends State<ProgressLine>
                 curve: Curves.easeOut,
                 builder: (context, length, _) =>
                     _Bar(length: length, color: scheme.primary),
+              ),
+              // With less movement asked for, the whole track in a fainter
+              // colour: any shorter length held still would read as a measure.
+              null when context.reduceMotion => _Bar(
+                length: 1,
+                color: scheme.primary.withValues(alpha: 0.4),
               ),
               null => AnimatedBuilder(
                 animation: _length,

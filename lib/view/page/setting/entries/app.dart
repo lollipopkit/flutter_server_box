@@ -20,10 +20,11 @@ extension _App on _AppSettingsPageState {
       // that used to be behind a tile called "More" ended up: a group with a
       // name is what that tile was standing in for.
       SettingsGroup(libL10n.system, [
-        if (_bioAuthAvail == true) _buildBioAuth(),
+        if (_bioAuthAvail == true) ...[_buildBioAuth(), _buildBioAuthDelay()],
         if (isMobile) _buildWakeLock(),
         if (isAndroid) _buildBgRun(),
         if (isDesktop) _buildHideTitleBar(),
+        _buildMotion(),
         if (DmgNotice.applies) _buildDmgNotice(),
         // Debug only, which is where it was moved to while these rows were
         // flat. Naming the group does not put it back in a release build.
@@ -396,9 +397,14 @@ extension _App on _AppSettingsPageState {
   }
 
   SettingsRow _buildBioAuth() {
+    return SettingsRow(libL10n.bioAuth, PlatformPublicSettings.buildBioAuth);
+  }
+
+  SettingsRow _buildBioAuthDelay() {
     return SettingsRow(
-      libL10n.bioAuth,
-      PlatformPublicSettings.buildBioAuthRows,
+      PlatformPublicSettings.bioAuthDelayLabel,
+      PlatformPublicSettings.buildBioAuthDelay,
+      keywords: libL10n.bioAuth,
     );
   }
 
@@ -1030,6 +1036,38 @@ extension _App on _AppSettingsPageState {
           trailing: Text('$val ${l10n.times}', style: UIs.text15),
         ),
       ),
+    );
+  }
+
+  /// Over the device's own "reduce motion", in either direction — see
+  /// `AppMotion`.
+  SettingsRow _buildMotion() {
+    final label = l10n.reduceMotion;
+    String name(MotionPref pref) => switch (pref) {
+      MotionPref.system => libL10n.followSystem,
+      MotionPref.reduce => libL10n.enabled,
+      MotionPref.full => libL10n.disabled,
+    };
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.animation),
+        title: Text(label),
+        onTap: () async {
+          final selected = await context.showPickSingleDialog(
+            title: label,
+            items: MotionPref.values,
+            display: name,
+            initial: _setting.motionPref.fetch(),
+          );
+          if (selected != null) _setting.motionPref.put(selected);
+        },
+        trailing: ValBuilder(
+          listenable: _setting.motionPref.listenable(),
+          builder: (pref) => Text(name(pref), style: UIs.text15),
+        ),
+      ),
+      keywords: 'animation',
     );
   }
 

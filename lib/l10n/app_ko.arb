@@ -1496,5 +1496,6 @@
   "virtHwRevertAllAsk": "{name}의 다음 시작을 기다리는 변경을 모두 버릴까요?",
   "virtBackupPlanNew": "새 계획",
   "virtBackupPlanNewTip": "이 게스트만 백업하는 일정입니다.",
-  "virtBackupPlanOthers": "{count, plural, =0{다른 게스트 없음} other{다른 게스트 {count}대도 백업합니다}}"
+  "virtBackupPlanOthers": "{count, plural, =0{다른 게스트 없음} other{다른 게스트 {count}대도 백업합니다}}",
+  "reduceMotion": "동작 줄이기"
 }

@@ -82,6 +82,30 @@ class AppDelegate: FlutterAppDelegate {
         ))
       }
 
+      // The system's "Reduce motion", which the engine does not pass on the
+      // way iOS's does. Asked once, then told on every change.
+      let motionChannel = FlutterMethodChannel(
+        name: "tech.lolli.toolbox/motion",
+        binaryMessenger: controller.engine.binaryMessenger
+      )
+      motionChannel.setMethodCallHandler { (call: FlutterMethodCall, result: @escaping FlutterResult) in
+        if call.method == "reduceMotion" {
+          result(NSWorkspace.shared.accessibilityDisplayShouldReduceMotion)
+        } else {
+          result(FlutterMethodNotImplemented)
+        }
+      }
+      NSWorkspace.shared.notificationCenter.addObserver(
+        forName: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification,
+        object: nil,
+        queue: .main
+      ) { _ in
+        motionChannel.invokeMethod(
+          "reduceMotionChanged",
+          arguments: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        )
+      }
+
       mainChannel.setMethodCallHandler { (call: FlutterMethodCall, result: @escaping FlutterResult) in
         // What MetricKit has reported since this was last asked. Cleared by
         // the read — the caller writes them into a log that persists, and

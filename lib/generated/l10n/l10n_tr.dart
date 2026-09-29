@@ -5317,4 +5317,7 @@ class AppLocalizationsTr extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get reduceMotion => 'Hareketi azalt';
 }

@@ -5417,4 +5417,7 @@ class AppLocalizationsFr extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get reduceMotion => 'Réduire les animations';
 }

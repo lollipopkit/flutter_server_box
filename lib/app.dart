@@ -11,6 +11,7 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/motion.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
 import 'package:server_box/core/service/theme_package.dart';
 import 'package:server_box/core/utils/local_server.dart';
@@ -178,7 +179,12 @@ class _MyAppState extends State<MyApp> {
         // The one background the whole app stands on. A page takes a copy of
         // it while it moves, so that it covers the page below — see
         // [AppPageTransitions].
-        return ThemeSplashGate(child: AppBackground(child: content));
+        //
+        // Under [MotionScope], which says for everything below whether the
+        // app moves less — see [AppMotion].
+        return MotionScope(
+          child: ThemeSplashGate(child: AppBackground(child: content)),
+        );
       },
       locale: locale,
       localizationsDelegates: const [

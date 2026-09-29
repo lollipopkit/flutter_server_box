@@ -5082,4 +5082,7 @@ class AppLocalizationsKo extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get reduceMotion => '동작 줄이기';
 }

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/extension/context/motion.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/shell_quote.dart';
@@ -171,6 +172,10 @@ class _ServerFuncBtnsState extends State<ServerFuncBtns>
   /// on its way out left at the index it had.
   final _slots = <_Slot>[];
 
+  /// [_kSlotDuration], or shorter with less motion asked for: a place opening
+  /// pushes the rest of the row along.
+  var _slotDuration = _kSlotDuration;
+
   @override
   void initState() {
     super.initState();
@@ -178,6 +183,15 @@ class _ServerFuncBtnsState extends State<ServerFuncBtns>
     // every time it appeared would do it once per machine opened.
     for (final e in widget.btns) {
       _slots.add(_Slot(e.btn, e, _controller(1), _remove));
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _slotDuration = context.motion(_kSlotDuration);
+    for (final slot in _slots) {
+      slot.ctrl.duration = _slotDuration;
     }
   }
 
@@ -197,7 +211,7 @@ class _ServerFuncBtnsState extends State<ServerFuncBtns>
   }
 
   AnimationController _controller(double value) =>
-      AnimationController(vsync: this, duration: _kSlotDuration, value: value);
+      AnimationController(vsync: this, duration: _slotDuration, value: value);
 
   void _remove(_Slot slot) {
     if (!mounted) return;

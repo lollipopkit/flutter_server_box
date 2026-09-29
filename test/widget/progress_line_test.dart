@@ -6,12 +6,23 @@ import 'package:server_box/view/widget/progress_line.dart';
 /// the length is known, so a download that stops reporting a fraction does not
 /// look like a different thing happening.
 void main() {
-  Future<void> pumpBar(WidgetTester tester, double? value) async {
+  Future<void> pumpBar(
+    WidgetTester tester,
+    double? value, {
+    bool reduceMotion = false,
+  }) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(
-          body: Center(
-            child: SizedBox(width: 200, child: ProgressLine(value: value)),
+        home: Builder(
+          builder: (context) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(disableAnimations: reduceMotion),
+            child: Scaffold(
+              body: Center(
+                child: SizedBox(width: 200, child: ProgressLine(value: value)),
+              ),
+            ),
           ),
         ),
       ),
@@ -90,5 +101,18 @@ void main() {
     await tester.pump(const Duration(milliseconds: 600));
     expect(barWidth(tester), closeTo(settled, 0.5));
     expect(settled, closeTo(50, 1));
+  });
+
+  testWidgets('with less movement asked for, no value holds still', (
+    tester,
+  ) async {
+    await pumpBar(tester, null, reduceMotion: true);
+    expect(tester.binding.transientCallbackCount, 0);
+
+    // The whole track, so a length held still does not read as a measure.
+    final width = barWidth(tester);
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(barWidth(tester), width);
+    expect(filled(tester), const Size(200, 3));
   });
 }

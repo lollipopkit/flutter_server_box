@@ -51,7 +51,7 @@ import '../helpers/test_db.dart';
 /// putting a pane beside it. They are one now: the card takes the width of the
 /// page and the rest of the grid makes way, so what is on screen is still the
 /// list with one of its cards open — which is what the strip of other machines
-/// over it and the list actions still in the bar are for.
+/// over it is for.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -219,6 +219,29 @@ void main() {
     // Both machines are still reachable from the strip over it, which is what
     // the list has become rather than something new to learn.
     expect(find.text('db'), findsWidgets);
+  });
+
+  testWidgets("the bar offers what the machine's own page does", (
+    tester,
+  ) async {
+    addServers();
+    await pump(tester, size: const Size(1200, 900));
+    expect(find.byIcon(Icons.search), findsOneWidget);
+    expect(find.byIcon(Icons.share), findsNothing);
+
+    await tester.tap(find.text('web'));
+    await settle(tester);
+
+    // The page's share and edit, in the tab's bar since the page draws none.
+    expect(find.byIcon(Icons.share), findsOneWidget);
+    expect(find.byIcon(Icons.edit), findsOneWidget);
+    expect(find.byIcon(Icons.search), findsNothing);
+    expect(find.byIcon(Icons.add), findsNothing);
+
+    await tester.tap(find.byIcon(Icons.arrow_back_ios_new));
+    await settle(tester);
+    expect(find.byIcon(Icons.search), findsOneWidget);
+    expect(find.byIcon(Icons.share), findsNothing);
   });
 
   testWidgets('and the way back puts every card in the grid', (tester) async {

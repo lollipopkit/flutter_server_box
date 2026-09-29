@@ -70,7 +70,12 @@ void main() {
         ],
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
-          body: ListView(children: [PlatformPublicSettings.buildBioAuthRows()]),
+          body: ListView(
+            children: [
+              PlatformPublicSettings.buildBioAuth(),
+              PlatformPublicSettings.buildBioAuthDelay(),
+            ],
+          ),
         ),
       ),
     );

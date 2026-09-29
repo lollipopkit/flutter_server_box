@@ -7,6 +7,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:server_box/core/diag.dart';
+import 'package:server_box/core/extension/context/motion.dart';
 import 'package:server_box/data/model/server/geo.dart';
 import 'package:server_box/view/widget/globe/land.dart';
 import 'package:server_box/view/widget/globe/layout.dart';
@@ -195,6 +196,13 @@ class _GlobeViewState extends State<GlobeView> with TickerProviderStateMixin {
     duration: Durations.medium4,
   )..forward();
 
+  /// Whether the device has asked for less movement.
+  ///
+  /// Then the globe moves only while a finger is on it: no idle turn, no coast
+  /// after a flick, and the entrance is a fade without the zoom. Dragging still
+  /// turns it — that movement is the user's own, and follows their hand.
+  bool _reduceMotion = false;
+
   ui.FragmentShader? _shader;
   GlobeLand? _land;
 
@@ -259,6 +267,15 @@ class _GlobeViewState extends State<GlobeView> with TickerProviderStateMixin {
     if (widget.action != null) _scheduleActionMeasure();
     unawaited(_loadShader());
     unawaited(_loadLand());
+  }
+
+  /// Also where the idle rotation is first considered, since whether it may
+  /// run at all depends on [_reduceMotion] and that needs a context.
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reduceMotion = context.reduceMotion;
+    if (_reduceMotion) _stopCoasting();
     _syncAutoRotation();
   }
 
@@ -434,7 +451,7 @@ class _GlobeViewState extends State<GlobeView> with TickerProviderStateMixin {
     final velocity = details.velocity.pixelsPerSecond;
     // Below this the globe is being let go rather than thrown, and coasting
     // from it reads as the globe drifting on its own.
-    if (velocity.distance < 60 || radius <= 0) return;
+    if (velocity.distance < 60 || radius <= 0 || _reduceMotion) return;
     const perRadian = 180 / math.pi;
     _spin = Offset(
       -velocity.dx / radius * perRadian,
@@ -501,7 +518,8 @@ class _GlobeViewState extends State<GlobeView> with TickerProviderStateMixin {
   /// list of servers, and each tick — rather than from `build`, which must not
   /// start tickers and would ask on every frame of an unrelated animation.
   void _syncAutoRotation() {
-    final want = _autoAllowed && _coast == null && _anyHidden;
+    final want =
+        _autoAllowed && !_reduceMotion && _coast == null && _anyHidden;
     if (want == (_auto != null)) return;
     if (want) {
       _lastAutoTick = Duration.zero;
@@ -621,7 +639,7 @@ class _GlobeViewState extends State<GlobeView> with TickerProviderStateMixin {
                       // Scaled about the middle, so the globe opens out of the
                       // page rather than sliding in from an edge.
                       child: Transform.scale(
-                        scale: 0.86 + 0.14 * t,
+                        scale: _reduceMotion ? 1 : 0.86 + 0.14 * t,
                         child: CustomPaint(
                         painter: GlobePainter(
                           projection: projection,

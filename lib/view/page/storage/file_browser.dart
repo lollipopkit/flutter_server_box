@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/extension/context/motion.dart';
 import 'package:server_box/data/model/file/browse_path.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_issue.dart';
@@ -1208,7 +1209,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
             // no row here when no search is on, so `AnimatedSize` gives the
             // opening and closing a height to animate.
             AnimatedSize(
-              duration: Durations.short4,
+              duration: context.motion(Durations.short4),
               alignment: Alignment.topCenter,
               child: InlineSearchBar(
                 controller: _search,

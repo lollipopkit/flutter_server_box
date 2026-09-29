@@ -1496,5 +1496,6 @@
   "virtHwRevertAllAsk": "Scartare tutte le modifiche in attesa del prossimo avvio di {name}?",
   "virtBackupPlanNew": "Nuovo piano",
   "virtBackupPlanNewTip": "Una pianificazione che esegue il backup solo di questo guest.",
-  "virtBackupPlanOthers": "{count, plural, =0{Nessun altro guest} =1{Esegue il backup anche di 1 altro guest} other{Esegue il backup anche di altri {count} guest}}"
+  "virtBackupPlanOthers": "{count, plural, =0{Nessun altro guest} =1{Esegue il backup anche di 1 altro guest} other{Esegue il backup anche di altri {count} guest}}",
+  "reduceMotion": "Riduci movimento"
 }

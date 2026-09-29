@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:server_box/core/extension/context/motion.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 
 /// The batch of calls awaiting review, one at a time, with a way between them.
@@ -78,8 +79,9 @@ class _AgentProposalPagerState extends State<AgentProposalPager> {
     // Always in the tree, even with nothing to show: approving the last call
     // of a batch is the moment the card should be seen leaving, and a widget
     // removed by an `if` above simply stops existing.
+    final reduceMotion = context.reduceMotion;
     return AnimatedSize(
-      duration: Durations.short4,
+      duration: context.motion(Durations.short4),
       curve: Curves.easeOutCubic,
       alignment: Alignment.topCenter,
       child: AnimatedSwitcher(
@@ -87,10 +89,12 @@ class _AgentProposalPagerState extends State<AgentProposalPager> {
         switchInCurve: Curves.easeOutCubic,
         switchOutCurve: Curves.easeIn,
         // Out and in from opposite sides, so a batch reads as a row of cards
-        // even though only one is ever built.
+        // even though only one is ever built. Where the device has asked for
+        // less movement, the two only cross-fade.
         transitionBuilder: (child, animation) {
           final incoming = child.key == ValueKey(proposal?.id ?? '');
-          final begin = Offset((incoming == _forward ? 1.0 : -1.0) * 0.12, 0);
+          final shift = reduceMotion ? 0.0 : 0.12;
+          final begin = Offset((incoming == _forward ? 1.0 : -1.0) * shift, 0);
           return FadeTransition(
             opacity: animation,
             child: SlideTransition(

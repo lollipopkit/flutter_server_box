@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:server_box/core/extension/context/motion.dart';
 import 'package:server_box/core/service/theme_package.dart';
 import 'package:server_box/data/model/app/theme_style.dart';
 import 'package:server_box/data/res/store.dart';
@@ -184,16 +185,99 @@ class BackgroundLayer extends StatelessWidget {
 /// A page at rest gives it back: the background is drawn once behind the whole
 /// app, and drawing it again in every page's own box would cost a layer per
 /// route to show the same thing.
+///
+/// And either kind fades in place of moving when the app moves less — see
+/// [_MotionAware].
 abstract final class AppPageTransitions {
-  /// For a theme whose pages are transparent. A page with no background behind
-  /// it is opaque on its own and wants the platform's transitions unwrapped.
-  static final backgrounded = PageTransitionsTheme(
+  /// For a theme whose pages are opaque: the platform's own transitions.
+  static final plain = _wrap((builder) => _MotionAware(builder));
+
+  /// For a theme whose pages are transparent.
+  static final backgrounded = _wrap(
+    (builder) => _Backgrounded(_MotionAware(builder)),
+  );
+
+  static PageTransitionsTheme _wrap(
+    PageTransitionsBuilder Function(PageTransitionsBuilder) wrap,
+  ) => PageTransitionsTheme(
     builders: {
       for (final MapEntry(key: platform, value: builder)
           in const PageTransitionsTheme().builders.entries)
-        platform: _Backgrounded(builder),
+        platform: wrap(builder),
     },
   );
+}
+
+/// The platform's transition, or a fade in its place when the app moves less.
+///
+/// The platform's builder is still the one that builds the page, only held
+/// still: it is also what carries the back gesture, and a swipe back is how a
+/// page is left on iOS whether or not it slides. Its gesture drives the route's
+/// own animation, which is what the fade reads, so the page fades under the
+/// finger instead of following it.
+final class _MotionAware extends PageTransitionsBuilder {
+  const _MotionAware(this._inner);
+
+  final PageTransitionsBuilder _inner;
+
+  @override
+  Duration get transitionDuration => _inner.transitionDuration;
+
+  @override
+  Duration get reverseTransitionDuration => _inner.reverseTransitionDuration;
+
+  @override
+  DelegatedTransitionBuilder? get delegatedTransition =>
+      _inner.delegatedTransition == null ? null : _delegated;
+
+  /// The page below moving aside for the one arriving, which it does not when
+  /// the app moves less. A tear-off, so every read of [delegatedTransition]
+  /// is the same value — the navigator compares two routes' by equality.
+  Widget? _delegated(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    bool allowSnapshotting,
+    Widget? child,
+  ) {
+    if (context.reduceMotion) return child;
+    return _inner.delegatedTransition!(
+      context,
+      animation,
+      secondaryAnimation,
+      allowSnapshotting,
+      child,
+    );
+  }
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    if (!context.reduceMotion) {
+      return _inner.buildTransitions(
+        route,
+        context,
+        animation,
+        secondaryAnimation,
+        child,
+      );
+    }
+    return FadeTransition(
+      opacity: animation,
+      child: _inner.buildTransitions(
+        route,
+        context,
+        kAlwaysCompleteAnimation,
+        kAlwaysDismissedAnimation,
+        child,
+      ),
+    );
+  }
 }
 
 /// Delegates to the platform's own transition, with the page wrapped.

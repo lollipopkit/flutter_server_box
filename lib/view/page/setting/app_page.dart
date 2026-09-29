@@ -297,6 +297,7 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
         // stops matching shrinks away and one that starts matching grows in,
         // and the rest of the column flows around it.
         AnimatedColumn(
+          duration: context.motion(Durations.medium2),
           children: [
             for (final group in [...groups, ?pageGroup])
               Padding(

@@ -7072,5 +7072,6 @@
         "type": "int"
       }
     }
-  }
+  },
+  "reduceMotion": "Reduce motion"
 }

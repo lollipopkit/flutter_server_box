@@ -53,10 +53,12 @@ extension _Bar on _ServerPageState {
                   // how many of them fit on a screen is not a question it has.
                   if (openId == null)
                     _buildDensityControl(filtered.length, room: cons.maxWidth),
-                  // The rest act on the list, and the list is still the page
-                  // with one of its cards open — so they stay where they are
-                  // rather than following a server into its own page.
-                  ..._listActions(),
+                  // With one open, the page is that machine, so the bar offers
+                  // what its own page does when pushed on a phone.
+                  if (openId == null)
+                    ..._listActions()
+                  else
+                    ..._serverActions(openId),
                   const SizedBox(width: 7),
                 ],
               ),
@@ -65,6 +67,19 @@ extension _Bar on _ServerPageState {
         );
       },
     );
+  }
+
+  List<Widget> _serverActions(String openId) {
+    final spi = ref.read(serversProvider).servers[openId];
+    if (spi == null) return const [];
+    return [
+      for (final action in ServerPageAction.of(context, spi))
+        Btn.icon(
+          text: action.label,
+          icon: Icon(action.icon, size: 18),
+          onTap: action.onTap,
+        ),
+    ];
   }
 
   /// How much of each machine the list draws.

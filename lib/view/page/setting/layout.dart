@@ -399,6 +399,7 @@ extension _SettingsLayout on _SettingsPageState {
     final entered = _path.lastOrNull;
     final level = entered == null || entered.isLeaf ? null : entered;
     final space = level == null ? 0.0 : _kTabsHeight + _kTabsMargin * 2;
+    final reduceMotion = context.reduceMotion;
 
     return Stack(
       // Nothing here should reach past the floor of this box — the page is
@@ -431,16 +432,21 @@ extension _SettingsLayout on _SettingsPageState {
             // Springs up past its place and settles, as displacement does
             // elsewhere. No fade with it: the curve overshoots, and an opacity
             // past 1 asserts.
-            switchInCurve: _kTabsCurve,
+            //
+            // Where the device has asked for less movement it only fades, on
+            // a curve that stays inside 0 to 1.
+            switchInCurve: reduceMotion ? Curves.easeOut : _kTabsCurve,
             switchOutCurve: Curves.easeIn,
-            transitionBuilder: (child, animation) => SlideTransition(
-              position: Tween(
-                // Far enough to take the shadow with it.
-                begin: const Offset(0, 1.4),
-                end: Offset.zero,
-              ).animate(animation),
-              child: child,
-            ),
+            transitionBuilder: (child, animation) => reduceMotion
+                ? FadeTransition(opacity: animation, child: child)
+                : SlideTransition(
+                    position: Tween(
+                      // Far enough to take the shadow with it.
+                      begin: const Offset(0, 1.4),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
             child: level == null
                 ? const SizedBox(key: ValueKey('no_tabs'), width: double.infinity)
                 : _SettingsTabs(

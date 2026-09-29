@@ -35,23 +35,9 @@ monitor/migrations/*.sql text eol=lf
 test/fixtures/rootfs_manifest/signed.json text eol=lf
 test/fixtures/rootfs_manifest/*.sig -text
 
-# New binary artwork and packaged themes use Git LFS. Existing Git history is
-# left unchanged; migrate tracked assets separately if their size warrants it.
-*.png filter=lfs diff=lfs merge=lfs -text
-*.jpg filter=lfs diff=lfs merge=lfs -text
-*.jpeg filter=lfs diff=lfs merge=lfs -text
-*.webp filter=lfs diff=lfs merge=lfs -text
-*.avif filter=lfs diff=lfs merge=lfs -text
-*.gif filter=lfs diff=lfs merge=lfs -text
-*.fsbt filter=lfs diff=lfs merge=lfs -text
-
-# Except what the theme store serves and what the app installs from its own
-# assets: `store/` reaches devices through `git archive` (scripts/store-tarball.sh),
-# which writes LFS pointers rather than the files, and a checkout without LFS
-# (CI's `check`, a plain clone) would ship a pointer as a bundled theme. They
-# are small; keep them regular blobs.
-store/**/*.png -filter -diff -merge -text
-store/**/*.jpg -filter -diff -merge -text
-store/**/*.jpeg -filter -diff -merge -text
-store/**/*.fsbt -filter -diff -merge -text
-assets/store_themes/*.fsbt -filter -diff -merge -text
+# No Git LFS: every tracked image and theme package is a regular blob. An LFS
+# rule over them makes each file whose mtime changes (a build, an IDE) show as
+# modified, and `git add` would turn it into a pointer. The theme store also
+# cannot hold pointers: `git archive HEAD:store` (scripts/store-tarball.sh)
+# reads no `.gitattributes` above the subtree, so no smudge runs. Moving to LFS
+# means `git add --renormalize` on the files in the same change.
