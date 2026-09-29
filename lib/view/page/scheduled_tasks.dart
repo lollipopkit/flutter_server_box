@@ -338,7 +338,8 @@ extension on _ScheduledTasksPageState {
               onChanged: (value) => _rebuild(() => _query = value),
               textInputAction: TextInputAction.search,
               style: const TextStyle(fontSize: 13),
-              decoration: InputDecoration.collapsed(
+              decoration: bareInputDecoration(
+                isCollapsed: true,
                 hintText: l10n.scheduledTaskFilterHint,
                 hintStyle: TextStyle(fontSize: 13, color: UIs.textGrey.color),
               ),
@@ -1314,7 +1315,8 @@ final class _TaskEditorState extends State<_TaskEditor> {
               autocorrect: false,
               enableSuggestions: false,
               style: const TextStyle(fontFamily: 'monospace', fontSize: 14),
-              decoration: InputDecoration.collapsed(
+              decoration: bareInputDecoration(
+                isCollapsed: true,
                 hintText: '/usr/bin/rsync -a /srv /mnt/backup',
                 hintStyle: TextStyle(
                   fontFamily: 'monospace',
@@ -1414,7 +1416,7 @@ final class _TaskEditorState extends State<_TaskEditor> {
             autocorrect: false,
             enableSuggestions: false,
             style: const TextStyle(fontFamily: 'monospace', fontSize: 14),
-            decoration: const InputDecoration.collapsed(hintText: null),
+            decoration: bareInputDecoration(isCollapsed: true),
           ),
         ),
         const SizedBox(height: 3),

@@ -405,7 +405,8 @@ extension on _ServicesPageState {
               onChanged: (value) => _rebuild(() => _query = value),
               textInputAction: TextInputAction.search,
               style: const TextStyle(fontSize: 13),
-              decoration: InputDecoration.collapsed(
+              decoration: bareInputDecoration(
+                isCollapsed: true,
                 hintText: context.l10n.serviceSearchHint,
                 hintStyle: TextStyle(fontSize: 13, color: UIs.textGrey.color),
               ),
