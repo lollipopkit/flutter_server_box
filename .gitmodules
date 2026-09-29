@@ -12,7 +12,7 @@
 	branch = main
 [submodule "fl_build"]
 	path = packages/fl_build
-	url = https://github.com/lppcg/fl_build.git
+	url = https://github.com/lollipopkit/fl_build.git
 	branch = main
 [submodule "circle_chart"]
 	path = packages/circle_chart

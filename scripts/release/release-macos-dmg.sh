@@ -251,6 +251,42 @@ verify_app_arch() {
   echo "$app_path: $checked binaries, all $expected"
 }
 
+# Adds [dmg...] to the release's SHA256SUMS and MD5SUMS, which CI wrote for
+# everything it published, replacing the line an earlier upload of the same
+# name left. A release without them yet gets them started.
+update_release_checksums() {
+  local dir list dmg name sum assets
+  dir="$(mktemp -d)"
+  # Asked first rather than inferred from a failed download: a download that
+  # failed for any other reason would start the list over, and the upload
+  # below would replace CI's list with one naming only these DMGs.
+  assets="$(gh release view "$RELEASE_TAG" --repo "$APP_REPO_SLUG" \
+    --json assets --jq '.assets[].name')"
+  for list in SHA256SUMS MD5SUMS; do
+    if grep -qxF "$list" <<< "$assets"; then
+      gh release download "$RELEASE_TAG" --repo "$APP_REPO_SLUG" \
+        --pattern "$list" --dir "$dir"
+    else
+      : > "$dir/$list"
+    fi
+    for dmg in "$@"; do
+      name="$(basename "$dmg")"
+      # By field, not by pattern: `.` in every name is a literal.
+      awk -v n="$name" '$2 != n' "$dir/$list" > "$dir/$list.tmp"
+      mv "$dir/$list.tmp" "$dir/$list"
+      case "$list" in
+        SHA256SUMS) sum="$(shasum -a 256 "$dmg" | cut -d' ' -f1)" ;;
+        MD5SUMS) sum="$(md5 -q "$dmg")" ;;
+      esac
+      printf '%s  %s\n' "$sum" "$name" >> "$dir/$list"
+    done
+  done
+  gh release upload "$RELEASE_TAG" "$dir/SHA256SUMS" "$dir/MD5SUMS" \
+    --repo "$APP_REPO_SLUG" \
+    --clobber
+  rm -rf "$dir"
+}
+
 # How many times a call to Apple's notary service is worth making.
 NOTARY_ATTEMPTS="${NOTARY_ATTEMPTS:-4}"
 
@@ -550,6 +586,7 @@ if [[ "$PUBLISH_GITHUB_RELEASE" == "1" ]]; then
   gh release upload "$RELEASE_TAG" "${built_dmgs[@]}" \
     --repo "$APP_REPO_SLUG" \
     --clobber
+  update_release_checksums "${built_dmgs[@]}"
 fi
 
 # The cask references one download per architecture, so update it only when both
