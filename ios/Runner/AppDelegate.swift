@@ -60,7 +60,8 @@ import ActivityKit
     private func setupMethodChannels(binaryMessenger: FlutterBinaryMessenger) {
         // Its own channel: `main_chan` has one handler and the Dart side has
         // already given it to the terminal service. This one only ever carries
-        // a nudge -- the payload still leaves through `takeOpenedShare`.
+        // a nudge -- the payload still leaves through `takeOpenedShare` or
+        // `takeOpenedLink`.
         let shareChannel = FlutterMethodChannel(name: "tech.lolli.toolbox/incoming_share", binaryMessenger: binaryMessenger)
         // Captured strongly, and that is the whole of it: the channel is a
         // local, so nothing else holds one. Captured weakly it was deallocated
@@ -74,7 +75,7 @@ import ActivityKit
             // explicitly anyway, because a channel call from anywhere else is
             // undefined rather than merely late.
             DispatchQueue.main.async {
-                shareChannel.invokeMethod("shareOpened", arguments: nil)
+                shareChannel.invokeMethod("opened", arguments: nil)
             }
         }
 
@@ -175,6 +176,9 @@ import ActivityKit
             // and [SceneDelegate], which is where it is picked up.
             case "takeOpenedShare":
                 result(IncomingShare.take())
+            // A `serverbox://` link, held the same way.
+            case "takeOpenedLink":
+                result(IncomingShare.takeLink())
             default:
                 result(FlutterMethodNotImplemented)
             }

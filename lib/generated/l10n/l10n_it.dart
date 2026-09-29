@@ -5396,4 +5396,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get reduceMotion => 'Riduci movimento';
+
+  @override
+  String get copyLink => 'Copia link';
 }

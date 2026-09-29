@@ -99,14 +99,19 @@ extension _HomePageLifecycle on _HomePageState {
     // had both drew the hint on top of the passphrase prompt the user had
     // just asked for, and the guide's own button sat over the dialog's.
     // Answering the file the user opened comes first either way.
-    await _consumePendingShare();
+    await _consumePending();
     if (!mounted) return;
     await _maybeShowNavGuide();
   }
 
-  /// Takes in a `.sbxsrv` the platform handed this app, if one is waiting.
-  Future<void> _consumePendingShare() async {
-    if (_consumingShare) return;
+  /// Takes in what the platform handed this app, if anything is waiting: a
+  /// `.sbxsrv`, then a `serverbox://` link.
+  ///
+  /// One method for both because they share every constraint below — the
+  /// lock screen, the launch ordering, the re-entry guard — and two copies
+  /// would be two places for those to drift.
+  Future<void> _consumePending() async {
+    if (_consumingPending) return;
     // Before the launch path has decided whether there is a lock, [_authed] is
     // null and awaiting it waits for nothing — so a `resumed` edge arriving
     // first (a cold launch on macOS, where opening the file is what activates
@@ -115,10 +120,12 @@ extension _HomePageLifecycle on _HomePageState {
     // this itself once it has assigned it, and taking the guard below would
     // have made that call a no-op instead.
     if (_authed == null) return;
-    _consumingShare = true;
+    _consumingPending = true;
     try {
       final text = await MethodChans.takeOpenedShare();
-      if (text == null || text.isEmpty || !mounted) return;
+      final link = await MethodChans.takeOpenedLink();
+      final hasText = text != null && text.isNotEmpty;
+      if ((!hasText && link == null) || !mounted) return;
       // Behind the lock screen for the same reason the launch notices are: it
       // is a root-navigator dialog, and the lock page is on that navigator.
       //
@@ -129,11 +136,14 @@ extension _HomePageLifecycle on _HomePageState {
       // the new [_authed] — has run by the time this line does.
       await _authed;
       if (!mounted) return;
-      await ServerShareUi.consume(context, ref, text, digitsOnly: false);
+      if (hasText) {
+        await ServerShareUi.consume(context, ref, text, digitsOnly: false);
+      }
+      if (link != null && mounted) await AppLinkUi.open(context, ref, link);
     } catch (e, s) {
-      Loggers.app.warning('Consume the opened share', e, s);
+      Loggers.app.warning('Consume what was opened', e, s);
     } finally {
-      _consumingShare = false;
+      _consumingPending = false;
     }
   }
 

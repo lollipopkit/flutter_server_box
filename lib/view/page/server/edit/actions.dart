@@ -131,6 +131,13 @@ extension _Discovery on _ServerEditPageState {
     _portController.text = '${found.port}';
     if (_nameController.text.isEmpty) _nameController.text = found.ip;
   }
+
+  void _initWithDraft(ServerDraft draft) {
+    if (draft.host case final host?) _ipController.text = host;
+    if (draft.port case final port?) _portController.text = '$port';
+    if (draft.user case final user?) _usernameController.text = user;
+    _nameController.text = draft.name ?? draft.host ?? '';
+  }
 }
 
 extension _Actions on _ServerEditPageState {

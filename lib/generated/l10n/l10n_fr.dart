@@ -5424,4 +5424,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get reduceMotion => 'Réduire les animations';
+
+  @override
+  String get copyLink => 'Copier le lien';
 }

@@ -5326,4 +5326,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get reduceMotion => 'Kurangi gerakan';
+
+  @override
+  String get copyLink => 'Salin tautan';
 }

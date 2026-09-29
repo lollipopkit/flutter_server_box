@@ -5374,4 +5374,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get reduceMotion => 'Зменшення руху';
+
+  @override
+  String get copyLink => 'Копіювати посилання';
 }

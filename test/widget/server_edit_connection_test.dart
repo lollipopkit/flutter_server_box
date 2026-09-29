@@ -15,6 +15,7 @@ import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/pve.dart';
+import 'package:server_box/data/store/server.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 
@@ -34,6 +35,10 @@ void main() {
     if (!getIt.isRegistered<PveStore>()) {
       getIt.registerSingleton<PveStore>(PveStore());
     }
+    // A new server's save checks its id against the stored ones.
+    if (!getIt.isRegistered<ServerStore>()) {
+      getIt.registerSingleton<ServerStore>(ServerStore());
+    }
   });
   tearDown(closeTestDb);
 
@@ -51,6 +56,7 @@ void main() {
     WidgetTester tester,
     Spi server, {
     List<Spi> others = const [],
+    ServerEditArgs? args,
   }) async {
     FlutterSecureStorage.setMockInitialValues({});
     Spi? persisted;
@@ -79,7 +85,7 @@ void main() {
             builder: (context) {
               app_locale.l10n = AppLocalizations.of(context)!;
               context.setLibL10n();
-              return ServerEditPage(args: ServerEditArgs(server));
+              return ServerEditPage(args: args ?? ServerEditArgs(server));
             },
           ),
         ),
@@ -179,6 +185,48 @@ void main() {
     expect(persisted(), isNull);
   });
 
+  group('a draft from a link', () {
+    const draft = (
+      name: null,
+      host: 'example.com',
+      port: 2222,
+      user: 'deploy',
+    );
+
+    testWidgets('fills the form of a new server', (tester) async {
+      await pumpEditor(tester, both, args: const ServerEditArgs.draft(draft));
+
+      expect(find.widgetWithText(TextField, 'example.com'), findsWidgets);
+      expect(find.widgetWithText(TextField, '2222'), findsOneWidget);
+      expect(find.widgetWithText(TextField, 'deploy'), findsOneWidget);
+      // New, not the server the notifier happens to hold: nothing to delete.
+      expect(find.byIcon(Icons.delete), findsNothing);
+    });
+
+    testWidgets('is saved as a new server, never over another', (
+      tester,
+    ) async {
+      final persisted = await pumpEditor(
+        tester,
+        both,
+        args: const ServerEditArgs.draft(draft),
+      );
+      // What a link never carries, and the user types.
+      await tester.enterText(find.widgetWithText(TextField, libL10n.pwd), 'pw');
+      await tester.tap(find.widgetWithText(FilledButton, libL10n.save));
+      await settle(tester);
+
+      final saved = persisted();
+      expect(saved, isNotNull);
+      expect(saved!.id, isNot(both.id));
+      expect(saved.ssh?.ip, 'example.com');
+      expect(saved.ssh?.port, 2222);
+      expect(saved.ssh?.user, 'deploy');
+      // No name in the link: the host stands in, as for a discovered server.
+      expect(saved.name, 'example.com');
+    });
+  });
+
   group('this device', () {
     const me = Spi(name: 'me', id: 'me-id', local: true);
     // Nothing to offer where this build cannot read this device.
@@ -221,6 +269,11 @@ final class _PersistingServersNotifier extends ServersNotifier {
     },
     serverOrder: [initialServer.id, for (final s in others) s.id],
   );
+
+  @override
+  Future<void> addServer(Spi spi) async {
+    onPersist(Spi.fromJson(jsonDecode(jsonEncode(spi)) as Map<String, dynamic>));
+  }
 
   @override
   Future<void> updateServer(Spi old, Spi newSpi) async {

@@ -1498,5 +1498,6 @@
   "virtBackupPlanNew": "Novo plano",
   "virtBackupPlanNewTip": "Um agendamento que faz backup apenas deste convidado.",
   "virtBackupPlanOthers": "{count, plural, =0{Nenhum outro convidado} =1{Também faz backup de 1 outro convidado} other{Também faz backup de {count} outros convidados}}",
-  "reduceMotion": "Reduzir movimento"
+  "reduceMotion": "Reduzir movimento",
+  "copyLink": "Copiar link"
 }

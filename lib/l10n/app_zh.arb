@@ -1498,5 +1498,6 @@
   "virtBackupPlanNew": "新建计划",
   "virtBackupPlanNewTip": "只备份这台虚拟机的定时计划。",
   "virtBackupPlanOthers": "{count, plural, =0{没有其他虚拟机} other{还备份另外 {count} 台虚拟机}}",
-  "reduceMotion": "减少动态效果"
+  "reduceMotion": "减少动态效果",
+  "copyLink": "复制链接"
 }

@@ -352,6 +352,23 @@ abstract final class MethodChans {
     }
   }
 
+  /// The `serverbox://` link this app was last opened with, if one is waiting.
+  ///
+  /// Held natively and pulled, for the same reason as [takeOpenedShare]: on a
+  /// cold launch the link arrives before the engine does. Android too, where a
+  /// link is an ordinary VIEW intent and needs none of the file handling above.
+  ///
+  /// Cleared by the read.
+  static Future<String?> takeOpenedLink() async {
+    if (!isIOS && !isMacOS && !isAndroid) return null;
+    try {
+      return await _channel.invokeMethod<String>('takeOpenedLink');
+    } catch (e, s) {
+      Loggers.app.warning('Failed to read the opened link', e, s);
+      return null;
+    }
+  }
+
   /// Its own channel, deliberately.
   ///
   /// A channel has exactly one handler and [registerHandler] already owns the
@@ -361,8 +378,8 @@ abstract final class MethodChans {
     '${Miscs.pkgName}/incoming_share',
   );
 
-  /// Runs [onOpened] when the platform hands this app a share while it is
-  /// **already frontmost**.
+  /// Runs [onOpened] when the platform hands this app a share or a link while
+  /// it is **already frontmost**.
   ///
   /// The lifecycle covers the other two ways in — a cold launch, and coming
   /// forward to answer the open. It does not cover this one: an app that never
@@ -371,13 +388,13 @@ abstract final class MethodChans {
   /// unrelated resume raised the prompt out of nowhere. Reachable on iPadOS in
   /// Split View, where two apps are foreground at once.
   ///
-  /// Push rather than pull only for the trigger; the bytes still come back
-  /// through [takeOpenedShare], so there is one path that reads and clears
-  /// them however the app was told.
-  static void onShareOpened(VoidCallback onOpened) {
-    if (!isIOS && !isMacOS) return;
+  /// Push rather than pull only for the trigger; the payload still comes
+  /// back through [takeOpenedShare] or [takeOpenedLink], so there is one path
+  /// that reads and clears it however the app was told.
+  static void onOpened(VoidCallback onOpened) {
+    if (!isIOS && !isMacOS && !isAndroid) return;
     _shareChannel.setMethodCallHandler((call) async {
-      if (call.method == 'shareOpened') onOpened();
+      if (call.method == 'opened') onOpened();
     });
   }
 

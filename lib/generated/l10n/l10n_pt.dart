@@ -5380,4 +5380,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get reduceMotion => 'Reduzir movimento';
+
+  @override
+  String get copyLink => 'Copiar link';
 }

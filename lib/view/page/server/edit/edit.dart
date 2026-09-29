@@ -51,13 +51,25 @@ enum ServerEditSection {
   pve,
 }
 
+/// What a new server's form starts with, from outside the app. Nothing
+/// secret: see `AddServerLink`.
+typedef ServerDraft = ({String? name, String? host, int? port, String? user});
+
 final class ServerEditArgs {
-  final Spi spi;
+  /// The server being edited. Null for a new one.
+  final Spi? spi;
+
+  /// Filled into a new server's form. Saved only by the user.
+  final ServerDraft? draft;
 
   /// Opened and scrolled to once the page is laid out.
   final ServerEditSection? section;
 
-  const ServerEditArgs(this.spi, {this.section});
+  const ServerEditArgs(Spi this.spi, {this.section}) : draft = null;
+
+  const ServerEditArgs.draft(ServerDraft this.draft)
+    : spi = null,
+      section = null;
 }
 
 class ServerEditPage extends ConsumerStatefulWidget {
@@ -230,7 +242,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   @override
   void initState() {
     super.initState();
-    _serverId = widget.args?.spi.id ?? ShortId.generate();
+    _serverId = widget.args?.spi?.id ?? ShortId.generate();
     // The open half of a funnel that `edit saved` closes. Without it, giving
     // up partway through adding a server is indistinguishable from never
     // having started -- neither leaves a record of any kind.
@@ -422,6 +434,10 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     if (spi != null) {
       _initWithSpi(spi!);
       if (widget.args?.section case final section?) _openSection(section);
+    } else if (widget.args?.draft case final draft?) {
+      // A form someone else started; the SSH config offer below would
+      // replace what it brought.
+      _initWithDraft(draft);
     } else if (isDesktop && Stores.setting.firstTimeReadSSHCfg.fetch()) {
       _checkSSHConfigImport();
     }

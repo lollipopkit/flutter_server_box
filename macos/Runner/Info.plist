@@ -32,6 +32,20 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<!-- `serverbox://` links: see `AppLink` in lib/data/model/app/app_link.dart. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>CFBundleURLName</key>
+			<string>tech.lolli.toolbox</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>serverbox</string>
+			</array>
+		</dict>
+	</array>
 	<!-- What this app is offered for in "Open With", and what AirDrop hands
 	     it. One type, its own: claiming `.json` would claim every JSON file on
 	     the machine. `Alternate` rather than `Owner` is wrong here — this app

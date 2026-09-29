@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/server.dart';
+import 'package:server_box/data/model/app/app_link.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
@@ -10,6 +11,7 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/view/page/server/card/card.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
+import 'package:server_box/view/widget/app_link.dart';
 import 'package:server_box/view/widget/server_power.dart';
 import 'package:server_box/view/widget/server_share.dart';
 
@@ -51,6 +53,11 @@ List<ContextMenuAction> serverActions(
       // that is worth reading before choosing it.
       note: spi.displayAddr,
       onTap: () => Pfs.copy(spi.displayAddr),
+    ),
+    ContextMenuAction(
+      icon: Icons.link,
+      text: l10n.copyLink,
+      onTap: () => AppLinkUi.copy(ServerLink(spi.id)),
     ),
     ContextMenuAction(
       icon: Icons.ios_share,

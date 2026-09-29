@@ -7077,5 +7077,6 @@
       }
     }
   },
-  "reduceMotion": "Reduce motion"
+  "reduceMotion": "Reduce motion",
+  "copyLink": "Copy link"
 }

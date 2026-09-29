@@ -85,6 +85,21 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- `serverbox://` links: see `AppLink` in
+                 lib/data/model/app/app_link.dart. MainActivity holds the link
+                 until the Dart side asks for it. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="serverbox" />
+            </intent-filter>
+            <!-- Off, or Flutter pushes every link it sees as a route name onto
+                 a navigator that has no generator for one. Links are taken in
+                 by MainActivity instead. -->
+            <meta-data
+                android:name="flutter_deeplinking_enabled"
+                android:value="false" />
             <!--
                 No file association on Android, deliberately.
 

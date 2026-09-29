@@ -66,6 +66,7 @@ export default defineConfig({
 						{ label: 'Globe View', translations: { 'zh-CN': '地球仪视图' }, slug: 'advanced/globe' },
 						{ label: 'Custom Commands', translations: { 'zh-CN': '自定义命令' }, slug: 'advanced/custom-commands' },
 						{ label: 'Custom Logo', translations: { 'zh-CN': '自定义 Logo' }, slug: 'advanced/custom-logo' },
+						{ label: 'Links (serverbox://)', translations: { 'zh-CN': '链接(serverbox://)' }, slug: 'advanced/url-scheme' },
 						{ label: 'Theme Packages', translations: { 'zh-CN': '主题包' }, slug: 'advanced/theme-packages' },
 						{ label: 'JSON Settings', translations: { 'zh-CN': 'JSON 设置' }, slug: 'advanced/json-settings' },
 						{ label: 'Common Issues', translations: { 'zh-CN': '常见问题' }, slug: 'advanced/troubleshooting' },

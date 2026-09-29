@@ -5089,4 +5089,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get reduceMotion => '동작 줄이기';
+
+  @override
+  String get copyLink => '링크 복사';
 }

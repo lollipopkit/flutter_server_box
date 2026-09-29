@@ -54,7 +54,8 @@ class AppDelegate: FlutterAppDelegate {
         binaryMessenger: controller.engine.binaryMessenger
       )
       // Its own channel, for the same reason the tray has one. Only ever
-      // carries a nudge; the payload still leaves through `takeOpenedShare`.
+      // carries a nudge; the payload still leaves through `takeOpenedShare` or
+      // `takeOpenedLink`.
       let shareChannel = FlutterMethodChannel(
         name: "tech.lolli.toolbox/incoming_share",
         binaryMessenger: controller.engine.binaryMessenger
@@ -69,7 +70,7 @@ class AppDelegate: FlutterAppDelegate {
         // explicitly anyway, because a channel call from anywhere else is
         // undefined rather than merely late.
         DispatchQueue.main.async {
-          shareChannel.invokeMethod("shareOpened", arguments: nil)
+          shareChannel.invokeMethod("opened", arguments: nil)
         }
       }
 
@@ -118,6 +119,8 @@ class AppDelegate: FlutterAppDelegate {
           }
         } else if call.method == "takeOpenedShare" {
           result(IncomingShare.take())
+        } else if call.method == "takeOpenedLink" {
+          result(IncomingShare.takeLink())
         } else {
           result(FlutterMethodNotImplemented)
         }

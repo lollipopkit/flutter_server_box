@@ -5324,4 +5324,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get reduceMotion => 'Hareketi azalt';
+
+  @override
+  String get copyLink => 'Bağlantıyı kopyala';
 }

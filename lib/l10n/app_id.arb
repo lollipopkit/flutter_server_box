@@ -1498,5 +1498,6 @@
   "virtBackupPlanNew": "Rencana baru",
   "virtBackupPlanNewTip": "Jadwal yang mencadangkan tamu ini saja.",
   "virtBackupPlanOthers": "{count, plural, =0{Tidak ada tamu lain} other{Juga mencadangkan {count} tamu lain}}",
-  "reduceMotion": "Kurangi gerakan"
+  "reduceMotion": "Kurangi gerakan",
+  "copyLink": "Salin tautan"
 }
