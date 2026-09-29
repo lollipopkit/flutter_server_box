@@ -242,6 +242,9 @@ class ServerSortOrder {
       case ServerSortField.manual:
         return order;
       case ServerSortField.name:
+        // The arrangement breaks a tie, as in [_by]: `sort` is not stable, and
+        // `Alpha` and `alpha` fold to the same name.
+        final rank = {for (var i = 0; i < order.length; i++) order[i]: i};
         final sorted = order.toList();
         sorted.sort((a, b) {
           // Case-folded, or the order is ASCII's rather than the alphabet's:
@@ -249,7 +252,9 @@ class ServerSortOrder {
           // comes before `alpha` under A-Z.
           final nameA = (servers[a]?.name ?? '').toLowerCase();
           final nameB = (servers[b]?.name ?? '').toLowerCase();
-          return ascending ? nameA.compareTo(nameB) : nameB.compareTo(nameA);
+          final byName = nameA.compareTo(nameB);
+          if (byName != 0) return ascending ? byName : -byName;
+          return rank[a]!.compareTo(rank[b]!);
         });
         return sorted;
       case ServerSortField.status:
