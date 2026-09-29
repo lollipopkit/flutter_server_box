@@ -1147,7 +1147,10 @@ fn windows_custom_commands_have_time_and_output_bounds() {
             "{}.ps1",
             script::custom_cmd_file_name(100, "large")
         )),
-        "[Console]::Out.Write('x' * 100000)",
+        // Then a mark that it got to the end: its own evidence of whether it
+        // finished or was killed, which the run's total time cannot give.
+        "[Console]::Out.Write('x' * 100000); [Console]::Out.Flush(); \
+         New-Item -ItemType File -Path (Join-Path $env:USERPROFILE 'large.done') | Out-Null",
     )
     .unwrap();
     std::fs::write(
@@ -1211,9 +1214,9 @@ fn windows_custom_commands_have_time_and_output_bounds() {
         }
         std::thread::sleep(Duration::from_millis(50));
     };
-    let elapsed = started.elapsed();
     let stdout = stdout_reader.join().unwrap();
     let stderr = stderr_reader.join().unwrap();
+    let large_finished = home.join("large.done").exists();
     std::fs::remove_dir_all(&home).ok();
 
     assert!(
@@ -1225,14 +1228,17 @@ fn windows_custom_commands_have_time_and_output_bounds() {
     let large = &parsed[&script::custom_result_key("large")];
     // The size bound, unless the time bound fired first. A hosted runner can
     // spend most of `large`'s five seconds starting its nested PowerShell and
-    // be killed at the deadline with part of the output written (#1589: 57 600
-    // bytes). That is the time bound working, and it is only acceptable when
-    // `large` did use its whole deadline: `slow` always does, so the run then
-    // took at least ten seconds. A short output in less is a real truncation.
+    // kill it at the deadline with part of the output written (#1589: 57 600
+    // bytes) — or none, if starting took all of it.
+    //
+    // The runner kills a command only at its deadline or once its output is
+    // past the cap, and past the cap it reads a full cap. So a short output
+    // from a command that was killed is the deadline; from one that finished
+    // — `large.done` written — it is a truncation the runner should not make.
     if large.len() < script::CUSTOM_CMD_MAX_OUTPUT_BYTES {
         assert!(
-            elapsed >= Duration::from_secs(10),
-            "`large` was cut to {} bytes in {elapsed:?}, before its deadline",
+            !large_finished,
+            "`large` finished and was still cut to {} bytes",
             large.len()
         );
         assert!(large.bytes().all(|b| b == b'x'));
