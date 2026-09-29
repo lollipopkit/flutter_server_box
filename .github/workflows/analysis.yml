@@ -55,7 +55,7 @@ jobs:
 
           # Which filters are answered from the diff: all of them on a pull
           # request, none otherwise.
-          strict=' rust dart frontend docs website '
+          strict=' rust dart frontend docs website android '
 
           if [[ "${{ github.event_name }}" == 'pull_request' ]]; then
             files="$(gh api --paginate \
