@@ -493,7 +493,7 @@ jobs:
           step: save
 
   # The Kotlin side's JVM unit tests (`android/app/src/test`). No device and
-  # no Rust: `testDebugUnitTest` compiles the Kotlin sources and stops there.
+  # no Rust: they need the Kotlin sources compiled and nothing else.
   androidUnitTests:
     name: Android unit tests
     needs: changes
@@ -521,9 +521,13 @@ jobs:
       - name: Generate the Gradle project
         run: flutter build apk --config-only
 
+      # Without `compileFlutterBuildDebug`, which the Flutter Gradle plugin
+      # hangs in front of every variant: it is a whole `flutter assemble` —
+      # Dart and the Rust library for each ABI — and was twelve of the job's
+      # thirteen minutes, for tests that load neither.
       - name: Run unit tests
         working-directory: android
-        run: ./gradlew :app:testDebugUnitTest
+        run: ./gradlew :app:testDebugUnitTest -x :app:compileFlutterBuildDebug
 
   check:
     needs: changes
