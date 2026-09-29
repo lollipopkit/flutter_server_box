@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
-# Fetch and verify every dependency needed by build-fdroid.sh before F-Droid
-# disables network access for the build phase.
+# Fetch every dependency build-fdroid.sh needs, so that
+# `FDROID_OFFLINE=true build-fdroid.sh` can prove nothing is fetched during the
+# build. Used by android-reproducible.yml only: it compiles (proot and one full
+# release build to seed Gradle's cache), so it must not run in an F-Droid
+# `prebuild`. F-Droid's recipe is in fdroid/README.md.
 
 set -euo pipefail
 
@@ -29,18 +32,9 @@ mkdir -p "$GRADLE_USER_HOME"
 
 flutter pub get --enforce-lockfile
 
-# The native-assets hook invokes rustup in crates/sbm_ffi. Install the exact
-# toolchain and every target declared there explicitly while networking is
-# available; do not depend on an incidental rustup proxy command to do it.
-rust_toolchain_file=crates/sbm_ffi/rust-toolchain.toml
-rust_toolchain="$(sed -n -E \
-  's/^[[:space:]]*channel[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' \
-  "$rust_toolchain_file")"
-[ -n "$rust_toolchain" ] || { echo "Rust toolchain is not pinned" >&2; exit 1; }
-mapfile -t rust_targets < <(sed -n -E \
-  's/^[[:space:]]*"([^"]+)",?[[:space:]]*$/\1/p' \
-  "$rust_toolchain_file")
-[ "${#rust_targets[@]}" -gt 0 ] || { echo "Rust targets are not pinned" >&2; exit 1; }
+# Install the exact toolchain and every target declared for the hook while
+# networking is available; do not depend on an incidental rustup proxy command
+# to do it.
 rustup toolchain install "$rust_toolchain" --profile minimal
 rustup target add --toolchain "$rust_toolchain" "${rust_targets[@]}"
 rustup run "$rust_toolchain" cargo fetch \
