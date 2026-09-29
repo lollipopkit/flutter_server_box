@@ -1582,10 +1582,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get viewDetails => 'Просмотр деталей';
 
   @override
-  String get virtKeyHelpClipboard =>
-      'Если в терминале выделен текст, то он копируется в буфер обмена, в противном случае содержимое буфера вставляется в терминал.';
-
-  @override
   String get virtKeyHelpIME => 'Включить/выключить клавиатуру';
 
   @override
@@ -1607,7 +1603,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get virtKeyIntroCustomizeTip =>
-      'В настройках терминала их можно переставить или скрыть те, которыми вы не пользуетесь.';
+      'В настройках терминала их можно переставить, включить другие (файлы, sudo, F1–F12…) или скрыть те, которыми вы не пользуетесь.';
 
   @override
   String get virtKeyIntroModifiers => 'Модификаторы';

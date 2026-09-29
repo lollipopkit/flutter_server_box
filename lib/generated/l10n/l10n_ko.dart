@@ -1497,10 +1497,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get viewDetails => '상세 보기';
 
   @override
-  String get virtKeyHelpClipboard =>
-      '터미널에 선택된 텍스트가 있으면 클립보드에 복사하고, 없으면 클립보드 내용을 터미널에 붙여넣습니다.';
-
-  @override
   String get virtKeyHelpIME => '키보드 켜기/끄기';
 
   @override
@@ -1521,7 +1517,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get virtKeyIntroCustomizeTip =>
-      '터미널 설정에서 순서를 바꾸거나, 쓰지 않는 키를 숨길 수 있습니다.';
+      '터미널 설정에서 순서를 바꾸거나, 키를 더 켜거나(파일, sudo, F1–F12 등), 쓰지 않는 키를 숨길 수 있습니다.';
 
   @override
   String get virtKeyIntroModifiers => '조합 키';

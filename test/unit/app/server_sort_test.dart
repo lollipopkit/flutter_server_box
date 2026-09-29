@@ -87,6 +87,25 @@ void main() {
     ]);
   });
 
+  test('names equal once case-folded keep the arrangement', () {
+    // Forty, not three: under 32 elements `sort` is an insertion sort and
+    // happens to be stable, which is how this passed without a tie.
+    final order = [for (var i = 0; i < 40; i++) 's$i'];
+    final servers = {
+      for (final (i, id) in order.indexed)
+        id: spiFixture(id: id, name: i.isEven ? 'Alpha' : 'alpha', ip: 'h'),
+    };
+    for (final ascending in [true, false]) {
+      expect(
+        ServerSortOrder(
+          ServerSortField.name,
+          ascending: ascending,
+        ).apply(order, servers, (_) => throw StateError('reads no status')),
+        order,
+      );
+    }
+  });
+
   test('alerts first is a partition, not a comparison', () {
     final states = {
       'quiet': state('quiet'),

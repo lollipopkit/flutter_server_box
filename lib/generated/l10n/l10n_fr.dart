@@ -1593,10 +1593,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get viewDetails => 'Voir les détails';
 
   @override
-  String get virtKeyHelpClipboard =>
-      'Copiez dans le presse-papiers si le terminal sélectionné n\'est pas vide, sinon collez le contenu du presse-papiers dans le terminal.';
-
-  @override
   String get virtKeyHelpIME => 'Activer/désactiver le clavier';
 
   @override
@@ -1619,7 +1615,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get virtKeyIntroCustomizeTip =>
-      'Les réglages du terminal permettent de les réordonner ou de masquer celles dont vous ne vous servez jamais.';
+      'Les réglages du terminal permettent de les réordonner, d’en activer d’autres (fichiers, sudo, F1–F12…) ou de masquer celles dont vous ne vous servez jamais.';
 
   @override
   String get virtKeyIntroModifiers => 'Modificateurs';

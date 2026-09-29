@@ -14,9 +14,8 @@
 library;
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:fl_lib/generated/l10n/lib_l10n.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
@@ -26,8 +25,7 @@ import 'package:server_box/view/widget/dist_icon.dart';
 Widget _app(void Function(bool) onAnswer) => MaterialApp(
   locale: const Locale('en'),
   localizationsDelegates: const [
-    LibLocalizations.delegate,
-    ...AppLocalizations.localizationsDelegates,
+    ...app_locale.appLocalizationsDelegates,
   ],
   supportedLocales: AppLocalizations.supportedLocales,
   home: Builder(

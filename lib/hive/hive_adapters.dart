@@ -4,15 +4,13 @@ import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
-import 'package:server_box/data/model/ssh/virtual_key.dart';
 
 /// `PrivateKeyInfo`, `Snippet`, `SshCredential` and `ServerCustom` are
 /// deliberately absent: all four gained a field the released boxes do not
 /// carry, so generating an adapter from them means generating one for a shape
-/// no box is in. They are frozen types in `legacy_adapters.dart` instead — see
+/// no box is in. So is `VirtKey`, which lost a case. They are frozen types in `legacy_adapters.dart` instead — see
 /// the note there before adding a model back to this list.
 @GenerateAdapters([
-  AdapterSpec<VirtKey>(),
   AdapterSpec<NetViewType>(),
   AdapterSpec<ServerFuncBtn>(),
   AdapterSpec<WakeOnLanCfg>(),

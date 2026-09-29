@@ -533,9 +533,9 @@ void main() {
         );
       });
 
-      /// What `Spi.isSameAs` answers wrong: it compares SSH credentials and
-      /// nothing else, so two servers that both have none read as the same
-      /// machine. This is why the share path has its own comparison.
+      /// `Spi.isSameAs` used to answer yes here, comparing SSH credentials
+      /// and nothing else; with no SSH on either side it now compares the
+      /// agents' addresses, and the two paths agree.
       test('two monitor-only servers are not the same machine', () {
         const a = Spi(
           id: 'a',
@@ -549,7 +549,7 @@ void main() {
         );
         Stores.server.put(a);
         expect(ServerShareInstaller.findExisting(b), isNull);
-        expect(a.isSameAs(b), isTrue, reason: 'the behaviour being avoided');
+        expect(a.isSameAs(b), isFalse);
       });
     });
   });

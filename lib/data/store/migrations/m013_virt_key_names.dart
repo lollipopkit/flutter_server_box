@@ -30,6 +30,60 @@ class VirtKeyNamesMigration implements SchemaMigration {
   @override
   int get from => appliedAt;
 
+  /// `VirtKey` as it stood while the keys were stored by index, which is
+  /// what an index here means. Frozen: read off the live enum, removing
+  /// `clipboard` from it made every stored index past 12 name the key after
+  /// the one the user chose.
+  static const _indexed = [
+    'esc',
+    'alt',
+    'home',
+    'up',
+    'end',
+    'sftp',
+    'snippet',
+    'tab',
+    'ctrl',
+    'left',
+    'down',
+    'right',
+    'clipboard',
+    'ime',
+    'shift',
+    'pgup',
+    'pgdn',
+    'slash',
+    'backSlash',
+    'underscore',
+    'plus',
+    'equal',
+    'minus',
+    'parenLeft',
+    'parenRight',
+    'bracketLeft',
+    'bracketRight',
+    'braceLeft',
+    'braceRight',
+    'chevronLeft',
+    'chevronRight',
+    'colon',
+    'semicolon',
+    'f1',
+    'f2',
+    'f3',
+    'f4',
+    'f5',
+    'f6',
+    'f7',
+    'f8',
+    'f9',
+    'f10',
+    'f11',
+    'f12',
+    'sudo',
+    'tmux',
+  ];
+
   static const orderKey = 'sshVirtKeys';
   static const disabledKey = 'sshVirtKeysDisabled';
 
@@ -56,10 +110,12 @@ class VirtKeyNamesMigration implements SchemaMigration {
     final names = <String>[];
     for (final entry in raw) {
       final name = switch (entry) {
-        final int index when index >= 0 && index < VirtKey.values.length =>
-          VirtKey.values[index].name,
-        // Half-converted, which a crash between the two writes below leaves.
-        final String s when VirtKey.values.any((k) => k.name == s) => s,
+        final int index when index >= 0 && index < _indexed.length =>
+          _indexed[index],
+        // Already a name. Kept whatever it names: one this build has no case
+        // for is [VirtKeyX.loadFromStore]'s to drop, and a newer build's key
+        // is not this step's to lose.
+        final String s => s,
         _ => null,
       };
       if (name == null || !seen.add(name)) continue;

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/motion.dart';
 
 /// A thin bar that says something is happening, and how far along when that is

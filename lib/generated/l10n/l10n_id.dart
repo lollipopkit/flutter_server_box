@@ -1575,10 +1575,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get viewDetails => 'Lihat Detail';
 
   @override
-  String get virtKeyHelpClipboard =>
-      'Salin ke clipboard jika terminal yang dipilih tidak kosong, jika tidak, tempel isi clipboard ke terminal.';
-
-  @override
   String get virtKeyHelpIME => 'Menyalakan/mematikan keyboard';
 
   @override
@@ -1600,7 +1596,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get virtKeyIntroCustomizeTip =>
-      'Di pengaturan terminal kamu bisa mengubah urutannya, atau menyembunyikan yang tidak pernah dipakai.';
+      'Di pengaturan terminal kamu bisa mengubah urutannya, menyalakan tombol lain (file, sudo, F1–F12…), atau menyembunyikan yang tidak pernah dipakai.';
 
   @override
   String get virtKeyIntroModifiers => 'Tombol pengubah';

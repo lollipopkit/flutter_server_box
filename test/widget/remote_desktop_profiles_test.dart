@@ -11,13 +11,11 @@ library;
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:fl_lib/generated/l10n/lib_l10n.dart';
-import 'package:flutter/cupertino.dart' show CupertinoSwitch;
 import 'package:flutter/foundation.dart'
     show TargetPlatform, debugDefaultTargetPlatformOverride;
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
@@ -137,8 +135,7 @@ void main() {
         child: MaterialApp(
           locale: locale,
           localizationsDelegates: const [
-            LibLocalizations.delegate,
-            ...AppLocalizations.localizationsDelegates,
+            ...app_locale.appLocalizationsDelegates,
           ],
           supportedLocales: AppLocalizations.supportedLocales,
           builder: ResponsivePoints.builder,
@@ -475,7 +472,6 @@ void main() {
       expect(find.byType(SegmentedTabs<RemoteDesktopProtocol>), findsOneWidget);
       expect(find.byType(SegmentedButton<RemoteDesktopProtocol>), findsNothing);
       expect(find.byType(SwitchX), findsNWidgets(2));
-      expect(find.byType(CupertinoSwitch), findsNothing);
       expect(find.byType(PageColumns), findsNothing);
       expect(find.byType(FloatingActionButton), findsNothing);
       expect(find.widgetWithText(FilledButton, libL10n.save), findsOneWidget);
@@ -585,8 +581,7 @@ void main() {
         ],
         child: MaterialApp(
           localizationsDelegates: const [
-            LibLocalizations.delegate,
-            ...AppLocalizations.localizationsDelegates,
+            ...app_locale.appLocalizationsDelegates,
           ],
           supportedLocales: AppLocalizations.supportedLocales,
           builder: ResponsivePoints.builder,

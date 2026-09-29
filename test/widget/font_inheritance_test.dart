@@ -1,9 +1,8 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:fl_lib/fl_lib.dart';
-import 'package:fl_lib/generated/l10n/lib_l10n.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
@@ -19,8 +18,7 @@ Widget _app(Widget child) => MaterialApp(
   theme: ThemeData(fontFamily: 'Test UI', fontFamilyFallback: _fallback),
   locale: const Locale('zh'),
   localizationsDelegates: const [
-    LibLocalizations.delegate,
-    ...AppLocalizations.localizationsDelegates,
+    ...app_locale.appLocalizationsDelegates,
   ],
   supportedLocales: AppLocalizations.supportedLocales,
   home: Builder(builder: (context) {

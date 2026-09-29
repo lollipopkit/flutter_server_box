@@ -2,18 +2,18 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
-import 'dart:ui' show ImageFilter;
 import 'dart:ui' as ui;
+import 'dart:ui' show ImageFilter;
 
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
@@ -77,11 +77,6 @@ import 'package:server_box/view/widget/themed_icon.dart';
 
 part 'about.dart';
 part 'app_page.dart';
-part 'group.dart';
-part 'layout.dart';
-part 'level.dart';
-part 'menu.dart';
-part 'nodes.dart';
 part 'entries/ai.dart';
 part 'entries/app.dart';
 part 'entries/container.dart';
@@ -93,6 +88,11 @@ part 'entries/remote_desktop.dart';
 part 'entries/server.dart';
 part 'entries/sftp.dart';
 part 'entries/ssh.dart';
+part 'group.dart';
+part 'layout.dart';
+part 'level.dart';
+part 'menu.dart';
+part 'nodes.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});

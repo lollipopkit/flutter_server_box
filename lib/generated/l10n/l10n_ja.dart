@@ -1491,10 +1491,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get viewDetails => '詳細を表示';
 
   @override
-  String get virtKeyHelpClipboard =>
-      '端末に選択された文字がある場合は、選択された文字をクリップボードにコピーします。そうでない場合は、クリップボードの内容を端末に貼り付けます。';
-
-  @override
   String get virtKeyHelpIME => 'キーボードのオン/オフ';
 
   @override
@@ -1513,7 +1509,8 @@ class AppLocalizationsJa extends AppLocalizations {
   String get virtKeyIntroActionsTip => 'これらは文字を入力せず、機能を開きます。長押しすると説明を読めます。';
 
   @override
-  String get virtKeyIntroCustomizeTip => 'ターミナル設定で並べ替えたり、使わないキーを隠したりできます。';
+  String get virtKeyIntroCustomizeTip =>
+      'ターミナル設定で並べ替えたり、キーを追加したり（ファイル、sudo、F1–F12 など）、使わないキーを隠したりできます。';
 
   @override
   String get virtKeyIntroModifiers => '修飾キー';

@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/motion.dart';
 import 'package:server_box/core/service/theme_package.dart';
 import 'package:server_box/data/model/app/theme_style.dart';
@@ -197,6 +197,18 @@ abstract final class AppPageTransitions {
     (builder) => _Backgrounded(_MotionAware(builder)),
   );
 
+  /// [current] ([plain] or [backgrounded]) with a slide across on every
+  /// platform, for a pane whose pages are one subject after another.
+  static PageTransitionsTheme paneSlide(PageTransitionsTheme current) =>
+      identical(current, backgrounded)
+      ? _paneSlideBackgrounded
+      : _paneSlidePlain;
+
+  static final _paneSlidePlain = _every(const _MotionAware(_PaneSlide()));
+  static final _paneSlideBackgrounded = _every(
+    const _Backgrounded(_MotionAware(_PaneSlide())),
+  );
+
   static PageTransitionsTheme _wrap(
     PageTransitionsBuilder Function(PageTransitionsBuilder) wrap,
   ) => PageTransitionsTheme(
@@ -206,6 +218,46 @@ abstract final class AppPageTransitions {
         platform: wrap(builder),
     },
   );
+
+  static PageTransitionsTheme _every(PageTransitionsBuilder builder) =>
+      PageTransitionsTheme(
+        builders: {for (final platform in TargetPlatform.values) platform: builder},
+      );
+}
+
+/// The arriving page slides in from the end edge, and the one below moves a
+/// third of the way out towards the start.
+final class _PaneSlide extends PageTransitionsBuilder {
+  const _PaneSlide();
+
+  static final _incoming = Tween<Offset>(
+    begin: const Offset(1, 0),
+    end: Offset.zero,
+  ).chain(CurveTween(curve: Curves.fastEaseInToSlowEaseOut));
+  static final _outgoing = Tween<Offset>(
+    begin: Offset.zero,
+    end: const Offset(-1 / 3, 0),
+  ).chain(CurveTween(curve: Curves.fastEaseInToSlowEaseOut));
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final direction = Directionality.of(context);
+    return SlideTransition(
+      position: secondaryAnimation.drive(_outgoing),
+      textDirection: direction,
+      child: SlideTransition(
+        position: animation.drive(_incoming),
+        textDirection: direction,
+        child: child,
+      ),
+    );
+  }
 }
 
 /// The platform's transition, or a fade in its place when the app moves less.

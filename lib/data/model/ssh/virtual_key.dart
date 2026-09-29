@@ -1,5 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/store.dart';
@@ -21,7 +21,6 @@ enum VirtKeyGroup { modifiers, navigation, shortcuts }
 enum VirtualKeyFunc {
   toggleIME,
   backspace,
-  clipboard,
   snippet,
   file,
   sudoPassword,
@@ -41,7 +40,6 @@ enum VirtKey {
   left,
   down,
   right,
-  clipboard,
   ime,
   shift,
   pgup,
@@ -117,22 +115,23 @@ extension VirtKeyX on VirtKey {
 
   /// Default order of virtual keys
   static const defaultOrder = [
+    // Two full rows, each key of a pair over the other: ↑ over ↓, PgUp over
+    // PgDn. The file browser, the sudo password and tmux are off until turned
+    // on in the settings.
     VirtKey.esc,
     VirtKey.alt,
     VirtKey.home,
     VirtKey.up,
     VirtKey.end,
-    VirtKey.sftp,
+    VirtKey.pgup,
     VirtKey.tab,
     VirtKey.shift,
     VirtKey.ctrl,
     VirtKey.left,
     VirtKey.down,
     VirtKey.right,
-    VirtKey.clipboard,
-    VirtKey.sudo,
+    VirtKey.pgdn,
     VirtKey.ime,
-    VirtKey.tmux,
   ];
 
   /// Corresponding [TerminalKey]
@@ -173,7 +172,6 @@ extension VirtKeyX on VirtKey {
     VirtKey.right => Icons.arrow_forward,
     VirtKey.sftp => Icons.file_open,
     VirtKey.snippet => Icons.code,
-    VirtKey.clipboard => Icons.paste,
     VirtKey.sudo => Icons.password,
     VirtKey.tmux => Icons.window,
     VirtKey.ime => Icons.keyboard,
@@ -186,7 +184,6 @@ extension VirtKeyX on VirtKey {
   VirtualKeyFunc? get func => switch (this) {
     VirtKey.sftp => VirtualKeyFunc.file,
     VirtKey.snippet => VirtualKeyFunc.snippet,
-    VirtKey.clipboard => VirtualKeyFunc.clipboard,
     VirtKey.sudo => VirtualKeyFunc.sudoPassword,
     VirtKey.tmux => VirtualKeyFunc.tmuxSwitch,
     VirtKey.ime => VirtualKeyFunc.toggleIME,
@@ -198,7 +195,8 @@ extension VirtKeyX on VirtKey {
   ///
   /// Four of these keys act on a *server*, and on a shell that is not on one
   /// they returned without a word: the strip drew them, they took a tap, and
-  /// nothing happened. Answered here beside the rest of what a key is, rather
+  /// nothing happened. The strip now draws them disabled. Answered here beside
+  /// the rest of what a key is, rather
   /// than in the page that draws them, so the toolbar and the strip cannot
   /// come to different conclusions about the same button.
   bool worksOn(Spi? spi, {bool shellUsesAgent = false}) => switch (this) {
@@ -227,7 +225,7 @@ extension VirtKeyX on VirtKey {
     // the connect reads it from, so this is settled once — not a strip that
     // rearranges itself under the user's thumb once something connects.
     VirtKey.tmux => spi?.sshOn != null && !shellUsesAgent,
-    // Everything else is the terminal's own — keys, modifiers, the clipboard,
+    // Everything else is the terminal's own — keys, modifiers,
     // the IME, and snippets, which are a script typed into whatever is there.
     _ => true,
   };
@@ -244,7 +242,6 @@ extension VirtKeyX on VirtKey {
 
   String? get help => switch (this) {
     VirtKey.sftp => l10n.virtKeyHelpSFTP,
-    VirtKey.clipboard => l10n.virtKeyHelpClipboard,
     VirtKey.sudo => l10n.trySudo,
     VirtKey.ime => l10n.virtKeyHelpIME,
     VirtKey.snippet => l10n.virtKeyHelpSnippet,

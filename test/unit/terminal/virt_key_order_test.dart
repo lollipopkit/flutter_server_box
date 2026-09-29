@@ -32,6 +32,18 @@ void main() {
     await SqliteDb.close();
   });
 
+  test('the default is two full rows, each pair in one column', () {
+    const order = VirtKeyX.defaultOrder;
+    expect(order, hasLength(kVirtKeysPerRow * 2));
+    int column(VirtKey key) => order.indexOf(key) % kVirtKeysPerRow;
+    expect(column(VirtKey.down), column(VirtKey.up));
+    expect(column(VirtKey.pgdn), column(VirtKey.pgup));
+    // Off until turned on in the settings.
+    expect(order, isNot(contains(VirtKey.sftp)));
+    expect(order, isNot(contains(VirtKey.sudo)));
+    expect(order, isNot(contains(VirtKey.tmux)));
+  });
+
   test('an order this build knows every key of is returned as it was', () {
     const order = [VirtKey.tab, VirtKey.ctrl, VirtKey.esc];
     Stores.setting.sshVirtKeys.put(order.map((e) => e.name).toList());

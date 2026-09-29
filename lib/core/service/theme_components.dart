@@ -1,5 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:server_box/core/service/theme_palette.dart';
 import 'package:server_box/data/model/app/theme_style.dart';
@@ -392,6 +392,14 @@ final class ThemeComponents {
 
   ThemeData apply(ThemeData base) {
     if (_data.isEmpty && density == null) return base;
+    // `ThemeData.textTheme` holds colours only; `Theme.of` merges in the
+    // sizes, weights and line heights for the locale's script. A style set on
+    // a component theme replaces the widget's own default instead of merging
+    // with it, so one taken from `base.textTheme` had no size and no height: a
+    // chip's label took the font's natural line height, a CJK fallback font
+    // overflowed it, and the label faded out. English-like geometry: the dense
+    // one differs only in its baseline.
+    final text = base.typography.englishLike.merge(base.textTheme);
     final card = _style('card', base);
     final tile = _style('tile', base);
     final input = _style('input', base);
@@ -469,7 +477,7 @@ final class ThemeComponents {
             final existing = bar.labelTextStyle?.resolve(states);
             return color == null
                 ? existing
-                : (existing ?? base.textTheme.labelMedium!).copyWith(
+                : (existing ?? text.labelMedium!).copyWith(
                     color: color,
                   );
           })
@@ -668,7 +676,7 @@ final class ThemeComponents {
         titleTextStyle: withColor(
           base.appBarTheme.titleTextStyle,
           appBar.color('titleColor'),
-          base.textTheme.titleLarge!,
+          text.titleLarge!,
         ),
       ),
       segmentedButtonTheme: SegmentedButtonThemeData(
@@ -712,12 +720,12 @@ final class ThemeComponents {
               ),
         selectedLabelTextStyle: navigation.color('selectedLabelColor') == null
             ? null
-            : (rail.selectedLabelTextStyle ?? base.textTheme.labelMedium!)
+            : (rail.selectedLabelTextStyle ?? text.labelMedium!)
                   .copyWith(color: navigation.color('selectedLabelColor')),
         unselectedLabelTextStyle:
             navigation.color('unselectedLabelColor') == null
             ? null
-            : (rail.unselectedLabelTextStyle ?? base.textTheme.labelMedium!)
+            : (rail.unselectedLabelTextStyle ?? text.labelMedium!)
                   .copyWith(color: navigation.color('unselectedLabelColor')),
       ),
       navigationBarTheme: bar.copyWith(
@@ -757,7 +765,7 @@ final class ThemeComponents {
         textStyle: withColor(
           base.popupMenuTheme.textStyle,
           menu.color('textColor'),
-          base.textTheme.bodyMedium!,
+          text.bodyMedium!,
         ),
       ),
       menuTheme: menu.values.isEmpty
@@ -800,7 +808,7 @@ final class ThemeComponents {
               textStyle: withColor(
                 base.tooltipTheme.textStyle,
                 tooltip.color('textColor'),
-                base.textTheme.bodySmall!.copyWith(
+                text.bodySmall!.copyWith(
                   color: base.colorScheme.onInverseSurface,
                 ),
               ),
@@ -811,7 +819,7 @@ final class ThemeComponents {
         contentTextStyle: withColor(
           base.snackBarTheme.contentTextStyle,
           toast.color('textColor'),
-          base.textTheme.bodyMedium!,
+          text.bodyMedium!,
         ),
         elevation: toast.number('elevation'),
         shape: toast.hasAny(_shape) ? toast.shape(base.snackBarTheme.shape) : null,
@@ -864,7 +872,7 @@ final class ThemeComponents {
         labelStyle: withColor(
           base.chipTheme.labelStyle,
           chip.color('textColor'),
-          base.textTheme.labelLarge!,
+          text.labelLarge!,
         ),
         shape: chip.hasAny(_shape) ? chip.shape(base.chipTheme.shape) : null,
         side: chip.hasAny({'borderColor', 'borderWidth'})

@@ -399,9 +399,9 @@ final class ServerShareResult {
 abstract final class ServerShareInstaller {
   /// The server this payload describes, if this device already has it.
   ///
-  /// Deliberately not `Spi.isSameAs`: that compares SSH credentials and
-  /// nothing else, so it answers *true* for any two servers that both have
-  /// none — two unrelated monitor-only servers read as the same machine.
+  /// Deliberately not `Spi.isSameAs`: that compares the whole connection
+  /// setup — password, keys, jump hosts — so a share of a machine this device
+  /// reaches with a different password read as a new one.
   ///
   /// TODO: fold this back into `Spi.isSameAs` once that grows an identity
   /// covering both transports, and delete this.
