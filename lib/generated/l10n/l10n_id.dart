@@ -1176,8 +1176,12 @@ class AppLocalizationsId extends AppLocalizations {
       'iOS tidak mengizinkannya. Sakelarnya ada di Pengaturan › ServerBox › Aktivitas Live dan Pengaturan › Face ID & Kode Sandi › Aktivitas Live.';
 
   @override
-  String get proxyCommandOnlySupportedOnDesktop =>
-      'ProxyCommand hanya didukung di platform desktop.';
+  String get proxyCommandNeedsLinux =>
+      'ProxyCommand berjalan di lingkungan Linux perangkat ini. Pasang sistem Linux terlebih dahulu.';
+
+  @override
+  String get proxyCommandMobileTip =>
+      'Di ponsel, perintah dijalankan di sistem Linux yang dipilih. Pasang dulu alat yang dipakainya (nc, socat, …) di sana.';
 
   @override
   String get pveIgnoreCertTip =>

@@ -96,14 +96,14 @@ extension _SettingsLayout on _SettingsPageState {
           : CustomAppBar(
               // The list names itself; everything else is named by what it
               // shows.
-              title: Text(
-                // The count is a heading over the results, where the design
-                // puts it — and it is one this page cannot work out anyway,
-                // since most of what matched is rows rather than pages.
-                _searching
-                    ? libL10n.search
-                    : (_path.isEmpty ? libL10n.setting : selected.title),
-              ),
+              // The count is a heading over the results, where the design
+              // puts it — and it is one this page cannot work out anyway,
+              // since most of what matched is rows rather than pages.
+              title: _searching
+                  ? Text(libL10n.search)
+                  : _path.isEmpty
+                  ? Text(libL10n.setting)
+                  : selected.titleWidget(),
               // Out of the level rather than out of the settings, while there
               // is a level to leave. A leaf shown on its own has no tabs and
               // so no other way back to the list. A search is left the same

@@ -1118,8 +1118,12 @@ class AppLocalizationsJa extends AppLocalizations {
       'iOS が許可していません。スイッチは「設定 › ServerBox › ライブアクティビティ」と「設定 › Face ID とパスコード › ライブアクティビティ」にあります。';
 
   @override
-  String get proxyCommandOnlySupportedOnDesktop =>
-      'ProxyCommand はデスクトップのみ対応しています。';
+  String get proxyCommandNeedsLinux =>
+      'ProxyCommand はこの端末の Linux 環境で実行されます。先に Linux システムをインストールしてください。';
+
+  @override
+  String get proxyCommandMobileTip =>
+      'スマートフォンでは、このコマンドは選択中の Linux システムで実行されます。使用するツール（nc、socat など）を先にそこへインストールしてください。';
 
   @override
   String get pveIgnoreCertTip =>

@@ -76,6 +76,41 @@ void main() {
     await tester.pumpAndSettle();
     expect(taps, ['New']);
   });
+
+  testWidgets('a loading action is a spinner in its slot, and not a tap', (
+    tester,
+  ) async {
+    taps.clear();
+    var refreshed = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 400,
+            height: 40,
+            child: FoldingBar(
+              label: const Text('pve'),
+              actions: [
+                BarAction(
+                  icon: Icons.refresh,
+                  label: 'Refresh',
+                  onTap: () => refreshed++,
+                  loading: true,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    // One frame, not `pumpAndSettle`: a spinner never settles.
+    await tester.pump();
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byIcon(Icons.refresh), findsNothing);
+    await tester.tap(find.byType(CircularProgressIndicator));
+    await tester.pump();
+    expect(refreshed, 0);
+  });
 }
 
 void _noop() {}

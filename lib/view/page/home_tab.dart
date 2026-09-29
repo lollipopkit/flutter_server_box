@@ -15,6 +15,7 @@ import 'package:server_box/view/page/ssh/tab.dart';
 import 'package:server_box/view/page/storage/tab.dart';
 import 'package:server_box/view/page/virt/tab.dart';
 import 'package:server_box/view/widget/conn_count_badge.dart';
+import 'package:server_box/view/widget/marked_title.dart';
 import 'package:server_box/view/widget/nav_rail.dart';
 import 'package:server_box/view/widget/themed_icon.dart';
 
@@ -79,18 +80,7 @@ extension AppTabViewX on AppTab {
   Widget get listTitle {
     final mark_ = mark;
     if (mark_ == null) return Text(label);
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Flexible, so a long name in a narrow row — or a large text scale —
-        // ellipsises against the mark instead of overflowing the row.
-        Flexible(
-          child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-        ),
-        const SizedBox(width: 7),
-        mark_,
-      ],
-    );
+    return MarkedTitle(label, mark: mark_);
   }
 
   /// Returns a [Widget] rather than a [NavigationDestination] on purpose:

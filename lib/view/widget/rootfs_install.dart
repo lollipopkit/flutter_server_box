@@ -70,9 +70,7 @@ Future<bool> installRootfs(
   final chosen = target.release;
 
   final confirm = await context.showRoundDialog<bool>(
-    // Capitalised: the shared string is a verb used mid-sentence elsewhere,
-    // and a dialog title is not mid-sentence.
-    title: into == null ? libL10n.install.capitalize : libL10n.update,
+    title: into == null ? libL10n.install : libL10n.update,
     child: Text(
       into == null
           ? context.l10n.rootfsInstallTip(

@@ -69,6 +69,7 @@ import 'package:server_box/view/widget/dmg_notice.dart';
 import 'package:server_box/view/widget/edge_fade_scroll.dart';
 import 'package:server_box/view/widget/geo_data_install.dart';
 import 'package:server_box/view/widget/group_title.dart';
+import 'package:server_box/view/widget/marked_title.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/progress_line.dart';
 import 'package:server_box/view/widget/rootfs_install.dart';
@@ -218,9 +219,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   /// spells the title differently.
   List<SettingsHit> _hits(List<SettingsNode> nodes) {
     final needle = _query.toLowerCase();
+    // A page's `BetaTag` is part of what it is called: the word was in the
+    // title before it became a mark, and searching for it still finds it.
     bool matches(SettingsNode leaf, SettingsNode? parent) =>
         leaf.title.toLowerCase().contains(needle) ||
         leaf.id.toLowerCase().contains(needle) ||
+        (leaf.beta && 'beta'.contains(needle)) ||
         (parent?.title.toLowerCase().contains(needle) ?? false);
 
     final hits = <SettingsHit>[];

@@ -9,10 +9,9 @@
 // ## Why a switch, and not just a feature flag
 //
 // App Store guideline 2.5.2 is about downloading and running executable code.
-// iSH was told four days after launch that it would be pulled over it, and the
-// thing that gets blocked in that argument is not the feature — it is the
-// whole app's next update. If review objects, a build without the engine has
-// to be one edit and a rebuild away.
+// The engine ships in every configuration — Debug, Profile and Release — and
+// review has accepted it. The switch stays so that, should that change, a
+// build without it is one edit and a rebuild away.
 //
 // To strip it:
 //
@@ -37,15 +36,15 @@
 //
 // ## Default
 //
-// 0. The engine is not in this repository — `scripts/build-ish-ios.sh` builds
-// it — so a checkout that has not run that script cannot link it, and a build
-// that silently omitted it would be worse than one that never tried.
+// 1. The libraries are not in this repository, and no step has to be run by
+// hand for them: the Runner target's "Build Linux Engine" phase runs
+// scripts/ensure-ish-libs.sh, which fetches the release built for the
+// submodule's revision, or builds it here when there is none.
 
-SBM_ISH = 0
+SBM_ISH = 1
 
-// A local override, so turning the engine on for a development build does not
-// mean editing a tracked file and remembering to put it back. Untracked; write
-// `SBM_ISH = 1` in it. Later assignment wins, so this is the last word.
+// A local override, for a development build without the engine: untracked,
+// write `SBM_ISH = 0` in it. Later assignment wins, so this is the last word.
 #include? "IshLocal.xcconfig"
 
 // The source is a submodule; the libraries are built out of tree, under

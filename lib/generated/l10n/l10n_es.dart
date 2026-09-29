@@ -1190,8 +1190,12 @@ class AppLocalizationsEs extends AppLocalizations {
       'iOS no lo permite. Los interruptores están en Ajustes › ServerBox › Actividades en vivo y Ajustes › Face ID y código › Actividades en vivo.';
 
   @override
-  String get proxyCommandOnlySupportedOnDesktop =>
-      'ProxyCommand solo se admite en plataformas de escritorio.';
+  String get proxyCommandNeedsLinux =>
+      'ProxyCommand se ejecuta en el entorno Linux de este dispositivo. Instala primero un sistema Linux.';
+
+  @override
+  String get proxyCommandMobileTip =>
+      'En un teléfono, el comando se ejecuta en el sistema Linux seleccionado. Instala primero allí las herramientas que usa (nc, socat, …).';
 
   @override
   String get pveIgnoreCertTip =>

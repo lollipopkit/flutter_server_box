@@ -119,6 +119,12 @@ SBM_ISH_EXPORT int sbm_ish_read(int session, char *buffer, int length, int timeo
 /// Types [length] bytes at [session].
 SBM_ISH_EXPORT int sbm_ish_write(int session, const char *buffer, int length);
 
+/// As [sbm_ish_write], without waiting for room: takes what the terminal's
+/// input buffer has space for and returns how many bytes that was — 0 when it
+/// is full — or a negative errno. For a byte stream fed from the UI isolate,
+/// which must not block on a guest that is slow to read.
+SBM_ISH_EXPORT int sbm_ish_try_write(int session, const char *buffer, int length);
+
 /// Tells [session] its terminal changed size.
 SBM_ISH_EXPORT void sbm_ish_resize(int session, int columns, int rows);
 

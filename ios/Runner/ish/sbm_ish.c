@@ -28,6 +28,10 @@ int sbm_ish_write(int session, const char *buffer, int length) {
     (void)session; (void)buffer; (void)length;
     return -1;
 }
+int sbm_ish_try_write(int session, const char *buffer, int length) {
+    (void)session; (void)buffer; (void)length;
+    return -1;
+}
 void sbm_ish_resize(int session, int columns, int rows) {
     (void)session; (void)columns; (void)rows;
 }
@@ -1117,6 +1121,20 @@ int sbm_ish_write(int session_id, const char *buffer, int length) {
     pthread_mutex_unlock(&sessions_lock);
     if (tty == NULL) return -ENOTTY;
     return (int)tty_input(tty, buffer, (size_t)length, true);
+}
+
+int sbm_ish_try_write(int session_id, const char *buffer, int length) {
+    if (buffer == NULL || length <= 0) return -EINVAL;
+    if (session_id < 0 || session_id >= SBM_MAX_SESSIONS) return -EINVAL;
+    pthread_mutex_lock(&sessions_lock);
+    struct tty *tty = sessions[session_id].used ? sessions[session_id].tty : NULL;
+    pthread_mutex_unlock(&sessions_lock);
+    if (tty == NULL) return -ENOTTY;
+    ssize_t written = tty_input(tty, buffer, (size_t)length, false);
+    // The engine's own EAGAIN: nothing fitted. Not an error to a caller that
+    // keeps the rest and tries again.
+    if (written == _EAGAIN) return 0;
+    return (int)written;
 }
 
 void sbm_ish_resize(int session_id, int columns, int rows) {

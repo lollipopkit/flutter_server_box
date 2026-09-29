@@ -7,9 +7,12 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.SimpleFileVisitor
+import java.nio.file.attribute.BasicFileAttributes
 
 /** Against a real tree of links, since the links are the point. */
 class GuestPathTest {
@@ -45,8 +48,33 @@ class GuestPathTest {
 
     @After
     fun tearDown() {
-        root.toFile().deleteRecursively()
-        outside.toFile().deleteRecursively()
+        deleteTree(root)
+        deleteTree(outside)
+    }
+
+    /**
+     * Removes [top] and what is in it, a link as the link: never through one.
+     *
+     * Not `File.deleteRecursively`, which follows links to directories — and
+     * this tree has `escape` and `host`, which point out of it on purpose. That
+     * deleted whatever was above the test's temporary directory, and on CI it
+     * walked the runner for hours.
+     */
+    private fun deleteTree(top: Path) {
+        Files.walkFileTree(
+            top,
+            object : SimpleFileVisitor<Path>() {
+                override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+                    Files.delete(file)
+                    return FileVisitResult.CONTINUE
+                }
+
+                override fun postVisitDirectory(dir: Path, exc: java.io.IOException?): FileVisitResult {
+                    Files.delete(dir)
+                    return FileVisitResult.CONTINUE
+                }
+            },
+        )
     }
 
     @Test

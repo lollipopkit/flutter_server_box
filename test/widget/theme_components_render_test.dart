@@ -62,12 +62,18 @@ void main() {
       (card.shape! as RoundedRectangleBorder).side,
       const BorderSide(color: Color(0xff123456), width: 2),
     );
+    // `Input` is framed by the row it sits in and draws no border of its own,
+    // whatever the theme says — the theme's field style is for a bare
+    // `TextField`, and is still there for one.
     final field = tester.widget<TextField>(find.byType(TextField));
-    expect(
-      field.decoration!.contentPadding,
-      const EdgeInsets.fromLTRB(8, 9, 10, 11),
-    );
-    expect(field.decoration!.border, isA<OutlineInputBorder>());
+    expect(field.decoration!.border, InputBorder.none);
+    expect(field.decoration!.focusedBorder, InputBorder.none);
+    expect(field.decoration!.filled, isFalse);
+    final fieldTheme = Theme.of(
+      tester.element(find.byType(TextField)),
+    ).inputDecorationTheme;
+    expect(fieldTheme.contentPadding, const EdgeInsets.fromLTRB(8, 9, 10, 11));
+    expect(fieldTheme.border, isA<OutlineInputBorder>());
     final tile = tester.widget<AnimatedContainer>(
       find
           .descendant(

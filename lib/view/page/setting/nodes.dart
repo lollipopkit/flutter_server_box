@@ -134,8 +134,9 @@ List<SettingsNode> _buildNodes() {
             // Not localized, and not searched for either: the id above is
             // what the settings search matches on, and "Linux" is the same
             // word in every locale this ships in.
-            title: 'Linux (Beta)',
+            title: 'Linux',
             icon: Icons.layers_outlined,
+            beta: true,
             page: () => const AppSettingsPage(section: SettingsSection.linux),
           ),
         SettingsNode.leaf(

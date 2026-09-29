@@ -69,7 +69,7 @@ SSH 配置放在 `ssh` 对象中。App 导出和导入对话框中的示例都�
 | `keyPath` | 否 | 仅桌面端使用的 private key 文件路径，由 `~/.ssh/config` 导入生成；连接时从该文件读取 |
 | `alterUrl` | 否 | 备用地址，格式为 `user@ip:port` |
 | `jumpIds` | 否 | Jump server 链，按服务器 ID 指定 |
-| `proxyCommand` | 否 | ProxyCommand；仅桌面端可用，且与 `jumpIds` 互斥 |
+| `proxyCommand` | 否 | ProxyCommand；手机上在内置 Linux 环境中运行。与 `jumpIds` 互斥 |
 
 以下字段放在 `pve` 对象中：
 

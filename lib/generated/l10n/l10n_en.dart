@@ -1170,8 +1170,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'iOS is not allowing one. The switches are at Settings › ServerBox › Live Activities and Settings › Face ID & Passcode › Live Activities.';
 
   @override
-  String get proxyCommandOnlySupportedOnDesktop =>
-      'ProxyCommand is only supported on desktop platforms.';
+  String get proxyCommandNeedsLinux =>
+      'ProxyCommand runs in this device\'s Linux environment. Install a Linux system first.';
+
+  @override
+  String get proxyCommandMobileTip =>
+      'On a phone, the command runs in the selected Linux system. Install the tools it uses (nc, socat, …) there first.';
 
   @override
   String get pveIgnoreCertTip =>

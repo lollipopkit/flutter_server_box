@@ -1179,8 +1179,12 @@ class AppLocalizationsUk extends AppLocalizations {
       'iOS не дозволяє. Перемикачі розташовані в розділах Налаштування › ServerBox › Активності в реальному часі та Налаштування › Face ID і код-пароль › Активності в реальному часі.';
 
   @override
-  String get proxyCommandOnlySupportedOnDesktop =>
-      'ProxyCommand підтримується лише на настільних платформах.';
+  String get proxyCommandNeedsLinux =>
+      'ProxyCommand виконується в середовищі Linux на цьому пристрої. Спочатку встановіть систему Linux.';
+
+  @override
+  String get proxyCommandMobileTip =>
+      'На телефоні команда виконується у вибраній системі Linux. Спочатку встановіть у неї інструменти, які вона використовує (nc, socat, …).';
 
   @override
   String get pveIgnoreCertTip =>

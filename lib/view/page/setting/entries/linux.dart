@@ -38,9 +38,9 @@ extension _Linux on _AppSettingsPageState {
 
   /// That this is beta, at the top of the page that manages it.
   ///
-  /// A row of its own rather than a suffix on the title. The settings list that
-  /// reached here already says "Linux (Beta)", and what a suffix cannot say is
-  /// the part that matters — that nothing here is guaranteed to work.
+  /// A row of its own as well as the mark on the title. The settings list
+  /// that reached here already carries the mark, and what a mark cannot say
+  /// is the part that matters — that nothing here is guaranteed to work.
   ///
   /// Stays after the warning before an install has been dismissed: that one is
   /// asked once and can be turned off, and this page would then be the only

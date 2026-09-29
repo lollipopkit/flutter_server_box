@@ -169,6 +169,11 @@ EOF
   for lib in libish.a libish_emu.a libfakefs.a; do
     [ -f "$build_dir/$lib" ] || die "$lib did not build"
   done
+  # The stamp scripts/ensure-ish-libs.sh checks before the Xcode build links
+  # these. Without it, that phase takes them for another revision's and
+  # replaces them with the published release — a local or CI build of the
+  # source would then quietly link something else.
+  git -C "$SRC_DIR" rev-parse HEAD > "$build_dir/.ish-libs-sha"
   log "Built into $build_dir"
   ls -la "$build_dir"/lib{ish,ish_emu,fakefs}.a
 }
@@ -254,8 +259,9 @@ esac
 
 cat <<'NOTE'
 
-Built. To use them, set `SBM_ISH = 1` — in an untracked ios/Flutter/
-IshLocal.xcconfig rather than in the tracked file — and rebuild.
+Built. The next iOS build links them: the engine is on by default
+(ios/Flutter/Ish.xcconfig), and these carry the stamp that keeps the build
+phase from replacing them with the published release.
 
 Not done by this script: the device work that only hands can do — thermals
 under Instruments, and App Store review.

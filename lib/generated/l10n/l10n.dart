@@ -2165,11 +2165,17 @@ abstract class AppLocalizations {
   /// **'iOS is not allowing one. The switches are at Settings › ServerBox › Live Activities and Settings › Face ID & Passcode › Live Activities.'**
   String get liveActivitySystemDisabled;
 
-  /// User-facing label or message for proxy command only supported on desktop.
+  /// Shown when a ProxyCommand is used on a phone with no Linux system installed to run it in.
   ///
   /// In en, this message translates to:
-  /// **'ProxyCommand is only supported on desktop platforms.'**
-  String get proxyCommandOnlySupportedOnDesktop;
+  /// **'ProxyCommand runs in this device\'s Linux environment. Install a Linux system first.'**
+  String get proxyCommandNeedsLinux;
+
+  /// Note under the ProxyCommand field on Android and iOS.
+  ///
+  /// In en, this message translates to:
+  /// **'On a phone, the command runs in the selected Linux system. Install the tools it uses (nc, socat, …) there first.'**
+  String get proxyCommandMobileTip;
 
   /// Help text for the pve ignore cert setting or action.
   ///

@@ -1185,8 +1185,12 @@ class AppLocalizationsAz extends AppLocalizations {
       'iOS buna icazə vermir. Açarlar «Settings › ServerBox › Live Activities» və «Settings › Face ID & Passcode › Live Activities» bölmələrindədir.';
 
   @override
-  String get proxyCommandOnlySupportedOnDesktop =>
-      'ProxyCommand yalnız masaüstü platformalarda dəstəklənir.';
+  String get proxyCommandNeedsLinux =>
+      'ProxyCommand bu cihazın Linux mühitində işləyir. Əvvəlcə bir Linux sistemi quraşdırın.';
+
+  @override
+  String get proxyCommandMobileTip =>
+      'Telefonda əmr seçilmiş Linux sistemində işləyir. Əvvəlcə istifadə etdiyi alətləri (nc, socat, …) oraya quraşdırın.';
 
   @override
   String get pveIgnoreCertTip =>

@@ -13,11 +13,23 @@ final class SettingsNode {
   final List<SettingsNode> children;
   final Widget Function()? builder;
 
+  /// Drawn with a `BetaTag` after [title] wherever the node is listed.
+  // TODO: from the Feature abstraction (#1587), not a flag per node.
+  final bool beta;
+
+  /// [title] with its mark, for a row that lists this node.
+  Widget titleWidget({TextStyle? style}) => MarkedTitle(
+    title,
+    style: style,
+    mark: beta ? const BetaTag() : null,
+  );
+
   const SettingsNode.leaf({
     required this.id,
     required this.title,
     required this.icon,
     required Widget Function() page,
+    this.beta = false,
   }) : builder = page,
        children = const [];
 
@@ -26,7 +38,8 @@ final class SettingsNode {
     required this.title,
     required this.icon,
     required this.children,
-  }) : builder = null;
+  }) : builder = null,
+       beta = false;
 
   bool get isLeaf => builder != null;
 
@@ -109,10 +122,7 @@ final class _SettingsRow extends StatelessWidget {
     return CardX(
       child: ListTile(
         leading: ThemedIcon(node.icon, size: 20),
-        title: Text(
-          node.title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+        title: node.titleWidget(
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
         ),
         trailing: trailing,
@@ -306,10 +316,7 @@ final class _SettingsMenuRow extends StatelessWidget {
                 ),
                 const SizedBox(width: 9),
                 Expanded(
-                  child: Text(
-                    node.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  child: node.titleWidget(
                     style: TextStyle(
                       fontSize: 13,
                       height: 1.2,

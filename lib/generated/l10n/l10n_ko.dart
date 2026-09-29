@@ -1121,8 +1121,12 @@ class AppLocalizationsKo extends AppLocalizations {
       'iOS에서 허용하지 않습니다. 스위치는 설정 › ServerBox › 실시간 활동과 설정 › Face ID 및 암호 › 실시간 활동에 있습니다.';
 
   @override
-  String get proxyCommandOnlySupportedOnDesktop =>
-      'ProxyCommand는 데스크톱 플랫폼에서만 지원됩니다.';
+  String get proxyCommandNeedsLinux =>
+      'ProxyCommand는 이 기기의 Linux 환경에서 실행됩니다. 먼저 Linux 시스템을 설치하세요.';
+
+  @override
+  String get proxyCommandMobileTip =>
+      '휴대폰에서는 이 명령이 선택한 Linux 시스템에서 실행됩니다. 명령에 쓰이는 도구(nc, socat 등)를 먼저 그곳에 설치하세요.';
 
   @override
   String get pveIgnoreCertTip =>

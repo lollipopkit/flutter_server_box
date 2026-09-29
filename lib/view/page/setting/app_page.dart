@@ -36,13 +36,17 @@ enum SettingsSection {
     SettingsSection.ssh => libL10n.terminal,
     // Not localized: the id is what the settings search matches on, and Linux
     // is the same word in every locale this ships in.
-    SettingsSection.linux => 'Linux (Beta)',
+    SettingsSection.linux => 'Linux',
     SettingsSection.sftp => 'SFTP',
     SettingsSection.container => libL10n.container,
     SettingsSection.remoteDesktop => l10n.remoteDesktop,
     SettingsSection.editor => libL10n.editor,
     SettingsSection.fullScreen => l10n.fullScreen,
   };
+
+  /// Whether [title] carries a `BetaTag` where it is shown.
+  // TODO: from the Feature abstraction (#1587).
+  bool get beta => this == SettingsSection.linux;
 
   /// The page this group is, inside the subject it is under.
   ///
@@ -56,7 +60,7 @@ enum SettingsSection {
     SettingsSection.fullScreen => '${libL10n.app} › ${l10n.fullScreen}',
     SettingsSection.server => '${libL10n.server} › ${libL10n.general}',
     SettingsSection.ssh => '${libL10n.terminal} › ${libL10n.general}',
-    SettingsSection.linux => '${libL10n.terminal} › Linux (Beta)',
+    SettingsSection.linux => '${libL10n.terminal} › Linux',
     SettingsSection.sftp => '${libL10n.file} › SFTP',
     SettingsSection.editor => '${libL10n.file} › ${libL10n.editor}',
     SettingsSection.container => libL10n.container,
@@ -105,7 +109,12 @@ final class SettingsSectionPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(title: Text(args.title)),
+      appBar: CustomAppBar(
+        title: MarkedTitle(
+          args.title,
+          mark: args.beta ? const BetaTag() : null,
+        ),
+      ),
       body: AppSettingsPage(section: args),
     );
   }
@@ -273,7 +282,7 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
                 hit.leaf.title,
                 () => ListTile(
                   leading: ThemedIcon(hit.leaf.icon),
-                  title: Text(hit.leaf.title),
+                  title: hit.leaf.titleWidget(),
                   subtitle: hit.parent == null
                       ? null
                       : Text(hit.parent!.title, style: UIs.text11Grey),

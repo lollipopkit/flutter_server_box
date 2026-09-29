@@ -63,7 +63,11 @@ class VirtGuestPage extends StatelessWidget {
       serverId: args.serverId,
       guestId: args.guestId,
       switcher: true,
-      leading: const BackButton(),
+      // Popped outright, not asked to: the text console is an `SSHPage`,
+      // whose `PopScope` turns a pop request into Esc for the terminal —
+      // right for the system back gesture there, but this button would
+      // type `^[` and never leave. As `SSHPage`'s own bar does.
+      leading: BackButton(onPressed: () => context.pop()),
       onDeleted: () => context.pop(),
     );
   }

@@ -1498,9 +1498,13 @@
   "@liveActivitySystemDisabled": {
     "description": "User-facing label or message for live activity system disabled."
   },
-  "proxyCommandOnlySupportedOnDesktop": "ProxyCommand is only supported on desktop platforms.",
-  "@proxyCommandOnlySupportedOnDesktop": {
-    "description": "User-facing label or message for proxy command only supported on desktop."
+  "proxyCommandNeedsLinux": "ProxyCommand runs in this device's Linux environment. Install a Linux system first.",
+  "@proxyCommandNeedsLinux": {
+    "description": "Shown when a ProxyCommand is used on a phone with no Linux system installed to run it in."
+  },
+  "proxyCommandMobileTip": "On a phone, the command runs in the selected Linux system. Install the tools it uses (nc, socat, …) there first.",
+  "@proxyCommandMobileTip": {
+    "description": "Note under the ProxyCommand field on Android and iOS."
   },
   "pveIgnoreCertTip": "Not recommended to enable, beware of security risks! If you are using the default certificate from PVE, you need to enable this option.",
   "@pveIgnoreCertTip": {
