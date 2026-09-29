@@ -251,6 +251,68 @@ verify_app_arch() {
   echo "$app_path: $checked binaries, all $expected"
 }
 
+# Adds [dmg...] to the release's SHA256SUMS and MD5SUMS, which CI wrote for
+# everything it published, replacing the line an earlier upload of the same
+# name left. A release without them yet gets them started.
+update_release_checksums() {
+  local dir list dmg name sum assets
+  dir="$(mktemp -d)"
+  # Asked first rather than inferred from a failed download: a download that
+  # failed for any other reason would start the list over, and the upload
+  # below would replace CI's list with one naming only these DMGs.
+  assets="$(gh release view "$RELEASE_TAG" --repo "$APP_REPO_SLUG" \
+    --json assets --jq '.assets[].name')"
+  for list in SHA256SUMS MD5SUMS; do
+    if grep -qxF "$list" <<< "$assets"; then
+      gh release download "$RELEASE_TAG" --repo "$APP_REPO_SLUG" \
+        --pattern "$list" --dir "$dir"
+    else
+      : > "$dir/$list"
+    fi
+    for dmg in "$@"; do
+      name="$(basename "$dmg")"
+      # The whole name after the `  ` or ` *` delimiter, compared as a
+      # string: `.` in every name is a literal, and a field would stop at a
+      # space.
+      awk -v n="$name" '{ f = $0; sub(/^[^ ]+ [ *]/, "", f) } f != n' \
+        "$dir/$list" > "$dir/$list.tmp"
+      mv "$dir/$list.tmp" "$dir/$list"
+      case "$list" in
+        SHA256SUMS) sum="$(shasum -a 256 "$dmg" | cut -d' ' -f1)" ;;
+        MD5SUMS) sum="$(md5 -q "$dmg")" ;;
+      esac
+      printf '%s  %s\n' "$sum" "$name" >> "$dir/$list"
+    done
+  done
+  # Uploaded beside the old lists and renamed over them, rather than with
+  # `--clobber`, which deletes first: a failed upload there leaves the public
+  # release with no list at all. Here it leaves the old one, and a failure
+  # after the delete leaves the new one under `.new`.
+  mv "$dir/SHA256SUMS" "$dir/SHA256SUMS.new"
+  mv "$dir/MD5SUMS" "$dir/MD5SUMS.new"
+  gh release upload "$RELEASE_TAG" "$dir/SHA256SUMS.new" "$dir/MD5SUMS.new" \
+    --repo "$APP_REPO_SLUG" \
+    --clobber
+  local release_api="repos/$APP_REPO_SLUG/releases/tags/$RELEASE_TAG"
+  local old new
+  for list in SHA256SUMS MD5SUMS; do
+    old="$(gh api "$release_api" --jq ".assets[] | select(.name == \"$list\") | .id")"
+    new="$(gh api "$release_api" --jq ".assets[] | select(.name == \"$list.new\") | .id")"
+    # Checked before the delete: without it the old list goes, and the
+    # rename below fails on an id-less URL.
+    if [[ -z "$new" ]]; then
+      echo "$list.new is not on $RELEASE_TAG after its upload; kept $list" >&2
+      exit 1
+    fi
+    if [[ -n "$old" ]]; then
+      gh api -X DELETE "repos/$APP_REPO_SLUG/releases/assets/$old" >/dev/null
+    fi
+    gh api -X PATCH "repos/$APP_REPO_SLUG/releases/assets/$new" \
+      -f name="$list" >/dev/null
+  done
+  rm -rf "$dir"
+}
+
 # How many times a call to Apple's notary service is worth making.
 NOTARY_ATTEMPTS="${NOTARY_ATTEMPTS:-4}"
 
@@ -550,6 +612,7 @@ if [[ "$PUBLISH_GITHUB_RELEASE" == "1" ]]; then
   gh release upload "$RELEASE_TAG" "${built_dmgs[@]}" \
     --repo "$APP_REPO_SLUG" \
     --clobber
+  update_release_checksums "${built_dmgs[@]}"
 fi
 
 # The cask references one download per architecture, so update it only when both
