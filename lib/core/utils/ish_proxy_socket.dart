@@ -74,6 +74,11 @@ final class IshProxySocket implements SSHSocket {
   Timer? _timer;
   final _drained = <Completer<void>>[];
 
+  /// Why bytes handed to [sink] were not delivered, once one was refused.
+  /// What [flush] answers from then on, so a caller does not take bytes that
+  /// never reached the proxy for sent ones.
+  SSHErr? _writeError;
+
   static Future<SSHSocket> connect({
     required String command,
     Duration? timeout,
@@ -215,6 +220,10 @@ final class IshProxySocket implements SSHSocket {
       final left = Uint8List.sublistView(head, _pendingOffset);
       final written = IosRootfs.tryWrite(_session, left);
       if (written < 0) {
+        _writeError = SSHErr(
+          type: SSHErrType.connect,
+          message: 'ProxyCommand: the guest refused input ($written)',
+        );
         unawaited(_finish());
         return;
       }
@@ -281,8 +290,13 @@ final class IshProxySocket implements SSHSocket {
       Loggers.app.warning('ProxyCommand stderr: $stderr');
     }
     await _remove(_files);
+    final writeError = _writeError;
     for (final waiter in _drained) {
-      waiter.complete();
+      if (writeError == null) {
+        waiter.complete();
+      } else {
+        waiter.completeError(writeError);
+      }
     }
     _drained.clear();
     // Not awaited: a single-subscription controller's close completes only
@@ -326,6 +340,8 @@ final class IshProxySocket implements SSHSocket {
 
   @override
   Future<void> flush() {
+    final writeError = _writeError;
+    if (writeError != null) return Future.error(writeError);
     if (_closed || _pending.isEmpty) return Future.value();
     final waiter = Completer<void>();
     _drained.add(waiter);
