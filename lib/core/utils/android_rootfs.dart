@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -339,6 +340,9 @@ abstract final class AndroidRootfs {
     _profiles
       ..clear()
       ..addAll(found);
+    // Every install, rename and removal ends here, and the file picker lists
+    // the same directories as roots.
+    unawaited(MethodChans.linuxSystemsChanged());
   }
 
   /// The last answer [isInstalled] gave, without asking the filesystem again.

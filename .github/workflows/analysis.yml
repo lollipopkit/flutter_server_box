@@ -44,6 +44,7 @@ jobs:
       frontend: ${{ steps.filter.outputs.frontend }}
       docs: ${{ steps.filter.outputs.docs }}
       website: ${{ steps.filter.outputs.website }}
+      android: ${{ steps.filter.outputs.android }}
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -54,7 +55,7 @@ jobs:
 
           # Which filters are answered from the diff: all of them on a pull
           # request, none otherwise.
-          strict=' rust dart frontend docs website '
+          strict=' rust dart frontend docs website android '
 
           if [[ "${{ github.event_name }}" == 'pull_request' ]]; then
             files="$(gh api --paginate \
@@ -116,6 +117,7 @@ jobs:
           # `store/` because the website build packs it into the store's
           # tarball (scripts/store-tarball.sh).
           emit website "$shared|^website/|^packages/webui/|^store/|^scripts/store-tarball\.sh$"
+          emit android "$shared|^android/"
 
   reproducibilityCheck:
     # These are deterministic-input guards, not a reproducibility proof. The
@@ -490,6 +492,39 @@ jobs:
       - uses: ./.github/actions/build-hook-cache
         with:
           step: save
+
+  # The Kotlin side's JVM unit tests (`android/app/src/test`). No device and
+  # no Rust: `testDebugUnitTest` compiles the Kotlin sources and stops there.
+  androidUnitTests:
+    name: Android unit tests
+    needs: changes
+    if: needs.changes.outputs.android == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          lfs: true
+          fetch-depth: 1
+          submodules: recursive
+          persist-credentials: false
+
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: "zulu"
+          java-version: "21"
+
+      - uses: ./.github/actions/setup-flutter
+
+      # `gradlew` is not checked in (`android/.gitignore`): Flutter writes it,
+      # and `local.properties` with the SDK's location, on its first build.
+      # `--config-only` does that and nothing else.
+      - name: Generate the Gradle project
+        run: flutter build apk --config-only
+
+      - name: Run unit tests
+        working-directory: android
+        run: ./gradlew :app:testDebugUnitTest
 
   check:
     needs: changes

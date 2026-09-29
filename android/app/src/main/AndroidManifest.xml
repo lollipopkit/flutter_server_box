@@ -164,6 +164,21 @@
             android:foregroundServiceType="dataSync"
             android:exported="false" />
 
+        <!-- The Linux systems in the system file picker (#1583). Exported, as
+             a documents provider has to be, and guarded by MANAGE_DOCUMENTS,
+             which only the system's picker holds: another app reaches a file
+             here only after the user picks it there. -->
+        <provider
+            android:name=".linux.LinuxDocumentsProvider"
+            android:authorities="${applicationId}.linux"
+            android:exported="true"
+            android:grantUriPermissions="true"
+            android:permission="android.permission.MANAGE_DOCUMENTS">
+            <intent-filter>
+                <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
+            </intent-filter>
+        </provider>
+
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility?hl=en and
