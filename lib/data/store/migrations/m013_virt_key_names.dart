@@ -112,8 +112,10 @@ class VirtKeyNamesMigration implements SchemaMigration {
       final name = switch (entry) {
         final int index when index >= 0 && index < _indexed.length =>
           _indexed[index],
-        // Half-converted, which a crash between the two writes below leaves.
-        final String s when _indexed.contains(s) => s,
+        // Already a name. Kept whatever it names: one this build has no case
+        // for is [VirtKeyX.loadFromStore]'s to drop, and a newer build's key
+        // is not this step's to lose.
+        final String s => s,
         _ => null,
       };
       if (name == null || !seen.add(name)) continue;

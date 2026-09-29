@@ -71,6 +71,14 @@ void main() {
     expect(store.sshVirtKeys.fetch(), ['ime', 'clipboard', 'tmux']);
   });
 
+  test('a name among the indices is kept, even one this build lacks', () async {
+    store.set(VirtKeyNamesMigration.orderKey, ['aNewerKey', _tab, 'esc']);
+
+    await migration.apply();
+
+    expect(store.sshVirtKeys.fetch(), ['aNewerKey', 'tab', 'esc']);
+  });
+
   test('and so does the hidden set', () async {
     store.set(VirtKeyNamesMigration.disabledKey, [_sudo]);
 
