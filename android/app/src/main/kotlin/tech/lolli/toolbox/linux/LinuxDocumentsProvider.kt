@@ -28,7 +28,12 @@ import java.io.FileNotFoundException
  *
  * A document id is `<system>:<guest path>`. Every access resolves that path
  * with [GuestPath], so links inside the rootfs point where they point for the
- * guest, and nothing outside the rootfs is reachable through one.
+ * guest, and neither a link nor a crafted id reaches anything outside it.
+ *
+ * Resolved, then used as a path: a guest process swapping a checked directory
+ * for a link in between is not guarded against, and does not need to be. The
+ * guest runs as this app's uid under proot, which is no sandbox (it has the
+ * host's `/proc`), so it can already reach everything this provider can.
  *
  * Only the system's picker can bind here: the manifest guards this provider
  * with `MANAGE_DOCUMENTS`, and another app gets a file only after the user
@@ -229,6 +234,9 @@ class LinuxDocumentsProvider : DocumentsProvider() {
         val root = File(container, doc.system).path
         val host = GuestPath.resolve(root, doc.path, followLast, ::readLink)
             ?: throw FileNotFoundException("Too many links: ${doc.id}")
+        // The marker is the app's, however it is named — `/.installed`, or
+        // through a link to `/` — and deleting it uninstalls the system.
+        if (host == File(root, MARKER).path) throw FileNotFoundException(doc.id)
         return File(host)
     }
 
