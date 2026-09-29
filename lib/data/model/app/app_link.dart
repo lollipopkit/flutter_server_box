@@ -28,10 +28,14 @@ sealed class AppLink {
 
   static AppLink? _parse(Uri uri) {
     if (uri.scheme.toLowerCase() != scheme) return null;
-    final segs = [
-      for (final seg in uri.pathSegments)
-        if (seg.isNotEmpty) seg,
-    ];
+    var segs = uri.pathSegments;
+    // One trailing slash is how a link typed by hand often ends. An empty
+    // segment anywhere else is a malformed link, not a shorter one: dropping
+    // it read `server//files` as the server whose id is `files`.
+    if (segs.isNotEmpty && segs.last.isEmpty) {
+      segs = segs.sublist(0, segs.length - 1);
+    }
+    if (segs.any((seg) => seg.isEmpty)) return null;
     final query = uri.queryParameters;
     return switch (uri.host.toLowerCase()) {
       ServerLink._host => ServerLink._parse(segs),

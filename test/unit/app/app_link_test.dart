@@ -22,6 +22,20 @@ void main() {
       expect(AppLink.parse('serverbox://server'), isNull);
     });
 
+    test('an empty segment is refused, not skipped', () {
+      // Skipping it read these as other, valid links.
+      expect(AppLink.parse('serverbox://server//files'), isNull);
+      expect(AppLink.parse('serverbox://server/abc//power'), isNull);
+      expect(AppLink.parse('serverbox://tab//file'), isNull);
+    });
+
+    test('one trailing slash is still the same link', () {
+      final link = AppLink.parse('serverbox://server/abc/files/') as ServerLink;
+      expect(link.id, 'abc');
+      expect(link.func, ServerFuncBtn.files);
+      expect(AppLink.parse('serverbox://add-server/?host=h'), isA<AddServerLink>());
+    });
+
     test('the scheme and the kind are case-insensitive', () {
       expect(AppLink.parse('ServerBox://SERVER/abc'), isA<ServerLink>());
     });
