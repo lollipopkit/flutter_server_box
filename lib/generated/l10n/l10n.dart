@@ -9116,6 +9116,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =0{No other guest} =1{Also backs up 1 other guest} other{Also backs up {count} other guests}}'**
   String virtBackupPlanOthers(int count);
+
+  /// No description provided for @reduceMotion.
+  ///
+  /// In en, this message translates to:
+  /// **'Reduce motion'**
+  String get reduceMotion;
 }
 
 class _AppLocalizationsDelegate

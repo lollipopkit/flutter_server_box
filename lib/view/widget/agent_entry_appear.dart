@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:server_box/core/extension/context/motion.dart';
 
 /// Fades and lifts a timeline entry into place the first time it is shown.
 ///
@@ -59,9 +60,10 @@ class _AgentEntryAppearState extends State<AgentEntryAppear>
       opacity: _curve,
       child: SlideTransition(
         // A short lift, not a slide across the page: the entry belongs where
-        // it is, and only has to look like it arrived there.
+        // it is, and only has to look like it arrived there. None at all where
+        // the device has asked for less movement; the fade is enough.
         position: Tween(
-          begin: const Offset(0, 0.06),
+          begin: Offset(0, context.reduceMotion ? 0 : 0.06),
           end: Offset.zero,
         ).animate(_curve),
         child: widget.child,

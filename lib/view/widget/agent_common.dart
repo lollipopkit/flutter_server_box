@@ -92,6 +92,18 @@ void scheduleAgentAutoScroll(
     if (!controller.hasClients) return;
     final position = controller.position;
     if (!force && position.pixels < position.maxScrollExtent - 96) return;
+    // Looked up rather than depended on: this runs after the frame, from no
+    // build of its own, so the list's context is the nearest one to ask.
+    final reduceMotion =
+        position.context.storageContext
+            .getInheritedWidgetOfExactType<MediaQuery>()
+            ?.data
+            .disableAnimations ??
+        false;
+    if (reduceMotion) {
+      controller.jumpTo(position.maxScrollExtent);
+      return;
+    }
     controller.animateTo(
       position.maxScrollExtent,
       duration: const Duration(milliseconds: 180),

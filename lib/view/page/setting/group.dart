@@ -128,6 +128,7 @@ final class SettingsGroupView extends StatelessWidget {
       // keystroke that rebuilt the list. The separator is [AnimatedColumn]'s
       // to place, so that a row leaving takes its own line with it.
       return AnimatedColumn(
+        duration: context.motion(Durations.medium2),
         separator: separator,
         children: [
           for (final (at, row) in rows.indexed)

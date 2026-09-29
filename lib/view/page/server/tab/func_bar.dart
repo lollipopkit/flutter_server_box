@@ -2,6 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:server_box/core/extension/context/motion.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
@@ -49,6 +50,8 @@ class ServerOpenFuncBar extends ConsumerWidget {
     // own once the movement is over and vanishing when it starts back.
     // That leaves [HideOnScroll] doing only what it is for — getting out
     // of the way of a page being read past — so its own arrival is off.
+    // With less motion asked for it fades where it is instead of rising.
+    final rise = context.reduceMotion ? 0.0 : kFuncBarHeight * 0.5;
     return AnimatedBuilder(
       animation: open,
       child: RepaintBoundary(
@@ -73,7 +76,7 @@ class ServerOpenFuncBar extends ConsumerWidget {
         return Opacity(
           opacity: t.clamp(0.0, 1.0),
           child: Transform.translate(
-            offset: Offset(0, (1 - t) * kFuncBarHeight * 0.5),
+            offset: Offset(0, (1 - t) * rise),
             child: child,
           ),
         );

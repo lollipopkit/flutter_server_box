@@ -53,15 +53,9 @@ abstract final class PlatformPublicSettings {
     return await LocalAuth.isAvail;
   }
 
-  /// The switch and the delay under it, as one row of a group.
-  static Widget buildBioAuthRows() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [_buildBioAuth(), _buildBioAuthDelay()],
-    );
-  }
-
-  static Widget _buildBioAuth() {
+  /// The switch. The delay under it is a row of its own, so the group draws
+  /// the line between the two.
+  static Widget buildBioAuth() {
     return ListTile(
       leading: const Icon(Icons.fingerprint),
       title: Text(libL10n.bioAuth),
@@ -75,10 +69,13 @@ abstract final class PlatformPublicSettings {
     );
   }
 
-  static Widget _buildBioAuthDelay() {
+  static String get bioAuthDelayLabel =>
+      '${libL10n.delay} (${libL10n.second})';
+
+  static Widget buildBioAuthDelay() {
     return ListTile(
       leading: const Icon(Icons.timer_outlined),
-      title: Text('${libL10n.delay} (${libL10n.second})'),
+      title: Text(bioAuthDelayLabel),
       trailing: Stores.setting.delayBioAuthLock.fieldWidget(),
     );
   }

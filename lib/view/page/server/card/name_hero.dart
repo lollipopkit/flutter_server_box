@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:server_box/core/extension/context/motion.dart';
 
 /// A server's name, carried from its card to the detail page's bar when
 /// opening the card pushes a page.
@@ -8,6 +9,9 @@ import 'package:flutter/material.dart';
 /// time anything is pushed from it. So each side says whether it is a side of
 /// a push — the card when it does not open in place, the page when it is not
 /// hosted inside the tab.
+///
+/// Nor with less motion asked for: a name flying across the screen is the
+/// thing that asks for, and the page's own fade carries the change without it.
 class ServerNameHero extends StatelessWidget {
   const ServerNameHero({
     super.key,
@@ -24,7 +28,7 @@ class ServerNameHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!enabled) return child;
+    if (!enabled || context.reduceMotion) return child;
     return Hero(
       tag: tagOf(id),
       transitionOnUserGestures: true,

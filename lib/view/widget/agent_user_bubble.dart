@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/extension/context/motion.dart';
 import 'package:server_box/view/widget/agent_common.dart';
 
 /// The user's own message, with a way to change what was asked.
@@ -83,7 +84,9 @@ class _AgentUserBubbleState extends State<AgentUserBubble> {
               // Its own centre, which is now the bubble's centre.
               alignment: Alignment.center,
               scale: _pressed ? 0.96 : 1,
-              duration: _pressed ? Durations.medium1 : Durations.short4,
+              duration: context.motion(
+                _pressed ? Durations.medium1 : Durations.short4,
+              ),
               // Out past its own size and back, the way a held control lets go.
               curve: _pressed ? Curves.easeOut : Curves.easeOutBack,
               child: widget.child,
@@ -92,7 +95,7 @@ class _AgentUserBubbleState extends State<AgentUserBubble> {
           // Under the message rather than over it: a row floating on the
           // bubble would cover the words being decided about.
           AnimatedSize(
-            duration: Durations.short3,
+            duration: context.motion(Durations.short3),
             curve: Curves.easeOut,
             alignment: Alignment.topRight,
             child: _hovered

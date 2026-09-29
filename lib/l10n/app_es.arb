@@ -1496,5 +1496,6 @@
   "virtHwRevertAllAsk": "¿Descartar todos los cambios que esperan al próximo arranque de {name}?",
   "virtBackupPlanNew": "Nuevo plan",
   "virtBackupPlanNewTip": "Una programación que respalda solo este invitado.",
-  "virtBackupPlanOthers": "{count, plural, =0{Ningún otro invitado} =1{También respalda 1 invitado más} other{También respalda {count} invitados más}}"
+  "virtBackupPlanOthers": "{count, plural, =0{Ningún otro invitado} =1{También respalda 1 invitado más} other{También respalda {count} invitados más}}",
+  "reduceMotion": "Reducir movimiento"
 }

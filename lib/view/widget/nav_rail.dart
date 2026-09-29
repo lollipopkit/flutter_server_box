@@ -2,6 +2,7 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:server_box/core/extension/context/motion.dart';
 
 /// The rail's geometry, in both of the shapes it has.
 ///
@@ -152,6 +153,13 @@ class _AppNavRailState extends State<AppNavRail>
     curve: Curves.easeOutCubic,
     reverseCurve: Curves.easeInCubic,
   );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Opening is a change of width, which is movement like any other.
+    _ctrl.duration = context.motion(Durations.short4);
+  }
 
   @override
   void dispose() {

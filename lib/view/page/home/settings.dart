@@ -51,16 +51,20 @@ extension _HomePageSettings on _HomePageState {
   /// the tabs — so the two fade in opposite directions and are displaced in
   /// opposite directions, which is what reads as one replacing the other
   /// rather than as two things fading independently.
+  ///
+  /// Only the fade where the device has asked for less movement. The slide
+  /// stays in the tree with nowhere to go rather than being left out: the
+  /// tabs are under it, and a different tree would build them again.
   Widget _crossed({required bool leaving, required Widget child}) {
-    const shift = 0.03;
+    final shift = context.reduceMotion ? 0.0 : 0.03;
     return FadeTransition(
       opacity: leaving
           ? Tween(begin: 1.0, end: 0.0).animate(_settingsAnim)
           : _settingsAnim,
       child: SlideTransition(
         position: Tween(
-          begin: leaving ? Offset.zero : const Offset(shift, 0),
-          end: leaving ? const Offset(-shift, 0) : Offset.zero,
+          begin: leaving ? Offset.zero : Offset(shift, 0),
+          end: leaving ? Offset(-shift, 0) : Offset.zero,
         ).animate(_settingsAnim),
         child: child,
       ),

@@ -1496,5 +1496,6 @@
   "virtHwRevertAllAsk": "Alle Änderungen verwerfen, die auf den nächsten Start von {name} warten?",
   "virtBackupPlanNew": "Neuer Plan",
   "virtBackupPlanNewTip": "Ein Zeitplan, der nur diesen Gast sichert.",
-  "virtBackupPlanOthers": "{count, plural, =0{Kein anderer Gast} =1{Sichert auch 1 weiteren Gast} other{Sichert auch {count} weitere Gäste}}"
+  "virtBackupPlanOthers": "{count, plural, =0{Kein anderer Gast} =1{Sichert auch 1 weiteren Gast} other{Sichert auch {count} weitere Gäste}}",
+  "reduceMotion": "Bewegung reduzieren"
 }

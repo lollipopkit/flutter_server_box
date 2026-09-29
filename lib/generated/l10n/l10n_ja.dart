@@ -5073,4 +5073,7 @@ class AppLocalizationsJa extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get reduceMotion => '視差効果を減らす';
 }

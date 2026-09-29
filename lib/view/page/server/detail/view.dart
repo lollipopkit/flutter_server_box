@@ -10,6 +10,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:redfish/redfish.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/extension/context/motion.dart';
 import 'package:server_box/core/extension/server.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
@@ -18,7 +19,6 @@ import 'package:server_box/data/model/server/battery.dart';
 import 'package:server_box/data/model/server/disk_smart.dart';
 import 'package:server_box/data/model/server/gpu.dart';
 import 'package:server_box/data/model/server/sensors.dart';
-import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/bmc/bmc.dart';
@@ -32,6 +32,7 @@ import 'package:server_box/view/page/server/card/name_hero.dart';
 import 'package:server_box/view/page/server/card/notices.dart';
 import 'package:server_box/view/page/server/card/sizes.dart';
 import 'package:server_box/view/page/server/chart.dart';
+import 'package:server_box/view/page/server/detail/bar_actions.dart';
 import 'package:server_box/view/page/server/detail/focus_parts.dart';
 import 'package:server_box/view/page/server/detail/info_card.dart';
 import 'package:server_box/view/page/server/detail/metric_devices.dart';
@@ -40,12 +41,10 @@ import 'package:server_box/view/page/server/detail/readout.dart';
 import 'package:server_box/view/page/server/detail/window_gaps.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/server/metric_row.dart';
-import 'package:server_box/view/page/server/monitor_settings/page.dart';
 import 'package:server_box/view/page/server/reading_text.dart';
 import 'package:server_box/view/page/server/text_scale.dart';
 import 'package:server_box/view/widget/built_from.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
-import 'package:server_box/view/widget/server_share.dart';
 
 part 'bmc.dart';
 part 'extra_cards.dart';
@@ -453,6 +452,8 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   Widget _entering(Widget child, {required Offset from}) {
     final entrance = widget.entrance;
     if (entrance == null) return child;
+    // Faded in where it is, with less motion asked for.
+    if (context.reduceMotion) from = Offset.zero;
     return AnimatedBuilder(
       animation: entrance,
       // Its own layer, so what happens each frame is an offset and an alpha on
@@ -661,65 +662,17 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
         ),
       ),
       actions: [
-        IconButton(
-          icon: const Icon(Icons.share),
-          tooltip: libL10n.share,
-          onPressed: () => ServerShareUi.send(context, si.spi),
-        ),
-        // Beside Edit rather than to the right of it: the two are neighbours
-        // because they are the same kind of thing at different ends of the
-        // wire — Edit is this app's record of the server, this is the agent's
-        // own configuration — and Edit stays the rightmost, where the primary
-        // action belongs.
-        ?_buildMonitorSettingsBtn(si),
-        IconButton(tooltip: libL10n.edit,
-          icon: const Icon(Icons.edit),
-          onPressed: () async {
-            final delete = await ServerEditPage.route.go(
-              context,
-              args: ServerEditArgs(si.spi),
-            );
-            if (delete == true) {
-              context.pop();
-            }
-          },
-        ),
+        for (final action in ServerPageAction.of(
+          context,
+          si.spi,
+          onDeleted: context.pop,
+        ))
+          IconButton(
+            icon: Icon(action.icon),
+            tooltip: action.label,
+            onPressed: action.onTap,
+          ),
       ],
-    );
-  }
-
-  /// The way into the agent's own configuration, for a server that has one.
-  ///
-  /// Null for every other server, and asked of `spi.monitorOn` rather than of
-  /// [ServerState.capabilities]: what this opens is *the agent's* settings, and
-  /// a server with both transports answers capability questions as the union of
-  /// the two — so a capability check would show this for an SSH-only server
-  /// that happens to share a capability with an agent.
-  ///
-  /// The switch counts. An agent that is configured and switched off is one
-  /// this app does not talk to, and editing its settings is talking to it.
-  ///
-  /// In the bar, not above the cards.
-  ///
-  /// It was a full-width card with a title and a line of explanation, sitting
-  /// on top of the readings this page exists to show — and it is a way out of
-  /// the page rather than anything about the machine, which is what the bar
-  /// holds. It also read as a card whose content had failed to load, since
-  /// every other card here has a measurement in it.
-  ///
-  /// Not in the function bar below the cards either: that row is things done
-  /// *to* the machine, and this is the agent's own configuration.
-  Widget? _buildMonitorSettingsBtn(ServerState si) {
-    final monitor = si.spi.monitorOn;
-    if (monitor == null) return null;
-
-    return IconButton(
-      icon: const Icon(MingCute.settings_2_line),
-      tooltip: l10n.monitorSettings,
-      onPressed: () => MonitorSettingsPage.route.go(
-        context,
-        MonitorSettingsArgs(monitor: monitor, subtitle: si.spi.name),
-      ),
     );
   }
 

@@ -2,6 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/extension/context/motion.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/privileged_exec.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
@@ -207,7 +208,7 @@ extension on _UsersPageState {
   /// the sake of the exit.
   Widget _buildSearchField() {
     return AnimatedSize(
-      duration: const Duration(milliseconds: 200),
+      duration: context.motion(const Duration(milliseconds: 200)),
       curve: Curves.easeOutCubic,
       alignment: Alignment.topCenter,
       child: _searching

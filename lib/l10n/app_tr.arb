@@ -1496,5 +1496,6 @@
   "virtHwRevertAllAsk": "{name} için bir sonraki başlatmayı bekleyen tüm değişiklikler atılsın mı?",
   "virtBackupPlanNew": "Yeni plan",
   "virtBackupPlanNewTip": "Yalnızca bu konuğu yedekleyen bir zamanlama.",
-  "virtBackupPlanOthers": "{count, plural, =0{Başka konuk yok} other{{count} başka konuğu da yedekler}}"
+  "virtBackupPlanOthers": "{count, plural, =0{Başka konuk yok} other{{count} başka konuğu da yedekler}}",
+  "reduceMotion": "Hareketi azalt"
 }

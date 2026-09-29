@@ -1496,5 +1496,6 @@
   "virtHwRevertAllAsk": "{name} üçün növbəti başlanğıcı gözləyən bütün dəyişikliklər atılsın?",
   "virtBackupPlanNew": "Yeni plan",
   "virtBackupPlanNewTip": "Yalnız bu qonağın ehtiyat nüsxəsini çıxaran cədvəl.",
-  "virtBackupPlanOthers": "{count, plural, =0{Başqa qonaq yoxdur} other{Daha {count} qonağın da ehtiyat nüsxəsini çıxarır}}"
+  "virtBackupPlanOthers": "{count, plural, =0{Başqa qonaq yoxdur} other{Daha {count} qonağın da ehtiyat nüsxəsini çıxarır}}",
+  "reduceMotion": "Hərəkəti azalt"
 }

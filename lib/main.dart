@@ -12,6 +12,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:server_box/app.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/diag.dart';
+import 'package:server_box/core/motion.dart';
 import 'package:server_box/core/service/app_font.dart';
 import 'package:server_box/core/service/crash_report.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
@@ -24,6 +25,7 @@ import 'package:server_box/core/utils/rootfs.dart';
 import 'package:server_box/core/utils/rootfs_manifest_source.dart';
 import 'package:server_box/core/utils/sandbox_import.dart';
 import 'package:server_box/core/utils/ssh_native_crypto.dart';
+import 'package:server_box/core/utils/stored_path.dart';
 import 'package:server_box/data/model/ai/model_context.dart';
 import 'package:server_box/data/model/server/dist_license.dart';
 import 'package:server_box/data/res/build_data.dart';
@@ -124,7 +126,9 @@ Future<void> _runInZone(Future<void> Function() body) async {
 }
 
 Future<void> _initApp() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  // The app's own, which is what lets its motion setting reach the
+  // framework's animations — see [AppBinding].
+  AppBinding();
 
   // Before anything that can fail, so that a failure during startup is at
   // least recorded — the errors worth catching most are the ones that stop the
@@ -186,6 +190,9 @@ Future<void> _initApp() async {
   // between the user and their first answer.
   unawaited(ModelContextTable.shared.ensureLoaded());
   await _initData();
+  // After the settings are open, and before the first frame is drawn with a
+  // preference it has not read.
+  await AppMotion.init();
   await _initWindow();
 
   await _doPlatformRelated();
@@ -252,6 +259,9 @@ Future<void> _initData() async {
   await _doDbMigrate();
 
   if (Stores.setting.betaTest.fetch()) AppUpdate.chan = AppUpdateChan.beta;
+
+  // Before the fonts and the theme read the paths it fixes.
+  StoredPaths.repair();
 
   // Not awaited: only the terminal uses it, and a broken font file is the
   // user's, not a defect to report.

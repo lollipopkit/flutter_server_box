@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:server_box/core/extension/context/motion.dart';
 
 /// One of several things in the same place, replaced by another with a
 /// direction.
@@ -84,6 +85,11 @@ class _DirectionalSwapState extends State<DirectionalSwap>
     final leaving = _leaving;
     if (leaving == null) return widget.child;
 
+    // With less motion asked for, the direction is given up and what is left
+    // is the cross-fade: a page sliding in, however briefly, is still a page
+    // travelling.
+    final moves = context.reduceMotion ? 0.0 : 1.0;
+
     return AnimatedBuilder(
       animation: _curve,
       builder: (_, _) {
@@ -95,15 +101,15 @@ class _DirectionalSwapState extends State<DirectionalSwap>
             IgnorePointer(
               child: _side(
                 leaving,
-                shift: -_direction * DirectionalSwap.travel * t,
-                scale: 1 - DirectionalSwap.shrink * t,
+                shift: -_direction * DirectionalSwap.travel * t * moves,
+                scale: 1 - DirectionalSwap.shrink * t * moves,
                 opacity: 1 - t,
               ),
             ),
             _side(
               widget.child,
-              shift: _direction * DirectionalSwap.travel * (1 - t),
-              scale: 1 - DirectionalSwap.shrink * (1 - t),
+              shift: _direction * DirectionalSwap.travel * (1 - t) * moves,
+              scale: 1 - DirectionalSwap.shrink * (1 - t) * moves,
               opacity: t,
             ),
           ],

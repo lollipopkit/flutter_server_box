@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/extension/context/motion.dart';
 import 'package:server_box/core/service/theme_package.dart';
 import 'package:server_box/core/service/theme_repo.dart';
 import 'package:server_box/data/model/app/theme_sort.dart';
@@ -420,7 +421,7 @@ extension on _ThemeStorePageState {
             // round.
             AnimatedRotation(
               turns: _expanded.contains(row.key) ? 0.5 : 0,
-              duration: _expandDuration,
+              duration: context.motion(_expandDuration),
               curve: Curves.easeOutCubic,
               child: Btn.icon(
                 text: libL10n.preview,
@@ -479,7 +480,7 @@ extension on _ThemeStorePageState {
     // Built only while open, and animated both ways: the preview is kept
     // through the closing animation and dropped after it.
     final preview = AnimatedSwitcher(
-      duration: _expandDuration,
+      duration: context.motion(_expandDuration),
       switchInCurve: Curves.easeOutCubic,
       switchOutCurve: Curves.easeInCubic,
       transitionBuilder: (child, animation) => SizeTransition(

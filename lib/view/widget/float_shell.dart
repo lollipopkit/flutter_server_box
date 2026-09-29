@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:responsive_framework/responsive_framework.dart';
+import 'package:server_box/core/extension/context/motion.dart';
 import 'package:server_box/data/model/app/float_shell.dart';
 
 /// One size for every icon button in a floating panel's title bar, and in the
@@ -283,7 +284,7 @@ class _DesktopShellState extends State<_DesktopShell> {
     final contentHeight = rectFor(false).height - FloatShellGeometry.barHeight;
 
     return AnimatedPositioned(
-      duration: _dragging ? Duration.zero : Durations.medium2,
+      duration: _dragging ? Duration.zero : context.motion(Durations.medium2),
       curve: Curves.easeOutCubic,
       left: rect.left,
       top: rect.top,
@@ -573,6 +574,7 @@ class _PhoneShellState extends State<_PhoneShell>
     final area = _shell.area;
     final padding = MediaQuery.paddingOf(context);
     final keyboard = MediaQuery.viewInsetsOf(context).bottom;
+    final reduceMotion = context.reduceMotion;
     final height = FloatShellGeometry.sheetHeightFor(
       areaHeight: area.height,
       topInset: padding.top,
@@ -591,23 +593,30 @@ class _PhoneShellState extends State<_PhoneShell>
         // In from the edge it sits on, which is where it goes when collapsed.
         // The stack it is in clips, so what is still below the screen is not
         // drawn over the tab bar on the way past.
-        child: SlideTransition(
-          position: Tween(
-            begin: const Offset(0, 1),
-            end: Offset.zero,
-          ).animate(_curve),
-          child: Material(
-            elevation: 12,
-            color: theme.colorScheme.surface,
-            clipBehavior: Clip.antiAlias,
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: Column(
-              children: [
-                _buildGrabBar(context, theme, height),
-                Expanded(child: Builder(builder: _shell.builder)),
-              ],
+        //
+        // Where the device has asked for less movement it fades where it
+        // stands instead, crossing with the pill the way the pill crosses
+        // with it.
+        child: FadeTransition(
+          opacity: reduceMotion ? _curve : kAlwaysCompleteAnimation,
+          child: SlideTransition(
+            position: Tween(
+              begin: Offset(0, reduceMotion ? 0 : 1),
+              end: Offset.zero,
+            ).animate(_curve),
+            child: Material(
+              elevation: 12,
+              color: theme.colorScheme.surface,
+              clipBehavior: Clip.antiAlias,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Column(
+                children: [
+                  _buildGrabBar(context, theme, height),
+                  Expanded(child: Builder(builder: _shell.builder)),
+                ],
+              ),
             ),
           ),
         ),
@@ -681,8 +690,14 @@ class _Reveal extends StatelessWidget {
   Widget build(BuildContext context) {
     return FadeTransition(
       opacity: animation,
+      // Faded only where the device has asked for less movement, but still
+      // a `ScaleTransition`: the panel under it would otherwise be built
+      // again whenever the setting changed.
       child: ScaleTransition(
-        scale: Tween<double>(begin: 0.94, end: 1).animate(animation),
+        scale: Tween<double>(
+          begin: context.reduceMotion ? 1 : 0.94,
+          end: 1,
+        ).animate(animation),
         alignment: alignment,
         child: child,
       ),

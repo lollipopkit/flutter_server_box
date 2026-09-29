@@ -553,10 +553,17 @@ extension on _ServerDetailPageState {
     final current = position.pixels;
     if (current <= toTop && current >= toBottom) return;
 
+    final to = current > toTop
+        ? toTop.clamp(position.minScrollExtent, position.maxScrollExtent)
+        : toBottom.clamp(position.minScrollExtent, position.maxScrollExtent);
+    // A page scrolling itself is the page travelling: with less motion asked
+    // for, the card is simply there.
+    if (context.reduceMotion) {
+      _scrollCtrl.jumpTo(to);
+      return;
+    }
     _scrollCtrl.animateTo(
-      current > toTop
-          ? toTop.clamp(position.minScrollExtent, position.maxScrollExtent)
-          : toBottom.clamp(position.minScrollExtent, position.maxScrollExtent),
+      to,
       duration: Durations.medium2,
       curve: Curves.easeOutCubic,
     );

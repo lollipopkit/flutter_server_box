@@ -123,15 +123,17 @@ extension _AskAi on SSHPageState {
           ),
         );
       },
-      transitionBuilder: (_, animation, _, child) {
+      transitionBuilder: (transitionContext, animation, _, child) {
         final curved = CurvedAnimation(
           parent: animation,
           curve: Curves.easeOutCubic,
           reverseCurve: Curves.easeInCubic,
         );
+        // In from the edge it sits against, or only faded in where the device
+        // has asked for less movement.
         return SlideTransition(
           position: Tween<Offset>(
-            begin: const Offset(1, 0),
+            begin: Offset(transitionContext.reduceMotion ? 0 : 1, 0),
             end: Offset.zero,
           ).animate(curved),
           child: FadeTransition(opacity: curved, child: child),

@@ -17,6 +17,7 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/extension/context/motion.dart';
 import 'package:server_box/core/service/app_font.dart';
 import 'package:server_box/core/service/crash_report.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
@@ -35,6 +36,7 @@ import 'package:server_box/data/model/app/builtin_theme.dart';
 import 'package:server_box/data/model/app/geo_manifest.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/linux_distros.dart';
+import 'package:server_box/data/model/app/motion.dart';
 import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/model/app/rootfs_manifest.dart';
 import 'package:server_box/data/model/app/theme_style.dart';
@@ -328,12 +330,15 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         // The width `AdaptivePanes` splits at, so that a window wide enough for
         // two columns gets two columns here as well.
         final wide = constraints.maxWidth >= AdaptivePanes.kSplitWidth;
-        return _buildScaffold(
+        return _SettingsWidth(
           wide: wide,
-          menu: menu,
-          nodes: nodes,
-          selected: selected,
-          hits: hits,
+          child: _buildScaffold(
+            wide: wide,
+            menu: menu,
+            nodes: nodes,
+            selected: selected,
+            hits: hits,
+          ),
         );
       },
     );

@@ -93,7 +93,7 @@ final class _SettingsTabs extends StatelessWidget {
             // overshoot would be a gap opening at the end of a bar that had
             // already stopped growing.
             child: AnimatedSize(
-              duration: Durations.medium2,
+              duration: context.motion(Durations.medium2),
               curve: _kTabsCurve,
               alignment: Alignment.centerLeft,
               child: row,
@@ -404,6 +404,13 @@ class _SettingsPagesState extends State<_SettingsPages> {
   /// that the animation still running had just set.
   int _animation = 0;
 
+  /// Whether a jump is under way, for as long as it takes to happen.
+  ///
+  /// A jump is made from [didUpdateWidget], while the parent is building, and
+  /// reports the page it lands on at once. That page is the one the parent
+  /// just selected, and selecting it again from inside its own build throws.
+  bool _jumping = false;
+
   int _indexOf(String id) {
     final index = widget.leaves.indexWhere((e) => e.id == id);
     return index < 0 ? 0 : index;
@@ -417,6 +424,15 @@ class _SettingsPagesState extends State<_SettingsPages> {
     if (!_controller.hasClients || _controller.page?.round() == target) return;
 
     final animation = ++_animation;
+    // Straight there where the device has asked for less movement: nothing
+    // is scrolled past, so there is nothing for [_animatingTo] to hold back.
+    if (context.reduceMotion) {
+      _animatingTo = null;
+      _jumping = true;
+      _controller.jumpToPage(target);
+      _jumping = false;
+      return;
+    }
     _animatingTo = target;
     _controller
         .animateToPage(
@@ -453,6 +469,7 @@ class _SettingsPagesState extends State<_SettingsPages> {
       // it, and the tabs have to say so. Pages passed through on the way to a
       // tapped one are not landings — see [_animatingTo].
       onPageChanged: (index) {
+        if (_jumping) return;
         if (_animatingTo != null && index != _animatingTo) return;
         widget.onChanged(widget.leaves[index]);
       },

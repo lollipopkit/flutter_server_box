@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:server_box/core/extension/context/motion.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/card/overview.dart';
@@ -69,6 +70,7 @@ class ServerStrip extends StatelessWidget {
       ),
     );
     final back = RepaintBoundary(child: _buildSwitcher(context));
+    final reduce = context.reduceMotion;
 
     // Around the turn rather than inside each face: one definition for both,
     // so what is below starts in the same place whichever face is up, and the
@@ -89,6 +91,15 @@ class ServerStrip extends StatelessWidget {
           // painted as an offset of zero, so it costs no layer and the text
           // in it is drawn as it would be without.
           final turning = t > 0 && t < 1;
+          // With less motion asked for the faces cross through nothing
+          // instead of turning over: the one going fades out over the first
+          // half and the one coming in over the second.
+          if (reduce) {
+            return Opacity(
+              opacity: (1 - 2 * t).abs().clamp(0.0, 1.0),
+              child: facing ? front : back,
+            );
+          }
           return Transform(
             alignment: Alignment.center,
             transform: turning

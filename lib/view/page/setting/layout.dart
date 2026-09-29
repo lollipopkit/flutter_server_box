@@ -399,6 +399,7 @@ extension _SettingsLayout on _SettingsPageState {
     final entered = _path.lastOrNull;
     final level = entered == null || entered.isLeaf ? null : entered;
     final space = level == null ? 0.0 : _kTabsHeight + _kTabsMargin * 2;
+    final reduceMotion = context.reduceMotion;
 
     return Stack(
       // Nothing here should reach past the floor of this box — the page is
@@ -431,16 +432,21 @@ extension _SettingsLayout on _SettingsPageState {
             // Springs up past its place and settles, as displacement does
             // elsewhere. No fade with it: the curve overshoots, and an opacity
             // past 1 asserts.
-            switchInCurve: _kTabsCurve,
+            //
+            // Where the device has asked for less movement it only fades, on
+            // a curve that stays inside 0 to 1.
+            switchInCurve: reduceMotion ? Curves.easeOut : _kTabsCurve,
             switchOutCurve: Curves.easeIn,
-            transitionBuilder: (child, animation) => SlideTransition(
-              position: Tween(
-                // Far enough to take the shadow with it.
-                begin: const Offset(0, 1.4),
-                end: Offset.zero,
-              ).animate(animation),
-              child: child,
-            ),
+            transitionBuilder: (child, animation) => reduceMotion
+                ? FadeTransition(opacity: animation, child: child)
+                : SlideTransition(
+                    position: Tween(
+                      // Far enough to take the shadow with it.
+                      begin: const Offset(0, 1.4),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
             child: level == null
                 ? const SizedBox(key: ValueKey('no_tabs'), width: double.infinity)
                 : _SettingsTabs(
@@ -454,4 +460,27 @@ extension _SettingsLayout on _SettingsPageState {
       ],
     );
   }
+}
+
+/// Whether the settings are in two columns, for a row that opens a page of its
+/// own.
+///
+/// One column keeps the settings' bar over the navigator the rows are in, so
+/// a page with a bar of its own pushed there showed two. It goes over the
+/// whole window instead. Beside the menu there is no settings bar, and the
+/// page takes the content column.
+final class _SettingsWidth extends InheritedWidget {
+  const _SettingsWidth({required this.wide, required super.child});
+
+  final bool wide;
+
+  /// Where a page opened from a row belongs. Outside the settings page — a
+  /// section pushed on its own, with its own bar — the nearest navigator.
+  static NavTarget pageTarget(BuildContext context) =>
+      context.getInheritedWidgetOfExactType<_SettingsWidth>()?.wide == false
+      ? NavTarget.root
+      : NavTarget.nearest;
+
+  @override
+  bool updateShouldNotify(_SettingsWidth oldWidget) => wide != oldWidget.wide;
 }

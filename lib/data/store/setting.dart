@@ -7,6 +7,7 @@ import 'package:server_box/data/model/app/diagnostics_level.dart';
 import 'package:server_box/data/model/app/float_shell_config.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
+import 'package:server_box/data/model/app/motion.dart';
 import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/model/app/server_sort.dart';
 import 'package:server_box/data/model/app/tab.dart';
@@ -152,6 +153,16 @@ class SettingStore extends SqliteStore {
 
   // ThemeMode: 0 -> system, 1 -> light, 2 -> dark.
   late final themeMode = propertyDefault('themeMode', 0);
+
+  /// Whether the app moves less than it would, over what the device asks —
+  /// see [MotionPref]. Full motion unless the user turns it down here: the
+  /// app's own transitions are its design, whatever the device asks.
+  late final motionPref = propertyDefault(
+    'motionPref',
+    MotionPref.full,
+    fromObj: MotionPref.parse,
+    toObj: (pref) => pref?.name,
+  );
 
   // Path to the terminal font file.
   late final fontPath = propertyDefault('fontPath', '');

@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/extension/context/motion.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/refresh_interval.dart';
 import 'package:server_box/data/model/app/error.dart';
@@ -261,7 +262,10 @@ extension _ContainerPageWidgets on _ContainerPageState {
             .map((tab) => SegmentedTab(value: tab, label: tab.i18n))
             .toList(growable: false),
         selected: _ContainerTabs.values[_tabCtrl.index],
-        onSelected: (tab) => _tabCtrl.animateTo(tab.index),
+        onSelected: (tab) => _tabCtrl.animateTo(
+          tab.index,
+          duration: context.reduceMotion ? Duration.zero : null,
+        ),
       ),
     );
   }

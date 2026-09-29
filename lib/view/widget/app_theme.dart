@@ -129,9 +129,12 @@ ThemeData buildAppTheme(
     // other during a transition are two sets of rows on the same pixels. The
     // background's own transitions give each moving page the background, which
     // is what makes the arriving one cover the one below — see
-    // [AppPageTransitions]. Null without a background: an opaque page needs no
-    // help, and the platform's own transition is the right one.
-    pageTransitionsTheme: hasBackground ? AppPageTransitions.backgrounded : null,
+    // [AppPageTransitions]. Without a background an opaque page needs no help,
+    // and the platform's own transition is the right one — faded instead when
+    // the app moves less.
+    pageTransitionsTheme: hasBackground
+        ? AppPageTransitions.backgrounded
+        : AppPageTransitions.plain,
     cardTheme: CardThemeData(shape: cardShape, elevation: 0),
     // Every plain `Divider`/`VerticalDivider` a hairline, as the seams and
     // section rules are: Material's own is drawn for a light background and

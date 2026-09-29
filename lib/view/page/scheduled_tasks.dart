@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/extension/context/motion.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/cron.dart';
 import 'package:server_box/data/model/server/cron_schedule.dart';
@@ -1189,7 +1190,7 @@ final class _TaskEditorState extends State<_TaskEditor> {
         // of all five: they change over rather than one appearing where the
         // other was.
         AnimatedSize(
-          duration: Durations.short4,
+          duration: context.motion(Durations.short4),
           curve: Curves.easeOutCubic,
           alignment: Alignment.topCenter,
           child: AnimatedSwitcher(

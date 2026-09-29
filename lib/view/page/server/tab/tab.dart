@@ -30,6 +30,7 @@ import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/card/sizes.dart';
 import 'package:server_box/view/page/server/card/swap.dart';
 import 'package:server_box/view/page/server/card/switcher.dart';
+import 'package:server_box/view/page/server/detail/bar_actions.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/server/tab/empty.dart';
@@ -366,8 +367,14 @@ class _ServerPageState extends ConsumerState<ServerPage>
   ///
   /// The reverse of opening in order as well as in direction: what came last
   /// goes first, so the card is the only thing moving while it shrinks.
+  ///
+  /// Also when the selection is already gone but the page is still open:
+  /// deleting the open server clears the selection itself, before the edit
+  /// page it was deleted from returns.
   void _closeDetail() {
-    if (ref.read(serverSelectionProvider) == null) return;
+    if (ref.read(serverSelectionProvider) == null && _openCtrl.isDismissed) {
+      return;
+    }
     if (_detailShowing) setState(() => _detailShowing = false);
     _openCtrl.duration = context.motion(_kOpenDuration);
     _closeTimer?.cancel();

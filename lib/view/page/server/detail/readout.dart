@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/extension/context/motion.dart';
 import 'package:server_box/view/widget/built_from.dart';
 
 /// What a card's chip says about the thing the card names.
@@ -174,7 +175,7 @@ class ServerDetailReadoutCard extends StatelessWidget {
                 // about to move as well as that it moves.
                 AnimatedRotation(
                   turns: open ? 0.5 : 0,
-                  duration: Durations.short3,
+                  duration: context.motion(Durations.short3),
                   child: Icon(
                     Icons.expand_more,
                     size: 17,
@@ -230,7 +231,7 @@ class ServerDetailReadoutCard extends StatelessWidget {
           // The rows themselves are already laid out; what animates is how
           // much of them the card shows.
           AnimatedSize(
-            duration: Durations.short4,
+            duration: context.motion(Durations.short4),
             curve: Curves.easeOutCubic,
             alignment: Alignment.topCenter,
             child: open
