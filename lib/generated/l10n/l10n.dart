@@ -2812,12 +2812,6 @@ abstract class AppLocalizations {
   /// **'View Details'**
   String get viewDetails;
 
-  /// User-facing label or message for virt key help clipboard.
-  ///
-  /// In en, this message translates to:
-  /// **'Copy to the clipboard if the selected terminal is not empty, otherwise paste the content of the clipboard to the terminal.'**
-  String get virtKeyHelpClipboard;
-
   /// User-facing label or message for virt key help ime.
   ///
   /// In en, this message translates to:
@@ -2857,7 +2851,7 @@ abstract class AppLocalizations {
   /// Help text for the virt key intro customize setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Reorder these keys, or hide the ones you never reach for, in the terminal settings.'**
+  /// **'Reorder these keys, turn on more (the file browser, sudo, F1–F12…), or hide the ones you never reach for, in the terminal settings.'**
   String get virtKeyIntroCustomizeTip;
 
   /// User-facing label or message for virt key intro modifiers.

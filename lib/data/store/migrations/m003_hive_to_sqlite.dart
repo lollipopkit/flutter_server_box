@@ -318,6 +318,7 @@ abstract final class HiveImport {
     final LegacyMonitorHttpCredentialV1 monitor => monitor.toJson(),
     final LegacyPrivateKeyV1 key => key.toJson(),
     final LegacySnippetV1 snippet => snippet.toJson(),
+    final LegacyVirtKeyV1 key => key.toJson(),
     _ => null,
   };
 

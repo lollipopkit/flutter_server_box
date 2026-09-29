@@ -1590,10 +1590,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get viewDetails => 'Details anzeigen';
 
   @override
-  String get virtKeyHelpClipboard =>
-      'In die Zwischenablage kopieren, wenn das ausgewählte Terminal nicht leer ist, andernfalls den Inhalt der Zwischenablage in das Terminal einfügen.';
-
-  @override
   String get virtKeyHelpIME => 'Tastatur ein-/ausschalten';
 
   @override
@@ -1616,7 +1612,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get virtKeyIntroCustomizeTip =>
-      'In den Terminal-Einstellungen lässt sich die Reihenfolge ändern oder ausblenden, was du nie brauchst.';
+      'In den Terminal-Einstellungen lässt sich die Reihenfolge ändern, mehr einschalten (Dateien, sudo, F1–F12 …) oder ausblenden, was du nie brauchst.';
 
   @override
   String get virtKeyIntroModifiers => 'Modifikatoren';

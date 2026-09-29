@@ -1577,10 +1577,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get viewDetails => 'Переглянути деталі';
 
   @override
-  String get virtKeyHelpClipboard =>
-      'Копіювати в буфер обміну, якщо вибраний термінал не порожній, в іншому випадку вставити вміст буфера обміну в термінал.';
-
-  @override
   String get virtKeyHelpIME => 'Увімкнути/вимкнути клавіатуру';
 
   @override
@@ -1602,7 +1598,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get virtKeyIntroCustomizeTip =>
-      'У налаштуваннях термінала їх можна переставити або приховати ті, якими ви не користуєтесь.';
+      'У налаштуваннях термінала їх можна переставити, увімкнути інші (файли, sudo, F1–F12…) або приховати ті, якими ви не користуєтесь.';
 
   @override
   String get virtKeyIntroModifiers => 'Модифікатори';

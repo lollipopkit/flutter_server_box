@@ -39,7 +39,6 @@ void main() {
       // used to bail for want of a server it never needed.
       for (final key in [
         VirtKey.snippet,
-        VirtKey.clipboard,
         VirtKey.ime,
         VirtKey.ctrl,
         VirtKey.esc,

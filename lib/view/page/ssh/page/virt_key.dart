@@ -119,9 +119,6 @@ extension _VirtKey on SSHPageState {
       case VirtualKeyFunc.backspace:
         _terminal.keyInput(TerminalKey.backspace);
         break;
-      case VirtualKeyFunc.clipboard:
-        await _onClipboardAction();
-        break;
       case VirtualKeyFunc.snippet:
         // The toolbar's picker, not a copy of it. The copy that used to be
         // here returned without a word when there was no server, so the key

@@ -1580,10 +1580,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get viewDetails => 'Təfərrüatlara bax';
 
   @override
-  String get virtKeyHelpClipboard =>
-      'Terminalda seçilmiş mətn varsa mübadilə buferinə kopyala, əks halda buferin məzmununu terminala yapışdır.';
-
-  @override
   String get virtKeyHelpIME => 'Klaviaturanı aç/bağla';
 
   @override
@@ -1605,7 +1601,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get virtKeyIntroCustomizeTip =>
-      'Terminal parametrlərində bu düymələrin sırasını dəyiş və ya istifadə etmədiklərini gizlət.';
+      'Terminal parametrlərində bu düymələrin sırasını dəyiş, daha çoxunu aç (fayllar, sudo, F1–F12…) və ya istifadə etmədiklərini gizlət.';
 
   @override
   String get virtKeyIntroModifiers => 'Dəyişdirici düymələr';

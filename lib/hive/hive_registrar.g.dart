@@ -18,7 +18,6 @@ extension HiveRegistrar on HiveInterface {
     registerAdapter(ServerConnectionStatsAdapter());
     registerAdapter(ServerFuncBtnAdapter());
     registerAdapter(SystemTypeAdapter());
-    registerAdapter(VirtKeyAdapter());
     registerAdapter(WakeOnLanCfgAdapter());
   }
 }
@@ -34,7 +33,6 @@ extension IsolatedHiveRegistrar on IsolatedHiveInterface {
     registerAdapter(ServerConnectionStatsAdapter());
     registerAdapter(ServerFuncBtnAdapter());
     registerAdapter(SystemTypeAdapter());
-    registerAdapter(VirtKeyAdapter());
     registerAdapter(WakeOnLanCfgAdapter());
   }
 }

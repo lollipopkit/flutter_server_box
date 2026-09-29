@@ -15,6 +15,15 @@ import 'package:server_box/data/store/setting.dart';
 
 import '../helpers/test_db.dart';
 
+// Indices as the releases wrote them, which `VirtKey.index` stopped being when
+// `clipboard` (12) left the enum.
+const _esc = 0;
+const _tab = 7;
+const _ctrl = 8;
+const _ime = 13;
+const _sudo = 45;
+const _tmux = 46;
+
 void main() {
   late SettingStore store;
   late VirtKeyNamesMigration migration;
@@ -44,7 +53,7 @@ void main() {
     const order = [VirtKey.tab, VirtKey.ctrl, VirtKey.esc];
     store.set(
       VirtKeyNamesMigration.orderKey,
-      order.map((e) => e.index).toList(),
+      [_tab, _ctrl, _esc],
     );
 
     await migration.apply();
@@ -52,8 +61,18 @@ void main() {
     expect(store.sshVirtKeys.fetch(), order.map((e) => e.name).toList());
   });
 
+  test('an index past the removed clipboard key is still its own key', () async {
+    store.set(VirtKeyNamesMigration.orderKey, [_ime, 12, _tmux]);
+
+    await migration.apply();
+
+    // `clipboard` comes across by name, and is dropped where every name this
+    // build has no case for is: by [VirtKeyX.loadFromStore].
+    expect(store.sshVirtKeys.fetch(), ['ime', 'clipboard', 'tmux']);
+  });
+
   test('and so does the hidden set', () async {
-    store.set(VirtKeyNamesMigration.disabledKey, [VirtKey.sudo.index]);
+    store.set(VirtKeyNamesMigration.disabledKey, [_sudo]);
 
     await migration.apply();
 
@@ -62,10 +81,10 @@ void main() {
 
   test('an index no case answers to is dropped, not guessed at', () async {
     store.set(VirtKeyNamesMigration.orderKey, [
-      VirtKey.tab.index,
+      _tab,
       VirtKey.values.length + 3,
       -1,
-      VirtKey.ctrl.index,
+      _ctrl,
     ]);
 
     await migration.apply();
@@ -75,9 +94,9 @@ void main() {
 
   test('and a repeat is dropped, keeping the first', () async {
     store.set(VirtKeyNamesMigration.orderKey, [
-      VirtKey.tab.index,
-      VirtKey.ctrl.index,
-      VirtKey.tab.index,
+      _tab,
+      _ctrl,
+      _tab,
     ]);
 
     await migration.apply();
@@ -96,7 +115,7 @@ void main() {
   /// A second pass is what a process stopped between `apply` and the version
   /// being recorded comes back to.
   test('running it again changes nothing', () async {
-    store.set(VirtKeyNamesMigration.orderKey, [VirtKey.tab.index]);
+    store.set(VirtKeyNamesMigration.orderKey, [_tab]);
     await migration.apply();
 
     await migration.apply();
@@ -108,7 +127,7 @@ void main() {
     // Two writes, so a crash between them leaves one key converted.
     store.set(VirtKeyNamesMigration.orderKey, [
       VirtKey.tab.name,
-      VirtKey.ctrl.index,
+      _ctrl,
     ]);
 
     await migration.apply();
@@ -120,7 +139,7 @@ void main() {
     // Sync compares this number, so a device that had only ever run a
     // migration would otherwise claim the newer copy of everything.
     store.set(VirtKeyNamesMigration.orderKey, [
-      VirtKey.tab.index,
+      _tab,
     ], updateLastUpdateTsOnSet: false);
     final before = store.lastUpdateTs;
 

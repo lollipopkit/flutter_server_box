@@ -1583,10 +1583,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get viewDetails => 'Details bekijken';
 
   @override
-  String get virtKeyHelpClipboard =>
-      'Kopiëren naar het klembord als de geselecteerde terminal niet leeg is, anders de inhoud van het klembord plakken in de terminal.';
-
-  @override
   String get virtKeyHelpIME => 'Toetsenbord aan/uit zetten';
 
   @override
@@ -1608,7 +1604,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get virtKeyIntroCustomizeTip =>
-      'In de terminalinstellingen kun je ze herschikken of verbergen wat je nooit gebruikt.';
+      'In de terminalinstellingen kun je ze herschikken, meer aanzetten (bestanden, sudo, F1–F12…) of verbergen wat je nooit gebruikt.';
 
   @override
   String get virtKeyIntroModifiers => 'Modificatietoetsen';

@@ -161,7 +161,6 @@ extension _Utils on _FloatTerminalState {
         .where(
           (key) => switch (key.func) {
             null ||
-            VirtualKeyFunc.clipboard ||
             VirtualKeyFunc.toggleIME => true,
             _ => false,
           },
@@ -250,10 +249,6 @@ extension _Actions on _FloatTerminalState {
       case VirtualKeyFunc.toggleIME:
         HapticFeedback.mediumImpact();
         _termKey.currentState?.toggleFocus();
-        return;
-      case VirtualKeyFunc.clipboard:
-        HapticFeedback.mediumImpact();
-        unawaited(_clipboardAction());
         return;
       // Filtered out by [_keys], and stated rather than defaulted so a key
       // added to `VirtualKeyFunc` has to be thought about here too.
