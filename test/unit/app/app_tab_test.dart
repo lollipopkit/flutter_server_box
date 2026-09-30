@@ -1,3 +1,4 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
@@ -6,6 +7,7 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/view/page/home_tab.dart';
 import 'package:server_box/view/page/setting/entries/home_tabs.dart';
+import 'package:server_box/view/widget/nav_bar.dart';
 
 import '../../helpers/test_db.dart';
 
@@ -297,7 +299,7 @@ void main() {
 }
 
 /// The bottom bar hides a tab's label unless it is selected, so a beta tab
-/// is marked on its icon's corner instead.
+/// is marked on its pill's corner instead.
 void _bottomBarMarks() {
   setUp(() async {
     await openTestDb();
@@ -315,30 +317,22 @@ void _bottomBarMarks() {
     Future<void> pump() => tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          bottomNavigationBar: NavigationBar(
+          bottomNavigationBar: AppNavBar(
             selectedIndex: selected,
-            destinations: [
-              AppTab.ssh.navDestination(),
-              AppTab.virt.navDestination(),
-            ],
+            onSelected: (_) {},
+            items: [AppTab.ssh.navRailItem(), AppTab.virt.navRailItem()],
           ),
         ),
       ),
     );
     await pump();
     await tester.pumpAndSettle();
-    Finder mark(AppTab tab) => find.descendant(
-      of: find.byWidgetPredicate(
-        (w) => w is NavigationDestination && w.label == tab.label,
-      ),
-      matching: find.descendant(of: find.byType(Badge), matching: find.text('Beta')),
-    );
     // Not selected: no mark.
-    expect(mark(AppTab.virt), findsNothing);
+    expect(find.byType(BetaTag), findsNothing);
     selected = 1;
     await pump();
     await tester.pumpAndSettle();
-    expect(mark(AppTab.virt), findsOneWidget);
-    expect(mark(AppTab.ssh), findsNothing);
+    // The terminal is not a beta tab, so the one mark is the selected one's.
+    expect(find.byType(BetaTag), findsOneWidget);
   });
 }

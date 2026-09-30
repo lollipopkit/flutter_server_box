@@ -29,6 +29,7 @@ import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/widget/app_link.dart';
 import 'package:server_box/view/widget/dmg_notice.dart';
 import 'package:server_box/view/widget/legacy_status_notice.dart';
+import 'package:server_box/view/widget/nav_bar.dart';
 import 'package:server_box/view/widget/nav_rail.dart';
 import 'package:server_box/view/widget/server_share.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';

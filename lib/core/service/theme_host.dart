@@ -50,7 +50,8 @@ void initThemeHost() => ThemeHost.init(
 /// its MingCute counterpart. Every [ThemeNavIcon] is here, so the keys a
 /// package may use in this app are the tabs' and these.
 final _symbols = <IconData, ThemeSymbol>{
-  Icons.more_horiz: ThemeSymbol(ThemeNavIcon.more.iconKey, mingcute: MingCute.more_2_line),
+  Icons.more_horiz: ThemeSymbol(ThemeNavIcon.more.iconKey, mingcute: MingCute.more_1_line),
+  Icons.more_vert: ThemeSymbol(ThemeNavIcon.more.iconKey, mingcute: MingCute.more_2_line),
   Icons.settings_outlined: ThemeSymbol(ThemeNavIcon.settings.iconKey, mingcute: MingCute.settings_2_line),
   Icons.settings: ThemeSymbol(ThemeNavIcon.settings.iconKey, mingcute: MingCute.settings_2_fill),
   Icons.tune: ThemeSymbol(ThemeNavIcon.tune.iconKey, mingcute: MingCute.settings_2_line),
