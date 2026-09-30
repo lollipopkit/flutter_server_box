@@ -28,6 +28,13 @@
       "pullRequest": 1327,
       "commit": "1b986359a1ffc513f12e05ed3b816770603406b5",
       "signedAt": "2026-08-21T07:39:45.746Z"
+    },
+    {
+      "login": "yuguorui",
+      "id": 6182414,
+      "pullRequest": 1595,
+      "commit": "c7fd421313a50c8e7359ede2619669ff09ffcbe6",
+      "signedAt": "2026-09-30T05:32:55.376Z"
     }
   ]
 }
