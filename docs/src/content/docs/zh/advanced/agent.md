@@ -59,6 +59,11 @@ Agent 标签页的工具：
 **设置 → 应用 → AI → 工具** 中按组关闭工具，也可以在此添加 MCP 服务器，Agent 标签页
 会同时提供其中的工具。
 
+需要密钥的 MCP 服务器（Streamable HTTP）可以在添加时填写请求头，之后也可以在其菜单中修改：
+每行一个 `名称: 值`，例如 `Authorization: Bearer <token>`。使用 OAuth 的服务器会显示
+**需要登录**，点击 **登录** 会打开浏览器，App 会保存并自动续期 token。请求头和 token
+只保存在本机，不会加入备份；除本机服务器外，只通过 `https` 发送。
+
 Agent 的文件工具需要 SSH。仅配置 Monitor HTTP 的服务器不提供这些工具。其独立的
 **文件** 标签页可以在运维人员开启 `[remote_access.fs]` 且请求路径位于 `roots` 下时，
 使用 Monitor agent 的文件 API。

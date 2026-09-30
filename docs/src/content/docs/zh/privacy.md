@@ -96,7 +96,7 @@ Agent 使用你在 **设置 → 应用 → AI → 服务商** 中添加的 provi
 
 命令输出和文件内容可能包含密码、token 或其他敏感信息，即使这些内容并非 Server Box 主动添加。发送前请检查内容，并阅读 provider 的隐私政策。
 
-provider 的 API key 保存在系统钥匙串中，只会发送给该 provider。位于其他机器上的明文 `http://` 自定义 provider 会被拒绝，除非为该 provider 允许，因为 key 会以明文传输。Agent 使用 **网页读取** 工具时，会从本机请求网页；你添加的 MCP 服务器会收到对其工具的调用。Server Box 不会通过开发者的服务中转 AI 请求。
+provider 的 API key 保存在系统钥匙串中，只会发送给该 provider。位于其他机器上的明文 `http://` 自定义 provider 会被拒绝，除非为该 provider 允许，因为 key 会以明文传输。Agent 使用 **网页读取** 工具时，会从本机请求网页；你添加的 MCP 服务器会收到对其工具的调用。MCP 服务器的请求头和登录 token 保存在本机的加密 App 数据库中，不会加入备份，只发送给该服务器，并且除本机服务器外只通过 `https` 发送。Server Box 不会通过开发者的服务中转 AI 请求。
 
 ## 地球仪与位置数据
 
