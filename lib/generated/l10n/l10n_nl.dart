@@ -9,87 +9,6 @@ class AppLocalizationsNl extends AppLocalizations {
   AppLocalizationsNl([String locale = 'nl']) : super(locale);
 
   @override
-  String get appearanceSettings => 'Uiterlijk';
-
-  @override
-  String get appearancePreset => 'Thema-instelling';
-
-  @override
-  String get appearanceThemeSchemaRange => 'Ondersteund themaschema';
-
-  @override
-  String get appearanceThemeInstall => 'Thema installeren';
-
-  @override
-  String get appearanceThemeStore => 'Themawinkel';
-
-  @override
-  String get appearanceInvalidTheme =>
-      'Ongeldig themapakket of ongeldige catalogus';
-
-  @override
-  String get themeStoreRefreshFailed =>
-      'De themacatalogus kon niet worden gelezen.';
-
-  @override
-  String themeStoreDeleteTheme(String name) {
-    return '“$name” verwijderen? De bestanden worden van dit apparaat verwijderd. Als dit het gebruikte thema is, keert de app terug naar het standaardthema.';
-  }
-
-  @override
-  String themeStoreUpdatedFmt(String ago) {
-    return 'bijgewerkt $ago';
-  }
-
-  @override
-  String get themeStoreUpdatedJustNow => 'zojuist bijgewerkt';
-
-  @override
-  String get themeStoreSortInUse => 'In gebruik eerst';
-
-  @override
-  String themeStoreMakeOwnFmt(String doc) {
-    return 'Wil je je eigen thema maken? Zie [hoe je er een maakt]($doc) — bedankt voor je bijdrage!';
-  }
-
-  @override
-  String appearanceThemeNeedsNewerApp(String version) {
-    return 'Een nieuwere app is vereist: $version';
-  }
-
-  @override
-  String get appearanceFontFamilies => 'Lettertypefamilies voor de interface';
-
-  @override
-  String get appearanceFontFamiliesTip =>
-      'Eén naam per regel; lettertypen worden op volgorde geprobeerd.';
-
-  @override
-  String get appearanceFontImport =>
-      'Lettertypebestand voor de interface importeren';
-
-  @override
-  String get appearanceGradient => 'Kleurverloop';
-
-  @override
-  String get appearanceNoBackground => 'Geen achtergrond';
-
-  @override
-  String get appearanceIcons => 'Pictogrammen in de app';
-
-  @override
-  String get appearanceCorners => 'Hoeken';
-
-  @override
-  String get appearanceCardCorners => 'Kaarthoeken';
-
-  @override
-  String get appearanceTileCorners => 'Tegelhoeken';
-
-  @override
-  String get appearanceButtonCorners => 'Knophoeken';
-
-  @override
   String get crashCollect => 'Diagnostische gegevens';
 
   @override
@@ -3293,11 +3212,6 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String remoteDesktopCertificateValidity(String start, String end) {
     return 'Geldig: $start – $end';
-  }
-
-  @override
-  String appearanceThemeModeLocked(String mode) {
-    return 'Dit thema ondersteunt alleen $mode. Kies een ander thema om de modus te wijzigen.';
   }
 
   @override

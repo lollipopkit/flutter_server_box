@@ -9,11 +9,11 @@ description: 内置主题如何打包、加载与分发
 
 ## 内置主题
 
-`BuiltinTheme`（`lib/data/model/app/builtin_theme.dart`）列出本构建内置的主题及其在
+`BuiltinTheme`（`packages/fl_lib/lib/src/theme/builtin.dart`）列出本构建内置的主题及其在
 选择器中的标签，只包含离线也必须可用的主题。`Default` 是 Dart const，不读取 asset，
 它在选择器中的标签已本地化（fl_lib 的 `defaultLabel`）。AMOLED 是旧版 AMOLED 主题模式
-迁移的目标，源目录位于 `assets/themes/amoled/`，其中包含 `manifest.toml`，并在
-`pubspec.yaml` 中注册。其他官方主题都在主题商店中（见[官方主题](#官方主题)）；如果保存的
+迁移的目标，源目录位于 `packages/fl_lib/assets/themes/amoled/`，其中包含 `manifest.toml`，并在
+fl_lib 的 `pubspec.yaml` 中注册。其他官方主题都在主题商店中（见[官方主题](#官方主题)）；如果保存的
 预设指向本构建已不再内置的主题，会回退到 Default（`ThemePackages.reconcileSelection`）。
 
 内置目录与导入目录和 `.fsbt` 压缩包共用同一个安装器，因此内置主题和已安装主题支持
@@ -21,11 +21,11 @@ description: 内置主题如何打包、加载与分发
 其他二进制 asset。
 
 新的官方主题应放进主题商店，而不是内置。只有离线也必须可用的主题才需要内置：创建
-目录，在 `pubspec.yaml` 中注册，并添加一个 `BuiltinTheme` case。
+目录，在 fl_lib 的 `pubspec.yaml` 中注册，并添加一个 `BuiltinTheme` case。
 
 ## 加载
 
-`BuiltinThemeLoader`（`lib/core/service/theme_package.dart`）按需加载主题。`_loaded`
+`BuiltinThemeLoader`（`packages/fl_lib/lib/src/theme/package.dart`）按需加载主题。`_loaded`
 保存已完成的结果，`_pending` 跟踪正在进行的加载，因此对同一主题的并发请求共用一次
 解析。失败结果不会缓存，可以重试。
 
@@ -50,7 +50,7 @@ CI 的 `docs` 任务会按 schema 校验所有入库的 manifest，包括内置�
 
 ## 主题商店
 
-`ThemeRepo`（`lib/core/service/theme_repo.dart`）先读取 repository catalog，再读取各
+`ThemeRepo`（`packages/fl_lib/lib/src/theme/repo.dart`）先读取 repository catalog，再读取各
 repository 的目录树。首次运行且无网络时，应用使用 `assets/catalog/repos.toml`；如果
 `Urls.themeCatalog` 有响应，则改用该地址提供的 catalog。
 
@@ -64,7 +64,7 @@ repository URL 必须使用 HTTPS，并指向 tarball。对于 git 仓库，应�
 8 MiB。应用会跳过不认识的 section，不会因此拒绝整个 repository，因此同一目录树可以
 同时包含供本应用使用的 `themes/` 和供插件功能使用的 `plugins/`。
 
-商店页面位于 `lib/view/page/theme_store/`。主题列表保存在
+商店页面位于 `packages/fl_lib/lib/src/theme/view/store/`。主题列表保存在
 `SettingStore.themeStoreCache`，供下次启动时读取；数据通过 `ThemeStore.toJson()` 写入，
 并设置 `updateLastModified: false`。该 key 列在 `SettingStore.deviceLocalKeys` 中，
 因为它只是 catalog 内容缓存，不是需要同步或恢复到其他设备的用户数据。缓存条目不包含

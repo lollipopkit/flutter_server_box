@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:computer/computer.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_lib/theme.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
@@ -13,11 +14,10 @@ import 'package:server_box/app.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/motion.dart';
-import 'package:server_box/core/service/app_font.dart';
 import 'package:server_box/core/service/crash_report.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
 import 'package:server_box/core/service/native_exit.dart';
-import 'package:server_box/core/service/theme_package.dart';
+import 'package:server_box/core/service/theme_host.dart';
 import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/core/service/widget_sync.dart';
 import 'package:server_box/core/sync.dart';
@@ -25,7 +25,6 @@ import 'package:server_box/core/utils/rootfs.dart';
 import 'package:server_box/core/utils/rootfs_manifest_source.dart';
 import 'package:server_box/core/utils/sandbox_import.dart';
 import 'package:server_box/core/utils/ssh_native_crypto.dart';
-import 'package:server_box/core/utils/stored_path.dart';
 import 'package:server_box/data/model/ai/model_context.dart';
 import 'package:server_box/data/model/server/dist_license.dart';
 import 'package:server_box/data/res/build_data.dart';
@@ -260,8 +259,11 @@ Future<void> _initData() async {
 
   if (Stores.setting.betaTest.fetch()) AppUpdate.chan = AppUpdateChan.beta;
 
+  // Before anything below reads a theme.
+  initThemeHost();
+
   // Before the fonts and the theme read the paths it fixes.
-  StoredPaths.repair();
+  StoredPaths.repair(alsoRepair: [Stores.setting.fontPath]);
 
   // Not awaited: only the terminal uses it, and a broken font file is the
   // user's, not a defect to report.

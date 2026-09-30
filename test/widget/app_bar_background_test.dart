@@ -1,16 +1,15 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:fl_lib/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/app.dart';
-import 'package:server_box/data/model/app/theme_style.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/setting.dart';
-import 'package:server_box/view/widget/app_background.dart';
 
 import '../helpers/test_db.dart';
 

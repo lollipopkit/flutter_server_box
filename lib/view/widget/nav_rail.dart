@@ -2,7 +2,6 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:server_box/core/extension/context/motion.dart';
 
 /// The rail's geometry, in both of the shapes it has.
 ///

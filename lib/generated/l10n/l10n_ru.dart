@@ -9,84 +9,6 @@ class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
-  String get appearanceSettings => 'Внешний вид';
-
-  @override
-  String get appearancePreset => 'Готовая тема';
-
-  @override
-  String get appearanceThemeSchemaRange => 'Поддерживаемая схема темы';
-
-  @override
-  String get appearanceThemeInstall => 'Установить тему';
-
-  @override
-  String get appearanceThemeStore => 'Магазин тем';
-
-  @override
-  String get appearanceInvalidTheme => 'Недопустимый пакет темы или каталог';
-
-  @override
-  String get themeStoreRefreshFailed => 'Не удалось прочитать каталог тем.';
-
-  @override
-  String themeStoreDeleteTheme(String name) {
-    return 'Удалить «$name»? Его файлы будут удалены с этого устройства. Если это используемая тема, приложение вернётся к теме по умолчанию.';
-  }
-
-  @override
-  String themeStoreUpdatedFmt(String ago) {
-    return 'обновлено $ago';
-  }
-
-  @override
-  String get themeStoreUpdatedJustNow => 'обновлено только что';
-
-  @override
-  String get themeStoreSortInUse => 'Сначала используемая';
-
-  @override
-  String themeStoreMakeOwnFmt(String doc) {
-    return 'Хотите сделать свою тему? Смотрите [как её создать]($doc) — спасибо за ваш вклад!';
-  }
-
-  @override
-  String appearanceThemeNeedsNewerApp(String version) {
-    return 'Требуется более новая версия приложения: $version';
-  }
-
-  @override
-  String get appearanceFontFamilies => 'Семейства шрифтов интерфейса';
-
-  @override
-  String get appearanceFontFamiliesTip =>
-      'Одно название в строке; шрифты применяются по порядку.';
-
-  @override
-  String get appearanceFontImport => 'Импортировать файл шрифта интерфейса';
-
-  @override
-  String get appearanceGradient => 'Градиент';
-
-  @override
-  String get appearanceNoBackground => 'Без фона';
-
-  @override
-  String get appearanceIcons => 'Значки в приложении';
-
-  @override
-  String get appearanceCorners => 'Углы';
-
-  @override
-  String get appearanceCardCorners => 'Углы карточек';
-
-  @override
-  String get appearanceTileCorners => 'Углы элементов';
-
-  @override
-  String get appearanceButtonCorners => 'Углы кнопок';
-
-  @override
   String get crashCollect => 'Диагностические данные';
 
   @override
@@ -3288,11 +3210,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String remoteDesktopCertificateValidity(String start, String end) {
     return 'Действителен: $start – $end';
-  }
-
-  @override
-  String appearanceThemeModeLocked(String mode) {
-    return 'Эта тема поддерживает только режим «$mode». Для смены режима выберите другую тему.';
   }
 
   @override

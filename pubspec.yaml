@@ -51,11 +51,6 @@ dependencies:
   intl: ^0.20.2
   json_annotation: ^4.9.0
   logging: ^1.3.0
-  toml: ^0.18.0
-  # Reads a theme package's SVG icon before it is installed, which is where a
-  # DTD, a script or an external reference is refused. Already in the tree under
-  # `flutter_svg`, which parses SVG at render time; this is the install-time half.
-  xml: ^7.0.1
   meta: ^1.18.0
   responsive_framework: ^1.5.1
   riverpod: ^3.2.1
@@ -148,6 +143,10 @@ dev_dependencies:
   # Fake time for unit tests of timers that are not widgets — see
   # `test/unit/remote_desktop/session_keep_alive_test.dart`.
   fake_async: ^1.3.3
+  # Theme manifests and SVG icons, read by the tests about this repository's
+  # own theme files; the app reads them through fl_lib.
+  toml: ^0.18.0
+  xml: ^7.0.1
   # The QR encoder, so `server_share_qr_test.dart` can hold the share's
   # capacity cap against what actually gets drawn. fl_lib depends on it too,
   # and `QrView` is the only thing in the app that draws one.
@@ -184,7 +183,6 @@ flutter:
     # The theme catalog's floor: whose repositories the store offers when its
     # own address does not answer. The list itself is read over HTTPS.
     - assets/catalog/
-    - assets/themes/amoled/
     # Store themes shipped with the app, installed once on first launch as if
     # from the store — see `ThemePackages.seedBundled`.
     - assets/store_themes/

@@ -1,10 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:fl_lib/theme.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/service/theme_components.dart';
-import 'package:server_box/core/service/theme_package.dart';
-import 'package:server_box/core/service/theme_palette.dart';
 
 /// `docs/schemas/fsbt-manifest.schema.json` is what an editor reads while a
 /// manifest is typed; the parser is what an install runs. Nothing else holds

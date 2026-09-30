@@ -29,7 +29,7 @@ enum SettingsSection {
   /// nothing at all.
   String get title => switch (this) {
     SettingsSection.app => libL10n.app,
-    SettingsSection.appearance => l10n.appearanceSettings,
+    SettingsSection.appearance => libL10n.appearanceSettings,
     SettingsSection.privacy => l10n.privacy,
     SettingsSection.ai => libL10n.ai,
     SettingsSection.server => libL10n.server,
@@ -54,7 +54,7 @@ enum SettingsSection {
   /// "General", and the subject is the half that tells them apart.
   String get breadcrumb => switch (this) {
     SettingsSection.app => '${libL10n.app} › ${libL10n.general}',
-    SettingsSection.appearance => '${libL10n.app} › ${l10n.appearanceSettings}',
+    SettingsSection.appearance => '${libL10n.app} › ${libL10n.appearanceSettings}',
     SettingsSection.privacy => '${libL10n.app} › ${l10n.privacy}',
     SettingsSection.ai => '${libL10n.app} › ${libL10n.ai}',
     SettingsSection.fullScreen => '${libL10n.app} › ${l10n.fullScreen}',

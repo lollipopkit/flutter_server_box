@@ -4,6 +4,7 @@ import 'dart:math' as math;
 
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_lib/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
@@ -12,7 +13,6 @@ import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/motion.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
-import 'package:server_box/core/service/theme_package.dart';
 import 'package:server_box/core/utils/local_server.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -23,11 +23,8 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/home.dart';
-import 'package:server_box/view/widget/app_background.dart';
-import 'package:server_box/view/widget/app_theme.dart';
 import 'package:server_box/view/widget/diagnostics_level_picker.dart';
 import 'package:server_box/view/widget/session_keep_alive_notice.dart';
-import 'package:server_box/view/widget/theme_splash.dart';
 
 part 'intro.dart';
 

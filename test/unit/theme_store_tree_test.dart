@@ -10,9 +10,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:fl_lib/theme.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/service/theme_package.dart';
-import 'package:server_box/core/service/theme_repo.dart';
 import 'package:toml/toml.dart';
 
 void main() {

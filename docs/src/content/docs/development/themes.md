@@ -12,12 +12,12 @@ attributions are listed in the authoring guide.
 
 ## Built-in themes
 
-`BuiltinTheme` (`lib/data/model/app/builtin_theme.dart`) lists the packages
+`BuiltinTheme` (`packages/fl_lib/lib/src/theme/builtin.dart`) lists the packages
 bundled with this build: only what the app needs without a network. `Default`
 is a Dart constant and does not read an asset; its picker label is localized
 (fl_lib `defaultLabel`). AMOLED, which legacy AMOLED theme modes migrate
-to, has a source folder under `assets/themes/amoled/` containing a
-`manifest.toml`, registered in `pubspec.yaml`. Every other official theme is in
+to, has a source folder under `packages/fl_lib/assets/themes/amoled/` containing a
+`manifest.toml`, registered in fl_lib's `pubspec.yaml`. Every other official theme is in
 the theme store (see [Official themes](#official-themes)); a saved preset that
 names a bundled theme this build no longer carries falls back to Default
 (`ThemePackages.reconcileSelection`).
@@ -28,12 +28,12 @@ folders are committed as source and bundled directly by Flutter; no archive or
 other binary asset is committed for them.
 
 A new official theme goes to the store, not here. Bundle one only if the app
-must have it offline, by creating its folder, registering it in `pubspec.yaml`,
+must have it offline, by creating its folder, registering it in fl_lib's `pubspec.yaml`,
 and adding a `BuiltinTheme` case.
 
 ## Loading
 
-`BuiltinThemeLoader` (`lib/core/service/theme_package.dart`) loads themes on
+`BuiltinThemeLoader` (`packages/fl_lib/lib/src/theme/package.dart`) loads themes on
 demand. `_loaded` stores completed results and `_pending` tracks active loads,
 so simultaneous requests for the same theme share one parse. Failed loads are
 not cached and can be retried.
@@ -63,7 +63,7 @@ fields, enums, and bounds offered by editors match what the installer accepts.
 
 ## Theme store
 
-`ThemeRepo` (`lib/core/service/theme_repo.dart`) reads a catalog of repositories
+`ThemeRepo` (`packages/fl_lib/lib/src/theme/repo.dart`) reads a catalog of repositories
 and then each repository's tree. `assets/catalog/repos.toml` provides the
 initial catalog when no network is available. When `Urls.themeCatalog`
 responds, the app reads that catalog instead.
@@ -80,7 +80,7 @@ catalog; 16 MiB compressed and 64 MiB unpacked per repository tree; and 8 MiB
 per entry. Unknown sections are skipped, allowing one tree to contain both
 `themes/` and `plugins/` for the app and plugin feature.
 
-The store page is in `lib/view/page/theme_store/`. Its listing is persisted
+The store page is in `packages/fl_lib/lib/src/theme/view/store/`. Its listing is persisted
 between runs in `SettingStore.themeStoreCache` using `ThemeStore.toJson()` with
 `updateLastModified: false`. The key is included in
 `SettingStore.deviceLocalKeys` because this cache records catalog contents; it

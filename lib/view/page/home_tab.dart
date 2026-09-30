@@ -1,10 +1,9 @@
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_lib/theme.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/service/theme_package.dart';
 import 'package:server_box/data/model/app/tab.dart';
-import 'package:server_box/data/model/app/theme_style.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/agent/agent.dart';
 import 'package:server_box/view/page/benchmark/tab.dart';
@@ -17,7 +16,6 @@ import 'package:server_box/view/page/virt/tab.dart';
 import 'package:server_box/view/widget/conn_count_badge.dart';
 import 'package:server_box/view/widget/marked_title.dart';
 import 'package:server_box/view/widget/nav_rail.dart';
-import 'package:server_box/view/widget/themed_icon.dart';
 
 extension AppTabViewX on AppTab {
   Widget get page {
@@ -222,7 +220,7 @@ class _AppTabIcon extends StatelessWidget {
                   selected ? Icons.view_in_ar : Icons.view_in_ar_outlined,
               };
         return ThemeIconAsset(
-          keyName: tabIconKey(tab, selected: selected),
+          keyName: ThemeIcons.tabKey(tab.name, selected: selected),
           fallback: Icon(icon),
         );
       },

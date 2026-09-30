@@ -9,85 +9,6 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
-  String get appearanceSettings => 'Apariencia';
-
-  @override
-  String get appearancePreset => 'Tema predefinido';
-
-  @override
-  String get appearanceThemeSchemaRange => 'Esquema de tema compatible';
-
-  @override
-  String get appearanceThemeInstall => 'Instalar tema';
-
-  @override
-  String get appearanceThemeStore => 'Tienda de temas';
-
-  @override
-  String get appearanceInvalidTheme => 'Paquete de tema o catálogo no válido';
-
-  @override
-  String get themeStoreRefreshFailed => 'No se pudo leer el catálogo de temas.';
-
-  @override
-  String themeStoreDeleteTheme(String name) {
-    return '¿Eliminar «$name»? Sus archivos se quitan de este dispositivo. Si es el tema en uso, la aplicación vuelve al tema predeterminado.';
-  }
-
-  @override
-  String themeStoreUpdatedFmt(String ago) {
-    return 'actualizado $ago';
-  }
-
-  @override
-  String get themeStoreUpdatedJustNow => 'actualizado ahora mismo';
-
-  @override
-  String get themeStoreSortInUse => 'En uso primero';
-
-  @override
-  String themeStoreMakeOwnFmt(String doc) {
-    return '¿Quieres crear tu propio tema? Consulta [cómo crear uno]($doc). ¡Gracias por tu contribución!';
-  }
-
-  @override
-  String appearanceThemeNeedsNewerApp(String version) {
-    return 'Se necesita una versión más reciente de la app: $version';
-  }
-
-  @override
-  String get appearanceFontFamilies => 'Familias de fuentes de la interfaz';
-
-  @override
-  String get appearanceFontFamiliesTip =>
-      'Un nombre por línea; las fuentes se prueban en orden.';
-
-  @override
-  String get appearanceFontImport =>
-      'Importar archivo de fuente de la interfaz';
-
-  @override
-  String get appearanceGradient => 'Degradado';
-
-  @override
-  String get appearanceNoBackground => 'Sin fondo';
-
-  @override
-  String get appearanceIcons => 'Iconos de la aplicación';
-
-  @override
-  String get appearanceCorners => 'Esquinas';
-
-  @override
-  String get appearanceCardCorners => 'Esquinas de tarjetas';
-
-  @override
-  String get appearanceTileCorners => 'Esquinas de elementos';
-
-  @override
-  String get appearanceButtonCorners => 'Esquinas de botones';
-
-  @override
   String get crashCollect => 'Datos de diagnóstico';
 
   @override
@@ -3315,11 +3236,6 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String remoteDesktopCertificateValidity(String start, String end) {
     return 'Válido: $start – $end';
-  }
-
-  @override
-  String appearanceThemeModeLocked(String mode) {
-    return 'Este tema solo admite $mode. Selecciona otro tema para cambiar de modo.';
   }
 
   @override

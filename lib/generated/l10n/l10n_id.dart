@@ -9,84 +9,6 @@ class AppLocalizationsId extends AppLocalizations {
   AppLocalizationsId([String locale = 'id']) : super(locale);
 
   @override
-  String get appearanceSettings => 'Tampilan';
-
-  @override
-  String get appearancePreset => 'Preset tema';
-
-  @override
-  String get appearanceThemeSchemaRange => 'Skema tema yang didukung';
-
-  @override
-  String get appearanceThemeInstall => 'Pasang tema';
-
-  @override
-  String get appearanceThemeStore => 'Toko tema';
-
-  @override
-  String get appearanceInvalidTheme => 'Paket tema atau katalog tidak valid';
-
-  @override
-  String get themeStoreRefreshFailed => 'Tidak dapat membaca katalog tema.';
-
-  @override
-  String themeStoreDeleteTheme(String name) {
-    return 'Hapus “$name”? Berkasnya dihapus dari perangkat ini. Jika ini tema yang sedang dipakai, aplikasi kembali ke tema bawaan.';
-  }
-
-  @override
-  String themeStoreUpdatedFmt(String ago) {
-    return 'diperbarui $ago';
-  }
-
-  @override
-  String get themeStoreUpdatedJustNow => 'baru saja diperbarui';
-
-  @override
-  String get themeStoreSortInUse => 'Yang digunakan dulu';
-
-  @override
-  String themeStoreMakeOwnFmt(String doc) {
-    return 'Ingin membuat tema sendiri? Lihat [cara membuatnya]($doc) — terima kasih atas kontribusimu!';
-  }
-
-  @override
-  String appearanceThemeNeedsNewerApp(String version) {
-    return 'Memerlukan aplikasi versi lebih baru: $version';
-  }
-
-  @override
-  String get appearanceFontFamilies => 'Daftar keluarga font antarmuka';
-
-  @override
-  String get appearanceFontFamiliesTip =>
-      'Satu nama per baris; font dicoba sesuai urutan.';
-
-  @override
-  String get appearanceFontImport => 'Impor berkas font antarmuka';
-
-  @override
-  String get appearanceGradient => 'Gradasi';
-
-  @override
-  String get appearanceNoBackground => 'Tanpa latar belakang';
-
-  @override
-  String get appearanceIcons => 'Ikon dalam aplikasi';
-
-  @override
-  String get appearanceCorners => 'Sudut';
-
-  @override
-  String get appearanceCardCorners => 'Sudut kartu';
-
-  @override
-  String get appearanceTileCorners => 'Sudut tile';
-
-  @override
-  String get appearanceButtonCorners => 'Sudut tombol';
-
-  @override
   String get crashCollect => 'Data diagnostik';
 
   @override
@@ -3262,11 +3184,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String remoteDesktopCertificateValidity(String start, String end) {
     return 'Berlaku: $start – $end';
-  }
-
-  @override
-  String appearanceThemeModeLocked(String mode) {
-    return 'Tema ini hanya mendukung $mode. Pilih tema lain untuk mengubah mode.';
   }
 
   @override

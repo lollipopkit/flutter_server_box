@@ -9,84 +9,6 @@ class AppLocalizationsTr extends AppLocalizations {
   AppLocalizationsTr([String locale = 'tr']) : super(locale);
 
   @override
-  String get appearanceSettings => 'Görünüm';
-
-  @override
-  String get appearancePreset => 'Tema ön ayarı';
-
-  @override
-  String get appearanceThemeSchemaRange => 'Desteklenen tema schema sürümü';
-
-  @override
-  String get appearanceThemeInstall => 'Tema yükle';
-
-  @override
-  String get appearanceThemeStore => 'Tema mağazası';
-
-  @override
-  String get appearanceInvalidTheme => 'Geçersiz tema paketi veya katalog';
-
-  @override
-  String get themeStoreRefreshFailed => 'Tema kataloğu okunamadı.';
-
-  @override
-  String themeStoreDeleteTheme(String name) {
-    return '“$name” silinsin mi? Dosyaları bu cihazdan kaldırılır. Kullanımdaki tema ise uygulama varsayılan temaya döner.';
-  }
-
-  @override
-  String themeStoreUpdatedFmt(String ago) {
-    return '$ago güncellendi';
-  }
-
-  @override
-  String get themeStoreUpdatedJustNow => 'az önce güncellendi';
-
-  @override
-  String get themeStoreSortInUse => 'Kullanımda olan önce';
-
-  @override
-  String themeStoreMakeOwnFmt(String doc) {
-    return 'Kendi temanızı mı yapmak istiyorsunuz? [Nasıl yapılacağına]($doc) bakın — katkınız için teşekkürler!';
-  }
-
-  @override
-  String appearanceThemeNeedsNewerApp(String version) {
-    return 'Daha yeni bir uygulama sürümü gerekiyor: $version';
-  }
-
-  @override
-  String get appearanceFontFamilies => 'Arayüz yazı tipi aileleri';
-
-  @override
-  String get appearanceFontFamiliesTip =>
-      'Her satıra bir ad yazın; yazı tipleri sırayla denenir.';
-
-  @override
-  String get appearanceFontImport => 'Arayüz yazı tipi dosyasını içe aktar';
-
-  @override
-  String get appearanceGradient => 'Gradyan';
-
-  @override
-  String get appearanceNoBackground => 'Arka plan yok';
-
-  @override
-  String get appearanceIcons => 'Uygulama içi simgeler';
-
-  @override
-  String get appearanceCorners => 'Köşeler';
-
-  @override
-  String get appearanceCardCorners => 'Kart köşeleri';
-
-  @override
-  String get appearanceTileCorners => 'Kutucuk köşeleri';
-
-  @override
-  String get appearanceButtonCorners => 'Düğme köşeleri';
-
-  @override
   String get crashCollect => 'Tanılama verileri';
 
   @override
@@ -3258,11 +3180,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String remoteDesktopCertificateValidity(String start, String end) {
     return 'Geçerlilik: $start – $end';
-  }
-
-  @override
-  String appearanceThemeModeLocked(String mode) {
-    return 'Bu tema yalnızca $mode modunu destekler. Modu değiştirmek için başka bir tema seçin.';
   }
 
   @override

@@ -9,84 +9,6 @@ class AppLocalizationsUk extends AppLocalizations {
   AppLocalizationsUk([String locale = 'uk']) : super(locale);
 
   @override
-  String get appearanceSettings => 'Вигляд';
-
-  @override
-  String get appearancePreset => 'Готова тема';
-
-  @override
-  String get appearanceThemeSchemaRange => 'Підтримувана схема теми';
-
-  @override
-  String get appearanceThemeInstall => 'Установити тему';
-
-  @override
-  String get appearanceThemeStore => 'Магазин тем';
-
-  @override
-  String get appearanceInvalidTheme => 'Недійсний пакет теми або каталог';
-
-  @override
-  String get themeStoreRefreshFailed => 'Не вдалося прочитати каталог тем.';
-
-  @override
-  String themeStoreDeleteTheme(String name) {
-    return 'Видалити «$name»? Його файли буде видалено з цього пристрою. Якщо це тема, що використовується, застосунок повернеться до типової теми.';
-  }
-
-  @override
-  String themeStoreUpdatedFmt(String ago) {
-    return 'оновлено $ago';
-  }
-
-  @override
-  String get themeStoreUpdatedJustNow => 'щойно оновлено';
-
-  @override
-  String get themeStoreSortInUse => 'Спочатку використовувана';
-
-  @override
-  String themeStoreMakeOwnFmt(String doc) {
-    return 'Хочете створити власну тему? Дивіться [як її створити]($doc) — дякуємо за ваш внесок!';
-  }
-
-  @override
-  String appearanceThemeNeedsNewerApp(String version) {
-    return 'Потрібна новіша версія застосунку: $version';
-  }
-
-  @override
-  String get appearanceFontFamilies => 'Сімейства шрифтів інтерфейсу';
-
-  @override
-  String get appearanceFontFamiliesTip =>
-      'Одна назва в рядку; шрифти застосовуються за порядком.';
-
-  @override
-  String get appearanceFontImport => 'Імпортувати файл шрифту інтерфейсу';
-
-  @override
-  String get appearanceGradient => 'Градієнт';
-
-  @override
-  String get appearanceNoBackground => 'Без тла';
-
-  @override
-  String get appearanceIcons => 'Піктограми в застосунку';
-
-  @override
-  String get appearanceCorners => 'Кути';
-
-  @override
-  String get appearanceCardCorners => 'Кути карток';
-
-  @override
-  String get appearanceTileCorners => 'Кути плиток';
-
-  @override
-  String get appearanceButtonCorners => 'Кути кнопок';
-
-  @override
   String get crashCollect => 'Діагностичні дані';
 
   @override
@@ -3285,11 +3207,6 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String remoteDesktopCertificateValidity(String start, String end) {
     return 'Дійсний: $start – $end';
-  }
-
-  @override
-  String appearanceThemeModeLocked(String mode) {
-    return 'Ця тема підтримує лише режим «$mode». Щоб змінити режим, виберіть іншу тему.';
   }
 
   @override
