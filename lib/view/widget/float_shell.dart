@@ -52,6 +52,7 @@ class FloatShell extends StatefulWidget {
     required this.builder,
     this.actions = const [],
     this.pillOverlay,
+    this.titleTrailing,
     this.expandTooltip,
     this.hideTooltip,
   });
@@ -95,6 +96,10 @@ class FloatShell extends StatefulWidget {
   /// Drawn behind [icon] in the collapsed pill — a progress ring, a badge.
   /// The pill is the only sign of the panel while you are on another tab.
   final Widget? pillOverlay;
+
+  /// Right after [title] on the title bar — what the panel's content is
+  /// doing, as the pill shows it while collapsed.
+  final Widget? titleTrailing;
 
   /// What the chevron says while collapsed. Defaults to [title], which is what
   /// a collapsed panel has room for.
@@ -217,13 +222,20 @@ class _TitleRow extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: Text(
-            shell.title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+          child: Row(
+            children: [
+              Flexible(
+                child: Text(
+                  shell.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              ?shell.titleTrailing,
+            ],
           ),
         ),
         ...shell.actions,

@@ -47,6 +47,14 @@ class AgentFloatingShell extends ConsumerWidget {
           AgentActivity.waiting => const _WorkingRing(waiting: true),
         },
       ),
+      titleTrailing: AgentBusyBuilder(
+        builder: (_, activity) => activity == AgentActivity.idle
+            ? UIs.placeholder
+            : Padding(
+                padding: const EdgeInsets.only(left: 9),
+                child: AgentActivityMark(activity),
+              ),
+      ),
       builder: (_) =>
           const AgentConversationView(compact: true, showHeader: false),
     );
