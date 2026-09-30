@@ -238,7 +238,10 @@ extension _VirtKey on SSHPageState {
         .toList();
     _virtKeysUnavailable.addAll(
       virtKeys.where(
-        (key) => !key.worksOn(spi, shellUsesAgent: shellUsesAgent),
+        (key) => !key.worksOn(
+          widget.args.source,
+          shellUsesAgent: shellUsesAgent,
+        ),
       ),
     );
     for (var at = 0; at < virtKeys.length; at += kVirtKeysPerRow) {

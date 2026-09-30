@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:server_box/data/model/server/shell_backend.dart';
@@ -13,6 +14,9 @@ class FakeShellBackend implements ShellBackend {
 
   @override
   final bool supportsExec;
+
+  @override
+  bool get supportsTmux => supportsExec;
 
   bool _closed = false;
 
@@ -75,6 +79,9 @@ class FakeShellSession implements ShellSession {
 
   @override
   void close() => finish();
+
+  /// What the shell printed.
+  void emit(String text) => _out.add(Uint8List.fromList(utf8.encode(text)));
 
   /// Ends the shell for good.
   void finish() {

@@ -50,6 +50,11 @@ abstract interface class ShellBackend {
   /// channel, the AI helper's probe) has to check this rather than assume it.
   bool get supportsExec;
 
+  /// Whether tmux can be driven here: [execute] runs its command with a POSIX
+  /// `sh` on a pseudo-terminal, which both the discovery shell and `tmux -CC`
+  /// need. Implies [supportsExec].
+  bool get supportsTmux;
+
   Future<ShellSession> openShell({
     required int width,
     required int height,
@@ -82,6 +87,9 @@ class SshShellBackend implements ShellBackend {
 
   @override
   bool get supportsExec => true;
+
+  @override
+  bool get supportsTmux => true;
 
   @override
   Future<ShellSession> openShell({

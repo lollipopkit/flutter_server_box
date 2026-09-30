@@ -156,9 +156,9 @@ class TerminalSession {
   /// finishes too, and that is not the terminal ending.
   void Function(ShellSession session)? onForegroundDone;
 
-  /// The SSH connection behind [backend], when there is one. tmux is the only
-  /// thing that needs it: it drives a second channel of its own, so it cannot
-  /// be expressed through [ShellBackend].
+  /// The SSH connection behind [backend], when there is one: tmux discovery
+  /// and the AI helper's probe run on its exec channels, which, unlike a
+  /// pseudo-terminal, carry their bytes as is.
   SSHClient? get client => switch (_backend) {
     SshShellBackend(:final client) => client,
     _ => null,

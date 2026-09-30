@@ -564,6 +564,9 @@ class _ConsoleBackend implements ShellBackend {
   bool get supportsExec => false;
 
   @override
+  bool get supportsTmux => false;
+
+  @override
   Future<ShellSession> openShell({
     required int width,
     required int height,

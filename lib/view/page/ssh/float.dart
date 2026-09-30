@@ -157,7 +157,12 @@ extension _Utils on _FloatTerminalState {
         );
     return VirtKeyX.loadFromStore(persistRepairs: false)
         .where((key) => !disabled.contains(key.name))
-        .where((key) => key.worksOn(spi, shellUsesAgent: shellUsesAgent))
+        .where(
+          (key) => key.worksOn(
+            widget.session.source,
+            shellUsesAgent: shellUsesAgent,
+          ),
+        )
         .where(
           (key) => switch (key.func) {
             null ||

@@ -7,6 +7,7 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/ssh/terminal_session.dart';
+import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/view/page/storage/server_file.dart';
 
 /// What the order in the server editor actually decides.
@@ -83,7 +84,7 @@ void main() {
     // anything — and a key drawn on a strip that does nothing when tapped is
     // the failure `worksOn` exists to prevent.
     bool tmuxOn(Spi spi, MonitorRemoteAccess? granted) => VirtKey.tmux.worksOn(
-      spi,
+      ServerSource(spi),
       shellUsesAgent: serverShellUsesAgent(spi, granted),
     );
 

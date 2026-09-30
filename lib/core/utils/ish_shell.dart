@@ -43,6 +43,10 @@ class IshShellBackend implements ShellBackend {
   @override
   bool get supportsExec => true;
 
+  /// A command runs under the guest's `/bin/sh`, on a pty of its own.
+  @override
+  bool get supportsTmux => true;
+
   @override
   Future<ShellSession> openShell({
     required int width,
