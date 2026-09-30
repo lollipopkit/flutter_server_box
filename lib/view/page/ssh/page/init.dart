@@ -67,7 +67,7 @@ extension _Init on SSHPageState {
     if (!_canTmux || !plan.shouldLaunchTmux) return false;
 
     final oldSession = _session;
-    ShellSession? session;
+    TmuxControlShellSession? session;
     try {
       session = await _openTmuxControlSession(plan.command!);
     } catch (e, st) {
@@ -81,6 +81,12 @@ extension _Init on SSHPageState {
 
     if (session == null) {
       Loggers.app.warning('Failed to replace foreground session with tmux');
+      return false;
+    }
+    // Something else took the terminal while this was opening — a reconnect,
+    // or the page going away. It is not this client's to replace.
+    if (!mounted || !identical(_session, oldSession)) {
+      _discardTmuxControlSession(session);
       return false;
     }
 
@@ -161,7 +167,9 @@ extension _Init on SSHPageState {
   ///
   /// The underlying SSH session must have a PTY: without one tmux exits before
   /// speaking control mode. `_sess.execute` is the path that allocates one.
-  Future<ShellSession?> _openTmuxControlSession(String command) async {
+  Future<TmuxControlShellSession?> _openTmuxControlSession(
+    String command,
+  ) async {
     final sshSession = await _sess.execute(command);
     if (sshSession == null) return null;
 
@@ -200,11 +208,17 @@ extension _Init on SSHPageState {
       session.resizeTerminal(_terminal.viewWidth, _terminal.viewHeight);
       await client.refreshState(captureActivePane: true);
     } catch (_) {
-      _detachTmuxControl();
-      session.close();
+      _discardTmuxControlSession(session);
       rethrow;
     }
     return session;
+  }
+
+  /// Closes a tmux client that will not be the foreground, and lets go of it
+  /// only if the page still points at it — a newer client may have replaced it.
+  void _discardTmuxControlSession(TmuxControlShellSession session) {
+    if (identical(_tmuxControl, session.client)) _detachTmuxControl();
+    session.close();
   }
 
   void _attachTmuxControl(TmuxControlClient client) {
@@ -1137,7 +1151,17 @@ extension _Init on SSHPageState {
   }
 
   Future<void> _showTmuxSwitcher() async {
-    if (!_canTmux || !mounted) return;
+    // The first open may be attaching tmux itself; see [_switchingTmux].
+    if (!_canTmux || !mounted || _openingTerminal || _switchingTmux) return;
+    _switchingTmux = true;
+    try {
+      await _runTmuxSwitcher();
+    } finally {
+      _switchingTmux = false;
+    }
+  }
+
+  Future<void> _runTmuxSwitcher() async {
     final control = _tmuxControl;
     if (control != null) {
       await _showTmuxControlSessionSwitcher(control);

@@ -61,6 +61,18 @@ void main() {
     expect(output, isEmpty);
   });
 
+  test('an OSC 52 request with extra fields is ignored', () async {
+    final session = TerminalSession(source: ServerSource(server()));
+    addTearDown(session.dispose);
+
+    session.terminal.write(
+      '\x1b]52;c;${base64.encode(utf8.encode('text'))};extra\x07',
+    );
+    await Future<void>.delayed(Duration.zero);
+
+    expect(clipboardCalls, isEmpty);
+  });
+
   test('a primary-only OSC 52 request leaves the clipboard alone', () async {
     final session = TerminalSession(source: ServerSource(server()));
     addTearDown(session.dispose);

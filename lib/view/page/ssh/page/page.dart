@@ -357,6 +357,10 @@ class SSHPageState extends ConsumerState<SSHPage>
   TerminalConnectionStep _connectionStep = TerminalConnectionStep.connecting;
   String? _connectionFailureDetail;
   bool _openingTerminal = false;
+
+  /// Whether the tmux key's switcher is running. Two overlapping ones would
+  /// each open a client, and the slower would replace the faster's foreground.
+  bool _switchingTmux = false;
   bool _retryInitialConnectionOnResume = false;
   bool _keyboardHandlerReady = false;
   bool _keyboardHandlerAttached = false;
