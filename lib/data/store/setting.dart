@@ -660,6 +660,10 @@ class SettingStore extends SqliteStore with ThemeSettings {
     true,
   );
 
+  /// Whether the strip above the server list is shown: the overview over the
+  /// grid, and the row of servers it turns into over an open one.
+  late final serverOverview = propertyDefault('serverOverview', true);
+
   /// Remerber pwd in memory
   /// Used for [DialogX.showPwdDialog]
   late final rememberPwdInMem = propertyDefault('rememberPwdInMem', true);

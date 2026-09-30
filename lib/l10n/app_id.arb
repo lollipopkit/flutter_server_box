@@ -236,6 +236,8 @@
   "sendTo": "Kirim ke…",
   "serverFuncBtns": "Tombol fungsi server",
   "serverOrder": "Pesanan server",
+  "serverOverview": "Ringkasan server",
+  "serverOverviewTip": "Tampilkan ringkasan di atas daftar server, dan bilah server di atas server yang terbuka",
   "serverTabEmpty": "Belum ada server",
   "serverTabRequired": "Tab server tidak dapat dihapus",
   "shareCodeHint": "Sampaikan digit ini secara terpisah kepada penerima. Digit ini tidak disertakan dalam kode QR.",

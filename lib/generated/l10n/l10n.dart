@@ -2236,6 +2236,18 @@ abstract class AppLocalizations {
   /// **'Server order'**
   String get serverOrder;
 
+  /// Setting that shows the summary strip at the top of the server tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Server overview'**
+  String get serverOverview;
+
+  /// Help text for the server overview setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the summary at the top of the server list, and the row of servers above an open one'**
+  String get serverOverviewTip;
+
   /// Empty-state message for server tab empty.
   ///
   /// In en, this message translates to:

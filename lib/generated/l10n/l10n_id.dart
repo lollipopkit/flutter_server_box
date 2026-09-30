@@ -1225,6 +1225,13 @@ class AppLocalizationsId extends AppLocalizations {
   String get serverOrder => 'Pesanan server';
 
   @override
+  String get serverOverview => 'Ringkasan server';
+
+  @override
+  String get serverOverviewTip =>
+      'Tampilkan ringkasan di atas daftar server, dan bilah server di atas server yang terbuka';
+
+  @override
   String get serverTabEmpty => 'Belum ada server';
 
   @override

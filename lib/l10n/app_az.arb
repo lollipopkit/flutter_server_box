@@ -334,6 +334,8 @@
   "sendTo": "Göndər…",
   "serverFuncBtns": "Server funksiya düymələri",
   "serverOrder": "Serverlərin sırası",
+  "serverOverview": "Server icmalı",
+  "serverOverviewTip": "Server siyahısının yuxarısında icmalı və açıq serverin üstündə server panelini göstərir",
   "serverTabEmpty": "Hələ server yoxdur",
   "serverTabRequired": "Server vərəqi silinə bilməz",
   "shareCodeHint": "Bu rəqəmləri alıcıya ayrıca bildir. Onlar QR koduna daxil edilmir.",

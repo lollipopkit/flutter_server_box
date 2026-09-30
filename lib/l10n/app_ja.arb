@@ -236,6 +236,8 @@
   "sendTo": "送信先…",
   "serverFuncBtns": "サーバー機能ボタン",
   "serverOrder": "サーバー順序",
+  "serverOverview": "サーバー概要",
+  "serverOverviewTip": "サーバー一覧の上部に概要を、開いているサーバーの上部にサーバー切り替えバーを表示します",
   "serverTabEmpty": "サーバーはまだありません",
   "serverTabRequired": "サーバータブは削除できません",
   "shareCodeHint": "この数字は別の方法で受信者に伝えてください。QR コードには含まれていません。",

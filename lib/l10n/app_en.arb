@@ -1557,6 +1557,14 @@
   "@serverOrder": {
     "description": "User-facing label or message for server order."
   },
+  "serverOverview": "Server overview",
+  "@serverOverview": {
+    "description": "Setting that shows the summary strip at the top of the server tab."
+  },
+  "serverOverviewTip": "Show the summary at the top of the server list, and the row of servers above an open one",
+  "@serverOverviewTip": {
+    "description": "Help text for the server overview setting."
+  },
   "serverTabEmpty": "No servers yet",
   "@serverTabEmpty": {
     "description": "Empty-state message for server tab empty."

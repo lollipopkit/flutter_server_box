@@ -1218,6 +1218,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serverOrder => 'Server order';
 
   @override
+  String get serverOverview => 'Server overview';
+
+  @override
+  String get serverOverviewTip =>
+      'Show the summary at the top of the server list, and the row of servers above an open one';
+
+  @override
   String get serverTabEmpty => 'No servers yet';
 
   @override

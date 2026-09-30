@@ -1160,6 +1160,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get serverOrder => 'サーバー順序';
 
   @override
+  String get serverOverview => 'サーバー概要';
+
+  @override
+  String get serverOverviewTip => 'サーバー一覧の上部に概要を、開いているサーバーの上部にサーバー切り替えバーを表示します';
+
+  @override
   String get serverTabEmpty => 'サーバーはまだありません';
 
   @override

@@ -237,6 +237,8 @@
   "sendTo": "Invia a…",
   "serverFuncBtns": "Pulsanti funzione server",
   "serverOrder": "Ordine server",
+  "serverOverview": "Panoramica dei server",
+  "serverOverviewTip": "Mostra il riepilogo in cima all'elenco dei server e la barra dei server sopra un server aperto",
   "serverTabEmpty": "Ancora nessun server",
   "serverTabRequired": "La scheda server non può essere rimossa",
   "shareCodeHint": "Comunica queste cifre separatamente al destinatario. Non sono incluse nel codice QR.",

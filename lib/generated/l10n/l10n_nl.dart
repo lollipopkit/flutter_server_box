@@ -1229,6 +1229,13 @@ class AppLocalizationsNl extends AppLocalizations {
   String get serverOrder => 'Servervolgorde';
 
   @override
+  String get serverOverview => 'Serveroverzicht';
+
+  @override
+  String get serverOverviewTip =>
+      'Toont het overzicht bovenaan de serverlijst en de serverbalk boven een geopende server';
+
+  @override
   String get serverTabEmpty => 'Nog geen servers';
 
   @override

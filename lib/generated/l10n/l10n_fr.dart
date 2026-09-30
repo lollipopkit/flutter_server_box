@@ -1239,6 +1239,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get serverOrder => 'Ordre du serveur';
 
   @override
+  String get serverOverview => 'Aperçu des serveurs';
+
+  @override
+  String get serverOverviewTip =>
+      'Affiche l\'aperçu en haut de la liste des serveurs, et la barre des serveurs au-dessus d\'un serveur ouvert';
+
+  @override
   String get serverTabEmpty => 'Aucun serveur pour le moment';
 
   @override

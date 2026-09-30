@@ -1233,6 +1233,13 @@ class AppLocalizationsAz extends AppLocalizations {
   String get serverOrder => 'Serverlərin sırası';
 
   @override
+  String get serverOverview => 'Server icmalı';
+
+  @override
+  String get serverOverviewTip =>
+      'Server siyahısının yuxarısında icmalı və açıq serverin üstündə server panelini göstərir';
+
+  @override
   String get serverTabEmpty => 'Hələ server yoxdur';
 
   @override

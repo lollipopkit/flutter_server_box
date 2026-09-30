@@ -270,6 +270,8 @@
   "sendTo": "보낼 위치…",
   "serverFuncBtns": "서버 기능 버튼",
   "serverOrder": "서버 순서",
+  "serverOverview": "서버 개요",
+  "serverOverviewTip": "서버 목록 상단에 개요를, 열린 서버 위에 서버 전환 막대를 표시합니다",
   "serverTabEmpty": "아직 서버가 없습니다",
   "serverTabRequired": "서버 탭은 제거할 수 없습니다",
   "shareCodeHint": "이 숫자는 수신자에게 별도로 알려 주세요. QR 코드에는 포함되어 있지 않습니다.",

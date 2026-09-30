@@ -1143,6 +1143,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get serverOrder => '服务器顺序';
 
   @override
+  String get serverOverview => '服务器总览';
+
+  @override
+  String get serverOverviewTip => '在服务器列表顶部显示总览，并在打开的服务器上方显示服务器切换栏';
+
+  @override
   String get serverTabEmpty => '还没有服务器';
 
   @override
@@ -6055,6 +6061,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get serverOrder => '伺服器順序';
+
+  @override
+  String get serverOverview => '伺服器總覽';
+
+  @override
+  String get serverOverviewTip => '在伺服器列表頂部顯示總覽，並在開啟的伺服器上方顯示伺服器切換列';
 
   @override
   String get serverTabEmpty => '還沒有伺服器';

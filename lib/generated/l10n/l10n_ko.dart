@@ -1163,6 +1163,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get serverOrder => '서버 순서';
 
   @override
+  String get serverOverview => '서버 개요';
+
+  @override
+  String get serverOverviewTip => '서버 목록 상단에 개요를, 열린 서버 위에 서버 전환 막대를 표시합니다';
+
+  @override
   String get serverTabEmpty => '아직 서버가 없습니다';
 
   @override

@@ -17,6 +17,7 @@ extension _Server on _AppSettingsPageState {
         _buildDisplayCpuIndex(),
         _buildServerTabPreferDiskAmount(),
         _buildDoubleColumnServersPage(),
+        _buildServerOverview(),
         _buildTextScaler(),
       ]),
       // Four rows about one feature, which is what the tile they were folded
@@ -177,6 +178,19 @@ extension _Server on _AppSettingsPageState {
         trailing: StoreSwitch(prop: _setting.doubleColumnServersPage),
       ),
       keywords: l10n.doubleColumnTip,
+    );
+  }
+
+  SettingsRow _buildServerOverview() {
+    final label = l10n.serverOverview;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.space_dashboard_outlined),
+        title: TipText(label, l10n.serverOverviewTip),
+        trailing: StoreSwitch(prop: _setting.serverOverview),
+      ),
+      keywords: l10n.serverOverviewTip,
     );
   }
 

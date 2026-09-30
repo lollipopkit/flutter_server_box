@@ -236,6 +236,8 @@
   "sendTo": "Verzenden naar…",
   "serverFuncBtns": "Server functieknoppen",
   "serverOrder": "Servervolgorde",
+  "serverOverview": "Serveroverzicht",
+  "serverOverviewTip": "Toont het overzicht bovenaan de serverlijst en de serverbalk boven een geopende server",
   "serverTabEmpty": "Nog geen servers",
   "serverTabRequired": "Servertabblad kan niet worden verwijderd",
   "shareCodeHint": "Geef deze cijfers afzonderlijk door aan de ontvanger. Ze staan niet in de QR-code.",

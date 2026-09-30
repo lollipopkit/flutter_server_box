@@ -340,6 +340,8 @@
   "sendTo": "发送到…",
   "serverFuncBtns": "服务器功能按钮",
   "serverOrder": "服务器顺序",
+  "serverOverview": "服务器总览",
+  "serverOverviewTip": "在服务器列表顶部显示总览，并在打开的服务器上方显示服务器切换栏",
   "serverTabEmpty": "还没有服务器",
   "serverTabRequired": "服务器标签不能被移除",
   "shareCodeHint": "请将这组数字另行告知接收方；验证码不包含在二维码中。",

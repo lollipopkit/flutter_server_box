@@ -236,6 +236,8 @@
   "sendTo": "Senden an …",
   "serverFuncBtns": "Server-Funktionsschaltflächen",
   "serverOrder": "Server-Bestellung",
+  "serverOverview": "Serverübersicht",
+  "serverOverviewTip": "Zeigt die Übersicht oben in der Serverliste und die Serverleiste über einem geöffneten Server",
   "serverTabEmpty": "Noch keine Server",
   "serverTabRequired": "Server-Tab kann nicht entfernt werden",
   "shareCodeHint": "Teilen Sie dem Empfänger diese Ziffern separat mit. Sie sind nicht im QR-Code enthalten.",

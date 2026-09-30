@@ -339,6 +339,8 @@
   "sendTo": "傳送到…",
   "serverFuncBtns": "伺服器功能按鈕",
   "serverOrder": "伺服器順序",
+  "serverOverview": "伺服器總覽",
+  "serverOverviewTip": "在伺服器列表頂部顯示總覽，並在開啟的伺服器上方顯示伺服器切換列",
   "serverTabEmpty": "還沒有伺服器",
   "serverTabRequired": "服務器標籤不能被移除",
   "shareCodeHint": "請將這組數字另行告知接收方；驗證碼不包含在 QR Code 中。",

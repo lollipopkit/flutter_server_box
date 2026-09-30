@@ -236,6 +236,8 @@
   "sendTo": "Envoyer vers…",
   "serverFuncBtns": "Boutons de fonction du serveur",
   "serverOrder": "Ordre du serveur",
+  "serverOverview": "Aperçu des serveurs",
+  "serverOverviewTip": "Affiche l'aperçu en haut de la liste des serveurs, et la barre des serveurs au-dessus d'un serveur ouvert",
   "serverTabEmpty": "Aucun serveur pour le moment",
   "serverTabRequired": "L'onglet serveur ne peut pas être supprimé",
   "shareCodeHint": "Communiquez ces chiffres séparément au destinataire. Ils ne sont pas inclus dans le QR code.",

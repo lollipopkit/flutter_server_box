@@ -1233,6 +1233,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get serverOrder => 'Server-Bestellung';
 
   @override
+  String get serverOverview => 'Serverübersicht';
+
+  @override
+  String get serverOverviewTip =>
+      'Zeigt die Übersicht oben in der Serverliste und die Serverleiste über einem geöffneten Server';
+
+  @override
   String get serverTabEmpty => 'Noch keine Server';
 
   @override

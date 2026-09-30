@@ -1232,6 +1232,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get serverOrder => 'Порядок серверов';
 
   @override
+  String get serverOverview => 'Обзор серверов';
+
+  @override
+  String get serverOverviewTip =>
+      'Показывать сводку вверху списка серверов и панель серверов над открытым сервером';
+
+  @override
   String get serverTabEmpty => 'Серверов пока нет';
 
   @override
