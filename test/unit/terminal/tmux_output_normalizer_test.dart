@@ -113,6 +113,28 @@ void main() {
     );
   });
 
+  test('unwraps passthrough with the doubled ESCs tmux sends', () {
+    final normalizer = TmuxOutputNormalizer();
+    final input = '\x1bPtmux;\x1b\x1b[?2004h\x1b\x1b]0;t\x07\x1b\\';
+
+    expect(
+      utf8.decode(normalizer(utf8.encode(input))),
+      '\x1b[?2004h\x1b]0;t\x07',
+    );
+  });
+
+  test('keeps an escape with intermediates whole', () {
+    final unknown = <String>[];
+    final normalizer = TmuxOutputNormalizer()..onUnknownEscape = unknown.add;
+    const input = 'a\x1b(Bb\x1b)0c\x1b#8d\x1b%Ge\x1b F';
+
+    expect(utf8.decode(normalizer(utf8.encode(input))), input);
+    expect(unknown, isEmpty);
+    // Split between the intermediate and its final byte.
+    expect(utf8.decode(normalizer(utf8.encode('x\x1b('))), 'x');
+    expect(utf8.decode(normalizer(utf8.encode('By'))), '\x1b(By');
+  });
+
   test('flushes a truncated sequence instead of dropping it', () {
     final normalizer = TmuxOutputNormalizer();
     expect(utf8.decode(normalizer(utf8.encode('text'))), 'text');

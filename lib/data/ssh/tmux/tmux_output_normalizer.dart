@@ -60,6 +60,8 @@ final class TmuxOutputNormalizer {
 
   void _feed(int byte, List<int> output) {
     switch (_state) {
+      case _ParserState.escapeIntermediate:
+        _consumeEscapeIntermediate(byte, output);
       case _ParserState.data:
         if (byte == 0x1b) {
           _control
@@ -110,7 +112,10 @@ final class TmuxOutputNormalizer {
         _beginString(_ParserState.apc);
       case 0x6b: // k
         _beginString(_ParserState.tmuxTitle);
-      case 0x20: // ESC SP F / ESC SP G
+      case >= 0x20 && <= 0x2f:
+        // ESC SP F, ESC # 8, ESC % G, ESC ( B, ...: intermediates, then the
+        // final byte which belongs to the same sequence.
+        _state = _ParserState.escapeIntermediate;
       case 0x36: // DECBI
       case 0x37: // DECSC
       case 0x38: // DECRC
@@ -136,6 +141,29 @@ final class TmuxOutputNormalizer {
         onUnknownEscape?.call(_escapeName(byte));
         _reset();
     }
+  }
+
+  void _consumeEscapeIntermediate(int byte, List<int> output) {
+    if (byte >= 0x20 && byte <= 0x2f) {
+      if (_control.length >= _maxControlBytes) {
+        _reset();
+        return;
+      }
+      _control.add(byte);
+      return;
+    }
+    if (byte >= 0x30 && byte <= 0x7e) {
+      output
+        ..addAll(_control)
+        ..add(byte);
+      _reset();
+      return;
+    }
+    // Not a final byte: replay what was held, as the CSI state does.
+    final incomplete = List<int>.of(_control);
+    _reset();
+    output.addAll(incomplete);
+    _feed(byte, output);
   }
 
   void _beginString(_ParserState state) {
@@ -282,9 +310,12 @@ final class TmuxOutputNormalizer {
 
     // tmux passthrough wraps a complete inner terminal sequence. Unwrap it and
     // normalize that sequence through the same rules instead of letting xterm
-    // swallow the whole DCS as an unsupported string.
+    // swallow the whole DCS as an unsupported string. tmux doubles every ESC
+    // inside the payload; each pair is one ESC of the inner sequence.
     final inner = payload.sublist(prefix.length);
-    for (final byte in inner) {
+    for (var i = 0; i < inner.length; i++) {
+      final byte = inner[i];
+      if (byte == 0x1b && i + 1 < inner.length && inner[i + 1] == 0x1b) i++;
       _feed(byte, output);
     }
   }
@@ -354,7 +385,7 @@ final class TmuxOutputNormalizer {
       return value.split(';').any((item) => item.trim() == '?');
     }
     // OSC 52 is handled by TerminalSession: set requests write the system
-    // clipboard and query requests generate a response through terminal output.
+    // clipboard and query requests are ignored.
     return false;
   }
 
@@ -401,4 +432,15 @@ final class TmuxOutputNormalizer {
   }
 }
 
-enum _ParserState { data, escape, csi, osc, dcs, sos, pm, apc, tmuxTitle }
+enum _ParserState {
+  data,
+  escape,
+  escapeIntermediate,
+  csi,
+  osc,
+  dcs,
+  sos,
+  pm,
+  apc,
+  tmuxTitle,
+}

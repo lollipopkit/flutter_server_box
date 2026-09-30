@@ -367,11 +367,11 @@ class TerminalSession {
     null => Future.value(),
   };
 
-  /// The largest clipboard payload OSC 52 may set or answer with.
+  /// The largest clipboard payload OSC 52 may set.
   ///
-  /// The sequence is unbounded protocol input, while a phone clipboard and the
-  /// response sent back through the PTY are not. Beyond this bound the request
-  /// is refused rather than turning one escape sequence into a memory spike.
+  /// The sequence is unbounded protocol input, while a phone clipboard is
+  /// not. Beyond this bound the request is refused rather than turning one
+  /// escape sequence into a memory spike.
   static const _maxOsc52Bytes = 1024 * 1024;
 
   /// The largest base64 payload considered for decoding.
@@ -392,26 +392,9 @@ class TerminalSession {
         selection.isEmpty || selection.codeUnits.contains('c'.codeUnitAt(0));
     if (!targetsClipboard) return;
 
-    if (data == '?') {
-      final value = await Clipboard.getData(Clipboard.kTextPlain);
-      final text = value?.text ?? '';
-      if (text.length > _maxOsc52Bytes) {
-        Loggers.app.warning(
-          'OSC 52 clipboard response exceeded $_maxOsc52Bytes bytes',
-        );
-        return;
-      }
-      final bytes = utf8.encode(text);
-      if (bytes.length > _maxOsc52Bytes) {
-        Loggers.app.warning(
-          'OSC 52 clipboard response exceeded $_maxOsc52Bytes bytes',
-        );
-        return;
-      }
-      final encoded = base64.encode(bytes);
-      terminal.onOutput?.call('\x1b]52;$selection;$encoded\x1b\\');
-      return;
-    }
+    // A query would hand the local clipboard to whatever runs on the server,
+    // without the user seeing it happen. Only writes are honoured.
+    if (data == '?') return;
 
     if (data.length > _maxOsc52EncodedChars) {
       Loggers.app.warning(

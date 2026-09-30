@@ -195,7 +195,7 @@ void main() {
         final shell = _FakeTmuxShell();
         shell.paneModeOutput =
             '1\t3\t4\t1\t0\tblock\t0\t0\t0\t1\t1\t1\t1'
-            '\t0\t1\t0\t0\t1\t0\tVT10x';
+            '\t0\t1\t1\t0\t1\t0\tVT10x';
         shell.captureOutput = 'screen';
         final client = TmuxControlClient(shell);
         final output = <List<int>>[];
@@ -222,7 +222,8 @@ void main() {
         expect(captured, contains('\x1bc'));
         expect(captured, contains('\x1b[?1h\x1b[?6l\x1b[?7h\x1b[?25h'));
         expect(captured, contains('\x1b[?2004h'));
-        expect(captured, contains('\x1b[?1000h\x1b[?1006h'));
+        expect(captured, contains('\x1b[?1002h\x1b[?1006h'));
+        expect(captured, isNot(contains('\x1b[?1000h')));
         expect(captured, contains('\x1b='));
         expect(captured, contains('\x1b[5;4H\x1b[?1049h'));
         expect(
@@ -296,6 +297,66 @@ void main() {
 
       expect(shell.writes, contains('refresh-client -C @0:44x15'));
       terminalSession.close();
+    });
+
+    test('resize before tmux 3.3 sizes the client, not a window', () async {
+      final shell = _FakeTmuxShell()..version = '3.2a';
+      final client = TmuxControlClient(shell);
+      final initialized = client.initialize();
+      shell.emit('\x1bP1000p%begin 1 100 1\n%end 1 100 1\n');
+      await initialized;
+      await _pumpEventQueue();
+
+      final terminalSession = TmuxControlShellSession(client, shell);
+      terminalSession.resizeTerminal(44, 15);
+      await _pumpEventQueue();
+
+      expect(shell.writes, contains('refresh-client -C 44x15'));
+      expect(shell.writes, isNot(contains('refresh-client -C @0:44x15')));
+      terminalSession.close();
+    });
+
+    test('tmux before 3.2 captures without pausing pane output', () async {
+      final shell = _FakeTmuxShell()..version = '3.0a';
+      final client = TmuxControlClient(shell);
+      final initialized = client.initialize();
+      shell.emit('\x1bP1000p%begin 1 100 1\n%end 1 100 1\n');
+      await initialized;
+      await _pumpEventQueue();
+
+      expect(shell.writes, contains("capture-pane -p -e -S -1000 -t '%0'"));
+      expect(
+        shell.writes.where((command) => command.startsWith('refresh-client -A')),
+        isEmpty,
+      );
+      await client.dispose();
+      shell.close();
+    });
+
+    test('a refresh requested during another waits for its own', () async {
+      final shell = _FakeTmuxShell();
+      final client = TmuxControlClient(shell);
+      final initialized = client.initialize(captureActivePane: false);
+      shell.emit('\x1bP1000p%begin 1 100 1\n%end 1 100 1\n');
+      await initialized;
+      await _pumpEventQueue();
+
+      int count(String prefix) =>
+          shell.writes.where((command) => command.startsWith(prefix)).length;
+      final refreshesBefore = count("display-message -p '#{session_id}");
+
+      final first = client.refreshState();
+      final second = client.refreshState(captureActivePane: true);
+      final third = client.refreshState();
+      await second;
+
+      // The second and third join one follow-up, which keeps the capture.
+      expect(count("display-message -p '#{session_id}"), refreshesBefore + 2);
+      expect(count('capture-pane'), 1);
+      await first;
+      await third;
+      await client.dispose();
+      shell.close();
     });
 
     test('selects a window through the same CC client', () async {
@@ -617,6 +678,14 @@ void main() {
   });
 
   group('tmux format field helpers', () {
+    test('reads the tmux version as major and minor', () {
+      expect(parseTmuxVersion('3.4'), 304);
+      expect(parseTmuxVersion('3.2a'), 302);
+      expect(parseTmuxVersion('next-3.6'), 306);
+      expect(parseTmuxVersion('master'), 0);
+      expect(parseTmuxVersion(''), 0);
+    });
+
     test('splits only unescaped tabs', () {
       expect(splitTmuxFields(r'$0	has\ space	1'), [r'$0', r'has\ space', '1']);
     });
@@ -643,6 +712,7 @@ final class _FakeTmuxShell implements ShellSession {
   String activePaneId = '%0';
   String sessionId = r'$0';
   String sessionName = 'main';
+  String version = '3.4';
   int historyLimit = 100000;
   String nextWindowId = '@2';
   bool splitPanes = false;
@@ -702,6 +772,10 @@ final class _FakeTmuxShell implements ShellSession {
 
   void _answer(String command) {
     if (command.startsWith('display-message')) {
+      if (command.contains('#{version}')) {
+        _result(version);
+        return;
+      }
       if (command.contains('alternate_on')) {
         _result(paneModeOutput);
         return;

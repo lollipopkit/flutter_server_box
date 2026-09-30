@@ -38,9 +38,17 @@ final class TmuxControlClient {
       StreamController<TmuxControlPaneOutput>.broadcast();
   StreamSubscription<Uint8List>? _outputSubscription;
   Timer? _refreshTimer;
-  bool _refreshing = false;
-  bool _refreshQueued = false;
   bool _captureAfterRefresh = false;
+
+  /// The refresh running now, and the one queued behind it. A request made
+  /// while one runs joins the follow-up, so its caller waits for state read
+  /// after the request rather than for a refresh that started before it.
+  Future<void>? _refreshInFlight;
+  Future<void>? _refreshFollowUp;
+  bool _followUpCapture = false;
+
+  /// The server's `major * 100 + minor`, or 0 when it could not be read.
+  int _tmuxVersion = 0;
   TmuxControlSnapshot? _snapshot;
 
   /// The current session's `history-limit`, refreshed with session identity.
@@ -78,6 +86,8 @@ final class TmuxControlClient {
     if (startup.error) {
       throw TmuxControlCommandException('<attach>', startup.output);
     }
+    final version = await run("display-message -p '#{version}'");
+    _tmuxVersion = version.error ? 0 : parseTmuxVersion(version.output);
     await refreshState(captureActivePane: captureActivePane);
   }
 
@@ -133,19 +143,23 @@ final class TmuxControlClient {
   }
 
   Future<void> refreshState({bool captureActivePane = false}) {
+    // A pending notification refresh is folded in, capture request included.
+    final capture = captureActivePane || _captureAfterRefresh;
     _refreshTimer?.cancel();
     _refreshTimer = null;
-    return _refreshNow(captureActivePane: captureActivePane);
+    _captureAfterRefresh = false;
+    return _refreshNow(captureActivePane: capture);
   }
 
   /// Sizes the attached CC client and its active window.
   ///
   /// `refresh-client -C WxH` alone does not necessarily resize an existing
   /// window when another, larger client is attached and `window-size` is
-  /// `latest`. tmux's explicit `<window-id>:WxH` form does.
+  /// `latest`. tmux's explicit `<window-id>:WxH` form does, from tmux 3.3;
+  /// older servers answer it with "bad size argument".
   void resizeWindow(int width, int height) {
     final windowId = _snapshot?.activeWindowId;
-    final target = windowId == null ? '' : '$windowId:';
+    final target = windowId == null || _tmuxVersion < 303 ? '' : '$windowId:';
     send('refresh-client -C $target${width}x$height');
   }
 
@@ -332,140 +346,154 @@ final class TmuxControlClient {
     });
   }
 
-  Future<void> _refreshNow({required bool captureActivePane}) async {
-    if (_commands.isClosed) return;
-    if (_refreshing) {
-      _refreshQueued = true;
-      _captureAfterRefresh = _captureAfterRefresh || captureActivePane;
-      return;
+  Future<void> _refreshNow({required bool captureActivePane}) {
+    if (_commands.isClosed) return Future.value();
+    final followUp = _refreshFollowUp;
+    if (followUp != null) {
+      _followUpCapture = _followUpCapture || captureActivePane;
+      return followUp;
     }
-    _refreshing = true;
-    try {
-      final current = await runRequired(
-        "display-message -p '#{session_id}\t#{q:session_name}"
-        "\t#{history-limit}'",
-      );
-      final currentParts = splitTmuxFields(current.output);
-      if (currentParts.length < 2) {
-        throw const TmuxControlCommandException(
-          'display-message',
-          'session identity was malformed',
-        );
-      }
+    final inFlight = _refreshInFlight;
+    if (inFlight == null) return _startRefresh(captureActivePane);
 
-      final sessionsResult = await runRequired(
-        "list-sessions -F '#{session_id}\t#{q:session_name}"
-        "\t#{session_windows}\t#{session_attached}'",
-      );
-      final sessions = <TmuxControlSessionSummary>[];
-      for (final line in sessionsResult.lines) {
-        if (line.trim().isEmpty) continue;
-        final parsed = _parseSession(line);
-        if (parsed != null) sessions.add(parsed);
-      }
+    _followUpCapture = captureActivePane;
+    return _refreshFollowUp = inFlight.then<void>((_) {}, onError: (_) {}).then(
+      (_) {
+        _refreshFollowUp = null;
+        final capture = _followUpCapture;
+        _followUpCapture = false;
+        if (_commands.isClosed) return Future.value();
+        return _startRefresh(capture);
+      },
+    );
+  }
 
-      final sessionId = TmuxSessionId.tryParse(
-        unescapeTmuxField(currentParts[0]),
-      );
-      final sessionName = unescapeTmuxField(currentParts[1]);
-      final historyLimit = currentParts.length > 2
-          ? int.tryParse(currentParts[2]) ?? maxScrollbackLines
-          : maxScrollbackLines;
-      _historyLimit = historyLimit < 0 ? 0 : historyLimit;
-      if (sessionId == null) {
-        throw const TmuxControlCommandException(
-          'display-message',
-          'session identity was malformed',
-        );
-      }
-      var session = sessions.where((item) => item.id == sessionId).firstOrNull;
-      session ??= TmuxControlSessionSummary(
-        id: sessionId,
-        name: sessionName,
-        windows: 0,
-        attached: true,
-      );
+  Future<void> _startRefresh(bool captureActivePane) {
+    final refresh = _refresh(captureActivePane: captureActivePane);
+    _refreshInFlight = refresh;
+    return refresh.whenComplete(() {
+      if (identical(_refreshInFlight, refresh)) _refreshInFlight = null;
+    });
+  }
 
-      final windowsResult = await runRequired(
-        "list-windows -t '$sessionId' -F '#{window_id}\t#{window_index}"
-        "\t#{q:window_name}\t#{window_active}'",
+  Future<void> _refresh({required bool captureActivePane}) async {
+    final current = await runRequired(
+      "display-message -p '#{session_id}\t#{q:session_name}"
+      "\t#{history-limit}'",
+    );
+    final currentParts = splitTmuxFields(current.output);
+    if (currentParts.length < 2) {
+      throw const TmuxControlCommandException(
+        'display-message',
+        'session identity was malformed',
       );
-      final windows = <TmuxControlWindow>[];
-      for (final line in windowsResult.lines) {
-        if (line.trim().isEmpty) continue;
-        final parsed = _parseWindow(line);
-        if (parsed != null) windows.add(parsed);
-      }
-
-      final activeWindow = windows.where((window) => window.active).firstOrNull;
-      if (activeWindow == null) {
-        throw const TmuxControlCommandException(
-          'list-windows',
-          'no active window',
-        );
-      }
-
-      // Panes are queried only for the active window: they exist to make splits
-      // addressable in the UI, and inactive windows stay summaries until selected.
-      final panesResult = await runRequired(
-        "list-panes -t '${activeWindow.id}' -F '#{pane_id}\t#{pane_index}"
-        '\t#{pane_active}\t#{q:pane_title}\t#{q:pane_current_command}'
-        "\t#{cursor_x}\t#{cursor_y}\t#{pane_height}'",
-      );
-      final panes = <TmuxControlPane>[];
-      for (final line in panesResult.lines) {
-        if (line.trim().isEmpty) continue;
-        final parsed = _parsePane(line);
-        if (parsed != null) panes.add(parsed);
-      }
-      final activePane = panes.where((pane) => pane.active).firstOrNull;
-      if (activePane == null) {
-        throw TmuxControlCommandException(
-          'list-panes',
-          'active window ${activeWindow.id} has no active pane',
-        );
-      }
-
-      final activeWindowWithPanes = TmuxControlWindow(
-        id: activeWindow.id,
-        index: activeWindow.index,
-        name: activeWindow.name,
-        active: true,
-        panes: panes,
-      );
-      final windowsWithPanes = [
-        for (final window in windows)
-          window.id == activeWindow.id ? activeWindowWithPanes : window,
-      ];
-      final activePaneId = activePane.id;
-      // Query pane modes before state is published or a capture is replayed.
-      // The screen snapshot is not enough: Vim can be in the alternate screen
-      // with application cursor/keypad modes while local xterm is still reset
-      // to its defaults.
-      final modeResult = await runRequired(
-        "display-message -p -t '$activePaneId' "
-        "'${TmuxPaneModeSnapshot.queryFormat}'",
-      );
-      final mode = TmuxPaneModeSnapshot.parse(modeResult.output);
-
-      _snapshot = TmuxControlSnapshot(
-        sessions: sessions,
-        session: session,
-        windows: windowsWithPanes,
-        activeWindowId: activeWindow.id,
-        activePaneId: activePaneId,
-        mode: mode,
-      );
-      _stateController.add(_snapshot!);
-      if (captureActivePane) await _captureActivePane();
-    } finally {
-      _refreshing = false;
-      if (_refreshQueued && !_commands.isClosed) {
-        _refreshQueued = false;
-        _scheduleRefresh(captureActivePane: _captureAfterRefresh);
-        _captureAfterRefresh = false;
-      }
     }
+
+    final sessionsResult = await runRequired(
+      "list-sessions -F '#{session_id}\t#{q:session_name}"
+      "\t#{session_windows}\t#{session_attached}'",
+    );
+    final sessions = <TmuxControlSessionSummary>[];
+    for (final line in sessionsResult.lines) {
+      if (line.trim().isEmpty) continue;
+      final parsed = _parseSession(line);
+      if (parsed != null) sessions.add(parsed);
+    }
+
+    final sessionId = TmuxSessionId.tryParse(
+      unescapeTmuxField(currentParts[0]),
+    );
+    final sessionName = unescapeTmuxField(currentParts[1]);
+    final historyLimit = currentParts.length > 2
+        ? int.tryParse(currentParts[2]) ?? maxScrollbackLines
+        : maxScrollbackLines;
+    _historyLimit = historyLimit < 0 ? 0 : historyLimit;
+    if (sessionId == null) {
+      throw const TmuxControlCommandException(
+        'display-message',
+        'session identity was malformed',
+      );
+    }
+    var session = sessions.where((item) => item.id == sessionId).firstOrNull;
+    session ??= TmuxControlSessionSummary(
+      id: sessionId,
+      name: sessionName,
+      windows: 0,
+      attached: true,
+    );
+
+    final windowsResult = await runRequired(
+      "list-windows -t '$sessionId' -F '#{window_id}\t#{window_index}"
+      "\t#{q:window_name}\t#{window_active}'",
+    );
+    final windows = <TmuxControlWindow>[];
+    for (final line in windowsResult.lines) {
+      if (line.trim().isEmpty) continue;
+      final parsed = _parseWindow(line);
+      if (parsed != null) windows.add(parsed);
+    }
+
+    final activeWindow = windows.where((window) => window.active).firstOrNull;
+    if (activeWindow == null) {
+      throw const TmuxControlCommandException(
+        'list-windows',
+        'no active window',
+      );
+    }
+
+    // Panes are queried only for the active window: they exist to make splits
+    // addressable in the UI, and inactive windows stay summaries until selected.
+    final panesResult = await runRequired(
+      "list-panes -t '${activeWindow.id}' -F '#{pane_id}\t#{pane_index}"
+      '\t#{pane_active}\t#{q:pane_title}\t#{q:pane_current_command}'
+      "\t#{cursor_x}\t#{cursor_y}\t#{pane_height}'",
+    );
+    final panes = <TmuxControlPane>[];
+    for (final line in panesResult.lines) {
+      if (line.trim().isEmpty) continue;
+      final parsed = _parsePane(line);
+      if (parsed != null) panes.add(parsed);
+    }
+    final activePane = panes.where((pane) => pane.active).firstOrNull;
+    if (activePane == null) {
+      throw TmuxControlCommandException(
+        'list-panes',
+        'active window ${activeWindow.id} has no active pane',
+      );
+    }
+
+    final activeWindowWithPanes = TmuxControlWindow(
+      id: activeWindow.id,
+      index: activeWindow.index,
+      name: activeWindow.name,
+      active: true,
+      panes: panes,
+    );
+    final windowsWithPanes = [
+      for (final window in windows)
+        window.id == activeWindow.id ? activeWindowWithPanes : window,
+    ];
+    final activePaneId = activePane.id;
+    // Query pane modes before state is published or a capture is replayed.
+    // The screen snapshot is not enough: Vim can be in the alternate screen
+    // with application cursor/keypad modes while local xterm is still reset
+    // to its defaults.
+    final modeResult = await runRequired(
+      "display-message -p -t '$activePaneId' "
+      "'${TmuxPaneModeSnapshot.queryFormat}'",
+    );
+    final mode = TmuxPaneModeSnapshot.parse(modeResult.output);
+
+    _snapshot = TmuxControlSnapshot(
+      sessions: sessions,
+      session: session,
+      windows: windowsWithPanes,
+      activeWindowId: activeWindow.id,
+      activePaneId: activePaneId,
+      mode: mode,
+    );
+    _stateController.add(_snapshot!);
+    if (captureActivePane) await _captureActivePane();
   }
 
   Future<void> _captureActivePane() async {
@@ -474,8 +502,10 @@ final class TmuxControlClient {
 
     // Freeze pane delivery around the capture. Without this boundary, output
     // can arrive between the capture and its control-mode result and then be
-    // erased when the older captured screen is replayed.
-    await runRequired("refresh-client -A '$paneId:pause'");
+    // erased when the older captured screen is replayed. tmux before 3.2 has
+    // no pause, and takes that race.
+    final pause = _tmuxVersion >= 302;
+    if (pause) await runRequired("refresh-client -A '$paneId:pause'");
     final mode = _snapshot?.mode ?? const TmuxPaneModeSnapshot();
     final activePane = _snapshot?.activeWindow?.panes
         .where((pane) => pane.id == paneId)
@@ -492,7 +522,7 @@ final class TmuxControlClient {
     try {
       result = await runRequired(command);
     } catch (error) {
-      _resumePaneOutput(paneId);
+      if (pause) _resumePaneOutput(paneId);
       rethrow;
     }
 
@@ -537,7 +567,7 @@ final class TmuxControlClient {
       '\x1bc${mode.restorePrefix}$captured$restoreCursor',
     );
     _paneOutputController.add(TmuxControlPaneOutput(paneId, bytes));
-    _resumePaneOutput(paneId);
+    if (pause) _resumePaneOutput(paneId);
   }
 
   void _resumePaneOutput(TmuxPaneId paneId) {
@@ -626,6 +656,14 @@ final class TmuxControlClient {
     onClosed?.call(cleanExit);
     unawaited(_outputSubscription?.cancel());
   }
+}
+
+/// Parses `#{version}` ("3.4", "3.2a", "next-3.6") into `major * 100 + minor`,
+/// or 0 when there is no version in it.
+int parseTmuxVersion(String value) {
+  final match = RegExp(r'(\d+)\.(\d+)').firstMatch(value);
+  if (match == null) return 0;
+  return int.parse(match[1]!) * 100 + int.parse(match[2]!);
 }
 
 /// Quotes an argument using tmux command syntax.

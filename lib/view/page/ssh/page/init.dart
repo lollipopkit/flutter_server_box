@@ -175,15 +175,22 @@ extension _Init on SSHPageState {
     client.onStateError = (error) {
       Loggers.app.warning('tmux control state refresh failed', error);
     };
+    final session = TmuxControlShellSession(client, sshSession);
     client.onClosed = (cleanExit) {
       // A dropped transport is reconnect's decision to make. tmux exiting is
       // not: the session is gone or deliberately detached, so restoration and
       // the native bar must not keep pointing at that client.
-      if (mounted && cleanExit) {
+      //
+      // Only while this client owns the terminal. One that exits during
+      // [initialize] has not been bound yet, and falling back then would close
+      // whatever shell is still in front.
+      if (mounted &&
+          cleanExit &&
+          identical(_tmuxControl, client) &&
+          identical(_session, session)) {
         unawaited(_fallbackToRawShellAfterTmuxExit());
       }
     };
-    final session = TmuxControlShellSession(client, sshSession);
     _attachTmuxControl(client);
     try {
       await client.initialize(captureActivePane: false);

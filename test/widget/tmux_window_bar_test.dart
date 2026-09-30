@@ -131,7 +131,7 @@ final class _FakeTmuxShell implements ShellSession {
     if (command.isEmpty) return;
     writes.add(command);
     if (command.startsWith('display-message')) {
-      _result(r'$0	main	$historyLimit');
+      _result('\$0\tmain\t$historyLimit');
     } else if (command.startsWith('list-sessions')) {
       _result(r'$0	main	2	1');
     } else if (command.startsWith('list-windows')) {

@@ -12,13 +12,9 @@ void main() {
 
   final clipboardCalls = <MethodCall>[];
   final clipboardChannel = SystemChannels.platform;
-  var clipboardText = 'clipboard text';
 
   Future<Object?> clipboardHandler(MethodCall call) async {
     clipboardCalls.add(call);
-    if (call.method == 'Clipboard.getData') {
-      return {'text': clipboardText};
-    }
     return null;
   }
 
@@ -52,7 +48,7 @@ void main() {
     expect(clipboardCalls.single.arguments['text'], 'remote text');
   });
 
-  test('OSC 52 query answers through terminal output', () async {
+  test('an OSC 52 query does not read the clipboard', () async {
     final session = TerminalSession(source: ServerSource(server()));
     addTearDown(session.dispose);
     final output = <String>[];
@@ -61,10 +57,8 @@ void main() {
     session.terminal.write('\x1b]52;c;?\x07');
     await Future<void>.delayed(Duration.zero);
 
-    expect(
-      output.single,
-      '\x1b]52;c;${base64.encode(utf8.encode('clipboard text'))}\x1b\\',
-    );
+    expect(clipboardCalls, isEmpty);
+    expect(output, isEmpty);
   });
 
   test('a primary-only OSC 52 request leaves the clipboard alone', () async {
@@ -101,18 +95,4 @@ void main() {
       expect(clipboardCalls, isEmpty);
     },
   );
-
-  test('an oversized clipboard is not answered through OSC 52', () async {
-    clipboardText = 'x' * 2 * 1024 * 1024;
-    final session = TerminalSession(source: ServerSource(server()));
-    addTearDown(session.dispose);
-    final output = <String>[];
-    session.terminal.onOutput = output.add;
-
-    session.terminal.write('\x1b]52;c;?\x07');
-    await Future<void>.delayed(Duration.zero);
-
-    expect(clipboardCalls, isNotEmpty);
-    expect(output, isEmpty);
-  });
 }

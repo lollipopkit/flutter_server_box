@@ -126,16 +126,17 @@ final class TmuxPaneModeSnapshot {
     final shapeCode = _cursorShapeCode;
     if (shapeCode != null) out.write('\x1b[$shapeCode q');
 
-    if (mouseAll) {
-      setDecMode(1003, true);
-    } else if (mouseAny) {
-      setDecMode(1002, true);
-    } else if (mouseButton) {
-      setDecMode(1000, true);
-    } else if (mouseStandard) {
-      setDecMode(9, true);
-    }
-    if (mouseAll || mouseAny || mouseButton || mouseStandard) {
+    // tmux's flags name the tracking mode: standard is DECSET 1000, button
+    // 1002, all 1003. `mouse_any_flag` is set by any of them, so it names none.
+    final mouseMode = mouseAll
+        ? 1003
+        : mouseButton
+        ? 1002
+        : mouseStandard
+        ? 1000
+        : null;
+    if (mouseMode != null) {
+      setDecMode(mouseMode, true);
       if (mouseSgr) {
         setDecMode(1006, true);
       } else if (mouseUtf8) {
