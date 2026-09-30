@@ -74,7 +74,7 @@ void main() {
 
     // The two table-backed stores answer only if their tables were created.
     expect(Stores.connectionStats.getAllServerStats(), isEmpty);
-    expect(Stores.agentConversation.fetchForServer('srv'), isEmpty);
+    expect(Stores.snippet.fetch(), isEmpty);
   });
 
   test('a second launch reopens the same file', () async {

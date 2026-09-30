@@ -1,7 +1,7 @@
 # Development setup
 
-For building and running ServerBox from source. The user-facing install is
-`app-usage.md`; deploying the agent on a server is `monitor-deploy.md`.
+For building and running ServerBox from source. Installing and using the app,
+and deploying the agent on a server, are the `serverbox-help` skill.
 
 `CONTRIBUTING.md` is the short authoritative version of this file, and
 `docs/src/content/docs/development/` (`building`, `codegen`, `testing`,

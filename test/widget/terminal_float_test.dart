@@ -3,15 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
-import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/app/float_shell.dart';
-import 'package:server_box/data/provider/ai/agent_session.dart';
 import 'package:server_box/data/provider/ai/agent_shell.dart';
 import 'package:server_box/data/provider/app/terminal_shell.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/terminal_session.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
-import 'package:server_box/data/store/agent_conversation.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/floating_panels.dart';
@@ -22,14 +19,6 @@ import 'package:xterm/ui.dart';
 import '../helpers/fake_shell.dart';
 import '../helpers/test_db.dart';
 
-/// An [AgentSession] frozen at one state, as in `float_shell_view_test.dart`:
-/// these tests are about the windows, not about the conversation.
-class _FixedSession extends AgentSession {
-  @override
-  AgentSessionState build(String scope) =>
-      const AgentSessionState(protocol: AskAiProtocol.chatCompletions);
-}
-
 /// A terminal popped out of its tab, and the two windows sharing a screen.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -39,7 +28,6 @@ void main() {
     // In memory rather than on disk: floating writes the window's placement the
     // moment it changes, so these tests write.
     getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
-    getIt.registerSingleton<AgentConversationStore>(AgentConversationStore());
     // The terminal page opens this over itself on a first run, and it would sit
     // over everything these tests are looking at.
     Stores.setting.sshTermHelpShown.put(true);
@@ -61,9 +49,7 @@ void main() {
   }
 
   ProviderContainer container() {
-    final it = ProviderContainer(
-      overrides: [globalAgentSessionProvider.overrideWith(_FixedSession.new)],
-    );
+    final it = ProviderContainer();
     addTearDown(it.dispose);
     return it;
   }
@@ -248,6 +234,9 @@ void main() {
         tester,
         view: const Size(390, 844),
       );
+      // Floating until closed; closed here, as a user would.
+      container.read(agentShellProvider.notifier).hide();
+      await settle(tester);
       expect(container.read(agentShellProvider), FloatShellMode.hidden);
 
       container

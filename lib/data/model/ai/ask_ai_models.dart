@@ -3,293 +3,6 @@ import 'dart:convert';
 import 'package:meta/meta.dart';
 import 'package:server_box/core/utils/local_exec.dart';
 
-/// API protocol used for one Agent conversation.
-enum AskAiProtocol {
-  auto,
-  chatCompletions,
-  responses;
-
-  /// What the vendor calls it, or null for [auto], which is a word rather
-  /// than a name and belongs to whoever is displaying it.
-  ///
-  /// Not localised: these are two OpenAI API surfaces, spelled this way in
-  /// every language's documentation. A translated one is a word nobody could
-  /// search for.
-  ///
-  /// On the enum rather than at the two call sites, which had the same switch
-  /// written out twice.
-  String? get vendorName => switch (this) {
-    AskAiProtocol.auto => null,
-    AskAiProtocol.chatCompletions => 'Chat Completions',
-    AskAiProtocol.responses => 'Responses',
-  };
-}
-
-AskAiProtocol parseAskAiProtocol(Object? value) {
-  final name = value?.toString();
-  return AskAiProtocol.values.firstWhere(
-    (protocol) => protocol.name == name,
-    orElse: () => AskAiProtocol.auto,
-  );
-}
-
-enum AskAiMessageRole { user, assistant }
-
-/// Protocol-neutral item stored in an Agent conversation.
-///
-/// Chat Completions codecs regroup adjacent assistant messages and function
-/// calls into a single message. Responses codecs replay the typed output items
-/// directly, including encrypted reasoning data when it is available.
-@immutable
-sealed class AskAiConversationItem {
-  const AskAiConversationItem();
-
-  String get persistenceKind;
-  int get estimatedCharacters;
-  Map<String, dynamic> toJson();
-
-  static AskAiConversationItem? fromJson(Object? value) {
-    if (value is! Map) return null;
-    final json = Map<String, dynamic>.from(value);
-    return switch (json['kind']) {
-      'message' => AskAiMessageItem.fromJson(json),
-      'function_call' => AskAiFunctionCallItem.fromJson(json),
-      'function_output' => AskAiFunctionOutputItem.fromJson(json),
-      'reasoning' => AskAiReasoningItem.fromJson(json),
-      'raw_response' => AskAiRawResponseItem.fromJson(json),
-      'summary' => AskAiSummaryItem.fromJson(json),
-      _ => null,
-    };
-  }
-}
-
-@immutable
-class AskAiMessageItem extends AskAiConversationItem {
-  const AskAiMessageItem({
-    required this.role,
-    required this.content,
-    this.reasoningContent,
-    this.rawResponseItem,
-  });
-
-  const AskAiMessageItem.user(String content)
-    : this(role: AskAiMessageRole.user, content: content);
-
-  const AskAiMessageItem.assistant(
-    String content, {
-    String? reasoningContent,
-    Map<String, dynamic>? rawResponseItem,
-  }) : this(
-         role: AskAiMessageRole.assistant,
-         content: content,
-         reasoningContent: reasoningContent,
-         rawResponseItem: rawResponseItem,
-       );
-
-  factory AskAiMessageItem.fromJson(Map<String, dynamic> json) {
-    return AskAiMessageItem(
-      role: AskAiMessageRole.values.firstWhere(
-        (role) => role.name == json['role'],
-        orElse: () => AskAiMessageRole.user,
-      ),
-      content: json['content'] as String? ?? '',
-      reasoningContent: json['reasoning_content'] as String?,
-      rawResponseItem: _mapOrNull(json['raw_response_item']),
-    );
-  }
-
-  final AskAiMessageRole role;
-  final String content;
-  final String? reasoningContent;
-  final Map<String, dynamic>? rawResponseItem;
-
-  @override
-  String get persistenceKind => 'message';
-
-  @override
-  int get estimatedCharacters =>
-      content.length + (reasoningContent?.length ?? 0);
-
-  @override
-  Map<String, dynamic> toJson() => {
-    'kind': persistenceKind,
-    'role': role.name,
-    'content': content,
-    if (reasoningContent?.isNotEmpty == true)
-      'reasoning_content': reasoningContent,
-    if (rawResponseItem != null) 'raw_response_item': rawResponseItem,
-  };
-}
-
-@immutable
-class AskAiFunctionCallItem extends AskAiConversationItem {
-  const AskAiFunctionCallItem({
-    required this.command,
-    this.responseItemId,
-    this.rawResponseItem,
-  });
-
-  factory AskAiFunctionCallItem.fromJson(Map<String, dynamic> json) {
-    return AskAiFunctionCallItem(
-      command: AskAiCommand.fromJson(
-        Map<String, dynamic>.from(json['command'] as Map? ?? const {}),
-      ),
-      responseItemId: json['response_item_id'] as String?,
-      rawResponseItem: _mapOrNull(json['raw_response_item']),
-    );
-  }
-
-  final AskAiCommand command;
-  final String? responseItemId;
-  final Map<String, dynamic>? rawResponseItem;
-
-  @override
-  String get persistenceKind => 'function_call';
-
-  @override
-  int get estimatedCharacters =>
-      command.rawArguments.length + command.description.length;
-
-  @override
-  Map<String, dynamic> toJson() => {
-    'kind': persistenceKind,
-    'command': command.toJson(),
-    if (responseItemId != null) 'response_item_id': responseItemId,
-    if (rawResponseItem != null) 'raw_response_item': rawResponseItem,
-  };
-}
-
-@immutable
-class AskAiFunctionOutputItem extends AskAiConversationItem {
-  const AskAiFunctionOutputItem({required this.callId, required this.output});
-
-  factory AskAiFunctionOutputItem.fromJson(Map<String, dynamic> json) {
-    return AskAiFunctionOutputItem(
-      callId: json['call_id'] as String? ?? '',
-      output: json['output'] as String? ?? '',
-    );
-  }
-
-  final String callId;
-  final String output;
-
-  @override
-  String get persistenceKind => 'function_output';
-
-  @override
-  int get estimatedCharacters => output.length;
-
-  @override
-  Map<String, dynamic> toJson() => {
-    'kind': persistenceKind,
-    'call_id': callId,
-    'output': output,
-  };
-}
-
-@immutable
-class AskAiReasoningItem extends AskAiConversationItem {
-  const AskAiReasoningItem({required this.rawResponseItem, this.summaryText});
-
-  factory AskAiReasoningItem.fromJson(Map<String, dynamic> json) {
-    return AskAiReasoningItem(
-      rawResponseItem: _mapOrNull(json['raw_response_item']) ?? const {},
-      summaryText: json['summary_text'] as String?,
-    );
-  }
-
-  final Map<String, dynamic> rawResponseItem;
-  final String? summaryText;
-
-  @override
-  String get persistenceKind => 'reasoning';
-
-  @override
-  int get estimatedCharacters =>
-      jsonEncode(rawResponseItem).length + (summaryText?.length ?? 0);
-
-  @override
-  Map<String, dynamic> toJson() => {
-    'kind': persistenceKind,
-    'raw_response_item': rawResponseItem,
-    if (summaryText?.isNotEmpty == true) 'summary_text': summaryText,
-  };
-}
-
-/// Preserves output item types not yet rendered by ServerBox.
-@immutable
-class AskAiRawResponseItem extends AskAiConversationItem {
-  const AskAiRawResponseItem({required this.rawResponseItem});
-
-  factory AskAiRawResponseItem.fromJson(Map<String, dynamic> json) {
-    return AskAiRawResponseItem(
-      rawResponseItem: _mapOrNull(json['raw_response_item']) ?? const {},
-    );
-  }
-
-  final Map<String, dynamic> rawResponseItem;
-
-  @override
-  String get persistenceKind => 'raw_response';
-
-  @override
-  int get estimatedCharacters => jsonEncode(rawResponseItem).length;
-
-  @override
-  Map<String, dynamic> toJson() => {
-    'kind': persistenceKind,
-    'raw_response_item': rawResponseItem,
-  };
-}
-
-/// What the turns before it amounted to, written by the model.
-///
-/// Stored *beside* the items it stands for, never in place of them. The
-/// timeline the user reads is replayed from this same list, and a conversation
-/// that deleted its own history to save room would be a worse fault than the
-/// one this exists to fix. Only a request substitutes it: everything before
-/// the newest summary is left out and the summary goes instead.
-///
-/// Which means the position in the list is the whole of the bookkeeping. There
-/// is no range to record and nothing to keep in step — a second summary covers
-/// the first the same way it covers everything else behind it.
-@immutable
-class AskAiSummaryItem extends AskAiConversationItem {
-  const AskAiSummaryItem({required this.summary, this.coveredItems = 0});
-
-  factory AskAiSummaryItem.fromJson(Map<String, dynamic> json) {
-    final covered = json['covered_items'];
-    return AskAiSummaryItem(
-      summary: json['summary'] as String? ?? '',
-      coveredItems: covered is num ? covered.toInt() : 0,
-    );
-  }
-
-  final String summary;
-
-  /// How many items went into it. Shown to the reader, and used by nothing —
-  /// see the note above about position being the bookkeeping.
-  final int coveredItems;
-
-  @override
-  String get persistenceKind => 'summary';
-
-  @override
-  int get estimatedCharacters => summary.length;
-
-  @override
-  Map<String, dynamic> toJson() => {
-    'kind': persistenceKind,
-    'summary': summary,
-    'covered_items': coveredItems,
-  };
-}
-
-Map<String, dynamic>? _mapOrNull(Object? value) {
-  if (value is! Map) return null;
-  return Map<String, dynamic>.from(value);
-}
-
 /// How much of a command the local check could actually establish.
 ///
 /// An allowlist, not a blocklist: [readOnly] is the only verdict that says
@@ -308,8 +21,8 @@ Map<String, dynamic>? _mapOrNull(Object? value) {
 /// so adding a value here migrates nothing.
 enum AskAiCommandRisk { readOnly, unknown, unvettedHost, caution, destructive }
 
-/// Protocol-neutral function tool definition used by both Chat Completions and
-/// Responses requests.
+/// A tool the Agent offers the model: its name, what it is for, and its
+/// arguments as JSON Schema.
 @immutable
 class AskAiToolDefinition {
   const AskAiToolDefinition({
@@ -358,17 +71,6 @@ class AskAiToolDefinition {
   final String name;
   final String description;
   final Map<String, dynamic> parameters;
-
-  Map<String, dynamic> toRequestJson(AskAiProtocol protocol) {
-    final definition = <String, dynamic>{
-      'name': name,
-      'description': description,
-      'parameters': parameters,
-    };
-    return protocol == AskAiProtocol.responses
-        ? {'type': 'function', ...definition, 'strict': true}
-        : {'type': 'function', 'function': definition};
-  }
 }
 
 /// A command proposal returned by the AI tool call.
@@ -383,6 +85,52 @@ class AskAiCommand {
     this.modelSafeToRun = false,
     this.modelDestructive = false,
   });
+
+  /// The call the model made to tool [name] with [args], as the app reviews
+  /// and runs it.
+  ///
+  /// What the call is *about*, in one line, is a different argument for every
+  /// tool, and a tool missing from that switch reads as having said nothing.
+  /// The two flags are read leniently: `as bool?` throws on `"true"` or `1`,
+  /// and a model that spelled one loosely would otherwise lose the whole call.
+  factory AskAiCommand.fromToolCall({
+    required String id,
+    required String name,
+    required Map<String, Object?> args,
+  }) {
+    final command = switch (name) {
+      'read_file' || 'write_file' => args['path'],
+      'serverbox' => args['action'],
+      'ssh_connect' => args['host'],
+      'ssh_disconnect' => args['session_id'],
+      _ => args['command'],
+    };
+    return AskAiCommand(
+      id: id.isEmpty ? 'tool-call' : id,
+      command: command is String ? command.trim() : '',
+      description: switch (args['description'] ?? args['explanation']) {
+        final String d => d.trim(),
+        _ => '',
+      },
+      toolName: name,
+      rawArguments: jsonEncode(args),
+      modelSafeToRun: lenientBool(args['safe_to_run']) ?? false,
+      // False when the model left it out; the local list still answers.
+      modelDestructive: lenientBool(args['destructive']) ?? false,
+    );
+  }
+
+  /// `true`, `"yes"`, `1` and their opposites; null for anything else.
+  static bool? lenientBool(Object? value) {
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    if (value is String) {
+      final text = value.trim().toLowerCase();
+      if (text == 'true' || text == 'yes' || text == '1') return true;
+      if (text == 'false' || text == 'no' || text == '0') return false;
+    }
+    return null;
+  }
 
   factory AskAiCommand.fromJson(Map<String, dynamic> json) {
     return AskAiCommand(
@@ -549,40 +297,6 @@ class AskAiCommand {
     'model_safe_to_run': modelSafeToRun,
     'model_destructive': modelDestructive,
   };
-
-  Map<String, dynamic> toToolCallJson() {
-    final arguments = rawArguments.isNotEmpty
-        ? rawArguments
-        : jsonEncode({
-            'command': command,
-            'description': description,
-            'safe_to_run': modelSafeToRun,
-            'destructive': modelDestructive,
-          });
-    return {
-      'id': id,
-      'type': 'function',
-      'function': {'name': toolName, 'arguments': arguments},
-    };
-  }
-
-  Map<String, dynamic> toResponsesFunctionCallJson({String? itemId}) {
-    final arguments = rawArguments.isNotEmpty
-        ? rawArguments
-        : jsonEncode({
-            'command': command,
-            'description': description,
-            'safe_to_run': modelSafeToRun,
-            'destructive': modelDestructive,
-          });
-    return {
-      if (itemId != null && itemId.isNotEmpty) 'id': itemId,
-      'type': 'function_call',
-      'call_id': id,
-      'name': toolName,
-      'arguments': arguments,
-    };
-  }
 
   @visibleForTesting
   static AskAiCommandRisk classifyRisk(String command) {
@@ -792,57 +506,4 @@ class AskAiCommandResult {
       'stderr': stderr,
     });
   }
-}
-
-@immutable
-sealed class AskAiEvent {
-  const AskAiEvent();
-}
-
-/// Incremental text delta emitted while streaming the AI response.
-class AskAiContentDelta extends AskAiEvent {
-  const AskAiContentDelta(this.delta);
-  final String delta;
-}
-
-/// Emits when a tool call returns a runnable command proposal.
-class AskAiToolSuggestion extends AskAiEvent {
-  const AskAiToolSuggestion(this.command);
-  final AskAiCommand command;
-}
-
-/// Signals that the stream finished successfully.
-class AskAiCompleted extends AskAiEvent {
-  const AskAiCompleted({
-    required this.fullText,
-    required this.commands,
-    required this.outputItems,
-    required this.protocol,
-    this.reasoningContent,
-    this.responseId,
-    this.promptTokens,
-  });
-
-  final String fullText;
-  final List<AskAiCommand> commands;
-  final List<AskAiConversationItem> outputItems;
-  final AskAiProtocol protocol;
-  final String? reasoningContent;
-  final String? responseId;
-
-  /// What the request actually cost, as the provider counted it.
-  ///
-  /// Null where the provider said nothing — not every OpenAI-compatible server
-  /// answers `usage`, and a stream has to ask for it. It is the only honest
-  /// measure of how full the context is; everything else is an estimate of
-  /// characters standing in for tokens.
-  final int? promptTokens;
-}
-
-/// Signals that the stream terminated with an error before completion.
-class AskAiStreamError extends AskAiEvent {
-  const AskAiStreamError(this.error, this.stackTrace);
-
-  final Object error;
-  final StackTrace? stackTrace;
 }

@@ -1,22 +1,22 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show Chats, ChatMeta, LlmStores;
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/model/ai/agent_conversation.dart';
-import 'package:server_box/data/provider/ai/agent_session.dart';
+import 'package:server_box/core/llm/scope.dart';
+import 'package:server_box/view/page/agent/view.dart';
 
-/// Opens the conversation list as a sheet, for the layouts too narrow to give
-/// it a column of its own.
-Future<void> showAgentHistorySheet(BuildContext context) {
+/// Opens [scope]'s chat list as a sheet, for the layouts too narrow to give it
+/// a column of its own.
+Future<void> showAgentHistorySheet(BuildContext context, {String? scope}) {
   return showModalBottomSheet<void>(
     context: context,
     useSafeArea: true,
     isScrollControlled: true,
     showDragHandle: true,
     sheetAnimationStyle: agentSheetAnimation,
-    builder: (_) => const FractionallySizedBox(
+    builder: (_) => FractionallySizedBox(
       heightFactor: 0.82,
-      child: AgentHistoryPanel(inSheet: true),
+      child: AgentHistoryPanel(inSheet: true, scope: scope),
     ),
   );
 }
@@ -27,8 +27,7 @@ Future<void> showAgentHistorySheet(BuildContext context) {
 /// which on the way out reads as the sheet being dropped. The rest of the
 /// Agent's motion — the floating shell's reveal, its expand — is
 /// `easeOutCubic` opening and `easeIn` closing, on the reasoning that opening
-/// presents something and closing acknowledges it. These sheets are the same
-/// gesture and had been the one thing not following it.
+/// presents something and closing acknowledges it.
 const agentSheetAnimation = AnimationStyle(
   curve: Curves.easeOutCubic,
   duration: Durations.medium2,
@@ -36,38 +35,63 @@ const agentSheetAnimation = AnimationStyle(
   reverseDuration: Durations.short4,
 );
 
-/// The conversation list, as a sheet you opened or as the column that is
-/// always beside the page.
+/// [scope]'s chats, as a sheet you opened or as the column that is always
+/// beside the page — see [AgentChats].
 ///
 /// [inSheet] is the difference between the two: a sheet is done once you have
 /// picked something from it, so picking closes it. The column stays.
-class AgentHistoryPanel extends ConsumerStatefulWidget {
-  const AgentHistoryPanel({super.key, required this.inSheet});
+class AgentHistoryPanel extends StatefulWidget {
+  const AgentHistoryPanel({super.key, required this.inSheet, this.scope});
 
   final bool inSheet;
+  final String? scope;
 
   @override
-  ConsumerState<AgentHistoryPanel> createState() => _AgentHistoryPanelState();
+  State<AgentHistoryPanel> createState() => _AgentHistoryPanelState();
 }
 
-class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
+class _AgentHistoryPanelState extends State<AgentHistoryPanel> {
   /// The rail's search: what is typed, and whether the row is a field at all.
   final _search = InlineSearchController();
 
-  /// What a conversation is called, or what an unnamed one is called instead.
-  /// Read twice — for the row and for the search — so it is written once.
-  String _titleOf(AgentConversation conversation) =>
-      conversation.title.isEmpty
-      ? context.l10n.askAiUntitledConversation
-      : conversation.title;
+  /// The chats whose conversation mentions what was typed, as the search
+  /// last answered; null while nothing is typed.
+  Set<String>? _found;
+  var _query = 0;
+
+  String? get _scope => widget.scope;
+
+  String _titleOf(ChatMeta chat) => switch (chat.title) {
+    final t? when t.isNotEmpty => t,
+    _ => context.l10n.askAiUntitledConversation,
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _search.addListener(_searchChanged);
+  }
 
   @override
   void dispose() {
+    _search.removeListener(_searchChanged);
     _search.dispose();
     super.dispose();
   }
 
-  AgentSession get _notifier => ref.read(globalAgentSessionProvider.notifier);
+  /// Asks the chats themselves, not only their titles: what a conversation was
+  /// about is usually in it rather than in its name.
+  Future<void> _searchChanged() async {
+    final needle = _search.needle;
+    final query = ++_query;
+    if (needle.isEmpty) {
+      setState(() => _found = null);
+      return;
+    }
+    final hits = await Chats.search(needle, scope: _scope);
+    if (!mounted || query != _query) return;
+    setState(() => _found = {for (final m in hits) m.id});
+  }
 
   // ------------------------------------------------------------------ actions
 
@@ -75,14 +99,12 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
     if (widget.inSheet && mounted) Navigator.pop(context);
   }
 
-  Future<void> _rename(AgentConversation conversation) async {
-    final controller = TextEditingController(text: conversation.title)
-      ..selection = TextSelection(
-        baseOffset: 0,
-        extentOffset: conversation.title.length,
-      );
+  Future<void> _rename(ChatMeta chat) async {
+    final title = chat.title ?? '';
+    final controller = TextEditingController(text: title)
+      ..selection = TextSelection(baseOffset: 0, extentOffset: title.length);
     // Disposed with the field, not when the dialog answers. See [DisposeWith].
-    final title = await context.showRoundDialog<String>(
+    final next = await context.showRoundDialog<String>(
       title: context.l10n.askAiRenameConversation,
       childBuilder: (dialogContext) => DisposeWith(
         notifiers: [controller],
@@ -100,11 +122,11 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
         ),
       ],
     );
-    if (title == null || title.isEmpty || !mounted) return;
-    await _notifier.renameConversation(conversation.id, title);
+    if (next == null || next.isEmpty || !mounted) return;
+    Chats.rename(chat.id, next);
   }
 
-  Future<void> _delete(AgentConversation conversation) async {
+  Future<void> _delete(ChatMeta chat) async {
     final confirmed = await context.showRoundDialog<bool>(
       title: context.l10n.askAiDeleteConversationTitle,
       child: Text(context.l10n.askAiDeleteConversationTip),
@@ -118,11 +140,7 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
       ],
     );
     if (confirmed != true || !mounted) return;
-    // Whether this is still allowed is re-checked inside the session, not only
-    // when the row was built: an auto-approved tool can start while the
-    // confirmation is on screen, and it would go on to append its result to
-    // whichever conversation is active by then.
-    await _notifier.deleteConversation(conversation.id);
+    await AgentChats.delete(_scope, chat.id);
   }
 
   Future<void> _clear() async {
@@ -139,146 +157,129 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
       ],
     );
     if (confirmed != true || !mounted) return;
-    await _notifier.clearConversationHistory();
+    for (final chat in LlmStores.chat.all(scope: _scope)) {
+      await AgentChats.delete(_scope, chat.id);
+    }
   }
-
-  // -------------------------------------------------------------------- utils
 
   // -------------------------------------------------------------------- build
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final session = ref.watch(globalAgentSessionProvider);
-    final conversations = session.conversations;
-    final activeId = session.conversation?.id;
+    final current = AgentChats.of(_scope);
     // The same rail as the terminal and file tabs: a right-aligned row of
     // actions, a heading with a rule running to the edge, and one line per
-    // entry. It used to be a list of cards with a timestamp under each title —
-    // its own vocabulary, in the one column of the app that had one.
-    //
-    // The timestamp went with the second line, which is [SideBarTile]'s own
-    // trade-off: at two lines a row a rail stops being something you can take
-    // in at a glance, and the conversation beside it says when it was.
-    // Transparent rather than `colorScheme.surface`: in a column this rail
-    // shows the `Scaffold`'s background like the terminal and file rails do,
-    // and in a sheet it shows the sheet's. Both are slots `toAmoled`
-    // overrides and `colorScheme.surface` is not, so painting that here left
-    // the rail Material grey under an AMOLED theme while the page beside it
-    // went black.
+    // entry. Transparent, so it shows the `Scaffold`'s background in a column
+    // and the sheet's in a sheet — both slots an AMOLED theme overrides.
     return ListenableBuilder(
-      listenable: _search,
+      listenable: Listenable.merge([
+        LlmStores.chat.changes,
+        current,
+        _search,
+        Chats.openChanges,
+        Chats.runningChanges,
+      ]),
       builder: (context, _) {
+        final chats = LlmStores.chat.all(scope: _scope);
         final needle = _search.needle;
+        final found = _found;
         final shown = [
-          for (final conversation in conversations)
+          for (final chat in chats)
             if (needle.isEmpty ||
-                _titleOf(conversation).toLowerCase().contains(needle))
-              conversation,
+                _titleOf(chat).toLowerCase().contains(needle) ||
+                (found?.contains(chat.id) ?? false))
+              chat,
         ];
+        final busy = AgentChats.busy(_scope);
 
         return Material(
-      type: MaterialType.transparency,
-      child: ListView(
-        padding: const EdgeInsets.only(bottom: 12),
-        children: [
-          // The same row, at the same inset and the same height, as the rails
-          // on the other tabs — see [SideBarActions], which is also what turns
-          // it into a search field.
-          SideBarActions(
-            search: _search,
-            // `Btn.icon` at 18, which is what the other rails' rows are made
-            // of. This was `IconButton` at [floatHeaderIconSize] — the size a
-            // floating panel's header uses, not a rail's — so the one row in
-            // the app that was meant to match three others matched none.
-            actions: [
-              if (conversations.isNotEmpty)
-                Btn.icon(
-                  text: libL10n.clearHistory,
-                  icon: const Icon(Icons.delete_sweep_outlined, size: 18),
-                  onTap: session.isWorking ? null : _clear,
-                ),
-              Btn.icon(
-                text: libL10n.search,
-                icon: const Icon(Icons.search, size: 18),
-                onTap: _search.start,
+          type: MaterialType.transparency,
+          child: ListView(
+            padding: const EdgeInsets.only(bottom: 12),
+            children: [
+              SideBarActions(
+                search: _search,
+                actions: [
+                  if (chats.isNotEmpty)
+                    Btn.icon(
+                      text: libL10n.clearHistory,
+                      icon: const Icon(Icons.delete_sweep_outlined, size: 18),
+                      onTap: busy ? null : _clear,
+                    ),
+                  Btn.icon(
+                    text: libL10n.search,
+                    icon: const Icon(Icons.search, size: 18),
+                    onTap: _search.start,
+                  ),
+                  Btn.icon(
+                    text: context.l10n.askAiNewConversation,
+                    icon: const Icon(Icons.add, size: 18),
+                    onTap: () {
+                      AgentChats.startNew(_scope);
+                      _closeIfSheet();
+                    },
+                  ),
+                ],
               ),
-              // Plain, not `filledTonal`. A filled button beside a bare one
-              // reads as the bigger of the two whatever their icons measure,
-              // and this row is meant to be one weight — the rails on the
-              // other tabs put their add button in it unfilled too.
-              Btn.icon(
-                text: context.l10n.askAiNewConversation,
-                icon: const Icon(Icons.add, size: 18),
-                onTap: session.isWorking
-                    ? null
-                    : () async {
-                        await _notifier.beginNewConversation();
-                        _closeIfSheet();
-                      },
-              ),
+              SideBarSection(context.l10n.askAiHistory),
+              // Two different nothings: no chats at all, and none that match
+              // what was typed. The second says what was typed, since that is
+              // the thing to change.
+              if (shown.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                  child: Text(
+                    needle.isEmpty ? context.l10n.agentNoHistory : needle,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                )
+              else
+                for (final chat in shown)
+                  SideBarTile(
+                    title: _titleOf(chat),
+                    // A reply being written here, whichever chat is shown.
+                    leading: switch (AgentActivity.of(chat.id)) {
+                      AgentActivity.idle => null,
+                      final activity => AgentActivityMark(activity, size: 13),
+                    },
+                    selected: chat.id == current.value,
+                    onTap: () {
+                      AgentChats.select(_scope, chat.id);
+                      _closeIfSheet();
+                    },
+                    onMenu: (at) => _showRowMenu(chat, at),
+                  ),
             ],
           ),
-          SideBarSection(context.l10n.askAiHistory),
-          // Two different nothings: no conversations at all, and none that
-          // match what was typed. The second says what was typed, since that
-          // is the thing to change.
-          if (shown.isEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-              child: Text(
-                needle.isEmpty ? context.l10n.agentNoHistory : needle,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            )
-          else
-            for (final conversation in shown)
-              SideBarTile(
-                title: _titleOf(conversation),
-                selected: conversation.id == activeId,
-                onTap: session.isWorking
-                    ? null
-                    : () async {
-                        await _notifier.activateConversation(conversation);
-                        _closeIfSheet();
-                      },
-                // The row's own tap is already refused while a tool is
-                // running. Renaming is harmless, but deleting the conversation
-                // being worked in clears the timeline the execution is about
-                // to append its output to — and the execution keeps going,
-                // since nothing but the stop button ends one.
-                menuEnabled: !session.isWorking,
-                onMenu: (at) => _showRowMenu(conversation, at),
-              ),
-        ],
-      ),
         );
       },
     );
   }
 
-  void _showRowMenu(AgentConversation conversation, Offset? at) {
+  void _showRowMenu(ChatMeta chat, Offset? at) {
+    // A chat writing a reply is not deleted from under it.
+    final running = Chats.openOf(chat.id)?.running.value ?? false;
     showContextMenu(
       context,
       [
         ContextMenuAction(
           text: context.l10n.askAiRenameConversation,
           icon: Icons.drive_file_rename_outline,
-          onTap: () => _rename(conversation),
+          onTap: () => _rename(chat),
         ),
-        ContextMenuAction(
-          text: libL10n.delete,
-          icon: Icons.delete_outline,
-          destructive: true,
-          onTap: () => _delete(conversation),
-        ),
+        if (!running)
+          ContextMenuAction(
+            text: libL10n.delete,
+            icon: Icons.delete_outline,
+            destructive: true,
+            onTap: () => _delete(chat),
+          ),
       ],
-      title: conversation.title.isEmpty
-          ? context.l10n.askAiUntitledConversation
-          : conversation.title,
+      title: _titleOf(chat),
       at: at,
     );
   }

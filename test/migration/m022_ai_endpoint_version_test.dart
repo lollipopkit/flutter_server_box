@@ -1,6 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/app/ask_ai_config.dart';
 import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/migrations/m022_ai_endpoint_version.dart';
 import 'package:server_box/data/store/schema.dart';
@@ -13,6 +12,24 @@ import '../helpers/test_db.dart';
 /// that was working because of it, with a 404 and nothing to say why. This
 /// puts the guess into the stored value once, so tomorrow's request is the one
 /// that went out yesterday.
+/// The `askAi` row as the release this step was written for stored it: every
+/// field, defaults included.
+Map<String, Object?> _row({required String baseUrl, String model = 'gpt-5.6-luna'}) => {
+  'baseUrl': baseUrl,
+  'apiKey': '',
+  'model': model,
+  'protocol': 'auto',
+  'autoRunSafeCommands': false,
+  'sendOnEnter': true,
+  'allowInsecure': false,
+  'compactAtPercent': 90,
+  'contextOverrides': <String, int>{},
+};
+
+Map<String, Object?> _stored(SettingStore store) => Map<String, Object?>.from(
+  store.get<Object>(AiEndpointVersionMigration.key)! as Map,
+);
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -95,35 +112,30 @@ void main() {
     test('rewrites a stored address that was relying on the guess', () {
       store.set(
         AiEndpointVersionMigration.key,
-        const AskAiConfig(
-          baseUrl: 'https://api.openai.com',
-          model: 'gpt-5-nano',
-        ).toJson(),
+        _row(baseUrl: 'https://api.openai.com', model: 'gpt-5-nano'),
         updateLastUpdateTsOnSet: false,
       );
 
       AiEndpointVersionMigration().applySync();
 
-      final raw = store.get<Object>(AiEndpointVersionMigration.key);
-      final config = AskAiConfig.fromJson(Map<String, dynamic>.from(raw! as Map));
-      expect(config.baseUrl, 'https://api.openai.com/v1');
       // And nothing else about the configuration moved.
-      expect(config.model, 'gpt-5-nano');
+      expect(
+        _stored(store),
+        _row(baseUrl: 'https://api.openai.com/v1', model: 'gpt-5-nano'),
+      );
     });
 
     test('leaves an address that already names a version', () {
       const url = 'https://open.bigmodel.cn/api/paas/v4';
       store.set(
         AiEndpointVersionMigration.key,
-        const AskAiConfig(baseUrl: url).toJson(),
+        _row(baseUrl: url),
         updateLastUpdateTsOnSet: false,
       );
 
       AiEndpointVersionMigration().applySync();
 
-      final raw = store.get<Object>(AiEndpointVersionMigration.key);
-      final config = AskAiConfig.fromJson(Map<String, dynamic>.from(raw! as Map));
-      expect(config.baseUrl, url);
+      expect(_stored(store), _row(baseUrl: url));
     });
 
     test('an install that never configured one is not given a row', () {
@@ -135,7 +147,7 @@ void main() {
     test('is not a user edit', () {
       store.set(
         AiEndpointVersionMigration.key,
-        const AskAiConfig(baseUrl: 'https://api.openai.com').toJson(),
+        _row(baseUrl: 'https://api.openai.com'),
         updateLastUpdateTsOnSet: false,
       );
       final before = store.lastUpdateTs;

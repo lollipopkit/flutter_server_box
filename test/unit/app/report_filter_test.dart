@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:dio/dio.dart';
+import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show McpError, UnauthorizedError;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:icloud_storage_plus/models/exceptions.dart';
 import 'package:server_box/core/service/report_filter.dart';
@@ -30,6 +31,8 @@ void main() {
         retryable: false,
         message: 'not signed in',
       ),
+      UnauthorizedError('Authentication required'),
+      McpError(0, 'Error POSTing to endpoint (HTTP 401): {}'),
     ];
     for (final e in notDefects) {
       expect(ReportFilter.isDefect(e), isFalse, reason: '$e');
@@ -51,6 +54,9 @@ void main() {
       StateError('Bad state'),
       TypeError(),
       ArgumentError('index'),
+      // An MCP protocol error is not the server's refusal: a request this
+      // app built wrong would be one.
+      McpError(-32602, 'Invalid params'),
     ];
     for (final e in defects) {
       expect(ReportFilter.isDefect(e), isTrue, reason: '$e');

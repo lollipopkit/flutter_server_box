@@ -74,111 +74,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get askAi => 'Спросить ИИ';
 
   @override
-  String get askAiAwaitingResponse => 'Ожидание ответа ИИ...';
-
-  @override
-  String get askAiEndpointTip =>
-      'Домен или полный URL. Путь дополняется по выбранному протоколу.';
-
-  @override
-  String get askAiProtocolTip =>
-      'Авто пробует Responses, затем Chat Completions.';
-
-  @override
-  String get askAiCommandInserted => 'Команда вставлена в терминал';
-
-  @override
-  String askAiConfigMissing(String fields) {
-    return 'Настройте $fields в настройках.';
-  }
-
-  @override
-  String get askAiDisclaimer =>
-      'ИИ может ошибаться. Используйте с осторожностью.';
-
-  @override
   String get askAiInsertTerminal => 'Вставить в терминал';
 
   @override
-  String get askAiNoResponse => 'Нет ответа';
-
-  @override
   String get remoteDesktop => 'Удалённый рабочий стол';
-
-  @override
-  String get askAiAgentWelcome => 'Что сделаем на этом сервере?';
-
-  @override
-  String get askAiAgentPromptHint =>
-      'Попросите агента что-нибудь проверить или починить…';
-
-  @override
-  String get askAiAnalyzeSelectionPrompt =>
-      'Проанализируй выделенный вывод терминала и объясни, что произошло';
-
-  @override
-  String get askAiTerminalContext => 'Контекст терминала';
-
-  @override
-  String get askAiReviewNeeded => 'Проверить';
-
-  @override
-  String get askAiReviewAction => 'Проверить предложенную команду';
-
-  @override
-  String get askAiReviewBeforeContinuing =>
-      'Сначала проверьте или отклоните текущее предложение';
-
-  @override
-  String get askAiApproveRun => 'Одобрить и выполнить';
-
-  @override
-  String get askAiDecline => 'Отклонить';
-
-  @override
-  String get askAiActionDeclined => 'Предложенная команда отклонена.';
-
-  @override
-  String get askAiInterrupted => 'Ответ агента прерван.';
-
-  @override
-  String get askAiResend => 'Resend';
-
-  @override
-  String get askAiResendTip =>
-      'Всё после этого сообщения будет удалено — ответы, команды и их результаты.';
-
-  @override
-  String get askAiDeleteTip =>
-      'Это сообщение и всё после него будет удалено — ответы, команды и их результаты.';
-
-  @override
-  String get askAiModelTable => 'Model table';
-
-  @override
-  String get askAiModelTableTip =>
-      'Размеры контекста для разных моделей взяты с models.dev. Одна таблица уже встроена в приложение; нажмите, чтобы загрузить более новую.';
-
-  @override
-  String get askAiContextFallback => 'нет в таблице';
-
-  @override
-  String get askAiCompactAt => 'Summarise at';
-
-  @override
-  String get askAiCompactAtTip =>
-      'Насколько должен заполниться контекст модели, прежде чем предыдущие сообщения будут сведены в краткое содержание. При раннем сжатии детали теряются быстрее, а при позднем модель может отклонить запрос.';
-
-  @override
-  String get askAiContextTokens => 'Context size';
-
-  @override
-  String get askAiContextTokensTip =>
-      'Сколько токенов помещается в контекст этой модели. В автоматическом режиме размер определяется по названию; укажите число, если провайдер предоставляет меньшее окно, чем поддерживает модель.';
-
-  @override
-  String get askAiConversationCompacted =>
-      'Предыдущие сообщения были сведены в краткое содержание, чтобы продолжить разговор.';
 
   @override
   String get askAiRiskReadOnly => 'Только чтение';
@@ -193,23 +92,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get askAiRiskDestructive => 'Высокий риск';
 
   @override
-  String get askAiHighRiskConfirmTitle => 'Выполнить команду с высоким риском?';
-
-  @override
-  String get askAiHighRiskConfirmBody =>
-      'Команда может внести изменения, которые трудно отменить. Проверьте внимательно.';
-
-  @override
-  String get askAiNoCommandOutput => 'Команда завершилась без вывода.';
-
-  @override
-  String get askAiOutputTruncated =>
-      'Длинный вывод обрезан перед отправкой обратно агенту.';
-
-  @override
-  String get askAiAutoApproved => 'Одобрено автоматически';
-
-  @override
   String get askAiAutoRunSafeCommands =>
       'Автоматически выполнять команды только для чтения';
 
@@ -218,38 +100,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Выполняется, только если и модель, и локальная проверка считают команду только для чтения';
 
   @override
-  String get askAiSendOnEnter => 'Enter отправляет';
-
-  @override
-  String get askAiSendOnEnterTip =>
-      'Enter отправляет, Shift+Enter — новая строка. Выкл.: Enter — новая строка, Cmd/Ctrl+Enter отправляет.';
-
-  @override
-  String get askAiApiKeyOptional =>
-      'Оставьте пустым для локального или без аутентификации';
-
-  @override
-  String get askAiAllowInsecure => 'Разрешить незашифрованный HTTP';
-
-  @override
-  String get askAiAllowInsecureTip =>
-      'Разрешает подключения по http:// к самостоятельно размещённым моделям по адресам, отличным от localhost. Ключ API и любой контекст терминала будут отправлены без шифрования; localhost это не затрагивает.';
-
-  @override
-  String get askAiInsecureEndpoint =>
-      'Эта конечная точка использует http://. Включите «Разрешить незашифрованный HTTP» в настройках AI, чтобы использовать её.';
-
-  @override
   String get askAiHistory => 'История диалогов';
 
   @override
   String get askAiNewConversation => 'Новый диалог';
-
-  @override
-  String get askAiNoHistory => 'Сохранённых бесед пока нет';
-
-  @override
-  String get askAiNoHistoryMessages => 'Сообщений пока нет';
 
   @override
   String get askAiUntitledConversation => 'Без названия';
@@ -263,29 +117,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get askAiDeleteConversationTip =>
       'Удаляет её с этого устройства. Отменить нельзя.';
-
-  @override
-  String get askAiClearHistoryTitle =>
-      'Очистить историю агента для этого сервера?';
-
-  @override
-  String get askAiClearHistoryTip =>
-      'Все сохранённые беседы агента для этого сервера будут удалены.';
-
-  @override
-  String get askAiRestoredReview =>
-      'Команда взята из истории. Проверьте её снова';
-
-  @override
-  String get agentWelcome => 'Что сделаем на ваших серверах?';
-
-  @override
-  String get agentWelcomeTip =>
-      'Пусть агент разберётся с проблемой или выполнит задачу';
-
-  @override
-  String get agentPromptHint =>
-      'Попросите агента проверить серверы или выполнить на них действие…';
 
   @override
   String get agentNoHistory => 'Нет сохранённых глобальных диалогов агента';
@@ -305,14 +136,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get agentToolWriteFile => 'Запись файла';
-
-  @override
-  String get agentToolFailed => 'Не удалось выполнить инструмент.';
-
-  @override
-  String agentToolCallsFmt(int count) {
-    return 'Вызовов инструментов: $count';
-  }
 
   @override
   String get floatOverTabs => 'Поверх других вкладок';
@@ -860,13 +683,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get noConnectionMethod => 'Настройте SSH, агент monitor или оба';
-
-  @override
-  String get preferredTransport => 'Сначала пробовать';
-
-  @override
-  String get preferredTransportTip =>
-      'Откуда читается статус и какое соединение команда откроет первым. Второе остаётся доступным.';
 
   @override
   String get keepForeground => 'Пожалуйста, держите приложение в фокусе!';
@@ -1463,9 +1279,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get used => 'Использовано';
 
   @override
-  String get view => 'Вид';
-
-  @override
   String get viewDetails => 'Просмотр деталей';
 
   @override
@@ -1609,13 +1422,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get tmuxSessionName => 'Имя сессии';
 
   @override
-  String get tmuxExistingSessions => 'Существующие сессии';
-
-  @override
   String get tmuxNewSession => 'Новая сессия';
-
-  @override
-  String get tmuxWindows => 'Окна';
 
   @override
   String get tmuxNewWindow => 'Новое окно';
@@ -1637,33 +1444,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String tmuxPaneCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count панели',
-      many: '$count панелей',
-      few: '$count панели',
-      one: '1 панель',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String get tmuxAttached => 'Подключена';
-
-  @override
-  String get tmuxActive => 'Активна';
-
-  @override
-  String tmuxActiveAt(String time) {
-    return 'активна: $time';
-  }
-
-  @override
-  String tmuxAttachedAt(String time) {
-    return 'подключена: $time';
-  }
 
   @override
   String get tmuxSkip => 'Пропустить';
@@ -1952,9 +1733,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get bmcStaleWrite =>
       'BMC изменился во время записи. Повторите попытку.';
-
-  @override
-  String get send => 'Отправить';
 
   @override
   String get privacyBlur => 'Приватность в фоне';
@@ -2336,6 +2114,69 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get agentServerTools => 'Инструменты серверов';
+
+  @override
+  String get agentServerToolsTip =>
+      'Выполнять команды и читать или записывать файлы на ваших серверах, подключаться к другим хостам по SSH и использовать действия самого ServerBox.';
+
+  @override
+  String get agentTerminalTools => 'Терминал';
+
+  @override
+  String get agentTerminalToolsTip =>
+      'В собственных чатах терминала: читать то, что он показывает, и выполнять команды на его сервере.';
+
+  @override
+  String get agentToolTerminalScreen => 'Прочитать экран';
+
+  @override
+  String get agentProviders => 'Провайдеры';
+
+  @override
+  String get agentProvidersTip => 'Ключи API, модели и модель для нового чата';
+
+  @override
+  String get agentTools => 'Инструменты';
+
+  @override
+  String get agentToolsTip => 'Что может использовать Agent, и его серверы MCP';
+
+  @override
+  String get agentSnippetToolsTip =>
+      'Просмотр, добавление, изменение и удаление snippets. Изменения подтверждаются.';
+
+  @override
+  String get agentVirtToolsTip =>
+      'Чтение ВМ и контейнеров, загруженных вкладкой «Виртуализация».';
+
+  @override
+  String get agentBenchmarkToolsTip =>
+      'Чтение результатов бенчмарка; запуск или остановка с вашего одобрения.';
+
+  @override
+  String get agentRemoteDesktopToolsTip =>
+      'Список профилей удалённого рабочего стола; подключение и отключение с вашего одобрения.';
+
+  @override
+  String get agentSkills => 'Skills';
+
+  @override
+  String get agentSkillsTip =>
+      'Инструкции для определённых задач, устанавливаются с GitHub или по ссылке';
+
+  @override
+  String get agentPermissions => 'Разрешения';
+
+  @override
+  String get agentEmptyHint =>
+      'Спросите о своих серверах или попросите Agent что-то на них сделать.';
+
+  @override
+  String get agentTerminalEmptyHint =>
+      'Спросите об этом сервере. Agent может читать этот терминал и выполнять здесь команды.';
+
+  @override
   String oldestSampleFmt(String time) {
     return 'самый старый замер $time';
   }
@@ -2530,34 +2371,8 @@ class AppLocalizationsRu extends AppLocalizations {
       'Оба могут быть включены одновременно. Порядок — это порядок, в котором к ним обращаются.';
 
   @override
-  String transportOrderFmt(String first, String second) {
-    return 'Перетащите, чтобы изменить порядок. Сначала — $first; если он не отвечает, сессию берёт на себя $second.';
-  }
-
-  @override
-  String transportOnlyFmt(String name) {
-    return 'Включён только $name, поэтому переключаться не на что.';
-  }
-
-  @override
   String get transportNoneOn =>
       'Оба выключены — к этому серверу нельзя подключиться.';
-
-  @override
-  String get transportOffKept =>
-      'выключено — настройки сохранены, обращений нет';
-
-  @override
-  String get transportDialledFirst => 'обращение первым';
-
-  @override
-  String get transportFallback => 'запасной';
-
-  @override
-  String get transportOnlyMethod => 'единственный способ';
-
-  @override
-  String get transportOff => 'выключено';
 
   @override
   String get thisDevice => 'Это устройство';
@@ -2605,10 +2420,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get optional => 'Необязательное';
-
-  @override
-  String get optionalTip =>
-      'Ничто здесь не нужно для подключения. Откройте один — и его поля займут место формы.';
 
   @override
   String get sshAdvanced => 'SSH, дополнительно';
@@ -3442,9 +3253,6 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get reopen => 'Открыть снова';
-
-  @override
   String get virtSnapshots => 'Снимки';
 
   @override
@@ -3614,9 +3422,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get virtCreateNameTaken => 'Гость с таким именем уже есть.';
-
-  @override
-  String get virtCreateVmidInvalid => 'От 100 до 999999999.';
 
   @override
   String get virtCreateVmidTaken => 'Этот VMID занят.';
@@ -4123,9 +3928,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get virtHwEfiStorage => 'Где хранить переменные EFI';
-
-  @override
-  String get virtHwTpmStorage => 'Где хранить состояние TPM';
 
   @override
   String virtHwSwitchFirmwareAsk(String guest, String firmware) {
@@ -4772,9 +4574,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get virtSnapshotFormInternal => 'Внутренний (в образе)';
 
   @override
-  String get virtSnapshotForm => 'Тип';
-
-  @override
   String get virtSnapshotOverlayPool => 'Пул слоёв';
 
   @override
@@ -4802,11 +4601,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get virtSnapshotChainBase => 'Базовый образ';
 
   @override
-  String virtSnapshotChainRaw(String format) {
-    return 'Для внешнего снимка нужен диск qcow2. Этот — $format.';
-  }
-
-  @override
   String get virtSnapshotNoSupport =>
       'Хранилище гостя не поддерживает снимки, поэтому создать его нельзя.';
 
@@ -4827,9 +4621,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get virtSnapshotDiffShow => 'Сравнить с текущим';
-
-  @override
-  String get virtSnapshotDiffGroup => 'Изменено';
 
   @override
   String get virtSnapshotDiffGroupCpu => 'Процессор';
@@ -4910,19 +4701,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get virtTemplateTip => 'Шаблон запускается только после клонирования.';
 
   @override
-  String get virtCloneStorage => 'Целевое хранилище';
-
-  @override
   String get virtCloneStorageSame => 'Как у источника';
 
   @override
-  String get virtCloneNode => 'Целевой узел';
-
-  @override
   String get virtCloneNodeSame => 'Как у источника';
-
-  @override
-  String get virtClonePool => 'Целевой пул';
 
   @override
   String get virtCloneStorageContent =>
@@ -4948,9 +4730,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get virtBackupJobNew => 'Новое задание';
-
-  @override
-  String get virtBackupJobEdit => 'Изменить задание';
 
   @override
   String get virtBackupJobRun => 'Запустить сейчас';
@@ -5004,12 +4783,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get virtBackupMail => 'Уведомление';
 
   @override
-  String get virtBackupMailAlways => 'Всегда';
-
-  @override
-  String get virtBackupMailFailure => 'При сбое';
-
-  @override
   String get virtBackupNotesTemplate => 'Заметки к копии';
 
   @override
@@ -5023,9 +4796,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get virtBackupPruneTip =>
       'Параметры хранения PVE, напр. keep-last=7,keep-daily=4. Пусто: из хранилища или узла.';
-
-  @override
-  String get virtBackupNextRun => 'Следующий запуск';
 
   @override
   String get virtBackupJobNode => 'Узел';
@@ -5060,9 +4830,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get virtBackupRestoreStorageSame => 'Как в копии';
-
-  @override
-  String get virtBackupModeSnapshotTip => 'snapshot · без простоя';
 
   @override
   String get virtCloneStorageMissing =>

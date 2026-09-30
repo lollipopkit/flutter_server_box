@@ -29,7 +29,8 @@ abstract final class Urls {
   /// put on the clipboard instead and this page is opened to paste it into.
   static const newIssue = '$thisRepo/issues/new';
 
-  static const docs = 'https://serverbox.lollipopkit.com/docs';
+  static const site = 'https://serverbox.lollipopkit.com';
+  static const docs = '$site/docs';
 
   /// What `{DIST}` and `{BRIGHT}` mean, and what a usable image URL looks
   /// like.

@@ -1,13 +1,12 @@
-import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show ChatMeta, LlmStores;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
-import 'package:server_box/data/store/agent_conversation.dart';
 import 'package:server_box/data/store/port_forward.dart';
 import 'package:server_box/data/store/remote_desktop.dart';
 import 'package:server_box/data/store/server.dart';
@@ -20,7 +19,6 @@ void main() {
   late PortForwardStore forwards;
   late RemoteDesktopStore remoteDesktops;
   late SnippetStore snippets;
-  late AgentConversationStore conversations;
 
   const original = Spi(
     id: 'server-old',
@@ -58,12 +56,10 @@ void main() {
     forwards = PortForwardStore();
     remoteDesktops = RemoteDesktopStore();
     snippets = SnippetStore();
-    conversations = AgentConversationStore();
     servers = ServerStore(
       portForwards: forwards,
       remoteDesktops: remoteDesktops,
       snippets: snippets,
-      conversations: conversations,
     );
     servers.put(original);
     servers.put(jumpOwner);
@@ -99,24 +95,13 @@ void main() {
       'VALUES (?, ?, ?, ?, ?, ?);',
       ['stat-1', original.id, original.name, 1, 'success', 5],
     );
-    final conversation = <String, Object?>{
-      'id': 'conversation-1',
-      'server_id': original.id,
-      'title': 'hello',
-      'created_at': '2026-01-01T00:00:00.000',
-      'updated_at': '2026-01-01T00:00:00.000',
-      'protocol': 'responses',
-      'provider_base_url': 'https://example.com',
-      'model': 'test',
-      'items': <Object?>[],
-    };
-    SqliteDb.instance.execute(
-      'INSERT INTO agent_conversation VALUES (?, ?, ?, ?);',
-      ['conversation-1', original.id, 1, json.encode(conversation)],
-    );
-    SqliteDb.instance.execute(
-      'INSERT INTO agent_active_conversation VALUES (?, ?);',
-      [original.id, 'conversation-1'],
+    // A chat of the server's terminals, which lists it by the server's id.
+    LlmStores.chat.put(
+      ChatMeta(
+        id: 'chat-1',
+        updatedAt: DateTime(2026),
+        scope: 'terminal:${original.id}',
+      ),
     );
   });
 
@@ -130,7 +115,6 @@ void main() {
     final forwardChanged = forwards.watch().first;
     final remoteDesktopChanged = remoteDesktops.watch().first;
     final snippetChanged = snippets.watch().first;
-    final conversationChanged = conversations.watch().first;
 
     final oldForwardRev =
         SqliteDb.instance.select('SELECT rev FROM port_forward WHERE id = ?;', [
@@ -160,7 +144,6 @@ void main() {
       forwardChanged,
       remoteDesktopChanged,
       snippetChanged,
-      conversationChanged,
     ]).timeout(const Duration(seconds: 1));
 
     expect(servers.fetchOneRaw(original.id), isNull);
@@ -213,19 +196,9 @@ void main() {
     );
     expect(servers.fetchOneRaw(jumpOwner.id)?.ssh?.jumpIds, [replacement.id]);
 
-    final conversationRow = SqliteDb.instance
-        .select('SELECT server_id, data FROM agent_conversation;')
-        .single;
-    expect(conversationRow['server_id'], replacement.id);
     expect(
-      (json.decode(conversationRow['data'] as String) as Map)['server_id'],
-      replacement.id,
-    );
-    expect(
-      SqliteDb.instance
-          .select('SELECT server_id FROM agent_active_conversation;')
-          .single['server_id'],
-      replacement.id,
+      LlmStores.chat.fetch('chat-1')?.scope,
+      'terminal:${replacement.id}',
     );
 
     expect(
@@ -263,15 +236,32 @@ void main() {
   });
 
   test('a failed replacement rolls the original graph back', () {
-    SqliteDb.instance.execute(
-      "UPDATE agent_conversation SET data = 'not-json' WHERE id = ?;",
-      ['conversation-1'],
+    // A second chat of the server, whose write alone is refused: the failure
+    // comes after the rename's other writes and after the first chat's new
+    // scope, which has to be undone with them.
+    LlmStores.chat.put(
+      ChatMeta(
+        id: 'chat-2',
+        // Older than chat-1, so listed, and moved, after it.
+        updatedAt: DateTime(2025),
+        scope: 'terminal:${original.id}',
+      ),
     );
+    for (final op in ['INSERT', 'UPDATE']) {
+      SqliteDb.instance.execute('''
+        CREATE TRIGGER refuse_chat_$op BEFORE $op ON kv
+        WHEN NEW.store = 'chats' AND NEW.key = 'chat-2'
+        BEGIN SELECT RAISE(ABORT, 'refused'); END;
+      ''');
+    }
 
     expect(
       () => servers.rename(original, original.copyWith(id: 'server-new')),
-      throwsA(isA<FormatException>()),
+      throwsA(isA<StateError>()),
     );
+    for (final id in ['chat-1', 'chat-2']) {
+      expect(LlmStores.chat.fetch(id)?.scope, 'terminal:${original.id}', reason: id);
+    }
 
     servers.dropCache();
     expect(servers.fetchOneRaw(original.id), original);

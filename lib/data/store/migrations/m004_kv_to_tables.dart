@@ -66,7 +66,9 @@ class KvToTablesMigration implements SchemaMigration {
       _migratePortForwards(serverIds);
       _migrateContainer(serverIds);
       _migrateConnStats(serverIds);
-      _migrateAgentConversations(serverIds);
+      // `agent_conversation` is not carried over: the Agent's chats moved to
+      // fl_pi_llm, whose sessions are another shape, and the old ones are
+      // dropped with the rest of this store's rows below — see m031.
       _rewriteOrder('serverOrder', (entry) => serverIds[entry]);
       // Occurrence by occurrence: two snippets could share a stored name, and
       // only one of them keeps it. A plain map would send both order entries
@@ -739,87 +741,6 @@ class KvToTablesMigration implements SchemaMigration {
     if (dropped > 0) {
       Loggers.app.info('m004: dropped $dropped stats for deleted servers');
     }
-  }
-
-  /// The agent box held conversations and the per-server active one under one
-  /// namespace, told apart by a key prefix.
-  ///
-  /// A scope that names a server follows that server's id, which this
-  /// migration may have regenerated. One that names no server is kept as it
-  /// is — the global agent's scope is not a server, which is also why the
-  /// table has no foreign key.
-  void _migrateAgentConversations(Map<String, String> serverIds) {
-    const conversationPrefix = 'conversation::';
-    const activePrefix = 'active::';
-    final active = <String, String>{};
-
-    for (final row in _raw('agent_conversation')) {
-      if (row.key.startsWith(activePrefix)) {
-        final id = row.value;
-        if (id is String && id.isNotEmpty) {
-          final scope = row.key.substring(activePrefix.length);
-          active[serverIds[scope] ?? scope] = id;
-        }
-        continue;
-      }
-      if (!row.key.startsWith(conversationPrefix)) continue;
-      final v = row.value;
-      if (v is! Map) continue;
-      try {
-        // snake_case: `AgentConversation.toJson` is hand-written and that is
-        // what it produces, so reading `serverId` here found nothing and every
-        // conversation was dropped.
-        final id = v['id'] as String?;
-        final serverId = v['server_id'] as String?;
-        if (id == null || id.isEmpty || serverId == null || serverId.isEmpty) {
-          continue;
-        }
-        final updatedAt = DateTime.tryParse('${v['updated_at']}');
-        final scope = serverIds[serverId] ?? serverId;
-        // Inside the payload too, not only in the column. The store rebuilds a
-        // conversation from `data` and then compares `conversation.serverId`
-        // against the server it was asked about — `fetchActive`, `setActive` and
-        // `deleteConversation` all do — so a record whose JSON still named the
-        // old id would be unreachable by every one of them.
-        v['server_id'] = scope;
-        // `ON CONFLICT`, not `OR REPLACE`: the active row references this one and
-        // cascades, so replacing would delete the record of which conversation
-        // is open.
-        _db.execute(
-          'INSERT INTO agent_conversation (id, server_id, updated_at, data) '
-          'VALUES (?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET '
-          'server_id = excluded.server_id, updated_at = excluded.updated_at, '
-          'data = excluded.data;',
-          [
-            id,
-            scope,
-            updatedAt?.millisecondsSinceEpoch ?? row.updatedAt,
-            json.encode(v),
-          ],
-        );
-      } catch (e, s) {
-        Loggers.app.warning(
-          'm004: malformed agent conversation "${row.key}" was skipped',
-          e,
-          s,
-        );
-      }
-    }
-
-    active.forEach((serverId, conversationId) {
-      // The active row references a real conversation now.
-      final exists = _db.select(
-        'SELECT 1 FROM agent_conversation WHERE id = ?;',
-        [conversationId],
-      ).isNotEmpty;
-      if (!exists) return;
-      _db.execute(
-        'INSERT INTO agent_active_conversation (server_id, conversation_id) '
-        'VALUES (?, ?) ON CONFLICT (server_id) DO UPDATE SET '
-        'conversation_id = excluded.conversation_id;',
-        [serverId, conversationId],
-      );
-    });
   }
 
   /// Rewrites one `setting` list whose entries this migration renamed.

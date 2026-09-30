@@ -1,6 +1,6 @@
 ---
 name: serverbox-onboarding
-description: Orientation for ServerBox (flutter_server_box) — installing and using the app, deploying and configuring the ServerBox Monitor agent on a server, bootstrapping the Flutter + Rust + Node development environment, and explaining how the project actually works (SSH vs monitor HTTP, the shared Rust parser, SQLite storage, Riverpod state). Use this whenever someone asks how to install, set up, run, build, deploy, configure, contribute to, or understand any part of ServerBox or its monitor agent — including questions that never name the project outright, such as "how do I get this repo running", "pub get fails after cloning", "why is the terminal button missing on this server", "what does full_access actually grant", "where does the status data come from", or a first-time contributor asking where to start.
+description: Orientation for working on ServerBox (flutter_server_box) from source — bootstrapping the Flutter + Rust + Node development environment, running, testing and building the app and the ServerBox Monitor agent, and explaining how the project actually works (SSH vs monitor HTTP, the shared Rust parser, SQLite storage, Riverpod state). Use this whenever someone asks how to get the repo running, why a build fails, where to start contributing, or how some part of the code or its design works — including questions that never name the project outright, such as "how do I get this repo running", "pub get fails after cloning", "where does the status data come from", or a first-time contributor asking where to start. Using the app or deploying the monitor agent on a server is the `serverbox-help` skill instead.
 ---
 
 # ServerBox onboarding
@@ -25,19 +25,21 @@ transport contributes its own capabilities; see `references/principles.md`.
 ## Work out which question this is first
 
 People arrive at this project from two directions, and the answers barely
-overlap. Read the one reference that matches, not all of them.
+overlap. This skill is for working on it; someone *using* the app or running
+the monitor agent on a server wants the `serverbox-help` skill, which is also
+what the app's own Agent is given. Read the one reference that matches, not
+all of them.
 
 | The person wants to | Read |
 |---|---|
-| Install the app and connect it to a server | `references/app-usage.md` |
-| Install, configure or secure the monitor agent on a server | `references/monitor-deploy.md` |
 | Build and run the project from source, or contribute | `references/dev-setup.md` |
 | Understand how something works, or why it was built that way | `references/principles.md` |
+| Install or use the app, or deploy and configure the monitor agent | the `serverbox-help` skill |
 
 Mixed asks are common and the wording rarely says which is which. "The
 terminal button disappeared" is the agent's capability model
-(`monitor-deploy.md`), not a bug. "`flutter pub get` fails right after
-cloning" is almost always uninitialised submodules (`dev-setup.md`). When it is
+(`serverbox-help`), not a bug. "`flutter pub get` fails right after cloning"
+is almost always uninitialised submodules (`dev-setup.md`). When it is
 genuinely ambiguous, ask whether they are running ServerBox or working on it.
 
 ## The repository outranks this skill
@@ -125,7 +127,5 @@ describe intent; `lib/data/provider/`, `lib/data/store/` and
 | File | Covers |
 |---|---|
 | `references/dev-setup.md` | Toolchain bootstrap, the run/test/build loop, monitor development, and a symptom-to-cause table for first-run failures |
-| `references/monitor-deploy.md` | Installing the agent, `config.toml`, the security switches and what each one really grants, connecting the app, troubleshooting |
-| `references/app-usage.md` | Where to download the app per platform, adding a server over SSH or through an agent, what each feature needs, where the advanced guides are |
 | `references/principles.md` | How the app is put together and which document answers which question |
 | `scripts/check-env.sh` | Read-only environment check: toolchain versions, submodules, dependency state, FFI version parity |

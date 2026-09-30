@@ -239,191 +239,17 @@ abstract class AppLocalizations {
   /// **'Ask AI'**
   String get askAi;
 
-  /// User-facing label or message for ask AI awaiting response.
-  ///
-  /// In en, this message translates to:
-  /// **'Waiting for AI response...'**
-  String get askAiAwaitingResponse;
-
-  /// Help text for the ask AI endpoint setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'Include the API version, such as /v1 — Zhipu uses /api/paas/v4. Only /chat/completions or /responses is added, from the protocol you pick.'**
-  String get askAiEndpointTip;
-
-  /// Help text for the ask AI protocol setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto tries Responses, then Chat Completions.'**
-  String get askAiProtocolTip;
-
-  /// User-facing label or message for ask AI command inserted.
-  ///
-  /// In en, this message translates to:
-  /// **'Command inserted into terminal'**
-  String get askAiCommandInserted;
-
-  /// User-facing label or message for ask AI config missing.
-  ///
-  /// In en, this message translates to:
-  /// **'Please configure {fields} in Settings.'**
-  String askAiConfigMissing(String fields);
-
-  /// User-facing label or message for ask AI disclaimer.
-  ///
-  /// In en, this message translates to:
-  /// **'AI may be incorrect. Review carefully before applying.'**
-  String get askAiDisclaimer;
-
   /// User-facing label or message for ask AI insert terminal.
   ///
   /// In en, this message translates to:
   /// **'Insert into terminal'**
   String get askAiInsertTerminal;
 
-  /// User-facing label or message for ask AI no response.
-  ///
-  /// In en, this message translates to:
-  /// **'No response'**
-  String get askAiNoResponse;
-
   /// User-facing label or message for remote desktop.
   ///
   /// In en, this message translates to:
   /// **'Remote desktop'**
   String get remoteDesktop;
-
-  /// User-facing label or message for ask AI agent welcome.
-  ///
-  /// In en, this message translates to:
-  /// **'What should we do on this server?'**
-  String get askAiAgentWelcome;
-
-  /// Hint shown in the ask AI agent prompt field or section.
-  ///
-  /// In en, this message translates to:
-  /// **'Ask the Agent to inspect or fix something...'**
-  String get askAiAgentPromptHint;
-
-  /// User-facing label or message for ask AI analyze selection prompt.
-  ///
-  /// In en, this message translates to:
-  /// **'Analyse the selected terminal output and explain what happened'**
-  String get askAiAnalyzeSelectionPrompt;
-
-  /// User-facing label or message for ask AI terminal context.
-  ///
-  /// In en, this message translates to:
-  /// **'Terminal context'**
-  String get askAiTerminalContext;
-
-  /// User-facing label or message for ask AI review needed.
-  ///
-  /// In en, this message translates to:
-  /// **'Review'**
-  String get askAiReviewNeeded;
-
-  /// User-facing label or message for ask AI review action.
-  ///
-  /// In en, this message translates to:
-  /// **'Review proposed command'**
-  String get askAiReviewAction;
-
-  /// User-facing label or message for ask AI review before continuing.
-  ///
-  /// In en, this message translates to:
-  /// **'Review or decline the current suggestion first'**
-  String get askAiReviewBeforeContinuing;
-
-  /// User-facing label or message for ask AI approve run.
-  ///
-  /// In en, this message translates to:
-  /// **'Approve & run'**
-  String get askAiApproveRun;
-
-  /// User-facing label or message for ask AI decline.
-  ///
-  /// In en, this message translates to:
-  /// **'Decline'**
-  String get askAiDecline;
-
-  /// User-facing label or message for ask AI action declined.
-  ///
-  /// In en, this message translates to:
-  /// **'The proposed command was declined.'**
-  String get askAiActionDeclined;
-
-  /// User-facing label or message for ask AI interrupted.
-  ///
-  /// In en, this message translates to:
-  /// **'Agent response was interrupted.'**
-  String get askAiInterrupted;
-
-  /// User-facing label or message for ask AI resend.
-  ///
-  /// In en, this message translates to:
-  /// **'Resend'**
-  String get askAiResend;
-
-  /// Help text for the ask AI resend setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'Everything after this message is discarded — the replies, the commands and their results.'**
-  String get askAiResendTip;
-
-  /// Help text for the ask AI delete setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'This message and everything after it are removed — the replies, the commands and their results.'**
-  String get askAiDeleteTip;
-
-  /// User-facing label or message for ask AI model table.
-  ///
-  /// In en, this message translates to:
-  /// **'Model table'**
-  String get askAiModelTable;
-
-  /// Help text for the ask AI model table setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'Context sizes by model name, from models.dev. One ships with the app; tap to fetch a newer one.'**
-  String get askAiModelTableTip;
-
-  /// User-facing label or message for ask AI context fallback.
-  ///
-  /// In en, this message translates to:
-  /// **'not in the table'**
-  String get askAiContextFallback;
-
-  /// User-facing label or message for ask AI compact at.
-  ///
-  /// In en, this message translates to:
-  /// **'Summarise at'**
-  String get askAiCompactAt;
-
-  /// Help text for the ask AI compact at setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'How full the model’s context gets before earlier turns are summarised. Earlier loses detail sooner; later risks a request the model refuses.'**
-  String get askAiCompactAtTip;
-
-  /// User-facing label or message for ask AI context tokens.
-  ///
-  /// In en, this message translates to:
-  /// **'Context size'**
-  String get askAiContextTokens;
-
-  /// Help text for the ask AI context tokens setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'How many tokens this model holds. Automatic looks it up by name; set a number when your provider serves a shorter window than the model has.'**
-  String get askAiContextTokensTip;
-
-  /// User-facing label or message for ask AI conversation compacted.
-  ///
-  /// In en, this message translates to:
-  /// **'Earlier messages were summarised to keep the conversation going.'**
-  String get askAiConversationCompacted;
 
   /// User-facing label or message for ask AI risk read only.
   ///
@@ -449,36 +275,6 @@ abstract class AppLocalizations {
   /// **'High risk'**
   String get askAiRiskDestructive;
 
-  /// Title shown for the ask AI high risk confirm dialog or section.
-  ///
-  /// In en, this message translates to:
-  /// **'Run high-risk command?'**
-  String get askAiHighRiskConfirmTitle;
-
-  /// Explanatory message shown in the ask AI high risk confirm dialog or notice.
-  ///
-  /// In en, this message translates to:
-  /// **'This command may make changes that are hard to undo. Check it carefully.'**
-  String get askAiHighRiskConfirmBody;
-
-  /// User-facing label or message for ask AI no command output.
-  ///
-  /// In en, this message translates to:
-  /// **'Command completed without output.'**
-  String get askAiNoCommandOutput;
-
-  /// User-facing label or message for ask AI output truncated.
-  ///
-  /// In en, this message translates to:
-  /// **'Long output was truncated before it was sent back to the Agent.'**
-  String get askAiOutputTruncated;
-
-  /// User-facing label or message for ask AI auto approved.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto-approved'**
-  String get askAiAutoApproved;
-
   /// User-facing label or message for ask AI auto run safe commands.
   ///
   /// In en, this message translates to:
@@ -491,42 +287,6 @@ abstract class AppLocalizations {
   /// **'Runs only when both the model and the local check call it read-only'**
   String get askAiAutoRunSafeCommandsTip;
 
-  /// User-facing label or message for ask AI send on enter.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter sends'**
-  String get askAiSendOnEnter;
-
-  /// Help text for the ask AI send on enter setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter sends, Shift+Enter for a new line. Off: Enter for a new line, Cmd/Ctrl+Enter sends.'**
-  String get askAiSendOnEnterTip;
-
-  /// User-facing label or message for ask AI API key optional.
-  ///
-  /// In en, this message translates to:
-  /// **'Leave empty for local or unauthenticated'**
-  String get askAiApiKeyOptional;
-
-  /// User-facing label or message for ask AI allow insecure.
-  ///
-  /// In en, this message translates to:
-  /// **'Allow plain HTTP'**
-  String get askAiAllowInsecure;
-
-  /// Help text for the ask AI allow insecure setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'Allows http:// connections to self-hosted models at non-localhost addresses. The API key and any terminal context are sent unencrypted; localhost is unaffected.'**
-  String get askAiAllowInsecureTip;
-
-  /// User-facing label or message for ask AI insecure endpoint.
-  ///
-  /// In en, this message translates to:
-  /// **'This endpoint uses http://. Turn on “Allow plain HTTP” in AI settings to use it.'**
-  String get askAiInsecureEndpoint;
-
   /// User-facing label or message for ask AI history.
   ///
   /// In en, this message translates to:
@@ -538,18 +298,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New conversation'**
   String get askAiNewConversation;
-
-  /// User-facing label or message for ask AI no history.
-  ///
-  /// In en, this message translates to:
-  /// **'No saved conversations yet'**
-  String get askAiNoHistory;
-
-  /// User-facing label or message for ask AI no history messages.
-  ///
-  /// In en, this message translates to:
-  /// **'No messages yet'**
-  String get askAiNoHistoryMessages;
 
   /// User-facing label or message for ask AI untitled conversation.
   ///
@@ -574,42 +322,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Deletes it from this device. Cannot be undone.'**
   String get askAiDeleteConversationTip;
-
-  /// Title shown for the ask AI clear history dialog or section.
-  ///
-  /// In en, this message translates to:
-  /// **'Clear this server\'s Agent history?'**
-  String get askAiClearHistoryTitle;
-
-  /// Help text for the ask AI clear history setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'Every saved Agent conversation for this server will be deleted.'**
-  String get askAiClearHistoryTip;
-
-  /// User-facing label or message for ask AI restored review.
-  ///
-  /// In en, this message translates to:
-  /// **'This command came from history. Review it again'**
-  String get askAiRestoredReview;
-
-  /// User-facing label or message for agent welcome.
-  ///
-  /// In en, this message translates to:
-  /// **'What should we do across your servers?'**
-  String get agentWelcome;
-
-  /// Help text for the agent welcome setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'Have the Agent diagnose a problem or carry out a task'**
-  String get agentWelcomeTip;
-
-  /// Hint shown in the agent prompt field or section.
-  ///
-  /// In en, this message translates to:
-  /// **'Ask the Agent to inspect or operate your servers...'**
-  String get agentPromptHint;
 
   /// User-facing label or message for agent no history.
   ///
@@ -646,18 +358,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Write file'**
   String get agentToolWriteFile;
-
-  /// Error message shown when agent tool failed.
-  ///
-  /// In en, this message translates to:
-  /// **'Tool execution failed.'**
-  String get agentToolFailed;
-
-  /// Formatted user-facing message for agent tool calls; runtime values are supplied by placeholders.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} tool calls'**
-  String agentToolCallsFmt(int count);
 
   /// User-facing label or message for float over tabs.
   ///
@@ -1612,18 +1312,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Configure SSH, a monitor agent, or both'**
   String get noConnectionMethod;
-
-  /// User-facing label or message for preferred transport.
-  ///
-  /// In en, this message translates to:
-  /// **'Try first'**
-  String get preferredTransport;
-
-  /// Help text for the preferred transport setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'Where status is read from, and which connection a command opens first. The other stays available.'**
-  String get preferredTransportTip;
 
   /// User-facing label or message for keep foreground.
   ///
@@ -2602,12 +2290,6 @@ abstract class AppLocalizations {
   /// **'Used'**
   String get used;
 
-  /// User-facing label or message for view.
-  ///
-  /// In en, this message translates to:
-  /// **'View'**
-  String get view;
-
   /// User-facing label or message for view details.
   ///
   /// In en, this message translates to:
@@ -2860,23 +2542,11 @@ abstract class AppLocalizations {
   /// **'Session name'**
   String get tmuxSessionName;
 
-  /// User-facing label or message for tmux existing sessions.
-  ///
-  /// In en, this message translates to:
-  /// **'Existing sessions'**
-  String get tmuxExistingSessions;
-
   /// User-facing label or message for tmux new session.
   ///
   /// In en, this message translates to:
   /// **'New session'**
   String get tmuxNewSession;
-
-  /// User-facing label or message for tmux windows.
-  ///
-  /// In en, this message translates to:
-  /// **'Windows'**
-  String get tmuxWindows;
 
   /// User-facing label or message for tmux new window.
   ///
@@ -2896,35 +2566,11 @@ abstract class AppLocalizations {
   /// **'{count, plural, one{1 window} other{{count} windows}}'**
   String tmuxWindowCount(int count);
 
-  /// User-facing label or message for tmux pane count.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, one{1 pane} other{{count} panes}}'**
-  String tmuxPaneCount(int count);
-
   /// User-facing label or message for tmux attached.
   ///
   /// In en, this message translates to:
   /// **'Attached'**
   String get tmuxAttached;
-
-  /// User-facing label or message for tmux active.
-  ///
-  /// In en, this message translates to:
-  /// **'Active'**
-  String get tmuxActive;
-
-  /// User-facing label or message for tmux active at.
-  ///
-  /// In en, this message translates to:
-  /// **'active: {time}'**
-  String tmuxActiveAt(String time);
-
-  /// User-facing label or message for tmux attached at.
-  ///
-  /// In en, this message translates to:
-  /// **'attached: {time}'**
-  String tmuxAttachedAt(String time);
 
   /// User-facing label or message for tmux skip.
   ///
@@ -3351,12 +2997,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The BMC changed while this was being written. Try again.'**
   String get bmcStaleWrite;
-
-  /// Action label for send.
-  ///
-  /// In en, this message translates to:
-  /// **'Send'**
-  String get send;
 
   /// User-facing label or message for privacy blur.
   ///
@@ -4018,6 +3658,114 @@ abstract class AppLocalizations {
   /// **'Agent keeps {kept}'**
   String agentRetentionFmt(String kept);
 
+  /// Agent: agentServerTools.
+  ///
+  /// In en, this message translates to:
+  /// **'Server tools'**
+  String get agentServerTools;
+
+  /// Agent: agentServerToolsTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Run commands and read or write files on your servers, connect to other hosts over SSH, and use ServerBox\'s own actions.'**
+  String get agentServerToolsTip;
+
+  /// Agent: agentTerminalTools.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminal'**
+  String get agentTerminalTools;
+
+  /// Agent: agentTerminalToolsTip.
+  ///
+  /// In en, this message translates to:
+  /// **'In a terminal\'s own chats: read what the terminal shows, and run commands on its server.'**
+  String get agentTerminalToolsTip;
+
+  /// Agent: agentToolTerminalScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Read the screen'**
+  String get agentToolTerminalScreen;
+
+  /// Agent: agentProviders.
+  ///
+  /// In en, this message translates to:
+  /// **'Providers'**
+  String get agentProviders;
+
+  /// Agent: agentProvidersTip.
+  ///
+  /// In en, this message translates to:
+  /// **'API keys, models, and the model a new chat uses'**
+  String get agentProvidersTip;
+
+  /// Agent: agentTools.
+  ///
+  /// In en, this message translates to:
+  /// **'Tools'**
+  String get agentTools;
+
+  /// Agent: agentToolsTip.
+  ///
+  /// In en, this message translates to:
+  /// **'What the Agent may use, and its MCP servers'**
+  String get agentToolsTip;
+
+  /// Agent: agentSnippetToolsTip.
+  ///
+  /// In en, this message translates to:
+  /// **'List, add, change and delete your snippets. Changes are asked about.'**
+  String get agentSnippetToolsTip;
+
+  /// Agent: agentVirtToolsTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Read the VMs and containers the Virtualization tab has loaded.'**
+  String get agentVirtToolsTip;
+
+  /// Agent: agentBenchmarkToolsTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Read benchmark results, and run or stop a benchmark with your approval.'**
+  String get agentBenchmarkToolsTip;
+
+  /// Agent: agentRemoteDesktopToolsTip.
+  ///
+  /// In en, this message translates to:
+  /// **'List remote desktop profiles, and connect or disconnect with your approval.'**
+  String get agentRemoteDesktopToolsTip;
+
+  /// Agent: agentSkills.
+  ///
+  /// In en, this message translates to:
+  /// **'Skills'**
+  String get agentSkills;
+
+  /// Agent: agentSkillsTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Instructions for particular tasks, installed from GitHub or a link'**
+  String get agentSkillsTip;
+
+  /// Agent: agentPermissions.
+  ///
+  /// In en, this message translates to:
+  /// **'Permissions'**
+  String get agentPermissions;
+
+  /// Agent: agentEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask about your servers, or ask the Agent to do something on them.'**
+  String get agentEmptyHint;
+
+  /// Agent: agentTerminalEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask about this server. The Agent can read this terminal and run commands here.'**
+  String get agentTerminalEmptyHint;
+
   /// Formatted user-facing message for oldest sample; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
@@ -4324,53 +4072,11 @@ abstract class AppLocalizations {
   /// **'Both can be on at once. The order is the order they are dialled.'**
   String get connectionTip;
 
-  /// Formatted user-facing message for transport order; runtime values are supplied by placeholders.
-  ///
-  /// In en, this message translates to:
-  /// **'Drag to change the order. {first} is dialled first; if it does not answer, {second} carries the session on its own.'**
-  String transportOrderFmt(String first, String second);
-
-  /// Formatted user-facing message for transport only; runtime values are supplied by placeholders.
-  ///
-  /// In en, this message translates to:
-  /// **'Only {name} is on, so there is nothing to fall back to.'**
-  String transportOnlyFmt(String name);
-
   /// User-facing label or message for transport none on.
   ///
   /// In en, this message translates to:
   /// **'Both are off — this server cannot be connected.'**
   String get transportNoneOn;
-
-  /// User-facing label or message for transport off kept.
-  ///
-  /// In en, this message translates to:
-  /// **'off — settings kept, never dialled'**
-  String get transportOffKept;
-
-  /// User-facing label or message for transport dialled first.
-  ///
-  /// In en, this message translates to:
-  /// **'dialled first'**
-  String get transportDialledFirst;
-
-  /// User-facing label or message for transport fallback.
-  ///
-  /// In en, this message translates to:
-  /// **'fallback'**
-  String get transportFallback;
-
-  /// User-facing label or message for transport only method.
-  ///
-  /// In en, this message translates to:
-  /// **'only method'**
-  String get transportOnlyMethod;
-
-  /// User-facing label or message for transport off.
-  ///
-  /// In en, this message translates to:
-  /// **'off'**
-  String get transportOff;
 
   /// User-facing label or message for this device.
   ///
@@ -4449,12 +4155,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Optional'**
   String get optional;
-
-  /// Help text for the optional setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'Nothing here is needed to connect. Open one and its fields take over the form.'**
-  String get optionalTip;
 
   /// User-facing label or message for SSH advanced.
   ///
@@ -5878,12 +5578,6 @@ abstract class AppLocalizations {
   /// **'Closing in {seconds} s'**
   String remoteSessionClosingIn(int seconds);
 
-  /// Button: show a console that is still running again.
-  ///
-  /// In en, this message translates to:
-  /// **'Reopen'**
-  String get reopen;
-
   /// A guest view and its heading: the guest's snapshots.
   ///
   /// In en, this message translates to:
@@ -6189,12 +5883,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A guest with this name exists.'**
   String get virtCreateNameTaken;
-
-  /// The VMID is out of PVE's range.
-  ///
-  /// In en, this message translates to:
-  /// **'From 100 to 999999999.'**
-  String get virtCreateVmidInvalid;
 
   /// The VMID is already used.
   ///
@@ -7083,12 +6771,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Where the EFI variables go'**
   String get virtHwEfiStorage;
-
-  /// Hardware view (virtualization): TpmStorage
-  ///
-  /// In en, this message translates to:
-  /// **'Where the TPM state goes'**
-  String get virtHwTpmStorage;
 
   /// Hardware view (virtualization): SwitchFirmwareAsk
   ///
@@ -8127,12 +7809,6 @@ abstract class AppLocalizations {
   /// **'Internal (in the image)'**
   String get virtSnapshotFormInternal;
 
-  /// Snapshot form: which kind of snapshot to take.
-  ///
-  /// In en, this message translates to:
-  /// **'Kind'**
-  String get virtSnapshotForm;
-
   /// Snapshot form: the pool an external snapshot puts its overlays in.
   ///
   /// In en, this message translates to:
@@ -8181,12 +7857,6 @@ abstract class AppLocalizations {
   /// **'Base image'**
   String get virtSnapshotChainBase;
 
-  /// Snapshots view: a disk that is not qcow2, so no external snapshot.
-  ///
-  /// In en, this message translates to:
-  /// **'An external snapshot needs a qcow2 disk. This one is {format}.'**
-  String virtSnapshotChainRaw(String format);
-
   /// Snapshot form: the storage does not support snapshots (PVE).
   ///
   /// In en, this message translates to:
@@ -8222,12 +7892,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Compare with now'**
   String get virtSnapshotDiffShow;
-
-  /// Snapshots view: the groups a diff is shown under.
-  ///
-  /// In en, this message translates to:
-  /// **'Changed'**
-  String get virtSnapshotDiffGroup;
 
   /// Snapshot diff group: processor.
   ///
@@ -8355,35 +8019,17 @@ abstract class AppLocalizations {
   /// **'A template only runs once it is cloned.'**
   String get virtTemplateTip;
 
-  /// Clone group: which storage the copy's disks go to.
-  ///
-  /// In en, this message translates to:
-  /// **'Target storage'**
-  String get virtCloneStorage;
-
   /// Clone group: the source's own storage.
   ///
   /// In en, this message translates to:
   /// **'Same as the source'**
   String get virtCloneStorageSame;
 
-  /// Clone group: the node the copy is made on.
-  ///
-  /// In en, this message translates to:
-  /// **'Target node'**
-  String get virtCloneNode;
-
   /// Clone group: the source's own node.
   ///
   /// In en, this message translates to:
   /// **'Same as the source'**
   String get virtCloneNodeSame;
-
-  /// Clone group (libvirt): the pool the copy's disks go in.
-  ///
-  /// In en, this message translates to:
-  /// **'Target pool'**
-  String get virtClonePool;
 
   /// Clone group: the storage has to hold VM images.
   ///
@@ -8426,12 +8072,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New job'**
   String get virtBackupJobNew;
-
-  /// Datacenter view: editing a job.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit job'**
-  String get virtBackupJobEdit;
 
   /// Datacenter view: running a job now.
   ///
@@ -8523,18 +8163,6 @@ abstract class AppLocalizations {
   /// **'Notification'**
   String get virtBackupMail;
 
-  /// Job editor: notify on every run.
-  ///
-  /// In en, this message translates to:
-  /// **'Always'**
-  String get virtBackupMailAlways;
-
-  /// Job editor: notify only on failure.
-  ///
-  /// In en, this message translates to:
-  /// **'On failure'**
-  String get virtBackupMailFailure;
-
   /// Job editor: the notes every backup the job makes carries.
   ///
   /// In en, this message translates to:
@@ -8558,12 +8186,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'PVE\'s retention options, e.g. keep-last=7,keep-daily=4. Empty: the storage\'s or the node\'s own.'**
   String get virtBackupPruneTip;
-
-  /// Job list: when the job next runs.
-  ///
-  /// In en, this message translates to:
-  /// **'Next run'**
-  String get virtBackupNextRun;
 
   /// Job editor: the node the job runs on.
   ///
@@ -8630,12 +8252,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'As in the backup'**
   String get virtBackupRestoreStorageSame;
-
-  /// Backup view: snapshot mode keeps a running guest running.
-  ///
-  /// In en, this message translates to:
-  /// **'snapshot · no downtime'**
-  String get virtBackupModeSnapshotTip;
 
   /// Clone group: no storage on the node holds VM images.
   ///

@@ -434,8 +434,17 @@ class TerminalSession {
     _cancelOutputSubscriptions();
 
     terminal.onOutput = (data) => session.write(utf8.encode(data));
-    terminal.onResize = (width, height, _, _) =>
+    terminal.onResize = (width, height, _, _) {
+      // A shell whose connection has gone throws here, and it is not the
+      // terminal's to fail over: the keyboard coming up resized the view of a
+      // dropped SSH session, and the throw escaped the layout. The shell that
+      // replaces it is told its size when it is bound.
+      try {
         session.resizeTerminal(width, height);
+      } catch (e) {
+        Loggers.app.info('Terminal size not sent: $e');
+      }
+    };
 
     _listen(session.stdout);
     _listen(session.stderr);

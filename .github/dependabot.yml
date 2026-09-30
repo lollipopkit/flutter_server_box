@@ -85,3 +85,19 @@ updates:
       github-actions:
         patterns:
           - "*"
+
+  # fl_pi_llm, the LLM layer shared with GPT Box, moves with its own repository
+  # rather than with a release: a bump is the submodule pointer following its
+  # `main` (the `branch` in .gitmodules). Only that submodule — the others are
+  # moved by hand, with the change that needs them. The shortest cooldown
+  # there is: the commits are this project's own, reviewed where they were
+  # made. Left unset it is not none but GitHub's default of 3 days, and 0 is
+  # not accepted (`default-days` is 1 to 90).
+  - package-ecosystem: gitsubmodule
+    directory: "/"
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 1
+    allow:
+      - dependency-name: "packages/fl_pi_llm"

@@ -96,7 +96,8 @@ abstract final class SchemaVersion {
   /// v30: the theme catalog address dropped, now that the catalog is compiled in
   /// v31: PVE moved out of `server` into `server_pve` (API tokens, pinned
   ///      certificate), and the Virtualization tab added for installs with PVE
-  static const current = 31;
+  /// v32: the Agent's conversations dropped, its chats being fl_pi_llm's now
+  static const current = 32;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

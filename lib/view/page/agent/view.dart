@@ -1,144 +1,51 @@
-import 'dart:async';
-
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart'
+    show Chats, Composer, LlmConversation, LlmStores, llmL10n;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/model/ai/ask_ai_models.dart';
+import 'package:server_box/core/llm/scope.dart';
 import 'package:server_box/data/provider/ai/adhoc_ssh.dart';
-import 'package:server_box/data/provider/ai/agent_session.dart';
-import 'package:server_box/data/provider/ai/global_agent_tools.dart';
-import 'package:server_box/data/provider/server/all.dart';
-import 'package:server_box/data/res/build_data.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/agent/history.dart';
-import 'package:server_box/view/widget/agent_common.dart';
-import 'package:server_box/view/widget/agent_entry_appear.dart';
-import 'package:server_box/view/widget/agent_proposal_pager.dart';
-import 'package:server_box/view/widget/agent_user_bubble.dart';
 import 'package:server_box/view/widget/float_shell.dart';
-
-/// How far the copy button floating over an output box stays from that box's
-/// top and right edges.
-///
-/// Two things set the right-hand value and the larger wins. A Material
-/// scrollbar is 8 wide and is drawn *over* the view rather than beside it, so
-/// on desktop anything on that edge has to be told to stay out of it — 16
-/// leaves the scrollbar that much again as margin. Touch platforms draw no
-/// scrollbar, so all that is left is keeping the button off the box's rounded
-/// corner, which 8 does.
-double get _outputCopyInset => isDesktop ? 16.0 : 8.0;
-
-/// The same gap above, where there is no scrollbar on any platform.
-const _outputCopyTopInset = 8.0;
-
-/// Padding on each side of the copy icon that floats over an output box.
-const _outputCopyPad = 7.0;
-
-/// The copy icon itself.
-const _outputCopyIcon = 15.0;
-
-/// What the output text keeps clear on its right: everything the button is
-/// made of, plus the gap holding it off the edge.
-///
-/// Derived rather than written out as one number, because all three have to
-/// agree — with the sum spelled `52` by hand, changing the icon size or the
-/// padding left the text running underneath the button with nothing to catch
-/// it.
-double get _outputTextRightInset =>
-    _outputCopyInset + _outputCopyPad * 2 + _outputCopyIcon;
-
-/// Everything a tool result has to say, as one block of text.
-///
-/// Never empty: a tool that handed back nothing still has to say so, and this
-/// is the only place that knows *which* tool it was — [noOutputLabel] is the
-/// shell's wording and is wrong for a `read_file` that simply had nothing to
-/// return, which is what [noResultLabel] is for. The card used to decide this
-/// a second time, from an empty return value, and so labelled every one of
-/// those as a command that produced no output.
-@visibleForTesting
-String formatGlobalAgentToolResultOutput(
-  AgentToolExecutionResult result, {
-  required String cancelledLabel,
-  required String timedOutLabel,
-  required String noOutputLabel,
-  required String noResultLabel,
-  required String truncatedLabel,
-}) {
-  // Above the tool name, because `{'error': ...}` is what every tool that
-  // threw produces, not only the shell's. Read inside the shell branch, a
-  // failed read_file printed the raw JSON of that map, and a failed shell
-  // command printed "the command produced no output" — which is what a
-  // command that never ran looks like from here, and says nothing about why.
-  if (result.data case final Map data?) {
-    final error = data['error'];
-    if (error is String && error.isNotEmpty) return error;
-  }
-
-  if (result.toolName != 'run_shell_command' || result.data is! Map) {
-    final shown = result.displayData;
-    return shown.isEmpty ? noResultLabel : shown;
-  }
-
-  final data = Map<Object?, Object?>.from(result.data! as Map);
-  final stdout = data['stdout'] as String? ?? '';
-  final stderr = data['stderr'] as String? ?? '';
-  final exitCode = data['exit_code'];
-  final timedOut = data['timed_out'] == true;
-  final sections = <String>[];
-
-  final status = <String>[
-    if (timedOut) timedOutLabel else if (result.cancelled) cancelledLabel,
-    if (exitCode != null) 'Exit code: $exitCode',
-  ];
-  if (status.isNotEmpty) sections.add(status.join(' · '));
-  if (stdout.isNotEmpty) sections.add('stdout\n$stdout');
-  if (stderr.isNotEmpty) sections.add('stderr\n$stderr');
-  if (stdout.isEmpty && stderr.isEmpty) sections.add(noOutputLabel);
-  if (result.truncated) sections.add(truncatedLabel);
-  return sections.join('\n\n');
-}
 
 /// The buttons that act on the conversation rather than on the window around
 /// it. Shared by the tab's header and the floating shell's title bar, which
 /// otherwise have nothing in common.
-class AgentHeaderActions extends ConsumerWidget {
-  const AgentHeaderActions({super.key, this.showConversations = false});
+class AgentHeaderActions extends StatelessWidget {
+  const AgentHeaderActions({
+    super.key,
+    this.showConversations = false,
+    this.scope,
+  });
 
-  /// Whether to carry the history and new-conversation buttons.
+  /// Whether to carry the history and new-chat buttons.
   ///
-  /// Only the floating shell does. The tab's own line names the conversation
-  /// and opens the list when tapped, so a history button beside it was a
-  /// second way to the same sheet and a plus was a third thing on a row that
-  /// never said which conversation you were in.
+  /// Only where nothing else does: the tab's own line names the chat and opens
+  /// the list when tapped.
   final bool showConversations;
 
+  final String? scope;
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final session = ref.watch(globalAgentSessionProvider);
-    final notifier = ref.read(globalAgentSessionProvider.notifier);
+  Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         if (showConversations) ...[
           IconButton(
             tooltip: context.l10n.askAiHistory,
-            onPressed: session.isWorking
-                ? null
-                : () => showAgentHistorySheet(context),
+            onPressed: () => showAgentHistorySheet(context, scope: scope),
             icon: const Icon(Icons.history, size: floatHeaderIconSize),
           ),
           IconButton(
             tooltip: context.l10n.askAiNewConversation,
-            onPressed: session.isWorking ? null : notifier.beginNewConversation,
-            // A plain plus, the same as every other "add one of these" in the
-            // app. `add_comment_outlined` is a speech bubble with a plus in
-            // it, which at this size is mostly bubble and reads lighter than
-            // the icons either side of it.
+            onPressed: () => AgentChats.startNew(scope),
             icon: const Icon(Icons.add, size: floatHeaderIconSize),
           ),
         ],
-        const _AdHocSessionsButton(),
+        // Only the app-wide Agent opens connections of its own.
+        if (scope == null) const _AdHocSessionsButton(),
       ],
     );
   }
@@ -203,1101 +110,257 @@ class _AdHocSessionsButton extends ConsumerWidget {
   }
 }
 
-/// The conversation: its timeline and the box you type into.
+/// A chat of [scope] and the box you type into: fl_pi_llm_ui's conversation
+/// and composer, with the header that says which chat this is.
 ///
-/// More than one of these can be on screen at once — the tab and the floating
-/// shell — and they show the same [globalAgentSessionProvider]. What belongs
-/// to each separately is only what is being typed and where it is scrolled to.
-class AgentConversationView extends ConsumerStatefulWidget {
+/// More than one of these can show the same scope — the tab and the floating
+/// shell — and they follow the same [AgentChats.of].
+class AgentConversationView extends StatelessWidget {
   const AgentConversationView({
     super.key,
     required this.compact,
+    this.scope,
     this.showHeader = true,
     this.headerTrailing,
   });
 
-  /// Too narrow for the conversation list to sit beside it, so the header
-  /// carries the buttons that open it instead.
+  /// Too narrow for the chat list to sit beside it, so the header opens it.
   final bool compact;
+
+  final String? scope;
 
   /// False where the container draws its own bar — the floating shell, whose
   /// bar has to be the thing you drag it by.
   final bool showHeader;
 
-  /// Goes after the conversation's own buttons. The tab puts the control that
-  /// sends this conversation floating there; the shell, having no header,
-  /// puts those controls on its title bar instead.
+  /// After the chat's own buttons.
   final Widget? headerTrailing;
 
   @override
-  ConsumerState<AgentConversationView> createState() =>
-      _AgentConversationViewState();
-}
-
-class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
-  final _scrollController = ScrollController();
-  final _inputController = TextEditingController();
-
-  /// How many timeline entries had already been drawn. Anything past it is an
-  /// arrival — see where it is read.
-  var _renderedEntries = 0;
-
-  AgentSession get _notifier => ref.read(globalAgentSessionProvider.notifier);
-
-  String? get _localeHint =>
-      Localizations.maybeLocaleOf(context)?.toLanguageTag();
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    _inputController.dispose();
-    super.dispose();
-  }
-
-  // ------------------------------------------------------------------ actions
-
-  /// Enter sends and Shift+Enter breaks the line, or the other way round with
-  /// the modifier doing the sending — the two habits people bring to a chat
-  /// box, and the setting that picks between them.
-  KeyEventResult _handleComposerKey(FocusNode node, KeyEvent event) {
-    if (!composerKeySends(
-      event,
-      composing: !_inputController.value.composing.isCollapsed,
-      sendOnEnter: Stores.setting.askAiSendOnEnter.fetch(),
-    )) {
-      return KeyEventResult.ignored;
-    }
-    return _sendAndConsume();
-  }
-
-  KeyEventResult _sendAndConsume() {
-    // A turn is running, so there is nothing to send yet. Let the key through
-    // rather than eating it: the box stays usable while an answer streams, and
-    // a keystroke that neither sends nor types anything simply disappears.
-    if (ref.read(globalAgentSessionProvider).isWorking) return KeyEventResult.ignored;
-    unawaited(_submitPrompt(_inputController.text));
-    // Handled either way from here: the key meant "send", and letting it
-    // through would leave a line break behind whenever there was nothing to
-    // send.
-    return KeyEventResult.handled;
-  }
-
-  Future<void> _submitPrompt(String prompt) async {
-    // Emptied only once the session has taken it. It refuses while a turn is
-    // running or a tool is waiting to be reviewed, and a box cleared anyway
-    // would lose what was typed.
-    final submitted = await _notifier.submitPrompt(
-      prompt,
-      localeHint: _localeHint,
-    );
-    if (!mounted) return;
-    if (submitted) {
-      _inputController.clear();
-    }
-  }
-
-  /// Reviews the proposal, then hands it to the session to run.
-  ///
-  /// The confirmation is a dialog and so has to be raised from a widget; the
-  /// session has no context to put one on, and auto-running never reaches here
-  /// because nothing that needs asking is eligible for it.
-  Future<void> _runPendingTool(AskAiCommand proposal) async {
-    if (proposal.risk == AskAiCommandRisk.destructive) {
-      final confirmed = await context.showRoundDialog<bool>(
-        title: context.l10n.askAiHighRiskConfirmTitle,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget build(BuildContext context) {
+    final current = AgentChats.of(scope);
+    return ValueListenableBuilder<String?>(
+      valueListenable: current,
+      builder: (context, id, _) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(context.l10n.askAiHighRiskConfirmBody),
-            const SizedBox(height: 12),
-            AgentCommandPreview(
-              text: proposal.displayValue,
-              language: proposal.toolName == 'run_shell_command'
-                  ? 'shell'
-                  : 'text',
-            ),
-          ],
-        ),
-        actionsBuilder: (dialogContext) => [
-          Btn.cancel(),
-          Btn.text(text: libL10n.run, onTap: () => dialogContext.pop(true)),
-        ],
-      );
-      if (confirmed != true || !mounted) return;
-    }
-    await _notifier.runPendingTool();
-  }
-
-  // -------------------------------------------------------------------- utils
-
-  ({String label, IconData icon, Color color}) _riskInfo(
-    BuildContext context,
-    AskAiCommandRisk risk,
-  ) {
-    final scheme = Theme.of(context).colorScheme;
-    return switch (risk) {
-      AskAiCommandRisk.readOnly => (
-        label: context.l10n.askAiRiskReadOnly,
-        icon: Icons.visibility_outlined,
-        color: scheme.primary,
-      ),
-      AskAiCommandRisk.unknown => (
-        label: context.l10n.askAiRiskUnknown,
-        icon: Icons.help_outline,
-        color: scheme.tertiary,
-      ),
-      AskAiCommandRisk.unvettedHost => (
-        label: context.l10n.askAiRiskUnvetted,
-        icon: Icons.shield_outlined,
-        color: scheme.tertiary,
-      ),
-      AskAiCommandRisk.caution => (
-        label: context.l10n.askAiRiskCaution,
-        icon: Icons.warning_amber_rounded,
-        color: scheme.tertiary,
-      ),
-      AskAiCommandRisk.destructive => (
-        label: context.l10n.askAiRiskDestructive,
-        icon: Icons.dangerous_outlined,
-        color: scheme.error,
-      ),
-    };
-  }
-
-  String _toolLabel(BuildContext context, String toolName) {
-    return switch (toolName) {
-      'run_shell_command' => context.l10n.agentToolShell,
-      'read_file' => context.l10n.agentToolReadFile,
-      'write_file' => context.l10n.agentToolWriteFile,
-      'serverbox' => BuildData.name,
-      'ssh_connect' => context.l10n.agentToolSshConnect,
-      'ssh_disconnect' => context.l10n.agentToolSshDisconnect,
-      _ => toolName,
-    };
-  }
-
-  IconData _toolIcon(String toolName) {
-    return switch (toolName) {
-      'run_shell_command' => Icons.terminal,
-      'read_file' => Icons.description_outlined,
-      'write_file' => Icons.edit_document,
-      'serverbox' => Icons.dns_outlined,
-      'ssh_connect' => Icons.cable,
-      'ssh_disconnect' => Icons.link_off,
-      _ => Icons.build_outlined,
-    };
-  }
-
-  // -------------------------------------------------------------------- build
-
-  /// The same line the terminal and file tabs carry: which conversation is on
-  /// screen, of how many, and the way to the rest.
-  ///
-  /// It used to be the app's name beside a badge, with a history button and a
-  /// new-conversation button on the right — three ways of saying "Agent" and
-  /// none of saying which conversation you were in. Tapping the line opens the
-  /// list, which is where switching, renaming, deleting and starting one all
-  /// already live.
-  ///
-  /// Beside the history column there is nothing to open — that column is the
-  /// list — so the line is a label there and names the conversation anyway.
-  Widget _buildHeader(BuildContext context) {
-    final compact = widget.compact;
-    final session = ref.watch(globalAgentSessionProvider);
-    final conversations = session.conversations;
-    final activeId = session.conversation?.id;
-    final at = conversations.indexWhere((e) => e.id == activeId);
-
-    final title = at < 0
-        ? 'Agent'
-        : (conversations[at].title.isEmpty
-              ? context.l10n.askAiUntitledConversation
-              : conversations[at].title);
-
-    return SizedBox(
-      height: SessionTabBar.height,
-      child: Row(
-        children: [
-          Expanded(
-            child: SessionSwitcherLabel(
-              name: title,
-              // Nothing to count until this conversation is one of a set —
-              // before the first reply it is not saved yet.
-              position: at < 0 ? null : at + 1,
-              total: conversations.length,
-              icon: Icons.auto_awesome,
-              // Refused while a tool is running, for the reason the list's own
-              // rows are: switching away leaves the execution appending to
-              // whichever conversation is active by then.
-              onTap: compact && !session.isWorking
-                  ? () => showAgentHistorySheet(context)
-                  : null,
-            ),
-          ),
-          const AgentHeaderActions(),
-          ?widget.headerTrailing,
-          const SizedBox(width: 4),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(BuildContext context, ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 52, horizontal: 24),
-      child: Column(
-        children: [
-          Icon(Icons.hub_outlined, size: 50, color: theme.colorScheme.primary),
-          const SizedBox(height: 18),
-          Text(
-            context.l10n.agentWelcome,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            context.l10n.agentWelcomeTip,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 18),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _toolChip(theme, Icons.terminal, context.l10n.agentToolShell),
-              _toolChip(
-                theme,
-                Icons.description_outlined,
-                context.l10n.agentToolReadFile,
-              ),
-              _toolChip(
-                theme,
-                Icons.edit_document,
-                context.l10n.agentToolWriteFile,
-              ),
-              _toolChip(
-                theme,
-                Icons.dns_outlined,
-                BuildData.name,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _toolChip(ThemeData theme, IconData icon, String label) {
-    return Chip(
-      avatar: Icon(icon, size: 17),
-      label: Text(label),
-      side: BorderSide(color: Hairline.color(context)),
-      backgroundColor: theme.colorScheme.surfaceContainerLow,
-    );
-  }
-
-  /// The timeline as widgets, with each run of tool results folded into one.
-  List<Widget> _buildTimeline(
-    BuildContext context,
-    ThemeData theme,
-    List<AgentTimelineEntry> timeline,
-  ) {
-    final widgets = <Widget>[];
-    var userOrdinal = 0;
-    // What was already on screen last build. Anything past it arrived since,
-    // and is the only thing worth animating — replaying the entrance whenever
-    // an old entry scrolls back into view is what makes a list feel cheap.
-    // Read and updated here rather than in `setState`: it describes the frame
-    // being built, and changing it does not itself need one.
-    final settled = _renderedEntries;
-    _renderedEntries = timeline.length;
-    for (var i = 0; i < timeline.length; i++) {
-      final entry = timeline[i];
-      if (entry is AgentToolResultEntry) {
-        final run = <AgentToolResultEntry>[entry];
-        while (i + 1 < timeline.length &&
-            timeline[i + 1] is AgentToolResultEntry) {
-          run.add(timeline[++i] as AgentToolResultEntry);
-        }
-        widgets.add(
-          AgentEntryAppear(
-            animate: i >= settled,
-            child: run.length == 1
-                ? _buildToolResultCard(context, theme, run.first)
-                : _buildToolGroupCard(context, theme, run),
-          ),
-        );
-      } else {
-        widgets.add(
-          AgentEntryAppear(
-            animate: i >= settled,
-            child: _buildTimelineEntry(
-              context,
-              theme,
-              entry,
-            // Which of the user's own messages this is. Counted here rather
-            // than carried on the entry: the timeline is rebuilt from the
-            // history on every open, and a stored index would be one more
-            // thing that has to stay in step with it.
-              userOrdinal: entry is AgentUserEntry ? userOrdinal++ : -1,
-            ),
-          ),
-        );
-      }
-      widgets.add(const SizedBox(height: 14));
-    }
-    return widgets;
-  }
-
-  Widget _buildTimelineEntry(
-    BuildContext context,
-    ThemeData theme,
-    AgentTimelineEntry entry, {
-    int userOrdinal = -1,
-  }) {
-    return switch (entry) {
-      AgentUserEntry(:final content) => AgentUserBubble(
-        content: content,
-        ordinal: userOrdinal,
-        onResend: _notifier.resendFrom,
-        onDelete: _notifier.deleteFrom,
-        // No `Align` here: the bubble goes to the right through the column
-        // inside `AgentUserBubble`, so that what scales is the bubble rather
-        // than a full-width box with a bubble at one end of it.
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 680),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 11),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            // Not selectable, deliberately: a `SelectableText` registers its
-            // own long press for the word-select handles, wins the arena
-            // against the bubble's, and the menu never opens. Copy is on that
-            // menu and on the hover row, so nothing is lost but the ability to
-            // take part of a message — which is the trade iMessage makes too.
-            child: Text(
-              content,
-              style: TextStyle(color: theme.colorScheme.onPrimaryContainer),
-            ),
-          ),
-        ),
-      ),
-      AgentAssistantEntry(:final content) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2),
-        child: SimpleMarkdown(data: content),
-      ),
-      AgentNoticeEntry(:final kind) => _buildNotice(
-        context,
-        theme,
-        agentNoticeText(context, kind),
-      ),
-      AgentRawNoticeEntry(:final text) => _buildNotice(context, theme, text),
-      AgentToolResultEntry() => _buildToolResultCard(context, theme, entry),
-      // Written only by a terminal Agent, which is a different scope and so a
-      // different session. Shown as the output rather than dropped, because
-      // "cannot appear here" is a claim about storage that this switch is not
-      // in a position to make — a restored backup decides what is in a
-      // conversation, not this page.
-      AgentShellResultEntry(:final result) => _buildNotice(
-        context,
-        theme,
-        result.displayOutput,
-      ),
-    };
-  }
-
-  Widget _buildNotice(BuildContext context, ThemeData theme, String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.info_outline,
-            size: 18,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(width: 8),
-          Expanded(child: Text(text)),
-        ],
-      ),
-    );
-  }
-
-  /// The frame every tool row and every group of them shares.
-  ///
-  /// A finished tool is a log line, not a message: it collapses to one row so
-  /// the answer it was gathered for stays on screen. The label and the
-  /// duration sit beside the summary; anything longer is behind the expander.
-  Widget _toolCard({
-    required BuildContext context,
-    required ThemeData theme,
-    required bool succeeded,
-    required String title,
-    required String meta,
-    required List<Widget> children,
-    double metaMaxWidth = 170,
-    EdgeInsets childrenPadding = const EdgeInsets.fromLTRB(12, 4, 12, 10),
-    double indent = 12,
-    bool framed = true,
-  }) {
-    final tile = ExpansionTile(
-      shape: const RoundedRectangleBorder(),
-      collapsedShape: const RoundedRectangleBorder(),
-      minTileHeight: 40,
-      tilePadding: EdgeInsets.only(left: indent, right: 12),
-      visualDensity: VisualDensity.compact,
-      childrenPadding: childrenPadding,
-      title: Row(
-        children: [
-          Icon(
-            succeeded ? Icons.check_circle : Icons.error,
-            size: 17,
-            color: succeeded
-                ? theme.colorScheme.primary
-                : theme.colorScheme.error,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodyMedium,
-            ),
-          ),
-          const SizedBox(width: 8),
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: metaMaxWidth),
-            child: Text(
-              meta,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-        ],
-      ),
-      children: children,
-    );
-    if (!framed) return tile;
-    return Card(
-      elevation: 0,
-      color: theme.colorScheme.surfaceContainerLow,
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Hairline.color(context)),
-      ),
-      child: tile,
-    );
-  }
-
-  Widget _buildToolResultCard(
-    BuildContext context,
-    ThemeData theme,
-    AgentToolResultEntry entry, {
-    bool framed = true,
-    double indent = 12,
-  }) {
-    final result = entry.result;
-    final output = formatGlobalAgentToolResultOutput(
-      result,
-      cancelledLabel: libL10n.cancelled,
-      timedOutLabel: libL10n.timedOut,
-      noOutputLabel: context.l10n.askAiNoCommandOutput,
-      noResultLabel: libL10n.empty,
-      truncatedLabel: context.l10n.askAiOutputTruncated,
-    );
-    return _toolCard(
-      context: context,
-      theme: theme,
-      framed: framed,
-      indent: indent,
-      succeeded: result.succeeded,
-      // A result's own summary is English on purpose — the model reads it.
-      // A tool that never ran has nothing else to show, so the app says so
-      // in its own words rather than passing that sentence on.
-      title: result.localFailure
-          ? context.l10n.agentToolFailed
-          : result.summary,
-      meta: [
-        _toolLabel(context, entry.proposal.toolName),
-        '${result.duration.inMilliseconds} ms',
-        if (entry.autoApproved) context.l10n.askAiAutoApproved,
-      ].join(' · '),
-      children: [
-        // No empty case: `formatGlobalAgentToolResultOutput` never returns
-        // one, because saying "nothing came back" needs the tool's name and
-        // that is the only place that has it.
-        //
-        // The button sits over the output's top right rather than under the
-          // whole block: a long output scrolls inside its own box, and a
-          // button below it is a screenful of scrolling away from the text it
-          // copies. Outside the scroll view, so it stays there while the
-          // output moves under it.
-          //
-          // The box holds no padding of its own. A desktop scroll view draws
-          // its scrollbar at its own right edge, so any padding here would
-          // move the scrollbar inwards along with the text, and the button
-          // would keep landing outside it. The text is inset by the scroll
-          // view instead, which leaves the scrollbar on the box's edge and
-          // this button clear of it.
-          Stack(
-            children: [
-              Container(
-                width: double.infinity,
-                constraints: const BoxConstraints(maxHeight: 320),
-                clipBehavior: Clip.antiAlias,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(12, 12, _outputTextRightInset, 12),
-                  child: SelectableText(
-                    output,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      fontFamily: 'monospace',
+            if (showHeader) _buildHeader(context, id),
+            Expanded(
+              child: id == null
+                  ? _buildEmpty(context)
+                  // Keyed: a different chat is a different conversation, with
+                  // its own scroll position.
+                  // The header and the list of chats say it is running.
+                  : LlmConversation(
+                      key: ValueKey(id),
+                      chatId: id,
+                      showLoading: false,
                     ),
-                  ),
-                ),
-              ),
-              Positioned(
-                top: _outputCopyTopInset,
-                right: _outputCopyInset,
-                // Opaque, and a step away from the box's own colour: drawn in
-                // `surfaceContainerHighest` at 90% over a box of exactly that
-                // colour, the button had no edge at all and the text scrolled
-                // visibly through it.
-                //
-                // Icon-only, with the label on the tooltip and on the
-                // semantics: it floats over the output, and a labelled button
-                // there would cover the first line of what it copies. Not
-                // reachable by touch without a long press, which is the trade
-                // — the same one every overlaid icon button in the app makes.
-                child: Tooltip(
-                  message: libL10n.copy,
-                  child: Material(
-                    color: theme.colorScheme.surfaceContainerLowest,
-                    borderRadius: BorderRadius.circular(8),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(8),
-                      onTap: () => copyAgentText(output),
-                      child: Padding(
-                        padding: const EdgeInsets.all(_outputCopyPad),
-                        child: Icon(
-                          Icons.copy,
-                          size: _outputCopyIcon,
-                          semanticLabel: libL10n.copy,
-                          color: theme.colorScheme.onSurfaceVariant,
+            ),
+            // Inset and as wide as the messages above it.
+            LayoutBuilder(
+              builder: (context, cons) {
+                final side = (cons.maxWidth * 0.03).clamp(9.0, 20.0);
+                return SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(side, 0, side, 13),
+                    child: Center(
+                      heightFactor: 1,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 760),
+                        child: Composer(
+                          key: ValueKey(id ?? 'new:$scope'),
+                          chatId: id,
+                          scope: scope,
+                          compact: compact,
+                          onChatCreated: (created) =>
+                              AgentChats.select(scope, created),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ),
-            ],
-          ),
-      ],
-    );
-  }
-
-  /// One card for a run of tool calls with nothing said between them.
-  ///
-  /// Reading three files to answer one question is one step of that answer,
-  /// and three cards for it pushed the answer itself off screen. The row names
-  /// the tools the run used, in the order it used them; each call keeps its
-  /// own row, and its own output, inside.
-  Widget _buildToolGroupCard(
-    BuildContext context,
-    ThemeData theme,
-    List<AgentToolResultEntry> entries,
-  ) {
-    final tally = <String, int>{};
-    var totalMs = 0;
-    var succeeded = true;
-    for (final entry in entries) {
-      final label = _toolLabel(context, entry.proposal.toolName);
-      tally[label] = (tally[label] ?? 0) + 1;
-      totalMs += entry.result.duration.inMilliseconds;
-      succeeded &= entry.result.succeeded;
-    }
-    return _toolCard(
-      context: context,
-      theme: theme,
-      succeeded: succeeded,
-      title: tally.entries
-          .map((e) => e.value > 1 ? '${e.key} ×${e.value}' : e.key)
-          .join(' · '),
-      meta: '${context.l10n.agentToolCallsFmt(entries.length)} · $totalMs ms',
-      metaMaxWidth: 210,
-      childrenPadding: EdgeInsets.zero,
-      children: [
-        for (final entry in entries) ...[
-          Divider(
-            height: Hairline.thickness,
-            thickness: Hairline.thickness,
-            color: Hairline.color(context),
-          ),
-          _buildToolResultCard(
-            context,
-            theme,
-            entry,
-            framed: false,
-            indent: 22,
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildProposalCard(
-    BuildContext context,
-    ThemeData theme,
-    AgentSessionState session,
-    AskAiCommand proposal,
-  ) {
-    final arguments = proposal.arguments;
-    final serverId = proposal.serverId;
-    final serverName = serverId == null
-        ? null
-        : ref.watch(serversProvider).servers[serverId]?.name;
-    final detail = switch (proposal.toolName) {
-      'run_shell_command' => arguments['command'] as String? ?? '',
-      'read_file' || 'write_file' => arguments['path'] as String? ?? '',
-      'serverbox' => arguments['action'] as String? ?? '',
-      // Its own summary: the host, user and port the connection would reach,
-      // which is the whole of what there is to review.
-      'ssh_connect' || 'ssh_disconnect' => proposal.displayValue,
-      _ => proposal.displayValue,
-    };
-    final content = arguments['content'];
-    final risk = _riskInfo(context, proposal.risk);
-    final riskLabel = risk.label;
-    return Card(
-      elevation: 0,
-      color: theme.colorScheme.surfaceContainerLow,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Hairline.color(context)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(_toolIcon(proposal.toolName), size: 21),
-                const SizedBox(width: 9),
-                Expanded(
-                  child: Text(
-                    _toolLabel(context, proposal.toolName),
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                Chip(
-                  visualDensity: VisualDensity.compact,
-                  avatar: Icon(risk.icon, size: 15, color: risk.color),
-                  label: Text(riskLabel),
-                  side: BorderSide(color: risk.color.withValues(alpha: 0.45)),
-                  backgroundColor: risk.color.withValues(alpha: 0.09),
-                ),
-              ],
-            ),
-            if (serverId != null) ...[
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Icon(
-                    Icons.dns_outlined,
-                    size: 17,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 7),
-                  Expanded(
-                    child: Text(
-                      '${serverName ?? serverId} · $serverId',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-            if (proposal.description.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Text(proposal.description),
-            ],
-            if (detail.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: AgentCommandPreview(
-                  text: detail,
-                  // Only one of these tools takes a command. The rest put a
-                  // path or an action here, and tagging those as shell would
-                  // be a claim about them that is not true.
-                  language: proposal.toolName == 'run_shell_command'
-                      ? 'shell'
-                      : 'text',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontFamily: proposal.toolName == 'run_shell_command'
-                        ? 'monospace'
-                        : null,
-                  ),
-                ),
-              ),
-            ],
-            if (content is String) ...[
-              const SizedBox(height: 10),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: AgentCommandPreview(
-                  text: content,
-                  // What a `write_file` would write. Whatever it is, it is not
-                  // a command.
-                  language: 'text',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontFamily: 'monospace',
-                  ),
-                ),
-              ),
-            ],
-            if (session.pendingToolRestored) ...[
-              const SizedBox(height: 10),
-              Text(
-                context.l10n.askAiRestoredReview,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-            const SizedBox(height: 14),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: session.canReviewPendingTool
-                      ? () => unawaited(_notifier.declinePendingTool())
-                      : null,
-                  child: Text(context.l10n.askAiDecline),
-                ),
-                const SizedBox(width: 8),
-                FilledButton.icon(
-                  onPressed: session.canReviewPendingTool
-                      ? () => _runPendingTool(proposal)
-                      : null,
-                  icon: const Icon(Icons.play_arrow, size: 18),
-                  label: Text(context.l10n.askAiApproveRun),
-                ),
-              ],
+                );
+              },
             ),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildComposer(
-    BuildContext context,
-    ThemeData theme,
-    AgentSessionState session,
-  ) {
-    // Everything but the text is session state, so only the send button has to
-    // follow the keystrokes — see the builder around it. Rebuilding the view
-    // for each one redrew the timeline's markdown and every history row.
-    //
-    // Typing is only blocked by a tool waiting to be reviewed, which is a
-    // question that has to be answered before anything else makes sense. A
-    // running turn does not block it: composing the next thing to say while
-    // the answer arrives is the normal way to use a chat box.
-    final canType = session.pendingTool == null;
-    final canSendWhatever = canType && !session.isWorking;
-    final error = session.error;
-    return SafeArea(
-      top: false,
-      child: Padding(
-        // Less below than beside: what sits at the bottom is one line of grey
-        // small print, and a gap sized for the input box above it left the
-        // disclaimer floating in the middle of nothing. The home indicator's
-        // inset is already added under this by the `SafeArea`.
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 900),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+  Widget _buildHeader(BuildContext context, String? id) {
+    return ListenableBuilder(
+      listenable: LlmStores.chat.changes,
+      builder: (context, _) {
+        final title = switch (id == null ? null : LlmStores.chat.fetch(id)) {
+          // As the list names it: an empty title is no title.
+          final meta? when meta.title?.isNotEmpty ?? false => meta.title!,
+          _? => context.l10n.askAiUntitledConversation,
+          null => context.l10n.askAiNewConversation,
+        };
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(13, 7, 7, 0),
+          child: Row(
             children: [
-              if (error != null) ...[
-                AgentErrorBanner(
-                  message: describeAgentError(context, error),
-                  onRetry: session.isWorking
-                      ? null
-                      : () => _notifier.startStream(localeHint: _localeHint),
-                ),
-                const SizedBox(height: 8),
-              ],
-              // Listened to, not read: the setting is changed on another page,
-              // and nothing here would bring this one back to ask again.
-              Stores.setting.askAiSendOnEnter.listenable().listenVal((
-                sendOnEnter,
-              ) {
-                return Container(
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerLow,
-                    borderRadius: BorderRadius.circular(18),
-                    // The same line as the rule directly above it.
-                    border: Border.all(color: Hairline.color(context)),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        // Above the field rather than on it: the key has to be
-                        // answered before the platform's text input sees it, or
-                        // the newline is in the box by the time we decide it was
-                        // a send.
-                        child: Focus(
-                          canRequestFocus: false,
-                          onKeyEvent: _handleComposerKey,
-                          child: TextField(
-                            controller: _inputController,
-                            minLines: 1,
-                            maxLines: 6,
-                            // The setting decides on every keyboard, soft ones
-                            // included. It used to be honoured only on desktop,
-                            // on the grounds that a soft keyboard has no Shift
-                            // and so no Shift+Enter to type a line break with —
-                            // but that is a reason to leave the setting off,
-                            // not a reason to ignore it. Someone who turned it
-                            // on wants the return key to send, and a phone is
-                            // where that saves the most reaching.
-                            textInputAction: sendOnEnter
-                                ? TextInputAction.send
-                                : TextInputAction.newline,
-                            onSubmitted: sendOnEnter ? _submitPrompt : null,
-                            enabled: canType,
-                            // Bare: the composer's card is the field's box.
-                            decoration: bareInputDecoration(
-                              hintText: session.pendingTool == null
-                                  ? context.l10n.agentPromptHint
-                                  : context.l10n.askAiReviewBeforeContinuing,
-                              // Not for density — the padding below is
-                              // unchanged — but because a field that is not
-                              // dense is also never shorter than 48px, and
-                              // `InputDecorator` both centres the text in that
-                              // floor *and* applies `textAlignVertical` to what
-                              // is left over. The two together pushed the line
-                              // below the middle of the box. Dense, the field is
-                              // its padding plus its text, and the row centres
-                              // the whole of it against the send button.
-                              isDense: true,
-                              contentPadding: const EdgeInsets.fromLTRB(
-                                15,
-                                10,
-                                8,
-                                10,
-                              ),
+              Expanded(
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(9),
+                  // Too narrow for the list beside it: the title is the way to
+                  // it, as the terminal tab's session name is.
+                  onTap: compact
+                      ? () => showAgentHistorySheet(context, scope: scope)
+                      : null,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 7),
+                    child: Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(6),
-                        // One button, because they are the same question at
-                        // two moments: while a turn is running the only thing
-                        // to do to it is stop it, and a separate stop control
-                        // elsewhere is one more place to look.
-                        //
-                        // Compact, and it is what sets the composer's height:
-                        // a filled `IconButton` stands at 40 and the field
-                        // beside it is its padding plus one line, so the row
-                        // was as tall as the button whatever the field did.
-                        child: session.isWorking
-                            ? IconButton.filled(
-                                tooltip: libL10n.stop,
-                                visualDensity: VisualDensity.compact,
-                                onPressed: _notifier.stopWork,
-                                icon: const Icon(Icons.stop, size: 20),
-                              )
-                            : ValueListenableBuilder(
-                                valueListenable: _inputController,
-                                builder: (_, value, _) => IconButton.filled(
-                                  tooltip: context.l10n.send,
-                                  visualDensity: VisualDensity.compact,
-                                  onPressed:
-                                      canSendWhatever &&
-                                          value.text.trim().isNotEmpty
-                                      ? () => _submitPrompt(_inputController.text)
-                                      : null,
-                                  icon: const Icon(Icons.arrow_upward, size: 20),
+                        if (compact) const Icon(Icons.expand_more, size: 18),
+                        // Writing a reply or running a tool: the one sign of
+                        // it that stays when the reply is scrolled away.
+                        AgentBusyBuilder(
+                          scope: scope,
+                          builder: (_, activity) =>
+                              activity == AgentActivity.idle
+                              ? UIs.placeholder
+                              : Padding(
+                                  padding: const EdgeInsets.only(left: 9),
+                                  child: AgentActivityMark(activity),
                                 ),
-                              ),
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
                   ),
-                );
-              }),
-              const SizedBox(height: 4),
-              Text(
-                context.l10n.askAiDisclaimer,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
+              if (id != null)
+                IconButton(
+                  tooltip: context.l10n.askAiNewConversation,
+                  onPressed: () => AgentChats.startNew(scope),
+                  icon: const Icon(Icons.add, size: floatHeaderIconSize),
+                ),
+              AgentHeaderActions(scope: scope),
+              ?headerTrailing,
             ],
           ),
+        );
+      },
+    );
+  }
+
+  Widget _buildEmpty(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.auto_awesome_outlined,
+              size: 40,
+              color: Theme.of(context).colorScheme.outline,
+            ),
+            UIs.height13,
+            Text(
+              scope == null
+                  ? context.l10n.agentEmptyHint
+                  : context.l10n.agentTerminalEmptyHint,
+              textAlign: TextAlign.center,
+              style: UIs.textGrey,
+            ),
+          ],
         ),
       ),
     );
   }
+}
+
+/// Whether [scope]'s chat is writing a reply, for the floating shell's ring:
+/// rebuilt as chats open and close, and as the one showing starts and ends a
+/// run.
+/// What a chat is doing, as the bar, the list and the floating pill show it.
+enum AgentActivity {
+  idle,
+
+  /// Writing a reply or running a tool.
+  running,
+
+  /// Waiting on the user: a call to approve, or a form to fill in. Apart
+  /// from [running] because only this one needs them.
+  waiting;
+
+  static AgentActivity of(String? chatId) {
+    if (chatId == null) return idle;
+    if (Chats.isWaiting(chatId)) return waiting;
+    if (Chats.isRunning(chatId)) return running;
+    return idle;
+  }
+}
+
+/// [AgentActivity] as a mark [size] across: a spinner while it runs, a dot
+/// while it waits on the user, nothing otherwise.
+class AgentActivityMark extends StatelessWidget {
+  const AgentActivityMark(this.activity, {super.key, this.size = 14});
+
+  final AgentActivity activity;
+  final double size;
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final session = ref.watch(globalAgentSessionProvider);
-    final compact = widget.compact;
-
-    // Following the state rather than scrolling wherever this view last
-    // appended something: the session moves on its own, so a turn started here
-    // keeps going while the view is off screen and comes back further along
-    // than it was left.
-    ref.listen(globalAgentSessionProvider, (previous, next) {
-      final settled =
-          previous?.timeline.length != next.timeline.length ||
-          previous?.pendingTool != next.pendingTool;
-      if (settled || previous?.streamingContent != next.streamingContent) {
-        scheduleAgentAutoScroll(_scrollController, force: settled);
-      }
-    });
-
-    final visibleTimeline = <Widget>[
-      if (session.isEmpty) _buildEmptyState(context, theme),
-      ..._buildTimeline(context, theme, session.timeline),
-      if (session.isStreaming) ...[
-        Builder(
-          builder: (context) {
-            // Answer text is many lines and starts at the top; the waiting
-            // label is one line and belongs beside the spinner's middle.
-            // Aligning both to the top left the label sitting visibly high.
-            final streamed = session.streamingContent?.trim();
-            final hasText = streamed?.isNotEmpty == true;
-            return Row(
-              crossAxisAlignment: hasText
-                  ? CrossAxisAlignment.start
-                  : CrossAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: EdgeInsets.only(top: hasText ? 4 : 0),
-                  child: const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: hasText
-                      ? SimpleMarkdown(data: session.streamingContent!)
-                      : Text(context.l10n.askAiAwaitingResponse),
-                ),
-              ],
-            );
-          },
-        ),
-        const SizedBox(height: 14),
-      ],
-      // Not behind an `if`: the pager animates its own emptiness, and a
-      // widget taken out of the tree cannot be seen leaving.
-      AgentProposalPager(
-          proposals: session.pendingTools,
-          index: session.pendingIndex,
-          onIndexChanged: _notifier.showPendingTool,
-          cardBuilder: (context, proposal) =>
-              _buildProposalCard(context, theme, session, proposal),
-        ),
-    ];
-
-    return Column(
-      children: [
-        if (widget.showHeader) ...[
-          _buildHeader(context),
-          // The same seam as the one beside the history column, which these
-          // two meet at a corner: at full strength they read as a brighter
-          // line than it, which is the pane looking like a window of its own.
-          Divider(
-            height: Hairline.thickness,
-            thickness: Hairline.thickness,
-            color: Hairline.color(context),
-          ),
-        ],
-        Expanded(
-          child: Scrollbar(
-            controller: _scrollController,
-            child: ListView(
-              controller: _scrollController,
-              padding: EdgeInsets.fromLTRB(
-                compact ? 12 : 24,
-                20,
-                compact ? 12 : 24,
-                24,
-              ),
-              children: [
-                Align(
-                  alignment: Alignment.topCenter,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 900),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: visibleTimeline,
-                    ),
-                  ),
-                ),
-              ],
+  Widget build(BuildContext context) => switch (activity) {
+    AgentActivity.idle => UIs.placeholder,
+    AgentActivity.running => SizedLoading(
+      size,
+      padding: 0,
+      builder: SizedLoading.circularBuilder,
+    ),
+    AgentActivity.waiting => Tooltip(
+      message: llmL10n.waitingForYou,
+      child: SizedBox.square(
+        dimension: size,
+        child: Center(
+          child: Container(
+            width: size * 0.6,
+            height: size * 0.6,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.tertiary,
+              shape: BoxShape.circle,
             ),
           ),
         ),
-        Divider(
-          height: Hairline.thickness,
-          thickness: Hairline.thickness,
-          color: Hairline.color(context),
-        ),
-        Align(
-          alignment: Alignment.center,
-          child: _buildComposer(context, theme, session),
-        ),
-      ],
+      ),
+    ),
+  };
+}
+
+/// [builder] with what the chat [scope] shows is doing.
+class AgentBusyBuilder extends StatelessWidget {
+  const AgentBusyBuilder({super.key, this.scope, required this.builder});
+
+  final String? scope;
+  final Widget Function(BuildContext context, AgentActivity activity) builder;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        AgentChats.of(scope),
+        Chats.openChanges,
+        Chats.runningChanges,
+      ]),
+      builder: (context, _) =>
+          builder(context, AgentActivity.of(AgentChats.of(scope).value)),
     );
   }
 }

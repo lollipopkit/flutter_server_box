@@ -74,111 +74,10 @@ class AppLocalizationsAz extends AppLocalizations {
   String get askAi => 'AI-dan soruş';
 
   @override
-  String get askAiAwaitingResponse => 'AI cavabı gözlənilir...';
-
-  @override
-  String get askAiEndpointTip =>
-      'Domen və ya tam URL daxil et. Yol seçdiyin protokola əsasən tamamlanır.';
-
-  @override
-  String get askAiProtocolTip =>
-      'Avtomatik rejim əvvəlcə Responses, sonra Chat Completions sınayır.';
-
-  @override
-  String get askAiCommandInserted => 'Əmr terminala daxil edildi';
-
-  @override
-  String askAiConfigMissing(String fields) {
-    return 'Parametrlərdə $fields məlumatlarını təyin et.';
-  }
-
-  @override
-  String get askAiDisclaimer =>
-      'AI səhv edə bilər. Tətbiq etməzdən əvvəl diqqətlə yoxla.';
-
-  @override
   String get askAiInsertTerminal => 'Terminala daxil et';
 
   @override
-  String get askAiNoResponse => 'Cavab yoxdur';
-
-  @override
   String get remoteDesktop => 'Uzaq masaüstü';
-
-  @override
-  String get askAiAgentWelcome => 'Bu serverdə nə edək?';
-
-  @override
-  String get askAiAgentPromptHint =>
-      'Agentdən nəyisə yoxlamağı və ya düzəltməyi istə...';
-
-  @override
-  String get askAiAnalyzeSelectionPrompt =>
-      'Seçilmiş terminal çıxışını təhlil et və nə baş verdiyini izah et';
-
-  @override
-  String get askAiTerminalContext => 'Terminal konteksti';
-
-  @override
-  String get askAiReviewNeeded => 'Yoxla';
-
-  @override
-  String get askAiReviewAction => 'Təklif olunan əmri yoxla';
-
-  @override
-  String get askAiReviewBeforeContinuing =>
-      'Əvvəlcə cari təklifi yoxla və ya rədd et';
-
-  @override
-  String get askAiApproveRun => 'Təsdiqlə və icra et';
-
-  @override
-  String get askAiDecline => 'Rədd et';
-
-  @override
-  String get askAiActionDeclined => 'Təklif olunan əmr rədd edildi.';
-
-  @override
-  String get askAiInterrupted => 'Agentin cavabı kəsildi.';
-
-  @override
-  String get askAiResend => 'Resend';
-
-  @override
-  String get askAiResendTip =>
-      'Bu mesajdan sonrakı hər şey — cavablar, əmrlər və onların nəticələri silinəcək.';
-
-  @override
-  String get askAiDeleteTip =>
-      'Bu mesaj və ondan sonrakı hər şey — cavablar, əmrlər və onların nəticələri silinəcək.';
-
-  @override
-  String get askAiModelTable => 'Model table';
-
-  @override
-  String get askAiModelTableTip =>
-      'models.dev saytından model adına görə kontekst ölçüləri. Biri tətbiqlə birlikdə verilir; yenisini əldə etmək üçün toxunun.';
-
-  @override
-  String get askAiContextFallback => 'cədvəldə yoxdur';
-
-  @override
-  String get askAiCompactAt => 'Summarise at';
-
-  @override
-  String get askAiCompactAtTip =>
-      'Əvvəlki dialoq hissələri xülasə edilməzdən öncə model kontekstinin nə qədər dolacağını müəyyən edir. Daha erkən xülasə detalları tez itirir, daha gec xülasə isə modelin sorğunu rədd etməsi riskini artırır.';
-
-  @override
-  String get askAiContextTokens => 'Context size';
-
-  @override
-  String get askAiContextTokensTip =>
-      'Bu modelin neçə token saxladığını göstərir. Avtomatik rejim bunu ada görə tapır; provider daha qısa kontekst pəncərəsi təqdim edirsə, rəqəmi özünüz təyin edin.';
-
-  @override
-  String get askAiConversationCompacted =>
-      'Söhbətin davam etməsi üçün əvvəlki mesajlar xülasə edildi.';
 
   @override
   String get askAiRiskReadOnly => 'Yalnız oxuma';
@@ -193,23 +92,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get askAiRiskDestructive => 'Yüksək risk';
 
   @override
-  String get askAiHighRiskConfirmTitle => 'Yüksək riskli əmr icra edilsin?';
-
-  @override
-  String get askAiHighRiskConfirmBody =>
-      'Bu əmr geri qaytarılması çətin olan dəyişikliklər edə bilər. Diqqətlə yoxla.';
-
-  @override
-  String get askAiNoCommandOutput => 'Əmr çıxış olmadan tamamlandı.';
-
-  @override
-  String get askAiOutputTruncated =>
-      'Uzun çıxış agentə geri göndərilməzdən əvvəl qısaldıldı.';
-
-  @override
-  String get askAiAutoApproved => 'Avtomatik təsdiqləndi';
-
-  @override
   String get askAiAutoRunSafeCommands =>
       'Yalnız oxuma əmrlərini avtomatik icra et';
 
@@ -218,38 +100,10 @@ class AppLocalizationsAz extends AppLocalizations {
       'Yalnız həm model, həm də yerli yoxlama əmri yalnız oxuma kimi qiymətləndirdikdə icra olunur';
 
   @override
-  String get askAiSendOnEnter => 'Enter göndərir';
-
-  @override
-  String get askAiSendOnEnterTip =>
-      'Enter göndərir, Shift+Enter yeni sətir açır. Söndürüldükdə: Enter yeni sətir açır, Cmd/Ctrl+Enter göndərir.';
-
-  @override
-  String get askAiApiKeyOptional =>
-      'Yerli istifadə və ya autentifikasiya tələb olunmadıqda boş saxla';
-
-  @override
-  String get askAiAllowInsecure => 'Şifrələnməmiş HTTP-yə icazə ver';
-
-  @override
-  String get askAiAllowInsecureTip =>
-      'localhost xaricindəki ünvanlarda yerləşən öz modelinə http:// ilə qoşulmağa imkan verir. API açarı və terminal konteksti şifrələnmədən göndərilir; localhost bundan təsirlənmir.';
-
-  @override
-  String get askAiInsecureEndpoint =>
-      'Bu ünvan http:// istifadə edir. İstifadə etmək üçün AI parametrlərində «Şifrələnməmiş HTTP-yə icazə ver» seçimini aktivləşdir.';
-
-  @override
   String get askAiHistory => 'Söhbət tarixçəsi';
 
   @override
   String get askAiNewConversation => 'Yeni söhbət';
-
-  @override
-  String get askAiNoHistory => 'Hələ yadda saxlanmış söhbət yoxdur';
-
-  @override
-  String get askAiNoHistoryMessages => 'Hələ mesaj yoxdur';
 
   @override
   String get askAiUntitledConversation => 'Adsız';
@@ -263,29 +117,6 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get askAiDeleteConversationTip =>
       'Söhbəti bu cihazdan silir. Geri qaytarmaq mümkün deyil.';
-
-  @override
-  String get askAiClearHistoryTitle =>
-      'Bu serverin agent tarixçəsi təmizlənsin?';
-
-  @override
-  String get askAiClearHistoryTip =>
-      'Bu server üçün yadda saxlanmış bütün agent söhbətləri silinəcək.';
-
-  @override
-  String get askAiRestoredReview =>
-      'Bu əmr tarixçədən götürülüb. Yenidən yoxla';
-
-  @override
-  String get agentWelcome => 'Serverlərində nə edək?';
-
-  @override
-  String get agentWelcomeTip =>
-      'Agentə problemi araşdırmağı və ya tapşırığı yerinə yetirməyi həvalə et';
-
-  @override
-  String get agentPromptHint =>
-      'Agentdən serverlərini yoxlamağı və ya idarə etməyi istə...';
 
   @override
   String get agentNoHistory => 'Yadda saxlanmış ümumi agent söhbəti yoxdur';
@@ -305,14 +136,6 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get agentToolWriteFile => 'Fayla yaz';
-
-  @override
-  String get agentToolFailed => 'Alətin icrası uğursuz oldu.';
-
-  @override
-  String agentToolCallsFmt(int count) {
-    return '$count alət çağırışı';
-  }
 
   @override
   String get floatOverTabs => 'Digər vərəqlərin üzərində göstər';
@@ -862,13 +685,6 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get noConnectionMethod =>
       'SSH, monitorinq agenti və ya hər ikisini konfiqurasiya et';
-
-  @override
-  String get preferredTransport => 'Əvvəlcə sına';
-
-  @override
-  String get preferredTransportTip =>
-      'Vəziyyətin haradan oxunduğunu və əmrin əvvəlcə hansı əlaqəni açdığını müəyyən edir. Digər əlaqə də əlçatan qalır.';
 
   @override
   String get keepForeground => 'Tətbiqi ön planda saxla!';
@@ -1460,9 +1276,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get used => 'İstifadə olunur';
 
   @override
-  String get view => 'Bax';
-
-  @override
   String get viewDetails => 'Təfərrüatlara bax';
 
   @override
@@ -1605,13 +1418,7 @@ class AppLocalizationsAz extends AppLocalizations {
   String get tmuxSessionName => 'Sessiya adı';
 
   @override
-  String get tmuxExistingSessions => 'Mövcud sessiyalar';
-
-  @override
   String get tmuxNewSession => 'Yeni sessiya';
-
-  @override
-  String get tmuxWindows => 'Pəncərələr';
 
   @override
   String get tmuxNewWindow => 'Yeni pəncərə';
@@ -1631,31 +1438,7 @@ class AppLocalizationsAz extends AppLocalizations {
   }
 
   @override
-  String tmuxPaneCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count bölmə',
-      one: '1 bölmə',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String get tmuxAttached => 'Qoşulub';
-
-  @override
-  String get tmuxActive => 'Aktivdir';
-
-  @override
-  String tmuxActiveAt(String time) {
-    return 'aktivdir: $time';
-  }
-
-  @override
-  String tmuxAttachedAt(String time) {
-    return 'qoşulub: $time';
-  }
 
   @override
   String get tmuxSkip => 'Keç';
@@ -1942,9 +1725,6 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get bmcStaleWrite =>
       'Məlumat yazılarkən BMC dəyişdi. Yenidən cəhd et.';
-
-  @override
-  String get send => 'Göndər';
 
   @override
   String get privacyBlur => 'Arxa planda məxfilik';
@@ -2325,6 +2105,71 @@ class AppLocalizationsAz extends AppLocalizations {
   }
 
   @override
+  String get agentServerTools => 'Server alətləri';
+
+  @override
+  String get agentServerToolsTip =>
+      'Serverlərinizdə əmrlər icra etmək, faylları oxumaq və ya yazmaq, SSH ilə digər hostlara qoşulmaq və ServerBox-un öz əməliyyatlarından istifadə etmək.';
+
+  @override
+  String get agentTerminalTools => 'Terminal';
+
+  @override
+  String get agentTerminalToolsTip =>
+      'Terminalın öz söhbətlərində: terminalın göstərdiyini oxumaq və onun serverində əmrlər icra etmək.';
+
+  @override
+  String get agentToolTerminalScreen => 'Ekranı oxu';
+
+  @override
+  String get agentProviders => 'Provayderlər';
+
+  @override
+  String get agentProvidersTip =>
+      'API açarları, modellər və yeni söhbətin modeli';
+
+  @override
+  String get agentTools => 'Alətlər';
+
+  @override
+  String get agentToolsTip =>
+      'Agent-in istifadə edə bildikləri və onun MCP serverləri';
+
+  @override
+  String get agentSnippetToolsTip =>
+      'Snippet-ləri siyahıla, əlavə et, dəyiş və sil. Dəyişikliklər soruşulur.';
+
+  @override
+  String get agentVirtToolsTip =>
+      'Virtualizasiya bölməsinin yüklədiyi VM və konteynerləri oxu.';
+
+  @override
+  String get agentBenchmarkToolsTip =>
+      'Benchmark nəticələrini oxu; icazənizlə benchmark başlat və ya dayandır.';
+
+  @override
+  String get agentRemoteDesktopToolsTip =>
+      'Uzaq masaüstü profillərini siyahıla; icazənizlə qoşul və ya ayrıl.';
+
+  @override
+  String get agentSkills => 'Skills';
+
+  @override
+  String get agentSkillsTip =>
+      'Müəyyən tapşırıqlar üçün təlimatlar, GitHub-dan və ya keçiddən quraşdırılır';
+
+  @override
+  String get agentPermissions => 'İcazələr';
+
+  @override
+  String get agentEmptyHint =>
+      'Serverləriniz haqqında soruşun və ya Agent-dən onlarda nəsə etməsini xahiş edin.';
+
+  @override
+  String get agentTerminalEmptyHint =>
+      'Bu server haqqında soruşun. Agent bu terminalı oxuya və burada əmrlər icra edə bilər.';
+
+  @override
   String oldestSampleFmt(String time) {
     return 'ən köhnə ölçmə $time';
   }
@@ -2519,34 +2364,8 @@ class AppLocalizationsAz extends AppLocalizations {
       'Hər ikisi eyni anda açıq ola bilər. Sıra, onların yığılma sırasıdır.';
 
   @override
-  String transportOrderFmt(String first, String second) {
-    return 'Sıranı dəyişmək üçün sürüşdürün. Əvvəlcə $first yığılır; cavab verməsə, sessiyanı $second təkbaşına aparır.';
-  }
-
-  @override
-  String transportOnlyFmt(String name) {
-    return 'Yalnız $name açıqdır, ona görə də geri dönüləcək bir şey yoxdur.';
-  }
-
-  @override
   String get transportNoneOn =>
       'Hər ikisi bağlıdır — bu serverə qoşulmaq mümkün deyil.';
-
-  @override
-  String get transportOffKept =>
-      'bağlı — parametrlər saxlanılır, heç vaxt yığılmır';
-
-  @override
-  String get transportDialledFirst => 'əvvəlcə yığılır';
-
-  @override
-  String get transportFallback => 'ehtiyat';
-
-  @override
-  String get transportOnlyMethod => 'yeganə üsul';
-
-  @override
-  String get transportOff => 'bağlı';
 
   @override
   String get thisDevice => 'Bu cihaz';
@@ -2594,10 +2413,6 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get optional => 'İstəyə bağlı';
-
-  @override
-  String get optionalTip =>
-      'Burada heç nə qoşulmaq üçün lazım deyil. Birini açın, onun sahələri formanı əvəz edir.';
 
   @override
   String get sshAdvanced => 'SSH əlavə';
@@ -3424,9 +3239,6 @@ class AppLocalizationsAz extends AppLocalizations {
   }
 
   @override
-  String get reopen => 'Yenidən aç';
-
-  @override
   String get virtSnapshots => 'Snapshotlar';
 
   @override
@@ -3596,9 +3408,6 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get virtCreateNameTaken => 'Bu adda qonaq var.';
-
-  @override
-  String get virtCreateVmidInvalid => '100-dən 999999999-a qədər.';
 
   @override
   String get virtCreateVmidTaken => 'Bu VMID məşğuldur.';
@@ -4103,9 +3912,6 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get virtHwEfiStorage => 'EFI dəyişənlərinin yeri';
-
-  @override
-  String get virtHwTpmStorage => 'TPM vəziyyətinin yeri';
 
   @override
   String virtHwSwitchFirmwareAsk(String guest, String firmware) {
@@ -4738,9 +4544,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get virtSnapshotFormInternal => 'Daxili (şəkil içində)';
 
   @override
-  String get virtSnapshotForm => 'Növ';
-
-  @override
   String get virtSnapshotOverlayPool => 'Örtük hovuzu';
 
   @override
@@ -4768,11 +4571,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get virtSnapshotChainBase => 'Əsas şəkil';
 
   @override
-  String virtSnapshotChainRaw(String format) {
-    return 'Xarici anlık görüntü qcow2 disk tələb edir. Bu disk $format.';
-  }
-
-  @override
   String get virtSnapshotNoSupport =>
       'Qonağın yaddaşı anlık görüntünü dəstəkləmir, buna görə yaradıla bilməz.';
 
@@ -4793,9 +4591,6 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get virtSnapshotDiffShow => 'İndiki ilə müqayisə et';
-
-  @override
-  String get virtSnapshotDiffGroup => 'Dəyişdi';
 
   @override
   String get virtSnapshotDiffGroupCpu => 'Prosessor';
@@ -4876,19 +4671,10 @@ class AppLocalizationsAz extends AppLocalizations {
   String get virtTemplateTip => 'Şablon yalnızca klonlandıqdan sonra işləyir.';
 
   @override
-  String get virtCloneStorage => 'Hədəf anbar';
-
-  @override
   String get virtCloneStorageSame => 'Mənbə ilə eyni';
 
   @override
-  String get virtCloneNode => 'Hədəf node';
-
-  @override
   String get virtCloneNodeSame => 'Mənbə ilə eyni';
-
-  @override
-  String get virtClonePool => 'Hədəf hovuz';
 
   @override
   String get virtCloneStorageContent => 'Bu anbar VM disklərini saxlamır.';
@@ -4913,9 +4699,6 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get virtBackupJobNew => 'Yeni iş';
-
-  @override
-  String get virtBackupJobEdit => 'İşi düzəlt';
 
   @override
   String get virtBackupJobRun => 'İndi işə sal';
@@ -4968,12 +4751,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get virtBackupMail => 'Bildiriş';
 
   @override
-  String get virtBackupMailAlways => 'Həmişə';
-
-  @override
-  String get virtBackupMailFailure => 'Xəta zamanı';
-
-  @override
   String get virtBackupNotesTemplate => 'Yedək qeydləri';
 
   @override
@@ -4987,9 +4764,6 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get virtBackupPruneTip =>
       'PVE saxlama seçimləri, məs. keep-last=7,keep-daily=4. Boş: anbarın və ya node-un öz ayarı.';
-
-  @override
-  String get virtBackupNextRun => 'Növbəti işə salma';
 
   @override
   String get virtBackupJobNode => 'Node';
@@ -5024,9 +4798,6 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get virtBackupRestoreStorageSame => 'Yedəkdəki kimi';
-
-  @override
-  String get virtBackupModeSnapshotTip => 'snapshot · dayanmadan';
 
   @override
   String get virtCloneStorageMissing =>

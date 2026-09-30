@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LlmStores;
 import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/geo.dart';
@@ -9,7 +10,6 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
-import 'package:server_box/data/store/agent_conversation.dart';
 import 'package:server_box/data/store/entity_store.dart';
 import 'package:server_box/data/store/port_forward.dart';
 import 'package:server_box/data/store/pve.dart';
@@ -29,26 +29,22 @@ class ServerStore extends EntityStore<Spi> {
     PortForwardStore? portForwards,
     RemoteDesktopStore? remoteDesktops,
     SnippetStore? snippets,
-    AgentConversationStore? conversations,
     PveStore? pve,
   }) : _portForwards = portForwards,
        _remoteDesktops = remoteDesktops,
        _snippets = snippets,
-       _conversations = conversations,
        _pve = pve;
 
   static final instance = ServerStore(
     portForwards: PortForwardStore.instance,
     remoteDesktops: RemoteDesktopStore.instance,
     snippets: SnippetStore.instance,
-    conversations: AgentConversationStore.instance,
     pve: PveStore.instance,
   );
 
   final PortForwardStore? _portForwards;
   final RemoteDesktopStore? _remoteDesktops;
   final SnippetStore? _snippets;
-  final AgentConversationStore? _conversations;
 
   /// `server_pve` cascades with its server and moves with a rename, neither
   /// of which goes through [PveStore], so its watchers hear it from here.
@@ -599,25 +595,9 @@ class ServerStore extends EntityStore<Spi> {
           old.id,
         ]);
 
-        for (final row in db.select(
-          'SELECT id, data FROM agent_conversation WHERE server_id = ?;',
-          [old.id],
-        )) {
-          final data = json.decode(row['data'] as String);
-          if (data is! Map) {
-            throw const FormatException('agent conversation is not an object');
-          }
-          final updated = Map<String, Object?>.from(data)
-            ..['server_id'] = replacement.id;
-          db.execute(
-            'UPDATE agent_conversation SET server_id = ?, data = ? WHERE id = ?;',
-            [replacement.id, json.encode(updated), row['id']],
-          );
-        }
-        db.execute(
-          'UPDATE agent_active_conversation SET server_id = ? WHERE server_id = ?;',
-          [replacement.id, old.id],
-        );
+        // The server's terminal chats are listed by its id — see
+        // `AgentScope.terminal`.
+        _rescopeTerminalChats(old.id, replacement.id);
 
         final snippetSync = SyncedTable('snippet');
         for (final snippetId in snippetIds) {
@@ -651,7 +631,19 @@ class ServerStore extends EntityStore<Spi> {
     if (remoteDesktopIds.isNotEmpty) _remoteDesktops?.invalidate();
     if (snippetIds.isNotEmpty) _snippets?.invalidate();
     if (hadPve) _pve?.invalidate();
-    _conversations?.notifyExternalChange();
+  }
+
+  /// Moves the chats of server [from]'s terminals to [to], within the rename's
+  /// transaction: a chat keeps its terminal by the server's id.
+  void _rescopeTerminalChats(String from, String to) {
+    final chats = LlmStores.chat;
+    for (final trashed in const [false, true]) {
+      for (final meta in chats.all(scope: 'terminal:$from', trashed: trashed)) {
+        if (!chats.set(meta.id, {...meta.toJson(), 'scope': 'terminal:$to'})) {
+          throw StateError('Moving chat ${meta.id} to server $to failed');
+        }
+      }
+    }
   }
 
   List<String> _referencingIds(String sql, String serverId) => db

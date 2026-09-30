@@ -18,25 +18,26 @@ ads, advertising identifiers, or cross-app tracking.
 | Data | Storage and behavior |
 |---|---|
 | Server names, addresses, ports, usernames and settings | Encrypted SQLite database |
-| SSH passwords, private keys, Monitor and BMC credentials, and the configured AI API key | Encrypted SQLite database; the database encryption key is kept in the platform keychain |
+| SSH passwords, private keys, Monitor and BMC credentials | Encrypted SQLite database; the database encryption key is kept in the platform keychain |
+| AI provider API keys | Platform keychain, one entry per provider |
 | Backup password, WebDAV password and GitHub token | Platform secure storage |
 | App logs | Local log files only; the current and previous run are retained for troubleshooting |
-| Agent conversations | Local encrypted database; they may contain prompts, model responses, command output, selected terminal text and file content |
+| Agent conversations, memory notes, AI providers and tool settings | Local encrypted database; conversations may contain prompts, model responses, command output, terminal text, file content and fetched pages |
 | Active terminal output | Kept in the active session; the terminal does not retain it after the session ends |
 | Downloaded city-level location data | Unencrypted files in the app's data directory, created only after you confirm the download; see [Globe and location data](#globe-and-location-data) |
 | Public-interface-address results reported by servers, including an explicit no-address result | Encrypted app database, one entry per server. Once seven days old, a record can be refreshed by a later status poll. Coordinates are not stored; each one is derived again from the downloaded data whenever needed |
 
-Agent conversations are excluded from backups and device sync. They remain on
-this device until you delete them from the conversation history. An Agent
+Agent conversations, memory notes, AI providers and tool settings are excluded
+from backups and device sync. Conversations remain on this device until you
+delete them from the conversation history. An Agent
 conversation can still be sent to the AI provider you configured; see
 [AI requests](#ai-requests).
 
 Backups are created only when you request one. Depending on the options and the
 backup format, a backup can contain server settings and credentials, private
 keys, snippets, port forwards, container settings, connection history and app
-settings. When app settings are included, this also includes the configured AI
-endpoint, model and API key. Agent conversations and device-local state are not
-included.
+settings. AI provider settings and API keys, Agent conversations and
+device-local state are not included.
 
 A local backup may be unencrypted when no backup password is set. When you set a
 backup password, the backup is encrypted before it is written or uploaded.
@@ -166,9 +167,10 @@ anonymous. Anything pasted into GitHub is public and is covered by
 
 ## AI requests
 
-The Agent uses the OpenAI-compatible endpoint configured in **Settings → App →
-AI**. The default endpoint can be replaced with another provider. No request is
-made until you send an Agent message.
+The Agent uses the providers you add at **Settings → App → AI → Providers**:
+built-in ones from the model catalog, and custom endpoints. No request is made
+until you send an Agent message, and each goes to the provider of the chat's
+model.
 
 Depending on the operation, a request can contain your prompt, selected terminal
 text, recent conversation history, the configured server name and context needed
@@ -177,10 +179,19 @@ in a later request so the model can continue. Command output and file content ma
 contain passwords, tokens or other secrets even when Server Box did not add them
 itself; check what you submit and review the provider's privacy policy.
 
-The API key is stored locally in the encrypted app database and sent as a bearer
-credential only to the endpoint you configure. If app settings are included in a
-backup, the endpoint, model and API key are included as well. Server Box does not
-proxy AI requests through a developer service.
+A provider's API key is stored in the platform keychain and sent only to that
+provider. A custom provider at a plain `http://` address on another machine is
+refused unless you allow it for that provider, since the key would travel
+unencrypted. The **Web fetch** tool requests a page from this device when the
+Agent uses it, and MCP servers you add receive the calls made to their tools.
+Installing or updating a skill from a remote source downloads it from the
+source you enter (GitHub, GitLab or the site), over `https`; one from a folder
+or a `.zip` on this device is read locally, with no request. Skills are kept
+as files on this device and are not backed up.
+An MCP server's headers and sign-in tokens are kept in the App's encrypted
+database on this device, never in a backup, and sent only to that server, and
+only over `https` unless the server is on this device.
+Server Box does not proxy AI requests through a developer service.
 
 ## Globe and location data
 

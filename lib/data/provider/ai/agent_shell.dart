@@ -47,7 +47,11 @@ class AgentShell extends _$AgentShell {
 /// A getter rather than a field: [FloatShellGeometry] holds the settings row's
 /// properties, and reading `Stores.setting` at import time would resolve the
 /// store before `Stores.init` has registered one.
+///
+/// Floating until the user closes it, from the Agent tab's float button: what
+/// the Agent does elsewhere in the app, on the user's word, stays in view.
 FloatShellGeometry get agentShellGeometry => FloatShellGeometry(
   Stores.setting.agentShell,
   defaultCorner: Alignment.bottomRight,
+  defaultMode: FloatShellMode.expanded,
 );

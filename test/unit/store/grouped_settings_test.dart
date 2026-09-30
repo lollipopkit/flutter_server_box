@@ -12,11 +12,14 @@ import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/app/ask_ai_config.dart';
 import 'package:server_box/data/model/app/float_shell_config.dart';
 import 'package:server_box/data/store/migrations/m009_grouped_settings.dart';
 import 'package:server_box/data/store/setting.dart';
 import '../../helpers/test_db.dart';
+
+/// The `askAi` row as the plain map it is written as — see m009's doc.
+Map<String, dynamic> _askAi() =>
+    jsonDecode(_rawValue('askAi')!) as Map<String, dynamic>;
 
 /// The `value` column exactly as stored.
 String? _rawValue(String key) {
@@ -56,13 +59,14 @@ void main() {
 
       await migration.apply();
 
-      final config = store.askAi.get();
-      expect(config.baseUrl, 'https://example.test');
-      expect(config.apiKey, 'sk-secret');
-      expect(config.model, 'some-model');
-      expect(config.protocol, 'responses');
-      expect(config.autoRunSafeCommands, isTrue);
-      expect(config.sendOnEnter, isFalse);
+      expect(_askAi(), {
+        'baseUrl': 'https://example.test',
+        'apiKey': 'sk-secret',
+        'model': 'some-model',
+        'protocol': 'responses',
+        'autoRunSafeCommands': true,
+        'sendOnEnter': false,
+      });
     });
 
     test('and the old keys are gone afterwards', () async {
@@ -83,12 +87,9 @@ void main() {
 
         await migration.apply();
 
-        final config = store.askAi.get();
-        expect(config.model, 'some-model');
-        // Never set, so it goes on tracking whatever the model says the default
-        // is — pinning it here would freeze it at today's value forever.
-        expect(config.baseUrl, const AskAiConfig().baseUrl);
-        expect(config.sendOnEnter, const AskAiConfig().sendOnEnter);
+        // Never set, so absent: whatever reads the row supplies the default,
+        // rather than this step freezing today's value into it.
+        expect(_askAi(), {'model': 'some-model'});
       },
     );
 
@@ -178,7 +179,7 @@ void main() {
     await migration.apply();
 
     expect(_rawValue('askAi'), first);
-    expect(store.askAi.get().model, 'some-model');
+    expect(_askAi()['model'], 'some-model');
     expect(store.agentShell.get().pill.y, 0.25);
   });
 
@@ -195,77 +196,69 @@ void main() {
 
   group('a field reads and writes like the property it replaced', () {
     test('get falls back to the model default', () {
-      expect(store.askAiModel.get(), const AskAiConfig().model);
       expect(store.agentShell.pillY.get(), const FloatShellPill().y);
     });
 
     test('set touches one field and leaves the rest', () async {
-      await store.askAiApiKey.set('sk-secret');
-      await store.askAiModel.set('some-model');
-
-      expect(store.askAiApiKey.get(), 'sk-secret');
-      expect(store.askAiModel.get(), 'some-model');
-      expect(store.askAiBaseUrl.get(), const AskAiConfig().baseUrl);
-    });
-
-    test('and so does a nested one', () async {
       await store.agentShell.width.set(500);
       await store.agentShell.pillY.set(0.25);
 
       expect(store.agentShell.width.get(), 500);
       expect(store.agentShell.pillY.get(), 0.25);
       expect(store.agentShell.height.get(), const FloatShellWindow().height);
-      expect(store.agentShell.mode.get(), const FloatShellConfig().mode);
+      // Unset: the field reads as empty, which `storedMode` takes for the
+      // panel's default.
+      expect(store.agentShell.mode.get(), '');
     });
 
     test(
       'remove puts the field back to its default, not the whole row',
       () async {
-        await store.askAiApiKey.set('sk-secret');
-        await store.askAiModel.set('some-model');
+        await store.agentShell.width.set(500);
+        await store.agentShell.pillY.set(0.25);
 
-        await store.askAiApiKey.remove();
+        await store.agentShell.width.remove();
 
-        expect(store.askAiApiKey.get(), '');
-        expect(store.askAiModel.get(), 'some-model');
+        expect(store.agentShell.width.get(), const FloatShellWindow().width);
+        expect(store.agentShell.pillY.get(), 0.25);
       },
     );
 
     test('fetch, put and delete are the same three operations', () async {
-      store.askAiModel.put('some-model');
-      expect(store.askAiModel.fetch(), 'some-model');
+      store.agentShell.mode.put('docked');
+      expect(store.agentShell.mode.fetch(), 'docked');
 
-      store.askAiModel.delete();
-      expect(store.askAiModel.fetch(), const AskAiConfig().model);
+      store.agentShell.mode.delete();
+      expect(store.agentShell.mode.fetch(), '');
     });
   });
 
   group('a field listenable reports its own field', () {
     test('and fires when it changes', () async {
-      final listenable = store.askAiModel.listenable();
+      final listenable = store.agentShell.mode.listenable();
       var fired = 0;
       void onChange() => fired++;
       listenable.addListener(onChange);
       addTearDown(() => listenable.removeListener(onChange));
 
-      await store.askAiModel.set('some-model');
+      await store.agentShell.mode.set('docked');
 
       expect(fired, 1);
-      expect(listenable.value, 'some-model');
+      expect(listenable.value, 'docked');
     });
 
     test('and stays quiet when a sibling field changes', () async {
       // The parent notifies on every write to the object, so without the
       // filter a switch bound to one field would rebuild whenever any other
       // was touched.
-      final listenable = store.askAiModel.listenable();
+      final listenable = store.agentShell.mode.listenable();
       var fired = 0;
       void onChange() => fired++;
       listenable.addListener(onChange);
       addTearDown(() => listenable.removeListener(onChange));
 
-      await store.askAiApiKey.set('sk-secret');
-      await store.askAiBaseUrl.set('https://example.test');
+      await store.agentShell.width.set(500);
+      await store.agentShell.pillY.set(0.25);
 
       expect(fired, 0);
     });
@@ -273,32 +266,32 @@ void main() {
     test('and the same callback added twice is removed twice', () async {
       // `ValueListenable` allows it, and keying one wrapper per callback lost
       // the first — it stayed registered on the store with no way to reach it.
-      final listenable = store.askAiModel.listenable();
+      final listenable = store.agentShell.mode.listenable();
       var fired = 0;
       void onChange() => fired++;
       listenable.addListener(onChange);
       listenable.addListener(onChange);
 
-      await store.askAiModel.set('a');
+      await store.agentShell.mode.set('a');
       expect(fired, 2);
 
       listenable.removeListener(onChange);
-      await store.askAiModel.set('b');
+      await store.agentShell.mode.set('b');
       expect(fired, 3);
 
       listenable.removeListener(onChange);
-      await store.askAiModel.set('c');
+      await store.agentShell.mode.set('c');
       expect(fired, 3);
     });
 
     test('and a removed listener hears nothing', () async {
-      final listenable = store.askAiModel.listenable();
+      final listenable = store.agentShell.mode.listenable();
       var fired = 0;
       void onChange() => fired++;
       listenable.addListener(onChange);
       listenable.removeListener(onChange);
 
-      await store.askAiModel.set('some-model');
+      await store.agentShell.mode.set('docked');
 
       expect(fired, 0);
     });

@@ -729,7 +729,7 @@ void main() {
     });
 
     test('regroups the settings a pre-grouping backup brings back', () async {
-      await Stores.setting.askAiModel.set('current-model');
+      Stores.setting.set('askAi', {'model': 'current-model'});
       await Stores.setting.agentShell.width.set(999);
 
       final backup = BackupV2(
@@ -749,8 +749,11 @@ void main() {
       );
       await backup.merge(force: true);
 
-      expect(Stores.setting.askAiModel.get(), 'from-backup');
-      expect(Stores.setting.askAiApiKey.get(), 'sk-from-backup');
+      // As the plain map `LegacyAskAiMigration` takes over at launch.
+      expect(Stores.setting.get<Object>('askAi'), {
+        'model': 'from-backup',
+        'apiKey': 'sk-from-backup',
+      });
       expect(Stores.setting.agentShell.width.get(), 321.0);
       expect(Stores.setting.get<Object>('askAiModel'), isNull);
       expect(Stores.setting.get<Object>('agentShellWidth'), isNull);

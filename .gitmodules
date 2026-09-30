@@ -42,3 +42,7 @@
 	path = third_party/ironrdp
 	url = https://github.com/lollipopkit/IronRDP.git
 	branch = serverbox
+[submodule "packages/fl_pi_llm"]
+	path = packages/fl_pi_llm
+	url = https://github.com/lollipopkit/fl_pi_llm
+	branch = main

@@ -74,110 +74,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get askAi => 'AI vragen';
 
   @override
-  String get askAiAwaitingResponse => 'Wachten op AI-reactie...';
-
-  @override
-  String get askAiEndpointTip =>
-      'Een domein of volledige URL. Het pad volgt uit het gekozen protocol.';
-
-  @override
-  String get askAiProtocolTip =>
-      'Auto probeert Responses, daarna Chat Completions.';
-
-  @override
-  String get askAiCommandInserted => 'Commando in terminal ingevoegd';
-
-  @override
-  String askAiConfigMissing(String fields) {
-    return 'Configureer $fields in de instellingen.';
-  }
-
-  @override
-  String get askAiDisclaimer => 'AI kan fouten maken. Gebruik het zorgvuldig.';
-
-  @override
   String get askAiInsertTerminal => 'In terminal invoegen';
 
   @override
-  String get askAiNoResponse => 'Geen reactie';
-
-  @override
   String get remoteDesktop => 'Extern bureaublad';
-
-  @override
-  String get askAiAgentWelcome => 'Wat gaan we op deze server doen?';
-
-  @override
-  String get askAiAgentPromptHint =>
-      'Vraag de agent om iets te onderzoeken of te herstellen...';
-
-  @override
-  String get askAiAnalyzeSelectionPrompt =>
-      'Analyseer de geselecteerde terminaluitvoer en leg uit wat er gebeurde';
-
-  @override
-  String get askAiTerminalContext => 'Terminalcontext';
-
-  @override
-  String get askAiReviewNeeded => 'Beoordelen';
-
-  @override
-  String get askAiReviewAction => 'Voorgesteld commando beoordelen';
-
-  @override
-  String get askAiReviewBeforeContinuing =>
-      'Beoordeel of weiger eerst de huidige suggestie';
-
-  @override
-  String get askAiApproveRun => 'Goedkeuren en uitvoeren';
-
-  @override
-  String get askAiDecline => 'Weigeren';
-
-  @override
-  String get askAiActionDeclined => 'Het voorgestelde commando is geweigerd.';
-
-  @override
-  String get askAiInterrupted => 'Het antwoord van de agent is onderbroken.';
-
-  @override
-  String get askAiResend => 'Resend';
-
-  @override
-  String get askAiResendTip =>
-      'Alles na dit bericht wordt verwijderd: de antwoorden, de opdrachten en de resultaten daarvan.';
-
-  @override
-  String get askAiDeleteTip =>
-      'Dit bericht en alles erna worden verwijderd: de antwoorden, de opdrachten en de resultaten daarvan.';
-
-  @override
-  String get askAiModelTable => 'Model table';
-
-  @override
-  String get askAiModelTableTip =>
-      'Contextgroottes per modelnaam, afkomstig van models.dev. Eén versie wordt met de app meegeleverd; tik om een nieuwere op te halen.';
-
-  @override
-  String get askAiContextFallback => 'niet in de tabel';
-
-  @override
-  String get askAiCompactAt => 'Summarise at';
-
-  @override
-  String get askAiCompactAtTip =>
-      'Bepaalt hoe vol de context van het model mag worden voordat eerdere beurten worden samengevat. Eerder samenvatten verliest sneller details; later samenvatten vergroot de kans dat het model een verzoek weigert.';
-
-  @override
-  String get askAiContextTokens => 'Context size';
-
-  @override
-  String get askAiContextTokensTip =>
-      'Het aantal tokens dat dit model kan bevatten. Automatisch zoekt dit op naam op; stel zelf een aantal in als je provider een kleiner contextvenster aanbiedt dan het model ondersteunt.';
-
-  @override
-  String get askAiConversationCompacted =>
-      'Eerdere berichten zijn samengevat om het gesprek voort te zetten.';
 
   @override
   String get askAiRiskReadOnly => 'Alleen lezen';
@@ -192,23 +92,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get askAiRiskDestructive => 'Hoog risico';
 
   @override
-  String get askAiHighRiskConfirmTitle => 'Commando met hoog risico uitvoeren?';
-
-  @override
-  String get askAiHighRiskConfirmBody =>
-      'Dit commando kan wijzigingen maken die lastig terug te draaien zijn. Controleer het goed.';
-
-  @override
-  String get askAiNoCommandOutput => 'Commando voltooid zonder uitvoer.';
-
-  @override
-  String get askAiOutputTruncated =>
-      'Lange uitvoer is ingekort voordat die naar de agent terugging.';
-
-  @override
-  String get askAiAutoApproved => 'Automatisch goedgekeurd';
-
-  @override
   String get askAiAutoRunSafeCommands =>
       'Alleen-lezen commando\'s automatisch uitvoeren';
 
@@ -217,38 +100,10 @@ class AppLocalizationsNl extends AppLocalizations {
       'Draait alleen als model én lokale controle het alleen-lezen noemen';
 
   @override
-  String get askAiSendOnEnter => 'Enter verstuurt';
-
-  @override
-  String get askAiSendOnEnterTip =>
-      'Enter verstuurt, Shift+Enter nieuwe regel. Uit: Enter nieuwe regel, Cmd/Ctrl+Enter verstuurt.';
-
-  @override
-  String get askAiApiKeyOptional =>
-      'Leeg laten voor lokaal of zonder authenticatie';
-
-  @override
-  String get askAiAllowInsecure => 'Onversleutelde HTTP toestaan';
-
-  @override
-  String get askAiAllowInsecureTip =>
-      'Staat http://-verbindingen toe met zelf gehoste modellen op adressen buiten localhost. De API-sleutel en eventuele terminalcontext worden onversleuteld verzonden; localhost wordt niet beïnvloed.';
-
-  @override
-  String get askAiInsecureEndpoint =>
-      'Dit eindpunt gebruikt http://. Schakel ‘Onversleutelde HTTP toestaan’ in bij de AI-instellingen om het te gebruiken.';
-
-  @override
   String get askAiHistory => 'Gespreksgeschiedenis';
 
   @override
   String get askAiNewConversation => 'Nieuw gesprek';
-
-  @override
-  String get askAiNoHistory => 'Nog geen opgeslagen gesprekken';
-
-  @override
-  String get askAiNoHistoryMessages => 'Nog geen berichten';
 
   @override
   String get askAiUntitledConversation => 'Naamloos';
@@ -262,29 +117,6 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get askAiDeleteConversationTip =>
       'Verwijdert het van dit apparaat. Kan niet ongedaan worden gemaakt.';
-
-  @override
-  String get askAiClearHistoryTitle =>
-      'Agentgeschiedenis van deze server wissen?';
-
-  @override
-  String get askAiClearHistoryTip =>
-      'Alle opgeslagen Agent-gesprekken van deze server worden verwijderd.';
-
-  @override
-  String get askAiRestoredReview =>
-      'Dit commando komt uit de geschiedenis. Beoordeel het opnieuw';
-
-  @override
-  String get agentWelcome => 'Wat gaan we op je servers doen?';
-
-  @override
-  String get agentWelcomeTip =>
-      'Laat de Agent een probleem onderzoeken of een taak uitvoeren';
-
-  @override
-  String get agentPromptHint =>
-      'Vraag de agent om je servers te onderzoeken of te bedienen...';
 
   @override
   String get agentNoHistory => 'Geen opgeslagen globale agentgesprekken';
@@ -304,14 +136,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get agentToolWriteFile => 'Bestand schrijven';
-
-  @override
-  String get agentToolFailed => 'Uitvoeren van het hulpmiddel is mislukt.';
-
-  @override
-  String agentToolCallsFmt(int count) {
-    return '$count hulpmiddelaanroepen';
-  }
 
   @override
   String get floatOverTabs => 'Boven andere tabbladen zweven';
@@ -858,13 +682,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get noConnectionMethod => 'Stel SSH, een monitor-agent of beide in';
-
-  @override
-  String get preferredTransport => 'Eerst proberen';
-
-  @override
-  String get preferredTransportTip =>
-      'Waar de status vandaan komt en welke verbinding een opdracht als eerste opent. De andere blijft beschikbaar.';
 
   @override
   String get keepForeground => 'Houd de app op de voorgrond!';
@@ -1460,9 +1277,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get used => 'Gebruikt';
 
   @override
-  String get view => 'Weergave';
-
-  @override
   String get viewDetails => 'Details bekijken';
 
   @override
@@ -1607,13 +1421,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get tmuxSessionName => 'Sessienaam';
 
   @override
-  String get tmuxExistingSessions => 'Bestaande sessies';
-
-  @override
   String get tmuxNewSession => 'Nieuwe sessie';
-
-  @override
-  String get tmuxWindows => 'Vensters';
 
   @override
   String get tmuxNewWindow => 'Nieuw venster';
@@ -1633,31 +1441,7 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String tmuxPaneCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count panelen',
-      one: '1 paneel',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String get tmuxAttached => 'Gekoppeld';
-
-  @override
-  String get tmuxActive => 'Actief';
-
-  @override
-  String tmuxActiveAt(String time) {
-    return 'actief: $time';
-  }
-
-  @override
-  String tmuxAttachedAt(String time) {
-    return 'gekoppeld: $time';
-  }
 
   @override
   String get tmuxSkip => 'Overslaan';
@@ -1944,9 +1728,6 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get bmcStaleWrite =>
       'De BMC is gewijzigd tijdens het schrijven. Probeer opnieuw.';
-
-  @override
-  String get send => 'Verzenden';
 
   @override
   String get privacyBlur => 'Privacy op de achtergrond';
@@ -2327,6 +2108,70 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String get agentServerTools => 'Serverhulpmiddelen';
+
+  @override
+  String get agentServerToolsTip =>
+      'Opdrachten uitvoeren en bestanden lezen of schrijven op je servers, via SSH verbinden met andere hosts en de acties van ServerBox zelf gebruiken.';
+
+  @override
+  String get agentTerminalTools => 'Terminal';
+
+  @override
+  String get agentTerminalToolsTip =>
+      'In de eigen chats van een terminal: lezen wat hij toont en opdrachten uitvoeren op zijn server.';
+
+  @override
+  String get agentToolTerminalScreen => 'Scherm lezen';
+
+  @override
+  String get agentProviders => 'Providers';
+
+  @override
+  String get agentProvidersTip =>
+      'API-sleutels, modellen en het model van een nieuwe chat';
+
+  @override
+  String get agentTools => 'Hulpmiddelen';
+
+  @override
+  String get agentToolsTip => 'Wat de Agent mag gebruiken, en zijn MCP-servers';
+
+  @override
+  String get agentSnippetToolsTip =>
+      'Snippets weergeven, toevoegen, wijzigen en verwijderen. Voor wijzigingen is je bevestiging nodig.';
+
+  @override
+  String get agentVirtToolsTip =>
+      'De VM’s en containers lezen die het tabblad Virtualisatie heeft geladen.';
+
+  @override
+  String get agentBenchmarkToolsTip =>
+      'Benchmarkresultaten lezen; met je goedkeuring een benchmark starten of stoppen.';
+
+  @override
+  String get agentRemoteDesktopToolsTip =>
+      'Profielen voor extern bureaublad weergeven; met je goedkeuring verbinden of verbreken.';
+
+  @override
+  String get agentSkills => 'Skills';
+
+  @override
+  String get agentSkillsTip =>
+      'Instructies voor bepaalde taken, geïnstalleerd vanaf GitHub of een link';
+
+  @override
+  String get agentPermissions => 'Machtigingen';
+
+  @override
+  String get agentEmptyHint =>
+      'Stel een vraag over je servers of laat de Agent er iets op doen.';
+
+  @override
+  String get agentTerminalEmptyHint =>
+      'Stel een vraag over deze server. De Agent kan deze terminal lezen en hier opdrachten uitvoeren.';
+
+  @override
   String oldestSampleFmt(String time) {
     return 'oudste meting $time';
   }
@@ -2528,34 +2373,8 @@ class AppLocalizationsNl extends AppLocalizations {
       'Beide kunnen tegelijk aan staan. De volgorde is de volgorde waarin ze worden gebeld.';
 
   @override
-  String transportOrderFmt(String first, String second) {
-    return 'Sleep om de volgorde te wijzigen. $first wordt eerst gebeld; antwoordt die niet, dan draagt $second de sessie alleen.';
-  }
-
-  @override
-  String transportOnlyFmt(String name) {
-    return 'Alleen $name staat aan, dus er is niets om op terug te vallen.';
-  }
-
-  @override
   String get transportNoneOn =>
       'Beide staan uit — deze server kan niet worden verbonden.';
-
-  @override
-  String get transportOffKept =>
-      'uit — instellingen blijven bewaard, wordt nooit gebeld';
-
-  @override
-  String get transportDialledFirst => 'eerst gebeld';
-
-  @override
-  String get transportFallback => 'terugval';
-
-  @override
-  String get transportOnlyMethod => 'enige methode';
-
-  @override
-  String get transportOff => 'uit';
 
   @override
   String get thisDevice => 'Dit apparaat';
@@ -2603,10 +2422,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get optional => 'Optioneel';
-
-  @override
-  String get optionalTip =>
-      'Niets hiervan is nodig om te verbinden. Open er een en de velden ervan nemen het formulier over.';
 
   @override
   String get sshAdvanced => 'SSH geavanceerd';
@@ -3447,9 +3262,6 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String get reopen => 'Opnieuw openen';
-
-  @override
   String get virtSnapshots => 'Snapshots';
 
   @override
@@ -3622,9 +3434,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get virtCreateNameTaken => 'Er bestaat al een gast met deze naam.';
-
-  @override
-  String get virtCreateVmidInvalid => 'Van 100 tot 999999999.';
 
   @override
   String get virtCreateVmidTaken => 'Deze VMID is bezet.';
@@ -4132,9 +3941,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get virtHwEfiStorage => 'Waar de EFI-variabelen komen';
-
-  @override
-  String get virtHwTpmStorage => 'Waar de TPM-status komt';
 
   @override
   String virtHwSwitchFirmwareAsk(String guest, String firmware) {
@@ -4783,9 +4589,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get virtSnapshotFormInternal => 'Intern (in de image)';
 
   @override
-  String get virtSnapshotForm => 'Soort';
-
-  @override
   String get virtSnapshotOverlayPool => 'Overlay-pool';
 
   @override
@@ -4813,11 +4616,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get virtSnapshotChainBase => 'Basis-image';
 
   @override
-  String virtSnapshotChainRaw(String format) {
-    return 'Een externe snapshot vereist een qcow2-schijf. Deze is $format.';
-  }
-
-  @override
   String get virtSnapshotNoSupport =>
       'De opslag van de gast ondersteunt geen snapshots, dus er kan geen worden gemaakt.';
 
@@ -4838,9 +4636,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get virtSnapshotDiffShow => 'Vergelijk met nu';
-
-  @override
-  String get virtSnapshotDiffGroup => 'Gewijzigd';
 
   @override
   String get virtSnapshotDiffGroupCpu => 'Processor';
@@ -4921,19 +4716,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get virtTemplateTip => 'Een sjabloon draait pas als het is gekloond.';
 
   @override
-  String get virtCloneStorage => 'Doelopslag';
-
-  @override
   String get virtCloneStorageSame => 'Zelfde als de bron';
 
   @override
-  String get virtCloneNode => 'Doelknooppunt';
-
-  @override
   String get virtCloneNodeSame => 'Zelfde als de bron';
-
-  @override
-  String get virtClonePool => 'Doelpool';
 
   @override
   String get virtCloneStorageContent => 'Deze opslag bevat geen VM-schijven.';
@@ -4958,9 +4744,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get virtBackupJobNew => 'Nieuwe taak';
-
-  @override
-  String get virtBackupJobEdit => 'Taak bewerken';
 
   @override
   String get virtBackupJobRun => 'Nu uitvoeren';
@@ -5013,12 +4796,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get virtBackupMail => 'Melding';
 
   @override
-  String get virtBackupMailAlways => 'Altijd';
-
-  @override
-  String get virtBackupMailFailure => 'Bij fout';
-
-  @override
   String get virtBackupNotesTemplate => 'Back-upnotities';
 
   @override
@@ -5032,9 +4809,6 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get virtBackupPruneTip =>
       'PVE-bewaaropties, bv. keep-last=7,keep-daily=4. Leeg: die van de opslag of het knooppunt.';
-
-  @override
-  String get virtBackupNextRun => 'Volgende uitvoering';
 
   @override
   String get virtBackupJobNode => 'Knooppunt';
@@ -5069,9 +4843,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get virtBackupRestoreStorageSame => 'Zoals in de back-up';
-
-  @override
-  String get virtBackupModeSnapshotTip => 'snapshot · zonder stilstand';
 
   @override
   String get virtCloneStorageMissing =>
