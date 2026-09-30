@@ -36,6 +36,9 @@ abstract final class LlmHost {
       return;
     }
     await LegacyAskAiMigration.run();
+    // In the background: each server connects on its own, and one that wants
+    // a sign-in says so on the tools page.
+    if (LlmStores.tool.enabled.get()) unawaited(McpTools.connectStored());
     // The app-wide Agent's instructions list the servers: a server added,
     // renamed or connected is in the next open chat's prompt.
     container.listen(
