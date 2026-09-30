@@ -790,6 +790,7 @@
   "remoteDesktopSendCtrlAltDelete": "Kirim Ctrl+Alt+Delete",
   "remoteDesktopReconnect": "Hubungkan kembali",
   "remoteDesktopFullScreen": "Layar penuh",
+  "remoteDesktopExitFullScreen": "Keluar dari layar penuh",
   "remoteDesktopCloseSession": "Tutup sesi",
   "remoteDesktopConnected": "Terhubung",
   "remoteDesktopConnecting": "Menghubungkan",

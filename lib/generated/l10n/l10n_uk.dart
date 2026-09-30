@@ -2828,6 +2828,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get remoteDesktopFullScreen => 'На весь екран';
 
   @override
+  String get remoteDesktopExitFullScreen => 'Вийти з повноекранного режиму';
+
+  @override
   String get remoteDesktopCloseSession => 'Закрити сеанс';
 
   @override

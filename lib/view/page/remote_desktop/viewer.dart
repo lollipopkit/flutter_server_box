@@ -36,6 +36,7 @@ class RemoteDesktopViewer extends ConsumerStatefulWidget {
     required this.sessionId,
     this.fullScreen = false,
     this.switcher,
+    this.showName = true,
   });
 
   final String sessionId;
@@ -47,6 +48,10 @@ class RemoteDesktopViewer extends ConsumerStatefulWidget {
   /// rather than in a second row repeating the name. Null leaves the name a
   /// label.
   final RemoteDesktopSwitcher? switcher;
+
+  /// False where the page around it already names the session — the
+  /// virtualization guest's console — so the bar keeps only its state.
+  final bool showName;
 
   /// The layer the pointer is drawn on, for tests to find.
   @visibleForTesting
@@ -272,50 +277,31 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
             return Row(
               children: [
                 Expanded(
-                  child: SessionSwitcherLabel(
-                    name: session.profile.name,
-                    position: switcher?.position,
-                    total: switcher?.total ?? 0,
-                    leading: _connectionDot(session.connectionState),
-                    onTap: switcher?.onTap,
-                  ),
-                ),
-                if (!compact) ...[
-                  btn(
-                    l10n.remoteDesktopFitToWindow,
-                    Icons.fit_screen,
-                    () => _setScaleMode(RemoteDesktopScaleMode.fit),
-                    color: on(_scaleMode == RemoteDesktopScaleMode.fit),
-                  ),
-                  btn(
-                    l10n.remoteDesktopActualSize,
-                    Icons.one_x_mobiledata,
-                    () => _setScaleMode(RemoteDesktopScaleMode.actual),
-                    color: on(_scaleMode == RemoteDesktopScaleMode.actual),
-                  ),
-                  _menuBtn<double>(
-                    text: l10n.remoteDesktopZoom,
-                    icon: Icons.zoom_in,
-                    color: on(_scaleMode == RemoteDesktopScaleMode.custom),
-                    items: () => [
-                      for (final zoom in const [0.5, 0.75, 1.0, 1.25, 1.5, 2.0])
-                        PopupMenuItem(
-                          value: zoom,
-                          child: Text('${(zoom * 100).round()}%'),
+                  child: widget.showName
+                      ? SessionSwitcherLabel(
+                          name: session.profile.name,
+                          position: switcher?.position,
+                          total: switcher?.total ?? 0,
+                          leading: _connectionDot(session.connectionState),
+                          onTap: switcher?.onTap,
+                        )
+                      : Align(
+                          alignment: Alignment.centerLeft,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 17),
+                            child: _connectionDot(session.connectionState),
+                          ),
                         ),
-                    ],
-                    onSelected: (value) => setState(() {
-                      _customScale = value;
-                      _scaleMode = RemoteDesktopScaleMode.custom;
-                    }),
-                  ),
-                ],
+                ),
+                _scaleBtn(),
                 btn(
                   session.viewOnly
                       ? l10n.remoteDesktopDisableViewOnly
                       : l10n.remoteDesktopViewOnly,
                   session.viewOnly ? Icons.visibility : Icons.mouse,
                   () => notifier.setViewOnly(session.id, !session.viewOnly),
+                  // On is the exception: input is not reaching the desktop.
+                  color: on(session.viewOnly),
                   key: _viewOnlyKey,
                 ),
                 if (!compact)
@@ -332,52 +318,75 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
                   session.viewOnly ? null : _showKeyboard,
                   key: _keyboardKey,
                 ),
+                btn(
+                  widget.fullScreen
+                      ? l10n.remoteDesktopExitFullScreen
+                      : l10n.remoteDesktopFullScreen,
+                  widget.fullScreen ? Icons.fullscreen_exit : Icons.fullscreen,
+                  _toggleFullScreen,
+                ),
                 _menuBtn<_ViewerAction>(
                   key: _moreKey,
                   text: l10n.remoteDesktopMoreControls,
                   icon: Icons.more_horiz,
-                  items: () => [
-                    if (compact)
-                      PopupMenuItem(
-                        value: _ViewerAction.fit,
-                        child: Text(l10n.remoteDesktopFitToWindow),
+                  items: () {
+                    PopupMenuItem<_ViewerAction> item(
+                      _ViewerAction action,
+                      IconData icon,
+                      String text, {
+                      bool enabled = true,
+                      Color? color,
+                    }) => PopupMenuItem(
+                      value: action,
+                      enabled: enabled,
+                      child: Row(
+                        children: [
+                          Icon(icon, size: 18, color: color),
+                          const SizedBox(width: 13),
+                          Text(text, style: TextStyle(color: color)),
+                        ],
                       ),
-                    if (compact)
-                      PopupMenuItem(
-                        value: _ViewerAction.actual,
-                        child: Text(l10n.remoteDesktopActualSize),
+                    );
+                    final input = connected && !session.viewOnly;
+                    return [
+                      if (compact)
+                        item(
+                          _ViewerAction.clipboard,
+                          Icons.content_paste,
+                          l10n.remoteDesktopSendClipboardText,
+                          enabled: input,
+                        ),
+                      item(
+                        _ViewerAction.ctrlAltDelete,
+                        Icons.keyboard_command_key,
+                        l10n.remoteDesktopSendCtrlAltDelete,
+                        enabled: input,
                       ),
-                    if (compact)
-                      PopupMenuItem(
-                        value: _ViewerAction.clipboard,
-                        child: Text(l10n.remoteDesktopSendClipboardText),
-                      ),
-                    if (isMobile)
-                      PopupMenuItem(
-                        value: _ViewerAction.touchMode,
-                        child: Text(
+                      if (isMobile)
+                        item(
+                          _ViewerAction.touchMode,
+                          _touchMode == _TouchMode.trackpad
+                              ? Icons.touch_app
+                              : Icons.mouse,
                           _touchMode == _TouchMode.trackpad
                               ? l10n.remoteDesktopUseDirectPointer
                               : l10n.remoteDesktopUseTouchpadPointer,
                         ),
+                      item(
+                        _ViewerAction.reconnect,
+                        Icons.refresh,
+                        l10n.remoteDesktopReconnect,
                       ),
-                    PopupMenuItem(
-                      value: _ViewerAction.ctrlAltDelete,
-                      child: Text(l10n.remoteDesktopSendCtrlAltDelete),
-                    ),
-                    PopupMenuItem(
-                      value: _ViewerAction.reconnect,
-                      child: Text(l10n.remoteDesktopReconnect),
-                    ),
-                    PopupMenuItem(
-                      value: _ViewerAction.fullScreen,
-                      child: Text(l10n.remoteDesktopFullScreen),
-                    ),
-                    PopupMenuItem(
-                      value: _ViewerAction.close,
-                      child: Text(l10n.remoteDesktopCloseSession),
-                    ),
-                  ],
+                      // Ends the session: apart from what only acts on it.
+                      const PopupMenuDivider(),
+                      item(
+                        _ViewerAction.close,
+                        Icons.link_off,
+                        l10n.remoteDesktopCloseSession,
+                        color: scheme.error,
+                      ),
+                    ];
+                  },
                   onSelected: (action) => _runAction(action, session),
                 ),
                 const SizedBox(width: 7),
@@ -393,6 +402,49 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
     _scaleMode = mode;
     _pan = Offset.zero;
   });
+
+  /// Fit, actual size and the zoom steps are one choice, so one button: its
+  /// icon says which is in effect, the menu ticks it.
+  Widget _scaleBtn() {
+    final l10n = context.l10n;
+    final custom = _scaleMode == RemoteDesktopScaleMode.custom;
+    CheckedPopupMenuItem<(RemoteDesktopScaleMode, double)> item(
+      RemoteDesktopScaleMode mode,
+      String text, [
+      double scale = 1,
+    ]) => CheckedPopupMenuItem(
+      value: (mode, scale),
+      checked: _scaleMode == mode && (!custom || _customScale == scale),
+      child: Text(text),
+    );
+    return _menuBtn<(RemoteDesktopScaleMode, double)>(
+      text: switch (_scaleMode) {
+        RemoteDesktopScaleMode.fit => l10n.remoteDesktopFitToWindow,
+        RemoteDesktopScaleMode.actual => l10n.remoteDesktopActualSize,
+        RemoteDesktopScaleMode.custom =>
+          '${l10n.remoteDesktopZoom} ${(_customScale * 100).round()}%',
+      },
+      icon: switch (_scaleMode) {
+        RemoteDesktopScaleMode.fit => Icons.fit_screen,
+        RemoteDesktopScaleMode.actual => Icons.crop_free,
+        RemoteDesktopScaleMode.custom => Icons.zoom_in,
+      },
+      items: () => [
+        item(RemoteDesktopScaleMode.fit, l10n.remoteDesktopFitToWindow),
+        item(RemoteDesktopScaleMode.actual, l10n.remoteDesktopActualSize),
+        const PopupMenuDivider(),
+        for (final zoom in const [0.5, 0.75, 1.25, 1.5, 2.0])
+          item(RemoteDesktopScaleMode.custom, '${(zoom * 100).round()}%', zoom),
+      ],
+      onSelected: (v) => switch (v) {
+        (RemoteDesktopScaleMode.custom, final zoom) => setState(() {
+          _customScale = zoom;
+          _scaleMode = RemoteDesktopScaleMode.custom;
+        }),
+        (final mode, _) => _setScaleMode(mode),
+      },
+    );
+  }
 
   /// A [Btn.icon] that opens a menu under itself.
   ///
@@ -481,10 +533,6 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
   ) async {
     final notifier = ref.read(remoteDesktopSessionsProvider.notifier);
     switch (action) {
-      case _ViewerAction.fit:
-        _setScaleMode(RemoteDesktopScaleMode.fit);
-      case _ViewerAction.actual:
-        _setScaleMode(RemoteDesktopScaleMode.actual);
       case _ViewerAction.clipboard:
         await _sendClipboard(session);
       case _ViewerAction.touchMode:
@@ -497,8 +545,6 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
         if (!session.viewOnly) _sendCtrlAltDelete(session);
       case _ViewerAction.reconnect:
         await notifier.reconnect(session.id);
-      case _ViewerAction.fullScreen:
-        await _toggleFullScreen();
       case _ViewerAction.close:
         if (widget.fullScreen && mounted) Navigator.of(context).pop();
         await notifier.close(session.id);
@@ -908,13 +954,4 @@ bool remoteDesktopUsesCompactToolbar(double width) => width < 650;
 
 enum _TouchMode { trackpad, direct }
 
-enum _ViewerAction {
-  fit,
-  actual,
-  clipboard,
-  touchMode,
-  ctrlAltDelete,
-  reconnect,
-  fullScreen,
-  close,
-}
+enum _ViewerAction { clipboard, touchMode, ctrlAltDelete, reconnect, close }

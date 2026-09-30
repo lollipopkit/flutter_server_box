@@ -790,6 +790,7 @@
   "remoteDesktopSendCtrlAltDelete": "Ctrl+Alt+Delete göndər",
   "remoteDesktopReconnect": "Yenidən qoşul",
   "remoteDesktopFullScreen": "Tam ekran",
+  "remoteDesktopExitFullScreen": "Tam ekrandan çıx",
   "remoteDesktopCloseSession": "Sessiyanı bağla",
   "remoteDesktopConnected": "Qoşuldu",
   "remoteDesktopConnecting": "Qoşulur",

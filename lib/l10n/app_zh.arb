@@ -790,6 +790,7 @@
   "remoteDesktopSendCtrlAltDelete": "发送 Ctrl+Alt+Delete",
   "remoteDesktopReconnect": "重新连接",
   "remoteDesktopFullScreen": "全屏",
+  "remoteDesktopExitFullScreen": "退出全屏",
   "remoteDesktopCloseSession": "关闭会话",
   "remoteDesktopConnected": "已连接",
   "remoteDesktopConnecting": "正在连接",

@@ -2673,6 +2673,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get remoteDesktopFullScreen => '전체 화면';
 
   @override
+  String get remoteDesktopExitFullScreen => '전체 화면 종료';
+
+  @override
   String get remoteDesktopCloseSession => '세션 닫기';
 
   @override

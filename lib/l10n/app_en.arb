@@ -3690,6 +3690,7 @@
     "description": "User-facing label or message for remote desktop reconnect."
   },
   "remoteDesktopFullScreen": "Full screen",
+  "remoteDesktopExitFullScreen": "Exit full screen",
   "@remoteDesktopFullScreen": {
     "description": "User-facing label or message for remote desktop full screen."
   },

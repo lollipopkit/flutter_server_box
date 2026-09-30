@@ -2823,6 +2823,9 @@ class AppLocalizationsAz extends AppLocalizations {
   String get remoteDesktopFullScreen => 'Tam ekran';
 
   @override
+  String get remoteDesktopExitFullScreen => 'Tam ekrandan çıx';
+
+  @override
   String get remoteDesktopCloseSession => 'Sessiyanı bağla';
 
   @override

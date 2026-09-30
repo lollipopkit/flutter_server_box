@@ -4870,6 +4870,12 @@ abstract class AppLocalizations {
   /// **'Full screen'**
   String get remoteDesktopFullScreen;
 
+  /// No description provided for @remoteDesktopExitFullScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit full screen'**
+  String get remoteDesktopExitFullScreen;
+
   /// User-facing label or message for remote desktop close session.
   ///
   /// In en, this message translates to:

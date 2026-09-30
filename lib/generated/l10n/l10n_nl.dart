@@ -2835,6 +2835,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get remoteDesktopFullScreen => 'Volledig scherm';
 
   @override
+  String get remoteDesktopExitFullScreen => 'Volledig scherm afsluiten';
+
+  @override
   String get remoteDesktopCloseSession => 'Sessie sluiten';
 
   @override

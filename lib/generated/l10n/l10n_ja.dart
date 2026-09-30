@@ -2669,6 +2669,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get remoteDesktopFullScreen => '全画面表示';
 
   @override
+  String get remoteDesktopExitFullScreen => '全画面表示を終了';
+
+  @override
   String get remoteDesktopCloseSession => 'セッションを閉じる';
 
   @override

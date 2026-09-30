@@ -2624,6 +2624,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get remoteDesktopFullScreen => '全屏';
 
   @override
+  String get remoteDesktopExitFullScreen => '退出全屏';
+
+  @override
   String get remoteDesktopCloseSession => '关闭会话';
 
   @override
@@ -7290,6 +7293,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get remoteDesktopFullScreen => '全螢幕';
+
+  @override
+  String get remoteDesktopExitFullScreen => '結束全螢幕';
 
   @override
   String get remoteDesktopCloseSession => '關閉工作階段';

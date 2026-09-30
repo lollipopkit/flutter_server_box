@@ -790,6 +790,7 @@
   "remoteDesktopSendCtrlAltDelete": "Отправить Ctrl+Alt+Delete",
   "remoteDesktopReconnect": "Переподключиться",
   "remoteDesktopFullScreen": "На весь экран",
+  "remoteDesktopExitFullScreen": "Выйти из полноэкранного режима",
   "remoteDesktopCloseSession": "Закрыть сеанс",
   "remoteDesktopConnected": "Подключено",
   "remoteDesktopConnecting": "Подключение",

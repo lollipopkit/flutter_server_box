@@ -2829,6 +2829,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get remoteDesktopFullScreen => 'На весь экран';
 
   @override
+  String get remoteDesktopExitFullScreen => 'Выйти из полноэкранного режима';
+
+  @override
   String get remoteDesktopCloseSession => 'Закрыть сеанс';
 
   @override

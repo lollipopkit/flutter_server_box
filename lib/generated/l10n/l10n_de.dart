@@ -2844,6 +2844,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get remoteDesktopFullScreen => 'Vollbild';
 
   @override
+  String get remoteDesktopExitFullScreen => 'Vollbild beenden';
+
+  @override
   String get remoteDesktopCloseSession => 'Sitzung schließen';
 
   @override

@@ -790,6 +790,7 @@
   "remoteDesktopSendCtrlAltDelete": "Ctrl+Alt+Delete を送信",
   "remoteDesktopReconnect": "再接続",
   "remoteDesktopFullScreen": "全画面表示",
+  "remoteDesktopExitFullScreen": "全画面表示を終了",
   "remoteDesktopCloseSession": "セッションを閉じる",
   "remoteDesktopConnected": "接続済み",
   "remoteDesktopConnecting": "接続中",

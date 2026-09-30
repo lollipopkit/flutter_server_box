@@ -2812,6 +2812,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get remoteDesktopFullScreen => 'Layar penuh';
 
   @override
+  String get remoteDesktopExitFullScreen => 'Keluar dari layar penuh';
+
+  @override
   String get remoteDesktopCloseSession => 'Tutup sesi';
 
   @override

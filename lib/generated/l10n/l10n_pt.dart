@@ -2840,6 +2840,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get remoteDesktopFullScreen => 'Tela cheia';
 
   @override
+  String get remoteDesktopExitFullScreen => 'Sair da tela cheia';
+
+  @override
   String get remoteDesktopCloseSession => 'Fechar sessão';
 
   @override

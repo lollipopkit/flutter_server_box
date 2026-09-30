@@ -790,6 +790,7 @@
   "remoteDesktopSendCtrlAltDelete": "Ctrl+Alt+Delete 보내기",
   "remoteDesktopReconnect": "다시 연결",
   "remoteDesktopFullScreen": "전체 화면",
+  "remoteDesktopExitFullScreen": "전체 화면 종료",
   "remoteDesktopCloseSession": "세션 닫기",
   "remoteDesktopConnected": "연결됨",
   "remoteDesktopConnecting": "연결 중",
