@@ -218,8 +218,9 @@ extension VirtKeyX on VirtKey {
       // Needs `ShellBackend.supportsTmux`: a POSIX `sh` run beside the
       // terminal. SSH has one, and so does this device — its own shell, or a
       // Linux system installed in the app — except on Windows, where a command
-      // is `cmd /C`. A monitor agent carries no exec channel at all, and a guest
-      // console is the guest's, not a shell to start tmux from.
+      // is `cmd /C`, and on iOS for now. A monitor agent carries no exec
+      // channel at all, and a guest console is the guest's, not a shell to
+      // start tmux from.
       //
       // [shellUsesAgent] is `serverShellUsesAgent` — the same answer
       // `TerminalSession.connect` acts on — so this says whether *this* shell
@@ -232,7 +233,9 @@ extension VirtKeyX on VirtKey {
       // the connect reads it from, so this is settled once — not a strip that
       // rearranges itself under the user's thumb once something connects.
       VirtKey.tmux => switch (source) {
-        LocalSource() => !isWindows,
+        // TODO: iOS once the guest's realfs reports its files as root's; see
+        // `IshShellBackend.supportsTmux`.
+        LocalSource() => !isWindows && !isIOS,
         ServerSource(:final spi) when spi.local => !isWindows,
         ServerSource(:final spi) => spi.sshOn != null && !shellUsesAgent,
         ConsoleSource() => false,

@@ -39,7 +39,8 @@ void main() {
 
     test('drives tmux, except where a command is cmd', () {
       // The guest and the host shell both run a POSIX `sh` beside the
-      // terminal, which is all tmux needs; Windows runs `cmd /C`.
+      // terminal, which is all tmux needs; Windows runs `cmd /C`. iOS is off
+      // for now, and this suite does not run there.
       for (final source in [_local, const LocalSource(rootfs: true)]) {
         expect(VirtKey.tmux.worksOn(source), !Platform.isWindows);
       }
