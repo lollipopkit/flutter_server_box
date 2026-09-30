@@ -382,8 +382,17 @@ class TerminalSession {
 
   void _handlePrivateOSC(String code, List<String> args) {
     if (code != '52' || args.length < 2) return;
+    // Bounded before joining, so an oversized payload is not copied first.
+    final parts = args.skip(1);
+    final length = parts.fold(parts.length - 1, (sum, p) => sum + p.length);
+    if (length > _maxOsc52EncodedChars) {
+      Loggers.app.warning(
+        'OSC 52 clipboard request exceeded $_maxOsc52EncodedChars characters',
+      );
+      return;
+    }
     final selection = args[0].isEmpty ? 'c' : args[0];
-    final data = args.skip(1).join(';');
+    final data = parts.join(';');
     unawaited(_handleOsc52(selection, data));
   }
 
@@ -395,13 +404,6 @@ class TerminalSession {
     // A query would hand the local clipboard to whatever runs on the server,
     // without the user seeing it happen. Only writes are honoured.
     if (data == '?') return;
-
-    if (data.length > _maxOsc52EncodedChars) {
-      Loggers.app.warning(
-        'OSC 52 clipboard request exceeded $_maxOsc52EncodedChars characters',
-      );
-      return;
-    }
 
     try {
       final bytes = base64.decode(data);

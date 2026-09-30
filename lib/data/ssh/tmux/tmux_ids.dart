@@ -11,7 +11,11 @@ bool _isValidTmuxId(String value, String prefix) {
 final class TmuxSessionId {
   final String value;
 
-  const TmuxSessionId(this.value);
+  const TmuxSessionId._(this.value);
+
+  /// Same as [TmuxSessionId.parse]: an id is interpolated into tmux commands, so
+  /// there is no way to make one that has not been checked.
+  factory TmuxSessionId(String value) = TmuxSessionId.parse;
 
   factory TmuxSessionId.parse(String value) {
     if (!_isValidTmuxId(value, r'$')) {
@@ -21,11 +25,11 @@ final class TmuxSessionId {
         'tmux session IDs are \$ followed by digits',
       );
     }
-    return TmuxSessionId(value);
+    return TmuxSessionId._(value);
   }
 
   static TmuxSessionId? tryParse(String value) =>
-      _isValidTmuxId(value, r'$') ? TmuxSessionId(value) : null;
+      _isValidTmuxId(value, r'$') ? TmuxSessionId._(value) : null;
 
   @override
   bool operator ==(Object other) =>
@@ -42,7 +46,11 @@ final class TmuxSessionId {
 final class TmuxWindowId {
   final String value;
 
-  const TmuxWindowId(this.value);
+  const TmuxWindowId._(this.value);
+
+  /// Same as [TmuxWindowId.parse]: an id is interpolated into tmux commands, so
+  /// there is no way to make one that has not been checked.
+  factory TmuxWindowId(String value) = TmuxWindowId.parse;
 
   factory TmuxWindowId.parse(String value) {
     if (!_isValidTmuxId(value, '@')) {
@@ -52,11 +60,11 @@ final class TmuxWindowId {
         'tmux window IDs are @ followed by digits',
       );
     }
-    return TmuxWindowId(value);
+    return TmuxWindowId._(value);
   }
 
   static TmuxWindowId? tryParse(String value) =>
-      _isValidTmuxId(value, '@') ? TmuxWindowId(value) : null;
+      _isValidTmuxId(value, '@') ? TmuxWindowId._(value) : null;
 
   @override
   bool operator ==(Object other) =>
@@ -73,7 +81,11 @@ final class TmuxWindowId {
 final class TmuxPaneId {
   final String value;
 
-  const TmuxPaneId(this.value);
+  const TmuxPaneId._(this.value);
+
+  /// Same as [TmuxPaneId.parse]: an id is interpolated into tmux commands, so
+  /// there is no way to make one that has not been checked.
+  factory TmuxPaneId(String value) = TmuxPaneId.parse;
 
   factory TmuxPaneId.parse(String value) {
     if (!_isValidTmuxId(value, '%')) {
@@ -83,11 +95,11 @@ final class TmuxPaneId {
         'tmux pane IDs are % followed by digits',
       );
     }
-    return TmuxPaneId(value);
+    return TmuxPaneId._(value);
   }
 
   static TmuxPaneId? tryParse(String value) =>
-      _isValidTmuxId(value, '%') ? TmuxPaneId(value) : null;
+      _isValidTmuxId(value, '%') ? TmuxPaneId._(value) : null;
 
   @override
   bool operator ==(Object other) => other is TmuxPaneId && other.value == value;

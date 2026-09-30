@@ -42,6 +42,15 @@ void main() {
       expect(TmuxPaneId.tryParse('%'), isNull);
       expect(() => TmuxPaneId.parse('%evil'), throwsArgumentError);
     });
+
+    test('the plain constructors check too', () {
+      expect(
+        () => TmuxSessionId("\$0'; kill-server; display-message '"),
+        throwsArgumentError,
+      );
+      expect(() => TmuxWindowId('@0;'), throwsArgumentError);
+      expect(() => TmuxPaneId("%0'"), throwsArgumentError);
+    });
   });
 
   test('ids of the same kind compare by value', () {

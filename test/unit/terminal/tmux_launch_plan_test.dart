@@ -11,7 +11,7 @@ void main() {
     test('builds attach command for existing restored session', () {
       final plan = buildRestoredTmuxLaunchPlan(
         const TmuxRestoreState(sessionName: 'main', windowIndex: 2),
-        const [
+        [
           TmuxSessionInfo(
             id: TmuxSessionId(r'$0'),
             name: 'main',
@@ -33,7 +33,7 @@ void main() {
     test('returns none when restored session no longer exists', () {
       final plan = buildRestoredTmuxLaunchPlan(
         const TmuxRestoreState(sessionName: 'ghost'),
-        const [
+        [
           TmuxSessionInfo(
             id: TmuxSessionId(r'$0'),
             name: 'main',
@@ -51,7 +51,7 @@ void main() {
     test('falls back to the session when restored window is gone', () {
       final plan = buildRestoredTmuxLaunchPlan(
         const TmuxRestoreState(sessionName: 'main', windowIndex: 4),
-        const [
+        [
           TmuxSessionInfo(
             id: TmuxSessionId(r'$0'),
             name: 'main',
@@ -71,7 +71,7 @@ void main() {
 
   group('selectAutoTmuxSession', () {
     test('prefers the default session name when it exists', () {
-      final selected = selectAutoTmuxSession(const [
+      final selected = selectAutoTmuxSession([
         TmuxSessionInfo(
           id: TmuxSessionId(r'$0'),
           name: 'main',
@@ -91,7 +91,7 @@ void main() {
     });
 
     test('prefers an attached session when the default name is absent', () {
-      final selected = selectAutoTmuxSession(const [
+      final selected = selectAutoTmuxSession([
         TmuxSessionInfo(
           id: TmuxSessionId(r'$0'),
           name: 'main',
@@ -111,7 +111,7 @@ void main() {
     });
 
     test('falls back to the first session when none are attached', () {
-      final selected = selectAutoTmuxSession(const [
+      final selected = selectAutoTmuxSession([
         TmuxSessionInfo(
           id: TmuxSessionId(r'$0'),
           name: 'main',
@@ -139,7 +139,7 @@ void main() {
 
   group('buildAutoTmuxLaunchPlan', () {
     test('attaches to the default session when it exists', () {
-      final plan = buildAutoTmuxLaunchPlan(const [
+      final plan = buildAutoTmuxLaunchPlan([
         TmuxSessionInfo(
           id: TmuxSessionId(r'$0'),
           name: 'main',
@@ -161,7 +161,7 @@ void main() {
     });
 
     test('attaches to an attached session when the default name is absent', () {
-      final plan = buildAutoTmuxLaunchPlan(const [
+      final plan = buildAutoTmuxLaunchPlan([
         TmuxSessionInfo(
           id: TmuxSessionId(r'$0'),
           name: 'main',
@@ -182,7 +182,7 @@ void main() {
     });
 
     test('attaches to the first session when none are attached', () {
-      final plan = buildAutoTmuxLaunchPlan(const [
+      final plan = buildAutoTmuxLaunchPlan([
         TmuxSessionInfo(
           id: TmuxSessionId(r'$0'),
           name: 'main',
@@ -228,7 +228,7 @@ void main() {
 
     test('uses stable session ids when discovery provided one', () {
       final plan = buildChosenTmuxLaunchPlan(
-        const TmuxAttachExisting(
+        TmuxAttachExisting(
           sessionName: 'main|special',
           sessionId: TmuxSessionId(r'$3'),
         ),

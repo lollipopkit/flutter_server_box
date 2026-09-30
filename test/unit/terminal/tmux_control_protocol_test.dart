@@ -180,6 +180,11 @@ void main() {
         TmuxControlProtocolParser.decodeOutputValue(utf8.encode(r'\12\999x')),
         utf8.encode(r'\12\999x'),
       );
+      // A sign is not an octal digit.
+      expect(
+        TmuxControlProtocolParser.decodeOutputValue(utf8.encode(r'\+12\-12')),
+        utf8.encode(r'\+12\-12'),
+      );
     });
 
     test('rejects a line longer than the protocol limit', () {

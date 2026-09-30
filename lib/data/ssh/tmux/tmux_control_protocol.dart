@@ -317,9 +317,17 @@ final class TmuxControlProtocolParser {
         out.addByte(byte);
         continue;
       }
-      final octal = String.fromCharCodes(bytes.sublist(i + 1, i + 4));
-      final value = int.tryParse(octal, radix: 8);
-      if (value == null || value > 0xff) {
+      var value = 0;
+      for (var j = i + 1; j <= i + 3; j++) {
+        final digit = bytes[j] - 0x30;
+        // Digits only: `int.parse` would also take a sign.
+        if (digit < 0 || digit > 7) {
+          value = -1;
+          break;
+        }
+        value = value * 8 + digit;
+      }
+      if (value < 0 || value > 0xff) {
         out.addByte(byte);
         continue;
       }

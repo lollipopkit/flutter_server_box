@@ -49,6 +49,10 @@ final class TmuxControlClient {
 
   /// The server's `major * 100 + minor`, or 0 when it could not be read.
   int _tmuxVersion = 0;
+
+  /// Whether tmux itself ended this client with `%exit`, as opposed to the
+  /// transport or the parser failing under it.
+  bool _exitedCleanly = false;
   TmuxControlSnapshot? _snapshot;
 
   /// The current session's `history-limit`, refreshed with session identity.
@@ -228,13 +232,14 @@ final class TmuxControlClient {
   /// `kill-pane` and `kill-window` can destroy the session that owns this CC
   /// client. tmux may emit `%exit` before the command's `%end`, in which case
   /// the pending command future is completed with the transport-ended error.
-  /// That is not a command failure; a genuine error still rethrows while the
-  /// client is alive.
+  /// That is not a command failure. Anything else rethrows, including a
+  /// transport that dropped before tmux answered: whether the command ran is
+  /// then unknown.
   Future<void> _runRequiredUnlessClientEnded(String command) async {
     try {
       await runRequired(command);
     } catch (error) {
-      if (!_commands.isClosed) rethrow;
+      if (!_exitedCleanly) rethrow;
     }
   }
 
@@ -643,10 +648,14 @@ final class TmuxControlClient {
     if (_commands.isClosed) return;
     _commands.fail(error, stackTrace);
     _handleDone();
+    // The PTY may still be up — a protocol overflow is raised here, not by
+    // the transport — and nothing can speak to that client any more.
+    _session.close();
   }
 
   void _handleDone({bool cleanExit = false}) {
     if (_commands.isClosed) return;
+    _exitedCleanly = cleanExit;
     _commands.close();
     _refreshTimer?.cancel();
     _refreshTimer = null;

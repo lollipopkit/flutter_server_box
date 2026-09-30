@@ -612,6 +612,36 @@ void main() {
       },
     );
 
+    test('a transport lost before kill-window answers is an error', () async {
+      final shell = _FakeTmuxShell()..onlyOneWindow = true;
+      final client = TmuxControlClient(shell);
+      final initialized = client.initialize();
+      shell.emit('\x1bP1000p%begin 1 100 1\n%end 1 100 1\n');
+      await initialized;
+      await _pumpEventQueue();
+
+      shell.dropBeforeNextCommandResult = true;
+      await expectLater(client.closeWindow(TmuxWindowId('@0')), throwsA(anything));
+      await client.dispose();
+    });
+
+    test('a protocol overflow closes the shell under the client', () async {
+      final shell = _FakeTmuxShell();
+      final client = TmuxControlClient(shell);
+      bool? cleanExit;
+      client.onClosed = (clean) => cleanExit = clean;
+      final initialized = client.initialize();
+      shell.emit('\x1bP1000p%begin 1 100 1\n%end 1 100 1\n');
+      await initialized;
+      await _pumpEventQueue();
+
+      shell.emit('x' * (65 * 1024));
+      await _pumpEventQueue();
+
+      expect(cleanExit, isFalse);
+      expect(shell.isClosed, isTrue);
+    });
+
     test('detaches the current client', () async {
       final shell = _FakeTmuxShell();
       final client = TmuxControlClient(shell);
@@ -718,6 +748,7 @@ final class _FakeTmuxShell implements ShellSession {
   bool splitPanes = false;
   bool errorNextCommand = false;
   bool exitBeforeNextCommandResult = false;
+  bool dropBeforeNextCommandResult = false;
   bool onlyOneWindow = false;
   String captureOutput = 'main prompt';
   int paneHeight = 24;
@@ -725,6 +756,7 @@ final class _FakeTmuxShell implements ShellSession {
       '0\t0\t0\t1\t0\tdefault\t0\t0\t0\t1\t0\t0\t0'
       '\t0\t0\t0\t0\t0\t0\tVT10x';
   bool _closed = false;
+  bool get isClosed => _closed;
 
   _FakeTmuxShell();
 
@@ -745,6 +777,11 @@ final class _FakeTmuxShell implements ShellSession {
     if (errorNextCommand) {
       errorNextCommand = false;
       emit('%begin 2 101 1\nparse error\n%error 2 101 1\n');
+      return;
+    }
+    if (dropBeforeNextCommandResult) {
+      dropBeforeNextCommandResult = false;
+      close();
       return;
     }
     if (exitBeforeNextCommandResult) {

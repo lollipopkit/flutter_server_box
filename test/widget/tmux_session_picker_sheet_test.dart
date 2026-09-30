@@ -5,7 +5,7 @@ import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/widget/tmux_session_picker_sheet.dart';
 
 void main() {
-  const sessions = [
+  final sessions = [
     TmuxPickerSession(
       id: TmuxSessionId(r'$0'),
       name: 'main',
@@ -91,7 +91,7 @@ void main() {
   });
 
   testWidgets('prefills a non-conflicting session name', (tester) async {
-    const conflictedSessions = [
+    final conflictedSessions = [
       TmuxPickerSession(
         id: TmuxSessionId(r'$0'),
         name: 'server_box',
