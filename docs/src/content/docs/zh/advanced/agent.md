@@ -36,6 +36,11 @@ model ID。
 位于其他机器上的明文 `http://` 地址会被拒绝，除非为该 provider 开启 **允许明文 HTTP**，
 因为 API key 会以明文发送。`http://localhost` 等本机地址不需要开启。
 
+未填写 key 的内置 provider 会读取 App 启动时环境变量中对应的 key，变量名与该 provider
+自家工具使用的相同，例如 `OPENAI_API_KEY`、`ANTHROPIC_API_KEY`、`GEMINI_API_KEY`；
+provider 列表会显示 key 来自哪个变量。在 App 中填写的 key 会优先使用。这适用于从 shell
+启动的桌面端 App：在 macOS 上，从访达或程序坞打开的 App 读不到 shell 配置文件中导出的变量。
+
 旧版本中的设置（endpoint、model、protocol 和 key）在更新时已迁移为一个自定义
 provider，key 也已迁入钥匙串。
 
@@ -76,7 +81,8 @@ Skill 是针对特定任务的一组操作说明，由一个 `SKILL.md` 及其�
 模型只看到每个 skill 的名称和描述，任务符合时再读取其余内容；读取不需要确认。Skills 与
 工具相互独立：关闭工具不影响 skills，每个 skill 也可以单独关闭。终端的对话同样可以使用
 skills。模型会按 skill 的内容执行，请只安装你信任的来源；skill 中的脚本不会自动运行。
-**检查更新** 会重新获取每个来源，并替换有变化的 skill。
+App 每天最多一次（启动时或打开 Skills 页时）询问各来源 skill 是否有变化，并标出有更新的
+skill；**全部更新** 会安装这些更新，**检查更新** 会立即检查一次。不会未经你确认就安装。
 
 App 自带一个 skill：**serverbox-help**，内容是 Server Box 的用法和 Monitor agent 的部署，
 Agent 因此可以回答关于 App 本身的问题，也可以在你批准后帮你在服务器上部署 Monitor agent。它随

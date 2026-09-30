@@ -44,6 +44,13 @@ unless you turn on **Allow plain HTTP** for it, because the API key would be
 sent unencrypted. `http://localhost` and other addresses on this device do not
 need it.
 
+A built-in provider with no key entered uses one from the environment the App
+was started with, under the variable that provider's tools use —
+`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY` and so on — and the
+provider list says which variable it came from. A key entered in the App takes
+its place. This is for a desktop App started from a shell: on macOS, an App
+opened from Finder or the Dock does not see what your shell profile exports.
+
 Settings from an earlier version — endpoint, model, protocol and key — were
 moved to a custom provider when you updated, and the key to the keychain.
 
@@ -91,8 +98,10 @@ task matches it; loading one needs no approval. Skills are separate from
 tools: turning tools off leaves them on, and each can be switched off on its
 own. A terminal's chats get them too. The model follows what a skill says,
 so install only from sources you trust; scripts in a skill do not run by
-themselves. **Check for updates** fetches each source again and replaces
-the skills that changed.
+themselves. Once a day, at launch or when you open the Skills page, the App
+asks each source whether its skills changed and marks the ones that did;
+**Update all** installs them, and **Check for updates** asks right away.
+Nothing is installed without you.
 
 One skill comes with the App: **serverbox-help**, on how to use Server Box and
 run Monitor agent, so the Agent can answer questions about the App itself —
