@@ -70,6 +70,7 @@ Skill 是针对特定任务的一组操作说明，由一个 `SKILL.md` 及其�
 **设置 → 应用 → AI → Skills** 中安装，支持的来源与 `npx skills add` 相同：`owner/repo`、
 `owner/repo@skill`、GitHub 或 GitLab 链接（仓库或其中的文件夹）、指向 `SKILL.md` 或压缩包的链接，
 以及发布了 `/.well-known` skills 索引的网站。也可以直接粘贴整条 `npx skills add …` 命令。
+本机的文件夹或 `.zip` 也可以安装：使用输入框下方的按钮，或直接输入其路径。
 来源中有多个 skill 时，可以选择要安装哪些。
 
 模型只看到每个 skill 的名称和描述，任务符合时再读取其余内容；读取不需要确认。Skills 与

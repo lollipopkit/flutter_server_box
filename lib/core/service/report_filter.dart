@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:dio/dio.dart';
+import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show McpTools;
 import 'package:icloud_storage_plus/models/exceptions.dart';
 import 'package:server_box/data/model/app/error.dart';
 
@@ -42,6 +43,8 @@ abstract final class ReportFilter {
     ICloudContainerAccessException() => false,
     // A password removed between `BakSyncer.sync`'s check and the upload.
     RemoteBackupPasswordMissing() => false,
+    // An MCP server the user added, wanting a sign-in or refusing a request.
+    Object() when McpTools.isRemoteFailure(error) => false,
     _ => true,
   };
 

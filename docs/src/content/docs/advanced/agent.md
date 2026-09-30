@@ -81,7 +81,9 @@ any files beside it. Install one at **Settings → App → AI → Skills** from 
 same sources `npx skills add` takes: `owner/repo`, `owner/repo@skill`, a
 GitHub or GitLab link (to a repository or a folder in it), a link to a
 `SKILL.md` or an archive, or a site that publishes a `/.well-known` skills
-index. A whole `npx skills add …` command can be pasted as it is. When a
+index. A whole `npx skills add …` command can be pasted as it is. A folder
+or a `.zip` on this device can be installed too, from the buttons below the
+field or by entering its path. When a
 source has several skills, you pick which to install.
 
 The model sees each skill's name and description, and loads the rest when a
