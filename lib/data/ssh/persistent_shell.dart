@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/data/model/server/shell_backend.dart';
 
 final class PersistentShellCommandResult {
   final String output;
@@ -39,6 +40,121 @@ final class SshPersistentShellSession implements PersistentShellSession {
 
   @override
   void close() {
+    _session.close();
+  }
+}
+
+/// [PersistentShellSession] over a command run on a pseudo-terminal.
+///
+/// [PersistentShell] writes a command and reads until a marker it appended,
+/// which an SSH `exec` channel carries as is. A pseudo-terminal does not: it
+/// echoes what is written into it, turns `\n` into `\r\n`, and a `sh` whose
+/// stdin is a terminal is interactive and prints prompts — all of it landing
+/// in the output being parsed. So [command] puts the terminal in raw mode
+/// without echo and runs `sh` behind `cat`, whose stdin is then a pipe.
+///
+/// Nothing is written until [readyMarker] arrives: bytes written before `stty`
+/// has run would still be echoed.
+final class PtyPersistentShellSession implements PersistentShellSession {
+  PtyPersistentShellSession._(this._session);
+
+  final ShellSession _session;
+  final _stdout = StreamController<Uint8List>();
+  final _stderr = StreamController<Uint8List>();
+  late final _stdin = StreamController<Uint8List>(sync: true)
+    ..stream.listen(_session.write);
+  StreamSubscription<Uint8List>? _sub;
+
+  static const readyMarker = '__SERVER_BOX_PTY_READY__';
+
+  /// Passed as the command's own argument, never typed into the terminal, so
+  /// [readyMarker] cannot arrive as an echo of it.
+  static const command =
+      "stty raw -echo && printf '$readyMarker\\n' && cat | sh 2>&1";
+
+  /// Runs [command] through [execute] and waits for it to be ready.
+  static Future<PtyPersistentShellSession> open(
+    Future<ShellSession> Function(String command) execute, {
+    Duration timeout = const Duration(seconds: 5),
+  }) async {
+    final session = await execute(command);
+    final stdout = session.stdout;
+    if (stdout == null) {
+      session.close();
+      throw StateError('The pseudo-terminal has no output');
+    }
+    final pty = PtyPersistentShellSession._(session);
+    final ready = Completer<void>();
+    final marker = utf8.encode('$readyMarker\n');
+    final pending = <int>[];
+    pty._sub = stdout.listen(
+      (data) {
+        if (ready.isCompleted) {
+          pty._stdout.add(data);
+          return;
+        }
+        pending.addAll(data);
+        final at = _indexOf(pending, marker);
+        if (at < 0) return;
+        ready.complete();
+        final rest = pending.sublist(at + marker.length);
+        if (rest.isNotEmpty) pty._stdout.add(Uint8List.fromList(rest));
+      },
+      onError: (Object e, StackTrace st) {
+        if (!ready.isCompleted) ready.completeError(e, st);
+        if (!pty._stdout.isClosed) pty._stdout.addError(e, st);
+      },
+      onDone: () {
+        if (!ready.isCompleted) {
+          // `stty` or `cat` missing, or a shell that is not POSIX.
+          ready.completeError(
+            StateError(
+              'The pseudo-terminal ended before it was ready: '
+              '${utf8.decode(pending, allowMalformed: true).trim()}',
+            ),
+          );
+        }
+        pty._stdout.close();
+      },
+    );
+    try {
+      await ready.future.timeout(timeout);
+    } catch (_) {
+      pty.close();
+      rethrow;
+    }
+    return pty;
+  }
+
+  static int _indexOf(List<int> haystack, List<int> needle) {
+    outer:
+    for (var i = 0; i <= haystack.length - needle.length; i++) {
+      for (var j = 0; j < needle.length; j++) {
+        if (haystack[i + j] != needle[j]) continue outer;
+      }
+      return i;
+    }
+    return -1;
+  }
+
+  @override
+  StreamSink<Uint8List> get stdin => _stdin.sink;
+
+  @override
+  Stream<Uint8List> get stdout => _stdout.stream;
+
+  /// Silent: a pseudo-terminal merges the two, and [command] sends `sh`'s
+  /// stderr to the same place. Open until [close], since [PersistentShell]
+  /// takes either stream ending for the shell ending.
+  @override
+  Stream<Uint8List> get stderr => _stderr.stream;
+
+  @override
+  void close() {
+    unawaited(_sub?.cancel());
+    unawaited(_stdin.close());
+    if (!_stdout.isClosed) unawaited(_stdout.close());
+    unawaited(_stderr.close());
     _session.close();
   }
 }

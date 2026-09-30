@@ -1,15 +1,18 @@
 /// Which virtual keys a terminal can actually use.
 ///
-/// Four of them act on a *server*, and on a shell that is not on one — this
+/// Some of them act on a *server*, and on a shell that is not on one — this
 /// device's, and the Linux systems installed in it — they used to return
 /// without a word: the strip drew them, they took a tap, and nothing happened.
 library;
+
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
+import 'package:server_box/data/ssh/terminal_source.dart';
 
 Spi _ssh({String user = 'me'}) => Spi(
   id: 's-1',
@@ -23,14 +26,24 @@ Spi _monitor() => Spi(
   monitorHttp: const MonitorHttpCredential(addr: 'https://10.0.0.2'),
 );
 
+const _local = LocalSource();
+
 void main() {
   group('a shell on this device', () {
     test('is offered nothing that needs a server', () {
       // The report this exists for: on a Linux system installed in the app,
       // the file, sudo and tmux keys were all dead buttons.
-      expect(VirtKey.sftp.worksOn(null), isFalse);
-      expect(VirtKey.sudo.worksOn(null), isFalse);
-      expect(VirtKey.tmux.worksOn(null), isFalse);
+      expect(VirtKey.sftp.worksOn(_local), isFalse);
+      expect(VirtKey.sudo.worksOn(_local), isFalse);
+    });
+
+    test('drives tmux, except where a command is cmd', () {
+      // The guest and the host shell both run a POSIX `sh` beside the
+      // terminal, which is all tmux needs; Windows runs `cmd /C`. iOS is off
+      // for now, and this suite does not run there.
+      for (final source in [_local, const LocalSource(rootfs: true)]) {
+        expect(VirtKey.tmux.worksOn(source), !Platform.isWindows);
+      }
     });
 
     test('keeps everything the terminal itself does', () {
@@ -47,7 +60,7 @@ void main() {
         VirtKey.slash,
       ]) {
         expect(
-          key.worksOn(null),
+          key.worksOn(_local),
           isTrue,
           reason: "${key.name} is the terminal's own",
         );
@@ -58,14 +71,14 @@ void main() {
   group('a server over SSH', () {
     test('is offered all of them', () {
       for (final key in VirtKey.values) {
-        expect(key.worksOn(_ssh()), isTrue, reason: key.name);
+        expect(key.worksOn(ServerSource(_ssh())), isTrue, reason: key.name);
       }
     });
 
     test('except sudo where the session is already root', () {
       // The same rule the toolbar's own sudo button applies, so the two cannot
       // disagree about the same server.
-      expect(VirtKey.sudo.worksOn(_ssh(user: 'root')), isFalse);
+      expect(VirtKey.sudo.worksOn(ServerSource(_ssh(user: 'root'))), isFalse);
     });
   });
 
@@ -74,11 +87,11 @@ void main() {
       final spi = _monitor();
       // tmux needs a channel that does not echo what is written into it, and
       // the agent carries no exec channel at all.
-      expect(VirtKey.tmux.worksOn(spi), isFalse);
+      expect(VirtKey.tmux.worksOn(ServerSource(spi)), isFalse);
       // The file key opens `ServerFilePage`, which serves a monitor server
       // from the agent's own file API.
-      expect(VirtKey.sftp.worksOn(spi), isTrue);
-      expect(VirtKey.snippet.worksOn(spi), isTrue);
+      expect(VirtKey.sftp.worksOn(ServerSource(spi)), isTrue);
+      expect(VirtKey.snippet.worksOn(ServerSource(spi)), isTrue);
     });
 
     test('and nothing to insert a sudo password from', () {
@@ -88,7 +101,7 @@ void main() {
       // another dead button, on the one kind of session that has no password to
       // offer.
       expect(_monitor().ssh, isNull);
-      expect(VirtKey.sudo.worksOn(_monitor()), isFalse);
+      expect(VirtKey.sudo.worksOn(ServerSource(_monitor())), isFalse);
     });
   });
 }

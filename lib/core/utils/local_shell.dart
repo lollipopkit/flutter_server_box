@@ -99,6 +99,10 @@ class LocalShellBackend implements ShellBackend {
   @override
   bool get supportsExec => true;
 
+  /// Not on Windows, where a command is `cmd /C` and there is no rootfs.
+  @override
+  bool get supportsTmux => !Platform.isWindows;
+
   @override
   Future<ShellSession> openShell({
     required int width,

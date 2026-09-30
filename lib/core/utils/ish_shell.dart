@@ -43,6 +43,13 @@ class IshShellBackend implements ShellBackend {
   @override
   bool get supportsExec => true;
 
+  /// Not yet. `realfs` reports the host's uid (the app's, not 0) as every
+  /// file's owner, and tmux refuses a socket directory the guest's root does
+  /// not own: "directory /tmp/tmux-0 has unsafe permissions".
+  // TODO: enable once realfs maps the host uid to the guest's.
+  @override
+  bool get supportsTmux => false;
+
   @override
   Future<ShellSession> openShell({
     required int width,
