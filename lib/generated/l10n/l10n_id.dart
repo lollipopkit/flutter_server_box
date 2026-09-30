@@ -2059,6 +2059,20 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String funcNeedsAgentGrant(String func, String setting) {
+    return '$func memerlukan $setting diaktifkan di Monitor agent.';
+  }
+
+  @override
+  String funcNeedsAgentUpdate(String func) {
+    return '$func memerlukan Monitor agent yang lebih baru.';
+  }
+
+  @override
+  String get portForwardNeedsSsh =>
+      'Penerusan jarak jauh dan dinamis memerlukan SSH: server harus mendengarkan, dan Monitor agent tidak melakukannya.';
+
+  @override
   String get rangeLive => 'Langsung';
 
   @override

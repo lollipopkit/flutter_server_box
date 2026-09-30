@@ -3586,6 +3586,24 @@ abstract class AppLocalizations {
   /// **'{func} is not available over this server\'s connection.'**
   String funcUnavailableFmt(String func);
 
+  /// No description provided for @funcNeedsAgentGrant.
+  ///
+  /// In en, this message translates to:
+  /// **'{func} needs the Monitor agent\'s {setting} to be turned on.'**
+  String funcNeedsAgentGrant(String func, String setting);
+
+  /// No description provided for @funcNeedsAgentUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'{func} needs a newer Monitor agent.'**
+  String funcNeedsAgentUpdate(String func);
+
+  /// No description provided for @portForwardNeedsSsh.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote and dynamic forwards need SSH: the server has to listen, which the Monitor agent does not.'**
+  String get portForwardNeedsSsh;
+
   /// User-facing label or message for range live.
   ///
   /// In en, this message translates to:

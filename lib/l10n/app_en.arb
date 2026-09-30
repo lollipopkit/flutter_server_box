@@ -2631,6 +2631,20 @@
       }
     }
   },
+  "funcNeedsAgentGrant": "{func} needs the Monitor agent's {setting} to be turned on.",
+  "@funcNeedsAgentGrant": {
+    "placeholders": {
+      "func": { "type": "String" },
+      "setting": { "type": "String" }
+    }
+  },
+  "funcNeedsAgentUpdate": "{func} needs a newer Monitor agent.",
+  "@funcNeedsAgentUpdate": {
+    "placeholders": {
+      "func": { "type": "String" }
+    }
+  },
+  "portForwardNeedsSsh": "Remote and dynamic forwards need SSH: the server has to listen, which the Monitor agent does not.",
   "rangeLive": "Live",
   "@rangeLive": {
     "description": "User-facing label or message for range live."

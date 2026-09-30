@@ -55,17 +55,19 @@ does not infer them from the transport currently in use:
 | Shell and commands | Available | Requires `full_access` |
 | Interactive terminal | Available | Requires `full_access` and the terminal endpoint |
 | File browsing | SFTP | Requires `[remote_access.fs]` and `roots` |
-| Byte streams (SFTP and port forwarding) | Available | Not available |
+| SFTP | Available | Not available |
+| Local port forwarding and remote desktop | Available | Requires `full_access` |
+| Remote and dynamic port forwarding | Available | Not available |
 | History from before the App connected | Not available | Available |
 
 With both transports configured, the server exposes the capabilities of both.
-For example, preferring Monitor HTTP does not remove SFTP or port forwarding
-available through SSH.
+For example, preferring Monitor HTTP does not remove SFTP or the remote and
+dynamic port forwards available through SSH.
 
 The file protocol is configured separately from the transport preference. SSH
 file operations use SFTP by default; choose SCP for hosts without an SFTP
 subsystem. A Monitor HTTP-only server uses the agent's file API and has no
-SFTP or port forwarding.
+SFTP.
 
 ## Status collection and parsing
 

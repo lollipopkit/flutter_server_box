@@ -2066,6 +2066,20 @@ class AppLocalizationsAz extends AppLocalizations {
   }
 
   @override
+  String funcNeedsAgentGrant(String func, String setting) {
+    return '$func üçün Monitor agent-də $setting aktiv edilməlidir.';
+  }
+
+  @override
+  String funcNeedsAgentUpdate(String func) {
+    return '$func üçün daha yeni Monitor agent lazımdır.';
+  }
+
+  @override
+  String get portForwardNeedsSsh =>
+      'Uzaq və dinamik yönləndirmələr SSH tələb edir: server port dinləməlidir, Monitor agent bunu etmir.';
+
+  @override
   String get rangeLive => 'Canlı';
 
   @override

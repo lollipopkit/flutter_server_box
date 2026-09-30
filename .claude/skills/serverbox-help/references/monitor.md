@@ -70,7 +70,7 @@ User**, **Monitor Password**, and **Monitor Ignore certificate** only for a
 self-signed certificate → save. SSH can be on for the same server as well.
 
 A server with only Monitor HTTP has no SSH credentials: it can do exactly what
-the agent allows, and no SFTP or port forwarding at all.
+the agent allows, and no SFTP or remote and dynamic port forwarding at all.
 
 ## What each switch allows
 
@@ -127,7 +127,8 @@ none of SSH's authentication in between.
 |---|---|
 | Only charts, no terminal or controls | `[remote_access.terminal] enabled` is off (the default), so `full_access` grants nothing; or the app reaches it over plain HTTP from another machine |
 | No file browser | `[remote_access.fs]` off, or `roots` empty |
-| No SFTP or port forwarding | Never through the agent; add SSH to the same server |
+| No SFTP, or no remote or dynamic forward | Never through the agent; add SSH to the same server |
+| No remote desktop or port forwarding, with a terminal | The agent predates the TCP relay; update it |
 | Certificate error | Configure TLS or a proxy, or **Monitor Ignore certificate** for a self-signed one |
 | Login refused, or the agent seems slow | Wrong password, throttled; reset with `user set-password` |
 | Settings turned themselves off after an upgrade | A config from before August 2026 uses old flat keys (`terminal_enabled`...) that are no longer read; rewrite it against [`config.example.toml`](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/config.example.toml) |

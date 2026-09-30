@@ -5,6 +5,8 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/diag.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/server_tcp.dart';
 import 'package:server_box/core/utils/ssh_local_tunnel.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -214,23 +216,49 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     if (config.remoteHost == null || config.remotePort == null) {
       throw Exception('Invalid local port forward: remote destination not set');
     }
-    // Connect before binding so a forward cannot look active when there is no
-    // authenticated SSH transport behind its listener.
-    final tunnel = await SshLocalTunnel.bind(
-      client: await _connectedClient(),
-      remoteHost: config.remoteHost!,
-      remotePort: config.remotePort!,
-      bindHost: config.localHost ?? 'localhost',
-      bindPort: config.localPort,
-    );
+    final server = ref.read(serverProvider(_serverId));
+    final caps = server.capabilities;
+    // Connect before binding so a forward cannot look active with nothing
+    // behind its listener: an SSH session, or an agent that relays.
+    if (caps.byteStream) {
+      await _connectedClient();
+    } else if (!caps.tcpRelay) {
+      throw Exception(l10n.funcUnavailableFmt(libL10n.portForward));
+    }
+    // Each connection is dialled as it arrives, over SSH or the agent, as a
+    // remote desktop's is — see [ServerTcpDialer].
+    final dialer = ServerTcpDialer.of(ref, server.spi);
+    final SshLocalTunnel tunnel;
+    try {
+      tunnel = await SshLocalTunnel.bindWithDialer(
+        bindHost: config.localHost ?? 'localhost',
+        bindPort: config.localPort,
+        // Nothing to end with: the dialer reconnects per connection, and a
+        // dropped SSH session stops every forward here (see [build]).
+        sshDone: Completer<void>().future,
+        dialer: () => dialer.open(config.remoteHost!, config.remotePort!),
+      );
+    } catch (_) {
+      dialer.close();
+      rethrow;
+    }
     Loggers.app.info(
       'Local port forward started: ${tunnel.address.address}:${tunnel.port} '
       '-> ${config.remoteHost}:${config.remotePort}',
     );
-    return _LocalForwardEntry(tunnel);
+    return _LocalForwardEntry(tunnel, dialer);
+  }
+
+  /// Remote and dynamic forwards have the server listen, which only sshd
+  /// does.
+  void _requireSsh() {
+    if (!ref.read(serverProvider(_serverId)).capabilities.byteStream) {
+      throw Exception(l10n.portForwardNeedsSsh);
+    }
   }
 
   Future<_ForwardEntry> _startRemoteForward(PortForwardConfig config) async {
+    _requireSsh();
     if (config.remoteHost == null || config.remotePort == null) {
       throw Exception(
         'Invalid remote port forward: remote destination not set',
@@ -256,6 +284,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
   }
 
   Future<_ForwardEntry> _startDynamicForward(PortForwardConfig config) async {
+    _requireSsh();
     final bindHost = config.localHost ?? 'localhost';
     final dynamicForward = await (await _connectedClient()).forwardDynamic(
       bindHost: bindHost,
@@ -308,12 +337,16 @@ abstract class _ForwardEntry {
 }
 
 class _LocalForwardEntry extends _ForwardEntry {
-  _LocalForwardEntry(this.tunnel);
+  _LocalForwardEntry(this.tunnel, this.dialer);
 
   final SshLocalTunnel tunnel;
+  final ServerTcpDialer dialer;
 
   @override
-  Future<void> close() => tunnel.close();
+  Future<void> close() async {
+    await tunnel.close();
+    dialer.close();
+  }
 }
 
 class _RemoteForwardEntry extends _ForwardEntry {

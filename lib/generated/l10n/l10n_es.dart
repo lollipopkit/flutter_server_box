@@ -2083,6 +2083,20 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String funcNeedsAgentGrant(String func, String setting) {
+    return '$func requiere activar $setting en el Monitor agent.';
+  }
+
+  @override
+  String funcNeedsAgentUpdate(String func) {
+    return '$func requiere un Monitor agent más reciente.';
+  }
+
+  @override
+  String get portForwardNeedsSsh =>
+      'Los reenvíos remotos y dinámicos requieren SSH: el servidor tiene que escuchar, y el Monitor agent no lo hace.';
+
+  @override
   String get rangeLive => 'En vivo';
 
   @override

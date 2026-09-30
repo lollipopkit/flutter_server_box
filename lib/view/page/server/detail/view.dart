@@ -121,7 +121,7 @@ const _kFuncBarInset = kFuncBarInset;
   final entries = serverFuncBtnsFor(si.spi, si.remoteAccess);
   if (!serverDetailHasContent(si)) {
     return (
-      entries: [for (final e in entries) (btn: e.btn, available: false)],
+      entries: [for (final e in entries) (btn: e.btn, available: false, reason: null)],
       any: false,
     );
   }

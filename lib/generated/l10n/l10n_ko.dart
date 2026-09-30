@@ -1943,6 +1943,20 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String funcNeedsAgentGrant(String func, String setting) {
+    return '$func을(를) 사용하려면 Monitor agent의 $setting을(를) 켜야 합니다.';
+  }
+
+  @override
+  String funcNeedsAgentUpdate(String func) {
+    return '$func을(를) 사용하려면 Monitor agent를 업데이트해야 합니다.';
+  }
+
+  @override
+  String get portForwardNeedsSsh =>
+      '원격 전달과 동적 전달에는 SSH가 필요합니다. 서버에서 포트를 수신해야 하며 Monitor agent는 이를 지원하지 않습니다.';
+
+  @override
   String get rangeLive => '실시간';
 
   @override

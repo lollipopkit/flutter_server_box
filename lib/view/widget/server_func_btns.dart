@@ -31,7 +31,9 @@ import 'package:server_box/view/widget/edge_fade_scroll.dart';
 import 'package:server_box/view/widget/server_power.dart';
 
 /// One entry of the function row, and whether this connection can serve it.
-typedef ServerFuncEntry = ({ServerFuncBtn btn, bool available});
+/// [reason] says why it is not [available], in the words a tap and a hover
+/// show; null when it is.
+typedef ServerFuncEntry = ({ServerFuncBtn btn, bool available, String? reason});
 
 /// Left over on either side of the bar, so the page it floats above is still
 /// visible past it and it never reads as a second edge to the window.
@@ -340,13 +342,18 @@ extension ServerFuncBtnsBuild on ServerFuncBtns {
     // go" — which is the agent's doing, not this app's, and is worth one
     // sentence.
     final available = entry.available;
+    // What would make it available, where the agent's operator can: the same
+    // words on hover and on a tap.
+    final reason = available
+        ? null
+        : entry.reason ?? l10n.funcUnavailableFmt(e.toStr);
     // The label is part of the button, not a caption under one. An
     // `IconButton` with a `Text` beneath it left the word inert, so half of
     // what looks like a target did nothing when tapped.
-    return InkWell(
-      onTap: available
+    final item = InkWell(
+      onTap: reason == null
           ? () => runServerFunc(e, spi, context, ref)
-          : () => Toast.show(l10n.funcUnavailableFmt(e.toStr)),
+          : () => Toast.show(reason),
       borderRadius: BorderRadius.circular(10),
       // Animated, because an entry that keeps its place and only changes what
       // it can do is the one case where nothing about the row moves: without
@@ -378,6 +385,7 @@ extension ServerFuncBtnsBuild on ServerFuncBtns {
         ),
       ),
     );
+    return reason == null ? item : Tooltip(message: reason, child: item);
   }
 }
 
@@ -420,7 +428,12 @@ List<ServerFuncEntry> serverFuncBtnsFor(
   final available = <ServerFuncEntry>[];
   final rest = <ServerFuncEntry>[];
   for (final btn in ordered) {
-    final entry = (btn: btn, available: btn.availableWith(caps));
+    final ok = btn.availableWith(caps);
+    final entry = (
+      btn: btn,
+      available: ok,
+      reason: ok ? null : btn.unavailableReason(spi, granted),
+    );
     (entry.available ? available : rest).add(entry);
   }
   return [...available, ...rest];
@@ -521,8 +534,8 @@ void runServerFunc(
         await ServerPower.pick(context, ref, spi);
         break;
       case ServerFuncBtn.portForward:
-        if (!await _ensureSshClient(context, spi.id, ref)) return;
-        if (!context.mounted) return;
+        // No connection first: a forward is dialled over SSH or the agent's
+        // relay when it starts, and says there why it could not.
         final args = SpiRequiredArgs(spi);
         unawaited(PortForwardPage.route.go(context, args));
         break;

@@ -1938,6 +1938,20 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String funcNeedsAgentGrant(String func, String setting) {
+    return '$funcを使うには Monitor agent の $setting を有効にする必要があります。';
+  }
+
+  @override
+  String funcNeedsAgentUpdate(String func) {
+    return '$funcを使うには Monitor agent の更新が必要です。';
+  }
+
+  @override
+  String get portForwardNeedsSsh =>
+      'リモート転送と動的転送には SSH が必要です。サーバー側での待ち受けが必要で、Monitor agent はこれに対応していません。';
+
+  @override
   String get rangeLive => 'リアルタイム';
 
   @override

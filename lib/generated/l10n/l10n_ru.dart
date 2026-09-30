@@ -2075,6 +2075,20 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String funcNeedsAgentGrant(String func, String setting) {
+    return 'Для «$func» нужно включить $setting в Monitor agent.';
+  }
+
+  @override
+  String funcNeedsAgentUpdate(String func) {
+    return 'Для «$func» нужна более новая версия Monitor agent.';
+  }
+
+  @override
+  String get portForwardNeedsSsh =>
+      'Удалённая и динамическая переадресация требуют SSH: сервер должен слушать порт, а Monitor agent этого не умеет.';
+
+  @override
   String get rangeLive => 'В реальном времени';
 
   @override

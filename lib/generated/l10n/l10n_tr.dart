@@ -2053,6 +2053,20 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String funcNeedsAgentGrant(String func, String setting) {
+    return '$func için Monitor agent\'ta $setting açık olmalıdır.';
+  }
+
+  @override
+  String funcNeedsAgentUpdate(String func) {
+    return '$func için daha yeni bir Monitor agent gerekir.';
+  }
+
+  @override
+  String get portForwardNeedsSsh =>
+      'Uzak ve dinamik yönlendirmeler SSH gerektirir: sunucunun dinlemesi gerekir, Monitor agent bunu yapmaz.';
+
+  @override
   String get rangeLive => 'Canlı';
 
   @override

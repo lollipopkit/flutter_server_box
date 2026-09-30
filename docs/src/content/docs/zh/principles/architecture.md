@@ -45,12 +45,14 @@ UI 根据 `ServerCapabilities` 判断可用功能，不直接根据当前使用�
 | Shell 和命令 | 支持 | 需要 `full_access` |
 | 交互式终端 | 支持 | 需要 `full_access` 和 terminal endpoint |
 | 文件浏览 | SFTP | 需要 `[remote_access.fs]` 和 `roots` |
-| Byte stream（SFTP、端口转发） | 支持 | 不支持 |
+| SFTP | 支持 | 不支持 |
+| 本地端口转发、远程桌面 | 支持 | 需要 `full_access` |
+| 远程和动态端口转发 | 支持 | 不支持 |
 | App 连接前的历史数据 | 不提供 | 提供 |
 
-同时配置两种方式时，服务器会提供两边能力的 union。例如，优先使用 Monitor HTTP 时，SSH 提供的 SFTP 和端口转发仍然可用。
+同时配置两种方式时，服务器会提供两边能力的 union。例如，优先使用 Monitor HTTP 时，SSH 提供的 SFTP 以及远程和动态端口转发仍然可用。
 
-文件传输协议与 transport 优先顺序分开配置。SSH 文件操作默认使用 SFTP；主机没有 SFTP subsystem 时可以选 SCP。仅配置 Monitor HTTP 的服务器使用 agent 文件 API，无法提供 SFTP 或端口转发。
+文件传输协议与 transport 优先顺序分开配置。SSH 文件操作默认使用 SFTP；主机没有 SFTP subsystem 时可以选 SCP。仅配置 Monitor HTTP 的服务器使用 agent 文件 API，无法提供 SFTP。
 
 ## 状态采集和解析
 
