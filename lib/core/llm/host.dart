@@ -60,15 +60,16 @@ abstract final class LlmHost {
     LlmUi.appPrompt = prompt;
   }
 
-  /// A terminal's chats get that terminal and nothing else: they are about
-  /// the shell on screen, and a tool reaching another machine or the web from
-  /// there is not what anyone opened the panel for. The app-wide Agent gets
-  /// everything but a terminal, which it has none of.
+  /// A terminal's chats get that terminal and nothing else but the skills:
+  /// they are about the shell on screen, and a tool reaching another machine
+  /// or the web from there is not what anyone opened the panel for, where a
+  /// skill only says how to do something. The app-wide Agent gets everything
+  /// but a terminal, which it has none of.
   @visibleForTesting
   static bool offers(ChatMeta? meta, String group) =>
       AgentScope.terminalServerOf(meta) == null
       ? group != AgentTools.terminal
-      : group == AgentTools.terminal;
+      : group == AgentTools.terminal || group == TfSkill.groupName;
 
   @visibleForTesting
   static String? prompt(ChatMeta? meta) {

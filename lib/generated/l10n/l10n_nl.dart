@@ -2138,6 +2138,13 @@ class AppLocalizationsNl extends AppLocalizations {
   String get agentToolsTip => 'Wat de Agent mag gebruiken, en zijn MCP-servers';
 
   @override
+  String get agentSkills => 'Skills';
+
+  @override
+  String get agentSkillsTip =>
+      'Instructies voor bepaalde taken, geïnstalleerd vanaf GitHub of een link';
+
+  @override
   String get agentPermissions => 'Machtigingen';
 
   @override

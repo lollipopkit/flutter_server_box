@@ -74,6 +74,24 @@ headers, a name and a value each, such as `Authorization` with
 opens the browser, and the App keeps the token and renews it. Headers and tokens stay on this device and are not backed up, and
 are sent only over `https` unless the server is on this device.
 
+## Skills
+
+A skill is a set of instructions for a particular task — a `SKILL.md` and
+any files beside it. Install one at **Settings → App → AI → Skills** from the
+same sources `npx skills add` takes: `owner/repo`, `owner/repo@skill`, a
+GitHub or GitLab link (to a repository or a folder in it), a link to a
+`SKILL.md` or an archive, or a site that publishes a `/.well-known` skills
+index. A whole `npx skills add …` command can be pasted as it is. When a
+source has several skills, you pick which to install.
+
+The model sees each skill's name and description, and loads the rest when a
+task matches it; loading one needs no approval. Skills are separate from
+tools: turning tools off leaves them on, and each can be switched off on its
+own. A terminal's chats get them too. The model follows what a skill says,
+so install only from sources you trust; scripts in a skill do not run by
+themselves. **Check for updates** fetches each source again and replaces
+the skills that changed.
+
 Agent's file tools require SSH. A server configured only with Monitor HTTP does
 not provide these tools. Its separate **File** tab can use the Monitor agent
 file API when the operator enables `[remote_access.fs]` and the requested path

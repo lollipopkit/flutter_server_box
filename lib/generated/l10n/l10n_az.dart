@@ -2136,6 +2136,13 @@ class AppLocalizationsAz extends AppLocalizations {
       'Agent-in istifadə edə bildikləri və onun MCP serverləri';
 
   @override
+  String get agentSkills => 'Skills';
+
+  @override
+  String get agentSkillsTip =>
+      'Müəyyən tapşırıqlar üçün təlimatlar, GitHub-dan və ya keçiddən quraşdırılır';
+
+  @override
   String get agentPermissions => 'İcazələr';
 
   @override

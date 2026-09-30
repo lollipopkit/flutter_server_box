@@ -184,6 +184,9 @@ provider. A custom provider at a plain `http://` address on another machine is
 refused unless you allow it for that provider, since the key would travel
 unencrypted. The **Web fetch** tool requests a page from this device when the
 Agent uses it, and MCP servers you add receive the calls made to their tools.
+Installing or updating a skill downloads it from the source you enter
+(GitHub, GitLab or the site), over `https`; skills are kept as files on this
+device and are not backed up.
 An MCP server's headers and sign-in tokens are kept in the App's encrypted
 database on this device, never in a backup, and sent only to that server, and
 only over `https` unless the server is on this device.

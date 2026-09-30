@@ -2143,6 +2143,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get agentToolsTip => 'Что может использовать Agent, и его серверы MCP';
 
   @override
+  String get agentSkills => 'Skills';
+
+  @override
+  String get agentSkillsTip =>
+      'Инструкции для определённых задач, устанавливаются с GitHub или по ссылке';
+
+  @override
   String get agentPermissions => 'Разрешения';
 
   @override

@@ -639,6 +639,8 @@
   "agentProvidersTip": "Ключи API, модели и модель для нового чата",
   "agentTools": "Инструменты",
   "agentToolsTip": "Что может использовать Agent, и его серверы MCP",
+  "agentSkills": "Skills",
+  "agentSkillsTip": "Инструкции для определённых задач, устанавливаются с GitHub или по ссылке",
   "agentPermissions": "Разрешения",
   "agentEmptyHint": "Спросите о своих серверах или попросите Agent что-то на них сделать.",
   "agentTerminalEmptyHint": "Спросите об этом сервере. Agent может читать этот терминал и выполнять здесь команды.",

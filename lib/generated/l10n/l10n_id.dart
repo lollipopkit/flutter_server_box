@@ -2129,6 +2129,13 @@ class AppLocalizationsId extends AppLocalizations {
       'Apa yang boleh dipakai Agent, dan server MCP-nya';
 
   @override
+  String get agentSkills => 'Skills';
+
+  @override
+  String get agentSkillsTip =>
+      'Petunjuk untuk tugas tertentu, dipasang dari GitHub atau tautan';
+
+  @override
   String get agentPermissions => 'Izin';
 
   @override

@@ -2006,6 +2006,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get agentToolsTip => 'Agent が使えるツールと MCP サーバー';
 
   @override
+  String get agentSkills => 'Skills';
+
+  @override
+  String get agentSkillsTip => '特定の作業の手順書。GitHub やリンクからインストール';
+
+  @override
   String get agentPermissions => '権限';
 
   @override

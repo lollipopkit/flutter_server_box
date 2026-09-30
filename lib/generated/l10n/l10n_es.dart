@@ -2152,6 +2152,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get agentToolsTip => 'Lo que el Agent puede usar y sus servidores MCP';
 
   @override
+  String get agentSkills => 'Skills';
+
+  @override
+  String get agentSkillsTip =>
+      'Instrucciones para tareas concretas, instaladas desde GitHub o un enlace';
+
+  @override
   String get agentPermissions => 'Permisos';
 
   @override

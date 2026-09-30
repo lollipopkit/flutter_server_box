@@ -3712,6 +3712,18 @@ abstract class AppLocalizations {
   /// **'What the Agent may use, and its MCP servers'**
   String get agentToolsTip;
 
+  /// Agent: agentSkills.
+  ///
+  /// In en, this message translates to:
+  /// **'Skills'**
+  String get agentSkills;
+
+  /// Agent: agentSkillsTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Instructions for particular tasks, installed from GitHub or a link'**
+  String get agentSkillsTip;
+
   /// Agent: agentPermissions.
   ///
   /// In en, this message translates to:

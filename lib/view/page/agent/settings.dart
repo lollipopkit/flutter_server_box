@@ -41,3 +41,22 @@ class AgentToolsPage extends StatelessWidget {
     );
   }
 }
+
+/// The skills the Agent can load, and installing them — see
+/// [AgentProvidersPage].
+class AgentSkillsPage extends StatelessWidget {
+  const AgentSkillsPage({super.key});
+
+  static const route = AppRouteNoArg(
+    page: AgentSkillsPage.new,
+    path: '/settings/agent/skills',
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: CustomAppBar(title: Text(context.l10n.agentSkills)),
+      body: const llm.SkillsPage(),
+    );
+  }
+}

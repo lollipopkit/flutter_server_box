@@ -1967,6 +1967,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentToolsTip => 'Agent 可以使用的工具，以及 MCP 服务器';
 
   @override
+  String get agentSkills => 'Skills';
+
+  @override
+  String get agentSkillsTip => '特定任务的操作说明，可从 GitHub 或链接安装';
+
+  @override
   String get agentPermissions => '权限';
 
   @override
@@ -6615,6 +6621,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get agentToolsTip => 'Agent 可以使用的工具，以及 MCP 伺服器';
+
+  @override
+  String get agentSkills => 'Skills';
+
+  @override
+  String get agentSkillsTip => '特定任務的操作說明，可從 GitHub 或連結安裝';
 
   @override
   String get agentPermissions => '權限';

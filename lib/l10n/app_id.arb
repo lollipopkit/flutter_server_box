@@ -639,6 +639,8 @@
   "agentProvidersTip": "Kunci API, model, dan model untuk obrolan baru",
   "agentTools": "Alat",
   "agentToolsTip": "Apa yang boleh dipakai Agent, dan server MCP-nya",
+  "agentSkills": "Skills",
+  "agentSkillsTip": "Petunjuk untuk tugas tertentu, dipasang dari GitHub atau tautan",
   "agentPermissions": "Izin",
   "agentEmptyHint": "Tanyakan tentang server Anda, atau minta Agent melakukan sesuatu di sana.",
   "agentTerminalEmptyHint": "Tanyakan tentang server ini. Agent dapat membaca terminal ini dan menjalankan perintah di sini.",

@@ -2154,6 +2154,13 @@ class AppLocalizationsFr extends AppLocalizations {
       'Ce que l\'Agent peut utiliser, et ses serveurs MCP';
 
   @override
+  String get agentSkills => 'Skills';
+
+  @override
+  String get agentSkillsTip =>
+      'Des instructions pour des tâches précises, installées depuis GitHub ou un lien';
+
+  @override
   String get agentPermissions => 'Autorisations';
 
   @override

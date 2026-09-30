@@ -2139,6 +2139,13 @@ class AppLocalizationsUk extends AppLocalizations {
       'Що може використовувати Agent, і його сервери MCP';
 
   @override
+  String get agentSkills => 'Skills';
+
+  @override
+  String get agentSkillsTip =>
+      'Інструкції для певних завдань, встановлюються з GitHub або за посиланням';
+
+  @override
   String get agentPermissions => 'Дозволи';
 
   @override

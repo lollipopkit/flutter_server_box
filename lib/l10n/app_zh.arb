@@ -635,6 +635,8 @@
   "agentProvidersTip": "API Key、模型，以及新对话使用的模型",
   "agentTools": "工具",
   "agentToolsTip": "Agent 可以使用的工具，以及 MCP 服务器",
+  "agentSkills": "Skills",
+  "agentSkillsTip": "特定任务的操作说明，可从 GitHub 或链接安装",
   "agentPermissions": "权限",
   "agentEmptyHint": "询问你的服务器，或让 Agent 在服务器上完成某项操作。",
   "agentTerminalEmptyHint": "询问这台服务器。Agent 可以读取当前终端，并在这里执行命令。",

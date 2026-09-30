@@ -2122,6 +2122,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get agentToolsTip => 'Agent\'ın kullanabildikleri ve MCP sunucuları';
 
   @override
+  String get agentSkills => 'Skills';
+
+  @override
+  String get agentSkillsTip =>
+      'Belirli görevler için talimatlar; GitHub’dan veya bir bağlantıdan kurulur';
+
+  @override
   String get agentPermissions => 'İzinler';
 
   @override

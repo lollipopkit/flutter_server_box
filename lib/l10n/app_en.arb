@@ -2720,6 +2720,14 @@
   "@agentToolsTip": {
     "description": "Agent: agentToolsTip."
   },
+  "agentSkills": "Skills",
+  "@agentSkills": {
+    "description": "Agent: agentSkills."
+  },
+  "agentSkillsTip": "Instructions for particular tasks, installed from GitHub or a link",
+  "@agentSkillsTip": {
+    "description": "Agent: agentSkillsTip."
+  },
   "agentPermissions": "Permissions",
   "@agentPermissions": {
     "description": "Agent: agentPermissions."

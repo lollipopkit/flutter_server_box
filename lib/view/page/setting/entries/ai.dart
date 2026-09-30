@@ -2,8 +2,8 @@ part of '../entry.dart';
 
 extension _AI on _AppSettingsPageState {
   /// The section, in named groups: what the Agent may do by itself, and what
-  /// it talks to — the providers and their models, and its tools. The last two
-  /// are fl_pi_llm_ui's pages.
+  /// it talks to — the providers and their models, its tools, and its skills.
+  /// Those three are fl_pi_llm_ui's pages.
   List<SettingsGroup> _buildAskAiConfig() {
     final l10n = context.l10n;
     final local = LocalExec.forThisDevice();
@@ -11,6 +11,7 @@ extension _AI on _AppSettingsPageState {
       SettingsGroup(libL10n.general, [
         _buildAgentProviders(l10n),
         _buildAgentTools(l10n),
+        _buildAgentSkills(l10n),
       ]),
       SettingsGroup(l10n.agentPermissions, [
         _buildAskAiAutoRun(l10n),
@@ -52,6 +53,21 @@ extension _AI on _AppSettingsPageState {
         onTap: () => AgentToolsPage.route.go(context),
       ),
       keywords: '${l10n.agentToolsTip} MCP',
+    );
+  }
+
+  SettingsRow _buildAgentSkills(AppLocalizations l10n) {
+    final label = l10n.agentSkills;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.auto_stories_outlined),
+        title: Text(label),
+        subtitle: Text(l10n.agentSkillsTip, style: UIs.textGrey),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+        onTap: () => AgentSkillsPage.route.go(context),
+      ),
+      keywords: '${l10n.agentSkillsTip} SKILL.md',
     );
   }
 

@@ -3,6 +3,7 @@
 // endpoint the `askAi` settings of an older install pointed at.
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -265,6 +266,28 @@ void main() {
       expect(ran, isEmpty);
       expect(chat.entries.value.last.message!.text, 'Done.');
     });
+  });
+
+  test('a terminal chat is told of the skills and can load them', () async {
+    final root = Directory.systemTemp.createTempSync('skills');
+    addTearDown(() {
+      Skills.remove('nginx');
+      root.deleteSync(recursive: true);
+    });
+    Skills.root = root.path;
+    final md = '---\nname: nginx\ndescription: Checks an nginx config.\n---\nRun nginx -t.\n';
+    await Skills.install(
+      SkillDiscovery.find({'SKILL.md': Uint8List.fromList(utf8.encode(md))}).single,
+      SkillSource.parse('o/r'),
+    );
+
+    final id = Chats.create(scope: AgentScope.terminal('srv-1'));
+    await Chats.send(id, 'hello');
+    expect(_tools(seen.last), {'terminal_run', 'terminal_screen', 'skill'});
+    expect(
+      (seen.last['messages'] as List).first['content'],
+      contains('- nginx: Checks an nginx config.'),
+    );
   });
 
   test("the app-wide Agent's chat gets the servers, not a terminal", () async {

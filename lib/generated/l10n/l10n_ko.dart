@@ -2011,6 +2011,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get agentToolsTip => 'Agent가 쓸 수 있는 도구와 MCP 서버';
 
   @override
+  String get agentSkills => 'Skills';
+
+  @override
+  String get agentSkillsTip => '특정 작업을 위한 지침, GitHub 또는 링크에서 설치';
+
+  @override
   String get agentPermissions => '권한';
 
   @override

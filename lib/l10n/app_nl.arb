@@ -639,6 +639,8 @@
   "agentProvidersTip": "API-sleutels, modellen en het model van een nieuwe chat",
   "agentTools": "Hulpmiddelen",
   "agentToolsTip": "Wat de Agent mag gebruiken, en zijn MCP-servers",
+  "agentSkills": "Skills",
+  "agentSkillsTip": "Instructies voor bepaalde taken, geïnstalleerd vanaf GitHub of een link",
   "agentPermissions": "Machtigingen",
   "agentEmptyHint": "Stel een vraag over je servers of laat de Agent er iets op doen.",
   "agentTerminalEmptyHint": "Stel een vraag over deze server. De Agent kan deze terminal lezen en hier opdrachten uitvoeren.",

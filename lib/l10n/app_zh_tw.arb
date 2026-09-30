@@ -602,6 +602,8 @@
   "agentProvidersTip": "API Key、模型，以及新對話使用的模型",
   "agentTools": "工具",
   "agentToolsTip": "Agent 可以使用的工具，以及 MCP 伺服器",
+  "agentSkills": "Skills",
+  "agentSkillsTip": "特定任務的操作說明，可從 GitHub 或連結安裝",
   "agentPermissions": "權限",
   "agentEmptyHint": "詢問你的伺服器，或讓 Agent 在伺服器上完成某項操作。",
   "agentTerminalEmptyHint": "詢問這台伺服器。Agent 可以讀取目前的終端，並在這裡執行指令。",

@@ -639,6 +639,8 @@
   "agentProvidersTip": "API anahtarları, modeller ve yeni sohbetin modeli",
   "agentTools": "Araçlar",
   "agentToolsTip": "Agent'ın kullanabildikleri ve MCP sunucuları",
+  "agentSkills": "Skills",
+  "agentSkillsTip": "Belirli görevler için talimatlar; GitHub’dan veya bir bağlantıdan kurulur",
   "agentPermissions": "İzinler",
   "agentEmptyHint": "Sunucularınız hakkında soru sorun ya da Agent'tan onlarda bir şey yapmasını isteyin.",
   "agentTerminalEmptyHint": "Bu sunucu hakkında soru sorun. Agent bu terminali okuyabilir ve burada komut çalıştırabilir.",

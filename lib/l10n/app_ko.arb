@@ -639,6 +639,8 @@
   "agentProvidersTip": "API 키, 모델, 새 채팅에 쓰는 모델",
   "agentTools": "도구",
   "agentToolsTip": "Agent가 쓸 수 있는 도구와 MCP 서버",
+  "agentSkills": "Skills",
+  "agentSkillsTip": "특정 작업을 위한 지침, GitHub 또는 링크에서 설치",
   "agentPermissions": "권한",
   "agentEmptyHint": "서버에 대해 묻거나 Agent에게 서버에서 할 일을 요청하세요.",
   "agentTerminalEmptyHint": "이 서버에 대해 물어보세요. Agent는 이 터미널을 읽고 여기에서 명령을 실행할 수 있습니다.",
