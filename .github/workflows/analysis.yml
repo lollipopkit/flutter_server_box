@@ -111,9 +111,10 @@ jobs:
           # official theme repository the way the store does.
           emit dart "$shared|^lib/|^test/|^integration_test/|^crates/|^macos/|^Cargo\.(toml|lock)$|^analysis_options\.yaml$|^docs/schemas/|^store/"
           emit frontend "$shared|^monitor/frontend/|^packages/webui/"
-          # `assets/` and `store/` for the theme manifests the docs job
-          # validates against that same schema.
-          emit docs "$shared|^docs/|^assets/(themes|catalog)/|^store/"
+          # `store/` (and fl_lib, under `$shared`) for the theme manifests the
+          # docs job validates against that same schema; `assets/catalog/` for
+          # the catalog the docs describe.
+          emit docs "$shared|^docs/|^assets/catalog/|^store/"
           # `store/` because the website build packs it into the store's
           # tarball (scripts/store-tarball.sh).
           emit website "$shared|^website/|^packages/webui/|^store/|^scripts/store-tarball\.sh$"
@@ -291,6 +292,10 @@ jobs:
       # an editor, and not by anything here. The one rule the schema cannot
       # state (a color whose key has no image) is a Dart test's, on the other
       # side of this same file.
+      # The themes built into the app are fl_lib's, and only that submodule is
+      # needed for them.
+      - name: Check out fl_lib
+        run: git submodule update --init --depth 1 packages/fl_lib
       - name: Check the theme manifests against the schema
         run: |
           # `store/` may hold no theme; an unmatched glob is then dropped
@@ -299,7 +304,7 @@ jobs:
           pipx run --spec check-jsonschema==0.38.2 check-jsonschema \
             --schemafile docs/schemas/fsbt-manifest.schema.json \
             docs/examples/aurora/manifest.toml \
-            assets/themes/*/manifest.toml \
+            packages/fl_lib/assets/themes/*/manifest.toml \
             store/themes/*/manifest.toml
 
   website:

@@ -35,9 +35,9 @@ fl_lib 的 `pubspec.yaml` 中注册。其他官方主题都在主题商店中（
 
 ## 解析器与编辑器 schema
 
-manifest 语法由三个文件定义：`theme_package.dart`（顶层表、归档条目和 schema
-范围）、`theme_components.dart`（组件字段、状态和数值范围），以及
-`theme_palette.dart`（未废弃的 ColorScheme role）。编辑器使用的
+manifest 语法由 `packages/fl_lib/lib/src/theme/` 下的三个文件定义：`package.dart`
+（顶层表、归档条目和 schema 范围）、`components.dart`（组件字段、状态和数值范围），以及
+`palette.dart`（未废弃的 ColorScheme role）。编辑器使用的
 `docs/schemas/fsbt-manifest.schema.json` 与这些定义保持一致，因此 schema 以这三个文件为
 依据，而不是以本文档为依据。
 
@@ -72,11 +72,12 @@ repository 文件（`ThemeStoreItem.index` 为 null），所以安装目录树�
 重新从 repository 获取 tarball。无论来源如何，都会校验 digest。
 
 listing 的 `description` 可以是字符串，也可以是以语言标签为键的表（`ThemeText`）；页面按
-应用语言解析，缓存会保留整张表。条目的预览（`view/page/theme_store/preview.dart`）只在
-条目展开时构建。它在 `buildAppTheme`（`view/widget/app_theme.dart`）根据主题包生成的
+应用语言解析，缓存会保留整张表。条目的预览
+（`packages/fl_lib/lib/src/theme/view/store/preview.dart`）只在条目展开时构建。它在
+`buildAppTheme`（`packages/fl_lib/lib/src/theme/view/app_theme.dart`）根据主题包生成的
 `ThemeData` 下渲染真实控件，应用自身也用同一函数配合 `AppThemeSource.current()` 构建主题。
-未安装的主题会为预览安装到 `Paths.cache/theme_preview`，与用户的主题分开，页面销毁时删除
-该目录。
+未安装的主题会为预览安装到系统临时目录下的 `<应用名>_theme_preview`，与用户的主题分开，
+页面销毁时删除该目录。
 
 包含 `[variants]` 的主题包只安装一次；每个变体会写成安装目录下 `variants/<key>/` 中一个
 完整、规范化的主题目录，因此 `ThemePackages.installed(id, variant: key)` 与读取无变体的包

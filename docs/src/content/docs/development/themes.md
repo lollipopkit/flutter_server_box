@@ -44,10 +44,10 @@ runtime cache and do not appear in the user-installed theme list.
 
 ## The parser and the editor schema
 
-Three files define the manifest grammar:
-`theme_package.dart` (top-level tables, archive entries, the schema range),
-`theme_components.dart` (component fields, states, and every numeric range) and
-`theme_palette.dart` (the non-deprecated ColorScheme roles).
+Three files in `packages/fl_lib/lib/src/theme/` define the manifest grammar:
+`package.dart` (top-level tables, archive entries, the schema range),
+`components.dart` (component fields, states, and every numeric range) and
+`palette.dart` (the non-deprecated ColorScheme roles).
 `docs/schemas/fsbt-manifest.schema.json` mirrors these definitions so editors
 can report errors while a file is being edited. The schema is derived from the
 parser definitions, not from this documentation.
@@ -91,13 +91,14 @@ in either case.
 
 A listing's `description` is a string or a table of language tags
 (`ThemeText`); the page resolves it with the app's locale, and the cache keeps
-the table. A row's preview (`view/page/theme_store/preview.dart`) is built only
-while the row is expanded. It renders real widgets under the `ThemeData` that
-`buildAppTheme` (`view/widget/app_theme.dart`) makes from the package, the same
-function the app uses for itself with `AppThemeSource.current()`. An
-uninstalled theme is installed for the preview under
-`Paths.cache/theme_preview`, apart from the user's themes, and that directory is
-deleted when the page is disposed.
+the table. A row's preview (`packages/fl_lib/lib/src/theme/view/store/preview.dart`)
+is built only while the row is expanded. It renders real widgets under the
+`ThemeData` that `buildAppTheme` (`packages/fl_lib/lib/src/theme/view/app_theme.dart`)
+makes from the package, the same function the app uses for itself with
+`AppThemeSource.current()`. An uninstalled theme is installed for the preview
+under `<app name>_theme_preview` in the system's temporary directory, apart
+from the user's themes, and that directory is deleted when the page is
+disposed.
 
 A package with `[variants]` installs once; each variant is written as a
 complete, normalized theme directory under `variants/<key>/` of the
