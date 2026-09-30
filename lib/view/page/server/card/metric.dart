@@ -197,8 +197,17 @@ bool serverNeverSampled(ServerState srv) =>
 /// `ServerDetailPage.readingsShowing`. A machine that failed after answering
 /// keeps its numbers on its page and not on its card, where the error is the
 /// more useful of the two.
+///
+/// Kept through a reconnect: a client that closed — every one of them, after
+/// the app comes back from the background — goes back through `connecting`,
+/// `connected` and `loading` before it is `finished` again. Dropped there,
+/// every card fell to one line at once and grew back a few seconds later, and
+/// the list, a fraction of its height in between, left whoever had scrolled
+/// it at its top. The last readings are still the last known; the title says
+/// it is connecting.
 bool serverCardHasBody(ServerState srv) =>
-    srv.conn == ServerConn.finished && !serverNeverSampled(srv);
+    (srv.conn == ServerConn.finished || srv.conn.busy) &&
+    !serverNeverSampled(srv);
 
 /// Whether there is anything to render on [state]'s page.
 ///

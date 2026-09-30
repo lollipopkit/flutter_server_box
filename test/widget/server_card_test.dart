@@ -595,11 +595,13 @@ void main() {
       // happens whenever the grid is: on the way back from an open machine,
       // when a tag is picked, when the globe is left. Each of those played it
       // again, on a card that had had its readings all along.
+      // Disconnected rather than connecting: a card that had readings keeps
+      // them through a reconnect — see `serverCardHasBody`.
       await pump(
         tester,
         promoted: null,
         onPromote: (_) {},
-        conn: ServerConn.connecting,
+        conn: ServerConn.disconnected,
       );
       expect(find.text(libL10n.memory), findsNothing);
 
