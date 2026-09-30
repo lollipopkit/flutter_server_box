@@ -143,6 +143,20 @@ times for one message. It is off by default and never applies to commands on
 this device. For the other tools, "always allow" is offered on the approval
 card and can be undone at **Tools**.
 
+## When the Agent asks you
+
+The Agent can ask you to fill in a short form in the conversation — a choice
+that is yours, or something it cannot find out itself — and waits until you
+submit it or cancel. The bar, the chat list and the floating pill mark a chat
+waiting on you with a dot, apart from the spinner of one that is working.
+Sending a message instead cancels the form, and your message goes to the Agent
+with it.
+
+A password, key or token is asked for in a secret field. What you type there
+never reaches the model or the chat history: the Agent gets a one-time handle,
+which the App trades for the value when a tool needs it — connecting a remote
+desktop whose profile keeps no password, for example.
+
 ## Connect to another host
 
 Agent can open a temporary SSH connection to a host outside your server list.

@@ -41,7 +41,11 @@ class AgentFloatingShell extends ConsumerWidget {
       onHide: shell.hide,
       actions: const [AgentHeaderActions(showConversations: true)],
       pillOverlay: AgentBusyBuilder(
-        builder: (_, busy) => busy ? const _WorkingRing() : UIs.placeholder,
+        builder: (_, activity) => switch (activity) {
+          AgentActivity.idle => UIs.placeholder,
+          AgentActivity.running => const _WorkingRing(),
+          AgentActivity.waiting => const _WorkingRing(waiting: true),
+        },
       ),
       builder: (_) =>
           const AgentConversationView(compact: true, showHeader: false),
@@ -52,7 +56,11 @@ class AgentFloatingShell extends ConsumerWidget {
 /// A ring rather than a badge: the pill is the only sign the Agent is doing
 /// anything while you are on another tab.
 class _WorkingRing extends StatelessWidget {
-  const _WorkingRing();
+  const _WorkingRing({this.waiting = false});
+
+  /// Waiting on the user: a whole ring that stays, in the accent the list and
+  /// the bar mark it with, not a spinner — there is nothing to wait out.
+  final bool waiting;
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +70,10 @@ class _WorkingRing extends StatelessWidget {
       padding: const EdgeInsets.all(4),
       child: CircularProgressIndicator(
         strokeWidth: 2,
-        color: Theme.of(context).colorScheme.onPrimaryContainer,
+        value: waiting ? 1 : null,
+        color: waiting
+            ? Theme.of(context).colorScheme.tertiary
+            : Theme.of(context).colorScheme.onPrimaryContainer,
       ),
     );
   }

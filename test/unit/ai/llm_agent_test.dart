@@ -91,6 +91,14 @@ Future<(HttpServer, List<Map<String, Object?>>)> _mockServer() async {
         'safe_to_run': true,
         'destructive': false,
       });
+    } else if (text.contains('ask me') && last['role'] != 'tool') {
+      call('ask_user', {
+        'title': 'Sign in',
+        'fields': [
+          {'id': 'user', 'label': 'User', 'type': 'text'},
+          {'id': 'pw', 'label': 'Password', 'type': 'secret', 'required': true},
+        ],
+      });
     } else if (text.contains('think first')) {
       send({'reasoning_content': 'Checking the uptime.'});
       send({'content': 'It has been up a week.'}, 'stop');
@@ -305,6 +313,51 @@ void main() {
     });
   });
 
+  group('a form the model asks for', () {
+    Future<(OpenChat, Future<void>)> asked() async {
+      final id = Chats.create();
+      final chat = await Chats.open(id);
+      final sending = Chats.send(id, 'ask me');
+      while (chat.pendingInput.value == null) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      expect(Chats.isWaiting(id), isTrue);
+      return (chat, sending);
+    }
+
+    String toolResult() => '${(seen.last['messages'] as List).last['content']}';
+
+    test('needs no approval, and a secret never reaches the model', () async {
+      final (chat, sending) = await asked();
+      expect(chat.approvals.value, isEmpty);
+      Chats.submitInput(chat.id, {'user': 'admin', 'pw': 'hunter2'});
+      await sending;
+
+      final result = toolResult();
+      expect(result, contains('"status":"submitted"'));
+      expect(result, contains('"user":"admin"'));
+      expect(result, contains('sec_'));
+      expect(jsonEncode(seen), isNot(contains('hunter2')));
+      expect(jsonEncode([for (final e in chat.entries.value) e.json]), isNot(contains('hunter2')));
+      expect(Chats.isWaiting(chat.id), isFalse);
+    });
+
+    test('a message sent instead cancels it, and goes to the model with that', () async {
+      final (chat, sending) = await asked();
+      Chats.cancelInput(chat.id, message: 'use my key instead');
+      await sending;
+      expect(toolResult(), contains('"status":"cancelled"'));
+      expect(toolResult(), contains('use my key instead'));
+    });
+
+    test('stopping the reply takes it away', () async {
+      final (chat, sending) = await asked();
+      await Chats.abort(chat.id);
+      await sending;
+      expect(chat.pendingInput.value, isNull);
+    });
+  });
+
   test("an app notice is the app's, and the model answers it", () async {
     final id = Chats.create();
     final chat = await Chats.open(id);
@@ -344,7 +397,7 @@ void main() {
     test('is offered that terminal and nothing else', () async {
       final id = Chats.create(scope: scope);
       await Chats.send(id, 'hello');
-      expect(_tools(seen.last), {'terminal_run', 'terminal_screen'});
+      expect(_tools(seen.last), {'terminal_run', 'terminal_screen', 'ask_user'});
       expect(
         (seen.last['messages'] as List).first['content'],
         contains('"web"'),
@@ -416,7 +469,7 @@ void main() {
 
     final id = Chats.create(scope: AgentScope.terminal('srv-1'));
     await Chats.send(id, 'hello');
-    expect(_tools(seen.last), {'terminal_run', 'terminal_screen', 'skill'});
+    expect(_tools(seen.last), {'terminal_run', 'terminal_screen', 'skill', 'ask_user'});
     expect(
       (seen.last['messages'] as List).first['content'],
       contains('- nginx: Checks an nginx config.'),

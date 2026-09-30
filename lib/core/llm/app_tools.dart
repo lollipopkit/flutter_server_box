@@ -441,8 +441,9 @@ final class BenchmarkTool extends ToolFunc {
 /// Remote desktop sessions (RDP, VNC) through a server: the profiles read
 /// without asking, a session opened or closed with the user's approval.
 ///
-/// Opened with the password the profile keeps; one without asks the user,
-/// which only the app can. What opens is the Remote desktop tab; the
+/// Opened with the password the profile keeps, or one the user gave for this
+/// session through `ask_user` — a handle the model passes on, traded for the
+/// value here ([LlmSecrets]) and never saved. What opens is the Remote desktop tab; the
 /// conversation stays in view only as the user left the floating Agent.
 final class RemoteDesktopTool extends ToolFunc {
   const RemoteDesktopTool()
@@ -457,6 +458,14 @@ final class RemoteDesktopTool extends ToolFunc {
             },
             'server_id': {'type': 'string', 'description': 'list: one server. Default: every one.'},
             'profile_id': {'type': 'string', 'description': 'connect, disconnect: a profile from list.'},
+            'password': {
+              'type': 'object',
+              'description': 'connect, for a profile that keeps no password: {"secret": "sec_…"} from an ask_user '
+                  'secret field. Used for this session only, never saved.',
+              'properties': {
+                'secret': {'type': 'string'},
+              },
+            },
           },
           'required': ['action'],
         },
@@ -465,8 +474,8 @@ final class RemoteDesktopTool extends ToolFunc {
   @override
   String get description =>
       'Remote desktop (RDP, VNC) through the user\'s servers: `list` the saved profiles and which are connected, '
-      '`connect` one — the app opens it on the Remote desktop tab for the user — or `disconnect` it. Connecting '
-      'needs the profile to keep its password; otherwise the user connects from the app.';
+      '`connect` one — the app opens it on the Remote desktop tab for the user — or `disconnect` it. For a profile '
+      'that keeps no password, ask the user for it with ask_user (a secret field) and pass what you get as password.';
 
   @override
   String get l10nName => l10n.remoteDesktop;
@@ -530,13 +539,16 @@ final class RemoteDesktopTool extends ToolFunc {
         ]));
       case 'connect':
         final p = _profile(args);
-        if (!(p.password?.isNotEmpty ?? false)) {
-          throw const LlmException('This profile keeps no password: the user connects to it from the app.');
+        final given = LlmSecrets.take(ctx.chatId, args['password']);
+        if (given == null && !(p.password?.isNotEmpty ?? false)) {
+          throw const LlmException(
+            'This profile keeps no password: ask the user for it with ask_user, a secret field, and pass it as password.',
+          );
         }
         if (!c.read(serverProvider(p.serverId)).capabilities.tcpRelay) {
           throw const LlmException('This server cannot relay a connection, which remote desktop needs.');
         }
-        c.read(remoteDesktopSessionsProvider.notifier).open(p);
+        c.read(remoteDesktopSessionsProvider.notifier).open(p, sessionPassword: given);
         c.read(homeTabRequestProvider.notifier).go(AppTab.remoteDesktop);
         return LlmToolResult.text('Opening ${p.name} on the Remote desktop tab.');
       case 'disconnect':

@@ -101,7 +101,9 @@ abstract final class LlmHost {
   static bool offers(ChatMeta? meta, String group) =>
       AgentScope.terminalServerOf(meta) == null
       ? group != AgentTools.terminal
-      : group == AgentTools.terminal || group == TfSkill.groupName;
+      : group == AgentTools.terminal ||
+            group == TfSkill.groupName ||
+            group == TfAskUser.groupName;
 
   @visibleForTesting
   static String? prompt(ChatMeta? meta) {

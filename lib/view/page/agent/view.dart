@@ -1,6 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart'
-    show Chats, Composer, LlmConversation, LlmStores;
+    show Chats, Composer, LlmConversation, LlmStores, llmL10n;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
@@ -230,16 +230,13 @@ class AgentConversationView extends StatelessWidget {
                         // it that stays when the reply is scrolled away.
                         AgentBusyBuilder(
                           scope: scope,
-                          builder: (_, busy) => busy
-                              ? const Padding(
-                                  padding: EdgeInsets.only(left: 9),
-                                  child: SizedLoading(
-                                    14,
-                                    padding: 0,
-                                    builder: SizedLoading.circularBuilder,
-                                  ),
-                                )
-                              : UIs.placeholder,
+                          builder: (_, activity) =>
+                              activity == AgentActivity.idle
+                              ? UIs.placeholder
+                              : Padding(
+                                  padding: const EdgeInsets.only(left: 9),
+                                  child: AgentActivityMark(activity),
+                                ),
                         ),
                       ],
                     ),
@@ -291,25 +288,77 @@ class AgentConversationView extends StatelessWidget {
 /// Whether [scope]'s chat is writing a reply, for the floating shell's ring:
 /// rebuilt as chats open and close, and as the one showing starts and ends a
 /// run.
+/// What a chat is doing, as the bar, the list and the floating pill show it.
+enum AgentActivity {
+  idle,
+
+  /// Writing a reply or running a tool.
+  running,
+
+  /// Waiting on the user: a call to approve, or a form to fill in. Apart
+  /// from [running] because only this one needs them.
+  waiting;
+
+  static AgentActivity of(String? chatId) {
+    if (chatId == null) return idle;
+    if (Chats.isWaiting(chatId)) return waiting;
+    if (Chats.isRunning(chatId)) return running;
+    return idle;
+  }
+}
+
+/// [AgentActivity] as a mark [size] across: a spinner while it runs, a dot
+/// while it waits on the user, nothing otherwise.
+class AgentActivityMark extends StatelessWidget {
+  const AgentActivityMark(this.activity, {super.key, this.size = 14});
+
+  final AgentActivity activity;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => switch (activity) {
+    AgentActivity.idle => UIs.placeholder,
+    AgentActivity.running => SizedLoading(
+      size,
+      padding: 0,
+      builder: SizedLoading.circularBuilder,
+    ),
+    AgentActivity.waiting => Tooltip(
+      message: llmL10n.waitingForYou,
+      child: SizedBox.square(
+        dimension: size,
+        child: Center(
+          child: Container(
+            width: size * 0.6,
+            height: size * 0.6,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.tertiary,
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
+      ),
+    ),
+  };
+}
+
+/// [builder] with what the chat [scope] shows is doing.
 class AgentBusyBuilder extends StatelessWidget {
   const AgentBusyBuilder({super.key, this.scope, required this.builder});
 
   final String? scope;
-  final Widget Function(BuildContext context, bool busy) builder;
+  final Widget Function(BuildContext context, AgentActivity activity) builder;
 
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Listenable.merge([AgentChats.of(scope), Chats.openChanges]),
-      builder: (context, _) {
-        final id = AgentChats.of(scope).value;
-        final running = id == null ? null : Chats.openOf(id)?.running;
-        if (running == null) return builder(context, false);
-        return ValueListenableBuilder<bool>(
-          valueListenable: running,
-          builder: (context, busy, _) => builder(context, busy),
-        );
-      },
+      listenable: Listenable.merge([
+        AgentChats.of(scope),
+        Chats.openChanges,
+        Chats.runningChanges,
+      ]),
+      builder: (context, _) =>
+          builder(context, AgentActivity.of(AgentChats.of(scope).value)),
     );
   }
 }

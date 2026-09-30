@@ -3,6 +3,7 @@ import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show Chats, ChatMeta, LlmStores;
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/llm/scope.dart';
+import 'package:server_box/view/page/agent/view.dart';
 
 /// Opens [scope]'s chat list as a sheet, for the layouts too narrow to give it
 /// a column of its own.
@@ -241,13 +242,10 @@ class _AgentHistoryPanelState extends State<AgentHistoryPanel> {
                   SideBarTile(
                     title: _titleOf(chat),
                     // A reply being written here, whichever chat is shown.
-                    leading: Chats.isRunning(chat.id)
-                        ? const SizedLoading(
-                            13,
-                            padding: 0,
-                            builder: SizedLoading.circularBuilder,
-                          )
-                        : null,
+                    leading: switch (AgentActivity.of(chat.id)) {
+                      AgentActivity.idle => null,
+                      final activity => AgentActivityMark(activity, size: 13),
+                    },
                     selected: chat.id == current.value,
                     onTap: () {
                       AgentChats.select(_scope, chat.id);
