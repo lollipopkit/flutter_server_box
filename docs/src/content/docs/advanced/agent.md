@@ -94,6 +94,11 @@ so install only from sources you trust; scripts in a skill do not run by
 themselves. **Check for updates** fetches each source again and replaces
 the skills that changed.
 
+One skill comes with the App: **serverbox-help**, on how to use Server Box and
+run Monitor agent, so the Agent can answer questions about the App itself —
+and set Monitor agent up on a server, with your approval. It is updated with
+the App and can be switched off, but not removed.
+
 Agent's file tools require SSH. A server configured only with Monitor HTTP does
 not provide these tools. Its separate **File** tab can use the Monitor agent
 file API when the operator enables `[remote_access.fs]` and the requested path

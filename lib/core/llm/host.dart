@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/llm/scope.dart';
@@ -36,6 +37,11 @@ abstract final class LlmHost {
       return;
     }
     await LegacyAskAiMigration.run();
+    try {
+      await Skills.syncBuiltin(await builtinSkills());
+    } catch (e, s) {
+      Loggers.app.warning('Built-in skills', e, s);
+    }
     // In the background: each server connects on its own, and one that wants
     // a sign-in says so on the tools page.
     if (LlmStores.tool.enabled.get()) unawaited(McpTools.connectStored());
@@ -48,6 +54,27 @@ abstract final class LlmHost {
     Stores.setting.agentLocalExec.listenable().addListener(
       Chats.reconfigureSoon,
     );
+  }
+
+  /// Where the skills the app ships are, among its assets.
+  static const _skillsAsset = '.claude/skills/';
+
+  /// The skills this app ships — `serverbox-help`: how to use the app and run
+  /// the Monitor agent. Read from the assets, which are the files Claude Code
+  /// reads in the repository, so the two cannot drift apart.
+  @visibleForTesting
+  static Future<List<FoundSkill>> builtinSkills() async {
+    final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+    final files = <String, Uint8List>{
+      for (final a in manifest.listAssets())
+        if (a.startsWith(_skillsAsset))
+          a.substring(_skillsAsset.length): (await rootBundle.load(a)).buffer.asUint8List(),
+    };
+    final skills = <FoundSkill>[];
+    for (final dir in {for (final p in files.keys) p.split('/').first}) {
+      skills.addAll(SkillDiscovery.find(files, path: dir).take(1));
+    }
+    return skills;
   }
 
   static void _configure() {

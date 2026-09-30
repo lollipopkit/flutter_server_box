@@ -211,6 +211,10 @@ flutter:
     # base64, because App Store validation rejects a bundled `.sh` — see
     # `YabsScript.assetPath`. A shell script cannot be added to this list.
     - assets/yabs.b64
+    # The Agent's built-in skill, the very files Claude Code reads in this
+    # repository — one copy, see `LlmHost.builtinSkills`.
+    - .claude/skills/serverbox-help/
+    - .claude/skills/serverbox-help/references/
     # The directory, not each file: `Dist.markAsset` names them by enum name.
     # Only distributions whose logo carries an explicit copyright licence are
     # in there — see the README beside them, which Flutter leaves out because
