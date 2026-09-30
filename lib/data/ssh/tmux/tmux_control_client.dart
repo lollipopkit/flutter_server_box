@@ -587,12 +587,12 @@ final class TmuxControlClient {
     final id = TmuxSessionId.tryParse(unescapeTmuxField(fields[0]));
     final windows = int.tryParse(unescapeTmuxField(fields[2]));
     final attached = int.tryParse(unescapeTmuxField(fields[3]));
-    if (id == null || windows == null) return null;
+    if (id == null || windows == null || attached == null) return null;
     return TmuxControlSessionSummary(
       id: id,
       name: unescapeTmuxField(fields[1]),
       windows: windows,
-      attached: (attached ?? 0) > 0,
+      attached: attached > 0,
     );
   }
 

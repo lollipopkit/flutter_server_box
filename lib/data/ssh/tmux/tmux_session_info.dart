@@ -33,13 +33,15 @@ final class TmuxSessionInfo {
     final name = unescapeTmuxField(fields[1]);
     final windows = int.tryParse(unescapeTmuxField(fields[2]));
     final attached = int.tryParse(unescapeTmuxField(fields[3]));
-    if (id == null || name.isEmpty || windows == null) return null;
+    if (id == null || name.isEmpty || windows == null || attached == null) {
+      return null;
+    }
 
     return TmuxSessionInfo(
       id: id,
       name: name,
       windows: windows,
-      attached: (attached ?? 0) > 0,
+      attached: attached > 0,
       createdAt: fields.length > 4 ? unescapeTmuxField(fields[4]) : null,
       lastAttached: fields.length > 5 ? unescapeTmuxField(fields[5]) : null,
       activity: fields.length > 6 ? unescapeTmuxField(fields[6]) : null,

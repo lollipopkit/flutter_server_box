@@ -31,6 +31,8 @@ void main() {
       expect(TmuxSessionInfo.tryParse(''), isNull);
       expect(TmuxSessionInfo.tryParse(r'main	1	1'), isNull);
       expect(TmuxSessionInfo.tryParse(r'$0	main	x	1'), isNull);
+      expect(TmuxSessionInfo.tryParse(r'$0	busy	1	garbage'), isNull);
+      expect(TmuxSessionInfo.tryParse(r'$0	busy	1	'), isNull);
     });
   });
 }

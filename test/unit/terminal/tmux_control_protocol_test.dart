@@ -203,5 +203,25 @@ void main() {
         }
       }, throwsA(isA<TmuxControlProtocolOverflow>()));
     });
+
+    test('counts empty lines against the command block limit', () {
+      final parser = TmuxControlProtocolParser();
+      parser.push(utf8.encode('\x1bP1000p%begin 1 2 1\n'));
+
+      expect(
+        () => parser.push(List<int>.filled(1024 * 1024 + 1, 0x0a)),
+        throwsA(isA<TmuxControlProtocolOverflow>()),
+      );
+    });
+
+    test('a trailing ESC in command output keeps its line boundary', () {
+      final parser = TmuxControlProtocolParser();
+      final events = parser.push(
+        utf8.encode('\x1bP1000p%begin 1 2 1\na\x1b\nb\x1b\x1b[0m\n%end 1 2 1\n'),
+      );
+
+      final result = events.single as TmuxControlProtocolCommandResult;
+      expect(result.result.lines, ['a\x1b', 'b\x1b\x1b[0m']);
+    });
   });
 }

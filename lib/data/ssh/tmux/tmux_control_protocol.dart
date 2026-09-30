@@ -113,7 +113,14 @@ final class TmuxControlProtocolParser {
         // Raw escapes can occur in command output such as `capture-pane -e`.
         // Outside a block, ESC \\ is tmux's terminating ST sequence.
         _appendLineByte(_terminator[0]);
-        _appendLineByte(byte);
+        if (byte == 0x0a) {
+          // A trailing ESC does not take the line boundary with it.
+          _flushLine(events);
+        } else if (byte == _terminator[0]) {
+          _escaped = true;
+        } else {
+          _appendLineByte(byte);
+        }
         continue;
       }
 
@@ -172,13 +179,15 @@ final class TmuxControlProtocolParser {
     var bytes = Uint8List.fromList(_line);
     _line.clear();
     if (_block != null) {
-      if (_blockBytes + lineLength > _maxBlockBytes) {
+      // The line feed counts too: a block of empty lines holds one list entry
+      // per line, and would otherwise never reach the limit.
+      if (_blockBytes + lineLength + 1 > _maxBlockBytes) {
         throw const TmuxControlProtocolOverflow(
           'command block',
           _maxBlockBytes,
         );
       }
-      _blockBytes += lineLength;
+      _blockBytes += lineLength + 1;
     }
     if (bytes.isEmpty) {
       // An empty CRLF line inside a command block is capture output, not a
