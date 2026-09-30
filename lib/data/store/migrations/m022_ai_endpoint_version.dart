@@ -1,4 +1,3 @@
-import 'package:server_box/data/model/app/ask_ai_config.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
 
@@ -35,13 +34,16 @@ class AiEndpointVersionMigration implements SchemaMigration {
     final raw = store.get<Object>(key);
     if (raw is! Map) return;
 
-    final config = AskAiConfig.fromJson(Map<String, dynamic>.from(raw));
-    final migrated = versioned(config.baseUrl);
-    if (migrated == config.baseUrl) return;
+    // The map as it is, not through a model: this row is read by nothing but
+    // `LegacyAskAiMigration` now, which takes the plain map.
+    final baseUrl = raw['baseUrl'];
+    if (baseUrl is! String) return;
+    final migrated = versioned(baseUrl);
+    if (migrated == baseUrl) return;
 
     final ok = store.set(
       key,
-      config.copyWith(baseUrl: migrated).toJson(),
+      {...raw.cast<String, Object?>(), 'baseUrl': migrated},
       // Not a user edit: the address means what it always meant, and syncing
       // this as a change would carry a rewrite nobody made to every device.
       updateLastUpdateTsOnSet: false,

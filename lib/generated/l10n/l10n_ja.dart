@@ -72,102 +72,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get askAi => 'AI に質問';
 
   @override
-  String get askAiAwaitingResponse => 'AI の応答を待機中...';
-
-  @override
-  String get askAiEndpointTip => 'ドメインまたは完全な URL。パスは選んだプロトコルから補完されます。';
-
-  @override
-  String get askAiProtocolTip => '自動は Responses、次に Chat Completions を試します。';
-
-  @override
-  String get askAiCommandInserted => 'コマンドをターミナルに挿入しました';
-
-  @override
-  String askAiConfigMissing(String fields) {
-    return '設定で $fields を構成してください。';
-  }
-
-  @override
-  String get askAiDisclaimer => 'AI が誤る可能性があります。注意してご利用ください。';
-
-  @override
   String get askAiInsertTerminal => 'ターミナルに挿入';
 
   @override
-  String get askAiNoResponse => '応答なし';
-
-  @override
   String get remoteDesktop => 'リモートデスクトップ';
-
-  @override
-  String get askAiAgentWelcome => 'このサーバーで何をしますか？';
-
-  @override
-  String get askAiAgentPromptHint => 'エージェントに調査や修正を依頼…';
-
-  @override
-  String get askAiAnalyzeSelectionPrompt => '選択したターミナル出力を分析し、何が起きたか説明して';
-
-  @override
-  String get askAiTerminalContext => 'ターミナルのコンテキスト';
-
-  @override
-  String get askAiReviewNeeded => '要確認';
-
-  @override
-  String get askAiReviewAction => '提案されたコマンドを確認';
-
-  @override
-  String get askAiReviewBeforeContinuing => '先に現在の提案を確認するか拒否してください';
-
-  @override
-  String get askAiApproveRun => '承認して実行';
-
-  @override
-  String get askAiDecline => '拒否';
-
-  @override
-  String get askAiActionDeclined => '提案されたコマンドは拒否されました。';
-
-  @override
-  String get askAiInterrupted => 'エージェントの応答が中断されました。';
-
-  @override
-  String get askAiResend => 'Resend';
-
-  @override
-  String get askAiResendTip => 'このメッセージ以降の返答、コマンド、実行結果はすべて破棄されます。';
-
-  @override
-  String get askAiDeleteTip => 'このメッセージと、それ以降の返答、コマンド、実行結果はすべて削除されます。';
-
-  @override
-  String get askAiModelTable => 'Model table';
-
-  @override
-  String get askAiModelTableTip =>
-      'models.dev から取得したモデル名別のコンテキストサイズです。App にも同梱されていますが、タップすると最新版を取得できます。';
-
-  @override
-  String get askAiContextFallback => '一覧にありません';
-
-  @override
-  String get askAiCompactAt => 'Summarise at';
-
-  @override
-  String get askAiCompactAtTip =>
-      '以前のやり取りを要約するまでに、モデルのコンテキストをどこまで使うかを指定します。早めに要約すると詳細が失われやすく、遅くするとモデルがリクエストを拒否する可能性が高まります。';
-
-  @override
-  String get askAiContextTokens => 'Context size';
-
-  @override
-  String get askAiContextTokensTip =>
-      'このモデルが扱える token 数です。「自動」ではモデル名から検索します。provider がモデル本来の上限より短い範囲しか提供しない場合は、数値を指定してください。';
-
-  @override
-  String get askAiConversationCompacted => '会話を続けるため、以前のメッセージを要約しました。';
 
   @override
   String get askAiRiskReadOnly => '読み取り専用';
@@ -182,59 +90,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get askAiRiskDestructive => '高リスク';
 
   @override
-  String get askAiHighRiskConfirmTitle => '高リスクのコマンドを実行しますか？';
-
-  @override
-  String get askAiHighRiskConfirmBody =>
-      'このコマンドは元に戻しにくい変更をする可能性があります。よく確認してください。';
-
-  @override
-  String get askAiNoCommandOutput => 'コマンドは出力なしで終了しました。';
-
-  @override
-  String get askAiOutputTruncated => '長い出力はエージェントに返す前に切り詰められました。';
-
-  @override
-  String get askAiAutoApproved => '自動承認';
-
-  @override
   String get askAiAutoRunSafeCommands => '読み取り専用コマンドを自動実行';
 
   @override
   String get askAiAutoRunSafeCommandsTip => 'モデルとローカルの検査がどちらも読み取り専用と判断したときだけ実行';
 
   @override
-  String get askAiSendOnEnter => 'Enter で送信';
-
-  @override
-  String get askAiSendOnEnterTip =>
-      'Enter で送信、Shift+Enter で改行。オフ：Enter で改行、Cmd/Ctrl+Enter で送信。';
-
-  @override
-  String get askAiApiKeyOptional => 'ローカルや認証不要なら空のままで';
-
-  @override
-  String get askAiAllowInsecure => '平文 HTTP を許可';
-
-  @override
-  String get askAiAllowInsecureTip =>
-      'localhost 以外のアドレスにあるセルフホストモデルへの http:// 接続を許可します。API キーと端末コンテキストは暗号化されずに送信されます。localhost には影響しません。';
-
-  @override
-  String get askAiInsecureEndpoint =>
-      'このエンドポイントは http:// を使用します。使用するには AI 設定で「平文 HTTP を許可」をオンにしてください。';
-
-  @override
   String get askAiHistory => '会話履歴';
 
   @override
   String get askAiNewConversation => '新しい会話';
-
-  @override
-  String get askAiNoHistory => '保存された会話はまだありません';
-
-  @override
-  String get askAiNoHistoryMessages => 'メッセージはまだありません';
 
   @override
   String get askAiUntitledConversation => '無題';
@@ -247,24 +112,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get askAiDeleteConversationTip => 'この端末から削除します。元に戻せません。';
-
-  @override
-  String get askAiClearHistoryTitle => 'このサーバーのエージェント履歴を消去しますか？';
-
-  @override
-  String get askAiClearHistoryTip => 'このサーバーの保存済み Agent 会話がすべて削除されます。';
-
-  @override
-  String get askAiRestoredReview => 'このコマンドは履歴からのものです。もう一度確認してください';
-
-  @override
-  String get agentWelcome => 'サーバー全体で何をしますか？';
-
-  @override
-  String get agentWelcomeTip => 'Agent に問題の診断や運用作業を任せられます';
-
-  @override
-  String get agentPromptHint => 'エージェントにサーバーの調査や操作を依頼…';
 
   @override
   String get agentNoHistory => '保存されたグローバルのエージェント会話はありません';
@@ -283,14 +130,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get agentToolWriteFile => 'ファイルを書く';
-
-  @override
-  String get agentToolFailed => 'ツールの実行に失敗しました。';
-
-  @override
-  String agentToolCallsFmt(int count) {
-    return 'ツール呼び出し $count 件';
-  }
 
   @override
   String get floatOverTabs => '他のタブの上に浮かべる';
@@ -811,12 +650,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get noConnectionMethod => 'SSH、monitor、またはその両方を設定してください';
-
-  @override
-  String get preferredTransport => '優先する接続';
-
-  @override
-  String get preferredTransportTip => 'ステータスの取得元と、コマンドが最初に開く接続。もう一方も引き続き使えます。';
 
   @override
   String get keepForeground => 'アプリを前面に保ってください！';
@@ -1374,9 +1207,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get used => '使用済み';
 
   @override
-  String get view => 'ビュー';
-
-  @override
   String get viewDetails => '詳細を表示';
 
   @override
@@ -1511,13 +1341,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tmuxSessionName => 'セッション名';
 
   @override
-  String get tmuxExistingSessions => '既存のセッション';
-
-  @override
   String get tmuxNewSession => '新しいセッション';
-
-  @override
-  String get tmuxWindows => 'ウィンドウ';
 
   @override
   String get tmuxNewWindow => '新しいウィンドウ';
@@ -1536,30 +1360,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String tmuxPaneCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count 個のペイン',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String get tmuxAttached => 'アタッチ中';
-
-  @override
-  String get tmuxActive => 'アクティブ';
-
-  @override
-  String tmuxActiveAt(String time) {
-    return 'アクティブ: $time';
-  }
-
-  @override
-  String tmuxAttachedAt(String time) {
-    return 'アタッチ: $time';
-  }
 
   @override
   String get tmuxSkip => 'スキップ';
@@ -1809,9 +1610,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get bmcStaleWrite => '書き込み中に BMC が変更されました。再試行してください。';
-
-  @override
-  String get send => '送信';
 
   @override
   String get privacyBlur => 'バックグラウンドのプライバシー';
@@ -2179,6 +1977,45 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get agentServerTools => 'サーバーツール';
+
+  @override
+  String get agentServerToolsTip =>
+      'サーバーでコマンドを実行し、ファイルを読み書きし、SSH で他のホストに接続し、ServerBox 自体の操作を使います。';
+
+  @override
+  String get agentTerminalTools => 'ターミナル';
+
+  @override
+  String get agentTerminalToolsTip =>
+      'ターミナル自身のチャットで：画面の内容を読み取り、そのサーバーでコマンドを実行します。';
+
+  @override
+  String get agentToolTerminalScreen => '画面を読む';
+
+  @override
+  String get agentProviders => 'プロバイダー';
+
+  @override
+  String get agentProvidersTip => 'API キー、モデル、新しいチャットで使うモデル';
+
+  @override
+  String get agentTools => 'ツール';
+
+  @override
+  String get agentToolsTip => 'Agent が使えるツールと MCP サーバー';
+
+  @override
+  String get agentPermissions => '権限';
+
+  @override
+  String get agentEmptyHint => 'サーバーについて質問したり、サーバー上での作業を Agent に頼んだりできます。';
+
+  @override
+  String get agentTerminalEmptyHint =>
+      'このサーバーについて質問できます。Agent はこのターミナルを読み取り、ここでコマンドを実行できます。';
+
+  @override
   String oldestSampleFmt(String time) {
     return '最も古い取得は $time';
   }
@@ -2371,32 +2208,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get connectionTip => '両方を同時に有効にできます。並び順が接続を試す順序です。';
 
   @override
-  String transportOrderFmt(String first, String second) {
-    return 'ドラッグで順序を変更できます。最初に $first を試し、応答がなければ $second がセッションを引き受けます。';
-  }
-
-  @override
-  String transportOnlyFmt(String name) {
-    return '$name だけが有効なので、切り替え先はありません。';
-  }
-
-  @override
   String get transportNoneOn => 'どちらも無効です — このサーバーには接続できません。';
-
-  @override
-  String get transportOffKept => '無効 — 設定は保持され、接続は行いません';
-
-  @override
-  String get transportDialledFirst => '最初に試す';
-
-  @override
-  String get transportFallback => '予備';
-
-  @override
-  String get transportOnlyMethod => '唯一の方法';
-
-  @override
-  String get transportOff => '無効';
 
   @override
   String get thisDevice => 'このデバイス';
@@ -2442,9 +2254,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get optional => '任意';
-
-  @override
-  String get optionalTip => '接続にはどれも必要ありません。開くと、その項目がフォームを置き換えます。';
 
   @override
   String get sshAdvanced => 'SSH 詳細';
@@ -3247,9 +3056,6 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get reopen => '再度開く';
-
-  @override
   String get virtSnapshots => 'スナップショット';
 
   @override
@@ -3410,9 +3216,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get virtCreateNameTaken => '同じ名前のゲストがあります。';
-
-  @override
-  String get virtCreateVmidInvalid => '100 から 999999999 まで。';
 
   @override
   String get virtCreateVmidTaken => 'この VMID は使用中です。';
@@ -3899,9 +3702,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get virtHwEfiStorage => 'EFI 変数の保存先';
-
-  @override
-  String get virtHwTpmStorage => 'TPM 状態の保存先';
 
   @override
   String virtHwSwitchFirmwareAsk(String guest, String firmware) {
@@ -4504,9 +4304,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get virtSnapshotFormInternal => '内部（イメージ内）';
 
   @override
-  String get virtSnapshotForm => '種類';
-
-  @override
   String get virtSnapshotOverlayPool => 'オーバーレイプール';
 
   @override
@@ -4534,11 +4331,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get virtSnapshotChainBase => 'ベースイメージ';
 
   @override
-  String virtSnapshotChainRaw(String format) {
-    return '外部スナップショットには qcow2 ディスクが必要です。これは $format です。';
-  }
-
-  @override
   String get virtSnapshotNoSupport => 'ゲストのストレージがスナップショットに対応していないため、作成できません。';
 
   @override
@@ -4556,9 +4348,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get virtSnapshotDiffShow => '現在と比較';
-
-  @override
-  String get virtSnapshotDiffGroup => '変更';
 
   @override
   String get virtSnapshotDiffGroupCpu => 'プロセッサ';
@@ -4637,19 +4426,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get virtTemplateTip => 'テンプレートはクローンして初めて動作します。';
 
   @override
-  String get virtCloneStorage => '移行先ストレージ';
-
-  @override
   String get virtCloneStorageSame => '元と同じ';
 
   @override
-  String get virtCloneNode => '移行先ノード';
-
-  @override
   String get virtCloneNodeSame => '元と同じ';
-
-  @override
-  String get virtClonePool => '移行先プール';
 
   @override
   String get virtCloneStorageContent => 'このストレージは VM ディスクを保持できません。';
@@ -4673,9 +4453,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get virtBackupJobNew => '新しいジョブ';
-
-  @override
-  String get virtBackupJobEdit => 'ジョブを編集';
 
   @override
   String get virtBackupJobRun => '今すぐ実行';
@@ -4728,12 +4505,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get virtBackupMail => '通知';
 
   @override
-  String get virtBackupMailAlways => '常に';
-
-  @override
-  String get virtBackupMailFailure => '失敗時';
-
-  @override
   String get virtBackupNotesTemplate => 'バックアップのメモ';
 
   @override
@@ -4747,9 +4518,6 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get virtBackupPruneTip =>
       'PVE の保持オプション（例: keep-last=7,keep-daily=4）。空欄ならストレージまたはノードの設定。';
-
-  @override
-  String get virtBackupNextRun => '次回実行';
 
   @override
   String get virtBackupJobNode => 'ノード';
@@ -4783,9 +4551,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get virtBackupRestoreStorageSame => 'バックアップどおり';
-
-  @override
-  String get virtBackupModeSnapshotTip => 'snapshot · 無停止';
 
   @override
   String get virtCloneStorageMissing => 'このノードに VM ディスクを保持できるストレージがありません。';

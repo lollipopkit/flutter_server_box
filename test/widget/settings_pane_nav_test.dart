@@ -17,7 +17,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/data/res/store.dart';
-import 'package:server_box/data/store/agent_conversation.dart';
 import 'package:server_box/data/store/bmc_credential.dart';
 import 'package:server_box/data/store/connection_stats.dart';
 import 'package:server_box/data/store/container.dart';
@@ -99,7 +98,6 @@ void main() {
     getIt.registerSingleton<BmcCredentialStore>(BmcCredentialStore());
     getIt.registerSingleton<SnippetStore>(SnippetStore());
     getIt.registerSingleton<HistoryStore>(HistoryStore('history_test'));
-    getIt.registerSingleton<AgentConversationStore>(AgentConversationStore());
     getIt.registerSingleton<ConnectionStatsStore>(
       ConnectionStatsStore.instance,
     );

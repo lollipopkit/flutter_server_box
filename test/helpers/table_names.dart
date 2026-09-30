@@ -31,9 +31,8 @@ abstract final class Tables {
   /// bumps the parent's `updated_at`. Syncing children separately would mean a
   /// tag could arrive before the server it belongs to.
   ///
-  /// `conn_stat` and `agent_conversation` are absent on purpose. Connecting to
-  /// a server is not an edit, and a conversation carries terminal output and
-  /// reasoning — neither leaves the device.
+  /// `conn_stat` is absent on purpose: connecting to a server is not an edit,
+  /// and it does not leave the device.
   static const syncRoots = [
     'private_key',
     'bmc_credential',
@@ -68,8 +67,6 @@ abstract final class Tables {
     'conn_stat',
     'server_dist',
     'benchmark_run',
-    'agent_conversation',
-    'agent_active_conversation',
     'tombstone',
     'sync_state',
   ];

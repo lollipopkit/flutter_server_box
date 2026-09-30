@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/theme.dart';
-import 'package:server_box/data/model/app/ask_ai_config.dart';
 import 'package:server_box/data/model/app/diagnostics_level.dart';
 import 'package:server_box/data/model/app/float_shell_config.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
@@ -433,95 +432,10 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// Whether collapse UI items by default
   late final collapseUIDefault = propertyDefault('collapseUIDefault', true);
 
-  /// Terminal AI helper configuration, as one row.
-  ///
-  /// Six keys before this. See [AskAiConfig] for what moved and why; the
-  /// per-field names below are [FieldProp]s onto it, so a caller reads and
-  /// writes one field with one field's type and hears about one field's
-  /// changes.
-  ///
-  /// One row is also one entry in `lastUpdateTs`, and sync resolves per entry.
-  /// So two devices editing *different* fields between syncs no longer both
-  /// win: the later write takes the whole object, and the other device's field
-  /// goes back to what this one had. That was per field before, and it is the
-  /// price of the grouping. It is the same trade [agentShell] makes, and the
-  /// reason to accept it is that these are provider settings changed on one
-  /// device at a time, not records edited in parallel.
-  late final askAi = propertyDefault<AskAiConfig>(
-    'askAi',
-    const AskAiConfig(),
-    fromObj: (raw) => raw is Map
-        ? AskAiConfig.fromJson(Map<String, dynamic>.from(raw))
-        : null,
-    toObj: (val) => val?.toJson(),
-  );
-
-  late final askAiBaseUrl = FieldProp<AskAiConfig, String>(
-    askAi,
-    'baseUrl',
-    read: (c) => c.baseUrl,
-    write: (c, v) => c.copyWith(baseUrl: v),
-  );
-  late final askAiApiKey = FieldProp<AskAiConfig, String>(
-    askAi,
-    'apiKey',
-    read: (c) => c.apiKey,
-    write: (c, v) => c.copyWith(apiKey: v),
-  );
-  late final askAiModel = FieldProp<AskAiConfig, String>(
-    askAi,
-    'model',
-    read: (c) => c.model,
-    write: (c, v) => c.copyWith(model: v),
-  );
-  late final askAiProtocol = FieldProp<AskAiConfig, String>(
-    askAi,
-    'protocol',
-    read: (c) => c.protocol,
-    write: (c, v) => c.copyWith(protocol: v),
-  );
-  late final askAiAutoRunSafeCommands = FieldProp<AskAiConfig, bool>(
-    askAi,
-    'autoRunSafeCommands',
-    read: (c) => c.autoRunSafeCommands,
-    write: (c, v) => c.copyWith(autoRunSafeCommands: v),
-  );
-
-  /// Enter sends the prompt and Shift+Enter starts a line. Off swaps them: a
-  /// line break is the plain key, and sending is the modifier or the button.
-  late final askAiSendOnEnter = FieldProp<AskAiConfig, bool>(
-    askAi,
-    'sendOnEnter',
-    read: (c) => c.sendOnEnter,
-    write: (c, v) => c.copyWith(sendOnEnter: v),
-  );
-
-  /// Percentage of the model's context at which the conversation is
-  /// summarised. See [AskAiConfig.compactAtPercent].
-  late final askAiCompactAtPercent = FieldProp<AskAiConfig, int>(
-    askAi,
-    'compactAtPercent',
-    read: (c) => c.compactAtPercent,
-    write: (c, v) => c.copyWith(compactAtPercent: v),
-  );
-
-  /// What a model holds, where the shipped table is wrong about it, keyed by
-  /// endpoint and model. See [AskAiConfig.contextOverrides].
-  late final askAiContextOverrides = FieldProp<AskAiConfig, Map<String, int>>(
-    askAi,
-    'contextOverrides',
-    read: (c) => c.contextOverrides,
-    write: (c, v) => c.copyWith(contextOverrides: v),
-  );
-
-  /// Whether [askAiBaseUrl] may be plain `http` to something other than
-  /// loopback. See [AskAiConfig.allowInsecure].
-  late final askAiAllowInsecure = FieldProp<AskAiConfig, bool>(
-    askAi,
-    'allowInsecure',
-    read: (c) => c.allowInsecure,
-    write: (c, v) => c.copyWith(allowInsecure: v),
-  );
+  /// Whether a command the Agent proposes may run on a *server* without being
+  /// asked, when it is clearly read-only — see `AskAiCommand.canAutoRun`.
+  /// Running on this device is [agentLocalExec], and never runs unasked.
+  late final agentAutoRunSafe = propertyDefault('agentAutoRunSafe', false);
 
   /// Whether the Agent may run commands on this device.
   ///
@@ -530,13 +444,11 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// stores, private keys and keychain live, and nobody opted into a model
   /// touching those by adding a server.
   ///
-  /// Auto-running stays off here whatever [askAiAutoRunSafeCommands] says —
-  /// that setting is about servers. See `AskAiCommand.canAutoRun`.
+  /// Auto-running stays off here whatever [agentAutoRunSafe] says — that
+  /// setting is about servers. See `AskAiCommand.canAutoRun`.
   ///
-  /// Its own key, and outside [askAi] on purpose: that group is which provider
-  /// to talk to, and this is what the app will let the answer do to this
-  /// machine. A restore that carried a provider's configuration across should
-  /// not carry that with it.
+  /// Device-local — see [deviceLocalKeys]: this is what the app will let a
+  /// model do to this machine, and a restore should not carry it.
   late final agentLocalExec = propertyDefault('agentLocalExec', false);
 
   /// Settings that describe *this device* rather than a preference worth

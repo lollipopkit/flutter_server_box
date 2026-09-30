@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:server_box/core/llm/scope.dart';
 import 'package:server_box/core/service/scoped_token.dart';
 import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/core/service/widget_sync.dart';
@@ -421,7 +422,7 @@ class ServersNotifier extends _$ServersNotifier {
 
   Future<void> _clearServerData(String id) async {
     await ref.read(portForwardProvider(id).notifier).clear();
-    Stores.agentConversation.clearServer(id);
+    await AgentChats.clearScope(AgentScope.terminal(id));
     await Stores.connectionStats.clearServerStats(id);
     Stores.selfAddr.forget(id);
   }

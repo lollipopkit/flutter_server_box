@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/float_shell.dart';
-import 'package:server_box/data/provider/ai/agent_session.dart';
 import 'package:server_box/data/provider/ai/agent_shell.dart';
 import 'package:server_box/view/page/agent/history.dart';
 import 'package:server_box/view/page/agent/view.dart';
@@ -11,8 +10,8 @@ import 'package:server_box/view/widget/pane_settings.dart';
 
 /// The Agent tab.
 ///
-/// It owns no part of the conversation — that is [agentSessionProvider], and
-/// the floating shell shows the same one. All this page adds is the history
+/// It owns no part of the conversation — that is `AgentChats`, and the
+/// floating shell shows the same one. All this page adds is the history
 /// column, which only a full tab is wide enough for.
 class AgentPage extends ConsumerStatefulWidget {
   const AgentPage({super.key});

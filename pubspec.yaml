@@ -113,6 +113,14 @@ dependencies:
   device_info_plus: ^13.2.0
   aptabase_flutter: ^0.5.0
   material_ui: ^1.5.0
+  # The LLM layer, shared with GPT Box: pi's agent loop and providers in
+  # QuickJS, built by its own hook like `sbm_ffi` (`fl_pi_llm`), and the
+  # chats, tools and provider settings over it (`fl_pi_llm_ui`). A submodule
+  # like fl_lib.
+  fl_pi_llm:
+    path: packages/fl_pi_llm
+  fl_pi_llm_ui:
+    path: packages/fl_pi_llm/ui
   # Imported by the app itself, not only through the packages that bring them
   # in: a transitive dependency can drop or change one under it.
   ffi: ^2.2.0
@@ -121,6 +129,14 @@ dependencies:
   window_manager: ^0.5.2
   cross_file: ^0.3.5+4
   collection: ^1.19.1
+dependency_overrides:
+  # fl_pi_llm_ui asks for fl_lib from git; the submodule is the one.
+  fl_lib:
+    path: packages/fl_lib
+  # For flutter_markdown_plus_latex, in fl_pi_llm_ui: only the root can
+  # override it.
+  flutter_math_fork: ^0.7.4
+
 dev_dependencies:
   integration_test:
     sdk: flutter
@@ -186,11 +202,6 @@ flutter:
     # Store themes shipped with the app, installed once on first launch as if
     # from the store — see `ThemePackages.seedBundled`.
     - assets/store_themes/
-    # Model id to context window, generated from models.dev by
-    # `scripts/update-model-context.sh`. Stale between releases on purpose —
-    # an unknown model falls back to a conservative default rather than to a
-    # download. Decides when a conversation is summarised, nothing else.
-    - assets/model_context.json
     # Yet Another Bench Script, vendored verbatim under WTFPL and pinned by
     # `YabsScript.upstreamCommit`. Shipped rather than piped from the network
     # on the server: `curl | bash` fixes no version and verifies nothing, and

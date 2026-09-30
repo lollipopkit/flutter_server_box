@@ -71,103 +71,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAi => '问 AI';
 
   @override
-  String get askAiAwaitingResponse => '等待 AI 响应...';
-
-  @override
-  String get askAiEndpointTip =>
-      '需要带上 API 版本号，如 /v1；智谱是 /api/paas/v4。只会按所选协议补上 /chat/completions 或 /responses。';
-
-  @override
-  String get askAiProtocolTip => '自动模式会尝试 Responses / Chat Completions。';
-
-  @override
-  String get askAiCommandInserted => '命令已插入终端';
-
-  @override
-  String askAiConfigMissing(String fields) {
-    return '请前往设置配置 $fields';
-  }
-
-  @override
-  String get askAiDisclaimer => 'AI 可能会犯错，请谨慎使用。';
-
-  @override
   String get askAiInsertTerminal => '插入终端';
 
   @override
-  String get askAiNoResponse => '无回复内容';
-
-  @override
   String get remoteDesktop => '远程桌面';
-
-  @override
-  String get askAiAgentWelcome => '想在这台服务器上做什么？';
-
-  @override
-  String get askAiAgentPromptHint => '让 Agent 检查或修复问题……';
-
-  @override
-  String get askAiAnalyzeSelectionPrompt => '分析选中的终端内容，解释发生了什么';
-
-  @override
-  String get askAiTerminalContext => '终端上下文';
-
-  @override
-  String get askAiReviewNeeded => '待审核';
-
-  @override
-  String get askAiReviewAction => '审核建议命令';
-
-  @override
-  String get askAiReviewBeforeContinuing => '请先审核或拒绝当前建议';
-
-  @override
-  String get askAiApproveRun => '批准并执行';
-
-  @override
-  String get askAiDecline => '拒绝';
-
-  @override
-  String get askAiActionDeclined => '已拒绝建议命令。';
-
-  @override
-  String get askAiInterrupted => '已中断 Agent 回复。';
-
-  @override
-  String get askAiResend => '重新发送';
-
-  @override
-  String get askAiResendTip => '这条消息之后的内容会被丢弃——包括回复、命令及其结果。';
-
-  @override
-  String get askAiDeleteTip => '这条消息及其之后的内容都会被删除——包括回复、命令及其结果。';
-
-  @override
-  String get askAiModelTable => '模型数据表';
-
-  @override
-  String get askAiModelTableTip =>
-      '来自 models.dev 的模型上下文长度对照表。App 内置一份，点击可获取更新。';
-
-  @override
-  String get askAiContextFallback => '表中没有该模型';
-
-  @override
-  String get askAiCompactAt => '压缩阈值';
-
-  @override
-  String get askAiCompactAtTip =>
-      '上下文占用达到该比例时，把较早的对话压缩为摘要。设得低会更早丢失细节，设得高可能导致请求被模型拒绝。';
-
-  @override
-  String get askAiContextTokens => '上下文长度';
-
-  @override
-  String get askAiContextTokensTip =>
-      '该模型能容纳的 token 数。自动表示按模型名查表；当服务商提供的长度短于模型本身时，填写具体数值。';
-
-  @override
-  String get askAiConversationCompacted => '较早的消息已压缩为摘要，以便对话继续。';
 
   @override
   String get askAiRiskReadOnly => '只读';
@@ -182,57 +89,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiRiskDestructive => '高风险';
 
   @override
-  String get askAiHighRiskConfirmTitle => '执行高风险命令？';
-
-  @override
-  String get askAiHighRiskConfirmBody => '此命令可能造成难以撤销的更改，请仔细检查。';
-
-  @override
-  String get askAiNoCommandOutput => '命令已完成，没有输出。';
-
-  @override
-  String get askAiOutputTruncated => '输出过长，回传给 Agent 前已被截断。';
-
-  @override
-  String get askAiAutoApproved => '已自动批准';
-
-  @override
   String get askAiAutoRunSafeCommands => '自动执行只读命令';
 
   @override
   String get askAiAutoRunSafeCommandsTip => '仅当模型与本地安全检查都判定命令为只读时自动执行';
 
   @override
-  String get askAiSendOnEnter => 'Enter 发送';
-
-  @override
-  String get askAiSendOnEnterTip =>
-      'Enter 发送消息，Shift+Enter 换行。关闭后：Enter 换行，Cmd/Ctrl+Enter 发送。';
-
-  @override
-  String get askAiApiKeyOptional => '本地或无需认证可留空';
-
-  @override
-  String get askAiAllowInsecure => '允许明文 HTTP';
-
-  @override
-  String get askAiAllowInsecureTip =>
-      '允许通过 http:// 连接 localhost 以外地址上的自建模型。API Key 和终端上下文将以明文发送；localhost 不受影响。';
-
-  @override
-  String get askAiInsecureEndpoint => '该地址使用 http://。请在 AI 设置中开启「允许明文 HTTP」。';
-
-  @override
   String get askAiHistory => '对话历史';
 
   @override
   String get askAiNewConversation => '新建对话';
-
-  @override
-  String get askAiNoHistory => '还没有已保存的对话';
-
-  @override
-  String get askAiNoHistoryMessages => '暂无消息';
 
   @override
   String get askAiUntitledConversation => '新对话';
@@ -245,24 +111,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get askAiDeleteConversationTip => '从本机删除该对话，无法撤销。';
-
-  @override
-  String get askAiClearHistoryTitle => '清空这台服务器的 Agent 历史？';
-
-  @override
-  String get askAiClearHistoryTip => '这台服务器保存的所有 Agent 对话都会被删除。';
-
-  @override
-  String get askAiRestoredReview => '此命令来自历史记录，请重新审核';
-
-  @override
-  String get agentWelcome => '想对你的服务器做些什么？';
-
-  @override
-  String get agentWelcomeTip => '可以让 Agent 诊断问题或执行运维任务';
-
-  @override
-  String get agentPromptHint => '让 Agent 检查或操作你的服务器……';
 
   @override
   String get agentNoHistory => '暂无全局 Agent 对话';
@@ -281,14 +129,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get agentToolWriteFile => '写入文件';
-
-  @override
-  String get agentToolFailed => '工具执行失败。';
-
-  @override
-  String agentToolCallsFmt(int count) {
-    return '$count 次工具调用';
-  }
 
   @override
   String get floatOverTabs => '在其他标签页上悬浮';
@@ -799,12 +639,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get noConnectionMethod => '请配置 SSH、Monitor 或两者';
-
-  @override
-  String get preferredTransport => '优先使用';
-
-  @override
-  String get preferredTransportTip => '状态从哪一侧读取，命令优先走哪条连接。另一条仍然可用。';
 
   @override
   String get keepForeground => '请将应用保持在前台运行';
@@ -1353,9 +1187,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get used => '已用';
 
   @override
-  String get view => '视图';
-
-  @override
   String get viewDetails => '查看详情';
 
   @override
@@ -1487,13 +1318,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tmuxSessionName => '会话名称';
 
   @override
-  String get tmuxExistingSessions => '现有会话';
-
-  @override
   String get tmuxNewSession => '新建会话';
-
-  @override
-  String get tmuxWindows => '窗口';
 
   @override
   String get tmuxNewWindow => '新建窗口';
@@ -1507,25 +1332,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String tmuxPaneCount(int count) {
-    return '$count 个窗格';
-  }
-
-  @override
   String get tmuxAttached => '已附加';
-
-  @override
-  String get tmuxActive => '活动中';
-
-  @override
-  String tmuxActiveAt(String time) {
-    return '活动：$time';
-  }
-
-  @override
-  String tmuxAttachedAt(String time) {
-    return '附加：$time';
-  }
 
   @override
   String get tmuxSkip => '跳过';
@@ -1771,9 +1578,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get bmcStaleWrite => 'BMC 上的内容在写入期间被改动过，请重试。';
-
-  @override
-  String get send => '发送';
 
   @override
   String get privacyBlur => '后台隐私保护';
@@ -2135,6 +1939,43 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get agentServerTools => '服务器工具';
+
+  @override
+  String get agentServerToolsTip =>
+      '在服务器上执行命令、读写文件，通过 SSH 连接其他主机，并使用 ServerBox 自身的操作。';
+
+  @override
+  String get agentTerminalTools => '终端';
+
+  @override
+  String get agentTerminalToolsTip => '在终端自己的对话中：读取终端显示的内容，并在其服务器上执行命令。';
+
+  @override
+  String get agentToolTerminalScreen => '读取屏幕';
+
+  @override
+  String get agentProviders => '服务商';
+
+  @override
+  String get agentProvidersTip => 'API Key、模型，以及新对话使用的模型';
+
+  @override
+  String get agentTools => '工具';
+
+  @override
+  String get agentToolsTip => 'Agent 可以使用的工具，以及 MCP 服务器';
+
+  @override
+  String get agentPermissions => '权限';
+
+  @override
+  String get agentEmptyHint => '询问你的服务器，或让 Agent 在服务器上完成某项操作。';
+
+  @override
+  String get agentTerminalEmptyHint => '询问这台服务器。Agent 可以读取当前终端，并在这里执行命令。';
+
+  @override
   String oldestSampleFmt(String time) {
     return '最早的采样在 $time';
   }
@@ -2326,32 +2167,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get connectionTip => '两个可以同时开启。顺序就是拨号的顺序。';
 
   @override
-  String transportOrderFmt(String first, String second) {
-    return '拖动可调整顺序。先拨 $first；它不应答时，$second 独自承担会话。';
-  }
-
-  @override
-  String transportOnlyFmt(String name) {
-    return '只开启了 $name，没有可回落的对象。';
-  }
-
-  @override
   String get transportNoneOn => '两个都关闭了 —— 这台服务器无法连接。';
-
-  @override
-  String get transportOffKept => '已关闭 —— 设置保留，不会拨号';
-
-  @override
-  String get transportDialledFirst => '先拨';
-
-  @override
-  String get transportFallback => '回落';
-
-  @override
-  String get transportOnlyMethod => '唯一方式';
-
-  @override
-  String get transportOff => '已关闭';
 
   @override
   String get thisDevice => '本机';
@@ -2397,9 +2213,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get optional => '可选';
-
-  @override
-  String get optionalTip => '这里的东西都不是连接所必需的。展开一项，它的字段会接管表单。';
 
   @override
   String get sshAdvanced => 'SSH 高级';
@@ -3189,9 +3002,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get reopen => '重新打开';
-
-  @override
   String get virtSnapshots => '快照';
 
   @override
@@ -3352,9 +3162,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtCreateNameTaken => '已有同名虚拟机。';
-
-  @override
-  String get virtCreateVmidInvalid => '范围为 100 到 999999999。';
 
   @override
   String get virtCreateVmidTaken => '这个 VMID 已被占用。';
@@ -3835,9 +3642,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtHwEfiStorage => 'EFI 变量存放在';
-
-  @override
-  String get virtHwTpmStorage => 'TPM 状态存放在';
 
   @override
   String virtHwSwitchFirmwareAsk(String guest, String firmware) {
@@ -4434,9 +4238,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtSnapshotFormInternal => '内部（镜像内）';
 
   @override
-  String get virtSnapshotForm => '类型';
-
-  @override
   String get virtSnapshotOverlayPool => '覆盖层存储池';
 
   @override
@@ -4463,11 +4264,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtSnapshotChainBase => '基础镜像';
 
   @override
-  String virtSnapshotChainRaw(String format) {
-    return '外部快照需要 qcow2 磁盘，而这块是 $format。';
-  }
-
-  @override
   String get virtSnapshotNoSupport => '虚拟机的存储不支持快照，无法创建。';
 
   @override
@@ -4485,9 +4281,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtSnapshotDiffShow => '与当前比较';
-
-  @override
-  String get virtSnapshotDiffGroup => '已变更';
 
   @override
   String get virtSnapshotDiffGroupCpu => '处理器';
@@ -4565,19 +4358,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtTemplateTip => '模板只有在克隆后才能运行。';
 
   @override
-  String get virtCloneStorage => '目标存储';
-
-  @override
   String get virtCloneStorageSame => '与源相同';
 
   @override
-  String get virtCloneNode => '目标节点';
-
-  @override
   String get virtCloneNodeSame => '与源相同';
-
-  @override
-  String get virtClonePool => '目标存储池';
 
   @override
   String get virtCloneStorageContent => '该存储不存放虚拟机磁盘。';
@@ -4599,9 +4383,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtBackupJobNew => '新建任务';
-
-  @override
-  String get virtBackupJobEdit => '编辑任务';
 
   @override
   String get virtBackupJobRun => '立即运行';
@@ -4654,12 +4435,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtBackupMail => '通知';
 
   @override
-  String get virtBackupMailAlways => '总是';
-
-  @override
-  String get virtBackupMailFailure => '失败时';
-
-  @override
   String get virtBackupNotesTemplate => '备份备注';
 
   @override
@@ -4673,9 +4448,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get virtBackupPruneTip =>
       'PVE 的保留选项，例如 keep-last=7,keep-daily=4。留空则用存储或节点自身的设置。';
-
-  @override
-  String get virtBackupNextRun => '下次运行';
 
   @override
   String get virtBackupJobNode => '节点';
@@ -4709,9 +4481,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtBackupRestoreStorageSame => '与备份一致';
-
-  @override
-  String get virtBackupModeSnapshotTip => 'snapshot · 不停机';
 
   @override
   String get virtCloneStorageMissing => '该节点上没有存放虚拟机磁盘的存储。';
@@ -4953,103 +4722,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get askAi => '詢問 AI';
 
   @override
-  String get askAiAwaitingResponse => '等待 AI 回應...';
-
-  @override
-  String get askAiEndpointTip =>
-      '需要帶上 API 版本號，如 /v1；智譜是 /api/paas/v4。只會依所選協定補上 /chat/completions 或 /responses。';
-
-  @override
-  String get askAiProtocolTip => '自動模式會嘗試 Responses / Chat Completions。';
-
-  @override
-  String get askAiCommandInserted => '指令已插入終端機';
-
-  @override
-  String askAiConfigMissing(String fields) {
-    return '請前往設定配置 $fields';
-  }
-
-  @override
-  String get askAiDisclaimer => 'AI 可能會犯錯，請謹慎使用。';
-
-  @override
   String get askAiInsertTerminal => '插入終端機';
 
   @override
-  String get askAiNoResponse => '無回覆內容';
-
-  @override
   String get remoteDesktop => '遠端桌面';
-
-  @override
-  String get askAiAgentWelcome => '想在這台伺服器上做什麼？';
-
-  @override
-  String get askAiAgentPromptHint => '讓 Agent 檢查或修復問題……';
-
-  @override
-  String get askAiAnalyzeSelectionPrompt => '分析選取的終端內容，解釋發生了什麼';
-
-  @override
-  String get askAiTerminalContext => '終端機內容';
-
-  @override
-  String get askAiReviewNeeded => '待審核';
-
-  @override
-  String get askAiReviewAction => '審核建議指令';
-
-  @override
-  String get askAiReviewBeforeContinuing => '請先審核或拒絕目前建議';
-
-  @override
-  String get askAiApproveRun => '核准並執行';
-
-  @override
-  String get askAiDecline => '拒絕';
-
-  @override
-  String get askAiActionDeclined => '已拒絕建議指令。';
-
-  @override
-  String get askAiInterrupted => '已中斷 Agent 回覆。';
-
-  @override
-  String get askAiResend => '重新傳送';
-
-  @override
-  String get askAiResendTip => '這則訊息之後的內容會被捨棄——包括回覆、命令及其結果。';
-
-  @override
-  String get askAiDeleteTip => '這則訊息及其之後的內容都會被刪除——包括回覆、命令及其結果。';
-
-  @override
-  String get askAiModelTable => '模型資料表';
-
-  @override
-  String get askAiModelTableTip =>
-      '來自 models.dev 的模型上下文長度對照表。App 內建一份，點擊可取得更新。';
-
-  @override
-  String get askAiContextFallback => '表中沒有該模型';
-
-  @override
-  String get askAiCompactAt => '壓縮閾值';
-
-  @override
-  String get askAiCompactAtTip =>
-      '上下文佔用達到該比例時，把較早的對話壓縮為摘要。設得低會更早失去細節，設得高可能導致請求被模型拒絕。';
-
-  @override
-  String get askAiContextTokens => '上下文長度';
-
-  @override
-  String get askAiContextTokensTip =>
-      '該模型能容納的 token 數。自動表示依模型名稱查表；當服務商提供的長度短於模型本身時，填寫具體數值。';
-
-  @override
-  String get askAiConversationCompacted => '較早的訊息已壓縮為摘要，以便對話繼續。';
 
   @override
   String get askAiRiskReadOnly => '唯讀';
@@ -5064,57 +4740,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get askAiRiskDestructive => '高風險';
 
   @override
-  String get askAiHighRiskConfirmTitle => '執行高風險指令？';
-
-  @override
-  String get askAiHighRiskConfirmBody => '此命令可能造成難以撤銷的變更，請仔細檢查。';
-
-  @override
-  String get askAiNoCommandOutput => '指令已完成，沒有輸出。';
-
-  @override
-  String get askAiOutputTruncated => '輸出過長，傳回 Agent 前已被截斷。';
-
-  @override
-  String get askAiAutoApproved => '已自動核准';
-
-  @override
   String get askAiAutoRunSafeCommands => '自動執行唯讀指令';
 
   @override
   String get askAiAutoRunSafeCommandsTip => '僅當模型與本機安全檢查都判定命令為唯讀時自動執行';
 
   @override
-  String get askAiSendOnEnter => 'Enter 傳送';
-
-  @override
-  String get askAiSendOnEnterTip =>
-      'Enter 傳送訊息，Shift+Enter 換行。關閉後：Enter 換行，Cmd/Ctrl+Enter 傳送。';
-
-  @override
-  String get askAiApiKeyOptional => '本機或無需認證可留空';
-
-  @override
-  String get askAiAllowInsecure => '允許明文 HTTP';
-
-  @override
-  String get askAiAllowInsecureTip =>
-      '允許透過 http:// 連線至 localhost 以外位址上的自建模型。API Key 與終端機上下文將以明文傳送；localhost 不受影響。';
-
-  @override
-  String get askAiInsecureEndpoint => '此位址使用 http://。請在 AI 設定中開啟「允許明文 HTTP」。';
-
-  @override
   String get askAiHistory => '對話歷史';
 
   @override
   String get askAiNewConversation => '新增對話';
-
-  @override
-  String get askAiNoHistory => '還沒有已儲存的對話';
-
-  @override
-  String get askAiNoHistoryMessages => '暫無訊息';
 
   @override
   String get askAiUntitledConversation => '新對話';
@@ -5127,24 +4762,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get askAiDeleteConversationTip => '從本機刪除該對話，無法復原。';
-
-  @override
-  String get askAiClearHistoryTitle => '清除這台伺服器的 Agent 歷史？';
-
-  @override
-  String get askAiClearHistoryTip => '這台伺服器儲存的所有 Agent 對話都會被刪除。';
-
-  @override
-  String get askAiRestoredReview => '此命令來自歷史紀錄，請重新審核';
-
-  @override
-  String get agentWelcome => '想對你的伺服器做些什麼？';
-
-  @override
-  String get agentWelcomeTip => '可以讓 Agent 診斷問題或執行維運任務';
-
-  @override
-  String get agentPromptHint => '讓 Agent 檢查或操作你的伺服器……';
 
   @override
   String get agentNoHistory => '暫無全域 Agent 對話';
@@ -5163,14 +4780,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get agentToolWriteFile => '寫入檔案';
-
-  @override
-  String get agentToolFailed => '工具執行失敗。';
-
-  @override
-  String agentToolCallsFmt(int count) {
-    return '$count 次工具呼叫';
-  }
 
   @override
   String get floatOverTabs => '在其他分頁上懸浮';
@@ -5681,12 +5290,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get noConnectionMethod => '請設定 SSH、Monitor 或兩者';
-
-  @override
-  String get preferredTransport => '優先使用';
-
-  @override
-  String get preferredTransportTip => '狀態從哪一側讀取，指令優先走哪條連線。另一條仍然可用。';
 
   @override
   String get keepForeground => '請讓 App 保持在前景執行';
@@ -6235,9 +5838,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get used => '已使用';
 
   @override
-  String get view => '檢視';
-
-  @override
   String get viewDetails => '檢視詳情';
 
   @override
@@ -6369,13 +5969,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get tmuxSessionName => '工作階段名稱';
 
   @override
-  String get tmuxExistingSessions => '現有工作階段';
-
-  @override
   String get tmuxNewSession => '新增工作階段';
-
-  @override
-  String get tmuxWindows => '視窗';
 
   @override
   String get tmuxNewWindow => '新增視窗';
@@ -6389,25 +5983,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String tmuxPaneCount(int count) {
-    return '$count 個窗格';
-  }
-
-  @override
   String get tmuxAttached => '已附加';
-
-  @override
-  String get tmuxActive => '使用中';
-
-  @override
-  String tmuxActiveAt(String time) {
-    return '活動：$time';
-  }
-
-  @override
-  String tmuxAttachedAt(String time) {
-    return '附加：$time';
-  }
 
   @override
   String get tmuxSkip => '略過';
@@ -6653,9 +6229,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get bmcStaleWrite => 'BMC 上的內容在寫入期間被改動過，請重試。';
-
-  @override
-  String get send => '傳送';
 
   @override
   String get privacyBlur => '背景隱私保護';
@@ -7016,6 +6589,43 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
+  String get agentServerTools => '伺服器工具';
+
+  @override
+  String get agentServerToolsTip =>
+      '在伺服器上執行指令、讀寫檔案，透過 SSH 連線其他主機，並使用 ServerBox 本身的操作。';
+
+  @override
+  String get agentTerminalTools => '終端';
+
+  @override
+  String get agentTerminalToolsTip => '在終端自己的對話中：讀取終端顯示的內容，並在其伺服器上執行指令。';
+
+  @override
+  String get agentToolTerminalScreen => '讀取螢幕';
+
+  @override
+  String get agentProviders => '服務商';
+
+  @override
+  String get agentProvidersTip => 'API Key、模型，以及新對話使用的模型';
+
+  @override
+  String get agentTools => '工具';
+
+  @override
+  String get agentToolsTip => 'Agent 可以使用的工具，以及 MCP 伺服器';
+
+  @override
+  String get agentPermissions => '權限';
+
+  @override
+  String get agentEmptyHint => '詢問你的伺服器，或讓 Agent 在伺服器上完成某項操作。';
+
+  @override
+  String get agentTerminalEmptyHint => '詢問這台伺服器。Agent 可以讀取目前的終端，並在這裡執行指令。';
+
+  @override
   String oldestSampleFmt(String time) {
     return '最早的取樣在 $time';
   }
@@ -7207,32 +6817,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get connectionTip => '兩個可以同時開啟。順序就是撥接的順序。';
 
   @override
-  String transportOrderFmt(String first, String second) {
-    return '拖曳可調整順序。先撥 $first；它不回應時，$second 獨自承擔工作階段。';
-  }
-
-  @override
-  String transportOnlyFmt(String name) {
-    return '只開啟了 $name，沒有可回落的對象。';
-  }
-
-  @override
   String get transportNoneOn => '兩個都關閉了 —— 這台伺服器無法連線。';
-
-  @override
-  String get transportOffKept => '已關閉 —— 設定保留，不會撥接';
-
-  @override
-  String get transportDialledFirst => '先撥';
-
-  @override
-  String get transportFallback => '回落';
-
-  @override
-  String get transportOnlyMethod => '唯一方式';
-
-  @override
-  String get transportOff => '已關閉';
 
   @override
   String get thisDevice => '本機';
@@ -7278,9 +6863,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get optional => '選用';
-
-  @override
-  String get optionalTip => '這裡的東西都不是連線所必需的。展開一項，它的欄位會接管表單。';
 
   @override
   String get sshAdvanced => 'SSH 進階';
@@ -8069,9 +7651,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get reopen => '重新開啟';
-
-  @override
   String get virtSnapshots => '快照';
 
   @override
@@ -8232,9 +7811,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtCreateNameTaken => '已有同名虛擬機器。';
-
-  @override
-  String get virtCreateVmidInvalid => '範圍為 100 到 999999999。';
 
   @override
   String get virtCreateVmidTaken => '這個 VMID 已被使用。';
@@ -8716,9 +8292,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtHwEfiStorage => 'EFI 變數存放於';
-
-  @override
-  String get virtHwTpmStorage => 'TPM 狀態存放於';
 
   @override
   String virtHwSwitchFirmwareAsk(String guest, String firmware) {
@@ -9316,9 +8889,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtSnapshotFormInternal => '內部（映像內）';
 
   @override
-  String get virtSnapshotForm => '類型';
-
-  @override
   String get virtSnapshotOverlayPool => '覆蓋層儲存池';
 
   @override
@@ -9345,11 +8915,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtSnapshotChainBase => '基礎映像';
 
   @override
-  String virtSnapshotChainRaw(String format) {
-    return '外部快照需要 qcow2 磁碟，而這顆是 $format。';
-  }
-
-  @override
   String get virtSnapshotNoSupport => '虛擬機器的儲存不支援快照，無法建立。';
 
   @override
@@ -9367,9 +8932,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtSnapshotDiffShow => '與現在比較';
-
-  @override
-  String get virtSnapshotDiffGroup => '已變更';
 
   @override
   String get virtSnapshotDiffGroupCpu => '處理器';
@@ -9447,19 +9009,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtTemplateTip => '範本只有在複製後才能執行。';
 
   @override
-  String get virtCloneStorage => '目標儲存';
-
-  @override
   String get virtCloneStorageSame => '與來源相同';
 
   @override
-  String get virtCloneNode => '目標節點';
-
-  @override
   String get virtCloneNodeSame => '與來源相同';
-
-  @override
-  String get virtClonePool => '目標儲存池';
 
   @override
   String get virtCloneStorageContent => '該儲存不存放虛擬機器磁碟。';
@@ -9481,9 +9034,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtBackupJobNew => '新增工作';
-
-  @override
-  String get virtBackupJobEdit => '編輯工作';
 
   @override
   String get virtBackupJobRun => '立即執行';
@@ -9536,12 +9086,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtBackupMail => '通知';
 
   @override
-  String get virtBackupMailAlways => '總是';
-
-  @override
-  String get virtBackupMailFailure => '失敗時';
-
-  @override
   String get virtBackupNotesTemplate => '備份備註';
 
   @override
@@ -9555,9 +9099,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get virtBackupPruneTip =>
       'PVE 的保留選項，例如 keep-last=7,keep-daily=4。留空則用儲存或節點自身的設定。';
-
-  @override
-  String get virtBackupNextRun => '下次執行';
 
   @override
   String get virtBackupJobNode => '節點';
@@ -9591,9 +9132,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtBackupRestoreStorageSame => '與備份一致';
-
-  @override
-  String get virtBackupModeSnapshotTip => 'snapshot · 不停機';
 
   @override
   String get virtCloneStorageMissing => '該節點上沒有存放虛擬機器磁碟的儲存。';

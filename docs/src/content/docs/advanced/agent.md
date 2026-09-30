@@ -3,16 +3,16 @@ title: Agent
 description: Ask a model to diagnose servers and review each action before it runs
 ---
 
-Agent connects a language model to your servers. It suggests one action at a
-time and shows you what it plans to do before running it. You can approve or
-reject each action.
+Agent connects a language model to your servers. It suggests an action, shows
+you what it plans to do, and runs it only after you approve.
 
-Agent includes a default API endpoint and model, so you can use it without
-setting up a provider first. To use another provider, change the endpoint,
-model, protocol, or API key in **Settings → App → AI**. An API key is needed
-only for providers that require authentication. The App sends a configured key
-as a bearer token and stores it in the same encrypted database as server
-passwords. A request is sent only when you send a message.
+Before the first message, add a provider at **Settings → App → AI →
+Providers**: pick one of the built-in providers (OpenAI, Anthropic, Google and
+others from the model catalog) and enter its API key, or add a custom
+OpenAI-compatible, Anthropic or Google endpoint. The same page chooses the
+model a new chat uses. API keys are stored in the system keychain, not in the
+App's database, and are sent only to their own provider. A request is sent only
+when you send a message.
 
 ## Choose an Agent
 
@@ -22,40 +22,51 @@ Server Box has two Agent entry points:
   temporary SSH connection to a host that is not in your server list, and read
   App state such as the list of servers and their connection status.
 - **SSH Agent** is available from a terminal session. It works with the
-  current server and can use the terminal context. If you select terminal
-  output before asking a question, that text is sent with your message.
+  current server: it can read what the terminal shows and run commands on its
+  connection. If you select terminal output and choose **Ask AI**, a new chat
+  starts with that text in the message box, for you to add your question.
 
-The Agent tab can stay above other tabs while you work in the terminal or file
-browser. Enable **Settings → App → AI → Float over other tabs**.
+Each has its own chat list: a terminal's chats belong to that server. The
+Agent tab can stay above other tabs while you work in the terminal or file
+browser — use the float button in its header.
 
-## Configure a provider
+## Providers and models
 
-Open **Settings → App → AI** to configure the provider:
+**Settings → App → AI → Providers** lists the built-in providers and your
+custom ones. For a custom provider, enter its base URL including the API
+version (for example `https://api.example.com/v1`) and pick its protocol:
+OpenAI Chat Completions, OpenAI Responses, Anthropic Messages or Google
+Generative AI. For an OpenAI-compatible endpoint the App lists the models it
+offers; otherwise enter the model IDs.
 
-| Setting | Default |
-|---|---|
-| **API endpoint** | `https://api.openai.com` |
-| **Model** | `gpt-5.6-luna` |
-| **API key** | Empty |
-| **Protocol** | Auto |
+A custom provider at a plain `http://` address on another machine is refused
+unless you turn on **Allow plain HTTP** for it, because the API key would be
+sent unencrypted. `http://localhost` and other addresses on this device do not
+need it.
 
-For **API endpoint**, enter either the service's base URL or a complete Chat
-Completions or Responses endpoint. The App fills in the endpoint path for the
-selected protocol. **Auto** selects Responses for the official OpenAI endpoint
-and Chat Completions for compatible providers. Most third-party gateways work
-without additional protocol settings. The provider must support at least one of
-these protocols.
+Settings from an earlier version — endpoint, model, protocol and key — were
+moved to a custom provider when you updated, and the key to the keychain.
 
 ## What Agent can do
+
+The Agent tab's tools:
 
 | Tool | Behavior |
 |---|---|
 | **Shell** | Runs a complete, non-interactive command on a server |
 | **Read file** | Reads a text file from an SSH server over its configured SFTP or SCP transport; with local execution enabled, it can read a local file too |
-| **Write file** | Replaces a text file over the configured transport; with local execution enabled, it can replace a local file too. Every write requires confirmation. |
+| **Write file** | Replaces a text file over the configured transport; with local execution enabled, it can replace a local file too |
 | **SSH connect** | Opens a temporary connection to a host not configured in the App |
 | **Disconnect SSH** | Closes a temporary SSH connection |
 | **Server Box** | Reads App state, including the server list and connection status |
+| **Memory** | Keeps notes on this device that later chats can read |
+| **Chat history** | Searches and reads your earlier Agent chats |
+| **Web fetch** | Reads a web page, from this device |
+
+A terminal's chats have only two: **Shell**, which runs in that terminal's
+connection, and **Read the screen**. Tools can be switched off by group at
+**Settings → App → AI → Tools**, where you can also add MCP servers, whose
+tools the Agent tab then offers too.
 
 Agent's file tools require SSH. A server configured only with Monitor HTTP does
 not provide these tools. Its separate **File** tab can use the Monitor agent
@@ -64,26 +75,29 @@ is under `roots`.
 
 ## Review actions
 
-Before an action runs, the App shows the command and the model's explanation of
-its purpose and risks. Read the command yourself, then approve or reject it. A
-rejection is sent back to the model so it can respond to your feedback. The
-model's safe or unsafe label is only a hint for your review.
+Before a server action runs, the App shows the command, how risky it looks and
+the model's explanation of it. Read the command yourself, then allow or deny
+it. A denial is sent back to the model so it can respond to your feedback. In
+a terminal's chat you can also insert the command into the terminal, to edit
+and run it yourself. The model's safe or unsafe label is only a hint for your
+review.
 
-At **Settings → App → AI**, **Auto-run read-only commands** can run server
-commands without asking each time only when both the model and the App's local
-check classify the command as read-only. The command must also be idempotent
-and non-destructive. This option is off by default and does not apply to
-commands on this device. Agent handles one action at a time: it waits for each
-result before proposing the next action.
+Server actions are asked about every time; there is no "always allow" for
+them. At **Settings → App → AI**, **Auto-run read-only commands** lets a server
+command run without asking only when both the model and the App's local check
+classify it as read-only, idempotent and non-destructive, and then at most three
+times for one message. It is off by default and never applies to commands on
+this device. For the other tools, "always allow" is offered on the approval
+card and can be undone at **Tools**.
 
 ## Connect to another host
 
 Agent can open a temporary SSH connection to a host outside your server list.
 If it needs a password, the App asks for it in a separate dialog; do not enter
 the password in the conversation. Conversation text is saved on the device and
-sent to the configured model. Temporary connections are listed separately. To
-keep one, save it as a server; its host information and password are then stored
-like your other server credentials.
+sent to the provider. Temporary connections are listed separately. To keep one,
+save it as a server; its host information and password are then stored like
+your other server credentials.
 
 ## Run commands on this device
 
@@ -105,17 +119,17 @@ build without the Linux engine cannot provide local command execution either.
 
 ## Conversation history
 
-Agent tab conversations are stored on the device. You can reopen them or clear
-all conversations from the history screen. Messages and tool results can
-contain command output, file contents, and any terminal text you selected; they
-are sent to the configured model when used in a conversation.
+Chats are stored on the device, in the App's encrypted database, and long ones
+are summarised as they grow. You can reopen, rename and delete them from the
+history list. They are not included in backups or synced, and neither are your
+providers, tool settings and memory notes. Messages and tool results can
+contain command output, file contents and any terminal text you pasted; they
+are sent to the provider when used in a chat.
 
 ## Before you send a message
 
 - Models can produce incorrect advice or commands. Review every action before
   approving it.
-- Command output, requested file contents, and selected terminal text may be
-  sent to the provider so the model can analyze them. Check for sensitive data
-  before sending a message or approving a tool action.
-- Press **Enter** to send by default; **Shift+Enter** starts a new line. Change
-  this under **Settings → App → AI → Send on Enter**.
+- Command output, requested file contents, terminal text and fetched pages may
+  be sent to the provider so the model can analyze them. Check for sensitive
+  data before sending a message or approving a tool action.

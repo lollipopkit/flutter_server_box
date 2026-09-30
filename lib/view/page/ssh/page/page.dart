@@ -6,13 +6,14 @@ import 'dart:ui';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show Composer;
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/llm/scope.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
-import 'package:server_box/data/model/ai/agent_conversation.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/tab.dart';
@@ -20,8 +21,6 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
-import 'package:server_box/data/provider/ai/agent_scope.dart';
-import 'package:server_box/data/provider/ai/agent_session.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/app/terminal_shell.dart';
 import 'package:server_box/data/provider/snippet.dart';
@@ -34,17 +33,13 @@ import 'package:server_box/data/ssh/terminal_session.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/data/ssh/tmux/tmux_export.dart';
 import 'package:server_box/data/ssh/tmux/tmux_ids.dart';
-import 'package:server_box/view/page/agent/history.dart';
+import 'package:server_box/view/page/agent/view.dart';
 import 'package:server_box/view/page/ssh/ask_ai_layout.dart';
 import 'package:server_box/view/page/ssh/page/tmux_page_controller.dart';
 import 'package:server_box/view/page/ssh/page/virt_key_intro.dart';
 import 'package:server_box/view/page/ssh/present_server.dart';
 import 'package:server_box/view/page/storage/server_file.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
-import 'package:server_box/view/widget/agent_common.dart';
-import 'package:server_box/view/widget/agent_entry_appear.dart';
-import 'package:server_box/view/widget/agent_proposal_pager.dart';
-import 'package:server_box/view/widget/agent_user_bubble.dart';
 import 'package:server_box/view/widget/terminal_connection_progress.dart';
 import 'package:server_box/view/widget/tmux_session_picker_sheet.dart';
 import 'package:server_box/view/widget/tmux_window_bar.dart';
@@ -52,7 +47,6 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:xterm/core.dart';
 import 'package:xterm/ui.dart' hide TerminalThemes;
 
-part 'agent_history.dart';
 part 'ask_ai.dart';
 part 'init.dart';
 part 'keyboard.dart';
@@ -405,7 +399,7 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   Future<void> pickSnippetFromToolbar() => _pickSnippet();
 
-  Future<void> openAgentFromToolbar() => _showAskAiPanel(autoStart: false);
+  Future<void> openAgentFromToolbar() => _showAskAiPanel();
 
   @override
   void deactivate() {

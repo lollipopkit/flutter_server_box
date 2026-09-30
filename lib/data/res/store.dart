@@ -1,6 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LlmStores;
 import 'package:get_it/get_it.dart';
-import 'package:server_box/data/store/agent_conversation.dart';
 import 'package:server_box/data/store/bmc_credential.dart';
 import 'package:server_box/data/store/connection_stats.dart';
 import 'package:server_box/data/store/container.dart';
@@ -49,8 +49,6 @@ abstract final class Stores {
   static BmcCredentialStore get bmcCredential => getIt<BmcCredentialStore>();
   static SnippetStore get snippet => getIt<SnippetStore>();
   static HistoryStore get history => getIt<HistoryStore>();
-  static AgentConversationStore get agentConversation =>
-      getIt<AgentConversationStore>();
   static ConnectionStatsStore get connectionStats =>
       getIt<ConnectionStatsStore>();
   static PortForwardStore get portForward => getIt<PortForwardStore>();
@@ -105,9 +103,6 @@ abstract final class Stores {
     );
     getIt.registerLazySingleton<SnippetStore>(() => SnippetStore.instance);
     getIt.registerLazySingleton<HistoryStore>(() => HistoryStore.instance);
-    getIt.registerLazySingleton<AgentConversationStore>(
-      () => AgentConversationStore.instance,
-    );
     getIt.registerLazySingleton<ServerDistStore>(
       () => ServerDistStore.instance,
     );
@@ -153,6 +148,11 @@ abstract final class Stores {
       // is is not something the user did, so it must not move the clock sync
       // reads.
       selfAddr.init(),
+      // The Agent's: its chats, providers, tool switches and memory. Not in
+      // `_kvStores` either — a conversation is a record of what was said, not
+      // an edit, and like the conversations before them they stay on this
+      // device.
+      ...LlmStores.all.map((store) => store.init()),
     ]);
 
     // Not a table to create — only the per-launch sweep of expired rows, and

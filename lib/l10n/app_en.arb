@@ -76,134 +76,13 @@
   "@askAi": {
     "description": "User-facing label or message for ask AI."
   },
-  "askAiAwaitingResponse": "Waiting for AI response...",
-  "@askAiAwaitingResponse": {
-    "description": "User-facing label or message for ask AI awaiting response."
-  },
-  "askAiEndpointTip": "Include the API version, such as /v1 — Zhipu uses /api/paas/v4. Only /chat/completions or /responses is added, from the protocol you pick.",
-  "@askAiEndpointTip": {
-    "description": "Help text for the ask AI endpoint setting or action."
-  },
-  "askAiProtocolTip": "Auto tries Responses, then Chat Completions.",
-  "@askAiProtocolTip": {
-    "description": "Help text for the ask AI protocol setting or action."
-  },
-  "askAiCommandInserted": "Command inserted into terminal",
-  "@askAiCommandInserted": {
-    "description": "User-facing label or message for ask AI command inserted."
-  },
-  "askAiConfigMissing": "Please configure {fields} in Settings.",
-  "@askAiConfigMissing": {
-    "description": "User-facing label or message for ask AI config missing.",
-    "placeholders": {
-      "fields": {
-        "type": "String"
-      }
-    }
-  },
-  "askAiDisclaimer": "AI may be incorrect. Review carefully before applying.",
-  "@askAiDisclaimer": {
-    "description": "User-facing label or message for ask AI disclaimer."
-  },
   "askAiInsertTerminal": "Insert into terminal",
   "@askAiInsertTerminal": {
     "description": "User-facing label or message for ask AI insert terminal."
   },
-  "askAiNoResponse": "No response",
-  "@askAiNoResponse": {
-    "description": "User-facing label or message for ask AI no response."
-  },
   "remoteDesktop": "Remote desktop",
   "@remoteDesktop": {
     "description": "User-facing label or message for remote desktop."
-  },
-  "askAiAgentWelcome": "What should we do on this server?",
-  "@askAiAgentWelcome": {
-    "description": "User-facing label or message for ask AI agent welcome."
-  },
-  "askAiAgentPromptHint": "Ask the Agent to inspect or fix something...",
-  "@askAiAgentPromptHint": {
-    "description": "Hint shown in the ask AI agent prompt field or section."
-  },
-  "askAiAnalyzeSelectionPrompt": "Analyse the selected terminal output and explain what happened",
-  "@askAiAnalyzeSelectionPrompt": {
-    "description": "User-facing label or message for ask AI analyze selection prompt."
-  },
-  "askAiTerminalContext": "Terminal context",
-  "@askAiTerminalContext": {
-    "description": "User-facing label or message for ask AI terminal context."
-  },
-  "askAiReviewNeeded": "Review",
-  "@askAiReviewNeeded": {
-    "description": "User-facing label or message for ask AI review needed."
-  },
-  "askAiReviewAction": "Review proposed command",
-  "@askAiReviewAction": {
-    "description": "User-facing label or message for ask AI review action."
-  },
-  "askAiReviewBeforeContinuing": "Review or decline the current suggestion first",
-  "@askAiReviewBeforeContinuing": {
-    "description": "User-facing label or message for ask AI review before continuing."
-  },
-  "askAiApproveRun": "Approve & run",
-  "@askAiApproveRun": {
-    "description": "User-facing label or message for ask AI approve run."
-  },
-  "askAiDecline": "Decline",
-  "@askAiDecline": {
-    "description": "User-facing label or message for ask AI decline."
-  },
-  "askAiActionDeclined": "The proposed command was declined.",
-  "@askAiActionDeclined": {
-    "description": "User-facing label or message for ask AI action declined."
-  },
-  "askAiInterrupted": "Agent response was interrupted.",
-  "@askAiInterrupted": {
-    "description": "User-facing label or message for ask AI interrupted."
-  },
-  "askAiResend": "Resend",
-  "@askAiResend": {
-    "description": "User-facing label or message for ask AI resend."
-  },
-  "askAiResendTip": "Everything after this message is discarded — the replies, the commands and their results.",
-  "@askAiResendTip": {
-    "description": "Help text for the ask AI resend setting or action."
-  },
-  "askAiDeleteTip": "This message and everything after it are removed — the replies, the commands and their results.",
-  "@askAiDeleteTip": {
-    "description": "Help text for the ask AI delete setting or action."
-  },
-  "askAiModelTable": "Model table",
-  "@askAiModelTable": {
-    "description": "User-facing label or message for ask AI model table."
-  },
-  "askAiModelTableTip": "Context sizes by model name, from models.dev. One ships with the app; tap to fetch a newer one.",
-  "@askAiModelTableTip": {
-    "description": "Help text for the ask AI model table setting or action."
-  },
-  "askAiContextFallback": "not in the table",
-  "@askAiContextFallback": {
-    "description": "User-facing label or message for ask AI context fallback."
-  },
-  "askAiCompactAt": "Summarise at",
-  "@askAiCompactAt": {
-    "description": "User-facing label or message for ask AI compact at."
-  },
-  "askAiCompactAtTip": "How full the model’s context gets before earlier turns are summarised. Earlier loses detail sooner; later risks a request the model refuses.",
-  "@askAiCompactAtTip": {
-    "description": "Help text for the ask AI compact at setting or action."
-  },
-  "askAiContextTokens": "Context size",
-  "@askAiContextTokens": {
-    "description": "User-facing label or message for ask AI context tokens."
-  },
-  "askAiContextTokensTip": "How many tokens this model holds. Automatic looks it up by name; set a number when your provider serves a shorter window than the model has.",
-  "@askAiContextTokensTip": {
-    "description": "Help text for the ask AI context tokens setting or action."
-  },
-  "askAiConversationCompacted": "Earlier messages were summarised to keep the conversation going.",
-  "@askAiConversationCompacted": {
-    "description": "User-facing label or message for ask AI conversation compacted."
   },
   "askAiRiskReadOnly": "Read-only",
   "@askAiRiskReadOnly": {
@@ -221,26 +100,6 @@
   "@askAiRiskDestructive": {
     "description": "User-facing label or message for ask AI risk destructive."
   },
-  "askAiHighRiskConfirmTitle": "Run high-risk command?",
-  "@askAiHighRiskConfirmTitle": {
-    "description": "Title shown for the ask AI high risk confirm dialog or section."
-  },
-  "askAiHighRiskConfirmBody": "This command may make changes that are hard to undo. Check it carefully.",
-  "@askAiHighRiskConfirmBody": {
-    "description": "Explanatory message shown in the ask AI high risk confirm dialog or notice."
-  },
-  "askAiNoCommandOutput": "Command completed without output.",
-  "@askAiNoCommandOutput": {
-    "description": "User-facing label or message for ask AI no command output."
-  },
-  "askAiOutputTruncated": "Long output was truncated before it was sent back to the Agent.",
-  "@askAiOutputTruncated": {
-    "description": "User-facing label or message for ask AI output truncated."
-  },
-  "askAiAutoApproved": "Auto-approved",
-  "@askAiAutoApproved": {
-    "description": "User-facing label or message for ask AI auto approved."
-  },
   "askAiAutoRunSafeCommands": "Auto-run read-only commands",
   "@askAiAutoRunSafeCommands": {
     "description": "User-facing label or message for ask AI auto run safe commands."
@@ -249,30 +108,6 @@
   "@askAiAutoRunSafeCommandsTip": {
     "description": "Help text for the ask AI auto run safe commands setting or action."
   },
-  "askAiSendOnEnter": "Enter sends",
-  "@askAiSendOnEnter": {
-    "description": "User-facing label or message for ask AI send on enter."
-  },
-  "askAiSendOnEnterTip": "Enter sends, Shift+Enter for a new line. Off: Enter for a new line, Cmd/Ctrl+Enter sends.",
-  "@askAiSendOnEnterTip": {
-    "description": "Help text for the ask AI send on enter setting or action."
-  },
-  "askAiApiKeyOptional": "Leave empty for local or unauthenticated",
-  "@askAiApiKeyOptional": {
-    "description": "User-facing label or message for ask AI API key optional."
-  },
-  "askAiAllowInsecure": "Allow plain HTTP",
-  "@askAiAllowInsecure": {
-    "description": "User-facing label or message for ask AI allow insecure."
-  },
-  "askAiAllowInsecureTip": "Allows http:// connections to self-hosted models at non-localhost addresses. The API key and any terminal context are sent unencrypted; localhost is unaffected.",
-  "@askAiAllowInsecureTip": {
-    "description": "Help text for the ask AI allow insecure setting or action."
-  },
-  "askAiInsecureEndpoint": "This endpoint uses http://. Turn on “Allow plain HTTP” in AI settings to use it.",
-  "@askAiInsecureEndpoint": {
-    "description": "User-facing label or message for ask AI insecure endpoint."
-  },
   "askAiHistory": "Conversation history",
   "@askAiHistory": {
     "description": "User-facing label or message for ask AI history."
@@ -280,14 +115,6 @@
   "askAiNewConversation": "New conversation",
   "@askAiNewConversation": {
     "description": "User-facing label or message for ask AI new conversation."
-  },
-  "askAiNoHistory": "No saved conversations yet",
-  "@askAiNoHistory": {
-    "description": "User-facing label or message for ask AI no history."
-  },
-  "askAiNoHistoryMessages": "No messages yet",
-  "@askAiNoHistoryMessages": {
-    "description": "User-facing label or message for ask AI no history messages."
   },
   "askAiUntitledConversation": "Untitled",
   "@askAiUntitledConversation": {
@@ -304,30 +131,6 @@
   "askAiDeleteConversationTip": "Deletes it from this device. Cannot be undone.",
   "@askAiDeleteConversationTip": {
     "description": "Help text for the ask AI delete conversation setting or action."
-  },
-  "askAiClearHistoryTitle": "Clear this server's Agent history?",
-  "@askAiClearHistoryTitle": {
-    "description": "Title shown for the ask AI clear history dialog or section."
-  },
-  "askAiClearHistoryTip": "Every saved Agent conversation for this server will be deleted.",
-  "@askAiClearHistoryTip": {
-    "description": "Help text for the ask AI clear history setting or action."
-  },
-  "askAiRestoredReview": "This command came from history. Review it again",
-  "@askAiRestoredReview": {
-    "description": "User-facing label or message for ask AI restored review."
-  },
-  "agentWelcome": "What should we do across your servers?",
-  "@agentWelcome": {
-    "description": "User-facing label or message for agent welcome."
-  },
-  "agentWelcomeTip": "Have the Agent diagnose a problem or carry out a task",
-  "@agentWelcomeTip": {
-    "description": "Help text for the agent welcome setting or action."
-  },
-  "agentPromptHint": "Ask the Agent to inspect or operate your servers...",
-  "@agentPromptHint": {
-    "description": "Hint shown in the agent prompt field or section."
   },
   "agentNoHistory": "No saved global Agent conversations",
   "@agentNoHistory": {
@@ -352,19 +155,6 @@
   "agentToolWriteFile": "Write file",
   "@agentToolWriteFile": {
     "description": "User-facing label or message for agent tool write file."
-  },
-  "agentToolFailed": "Tool execution failed.",
-  "@agentToolFailed": {
-    "description": "Error message shown when agent tool failed."
-  },
-  "agentToolCallsFmt": "{count} tool calls",
-  "@agentToolCallsFmt": {
-    "description": "Formatted user-facing message for agent tool calls; runtime values are supplied by placeholders.",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
   },
   "floatOverTabs": "Float over other tabs",
   "@floatOverTabs": {
@@ -1068,14 +858,6 @@
   "noConnectionMethod": "Configure SSH, a monitor agent, or both",
   "@noConnectionMethod": {
     "description": "User-facing label or message for no connection method."
-  },
-  "preferredTransport": "Try first",
-  "@preferredTransport": {
-    "description": "User-facing label or message for preferred transport."
-  },
-  "preferredTransportTip": "Where status is read from, and which connection a command opens first. The other stays available.",
-  "@preferredTransportTip": {
-    "description": "Help text for the preferred transport setting or action."
   },
   "keepForeground": "Keep app foreground!",
   "@keepForeground": {
@@ -1856,10 +1638,6 @@
   "@used": {
     "description": "User-facing label or message for used."
   },
-  "view": "View",
-  "@view": {
-    "description": "User-facing label or message for view."
-  },
   "viewDetails": "View Details",
   "@viewDetails": {
     "description": "User-facing label or message for view details."
@@ -2033,17 +1811,9 @@
   "@tmuxSessionName": {
     "description": "User-facing label or message for tmux session name."
   },
-  "tmuxExistingSessions": "Existing sessions",
-  "@tmuxExistingSessions": {
-    "description": "User-facing label or message for tmux existing sessions."
-  },
   "tmuxNewSession": "New session",
   "@tmuxNewSession": {
     "description": "User-facing label or message for tmux new session."
-  },
-  "tmuxWindows": "Windows",
-  "@tmuxWindows": {
-    "description": "User-facing label or message for tmux windows."
   },
   "tmuxNewWindow": "New window",
   "@tmuxNewWindow": {
@@ -2062,40 +1832,9 @@
       }
     }
   },
-  "tmuxPaneCount": "{count, plural, one{1 pane} other{{count} panes}}",
-  "@tmuxPaneCount": {
-    "description": "User-facing label or message for tmux pane count.",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "tmuxAttached": "Attached",
   "@tmuxAttached": {
     "description": "User-facing label or message for tmux attached."
-  },
-  "tmuxActive": "Active",
-  "@tmuxActive": {
-    "description": "User-facing label or message for tmux active."
-  },
-  "tmuxActiveAt": "active: {time}",
-  "@tmuxActiveAt": {
-    "description": "User-facing label or message for tmux active at.",
-    "placeholders": {
-      "time": {
-        "type": "String"
-      }
-    }
-  },
-  "tmuxAttachedAt": "attached: {time}",
-  "@tmuxAttachedAt": {
-    "description": "User-facing label or message for tmux attached at.",
-    "placeholders": {
-      "time": {
-        "type": "String"
-      }
-    }
   },
   "tmuxSkip": "Skip",
   "@tmuxSkip": {
@@ -2450,10 +2189,6 @@
   "bmcStaleWrite": "The BMC changed while this was being written. Try again.",
   "@bmcStaleWrite": {
     "description": "User-facing label or message for BMC stale write."
-  },
-  "send": "Send",
-  "@send": {
-    "description": "Action label for send."
   },
   "privacyBlur": "Background privacy",
   "@privacyBlur": {
@@ -2949,6 +2684,54 @@
       }
     }
   },
+  "agentServerTools": "Server tools",
+  "@agentServerTools": {
+    "description": "Agent: agentServerTools."
+  },
+  "agentServerToolsTip": "Run commands and read or write files on your servers, connect to other hosts over SSH, and use ServerBox's own actions.",
+  "@agentServerToolsTip": {
+    "description": "Agent: agentServerToolsTip."
+  },
+  "agentTerminalTools": "Terminal",
+  "@agentTerminalTools": {
+    "description": "Agent: agentTerminalTools."
+  },
+  "agentTerminalToolsTip": "In a terminal's own chats: read what the terminal shows, and run commands on its server.",
+  "@agentTerminalToolsTip": {
+    "description": "Agent: agentTerminalToolsTip."
+  },
+  "agentToolTerminalScreen": "Read the screen",
+  "@agentToolTerminalScreen": {
+    "description": "Agent: agentToolTerminalScreen."
+  },
+  "agentProviders": "Providers",
+  "@agentProviders": {
+    "description": "Agent: agentProviders."
+  },
+  "agentProvidersTip": "API keys, models, and the model a new chat uses",
+  "@agentProvidersTip": {
+    "description": "Agent: agentProvidersTip."
+  },
+  "agentTools": "Tools",
+  "@agentTools": {
+    "description": "Agent: agentTools."
+  },
+  "agentToolsTip": "What the Agent may use, and its MCP servers",
+  "@agentToolsTip": {
+    "description": "Agent: agentToolsTip."
+  },
+  "agentPermissions": "Permissions",
+  "@agentPermissions": {
+    "description": "Agent: agentPermissions."
+  },
+  "agentEmptyHint": "Ask about your servers, or ask the Agent to do something on them.",
+  "@agentEmptyHint": {
+    "description": "Agent: agentEmptyHint."
+  },
+  "agentTerminalEmptyHint": "Ask about this server. The Agent can read this terminal and run commands here.",
+  "@agentTerminalEmptyHint": {
+    "description": "Agent: agentTerminalEmptyHint."
+  },
   "oldestSampleFmt": "oldest sample {time}",
   "@oldestSampleFmt": {
     "description": "Formatted user-facing message for oldest sample; runtime values are supplied by placeholders.",
@@ -3272,50 +3055,9 @@
   "@connectionTip": {
     "description": "Help text for the connection setting or action."
   },
-  "transportOrderFmt": "Drag to change the order. {first} is dialled first; if it does not answer, {second} carries the session on its own.",
-  "@transportOrderFmt": {
-    "description": "Formatted user-facing message for transport order; runtime values are supplied by placeholders.",
-    "placeholders": {
-      "first": {
-        "type": "String"
-      },
-      "second": {
-        "type": "String"
-      }
-    }
-  },
-  "transportOnlyFmt": "Only {name} is on, so there is nothing to fall back to.",
-  "@transportOnlyFmt": {
-    "description": "Formatted user-facing message for transport only; runtime values are supplied by placeholders.",
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
   "transportNoneOn": "Both are off — this server cannot be connected.",
   "@transportNoneOn": {
     "description": "User-facing label or message for transport none on."
-  },
-  "transportOffKept": "off — settings kept, never dialled",
-  "@transportOffKept": {
-    "description": "User-facing label or message for transport off kept."
-  },
-  "transportDialledFirst": "dialled first",
-  "@transportDialledFirst": {
-    "description": "User-facing label or message for transport dialled first."
-  },
-  "transportFallback": "fallback",
-  "@transportFallback": {
-    "description": "User-facing label or message for transport fallback."
-  },
-  "transportOnlyMethod": "only method",
-  "@transportOnlyMethod": {
-    "description": "User-facing label or message for transport only method."
-  },
-  "transportOff": "off",
-  "@transportOff": {
-    "description": "User-facing label or message for transport off."
   },
   "thisDevice": "This device",
   "@thisDevice": {
@@ -3368,10 +3110,6 @@
   "optional": "Optional",
   "@optional": {
     "description": "User-facing label or message for optional."
-  },
-  "optionalTip": "Nothing here is needed to connect. Open one and its fields take over the form.",
-  "@optionalTip": {
-    "description": "Help text for the optional setting or action."
   },
   "sshAdvanced": "SSH advanced",
   "@sshAdvanced": {
@@ -4409,10 +4147,6 @@
       }
     }
   },
-  "reopen": "Reopen",
-  "@reopen": {
-    "description": "Button: show a console that is still running again."
-  },
   "virtSnapshots": "Snapshots",
   "@virtSnapshots": {
     "description": "A guest view and its heading: the guest's snapshots."
@@ -4639,10 +4373,6 @@
   "virtCreateNameTaken": "A guest with this name exists.",
   "@virtCreateNameTaken": {
     "description": "The new guest's name is already used."
-  },
-  "virtCreateVmidInvalid": "From 100 to 999999999.",
-  "@virtCreateVmidInvalid": {
-    "description": "The VMID is out of PVE's range."
   },
   "virtCreateVmidTaken": "This VMID is taken.",
   "@virtCreateVmidTaken": {
@@ -5349,10 +5079,6 @@
   "virtHwEfiStorage": "Where the EFI variables go",
   "@virtHwEfiStorage": {
     "description": "Hardware view (virtualization): EfiStorage"
-  },
-  "virtHwTpmStorage": "Where the TPM state goes",
-  "@virtHwTpmStorage": {
-    "description": "Hardware view (virtualization): TpmStorage"
   },
   "virtHwSwitchFirmwareAsk": "Switch {guest} to {firmware}?",
   "@virtHwSwitchFirmwareAsk": {
@@ -6260,10 +5986,6 @@
   "@virtSnapshotFormInternal": {
     "description": "Snapshot form: an internal snapshot."
   },
-  "virtSnapshotForm": "Kind",
-  "@virtSnapshotForm": {
-    "description": "Snapshot form: which kind of snapshot to take."
-  },
   "virtSnapshotOverlayPool": "Overlay pool",
   "@virtSnapshotOverlayPool": {
     "description": "Snapshot form: the pool an external snapshot puts its overlays in."
@@ -6301,15 +6023,6 @@
   "@virtSnapshotChainBase": {
     "description": "Snapshots view: the base image at the bottom of a chain."
   },
-  "virtSnapshotChainRaw": "An external snapshot needs a qcow2 disk. This one is {format}.",
-  "@virtSnapshotChainRaw": {
-    "description": "Snapshots view: a disk that is not qcow2, so no external snapshot.",
-    "placeholders": {
-      "format": {
-        "type": "String"
-      }
-    }
-  },
   "virtSnapshotNoSupport": "The guest's storage does not support snapshots, so none can be taken.",
   "@virtSnapshotNoSupport": {
     "description": "Snapshot form: the storage does not support snapshots (PVE)."
@@ -6333,10 +6046,6 @@
   "virtSnapshotDiffShow": "Compare with now",
   "@virtSnapshotDiffShow": {
     "description": "Snapshots view: the button that reads the diff."
-  },
-  "virtSnapshotDiffGroup": "Changed",
-  "@virtSnapshotDiffGroup": {
-    "description": "Snapshots view: the groups a diff is shown under."
   },
   "virtSnapshotDiffGroupCpu": "Processor",
   "@virtSnapshotDiffGroupCpu": {
@@ -6455,25 +6164,13 @@
   "@virtTemplateTip": {
     "description": "Guest view: what a template offers instead of power actions."
   },
-  "virtCloneStorage": "Target storage",
-  "@virtCloneStorage": {
-    "description": "Clone group: which storage the copy's disks go to."
-  },
   "virtCloneStorageSame": "Same as the source",
   "@virtCloneStorageSame": {
     "description": "Clone group: the source's own storage."
   },
-  "virtCloneNode": "Target node",
-  "@virtCloneNode": {
-    "description": "Clone group: the node the copy is made on."
-  },
   "virtCloneNodeSame": "Same as the source",
   "@virtCloneNodeSame": {
     "description": "Clone group: the source's own node."
-  },
-  "virtClonePool": "Target pool",
-  "@virtClonePool": {
-    "description": "Clone group (libvirt): the pool the copy's disks go in."
   },
   "virtCloneStorageContent": "This storage does not hold VM images.",
   "@virtCloneStorageContent": {
@@ -6502,10 +6199,6 @@
   "virtBackupJobNew": "New job",
   "@virtBackupJobNew": {
     "description": "Datacenter view: the button that adds a job."
-  },
-  "virtBackupJobEdit": "Edit job",
-  "@virtBackupJobEdit": {
-    "description": "Datacenter view: editing a job."
   },
   "virtBackupJobRun": "Run now",
   "@virtBackupJobRun": {
@@ -6577,14 +6270,6 @@
   "@virtBackupMail": {
     "description": "Job editor: when the job notifies."
   },
-  "virtBackupMailAlways": "Always",
-  "@virtBackupMailAlways": {
-    "description": "Job editor: notify on every run."
-  },
-  "virtBackupMailFailure": "On failure",
-  "@virtBackupMailFailure": {
-    "description": "Job editor: notify only on failure."
-  },
   "virtBackupNotesTemplate": "Backup notes",
   "@virtBackupNotesTemplate": {
     "description": "Job editor: the notes every backup the job makes carries."
@@ -6605,10 +6290,6 @@
   "virtBackupPruneTip": "PVE's retention options, e.g. keep-last=7,keep-daily=4. Empty: the storage's or the node's own.",
   "@virtBackupPruneTip": {
     "description": "Job editor: what the retention value looks like."
-  },
-  "virtBackupNextRun": "Next run",
-  "@virtBackupNextRun": {
-    "description": "Job list: when the job next runs."
   },
   "virtBackupJobNode": "Node",
   "@virtBackupJobNode": {
@@ -6653,10 +6334,6 @@
   "virtBackupRestoreStorageSame": "As in the backup",
   "@virtBackupRestoreStorageSame": {
     "description": "Backup view: a restore leaves the disks where the archive says."
-  },
-  "virtBackupModeSnapshotTip": "snapshot · no downtime",
-  "@virtBackupModeSnapshotTip": {
-    "description": "Backup view: snapshot mode keeps a running guest running."
   },
   "virtCloneStorageMissing": "No storage on this node holds VM images.",
   "@virtCloneStorageMissing": {

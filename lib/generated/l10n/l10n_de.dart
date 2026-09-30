@@ -74,112 +74,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get askAi => 'KI fragen';
 
   @override
-  String get askAiAwaitingResponse => 'Warte auf KI-Antwort...';
-
-  @override
-  String get askAiEndpointTip =>
-      'Domain oder vollständige URL. Der Pfad ergibt sich aus dem gewählten Protokoll.';
-
-  @override
-  String get askAiProtocolTip =>
-      'Auto probiert Responses, dann Chat Completions.';
-
-  @override
-  String get askAiCommandInserted => 'Befehl ins Terminal eingefügt';
-
-  @override
-  String askAiConfigMissing(String fields) {
-    return 'Bitte konfigurieren Sie $fields in den Einstellungen.';
-  }
-
-  @override
-  String get askAiDisclaimer =>
-      'KI kann Fehler machen. Bitte vorsichtig verwenden.';
-
-  @override
   String get askAiInsertTerminal => 'In Terminal einfügen';
 
   @override
-  String get askAiNoResponse => 'Keine Antwort';
-
-  @override
   String get remoteDesktop => 'Remotedesktop';
-
-  @override
-  String get askAiAgentWelcome => 'Was sollen wir auf diesem Server tun?';
-
-  @override
-  String get askAiAgentPromptHint =>
-      'Bitte den Agenten, etwas zu prüfen oder zu beheben …';
-
-  @override
-  String get askAiAnalyzeSelectionPrompt =>
-      'Die ausgewählte Terminalausgabe analysieren und erklären, was passiert ist';
-
-  @override
-  String get askAiTerminalContext => 'Terminal-Kontext';
-
-  @override
-  String get askAiReviewNeeded => 'Prüfen';
-
-  @override
-  String get askAiReviewAction => 'Vorgeschlagenen Befehl prüfen';
-
-  @override
-  String get askAiReviewBeforeContinuing =>
-      'Prüfe oder lehne den aktuellen Vorschlag zuerst ab';
-
-  @override
-  String get askAiApproveRun => 'Freigeben & ausführen';
-
-  @override
-  String get askAiDecline => 'Ablehnen';
-
-  @override
-  String get askAiActionDeclined =>
-      'Der vorgeschlagene Befehl wurde abgelehnt.';
-
-  @override
-  String get askAiInterrupted => 'Die Antwort des Agenten wurde unterbrochen.';
-
-  @override
-  String get askAiResend => 'Resend';
-
-  @override
-  String get askAiResendTip =>
-      'Alles nach dieser Nachricht wird verworfen: Antworten, Befehle und deren Ergebnisse.';
-
-  @override
-  String get askAiDeleteTip =>
-      'Diese Nachricht und alles danach wird gelöscht: Antworten, Befehle und deren Ergebnisse.';
-
-  @override
-  String get askAiModelTable => 'Model table';
-
-  @override
-  String get askAiModelTableTip =>
-      'Kontextgrößen nach Modellname von models.dev. Eine Version ist in der App enthalten; tippe, um eine neuere abzurufen.';
-
-  @override
-  String get askAiContextFallback => 'nicht in der Tabelle';
-
-  @override
-  String get askAiCompactAt => 'Summarise at';
-
-  @override
-  String get askAiCompactAtTip =>
-      'Legt fest, wie voll der Modellkontext sein darf, bevor frühere Beiträge zusammengefasst werden. Eine frühe Zusammenfassung verliert eher Details; eine späte erhöht das Risiko, dass das Modell die Anfrage ablehnt.';
-
-  @override
-  String get askAiContextTokens => 'Context size';
-
-  @override
-  String get askAiContextTokensTip =>
-      'Anzahl der Tokens, die dieses Modell aufnehmen kann. Automatisch sucht den Wert anhand des Modellnamens; gib eine Zahl an, wenn dein Anbieter ein kleineres Kontextfenster bereitstellt.';
-
-  @override
-  String get askAiConversationCompacted =>
-      'Frühere Nachrichten wurden zusammengefasst, damit die Unterhaltung fortgesetzt werden kann.';
 
   @override
   String get askAiRiskReadOnly => 'Nur lesend';
@@ -194,23 +92,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get askAiRiskDestructive => 'Hohes Risiko';
 
   @override
-  String get askAiHighRiskConfirmTitle => 'Befehl mit hohem Risiko ausführen?';
-
-  @override
-  String get askAiHighRiskConfirmBody =>
-      'Dieser Befehl kann schwer rückgängig zu machende Änderungen bewirken. Prüfe ihn genau.';
-
-  @override
-  String get askAiNoCommandOutput => 'Befehl ohne Ausgabe abgeschlossen.';
-
-  @override
-  String get askAiOutputTruncated =>
-      'Lange Ausgabe wurde gekürzt, bevor sie an den Agenten zurückging.';
-
-  @override
-  String get askAiAutoApproved => 'Automatisch freigegeben';
-
-  @override
   String get askAiAutoRunSafeCommands =>
       'Nur lesende Befehle automatisch ausführen';
 
@@ -219,38 +100,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Läuft nur, wenn Modell und lokale Prüfung ihn beide als lesend einstufen';
 
   @override
-  String get askAiSendOnEnter => 'Enter sendet';
-
-  @override
-  String get askAiSendOnEnterTip =>
-      'Enter sendet, Shift+Enter neue Zeile. Aus: Enter neue Zeile, Cmd/Strg+Enter sendet.';
-
-  @override
-  String get askAiApiKeyOptional =>
-      'Leer lassen für lokal oder ohne Authentifizierung';
-
-  @override
-  String get askAiAllowInsecure => 'Unverschlüsseltes HTTP zulassen';
-
-  @override
-  String get askAiAllowInsecureTip =>
-      'Erlaubt http://-Verbindungen zu selbst gehosteten Modellen an Adressen außerhalb von localhost. Der API-Schlüssel und etwaiger Terminalkontext werden unverschlüsselt übertragen; localhost ist nicht betroffen.';
-
-  @override
-  String get askAiInsecureEndpoint =>
-      'Dieser Endpunkt verwendet http://. Aktiviere in den AI-Einstellungen „Unverschlüsseltes HTTP zulassen“, um ihn zu verwenden.';
-
-  @override
   String get askAiHistory => 'Gesprächsverlauf';
 
   @override
   String get askAiNewConversation => 'Neues Gespräch';
-
-  @override
-  String get askAiNoHistory => 'Noch keine gespeicherten Unterhaltungen';
-
-  @override
-  String get askAiNoHistoryMessages => 'Noch keine Nachrichten';
 
   @override
   String get askAiUntitledConversation => 'Ohne Titel';
@@ -264,28 +117,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get askAiDeleteConversationTip =>
       'Löscht sie von diesem Gerät. Nicht rückgängig zu machen.';
-
-  @override
-  String get askAiClearHistoryTitle => 'Agent-Verlauf dieses Servers löschen?';
-
-  @override
-  String get askAiClearHistoryTip =>
-      'Alle gespeicherten Agent-Unterhaltungen dieses Servers werden gelöscht.';
-
-  @override
-  String get askAiRestoredReview =>
-      'Dieser Befehl stammt aus dem Verlauf. Prüfe ihn erneut';
-
-  @override
-  String get agentWelcome => 'Was sollen wir auf deinen Servern tun?';
-
-  @override
-  String get agentWelcomeTip =>
-      'Lass den Agent ein Problem untersuchen oder eine Aufgabe erledigen';
-
-  @override
-  String get agentPromptHint =>
-      'Bitte den Agenten, deine Server zu prüfen oder zu bedienen …';
 
   @override
   String get agentNoHistory => 'Keine gespeicherten globalen Agent-Gespräche';
@@ -305,14 +136,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get agentToolWriteFile => 'Datei schreiben';
-
-  @override
-  String get agentToolFailed => 'Ausführung des Werkzeugs fehlgeschlagen.';
-
-  @override
-  String agentToolCallsFmt(int count) {
-    return '$count Werkzeugaufrufe';
-  }
 
   @override
   String get floatOverTabs => 'Über anderen Tabs schweben';
@@ -860,13 +683,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get noConnectionMethod =>
       'SSH, einen monitor-Agenten oder beides einrichten';
-
-  @override
-  String get preferredTransport => 'Zuerst versuchen';
-
-  @override
-  String get preferredTransportTip =>
-      'Woher der Status gelesen wird und welche Verbindung ein Befehl zuerst öffnet. Die andere bleibt verfügbar.';
 
   @override
   String get keepForeground => 'Stelle sicher, dass die App geöffnet bleibt.';
@@ -1468,9 +1284,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get used => 'Gebraucht';
 
   @override
-  String get view => 'Ansicht';
-
-  @override
   String get viewDetails => 'Details anzeigen';
 
   @override
@@ -1616,13 +1429,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tmuxSessionName => 'Sitzungsname';
 
   @override
-  String get tmuxExistingSessions => 'Vorhandene Sitzungen';
-
-  @override
   String get tmuxNewSession => 'Neue Sitzung';
-
-  @override
-  String get tmuxWindows => 'Fenster';
 
   @override
   String get tmuxNewWindow => 'Neues Fenster';
@@ -1642,31 +1449,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String tmuxPaneCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count Panes',
-      one: '1 Pane',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String get tmuxAttached => 'Verbunden';
-
-  @override
-  String get tmuxActive => 'Aktiv';
-
-  @override
-  String tmuxActiveAt(String time) {
-    return 'aktiv: $time';
-  }
-
-  @override
-  String tmuxAttachedAt(String time) {
-    return 'verbunden: $time';
-  }
 
   @override
   String get tmuxSkip => 'Überspringen';
@@ -1954,9 +1737,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get bmcStaleWrite =>
       'Der BMC hat sich während des Schreibens geändert. Bitte erneut versuchen.';
-
-  @override
-  String get send => 'Senden';
 
   @override
   String get privacyBlur => 'Datenschutz im Hintergrund';
@@ -2337,6 +2117,47 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get agentServerTools => 'Server-Werkzeuge';
+
+  @override
+  String get agentServerToolsTip =>
+      'Befehle auf deinen Servern ausführen, Dateien lesen und schreiben, sich per SSH mit anderen Hosts verbinden und ServerBox-eigene Aktionen nutzen.';
+
+  @override
+  String get agentTerminalTools => 'Terminal';
+
+  @override
+  String get agentTerminalToolsTip =>
+      'In den eigenen Chats eines Terminals: lesen, was es anzeigt, und Befehle auf seinem Server ausführen.';
+
+  @override
+  String get agentToolTerminalScreen => 'Bildschirm lesen';
+
+  @override
+  String get agentProviders => 'Anbieter';
+
+  @override
+  String get agentProvidersTip =>
+      'API-Schlüssel, Modelle und das Modell für neue Chats';
+
+  @override
+  String get agentTools => 'Werkzeuge';
+
+  @override
+  String get agentToolsTip => 'Was der Agent nutzen darf, und seine MCP-Server';
+
+  @override
+  String get agentPermissions => 'Berechtigungen';
+
+  @override
+  String get agentEmptyHint =>
+      'Frag nach deinen Servern oder lass den Agent etwas auf ihnen erledigen.';
+
+  @override
+  String get agentTerminalEmptyHint =>
+      'Frag nach diesem Server. Der Agent kann dieses Terminal lesen und hier Befehle ausführen.';
+
+  @override
   String oldestSampleFmt(String time) {
     return 'älteste Messung $time';
   }
@@ -2537,34 +2358,8 @@ class AppLocalizationsDe extends AppLocalizations {
       'Beide können gleichzeitig an sein. Die Reihenfolge ist die Reihenfolge, in der gewählt wird.';
 
   @override
-  String transportOrderFmt(String first, String second) {
-    return 'Zum Ändern der Reihenfolge ziehen. $first wird zuerst gewählt; antwortet es nicht, trägt $second die Sitzung allein.';
-  }
-
-  @override
-  String transportOnlyFmt(String name) {
-    return 'Nur $name ist an, es gibt also nichts, worauf ausgewichen werden könnte.';
-  }
-
-  @override
   String get transportNoneOn =>
       'Beide sind aus — dieser Server kann nicht verbunden werden.';
-
-  @override
-  String get transportOffKept =>
-      'aus — Einstellungen bleiben, wird nie gewählt';
-
-  @override
-  String get transportDialledFirst => 'zuerst gewählt';
-
-  @override
-  String get transportFallback => 'Ausweichweg';
-
-  @override
-  String get transportOnlyMethod => 'einziger Weg';
-
-  @override
-  String get transportOff => 'aus';
 
   @override
   String get thisDevice => 'Dieses Gerät';
@@ -2612,10 +2407,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get optional => 'Optional';
-
-  @override
-  String get optionalTip =>
-      'Nichts hiervon ist zum Verbinden nötig. Öffnen Sie eines, und seine Felder übernehmen das Formular.';
 
   @override
   String get sshAdvanced => 'SSH erweitert';
@@ -3457,9 +3248,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get reopen => 'Erneut öffnen';
-
-  @override
   String get virtSnapshots => 'Snapshots';
 
   @override
@@ -3634,9 +3422,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get virtCreateNameTaken =>
       'Es gibt bereits einen Gast mit diesem Namen.';
-
-  @override
-  String get virtCreateVmidInvalid => 'Von 100 bis 999999999.';
 
   @override
   String get virtCreateVmidTaken => 'Diese VMID ist vergeben.';
@@ -4144,9 +3929,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get virtHwEfiStorage => 'Speicher für die EFI-Variablen';
-
-  @override
-  String get virtHwTpmStorage => 'Speicher für den TPM-Zustand';
 
   @override
   String virtHwSwitchFirmwareAsk(String guest, String firmware) {
@@ -4802,9 +4584,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get virtSnapshotFormInternal => 'Intern (im Datenträgerbild)';
 
   @override
-  String get virtSnapshotForm => 'Art';
-
-  @override
   String get virtSnapshotOverlayPool => 'Overlay-Pool';
 
   @override
@@ -4832,11 +4611,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get virtSnapshotChainBase => 'Basisabbild';
 
   @override
-  String virtSnapshotChainRaw(String format) {
-    return 'Ein externer Snapshot braucht einen qcow2-Datenträger. Dieser ist $format.';
-  }
-
-  @override
   String get virtSnapshotNoSupport =>
       'Der Speicher des Gastes unterstützt keine Snapshots, daher kann keiner erstellt werden.';
 
@@ -4857,9 +4631,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get virtSnapshotDiffShow => 'Mit jetzt vergleichen';
-
-  @override
-  String get virtSnapshotDiffGroup => 'Geändert';
 
   @override
   String get virtSnapshotDiffGroupCpu => 'Prozessor';
@@ -4941,19 +4712,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Eine Vorlage läuft erst, wenn sie geklont wurde.';
 
   @override
-  String get virtCloneStorage => 'Zielspeicher';
-
-  @override
   String get virtCloneStorageSame => 'Wie die Quelle';
 
   @override
-  String get virtCloneNode => 'Zielknoten';
-
-  @override
   String get virtCloneNodeSame => 'Wie die Quelle';
-
-  @override
-  String get virtClonePool => 'Ziel-Pool';
 
   @override
   String get virtCloneStorageContent =>
@@ -4979,9 +4741,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get virtBackupJobNew => 'Neuer Auftrag';
-
-  @override
-  String get virtBackupJobEdit => 'Auftrag bearbeiten';
 
   @override
   String get virtBackupJobRun => 'Jetzt ausführen';
@@ -5035,12 +4794,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get virtBackupMail => 'Benachrichtigung';
 
   @override
-  String get virtBackupMailAlways => 'Immer';
-
-  @override
-  String get virtBackupMailFailure => 'Bei Fehler';
-
-  @override
   String get virtBackupNotesTemplate => 'Sicherungsnotizen';
 
   @override
@@ -5054,9 +4807,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get virtBackupPruneTip =>
       'PVEs Aufbewahrungsoptionen, z. B. keep-last=7,keep-daily=4. Leer: die des Speichers oder des Knotens.';
-
-  @override
-  String get virtBackupNextRun => 'Nächster Lauf';
 
   @override
   String get virtBackupJobNode => 'Knoten';
@@ -5091,9 +4841,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get virtBackupRestoreStorageSame => 'Wie in der Sicherung';
-
-  @override
-  String get virtBackupModeSnapshotTip => 'snapshot · kein Ausfall';
 
   @override
   String get virtCloneStorageMissing =>

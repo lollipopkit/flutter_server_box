@@ -646,49 +646,6 @@ class BenchmarkRuns extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-/// `data` stays JSON: a conversation is an ordered log of heterogeneous items
-/// read only ever whole, never queried by field. Columns would buy nothing and
-/// cost a migration for every new item kind.
-///
-/// `serverId` has no foreign key: the global agent uses a scope id that is not
-/// a server.
-///
-/// No sync columns, and not a sync root: a conversation carries terminal output
-/// and reasoning, so it is deliberately left out of backup and sync. Its
-/// `updatedAt` is the conversation's own timestamp — what the list is ordered
-/// by and what the per-server cap keeps — rather than a record of when this
-/// device last touched the row.
-@DataClassName('AgentConversationRow')
-class AgentConversations extends Table {
-  @override
-  String get tableName => 'agent_conversation';
-  @override
-  bool get withoutRowId => true;
-
-  TextColumn get id => text()();
-  TextColumn get serverId => text()();
-  IntColumn get updatedAt => integer()();
-  TextColumn get data => text()();
-
-  @override
-  Set<Column> get primaryKey => {id};
-}
-
-@DataClassName('AgentActiveConversationRow')
-class AgentActiveConversations extends Table {
-  @override
-  String get tableName => 'agent_active_conversation';
-  @override
-  bool get withoutRowId => true;
-
-  TextColumn get serverId => text()();
-  TextColumn get conversationId => text()
-      .references(AgentConversations, #id, onDelete: KeyAction.cascade)();
-
-  @override
-  Set<Column> get primaryKey => {serverId};
-}
-
 /// A delete has to be a fact that can travel. Without this the peer that still
 /// holds the row reads its absence as an addition and puts it back, which is
 /// how a deleted server returns on the next sync.
@@ -765,8 +722,6 @@ class SyncStates extends Table {
     ConnStats,
     ServerDists,
     BenchmarkRuns,
-    AgentConversations,
-    AgentActiveConversations,
     Tombstones,
     SyncStates,
   ],
@@ -822,8 +777,6 @@ class AppDb extends _$AppDb {
     // this table is ever read.
     'CREATE INDEX IF NOT EXISTS idx_benchmark_run_server_started '
         'ON benchmark_run(server_id, started_at DESC);',
-    'CREATE INDEX IF NOT EXISTS idx_agent_conversation_server_updated '
-        'ON agent_conversation(server_id, updated_at DESC);',
     'CREATE INDEX IF NOT EXISTS idx_tombstone_deleted '
         'ON tombstone(deleted_at);',
   ];

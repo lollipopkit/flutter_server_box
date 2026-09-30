@@ -3,26 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
-import 'package:server_box/data/model/ai/ask_ai_models.dart';
-import 'package:server_box/data/provider/ai/agent_session.dart';
 import 'package:server_box/data/provider/ai/agent_shell.dart';
 import 'package:server_box/data/res/store.dart';
-import 'package:server_box/data/store/agent_conversation.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/agent/shell.dart';
 import 'package:server_box/view/page/agent/view.dart';
 
 import '../helpers/test_db.dart';
-
-/// An [AgentSession] frozen at one state, as in `agent_view_test.dart`: these
-/// tests are about the window the conversation is shown in, not about the
-/// conversation.
-class _FixedSession extends AgentSession {
-  @override
-  AgentSessionState build(String scope) =>
-      const AgentSessionState(protocol: AskAiProtocol.chatCompletions);
-}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -33,7 +21,6 @@ void main() {
     // changes, so every test here writes, and none of them should leave a
     // database behind.
     getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
-    getIt.registerSingleton<AgentConversationStore>(AgentConversationStore());
   });
 
   tearDown(() async {
@@ -60,9 +47,7 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
-    final container = ProviderContainer(
-      overrides: [globalAgentSessionProvider.overrideWith(_FixedSession.new)],
-    );
+    final container = ProviderContainer();
     addTearDown(container.dispose);
 
     await tester.pumpWidget(

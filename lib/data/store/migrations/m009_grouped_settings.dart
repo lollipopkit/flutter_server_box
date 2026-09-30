@@ -1,4 +1,3 @@
-import 'package:server_box/data/model/app/ask_ai_config.dart';
 import 'package:server_box/data/model/app/float_shell_config.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
@@ -8,9 +7,10 @@ import 'package:server_box/data/store/setting.dart';
 ///
 /// Fourteen `kv` rows for two pieces of state: fourteen entries in a backup,
 /// fourteen in the sync timestamps, fourteen lines in the raw settings editor.
-/// They are `agentShell` and `askAi` now — see [FloatShellConfig] and
-/// [AskAiConfig] for the shapes, and `FieldProp` for how a caller still reads
-/// and writes one field at a time.
+/// They are `agentShell` and `askAi` now — see [FloatShellConfig] for the
+/// first. The second is read by nothing but `LegacyAskAiMigration` since the
+/// Agent moved to fl_pi_llm, so it is written here as the plain map that
+/// migration takes: the fields found, and no defaults filled in.
 ///
 /// Each field is taken only when the old key is actually present, so anything
 /// the user never touched keeps the model's default rather than being frozen
@@ -53,24 +53,25 @@ class GroupedSettingsMigration implements SchemaMigration {
   }
 
   static void _groupAskAi(SettingStore store) {
-    var config = store.askAi.get();
+    final existing = store.get<Object>('askAi');
     final read = _Reader(store);
 
-    config = config.copyWith(
-      baseUrl: read.string('askAiBaseUrl'),
-      apiKey: read.string('askAiApiKey'),
-      model: read.string('askAiModel'),
-      protocol: read.string('askAiProtocol'),
-      autoRunSafeCommands: read.boolean('askAiAutoRunSafeCommands'),
-      sendOnEnter: read.boolean('askAiSendOnEnter'),
-    );
+    final config = <String, Object?>{
+      if (existing is Map) ...existing.cast<String, Object?>(),
+      'baseUrl': ?read.string('askAiBaseUrl'),
+      'apiKey': ?read.string('askAiApiKey'),
+      'model': ?read.string('askAiModel'),
+      'protocol': ?read.string('askAiProtocol'),
+      'autoRunSafeCommands': ?read.boolean('askAiAutoRunSafeCommands'),
+      'sendOnEnter': ?read.boolean('askAiSendOnEnter'),
+    };
 
     if (!read.sawAnything) return;
     // Checked, not assumed: `SqliteStore.set` answers `false` on a failure to
     // encode or to write rather than throwing. Removing the old keys after one
     // of those would leave the values in neither shape, and the step is not
     // run again once the version has moved.
-    if (!store.set('askAi', config.toJson(), updateLastUpdateTsOnSet: false)) {
+    if (!store.set('askAi', config, updateLastUpdateTsOnSet: false)) {
       throw StateError('m009: writing "askAi" failed');
     }
     read.removeAll();

@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/container/type.dart';
-import 'package:server_box/data/store/agent_conversation.dart';
 import 'package:server_box/data/store/container.dart';
 import 'package:server_box/data/store/migrations/m004_kv_to_tables.dart';
 import 'package:server_box/data/store/port_forward.dart';
@@ -106,34 +105,28 @@ void main() {
   });
 
   test(
-    'an agent conversation follows it, in the column and in the JSON',
+    'an agent conversation is left behind, with the rest of its store',
     () async {
-      // The store rebuilds a conversation from `data` and compares the
-      // `serverId` it finds there against the server it was asked about. A
-      // payload still naming the old key left the conversation reachable by no
-      // path at all: not `fetchActive`, not `setActive`, not delete.
+      // The Agent's chats are fl_pi_llm sessions now, and the old
+      // conversations have no path into them — see m031.
       seedLegacyServer();
       seed('agent_conversation', 'conversation::conv-1', {
         'id': 'conv-1',
         'server_id': legacyRef,
-        'title': 'disk is filling up',
-        'created_at': '2026-01-01T00:00:00.000',
-        'updated_at': '2026-01-02T00:00:00.000',
-        'protocol': 'responses',
-        'provider_base_url': 'https://api.openai.com',
-        'model': 'gpt-test',
         'items': <Object>[],
       });
       seed('agent_conversation', 'active::$legacyRef', 'conv-1');
 
-      final id = await migrate();
-      final store = AgentConversationStore();
+      await migrate();
 
-      expect(store.activeConversationId(id), 'conv-1');
-      expect(store.fetchForServer(id).single.serverId, id);
-      // The one that reads the column and the payload together.
-      expect(store.fetchActive(id)?.id, 'conv-1');
-      expect(store.fetchForServer(legacyRef), isEmpty);
+      expect(
+        SqliteDb.instance
+            .select(
+              "SELECT count(*) AS n FROM kv WHERE store = 'agent_conversation';",
+            )
+            .single['n'],
+        0,
+      );
     },
   );
 
@@ -340,16 +333,6 @@ void main() {
       'timestamp': '2026-01-01T00:00:00.000',
       'result': 'success',
     });
-    seed('agent_conversation', 'conversation::broken', {
-      'id': <String>['not', 'a', 'string'],
-      'server_id': legacyRef,
-    });
-    seed('agent_conversation', 'conversation::healthy', {
-      'id': 'healthy-conversation',
-      'server_id': legacyRef,
-      'updated_at': '2026-01-01T00:00:00.000',
-      'items': <Object>[],
-    });
 
     final id = await migrate();
 
@@ -360,10 +343,6 @@ void main() {
           .select('SELECT count(*) AS n FROM conn_stat;')
           .single['n'],
       1,
-    );
-    expect(
-      AgentConversationStore().fetchForServer(id).single.id,
-      'healthy-conversation',
     );
   });
 }
