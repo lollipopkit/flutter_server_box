@@ -151,7 +151,12 @@ class AgentConversationView extends StatelessWidget {
                   ? _buildEmpty(context)
                   // Keyed: a different chat is a different conversation, with
                   // its own scroll position.
-                  : LlmConversation(key: ValueKey(id), chatId: id),
+                  // The header and the list of chats say it is running.
+                  : LlmConversation(
+                      key: ValueKey(id),
+                      chatId: id,
+                      showLoading: false,
+                    ),
             ),
             // Inset and as wide as the messages above it.
             LayoutBuilder(
