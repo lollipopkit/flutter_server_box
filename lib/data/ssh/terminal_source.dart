@@ -44,6 +44,10 @@ final class ServerSource extends TerminalSource {
   @override
   String get id => spi.id;
 
+  /// The server's configured variables, over whatever the shell inherits —
+  /// for a server that is this device too, since the editor offers them there
+  /// as well. A local pty and `Process.start` both merge them over the app's
+  /// own environment, so only a variable set here replaces anything.
   @override
   Map<String, String>? get environment => buildSshTerminalEnvironment(spi.envs);
 

@@ -253,7 +253,8 @@ final class _TmuxNewSessionRow extends StatelessWidget {
         ),
       ],
     );
-    if (result == null || result.isEmpty) return;
+    // The dialog is on the root navigator and can outlive the sheet.
+    if (result == null || result.isEmpty || !sheetContext.mounted) return;
     Navigator.of(sheetContext).pop(TmuxPickNew(result));
   }
 }

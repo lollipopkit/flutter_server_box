@@ -90,6 +90,36 @@ void main() {
     expect((result as TmuxPickNew).sessionName, 'work');
   });
 
+  testWidgets('a name confirmed after the sheet is gone is dropped', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const _PickerHost());
+    final context = tester.element(find.byType(Scaffold));
+    final future = showTmuxSessionPickerSheet(
+      context,
+      sessions: sessions,
+      defaultSessionName: 'server_box',
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.text('New session'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    // The dialog is above the sheet on the root navigator; the sheet goes
+    // first, as when the page under it is torn down.
+    final sheet = ModalRoute.of(tester.element(find.byType(BottomSheet)))!;
+    Navigator.of(context).removeRoute(sheet);
+    await tester.pump();
+    expect(await future, isNull);
+
+    await tester.tap(find.text('Okay'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(tester.takeException(), isNull);
+    expect(find.byType(AlertDialog), findsNothing);
+  });
+
   testWidgets('prefills a non-conflicting session name', (tester) async {
     final conflictedSessions = [
       TmuxPickerSession(

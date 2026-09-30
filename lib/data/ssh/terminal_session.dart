@@ -381,18 +381,17 @@ class TerminalSession {
   static final int _maxOsc52EncodedChars = ((_maxOsc52Bytes + 2) ~/ 3) * 4;
 
   void _handlePrivateOSC(String code, List<String> args) {
-    if (code != '52' || args.length < 2) return;
-    // Bounded before joining, so an oversized payload is not copied first.
-    final parts = args.skip(1);
-    final length = parts.fold(parts.length - 1, (sum, p) => sum + p.length);
-    if (length > _maxOsc52EncodedChars) {
+    // Selection and payload; base64 has no `;`, so more fields are malformed.
+    // xterm bounds the sequence itself (`EscapeParser.maxOscLength`).
+    if (code != '52' || args.length != 2) return;
+    final data = args[1];
+    if (data.length > _maxOsc52EncodedChars) {
       Loggers.app.warning(
         'OSC 52 clipboard request exceeded $_maxOsc52EncodedChars characters',
       );
       return;
     }
     final selection = args[0].isEmpty ? 'c' : args[0];
-    final data = parts.join(';');
     unawaited(_handleOsc52(selection, data));
   }
 
