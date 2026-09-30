@@ -2011,6 +2011,19 @@ class AppLocalizationsKo extends AppLocalizations {
   String get agentToolsTip => 'Agent가 쓸 수 있는 도구와 MCP 서버';
 
   @override
+  String get agentSnippetToolsTip => 'snippet 목록 보기, 추가, 수정, 삭제. 변경 시 확인합니다.';
+
+  @override
+  String get agentVirtToolsTip => '가상화 탭이 불러온 VM과 컨테이너를 읽습니다.';
+
+  @override
+  String get agentBenchmarkToolsTip => '벤치마크 결과를 읽고, 승인 후 벤치마크를 실행하거나 중지합니다.';
+
+  @override
+  String get agentRemoteDesktopToolsTip =>
+      '원격 데스크톱 프로필을 보고, 승인 후 연결하거나 연결을 끊습니다.';
+
+  @override
   String get agentSkills => 'Skills';
 
   @override

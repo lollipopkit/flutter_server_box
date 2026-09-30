@@ -2720,6 +2720,22 @@
   "@agentToolsTip": {
     "description": "Agent: agentToolsTip."
   },
+  "agentSnippetToolsTip": "List, add, change and delete your snippets. Changes are asked about.",
+  "@agentSnippetToolsTip": {
+    "description": "Agent: agentSnippetToolsTip."
+  },
+  "agentVirtToolsTip": "Read the VMs and containers the Virtualization tab has loaded.",
+  "@agentVirtToolsTip": {
+    "description": "Agent: agentVirtToolsTip."
+  },
+  "agentBenchmarkToolsTip": "Read benchmark results, and run or stop a benchmark with your approval.",
+  "@agentBenchmarkToolsTip": {
+    "description": "Agent: agentBenchmarkToolsTip."
+  },
+  "agentRemoteDesktopToolsTip": "List remote desktop profiles, and connect or disconnect with your approval.",
+  "@agentRemoteDesktopToolsTip": {
+    "description": "Agent: agentRemoteDesktopToolsTip."
+  },
   "agentSkills": "Skills",
   "@agentSkills": {
     "description": "Agent: agentSkills."

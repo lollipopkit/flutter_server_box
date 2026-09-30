@@ -29,9 +29,16 @@ enum FloatShellMode {
 /// two positions. The arithmetic below is static: it is the same question
 /// whichever panel is asking, and none of it reads the store.
 final class FloatShellGeometry {
-  const FloatShellGeometry(this._props, {required this.defaultCorner});
+  const FloatShellGeometry(
+    this._props, {
+    required this.defaultCorner,
+    this.defaultMode = FloatShellMode.hidden,
+  });
 
   final FloatShellProps _props;
+
+  /// How a panel that has never been opened or closed starts.
+  final FloatShellMode defaultMode;
 
   /// Which corner a panel that has never been placed starts in.
   ///
@@ -91,7 +98,10 @@ final class FloatShellGeometry {
 
   /// How the panel was last left, for a caller that reopens it the way it was
   /// rather than always fully open.
-  FloatShellMode get storedMode => FloatShellMode.parse(_props.mode.fetch());
+  FloatShellMode get storedMode => switch (_props.mode.fetch()) {
+    '' => defaultMode,
+    final name => FloatShellMode.parse(name),
+  };
 
   void saveMode(FloatShellMode mode) => _props.mode.put(mode.name);
 

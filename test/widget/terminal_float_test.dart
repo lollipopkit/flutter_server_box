@@ -234,6 +234,9 @@ void main() {
         tester,
         view: const Size(390, 844),
       );
+      // Floating until closed; closed here, as a user would.
+      container.read(agentShellProvider.notifier).hide();
+      await settle(tester);
       expect(container.read(agentShellProvider), FloatShellMode.hidden);
 
       container

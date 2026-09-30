@@ -2138,6 +2138,22 @@ class AppLocalizationsNl extends AppLocalizations {
   String get agentToolsTip => 'Wat de Agent mag gebruiken, en zijn MCP-servers';
 
   @override
+  String get agentSnippetToolsTip =>
+      'Snippets weergeven, toevoegen, wijzigen en verwijderen. Wijzigingen worden gevraagd.';
+
+  @override
+  String get agentVirtToolsTip =>
+      'De VM’s en containers lezen die het tabblad Virtualisatie heeft geladen.';
+
+  @override
+  String get agentBenchmarkToolsTip =>
+      'Benchmarkresultaten lezen; met je goedkeuring een benchmark starten of stoppen.';
+
+  @override
+  String get agentRemoteDesktopToolsTip =>
+      'Profielen voor extern bureaublad weergeven; met je goedkeuring verbinden of verbreken.';
+
+  @override
   String get agentSkills => 'Skills';
 
   @override

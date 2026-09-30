@@ -3712,6 +3712,30 @@ abstract class AppLocalizations {
   /// **'What the Agent may use, and its MCP servers'**
   String get agentToolsTip;
 
+  /// Agent: agentSnippetToolsTip.
+  ///
+  /// In en, this message translates to:
+  /// **'List, add, change and delete your snippets. Changes are asked about.'**
+  String get agentSnippetToolsTip;
+
+  /// Agent: agentVirtToolsTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Read the VMs and containers the Virtualization tab has loaded.'**
+  String get agentVirtToolsTip;
+
+  /// Agent: agentBenchmarkToolsTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Read benchmark results, and run or stop a benchmark with your approval.'**
+  String get agentBenchmarkToolsTip;
+
+  /// Agent: agentRemoteDesktopToolsTip.
+  ///
+  /// In en, this message translates to:
+  /// **'List remote desktop profiles, and connect or disconnect with your approval.'**
+  String get agentRemoteDesktopToolsTip;
+
   /// Agent: agentSkills.
   ///
   /// In en, this message translates to:

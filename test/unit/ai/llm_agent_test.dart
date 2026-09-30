@@ -12,11 +12,18 @@ import 'package:server_box/core/llm/host.dart';
 import 'package:server_box/core/llm/scope.dart';
 import 'package:server_box/core/llm/tools.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
+import 'package:server_box/data/model/server/remote_desktop.dart';
+import 'package:server_box/data/model/server/snippet.dart';
+import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/private_key.dart';
+import 'package:server_box/data/store/pve.dart';
+import 'package:server_box/data/store/remote_desktop.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/snippet.dart';
 
+import '../../helpers/spi_fixture.dart';
 import '../../helpers/test_db.dart';
 
 /// What each request asked for, and the tool calls the mock answers with:
@@ -140,6 +147,9 @@ void main() {
     getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
     getIt.registerSingleton<ServerStore>(ServerStore());
     getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore());
+    getIt.registerSingleton<SnippetStore>(SnippetStore());
+    getIt.registerSingleton<RemoteDesktopStore>(RemoteDesktopStore());
+    getIt.registerSingleton<PveStore>(PveStore());
     Stores.setting.serverStatusUpdateInterval.put(0);
     for (final store in LlmStores.all) {
       await store.init();
@@ -220,6 +230,89 @@ void main() {
     final reply = chat.entries.value.last.message!;
     expect(reply.thinking, 'Checking the uptime.');
     expect(reply.text, 'It has been up a week.');
+  });
+
+  group("the app's own features", () {
+    final ctx = ToolCtx('c', LlmCancelToken());
+    String text(LlmToolResult r) => r.content.single['text'] as String;
+    ToolFunc tool(String name) => Tools.internal(name)!;
+
+    test('are offered to the app-wide Agent, not to a terminal', () async {
+      final id = Chats.create();
+      await Chats.send(id, 'hello');
+      expect(_tools(seen.last), containsAll(['snippet', 'virt_read', 'benchmark', 'remote_desktop']));
+      final t = Chats.create(scope: AgentScope.terminal('srv-1'));
+      await Chats.send(t, 'hello');
+      expect(_tools(seen.last).intersection({'snippet', 'virt_read', 'benchmark', 'remote_desktop'}), isEmpty);
+    });
+
+    test('snippets: read freely, changed with a yes, never set to run by themselves', () async {
+      final snippet = tool('snippet');
+      expect(await snippet.preApprove({'action': 'list'}, 'c'), isNotNull);
+      expect(await snippet.preApprove({'action': 'add'}, 'c'), isNull);
+
+      // One the user set to run on a server when it connects — a server the
+      // database has, which the setting points at.
+      Stores.server.put(spiFixture(name: 'web', id: 'srv-1', ip: '10.0.0.1'));
+      addTearDown(() => Stores.server.deleteById('srv-1'));
+      await AgentScope.container.read(snippetProvider.notifier).add(
+        const Snippet(id: 'sn-1', name: 'uptime', script: 'uptime', autoRunOn: ['srv-1']),
+      );
+      expect(text(await snippet.run({'action': 'list'}, ctx)), isNot(contains('autoRunOn')));
+
+      await snippet.run({'action': 'update', 'id': 'sn-1', 'script': 'uptime -p'}, ctx);
+      final updated = AgentScope.container.read(snippetProvider).snippets.singleWhere((s) => s.id == 'sn-1');
+      expect(updated.script, 'uptime -p');
+      expect(updated.autoRunOn, ['srv-1'], reason: 'the model does not touch it');
+
+      final added = text(await snippet.run({'action': 'add', 'name': 'df', 'script': 'df -h', 'tags': ['disk']}, ctx));
+      final newId = RegExp(r'\((\w+)\)').firstMatch(added)![1]!;
+      expect(Stores.snippet.fetch().singleWhere((s) => s.id == newId).tags, ['disk']);
+      await snippet.run({'action': 'delete', 'id': newId}, ctx);
+      await snippet.run({'action': 'delete', 'id': 'sn-1'}, ctx);
+      expect(Stores.snippet.fetch(), isEmpty);
+    });
+
+    test('virtualization: only what is loaded, never a load', () async {
+      expect(text(await tool('virt_read').run({}, ctx)), contains('No virtualization host'));
+    });
+
+    test('remote desktop: listed freely; one without a password is left to the user', () async {
+      final rd = tool('remote_desktop');
+      expect(text(await rd.run({'action': 'list'}, ctx)), 'No remote desktop profiles.');
+      Stores.server.put(spiFixture(name: 'web', id: 'srv-1', ip: '10.0.0.1'));
+      addTearDown(() => Stores.server.deleteById('srv-1'));
+      Stores.remoteDesktop.put(const RemoteDesktopProfile(
+        id: 'rd-1',
+        serverId: 'srv-1',
+        name: 'desk',
+        protocol: RemoteDesktopProtocol.vnc,
+        port: 5900,
+      ));
+      addTearDown(() => Stores.remoteDesktop.deleteById('rd-1'));
+      expect(text(await rd.run({'action': 'list'}, ctx)), contains('"password_saved":false'));
+      expect(rd.preApprove({'action': 'connect', 'profile_id': 'rd-1'}, 'c'), isNull);
+      await expectLater(rd.run({'action': 'connect', 'profile_id': 'rd-1'}, ctx), throwsA(isA<LlmException>()));
+      await expectLater(rd.run({'action': 'connect', 'profile_id': 'nope'}, ctx), throwsA(isA<LlmException>()));
+    });
+
+    test('benchmark: read freely, a run never allowed for good', () async {
+      final bench = tool('benchmark');
+      expect(bench.allowAlways, isFalse);
+      expect(bench.preApprove({'action': 'run'}, 'c'), isNull);
+      expect(bench.preApprove({'action': 'read'}, 'c'), isNotNull);
+      await expectLater(bench.run({'action': 'list', 'server_id': 'nope'}, ctx), throwsA(isA<LlmException>()));
+    });
+  });
+
+  test("an app notice is the app's, and the model answers it", () async {
+    final id = Chats.create();
+    final chat = await Chats.open(id);
+    await Chats.notify(id, 'The benchmark ended.');
+    final first = chat.entries.value.first.message!;
+    expect(Chats.noticeOf(first), 'The benchmark ended.');
+    expect(chat.entries.value.last.message!.role, 'assistant');
+    expect((seen.last['messages'] as List).first['content'], contains('<app_notice>'));
   });
 
   group('the settings from before fl_pi_llm', () {

@@ -38,7 +38,7 @@ Map<String, dynamic> _$FloatShellPillToJson(FloatShellPill instance) =>
 
 FloatShellConfig _$FloatShellConfigFromJson(Map<String, dynamic> json) =>
     FloatShellConfig(
-      mode: json['mode'] as String? ?? 'hidden',
+      mode: json['mode'] as String?,
       window: json['window'] == null
           ? const FloatShellWindow()
           : FloatShellWindow.fromJson(json['window'] as Map<String, dynamic>),

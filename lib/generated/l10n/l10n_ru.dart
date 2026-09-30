@@ -2143,6 +2143,22 @@ class AppLocalizationsRu extends AppLocalizations {
   String get agentToolsTip => 'Что может использовать Agent, и его серверы MCP';
 
   @override
+  String get agentSnippetToolsTip =>
+      'Просмотр, добавление, изменение и удаление snippets. Изменения подтверждаются.';
+
+  @override
+  String get agentVirtToolsTip =>
+      'Чтение ВМ и контейнеров, загруженных вкладкой «Виртуализация».';
+
+  @override
+  String get agentBenchmarkToolsTip =>
+      'Чтение результатов бенчмарка; запуск или остановка с вашего одобрения.';
+
+  @override
+  String get agentRemoteDesktopToolsTip =>
+      'Список профилей удалённого рабочего стола; подключение и отключение с вашего одобрения.';
+
+  @override
   String get agentSkills => 'Skills';
 
   @override

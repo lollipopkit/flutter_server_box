@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/llm/app_tools.dart';
 import 'package:server_box/core/llm/scope.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/provider/ai/global_agent_tools.dart';
@@ -26,6 +27,7 @@ abstract final class AgentTools {
     for (final def in globalAgentToolDefinitions) ServerAgentTool(def),
     const TerminalRunTool(),
     const TerminalScreenTool(),
+    ...AppDataTools.all,
   ];
 
   /// How many calls a single prompt may run without asking, at most. A model

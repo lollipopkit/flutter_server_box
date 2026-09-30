@@ -2006,6 +2006,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get agentToolsTip => 'Agent が使えるツールと MCP サーバー';
 
   @override
+  String get agentSnippetToolsTip => 'snippet の一覧、追加、変更、削除。変更は確認されます。';
+
+  @override
+  String get agentVirtToolsTip => '仮想化タブが読み込んだ VM とコンテナを読み取ります。';
+
+  @override
+  String get agentBenchmarkToolsTip => 'ベンチマーク結果を読み取り、承認を得て実行または停止します。';
+
+  @override
+  String get agentRemoteDesktopToolsTip =>
+      'リモートデスクトップのプロファイルを一覧し、承認を得て接続または切断します。';
+
+  @override
   String get agentSkills => 'Skills';
 
   @override

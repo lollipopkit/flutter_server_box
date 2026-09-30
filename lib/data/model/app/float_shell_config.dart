@@ -116,7 +116,7 @@ class FloatShellPill {
 @JsonSerializable()
 class FloatShellConfig {
   const FloatShellConfig({
-    this.mode = 'hidden',
+    this.mode,
     this.window = const FloatShellWindow(),
     this.pill = const FloatShellPill(),
   });
@@ -128,8 +128,10 @@ class FloatShellConfig {
   /// comes along. One of `FloatShellMode`'s names.
   ///
   /// By name, never by index: an index silently changes meaning when a case is
-  /// inserted, and this outlives the build that wrote it.
-  final String mode;
+  /// inserted, and this outlives the build that wrote it. Null for a panel
+  /// never opened or closed, which starts as that panel's default
+  /// (`FloatShellGeometry.defaultMode`).
+  final String? mode;
 
   final FloatShellWindow window;
   final FloatShellPill pill;

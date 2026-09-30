@@ -2122,6 +2122,22 @@ class AppLocalizationsTr extends AppLocalizations {
   String get agentToolsTip => 'Agent\'ın kullanabildikleri ve MCP sunucuları';
 
   @override
+  String get agentSnippetToolsTip =>
+      'Snippet’leri listele, ekle, değiştir ve sil. Değişiklikler sorulur.';
+
+  @override
+  String get agentVirtToolsTip =>
+      'Sanallaştırma sekmesinin yüklediği VM ve konteynerleri oku.';
+
+  @override
+  String get agentBenchmarkToolsTip =>
+      'Benchmark sonuçlarını oku; onayınla benchmark başlat veya durdur.';
+
+  @override
+  String get agentRemoteDesktopToolsTip =>
+      'Uzak masaüstü profillerini listele; onayınla bağlan veya bağlantıyı kes.';
+
+  @override
   String get agentSkills => 'Skills';
 
   @override

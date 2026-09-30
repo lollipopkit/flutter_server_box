@@ -27,8 +27,9 @@ Server Box has two Agent entry points:
   starts with that text in the message box, for you to add your question.
 
 Each has its own chat list: a terminal's chats belong to that server. The
-Agent tab can stay above other tabs while you work in the terminal or file
-browser — use the float button in its header.
+Agent floats above the other tabs while you work in the terminal or file
+browser, so what it does elsewhere in the App stays in view; turn that off
+with the float button in the Agent tab's header.
 
 ## Providers and models
 
@@ -77,6 +78,10 @@ The Agent tab's tools:
 | **Memory** | Keeps notes on this device that later chats can read |
 | **Chat history** | Searches and reads your earlier Agent chats |
 | **Web fetch** | Reads a web page, from this device |
+| **Snippets** | Lists your snippets, and adds, changes or deletes them — changes ask first. It never sets a snippet to run by itself on a server |
+| **Virtualization** | Reads the VMs and containers the Virtualization tab has loaded; a host not loaded yet is left alone |
+| **Benchmark** | Reads benchmark results, and runs or stops a benchmark — asking every time. A run takes 10 to 20 minutes; when it ends, the chat that started it is told, and the Agent reads the result |
+| **Remote desktop** | Lists remote desktop profiles, and connects (on the Remote desktop tab) or disconnects one, asking first. A profile without a saved password is connected from the App |
 
 A terminal's chats have only two: **Shell**, which runs in that terminal's
 connection, and **Read the screen**. Tools can be switched off by group at

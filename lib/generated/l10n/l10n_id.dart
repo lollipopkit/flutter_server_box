@@ -2129,6 +2129,22 @@ class AppLocalizationsId extends AppLocalizations {
       'Apa yang boleh dipakai Agent, dan server MCP-nya';
 
   @override
+  String get agentSnippetToolsTip =>
+      'Menampilkan, menambah, mengubah, dan menghapus snippet. Perubahan akan ditanyakan.';
+
+  @override
+  String get agentVirtToolsTip =>
+      'Membaca VM dan kontainer yang dimuat tab Virtualisasi.';
+
+  @override
+  String get agentBenchmarkToolsTip =>
+      'Membaca hasil benchmark; menjalankan atau menghentikan benchmark dengan persetujuanmu.';
+
+  @override
+  String get agentRemoteDesktopToolsTip =>
+      'Menampilkan profil remote desktop; menghubungkan atau memutus dengan persetujuanmu.';
+
+  @override
   String get agentSkills => 'Skills';
 
   @override

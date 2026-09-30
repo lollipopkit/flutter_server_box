@@ -1967,6 +1967,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentToolsTip => 'Agent 可以使用的工具，以及 MCP 服务器';
 
   @override
+  String get agentSnippetToolsTip => '列出、新增、修改和删除 snippet；修改前会询问。';
+
+  @override
+  String get agentVirtToolsTip => '读取虚拟化标签页已加载的虚拟机和容器。';
+
+  @override
+  String get agentBenchmarkToolsTip => '读取性能测试结果；经你批准后运行或停止测试。';
+
+  @override
+  String get agentRemoteDesktopToolsTip => '列出远程桌面配置；经你批准后连接或断开。';
+
+  @override
   String get agentSkills => 'Skills';
 
   @override
@@ -6621,6 +6633,18 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get agentToolsTip => 'Agent 可以使用的工具，以及 MCP 伺服器';
+
+  @override
+  String get agentSnippetToolsTip => '列出、新增、修改和刪除 snippet；修改前會詢問。';
+
+  @override
+  String get agentVirtToolsTip => '讀取虛擬化分頁已載入的虛擬機和容器。';
+
+  @override
+  String get agentBenchmarkToolsTip => '讀取效能測試結果；經你核准後執行或停止測試。';
+
+  @override
+  String get agentRemoteDesktopToolsTip => '列出遠端桌面設定；經你核准後連線或中斷。';
 
   @override
   String get agentSkills => 'Skills';

@@ -2136,6 +2136,22 @@ class AppLocalizationsAz extends AppLocalizations {
       'Agent-in istifadə edə bildikləri və onun MCP serverləri';
 
   @override
+  String get agentSnippetToolsTip =>
+      'Snippet-ləri siyahıla, əlavə et, dəyiş və sil. Dəyişikliklər soruşulur.';
+
+  @override
+  String get agentVirtToolsTip =>
+      'Virtualizasiya bölməsinin yüklədiyi VM və konteynerləri oxu.';
+
+  @override
+  String get agentBenchmarkToolsTip =>
+      'Benchmark nəticələrini oxu; icazənizlə benchmark başlat və ya dayandır.';
+
+  @override
+  String get agentRemoteDesktopToolsTip =>
+      'Uzaq masaüstü profillərini siyahıla; icazənizlə qoşul və ya ayrıl.';
+
+  @override
   String get agentSkills => 'Skills';
 
   @override

@@ -1072,7 +1072,8 @@ final class FloatShellProps {
     : mode = FieldProp<FloatShellConfig, String>(
         config,
         'mode',
-        read: (c) => c.mode,
+        // Empty for a panel never opened or closed.
+        read: (c) => c.mode ?? '',
         write: (c, v) => c.copyWith(mode: v),
       ),
       left = FieldProp<FloatShellConfig, double>(

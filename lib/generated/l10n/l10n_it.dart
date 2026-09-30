@@ -2148,6 +2148,22 @@ class AppLocalizationsIt extends AppLocalizations {
   String get agentToolsTip => 'Cosa può usare l\'Agent e i suoi server MCP';
 
   @override
+  String get agentSnippetToolsTip =>
+      'Elencare, aggiungere, modificare ed eliminare gli snippet. Le modifiche vengono chieste.';
+
+  @override
+  String get agentVirtToolsTip =>
+      'Leggere le VM e i container caricati dalla scheda Virtualizzazione.';
+
+  @override
+  String get agentBenchmarkToolsTip =>
+      'Leggere i risultati dei benchmark e, con la tua approvazione, avviarne o fermarne uno.';
+
+  @override
+  String get agentRemoteDesktopToolsTip =>
+      'Elencare i profili desktop remoto e, con la tua approvazione, connettere o disconnettere.';
+
+  @override
   String get agentSkills => 'Skills';
 
   @override
