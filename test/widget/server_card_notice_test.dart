@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/view/page/server/card/notices.dart';
+import 'package:server_box/view/page/server/metric_row.dart';
 
 const _side = BorderSide(color: Color(0xFFFF0000), width: 2);
 
@@ -37,7 +38,10 @@ void main() {
     await pump(tester, 0);
     expect(find.text(_notice.mono), findsOneWidget);
     expect(
-      find.ancestor(of: find.text(_notice.mono), matching: find.byType(Card)),
+      find.ancestor(
+        of: find.text(_notice.mono),
+        matching: find.byType(FadingCard),
+      ),
       findsNothing,
     );
   });
@@ -46,8 +50,14 @@ void main() {
     tester,
   ) async {
     await pump(tester, 1);
-    final card = tester.widget<Card>(
-      find.ancestor(of: find.text(_notice.mono), matching: find.byType(Card)),
+    final card = tester.widget<Material>(
+      find.descendant(
+        of: find.ancestor(
+          of: find.text(_notice.mono),
+          matching: find.byType(FadingCard),
+        ),
+        matching: find.byType(Material),
+      ),
     );
     expect((card.shape! as RoundedRectangleBorder).side, _side);
   });

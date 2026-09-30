@@ -97,7 +97,13 @@ extension on _ServerDetailPageState {
     required bool wide,
   }) {
     final axis = _chartWindow(si, m, w);
-    final chart = _buildFocusChart(si, m, w, axis, wide: wide);
+    // The card's chart lands here when the card pushed this page — see
+    // [ServerChartHero].
+    final chart = ServerChartHero(
+      id: si.spi.id,
+      enabled: !widget.bare,
+      child: _buildFocusChart(si, m, w, axis, wide: wide),
+    );
     // What a window that could not be filled actually holds. Only when it is
     // short: on a window the agent covered, "stored 24 h · window 24 h" is two
     // ways of saying the axis.

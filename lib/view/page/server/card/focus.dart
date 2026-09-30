@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/view/page/server/card/arrival.dart';
+import 'package:server_box/view/page/server/card/chart_hero.dart';
 import 'package:server_box/view/page/server/card/fold.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/card/sizes.dart';
@@ -46,6 +47,7 @@ class ServerCardFocus extends StatelessWidget {
     required this.onTap,
     required this.onPromote,
     this.selected,
+    this.heroId,
   });
 
   /// The reading drawn in full.
@@ -82,6 +84,10 @@ class ServerCardFocus extends StatelessWidget {
 
   /// A different reading was chosen to be drawn in full.
   final ValueChanged<ServerMetricKind> onPromote;
+
+  /// The server whose chart flies to the detail page, or null where opening
+  /// the card does not push one — see [ServerChartHero].
+  final String? heroId;
 
   @override
   Widget build(BuildContext context) {
@@ -288,7 +294,10 @@ class ServerCardFocus extends StatelessWidget {
     ];
     // The chart height must follow the parent transition so it does not freeze
     // at an intermediate value during the reverse animation.
-    return SizedBox(
+    return ServerChartHero(
+      id: heroId ?? '',
+      enabled: heroId != null,
+      child: SizedBox(
       height: height,
       // A layer of its own: the line eases to each new sample over 150ms, and
       // without this every one of those frames painted the card round it —
@@ -318,6 +327,7 @@ class ServerCardFocus extends StatelessWidget {
         height: height,
         fill: true,
         axis: axis,
+      ),
       ),
       ),
       ),
@@ -368,9 +378,10 @@ class ServerCardFocus extends StatelessWidget {
     required EdgeInsets padding,
   }) {
     if (t <= 0) return child;
-    return CardX(
+    return FadingCard(
       // In before the card's own surface starts going — see `ServerCard.build`
       // and [blockSurfaceAt].
+      outline: blockOutlineAt(t),
       color: Color.lerp(Colors.transparent, cardColorOf(context), blockSurfaceAt(t)),
       margin: EdgeInsets.lerp(EdgeInsets.zero, const EdgeInsets.all(4), t),
       child: Padding(

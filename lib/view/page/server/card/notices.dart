@@ -286,9 +286,11 @@ class ServerCardNotice extends StatelessWidget {
       // would add is the theme's outline round the machine's words. The
       // readings rows and the focus block do the same.
       _ when t <= 0 => monoText,
-      _ => CardX(
+      _ => FadingCard(
         // A card of its own at the far end, in before the block's own
-        // surface starts going — see [blockSurfaceAt].
+        // surface starts going — see [blockSurfaceAt]. Its outline once the
+        // card's has gone — see [blockOutlineAt].
+        outline: blockOutlineAt(t),
         color: Color.lerp(
           Colors.transparent,
           cardColorOf(context),
