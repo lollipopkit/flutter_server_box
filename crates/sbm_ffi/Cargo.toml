@@ -28,7 +28,7 @@ sha2 = "0.11"
 smallvec = "1.15"
 sspi = { version = "=0.21.3", default-features = false }
 tokio = { version = "1", features = ["io-util", "macros", "net", "rt-multi-thread", "sync", "time"] }
-vnc-rs = "=0.5.3"
+vnc-rs = "=0.6.0"
 x25519-dalek = { version = "3", features = ["static_secrets", "getrandom"] }
 x509-cert = { version = "0.3", features = ["std"], default-features = false }
 
