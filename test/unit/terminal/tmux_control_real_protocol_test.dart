@@ -104,16 +104,20 @@ void main() {
         isTrue,
       );
 
+      // Older tmux stores ':' in a session name as '_', so compare with
+      // the name tmux reports rather than the one requested.
       final special = await client.runRequired(
-        "new-session -d -P -F '#{session_id}' -s 'a|b:c'",
+        "new-session -d -P -F '#{session_id} #{session_name}' -s 'a|b:c'",
       );
-      final specialId = TmuxSessionId.parse(special.output.trim());
+      final [specialIdRaw, specialName] = special.output.trim().split(' ');
+      final specialId = TmuxSessionId.parse(specialIdRaw);
+      expect(specialName, anyOf('a|b:c', 'a|b_c'));
       await client.switchSession(specialId);
       expect(client.snapshot!.session.id, specialId);
-      expect(client.snapshot!.session.name, 'a|b:c');
+      expect(client.snapshot!.session.name, specialName);
       expect(
         client.snapshot!.sessions.map((session) => session.name),
-        contains('a|b:c'),
+        contains(specialName),
       );
     } finally {
       await subscription?.cancel();
