@@ -97,6 +97,21 @@ class VirtHostRequest extends _$VirtHostRequest {
   void done() => state = null;
 }
 
+/// A server whose remote desktop profiles the Remote desktop tab should show
+/// — what a server's function row asks for.
+///
+/// A request for the same reasons as [VirtHostRequest]: the tab is built when
+/// first visited, and which server it shows is its own state.
+@Riverpod(keepAlive: true)
+class RemoteDesktopServerRequest extends _$RemoteDesktopServerRequest {
+  @override
+  String? build() => null;
+
+  void go(String serverId) => state = serverId;
+
+  void done() => state = null;
+}
+
 /// A server waiting for a terminal, and what to put in it once it opens.
 class TerminalRequest {
   const TerminalRequest(this.spi, {this.snippet, this.session});

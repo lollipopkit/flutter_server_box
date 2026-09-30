@@ -19,9 +19,8 @@ import 'package:server_box/view/widget/group_title.dart';
 ///
 /// A page rather than the dialog this was. Two things decided it: a form with
 /// this many fields wants a bar to save from and a corner to act from, and a
-/// dialog has neither; and beside the profile list it is the pane's detail
-/// (`RemoteDesktopProfilesPage`), where a modal over the list that opened it is
-/// the one shape the pane layout exists to avoid.
+/// dialog has neither; and it takes the place of the profile list it was
+/// opened from (`RemoteDesktopProfilesPage`), inside the remote desktop tab.
 ///
 /// Connecting lives in the app bar, not in the list rows: opening a session
 /// is what a profile is for, and the action stays visible while the form scrolls.
@@ -32,11 +31,6 @@ final class RemoteDesktopProfileEditPage extends ConsumerStatefulWidget {
 
   final RemoteDesktopProfileEditArgs args;
 
-  static const route = AppRouteArg<void, RemoteDesktopProfileEditArgs>(
-    page: RemoteDesktopProfileEditPage.new,
-    path: '/remote_desktop_profile/edit',
-  );
-
   @override
   ConsumerState<RemoteDesktopProfileEditPage> createState() =>
       _RemoteDesktopProfileEditPageState();
@@ -46,7 +40,7 @@ final class RemoteDesktopProfileEditArgs {
   const RemoteDesktopProfileEditArgs({
     required this.serverId,
     this.profile,
-    this.onClose,
+    required this.onClose,
     this.onTestSessionOpening,
   });
 
@@ -54,7 +48,8 @@ final class RemoteDesktopProfileEditArgs {
 
   /// The profile being edited, or null for one being added.
   final RemoteDesktopProfile? profile;
-  final VoidCallback? onClose;
+  /// Back to the list.
+  final VoidCallback onClose;
   final ValueChanged<String?>? onTestSessionOpening;
 }
 
@@ -112,13 +107,11 @@ class _RemoteDesktopProfileEditPageState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        leading: widget.args.onClose == null
-            ? null
-            : IconButton(
-                tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-                icon: const Icon(Icons.arrow_back),
-                onPressed: _leave,
-              ),
+        leading: IconButton(
+          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+          icon: const Icon(Icons.arrow_back),
+          onPressed: _leave,
+        ),
         title: Text(
           widget.args.profile == null
               ? l10n.remoteDesktopAdd
@@ -443,22 +436,8 @@ extension _Utils on _RemoteDesktopProfileEditPageState {
     ).clearTrustWhenEndpointChanged(existing);
   }
 
-  /// Leaves the editor, wherever it is.
-  ///
-  /// An embedded form returns to its list, a detail closes its pane, and a
-  /// pushed page pops its route.
-  void _leave() {
-    if (widget.args.onClose case final onClose?) {
-      onClose();
-      return;
-    }
-    final closePane = PaneScope.closeDetailOf(context);
-    if (closePane != null) {
-      closePane();
-      return;
-    }
-    context.pop();
-  }
+  /// Leaves the editor, back to the list.
+  void _leave() => widget.args.onClose();
 }
 
 /// Opens [profile], switching to the remote desktop tab for list actions.

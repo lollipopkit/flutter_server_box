@@ -419,6 +419,82 @@ abstract class _$VirtHostRequest extends $Notifier<String?> {
   }
 }
 
+/// A server whose remote desktop profiles the Remote desktop tab should show
+/// — what a server's function row asks for.
+///
+/// A request for the same reasons as [VirtHostRequest]: the tab is built when
+/// first visited, and which server it shows is its own state.
+
+@ProviderFor(RemoteDesktopServerRequest)
+final remoteDesktopServerRequestProvider =
+    RemoteDesktopServerRequestProvider._();
+
+/// A server whose remote desktop profiles the Remote desktop tab should show
+/// — what a server's function row asks for.
+///
+/// A request for the same reasons as [VirtHostRequest]: the tab is built when
+/// first visited, and which server it shows is its own state.
+final class RemoteDesktopServerRequestProvider
+    extends $NotifierProvider<RemoteDesktopServerRequest, String?> {
+  /// A server whose remote desktop profiles the Remote desktop tab should show
+  /// — what a server's function row asks for.
+  ///
+  /// A request for the same reasons as [VirtHostRequest]: the tab is built when
+  /// first visited, and which server it shows is its own state.
+  RemoteDesktopServerRequestProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'remoteDesktopServerRequestProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$remoteDesktopServerRequestHash();
+
+  @$internal
+  @override
+  RemoteDesktopServerRequest create() => RemoteDesktopServerRequest();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String?>(value),
+    );
+  }
+}
+
+String _$remoteDesktopServerRequestHash() =>
+    r'0ed3c0194b0bef40d4277a30198680b4c2755ad8';
+
+/// A server whose remote desktop profiles the Remote desktop tab should show
+/// — what a server's function row asks for.
+///
+/// A request for the same reasons as [VirtHostRequest]: the tab is built when
+/// first visited, and which server it shows is its own state.
+
+abstract class _$RemoteDesktopServerRequest extends $Notifier<String?> {
+  String? build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<String?, String?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<String?, String?>,
+              String?,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 /// Servers waiting for a terminal.
 ///
 /// A queue rather than a direct call because the tab that opens terminals may

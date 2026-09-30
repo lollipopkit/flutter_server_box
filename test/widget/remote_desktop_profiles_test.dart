@@ -30,6 +30,7 @@ import 'package:server_box/generated/l10n/l10n_zh.dart';
 import 'package:server_box/view/page/remote_desktop/profile_edit.dart';
 import 'package:server_box/view/page/remote_desktop/profiles.dart';
 import 'package:server_box/view/page/remote_desktop/tab.dart';
+import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/view/widget/group_title.dart';
 
 import '../helpers/spi_fixture.dart';
@@ -143,6 +144,7 @@ void main() {
               home ??
               RemoteDesktopProfilesPage(
                 args: SpiRequiredArgs(Stores.server.fetch().single),
+                onBack: () {},
               ),
         ),
       ),
@@ -210,6 +212,30 @@ void main() {
       expect(find.byType(SideBarTile), findsOneWidget);
     },
   );
+
+  testWidgets('a server asked for from its detail page is the one shown', (
+    tester,
+  ) async {
+    // The function row asks the tab rather than pushing a page of its own,
+    // which had nothing to go back to.
+    await pumpPage(tester, width: 834, home: const RemoteDesktopTabPage());
+    expect(find.byType(RemoteDesktopProfilesPage), findsNothing);
+
+    ProviderScope.containerOf(
+      tester.element(find.byType(RemoteDesktopTabPage)),
+    ).read(remoteDesktopServerRequestProvider.notifier).go(sid);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.byType(RemoteDesktopProfilesPage), findsOneWidget);
+    expect(find.text('Windows'), findsOneWidget);
+    expect(
+      ProviderScope.containerOf(
+        tester.element(find.byType(RemoteDesktopTabPage)),
+      ).read(remoteDesktopServerRequestProvider),
+      isNull,
+    );
+  });
 
   testWidgets('the rail puts open sessions in a running group', (tester) async {
     final profile = Stores.remoteDesktop.fetchForServer(sid).single;
@@ -391,32 +417,6 @@ void main() {
     );
   });
 
-  testWidgets('a wide window puts the editor beside the list', (tester) async {
-    await pumpPage(tester, width: 1200);
-
-    // The rail is a `SideBarTile`, which is the narrow index every other pane
-    // in this app uses.
-    expect(find.byType(SideBarTile), findsOneWidget);
-    expect(find.text('Windows'), findsOneWidget);
-    // Nothing selected yet: the pane is empty rather than showing a form.
-    expect(find.byType(RemoteDesktopProfileEditPage), findsNothing);
-
-    await tester.tap(find.byType(SideBarTile));
-    await tester.pump();
-    final incomingX = tester
-        .getTopLeft(find.byType(RemoteDesktopProfileEditPage))
-        .dx;
-    await tester.pumpAndSettle();
-
-    // Beside the list, not over it: the rail is still on screen.
-    expect(find.byType(RemoteDesktopProfileEditPage), findsOneWidget);
-    expect(find.byType(SideBarTile), findsOneWidget);
-    expect(
-      tester.getTopLeft(find.byType(RemoteDesktopProfileEditPage)).dx,
-      lessThan(incomingX),
-    );
-  });
-
   testWidgets('a narrow window keeps the list and opens the editor over it', (
     tester,
   ) async {
@@ -464,7 +464,7 @@ void main() {
     debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
     try {
       await pumpPage(tester, width: 1200);
-      await tester.tap(find.byType(SideBarTile));
+      await tester.tap(find.widgetWithText(TextButton, libL10n.edit));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
@@ -485,7 +485,7 @@ void main() {
     tester,
   ) async {
     await pumpPage(tester, width: 1200);
-    await tester.tap(find.byType(SideBarTile));
+    await tester.tap(find.widgetWithText(TextButton, libL10n.edit));
     await tester.pumpAndSettle();
 
     final port = find.byWidgetPredicate(
@@ -544,7 +544,12 @@ void main() {
       ),
     );
     await pumpPage(tester, width: 1200);
-    await tester.tap(find.text('Screen'));
+    await tester.tap(
+      find.descendant(
+        of: find.widgetWithText(CardTile, 'Screen'),
+        matching: find.widgetWithText(TextButton, libL10n.edit),
+      ),
+    );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 

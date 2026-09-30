@@ -60,7 +60,19 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
       _sessions.setSurfaceVisible(
         ref.read(currentHomeTabProvider) == AppTab.remoteDesktop,
       );
+      _drainServerRequest();
     });
+  }
+
+  /// Selects the server a request names, once — whether it was made before
+  /// this tab existed or while it is on screen.
+  void _drainServerRequest() {
+    final id = ref.read(remoteDesktopServerRequestProvider);
+    if (id == null) return;
+    ref.read(remoteDesktopServerRequestProvider.notifier).done();
+    if (ref.read(serversProvider).servers[id] case final spi?) {
+      _selectServer(spi);
+    }
   }
 
   @override
@@ -81,6 +93,10 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
     final servers = ref.watch(serversProvider);
     final order = _SortOrder.stored.apply(servers.serverOrder, servers.servers);
     final groups = groupByTag(order, (id) => servers.servers[id]?.tags);
+    ref.listen(
+      remoteDesktopServerRequestProvider,
+      (_, _) => _drainServerRequest(),
+    );
     ref.listen(currentHomeTabProvider, (_, tab) {
       _sessions.setSurfaceVisible(
         tab == AppTab.remoteDesktop &&

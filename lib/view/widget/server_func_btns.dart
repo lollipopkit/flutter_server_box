@@ -21,7 +21,6 @@ import 'package:server_box/view/page/container/container.dart';
 import 'package:server_box/view/page/iperf.dart';
 import 'package:server_box/view/page/port_forward.dart';
 import 'package:server_box/view/page/process.dart';
-import 'package:server_box/view/page/remote_desktop/profiles.dart';
 import 'package:server_box/view/page/scheduled_tasks.dart';
 import 'package:server_box/view/page/services.dart';
 import 'package:server_box/view/page/ssh/snippet_run.dart';
@@ -563,9 +562,11 @@ void runServerFunc(
           return;
         }
         if (!context.mounted) return;
-        unawaited(
-          RemoteDesktopProfilesPage.route.go(context, SpiRequiredArgs(spi)),
-        );
+        // Into the tab, on this server, rather than a page of its own over the
+        // detail page: sessions live in the tab, and a pushed copy of its list
+        // had nowhere to go back to.
+        ref.read(remoteDesktopServerRequestProvider.notifier).go(spi.id);
+        ref.read(homeTabRequestProvider.notifier).go(AppTab.remoteDesktop);
         break;
   }
 }
