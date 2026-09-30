@@ -596,10 +596,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get copyPath => 'Pad kopiëren';
 
   @override
-  String get cpuViewAsProgressTip =>
-      'Toon het gebruik van elke CPU in een voortgangsbalkstijl (oude stijl)';
-
-  @override
   String get customCmd => 'Aangepaste opdrachten';
 
   @override
@@ -631,9 +627,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get diskHealth => 'Schijfgezondheid';
 
   @override
-  String get displayCpuIndex => 'Toon de CPU-index';
-
-  @override
   String dl2Local(String fileName) {
     return 'Download $fileName naar lokaal?';
   }
@@ -651,13 +644,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get dockerStatistics => 'Docker-statistieken';
-
-  @override
-  String get doubleColumnMode => 'Dubbele kolommodus';
-
-  @override
-  String get doubleColumnTip =>
-      'Deze optie schakelt alleen de functie in, of deze daadwerkelijk kan worden ingeschakeld, hangt af van de breedte van het apparaat';
 
   @override
   String get editVirtKeys => 'Virtuele toetsen';
@@ -940,16 +926,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get needRestart => 'App moet opnieuw worden gestart';
 
   @override
-  String get netViewType => 'Netweergavetype';
-
-  @override
   String get newContainer => 'Nieuwe container';
 
   @override
   String get noConnectionStatsData => 'Geen verbindingsstatistiekgegevens';
-
-  @override
-  String get noLineChart => 'lijndiagrammen gebruiken';
 
   @override
   String get noPrivateKeyTip =>
@@ -968,10 +948,6 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get parseContainerStatsTip =>
       'Het parsen van de bezettingsstatus van Docker is relatief langzaam.';
-
-  @override
-  String get preferDiskAmount =>
-      'Geef de schijfcapaciteit prioriteit bij weergave';
 
   @override
   String get privateKey => 'Privésleutel';

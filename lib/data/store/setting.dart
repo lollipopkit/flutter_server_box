@@ -8,7 +8,6 @@ import 'package:server_box/data/model/app/float_shell_config.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/motion.dart';
-import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/model/app/server_sort.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/app/tray.dart';
@@ -38,12 +37,6 @@ class SettingStore extends SqliteStore with ThemeSettings {
 
   /// Whether to remember previously opened SFTP paths.
   late final recordHistory = propertyDefault('recordHistory', true);
-
-  /// Whether the disk view prefers usage amounts over I/O metrics.
-  late final serverTabPreferDiskAmount = propertyDefault(
-    'serverTabPreferDiskAmount',
-    false,
-  );
 
   /// UI scale factor. `1.0` means 100%.
   ///
@@ -224,13 +217,6 @@ class SettingStore extends SqliteStore with ThemeSettings {
     'sshVirtKeys',
     defaultValue: VirtKeyX.defaultOrder.map((e) => e.name).toList(),
     fromObj: _virtKeyNames,
-  );
-
-  late final netViewType = propertyDefault(
-    'netViewType',
-    NetViewType.speed,
-    fromObj: (val) => NetViewType.values.firstWhereOrNull((e) => e.name == val),
-    toObj: (type) => type?.name,
   );
 
   // Only valid on iOS
@@ -654,12 +640,6 @@ class SettingStore extends SqliteStore with ThemeSettings {
     true,
   );
 
-  /// Whether to use a two-column server page on desktop.
-  late final doubleColumnServersPage = propertyDefault(
-    'doubleColumnServersPage',
-    true,
-  );
-
   /// Whether the strip above the server list is shown: the overview over the
   /// grid, and the row of servers it turns into over an open one.
   late final serverOverview = propertyDefault('serverOverview', true);
@@ -703,11 +683,6 @@ class SettingStore extends SqliteStore with ThemeSettings {
 
   /// Hide title bar on desktop
   late final hideTitleBar = propertyDefault('hideTitleBar', isDesktop);
-
-  /// Whether to display CPU usage with the legacy progress-bar view.
-  late final cpuViewAsProgress = propertyDefault('cpuViewAsProgress', false);
-
-  late final displayCpuIndex = propertyDefault('displayCpuIndex', true);
 
   late final editorSoftWrap = propertyDefault('editorSoftWrap', isIOS);
 
@@ -1139,6 +1114,13 @@ class SettingStore extends SqliteStore with ThemeSettings {
       'geoShards',
       'geoShardEndpoint',
       'geoCacheLimit',
+      // Server page options the current cards and detail page no longer read
+      // (the per-core CPU bars went with the last two).
+      'netViewType',
+      'serverTabPreferDiskAmount',
+      'doubleColumnServersPage',
+      'cpuViewAsProgress',
+      'displayCpuIndex',
     ]) {
       remove(key, updateLastUpdateTsOnRemove: false);
     }

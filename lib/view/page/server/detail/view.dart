@@ -219,8 +219,6 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   /// back on screen — see `_revealFocus`.
   final _focusCardKey = GlobalKey();
   late final _collapse = _settings.collapseUIDefault.fetch();
-  late final _cpuViewAsProgress = _settings.cpuViewAsProgress.fetch();
-  late final _displayCpuIndex = _settings.displayCpuIndex.fetch();
 
   /// Which cards are open, by their `cardKey`.
   ///

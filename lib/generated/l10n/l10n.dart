@@ -1145,12 +1145,6 @@ abstract class AppLocalizations {
   /// **'Copy path'**
   String get copyPath;
 
-  /// Help text for the CPU view as progress setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'Display the usage of each CPU in a progress bar style (old style)'**
-  String get cpuViewAsProgressTip;
-
   /// User-facing label or message for custom cmd.
   ///
   /// In en, this message translates to:
@@ -1211,12 +1205,6 @@ abstract class AppLocalizations {
   /// **'Disk Health'**
   String get diskHealth;
 
-  /// User-facing label or message for display CPU index.
-  ///
-  /// In en, this message translates to:
-  /// **'Display CPU index'**
-  String get displayCpuIndex;
-
   /// User-facing label or message for dl 2 local.
   ///
   /// In en, this message translates to:
@@ -1246,18 +1234,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Docker Statistics'**
   String get dockerStatistics;
-
-  /// User-facing label or message for double column mode.
-  ///
-  /// In en, this message translates to:
-  /// **'Double column mode'**
-  String get doubleColumnMode;
-
-  /// Help text for the double column setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'This option only enables the feature, whether it can actually be enabled depends on the width of the device'**
-  String get doubleColumnTip;
 
   /// Action label for edit virt keys.
   ///
@@ -1751,12 +1727,6 @@ abstract class AppLocalizations {
   /// **'App needs to be restarted'**
   String get needRestart;
 
-  /// User-facing label or message for net view type.
-  ///
-  /// In en, this message translates to:
-  /// **'Network view type'**
-  String get netViewType;
-
   /// User-facing label or message for new container.
   ///
   /// In en, this message translates to:
@@ -1768,12 +1738,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No connection statistics data'**
   String get noConnectionStatsData;
-
-  /// User-facing label or message for no line chart.
-  ///
-  /// In en, this message translates to:
-  /// **'Do not use line charts'**
-  String get noLineChart;
 
   /// Help text for the no private key setting or action.
   ///
@@ -1804,12 +1768,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Parsing the occupancy status of Docker is relatively slow.'**
   String get parseContainerStatsTip;
-
-  /// User-facing label or message for prefer disk amount.
-  ///
-  /// In en, this message translates to:
-  /// **'Prioritize displaying disk capacity'**
-  String get preferDiskAmount;
 
   /// User-facing label or message for private key.
   ///

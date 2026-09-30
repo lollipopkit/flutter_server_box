@@ -594,10 +594,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get copyPath => 'Path Copy';
 
   @override
-  String get cpuViewAsProgressTip =>
-      'Tampilkan tingkat penggunaan setiap CPU dalam gaya bilah kemajuan (gaya lama)';
-
-  @override
   String get customCmd => 'Perintah kustom';
 
   @override
@@ -629,9 +625,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get diskHealth => 'Kesehatan disk';
 
   @override
-  String get displayCpuIndex => 'Tampilkan indeks CPU';
-
-  @override
   String dl2Local(String fileName) {
     return 'Unduh $fileName ke lokal?';
   }
@@ -649,13 +642,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get dockerStatistics => 'Statistik Docker';
-
-  @override
-  String get doubleColumnMode => 'Mode kolom ganda';
-
-  @override
-  String get doubleColumnTip =>
-      'Opsi ini hanya mengaktifkan fitur, apakah itu benar-benar dapat diaktifkan tergantung pada lebar perangkat';
 
   @override
   String get editVirtKeys => 'Kunci virtual';
@@ -937,16 +923,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get needRestart => 'Perlu memulai ulang aplikasi';
 
   @override
-  String get netViewType => 'Jenis tampilan bersih';
-
-  @override
   String get newContainer => 'Wadah baru';
 
   @override
   String get noConnectionStatsData => 'Tidak ada data statistik koneksi';
-
-  @override
-  String get noLineChart => 'Jangan gunakan grafik garis';
 
   @override
   String get noPrivateKeyTip =>
@@ -965,9 +945,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get parseContainerStatsTip =>
       'Parsing status okupansi oleh Docker agak lambat';
-
-  @override
-  String get preferDiskAmount => 'Prioritaskan tampilan kapasitas disk';
 
   @override
   String get privateKey => 'Kunci Pribadi';

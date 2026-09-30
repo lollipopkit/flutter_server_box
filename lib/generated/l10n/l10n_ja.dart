@@ -559,9 +559,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get copyPath => 'パスをコピー';
 
   @override
-  String get cpuViewAsProgressTip => '各CPUの使用率をプログレスバースタイルで表示する（旧スタイル）';
-
-  @override
   String get customCmd => 'カスタムコマンド';
 
   @override
@@ -592,9 +589,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get diskHealth => 'ディスクの健康状態';
 
   @override
-  String get displayCpuIndex => 'CPUインデックスを表示する';
-
-  @override
   String dl2Local(String fileName) {
     return '$fileNameをローカルにダウンロードしますか？';
   }
@@ -611,13 +605,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get dockerStatistics => 'Docker 統計';
-
-  @override
-  String get doubleColumnMode => 'ダブルカラムモード';
-
-  @override
-  String get doubleColumnTip =>
-      'このオプションは機能を有効にするだけで、実際に有効にできるかどうかはデバイスの幅に依存します';
 
   @override
   String get editVirtKeys => '仮想キー';
@@ -888,16 +875,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get needRestart => 'アプリを再起動する必要があります';
 
   @override
-  String get netViewType => 'ネットワークビュータイプ';
-
-  @override
   String get newContainer => '新しいコンテナを作成';
 
   @override
   String get noConnectionStatsData => '接続統計データがありません';
-
-  @override
-  String get noLineChart => '折れ線グラフを使用しない';
 
   @override
   String get noPrivateKeyTip => '秘密鍵が存在しません。削除されたか、設定ミスがある可能性があります。';
@@ -913,9 +894,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get parseContainerStatsTip => 'Dockerの使用状況の解析は比較的遅いです';
-
-  @override
-  String get preferDiskAmount => 'ディスク容量を優先的に表示';
 
   @override
   String get privateKey => '秘密鍵';

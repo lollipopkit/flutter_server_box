@@ -300,11 +300,6 @@ extension on _ServerDetailPageState {
               // As tall as a chart for every reading but one that failed,
               // which is as tall as what it has to say.
               ServerDetailEased(child: chart),
-              ServerDetailEased(
-                child:
-                    _buildFocusDetail(si, m.kind) ??
-                    const SizedBox(width: double.infinity),
-              ),
             ],
           ),
         ),
@@ -378,37 +373,6 @@ extension on _ServerDetailPageState {
         ),
       ),
     );
-  }
-
-  /// What the machine says about this metric beyond the one number — the
-  /// mounts, the interfaces, the cores. It belongs to the metric being read,
-  /// not to the page, which is why it is inside the card rather than under it.
-  Widget? _buildFocusDetail(ServerState si, ServerMetricKind kind) {
-    final ss = si.status;
-    switch (kind) {
-      case ServerMetricKind.cpu:
-        if (!_cpuViewAsProgress) return null;
-        return Padding(
-          padding: const EdgeInsets.only(top: 13),
-          child: ServerDetailCpuBars(
-            cpus: ss.cpu,
-            showIndex: _displayCpuIndex,
-          ),
-        );
-      case ServerMetricKind.disk:
-      case ServerMetricKind.diskIo:
-      case ServerMetricKind.net:
-      case ServerMetricKind.mem:
-      case ServerMetricKind.swap:
-      case ServerMetricKind.gpu:
-      case ServerMetricKind.temp:
-      case ServerMetricKind.battery:
-        // The devices behind a metric are reached from the control in the
-        // header, not listed under the chart. Once every device has a line of
-        // its own the chart's legend is that list, and a second copy of it
-        // below would be the same names twice.
-        return null;
-    }
   }
 
   /// Which of a metric's devices the chart draws, and the way to change it.

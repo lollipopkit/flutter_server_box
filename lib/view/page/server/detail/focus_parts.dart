@@ -1,7 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/res/chart_palette.dart';
@@ -411,90 +410,6 @@ class ServerDetailMetricTile extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Each core's load as a bar of its own, two to a row once there are enough
-/// cores for one a line to be a long column.
-class ServerDetailCpuBars extends StatelessWidget {
-  const ServerDetailCpuBars({
-    super.key,
-    required this.cpus,
-    required this.showIndex,
-  });
-
-  final Cpus cpus;
-
-  /// Whether each bar is labelled with its core's number.
-  final bool showIndex;
-
-  @override
-  Widget build(BuildContext context) {
-    const kMaxColumn = 2;
-    const kRowThreshold = 4;
-    const kCoresCountThreshold = kMaxColumn * kRowThreshold;
-    final children = <Widget>[];
-
-    if (cpus.coresCount >= kCoresCountThreshold) {
-      final numCoresToDisplay = cpus.coresCount;
-      final numRows = (numCoresToDisplay + kMaxColumn - 1) ~/ kMaxColumn;
-
-      for (var i = 0; i < numRows; i++) {
-        final rowChildren = <Widget>[];
-        for (var j = 0; j < kMaxColumn; j++) {
-          final coreListIndex = i * kMaxColumn + j;
-          if (coreListIndex >= numCoresToDisplay) break;
-
-          final coreNumberOneBased = coreListIndex + 1;
-
-          if (showIndex) {
-            rowChildren.add(Text('$coreNumberOneBased', style: UIs.text13Grey));
-          }
-          rowChildren.add(
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                child: _progress(
-                  cpus.usedPercent(coreIdx: coreNumberOneBased),
-                ),
-              ),
-            ),
-          );
-        }
-        if (rowChildren.isNotEmpty) {
-          children.add(
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 17),
-              child: Row(children: rowChildren.joinWith(UIs.width7).toList()),
-            ),
-          );
-        }
-      }
-    } else {
-      for (var i = 1; i <= cpus.coresCount; i++) {
-        children.add(
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 17),
-            child: _progress(cpus.usedPercent(coreIdx: i)),
-          ),
-        );
-      }
-    }
-
-    return Column(children: children);
-  }
-}
-
-Widget _progress(double? percent) {
-  // Indeterminate while there is no reading, instead of a full-width 0 bar
-  final percentWithinOne = percent == null
-      ? null
-      : percent.clamp(0, 100) / 100;
-  return LinearProgressIndicator(
-    value: percentWithinOne,
-    minHeight: 7,
-    backgroundColor: UIs.halfAlpha,
-    color: UIs.primaryColor,
-  );
 }
 
 /// A disk and what it is at, with the disks under it a step further in.

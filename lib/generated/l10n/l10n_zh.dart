@@ -552,9 +552,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get copyPath => '复制路径';
 
   @override
-  String get cpuViewAsProgressTip => '以进度条样式显示每个 CPU 的使用率（旧版样式）';
-
-  @override
   String get customCmd => '自定义命令';
 
   @override
@@ -585,9 +582,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get diskHealth => '磁盘健康';
 
   @override
-  String get displayCpuIndex => '显示 CPU 索引';
-
-  @override
   String dl2Local(String fileName) {
     return '下载 $fileName 到本地？';
   }
@@ -604,12 +598,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get dockerStatistics => 'Docker 统计';
-
-  @override
-  String get doubleColumnMode => '双列模式';
-
-  @override
-  String get doubleColumnTip => '此选项仅用于启用该功能，是否生效取决于设备宽度';
 
   @override
   String get editVirtKeys => '虚拟按键';
@@ -874,16 +862,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get needRestart => '需要重启 App';
 
   @override
-  String get netViewType => '网络视图类型';
-
-  @override
   String get newContainer => '新建容器';
 
   @override
   String get noConnectionStatsData => '暂无连接统计数据';
-
-  @override
-  String get noLineChart => '不使用折线图';
 
   @override
   String get noPrivateKeyTip => '私钥不存在，可能已被删除/配置错误';
@@ -899,9 +881,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get parseContainerStatsTip => 'Docker 解析占用状态较为缓慢';
-
-  @override
-  String get preferDiskAmount => '优先显示硬盘容量';
 
   @override
   String get privateKey => '私钥';
@@ -5472,9 +5451,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get copyPath => '複製路徑';
 
   @override
-  String get cpuViewAsProgressTip => '以進度條樣式顯示每個CPU的使用率（舊版樣式）';
-
-  @override
   String get customCmd => '自訂指令';
 
   @override
@@ -5505,9 +5481,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get diskHealth => '磁碟健康';
 
   @override
-  String get displayCpuIndex => '顯示 CPU 索引';
-
-  @override
   String dl2Local(String fileName) {
     return '下載 $fileName 到本地？';
   }
@@ -5524,12 +5497,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get dockerStatistics => 'Docker 統計';
-
-  @override
-  String get doubleColumnMode => '雙列模式';
-
-  @override
-  String get doubleColumnTip => '此選項僅用於啟用此功能，是否生效取決於裝置寬度';
 
   @override
   String get editVirtKeys => '虛擬按鍵';
@@ -5794,16 +5761,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get needRestart => '需要重開 App';
 
   @override
-  String get netViewType => '網路檢視類型';
-
-  @override
   String get newContainer => '新建容器';
 
   @override
   String get noConnectionStatsData => '暫無連線統計資料';
-
-  @override
-  String get noLineChart => '不使用折線圖';
 
   @override
   String get noPrivateKeyTip => '私鑰不存在，可能已被刪除/配置錯誤。';
@@ -5819,9 +5780,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get parseContainerStatsTip => 'Docker 解析消耗狀態較為緩慢';
-
-  @override
-  String get preferDiskAmount => '優先顯示硬碟容量';
 
   @override
   String get privateKey => '私鑰';

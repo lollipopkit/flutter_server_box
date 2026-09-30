@@ -598,10 +598,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get copyPath => 'Копировать путь';
 
   @override
-  String get cpuViewAsProgressTip =>
-      'Отобразите уровень использования каждого процессора в виде индикатора выполнения (старый стиль)';
-
-  @override
   String get customCmd => 'Пользовательские команды';
 
   @override
@@ -633,9 +629,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get diskHealth => 'Состояние диска';
 
   @override
-  String get displayCpuIndex => 'Отобразить индекс ЦП';
-
-  @override
   String dl2Local(String fileName) {
     return 'Загрузить $fileName на локальный диск?';
   }
@@ -653,13 +646,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get dockerStatistics => 'Статистика Docker';
-
-  @override
-  String get doubleColumnMode => 'Режим двойной колонки';
-
-  @override
-  String get doubleColumnTip =>
-      'Эта опция лишь включает функцию; фактическое применение зависит от ширины устройства';
 
   @override
   String get editVirtKeys => 'Виртуальные клавиши';
@@ -944,16 +930,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get needRestart => 'Требуется перезапуск приложения';
 
   @override
-  String get netViewType => 'Тип визуализации сети';
-
-  @override
   String get newContainer => 'Создать контейнер';
 
   @override
   String get noConnectionStatsData => 'Нет данных статистики соединений';
-
-  @override
-  String get noLineChart => 'Не использовать линейные графики';
 
   @override
   String get noPrivateKeyTip =>
@@ -972,9 +952,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get parseContainerStatsTip =>
       'Анализ статуса использования Docker может быть медленным';
-
-  @override
-  String get preferDiskAmount => 'Приоритетное отображение объёма диска';
 
   @override
   String get privateKey => 'Приватный ключ';

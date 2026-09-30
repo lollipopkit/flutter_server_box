@@ -597,10 +597,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get copyPath => 'Yolu kopyala';
 
   @override
-  String get cpuViewAsProgressTip =>
-      'Her CPU\'nun kullanımını ilerleme çubuğu tarzında göster (eski tarz)';
-
-  @override
   String get customCmd => 'Özel komutlar';
 
   @override
@@ -632,9 +628,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get diskHealth => 'Disk sağlığı';
 
   @override
-  String get displayCpuIndex => 'CPU indeksini göster';
-
-  @override
   String dl2Local(String fileName) {
     return '$fileName dosyasını yerel cihaza indir?';
   }
@@ -652,13 +645,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get dockerStatistics => 'Docker İstatistikleri';
-
-  @override
-  String get doubleColumnMode => 'Çift sütun modu';
-
-  @override
-  String get doubleColumnTip =>
-      'Bu seçenek yalnızca özelliği etkinleştirir, gerçekten etkinleşip etkinleşmeyeceği cihazın genişliğine bağlıdır';
 
   @override
   String get editVirtKeys => 'Sanal tuşlar';
@@ -940,16 +926,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get needRestart => 'Uygulamanın yeniden başlatılması gerekiyor';
 
   @override
-  String get netViewType => 'Ağ görüntüleme türü';
-
-  @override
   String get newContainer => 'Yeni konteyner';
 
   @override
   String get noConnectionStatsData => 'Bağlantı istatistik verisi yok';
-
-  @override
-  String get noLineChart => 'Çizgi grafikleri kullanma';
 
   @override
   String get noPrivateKeyTip =>
@@ -968,9 +948,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get parseContainerStatsTip =>
       'Docker\'ın doluluk durumunu ayrıştırmak oldukça yavaş.';
-
-  @override
-  String get preferDiskAmount => 'Disk kapasitesini öncelikli olarak göster';
 
   @override
   String get privateKey => 'Özel Anahtar';

@@ -596,10 +596,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get copyPath => 'Скопіювати шлях';
 
   @override
-  String get cpuViewAsProgressTip =>
-      'Відобразити використання кожного процесора у вигляді стовпчикової діаграми (старий стиль)';
-
-  @override
   String get customCmd => 'Користувацькі команди';
 
   @override
@@ -631,9 +627,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get diskHealth => 'Стан диска';
 
   @override
-  String get displayCpuIndex => 'Відобразити індекс ЦП';
-
-  @override
   String dl2Local(String fileName) {
     return 'Завантажити $fileName на локальний комп\'ютер?';
   }
@@ -651,13 +644,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get dockerStatistics => 'Статистика Docker';
-
-  @override
-  String get doubleColumnMode => 'Режим подвійної колонки';
-
-  @override
-  String get doubleColumnTip =>
-      'Ця опція лише активує функцію, чи можна її насправді включити, залежить від ширини пристрою';
 
   @override
   String get editVirtKeys => 'Віртуальні клавіші';
@@ -941,16 +927,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get needRestart => 'Необхідно перезапустити застосунок';
 
   @override
-  String get netViewType => 'Тип перегляду мережі';
-
-  @override
   String get newContainer => 'Новий контейнер';
 
   @override
   String get noConnectionStatsData => 'Немає даних статистики з\'єднань';
-
-  @override
-  String get noLineChart => 'Не використовувати лінійні діаграми';
 
   @override
   String get noPrivateKeyTip =>
@@ -969,9 +949,6 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get parseContainerStatsTip =>
       'Парсинг статусу зайнятості Docker є відносно повільним.';
-
-  @override
-  String get preferDiskAmount => 'Пріоритетно показувати ємність диска';
 
   @override
   String get privateKey => 'Приватний ключ';
