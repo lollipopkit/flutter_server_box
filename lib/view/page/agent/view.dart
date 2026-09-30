@@ -153,15 +153,31 @@ class AgentConversationView extends StatelessWidget {
                   // its own scroll position.
                   : LlmConversation(key: ValueKey(id), chatId: id),
             ),
-            SafeArea(
-              top: false,
-              child: Composer(
-                key: ValueKey(id ?? 'new:$scope'),
-                chatId: id,
-                scope: scope,
-                compact: compact,
-                onChatCreated: (created) => AgentChats.select(scope, created),
-              ),
+            // Inset and as wide as the messages above it.
+            LayoutBuilder(
+              builder: (context, cons) {
+                final side = (cons.maxWidth * 0.03).clamp(9.0, 20.0);
+                return SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(side, 0, side, 13),
+                    child: Center(
+                      heightFactor: 1,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 760),
+                        child: Composer(
+                          key: ValueKey(id ?? 'new:$scope'),
+                          chatId: id,
+                          scope: scope,
+                          compact: compact,
+                          onChatCreated: (created) =>
+                              AgentChats.select(scope, created),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
           ],
         );
