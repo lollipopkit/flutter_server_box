@@ -4,7 +4,8 @@ description: Ask a model to diagnose servers and review each action before it ru
 ---
 
 Agent connects a language model to your servers. It suggests an action, shows
-you what it plans to do, and runs it only after you approve.
+you what it plans to do, and runs it only after you approve — unless you let
+read-only commands run by themselves (see [Review actions](#review-actions)).
 
 Before the first message, add a provider at **Settings → App → AI →
 Providers**: pick one of the built-in providers (OpenAI, Anthropic, Google and
@@ -129,14 +130,15 @@ is under `roots`.
 ## Review actions
 
 Before a server action runs, the App shows the command, how risky it looks and
-the model's explanation of it. Read the command yourself, then allow or deny
+the model's explanation of it — except a read-only command that auto-runs (see
+below), which runs without a prompt. Read the command yourself, then allow or deny
 it. A denial is sent back to the model so it can respond to your feedback. In
 a terminal's chat you can also insert the command into the terminal, to edit
 and run it yourself. The model's safe or unsafe label is only a hint for your
 review.
 
-Server actions are asked about every time; there is no "always allow" for
-them. At **Settings → App → AI**, **Auto-run read-only commands** lets a server
+Server actions that do not auto-run are asked about every time; there is no
+"always allow" for them. At **Settings → App → AI**, **Auto-run read-only commands** lets a server
 command run without asking only when both the model and the App's local check
 classify it as read-only, idempotent and non-destructive, and then at most three
 times for one message. It is off by default and never applies to commands on

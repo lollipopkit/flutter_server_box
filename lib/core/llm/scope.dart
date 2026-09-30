@@ -54,23 +54,28 @@ final class TerminalHost {
 /// The terminal each server has open, for its chats' tools. Looked up per call:
 /// a terminal opens and closes under chats that outlive both.
 abstract final class TerminalHosts {
-  static final _hosts = <String, TerminalHost>{};
+  /// Per server, every terminal of it that is open, newest last: closing the
+  /// newest hands the chats back to the one before it rather than to none.
+  static final _hosts = <String, List<TerminalHost>>{};
 
   /// Registers [host] for server [serverId]; the returned callback removes it,
-  /// and only it — a second terminal of the same server that took over is
-  /// left alone.
+  /// and only it — another terminal of the same server stays reachable.
   static void Function() register(String serverId, TerminalHost host) {
-    _hosts[serverId] = host;
+    (_hosts[serverId] ??= []).add(host);
     return () {
-      if (identical(_hosts[serverId], host)) _hosts.remove(serverId);
+      final stack = _hosts[serverId];
+      if (stack == null) return;
+      stack.removeWhere((h) => identical(h, host));
+      if (stack.isEmpty) _hosts.remove(serverId);
     };
   }
 
-  static TerminalHost? of(String serverId) => _hosts[serverId];
+  /// The newest terminal of [serverId] still open.
+  static TerminalHost? of(String serverId) => _hosts[serverId]?.lastOrNull;
 
   static TerminalHost? forChat(String chatId) => switch (AgentScope
       .terminalServerOf(LlmStores.chat.fetch(chatId))) {
-    final id? => _hosts[id],
+    final id? => of(id),
     null => null,
   };
 }

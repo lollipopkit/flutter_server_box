@@ -639,7 +639,7 @@
   "agentProvidersTip": "Claves de API, modelos y el modelo de un chat nuevo",
   "agentTools": "Herramientas",
   "agentToolsTip": "Lo que el Agent puede usar y sus servidores MCP",
-  "agentSnippetToolsTip": "Listar, añadir, cambiar y eliminar tus snippets. Los cambios se consultan.",
+  "agentSnippetToolsTip": "Listar, añadir, cambiar y eliminar tus snippets. Los cambios requieren tu aprobación.",
   "agentVirtToolsTip": "Leer las VM y contenedores que ha cargado la pestaña Virtualización.",
   "agentBenchmarkToolsTip": "Leer resultados de benchmark y, con tu aprobación, ejecutar o detener uno.",
   "agentRemoteDesktopToolsTip": "Listar perfiles de escritorio remoto y, con tu aprobación, conectar o desconectar.",

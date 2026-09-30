@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/llm/scope.dart';
+import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/benchmark/benchmark_run.dart';
 import 'package:server_box/data/model/server/benchmark/yabs_options.dart';
@@ -409,9 +410,9 @@ final class BenchmarkTool extends ToolFunc {
           ).catchError((Object e, StackTrace s) => Loggers.app.warning('Benchmark notice', e, s)));
         });
         final options = YabsOptions(
-          disk: args['disk'] as bool? ?? true,
-          network: args['network'] as bool? ?? true,
-          cpu: args['cpu'] as bool? ?? false,
+          disk: AskAiCommand.lenientBool(args['disk']) ?? true,
+          network: AskAiCommand.lenientBool(args['network']) ?? true,
+          cpu: AskAiCommand.lenientBool(args['cpu']) ?? false,
         );
         await c.read(provider.notifier).start(options);
         final st = c.read(provider);
@@ -429,7 +430,11 @@ final class BenchmarkTool extends ToolFunc {
         if (c.read(provider).active == null && store.activeFor(id) == null) {
           return LlmToolResult.text('No run in progress.');
         }
-        _listening[id] ??= c.listen(provider, (_, _) {});
+        // Kept until the run ends, as for one started here: what polls it to
+        // its end. One already kept — this chat's run — is left as it is.
+        _listening[id] ??= c.listen(provider, (_, next) {
+          if (next.active == null && !next.isBusy) _listening.remove(id)?.close();
+        });
         await c.read(provider.notifier).cancel();
         return LlmToolResult.text('Cancelling.');
       default:

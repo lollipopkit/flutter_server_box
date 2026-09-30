@@ -639,7 +639,7 @@
   "agentProvidersTip": "API-sleutels, modellen en het model van een nieuwe chat",
   "agentTools": "Hulpmiddelen",
   "agentToolsTip": "Wat de Agent mag gebruiken, en zijn MCP-servers",
-  "agentSnippetToolsTip": "Snippets weergeven, toevoegen, wijzigen en verwijderen. Wijzigingen worden gevraagd.",
+  "agentSnippetToolsTip": "Snippets weergeven, toevoegen, wijzigen en verwijderen. Voor wijzigingen is je bevestiging nodig.",
   "agentVirtToolsTip": "De VM’s en containers lezen die het tabblad Virtualisatie heeft geladen.",
   "agentBenchmarkToolsTip": "Benchmarkresultaten lezen; met je goedkeuring een benchmark starten of stoppen.",
   "agentRemoteDesktopToolsTip": "Profielen voor extern bureaublad weergeven; met je goedkeuring verbinden of verbreken.",

@@ -2155,7 +2155,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get agentSnippetToolsTip =>
-      'Lister, ajouter, modifier et supprimer vos snippets. Les modifications sont demandées.';
+      'Lister, ajouter, modifier et supprimer vos snippets. Les modifications nécessitent votre accord.';
 
   @override
   String get agentVirtToolsTip =>

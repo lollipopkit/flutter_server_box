@@ -195,7 +195,9 @@ class AgentConversationView extends StatelessWidget {
       listenable: LlmStores.chat.changes,
       builder: (context, _) {
         final title = switch (id == null ? null : LlmStores.chat.fetch(id)) {
-          final meta? => meta.title ?? context.l10n.askAiUntitledConversation,
+          // As the list names it: an empty title is no title.
+          final meta? when meta.title?.isNotEmpty ?? false => meta.title!,
+          _? => context.l10n.askAiUntitledConversation,
           null => context.l10n.askAiNewConversation,
         };
         return Padding(

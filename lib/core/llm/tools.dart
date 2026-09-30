@@ -57,15 +57,26 @@ abstract final class AgentTools {
   static AskAiCommand commandOf(String name, Map<String, Object?> args) =>
       AskAiCommand.fromToolCall(id: name, name: name, args: args);
 
-  /// Stops [run] when the user stops the reply.
+  /// Stops [run] when the user stops the reply — only while it runs: a stop
+  /// after it ended would cancel whatever runs next through the same
+  /// [onCancel].
   static Future<T> cancellable<T>(
     LlmCancelToken cancel,
     Future<void> Function() onCancel,
     Future<T> Function() run,
   ) async {
     if (cancel.isCancelled) throw const LlmException('Cancelled');
-    unawaited(cancel.whenCancelled.then((_) => onCancel()));
-    return run();
+    var running = true;
+    unawaited(
+      cancel.whenCancelled.then((_) {
+        if (running) return onCancel();
+      }),
+    );
+    try {
+      return await run();
+    } finally {
+      running = false;
+    }
   }
 }
 

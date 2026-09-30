@@ -206,7 +206,9 @@ void main() {
       expect(store.agentShell.width.get(), 500);
       expect(store.agentShell.pillY.get(), 0.25);
       expect(store.agentShell.height.get(), const FloatShellWindow().height);
-      expect(store.agentShell.mode.get(), const FloatShellConfig().mode);
+      // Unset: the field reads as empty, which `storedMode` takes for the
+      // panel's default.
+      expect(store.agentShell.mode.get(), '');
     });
 
     test(
@@ -227,7 +229,7 @@ void main() {
       expect(store.agentShell.mode.fetch(), 'docked');
 
       store.agentShell.mode.delete();
-      expect(store.agentShell.mode.fetch(), const FloatShellConfig().mode);
+      expect(store.agentShell.mode.fetch(), '');
     });
   });
 

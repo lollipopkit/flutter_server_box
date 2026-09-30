@@ -236,12 +236,21 @@ void main() {
   });
 
   test('a failed replacement rolls the original graph back', () {
-    // The last thing a rename writes is the terminal chats' scope; refusing it
-    // there is a failure after everything else has been moved.
+    // A second chat of the server, whose write alone is refused: the failure
+    // comes after the rename's other writes and after the first chat's new
+    // scope, which has to be undone with them.
+    LlmStores.chat.put(
+      ChatMeta(
+        id: 'chat-2',
+        // Older than chat-1, so listed, and moved, after it.
+        updatedAt: DateTime(2025),
+        scope: 'terminal:${original.id}',
+      ),
+    );
     for (final op in ['INSERT', 'UPDATE']) {
       SqliteDb.instance.execute('''
         CREATE TRIGGER refuse_chat_$op BEFORE $op ON kv
-        WHEN NEW.store = 'chats'
+        WHEN NEW.store = 'chats' AND NEW.key = 'chat-2'
         BEGIN SELECT RAISE(ABORT, 'refused'); END;
       ''');
     }
@@ -250,7 +259,9 @@ void main() {
       () => servers.rename(original, original.copyWith(id: 'server-new')),
       throwsA(isA<StateError>()),
     );
-    expect(LlmStores.chat.fetch('chat-1')?.scope, 'terminal:${original.id}');
+    for (final id in ['chat-1', 'chat-2']) {
+      expect(LlmStores.chat.fetch(id)?.scope, 'terminal:${original.id}', reason: id);
+    }
 
     servers.dropCache();
     expect(servers.fetchOneRaw(original.id), original);

@@ -2139,7 +2139,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get agentSnippetToolsTip =>
-      'Snippets weergeven, toevoegen, wijzigen en verwijderen. Wijzigingen worden gevraagd.';
+      'Snippets weergeven, toevoegen, wijzigen en verwijderen. Voor wijzigingen is je bevestiging nodig.';
 
   @override
   String get agentVirtToolsTip =>
