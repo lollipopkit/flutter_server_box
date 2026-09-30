@@ -596,10 +596,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get copyPath => 'Скопіювати шлях';
 
   @override
-  String get cpuViewAsProgressTip =>
-      'Відобразити використання кожного процесора у вигляді стовпчикової діаграми (старий стиль)';
-
-  @override
   String get customCmd => 'Користувацькі команди';
 
   @override
@@ -607,10 +603,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get deleteDirRecursive => 'Видалити папку та весь її вміст';
-
-  @override
-  String get desktopTerminalTip =>
-      'Команда для відкриття емулятора термінала під час запуску SSH-сеансів.';
 
   @override
   String get dirEmpty => 'Переконайтеся, що директорія пуста.';
@@ -631,9 +623,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get diskHealth => 'Стан диска';
 
   @override
-  String get displayCpuIndex => 'Відобразити індекс ЦП';
-
-  @override
   String dl2Local(String fileName) {
     return 'Завантажити $fileName на локальний комп\'ютер?';
   }
@@ -651,13 +640,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get dockerStatistics => 'Статистика Docker';
-
-  @override
-  String get doubleColumnMode => 'Режим подвійної колонки';
-
-  @override
-  String get doubleColumnTip =>
-      'Ця опція лише активує функцію, чи можна її насправді включити, залежить від ширини пристрою';
 
   @override
   String get editVirtKeys => 'Віртуальні клавіші';
@@ -930,27 +912,16 @@ class AppLocalizationsUk extends AppLocalizations {
       'Кількість повторних спроб підключення до сервера';
 
   @override
-  String mismatchSystem(String system) {
-    return 'Невідповідна система: $system';
-  }
-
-  @override
   String get mirror => 'Дзеркало';
 
   @override
   String get needRestart => 'Необхідно перезапустити застосунок';
 
   @override
-  String get netViewType => 'Тип перегляду мережі';
-
-  @override
   String get newContainer => 'Новий контейнер';
 
   @override
   String get noConnectionStatsData => 'Немає даних статистики з\'єднань';
-
-  @override
-  String get noLineChart => 'Не використовувати лінійні діаграми';
 
   @override
   String get noPrivateKeyTip =>
@@ -969,9 +940,6 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get parseContainerStatsTip =>
       'Парсинг статусу зайнятості Docker є відносно повільним.';
-
-  @override
-  String get preferDiskAmount => 'Пріоритетно показувати ємність диска';
 
   @override
   String get privateKey => 'Приватний ключ';
@@ -1228,6 +1196,13 @@ class AppLocalizationsUk extends AppLocalizations {
   String get serverOrder => 'Порядок сервера';
 
   @override
+  String get serverOverview => 'Огляд серверів';
+
+  @override
+  String get serverOverviewTip =>
+      'Показувати зведення вгорі списку серверів і панель серверів над відкритим сервером';
+
+  @override
   String get serverTabEmpty => 'Серверів ще немає';
 
   @override
@@ -1352,17 +1327,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String sshConfigAllExist(int duplicateCount) {
     return 'Всі сервери вже існують (знайдено $duplicateCount дублікатів)';
   }
-
-  @override
-  String get sshConnectionModeTip =>
-      'Вбудований: використовувати термінал застосунку. Системний SSH: запускати системну команду ssh у зовнішньому терміналі.';
-
-  @override
-  String get sshConnectionModeUseBuiltin =>
-      'Використовувати вбудований термінал';
-
-  @override
-  String get sshConnectionModeUseSystem => 'Використовувати системний SSH';
 
   @override
   String sshConfigDuplicatesSkipped(int duplicateCount) {

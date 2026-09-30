@@ -38,26 +38,8 @@ class ConnCountBuilder extends ConsumerWidget {
   }
 }
 
-/// The count over whatever it wraps, for the bottom bar.
-class ConnCountBadge extends StatelessWidget {
-  const ConnCountBadge({super.key, required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return ConnCountBuilder(
-      builder: (_, count) =>
-          count == null ? child : Badge(label: Text(count), child: child),
-    );
-  }
-}
-
-/// The same count for the rail, which positions it itself.
-///
-/// [ConnCountBadge] hangs Material's badge off what it wraps, and in the rail
-/// that is the icon — inside the indicator, over the glyph. Here the badge is
-/// the whole widget and the rail puts it on the indicator's corner.
+/// The count for the rail and the bottom bar, which position it themselves:
+/// on the indicator's corner rather than over the glyph.
 class ConnCountRailBadge extends StatelessWidget {
   const ConnCountRailBadge({super.key, this.opacity = 1});
 

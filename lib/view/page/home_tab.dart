@@ -70,8 +70,8 @@ extension AppTabViewX on AppTab {
   /// The mark a tab carries, where the tab is *listed* — the settings page
   /// that arranges them, and the sheet the bar opens for the ones it cannot
   /// hold — and after its name in the open rail ([navRailItem]). The bottom
-  /// bar, whose label is a string and mostly hidden, carries it on the icon's
-  /// corner instead ([navDestination]).
+  /// bar, whose label is mostly hidden, carries it on the pill's corner while
+  /// the tab is selected.
   Widget? get mark => beta ? const BetaTag() : null;
 
   /// [label] with [mark], for a row that lists the tab rather than opening it.
@@ -81,23 +81,7 @@ extension AppTabViewX on AppTab {
     return MarkedTitle(label, mark: mark_);
   }
 
-  /// Returns a [Widget] rather than a [NavigationDestination] on purpose:
-  /// `NavigationBar.destinations` is a list of widgets, so [onMenu] can wrap
-  /// the whole cell. The destination still finds the bar's inherited
-  /// information above the wrapper, and a long press anywhere on the item —
-  /// icon, label, or the space around them — reaches the menu.
-  Widget navDestination({ContextMenuOpener? onMenu}) {
-    return _withMenu(
-      NavigationDestination(
-        icon: _badged(icon),
-        selectedIcon: _badged(selectedIcon, selected: true),
-        label: label,
-      ),
-      onMenu,
-    );
-  }
-
-  /// The same tab in the rail.
+  /// The tab in the rail and the bottom bar.
   ///
   /// The count is not wrapped round the icon here: [AppNavRail] hangs it off
   /// the indicator's corner instead, clear of the glyph. The menu is not
@@ -126,38 +110,6 @@ extension AppTabViewX on AppTab {
           child: icon,
         ),
       ),
-    );
-  }
-
-  /// The connection count on the server tab, the beta mark on a beta one:
-  /// on the icon's corner, the one place the bar has for it. The mark only
-  /// while the tab is [selected] — as the bar's label is — so a row of beta
-  /// tabs is not a row of marks.
-  ///
-  /// Only where the tab is a control. In a list of tabs to reorder, a count
-  /// would be answering a question the row is not about, and the mark is
-  /// beside the name there already.
-  Widget _badged(Widget icon, {bool selected = false}) {
-    if (this == AppTab.server) return ConnCountBadge(child: icon);
-    return beta && selected ? _BetaBadge(child: icon) : icon;
-  }
-}
-
-/// Material's badge, as the connection count is, in [BetaTag]'s colours and
-/// word.
-class _BetaBadge extends StatelessWidget {
-  const _BetaBadge({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Badge(
-      label: const Text('Beta'),
-      backgroundColor: scheme.tertiaryContainer,
-      textColor: scheme.onTertiaryContainer,
-      child: child,
     );
   }
 }
@@ -226,18 +178,4 @@ class _AppTabIcon extends StatelessWidget {
       },
     );
   }
-}
-
-/// Adds the long press and the right-click, and nothing when there is no menu.
-///
-/// Translucent, so the tap that switches tabs still reaches the ink response
-/// this sits inside. A long press wins the arena over that tap by holding past
-/// the timeout, which is what lets one target carry both.
-Widget _withMenu(Widget child, ContextMenuOpener? onMenu) {
-  if (onMenu == null) return child;
-  return GestureDetector(
-    behavior: HitTestBehavior.translucent,
-    onLongPress: () => onMenu(null),
-    child: child,
-  ).onSecondary(onMenu);
 }

@@ -301,9 +301,9 @@ void main() {
           ]);
           expect(Stores.setting.detailCardDisabled.get(), ['temperature']);
 
-          // Stored by name in 1466 and still read by name — an index would have
-          // changed meaning silently.
-          expect(Stores.setting.netViewType.get().name, 'speed');
+          // Retired since: the value that release wrote is not carried into
+          // the new store, where a backup would keep exporting it.
+          expect(Stores.setting.get<Object>('netViewType'), isNull);
 
           // Still a setting, which is the only place anything reads them from.
           // Re-keyed onto the ids m004 hands out, so a fingerprint filed under

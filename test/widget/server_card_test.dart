@@ -459,6 +459,24 @@ void main() {
       expect(asked, [ServerMetricKind.mem]);
     });
 
+    testWidgets('from its name as well as from the arrows', (tester) async {
+      // The name looks like part of the control, and it is: the arrows alone
+      // were a 15pt target beside a name that did nothing.
+      await pump(
+        tester,
+        promoted: null,
+        onPromote: (_) {},
+        expanded: false,
+      );
+      expect(find.text(libL10n.memory), findsNothing);
+
+      await tester.tap(find.text('CPU'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text(libL10n.memory), findsOneWidget);
+    });
+
     testWidgets('and the control is no taller than the line it is on', (
       tester,
     ) async {
@@ -595,11 +613,13 @@ void main() {
       // happens whenever the grid is: on the way back from an open machine,
       // when a tag is picked, when the globe is left. Each of those played it
       // again, on a card that had had its readings all along.
+      // Disconnected rather than connecting: a card that had readings keeps
+      // them through a reconnect — see `serverCardHasBody`.
       await pump(
         tester,
         promoted: null,
         onPromote: (_) {},
-        conn: ServerConn.connecting,
+        conn: ServerConn.disconnected,
       );
       expect(find.text(libL10n.memory), findsNothing);
 

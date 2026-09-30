@@ -1145,12 +1145,6 @@ abstract class AppLocalizations {
   /// **'Copy path'**
   String get copyPath;
 
-  /// Help text for the CPU view as progress setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'Display the usage of each CPU in a progress bar style (old style)'**
-  String get cpuViewAsProgressTip;
-
   /// User-facing label or message for custom cmd.
   ///
   /// In en, this message translates to:
@@ -1168,12 +1162,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete the folder and everything in it'**
   String get deleteDirRecursive;
-
-  /// Help text for the desktop terminal setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'Command used to open the terminal emulator when launching SSH sessions.'**
-  String get desktopTerminalTip;
 
   /// Empty-state message for dir empty.
   ///
@@ -1211,12 +1199,6 @@ abstract class AppLocalizations {
   /// **'Disk Health'**
   String get diskHealth;
 
-  /// User-facing label or message for display CPU index.
-  ///
-  /// In en, this message translates to:
-  /// **'Display CPU index'**
-  String get displayCpuIndex;
-
   /// User-facing label or message for dl 2 local.
   ///
   /// In en, this message translates to:
@@ -1246,18 +1228,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Docker Statistics'**
   String get dockerStatistics;
-
-  /// User-facing label or message for double column mode.
-  ///
-  /// In en, this message translates to:
-  /// **'Double column mode'**
-  String get doubleColumnMode;
-
-  /// Help text for the double column setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'This option only enables the feature, whether it can actually be enabled depends on the width of the device'**
-  String get doubleColumnTip;
 
   /// Action label for edit virt keys.
   ///
@@ -1733,12 +1703,6 @@ abstract class AppLocalizations {
   /// **'Number of server reconnections'**
   String get maxRetryCount;
 
-  /// User-facing label or message for mismatch system.
-  ///
-  /// In en, this message translates to:
-  /// **'Mismatch system: {system}'**
-  String mismatchSystem(String system);
-
   /// User-facing label or message for mirror.
   ///
   /// In en, this message translates to:
@@ -1751,12 +1715,6 @@ abstract class AppLocalizations {
   /// **'App needs to be restarted'**
   String get needRestart;
 
-  /// User-facing label or message for net view type.
-  ///
-  /// In en, this message translates to:
-  /// **'Network view type'**
-  String get netViewType;
-
   /// User-facing label or message for new container.
   ///
   /// In en, this message translates to:
@@ -1768,12 +1726,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No connection statistics data'**
   String get noConnectionStatsData;
-
-  /// User-facing label or message for no line chart.
-  ///
-  /// In en, this message translates to:
-  /// **'Do not use line charts'**
-  String get noLineChart;
 
   /// Help text for the no private key setting or action.
   ///
@@ -1804,12 +1756,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Parsing the occupancy status of Docker is relatively slow.'**
   String get parseContainerStatsTip;
-
-  /// User-facing label or message for prefer disk amount.
-  ///
-  /// In en, this message translates to:
-  /// **'Prioritize displaying disk capacity'**
-  String get preferDiskAmount;
 
   /// User-facing label or message for private key.
   ///
@@ -2236,6 +2182,18 @@ abstract class AppLocalizations {
   /// **'Server order'**
   String get serverOrder;
 
+  /// Setting that shows the summary strip at the top of the server tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Server overview'**
+  String get serverOverview;
+
+  /// Help text for the server overview setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the summary at the top of the server list, and the row of servers above an open one'**
+  String get serverOverviewTip;
+
   /// Empty-state message for server tab empty.
   ///
   /// In en, this message translates to:
@@ -2439,24 +2397,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'All servers already exist ({duplicateCount} duplicates found)'**
   String sshConfigAllExist(int duplicateCount);
-
-  /// Help text for the SSH connection mode setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'Built-in: use the app\'s terminal. System SSH: launch the system ssh command in an external terminal.'**
-  String get sshConnectionModeTip;
-
-  /// User-facing label or message for SSH connection mode use builtin.
-  ///
-  /// In en, this message translates to:
-  /// **'Use built-in terminal'**
-  String get sshConnectionModeUseBuiltin;
-
-  /// User-facing label or message for SSH connection mode use system.
-  ///
-  /// In en, this message translates to:
-  /// **'Use system SSH'**
-  String get sshConnectionModeUseSystem;
 
   /// User-facing label or message for SSH config duplicates skipped.
   ///

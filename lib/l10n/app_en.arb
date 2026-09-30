@@ -718,10 +718,6 @@
   "@copyPath": {
     "description": "Action label for copy path."
   },
-  "cpuViewAsProgressTip": "Display the usage of each CPU in a progress bar style (old style)",
-  "@cpuViewAsProgressTip": {
-    "description": "Help text for the CPU view as progress setting or action."
-  },
   "customCmd": "Custom commands",
   "@customCmd": {
     "description": "User-facing label or message for custom cmd."
@@ -733,10 +729,6 @@
   "deleteDirRecursive": "Delete the folder and everything in it",
   "@deleteDirRecursive": {
     "description": "Action label for delete dir recursive."
-  },
-  "desktopTerminalTip": "Command used to open the terminal emulator when launching SSH sessions.",
-  "@desktopTerminalTip": {
-    "description": "Help text for the desktop terminal setting or action."
   },
   "dirEmpty": "Make sure the folder is empty.",
   "@dirEmpty": {
@@ -762,10 +754,6 @@
   "@diskHealth": {
     "description": "User-facing label or message for disk health."
   },
-  "displayCpuIndex": "Display CPU index",
-  "@displayCpuIndex": {
-    "description": "User-facing label or message for display CPU index."
-  },
   "dl2Local": "Download {fileName} to local?",
   "@dl2Local": {
     "description": "User-facing label or message for dl 2 local.",
@@ -790,14 +778,6 @@
   "dockerStatistics": "Docker Statistics",
   "@dockerStatistics": {
     "description": "User-facing label or message for docker statistics."
-  },
-  "doubleColumnMode": "Double column mode",
-  "@doubleColumnMode": {
-    "description": "User-facing label or message for double column mode."
-  },
-  "doubleColumnTip": "This option only enables the feature, whether it can actually be enabled depends on the width of the device",
-  "@doubleColumnTip": {
-    "description": "Help text for the double column setting or action."
   },
   "editVirtKeys": "Virtual keys",
   "@editVirtKeys": {
@@ -1154,15 +1134,6 @@
   "@maxRetryCount": {
     "description": "User-facing label or message for max retry count."
   },
-  "mismatchSystem": "Mismatch system: {system}",
-  "@mismatchSystem": {
-    "description": "User-facing label or message for mismatch system.",
-    "placeholders": {
-      "system": {
-        "type": "String"
-      }
-    }
-  },
   "mirror": "Mirror",
   "@mirror": {
     "description": "User-facing label or message for mirror."
@@ -1171,10 +1142,6 @@
   "@needRestart": {
     "description": "User-facing label or message for need restart."
   },
-  "netViewType": "Network view type",
-  "@netViewType": {
-    "description": "User-facing label or message for net view type."
-  },
   "newContainer": "New container",
   "@newContainer": {
     "description": "User-facing label or message for new container."
@@ -1182,10 +1149,6 @@
   "noConnectionStatsData": "No connection statistics data",
   "@noConnectionStatsData": {
     "description": "User-facing label or message for no connection stats data."
-  },
-  "noLineChart": "Do not use line charts",
-  "@noLineChart": {
-    "description": "User-facing label or message for no line chart."
   },
   "noPrivateKeyTip": "The private key does not exist, it may have been deleted or there is a configuration error.",
   "@noPrivateKeyTip": {
@@ -1206,10 +1169,6 @@
   "parseContainerStatsTip": "Parsing the occupancy status of Docker is relatively slow.",
   "@parseContainerStatsTip": {
     "description": "Help text for the parse container stats setting or action."
-  },
-  "preferDiskAmount": "Prioritize displaying disk capacity",
-  "@preferDiskAmount": {
-    "description": "User-facing label or message for prefer disk amount."
   },
   "privateKey": "Private Key",
   "@privateKey": {
@@ -1557,6 +1516,14 @@
   "@serverOrder": {
     "description": "User-facing label or message for server order."
   },
+  "serverOverview": "Server overview",
+  "@serverOverview": {
+    "description": "Setting that shows the summary strip at the top of the server tab."
+  },
+  "serverOverviewTip": "Show the summary at the top of the server list, and the row of servers above an open one",
+  "@serverOverviewTip": {
+    "description": "Help text for the server overview setting."
+  },
   "serverTabEmpty": "No servers yet",
   "@serverTabEmpty": {
     "description": "Empty-state message for server tab empty."
@@ -1712,18 +1679,6 @@
         "type": "int"
       }
     }
-  },
-  "sshConnectionModeTip": "Built-in: use the app's terminal. System SSH: launch the system ssh command in an external terminal.",
-  "@sshConnectionModeTip": {
-    "description": "Help text for the SSH connection mode setting or action."
-  },
-  "sshConnectionModeUseBuiltin": "Use built-in terminal",
-  "@sshConnectionModeUseBuiltin": {
-    "description": "User-facing label or message for SSH connection mode use builtin."
-  },
-  "sshConnectionModeUseSystem": "Use system SSH",
-  "@sshConnectionModeUseSystem": {
-    "description": "User-facing label or message for SSH connection mode use system."
   },
   "sshConfigDuplicatesSkipped": "{duplicateCount} duplicates will be skipped",
   "@sshConfigDuplicatesSkipped": {

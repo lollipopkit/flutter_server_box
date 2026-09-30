@@ -596,10 +596,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get copyPath => 'Copiar caminho';
 
   @override
-  String get cpuViewAsProgressTip =>
-      'Exiba a taxa de uso de cada CPU em estilo de barra de progresso (estilo antigo)';
-
-  @override
   String get customCmd => 'Comandos personalizados';
 
   @override
@@ -607,10 +603,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get deleteDirRecursive => 'Eliminar a pasta e todo o seu conteúdo';
-
-  @override
-  String get desktopTerminalTip =>
-      'Comando usado para abrir o emulador de terminal ao iniciar sessões SSH.';
 
   @override
   String get dirEmpty => 'Certifique-se de que a pasta está vazia';
@@ -631,9 +623,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get diskHealth => 'Saúde do disco';
 
   @override
-  String get displayCpuIndex => 'Exiba o índice de CPU';
-
-  @override
   String dl2Local(String fileName) {
     return 'Baixar $fileName para o local?';
   }
@@ -651,13 +640,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get dockerStatistics => 'Estatísticas do Docker';
-
-  @override
-  String get doubleColumnMode => 'Modo de coluna dupla';
-
-  @override
-  String get doubleColumnTip =>
-      'Esta opção apenas ativa a funcionalidade, se ela será ativada depende também da largura do dispositivo';
 
   @override
   String get editVirtKeys => 'Teclas virtuais';
@@ -929,27 +911,16 @@ class AppLocalizationsPt extends AppLocalizations {
       'Número de tentativas de reconexão com o servidor';
 
   @override
-  String mismatchSystem(String system) {
-    return 'Sistema incompatível: $system';
-  }
-
-  @override
   String get mirror => 'Espelho';
 
   @override
   String get needRestart => 'Necessita reiniciar o app';
 
   @override
-  String get netViewType => 'Tipo de visualização de rede';
-
-  @override
   String get newContainer => 'Novo contêiner';
 
   @override
   String get noConnectionStatsData => 'Não há dados de estatísticas de conexão';
-
-  @override
-  String get noLineChart => 'Não usar gráficos de linha';
 
   @override
   String get noPrivateKeyTip =>
@@ -968,9 +939,6 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get parseContainerStatsTip =>
       'Análise de status do Docker pode ser lenta';
-
-  @override
-  String get preferDiskAmount => 'Priorizar a exibição da capacidade do disco';
 
   @override
   String get privateKey => 'Chave privada';
@@ -1226,6 +1194,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get serverOrder => 'Ordem do servidor';
 
   @override
+  String get serverOverview => 'Visão geral dos servidores';
+
+  @override
+  String get serverOverviewTip =>
+      'Mostra o resumo no topo da lista de servidores e a barra de servidores acima de um servidor aberto';
+
+  @override
   String get serverTabEmpty => 'Ainda não há servidores';
 
   @override
@@ -1349,16 +1324,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String sshConfigAllExist(int duplicateCount) {
     return 'Todos os servidores já existem (encontradas $duplicateCount duplicatas)';
   }
-
-  @override
-  String get sshConnectionModeTip =>
-      'Integrado: usar o terminal do app. SSH do sistema: iniciar o comando ssh do sistema em um terminal externo.';
-
-  @override
-  String get sshConnectionModeUseBuiltin => 'Usar o terminal integrado';
-
-  @override
-  String get sshConnectionModeUseSystem => 'Usar o SSH do sistema';
 
   @override
   String sshConfigDuplicatesSkipped(int duplicateCount) {

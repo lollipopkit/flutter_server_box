@@ -563,9 +563,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get copyPath => '경로 복사';
 
   @override
-  String get cpuViewAsProgressTip => '각 CPU 사용률을 프로그레스 바 형태로 표시합니다 (이전 스타일)';
-
-  @override
   String get customCmd => '사용자 정의 명령어';
 
   @override
@@ -573,9 +570,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get deleteDirRecursive => '폴더와 그 안의 모든 항목 삭제';
-
-  @override
-  String get desktopTerminalTip => 'SSH 세션을 시작할 때 사용할 터미널 에뮬레이터를 여는 명령어입니다.';
 
   @override
   String get dirEmpty => '폴더가 비어 있는지 확인해 주세요.';
@@ -596,9 +590,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get diskHealth => '디스크 상태';
 
   @override
-  String get displayCpuIndex => 'CPU 인덱스 표시';
-
-  @override
   String dl2Local(String fileName) {
     return '$fileName을(를) 로컬에 다운로드하시겠습니까?';
   }
@@ -615,12 +606,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get dockerStatistics => 'Docker 통계';
-
-  @override
-  String get doubleColumnMode => '이중 열 모드';
-
-  @override
-  String get doubleColumnTip => '이 옵션은 기능만 활성화하며, 실제 적용 여부는 기기의 너비에 따라 다릅니다';
 
   @override
   String get editVirtKeys => '가상 키';
@@ -879,27 +864,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String get maxRetryCount => '서버 재연결 횟수';
 
   @override
-  String mismatchSystem(String system) {
-    return '시스템이 일치하지 않습니다: $system';
-  }
-
-  @override
   String get mirror => '미러';
 
   @override
   String get needRestart => '앱을 다시 시작해야 합니다';
 
   @override
-  String get netViewType => '네트워크 뷰 유형';
-
-  @override
   String get newContainer => '새 컨테이너';
 
   @override
   String get noConnectionStatsData => '연결 통계 데이터가 없습니다';
-
-  @override
-  String get noLineChart => '꺾은선 그래프 사용 안 함';
 
   @override
   String get noPrivateKeyTip => '개인 키가 존재하지 않습니다. 삭제되었거나 설정 오류일 수 있습니다.';
@@ -915,9 +889,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get parseContainerStatsTip => 'Docker 점유 상태 파싱이 비교적 느립니다.';
-
-  @override
-  String get preferDiskAmount => '디스크 용량 우선 표시';
 
   @override
   String get privateKey => '개인 키';
@@ -1163,6 +1134,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get serverOrder => '서버 순서';
 
   @override
+  String get serverOverview => '서버 개요';
+
+  @override
+  String get serverOverviewTip => '서버 목록 상단에 개요를, 열린 서버 위에 서버 전환 막대를 표시합니다';
+
+  @override
   String get serverTabEmpty => '아직 서버가 없습니다';
 
   @override
@@ -1277,16 +1254,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String sshConfigAllExist(int duplicateCount) {
     return '모든 서버가 이미 존재합니다 (중복 $duplicateCount개 발견)';
   }
-
-  @override
-  String get sshConnectionModeTip =>
-      '내장: 앱의 터미널을 사용합니다. 시스템 SSH: 외부 터미널에서 시스템 ssh 명령을 실행합니다.';
-
-  @override
-  String get sshConnectionModeUseBuiltin => '내장 터미널 사용';
-
-  @override
-  String get sshConnectionModeUseSystem => '시스템 SSH 사용';
 
   @override
   String sshConfigDuplicatesSkipped(int duplicateCount) {

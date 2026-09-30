@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/view/page/server/card/arrival.dart';
+import 'package:server_box/view/page/server/card/chart_hero.dart';
 import 'package:server_box/view/page/server/card/fold.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/card/sizes.dart';
@@ -46,6 +47,7 @@ class ServerCardFocus extends StatelessWidget {
     required this.onTap,
     required this.onPromote,
     this.selected,
+    this.heroId,
   });
 
   /// The reading drawn in full.
@@ -83,6 +85,10 @@ class ServerCardFocus extends StatelessWidget {
   /// A different reading was chosen to be drawn in full.
   final ValueChanged<ServerMetricKind> onPromote;
 
+  /// The server whose chart flies to the detail page, or null where opening
+  /// the card does not push one — see [ServerChartHero].
+  final String? heroId;
+
   @override
   Widget build(BuildContext context) {
     final m = metric;
@@ -109,6 +115,20 @@ class ServerCardFocus extends StatelessWidget {
       t,
     )!;
 
+    // What the reading is. Part of the switch where there is anything to
+    // switch to, so a press on the name does what a press on the arrows does.
+    final lead = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(m.icon, size: 18, color: ChartPalette.accent),
+        const SizedBox(width: 9),
+        Text(
+          m.label,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+        ),
+      ],
+    );
+
     final body = Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -119,26 +139,21 @@ class ServerCardFocus extends StatelessWidget {
               : lerpDouble(ServerCardSizes.big, ServerCardSizes.openHead, t),
           child: Row(
           children: [
-            Icon(m.icon, size: 18, color: ChartPalette.accent),
-            const SizedBox(width: 9),
-            Text(
-              m.label,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-            ),
             // The card's only. On the page every reading has a row, and
             // pressing one is how a different one is chosen there.
-            if (others.isNotEmpty && t < 1)
-              Opacity(
-                opacity: 1 - t,
-                child: ServerCardSwitch(
-                  others: others,
-                  title: name,
-                  moving: t > 0,
-                  selected: selected,
-                  onTap: onTap,
-                  onPromote: onPromote,
-                ),
-              ),
+            if (others.isNotEmpty)
+              ServerCardSwitch(
+                lead: lead,
+                others: others,
+                title: name,
+                moving: t > 0,
+                selected: selected,
+                onTap: onTap,
+                onPromote: onPromote,
+                glyph: 1 - t,
+              )
+            else
+              lead,
             const Spacer(),
             if (t < 1)
               Opacity(
@@ -288,7 +303,10 @@ class ServerCardFocus extends StatelessWidget {
     ];
     // The chart height must follow the parent transition so it does not freeze
     // at an intermediate value during the reverse animation.
-    return SizedBox(
+    return ServerChartHero(
+      id: heroId ?? '',
+      enabled: heroId != null,
+      child: SizedBox(
       height: height,
       // A layer of its own: the line eases to each new sample over 150ms, and
       // without this every one of those frames painted the card round it —
@@ -318,6 +336,7 @@ class ServerCardFocus extends StatelessWidget {
         height: height,
         fill: true,
         axis: axis,
+      ),
       ),
       ),
       ),
@@ -368,9 +387,10 @@ class ServerCardFocus extends StatelessWidget {
     required EdgeInsets padding,
   }) {
     if (t <= 0) return child;
-    return CardX(
+    return FadingCard(
       // In before the card's own surface starts going — see `ServerCard.build`
       // and [blockSurfaceAt].
+      outline: blockOutlineAt(t),
       color: Color.lerp(Colors.transparent, cardColorOf(context), blockSurfaceAt(t)),
       margin: EdgeInsets.lerp(EdgeInsets.zero, const EdgeInsets.all(4), t),
       child: Padding(
@@ -381,11 +401,14 @@ class ServerCardFocus extends StatelessWidget {
   }
 }
 
-/// Beside the name of the reading drawn in full: which one that is.
+/// The name of the reading drawn in full, and the way to draw another.
 ///
 /// Pressing a row is the other way, and on a card at rest there are no rows
 /// — see `ServerCard.expanded`. Here it does not depend on what is unfolded,
 /// and it reaches the readings the card has no slot for as well.
+///
+/// The whole of it, name and arrows, is the button: the arrows alone were a
+/// 15pt glyph beside a name that looked just as pressable and did nothing.
 ///
 /// No taller than the line it is on. That line takes the height of what is
 /// in it at rest and a stated one from the first frame of the movement, so
@@ -394,13 +417,22 @@ class ServerCardFocus extends StatelessWidget {
 class ServerCardSwitch extends StatelessWidget {
   const ServerCardSwitch({
     super.key,
+    required this.lead,
     required this.others,
     required this.title,
     required this.onTap,
     required this.onPromote,
     this.moving = false,
     this.selected,
+    this.glyph = 1,
   });
+
+  /// The reading's glyph and name, which the button starts with.
+  final Widget lead;
+
+  /// How much of the arrows is drawn, 0 to 1. They leave as the card becomes
+  /// the page, where the rows are the way to choose; the name stays.
+  final double glyph;
 
   /// What it offers: every reading but the one already drawn in full.
   final List<ServerMetric> others;
@@ -438,10 +470,23 @@ class ServerCardSwitch extends StatelessWidget {
             onTap: selected == null
                 ? () => _pickReading(context, others)
                 : onTap,
-            child: const SizedBox(
-              width: ServerCardSizes.action,
-              height: ServerCardSizes.big,
-              child: Icon(Icons.unfold_more, size: 15, color: Colors.grey),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                lead,
+                SizedBox(
+                  width: ServerCardSizes.action,
+                  height: ServerCardSizes.big,
+                  child: Opacity(
+                    opacity: glyph.clamp(0.0, 1.0),
+                    child: const Icon(
+                      Icons.unfold_more,
+                      size: 15,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

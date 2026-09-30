@@ -8,7 +8,6 @@ import 'package:server_box/data/model/app/float_shell_config.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/motion.dart';
-import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/model/app/server_sort.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/app/tray.dart';
@@ -38,12 +37,6 @@ class SettingStore extends SqliteStore with ThemeSettings {
 
   /// Whether to remember previously opened SFTP paths.
   late final recordHistory = propertyDefault('recordHistory', true);
-
-  /// Whether the disk view prefers usage amounts over I/O metrics.
-  late final serverTabPreferDiskAmount = propertyDefault(
-    'serverTabPreferDiskAmount',
-    false,
-  );
 
   /// UI scale factor. `1.0` means 100%.
   ///
@@ -224,13 +217,6 @@ class SettingStore extends SqliteStore with ThemeSettings {
     'sshVirtKeys',
     defaultValue: VirtKeyX.defaultOrder.map((e) => e.name).toList(),
     fromObj: _virtKeyNames,
-  );
-
-  late final netViewType = propertyDefault(
-    'netViewType',
-    NetViewType.speed,
-    fromObj: (val) => NetViewType.values.firstWhereOrNull((e) => e.name == val),
-    toObj: (type) => type?.name,
   );
 
   // Only valid on iOS
@@ -654,11 +640,9 @@ class SettingStore extends SqliteStore with ThemeSettings {
     true,
   );
 
-  /// Whether to use a two-column server page on desktop.
-  late final doubleColumnServersPage = propertyDefault(
-    'doubleColumnServersPage',
-    true,
-  );
+  /// Whether the strip above the server list is shown: the overview over the
+  /// grid, and the row of servers it turns into over an open one.
+  late final serverOverview = propertyDefault('serverOverview', true);
 
   /// Remerber pwd in memory
   /// Used for [DialogX.showPwdDialog]
@@ -699,11 +683,6 @@ class SettingStore extends SqliteStore with ThemeSettings {
 
   /// Hide title bar on desktop
   late final hideTitleBar = propertyDefault('hideTitleBar', isDesktop);
-
-  /// Whether to display CPU usage with the legacy progress-bar view.
-  late final cpuViewAsProgress = propertyDefault('cpuViewAsProgress', false);
-
-  late final displayCpuIndex = propertyDefault('displayCpuIndex', true);
 
   late final editorSoftWrap = propertyDefault('editorSoftWrap', isIOS);
 
@@ -777,23 +756,6 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// Remote editor command used in the SSH terminal, such as `$EDITOR` or
   /// `vim`. Leave empty to use the local GUI editor.
   late final sftpEditor = propertyDefault('sftpEditor', '');
-
-  /// Preferred terminal emulator command on desktop.
-  late final desktopTerminal = propertyDefault(
-    'desktopTerminal',
-    'x-terminal-emulator',
-  );
-
-  /// Whether to copy the login password before launching a desktop SSH client.
-  late final desktopSshAutoCopyPassword = propertyDefault(
-    'desktopSshAutoCopyPassword',
-    false,
-  );
-
-  /// SSH connection mode on desktop.
-  /// false = built-in (dartssh2 + xterm)
-  /// true = system SSH (launch ssh command in external terminal)
-  late final sshConnectionMode = propertyDefault('sshConnectionMode', false);
 
   // `fgService` was here: a second switch for the Android foreground service,
   // whose tile was commented out of the settings page long before that page
@@ -1135,6 +1097,20 @@ class SettingStore extends SqliteStore with ThemeSettings {
       'geoShards',
       'geoShardEndpoint',
       'geoCacheLimit',
+      // Server page options the current cards and detail page no longer read
+      // (the per-core CPU bars went with the last two).
+      'netViewType',
+      'serverTabPreferDiskAmount',
+      'doubleColumnServersPage',
+      'cpuViewAsProgress',
+      'displayCpuIndex',
+      // Opening a terminal in the system's own `ssh` instead of this app's:
+      // the switch, the password copied for it, and the Linux emulator it ran
+      // in. `SettingsFixupsMigration` still converts the first from an int,
+      // which is harmless once this has dropped it.
+      'sshConnectionMode',
+      'desktopSshAutoCopyPassword',
+      'desktopTerminal',
     ]) {
       remove(key, updateLastUpdateTsOnRemove: false);
     }

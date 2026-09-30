@@ -279,34 +279,42 @@ class ServerCardNotice extends StatelessWidget {
       maxLines: t < 1 ? 3 : null,
       overflow: t < 1 ? TextOverflow.ellipsis : null,
     );
-    final mono = notice.mono.isEmpty
-        ? null
-        : CardX(
-            // A card of its own at the far end, in before the block's own
-            // surface starts going — see [blockSurfaceAt].
-            color: Color.lerp(
-              Colors.transparent,
-              cardColorOf(context),
-              blockSurfaceAt(t),
-            ),
-            radius: BorderRadius.lerp(_radius, CardX.borderRadius, t),
-            margin: EdgeInsets.lerp(
-              EdgeInsets.zero,
-              const EdgeInsets.all(4),
-              t,
-            ),
-            child: Padding(
-              padding: EdgeInsets.lerp(
-                EdgeInsets.zero,
-                const EdgeInsets.all(13),
-                t,
-              )!,
-              // Selectable once it is the page's, and laid out the same either
-              // way: a `SelectableText` wraps a caret's width earlier than the
-              // `Text` it would be taking over from.
-              child: t < 1 ? monoText : SelectionArea(child: monoText),
-            ),
-          );
+    final mono = switch (notice.mono) {
+      '' => null,
+      // Bare on the card, where the block around it is its surface: at zero
+      // the card below has no colour, margin or padding, so the one thing it
+      // would add is the theme's outline round the machine's words. The
+      // readings rows and the focus block do the same.
+      _ when t <= 0 => monoText,
+      _ => FadingCard(
+        // A card of its own at the far end, in before the block's own
+        // surface starts going — see [blockSurfaceAt]. Its outline once the
+        // card's has gone — see [blockOutlineAt].
+        outline: blockOutlineAt(t),
+        color: Color.lerp(
+          Colors.transparent,
+          cardColorOf(context),
+          blockSurfaceAt(t),
+        ),
+        radius: BorderRadius.lerp(_radius, CardX.borderRadius, t),
+        margin: EdgeInsets.lerp(
+          EdgeInsets.zero,
+          const EdgeInsets.all(4),
+          t,
+        ),
+        child: Padding(
+          padding: EdgeInsets.lerp(
+            EdgeInsets.zero,
+            const EdgeInsets.all(13),
+            t,
+          )!,
+          // Selectable once it is the page's, and laid out the same either
+          // way: a `SelectableText` wraps a caret's width earlier than the
+          // `Text` it would be taking over from.
+          child: t < 1 ? monoText : SelectionArea(child: monoText),
+        ),
+      ),
+    };
 
     final block = Container(
       padding: EdgeInsets.lerp(_pad, EdgeInsets.zero, t),

@@ -596,10 +596,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get copyPath => 'Pad kopiëren';
 
   @override
-  String get cpuViewAsProgressTip =>
-      'Toon het gebruik van elke CPU in een voortgangsbalkstijl (oude stijl)';
-
-  @override
   String get customCmd => 'Aangepaste opdrachten';
 
   @override
@@ -607,10 +603,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get deleteDirRecursive => 'De map en alles erin verwijderen';
-
-  @override
-  String get desktopTerminalTip =>
-      'Opdracht die wordt gebruikt om de terminalemulator te openen bij het starten van SSH-sessies.';
 
   @override
   String get dirEmpty => 'Zorg ervoor dat de map leeg is.';
@@ -631,9 +623,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get diskHealth => 'Schijfgezondheid';
 
   @override
-  String get displayCpuIndex => 'Toon de CPU-index';
-
-  @override
   String dl2Local(String fileName) {
     return 'Download $fileName naar lokaal?';
   }
@@ -651,13 +640,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get dockerStatistics => 'Docker-statistieken';
-
-  @override
-  String get doubleColumnMode => 'Dubbele kolommodus';
-
-  @override
-  String get doubleColumnTip =>
-      'Deze optie schakelt alleen de functie in, of deze daadwerkelijk kan worden ingeschakeld, hangt af van de breedte van het apparaat';
 
   @override
   String get editVirtKeys => 'Virtuele toetsen';
@@ -929,27 +911,16 @@ class AppLocalizationsNl extends AppLocalizations {
   String get maxRetryCount => 'Aantal serverherverbindingen';
 
   @override
-  String mismatchSystem(String system) {
-    return 'Niet-overeenkomend systeem: $system';
-  }
-
-  @override
   String get mirror => 'Mirror';
 
   @override
   String get needRestart => 'App moet opnieuw worden gestart';
 
   @override
-  String get netViewType => 'Netweergavetype';
-
-  @override
   String get newContainer => 'Nieuwe container';
 
   @override
   String get noConnectionStatsData => 'Geen verbindingsstatistiekgegevens';
-
-  @override
-  String get noLineChart => 'lijndiagrammen gebruiken';
 
   @override
   String get noPrivateKeyTip =>
@@ -968,10 +939,6 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get parseContainerStatsTip =>
       'Het parsen van de bezettingsstatus van Docker is relatief langzaam.';
-
-  @override
-  String get preferDiskAmount =>
-      'Geef de schijfcapaciteit prioriteit bij weergave';
 
   @override
   String get privateKey => 'Privésleutel';
@@ -1229,6 +1196,13 @@ class AppLocalizationsNl extends AppLocalizations {
   String get serverOrder => 'Servervolgorde';
 
   @override
+  String get serverOverview => 'Serveroverzicht';
+
+  @override
+  String get serverOverviewTip =>
+      'Toont het overzicht bovenaan de serverlijst en de serverbalk boven een geopende server';
+
+  @override
   String get serverTabEmpty => 'Nog geen servers';
 
   @override
@@ -1352,16 +1326,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String sshConfigAllExist(int duplicateCount) {
     return 'Alle servers bestaan al ($duplicateCount duplicaten gevonden)';
   }
-
-  @override
-  String get sshConnectionModeTip =>
-      'Ingebouwd: de terminal van de app gebruiken. Systeem-SSH: het ssh-commando van het systeem in een externe terminal starten.';
-
-  @override
-  String get sshConnectionModeUseBuiltin => 'Ingebouwde terminal gebruiken';
-
-  @override
-  String get sshConnectionModeUseSystem => 'Systeem-SSH gebruiken';
 
   @override
   String sshConfigDuplicatesSkipped(int duplicateCount) {

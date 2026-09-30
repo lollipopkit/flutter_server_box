@@ -12,12 +12,9 @@ extension _SSH on _AppSettingsPageState {
     return [
       SettingsGroup(libL10n.general, [
         if (isDesktop) _buildSSHConfigImport(),
-        if (isDesktop) _buildSshConnectionMode(),
         _buildLetterCache(),
         _buildSSHWakeLock(),
         _buildSSHVirtualKeyAutoOff(),
-        if (isDesktop) _buildDesktopSshAutoCopyPassword(),
-        if (isLinux) _buildDesktopTerminal(),
       ]),
       SettingsGroup(libL10n.theme, [
         _buildTermTheme(),
@@ -298,82 +295,6 @@ extension _SSH on _AppSettingsPageState {
     _setting.sshBgImage.put(newPath);
 
     _refreshApp(closeDialog: true);
-  }
-
-  SettingsRow _buildDesktopTerminal() {
-    final label = libL10n.terminal;
-    return SettingsRow(
-      label,
-      () => _setting.desktopTerminal.listenable().listenVal((val) {
-        return ListTile(
-          leading: const Icon(Icons.terminal),
-          title: TipText(label, l10n.desktopTerminalTip),
-          trailing: Text(
-            val,
-            style: UIs.text15,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          onTap: () {
-            withTextFieldController((ctrl) async {
-              ctrl.text = val;
-              void onSave() {
-                _setting.desktopTerminal.put(ctrl.text.trim());
-                context.popDialog();
-              }
-
-              await context.showRoundDialog<bool>(
-                title: libL10n.select,
-                child: Input(
-                  controller: ctrl,
-                  autoFocus: true,
-                  label: label,
-                  hint: 'x-terminal-emulator / gnome-terminal',
-                  icon: Icons.edit,
-                  suggestion: false,
-                  onSubmitted: (_) => onSave(),
-                ),
-                actions: Btn.ok(onTap: onSave).toList,
-              );
-            });
-          },
-        );
-      }),
-      keywords: l10n.desktopTerminalTip,
-    );
-  }
-
-  SettingsRow _buildDesktopSshAutoCopyPassword() {
-    final label = '${libL10n.copy} ${libL10n.pwd}';
-    return SettingsRow(
-      label,
-      () => ListTile(
-        leading: const Icon(Icons.password),
-        title: Text(label),
-        subtitle: Text('SSH', style: UIs.textGrey),
-        trailing: StoreSwitch(prop: _setting.desktopSshAutoCopyPassword),
-      ),
-      keywords: 'SSH',
-    );
-  }
-
-  SettingsRow _buildSshConnectionMode() {
-    return SettingsRow(
-      l10n.sshConnectionModeUseSystem,
-      () => _setting.sshConnectionMode.listenable().listenVal((useSystemSsh) {
-        final title = useSystemSsh
-            ? l10n.sshConnectionModeUseSystem
-            : l10n.sshConnectionModeUseBuiltin;
-        return ListTile(
-          leading: const Icon(Icons.swap_horiz),
-          title: Text(title),
-          subtitle: Text(l10n.sshConnectionModeTip, style: UIs.textGrey),
-          trailing: StoreSwitch(prop: _setting.sshConnectionMode),
-        );
-      }),
-      keywords:
-          '${l10n.sshConnectionModeUseBuiltin} ${l10n.sshConnectionModeTip}',
-    );
   }
 
   SettingsRow _buildTermTheme() {

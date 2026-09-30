@@ -552,9 +552,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get copyPath => '复制路径';
 
   @override
-  String get cpuViewAsProgressTip => '以进度条样式显示每个 CPU 的使用率（旧版样式）';
-
-  @override
   String get customCmd => '自定义命令';
 
   @override
@@ -562,9 +559,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get deleteDirRecursive => '连同文件夹里的所有内容一起删除';
-
-  @override
-  String get desktopTerminalTip => '启动 SSH 连接所用的终端模拟器命令';
 
   @override
   String get dirEmpty => '请确保目录为空';
@@ -585,9 +579,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get diskHealth => '磁盘健康';
 
   @override
-  String get displayCpuIndex => '显示 CPU 索引';
-
-  @override
   String dl2Local(String fileName) {
     return '下载 $fileName 到本地？';
   }
@@ -604,12 +595,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get dockerStatistics => 'Docker 统计';
-
-  @override
-  String get doubleColumnMode => '双列模式';
-
-  @override
-  String get doubleColumnTip => '此选项仅用于启用该功能，是否生效取决于设备宽度';
 
   @override
   String get editVirtKeys => '虚拟按键';
@@ -863,27 +848,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get maxRetryCount => '服务器尝试重连次数';
 
   @override
-  String mismatchSystem(String system) {
-    return '系统不匹配：$system';
-  }
-
-  @override
   String get mirror => '镜像';
 
   @override
   String get needRestart => '需要重启 App';
 
   @override
-  String get netViewType => '网络视图类型';
-
-  @override
   String get newContainer => '新建容器';
 
   @override
   String get noConnectionStatsData => '暂无连接统计数据';
-
-  @override
-  String get noLineChart => '不使用折线图';
 
   @override
   String get noPrivateKeyTip => '私钥不存在，可能已被删除/配置错误';
@@ -899,9 +873,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get parseContainerStatsTip => 'Docker 解析占用状态较为缓慢';
-
-  @override
-  String get preferDiskAmount => '优先显示硬盘容量';
 
   @override
   String get privateKey => '私钥';
@@ -1143,6 +1114,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get serverOrder => '服务器顺序';
 
   @override
+  String get serverOverview => '服务器总览';
+
+  @override
+  String get serverOverviewTip => '在服务器列表顶部显示总览，并在打开的服务器上方显示服务器切换栏';
+
+  @override
   String get serverTabEmpty => '还没有服务器';
 
   @override
@@ -1255,15 +1232,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String sshConfigAllExist(int duplicateCount) {
     return '所有服务器已存在（发现 $duplicateCount 个重复项）';
   }
-
-  @override
-  String get sshConnectionModeTip => '内置终端：使用应用自带的终端。系统 SSH：在外部终端中调用系统 ssh 命令。';
-
-  @override
-  String get sshConnectionModeUseBuiltin => '使用内置终端';
-
-  @override
-  String get sshConnectionModeUseSystem => '使用系统 SSH';
 
   @override
   String sshConfigDuplicatesSkipped(int duplicateCount) {
@@ -5466,9 +5434,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get copyPath => '複製路徑';
 
   @override
-  String get cpuViewAsProgressTip => '以進度條樣式顯示每個CPU的使用率（舊版樣式）';
-
-  @override
   String get customCmd => '自訂指令';
 
   @override
@@ -5476,9 +5441,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get deleteDirRecursive => '連同資料夾裡的所有內容一起刪除';
-
-  @override
-  String get desktopTerminalTip => '啟動 SSH 連線時用於打開終端機模擬器的指令。';
 
   @override
   String get dirEmpty => '請確保目錄為空';
@@ -5499,9 +5461,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get diskHealth => '磁碟健康';
 
   @override
-  String get displayCpuIndex => '顯示 CPU 索引';
-
-  @override
   String dl2Local(String fileName) {
     return '下載 $fileName 到本地？';
   }
@@ -5518,12 +5477,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get dockerStatistics => 'Docker 統計';
-
-  @override
-  String get doubleColumnMode => '雙列模式';
-
-  @override
-  String get doubleColumnTip => '此選項僅用於啟用此功能，是否生效取決於裝置寬度';
 
   @override
   String get editVirtKeys => '虛擬按鍵';
@@ -5777,27 +5730,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get maxRetryCount => '伺服器嘗試重連次數';
 
   @override
-  String mismatchSystem(String system) {
-    return '系統不匹配：$system';
-  }
-
-  @override
   String get mirror => '鏡像';
 
   @override
   String get needRestart => '需要重開 App';
 
   @override
-  String get netViewType => '網路檢視類型';
-
-  @override
   String get newContainer => '新建容器';
 
   @override
   String get noConnectionStatsData => '暫無連線統計資料';
-
-  @override
-  String get noLineChart => '不使用折線圖';
 
   @override
   String get noPrivateKeyTip => '私鑰不存在，可能已被刪除/配置錯誤。';
@@ -5813,9 +5755,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get parseContainerStatsTip => 'Docker 解析消耗狀態較為緩慢';
-
-  @override
-  String get preferDiskAmount => '優先顯示硬碟容量';
 
   @override
   String get privateKey => '私鑰';
@@ -6057,6 +5996,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get serverOrder => '伺服器順序';
 
   @override
+  String get serverOverview => '伺服器總覽';
+
+  @override
+  String get serverOverviewTip => '在伺服器列表頂部顯示總覽，並在開啟的伺服器上方顯示伺服器切換列';
+
+  @override
   String get serverTabEmpty => '還沒有伺服器';
 
   @override
@@ -6169,15 +6114,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String sshConfigAllExist(int duplicateCount) {
     return '所有伺服器均已存在（發現$duplicateCount個重複項）';
   }
-
-  @override
-  String get sshConnectionModeTip => '內建：使用 App 的終端。系統 SSH：在外部終端中啟動系統的 ssh 指令。';
-
-  @override
-  String get sshConnectionModeUseBuiltin => '使用內建終端';
-
-  @override
-  String get sshConnectionModeUseSystem => '使用系統 SSH';
 
   @override
   String sshConfigDuplicatesSkipped(int duplicateCount) {

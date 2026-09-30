@@ -44,6 +44,86 @@ double blockSurfaceAt(double openness) =>
 double cardSurfaceAt(double openness) =>
     1 - ((openness - _kCardOutAt) / _kCardOut).clamp(0.0, 1.0);
 
+/// How much of a block's outline is there yet: none until the card's own has
+/// gone, then all of it over the same span the card's took to go.
+///
+/// Not [blockSurfaceAt]. The colours cross with the blocks ahead, for the
+/// reason given at [_kBlockIn]; outlines crossed at all draw every block
+/// framed inside a card that is still framed, a frame within a frame, for as
+/// long as the two overlap. So one follows the other.
+double blockOutlineAt(double openness) =>
+    ((openness - _kCardOutAt - _kCardOut) / _kCardOut).clamp(0.0, 1.0);
+
+/// A [CardX] whose theme outline is drawn at [outline] of its strength, and
+/// drawn as asked on every frame.
+///
+/// `CardX` draws the theme's outline whole whatever colour it is given, and
+/// the surfaces above cross by colour alone: in a theme whose cards are
+/// outlined, the card on its way to being the page kept a frame the size of
+/// the whole content area around a surface that had already gone.
+class FadingCard extends StatelessWidget {
+  const FadingCard({
+    super.key,
+    required this.outline,
+    required this.child,
+    this.color,
+    this.radius,
+    this.margin,
+  });
+
+  /// 0 for none of the theme's outline, 1 for all of it.
+  final double outline;
+  final Color? color;
+
+  /// As [CardX.radius]: null keeps the theme's shape.
+  final BorderRadius? radius;
+  final EdgeInsetsGeometry? margin;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = CardTheme.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final shape = theme.shape;
+    final side = shape is OutlinedBorder ? shape.side : BorderSide.none;
+    final faded = side.copyWith(
+      color: side.color.withValues(alpha: side.color.a * outline),
+    );
+    // `Card`'s own tree, with one difference: its `Material` eases a change of
+    // shape over 200ms, which is longer than either crossing lasts. The
+    // outline being asked for and the one drawn were a fifth of a second
+    // apart — the card's still there as the blocks' arrived — so what is
+    // drawn here is what was asked for, on every frame.
+    return Semantics(
+      container: true,
+      child: Padding(
+        padding: margin ?? theme.margin ?? const EdgeInsets.all(4),
+        child: Material(
+          type: MaterialType.card,
+          animationDuration: Duration.zero,
+          color: color ?? theme.color ?? scheme.surfaceContainerLow,
+          shadowColor: theme.shadowColor ?? scheme.shadow,
+          surfaceTintColor: theme.surfaceTintColor ?? Colors.transparent,
+          elevation: theme.elevation ?? 0,
+          clipBehavior: Clip.hardEdge,
+          shape: switch ((radius, shape)) {
+            (final radius?, _) => RoundedRectangleBorder(
+              borderRadius: radius,
+              side: faded,
+            ),
+            (null, final OutlinedBorder shape) => shape.copyWith(side: faded),
+            (null, final shape?) => shape,
+            (null, null) => const RoundedRectangleBorder(
+              borderRadius: CardX.borderRadius,
+            ),
+          },
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
 /// One reading that is not the one being drawn in full.
 ///
 /// The same widget on a card in the list and on the page that card grows into,
@@ -215,7 +295,8 @@ class MetricRow extends StatelessWidget {
     // same surface the chart sits on and a row with none of its own
     // disappeared into the page. It is in before the card's own starts going
     // — see [blockSurfaceAt].
-    return CardX(
+    return FadingCard(
+      outline: blockOutlineAt(t),
       color: Color.lerp(
         Colors.transparent,
         selected ? scheme.secondaryContainer : cardColorOf(context),

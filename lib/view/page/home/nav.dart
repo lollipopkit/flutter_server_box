@@ -80,64 +80,38 @@ extension _HomePageStrip on _HomePageState {
         if (_isServerFullscreenMode) return UIs.placeholder;
         final shown = _barTabs;
         final overflow = _tabs.length - shown.length;
-        final selected = _selectIndex.value;
-        return NavigationBar(
+        return AppNavBar(
           key: _navKey,
-          // Past the bar's own tabs, what is open is inside "more" — which is
-          // then what the last destination stands for, and is lit to say so.
-          // The settings light that slot too, when they are what it holds.
-          selectedIndex: _settingsOpen && overflow == 0
-              ? shown.length
-              : (selected < shown.length ? selected : shown.length),
-          height: kBottomNavigationBarHeight * 1.1,
-          animationDuration: const Duration(milliseconds: 250),
-          onDestinationSelected: (index) {
-            if (index < shown.length) return _onDestinationSelected(index);
-            // The last slot is one or the other, never both.
-            if (overflow > 0) {
-              unawaited(_showMoreSheet(shown.length));
-              return;
-            }
-            _openSettings();
-          },
-          labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-          // One line each. A label wider than its slot ("Virtualization") wraps
-          // by default, and the second line pushes the indicator up into the
-          // icon's badge. Set per destination: the bar's own `Material` resets
-          // the `DefaultTextStyle` above it.
-          destinations: [
-            for (final destination in [
-              for (final tab in shown)
-                tab.navDestination(onMenu: _navMenuFor(tab)),
-              // One slot, holding whichever of the two is needed. While
-              // anything is behind "more" that is where the settings live, as
-              // they always have; with every tab turned on there is nothing left
-              // for "more" to hold, and the slot becomes the settings themselves
-              // rather than a sheet with one row in it.
-              //
-              // Settings is not an `AppTab` either way: it is never arranged,
-              // never stored, and never one of the pages the index above
-              // addresses — tapping it pushes rather than switches.
-              if (overflow > 0)
-                NavigationDestination(
-                  icon: const ThemedIcon(Icons.more_horiz),
-                  selectedIcon: const ThemedIcon(Icons.more_horiz),
+          // Out of range past the bar's own tabs: what is open is behind
+          // "more", which is a button and not a place, so nothing is lit.
+          selectedIndex: _settingsOpen ? -1 : _selectIndex.value,
+          items: [
+            for (final tab in shown) tab.navRailItem(onMenu: _navMenuFor(tab)),
+          ],
+          onSelected: _onDestinationSelected,
+          // One button, holding whichever of the two is needed. While anything
+          // is behind "more" that is where the settings live, as they always
+          // have; with every tab turned on there is nothing left for "more" to
+          // hold, and the button becomes the settings themselves rather than a
+          // sheet with one row in it.
+          //
+          // Settings is not an `AppTab` either way: it is never arranged,
+          // never stored, and never one of the pages the index above
+          // addresses — tapping it pushes rather than switches.
+          trailing: overflow > 0
+              ? NavRailItem(
+                  icon: const ThemedIcon(Icons.more_vert),
+                  selectedIcon: const ThemedIcon(Icons.more_vert),
                   label: libL10n.more,
                 )
-              else
-                NavigationDestination(
+              : NavRailItem(
                   icon: const ThemedIcon(Icons.settings_outlined),
                   selectedIcon: const ThemedIcon(Icons.settings),
                   label: libL10n.setting,
                 ),
-            ])
-              DefaultTextStyle.merge(
-                maxLines: 1,
-                softWrap: false,
-                overflow: TextOverflow.ellipsis,
-                child: destination,
-              ),
-          ],
+          onTrailingTap: overflow > 0
+              ? () => unawaited(_showMoreSheet(shown.length))
+              : _openSettings,
         );
       },
     );

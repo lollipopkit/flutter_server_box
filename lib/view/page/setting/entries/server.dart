@@ -12,11 +12,7 @@ extension _Server on _AppSettingsPageState {
   List<SettingsGroup> _buildServer() {
     return [
       SettingsGroup(libL10n.view, [
-        _buildNetViewType(),
-        _buildCpuNoLineChart(),
-        _buildDisplayCpuIndex(),
-        _buildServerTabPreferDiskAmount(),
-        _buildDoubleColumnServersPage(),
+        _buildServerOverview(),
         _buildTextScaler(),
       ]),
       // Four rows about one feature, which is what the tile they were folded
@@ -41,32 +37,6 @@ extension _Server on _AppSettingsPageState {
         _buildDeleteServers(),
       ]),
     ];
-  }
-
-  SettingsRow _buildNetViewType() {
-    final label = l10n.netViewType;
-    return SettingsRow(
-      label,
-      () => ListTile(
-        leading: const Icon(ZondIcons.network),
-        title: Text(label),
-        trailing: ValBuilder(
-          listenable: _setting.netViewType.listenable(),
-          builder: (val) => Text(val.toStr, style: UIs.text15),
-        ),
-        onTap: () async {
-          final selected = await context.showPickSingleDialog(
-            title: label,
-            items: NetViewType.values,
-            display: (p0) => p0.toStr,
-            initial: _setting.netViewType.fetch(),
-          );
-          if (selected != null) {
-            _setting.netViewType.put(selected);
-          }
-        },
-      ),
-    );
   }
 
   SettingsRow _buildConnectionStats() {
@@ -167,16 +137,16 @@ extension _Server on _AppSettingsPageState {
     context.popDialog();
   }
 
-  SettingsRow _buildDoubleColumnServersPage() {
-    final label = l10n.doubleColumnMode;
+  SettingsRow _buildServerOverview() {
+    final label = l10n.serverOverview;
     return SettingsRow(
       label,
       () => ListTile(
-        leading: const Icon(Icons.view_column_outlined),
-        title: TipText(label, l10n.doubleColumnTip),
-        trailing: StoreSwitch(prop: _setting.doubleColumnServersPage),
+        leading: const Icon(Icons.space_dashboard_outlined),
+        title: TipText(label, l10n.serverOverviewTip),
+        trailing: StoreSwitch(prop: _setting.serverOverview),
       ),
-      keywords: l10n.doubleColumnTip,
+      keywords: l10n.serverOverviewTip,
     );
   }
 
@@ -204,33 +174,6 @@ extension _Server on _AppSettingsPageState {
         trailing: StoreSwitch(prop: _setting.rememberPwdInMem),
       ),
       keywords: l10n.rememberPwdInMemTip,
-    );
-  }
-
-  SettingsRow _buildCpuNoLineChart() {
-    final label = l10n.noLineChart;
-    return SettingsRow(
-      label,
-      () => ListTile(
-        leading: const Icon(OctIcons.cpu),
-        title: Text(label),
-        subtitle: Text(l10n.cpuViewAsProgressTip, style: UIs.textGrey),
-        trailing: StoreSwitch(prop: _setting.cpuViewAsProgress),
-      ),
-      keywords: 'CPU ${l10n.cpuViewAsProgressTip}',
-    );
-  }
-
-  SettingsRow _buildDisplayCpuIndex() {
-    final label = l10n.displayCpuIndex;
-    return SettingsRow(
-      label,
-      () => ListTile(
-        leading: const Icon(Icons.format_list_numbered),
-        title: Text(label),
-        trailing: StoreSwitch(prop: _setting.displayCpuIndex),
-      ),
-      keywords: 'CPU',
     );
   }
 
@@ -452,18 +395,6 @@ extension _Server on _AppSettingsPageState {
         },
       ),
       keywords: l10n.logoUrlTip,
-    );
-  }
-
-  SettingsRow _buildServerTabPreferDiskAmount() {
-    final label = l10n.preferDiskAmount;
-    return SettingsRow(
-      label,
-      () => ListTile(
-        leading: const Icon(Icons.storage),
-        title: Text(label),
-        trailing: StoreSwitch(prop: Stores.setting.serverTabPreferDiskAmount),
-      ),
     );
   }
 

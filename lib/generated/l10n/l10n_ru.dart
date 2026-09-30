@@ -598,10 +598,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get copyPath => 'Копировать путь';
 
   @override
-  String get cpuViewAsProgressTip =>
-      'Отобразите уровень использования каждого процессора в виде индикатора выполнения (старый стиль)';
-
-  @override
   String get customCmd => 'Пользовательские команды';
 
   @override
@@ -609,10 +605,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get deleteDirRecursive => 'Удалить папку и всё её содержимое';
-
-  @override
-  String get desktopTerminalTip =>
-      'Команда для открытия эмулятора терминала при запуске SSH-сеансов.';
 
   @override
   String get dirEmpty => 'Пожалуйста, убедитесь, что папка пуста';
@@ -633,9 +625,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get diskHealth => 'Состояние диска';
 
   @override
-  String get displayCpuIndex => 'Отобразить индекс ЦП';
-
-  @override
   String dl2Local(String fileName) {
     return 'Загрузить $fileName на локальный диск?';
   }
@@ -653,13 +642,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get dockerStatistics => 'Статистика Docker';
-
-  @override
-  String get doubleColumnMode => 'Режим двойной колонки';
-
-  @override
-  String get doubleColumnTip =>
-      'Эта опция лишь включает функцию; фактическое применение зависит от ширины устройства';
 
   @override
   String get editVirtKeys => 'Виртуальные клавиши';
@@ -933,27 +915,16 @@ class AppLocalizationsRu extends AppLocalizations {
       'Максимальное количество попыток переподключения к серверу';
 
   @override
-  String mismatchSystem(String system) {
-    return 'Несоответствующая система: $system';
-  }
-
-  @override
   String get mirror => 'Зеркало';
 
   @override
   String get needRestart => 'Требуется перезапуск приложения';
 
   @override
-  String get netViewType => 'Тип визуализации сети';
-
-  @override
   String get newContainer => 'Создать контейнер';
 
   @override
   String get noConnectionStatsData => 'Нет данных статистики соединений';
-
-  @override
-  String get noLineChart => 'Не использовать линейные графики';
 
   @override
   String get noPrivateKeyTip =>
@@ -972,9 +943,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get parseContainerStatsTip =>
       'Анализ статуса использования Docker может быть медленным';
-
-  @override
-  String get preferDiskAmount => 'Приоритетное отображение объёма диска';
 
   @override
   String get privateKey => 'Приватный ключ';
@@ -1232,6 +1200,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get serverOrder => 'Порядок серверов';
 
   @override
+  String get serverOverview => 'Обзор серверов';
+
+  @override
+  String get serverOverviewTip =>
+      'Показывать сводку вверху списка серверов и панель серверов над открытым сервером';
+
+  @override
   String get serverTabEmpty => 'Серверов пока нет';
 
   @override
@@ -1357,16 +1332,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String sshConfigAllExist(int duplicateCount) {
     return 'Все серверы уже существуют (найдено $duplicateCount дубликатов)';
   }
-
-  @override
-  String get sshConnectionModeTip =>
-      'Встроенный: использовать терминал приложения. Системный SSH: запускать системную команду ssh во внешнем терминале.';
-
-  @override
-  String get sshConnectionModeUseBuiltin => 'Использовать встроенный терминал';
-
-  @override
-  String get sshConnectionModeUseSystem => 'Использовать системный SSH';
 
   @override
   String sshConfigDuplicatesSkipped(int duplicateCount) {

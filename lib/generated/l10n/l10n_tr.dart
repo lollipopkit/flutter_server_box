@@ -597,10 +597,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get copyPath => 'Yolu kopyala';
 
   @override
-  String get cpuViewAsProgressTip =>
-      'Her CPU\'nun kullanımını ilerleme çubuğu tarzında göster (eski tarz)';
-
-  @override
   String get customCmd => 'Özel komutlar';
 
   @override
@@ -608,10 +604,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get deleteDirRecursive => 'Klasörü ve içindeki her şeyi sil';
-
-  @override
-  String get desktopTerminalTip =>
-      'SSH oturumları başlatılırken terminal öykünücüsünü açmak için kullanılan komut.';
 
   @override
   String get dirEmpty => 'Klasörün boş olduğundan emin olun.';
@@ -632,9 +624,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get diskHealth => 'Disk sağlığı';
 
   @override
-  String get displayCpuIndex => 'CPU indeksini göster';
-
-  @override
   String dl2Local(String fileName) {
     return '$fileName dosyasını yerel cihaza indir?';
   }
@@ -652,13 +641,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get dockerStatistics => 'Docker İstatistikleri';
-
-  @override
-  String get doubleColumnMode => 'Çift sütun modu';
-
-  @override
-  String get doubleColumnTip =>
-      'Bu seçenek yalnızca özelliği etkinleştirir, gerçekten etkinleşip etkinleşmeyeceği cihazın genişliğine bağlıdır';
 
   @override
   String get editVirtKeys => 'Sanal tuşlar';
@@ -929,27 +911,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get maxRetryCount => 'Sunucu yeniden bağlantı sayısı';
 
   @override
-  String mismatchSystem(String system) {
-    return 'Eşleşmeyen sistem: $system';
-  }
-
-  @override
   String get mirror => 'Yansı';
 
   @override
   String get needRestart => 'Uygulamanın yeniden başlatılması gerekiyor';
 
   @override
-  String get netViewType => 'Ağ görüntüleme türü';
-
-  @override
   String get newContainer => 'Yeni konteyner';
 
   @override
   String get noConnectionStatsData => 'Bağlantı istatistik verisi yok';
-
-  @override
-  String get noLineChart => 'Çizgi grafikleri kullanma';
 
   @override
   String get noPrivateKeyTip =>
@@ -968,9 +939,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get parseContainerStatsTip =>
       'Docker\'ın doluluk durumunu ayrıştırmak oldukça yavaş.';
-
-  @override
-  String get preferDiskAmount => 'Disk kapasitesini öncelikli olarak göster';
 
   @override
   String get privateKey => 'Özel Anahtar';
@@ -1228,6 +1196,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get serverOrder => 'Sunucu sırası';
 
   @override
+  String get serverOverview => 'Sunucu özeti';
+
+  @override
+  String get serverOverviewTip =>
+      'Sunucu listesinin üstünde özeti ve açık bir sunucunun üstünde sunucu çubuğunu gösterir';
+
+  @override
   String get serverTabEmpty => 'Henüz sunucu yok';
 
   @override
@@ -1351,16 +1326,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String sshConfigAllExist(int duplicateCount) {
     return 'Tüm sunucular zaten mevcut ($duplicateCount kopya bulundu)';
   }
-
-  @override
-  String get sshConnectionModeTip =>
-      'Yerleşik: uygulamanın terminalini kullanır. Sistem SSH: sistemin ssh komutunu harici bir terminalde başlatır.';
-
-  @override
-  String get sshConnectionModeUseBuiltin => 'Yerleşik terminali kullan';
-
-  @override
-  String get sshConnectionModeUseSystem => 'Sistem SSH\'ini kullan';
 
   @override
   String sshConfigDuplicatesSkipped(int duplicateCount) {

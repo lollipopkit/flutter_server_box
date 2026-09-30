@@ -27,6 +27,7 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
+import 'package:server_box/view/page/server/card/chart_hero.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/card/name_hero.dart';
 import 'package:server_box/view/page/server/card/notices.dart';
@@ -219,8 +220,6 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   /// back on screen — see `_revealFocus`.
   final _focusCardKey = GlobalKey();
   late final _collapse = _settings.collapseUIDefault.fetch();
-  late final _cpuViewAsProgress = _settings.cpuViewAsProgress.fetch();
-  late final _displayCpuIndex = _settings.displayCpuIndex.fetch();
 
   /// Which cards are open, by their `cardKey`.
   ///

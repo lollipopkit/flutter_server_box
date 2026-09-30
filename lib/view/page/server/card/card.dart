@@ -137,7 +137,9 @@ class ServerCard extends StatelessWidget {
     final compact = shaped && openness <= 0;
     final cross = shaped ? _kShapeCross.transform(openness) : 1.0;
     final card = cardColorOf(context);
-    return CardX(
+    return FadingCard(
+      // The outline with it, handed to the blocks — see [blockOutlineAt].
+      outline: openness > 0 ? cardSurfaceAt(openness) : 1,
       // The card's own surface goes as it becomes the page: by then each block
       // inside it is a card in its own right, which is how the page draws
       // them, and one more behind all of them would be a second edge.
@@ -476,6 +478,7 @@ class ServerCard extends StatelessWidget {
                           selected: selected,
                           onTap: onTap,
                           onPromote: onPromote,
+                          heroId: opensInPlace ? null : srv.spi.id,
                         ),
                       ),
                     ],

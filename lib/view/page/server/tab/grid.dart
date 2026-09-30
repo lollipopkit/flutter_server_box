@@ -233,15 +233,21 @@ extension _Grid on _ServerPageState {
     //
     // The strip above both belongs to neither: it is what the list becomes
     // while one of its cards is open, so it stays whichever of the two is on
-    // screen.
+    // screen — or neither, when the setting turns it off. The bar's own
+    // switcher still reaches every machine.
     final body = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ServerStrip(
-          ids: filtered,
-          openId: openId,
-          open: _open,
-          onOpen: _openDetail,
+        ValBuilder(
+          listenable: Stores.setting.serverOverview.listenable(),
+          builder: (shown) => shown
+              ? ServerStrip(
+                  ids: filtered,
+                  openId: openId,
+                  open: _open,
+                  onOpen: _openDetail,
+                )
+              : UIs.placeholder,
         ),
         Expanded(
           child: Stack(

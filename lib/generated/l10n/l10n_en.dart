@@ -590,10 +590,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get copyPath => 'Copy path';
 
   @override
-  String get cpuViewAsProgressTip =>
-      'Display the usage of each CPU in a progress bar style (old style)';
-
-  @override
   String get customCmd => 'Custom commands';
 
   @override
@@ -601,10 +597,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteDirRecursive => 'Delete the folder and everything in it';
-
-  @override
-  String get desktopTerminalTip =>
-      'Command used to open the terminal emulator when launching SSH sessions.';
 
   @override
   String get dirEmpty => 'Make sure the folder is empty.';
@@ -625,9 +617,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get diskHealth => 'Disk Health';
 
   @override
-  String get displayCpuIndex => 'Display CPU index';
-
-  @override
   String dl2Local(String fileName) {
     return 'Download $fileName to local?';
   }
@@ -644,13 +633,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dockerStatistics => 'Docker Statistics';
-
-  @override
-  String get doubleColumnMode => 'Double column mode';
-
-  @override
-  String get doubleColumnTip =>
-      'This option only enables the feature, whether it can actually be enabled depends on the width of the device';
 
   @override
   String get editVirtKeys => 'Virtual keys';
@@ -920,27 +902,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get maxRetryCount => 'Number of server reconnections';
 
   @override
-  String mismatchSystem(String system) {
-    return 'Mismatch system: $system';
-  }
-
-  @override
   String get mirror => 'Mirror';
 
   @override
   String get needRestart => 'App needs to be restarted';
 
   @override
-  String get netViewType => 'Network view type';
-
-  @override
   String get newContainer => 'New container';
 
   @override
   String get noConnectionStatsData => 'No connection statistics data';
-
-  @override
-  String get noLineChart => 'Do not use line charts';
 
   @override
   String get noPrivateKeyTip =>
@@ -959,9 +930,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get parseContainerStatsTip =>
       'Parsing the occupancy status of Docker is relatively slow.';
-
-  @override
-  String get preferDiskAmount => 'Prioritize displaying disk capacity';
 
   @override
   String get privateKey => 'Private Key';
@@ -1218,6 +1186,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serverOrder => 'Server order';
 
   @override
+  String get serverOverview => 'Server overview';
+
+  @override
+  String get serverOverviewTip =>
+      'Show the summary at the top of the server list, and the row of servers above an open one';
+
+  @override
   String get serverTabEmpty => 'No servers yet';
 
   @override
@@ -1339,16 +1314,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String sshConfigAllExist(int duplicateCount) {
     return 'All servers already exist ($duplicateCount duplicates found)';
   }
-
-  @override
-  String get sshConnectionModeTip =>
-      'Built-in: use the app\'s terminal. System SSH: launch the system ssh command in an external terminal.';
-
-  @override
-  String get sshConnectionModeUseBuiltin => 'Use built-in terminal';
-
-  @override
-  String get sshConnectionModeUseSystem => 'Use system SSH';
 
   @override
   String sshConfigDuplicatesSkipped(int duplicateCount) {

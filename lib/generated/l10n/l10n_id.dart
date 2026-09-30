@@ -594,10 +594,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get copyPath => 'Path Copy';
 
   @override
-  String get cpuViewAsProgressTip =>
-      'Tampilkan tingkat penggunaan setiap CPU dalam gaya bilah kemajuan (gaya lama)';
-
-  @override
   String get customCmd => 'Perintah kustom';
 
   @override
@@ -605,10 +601,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get deleteDirRecursive => 'Hapus folder beserta seluruh isinya';
-
-  @override
-  String get desktopTerminalTip =>
-      'Perintah yang digunakan untuk membuka emulator terminal saat memulai sesi SSH.';
 
   @override
   String get dirEmpty => 'Pastikan dir kosong.';
@@ -629,9 +621,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get diskHealth => 'Kesehatan disk';
 
   @override
-  String get displayCpuIndex => 'Tampilkan indeks CPU';
-
-  @override
   String dl2Local(String fileName) {
     return 'Unduh $fileName ke lokal?';
   }
@@ -649,13 +638,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get dockerStatistics => 'Statistik Docker';
-
-  @override
-  String get doubleColumnMode => 'Mode kolom ganda';
-
-  @override
-  String get doubleColumnTip =>
-      'Opsi ini hanya mengaktifkan fitur, apakah itu benar-benar dapat diaktifkan tergantung pada lebar perangkat';
 
   @override
   String get editVirtKeys => 'Kunci virtual';
@@ -926,27 +908,16 @@ class AppLocalizationsId extends AppLocalizations {
   String get maxRetryCount => 'Jumlah penyambungan kembali server';
 
   @override
-  String mismatchSystem(String system) {
-    return 'Sistem tidak cocok: $system';
-  }
-
-  @override
   String get mirror => 'Mirror';
 
   @override
   String get needRestart => 'Perlu memulai ulang aplikasi';
 
   @override
-  String get netViewType => 'Jenis tampilan bersih';
-
-  @override
   String get newContainer => 'Wadah baru';
 
   @override
   String get noConnectionStatsData => 'Tidak ada data statistik koneksi';
-
-  @override
-  String get noLineChart => 'Jangan gunakan grafik garis';
 
   @override
   String get noPrivateKeyTip =>
@@ -965,9 +936,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get parseContainerStatsTip =>
       'Parsing status okupansi oleh Docker agak lambat';
-
-  @override
-  String get preferDiskAmount => 'Prioritaskan tampilan kapasitas disk';
 
   @override
   String get privateKey => 'Kunci Pribadi';
@@ -1225,6 +1193,13 @@ class AppLocalizationsId extends AppLocalizations {
   String get serverOrder => 'Pesanan server';
 
   @override
+  String get serverOverview => 'Ringkasan server';
+
+  @override
+  String get serverOverviewTip =>
+      'Tampilkan ringkasan di atas daftar server, dan bilah server di atas server yang terbuka';
+
+  @override
   String get serverTabEmpty => 'Belum ada server';
 
   @override
@@ -1349,16 +1324,6 @@ class AppLocalizationsId extends AppLocalizations {
   String sshConfigAllExist(int duplicateCount) {
     return 'Semua server sudah ada (ditemukan $duplicateCount duplikat)';
   }
-
-  @override
-  String get sshConnectionModeTip =>
-      'Bawaan: memakai terminal aplikasi. SSH sistem: menjalankan perintah ssh sistem di terminal eksternal.';
-
-  @override
-  String get sshConnectionModeUseBuiltin => 'Pakai terminal bawaan';
-
-  @override
-  String get sshConnectionModeUseSystem => 'Pakai SSH sistem';
 
   @override
   String sshConfigDuplicatesSkipped(int duplicateCount) {
