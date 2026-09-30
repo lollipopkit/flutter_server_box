@@ -325,12 +325,20 @@ extension _ProcessPageWidgets on _ProcessPageState {
         children: [
           SizedBox(width: 260, child: _buildSearchPill()),
           const SizedBox(width: 17),
-          if (_loadText() case final load?) ...[
-            Flexible(child: load),
-            const SizedBox(width: 13),
-          ],
-          Text(_countText(), maxLines: 1, style: _metaStyle),
-          const Spacer(),
+          // One flexible child for the whole middle: a `Flexible` load beside
+          // a `Spacer` split the free space between them, and what the load
+          // did not use was left after the switch, not before it.
+          Expanded(
+            child: Row(
+              children: [
+                if (_loadText() case final load?) ...[
+                  Flexible(child: load),
+                  const SizedBox(width: 13),
+                ],
+                Text(_countText(), maxLines: 1, style: _metaStyle),
+              ],
+            ),
+          ),
           ?_buildKernelSwitch(shrinkLabel: false),
         ],
       ),
