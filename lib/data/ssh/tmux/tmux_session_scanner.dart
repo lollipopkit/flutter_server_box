@@ -6,14 +6,13 @@ import 'package:server_box/data/ssh/tmux/tmux_command_builder.dart';
 import 'package:server_box/data/ssh/tmux/tmux_session_info.dart';
 import 'package:server_box/data/ssh/tmux/tmux_window_info.dart';
 
-/// Discovers and manages tmux sessions on the remote server.
+/// Discovers tmux before the foreground control-mode client is attached.
 final class TmuxSessionScanner {
   final PersistentShell _shell;
-  final String? _lang;
   String? _tmuxBin;
   String? get tmuxBin => _tmuxBin;
 
-  TmuxSessionScanner(this._shell, {String? lang}) : _lang = lang;
+  TmuxSessionScanner(this._shell);
 
   Future<String?> _findTmuxBin() async {
     final result = await _shell.run(
@@ -49,37 +48,43 @@ final class TmuxSessionScanner {
     try {
       if (!await _ensureTmuxResolved()) return [];
       final result = await _shell.run(
-        TmuxCommandBuilder.listSessionsCmd(tmuxBin: _tmuxBin!, lang: _lang),
+        TmuxCommandBuilder.listSessionsCmd(tmuxBin: _tmuxBin!),
         timeout: const Duration(seconds: 5),
       );
       if (result.exitCode != 0) return [];
-      return result.output
+      final lines = result.output
           .split('\n')
           .where((line) => line.trim().isNotEmpty)
+          .toList(growable: false);
+      final sessions = lines
           .map(TmuxSessionInfo.tryParse)
           .whereType<TmuxSessionInfo>()
-          .toList();
+          .toList(growable: false);
+      if (lines.isNotEmpty && sessions.isEmpty) {
+        // A successful command whose every line fails to parse is not "no
+        // sessions"; it is a broken discovery contract, and returning silently
+        // would hide that from both the user and the logs.
+        Loggers.app.warning(
+          'tmux list-sessions returned ${lines.length} unparseable line(s)',
+          lines.take(3).join('\n'),
+        );
+      }
+      return sessions;
     } catch (e, st) {
       Loggers.app.warning('Failed to list tmux sessions', e, st);
       return [];
     }
   }
 
-  /// List windows in a tmux session.
-  Future<List<TmuxWindowInfo>> listWindows(String sessionName) async {
-    return await tryListWindows(sessionName) ?? const [];
-  }
-
   /// List windows, returning null when discovery or the command fails.
-  Future<List<TmuxWindowInfo>?> tryListWindows(String sessionName) async {
+  ///
+  /// This is only for validating a restored window before the foreground CC
+  /// client is attached; live window and pane state belongs to that client.
+  Future<List<TmuxWindowInfo>?> tryListWindows(String sessionTarget) async {
     try {
       if (!await _ensureTmuxResolved()) return null;
       final result = await _shell.run(
-        TmuxCommandBuilder.listWindows(
-          sessionName,
-          tmuxBin: _tmuxBin!,
-          lang: _lang,
-        ),
+        TmuxCommandBuilder.listWindows(sessionTarget, tmuxBin: _tmuxBin!),
         timeout: const Duration(seconds: 5),
       );
       if (result.exitCode != 0) return null;
@@ -92,78 +97,6 @@ final class TmuxSessionScanner {
     } catch (e, st) {
       Loggers.app.warning('Failed to list tmux windows', e, st);
       return null;
-    }
-  }
-
-  /// Kill a window using the discovered tmux binary and configured locale.
-  Future<bool> killWindow(String sessionName, int windowIndex) async {
-    if (!await _ensureTmuxResolved()) return false;
-    return runCommand(
-      TmuxCommandBuilder.killWindow(
-        sessionName,
-        windowIndex,
-        tmuxBin: _tmuxBin!,
-        lang: _lang,
-      ),
-    );
-  }
-
-  /// Creates a window using the discovered tmux executable and locale.
-  Future<bool> newWindow(String sessionName) async {
-    if (!await _ensureTmuxResolved()) return false;
-    return runCommand(
-      TmuxCommandBuilder.newWindow(
-        sessionName,
-        tmuxBin: _tmuxBin!,
-        lang: _lang,
-      ),
-    );
-  }
-
-  /// Run a command and capture its output.
-  Future<String?> runCommandAndCapture(String command) async {
-    try {
-      final result = await _shell.run(
-        command,
-        timeout: const Duration(seconds: 5),
-      );
-      if (result.exitCode == 0) return result.output;
-      return null;
-    } catch (e, st) {
-      Loggers.app.warning('Failed to run command: $command', e, st);
-      return null;
-    }
-  }
-
-  /// Run an arbitrary command on the remote server.
-  Future<bool> runCommand(String command) async {
-    try {
-      final result = await _shell.run(
-        command,
-        timeout: const Duration(seconds: 5),
-      );
-      return result.exitCode == 0;
-    } catch (e, st) {
-      Loggers.app.warning('Failed to run command: $command', e, st);
-      return false;
-    }
-  }
-
-  /// Kill a tmux session by name.
-  Future<bool> killSession(String sessionName) async {
-    try {
-      final result = await _shell.run(
-        TmuxCommandBuilder.killSession(
-          sessionName,
-          tmuxBin: _tmuxBin ?? 'tmux',
-          lang: _lang,
-        ),
-        timeout: const Duration(seconds: 5),
-      );
-      return result.exitCode == 0;
-    } catch (e, st) {
-      Loggers.app.warning('Failed to kill tmux session', e, st);
-      return false;
     }
   }
 }

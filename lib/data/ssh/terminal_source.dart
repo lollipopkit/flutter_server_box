@@ -30,9 +30,6 @@ sealed class TerminalSource {
 
   /// What the shell starts with. Null where there is nothing to add.
   Map<String, String>? get environment;
-
-  /// The locale tmux is launched under, where one is configured.
-  String? get tmuxLang;
 }
 
 /// A machine in the app's server list.
@@ -47,11 +44,12 @@ final class ServerSource extends TerminalSource {
   @override
   String get id => spi.id;
 
+  /// The server's configured variables, over whatever the shell inherits —
+  /// for a server that is this device too, since the editor offers them there
+  /// as well. A local pty and `Process.start` both merge them over the app's
+  /// own environment, so only a variable set here replaces anything.
   @override
   Map<String, String>? get environment => buildSshTerminalEnvironment(spi.envs);
-
-  @override
-  String? get tmuxLang => resolveTmuxLang(spi.envs);
 
   @override
   bool operator ==(Object other) =>
@@ -123,9 +121,6 @@ final class LocalSource extends TerminalSource {
       rootfs ? AndroidRootfs.environment : null;
 
   @override
-  String? get tmuxLang => null;
-
-  @override
   bool operator ==(Object other) =>
       other is LocalSource &&
       other.rootfs == rootfs &&
@@ -166,9 +161,6 @@ final class ConsoleSource extends TerminalSource {
 
   @override
   Map<String, String>? get environment => null;
-
-  @override
-  String? get tmuxLang => null;
 
   @override
   bool operator ==(Object other) => other is ConsoleSource && other.id == id;
