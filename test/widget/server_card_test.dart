@@ -459,6 +459,24 @@ void main() {
       expect(asked, [ServerMetricKind.mem]);
     });
 
+    testWidgets('from its name as well as from the arrows', (tester) async {
+      // The name looks like part of the control, and it is: the arrows alone
+      // were a 15pt target beside a name that did nothing.
+      await pump(
+        tester,
+        promoted: null,
+        onPromote: (_) {},
+        expanded: false,
+      );
+      expect(find.text(libL10n.memory), findsNothing);
+
+      await tester.tap(find.text('CPU'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text(libL10n.memory), findsOneWidget);
+    });
+
     testWidgets('and the control is no taller than the line it is on', (
       tester,
     ) async {

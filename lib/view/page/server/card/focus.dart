@@ -115,6 +115,20 @@ class ServerCardFocus extends StatelessWidget {
       t,
     )!;
 
+    // What the reading is. Part of the switch where there is anything to
+    // switch to, so a press on the name does what a press on the arrows does.
+    final lead = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(m.icon, size: 18, color: ChartPalette.accent),
+        const SizedBox(width: 9),
+        Text(
+          m.label,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+        ),
+      ],
+    );
+
     final body = Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -125,26 +139,21 @@ class ServerCardFocus extends StatelessWidget {
               : lerpDouble(ServerCardSizes.big, ServerCardSizes.openHead, t),
           child: Row(
           children: [
-            Icon(m.icon, size: 18, color: ChartPalette.accent),
-            const SizedBox(width: 9),
-            Text(
-              m.label,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-            ),
             // The card's only. On the page every reading has a row, and
             // pressing one is how a different one is chosen there.
-            if (others.isNotEmpty && t < 1)
-              Opacity(
-                opacity: 1 - t,
-                child: ServerCardSwitch(
-                  others: others,
-                  title: name,
-                  moving: t > 0,
-                  selected: selected,
-                  onTap: onTap,
-                  onPromote: onPromote,
-                ),
-              ),
+            if (others.isNotEmpty)
+              ServerCardSwitch(
+                lead: lead,
+                others: others,
+                title: name,
+                moving: t > 0,
+                selected: selected,
+                onTap: onTap,
+                onPromote: onPromote,
+                glyph: 1 - t,
+              )
+            else
+              lead,
             const Spacer(),
             if (t < 1)
               Opacity(
@@ -392,11 +401,14 @@ class ServerCardFocus extends StatelessWidget {
   }
 }
 
-/// Beside the name of the reading drawn in full: which one that is.
+/// The name of the reading drawn in full, and the way to draw another.
 ///
 /// Pressing a row is the other way, and on a card at rest there are no rows
 /// — see `ServerCard.expanded`. Here it does not depend on what is unfolded,
 /// and it reaches the readings the card has no slot for as well.
+///
+/// The whole of it, name and arrows, is the button: the arrows alone were a
+/// 15pt glyph beside a name that looked just as pressable and did nothing.
 ///
 /// No taller than the line it is on. That line takes the height of what is
 /// in it at rest and a stated one from the first frame of the movement, so
@@ -405,13 +417,22 @@ class ServerCardFocus extends StatelessWidget {
 class ServerCardSwitch extends StatelessWidget {
   const ServerCardSwitch({
     super.key,
+    required this.lead,
     required this.others,
     required this.title,
     required this.onTap,
     required this.onPromote,
     this.moving = false,
     this.selected,
+    this.glyph = 1,
   });
+
+  /// The reading's glyph and name, which the button starts with.
+  final Widget lead;
+
+  /// How much of the arrows is drawn, 0 to 1. They leave as the card becomes
+  /// the page, where the rows are the way to choose; the name stays.
+  final double glyph;
 
   /// What it offers: every reading but the one already drawn in full.
   final List<ServerMetric> others;
@@ -449,10 +470,23 @@ class ServerCardSwitch extends StatelessWidget {
             onTap: selected == null
                 ? () => _pickReading(context, others)
                 : onTap,
-            child: const SizedBox(
-              width: ServerCardSizes.action,
-              height: ServerCardSizes.big,
-              child: Icon(Icons.unfold_more, size: 15, color: Colors.grey),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                lead,
+                SizedBox(
+                  width: ServerCardSizes.action,
+                  height: ServerCardSizes.big,
+                  child: Opacity(
+                    opacity: glyph.clamp(0.0, 1.0),
+                    child: const Icon(
+                      Icons.unfold_more,
+                      size: 15,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
