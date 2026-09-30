@@ -625,7 +625,7 @@ abstract final class ServiceUi {
 
   /// A unit's actions, then what can be read about it in a terminal.
   ///
-  /// [compact] gives up the 48pt tap target for 32, for a row that would
+  /// [compact] gives up the 40pt tap target for 32, for a row that would
   /// otherwise be as tall as its button rather than its text.
   static Widget unitMenu(
     BuildContext context,
@@ -638,54 +638,41 @@ abstract final class ServiceUi {
     final status = notifier.statusTerminalCommand(unit);
     final log = notifier.logTerminalCommand(unit);
     final definition = notifier.definitionTerminalCommand(unit);
-    return PopupMenuButton<VoidCallback>(
+    return ContextMenuButton(
       tooltip: libL10n.more,
-      icon: const Icon(Icons.more_vert, size: 18),
-      padding: compact ? EdgeInsets.zero : const EdgeInsets.all(8),
-      style: compact
-          ? IconButton.styleFrom(
-              visualDensity: VisualDensity.compact,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              minimumSize: const Size.square(32),
-              fixedSize: const Size.square(32),
-            )
-          : null,
-      onSelected: (callback) => callback(),
-      itemBuilder: (_) => [
+      actions: () => [
         for (final action in unit.actions)
-          PopupMenuItem(
-            value: () => runAction(context, ref, spi, unit, action),
-            child: menuRow(action.icon, action.displayName),
+          ContextMenuAction(
+            text: action.displayName,
+            icon: action.icon,
+            destructive: action.destructive,
+            onTap: () => runAction(context, ref, spi, unit, action),
           ),
-        if (unit.actions.isNotEmpty &&
-            (status != null || log != null || definition != null))
-          const PopupMenuDivider(),
         if (status != null)
-          PopupMenuItem(
-            value: () => openInTerminal(context, spi, status),
-            child: menuRow(Icons.info_outline, l10n.status),
+          ContextMenuAction(
+            text: l10n.status,
+            icon: Icons.info_outline,
+            onTap: () => openInTerminal(context, spi, status),
           ),
         if (log != null)
-          PopupMenuItem(
-            value: () => openInTerminal(context, spi, log),
-            child: menuRow(Icons.receipt_long, context.l10n.serviceFullJournal),
+          ContextMenuAction(
+            text: context.l10n.serviceFullJournal,
+            icon: Icons.receipt_long,
+            onTap: () => openInTerminal(context, spi, log),
           ),
         if (definition != null)
-          PopupMenuItem(
-            value: () => openInTerminal(context, spi, definition),
-            child: menuRow(
-              Icons.description_outlined,
-              context.l10n.serviceUnitFile,
-            ),
+          ContextMenuAction(
+            text: context.l10n.serviceUnitFile,
+            icon: Icons.description_outlined,
+            onTap: () => openInTerminal(context, spi, definition),
           ),
       ],
+      child: Padding(
+        padding: EdgeInsets.all(compact ? 7 : 11),
+        child: const Icon(Icons.more_vert, size: 18),
+      ),
     );
   }
-
-  static Widget menuRow(IconData icon, String label) => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [Icon(icon, size: 18), const SizedBox(width: 10), Text(label)],
-  );
 
   /// Runs [action] on [unit] here and reports how it went.
   ///

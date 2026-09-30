@@ -332,18 +332,19 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
                   actions: () {
                     final input = connected && !session.viewOnly;
                     return [
-                      if (compact && input)
+                      if (compact)
                         ContextMenuAction(
                           text: l10n.remoteDesktopSendClipboardText,
                           icon: Icons.content_paste,
+                          enabled: input,
                           onTap: () => _sendClipboard(session),
                         ),
-                      if (input)
-                        ContextMenuAction(
-                          text: l10n.remoteDesktopSendCtrlAltDelete,
-                          icon: Icons.keyboard_command_key,
-                          onTap: () => _sendCtrlAltDelete(session),
-                        ),
+                      ContextMenuAction(
+                        text: l10n.remoteDesktopSendCtrlAltDelete,
+                        icon: Icons.keyboard_command_key,
+                        enabled: input,
+                        onTap: () => _sendCtrlAltDelete(session),
+                      ),
                       if (isMobile)
                         ContextMenuAction(
                           text: _touchMode == _TouchMode.trackpad
@@ -383,18 +384,14 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
   });
 
   /// Fit, actual size and the zoom steps are one choice, so one button: its
-  /// icon says which is in effect, the menu marks it.
+  /// icon says which is in effect, the menu ticks it.
   Widget _scaleBtn() {
     final l10n = context.l10n;
     ContextMenuAction item(
       String text,
       bool current,
       VoidCallback onTap,
-    ) => ContextMenuAction(
-      text: text,
-      icon: current ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-      onTap: onTap,
-    );
+    ) => ContextMenuAction(text: text, checked: current, onTap: onTap);
     final custom = _scaleMode == RemoteDesktopScaleMode.custom;
     return _menuBtn(
       text: switch (_scaleMode) {

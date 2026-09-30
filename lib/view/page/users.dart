@@ -17,7 +17,6 @@ enum _UserFilter { all, regular, system, disabled }
 
 enum _UserSort { uid, name }
 
-enum _UserAction { edit, delete }
 
 /// Below this the Status column is dropped and the mono line loses the group,
 /// which is the narrow layout the design draws at 393pt.
@@ -103,19 +102,24 @@ extension on _UsersPageState {
         icon: Icon(_searching ? Icons.search_off : Icons.search, size: 18),
         onTap: canMutate ? _toggleSearch : null,
       ),
-      PopupMenuButton<_UserSort>(
+      ContextMenuButton(
         tooltip: libL10n.sort,
         enabled: canMutate,
-        icon: const Icon(Icons.sort, size: 18),
-        initialValue: _sort,
-        // Its initial value is scrolled into view: from the page's own
-        // navigator, inside the home's tab pages, that scrolled the tabs.
-        useRootNavigator: true,
-        itemBuilder: (_) => [
-          PopupMenuItem(value: _UserSort.uid, child: Text(l10n.userUid)),
-          PopupMenuItem(value: _UserSort.name, child: Text(libL10n.sortByName)),
+        actions: () => [
+          for (final (sort, text) in [
+            (_UserSort.uid, l10n.userUid),
+            (_UserSort.name, libL10n.sortByName),
+          ])
+            ContextMenuAction(
+              text: text,
+              checked: sort == _sort,
+              onTap: () => _rebuild(() => _sort = sort),
+            ),
         ],
-        onSelected: (sort) => _rebuild(() => _sort = sort),
+        child: const Padding(
+          padding: EdgeInsets.all(7),
+          child: Icon(Icons.sort, size: 18),
+        ),
       ),
       if (isDesktop)
         Btn.icon(
@@ -525,19 +529,22 @@ extension on _UsersPageState {
     }
     return SizedBox(
       width: 24,
-      child: PopupMenu<_UserAction>(
-        items: [
-          PopupMenuItem(value: _UserAction.edit, child: Text(libL10n.edit)),
+      child: ContextMenuButton(
+        tooltip: libL10n.more,
+        actions: () => [
+          ContextMenuAction(
+            text: libL10n.edit,
+            icon: Icons.edit_outlined,
+            onTap: () => _editUser(user),
+          ),
           if (!user.isRoot && !isCurrent)
-            PopupMenuItem(
-              value: _UserAction.delete,
-              child: Text(libL10n.delete),
+            ContextMenuAction(
+              text: libL10n.delete,
+              icon: Icons.delete_outline,
+              destructive: true,
+              onTap: () => _deleteUser(user),
             ),
         ],
-        onSelected: (action) => switch (action) {
-          _UserAction.edit => _editUser(user),
-          _UserAction.delete => _deleteUser(user),
-        },
       ),
     );
   }

@@ -709,18 +709,25 @@ extension _Widgets on _ServerEditPageState {
       return ListTile(
         leading: Icon(MingCute.laptop_2_line),
         title: Text(libL10n.system),
-        trailing: PopupMenu<SystemType?>(
-          initialValue: val,
-          items: [
-            PopupMenuItem(value: null, child: Text(libL10n.auto)),
-            PopupMenuItem(value: SystemType.linux, child: Text('Linux')),
-            PopupMenuItem(value: SystemType.bsd, child: Text('BSD')),
-            PopupMenuItem(value: SystemType.windows, child: Text('Windows')),
+        trailing: ContextMenuButton(
+          actions: () => [
+            for (final (type, name) in [
+              (null, libL10n.auto),
+              (SystemType.linux, 'Linux'),
+              (SystemType.bsd, 'BSD'),
+              (SystemType.windows, 'Windows'),
+            ])
+              ContextMenuAction(
+                text: name,
+                checked: type == val,
+                onTap: () => _systemType.value = type,
+              ),
           ],
-          onSelected: (value) => _systemType.value = value,
-          child: Text(
-            val?.name ?? libL10n.auto,
-            style: TextStyle(color: val == null ? Colors.grey : null),
+          child: ContextMenuButton.value(
+            Text(
+              val?.name ?? libL10n.auto,
+              style: TextStyle(color: val == null ? Colors.grey : null),
+            ),
           ),
         ),
       ).cardx;
@@ -799,14 +806,21 @@ extension _Widgets on _ServerEditPageState {
       return ListTile(
         leading: const Icon(MingCute.transfer_2_line),
         title: TipText(libL10n.file, l10n.sshFileTransportTip),
-        trailing: PopupMenu<SshFileTransport>(
-          initialValue: val,
-          items: const [
-            PopupMenuItem(value: SshFileTransport.sftp, child: Text('SFTP')),
-            PopupMenuItem(value: SshFileTransport.scp, child: Text('SCP')),
+        trailing: ContextMenuButton(
+          actions: () => [
+            for (final (t, name) in [
+              (SshFileTransport.sftp, 'SFTP'),
+              (SshFileTransport.scp, 'SCP'),
+            ])
+              ContextMenuAction(
+                text: name,
+                checked: t == val,
+                onTap: () => _fileTransport.value = t,
+              ),
           ],
-          onSelected: (value) => _fileTransport.value = value,
-          child: Text(val == SshFileTransport.scp ? 'SCP' : 'SFTP'),
+          child: ContextMenuButton.value(
+            Text(val == SshFileTransport.scp ? 'SCP' : 'SFTP'),
+          ),
         ),
       ).cardx;
     });
@@ -896,18 +910,21 @@ extension _Widgets on _ServerEditPageState {
               ].join('\n')
             : l10n.pvePasswordAuthTip,
       ),
-      trailing: PopupMenu<bool>(
-        initialValue: useToken,
-        items: [
-          PopupMenuItem(value: true, child: Text(token)),
-          PopupMenuItem(
-            value: false,
+      trailing: ContextMenuButton(
+        actions: () => [
+          ContextMenuAction(
+            text: token,
+            checked: useToken,
+            onTap: () => _pveUseToken.value = true,
+          ),
+          ContextMenuAction(
+            text: pwd,
+            checked: !useToken,
             enabled: _hasPveLoginUser,
-            child: Text(pwd),
+            onTap: () => _pveUseToken.value = false,
           ),
         ],
-        onSelected: (value) => _pveUseToken.value = value,
-        child: Text(useToken ? token : pwd),
+        child: ContextMenuButton.value(Text(useToken ? token : pwd)),
       ),
     ).cardx;
   }

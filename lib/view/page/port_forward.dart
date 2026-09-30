@@ -149,38 +149,21 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
             value: isActive,
             onChanged: (_) => _notifier.toggleForward(config.id),
           ),
-          PopupMenu(
-            items: [
-              PopupMenuItem(
-                value: 'edit',
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.edit, size: 18),
-                    const SizedBox(width: 8),
-                    Text(libL10n.edit),
-                  ],
-                ),
+          ContextMenuButton(
+            tooltip: libL10n.more,
+            actions: () => [
+              ContextMenuAction(
+                text: libL10n.edit,
+                icon: Icons.edit_outlined,
+                onTap: () => _onEdit(config),
               ),
-              PopupMenuItem(
-                value: 'delete',
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.delete, size: 18),
-                    const SizedBox(width: 8),
-                    Text(libL10n.delete),
-                  ],
-                ),
+              ContextMenuAction(
+                text: libL10n.delete,
+                icon: Icons.delete_outline,
+                destructive: true,
+                onTap: () => _onDelete(config),
               ),
             ],
-            onSelected: (val) {
-              if (val == 'edit') {
-                _onEdit(config);
-              } else if (val == 'delete') {
-                _onDelete(config);
-              }
-            },
           ),
         ],
       ),

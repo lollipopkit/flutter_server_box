@@ -94,24 +94,17 @@ class FoldingBar extends StatelessWidget {
                   onTap: a.onTap,
                 ),
             if (folded.isNotEmpty)
-              PopupMenu<int>(
+              ContextMenuButton(
                 tooltip: libL10n.more,
-                items: [
-                  for (final (i, a) in folded.indexed)
-                    PopupMenuItem(
-                      value: i,
+                actions: () => [
+                  for (final a in folded)
+                    ContextMenuAction(
+                      text: a.label,
+                      icon: a.icon,
                       enabled: !a.loading,
-                      child: Row(
-                        children: [
-                          a.buildIcon(),
-                          const SizedBox(width: 11),
-                          Text(a.label, style: TextStyle(color: a.color)),
-                        ],
-                      ),
+                      onTap: a.onTap,
                     ),
                 ],
-                onSelected: (i) => folded[i].onTap(),
-                // A button's padding: `PopupMenuButton` gives a child none.
                 child: const Padding(
                   padding: EdgeInsets.all(7),
                   child: Icon(Icons.more_vert, size: 18),

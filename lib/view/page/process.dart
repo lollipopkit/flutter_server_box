@@ -514,14 +514,20 @@ extension _ProcessPageWidgets on _ProcessPageState {
           ),
         ),
         if (more.isNotEmpty)
-          PopupMenuButton<ProcSortMode>(
+          ContextMenuButton(
             tooltip: libL10n.sort,
-            icon: const Icon(Icons.filter_list, size: 18),
-            onSelected: _selectSort,
-            itemBuilder: (_) => [
+            actions: () => [
               for (final mode in more)
-                PopupMenuItem(value: mode, child: Text(_sortLabel(mode))),
+                ContextMenuAction(
+                  text: _sortLabel(mode),
+                  checked: mode == _procSortMode,
+                  onTap: () => _selectSort(mode),
+                ),
             ],
+            child: const Padding(
+              padding: EdgeInsets.all(7),
+              child: Icon(Icons.filter_list, size: 18),
+            ),
           ),
       ],
     );

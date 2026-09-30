@@ -31,8 +31,6 @@ final class UserDetailPageArgs {
   final Future<bool> Function(ServerUser user) onDelete;
 }
 
-enum _DetailAction { delete }
-
 final class UserDetailPage extends ConsumerStatefulWidget {
   const UserDetailPage({super.key, required this.args});
 
@@ -76,14 +74,20 @@ final class _UserDetailPageState extends ConsumerState<UserDetailPage> {
             onTap: () => _run(widget.args.onEdit),
           ),
           if (!_user.isRoot && _user.name != widget.args.catalog.currentUser)
-            PopupMenu<_DetailAction>(
-              items: [
-                PopupMenuItem(
-                  value: _DetailAction.delete,
-                  child: Text(libL10n.delete),
+            ContextMenuButton(
+              tooltip: libL10n.more,
+              actions: () => [
+                ContextMenuAction(
+                  text: libL10n.delete,
+                  icon: Icons.delete_outline,
+                  destructive: true,
+                  onTap: () => _run(widget.args.onDelete),
                 ),
               ],
-              onSelected: (_) => _run(widget.args.onDelete),
+              child: const Padding(
+                padding: EdgeInsets.all(7),
+                child: Icon(Icons.more_vert, size: 18),
+              ),
             ),
         ],
       ),

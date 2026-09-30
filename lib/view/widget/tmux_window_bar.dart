@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
@@ -187,26 +185,6 @@ final class _TmuxWindowBarView extends StatelessWidget {
   }
 }
 
-sealed class _PaneSelection {
-  const _PaneSelection();
-
-  factory _PaneSelection.select(TmuxControlPane pane) = _SelectPane;
-
-  factory _PaneSelection.close(TmuxControlPane pane) = _ClosePane;
-}
-
-final class _SelectPane extends _PaneSelection {
-  final TmuxControlPane pane;
-
-  const _SelectPane(this.pane);
-}
-
-final class _ClosePane extends _PaneSelection {
-  final TmuxControlPane pane;
-
-  const _ClosePane(this.pane);
-}
-
 final class _PaneSummaryButton extends StatefulWidget {
   final List<TmuxControlPane> panes;
   final TmuxPaneId activePaneId;
@@ -225,69 +203,33 @@ final class _PaneSummaryButton extends StatefulWidget {
 }
 
 final class _PaneSummaryButtonState extends State<_PaneSummaryButton> {
-  Future<void> _showPaneMenu(BuildContext buttonContext) async {
+  void _showPaneMenu(BuildContext buttonContext) {
     final button = buttonContext.findRenderObject();
-    final overlay = Overlay.of(buttonContext).context.findRenderObject();
-    if (button is! RenderBox || overlay is! RenderBox) return;
-
+    if (button is! RenderBox || !button.hasSize) return;
+    final onClose = widget.onClosePane;
     // The menu belongs to the control that opened it. A bottom sheet would put
     // a pane switch at the opposite end of the screen from the window switch,
     // even though both are selections in the same tmux hierarchy.
-    final origin = button.localToGlobal(Offset.zero, ancestor: overlay);
-    final picked = await showMenu<_PaneSelection>(
-      context: buttonContext,
-      constraints: const BoxConstraints(minWidth: 260, maxWidth: 320),
-      position: RelativeRect.fromLTRB(
-        origin.dx,
-        origin.dy + button.size.height + 4,
-        overlay.size.width - origin.dx - button.size.width,
-        overlay.size.height - origin.dy - button.size.height,
-      ),
-      items: [
+    showContextMenu(
+      buttonContext,
+      [
         for (final pane in widget.panes)
-          PopupMenuItem(
-            value: _PaneSelection.select(pane),
-            child: Builder(
-              builder: (menuContext) => Row(
-                children: [
-                  Icon(
-                    pane.id == widget.activePaneId
-                        ? Icons.check_circle
-                        : Icons.circle_outlined,
-                    size: 14,
+          ContextMenuAction(
+            text: '${pane.index}:${pane.displayName}',
+            checked: pane.id == widget.activePaneId,
+            onTap: () => widget.onSelectPane?.call(pane),
+            trailing: onClose == null
+                ? null
+                : ContextMenuTrailing(
+                    key: ValueKey('close_tmux_pane_${pane.id}'),
+                    icon: Icons.close_outlined,
+                    tooltip: libL10n.delete,
+                    onTap: () => onClose(pane),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      '${pane.index}:${pane.displayName}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (widget.onClosePane != null)
-                    IconButton(
-                      key: ValueKey('close_tmux_pane_${pane.id}'),
-                      tooltip: libL10n.delete,
-                      onPressed: () => Navigator.of(
-                        menuContext,
-                      ).pop(_PaneSelection.close(pane)),
-                      icon: const Icon(Icons.close_outlined, size: 16),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                ],
-              ),
-            ),
           ),
       ],
+      at: button.localToGlobal(button.size.bottomLeft(const Offset(0, 4))),
     );
-    if (!mounted || picked == null) return;
-
-    switch (picked) {
-      case _SelectPane(:final pane):
-        widget.onSelectPane?.call(pane);
-      case _ClosePane(:final pane):
-        widget.onClosePane?.call(pane);
-    }
   }
 
   @override
@@ -304,7 +246,7 @@ final class _PaneSummaryButtonState extends State<_PaneSummaryButton> {
         color: scheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
-          onTap: () => unawaited(_showPaneMenu(context)),
+          onTap: () => _showPaneMenu(context),
           borderRadius: BorderRadius.circular(14),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
