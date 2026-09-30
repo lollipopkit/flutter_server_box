@@ -19,7 +19,7 @@ Read the <a href="https://serverbox.lolli.tech/docs/">documentation site</a> for
 
 Special thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartssh2</a> & <a href="https://github.com/TerminalStudio/xterm.dart">xterm.dart</a>.
 Thanks to my partner for their emotional and financial support.
-Thanks to <a href="https://openai.com">OpenAI</a> for providing six months of ChatGPT Pro 20x subscription! Not an advertisement, just appreciation for their contribution to FOSS.
+Thanks to <a href="https://openai.com">OpenAI</a> for providing six months of ChatGPT Pro 20x subscription.
 
 ## Screenshots
 
