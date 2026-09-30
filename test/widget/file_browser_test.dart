@@ -187,6 +187,34 @@ final typedField = find.byWidgetPredicate(
     expect(find.text('inner.txt'), findsNothing);
   });
 
+  testWidgets('a slow directory shows a spinner, a quick one does not', (
+    tester,
+  ) async {
+    // Blank until the listing arrived, which read as an empty directory.
+    // Past 100ms it says it is still reading; before, it says nothing, so an
+    // answer that comes at once does not blink an indicator.
+    final backend = _MapBackend({
+      '/': [_dir('sub')],
+      '/sub': [_file('inner.txt')],
+    })
+      ..gatePath = '/sub'
+      ..gate = Completer<void>();
+    final spinner = find.byType(CircularProgressIndicator);
+
+    await pump(tester, backend);
+    await tester.tap(find.text('sub'));
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(spinner, findsNothing);
+
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(spinner, findsOneWidget);
+
+    backend.gate!.complete();
+    await tester.pumpAndSettle();
+    expect(spinner, findsNothing);
+    expect(find.text('inner.txt'), findsOneWidget);
+  });
+
   group('a directory that would not open', () {
     testWidgets('names what went wrong, and keeps the exception', (
       tester,

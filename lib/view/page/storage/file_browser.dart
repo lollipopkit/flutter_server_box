@@ -17,6 +17,7 @@ import 'package:server_box/data/provider/file_transfer.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/storage/send_to.dart';
 import 'package:server_box/view/page/storage/transfer_announce.dart';
+import 'package:server_box/view/widget/delayed_loading.dart';
 import 'package:server_box/view/widget/unix_perm.dart';
 
 /// What an injected action is allowed to do to the browser it sits in.
@@ -1521,7 +1522,10 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   Widget _buildList() {
     return FutureWidget(
       future: _entries,
-      loading: UIs.placeholder,
+      // Nothing for a directory that answers at once, a spinner for one that
+      // does not: a slow listing was a blank pane until it arrived, which read
+      // as an empty directory.
+      loading: const DelayedLoading(),
       error: (e, _) => _buildError(e),
       success: (entries) => ListenBuilder(
         listenable: Listenable.merge([_sort, _search]),
