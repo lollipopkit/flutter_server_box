@@ -94,6 +94,9 @@ final class ServerAgentTool extends ToolFunc {
   String get groupLabel => l10n.agentServerTools;
 
   @override
+  IconData get groupIcon => Icons.dns_outlined;
+
+  @override
   String? get l10nTip => l10n.agentServerToolsTip;
 
   @override
@@ -189,6 +192,9 @@ final class TerminalRunTool extends ToolFunc {
   String get groupLabel => l10n.agentTerminalTools;
 
   @override
+  IconData get groupIcon => Icons.terminal;
+
+  @override
   String? get l10nTip => l10n.agentTerminalToolsTip;
 
   @override
@@ -276,6 +282,9 @@ final class TerminalScreenTool extends ToolFunc {
 
   @override
   String get groupLabel => l10n.agentTerminalTools;
+
+  @override
+  IconData get groupIcon => Icons.terminal;
 
   @override
   IconData get icon => Icons.visibility_outlined;
