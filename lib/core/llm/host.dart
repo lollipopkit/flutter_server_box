@@ -10,6 +10,7 @@ import 'package:server_box/data/provider/ai/global_agent_tools.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/res/url.dart';
 import 'package:server_box/view/page/agent/settings.dart';
 
 /// The Agent on fl_pi_llm: what this app tells fl_pi_llm_ui about itself, and
@@ -49,6 +50,7 @@ abstract final class LlmHost {
   static void _configure() {
     LlmUi.appName = BuildData.name;
     LlmUi.appVersion = '${BuildData.build}';
+    LlmUi.appUri = Uri.parse(Urls.site);
     LlmUi.openProviders = (context) => AgentProvidersPage.route.go(context);
     LlmUi.appTools = () => AgentTools.all;
     LlmUi.offers = offers;

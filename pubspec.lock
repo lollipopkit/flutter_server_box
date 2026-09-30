@@ -1236,8 +1236,8 @@ packages:
     description:
       path: "."
       ref: main
-      resolved-ref: "3ec2f6f31df69a803b259886438a82dd34b58272"
-      url: "https://github.com/leehack/mcp_dart"
+      resolved-ref: "254eea96f62cf4d8b30e3eebac87da7df7d3cac2"
+      url: "https://github.com/lollipopkit/mcp_dart"
     source: git
     version: "2.4.2"
   meta:
