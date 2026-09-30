@@ -607,10 +607,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get deleteDirRecursive => 'Qovluğu və içindəkilərin hamısını sil';
 
   @override
-  String get desktopTerminalTip =>
-      'SSH sessiyaları başladılarkən terminal emulyatorunu açmaq üçün istifadə olunan əmr.';
-
-  @override
   String get dirEmpty => 'Qovluğun boş olduğuna əmin ol.';
 
   @override
@@ -918,11 +914,6 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get maxRetryCount => 'Serverlə yenidən əlaqə cəhdlərinin sayı';
-
-  @override
-  String mismatchSystem(String system) {
-    return 'Uyğun olmayan sistem: $system';
-  }
 
   @override
   String get mirror => 'Güzgü serveri';
@@ -1339,16 +1330,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String sshConfigAllExist(int duplicateCount) {
     return 'Bütün serverlər artıq mövcuddur ($duplicateCount təkrar tapıldı)';
   }
-
-  @override
-  String get sshConnectionModeTip =>
-      'Daxili: tətbiqin terminalından istifadə et. Sistem SSH: sistemin ssh əmrini xarici terminalda başlat.';
-
-  @override
-  String get sshConnectionModeUseBuiltin => 'Daxili terminaldan istifadə et';
-
-  @override
-  String get sshConnectionModeUseSystem => 'Sistem SSH istifadə et';
 
   @override
   String sshConfigDuplicatesSkipped(int duplicateCount) {

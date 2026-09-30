@@ -605,10 +605,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get deleteDirRecursive => 'Eliminar a pasta e todo o seu conteúdo';
 
   @override
-  String get desktopTerminalTip =>
-      'Comando usado para abrir o emulador de terminal ao iniciar sessões SSH.';
-
-  @override
   String get dirEmpty => 'Certifique-se de que a pasta está vazia';
 
   @override
@@ -913,11 +909,6 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get maxRetryCount =>
       'Número de tentativas de reconexão com o servidor';
-
-  @override
-  String mismatchSystem(String system) {
-    return 'Sistema incompatível: $system';
-  }
 
   @override
   String get mirror => 'Espelho';
@@ -1333,16 +1324,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String sshConfigAllExist(int duplicateCount) {
     return 'Todos os servidores já existem (encontradas $duplicateCount duplicatas)';
   }
-
-  @override
-  String get sshConnectionModeTip =>
-      'Integrado: usar o terminal do app. SSH do sistema: iniciar o comando ssh do sistema em um terminal externo.';
-
-  @override
-  String get sshConnectionModeUseBuiltin => 'Usar o terminal integrado';
-
-  @override
-  String get sshConnectionModeUseSystem => 'Usar o SSH do sistema';
 
   @override
   String sshConfigDuplicatesSkipped(int duplicateCount) {

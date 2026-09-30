@@ -1163,12 +1163,6 @@ abstract class AppLocalizations {
   /// **'Delete the folder and everything in it'**
   String get deleteDirRecursive;
 
-  /// Help text for the desktop terminal setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'Command used to open the terminal emulator when launching SSH sessions.'**
-  String get desktopTerminalTip;
-
   /// Empty-state message for dir empty.
   ///
   /// In en, this message translates to:
@@ -1708,12 +1702,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Number of server reconnections'**
   String get maxRetryCount;
-
-  /// User-facing label or message for mismatch system.
-  ///
-  /// In en, this message translates to:
-  /// **'Mismatch system: {system}'**
-  String mismatchSystem(String system);
 
   /// User-facing label or message for mirror.
   ///
@@ -2409,24 +2397,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'All servers already exist ({duplicateCount} duplicates found)'**
   String sshConfigAllExist(int duplicateCount);
-
-  /// Help text for the SSH connection mode setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'Built-in: use the app\'s terminal. System SSH: launch the system ssh command in an external terminal.'**
-  String get sshConnectionModeTip;
-
-  /// User-facing label or message for SSH connection mode use builtin.
-  ///
-  /// In en, this message translates to:
-  /// **'Use built-in terminal'**
-  String get sshConnectionModeUseBuiltin;
-
-  /// User-facing label or message for SSH connection mode use system.
-  ///
-  /// In en, this message translates to:
-  /// **'Use system SSH'**
-  String get sshConnectionModeUseSystem;
 
   /// User-facing label or message for SSH config duplicates skipped.
   ///

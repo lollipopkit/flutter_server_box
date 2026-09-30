@@ -606,10 +606,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get deleteDirRecursive => 'Klasörü ve içindeki her şeyi sil';
 
   @override
-  String get desktopTerminalTip =>
-      'SSH oturumları başlatılırken terminal öykünücüsünü açmak için kullanılan komut.';
-
-  @override
   String get dirEmpty => 'Klasörün boş olduğundan emin olun.';
 
   @override
@@ -913,11 +909,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get maxRetryCount => 'Sunucu yeniden bağlantı sayısı';
-
-  @override
-  String mismatchSystem(String system) {
-    return 'Eşleşmeyen sistem: $system';
-  }
 
   @override
   String get mirror => 'Yansı';
@@ -1335,16 +1326,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String sshConfigAllExist(int duplicateCount) {
     return 'Tüm sunucular zaten mevcut ($duplicateCount kopya bulundu)';
   }
-
-  @override
-  String get sshConnectionModeTip =>
-      'Yerleşik: uygulamanın terminalini kullanır. Sistem SSH: sistemin ssh komutunu harici bir terminalde başlatır.';
-
-  @override
-  String get sshConnectionModeUseBuiltin => 'Yerleşik terminali kullan';
-
-  @override
-  String get sshConnectionModeUseSystem => 'Sistem SSH\'ini kullan';
 
   @override
   String sshConfigDuplicatesSkipped(int duplicateCount) {

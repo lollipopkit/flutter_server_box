@@ -572,9 +572,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get deleteDirRecursive => '폴더와 그 안의 모든 항목 삭제';
 
   @override
-  String get desktopTerminalTip => 'SSH 세션을 시작할 때 사용할 터미널 에뮬레이터를 여는 명령어입니다.';
-
-  @override
   String get dirEmpty => '폴더가 비어 있는지 확인해 주세요.';
 
   @override
@@ -865,11 +862,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get maxRetryCount => '서버 재연결 횟수';
-
-  @override
-  String mismatchSystem(String system) {
-    return '시스템이 일치하지 않습니다: $system';
-  }
 
   @override
   String get mirror => '미러';
@@ -1262,16 +1254,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String sshConfigAllExist(int duplicateCount) {
     return '모든 서버가 이미 존재합니다 (중복 $duplicateCount개 발견)';
   }
-
-  @override
-  String get sshConnectionModeTip =>
-      '내장: 앱의 터미널을 사용합니다. 시스템 SSH: 외부 터미널에서 시스템 ssh 명령을 실행합니다.';
-
-  @override
-  String get sshConnectionModeUseBuiltin => '내장 터미널 사용';
-
-  @override
-  String get sshConnectionModeUseSystem => '시스템 SSH 사용';
 
   @override
   String sshConfigDuplicatesSkipped(int duplicateCount) {

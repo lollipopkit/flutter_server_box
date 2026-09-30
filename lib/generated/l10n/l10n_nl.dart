@@ -605,10 +605,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get deleteDirRecursive => 'De map en alles erin verwijderen';
 
   @override
-  String get desktopTerminalTip =>
-      'Opdracht die wordt gebruikt om de terminalemulator te openen bij het starten van SSH-sessies.';
-
-  @override
   String get dirEmpty => 'Zorg ervoor dat de map leeg is.';
 
   @override
@@ -913,11 +909,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get maxRetryCount => 'Aantal serverherverbindingen';
-
-  @override
-  String mismatchSystem(String system) {
-    return 'Niet-overeenkomend systeem: $system';
-  }
 
   @override
   String get mirror => 'Mirror';
@@ -1335,16 +1326,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String sshConfigAllExist(int duplicateCount) {
     return 'Alle servers bestaan al ($duplicateCount duplicaten gevonden)';
   }
-
-  @override
-  String get sshConnectionModeTip =>
-      'Ingebouwd: de terminal van de app gebruiken. Systeem-SSH: het ssh-commando van het systeem in een externe terminal starten.';
-
-  @override
-  String get sshConnectionModeUseBuiltin => 'Ingebouwde terminal gebruiken';
-
-  @override
-  String get sshConnectionModeUseSystem => 'Systeem-SSH gebruiken';
 
   @override
   String sshConfigDuplicatesSkipped(int duplicateCount) {

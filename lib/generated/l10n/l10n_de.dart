@@ -607,10 +607,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get deleteDirRecursive => 'Ordner mit dem gesamten Inhalt löschen';
 
   @override
-  String get desktopTerminalTip =>
-      'Befehl zum Öffnen des Terminal-Emulators beim Starten von SSH-Sitzungen.';
-
-  @override
   String get dirEmpty => 'Stelle sicher, dass der Ordner leer ist.';
 
   @override
@@ -916,11 +912,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get maxRetryCount => 'Anzahl an Verbindungsversuchen';
-
-  @override
-  String mismatchSystem(String system) {
-    return 'Nicht übereinstimmendes System: $system';
-  }
 
   @override
   String get mirror => 'Spiegelserver';
@@ -1341,16 +1332,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String sshConfigAllExist(int duplicateCount) {
     return 'Alle Server existieren bereits ($duplicateCount Duplikate gefunden)';
   }
-
-  @override
-  String get sshConnectionModeTip =>
-      'Integriert: das Terminal der App verwenden. System-SSH: den ssh-Befehl des Systems in einem externen Terminal starten.';
-
-  @override
-  String get sshConnectionModeUseBuiltin => 'Integriertes Terminal verwenden';
-
-  @override
-  String get sshConnectionModeUseSystem => 'System-SSH verwenden';
 
   @override
   String sshConfigDuplicatesSkipped(int duplicateCount) {

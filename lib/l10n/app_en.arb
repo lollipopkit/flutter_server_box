@@ -730,10 +730,6 @@
   "@deleteDirRecursive": {
     "description": "Action label for delete dir recursive."
   },
-  "desktopTerminalTip": "Command used to open the terminal emulator when launching SSH sessions.",
-  "@desktopTerminalTip": {
-    "description": "Help text for the desktop terminal setting or action."
-  },
   "dirEmpty": "Make sure the folder is empty.",
   "@dirEmpty": {
     "description": "Empty-state message for dir empty."
@@ -1137,15 +1133,6 @@
   "maxRetryCount": "Number of server reconnections",
   "@maxRetryCount": {
     "description": "User-facing label or message for max retry count."
-  },
-  "mismatchSystem": "Mismatch system: {system}",
-  "@mismatchSystem": {
-    "description": "User-facing label or message for mismatch system.",
-    "placeholders": {
-      "system": {
-        "type": "String"
-      }
-    }
   },
   "mirror": "Mirror",
   "@mirror": {
@@ -1692,18 +1679,6 @@
         "type": "int"
       }
     }
-  },
-  "sshConnectionModeTip": "Built-in: use the app's terminal. System SSH: launch the system ssh command in an external terminal.",
-  "@sshConnectionModeTip": {
-    "description": "Help text for the SSH connection mode setting or action."
-  },
-  "sshConnectionModeUseBuiltin": "Use built-in terminal",
-  "@sshConnectionModeUseBuiltin": {
-    "description": "User-facing label or message for SSH connection mode use builtin."
-  },
-  "sshConnectionModeUseSystem": "Use system SSH",
-  "@sshConnectionModeUseSystem": {
-    "description": "User-facing label or message for SSH connection mode use system."
   },
   "sshConfigDuplicatesSkipped": "{duplicateCount} duplicates will be skipped",
   "@sshConfigDuplicatesSkipped": {

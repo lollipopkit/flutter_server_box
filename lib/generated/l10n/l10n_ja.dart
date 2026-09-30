@@ -568,9 +568,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get deleteDirRecursive => 'フォルダーとその中身をすべて削除';
 
   @override
-  String get desktopTerminalTip => 'SSHセッションを起動する際に使用されるターミナルエミュレーターを開くコマンド。';
-
-  @override
   String get dirEmpty => 'フォルダーが空であることを確認してください';
 
   @override
@@ -862,11 +859,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get maxRetryCount => 'サーバーの再接続試行回数';
-
-  @override
-  String mismatchSystem(String system) {
-    return 'システムが一致しません: $system';
-  }
 
   @override
   String get mirror => 'ミラー';
@@ -1258,16 +1250,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String sshConfigAllExist(int duplicateCount) {
     return 'すべてのサーバーがすでに存在します（$duplicateCount個の重複が見つかりました）';
   }
-
-  @override
-  String get sshConnectionModeTip =>
-      '内蔵: アプリのターミナルを使います。システム SSH: 外部ターミナルでシステムの ssh コマンドを起動します。';
-
-  @override
-  String get sshConnectionModeUseBuiltin => '内蔵ターミナルを使う';
-
-  @override
-  String get sshConnectionModeUseSystem => 'システムの SSH を使う';
 
   @override
   String sshConfigDuplicatesSkipped(int duplicateCount) {

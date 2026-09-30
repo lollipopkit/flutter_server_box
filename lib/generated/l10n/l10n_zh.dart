@@ -561,9 +561,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deleteDirRecursive => '连同文件夹里的所有内容一起删除';
 
   @override
-  String get desktopTerminalTip => '启动 SSH 连接所用的终端模拟器命令';
-
-  @override
   String get dirEmpty => '请确保目录为空';
 
   @override
@@ -849,11 +846,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get maxRetryCount => '服务器尝试重连次数';
-
-  @override
-  String mismatchSystem(String system) {
-    return '系统不匹配：$system';
-  }
 
   @override
   String get mirror => '镜像';
@@ -1240,15 +1232,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String sshConfigAllExist(int duplicateCount) {
     return '所有服务器已存在（发现 $duplicateCount 个重复项）';
   }
-
-  @override
-  String get sshConnectionModeTip => '内置终端：使用应用自带的终端。系统 SSH：在外部终端中调用系统 ssh 命令。';
-
-  @override
-  String get sshConnectionModeUseBuiltin => '使用内置终端';
-
-  @override
-  String get sshConnectionModeUseSystem => '使用系统 SSH';
 
   @override
   String sshConfigDuplicatesSkipped(int duplicateCount) {
@@ -5460,9 +5443,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get deleteDirRecursive => '連同資料夾裡的所有內容一起刪除';
 
   @override
-  String get desktopTerminalTip => '啟動 SSH 連線時用於打開終端機模擬器的指令。';
-
-  @override
   String get dirEmpty => '請確保目錄為空';
 
   @override
@@ -5748,11 +5728,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get maxRetryCount => '伺服器嘗試重連次數';
-
-  @override
-  String mismatchSystem(String system) {
-    return '系統不匹配：$system';
-  }
 
   @override
   String get mirror => '鏡像';
@@ -6139,15 +6114,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String sshConfigAllExist(int duplicateCount) {
     return '所有伺服器均已存在（發現$duplicateCount個重複項）';
   }
-
-  @override
-  String get sshConnectionModeTip => '內建：使用 App 的終端。系統 SSH：在外部終端中啟動系統的 ssh 指令。';
-
-  @override
-  String get sshConnectionModeUseBuiltin => '使用內建終端';
-
-  @override
-  String get sshConnectionModeUseSystem => '使用系統 SSH';
 
   @override
   String sshConfigDuplicatesSkipped(int duplicateCount) {

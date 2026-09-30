@@ -757,23 +757,6 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// `vim`. Leave empty to use the local GUI editor.
   late final sftpEditor = propertyDefault('sftpEditor', '');
 
-  /// Preferred terminal emulator command on desktop.
-  late final desktopTerminal = propertyDefault(
-    'desktopTerminal',
-    'x-terminal-emulator',
-  );
-
-  /// Whether to copy the login password before launching a desktop SSH client.
-  late final desktopSshAutoCopyPassword = propertyDefault(
-    'desktopSshAutoCopyPassword',
-    false,
-  );
-
-  /// SSH connection mode on desktop.
-  /// false = built-in (dartssh2 + xterm)
-  /// true = system SSH (launch ssh command in external terminal)
-  late final sshConnectionMode = propertyDefault('sshConnectionMode', false);
-
   // `fgService` was here: a second switch for the Android foreground service,
   // whose tile was commented out of the settings page long before that page
   // was deleted. It defaulted to false, nothing could turn it on, and it gated
@@ -1121,6 +1104,13 @@ class SettingStore extends SqliteStore with ThemeSettings {
       'doubleColumnServersPage',
       'cpuViewAsProgress',
       'displayCpuIndex',
+      // Opening a terminal in the system's own `ssh` instead of this app's:
+      // the switch, the password copied for it, and the Linux emulator it ran
+      // in. `SettingsFixupsMigration` still converts the first from an int,
+      // which is harmless once this has dropped it.
+      'sshConnectionMode',
+      'desktopSshAutoCopyPassword',
+      'desktopTerminal',
     ]) {
       remove(key, updateLastUpdateTsOnRemove: false);
     }

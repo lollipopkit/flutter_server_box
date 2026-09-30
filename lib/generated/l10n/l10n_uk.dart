@@ -605,10 +605,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get deleteDirRecursive => 'Видалити папку та весь її вміст';
 
   @override
-  String get desktopTerminalTip =>
-      'Команда для відкриття емулятора термінала під час запуску SSH-сеансів.';
-
-  @override
   String get dirEmpty => 'Переконайтеся, що директорія пуста.';
 
   @override
@@ -914,11 +910,6 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get maxRetryCount =>
       'Кількість повторних спроб підключення до сервера';
-
-  @override
-  String mismatchSystem(String system) {
-    return 'Невідповідна система: $system';
-  }
 
   @override
   String get mirror => 'Дзеркало';
@@ -1336,17 +1327,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String sshConfigAllExist(int duplicateCount) {
     return 'Всі сервери вже існують (знайдено $duplicateCount дублікатів)';
   }
-
-  @override
-  String get sshConnectionModeTip =>
-      'Вбудований: використовувати термінал застосунку. Системний SSH: запускати системну команду ssh у зовнішньому терміналі.';
-
-  @override
-  String get sshConnectionModeUseBuiltin =>
-      'Використовувати вбудований термінал';
-
-  @override
-  String get sshConnectionModeUseSystem => 'Використовувати системний SSH';
 
   @override
   String sshConfigDuplicatesSkipped(int duplicateCount) {

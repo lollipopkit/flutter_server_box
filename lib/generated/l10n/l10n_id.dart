@@ -603,10 +603,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get deleteDirRecursive => 'Hapus folder beserta seluruh isinya';
 
   @override
-  String get desktopTerminalTip =>
-      'Perintah yang digunakan untuk membuka emulator terminal saat memulai sesi SSH.';
-
-  @override
   String get dirEmpty => 'Pastikan dir kosong.';
 
   @override
@@ -910,11 +906,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get maxRetryCount => 'Jumlah penyambungan kembali server';
-
-  @override
-  String mismatchSystem(String system) {
-    return 'Sistem tidak cocok: $system';
-  }
 
   @override
   String get mirror => 'Mirror';
@@ -1333,16 +1324,6 @@ class AppLocalizationsId extends AppLocalizations {
   String sshConfigAllExist(int duplicateCount) {
     return 'Semua server sudah ada (ditemukan $duplicateCount duplikat)';
   }
-
-  @override
-  String get sshConnectionModeTip =>
-      'Bawaan: memakai terminal aplikasi. SSH sistem: menjalankan perintah ssh sistem di terminal eksternal.';
-
-  @override
-  String get sshConnectionModeUseBuiltin => 'Pakai terminal bawaan';
-
-  @override
-  String get sshConnectionModeUseSystem => 'Pakai SSH sistem';
 
   @override
   String sshConfigDuplicatesSkipped(int duplicateCount) {
