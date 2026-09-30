@@ -42,6 +42,11 @@ void main() {
     tester,
   ) async {
     await pump(tester, selected: 0);
+    // At the default text size, the height it has always had.
+    expect(
+      tester.getSize(find.byType(AppNavBar)).height,
+      NavBarMetrics.height,
+    );
     final more = tester.getRect(find.bySemanticsLabel('more'));
     expect(more.right, 400);
     expect(more.width, NavBarMetrics.trailingWidth);
@@ -66,6 +71,40 @@ void main() {
       tester.getSemantics(find.bySemanticsLabel('a')),
       isSemantics(isSelected: false),
     );
+  });
+
+  testWidgets('grows with large text rather than overflowing', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(400, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(
+            size: Size(400, 800),
+            textScaler: TextScaler.linear(2.5),
+          ),
+          child: Scaffold(
+            bottomNavigationBar: AppNavBar(
+              selectedIndex: 0,
+              onSelected: (_) {},
+              items: [_item('a'), _item('b')],
+              trailing: _item('more'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    // An overflow is an exception in a test, so the pump is most of this.
+    expect(tester.takeException(), isNull);
+    final bar = tester.getSize(find.byType(AppNavBar)).height;
+    expect(bar, greaterThan(NavBarMetrics.height));
+    // The selected label is laid out whole, inside the bar.
+    final label = tester.getRect(find.text('a'));
+    expect(label.bottom, lessThanOrEqualTo(800));
   });
 
   testWidgets('taps reach the tab and the button', (tester) async {

@@ -23,6 +23,11 @@ abstract final class NavBarMetrics {
 
   /// What the trailing button takes at the right edge.
   static const trailingWidth = 48.0;
+
+  /// Above the pill and below the name, once large text has made the bar
+  /// taller than [height]. Small enough that at the default text size the
+  /// bar is [height] exactly, as it was.
+  static const labelInset = 4.0;
 }
 
 /// The app's bottom bar: [AppNavRail]'s counterpart on a phone.
@@ -52,6 +57,28 @@ class AppNavBar extends StatelessWidget {
   final NavRailItem? trailing;
   final VoidCallback? onTrailingTap;
 
+  /// As tall as the selected tab's pill and name need, and never shorter than
+  /// [NavBarMetrics.height].
+  ///
+  /// The name is laid out at the text scale the system asks for, which the
+  /// fixed height did not allow for: at twice the size it overflowed the bar.
+  double _height(BuildContext context) {
+    final painter = TextPainter(
+      text: TextSpan(text: 'M', style: _labelStyle(context)),
+      textScaler: MediaQuery.textScalerOf(context),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+    )..layout();
+    final label = painter.height;
+    painter.dispose();
+    final needed =
+        NavBarMetrics.indicatorHeight +
+        NavBarMetrics.labelGap +
+        label +
+        2 * NavBarMetrics.labelInset;
+    return needed > NavBarMetrics.height ? needed : NavBarMetrics.height;
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -66,7 +93,7 @@ class AppNavBar extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: SizedBox(
-          height: NavBarMetrics.height,
+          height: _height(context),
           child: Row(
             children: [
               for (final (at, item) in items.indexed)
@@ -91,6 +118,15 @@ class AppNavBar extends StatelessWidget {
       ),
     );
   }
+}
+
+/// What a selected tab's name is drawn in, from the bar's theme and then M3's.
+TextStyle? _labelStyle(BuildContext context) {
+  final theme = Theme.of(context);
+  return NavigationBarTheme.of(
+        context,
+      ).labelTextStyle?.resolve({WidgetState.selected}) ??
+      theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.onSurface);
 }
 
 /// The colours an item is drawn in, from the bar's theme and then M3's.
@@ -128,11 +164,7 @@ class _NavBarTile extends StatelessWidget {
     final theme = Theme.of(context);
     final barTheme = NavigationBarTheme.of(context);
     final shape = barTheme.indicatorShape ?? const StadiumBorder();
-    final labelStyle =
-        barTheme.labelTextStyle?.resolve({WidgetState.selected}) ??
-        theme.textTheme.labelMedium?.copyWith(
-          color: theme.colorScheme.onSurface,
-        );
+    final labelStyle = _labelStyle(context);
     // The count while there is one, and otherwise the mark while selected —
     // on the pill's corner, the one place the bar has for either. A row of
     // beta tabs is not a row of marks.
