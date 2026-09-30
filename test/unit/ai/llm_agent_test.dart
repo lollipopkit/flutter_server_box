@@ -84,6 +84,9 @@ Future<(HttpServer, List<Map<String, Object?>>)> _mockServer() async {
         'safe_to_run': true,
         'destructive': false,
       });
+    } else if (text.contains('think first')) {
+      send({'reasoning_content': 'Checking the uptime.'});
+      send({'content': 'It has been up a week.'}, 'stop');
     } else if (last['role'] == 'tool') {
       send({'content': 'Done.'}, 'stop');
     } else if (text.contains('list files')) {
@@ -201,6 +204,22 @@ void main() {
     await Chats.send(id, 'hello');
     expect(seen.last['model'], 'echo');
     expect(_keys.last, 'Bearer sk-gateway');
+  });
+
+  test("the model's thinking is streamed, and kept with the reply", () async {
+    final id = Chats.create();
+    final chat = await Chats.open(id);
+    final streamed = <String>[];
+    void onStream() => streamed.add(chat.streaming.value?.thinking ?? '');
+    chat.streaming.addListener(onStream);
+    addTearDown(() => chat.streaming.removeListener(onStream));
+
+    await Chats.send(id, 'think first');
+
+    expect(streamed, contains('Checking the uptime.'));
+    final reply = chat.entries.value.last.message!;
+    expect(reply.thinking, 'Checking the uptime.');
+    expect(reply.text, 'It has been up a week.');
   });
 
   group('the settings from before fl_pi_llm', () {

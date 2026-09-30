@@ -177,6 +177,7 @@ class _AgentHistoryPanelState extends State<AgentHistoryPanel> {
         current,
         _search,
         Chats.openChanges,
+        Chats.runningChanges,
       ]),
       builder: (context, _) {
         final chats = LlmStores.chat.all(scope: _scope);
@@ -239,6 +240,14 @@ class _AgentHistoryPanelState extends State<AgentHistoryPanel> {
                 for (final chat in shown)
                   SideBarTile(
                     title: _titleOf(chat),
+                    // A reply being written here, whichever chat is shown.
+                    leading: Chats.isRunning(chat.id)
+                        ? const SizedLoading(
+                            13,
+                            padding: 0,
+                            builder: SizedLoading.circularBuilder,
+                          )
+                        : null,
                     selected: chat.id == current.value,
                     onTap: () {
                       AgentChats.select(_scope, chat.id);

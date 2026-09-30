@@ -221,6 +221,21 @@ class AgentConversationView extends StatelessWidget {
                           ),
                         ),
                         if (compact) const Icon(Icons.expand_more, size: 18),
+                        // Writing a reply or running a tool: the one sign of
+                        // it that stays when the reply is scrolled away.
+                        AgentBusyBuilder(
+                          scope: scope,
+                          builder: (_, busy) => busy
+                              ? const Padding(
+                                  padding: EdgeInsets.only(left: 9),
+                                  child: SizedLoading(
+                                    14,
+                                    padding: 0,
+                                    builder: SizedLoading.circularBuilder,
+                                  ),
+                                )
+                              : UIs.placeholder,
+                        ),
                       ],
                     ),
                   ),
