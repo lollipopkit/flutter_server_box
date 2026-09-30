@@ -94,6 +94,16 @@ Future<(HttpServer, List<Map<String, Object?>>)> _mockServer() async {
     } else if (text.contains('ask me') && last['role'] != 'tool') {
       call('ask_user', {
         'title': 'Sign in',
+        'questions': [
+          {
+            'id': 'how',
+            'question': 'How to sign in?',
+            'options': [
+              {'label': 'Password', 'description': 'Asked below.'},
+              {'label': 'Key'},
+            ],
+          },
+        ],
         'fields': [
           {'id': 'user', 'label': 'User', 'type': 'text'},
           {'id': 'pw', 'label': 'Password', 'type': 'secret', 'required': true},
@@ -330,12 +340,13 @@ void main() {
     test('needs no approval, and a secret never reaches the model', () async {
       final (chat, sending) = await asked();
       expect(chat.approvals.value, isEmpty);
-      Chats.submitInput(chat.id, {'user': 'admin', 'pw': 'hunter2'});
+      Chats.submitInput(chat.id, answers: {'how': 'Password'}, values: {'user': 'admin', 'pw': 'hunter2'});
       await sending;
 
       final result = toolResult();
       expect(result, contains('"status":"submitted"'));
       expect(result, contains('"user":"admin"'));
+      expect(result, contains('"how":"Password"'));
       expect(result, contains('sec_'));
       expect(jsonEncode(seen), isNot(contains('hunter2')));
       expect(jsonEncode([for (final e in chat.entries.value) e.json]), isNot(contains('hunter2')));

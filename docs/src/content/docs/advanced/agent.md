@@ -145,9 +145,11 @@ card and can be undone at **Tools**.
 
 ## When the Agent asks you
 
-The Agent can ask you to fill in a short form in the conversation — a choice
-that is yours, or something it cannot find out itself — and waits until you
-submit it or cancel. The bar, the chat list and the floating pill mark a chat
+The Agent can ask you in the conversation — a choice that is yours, or
+something it cannot find out itself — and waits until you submit or cancel.
+It asks up to four questions, each with a few options and what they mean,
+one or several to pick; **Other** is always there for an answer of your own.
+It can also ask for things to type in. The bar, the chat list and the floating pill mark a chat
 waiting on you with a dot, apart from the spinner of one that is working.
 Sending a message instead cancels the form, and your message goes to the Agent
 with it.
