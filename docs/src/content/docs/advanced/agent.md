@@ -68,11 +68,10 @@ connection, and **Read the screen**. Tools can be switched off by group at
 **Settings → App → AI → Tools**, where you can also add MCP servers, whose
 tools the Agent tab then offers too.
 
-An MCP server (Streamable HTTP) that wants a key takes it as headers when you
-add it, or later from its menu: one `Name: value` a line, such as
-`Authorization: Bearer <token>`. One that uses OAuth shows **Sign-in
-required**; **Log in** opens the browser, and the App keeps the token and
-renews it. Headers and tokens stay on this device and are not backed up, and
+Tap a server to edit it. One (Streamable HTTP) that wants a key takes it as
+headers, a name and a value each, such as `Authorization` with
+`Bearer <token>`. One that uses OAuth shows **Sign-in required**; **Log in**
+opens the browser, and the App keeps the token and renews it. Headers and tokens stay on this device and are not backed up, and
 are sent only over `https` unless the server is on this device.
 
 Agent's file tools require SSH. A server configured only with Monitor HTTP does
