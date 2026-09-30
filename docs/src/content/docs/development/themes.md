@@ -12,12 +12,12 @@ attributions are listed in the authoring guide.
 
 ## Built-in themes
 
-`BuiltinTheme` (`lib/data/model/app/builtin_theme.dart`) lists the packages
+`BuiltinTheme` (`packages/fl_lib/lib/src/theme/builtin.dart`) lists the packages
 bundled with this build: only what the app needs without a network. `Default`
 is a Dart constant and does not read an asset; its picker label is localized
 (fl_lib `defaultLabel`). AMOLED, which legacy AMOLED theme modes migrate
-to, has a source folder under `assets/themes/amoled/` containing a
-`manifest.toml`, registered in `pubspec.yaml`. Every other official theme is in
+to, has a source folder under `packages/fl_lib/assets/themes/amoled/` containing a
+`manifest.toml`, registered in fl_lib's `pubspec.yaml`. Every other official theme is in
 the theme store (see [Official themes](#official-themes)); a saved preset that
 names a bundled theme this build no longer carries falls back to Default
 (`ThemePackages.reconcileSelection`).
@@ -28,12 +28,12 @@ folders are committed as source and bundled directly by Flutter; no archive or
 other binary asset is committed for them.
 
 A new official theme goes to the store, not here. Bundle one only if the app
-must have it offline, by creating its folder, registering it in `pubspec.yaml`,
+must have it offline, by creating its folder, registering it in fl_lib's `pubspec.yaml`,
 and adding a `BuiltinTheme` case.
 
 ## Loading
 
-`BuiltinThemeLoader` (`lib/core/service/theme_package.dart`) loads themes on
+`BuiltinThemeLoader` (`packages/fl_lib/lib/src/theme/package.dart`) loads themes on
 demand. `_loaded` stores completed results and `_pending` tracks active loads,
 so simultaneous requests for the same theme share one parse. Failed loads are
 not cached and can be retried.
@@ -44,10 +44,10 @@ runtime cache and do not appear in the user-installed theme list.
 
 ## The parser and the editor schema
 
-Three files define the manifest grammar:
-`theme_package.dart` (top-level tables, archive entries, the schema range),
-`theme_components.dart` (component fields, states, and every numeric range) and
-`theme_palette.dart` (the non-deprecated ColorScheme roles).
+Three files in `packages/fl_lib/lib/src/theme/` define the manifest grammar:
+`package.dart` (top-level tables, archive entries, the schema range),
+`components.dart` (component fields, states, and every numeric range) and
+`palette.dart` (the non-deprecated ColorScheme roles).
 `docs/schemas/fsbt-manifest.schema.json` mirrors these definitions so editors
 can report errors while a file is being edited. The schema is derived from the
 parser definitions, not from this documentation.
@@ -63,7 +63,7 @@ fields, enums, and bounds offered by editors match what the installer accepts.
 
 ## Theme store
 
-`ThemeRepo` (`lib/core/service/theme_repo.dart`) reads a catalog of repositories
+`ThemeRepo` (`packages/fl_lib/lib/src/theme/repo.dart`) reads a catalog of repositories
 and then each repository's tree. `assets/catalog/repos.toml` provides the
 initial catalog when no network is available. When `Urls.themeCatalog`
 responds, the app reads that catalog instead.
@@ -80,7 +80,7 @@ catalog; 16 MiB compressed and 64 MiB unpacked per repository tree; and 8 MiB
 per entry. Unknown sections are skipped, allowing one tree to contain both
 `themes/` and `plugins/` for the app and plugin feature.
 
-The store page is in `lib/view/page/theme_store/`. Its listing is persisted
+The store page is in `packages/fl_lib/lib/src/theme/view/store/`. Its listing is persisted
 between runs in `SettingStore.themeStoreCache` using `ThemeStore.toJson()` with
 `updateLastModified: false`. The key is included in
 `SettingStore.deviceLocalKeys` because this cache records catalog contents; it
@@ -91,13 +91,14 @@ in either case.
 
 A listing's `description` is a string or a table of language tags
 (`ThemeText`); the page resolves it with the app's locale, and the cache keeps
-the table. A row's preview (`view/page/theme_store/preview.dart`) is built only
-while the row is expanded. It renders real widgets under the `ThemeData` that
-`buildAppTheme` (`view/widget/app_theme.dart`) makes from the package, the same
-function the app uses for itself with `AppThemeSource.current()`. An
-uninstalled theme is installed for the preview under
-`Paths.cache/theme_preview`, apart from the user's themes, and that directory is
-deleted when the page is disposed.
+the table. A row's preview (`packages/fl_lib/lib/src/theme/view/store/preview.dart`)
+is built only while the row is expanded. It renders real widgets under the
+`ThemeData` that `buildAppTheme` (`packages/fl_lib/lib/src/theme/view/app_theme.dart`)
+makes from the package, the same function the app uses for itself with
+`AppThemeSource.current()`. An uninstalled theme is installed for the preview
+under `<app name>_theme_preview` in the system's temporary directory, apart
+from the user's themes, and that directory is deleted when the page is
+disposed.
 
 A package with `[variants]` installs once; each variant is written as a
 complete, normalized theme directory under `variants/<key>/` of the

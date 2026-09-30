@@ -1,7 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:responsive_framework/responsive_framework.dart';
-import 'package:server_box/core/extension/context/motion.dart';
 import 'package:server_box/data/model/app/float_shell.dart';
 
 /// One size for every icon button in a floating panel's title bar, and in the

@@ -7,7 +7,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/diag.dart';
-import 'package:server_box/core/extension/context/motion.dart';
 import 'package:server_box/data/model/server/geo.dart';
 import 'package:server_box/view/widget/globe/land.dart';
 import 'package:server_box/view/widget/globe/layout.dart';

@@ -1,8 +1,9 @@
 import 'dart:math' as math;
 
+import 'package:fl_lib/fl_lib.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:server_box/core/extension/context/motion.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/card/overview.dart';

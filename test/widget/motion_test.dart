@@ -1,8 +1,8 @@
+import 'package:fl_lib/theme.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/motion.dart';
 import 'package:server_box/data/model/app/motion.dart';
-import 'package:server_box/view/widget/app_background.dart';
 
 /// Whether the app moves less: the device's settings, the app's own
 /// preference over them, and the page transitions that follow the answer.
@@ -116,9 +116,11 @@ void main() {
         of: find.text('arriving'),
         matching: find.byType(FadeTransition),
       );
-      final opacity = fades.evaluate().isEmpty
-          ? 1.0
-          : tester.widget<FadeTransition>(fades.first).opacity.value;
+      // Every fade the page is under: the platform's builder may bring its
+      // own, held at 1 while the app moves less.
+      final opacity = tester
+          .widgetList<FadeTransition>(fades)
+          .fold(1.0, (o, f) => o * f.opacity.value);
       return (x, opacity);
     }
 

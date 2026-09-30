@@ -5,9 +5,10 @@ library;
 import 'dart:io';
 
 import 'package:archive/archive.dart';
+import 'package:fl_lib/theme.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/service/theme_package.dart';
+import 'package:server_box/core/service/theme_host.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
 
@@ -16,7 +17,7 @@ import '../helpers/test_db.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  final bundled = Directory(ThemePackages.bundledDir)
+  final bundled = Directory(themeBundledDir)
       .listSync()
       .whereType<File>()
       .where((f) => f.path.endsWith('.fsbt'))

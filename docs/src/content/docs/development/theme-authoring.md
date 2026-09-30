@@ -345,7 +345,13 @@ Supported icon keys are `tab.<tab>` and `tab.<tab>.selected` for `server`, `ssh`
 are `nav.more`, `nav.settings`, `nav.tune`, `nav.privacy`, `nav.agent`,
 `nav.tabs`, `nav.server`, `nav.sort`, `nav.terminal`, `nav.folder`, `nav.cloud`,
 `nav.snippet`, `nav.inbox`, `nav.key`, `nav.info`, `nav.download`, and
-`nav.desktop`. Additional keys are rejected in version 1.
+`nav.desktop`.
+
+These are the keys ServerBox draws. The format is shared with other apps built
+on the same library, so a key made for one of them — dotted lowercase words,
+such as `tab.chat` — is accepted and kept, and ServerBox does not draw it. A
+key that is not well formed is rejected. The editor schema lists only
+ServerBox's keys, so it still flags a misspelled one as you edit.
 
 The compressed archive and total extracted content are each limited to 16 MiB.
 `manifest.toml` is limited to 64 KiB. An icon is limited to 256 KiB, the splash

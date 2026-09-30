@@ -304,8 +304,12 @@ background 或 iOS 的 launch storyboard）在构建应用时确定，只能随�
 `ssh`、`file`、`snippet`、`agent`、`benchmark`、`remoteDesktop`、`virt`。navigation key 有
 `nav.more`、`nav.settings`、`nav.tune`、`nav.privacy`、`nav.agent`、`nav.tabs`、
 `nav.server`、`nav.sort`、`nav.terminal`、`nav.folder`、`nav.cloud`、`nav.snippet`、
-`nav.inbox`、`nav.key`、`nav.info`、`nav.download`、`nav.desktop`。版本 1 中其他 key
-会被拒绝。
+`nav.inbox`、`nav.key`、`nav.info`、`nav.download`、`nav.desktop`。
+
+以上是 ServerBox 会绘制的 key。这一格式与基于同一个库的其他 app 共用，为其他 app
+准备的 key（点分隔的小写单词，如 `tab.chat`）会被接受并保留，但 ServerBox 不绘制。
+格式不合法的 key 会被拒绝。编辑器用的 schema 只列出 ServerBox 的 key，所以编辑时
+拼错的 key 仍会被标出。
 
 压缩包和解压后总内容各限制 16 MiB。`manifest.toml` 限制 64 KiB。icon 限制
 256 KiB，splash logo 512 KiB，背景 8 MiB、单边 8192 像素、总计 6400 万像素。安装器

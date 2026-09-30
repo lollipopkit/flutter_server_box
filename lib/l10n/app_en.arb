@@ -1,117 +1,5 @@
 {
   "@@locale": "en",
-  "appearanceSettings": "Appearance",
-  "@appearanceSettings": {
-    "description": "User-facing label or message for appearance settings."
-  },
-  "appearancePreset": "Theme preset",
-  "@appearancePreset": {
-    "description": "User-facing label or message for appearance preset."
-  },
-  "appearanceThemeSchemaRange": "Supported theme schema",
-  "@appearanceThemeSchemaRange": {
-    "description": "User-facing label or message for appearance theme schema range."
-  },
-  "appearanceThemeInstall": "Install theme",
-  "@appearanceThemeInstall": {
-    "description": "User-facing label or message for appearance theme install."
-  },
-  "appearanceThemeStore": "Theme store",
-  "@appearanceThemeStore": {
-    "description": "User-facing label or message for appearance theme store."
-  },
-  "appearanceInvalidTheme": "Invalid theme package or catalog",
-  "@appearanceInvalidTheme": {
-    "description": "User-facing label or message for appearance invalid theme."
-  },
-  "themeStoreRefreshFailed": "Could not read the theme catalog.",
-  "@themeStoreRefreshFailed": {
-    "description": "Shown when a manual refresh of the theme store could not read the catalog or any of its repositories."
-  },
-  "themeStoreDeleteTheme": "Delete “{name}”? Its files are removed from this device. If it is the theme in use, the app returns to the default theme.",
-  "@themeStoreDeleteTheme": {
-    "description": "Confirm dialog for deleting one installed theme. It also names what happens when that theme is the one in use.",
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "themeStoreUpdatedFmt": "updated {ago}",
-  "@themeStoreUpdatedFmt": {
-    "description": "How long ago the catalog on screen was read, under the repository names. {ago} is a phrase such as \"5 minutes ago\".",
-    "placeholders": {
-      "ago": {
-        "type": "String"
-      }
-    }
-  },
-  "themeStoreUpdatedJustNow": "updated just now",
-  "@themeStoreUpdatedJustNow": {
-    "description": "How long ago the catalog on screen was read, when that was under a minute. Spelled out rather than composed with themeStoreUpdatedFmt because \"just now\" is a sentence of its own in every language."
-  },
-  "themeStoreSortInUse": "In use first",
-  "@themeStoreSortInUse": {
-    "description": "Sort option for the theme store: the theme in use, then the themes on this device, then what only the catalog offers."
-  },
-  "themeStoreMakeOwnFmt": "Want to make your own theme? [How to author one]({doc}) — thank you for contributing!",
-  "@themeStoreMakeOwnFmt": {
-    "description": "At the end of the theme store's list, under the last theme. Markdown: the document is a link rather than an address the reader has to copy.",
-    "placeholders": {
-      "doc": {
-        "type": "String"
-      }
-    }
-  },
-  "appearanceThemeNeedsNewerApp": "Needs a newer app: {version}",
-  "@appearanceThemeNeedsNewerApp": {
-    "description": "Shown when a selected theme requires a newer app version. {version} is the required version.",
-    "placeholders": {
-      "version": {
-        "type": "String"
-      }
-    }
-  },
-  "appearanceFontFamilies": "UI font families",
-  "@appearanceFontFamilies": {
-    "description": "User-facing label or message for appearance font families."
-  },
-  "appearanceFontFamiliesTip": "One name per line; fonts are tried in order.",
-  "@appearanceFontFamiliesTip": {
-    "description": "Help text for the appearance font families setting or action."
-  },
-  "appearanceFontImport": "Import UI font file",
-  "@appearanceFontImport": {
-    "description": "User-facing label or message for appearance font import."
-  },
-  "appearanceGradient": "Gradient",
-  "@appearanceGradient": {
-    "description": "User-facing label or message for appearance gradient."
-  },
-  "appearanceNoBackground": "No background",
-  "@appearanceNoBackground": {
-    "description": "User-facing label or message for appearance no background."
-  },
-  "appearanceIcons": "In-app icons",
-  "@appearanceIcons": {
-    "description": "User-facing label or message for appearance icons."
-  },
-  "appearanceCorners": "Corners",
-  "@appearanceCorners": {
-    "description": "User-facing label or message for appearance corners."
-  },
-  "appearanceCardCorners": "Card corners",
-  "@appearanceCardCorners": {
-    "description": "User-facing label or message for appearance card corners."
-  },
-  "appearanceTileCorners": "Tile corners",
-  "@appearanceTileCorners": {
-    "description": "User-facing label or message for appearance tile corners."
-  },
-  "appearanceButtonCorners": "Button corners",
-  "@appearanceButtonCorners": {
-    "description": "User-facing label or message for appearance button corners."
-  },
   "crashCollect": "Diagnostic data",
   "@crashCollect": {
     "description": "User-facing label or message for crash collect."
@@ -4213,15 +4101,6 @@
       }
     }
   },
-  "appearanceThemeModeLocked": "This theme only supports {mode}. Select another theme to change the mode.",
-  "@appearanceThemeModeLocked": {
-    "description": "User-facing label or message for appearance theme mode locked.",
-    "placeholders": {
-      "mode": {
-        "type": "String"
-      }
-    }
-  },
   "pveAuthToken": "API token",
   "@pveAuthToken": {
     "description": "Label for logging in to Proxmox VE with an API token."
@@ -5950,7 +5829,12 @@
   "virtVolBackingOf": "Backing file of {names}",
   "@virtVolBackingOf": {
     "description": "Storage view: the volumes a base image is the backing file of.",
-    "placeholders": {"names": {"type": "String", "example": "run1.qcow2, data1.qcow2"}}
+    "placeholders": {
+      "names": {
+        "type": "String",
+        "example": "run1.qcow2, data1.qcow2"
+      }
+    }
   },
   "virtVolIsBase": "Other volumes are made on this one; deleting it would break them",
   "@virtVolIsBase": {

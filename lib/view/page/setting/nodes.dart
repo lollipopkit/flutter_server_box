@@ -26,7 +26,7 @@ List<SettingsNode> _buildNodes() {
         // name would have covered.
         SettingsNode.leaf(
           id: 'app.appearance',
-          title: l10n.appearanceSettings,
+          title: libL10n.appearanceSettings,
           icon: Icons.style_outlined,
           page: () => const AppSettingsPage(section: SettingsSection.appearance),
         ),

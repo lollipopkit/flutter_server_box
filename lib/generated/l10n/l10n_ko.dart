@@ -9,84 +9,6 @@ class AppLocalizationsKo extends AppLocalizations {
   AppLocalizationsKo([String locale = 'ko']) : super(locale);
 
   @override
-  String get appearanceSettings => '모양';
-
-  @override
-  String get appearancePreset => '테마 프리셋';
-
-  @override
-  String get appearanceThemeSchemaRange => '지원하는 테마 schema';
-
-  @override
-  String get appearanceThemeInstall => '테마 설치';
-
-  @override
-  String get appearanceThemeStore => '테마 스토어';
-
-  @override
-  String get appearanceInvalidTheme => '유효하지 않은 테마 패키지 또는 카탈로그';
-
-  @override
-  String get themeStoreRefreshFailed => '테마 카탈로그를 읽을 수 없습니다.';
-
-  @override
-  String themeStoreDeleteTheme(String name) {
-    return '“$name”을(를) 삭제할까요? 파일이 이 기기에서 제거됩니다. 사용 중인 테마라면 앱이 기본 테마로 돌아갑니다.';
-  }
-
-  @override
-  String themeStoreUpdatedFmt(String ago) {
-    return '$ago 업데이트';
-  }
-
-  @override
-  String get themeStoreUpdatedJustNow => '방금 업데이트';
-
-  @override
-  String get themeStoreSortInUse => '사용 중 우선';
-
-  @override
-  String themeStoreMakeOwnFmt(String doc) {
-    return '직접 테마를 만들고 싶다면 [테마 제작 안내]($doc)를 확인해 보세요. 기여해 주셔서 감사합니다!';
-  }
-
-  @override
-  String appearanceThemeNeedsNewerApp(String version) {
-    return '최신 버전의 앱이 필요합니다: $version';
-  }
-
-  @override
-  String get appearanceFontFamilies => 'UI 글꼴 목록';
-
-  @override
-  String get appearanceFontFamiliesTip =>
-      '한 줄에 글꼴 이름 하나씩 입력하세요. 위에서부터 순서대로 적용합니다.';
-
-  @override
-  String get appearanceFontImport => 'UI 글꼴 파일 가져오기';
-
-  @override
-  String get appearanceGradient => '그라데이션';
-
-  @override
-  String get appearanceNoBackground => '배경 없음';
-
-  @override
-  String get appearanceIcons => '앱 내 아이콘';
-
-  @override
-  String get appearanceCorners => '모서리';
-
-  @override
-  String get appearanceCardCorners => '카드 모서리';
-
-  @override
-  String get appearanceTileCorners => '타일 모서리';
-
-  @override
-  String get appearanceButtonCorners => '버튼 모서리';
-
-  @override
   String get crashCollect => '진단 데이터';
 
   @override
@@ -3111,11 +3033,6 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String remoteDesktopCertificateValidity(String start, String end) {
     return '유효 기간: $start – $end';
-  }
-
-  @override
-  String appearanceThemeModeLocked(String mode) {
-    return '이 테마는 $mode만 지원합니다. 모드를 변경하려면 다른 테마를 선택하세요.';
   }
 
   @override
