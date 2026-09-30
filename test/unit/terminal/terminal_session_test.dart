@@ -47,6 +47,8 @@ class _FakeShell implements ShellSession {
 
   void emit(String data) => _stdout.add(Uint8List.fromList(utf8.encode(data)));
 
+  void emitBytes(List<int> data) => _stdout.add(Uint8List.fromList(data));
+
   void finish() {
     if (!_done.isCompleted) _done.complete();
   }
@@ -83,6 +85,20 @@ void main() {
       session.dispose();
     });
 
+    test('malformed UTF-8 does not end the shell stream', () async {
+      final session = TerminalSession(source: ServerSource(ssh));
+      final shell = _FakeShell();
+      session.bindForeground(shell);
+
+      shell.emitBytes([0xff, 0x41]);
+      shell.emit('ok');
+      await flushed();
+
+      expect(session.outputTail, contains('A'));
+      expect(session.outputTail.endsWith('ok'), isTrue);
+      session.dispose();
+    });
+
     test('what is typed reaches the shell', () async {
       final session = TerminalSession(source: ServerSource(ssh));
       final shell = _FakeShell();
@@ -105,25 +121,28 @@ void main() {
       session.dispose();
     });
 
-    test('the end of the shell is announced once it has all been read', () async {
-      final session = TerminalSession(source: ServerSource(ssh));
-      final shell = _FakeShell();
-      ShellSession? ended;
-      session.onForegroundDone = (s) => ended = s;
-      session.bindForeground(shell);
+    test(
+      'the end of the shell is announced once it has all been read',
+      () async {
+        final session = TerminalSession(source: ServerSource(ssh));
+        final shell = _FakeShell();
+        ShellSession? ended;
+        session.onForegroundDone = (s) => ended = s;
+        session.bindForeground(shell);
 
-      // Printed and finished in the same breath, which is what a command that
-      // says something and exits does. The last line must not be lost to the
-      // flush that had not run yet.
-      shell.emit('done');
-      shell.finish();
-      await flushed();
+        // Printed and finished in the same breath, which is what a command that
+        // says something and exits does. The last line must not be lost to the
+        // flush that had not run yet.
+        shell.emit('done');
+        shell.finish();
+        await flushed();
 
-      expect(ended, same(shell));
-      expect(session.foreground, isNull);
-      expect(session.terminal.buffer.currentLine.toString().trim(), 'done');
-      session.dispose();
-    });
+        expect(ended, same(shell));
+        expect(session.foreground, isNull);
+        expect(session.terminal.buffer.currentLine.toString().trim(), 'done');
+        session.dispose();
+      },
+    );
 
     test('a shell that was replaced does not announce the end', () async {
       final session = TerminalSession(source: ServerSource(ssh));
@@ -141,6 +160,24 @@ void main() {
 
       expect(ends, 0);
       expect(session.foreground, same(second));
+      session.dispose();
+    });
+
+    test('a shell that was unbound does not announce the end', () async {
+      final session = TerminalSession(source: ServerSource(ssh));
+      final shell = _FakeShell();
+      var ends = 0;
+      session.onForegroundDone = (_) => ends++;
+
+      session.bindForeground(shell);
+      // What the tmux-to-raw-shell fallback does: detach before the old
+      // channel reports done, so tmux ending does not end the terminal tab.
+      session.unbindForeground();
+      shell.finish();
+      await flushed();
+
+      expect(ends, 0);
+      expect(session.foreground, isNull);
       session.dispose();
     });
 
@@ -298,31 +335,34 @@ void main() {
   });
 
   group('where the shells come from', () {
-    test('a monitor-only terminal checks its grant when status has none yet', () async {
-      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-      addTearDown(() => server.close(force: true));
-      server.listen((request) {
-        request.response.headers.contentType = ContentType.json;
-        request.response.write(
-          request.uri.path == '/api/v1/login'
-              ? '{"token":"test"}'
-              : '{"remote_access":{"terminal":true,"full_access":true}}',
+    test(
+      'a monitor-only terminal checks its grant when status has none yet',
+      () async {
+        final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+        addTearDown(() => server.close(force: true));
+        server.listen((request) {
+          request.response.headers.contentType = ContentType.json;
+          request.response.write(
+            request.uri.path == '/api/v1/login'
+                ? '{"token":"test"}'
+                : '{"remote_access":{"terminal":true,"full_access":true}}',
+          );
+          request.response.close();
+        });
+
+        final spi = Spi(
+          name: 'agent',
+          id: 'agent-test',
+          monitorHttp: MonitorHttpCredential(
+            addr: 'http://127.0.0.1:${server.port}',
+          ),
         );
-        request.response.close();
-      });
+        final session = TerminalSession(source: ServerSource(spi));
+        addTearDown(session.close);
 
-      final spi = Spi(
-        name: 'agent',
-        id: 'agent-test',
-        monitorHttp: MonitorHttpCredential(
-          addr: 'http://127.0.0.1:${server.port}',
-        ),
-      );
-      final session = TerminalSession(source: ServerSource(spi));
-      addTearDown(session.close);
-
-      expect(await session.connect(), isA<MonitorShellBackend>());
-    });
+        expect(await session.connect(), isA<MonitorShellBackend>());
+      },
+    );
 
     test('a denied grant does not fall back to disabled SSH', () async {
       final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
@@ -489,7 +529,10 @@ void main() {
   });
 
   test('initial reconnect retries transport errors only', () {
-    expect(isRetryableTerminalConnectionError(TimeoutException('slow')), isTrue);
+    expect(
+      isRetryableTerminalConnectionError(TimeoutException('slow')),
+      isTrue,
+    );
     expect(
       isRetryableTerminalConnectionError(
         const MonitorHttpErr(type: MonitorHttpErrType.net),

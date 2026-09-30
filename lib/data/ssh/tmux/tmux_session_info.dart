@@ -1,5 +1,9 @@
+import 'package:server_box/data/ssh/tmux/tmux_format.dart';
+import 'package:server_box/data/ssh/tmux/tmux_ids.dart';
+
 /// Represents a tmux session discovered on the remote server.
 final class TmuxSessionInfo {
+  final TmuxSessionId id;
   final String name;
   final int windows;
   final bool attached;
@@ -8,6 +12,7 @@ final class TmuxSessionInfo {
   final String? activity;
 
   const TmuxSessionInfo({
+    required this.id,
     required this.name,
     required this.windows,
     required this.attached,
@@ -15,20 +20,34 @@ final class TmuxSessionInfo {
     this.lastAttached,
     this.activity,
   });
-  /// Parse a line from `tmux list-sessions -F "#{session_name}|#{session_windows}|#{session_attached}|#{session_created_string}|#{session_last_attached_string}|#{session_activity_string}"`
+
+  /// Parses tab-separated output from `list-sessions`.
+  ///
+  /// The stable session id is first and the name uses tmux's `q:` escaping, so
+  /// `|` and `:` are valid parts of a name rather than protocol delimiters.
   static TmuxSessionInfo? tryParse(String line) {
-    final parts = line.split('|');
-    if (parts.isEmpty || parts[0].isEmpty) return null;
+    final fields = splitTmuxFields(line);
+    if (fields.length < 4) return null;
+
+    final id = TmuxSessionId.tryParse(unescapeTmuxField(fields[0]));
+    final name = unescapeTmuxField(fields[1]);
+    final windows = int.tryParse(unescapeTmuxField(fields[2]));
+    final attached = int.tryParse(unescapeTmuxField(fields[3]));
+    if (id == null || name.isEmpty || windows == null || attached == null) {
+      return null;
+    }
+
     return TmuxSessionInfo(
-      name: parts[0],
-      windows: parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0,
-      attached: parts.length > 2 && (int.tryParse(parts[2]) ?? 0) > 0,
-      createdAt: parts.length > 3 ? parts[3] : null,
-      lastAttached: parts.length > 4 ? parts[4] : null,
-      activity: parts.length > 5 ? parts[5] : null,
+      id: id,
+      name: name,
+      windows: windows,
+      attached: attached > 0,
+      createdAt: fields.length > 4 ? unescapeTmuxField(fields[4]) : null,
+      lastAttached: fields.length > 5 ? unescapeTmuxField(fields[5]) : null,
+      activity: fields.length > 6 ? unescapeTmuxField(fields[6]) : null,
     );
   }
 
   @override
-  String toString() => 'TmuxSession($name, $windows windows, attached=$attached)';
+  String toString() => '$id:$name ($windows windows)';
 }
