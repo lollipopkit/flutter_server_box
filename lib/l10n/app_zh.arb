@@ -631,7 +631,7 @@
   "agentTerminalTools": "终端",
   "agentTerminalToolsTip": "在终端自己的对话中：读取终端显示的内容，并在其服务器上执行命令。",
   "agentToolTerminalScreen": "读取屏幕",
-  "agentProviders": "服务商",
+  "agentProviders": "提供商",
   "agentProvidersTip": "API Key、模型，以及新对话使用的模型",
   "agentTools": "工具",
   "agentToolsTip": "Agent 可以使用的工具，以及 MCP 服务器",

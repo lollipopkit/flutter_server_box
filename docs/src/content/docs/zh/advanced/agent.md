@@ -6,7 +6,7 @@ description: 让模型诊断服务器，并在每次操作前由你审核
 Agent 会将语言模型连接到你的服务器。模型提出操作后，App 会先展示操作内容，由你批准后
 才会执行。
 
-发送第一条消息前，请先在 **设置 → 应用 → AI → 服务商** 中添加 provider：选择内置
+发送第一条消息前，请先在 **设置 → 应用 → AI → 提供商** 中添加 provider：选择内置
 provider（模型目录中的 OpenAI、Anthropic、Google 等）并填写 API key，或添加自定义的
 OpenAI-compatible、Anthropic 或 Google endpoint。新对话使用的 model 也在此页面选择。
 API key 保存在系统钥匙串中，不在 App 数据库里，并且只会发送给它所属的 provider。只有
@@ -27,7 +27,7 @@ Server Box 提供两个 Agent 入口：
 
 ## Provider 与 model
 
-**设置 → 应用 → AI → 服务商** 列出内置 provider 和你添加的自定义 provider。自定义
+**设置 → 应用 → AI → 提供商** 列出内置 provider 和你添加的自定义 provider。自定义
 provider 需要填写包含 API 版本的 base URL（例如 `https://api.example.com/v1`），并选择
 协议：OpenAI Chat Completions、OpenAI Responses、Anthropic Messages 或 Google
 Generative AI。OpenAI-compatible endpoint 会列出它提供的 model；其他协议需要手动填写
@@ -38,7 +38,13 @@ model ID。
 
 未填写 key 的内置 provider 会读取 App 启动时环境变量中对应的 key，变量名与该 provider
 自家工具使用的相同，例如 `OPENAI_API_KEY`、`ANTHROPIC_API_KEY`、`GEMINI_API_KEY`；
-provider 列表会显示 key 来自哪个变量。在 App 中填写的 key 会优先使用。这适用于从 shell
+provider 列表会在 **系统** 分组中列出它，并注明 key 来自哪个变量。在 App 中填写的 key 会优先使用。
+
+设置了 `OPENAI_BASE_URL` 时，会多出一个名为 **系统** 的 provider：指向该地址的 OpenAI 兼容端点，
+key 取 `OPENAI_API_KEY`，`OPENAI_MODEL` 用于补充端点没有列出的模型。此时 `OPENAI_API_KEY`
+只供这个端点使用，内置的 OpenAI provider 不会把它发给 api.openai.com；地址本身就是 OpenAI
+官方地址时除外。这些都不会被保存，只取 App 启动时的环境。与其他 provider 一样，指向其他机器的
+明文 `http://` 地址会被拒绝。这适用于从 shell
 启动的桌面端 App：在 macOS 上，从访达或程序坞打开的 App 读不到 shell 配置文件中导出的变量。
 
 旧版本中的设置（endpoint、model、protocol 和 key）在更新时已迁移为一个自定义

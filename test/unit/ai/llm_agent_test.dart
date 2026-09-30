@@ -25,6 +25,7 @@ import '../../helpers/test_db.dart';
 Future<(HttpServer, List<Map<String, Object?>>)> _mockServer() async {
   final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
   final seen = <Map<String, Object?>>[];
+  _keys.clear();
   server.listen((req) async {
     if (req.method == 'GET') {
       req.response
@@ -42,6 +43,7 @@ Future<(HttpServer, List<Map<String, Object?>>)> _mockServer() async {
     final body =
         jsonDecode(await utf8.decodeStream(req)) as Map<String, Object?>;
     seen.add(body);
+    _keys.add(req.headers.value('authorization') ?? '');
     final msgs = (body['messages'] as List).cast<Map>();
     final res = req.response
       ..headers.contentType = ContentType('text', 'event-stream')
@@ -114,6 +116,9 @@ ExternalLibrary _nativeLib() => ExternalLibrary.open(switch (Platform
   _ => 'build/native_assets/linux/libfl_pi_llm.so',
 });
 
+/// The `Authorization` of each chat request, beside [_mockServer]'s bodies.
+final _keys = <String>[];
+
 /// The names of the tools a request offered.
 Set<String> _tools(Map<String, Object?> request) => {
   for (final t in (request['tools'] as List? ?? const []).cast<Map>())
@@ -150,6 +155,12 @@ void main() {
       ProviderContainer(),
       credentials: credentials,
       externalLibrary: _nativeLib(),
+      // An OpenAI-compatible gateway, as a shell exports it.
+      environment: () => {
+        'OPENAI_BASE_URL': 'http://127.0.0.1:${server.port}/v1',
+        'OPENAI_API_KEY': 'sk-gateway',
+        'OPENAI_MODEL': 'echo',
+      },
     );
     LlmUi.genTitle = () => false;
 
@@ -180,6 +191,16 @@ void main() {
     await server.close(force: true);
     await getIt.reset();
     await closeTestDb();
+  });
+
+  test('OPENAI_BASE_URL is the system provider, and its key goes nowhere else', () async {
+    expect(Llm.configured.value, contains(SystemProvider.id));
+    expect(Llm.envAuth.value, isNot(contains('openai')), reason: "a gateway's key is not OpenAI's");
+    final id = Chats.create();
+    LlmStores.chat.put(LlmStores.chat.fetch(id)!.copyWith(model: const LlmModelRef(SystemProvider.id, 'echo')));
+    await Chats.send(id, 'hello');
+    expect(seen.last['model'], 'echo');
+    expect(_keys.last, 'Bearer sk-gateway');
   });
 
   group('the settings from before fl_pi_llm', () {

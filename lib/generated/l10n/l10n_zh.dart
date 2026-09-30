@@ -1955,7 +1955,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentToolTerminalScreen => '读取屏幕';
 
   @override
-  String get agentProviders => '服务商';
+  String get agentProviders => '提供商';
 
   @override
   String get agentProvidersTip => 'API Key、模型，以及新对话使用的模型';
@@ -6611,7 +6611,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get agentToolTerminalScreen => '讀取螢幕';
 
   @override
-  String get agentProviders => '服務商';
+  String get agentProviders => '提供者';
 
   @override
   String get agentProvidersTip => 'API Key、模型，以及新對話使用的模型';

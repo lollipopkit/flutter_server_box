@@ -90,7 +90,7 @@ analytics service 还可能根据设备连接时使用的 IP 地址推导大致�
 
 ## AI 请求
 
-Agent 使用你在 **设置 → 应用 → AI → 服务商** 中添加的 provider：模型目录中的内置 provider，以及自定义 endpoint。只有在你发送 Agent 消息后，App 才会发起请求，并且请求只发往对话所用 model 的 provider。
+Agent 使用你在 **设置 → 应用 → AI → 提供商** 中添加的 provider：模型目录中的内置 provider，以及自定义 endpoint。只有在你发送 Agent 消息后，App 才会发起请求，并且请求只发往对话所用 model 的 provider。
 
 根据操作类型，请求可能包含你的 prompt、选中的终端文本、最近的对话历史、配置的服务器名称，以及 Agent 工作所需的上下文。执行命令或文件操作后，结果可能随后续请求发送，让模型继续工作。
 

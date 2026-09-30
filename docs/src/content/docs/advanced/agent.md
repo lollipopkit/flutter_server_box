@@ -47,8 +47,16 @@ need it.
 A built-in provider with no key entered uses one from the environment the App
 was started with, under the variable that provider's tools use —
 `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY` and so on — and the
-provider list says which variable it came from. A key entered in the App takes
-its place. This is for a desktop App started from a shell: on macOS, an App
+provider list shows it under **System**, with the variable it came from. A key
+entered in the App takes its place.
+
+`OPENAI_BASE_URL` adds a provider of its own, **System**: an OpenAI-compatible
+endpoint at that address, with `OPENAI_API_KEY` as its key and `OPENAI_MODEL`
+as a model it may not list. `OPENAI_API_KEY` is then that endpoint's alone —
+the built-in OpenAI provider does not send it to api.openai.com — unless the
+address is OpenAI's own. Nothing of it is stored; it is whatever the App was
+started with. A plain `http://` address on another machine is refused, as for
+any provider. This is for a desktop App started from a shell: on macOS, an App
 opened from Finder or the Dock does not see what your shell profile exports.
 
 Settings from an earlier version — endpoint, model, protocol and key — were

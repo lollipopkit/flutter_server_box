@@ -27,11 +27,16 @@ abstract final class LlmHost {
     ProviderContainer container, {
     @visibleForTesting LlmCredentials? credentials,
     @visibleForTesting ExternalLibrary? externalLibrary,
+    @visibleForTesting Map<String, String> Function()? environment,
   }) async {
     AgentScope.container = container;
     _configure();
     try {
-      await Llm.init(credentials: credentials, externalLibrary: externalLibrary);
+      await Llm.init(
+        credentials: credentials,
+        externalLibrary: externalLibrary,
+        environment: environment,
+      );
     } catch (e, s) {
       Loggers.app.severe('The Agent runtime did not start', e, s);
       return;

@@ -598,7 +598,7 @@
   "agentTerminalTools": "終端",
   "agentTerminalToolsTip": "在終端自己的對話中：讀取終端顯示的內容，並在其伺服器上執行指令。",
   "agentToolTerminalScreen": "讀取螢幕",
-  "agentProviders": "服務商",
+  "agentProviders": "提供者",
   "agentProvidersTip": "API Key、模型，以及新對話使用的模型",
   "agentTools": "工具",
   "agentToolsTip": "Agent 可以使用的工具，以及 MCP 伺服器",
