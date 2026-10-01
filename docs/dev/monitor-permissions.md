@@ -8,7 +8,7 @@ Six grants. `read` (status, charts, history) is held by every account and is not
 
 | Grant | Covers | Options |
 |---|---|---|
-| `shell` | `POST /exec`, the app terminal (local PTY on `/terminal/ws` without SSH credentials), running custom commands, the panel's machine pages (`POST /power`; `GET`/`POST /process` — reading the table too, since a command line is where an argument-borne secret shows; `GET`/`POST /services`; and the cron and container endpoints as they land — #1623) | — |
+| `shell` | `POST /exec`, the app terminal (local PTY on `/terminal/ws` without SSH credentials), running custom commands, the panel's machine pages (`POST /power`; `GET`/`POST /process` — reading the table too, since a command line is where an argument-borne secret shows; `GET`/`POST /services`; `GET`/`PUT /cron`; and the container endpoint as it lands — #1623) | — |
 | `files` | `/fs/*` | `mode`: `"read"` \| `"write"` (read = list, stat, read, roots; write adds write, mkdir, rename, chmod, remove) |
 | `connect` | `/stream/ws` `open` (local/dynamic forwards, RDP/VNC) | `allow`: list of `"<ip or cidr>"` or `"<ip or cidr>:<port or lo-hi>"`; empty = anywhere. A host name in a request is resolved by the agent and *every* resolved address must match. IPv6 as `[addr]:port`. |
 | `listen` | `/listen/ws` (remote forwards) and `/stream/ws` `accept` | `public`: bool (non-loopback binds); `ports`: `[lo, hi]` or null (any) |

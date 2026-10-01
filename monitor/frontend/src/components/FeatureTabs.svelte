@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Activity, ServerCog, type LucideIcon } from '@lucide/svelte'
+  import { Activity, CalendarClock, ServerCog, type LucideIcon } from '@lucide/svelte'
   import { enabledFeatures, type FeatureId } from '../lib/features'
   import { capabilitiesStore } from '../lib/capabilities.svelte'
   import { layout } from '../lib/layout.svelte'
@@ -18,6 +18,7 @@
   const PRESENTATION: Record<FeatureId, { label: () => string; icon: LucideIcon }> = {
     process: { label: () => $LL.processes(), icon: Activity },
     services: { label: () => $LL.services(), icon: ServerCog },
+    cron: { label: () => $LL.cron(), icon: CalendarClock },
   }
 
   const served = $derived(enabledFeatures(capabilitiesStore.byServer[servers.currentId]))

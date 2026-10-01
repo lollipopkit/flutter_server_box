@@ -213,7 +213,16 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   gave it and is resolved against a listing read for that request, so whether
   it needs root is the listing's answer, not the caller's. Outputs reach the
   parsers as `CommandOutput` through `machine::command_output`, where a
-  timeout or the output cap is a failure carrying why.
+  timeout or the output cap is a failure carrying why. `/cron`
+  (`sbm_parser::cron`): the account's own crontab only. An edit is one
+  operation on one line by the index its listing gave, applied to the file
+  re-read at the moment of the write and written with `crontab -` on stdin;
+  an index that no longer names a job is refused (`unknownLine`). The audit
+  detail carries the schedule, never the command. `tests/cron_api.rs` never
+  saves — it would write the crontab of whoever runs the suite.
+  `tests/watch_token_scope.rs` lists these routes with requests that are
+  harmless under the panel login; `/power` is left out, since every body it
+  accepts takes the machine down.
 - **`GET/PUT /api/v1/custom-cmds`** — the user's custom status commands, which
   are files in `~/.config/server_box/custom_cmds` (`sbm_parser::script`) rather
   than anything in this agent's config. The same directory the app writes over

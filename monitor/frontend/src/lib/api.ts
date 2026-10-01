@@ -18,6 +18,8 @@ import type {
   SettingsView,
   StatusResponse,
   SystemMetrics,
+  CronEdit,
+  CronView,
   PowerAction,
   PowerResult,
   ProcessSignalRequest,
@@ -283,6 +285,23 @@ export const api = {
       '/services',
       { method: 'POST', body: JSON.stringify(payload) },
       'Failed to reach the machine',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// The account's crontab, expanded on the agent against its own clock (the
+  /// `shell` grant).
+  getCron: () =>
+    request<CronView>('/cron', {}, 'Failed to fetch the schedule', undefined, MACHINE_TIMEOUT_MS),
+  /// One change; answers with the schedule as it now stands. The file is
+  /// re-read at the moment of the write, so only `line_index` can be stale,
+  /// and one that no longer names a job is refused (400) rather than applied
+  /// to whatever moved into its place. A refusal arrives as
+  /// `ApiError.message`, holding the rule's own name (`scheduleEmpty`, ...).
+  editCron: (edit: CronEdit) =>
+    request<CronView>(
+      '/cron',
+      { method: 'PUT', body: JSON.stringify(edit) },
+      'Failed to save the schedule',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),

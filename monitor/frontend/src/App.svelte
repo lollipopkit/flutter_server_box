@@ -7,6 +7,7 @@
   import Files from './pages/Files.svelte'
   import Process from './pages/Process.svelte'
   import Services from './pages/Services.svelte'
+  import Cron from './pages/Cron.svelte'
   import PanelSettings from './pages/PanelSettings.svelte'
   import ServerSettings from './pages/ServerSettings.svelte'
   import Terminal from './pages/Terminal.svelte'
@@ -39,6 +40,8 @@
             <Process onback={() => layout.back('dashboard')} />
           {:else if layout.view === 'services'}
             <Services onback={() => layout.back('dashboard')} />
+          {:else if layout.view === 'cron'}
+            <Cron onback={() => layout.back('dashboard')} />
           {:else}
             <Dashboard />
           {/if}

@@ -297,6 +297,30 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
             "/api/v1/roles/viewer",
             Some(json!({ "current_password": "nope" })),
         ),
+        // The machine-management endpoints (#1623). Each request is one the
+        // panel login can send harmlessly: a PID nothing holds, a unit no
+        // machine has, a crontab line no crontab holds. `/power` is left out
+        // for the same reason — every body it accepts takes the machine down
+        // under the panel login, and one it does not accept is a 400 from the
+        // extractor before the token is looked at.
+        (Method::GET, "/api/v1/process", None),
+        (
+            Method::POST,
+            "/api/v1/process",
+            Some(json!({ "pid": 4_000_000_000i64, "start_id": "1", "signal": "kill" })),
+        ),
+        (Method::GET, "/api/v1/services", None),
+        (
+            Method::POST,
+            "/api/v1/services",
+            Some(json!({ "key": "system:definitely-not-a-unit.service", "action": "start" })),
+        ),
+        (Method::GET, "/api/v1/cron", None),
+        (
+            Method::PUT,
+            "/api/v1/cron",
+            Some(json!({ "op": "remove", "line_index": 4_294_967_295u32 })),
+        ),
     ]
 }
 
