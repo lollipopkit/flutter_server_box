@@ -902,6 +902,14 @@ type RootTranslation = {
 	 */
 	grantSshTerminalNote: string
 	/**
+	 * V​i​r​t​u​a​l​i​z​a​t​i​o​n
+	 */
+	grantVirt: string
+	/**
+	 * P​r​o​x​m​o​x​ ​V​E​,​ ​l​i​b​v​i​r​t​ ​a​n​d​ ​B​M​C​s​ ​t​h​e​ ​a​g​e​n​t​ ​r​e​a​c​h​e​s​:​ ​s​e​e​ ​a​n​d​ ​c​o​n​t​r​o​l​ ​t​h​e​i​r​ ​m​a​c​h​i​n​e​s​.​ ​W​h​e​r​e​ ​t​h​e​y​ ​a​r​e​ ​a​n​d​ ​h​o​w​ ​t​o​ ​s​i​g​n​ ​i​n​ ​i​s​ ​s​e​t​ ​b​y​ ​a​n​ ​a​d​m​i​n​.
+	 */
+	grantVirtNote: string
+	/**
 	 * F​i​l​e​s
 	 */
 	grantFiles: string
@@ -1896,6 +1904,14 @@ export type TranslationFunctions = {
 	 * The panel’s terminal that signs in to sshd with an SSH account, with that account’s rights.
 	 */
 	grantSshTerminalNote: () => LocalizedString
+	/**
+	 * Virtualization
+	 */
+	grantVirt: () => LocalizedString
+	/**
+	 * Proxmox VE, libvirt and BMCs the agent reaches: see and control their machines. Where they are and how to sign in is set by an admin.
+	 */
+	grantVirtNote: () => LocalizedString
 	/**
 	 * Files
 	 */

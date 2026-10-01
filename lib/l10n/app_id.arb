@@ -1427,6 +1427,8 @@
   "monitorGrantShell": "Shell dan perintah",
   "monitorGrantShellTip": "Terminal, proses, layanan, kontainer, snippet, daya — sebagai akun agent",
   "monitorGrantSshTerminal": "Terminal panel lewat SSH",
+  "monitorGrantVirt": "Virtualisasi",
+  "monitorGrantVirtTip": "Proxmox VE, libvirt, dan BMC yang dijangkau agen, di panel web-nya",
   "monitorGrantFiles": "File",
   "monitorGrantConnect": "Koneksi keluar",
   "monitorGrantConnectTip": "Penerusan port lokal dan dinamis, desktop jarak jauh",

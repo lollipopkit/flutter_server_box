@@ -219,6 +219,8 @@ const id = {
 	grantShellNote: 'Menjalankan perintah dan membuka terminal sebagai akun agen itu sendiri, tanpa kredensial SSH. Siapa pun yang memilikinya juga bisa melakukan semua di bawah ini.',
 	grantSshTerminal: 'Terminal SSH',
 	grantSshTerminalNote: 'Terminal panel yang masuk ke sshd dengan akun SSH, dengan hak akun tersebut.',
+	grantVirt: 'Virtualisasi',
+	grantVirtNote: 'Proxmox VE, libvirt, dan BMC yang dijangkau agen: melihat dan mengendalikan mesinnya. Alamat dan cara masuk diatur oleh admin.',
 	grantFiles: 'Berkas',
 	filesNone: 'Tanpa akses',
 	filesRead: 'Hanya baca',

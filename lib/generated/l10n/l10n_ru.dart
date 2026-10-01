@@ -5116,6 +5116,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get monitorGrantSshTerminal => 'Терминал панели через SSH';
 
   @override
+  String get monitorGrantVirt => 'Виртуализация';
+
+  @override
+  String get monitorGrantVirtTip =>
+      'Proxmox VE, libvirt и BMC, к которым подключается агент, в его веб-панели';
+
+  @override
   String get monitorGrantFiles => 'Файлы';
 
   @override

@@ -1427,6 +1427,8 @@
   "monitorGrantShell": "Shell 和指令",
   "monitorGrantShellTip": "終端機、程序、服務、容器、程式碼片段、電源 —— 以 agent 的系統帳號執行",
   "monitorGrantSshTerminal": "面板 SSH 終端機",
+  "monitorGrantVirt": "虛擬化",
+  "monitorGrantVirtTip": "agent 網頁面板中連接的 Proxmox VE、libvirt 和 BMC",
   "monitorGrantFiles": "檔案",
   "monitorGrantConnect": "對外連線",
   "monitorGrantConnectTip": "本機和動態連接埠轉發、遠端桌面",

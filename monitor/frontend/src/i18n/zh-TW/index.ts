@@ -219,6 +219,8 @@ const zh_TW = {
 	grantShellNote: '以 agent 自身的帳號執行命令、開啟終端，不需要 SSH 憑證。擁有這項權限的人也能做到下面的所有事。',
 	grantSshTerminal: 'SSH 終端',
 	grantSshTerminalNote: '面板中透過 SSH 帳號登入 sshd 的終端，權限等同於該 SSH 帳號。',
+	grantVirt: '虛擬化',
+	grantVirtNote: '檢視和控制 agent 連接的 Proxmox VE、libvirt 和 BMC 上的機器。連接位址和登入憑證由管理員設定。',
 	grantFiles: '檔案',
 	filesNone: '無權限',
 	filesRead: '唯讀',

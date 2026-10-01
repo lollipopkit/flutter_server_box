@@ -5081,6 +5081,13 @@ class AppLocalizationsAz extends AppLocalizations {
   String get monitorGrantSshTerminal => 'SSH üzərindən panel terminalı';
 
   @override
+  String get monitorGrantVirt => 'Virtuallaşdırma';
+
+  @override
+  String get monitorGrantVirtTip =>
+      'Agentin veb panelində qoşulduğu Proxmox VE, libvirt və BMC-lər';
+
+  @override
   String get monitorGrantFiles => 'Fayllar';
 
   @override

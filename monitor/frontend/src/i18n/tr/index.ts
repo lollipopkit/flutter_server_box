@@ -219,6 +219,8 @@ const tr = {
 	grantShellNote: 'SSH kimlik bilgisi olmadan, agent\'ın kendi hesabıyla komut çalıştırır ve terminal açar. Buna sahip olan aşağıdakilerin hepsini de yapabilir.',
 	grantSshTerminal: 'SSH terminali',
 	grantSshTerminalNote: 'Panelin, bir SSH hesabıyla sshd\'ye oturum açan ve o hesabın haklarıyla çalışan terminali.',
+	grantVirt: 'Sanallaştırma',
+	grantVirtNote: 'Ajanın eriştiği Proxmox VE, libvirt ve BMC’lerdeki makineleri görme ve yönetme. Adres ve oturum açma bilgilerini yönetici ayarlar.',
 	grantFiles: 'Dosyalar',
 	filesNone: 'Erişim yok',
 	filesRead: 'Salt okunur',

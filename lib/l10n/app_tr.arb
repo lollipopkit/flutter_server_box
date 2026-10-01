@@ -1427,6 +1427,8 @@
   "monitorGrantShell": "Kabuk ve komutlar",
   "monitorGrantShellTip": "Terminal, süreçler, servisler, konteynerler, snippet'ler, güç — agent hesabıyla",
   "monitorGrantSshTerminal": "SSH üzerinden panel terminali",
+  "monitorGrantVirt": "Sanallaştırma",
+  "monitorGrantVirtTip": "Ajanın web panelinde eriştiği Proxmox VE, libvirt ve BMC’ler",
   "monitorGrantFiles": "Dosyalar",
   "monitorGrantConnect": "Giden bağlantılar",
   "monitorGrantConnectTip": "Yerel ve dinamik port yönlendirmeleri, uzak masaüstü",

@@ -219,6 +219,8 @@ const nl = {
 	grantShellNote: 'Opdrachten uitvoeren en een terminal openen als het eigen account van de agent, zonder SSH-gegevens. Wie dit heeft, kan ook alles hieronder.',
 	grantSshTerminal: 'SSH-terminal',
 	grantSshTerminalNote: 'De terminal van het paneel die met een SSH-account bij sshd aanmeldt, met de rechten van dat account.',
+	grantVirt: 'Virtualisatie',
+	grantVirtNote: 'Proxmox VE, libvirt en BMC’s die de agent bereikt: hun machines zien en bedienen. Adres en aanmelding stelt een beheerder in.',
 	grantFiles: 'Bestanden',
 	filesNone: 'Geen toegang',
 	filesRead: 'Alleen lezen',

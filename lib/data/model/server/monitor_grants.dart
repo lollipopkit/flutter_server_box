@@ -83,6 +83,7 @@ class MonitorGrants {
     this.connectAllow = const [],
     this.listen = MonitorGrant.denied,
     this.listenPublic = false,
+    this.virt = MonitorGrant.denied,
   });
 
   final MonitorGrant shell;
@@ -101,6 +102,10 @@ class MonitorGrants {
   final MonitorGrant listen;
   final bool listenPublic;
 
+  /// The hypervisors and BMCs the agent reaches for the panel. Denied for an
+  /// agent older than the grant, which does not list it.
+  final MonitorGrant virt;
+
   /// Whether files are browsed without being changed.
   bool get filesReadOnly => files.ok && filesMode == MonitorFilesMode.read;
 
@@ -118,6 +123,7 @@ class MonitorGrants {
       ],
       listen: MonitorGrant.fromJson(json['listen']),
       listenPublic: obj('listen')?['public'] == true,
+      virt: MonitorGrant.fromJson(json['virt']),
     );
   }
 
@@ -131,7 +137,8 @@ class MonitorGrants {
       other.connect == connect &&
       _sameList(other.connectAllow, connectAllow) &&
       other.listen == listen &&
-      other.listenPublic == listenPublic;
+      other.listenPublic == listenPublic &&
+      other.virt == virt;
 
   @override
   int get hashCode => Object.hash(
@@ -143,13 +150,14 @@ class MonitorGrants {
     Object.hashAll(connectAllow),
     listen,
     listenPublic,
+    virt,
   );
 
   @override
   String toString() =>
       'MonitorGrants(shell: $shell, sshTerminal: $sshTerminal, files: $files '
       '${filesMode?.name}, connect: $connect $connectAllow, listen: $listen '
-      'public=$listenPublic)';
+      'public=$listenPublic, virt: $virt)';
 }
 
 /// Who this app is logged in as on the agent.
@@ -184,6 +192,7 @@ class MonitorRoleGrants {
     this.files,
     this.connectAllow,
     this.listen,
+    this.virt,
   });
 
   final bool shell;
@@ -197,6 +206,10 @@ class MonitorRoleGrants {
 
   /// Null is not granted.
   final MonitorListenGrant? listen;
+
+  /// Null when the agent does not know the grant: neither shown nor sent,
+  /// since such an agent refuses a role that names it.
+  final bool? virt;
 
   factory MonitorRoleGrants.fromJson(Map<String, dynamic> json) {
     final files = json['files'];
@@ -215,6 +228,10 @@ class MonitorRoleGrants {
             ]
           : null,
       listen: listen is Map ? MonitorListenGrant.fromJson(listen) : null,
+      virt: switch (json['virt']) {
+        final bool v => v,
+        _ => null,
+      },
     );
   }
 
@@ -224,6 +241,7 @@ class MonitorRoleGrants {
     'files': files == null ? null : {'mode': files!.name},
     'connect': connectAllow == null ? null : {'allow': connectAllow},
     'listen': listen?.toJson(),
+    'virt': ?virt,
   };
 
   MonitorRoleGrants copyWith({
@@ -232,12 +250,14 @@ class MonitorRoleGrants {
     MonitorFilesMode? Function()? files,
     List<String>? Function()? connectAllow,
     MonitorListenGrant? Function()? listen,
+    bool? virt,
   }) => MonitorRoleGrants(
     shell: shell ?? this.shell,
     sshTerminal: sshTerminal ?? this.sshTerminal,
     files: files == null ? this.files : files(),
     connectAllow: connectAllow == null ? this.connectAllow : connectAllow(),
     listen: listen == null ? this.listen : listen(),
+    virt: virt ?? this.virt,
   );
 }
 

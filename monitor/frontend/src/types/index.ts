@@ -109,9 +109,9 @@ export interface Capabilities {
   grants?: CallerGrants
 }
 
-/// The five grants a role can hold. `read` is held by every account and is
-/// not one of them.
-export type GrantName = 'shell' | 'ssh_terminal' | 'files' | 'connect' | 'listen'
+/// The grants a role can hold. `read` is held by every account and is not
+/// one of them.
+export type GrantName = 'shell' | 'ssh_terminal' | 'files' | 'connect' | 'listen' | 'virt'
 
 /// Why a grant is not usable: the role lacks it, the request did not arrive
 /// over TLS or loopback, or the machine side is not set up (files with no
@@ -132,6 +132,8 @@ export interface CallerGrants {
   files: GrantStatus & { mode?: FilesMode }
   connect: GrantStatus & { allow?: string[] }
   listen: GrantStatus & { public?: boolean; ports?: [number, number] | null }
+  /// Absent from an agent older than the grant.
+  virt?: GrantStatus
 }
 
 export interface Me {
@@ -151,6 +153,9 @@ export interface RoleGrants {
   connect: { allow: string[] } | null
   /// `ports` null means any port.
   listen: { public: boolean; ports: [number, number] | null } | null
+  /// Absent from an agent older than the grant, which refuses a role that
+  /// carries it — so it is sent only to an agent that sent it.
+  virt?: boolean
 }
 
 export interface Role {

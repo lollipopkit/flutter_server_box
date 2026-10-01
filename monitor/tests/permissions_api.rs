@@ -490,6 +490,31 @@ async fn admins_manage_accounts_and_roles_with_their_password() {
     assert!(users.as_array().unwrap().iter().all(|u| u["username"] != "kim"));
 }
 
+/// A client older than `virt` saves a role without it. That must not be read
+/// as taking it away; only a client that sends `virt` changes it.
+#[ntex::test]
+async fn saving_a_role_without_virt_keeps_what_it_had() {
+    let root = temp_root();
+    let srv = server(state(root.path().to_str().unwrap()).await).await;
+    let pw = common::PASSWORD;
+    let put = |grants: Value| {
+        Some(json!({ "role": { "name": "viewer", "grants": grants }, "current_password": pw }))
+    };
+
+    let (status, body) = call(&srv, "admin", Method::PUT, "/api/v1/roles/viewer", put(json!({ "virt": true }))).await;
+    assert_eq!((status, &body["grants"]["virt"]), (200, &json!(true)), "{body}");
+
+    // What an app from before `virt` sends: every grant it knows, written out.
+    let old_client = json!({ "shell": false, "ssh_terminal": false, "files": { "mode": "read" }, "connect": null, "listen": null });
+    let (status, body) = call(&srv, "admin", Method::PUT, "/api/v1/roles/viewer", put(old_client)).await;
+    assert_eq!(status, 200, "{body}");
+    assert_eq!(body["grants"]["virt"], true);
+    assert_eq!(body["grants"]["files"]["mode"], "read");
+
+    let (status, body) = call(&srv, "admin", Method::PUT, "/api/v1/roles/viewer", put(json!({ "virt": false }))).await;
+    assert_eq!((status, &body["grants"]["virt"]), (200, &json!(false)), "{body}");
+}
+
 #[ntex::test]
 async fn there_is_always_an_admin() {
     let root = temp_root();

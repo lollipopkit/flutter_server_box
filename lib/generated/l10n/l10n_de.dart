@@ -5150,6 +5150,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get monitorGrantSshTerminal => 'Panel-Terminal über SSH';
 
   @override
+  String get monitorGrantVirt => 'Virtualisierung';
+
+  @override
+  String get monitorGrantVirtTip =>
+      'Proxmox VE, libvirt und BMCs, die der Agent in seinem Web-Panel erreicht';
+
+  @override
   String get monitorGrantFiles => 'Dateien';
 
   @override

@@ -75,6 +75,13 @@
       {@render grant($LL.grantSshTerminal(), $LL.grantSshTerminalNote())}
     </label>
 
+    {#if d.virt !== undefined}
+      <label class="flex items-start gap-3">
+        <input type="checkbox" class="w-4 h-4 mt-0.5" bind:checked={d.virt} />
+        {@render grant($LL.grantVirt(), $LL.grantVirtNote())}
+      </label>
+    {/if}
+
     <div class="space-y-1">
       <span class="text-sm text-fg">{$LL.grantFiles()}</span>
       <Select bind:value={d.files} class="w-full">

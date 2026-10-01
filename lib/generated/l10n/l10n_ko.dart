@@ -4847,6 +4847,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get monitorGrantSshTerminal => 'SSH를 통한 패널 터미널';
 
   @override
+  String get monitorGrantVirt => '가상화';
+
+  @override
+  String get monitorGrantVirtTip => '에이전트 웹 패널에서 연결하는 Proxmox VE, libvirt, BMC';
+
+  @override
   String get monitorGrantFiles => '파일';
 
   @override

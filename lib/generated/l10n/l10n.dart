@@ -8697,6 +8697,18 @@ abstract class AppLocalizations {
   /// **'Panel terminal over SSH'**
   String get monitorGrantSshTerminal;
 
+  /// No description provided for @monitorGrantVirt.
+  ///
+  /// In en, this message translates to:
+  /// **'Virtualization'**
+  String get monitorGrantVirt;
+
+  /// No description provided for @monitorGrantVirtTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Proxmox VE, libvirt and BMCs the agent reaches, in its web panel'**
+  String get monitorGrantVirtTip;
+
   /// No description provided for @monitorGrantFiles.
   ///
   /// In en, this message translates to:

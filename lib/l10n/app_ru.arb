@@ -1427,6 +1427,8 @@
   "monitorGrantShell": "Shell и команды",
   "monitorGrantShellTip": "Терминал, процессы, службы, контейнеры, сниппеты, питание — от учётной записи agent",
   "monitorGrantSshTerminal": "Терминал панели через SSH",
+  "monitorGrantVirt": "Виртуализация",
+  "monitorGrantVirtTip": "Proxmox VE, libvirt и BMC, к которым подключается агент, в его веб-панели",
   "monitorGrantFiles": "Файлы",
   "monitorGrantConnect": "Исходящие подключения",
   "monitorGrantConnectTip": "Локальная и динамическая переадресация портов, удалённый рабочий стол",

@@ -28,7 +28,7 @@ use serde::{Deserialize, Serialize};
 pub const ADMIN_ROLE: &str = "admin";
 pub const VIEWER_ROLE: &str = "viewer";
 
-/// One of the five things an account can be granted, beyond `read`, which
+/// One of the six things an account can be granted, beyond `read`, which
 /// every account holds and is therefore not a grant at all.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Grant {
@@ -42,15 +42,20 @@ pub enum Grant {
     Connect,
     /// `/listen/ws` and `/stream/ws` `accept`: a port listened on here.
     Listen,
+    /// The hypervisors and BMCs the agent reaches for the panel: Proxmox VE,
+    /// libvirt, Redfish. Seeing and controlling them; setting up where they
+    /// are and how to sign in is the admin's.
+    Virt,
 }
 
 impl Grant {
-    pub const ALL: [Grant; 5] = [
+    pub const ALL: [Grant; 6] = [
         Grant::Shell,
         Grant::SshTerminal,
         Grant::Files,
         Grant::Connect,
         Grant::Listen,
+        Grant::Virt,
     ];
 
     pub fn as_str(self) -> &'static str {
@@ -60,6 +65,7 @@ impl Grant {
             Grant::Files => "files",
             Grant::Connect => "connect",
             Grant::Listen => "listen",
+            Grant::Virt => "virt",
         }
     }
 }
@@ -153,6 +159,8 @@ pub struct Grants {
     pub connect: Option<ConnectGrant>,
     #[serde(default)]
     pub listen: Option<ListenGrant>,
+    #[serde(default)]
+    pub virt: bool,
 }
 
 impl Grants {
@@ -172,6 +180,7 @@ impl Grants {
             }),
             connect: Some(ConnectGrant::default()),
             listen: Some(ListenGrant::default()),
+            virt: true,
         }
     }
 
@@ -233,6 +242,7 @@ impl Grants {
             files,
             connect,
             listen,
+            virt: self.virt && other.virt,
         }
     }
 
@@ -244,6 +254,7 @@ impl Grants {
             Grant::Files => self.files.is_some(),
             Grant::Connect => self.connect.is_some(),
             Grant::Listen => self.listen.is_some(),
+            Grant::Virt => self.virt,
         }
     }
 
@@ -274,6 +285,10 @@ impl Grants {
                 public: listen_public,
                 ports: None,
             }),
+            // Newer than every one of those switches. A shell reaches the
+            // same hypervisors with the same credentials, so it comes with
+            // one, as it does on a role upgraded by migration 011.
+            virt: shell,
         }
     }
 
@@ -581,10 +596,11 @@ mod tests {
     #[test]
     fn grants_read_and_write_the_documented_shape() {
         let json = r#"{"shell":false,"ssh_terminal":false,"files":null,
-            "connect":{"allow":["127.0.0.1:3389"]},"listen":null}"#;
+            "connect":{"allow":["127.0.0.1:3389"]},"listen":null,"virt":true}"#;
         let grants: Grants = serde_json::from_str(json).unwrap();
         assert_eq!(grants.connect.as_ref().unwrap().allow, ["127.0.0.1:3389"]);
         assert!(!grants.holds(Grant::Listen));
+        assert!(grants.holds(Grant::Virt));
         let back = serde_json::to_value(&grants).unwrap();
         assert_eq!(back["files"], serde_json::Value::Null);
         assert_eq!(back["listen"], serde_json::Value::Null);
@@ -602,7 +618,7 @@ mod tests {
             Grants::none()
         );
         let both = Grants::from_legacy(true, true, true, true);
-        assert!(both.shell && both.ssh_terminal);
+        assert!(both.shell && both.ssh_terminal && both.virt);
         assert_eq!(both.connect, Some(ConnectGrant::default()));
         assert_eq!(
             both.listen,
@@ -618,7 +634,7 @@ mod tests {
             })
         );
         let terminal_only = Grants::from_legacy(true, false, false, false);
-        assert!(terminal_only.ssh_terminal && !terminal_only.shell);
+        assert!(terminal_only.ssh_terminal && !terminal_only.shell && !terminal_only.virt);
         assert!(terminal_only.connect.is_none() && terminal_only.listen.is_none());
     }
 

@@ -219,6 +219,8 @@ const fr = {
 	grantShellNote: 'Exécuter des commandes et ouvrir un terminal avec le compte de l’agent lui-même, sans identifiants SSH. Qui a ceci peut aussi faire tout ce qui suit.',
 	grantSshTerminal: 'Terminal SSH',
 	grantSshTerminalNote: 'Le terminal du panneau qui se connecte à sshd avec un compte SSH, avec les droits de ce compte.',
+	grantVirt: 'Virtualisation',
+	grantVirtNote: 'Proxmox VE, libvirt et BMC joints par l’agent : voir et piloter leurs machines. L’adresse et l’identification sont définies par un administrateur.',
 	grantFiles: 'Fichiers',
 	filesNone: 'Aucun accès',
 	filesRead: 'Lecture seule',

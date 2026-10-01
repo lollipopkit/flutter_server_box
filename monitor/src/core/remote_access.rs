@@ -392,6 +392,7 @@ impl RemoteAccessConfig {
             ssh_addr: self.ssh_addr.clone(),
             insecure_shell: self.allow_insecure || self.terminal.allow_insecure,
             insecure_files: self.allow_insecure || self.fs.allow_insecure,
+            insecure_rest: self.allow_insecure,
             terminal: Terminal {
                 max_sessions: self.terminal.max_sessions.filter(|&n| n > 0).unwrap_or(slots),
                 scrollback_bytes: self
@@ -446,6 +447,10 @@ pub struct RemoteAccess {
     /// Whether `files` may be: [`RemoteAccessConfig::allow_insecure`] or the
     /// file API's legacy key.
     pub insecure_files: bool,
+    /// Whether a grant newer than both legacy keys (`virt`) may be:
+    /// [`RemoteAccessConfig::allow_insecure`] alone. Neither old key ever
+    /// covered it, so neither can open it.
+    pub insecure_rest: bool,
     pub terminal: Terminal,
     pub fs: Fs,
     pub exec: Exec,
@@ -503,6 +508,7 @@ impl RemoteAccess {
                 Grant::Shell | Grant::SshTerminal | Grant::Connect | Grant::Listen => {
                     self.insecure_shell
                 }
+                Grant::Virt => self.insecure_rest,
             }
     }
 
@@ -673,6 +679,7 @@ mod tests {
             assert!(terminal.transport_ok(grant, false), "{grant:?}");
         }
         assert!(!terminal.transport_ok(Grant::Files, false));
+        assert!(!terminal.transport_ok(Grant::Virt, false));
 
         // The file API's: files, and never a shell — which is what an old
         // config that trusted a plaintext link with its files would otherwise
@@ -686,6 +693,7 @@ mod tests {
         }
         .resolve(None);
         assert!(fs.transport_ok(Grant::Files, false));
+        assert!(!fs.transport_ok(Grant::Virt, false));
         for grant in shellish {
             assert!(!fs.transport_ok(grant, false), "{grant:?}");
         }

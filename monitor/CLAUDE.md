@@ -127,7 +127,8 @@ Monitor-only crate (the app never depends on it — it always collects over SSH 
 **Who may use any of this is the caller's role** (issue #1610,
 `docs/dev/monitor-permissions.md` is the contract). Every account has one role
 (`users.role`), a role is a set of grants — `shell`, `ssh_terminal`, `files`
-(read/write), `connect` (an `allow` list), `listen` (`public`, `ports`) — and
+(read/write), `connect` (an `allow` list), `listen` (`public`, `ports`),
+`virt` (Proxmox VE / libvirt / BMC pages, migration 011) — and
 `admin` roles also manage accounts, roles and the agent's configuration.
 `api/authz.rs` is the one place a request becomes a `Caller` (JWT → account →
 role) and `Caller::check(grant, state, secure)` the one question handlers ask;
@@ -149,7 +150,10 @@ keep their name and `admin` flag. A change that takes a grant away ends what
 ran under it: `authz::revoke_lost` sweeps terminal sessions and broadcasts
 `AppState.grants_changed`, on which every relay and listener re-checks its
 own account (`permission_revoked`). Roles live in the database (migration
-010); `db::bootstrap::ensure_roles` decides the built-ins once — a fresh
+010; 011 adds `virt` to roles holding `shell`). `PUT /roles/{name}` keeps a
+grant the body does not mention, so a client older than `virt` saving a role
+does not take it away; clients send `virt` only to an agent that listed it,
+since an older agent's `Grants` refuses unknown fields; `db::bootstrap::ensure_roles` decides the built-ins once — a fresh
 install from `--init-permissions full|read` / `SBM_INIT_PERMISSIONS`, an
 upgrade from what the old `full_access`/`listen_public`/`terminal.enabled`/
 `fs.enabled` *effectively* granted (`Grants::from_legacy`), after which those

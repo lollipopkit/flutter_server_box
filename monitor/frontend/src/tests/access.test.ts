@@ -263,6 +263,24 @@ describe('the role editor', () => {
     }
     expect(roleFromDraft(draftFromRole(admin))).toEqual(admin)
   })
+
+  it('sends virt only to an agent that knows it', () => {
+    // An agent before `virt` refuses a role that names it.
+    const old: Role = {
+      name: 'ops',
+      admin: false,
+      builtin: false,
+      grants: { shell: true, ssh_terminal: false, files: null, connect: null, listen: null },
+    }
+    const back = roleFromDraft(draftFromRole(old))
+    expect(back).toEqual(old)
+    expect('virt' in (back as Role).grants).toBe(false)
+    expect('virt' in (roleFromDraft({ ...emptyDraft(), name: 'new' }) as Role).grants).toBe(false)
+
+    const known: Role = { ...old, grants: { ...old.grants, virt: true } }
+    expect(roleFromDraft(draftFromRole(known))).toEqual(known)
+    expect((roleFromDraft({ ...emptyDraft(true), name: 'new' }) as Role).grants.virt).toBe(false)
+  })
 })
 
 /// `GET /api/v1/capabilities` as a real agent answered it, for an account in

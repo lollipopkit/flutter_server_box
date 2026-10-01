@@ -609,6 +609,56 @@ async fn fresh_admin_role(
     role
 }
 
+/// Migration 011 against roles saved the way monitor 0.2.0 saved them.
+///
+/// 0.2.0 wrote `grants` with `serde_json::to_string(&Grants)` and had no
+/// `virt` field, so the JSON below is byte for byte what it stored: a role
+/// with `shell` (the upgraded admin), one without (a remote-desktop role an
+/// admin created), and a built-in still waiting for `ensure_roles`.
+#[tokio::test]
+async fn migration_011_gives_virt_to_the_roles_that_hold_shell() {
+    use server_box_monitor::db::accounts;
+
+    let pool = pool().await;
+    migrator_through(10).run(&pool).await.unwrap();
+    let saved_by_0_2_0 = [
+        (
+            "admin",
+            r#"{"shell":true,"ssh_terminal":true,"files":{"mode":"write"},"connect":{"allow":[]},"listen":{"public":false,"ports":null}}"#,
+        ),
+        (
+            "desktop",
+            r#"{"shell":false,"ssh_terminal":false,"files":null,"connect":{"allow":["127.0.0.1:3389"]},"listen":null}"#,
+        ),
+    ];
+    for (name, grants) in saved_by_0_2_0 {
+        sqlx::query(
+            "INSERT INTO roles (name, admin, builtin, grants, created_at, updated_at) \
+             VALUES (?, 0, 0, ?, '2026-10-01T00:00:00Z', '2026-10-01T00:00:00Z') \
+             ON CONFLICT(name) DO UPDATE SET grants = excluded.grants",
+        )
+        .bind(name)
+        .bind(grants)
+        .execute(&pool)
+        .await
+        .unwrap();
+    }
+
+    sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+
+    let admin = accounts::role(&pool, "admin").await.unwrap().unwrap();
+    assert!(admin.grants.virt && admin.grants.shell);
+    let desktop = accounts::role(&pool, "desktop").await.unwrap().unwrap();
+    assert!(!desktop.grants.virt);
+    assert_eq!(desktop.grants.connect.unwrap().allow, ["127.0.0.1:3389"]);
+    // Undecided stays undecided, for `ensure_roles` to settle.
+    let viewer: Option<String> = sqlx::query_scalar("SELECT grants FROM roles WHERE name = 'viewer'")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(viewer, None);
+}
+
 /// The bytes of a migration that has already run somewhere are frozen.
 ///
 /// `Migrator::run` compares the checksum embedded in the binary against the one
@@ -636,6 +686,7 @@ fn shipped_migrations_keep_their_checksums() {
         (8, "9961008300f34069365756a67bc45c596baaf1290ddf9825198377feeafe11901c08603bbcabcb14f2df943eacebe054"),
         (9, "f50849af86f5e456829df80ddb0c716540a23bd0a15527925bfb27f5e05b8dd567e83c6e1d08898a93135aa05052877b"),
         (10, "92495a720d33186675f04e757b7e28756d1233ee2152be1f86fda8d48ee28d628419336de8f8ea742a575ddeea9d85c8"),
+        (11, "9081aeb2c58f141bd2efa4db9c41042208fe7940a294984e6b5891dd05a09f4055b10efc4539eed515bac0a32a08fdc5"),
     ];
     let migrator = sqlx::migrate!("./migrations");
     let mut seen = std::collections::BTreeMap::new();

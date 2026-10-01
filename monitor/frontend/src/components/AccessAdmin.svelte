@@ -110,7 +110,8 @@
 
   function openEditor(role: Role | null) {
     editorExisting = role !== null
-    editorDraft = role ? draftFromRole(role) : emptyDraft()
+    // A role read from this agent says whether it knows `virt`.
+    editorDraft = role ? draftFromRole(role) : emptyDraft(roles.some((r) => r.grants.virt !== undefined))
     editorOpen = true
   }
 

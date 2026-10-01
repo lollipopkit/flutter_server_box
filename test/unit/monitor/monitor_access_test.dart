@@ -119,6 +119,20 @@ void main() {
     expect(json['name'], 'desktop');
   });
 
+  test('virt goes back only to an agent that sent it', () {
+    // An agent older than `virt` refuses a role naming it: `desktop` above
+    // has none, and the test before this one shows none is added.
+    final withVirt = {
+      ...desktop,
+      'grants': {...desktop['grants']! as Map<String, dynamic>, 'virt': true},
+    };
+    final role = MonitorRole.fromJson(withVirt);
+    expect(role.grants.virt, isTrue);
+    expect(role.toJson()['grants'], withVirt['grants']);
+    final off = role.copyWith(grants: role.grants.copyWith(virt: false));
+    expect((off.toJson()['grants'] as Map)['virt'], isFalse);
+  });
+
   test('changing your own password sends both', () async {
     await client.changeOwnPassword(currentPassword: 'pw', newPassword: 'n3w-pass');
     final (method, path, body) = seen.single;

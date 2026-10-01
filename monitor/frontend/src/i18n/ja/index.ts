@@ -219,6 +219,8 @@ const ja = {
 	grantShellNote: 'SSH 認証情報なしで、agent 自身のアカウントとしてコマンドを実行し、ターミナルを開きます。これを持つ人は以下のすべてもできます。',
 	grantSshTerminal: 'SSH ターミナル',
 	grantSshTerminalNote: 'SSH アカウントで sshd にサインインするパネルのターミナル。そのアカウントの権限で動きます。',
+	grantVirt: '仮想化',
+	grantVirtNote: 'エージェントが接続する Proxmox VE、libvirt、BMC のマシンを表示・操作します。接続先とログイン情報は管理者が設定します。',
 	grantFiles: 'ファイル',
 	filesNone: 'アクセスなし',
 	filesRead: '読み取りのみ',

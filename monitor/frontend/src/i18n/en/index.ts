@@ -219,6 +219,8 @@ const en = {
 	grantShellNote: 'Run commands and open a terminal as the agent’s own account, with no SSH credentials. Whoever has this can do everything below as well.',
 	grantSshTerminal: 'SSH terminal',
 	grantSshTerminalNote: 'The panel’s terminal that signs in to sshd with an SSH account, with that account’s rights.',
+	grantVirt: 'Virtualization',
+	grantVirtNote: 'Proxmox VE, libvirt and BMCs the agent reaches: see and control their machines. Where they are and how to sign in is set by an admin.',
 	grantFiles: 'Files',
 	filesNone: 'No access',
 	filesRead: 'Read only',

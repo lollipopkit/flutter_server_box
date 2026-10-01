@@ -219,6 +219,8 @@ const zh_CN = {
 	grantShellNote: '以 agent 自身的账号执行命令、打开终端，不需要 SSH 凭据。拥有这项权限的人也能做到下面的所有事。',
 	grantSshTerminal: 'SSH 终端',
 	grantSshTerminalNote: '面板里通过 SSH 账号登录 sshd 的终端，权限等同于该 SSH 账号。',
+	grantVirt: '虚拟化',
+	grantVirtNote: '查看和控制 agent 连接的 Proxmox VE、libvirt 和 BMC 上的机器。连接地址和登录凭据由管理员设置。',
 	grantFiles: '文件',
 	filesNone: '无权限',
 	filesRead: '只读',

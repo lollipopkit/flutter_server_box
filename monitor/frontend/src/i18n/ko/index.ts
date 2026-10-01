@@ -219,6 +219,8 @@ const ko = {
 	grantShellNote: 'SSH 자격 증명 없이 agent 자체 계정으로 명령을 실행하고 터미널을 엽니다. 이 권한이 있으면 아래의 모든 것도 할 수 있습니다.',
 	grantSshTerminal: 'SSH 터미널',
 	grantSshTerminalNote: 'SSH 계정으로 sshd에 로그인하는 패널의 터미널로, 그 계정의 권한을 가집니다.',
+	grantVirt: '가상화',
+	grantVirtNote: '에이전트가 연결하는 Proxmox VE, libvirt, BMC의 머신을 보고 제어합니다. 주소와 로그인 정보는 관리자가 설정합니다.',
 	grantFiles: '파일',
 	filesNone: '접근 없음',
 	filesRead: '읽기 전용',
