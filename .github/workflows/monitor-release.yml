@@ -335,6 +335,22 @@ jobs:
           # the fenced blocks below are allowed to carry their own line breaks,
           # where they are the commands' own.
           body: |
+            Docs: https://serverbox.lollipopkit.com/docs/advanced/monitor-agent/
+
+            ## System
+            Runs as your own account (a `systemctl --user` service; OpenRC needs `sudo` but still runs it as you):
+            ```sh
+            curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/monitor/install.sh | sh -s -- install
+            ```
+
+            As a root-owned system service. An account whose role holds `shell` then gets a root shell:
+            ```sh
+            curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/monitor/install.sh | sudo sh -s -- install --system
+            ```
+
+            Add `--permissions read` to start the first admin read-only.
+
+            ## Docker
             ```sh
             docker run -d --name server-box-monitor \
               -p 3770:3770 -v ./data:/data \
