@@ -325,12 +325,20 @@ extension _ProcessPageWidgets on _ProcessPageState {
         children: [
           SizedBox(width: 260, child: _buildSearchPill()),
           const SizedBox(width: 17),
-          if (_loadText() case final load?) ...[
-            Flexible(child: load),
-            const SizedBox(width: 13),
-          ],
-          Text(_countText(), maxLines: 1, style: _metaStyle),
-          const Spacer(),
+          // One flexible child for the whole middle: a `Flexible` load beside
+          // a `Spacer` split the free space between them, and what the load
+          // did not use was left after the switch, not before it.
+          Expanded(
+            child: Row(
+              children: [
+                if (_loadText() case final load?) ...[
+                  Flexible(child: load),
+                  const SizedBox(width: 13),
+                ],
+                Text(_countText(), maxLines: 1, style: _metaStyle),
+              ],
+            ),
+          ),
           ?_buildKernelSwitch(shrinkLabel: false),
         ],
       ),
@@ -514,14 +522,20 @@ extension _ProcessPageWidgets on _ProcessPageState {
           ),
         ),
         if (more.isNotEmpty)
-          PopupMenuButton<ProcSortMode>(
+          ContextMenuButton(
             tooltip: libL10n.sort,
-            icon: const Icon(Icons.filter_list, size: 18),
-            onSelected: _selectSort,
-            itemBuilder: (_) => [
+            actions: () => [
               for (final mode in more)
-                PopupMenuItem(value: mode, child: Text(_sortLabel(mode))),
+                ContextMenuAction(
+                  text: _sortLabel(mode),
+                  checked: mode == _procSortMode,
+                  onTap: () => _selectSort(mode),
+                ),
             ],
+            child: const Padding(
+              padding: EdgeInsets.all(7),
+              child: Icon(Icons.filter_list, size: 18),
+            ),
           ),
       ],
     );

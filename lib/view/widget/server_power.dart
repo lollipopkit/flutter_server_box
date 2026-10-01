@@ -132,7 +132,7 @@ abstract final class ServerPower {
     final remember = Stores.setting.rememberPwdInMem.fetch();
     final pwd = await context.showPwdDialog(
       title: libL10n.pwd,
-      label: spi.ssh?.user ?? '',
+      label: spi.ssh?.user,
       // Its own key rather than the SSH one: sudo's password and the account's
       // SSH password are not always the same thing.
       id: '${spi.id}_sudo',

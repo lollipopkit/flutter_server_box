@@ -3586,6 +3586,24 @@ abstract class AppLocalizations {
   /// **'{func} is not available over this server\'s connection.'**
   String funcUnavailableFmt(String func);
 
+  /// No description provided for @funcNeedsAgentGrant.
+  ///
+  /// In en, this message translates to:
+  /// **'{func} needs the Monitor agent\'s {setting} to be turned on.'**
+  String funcNeedsAgentGrant(String func, String setting);
+
+  /// No description provided for @funcNeedsAgentUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'{func} needs a newer Monitor agent.'**
+  String funcNeedsAgentUpdate(String func);
+
+  /// No description provided for @portForwardNeedsSsh.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote and dynamic forwards need SSH: the Monitor agent does not support them.'**
+  String get portForwardNeedsSsh;
+
   /// User-facing label or message for range live.
   ///
   /// In en, this message translates to:
@@ -4869,6 +4887,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Full screen'**
   String get remoteDesktopFullScreen;
+
+  /// No description provided for @remoteDesktopExitFullScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit full screen'**
+  String get remoteDesktopExitFullScreen;
 
   /// User-facing label or message for remote desktop close session.
   ///

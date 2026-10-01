@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
@@ -192,29 +193,32 @@ void main() {
       expect(ServerFuncBtn.power.availableWith(refused), isFalse);
     });
 
-    test('a full-access agent offers everything but the SSH-only streams', () {
-      // Files are not among them: full access is the shell grant, and the file
-      // API is a grant of its own — see the next test. Port forwarding is not
-      // either: the forward page still opens through the SSH client.
+    test('a full-access agent offers everything but files', () {
+      // Full access is the shell grant, and the file API is a grant of its
+      // own — see the next test.
       expect(ServerFuncBtn.files.availableWith(granted), isFalse);
-      expect(ServerFuncBtn.portForward.availableWith(granted), isFalse);
       for (final btn in ServerFuncBtn.values) {
-        if (btn == ServerFuncBtn.files ||
-            btn == ServerFuncBtn.portForward) {
-          continue;
-        }
+        if (btn == ServerFuncBtn.files) continue;
         expect(btn.availableWith(granted), isTrue, reason: btn.name);
       }
     });
 
-    test('remote desktop follows the relay, not the grant behind it', () {
-      // The endpoint is what the session needs, and an agent that has the
-      // grant but not the endpoint cannot carry one.
-      expect(ServerFuncBtn.remoteDesktop.availableWith(granted), isTrue);
-      expect(
-        ServerFuncBtn.remoteDesktop.availableWith(grantedBeforeRelay),
-        isFalse,
-      );
+    test('remote desktop and port forwarding follow the relay, not the grant '
+        'behind it', () {
+      // The endpoint is what both need — a local forward is dialled through
+      // it as a session is — and an agent that has the grant but not the
+      // endpoint cannot carry one.
+      for (final btn in [
+        ServerFuncBtn.remoteDesktop,
+        ServerFuncBtn.portForward,
+      ]) {
+        expect(btn.availableWith(granted), isTrue, reason: btn.name);
+        expect(
+          btn.availableWith(grantedBeforeRelay),
+          isFalse,
+          reason: btn.name,
+        );
+      }
     });
 
     test('the file entry follows the agent\'s file grant alone', () {
@@ -227,6 +231,50 @@ void main() {
       expect(ServerFuncBtn.files.availableWith(filesOnly), isTrue);
       expect(ServerFuncBtn.terminal.availableWith(filesOnly), isFalse);
       expect(ServerFuncBtn.files.availableWith(granted), isFalse);
+    });
+  });
+  group('ServerFuncBtn.unavailableReason', () {
+    const monitor = MonitorHttpCredential(addr: 'https://agent:3770');
+    final agentOnly = Spi(name: 'test', id: 'r', monitorHttp: monitor);
+
+    test('names the grant an agent-only server is missing', () {
+      const shellOnly = MonitorRemoteAccess(fullAccess: true);
+      expect(
+        ServerFuncBtn.files.unavailableReason(agentOnly, shellOnly),
+        contains('[remote_access.fs]'),
+      );
+      expect(
+        ServerFuncBtn.terminal.unavailableReason(agentOnly, shellOnly),
+        contains('[remote_access.terminal]'),
+      );
+      expect(
+        ServerFuncBtn.process.unavailableReason(
+          agentOnly,
+          MonitorRemoteAccess.none,
+        ),
+        contains('full_access'),
+      );
+    });
+
+    test('a relay missing under full access is an agent to update', () {
+      const beforeRelay = MonitorRemoteAccess(terminal: true, fullAccess: true);
+      for (final btn in [
+        ServerFuncBtn.remoteDesktop,
+        ServerFuncBtn.portForward,
+      ]) {
+        expect(
+          btn.unavailableReason(agentOnly, beforeRelay),
+          l10n.funcNeedsAgentUpdate(btn.toStr),
+          reason: btn.name,
+        );
+      }
+    });
+
+    test('an agent not heard from yet gets the plain answer', () {
+      expect(
+        ServerFuncBtn.files.unavailableReason(agentOnly, null),
+        l10n.funcUnavailableFmt(ServerFuncBtn.files.toStr),
+      );
     });
   });
 }

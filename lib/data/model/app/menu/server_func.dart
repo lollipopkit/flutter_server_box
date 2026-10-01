@@ -3,6 +3,8 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
+import 'package:server_box/data/model/server/monitor_remote_access.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/store.dart';
 
 enum ServerFuncBtn {
@@ -217,14 +219,38 @@ enum ServerFuncBtn {
     // Browsing files is its own question: a transport could grow a file API
     // without growing a stream this app can point anywhere.
     files => caps.files,
-    // A forwarded connection and a remote desktop are both one TCP connection
-    // to an address this app names, but only the remote desktop can take it
-    // from either transport: the forward page still opens through the SSH
-    // client, so it asks the narrower question until it is moved onto the same
-    // dialer.
-    portForward => caps.byteStream,
+    // A local forward is one TCP connection to an address this app names, as
+    // a remote desktop is, and either transport can carry one. The remote and
+    // dynamic kinds need the server to listen, which only sshd does: the page
+    // offers those where there is SSH.
+    portForward => caps.byteStream || caps.tcpRelay,
     remoteDesktop => caps.tcpRelay,
   };
+
+  /// Why this is not [availableWith] a server — what would make it so, where
+  /// that is something its agent's operator can change.
+  ///
+  /// Only a server reached through its agent alone gets an answer of its own:
+  /// with SSH there is nothing the agent could add, and this device's answer
+  /// is this app's.
+  String unavailableReason(Spi spi, MonitorRemoteAccess? granted) {
+    final generic = l10n.funcUnavailableFmt(toStr);
+    if (spi.sshOn != null || spi.monitorOn == null || granted == null) {
+      return generic;
+    }
+    final grant = switch (this) {
+      files => '[remote_access.fs]',
+      // The relay is granted with `full_access`: one that has it and still
+      // does not relay is an agent from before the endpoint.
+      portForward || remoteDesktop when granted.fullAccess => null,
+      terminal || snippet || iperf when granted.fullAccess =>
+        '[remote_access.terminal]',
+      _ => 'full_access',
+    };
+    return grant == null
+        ? l10n.funcNeedsAgentUpdate(toStr)
+        : l10n.funcNeedsAgentGrant(toStr, grant);
+  }
 
   String get toStr => switch (this) {
     // Named after what it opens, not after the protocol that used to be the

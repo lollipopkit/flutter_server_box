@@ -21,7 +21,7 @@ void main() {
   final spi = spiFixture(id: 'srv', name: 'web', ip: 'h', user: 'u');
 
   List<ServerFuncEntry> entries(List<ServerFuncBtn> btns, {Set<ServerFuncBtn> off = const {}}) => [
-    for (final btn in btns) (btn: btn, available: !off.contains(btn)),
+    for (final btn in btns) (btn: btn, available: !off.contains(btn), reason: null),
   ];
 
   Future<void> pump(WidgetTester tester, List<ServerFuncEntry> btns) async {

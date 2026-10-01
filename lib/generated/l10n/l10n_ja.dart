@@ -1938,6 +1938,20 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String funcNeedsAgentGrant(String func, String setting) {
+    return '$funcを使うには Monitor agent の $setting を有効にする必要があります。';
+  }
+
+  @override
+  String funcNeedsAgentUpdate(String func) {
+    return '$funcを使うには Monitor agent の更新が必要です。';
+  }
+
+  @override
+  String get portForwardNeedsSsh =>
+      'リモート転送と動的転送には SSH が必要です。Monitor agent はこれらに対応していません。';
+
+  @override
   String get rangeLive => 'リアルタイム';
 
   @override
@@ -2667,6 +2681,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get remoteDesktopFullScreen => '全画面表示';
+
+  @override
+  String get remoteDesktopExitFullScreen => '全画面表示を終了';
 
   @override
   String get remoteDesktopCloseSession => 'セッションを閉じる';

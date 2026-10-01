@@ -39,6 +39,8 @@ import 'package:server_box/view/page/server/tab/selection_bar.dart';
 import 'package:server_box/view/page/server/tab/strip.dart';
 import 'package:server_box/view/page/server/text_scale.dart';
 import 'package:server_box/view/page/setting/entry.dart';
+import 'package:server_box/view/widget/dist_icon.dart';
+import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/server_globe.dart';
 import 'package:server_box/view/widget/server_share.dart';
 
@@ -47,6 +49,7 @@ part 'bulk.dart';
 part 'detail_host.dart';
 part 'grid.dart';
 part 'landscape.dart';
+part 'pane.dart';
 part 'sheets.dart';
 part 'utils.dart';
 
@@ -276,6 +279,10 @@ class _ServerPageState extends ConsumerState<ServerPage>
   /// travelled up — a second movement after the first. See [MasonryMemory].
   final _gridMemory = MasonryMemory();
 
+  /// What the list is drawn as while a card is out of it — see
+  /// [_Grid._buildGrid], which holds it.
+  ServerListDensity? _heroDensity;
+
   /// Whether the detail's own chrome is up: the facts beside the readings and
   /// the row of things to do under them.
   ///
@@ -347,6 +354,12 @@ class _ServerPageState extends ConsumerState<ServerPage>
     _heroId = id;
     ref.read(serverSelectionProvider.notifier).select(id);
     _closeTimer?.cancel();
+    // Opened again in the gap between the chrome leaving and the card starting
+    // back — from the column, which is still there. The card never moved, so
+    // nothing will say it has finished growing: the chrome is put back here.
+    if (_openCtrl.isCompleted && !_detailShowing) {
+      setState(() => _detailShowing = true);
+    }
     // Switching from one open server to another is not a second opening: the
     // page is already the detail, and only which card is in it changes.
     if (was != null) return;

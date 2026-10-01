@@ -5,6 +5,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/provider/port_forward_provider.dart';
+import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 
 final class PortForwardPage extends ConsumerStatefulWidget {
@@ -149,38 +150,21 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
             value: isActive,
             onChanged: (_) => _notifier.toggleForward(config.id),
           ),
-          PopupMenu(
-            items: [
-              PopupMenuItem(
-                value: 'edit',
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.edit, size: 18),
-                    const SizedBox(width: 8),
-                    Text(libL10n.edit),
-                  ],
-                ),
+          ContextMenuButton(
+            tooltip: libL10n.more,
+            actions: () => [
+              ContextMenuAction(
+                text: libL10n.edit,
+                icon: Icons.edit_outlined,
+                onTap: () => _onEdit(config),
               ),
-              PopupMenuItem(
-                value: 'delete',
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.delete, size: 18),
-                    const SizedBox(width: 8),
-                    Text(libL10n.delete),
-                  ],
-                ),
+              ContextMenuAction(
+                text: libL10n.delete,
+                icon: Icons.delete_outline,
+                destructive: true,
+                onTap: () => _onDelete(config),
               ),
             ],
-            onSelected: (val) {
-              if (val == 'edit') {
-                _onEdit(config);
-              } else if (val == 'delete') {
-                _onDelete(config);
-              }
-            },
           ),
         ],
       ),
@@ -213,6 +197,7 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
       builder: (ctx) => _PortForwardConfigDialog(
         existing: existing,
         serverId: widget.args.spi.id,
+        ssh: ref.read(serverProvider(widget.args.spi.id)).capabilities.byteStream,
         onSave: (config) async {
           if (existing == null) {
             await _notifier.addConfig(config);
@@ -237,11 +222,16 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
 class _PortForwardConfigDialog extends StatefulWidget {
   final PortForwardConfig? existing;
   final String serverId;
+
+  /// Whether the server can listen for this app: remote and dynamic forwards
+  /// need it, and only SSH gives it.
+  final bool ssh;
   final Future<void> Function(PortForwardConfig config) onSave;
 
   const _PortForwardConfigDialog({
     required this.existing,
     required this.serverId,
+    required this.ssh,
     required this.onSave,
   });
 
@@ -299,6 +289,10 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
             Input(controller: nameController, hint: libL10n.name),
             const SizedBox(height: 8),
             _buildTypeSelector(),
+            if (!widget.ssh) ...[
+              const SizedBox(height: 5),
+              Text(context.l10n.portForwardNeedsSsh, style: UIs.text12Grey),
+            ],
             const SizedBox(height: 8),
             Row(
               children: [
@@ -371,11 +365,13 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
         ),
         ButtonSegment(
           value: PortForwardType.remote,
+          enabled: widget.ssh,
           label: Text(_remoteTypeLabel),
           icon: const Icon(Icons.arrow_back, size: 16),
         ),
         ButtonSegment(
           value: PortForwardType.dynamic,
+          enabled: widget.ssh,
           label: Text(_dynamicTypeLabel),
           icon: const Icon(Icons.hub, size: 16),
         ),

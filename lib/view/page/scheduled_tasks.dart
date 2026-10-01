@@ -23,8 +23,6 @@ const _kPad = 13.0;
 /// fetched; the next run is worked out here.
 const _kTick = Duration(seconds: 30);
 
-enum _ScheduledTaskAction { edit, delete }
-
 typedef _TaskEdit = ({String schedule, String command, bool enabled});
 
 /// A task with everything the list shows worked out once: what its schedule
@@ -729,26 +727,29 @@ extension on _ScheduledTasksPageState {
   }
 
   Widget _buildMenu(CronJob job) {
-    return PopupMenu<_ScheduledTaskAction>(
+    return ContextMenuButton(
       // A save is one write of the whole file, and [_save] refuses a second
       // one while it is in flight: left on, this would take an edit through
       // the whole sheet and then drop it without saying so.
       enabled: !_busy,
-      items: [
-        PopupMenuItem(
-          value: _ScheduledTaskAction.edit,
-          child: Text(libL10n.edit),
+      tooltip: libL10n.more,
+      actions: () => [
+        ContextMenuAction(
+          text: libL10n.edit,
+          icon: Icons.edit_outlined,
+          onTap: () => _editTask(job),
         ),
-        PopupMenuItem(
-          value: _ScheduledTaskAction.delete,
-          child: Text(libL10n.delete),
+        ContextMenuAction(
+          text: libL10n.delete,
+          icon: Icons.delete_outline,
+          destructive: true,
+          onTap: () => _deleteTask(job),
         ),
       ],
-      onSelected: (action) => switch (action) {
-        _ScheduledTaskAction.edit => _editTask(job),
-        _ScheduledTaskAction.delete => _deleteTask(job),
-      },
-      child: const Icon(Icons.more_horiz, size: 18),
+      child: const Padding(
+        padding: EdgeInsets.all(7),
+        child: Icon(Icons.more_horiz, size: 18),
+      ),
     );
   }
 

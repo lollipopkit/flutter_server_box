@@ -19,10 +19,6 @@ const _kRecentWindow = Duration(hours: 24);
 const _kRecentCount = 3;
 
 /// The strip's own height, and the design's.
-///
-/// Also the height of the machine switcher that turns over into this strip's
-/// slot while a server is open — see `ServerStrip` — so the slot is one
-/// height whichever face is up.
 const kServerStripHeight = 46.0;
 
 /// One fleet reading's bar: short enough that three of them and their numbers
@@ -62,12 +58,12 @@ class ServerOverview extends ConsumerStatefulWidget {
   /// be answering about different sets of machines.
   final List<String> ids;
 
-  /// Whether one of those machines is open, which is what this strip turns
-  /// over to make room for.
+  /// Whether one of those machines is open, which is what this strip folds
+  /// away to make room for.
   ///
-  /// It closes when that happens: the slot is one height on both of its faces,
-  /// and a face that is three rows taller than the other turns into a shape
-  /// that is not there.
+  /// It closes when that happens, so what folds away is the one line and
+  /// not the list opened out under it: three rows taller, the strip would
+  /// push the page down while it is still folding.
   final bool open;
 
   @override

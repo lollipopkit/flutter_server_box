@@ -50,8 +50,8 @@ import '../helpers/test_db.dart';
 /// The two used to be two pages, reached by pushing one over the other or by
 /// putting a pane beside it. They are one now: the card takes the width of the
 /// page and the rest of the grid makes way, so what is on screen is still the
-/// list with one of its cards open — which is what the strip of other machines
-/// over it is for.
+/// list with one of its cards open — which is what the column of other machines
+/// beside it is for.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -215,9 +215,9 @@ void main() {
     expect(openId(tester), 'srv-0');
     // One card left — the one that was opened — and the page under it.
     expect(find.byType(ServerDetailPage), findsOneWidget);
-    // Both machines are still reachable from the strip over it, which is what
-    // the list has become rather than something new to learn.
-    expect(find.text('db'), findsWidgets);
+    // Both machines are still reachable from the column beside it, which is
+    // what the list has become rather than something new to learn.
+    expect(find.byType(SideBarTile), findsNWidgets(2));
   });
 
   testWidgets("the bar offers what the machine's own page does", (
@@ -241,6 +241,27 @@ void main() {
     await settle(tester);
     expect(find.byIcon(Icons.search), findsOneWidget);
     expect(find.byIcon(Icons.share), findsNothing);
+  });
+
+  testWidgets('the add button drops a menu of the ways to add one', (
+    tester,
+  ) async {
+    addServers();
+    await pump(tester, size: const Size(1200, 900));
+
+    final button = tester.getRect(find.byIcon(Icons.add));
+    await tester.tap(find.byIcon(Icons.add));
+    await settle(tester);
+
+    // A menu under the button, not a dialog in the middle of the window.
+    expect(find.byType(Dialog), findsNothing);
+    final manual = find.text(libL10n.manual);
+    expect(manual, findsOneWidget);
+    expect(tester.getRect(manual).top, greaterThan(button.bottom));
+
+    await tester.tap(manual);
+    await settle(tester);
+    expect(find.byType(ServerEditPage), findsOneWidget);
   });
 
   testWidgets('and the way back puts every card in the grid', (tester) async {
@@ -390,7 +411,10 @@ void main() {
     // the readings take over from it, which is what the growth finishing is
     // the cue for.
     await tester.pump(const Duration(milliseconds: 160));
-    expect(tester.getRect(open).width, greaterThan(1100));
+    final page = tester.getRect(find.byType(ServerDetailPage));
+    final grown = tester.getRect(open);
+    expect(grown.width, greaterThan(page.width - 30));
+    expect(grown.left, greaterThanOrEqualTo(page.left));
   });
 
   testWidgets('and nothing moves when the page takes the card over', (
@@ -461,6 +485,41 @@ void main() {
       tester.getRect(find.byType(MetricRow).first),
       rectMoreOrLessEquals(firstRow, epsilon: 2),
     );
+  });
+
+  testWidgets('a wide window holds the readings to a width, card and page', (
+    tester,
+  ) async {
+    // Past a width the chart is only flatter, so the page centres its content
+    // — and the card growing into it has to centre to the same place.
+    addServers();
+    await pump(tester, size: const Size(2400, 900));
+    await answer(tester);
+
+    await tester.tap(find.text('web'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 340));
+    final grown = tester.getRect(
+      find.descendant(
+        of: find.byType(AnimatedMasonry),
+        matching: find.byType(MetricChart),
+      ),
+    );
+    final page = tester.getRect(
+      find.descendant(
+        of: find.byType(ServerDetailPage),
+        matching: find.byType(MetricChart),
+      ),
+    );
+    expect(page, rectMoreOrLessEquals(grown, epsilon: 2));
+    expect(page.width, lessThanOrEqualTo(ServerCardSizes.readingsMax));
+
+    await settle(tester);
+    expect(
+      tester.getRect(find.byType(MetricChart)),
+      rectMoreOrLessEquals(grown, epsilon: 2),
+    );
+    expect(tester.takeException(), isNull);
   });
 
   /// Has a machine fail — the first, unless [id] names another — with what it
@@ -1145,73 +1204,138 @@ void main() {
     expect(openId(tester), 'srv-1');
   });
 
-  testWidgets('the strip over the list turns over rather than crossing', (
+  testWidgets('the overview over the list folds away rather than turning', (
     tester,
   ) async {
-    // What the list adds up to and the rest of the list as pills are the two
-    // faces of one slot: one height, and never both on screen at once.
+    // A summary of the list has nothing to be over once one machine has the
+    // page, so it goes — by folding up, on the card's movement, with what is
+    // under it riding up with its bottom edge.
     addServers();
     await pump(tester, size: const Size(1200, 900));
 
     final under = tester.getRect(find.byType(AnimatedMasonry)).top;
-    expect(find.byType(ServerOverview), findsOneWidget);
-    expect(find.byKey(const ValueKey('switcher')), findsNothing);
+    final strip = tester.getRect(find.byType(ServerOverview));
+    expect(strip.bottom, lessThan(under));
 
     await tester.tap(find.text('web'));
     await tester.pump();
-    for (var i = 0; i < 10; i++) {
+    var last = under;
+    for (var i = 0; i < 8; i++) {
       await tester.pump(const Duration(milliseconds: 40));
-      expect(
-        find.byType(ServerOverview).evaluate().length +
-            find.byKey(const ValueKey('switcher')).evaluate().length,
-        1,
-        reason: 'one face at a time, turned rather than faded past',
-      );
+      final top = tester.getRect(find.byType(ServerDetailPage)).top;
+      expect(top, lessThanOrEqualTo(last), reason: 'frame $i of the way in');
+      last = top;
     }
 
     await settle(tester);
     expect(find.byType(ServerOverview), findsNothing);
-    expect(find.byKey(const ValueKey('switcher')), findsOneWidget);
-    // The same slot at the same height, so what is under it has not moved.
-    expect(tester.getRect(find.byType(ServerDetailPage)).top, under);
+    // The page starts where the strip did.
+    expect(
+      tester.getRect(find.byType(ServerDetailPage)).top,
+      moreOrLessEquals(strip.top - 8, epsilon: 0.5),
+    );
+
+    await tester.tap(find.byIcon(Icons.arrow_back_ios_new));
+    await settle(tester);
+    expect(find.byType(ServerOverview), findsOneWidget);
+    expect(tester.getRect(find.byType(AnimatedMasonry)).top, under);
   });
 
-  testWidgets('and a face at rest is the one that was turning', (tester) async {
-    // Each face was handed back bare once the turn was over and wrapped in
-    // the turn while it lasted: a different parent at rest, so the face was
-    // unmounted and built again on the frame the turn started or stopped. The
-    // pills keep a scroll position and work out their faded edges a frame
-    // after they are mounted, so the way back began with the row of machines
-    // jumping to its start and its edges going hard for a frame.
+  testWidgets('a machine picked from the column while closing stays open', (
+    tester,
+  ) async {
+    // Between the chrome leaving and the card starting back the column is
+    // still there, and picking from it cancels the way back. The card never
+    // moved, so nothing else would bring the chrome back.
     addServers();
     await pump(tester, size: const Size(1200, 900));
+    await answer(tester);
+    await tester.tap(find.text('web'));
+    await settle(tester);
 
-    Element overview() => tester.element(find.byType(ServerOverview));
-    Element switcher() =>
-        tester.element(find.byKey(const ValueKey('switcher')));
+    await tester.tap(find.byIcon(Icons.arrow_back_ios_new));
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.tap(find.widgetWithText(SideBarTile, 'db'));
+    await settle(tester);
 
-    final resting = overview();
+    expect(openId(tester), 'srv-1');
+    // The page has the readings again, and the grid is gone.
+    expect(find.byType(AnimatedMasonry), findsNothing);
+    expect(find.byType(ServerDetailPage), findsOneWidget);
+  });
+
+  testWidgets("the switcher's field is centred on its icon", (tester) async {
+    addServers();
+    await pump(tester, size: const Size(1200, 900));
+    await tester.tap(find.text('web'));
+    await settle(tester);
+
+    // The bar's name opens every machine in a sheet.
+    await tester.tap(find.byIcon(Icons.expand_more).first);
+    await settle(tester);
+
+    final sheet = find.byType(BottomSheet);
+    final icon = tester.getCenter(
+      find.descendant(of: sheet, matching: find.byIcon(Icons.search)),
+    );
+    final hint = tester.getCenter(
+      find.descendant(
+        of: sheet,
+        matching: find.textContaining(libL10n.search),
+      ),
+    );
+    expect(hint.dy, moreOrLessEquals(icon.dy, epsilon: 1));
+  });
+
+  testWidgets('the list is a column beside the open machine', (tester) async {
+    // The column arrives with the card and the card grows to its edge, never
+    // under it: the chart has to land where the page beside the column draws
+    // it.
+    addServers();
+    await pump(tester, size: const Size(1200, 900));
+    await answer(tester);
+    expect(find.byType(SideBarTile), findsNothing);
+
     await tester.tap(find.text('web'));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 60));
-    expect(identical(overview(), resting), isTrue);
+    for (var i = 0; i < 8; i++) {
+      await tester.pump(const Duration(milliseconds: 40));
+      if (find.byType(AnimatedMasonry).evaluate().isEmpty) break;
+      // Where the column ends on this frame is where the surface beside it
+      // starts: the column itself is laid out at its full width and clipped.
+      final edge = tester.getRect(find.byType(ServerDetailPage)).left;
+      final card = tester.getRect(
+        find.byWidgetPredicate(
+          (w) => w is ServerCard && w.srv.spi.id == 'srv-0',
+        ),
+      );
+      expect(
+        card.left,
+        greaterThanOrEqualTo(edge - 0.5),
+        reason: 'frame $i of the way in',
+      );
+    }
 
-    // Past the halfway point, where the other face is the one turning.
-    await tester.pump(const Duration(milliseconds: 240));
-    final turning = switcher();
     await settle(tester);
-    expect(identical(switcher(), turning), isTrue);
+    final column = tester.getRect(find.byType(ListView).first);
+    final page = tester.getRect(find.byType(ServerDetailPage));
+    expect(page.left, greaterThan(column.right));
+    expect(page.right, 1200);
+    expect(find.byType(SideBarTile), findsNWidgets(2));
 
-    // And into the way back: past the chrome leaving, a little into the turn.
+    // Under their tags, whatever the grid is set to: neither is tagged.
+    expect(find.byType(SideBarSection), findsOneWidget);
+
+    // A line of the column opens its machine.
+    await tester.tap(find.widgetWithText(SideBarTile, 'db'));
+    await settle(tester);
+    expect(openId(tester), 'srv-1');
+
+    // And it leaves with the card on the way back.
     await tester.tap(find.byIcon(Icons.arrow_back_ios_new));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 260));
-    expect(identical(switcher(), turning), isTrue);
-
-    await tester.pump(const Duration(milliseconds: 240));
-    final landing = overview();
     await settle(tester);
-    expect(identical(overview(), landing), isTrue);
+    expect(find.byType(SideBarTile), findsNothing);
+    expect(find.byType(ServerCard), findsNWidgets(2));
   });
 
   testWidgets('and it is as far from the bar as the cards are from it', (

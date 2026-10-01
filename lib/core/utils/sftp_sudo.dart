@@ -60,7 +60,7 @@ final class SftpSudoHelper {
 
     final pwd = await context.showPwdDialog(
       title: l10n.trySudo,
-      label: spi.ssh?.user ?? '',
+      label: spi.ssh?.user,
       id: '${spi.id}_sftp_sudo',
       remember: _rememberPwd,
     );

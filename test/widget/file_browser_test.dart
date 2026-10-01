@@ -478,6 +478,21 @@ final typedField = find.byWidgetPredicate(
     expect(find.text('Rename'), findsNothing);
   });
 
+  testWidgets('the add button drops its menu from itself', (tester) async {
+    // A menu under the button, as every other `+` in a bar does — it was a
+    // dialog in the middle of the page.
+    final backend = _MapBackend({'/': const []});
+
+    await pump(tester, backend);
+    final button = tester.getRect(find.byIcon(Icons.add));
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(Dialog), findsNothing);
+    expect(find.text('File'), findsOneWidget);
+    expect(tester.getRect(find.text('Folder')).top, greaterThan(button.bottom));
+  });
+
   group('picking several out', () {
     _MapBackend threeFiles() => _MapBackend({
       '/': [_file('a.txt'), _file('b.txt'), _file('c.txt')],

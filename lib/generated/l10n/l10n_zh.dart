@@ -1901,6 +1901,19 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String funcNeedsAgentGrant(String func, String setting) {
+    return '$func需要在 Monitor agent 中开启 $setting。';
+  }
+
+  @override
+  String funcNeedsAgentUpdate(String func) {
+    return '$func需要更新 Monitor agent。';
+  }
+
+  @override
+  String get portForwardNeedsSsh => '远程转发和动态转发需要 SSH，Monitor agent 不支持。';
+
+  @override
   String get rangeLive => '实时';
 
   @override
@@ -2622,6 +2635,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get remoteDesktopFullScreen => '全屏';
+
+  @override
+  String get remoteDesktopExitFullScreen => '退出全屏';
 
   @override
   String get remoteDesktopCloseSession => '关闭会话';
@@ -6569,6 +6585,19 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
+  String funcNeedsAgentGrant(String func, String setting) {
+    return '$func需要在 Monitor agent 中開啟 $setting。';
+  }
+
+  @override
+  String funcNeedsAgentUpdate(String func) {
+    return '$func需要更新 Monitor agent。';
+  }
+
+  @override
+  String get portForwardNeedsSsh => '遠端轉發和動態轉發需要 SSH，Monitor agent 不支援。';
+
+  @override
   String get rangeLive => '即時';
 
   @override
@@ -7290,6 +7319,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get remoteDesktopFullScreen => '全螢幕';
+
+  @override
+  String get remoteDesktopExitFullScreen => '結束全螢幕';
 
   @override
   String get remoteDesktopCloseSession => '關閉工作階段';

@@ -26,7 +26,8 @@ first, and the other stays available.
 | Status and charts | yes | yes, with history from before the app connected |
 | Terminal, commands, processes, containers, systemd, snippets, power | yes | only with `full_access` **and** `[remote_access.terminal] enabled` **and** a secure transport |
 | File browser | yes (SFTP) | only with `[remote_access.fs]` and a non-empty `roots` |
-| SFTP transfers, port forwarding | yes | **never** — configure SSH for the same server too |
+| Local port forwarding, remote desktop | yes | with `full_access`, through the agent's TCP relay (an agent older than the relay reports none: update it) |
+| SFTP transfers, remote and dynamic port forwarding | yes | **never** — configure SSH for the same server too |
 | Push alerts, home-screen widgets, watch app | no | yes, they read the agent with the app closed |
 
 Recommend SSH unless there is a reason not to. The agent is the answer when the
@@ -39,7 +40,8 @@ The app only shows what the server can do. For a server reached **only**
 through the agent, a missing terminal, command, container or process control
 almost always means the agent does not allow it — and on a fresh install
 `[remote_access.terminal] enabled` is off, so nothing beyond charts is offered.
-Missing SFTP or port forwarding means SSH is not configured for that server.
+Missing SFTP, or remote and dynamic forwards, means SSH is not configured for
+that server. A greyed button says why when tapped or hovered.
 It is a configuration answer, not a bug. Details and the fix:
 `references/monitor.md`.
 

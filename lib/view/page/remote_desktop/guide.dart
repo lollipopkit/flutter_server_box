@@ -8,7 +8,7 @@ part of 'viewer.dart';
 /// after that are the ones whose effect is not on their face — view only
 /// looks like a mouse, and Ctrl+Alt+Delete is behind the menu.
 ///
-/// Not the fit and zoom buttons: pressing one shows what it does.
+/// Not the scale button: picking one shows what it does.
 extension _GuideX on _RemoteDesktopViewerState {
   /// Waits for a desktop to be on screen. Before that the canvas is a status
   /// line, and a certificate prompt may still be up over it.

@@ -1107,10 +1107,18 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
       // every mobile build the one visible `+` in this tab belonged to the
       // *server* list and adding a file had no button at all.
       if (!widget.args.isPickFile && !widget.args.isPickDir)
-        Btn.icon(
-          text: libL10n.add,
-          icon: const Icon(Icons.add, size: 18),
-          onTap: () => showContextMenu(context, _createActions),
+        // Its own context, so the menu drops from this button rather than
+        // opening as a dialog in the middle of the page.
+        Builder(
+          builder: (ctx) => Btn.icon(
+            text: libL10n.add,
+            icon: const Icon(Icons.add, size: 18),
+            onTap: () => showContextMenu(
+              ctx,
+              _createActions,
+              at: contextMenuAnchorBelow(ctx),
+            ),
+          ),
         ),
       _buildViewBtn(),
       Btn.icon(text: libL10n.search, icon: const Icon(Icons.search, size: 18), onTap: _search.start),
@@ -1810,69 +1818,39 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   Widget _buildViewBtn() {
     return _sort.listenVal((value) {
       final hidden = Stores.setting.showHiddenFiles.fetch();
-      return PopupMenuButton<Object>(
+      return ContextMenuButton(
         tooltip: libL10n.sort,
-        padding: EdgeInsets.zero,
+        actions: () => [
+          for (final by in _SortBy.values)
+            ContextMenuAction(
+              text: by.i18n,
+              // The direction, on the one that is doing the sorting. Tapping
+              // it again is what flips it, so it has to be visible there.
+              note: by == value.by ? (value.reversed ? '↓' : '↑') : null,
+              checked: by == value.by,
+              onTap: () => _sort.value = by == value.by
+                  ? _SortOption(by: by, reversed: !value.reversed)
+                  : _SortOption(by: by, reversed: value.reversed),
+            ),
+          ContextMenuAction(
+            text: l10n.showHiddenFiles,
+            icon: hidden ? Icons.check_box : Icons.check_box_outline_blank,
+            onTap: () {
+              Stores.setting.showHiddenFiles.put(!hidden);
+              // The setting is read while sorting, so the list has to be
+              // asked to sort again — nothing about the listing changed.
+              _sort.notify();
+            },
+          ),
+        ],
         child: const Padding(
           padding: EdgeInsets.all(7),
           child: Icon(Icons.sort, size: 18),
         ),
-        itemBuilder: (_) => [
-          for (final by in _SortBy.values)
-            PopupMenuItem(
-              value: by,
-              child: Text(
-                // The direction, on the one that is doing the sorting. Tapping
-                // it again is what flips it, so it has to be visible there.
-                by == value.by
-                    ? '${by.i18n} (${value.reversed ? '-' : '+'})'
-                    : by.i18n,
-                style: TextStyle(
-                  color: by == value.by ? UIs.primaryColor : null,
-                  fontWeight: by == value.by ? FontWeight.bold : null,
-                ),
-              ),
-            ),
-          const PopupMenuDivider(),
-          PopupMenuItem(
-            value: _kToggleHidden,
-            child: Row(
-              spacing: 7,
-              children: [
-                Icon(
-                  hidden ? Icons.check_box : Icons.check_box_outline_blank,
-                  size: 18,
-                ),
-                // Expanded, because this label is a translation: 17 characters
-                // in English and 28 in French and Indonesian, in a menu whose
-                // width is decided by the longest of the three sort names
-                // above it. Unwrapped, the longer locales run off the right.
-                Expanded(child: Text(l10n.showHiddenFiles)),
-              ],
-            ),
-          ),
-        ],
-        onSelected: (selected) {
-          if (selected == _kToggleHidden) {
-            Stores.setting.showHiddenFiles.put(!hidden);
-            // The setting is read while sorting, so the list has to be asked
-            // to sort again — nothing about the listing itself changed.
-            _sort.notify();
-            return;
-          }
-          final by = selected as _SortBy;
-          final old = _sort.value;
-          _sort.value = by == old.by
-              ? _SortOption(by: old.by, reversed: !old.reversed)
-              : _SortOption(by: by, reversed: old.reversed);
-        },
       );
     });
   }
 }
-
-/// Not a [_SortBy], so the menu can carry one entry that is not a sort order.
-const _kToggleHidden = 'toggle-hidden';
 
 @immutable
 class _SortOption {
@@ -1894,7 +1872,7 @@ enum _SortBy {
   size,
   time;
 
-  /// Ascending, always, so that the `+` and `-` the menu shows mean the same
+  /// Ascending, always, so that the arrow the menu shows means the same
   /// thing whichever of the three is chosen.
   int compare(FileEntry a, FileEntry b) => switch (this) {
     name => a.name.toLowerCase().compareTo(b.name.toLowerCase()),

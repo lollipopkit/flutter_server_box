@@ -514,7 +514,11 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
             ffi.RemoteDesktopEndReason.authenticationFailed,
       ),
     );
-    final viewer = RemoteDesktopViewer(sessionId: _vncId);
+    final viewer = RemoteDesktopViewer(
+      sessionId: _vncId,
+      // The guest's header above already names it.
+      showName: false,
+    );
     if (!refused) return viewer;
     return Column(
       children: [

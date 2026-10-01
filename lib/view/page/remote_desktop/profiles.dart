@@ -11,9 +11,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/provider/remote_desktop.dart';
-import 'package:server_box/view/page/remote_desktop/pane_slide.dart';
 import 'package:server_box/view/page/remote_desktop/profile_edit.dart';
-import 'package:server_box/view/widget/pane_settings.dart';
 
 /// One server's remote desktop profiles: a list, and the form each row opens.
 ///
@@ -30,22 +28,20 @@ final class RemoteDesktopProfilesPage extends ConsumerStatefulWidget {
   const RemoteDesktopProfilesPage({
     super.key,
     required this.args,
-    this.onBack,
+    required this.onBack,
     this.onSessionOpened,
     this.onTestSessionOpening,
   });
 
   final SpiRequiredArgs args;
 
-  /// When embedded in the remote desktop tab, keep the form in its pane.
-  final VoidCallback? onBack;
+  /// Back to the session or server picker of the remote desktop tab, which
+  /// this page is always part of: a server's profiles are reached by selecting
+  /// the server there (`RemoteDesktopServerRequest`), not as a page of their
+  /// own.
+  final VoidCallback onBack;
   final VoidCallback? onSessionOpened;
   final ValueChanged<String?>? onTestSessionOpening;
-
-  static const route = AppRouteArg<void, SpiRequiredArgs>(
-    page: RemoteDesktopProfilesPage.new,
-    path: '/remote_desktop_profiles',
-  );
 
   @override
   ConsumerState<RemoteDesktopProfilesPage> createState() =>
@@ -82,53 +78,19 @@ class _RemoteDesktopProfilesPageState
       });
     }
 
-    if (widget.onBack != null) {
-      final pane = _editing == null || gone
-          ? _buildList(profiles, false)
-          : RemoteDesktopProfileEditPage(
-              args: RemoteDesktopProfileEditArgs(
-                serverId: widget.args.spi.id,
-                profile: editing,
-                onClose: () => setState(() => _editing = null),
-                onTestSessionOpening: widget.onTestSessionOpening,
-              ),
-            );
-      return NestedNavigator(
-        rootId: gone ? null : _editing,
-        rootBuilder: (_) => pane,
-      );
-    }
-
-    return RemoteDesktopPaneSlide(
-      child: PaneSettings.listenAll((paneWidth, paneCollapsed) {
-        return AdaptivePanes.detail(
-          listWidth: paneWidth,
-          onListWidthChanged: PaneSettings.saveWidth,
-          collapsed: paneCollapsed,
-          onCollapsedChanged: PaneSettings.saveCollapsed,
-          collapseTooltip: libL10n.fold,
-          expandTooltip: libL10n.open,
-          detailId: _editing,
-          onCloseDetail: () => setState(() => _editing = null),
-          // Never null, so the two columns are what this page looks like from the
-          // moment it opens. A null builder hands the whole width back to the
-          // list, which made the first thing anyone saw a full-width list that
-          // rearranged itself into a column as soon as a row was tapped.
-          //
-          // `_editing` is the sentinel for a new profile, so the pane shows a
-          // form for it exactly as it does for a saved one — and shows nothing at
-          // all for an id whose record has just gone.
-          detailBuilder: (_) => _editing == null || gone
-              ? const EmptyPane(icon: Icons.desktop_windows_outlined)
-              : RemoteDesktopProfileEditPage(
-                  args: RemoteDesktopProfileEditArgs(
-                    serverId: widget.args.spi.id,
-                    profile: editing,
-                  ),
-                ),
-          listBuilder: (_, split) => _buildList(profiles, split),
-        );
-      }),
+    final pane = _editing == null || gone
+        ? _buildList(profiles)
+        : RemoteDesktopProfileEditPage(
+            args: RemoteDesktopProfileEditArgs(
+              serverId: widget.args.spi.id,
+              profile: editing,
+              onClose: () => setState(() => _editing = null),
+              onTestSessionOpening: widget.onTestSessionOpening,
+            ),
+          );
+    return NestedNavigator(
+      rootId: gone ? null : _editing,
+      rootBuilder: (_) => pane,
     );
   }
 }
@@ -136,18 +98,15 @@ class _RemoteDesktopProfilesPageState
 // --- Widgets ---
 
 extension _Widgets on _RemoteDesktopProfilesPageState {
-  Widget _buildList(List<RemoteDesktopProfile> profiles, bool split) {
+  Widget _buildList(List<RemoteDesktopProfile> profiles) {
     return Scaffold(
       appBar: CustomAppBar(
-        // A route's list is already the back destination for its detail.
-        // Embedded in the tab, Back returns to the session or server picker.
-        leading: widget.onBack == null
-            ? const SizedBox.shrink()
-            : IconButton(
-                tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-                icon: const Icon(Icons.arrow_back),
-                onPressed: widget.onBack,
-              ),
+        // Back returns to the tab's session or server picker.
+        leading: IconButton(
+          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+          icon: const Icon(Icons.arrow_back),
+          onPressed: widget.onBack,
+        ),
         title: TwoLineText(
           up: l10n.remoteDesktop,
           down: widget.args.spi.name,
@@ -157,38 +116,11 @@ extension _Widgets on _RemoteDesktopProfilesPageState {
           Btn.icon(
             text: libL10n.add,
             icon: const Icon(Icons.add, size: 18),
-            onTap: () => _edit(null, split),
+            onTap: () => _edit(null),
           ),
         ],
       ),
-      body: profiles.isEmpty
-          ? _empty(split)
-          : split
-          ? _buildRail(profiles)
-          : _buildCards(profiles),
-    );
-  }
-
-  /// The narrow column: a name and nothing else, like every other rail here.
-  Widget _buildRail(List<RemoteDesktopProfile> profiles) {
-    return ListView(
-      // Room at the bottom for the add button to float over, the way the
-      // server rail leaves it.
-      padding: const EdgeInsets.only(top: 4, bottom: 77),
-      children: [
-        for (final profile in profiles)
-          SideBarTile(
-            key: ValueKey(profile.id),
-            title: profile.name,
-            icon: profile.protocol == RemoteDesktopProtocol.rdp
-                ? Icons.desktop_windows_outlined
-                : Icons.connected_tv_outlined,
-            selected: _editing == profile.id,
-            live: _isOpen(profile),
-            onTap: () => _edit(profile, true),
-            onMenu: (at) => _showRowMenu(profile, at),
-          ),
-      ],
+      body: profiles.isEmpty ? _empty() : _buildCards(profiles),
     );
   }
 
@@ -237,11 +169,11 @@ extension _Widgets on _RemoteDesktopProfilesPageState {
                         IconButton(
                           tooltip: libL10n.edit,
                           icon: const Icon(Icons.edit_outlined),
-                          onPressed: () => _edit(profile, false),
+                          onPressed: () => _edit(profile),
                         )
                       else
                         TextButton.icon(
-                          onPressed: () => _edit(profile, false),
+                          onPressed: () => _edit(profile),
                           icon: const Icon(Icons.edit_outlined),
                           label: Text(libL10n.edit),
                         ),
@@ -258,20 +190,15 @@ extension _Widgets on _RemoteDesktopProfilesPageState {
     );
   }
 
-  Widget _empty(bool split) {
-    final add = FilledButton.icon(
-      onPressed: () => _edit(null, split),
+  Widget _empty() => EmptyPane(
+    icon: Icons.desktop_windows_outlined,
+    label: l10n.remoteDesktopNoProfiles,
+    action: FilledButton.icon(
+      onPressed: () => _edit(null),
       icon: const Icon(Icons.add),
       label: Text(l10n.remoteDesktopAddProfile),
-    );
-    // In the rail's place the button is in the bar already, so the empty pane
-    // only has to say what is missing.
-    return EmptyPane(
-      icon: Icons.desktop_windows_outlined,
-      label: l10n.remoteDesktopNoProfiles,
-      action: split ? null : add,
-    );
-  }
+    ),
+  );
 
   bool _isOpen(RemoteDesktopProfile profile) => ref.watch(
     remoteDesktopSessionsProvider.select(
@@ -307,21 +234,9 @@ extension _Actions on _RemoteDesktopProfilesPageState {
     }
   }
 
-  /// Opens [profile] — or a new one when null — in the editor beside the list,
-  /// or over it when there is no room for a second column.
-  void _edit(RemoteDesktopProfile? profile, bool split) {
-    if (split || widget.onBack != null) {
+  /// Opens [profile] — or a new one when null — in the editor, in this pane.
+  void _edit(RemoteDesktopProfile? profile) =>
       setState(() => _editing = profile?.id ?? _newProfile);
-      return;
-    }
-    RemoteDesktopProfileEditPage.route.go(
-      context,
-      RemoteDesktopProfileEditArgs(
-        serverId: widget.args.spi.id,
-        profile: profile,
-      ),
-    );
-  }
 
   void _showRowMenu(RemoteDesktopProfile profile, Offset? at) {
     showContextMenu(

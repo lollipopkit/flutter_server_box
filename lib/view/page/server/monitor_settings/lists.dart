@@ -167,14 +167,16 @@ final class _MonitorRulesPageState extends State<MonitorRulesPage> {
               ListTile(
                 leading: const Icon(MingCute.alert_line),
                 title: Text(l10n.ruleMonitorType),
-                trailing: PopupMenu<String>(
-                  initialValue: type,
-                  items: [
+                trailing: ContextMenuButton(
+                  actions: () => [
                     for (final e in {..._kRuleTypes, type})
-                      PopupMenuItem(value: e, child: Text(e)),
+                      ContextMenuAction(
+                        text: e,
+                        checked: e == type,
+                        onTap: () => setDialogState(() => type = e),
+                      ),
                   ],
-                  onSelected: (value) => setDialogState(() => type = value),
-                  child: Text(type),
+                  child: ContextMenuButton.value(Text(type)),
                 ),
               ).cardx,
               Input(

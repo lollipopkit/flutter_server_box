@@ -1,12 +1,15 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/port_forward_provider.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/status.dart';
@@ -78,6 +81,67 @@ void main() {
       await closeTestDb();
     }
   });
+
+  group('a local forward on a server with both SSH and an agent', () {
+    /// Starts one and answers whether SSH was connected for it.
+    Future<bool> dialsSsh(ServerTransport preferred) async {
+      await openTestDb();
+      final store = PortForwardStore();
+      getIt.registerSingleton<PortForwardStore>(store);
+      const serverId = 'server-id';
+      SqliteDb.instance.execute(
+        "INSERT INTO server (id, name, ssh_ip) VALUES ('$serverId', 'server', '127.0.0.1');",
+      );
+      final config = PortForwardConfig(
+        id: 'forward-id',
+        serverId: serverId,
+        name: 'test',
+        type: PortForwardType.local,
+        localHost: InternetAddress.loopbackIPv4.address,
+        localPort: await _freeLoopbackPort(),
+        remoteHost: '127.0.0.1',
+        remotePort: 22,
+      );
+      store.put(config);
+
+      final notifier = _FixedServerNotifier(
+        ServerState(
+          spi: spiFixture(name: 'server', id: serverId, ip: '127.0.0.1')
+              .copyWith(
+                monitorHttp: const MonitorHttpCredential(
+                  addr: 'https://agent:3770',
+                ),
+                preferredTransport: preferred,
+              ),
+          status: InitStatus.status,
+          remoteAccess: const MonitorRemoteAccess(stream: true),
+        ),
+      );
+      final container = ProviderContainer(
+        overrides: [serverProvider(serverId).overrideWith(() => notifier)],
+      );
+      try {
+        final forwards = container.read(portForwardProvider(serverId).notifier);
+        await forwards.startForward(config.id);
+        await forwards.stopForward(config.id);
+        return notifier.shellDials > 0;
+      } finally {
+        container.dispose();
+        await getIt.reset();
+        await closeTestDb();
+      }
+    }
+
+    test('the agent leading, goes over its relay without SSH', () async {
+      // An sshd that is down would otherwise fail a forward that never
+      // needed it.
+      expect(await dialsSsh(ServerTransport.monitorHttp), isFalse);
+    });
+
+    test('SSH leading, connects it before binding', () async {
+      expect(await dialsSsh(ServerTransport.ssh), isTrue);
+    });
+  });
 }
 
 /// Waits for the forward to take [port], which is what says it reached its
@@ -148,6 +212,16 @@ class _FixedServerNotifier extends ServerNotifier {
 
   final ServerState _serverState;
 
+  /// How many times SSH was asked for. Refused, as an sshd that is down is.
+  int shellDials = 0;
+
   @override
   ServerState build(String serverId) => _serverState;
+
+  @override
+  Future<SSHClient> ensureShellClient({VoidCallback? onDial}) {
+    shellDials++;
+    if (_serverState.client case final client?) return Future.value(client);
+    return Future.error(const SocketException('sshd is down'));
+  }
 }

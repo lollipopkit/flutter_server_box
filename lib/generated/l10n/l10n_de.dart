@@ -2078,6 +2078,20 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String funcNeedsAgentGrant(String func, String setting) {
+    return '$func erfordert, dass $setting im Monitor agent aktiviert ist.';
+  }
+
+  @override
+  String funcNeedsAgentUpdate(String func) {
+    return '$func erfordert einen neueren Monitor agent.';
+  }
+
+  @override
+  String get portForwardNeedsSsh =>
+      'Remote- und dynamische Weiterleitungen benötigen SSH: Der Monitor agent unterstützt sie nicht.';
+
+  @override
   String get rangeLive => 'Live';
 
   @override
@@ -2842,6 +2856,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get remoteDesktopFullScreen => 'Vollbild';
+
+  @override
+  String get remoteDesktopExitFullScreen => 'Vollbild beenden';
 
   @override
   String get remoteDesktopCloseSession => 'Sitzung schließen';
