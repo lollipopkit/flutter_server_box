@@ -220,6 +220,11 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   an index that no longer names a job is refused (`unknownLine`). The audit
   detail carries the schedule, never the command. `tests/cron_api.rs` never
   saves — it would write the crontab of whoever runs the suite.
+  `/containers` (`sbm_parser::container`): Docker, then Podman, with a
+  `docker` that is Podman read as Podman; each part (containers, images,
+  usage, logs) is one batch split by a fresh separator, and an action answers
+  with the refreshed listing. A runtime the agent's account may not reach is
+  `permission_denied`, not a failure. TODO: `DOCKER_HOST` and a sudo path.
   `tests/watch_token_scope.rs` lists these routes with requests that are
   harmless under the panel login; `/power` is left out, since every body it
   accepts takes the machine down.

@@ -9,6 +9,7 @@ pub mod service;
 pub mod push;
 pub mod cors;
 pub mod admin;
+pub mod containers;
 pub mod auth;
 pub mod authz;
 pub mod ratelimit;

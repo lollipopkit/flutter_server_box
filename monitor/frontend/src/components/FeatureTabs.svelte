@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Activity, CalendarClock, ServerCog, type LucideIcon } from '@lucide/svelte'
+  import { Activity, CalendarClock, Container, ServerCog, type LucideIcon } from '@lucide/svelte'
   import { enabledFeatures, type FeatureId } from '../lib/features'
   import { capabilitiesStore } from '../lib/capabilities.svelte'
   import { layout } from '../lib/layout.svelte'
@@ -16,6 +16,7 @@
   /// A `Record` over every `FeatureId`, so a page added to the list without a
   /// label here is a type error rather than an empty tab.
   const PRESENTATION: Record<FeatureId, { label: () => string; icon: LucideIcon }> = {
+    containers: { label: () => $LL.containers(), icon: Container },
     process: { label: () => $LL.processes(), icon: Activity },
     services: { label: () => $LL.services(), icon: ServerCog },
     cron: { label: () => $LL.cron(), icon: CalendarClock },

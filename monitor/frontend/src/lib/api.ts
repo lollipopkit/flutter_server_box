@@ -18,6 +18,10 @@ import type {
   SettingsView,
   StatusResponse,
   SystemMetrics,
+  ContainerAction,
+  ContainerActionResult,
+  ContainerPart,
+  ContainerView,
   CronEdit,
   CronView,
   PowerAction,
@@ -302,6 +306,27 @@ export const api = {
       '/cron',
       { method: 'PUT', body: JSON.stringify(edit) },
       'Failed to save the schedule',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// The runtime's containers, images or disk usage — one at a time (the
+  /// `shell` grant). `part: 'logs'` names a container: a log belongs to one,
+  /// and the agent refuses the request rather than guessing which.
+  getContainers: (part: ContainerPart, id?: string) =>
+    request<ContainerView>(
+      `/containers?part=${part}${id ? `&id=${encodeURIComponent(id)}` : ''}`,
+      {},
+      'Failed to fetch the containers',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// One change, answered in one round trip with the refreshed listing and
+  /// `exit_code`/`output`, what the runtime said about the change.
+  actContainer: (action: ContainerAction) =>
+    request<ContainerActionResult>(
+      '/containers',
+      { method: 'POST', body: JSON.stringify(action) },
+      'Failed to change the container',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
