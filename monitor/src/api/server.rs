@@ -130,6 +130,17 @@ pub struct AppState {
     pub config_write: Arc<Mutex<()>>,
 }
 
+/// The file a `sqlite:` [url] opens, or `None` for an in-memory database.
+fn sqlite_file(url: &str) -> Option<std::path::PathBuf> {
+    use std::str::FromStr;
+    let options = sqlx::sqlite::SqliteConnectOptions::from_str(url).ok()?;
+    let file = options.get_filename();
+    let memory = url.contains("mode=memory")
+        || file.as_os_str().is_empty()
+        || file.to_string_lossy().starts_with("file:");
+    (!memory).then(|| file.to_path_buf())
+}
+
 /// Where this agent keeps what the file API must never reach — see
 /// [`crate::core::fs_roots::Protected`]: the database (and its journal files)
 /// with `jwt.secret` and the first-start credentials beside it, `config.toml`
@@ -139,14 +150,11 @@ fn agent_state(config: &Config) -> crate::core::fs_roots::Protected {
     use std::path::Path;
     let mut protected = crate::core::fs_roots::Protected::default();
     let url = config.get_database_url();
-    let db = url
-        .trim_start_matches("sqlite://")
-        .trim_start_matches("sqlite:")
-        .split('?')
-        .next()
-        .unwrap_or_default();
-    if !db.is_empty() && !db.starts_with(":memory:") {
-        protected.file(Path::new(db));
+    // The file sqlx opens, as sqlx reads the URL — percent-decoded, query
+    // removed. Taking it apart here by hand protected `my%20db.db` while the
+    // database was `my db.db`.
+    if let Some(db) = sqlite_file(&url) {
+        protected.file(&db);
     }
     protected.file(&config.jwt_secret_path());
     protected.file(&crate::db::bootstrap::initial_credentials_path(&url));
@@ -1686,6 +1694,20 @@ mod metrics_json_tests {
 #[cfg(test)]
 mod agent_state_tests {
     use super::*;
+
+    #[test]
+    fn the_database_is_the_file_sqlx_opens() {
+        assert_eq!(
+            sqlite_file("sqlite:///data/my%20db.db?mode=rwc"),
+            Some(std::path::PathBuf::from("/data/my db.db"))
+        );
+        assert_eq!(
+            sqlite_file("sqlite:serverbox_monitor.db"),
+            Some(std::path::PathBuf::from("serverbox_monitor.db"))
+        );
+        assert_eq!(sqlite_file("sqlite::memory:"), None);
+        assert_eq!(sqlite_file("sqlite://?mode=memory"), None);
+    }
 
     #[test]
     fn the_environment_file_is_agent_state() {

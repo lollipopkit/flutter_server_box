@@ -200,7 +200,14 @@ mod over_http {
         ensure_crypto_provider();
         let mut config = Config {
             jwt_secret: Some(SECRET.to_string()),
-            database_url: Some(format!("sqlite:{}", home.join("serverbox_monitor.db").display())),
+            // Without Windows' verbatim `\\?\` prefix, which a canonical path
+            // has there: in a URL its `?` starts the query, as sqlx reads it.
+            database_url: Some(format!(
+                "sqlite:{}",
+                home.join("serverbox_monitor.db")
+                    .to_string_lossy()
+                    .trim_start_matches(r"\\?\")
+            )),
             server: Some(ServerConfig {
                 tls: Some(TlsConfig {
                     cert_path: home.join("cert.pem").to_string_lossy().into_owned(),
