@@ -175,22 +175,6 @@ jobs:
           submodules: recursive
           persist-credentials: false
 
-      # kache caches each rustc invocation by a hash of its normalized inputs,
-      # deduplicated across crates, rather than a snapshot of `target/` per
-      # job. Saved from main only: a pull request restores main's store and
-      # adds nothing to the repository's 10 GB, so branches stop evicting it.
-      # A prefix per job, because the store is keyed by OS and `Cargo.lock`
-      # alone, and the first job to save under a key keeps it.
-      - uses: kunobi-ninja/kache-action@ad7317540dcdd71c904f7a60a87b620a0c0e67ed # v1
-        with:
-          version: 0.26.3
-          cache-key-prefix: kache-rust-tests
-          save-cache: ${{ github.ref == 'refs/heads/main' }}
-          pr-comment: false
-          # The home and workspace volumes differ on hosted Windows runners,
-          # and a store that cannot hardlink into `target/` copies instead.
-          cache-dir: ${{ runner.os == 'Windows' && format('{0}/kache', runner.temp) || '' }}
-
       # The toolchain the app's build hook is pinned to, rather than the
       # runner's `stable`: that one moves on its own, and a lint added in a new
       # release failed pull requests that changed nothing it looks at.
@@ -590,14 +574,6 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
-
-      # See `rustTests` for why kache and why only main saves.
-      - uses: kunobi-ninja/kache-action@ad7317540dcdd71c904f7a60a87b620a0c0e67ed # v1
-        with:
-          version: 0.26.3
-          cache-key-prefix: kache-flutter-tests
-          save-cache: ${{ github.ref == 'refs/heads/main' }}
-          pr-comment: false
 
       # FFI-dependent suites (frb_parser/windows/server_status_update_req...)
       # load the dylib from target/debug via test/helpers/rust_lib_helper.dart

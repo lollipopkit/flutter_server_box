@@ -33,7 +33,7 @@ Flutter app for managing servers, in a Rust workspace monorepo. Feature-specific
   - macOS / Windows build: `macos/` or `windows/`, `hook/`, `crates/`, `Cargo.{toml,lock}`, `packages/flutter_pty`, `packages/fl_pi_llm` (its Rust crate, built by its own hook).
   - All three: `pubspec.{yaml,lock}` (a new plugin brings native code), `.github/actions/`, and `analysis.yml` itself.
   - Not a reason on its own: `lib/`, `test/`, or a gitlink move of a pure-Dart submodule (`fl_lib`, `dartssh2`, `xterm`, `fl_build`). `check` compiles those, and a native dependency they add shows up in `pubspec.lock`.
-- **Rust caching depends on who runs cargo, and every cache saves from main only.** A job's own `cargo` gets `kunobi-ninja/kache-action` (as `RUSTC_WRAPPER`), with a `cache-key-prefix` of its own. A `flutter build`/`flutter test` builds `sbm_ffi` through the build hook instead, which kache never sees — hooks_runner passes an environment allowlist, and neither `RUSTC_WRAPPER` nor `RUSTUP_TOOLCHAIN` is on it — so it gets `.github/actions/build-hook-cache` (`step: restore` before, `step: save` after). rust-cache is gone: it cached a `target/` the hook does not build into.
+- **Rust caching: only the build hook's output is cached, saved from main only.** A `flutter build`/`flutter test` builds `sbm_ffi` through the build hook, which gets `.github/actions/build-hook-cache` (`step: restore` before, `step: save` after); hooks_runner passes an environment allowlist, so no `RUSTC_WRAPPER` or `RUSTUP_TOOLCHAIN` reaches it. A job's own `cargo` runs uncached: kache-action was removed, and rust-cache before it cached a `target/` the hook does not build into.
 
 ### Rust / FFI
 
