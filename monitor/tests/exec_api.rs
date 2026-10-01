@@ -5,6 +5,8 @@
 //! against real commands, since an exec endpoint that reports someone else's
 //! output would be worse than one that reports none.
 
+mod common;
+
 use std::sync::{Arc, Once};
 
 use ntex::time::Millis;
@@ -44,12 +46,13 @@ async fn app_state_with(full_access: bool, exec: ExecConfig) -> Arc<AppState> {
     // The grant is gated on the terminal being available, so that switching
     // the terminal off cannot leave this door open behind it. The test server
     // listens on loopback, which counts as a secure transport.
-    remote.terminal.enabled = true;
+    remote.terminal.enabled = Some(true);
     remote.full_access = Some(full_access);
     config.remote_access = Some(remote);
 
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
     sqlx::migrate!("./migrations").run(&db).await.unwrap();
+    common::seed_as_upgrade(&db, &config).await;
     AppState::new(Arc::new(config), db)
 }
 

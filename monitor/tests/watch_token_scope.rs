@@ -22,6 +22,8 @@
 //! come from a grant being switched off. With every door unlocked, 401 is the
 //! only thing left that can be doing the refusing.
 
+mod common;
+
 use std::sync::{Arc, Once};
 
 use ntex::http::Method;
@@ -77,9 +79,9 @@ async fn permissive_state() -> Arc<AppState> {
         ..Default::default()
     };
     let mut remote = config.get_remote_access();
-    remote.terminal.enabled = true;
+    remote.terminal.enabled = Some(true);
     remote.full_access = Some(true);
-    remote.fs.enabled = true;
+    remote.fs.enabled = Some(true);
     remote.fs.roots = vec![
         std::fs::canonicalize(std::env::current_dir().unwrap())
             .unwrap()
@@ -90,6 +92,7 @@ async fn permissive_state() -> Arc<AppState> {
 
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
     sqlx::migrate!("./migrations").run(&db).await.unwrap();
+    common::seed_as_upgrade(&db, &config).await;
     AppState::new(Arc::new(config), db)
 }
 
@@ -185,7 +188,6 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
             "/api/v1/exec",
             Some(json!({ "cmd": "echo scoped" })),
         ),
-        (Method::GET, "/api/v1/capabilities", None),
         (Method::GET, "/api/v1/fs/roots", None),
         (Method::GET, "/api/v1/fs/list?path=/", None),
         (Method::GET, "/api/v1/fs/stat?path=/", None),
@@ -249,14 +251,52 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
                 "cors_allowed_origins": [],
             })),
         ),
-        (Method::GET, "/api/v1/card-order", None),
         (
             Method::PUT,
             "/api/v1/card-order",
             Some(json!({ "card_order": [] })),
         ),
-        (Method::GET, "/api/v1/velocity", None),
-        (Method::GET, "/api/v1/velocity/history", None),
+        // Accounts and roles. The panel-login half sends a wrong
+        // `current_password` to every one that would change something, so
+        // they stop at re-authentication — which is still not a 401.
+        (Method::GET, "/api/v1/me", None),
+        (
+            Method::PUT,
+            "/api/v1/me/password",
+            Some(json!({ "current_password": "nope", "new_password": "new-password" })),
+        ),
+        (Method::GET, "/api/v1/users", None),
+        (
+            Method::POST,
+            "/api/v1/users",
+            Some(json!({ "username": "x", "password": "password-x", "role": "viewer", "current_password": "nope" })),
+        ),
+        (
+            Method::PUT,
+            "/api/v1/users/intruder",
+            Some(json!({ "role": "viewer", "current_password": "nope" })),
+        ),
+        (
+            Method::DELETE,
+            "/api/v1/users/intruder",
+            Some(json!({ "current_password": "nope" })),
+        ),
+        (Method::GET, "/api/v1/roles", None),
+        (
+            Method::POST,
+            "/api/v1/roles",
+            Some(json!({ "role": { "name": "x", "grants": {} }, "current_password": "nope" })),
+        ),
+        (
+            Method::PUT,
+            "/api/v1/roles/viewer",
+            Some(json!({ "role": { "name": "viewer", "grants": {} }, "current_password": "nope" })),
+        ),
+        (
+            Method::DELETE,
+            "/api/v1/roles/viewer",
+            Some(json!({ "current_password": "nope" })),
+        ),
     ]
 }
 
@@ -265,13 +305,17 @@ async fn a_watch_token_reads_metrics_and_nothing_else() {
     let srv = test_server(permissive_state().await).await;
     let token = issue_watch_token(&srv).await;
 
-    // The three it is for. Asserted as "not a refusal" rather than as 200:
-    // what these answer with is the monitoring loop's business and a test
-    // server has never sampled anything.
+    // The read routes it is for. Asserted as "not a refusal" rather than as
+    // 200: what these answer with is the monitoring loop's business and a
+    // test server has never sampled anything.
     for path in [
         "/api/v1/status",
         "/api/v1/metrics",
         "/api/v1/metrics/history?minutes=60",
+        "/api/v1/capabilities",
+        "/api/v1/card-order",
+        "/api/v1/velocity",
+        "/api/v1/velocity/history",
     ] {
         let status = status_with(&srv, &token, Method::GET, path, None).await;
         assert_ne!(status, 401, "{path} should accept a watch token");
@@ -283,7 +327,7 @@ async fn a_watch_token_reads_metrics_and_nothing_else() {
         assert_eq!(
             status, 401,
             "{method} {path} answered {status} to a watch token; every route \
-             outside the three read endpoints must sit behind require_jwt!",
+             outside the read endpoints must refuse one",
         );
     }
 }
@@ -330,4 +374,25 @@ async fn a_revoked_token_stops_reading() {
         401,
         "a revoked watch token kept working",
     );
+}
+
+#[ntex::test]
+async fn a_watch_tokens_capabilities_grant_nothing() {
+    // The read routes answer it, and `/capabilities` is one of them: it must
+    // say nothing is usable rather than describe the account that paired it.
+    let srv = test_server(permissive_state().await).await;
+    let token = issue_watch_token(&srv).await;
+    let resp = srv
+        .get("/api/v1/capabilities")
+        .header("Authorization", format!("Bearer {token}"))
+        .send()
+        .await
+        .unwrap();
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert!(body.get("me").is_none(), "{body}");
+    for grant in ["shell", "ssh_terminal", "files", "connect", "listen"] {
+        assert_eq!(body["grants"][grant]["ok"], false, "{grant}");
+        assert_eq!(body["grants"][grant]["why"], "not_granted", "{grant}");
+    }
+    assert_eq!(body["remote_access"]["full_access"], false);
 }

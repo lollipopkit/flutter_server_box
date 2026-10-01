@@ -11,6 +11,8 @@
 //! and a test suite that replaced the developer's own commands to prove a
 //! point would be a poor trade.
 
+mod common;
+
 use std::sync::{Arc, Once};
 
 use ntex::web::test::{self as web_test, TestServer};
@@ -37,12 +39,13 @@ async fn app_state(full_access: bool) -> Arc<AppState> {
         ..Default::default()
     };
     let mut remote = config.get_remote_access();
-    remote.terminal.enabled = true;
+    remote.terminal.enabled = Some(true);
     remote.full_access = Some(full_access);
     config.remote_access = Some(remote);
 
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
     sqlx::migrate!("./migrations").run(&db).await.unwrap();
+    common::seed_as_upgrade(&db, &config).await;
     AppState::new(Arc::new(config), db)
 }
 

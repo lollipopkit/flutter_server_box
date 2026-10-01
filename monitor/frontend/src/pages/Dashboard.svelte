@@ -22,6 +22,7 @@
   import OsIcon from '../components/OsIcon.svelte'
   import PageHeader from '../components/PageHeader.svelte'
   import StatCard from '../components/StatCard.svelte'
+  import { dashboardAccess, isAdmin } from '../lib/access'
   import { api } from '../lib/api'
   import { capabilitiesStore } from '../lib/capabilities.svelte'
   import { health } from '../lib/health.svelte'
@@ -44,19 +45,14 @@
   })
   const capabilities = $derived(capabilitiesStore.byServer[servers.currentId])
 
-  /// Whether this agent grants no way in at all — no terminal, no shell, no
-  /// file API — which is what removes every entry from the header beside
-  /// Settings and Refresh.
-  ///
-  /// Only once `capabilities` has arrived: undefined is "not fetched yet, or
-  /// the fetch failed", and neither is "you are not allowed". `full_access` is
-  /// not tested because the agent already gates it on the terminal being
-  /// available, so it can never be the only one on.
-  const noRemoteAccess = $derived(
-    capabilities !== undefined &&
-      !capabilities.remote_access?.terminal &&
-      !capabilities.remote_access?.files,
-  )
+  /// Which entries the header offers, and whether this account can only
+  /// watch — see `dashboardAccess`, which answers for an agent with roles and
+  /// for one from before them.
+  const access = $derived(dashboardAccess(capabilities))
+  /// Whether the cards can be rearranged: the order is the agent's, shared by
+  /// everyone who views it, so changing it is an administrator's call.
+  /// Unknown is allowed — the agent refuses for itself.
+  const canArrange = $derived(isAdmin(capabilities) !== false)
 
   // Home-grid card order, synced server-side (not localStorage) so every
   // client viewing this agent sees the same arrangement — see card-order.ts
@@ -84,6 +80,7 @@
   let dragId = $state<CardId | null>(null)
 
   function onCardDragStart(id: CardId) {
+    if (!canArrange) return
     dragId = id
   }
   function onCardDragOver(e: DragEvent) {
@@ -250,12 +247,12 @@
         <Badge tone={connected ? 'success' : 'danger'}>
           {connected ? $LL.connected() : $LL.disconnected()}
         </Badge>
-        {#if capabilities?.remote_access?.terminal}
+        {#if access.terminal}
           <IconButton label={$LL.terminal()} onclick={() => layout.navigate('terminal')}>
             <SquareTerminal class="w-4 h-4" />
           </IconButton>
         {/if}
-        {#if capabilities?.remote_access?.files}
+        {#if access.files}
           <IconButton label={$LL.files()} onclick={() => layout.navigate('files')}>
             <FolderOpen class="w-4 h-4" />
           </IconButton>
@@ -305,12 +302,16 @@
          off until someone edits the file, and the docs recommend leaving them
          that way. Most agents are in this state on purpose, so this says what
          is off and where the switches are, and stops there. -->
-    {#if noRemoteAccess}
+    {#if access.viewOnly}
       <Card class="mb-6 space-y-1">
         <h2 class="text-sm font-semibold font-display text-fg-strong">
           {$LL.remoteAccessOffTitle()}
         </h2>
-        <p class="text-sm text-muted-fg">{$LL.remoteAccessOffBody()}</p>
+        <!-- With roles, more is an administrator's grant away rather than a
+             config file's edit. -->
+        <p class="text-sm text-muted-fg">
+          {capabilities?.grants ? $LL.remoteAccessOffBodyRoles() : $LL.remoteAccessOffBody()}
+        </p>
       </Card>
     {/if}
 
@@ -424,11 +425,12 @@
       {#each visibleCardOrder as id (id)}
         <div
           role="listitem"
-          draggable="true"
+          draggable={canArrange}
+          title={canArrange ? undefined : $LL.cardOrderAdminOnly()}
           ondragstart={() => onCardDragStart(id)}
           ondragover={onCardDragOver}
           ondrop={() => onCardDrop(id)}
-          class="cursor-grab active:cursor-grabbing"
+          class={canArrange ? 'cursor-grab active:cursor-grabbing' : undefined}
         >
           {@render card(id)}
         </div>

@@ -4765,4 +4765,122 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get copyLink => 'リンクをコピー';
+
+  @override
+  String funcNeedsAgentPermission(String func) {
+    return 'この Monitor agent 上のあなたのアカウントには $func の権限がありません。agent の管理者に依頼してください。';
+  }
+
+  @override
+  String funcNeedsAgentHttps(String func) {
+    return '$func にはこの Monitor agent への HTTPS 接続、または agent とこのアプリの両方での HTTP 許可が必要です。';
+  }
+
+  @override
+  String funcNeedsAgentSetup(String func) {
+    return 'この Monitor agent では $func が設定されていません。運用者が設定する必要があります。';
+  }
+
+  @override
+  String get monitorFilesReadOnly =>
+      '読み取り専用：このアカウントは agent 上のファイルを閲覧できますが、変更はできません。';
+
+  @override
+  String get monitorAccess => 'アクセス';
+
+  @override
+  String get monitorAccounts => 'アカウント';
+
+  @override
+  String get monitorRoles => 'ロール';
+
+  @override
+  String get monitorRole => 'ロール';
+
+  @override
+  String get monitorChangePassword => 'パスワードを変更';
+
+  @override
+  String get monitorNewPassword => '新しいパスワード';
+
+  @override
+  String get monitorCurrentPassword => '現在のパスワード';
+
+  @override
+  String get monitorReauthTip => 'アクセスを変更するには、もう一度パスワードを入力する必要があります。';
+
+  @override
+  String get monitorPasswordTooShort => '8 文字以上';
+
+  @override
+  String get monitorPasswordMismatch => 'パスワードが一致しません';
+
+  @override
+  String get monitorErrReauth => 'パスワードが正しくありません。';
+
+  @override
+  String get monitorErrLastAdmin => 'agent には少なくとも 1 つの管理者アカウントが必要です。';
+
+  @override
+  String get monitorErrConflict => '既に存在するか、まだ使用中です。';
+
+  @override
+  String get monitorErrForbidden => 'この操作は管理者のみ実行できます。';
+
+  @override
+  String get monitorRoleNameRule => '小文字、数字、- と _、32 文字まで';
+
+  @override
+  String get monitorGrantShell => 'シェルとコマンド';
+
+  @override
+  String get monitorGrantShellTip =>
+      'ターミナル、プロセス、サービス、コンテナ、スニペット、電源 —— agent のアカウントで実行';
+
+  @override
+  String get monitorGrantSshTerminal => 'SSH 経由のパネルターミナル';
+
+  @override
+  String get monitorGrantFiles => 'ファイル';
+
+  @override
+  String get monitorGrantConnect => '外向き接続';
+
+  @override
+  String get monitorGrantConnectTip => 'ローカル・動的ポート転送、リモートデスクトップ';
+
+  @override
+  String get monitorGrantConnectAllow =>
+      '許可する接続先（IP または CIDR、任意で :ポート または :開始-終了。1 行に 1 つ、空欄は制限なし）';
+
+  @override
+  String get monitorGrantListen => 'サーバーで待ち受け';
+
+  @override
+  String get monitorGrantListenTip => 'リモートポート転送';
+
+  @override
+  String get monitorGrantListenPublic => 'loopback 以外のアドレス';
+
+  @override
+  String get monitorGrantPorts => 'ポート範囲（空欄は制限なし）';
+
+  @override
+  String get monitorGrantOff => 'オフ';
+
+  @override
+  String get monitorBuiltin => '組み込み';
+
+  @override
+  String get monitorAdminRoleTip => 'アカウント、ロール、agent の設定を管理します';
+
+  @override
+  String get monitorYou => 'あなた';
+
+  @override
+  String get monitorNoAccessToSettings => 'この agent の設定を変更できるのは管理者のみです。';
+
+  @override
+  String get monitorPasswordNotSaved =>
+      'agent 上のパスワードは変更されましたが、App に保存できませんでした。このサーバーの設定で Monitor のパスワードを更新してください。';
 }

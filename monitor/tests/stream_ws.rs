@@ -4,6 +4,8 @@
 //! against the real app: the target is a `TcpListener` this test owns, so unlike
 //! the terminal's SSH half there is nothing here that needs a second machine.
 
+mod common;
+
 use std::sync::{Arc, Once};
 use std::time::Duration;
 
@@ -16,6 +18,7 @@ use ntex::web::{self, App};
 use ntex::ws::error::WsClientError;
 use ntex::ws::{self, WsClient, WsConnection};
 use rustls::crypto::ring;
+use server_box_monitor::api::authz::revoke_lost;
 use server_box_monitor::api::server::AppState;
 use server_box_monitor::api::ws::stream::stream_ws;
 use server_box_monitor::api::ws::ticket::Purpose;
@@ -39,13 +42,14 @@ async fn app_state(full_access: bool) -> Arc<AppState> {
         ..Default::default()
     };
     let mut remote = config.get_remote_access();
-    remote.terminal.enabled = true;
+    remote.terminal.enabled = Some(true);
     remote.full_access = Some(full_access);
     config.remote_access = Some(remote);
 
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
     sqlx::migrate!("./migrations").run(&db).await.unwrap();
 
+    common::seed_as_upgrade(&db, &config).await;
     AppState::new(Arc::new(config), db)
 }
 
@@ -325,11 +329,11 @@ async fn input_before_open_is_refused_rather_than_buffered() {
 }
 
 #[ntex::test]
-async fn revoking_full_access_ends_a_running_relay() {
-    // The flag `full_access_allowed` reads is only consulted when something is
-    // started, so a connection already carrying bytes would otherwise outlive
-    // the grant the panel just took away — and the app would go on showing a
-    // desktop it is no longer allowed to reach.
+async fn taking_connect_away_ends_a_running_relay() {
+    // The role is only consulted when something is started, so a connection
+    // already carrying bytes would otherwise outlive the grant an admin just
+    // took away — and the app would go on showing a desktop it is no longer
+    // allowed to reach.
     let target = echo_server().await;
     let state = app_state(true).await;
     let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
@@ -338,15 +342,14 @@ async fn revoking_full_access_ends_a_running_relay() {
 
     assert_eq!(request(&io, &codec, &target).await["type"], "ready");
 
-    // What `DELETE /api/v1/remote-access/full-access` does.
-    state
-        .full_access_off
-        .store(true, std::sync::atomic::Ordering::Release);
-    let _ = state.full_access_revoked.send(());
+    let mut grants = common::grants_of(&state.db, "admin").await;
+    grants.connect = None;
+    common::set_grants(&state.db, "admin", &grants).await;
+    revoke_lost(&state, "permission_revoked").await;
 
     let reply = next_control(&io, &codec).await;
     assert_eq!(reply["type"], "error");
-    assert_eq!(reply["code"], "full_access_disabled");
+    assert_eq!(reply["code"], "permission_revoked");
 }
 
 #[ntex::test]
@@ -355,11 +358,127 @@ async fn a_relay_opened_before_revocation_still_starts_after_a_reconnect() {
     // client that reports the close and tries again is turned away at the
     // upgrade rather than getting a second connection.
     let state = app_state(true).await;
-    state
-        .full_access_off
-        .store(true, std::sync::atomic::Ordering::Release);
+    common::set_grants(&state.db, "admin", &Default::default()).await;
     let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
     let srv = test_server(state).await;
 
     assert!(stream_connection(&srv, &ticket).await.is_err());
+}
+
+/// The admin role with `connect` limited to [allow], and nothing else.
+async fn connect_only(state: &AppState, allow: &[String]) {
+    let grants = server_box_monitor::core::permissions::Grants {
+        connect: Some(server_box_monitor::core::permissions::ConnectGrant {
+            allow: allow.to_vec(),
+        }),
+        ..Default::default()
+    };
+    common::set_grants(&state.db, "admin", &grants).await;
+}
+
+#[ntex::test]
+async fn an_address_the_roles_allow_list_names_is_relayed() {
+    let target = echo_server().await;
+    let state = app_state(true).await;
+    connect_only(&state, std::slice::from_ref(&target)).await;
+    let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
+    let srv = test_server(state).await;
+    let (io, codec) = open_stream(&srv, &ticket).await;
+
+    assert_eq!(request(&io, &codec, &target).await["type"], "ready");
+}
+
+#[ntex::test]
+async fn an_address_outside_the_allow_list_is_refused_before_dialling() {
+    let target = echo_server().await;
+    let (_, port) = target.rsplit_once(':').unwrap();
+    let state = app_state(true).await;
+    // The same host, another port: the port is part of what is allowed.
+    connect_only(&state, &["127.0.0.1:1".to_string()]).await;
+    let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
+    let srv = test_server(state).await;
+    let (io, codec) = open_stream(&srv, &ticket).await;
+
+    let reply = request(&io, &codec, &format!("127.0.0.1:{port}")).await;
+    assert_eq!(reply["code"], "forbidden", "{reply}");
+}
+
+#[ntex::test]
+async fn a_host_name_is_allowed_only_if_every_address_it_resolves_to_is() {
+    let target = echo_server().await;
+    let (_, port) = target.rsplit_once(':').unwrap();
+
+    // `localhost` is 127.0.0.1, and on most machines ::1 as well. Naming both
+    // lets it through — the dial goes to whichever answers, and the echo
+    // server is on the IPv4 one.
+    let state = app_state(true).await;
+    connect_only(
+        &state,
+        &[format!("127.0.0.1:{port}"), format!("[::1]:{port}")],
+    )
+    .await;
+    let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
+    let srv = test_server(state).await;
+    let (io, codec) = open_stream(&srv, &ticket).await;
+    assert_eq!(
+        request(&io, &codec, &format!("localhost:{port}")).await["type"],
+        "ready"
+    );
+
+    // A name none of whose addresses is allowed is refused, though it is the
+    // same machine an allowed entry for another network would not cover.
+    let state = app_state(true).await;
+    connect_only(&state, &["10.0.0.0/8".to_string()]).await;
+    let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
+    let srv = test_server(state).await;
+    let (io, codec) = open_stream(&srv, &ticket).await;
+    assert_eq!(
+        request(&io, &codec, &format!("localhost:{port}")).await["code"],
+        "forbidden"
+    );
+}
+
+#[ntex::test]
+async fn an_ipv6_entry_matches_an_ipv6_target() {
+    // Skipped where the machine has no IPv6 loopback to listen on.
+    let Ok(listener) = TcpListener::bind("[::1]:0").await else {
+        return;
+    };
+    let port = listener.local_addr().unwrap().port();
+    tokio::spawn(async move {
+        // Held, not answered: a peer that closed at once would race its own
+        // `exit` against the `ready` this test is waiting for.
+        let mut held = Vec::new();
+        while let Ok((socket, _)) = listener.accept().await {
+            held.push(socket);
+        }
+    });
+    let state = app_state(true).await;
+    connect_only(&state, &[format!("[::1]:{port}")]).await;
+    let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
+    let srv = test_server(state).await;
+    let (io, codec) = open_stream(&srv, &ticket).await;
+    let reply = request(&io, &codec, &format!("::1:{port}")).await;
+    assert_eq!(reply["type"], "ready", "{reply}");
+}
+
+#[ntex::test]
+async fn accepting_a_remote_forwards_connection_needs_listen() {
+    // `connect` alone opens the relay, and `accept` is still refused: taking a
+    // connection a listener holds is the other direction.
+    let state = app_state(true).await;
+    connect_only(&state, &[]).await;
+    let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
+    let srv = test_server(state).await;
+    let (io, codec) = open_stream(&srv, &ticket).await;
+    io.send(
+        ws::Message::Text(ByteString::from(format!(
+            r#"{{"type":"accept","id":"{}"}}"#,
+            "00".repeat(16)
+        ))),
+        &codec,
+    )
+    .await
+    .unwrap();
+    assert_eq!(next_control(&io, &codec).await["code"], "forbidden");
 }

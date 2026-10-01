@@ -34,6 +34,15 @@ final class MonitorHttpCredential {
     this.allowInsecure = false,
   });
 
+  /// The same agent with another password — this account's own, changed.
+  MonitorHttpCredential withPwd(String pwd) => MonitorHttpCredential(
+    addr: addr,
+    user: user,
+    pwd: pwd,
+    ignoreCert: ignoreCert,
+    allowInsecure: allowInsecure,
+  );
+
   factory MonitorHttpCredential.fromJson(Map<String, dynamic> json) =>
       _$MonitorHttpCredentialFromJson(json);
 

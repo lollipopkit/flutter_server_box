@@ -7,20 +7,21 @@
 //! added here shows up on the next extended collection cycle without anything
 //! having to be told about it.
 //!
-//! Writing is gated on `remote_access.full_access`, the same grant the shell
-//! and `/exec` need. A file in that directory is run by the status script on
-//! every extended cycle, so adding one is arranging for code to run as the
-//! agent's user — the same decision, and not a second, weaker one. Reading
-//! only needs the panel login: it discloses the commands, not the machine.
+//! Writing needs an admin who also holds `shell`. Admin, because the set is
+//! the agent's configuration rather than anything of one account's; `shell`,
+//! because a file in that directory is run by the status script on every
+//! extended cycle, so adding one is arranging for code to run as the agent's
+//! user — an admin whose role holds no shell must not be able to write one
+//! in by the side door. Reading needs any account: it discloses the
+//! commands, not the machine.
 
 use std::sync::Arc;
 
 use ntex::web::{self, HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 
+use super::authz::{self, Caller};
 use super::server::AppState;
-use super::server::verify_auth;
-use super::ws;
 use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
 use crate::monitoring::custom_cmds::{self, CustomCmd, Error};
 
@@ -55,11 +56,10 @@ pub async fn list(
     req: HttpRequest,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
+    let Ok(caller) = authz::jwt_caller(&req, &app_state).await else {
         return Ok(HttpResponse::Unauthorized().finish());
-    }
-    let secure = ws::is_secure_transport(&req, app_state.tls_active);
-    let editable = app_state.full_access_allowed(secure);
+    };
+    let editable = may_edit(&caller, &req, &app_state);
 
     match custom_cmds::list() {
         Ok(commands) => Ok(HttpResponse::Ok().json(&ListResponse { commands, editable })),
@@ -72,16 +72,15 @@ pub async fn replace(
     body: web::types::Json<ReplaceRequest>,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
+    let Ok(caller) = authz::jwt_caller(&req, &app_state).await else {
         return Ok(HttpResponse::Unauthorized().finish());
-    }
+    };
 
     let remote_ip = peer_ip(&req);
-    let secure = ws::is_secure_transport(&req, app_state.tls_active);
-    if !app_state.full_access_allowed(secure) {
+    if !may_edit(&caller, &req, &app_state) {
         Event::new(Kind::CustomCmd, Action::Denied, Outcome::Denied)
             .remote_ip(remote_ip)
-            .detail("full access disabled")
+            .detail(format!("{} may not edit custom commands", caller.username))
             .record(&app_state.db)
             .await;
         return Ok(HttpResponse::Forbidden().finish());
@@ -109,6 +108,18 @@ pub async fn replace(
             Ok(error_response(e))
         }
     }
+}
+
+/// An admin holding a usable `shell` — see the module documentation.
+fn may_edit(caller: &Caller, req: &HttpRequest, state: &AppState) -> bool {
+    caller.is_admin()
+        && caller
+            .check(
+                crate::core::permissions::Grant::Shell,
+                state,
+                authz::is_secure(req, state),
+            )
+            .is_ok()
 }
 
 /// A rejected set is the caller's fault and says which command was wrong; a

@@ -119,6 +119,25 @@ enum MonitorHttpErrType {
   /// `/exec` or `/ws-ticket` — never retried, since only its config changes
   /// the answer.
   notGranted,
+
+  /// An account or role request was refused: this account is not an admin.
+  forbidden,
+
+  /// The admin's current password, which every change of access asks for,
+  /// was missing or wrong.
+  reauth,
+
+  /// The account or role exists already, or a role is still in use.
+  conflict,
+
+  /// The change would leave the agent with no admin.
+  lastAdmin,
+
+  /// No such account or role.
+  notFound,
+
+  /// The agent rejected the request's contents — a name, a password too short.
+  badRequest,
 }
 
 class MonitorHttpErr extends Err<MonitorHttpErrType> {

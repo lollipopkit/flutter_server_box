@@ -23,21 +23,20 @@ https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/in
 `systemctl --user` 服务。Alpine 上需要 `sudo sh` 才能写入 /etc/init.d，但 agent
 仍然以执行 sudo 的用户运行。
 
-不要把它装成 root 系统服务。agent 以 root 运行，正是之后 `full_access`
-变得危险的原因。
+不要把它装成 root 系统服务。角色带有 `shell` 权限的账号会以 agent 的运行账户
+执行命令；以 root 运行时，就等于整台机器。
 
-请保持 `[remote_access]` 下的所有开关关闭，并在那里显式写上
-`full_access = false`。
+给安装脚本加上 `--permissions read`（`sh -s -- install --permissions read`），
+让它创建的 admin 账号初始不带任何权限。我会之后在 app 或网页面板里开启需要的
+权限。
 
-它是该小节里唯一不是默认关闭的开关：不写时取平台默认值，Linux 上就是开。它自
-己不会造成什么，因为它以终端启用为前提，而终端是关的——但之后打开终端的人，会
-在没有任何地方写过 `true` 的情况下打开一个免密 shell。文件里显式写 `false` 还
-有粘性：`SBM_FULL_ACCESS=1` 也无法把它重新打开。
-
-其余开关是否开启我会另行决定。
+不要在 config.toml 的 `[remote_access]` 下添加 `full_access`、`listen_public`
+或任何 `enabled`。agent 已经不读这些配置：每个账号能做什么由它的角色决定，角色
+保存在 agent 的数据库里。
 
 安装完成后请告诉我：
 - config.toml 的路径，以及旁边 SQLite 数据库的路径
+- initial-admin-credentials.txt 的路径。不要输出其中的内容。
 - 它监听的地址和端口
 - `loginctl show-user <user> -p Linger` 的结果。没有 linger,--user 服务会
   在我登出时停止。
@@ -48,31 +47,32 @@ https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/in
 </details>
 
 <details>
-<summary>开启 remote access</summary>
+<summary>准备 remote access 的服务器配置</summary>
 
 ```text
-配置 <host> 上的 ServerBox Monitor agent，让 app 和面板可以
-<打开终端 / 浏览文件 / 执行命令>。
+配置 <host> 上的 ServerBox Monitor agent，让账号可以被授予
+<终端 / 文件浏览 / 执行命令 / 端口转发>。
 
-修改前先说明这样做的风险，并等我同意：`full_access = true` 会让拿到面板密码的
-人直接获得 agent 运行账户的 shell，中间没有 SSH 认证。
+修改前先说明这样做的影响，并等我同意。
 
 请特别注意：
 
-- 这些开关只存在于 agent 的 config.toml 里。没有任何 API 或面板控件能打开
-  它们；面板只能关闭 `full_access`。只有修改配置文件才能开启这些功能。
-- `full_access` 以 `[remote_access.terminal] enabled` 为前提。只设
-  full_access 不起任何作用。
-- 终端和文件 API 会拒绝从网络上到达的明文请求，但对 loopback 调用方——包括
-  同机反向代理——无需 TLS 即可服务。因此，如果 agent 绑定在 127.0.0.1，或由
-  同机代理终结 TLS，就不需要 `allow_insecure`。只有当另一台机器可以
-  通过明文连接直接访问 agent 时，才应考虑开启它；操作前请先说明风险。
-- `[remote_access.fs]` 没有 `roots` 就什么都不做。只写真正需要浏览的目录。
-  `roots = ["/"]` 会让面板密码等价于一个 shell，因为能写入
-  `~/.ssh/authorized_keys` 的人就能获得 shell。agent 启动时也会对此发出警告。
+- 账号能做什么不在 config.toml 里。每个账号属于一个角色，角色带有若干权限：
+  shell、ssh_terminal、files、connect 和 listen。admin 在 app 或网页面板里
+  编辑账号和角色，编辑时需要再次输入自己的密码。不要试图通过修改 config.toml
+  或数据库来授予权限。
+- config.toml 仍然决定服务器一侧的配置：
+  - 读取监控数据以外的所有功能都需要 TLS 或 loopback 调用方，同机反向代理也
+    算 loopback。如果 agent 绑定在 127.0.0.1，或由同机代理终结 TLS，就不需要
+    其他配置。只有当另一台机器通过明文连接直接访问 agent 时，才考虑设置
+    `[remote_access] allow_insecure = true`；操作前请先说明。
+  - files 权限在没有 `[remote_access.fs] roots` 时不提供任何文件。只写真正
+    需要浏览的目录。`roots = ["/"]` 加上写权限等价于一个 shell，因为能写入
+    ~/.ssh/authorized_keys 的人就能获得 shell；agent 启动时会对此发出警告。
+  - 网页面板的 SSH 终端连接 `[remote_access] ssh_addr`。
 
-修改后重启 agent，并把日志里的 `Remote access:` 那一行发给我。这一行会说明实际
-开启了哪些功能；如果全部关闭，就不会出现这一行。
+修改 config.toml 后重启 agent。然后告诉我需要在 app 或面板里为哪个角色开启
+哪些权限。
 ```
 
 </details>
@@ -120,18 +120,19 @@ ServerBox app 没有为 <host> 上的 Monitor agent 提供 <功能>。请先查�
 
 请先检查这些地方：
 
-- app 只显示 agent 当前启用的功能。终端、命令、
-  容器、进程、systemd、电源和计划任务都需要 `full_access`,而它本身以
-  `[remote_access.terminal] enabled` 为前提。文件浏览需要
-  `[remote_access.fs] enabled` 加上非空的 `roots`。
-- 端口转发（本地、动态、远程）和远程桌面通过 agent 实现，由 `full_access`
-  授予。远程转发默认只监听 loopback 地址，除非设置
-  `[remote_access] listen_public = true`。SFTP 无法通过 agent 使用，需要在 app
-  里为同一台服务器另行配置 SSH。
-- 终端和文件 API 会拒绝从网络上到达的明文请求。loopback 调用方和同机反向
-  代理无需 TLS。
-- 只要该小节下有任何开关开启，agent 启动时就会记录一行 `Remote access:`
-  汇总；全部关闭时则不会记录。
+- app 显示的是 agent 允许当前登录账号使用的功能。每项权限都带有 `ok`，不可用
+  时还带有 `why`：`not_granted`（账号的角色没有这项权限，admin 可以在 app 或
+  面板里修改）、`insecure_transport`（需要 TLS 或 loopback 调用方，或者
+  `[remote_access] allow_insecure`）、`not_configured`（files 权限没有配置
+  `[remote_access.fs] roots`）。用该账号登录后请求
+  `GET /api/v1/capabilities`，可以在 `grants` 下看到这些信息。
+- 命令、进程、systemd、容器、代码片段、电源、计划任务和 app 终端需要 `shell`。
+  文件浏览需要 `files`；`mode = "read"` 时不能修改任何内容。远程桌面以及本地和
+  动态转发需要 `connect`，它的 `allow` 列表不为空时必须包含目标地址。远程转发
+  需要 `listen`；绑定 loopback 以外的地址需要开启它的 `public` 选项。
+- SFTP 无法通过 agent 使用，需要在 app 里为同一台服务器另行配置 SSH。
+- 角色功能之前的 agent 只上报 `remote_access`；早于 relay 或监听端点的 agent
+  不提供端口转发和远程桌面。请更新 agent。
 - agent 的 SQLite 数据库里的 `access_log` 表记录访问者、时间、来源、请求的
   资源和结果，不记录凭据。
 ```
@@ -145,9 +146,9 @@ ServerBox app 没有为 <host> 上的 Monitor agent 提供 <功能>。请先查�
 | 需要在服务器上安装额外软件 | 否 | 是 |
 | 查看状态和图表 | 支持 | 支持 |
 | 查看 App 连接前的历史数据 | 不支持 | 支持 |
-| 终端、命令和文件浏览 | 支持 | 取决于 agent 开启的功能 |
+| 终端、命令和文件浏览 | 支持 | 取决于账号的角色 |
 | SFTP 传输 | 支持 | 不支持 |
-| 端口转发（本地、动态、远程）和远程桌面 | 支持 | 需要 `full_access` |
+| 端口转发（本地、动态、远程）和远程桌面 | 支持 | 需要 `connect` 或 `listen` 权限 |
 | 推送告警、主屏幕小组件和 Watch App | 不支持 | 支持 |
 
 SSH 通常是最简单的连接方式。若当前网络无法访问 SSH 端口、希望图表包含 App 连接前采集的历史数据，或希望在手机上接收服务器告警，可以使用 Monitor agent。
@@ -171,15 +172,23 @@ curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main
 curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh | sudo sh -s -- install
 ```
 
+若要让 admin 账号初始不带任何权限，加上 `--permissions read`：
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh | sh -s -- install --permissions read
+```
+
+`--permissions full|read` 决定全新安装时 admin 账号的初始权限：全部权限（`full`，默认值），或不带任何权限（`read`），之后再在 App 或面板中开启。该参数通过服务环境变量 `SBM_INIT_PERMISSIONS` 传给 agent；自行运行二进制文件时，使用 `serve --init-permissions read`。它只在 agent 创建第一个账号时生效，已有的安装会保留现有角色。
+
 `sh -s --` 后面的参数会传给安装脚本；执行 `uninstall` 和 `upgrade` 时也使用相同方式。仓库中也包含该脚本，可在 checkout 根目录运行 `./monitor/install.sh install`。此时使用的是 checkout 中的版本，可能与上述命令从 `main` 下载的版本不同。
 
-默认情况下，agent 以普通用户运行。这样可以限制 `full_access` 开启时的权限范围，详见[权限开关](#权限开关)。
+默认情况下，agent 以普通用户运行。角色带有 `shell` 权限的账号会以该用户执行命令，因此这样可以限制这类账号能访问的范围，详见[账号和权限](#账号和权限)。
 
 agent 从二进制文件所在目录读取 `config.toml`。所有可用配置项见 [`config.example.toml`](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/config.example.toml)。默认监听地址是 `0.0.0.0:3770`；该目录下存在 `frontend/dist` 时，agent 也会在此提供网页面板。
 
 无需直接编辑 `config.toml`，也可以修改采集间隔、告警规则、通知渠道、数据保留时间和允许的面板来源。在网页面板使用 **Server Settings**，或在 App 中打开已配置 agent 的服务器并点击顶部设置按钮。两个入口会修改同一个 agent 和配置文件。
 
-JWT secret、`database_url` 和 `[remote_access]` 开关只能通过配置文件修改。这样，即使面板密码泄露，攻击者也不能通过面板扩大 agent 暴露的功能。
+只有 admin 账号能查看和修改这些设置。JWT secret、`database_url` 和 `[remote_access]`（是否允许明文、文件 roots、SSH 地址和各项限额）只能通过配置文件修改。账号能做什么不属于这两处：它由账号的角色决定，由 admin 在 App 或面板中编辑，详见[账号和权限](#账号和权限)。
 
 编辑器不会返回文件中已保存的 secret，例如 ServerChan key、Bark key、iOS push token 或 `Authorization` header。界面会显示“已设置”，但输入框保持为空。留空表示保留原值；输入新值则会替换。
 
@@ -199,7 +208,7 @@ App 和网页面板使用的账户保存在 agent 的 SQLite 数据库中，不�
 
 ### 首个密码
 
-首次启动且用户表为空时，agent 会创建 `admin` 用户并生成随机密码。密码会写入数据库旁的 `initial-admin-credentials.txt`；Unix 系统上的文件权限为 0600：
+首次启动且用户表为空时，agent 会创建属于 `admin` 角色的 `admin` 用户，并生成随机密码。密码会写入数据库旁的 `initial-admin-credentials.txt`；Unix 系统上的文件权限为 0600：
 
 ```sh
 cd /opt/server-box-monitor
@@ -215,7 +224,7 @@ cd /opt/server-box-monitor
 ./server_box_monitor user set-password admin
 ```
 
-命令会要求输入两次新密码，输入时不会回显，密码至少需要 8 个字符。如果指定的用户不存在，命令会创建该用户；添加其他账户也使用此命令。
+命令会要求输入两次新密码，输入时不会回显，密码至少需要 8 个字符。如果指定的用户不存在，命令会创建该用户，并放入 `viewer` 角色；agent 还没有任何 admin 账号时，则放入 `admin` 角色。加上 `--role <名称>` 可以指定其他角色，也可以用它修改已有账号的角色。admin 也可以在 App 或面板中添加账号，见[编辑账号和角色](#编辑账号和角色)。
 
 如需从环境变量读取密码（例如用于脚本或避免写入 shell history），请在 Bash 或 Zsh 中运行以下命令。`read -s` 不是 POSIX `sh` 的命令；后续检查可避免读取失败或密码为空时设置空密码：
 
@@ -227,9 +236,14 @@ SBM_PW="$SBM_PW" ./server_box_monitor user set-password admin --password-env SBM
 
 命令不接受密码作为参数，因为命令行参数可能出现在 `ps` 输出和 shell history 中。
 
-新密码从下一次登录起生效，无需重启 agent，因为每次登录都会读取用户表。已登录会话最多还能持续一小时（token 的有效期）。如需立即结束所有会话，请修改 `config.toml` 中的 `jwt_secret` 并重启 agent：systemd 使用 `systemctl --user restart server_box_monitor`，OpenRC 使用 `rc-service server-box-monitor restart`。重启后此前签发的 token 全部失效。
+修改密码后，旧密码对应的访问会结束：
 
-之后在 App 中编辑服务器并更新 **Monitor Password**，其他保存了该凭据的客户端也要同步更新。客户端不会收到密码变更通知，因此更新前无法登录。
+- **登录和已配对的设备：无论用哪种方式修改，都会立即失效。** 修改前的登录从下一次请求起被拒绝，该账号已配对的小组件和 Watch 会被解除配对。这一步不需要重启 agent，也不需要修改 `jwt_secret`。
+- **已打开的终端、端口转发和监听：在 App 或面板中修改时会立即关闭。** 上面的命令只写数据库，无法通知正在运行的 agent，因此用旧密码打开的连接会一直持续到 agent 重启：systemd 使用 `systemctl --user restart server_box_monitor`，OpenRC 使用 `rc-service server-box-monitor restart`。如果是因为密码可能已经泄露而重置，请在重置后重启 agent。
+
+每个账号也可以在 App 或面板中修改自己的密码，见[编辑账号和角色](#编辑账号和角色)。在 App 中修改时，App 会同时更新为该服务器保存的密码。
+
+在服务器上修改密码后，请在 App 中编辑服务器并更新 **Monitor Password**，其他保存了该凭据的客户端也要同步更新。客户端不会收到密码变更通知，因此更新前无法登录。
 
 ### 忘记密码
 
@@ -257,29 +271,71 @@ App 和 Monitor agent 采集数据时都不会等待交互式 `sudo` 输入。�
 
 每块 Linux GPU 都以 PCI 地址标识，例如 `0000:00:02.0`。因此，多块集成或独立 GPU 会分别显示为稳定条目。
 
-## 权限开关
+## 账号和权限
 
-App 只显示 Monitor agent 运维人员开启的功能。文件 API 和网页面板终端默认关闭，必须在 `config.toml` 中启用。
+每个账号都可以查看状态、图表和已保存的历史数据。其他功能都属于**权限**，账号拥有其**角色**的权限。权限和角色保存在 agent 的数据库中，在 App 或网页面板里编辑。`config.toml` 只决定服务器一侧的配置，例如文件可以来自哪些目录、是否允许明文 HTTP。
 
-**状态、图表和已保存的历史数据**：登录面板后即可查看。
+| 权限 | 允许的功能 | 选项 |
+|---|---|---|
+| `shell` | 以 agent 的系统账户执行命令，包括进程、systemd、容器、代码片段、电源、计划任务和 App 终端 | 无 |
+| `ssh_terminal` | 网页面板的终端，用 SSH 账户自己的凭据登录 `[remote_access] ssh_addr` 指定的 SSH server | 无 |
+| `files` | 在 `[remote_access.fs] roots` 范围内浏览文件 | `read`（浏览和下载）或 `write`（另外允许上传、新建、重命名、chmod 和删除） |
+| `connect` | 远程桌面（RDP、VNC）以及本地和动态端口转发，即由 agent 发起的连接 | `allow`：允许访问的地址；为空表示不限制 |
+| `listen` | 远程端口转发，即由 agent 在服务器上监听端口 | `public`：允许 loopback 以外的地址；端口范围 |
 
-**`full_access`** 允许已登录用户以运行 agent 的系统账户访问 shell 并执行命令。App 中的进程、systemd、容器、代码片段、电源控制、终端、远程桌面（RDP、VNC）和端口转发都依赖此权限：本地和动态转发通过 agent 的 TCP relay，远程转发通过 agent 的监听端点。获得 shell 的人也可以运行任意命令或转发端口，所以这两项没有单独的开关。
+`shell` 实际上包含了其他几项：能执行命令的账号可以自己读取文件、建立连接和监听端口。账号只需要某一项时，可以只授予 `files`、`connect` 或 `listen`，不授予 `shell`，例如只能访问一台远程桌面的角色。
 
-远程转发由 agent 在服务器上监听端口。和 sshd 的 `GatewayPorts no` 一样，默认只允许绑定 loopback 地址；要绑定其他地址，需设置 `[remote_access] listen_public = true`。
+### 角色
 
-只有启用 `[remote_access.terminal] enabled = true` 后，`full_access` 才会生效。
+agent 有两个内置角色：
 
-agent 只有一个 `full_access` 开关。获得 shell 的用户也能执行任意命令，单独设置“命令”开关无法限制这项权限。Linux 默认开启，macOS 和 Windows 默认关闭。面板可以关闭此权限；要重新开启，必须修改配置文件。
+- **admin**：拥有为它设置的权限，并且是唯一能管理账号、角色和 agent 设置的角色。agent 设置包括告警规则、通知渠道、采集间隔和允许的来源。编辑自定义命令还需要 `shell`，因为这些命令由 agent 执行。
+- **viewer**：不带任何权限，只能查看状态、图表和历史数据。
 
-**启用 `full_access` 时，面板密码相当于运行 agent 的账户的 shell 凭据。** 因此 `install.sh` 默认以普通用户运行 agent。若选择以 root 运行，请关闭 `full_access`。
+admin 可以修改两个内置角色的权限，也可以添加新角色。角色名只能包含小写字母、数字、`-` 和 `_`，最长 32 个字符。内置角色不能重命名或删除；仍有账号在使用的角色不能删除。最后一个 admin 账号不能被删除，也不能改为其他角色。
 
-**`[remote_access.fs]`** 开启文件浏览，并将访问限制在 `roots` 列出的目录中。该设置只授予指定路径的访问；`full_access` 则授予 shell。`roots` 默认为空，启用文件 API 时必须明确列出目录。
+### 编辑账号和角色
 
-设置 `roots = ["/"]` 会开放整个文件系统，权限接近 shell；agent 启动时会对此发出警告。从其他设备通过明文 HTTP 使用 File API 时，还必须设置 `[remote_access.fs] allow_insecure = true`。路径校验和 transport 详情见[Monitor agent API 与访问模型](/docs/zh/development/monitor-agent/)。
+在 App 中打开服务器，点击顶部的设置按钮，在**访问**下使用**账号**和**角色**。在网页面板中，它们位于**服务器设置**页面的末尾。每次修改账号或角色都需要再次输入自己的密码；输错的次数与登录共用同一个限流。
 
-**`[remote_access.terminal]`** 为 App 和网页面板开启终端。网页面板连接配置的 SSH server，并使用该 SSH 账户的权限。启用 `full_access` 后，App 终端使用 agent 账户的本地 shell。仅有面板登录凭据不会授予 shell 权限。
+修改会立即生效。依赖某项权限的会话，例如终端、远程桌面或端口转发，在账号失去这项权限后会被关闭。已删除账号的所有会话都会立即失效。
 
-终端连接应使用 HTTPS。若使用明文 HTTP，必须同时在 agent 配置中设置 `[remote_access.terminal] allow_insecure = true`，并在 App 中为该服务器开启**允许不安全 HTTP**。transport 要求和 endpoint 行为见[Monitor agent API 与访问模型](/docs/zh/development/monitor-agent/)。
+每个账号（包括非 admin 账号）都可以查看自己的角色并修改自己的密码：在 App 中位于**访问**下，在面板中位于**你的账号**下。
+
+### 新安装的权限
+
+全新安装时，`admin` 账号属于 `admin` 角色，拥有全部权限：可写的 `files`、不限制地址的 `connect`、只监听 loopback 且不限端口的 `listen`、`shell` 和 `ssh_terminal`。安装时使用 `--permissions read` 可以让它初始不带任何权限，之后在 App 或面板中开启需要的权限，见[安装 Monitor agent](#安装-monitor-agent)。
+
+如果 agent 启动时读取的 `config.toml` 仍然设置了旧开关（`full_access`、`[remote_access.terminal] enabled`、`[remote_access.fs] enabled`、`listen_public`），例如在新的数据卷上挂载了旧配置，或复制了旧的示例配置，全新安装也会遵守这些开关：`admin` 角色只获得它们同样允许的权限，日志中会说明这一点。
+
+`files` 仍然需要配置 `[remote_access.fs] roots`。在配置之前，App 会提示 agent 上未配置文件浏览。无论 `roots` 如何设置，文件 API 都无法访问 agent 自己的文件，包括数据库、`jwt.secret`、`config.toml` 及其备份、`.env`、TLS 密钥和证书、自定义命令，因为读取这些文件就等于拿到 admin 登录。
+
+**角色带有 `shell` 的账号，相当于拥有 agent 运行账户的 shell。** 因此 `install.sh` 默认以普通用户运行 agent。若选择以 root 运行，请先考虑这一点。
+
+### 从没有角色的 agent 升级
+
+之前的 agent 使用 `config.toml` 中的开关，而不是角色。带有角色的 agent 首次启动时会转换一次：所有已有账号都成为 admin，`admin` 角色获得旧开关实际允许的权限。
+
+| 旧配置 | 转换结果 |
+|---|---|
+| `[remote_access.terminal] enabled` | `ssh_terminal` |
+| `full_access`（包括平台默认值和 `SBM_FULL_ACCESS`），仅在终端开启时计入 | `shell`、不限制地址的 `connect`，以及 `listen` |
+| `listen_public` | 开启 `public` 的 `listen` |
+| `[remote_access.fs] enabled` 且 `roots` 非空 | 可写的 `files` |
+
+之后 agent 不再读取这些配置，并在日志中提示一次可以删除它们。在面板首次使用提示中关闭 shell 访问，会从所有角色中移除 `shell`、`connect` 和 `listen`。
+
+### 明文 HTTP
+
+读取监控数据以外的所有功能都需要 HTTPS，或来自同一台主机的调用方（包括同机反向代理）。在已经对流量加密的私有网络（例如 Tailscale）中，可以设置 `[remote_access] allow_insecure = true`，并在 App 中为该服务器开启**允许不安全 HTTP**；两者缺一不可。旧的 key 仍然有效，但只对原来覆盖的范围生效：`[remote_access.terminal] allow_insecure` 对应 shell、终端、connect 和 listen，`[remote_access.fs] allow_insecure` 只对应文件。
+
+### 连接和监听的限制
+
+`connect.allow` 每行一项：IP 地址或 CIDR 网段，后面可以跟端口或端口范围，例如 `127.0.0.1:3389`、`10.0.0.0/8` 或 `[::1]:5900-5910`。连接使用主机名时，agent 会先解析主机名，解析得到的每个地址都必须在允许范围内。`localhost` 通常同时解析为 `127.0.0.1` 和 `::1`，只允许其中一个会导致 `localhost` 被拒绝；请在 App 中直接填写地址。
+
+和 sshd 的 `GatewayPorts no` 一样，远程转发默认只绑定 loopback 地址，除非角色的 `listen` 开启了 **public**。`listen` 上的端口范围限制可以绑定的端口。
+
+路径校验、endpoint 行为和错误码见[Monitor agent API 与访问模型](/docs/zh/development/monitor-agent/)。
 
 ## 不支持的功能
 
@@ -287,7 +343,7 @@ Monitor HTTP 连接不支持 SFTP：SFTP 运行在 SSH channel 上。文件 API 
 
 以 agent 为主的服务器（只配置了 agent，或同时配置了 SSH 但优先 agent）的所有端口转发都只经过 agent，不会回退到 SSH。动态转发是本机上的 SOCKS5 代理，每条连接都从服务器发起。
 
-要使用 SFTP，请同时在 App 中为该服务器配置 SSH。早于 relay 的 agent 即使开启 `full_access` 也不会报告 relay，早于监听端点的 agent 无法进行远程转发；请更新 agent。
+要使用 SFTP，请同时在 App 中为该服务器配置 SSH。早于 relay 或监听端点的 agent 不提供远程桌面和端口转发；请更新 agent。
 
 ## 小组件、推送和 Watch App
 
@@ -397,7 +453,9 @@ threshold = ">=70c"
 
 ## 故障排除
 
-**服务器页缺少功能。** App 只显示 agent 上报的能力。命令和终端需要 `full_access` 及 terminal endpoint；文件浏览需要启用 `[remote_access.fs]` 并配置 `roots`。改完配置后重启 agent。
+**功能缺失或显示为灰色。** App 显示的是 agent 允许当前登录账号使用的功能，不可用时会说明原因：账号的角色没有这项权限（admin 可以修改）、连接需要 HTTPS，或 agent 运维人员尚未配置（例如文件 `roots`）。见[账号和权限](#账号和权限)。角色修改会立即生效；修改 `config.toml` 后需要重启 agent。
+
+**无法修改设置。** 只有 admin 账号能查看和修改 agent 的设置、通知渠道和告警规则。请使用 admin 账号登录，或请 admin 修改你的角色。
 
 **证书错误。** 配置有效的 TLS，将 agent 放在反向代理后，或为该服务器开启 **Monitor Ignore certificate**。
 

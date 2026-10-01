@@ -5,6 +5,8 @@
 //! unit test should do. `ssh_session_reaches_a_real_sshd` fills that gap and is
 //! opt-in, following the same convention as `sbm_parser`'s `ssh_e2e`.
 
+mod common;
+
 use std::sync::{Arc, Once};
 use std::time::Duration;
 
@@ -18,6 +20,7 @@ use ntex::web::{self, App};
 use ntex::ws::error::WsClientError;
 use ntex::ws::{self, WsClient, WsConnection};
 use rustls::crypto::ring;
+use server_box_monitor::api::authz::revoke_lost;
 use server_box_monitor::api::server::AppState;
 use server_box_monitor::api::ws::terminal::terminal_ws;
 use server_box_monitor::api::ws::ticket::Purpose;
@@ -42,13 +45,14 @@ async fn app_state(enabled: bool, ssh_addr: &str) -> Arc<AppState> {
         ..Default::default()
     };
     let mut remote = config.get_remote_access();
-    remote.terminal.enabled = enabled;
+    remote.terminal.enabled = Some(enabled);
     remote.ssh_addr = ssh_addr.to_string();
     config.remote_access = Some(remote);
 
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
     sqlx::migrate!("./migrations").run(&db).await.unwrap();
 
+    common::seed_as_upgrade(&db, &config).await;
     AppState::new(Arc::new(config), db)
 }
 
@@ -766,12 +770,13 @@ async fn the_session_cap_refuses_the_extra_terminal() {
         ..Default::default()
     };
     let mut remote = config.get_remote_access();
-    remote.terminal.enabled = true;
+    remote.terminal.enabled = Some(true);
     remote.ssh_addr = sshd.clone();
     remote.terminal.max_sessions = Some(1);
     config.remote_access = Some(remote);
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
     sqlx::migrate!("./migrations").run(&db).await.unwrap();
+    common::seed_as_upgrade(&db, &config).await;
     let state = AppState::new(Arc::new(config), db);
 
     let first = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
@@ -803,7 +808,7 @@ async fn full_access_state(enabled: bool) -> Arc<AppState> {
         ..Default::default()
     };
     let mut remote = config.get_remote_access();
-    remote.terminal.enabled = true;
+    remote.terminal.enabled = Some(true);
     // Nothing listens here: an SSH-less shell must not need it
     remote.ssh_addr = "127.0.0.1:1".to_string();
     remote.full_access = Some(enabled);
@@ -811,6 +816,7 @@ async fn full_access_state(enabled: bool) -> Arc<AppState> {
 
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
     sqlx::migrate!("./migrations").run(&db).await.unwrap();
+    common::seed_as_upgrade(&db, &config).await;
     AppState::new(Arc::new(config), db)
 }
 
@@ -867,22 +873,23 @@ async fn a_full_access_open_is_refused_when_the_feature_is_off() {
     .await
     .unwrap();
 
-    assert_eq!(
-        next_control(&io, &codec).await["code"],
-        "full_access_disabled"
-    );
+    assert_eq!(next_control(&io, &codec).await["code"], "forbidden");
+}
+
+/// Takes `shell` away from the admin role, as an admin editing it would.
+async fn take_shell(state: &AppState) {
+    let mut grants = common::grants_of(&state.db, "admin").await;
+    grants.shell = false;
+    common::set_grants(&state.db, "admin", &grants).await;
 }
 
 #[ntex::test]
-async fn turning_it_off_from_the_panel_applies_without_a_restart() {
+async fn taking_shell_away_applies_without_a_restart() {
     let state = full_access_state(true).await;
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state.clone()).await;
 
-    // What the first-run prompt does
-    state
-        .full_access_off
-        .store(true, std::sync::atomic::Ordering::Release);
+    take_shell(&state).await;
 
     let (io, codec) = open_terminal(&srv, &ticket).await;
     io.send(
@@ -896,13 +903,13 @@ async fn turning_it_off_from_the_panel_applies_without_a_restart() {
 
     assert_eq!(
         next_control(&io, &codec).await["code"],
-        "full_access_disabled",
-        "the switch must bind the running process, not just the config file"
+        "forbidden",
+        "the role must bind the running process, not just what was read at startup"
     );
 }
 
 #[ntex::test]
-async fn turning_full_access_off_closes_an_existing_local_shell() {
+async fn taking_shell_away_closes_an_existing_local_shell() {
     let state = full_access_state(true).await;
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state.clone()).await;
@@ -918,19 +925,17 @@ async fn turning_full_access_off_closes_an_existing_local_shell() {
     .unwrap();
     assert_eq!(next_control(&io, &codec).await["type"], "ready");
 
-    state
-        .full_access_off
-        .store(true, std::sync::atomic::Ordering::Release);
-    assert_eq!(state.sessions.close_local(), 1);
+    take_shell(&state).await;
+    revoke_lost(&state, "permission_revoked").await;
     assert_eq!(
         next_control(&io, &codec).await["code"],
-        "full_access_disabled"
+        "permission_revoked"
     );
     assert!(state.sessions.is_empty());
 }
 
 #[ntex::test]
-async fn turning_full_access_off_does_not_strand_an_ssh_session() {
+async fn taking_shell_away_does_not_strand_an_ssh_session() {
     let sshd = fake_sshd::start(false).await;
     let state = app_state(true, &sshd).await;
     let first = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
@@ -938,10 +943,9 @@ async fn turning_full_access_off_does_not_strand_an_ssh_session() {
     let (io, codec, handle) = open_shell(&srv, &first).await;
     read_until(&io, &codec, fake_sshd::BANNER).await;
 
-    state
-        .full_access_off
-        .store(true, std::sync::atomic::Ordering::Release);
-    assert_eq!(state.sessions.close_local(), 0);
+    take_shell(&state).await;
+    revoke_lost(&state, "permission_revoked").await;
+    assert_eq!(state.sessions.len(), 1, "an SSH session is not a local shell");
     drop(io);
 
     let second = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
@@ -979,7 +983,7 @@ async fn tuned_state(
         ..Default::default()
     };
     let mut remote = config.get_remote_access();
-    remote.terminal.enabled = true;
+    remote.terminal.enabled = Some(true);
     remote.ssh_addr = ssh_addr.to_string();
     remote.terminal.scrollback_bytes = scrollback;
     remote.terminal.detached_timeout_secs = detached_secs;
@@ -987,6 +991,7 @@ async fn tuned_state(
 
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
     sqlx::migrate!("./migrations").run(&db).await.unwrap();
+    common::seed_as_upgrade(&db, &config).await;
     AppState::new(Arc::new(config), db)
 }
 

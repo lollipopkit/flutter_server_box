@@ -86,92 +86,76 @@ monitor_type = "disk"
 threshold = ">=90%"
 matcher = "disk"
 
-# Ways to reach this machine through the agent, beyond reading its metrics.
-# Every switch below is off by default; turning one on exposes shell or file
-# access through this agent's HTTP surface, so it is deliberately a
-# config-file decision and cannot be changed from the panel's settings page.
+# The machine side of reaching this machine through the agent, beyond reading
+# its metrics: where sshd is, what the file API may reach, how big a terminal
+# or a command may get, and whether plaintext is tolerated.
 #
-# This section is never required — omit it entirely and everything stays off.
+# *Who* may use any of it is not here. Each account has a role, and a role
+# holds grants — shell, ssh_terminal, files (read or write), connect (with an
+# allow list), listen (with public and a port range). Admins edit accounts and
+# roles from the app or the panel. A fresh install's admin starts with every
+# grant, or none with `install.sh --permissions read`
+# (SBM_INIT_PERMISSIONS=read, or `serve --init-permissions read`).
+#
+# This section is never required.
 [remote_access]
 # The SSH server the panel terminal connects to.
 ssh_addr = "127.0.0.1:22"
 
-# Open a shell straight from a panel login, with no SSH credentials at all.
-# Unset follows the platform: on for Linux, off for macOS and Windows.
-#
-# This makes your panel password equivalent to a shell as whatever account the
-# agent runs as — which is why install.sh installs a *user* service by default.
-# If you run the agent as root, turn this off. The SSH login stays available
-# alongside it for anyone who wants sshd's authentication, logging, and second
-# factor instead.
-#
-# Also settable with SBM_FULL_ACCESS=0/1 (env wins over this file), and the
-# panel can turn it off — but never on — from its first-run prompt.
-# full_access = false
+# Serve everything beyond reading the numbers — terminals, commands, files,
+# relays — to a caller on a plaintext link. Off, that needs TLS (above) or a
+# loopback peer: a reverse proxy on this same host terminating TLS counts.
+# Only for a private network with transport encryption outside HTTP, such as
+# Tailscale. The App must also enable Allow insecure HTTP for the individual
+# Monitor connection; both opt-ins are required.
+# allow_insecure = false
 
-# Let the app's remote port forwards listen on an address other than loopback
-# (0.0.0.0, a LAN address). This is sshd's GatewayPorts: off, a forward is
-# reachable from this machine only; on, it is reachable by everyone who can
-# reach this machine. Remote forwards themselves are granted by full_access.
-# listen_public = false
+# Legacy, no longer read (TODO remove): full_access, listen_public,
+# [remote_access.terminal] enabled and [remote_access.fs] enabled moved to the
+# roles. An agent upgrading from a release before roles reads them once, to
+# give its admin role exactly what they granted, and logs that they can go.
+# terminal.allow_insecure and fs.allow_insecure still count, each for what it
+# used to cover only: the terminal's for shell, ssh_terminal, connect and
+# listen; the file API's for files.
 
-# In-browser terminal in the panel. The agent acts as an SSH client to
-# ssh_addr, so a session has exactly the privileges of the SSH account the
-# browser authenticates as — the panel password alone grants no shell, unless
-# full_access above is on.
+# The panel's in-browser terminal (the ssh_terminal grant) and the app's
+# terminal (the shell grant): capacities, which apply to both. The panel's
+# acts as an SSH client to ssh_addr, so a session there has exactly the
+# privileges of the SSH account the browser authenticates as.
 [remote_access.terminal]
-enabled = false
 # How long a session survives the browser disconnecting, so a laptop that
 # sleeps or a phone that changes network reattaches to the same shell.
 # detached_timeout_secs = 300
-# Serve on a plaintext listener. Off by default because the terminal's first
-# message carries an SSH password and everything after it is cleartext output.
-# Not needed when TLS is configured above, nor when a proxy on this same host
-# terminates TLS (loopback traffic counts as secure).
-# Only use this on a trusted private network with transport encryption outside
-# HTTP, such as Tailscale. The App must also enable Allow insecure HTTP for the
-# individual Monitor connection; both opt-ins are required.
-# allow_insecure = false
 # Leave unset to size from physical memory.
 # max_sessions = 8
 # scrollback_bytes = 2097152
 
-# The file API: GET /fs/list, /fs/stat, /fs/read; PUT /fs/write; POST
-# /fs/mkdir, /fs/rename, /fs/chmod; DELETE /fs/remove.
+# The file API (the files grant): GET /fs/list, /fs/stat, /fs/read; PUT
+# /fs/write; POST /fs/mkdir, /fs/rename, /fs/chmod; DELETE /fs/remove.
 #
 # This is how the app browses files on a server it reaches through this agent.
 # Such a server carries no SSH credentials at all, so SFTP is not available to
-# it and this endpoint is the only way — switching it off means the app offers
-# no file browser for this machine. A server added to the app over SSH instead
+# it and this endpoint is the only way. A server added to the app over SSH
 # browses over SFTP end to end and needs nothing here.
 #
-# roots is not optional: switching this on without naming directories serves
-# nothing at all. Every request is resolved to a real path — symlinks
-# followed, `..` refused — and anything landing outside these roots is denied,
-# so a link inside a root pointing at /etc is not a way out.
+# roots is what the file API may reach, and it is not optional: with none,
+# nothing is served whatever a role grants. Every request is resolved to a real
+# path — symlinks followed, `..` refused — and anything landing outside these
+# roots is denied, so a link inside a root pointing at /etc is not a way out.
 #
-# roots = ["/"] is how you say "the whole machine", and it makes the panel
-# password worth a shell: anyone who can write ~/.ssh/authorized_keys has one.
-# The agent warns about it at startup. Prefer naming what actually needs to be
-# reachable.
-#
-# File contents and the bearer token must not cross the network in plaintext.
-# Remote callers therefore need TLS above; a same-host reverse proxy remains
-# supported because its loopback connection to monitor is local.
-# Set this only for a private network whose transport encryption you control,
-# such as a Tailscale tailnet. The App must also explicitly allow insecure HTTP
-# for that individual Monitor connection before it will send a plaintext request.
+# roots = ["/"] is how you say "the whole machine", and it makes `files` with
+# mode = "write" worth a shell: anyone who can write ~/.ssh/authorized_keys has
+# one. The agent warns about it at startup. Prefer naming what actually needs
+# to be reachable.
 [remote_access.fs]
-enabled = false
 roots = []
-# allow_insecure = false
 # Largest single file a write will accept. Leave unset to size it from
 # physical memory. The body is streamed to disk and never buffered whole, so
 # this bounds the disk rather than memory.
 # max_write_bytes = 1073741824
 
-# Bounds on one `POST /api/v1/exec` command. Gated by full_access above; these
-# only decide how much a permitted command may take.
+# Bounds on one `POST /api/v1/exec` command. Whether one may run at all is the
+# shell grant; these only decide how much a permitted command may take.
 #
 # The defaults suit the pages this endpoint was built for — listing processes,
 # units and containers — and suit nothing that takes minutes or prints more

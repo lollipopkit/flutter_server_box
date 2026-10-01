@@ -12,11 +12,13 @@
 //! handler here takes a `&str` from a client and hands it to `tokio::fs`
 //! without going through [`FsRoots`], that is the bug.
 //!
-//! Not gated on `full_access`, unlike `/exec`. That grant means "a shell as
-//! the agent's user"; this one means "these directories", and folding them
+//! Its own grant, `files`, not `shell`: that one means "a shell as the
+//! agent's user", this one means "these directories", and folding them
 //! together would make the narrower thing cost the wider one. Where the roots
 //! *are* the whole filesystem the two are equivalent, which is what the
-//! startup warning says.
+//! startup warning says. `files` is read-only or read-write
+//! (`core::permissions::FilesMode`), and which a request needs is decided by
+//! what it does — see [`admit`].
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -27,12 +29,11 @@ use ntex::web::{self, HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 use tokio::io::{AsyncReadExt, AsyncSeekExt, AsyncWriteExt};
 
-use super::server::{AppState, verify_auth};
-use super::ws::{
-    self,
-    audit::{Action, Event, Kind, Outcome, peer_ip},
-};
+use super::authz;
+use super::server::AppState;
+use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
 use crate::core::fs_roots::FsDenied;
+use crate::core::permissions::Grant;
 
 /// How much of a file is read per chunk. The same 32 KiB the SFTP path uses,
 /// for the same reason: big enough that the per-chunk overhead disappears,
@@ -90,6 +91,12 @@ pub struct ChmodBody {
     mode: u32,
 }
 
+/// What changes something on disk, and therefore needs `files` with
+/// `mode = "write"`. Everything else — the roots, list, stat, read — is a read.
+fn writes(action: &str) -> bool {
+    matches!(action, "write" | "mkdir" | "remove" | "rename" | "chmod")
+}
+
 /// Authorises the request and reports why not.
 ///
 /// Every handler starts here. Re-checked per request rather than trusted from
@@ -101,17 +108,26 @@ async fn admit(
     action: &str,
     subject: &str,
 ) -> Result<(), HttpResponse> {
-    if verify_auth(req, &state.config.get_jwt_secret()).is_err() {
-        return Err(HttpResponse::Unauthorized().finish());
-    }
-    if !state
-        .remote_access
-        .fs
-        .available(is_secure_request(req, state))
-    {
+    let caller = match authz::jwt_caller(req, state).await {
+        Ok(caller) => caller,
+        Err(_) => return Err(HttpResponse::Unauthorized().finish()),
+    };
+    let checked = caller.check(Grant::Files, state, authz::is_secure(req, state));
+    let read_only = caller
+        .grants()
+        .files
+        .as_ref()
+        .is_some_and(|files| !files.allows_write());
+    let refusal = match checked {
+        Err(why) => Some(why.as_str()),
+        Ok(()) if writes(action) && read_only => Some("read-only"),
+        Ok(()) => None,
+    };
+    if let Some(refusal) = refusal {
         Event::new(Kind::Fs, Action::Denied, Outcome::Denied)
             .remote_ip(peer_ip(req))
-            .detail("file api disabled or insecure transport")
+            .subject(&caller.username)
+            .detail(format!("{action}: {refusal}"))
             .record(&state.db)
             .await;
         return Err(HttpResponse::Forbidden().finish());
@@ -124,10 +140,6 @@ async fn admit(
         .record(&state.db)
         .await;
     Ok(())
-}
-
-fn is_secure_request(req: &HttpRequest, state: &AppState) -> bool {
-    ws::is_secure_transport(req, state.tls_active)
 }
 
 /// Turns a refusal into a response.
@@ -200,9 +212,13 @@ pub async fn list(
         Ok(reader) => reader,
         Err(e) => return Ok(failed(e)),
     };
+    let roots = &state.remote_access.fs.roots;
     let mut entries = Vec::new();
     loop {
         match reader.next_entry().await {
+            // The agent's own state is left out rather than shown and refused:
+            // a name that can be listed is a name somebody will try.
+            Ok(Some(entry)) if roots.hides(&entry.path()) => {}
             Ok(Some(entry)) => entries.push(view_of(&entry.path()).await),
             Ok(None) => break,
             Err(e) => return Ok(failed(e)),
@@ -393,6 +409,10 @@ pub async fn remove(
         Ok(path) => path,
         Err(e) => return Ok(denied(e)),
     };
+    // Nor is a directory the agent's own state is in — see `Protected`.
+    if let Err(e) = state.remote_access.fs.roots.check_mutable(&path) {
+        return Ok(denied(e));
+    }
 
     // A root itself is not deletable through this API. Removing the thing the
     // confinement is defined against would leave the API pointed at nothing,
@@ -449,6 +469,13 @@ pub async fn rename(
         Ok(path) => path,
         Err(e) => return Ok(denied(e)),
     };
+    // Moving a directory the agent's state is in would carry that state to a
+    // name nothing protects — see `Protected`.
+    for end in [&from, &to] {
+        if let Err(e) = roots.check_mutable(end) {
+            return Ok(denied(e));
+        }
+    }
     // As in `remove`: a root is what the confinement is defined against, and
     // renaming one leaves it pointing at a path that no longer exists — after
     // which every request 403s because nothing under it can be canonicalised.
@@ -473,6 +500,11 @@ pub async fn chmod(
         Ok(path) => path,
         Err(e) => return Ok(denied(e)),
     };
+    // A directory the agent's state is in keeps its mode: opening it up is
+    // handing the state to whoever else is on the machine.
+    if let Err(e) = state.remote_access.fs.roots.check_mutable(&path) {
+        return Ok(denied(e));
+    }
     set_mode(&path, body.mode).await
 }
 

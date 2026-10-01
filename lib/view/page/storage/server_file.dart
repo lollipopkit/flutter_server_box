@@ -169,10 +169,11 @@ class _MonitorFilePageState extends ConsumerState<_MonitorFilePage> {
     if (monitor == null) {
       throw StateError('${_spi.name} has no monitor agent to browse');
     }
-    final system = ref.read(serverProvider(_spi.id)).status.system;
+    final server = ref.read(serverProvider(_spi.id));
     _backend = MonitorFileBackend(
       monitor,
-      permissions: system != SystemType.windows,
+      permissions: server.status.system != SystemType.windows,
+      readOnly: server.remoteAccess?.grants?.filesReadOnly ?? false,
     );
   }
 

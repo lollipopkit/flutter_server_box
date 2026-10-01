@@ -1,0 +1,61 @@
+{
+    "cpu": "supported",
+    "cpu_brand": "supported",
+    "mem": "supported",
+    "swap": "hardware_dependent",
+    "disks": "supported",
+    "net": "supported",
+    "temps": "hardware_dependent",
+    "conn": "not_implemented",
+    "uptime": "supported",
+    "sys": "supported",
+    "host": "supported",
+    "diskio": "hardware_dependent",
+    "batteries": "not_implemented",
+    "sensors": "not_implemented",
+    "nvidia": "not_implemented",
+    "amd": "not_implemented",
+    "gpu": "not_implemented",
+    "disk_smart": "hardware_dependent",
+    "platform": "bsd",
+    "version": "0.1.3",
+    "retention_days": 30,
+    "oldest_sample": "2026-10-01T09:04:43.798257+00:00",
+    "remote_access": {
+        "terminal": false,
+        "full_access": false,
+        "files": false,
+        "stream": true,
+        "listen": false
+    },
+    "me": {
+        "username": "alice",
+        "role": "desktop",
+        "admin": false
+    },
+    "grants": {
+        "connect": {
+            "allow": [
+                "127.0.0.1:3389"
+            ],
+            "ok": true
+        },
+        "files": {
+            "mode": "read",
+            "ok": false,
+            "why": "not_configured"
+        },
+        "listen": {
+            "ok": false,
+            "why": "not_granted"
+        },
+        "shell": {
+            "ok": false,
+            "why": "not_granted"
+        },
+        "ssh_terminal": {
+            "ok": false,
+            "why": "not_granted"
+        }
+    }
+}

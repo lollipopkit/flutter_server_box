@@ -1,3 +1,5 @@
+import 'package:server_box/data/model/server/monitor_grants.dart';
+
 /// What a `monitor` agent will actually accept on its remote-access
 /// endpoints, from `GET /api/v1/capabilities`.
 ///
@@ -44,17 +46,44 @@ class MonitorRemoteAccess {
   /// cannot listen.
   final bool listen;
 
+  /// The agent's per-grant answer, with why one is not usable — null for an
+  /// agent older than roles (`docs/dev/monitor-permissions.md`), which says
+  /// only the booleans above.
+  ///
+  /// When present the booleans are derived from it, as the agent derives its
+  /// own legacy fields: one source, so the two cannot disagree.
+  final MonitorGrants? grants;
+
   const MonitorRemoteAccess({
     this.terminal = false,
     this.fullAccess = false,
     this.files = false,
     this.stream = false,
     this.listen = false,
+    this.grants,
   });
+
+  /// [grants] as the booleans every other part of the app asks.
+  factory MonitorRemoteAccess.ofGrants(MonitorGrants grants) =>
+      MonitorRemoteAccess(
+        terminal: grants.shell.ok || grants.sshTerminal.ok,
+        fullAccess: grants.shell.ok,
+        files: grants.files.ok,
+        stream: grants.connect.ok,
+        listen: grants.listen.ok,
+        grants: grants,
+      );
 
   static const none = MonitorRemoteAccess();
 
-  factory MonitorRemoteAccess.fromJson(Map<String, dynamic> json) {
+  /// [grants] is `capabilities.grants`, which wins over [json] when there.
+  factory MonitorRemoteAccess.fromJson(
+    Map<String, dynamic> json, {
+    Map<String, dynamic>? grants,
+  }) {
+    if (grants != null) {
+      return MonitorRemoteAccess.ofGrants(MonitorGrants.fromJson(grants));
+    }
     bool flag(String key) => json[key] == true;
     return MonitorRemoteAccess(
       terminal: flag('terminal'),
@@ -68,7 +97,7 @@ class MonitorRemoteAccess {
   @override
   String toString() =>
       'MonitorRemoteAccess(terminal: $terminal, fullAccess: $fullAccess, '
-      'files: $files, stream: $stream, listen: $listen)';
+      'files: $files, stream: $stream, listen: $listen, grants: $grants)';
 
   @override
   bool operator ==(Object other) =>
@@ -77,8 +106,10 @@ class MonitorRemoteAccess {
        fullAccess == other.fullAccess &&
        files == other.files &&
        stream == other.stream &&
-       listen == other.listen;
+       listen == other.listen &&
+       grants == other.grants;
 
   @override
-  int get hashCode => Object.hash(terminal, fullAccess, files, stream, listen);
+  int get hashCode =>
+      Object.hash(terminal, fullAccess, files, stream, listen, grants);
 }

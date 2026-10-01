@@ -4999,4 +4999,128 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get copyLink => 'Salin tautan';
+
+  @override
+  String funcNeedsAgentPermission(String func) {
+    return 'Akun Anda di Monitor agent ini tidak punya izin untuk $func. Minta kepada admin agent.';
+  }
+
+  @override
+  String funcNeedsAgentHttps(String func) {
+    return '$func memerlukan HTTPS ke Monitor agent ini, atau HTTP diizinkan di agent dan aplikasi ini.';
+  }
+
+  @override
+  String funcNeedsAgentSetup(String func) {
+    return '$func belum disiapkan di Monitor agent ini; operatornya harus mengonfigurasinya.';
+  }
+
+  @override
+  String get monitorFilesReadOnly =>
+      'Hanya baca: akun ini dapat menelusuri file di agent tetapi tidak dapat mengubahnya.';
+
+  @override
+  String get monitorAccess => 'Akses';
+
+  @override
+  String get monitorAccounts => 'Akun';
+
+  @override
+  String get monitorRoles => 'Peran';
+
+  @override
+  String get monitorRole => 'Peran';
+
+  @override
+  String get monitorChangePassword => 'Ubah kata sandi';
+
+  @override
+  String get monitorNewPassword => 'Kata sandi baru';
+
+  @override
+  String get monitorCurrentPassword => 'Kata sandi Anda saat ini';
+
+  @override
+  String get monitorReauthTip =>
+      'Mengubah akses memerlukan kata sandi Anda lagi.';
+
+  @override
+  String get monitorPasswordTooShort => 'Minimal 8 karakter';
+
+  @override
+  String get monitorPasswordMismatch => 'Kata sandi tidak cocok';
+
+  @override
+  String get monitorErrReauth => 'Kata sandi Anda salah.';
+
+  @override
+  String get monitorErrLastAdmin =>
+      'Agent memerlukan setidaknya satu akun admin.';
+
+  @override
+  String get monitorErrConflict => 'Sudah ada, atau masih digunakan.';
+
+  @override
+  String get monitorErrForbidden => 'Hanya admin yang dapat melakukan ini.';
+
+  @override
+  String get monitorRoleNameRule =>
+      'Huruf kecil, angka, - dan _, maksimal 32 karakter';
+
+  @override
+  String get monitorGrantShell => 'Shell dan perintah';
+
+  @override
+  String get monitorGrantShellTip =>
+      'Terminal, proses, layanan, kontainer, snippet, daya — sebagai akun agent';
+
+  @override
+  String get monitorGrantSshTerminal => 'Terminal panel lewat SSH';
+
+  @override
+  String get monitorGrantFiles => 'File';
+
+  @override
+  String get monitorGrantConnect => 'Koneksi keluar';
+
+  @override
+  String get monitorGrantConnectTip =>
+      'Penerusan port lokal dan dinamis, desktop jarak jauh';
+
+  @override
+  String get monitorGrantConnectAllow =>
+      'Tujuan yang diizinkan (IP atau CIDR, opsional :port atau :dari-sampai; satu per baris, kosong = di mana saja)';
+
+  @override
+  String get monitorGrantListen => 'Mendengarkan di server';
+
+  @override
+  String get monitorGrantListenTip => 'Penerusan port jarak jauh';
+
+  @override
+  String get monitorGrantListenPublic => 'Alamat non-loopback';
+
+  @override
+  String get monitorGrantPorts => 'Rentang port (kosong = apa saja)';
+
+  @override
+  String get monitorGrantOff => 'Mati';
+
+  @override
+  String get monitorBuiltin => 'Bawaan';
+
+  @override
+  String get monitorAdminRoleTip =>
+      'Mengelola akun, peran, dan pengaturan agent';
+
+  @override
+  String get monitorYou => 'Anda';
+
+  @override
+  String get monitorNoAccessToSettings =>
+      'Hanya admin yang dapat mengubah pengaturan agent ini.';
+
+  @override
+  String get monitorPasswordNotSaved =>
+      'Kata sandi sudah diubah di agen, tetapi aplikasi gagal menyimpannya. Perbarui kata sandi Monitor di pengaturan server ini.';
 }

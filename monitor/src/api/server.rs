@@ -1,5 +1,6 @@
 use crate::{
-    api::auth::{self, Claims},
+    api::auth,
+    api::authz::{self, Caller, Reader},
     api::cors::Cors,
     api::ratelimit::LoginThrottle,
     api::ws::{
@@ -12,6 +13,7 @@ use crate::{
     },
     core::config::Config,
     core::config_file,
+    core::permissions::Grant,
     core::remote_access::RemoteAccess,
     monitoring::{self, LiveSettings, SystemMetrics},
     monitoring::velocity::{NetworkSpeedInfo, VelocityAnalysisResponse, VelocityManager},
@@ -24,7 +26,6 @@ use sbm_parser::{SystemType, capabilities::Capabilities};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use sqlx::SqlitePool;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, OnceLock};
 use std::time::Duration;
 use tokio::sync::{Mutex, RwLock, Semaphore, broadcast};
@@ -44,7 +45,24 @@ fn password_check_limit() -> &'static Arc<Semaphore> {
     })
 }
 
-async fn verify_login_password_off_worker(password: String, hash: Option<String>) -> Result<bool> {
+/// Hashes [password] for storage on a blocking thread, under the same limit
+/// as a check: a bcrypt hash is the same work as a verify, and done on the
+/// worker it stalls every request that worker is serving.
+pub(crate) async fn hash_password_off_worker(password: String) -> Result<String> {
+    let permit = password_check_limit()
+        .clone()
+        .acquire_owned()
+        .await
+        .map_err(|_| MonitorError::Monitoring("Password hasher is unavailable".to_string()))?;
+    tokio::task::spawn_blocking(move || {
+        let _permit = permit;
+        auth::hash_password(&password)
+    })
+    .await
+    .map_err(|error| MonitorError::Monitoring(format!("Password hasher failed: {error}")))?
+}
+
+pub(crate) async fn verify_login_password_off_worker(password: String, hash: Option<String>) -> Result<bool> {
     let permit = password_check_limit()
         .clone()
         .acquire_owned()
@@ -91,19 +109,16 @@ pub struct AppState {
     /// taken yet — see `api::ws::listen`.
     pub pending: Arc<PendingStore>,
     pub login_throttle: Arc<LoginThrottle>,
-    /// Set when the panel turns the access without SSH off, so the change
-    /// applies to the running process rather than waiting for a restart.
-    /// One-way: nothing here can switch it back on.
-    pub full_access_off: Arc<AtomicBool>,
-    /// Fired when the panel turns that access off, so work already running
-    /// under the grant ends with it.
+    /// Fired when a role or an account changed, carrying the code a client
+    /// whose connection ends because of it is told (`permission_revoked`, or
+    /// `full_access_disabled` for the panel's legacy switch).
     ///
-    /// The flag above answers "may this start now", which every handler asks
-    /// afresh; this answers "may this carry on", which only a long-lived
-    /// connection has to be told. The terminal uses a session store for the
-    /// same purpose (`SessionStore::close_local`); a relay has no session to
-    /// look up, so it holds a subscription instead.
-    pub full_access_revoked: broadcast::Sender<()>,
+    /// Every handler asks the database afresh whether its caller may *start*
+    /// something; this answers "may this carry on", which only a long-lived
+    /// connection has to be told. A relay or a listener holds a subscription
+    /// and re-checks its own account when it fires; terminal sessions, which
+    /// outlive their sockets, are swept by `authz::revoke_lost` instead.
+    pub grants_changed: broadcast::Sender<&'static str>,
     /// Serialises every read-modify-write of `config.toml`.
     ///
     /// `config_file::write` is atomic, so no reader ever sees a half-written
@@ -115,14 +130,65 @@ pub struct AppState {
     pub config_write: Arc<Mutex<()>>,
 }
 
+/// The file a `sqlite:` [url] opens, or `None` for an in-memory database.
+fn sqlite_file(url: &str) -> Option<std::path::PathBuf> {
+    use std::str::FromStr;
+    let options = sqlx::sqlite::SqliteConnectOptions::from_str(url).ok()?;
+    let file = options.get_filename();
+    let memory = url.contains("mode=memory")
+        || file.as_os_str().is_empty()
+        || file.to_string_lossy().starts_with("file:");
+    (!memory).then(|| file.to_path_buf())
+}
+
+/// Where this agent keeps what the file API must never reach — see
+/// [`crate::core::fs_roots::Protected`]: the database (and its journal files)
+/// with `jwt.secret` and the first-start credentials beside it, `config.toml`
+/// and its backups, `.env`, the TLS certificate and key, and the
+/// custom-commands directory.
+fn agent_state(config: &Config) -> crate::core::fs_roots::Protected {
+    use std::path::Path;
+    let mut protected = crate::core::fs_roots::Protected::default();
+    let url = config.get_database_url();
+    // The file sqlx opens, as sqlx reads the URL — percent-decoded, query
+    // removed. Taking it apart here by hand protected `my%20db.db` while the
+    // database was `my db.db`.
+    if let Some(db) = sqlite_file(&url) {
+        protected.file(&db);
+    }
+    protected.file(&config.jwt_secret_path());
+    protected.file(&crate::db::bootstrap::initial_credentials_path(&url));
+    protected.file(Path::new(crate::core::config_file::CONFIG_PATH));
+    // The environment file: the one in the working directory (and its
+    // backups, by prefix), and the one actually loaded, which `dotenvy` may
+    // have found in a parent directory.
+    protected.file(Path::new(".env"));
+    if let Some(env) = crate::core::config::loaded_dotenv() {
+        protected.file(env);
+    }
+    if let Some(tls) = config.get_server().tls {
+        protected.file(Path::new(&tls.cert_path));
+        protected.file(Path::new(&tls.key_path));
+    }
+    if let Some(dir) = sbm_parser::script::custom_cmd_dir_path() {
+        protected.tree(&dir);
+    }
+    protected
+}
+
 impl AppState {
     pub fn new(config: Arc<Config>, db: SqlitePool) -> Arc<Self> {
         let velocity_manager = Arc::new(RwLock::new(VelocityManager::new()));
         let live_settings = Arc::new(RwLock::new(LiveSettings::from_config(&config.get_monitoring())));
         let tls_active = config.get_server().tls.is_some();
-        let remote_access = config
+        let mut remote_access = config
             .get_remote_access()
             .resolve(sbm_native::total_memory());
+        remote_access.fs.roots = remote_access
+            .fs
+            .roots
+            .clone()
+            .protecting(agent_state(&config));
         remote_access.log_summary(tls_active);
         let sessions = Arc::new(SessionStore::new(
             remote_access.terminal.max_sessions,
@@ -135,8 +201,7 @@ impl AppState {
             sessions,
             pending: Arc::new(PendingStore::default()),
             login_throttle: Arc::new(LoginThrottle::new()),
-            full_access_off: Arc::new(AtomicBool::new(false)),
-            full_access_revoked: broadcast::channel(1).0,
+            grants_changed: broadcast::channel(16).0,
             config,
             db,
             current_metrics: Arc::new(RwLock::new(None)),
@@ -145,17 +210,6 @@ impl AppState {
             last_viewer_seen: Arc::new(RwLock::new(chrono::Utc::now())),
             config_write: Arc::new(Mutex::new(())),
         })
-    }
-
-    /// Whether a shell may be opened without SSH credentials right now.
-    ///
-    /// The config snapshot minus anything the panel has switched off since
-    /// startup. Both halves are checked at the point of use rather than
-    /// resolved once, so pressing "turn this off" takes effect on the next
-    /// request instead of the next restart.
-    pub fn full_access_allowed(&self, secure: bool) -> bool {
-        self.remote_access.full_access_available(secure)
-            && !self.full_access_off.load(Ordering::Acquire)
     }
 }
 
@@ -197,30 +251,33 @@ struct ErrorResponse {
     error: String,
 }
 
-fn unauthorized_response() -> HttpResponse {
-    HttpResponse::Unauthorized().json(&ErrorResponse {
-        error: "Invalid or missing token".to_string(),
-    })
-}
-
-/// Require a full panel JWT and return its claims. The early response stays
-/// identical across handlers, while the macro makes endpoints that need the
-/// subject just as explicit as endpoints that only need authentication.
+/// Require a panel JWT for an account that exists, and return the account
+/// with its role — see `api::authz`.
 macro_rules! require_jwt {
     ($req:expr, $app_state:expr) => {{
-        match verify_auth($req, &$app_state.config.get_jwt_secret()) {
-            Ok(claims) => claims,
-            Err(_) => return Ok(unauthorized_response()),
+        match authz::jwt_caller($req, $app_state).await {
+            Ok(caller) => caller,
+            Err(response) => return Ok(response),
         }
     }};
 }
 
-/// Require either a full panel JWT or a paired Watch read token.
+/// Require an admin's panel JWT.
+macro_rules! require_admin {
+    ($req:expr, $app_state:expr) => {{
+        match authz::admin_caller($req, $app_state).await {
+            Ok(caller) => caller,
+            Err(response) => return Ok(response),
+        }
+    }};
+}
+
+/// Require either a panel JWT or a watch token with the `read` scope.
 macro_rules! require_read_access {
     ($req:expr, $app_state:expr) => {{
-        match verify_read_auth($req, $app_state).await {
-            Ok(subject) => subject,
-            Err(_) => return Ok(unauthorized_response()),
+        match authz::read_caller($req, $app_state).await {
+            Ok(reader) => reader,
+            Err(response) => return Ok(response),
         }
     }};
 }
@@ -291,6 +348,28 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                 "/remote-access/full-access",
                 web::delete().to(disable_full_access),
             )
+            .route("/me", web::get().to(crate::api::admin::me))
+            .route("/me/password", web::put().to(crate::api::admin::change_own_password))
+            .service(
+                web::resource("/users")
+                    .route(web::get().to(crate::api::admin::list_users))
+                    .route(web::post().to(crate::api::admin::create_user)),
+            )
+            .service(
+                web::resource("/users/{username}")
+                    .route(web::put().to(crate::api::admin::update_user))
+                    .route(web::delete().to(crate::api::admin::delete_user)),
+            )
+            .service(
+                web::resource("/roles")
+                    .route(web::get().to(crate::api::admin::list_roles))
+                    .route(web::post().to(crate::api::admin::create_role)),
+            )
+            .service(
+                web::resource("/roles/{name}")
+                    .route(web::put().to(crate::api::admin::update_role))
+                    .route(web::delete().to(crate::api::admin::delete_role)),
+            )
             .service(
                 // Its own payload limit, like `/exec`: the body is
                 // every custom command at once, and a user who pastes
@@ -339,15 +418,14 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
     let server_config = app_state.config.get_server();
     let bind_addr = format!("{}:{}", server_config.host, server_config.port);
 
-    if app_state.remote_access.terminal.enabled {
-        // A quarter of the grace period: often enough that a reaped session
-        // isn't held much past its deadline, rare enough to be invisible
-        start_reaper(
-            app_state.sessions.clone(),
-            (app_state.remote_access.terminal.detached_timeout / 4)
-                .max(Duration::from_secs(10)),
-        );
-    }
+    // Always: whether anyone may open a terminal is a role's grant now, and
+    // a role can gain it while the agent runs. A quarter of the grace period:
+    // often enough that a reaped session isn't held much past its deadline,
+    // rare enough to be invisible.
+    start_reaper(
+        app_state.sessions.clone(),
+        (app_state.remote_access.terminal.detached_timeout / 4).max(Duration::from_secs(10)),
+    );
 
     // Read once here rather than inside the factory: the factory runs per
     // worker, and every worker must apply the same limit.
@@ -532,20 +610,22 @@ async fn issue_watch_token(
     app_state: web::types::State<Arc<AppState>>,
     payload: web::types::Json<WatchTokenRequest>,
 ) -> Result<HttpResponse> {
-    let claims = require_jwt!(&req, &app_state);
+    let caller = require_jwt!(&req, &app_state);
     let client_id = validate_watch_client_id(&payload.client_id)?;
     let token = format!("sbw_{}", crate::utils::secrets::random_hex(32)?);
     let token_hash = watch_token_hash(&token);
     let now = chrono::Utc::now().timestamp();
     let expires_at = (chrono::Utc::now() + WATCH_TOKEN_LIFETIME).timestamp();
     sqlx::query(
-        "INSERT INTO watch_tokens(subject, client_id, token_hash, created_at, expires_at) \
-         VALUES (?, ?, ?, ?, ?) \
+        // `read`, the only scope there is, and stated rather than left to
+        // the column default: the scope is what `verify_watch_token` reads.
+        "INSERT INTO watch_tokens(subject, client_id, token_hash, created_at, expires_at, scope) \
+         VALUES (?, ?, ?, ?, ?, 'read') \
          ON CONFLICT(subject, client_id) DO UPDATE SET \
          token_hash = excluded.token_hash, created_at = excluded.created_at, \
-         expires_at = excluded.expires_at",
+         expires_at = excluded.expires_at, scope = excluded.scope",
     )
-    .bind(&claims.sub)
+    .bind(&caller.username)
     .bind(client_id)
     .bind(token_hash)
     .bind(now)
@@ -560,10 +640,10 @@ async fn revoke_watch_token(
     app_state: web::types::State<Arc<AppState>>,
     payload: web::types::Json<WatchTokenRequest>,
 ) -> Result<HttpResponse> {
-    let claims = require_jwt!(&req, &app_state);
+    let caller = require_jwt!(&req, &app_state);
     let client_id = validate_watch_client_id(&payload.client_id)?;
     sqlx::query("DELETE FROM watch_tokens WHERE subject = ? AND client_id = ?")
-        .bind(&claims.sub)
+        .bind(&caller.username)
         .bind(client_id)
         .execute(&app_state.db)
         .await?;
@@ -751,12 +831,24 @@ struct CapabilitiesView {
     #[serde(skip_serializing_if = "Option::is_none")]
     oldest_sample: Option<String>,
     remote_access: RemoteAccessView,
+    /// Who is asking — absent for a watch token, which is nobody's session.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    me: Option<MeView>,
+    /// What the caller's role lets them do over this link, grant by grant —
+    /// see `authz::grants_view`.
+    grants: serde_json::Value,
 }
 
-/// Which remote-access paths this agent will actually accept, as opposed to
-/// what the config asks for: `terminal` already accounts for the transport
-/// check, so the panel can hide the entry rather than offer something that
-/// answers 403.
+#[derive(Serialize)]
+struct MeView {
+    username: String,
+    role: String,
+    admin: bool,
+}
+
+/// The answer clients read before roles, derived from `grants` for the
+/// caller so an app that predates roles keeps working. TODO: remove once no
+/// supported app reads it.
 #[derive(Serialize)]
 struct RemoteAccessView {
     terminal: bool,
@@ -783,7 +875,11 @@ struct RemoteAccessView {
 }
 
 async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
-    require_jwt!(&req, &app_state);
+    let reader = require_read_access!(&req, &app_state);
+    let caller = match &reader {
+        Reader::Account(caller) => Some(caller),
+        Reader::Watch => None,
+    };
     let platform = monitoring::system_type();
     let capabilities = monitoring::effective_capabilities(platform);
     let secure = ws::is_secure_transport(&req, app_state.tls_active);
@@ -810,13 +906,24 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             .unwrap_or_default()
             .metrics_days,
         oldest_sample,
-        remote_access: RemoteAccessView {
-            terminal: app_state.remote_access.terminal.available(secure),
-            full_access: app_state.full_access_allowed(secure),
-            files: app_state.remote_access.fs.available(secure),
-            stream: app_state.full_access_allowed(secure),
-            listen: app_state.full_access_allowed(secure),
+        remote_access: {
+            let ok = |grant| {
+                caller.is_some_and(|c: &Caller| c.check(grant, &app_state, secure).is_ok())
+            };
+            RemoteAccessView {
+                terminal: ok(Grant::SshTerminal) || ok(Grant::Shell),
+                full_access: ok(Grant::Shell),
+                files: ok(Grant::Files),
+                stream: ok(Grant::Connect),
+                listen: ok(Grant::Listen),
+            }
         },
+        me: caller.map(|c| MeView {
+            username: c.username.clone(),
+            role: c.role.name.clone(),
+            admin: c.role.admin,
+        }),
+        grants: authz::grants_view(caller, &app_state, secure),
     }))
 }
 
@@ -834,24 +941,30 @@ async fn issue_ws_ticket(
     app_state: web::types::State<Arc<AppState>>,
     payload: web::types::Json<TicketRequest>,
 ) -> Result<HttpResponse> {
-    let claims = require_jwt!(&req, &app_state);
+    let caller = require_jwt!(&req, &app_state);
 
     let remote_ip = audit::peer_ip(&req);
     let purpose = payload.into_inner().purpose;
     let secure = ws::is_secure_transport(&req, app_state.tls_active);
+    // The grants each endpoint can be used under at all; which one a frame
+    // needs is checked again when it arrives (a local shell needs `shell`, an
+    // SSH one `ssh_terminal`; a stream `open` needs `connect`, an `accept`
+    // `listen`).
+    let ok = |grant| caller.check(grant, &app_state, secure).is_ok();
     let (available, detail) = match purpose {
         Purpose::Terminal => (
-            app_state.remote_access.terminal.available(secure),
+            ok(Grant::Shell) || ok(Grant::SshTerminal),
             "terminal not available",
         ),
-        Purpose::Stream | Purpose::Listen => (
-            app_state.full_access_allowed(secure),
-            "full access not available",
+        Purpose::Stream => (
+            ok(Grant::Connect) || ok(Grant::Listen),
+            "stream not available",
         ),
+        Purpose::Listen => (ok(Grant::Listen), "listen not available"),
     };
     if !available {
         Event::new(Kind::Ticket, Action::Denied, Outcome::Denied)
-            .subject(&claims.sub)
+            .subject(&caller.username)
             .remote_ip(remote_ip)
             .detail(detail)
             .record(&app_state.db)
@@ -861,10 +974,10 @@ async fn issue_ws_ticket(
         }));
     }
 
-    match app_state.tickets.issue(purpose, &claims.sub) {
+    match app_state.tickets.issue(purpose, &caller.username) {
         Ok(ticket) => {
             Event::new(Kind::Ticket, Action::Open, Outcome::Ok)
-                .subject(&claims.sub)
+                .subject(&caller.username)
                 .remote_ip(remote_ip)
                 .detail(match purpose {
                     Purpose::Terminal => "terminal",
@@ -878,7 +991,7 @@ async fn issue_ws_ticket(
         }
         Err(e) => {
             Event::new(Kind::Ticket, Action::Denied, Outcome::Error)
-                .subject(&claims.sub)
+                .subject(&caller.username)
                 .remote_ip(remote_ip)
                 .detail("issue failed")
                 .record(&app_state.db)
@@ -937,7 +1050,7 @@ struct SettingsView {
 const SETTINGS_LIVE_FIELDS: &[&str] = &["extended_interval_secs", "idle_pause_enabled", "idle_pause_threshold_secs"];
 
 async fn get_settings(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
-    require_jwt!(&req, &app_state);
+    require_admin!(&req, &app_state);
 
     let file_config = match config_file::read() {
         Ok(c) => c,
@@ -979,7 +1092,7 @@ async fn update_settings(
     app_state: web::types::State<Arc<AppState>>,
     payload: web::types::Json<SettingsPayload>,
 ) -> Result<HttpResponse> {
-    require_jwt!(&req, &app_state);
+    require_admin!(&req, &app_state);
     let payload = payload.into_inner();
 
     if payload.interval_seconds < 1 {
@@ -1040,48 +1153,37 @@ async fn update_settings(
     Ok(HttpResponse::Ok().json(&serde_json::json!({ "status": "ok" })))
 }
 
-/// Turns the access without SSH off, permanently, from the panel.
+/// The panel's first-use "turn off access without SSH": takes `shell`,
+/// `connect` and `listen` away from every role, and ends what was running
+/// under them.
 ///
-/// The rest of `remote_access` is deliberately absent from the settings API:
-/// a panel-password holder must not be able to *widen* what the agent exposes.
-/// This is the one direction that is always safe, so it gets its own endpoint
-/// rather than a general read-write field — there is no way to spell "enable"
-/// through it, which is what the first-run prompt in the panel needs and all
-/// it needs.
-///
-/// Takes effect immediately as well as on disk: `AppState.remote_access` is
-/// otherwise a startup snapshot, and a switch the user just pressed for
-/// safety reasons should not wait for a restart.
+/// Kept for the panel's existing prompt, and for an app that predates roles;
+/// with roles it is one admin edit among others, and the admin can grant them
+/// back. It answers the old way too — a client told `full_access_disabled`
+/// rather than `permission_revoked`. TODO: remove once the panel's prompt
+/// edits roles itself.
 async fn disable_full_access(
     req: HttpRequest,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse> {
-    let claims = require_jwt!(&req, &app_state);
+    let caller = require_admin!(&req, &app_state);
 
-    let _config_guard = app_state.config_write.lock().await;
-    let mut config = match config_file::read() {
-        Ok(c) => c,
-        Err(e) => {
-            return Ok(HttpResponse::InternalServerError()
-                .json(&ErrorResponse { error: e.to_string() }));
-        }
-    };
-    let mut remote = config.get_remote_access();
-    remote.full_access = Some(false);
-    config.remote_access = Some(remote);
-    if let Err(e) = config_file::write(&config) {
-        return Ok(HttpResponse::InternalServerError()
-            .json(&ErrorResponse { error: e.to_string() }));
+    for mut role in crate::db::accounts::roles(&app_state.db).await? {
+        role.grants.shell = false;
+        role.grants.connect = None;
+        role.grants.listen = None;
+        crate::db::accounts::set_grants(&app_state.db, &role.name, &role.grants).await?;
     }
-
-    app_state.full_access_off.store(true, Ordering::Release);
-    // Told as well as flagged: the flag stops the next request, this ends the
-    // long-lived ones already carrying bytes.
-    let _ = app_state.full_access_revoked.send(());
-    let closed = app_state.sessions.close_local();
+    Event::new(Kind::Admin, Action::Close, Outcome::Ok)
+        .subject(&caller.username)
+        .remote_ip(audit::peer_ip(&req))
+        .detail("shell, connect and listen removed from every role")
+        .record(&app_state.db)
+        .await;
+    authz::revoke_lost(app_state.get_ref(), "full_access_disabled").await;
     tracing::info!(
-        "Access without SSH disabled from the panel by {}; closed {closed} local terminal sessions",
-        claims.sub,
+        "Access without SSH disabled from the panel by {}: shell, connect and listen removed from every role",
+        caller.username,
     );
     Ok(HttpResponse::Ok().json(&serde_json::json!({ "status": "ok" })))
 }
@@ -1098,7 +1200,7 @@ struct CardOrderPayload {
 }
 
 async fn get_card_order(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
-    require_jwt!(&req, &app_state);
+    require_read_access!(&req, &app_state);
     let file_config = match config_file::read() {
         Ok(c) => c,
         Err(e) => {
@@ -1114,7 +1216,7 @@ async fn update_card_order(
     app_state: web::types::State<Arc<AppState>>,
     payload: web::types::Json<CardOrderPayload>,
 ) -> Result<HttpResponse> {
-    require_jwt!(&req, &app_state);
+    require_admin!(&req, &app_state);
     let _config_guard = app_state.config_write.lock().await;
 
     let mut config = match config_file::read() {
@@ -1347,7 +1449,7 @@ async fn get_velocity(
     req: HttpRequest,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse> {
-    require_jwt!(&req, &app_state);
+    require_read_access!(&req, &app_state);
 
     let server_name = app_state.config.get_server_name();
 
@@ -1395,7 +1497,7 @@ async fn get_velocity_history(
     req: HttpRequest,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse> {
-    require_jwt!(&req, &app_state);
+    require_read_access!(&req, &app_state);
 
     let query = web::types::Query::<serde_json::Value>::from_query(req.query_string())
         .unwrap_or_else(|_| web::types::Query(serde_json::Value::Object(serde_json::Map::new())));
@@ -1439,7 +1541,7 @@ async fn touch_viewer_heartbeat(app_state: &AppState) {
     *app_state.last_viewer_seen.write().await = chrono::Utc::now();
 }
 
-fn bearer_token(req: &HttpRequest) -> Result<&str> {
+pub(crate) fn bearer_token(req: &HttpRequest) -> Result<&str> {
     let auth_header = req
         .headers()
         .get("Authorization")
@@ -1460,22 +1562,13 @@ fn bearer_token(req: &HttpRequest) -> Result<&str> {
     Ok(&auth_header[7..])
 }
 
-pub(crate) fn verify_auth(req: &HttpRequest, jwt_secret: &str) -> Result<Claims> {
-    auth::verify_token(bearer_token(req)?, jwt_secret)
-}
-
-async fn verify_read_auth(req: &HttpRequest, app_state: &AppState) -> Result<String> {
-    let token = bearer_token(req)?;
-    if let Ok(claims) = auth::verify_token(token, &app_state.config.get_jwt_secret()) {
-        return Ok(claims.sub);
-    }
-    verify_watch_token(&app_state.db, token, chrono::Utc::now().timestamp()).await
-}
-
-async fn verify_watch_token(db: &SqlitePool, token: &str, now: i64) -> Result<String> {
+/// The account a watch token was paired by, for a token that is live and
+/// has the `read` scope — the only one a watch token is ever given, and the
+/// only routes that call this are the read ones.
+pub(crate) async fn verify_watch_token(db: &SqlitePool, token: &str, now: i64) -> Result<String> {
     let token_hash = watch_token_hash(token);
     let subject = sqlx::query_scalar::<_, String>(
-        "SELECT subject FROM watch_tokens WHERE token_hash = ? AND expires_at > ?",
+        "SELECT subject FROM watch_tokens WHERE token_hash = ? AND expires_at > ? AND scope = 'read'",
     )
     .bind(token_hash)
     .bind(now)
@@ -1517,7 +1610,8 @@ mod watch_token_tests {
             "CREATE TABLE watch_tokens (\
              subject TEXT NOT NULL, client_id TEXT NOT NULL, \
              token_hash TEXT NOT NULL UNIQUE, created_at INTEGER NOT NULL, \
-             expires_at INTEGER NOT NULL, PRIMARY KEY(subject, client_id))",
+             expires_at INTEGER NOT NULL, scope TEXT NOT NULL DEFAULT 'read', \
+             PRIMARY KEY(subject, client_id))",
         )
         .execute(&pool)
         .await
@@ -1594,5 +1688,35 @@ mod metrics_json_tests {
         assert_eq!(value["network"]["rx_bytes_exact"], "9007199254740993");
         assert_eq!(value["ifaces"][0]["tx_bytes_exact"], "9007199254740996");
         assert_eq!(value["diskio"][0]["sectors_read_exact"], "9007199254740997");
+    }
+}
+
+#[cfg(test)]
+mod agent_state_tests {
+    use super::*;
+
+    #[test]
+    fn the_database_is_the_file_sqlx_opens() {
+        assert_eq!(
+            sqlite_file("sqlite:///data/my%20db.db?mode=rwc"),
+            Some(std::path::PathBuf::from("/data/my db.db"))
+        );
+        assert_eq!(
+            sqlite_file("sqlite:serverbox_monitor.db"),
+            Some(std::path::PathBuf::from("serverbox_monitor.db"))
+        );
+        assert_eq!(sqlite_file("sqlite::memory:"), None);
+        assert_eq!(sqlite_file("sqlite://?mode=memory"), None);
+    }
+
+    #[test]
+    fn the_environment_file_is_agent_state() {
+        // Whatever the operator put in the environment — credentials included —
+        // is in `.env`, and the installer leaves `.env.bak-*` beside it.
+        let protected = agent_state(&Config::default());
+        let cwd = std::fs::canonicalize(".").unwrap();
+        assert!(protected.covers(&cwd.join(".env")));
+        assert!(protected.covers(&cwd.join(".env.bak-1789489640")));
+        assert!(!protected.covers(&cwd.join("notes.env")));
     }
 }

@@ -52,6 +52,16 @@ String? portForwardUnavailable(ServerState server, {required bool listen}) {
   final kinds = portForwardKinds(server);
   if (listen ? kinds.listen : kinds.relay) return null;
   final granted = server.remoteAccess;
+  final grants = server.spi.transport == ServerTransport.monitorHttp
+      ? granted?.grants
+      : null;
+  if (grants != null) {
+    return monitorGrantReason(
+          libL10n.portForward,
+          listen ? grants.listen : grants.connect,
+        ) ??
+        l10n.funcUnavailableFmt(libL10n.portForward);
+  }
   if (listen &&
       server.spi.transport == ServerTransport.monitorHttp &&
       granted != null &&

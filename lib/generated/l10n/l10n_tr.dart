@@ -4994,4 +4994,128 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get copyLink => 'Bağlantıyı kopyala';
+
+  @override
+  String funcNeedsAgentPermission(String func) {
+    return 'Bu Monitor agent üzerindeki hesabınızın $func için izni yok. Agent yöneticisinden isteyin.';
+  }
+
+  @override
+  String funcNeedsAgentHttps(String func) {
+    return '$func, bu Monitor agent\'a HTTPS veya hem agent\'ta hem bu uygulamada izin verilmiş HTTP gerektirir.';
+  }
+
+  @override
+  String funcNeedsAgentSetup(String func) {
+    return '$func bu Monitor agent\'ta ayarlanmamış; operatörünün yapılandırması gerekir.';
+  }
+
+  @override
+  String get monitorFilesReadOnly =>
+      'Salt okunur: bu hesap agent üzerindeki dosyalara göz atabilir ama değiştiremez.';
+
+  @override
+  String get monitorAccess => 'Erişim';
+
+  @override
+  String get monitorAccounts => 'Hesaplar';
+
+  @override
+  String get monitorRoles => 'Roller';
+
+  @override
+  String get monitorRole => 'Rol';
+
+  @override
+  String get monitorChangePassword => 'Parolayı değiştir';
+
+  @override
+  String get monitorNewPassword => 'Yeni parola';
+
+  @override
+  String get monitorCurrentPassword => 'Mevcut parolanız';
+
+  @override
+  String get monitorReauthTip =>
+      'Erişimi değiştirmek için parolanız yeniden gerekir.';
+
+  @override
+  String get monitorPasswordTooShort => 'En az 8 karakter';
+
+  @override
+  String get monitorPasswordMismatch => 'Parolalar eşleşmiyor';
+
+  @override
+  String get monitorErrReauth => 'Parolanız yanlıştı.';
+
+  @override
+  String get monitorErrLastAdmin =>
+      'Agent\'ın en az bir yönetici hesabına ihtiyacı var.';
+
+  @override
+  String get monitorErrConflict => 'Zaten var veya hâlâ kullanımda.';
+
+  @override
+  String get monitorErrForbidden => 'Bunu yalnızca bir yönetici yapabilir.';
+
+  @override
+  String get monitorRoleNameRule =>
+      'Küçük harfler, rakamlar, - ve _, en fazla 32 karakter';
+
+  @override
+  String get monitorGrantShell => 'Kabuk ve komutlar';
+
+  @override
+  String get monitorGrantShellTip =>
+      'Terminal, süreçler, servisler, konteynerler, snippet\'ler, güç — agent hesabıyla';
+
+  @override
+  String get monitorGrantSshTerminal => 'SSH üzerinden panel terminali';
+
+  @override
+  String get monitorGrantFiles => 'Dosyalar';
+
+  @override
+  String get monitorGrantConnect => 'Giden bağlantılar';
+
+  @override
+  String get monitorGrantConnectTip =>
+      'Yerel ve dinamik port yönlendirmeleri, uzak masaüstü';
+
+  @override
+  String get monitorGrantConnectAllow =>
+      'İzin verilen hedefler (IP veya CIDR, isteğe bağlı :port veya :başlangıç-bitiş; satır başına bir tane, boş = her yer)';
+
+  @override
+  String get monitorGrantListen => 'Sunucuda dinle';
+
+  @override
+  String get monitorGrantListenTip => 'Uzak port yönlendirmeleri';
+
+  @override
+  String get monitorGrantListenPublic => 'Loopback olmayan adresler';
+
+  @override
+  String get monitorGrantPorts => 'Port aralığı (boş = herhangi)';
+
+  @override
+  String get monitorGrantOff => 'Kapalı';
+
+  @override
+  String get monitorBuiltin => 'Yerleşik';
+
+  @override
+  String get monitorAdminRoleTip =>
+      'Hesapları, rolleri ve agent ayarlarını yönetir';
+
+  @override
+  String get monitorYou => 'Siz';
+
+  @override
+  String get monitorNoAccessToSettings =>
+      'Bu agent\'ın ayarlarını yalnızca bir yönetici değiştirebilir.';
+
+  @override
+  String get monitorPasswordNotSaved =>
+      'Parola agent üzerinde değiştirildi, ancak uygulama kaydedemedi. Bu sunucunun ayarlarında Monitor parolasını güncelleyin.';
 }

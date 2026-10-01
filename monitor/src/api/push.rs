@@ -47,7 +47,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map as JsonMap, Value as JsonValue};
 
 use super::server::AppState;
-use super::server::verify_auth;
+use super::authz;
 use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
 use crate::core::config::{PushConfig, validate_push_rate};
 use crate::core::config_file;
@@ -229,8 +229,10 @@ pub async fn list(
     req: HttpRequest,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
-        return Ok(HttpResponse::Unauthorized().finish());
+    // The channels are the agent's configuration, and a webhook is a place
+    // to send what the agent knows: an admin's to change, and to read.
+    if let Err(response) = authz::admin_caller(&req, &app_state).await {
+        return Ok(response);
     }
 
     // Off disk rather than off `AppState.config`, which is a startup snapshot:
@@ -253,8 +255,10 @@ pub async fn replace(
     body: web::types::Json<ReplaceRequest>,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
-        return Ok(HttpResponse::Unauthorized().finish());
+    // The channels are the agent's configuration, and a webhook is a place
+    // to send what the agent knows: an admin's to change, and to read.
+    if let Err(response) = authz::admin_caller(&req, &app_state).await {
+        return Ok(response);
     }
     let remote_ip = peer_ip(&req);
     let ReplaceRequest { pushes, push_rate } = body.into_inner();
@@ -333,8 +337,10 @@ pub async fn test(
     body: web::types::Json<TestRequest>,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
-        return Ok(HttpResponse::Unauthorized().finish());
+    // The channels are the agent's configuration, and a webhook is a place
+    // to send what the agent knows: an admin's to change, and to read.
+    if let Err(response) = authz::admin_caller(&req, &app_state).await {
+        return Ok(response);
     }
     let remote_ip = peer_ip(&req);
     let TestRequest { push, message } = body.into_inner();

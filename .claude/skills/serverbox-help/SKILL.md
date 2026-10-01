@@ -24,9 +24,9 @@ first, and the other stays available.
 |---|---|---|
 | Needs something installed on the server | no (an SSH server) | yes, the agent |
 | Status and charts | yes | yes, with history from before the app connected |
-| Terminal, commands, processes, containers, systemd, snippets, power | yes | only with `full_access` **and** `[remote_access.terminal] enabled` **and** a secure transport |
-| File browser | yes (SFTP) | only with `[remote_access.fs]` and a non-empty `roots` |
-| Port forwarding (local, dynamic, remote), remote desktop | yes | with `full_access`, through the agent's relay and listener (an agent older than either reports none: update it). Remote forwards bind loopback only unless `[remote_access] listen_public = true` |
+| Terminal, commands, processes, containers, systemd, snippets, power | yes | only if the account's role holds `shell`, over a secure transport |
+| File browser | yes (SFTP) | only if the role holds `files` (read-only or writable) and the agent has a non-empty `[remote_access.fs] roots` |
+| Port forwarding (local, dynamic, remote), remote desktop | yes | local, dynamic and remote desktop with the role's `connect` grant, remote forwards with `listen` (an agent older than the relay or the listener reports none: update it). Remote forwards bind loopback only unless the role's `listen` has `public` |
 | SFTP transfers | yes | **never** — configure SSH for the same server too |
 | Push alerts, home-screen widgets, watch app | no | yes, they read the agent with the app closed |
 
@@ -38,8 +38,10 @@ in on open, or for alerts, widgets and the watch.
 
 The app only shows what the server can do. For a server reached **only**
 through the agent, a missing terminal, command, container or process control
-almost always means the agent does not allow it — and on a fresh install
-`[remote_access.terminal] enabled` is off, so nothing beyond charts is offered.
+almost always means the account the app signed in with is not allowed it: its
+role on the agent lacks the grant, which an admin of that agent changes from the
+app or the web panel. An agent installed with `--permissions read` starts with
+no grants at all.
 Missing SFTP, or remote and dynamic forwards, means SSH is not configured for
 that server. A greyed button says why when tapped or hovered.
 It is a configuration answer, not a bug. Details and the fix:
@@ -49,9 +51,10 @@ It is a configuration answer, not a bug. Details and the fix:
 
 You may be able to do this for the user: in the Agent tab you can run commands
 on their servers, each one approved by them. Before you change an agent's
-configuration, say what the change allows and wait for a yes — `full_access`
-makes the panel password worth a shell on that machine. Never install the
-agent as root, and never enable remote access the user did not ask for.
+configuration or a role, say what the change allows and wait for a yes — a
+role with `shell` makes that account's password worth a shell on that machine.
+Never install the agent as root, and never grant access the user did not ask
+for.
 Everything needed is in `references/monitor.md`.
 
 ## Where things are in the app

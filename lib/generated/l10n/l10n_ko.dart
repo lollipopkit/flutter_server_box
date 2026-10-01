@@ -4771,4 +4771,122 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get copyLink => '링크 복사';
+
+  @override
+  String funcNeedsAgentPermission(String func) {
+    return '이 Monitor agent의 계정에는 $func 권한이 없습니다. agent 관리자에게 요청하세요.';
+  }
+
+  @override
+  String funcNeedsAgentHttps(String func) {
+    return '$func에는 이 Monitor agent로의 HTTPS 연결 또는 agent와 이 앱 모두에서 HTTP 허용이 필요합니다.';
+  }
+
+  @override
+  String funcNeedsAgentSetup(String func) {
+    return '이 Monitor agent에는 $func이(가) 설정되어 있지 않습니다. 운영자가 설정해야 합니다.';
+  }
+
+  @override
+  String get monitorFilesReadOnly =>
+      '읽기 전용: 이 계정은 agent의 파일을 볼 수 있지만 변경할 수는 없습니다.';
+
+  @override
+  String get monitorAccess => '접근';
+
+  @override
+  String get monitorAccounts => '계정';
+
+  @override
+  String get monitorRoles => '역할';
+
+  @override
+  String get monitorRole => '역할';
+
+  @override
+  String get monitorChangePassword => '비밀번호 변경';
+
+  @override
+  String get monitorNewPassword => '새 비밀번호';
+
+  @override
+  String get monitorCurrentPassword => '현재 비밀번호';
+
+  @override
+  String get monitorReauthTip => '접근 권한을 변경하려면 비밀번호를 다시 입력해야 합니다.';
+
+  @override
+  String get monitorPasswordTooShort => '8자 이상';
+
+  @override
+  String get monitorPasswordMismatch => '비밀번호가 일치하지 않습니다';
+
+  @override
+  String get monitorErrReauth => '비밀번호가 틀렸습니다.';
+
+  @override
+  String get monitorErrLastAdmin => 'agent에는 관리자 계정이 하나 이상 있어야 합니다.';
+
+  @override
+  String get monitorErrConflict => '이미 존재하거나 아직 사용 중입니다.';
+
+  @override
+  String get monitorErrForbidden => '관리자만 할 수 있습니다.';
+
+  @override
+  String get monitorRoleNameRule => '소문자, 숫자, - 및 _, 최대 32자';
+
+  @override
+  String get monitorGrantShell => '셸과 명령';
+
+  @override
+  String get monitorGrantShellTip =>
+      '터미널, 프로세스, 서비스, 컨테이너, 스니펫, 전원 — agent 계정으로 실행';
+
+  @override
+  String get monitorGrantSshTerminal => 'SSH를 통한 패널 터미널';
+
+  @override
+  String get monitorGrantFiles => '파일';
+
+  @override
+  String get monitorGrantConnect => '외부 연결';
+
+  @override
+  String get monitorGrantConnectTip => '로컬 및 동적 포트 전달, 원격 데스크톱';
+
+  @override
+  String get monitorGrantConnectAllow =>
+      '허용된 대상 (IP 또는 CIDR, 선택적으로 :포트 또는 :시작-끝; 한 줄에 하나, 비우면 제한 없음)';
+
+  @override
+  String get monitorGrantListen => '서버에서 수신 대기';
+
+  @override
+  String get monitorGrantListenTip => '원격 포트 전달';
+
+  @override
+  String get monitorGrantListenPublic => 'loopback이 아닌 주소';
+
+  @override
+  String get monitorGrantPorts => '포트 범위 (비우면 제한 없음)';
+
+  @override
+  String get monitorGrantOff => '끔';
+
+  @override
+  String get monitorBuiltin => '기본 제공';
+
+  @override
+  String get monitorAdminRoleTip => '계정, 역할 및 agent 설정을 관리합니다';
+
+  @override
+  String get monitorYou => '나';
+
+  @override
+  String get monitorNoAccessToSettings => '관리자만 이 agent의 설정을 변경할 수 있습니다.';
+
+  @override
+  String get monitorPasswordNotSaved =>
+      'agent의 비밀번호는 변경되었지만 앱에 저장하지 못했습니다. 이 서버 설정에서 Monitor 비밀번호를 업데이트하세요.';
 }

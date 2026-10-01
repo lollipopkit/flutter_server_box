@@ -1,4 +1,5 @@
 use crate::core::config::Config;
+use crate::core::permissions::InitPermissions;
 use crate::core::config_file;
 use crate::db;
 use crate::monitoring;
@@ -46,7 +47,8 @@ pub fn build_cli() -> Command {
                         .value_name("KEY_FILE")
                         .help("TLS key file path")
                         .env("SBM_TLS_KEY"),
-                ),
+                )
+                .arg(init_permissions_arg()),
         )
         .subcommand(
             Command::new("config")
@@ -72,7 +74,14 @@ pub fn build_cli() -> Command {
                                 .long("password-env")
                                 .value_name("ENV_VAR")
                                 .help("Read the password from this environment variable instead of prompting"),
-                        ),
+                        )
+                        .arg(
+                            Arg::new("role")
+                                .long("role")
+                                .value_name("ROLE")
+                                .help("Give the account this role (a new account is a viewer otherwise)"),
+                        )
+                        .arg(init_permissions_arg()),
                 ),
         )
         .subcommand(
@@ -82,6 +91,27 @@ pub fn build_cli() -> Command {
                 .subcommand(Command::new("stats").about("Show database statistics"))
                 .subcommand(Command::new("vacuum").about("Run database VACUUM")),
         )
+}
+
+/// What a fresh install's admin role starts with — `install.sh --permissions`.
+///
+/// Read only when the agent creates its first account; on a database that has
+/// one it changes nothing, so the installer can leave it in the service's
+/// environment for good.
+fn init_permissions_arg() -> Arg {
+    Arg::new("init-permissions")
+        .long("init-permissions")
+        .value_name("full|read")
+        .help("Permissions of a fresh install's admin role: full (default) or read")
+        .env("SBM_INIT_PERMISSIONS")
+        .value_parser(|v: &str| v.parse::<InitPermissions>())
+}
+
+fn init_permissions(matches: &clap::ArgMatches) -> InitPermissions {
+    matches
+        .get_one::<InitPermissions>("init-permissions")
+        .copied()
+        .unwrap_or_default()
 }
 
 pub async fn handle_matches(matches: clap::ArgMatches) -> anyhow::Result<()> {
@@ -132,6 +162,9 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
 
     let db = db::database::init(&config.get_database_url()).await?;
 
+    // Roles first: whether there is an account yet is what tells a fresh
+    // install from an upgrade, and the next line creates one.
+    db::bootstrap::ensure_roles(&db, &config, init_permissions(matches)).await?;
     // On first start, create an admin with a generated password and print the
     // password once.
     db::bootstrap::ensure_admin_user(&db, &config.get_database_url()).await?;
@@ -196,8 +229,30 @@ async fn handle_user(matches: &clap::ArgMatches) -> anyhow::Result<()> {
 
             let config = Config::load().await?;
             let db = db::database::init(&config.get_database_url()).await?;
-            db::bootstrap::set_password(&db, username, &password).await?;
-            println!("Password updated for {username}");
+            // Before the account exists, for the reason `handle_serve` gives:
+            // on a database nothing has served yet, this account would
+            // otherwise make the first start read as an upgrade.
+            db::bootstrap::ensure_roles(&db, &config, init_permissions(sub)).await?;
+            let role = sub.get_one::<String>("role").map(String::as_str);
+            match db::bootstrap::set_password(&db, username, &password, role).await? {
+                db::bootstrap::PasswordSet::Created { first_admin } => {
+                    println!("Created {username}");
+                    if first_admin {
+                        println!(
+                            "{username} is an admin: there was no admin account, and an \
+                             agent nobody can administer has no way to grant anything."
+                        );
+                    }
+                }
+                db::bootstrap::PasswordSet::Reset => {
+                    println!("Password updated for {username}");
+                    println!(
+                        "Tokens and watch pairings issued under the old password no longer \
+                         work; a running agent ends its open terminals and relays on its \
+                         next role change."
+                    );
+                }
+            }
         }
         _ => {
             eprintln!("Please specify a user subcommand. Use --help for more information.");

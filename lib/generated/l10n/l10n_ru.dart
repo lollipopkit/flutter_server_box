@@ -5037,4 +5037,128 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get copyLink => 'Копировать ссылку';
+
+  @override
+  String funcNeedsAgentPermission(String func) {
+    return 'У вашей учётной записи на этом Monitor agent нет разрешения на $func. Обратитесь к администратору agent.';
+  }
+
+  @override
+  String funcNeedsAgentHttps(String func) {
+    return 'Для $func нужен HTTPS к этому Monitor agent или разрешённый HTTP и в agent, и в этом приложении.';
+  }
+
+  @override
+  String funcNeedsAgentSetup(String func) {
+    return '$func не настроено на этом Monitor agent; это должен сделать его администратор сервера.';
+  }
+
+  @override
+  String get monitorFilesReadOnly =>
+      'Только чтение: эта учётная запись может просматривать файлы на agent, но не изменять их.';
+
+  @override
+  String get monitorAccess => 'Доступ';
+
+  @override
+  String get monitorAccounts => 'Учётные записи';
+
+  @override
+  String get monitorRoles => 'Роли';
+
+  @override
+  String get monitorRole => 'Роль';
+
+  @override
+  String get monitorChangePassword => 'Сменить пароль';
+
+  @override
+  String get monitorNewPassword => 'Новый пароль';
+
+  @override
+  String get monitorCurrentPassword => 'Ваш текущий пароль';
+
+  @override
+  String get monitorReauthTip =>
+      'Для изменения доступа снова нужен ваш пароль.';
+
+  @override
+  String get monitorPasswordTooShort => 'Не менее 8 символов';
+
+  @override
+  String get monitorPasswordMismatch => 'Пароли не совпадают';
+
+  @override
+  String get monitorErrReauth => 'Неверный пароль.';
+
+  @override
+  String get monitorErrLastAdmin =>
+      'У agent должна быть хотя бы одна учётная запись администратора.';
+
+  @override
+  String get monitorErrConflict => 'Уже существует или ещё используется.';
+
+  @override
+  String get monitorErrForbidden => 'Это может сделать только администратор.';
+
+  @override
+  String get monitorRoleNameRule =>
+      'Строчные буквы, цифры, - и _, до 32 символов';
+
+  @override
+  String get monitorGrantShell => 'Shell и команды';
+
+  @override
+  String get monitorGrantShellTip =>
+      'Терминал, процессы, службы, контейнеры, сниппеты, питание — от учётной записи agent';
+
+  @override
+  String get monitorGrantSshTerminal => 'Терминал панели через SSH';
+
+  @override
+  String get monitorGrantFiles => 'Файлы';
+
+  @override
+  String get monitorGrantConnect => 'Исходящие подключения';
+
+  @override
+  String get monitorGrantConnectTip =>
+      'Локальная и динамическая переадресация портов, удалённый рабочий стол';
+
+  @override
+  String get monitorGrantConnectAllow =>
+      'Разрешённые цели (IP или CIDR, при необходимости :порт или :от-до; по одной на строку, пусто = куда угодно)';
+
+  @override
+  String get monitorGrantListen => 'Прослушивание на сервере';
+
+  @override
+  String get monitorGrantListenTip => 'Удалённая переадресация портов';
+
+  @override
+  String get monitorGrantListenPublic => 'Адреса не loopback';
+
+  @override
+  String get monitorGrantPorts => 'Диапазон портов (пусто = любой)';
+
+  @override
+  String get monitorGrantOff => 'Выкл.';
+
+  @override
+  String get monitorBuiltin => 'Встроенная';
+
+  @override
+  String get monitorAdminRoleTip =>
+      'Управляет учётными записями, ролями и настройками agent';
+
+  @override
+  String get monitorYou => 'Вы';
+
+  @override
+  String get monitorNoAccessToSettings =>
+      'Изменять настройки этого agent может только администратор.';
+
+  @override
+  String get monitorPasswordNotSaved =>
+      'Пароль на агенте изменён, но приложению не удалось его сохранить. Обновите пароль Monitor в настройках этого сервера.';
 }

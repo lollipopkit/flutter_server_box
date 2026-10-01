@@ -125,7 +125,10 @@ pub enum SessionOutput {
     Data(Vec<u8>),
     Exit(Option<u32>),
     Error(String),
-    FullAccessRevoked,
+    /// The account lost the grant this session runs under. The code is what
+    /// the client is told: `permission_revoked`, or `full_access_disabled`
+    /// for the panel's legacy switch.
+    Revoked(&'static str),
     ReplayRequired,
 }
 
@@ -150,6 +153,11 @@ pub struct Session {
     /// Panel account that created it. An `attach` from any other account is
     /// refused, so one user's ticket cannot pick up another's shell.
     pub subject: String,
+    /// The account's password epoch when the session was opened (see
+    /// `authz::Caller::since`). A session opened under a password that has
+    /// since changed — a CLI reset the running agent was not told about, or a
+    /// change that raced the open — is closed at the next sweep.
+    pub since: i64,
     pub ssh_user: String,
     pub auth: SessionAuth,
     secret: String,
@@ -175,6 +183,7 @@ impl Session {
         let (input, input_rx) = mpsc::channel(input_queue);
         let session = Self {
             subject: subject.into(),
+            since: 0,
             ssh_user: ssh_user.into(),
             auth,
             secret: String::new(),
@@ -365,13 +374,23 @@ impl SessionStore {
             .remove(id);
     }
 
-    /// Removes and terminates every shell that bypassed SSH authentication.
-    pub fn close_local(&self) -> usize {
-        let local = {
+    /// The accounts that hold a session, each once.
+    pub fn subjects(&self) -> Vec<String> {
+        let sessions = self.sessions.lock().unwrap_or_else(|e| e.into_inner());
+        let mut subjects: Vec<String> = sessions.values().map(|s| s.subject.clone()).collect();
+        subjects.sort();
+        subjects.dedup();
+        subjects
+    }
+
+    /// Removes and terminates every session [doomed] picks, telling an
+    /// attached client [code]. Returns how many went.
+    pub fn close_where(&self, doomed: impl Fn(&Session) -> bool, code: &'static str) -> usize {
+        let closing = {
             let mut sessions = self.sessions.lock().unwrap_or_else(|e| e.into_inner());
             let ids = sessions
                 .iter()
-                .filter(|(_, session)| session.auth == SessionAuth::Local)
+                .filter(|(_, session)| doomed(session))
                 .map(|(id, _)| id.clone())
                 .collect::<Vec<_>>();
             ids.into_iter()
@@ -379,9 +398,9 @@ impl SessionStore {
                 .collect::<Vec<_>>()
         };
 
-        for session in &local {
+        for session in &closing {
             if let Some(output) = session.close() {
-                let _ = output.try_send(SessionOutput::FullAccessRevoked);
+                let _ = output.try_send(SessionOutput::Revoked(code));
             }
             if let Err(mpsc::error::TrySendError::Full(close)) =
                 session.input.try_send(SessionInput::Close)
@@ -392,7 +411,7 @@ impl SessionStore {
                 });
             }
         }
-        local.len()
+        closing.len()
     }
 
     /// Drops sessions that have been unattached past the timeout.
@@ -684,7 +703,11 @@ mod tests {
         let (_, mut local_output, _, _) = local.attach(0, 1).unwrap();
         let _ssh_attachment = ssh.attach(0, 1).unwrap();
 
-        assert_eq!(store.close_local(), 1);
+        assert_eq!(
+            store.close_where(|s| s.auth == SessionAuth::Local, "permission_revoked"),
+            1
+        );
+        assert_eq!(store.subjects(), ["admin"]);
         assert_eq!(
             store.get(&local_handle, "admin").err(),
             Some(AttachError::Unknown)
@@ -696,7 +719,7 @@ mod tests {
         ));
         assert!(matches!(
             local_output.recv().await,
-            Some(SessionOutput::FullAccessRevoked)
+            Some(SessionOutput::Revoked("permission_revoked"))
         ));
         assert!(ssh_input.try_recv().is_err());
     }

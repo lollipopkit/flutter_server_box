@@ -13,6 +13,7 @@
   import { Button, Card, IconButton, Input, Spinner } from '@serverbox/webui'
   import PageHeader from '../components/PageHeader.svelte'
   import { LL } from '../i18n/i18n-svelte'
+  import { isAdmin, terminalAccess, whyText } from '../lib/access'
   import { api } from '../lib/api'
   import { capabilitiesStore } from '../lib/capabilities.svelte'
   import { layout } from '../lib/layout.svelte'
@@ -223,21 +224,23 @@
   )
   const showForm = $derived(session.phase === 'idle' || session.phase === 'closed')
 
+  const caps = $derived(capabilitiesStore.byServer[servers.currentId])
+  /// Which terminals this account can open here — see `terminalAccess`.
+  const access = $derived(terminalAccess(caps))
+
   /// The dashboard only offers the entry point when the agent reports the
   /// terminal available, but a cached capability or a stale tab can still land
   /// here — better to explain why than to present a form that can't connect.
-  const available = $derived(
-    capabilitiesStore.byServer[servers.currentId]?.remote_access?.terminal !== false,
-  )
+  const available = $derived(access.available)
 
   /// Set once this session has turned it off, so the UI updates before the
   /// capabilities cache is refetched. The agent's answer stays the source of
   /// truth — the panel can narrow it, never widen it.
   let turnedOff = $state(false)
-  const fullAccess = $derived(
-    !turnedOff &&
-      capabilitiesStore.byServer[servers.currentId]?.remote_access?.full_access === true,
-  )
+  const fullAccess = $derived(!turnedOff && access.direct)
+  /// Turning it off is an administrator's request: with roles it takes the
+  /// shell away from every role, not just this session's.
+  const canTurnOff = $derived(isAdmin(caps) !== false)
 
   /// Shown the first time access without SSH is on offer, once per
   /// browser: it changes what the panel password is worth, and silently
@@ -303,7 +306,11 @@
 >
   {#if !available}
     <Card>
-      <p class="text-sm text-muted-fg">{$LL.terminalUnavailable()}</p>
+      <!-- With roles the agent says why; before them, the one reason there
+           was is the config switch. -->
+      <p class="text-sm text-muted-fg">
+        {caps?.grants ? whyText(access.why, $LL) : $LL.terminalUnavailable()}
+      </p>
     </Card>
   {:else if showForm}
     {#if showNotice}
@@ -311,15 +318,19 @@
         <h2 class="text-base font-semibold font-display text-fg-strong">
           {$LL.terminalPasswordlessNoticeTitle()}
         </h2>
-        <p class="text-sm text-muted-fg">{$LL.terminalPasswordlessNoticeBody()}</p>
+        <p class="text-sm text-muted-fg">
+          {caps?.grants ? $LL.terminalPasswordlessNoticeBodyRoles() : $LL.terminalPasswordlessNoticeBody()}
+        </p>
         <div class="flex flex-wrap gap-2">
           <Button variant="secondary" onclick={acknowledgeNotice}>
             {$LL.terminalPasswordlessKeep()}
           </Button>
-          <Button variant="danger" onclick={disablePasswordless} disabled={disabling}>
-            {#if disabling}<Spinner class="w-4 h-4" />{/if}
-            {$LL.terminalPasswordlessDisable()}
-          </Button>
+          {#if canTurnOff}
+            <Button variant="danger" onclick={disablePasswordless} disabled={disabling}>
+              {#if disabling}<Spinner class="w-4 h-4" />{/if}
+              {$LL.terminalPasswordlessDisable()}
+            </Button>
+          {/if}
         </div>
       </Card>
     {/if}
@@ -334,6 +345,7 @@
       </Card>
     {/if}
 
+    {#if access.ssh}
     <Card class="space-y-4">
       <p class="text-sm text-muted-fg">{$LL.terminalCredentialsHint()}</p>
 
@@ -401,6 +413,7 @@
         {/if}
       </div>
     </Card>
+    {/if}
   {/if}
 
   {#if session.phase === 'prompting'}

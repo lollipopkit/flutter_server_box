@@ -4689,6 +4689,122 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get copyLink => '复制链接';
+
+  @override
+  String funcNeedsAgentPermission(String func) {
+    return '你在此 Monitor agent 上的账号没有 $func 的权限，请联系该 agent 的管理员。';
+  }
+
+  @override
+  String funcNeedsAgentHttps(String func) {
+    return '$func 需要通过 HTTPS 连接此 Monitor agent，或在 agent 和本 App 中同时允许 HTTP。';
+  }
+
+  @override
+  String funcNeedsAgentSetup(String func) {
+    return '此 Monitor agent 尚未配置 $func，需要由其运维人员配置。';
+  }
+
+  @override
+  String get monitorFilesReadOnly => '只读：此账号可以浏览 agent 上的文件，但不能修改。';
+
+  @override
+  String get monitorAccess => '访问';
+
+  @override
+  String get monitorAccounts => '账号';
+
+  @override
+  String get monitorRoles => '角色';
+
+  @override
+  String get monitorRole => '角色';
+
+  @override
+  String get monitorChangePassword => '修改密码';
+
+  @override
+  String get monitorNewPassword => '新密码';
+
+  @override
+  String get monitorCurrentPassword => '你当前的密码';
+
+  @override
+  String get monitorReauthTip => '修改访问权限需要再次输入你的密码。';
+
+  @override
+  String get monitorPasswordTooShort => '至少 8 个字符';
+
+  @override
+  String get monitorPasswordMismatch => '两次输入的密码不一致';
+
+  @override
+  String get monitorErrReauth => '密码错误。';
+
+  @override
+  String get monitorErrLastAdmin => 'agent 至少需要一个管理员账号。';
+
+  @override
+  String get monitorErrConflict => '已存在，或仍在使用中。';
+
+  @override
+  String get monitorErrForbidden => '只有管理员可以执行此操作。';
+
+  @override
+  String get monitorRoleNameRule => '小写字母、数字、- 和 _，最多 32 个字符';
+
+  @override
+  String get monitorGrantShell => 'Shell 和命令';
+
+  @override
+  String get monitorGrantShellTip => '终端、进程、服务、容器、代码片段、电源 —— 以 agent 的系统账号运行';
+
+  @override
+  String get monitorGrantSshTerminal => '面板 SSH 终端';
+
+  @override
+  String get monitorGrantFiles => '文件';
+
+  @override
+  String get monitorGrantConnect => '出站连接';
+
+  @override
+  String get monitorGrantConnectTip => '本地和动态端口转发、远程桌面';
+
+  @override
+  String get monitorGrantConnectAllow =>
+      '允许的目标（IP 或 CIDR，可带 :端口 或 :起-止；每行一个，留空表示任意）';
+
+  @override
+  String get monitorGrantListen => '在服务器上监听';
+
+  @override
+  String get monitorGrantListenTip => '远程端口转发';
+
+  @override
+  String get monitorGrantListenPublic => '非 loopback 地址';
+
+  @override
+  String get monitorGrantPorts => '端口范围（留空表示任意）';
+
+  @override
+  String get monitorGrantOff => '关闭';
+
+  @override
+  String get monitorBuiltin => '内置';
+
+  @override
+  String get monitorAdminRoleTip => '管理账号、角色和 agent 的设置';
+
+  @override
+  String get monitorYou => '你';
+
+  @override
+  String get monitorNoAccessToSettings => '只有管理员可以修改此 agent 的设置。';
+
+  @override
+  String get monitorPasswordNotSaved =>
+      'agent 上的密码已修改，但 App 未能保存新密码。请在这台服务器的设置中更新 Monitor 密码。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -9375,4 +9491,120 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get copyLink => '複製連結';
+
+  @override
+  String funcNeedsAgentPermission(String func) {
+    return '你在此 Monitor agent 上的帳號沒有 $func 的權限，請聯絡該 agent 的管理員。';
+  }
+
+  @override
+  String funcNeedsAgentHttps(String func) {
+    return '$func 需要透過 HTTPS 連線此 Monitor agent，或在 agent 和本 App 中同時允許 HTTP。';
+  }
+
+  @override
+  String funcNeedsAgentSetup(String func) {
+    return '此 Monitor agent 尚未設定 $func，需要由其維運人員設定。';
+  }
+
+  @override
+  String get monitorFilesReadOnly => '唯讀：此帳號可以瀏覽 agent 上的檔案，但不能修改。';
+
+  @override
+  String get monitorAccess => '存取';
+
+  @override
+  String get monitorAccounts => '帳號';
+
+  @override
+  String get monitorRoles => '角色';
+
+  @override
+  String get monitorRole => '角色';
+
+  @override
+  String get monitorChangePassword => '變更密碼';
+
+  @override
+  String get monitorNewPassword => '新密碼';
+
+  @override
+  String get monitorCurrentPassword => '你目前的密碼';
+
+  @override
+  String get monitorReauthTip => '變更存取權限需要再次輸入你的密碼。';
+
+  @override
+  String get monitorPasswordTooShort => '至少 8 個字元';
+
+  @override
+  String get monitorPasswordMismatch => '兩次輸入的密碼不一致';
+
+  @override
+  String get monitorErrReauth => '密碼錯誤。';
+
+  @override
+  String get monitorErrLastAdmin => 'agent 至少需要一個管理員帳號。';
+
+  @override
+  String get monitorErrConflict => '已存在，或仍在使用中。';
+
+  @override
+  String get monitorErrForbidden => '只有管理員可以執行此操作。';
+
+  @override
+  String get monitorRoleNameRule => '小寫字母、數字、- 和 _，最多 32 個字元';
+
+  @override
+  String get monitorGrantShell => 'Shell 和指令';
+
+  @override
+  String get monitorGrantShellTip => '終端機、程序、服務、容器、程式碼片段、電源 —— 以 agent 的系統帳號執行';
+
+  @override
+  String get monitorGrantSshTerminal => '面板 SSH 終端機';
+
+  @override
+  String get monitorGrantFiles => '檔案';
+
+  @override
+  String get monitorGrantConnect => '對外連線';
+
+  @override
+  String get monitorGrantConnectTip => '本機和動態連接埠轉發、遠端桌面';
+
+  @override
+  String get monitorGrantConnectAllow =>
+      '允許的目標（IP 或 CIDR，可帶 :連接埠 或 :起-迄；每行一個，留空表示任意）';
+
+  @override
+  String get monitorGrantListen => '在伺服器上監聽';
+
+  @override
+  String get monitorGrantListenTip => '遠端連接埠轉發';
+
+  @override
+  String get monitorGrantListenPublic => '非 loopback 位址';
+
+  @override
+  String get monitorGrantPorts => '連接埠範圍（留空表示任意）';
+
+  @override
+  String get monitorGrantOff => '關閉';
+
+  @override
+  String get monitorBuiltin => '內建';
+
+  @override
+  String get monitorAdminRoleTip => '管理帳號、角色和 agent 的設定';
+
+  @override
+  String get monitorYou => '你';
+
+  @override
+  String get monitorNoAccessToSettings => '只有管理員可以變更此 agent 的設定。';
+
+  @override
+  String get monitorPasswordNotSaved =>
+      'agent 上的密碼已修改，但 App 未能儲存新密碼。請在這台伺服器的設定中更新 Monitor 密碼。';
 }

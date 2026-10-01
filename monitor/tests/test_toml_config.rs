@@ -63,13 +63,14 @@ message = "Alert: {{message}}"
         let example = include_str!("../config.example.toml");
         let config: Config = toml::from_str(example).expect("config.example.toml must parse");
 
-        // Every switch must ship off: the example is copied verbatim, and
-        // neither shell nor file access should be something a user turns on by
-        // accident.
+        // Nothing that widens access ships on: the example is copied
+        // verbatim. Plaintext stays refused, the file API reaches nothing, and
+        // none of the moved switches is set — an upgrade would read them.
         let remote = config.get_remote_access();
-        assert!(!remote.terminal.enabled);
+        assert!(!remote.allow_insecure);
         assert!(!remote.terminal.allow_insecure);
-        assert!(!remote.fs.enabled);
+        assert!(remote.fs.roots.is_empty());
+        assert!(remote.legacy_keys_set().is_empty() || std::env::var_os("SBM_FULL_ACCESS").is_some());
     }
 
     /// Every config written before remote access existed lacks the section
@@ -80,6 +81,8 @@ message = "Alert: {{message}}"
         assert!(config.remote_access.is_none());
 
         let remote = config.get_remote_access().resolve(None);
-        assert!(!remote.any_enabled());
+        assert!(!remote.insecure_shell);
+        assert!(!remote.insecure_files);
+        assert!(!remote.fs.configured());
     }
 }

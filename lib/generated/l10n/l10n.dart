@@ -8564,6 +8564,222 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Copy link'**
   String get copyLink;
+
+  /// No description provided for @funcNeedsAgentPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account on this Monitor agent has no permission for {func}. Ask the agent\'s admin.'**
+  String funcNeedsAgentPermission(String func);
+
+  /// No description provided for @funcNeedsAgentHttps.
+  ///
+  /// In en, this message translates to:
+  /// **'{func} needs HTTPS to this Monitor agent, or plain HTTP allowed on both the agent and this app.'**
+  String funcNeedsAgentHttps(String func);
+
+  /// No description provided for @funcNeedsAgentSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'{func} is not set up on this Monitor agent; its operator has to configure it.'**
+  String funcNeedsAgentSetup(String func);
+
+  /// No description provided for @monitorFilesReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Read-only: this account can browse files on the agent but not change them.'**
+  String get monitorFilesReadOnly;
+
+  /// No description provided for @monitorAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Access'**
+  String get monitorAccess;
+
+  /// No description provided for @monitorAccounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts'**
+  String get monitorAccounts;
+
+  /// No description provided for @monitorRoles.
+  ///
+  /// In en, this message translates to:
+  /// **'Roles'**
+  String get monitorRoles;
+
+  /// No description provided for @monitorRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Role'**
+  String get monitorRole;
+
+  /// No description provided for @monitorChangePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Change password'**
+  String get monitorChangePassword;
+
+  /// No description provided for @monitorNewPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'New password'**
+  String get monitorNewPassword;
+
+  /// No description provided for @monitorCurrentPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Your current password'**
+  String get monitorCurrentPassword;
+
+  /// No description provided for @monitorReauthTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Changing access needs your own password again.'**
+  String get monitorReauthTip;
+
+  /// No description provided for @monitorPasswordTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'At least 8 characters'**
+  String get monitorPasswordTooShort;
+
+  /// No description provided for @monitorPasswordMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The passwords do not match'**
+  String get monitorPasswordMismatch;
+
+  /// No description provided for @monitorErrReauth.
+  ///
+  /// In en, this message translates to:
+  /// **'Your password was wrong.'**
+  String get monitorErrReauth;
+
+  /// No description provided for @monitorErrLastAdmin.
+  ///
+  /// In en, this message translates to:
+  /// **'The agent needs at least one admin account.'**
+  String get monitorErrLastAdmin;
+
+  /// No description provided for @monitorErrConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'It already exists, or it is still in use.'**
+  String get monitorErrConflict;
+
+  /// No description provided for @monitorErrForbidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Only an admin can do this.'**
+  String get monitorErrForbidden;
+
+  /// No description provided for @monitorRoleNameRule.
+  ///
+  /// In en, this message translates to:
+  /// **'Lowercase letters, digits, - and _, up to 32 characters'**
+  String get monitorRoleNameRule;
+
+  /// No description provided for @monitorGrantShell.
+  ///
+  /// In en, this message translates to:
+  /// **'Shell and commands'**
+  String get monitorGrantShell;
+
+  /// No description provided for @monitorGrantShellTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminal, processes, services, containers, snippets, power — as the agent\'s account'**
+  String get monitorGrantShellTip;
+
+  /// No description provided for @monitorGrantSshTerminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Panel terminal over SSH'**
+  String get monitorGrantSshTerminal;
+
+  /// No description provided for @monitorGrantFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Files'**
+  String get monitorGrantFiles;
+
+  /// No description provided for @monitorGrantConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Outbound connections'**
+  String get monitorGrantConnect;
+
+  /// No description provided for @monitorGrantConnectTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Local and dynamic port forwards, remote desktop'**
+  String get monitorGrantConnectTip;
+
+  /// No description provided for @monitorGrantConnectAllow.
+  ///
+  /// In en, this message translates to:
+  /// **'Allowed targets (IP or CIDR, optionally :port or :from-to; one per line, empty is anywhere)'**
+  String get monitorGrantConnectAllow;
+
+  /// No description provided for @monitorGrantListen.
+  ///
+  /// In en, this message translates to:
+  /// **'Listen on the server'**
+  String get monitorGrantListen;
+
+  /// No description provided for @monitorGrantListenTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote port forwards'**
+  String get monitorGrantListenTip;
+
+  /// No description provided for @monitorGrantListenPublic.
+  ///
+  /// In en, this message translates to:
+  /// **'Non-loopback addresses'**
+  String get monitorGrantListenPublic;
+
+  /// No description provided for @monitorGrantPorts.
+  ///
+  /// In en, this message translates to:
+  /// **'Port range (empty is any)'**
+  String get monitorGrantPorts;
+
+  /// No description provided for @monitorGrantOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get monitorGrantOff;
+
+  /// No description provided for @monitorBuiltin.
+  ///
+  /// In en, this message translates to:
+  /// **'Built-in'**
+  String get monitorBuiltin;
+
+  /// No description provided for @monitorAdminRoleTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Manages accounts, roles and the agent\'s settings'**
+  String get monitorAdminRoleTip;
+
+  /// No description provided for @monitorYou.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get monitorYou;
+
+  /// No description provided for @monitorNoAccessToSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Only an admin can change this agent\'s settings.'**
+  String get monitorNoAccessToSettings;
+
+  /// Shown when the agent accepted a new password but the app failed to update the credential it stores for the server.
+  ///
+  /// In en, this message translates to:
+  /// **'The password was changed on the agent, but the app could not save it. Update this server\'s Monitor password in its settings.'**
+  String get monitorPasswordNotSaved;
 }
 
 class _AppLocalizationsDelegate

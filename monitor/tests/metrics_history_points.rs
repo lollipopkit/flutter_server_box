@@ -14,6 +14,8 @@
 //! endpoint has always answered with, since watches and widgets in the field
 //! are asking exactly as they always did.
 
+mod common;
+
 use std::sync::{Arc, Once};
 
 use chrono::{DateTime, Duration, Utc};
@@ -72,6 +74,7 @@ async fn state_with(at: &[DateTime<Utc>]) -> Arc<AppState> {
         insert_sample(&db, *at, i as i64).await;
     }
 
+    common::seed_as_upgrade(&db, &config).await;
     AppState::new(Arc::new(config), db)
 }
 
@@ -332,6 +335,7 @@ async fn swap_is_a_percentage_and_absent_where_there_is_none() {
         jwt_secret: Some(SECRET.to_string()),
         ..Default::default()
     };
+    common::seed_as_upgrade(&db, &config).await;
     let srv = test_server(AppState::new(Arc::new(config), db)).await;
 
     let points = history(&srv, "minutes=60").await;

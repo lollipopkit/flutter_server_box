@@ -46,6 +46,10 @@ pub enum Kind {
     /// subject is the channel names and types, plus the host a test webhook
     /// went to — never a key, a token or a header value.
     Push,
+    /// A change to who may do what: an account or a role created, changed or
+    /// removed, a password changed. The detail names the account or role and
+    /// what changed — never a password.
+    Admin,
 }
 
 impl Kind {
@@ -59,6 +63,7 @@ impl Kind {
             Kind::Fs => "fs",
             Kind::CustomCmd => "custom_cmd",
             Kind::Push => "push",
+            Kind::Admin => "admin",
         }
     }
 }

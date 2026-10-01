@@ -44,7 +44,9 @@ use super::session::{
     AttachmentId, Replay, Session, SessionAuth, SessionInput, SessionOutput, SessionStore,
 };
 use super::ticket::Purpose;
+use crate::api::authz;
 use crate::api::server::AppState;
+use crate::core::permissions::Grant;
 use crate::ssh::client::{
     AuthStep, Credential, InteractivePrompt, ShellEvent, SshError, SshSession, next_shell_event,
 };
@@ -117,7 +119,7 @@ enum AuthPayload {
     /// two-factor prompts.
     Interactive,
     /// No credentials at all: run a shell as the agent's own user. Only
-    /// honoured when `remote_access.full_access` is on; see
+    /// honoured when the account holds `shell`; see
     /// `crate::ssh::local_pty` for what that costs.
     Local,
 }
@@ -195,21 +197,6 @@ pub async fn terminal_ws(
     };
 
     let secure = super::is_secure_transport(&req, app_state.tls_active);
-    if !app_state.remote_access.terminal.available(secure) {
-        // Two different refusals, one status: whether the terminal is off or
-        // merely unreachable over this transport is visible on /capabilities
-        // to an authenticated caller, and there is no reason to spell it out
-        // to an unauthenticated one here.
-        return deny(
-            if app_state.remote_access.terminal.enabled {
-                "insecure transport"
-            } else {
-                "disabled"
-            },
-            HttpResponse::Forbidden().finish(),
-        )
-        .await;
-    }
     if !super::origin_allowed(&req, &app_state.config.get_server().cors_allowed_origins) {
         return deny("origin", HttpResponse::Unauthorized().finish()).await;
     }
@@ -227,11 +214,26 @@ pub async fn terminal_ws(
     let subject = reservation.subject().to_string();
     let tickets = app_state.tickets.clone();
 
+    // Checked here as well as at the ticket, so the answer cannot be stale by
+    // the time the socket opens: the account's role may have changed in
+    // between. Either kind of terminal will do — which one a frame asks for
+    // is checked again when it arrives.
+    let admitted = authz::caller_named(&app_state, &subject).await.filter(|caller| {
+        [Grant::Shell, Grant::SshTerminal]
+            .into_iter()
+            .any(|grant| caller.check(grant, &app_state, secure).is_ok())
+    });
+    let Some(admitted) = admitted else {
+        tickets.rollback(reservation);
+        return deny("not granted", HttpResponse::Forbidden().finish()).await;
+    };
+
     let ctx = Rc::new(ConnCtx {
         state: app_state,
         subject,
         remote_ip,
         secure,
+        since: admitted.since,
     });
 
     let upgraded = super::upgrade::start::<_, _, web::Error>(
@@ -263,6 +265,35 @@ struct ConnCtx {
     /// Whether this connection arrived over a link that can't be read off the
     /// network. Captured at the handshake, where the peer address is known.
     secure: bool,
+    /// The account's password as of the upgrade (`Caller::since`): a socket
+    /// that outlived a password change opens nothing more under it.
+    since: i64,
+}
+
+impl ConnCtx {
+    /// Whether this connection's account may use [grant] now: its role read
+    /// again, not trusted from the handshake — an admin may have changed it
+    /// since.
+    async fn may(&self, grant: Grant) -> Result<(), &'static str> {
+        match authz::caller_named(&self.state, &self.subject)
+            .await
+            .filter(|caller| caller.since == self.since)
+        {
+            Some(caller) => caller
+                .check(grant, &self.state, self.secure)
+                .map_err(|why| why.as_str()),
+            None => Err("not_granted"),
+        }
+    }
+}
+
+/// What a client is told when the frame it sent needs a grant its account
+/// does not have.
+fn not_permitted(grant: Grant, why: &str) -> Message {
+    error_frame(
+        "forbidden",
+        &format!("This account may not use {} here ({why})", grant.as_str()),
+    )
 }
 
 /// Where this connection is in the open/authenticate/run sequence.
@@ -501,7 +532,7 @@ async fn on_control(
 
 /// Starts a shell with no authentication step, as the agent's own user.
 ///
-/// Refused unless `remote_access.full_access` is on. The check is
+/// Refused unless the account holds `shell`. The check is
 /// here rather than only in the UI because the UI is not a security boundary:
 /// a client can send this frame whether or not a button was rendered for it.
 async fn open_local(
@@ -512,21 +543,17 @@ async fn open_local(
     cols: u16,
     rows: u16,
 ) -> Option<Message> {
-    // Re-derived here rather than trusted from the handshake: the panel may
-    // have switched it off in between, and this is the request that matters.
-    let secure = ctx.secure;
-    if !ctx.state.full_access_allowed(secure) {
+    // Re-derived here rather than trusted from the handshake: the account's
+    // role may have changed in between, and this is the request that matters.
+    if let Err(why) = ctx.may(Grant::Shell).await {
         Event::new(Kind::Terminal, Action::Denied, Outcome::Denied)
             .subject(&ctx.subject)
             .remote_ip(ctx.remote_ip.clone())
-            .detail("full access disabled")
+            .detail(format!("shell: {why}"))
             .record(&ctx.state.db)
             .await;
         reset_opening(phase);
-        return Some(error_frame(
-            "full_access_disabled",
-            "This agent does not allow opening a terminal without SSH credentials",
-        ));
+        return Some(not_permitted(Grant::Shell, why));
     }
 
     let (shell, events) = match LocalShell::spawn(&term, cols, rows) {
@@ -545,13 +572,14 @@ async fn open_local(
     };
 
     let user = local_user();
-    let (session, input_rx) = Session::new(
+    let (mut session, input_rx) = Session::new(
         &ctx.subject,
         &user,
         SessionAuth::Local,
         ctx.state.remote_access.terminal.scrollback_bytes,
         INPUT_QUEUE,
     );
+    session.since = ctx.since;
     let inserted = match ctx.state.sessions.insert(session) {
         Ok(Some(inserted)) => inserted,
         Ok(None) => {
@@ -571,24 +599,22 @@ async fn open_local(
     };
     let (handle, session) = inserted;
 
-    // Disabling full access can race the spawn above on another worker. Once
-    // registered, either this recheck rejects it or the disable sweep sees it.
-    if !ctx.state.full_access_allowed(secure) {
+    // A role change can race the spawn above on another worker. Once
+    // registered, either this recheck rejects it or the revocation sweep sees
+    // it.
+    if let Err(why) = ctx.may(Grant::Shell).await {
         ctx.state.sessions.remove(&handle);
         shell.kill();
         reset_opening(phase);
-        return Some(error_frame(
-            "full_access_disabled",
-            "This agent does not allow opening a terminal without SSH credentials",
-        ));
+        return Some(not_permitted(Grant::Shell, why));
     }
     let Some((attachment, rx, _replay, _start)) = session.attach(0, OUTPUT_QUEUE) else {
         ctx.state.sessions.remove(&handle);
         shell.kill();
         reset_opening(phase);
         return Some(error_frame(
-            "full_access_disabled",
-            "Full access has been disabled",
+            "permission_revoked",
+            "This account's permissions changed",
         ));
     };
     drive_local_shell(
@@ -628,7 +654,7 @@ async fn open_local(
         .subject(&ctx.subject)
         .remote_ip(ctx.remote_ip.clone())
         .ssh_user(&user)
-        .detail("full access")
+        .detail("shell")
         .record(&ctx.state.db)
         .await;
 
@@ -694,6 +720,18 @@ async fn open(
     cols: u16,
     rows: u16,
 ) -> Option<Message> {
+    // Checked before sshd is dialled: an account without the grant must not
+    // be able to make the agent connect anywhere, even to its own sshd.
+    if let Err(why) = ctx.may(Grant::SshTerminal).await {
+        Event::new(Kind::Terminal, Action::Denied, Outcome::Denied)
+            .subject(&ctx.subject)
+            .remote_ip(ctx.remote_ip.clone())
+            .detail(format!("ssh_terminal: {why}"))
+            .record(&ctx.state.db)
+            .await;
+        reset_opening(phase);
+        return Some(not_permitted(Grant::SshTerminal, why));
+    }
     let addr = &ctx.state.remote_access.ssh_addr;
     let mut ssh = match timeout(
         AUTH_TIMEOUT,
@@ -862,13 +900,14 @@ async fn start_shell(
         return None;
     }
 
-    let (session, input_rx) = Session::new(
+    let (mut session, input_rx) = Session::new(
         &ctx.subject,
         &user,
         SessionAuth::Ssh,
         ctx.state.remote_access.terminal.scrollback_bytes,
         INPUT_QUEUE,
     );
+    session.since = ctx.since;
 
     let inserted = match ctx.state.sessions.insert(session) {
         Ok(Some(inserted)) => inserted,
@@ -971,17 +1010,15 @@ async fn attach(
             ));
         }
     };
-    if session.auth == SessionAuth::Local
-        && ctx
-            .state
-            .full_access_off
-            .load(std::sync::atomic::Ordering::Acquire)
-    {
+    // The session was opened under a grant; rejoining it needs that grant
+    // still, or taking it away would only end the sessions nobody rejoined.
+    let needs = match session.auth {
+        SessionAuth::Local => Grant::Shell,
+        SessionAuth::Ssh => Grant::SshTerminal,
+    };
+    if let Err(why) = ctx.may(needs).await {
         reset_opening(phase);
-        return Some(error_frame(
-            "full_access_disabled",
-            "Full access has been disabled",
-        ));
+        return Some(not_permitted(needs, why));
     }
 
     // Installs this connection's sender and reads the replay in one step, so
@@ -1144,12 +1181,12 @@ fn pump_output(sink: WsSink, mut rx: mpsc::Receiver<SessionOutput>) {
                     superseded = false;
                     break;
                 }
-                SessionOutput::FullAccessRevoked => {
+                SessionOutput::Revoked(code) => {
                     let _ = sink
                         .send(
                             ServerMsg::Error {
-                                code: "full_access_disabled",
-                                message: "Full access has been disabled",
+                                code,
+                                message: "This account may no longer use this terminal",
                             }
                             .frame(),
                         )

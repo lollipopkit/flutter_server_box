@@ -3,6 +3,7 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
+import 'package:server_box/data/model/server/monitor_grants.dart';
 import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/store.dart';
@@ -254,6 +255,22 @@ enum ServerFuncBtn {
     if (!agentOnly || spi.monitorOn == null || granted == null) {
       return generic;
     }
+    // An agent with roles says which grant and why, for this account.
+    if (granted.grants case final grants?) {
+      // A forward is either grant's — see [availableWith] — so the reason is
+      // `connect`'s, or `listen`'s where that one says more.
+      if (this == portForward) {
+        return monitorGrantReason(toStr, grants.connect) ??
+            monitorGrantReason(toStr, grants.listen) ??
+            generic;
+      }
+      final grant = switch (this) {
+        files => grants.files,
+        remoteDesktop => grants.connect,
+        _ => grants.shell,
+      };
+      return monitorGrantReason(toStr, grant) ?? generic;
+    }
     final grant = switch (this) {
       files => '[remote_access.fs]',
       // The relay is granted with `full_access`: one that has it and still
@@ -285,3 +302,13 @@ enum ServerFuncBtn {
     remoteDesktop => l10n.remoteDesktop,
   };
 }
+
+/// Why [func] cannot be had through a `monitor` agent that answered [grant],
+/// or null when it says nothing a person could act on.
+String? monitorGrantReason(String func, MonitorGrant grant) =>
+    switch (grant.why) {
+      MonitorGrantWhy.notGranted => l10n.funcNeedsAgentPermission(func),
+      MonitorGrantWhy.insecureTransport => l10n.funcNeedsAgentHttps(func),
+      MonitorGrantWhy.notConfigured => l10n.funcNeedsAgentSetup(func),
+      MonitorGrantWhy.unknown || null => null,
+    };

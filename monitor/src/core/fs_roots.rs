@@ -14,6 +14,13 @@
 //! `/etc` a refusal rather than a way out. Checking the string the client sent
 //! would not: `/srv/data/link/passwd` is textually inside `/srv/data`.
 //!
+//! And one exception to the roots: the agent's own state — its database,
+//! `jwt.secret`, `config.toml`, its TLS key, the custom-commands directory —
+//! is never reached, whatever the roots say and whatever the caller's role.
+//! Each of those is a way past the roles: the JWT secret signs an admin
+//! token, the database holds the role table, a custom command runs as the
+//! agent. See [`Protected`].
+//!
 //! ## What this does not defend against
 //!
 //! Resolution and use are two steps, so a symlink swapped in between them
@@ -23,7 +30,8 @@
 //! roots contain a directory writable by someone else is already trusting that
 //! someone. This is stated rather than papered over.
 
-use std::path::{Component, PathBuf};
+use std::ffi::OsString;
+use std::path::{Component, Path, PathBuf};
 
 /// Why a path was refused. Kept apart from "the operation failed" so the API
 /// can answer 403 for the first and 404/500 for the second — a client that
@@ -58,6 +66,102 @@ impl std::fmt::Display for FsDenied {
 #[derive(Debug, Clone, Default)]
 pub struct FsRoots {
     roots: Vec<PathBuf>,
+    protected: Protected,
+}
+
+/// What the file API never reaches, inside the roots or not: the agent's own
+/// state.
+///
+/// Per file rather than per directory, because the database usually sits in
+/// the agent's working directory and that can be somebody's home: refusing
+/// the whole directory would refuse what the roots were opened for. What is
+/// refused instead:
+///
+/// - a protected file itself, by its canonical path — so a symlink to it is
+///   refused too, since it resolves there;
+/// - in a protected file's directory, any name that starts with its name:
+///   `serverbox_monitor.db` covers `-wal`, `-shm` and `-journal`, and
+///   `config.toml` the `config.toml.bak-*` backups and the temporary file a
+///   save is written through;
+/// - everything under a protected tree (the custom-commands directory, whose
+///   every file the status script runs);
+/// - changing any directory one of those sits in — renaming, removing or
+///   chmod-ing it. The paths are worked out at startup, and a renamed
+///   directory would carry the files out from under them.
+#[derive(Debug, Clone, Default)]
+pub struct Protected {
+    trees: Vec<PathBuf>,
+    named: Vec<(PathBuf, OsString)>,
+}
+
+impl Protected {
+    /// Protects [file] and every name in its directory that begins with its
+    /// name. Relative paths are taken against the working directory, as the
+    /// agent opens them.
+    pub fn file(&mut self, file: &Path) {
+        let path = settled(file);
+        if let (Some(dir), Some(name)) = (path.parent(), path.file_name()) {
+            self.named.push((dir.to_path_buf(), name.to_os_string()));
+        }
+    }
+
+    /// Protects everything under [dir].
+    pub fn tree(&mut self, dir: &Path) {
+        self.trees.push(settled(dir));
+    }
+
+    /// Whether [path] — canonical — is protected state.
+    pub fn covers(&self, path: &Path) -> bool {
+        if self.trees.iter().any(|tree| path.starts_with(tree)) {
+            return true;
+        }
+        let (Some(dir), Some(name)) = (path.parent(), path.file_name()) else {
+            return false;
+        };
+        let name = name.as_encoded_bytes();
+        self.named.iter().any(|(protected_dir, prefix)| {
+            dir == protected_dir && name.starts_with(prefix.as_encoded_bytes())
+        })
+    }
+
+    /// Whether changing [path] — canonical — would move or remove protected
+    /// state: it is protected, or a directory something protected is in.
+    pub fn holds(&self, path: &Path) -> bool {
+        self.covers(path)
+            || self.trees.iter().any(|tree| tree.starts_with(path))
+            || self.named.iter().any(|(dir, _)| dir.starts_with(path))
+    }
+}
+
+/// [path] made absolute against the working directory and canonicalised as
+/// far as it exists: a protected file may not be there yet (the first backup,
+/// a database about to be created), and its directory is what must match.
+fn settled(path: &Path) -> PathBuf {
+    let absolute = if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        std::env::current_dir()
+            .map(|cwd| cwd.join(path))
+            .unwrap_or_else(|_| path.to_path_buf())
+    };
+    let mut tail = Vec::new();
+    let mut cursor = absolute.as_path();
+    loop {
+        if let Ok(canonical) = std::fs::canonicalize(cursor) {
+            let mut settled = canonical;
+            for name in tail.into_iter().rev() {
+                settled.push(name);
+            }
+            return settled;
+        }
+        match (cursor.file_name(), cursor.parent()) {
+            (Some(name), Some(parent)) => {
+                tail.push(name.to_os_string());
+                cursor = parent;
+            }
+            _ => return absolute,
+        }
+    }
 }
 
 impl FsRoots {
@@ -75,12 +179,40 @@ impl FsRoots {
                 Err(e) => tracing::warn!("fs root {raw:?} is unusable and will be ignored: {e}"),
             }
         }
-        Self { roots }
+        Self {
+            roots,
+            protected: Protected::default(),
+        }
     }
 
     /// For tests and for callers that already hold canonical paths.
     pub fn from_canonical(roots: Vec<PathBuf>) -> Self {
-        Self { roots }
+        Self {
+            roots,
+            protected: Protected::default(),
+        }
+    }
+
+    /// These roots, never reaching [protected] — see [`Protected`].
+    pub fn protecting(mut self, protected: Protected) -> Self {
+        self.protected = protected;
+        self
+    }
+
+    /// Whether a directory listing should leave out [path] — an entry of a
+    /// directory already resolved, so canonical but for its own name.
+    pub fn hides(&self, path: &Path) -> bool {
+        self.protected.covers(path)
+    }
+
+    /// Refuses [path] — already resolved — when renaming, removing or
+    /// chmod-ing it would move or remove the agent's own state.
+    pub fn check_mutable(&self, path: &Path) -> Result<(), FsDenied> {
+        if self.protected.holds(path) {
+            Err(FsDenied::OutsideRoots)
+        } else {
+            Ok(())
+        }
     }
 
     pub fn is_empty(&self) -> bool {
@@ -129,6 +261,9 @@ impl FsRoots {
         let parent = std::fs::canonicalize(parent).map_err(|_| FsDenied::OutsideRoots)?;
         let mut resolved = self.check_within(parent)?;
         resolved.push(name);
+        if self.protected.covers(&resolved) {
+            return Err(FsDenied::OutsideRoots);
+        }
         std::fs::symlink_metadata(&resolved).map_err(|_| FsDenied::OutsideRoots)?;
         Ok(resolved)
     }
@@ -169,6 +304,11 @@ impl FsRoots {
             }
             resolved.push(name);
         }
+        // The new name too: writing `jwt.secret` or a `config.toml.bak-*` is
+        // writing the agent's state as surely as overwriting it is.
+        if self.protected.covers(&resolved) {
+            return Err(FsDenied::OutsideRoots);
+        }
         Ok(resolved)
     }
 
@@ -189,7 +329,14 @@ impl FsRoots {
 
     /// Component-wise, not by string prefix: `/var/logs` is not inside
     /// `/var/log`, and a prefix comparison would say it is.
+    ///
+    /// The agent's own state is refused here too, with the same answer as
+    /// anything outside the roots: which of the two it was is nothing a
+    /// caller needs to learn.
     fn check_within(&self, path: PathBuf) -> Result<PathBuf, FsDenied> {
+        if self.protected.covers(&path) {
+            return Err(FsDenied::OutsideRoots);
+        }
         if self.roots.iter().any(|root| path.starts_with(root)) {
             Ok(path)
         } else {

@@ -2,13 +2,12 @@
 #![recursion_limit = "256"]
 
 use anyhow::Result;
-use dotenvy::dotenv;
 use server_box_monitor::cli::{build_cli, handle_matches};
 
 #[ntex::main]
 async fn main() -> Result<()> {
     // Load .env file
-    dotenv().ok();
+    server_box_monitor::core::config::load_dotenv();
     
     // Initialize tracing
     tracing_subscriber::fmt::init();
