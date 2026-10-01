@@ -5132,15 +5132,11 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get firewallLinuxOnly =>
-      'Firewall idarəetməsi ufw quraşdırılmış Linux serverlərini dəstəkləyir.';
-
-  @override
-  String get firewallUfwMissing =>
-      'Bu serverdə ufw quraşdırılmayıb. Onu sistemin paket meneceri ilə quraşdırın, məsələn `apt install ufw`.';
+      'Firewall idarəetməsi ufw və ya firewalld quraşdırılmış Linux serverlərini dəstəkləyir.';
 
   @override
   String get firewallNeedsRoot =>
-      'ufw qaydalarını oxumaq üçün root lazımdır. Davam etmək üçün sudo parolunu daxil edin.';
+      'Firewall qaydalarını oxumaq üçün root lazımdır. Davam etmək üçün sudo parolunu daxil edin.';
 
   @override
   String get firewallIncoming => 'Daxil olan';
@@ -5200,16 +5196,6 @@ class AppLocalizationsAz extends AppLocalizations {
       'IPv6 söndürülüb (IPV6=no): v6 qaydaları yüklənmir.';
 
   @override
-  String firewallLockoutFmt(String ports) {
-    return 'Bu tətbiqin qoşulduğu $ports TCP portuna daxil olan trafikə icazə verən qayda yoxdur. Daxil olan trafikə standart olaraq icazə verilmədikcə, bu porta yeni qoşulmalar rədd ediləcək.';
-  }
-
-  @override
-  String firewallAllowFirstFmt(String ports) {
-    return 'Əvvəlcə $ports TCP portuna icazə ver';
-  }
-
-  @override
   String get firewallReload => 'Yenidən yüklə';
 
   @override
@@ -5252,4 +5238,110 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get firewallMoreOptions => 'Əlavə seçimlər';
+
+  @override
+  String get firewallNoneInstalled =>
+      'Bu serverdə nə ufw, nə də firewalld quraşdırılıb. Onlardan birini sistemin paket meneceri ilə quraşdırın, məsələn `apt install ufw` və ya `dnf install firewalld`.';
+
+  @override
+  String get firewallKeepAccess => 'Əvvəlcə bu tətbiqin portlarını açıq saxla';
+
+  @override
+  String firewallWillRefuseFmt(String access) {
+    return '$access: bu tətbiqin yeni qoşulmaları rədd ediləcək. İstifadə olunan qoşulma kəsilənə qədər qalır.';
+  }
+
+  @override
+  String firewallMayRefuseFmt(String access) {
+    return '$access: bu tətbiqin yeni qoşulmaları rədd edilə bilər. Bu, qoşulmanın gəldiyi ünvandan və ya interfeysdən asılıdır və tətbiq bunu bilə bilmir.';
+  }
+
+  @override
+  String firewallRateLimitedFmt(String access) {
+    return '$access: qoşulmalar sürət məhdudiyyətinə düşəcək. 30 saniyə ərzində 6 və ya daha çox qoşulma açan ünvan rədd edilir və bu tətbiq bu qədər tez-tez yenidən qoşula bilər.';
+  }
+
+  @override
+  String get firewallConflict =>
+      'ufw və firewalld hər ikisi aktivdir. Hər ikisi nüvənin qaydalarını yazır və sonuncu yüklənən nəyin keçəcəyini həll edir.';
+
+  @override
+  String get firewallDefaultZone => 'Standart zone';
+
+  @override
+  String get firewallZone => 'Zone';
+
+  @override
+  String get firewallTarget => 'Target';
+
+  @override
+  String get firewallMasquerade => 'Masquerade';
+
+  @override
+  String get firewallServices => 'Xidmətlər';
+
+  @override
+  String get firewallPorts => 'Portlar';
+
+  @override
+  String get firewallSources => 'Mənbələr';
+
+  @override
+  String get firewallInterfaces => 'İnterfeyslər';
+
+  @override
+  String get firewallRichRules => 'Rich rules';
+
+  @override
+  String get firewallForwardPorts => 'Yönləndirilən portlar';
+
+  @override
+  String get firewallRuntimeOnly => 'yalnız runtime';
+
+  @override
+  String get firewallPermanentOnly => 'yalnız permanent';
+
+  @override
+  String get firewallThisConnection => 'bu qoşulma';
+
+  @override
+  String get firewallDefaultTag => 'standart';
+
+  @override
+  String get firewallDrift =>
+      'Qüvvədə olan konfiqurasiya saxlanılandan fərqlənir. Reload və ya yenidən başlatma onu saxlanılan konfiqurasiya ilə əvəz edir.';
+
+  @override
+  String firewallDriftLockoutFmt(String access) {
+    return 'Reload və ya yenidən başlatmadan sonra $access rədd ediləcək: saxlanılan konfiqurasiya ona icazə vermir.';
+  }
+
+  @override
+  String get firewallSaveRuntime => 'Permanent kimi saxla';
+
+  @override
+  String get firewallReloadLoses =>
+      'Permanent kimi saxlanmayan dəyişikliklər itəcək.';
+
+  @override
+  String get firewallPanic => 'Panic rejimi aktivdir: bütün paketlər atılır.';
+
+  @override
+  String get firewallPanicOff => 'Panic rejimini söndür';
+
+  @override
+  String get firewallStoppedNote =>
+      'firewalld dayandırılıb. Dəyişikliklər saxlanılır və o başlayanda qüvvəyə minir.';
+
+  @override
+  String get firewallInvalidSource =>
+      'Yanlış mənbə. Ünvan, 192.168.1.0/24 kimi şəbəkə, ipset:AD və ya MAC ünvanı istifadə edin.';
+
+  @override
+  String get firewallInvalidRichRule =>
+      'Rich rule \"rule\" ilə başlayır və bir sətirdə olur.';
+
+  @override
+  String get firewallInvalidForwardPort =>
+      'port=80:proto=tcp:toport=8080 formatından toport, toaddr və ya hər ikisi ilə istifadə edin.';
 }

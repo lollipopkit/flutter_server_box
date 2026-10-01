@@ -1,330 +1,124 @@
-import 'package:fl_lib/fl_lib.dart';
-import 'package:material_ui/material_ui.dart';
+import 'dart:io';
 
-/// What a ufw rule does with a packet it matches. Named as ufw names them,
-/// which is also the word the rule is added with.
-enum UfwAction {
-  allow,
-  deny,
-  reject,
+/// Which way of reaching the server an access is.
+enum FirewallAccessVia { ssh, monitor }
 
-  /// Allows, but denies an address that opened six or more connections in
-  /// the last thirty seconds.
-  limit;
-
-  static UfwAction? fromName(String? value) =>
-      values.firstWhereOrNull((e) => e.name == value);
-
-  /// Whether a matching packet is let through.
-  bool get admits => this == allow || this == limit;
-
-  Color get color => switch (this) {
-    allow => Colors.green,
-    deny => Colors.red,
-    reject => Colors.orange,
-    limit => Colors.blue,
-  };
-}
-
-enum UfwDirection {
-  incoming('in'),
-  outgoing('out');
-
-  const UfwDirection(this.token);
-
-  /// The word ufw takes and writes: `in`, `out`.
-  final String token;
-
-  static UfwDirection? fromToken(String? value) =>
-      values.firstWhereOrNull((e) => e.token == value);
-}
-
-/// What ufw does with a packet no rule matched.
+/// One way this app reaches a server: the TCP port it connects to there, and
+/// the addresses of the connection as the server sees them.
 ///
-/// Stored in `/etc/default/ufw` under iptables' names (`ACCEPT`, `DROP`,
-/// `REJECT`); set with ufw's (`ufw default deny incoming`).
-enum UfwPolicy {
-  allow('ACCEPT'),
-  deny('DROP'),
-  reject('REJECT');
+/// What every firewall change is checked against. A change that refuses it
+/// leaves the server unreachable from this app once the connection in use
+/// drops — and the connection in use is usually the only way to undo it.
+final class FirewallAccess {
+  const FirewallAccess({
+    required this.via,
+    required this.port,
+    this.client,
+    this.server,
+  });
 
-  const UfwPolicy(this.target);
+  final FirewallAccessVia via;
 
-  final String target;
+  /// The port on the server. From `SSH_CONNECTION` where the server said, so
+  /// a NAT that maps another port to it does not mislead.
+  final int port;
 
-  static UfwPolicy? fromTarget(String? value) =>
-      values.firstWhereOrNull((e) => e.target == value?.toUpperCase());
+  /// Where the server sees this device connect from: a NAT's address, or a
+  /// jump server's. Null where it could not be asked.
+  final InternetAddress? client;
+
+  /// The server's own address the connection arrived on.
+  final InternetAddress? server;
+
+  /// Reads `SSH_CONNECTION` — `client_ip client_port server_ip server_port` —
+  /// into the SSH access it describes. Null for anything else.
+  static FirewallAccess? fromSshConnection(String? value) {
+    final fields = value?.trim().split(RegExp(r'\s+')) ?? const <String>[];
+    if (fields.length != 4) return null;
+    final client = InternetAddress.tryParse(_unscoped(fields[0]));
+    final server = InternetAddress.tryParse(_unscoped(fields[2]));
+    final port = int.tryParse(fields[3]);
+    if (client == null || server == null || port == null) return null;
+    if (port < 1 || port > 65535) return null;
+    return FirewallAccess(
+      via: FirewallAccessVia.ssh,
+      port: port,
+      client: client,
+      server: server,
+    );
+  }
+
+  /// `fe80::1%eth0` without its zone, which [InternetAddress] will not parse.
+  static String _unscoped(String address) => address.split('%').first;
 }
 
-/// The three chains a default policy is set for.
-enum UfwChain {
-  incoming('INPUT'),
-  outgoing('OUTPUT'),
-  routed('FORWARD');
-
-  const UfwChain(this.key);
-
-  /// `DEFAULT_<key>_POLICY` in `/etc/default/ufw`.
-  final String key;
-}
-
-enum UfwLogLevel {
-  off,
-  low,
-  medium,
-  high,
-  full;
-
-  static UfwLogLevel? fromName(String? value) =>
-      values.firstWhereOrNull((e) => e.name == value?.toLowerCase());
-}
-
-enum UfwIpVersion { v4, v6, both }
-
-/// What a rule logs of its own, beyond ufw's logging level.
-enum UfwLog {
-  /// New connections the rule matches.
-  log('log'),
-
-  /// Every packet the rule matches.
-  logAll('log-all');
-
-  const UfwLog(this.token);
-
-  /// The word ufw takes and writes.
-  final String token;
-
-  static UfwLog? fromToken(String? value) =>
-      values.firstWhereOrNull((e) => e.token == value);
-}
-
-/// One end of a rule: an address, and a port or an application profile.
-final class UfwEndpoint {
-  const UfwEndpoint({this.address, this.port, this.app});
-
-  /// Null for any address.
-  final String? address;
-
-  /// As ufw writes it: `22`, `80,443`, `6000:6010`. Null for any port.
-  final String? port;
-
-  /// The application profile [port] came from, as the rule was added.
-  final String? app;
-
-  bool get isAny => address == null && port == null && app == null;
-}
-
-/// One rule, as ufw keeps it in `/etc/ufw/user.rules` and `user6.rules`.
+/// Whether a new connection like a [FirewallAccess] would get through.
 ///
-/// Read from the `### tuple ###` lines of those files rather than from
-/// `ufw status`. The status table is drawn for reading: its columns are
-/// padded to a width a long rule overflows, its words are translated with the
-/// server's locale, and an inactive firewall prints no rules at all. The
-/// tuples are what ufw itself reloads its rules from.
-final class UfwRule {
-  const UfwRule({
-    required this.action,
-    required this.direction,
-    required this.protocol,
-    required this.to,
-    required this.from,
-    required this.ipVersion,
-    required this.tuples,
-    this.routed = false,
-    this.log,
-    this.interfaceIn,
-    this.interfaceOut,
-    this.comment,
-  });
+/// Ordered from best to worst, which is what [worseThan] compares.
+enum FirewallReach {
+  open,
 
-  final UfwAction action;
-  final UfwDirection direction;
+  /// Let through, at a rate: ufw's `limit` refuses an address after six
+  /// connections in thirty seconds.
+  limited,
 
-  /// A `ufw route` rule, which matches forwarded packets rather than those
-  /// addressed to this host.
-  final bool routed;
+  /// Turns on what this app cannot know: the address or the interface the
+  /// connection comes by, where a rule names one.
+  unknown,
+  blocked;
 
-  /// Null when the rule logs nothing of its own.
-  final UfwLog? log;
+  bool get admits => this == open || this == limited;
 
-  /// `tcp`, `udp`, another protocol name, or null for any.
-  final String? protocol;
-
-  final UfwEndpoint to;
-  final UfwEndpoint from;
-
-  /// The interface a packet arrives on, for an incoming or routed rule.
-  final String? interfaceIn;
-
-  /// The interface a packet leaves by, for an outgoing or routed rule.
-  final String? interfaceOut;
-
-  final String? comment;
-
-  /// [UfwIpVersion.both] where ufw added the same rule to both families, as
-  /// it does for a rule naming no address; deleting it deletes both.
-  final UfwIpVersion ipVersion;
-
-  /// The tuple lines this rule was read from, v4's first. Deletion names a
-  /// rule by these, never by a position the list may have moved since.
-  final List<String> tuples;
-
-  /// The rule's port spec as `ufw status` prints it: `22/tcp`, `25`.
-  static String? portSpec(String? port, String? protocol) {
-    if (port == null) return null;
-    return protocol == null ? port : '$port/$protocol';
-  }
-
-  /// Whether a TCP connection to [port] on this host, from some address,
-  /// is let through by this rule.
-  bool admitsTcp(int port) {
-    if (routed || direction != UfwDirection.incoming || !action.admits) {
-      return false;
-    }
-    if (protocol != null && protocol != 'tcp') return false;
-    final spec = to.port;
-    if (spec == null) return true;
-    for (final part in spec.split(',')) {
-      final range = part.split(':');
-      final start = int.tryParse(range.first);
-      final end = int.tryParse(range.last);
-      if (start == null || end == null) continue;
-      if (port >= start && port <= end) return true;
-    }
-    return false;
-  }
+  /// Whether a change from [before] to this is one to stop and ask about.
+  bool worseThan(FirewallReach before) => index > before.index;
 }
 
-/// What a server's ufw is doing, as one read found it.
-final class UfwSnapshot {
-  const UfwSnapshot({
-    required this.active,
-    required this.rules,
-    required this.policies,
-    required this.apps,
-    this.statusLine,
-    this.version,
-    this.logLevel,
-    this.ipv6 = true,
-  });
-
-  /// Whether ufw's rules are loaded now; null when `ufw status` answered
-  /// something other than a status, which [statusLine] then holds.
-  final bool? active;
-  final String? statusLine;
-
-  /// `0.36.2`.
-  final String? version;
-  final UfwLogLevel? logLevel;
-
-  /// `IPV6=yes`. With it off ufw loads no v6 rule, so none is listed.
-  final bool ipv6;
-
-  final Map<UfwChain, UfwPolicy> policies;
-  final List<UfwRule> rules;
-
-  /// Application profiles a rule can name, from `ufw app list`.
-  final List<String> apps;
-
-  /// Of [ports], those a connection from outside could not reach once ufw
-  /// is enforcing [rules] — under an incoming policy other than allow, with
-  /// no rule that lets TCP in to them.
-  ///
-  /// [rules] and [incoming] stand in for this snapshot's own, to ask about a
-  /// change before it is made.
-  ///
-  /// Not a promise either way. A rule from one address counts as letting the
-  /// port in, since that address may be this device; one this device does
-  /// not match still leaves it outside.
-  List<int> unreachable(
-    Iterable<int> ports, {
-    List<UfwRule>? rules,
-    UfwPolicy? incoming,
-  }) {
-    if ((incoming ?? policies[UfwChain.incoming]) == UfwPolicy.allow) {
-      return const [];
-    }
-    final list = rules ?? this.rules;
-    return [
-      for (final port in ports)
-        if (!list.any((rule) => rule.admitsTcp(port))) port,
-    ];
+/// The worst of [reaches] that is worse than it was before, or null when
+/// none got worse.
+FirewallReach? worstChange(
+  Iterable<(FirewallReach before, FirewallReach after)> reaches,
+) {
+  FirewallReach? worst;
+  for (final (before, after) in reaches) {
+    if (!after.worseThan(before)) continue;
+    if (worst == null || after.index > worst.index) worst = after;
   }
+  return worst;
 }
 
-/// A rule as the add form describes it.
-final class UfwRuleDraft {
-  const UfwRuleDraft({
-    required this.action,
-    required this.direction,
-    this.routed = false,
-    this.protocol,
-    this.port = '',
-    this.sourcePort = '',
-    this.app,
-    this.from = '',
-    this.to = '',
-    this.interfaceIn = '',
-    this.interfaceOut = '',
-    this.log,
-    this.comment = '',
-    this.prepend = false,
-  });
-
-  final UfwAction action;
-
-  /// Which side of this host the rule is on. Not asked of a [routed] rule,
-  /// whose interfaces say.
-  final UfwDirection direction;
-
-  /// A `ufw route` rule, for packets this host forwards.
-  final bool routed;
-
-  /// `tcp`, `udp` or null for both. Not offered with [app], whose profile
-  /// says.
-  final String? protocol;
-
-  /// The destination port.
-  final String port;
-  final String sourcePort;
-  final String? app;
-
-  /// Empty for any address.
-  final String from;
-  final String to;
-
-  /// The interface a packet arrives on: an incoming rule's, or a routed
-  /// one's. An outgoing rule has none, and this is not read for it.
-  final String interfaceIn;
-
-  /// The interface a packet leaves by: an outgoing rule's, or a routed one's.
-  /// An incoming rule has none, and this is not read for it.
-  final String interfaceOut;
-
-  final UfwLog? log;
-  final String comment;
-
-  /// Put before every other rule, rather than after: ufw stops at the first
-  /// rule that matches.
-  final bool prepend;
-
-  /// [interfaceIn] where this rule has one, trimmed; empty otherwise.
-  String get effectiveInterfaceIn =>
-      routed || direction == UfwDirection.incoming ? interfaceIn.trim() : '';
-
-  /// [interfaceOut] where this rule has one, trimmed; empty otherwise.
-  String get effectiveInterfaceOut =>
-      routed || direction == UfwDirection.outgoing ? interfaceOut.trim() : '';
+/// Whether [spec] — `22`, `80,443`, `6000:6010`, or firewalld's `6000-6010`
+/// — names [port]. A null [spec] is any port.
+bool portSpecCovers(String? spec, int port) {
+  if (spec == null) return true;
+  for (final part in spec.split(',')) {
+    final range = part.trim().split(RegExp('[:-]'));
+    final start = int.tryParse(range.first);
+    final end = int.tryParse(range.last);
+    if (start == null || end == null) continue;
+    if (port >= start && port <= end) return true;
+  }
+  return false;
 }
 
-/// Why [UfwRuleDraft] cannot be added, said before ufw is asked.
-enum UfwDraftIssue {
-  nothingMatched,
-  invalidPort,
-  tooManyPorts,
-  portsNeedProtocol,
-  invalidAddress,
-  mixedIpVersions,
-  invalidInterface,
-  invalidComment,
+/// Whether [network] — an address or a CIDR network — holds [address].
+///
+/// Null when [network] is neither, and false across families: a v4 network
+/// never holds a v6 address, mapped or not, as iptables sees it.
+bool? networkContains(String network, InternetAddress address) {
+  final slash = network.indexOf('/');
+  final base = InternetAddress.tryParse(
+    slash < 0 ? network : network.substring(0, slash),
+  );
+  if (base == null) return null;
+  if (base.type != address.type) return false;
+  final bits = base.rawAddress.length * 8;
+  final prefix = slash < 0 ? bits : int.tryParse(network.substring(slash + 1));
+  if (prefix == null || prefix < 0 || prefix > bits) return null;
+  final a = base.rawAddress;
+  final b = address.rawAddress;
+  for (var bit = 0; bit < prefix; bit++) {
+    final mask = 0x80 >> (bit % 8);
+    if ((a[bit ~/ 8] & mask) != (b[bit ~/ 8] & mask)) return false;
+  }
+  return true;
 }

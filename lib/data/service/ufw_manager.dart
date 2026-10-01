@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:server_box/core/utils/shell_quote.dart';
-import 'package:server_box/data/model/server/firewall.dart';
-import 'package:server_box/data/model/server/server_exec.dart';
+import 'package:server_box/data/model/server/ufw.dart';
+import 'package:server_box/data/service/firewall.dart';
 
 final class UfwManagerException implements Exception {
   const UfwManagerException(this.message);
@@ -16,40 +16,10 @@ final class UfwManagerException implements Exception {
 
 /// Reads and changes a server's ufw.
 ///
-/// Everything but [probe] needs root: ufw keeps its rule files `0640 root`,
-/// and `ufw status` refuses anyone else. The page runs these through
-/// `PrivilegedExec`.
+/// Everything here needs root: ufw keeps its rule files `0640 root`, and
+/// `ufw status` refuses anyone else. The page runs these through
+/// `PrivilegedExec`, after `FirewallProbe` found ufw without it.
 abstract final class UfwManager {
-  /// ufw lives in `/usr/sbin`, which Debian leaves out of a non-root `PATH`.
-  /// `C` because `ufw status` translates its words, and the status line is
-  /// read.
-  static const _env = r'export LC_ALL=C PATH="$PATH:/usr/sbin:/sbin"';
-
-  static const installedMarker = 'SrvBoxUfw.Installed';
-  static const uidMarker = 'SrvBoxUfw.Uid\t';
-
-  /// Whether ufw is there, and who commands run as — asked without root, so
-  /// a server without ufw is said to be one before anyone is asked for a
-  /// password.
-  static const probeScript =
-      '$_env\n'
-      "command -v ufw >/dev/null 2>&1 && printf '$installedMarker\\n'\n"
-      "printf '$uidMarker'\n"
-      'id -u\n';
-
-  static Future<({bool installed, bool root})> probe(ServerExec exec) async {
-    final result = await exec.run(probeScript, entry: 'sh');
-    final lines = result.stdout.replaceAll('\r\n', '\n').split('\n');
-    final uid = lines
-        .firstWhere((line) => line.startsWith(uidMarker), orElse: () => '')
-        .replaceFirst(uidMarker, '')
-        .trim();
-    return (
-      installed: lines.any((line) => line.trim() == installedMarker),
-      root: uid == '0',
-    );
-  }
-
   static const versionMarker = 'SrvBoxUfw.Version\t';
   static const statusMarker = 'SrvBoxUfw.Status\t';
   static const defaultsMarker = 'SrvBoxUfw.Defaults';
@@ -65,7 +35,7 @@ abstract final class UfwManager {
   /// password, and `grep` exits 2 on a file it cannot open. An unreadable v4
   /// file is an error of its own rather than an empty rule list.
   static const readScript =
-      '$_env\n'
+      '$kFirewallEnv\n'
       "[ -r $_rules4 ] || { echo 'Cannot read $_rules4' >&2; exit 1; }\n"
       r'v=$(ufw version 2>/dev/null | head -n 1)' '\n'
       r's=$(ufw status 2>&1 | head -n 1)' '\n'
@@ -80,7 +50,7 @@ abstract final class UfwManager {
       'echo $v6Marker\n'
       "grep '^$tuplePrefix' $_rules6 2>/dev/null\n"
       'echo $appsMarker\n'
-      'ufw app list 2>/dev/null\n'
+      'ufw app info all 2>/dev/null\n'
       'exit 0\n';
 
   static UfwSnapshot parse(String output) {
@@ -139,11 +109,37 @@ abstract final class UfwManager {
         sections[v4Marker] ?? const [],
         ipv6 ? sections[v6Marker] ?? const [] : const [],
       ),
-      apps: [
-        for (final line in sections[appsMarker] ?? const <String>[])
-          if (line.startsWith(' ') && line.trim().isNotEmpty) line.trim(),
-      ],
+      apps: parseApps(sections[appsMarker] ?? const []),
     );
+  }
+
+  /// `ufw app info all`: a `Profile:` line per profile, and under `Ports:`
+  /// (`Port:` for one) its specs, indented.
+  static List<UfwApp> parseApps(List<String> lines) {
+    final apps = <UfwApp>[];
+    String? name;
+    var ports = <UfwAppPort>[];
+    var inPorts = false;
+    void flush() {
+      if (name case final n?) apps.add(UfwApp(n, List.unmodifiable(ports)));
+    }
+
+    for (final line in lines) {
+      if (line.startsWith('Profile: ')) {
+        flush();
+        name = line.substring('Profile: '.length).trim();
+        ports = [];
+        inPorts = false;
+      } else if (line == 'Ports:' || line == 'Port:') {
+        inPorts = true;
+      } else if (inPorts && line.startsWith(' ')) {
+        if (UfwAppPort.parse(line) case final port?) ports.add(port);
+      } else {
+        inPorts = false;
+      }
+    }
+    flush();
+    return apps;
   }
 
   /// `KEY=value` lines, quotes stripped, as ufw reads its own config.
@@ -300,10 +296,8 @@ abstract final class UfwManager {
     return utf8.decode(bytes, allowMalformed: true);
   }
 
-  /// [commands] as the script that runs them: in ufw's `PATH`, stopping at
-  /// the first that fails.
-  static String script(Iterable<String> commands) =>
-      '$_env\nset -e\n${commands.join('\n')}\n';
+  /// [commands] as the script that runs them. See [firewallScript].
+  static String script(Iterable<String> commands) => firewallScript(commands);
 
   /// `--force`: ufw otherwise stops to ask whether SSH may be cut off, on a
   /// terminal nobody is reading. The page asks instead.
@@ -316,10 +310,12 @@ abstract final class UfwManager {
 
   static String loggingCommand(UfwLogLevel level) => 'ufw logging ${level.name}';
 
-  /// Lets TCP in to [port] — what enabling is preceded by when it would
-  /// otherwise shut this app out.
+  /// Lets TCP in to [port], before every other rule — what a change that
+  /// would shut this app out is preceded by. First, because ufw stops at the
+  /// first rule that matches: added last, it would come after the deny that
+  /// made it necessary.
   static String allowTcpCommand(int port) =>
-      'ufw allow in proto tcp from any to any port $port';
+      'ufw prepend allow in proto tcp from any to any port $port';
 
   /// Deletes [rule] by the number ufw gives its tuples now, found on the
   /// server as the script runs. A number taken from the page could name

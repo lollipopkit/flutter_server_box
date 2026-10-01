@@ -2,29 +2,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/firewall.dart';
-import 'package:server_box/data/model/server/server_exec.dart';
+import 'package:server_box/data/model/server/ufw.dart';
 import 'package:server_box/data/service/ufw_manager.dart';
-
-final class _OneExec implements ServerExec {
-  _OneExec(this.stdout);
-
-  final String stdout;
-  String? entry;
-
-  @override
-  Future<ExecResult> run(
-    String script, {
-    String? entry,
-    Map<String, String>? env,
-    String? stdin,
-    OnExecOutput? onStdout,
-    OnExecOutput? onStderr,
-    Future<void>? cancel,
-  }) async {
-    this.entry = entry;
-    return ExecResult(exitCode: 0, stdout: stdout, stderr: '');
-  }
-}
 
 UfwSnapshot _fixture(String name) => UfwManager.parse(
   File('test/fixtures/ufw/$name').readAsStringSync(),
@@ -46,7 +25,10 @@ void main() {
         UfwChain.outgoing: UfwPolicy.allow,
         UfwChain.routed: UfwPolicy.deny,
       });
-      expect(snapshot.apps, ['My App']);
+      expect(snapshot.apps.map((a) => a.name), ['My App', 'OpenSSH']);
+      expect(snapshot.apps.first.ports.single.port, '8000,8001');
+      expect(snapshot.apps.first.ports.single.protocol, 'tcp');
+      expect(snapshot.apps.last.ports.single.port, '22');
     });
 
     test('lists a rule added to both families once, in ufw order', () {
@@ -164,50 +146,137 @@ void main() {
     });
   });
 
-  group('unreachable', () {
+  group('reach', () {
     final snapshot = _fixture('active.txt');
+    FirewallAccess at(int port, [String? client]) => FirewallAccess(
+      via: FirewallAccessVia.ssh,
+      port: port,
+      client: client == null ? null : InternetAddress(client),
+    );
 
-    test('a port with an incoming allow or limit rule is reachable', () {
-      expect(snapshot.unreachable([22, 2222, 8001, 3770]), [3770]);
+    test('the first rule that matches decides', () {
+      expect(snapshot.reach(at(22, '192.0.2.1')), FirewallReach.open);
+      expect(snapshot.reach(at(2222, '192.0.2.1')), FirewallReach.limited);
+      // Rule 1 denies 203.0.113.9 everything, before 22 is allowed.
+      expect(snapshot.reach(at(22, '203.0.113.9')), FirewallReach.blocked);
+      expect(snapshot.reach(at(3770, '192.0.2.1')), FirewallReach.blocked);
+      // An app profile's ports, as ufw resolved them.
+      expect(snapshot.reach(at(8001, '192.0.2.1')), FirewallReach.open);
     });
 
-    test('an outgoing, routed or udp rule does not count', () {
-      expect(snapshot.unreachable([25, 8080, 53]), [25, 8080, 53]);
+    test('an address-bound rule decides only for its address', () {
+      expect(snapshot.reach(at(443, '192.168.1.20')), FirewallReach.open);
+      expect(snapshot.reach(at(443, '192.0.2.1')), FirewallReach.blocked);
+      // Unknown where it is from: the rule may or may not be for it.
+      expect(snapshot.reach(at(443)), FirewallReach.unknown);
+      // A v6 rule says nothing of a v4 connection.
+      expect(snapshot.reach(at(5000, '192.0.2.1')), FirewallReach.blocked);
+      expect(snapshot.reach(at(5000, '2001:db8::9')), FirewallReach.open);
     });
 
-    test('without the rule that let it in, the port is unreachable', () {
+    test('rule 1 may be the one, for an address not known', () {
+      // 203.0.113.9 is denied first; anyone else reaches 22.
+      expect(snapshot.reach(at(22)), FirewallReach.unknown);
+    });
+
+    test('an interface this app cannot see makes it unknown', () {
+      // 22 is allowed before `reject in on eth0 from 10.0.0.5` is reached;
+      // 2222's limit comes after it, and eth0 may or may not be the way in.
+      expect(snapshot.reach(at(22, '10.0.0.5')), FirewallReach.open);
+      expect(snapshot.reach(at(2222, '10.0.0.5')), FirewallReach.unknown);
+    });
+
+    test('outgoing, routed and udp rules do not count', () {
+      expect(snapshot.reach(at(25, '192.0.2.1')), FirewallReach.blocked);
+      expect(snapshot.reach(at(8080, '192.0.2.1')), FirewallReach.blocked);
+      expect(snapshot.reach(at(53, '192.0.2.1')), FirewallReach.blocked);
+    });
+
+    test('a change is judged before it is made', () {
+      final access = at(22, '192.0.2.1');
       final rules = snapshot.rules.where((r) => r.to.port != '22').toList();
-      expect(snapshot.unreachable([22], rules: rules), [22]);
+      expect(snapshot.reach(access, rules: rules), FirewallReach.blocked);
+      expect(
+        snapshot.reach(access, rules: rules, incoming: UfwPolicy.allow),
+        FirewallReach.open,
+      );
+      final off = _fixture('inactive_no_ipv6.txt');
+      expect(off.reach(access), FirewallReach.open);
+      expect(off.reach(access, active: true), FirewallReach.open);
+      expect(
+        off.reach(access, active: true, rules: const []),
+        FirewallReach.blocked,
+      );
     });
 
-    test('nothing is unreachable under an incoming allow policy', () {
-      const open = UfwSnapshot(
-        active: true,
-        rules: [],
-        policies: {UfwChain.incoming: UfwPolicy.allow},
-        apps: [],
+    test('ufw leaves IPv6 alone with it off', () {
+      final off = _fixture('inactive_no_ipv6.txt');
+      expect(
+        off.reach(at(3770, '2001:db8::9'), active: true),
+        FirewallReach.open,
       );
-      expect(open.unreachable([22]), isEmpty);
+    });
+
+    test('a draft becomes the rules ufw would add', () {
+      const deny = UfwRuleDraft(
+        action: UfwAction.deny,
+        direction: UfwDirection.incoming,
+        protocol: 'tcp',
+        port: '20:30',
+      );
+      final access = at(22, '192.0.2.1');
+      expect(
+        snapshot.reach(
+          access,
+          rules: snapshot.withRules(deny.asRules(snapshot.apps), prepend: true),
+        ),
+        FirewallReach.blocked,
+      );
+      // Last, it comes after the rule that already let 22 in.
+      expect(
+        snapshot.reach(
+          access,
+          rules: snapshot.withRules(deny.asRules(snapshot.apps), prepend: false),
+        ),
+        FirewallReach.open,
+      );
+      const app = UfwRuleDraft(
+        action: UfwAction.reject,
+        direction: UfwDirection.incoming,
+        app: 'OpenSSH',
+      );
+      expect(
+        snapshot.reach(
+          access,
+          rules: snapshot.withRules(app.asRules(snapshot.apps), prepend: true),
+        ),
+        FirewallReach.blocked,
+      );
+      // From one address only: blocked if it is this one.
+      const fromOne = UfwRuleDraft(
+        action: UfwAction.deny,
+        direction: UfwDirection.incoming,
+        from: '192.0.2.0/24',
+        prepend: true,
+      );
+      expect(
+        snapshot.reach(
+          access,
+          rules: snapshot.withRules(fromOne.asRules(snapshot.apps), prepend: true),
+        ),
+        FirewallReach.blocked,
+      );
+      expect(
+        snapshot.reach(
+          at(22, '198.51.100.1'),
+          rules: snapshot.withRules(fromOne.asRules(snapshot.apps), prepend: true),
+        ),
+        FirewallReach.open,
+      );
     });
   });
 
   group('commands', () {
-    test('probe reads ufw and the uid without root', () async {
-      final exec = _OneExec(
-        '${UfwManager.installedMarker}\n${UfwManager.uidMarker}0\n',
-      );
-      final probe = await UfwManager.probe(exec);
-      expect(probe.installed, isTrue);
-      expect(probe.root, isTrue);
-      expect(exec.entry, 'sh');
-
-      final none = await UfwManager.probe(
-        _OneExec('${UfwManager.uidMarker}1000\n'),
-      );
-      expect(none.installed, isFalse);
-      expect(none.root, isFalse);
-    });
-
     test('add quotes what was typed and puts proto before from', () {
       const draft = UfwRuleDraft(
         action: UfwAction.allow,
@@ -324,11 +393,11 @@ void main() {
       );
     });
 
-    test('script stops at the first failure, in ufw PATH', () {
-      final script = UfwManager.script(['a', 'b']);
-      expect(script, contains('/usr/sbin'));
-      expect(script, contains('LC_ALL=C'));
-      expect(script, endsWith('set -e\na\nb\n'));
+    test('the rule that keeps this app in goes first', () {
+      expect(
+        UfwManager.allowTcpCommand(22),
+        'ufw prepend allow in proto tcp from any to any port 22',
+      );
     });
   });
 

@@ -1,0 +1,768 @@
+SrvBoxFwd.Version	1.3.4
+SrvBoxFwd.Default	public
+SrvBoxFwd.Permanent
+block
+  target: %%REJECT%%
+  icmp-block-inversion: no
+  interfaces: 
+  sources: 
+  services: 
+  ports: 
+  protocols: 
+  forward: yes
+  masquerade: no
+  forward-ports: 
+  source-ports: 
+  icmp-blocks: 
+  rich rules: 
+
+dmz
+  target: default
+  icmp-block-inversion: no
+  interfaces: 
+  sources: 
+  services: ssh
+  ports: 
+  protocols: 
+  forward: yes
+  masquerade: no
+  forward-ports: 
+  source-ports: 
+  icmp-blocks: 
+  rich rules: 
+
+drop
+  target: DROP
+  icmp-block-inversion: no
+  interfaces: 
+  sources: 
+  services: 
+  ports: 
+  protocols: 
+  forward: yes
+  masquerade: no
+  forward-ports: 
+  source-ports: 
+  icmp-blocks: 
+  rich rules: 
+
+external
+  target: default
+  icmp-block-inversion: no
+  interfaces: 
+  sources: 
+  services: ssh
+  ports: 
+  protocols: 
+  forward: yes
+  masquerade: yes
+  forward-ports: 
+  source-ports: 
+  icmp-blocks: 
+  rich rules: 
+
+home
+  target: default
+  icmp-block-inversion: no
+  interfaces: 
+  sources: 
+  services: cockpit dhcpv6-client mdns samba-client ssh
+  ports: 
+  protocols: 
+  forward: yes
+  masquerade: no
+  forward-ports: 
+  source-ports: 
+  icmp-blocks: 
+  rich rules: 
+
+internal (active)
+  target: default
+  icmp-block-inversion: no
+  interfaces: eth0
+  sources: 
+  services: cockpit dhcpv6-client mdns samba-client ssh
+  ports: 
+  protocols: 
+  forward: yes
+  masquerade: no
+  forward-ports: 
+  source-ports: 
+  icmp-blocks: 
+  rich rules: 
+
+public
+  target: default
+  icmp-block-inversion: no
+  interfaces: 
+  sources: 
+  services: cockpit dhcpv6-client http ssh
+  ports: 8080/tcp 6000-6010/udp 5555/tcp 4444/tcp
+  protocols: 
+  forward: yes
+  masquerade: yes
+  forward-ports: 
+	port=80:proto=tcp:toport=8080:toaddr=
+  source-ports: 
+  icmp-blocks: 
+  rich rules: 
+	rule priority="-10" family="ipv4" source address="198.51.100.7" drop
+	rule family="ipv4" source address="203.0.113.0/24" service name="ssh" reject
+
+trusted (active)
+  target: ACCEPT
+  icmp-block-inversion: no
+  interfaces: 
+  sources: 10.8.0.0/24
+  services: 
+  ports: 
+  protocols: 
+  forward: yes
+  masquerade: no
+  forward-ports: 
+  source-ports: 
+  icmp-blocks: 
+  rich rules: 
+
+work
+  target: default
+  icmp-block-inversion: no
+  interfaces: 
+  sources: 
+  services: cockpit dhcpv6-client ssh
+  ports: 
+  protocols: 
+  forward: yes
+  masquerade: no
+  forward-ports: 
+  source-ports: 
+  icmp-blocks: 
+  rich rules: 
+
+SrvBoxFwd.Services
+/usr/lib/firewalld/services/RH-Satellite-6-capsule.xml:<include service="RH-Satellite-6"/>
+/usr/lib/firewalld/services/RH-Satellite-6-capsule.xml:<port protocol="tcp" port="8443"/>
+/usr/lib/firewalld/services/RH-Satellite-6.xml:<include service="foreman"/>
+/usr/lib/firewalld/services/RH-Satellite-6.xml:<port protocol="tcp" port="5000"/>
+/usr/lib/firewalld/services/RH-Satellite-6.xml:<port protocol="tcp" port="5646-5647"/>
+/usr/lib/firewalld/services/RH-Satellite-6.xml:<port protocol="tcp" port="5671"/>
+/usr/lib/firewalld/services/RH-Satellite-6.xml:<port protocol="tcp" port="8000"/>
+/usr/lib/firewalld/services/RH-Satellite-6.xml:<port protocol="tcp" port="8080"/>
+/usr/lib/firewalld/services/RH-Satellite-6.xml:<port protocol="tcp" port="9090"/>
+/usr/lib/firewalld/services/afp.xml:<port protocol="tcp" port="548"/>
+/usr/lib/firewalld/services/amanda-client.xml:<port protocol="udp" port="10080"/>
+/usr/lib/firewalld/services/amanda-client.xml:<port protocol="tcp" port="10080"/>
+/usr/lib/firewalld/services/amanda-k5-client.xml:<port protocol="tcp" port="10082"/>
+/usr/lib/firewalld/services/amqp.xml:<port protocol="tcp" port="5672"/>
+/usr/lib/firewalld/services/amqps.xml:<port protocol="tcp" port="5671"/>
+/usr/lib/firewalld/services/apcupsd.xml:<port port="3551" protocol="tcp"/>
+/usr/lib/firewalld/services/audit.xml:<port protocol="tcp" port="60"/>
+/usr/lib/firewalld/services/ausweisapp2.xml:<port protocol="udp" port="24727"/>
+/usr/lib/firewalld/services/bacula-client.xml:<port protocol="tcp" port="9102"/>
+/usr/lib/firewalld/services/bacula.xml:<port protocol="tcp" port="9101"/>
+/usr/lib/firewalld/services/bacula.xml:<port protocol="tcp" port="9102"/>
+/usr/lib/firewalld/services/bacula.xml:<port protocol="tcp" port="9103"/>
+/usr/lib/firewalld/services/bareos-director.xml:<port protocol="tcp" port="9101"/>
+/usr/lib/firewalld/services/bareos-filedaemon.xml:<port protocol="tcp" port="9102"/>
+/usr/lib/firewalld/services/bareos-storage.xml:<port protocol="tcp" port="9103"/>
+/usr/lib/firewalld/services/bb.xml:<port protocol="tcp" port="1984"/>
+/usr/lib/firewalld/services/bb.xml:<port protocol="udp" port="1984"/>
+/usr/lib/firewalld/services/bgp.xml:<port protocol="tcp" port="179"/>
+/usr/lib/firewalld/services/bitcoin-rpc.xml:<port protocol="tcp" port="8332"/>
+/usr/lib/firewalld/services/bitcoin-testnet-rpc.xml:<port protocol="tcp" port="18332"/>
+/usr/lib/firewalld/services/bitcoin-testnet.xml:<port protocol="tcp" port="18333"/>
+/usr/lib/firewalld/services/bitcoin.xml:<port protocol="tcp" port="8333"/>
+/usr/lib/firewalld/services/bittorrent-lsd.xml:<port protocol="udp" port="6771"/>
+/usr/lib/firewalld/services/ceph-exporter.xml:<port protocol="tcp" port="9283"/>
+/usr/lib/firewalld/services/ceph-mon.xml:<port protocol="tcp" port="3300"/>
+/usr/lib/firewalld/services/ceph-mon.xml:<port protocol="tcp" port="6789"/>
+/usr/lib/firewalld/services/ceph.xml:<port protocol="tcp" port="6800-7568"/>
+/usr/lib/firewalld/services/cfengine.xml:<port protocol="tcp" port="5308"/>
+/usr/lib/firewalld/services/checkmk-agent.xml:<port protocol="tcp" port="6556"/>
+/usr/lib/firewalld/services/cockpit.xml:<port protocol="tcp" port="9090"/>
+/usr/lib/firewalld/services/collectd.xml:<port protocol="udp" port="25826"/>
+/usr/lib/firewalld/services/condor-collector.xml:<port protocol="tcp" port="9618"/>
+/usr/lib/firewalld/services/cratedb.xml:<port protocol="tcp" port="4200"/>
+/usr/lib/firewalld/services/cratedb.xml:<port protocol="tcp" port="4300"/>
+/usr/lib/firewalld/services/cratedb.xml:<include service="postgresql"/>
+/usr/lib/firewalld/services/ctdb.xml:<port protocol="tcp" port="4379"/>
+/usr/lib/firewalld/services/ctdb.xml:<port protocol="udp" port="4379"/>
+/usr/lib/firewalld/services/dds-multicast.xml:<port protocol="udp" port="7400-7401"/>
+/usr/lib/firewalld/services/dds-multicast.xml:<port protocol="udp" port="7650-7651"/>
+/usr/lib/firewalld/services/dds-multicast.xml:<port protocol="udp" port="7900-7901"/>
+/usr/lib/firewalld/services/dds-multicast.xml:<port protocol="udp" port="8150-8151"/>
+/usr/lib/firewalld/services/dds-multicast.xml:<port protocol="udp" port="8400-8401"/>
+/usr/lib/firewalld/services/dds-multicast.xml:<port protocol="udp" port="8650-8651"/>
+/usr/lib/firewalld/services/dds-multicast.xml:<port protocol="udp" port="8900-8901"/>
+/usr/lib/firewalld/services/dds-multicast.xml:<port protocol="udp" port="9150-9151"/>
+/usr/lib/firewalld/services/dds-multicast.xml:<port protocol="udp" port="9400-9401"/>
+/usr/lib/firewalld/services/dds-multicast.xml:<port protocol="udp" port="9650-9651"/>
+/usr/lib/firewalld/services/dds-multicast.xml:<port protocol="udp" port="9900-9901"/>
+/usr/lib/firewalld/services/dds-unicast.xml:<port protocol="udp" port="7402-7649"/>
+/usr/lib/firewalld/services/dds-unicast.xml:<port protocol="udp" port="7652-7899"/>
+/usr/lib/firewalld/services/dds-unicast.xml:<port protocol="udp" port="7902-8149"/>
+/usr/lib/firewalld/services/dds-unicast.xml:<port protocol="udp" port="8152-8339"/>
+/usr/lib/firewalld/services/dds-unicast.xml:<port protocol="udp" port="8402-8649"/>
+/usr/lib/firewalld/services/dds-unicast.xml:<port protocol="udp" port="8652-8899"/>
+/usr/lib/firewalld/services/dds-unicast.xml:<port protocol="udp" port="8902-9149"/>
+/usr/lib/firewalld/services/dds-unicast.xml:<port protocol="udp" port="9152-9339"/>
+/usr/lib/firewalld/services/dds-unicast.xml:<port protocol="udp" port="9402-9649"/>
+/usr/lib/firewalld/services/dds-unicast.xml:<port protocol="udp" port="9652-9899"/>
+/usr/lib/firewalld/services/dds-unicast.xml:<port protocol="udp" port="9902-10149"/>
+/usr/lib/firewalld/services/dds.xml:<include service="dds-multicast"/>
+/usr/lib/firewalld/services/dds.xml:<include service="dds-unicast"/>
+/usr/lib/firewalld/services/dhcp.xml:<port protocol="udp" port="67"/>
+/usr/lib/firewalld/services/dhcpv6-client.xml:<port protocol="udp" port="546"/>
+/usr/lib/firewalld/services/dhcpv6.xml:<port protocol="udp" port="547"/>
+/usr/lib/firewalld/services/distcc.xml:<port port="3632" protocol="tcp"/>
+/usr/lib/firewalld/services/dns-over-tls.xml:<port protocol="tcp" port="853"/>
+/usr/lib/firewalld/services/dns.xml:<port protocol="tcp" port="53"/>
+/usr/lib/firewalld/services/dns.xml:<port protocol="udp" port="53"/>
+/usr/lib/firewalld/services/docker-registry.xml:<port protocol="tcp" port="5000"/>
+/usr/lib/firewalld/services/docker-swarm.xml:<port port="2377" protocol="tcp"/>
+/usr/lib/firewalld/services/docker-swarm.xml:<port port="7946" protocol="tcp"/>
+/usr/lib/firewalld/services/docker-swarm.xml:<port port="7946" protocol="udp"/>
+/usr/lib/firewalld/services/docker-swarm.xml:<port port="4789" protocol="udp"/>
+/usr/lib/firewalld/services/dropbox-lansync.xml:<port protocol="udp" port="17500"/>
+/usr/lib/firewalld/services/dropbox-lansync.xml:<port protocol="tcp" port="17500"/>
+/usr/lib/firewalld/services/elasticsearch.xml:<port protocol="tcp" port="9300"/>
+/usr/lib/firewalld/services/elasticsearch.xml:<port protocol="tcp" port="9200"/>
+/usr/lib/firewalld/services/etcd-client.xml:<port port="2379" protocol="tcp"/>
+/usr/lib/firewalld/services/etcd-server.xml:<port port="2380" protocol="tcp"/>
+/usr/lib/firewalld/services/finger.xml:<port port="79" protocol="tcp"/>
+/usr/lib/firewalld/services/foreman-proxy.xml:<include service="foreman"/>
+/usr/lib/firewalld/services/foreman-proxy.xml:<port protocol="tcp" port="8443"/>
+/usr/lib/firewalld/services/foreman.xml:<include service="dns"/>
+/usr/lib/firewalld/services/foreman.xml:<include service="http"/>
+/usr/lib/firewalld/services/foreman.xml:<include service="https"/>
+/usr/lib/firewalld/services/foreman.xml:<include service="dhcp"/>
+/usr/lib/firewalld/services/foreman.xml:<include service="tftp"/>
+/usr/lib/firewalld/services/foreman.xml:<port protocol="udp" port="68"/>
+/usr/lib/firewalld/services/foreman.xml:<port protocol="tcp" port="8140"/>
+/usr/lib/firewalld/services/freeipa-4.xml:<include service="http"/>
+/usr/lib/firewalld/services/freeipa-4.xml:<include service="https"/>
+/usr/lib/firewalld/services/freeipa-4.xml:<include service="kerberos"/>
+/usr/lib/firewalld/services/freeipa-4.xml:<include service="kpasswd"/>
+/usr/lib/firewalld/services/freeipa-4.xml:<include service="ldap"/>
+/usr/lib/firewalld/services/freeipa-4.xml:<include service="ldaps"/>
+/usr/lib/firewalld/services/freeipa-ldap.xml:<port protocol="tcp" port="80"/>
+/usr/lib/firewalld/services/freeipa-ldap.xml:<port protocol="tcp" port="443"/>
+/usr/lib/firewalld/services/freeipa-ldap.xml:<port protocol="tcp" port="88"/>
+/usr/lib/firewalld/services/freeipa-ldap.xml:<port protocol="udp" port="88"/>
+/usr/lib/firewalld/services/freeipa-ldap.xml:<port protocol="tcp" port="464"/>
+/usr/lib/firewalld/services/freeipa-ldap.xml:<port protocol="udp" port="464"/>
+/usr/lib/firewalld/services/freeipa-ldap.xml:<port protocol="udp" port="123"/>
+/usr/lib/firewalld/services/freeipa-ldap.xml:<port protocol="tcp" port="389"/>
+/usr/lib/firewalld/services/freeipa-ldaps.xml:<port protocol="tcp" port="80"/>
+/usr/lib/firewalld/services/freeipa-ldaps.xml:<port protocol="tcp" port="443"/>
+/usr/lib/firewalld/services/freeipa-ldaps.xml:<port protocol="tcp" port="88"/>
+/usr/lib/firewalld/services/freeipa-ldaps.xml:<port protocol="udp" port="88"/>
+/usr/lib/firewalld/services/freeipa-ldaps.xml:<port protocol="tcp" port="464"/>
+/usr/lib/firewalld/services/freeipa-ldaps.xml:<port protocol="udp" port="464"/>
+/usr/lib/firewalld/services/freeipa-ldaps.xml:<port protocol="udp" port="123"/>
+/usr/lib/firewalld/services/freeipa-ldaps.xml:<port protocol="tcp" port="636"/>
+/usr/lib/firewalld/services/freeipa-replication.xml:<port protocol="tcp" port="7389"/>
+/usr/lib/firewalld/services/freeipa-trust.xml:<port protocol="tcp" port="135"/>
+/usr/lib/firewalld/services/freeipa-trust.xml:<port protocol="tcp" port="138-139"/>
+/usr/lib/firewalld/services/freeipa-trust.xml:<port protocol="udp" port="138-139"/>
+/usr/lib/firewalld/services/freeipa-trust.xml:<port protocol="tcp" port="389"/>
+/usr/lib/firewalld/services/freeipa-trust.xml:<port protocol="udp" port="389"/>
+/usr/lib/firewalld/services/freeipa-trust.xml:<port protocol="tcp" port="445"/>
+/usr/lib/firewalld/services/freeipa-trust.xml:<port protocol="udp" port="445"/>
+/usr/lib/firewalld/services/freeipa-trust.xml:<port protocol="tcp" port="49152-65535"/>
+/usr/lib/firewalld/services/freeipa-trust.xml:<port protocol="tcp" port="3268"/>
+/usr/lib/firewalld/services/ftp.xml:<port protocol="tcp" port="21"/>
+/usr/lib/firewalld/services/galera.xml:<port protocol="tcp" port="3306"/>
+/usr/lib/firewalld/services/galera.xml:<port protocol="tcp" port="4567"/>
+/usr/lib/firewalld/services/galera.xml:<port protocol="tcp" port="4568"/>
+/usr/lib/firewalld/services/galera.xml:<port protocol="tcp" port="4444"/>
+/usr/lib/firewalld/services/ganglia-client.xml:<port protocol="tcp" port="8660"/>
+/usr/lib/firewalld/services/ganglia-master.xml:<port protocol="tcp" port="8651"/>
+/usr/lib/firewalld/services/git.xml:<port protocol="tcp" port="9418"/>
+/usr/lib/firewalld/services/gpsd.xml:<port protocol="tcp" port="2947" />
+/usr/lib/firewalld/services/grafana.xml:<port protocol="tcp" port="3000"/>
+/usr/lib/firewalld/services/high-availability.xml:<port protocol="tcp" port="2224"/>
+/usr/lib/firewalld/services/high-availability.xml:<port protocol="tcp" port="3121"/>
+/usr/lib/firewalld/services/high-availability.xml:<port protocol="tcp" port="5403"/>
+/usr/lib/firewalld/services/high-availability.xml:<port protocol="udp" port="5404"/>
+/usr/lib/firewalld/services/high-availability.xml:<port protocol="udp" port="5405-5412"/>
+/usr/lib/firewalld/services/high-availability.xml:<port protocol="tcp" port="9929"/>
+/usr/lib/firewalld/services/high-availability.xml:<port protocol="udp" port="9929"/>
+/usr/lib/firewalld/services/high-availability.xml:<port protocol="tcp" port="21064"/>
+/usr/lib/firewalld/services/http.xml:<port protocol="tcp" port="80"/>
+/usr/lib/firewalld/services/http3.xml:<port protocol="udp" port="443"/>
+/usr/lib/firewalld/services/https.xml:<port protocol="tcp" port="443"/>
+/usr/lib/firewalld/services/ident.xml:<port protocol="tcp" port="113"/>
+/usr/lib/firewalld/services/imap.xml:<port protocol="tcp" port="143"/>
+/usr/lib/firewalld/services/imaps.xml:<port protocol="tcp" port="993"/>
+/usr/lib/firewalld/services/iperf2.xml:<port protocol="tcp" port="5001"/>
+/usr/lib/firewalld/services/iperf2.xml:<port protocol="udp" port="5001"/>
+/usr/lib/firewalld/services/iperf3.xml:<port protocol="tcp" port="5201"/>
+/usr/lib/firewalld/services/iperf3.xml:<port protocol="udp" port="5201"/>
+/usr/lib/firewalld/services/iperf3.xml:<port protocol="sctp" port="5201"/>
+/usr/lib/firewalld/services/ipfs.xml:<port protocol="tcp" port="4001"/>
+/usr/lib/firewalld/services/ipfs.xml:<port protocol="udp" port="4001"/>
+/usr/lib/firewalld/services/ipp-client.xml:<port protocol="udp" port="631"/>
+/usr/lib/firewalld/services/ipp.xml:<port protocol="tcp" port="631"/>
+/usr/lib/firewalld/services/ipp.xml:<port protocol="udp" port="631"/>
+/usr/lib/firewalld/services/ipsec.xml:<port protocol="ah" port=""/>
+/usr/lib/firewalld/services/ipsec.xml:<port protocol="esp" port=""/>
+/usr/lib/firewalld/services/ipsec.xml:<port protocol="udp" port="500"/>
+/usr/lib/firewalld/services/ipsec.xml:<port protocol="udp" port="4500"/>
+/usr/lib/firewalld/services/ipsec.xml:<port protocol="tcp" port="4500"/>
+/usr/lib/firewalld/services/irc.xml:<port protocol="tcp" port="6667"/>
+/usr/lib/firewalld/services/ircs.xml:<port protocol="tcp" port="6697"/>
+/usr/lib/firewalld/services/iscsi-target.xml:<port protocol="tcp" port="3260"/>
+/usr/lib/firewalld/services/iscsi-target.xml:<port protocol="udp" port="3260"/>
+/usr/lib/firewalld/services/isns.xml:<port port="3205" protocol="tcp"/>
+/usr/lib/firewalld/services/isns.xml:<port port="3205" protocol="udp"/>
+/usr/lib/firewalld/services/jenkins.xml:<port protocol="tcp" port="8080"/>
+/usr/lib/firewalld/services/kadmin.xml:<port protocol="tcp" port="749"/>
+/usr/lib/firewalld/services/kdeconnect.xml:<port port="1714-1764" protocol="tcp"/>
+/usr/lib/firewalld/services/kdeconnect.xml:<port port="1714-1764" protocol="udp"/>
+/usr/lib/firewalld/services/kerberos.xml:<port protocol="tcp" port="88"/>
+/usr/lib/firewalld/services/kerberos.xml:<port protocol="udp" port="88"/>
+/usr/lib/firewalld/services/kibana.xml:<port protocol="tcp" port="5601"/>
+/usr/lib/firewalld/services/klogin.xml:<port port="543" protocol="tcp"/>
+/usr/lib/firewalld/services/kpasswd.xml:<port protocol="tcp" port="464"/>
+/usr/lib/firewalld/services/kpasswd.xml:<port protocol="udp" port="464"/>
+/usr/lib/firewalld/services/kprop.xml:<port protocol="tcp" port="754"/>
+/usr/lib/firewalld/services/kshell.xml:<port port="544" protocol="tcp"/>
+/usr/lib/firewalld/services/kube-api.xml:<include service="kubelet" />
+/usr/lib/firewalld/services/kube-apiserver.xml:<port protocol="tcp" port="6443"/>
+/usr/lib/firewalld/services/kube-control-plane-secure.xml:<include service="etcd-client" />
+/usr/lib/firewalld/services/kube-control-plane-secure.xml:<include service="etcd-server" />
+/usr/lib/firewalld/services/kube-control-plane-secure.xml:<include service="kube-apiserver" />
+/usr/lib/firewalld/services/kube-control-plane-secure.xml:<include service="kube-controller-manager-secure" />
+/usr/lib/firewalld/services/kube-control-plane-secure.xml:<include service="kube-scheduler-secure" />
+/usr/lib/firewalld/services/kube-control-plane.xml:<include service="etcd-client" />
+/usr/lib/firewalld/services/kube-control-plane.xml:<include service="etcd-server" />
+/usr/lib/firewalld/services/kube-control-plane.xml:<include service="kube-apiserver" />
+/usr/lib/firewalld/services/kube-control-plane.xml:<include service="kube-controller-manager" />
+/usr/lib/firewalld/services/kube-control-plane.xml:<include service="kube-scheduler" />
+/usr/lib/firewalld/services/kube-controller-manager-secure.xml:<port protocol="tcp" port="10257"/>
+/usr/lib/firewalld/services/kube-controller-manager.xml:<port protocol="tcp" port="10252"/>
+/usr/lib/firewalld/services/kube-nodeport-services.xml:<port protocol="tcp" port="30000-32767"/>
+/usr/lib/firewalld/services/kube-scheduler-secure.xml:<port protocol="tcp" port="10259"/>
+/usr/lib/firewalld/services/kube-scheduler.xml:<port protocol="tcp" port="10251"/>
+/usr/lib/firewalld/services/kube-worker.xml:<include service="kubelet" />
+/usr/lib/firewalld/services/kube-worker.xml:<include service="kube-nodeport-services" />
+/usr/lib/firewalld/services/kubelet-readonly.xml:<port protocol="tcp" port="10255"/>
+/usr/lib/firewalld/services/kubelet-worker.xml:<include service="kube-worker" />
+/usr/lib/firewalld/services/kubelet.xml:<port protocol="tcp" port="10250"/>
+/usr/lib/firewalld/services/ldap.xml:<port protocol="tcp" port="389"/>
+/usr/lib/firewalld/services/ldaps.xml:<port protocol="tcp" port="636"/>
+/usr/lib/firewalld/services/libvirt-tls.xml:<port protocol="tcp" port="16514"/>
+/usr/lib/firewalld/services/libvirt.xml:<port protocol="tcp" port="16509"/>
+/usr/lib/firewalld/services/lightning-network.xml:<port protocol="tcp" port="9735"/>
+/usr/lib/firewalld/services/llmnr-tcp.xml:<port protocol="tcp" port="5355"/>
+/usr/lib/firewalld/services/llmnr-udp.xml:<port protocol="udp" port="5355"/>
+/usr/lib/firewalld/services/llmnr.xml:<include service="llmnr-tcp"/>
+/usr/lib/firewalld/services/llmnr.xml:<include service="llmnr-udp"/>
+/usr/lib/firewalld/services/managesieve.xml:<port protocol="tcp" port="4190"/>
+/usr/lib/firewalld/services/matrix.xml:<include service="https"/>
+/usr/lib/firewalld/services/matrix.xml:<port port="8448" protocol="tcp"/>
+/usr/lib/firewalld/services/mdns.xml:<port protocol="udp" port="5353"/>
+/usr/lib/firewalld/services/memcache.xml:<port protocol="tcp" port="11211"/>
+/usr/lib/firewalld/services/memcache.xml:<port protocol="udp" port="11211"/>
+/usr/lib/firewalld/services/minidlna.xml:<port protocol="tcp" port="8200"/>
+/usr/lib/firewalld/services/minidlna.xml:<include service="ssdp"/>
+/usr/lib/firewalld/services/mongodb.xml:<port protocol="tcp" port="27017"/>
+/usr/lib/firewalld/services/mosh.xml:<port protocol="udp" port="60000-61000"/>
+/usr/lib/firewalld/services/mountd.xml:<port protocol="tcp" port="20048"/>
+/usr/lib/firewalld/services/mountd.xml:<port protocol="udp" port="20048"/>
+/usr/lib/firewalld/services/mqtt-tls.xml:<port port="8883" protocol="tcp"/>
+/usr/lib/firewalld/services/mqtt.xml:<port port="1883" protocol="tcp"/>
+/usr/lib/firewalld/services/ms-wbt.xml:<include service="rdp"/>
+/usr/lib/firewalld/services/mssql.xml:<port protocol="tcp" port="1433"/>
+/usr/lib/firewalld/services/murmur.xml:<port protocol="tcp" port="64738"/>
+/usr/lib/firewalld/services/murmur.xml:<port protocol="udp" port="64738"/>
+/usr/lib/firewalld/services/mysql.xml:<port protocol="tcp" port="3306"/>
+/usr/lib/firewalld/services/nbd.xml:<port protocol="tcp" port="10809"/>
+/usr/lib/firewalld/services/nebula.xml:<port protocol="udp" port="4242"/>
+/usr/lib/firewalld/services/netbios-ns.xml:<port protocol="udp" port="137"/>
+/usr/lib/firewalld/services/netdata-dashboard.xml:<port protocol="tcp" port="19999"/>
+/usr/lib/firewalld/services/nfs.xml:<port protocol="tcp" port="2049"/>
+/usr/lib/firewalld/services/nfs3.xml:<port protocol="tcp" port="2049"/>
+/usr/lib/firewalld/services/nfs3.xml:<port protocol="udp" port="2049"/>
+/usr/lib/firewalld/services/nmea-0183.xml:<port protocol="tcp" port="10110" />
+/usr/lib/firewalld/services/nmea-0183.xml:<port protocol="udp" port="10110" />
+/usr/lib/firewalld/services/nrpe.xml:<port protocol="tcp" port="5666"/>
+/usr/lib/firewalld/services/ntp.xml:<port protocol="udp" port="123"/>
+/usr/lib/firewalld/services/nut.xml:<port port="3493" protocol="tcp"/>
+/usr/lib/firewalld/services/nut.xml:<port port="3493" protocol="udp"/>
+/usr/lib/firewalld/services/opentelemetry.xml:<port protocol="tcp" port="4317"/>
+/usr/lib/firewalld/services/opentelemetry.xml:<port protocol="tcp" port="4318"/>
+/usr/lib/firewalld/services/openvpn.xml:<port protocol="udp" port="1194"/>
+/usr/lib/firewalld/services/ovirt-imageio.xml:<port protocol="tcp" port="54322"/>
+/usr/lib/firewalld/services/ovirt-storageconsole.xml:<port protocol="tcp" port="55863"/>
+/usr/lib/firewalld/services/ovirt-storageconsole.xml:<port protocol="tcp" port="39543"/>
+/usr/lib/firewalld/services/ovirt-vmconsole.xml:<port protocol="tcp" port="2223"/>
+/usr/lib/firewalld/services/plex.xml:<port protocol="tcp" port="32400"/>
+/usr/lib/firewalld/services/plex.xml:<port protocol="udp" port="32400"/>
+/usr/lib/firewalld/services/plex.xml:<port protocol="tcp" port="32469"/>
+/usr/lib/firewalld/services/plex.xml:<include service="ssdp"/>
+/usr/lib/firewalld/services/plex.xml:<port protocol="tcp" port="3005"/>
+/usr/lib/firewalld/services/plex.xml:<port protocol="tcp" port="8324"/>
+/usr/lib/firewalld/services/plex.xml:<port protocol="udp" port="32410"/>
+/usr/lib/firewalld/services/plex.xml:<port protocol="udp" port="32412"/>
+/usr/lib/firewalld/services/plex.xml:<port protocol="udp" port="32413"/>
+/usr/lib/firewalld/services/plex.xml:<port protocol="udp" port="32414"/>
+/usr/lib/firewalld/services/pmcd.xml:<port protocol="tcp" port="44321"/>
+/usr/lib/firewalld/services/pmproxy.xml:<port protocol="tcp" port="44322"/>
+/usr/lib/firewalld/services/pmwebapi.xml:<port protocol="tcp" port="44323"/>
+/usr/lib/firewalld/services/pmwebapis.xml:<port protocol="tcp" port="44324"/>
+/usr/lib/firewalld/services/pop3.xml:<port protocol="tcp" port="110"/>
+/usr/lib/firewalld/services/pop3s.xml:<port protocol="tcp" port="995"/>
+/usr/lib/firewalld/services/postgresql.xml:<port protocol="tcp" port="5432"/>
+/usr/lib/firewalld/services/privoxy.xml:<port protocol="tcp" port="8118"/>
+/usr/lib/firewalld/services/prometheus-node-exporter.xml:<port protocol="tcp" port="9100"/>
+/usr/lib/firewalld/services/prometheus.xml:<port protocol="tcp" port="9090"/>
+/usr/lib/firewalld/services/proxy-dhcp.xml:<port protocol="udp" port="4011"/>
+/usr/lib/firewalld/services/ps2link.xml:<port protocol="udp" port="18194"/>
+/usr/lib/firewalld/services/ps2link.xml:<port protocol="tcp" port="18193"/>
+/usr/lib/firewalld/services/ps3netsrv.xml:<port protocol="tcp" port="38008"/>
+/usr/lib/firewalld/services/ptp.xml:<port protocol="udp" port="319"/>
+/usr/lib/firewalld/services/ptp.xml:<port protocol="udp" port="320"/>
+/usr/lib/firewalld/services/pulseaudio.xml:<port protocol="tcp" port="4713"/>
+/usr/lib/firewalld/services/puppetmaster.xml:<port protocol="tcp" port="8140"/>
+/usr/lib/firewalld/services/quassel.xml:<port protocol="tcp" port="4242"/>
+/usr/lib/firewalld/services/radius.xml:<port protocol="tcp" port="1812"/>
+/usr/lib/firewalld/services/radius.xml:<port protocol="udp" port="1812"/>
+/usr/lib/firewalld/services/radius.xml:<port protocol="tcp" port="1813"/>
+/usr/lib/firewalld/services/radius.xml:<port protocol="udp" port="1813"/>
+/usr/lib/firewalld/services/rdp.xml:<port protocol="tcp" port="3389"/>
+/usr/lib/firewalld/services/redis-sentinel.xml:<port protocol="tcp" port="26379"/>
+/usr/lib/firewalld/services/redis.xml:<port protocol="tcp" port="6379"/>
+/usr/lib/firewalld/services/rootd.xml:<port protocol="tcp" port="1094"/>
+/usr/lib/firewalld/services/rpc-bind.xml:<port protocol="tcp" port="111"/>
+/usr/lib/firewalld/services/rpc-bind.xml:<port protocol="udp" port="111"/>
+/usr/lib/firewalld/services/rquotad.xml:<port protocol="tcp" port="875"/>
+/usr/lib/firewalld/services/rquotad.xml:<port protocol="udp" port="875"/>
+/usr/lib/firewalld/services/rsh.xml:<port port="514" protocol="tcp"/>
+/usr/lib/firewalld/services/rsyncd.xml:<port protocol="tcp" port="873"/>
+/usr/lib/firewalld/services/rsyncd.xml:<port protocol="udp" port="873"/>
+/usr/lib/firewalld/services/rtsp.xml:<port port="554" protocol="tcp"/>
+/usr/lib/firewalld/services/rtsp.xml:<port port="554" protocol="udp"/>
+/usr/lib/firewalld/services/salt-master.xml:<port port="4505" protocol="tcp"/>
+/usr/lib/firewalld/services/salt-master.xml:<port port="4506" protocol="tcp"/>
+/usr/lib/firewalld/services/samba-client.xml:<include service="netbios-ns"/>
+/usr/lib/firewalld/services/samba-client.xml:<port protocol="udp" port="138"/>
+/usr/lib/firewalld/services/samba-dc.xml:<include service="samba"/>
+/usr/lib/firewalld/services/samba-dc.xml:<include service="dns"/>
+/usr/lib/firewalld/services/samba-dc.xml:<include service="kerberos"/>
+/usr/lib/firewalld/services/samba-dc.xml:<include service="ldap"/>
+/usr/lib/firewalld/services/samba-dc.xml:<include service="ldaps"/>
+/usr/lib/firewalld/services/samba-dc.xml:<include service="kpasswd"/>
+/usr/lib/firewalld/services/samba-dc.xml:<port protocol="tcp" port="135"/>
+/usr/lib/firewalld/services/samba-dc.xml:<port protocol="udp" port="389"/>
+/usr/lib/firewalld/services/samba-dc.xml:<port protocol="tcp" port="49152-65535"/>
+/usr/lib/firewalld/services/samba-dc.xml:<port protocol="tcp" port="3268"/>
+/usr/lib/firewalld/services/samba-dc.xml:<port protocol="tcp" port="3269"/>
+/usr/lib/firewalld/services/samba.xml:<include service="samba-client"/>
+/usr/lib/firewalld/services/samba.xml:<port protocol="tcp" port="139"/>
+/usr/lib/firewalld/services/samba.xml:<port protocol="tcp" port="445"/>
+/usr/lib/firewalld/services/sane.xml:<port protocol="tcp" port="6566"/>
+/usr/lib/firewalld/services/sip.xml:<port protocol="tcp" port="5060"/>
+/usr/lib/firewalld/services/sip.xml:<port protocol="udp" port="5060"/>
+/usr/lib/firewalld/services/sips.xml:<port protocol="tcp" port="5061"/>
+/usr/lib/firewalld/services/sips.xml:<port protocol="udp" port="5061"/>
+/usr/lib/firewalld/services/slp.xml:<port port="427" protocol="tcp"/>
+/usr/lib/firewalld/services/slp.xml:<port port="427" protocol="udp"/>
+/usr/lib/firewalld/services/smtp-submission.xml:<port protocol="tcp" port="587"/>
+/usr/lib/firewalld/services/smtp.xml:<port protocol="tcp" port="25"/>
+/usr/lib/firewalld/services/smtps.xml:<port protocol="tcp" port="465"/>
+/usr/lib/firewalld/services/snmp.xml:<port protocol="tcp" port="161"/>
+/usr/lib/firewalld/services/snmp.xml:<port protocol="udp" port="161"/>
+/usr/lib/firewalld/services/snmptls-trap.xml:<port protocol="tcp" port="10162"/>
+/usr/lib/firewalld/services/snmptls-trap.xml:<port protocol="udp" port="10162"/>
+/usr/lib/firewalld/services/snmptls.xml:<port port="10161" protocol="tcp"/>
+/usr/lib/firewalld/services/snmptls.xml:<port port="10161" protocol="udp"/>
+/usr/lib/firewalld/services/snmptrap.xml:<port protocol="tcp" port="162"/>
+/usr/lib/firewalld/services/snmptrap.xml:<port protocol="udp" port="162"/>
+/usr/lib/firewalld/services/spideroak-lansync.xml:<port protocol="udp" port="21327"/>
+/usr/lib/firewalld/services/spideroak-lansync.xml:<port protocol="udp" port="21328"/>
+/usr/lib/firewalld/services/spotify-sync.xml:<port port="57621" protocol="udp"/>
+/usr/lib/firewalld/services/spotify-sync.xml:<port port="57621" protocol="tcp"/>
+/usr/lib/firewalld/services/squid.xml:<port protocol="tcp" port="3128"/>
+/usr/lib/firewalld/services/ssdp.xml:<port protocol="udp" port="1900"/>
+/usr/lib/firewalld/services/ssh.xml:<port protocol="tcp" port="22"/>
+/usr/lib/firewalld/services/steam-streaming.xml:<port protocol="tcp" port="27036"/>
+/usr/lib/firewalld/services/steam-streaming.xml:<port protocol="tcp" port="27037"/>
+/usr/lib/firewalld/services/steam-streaming.xml:<port protocol="udp" port="27031-27036"/>
+/usr/lib/firewalld/services/svdrp.xml:<port port="6419" protocol="tcp"/>
+/usr/lib/firewalld/services/svdrp.xml:<port port="6419" protocol="udp"/>
+/usr/lib/firewalld/services/svn.xml:<port port="3690" protocol="tcp"/>
+/usr/lib/firewalld/services/syncthing-gui.xml:<port protocol="tcp" port="8384"/>
+/usr/lib/firewalld/services/syncthing-relay.xml:<port protocol="tcp" port="22067"/>
+/usr/lib/firewalld/services/syncthing-relay.xml:<port protocol="tcp" port="22070"/>
+/usr/lib/firewalld/services/syncthing.xml:<port protocol="tcp" port="22000"/>
+/usr/lib/firewalld/services/syncthing.xml:<port protocol="udp" port="22000"/>
+/usr/lib/firewalld/services/syncthing.xml:<port protocol="udp" port="21027"/>
+/usr/lib/firewalld/services/synergy.xml:<port protocol="tcp" port="24800"/>
+/usr/lib/firewalld/services/syslog-tls.xml:<port protocol="tcp" port="6514"/>
+/usr/lib/firewalld/services/syslog-tls.xml:<port protocol="udp" port="6514"/>
+/usr/lib/firewalld/services/syslog.xml:<port protocol="udp" port="514"/>
+/usr/lib/firewalld/services/telnet.xml:<port port="23" protocol="tcp"/>
+/usr/lib/firewalld/services/tentacle.xml:<port protocol="tcp" port="41121"/>
+/usr/lib/firewalld/services/tftp.xml:<port protocol="udp" port="69"/>
+/usr/lib/firewalld/services/tile38.xml:<port protocol="tcp" port="9851"/>
+/usr/lib/firewalld/services/tinc.xml:<port protocol="tcp" port="655"/>
+/usr/lib/firewalld/services/tinc.xml:<port protocol="udp" port="655"/>
+/usr/lib/firewalld/services/tor-socks.xml:<port protocol="tcp" port="9050"/>
+/usr/lib/firewalld/services/transmission-client.xml:<port protocol="tcp" port="51413"/>
+/usr/lib/firewalld/services/transmission-client.xml:<port protocol="udp" port="51413"/>
+/usr/lib/firewalld/services/vdsm.xml:<port protocol="tcp" port="54321"/>
+/usr/lib/firewalld/services/vdsm.xml:<port protocol="tcp" port="5900-6923"/>
+/usr/lib/firewalld/services/vdsm.xml:<port protocol="tcp" port="49152-49216"/>
+/usr/lib/firewalld/services/vnc-server.xml:<port protocol="tcp" port="5900-5903"/>
+/usr/lib/firewalld/services/warpinator.xml:<port protocol="tcp" port="42000"/>
+/usr/lib/firewalld/services/warpinator.xml:<port protocol="udp" port="42000"/>
+/usr/lib/firewalld/services/warpinator.xml:<port protocol="tcp" port="42001"/>
+/usr/lib/firewalld/services/wbem-http.xml:<port protocol="tcp" port="5988"/>
+/usr/lib/firewalld/services/wbem-https.xml:<port protocol="tcp" port="5989"/>
+/usr/lib/firewalld/services/wireguard.xml:<port protocol="udp" port="51820"/>
+/usr/lib/firewalld/services/ws-discovery-tcp.xml:<port protocol="tcp" port="3702"/>
+/usr/lib/firewalld/services/ws-discovery-udp.xml:<port protocol="udp" port="3702"/>
+/usr/lib/firewalld/services/ws-discovery.xml:<include service="ws-discovery-tcp"/>
+/usr/lib/firewalld/services/ws-discovery.xml:<include service="ws-discovery-udp"/>
+/usr/lib/firewalld/services/wsman.xml:<port port="5985" protocol="tcp"/>
+/usr/lib/firewalld/services/wsmans.xml:<port port="5986" protocol="tcp"/>
+/usr/lib/firewalld/services/xdmcp.xml:<port port="177" protocol="tcp"/>
+/usr/lib/firewalld/services/xdmcp.xml:<port port="177" protocol="udp"/>
+/usr/lib/firewalld/services/xmpp-bosh.xml:<port protocol="tcp" port="5280"/>
+/usr/lib/firewalld/services/xmpp-client.xml:<port protocol="tcp" port="5222"/>
+/usr/lib/firewalld/services/xmpp-local.xml:<port protocol="tcp" port="5298"/>
+/usr/lib/firewalld/services/xmpp-server.xml:<port protocol="tcp" port="5269"/>
+/usr/lib/firewalld/services/zabbix-agent.xml:<port protocol="tcp" port="10050"/>
+/usr/lib/firewalld/services/zabbix-server.xml:<port protocol="tcp" port="10051"/>
+/usr/lib/firewalld/services/zerotier.xml:<port protocol="udp" port="9993" />
+/etc/firewalld/services/myapp.xml:<port protocol="tcp" port="9000"/>
+/etc/firewalld/services/myapp.xml:<port protocol="udp" port="9001-9002"/>
+SrvBoxFwd.ServiceNames
+RH-Satellite-6-capsule.xml
+RH-Satellite-6.xml
+afp.xml
+amanda-client.xml
+amanda-k5-client.xml
+amqp.xml
+amqps.xml
+apcupsd.xml
+audit.xml
+ausweisapp2.xml
+bacula-client.xml
+bacula.xml
+bareos-director.xml
+bareos-filedaemon.xml
+bareos-storage.xml
+bb.xml
+bgp.xml
+bitcoin-rpc.xml
+bitcoin-testnet-rpc.xml
+bitcoin-testnet.xml
+bitcoin.xml
+bittorrent-lsd.xml
+ceph-exporter.xml
+ceph-mon.xml
+ceph.xml
+cfengine.xml
+checkmk-agent.xml
+cockpit.xml
+collectd.xml
+condor-collector.xml
+cratedb.xml
+ctdb.xml
+dds-multicast.xml
+dds-unicast.xml
+dds.xml
+dhcp.xml
+dhcpv6-client.xml
+dhcpv6.xml
+distcc.xml
+dns-over-tls.xml
+dns.xml
+docker-registry.xml
+docker-swarm.xml
+dropbox-lansync.xml
+elasticsearch.xml
+etcd-client.xml
+etcd-server.xml
+finger.xml
+foreman-proxy.xml
+foreman.xml
+freeipa-4.xml
+freeipa-ldap.xml
+freeipa-ldaps.xml
+freeipa-replication.xml
+freeipa-trust.xml
+ftp.xml
+galera.xml
+ganglia-client.xml
+ganglia-master.xml
+git.xml
+gpsd.xml
+grafana.xml
+gre.xml
+high-availability.xml
+http.xml
+http3.xml
+https.xml
+ident.xml
+imap.xml
+imaps.xml
+iperf2.xml
+iperf3.xml
+ipfs.xml
+ipp-client.xml
+ipp.xml
+ipsec.xml
+irc.xml
+ircs.xml
+iscsi-target.xml
+isns.xml
+jenkins.xml
+kadmin.xml
+kdeconnect.xml
+kerberos.xml
+kibana.xml
+klogin.xml
+kpasswd.xml
+kprop.xml
+kshell.xml
+kube-api.xml
+kube-apiserver.xml
+kube-control-plane-secure.xml
+kube-control-plane.xml
+kube-controller-manager-secure.xml
+kube-controller-manager.xml
+kube-nodeport-services.xml
+kube-scheduler-secure.xml
+kube-scheduler.xml
+kube-worker.xml
+kubelet-readonly.xml
+kubelet-worker.xml
+kubelet.xml
+ldap.xml
+ldaps.xml
+libvirt-tls.xml
+libvirt.xml
+lightning-network.xml
+llmnr-client.xml
+llmnr-tcp.xml
+llmnr-udp.xml
+llmnr.xml
+managesieve.xml
+matrix.xml
+mdns.xml
+memcache.xml
+minidlna.xml
+mongodb.xml
+mosh.xml
+mountd.xml
+mqtt-tls.xml
+mqtt.xml
+ms-wbt.xml
+mssql.xml
+murmur.xml
+mysql.xml
+nbd.xml
+nebula.xml
+netbios-ns.xml
+netdata-dashboard.xml
+nfs.xml
+nfs3.xml
+nmea-0183.xml
+nrpe.xml
+ntp.xml
+nut.xml
+opentelemetry.xml
+openvpn.xml
+ovirt-imageio.xml
+ovirt-storageconsole.xml
+ovirt-vmconsole.xml
+plex.xml
+pmcd.xml
+pmproxy.xml
+pmwebapi.xml
+pmwebapis.xml
+pop3.xml
+pop3s.xml
+postgresql.xml
+privoxy.xml
+prometheus-node-exporter.xml
+prometheus.xml
+proxy-dhcp.xml
+ps2link.xml
+ps3netsrv.xml
+ptp.xml
+pulseaudio.xml
+puppetmaster.xml
+quassel.xml
+radius.xml
+rdp.xml
+redis-sentinel.xml
+redis.xml
+rootd.xml
+rpc-bind.xml
+rquotad.xml
+rsh.xml
+rsyncd.xml
+rtsp.xml
+salt-master.xml
+samba-client.xml
+samba-dc.xml
+samba.xml
+sane.xml
+sip.xml
+sips.xml
+slp.xml
+smtp-submission.xml
+smtp.xml
+smtps.xml
+snmp.xml
+snmptls-trap.xml
+snmptls.xml
+snmptrap.xml
+spideroak-lansync.xml
+spotify-sync.xml
+squid.xml
+ssdp.xml
+ssh.xml
+steam-streaming.xml
+svdrp.xml
+svn.xml
+syncthing-gui.xml
+syncthing-relay.xml
+syncthing.xml
+synergy.xml
+syslog-tls.xml
+syslog.xml
+telnet.xml
+tentacle.xml
+tftp.xml
+tile38.xml
+tinc.xml
+tor-socks.xml
+transmission-client.xml
+upnp-client.xml
+vdsm.xml
+vnc-server.xml
+warpinator.xml
+wbem-http.xml
+wbem-https.xml
+wireguard.xml
+ws-discovery-client.xml
+ws-discovery-tcp.xml
+ws-discovery-udp.xml
+ws-discovery.xml
+wsman.xml
+wsmans.xml
+xdmcp.xml
+xmpp-bosh.xml
+xmpp-client.xml
+xmpp-local.xml
+xmpp-server.xml
+zabbix-agent.xml
+zabbix-server.xml
+zerotier.xml
+myapp.xml

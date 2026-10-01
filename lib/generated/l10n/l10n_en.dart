@@ -5136,15 +5136,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get firewallLinuxOnly =>
-      'Firewall management supports Linux servers with ufw.';
-
-  @override
-  String get firewallUfwMissing =>
-      'ufw is not installed on this server. Install it with the system\'s package manager, for example `apt install ufw`.';
+      'Firewall management supports Linux servers with ufw or firewalld.';
 
   @override
   String get firewallNeedsRoot =>
-      'Reading ufw\'s rules needs root. Enter the sudo password to continue.';
+      'Reading the firewall\'s rules needs root. Enter the sudo password to continue.';
 
   @override
   String get firewallIncoming => 'Incoming';
@@ -5204,16 +5200,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'IPv6 is off (IPV6=no): v6 rules are not loaded.';
 
   @override
-  String firewallLockoutFmt(String ports) {
-    return 'No rule lets TCP in to port $ports, which this app connects to. While incoming traffic is not allowed by default, new connections to it will be refused.';
-  }
-
-  @override
-  String firewallAllowFirstFmt(String ports) {
-    return 'Allow TCP port $ports first';
-  }
-
-  @override
   String get firewallReload => 'Reload';
 
   @override
@@ -5257,4 +5243,110 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get firewallMoreOptions => 'More options';
+
+  @override
+  String get firewallNoneInstalled =>
+      'Neither ufw nor firewalld is installed on this server. Install one with the system\'s package manager, for example `apt install ufw` or `dnf install firewalld`.';
+
+  @override
+  String get firewallKeepAccess => 'Keep this app\'s ports open first';
+
+  @override
+  String firewallWillRefuseFmt(String access) {
+    return '$access: new connections from this app will be refused. The connection in use stays up until it drops.';
+  }
+
+  @override
+  String firewallMayRefuseFmt(String access) {
+    return '$access: new connections from this app may be refused. It depends on the address or interface they arrive by, which this app cannot tell.';
+  }
+
+  @override
+  String firewallRateLimitedFmt(String access) {
+    return '$access: connections will be rate-limited. An address that opens 6 or more within 30 seconds is refused, and this app may reconnect that often.';
+  }
+
+  @override
+  String get firewallConflict =>
+      'Both ufw and firewalld are on. Each writes the kernel\'s rules, and whichever loaded last decides what gets through.';
+
+  @override
+  String get firewallDefaultZone => 'Default zone';
+
+  @override
+  String get firewallZone => 'Zone';
+
+  @override
+  String get firewallTarget => 'Target';
+
+  @override
+  String get firewallMasquerade => 'Masquerade';
+
+  @override
+  String get firewallServices => 'Services';
+
+  @override
+  String get firewallPorts => 'Ports';
+
+  @override
+  String get firewallSources => 'Sources';
+
+  @override
+  String get firewallInterfaces => 'Interfaces';
+
+  @override
+  String get firewallRichRules => 'Rich rules';
+
+  @override
+  String get firewallForwardPorts => 'Forwarded ports';
+
+  @override
+  String get firewallRuntimeOnly => 'runtime only';
+
+  @override
+  String get firewallPermanentOnly => 'permanent only';
+
+  @override
+  String get firewallThisConnection => 'this connection';
+
+  @override
+  String get firewallDefaultTag => 'default';
+
+  @override
+  String get firewallDrift =>
+      'What is in force differs from what is saved. A reload or a reboot replaces it with the saved configuration.';
+
+  @override
+  String firewallDriftLockoutFmt(String access) {
+    return 'After a reload or a reboot, $access will be refused: the saved configuration does not let it in.';
+  }
+
+  @override
+  String get firewallSaveRuntime => 'Save as permanent';
+
+  @override
+  String get firewallReloadLoses =>
+      'Changes not saved as permanent will be lost.';
+
+  @override
+  String get firewallPanic => 'Panic mode is on: every packet is dropped.';
+
+  @override
+  String get firewallPanicOff => 'Turn off panic mode';
+
+  @override
+  String get firewallStoppedNote =>
+      'firewalld is stopped. Changes are saved, and take effect when it starts.';
+
+  @override
+  String get firewallInvalidSource =>
+      'Invalid source. Use an address, a network such as 192.168.1.0/24, ipset:NAME or a MAC address.';
+
+  @override
+  String get firewallInvalidRichRule =>
+      'A rich rule starts with \"rule\" and fits on one line.';
+
+  @override
+  String get firewallInvalidForwardPort =>
+      'Use port=80:proto=tcp:toport=8080, with toport, toaddr or both.';
 }

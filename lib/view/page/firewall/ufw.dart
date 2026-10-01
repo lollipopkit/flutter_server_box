@@ -1,18 +1,4 @@
-import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:material_ui/material_ui.dart';
-import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/route.dart';
-import 'package:server_box/core/utils/privileged_exec.dart';
-import 'package:server_box/core/utils/sudo_password.dart';
-import 'package:server_box/data/model/server/firewall.dart';
-import 'package:server_box/data/model/server/server_exec.dart';
-import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/model/server/system.dart';
-import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/data/service/ufw_manager.dart';
-
-enum _Issue { unsupported, missing, needsRoot }
+part of 'firewall.dart';
 
 enum _Target { port, app }
 
@@ -38,54 +24,49 @@ enum _Protocol {
   String? get value => this == any ? null : name;
 }
 
-/// A server's ufw: whether it is on, what it does by default, and its rules.
-final class FirewallPage extends ConsumerStatefulWidget {
-  const FirewallPage({super.key, required this.args});
+/// ufw: whether it is on, what it does by default, and its rules.
+final class _UfwView extends ConsumerStatefulWidget {
+  const _UfwView({super.key, required this.host});
 
-  final SpiRequiredArgs args;
-
-  static const route = AppRouteArg<void, SpiRequiredArgs>(
-    page: FirewallPage.new,
-    path: '/firewall',
-  );
+  final _FirewallHost host;
 
   @override
-  ConsumerState<FirewallPage> createState() => _FirewallPageState();
+  ConsumerState<_UfwView> createState() => _UfwViewState();
 }
 
-final class _FirewallPageState extends ConsumerState<FirewallPage> {
-  late final _provider = serverProvider(widget.args.spi.id);
-
+final class _UfwViewState extends ConsumerState<_UfwView>
+    with _FirewallView<_UfwView> {
   UfwSnapshot? _snapshot;
-  bool _busy = false;
 
-  /// Whether commands already run as root, as the probe found.
-  bool _root = false;
-  _Issue? _issue;
-  String? _failure;
+  @override
+  _FirewallHost get host => widget.host;
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(_refresh);
+    Future.microtask(refresh);
   }
 
-  void _rebuild(VoidCallback update) => setState(update);
+  @override
+  Future<void> refresh() async {
+    final snapshot = await read(UfwManager.readScript, UfwManager.parse);
+    if (snapshot != null && mounted) setState(() => _snapshot = snapshot);
+  }
 
   @override
   Widget build(BuildContext context) {
     final snapshot = _snapshot;
-    final ready = snapshot != null && _issue == null && _failure == null;
+    final ready = snapshot != null && !needsRoot && failure == null;
     return Scaffold(
       appBar: CustomAppBar(
-        title: TwoLineText(up: l10n.firewall, down: widget.args.spi.name),
+        title: TwoLineText(up: l10n.firewall, down: host.spi.name),
         actions: _buildActions(ready ? snapshot : null),
       ),
-      body: RefreshIndicator(onRefresh: _refresh, child: _buildBody()),
+      body: RefreshIndicator(onRefresh: refresh, child: _buildBody()),
       floatingActionButton: ready
           ? FloatingActionButton(
               tooltip: l10n.firewallAddRule,
-              onPressed: _busy ? null : () => _addRule(snapshot),
+              onPressed: busy ? null : () => _addRule(snapshot),
               child: const Icon(Icons.add),
             )
           : null,
@@ -95,23 +76,24 @@ final class _FirewallPageState extends ConsumerState<FirewallPage> {
 
 // --- Widget builders ---
 
-extension on _FirewallPageState {
+extension on _UfwViewState {
   List<Widget> _buildActions(UfwSnapshot? snapshot) {
     return [
+      ...switchAction(FirewallKind.ufw),
       if (isDesktop)
         Btn.icon(
           text: libL10n.refresh,
           icon: const Icon(Icons.refresh, size: 18),
-          onTap: _busy ? null : _refresh,
+          onTap: busy ? null : refresh,
         ),
       ContextMenuButton(
         tooltip: libL10n.more,
-        enabled: snapshot?.active == true && !_busy,
+        enabled: snapshot?.active == true && !busy,
         actions: () => [
           ContextMenuAction(
             text: l10n.firewallReload,
             icon: Icons.sync,
-            onTap: () => _run([UfwManager.reloadCommand]),
+            onTap: () => run([UfwManager.reloadCommand]),
           ),
         ],
       ),
@@ -119,89 +101,24 @@ extension on _FirewallPageState {
   }
 
   Widget _buildBody() {
-    switch (_issue) {
-      case _Issue.unsupported:
-        return _issueBody(
-          title: libL10n.unsupported,
-          explain: l10n.firewallLinuxOnly,
-          icon: Icons.not_interested,
-        );
-      case _Issue.missing:
-        return _issueBody(
-          title: libL10n.unsupported,
-          explain: l10n.firewallUfwMissing,
-          icon: Icons.shield_outlined,
-        );
-      case _Issue.needsRoot:
-        return _issueBody(
-          title: libL10n.fail,
-          explain: l10n.firewallNeedsRoot,
-          icon: Icons.lock_outline,
-        );
-      case null:
-    }
-    if (_failure case final failure?) {
-      return _issueBody(
-        title: libL10n.fail,
-        detail: failure,
-        icon: Icons.error_outline,
-      );
-    }
+    if (issue() case final issue?) return issue;
     final snapshot = _snapshot;
-    if (snapshot == null) {
-      return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: const [SizedBox(height: 280, child: UIs.centerLoading)],
-      );
-    }
+    if (snapshot == null) return loading();
 
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
-        if (_busy)
+        if (busy)
           const SliverToBoxAdapter(child: LinearProgressIndicator(minHeight: 2))
         else
           const SliverToBoxAdapter(child: SizedBox(height: 2)),
+        if (conflictBanner(FirewallKind.ufw, on: snapshot.active == true)
+            case final banner?)
+          SliverToBoxAdapter(child: banner),
         SliverToBoxAdapter(child: _buildStatusCard(snapshot)),
         _buildRulesCard(snapshot),
         const SliverToBoxAdapter(child: SizedBox(height: 90)),
       ],
-    );
-  }
-
-  Widget _issueBody({
-    required String title,
-    required IconData icon,
-    String? explain,
-    String? detail,
-  }) {
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      children: [
-        SizedBox(
-          height: MediaQuery.sizeOf(context).height * 0.65,
-          child: PageIssueView(
-            title: title,
-            explain: explain,
-            detail: detail,
-            icon: icon,
-            onRetry: _refresh,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _card(Widget child) {
-    final theme = Theme.of(context);
-    return Container(
-      margin: const EdgeInsets.fromLTRB(13, 8, 13, 2),
-      decoration: BoxDecoration(
-        color: theme.cardTheme.color ?? theme.colorScheme.surfaceContainerLow,
-        borderRadius: const BorderRadius.all(Radius.circular(13)),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: child,
     );
   }
 
@@ -213,7 +130,7 @@ extension on _FirewallPageState {
       false => libL10n.inactive,
       null => snapshot.statusLine ?? libL10n.unknown,
     };
-    return _card(
+    return card(
       Column(
         children: [
           Padding(
@@ -243,7 +160,7 @@ extension on _FirewallPageState {
                 ),
                 Switch(
                   value: active == true,
-                  onChanged: _busy || active == null
+                  onChanged: busy || active == null
                       ? null
                       : (on) => _setEnabled(snapshot, on),
                 ),
@@ -251,7 +168,7 @@ extension on _FirewallPageState {
             ),
           ),
           if (!snapshot.ipv6)
-            _row(
+            row(
               Text(l10n.firewallIpv6Off, style: UIs.text12Grey),
               null,
             ),
@@ -269,11 +186,11 @@ extension on _FirewallPageState {
             (UfwChain.outgoing, l10n.firewallOutgoing),
             (UfwChain.routed, l10n.firewallRouted),
           ])
-            _row(
+            row(
               Text(label),
               ContextMenuButton(
                 tooltip: label,
-                enabled: !_busy,
+                enabled: !busy,
                 actions: () => [
                   for (final policy in UfwPolicy.values)
                     ContextMenuAction(
@@ -287,17 +204,17 @@ extension on _FirewallPageState {
                 ),
               ),
             ),
-          _row(
+          row(
             Text(l10n.firewallLogging),
             ContextMenuButton(
               tooltip: l10n.firewallLogging,
-              enabled: !_busy,
+              enabled: !busy,
               actions: () => [
                 for (final level in UfwLogLevel.values)
                   ContextMenuAction(
                     text: level.name,
                     checked: snapshot.logLevel == level,
-                    onTap: () => _run([UfwManager.loggingCommand(level)]),
+                    onTap: () => run([UfwManager.loggingCommand(level)]),
                   ),
               ],
               child: ContextMenuButton.value(
@@ -306,22 +223,6 @@ extension on _FirewallPageState {
             ),
             last: true,
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _row(Widget title, Widget? trailing, {bool last = false}) {
-    return Container(
-      constraints: const BoxConstraints(minHeight: 40),
-      padding: const EdgeInsets.fromLTRB(13, 4, 7, 4),
-      decoration: BoxDecoration(
-        border: last ? null : Border(bottom: BorderSide(color: _hairline)),
-      ),
-      child: Row(
-        children: [
-          Expanded(child: title),
-          ?trailing,
         ],
       ),
     );
@@ -396,7 +297,7 @@ extension on _FirewallPageState {
     return Container(
       key: ValueKey('ufw-rule:${rule.tuples.first}'),
       decoration: BoxDecoration(
-        border: last ? null : Border(bottom: BorderSide(color: _hairline)),
+        border: last ? null : Border(bottom: BorderSide(color: hairline)),
       ),
       padding: const EdgeInsets.fromLTRB(13, 9, 4, 9),
       child: Row(
@@ -406,7 +307,7 @@ extension on _FirewallPageState {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _tag(
+                tag(
                   rule.action.name,
                   rule.action.color,
                   rule.action.color.withValues(alpha: 0.13),
@@ -431,7 +332,7 @@ extension on _FirewallPageState {
                       style: const TextStyle(fontWeight: FontWeight.w500),
                     ),
                     if (rule.log case final log?)
-                      _tag(
+                      tag(
                         log.token,
                         scheme.onSurfaceVariant,
                         scheme.surfaceContainerHighest,
@@ -439,7 +340,7 @@ extension on _FirewallPageState {
                   ],
                 ),
                 const SizedBox(height: 2),
-                Text(details.join(' · '), style: _monoStyle),
+                Text(details.join(' · '), style: monoStyle),
                 if (rule.comment case final comment?) ...[
                   const SizedBox(height: 2),
                   Text(comment, style: UIs.text12Grey),
@@ -449,7 +350,7 @@ extension on _FirewallPageState {
           ),
           ContextMenuButton(
             tooltip: libL10n.more,
-            enabled: !_busy,
+            enabled: !busy,
             actions: () => [
               ContextMenuAction(
                 text: libL10n.delete,
@@ -463,31 +364,11 @@ extension on _FirewallPageState {
       ),
     );
   }
-
-  Widget _tag(String text, Color foreground, Color background) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(7),
-      ),
-      child: Text(text, style: TextStyle(fontSize: 11, color: foreground)),
-    );
-  }
-
-  TextStyle get _monoStyle => TextStyle(
-    fontFamily: 'monospace',
-    fontSize: 11,
-    color: UIs.textGrey.color,
-  );
-
-  Color get _hairline =>
-      Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.35);
 }
 
 // --- Utils ---
 
-extension on _FirewallPageState {
+extension on _UfwViewState {
   /// `22/tcp`, `10.0.0.1 99/udp`, `My App`, as `ufw status` writes them.
   String _endpointText(UfwEndpoint endpoint, String? protocol) {
     final parts = [
@@ -495,18 +376,6 @@ extension on _FirewallPageState {
       ?(endpoint.app ?? UfwRule.portSpec(endpoint.port, protocol)),
     ];
     return parts.isEmpty ? l10n.firewallAnywhere : parts.join(' ');
-  }
-
-  /// The TCP ports this app reaches the server on, which a firewall change
-  /// could shut it out of. None for this device.
-  List<int> get _accessPorts {
-    final spi = widget.args.spi;
-    return {
-      if (spi.sshOn case final ssh?) ssh.port,
-      if (spi.monitorOn case final monitor?)
-        if (Uri.tryParse(monitor.addr) case final uri? when uri.hasAuthority)
-          uri.port,
-    }.toList();
   }
 
   String _issueText(UfwDraftIssue issue) => switch (issue) {
@@ -519,117 +388,32 @@ extension on _FirewallPageState {
     UfwDraftIssue.invalidInterface => l10n.firewallInvalidInterface,
     UfwDraftIssue.invalidComment => l10n.firewallInvalidComment,
   };
+
+  /// Rules that let each of [accesses] in, put before every other rule.
+  List<String> _keepOpen(List<FirewallAccess> accesses) => [
+    for (final port in {for (final a in accesses) a.port})
+      UfwManager.allowTcpCommand(port),
+  ];
 }
 
 // --- Actions ---
 
-extension on _FirewallPageState {
-  Future<void> _refresh() async {
-    if (!mounted || _busy) return;
-    if (ref.read(_provider).status.system != SystemType.linux) {
-      _rebuild(() {
-        _issue = _Issue.unsupported;
-        _failure = null;
-        _snapshot = null;
-      });
-      return;
-    }
-
-    _rebuild(() {
-      _busy = true;
-      _issue = null;
-      _failure = null;
-    });
-    try {
-      final exec = await ref.read(_provider.notifier).ensureExec();
-      final probe = await UfwManager.probe(exec);
-      if (!mounted) return;
-      if (!probe.installed) {
-        _rebuild(() {
-          _issue = _Issue.missing;
-          _snapshot = null;
-        });
-        return;
-      }
-      _root = probe.root;
-      final result = await _privileged(exec, UfwManager.readScript);
-      if (!mounted) return;
-      if (result == null) {
-        _rebuild(() => _issue = _Issue.needsRoot);
-        return;
-      }
-      if (!result.succeeded) {
-        final detail = result.combined.trim();
-        _rebuild(() => _failure = detail.isEmpty ? libL10n.fail : detail);
-        return;
-      }
-      final snapshot = UfwManager.parse(result.stdout);
-      if (mounted) _rebuild(() => _snapshot = snapshot);
-    } catch (e, s) {
-      Loggers.app.warning('Read ufw on ${widget.args.spi.id}', e, s);
-      if (mounted) _rebuild(() => _failure = '$e');
-    } finally {
-      if (mounted) _rebuild(() => _busy = false);
-    }
-  }
-
-  /// [script] as root, asking for the sudo password where it is needed.
-  /// Null when the user declined to give one.
-  Future<ExecResult?> _privileged(ServerExec exec, String script) {
-    return SudoPassword.retry(
-      context,
-      widget.args.spi.id,
-      label: widget.args.spi.ssh?.user,
-      attempt: (password) => PrivilegedExec.run(
-        exec,
-        script,
-        isRoot: password == null && (_root || widget.args.spi.isRoot),
-        password: password,
-      ),
-      rejected: (r) => r.exitCode == kSudoPasswordRejected,
-    );
-  }
-
-  /// Runs [commands] as root, then reads ufw again.
-  Future<bool> _run(List<String> commands) async {
-    if (_busy) return false;
-    _rebuild(() => _busy = true);
-    var ok = false;
-    try {
-      final exec = await ref.read(_provider.notifier).ensureExec();
-      if (!mounted) return false;
-      final result = await _privileged(exec, UfwManager.script(commands));
-      if (result == null) return false;
-      if (!result.succeeded) {
-        if (mounted) {
-          final detail = result.combined.trim();
-          Toast.error(libL10n.fail, body: detail.isEmpty ? null : detail);
-        }
-      } else {
-        ok = true;
-      }
-    } catch (e, s) {
-      Loggers.app.warning('Change ufw on ${widget.args.spi.id}', e, s);
-      if (mounted) Toast.error('$e');
-    } finally {
-      if (mounted) _rebuild(() => _busy = false);
-    }
-    // Read again after a failure too: a script stopped part way through has
-    // still changed what it got to.
-    await _refresh();
-    if (ok && mounted) Toast.success(libL10n.success);
-    return ok;
-  }
-
+extension on _UfwViewState {
   Future<void> _setEnabled(UfwSnapshot snapshot, bool on) async {
-    final commands = await _confirm(
+    final commands = await confirm(
       commands: [on ? UfwManager.enableCommand : UfwManager.disableCommand],
       // Turned off, the server takes everything; turned on, it may stop
       // taking this app.
       destructive: true,
-      unreachable: on ? snapshot.unreachable(_accessPorts) : const [],
+      effects: on
+          ? effects(
+              (a) => snapshot.reach(a, active: false),
+              (a) => snapshot.reach(a, active: true),
+            )
+          : const [],
+      keepOpen: _keepOpen,
     );
-    if (commands != null) await _run(commands);
+    if (commands != null) await run(commands);
   }
 
   Future<void> _setPolicy(
@@ -638,97 +422,67 @@ extension on _FirewallPageState {
     UfwPolicy policy,
   ) async {
     if (snapshot.policies[chain] == policy) return;
-    final commands = await _confirm(
+    final commands = await confirm(
       commands: [UfwManager.policyCommand(chain, policy)],
       destructive: policy != UfwPolicy.allow,
-      unreachable: snapshot.active == true && chain == UfwChain.incoming
-          ? snapshot.unreachable(_accessPorts, incoming: policy)
+      effects: chain == UfwChain.incoming
+          ? effects(snapshot.reach, (a) => snapshot.reach(a, incoming: policy))
           : const [],
+      keepOpen: _keepOpen,
     );
-    if (commands != null) await _run(commands);
+    if (commands != null) await run(commands);
   }
 
   Future<void> _deleteRule(UfwSnapshot snapshot, UfwRule rule) async {
-    final before = snapshot.unreachable(_accessPorts);
-    final after = snapshot.unreachable(
-      _accessPorts,
-      rules: [...snapshot.rules]..remove(rule),
-    );
-    final commands = await _confirm(
+    final commands = await confirm(
       message: libL10n.delFmt(
         l10n.firewallRule,
         '${rule.action.name} ${_endpointText(rule.to, rule.protocol)}',
       ),
       commands: UfwManager.deleteCommands(rule),
       destructive: true,
-      unreachable: snapshot.active == true
-          ? after.where((port) => !before.contains(port)).toList()
-          : const [],
-    );
-    if (commands != null) await _run(commands);
-  }
-
-  /// Asks before [commands] run, showing them unless there is a [message]
-  /// to say instead. Answers what to run — [commands], after rules that let
-  /// the [unreachable] ports in where the user kept that box ticked — or null.
-  Future<List<String>?> _confirm({
-    required List<String> commands,
-    String? message,
-    bool destructive = false,
-    List<int> unreachable = const [],
-  }) async {
-    final ports = unreachable.join(', ');
-    var allowFirst = unreachable.isNotEmpty;
-    final sure = await context.showRoundDialog<bool>(
-      title: libL10n.attention,
-      child: StatefulBuilder(
-        builder: (context, setDialogState) => SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (message != null)
-                Text(message)
-              else
-                SimpleMarkdown(data: '```shell\n${commands.join('\n')}\n```'),
-              if (unreachable.isNotEmpty) ...[
-                UIs.height13,
-                Text(
-                  l10n.firewallLockoutFmt(ports),
-                  style: UIs.textRed,
-                ),
-                CheckboxListTile(
-                  value: allowFirst,
-                  title: Text(l10n.firewallAllowFirstFmt(ports)),
-                  contentPadding: EdgeInsets.zero,
-                  onChanged: (value) {
-                    setDialogState(() => allowFirst = value ?? false);
-                  },
-                ),
-              ],
-            ],
-          ),
-        ),
+      effects: effects(
+        snapshot.reach,
+        (a) => snapshot.reach(a, rules: [...snapshot.rules]..remove(rule)),
       ),
-      actions: destructive ? Btnx.cancelRedOk : Btnx.cancelOk,
+      keepOpen: _keepOpen,
     );
-    if (sure != true || !mounted) return null;
-    return [
-      if (allowFirst) ...unreachable.map(UfwManager.allowTcpCommand),
-      ...commands,
-    ];
+    if (commands != null) await run(commands);
   }
 
+  /// Asks only where the rule would shut or narrow a way in: adding one
+  /// that only lets something in needs no second look.
   Future<void> _addRule(UfwSnapshot snapshot) async {
     final draft = await _showEditor(snapshot);
     if (draft == null || !mounted) return;
-    await _run([UfwManager.addCommand(draft)]);
+    final command = UfwManager.addCommand(draft);
+    final changes = effects(
+      snapshot.reach,
+      (a) => snapshot.reach(
+        a,
+        rules: snapshot.withRules(
+          draft.asRules(snapshot.apps),
+          prepend: draft.prepend,
+        ),
+      ),
+    );
+    if (!changes.any((e) => e.after.worseThan(e.before))) {
+      await run([command]);
+      return;
+    }
+    final commands = await confirm(
+      commands: [command],
+      destructive: true,
+      effects: changes,
+      keepOpen: _keepOpen,
+    );
+    if (commands != null) await run(commands);
   }
 }
 
 // --- Editor ---
 
-extension on _FirewallPageState {
+extension on _UfwViewState {
   Widget _dialogRow(String label, Widget trailing) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -748,7 +502,7 @@ extension on _FirewallPageState {
     var flow = _Flow.incoming;
     var protocol = _Protocol.tcp;
     var target = _Target.port;
-    var app = snapshot.apps.firstOrNull;
+    var app = snapshot.apps.firstOrNull?.name;
     UfwLog? log;
     var port = '';
     var sourcePort = '';
@@ -848,7 +602,7 @@ extension on _FirewallPageState {
                           ContextMenuButton(
                             tooltip: l10n.firewallAppProfile,
                             actions: () => [
-                              for (final name in snapshot.apps)
+                              for (final name in snapshot.apps.map((a) => a.name))
                                 ContextMenuAction(
                                   text: name,
                                   checked: name == app,

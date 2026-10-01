@@ -4888,15 +4888,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get firewall => 'ファイアウォール';
 
   @override
-  String get firewallLinuxOnly => 'ファイアウォール管理は ufw を備えた Linux サーバーに対応しています。';
-
-  @override
-  String get firewallUfwMissing =>
-      'このサーバーには ufw がインストールされていません。システムのパッケージマネージャーでインストールしてください（例: `apt install ufw`）。';
+  String get firewallLinuxOnly =>
+      'ファイアウォール管理は ufw または firewalld を備えた Linux サーバーに対応しています。';
 
   @override
   String get firewallNeedsRoot =>
-      'ufw のルールを読み取るには root 権限が必要です。続行するには sudo パスワードを入力してください。';
+      'ファイアウォールのルールを読み取るには root 権限が必要です。続行するには sudo パスワードを入力してください。';
 
   @override
   String get firewallIncoming => '受信';
@@ -4955,16 +4952,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get firewallIpv6Off => 'IPv6 はオフです（IPV6=no）。v6 ルールは読み込まれません。';
 
   @override
-  String firewallLockoutFmt(String ports) {
-    return 'このアプリが接続する TCP ポート $ports への受信を許可するルールがありません。受信がデフォルトで許可されていない間、このポートへの新しい接続は拒否されます。';
-  }
-
-  @override
-  String firewallAllowFirstFmt(String ports) {
-    return '先に TCP ポート $ports を許可する';
-  }
-
-  @override
   String get firewallReload => '再読み込み';
 
   @override
@@ -5005,4 +4992,108 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get firewallMoreOptions => 'その他のオプション';
+
+  @override
+  String get firewallNoneInstalled =>
+      'このサーバーには ufw も firewalld もインストールされていません。システムのパッケージマネージャーでいずれかをインストールしてください（例: `apt install ufw`、`dnf install firewalld`）。';
+
+  @override
+  String get firewallKeepAccess => '先にこのアプリのポートを開いたままにする';
+
+  @override
+  String firewallWillRefuseFmt(String access) {
+    return '$access: このアプリからの新しい接続は拒否されます。使用中の接続は切断されるまで維持されます。';
+  }
+
+  @override
+  String firewallMayRefuseFmt(String access) {
+    return '$access: このアプリからの新しい接続は拒否される可能性があります。接続元のアドレスや受信インターフェースによりますが、アプリからは判別できません。';
+  }
+
+  @override
+  String firewallRateLimitedFmt(String access) {
+    return '$access: 接続にレート制限がかかります。30 秒以内に 6 回以上接続したアドレスは拒否され、このアプリはその頻度で再接続することがあります。';
+  }
+
+  @override
+  String get firewallConflict =>
+      'ufw と firewalld の両方が有効です。どちらもカーネルのルールを書き込み、最後に読み込まれた方が通過可否を決めます。';
+
+  @override
+  String get firewallDefaultZone => 'デフォルト zone';
+
+  @override
+  String get firewallZone => 'Zone';
+
+  @override
+  String get firewallTarget => 'Target';
+
+  @override
+  String get firewallMasquerade => 'Masquerade';
+
+  @override
+  String get firewallServices => 'サービス';
+
+  @override
+  String get firewallPorts => 'ポート';
+
+  @override
+  String get firewallSources => '送信元';
+
+  @override
+  String get firewallInterfaces => 'インターフェース';
+
+  @override
+  String get firewallRichRules => 'Rich rules';
+
+  @override
+  String get firewallForwardPorts => 'ポート転送';
+
+  @override
+  String get firewallRuntimeOnly => 'runtime のみ';
+
+  @override
+  String get firewallPermanentOnly => 'permanent のみ';
+
+  @override
+  String get firewallThisConnection => 'この接続';
+
+  @override
+  String get firewallDefaultTag => 'デフォルト';
+
+  @override
+  String get firewallDrift =>
+      '現在有効な設定が保存済みの設定と異なります。reload または再起動すると保存済みの設定に置き換わります。';
+
+  @override
+  String firewallDriftLockoutFmt(String access) {
+    return 'reload または再起動後、$access は拒否されます。保存済みの設定では許可されていません。';
+  }
+
+  @override
+  String get firewallSaveRuntime => 'permanent として保存';
+
+  @override
+  String get firewallReloadLoses => 'permanent として保存されていない変更は失われます。';
+
+  @override
+  String get firewallPanic => 'panic モードがオンです。すべてのパケットが破棄されます。';
+
+  @override
+  String get firewallPanicOff => 'panic モードをオフにする';
+
+  @override
+  String get firewallStoppedNote => 'firewalld は停止しています。変更は保存され、起動時に有効になります。';
+
+  @override
+  String get firewallInvalidSource =>
+      '無効な送信元です。アドレス、192.168.1.0/24 のようなネットワーク、ipset:名前、または MAC アドレスを入力してください。';
+
+  @override
+  String get firewallInvalidRichRule =>
+      'rich rule は \"rule\" で始まり、1 行で記述する必要があります。';
+
+  @override
+  String get firewallInvalidForwardPort =>
+      'port=80:proto=tcp:toport=8080 の形式で、toport、toaddr、またはその両方を指定してください。';
 }

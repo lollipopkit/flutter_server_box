@@ -28,5 +28,18 @@ SrvBoxUfw.V6
 ### tuple ### allow tcp 8000,8001 ::/0 any ::/0 My%20App - in
 ### tuple ### limit tcp 2222 ::/0 any ::/0 in
 SrvBoxUfw.Apps
-Available applications:
-  My App
+Profile: My App
+Title: x
+Description: y
+
+Ports:
+  8000,8001/tcp
+
+--
+
+Profile: OpenSSH
+Title: Secure shell server, an rshd replacement
+Description: OpenSSH is a free implementation of the Secure Shell protocol.
+
+Port:
+  22/tcp

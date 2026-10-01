@@ -4810,14 +4810,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get firewall => '防火墙';
 
   @override
-  String get firewallLinuxOnly => '防火墙管理支持装有 ufw 的 Linux 服务器。';
+  String get firewallLinuxOnly => '防火墙管理支持装有 ufw 或 firewalld 的 Linux 服务器。';
 
   @override
-  String get firewallUfwMissing =>
-      '此服务器未安装 ufw。可用系统的包管理器安装，例如 `apt install ufw`。';
-
-  @override
-  String get firewallNeedsRoot => '读取 ufw 规则需要 root 权限。请输入 sudo 密码以继续。';
+  String get firewallNeedsRoot => '读取防火墙规则需要 root 权限。请输入 sudo 密码以继续。';
 
   @override
   String get firewallIncoming => '入站';
@@ -4876,16 +4872,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get firewallIpv6Off => 'IPv6 已关闭（IPV6=no），不加载 v6 规则。';
 
   @override
-  String firewallLockoutFmt(String ports) {
-    return '没有规则放行本 App 连接所用的 TCP 端口 $ports。入站默认不放行时，到该端口的新连接会被拒绝。';
-  }
-
-  @override
-  String firewallAllowFirstFmt(String ports) {
-    return '先放行 TCP 端口 $ports';
-  }
-
-  @override
   String get firewallReload => '重新加载';
 
   @override
@@ -4923,6 +4909,108 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get firewallMoreOptions => '更多选项';
+
+  @override
+  String get firewallNoneInstalled =>
+      '此服务器未安装 ufw 或 firewalld。可用系统的包管理器安装其中一个，例如 `apt install ufw` 或 `dnf install firewalld`。';
+
+  @override
+  String get firewallKeepAccess => '先保持本 App 使用的端口开放';
+
+  @override
+  String firewallWillRefuseFmt(String access) {
+    return '$access：本 App 的新连接将被拒绝。当前连接在断开前不受影响。';
+  }
+
+  @override
+  String firewallMayRefuseFmt(String access) {
+    return '$access：本 App 的新连接可能被拒绝，取决于连接来源地址或进入的网络接口，本 App 无法判断。';
+  }
+
+  @override
+  String firewallRateLimitedFmt(String access) {
+    return '$access：连接将被限速。同一地址 30 秒内建立 6 个及以上连接会被拒绝，本 App 可能达到这个频率。';
+  }
+
+  @override
+  String get firewallConflict =>
+      'ufw 和 firewalld 同时开启。两者都会写入内核规则，最后加载的一方决定放行什么。';
+
+  @override
+  String get firewallDefaultZone => '默认 zone';
+
+  @override
+  String get firewallZone => 'Zone';
+
+  @override
+  String get firewallTarget => 'Target';
+
+  @override
+  String get firewallMasquerade => 'Masquerade';
+
+  @override
+  String get firewallServices => '服务';
+
+  @override
+  String get firewallPorts => '端口';
+
+  @override
+  String get firewallSources => '来源';
+
+  @override
+  String get firewallInterfaces => '网络接口';
+
+  @override
+  String get firewallRichRules => 'Rich rules';
+
+  @override
+  String get firewallForwardPorts => '端口转发';
+
+  @override
+  String get firewallRuntimeOnly => '仅 runtime';
+
+  @override
+  String get firewallPermanentOnly => '仅 permanent';
+
+  @override
+  String get firewallThisConnection => '当前连接';
+
+  @override
+  String get firewallDefaultTag => '默认';
+
+  @override
+  String get firewallDrift => '当前生效的配置与已保存的不一致。reload 或重启后将改为已保存的配置。';
+
+  @override
+  String firewallDriftLockoutFmt(String access) {
+    return 'reload 或重启后，$access 将被拒绝：已保存的配置没有放行它。';
+  }
+
+  @override
+  String get firewallSaveRuntime => '保存为 permanent';
+
+  @override
+  String get firewallReloadLoses => '未保存为 permanent 的改动将丢失。';
+
+  @override
+  String get firewallPanic => 'panic 模式已开启：所有数据包都会被丢弃。';
+
+  @override
+  String get firewallPanicOff => '关闭 panic 模式';
+
+  @override
+  String get firewallStoppedNote => 'firewalld 已停止。改动会保存，启动后生效。';
+
+  @override
+  String get firewallInvalidSource =>
+      '来源无效。请填写地址、网段（如 192.168.1.0/24）、ipset:名称 或 MAC 地址。';
+
+  @override
+  String get firewallInvalidRichRule => 'rich rule 必须以 \"rule\" 开头，且只能有一行。';
+
+  @override
+  String get firewallInvalidForwardPort =>
+      '格式为 port=80:proto=tcp:toport=8080，需包含 toport、toaddr 或两者。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -9730,14 +9818,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get firewall => '防火牆';
 
   @override
-  String get firewallLinuxOnly => '防火牆管理支援裝有 ufw 的 Linux 伺服器。';
+  String get firewallLinuxOnly => '防火牆管理支援裝有 ufw 或 firewalld 的 Linux 伺服器。';
 
   @override
-  String get firewallUfwMissing =>
-      '此伺服器未安裝 ufw。可用系統的套件管理員安裝，例如 `apt install ufw`。';
-
-  @override
-  String get firewallNeedsRoot => '讀取 ufw 規則需要 root 權限。請輸入 sudo 密碼以繼續。';
+  String get firewallNeedsRoot => '讀取防火牆規則需要 root 權限。請輸入 sudo 密碼以繼續。';
 
   @override
   String get firewallIncoming => '入站';
@@ -9796,16 +9880,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get firewallIpv6Off => 'IPv6 已關閉（IPV6=no），不載入 v6 規則。';
 
   @override
-  String firewallLockoutFmt(String ports) {
-    return '沒有規則放行本 App 連線所用的 TCP 連接埠 $ports。入站預設不放行時，到該連接埠的新連線會被拒絕。';
-  }
-
-  @override
-  String firewallAllowFirstFmt(String ports) {
-    return '先放行 TCP 連接埠 $ports';
-  }
-
-  @override
   String get firewallReload => '重新載入';
 
   @override
@@ -9843,4 +9917,106 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get firewallMoreOptions => '更多選項';
+
+  @override
+  String get firewallNoneInstalled =>
+      '此伺服器未安裝 ufw 或 firewalld。可用系統的套件管理員安裝其中一個，例如 `apt install ufw` 或 `dnf install firewalld`。';
+
+  @override
+  String get firewallKeepAccess => '先保持本 App 使用的連接埠開放';
+
+  @override
+  String firewallWillRefuseFmt(String access) {
+    return '$access：本 App 的新連線將被拒絕。目前的連線在中斷前不受影響。';
+  }
+
+  @override
+  String firewallMayRefuseFmt(String access) {
+    return '$access：本 App 的新連線可能被拒絕，取決於連線來源位址或進入的網路介面，本 App 無法判斷。';
+  }
+
+  @override
+  String firewallRateLimitedFmt(String access) {
+    return '$access：連線將被限速。同一位址 30 秒內建立 6 個以上連線會被拒絕，本 App 可能達到這個頻率。';
+  }
+
+  @override
+  String get firewallConflict =>
+      'ufw 和 firewalld 同時開啟。兩者都會寫入核心規則，最後載入的一方決定放行什麼。';
+
+  @override
+  String get firewallDefaultZone => '預設 zone';
+
+  @override
+  String get firewallZone => 'Zone';
+
+  @override
+  String get firewallTarget => 'Target';
+
+  @override
+  String get firewallMasquerade => 'Masquerade';
+
+  @override
+  String get firewallServices => '服務';
+
+  @override
+  String get firewallPorts => '連接埠';
+
+  @override
+  String get firewallSources => '來源';
+
+  @override
+  String get firewallInterfaces => '網路介面';
+
+  @override
+  String get firewallRichRules => 'Rich rules';
+
+  @override
+  String get firewallForwardPorts => '連接埠轉送';
+
+  @override
+  String get firewallRuntimeOnly => '僅 runtime';
+
+  @override
+  String get firewallPermanentOnly => '僅 permanent';
+
+  @override
+  String get firewallThisConnection => '目前連線';
+
+  @override
+  String get firewallDefaultTag => '預設';
+
+  @override
+  String get firewallDrift => '目前生效的設定與已儲存的不一致。reload 或重新開機後將改為已儲存的設定。';
+
+  @override
+  String firewallDriftLockoutFmt(String access) {
+    return 'reload 或重新開機後，$access 將被拒絕：已儲存的設定沒有放行它。';
+  }
+
+  @override
+  String get firewallSaveRuntime => '儲存為 permanent';
+
+  @override
+  String get firewallReloadLoses => '未儲存為 permanent 的變更將遺失。';
+
+  @override
+  String get firewallPanic => 'panic 模式已開啟：所有封包都會被丟棄。';
+
+  @override
+  String get firewallPanicOff => '關閉 panic 模式';
+
+  @override
+  String get firewallStoppedNote => 'firewalld 已停止。變更會儲存，啟動後生效。';
+
+  @override
+  String get firewallInvalidSource =>
+      '來源無效。請填寫位址、網段（如 192.168.1.0/24）、ipset:名稱 或 MAC 位址。';
+
+  @override
+  String get firewallInvalidRichRule => 'rich rule 必須以 \"rule\" 開頭，且只能有一行。';
+
+  @override
+  String get firewallInvalidForwardPort =>
+      '格式為 port=80:proto=tcp:toport=8080，需包含 toport、toaddr 或兩者。';
 }

@@ -5169,15 +5169,11 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get firewallLinuxOnly =>
-      'Керування брандмауером підтримує сервери Linux з ufw.';
-
-  @override
-  String get firewallUfwMissing =>
-      'ufw не встановлено на цьому сервері. Встановіть його через менеджер пакетів системи, наприклад `apt install ufw`.';
+      'Керування брандмауером підтримує сервери Linux з ufw або firewalld.';
 
   @override
   String get firewallNeedsRoot =>
-      'Для читання правил ufw потрібні права root. Введіть пароль sudo, щоб продовжити.';
+      'Для читання правил брандмауера потрібні права root. Введіть пароль sudo, щоб продовжити.';
 
   @override
   String get firewallIncoming => 'Вхідний';
@@ -5237,16 +5233,6 @@ class AppLocalizationsUk extends AppLocalizations {
       'IPv6 вимкнено (IPV6=no): правила v6 не завантажуються.';
 
   @override
-  String firewallLockoutFmt(String ports) {
-    return 'Жодне правило не пропускає вхідний TCP на порт $ports, до якого підключається цей застосунок. Доки вхідний трафік за замовчуванням не дозволено, нові підключення до нього буде відхилено.';
-  }
-
-  @override
-  String firewallAllowFirstFmt(String ports) {
-    return 'Спершу дозволити TCP-порт $ports';
-  }
-
-  @override
   String get firewallReload => 'Перезавантажити';
 
   @override
@@ -5291,4 +5277,111 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get firewallMoreOptions => 'Додаткові параметри';
+
+  @override
+  String get firewallNoneInstalled =>
+      'На цьому сервері не встановлено ні ufw, ні firewalld. Встановіть один із них через менеджер пакетів системи, наприклад `apt install ufw` або `dnf install firewalld`.';
+
+  @override
+  String get firewallKeepAccess =>
+      'Спершу залишити порти цього застосунку відкритими';
+
+  @override
+  String firewallWillRefuseFmt(String access) {
+    return '$access: нові підключення цього застосунку буде відхилено. Поточне підключення збережеться, доки не обірветься.';
+  }
+
+  @override
+  String firewallMayRefuseFmt(String access) {
+    return '$access: нові підключення цього застосунку можуть відхилятися. Це залежить від адреси чи інтерфейсу, через який вони надходять, а застосунок не може цього визначити.';
+  }
+
+  @override
+  String firewallRateLimitedFmt(String access) {
+    return '$access: підключення буде обмежено за частотою. Адресу, що відкриває 6 і більше підключень за 30 секунд, буде відхилено, а цей застосунок може перепідключатися так часто.';
+  }
+
+  @override
+  String get firewallConflict =>
+      'ufw і firewalld увімкнено одночасно. Обидва записують правила ядра, і вирішує той, що завантажився останнім.';
+
+  @override
+  String get firewallDefaultZone => 'Зона за замовчуванням';
+
+  @override
+  String get firewallZone => 'Зона';
+
+  @override
+  String get firewallTarget => 'Target';
+
+  @override
+  String get firewallMasquerade => 'Masquerade';
+
+  @override
+  String get firewallServices => 'Служби';
+
+  @override
+  String get firewallPorts => 'Порти';
+
+  @override
+  String get firewallSources => 'Джерела';
+
+  @override
+  String get firewallInterfaces => 'Інтерфейси';
+
+  @override
+  String get firewallRichRules => 'Rich rules';
+
+  @override
+  String get firewallForwardPorts => 'Перенаправлені порти';
+
+  @override
+  String get firewallRuntimeOnly => 'лише runtime';
+
+  @override
+  String get firewallPermanentOnly => 'лише permanent';
+
+  @override
+  String get firewallThisConnection => 'це підключення';
+
+  @override
+  String get firewallDefaultTag => 'за замовчуванням';
+
+  @override
+  String get firewallDrift =>
+      'Чинна конфігурація відрізняється від збереженої. Після reload або перезавантаження діятиме збережена.';
+
+  @override
+  String firewallDriftLockoutFmt(String access) {
+    return 'Після reload або перезавантаження $access буде відхилено: збережена конфігурація його не пропускає.';
+  }
+
+  @override
+  String get firewallSaveRuntime => 'Зберегти як permanent';
+
+  @override
+  String get firewallReloadLoses =>
+      'Зміни, не збережені як permanent, буде втрачено.';
+
+  @override
+  String get firewallPanic => 'Увімкнено режим panic: усі пакети відкидаються.';
+
+  @override
+  String get firewallPanicOff => 'Вимкнути режим panic';
+
+  @override
+  String get firewallStoppedNote =>
+      'firewalld зупинено. Зміни зберігаються й наберуть чинності під час запуску.';
+
+  @override
+  String get firewallInvalidSource =>
+      'Неприпустиме джерело. Використовуйте адресу, мережу на кшталт 192.168.1.0/24, ipset:НАЗВА або MAC-адресу.';
+
+  @override
+  String get firewallInvalidRichRule =>
+      'Rich rule починається з «rule» і займає один рядок.';
+
+  @override
+  String get firewallInvalidForwardPort =>
+      'Використовуйте port=80:proto=tcp:toport=8080, з toport, toaddr або обома.';
 }
