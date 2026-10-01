@@ -434,7 +434,9 @@
         </div>
         <div class="flex justify-end gap-2">
           <Button variant="secondary" onclick={() => (target = undefined)}>{$LL.cancel()}</Button>
-          <Button disabled={busy} onclick={() => void signal(pending!, true)}>
+          <!-- Without a password the retry is the `sudo -n` the agent
+               already tried, so there is nothing to send until one is typed. -->
+          <Button disabled={busy || !password} onclick={() => void signal(pending!, true)}>
             {$LL.processRetryAsRoot()}
           </Button>
         </div>

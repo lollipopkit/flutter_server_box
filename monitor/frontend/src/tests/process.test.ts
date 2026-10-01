@@ -63,6 +63,8 @@ describe('Process page', () => {
     await fireEvent.click(signalButtons.at(-1)!)
     const password = await screen.findByLabelText('Sudo password')
     expect(screen.queryByText(/refused that password/)).not.toBeInTheDocument()
+    // Nothing to retry with until a password is typed.
+    expect(screen.getByRole('button', { name: /retry as root/i })).toBeDisabled()
 
     signalProcess.mockResolvedValueOnce(answer({ outcome: 'succeeded', exit_code: 0 }))
     await fireEvent.input(password, { target: { value: 'hunter2' } })

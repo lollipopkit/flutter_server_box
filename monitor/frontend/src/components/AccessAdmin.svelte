@@ -140,6 +140,7 @@
     if (g.files) parts.push(`${$LL.grantFiles()} (${g.files.mode === 'read' ? $LL.filesRead() : $LL.filesWrite()})`)
     if (g.connect) parts.push($LL.grantConnect())
     if (g.listen) parts.push($LL.grantListen())
+    if (g.virt) parts.push($LL.grantVirt())
     return parts.length ? parts.join(' · ') : $LL.roleViewOnly()
   }
 

@@ -7,6 +7,8 @@
 //! have in common is who may call them and what is written down when someone
 //! may not: [`gate`] is that, and nothing else in these handlers decides it.
 
+use std::collections::HashMap;
+
 use ntex::http::StatusCode;
 
 use super::exec::{ExecResponse, Limits, run};
@@ -68,19 +70,79 @@ pub(crate) async fn as_self(text: &str, limits: &Limits) -> std::io::Result<Exec
 
 /// Runs POSIX shell text as root through `sudo`.
 ///
-/// With a password, it is the first line of the same pipe and `sudo -S -p ''`
-/// consumes exactly that line before the script begins — on a command line it
-/// would sit in `/proc/<pid>/cmdline` for every account to read. Without one,
-/// `sudo -n`: otherwise sudo reads the script as the password it is waiting
-/// for, and the command silently never runs.
+/// The script never shares a stream with the password. It reaches the root
+/// shell as `sh -c "$SBM_ROOT_SCRIPT"`, expanded by the unprivileged shell as
+/// one argument (sudo's `env_reset` would drop the variable itself), and
+/// stdin carries the password line alone. Sharing the pipe would hand that
+/// line to the script whenever sudo does not ask for it — root already, or
+/// `NOPASSWD` — and the shell would run the password as a command and print
+/// it back in its error. The password stays off every command line; the
+/// script, which holds no secret, does not.
+///
+/// Without a password, `sudo -n`: a machine that wants one answers with a
+/// failure that names the reason, rather than waiting on a read.
 pub(crate) async fn as_root(
     text: &str,
     password: Option<&str>,
     limits: &Limits,
 ) -> std::io::Result<ExecResponse> {
-    let (entry, stdin) = match password {
-        Some(password) => ("sudo -S -p '' sh", format!("{password}\n{text}")),
-        None => ("sudo -n sh", text.to_owned()),
-    };
-    run(entry, Some(&stdin), None, limits).await
+    let (entry, stdin, env) = root_invocation(text, password);
+    run(entry, stdin.as_deref(), Some(&env), limits).await
+}
+
+/// What [`as_root`] runs: the command, what goes on stdin, and the
+/// environment the script travels in.
+fn root_invocation(
+    text: &str,
+    password: Option<&str>,
+) -> (&'static str, Option<String>, HashMap<String, String>) {
+    let env = HashMap::from([(ROOT_SCRIPT_VAR.to_owned(), text.to_owned())]);
+    match password {
+        Some(password) => (
+            r#"sudo -S -p '' sh -c "$SBM_ROOT_SCRIPT""#,
+            Some(format!("{password}\n")),
+            env,
+        ),
+        None => (r#"sudo -n sh -c "$SBM_ROOT_SCRIPT""#, None, env),
+    }
+}
+
+const ROOT_SCRIPT_VAR: &str = "SBM_ROOT_SCRIPT";
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_password_is_the_only_thing_on_stdin() {
+        let (cmd, stdin, env) = root_invocation("kill -s TERM 42", Some("hunter2"));
+        assert_eq!(stdin.as_deref(), Some("hunter2\n"));
+        assert!(!cmd.contains("hunter2"));
+        assert!(cmd.contains(&format!("\"${ROOT_SCRIPT_VAR}\"")), "{cmd}");
+        assert_eq!(env[ROOT_SCRIPT_VAR], "kill -s TERM 42");
+
+        let (cmd, stdin, env) = root_invocation("kill -s TERM 42", None);
+        assert!(cmd.starts_with("sudo -n "), "{cmd}");
+        assert_eq!(stdin, None);
+        assert_eq!(env[ROOT_SCRIPT_VAR], "kill -s TERM 42");
+    }
+
+    /// The case the separate streams exist for: when sudo does not read the
+    /// password, nothing runs it. `sh -c` stands in for a sudo that let the
+    /// command through without asking.
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn a_password_sudo_did_not_read_is_not_run_by_the_script() {
+        let (_, stdin, env) = root_invocation("echo ran", Some("echo leaked"));
+        let limits = Limits {
+            timeout: std::time::Duration::from_secs(10),
+            max_output_bytes: 4096,
+            max_request_bytes: 4096,
+        };
+        let out = run(r#"sh -c "$SBM_ROOT_SCRIPT""#, stdin.as_deref(), Some(&env), &limits)
+            .await
+            .unwrap();
+        assert_eq!(out.stdout, "ran\n");
+        assert!(!out.stdout.contains("leaked") && !out.stderr.contains("leaked"));
+    }
 }

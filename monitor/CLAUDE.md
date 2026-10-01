@@ -197,8 +197,10 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   the test machine down; `tests/common::machine` is the shared setup.
   Shell text built by `sbm_parser` runs through `machine::as_self` (`sh` with
   the text on stdin, never a command line) and `machine::as_root` (`sudo -S
-  -p ''` with the password as the first stdin line, or `sudo -n` without one,
-  so sudo never reads the script as a password). `/process` (`sbm_parser::proc`,
+  -p '' sh -c "$SBM_ROOT_SCRIPT"` with only the password on stdin, or `sudo
+  -n` without one: the script never shares the password's stream, since a
+  sudo that does not ask — root, `NOPASSWD` — would leave the password line
+  for the script to run as a command). `/process` (`sbm_parser::proc`,
   a port of the app's `proc.dart`/`proc_kill.dart`, locked by
   `tests/proc_compat.rs`): the table is the status script's `SbProcess` read
   with at least 8 MiB of output, kept in `AppState.process_sample` so read and
