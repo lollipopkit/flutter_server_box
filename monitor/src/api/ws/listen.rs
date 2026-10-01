@@ -22,9 +22,11 @@
 //!
 //! # Authority
 //!
-//! `remote_access.full_access`, as for `stream`: anyone who can open a shell
-//! can `ssh -R` from it. Loopback only unless `[remote_access] listen_public`
-//! says otherwise — see [`bind_host`].
+//! The caller's `listen` grant (`core::permissions::ListenGrant`): loopback
+//! only unless it says `public` — see [`bind_host`] — and only on its `ports`
+//! when it names a range. Checked when the ticket is minted, when the socket
+//! opens, when `listen` arrives, and again whenever a role changes while the
+//! port is open.
 
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -42,10 +44,12 @@ use serde::{Deserialize, Serialize};
 use tokio::net::{TcpListener, TcpStream};
 
 use super::audit::{self, Action, Event, Kind, Outcome};
-use super::stream::awaiting_revocation;
+use super::stream::next_change;
 use super::ticket::Purpose;
 use super::upgrade::WsSink;
+use crate::api::authz;
 use crate::api::server::AppState;
+use crate::core::permissions::Grant;
 use crate::utils::secrets::random_hex;
 
 const TICKET_PROTOCOL_PREFIX: &str = "sbm-ticket.";
@@ -250,9 +254,6 @@ pub async fn listen_ws(
 
     // The same admission as `stream`, for the same reasons — see there.
     let secure = super::is_secure_transport(&req, app_state.tls_active);
-    if !app_state.full_access_allowed(secure) {
-        return deny("no full access", HttpResponse::Forbidden().finish()).await;
-    }
     if !super::origin_allowed(&req, &app_state.config.get_server().cors_allowed_origins) {
         return deny("origin", HttpResponse::Unauthorized().finish()).await;
     }
@@ -270,11 +271,20 @@ pub async fn listen_ws(
     let subject = reservation.subject().to_string();
     let tickets = app_state.tickets.clone();
 
+    let admitted = authz::caller_named(&app_state, &subject)
+        .await
+        .filter(|caller| caller.check(Grant::Listen, &app_state, secure).is_ok());
+    let Some(admitted) = admitted else {
+        tickets.rollback(reservation);
+        return deny("not granted", HttpResponse::Forbidden().finish()).await;
+    };
+
     let ctx = Rc::new(ListenCtx {
         state: app_state,
         subject,
         remote_ip,
         secure,
+        since: admitted.since,
     });
 
     let upgraded = super::upgrade::start::<_, _, web::Error>(
@@ -306,6 +316,33 @@ struct ListenCtx {
     subject: String,
     remote_ip: Option<String>,
     secure: bool,
+    /// The account's password as of the upgrade — see `stream::ConnCtx`.
+    since: i64,
+}
+
+impl ListenCtx {
+    /// This socket's account, its role read again — none once its password
+    /// has changed since the upgrade.
+    async fn caller(&self) -> Option<authz::Caller> {
+        authz::caller_named(&self.state, &self.subject)
+            .await
+            .filter(|caller| caller.since == self.since)
+    }
+
+    /// Whether this account may still hold a port bound to [bound], asked for
+    /// as [requested] — its role read again.
+    async fn may_hold(&self, bound: SocketAddr, requested: u16) -> bool {
+        let Some(caller) = self.caller().await else {
+            return false;
+        };
+        if caller.check(Grant::Listen, &self.state, self.secure).is_err() {
+            return false;
+        }
+        let Some(listen) = &caller.grants().listen else {
+            return false;
+        };
+        (listen.public || bound.ip().is_loopback()) && listen.permits_port(requested)
+    }
 }
 
 /// One `listen` per socket, like `stream`'s one `open`: a listener that could
@@ -363,19 +400,35 @@ impl Control {
     async fn listen(&self, host: &str, port: u16) -> Option<Message> {
         let ctx = &self.ctx;
         // Before the check, for the reason `stream::open` gives.
-        let revoked = ctx.state.full_access_revoked.subscribe();
-        if !ctx.state.full_access_allowed(ctx.secure) {
-            self.audit(Action::Denied, Outcome::Denied, "no full access").await;
-            return Some(error_frame("forbidden", "Full access is off"));
-        }
-        let Some(bind) = bind_host(host, ctx.state.remote_access.listen_public) else {
+        let changes = ctx.state.grants_changed.subscribe();
+        let caller = ctx.caller().await;
+        let grant = match &caller {
+            Some(caller) => match caller.check(Grant::Listen, &ctx.state, ctx.secure) {
+                Ok(()) => caller.grants().listen.clone(),
+                Err(_) => None,
+            },
+            None => None,
+        };
+        let Some(grant) = grant else {
+            self.audit(Action::Denied, Outcome::Denied, "not granted").await;
+            return Some(error_frame("forbidden", "This account may not listen"));
+        };
+        let Some(bind) = bind_host(host, grant.public) else {
             self.audit(Action::Denied, Outcome::Denied, &format!("public bind {host}:{port}"))
                 .await;
             return Some(error_frame(
                 "not_permitted",
-                "Only loopback may be listened on; see listen_public",
+                "Only loopback may be listened on; this account's role does not allow public binds",
             ));
         };
+        if !grant.permits_port(port) {
+            self.audit(Action::Denied, Outcome::Denied, &format!("port {port}"))
+                .await;
+            return Some(error_frame(
+                "not_permitted",
+                "This account's role does not allow listening on that port",
+            ));
+        }
         let Some(slot) = ctx.state.pending.open_listener(&ctx.subject) else {
             return Some(error_frame("limit", "Too many listeners are open"));
         };
@@ -405,7 +458,15 @@ impl Control {
             return None;
         }
 
-        spawn(accept_loop(ctx.clone(), self.sink.clone(), listener, slot, revoked, bound));
+        spawn(accept_loop(
+            ctx.clone(),
+            self.sink.clone(),
+            listener,
+            slot,
+            changes,
+            bound,
+            port,
+        ));
         None
     }
 
@@ -414,25 +475,29 @@ impl Control {
     }
 }
 
-/// Accepts until the control socket goes or full access is revoked, then
-/// closes the port and everything of its own still waiting.
+/// Accepts until the control socket goes or the account may no longer hold
+/// the port, then closes it and everything of its own still waiting.
+#[allow(clippy::too_many_arguments)]
 async fn accept_loop(
     ctx: Rc<ListenCtx>,
     sink: WsSink,
     listener: TcpListener,
     slot: Listener,
-    revoked: tokio::sync::broadcast::Receiver<()>,
+    mut changes: tokio::sync::broadcast::Receiver<&'static str>,
     bound: SocketAddr,
+    requested: u16,
 ) {
     let disconnect = sink.on_disconnect();
-    let revocation = awaiting_revocation(revoked);
-    tokio::pin!(disconnect, revocation);
+    tokio::pin!(disconnect);
     loop {
         tokio::select! {
             _ = &mut disconnect => break,
-            _ = &mut revocation => {
+            code = next_change(&mut changes) => {
+                if ctx.may_hold(bound, requested).await {
+                    continue;
+                }
                 let _ = sink
-                    .send(error_frame("full_access_disabled", "Full access has been disabled"))
+                    .send(error_frame(code, "This account may no longer listen on this port"))
                     .await;
                 let _ = sink.send(Message::Close(Some(CloseCode::Normal.into()))).await;
                 break;

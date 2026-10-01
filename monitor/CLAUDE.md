@@ -124,10 +124,38 @@ Monitor-only crate (the app never depends on it — it always collects over SSH 
 
 ### Remote access (`api/ws/`, `ssh/`, `core/remote_access.rs`)
 
-The WebSocket terminal reaches the local sshd. It is **off by default** and
-configured only in `config.toml` (deliberately absent from `PUT /settings`, so
-the panel password can't switch it on); shared admission checks live in
-`api/ws/mod.rs`.
+**Who may use any of this is the caller's role** (issue #1610,
+`docs/dev/monitor-permissions.md` is the contract). Every account has one role
+(`users.role`), a role is a set of grants — `shell`, `ssh_terminal`, `files`
+(read/write), `connect` (an `allow` list), `listen` (`public`, `ports`) — and
+`admin` roles also manage accounts, roles and the agent's configuration.
+`api/authz.rs` is the one place a request becomes a `Caller` (JWT → account →
+role) and `Caller::check(grant, state, secure)` the one question handlers ask;
+nothing reads a switch out of `config.toml` for this any more. A JWT for an
+account that no longer exists is a 401. What stays in `config.toml` is the
+machine side: `ssh_addr`, `fs.roots`, limits, and one `allow_insecure` for
+every grant (TLS or a loopback peer otherwise; the legacy
+`terminal.allow_insecure` / `fs.allow_insecure` still count, each only for
+the grants it used to cover). A password change ends what the old one paid
+for: `users.password_changed_ms` moves on, panel tokens issued before it are
+refused, the account's watch tokens are deleted, and `authz::end_account`
+closes its sessions, tickets, relays and listeners (each socket remembers the
+value it was admitted under). The last-admin rule is part of the delete /
+role-change statement itself (`accounts::Guarded`). `api/admin.rs` is
+`/me`, `/me/password`, `/users*`, `/roles*`: admin-only except `/me`, every
+change re-asks the calling admin's password through the login throttle, the
+last admin cannot be deleted or demoted, built-in roles (`admin`, `viewer`)
+keep their name and `admin` flag. A change that takes a grant away ends what
+ran under it: `authz::revoke_lost` sweeps terminal sessions and broadcasts
+`AppState.grants_changed`, on which every relay and listener re-checks its
+own account (`permission_revoked`). Roles live in the database (migration
+010); `db::bootstrap::ensure_roles` decides the built-ins once — a fresh
+install from `--init-permissions full|read` / `SBM_INIT_PERMISSIONS`, an
+upgrade from what the old `full_access`/`listen_public`/`terminal.enabled`/
+`fs.enabled` *effectively* granted (`Grants::from_legacy`), after which those
+keys are not read again (TODO remove). `tests/permissions_api.rs` holds the
+route × role matrix; tests seed accounts through `tests/common`. Shared
+WebSocket admission checks live in `api/ws/mod.rs`.
 - **`POST /api/v1/exec`** — one command, its output, its exit code, for the
   pages that parse what a command printed (processes, units, containers,
   snippets, power). A request rather than a stream because none of those
@@ -154,18 +182,20 @@ the panel password can't switch it on); shared admission checks live in
   SSH and the generated status script reads, so the panel and the app edit one
   set; the extended cycle picks up a change with nothing having to be told.
   A PUT replaces the whole set in order — the order is what is stored (the
-  files' name prefixes), so a move has no smaller expression. **Writing is
-  gated on `full_access`**, the same grant as the shell and `/exec`: a file in
-  that directory is run on every extended cycle, so adding one is arranging for
-  code to run as the agent's user. Reading needs only the panel login, and the
+  files' name prefixes), so a move has no smaller expression. **Writing needs
+  an admin who also holds `shell`**: the set is the agent's configuration, and
+  a file in that directory is run on every extended cycle, so adding one is
+  arranging for code to run as the agent's user — an admin without `shell`
+  must not get it by the side door. Reading needs any account, and the
   response says `editable` so the editor can go read-only instead of failing on
   save. The store is `monitoring::custom_cmds` (write-aside-and-rename, stray
   files skipped, names never logged — only the audit `subject`).
 - **`/api/v1/fs/*`** — list, stat, read, write, mkdir, rename, chmod, remove,
-  for the app's file browser. Its own switch (`[remote_access.fs] enabled`), not
-  folded into `full_access`: that grant means "a shell as the agent's user",
-  this one means "these directories", and folding them would make the narrower
-  thing cost the wider one.
+  for the app's file browser. Its own grant (`files`, `mode` read or write —
+  `fs::writes` decides which an action needs), not folded into `shell`: that
+  grant means "a shell as the agent's user", this one means "these
+  directories", and folding them would make the narrower thing cost the wider
+  one.
   **`[remote_access.fs] roots` is the boundary and there is no default.** Every request is
   resolved to a canonical path — symlinks followed, `..` refused outright —
   and then checked component-wise against the roots (`core/fs_roots.rs`), so a
@@ -182,10 +212,18 @@ the panel password can't switch it on); shared admission checks live in
   handler re-resolves per request, and a client can discover them one 403 at a
   time anyway. It exists because without it a client can only start at `/`, be
   refused, and have nothing to show for it; the app's file browser turns this
-  into the chips it offers on a refusal. It answers 403 when the API is off, so
-  "no roots" can never be read as "no limit".
+  into the chips it offers on a refusal. It answers 403 without the grant or
+  with no roots (`not_configured`), so "no roots" can never be read as "no
+  limit".
   `roots = ["/"]` makes this equivalent to a shell (anyone who can write
   `~/.ssh/authorized_keys` has one) and is warned about at startup.
+  **The agent's own state is outside every root** (`fs_roots::Protected`,
+  filled from the config in `api::server::agent_state`): the database and its
+  journal files, `jwt.secret`, the first-start credentials, `config.toml` and
+  its backups, the TLS key, the custom-commands directory — each a way past
+  the roles. Per file, not per directory (the working directory can be a
+  home); hidden from listings; their directories cannot be renamed, removed or
+  chmod-ed. `tests/fs_protected.rs`.
   Known limitation, stated rather than papered over: resolution and use are two
   steps, so a symlink swapped in between them would be followed. Closing that
   needs `openat`+`O_NOFOLLOW` per component, which is not portable across the
@@ -197,9 +235,12 @@ the panel password can't switch it on); shared admission checks live in
   shell. Frame type is the channel selector: Binary = PTY bytes, Text = control
   JSON (`api/ws/terminal.rs` documents the messages).
 - **`/api/v1/stream/ws`** — a raw TCP connection to an address the app names,
-  gated on `full_access` exactly like the shell and `/exec`: it dials as the
-  agent's account, so anyone who could open a shell could `ssh -L` from it and
-  a switch of its own would withhold nothing. This is what the app's remote
+  under the `connect` grant: networking without a shell, which is the point of
+  it being its own grant (remote desktop for someone who should not have a
+  prompt). `connect.allow` is checked against *resolved addresses* — every
+  address a host name resolves to must be allowed, and those addresses are what
+  is dialled, so a name cannot resolve one way for the check and another for
+  the connection. `accept` needs `listen` instead. This is what the app's remote
   desktop and local/dynamic port forwards use on a monitor-only server; the
   agent understands neither RDP nor VNC, which is what makes it one
   endpoint for both. Text frames are the request and control JSON
@@ -217,8 +258,9 @@ the panel password can't switch it on); shared admission checks live in
   backpressure and nothing is multiplexed on the control socket. Waiting
   connections live in `AppState.pending` (`listen::PendingStore`): claimable
   only by the panel account that listened, closed after `PENDING_TTL`, and
-  dropped with their listener. Same grant as `stream`; loopback only unless
-  `[remote_access] listen_public` (sshd's `GatewayPorts`). `tests/listen_ws.rs`.
+  dropped with their listener. The `listen` grant; loopback only unless it says
+  `public` (sshd's `GatewayPorts`), and only on its `ports` when it names a
+  range. `tests/listen_ws.rs`.
 
 Things that are easy to get wrong here, and are locked by tests:
 
@@ -236,7 +278,7 @@ Things that are easy to get wrong here, and are locked by tests:
   a wrong secret.
 - **`is_secure_transport` treats loopback as secure** even without TLS. That is
   the same-host reverse proxy / `cloudflared` case, which really is encrypted;
-  refusing it would push people to `terminal.allow_insecure` and switch the check off for
+  refusing it would push people to `allow_insecure` and switch the check off for
   genuinely plaintext setups too. It never consults `X-Forwarded-Proto`, which
   the client controls.
 - **Terminal sessions outlive their WebSocket** (`api/ws/session.rs`) so a
@@ -250,24 +292,22 @@ Things that are easy to get wrong here, and are locked by tests:
   is never cleared for a short outage. `ready.since` is *the absolute position
   the following byte stream starts at* — echoing back `next_seq` instead would
   make the client double-count the replay. `ready` must also precede any output.
-- **`full_access` is a deliberate reversal of the model above.**
-  With `remote_access.full_access` on (default: Linux only), a panel login
-  reaches the machine directly — a local PTY as the agent's own user, a command
-  run as that user, a TCP connection made from it — with no sshd and no SSH
-  credentials, so none of sshd's authentication, logging or second factor
-  applies. `install.sh` therefore runs the agent as an **ordinary account** by
+- **`shell` is a deliberate reversal of the model above.**
+  A role holding it reaches the machine directly — a local PTY as the agent's
+  own user, a command run as that user — with no sshd and no SSH credentials,
+  so none of sshd's authentication, logging or second factor applies. `install.sh` therefore runs the agent as an **ordinary account** by
   default, whichever init system it finds: a `systemctl --user` service under
   systemd, and under OpenRC — which has no user services — a script in
   `/etc/init.d` with `command_user` set to the account that invoked `sudo`.
   The point is not where the service file lives; it is that "the agent's own
-  user" is not root. The switch is checked at the moment of use
-  (`AppState::full_access_allowed`), not only in the UI, since the UI is not
-  a boundary. `DELETE /api/v1/remote-access/full-access` lets the panel turn
-  it off and has no counterpart that turns it on — narrowing what the agent
-  exposes is always safe, widening is a config-file decision.
-  It is one switch and not one per feature: anyone who can open a shell can run
-  anything in it and connect anywhere from it, so a grant that gives the
-  terminal and withholds the rest withholds nothing.
+  user" is not root. The grant is checked at the moment of use
+  (`Caller::check`, with the role read again), not only in the UI, since the UI
+  is not a boundary. `DELETE /api/v1/remote-access/full-access` (admin) is the
+  panel's legacy "turn it off": it takes `shell`, `connect` and `listen` from
+  every role and closes what ran under them with `full_access_disabled`.
+  A shell can run anything and connect anywhere, so a role granting `shell`
+  without `connect`/`listen` only hides the UI — granting those *without*
+  `shell` is the direction that means something.
 - **Capacities are derived from physical memory** (`core/remote_access.rs`), not
   constants: monitor runs on everything from a 512 MiB VPS to a 256 GiB server.
   Explicit config always wins; the resolved values are logged at startup.
@@ -301,14 +341,13 @@ name prefix — `[remote_access.terminal]`, `[remote_access.fs]`,
 adding a key:
 
 - Where a key lives is a claim about its scope, and the code is arranged to
-  match: `allow_insecure` sits under `terminal` because the terminal is the
-  only endpoint it gates, and `idle_pause` under `extended` because that is the
-  only cycle it can pause. What stays at a section's own level is what more
-  than one subsection reads (`ssh_addr`, `full_access`). Adding a key to the
-  wrong level makes the file lie about what it does.
+  match: `idle_pause` sits under `extended` because that is the only cycle it
+  can pause. What stays at a section's own level is what more than one
+  subsection reads (`ssh_addr`, `allow_insecure`). Adding a key to the wrong
+  level makes the file lie about what it does.
 - The resolved runtime structs (`RemoteAccess`, with `Terminal`/`Fs`)
-  mirror the file's shape, so `terminal.available()` and `fs.available()` are
-  methods on the part they answer for.
+  mirror the file's shape, so `fs.configured()` is a method on the part it
+  answers for.
 
 The **flat pre-Aug-2026 layout is not read at all** (`fs_enabled`,
 `terminal_enabled`, `idle_pause_enabled`, ...). serde
@@ -322,7 +361,7 @@ keys and moved into sections; `Config::legacy` still reads the Go agent's flat
 #### Editing it over the API
 
 Both the panel and the app edit `config.toml` through three endpoints, all
-behind `require_jwt!` and all reading the file fresh off disk rather than
+admin-only (`require_admin!`) and all reading the file fresh off disk rather than
 `AppState.config` (a startup snapshot, so a GET right after a save would show
 stale values). **A `PUT` replaces the whole of what it names**, so a client
 that omits a field clears it — `PUT /settings` and `PUT /push` each take
@@ -330,8 +369,8 @@ their entire payload at once. The reads do not: `GET /settings`, `GET /push`
 and `POST /push/test` write nothing.
 
 - **`GET/PUT /api/v1/settings`** — the whitelist: intervals, idle pause, rules,
-  data retention, CORS origins. `jwt_secret`, `database_url` and the
-  `remote_access` grants are deliberately not in it. GET adds `live_fields`
+  data retention, CORS origins. `jwt_secret`, `database_url` and
+  `remote_access` are deliberately not in it; who may do what is the roles. GET adds `live_fields`
   (which of them the running process picks up; everything else waits for a
   restart) and `data_retention_defaults` — absent retention means *no cleanup
   runs at all* rather than "the defaults apply", so an editor offering to
@@ -365,7 +404,8 @@ and `POST /push/test` write nothing.
 
 SQLite database with migrations in `migrations/`:
 - System metrics history
-- User authentication
+- User authentication: `users` (each with a `role`), `roles` (migration 010),
+  `watch_tokens` (each with a `scope`, only ever `read`)
 - Configuration storage
 - `access_log` — who opened a terminal, from where, and whether it
   worked. Never records a credential; cleaned up by the existing
@@ -434,6 +474,10 @@ sudo ./install.sh install
 
 # Either one, as root: `--system`
 sudo ./install.sh install --system
+
+# A fresh install whose admin starts read-only (default: full), widened later
+# from the app or the panel
+./install.sh install --permissions read
 
 # Without a release to fetch — offline, or an unreleased build
 SBM_INSTALL_PKG=/path/to/server-box-monitor ./install.sh install

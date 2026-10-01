@@ -633,7 +633,7 @@ impl Config {
     }
 
     /// The secret file lives next to the SQLite database (persisted with the data under Docker volume mounts)
-    fn jwt_secret_path(&self) -> std::path::PathBuf {
+    pub fn jwt_secret_path(&self) -> std::path::PathBuf {
         let db = self.get_database_url();
         let db_path = db
             .trim_start_matches("sqlite://")

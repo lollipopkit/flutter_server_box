@@ -1,9 +1,14 @@
-//! Settings for the panel's WebSocket terminal and the app's file API.
+//! The machine side of remote access: where sshd is, what the file API may
+//! reach, how big a terminal or a command may get, and whether plaintext is
+//! tolerated.
 //!
-//! Both are **off by default**. Turning them on is a decision about exposing
-//! shell access through the panel's HTTP surface, so it has to be made
-//! deliberately, in the config file — this section is intentionally absent
-//! from `PUT /api/v1/settings`, which only requires the panel password.
+//! *Who* may use any of it is not here. That is a role's grants, in the
+//! database (`core::permissions`, issue #1610). The switches that used to say
+//! it for every login at once — `full_access`, `listen_public`,
+//! `terminal.enabled`, `fs.enabled` — are still parsed so an old file loads,
+//! and read exactly once: when an upgraded agent first decides what its admin
+//! role holds (`db::bootstrap::ensure_roles`). After that they are ignored.
+//! TODO: remove them once no agent can still be upgrading from before roles.
 //!
 //! Two shapes live here:
 //!
@@ -22,6 +27,7 @@ use std::time::Duration;
 use serde::{Deserialize, Serialize};
 
 use super::fs_roots::FsRoots;
+use super::permissions::Grant;
 
 /// The SSH server the panel's terminal connects to.
 fn default_ssh_addr() -> String {
@@ -48,6 +54,26 @@ pub struct RemoteAccessConfig {
     #[serde(default = "default_ssh_addr")]
     pub ssh_addr: String,
 
+    /// Serve everything beyond reading the numbers to callers on a plaintext
+    /// network link.
+    ///
+    /// One rule for every grant: TLS, or a loopback peer (a same-host reverse
+    /// proxy), unless this is on. A private source address does not prove a
+    /// path is encrypted, so it is off by default and only an operator editing
+    /// this file can turn it on; the app has a second, per-server opt-in
+    /// before it will send anything over HTTP.
+    ///
+    /// The two keys that came before it still count, each for what it used to
+    /// cover and no further: `terminal.allow_insecure` for the grants that
+    /// were behind the terminal switch (`shell`, `ssh_terminal`, `connect`,
+    /// `listen`), `fs.allow_insecure` for `files`. Folded into one, an old
+    /// file that let the file API onto a trusted plaintext link would have
+    /// put a shell on it after the upgrade.
+    #[serde(default)]
+    pub allow_insecure: bool,
+
+    /// Legacy: moved to the roles. See the module documentation.
+    ///
     /// Open a shell straight from a panel login, with no SSH credentials.
     ///
     /// `None` follows the platform: on by default on Linux, off on macOS and
@@ -67,14 +93,16 @@ pub struct RemoteAccessConfig {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub full_access: Option<bool>,
 
+    /// Legacy: moved to the roles (`listen.public`). See the module docs.
+    ///
     /// Let a remote forward listen on an address other than loopback.
     ///
     /// sshd's `GatewayPorts`, and off for the same reason: a forward the app
     /// opens is for the app's user, and one bound to `0.0.0.0` hands the port
     /// to everyone who can reach this machine. Off, `/api/v1/listen/ws` binds
     /// loopback only.
-    #[serde(default)]
-    pub listen_public: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub listen_public: Option<bool>,
 
     #[serde(default)]
     pub terminal: TerminalConfig,
@@ -93,8 +121,9 @@ impl Default for RemoteAccessConfig {
     fn default() -> Self {
         Self {
             ssh_addr: default_ssh_addr(),
+            allow_insecure: false,
             full_access: None,
-            listen_public: false,
+            listen_public: None,
             terminal: TerminalConfig::default(),
             fs: FsConfig::default(),
             exec: ExecConfig::default(),
@@ -105,8 +134,12 @@ impl Default for RemoteAccessConfig {
 /// `[remote_access.terminal]` — the panel's in-browser terminal.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TerminalConfig {
-    #[serde(default)]
-    pub enabled: bool,
+    /// Legacy: moved to the roles (`ssh_terminal`). See the module docs.
+    ///
+    /// An `Option` so that a file which says `false` is told apart from one
+    /// that does not mention it — see [`RemoteAccessConfig::legacy_present`].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub enabled: Option<bool>,
 
     /// `None` = derive from physical memory.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -122,10 +155,7 @@ pub struct TerminalConfig {
     #[serde(default = "default_detached_timeout_secs")]
     pub detached_timeout_secs: u64,
 
-    /// Whether to serve this endpoint over a plaintext listener.
-    ///
-    /// Its opening frame carries an SSH password and everything after it is
-    /// cleartext PTY traffic, so without TLS the credentials are on the wire.
+    /// Read as [`RemoteAccessConfig::allow_insecure`]. TODO: remove.
     #[serde(default)]
     pub allow_insecure: bool,
 }
@@ -133,7 +163,7 @@ pub struct TerminalConfig {
 impl Default for TerminalConfig {
     fn default() -> Self {
         Self {
-            enabled: false,
+            enabled: None,
             max_sessions: None,
             scrollback_bytes: None,
             detached_timeout_secs: default_detached_timeout_secs(),
@@ -145,18 +175,14 @@ impl Default for TerminalConfig {
 /// `[remote_access.fs]` — the app's file browser, `/api/v1/fs/*`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct FsConfig {
-    /// Serve `/api/v1/fs/*`: list, read, write, rename, delete, chmod.
-    ///
-    /// Off by default, and config-file only, like everything else here. What
-    /// makes it a separate switch from [`RemoteAccessConfig::full_access`]
-    /// rather than part of it is [`Self::roots`]: an API confined to
-    /// `/srv/backups` is genuinely less than a shell, and a grant that could
-    /// only be "all or nothing" would push people to the wider one.
-    #[serde(default)]
-    pub enabled: bool,
+    /// Legacy: moved to the roles (`files`). See the module docs. An
+    /// `Option` for the reason [`TerminalConfig::enabled`] is.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub enabled: Option<bool>,
 
-    /// The directories the file API may reach. Required when [`Self::enabled`]
-    /// is on; an empty list serves nothing.
+    /// The directories the file API may reach; an empty list serves nothing,
+    /// whatever a role grants. Machine-level rather than per role: what is on
+    /// this disk worth reaching is the operator's to say.
     ///
     /// `["/"]` is how "the whole machine" is said, and it is a real decision
     /// rather than a default: at that setting the panel password is worth a
@@ -165,11 +191,7 @@ pub struct FsConfig {
     #[serde(default)]
     pub roots: Vec<String>,
 
-    /// Serve files to callers outside loopback without TLS.
-    ///
-    /// A private source address does not prove a path is encrypted, so this is
-    /// off by default and only an operator editing the agent config can enable
-    /// it. The app has a second per-server opt-in before it will send HTTP.
+    /// Read as [`RemoteAccessConfig::allow_insecure`]. TODO: remove.
     #[serde(default)]
     pub allow_insecure: bool,
 
@@ -194,9 +216,8 @@ pub struct FsConfig {
 /// the limits are the agent's decision, not the caller's, so a request cannot
 /// raise them.
 ///
-/// Under `exec` rather than beside [`RemoteAccessConfig::full_access`]: that
-/// switch decides *whether* commands run at all and is shared with the shell,
-/// while these describe one endpoint's bounds and nothing else reads them.
+/// Under `exec` because these describe one endpoint's bounds and nothing else
+/// reads them; *whether* commands run at all is the `shell` grant.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ExecConfig {
     /// How long a command may run before the agent kills it and answers
@@ -254,6 +275,7 @@ fn full_access_from_env() -> Option<bool> {
     }
 }
 
+/// TODO: remove with [`RemoteAccessConfig::legacy_full_access`].
 fn resolve_full_access(configured: Option<bool>, from_env: Option<bool>) -> bool {
     // An explicit file-level denial is sticky because the panel's disable
     // endpoint can only persist to that file. Environment may still disable a
@@ -283,6 +305,71 @@ const MIN_EXEC_BYTES: usize = 1024 * 1024;
 const MAX_EXEC_BYTES: usize = 64 * 1024 * 1024;
 
 impl RemoteAccessConfig {
+    /// What `full_access` resolved to before roles: the platform default,
+    /// `SBM_FULL_ACCESS`, and the file, the way the old agent combined them.
+    /// Only the upgrade to roles reads it. TODO: remove with the key.
+    pub fn legacy_full_access(&self) -> bool {
+        resolve_full_access(self.full_access, full_access_from_env())
+    }
+
+    /// The moved keys this file still sets, for the log line that says they
+    /// are no longer read.
+    pub fn legacy_keys_set(&self) -> Vec<&'static str> {
+        let mut keys = Vec::new();
+        if self.full_access.is_some() {
+            keys.push("remote_access.full_access");
+        }
+        if std::env::var_os("SBM_FULL_ACCESS").is_some() {
+            keys.push("SBM_FULL_ACCESS");
+        }
+        if self.listen_public.is_some() {
+            keys.push("remote_access.listen_public");
+        }
+        if self.terminal.enabled.is_some() {
+            keys.push("remote_access.terminal.enabled");
+        }
+        if self.fs.enabled.is_some() {
+            keys.push("remote_access.fs.enabled");
+        }
+        keys
+    }
+
+    /// Whether this configuration was written for the model before roles, so
+    /// that a fresh install must not grant more than it said: any moved key
+    /// written into the file, whatever its value, or `SBM_FULL_ACCESS` set
+    /// to false. [env] is that variable as read.
+    ///
+    /// Presence rather than value because an absent key and `false` meant the
+    /// same thing then and do not now: a declarative deployment that wrote
+    /// `full_access = false` and starts on a new database must not come up
+    /// with a shell.
+    pub fn legacy_present(&self, env: Option<bool>) -> bool {
+        self.full_access.is_some()
+            || self.listen_public.is_some()
+            || self.terminal.enabled.is_some()
+            || self.fs.enabled.is_some()
+            || env == Some(false)
+    }
+
+    /// What the moved keys effectively granted every login before roles —
+    /// [`Grants::from_legacy`] over this file and `SBM_FULL_ACCESS`.
+    /// TODO: remove with the keys.
+    pub fn legacy_grants(&self) -> super::permissions::Grants {
+        let files_usable =
+            self.fs.enabled == Some(true) && !FsRoots::resolve(&self.fs.roots).is_empty();
+        super::permissions::Grants::from_legacy(
+            self.terminal.enabled == Some(true),
+            self.legacy_full_access(),
+            self.listen_public == Some(true),
+            files_usable,
+        )
+    }
+
+    /// `SBM_FULL_ACCESS` as a boolean, for [`Self::legacy_present`].
+    pub fn legacy_env() -> Option<bool> {
+        full_access_from_env()
+    }
+
     /// Fills in every unset capacity from `total_memory` (bytes).
     ///
     /// Takes the memory as a parameter rather than reading the host, so the
@@ -303,10 +390,9 @@ impl RemoteAccessConfig {
 
         RemoteAccess {
             ssh_addr: self.ssh_addr.clone(),
-            full_access: resolve_full_access(self.full_access, full_access_from_env()),
-            listen_public: self.listen_public,
+            insecure_shell: self.allow_insecure || self.terminal.allow_insecure,
+            insecure_files: self.allow_insecure || self.fs.allow_insecure,
             terminal: Terminal {
-                enabled: self.terminal.enabled,
                 max_sessions: self.terminal.max_sessions.filter(|&n| n > 0).unwrap_or(slots),
                 scrollback_bytes: self
                     .terminal
@@ -314,12 +400,9 @@ impl RemoteAccessConfig {
                     .filter(|&n| n > 0)
                     .unwrap_or(scrollback),
                 detached_timeout: Duration::from_secs(self.terminal.detached_timeout_secs),
-                allow_insecure: self.terminal.allow_insecure,
             },
             fs: Fs {
-                enabled: self.fs.enabled,
                 roots: FsRoots::resolve(&self.fs.roots),
-                allow_insecure: self.fs.allow_insecure,
                 // A quarter of RAM, floored and capped: big enough for the
                 // config files and archives people actually move, small enough
                 // that one request cannot fill a small VPS's disk.
@@ -352,15 +435,17 @@ impl RemoteAccessConfig {
 }
 
 /// [`RemoteAccessConfig`] with every capacity resolved. Built once at startup
-/// and shared through `AppState`. Mirrors the config's shape, so a reader who
-/// knows the file knows this.
+/// and shared through `AppState`.
 #[derive(Debug, Clone)]
 pub struct RemoteAccess {
     pub ssh_addr: String,
-    /// See [`RemoteAccessConfig::full_access`].
-    pub full_access: bool,
-    /// See [`RemoteAccessConfig::listen_public`].
-    pub listen_public: bool,
+    /// Whether `shell`, `ssh_terminal`, `connect` and `listen` may be used over
+    /// plaintext: [`RemoteAccessConfig::allow_insecure`] or the terminal's
+    /// legacy key.
+    pub insecure_shell: bool,
+    /// Whether `files` may be: [`RemoteAccessConfig::allow_insecure`] or the
+    /// file API's legacy key.
+    pub insecure_files: bool,
     pub terminal: Terminal,
     pub fs: Fs,
     pub exec: Exec,
@@ -374,70 +459,51 @@ pub struct Exec {
     pub max_request_bytes: usize,
 }
 
-/// Resolved [`TerminalConfig`].
+/// Resolved [`TerminalConfig`]: the capacities, which apply to every
+/// terminal whichever grant opened it.
 #[derive(Debug, Clone)]
 pub struct Terminal {
-    pub enabled: bool,
     pub max_sessions: usize,
     pub scrollback_bytes: usize,
     pub detached_timeout: Duration,
-    pub allow_insecure: bool,
-}
-
-impl Terminal {
-    /// Whether the terminal may run given how the server is listening.
-    ///
-    /// See [`TerminalConfig::allow_insecure`] for why only the terminal is
-    /// gated on transport security.
-    pub fn available(&self, tls_active: bool) -> bool {
-        self.enabled && (tls_active || self.allow_insecure)
-    }
 }
 
 /// Resolved [`FsConfig`].
 #[derive(Debug, Clone)]
 pub struct Fs {
-    pub enabled: bool,
     /// Canonicalised at startup — see [`FsRoots`].
     pub roots: FsRoots,
-    pub allow_insecure: bool,
     pub max_write_bytes: u64,
 }
 
 impl Fs {
-    /// Whether the file API will answer.
-    ///
-    /// Enabled *and* pointed somewhere: switching it on without roots is a
-    /// half-finished configuration, and serving the whole filesystem would be
-    /// the worst possible reading of it.
-    ///
-    /// File contents and the bearer token are both sensitive, so a direct
-    /// network request needs TLS unless the operator explicitly allows
-    /// plaintext. A local caller or same-host reverse proxy is safe for the
-    /// same reason as the terminal path (see `api::ws`).
-    pub fn available(&self, secure: bool) -> bool {
-        self.enabled && !self.roots.is_empty() && (secure || self.allow_insecure)
+    /// Whether the file API has anywhere to serve. A role can grant `files`
+    /// on a machine with no roots; that grant answers `not_configured`
+    /// rather than serving the whole filesystem, which would be the worst
+    /// possible reading of a half-finished configuration.
+    pub fn configured(&self) -> bool {
+        !self.roots.is_empty()
     }
 }
 
 impl RemoteAccess {
-    /// Whether anything here is switched on, i.e. whether the startup summary
-    /// and the `ssh_addr` resolution check are worth running at all.
-    pub fn any_enabled(&self) -> bool {
-        self.terminal.enabled || self.fs.enabled && !self.fs.roots.is_empty()
-    }
-
-    /// Whether a client may reach this machine without presenting SSH
-    /// credentials — a shell, a command, a forwarded port.
+    /// Whether anything beyond reading the numbers may be served over a link
+    /// that is [`secure`] or not — see `api::ws::is_secure_transport` for what
+    /// counts.
     ///
-    /// One answer for all of them. Anyone who can open a shell can run
-    /// anything in it and connect anywhere from it, so granting the shell and
-    /// withholding the rest withholds nothing; it only makes the app pretend.
-    ///
-    /// Gated on the terminal being available at all, so turning the terminal
-    /// off can never leave a door open behind it.
-    pub fn full_access_available(&self, tls_active: bool) -> bool {
-        self.terminal.available(tls_active) && self.full_access
+    /// One rule for every grant. A terminal's first frame can carry an SSH
+    /// password, a file read is the file, a relay is whatever it relays, and
+    /// all of them ride on a bearer token that a plaintext link hands to
+    /// anyone on the path. Which opt-out applies depends on [grant] only
+    /// because of the legacy keys — see [`RemoteAccessConfig::allow_insecure`].
+    pub fn transport_ok(&self, grant: Grant, secure: bool) -> bool {
+        secure
+            || match grant {
+                Grant::Files => self.insecure_files,
+                Grant::Shell | Grant::SshTerminal | Grant::Connect | Grant::Listen => {
+                    self.insecure_shell
+                }
+            }
     }
 
     /// Logs the resolved limits once at startup.
@@ -446,92 +512,40 @@ impl RemoteAccess {
     /// anywhere, and "why did my sixth terminal get refused" should be
     /// answerable from the log instead of from this source file.
     pub fn log_summary(&self, tls_active: bool) {
-        if !self.any_enabled() {
-            return;
-        }
         tracing::info!(
-            "Remote access: terminal={} (max {} sessions, {} KiB scrollback, {}s detached timeout), full_access={}, target={}",
-            self.terminal.enabled,
+            "Remote access limits: {} terminal sessions, {} KiB scrollback, {}s detached timeout; \
+             exec {}s timeout, {} MiB output, {} MiB request; sshd at {}",
             self.terminal.max_sessions,
             self.terminal.scrollback_bytes / 1024,
             self.terminal.detached_timeout.as_secs(),
-            self.full_access,
+            self.exec.timeout.as_secs(),
+            self.exec.max_output_bytes / (1024 * 1024),
+            self.exec.max_request_bytes / (1024 * 1024),
             self.ssh_addr,
         );
-        if self.fs.available(tls_active) {
+        if self.fs.configured() {
             tracing::info!(
-                "File API: roots={:?}, max write {} MiB",
+                "File API roots: {:?}, max write {} MiB",
                 self.fs.roots.as_slice(),
                 self.fs.max_write_bytes / (1024 * 1024),
             );
         }
-        if self.full_access_available(tls_active) {
-            tracing::info!(
-                "Exec: {}s timeout, {} MiB max output per stream, {} MiB max request",
-                self.exec.timeout.as_secs(),
-                self.exec.max_output_bytes / (1024 * 1024),
-                self.exec.max_request_bytes / (1024 * 1024),
-            );
-        }
-        if self.terminal.enabled && self.full_access {
+        if self.fs.configured() && self.fs.roots.is_unrestricted() {
             tracing::warn!(
-                "Access without SSH is on: anyone who can log into the panel gets a \
-                 shell as {}, can run any command as that account, and can reach any \
-                 address this machine can reach — with no SSH authentication in \
-                 between. The panel password is the only thing in the way. Turn it \
-                 off with remote_access.full_access = false or SBM_FULL_ACCESS=0.",
+                "The file API's roots are the whole filesystem. For a role holding \
+                 `files` that is a shell as {}: it can read any file that account can \
+                 read and, with mode = \"write\", write any file it can write, including \
+                 ~/.ssh/authorized_keys. Narrow remote_access.fs.roots to the \
+                 directories that actually need to be reachable.",
                 whoami()
             );
         }
-        if self.fs.enabled && self.fs.roots.is_empty() {
+        if (self.insecure_shell || self.insecure_files) && !tls_active {
             tracing::warn!(
-                "remote_access.fs.enabled is on but remote_access.fs.roots names \
-                 nothing usable, so the file API will refuse every request. Name \
-                 the directories it may reach, e.g. roots = [\"/srv/data\"]."
-            );
-        }
-        if self.fs.enabled && !self.fs.roots.is_empty() && self.fs.roots.is_unrestricted() {
-            tracing::warn!(
-                "The file API is serving the whole filesystem. At that setting it is \
-                 equivalent to a shell as {}: anyone who can log into the panel can \
-                 read any file that account can read and write any file it can write, \
-                 including ~/.ssh/authorized_keys. Narrow remote_access.fs.roots to \
-                 the directories that actually need to be reachable.",
-                whoami()
-            );
-        }
-        if self.terminal.enabled && !tls_active {
-            if self.terminal.allow_insecure {
-                tracing::warn!(
-                    "Terminal is enabled on a plaintext listener with allow_insecure=true: \
-                     SSH credentials and all terminal output travel unencrypted"
-                );
-            } else {
-                // Deliberately not "it will refuse connections": the check is
-                // per request, and a loopback peer — this host's browser, or a
-                // reverse proxy on the same machine — still counts as secure.
-                // Saying otherwise sends someone testing locally hunting for a
-                // problem that isn't there.
-                tracing::warn!(
-                    "Terminal is enabled without TLS: it will serve clients on loopback \
-                     (including a same-host reverse proxy) but refuse anything arriving \
-                     over the network; configure TLS or set \
-                     remote_access.terminal.allow_insecure"
-                );
-            }
-        }
-        if self.fs.enabled && !self.fs.roots.is_empty() && !tls_active && !self.fs.allow_insecure {
-            tracing::warn!(
-                "File API is enabled without TLS: it will serve clients on loopback \
-                  (including a same-host reverse proxy) but refuse anything arriving \
-                  over the network; configure TLS or set remote_access.fs.allow_insecure"
-            );
-        }
-        if self.fs.enabled && !self.fs.roots.is_empty() && self.fs.allow_insecure {
-            tracing::warn!(
-                "File API permits plaintext network access: bearer tokens and file \
-                 contents can be read or changed in transit. Keep this limited to a \
-                 network whose transport security you control."
+                "remote_access.allow_insecure is on and this agent has no TLS: \
+                 terminals, commands, files and relays are served over plaintext to \
+                 anyone on the network path. Keep this to a network whose transport \
+                 security you control."
             );
         }
     }
@@ -623,41 +637,58 @@ mod tests {
     }
 
     #[test]
-    fn everything_is_off_by_default() {
+    fn plaintext_is_refused_and_no_roots_are_served_by_default() {
         let r = resolved(None);
-        assert!(!r.terminal.enabled);
-        assert!(!r.terminal.allow_insecure);
-        assert!(!r.fs.enabled);
-        assert!(!r.fs.allow_insecure);
-        assert!(!r.any_enabled());
+        for grant in Grant::ALL {
+            assert!(r.transport_ok(grant, true));
+            assert!(!r.transport_ok(grant, false));
+        }
+        assert!(!r.fs.configured());
     }
 
     #[test]
-    fn terminal_needs_tls_unless_explicitly_allowed() {
-        let enabled = RemoteAccessConfig {
-            terminal: TerminalConfig {
-                enabled: true,
-                ..Default::default()
-            },
+    fn each_old_allow_insecure_key_covers_what_it_used_to_and_no_more() {
+        let shellish = [Grant::Shell, Grant::SshTerminal, Grant::Connect, Grant::Listen];
+
+        // The new key: everything.
+        let all = RemoteAccessConfig {
+            allow_insecure: true,
             ..Default::default()
         }
         .resolve(None);
-        assert!(enabled.terminal.available(true));
-        assert!(!enabled.terminal.available(false));
+        for grant in Grant::ALL {
+            assert!(all.transport_ok(grant, false), "{grant:?}");
+        }
 
-        let insecure = RemoteAccessConfig {
+        // The terminal's: what was behind the terminal switch, not files.
+        let terminal = RemoteAccessConfig {
             terminal: TerminalConfig {
-                enabled: true,
                 allow_insecure: true,
                 ..Default::default()
             },
             ..Default::default()
         }
         .resolve(None);
-        assert!(insecure.terminal.available(false));
+        for grant in shellish {
+            assert!(terminal.transport_ok(grant, false), "{grant:?}");
+        }
+        assert!(!terminal.transport_ok(Grant::Files, false));
 
-        let disabled = resolved(None);
-        assert!(!disabled.terminal.available(true));
+        // The file API's: files, and never a shell — which is what an old
+        // config that trusted a plaintext link with its files would otherwise
+        // have handed out on upgrade.
+        let fs = RemoteAccessConfig {
+            fs: FsConfig {
+                allow_insecure: true,
+                ..Default::default()
+            },
+            ..Default::default()
+        }
+        .resolve(None);
+        assert!(fs.transport_ok(Grant::Files, false));
+        for grant in shellish {
+            assert!(!fs.transport_ok(grant, false), "{grant:?}");
+        }
     }
 
     #[test]
@@ -668,35 +699,45 @@ mod tests {
     }
 
     #[test]
-    fn file_api_needs_a_secure_transport() {
+    fn roots_are_what_makes_the_file_api_configured() {
         let root = std::env::temp_dir().to_string_lossy().into_owned();
         let configured = RemoteAccessConfig {
             fs: FsConfig {
-                enabled: true,
                 roots: vec![root],
                 ..Default::default()
             },
             ..Default::default()
         }
         .resolve(None);
-        assert!(configured.fs.available(true));
-        assert!(!configured.fs.available(false));
+        assert!(configured.fs.configured());
     }
 
     #[test]
-    fn file_api_can_explicitly_allow_plaintext() {
-        let root = std::env::temp_dir().to_string_lossy().into_owned();
-        let configured = RemoteAccessConfig {
-            fs: FsConfig {
-                enabled: true,
-                roots: vec![root],
-                allow_insecure: true,
-                ..Default::default()
-            },
-            ..Default::default()
-        }
-        .resolve(None);
-        assert!(configured.fs.available(false));
+    fn a_moved_key_counts_whatever_its_value_and_absence_does_not() {
+        let old: RemoteAccessConfig = toml::from_str("full_access = false\n").unwrap();
+        assert!(old.legacy_present(None));
+        let off: RemoteAccessConfig = toml::from_str("[terminal]\nenabled = false\n").unwrap();
+        assert!(off.legacy_present(None));
+        let new: RemoteAccessConfig = toml::from_str("allow_insecure = false\n").unwrap();
+        assert!(!new.legacy_present(None));
+        // The environment counts only when it says no.
+        assert!(new.legacy_present(Some(false)));
+        assert!(!new.legacy_present(Some(true)));
+        // And an absent key is not written back on save.
+        assert!(!toml::to_string(&new).unwrap().contains("enabled"));
+    }
+
+    #[test]
+    fn the_moved_keys_are_named_for_the_log() {
+        let config: RemoteAccessConfig = toml::from_str(
+            "full_access = true\nlisten_public = true\n[terminal]\nenabled = true\n",
+        )
+        .unwrap();
+        let keys = config.legacy_keys_set();
+        assert!(keys.contains(&"remote_access.full_access"));
+        assert!(keys.contains(&"remote_access.listen_public"));
+        assert!(keys.contains(&"remote_access.terminal.enabled"));
+        assert!(!keys.contains(&"remote_access.fs.enabled"));
     }
 
     #[test]
@@ -756,8 +797,8 @@ mod tests {
     fn an_empty_section_parses_to_the_defaults() {
         let parsed: RemoteAccessConfig = toml::from_str("").unwrap();
         assert_eq!(parsed.ssh_addr, default_ssh_addr());
-        assert!(!parsed.terminal.enabled);
-        assert!(!parsed.fs.enabled);
+        assert_eq!(parsed.terminal.enabled, None);
+        assert_eq!(parsed.fs.enabled, None);
         assert_eq!(
             parsed.terminal.detached_timeout_secs,
             default_detached_timeout_secs()
@@ -775,7 +816,7 @@ mod tests {
             "[terminal]\nenabled = true\n[fs]\nenabled = true\nroots = [\"/srv\"]\n",
         )
         .unwrap();
-        assert!(parsed.terminal.enabled);
+        assert_eq!(parsed.terminal.enabled, Some(true));
         assert_eq!(
             parsed.terminal.detached_timeout_secs,
             default_detached_timeout_secs()

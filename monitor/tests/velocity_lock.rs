@@ -18,6 +18,8 @@
 //! from here. Verified to hang the old handler well inside the iteration count
 //! below.
 
+mod common;
+
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
@@ -52,6 +54,7 @@ async fn state() -> Arc<AppState> {
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
     sqlx::migrate!("./migrations").run(&db).await.unwrap();
 
+    common::seed_as_upgrade(&db, &config).await;
     let state = AppState::new(Arc::new(config), db);
 
     // One sample, so the handler goes through the per-server processor rather

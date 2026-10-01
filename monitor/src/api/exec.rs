@@ -12,7 +12,7 @@
 //! That is why `terminal.rs` refuses an `exec` frame, and why this is a
 //! separate door rather than a wider one.
 //!
-//! Gated on `remote_access.full_access`, the same grant the shell needs and
+//! Gated on the caller's `shell` grant, the same one the terminal needs and
 //! for the same reason: anyone who can open a shell can run anything in it, so
 //! there is one decision here, not two.
 
@@ -25,9 +25,8 @@ use serde::{Deserialize, Serialize};
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWriteExt};
 use tokio::process::Command;
 
+use super::authz;
 use super::server::AppState;
-use super::server::verify_auth;
-use super::ws;
 use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
 
 /// The bounds on one command — how long it may run and how much of it is kept.
@@ -81,19 +80,23 @@ pub async fn exec(
     body: web::types::Json<ExecRequest>,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
+    let Ok(caller) = authz::jwt_caller(&req, &app_state).await else {
         return Ok(HttpResponse::Unauthorized().finish());
-    }
+    };
 
     let remote_ip = peer_ip(&req);
-    let secure = ws::is_secure_transport(&req, app_state.tls_active);
 
     // Re-checked here rather than trusted from the capabilities the client was
     // told earlier: that answer is a UI hint, and the UI is not a boundary.
-    if !app_state.full_access_allowed(secure) {
+    if let Err(why) = caller.check(
+        crate::core::permissions::Grant::Shell,
+        &app_state,
+        authz::is_secure(&req, &app_state),
+    ) {
         Event::new(Kind::Exec, Action::Denied, Outcome::Denied)
+            .subject(&caller.username)
             .remote_ip(remote_ip)
-            .detail("full access disabled")
+            .detail(why.as_str())
             .record(&app_state.db)
             .await;
         return Ok(HttpResponse::Forbidden().finish());

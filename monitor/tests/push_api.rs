@@ -13,6 +13,8 @@
 //! each integration test file its own process — and serialises its tests, which
 //! all write the same `config.toml`.
 
+mod common;
+
 use std::path::PathBuf;
 use std::sync::{Arc, Once, OnceLock};
 
@@ -70,6 +72,7 @@ async fn test_server() -> TestServer {
     };
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
     sqlx::migrate!("./migrations").run(&db).await.unwrap();
+    common::seed_as_upgrade(&db, &config).await;
     let state = AppState::new(Arc::new(config), db);
 
     web_test::server(move || {

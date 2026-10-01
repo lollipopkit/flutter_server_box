@@ -5,9 +5,15 @@
 # binary + frontend/dist + migrations + example config.
 #
 # The agent runs as an ordinary account by default. That matters beyond
-# tidiness: with `remote_access.full_access` on (the default on Linux), a panel
-# login opens a shell as whoever the agent runs as — as root that would be the
-# whole machine. Pass --system for the old root-owned service.
+# tidiness: an account whose role holds `shell` opens a shell as whoever the
+# agent runs as — as root that would be the whole machine. Pass --system for
+# the old root-owned service.
+#
+# --permissions full|read is what a fresh install's admin role starts with:
+# every grant (the default), or none, to be turned on from the app or the
+# panel. It reaches the agent as SBM_INIT_PERMISSIONS in the service's
+# environment and is read only when the agent creates its first account, so
+# it stays there harmlessly afterwards.
 #
 # systemd and OpenRC both, because the second is what Alpine has and the binary
 # is a static musl build that runs there perfectly well. They arrive at the
@@ -38,18 +44,31 @@ fi
 
 MODE="user"
 CMD=""
-for arg in "$@"; do
-    case "$arg" in
+PERMISSIONS="full"
+USAGE="Usage: $SELF [install|uninstall|upgrade] [--user|--system] [--permissions full|read]"
+while [ $# -gt 0 ]; do
+    case "$1" in
         --system) MODE="system" ;;
         --user) MODE="user" ;;
-        install|uninstall|upgrade) CMD="$arg" ;;
+        --permissions) shift; PERMISSIONS="${1:-}" ;;
+        --permissions=*) PERMISSIONS="${1#*=}" ;;
+        install|uninstall|upgrade) CMD="$1" ;;
         *)
-            echo "Unknown argument: $arg"
-            echo "Usage: $SELF [install|uninstall|upgrade] [--user|--system]"
+            echo "Unknown argument: $1"
+            echo "$USAGE"
             exit 1
             ;;
     esac
+    shift
 done
+case "$PERMISSIONS" in
+    full|read) ;;
+    *)
+        echo "--permissions takes full or read, not '$PERMISSIONS'"
+        echo "$USAGE"
+        exit 1
+        ;;
+esac
 
 # Which init system will be asked to keep the agent running.
 #
@@ -395,6 +414,9 @@ write_openrc_script() {
         # Same reason as the systemd unit's Environment=: the default filter
         # is ERROR only.
         echo "export RUST_LOG=info"
+        # Read once, when the agent creates its first account — see the top
+        # of this file.
+        echo "export SBM_INIT_PERMISSIONS=$PERMISSIONS"
         echo
         echo "depend() {"
         echo "    need net"
@@ -432,6 +454,9 @@ install_service() {
         # remote-access summary and its security warnings. docker-compose.yaml
         # already defaults to info.
         echo "Environment=RUST_LOG=info"
+        # Read once, when the agent creates its first account — see the top
+        # of this file.
+        echo "Environment=SBM_INIT_PERMISSIONS=$PERMISSIONS"
         # The agent collects by running ordinary tools — `sh` first, then
         # whatever the command manifest asks for: cat, df, uptime, lsblk.
         # A unit that sets no PATH gets systemd's compiled-in one, and that is
@@ -493,9 +518,9 @@ install() {
     echo "Install success ($MODE service). Config: $APP_DIR/.env"
     if [ "$MODE" = "system" ]; then
         echo
-        echo "This runs as root. If you enable remote_access.terminal.enabled,"
-        echo "also set remote_access.full_access = false, or a panel"
-        echo "login becomes a root shell."
+        echo "This runs as root: any account whose role holds shell gets a"
+        echo "root shell. Take shell off the roles that should not have one"
+        echo "(the app or the panel, as an admin)."
     fi
 }
 
@@ -545,10 +570,14 @@ case "$CMD" in
     uninstall) resolve_target; uninstall ;;
     upgrade) resolve_target; upgrade ;;
     *)
-        echo "Usage: $SELF [install|uninstall|upgrade] [--user|--system]"
+        echo "$USAGE"
         echo
         echo "  --user    (default) the agent runs as an ordinary account"
         echo "  --system  the agent runs as root"
+        echo "  --permissions full|read"
+        echo "            what a fresh install's admin starts with: every"
+        echo "            permission (default), or read-only, to be widened"
+        echo "            from the app or the panel"
         echo
         echo "Init system detected: $INIT"
         if [ "$INIT" = "systemd" ]; then

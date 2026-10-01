@@ -5,6 +5,8 @@
 //! deliberately. Everything that keeps a *request* inside them is `FsRoots`'
 //! job and is tested directly in `fs_roots.rs`.
 
+mod common;
+
 use std::sync::{Arc, Once};
 use std::{fs, path::Path};
 
@@ -35,12 +37,13 @@ async fn app_state(enabled: bool, roots: &[&str]) -> Arc<AppState> {
         ..Default::default()
     };
     let mut remote = config.get_remote_access();
-    remote.fs.enabled = enabled;
+    remote.fs.enabled = Some(enabled);
     remote.fs.roots = roots.iter().map(|r| r.to_string()).collect();
     config.remote_access = Some(remote);
 
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
     sqlx::migrate!("./migrations").run(&db).await.unwrap();
+    common::seed_as_upgrade(&db, &config).await;
     AppState::new(Arc::new(config), db)
 }
 

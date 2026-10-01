@@ -122,6 +122,15 @@ impl TicketStore {
         reservation.subject
     }
 
+    /// Forgets every ticket issued to [subject]: what its old password
+    /// authorised is not to be redeemed after it changes.
+    pub fn revoke_subject(&self, subject: &str) {
+        self.entries
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .retain(|_, entry| entry.subject != subject);
+    }
+
     /// Makes a reservation usable again after the HTTP upgrade fails.
     pub fn rollback(&self, reservation: TicketReservation) {
         if let Some(entry) = self
@@ -378,5 +387,20 @@ mod tests {
         );
         store.rollback(reservation);
         assert_eq!(store.reserve(&ticket, Purpose::Terminal).map(|reservation| store.commit(reservation)).unwrap(), "admin");
+    }
+
+    #[test]
+    fn revoking_a_subject_takes_only_its_tickets() {
+        // A password change: what the old one authorised is not redeemed
+        // after it, and nobody else's is touched.
+        let store = TicketStore::new();
+        let mine = store.issue(Purpose::Stream, "admin").unwrap();
+        let theirs = store.issue(Purpose::Stream, "ops").unwrap();
+        store.revoke_subject("admin");
+        assert_eq!(
+            store.reserve(&mine, Purpose::Stream).err(),
+            Some(TicketError::Unknown)
+        );
+        assert!(store.reserve(&theirs, Purpose::Stream).is_ok());
     }
 }

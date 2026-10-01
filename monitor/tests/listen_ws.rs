@@ -5,6 +5,8 @@
 //! port the agent listened on, so the whole remote-forward path runs here:
 //! bind, announce, claim, relay.
 
+mod common;
+
 use std::sync::{Arc, Once};
 use std::time::Duration;
 
@@ -16,6 +18,7 @@ use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
 use ntex::ws::{self, WsClient, WsConnection};
 use rustls::crypto::ring;
+use server_box_monitor::api::authz::revoke_lost;
 use server_box_monitor::api::server::AppState;
 use server_box_monitor::api::ws::listen::listen_ws;
 use server_box_monitor::api::ws::stream::stream_ws;
@@ -38,14 +41,15 @@ async fn app_state(listen_public: bool) -> Arc<AppState> {
         ..Default::default()
     };
     let mut remote = config.get_remote_access();
-    remote.terminal.enabled = true;
+    remote.terminal.enabled = Some(true);
     remote.full_access = Some(true);
-    remote.listen_public = listen_public;
+    remote.listen_public = Some(listen_public);
     config.remote_access = Some(remote);
 
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
     sqlx::migrate!("./migrations").run(&db).await.unwrap();
 
+    common::seed_as_upgrade(&db, &config).await;
     AppState::new(Arc::new(config), db)
 }
 
@@ -177,7 +181,7 @@ async fn a_connection_is_only_taken_by_the_account_that_listened() {
         .unwrap()
         .to_string();
 
-    let (_, _, reply) = accept(&srv, &state, "someone-else", &id).await;
+    let (_, _, reply) = accept(&srv, &state, "intruder", &id).await;
     assert_eq!(reply["code"], "not_found");
     // Still there for its owner.
     let (_, _, reply) = accept(&srv, &state, "admin", &id).await;
@@ -255,15 +259,63 @@ async fn a_stream_ticket_is_not_a_listen_ticket() {
 }
 
 #[ntex::test]
-async fn revoking_full_access_closes_the_listener() {
+async fn taking_listen_away_closes_the_listener() {
     let state = app_state(false).await;
     let srv = test_server(state.clone()).await;
     let (io, codec, _) = listen(&srv, &state).await;
 
-    state
-        .full_access_off
-        .store(true, std::sync::atomic::Ordering::Release);
-    let _ = state.full_access_revoked.send(());
+    let mut grants = common::grants_of(&state.db, "admin").await;
+    grants.listen = None;
+    common::set_grants(&state.db, "admin", &grants).await;
+    revoke_lost(&state, "permission_revoked").await;
 
-    assert_eq!(next_control(&io, &codec).await["code"], "full_access_disabled");
+    assert_eq!(next_control(&io, &codec).await["code"], "permission_revoked");
+}
+
+#[ntex::test]
+async fn a_change_that_leaves_listen_alone_keeps_the_listener() {
+    // Every role change is broadcast; a listener whose own account kept what
+    // it needs must not be closed by somebody else's edit.
+    let state = app_state(false).await;
+    let srv = test_server(state.clone()).await;
+    let (io, codec, _) = listen(&srv, &state).await;
+
+    revoke_lost(&state, "permission_revoked").await;
+    send_text(&io, &codec, r#"{"type":"ping"}"#.into()).await;
+    assert_eq!(next_control(&io, &codec).await["type"], "pong");
+}
+
+#[ntex::test]
+async fn a_port_outside_the_roles_range_is_refused() {
+    let state = app_state(false).await;
+    let mut grants = common::grants_of(&state.db, "admin").await;
+    grants.listen = Some(server_box_monitor::core::permissions::ListenGrant {
+        public: false,
+        ports: Some([20000, 20010]),
+    });
+    common::set_grants(&state.db, "admin", &grants).await;
+    let srv = test_server(state.clone()).await;
+    let ticket = state.tickets.issue(Purpose::Listen, "admin").unwrap();
+    let (io, codec) = connect(&srv, "/api/v1/listen/ws", &ticket).await;
+
+    send_text(&io, &codec, r#"{"type":"listen","host":"127.0.0.1","port":0}"#.into()).await;
+    assert_eq!(next_control(&io, &codec).await["code"], "not_permitted");
+}
+
+#[ntex::test]
+async fn a_password_change_closes_the_listener() {
+    // The role is unchanged, so this is not what `revoke_lost` sees: what
+    // ends it is that the account's password moved on since it was opened —
+    // the reason to change a password is that someone else may have it.
+    let state = app_state(false).await;
+    let srv = test_server(state.clone()).await;
+    let (io, codec, _) = listen(&srv, &state).await;
+
+    let hash = bcrypt::hash("a-new-password", 4).unwrap();
+    server_box_monitor::db::accounts::set_password_hash(&state.db, "admin", &hash)
+        .await
+        .unwrap();
+    server_box_monitor::api::authz::end_account(&state, "admin", "permission_revoked");
+
+    assert_eq!(next_control(&io, &codec).await["code"], "permission_revoked");
 }

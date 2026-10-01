@@ -382,6 +382,233 @@ async fn unused_metric_tables_and_policies_are_removed_on_upgrade() {
     assert_eq!(system_metrics_exists.as_deref(), Some("system_metrics"));
 }
 
+/// Applies the migrations a release before roles shipped (001–009), from the
+/// same files, through the public migrator — so the database is the one that
+/// release left behind, and the full set then applies on top of it exactly as
+/// it does in the field.
+async fn migrate_through_009(pool: &SqlitePool) {
+    let dir = tempfile::tempdir().unwrap();
+    let source = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("migrations");
+    for entry in std::fs::read_dir(&source).unwrap() {
+        let path = entry.unwrap().path();
+        let name = path.file_name().unwrap().to_string_lossy().into_owned();
+        let version: i64 = name.split('_').next().unwrap().parse().unwrap();
+        if version <= 9 {
+            std::fs::copy(&path, dir.path().join(&name)).unwrap();
+        }
+    }
+    sqlx::migrate::Migrator::new(dir.path())
+        .await
+        .unwrap()
+        .run(pool)
+        .await
+        .unwrap();
+}
+
+/// Accounts and a watch token, written the way the release before roles
+/// wrote them: `ensure_admin_user` / `user set-password` inserted a name and a
+/// hash and left the timestamps to their defaults, `login` stamped
+/// `last_login` with `CURRENT_TIMESTAMP`, and `issue_watch_token` had no
+/// scope to write.
+async fn seed_like_the_release_before_roles(pool: &SqlitePool) {
+    for (name, hash) in [("admin", "$2b$12$hash-a"), ("ops", "$2b$12$hash-b")] {
+        sqlx::query("INSERT INTO users (username, password_hash) VALUES (?, ?)")
+            .bind(name)
+            .bind(hash)
+            .execute(pool)
+            .await
+            .unwrap();
+    }
+    sqlx::query("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE username = 'admin'")
+        .execute(pool)
+        .await
+        .unwrap();
+    sqlx::query(
+        "INSERT INTO watch_tokens(subject, client_id, token_hash, created_at, expires_at) \
+         VALUES ('admin', 'watch:one', 'deadbeef', 10, 99999999999)",
+    )
+    .execute(pool)
+    .await
+    .unwrap();
+}
+
+/// What an old `config.toml` with these switches parses to.
+fn old_config(toml: &str) -> server_box_monitor::core::config::Config {
+    toml::from_str(toml).unwrap()
+}
+
+async fn upgraded(config_toml: &str) -> SqlitePool {
+    let pool = pool().await;
+    migrate_through_009(&pool).await;
+    seed_like_the_release_before_roles(&pool).await;
+    sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+    server_box_monitor::db::bootstrap::ensure_roles(
+        &pool,
+        &old_config(config_toml),
+        server_box_monitor::core::permissions::InitPermissions::Read,
+    )
+    .await
+    .unwrap();
+    pool
+}
+
+#[tokio::test]
+async fn upgrading_to_roles_keeps_every_account_and_what_it_could_do() {
+    use server_box_monitor::core::permissions::{ConnectGrant, FilesGrant, FilesMode, ListenGrant};
+    use server_box_monitor::db::accounts;
+
+    let root = tempfile::tempdir().unwrap();
+    let pool = upgraded(&format!(
+        "[remote_access]\nfull_access = true\nlisten_public = true\n\
+         [remote_access.terminal]\nenabled = true\n\
+         [remote_access.fs]\nenabled = true\nroots = [{:?}]\n",
+        root.path().display().to_string()
+    ))
+    .await;
+
+    // Every account survives, each now an admin — which is what every login
+    // was before roles. `InitPermissions::Read` was passed and did nothing:
+    // it is a fresh install's choice, and this is not one.
+    let users = accounts::accounts(&pool).await.unwrap();
+    assert_eq!(users.len(), 2);
+    assert!(users.iter().all(|u| u.role == "admin"));
+    let admin = users.iter().find(|u| u.username == "admin").unwrap();
+    assert!(admin.last_login.as_deref().is_some_and(|t| t.contains('T')), "{admin:?}");
+    assert!(admin.created_at.is_some());
+    assert_eq!(
+        accounts::password_hash(&pool, "ops").await.unwrap().as_deref(),
+        Some("$2b$12$hash-b")
+    );
+
+    // And the admin role holds what those switches gave.
+    let role = accounts::role(&pool, "admin").await.unwrap().unwrap();
+    assert!(role.admin && role.builtin);
+    assert!(role.grants.shell && role.grants.ssh_terminal);
+    assert_eq!(role.grants.connect, Some(ConnectGrant::default()));
+    assert_eq!(
+        role.grants.listen,
+        Some(ListenGrant {
+            public: true,
+            ports: None
+        })
+    );
+    assert_eq!(
+        role.grants.files,
+        Some(FilesGrant {
+            mode: FilesMode::Write
+        })
+    );
+    let viewer = accounts::role(&pool, "viewer").await.unwrap().unwrap();
+    assert_eq!(viewer.grants, Default::default());
+
+    // The watch token is a read token, which is all it ever was.
+    let scope: String = sqlx::query_scalar("SELECT scope FROM watch_tokens")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(scope, "read");
+}
+
+#[tokio::test]
+async fn an_upgrade_grants_only_what_the_old_switches_effectively_gave() {
+    use server_box_monitor::db::accounts;
+
+    // `full_access` only counted while the terminal was enabled.
+    let pool = upgraded("[remote_access]\nfull_access = true\n").await;
+    let grants = accounts::role(&pool, "admin").await.unwrap().unwrap().grants;
+    assert_eq!(grants, Default::default());
+
+    // The terminal alone is the SSH terminal and nothing else.
+    let pool = upgraded("[remote_access]\nfull_access = false\n[remote_access.terminal]\nenabled = true\n").await;
+    let grants = accounts::role(&pool, "admin").await.unwrap().unwrap().grants;
+    assert!(grants.ssh_terminal && !grants.shell);
+    assert!(grants.connect.is_none() && grants.listen.is_none());
+
+    // The file API switched on with no roots served nothing.
+    let pool = upgraded("[remote_access.fs]\nenabled = true\n").await;
+    let grants = accounts::role(&pool, "admin").await.unwrap().unwrap().grants;
+    assert!(grants.files.is_none());
+}
+
+#[tokio::test]
+async fn roles_are_decided_once() {
+    use server_box_monitor::db::accounts;
+
+    let pool = upgraded("[remote_access]\nfull_access = false\n").await;
+    // A later start with switches that would have granted more changes
+    // nothing: the roles are the admin's now, not the file's.
+    server_box_monitor::db::bootstrap::ensure_roles(
+        &pool,
+        &old_config("[remote_access]\nfull_access = true\n[remote_access.terminal]\nenabled = true\n"),
+        server_box_monitor::core::permissions::InitPermissions::Full,
+    )
+    .await
+    .unwrap();
+    let grants = accounts::role(&pool, "admin").await.unwrap().unwrap().grants;
+    assert_eq!(grants, Default::default());
+}
+
+#[tokio::test]
+async fn a_fresh_install_starts_with_what_the_installer_chose() {
+    use server_box_monitor::core::permissions::{Grants, InitPermissions};
+
+    // The shipped example: written for roles, none of the moved keys in it.
+    let example = old_config(include_str!("../config.example.toml"));
+    for (init, expected) in [
+        (InitPermissions::Full, Grants::all()),
+        (InitPermissions::Read, Grants::none()),
+    ] {
+        let role = fresh_admin_role(&example, init).await;
+        assert!(role.admin, "the first account administers the agent either way");
+        assert_eq!(role.grants, expected, "{init}");
+    }
+}
+
+#[tokio::test]
+async fn a_fresh_install_with_an_old_config_grants_no_more_than_it_said() {
+    // A config written for the model before roles over a new database — a
+    // mounted file on a fresh volume, a declarative deployment. It said no
+    // shell, and the installer's default must not say yes.
+    use server_box_monitor::core::permissions::{Grants, InitPermissions};
+
+    let denied = old_config("[remote_access]\nfull_access = false\n");
+    let role = fresh_admin_role(&denied, InitPermissions::Full).await;
+    assert!(role.admin);
+    assert_eq!(role.grants, Grants::none());
+
+    // One that said `enabled = false` for the terminal is the same answer:
+    // presence is what counts, not the value.
+    let off = old_config("[remote_access.terminal]\nenabled = false\n");
+    assert_eq!(fresh_admin_role(&off, InitPermissions::Full).await.grants, Grants::none());
+
+    // And what it did allow is still a ceiling a `read` install stays under.
+    let open = old_config("[remote_access]\nfull_access = true\n[remote_access.terminal]\nenabled = true\n");
+    let full = fresh_admin_role(&open, InitPermissions::Full).await.grants;
+    assert!(full.shell && full.ssh_terminal);
+    assert!(full.files.is_none(), "no roots, no files");
+    assert_eq!(
+        fresh_admin_role(&open, InitPermissions::Read).await.grants,
+        Grants::none()
+    );
+}
+
+/// The admin role a fresh database ends up with under [config] and [init].
+async fn fresh_admin_role(
+    config: &server_box_monitor::core::config::Config,
+    init: server_box_monitor::core::permissions::InitPermissions,
+) -> server_box_monitor::core::permissions::Role {
+    use server_box_monitor::db::{accounts, bootstrap};
+    let dir = tempfile::tempdir().unwrap();
+    let database_url = format!("sqlite:{}", dir.path().join("data.db").display());
+    let pool = pool().await;
+    sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+    bootstrap::ensure_roles(&pool, config, init).await.unwrap();
+    bootstrap::ensure_admin_user(&pool, &database_url).await.unwrap();
+    let (name, role) = accounts::account(&pool, "admin").await.unwrap().unwrap();
+    assert_eq!(name, "admin");
+    role
+}
+
 /// The bytes of a migration that has already run somewhere are frozen.
 ///
 /// `Migrator::run` compares the checksum embedded in the binary against the one
@@ -408,6 +635,7 @@ fn shipped_migrations_keep_their_checksums() {
         (7, "d7726fdbe4fad21ac01dc6b9a3058550aa138829baff1e0968a259f33e9b182e60bc4b658e0227fd4418a3c0fbd0a1f5"),
         (8, "9961008300f34069365756a67bc45c596baaf1290ddf9825198377feeafe11901c08603bbcabcb14f2df943eacebe054"),
         (9, "f50849af86f5e456829df80ddb0c716540a23bd0a15527925bfb27f5e05b8dd567e83c6e1d08898a93135aa05052877b"),
+        (10, "92495a720d33186675f04e757b7e28756d1233ee2152be1f86fda8d48ee28d628419336de8f8ea742a575ddeea9d85c8"),
     ];
     let migrator = sqlx::migrate!("./migrations");
     let mut seen = std::collections::BTreeMap::new();
