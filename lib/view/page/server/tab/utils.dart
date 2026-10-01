@@ -78,7 +78,7 @@ extension _Actions on _ServerPageState {
         ref,
         srv,
         // Anchor the menu to the pressed row when possible.
-        at: at ?? (sheet ? null : _anchorUnder(ctx)),
+        at: at ?? (sheet ? null : contextMenuAnchorBelow(ctx)),
         sheet: sheet,
         // Said inside the menu only where the menu is not beside the thing it
         // is about: a sheet is at the bottom of the window, and a 44pt tile
@@ -97,13 +97,6 @@ extension _Actions on _ServerPageState {
     );
   }
 
-  /// The bottom left of whatever was pressed, in the window's coordinates.
-  Offset? _anchorUnder(BuildContext ctx) {
-    final box = ctx.findRenderObject();
-    if (box is! RenderBox || !box.hasSize) return null;
-    return box.localToGlobal(Offset(0, box.size.height));
-  }
-
   /// The three ways a server gets onto this device, in one place.
   ///
   /// The two import paths used to live in two different settings groups — a
@@ -115,26 +108,28 @@ extension _Actions on _ServerPageState {
   ///
   /// The cost is a tap: this used to open the editor directly. Adding a server
   /// is rare enough that finding the other two is worth more than saving it.
-  Future<void> _onTapAddServer() async {
-    final way = await context.showRoundDialog<_AddServerWay>(
-      title: libL10n.add,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (final way in _AddServerWay.values)
-            if (way.available)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Icon(way.icon),
-                title: Text(way.label),
-                onTap: () => context.popDialog(way),
-              ),
-        ],
-      ),
-      actions: Btn.cancel().toList,
+  ///
+  /// A menu dropped from [anchor], the button that was pressed, rather than a
+  /// dialog: three entries with nothing to read first, and a dialog took the
+  /// middle of the window and a cancel button to say so.
+  void _onTapAddServer(BuildContext anchor) {
+    showContextMenu(
+      anchor,
+      [
+        for (final way in _AddServerWay.values)
+          if (way.available)
+            ContextMenuAction(
+              text: way.label,
+              icon: way.icon,
+              onTap: () => unawaited(_addServer(way)),
+            ),
+      ],
+      at: contextMenuAnchorBelow(anchor),
     );
-    if (way == null || !mounted) return;
+  }
 
+  Future<void> _addServer(_AddServerWay way) async {
+    if (!mounted) return;
     switch (way) {
       case _AddServerWay.manual:
         unawaited(ServerEditPage.route.go(context));

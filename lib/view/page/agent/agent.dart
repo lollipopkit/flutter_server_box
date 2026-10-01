@@ -1,3 +1,4 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
@@ -5,7 +6,6 @@ import 'package:server_box/data/model/app/float_shell.dart';
 import 'package:server_box/data/provider/ai/agent_shell.dart';
 import 'package:server_box/view/page/agent/history.dart';
 import 'package:server_box/view/page/agent/view.dart';
-import 'package:server_box/view/widget/float_shell.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 
 /// The Agent tab.
@@ -68,17 +68,17 @@ class _FloatToggle extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final floating = ref.watch(agentShellProvider) != FloatShellMode.hidden;
-    return IconButton(
-      tooltip: context.l10n.floatOverTabs,
-      isSelected: floating,
-      onPressed: ref.read(agentShellProvider.notifier).toggle,
-      icon: const Icon(
-        Icons.picture_in_picture_alt_outlined,
-        size: floatHeaderIconSize,
-      ),
-      selectedIcon: const Icon(
-        Icons.picture_in_picture_alt,
-        size: floatHeaderIconSize,
+    // The tab's bar, so the 18pt `Btn.icon` the other tabs' bars use — on in
+    // the accent, as the server tab's globe toggle is.
+    return Btn.icon(
+      text: context.l10n.floatOverTabs,
+      onTap: ref.read(agentShellProvider.notifier).toggle,
+      icon: Icon(
+        floating
+            ? Icons.picture_in_picture_alt
+            : Icons.picture_in_picture_alt_outlined,
+        size: 18,
+        color: floating ? Theme.of(context).colorScheme.primary : null,
       ),
     );
   }

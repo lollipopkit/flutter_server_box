@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/widgets.dart';
 
 /// Every measurement a server card is built from, at both of its sizes.
@@ -43,6 +45,23 @@ abstract final class ServerCardSizes {
   /// a shape in — and the facts are what can afford to wait, since they are
   /// the part of the page that does not move.
   static const columnsWidth = 800.0;
+
+  /// The widest the readings get, and so the chart.
+  ///
+  /// A chart is a fixed height, so past this a wider one is a flatter line
+  /// rather than more to read. The page keeps its content to this plus the
+  /// facts column and centres it — see [contentMax].
+  static const readingsMax = 760.0;
+
+  /// The widest the page's content gets: the readings at [readingsMax] and the
+  /// facts beside them. Inside the page's own [pageSide] on either side.
+  static const contentMax = readingsMax + asideGap + aside;
+
+  /// What a page [pageWidth] wide leaves either side of its content once that
+  /// is held to [contentMax]. The page and the card growing into it both ask
+  /// this, so the two centre the content at the same place.
+  static double contentGutter(double pageWidth) =>
+      math.max(0.0, pageWidth - 2 * pageSide - contentMax) / 2;
 
   /// What the card adds to the grid's own padding once it is the page.
   ///

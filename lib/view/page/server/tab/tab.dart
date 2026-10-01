@@ -39,6 +39,8 @@ import 'package:server_box/view/page/server/tab/selection_bar.dart';
 import 'package:server_box/view/page/server/tab/strip.dart';
 import 'package:server_box/view/page/server/text_scale.dart';
 import 'package:server_box/view/page/setting/entry.dart';
+import 'package:server_box/view/widget/dist_icon.dart';
+import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/server_globe.dart';
 import 'package:server_box/view/widget/server_share.dart';
 
@@ -47,6 +49,7 @@ part 'bulk.dart';
 part 'detail_host.dart';
 part 'grid.dart';
 part 'landscape.dart';
+part 'pane.dart';
 part 'sheets.dart';
 part 'utils.dart';
 
@@ -275,6 +278,10 @@ class _ServerPageState extends ConsumerState<ServerPage>
   /// under it a page-height too low until the card had landed, and then they
   /// travelled up — a second movement after the first. See [MasonryMemory].
   final _gridMemory = MasonryMemory();
+
+  /// What the list is drawn as while a card is out of it — see
+  /// [_Grid._buildGrid], which holds it.
+  ServerListDensity? _heroDensity;
 
   /// Whether the detail's own chrome is up: the facts beside the readings and
   /// the row of things to do under them.

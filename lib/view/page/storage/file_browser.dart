@@ -1107,10 +1107,18 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
       // every mobile build the one visible `+` in this tab belonged to the
       // *server* list and adding a file had no button at all.
       if (!widget.args.isPickFile && !widget.args.isPickDir)
-        Btn.icon(
-          text: libL10n.add,
-          icon: const Icon(Icons.add, size: 18),
-          onTap: () => showContextMenu(context, _createActions),
+        // Its own context, so the menu drops from this button rather than
+        // opening as a dialog in the middle of the page.
+        Builder(
+          builder: (ctx) => Btn.icon(
+            text: libL10n.add,
+            icon: const Icon(Icons.add, size: 18),
+            onTap: () => showContextMenu(
+              ctx,
+              _createActions,
+              at: contextMenuAnchorBelow(ctx),
+            ),
+          ),
         ),
       _buildViewBtn(),
       Btn.icon(text: libL10n.search, icon: const Icon(Icons.search, size: 18), onTap: _search.start),

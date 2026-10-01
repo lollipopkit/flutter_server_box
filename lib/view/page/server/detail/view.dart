@@ -584,7 +584,14 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
       // Match the grid's top inset so the card-to-detail transition does not
       // introduce a vertical jump.
       padding: EdgeInsets.fromLTRB(13, 4, 13, bottomInset + 13),
-      child: wide
+      // Held to a width and centred inside a scroll view that still has the
+      // whole page, so the page scrolls from anywhere over it.
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: ServerCardSizes.contentMax,
+          ),
+          child: wide
           ? Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -602,6 +609,8 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [...metrics, UIs.height13, aside],
             ),
+        ),
+      ),
     );
   }
 

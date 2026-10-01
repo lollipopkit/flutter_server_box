@@ -204,9 +204,8 @@ extension _Bar on _ServerPageState {
   ///
   /// The same shape the terminal tab's switcher has — position, name, chevron
   /// — because it answers the same question: this is one of several, and here
-  /// is how to reach the others. The strip of pills over the card is the same
-  /// list; this is what is left of it once there are more machines than pills
-  /// that fit.
+  /// is how to reach the others. The column beside the card is the same list;
+  /// this is what is left of it where there is no room for one.
   Widget _buildServerSwitcher(String openId, List<String> filtered) {
     final at = filtered.indexOf(openId);
     final spi = ref.read(serversProvider).servers[openId];
@@ -252,10 +251,13 @@ extension _Bar on _ServerPageState {
           onTap: _toggleGlobe,
         ),
       ),
-    Btn.icon(
-      text: libL10n.add,
-      icon: const Icon(Icons.add, size: 18),
-      onTap: _onTapAddServer,
+    // Its own context, so the menu drops from this button.
+    Builder(
+      builder: (ctx) => Btn.icon(
+        text: libL10n.add,
+        icon: const Icon(Icons.add, size: 18),
+        onTap: () => _onTapAddServer(ctx),
+      ),
     ),
   ];
 

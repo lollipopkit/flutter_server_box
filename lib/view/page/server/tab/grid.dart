@@ -68,8 +68,158 @@ extension _Grid on _ServerPageState {
     // takes the list from cards to lines, with its width unchanged.
     final others = <(double, ServerListDensity), Map<String, Widget>>{};
 
-    final grid = LayoutBuilder(
+    Widget gridOf(
+      BoxConstraints cons,
+      ServerListDensity density,
+      double pageInset,
+    ) {
+      final rest = others.putIfAbsent(
+        (cons.maxWidth, density),
+        () => {
+          for (final id in filtered)
+            if (id != heroId)
+              id: Consumer(
+                key: ValueKey(id),
+                builder: (_, ref, _) => _buildEachServerCard(
+                  ref.watch(serverProvider(id)),
+                  // How far the *page* has taken over, which is what fades
+                  // the cards that are not the one being opened. An
+                  // animation rather than a number, so the widget this
+                  // returns is the one it returned last frame and Flutter
+                  // skips it outright.
+                  fade: hero ? _othersOpacity : null,
+                  density: density,
+                  pageWidth: cons.maxWidth,
+                  expanded: unfolded(id),
+                ),
+              ),
+        },
+      );
+      // Every one of them, the whole way through. The rest used to be
+      // taken out of the list while one was open, which made them leave
+      // and then arrive again — a card growing in and shuffling into
+      // place for each of them, on a page nobody had asked to rearrange.
+      // They fade instead, and their slots are held for them.
+      //
+      // Its own `Consumer` per card, so a status poll rebuilds the one card
+      // whose server answered rather than the grid. Watched from this page's
+      // `ref` — which is what a builder would have to do — any server's
+      // reading landing rebuilt every card on screen.
+      Widget cardOf(String id) =>
+          rest[id] ??
+          Consumer(
+            key: ValueKey(id),
+            builder: (_, ref, _) => _buildEachServerCard(
+              ref.watch(serverProvider(id)),
+              openness: _open.value,
+              density: density,
+              // The box the page will have, which is this same box: the
+              // grid and the page it becomes are the two children of one
+              // crossing. The page asks its own width the same question, so
+              // both arrive at the same answer about the facts column.
+              pageWidth: cons.maxWidth - pageInset,
+              expanded: unfolded(id),
+            ),
+          );
+
+      // One section, or the whole list as one. [scrollable] is off for a
+      // grouped list, where the page owns the scrolling and each section is
+      // laid out inside it.
+      AnimatedMasonry masonry(List<String> ids, {required bool scrollable}) =>
+          AnimatedMasonry(
+            controller: scrollable ? _scrollController : null,
+            scrollable: scrollable,
+            // Constant. The card growing out of the grid needs the page's
+            // inset rather than the grid's, but taking it from here would
+            // change every column's width — so every other card would slide
+            // sideways for a movement that is not about them. The card makes
+            // up the difference in its own padding instead.
+            padding: scrollable ? MasonryList.kPadding : EdgeInsets.zero,
+            // The cards make way at the same pace as the one growing, so the
+            // whole thing reads as one movement rather than as a card
+            // growing into a grid that is still settling.
+            moveDuration: context.motion(_kOpenDuration),
+            changeDuration: context.motion(Durations.medium2),
+            // The column each shape wants: a line per machine takes the
+            // width, a tile takes as little as a name needs, and a card
+            // takes the one width the rest of the app lays a column out at.
+            columnWidth: switch (density) {
+              ServerListDensity.grid => 170.0,
+              ServerListDensity.rows => double.infinity,
+              _ => UIs.columnWidth,
+            },
+            // And how much air each shape wants around it: a wall of tiles
+            // reads as a wall at the design's 5, and a list of lines as a
+            // list at nothing at all.
+            spacing: switch (density) {
+              ServerListDensity.grid => 5.0,
+              ServerListDensity.rows => 0.0,
+              _ => MasonryList.kSpacing,
+            },
+            // Only the section the card is in: the others have no card to
+            // expand, and a key they do not hold is one they ignore.
+            expandedKey: hero && ids.contains(heroId)
+                ? ValueKey(heroId)
+                : null,
+            expansion: _open.value,
+            expandedInset: EdgeInsets.only(left: pageInset),
+            // One for every section: a card is known by its server, and is
+            // the same height whichever section it is in.
+            memory: _gridMemory,
+            children: [for (final id in ids) cardOf(id)],
+          );
+
+      if (groups == null) {
+        return AnimatedBuilder(
+          animation: _open,
+          builder: (_, _) => masonry(filtered, scrollable: true),
+        );
+      }
+
+      // A section each, under one scroll position. A masonry per section
+      // rather than one with headings in it: the headings span the row and a
+      // masonry lays its children into columns, so a heading placed in one
+      // would sit in a column beside the cards it is a heading for.
+      //
+      // The cost is that a card moving between sections — a tag edited — is
+      // a card leaving one grid and arriving in another rather than one
+      // travelling, which is a fade rather than a flight. That is the right
+      // way round: what moved it was not the list rearranging itself.
+      return AnimatedBuilder(
+        animation: _open,
+        builder: (_, _) => SingleChildScrollView(
+          controller: _scrollController,
+          padding: MasonryList.kPadding,
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final (at, group) in groups.indexed) ...[
+                ServerGroupHeading(
+                  label: group.label,
+                  ids: group.items,
+                  first: at == 0,
+                ),
+                masonry(group.items, scrollable: false),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
+
+    // [pageInset] is how much of the grid's left the page the card becomes
+    // leaves to the column beside it — see [_buildPanes].
+    Widget grid(double pageInset) => LayoutBuilder(
       builder: (_, cons) {
+        // Held for as long as a card is out of the grid. The box this is laid
+        // out in gets taller as the overview above it folds away, and `auto`
+        // asks the box's height — so the card being opened could change shape
+        // halfway through becoming the page, and the rest of the list with it.
+        if (hero ? _heroDensity : null case final held?) {
+          return gridOf(cons, held, pageInset);
+        }
         // What `auto` comes to here, whether or not it is what is chosen: the
         // bar says so beside the choice — see [_publishAuto].
         final auto = ServerListDensity.auto.resolve(
@@ -87,139 +237,8 @@ extension _Grid on _ServerPageState {
                 viewport: cons.biggest,
                 folded: folded,
               );
-        final rest = others.putIfAbsent(
-          (cons.maxWidth, density),
-          () => {
-            for (final id in filtered)
-              if (id != heroId)
-                id: Consumer(
-                  key: ValueKey(id),
-                  builder: (_, ref, _) => _buildEachServerCard(
-                    ref.watch(serverProvider(id)),
-                    // How far the *page* has taken over, which is what fades
-                    // the cards that are not the one being opened. An
-                    // animation rather than a number, so the widget this
-                    // returns is the one it returned last frame and Flutter
-                    // skips it outright.
-                    fade: hero ? _othersOpacity : null,
-                    density: density,
-                    pageWidth: cons.maxWidth,
-                    expanded: unfolded(id),
-                  ),
-                ),
-          },
-        );
-        // Every one of them, the whole way through. The rest used to be
-        // taken out of the list while one was open, which made them leave
-        // and then arrive again — a card growing in and shuffling into
-        // place for each of them, on a page nobody had asked to rearrange.
-        // They fade instead, and their slots are held for them.
-        //
-        // Its own `Consumer` per card, so a status poll rebuilds the one card
-        // whose server answered rather than the grid. Watched from this page's
-        // `ref` — which is what a builder would have to do — any server's
-        // reading landing rebuilt every card on screen.
-        Widget cardOf(String id) =>
-            rest[id] ??
-            Consumer(
-              key: ValueKey(id),
-              builder: (_, ref, _) => _buildEachServerCard(
-                ref.watch(serverProvider(id)),
-                openness: _open.value,
-                density: density,
-                // The box the page will have, which is this same box: the
-                // grid and the page it becomes are the two children of one
-                // crossing. The page asks its own width the same question, so
-                // both arrive at the same answer about the facts column.
-                pageWidth: cons.maxWidth,
-                expanded: unfolded(id),
-              ),
-            );
-
-        // One section, or the whole list as one. [scrollable] is off for a
-        // grouped list, where the page owns the scrolling and each section is
-        // laid out inside it.
-        AnimatedMasonry masonry(List<String> ids, {required bool scrollable}) =>
-            AnimatedMasonry(
-              controller: scrollable ? _scrollController : null,
-              scrollable: scrollable,
-              // Constant. The card growing out of the grid needs the page's
-              // inset rather than the grid's, but taking it from here would
-              // change every column's width — so every other card would slide
-              // sideways for a movement that is not about them. The card makes
-              // up the difference in its own padding instead.
-              padding: scrollable ? MasonryList.kPadding : EdgeInsets.zero,
-              // The cards make way at the same pace as the one growing, so the
-              // whole thing reads as one movement rather than as a card
-              // growing into a grid that is still settling.
-              moveDuration: context.motion(_kOpenDuration),
-              changeDuration: context.motion(Durations.medium2),
-              // The column each shape wants: a line per machine takes the
-              // width, a tile takes as little as a name needs, and a card
-              // takes the one width the rest of the app lays a column out at.
-              columnWidth: switch (density) {
-                ServerListDensity.grid => 170.0,
-                ServerListDensity.rows => double.infinity,
-                _ => UIs.columnWidth,
-              },
-              // And how much air each shape wants around it: a wall of tiles
-              // reads as a wall at the design's 5, and a list of lines as a
-              // list at nothing at all.
-              spacing: switch (density) {
-                ServerListDensity.grid => 5.0,
-                ServerListDensity.rows => 0.0,
-                _ => MasonryList.kSpacing,
-              },
-              // Only the section the card is in: the others have no card to
-              // expand, and a key they do not hold is one they ignore.
-              expandedKey: hero && ids.contains(heroId)
-                  ? ValueKey(heroId)
-                  : null,
-              expansion: _open.value,
-              // One for every section: a card is known by its server, and is
-              // the same height whichever section it is in.
-              memory: _gridMemory,
-              children: [for (final id in ids) cardOf(id)],
-            );
-
-        if (groups == null) {
-          return AnimatedBuilder(
-            animation: _open,
-            builder: (_, _) => masonry(filtered, scrollable: true),
-          );
-        }
-
-        // A section each, under one scroll position. A masonry per section
-        // rather than one with headings in it: the headings span the row and a
-        // masonry lays its children into columns, so a heading placed in one
-        // would sit in a column beside the cards it is a heading for.
-        //
-        // The cost is that a card moving between sections — a tag edited — is
-        // a card leaving one grid and arriving in another rather than one
-        // travelling, which is a fade rather than a flight. That is the right
-        // way round: what moved it was not the list rearranging itself.
-        return AnimatedBuilder(
-          animation: _open,
-          builder: (_, _) => SingleChildScrollView(
-            controller: _scrollController,
-            padding: MasonryList.kPadding,
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (final (at, group) in groups.indexed) ...[
-                  ServerGroupHeading(
-                    label: group.label,
-                    ids: group.items,
-                    first: at == 0,
-                  ),
-                  masonry(group.items, scrollable: false),
-                ],
-              ],
-            ),
-          ),
-        );
+        _heroDensity = hero ? density : null;
+        return gridOf(cons, density, pageInset);
       },
     );
 
@@ -231,49 +250,24 @@ extension _Grid on _ServerPageState {
     // and not painted until the card hands them over, since the card is
     // already drawing exactly those widgets in exactly those boxes.
     //
-    // The strip above both belongs to neither: it is what the list becomes
-    // while one of its cards is open, so it stays whichever of the two is on
-    // screen — or neither, when the setting turns it off. The bar's own
-    // switcher still reaches every machine.
+    // The overview above both belongs to neither: it is what the list adds
+    // up to, so it folds away while one of its cards is open — or is not
+    // there at all, when the setting turns it off.
     final body = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ValBuilder(
           listenable: Stores.setting.serverOverview.listenable(),
           builder: (shown) => shown
-              ? ServerStrip(
-                  ids: filtered,
-                  openId: openId,
-                  open: _open,
-                  onOpen: _openDetail,
-                )
+              ? ServerStrip(ids: filtered, openId: openId, open: _open)
               : UIs.placeholder,
         ),
         Expanded(
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              if (hero) _buildOpenDetail(heroId),
-              // Dropped the moment the page takes the readings over rather
-              // than crossed with it: at that point both are drawing the same
-              // widgets in the same places, so a crossing would have nothing
-              // to carry and 200ms to carry it in.
-              if (!_detailShowing)
-                KeyedSubtree(key: const ValueKey('cards'), child: grid),
-              // Above both, and the tab's rather than the page's — see
-              // [ServerOpenFuncBar].
-              if (hero)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: ServerOpenFuncBar(
-                    id: heroId,
-                    open: _open,
-                    visible: _funcBarVisible,
-                  ),
-                ),
-            ],
+          child: _buildPanes(
+            filtered: filtered,
+            openId: openId,
+            heroId: hero ? heroId : null,
+            grid: grid,
           ),
         ),
       ],
@@ -298,7 +292,6 @@ extension _Grid on _ServerPageState {
       child: body,
     );
   }
-
 
   Future<void> _refreshAll() async {
     await ref.read(serversProvider.notifier).refresh();

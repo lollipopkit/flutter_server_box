@@ -134,9 +134,9 @@ extension _Sheets on _ServerPageState {
 
   /// Every machine, for picking one without going back to the grid.
   ///
-  /// The strip of pills over an open card is this same list and answers it for
-  /// a handful; past that they stop fitting, and what a longer one wants is
-  /// something to type into and the tags to group by.
+  /// The column beside an open card is this same list, where there is room
+  /// for one; this is for where there is not, and for a list long enough to
+  /// want something to type into and the tags to group by.
   Future<void> _showServerSheet(List<String> filtered, String openId) async {
     final picked = await showServerSwitcher(
       context,

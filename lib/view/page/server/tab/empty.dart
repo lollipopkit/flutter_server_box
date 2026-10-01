@@ -50,8 +50,9 @@ class ServerListEmpty extends StatelessWidget {
   /// Goes back to every tag, which is the way out of an empty one.
   final VoidCallback onClearTag;
 
-  /// Starts adding a server, which is the way out of there being none.
-  final VoidCallback onAdd;
+  /// Starts adding a server, which is the way out of there being none. Given
+  /// the button, which is what the choices drop from.
+  final ValueChanged<BuildContext> onAdd;
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +83,9 @@ class ServerListEmpty extends StatelessWidget {
       icon: BoxIcons.bx_server,
       title: l10n.serverTabEmpty,
       label: l10n.addServerTip,
-      action: Btn.text(text: libL10n.add, onTap: onAdd),
+      action: Builder(
+        builder: (ctx) => Btn.text(text: libL10n.add, onTap: () => onAdd(ctx)),
+      ),
     );
   }
 }

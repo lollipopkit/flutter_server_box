@@ -8,10 +8,10 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
 
-/// Which machine to look at, when there are more of them than pills that fit.
+/// Which machine to look at, from the bar over an open one.
 ///
-/// The strip over an open card is the list itself and answers this for a
-/// handful; past that it stops fitting, and what is wanted instead is exactly
+/// The column beside an open card is the list itself and answers this where
+/// the window has room for it; a narrower one, or a long list, wants exactly
 /// what a long list wants — something to type into and the tags to group by.
 ///
 /// Answers the chosen server's id, or null if the sheet was simply closed.
@@ -124,6 +124,9 @@ class _SwitcherSheetState extends ConsumerState<_SwitcherSheet> {
                     // Off, or the field's own baseline makes the hint and the
                     // value sit at two different heights in a 34pt pill.
                     strutStyle: StrutStyle.disabled,
+                    // The icon makes the field 34 tall and the line is 13, so
+                    // left at the top it sat above the icon beside it.
+                    textAlignVertical: TextAlignVertical.center,
                     decoration: bareInputDecoration(
                       isDense: true,
                       hintText: '${libL10n.search} · #${libL10n.tag}',

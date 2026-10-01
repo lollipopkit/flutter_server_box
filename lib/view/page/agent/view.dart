@@ -17,7 +17,12 @@ class AgentHeaderActions extends StatelessWidget {
     super.key,
     this.showConversations = false,
     this.scope,
+    this.tabBar = false,
   });
+
+  /// Drawn in the tab's bar, which is drawn as every other tab's — see
+  /// [agentHeaderButton].
+  final bool tabBar;
 
   /// Whether to carry the history and new-chat buttons.
   ///
@@ -33,22 +38,47 @@ class AgentHeaderActions extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (showConversations) ...[
-          IconButton(
+          agentHeaderButton(
+            tabBar: tabBar,
             tooltip: context.l10n.askAiHistory,
-            onPressed: () => showAgentHistorySheet(context, scope: scope),
-            icon: const Icon(Icons.history, size: floatHeaderIconSize),
+            onTap: () => showAgentHistorySheet(context, scope: scope),
+            icon: Icons.history,
           ),
-          IconButton(
+          agentHeaderButton(
+            tabBar: tabBar,
             tooltip: context.l10n.askAiNewConversation,
-            onPressed: () => AgentChats.startNew(scope),
-            icon: const Icon(Icons.add, size: floatHeaderIconSize),
+            onTap: () => AgentChats.startNew(scope),
+            icon: Icons.add,
           ),
         ],
         // Only the app-wide Agent opens connections of its own.
-        if (scope == null) const _AdHocSessionsButton(),
+        if (scope == null) _AdHocSessionsButton(tabBar: tabBar),
       ],
     );
   }
+}
+
+/// One button of an Agent header.
+///
+/// In the tab's bar, the `Btn.icon` at 18pt that every other tab's bar draws
+/// its actions with. Elsewhere — the floating shell's title bar, the terminal's
+/// sheet — an `IconButton` at [floatHeaderIconSize], which those bars are
+/// measured for.
+///
+/// [badge] is a count drawn on the icon's corner.
+Widget agentHeaderButton({
+  required bool tabBar,
+  required String tooltip,
+  required VoidCallback onTap,
+  required IconData icon,
+  int? badge,
+}) {
+  final glyph = Icon(icon, size: tabBar ? 18 : floatHeaderIconSize);
+  final drawn = badge == null
+      ? glyph
+      : Badge.count(count: badge, child: glyph);
+  if (tabBar) return Btn.icon(text: tooltip, icon: drawn, onTap: onTap);
+  return IconButton(tooltip: tooltip, onPressed: onTap, icon: drawn);
 }
 
 /// How many hosts the Agent has open that are not configured servers.
@@ -57,19 +87,20 @@ class AgentHeaderActions extends StatelessWidget {
 /// no server row — and a connection the model opened and forgot about should
 /// not be something only the model knows exists.
 class _AdHocSessionsButton extends ConsumerWidget {
-  const _AdHocSessionsButton();
+  const _AdHocSessionsButton({required this.tabBar});
+
+  final bool tabBar;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final sessions = ref.watch(adHocSshSessionsProvider);
     if (sessions.isEmpty) return const SizedBox.shrink();
-    return IconButton(
+    return agentHeaderButton(
+      tabBar: tabBar,
       tooltip: context.l10n.agentAdHocSessions,
-      onPressed: () => _show(context),
-      icon: Badge.count(
-        count: sessions.length,
-        child: const Icon(Icons.cable, size: floatHeaderIconSize),
-      ),
+      onTap: () => _show(context),
+      icon: Icons.cable,
+      badge: sessions.length,
     );
   }
 
@@ -245,13 +276,17 @@ class AgentConversationView extends StatelessWidget {
                   ),
                 ),
               ),
-              if (id != null)
-                IconButton(
+              // Only where the list is out of sight: beside it, the list's
+              // own `+` is the one, and a second here was the same button
+              // twice in one window.
+              if (id != null && compact)
+                agentHeaderButton(
+                  tabBar: true,
                   tooltip: context.l10n.askAiNewConversation,
-                  onPressed: () => AgentChats.startNew(scope),
-                  icon: const Icon(Icons.add, size: floatHeaderIconSize),
+                  onTap: () => AgentChats.startNew(scope),
+                  icon: Icons.add,
                 ),
-              AgentHeaderActions(scope: scope),
+              AgentHeaderActions(scope: scope, tabBar: true),
               ?headerTrailing,
             ],
           ),

@@ -193,7 +193,12 @@ extension on _ServerDetailPageState {
                 ),
                 const SizedBox(width: 9),
               ],
-              Flexible(child: _buildRangeChips(si, wide: wide)),
+              // Its own width, first: the chips are a row of fixed labels
+              // that cannot shrink, while the note beside them can ellipsize.
+              // Flexible as well, the two split what was left evenly, and on
+              // a page just past two columns the chips were handed less than
+              // they are wide.
+              _buildRangeChips(si, wide: wide),
             ],
           ),
         ),

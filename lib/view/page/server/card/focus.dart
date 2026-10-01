@@ -500,14 +500,11 @@ class ServerCardSwitch extends StatelessWidget {
   /// it is named an inch above the menu. What each reads now is beside its
   /// name, because that is usually the reason for picking it.
   void _pickReading(BuildContext context, List<ServerMetric> others) {
-    final box = context.findRenderObject();
     // Under the button in every window, a phone's included: what it hangs off
     // is a control the size of a finger, not a card the height of the screen,
     // so there is always somewhere to put it. A sheet only when there is
     // nothing to measure.
-    final at = box is RenderBox && box.hasSize
-        ? box.localToGlobal(Offset(0, box.size.height))
-        : null;
+    final at = contextMenuAnchorBelow(context);
     showContextMenu(
       context,
       [

@@ -364,6 +364,11 @@ class ServerCard extends StatelessWidget {
     );
 
     final reserved = asideAtEnd * t;
+    // Where the page centres its content, which only a page with readings
+    // does: a notice is laid out across the whole width.
+    final gutter = hasContent
+        ? ServerCardSizes.contentGutter(pageWidth) * t
+        : 0.0;
 
     return Padding(
       // At rest the card's own inset. At the end, what is left of the page's
@@ -382,7 +387,7 @@ class ServerCard extends StatelessWidget {
             ServerCardSizes.openInset,
             t,
           )! +
-          EdgeInsets.only(right: reserved),
+          EdgeInsets.only(left: gutter, right: reserved + gutter),
       // As tall as what is in it, which with nothing to report is the title.
       // It was held to 30, from when a progress line under the title made up
       // the difference; the title is 23, so without that line the other 7 sat
