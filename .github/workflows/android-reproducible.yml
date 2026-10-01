@@ -139,7 +139,6 @@ jobs:
           set -euo pipefail
           apk="build/app/outputs/apk/release/${{ matrix.apk_name }}"
           manifest="$RUNNER_TEMP/NativeAssetsManifest-${{ matrix.instance }}-${{ matrix.abi }}.json"
-          library="$RUNNER_TEMP/libsbm_ffi-${{ matrix.instance }}-${{ matrix.abi }}.so"
 
           unzip -p "$apk" assets/flutter_assets/NativeAssetsManifest.json > "$manifest"
           jq -e --arg target "${{ matrix.native_target }}" \
@@ -149,14 +148,19 @@ jobs:
               exit 1
             }
 
-          unzip -p "$apk" "lib/${{ matrix.jni_abi }}/libsbm_ffi.so" > "$library"
-          for forbidden in \
-            "$RUNNER_TEMP/${{ matrix.source_directory }}" \
-            "$HOME/.cargo"; do
-            if grep -aFq -- "$forbidden" "$library"; then
-              echo "::error::libsbm_ffi.so contains host path: $forbidden"
-              exit 1
-            fi
+          # Every library a build hook compiles from Rust (and the C its
+          # crates bring along).
+          for name in libsbm_ffi libfl_pi_llm; do
+            library="$RUNNER_TEMP/$name-${{ matrix.instance }}-${{ matrix.abi }}.so"
+            unzip -p "$apk" "lib/${{ matrix.jni_abi }}/$name.so" > "$library"
+            for forbidden in \
+              "$RUNNER_TEMP/${{ matrix.source_directory }}" \
+              "$HOME/.cargo"; do
+              if grep -aFq -- "$forbidden" "$library"; then
+                echo "::error::$name.so contains host path: $forbidden"
+                exit 1
+              fi
+            done
           done
 
       - name: Upload unsigned APK
