@@ -284,6 +284,198 @@ type RootTranslation = {
 	 */
 	cancel: string
 	/**
+	 * P​o​w​e​r
+	 */
+	powerControl: string
+	/**
+	 * S​h​u​t​ ​d​o​w​n
+	 */
+	powerShutdown: string
+	/**
+	 * R​e​b​o​o​t
+	 */
+	powerReboot: string
+	/**
+	 * S​u​s​p​e​n​d
+	 */
+	powerSuspend: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​s​t​o​p​s​ ​w​i​t​h​ ​t​h​e​ ​m​a​c​h​i​n​e​,​ ​s​o​ ​t​h​i​s​ ​p​a​n​e​l​ ​c​a​n​n​o​t​ ​s​t​a​r​t​ ​i​t​ ​a​g​a​i​n​.​ ​A​n​y​t​h​i​n​g​ ​r​u​n​n​i​n​g​ ​o​n​ ​i​t​ ​e​n​d​s​.
+	 */
+	powerNote: string
+	/**
+	 * S​u​d​o​ ​p​a​s​s​w​o​r​d
+	 */
+	powerPassword: string
+	/**
+	 * L​e​a​v​e​ ​b​l​a​n​k​ ​w​h​e​n​ ​t​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​a​s​ ​r​o​o​t​,​ ​o​r​ ​w​h​e​n​ ​i​t​s​ ​a​c​c​o​u​n​t​ ​h​a​s​ ​p​a​s​s​w​o​r​d​l​e​s​s​ ​s​u​d​o​ ​f​o​r​ ​t​h​i​s​ ​c​o​m​m​a​n​d​.
+	 */
+	powerPasswordHint: string
+	/**
+	 * T​h​e​ ​m​a​c​h​i​n​e​ ​r​e​f​u​s​e​d​ ​t​h​a​t​ ​p​a​s​s​w​o​r​d​.​ ​N​o​t​h​i​n​g​ ​h​a​p​p​e​n​e​d​.
+	 */
+	powerRejected: string
+	/**
+	 * T​h​e​ ​c​o​m​m​a​n​d​ ​f​a​i​l​e​d​.
+	 */
+	powerFailed: string
+	/**
+	 * N​o​ ​a​n​s​w​e​r​ ​c​a​m​e​ ​b​a​c​k​,​ ​w​h​i​c​h​ ​i​s​ ​w​h​a​t​ ​a​ ​m​a​c​h​i​n​e​ ​a​l​r​e​a​d​y​ ​g​o​i​n​g​ ​d​o​w​n​ ​l​o​o​k​s​ ​l​i​k​e​.
+	 */
+	powerTimeout: string
+	/**
+	 * S​e​n​t​:​ ​{​a​c​t​i​o​n​}​.​ ​I​f​ ​t​h​e​ ​m​a​c​h​i​n​e​ ​i​s​ ​g​o​i​n​g​ ​d​o​w​n​,​ ​t​h​i​s​ ​p​a​n​e​l​ ​l​o​s​e​s​ ​i​t​ ​u​n​t​i​l​ ​i​t​ ​i​s​ ​b​a​c​k​.
+	 * @param {unknown} action
+	 */
+	powerActionSent: RequiredParams<'action'>
+	/**
+	 * M​a​n​a​g​e​ ​m​a​c​h​i​n​e
+	 */
+	manageMachine: string
+	/**
+	 * C​P​U
+	 */
+	processCpu: string
+	/**
+	 * T​h​e​ ​t​a​b​l​e​ ​d​i​d​ ​n​o​t​ ​f​i​n​i​s​h​ ​p​r​i​n​t​i​n​g​ ​i​n​ ​t​i​m​e​,​ ​s​o​ ​n​o​t​h​i​n​g​ ​i​s​ ​s​h​o​w​n​ ​h​e​r​e​.
+	 */
+	processDidNotFinish: string
+	/**
+	 * T​h​e​ ​m​a​c​h​i​n​e​ ​p​r​i​n​t​e​d​ ​a​n​ ​e​m​p​t​y​ ​t​a​b​l​e​.
+	 */
+	processEmpty: string
+	/**
+	 * F​o​r​c​e​ ​k​i​l​l
+	 */
+	processForceKill: string
+	/**
+	 * T​h​e​ ​m​a​c​h​i​n​e​ ​p​r​i​n​t​e​d​ ​r​o​w​s​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​d​.​ ​T​h​e​y​ ​a​r​e​ ​n​o​t​ ​l​i​s​t​e​d​ ​h​e​r​e​.
+	 */
+	processIssue: string
+	/**
+	 * S​h​o​w​ ​{​c​o​u​n​t​}​ ​k​e​r​n​e​l​ ​t​h​r​e​a​d​s
+	 * @param {unknown} count
+	 */
+	processKernelThreads: RequiredParams<'count'>
+	/**
+	 * T​h​i​s​ ​a​c​c​o​u​n​t​ ​d​o​e​s​ ​n​o​t​ ​o​w​n​ ​t​h​a​t​ ​p​r​o​c​e​s​s​.
+	 */
+	processKillDenied: string
+	/**
+	 * T​h​e​ ​s​i​g​n​a​l​ ​f​a​i​l​e​d​.
+	 */
+	processKillFailed: string
+	/**
+	 * {​s​i​g​n​a​l​}​ ​s​e​n​t​ ​t​o​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 * @param {unknown} signal
+	 */
+	processKillSucceeded: RequiredParams<'name' | 'signal'>
+	/**
+	 * T​h​a​t​ ​p​r​o​c​e​s​s​ ​h​a​s​ ​c​h​a​n​g​e​d​ ​o​r​ ​e​x​i​t​e​d​.​ ​T​h​e​ ​t​a​b​l​e​ ​h​a​s​ ​b​e​e​n​ ​r​e​a​d​ ​a​g​a​i​n​.
+	 */
+	processKillTargetChanged: string
+	/**
+	 * L​o​a​d​ ​{​o​n​e​}​ ​{​f​i​v​e​}​ ​{​f​i​f​t​e​e​n​}
+	 * @param {unknown} fifteen
+	 * @param {unknown} five
+	 * @param {unknown} one
+	 */
+	processLoad: RequiredParams<'fifteen' | 'five' | 'one'>
+	/**
+	 * M​e​m​o​r​y
+	 */
+	processMemory: string
+	/**
+	 * N​o​ ​p​r​o​c​e​s​s​ ​m​a​t​c​h​e​s​ ​t​h​e​ ​f​i​l​t​e​r​.
+	 */
+	processNoMatch: string
+	/**
+	 * N​o​ ​p​r​o​c​e​s​s​e​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	processNone: string
+	/**
+	 * R​e​t​r​y​ ​a​s​ ​r​o​o​t
+	 */
+	processRetryAsRoot: string
+	/**
+	 * R​S​S
+	 */
+	processRss: string
+	/**
+	 * R​e​a​d​ ​a​t​ ​{​t​i​m​e​}​ ​·​ ​{​c​o​u​n​t​}​ ​p​r​o​c​e​s​s​e​s
+	 * @param {unknown} count
+	 * @param {unknown} time
+	 */
+	processSampledAt: RequiredParams<'count' | 'time'>
+	/**
+	 * N​a​m​e​,​ ​u​s​e​r​ ​o​r​ ​P​I​D
+	 */
+	processSearchHint: string
+	/**
+	 * C​P​U
+	 */
+	processSortCpu: string
+	/**
+	 * M​e​m​o​r​y
+	 */
+	processSortMem: string
+	/**
+	 * N​a​m​e
+	 */
+	processSortName: string
+	/**
+	 * P​I​D
+	 */
+	processSortPid: string
+	/**
+	 * R​e​a​d
+	 */
+	processSortRead: string
+	/**
+	 * R​S​S
+	 */
+	processSortRss: string
+	/**
+	 * U​s​e​r
+	 */
+	processSortUser: string
+	/**
+	 * W​r​i​t​e
+	 */
+	processSortWrite: string
+	/**
+	 * S​t​o​p
+	 */
+	processStop: string
+	/**
+	 * S​e​n​d​ ​a​ ​s​i​g​n​a​l​ ​t​o​ ​{​n​a​m​e​}​ ​(​P​I​D​ ​{​p​i​d​}​)​?
+	 * @param {unknown} name
+	 * @param {unknown} pid
+	 */
+	processStopConfirm: RequiredParams<'name' | 'pid'>
+	/**
+	 * {​c​o​u​n​t​}​ ​t​h​r​e​a​d​s
+	 * @param {unknown} count
+	 */
+	processThreads: RequiredParams<'count'>
+	/**
+	 * T​h​e​ ​t​a​b​l​e​ ​i​s​ ​l​a​r​g​e​r​ ​t​h​a​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​w​i​l​l​ ​r​e​a​d​,​ ​s​o​ ​n​o​t​h​i​n​g​ ​i​s​ ​s​h​o​w​n​ ​h​e​r​e​.
+	 */
+	processTooLarge: string
+	/**
+	 * T​h​e​ ​m​a​c​h​i​n​e​ ​a​n​s​w​e​r​e​d​ ​i​n​ ​a​ ​w​a​y​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​d​.
+	 */
+	processUnreadable: string
+	/**
+	 * P​r​o​c​e​s​s​e​s
+	 */
+	processes: string
+	/**
+	 * C​l​o​s​e
+	 */
+	close: string
+	/**
 	 * R​e​m​o​v​e​ ​t​h​i​s​ ​s​e​r​v​e​r​?​ ​T​h​i​s​ ​o​n​l​y​ ​f​o​r​g​e​t​s​ ​i​t​ ​i​n​ ​t​h​i​s​ ​b​r​o​w​s​e​r​ ​—​ ​i​t​ ​d​o​e​s​ ​n​o​t​ ​s​t​o​p​ ​t​h​e​ ​a​g​e​n​t​.
 	 */
 	confirmDeleteServer: string
@@ -902,6 +1094,14 @@ type RootTranslation = {
 	 */
 	grantSshTerminalNote: string
 	/**
+	 * V​i​r​t​u​a​l​i​z​a​t​i​o​n
+	 */
+	grantVirt: string
+	/**
+	 * P​r​o​x​m​o​x​ ​V​E​,​ ​l​i​b​v​i​r​t​ ​a​n​d​ ​B​M​C​s​ ​t​h​e​ ​a​g​e​n​t​ ​r​e​a​c​h​e​s​:​ ​s​e​e​ ​a​n​d​ ​c​o​n​t​r​o​l​ ​t​h​e​i​r​ ​m​a​c​h​i​n​e​s​.​ ​W​h​e​r​e​ ​t​h​e​y​ ​a​r​e​ ​a​n​d​ ​h​o​w​ ​t​o​ ​s​i​g​n​ ​i​n​ ​i​s​ ​s​e​t​ ​b​y​ ​a​n​ ​a​d​m​i​n​.
+	 */
+	grantVirtNote: string
+	/**
 	 * F​i​l​e​s
 	 */
 	grantFiles: string
@@ -1280,6 +1480,186 @@ export type TranslationFunctions = {
 	 * Cancel
 	 */
 	cancel: () => LocalizedString
+	/**
+	 * Power
+	 */
+	powerControl: () => LocalizedString
+	/**
+	 * Shut down
+	 */
+	powerShutdown: () => LocalizedString
+	/**
+	 * Reboot
+	 */
+	powerReboot: () => LocalizedString
+	/**
+	 * Suspend
+	 */
+	powerSuspend: () => LocalizedString
+	/**
+	 * The agent stops with the machine, so this panel cannot start it again. Anything running on it ends.
+	 */
+	powerNote: () => LocalizedString
+	/**
+	 * Sudo password
+	 */
+	powerPassword: () => LocalizedString
+	/**
+	 * Leave blank when the agent runs as root, or when its account has passwordless sudo for this command.
+	 */
+	powerPasswordHint: () => LocalizedString
+	/**
+	 * The machine refused that password. Nothing happened.
+	 */
+	powerRejected: () => LocalizedString
+	/**
+	 * The command failed.
+	 */
+	powerFailed: () => LocalizedString
+	/**
+	 * No answer came back, which is what a machine already going down looks like.
+	 */
+	powerTimeout: () => LocalizedString
+	/**
+	 * Sent: {action}. If the machine is going down, this panel loses it until it is back.
+	 */
+	powerActionSent: (arg: { action: unknown }) => LocalizedString
+	/**
+	 * Manage machine
+	 */
+	manageMachine: () => LocalizedString
+	/**
+	 * CPU
+	 */
+	processCpu: () => LocalizedString
+	/**
+	 * The table did not finish printing in time, so nothing is shown here.
+	 */
+	processDidNotFinish: () => LocalizedString
+	/**
+	 * The machine printed an empty table.
+	 */
+	processEmpty: () => LocalizedString
+	/**
+	 * Force kill
+	 */
+	processForceKill: () => LocalizedString
+	/**
+	 * The machine printed rows this agent could not read. They are not listed here.
+	 */
+	processIssue: () => LocalizedString
+	/**
+	 * Show {count} kernel threads
+	 */
+	processKernelThreads: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * This account does not own that process.
+	 */
+	processKillDenied: () => LocalizedString
+	/**
+	 * The signal failed.
+	 */
+	processKillFailed: () => LocalizedString
+	/**
+	 * {signal} sent to {name}.
+	 */
+	processKillSucceeded: (arg: { name: unknown, signal: unknown }) => LocalizedString
+	/**
+	 * That process has changed or exited. The table has been read again.
+	 */
+	processKillTargetChanged: () => LocalizedString
+	/**
+	 * Load {one} {five} {fifteen}
+	 */
+	processLoad: (arg: { fifteen: unknown, five: unknown, one: unknown }) => LocalizedString
+	/**
+	 * Memory
+	 */
+	processMemory: () => LocalizedString
+	/**
+	 * No process matches the filter.
+	 */
+	processNoMatch: () => LocalizedString
+	/**
+	 * No processes on this machine.
+	 */
+	processNone: () => LocalizedString
+	/**
+	 * Retry as root
+	 */
+	processRetryAsRoot: () => LocalizedString
+	/**
+	 * RSS
+	 */
+	processRss: () => LocalizedString
+	/**
+	 * Read at {time} · {count} processes
+	 */
+	processSampledAt: (arg: { count: unknown, time: unknown }) => LocalizedString
+	/**
+	 * Name, user or PID
+	 */
+	processSearchHint: () => LocalizedString
+	/**
+	 * CPU
+	 */
+	processSortCpu: () => LocalizedString
+	/**
+	 * Memory
+	 */
+	processSortMem: () => LocalizedString
+	/**
+	 * Name
+	 */
+	processSortName: () => LocalizedString
+	/**
+	 * PID
+	 */
+	processSortPid: () => LocalizedString
+	/**
+	 * Read
+	 */
+	processSortRead: () => LocalizedString
+	/**
+	 * RSS
+	 */
+	processSortRss: () => LocalizedString
+	/**
+	 * User
+	 */
+	processSortUser: () => LocalizedString
+	/**
+	 * Write
+	 */
+	processSortWrite: () => LocalizedString
+	/**
+	 * Stop
+	 */
+	processStop: () => LocalizedString
+	/**
+	 * Send a signal to {name} (PID {pid})?
+	 */
+	processStopConfirm: (arg: { name: unknown, pid: unknown }) => LocalizedString
+	/**
+	 * {count} threads
+	 */
+	processThreads: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * The table is larger than this agent will read, so nothing is shown here.
+	 */
+	processTooLarge: () => LocalizedString
+	/**
+	 * The machine answered in a way this agent could not read.
+	 */
+	processUnreadable: () => LocalizedString
+	/**
+	 * Processes
+	 */
+	processes: () => LocalizedString
+	/**
+	 * Close
+	 */
+	close: () => LocalizedString
 	/**
 	 * Remove this server? This only forgets it in this browser — it does not stop the agent.
 	 */
@@ -1896,6 +2276,14 @@ export type TranslationFunctions = {
 	 * The panel’s terminal that signs in to sshd with an SSH account, with that account’s rights.
 	 */
 	grantSshTerminalNote: () => LocalizedString
+	/**
+	 * Virtualization
+	 */
+	grantVirt: () => LocalizedString
+	/**
+	 * Proxmox VE, libvirt and BMCs the agent reaches: see and control their machines. Where they are and how to sign in is set by an admin.
+	 */
+	grantVirtNote: () => LocalizedString
 	/**
 	 * Files
 	 */

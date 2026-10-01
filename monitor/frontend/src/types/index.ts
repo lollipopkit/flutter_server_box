@@ -107,11 +107,31 @@ export interface Capabilities {
   /// What the caller may do, per grant. Absent on agents predating roles:
   /// `remote_access` is then the whole answer — see `lib/access.ts`.
   grants?: CallerGrants
+  /// The machine-management endpoints the agent serves. Absent on agents
+  /// predating them, which serve none — see `machineAccess`.
+  features?: MachineFeature[]
 }
 
-/// The five grants a role can hold. `read` is held by every account and is
-/// not one of them.
-export type GrantName = 'shell' | 'ssh_terminal' | 'files' | 'connect' | 'listen'
+/// A machine-management page the agent may serve (`api::machine::FEATURES`).
+export type MachineFeature = 'power' | 'process'
+
+export type PowerAction = 'shutdown' | 'reboot' | 'suspend'
+
+/// What `POST /power` answered. A suspend that never returns is an ordinary
+/// end for one, so a timeout is a field; `sudo_rejected` is the one outcome
+/// the caller can act on, by asking for another password.
+export interface PowerResult {
+  exit_code: number | null
+  stdout: string
+  stderr: string
+  sudo_rejected: boolean
+  truncated: boolean
+  timed_out: boolean
+}
+
+/// The grants a role can hold. `read` is held by every account and is not
+/// one of them.
+export type GrantName = 'shell' | 'ssh_terminal' | 'files' | 'connect' | 'listen' | 'virt'
 
 /// Why a grant is not usable: the role lacks it, the request did not arrive
 /// over TLS or loopback, or the machine side is not set up (files with no
@@ -132,6 +152,8 @@ export interface CallerGrants {
   files: GrantStatus & { mode?: FilesMode }
   connect: GrantStatus & { allow?: string[] }
   listen: GrantStatus & { public?: boolean; ports?: [number, number] | null }
+  /// Absent from an agent older than the grant.
+  virt?: GrantStatus
 }
 
 export interface Me {
@@ -151,6 +173,9 @@ export interface RoleGrants {
   connect: { allow: string[] } | null
   /// `ports` null means any port.
   listen: { public: boolean; ports: [number, number] | null } | null
+  /// Absent from an agent older than the grant, which refuses a role that
+  /// carries it — so it is sent only to an agent that sent it.
+  virt?: boolean
 }
 
 export interface Role {
@@ -453,4 +478,130 @@ export interface FsEntry {
 /// so this is the whole of what the panel can browse.
 export interface FsRootsResponse {
   roots: string[];
+}
+
+/// How the process table may be ordered. The set the agent answers — `sorts` in
+/// the response — is a property of the columns the machine printed, so a mode
+/// absent there is one this table cannot answer.
+export type ProcessSortMode = 'cpu' | 'mem' | 'rss' | 'read' | 'write' | 'pid' | 'user' | 'name'
+
+/// What may be sent to a process. Windows has the one stop there is, BSD none
+/// at all — `signals` in the response is the list, and empty means no stop is
+/// offered.
+export type ProcessSignal = 'term' | 'kill'
+
+/// What happened to a signal.
+///
+/// Told apart from the exit status because the caller's next move differs for
+/// each: `denied` is a process this account does not own, which is what the
+/// retry as root is for; `target_changed` is a table that has moved on.
+export type ProcessKillOutcome = 'succeeded' | 'target_changed' | 'denied' | 'failed'
+
+/// Which of the machine's columns carried a value, which is what the page
+/// draws and what decides which orders are available.
+export interface ProcessColumns {
+  user: boolean
+  cpu: boolean
+  mem: boolean
+  rss: boolean
+  read: boolean
+  write: boolean
+  read_speed: boolean
+  write_speed: boolean
+}
+
+/// One process, as the agent read it from the machine.
+export interface ProcRow {
+  user: string | null
+  pid: number
+  ppid: number | null
+  cpu: number | null
+  mem: number | null
+  vsz: string | null
+  rss: string | null
+  tty: string | null
+  stat: string | null
+  nice: number | null
+  threads: number | null
+  start: string | null
+  /// The identity a stop is checked against: a PID the kernel has since handed
+  /// to something else is refused rather than signalled.
+  start_id: string | null
+  time: string | null
+  elapsed_seconds: number | null
+  read_bytes: number | null
+  write_bytes: number | null
+  /// Bytes a second since the previous reading. `null` where there is nothing
+  /// to difference against, which is every first reading.
+  read_speed: number | null
+  write_speed: number | null
+  /// The whole command line as printed.
+  command: string
+  process_name: string | null
+  /// What to call this process where the command line does not fit. Sent by the
+  /// agent rather than derived here: it is a rule, and a second implementation
+  /// of it would drift.
+  name: string
+  /// `RSS` in KiB as a number — the column itself is a string because the two
+  /// `ps` dialects print different things into it, and `-` is not zero.
+  rss_kb: number | null
+  /// Whether this row is `kthreadd` or one of its children. Hidden by default:
+  /// they are not something a user acts on, and there are dozens.
+  is_kernel_thread: boolean
+  /// Whether this row may be signalled at all — a PID whose start identity the
+  /// machine did not report cannot be checked before the signal.
+  killable: boolean
+}
+
+/// Why the machine gave no table.
+export type ProcessReason = 'did_not_finish' | 'too_large' | 'empty'
+
+/// One reading of the process table.
+export interface ProcessView {
+  /// Whether the machine gave a table at all. `false` is a state of the
+  /// machine, not a failure of the caller.
+  available: boolean
+  reason_kind: ProcessReason | null
+  /// What the machine said, verbatim. Never translated: it is the only thing
+  /// that distinguishes one failure from another.
+  reason: string | null
+  procs: ProcRow[]
+  /// Rows the agent's parser had to drop. The rest of the table is still here.
+  issue: { failure: string; diagnostics: string } | null
+  load: { one: number; five: number; fifteen: number } | null
+  /// The instant this reading was taken, in Unix milliseconds. Older than the
+  /// request when the agent answered with the reading it already had.
+  sampled_at_millis: number
+  columns: ProcessColumns
+  /// The orders this table can answer, in the order the page draws them.
+  sorts: ProcessSortMode[]
+  /// What this answer is ordered by, after the agent's fallbacks.
+  sort: ProcessSortMode | null
+  ascending: boolean | null
+  signals: ProcessSignal[]
+}
+
+/// One signal to one process.
+///
+/// The password travels as its own field rather than inside a command, for the
+/// reason `/power`'s does: a password in a command line lands in the machine's
+/// process list and in the agent's audit row. Omitted unless the first attempt
+/// came back `denied`.
+export interface ProcessSignalRequest {
+  pid: number
+  /// The identity the listing gave this PID. Without it the agent refuses
+  /// rather than signalling whatever holds the number now.
+  start_id: string | null
+  signal: ProcessSignal
+  password?: string
+}
+
+export interface ProcessSignalResult {
+  outcome: ProcessKillOutcome
+  exit_code: number | null
+  stdout: string
+  stderr: string
+  /// `sudo` refused the password that was sent. The one outcome the caller can
+  /// act on, which is why it is a field rather than a status code.
+  sudo_rejected: boolean
 }

@@ -402,8 +402,15 @@ pub async fn update_role(
 ) -> Result<HttpResponse> {
     let caller = require!(authz::admin_caller(&req, &state).await);
     let name = path.into_inner();
+    // A client older than a grant sends a role without it. Read as "not
+    // granted", saving any other change from that client would take the
+    // grant away without anyone having chosen to.
+    let sent_virt = body
+        .get("role")
+        .and_then(|role| role.get("grants"))
+        .is_some_and(|grants| grants.get("virt").is_some());
     let RoleBody {
-        role,
+        mut role,
         current_password,
     } = require!(parse(body));
     require!(reauth(&req, &state, &caller, current_password.as_deref()).await);
@@ -415,6 +422,9 @@ pub async fn update_role(
     }
     if role.admin != stored.admin {
         return Ok(bad_request("Whether a role administers the agent cannot be changed"));
+    }
+    if !sent_virt {
+        role.grants.virt = stored.grants.virt;
     }
     if let Err(e) = role.grants.validate() {
         return Ok(bad_request(&e));

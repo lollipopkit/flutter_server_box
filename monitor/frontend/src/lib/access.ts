@@ -9,8 +9,10 @@
 import type {
   Capabilities,
   FilesMode,
+  GrantName,
   GrantStatus,
   GrantWhy,
+  MachineFeature,
   Role,
   RoleGrants,
 } from '../types'
@@ -22,6 +24,18 @@ import { ApiError } from './api'
 /// `undefined` until the capabilities are in. An agent from before roles has
 /// no such thing as a non-admin — every login could change everything — so it
 /// answers true.
+/// Whether a machine-management page is offered: the agent serves it and the
+/// caller's role may use it over this link. Hidden otherwise, as the
+/// terminal and files are — the agent re-checks on every request either way.
+export function machineAccess(
+  caps: Capabilities | undefined,
+  feature: MachineFeature,
+  grant: GrantName = 'shell',
+): boolean {
+  if (!caps?.features?.includes(feature)) return false
+  return caps.grants?.[grant]?.ok === true
+}
+
 export function isAdmin(caps: Capabilities | undefined): boolean | undefined {
   if (caps === undefined) return undefined
   return caps.me ? caps.me.admin : true
@@ -101,6 +115,7 @@ export function dashboardAccess(caps: Capabilities | undefined): {
   }
   const terminal = g.shell.ok || g.ssh_terminal.ok
   const all: GrantStatus[] = [g.shell, g.ssh_terminal, g.files, g.connect, g.listen]
+  if (g.virt) all.push(g.virt)
   return { terminal, files: g.files.ok, viewOnly: !all.some((s) => s.ok) }
 }
 
@@ -125,9 +140,14 @@ export interface RoleDraft {
   listenPublic: boolean
   /// `""` for any, `"8080"` or `"1024-65535"`.
   listenPorts: string
+  /// Undefined when the agent does not know the grant: neither shown nor
+  /// sent, since such an agent refuses a role that names it.
+  virt: boolean | undefined
 }
 
-export function emptyDraft(): RoleDraft {
+/// [virtKnown]: whether the agent being edited knows `virt` — see
+/// [RoleDraft.virt].
+export function emptyDraft(virtKnown = false): RoleDraft {
   return {
     name: '',
     admin: false,
@@ -140,6 +160,7 @@ export function emptyDraft(): RoleDraft {
     listen: false,
     listenPublic: false,
     listenPorts: '',
+    virt: virtKnown ? false : undefined,
   }
 }
 
@@ -158,6 +179,7 @@ export function draftFromRole(role: Role): RoleDraft {
     listen: g.listen !== null,
     listenPublic: g.listen?.public ?? false,
     listenPorts: ports ? (ports[0] === ports[1] ? `${ports[0]}` : `${ports[0]}-${ports[1]}`) : '',
+    virt: g.virt,
   }
 }
 
@@ -206,6 +228,7 @@ export function roleFromDraft(draft: RoleDraft): Role | { error: DraftError } {
       files: draft.files === 'none' ? null : { mode: draft.files },
       connect: draft.connect ? { allow } : null,
       listen,
+      ...(draft.virt === undefined ? {} : { virt: draft.virt }),
     },
   }
 }
@@ -218,6 +241,7 @@ export function grantNames(grants: RoleGrants): string[] {
   if (grants.files) out.push(`files:${grants.files.mode}`)
   if (grants.connect) out.push('connect')
   if (grants.listen) out.push('listen')
+  if (grants.virt) out.push('virt')
   return out
 }
 

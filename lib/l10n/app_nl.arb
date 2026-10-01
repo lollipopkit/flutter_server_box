@@ -1427,6 +1427,8 @@
   "monitorGrantShell": "Shell en opdrachten",
   "monitorGrantShellTip": "Terminal, processen, services, containers, snippets, voeding — als het account van de agent",
   "monitorGrantSshTerminal": "Paneelterminal via SSH",
+  "monitorGrantVirt": "Virtualisatie",
+  "monitorGrantVirtTip": "Proxmox VE, libvirt en BMC’s die de agent bereikt, in zijn webpaneel",
   "monitorGrantFiles": "Bestanden",
   "monitorGrantConnect": "Uitgaande verbindingen",
   "monitorGrantConnectTip": "Lokale en dynamische port forwards, extern bureaublad",

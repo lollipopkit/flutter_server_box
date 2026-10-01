@@ -4841,6 +4841,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get monitorGrantSshTerminal => 'SSH 経由のパネルターミナル';
 
   @override
+  String get monitorGrantVirt => '仮想化';
+
+  @override
+  String get monitorGrantVirtTip =>
+      'エージェントの Web パネルで接続する Proxmox VE、libvirt、BMC';
+
+  @override
   String get monitorGrantFiles => 'ファイル';
 
   @override

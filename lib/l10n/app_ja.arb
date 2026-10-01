@@ -1427,6 +1427,8 @@
   "monitorGrantShell": "シェルとコマンド",
   "monitorGrantShellTip": "ターミナル、プロセス、サービス、コンテナ、スニペット、電源 —— agent のアカウントで実行",
   "monitorGrantSshTerminal": "SSH 経由のパネルターミナル",
+  "monitorGrantVirt": "仮想化",
+  "monitorGrantVirtTip": "エージェントの Web パネルで接続する Proxmox VE、libvirt、BMC",
   "monitorGrantFiles": "ファイル",
   "monitorGrantConnect": "外向き接続",
   "monitorGrantConnectTip": "ローカル・動的ポート転送、リモートデスクトップ",

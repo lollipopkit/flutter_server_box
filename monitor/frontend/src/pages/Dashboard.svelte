@@ -14,6 +14,8 @@
     Network,
     CircleAlert,
     RefreshCw,
+    Power,
+    ServerCog,
   } from '@lucide/svelte'
   import { Badge, Button, Card, IconButton, Spinner } from '@serverbox/webui'
   import DetailPanel, { type DetailKind } from '../components/DetailPanel.svelte'
@@ -21,8 +23,10 @@
   import LoginForm from '../components/LoginForm.svelte'
   import OsIcon from '../components/OsIcon.svelte'
   import PageHeader from '../components/PageHeader.svelte'
+  import PowerModal from '../components/PowerModal.svelte'
   import StatCard from '../components/StatCard.svelte'
-  import { dashboardAccess, isAdmin } from '../lib/access'
+  import { dashboardAccess, isAdmin, machineAccess } from '../lib/access'
+  import { enabledFeatures } from '../lib/features'
   import { api } from '../lib/api'
   import { capabilitiesStore } from '../lib/capabilities.svelte'
   import { health } from '../lib/health.svelte'
@@ -49,6 +53,11 @@
   /// watch — see `dashboardAccess`, which answers for an agent with roles and
   /// for one from before them.
   const access = $derived(dashboardAccess(capabilities))
+  const canPower = $derived(machineAccess(capabilities, 'power'))
+  /// The machine-management pages; the entry opens the first, and their tab
+  /// bar reaches the rest.
+  const features = $derived(enabledFeatures(capabilities))
+  let powerOpen = $state(false)
   /// Whether the cards can be rearranged: the order is the agent's, shared by
   /// everyone who views it, so changing it is an administrator's call.
   /// Unknown is allowed — the agent refuses for itself.
@@ -255,6 +264,16 @@
         {#if access.files}
           <IconButton label={$LL.files()} onclick={() => layout.navigate('files')}>
             <FolderOpen class="w-4 h-4" />
+          </IconButton>
+        {/if}
+        {#if features.length > 0}
+          <IconButton label={$LL.manageMachine()} onclick={() => layout.navigate(features[0].id)}>
+            <ServerCog class="w-4 h-4" />
+          </IconButton>
+        {/if}
+        {#if canPower}
+          <IconButton label={$LL.powerControl()} onclick={() => (powerOpen = true)}>
+            <Power class="w-4 h-4" />
           </IconButton>
         {/if}
         <IconButton label={$LL.serverSettings()} onclick={() => layout.navigate('server-settings')}>
@@ -527,3 +546,5 @@
     {/if}
   </main>
 {/if}
+
+<PowerModal open={powerOpen} onclose={() => (powerOpen = false)} />

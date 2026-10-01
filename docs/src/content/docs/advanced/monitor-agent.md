@@ -400,6 +400,7 @@ may come from and whether plaintext HTTP is tolerated.
 | `files` | File browsing inside `[remote_access.fs] roots` | `read` (browse and download) or `write` (also upload, create, rename, chmod, and delete) |
 | `connect` | Remote desktop (RDP, VNC) and local and dynamic port forwarding: connections the agent opens | `allow`: the addresses it may reach; empty is anywhere |
 | `listen` | Remote port forwarding: the agent listens on the server | `public`: addresses other than loopback; a port range |
+| `virt` | The web panel's Proxmox VE, libvirt and BMC pages: seeing and controlling those machines. Where they are and how to sign in is set by an admin | — |
 
 `shell` covers the others in practice: an account that can run commands can
 read files, open connections, and listen by itself. Grant `files`, `connect`,

@@ -72,3 +72,103 @@ pub async fn grants_of(db: &SqlitePool, role: &str) -> Grants {
 pub async fn add_role(db: &SqlitePool, role: &Role) {
     accounts::insert_role(db, role).await.unwrap();
 }
+
+/// For the machine-management endpoints (`api::machine`): an agent whose
+/// `admin` and `intruder` hold every grant and whose `viewer` holds none,
+/// mounted on the real route table.
+pub mod machine {
+    use std::sync::{Arc, Once};
+
+    use ntex::http::Method;
+    use ntex::web::App;
+    use ntex::web::test::{self as web_test, TestServer};
+    use serde_json::Value;
+    use server_box_monitor::api::auth::generate_token;
+    use server_box_monitor::api::server::{AppState, configure_api};
+    use server_box_monitor::core::config::Config;
+    use server_box_monitor::core::permissions::{Grants, InitPermissions};
+
+    pub const SECRET: &str = "test-secret-that-is-long-enough-32ch";
+
+    /// Out of the crate's directory, as `permissions_api.rs` explains.
+    fn leave_the_crate() {
+        static ONCE: Once = Once::new();
+        ONCE.call_once(|| {
+            let dir = std::env::temp_dir().join(format!("sbm-machine-api-{}", std::process::id()));
+            std::fs::create_dir_all(&dir).unwrap();
+            std::env::set_current_dir(&dir).unwrap();
+        });
+    }
+
+    /// The server, and its database for asserting what was recorded.
+    pub async fn server() -> (TestServer, sqlx::SqlitePool) {
+        leave_the_crate();
+        static ONCE: Once = Once::new();
+        ONCE.call_once(|| {
+            let _ = rustls::crypto::ring::default_provider().install_default();
+        });
+        let config = Config {
+            jwt_secret: Some(SECRET.to_string()),
+            ..Default::default()
+        };
+        let db = super::database().await;
+        for name in super::ACCOUNTS {
+            super::add_account(&db, name, "admin").await;
+        }
+        server_box_monitor::db::bootstrap::ensure_roles(&db, &Config::default(), InitPermissions::Full)
+            .await
+            .unwrap();
+        super::set_grants(&db, "admin", &Grants::all()).await;
+        super::add_account(&db, "viewer", "viewer").await;
+        let state = AppState::new(Arc::new(config), db.clone());
+        let srv = web_test::server(move || {
+            let state = state.clone();
+            async move {
+                let limit = state.remote_access.exec.max_request_bytes;
+                App::new().state(state).configure(configure_api(limit))
+            }
+        })
+        .await;
+        (srv, db)
+    }
+
+    /// The `(action, result, subject, detail)` of every `machine` row,
+    /// oldest first.
+    pub async fn audit(
+        db: &sqlx::SqlitePool,
+    ) -> Vec<(String, String, Option<String>, Option<String>)> {
+        sqlx::query_as(
+            "SELECT action, result, subject, detail FROM access_log WHERE kind = 'machine' ORDER BY id",
+        )
+        .fetch_all(db)
+        .await
+        .unwrap()
+    }
+
+    /// One request as [user] (`None` for no token), and its status and body.
+    pub async fn call(
+        srv: &TestServer,
+        user: Option<&str>,
+        method: Method,
+        path: &str,
+        body: Option<Value>,
+    ) -> (u16, Value) {
+        let mut req = srv
+            .request(method, srv.url(path))
+            .timeout(std::time::Duration::from_secs(30));
+        if let Some(user) = user {
+            req = req.header(
+                "Authorization",
+                format!("Bearer {}", generate_token(user, SECRET).unwrap()),
+            );
+        }
+        let resp = match body {
+            Some(body) => req.send_json(&body).await.unwrap(),
+            None => req.send().await.unwrap(),
+        };
+        let status = resp.status().as_u16();
+        // A process table is well past the client's default body limit.
+        let bytes = resp.body().limit(16 * 1024 * 1024).await.unwrap_or_default();
+        (status, serde_json::from_slice(&bytes).unwrap_or(Value::Null))
+    }
+}

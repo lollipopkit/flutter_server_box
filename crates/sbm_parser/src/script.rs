@@ -573,6 +573,29 @@ pub fn exec_command(system: SystemType, script_path: &str, func: ShellFunc) -> S
     }
 }
 
+/// A sudo password the machine rejected, told apart from any other failure.
+///
+/// `sudo` says so on stderr and then exits non-zero like everything else, so
+/// without reading what it said a wrong password is indistinguishable from the
+/// command itself failing — and the caller has no reason to ask for a new one.
+///
+/// Three phrasings: util-linux's `Sorry, try again.`, a PAM stack's
+/// `incorrect password attempt`, and `a password is required` when none was
+/// given.
+///
+/// TODO(migration): the app keeps its own copies, in
+/// `lib/core/extension/ssh_client.dart` and (without the third phrase)
+/// `lib/data/provider/virt/libvirt_backend.dart`; both should read this one
+/// through the FFI boundary instead.
+pub fn sudo_password_rejected(stderr: &str) -> bool {
+    const REJECTED: [&str; 3] = [
+        "Sorry, try again.",
+        "incorrect password attempt",
+        "a password is required",
+    ];
+    REJECTED.iter().any(|phrase| stderr.contains(phrase))
+}
+
 /// Split script output into a command key → output map.
 ///
 /// Built-in sections are keyed by the command key; custom commands by

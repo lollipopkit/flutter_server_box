@@ -1,3 +1,5 @@
+import type { FeatureId } from './features'
+
 /// Sidebar state with persistent desktop collapse and a transient mobile drawer.
 
 /// 'panel' = browser-local prefs (language/theme), reached from the sidebar
@@ -5,7 +7,9 @@
 /// selected server's config.toml, reached from a gear icon on its dashboard.
 /// 'terminal' = an SSH session on the selected server, reached from its
 /// dashboard and only offered when that agent reports the feature available.
-export type View = 'dashboard' | 'panel' | 'server-settings' | 'terminal' | 'files'
+/// The machine-management pages are `FeatureId`s, listed once in
+/// `lib/features.ts`.
+export type View = 'dashboard' | 'panel' | 'server-settings' | 'terminal' | 'files' | FeatureId
 
 class LayoutStore {
   collapsed = $state(window.localStorage.getItem('sidebar.collapsed') === '1')

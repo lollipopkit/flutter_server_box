@@ -119,6 +119,9 @@ pub struct AppState {
     /// and re-checks its own account when it fires; terminal sessions, which
     /// outlive their sockets, are swept by `authz::revoke_lost` instead.
     pub grants_changed: broadcast::Sender<&'static str>,
+    /// The last process table read, which the next one's read and write
+    /// speeds are differenced against — see `api::process`.
+    pub process_sample: Arc<tokio::sync::Mutex<Option<crate::api::process::ProcessSample>>>,
     /// Serialises every read-modify-write of `config.toml`.
     ///
     /// `config_file::write` is atomic, so no reader ever sees a half-written
@@ -202,6 +205,7 @@ impl AppState {
             pending: Arc::new(PendingStore::default()),
             login_throttle: Arc::new(LoginThrottle::new()),
             grants_changed: broadcast::channel(16).0,
+            process_sample: Arc::new(tokio::sync::Mutex::new(None)),
             config,
             db,
             current_metrics: Arc::new(RwLock::new(None)),
@@ -329,6 +333,12 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                 web::resource("/exec")
                     .state(web::types::JsonConfig::default().limit(exec_max_request))
                     .route(web::post().to(crate::api::exec::exec)),
+            )
+            .service(web::resource("/power").route(web::post().to(crate::api::power::power)))
+            .service(
+                web::resource("/process")
+                    .route(web::get().to(crate::api::process::list))
+                    .route(web::post().to(crate::api::process::kill)),
             )
             .service(
                 // A streamed body, so ntex's payload limit must not
@@ -830,6 +840,9 @@ struct CapabilitiesView {
     /// has a day.
     #[serde(skip_serializing_if = "Option::is_none")]
     oldest_sample: Option<String>,
+    /// The machine-management endpoints this agent serves — see
+    /// `api::machine::FEATURES`. Whether the caller may use one is `grants`.
+    features: &'static [&'static str],
     remote_access: RemoteAccessView,
     /// Who is asking — absent for a watch token, which is nobody's session.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -906,6 +919,7 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             .unwrap_or_default()
             .metrics_days,
         oldest_sample,
+        features: crate::api::machine::FEATURES,
         remote_access: {
             let ok = |grant| {
                 caller.is_some_and(|c: &Caller| c.check(grant, &app_state, secure).is_ok())

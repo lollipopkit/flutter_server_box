@@ -135,13 +135,19 @@
 
 - [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) 是安装在你服务器上的 agent。不打开 ServerBox app 时仍需工作的功能都依赖它 —— **推送服务**、**桌面小部件** 和 **手表 app**；它同时也是添加服务器的第二种方式：app 可以经 HTTP 而不是 SSH 访问它，适用于不便暴露 SSH 端口的主机，并且图表在 app 首次连接前就已有历史数据。它自己还提供一个网页面板。安装方法和各个远程访问开关的含义详见其[中文文档](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/README_zh.md)。  
 - **常见问题** 可以在 [app wiki](https://github.com/lollipopkit/flutter_server_box/wiki/主页) 查看。
-- **Agent onboarding：** 本仓库包含一份 skill，用于安装和使用 App、部署与配置 Monitor agent、搭建 Flutter + Rust + Node 开发环境，以及回答常见的服务器管理问题。使用下面的命令将它添加到你的 agent：
+- **Agent skills：** 本仓库包含三份供 AI agent 使用的 skill。使用下面的命令添加：
 
   ```sh
   npx skills add lollipopkit/flutter_server_box
   ```
 
-  内容在 [`.claude/skills/serverbox-onboarding`](.claude/skills/serverbox-onboarding)，装之前可以先读它到底会告诉你的 agent 什么。
+  命令会列出全部 skill 供你选择，也可以用 `--skill <名称>` 只添加其中一个：
+
+  - [`serverbox-help`](.claude/skills/serverbox-help)：使用 App，以及部署和配置 Monitor agent，例如添加服务器、某台服务器缺少某个功能的原因、权限、告警、小部件和备份。App 内置的 Agent 自带这份 skill。
+  - [`serverbox-onboarding`](.claude/skills/serverbox-onboarding)：参与开发，包括搭建 Flutter + Rust + Node 开发环境、构建与测试，以及项目的工作原理。
+  - [`serverbox-theme`](.claude/skills/serverbox-theme)：制作主题包（`.fsbt`），校验后发布到主题商店。
+
+  它们的源文件都在本仓库中，安装前可以先读一读它们会告诉你的 agent 什么。
 
 提交 issue 前请确认：
 

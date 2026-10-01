@@ -110,7 +110,8 @@
 
   function openEditor(role: Role | null) {
     editorExisting = role !== null
-    editorDraft = role ? draftFromRole(role) : emptyDraft()
+    // A role read from this agent says whether it knows `virt`.
+    editorDraft = role ? draftFromRole(role) : emptyDraft(roles.some((r) => r.grants.virt !== undefined))
     editorOpen = true
   }
 
@@ -139,6 +140,7 @@
     if (g.files) parts.push(`${$LL.grantFiles()} (${g.files.mode === 'read' ? $LL.filesRead() : $LL.filesWrite()})`)
     if (g.connect) parts.push($LL.grantConnect())
     if (g.listen) parts.push($LL.grantListen())
+    if (g.virt) parts.push($LL.grantVirt())
     return parts.length ? parts.join(' · ') : $LL.roleViewOnly()
   }
 

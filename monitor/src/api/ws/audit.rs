@@ -50,6 +50,12 @@ pub enum Kind {
     /// removed, a password changed. The detail names the account or role and
     /// what changed — never a password.
     Admin,
+    /// The machine-management endpoints (`api::machine`): power, processes,
+    /// services and the rest. The subject is the account; the detail starts
+    /// with the feature and verb and its target (`power reboot`,
+    /// `process stop 1234`), and never carries a password or a command's
+    /// output.
+    Machine,
 }
 
 impl Kind {
@@ -64,6 +70,7 @@ impl Kind {
             Kind::CustomCmd => "custom_cmd",
             Kind::Push => "push",
             Kind::Admin => "admin",
+            Kind::Machine => "machine",
         }
     }
 }

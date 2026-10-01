@@ -5,6 +5,7 @@
   import Sidebar from './components/Sidebar.svelte'
   import Dashboard from './pages/Dashboard.svelte'
   import Files from './pages/Files.svelte'
+  import Process from './pages/Process.svelte'
   import PanelSettings from './pages/PanelSettings.svelte'
   import ServerSettings from './pages/ServerSettings.svelte'
   import Terminal from './pages/Terminal.svelte'
@@ -33,6 +34,8 @@
             <Terminal />
           {:else if layout.view === 'files'}
             <Files />
+          {:else if layout.view === 'process'}
+            <Process onback={() => layout.back('dashboard')} />
           {:else}
             <Dashboard />
           {/if}

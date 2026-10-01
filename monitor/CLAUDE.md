@@ -127,7 +127,8 @@ Monitor-only crate (the app never depends on it — it always collects over SSH 
 **Who may use any of this is the caller's role** (issue #1610,
 `docs/dev/monitor-permissions.md` is the contract). Every account has one role
 (`users.role`), a role is a set of grants — `shell`, `ssh_terminal`, `files`
-(read/write), `connect` (an `allow` list), `listen` (`public`, `ports`) — and
+(read/write), `connect` (an `allow` list), `listen` (`public`, `ports`),
+`virt` (Proxmox VE / libvirt / BMC pages, migration 011) — and
 `admin` roles also manage accounts, roles and the agent's configuration.
 `api/authz.rs` is the one place a request becomes a `Caller` (JWT → account →
 role) and `Caller::check(grant, state, secure)` the one question handlers ask;
@@ -149,7 +150,10 @@ keep their name and `admin` flag. A change that takes a grant away ends what
 ran under it: `authz::revoke_lost` sweeps terminal sessions and broadcasts
 `AppState.grants_changed`, on which every relay and listener re-checks its
 own account (`permission_revoked`). Roles live in the database (migration
-010); `db::bootstrap::ensure_roles` decides the built-ins once — a fresh
+010; 011 adds `virt` to roles holding `shell`). `PUT /roles/{name}` keeps a
+grant the body does not mention, so a client older than `virt` saving a role
+does not take it away; clients send `virt` only to an agent that listed it,
+since an older agent's `Grants` refuses unknown fields; `db::bootstrap::ensure_roles` decides the built-ins once — a fresh
 install from `--init-permissions full|read` / `SBM_INIT_PERMISSIONS`, an
 upgrade from what the old `full_access`/`listen_public`/`terminal.enabled`/
 `fs.enabled` *effectively* granted (`Grants::from_legacy`), after which those
@@ -176,6 +180,34 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   A caller that must outlive any configured timeout should start the work
   detached and poll it in short requests instead of asking for a longer one.
   `tests/exec_api.rs`.
+- **The machine-management endpoints (`api/machine.rs`, issue #1623)** — the
+  panel's power, process, service, cron and container pages. Each builds its
+  command in Rust (`sbm_parser`, the app's own text where one exists — power
+  runs the status script's `SbShutdown`/`SbReboot`/`SbSuspend` via
+  `monitoring::local_script_command`) and runs it through `api::exec::run`, so
+  `[remote_access.exec]` bounds it as it bounds `/exec`. `machine::gate` is the
+  one place they ask the grant (`shell` unless stated) and record a refusal;
+  audit rows are `Kind::Machine`, subject the account, detail the feature and
+  verb (`power reboot`) — never a password or output. A sudo password is a
+  request field written to stdin, and a refused one is answered as
+  `sudo_rejected` (`sbm_parser::script::sudo_password_rejected`), not a status.
+  `machine::FEATURES` is `features` in `/capabilities`: a panel offers a page
+  only when its name is there, since an older agent 404s the route.
+  `tests/power_api.rs` asserts refusals and records only — the actions take
+  the test machine down; `tests/common::machine` is the shared setup.
+  Shell text built by `sbm_parser` runs through `machine::as_self` (`sh` with
+  the text on stdin, never a command line) and `machine::as_root` (`sudo -S
+  -p '' sh -c "$SBM_ROOT_SCRIPT"` with only the password on stdin, or `sudo
+  -n` without one: the script never shares the password's stream, since a
+  sudo that does not ask — root, `NOPASSWD` — would leave the password line
+  for the script to run as a command). `/process` (`sbm_parser::proc`,
+  a port of the app's `proc.dart`/`proc_kill.dart`, locked by
+  `tests/proc_compat.rs`): the table is the status script's `SbProcess` read
+  with at least 8 MiB of output, kept in `AppState.process_sample` so read and
+  write speeds have a baseline (reused within 2 s, a baseline for 30 s); a stop
+  checks the PID's start identity first and retries as root on `denied`.
+  TODO(migration): the app still parses with its Dart copy; move it to
+  `sbm_parser::proc` over FFI.
 - **`GET/PUT /api/v1/custom-cmds`** — the user's custom status commands, which
   are files in `~/.config/server_box/custom_cmds` (`sbm_parser::script`) rather
   than anything in this agent's config. The same directory the app writes over

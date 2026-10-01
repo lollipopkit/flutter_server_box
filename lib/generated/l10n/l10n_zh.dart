@@ -4763,6 +4763,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get monitorGrantSshTerminal => '面板 SSH 终端';
 
   @override
+  String get monitorGrantVirt => '虚拟化';
+
+  @override
+  String get monitorGrantVirtTip => 'agent 网页面板中连接的 Proxmox VE、libvirt 和 BMC';
+
+  @override
   String get monitorGrantFiles => '文件';
 
   @override
@@ -9769,6 +9775,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get monitorGrantSshTerminal => '面板 SSH 終端機';
+
+  @override
+  String get monitorGrantVirt => '虛擬化';
+
+  @override
+  String get monitorGrantVirtTip => 'agent 網頁面板中連接的 Proxmox VE、libvirt 和 BMC';
 
   @override
   String get monitorGrantFiles => '檔案';

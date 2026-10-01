@@ -238,7 +238,7 @@ pub fn grants_view(caller: Option<&Caller>, state: &AppState, secure: bool) -> s
                         );
                     }
                 }
-                Grant::Shell | Grant::SshTerminal => {}
+                Grant::Shell | Grant::SshTerminal | Grant::Virt => {}
             }
         }
         out.insert(grant.as_str().into(), entry.into());

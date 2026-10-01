@@ -5078,6 +5078,13 @@ class AppLocalizationsId extends AppLocalizations {
   String get monitorGrantSshTerminal => 'Terminal panel lewat SSH';
 
   @override
+  String get monitorGrantVirt => 'Virtualisasi';
+
+  @override
+  String get monitorGrantVirtTip =>
+      'Proxmox VE, libvirt, dan BMC yang dijangkau agen, di panel web-nya';
+
+  @override
   String get monitorGrantFiles => 'File';
 
   @override

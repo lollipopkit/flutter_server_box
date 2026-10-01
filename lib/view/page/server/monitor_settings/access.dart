@@ -136,6 +136,7 @@ String monitorRoleSummary(MonitorRole role) {
       '${l10n.monitorGrantFiles} (${mode == MonitorFilesMode.read ? libL10n.read : libL10n.write})',
     if (g.connectAllow != null) l10n.monitorGrantConnect,
     if (g.listen != null) l10n.monitorGrantListen,
+    if (g.virt == true) l10n.monitorGrantVirt,
   ];
   return held.isEmpty ? libL10n.read : held.join(', ');
 }
@@ -441,7 +442,12 @@ final class _MonitorRolesPageState extends State<MonitorRolesPage> {
   Future<void> _edit(MonitorRole? role) async {
     final saved = await MonitorRoleEditPage.route.go(
       context,
-      MonitorRoleEditArgs(client: _client, role: role),
+      MonitorRoleEditArgs(
+        client: _client,
+        role: role,
+        // A role read from this agent says whether it knows `virt`.
+        virtKnown: _roles?.any((r) => r.grants.virt != null) ?? false,
+      ),
     );
     if (saved == true) await _load();
   }
@@ -469,7 +475,15 @@ final class MonitorRoleEditArgs {
   /// Null for a new one.
   final MonitorRole? role;
 
-  const MonitorRoleEditArgs({required this.client, this.role});
+  /// Whether the agent knows `virt`, for a new role — see
+  /// [MonitorRoleGrants.virt].
+  final bool virtKnown;
+
+  const MonitorRoleEditArgs({
+    required this.client,
+    this.role,
+    this.virtKnown = false,
+  });
 }
 
 /// One role's grants, and their options.
@@ -494,7 +508,9 @@ final class _MonitorRoleEditPageState extends State<MonitorRoleEditPage> {
   MonitorRole? get _existing => widget.args.role;
 
   late final _name = TextEditingController(text: _existing?.name ?? '');
-  late var _grants = _existing?.grants ?? const MonitorRoleGrants();
+  late var _grants =
+      _existing?.grants ??
+      MonitorRoleGrants(virt: widget.args.virtKnown ? false : null);
   late final _allow = TextEditingController(
     text: (_existing?.grants.connectAllow ?? const []).join('\n'),
   );
@@ -557,6 +573,14 @@ final class _MonitorRoleEditPageState extends State<MonitorRoleEditPage> {
             value: _grants.sshTerminal,
             onChanged: (v) => _grants = _grants.copyWith(sshTerminal: v),
           ),
+          if (_grants.virt case final virt?)
+            _switch(
+              icon: Icons.dns_outlined,
+              title: l10n.monitorGrantVirt,
+              tip: l10n.monitorGrantVirtTip,
+              value: virt,
+              onChanged: (v) => _grants = _grants.copyWith(virt: v),
+            ),
           _buildFiles(),
           _switch(
             icon: Icons.call_made,

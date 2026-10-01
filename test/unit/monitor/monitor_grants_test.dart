@@ -55,6 +55,15 @@ void main() {
       expect(grants.filesReadOnly, isTrue);
       expect(grants.connectAllow, ['127.0.0.1:3389']);
       expect(grants.listen.why, MonitorGrantWhy.insecureTransport);
+      // Not in this answer, as from an agent older than the grant.
+      expect(grants.virt.ok, isFalse);
+    });
+
+    test('virt is read when the agent lists it', () {
+      final json = withGrants();
+      (json['grants'] as Map)['virt'] = {'ok': true};
+      final grants = MonitorCapabilities.fromJson(json).remoteAccess.grants!;
+      expect(grants.virt.ok, isTrue);
     });
 
     test('the booleans are the grants, not the legacy object beside them', () {
