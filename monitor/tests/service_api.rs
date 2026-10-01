@@ -64,9 +64,14 @@ async fn the_read_says_which_manager_the_machine_runs() {
     assert_eq!(status, 200, "{body}");
 
     assert_eq!(body["part"], "list");
+    assert!(body["units"].is_array(), "{body}");
+    // No shell for the detector, and no manager these commands reach.
+    if system_type() == SystemType::Windows {
+        assert_eq!(body["reason_kind"], "unsupported_platform", "{body}");
+        return;
+    }
     assert!(!body["manager"]["detected_name"].as_str().unwrap().is_empty(), "{body}");
     assert!(!body["manager"]["description"].as_str().unwrap().is_empty(), "{body}");
-    assert!(body["units"].is_array(), "{body}");
     if system_type() == SystemType::Bsd {
         assert_eq!(body["available"], false);
         assert_eq!(body["reason_kind"], "unsupported_manager", "{body}");
@@ -95,16 +100,27 @@ async fn the_units_are_keyed_and_ordered_by_the_model() {
     for (index, unit) in units.iter().enumerate() {
         assert_eq!(unit["scope"] == "user", index < users, "the user scope is not first: {unit}");
     }
+    // `compare_services`: within a scope what is running comes first, and
+    // each of the two groups is by name.
     for pair in units.windows(2) {
         if pair[0]["scope"] != pair[1]["scope"] {
             continue;
         }
+        let running = |unit: &Value| unit["state"] == "running";
         assert!(
-            pair[1]["state"] == "running" || pair[0]["state"] != "running" || pair[0]["state"] == pair[1]["state"],
+            running(&pair[0]) || !running(&pair[1]),
             "not running-first: {} then {}",
             pair[0]["name"],
             pair[1]["name"]
         );
+        if running(&pair[0]) == running(&pair[1]) {
+            assert!(
+                pair[0]["name"].as_str() <= pair[1]["name"].as_str(),
+                "not by name: {} then {}",
+                pair[0]["name"],
+                pair[1]["name"]
+            );
+        }
     }
 }
 

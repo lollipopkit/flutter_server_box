@@ -205,6 +205,17 @@ pub async fn list(
         return Ok(HttpResponse::BadRequest().finish());
     }
 
+    // Windows has no shell for these commands and no manager behind them —
+    // asked before the detector, which would only fail for want of `sh` and
+    // be reported as an unknown manager.
+    if system_type() == SystemType::Windows {
+        return Ok(HttpResponse::Ok().json(&empty_response(
+            part,
+            &parse_probe(""),
+            ServiceReason::UnsupportedPlatform,
+            None,
+        )));
+    }
     let (probe, unreadable) = probe(exec).await;
     let Some(manager) = probe.manager_type else {
         return Ok(HttpResponse::Ok().json(&empty_response(
@@ -214,15 +225,6 @@ pub async fn list(
             unreadable,
         )));
     };
-    // Windows has no shell for these commands and no manager behind them.
-    if system_type() == SystemType::Windows {
-        return Ok(HttpResponse::Ok().json(&empty_response(
-            part,
-            &probe,
-            ServiceReason::UnsupportedPlatform,
-            None,
-        )));
-    }
 
     let listing = read_listing(manager, exec).await;
     let mut response = base_response(part, &probe, manager, listing);
@@ -295,15 +297,15 @@ pub async fn act(
             })
     };
 
+    if system_type() == SystemType::Windows {
+        record(Action::Denied, Outcome::Denied, Some("unsupported platform")).record(&state.db).await;
+        return Ok(HttpResponse::BadRequest().finish());
+    }
     let (probe, _) = probe(exec).await;
     let Some(manager) = probe.manager_type else {
         record(Action::Denied, Outcome::Denied, Some("unsupported manager")).record(&state.db).await;
         return Ok(HttpResponse::BadRequest().finish());
     };
-    if system_type() == SystemType::Windows {
-        record(Action::Denied, Outcome::Denied, Some("unsupported platform")).record(&state.db).await;
-        return Ok(HttpResponse::BadRequest().finish());
-    }
 
     // Resolved against a listing read now, so a unit the machine no longer
     // has cannot be acted on through a stale key, and whether it needs root is
