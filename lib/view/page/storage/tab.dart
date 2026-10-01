@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
@@ -266,6 +267,8 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
       appBar: split ? _sessionBar : _tabBar,
       body: SessionTabsView<FileSession>(
         controller: _sessions,
+        // Restored sessions land while another tab may be the one on screen.
+        mayFocus: () => ref.read(currentHomeTabProvider) == AppTab.file,
         // Page 0 is the picker's on one column. Beside a rail it is the empty
         // surface, and not the picker: the rail is already that list.
         leading: split
