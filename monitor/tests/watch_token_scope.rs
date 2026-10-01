@@ -49,7 +49,28 @@ fn ensure_crypto_provider() {
 /// Deliberately the opposite of what the other API tests do. They check that a
 /// switched-off grant refuses; this one needs every grant *on*, so that a 401
 /// cannot be a 403 wearing a different number.
+/// Out of the crate's directory, once, before any server starts.
+///
+/// The panel-login half below sends every write route a valid login, and three
+/// of them — settings, the card order, turning full access off — rewrite
+/// `config.toml` in the working directory. `cargo test` runs from the crate,
+/// whose `config.toml` is a developer's own: running this file cleared its
+/// alert rules and switched its full access off. With no `config.toml` here
+/// those routes fail reading it, which is still not a 401.
+fn leave_the_crate() {
+    static ONCE: Once = Once::new();
+    ONCE.call_once(|| {
+        let dir = std::env::temp_dir().join(format!(
+            "sbm-watch-token-scope-{}",
+            std::process::id()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        std::env::set_current_dir(&dir).unwrap();
+    });
+}
+
 async fn permissive_state() -> Arc<AppState> {
+    leave_the_crate();
     ensure_crypto_provider();
     let mut config = Config {
         jwt_secret: Some(SECRET.to_string()),
