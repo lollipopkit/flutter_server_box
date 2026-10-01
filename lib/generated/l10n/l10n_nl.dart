@@ -5173,4 +5173,132 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get monitorPasswordNotSaved =>
       'Het wachtwoord is op de agent gewijzigd, maar de app kon het niet opslaan. Werk het Monitor-wachtwoord bij in de instellingen van deze server.';
+
+  @override
+  String get firewall => 'Firewall';
+
+  @override
+  String get firewallLinuxOnly =>
+      'Firewallbeheer ondersteunt Linux-servers met ufw.';
+
+  @override
+  String get firewallUfwMissing =>
+      'ufw is niet geïnstalleerd op deze server. Installeer het met de pakketbeheerder van het systeem, bijvoorbeeld `apt install ufw`.';
+
+  @override
+  String get firewallNeedsRoot =>
+      'Voor het lezen van de ufw-regels is root nodig. Voer het sudo-wachtwoord in om door te gaan.';
+
+  @override
+  String get firewallIncoming => 'Inkomend';
+
+  @override
+  String get firewallOutgoing => 'Uitgaand';
+
+  @override
+  String get firewallRouted => 'Doorgestuurd';
+
+  @override
+  String get firewallDefaultPolicy => 'Standaardbeleid';
+
+  @override
+  String get firewallLogging => 'Logboek';
+
+  @override
+  String get firewallRules => 'Regels';
+
+  @override
+  String get firewallRule => 'Regel';
+
+  @override
+  String get firewallAddRule => 'Regel toevoegen';
+
+  @override
+  String get firewallAnywhere => 'Overal';
+
+  @override
+  String firewallFromFmt(String source) {
+    return 'van $source';
+  }
+
+  @override
+  String get firewallFrom => 'Van';
+
+  @override
+  String get firewallTo => 'Naar';
+
+  @override
+  String get firewallProtocol => 'Protocol';
+
+  @override
+  String get firewallInterface => 'Interface';
+
+  @override
+  String get firewallComment => 'Opmerking';
+
+  @override
+  String get firewallAppProfile => 'App-profiel';
+
+  @override
+  String get firewallPrepend => 'Vóór alle andere regels plaatsen';
+
+  @override
+  String get firewallIpv6Off =>
+      'IPv6 staat uit (IPV6=no): v6-regels worden niet geladen.';
+
+  @override
+  String firewallLockoutFmt(String ports) {
+    return 'Geen enkele regel laat TCP binnen op poort $ports, waarmee deze app verbinding maakt. Zolang inkomend verkeer standaard niet is toegestaan, worden nieuwe verbindingen daarmee geweigerd.';
+  }
+
+  @override
+  String firewallAllowFirstFmt(String ports) {
+    return 'Eerst TCP-poort $ports toestaan';
+  }
+
+  @override
+  String get firewallReload => 'Opnieuw laden';
+
+  @override
+  String get firewallNothingMatched =>
+      'Voer een poort, een app-profiel, een adres of een interface in.';
+
+  @override
+  String get firewallInvalidPort =>
+      'Ongeldige poort. Gebruik 22, 80,443 of 6000:6010.';
+
+  @override
+  String get firewallTooManyPorts =>
+      'Maximaal 15 poorten; een bereik telt als twee.';
+
+  @override
+  String get firewallPortsNeedProtocol =>
+      'Een poortlijst of poortbereik vereist tcp of udp.';
+
+  @override
+  String get firewallInvalidAddress =>
+      'Ongeldig adres. Gebruik een IP-adres of een netwerk zoals 192.168.1.0/24.';
+
+  @override
+  String get firewallMixedIpVersions =>
+      'Van en Naar moeten beide IPv4 of beide IPv6 zijn.';
+
+  @override
+  String get firewallInvalidInterface => 'Ongeldige interfacenaam.';
+
+  @override
+  String get firewallInvalidComment =>
+      'De opmerking mag geen \' of regeleinden bevatten.';
+
+  @override
+  String get firewallInterfaceIn => 'Inkomende interface';
+
+  @override
+  String get firewallInterfaceOut => 'Uitgaande interface';
+
+  @override
+  String get firewallSourcePort => 'Bronpoort';
+
+  @override
+  String get firewallMoreOptions => 'Meer opties';
 }

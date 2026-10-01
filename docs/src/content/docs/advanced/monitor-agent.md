@@ -142,7 +142,7 @@ Check these first:
   or `[remote_access] allow_insecure`), or `not_configured` (files without
   `[remote_access.fs] roots`). `GET /api/v1/capabilities` with that
   account's login shows it under `grants`.
-- Commands, processes, systemd, containers, snippets, power, scheduled tasks
+- Commands, processes, systemd, containers, snippets, power, scheduled tasks, firewall
   and the App's terminal need `shell`. File browsing needs `files`; with
   `mode = "read"` nothing can be changed. Remote desktop and local or
   dynamic forwards need `connect`, and its `allow` list, when it has
@@ -395,7 +395,7 @@ may come from and whether plaintext HTTP is tolerated.
 
 | Grant | Allows | Options |
 |---|---|---|
-| `shell` | Commands, processes, systemd, containers, snippets, power, scheduled tasks, and the App's terminal, as the agent's operating-system account | — |
+| `shell` | Commands, processes, systemd, containers, snippets, power, scheduled tasks, firewall, and the App's terminal, as the agent's operating-system account | — |
 | `ssh_terminal` | The web panel's terminal, which signs in to the SSH server at `[remote_access] ssh_addr` with that SSH account's own credentials | — |
 | `files` | File browsing inside `[remote_access.fs] roots` | `read` (browse and download) or `write` (also upload, create, rename, chmod, and delete) |
 | `connect` | Remote desktop (RDP, VNC) and local and dynamic port forwarding: connections the agent opens | `allow`: the addresses it may reach; empty is anywhere |

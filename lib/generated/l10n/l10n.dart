@@ -8780,6 +8780,228 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The password was changed on the agent, but the app could not save it. Update this server\'s Monitor password in its settings.'**
   String get monitorPasswordNotSaved;
+
+  /// Server function that manages the server's firewall (ufw).
+  ///
+  /// In en, this message translates to:
+  /// **'Firewall'**
+  String get firewall;
+
+  /// Shown when the server is not Linux.
+  ///
+  /// In en, this message translates to:
+  /// **'Firewall management supports Linux servers with ufw.'**
+  String get firewallLinuxOnly;
+
+  /// Shown when ufw is not found on the server.
+  ///
+  /// In en, this message translates to:
+  /// **'ufw is not installed on this server. Install it with the system\'s package manager, for example `apt install ufw`.'**
+  String get firewallUfwMissing;
+
+  /// Shown when the user declined to enter a sudo password.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading ufw\'s rules needs root. Enter the sudo password to continue.'**
+  String get firewallNeedsRoot;
+
+  /// Default policy chain for incoming traffic.
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming'**
+  String get firewallIncoming;
+
+  /// Default policy chain for outgoing traffic.
+  ///
+  /// In en, this message translates to:
+  /// **'Outgoing'**
+  String get firewallOutgoing;
+
+  /// Default policy chain for forwarded traffic.
+  ///
+  /// In en, this message translates to:
+  /// **'Routed'**
+  String get firewallRouted;
+
+  /// Section title for ufw's default policies.
+  ///
+  /// In en, this message translates to:
+  /// **'Default policy'**
+  String get firewallDefaultPolicy;
+
+  /// ufw log level.
+  ///
+  /// In en, this message translates to:
+  /// **'Logging'**
+  String get firewallLogging;
+
+  /// Section title for the firewall rule list.
+  ///
+  /// In en, this message translates to:
+  /// **'Rules'**
+  String get firewallRules;
+
+  /// One firewall rule, as the type in a delete confirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Rule'**
+  String get firewallRule;
+
+  /// Button and dialog title for adding a firewall rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Add rule'**
+  String get firewallAddRule;
+
+  /// Any address or port in a firewall rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Anywhere'**
+  String get firewallAnywhere;
+
+  /// Where the traffic a rule matches comes from.
+  ///
+  /// In en, this message translates to:
+  /// **'from {source}'**
+  String firewallFromFmt(String source);
+
+  /// Field label: the source address of a firewall rule.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get firewallFrom;
+
+  /// Field label: the destination address of a firewall rule.
+  ///
+  /// In en, this message translates to:
+  /// **'To'**
+  String get firewallTo;
+
+  /// Field label: tcp, udp or any.
+  ///
+  /// In en, this message translates to:
+  /// **'Protocol'**
+  String get firewallProtocol;
+
+  /// Field label: network interface name.
+  ///
+  /// In en, this message translates to:
+  /// **'Interface'**
+  String get firewallInterface;
+
+  /// Field label: comment stored with a firewall rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Comment'**
+  String get firewallComment;
+
+  /// ufw application profile, which names the ports of an application.
+  ///
+  /// In en, this message translates to:
+  /// **'App profile'**
+  String get firewallAppProfile;
+
+  /// Switch: insert the rule first. ufw applies the first rule that matches.
+  ///
+  /// In en, this message translates to:
+  /// **'Put before all other rules'**
+  String get firewallPrepend;
+
+  /// Shown when ufw's IPv6 support is off.
+  ///
+  /// In en, this message translates to:
+  /// **'IPv6 is off (IPV6=no): v6 rules are not loaded.'**
+  String get firewallIpv6Off;
+
+  /// Warning before a firewall change that may block the app's own connection.
+  ///
+  /// In en, this message translates to:
+  /// **'No rule lets TCP in to port {ports}, which this app connects to. While incoming traffic is not allowed by default, new connections to it will be refused.'**
+  String firewallLockoutFmt(String ports);
+
+  /// Checkbox: add allow rules for the app's ports before the change.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow TCP port {ports} first'**
+  String firewallAllowFirstFmt(String ports);
+
+  /// Reload ufw's rules.
+  ///
+  /// In en, this message translates to:
+  /// **'Reload'**
+  String get firewallReload;
+
+  /// Validation error for a firewall rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a port, an app profile, an address or an interface.'**
+  String get firewallNothingMatched;
+
+  /// Validation error for a firewall rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid port. Use 22, 80,443 or 6000:6010.'**
+  String get firewallInvalidPort;
+
+  /// Validation error for a firewall rule.
+  ///
+  /// In en, this message translates to:
+  /// **'At most 15 ports; a range counts as two.'**
+  String get firewallTooManyPorts;
+
+  /// Validation error for a firewall rule.
+  ///
+  /// In en, this message translates to:
+  /// **'A port list or range needs tcp or udp.'**
+  String get firewallPortsNeedProtocol;
+
+  /// Validation error for a firewall rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid address. Use an IP address or a network such as 192.168.1.0/24.'**
+  String get firewallInvalidAddress;
+
+  /// Validation error for a firewall rule.
+  ///
+  /// In en, this message translates to:
+  /// **'From and To must both be IPv4 or both be IPv6.'**
+  String get firewallMixedIpVersions;
+
+  /// Validation error for a firewall rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid interface name.'**
+  String get firewallInvalidInterface;
+
+  /// Validation error for a firewall rule.
+  ///
+  /// In en, this message translates to:
+  /// **'The comment cannot contain \' or line breaks.'**
+  String get firewallInvalidComment;
+
+  /// Field label: the interface a packet arrives on.
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming interface'**
+  String get firewallInterfaceIn;
+
+  /// Field label: the interface a packet leaves by.
+  ///
+  /// In en, this message translates to:
+  /// **'Outgoing interface'**
+  String get firewallInterfaceOut;
+
+  /// Field label: the port the traffic a rule matches comes from.
+  ///
+  /// In en, this message translates to:
+  /// **'Source port'**
+  String get firewallSourcePort;
+
+  /// Expands the less used fields of the add-rule form.
+  ///
+  /// In en, this message translates to:
+  /// **'More options'**
+  String get firewallMoreOptions;
 }
 
 class _AppLocalizationsDelegate

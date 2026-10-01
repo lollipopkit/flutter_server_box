@@ -4889,4 +4889,125 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get monitorPasswordNotSaved =>
       'agent의 비밀번호는 변경되었지만 앱에 저장하지 못했습니다. 이 서버 설정에서 Monitor 비밀번호를 업데이트하세요.';
+
+  @override
+  String get firewall => '방화벽';
+
+  @override
+  String get firewallLinuxOnly => '방화벽 관리는 ufw가 설치된 Linux 서버를 지원합니다.';
+
+  @override
+  String get firewallUfwMissing =>
+      '이 서버에 ufw가 설치되어 있지 않습니다. 시스템 패키지 관리자로 설치하세요(예: `apt install ufw`).';
+
+  @override
+  String get firewallNeedsRoot =>
+      'ufw 규칙을 읽으려면 root 권한이 필요합니다. 계속하려면 sudo 비밀번호를 입력하세요.';
+
+  @override
+  String get firewallIncoming => '수신';
+
+  @override
+  String get firewallOutgoing => '발신';
+
+  @override
+  String get firewallRouted => '전달';
+
+  @override
+  String get firewallDefaultPolicy => '기본 정책';
+
+  @override
+  String get firewallLogging => '로깅';
+
+  @override
+  String get firewallRules => '규칙';
+
+  @override
+  String get firewallRule => '규칙';
+
+  @override
+  String get firewallAddRule => '규칙 추가';
+
+  @override
+  String get firewallAnywhere => '모든 곳';
+
+  @override
+  String firewallFromFmt(String source) {
+    return '출발지 $source';
+  }
+
+  @override
+  String get firewallFrom => '출발지';
+
+  @override
+  String get firewallTo => '목적지';
+
+  @override
+  String get firewallProtocol => '프로토콜';
+
+  @override
+  String get firewallInterface => '인터페이스';
+
+  @override
+  String get firewallComment => '설명';
+
+  @override
+  String get firewallAppProfile => '앱 프로필';
+
+  @override
+  String get firewallPrepend => '다른 모든 규칙보다 앞에 두기';
+
+  @override
+  String get firewallIpv6Off => 'IPv6가 꺼져 있습니다(IPV6=no). v6 규칙은 로드되지 않습니다.';
+
+  @override
+  String firewallLockoutFmt(String ports) {
+    return '이 앱이 연결하는 TCP 포트 $ports로의 수신을 허용하는 규칙이 없습니다. 수신 트래픽이 기본적으로 허용되지 않는 동안 이 포트로의 새 연결은 거부됩니다.';
+  }
+
+  @override
+  String firewallAllowFirstFmt(String ports) {
+    return 'TCP 포트 $ports를 먼저 허용';
+  }
+
+  @override
+  String get firewallReload => '다시 불러오기';
+
+  @override
+  String get firewallNothingMatched => '포트, 앱 프로필, 주소 또는 인터페이스를 입력하세요.';
+
+  @override
+  String get firewallInvalidPort =>
+      '잘못된 포트입니다. 22, 80,443 또는 6000:6010 형식을 사용하세요.';
+
+  @override
+  String get firewallTooManyPorts => '포트는 최대 15개이며, 범위는 2개로 계산됩니다.';
+
+  @override
+  String get firewallPortsNeedProtocol => '포트 목록이나 범위에는 tcp 또는 udp가 필요합니다.';
+
+  @override
+  String get firewallInvalidAddress =>
+      '잘못된 주소입니다. IP 주소나 192.168.1.0/24 같은 네트워크를 사용하세요.';
+
+  @override
+  String get firewallMixedIpVersions => '출발지와 목적지는 모두 IPv4이거나 모두 IPv6이어야 합니다.';
+
+  @override
+  String get firewallInvalidInterface => '잘못된 인터페이스 이름입니다.';
+
+  @override
+  String get firewallInvalidComment => '설명에는 \' 또는 줄바꿈을 넣을 수 없습니다.';
+
+  @override
+  String get firewallInterfaceIn => '수신 인터페이스';
+
+  @override
+  String get firewallInterfaceOut => '발신 인터페이스';
+
+  @override
+  String get firewallSourcePort => '출발지 포트';
+
+  @override
+  String get firewallMoreOptions => '추가 옵션';
 }

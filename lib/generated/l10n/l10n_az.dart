@@ -5126,4 +5126,130 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get monitorPasswordNotSaved =>
       'Parol agent-də dəyişdirildi, lakin tətbiq onu saxlaya bilmədi. Bu serverin ayarlarında Monitor parolunu yeniləyin.';
+
+  @override
+  String get firewall => 'Firewall';
+
+  @override
+  String get firewallLinuxOnly =>
+      'Firewall idarəetməsi ufw quraşdırılmış Linux serverlərini dəstəkləyir.';
+
+  @override
+  String get firewallUfwMissing =>
+      'Bu serverdə ufw quraşdırılmayıb. Onu sistemin paket meneceri ilə quraşdırın, məsələn `apt install ufw`.';
+
+  @override
+  String get firewallNeedsRoot =>
+      'ufw qaydalarını oxumaq üçün root lazımdır. Davam etmək üçün sudo parolunu daxil edin.';
+
+  @override
+  String get firewallIncoming => 'Daxil olan';
+
+  @override
+  String get firewallOutgoing => 'Çıxan';
+
+  @override
+  String get firewallRouted => 'Yönləndirilən';
+
+  @override
+  String get firewallDefaultPolicy => 'Standart siyasət';
+
+  @override
+  String get firewallLogging => 'Jurnal';
+
+  @override
+  String get firewallRules => 'Qaydalar';
+
+  @override
+  String get firewallRule => 'Qayda';
+
+  @override
+  String get firewallAddRule => 'Qayda əlavə et';
+
+  @override
+  String get firewallAnywhere => 'İstənilən yer';
+
+  @override
+  String firewallFromFmt(String source) {
+    return 'mənbə: $source';
+  }
+
+  @override
+  String get firewallFrom => 'Mənbə';
+
+  @override
+  String get firewallTo => 'Təyinat';
+
+  @override
+  String get firewallProtocol => 'Protokol';
+
+  @override
+  String get firewallInterface => 'İnterfeys';
+
+  @override
+  String get firewallComment => 'Şərh';
+
+  @override
+  String get firewallAppProfile => 'Tətbiq profili';
+
+  @override
+  String get firewallPrepend => 'Bütün digər qaydalardan əvvəl yerləşdir';
+
+  @override
+  String get firewallIpv6Off =>
+      'IPv6 söndürülüb (IPV6=no): v6 qaydaları yüklənmir.';
+
+  @override
+  String firewallLockoutFmt(String ports) {
+    return 'Bu tətbiqin qoşulduğu $ports TCP portuna daxil olan trafikə icazə verən qayda yoxdur. Daxil olan trafikə standart olaraq icazə verilmədikcə, bu porta yeni qoşulmalar rədd ediləcək.';
+  }
+
+  @override
+  String firewallAllowFirstFmt(String ports) {
+    return 'Əvvəlcə $ports TCP portuna icazə ver';
+  }
+
+  @override
+  String get firewallReload => 'Yenidən yüklə';
+
+  @override
+  String get firewallNothingMatched =>
+      'Port, tətbiq profili, ünvan və ya interfeys daxil edin.';
+
+  @override
+  String get firewallInvalidPort =>
+      'Yanlış port. 22, 80,443 və ya 6000:6010 formatından istifadə edin.';
+
+  @override
+  String get firewallTooManyPorts => 'Ən çox 15 port; bir aralıq iki sayılır.';
+
+  @override
+  String get firewallPortsNeedProtocol =>
+      'Port siyahısı və ya aralığı üçün tcp və ya udp lazımdır.';
+
+  @override
+  String get firewallInvalidAddress =>
+      'Yanlış ünvan. IP ünvanı və ya 192.168.1.0/24 kimi şəbəkə istifadə edin.';
+
+  @override
+  String get firewallMixedIpVersions =>
+      'Mənbə və Təyinat ya hər ikisi IPv4, ya da hər ikisi IPv6 olmalıdır.';
+
+  @override
+  String get firewallInvalidInterface => 'Yanlış interfeys adı.';
+
+  @override
+  String get firewallInvalidComment => 'Şərhdə \' və ya sətir sonu ola bilməz.';
+
+  @override
+  String get firewallInterfaceIn => 'Daxil olan interfeys';
+
+  @override
+  String get firewallInterfaceOut => 'Çıxan interfeys';
+
+  @override
+  String get firewallSourcePort => 'Mənbə portu';
+
+  @override
+  String get firewallMoreOptions => 'Əlavə seçimlər';
 }

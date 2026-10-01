@@ -4883,4 +4883,126 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get monitorPasswordNotSaved =>
       'agent 上のパスワードは変更されましたが、App に保存できませんでした。このサーバーの設定で Monitor のパスワードを更新してください。';
+
+  @override
+  String get firewall => 'ファイアウォール';
+
+  @override
+  String get firewallLinuxOnly => 'ファイアウォール管理は ufw を備えた Linux サーバーに対応しています。';
+
+  @override
+  String get firewallUfwMissing =>
+      'このサーバーには ufw がインストールされていません。システムのパッケージマネージャーでインストールしてください（例: `apt install ufw`）。';
+
+  @override
+  String get firewallNeedsRoot =>
+      'ufw のルールを読み取るには root 権限が必要です。続行するには sudo パスワードを入力してください。';
+
+  @override
+  String get firewallIncoming => '受信';
+
+  @override
+  String get firewallOutgoing => '送信';
+
+  @override
+  String get firewallRouted => '転送';
+
+  @override
+  String get firewallDefaultPolicy => 'デフォルトポリシー';
+
+  @override
+  String get firewallLogging => 'ログ';
+
+  @override
+  String get firewallRules => 'ルール';
+
+  @override
+  String get firewallRule => 'ルール';
+
+  @override
+  String get firewallAddRule => 'ルールを追加';
+
+  @override
+  String get firewallAnywhere => '任意';
+
+  @override
+  String firewallFromFmt(String source) {
+    return '送信元 $source';
+  }
+
+  @override
+  String get firewallFrom => '送信元';
+
+  @override
+  String get firewallTo => '宛先';
+
+  @override
+  String get firewallProtocol => 'プロトコル';
+
+  @override
+  String get firewallInterface => 'インターフェース';
+
+  @override
+  String get firewallComment => 'コメント';
+
+  @override
+  String get firewallAppProfile => 'アプリプロファイル';
+
+  @override
+  String get firewallPrepend => '他のすべてのルールより前に置く';
+
+  @override
+  String get firewallIpv6Off => 'IPv6 はオフです（IPV6=no）。v6 ルールは読み込まれません。';
+
+  @override
+  String firewallLockoutFmt(String ports) {
+    return 'このアプリが接続する TCP ポート $ports への受信を許可するルールがありません。受信がデフォルトで許可されていない間、このポートへの新しい接続は拒否されます。';
+  }
+
+  @override
+  String firewallAllowFirstFmt(String ports) {
+    return '先に TCP ポート $ports を許可する';
+  }
+
+  @override
+  String get firewallReload => '再読み込み';
+
+  @override
+  String get firewallNothingMatched =>
+      'ポート、アプリプロファイル、アドレス、またはインターフェースを入力してください。';
+
+  @override
+  String get firewallInvalidPort =>
+      '無効なポートです。22、80,443、6000:6010 の形式で入力してください。';
+
+  @override
+  String get firewallTooManyPorts => 'ポートは最大 15 個までです（範囲は 2 個として数えます）。';
+
+  @override
+  String get firewallPortsNeedProtocol => 'ポートのリストや範囲には tcp または udp の指定が必要です。';
+
+  @override
+  String get firewallInvalidAddress =>
+      '無効なアドレスです。IP アドレスまたは 192.168.1.0/24 のようなネットワークを入力してください。';
+
+  @override
+  String get firewallMixedIpVersions => '送信元と宛先は、両方とも IPv4 か両方とも IPv6 にしてください。';
+
+  @override
+  String get firewallInvalidInterface => '無効なインターフェース名です。';
+
+  @override
+  String get firewallInvalidComment => 'コメントに \' や改行は使用できません。';
+
+  @override
+  String get firewallInterfaceIn => '受信インターフェース';
+
+  @override
+  String get firewallInterfaceOut => '送信インターフェース';
+
+  @override
+  String get firewallSourcePort => '送信元ポート';
+
+  @override
+  String get firewallMoreOptions => 'その他のオプション';
 }

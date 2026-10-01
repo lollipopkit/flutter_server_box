@@ -25,7 +25,7 @@ Windows 和 Linux 不支持这些链接。
 | `serverbox://snippet/<id>?server=<id>` | 代码片段，在指定服务器上 |
 | `serverbox://add-server?host=…&port=…&user=…&name=…` | 预填好的新增服务器表单 |
 
-`<function>` 可选：`terminal`、`files`、`container`、`process`、`snippet`、`iperf`、`systemd`、`portForward`、`power`、`users`、`scheduledTasks`、`remoteDesktop`。
+`<function>` 可选：`terminal`、`files`、`container`、`process`、`snippet`、`iperf`、`systemd`、`portForward`、`power`、`users`、`scheduledTasks`、`remoteDesktop`、`firewall`。
 
 `<tab>` 可选：`server`、`ssh`、`file`、`snippet`、`agent`、`benchmark`、`remoteDesktop`、`virt`。
 

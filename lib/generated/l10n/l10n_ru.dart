@@ -5161,4 +5161,132 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get monitorPasswordNotSaved =>
       'Пароль на агенте изменён, но приложению не удалось его сохранить. Обновите пароль Monitor в настройках этого сервера.';
+
+  @override
+  String get firewall => 'Брандмауэр';
+
+  @override
+  String get firewallLinuxOnly =>
+      'Управление брандмауэром поддерживает серверы Linux с ufw.';
+
+  @override
+  String get firewallUfwMissing =>
+      'ufw не установлен на этом сервере. Установите его через менеджер пакетов системы, например `apt install ufw`.';
+
+  @override
+  String get firewallNeedsRoot =>
+      'Для чтения правил ufw нужны права root. Введите пароль sudo, чтобы продолжить.';
+
+  @override
+  String get firewallIncoming => 'Входящий';
+
+  @override
+  String get firewallOutgoing => 'Исходящий';
+
+  @override
+  String get firewallRouted => 'Пересылаемый';
+
+  @override
+  String get firewallDefaultPolicy => 'Политика по умолчанию';
+
+  @override
+  String get firewallLogging => 'Журналирование';
+
+  @override
+  String get firewallRules => 'Правила';
+
+  @override
+  String get firewallRule => 'Правило';
+
+  @override
+  String get firewallAddRule => 'Добавить правило';
+
+  @override
+  String get firewallAnywhere => 'Любой';
+
+  @override
+  String firewallFromFmt(String source) {
+    return 'от $source';
+  }
+
+  @override
+  String get firewallFrom => 'Откуда';
+
+  @override
+  String get firewallTo => 'Куда';
+
+  @override
+  String get firewallProtocol => 'Протокол';
+
+  @override
+  String get firewallInterface => 'Интерфейс';
+
+  @override
+  String get firewallComment => 'Комментарий';
+
+  @override
+  String get firewallAppProfile => 'Профиль приложения';
+
+  @override
+  String get firewallPrepend => 'Поместить перед всеми остальными правилами';
+
+  @override
+  String get firewallIpv6Off =>
+      'IPv6 выключен (IPV6=no): правила v6 не загружаются.';
+
+  @override
+  String firewallLockoutFmt(String ports) {
+    return 'Ни одно правило не пропускает входящий TCP на порт $ports, к которому подключается это приложение. Пока входящий трафик по умолчанию не разрешён, новые подключения к нему будут отклоняться.';
+  }
+
+  @override
+  String firewallAllowFirstFmt(String ports) {
+    return 'Сначала разрешить TCP-порт $ports';
+  }
+
+  @override
+  String get firewallReload => 'Перезагрузить';
+
+  @override
+  String get firewallNothingMatched =>
+      'Укажите порт, профиль приложения, адрес или интерфейс.';
+
+  @override
+  String get firewallInvalidPort =>
+      'Недопустимый порт. Используйте 22, 80,443 или 6000:6010.';
+
+  @override
+  String get firewallTooManyPorts =>
+      'Не более 15 портов; диапазон считается за два.';
+
+  @override
+  String get firewallPortsNeedProtocol =>
+      'Для списка или диапазона портов нужен tcp или udp.';
+
+  @override
+  String get firewallInvalidAddress =>
+      'Недопустимый адрес. Используйте IP-адрес или сеть, например 192.168.1.0/24.';
+
+  @override
+  String get firewallMixedIpVersions =>
+      'Откуда и Куда должны быть оба IPv4 или оба IPv6.';
+
+  @override
+  String get firewallInvalidInterface => 'Недопустимое имя интерфейса.';
+
+  @override
+  String get firewallInvalidComment =>
+      'Комментарий не может содержать \' или переносы строк.';
+
+  @override
+  String get firewallInterfaceIn => 'Входящий интерфейс';
+
+  @override
+  String get firewallInterfaceOut => 'Исходящий интерфейс';
+
+  @override
+  String get firewallSourcePort => 'Порт источника';
+
+  @override
+  String get firewallMoreOptions => 'Дополнительные параметры';
 }

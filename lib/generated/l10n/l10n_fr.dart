@@ -5214,4 +5214,132 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get monitorPasswordNotSaved =>
       'Le mot de passe a été modifié sur l\'agent, mais l\'application n\'a pas pu l\'enregistrer. Mettez à jour le mot de passe Monitor dans les réglages de ce serveur.';
+
+  @override
+  String get firewall => 'Pare-feu';
+
+  @override
+  String get firewallLinuxOnly =>
+      'La gestion du pare-feu prend en charge les serveurs Linux avec ufw.';
+
+  @override
+  String get firewallUfwMissing =>
+      'ufw n\'est pas installé sur ce serveur. Installez-le avec le gestionnaire de paquets du système, par exemple `apt install ufw`.';
+
+  @override
+  String get firewallNeedsRoot =>
+      'La lecture des règles ufw nécessite root. Saisissez le mot de passe sudo pour continuer.';
+
+  @override
+  String get firewallIncoming => 'Entrant';
+
+  @override
+  String get firewallOutgoing => 'Sortant';
+
+  @override
+  String get firewallRouted => 'Routé';
+
+  @override
+  String get firewallDefaultPolicy => 'Politique par défaut';
+
+  @override
+  String get firewallLogging => 'Journalisation';
+
+  @override
+  String get firewallRules => 'Règles';
+
+  @override
+  String get firewallRule => 'Règle';
+
+  @override
+  String get firewallAddRule => 'Ajouter une règle';
+
+  @override
+  String get firewallAnywhere => 'N\'importe où';
+
+  @override
+  String firewallFromFmt(String source) {
+    return 'depuis $source';
+  }
+
+  @override
+  String get firewallFrom => 'De';
+
+  @override
+  String get firewallTo => 'Vers';
+
+  @override
+  String get firewallProtocol => 'Protocole';
+
+  @override
+  String get firewallInterface => 'Interface';
+
+  @override
+  String get firewallComment => 'Commentaire';
+
+  @override
+  String get firewallAppProfile => 'Profil d\'application';
+
+  @override
+  String get firewallPrepend => 'Placer avant toutes les autres règles';
+
+  @override
+  String get firewallIpv6Off =>
+      'IPv6 est désactivé (IPV6=no) : les règles v6 ne sont pas chargées.';
+
+  @override
+  String firewallLockoutFmt(String ports) {
+    return 'Aucune règle n\'autorise TCP en entrée vers le port $ports, auquel cette app se connecte. Tant que le trafic entrant n\'est pas autorisé par défaut, les nouvelles connexions vers ce port seront refusées.';
+  }
+
+  @override
+  String firewallAllowFirstFmt(String ports) {
+    return 'Autoriser d\'abord le port TCP $ports';
+  }
+
+  @override
+  String get firewallReload => 'Recharger';
+
+  @override
+  String get firewallNothingMatched =>
+      'Saisissez un port, un profil d\'application, une adresse ou une interface.';
+
+  @override
+  String get firewallInvalidPort =>
+      'Port non valide. Utilisez 22, 80,443 ou 6000:6010.';
+
+  @override
+  String get firewallTooManyPorts =>
+      'Au plus 15 ports ; une plage compte pour deux.';
+
+  @override
+  String get firewallPortsNeedProtocol =>
+      'Une liste ou une plage de ports nécessite tcp ou udp.';
+
+  @override
+  String get firewallInvalidAddress =>
+      'Adresse non valide. Utilisez une adresse IP ou un réseau comme 192.168.1.0/24.';
+
+  @override
+  String get firewallMixedIpVersions =>
+      'De et Vers doivent être tous deux en IPv4 ou tous deux en IPv6.';
+
+  @override
+  String get firewallInvalidInterface => 'Nom d\'interface non valide.';
+
+  @override
+  String get firewallInvalidComment =>
+      'Le commentaire ne peut pas contenir \' ni de saut de ligne.';
+
+  @override
+  String get firewallInterfaceIn => 'Interface d\'entrée';
+
+  @override
+  String get firewallInterfaceOut => 'Interface de sortie';
+
+  @override
+  String get firewallSourcePort => 'Port source';
+
+  @override
+  String get firewallMoreOptions => 'Plus d\'options';
 }

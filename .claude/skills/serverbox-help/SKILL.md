@@ -24,7 +24,7 @@ first, and the other stays available.
 |---|---|---|
 | Needs something installed on the server | no (an SSH server) | yes, the agent |
 | Status and charts | yes | yes, with history from before the app connected |
-| Terminal, commands, processes, containers, systemd, snippets, power | yes | only if the account's role holds `shell`, over a secure transport |
+| Terminal, commands, processes, containers, systemd, snippets, power, firewall | yes | only if the account's role holds `shell`, over a secure transport |
 | File browser | yes (SFTP) | only if the role holds `files` (read-only or writable) and the agent has a non-empty `[remote_access.fs] roots` |
 | Port forwarding (local, dynamic, remote), remote desktop | yes | local, dynamic and remote desktop with the role's `connect` grant, remote forwards with `listen` (an agent older than the relay or the listener reports none: update it). Remote forwards bind loopback only unless the role's `listen` has `public` |
 | SFTP transfers | yes | **never** — configure SSH for the same server too |

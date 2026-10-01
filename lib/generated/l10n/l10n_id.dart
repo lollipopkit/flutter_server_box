@@ -5123,4 +5123,132 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get monitorPasswordNotSaved =>
       'Kata sandi sudah diubah di agen, tetapi aplikasi gagal menyimpannya. Perbarui kata sandi Monitor di pengaturan server ini.';
+
+  @override
+  String get firewall => 'Firewall';
+
+  @override
+  String get firewallLinuxOnly =>
+      'Pengelolaan firewall mendukung server Linux dengan ufw.';
+
+  @override
+  String get firewallUfwMissing =>
+      'ufw tidak terpasang di server ini. Pasang dengan pengelola paket sistem, misalnya `apt install ufw`.';
+
+  @override
+  String get firewallNeedsRoot =>
+      'Membaca aturan ufw memerlukan root. Masukkan kata sandi sudo untuk melanjutkan.';
+
+  @override
+  String get firewallIncoming => 'Masuk';
+
+  @override
+  String get firewallOutgoing => 'Keluar';
+
+  @override
+  String get firewallRouted => 'Diteruskan';
+
+  @override
+  String get firewallDefaultPolicy => 'Kebijakan bawaan';
+
+  @override
+  String get firewallLogging => 'Pencatatan';
+
+  @override
+  String get firewallRules => 'Aturan';
+
+  @override
+  String get firewallRule => 'Aturan';
+
+  @override
+  String get firewallAddRule => 'Tambah aturan';
+
+  @override
+  String get firewallAnywhere => 'Di mana saja';
+
+  @override
+  String firewallFromFmt(String source) {
+    return 'dari $source';
+  }
+
+  @override
+  String get firewallFrom => 'Dari';
+
+  @override
+  String get firewallTo => 'Ke';
+
+  @override
+  String get firewallProtocol => 'Protokol';
+
+  @override
+  String get firewallInterface => 'Antarmuka';
+
+  @override
+  String get firewallComment => 'Komentar';
+
+  @override
+  String get firewallAppProfile => 'Profil aplikasi';
+
+  @override
+  String get firewallPrepend => 'Letakkan sebelum semua aturan lain';
+
+  @override
+  String get firewallIpv6Off =>
+      'IPv6 nonaktif (IPV6=no): aturan v6 tidak dimuat.';
+
+  @override
+  String firewallLockoutFmt(String ports) {
+    return 'Tidak ada aturan yang mengizinkan TCP masuk ke port $ports, yang dipakai aplikasi ini untuk terhubung. Selama lalu lintas masuk tidak diizinkan secara bawaan, koneksi baru ke port itu akan ditolak.';
+  }
+
+  @override
+  String firewallAllowFirstFmt(String ports) {
+    return 'Izinkan port TCP $ports terlebih dahulu';
+  }
+
+  @override
+  String get firewallReload => 'Muat ulang';
+
+  @override
+  String get firewallNothingMatched =>
+      'Masukkan port, profil aplikasi, alamat, atau antarmuka.';
+
+  @override
+  String get firewallInvalidPort =>
+      'Port tidak valid. Gunakan 22, 80,443, atau 6000:6010.';
+
+  @override
+  String get firewallTooManyPorts =>
+      'Paling banyak 15 port; satu rentang dihitung dua.';
+
+  @override
+  String get firewallPortsNeedProtocol =>
+      'Daftar atau rentang port memerlukan tcp atau udp.';
+
+  @override
+  String get firewallInvalidAddress =>
+      'Alamat tidak valid. Gunakan alamat IP atau jaringan seperti 192.168.1.0/24.';
+
+  @override
+  String get firewallMixedIpVersions =>
+      'Dari dan Ke harus sama-sama IPv4 atau sama-sama IPv6.';
+
+  @override
+  String get firewallInvalidInterface => 'Nama antarmuka tidak valid.';
+
+  @override
+  String get firewallInvalidComment =>
+      'Komentar tidak boleh berisi \' atau baris baru.';
+
+  @override
+  String get firewallInterfaceIn => 'Antarmuka masuk';
+
+  @override
+  String get firewallInterfaceOut => 'Antarmuka keluar';
+
+  @override
+  String get firewallSourcePort => 'Port sumber';
+
+  @override
+  String get firewallMoreOptions => 'Opsi lainnya';
 }

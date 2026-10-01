@@ -29,7 +29,7 @@ and change.
 
 `<function>` is one of `terminal`, `files`, `container`, `process`, `snippet`,
 `iperf`, `systemd`, `portForward`, `power`, `users`, `scheduledTasks`,
-`remoteDesktop`.
+`remoteDesktop`, `firewall`.
 
 `<tab>` is one of `server`, `ssh`, `file`, `snippet`, `agent`, `benchmark`,
 `remoteDesktop`, `virt`.
