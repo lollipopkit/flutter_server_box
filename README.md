@@ -134,13 +134,19 @@ Download packages only from sources you trust.
 
 - [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) is an agent you install on your servers. It is required for features that need to work while the app is closed — **push notifications**, **home-screen widgets**, and the **watch app**. It also offers another way to add a server: the app can connect to it over HTTP instead of SSH, which suits hosts whose SSH port you prefer not to expose, and gives charts historical data from before the app's first connection. Monitor also serves its own web panel. See its [Chinese documentation](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/README_zh.md) for setup and details on what each remote-access switch allows.
 - **Common issues** are listed in the [app wiki](https://github.com/lollipopkit/flutter_server_box/wiki/主页).
-- **Agent onboarding:** This repository includes a skill for installing and using the app, deploying and configuring Monitor agent, setting up the Flutter + Rust + Node environment, and answering common server-management questions. Add it to your agent with
+- **Agent skills:** This repository includes three skills for AI agents. Add them with
 
   ```sh
   npx skills add lollipopkit/flutter_server_box
   ```
 
-  The source is [`.claude/skills/serverbox-onboarding`](.claude/skills/serverbox-onboarding), so you can read what it will tell your agent before installing it.
+  which lists them and lets you pick, or add one with `--skill <name>`:
+
+  - [`serverbox-help`](.claude/skills/serverbox-help): using the app and deploying and configuring Monitor agent — adding servers, why a feature is missing for a server, permissions, alerts, widgets, backups. The app's own Agent ships with it.
+  - [`serverbox-onboarding`](.claude/skills/serverbox-onboarding): working on the code — setting up the Flutter + Rust + Node environment, building and testing, and how the project works.
+  - [`serverbox-theme`](.claude/skills/serverbox-theme): making a theme package (`.fsbt`), validating it and publishing it to the theme store.
+
+  Their source is in this repository, so you can read what they will tell your agent before installing them.
 
 Before opening an issue, please:
 
