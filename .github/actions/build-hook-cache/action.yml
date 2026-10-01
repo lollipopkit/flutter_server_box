@@ -5,9 +5,9 @@ description: The Rust toolchain and outputs of the app's Dart build hooks.
 # `hook/build.dart`: a `cargo build` into `.dart_tool/hooks_runner`, on the
 # toolchain `crates/sbm_ffi/rust-toolchain.toml` pins, with every shipped
 # target. rust-cache knows neither that target directory nor that toolchain,
-# and kache never sees the build — hooks_runner passes a fixed allowlist of
-# environment variables, and `RUSTC_WRAPPER` is not on it. Cold, the hook was
-# ~3.5 minutes before the first test in `analysis.yml`.
+# and a `RUSTC_WRAPPER` never reaches the build — hooks_runner passes a fixed
+# allowlist of environment variables. Cold, the hook was ~3.5 minutes before
+# the first test in `analysis.yml`.
 #
 # Two steps rather than `actions/cache`, whose save cannot be turned off: a
 # pull request restores main's outputs and does not add its own to the

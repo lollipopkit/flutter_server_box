@@ -514,16 +514,6 @@ jobs:
           sudo apt-get install -y musl-tools
       - name: Add Rust target
         run: rustup target add ${{ matrix.target }}
-      # kache rather than rust-cache: see `rustTests` in analysis.yml. Only a
-      # run from main saves, so a tag's release build restores what main left
-      # and a one-off dispatch adds nothing.
-      - uses: kunobi-ninja/kache-action@ad7317540dcdd71c904f7a60a87b620a0c0e67ed # v1
-        with:
-          version: 0.26.3
-          cache-key-prefix: kache-monitor-${{ matrix.target }}
-          save-cache: ${{ github.ref == 'refs/heads/main' }}
-          pr-comment: false
-          cache-dir: ${{ runner.os == 'Windows' && format('{0}/kache', runner.temp) || '' }}
       - name: Build
         shell: bash
         run: cargo build -p server_box_monitor --release --target ${{ matrix.target }}
