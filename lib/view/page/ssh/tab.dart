@@ -8,6 +8,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/local_shell.dart';
 import 'package:server_box/core/utils/rootfs.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
+import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/dist.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
@@ -210,6 +211,8 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
       appBar: split ? _sessionBar : _tabBar,
       body: SessionTabsView<_SshSession>(
         controller: _sessions,
+        // Restored sessions land while another tab may be the one on screen.
+        mayFocus: () => ref.read(currentHomeTabProvider) == AppTab.ssh,
         // Page 0 is the picker's on one column. Beside a rail it is what the
         // surface shows before anything is opened — and nothing else, because
         // the rail is already that list and drawing it twice is what the grid
