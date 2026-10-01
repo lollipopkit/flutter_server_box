@@ -9,6 +9,7 @@ import 'package:server_box/core/utils/secure_endpoint.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/monitor_capabilities.dart';
 import 'package:server_box/data/model/server/monitor_exec_output.dart';
+import 'package:server_box/data/model/server/monitor_grants.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/monitor_metrics.dart';
 import 'package:server_box/data/model/server/monitor_push.dart';
@@ -514,6 +515,182 @@ class MonitorHttpClient {
     return _authed(() async {
       return MonitorPushList.fromJson(await _object('/api/v1/push'));
     });
+  }
+
+  // ------------------------------------------------------------- accounts
+  //
+  // `/me`, `/users`, `/roles` — `docs/dev/monitor-permissions.md`. Every change
+  // of access carries the calling admin's own password, which the agent checks
+  // again; [currentPassword] is that, never the password being set.
+
+  /// Who this app is logged in as, and that account's role.
+  Future<({String username, MonitorRole role})> fetchMe() {
+    return _access(() async {
+      final resp = await _object('/api/v1/me');
+      final role = resp['role'];
+      return (
+        username: resp['username'] as String? ?? '',
+        role: role is Map<String, dynamic>
+            ? MonitorRole.fromJson(role)
+            : MonitorRole(name: role is String ? role : ''),
+      );
+    });
+  }
+
+  /// Changes this account's own password. The app keeps logging in with the
+  /// one it has stored, so a caller updates that as well.
+  Future<void> changeOwnPassword({
+    required String currentPassword,
+    required String newPassword,
+  }) {
+    return _access(() async {
+      await _session().put<dynamic>(
+        '/api/v1/me/password',
+        data: {
+          'current_password': currentPassword,
+          'new_password': newPassword,
+        },
+      );
+    });
+  }
+
+  Future<List<MonitorUser>> fetchUsers() {
+    return _access(() async {
+      return [
+        for (final item in await _list('/api/v1/users'))
+          MonitorUser.fromJson(item),
+      ];
+    });
+  }
+
+  Future<void> createUser({
+    required String username,
+    required String password,
+    required String role,
+    required String currentPassword,
+  }) {
+    return _access(() async {
+      await _session().post<dynamic>(
+        '/api/v1/users',
+        data: {
+          'username': username,
+          'password': password,
+          'role': role,
+          'current_password': currentPassword,
+        },
+      );
+    });
+  }
+
+  /// [role] and [password] only where given: the other is left as it is.
+  Future<void> updateUser(
+    String username, {
+    String? role,
+    String? password,
+    required String currentPassword,
+  }) {
+    return _access(() async {
+      await _session().put<dynamic>(
+        '/api/v1/users/${Uri.encodeComponent(username)}',
+        data: {
+          'role': ?role,
+          'password': ?password,
+          'current_password': currentPassword,
+        },
+      );
+    });
+  }
+
+  Future<void> deleteUser(String username, {required String currentPassword}) {
+    return _access(() async {
+      await _session().delete<dynamic>(
+        '/api/v1/users/${Uri.encodeComponent(username)}',
+        data: {'current_password': currentPassword},
+      );
+    });
+  }
+
+  Future<List<MonitorRole>> fetchRoles() {
+    return _access(() async {
+      return [
+        for (final item in await _list('/api/v1/roles'))
+          MonitorRole.fromJson(item),
+      ];
+    });
+  }
+
+  Future<void> createRole(MonitorRole role, {required String currentPassword}) {
+    return _access(() async {
+      await _session().post<dynamic>(
+        '/api/v1/roles',
+        data: {'role': role.toJson(), 'current_password': currentPassword},
+      );
+    });
+  }
+
+  Future<void> updateRole(MonitorRole role, {required String currentPassword}) {
+    return _access(() async {
+      await _session().put<dynamic>(
+        '/api/v1/roles/${Uri.encodeComponent(role.name)}',
+        data: {'role': role.toJson(), 'current_password': currentPassword},
+      );
+    });
+  }
+
+  Future<void> deleteRole(String name, {required String currentPassword}) {
+    return _access(() async {
+      await _session().delete<dynamic>(
+        '/api/v1/roles/${Uri.encodeComponent(name)}',
+        data: {'current_password': currentPassword},
+      );
+    });
+  }
+
+  /// [fn] with the agent's refusals typed — see [accessErr]. A 401 still
+  /// reaches [_authed], which logs in again and retries.
+  Future<T> _access<T>(Future<T> Function() fn) {
+    return _authed(() async {
+      try {
+        return await fn();
+      } on DioException catch (e) {
+        final typed = accessErr(e.response?.statusCode, e.response?.data);
+        if (typed != null) throw typed;
+        rethrow;
+      }
+    });
+  }
+
+  /// What an account or role request's refusal means, from its status and the
+  /// agent's `{"error": code, "message": ...}` body; null for a 401 and for
+  /// anything that is not one of these.
+  @visibleForTesting
+  static MonitorHttpErr? accessErr(int? status, Object? body) {
+    final code = body is Map ? body['error'] : null;
+    final said = body is Map ? body['message'] : null;
+    final type = switch ((status, code)) {
+      (403, 'reauth') => MonitorHttpErrType.reauth,
+      (409, 'last_admin') => MonitorHttpErrType.lastAdmin,
+      (409, _) => MonitorHttpErrType.conflict,
+      (403, _) => MonitorHttpErrType.forbidden,
+      (404, _) => MonitorHttpErrType.notFound,
+      (400, _) => MonitorHttpErrType.badRequest,
+      _ => null,
+    };
+    if (type == null) return null;
+    return MonitorHttpErr(
+      type: type,
+      message: said is String && said.isNotEmpty ? said : '$status $code',
+    );
+  }
+
+  /// A JSON array of objects from [path].
+  Future<List<Map<String, dynamic>>> _list(String path) async {
+    final data = (await _session().get<dynamic>(path)).data;
+    if (data is List) return [for (final e in data) if (e is Map<String, dynamic>) e];
+    throw MonitorHttpErr(
+      type: MonitorHttpErrType.invalidResponse,
+      message: '$path answered with ${data.runtimeType}, not a JSON array',
+    );
   }
 
   /// Answers with the saved set read back, not with what was sent: after a

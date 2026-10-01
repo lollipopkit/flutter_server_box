@@ -5049,4 +5049,124 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get copyLink => 'Link kopiëren';
+
+  @override
+  String funcNeedsAgentPermission(String func) {
+    return 'Je account op deze Monitor agent heeft geen toestemming voor $func. Vraag de beheerder van de agent.';
+  }
+
+  @override
+  String funcNeedsAgentHttps(String func) {
+    return '$func heeft HTTPS naar deze Monitor agent nodig, of HTTP toegestaan op zowel de agent als deze app.';
+  }
+
+  @override
+  String funcNeedsAgentSetup(String func) {
+    return '$func is niet ingesteld op deze Monitor agent; de beheerder van de server moet het configureren.';
+  }
+
+  @override
+  String get monitorFilesReadOnly =>
+      'Alleen-lezen: dit account kan bestanden op de agent bekijken, maar niet wijzigen.';
+
+  @override
+  String get monitorAccess => 'Toegang';
+
+  @override
+  String get monitorAccounts => 'Accounts';
+
+  @override
+  String get monitorRoles => 'Rollen';
+
+  @override
+  String get monitorRole => 'Rol';
+
+  @override
+  String get monitorChangePassword => 'Wachtwoord wijzigen';
+
+  @override
+  String get monitorNewPassword => 'Nieuw wachtwoord';
+
+  @override
+  String get monitorCurrentPassword => 'Je huidige wachtwoord';
+
+  @override
+  String get monitorReauthTip =>
+      'Toegang wijzigen vraagt opnieuw om je wachtwoord.';
+
+  @override
+  String get monitorPasswordTooShort => 'Minstens 8 tekens';
+
+  @override
+  String get monitorPasswordMismatch => 'De wachtwoorden komen niet overeen';
+
+  @override
+  String get monitorErrReauth => 'Je wachtwoord was onjuist.';
+
+  @override
+  String get monitorErrLastAdmin =>
+      'De agent heeft minstens één beheerdersaccount nodig.';
+
+  @override
+  String get monitorErrConflict => 'Bestaat al of is nog in gebruik.';
+
+  @override
+  String get monitorErrForbidden => 'Alleen een beheerder kan dit doen.';
+
+  @override
+  String get monitorRoleNameRule =>
+      'Kleine letters, cijfers, - en _, tot 32 tekens';
+
+  @override
+  String get monitorGrantShell => 'Shell en opdrachten';
+
+  @override
+  String get monitorGrantShellTip =>
+      'Terminal, processen, services, containers, snippets, voeding — als het account van de agent';
+
+  @override
+  String get monitorGrantSshTerminal => 'Paneelterminal via SSH';
+
+  @override
+  String get monitorGrantFiles => 'Bestanden';
+
+  @override
+  String get monitorGrantConnect => 'Uitgaande verbindingen';
+
+  @override
+  String get monitorGrantConnectTip =>
+      'Lokale en dynamische port forwards, extern bureaublad';
+
+  @override
+  String get monitorGrantConnectAllow =>
+      'Toegestane doelen (IP of CIDR, optioneel :poort of :van-tot; één per regel, leeg = overal)';
+
+  @override
+  String get monitorGrantListen => 'Luisteren op de server';
+
+  @override
+  String get monitorGrantListenTip => 'Externe port forwards';
+
+  @override
+  String get monitorGrantListenPublic => 'Niet-loopbackadressen';
+
+  @override
+  String get monitorGrantPorts => 'Poortbereik (leeg = elke)';
+
+  @override
+  String get monitorGrantOff => 'Uit';
+
+  @override
+  String get monitorBuiltin => 'Ingebouwd';
+
+  @override
+  String get monitorAdminRoleTip =>
+      'Beheert accounts, rollen en de instellingen van de agent';
+
+  @override
+  String get monitorYou => 'Jij';
+
+  @override
+  String get monitorNoAccessToSettings =>
+      'Alleen een beheerder kan de instellingen van deze agent wijzigen.';
 }

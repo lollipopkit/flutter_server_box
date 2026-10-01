@@ -148,6 +148,7 @@ class FileBackendTraits {
     this.permissions = false,
     this.symlinks = false,
     this.sudoFallback = false,
+    this.readOnly = false,
   });
 
   /// Entries carry [FileEntry.mode], and it can be changed.
@@ -159,6 +160,11 @@ class FileBackendTraits {
   /// A refused operation can be retried through a shell with sudo. Only a
   /// backend that has a shell behind it can offer this; see `sftp_sudo.dart`.
   final bool sudoFallback;
+
+  /// Nothing can be changed here, only listed and read: a `monitor` agent
+  /// whose role grants `files` in read mode. The browser offers no write
+  /// rather than one the far side refuses.
+  final bool readOnly;
 }
 
 /// Somewhere files live.

@@ -5049,4 +5049,123 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get copyLink => 'Copiar link';
+
+  @override
+  String funcNeedsAgentPermission(String func) {
+    return 'Sua conta neste Monitor agent não tem permissão para $func. Peça ao administrador do agent.';
+  }
+
+  @override
+  String funcNeedsAgentHttps(String func) {
+    return '$func precisa de HTTPS até este Monitor agent, ou HTTP permitido no agent e neste app.';
+  }
+
+  @override
+  String funcNeedsAgentSetup(String func) {
+    return '$func não está configurado neste Monitor agent; o operador precisa configurá-lo.';
+  }
+
+  @override
+  String get monitorFilesReadOnly =>
+      'Somente leitura: esta conta pode navegar pelos arquivos do agent, mas não alterá-los.';
+
+  @override
+  String get monitorAccess => 'Acesso';
+
+  @override
+  String get monitorAccounts => 'Contas';
+
+  @override
+  String get monitorRoles => 'Funções';
+
+  @override
+  String get monitorRole => 'Função';
+
+  @override
+  String get monitorChangePassword => 'Alterar senha';
+
+  @override
+  String get monitorNewPassword => 'Nova senha';
+
+  @override
+  String get monitorCurrentPassword => 'Sua senha atual';
+
+  @override
+  String get monitorReauthTip => 'Alterar acessos exige sua senha novamente.';
+
+  @override
+  String get monitorPasswordTooShort => 'Pelo menos 8 caracteres';
+
+  @override
+  String get monitorPasswordMismatch => 'As senhas não coincidem';
+
+  @override
+  String get monitorErrReauth => 'Sua senha estava errada.';
+
+  @override
+  String get monitorErrLastAdmin =>
+      'O agent precisa de pelo menos uma conta de administrador.';
+
+  @override
+  String get monitorErrConflict => 'Já existe ou ainda está em uso.';
+
+  @override
+  String get monitorErrForbidden => 'Somente um administrador pode fazer isso.';
+
+  @override
+  String get monitorRoleNameRule =>
+      'Letras minúsculas, dígitos, - e _, até 32 caracteres';
+
+  @override
+  String get monitorGrantShell => 'Shell e comandos';
+
+  @override
+  String get monitorGrantShellTip =>
+      'Terminal, processos, serviços, contêineres, snippets, energia — com a conta do agent';
+
+  @override
+  String get monitorGrantSshTerminal => 'Terminal do painel via SSH';
+
+  @override
+  String get monitorGrantFiles => 'Arquivos';
+
+  @override
+  String get monitorGrantConnect => 'Conexões de saída';
+
+  @override
+  String get monitorGrantConnectTip =>
+      'Encaminhamentos de portas locais e dinâmicos, área de trabalho remota';
+
+  @override
+  String get monitorGrantConnectAllow =>
+      'Destinos permitidos (IP ou CIDR, opcionalmente :porta ou :de-até; um por linha, vazio = qualquer lugar)';
+
+  @override
+  String get monitorGrantListen => 'Escutar no servidor';
+
+  @override
+  String get monitorGrantListenTip => 'Encaminhamentos de portas remotos';
+
+  @override
+  String get monitorGrantListenPublic => 'Endereços não loopback';
+
+  @override
+  String get monitorGrantPorts => 'Faixa de portas (vazio = qualquer)';
+
+  @override
+  String get monitorGrantOff => 'Desligado';
+
+  @override
+  String get monitorBuiltin => 'Integrada';
+
+  @override
+  String get monitorAdminRoleTip =>
+      'Gerencia contas, funções e as configurações do agent';
+
+  @override
+  String get monitorYou => 'Você';
+
+  @override
+  String get monitorNoAccessToSettings =>
+      'Somente um administrador pode alterar as configurações deste agent.';
 }

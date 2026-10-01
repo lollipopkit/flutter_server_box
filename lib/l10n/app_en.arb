@@ -6629,5 +6629,55 @@
     }
   },
   "reduceMotion": "Reduce motion",
-  "copyLink": "Copy link"
+  "copyLink": "Copy link",
+  "funcNeedsAgentPermission": "Your account on this Monitor agent has no permission for {func}. Ask the agent's admin.",
+  "@funcNeedsAgentPermission": {
+    "placeholders": {
+      "func": { "type": "String" }
+    }
+  },
+  "funcNeedsAgentHttps": "{func} needs HTTPS to this Monitor agent, or plain HTTP allowed on both the agent and this app.",
+  "@funcNeedsAgentHttps": {
+    "placeholders": {
+      "func": { "type": "String" }
+    }
+  },
+  "funcNeedsAgentSetup": "{func} is not set up on this Monitor agent; its operator has to configure it.",
+  "@funcNeedsAgentSetup": {
+    "placeholders": {
+      "func": { "type": "String" }
+    }
+  },
+  "monitorFilesReadOnly": "Read-only: this account can browse files on the agent but not change them.",
+  "monitorAccess": "Access",
+  "monitorAccounts": "Accounts",
+  "monitorRoles": "Roles",
+  "monitorRole": "Role",
+  "monitorChangePassword": "Change password",
+  "monitorNewPassword": "New password",
+  "monitorCurrentPassword": "Your current password",
+  "monitorReauthTip": "Changing access needs your own password again.",
+  "monitorPasswordTooShort": "At least 8 characters",
+  "monitorPasswordMismatch": "The passwords do not match",
+  "monitorErrReauth": "Your password was wrong.",
+  "monitorErrLastAdmin": "The agent needs at least one admin account.",
+  "monitorErrConflict": "It already exists, or it is still in use.",
+  "monitorErrForbidden": "Only an admin can do this.",
+  "monitorRoleNameRule": "Lowercase letters, digits, - and _, up to 32 characters",
+  "monitorGrantShell": "Shell and commands",
+  "monitorGrantShellTip": "Terminal, processes, services, containers, snippets, power — as the agent's account",
+  "monitorGrantSshTerminal": "Panel terminal over SSH",
+  "monitorGrantFiles": "Files",
+  "monitorGrantConnect": "Outbound connections",
+  "monitorGrantConnectTip": "Local and dynamic port forwards, remote desktop",
+  "monitorGrantConnectAllow": "Allowed targets (IP or CIDR, optionally :port or :from-to; one per line, empty is anywhere)",
+  "monitorGrantListen": "Listen on the server",
+  "monitorGrantListenTip": "Remote port forwards",
+  "monitorGrantListenPublic": "Non-loopback addresses",
+  "monitorGrantPorts": "Port range (empty is any)",
+  "monitorGrantOff": "Off",
+  "monitorBuiltin": "Built-in",
+  "monitorAdminRoleTip": "Manages accounts, roles and the agent's settings",
+  "monitorYou": "You",
+  "monitorNoAccessToSettings": "Only an admin can change this agent's settings."
 }

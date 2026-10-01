@@ -23,12 +23,18 @@ class MonitorFileBackend implements FileBackend {
   /// File backends with the same credential share login, roots discovery, and
   /// Dio's connection pool. The reference-counted session is still separate
   /// from status polling, whose lifetime belongs to `ServerNotifier`.
-  MonitorFileBackend(MonitorHttpCredential monitor, {bool permissions = false})
-    : _permissions = permissions,
-      _shared = _SharedMonitorClient.acquire(monitor);
+  MonitorFileBackend(
+    MonitorHttpCredential monitor, {
+    bool permissions = false,
+    this.readOnly = false,
+  }) : _permissions = permissions,
+       _shared = _SharedMonitorClient.acquire(monitor);
 
   final _SharedMonitorClient _shared;
   final bool _permissions;
+
+  /// The account's `files` grant is read-only — see [FileBackendTraits.readOnly].
+  final bool readOnly;
   bool _closed = false;
 
   MonitorHttpClient get _client => _shared.client;
@@ -40,6 +46,7 @@ class MonitorFileBackend implements FileBackend {
     // Nowhere to escalate to. The agent runs as one account and offers no way
     // to ask for another; what it will not do, it will not do.
     sudoFallback: false,
+    readOnly: readOnly,
   );
 
   /// The agent's own answer, cached for the life of this backend.

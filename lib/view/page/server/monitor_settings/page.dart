@@ -10,7 +10,14 @@ final class MonitorSettingsArgs {
   /// The server's name, shown under the title.
   final String subtitle;
 
-  const MonitorSettingsArgs({required this.monitor, required this.subtitle});
+  /// See [MonitorSettingsView.onOwnPasswordChanged].
+  final Future<void> Function(String newPassword)? onOwnPasswordChanged;
+
+  const MonitorSettingsArgs({
+    required this.monitor,
+    required this.subtitle,
+    this.onOwnPasswordChanged,
+  });
 }
 
 /// [MonitorSettingsView] as a page, which is how a server's own detail page
@@ -93,6 +100,7 @@ final class _MonitorSettingsPageState extends State<MonitorSettingsPage> {
           body: MonitorSettingsView(
             monitor: widget.args.monitor,
             controller: _ctrl,
+            onOwnPasswordChanged: widget.args.onOwnPasswordChanged,
           ),
         ),
       ),
