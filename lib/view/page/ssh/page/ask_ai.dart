@@ -88,6 +88,7 @@ extension _AskAi on SSHPageState {
     if (placement == AskAiPanelPlacement.bottomSheet) {
       await showModalBottomSheet<void>(
         context: context,
+        useRootNavigator: true,
         isScrollControlled: true,
         useSafeArea: true,
         backgroundColor: Colors.transparent,

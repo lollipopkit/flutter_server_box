@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/llm/scope.dart';
 import 'package:server_box/data/model/app/float_shell.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/provider/ai/agent_shell.dart';
@@ -22,13 +23,27 @@ class AgentFloatingShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(agentShellProvider);
-    final visible =
-        mode != FloatShellMode.hidden &&
+    final onTab =
         // The tab is the better view of the same thing whenever it is the one
         // being looked at, and two of them at once is only confusing.
-        ref.watch(currentHomeTabProvider) != AppTab.agent;
+        ref.watch(currentHomeTabProvider) == AppTab.agent;
     final shell = ref.read(agentShellProvider.notifier);
 
+    return ValueListenableBuilder(
+      valueListenable: AgentChats.engaged,
+      builder: (context, engaged, _) => _build(
+        visible: mode != FloatShellMode.hidden && !onTab && engaged,
+        mode: mode,
+        shell: shell,
+      ),
+    );
+  }
+
+  Widget _build({
+    required bool visible,
+    required FloatShellMode mode,
+    required AgentShell shell,
+  }) {
     return FloatShell(
       area: area,
       visible: visible,

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
+import 'package:server_box/core/llm/scope.dart';
 import 'package:server_box/data/provider/ai/agent_shell.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
@@ -21,9 +22,13 @@ void main() {
     // changes, so every test here writes, and none of them should leave a
     // database behind.
     getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
+    // A run that has had a chat: before one, the window stays away whatever
+    // its mode — see `AgentChats.engaged`.
+    AgentChats.engaged.value = true;
   });
 
   tearDown(() async {
+    AgentChats.reset();
     await getIt.reset();
     await SqliteDb.close();
   });

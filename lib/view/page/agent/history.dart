@@ -11,6 +11,9 @@ import 'package:server_box/view/page/setting/entry.dart';
 Future<void> showAgentHistorySheet(BuildContext context, {String? scope}) {
   return showModalBottomSheet<void>(
     context: context,
+    // From the foot of the screen, over the nav bar, as every other tab's
+    // sheet is: the tab's own navigator stops above the bar.
+    useRootNavigator: true,
     useSafeArea: true,
     isScrollControlled: true,
     showDragHandle: true,
