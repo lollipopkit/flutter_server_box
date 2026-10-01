@@ -364,15 +364,25 @@ void main() {
           .initialize(captureActivePane: false)
           .timeout(const Duration(seconds: 10));
 
+      // Ready means drawn, not only in its modes: Vim switches to the
+      // alternate screen and keypad modes before it paints its `~` rows, and
+      // on a slow runner a capture between the two replays a blank screen.
       var vimReady = false;
-      for (var attempt = 0; attempt < 30; attempt++) {
+      for (var attempt = 0; attempt < 50; attempt++) {
         await client.refreshState(captureActivePane: false);
         final mode = client.snapshot!.mode;
         if (mode.alternateScreen &&
             mode.applicationCursorKeys &&
             mode.applicationKeypad) {
-          vimReady = true;
-          break;
+          final screen = await Process.run(
+            'tmux',
+            ['-L', socketName, 'capture-pane', '-p', '-t', 'serverbox_vim_mode'],
+            environment: {'TMUX_TMPDIR': tempDir.path},
+          );
+          if ('${screen.stdout}'.contains('~')) {
+            vimReady = true;
+            break;
+          }
         }
         await Future<void>.delayed(const Duration(milliseconds: 100));
       }
