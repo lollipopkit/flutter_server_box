@@ -6,14 +6,40 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/monitor_listener.dart';
+import 'package:server_box/core/utils/monitor_tunnel.dart';
 import 'package:server_box/core/utils/server_tcp.dart';
 import 'package:server_box/core/utils/ssh_local_tunnel.dart';
+import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/server/monitor_http.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 
 part 'port_forward_provider.g.dart';
+
+/// Which forwards [server] can make: [relay] a local or dynamic one, a
+/// connection dialled from the server per connection; [listen] a remote one,
+/// the server listening.
+///
+/// Asked of [ServerCapabilities.forwardsOf], so an agent-led server answers
+/// with its agent alone. An agent that has not answered yet is given the
+/// benefit of the doubt: it refuses for itself, and a forward started before
+/// the first poll should not fail on an answer nobody has heard.
+({bool relay, bool listen}) portForwardKinds(ServerState server) {
+  final caps = ServerCapabilities.forwardsOf(
+    server.spi,
+    granted: server.remoteAccess,
+  );
+  final unknown =
+      server.spi.transport == ServerTransport.monitorHttp &&
+      server.remoteAccess == null;
+  return (
+    relay: caps.tcpRelay || unknown,
+    listen: caps.remoteListen || unknown,
+  );
+}
 
 @Riverpod(keepAlive: true)
 class PortForwardNotifier extends _$PortForwardNotifier {
@@ -39,13 +65,22 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     ref.onDispose(() => dispose());
     ref.listen(serverProvider(serverId), (prev, next) {
       if (next.client == null && prev?.client != null) {
+        // Only what SSH carried. A forward through the agent never used the
+        // session, and went down with it all the same.
+        final dropped = _forwards.entries
+            .where((e) => e.value.viaSsh)
+            .toList();
+        if (dropped.isEmpty) return;
         _generation++;
-        final forwards = _forwards.values.toList();
-        _forwards.clear();
-        for (final entry in forwards) {
-          entry.close().catchError((_) {});
+        final active = Map<String, PortForwardStatus>.from(
+          state.activeForwards,
+        );
+        for (final MapEntry(:key, :value) in dropped) {
+          _forwards.remove(key);
+          active.remove(key);
+          value.close().catchError((_) {});
         }
-        state = state.copyWith(activeForwards: {});
+        state = state.copyWith(activeForwards: active);
       }
     });
     final configs = Stores.portForward.fetchForServer(serverId);
@@ -188,6 +223,18 @@ class PortForwardNotifier extends _$PortForwardNotifier {
         return;
       }
       _forwards[config.id] = entry;
+      // A forward can end from the far side — the agent stopping its listener,
+      // its grant taken away — and is no longer active once it has.
+      unawaited(
+        entry.ended.then((_) {
+          if (_disposed || !identical(_forwards[config.id], entry)) return;
+          _forwards.remove(config.id);
+          _updateStatus(
+            config.id,
+            PortForwardStatus(id: config.id, isActive: false),
+          );
+        }),
+      );
       _updateStatus(
         config.id,
         PortForwardStatus(id: config.id, isActive: true),
@@ -213,38 +260,56 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     }
   }
 
+  /// Whether this server's forwards go through its agent alone: when the
+  /// agent leads, a forward never touches SSH — no session opened first, no
+  /// falling back to sshd when the agent refuses.
+  bool _viaAgent(ServerState server) =>
+      server.spi.transport == ServerTransport.monitorHttp;
+
+  /// Before binding, so a forward cannot look active with nothing behind its
+  /// listener: what the leading transport can do, and an SSH session where SSH
+  /// leads.
+  Future<void> _ensureCarried(
+    ServerState server, {
+    required bool listen,
+  }) async {
+    final kinds = portForwardKinds(server);
+    if (!(listen ? kinds.listen : kinds.relay)) {
+      throw Exception(
+        listen && _viaAgent(server)
+            ? l10n.portForwardRemoteNeedsAgent
+            : l10n.funcUnavailableFmt(libL10n.portForward),
+      );
+    }
+    if (server.spi.transport == ServerTransport.ssh) await _connectedClient();
+  }
+
+  /// Dials per connection, over the agent alone where it leads — see
+  /// [_viaAgent] — and otherwise over SSH, falling back to the agent.
+  ServerTcpDialer _dialer(ServerState server) => ServerTcpDialer.of(
+    ref,
+    server.spi,
+    transports: _viaAgent(server)
+        ? const {ServerTransport.monitorHttp}
+        : const {...ServerTransport.values},
+  );
+
   Future<_ForwardEntry> _startLocalForward(PortForwardConfig config) async {
     if (config.remoteHost == null || config.remotePort == null) {
       throw Exception('Invalid local port forward: remote destination not set');
     }
     final server = ref.read(serverProvider(_serverId));
-    final caps = server.capabilities;
-    // Whether the agent's relay is what [ServerTcpDialer] tries first: the
-    // agent leads, and has not said it refuses — the dialer's own reading of
-    // the grant, where unknown is worth trying.
-    final relayLeads =
-        server.spi.transport == ServerTransport.monitorHttp &&
-        server.remoteAccess?.stream != false;
-    // Connect before binding so a forward cannot look active with nothing
-    // behind its listener: an SSH session, or an agent that relays. Not SSH
-    // where the agent leads, though a server with both answers `byteStream`:
-    // the connections go over the relay, and an sshd that is down would fail
-    // a forward that never needed it.
-    if (caps.byteStream && !relayLeads) {
-      await _connectedClient();
-    } else if (!caps.tcpRelay) {
-      throw Exception(l10n.funcUnavailableFmt(libL10n.portForward));
-    }
-    // Each connection is dialled as it arrives, over SSH or the agent, as a
-    // remote desktop's is — see [ServerTcpDialer].
-    final dialer = ServerTcpDialer.of(ref, server.spi);
+    await _ensureCarried(server, listen: false);
+    // Each connection is dialled as it arrives, as a remote desktop's is —
+    // see [ServerTcpDialer].
+    final dialer = _dialer(server);
     final SshLocalTunnel tunnel;
     try {
       tunnel = await SshLocalTunnel.bindWithDialer(
         bindHost: config.localHost ?? 'localhost',
         bindPort: config.localPort,
         // Nothing to end with: the dialer reconnects per connection, and a
-        // dropped SSH session stops every forward here (see [build]).
+        // dropped SSH session stops the forwards it carried (see [build]).
         sshDone: Completer<void>().future,
         dialer: () => dialer.open(config.remoteHost!, config.remotePort!),
       );
@@ -256,24 +321,20 @@ class PortForwardNotifier extends _$PortForwardNotifier {
       'Local port forward started: ${tunnel.address.address}:${tunnel.port} '
       '-> ${config.remoteHost}:${config.remotePort}',
     );
-    return _LocalForwardEntry(tunnel, dialer);
-  }
-
-  /// Remote and dynamic forwards are SSH's alone: a remote one has the
-  /// server listen, and a dynamic one listens here but is SSH's own SOCKS —
-  /// the agent's relay is neither.
-  void _requireSsh() {
-    if (!ref.read(serverProvider(_serverId)).capabilities.byteStream) {
-      throw Exception(l10n.portForwardNeedsSsh);
-    }
+    return _TunnelForwardEntry(tunnel, dialer, viaSsh: !_viaAgent(server));
   }
 
   Future<_ForwardEntry> _startRemoteForward(PortForwardConfig config) async {
-    _requireSsh();
     if (config.remoteHost == null || config.remotePort == null) {
       throw Exception(
         'Invalid remote port forward: remote destination not set',
       );
+    }
+    final server = ref.read(serverProvider(_serverId));
+    await _ensureCarried(server, listen: true);
+    final localHost = config.localHost ?? 'localhost';
+    if (_viaAgent(server)) {
+      return _startAgentRemoteForward(server, config, localHost);
     }
     final forward = await (await _connectedClient()).forwardRemote(
       host: config.remoteHost!,
@@ -287,24 +348,71 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     );
     final entry = _RemoteForwardEntry(
       forward: forward,
-      remoteHost: config.localHost ?? 'localhost',
+      remoteHost: localHost,
       remotePort: config.localPort,
     );
     entry.start();
     return entry;
   }
 
+  /// The agent listens on the server; each connection it takes is claimed
+  /// over its relay and carried to [localHost] — see [MonitorRemoteListener].
+  Future<_ForwardEntry> _startAgentRemoteForward(
+    ServerState server,
+    PortForwardConfig config,
+    String localHost,
+  ) async {
+    final monitor = server.spi.monitorOn;
+    if (monitor == null) {
+      throw Exception(l10n.funcUnavailableFmt(libL10n.portForward));
+    }
+    final client = MonitorHttpClient(monitor);
+    try {
+      final listener = await MonitorRemoteListener.start(
+        socket: await client.openListen(),
+        bindHost: config.remoteHost!,
+        bindPort: config.remotePort!,
+        claim: (id) => MonitorTunnelChannel.accept(client: client, id: id),
+        connectLocal: () => Socket.connect(
+          localHost,
+          config.localPort,
+          timeout: ServerTcpDialer.openTimeout,
+        ),
+      );
+      Loggers.app.info(
+        'Remote port forward started through the agent: '
+        '${config.remoteHost}:${listener.port}',
+      );
+      return _AgentRemoteForwardEntry(listener, client);
+    } catch (_) {
+      client.dispose();
+      rethrow;
+    }
+  }
+
+  /// A SOCKS5 proxy here whose every connection is dialled from the server,
+  /// as a local forward's is — see [SshLocalTunnel.bindSocks].
   Future<_ForwardEntry> _startDynamicForward(PortForwardConfig config) async {
-    _requireSsh();
-    final bindHost = config.localHost ?? 'localhost';
-    final dynamicForward = await (await _connectedClient()).forwardDynamic(
-      bindHost: bindHost,
-      bindPort: config.localPort,
-    );
+    final server = ref.read(serverProvider(_serverId));
+    await _ensureCarried(server, listen: false);
+    final dialer = _dialer(server);
+    final SshLocalTunnel tunnel;
+    try {
+      tunnel = await SshLocalTunnel.bindSocks(
+        bindHost: config.localHost ?? 'localhost',
+        bindPort: config.localPort,
+        sshDone: Completer<void>().future,
+        dial: dialer.open,
+      );
+    } catch (_) {
+      dialer.close();
+      rethrow;
+    }
     Loggers.app.info(
-      'Dynamic port forward (SOCKS5) started: $bindHost:${config.localPort}',
+      'Dynamic port forward (SOCKS5) started: '
+      '${tunnel.address.address}:${tunnel.port}',
     );
-    return _DynamicForwardEntry(dynamicForward: dynamicForward);
+    return _TunnelForwardEntry(tunnel, dialer, viaSsh: !_viaAgent(server));
   }
 
   Future<void> stopForward(String id) async {
@@ -345,13 +453,26 @@ class PortForwardNotifier extends _$PortForwardNotifier {
 
 abstract class _ForwardEntry {
   Future<void> close();
+
+  /// Whether an SSH session carries it, so that losing the session ends it —
+  /// see [PortForwardNotifier.build].
+  bool get viaSsh;
+
+  /// Completes when it has ended from the far side. Never, for one that only
+  /// ends when it is closed here.
+  Future<void> get ended => Completer<void>().future;
 }
 
-class _LocalForwardEntry extends _ForwardEntry {
-  _LocalForwardEntry(this.tunnel, this.dialer);
+/// A local listener whose connections are dialled from the server: a local
+/// forward to one address, or a dynamic one to whatever each names.
+class _TunnelForwardEntry extends _ForwardEntry {
+  _TunnelForwardEntry(this.tunnel, this.dialer, {required this.viaSsh});
 
   final SshLocalTunnel tunnel;
   final ServerTcpDialer dialer;
+
+  @override
+  final bool viaSsh;
 
   @override
   Future<void> close() async {
@@ -360,7 +481,29 @@ class _LocalForwardEntry extends _ForwardEntry {
   }
 }
 
+class _AgentRemoteForwardEntry extends _ForwardEntry {
+  _AgentRemoteForwardEntry(this.listener, this.client);
+
+  final MonitorRemoteListener listener;
+  final MonitorHttpClient client;
+
+  @override
+  bool get viaSsh => false;
+
+  @override
+  Future<void> get ended => listener.done;
+
+  @override
+  Future<void> close() async {
+    await listener.close();
+    client.dispose();
+  }
+}
+
 class _RemoteForwardEntry extends _ForwardEntry {
+  @override
+  bool get viaSsh => true;
+
   final SSHRemoteForward forward;
   final String remoteHost;
   final int remotePort;
@@ -412,15 +555,6 @@ class _RemoteForwardEntry extends _ForwardEntry {
       await Future.microtask(() => forward.close());
     } catch (_) {}
   }
-}
-
-class _DynamicForwardEntry extends _ForwardEntry {
-  final SSHDynamicForward dynamicForward;
-
-  _DynamicForwardEntry({required this.dynamicForward});
-
-  @override
-  Future<void> close() => dynamicForward.close();
 }
 
 class _ActiveConnection {

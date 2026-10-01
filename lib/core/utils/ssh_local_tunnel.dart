@@ -5,8 +5,14 @@ import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/utils/socks5.dart';
 
 typedef SshTunnelDialer = Future<SshTunnelChannel> Function();
+
+/// Opens a channel to an address a connection named itself — see
+/// [SshLocalTunnel.bindSocks].
+typedef SshTunnelTargetDialer =
+    Future<SshTunnelChannel> Function(String host, int port);
 
 /// The byte-stream surface a local SSH tunnel needs from a direct-tcpip
 /// channel. Keeping this seam small makes the listener lifecycle testable
@@ -25,6 +31,10 @@ abstract interface class SshTunnelChannel {
 /// port-forward feature, which may intentionally expose a chosen interface and
 /// port.
 ///
+/// **A SOCKS tunnel** ([bindSocks]) is a dynamic port forward: each connection
+/// is a SOCKS5 client naming where it wants to go, and that address is dialled
+/// for it rather than one fixed for the whole tunnel.
+///
 /// **An authenticated tunnel** ([accessToken] set) is one for a client inside
 /// this app — the remote desktop engine. A loopback port is open to every
 /// process on the device, and without this the first one to connect would get
@@ -36,18 +46,25 @@ abstract interface class SshTunnelChannel {
 class SshLocalTunnel {
   SshLocalTunnel._({
     required ServerSocket listener,
-    required SshTunnelDialer dialer,
+    SshTunnelDialer? dialer,
+    SshTunnelTargetDialer? socks,
     required Future<void> sshDone,
     this.accessToken,
     this.once = false,
-  }) : _listener = listener,
-       _dialer = dialer {
+  }) : assert((dialer == null) != (socks == null)),
+       _listener = listener,
+       _dialer = dialer,
+       _socks = socks {
     _subscription = _listener.listen(_accept, onError: _listenerError);
     unawaited(sshDone.then<void>((_) => close(), onError: (_, _) => close()));
   }
 
   final ServerSocket _listener;
-  final SshTunnelDialer _dialer;
+
+  /// One of these two: every connection to one address, or each to the one
+  /// it names.
+  final SshTunnelDialer? _dialer;
+  final SshTunnelTargetDialer? _socks;
   final Set<Socket> _pendingSockets = {};
   final Set<SshTunnelBridge> _connections = {};
   final Set<Future<void>> _bridges = {};
@@ -128,6 +145,18 @@ class SshLocalTunnel {
     );
   }
 
+  /// A dynamic forward: a SOCKS5 proxy on [bindHost]:[bindPort] whose every
+  /// connection is dialled by [dial], to the address its client named.
+  static Future<SshLocalTunnel> bindSocks({
+    required String bindHost,
+    int bindPort = 0,
+    required Future<void> sshDone,
+    required SshTunnelTargetDialer dial,
+  }) async {
+    final listener = await ServerSocket.bind(bindHost, bindPort);
+    return SshLocalTunnel._(listener: listener, socks: dial, sshDone: sshDone);
+  }
+
   static Uint8List _newToken() {
     final random = Random.secure();
     return Uint8List.fromList([
@@ -150,32 +179,55 @@ class SshLocalTunnel {
     unawaited(bridge);
   }
 
-  /// [socket]'s bytes after the token, or all of them for a tunnel without
-  /// one; null for a connection that did not present it.
+  /// Reads what [socket] says before its own bytes — the token, a SOCKS
+  /// handshake — and carries the rest; drops a connection that does not say
+  /// it.
   Future<void> _admit(Socket socket) async {
     final token = accessToken;
-    final Stream<List<int>>? incoming;
-    if (token == null) {
-      incoming = socket.cast<List<int>>();
-    } else {
-      incoming = await _presented(socket, token);
-      if (incoming == null) {
-        _pendingSockets.remove(socket);
-        socket.destroy();
-        return;
-      }
+    final socks = _socks;
+    // Nothing to read first and nothing to count: the socket is the stream.
+    if (token == null && socks == null && !once) {
+      await _bridge(socket, socket.cast<List<int>>(), _dialer!);
+      return;
+    }
+
+    final head = SocketHead(socket);
+    if (token != null && !await _presented(head, token)) {
+      return _drop(socket, head);
     }
     if (once) {
-      if (_carried) {
-        _pendingSockets.remove(socket);
-        socket.destroy();
-        return;
-      }
+      if (_carried) return _drop(socket, head);
       _carried = true;
       // Nothing more to take: no port left open for the life of the session.
       unawaited(_stopListening());
     }
-    await _bridge(socket, incoming);
+    if (socks == null) {
+      await _bridge(socket, head.rest(), _dialer!);
+      return;
+    }
+
+    final Socks5Target? target;
+    try {
+      target = await Socks5.negotiate(head, socket).timeout(accessTimeout);
+    } catch (_) {
+      return _drop(socket, head);
+    }
+    if (target == null) return _drop(socket, head);
+    await _bridge(
+      socket,
+      head.rest(),
+      () => socks(target!.host, target.port),
+      socks: true,
+    );
+  }
+
+  Future<void> _drop(Socket socket, SocketHead head) async {
+    _pendingSockets.remove(socket);
+    await head.cancel();
+    // Flushed first, so what was said to a client being turned away — a
+    // SOCKS refusal — reaches it rather than being cut off with the socket.
+    await socket.flush().catchError((_) {});
+    socket.destroy();
   }
 
   Future<void> _stopListening() async {
@@ -184,66 +236,17 @@ class SshLocalTunnel {
     await _listener.close().catchError((_) => _listener);
   }
 
-  /// Reads [token]'s length from [socket] and compares it with [token]:
-  /// the rest of the stream when they match, null otherwise — a mismatch,
-  /// the socket ending first, or [accessTimeout] passing.
-  static Future<Stream<List<int>>?> _presented(
-    Socket socket,
-    Uint8List token,
-  ) async {
-    final head = BytesBuilder(copy: false);
-    final rest = StreamController<List<int>>();
-    final verdict = Completer<bool>();
-    late final StreamSubscription<Uint8List> sub;
-    sub = socket.listen(
-      (chunk) {
-        if (verdict.isCompleted) {
-          rest.add(chunk);
-          return;
-        }
-        head.add(chunk);
-        if (head.length < token.length) return;
-        final bytes = head.takeBytes();
-        final ok = _sameBytes(Uint8List.sublistView(bytes, 0, token.length), token);
-        verdict.complete(ok);
-        if (!ok) return;
-        if (bytes.length > token.length) {
-          rest.add(Uint8List.sublistView(bytes, token.length));
-        }
-        // Nothing reads [rest] until the remote end is dialled, which can
-        // take [SshLocalTunnel]'s whole open timeout, and a controller with
-        // no listener buffers without limit — so the socket waits instead,
-        // until [rest] has a reader.
-        sub.pause();
-      },
-      onError: (Object e, StackTrace s) {
-        if (!verdict.isCompleted) {
-          verdict.complete(false);
-        } else {
-          rest.addError(e, s);
-        }
-      },
-      onDone: () {
-        if (!verdict.isCompleted) verdict.complete(false);
-        unawaited(rest.close());
-      },
-    );
-    // Whoever reads the rest sets the pace, as reading the socket would.
-    rest
-      ..onListen = sub.resume
-      ..onPause = sub.pause
-      ..onResume = sub.resume
-      ..onCancel = sub.cancel;
-    final ok = await verdict.future.timeout(
-      accessTimeout,
-      onTimeout: () => false,
-    );
-    if (ok) return rest.stream;
-    await sub.cancel();
-    // Not awaited: nobody listens to it, and a close with no listener never
-    // completes.
-    unawaited(rest.close());
-    return null;
+  /// Whether [head] starts with [token]: false for a mismatch, the socket
+  /// ending first, or [accessTimeout] passing.
+  static Future<bool> _presented(SocketHead head, Uint8List token) async {
+    try {
+      final presented = await head
+          .take(token.length)
+          .timeout(accessTimeout);
+      return _sameBytes(presented, token);
+    } catch (_) {
+      return false;
+    }
   }
 
   /// Every byte compared, whatever the first difference: how long this takes
@@ -257,11 +260,18 @@ class SshLocalTunnel {
     return diff == 0;
   }
 
-  Future<void> _bridge(Socket socket, Stream<List<int>> incoming) async {
+  /// [socks] answers the client's request once the far end is open or has
+  /// failed, which is when a SOCKS client is told whether it may start.
+  Future<void> _bridge(
+    Socket socket,
+    Stream<List<int>> incoming,
+    SshTunnelDialer dial, {
+    bool socks = false,
+  }) async {
     SshTunnelChannel? channel;
     late final Future<SshTunnelChannel> opening;
     try {
-      opening = _dialer();
+      opening = dial();
       final stopped = Completer<SshTunnelChannel>();
       _openingStops.add(stopped);
       if (_closed) stopped.completeError(StateError('Tunnel closed'));
@@ -300,6 +310,7 @@ class SshLocalTunnel {
         return;
       }
 
+      if (socks) socket.add(Socks5.reply(Socks5.succeeded));
       final connection = SshTunnelBridge(socket, channel, incoming: incoming);
       _connections.add(connection);
       await connection.pipe();
@@ -307,6 +318,16 @@ class SshLocalTunnel {
       await connection.close();
     } catch (e, s) {
       _pendingSockets.remove(socket);
+      if (socks && channel == null) {
+        socket.add(
+          Socks5.reply(
+            e is TimeoutException
+                ? Socks5.hostUnreachable
+                : Socks5.generalFailure,
+          ),
+        );
+        await socket.flush().catchError((_) {});
+      }
       socket.destroy();
       await channel?.close().catchError((_) {});
       if (!_closed) {

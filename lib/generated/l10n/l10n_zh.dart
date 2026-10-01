@@ -1911,7 +1911,8 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get portForwardNeedsSsh => '远程转发和动态转发需要 SSH，Monitor agent 不支持。';
+  String get portForwardRemoteNeedsAgent =>
+      '通过 Monitor agent 进行远程转发需要更新版本的 agent，请在服务器上更新。';
 
   @override
   String get rangeLive => '实时';
@@ -6595,7 +6596,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get portForwardNeedsSsh => '遠端轉發和動態轉發需要 SSH，Monitor agent 不支援。';
+  String get portForwardRemoteNeedsAgent =>
+      '透過 Monitor agent 進行遠端轉發需要較新版本的 agent，請在伺服器上更新。';
 
   @override
   String get rangeLive => '即時';

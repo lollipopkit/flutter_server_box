@@ -143,10 +143,10 @@ Check these first:
   and scheduled tasks all need `full_access`, which is itself gated on
   `[remote_access.terminal] enabled`. File browsing needs
   `[remote_access.fs] enabled` together with a non-empty `roots`.
-- Local port forwarding and remote desktop go through the agent's TCP relay,
-  which `full_access` grants. SFTP and remote or dynamic port forwarding are
-  never available through the agent: they need SSH configured for the same
-  server in the app.
+- Port forwarding (local, dynamic and remote) and remote desktop go through
+  the agent, which `full_access` grants. Remote forwards listen on loopback
+  only unless `[remote_access] listen_public = true`. SFTP is never available
+  through the agent: it needs SSH configured for the same server in the app.
 - The terminal and the file API refuse plaintext requests arriving over the
   network. Loopback callers and a same-host reverse proxy are fine without
   TLS.
@@ -166,8 +166,8 @@ Check these first:
 | Status and charts | Yes | Yes |
 | History from before the App connected | No | Yes |
 | Terminal, commands, and file browsing | Yes | Depends on the features enabled by the operator |
-| SFTP transfers, remote and dynamic port forwarding | Yes | No |
-| Local port forwarding and remote desktop | Yes | With `full_access` |
+| SFTP transfers | Yes | No |
+| Port forwarding (local, dynamic, remote) and remote desktop | Yes | With `full_access` |
 | Push alerts, home-screen widgets, and Watch app | No | Yes |
 
 SSH is usually the simplest way to connect. Use Monitor agent if SSH is
@@ -361,10 +361,14 @@ in `config.toml`.
 **`full_access`** lets an authenticated user run a shell and commands as the
 agent's operating-system account. The App requires it for process, systemd,
 container, snippet, power-control, and terminal features. RDP and VNC remote
-desktop and local port forwarding use it as well, through the agent's TCP
-relay. The relay has no separate switch because shell access already allows
-port forwarding. This permission is available only while
-`[remote_access.terminal] enabled = true`.
+desktop and port forwarding use it as well: local and dynamic forwards through
+the agent's TCP relay, remote forwards through its listener. Neither has a
+separate switch because shell access already allows port forwarding. This
+permission is available only while `[remote_access.terminal] enabled = true`.
+
+A remote forward has the agent listen on the server. It binds loopback
+addresses only, as sshd does with `GatewayPorts no`; set
+`[remote_access] listen_public = true` to allow other addresses.
 
 The agent uses a single `full_access` switch. A user with shell access can run
 arbitrary commands, so a separate “commands” switch would not limit the
@@ -402,14 +406,18 @@ transport rules and endpoint behavior.
 
 ## Unsupported features
 
-A Monitor HTTP connection cannot provide SFTP, or remote and dynamic port
-forwards: those need the server to accept connections for the App, and the
-agent only makes connections outward. The file API supports **browsing** by
-transferring file contents; it does not provide a general-purpose byte stream.
+A Monitor HTTP connection cannot provide SFTP: it runs through an SSH channel.
+The file API supports **browsing** by transferring file contents; it does not
+provide a general-purpose byte stream.
 
-To use SFTP or remote and dynamic port forwards, also configure SSH for that
-server in the App. An agent older than the relay reports no relay even with
-`full_access`; update it for local port forwarding and remote desktop.
+A server whose agent leads (the agent alone, or both with the agent preferred)
+runs every port forward through the agent and never falls back to SSH. A
+dynamic forward is a SOCKS5 proxy on your device; each connection it carries
+is dialled from the server.
+
+To use SFTP, also configure SSH for that server in the App. An agent older than
+the relay reports no relay even with `full_access`, and one older than the
+listener cannot take remote forwards; update it.
 
 ## Widgets, push, and the Watch app
 

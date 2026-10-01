@@ -537,7 +537,7 @@
   "funcUnavailableFmt": "此伺服器的連線方式不提供{func}。",
   "funcNeedsAgentGrant": "{func}需要在 Monitor agent 中開啟 {setting}。",
   "funcNeedsAgentUpdate": "{func}需要更新 Monitor agent。",
-  "portForwardNeedsSsh": "遠端轉發和動態轉發需要 SSH，Monitor agent 不支援。",
+  "portForwardRemoteNeedsAgent": "透過 Monitor agent 進行遠端轉發需要較新版本的 agent，請在伺服器上更新。",
   "rangeLive": "即時",
   "diskIo": "磁碟讀寫",
   "peak": "峰值",

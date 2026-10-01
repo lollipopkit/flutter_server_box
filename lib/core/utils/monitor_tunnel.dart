@@ -23,8 +23,10 @@ import 'package:server_box/data/provider/server/monitor_http.dart';
 /// # Wire format
 ///
 /// One socket is one connection. Text frames are control JSON — the request
-/// first, `{"type":"open","host":..,"port":..}`, then `ready`, `error` or
-/// `exit` — and Binary frames are the bytes of the connection, both ways.
+/// first, `{"type":"open","host":..,"port":..}` — or `{"type":"accept",
+/// "id":..}` for a connection the agent's listener took, see [accept] — then
+/// `ready`, `error` or `exit`; and Binary frames are the bytes of the
+/// connection, both ways.
 class MonitorTunnelChannel implements SshTunnelChannel {
   MonitorTunnelChannel._(this._socket);
 
@@ -62,13 +64,30 @@ class MonitorTunnelChannel implements SshTunnelChannel {
     required String remoteHost,
     required int remotePort,
     Duration timeout = const Duration(seconds: 15),
-  }) async {
+  }) => _start(
+    client,
+    {'type': 'open', 'host': remoteHost, 'port': remotePort},
+    timeout,
+  );
+
+  /// Takes over the connection the agent's listener announced as [id] — see
+  /// `MonitorRemoteListener` — and hands back the channel.
+  static Future<MonitorTunnelChannel> accept({
+    required MonitorHttpClient client,
+    required String id,
+    Duration timeout = const Duration(seconds: 15),
+  }) => _start(client, {'type': 'accept', 'id': id}, timeout);
+
+  /// Opens the relay, says which connection it is for, and waits for `ready`.
+  static Future<MonitorTunnelChannel> _start(
+    MonitorHttpClient client,
+    Map<String, Object> request,
+    Duration timeout,
+  ) async {
     final socket = await client.openStream(timeout: timeout);
     final channel = MonitorTunnelChannel._(socket);
     channel._listen();
-    socket.add(
-      jsonEncode({'type': 'open', 'host': remoteHost, 'port': remotePort}),
-    );
+    socket.add(jsonEncode(request));
     try {
       await channel._ready.future.timeout(
         timeout,

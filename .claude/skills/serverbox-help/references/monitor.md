@@ -70,7 +70,9 @@ User**, **Monitor Password**, and **Monitor Ignore certificate** only for a
 self-signed certificate → save. SSH can be on for the same server as well.
 
 A server with only Monitor HTTP has no SSH credentials: it can do exactly what
-the agent allows, and no SFTP or remote and dynamic port forwarding at all.
+the agent allows, and no SFTP at all. A server whose agent leads — the agent
+alone, or both with the agent preferred — runs every port forward through the
+agent and never falls back to SSH.
 
 ## What each switch allows
 
@@ -82,7 +84,7 @@ when everything is off).
 | Switch | Allows | Note |
 |---|---|---|
 | (none) | Status, charts, stored history | Any panel login |
-| `full_access` | Terminal, commands, processes, systemd, containers, snippets, power, remote desktop — as the agent's OS account | **Only while `[remote_access.terminal] enabled = true`**, which is off by default: a fresh install offers charts and nothing else |
+| `full_access` | Terminal, commands, processes, systemd, containers, snippets, power, remote desktop, port forwarding — as the agent's OS account | **Only while `[remote_access.terminal] enabled = true`**, which is off by default: a fresh install offers charts and nothing else |
 | `[remote_access.terminal] enabled` | The terminal endpoint, for the app and the web panel | The panel's terminal logs in over SSH with that account's rights |
 | `[remote_access.fs] enabled` + `roots` | The file browser, inside the listed directories | `roots` has no default. `roots = ["/"]` is close to a shell: anyone who can write `~/.ssh/authorized_keys` has one |
 
@@ -127,8 +129,10 @@ none of SSH's authentication in between.
 |---|---|
 | Only charts, no terminal or controls | `[remote_access.terminal] enabled` is off (the default), so `full_access` grants nothing; or the app reaches it over plain HTTP from another machine |
 | No file browser | `[remote_access.fs]` off, or `roots` empty |
-| No SFTP, or no remote or dynamic forward | Never through the agent; add SSH to the same server |
+| No SFTP | Never through the agent; add SSH to the same server |
 | No remote desktop or port forwarding, with a terminal | The agent predates the TCP relay; update it |
+| Remote forward greyed out, local and dynamic fine | The agent predates the listener; update it |
+| Remote forward refuses an address that is not loopback | `[remote_access] listen_public = true` on the agent |
 | Certificate error | Configure TLS or a proxy, or **Monitor Ignore certificate** for a self-signed one |
 | Login refused, or the agent seems slow | Wrong password, throttled; reset with `user set-password` |
 | Settings turned themselves off after an upgrade | A config from before August 2026 uses old flat keys (`terminal_enabled`...) that are no longer read; rewrite it against [`config.example.toml`](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/config.example.toml) |

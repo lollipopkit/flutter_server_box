@@ -124,9 +124,10 @@ ServerBox app 没有为 <host> 上的 Monitor agent 提供 <功能>。请先查�
   容器、进程、systemd、电源和计划任务都需要 `full_access`,而它本身以
   `[remote_access.terminal] enabled` 为前提。文件浏览需要
   `[remote_access.fs] enabled` 加上非空的 `roots`。
-- 本地端口转发和远程桌面通过 agent 的 TCP relay 实现，由 `full_access` 授予。
-  SFTP、远程和动态端口转发无法通过 agent 使用，需要在 app 里为同一台服务器
-  另行配置 SSH。
+- 端口转发（本地、动态、远程）和远程桌面通过 agent 实现，由 `full_access`
+  授予。远程转发默认只监听 loopback 地址，除非设置
+  `[remote_access] listen_public = true`。SFTP 无法通过 agent 使用，需要在 app
+  里为同一台服务器另行配置 SSH。
 - 终端和文件 API 会拒绝从网络上到达的明文请求。loopback 调用方和同机反向
   代理无需 TLS。
 - 只要该小节下有任何开关开启，agent 启动时就会记录一行 `Remote access:`
@@ -145,8 +146,8 @@ ServerBox app 没有为 <host> 上的 Monitor agent 提供 <功能>。请先查�
 | 查看状态和图表 | 支持 | 支持 |
 | 查看 App 连接前的历史数据 | 不支持 | 支持 |
 | 终端、命令和文件浏览 | 支持 | 取决于 agent 开启的功能 |
-| SFTP 传输、远程和动态端口转发 | 支持 | 不支持 |
-| 本地端口转发和远程桌面 | 支持 | 需要 `full_access` |
+| SFTP 传输 | 支持 | 不支持 |
+| 端口转发（本地、动态、远程）和远程桌面 | 支持 | 需要 `full_access` |
 | 推送告警、主屏幕小组件和 Watch App | 不支持 | 支持 |
 
 SSH 通常是最简单的连接方式。若当前网络无法访问 SSH 端口、希望图表包含 App 连接前采集的历史数据，或希望在手机上接收服务器告警，可以使用 Monitor agent。
@@ -262,7 +263,9 @@ App 只显示 Monitor agent 运维人员开启的功能。文件 API 和网页�
 
 **状态、图表和已保存的历史数据**：登录面板后即可查看。
 
-**`full_access`** 允许已登录用户以运行 agent 的系统账户访问 shell 并执行命令。App 中的进程、systemd、容器、代码片段、电源控制、终端和远程桌面（RDP、VNC）都依赖此权限。获得 shell 的人也可以运行任意命令或转发端口。
+**`full_access`** 允许已登录用户以运行 agent 的系统账户访问 shell 并执行命令。App 中的进程、systemd、容器、代码片段、电源控制、终端、远程桌面（RDP、VNC）和端口转发都依赖此权限：本地和动态转发通过 agent 的 TCP relay，远程转发通过 agent 的监听端点。获得 shell 的人也可以运行任意命令或转发端口，所以这两项没有单独的开关。
+
+远程转发由 agent 在服务器上监听端口。和 sshd 的 `GatewayPorts no` 一样，默认只允许绑定 loopback 地址；要绑定其他地址，需设置 `[remote_access] listen_public = true`。
 
 只有启用 `[remote_access.terminal] enabled = true` 后，`full_access` 才会生效。
 
@@ -280,9 +283,11 @@ agent 只有一个 `full_access` 开关。获得 shell 的用户也能执行任�
 
 ## 不支持的功能
 
-Monitor HTTP 连接不支持 SFTP，也不支持远程和动态端口转发：这些功能需要服务器为 App 接受连接，而 agent 只会向外发起连接。文件 API 支持**浏览**，通过传输文件内容工作，不提供通用字节流。
+Monitor HTTP 连接不支持 SFTP：SFTP 运行在 SSH channel 上。文件 API 支持**浏览**，通过传输文件内容工作，不提供通用字节流。
 
-要使用 SFTP 或远程、动态端口转发，请同时在 App 中为该服务器配置 SSH。早于 relay 的 agent 即使开启 `full_access` 也不会报告 relay；更新 agent 后才能使用本地端口转发和远程桌面。
+以 agent 为主的服务器（只配置了 agent，或同时配置了 SSH 但优先 agent）的所有端口转发都只经过 agent，不会回退到 SSH。动态转发是本机上的 SOCKS5 代理，每条连接都从服务器发起。
+
+要使用 SFTP，请同时在 App 中为该服务器配置 SSH。早于 relay 的 agent 即使开启 `full_access` 也不会报告 relay，早于监听端点的 agent 无法进行远程转发；请更新 agent。
 
 ## 小组件、推送和 Watch App
 

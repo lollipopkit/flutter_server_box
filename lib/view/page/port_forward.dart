@@ -197,7 +197,7 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
       builder: (ctx) => _PortForwardConfigDialog(
         existing: existing,
         serverId: widget.args.spi.id,
-        ssh: ref.read(serverProvider(widget.args.spi.id)).capabilities.byteStream,
+        kinds: portForwardKinds(ref.read(serverProvider(widget.args.spi.id))),
         onSave: (config) async {
           if (existing == null) {
             await _notifier.addConfig(config);
@@ -223,15 +223,14 @@ class _PortForwardConfigDialog extends StatefulWidget {
   final PortForwardConfig? existing;
   final String serverId;
 
-  /// Whether the server can listen for this app: remote and dynamic forwards
-  /// need it, and only SSH gives it.
-  final bool ssh;
+  /// Which kinds the server can make — see [portForwardKinds].
+  final ({bool relay, bool listen}) kinds;
   final Future<void> Function(PortForwardConfig config) onSave;
 
   const _PortForwardConfigDialog({
     required this.existing,
     required this.serverId,
-    required this.ssh,
+    required this.kinds,
     required this.onSave,
   });
 
@@ -289,9 +288,14 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
             Input(controller: nameController, hint: libL10n.name),
             const SizedBox(height: 8),
             _buildTypeSelector(),
-            if (!widget.ssh) ...[
+            // Only an agent-led server lacks one: SSH listens, and a server
+            // whose agent cannot relay has no forwards at all.
+            if (!widget.kinds.listen) ...[
               const SizedBox(height: 5),
-              Text(context.l10n.portForwardNeedsSsh, style: UIs.text12Grey),
+              Text(
+                context.l10n.portForwardRemoteNeedsAgent,
+                style: UIs.text12Grey,
+              ),
             ],
             const SizedBox(height: 8),
             Row(
@@ -360,18 +364,19 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
       segments: [
         ButtonSegment(
           value: PortForwardType.local,
+          enabled: widget.kinds.relay,
           label: Text(_localTypeLabel),
           icon: const Icon(Icons.arrow_forward, size: 16),
         ),
         ButtonSegment(
           value: PortForwardType.remote,
-          enabled: widget.ssh,
+          enabled: widget.kinds.listen,
           label: Text(_remoteTypeLabel),
           icon: const Icon(Icons.arrow_back, size: 16),
         ),
         ButtonSegment(
           value: PortForwardType.dynamic,
-          enabled: widget.ssh,
+          enabled: widget.kinds.relay,
           label: Text(_dynamicTypeLabel),
           icon: const Icon(Icons.hub, size: 16),
         ),

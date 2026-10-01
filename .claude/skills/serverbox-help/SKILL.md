@@ -26,8 +26,8 @@ first, and the other stays available.
 | Status and charts | yes | yes, with history from before the app connected |
 | Terminal, commands, processes, containers, systemd, snippets, power | yes | only with `full_access` **and** `[remote_access.terminal] enabled` **and** a secure transport |
 | File browser | yes (SFTP) | only with `[remote_access.fs]` and a non-empty `roots` |
-| Local port forwarding, remote desktop | yes | with `full_access`, through the agent's TCP relay (an agent older than the relay reports none: update it) |
-| SFTP transfers, remote and dynamic port forwarding | yes | **never** — configure SSH for the same server too |
+| Port forwarding (local, dynamic, remote), remote desktop | yes | with `full_access`, through the agent's relay and listener (an agent older than either reports none: update it). Remote forwards bind loopback only unless `[remote_access] listen_public = true` |
+| SFTP transfers | yes | **never** — configure SSH for the same server too |
 | Push alerts, home-screen widgets, watch app | no | yes, they read the agent with the app closed |
 
 Recommend SSH unless there is a reason not to. The agent is the answer when the

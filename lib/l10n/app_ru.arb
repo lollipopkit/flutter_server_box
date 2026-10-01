@@ -574,7 +574,7 @@
   "funcUnavailableFmt": "{func} недоступно через это подключение к серверу.",
   "funcNeedsAgentGrant": "Для «{func}» нужно включить {setting} в Monitor agent.",
   "funcNeedsAgentUpdate": "Для «{func}» нужна более новая версия Monitor agent.",
-  "portForwardNeedsSsh": "Удалённая и динамическая переадресация требуют SSH: Monitor agent их не поддерживает.",
+  "portForwardRemoteNeedsAgent": "Для удалённой переадресации через Monitor agent нужна более новая версия: обновите его на сервере.",
   "rangeLive": "В реальном времени",
   "diskIo": "Диск (ввод-вывод)",
   "peak": "пик",

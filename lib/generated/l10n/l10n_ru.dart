@@ -2085,8 +2085,8 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get portForwardNeedsSsh =>
-      'Удалённая и динамическая переадресация требуют SSH: Monitor agent их не поддерживает.';
+  String get portForwardRemoteNeedsAgent =>
+      'Для удалённой переадресации через Monitor agent нужна более новая версия: обновите его на сервере.';
 
   @override
   String get rangeLive => 'В реальном времени';

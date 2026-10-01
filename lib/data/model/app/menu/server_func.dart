@@ -219,13 +219,24 @@ enum ServerFuncBtn {
     // Browsing files is its own question: a transport could grow a file API
     // without growing a stream this app can point anywhere.
     files => caps.files,
-    // A local forward is one TCP connection to an address this app names, as
-    // a remote desktop is, and either transport can carry one. The remote and
-    // dynamic kinds need the server to listen, which only sshd does: the page
-    // offers those where there is SSH.
-    portForward => caps.byteStream || caps.tcpRelay,
+    // A local or dynamic forward is a TCP connection to an address this app
+    // names per connection, as a remote desktop is; a remote one has the
+    // server listen. Either is enough to open the page, which offers the kinds
+    // that are there. Asked of [ServerCapabilities.forwardsOf] — see
+    // [availableOn].
+    portForward => caps.tcpRelay || caps.remoteListen,
     remoteDesktop => caps.tcpRelay,
   };
+
+  /// [availableWith] for [spi], asked of the capabilities this entry runs on:
+  /// a port forward only of the transport it goes through when the agent
+  /// leads (see [ServerCapabilities.forwardsOf]), everything else of the
+  /// server's union.
+  bool availableOn(Spi spi, MonitorRemoteAccess? granted) => availableWith(
+    this == portForward
+        ? ServerCapabilities.forwardsOf(spi, granted: granted)
+        : ServerCapabilities.ofSpi(spi, granted: granted),
+  );
 
   /// Why this is not [availableWith] a server — what would make it so, where
   /// that is something its agent's operator can change.
@@ -235,7 +246,12 @@ enum ServerFuncBtn {
   /// is this app's.
   String unavailableReason(Spi spi, MonitorRemoteAccess? granted) {
     final generic = l10n.funcUnavailableFmt(toStr);
-    if (spi.sshOn != null || spi.monitorOn == null || granted == null) {
+    // A forward on a server whose agent leads goes through the agent alone,
+    // SSH or not, so the agent is what would have to change.
+    final agentOnly =
+        spi.sshOn == null ||
+        (this == portForward && spi.transport == ServerTransport.monitorHttp);
+    if (!agentOnly || spi.monitorOn == null || granted == null) {
       return generic;
     }
     final grant = switch (this) {

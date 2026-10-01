@@ -574,7 +574,7 @@
   "funcUnavailableFmt": "{func} is niet beschikbaar via de verbinding van deze server.",
   "funcNeedsAgentGrant": "{func} vereist dat {setting} in de Monitor agent is ingeschakeld.",
   "funcNeedsAgentUpdate": "{func} vereist een nieuwere Monitor agent.",
-  "portForwardNeedsSsh": "Externe en dynamische doorsturingen vereisen SSH: de Monitor agent ondersteunt ze niet.",
+  "portForwardRemoteNeedsAgent": "Externe doorsturingen via de Monitor agent vereisen een nieuwere versie: werk hem bij op de server.",
   "rangeLive": "Live",
   "diskIo": "Schijf-I/O",
   "peak": "piek",

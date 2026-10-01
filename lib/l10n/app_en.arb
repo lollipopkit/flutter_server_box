@@ -2644,7 +2644,7 @@
       "func": { "type": "String" }
     }
   },
-  "portForwardNeedsSsh": "Remote and dynamic forwards need SSH: the Monitor agent does not support them.",
+  "portForwardRemoteNeedsAgent": "Remote forwards through the Monitor agent need a newer agent: update it on the server.",
   "rangeLive": "Live",
   "@rangeLive": {
     "description": "User-facing label or message for range live."
