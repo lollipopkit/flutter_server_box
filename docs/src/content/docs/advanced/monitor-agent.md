@@ -28,23 +28,21 @@ It detects the init system automatically. When piped to `sh`, it installs a
 `systemctl --user` service for my user. On Alpine, use `sudo sh` so it can
 write to /etc/init.d; the agent still runs as the user who invoked sudo.
 
-Do not install it as a root system service. Running the agent as root makes
-`full_access` much more dangerous.
+Do not install it as a root system service. An account whose role holds the
+`shell` grant runs commands as whoever the agent runs as; as root, that is the
+whole machine.
 
-Leave every switch under `[remote_access]` turned off, and write
-`full_access = false` there explicitly.
+Pass `--permissions read` to the installer (`sh -s -- install --permissions
+read`), so the admin account it creates starts with no grants. I will turn on
+what I need from the app or the web panel.
 
-It is the one switch in that section that is not off by default: unset, it
-follows the platform, and on Linux that means on. Nothing comes of it on
-its own, because it is gated on the terminal being enabled and the terminal
-is off — but whoever turns the terminal on later would be opening a
-passwordless shell without having written `true` anywhere. An explicit
-`false` in the file is also sticky: `SBM_FULL_ACCESS=1` cannot reopen it.
-
-I will decide separately whether to enable any of the others.
+Do not add `full_access`, `listen_public`, or an `enabled` key under
+`[remote_access]` to config.toml. The agent no longer reads them: who may do
+what is each account's role, kept in the agent's database.
 
 When you finish, report:
 - the path of config.toml and of the SQLite database beside it
+- the path of initial-admin-credentials.txt. Do not print what it contains.
 - the address and port it listens on
 - what `loginctl show-user <user> -p Linger` says. Without linger a --user
   service stops when I log out.
@@ -56,37 +54,36 @@ When you finish, report:
 </details>
 
 <details>
-<summary>Turn on remote access</summary>
+<summary>Prepare the machine for remote access</summary>
 
 ```text
-Configure remote access for the ServerBox Monitor agent on <host> so the app
-and panel can <open a terminal / browse files / run commands>.
+Prepare the ServerBox Monitor agent on <host> so that accounts can be given
+<a terminal / file browsing / commands / port forwarding>.
 
 Before changing anything, explain the consequences and wait for my approval.
-`full_access = true` makes the panel password equivalent to a shell for the
-account running the agent, without any SSH authentication in between.
 
 Keep these details in mind:
 
-- These switches exist only in the agent's config.toml. No API or panel
-  control can turn them on; the panel can only turn `full_access` off. Editing
-  the file is the only way to enable them.
-- `full_access` is gated on `[remote_access.terminal] enabled`. Setting
-  full_access by itself does nothing.
-- The terminal and the file API refuse plaintext requests that arrive over
-  the network, and serve loopback callers — including a reverse proxy on the
-  same host — without TLS. So if the agent binds 127.0.0.1, or a same-host
-  proxy terminates TLS, `allow_insecure` is not needed. Only consider it if
-  the agent is reachable directly over plaintext from another machine, and
-  say so before you do.
-- `[remote_access.fs]` does nothing without `roots`. Name the directories
-  that actually need browsing. `roots = ["/"]` makes the panel password
-  worth a shell, because anyone who can write ~/.ssh/authorized_keys has
-  one, and the agent warns about it at startup.
+- Who may do what is not in config.toml. Each account has a role, and a role
+  holds grants: shell, ssh_terminal, files, connect and listen. An admin
+  edits accounts and roles from the app or the web panel, entering their own
+  password again to do it. Do not try to grant anything by editing
+  config.toml or the database.
+- config.toml still decides the machine side:
+  - Everything beyond reading the numbers needs TLS or a loopback caller,
+    and a reverse proxy on the same host counts. If the agent binds
+    127.0.0.1, or a same-host proxy terminates TLS, nothing more is needed.
+    Only consider `[remote_access] allow_insecure = true` if the agent is
+    reached directly over plaintext from another machine, and say so before
+    you do.
+  - The files grant serves nothing without `[remote_access.fs] roots`. Name
+    the directories that actually need browsing. `roots = ["/"]` with write
+    access is worth a shell, because anyone who can write
+    ~/.ssh/authorized_keys has one; the agent warns about it at startup.
+  - The panel's SSH terminal signs in to `[remote_access] ssh_addr`.
 
-Restart the agent afterwards and show me the `Remote access:` line from its
-log. It summarizes what is actually enabled. If everything is off, the line
-will not appear.
+Restart the agent after changing config.toml. Then tell me which grants to
+turn on, for which role, in the app or the panel.
 ```
 
 </details>
@@ -138,20 +135,24 @@ changing anything.
 
 Check these first:
 
-- The App shows features that the agent currently enables. A terminal,
-  commands, containers, processes, systemd, power
-  and scheduled tasks all need `full_access`, which is itself gated on
-  `[remote_access.terminal] enabled`. File browsing needs
-  `[remote_access.fs] enabled` together with a non-empty `roots`.
-- Port forwarding (local, dynamic and remote) and remote desktop go through
-  the agent, which `full_access` grants. Remote forwards listen on loopback
-  only unless `[remote_access] listen_public = true`. SFTP is never available
-  through the agent: it needs SSH configured for the same server in the app.
-- The terminal and the file API refuse plaintext requests arriving over the
-  network. Loopback callers and a same-host reverse proxy are fine without
-  TLS.
-- The agent logs a `Remote access:` summary at startup when anything under
-  that section is enabled. It logs nothing when everything is off.
+- The App offers what the agent allows the account it signed in with. Each
+  grant comes with `ok` and, when it is not usable, `why`: `not_granted`
+  (the account's role does not hold it; an admin changes that from the app
+  or the panel), `insecure_transport` (it needs TLS or a loopback caller,
+  or `[remote_access] allow_insecure`), or `not_configured` (files without
+  `[remote_access.fs] roots`). `GET /api/v1/capabilities` with that
+  account's login shows it under `grants`.
+- Commands, processes, systemd, containers, snippets, power, scheduled tasks
+  and the App's terminal need `shell`. File browsing needs `files`; with
+  `mode = "read"` nothing can be changed. Remote desktop and local or
+  dynamic forwards need `connect`, and its `allow` list, when it has
+  entries, must include the address. Remote forwards need `listen`; binding
+  anything but loopback needs its `public` option.
+- SFTP is never available through the agent: it needs SSH configured for
+  the same server in the app.
+- An agent from before roles reports only `remote_access`, and one older
+  than the relay or the listener offers no port forwarding or remote
+  desktop. Update it.
 - The `access_log` table in the agent's SQLite database records the visitor,
   time, source, requested resource and result. It never records credentials.
 ```
@@ -165,9 +166,9 @@ Check these first:
 | Requires additional software on the server | No | Yes |
 | Status and charts | Yes | Yes |
 | History from before the App connected | No | Yes |
-| Terminal, commands, and file browsing | Yes | Depends on the features enabled by the operator |
+| Terminal, commands, and file browsing | Yes | Depends on the account's role |
 | SFTP transfers | Yes | No |
-| Port forwarding (local, dynamic, remote) and remote desktop | Yes | With `full_access` |
+| Port forwarding (local, dynamic, remote) and remote desktop | Yes | With the `connect` or `listen` grant |
 | Push alerts, home-screen widgets, and Watch app | No | Yes |
 
 SSH is usually the simplest way to connect. Use Monitor agent if SSH is
@@ -199,13 +200,27 @@ curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main
 curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh | sudo sh -s -- install
 ```
 
+To start with an admin account that holds no grants, add
+`--permissions read`:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh | sh -s -- install --permissions read
+```
+
+`--permissions full|read` decides what the admin account starts with on a
+fresh install: every grant (`full`, the default) or none (`read`), to be
+turned on later from the App or the panel. It reaches the agent as
+`SBM_INIT_PERMISSIONS` in the service's environment; when you run the binary
+yourself, pass `serve --init-permissions read`. It only applies when the agent
+creates its first account, so an existing installation keeps its roles.
+
 Arguments after `sh -s --` are passed to the installer; use the same pattern
 for `uninstall` and `upgrade`. The script is also in the repository, so you
 can run `./monitor/install.sh install` from a checkout root. That uses the
 checked-out script, which may differ from the version fetched from `main` by
 the commands above.
 
-The agent runs as an ordinary user by default. This limits the scope of `full_access`; see [Permission switches](#permission-switches).
+The agent runs as an ordinary user by default. An account whose role holds `shell` runs commands as that user, so this limits what such an account can reach; see [Accounts and permissions](#accounts-and-permissions).
 
 The agent reads `config.toml` from the directory beside its binary. See
 [`config.example.toml`](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/config.example.toml)
@@ -218,9 +233,12 @@ allowed panel origins can be edited without opening `config.toml`. Use
 the settings button in the top bar. Both interfaces update the same agent and
 configuration file.
 
-The JWT secret, `database_url`, and `[remote_access]` switches can only be
-changed in the configuration file. Keeping the access switches out of the
-panel prevents a panel password from granting additional capabilities.
+Only an admin account can see and change these settings. The JWT secret,
+`database_url`, and `[remote_access]` (plaintext tolerance, file roots, the
+SSH address, and size limits) can only be changed in the configuration file.
+Who may do what is in neither place: it is each account's role, which an
+admin edits from the App or the panel. See
+[Accounts and permissions](#accounts-and-permissions).
 
 The editor never returns stored secrets such as ServerChan or Bark keys, an
 iOS push token, or an `Authorization` header. It shows that each value is
@@ -260,7 +278,7 @@ database the service does not use.
 ### The first password
 
 When the agent starts with an empty user table for the first time, it creates
-an `admin` user with a random password. The password is written next to the
+an `admin` user in the `admin` role with a random password. The password is written next to the
 database in `initial-admin-credentials.txt`, with mode 0600 on Unix:
 
 ```sh
@@ -281,7 +299,15 @@ cd /opt/server-box-monitor
 
 The command prompts for the new password twice without displaying it. It
 requires at least 8 characters. If the named user does not exist, the command
-creates it; use this to add another account as well.
+creates it in the `viewer` role — or `admin`, when the agent has no admin
+account yet; add `--role <name>` to give it another role, or to move an
+existing account. An admin can also add accounts from the App or the panel;
+see [Editing accounts and roles](#editing-accounts-and-roles).
+
+A password change, by any of these ways, signs the account out everywhere:
+its existing logins, its paired widgets and Watch, and its open terminals,
+forwards and listeners stop working, and it signs in again with the new
+password.
 
 To set the password from an environment variable, use the following in a
 script or when you want to keep it out of shell history. This uses Bash or
@@ -303,8 +329,12 @@ up to one hour. To invalidate them immediately, change `jwt_secret` in
 `config.toml` and restart the agent with `systemctl --user restart
 server_box_monitor`, or `rc-service server-box-monitor restart` on OpenRC.
 
-After changing the password, update **Monitor Password** in the App and
-replace it in any other client that uses the account. Clients are not notified
+Any account can also change its own password from the App or the panel; see
+[Editing accounts and roles](#editing-accounts-and-roles). Changing it in the
+App updates the password the App has saved for that server.
+
+After changing the password on the server, update **Monitor Password** in the
+App and replace it in any other client that uses the account. Clients are not notified
 about password changes and cannot sign in until their saved credentials are
 updated.
 
@@ -350,59 +380,126 @@ Each Linux GPU is identified by its PCI address, for example
 `0000:00:02.0`. Systems with multiple integrated or discrete GPUs therefore
 show a distinct, stable entry for each device.
 
-## Permission switches
+<a id="permission-switches"></a>
 
-The App displays only the features enabled by the Monitor agent operator. The
-file API and web-panel terminal start disabled; an operator must enable them
-in `config.toml`.
+## Accounts and permissions
 
-**Status, charts, and stored history** are available after panel login.
+Every account can read status, charts, and stored history. Everything else is
+a **grant**, and an account holds the grants of its **role**. Grants and roles
+are kept in the agent's database and edited from the App or the web panel.
+`config.toml` only decides the machine side, such as which directories files
+may come from and whether plaintext HTTP is tolerated.
 
-**`full_access`** lets an authenticated user run a shell and commands as the
-agent's operating-system account. The App requires it for process, systemd,
-container, snippet, power-control, and terminal features. RDP and VNC remote
-desktop and port forwarding use it as well: local and dynamic forwards through
-the agent's TCP relay, remote forwards through its listener. Neither has a
-separate switch because shell access already allows port forwarding. This
-permission is available only while `[remote_access.terminal] enabled = true`.
+| Grant | Allows | Options |
+|---|---|---|
+| `shell` | Commands, processes, systemd, containers, snippets, power, scheduled tasks, and the App's terminal, as the agent's operating-system account | — |
+| `ssh_terminal` | The web panel's terminal, which signs in to the SSH server at `[remote_access] ssh_addr` with that SSH account's own credentials | — |
+| `files` | File browsing inside `[remote_access.fs] roots` | `read` (browse and download) or `write` (also upload, create, rename, chmod, and delete) |
+| `connect` | Remote desktop (RDP, VNC) and local and dynamic port forwarding: connections the agent opens | `allow`: the addresses it may reach; empty is anywhere |
+| `listen` | Remote port forwarding: the agent listens on the server | `public`: addresses other than loopback; a port range |
 
-A remote forward has the agent listen on the server. It binds loopback
-addresses only, as sshd does with `GatewayPorts no`; set
-`[remote_access] listen_public = true` to allow other addresses.
+`shell` covers the others in practice: an account that can run commands can
+read files, open connections, and listen by itself. Grant `files`, `connect`,
+or `listen` without `shell` when an account needs only that, for example a
+role that reaches one remote desktop and nothing else.
 
-The agent uses a single `full_access` switch. A user with shell access can run
-arbitrary commands, so a separate “commands” switch would not limit the
-permission. The default is enabled on Linux and disabled on macOS and Windows.
-The panel can turn it off. To turn it back on, edit the configuration file.
+### Roles
 
-**A panel password grants shell-level access as the agent user when
-`full_access` is enabled.** The installer therefore runs the agent as an
-ordinary user by default. If you choose to run it as root, disable
-`full_access`.
+The agent has two built-in roles:
 
-**`[remote_access.fs]`** enables file browsing within directories listed in
-`roots`. This grants access to those paths; `full_access` grants a shell.
-`roots` is empty by default, so list the directories explicitly when enabling
-file access.
+- **admin** holds the grants it is given and, unlike any other role, manages
+  accounts, roles, and the agent's settings: alert rules, notification
+  channels, collection intervals, and allowed origins. Editing custom
+  commands also needs `shell`, because the agent runs them.
+- **viewer** holds no grants: status, charts, and history only.
 
-Setting `roots = ["/"]` exposes the whole filesystem and grants access close
-to shell access; the agent warns about this configuration at startup. To use
-the File API over plaintext HTTP from another device, also set
-`[remote_access.fs] allow_insecure = true`. For path validation and transport
-details, see
+An admin can change the grants of both built-in roles and add roles. A role
+name uses lowercase letters, digits, `-`, and `_`, up to 32 characters.
+Built-in roles cannot be renamed or deleted, and a role that an account still
+has cannot be deleted. The last admin account cannot be deleted or moved to
+another role.
+
+### Editing accounts and roles
+
+In the App, open the server, tap the settings button in the top bar, and use
+**Accounts** and **Roles** under **Access**. In the web panel they are at the
+end of **Server Settings**. Every change to an account or a role asks for your
+own password again; wrong attempts count against the same limit as logins.
+
+A change applies at once. A session that relies on a grant its account no
+longer holds, such as a terminal, a remote desktop, or a port forward, is
+closed. A deleted account cannot use any existing session.
+
+Every account, admin or not, can see its own role and change its own password:
+under **Access** in the App, and under **Your account** in the panel.
+
+### Permissions of a new installation
+
+On a fresh install, the `admin` account starts in the `admin` role with every
+grant: `files` with write access, `connect` to anywhere, `listen` on loopback
+with any port, `shell`, and `ssh_terminal`. Install with `--permissions read`
+to start with none and turn on what you need from the App or the panel; see
+[Install Monitor agent](#install-monitor-agent).
+
+If the `config.toml` the agent starts with still sets the old switches
+(`full_access`, `[remote_access.terminal] enabled`, `[remote_access.fs]
+enabled`, `listen_public`) — a mounted configuration on a new data volume, an
+old example copied over — a fresh install honours them: the admin role gets
+only what they allowed as well, and the log says so.
+
+`files` still needs `[remote_access.fs] roots`. Until they are set, the App
+reports file browsing as not set up on the agent. Whatever the roots, the file
+API never reaches the agent's own files — its database, `jwt.secret`,
+`config.toml` and its backups, the TLS key and certificate, and the custom
+commands — since reading them would hand out an admin login.
+
+**An account whose role holds `shell` has a shell as the agent's user.** The
+installer therefore runs the agent as an ordinary user by default. Keep this
+in mind before running it as root.
+
+### Upgrading from an agent without roles
+
+Earlier agents used switches in `config.toml` instead of roles. The first
+start of an agent with roles converts them once: every existing account
+becomes an admin, and the `admin` role holds what the old switches actually
+allowed.
+
+| Old setting | Becomes |
+|---|---|
+| `[remote_access.terminal] enabled` | `ssh_terminal` |
+| `full_access` (including its platform default and `SBM_FULL_ACCESS`), counted only while the terminal was enabled | `shell`, `connect` to anywhere, and `listen` |
+| `listen_public` | `listen` with `public` |
+| `[remote_access.fs] enabled` with non-empty `roots` | `files` with write access |
+
+After that, the agent no longer reads these keys and logs once that they can
+be deleted. Turning off shell access from the panel's first-use notice removes
+`shell`, `connect`, and `listen` from every role.
+
+### Plaintext HTTP
+
+Everything beyond reading the numbers needs HTTPS or a caller on the same
+host, which includes a reverse proxy there. On a private network that already
+encrypts traffic, such as Tailscale, set `[remote_access] allow_insecure =
+true` and enable **Allow insecure HTTP** for this server in the App; both are
+required. The older keys still count, each for what it used to
+cover: `[remote_access.terminal] allow_insecure` for shell, terminal, connect
+and listen, `[remote_access.fs] allow_insecure` for files only.
+
+### Limits on connecting and listening
+
+`connect.allow` takes one entry per line: an IP address or a CIDR range,
+optionally followed by a port or a port range, such as `127.0.0.1:3389`,
+`10.0.0.0/8`, or `[::1]:5900-5910`. When a connection names a host, the agent
+resolves it and every resulting address must be allowed. `localhost` usually
+resolves to both `127.0.0.1` and `::1`, so allowing only one of them refuses
+`localhost`; enter the address itself in the App.
+
+A remote forward binds loopback addresses only, as sshd does with
+`GatewayPorts no`, unless the role's `listen` has **public** turned on. A port
+range on `listen` limits which ports it may bind.
+
+For path validation, endpoint behavior, and error codes, see
 [Monitor agent API and access model](/docs/development/monitor-agent/).
-
-**`[remote_access.terminal]`** enables terminal access for the App and web
-panel. The panel terminal connects to the configured SSH server and uses that
-SSH account's permissions. When `full_access` is enabled, the App's terminal
-uses the agent account's local shell. Panel credentials alone do not grant
-shell access.
-
-Use HTTPS for terminal access. Plaintext HTTP requires both
-`[remote_access.terminal] allow_insecure = true` in the agent configuration
-and **Allow insecure HTTP** for this server in the App. See
-[Monitor agent API and access model](/docs/development/monitor-agent/) for
-transport rules and endpoint behavior.
 
 ## Unsupported features
 
@@ -416,8 +513,8 @@ dynamic forward is a SOCKS5 proxy on your device; each connection it carries
 is dialled from the server.
 
 To use SFTP, also configure SSH for that server in the App. An agent older than
-the relay reports no relay even with `full_access`, and one older than the
-listener cannot take remote forwards; update it.
+the relay or the listener offers no remote desktop or port forwarding; update
+it.
 
 ## Widgets, push, and the Watch app
 
@@ -541,11 +638,16 @@ Rate limits apply to each notification channel. Configure `push_rate` in
 
 ## Troubleshooting
 
-**A feature is missing from the server page.** The App displays only the
-features the agent reports. Commands and terminal access require
-`full_access` and the terminal endpoint; file browsing requires
-`[remote_access.fs]` and configured `roots`. Restart the agent after changing
-its configuration.
+**A feature is missing or greyed out.** The App offers what the agent allows
+the account it signed in with, and says why when it does not: the account's
+role lacks the grant, which an admin can change; the connection needs HTTPS;
+or the agent's operator has not set it up, such as file `roots`. See
+[Accounts and permissions](#accounts-and-permissions). Role changes apply at
+once; restart the agent after editing `config.toml`.
+
+**Settings cannot be changed.** Only an admin account can view and change the
+agent's settings, notification channels, and alert rules. Sign in with an
+admin account, or ask an admin to change your role.
 
 **Certificate errors.** Configure valid TLS, put the agent behind a reverse proxy, or enable **Monitor Ignore certificate** for that server.
 

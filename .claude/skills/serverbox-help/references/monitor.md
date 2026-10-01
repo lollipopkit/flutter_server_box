@@ -26,13 +26,15 @@ curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main
   service); `config.toml` and the SQLite database are there, and neither
   should be readable by group or others.
 
-Why not root: with `full_access` on, the panel password is worth a shell as
-whoever the agent runs as.
+Why not root: an account whose role holds `shell` runs commands as whoever the
+agent runs as.
 
-Right after installing, leave everything under `[remote_access]` off and write
-`full_access = false` there explicitly. Unset, it follows the platform — on
-for Linux — and an explicit `false` cannot be reopened by an environment
-variable.
+`--permissions read` (`sh -s -- install --permissions read`) makes the first
+`admin` account start with no grants; the default, `full`, gives it every grant.
+It only matters on a fresh install. Prefer `read` unless the user asked for
+more, then turn on what they need from the app or the panel. The old
+`[remote_access]` switches (`full_access`, `enabled`, `listen_public`) are no
+longer read; do not add them.
 
 ### In Docker
 
@@ -60,8 +62,10 @@ cd ~/.local/share/server-box-monitor     # or /opt/server-box-monitor
 Run it there and as the service's account, or it creates a second, empty
 database the service never reads. The command prompts (8 characters at
 least); it takes no password argument on purpose. There is no recovery in the
-panel — this command is the reset. Repeated wrong passwords are throttled up
-to five minutes, which can look like an agent that does not answer.
+panel — this command is the reset. A user it creates is a `viewer` unless
+`--role admin` (or another role) is added; an admin can also add accounts from
+the app or the panel. Repeated wrong passwords are throttled up to five
+minutes, which can look like an agent that does not answer.
 
 ## Adding it in the app
 
@@ -74,30 +78,42 @@ the agent allows, and no SFTP at all. A server whose agent leads — the agent
 alone, or both with the agent preferred — runs every port forward through the
 agent and never falls back to SSH.
 
-## What each switch allows
+## Accounts, roles and grants
 
-These are only in `config.toml` — no panel or app control can turn one on (the
-panel can turn `full_access` off). Restart the agent after editing; its log
-then prints a `Remote access:` line summarising what is on (nothing at all
-when everything is off).
+Each account on the agent has a role, and a role holds grants. Roles live in
+the agent's database, not in `config.toml`; an **admin** account edits accounts
+and roles from the app (server page → settings button → **Access** →
+**Accounts** / **Roles**) or the web panel (end of **Server Settings**),
+entering its own password again for each change. Changes apply at once and
+close sessions that lost their grant. Any account can see its role and change
+its own password there.
 
-| Switch | Allows | Note |
+| Grant | Allows | Options |
 |---|---|---|
-| (none) | Status, charts, stored history | Any panel login |
-| `full_access` | Terminal, commands, processes, systemd, containers, snippets, power, remote desktop, port forwarding — as the agent's OS account | **Only while `[remote_access.terminal] enabled = true`**, which is off by default: a fresh install offers charts and nothing else |
-| `[remote_access.terminal] enabled` | The terminal endpoint, for the app and the web panel | The panel's terminal logs in over SSH with that account's rights |
-| `[remote_access.fs] enabled` + `roots` | The file browser, inside the listed directories | `roots` has no default. `roots = ["/"]` is close to a shell: anyone who can write `~/.ssh/authorized_keys` has one |
+| (none) | Status, charts, stored history | Any account |
+| `shell` | Terminal, commands, processes, systemd, containers, snippets, power, scheduled tasks — as the agent's OS account | Covers the rest in practice |
+| `ssh_terminal` | The web panel's terminal, which logs in over SSH with that SSH account's rights | — |
+| `files` | The file browser, inside `[remote_access.fs] roots` | `read` or `write`. `roots` has no default and is set in `config.toml`. `roots = ["/"]` with write is close to a shell |
+| `connect` | Remote desktop, local and dynamic port forwards | `allow`: IPs or CIDRs with optional ports; empty is anywhere |
+| `listen` | Remote port forwards | `public` for non-loopback addresses; a port range |
 
-**Plain HTTP is refused** by the terminal and the file browser for requests
-from another machine; loopback and a reverse proxy on the same host are fine.
-Use TLS (`[server.tls]`) or a reverse proxy. On a network already encrypted
-underneath (Tailscale and the like), plain HTTP takes both
-`allow_insecure = true` in that section **and** **Allow insecure HTTP** for
+Built-in roles: `admin` (also manages accounts, roles and the agent's settings
+— only an admin can change settings, alert rules and channels) and `viewer`
+(no grants). The last admin cannot be removed or demoted.
+
+An agent upgraded from before roles turns its old switches into the `admin`
+role once, and every existing account becomes an admin.
+
+**Plain HTTP is refused** for everything beyond the charts when the request
+comes from another machine; loopback and a reverse proxy on the same host are
+fine. Use TLS (`[server.tls]`) or a reverse proxy. On a network already
+encrypted underneath (Tailscale and the like), plain HTTP takes both
+`[remote_access] allow_insecure = true` **and** **Allow insecure HTTP** for
 that server in the app.
 
-Before enabling any of these, tell the user what it allows and wait for their
-answer. `full_access` makes the panel password equivalent to a shell, with
-none of SSH's authentication in between.
+Before granting any of these, tell the user what it allows and wait for their
+answer. A role with `shell` makes its accounts' passwords equivalent to a shell,
+with none of SSH's authentication in between.
 
 ## Alerts, widgets, the watch
 
@@ -127,12 +143,15 @@ none of SSH's authentication in between.
 
 | Symptom | Cause |
 |---|---|
-| Only charts, no terminal or controls | `[remote_access.terminal] enabled` is off (the default), so `full_access` grants nothing; or the app reaches it over plain HTTP from another machine |
-| No file browser | `[remote_access.fs]` off, or `roots` empty |
+| Only charts, no terminal or controls | The account's role has no `shell` (an admin grants it; a `--permissions read` install starts with none); or the app reaches it over plain HTTP from another machine |
+| No file browser | The role has no `files`, or `[remote_access.fs] roots` is empty |
+| Files can be browsed but not changed | The role's `files` is read-only |
 | No SFTP | Never through the agent; add SSH to the same server |
 | No remote desktop or port forwarding, with a terminal | The agent predates the TCP relay; update it |
 | Remote forward greyed out, local and dynamic fine | The agent predates the listener; update it |
-| Remote forward refuses an address that is not loopback | `[remote_access] listen_public = true` on the agent |
+| Remote forward refuses an address that is not loopback | Turn on `public` in the role's `listen` |
+| Remote desktop or a forward to one address is refused | The role's `connect.allow` does not include it; `localhost` needs both `127.0.0.1` and `::1`, so enter the address |
+| Settings, alert rules or channels cannot be changed | Only an admin account can; sign in with one or ask an admin to change your role |
 | Certificate error | Configure TLS or a proxy, or **Monitor Ignore certificate** for a self-signed one |
 | Login refused, or the agent seems slow | Wrong password, throttled; reset with `user set-password` |
 | Settings turned themselves off after an upgrade | A config from before August 2026 uses old flat keys (`terminal_enabled`...) that are no longer read; rewrite it against [`config.example.toml`](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/config.example.toml) |
