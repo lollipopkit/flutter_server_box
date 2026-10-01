@@ -15,7 +15,7 @@ types:
         index: 2
   ServerFuncBtn:
     typeId: 6
-    nextIndex: 15
+    nextIndex: 16
     fields:
       terminal:
         index: 0
@@ -41,6 +41,8 @@ types:
         index: 13
       remoteDesktop:
         index: 14
+      firewall:
+        index: 15
   WakeOnLanCfg:
     typeId: 8
     nextIndex: 3

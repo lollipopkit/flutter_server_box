@@ -5173,4 +5173,225 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get monitorPasswordNotSaved =>
       'Het wachtwoord is op de agent gewijzigd, maar de app kon het niet opslaan. Werk het Monitor-wachtwoord bij in de instellingen van deze server.';
+
+  @override
+  String get firewall => 'Firewall';
+
+  @override
+  String get firewallLinuxOnly =>
+      'Firewallbeheer ondersteunt Linux-servers met ufw of firewalld.';
+
+  @override
+  String get firewallNeedsRoot =>
+      'Voor het lezen van de firewallregels is root nodig. Voer het sudo-wachtwoord in om door te gaan.';
+
+  @override
+  String get firewallIncoming => 'Inkomend';
+
+  @override
+  String get firewallOutgoing => 'Uitgaand';
+
+  @override
+  String get firewallRouted => 'Doorgestuurd';
+
+  @override
+  String get firewallDefaultPolicy => 'Standaardbeleid';
+
+  @override
+  String get firewallLogging => 'Logboek';
+
+  @override
+  String get firewallRules => 'Regels';
+
+  @override
+  String get firewallRule => 'Regel';
+
+  @override
+  String get firewallAddRule => 'Regel toevoegen';
+
+  @override
+  String get firewallAnywhere => 'Overal';
+
+  @override
+  String firewallFromFmt(String source) {
+    return 'van $source';
+  }
+
+  @override
+  String get firewallFrom => 'Van';
+
+  @override
+  String get firewallTo => 'Naar';
+
+  @override
+  String get firewallProtocol => 'Protocol';
+
+  @override
+  String get firewallInterface => 'Interface';
+
+  @override
+  String get firewallComment => 'Opmerking';
+
+  @override
+  String get firewallAppProfile => 'App-profiel';
+
+  @override
+  String get firewallPrepend => 'Vóór alle andere regels plaatsen';
+
+  @override
+  String get firewallIpv6Off =>
+      'IPv6 staat uit (IPV6=no): v6-regels worden niet geladen.';
+
+  @override
+  String get firewallReload => 'Opnieuw laden';
+
+  @override
+  String get firewallNothingMatched =>
+      'Voer een poort, een app-profiel, een adres of een interface in.';
+
+  @override
+  String get firewallInvalidPort =>
+      'Ongeldige poort. Gebruik 22, 80,443 of 6000:6010.';
+
+  @override
+  String get firewallTooManyPorts =>
+      'Maximaal 15 poorten; een bereik telt als twee.';
+
+  @override
+  String get firewallPortsNeedProtocol =>
+      'Een poortlijst of poortbereik vereist tcp of udp.';
+
+  @override
+  String get firewallInvalidAddress =>
+      'Ongeldig adres. Gebruik een IP-adres of een netwerk zoals 192.168.1.0/24.';
+
+  @override
+  String get firewallMixedIpVersions =>
+      'Van en Naar moeten beide IPv4 of beide IPv6 zijn.';
+
+  @override
+  String get firewallInvalidInterface => 'Ongeldige interfacenaam.';
+
+  @override
+  String get firewallInvalidComment =>
+      'De opmerking mag geen \' of regeleinden bevatten.';
+
+  @override
+  String get firewallInterfaceIn => 'Inkomende interface';
+
+  @override
+  String get firewallInterfaceOut => 'Uitgaande interface';
+
+  @override
+  String get firewallSourcePort => 'Bronpoort';
+
+  @override
+  String get firewallMoreOptions => 'Meer opties';
+
+  @override
+  String get firewallNoneInstalled =>
+      'ufw noch firewalld is op deze server geïnstalleerd. Installeer er een met de pakketbeheerder van het systeem, bijvoorbeeld `apt install ufw` of `dnf install firewalld`.';
+
+  @override
+  String get firewallKeepAccess => 'Eerst de poorten van deze app open houden';
+
+  @override
+  String firewallWillRefuseFmt(String access) {
+    return '$access: nieuwe verbindingen van deze app worden geweigerd. De huidige verbinding blijft bestaan tot die wegvalt.';
+  }
+
+  @override
+  String firewallMayRefuseFmt(String access) {
+    return '$access: nieuwe verbindingen van deze app worden mogelijk geweigerd. Dat hangt af van het adres of de interface waarlangs ze binnenkomen, wat deze app niet kan zien.';
+  }
+
+  @override
+  String firewallRateLimitedFmt(String access) {
+    return '$access: verbindingen worden beperkt. Een adres dat er binnen 30 seconden 6 of meer opent, wordt geweigerd, en deze app maakt mogelijk zo vaak opnieuw verbinding.';
+  }
+
+  @override
+  String get firewallConflict =>
+      'ufw en firewalld staan allebei aan. Beide schrijven de regels van de kernel, en wat het laatst is geladen beslist wat doorkomt.';
+
+  @override
+  String get firewallDefaultZone => 'Standaardzone';
+
+  @override
+  String get firewallZone => 'Zone';
+
+  @override
+  String get firewallTarget => 'Target';
+
+  @override
+  String get firewallMasquerade => 'Masquerade';
+
+  @override
+  String get firewallServices => 'Services';
+
+  @override
+  String get firewallPorts => 'Poorten';
+
+  @override
+  String get firewallSources => 'Bronnen';
+
+  @override
+  String get firewallInterfaces => 'Interfaces';
+
+  @override
+  String get firewallRichRules => 'Rich rules';
+
+  @override
+  String get firewallForwardPorts => 'Doorgestuurde poorten';
+
+  @override
+  String get firewallRuntimeOnly => 'alleen runtime';
+
+  @override
+  String get firewallPermanentOnly => 'alleen permanent';
+
+  @override
+  String get firewallThisConnection => 'deze verbinding';
+
+  @override
+  String get firewallDefaultTag => 'standaard';
+
+  @override
+  String get firewallDrift =>
+      'Wat nu geldt, wijkt af van wat is opgeslagen. Een reload of herstart vervangt het door de opgeslagen configuratie.';
+
+  @override
+  String firewallDriftLockoutFmt(String access) {
+    return 'Na een reload of herstart wordt $access geweigerd: de opgeslagen configuratie laat het niet door.';
+  }
+
+  @override
+  String get firewallSaveRuntime => 'Opslaan als permanent';
+
+  @override
+  String get firewallReloadLoses =>
+      'Wijzigingen die niet als permanent zijn opgeslagen, gaan verloren.';
+
+  @override
+  String get firewallPanic =>
+      'De panic-modus staat aan: elk pakket wordt verworpen.';
+
+  @override
+  String get firewallPanicOff => 'panic-modus uitzetten';
+
+  @override
+  String get firewallStoppedNote =>
+      'firewalld is gestopt. Wijzigingen worden opgeslagen en gelden zodra het start.';
+
+  @override
+  String get firewallInvalidSource =>
+      'Ongeldige bron. Gebruik een adres, een netwerk zoals 192.168.1.0/24, ipset:NAAM of een MAC-adres.';
+
+  @override
+  String get firewallInvalidRichRule =>
+      'Een rich rule begint met \"rule\" en past op één regel.';
+
+  @override
+  String get firewallInvalidForwardPort =>
+      'Gebruik port=80:proto=tcp:toport=8080, met toport, toaddr of beide.';
 }

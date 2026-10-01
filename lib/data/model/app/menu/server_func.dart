@@ -25,7 +25,8 @@ enum ServerFuncBtn {
   power(1491),
   users(1579),
   scheduledTasks(1579),
-  remoteDesktop(1617);
+  remoteDesktop(1617),
+  firewall(1719);
 
   /// The last released build that did not contain this entry.
   ///
@@ -81,6 +82,7 @@ enum ServerFuncBtn {
     users,
     scheduledTasks,
     remoteDesktop,
+    firewall,
   ].map((e) => e.name).toList();
 
   /// The entry a stored row names.
@@ -204,6 +206,7 @@ enum ServerFuncBtn {
     users => Icons.manage_accounts_outlined,
     scheduledTasks => Icons.schedule,
     remoteDesktop => Icons.desktop_windows_outlined,
+    firewall => Icons.shield_outlined,
   };
 
   /// Whether a connection with [caps] can actually do what this entry opens.
@@ -215,8 +218,13 @@ enum ServerFuncBtn {
     // All three end in the terminal — snippets and iperf hand it a command to
     // start with, and nothing else.
     terminal || snippet || iperf => caps.terminal,
-    container || process || systemd || power || users || scheduledTasks =>
-      caps.shell,
+    container ||
+    process ||
+    systemd ||
+    power ||
+    users ||
+    scheduledTasks ||
+    firewall => caps.shell,
     // Browsing files is its own question: a transport could grow a file API
     // without growing a stream this app can point anywhere.
     files => caps.files,
@@ -300,6 +308,7 @@ enum ServerFuncBtn {
     users => l10n.systemUsers,
     scheduledTasks => l10n.scheduledTasks,
     remoteDesktop => l10n.remoteDesktop,
+    firewall => l10n.firewall,
   };
 }
 

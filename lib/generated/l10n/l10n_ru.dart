@@ -5161,4 +5161,225 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get monitorPasswordNotSaved =>
       'Пароль на агенте изменён, но приложению не удалось его сохранить. Обновите пароль Monitor в настройках этого сервера.';
+
+  @override
+  String get firewall => 'Брандмауэр';
+
+  @override
+  String get firewallLinuxOnly =>
+      'Управление брандмауэром поддерживает серверы Linux с ufw или firewalld.';
+
+  @override
+  String get firewallNeedsRoot =>
+      'Для чтения правил брандмауэра нужны права root. Введите пароль sudo, чтобы продолжить.';
+
+  @override
+  String get firewallIncoming => 'Входящий';
+
+  @override
+  String get firewallOutgoing => 'Исходящий';
+
+  @override
+  String get firewallRouted => 'Пересылаемый';
+
+  @override
+  String get firewallDefaultPolicy => 'Политика по умолчанию';
+
+  @override
+  String get firewallLogging => 'Журналирование';
+
+  @override
+  String get firewallRules => 'Правила';
+
+  @override
+  String get firewallRule => 'Правило';
+
+  @override
+  String get firewallAddRule => 'Добавить правило';
+
+  @override
+  String get firewallAnywhere => 'Любой';
+
+  @override
+  String firewallFromFmt(String source) {
+    return 'от $source';
+  }
+
+  @override
+  String get firewallFrom => 'Откуда';
+
+  @override
+  String get firewallTo => 'Куда';
+
+  @override
+  String get firewallProtocol => 'Протокол';
+
+  @override
+  String get firewallInterface => 'Интерфейс';
+
+  @override
+  String get firewallComment => 'Комментарий';
+
+  @override
+  String get firewallAppProfile => 'Профиль приложения';
+
+  @override
+  String get firewallPrepend => 'Поместить перед всеми остальными правилами';
+
+  @override
+  String get firewallIpv6Off =>
+      'IPv6 выключен (IPV6=no): правила v6 не загружаются.';
+
+  @override
+  String get firewallReload => 'Перезагрузить';
+
+  @override
+  String get firewallNothingMatched =>
+      'Укажите порт, профиль приложения, адрес или интерфейс.';
+
+  @override
+  String get firewallInvalidPort =>
+      'Недопустимый порт. Используйте 22, 80,443 или 6000:6010.';
+
+  @override
+  String get firewallTooManyPorts =>
+      'Не более 15 портов; диапазон считается за два.';
+
+  @override
+  String get firewallPortsNeedProtocol =>
+      'Для списка или диапазона портов нужен tcp или udp.';
+
+  @override
+  String get firewallInvalidAddress =>
+      'Недопустимый адрес. Используйте IP-адрес или сеть, например 192.168.1.0/24.';
+
+  @override
+  String get firewallMixedIpVersions =>
+      'Откуда и Куда должны быть оба IPv4 или оба IPv6.';
+
+  @override
+  String get firewallInvalidInterface => 'Недопустимое имя интерфейса.';
+
+  @override
+  String get firewallInvalidComment =>
+      'Комментарий не может содержать \' или переносы строк.';
+
+  @override
+  String get firewallInterfaceIn => 'Входящий интерфейс';
+
+  @override
+  String get firewallInterfaceOut => 'Исходящий интерфейс';
+
+  @override
+  String get firewallSourcePort => 'Порт источника';
+
+  @override
+  String get firewallMoreOptions => 'Дополнительные параметры';
+
+  @override
+  String get firewallNoneInstalled =>
+      'На этом сервере не установлены ни ufw, ни firewalld. Установите один из них через менеджер пакетов системы, например `apt install ufw` или `dnf install firewalld`.';
+
+  @override
+  String get firewallKeepAccess =>
+      'Сначала оставить порты этого приложения открытыми';
+
+  @override
+  String firewallWillRefuseFmt(String access) {
+    return '$access: новые подключения этого приложения будут отклоняться. Текущее подключение сохранится, пока не оборвётся.';
+  }
+
+  @override
+  String firewallMayRefuseFmt(String access) {
+    return '$access: новые подключения этого приложения могут отклоняться. Это зависит от адреса или интерфейса, через который они приходят, а приложение не может это определить.';
+  }
+
+  @override
+  String firewallRateLimitedFmt(String access) {
+    return '$access: подключения будут ограничены по частоте. Адрес, открывший 6 и более подключений за 30 секунд, будет отклонён, а это приложение может переподключаться так часто.';
+  }
+
+  @override
+  String get firewallConflict =>
+      'ufw и firewalld включены одновременно. Оба записывают правила ядра, и решает тот, что загрузился последним.';
+
+  @override
+  String get firewallDefaultZone => 'Зона по умолчанию';
+
+  @override
+  String get firewallZone => 'Зона';
+
+  @override
+  String get firewallTarget => 'Target';
+
+  @override
+  String get firewallMasquerade => 'Masquerade';
+
+  @override
+  String get firewallServices => 'Службы';
+
+  @override
+  String get firewallPorts => 'Порты';
+
+  @override
+  String get firewallSources => 'Источники';
+
+  @override
+  String get firewallInterfaces => 'Интерфейсы';
+
+  @override
+  String get firewallRichRules => 'Rich rules';
+
+  @override
+  String get firewallForwardPorts => 'Перенаправленные порты';
+
+  @override
+  String get firewallRuntimeOnly => 'только runtime';
+
+  @override
+  String get firewallPermanentOnly => 'только permanent';
+
+  @override
+  String get firewallThisConnection => 'это подключение';
+
+  @override
+  String get firewallDefaultTag => 'по умолчанию';
+
+  @override
+  String get firewallDrift =>
+      'Действующая конфигурация отличается от сохранённой. После reload или перезагрузки будет действовать сохранённая.';
+
+  @override
+  String firewallDriftLockoutFmt(String access) {
+    return 'После reload или перезагрузки $access будет отклоняться: сохранённая конфигурация его не пропускает.';
+  }
+
+  @override
+  String get firewallSaveRuntime => 'Сохранить как permanent';
+
+  @override
+  String get firewallReloadLoses =>
+      'Изменения, не сохранённые как permanent, будут потеряны.';
+
+  @override
+  String get firewallPanic => 'Включён режим panic: все пакеты отбрасываются.';
+
+  @override
+  String get firewallPanicOff => 'Выключить режим panic';
+
+  @override
+  String get firewallStoppedNote =>
+      'firewalld остановлен. Изменения сохраняются и вступят в силу при запуске.';
+
+  @override
+  String get firewallInvalidSource =>
+      'Недопустимый источник. Используйте адрес, сеть вроде 192.168.1.0/24, ipset:ИМЯ или MAC-адрес.';
+
+  @override
+  String get firewallInvalidRichRule =>
+      'Rich rule начинается с «rule» и занимает одну строку.';
+
+  @override
+  String get firewallInvalidForwardPort =>
+      'Используйте port=80:proto=tcp:toport=8080, с toport, toaddr или обоими.';
 }

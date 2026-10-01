@@ -91,7 +91,7 @@ its own password there.
 | Grant | Allows | Options |
 |---|---|---|
 | (none) | Status, charts, stored history | Any account |
-| `shell` | Terminal, commands, processes, systemd, containers, snippets, power, scheduled tasks — as the agent's OS account | Covers the rest in practice |
+| `shell` | Terminal, commands, processes, systemd, containers, snippets, power, scheduled tasks, firewall — as the agent's OS account | Covers the rest in practice |
 | `ssh_terminal` | The web panel's terminal, which logs in over SSH with that SSH account's rights | — |
 | `files` | The file browser, inside `[remote_access.fs] roots` | `read` or `write`. `roots` has no default and is set in `config.toml`. `roots = ["/"]` with write is close to a shell |
 | `connect` | Remote desktop, local and dynamic port forwards | `allow`: IPs or CIDRs with optional ports; empty is anywhere |

@@ -18,6 +18,7 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/container/container.dart';
+import 'package:server_box/view/page/firewall/firewall.dart';
 import 'package:server_box/view/page/iperf.dart';
 import 'package:server_box/view/page/port_forward.dart';
 import 'package:server_box/view/page/process.dart';
@@ -548,6 +549,12 @@ void runServerFunc(
         if (!context.mounted) return;
         final args = SpiRequiredArgs(spi);
         unawaited(ScheduledTasksPage.route.go(context, args));
+        break;
+      case ServerFuncBtn.firewall:
+        if (!await _ensureExec(context, spi.id, ref)) return;
+        if (!context.mounted) return;
+        final args = SpiRequiredArgs(spi);
+        unawaited(FirewallPage.route.go(context, args));
         break;
       case ServerFuncBtn.remoteDesktop:
         // A monitor-backed server has nothing to connect here: the agent dials

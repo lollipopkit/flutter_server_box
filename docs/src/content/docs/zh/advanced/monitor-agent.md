@@ -126,7 +126,7 @@ ServerBox app 没有为 <host> 上的 Monitor agent 提供 <功能>。请先查�
   `[remote_access] allow_insecure`）、`not_configured`（files 权限没有配置
   `[remote_access.fs] roots`）。用该账号登录后请求
   `GET /api/v1/capabilities`，可以在 `grants` 下看到这些信息。
-- 命令、进程、systemd、容器、代码片段、电源、计划任务和 app 终端需要 `shell`。
+- 命令、进程、systemd、容器、代码片段、电源、计划任务、防火墙和 app 终端需要 `shell`。
   文件浏览需要 `files`；`mode = "read"` 时不能修改任何内容。远程桌面以及本地和
   动态转发需要 `connect`，它的 `allow` 列表不为空时必须包含目标地址。远程转发
   需要 `listen`；绑定 loopback 以外的地址需要开启它的 `public` 选项。
@@ -277,7 +277,7 @@ App 和 Monitor agent 采集数据时都不会等待交互式 `sudo` 输入。�
 
 | 权限 | 允许的功能 | 选项 |
 |---|---|---|
-| `shell` | 以 agent 的系统账户执行命令，包括进程、systemd、容器、代码片段、电源、计划任务和 App 终端 | 无 |
+| `shell` | 以 agent 的系统账户执行命令，包括进程、systemd、容器、代码片段、电源、计划任务、防火墙和 App 终端 | 无 |
 | `ssh_terminal` | 网页面板的终端，用 SSH 账户自己的凭据登录 `[remote_access] ssh_addr` 指定的 SSH server | 无 |
 | `files` | 在 `[remote_access.fs] roots` 范围内浏览文件 | `read`（浏览和下载）或 `write`（另外允许上传、新建、重命名、chmod 和删除） |
 | `connect` | 远程桌面（RDP、VNC）以及本地和动态端口转发，即由 agent 发起的连接 | `allow`：允许访问的地址；为空表示不限制 |

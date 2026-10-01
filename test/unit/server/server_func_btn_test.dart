@@ -78,6 +78,7 @@ void main() {
       (1579, ServerFuncBtn.users),
       (1579, ServerFuncBtn.scheduledTasks),
       (1617, ServerFuncBtn.remoteDesktop),
+      (1719, ServerFuncBtn.firewall),
     ];
 
     for (final (boundary, button) in boundaries) {
@@ -108,6 +109,17 @@ void main() {
     expect(row(), [
       ServerFuncBtn.terminal.name,
       ServerFuncBtn.remoteDesktop.name,
+    ]);
+  });
+
+  test('adds the firewall after the last build without it', () async {
+    setting.serverFuncBtns.put([ServerFuncBtn.terminal.name]);
+
+    ServerFuncBtn.autoAddNewFuncs(1719, 1720);
+
+    expect(row(), [
+      ServerFuncBtn.terminal.name,
+      ServerFuncBtn.firewall.name,
     ]);
   });
 

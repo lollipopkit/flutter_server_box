@@ -8780,6 +8780,390 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The password was changed on the agent, but the app could not save it. Update this server\'s Monitor password in its settings.'**
   String get monitorPasswordNotSaved;
+
+  /// Server function that manages the server's firewall (ufw).
+  ///
+  /// In en, this message translates to:
+  /// **'Firewall'**
+  String get firewall;
+
+  /// Shown when the server is not Linux.
+  ///
+  /// In en, this message translates to:
+  /// **'Firewall management supports Linux servers with ufw or firewalld.'**
+  String get firewallLinuxOnly;
+
+  /// Shown when the user declined to enter a sudo password.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading the firewall\'s rules needs root. Enter the sudo password to continue.'**
+  String get firewallNeedsRoot;
+
+  /// Default policy chain for incoming traffic.
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming'**
+  String get firewallIncoming;
+
+  /// Default policy chain for outgoing traffic.
+  ///
+  /// In en, this message translates to:
+  /// **'Outgoing'**
+  String get firewallOutgoing;
+
+  /// Default policy chain for forwarded traffic.
+  ///
+  /// In en, this message translates to:
+  /// **'Routed'**
+  String get firewallRouted;
+
+  /// Section title for ufw's default policies.
+  ///
+  /// In en, this message translates to:
+  /// **'Default policy'**
+  String get firewallDefaultPolicy;
+
+  /// ufw log level.
+  ///
+  /// In en, this message translates to:
+  /// **'Logging'**
+  String get firewallLogging;
+
+  /// Section title for the firewall rule list.
+  ///
+  /// In en, this message translates to:
+  /// **'Rules'**
+  String get firewallRules;
+
+  /// One firewall rule, as the type in a delete confirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Rule'**
+  String get firewallRule;
+
+  /// Button and dialog title for adding a firewall rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Add rule'**
+  String get firewallAddRule;
+
+  /// Any address or port in a firewall rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Anywhere'**
+  String get firewallAnywhere;
+
+  /// Where the traffic a rule matches comes from.
+  ///
+  /// In en, this message translates to:
+  /// **'from {source}'**
+  String firewallFromFmt(String source);
+
+  /// Field label: the source address of a firewall rule.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get firewallFrom;
+
+  /// Field label: the destination address of a firewall rule.
+  ///
+  /// In en, this message translates to:
+  /// **'To'**
+  String get firewallTo;
+
+  /// Field label: tcp, udp or any.
+  ///
+  /// In en, this message translates to:
+  /// **'Protocol'**
+  String get firewallProtocol;
+
+  /// Field label: network interface name.
+  ///
+  /// In en, this message translates to:
+  /// **'Interface'**
+  String get firewallInterface;
+
+  /// Field label: comment stored with a firewall rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Comment'**
+  String get firewallComment;
+
+  /// ufw application profile, which names the ports of an application.
+  ///
+  /// In en, this message translates to:
+  /// **'App profile'**
+  String get firewallAppProfile;
+
+  /// Switch: insert the rule first. ufw applies the first rule that matches.
+  ///
+  /// In en, this message translates to:
+  /// **'Put before all other rules'**
+  String get firewallPrepend;
+
+  /// Shown when ufw's IPv6 support is off.
+  ///
+  /// In en, this message translates to:
+  /// **'IPv6 is off (IPV6=no): v6 rules are not loaded.'**
+  String get firewallIpv6Off;
+
+  /// Reload ufw's rules.
+  ///
+  /// In en, this message translates to:
+  /// **'Reload'**
+  String get firewallReload;
+
+  /// Validation error for a firewall rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a port, an app profile, an address or an interface.'**
+  String get firewallNothingMatched;
+
+  /// Validation error for a firewall rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid port. Use 22, 80,443 or 6000:6010.'**
+  String get firewallInvalidPort;
+
+  /// Validation error for a firewall rule.
+  ///
+  /// In en, this message translates to:
+  /// **'At most 15 ports; a range counts as two.'**
+  String get firewallTooManyPorts;
+
+  /// Validation error for a firewall rule.
+  ///
+  /// In en, this message translates to:
+  /// **'A port list or range needs tcp or udp.'**
+  String get firewallPortsNeedProtocol;
+
+  /// Validation error for a firewall rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid address. Use an IP address or a network such as 192.168.1.0/24.'**
+  String get firewallInvalidAddress;
+
+  /// Validation error for a firewall rule.
+  ///
+  /// In en, this message translates to:
+  /// **'From and To must both be IPv4 or both be IPv6.'**
+  String get firewallMixedIpVersions;
+
+  /// Validation error for a firewall rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid interface name.'**
+  String get firewallInvalidInterface;
+
+  /// Validation error for a firewall rule.
+  ///
+  /// In en, this message translates to:
+  /// **'The comment cannot contain \' or line breaks.'**
+  String get firewallInvalidComment;
+
+  /// Field label: the interface a packet arrives on.
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming interface'**
+  String get firewallInterfaceIn;
+
+  /// Field label: the interface a packet leaves by.
+  ///
+  /// In en, this message translates to:
+  /// **'Outgoing interface'**
+  String get firewallInterfaceOut;
+
+  /// Field label: the port the traffic a rule matches comes from.
+  ///
+  /// In en, this message translates to:
+  /// **'Source port'**
+  String get firewallSourcePort;
+
+  /// Expands the less used fields of the add-rule form.
+  ///
+  /// In en, this message translates to:
+  /// **'More options'**
+  String get firewallMoreOptions;
+
+  /// Shown when neither firewall is found.
+  ///
+  /// In en, this message translates to:
+  /// **'Neither ufw nor firewalld is installed on this server. Install one with the system\'s package manager, for example `apt install ufw` or `dnf install firewalld`.'**
+  String get firewallNoneInstalled;
+
+  /// Checkbox: run commands that keep the app's own ports open before the change.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep this app\'s ports open first'**
+  String get firewallKeepAccess;
+
+  /// Warning: a firewall change blocks the app's own connection.
+  ///
+  /// In en, this message translates to:
+  /// **'{access}: new connections from this app will be refused. The connection in use stays up until it drops.'**
+  String firewallWillRefuseFmt(String access);
+
+  /// Warning: a firewall change may block the app's own connection.
+  ///
+  /// In en, this message translates to:
+  /// **'{access}: new connections from this app may be refused. It depends on the address or interface they arrive by, which this app cannot tell.'**
+  String firewallMayRefuseFmt(String access);
+
+  /// Warning: a firewall change rate-limits the app's own connection.
+  ///
+  /// In en, this message translates to:
+  /// **'{access}: connections will be rate-limited. An address that opens 6 or more within 30 seconds is refused, and this app may reconnect that often.'**
+  String firewallRateLimitedFmt(String access);
+
+  /// Shown when both firewalls are enabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Both ufw and firewalld are on. Each writes the kernel\'s rules, and whichever loaded last decides what gets through.'**
+  String get firewallConflict;
+
+  /// firewalld's default zone.
+  ///
+  /// In en, this message translates to:
+  /// **'Default zone'**
+  String get firewallDefaultZone;
+
+  /// A firewalld zone.
+  ///
+  /// In en, this message translates to:
+  /// **'Zone'**
+  String get firewallZone;
+
+  /// What a firewalld zone does with traffic nothing else matched.
+  ///
+  /// In en, this message translates to:
+  /// **'Target'**
+  String get firewallTarget;
+
+  /// firewalld masquerading (NAT) of a zone.
+  ///
+  /// In en, this message translates to:
+  /// **'Masquerade'**
+  String get firewallMasquerade;
+
+  /// firewalld services allowed in a zone.
+  ///
+  /// In en, this message translates to:
+  /// **'Services'**
+  String get firewallServices;
+
+  /// Ports allowed in a zone.
+  ///
+  /// In en, this message translates to:
+  /// **'Ports'**
+  String get firewallPorts;
+
+  /// Source addresses bound to a zone.
+  ///
+  /// In en, this message translates to:
+  /// **'Sources'**
+  String get firewallSources;
+
+  /// Interfaces bound to a zone.
+  ///
+  /// In en, this message translates to:
+  /// **'Interfaces'**
+  String get firewallInterfaces;
+
+  /// firewalld rich rules.
+  ///
+  /// In en, this message translates to:
+  /// **'Rich rules'**
+  String get firewallRichRules;
+
+  /// firewalld forwarded ports.
+  ///
+  /// In en, this message translates to:
+  /// **'Forwarded ports'**
+  String get firewallForwardPorts;
+
+  /// Tag: in force now, but not saved; lost at a reload or reboot.
+  ///
+  /// In en, this message translates to:
+  /// **'runtime only'**
+  String get firewallRuntimeOnly;
+
+  /// Tag: saved, but not in force until a reload.
+  ///
+  /// In en, this message translates to:
+  /// **'permanent only'**
+  String get firewallPermanentOnly;
+
+  /// Tag: the zone this app's connection arrives in.
+  ///
+  /// In en, this message translates to:
+  /// **'this connection'**
+  String get firewallThisConnection;
+
+  /// Tag: the default zone.
+  ///
+  /// In en, this message translates to:
+  /// **'default'**
+  String get firewallDefaultTag;
+
+  /// Shown when firewalld's runtime differs from its permanent configuration.
+  ///
+  /// In en, this message translates to:
+  /// **'What is in force differs from what is saved. A reload or a reboot replaces it with the saved configuration.'**
+  String get firewallDrift;
+
+  /// Shown when the permanent configuration would block the app's connection.
+  ///
+  /// In en, this message translates to:
+  /// **'After a reload or a reboot, {access} will be refused: the saved configuration does not let it in.'**
+  String firewallDriftLockoutFmt(String access);
+
+  /// Save firewalld's runtime configuration as permanent.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as permanent'**
+  String get firewallSaveRuntime;
+
+  /// Note before a reload of firewalld.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes not saved as permanent will be lost.'**
+  String get firewallReloadLoses;
+
+  /// Shown when firewalld's panic mode is on.
+  ///
+  /// In en, this message translates to:
+  /// **'Panic mode is on: every packet is dropped.'**
+  String get firewallPanic;
+
+  /// Button: turn firewalld's panic mode off.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off panic mode'**
+  String get firewallPanicOff;
+
+  /// Shown while firewalld is not running.
+  ///
+  /// In en, this message translates to:
+  /// **'firewalld is stopped. Changes are saved, and take effect when it starts.'**
+  String get firewallStoppedNote;
+
+  /// Validation error for a firewalld source.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid source. Use an address, a network such as 192.168.1.0/24, ipset:NAME or a MAC address.'**
+  String get firewallInvalidSource;
+
+  /// Validation error for a firewalld rich rule.
+  ///
+  /// In en, this message translates to:
+  /// **'A rich rule starts with \"rule\" and fits on one line.'**
+  String get firewallInvalidRichRule;
+
+  /// Validation error for a firewalld forwarded port.
+  ///
+  /// In en, this message translates to:
+  /// **'Use port=80:proto=tcp:toport=8080, with toport, toaddr or both.'**
+  String get firewallInvalidForwardPort;
 }
 
 class _AppLocalizationsDelegate

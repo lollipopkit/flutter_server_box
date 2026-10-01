@@ -5123,4 +5123,225 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get monitorPasswordNotSaved =>
       'Kata sandi sudah diubah di agen, tetapi aplikasi gagal menyimpannya. Perbarui kata sandi Monitor di pengaturan server ini.';
+
+  @override
+  String get firewall => 'Firewall';
+
+  @override
+  String get firewallLinuxOnly =>
+      'Pengelolaan firewall mendukung server Linux dengan ufw atau firewalld.';
+
+  @override
+  String get firewallNeedsRoot =>
+      'Membaca aturan firewall memerlukan root. Masukkan kata sandi sudo untuk melanjutkan.';
+
+  @override
+  String get firewallIncoming => 'Masuk';
+
+  @override
+  String get firewallOutgoing => 'Keluar';
+
+  @override
+  String get firewallRouted => 'Diteruskan';
+
+  @override
+  String get firewallDefaultPolicy => 'Kebijakan bawaan';
+
+  @override
+  String get firewallLogging => 'Pencatatan';
+
+  @override
+  String get firewallRules => 'Aturan';
+
+  @override
+  String get firewallRule => 'Aturan';
+
+  @override
+  String get firewallAddRule => 'Tambah aturan';
+
+  @override
+  String get firewallAnywhere => 'Di mana saja';
+
+  @override
+  String firewallFromFmt(String source) {
+    return 'dari $source';
+  }
+
+  @override
+  String get firewallFrom => 'Dari';
+
+  @override
+  String get firewallTo => 'Ke';
+
+  @override
+  String get firewallProtocol => 'Protokol';
+
+  @override
+  String get firewallInterface => 'Antarmuka';
+
+  @override
+  String get firewallComment => 'Komentar';
+
+  @override
+  String get firewallAppProfile => 'Profil aplikasi';
+
+  @override
+  String get firewallPrepend => 'Letakkan sebelum semua aturan lain';
+
+  @override
+  String get firewallIpv6Off =>
+      'IPv6 nonaktif (IPV6=no): aturan v6 tidak dimuat.';
+
+  @override
+  String get firewallReload => 'Muat ulang';
+
+  @override
+  String get firewallNothingMatched =>
+      'Masukkan port, profil aplikasi, alamat, atau antarmuka.';
+
+  @override
+  String get firewallInvalidPort =>
+      'Port tidak valid. Gunakan 22, 80,443, atau 6000:6010.';
+
+  @override
+  String get firewallTooManyPorts =>
+      'Paling banyak 15 port; satu rentang dihitung dua.';
+
+  @override
+  String get firewallPortsNeedProtocol =>
+      'Daftar atau rentang port memerlukan tcp atau udp.';
+
+  @override
+  String get firewallInvalidAddress =>
+      'Alamat tidak valid. Gunakan alamat IP atau jaringan seperti 192.168.1.0/24.';
+
+  @override
+  String get firewallMixedIpVersions =>
+      'Dari dan Ke harus sama-sama IPv4 atau sama-sama IPv6.';
+
+  @override
+  String get firewallInvalidInterface => 'Nama antarmuka tidak valid.';
+
+  @override
+  String get firewallInvalidComment =>
+      'Komentar tidak boleh berisi \' atau baris baru.';
+
+  @override
+  String get firewallInterfaceIn => 'Antarmuka masuk';
+
+  @override
+  String get firewallInterfaceOut => 'Antarmuka keluar';
+
+  @override
+  String get firewallSourcePort => 'Port sumber';
+
+  @override
+  String get firewallMoreOptions => 'Opsi lainnya';
+
+  @override
+  String get firewallNoneInstalled =>
+      'ufw maupun firewalld tidak terpasang di server ini. Pasang salah satunya dengan pengelola paket sistem, misalnya `apt install ufw` atau `dnf install firewalld`.';
+
+  @override
+  String get firewallKeepAccess =>
+      'Biarkan port aplikasi ini tetap terbuka terlebih dahulu';
+
+  @override
+  String firewallWillRefuseFmt(String access) {
+    return '$access: koneksi baru dari aplikasi ini akan ditolak. Koneksi yang sedang dipakai tetap berjalan sampai terputus.';
+  }
+
+  @override
+  String firewallMayRefuseFmt(String access) {
+    return '$access: koneksi baru dari aplikasi ini mungkin ditolak. Hal itu bergantung pada alamat atau antarmuka yang dilaluinya, yang tidak dapat diketahui aplikasi ini.';
+  }
+
+  @override
+  String firewallRateLimitedFmt(String access) {
+    return '$access: koneksi akan dibatasi lajunya. Alamat yang membuka 6 koneksi atau lebih dalam 30 detik akan ditolak, dan aplikasi ini mungkin menyambung ulang sesering itu.';
+  }
+
+  @override
+  String get firewallConflict =>
+      'ufw dan firewalld sama-sama aktif. Keduanya menulis aturan kernel, dan yang dimuat terakhir menentukan apa yang lolos.';
+
+  @override
+  String get firewallDefaultZone => 'Zone bawaan';
+
+  @override
+  String get firewallZone => 'Zone';
+
+  @override
+  String get firewallTarget => 'Target';
+
+  @override
+  String get firewallMasquerade => 'Masquerade';
+
+  @override
+  String get firewallServices => 'Layanan';
+
+  @override
+  String get firewallPorts => 'Port';
+
+  @override
+  String get firewallSources => 'Sumber';
+
+  @override
+  String get firewallInterfaces => 'Antarmuka';
+
+  @override
+  String get firewallRichRules => 'Rich rules';
+
+  @override
+  String get firewallForwardPorts => 'Port yang diteruskan';
+
+  @override
+  String get firewallRuntimeOnly => 'hanya runtime';
+
+  @override
+  String get firewallPermanentOnly => 'hanya permanent';
+
+  @override
+  String get firewallThisConnection => 'koneksi ini';
+
+  @override
+  String get firewallDefaultTag => 'bawaan';
+
+  @override
+  String get firewallDrift =>
+      'Konfigurasi yang berlaku berbeda dari yang tersimpan. Reload atau boot ulang akan menggantinya dengan konfigurasi tersimpan.';
+
+  @override
+  String firewallDriftLockoutFmt(String access) {
+    return 'Setelah reload atau boot ulang, $access akan ditolak: konfigurasi tersimpan tidak mengizinkannya.';
+  }
+
+  @override
+  String get firewallSaveRuntime => 'Simpan sebagai permanent';
+
+  @override
+  String get firewallReloadLoses =>
+      'Perubahan yang tidak disimpan sebagai permanent akan hilang.';
+
+  @override
+  String get firewallPanic => 'Mode panic aktif: semua paket dibuang.';
+
+  @override
+  String get firewallPanicOff => 'Matikan mode panic';
+
+  @override
+  String get firewallStoppedNote =>
+      'firewalld berhenti. Perubahan disimpan dan berlaku saat dijalankan.';
+
+  @override
+  String get firewallInvalidSource =>
+      'Sumber tidak valid. Gunakan alamat, jaringan seperti 192.168.1.0/24, ipset:NAMA, atau alamat MAC.';
+
+  @override
+  String get firewallInvalidRichRule =>
+      'Rich rule diawali \"rule\" dan hanya satu baris.';
+
+  @override
+  String get firewallInvalidForwardPort =>
+      'Gunakan port=80:proto=tcp:toport=8080, dengan toport, toaddr, atau keduanya.';
 }

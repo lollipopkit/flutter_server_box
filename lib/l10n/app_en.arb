@@ -6683,5 +6683,286 @@
   "monitorPasswordNotSaved": "The password was changed on the agent, but the app could not save it. Update this server's Monitor password in its settings.",
   "@monitorPasswordNotSaved": {
     "description": "Shown when the agent accepted a new password but the app failed to update the credential it stores for the server."
+  },
+  "firewall": "Firewall",
+  "@firewall": {
+    "description": "Server function that manages the server's firewall (ufw)."
+  },
+  "firewallLinuxOnly": "Firewall management supports Linux servers with ufw or firewalld.",
+  "@firewallLinuxOnly": {
+    "description": "Shown when the server is not Linux."
+  },
+  "firewallNeedsRoot": "Reading the firewall's rules needs root. Enter the sudo password to continue.",
+  "@firewallNeedsRoot": {
+    "description": "Shown when the user declined to enter a sudo password."
+  },
+  "firewallIncoming": "Incoming",
+  "@firewallIncoming": {
+    "description": "Default policy chain for incoming traffic."
+  },
+  "firewallOutgoing": "Outgoing",
+  "@firewallOutgoing": {
+    "description": "Default policy chain for outgoing traffic."
+  },
+  "firewallRouted": "Routed",
+  "@firewallRouted": {
+    "description": "Default policy chain for forwarded traffic."
+  },
+  "firewallDefaultPolicy": "Default policy",
+  "@firewallDefaultPolicy": {
+    "description": "Section title for ufw's default policies."
+  },
+  "firewallLogging": "Logging",
+  "@firewallLogging": {
+    "description": "ufw log level."
+  },
+  "firewallRules": "Rules",
+  "@firewallRules": {
+    "description": "Section title for the firewall rule list."
+  },
+  "firewallRule": "Rule",
+  "@firewallRule": {
+    "description": "One firewall rule, as the type in a delete confirmation."
+  },
+  "firewallAddRule": "Add rule",
+  "@firewallAddRule": {
+    "description": "Button and dialog title for adding a firewall rule."
+  },
+  "firewallAnywhere": "Anywhere",
+  "@firewallAnywhere": {
+    "description": "Any address or port in a firewall rule."
+  },
+  "firewallFromFmt": "from {source}",
+  "@firewallFromFmt": {
+    "description": "Where the traffic a rule matches comes from.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "firewallFrom": "From",
+  "@firewallFrom": {
+    "description": "Field label: the source address of a firewall rule."
+  },
+  "firewallTo": "To",
+  "@firewallTo": {
+    "description": "Field label: the destination address of a firewall rule."
+  },
+  "firewallProtocol": "Protocol",
+  "@firewallProtocol": {
+    "description": "Field label: tcp, udp or any."
+  },
+  "firewallInterface": "Interface",
+  "@firewallInterface": {
+    "description": "Field label: network interface name."
+  },
+  "firewallComment": "Comment",
+  "@firewallComment": {
+    "description": "Field label: comment stored with a firewall rule."
+  },
+  "firewallAppProfile": "App profile",
+  "@firewallAppProfile": {
+    "description": "ufw application profile, which names the ports of an application."
+  },
+  "firewallPrepend": "Put before all other rules",
+  "@firewallPrepend": {
+    "description": "Switch: insert the rule first. ufw applies the first rule that matches."
+  },
+  "firewallIpv6Off": "IPv6 is off (IPV6=no): v6 rules are not loaded.",
+  "@firewallIpv6Off": {
+    "description": "Shown when ufw's IPv6 support is off."
+  },
+  "firewallReload": "Reload",
+  "@firewallReload": {
+    "description": "Reload ufw's rules."
+  },
+  "firewallNothingMatched": "Enter a port, an app profile, an address or an interface.",
+  "@firewallNothingMatched": {
+    "description": "Validation error for a firewall rule."
+  },
+  "firewallInvalidPort": "Invalid port. Use 22, 80,443 or 6000:6010.",
+  "@firewallInvalidPort": {
+    "description": "Validation error for a firewall rule."
+  },
+  "firewallTooManyPorts": "At most 15 ports; a range counts as two.",
+  "@firewallTooManyPorts": {
+    "description": "Validation error for a firewall rule."
+  },
+  "firewallPortsNeedProtocol": "A port list or range needs tcp or udp.",
+  "@firewallPortsNeedProtocol": {
+    "description": "Validation error for a firewall rule."
+  },
+  "firewallInvalidAddress": "Invalid address. Use an IP address or a network such as 192.168.1.0/24.",
+  "@firewallInvalidAddress": {
+    "description": "Validation error for a firewall rule."
+  },
+  "firewallMixedIpVersions": "From and To must both be IPv4 or both be IPv6.",
+  "@firewallMixedIpVersions": {
+    "description": "Validation error for a firewall rule."
+  },
+  "firewallInvalidInterface": "Invalid interface name.",
+  "@firewallInvalidInterface": {
+    "description": "Validation error for a firewall rule."
+  },
+  "firewallInvalidComment": "The comment cannot contain ' or line breaks.",
+  "@firewallInvalidComment": {
+    "description": "Validation error for a firewall rule."
+  },
+  "firewallInterfaceIn": "Incoming interface",
+  "@firewallInterfaceIn": {
+    "description": "Field label: the interface a packet arrives on."
+  },
+  "firewallInterfaceOut": "Outgoing interface",
+  "@firewallInterfaceOut": {
+    "description": "Field label: the interface a packet leaves by."
+  },
+  "firewallSourcePort": "Source port",
+  "@firewallSourcePort": {
+    "description": "Field label: the port the traffic a rule matches comes from."
+  },
+  "firewallMoreOptions": "More options",
+  "@firewallMoreOptions": {
+    "description": "Expands the less used fields of the add-rule form."
+  },
+  "firewallNoneInstalled": "Neither ufw nor firewalld is installed on this server. Install one with the system's package manager, for example `apt install ufw` or `dnf install firewalld`.",
+  "@firewallNoneInstalled": {
+    "description": "Shown when neither firewall is found."
+  },
+  "firewallKeepAccess": "Keep this app's ports open first",
+  "@firewallKeepAccess": {
+    "description": "Checkbox: run commands that keep the app's own ports open before the change."
+  },
+  "firewallWillRefuseFmt": "{access}: new connections from this app will be refused. The connection in use stays up until it drops.",
+  "@firewallWillRefuseFmt": {
+    "description": "Warning: a firewall change blocks the app's own connection.",
+    "placeholders": {
+      "access": {
+        "type": "String"
+      }
+    }
+  },
+  "firewallMayRefuseFmt": "{access}: new connections from this app may be refused. It depends on the address or interface they arrive by, which this app cannot tell.",
+  "@firewallMayRefuseFmt": {
+    "description": "Warning: a firewall change may block the app's own connection.",
+    "placeholders": {
+      "access": {
+        "type": "String"
+      }
+    }
+  },
+  "firewallRateLimitedFmt": "{access}: connections will be rate-limited. An address that opens 6 or more within 30 seconds is refused, and this app may reconnect that often.",
+  "@firewallRateLimitedFmt": {
+    "description": "Warning: a firewall change rate-limits the app's own connection.",
+    "placeholders": {
+      "access": {
+        "type": "String"
+      }
+    }
+  },
+  "firewallConflict": "Both ufw and firewalld are on. Each writes the kernel's rules, and whichever loaded last decides what gets through.",
+  "@firewallConflict": {
+    "description": "Shown when both firewalls are enabled."
+  },
+  "firewallDefaultZone": "Default zone",
+  "@firewallDefaultZone": {
+    "description": "firewalld's default zone."
+  },
+  "firewallZone": "Zone",
+  "@firewallZone": {
+    "description": "A firewalld zone."
+  },
+  "firewallTarget": "Target",
+  "@firewallTarget": {
+    "description": "What a firewalld zone does with traffic nothing else matched."
+  },
+  "firewallMasquerade": "Masquerade",
+  "@firewallMasquerade": {
+    "description": "firewalld masquerading (NAT) of a zone."
+  },
+  "firewallServices": "Services",
+  "@firewallServices": {
+    "description": "firewalld services allowed in a zone."
+  },
+  "firewallPorts": "Ports",
+  "@firewallPorts": {
+    "description": "Ports allowed in a zone."
+  },
+  "firewallSources": "Sources",
+  "@firewallSources": {
+    "description": "Source addresses bound to a zone."
+  },
+  "firewallInterfaces": "Interfaces",
+  "@firewallInterfaces": {
+    "description": "Interfaces bound to a zone."
+  },
+  "firewallRichRules": "Rich rules",
+  "@firewallRichRules": {
+    "description": "firewalld rich rules."
+  },
+  "firewallForwardPorts": "Forwarded ports",
+  "@firewallForwardPorts": {
+    "description": "firewalld forwarded ports."
+  },
+  "firewallRuntimeOnly": "runtime only",
+  "@firewallRuntimeOnly": {
+    "description": "Tag: in force now, but not saved; lost at a reload or reboot."
+  },
+  "firewallPermanentOnly": "permanent only",
+  "@firewallPermanentOnly": {
+    "description": "Tag: saved, but not in force until a reload."
+  },
+  "firewallThisConnection": "this connection",
+  "@firewallThisConnection": {
+    "description": "Tag: the zone this app's connection arrives in."
+  },
+  "firewallDefaultTag": "default",
+  "@firewallDefaultTag": {
+    "description": "Tag: the default zone."
+  },
+  "firewallDrift": "What is in force differs from what is saved. A reload or a reboot replaces it with the saved configuration.",
+  "@firewallDrift": {
+    "description": "Shown when firewalld's runtime differs from its permanent configuration."
+  },
+  "firewallDriftLockoutFmt": "After a reload or a reboot, {access} will be refused: the saved configuration does not let it in.",
+  "@firewallDriftLockoutFmt": {
+    "description": "Shown when the permanent configuration would block the app's connection.",
+    "placeholders": {
+      "access": {
+        "type": "String"
+      }
+    }
+  },
+  "firewallSaveRuntime": "Save as permanent",
+  "@firewallSaveRuntime": {
+    "description": "Save firewalld's runtime configuration as permanent."
+  },
+  "firewallReloadLoses": "Changes not saved as permanent will be lost.",
+  "@firewallReloadLoses": {
+    "description": "Note before a reload of firewalld."
+  },
+  "firewallPanic": "Panic mode is on: every packet is dropped.",
+  "@firewallPanic": {
+    "description": "Shown when firewalld's panic mode is on."
+  },
+  "firewallPanicOff": "Turn off panic mode",
+  "@firewallPanicOff": {
+    "description": "Button: turn firewalld's panic mode off."
+  },
+  "firewallStoppedNote": "firewalld is stopped. Changes are saved, and take effect when it starts.",
+  "@firewallStoppedNote": {
+    "description": "Shown while firewalld is not running."
+  },
+  "firewallInvalidSource": "Invalid source. Use an address, a network such as 192.168.1.0/24, ipset:NAME or a MAC address.",
+  "@firewallInvalidSource": {
+    "description": "Validation error for a firewalld source."
+  },
+  "firewallInvalidRichRule": "A rich rule starts with \"rule\" and fits on one line.",
+  "@firewallInvalidRichRule": {
+    "description": "Validation error for a firewalld rich rule."
+  },
+  "firewallInvalidForwardPort": "Use port=80:proto=tcp:toport=8080, with toport, toaddr or both.",
+  "@firewallInvalidForwardPort": {
+    "description": "Validation error for a firewalld forwarded port."
   }
 }
