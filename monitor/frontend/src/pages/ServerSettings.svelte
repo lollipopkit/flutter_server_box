@@ -2,12 +2,16 @@
   import { ChevronDown, ChevronUp, Plus, Trash2 } from '@lucide/svelte'
   import { Badge, Button, Card, IconButton, Input, Spinner } from '@serverbox/webui'
   import { fade } from 'svelte/transition'
+  import AccessAdmin from '../components/AccessAdmin.svelte'
   import Disclosure from '../components/Disclosure.svelte'
   import Markdown from '../components/Markdown.svelte'
+  import MyAccount from '../components/MyAccount.svelte'
   import PageHeader from '../components/PageHeader.svelte'
   import PushChannels from '../components/PushChannels.svelte'
   import { LL } from '../i18n/i18n-svelte'
+  import { isAdmin } from '../lib/access'
   import { api, ApiError } from '../lib/api'
+  import { capabilitiesStore } from '../lib/capabilities.svelte'
   import { serverNames } from '../lib/serverNames.svelte'
   import { displayName, servers } from '../lib/servers.svelte'
   import type {
@@ -117,8 +121,24 @@
   }
 
   $effect(() => {
-    if (servers.authenticated) void load()
+    if (servers.authenticated) void capabilitiesStore.ensure(servers.currentId)
   })
+  const caps = $derived(capabilitiesStore.byServer[servers.currentId])
+  /// Known not to administer this agent, which is what keeps the settings —
+  /// readable by an administrator only — from being asked for at all.
+  /// Unknown is not a refusal: the agent answers for itself.
+  const nonAdmin = $derived(isAdmin(caps) === false)
+
+  $effect(() => {
+    if (servers.authenticated && !nonAdmin) void load()
+  })
+
+  /// A change to accounts or roles can change this session's own access, so
+  /// what the agent says this session may do is asked again.
+  function refreshAccess() {
+    capabilitiesStore.clear(servers.currentId)
+    void capabilitiesStore.ensure(servers.currentId)
+  }
 
   const isLive = $derived(
     (field: string) => settings?.live_fields.includes(field) ?? false,
@@ -248,7 +268,7 @@
   containerClass="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 w-full"
 >
   {#snippet actions()}
-    {#if settings}
+    {#if settings && !nonAdmin}
       <Button size="sm" onclick={save} disabled={saving}>
         {saving ? $LL.saving() : $LL.save()}
       </Button>
@@ -259,6 +279,13 @@
 <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
   {#if !servers.authenticated}
     <p class="text-sm text-muted-fg">{$LL.settingsNeedsAuth()}</p>
+  {:else if nonAdmin}
+    <div in:fade={{ duration: 200 }} class="space-y-6">
+      <p class="text-sm text-muted-fg">{$LL.adminOnlySettings()}</p>
+      {#if caps?.me}
+        <MyAccount me={caps.me} />
+      {/if}
+    </div>
   {:else if loading}
     <div class="flex justify-center py-12"><Spinner size="lg" /></div>
   {:else if loadError}
@@ -436,7 +463,11 @@
         <Markdown text={$LL.customCmdsNote()} class="text-xs text-faint-fg" />
       </Disclosure>
       {#if !customCmdsEditable}
-        <p class="text-xs text-faint-fg">{$LL.customCmdsReadOnly()}</p>
+        <!-- With roles the gate is the admin role's shell grant; before them,
+             the agent's full_access switch. -->
+        <p class="text-xs text-faint-fg">
+          {caps?.grants ? $LL.customCmdsReadOnlyRoles() : $LL.customCmdsReadOnly()}
+        </p>
       {/if}
       <div class="divide-y divide-line">
         {#each customCmds as cmd, i (i)}
@@ -500,6 +531,16 @@
     {/if}
     {#if saveOk}
       <p class="text-sm text-success">{$LL.settingsSaved()}</p>
+    {/if}
+
+    <!-- Who can do what on this agent: an agent with roles reports `me`,
+         and only an administrator manages the rest. Its own requests and its
+         own re-authentication — nothing here goes through Save above. -->
+    {#if caps?.me}
+      <MyAccount me={caps.me} />
+      {#if caps.me.admin}
+        <AccessAdmin onchanged={refreshAccess} />
+      {/if}
     {/if}
     </div>
   {/if}

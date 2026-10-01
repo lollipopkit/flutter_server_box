@@ -14,6 +14,7 @@
   import { Button, Card, IconButton, Input, Modal, Spinner } from '@serverbox/webui'
   import PageHeader from '../components/PageHeader.svelte'
   import { LL } from '../i18n/i18n-svelte'
+  import { filesAccess, whyText } from '../lib/access'
   import { api } from '../lib/api'
   import { capabilitiesStore } from '../lib/capabilities.svelte'
   import { fmtBytes } from '../lib/format'
@@ -22,13 +23,15 @@
   import { servers } from '../lib/servers.svelte'
   import type { FsEntry } from '../types'
 
-  /// `!== false` rather than `=== true`: an agent predating the field reports
-  /// nothing, and refusing to show the page for it would be reading silence as
-  /// a denial. The agent is the one that decides in the end — every request is
-  /// resolved against its roots.
-  const available = $derived(
-    capabilitiesStore.byServer[servers.currentId]?.remote_access?.files !== false,
-  )
+  /// An agent that says nothing is not read as a refusal — see `filesAccess`.
+  /// The agent decides in the end: every request is resolved against its
+  /// roots, and a write against the caller's role.
+  const caps = $derived(capabilitiesStore.byServer[servers.currentId])
+  const access = $derived(filesAccess(caps))
+  const available = $derived(access.available)
+  /// Upload, new folder, rename, chmod, delete — absent for a read-only role
+  /// rather than offered and refused.
+  const write = $derived(access.write)
 
   let roots = $state<string[]>([])
   /// Null until the roots have been read, which is what decides where the page
@@ -198,7 +201,7 @@
   onback={() => layout.back('dashboard')}
 >
   {#snippet actions()}
-    {#if available && cwd}
+    {#if available && write && cwd}
       <IconButton label={$LL.filesNewFolder()} onclick={() => (dialog = { kind: 'mkdir', value: '' })}>
         <FolderPlus class="w-4 h-4" />
       </IconButton>
@@ -214,9 +217,14 @@
 <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-4">
   {#if !available}
     <Card>
-      <p class="text-sm text-muted-fg">{$LL.filesUnavailable()}</p>
+      <p class="text-sm text-muted-fg">
+        {caps?.grants ? whyText(access.why, $LL) : $LL.filesUnavailable()}
+      </p>
     </Card>
   {:else}
+    {#if !write}
+      <p class="text-sm text-muted-fg">{$LL.filesReadOnly()}</p>
+    {/if}
     {#if roots.length > 1}
       <div class="flex flex-wrap gap-2">
         <span class="text-sm text-muted-fg self-center">{$LL.filesRoots()}</span>
@@ -287,24 +295,26 @@
                   <Download class="w-4 h-4" />
                 </IconButton>
               {/if}
-              <IconButton
-                label={$LL.filesRename()}
-                onclick={() => (dialog = { kind: 'rename', entry, value: entry.name })}
-              >
-                <Pencil class="w-4 h-4" />
-              </IconButton>
-              <IconButton
-                label={$LL.filesPermissions()}
-                onclick={() => (dialog = { kind: 'chmod', entry, value: modeText(entry.mode) })}
-              >
-                <Shield class="w-4 h-4" />
-              </IconButton>
-              <IconButton
-                label={$LL.filesDelete()}
-                onclick={() => (dialog = { kind: 'delete', entry })}
-              >
-                <Trash2 class="w-4 h-4" />
-              </IconButton>
+              {#if write}
+                <IconButton
+                  label={$LL.filesRename()}
+                  onclick={() => (dialog = { kind: 'rename', entry, value: entry.name })}
+                >
+                  <Pencil class="w-4 h-4" />
+                </IconButton>
+                <IconButton
+                  label={$LL.filesPermissions()}
+                  onclick={() => (dialog = { kind: 'chmod', entry, value: modeText(entry.mode) })}
+                >
+                  <Shield class="w-4 h-4" />
+                </IconButton>
+                <IconButton
+                  label={$LL.filesDelete()}
+                  onclick={() => (dialog = { kind: 'delete', entry })}
+                >
+                  <Trash2 class="w-4 h-4" />
+                </IconButton>
+              {/if}
             </div>
           </div>
         {/each}

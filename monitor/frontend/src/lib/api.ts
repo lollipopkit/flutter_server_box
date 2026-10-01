@@ -1,4 +1,5 @@
 import type {
+  AgentUser,
   CardOrderPayload,
   Capabilities,
   CustomCmd,
@@ -12,6 +13,7 @@ import type {
   PushListView,
   PushPayload,
   PushTestResult,
+  Role,
   SettingsPayload,
   SettingsView,
   StatusResponse,
@@ -30,10 +32,32 @@ export class ApiError extends Error {
   /// need, since "refused" and "unreachable" deserve opposite responses.
   readonly status?: number
 
-  constructor(message: string, status?: number) {
+  /// The agent's stable error code, where the endpoint gives one (the account
+  /// and role endpoints: `reauth`, `last_admin`, ...). Absent for the older
+  /// endpoints, whose `error` is the message itself.
+  readonly code?: string
+
+  constructor(message: string, status?: number, code?: string) {
     super(message)
     this.status = status
+    this.code = code
   }
+}
+
+/// An error response as an `ApiError`.
+///
+/// Two shapes: the older endpoints answer `{"error": "<message>"}`, the
+/// account and role ones `{"error": "<code>", "message": "..."}`. A body with
+/// a `message` is the second, and its `error` is the code.
+async function errorFrom(res: Response, fallback: string): Promise<ApiError> {
+  try {
+    const body = (await res.json()) as { error?: string; message?: string }
+    if (body.message) return new ApiError(body.message, res.status, body.error)
+    if (body.error) return new ApiError(body.error, res.status)
+  } catch {
+    // Non-JSON error body: keep the fallback message
+  }
+  return new ApiError(fallback, res.status)
 }
 
 function requestSignal(signal?: AbortSignal): AbortSignal {
@@ -74,16 +98,10 @@ async function request<T>(
     if (server) servers.logout(server.id, server)
     throw new ApiError('Session expired', 401)
   }
-  if (!res.ok) {
-    let message = fallback
-    try {
-      const body = (await res.json()) as { error?: string }
-      if (body.error) message = body.error
-    } catch {
-      // Non-JSON error body: keep the fallback message
-    }
-    throw new ApiError(message, res.status)
-  }
+  if (!res.ok) throw await errorFrom(res, fallback)
+  // `204 No Content` (a password changed, an account deleted) has no body to
+  // parse.
+  if (res.status === 204) return undefined as T
   return res.json() as Promise<T>
 }
 
@@ -115,16 +133,7 @@ async function fsBytes(
     if (server) servers.logout(server.id, server)
     throw new ApiError('Session expired', 401)
   }
-  if (!res.ok) {
-    let message = fallback
-    try {
-      const body = (await res.json()) as { error?: string }
-      if (body.error) message = body.error
-    } catch {
-      // Non-JSON error body: keep the fallback message
-    }
-    throw new ApiError(message, res.status)
-  }
+  if (!res.ok) throw await errorFrom(res, fallback)
   return res
 }
 
@@ -334,6 +343,60 @@ export const api = {
       '/push/test',
       { method: 'POST', body: JSON.stringify({ push, message }) },
       'Failed to send the test notification',
+    ),
+  /// Who this session is on the agent, and with what role.
+  getMe: () => request<{ username: string; role: Role }>('/me', {}, 'Failed to fetch your account'),
+  changeMyPassword: (current_password: string, new_password: string) =>
+    request<void>(
+      '/me/password',
+      { method: 'PUT', body: JSON.stringify({ current_password, new_password }) },
+      'Failed to change the password',
+    ),
+  // Everything below needs an administrator, and every change carries the
+  // administrator's own password: what changes access is re-authenticated,
+  // not taken on the strength of a session that may have been left open.
+  listUsers: () => request<AgentUser[]>('/users', {}, 'Failed to fetch accounts'),
+  createUser: (username: string, password: string, role: string, current_password: string) =>
+    request<AgentUser>(
+      '/users',
+      { method: 'POST', body: JSON.stringify({ username, password, role, current_password }) },
+      'Failed to add the account',
+    ),
+  /// Changes the role, the password, or both; a field left out is kept.
+  updateUser: (
+    username: string,
+    change: { role?: string; password?: string },
+    current_password: string,
+  ) =>
+    request<AgentUser>(
+      `/users/${encodeURIComponent(username)}`,
+      { method: 'PUT', body: JSON.stringify({ ...change, current_password }) },
+      'Failed to update the account',
+    ),
+  deleteUser: (username: string, current_password: string) =>
+    request<void>(
+      `/users/${encodeURIComponent(username)}`,
+      { method: 'DELETE', body: JSON.stringify({ current_password }) },
+      'Failed to delete the account',
+    ),
+  listRoles: () => request<Role[]>('/roles', {}, 'Failed to fetch roles'),
+  createRole: (role: Omit<Role, 'builtin'>, current_password: string) =>
+    request<Role>(
+      '/roles',
+      { method: 'POST', body: JSON.stringify({ role, current_password }) },
+      'Failed to add the role',
+    ),
+  updateRole: (role: Role, current_password: string) =>
+    request<Role>(
+      `/roles/${encodeURIComponent(role.name)}`,
+      { method: 'PUT', body: JSON.stringify({ role, current_password }) },
+      'Failed to save the role',
+    ),
+  deleteRole: (name: string, current_password: string) =>
+    request<void>(
+      `/roles/${encodeURIComponent(name)}`,
+      { method: 'DELETE', body: JSON.stringify({ current_password }) },
+      'Failed to delete the role',
     ),
   getCardOrder: () => request<CardOrderPayload>('/card-order', {}, 'Failed to fetch card order'),
   updateCardOrder: (card_order: string[]) =>

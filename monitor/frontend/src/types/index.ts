@@ -101,7 +101,84 @@ export interface Capabilities {
   platform: Platform
   // Absent on agents predating the feature; treat as all-off
   remote_access?: RemoteAccess
+  /// Who the caller is on this agent. Absent on agents predating roles, and
+  /// for a watch token.
+  me?: Me
+  /// What the caller may do, per grant. Absent on agents predating roles:
+  /// `remote_access` is then the whole answer — see `lib/access.ts`.
+  grants?: CallerGrants
 }
+
+/// The five grants a role can hold. `read` is held by every account and is
+/// not one of them.
+export type GrantName = 'shell' | 'ssh_terminal' | 'files' | 'connect' | 'listen'
+
+/// Why a grant is not usable: the role lacks it, the request did not arrive
+/// over TLS or loopback, or the machine side is not set up (files with no
+/// roots).
+export type GrantWhy = 'not_granted' | 'insecure_transport' | 'not_configured'
+
+export interface GrantStatus {
+  ok: boolean
+  /// Only when `ok` is false.
+  why?: GrantWhy
+}
+
+export type FilesMode = 'read' | 'write'
+
+export interface CallerGrants {
+  shell: GrantStatus
+  ssh_terminal: GrantStatus
+  files: GrantStatus & { mode?: FilesMode }
+  connect: GrantStatus & { allow?: string[] }
+  listen: GrantStatus & { public?: boolean; ports?: [number, number] | null }
+}
+
+export interface Me {
+  username: string
+  role: string
+  /// May manage accounts, roles and the agent's configuration.
+  admin: boolean
+}
+
+/// A role's grants as stored: `null` is not granted, an object is granted
+/// with those options.
+export interface RoleGrants {
+  shell: boolean
+  ssh_terminal: boolean
+  files: { mode: FilesMode } | null
+  /// `allow` empty means anywhere.
+  connect: { allow: string[] } | null
+  /// `ports` null means any port.
+  listen: { public: boolean; ports: [number, number] | null } | null
+}
+
+export interface Role {
+  name: string
+  /// Only the built-in `admin` role has it, and it cannot be set.
+  admin: boolean
+  builtin: boolean
+  grants: RoleGrants
+}
+
+export interface AgentUser {
+  username: string
+  /// The role's name.
+  role: string
+  created_at: string | null
+  last_login: string | null
+}
+
+/// The error body of the account and role endpoints: a stable code, and a
+/// message for a human.
+export type AccessErrorCode =
+  | 'bad_request'
+  | 'unauthorized'
+  | 'forbidden'
+  | 'reauth'
+  | 'not_found'
+  | 'conflict'
+  | 'last_admin'
 
 /// Which remote-access paths this agent will actually accept, already
 /// accounting for the transport check.
@@ -113,6 +190,9 @@ export interface RemoteAccess {
   /// Whether the agent's confined file API is available. Absent on agents
   /// predating remote file access.
   files?: boolean
+  /// Whether the agent relays a TCP connection, and listens for one.
+  stream?: boolean
+  listen?: boolean
 }
 
 export type WsTicketPurpose = 'terminal'
