@@ -45,6 +45,23 @@ fn password_check_limit() -> &'static Arc<Semaphore> {
     })
 }
 
+/// Hashes [password] for storage on a blocking thread, under the same limit
+/// as a check: a bcrypt hash is the same work as a verify, and done on the
+/// worker it stalls every request that worker is serving.
+pub(crate) async fn hash_password_off_worker(password: String) -> Result<String> {
+    let permit = password_check_limit()
+        .clone()
+        .acquire_owned()
+        .await
+        .map_err(|_| MonitorError::Monitoring("Password hasher is unavailable".to_string()))?;
+    tokio::task::spawn_blocking(move || {
+        let _permit = permit;
+        auth::hash_password(&password)
+    })
+    .await
+    .map_err(|error| MonitorError::Monitoring(format!("Password hasher failed: {error}")))?
+}
+
 pub(crate) async fn verify_login_password_off_worker(password: String, hash: Option<String>) -> Result<bool> {
     let permit = password_check_limit()
         .clone()
@@ -116,8 +133,8 @@ pub struct AppState {
 /// Where this agent keeps what the file API must never reach — see
 /// [`crate::core::fs_roots::Protected`]: the database (and its journal files)
 /// with `jwt.secret` and the first-start credentials beside it, `config.toml`
-/// and its backups, the TLS certificate and key, and the custom-commands
-/// directory.
+/// and its backups, `.env`, the TLS certificate and key, and the
+/// custom-commands directory.
 fn agent_state(config: &Config) -> crate::core::fs_roots::Protected {
     use std::path::Path;
     let mut protected = crate::core::fs_roots::Protected::default();
@@ -134,6 +151,13 @@ fn agent_state(config: &Config) -> crate::core::fs_roots::Protected {
     protected.file(&config.jwt_secret_path());
     protected.file(&crate::db::bootstrap::initial_credentials_path(&url));
     protected.file(Path::new(crate::core::config_file::CONFIG_PATH));
+    // The environment file: the one in the working directory (and its
+    // backups, by prefix), and the one actually loaded, which `dotenvy` may
+    // have found in a parent directory.
+    protected.file(Path::new(".env"));
+    if let Some(env) = crate::core::config::loaded_dotenv() {
+        protected.file(env);
+    }
     if let Some(tls) = config.get_server().tls {
         protected.file(Path::new(&tls.cert_path));
         protected.file(Path::new(&tls.key_path));
@@ -1656,5 +1680,21 @@ mod metrics_json_tests {
         assert_eq!(value["network"]["rx_bytes_exact"], "9007199254740993");
         assert_eq!(value["ifaces"][0]["tx_bytes_exact"], "9007199254740996");
         assert_eq!(value["diskio"][0]["sectors_read_exact"], "9007199254740997");
+    }
+}
+
+#[cfg(test)]
+mod agent_state_tests {
+    use super::*;
+
+    #[test]
+    fn the_environment_file_is_agent_state() {
+        // Whatever the operator put in the environment — credentials included —
+        // is in `.env`, and the installer leaves `.env.bak-*` beside it.
+        let protected = agent_state(&Config::default());
+        let cwd = std::fs::canonicalize(".").unwrap();
+        assert!(protected.covers(&cwd.join(".env")));
+        assert!(protected.covers(&cwd.join(".env.bak-1789489640")));
+        assert!(!protected.covers(&cwd.join("notes.env")));
     }
 }

@@ -21,7 +21,7 @@ use ntex::web::{self, HttpRequest, HttpResponse};
 use serde::Deserialize;
 
 use crate::api::authz::{self, Caller, error};
-use crate::api::server::{AppState, verify_login_password_off_worker};
+use crate::api::server::{AppState, hash_password_off_worker, verify_login_password_off_worker};
 use crate::api::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
 use crate::core::permissions::{Role, valid_role_name};
 use crate::db::accounts::{self, Guarded};
@@ -152,11 +152,11 @@ async fn reauth(
     }
 }
 
-fn hash(password: &str) -> std::result::Result<String, HttpResponse> {
+async fn hash(password: &str) -> std::result::Result<String, HttpResponse> {
     if password.chars().count() < MIN_PASSWORD {
         return Err(bad_request("A password must be at least 8 characters"));
     }
-    crate::api::auth::hash_password(password).map_err(|_| {
+    hash_password_off_worker(password.to_string()).await.map_err(|_| {
         error(
             StatusCode::INTERNAL_SERVER_ERROR,
             "internal",
@@ -190,7 +190,7 @@ pub async fn change_own_password(
     let caller = require!(authz::jwt_caller(&req, &state).await);
     let body: PasswordChange = require!(parse(body));
     require!(reauth(&req, &state, &caller, body.current_password.as_deref()).await);
-    let hash = require!(hash(&body.new_password));
+    let hash = require!(hash(&body.new_password).await);
     accounts::set_password_hash(&state.db, &caller.username, &hash).await?;
     // Including the caller's own other sessions: a password is changed
     // because someone else may have it.
@@ -233,7 +233,7 @@ pub async fn create_user(
     if accounts::account(&state.db, &body.username).await?.is_some() {
         return Ok(conflict("An account with that name exists"));
     }
-    let hash = require!(hash(&body.password));
+    let hash = require!(hash(&body.password).await);
     accounts::insert_account(&state.db, &body.username, &hash, &body.role).await?;
     audit(
         &req,
@@ -271,7 +271,7 @@ pub async fn update_user(
     // Everything checked before anything is written, so a refused half does
     // not leave the other half applied.
     let new_hash = match &body.password {
-        Some(password) => Some(require!(hash(password))),
+        Some(password) => Some(require!(hash(password).await)),
         None => None,
     };
     let role_change = match &body.role {

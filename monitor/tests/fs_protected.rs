@@ -56,8 +56,10 @@ fn state() -> State {
         protected.file(&home.join(name));
     }
     protected.tree(&cmds);
-    let whole = std::env::current_dir()
-        .unwrap()
+    // The root of the filesystem the temporary directory is on. Not the working
+    // directory's: on Windows the two can be different drives, and `D:\` holds
+    // nothing of `C:\`.
+    let whole = base
         .ancestors()
         .last()
         .unwrap()
@@ -210,7 +212,10 @@ mod over_http {
         };
         let mut remote = config.get_remote_access();
         remote.fs.enabled = Some(true);
-        remote.fs.roots = vec!["/".to_string()];
+        // The root of the filesystem [home] is on — on Windows a drive, and not
+        // necessarily the one `/` means to this process.
+        let whole = home.ancestors().last().unwrap().to_string_lossy().into_owned();
+        remote.fs.roots = vec![whole];
         // Plaintext from the test client, which is loopback anyway.
         remote.allow_insecure = true;
         config.remote_access = Some(remote);

@@ -129,8 +129,11 @@ async fn call(
     path: &str,
     body: Option<Value>,
 ) -> (u16, Value) {
+    // Generous: a password change is two bcrypt rounds at the real cost, and a
+    // debug build on a shared Windows runner took longer than the default.
     let req = srv
         .request(method, srv.url(path))
+        .timeout(std::time::Duration::from_secs(30))
         .header("Authorization", format!("Bearer {}", jwt(user)));
     let resp = match body {
         Some(body) => req.send_json(&body).await.unwrap(),
@@ -364,6 +367,7 @@ async fn admins_manage_accounts_and_roles_with_their_password() {
     assert_eq!(body["role"], "kiosk");
     let resp = srv
         .post("/api/v1/login")
+        .timeout(std::time::Duration::from_secs(30))
         .send_json(&json!({ "username": "kim", "password": "kim-password" }))
         .await
         .unwrap();
@@ -707,4 +711,31 @@ async fn a_token_for_a_deleted_account_is_not_one_for_its_successor() {
     .await;
     assert_eq!(status, 201);
     assert_eq!(status_with(&srv, &old, "/api/v1/me").await, 401);
+}
+
+#[tokio::test]
+async fn a_password_changed_behind_the_agents_back_ends_its_terminals_at_the_next_sweep() {
+    // A CLI reset writes the database and cannot reach the running agent: its
+    // open terminal stays until something next sweeps the sessions. That sweep
+    // must not keep it just because the role still grants a shell.
+    use server_box_monitor::api::authz::{caller_named, revoke_lost};
+    use server_box_monitor::api::ws::session::{Session, SessionAuth};
+    use server_box_monitor::core::permissions::Grants;
+    use server_box_monitor::db::accounts;
+
+    let state = common::upgraded_state(Config::default()).await;
+    common::set_grants(&state.db, "admin", &Grants::all()).await;
+    let since = caller_named(&state, "admin").await.unwrap().since;
+    let (mut session, _input) = Session::new("admin", "admin", SessionAuth::Local, 1024, 8);
+    session.since = since;
+    state.sessions.insert(session).unwrap().unwrap();
+
+    // Nothing changed yet: the sweep leaves it.
+    revoke_lost(&state, "permission_revoked").await;
+    assert_eq!(state.sessions.subjects(), ["admin"]);
+
+    let hash = bcrypt::hash("a-new-password", 4).unwrap();
+    accounts::set_password_hash(&state.db, "admin", &hash).await.unwrap();
+    revoke_lost(&state, "permission_revoked").await;
+    assert!(state.sessions.subjects().is_empty());
 }
