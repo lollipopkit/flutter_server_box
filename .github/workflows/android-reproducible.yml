@@ -1,24 +1,12 @@
 name: Android reproducible build
 
 on:
-  # Called by the release pipeline, where it gates publication — see
-  # `androidReproducible` in build.yml. Not run per pull request any more: it
-  # is two independent builds of every ABI, which is too much work to hold every
-  # change that touches `lib/` for a property only a release can act on. What it
-  # protects is the F-Droid contract — F-Droid rebuilds
-  # from this source and compares against the published APK — so the release is
-  # the moment it has to hold, and the release is where it now runs.
-  workflow_call:
-  # For checking a change that is likely to break it without waiting for a tag:
-  # anything under `android/`, the build scripts, or a dependency bump.
+  # By hand only: two independent builds of every ABI, from sources that fetch
+  # upstream tarballs, is too slow and too exposed to someone else's outage to
+  # gate a release on. Run it before tagging when a change could break it:
+  # anything under `android/`, the build scripts, a Flutter, NDK or dependency
+  # bump.
   workflow_dispatch:
-  # Weekly on main, because what breaks reproducibility lands between releases:
-  # a Flutter, NDK or Gradle plugin bump, a dependency that started embedding a
-  # path or a timestamp. Without this the first anyone hears of it is the tag,
-  # which is the worst moment — someone is trying to ship. One run a week costs
-  # nothing and no pull request waits for it.
-  schedule:
-    - cron: "17 4 * * 1"
 
 permissions:
   contents: read

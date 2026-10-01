@@ -34,7 +34,7 @@ env:
 jobs:
   reproducibilityCheck:
     # Static build-input validation. The independent byte-for-byte Android
-    # builds live in android-reproducible.yml.
+    # builds live in android-reproducible.yml, run by hand.
     name: Build input checks
     runs-on: ubuntu-latest
     outputs:
@@ -518,24 +518,6 @@ jobs:
         shell: bash
         run: cargo build -p server_box_monitor --release --target ${{ matrix.target }}
 
-  # Two independent Android builds of this exact tree, compared byte for byte.
-  # `publishRelease` needs it, so a tree that has stopped building reproducibly
-  # does not become a release: F-Droid rebuilds from this source and compares
-  # against the published APK, and a divergence found there is found after the
-  # fact, by someone else.
-  #
-  # Gated the same way `buildAndroid` is, so a dispatch that did not ask for
-  # Android does not pay for it. It builds the unsigned F-Droid APKs rather than
-  # the signed ones this publishes — those are what the reproducibility work
-  # targets, and what F-Droid will rebuild.
-  androidReproducible:
-    name: Android reproducible build
-    if: >-
-      github.ref_type == 'tag'
-      || contains(needs.reproducibilityCheck.outputs.selected, ',android,')
-    needs: reproducibilityCheck
-    uses: ./.github/workflows/android-reproducible.yml
-
   buildAndroid:
     name: Build Android (${{ matrix.abi }})
     if: >-
@@ -901,7 +883,6 @@ jobs:
     if: needs.reproducibilityCheck.outputs.isRelease == 'true'
     needs:
       - reproducibilityCheck
-      - androidReproducible
       - buildMacOS
       - buildAndroid
       - buildIOS
