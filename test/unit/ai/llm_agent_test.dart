@@ -284,7 +284,9 @@ void main() {
       expect(updated.autoRunOn, ['srv-1'], reason: 'the model does not touch it');
 
       final added = text(await snippet.run({'action': 'add', 'name': 'df', 'script': 'df -h', 'tags': ['disk']}, ctx));
-      final newId = RegExp(r'\((\w+)\)').firstMatch(added)![1]!;
+      // Everything between the parentheses: a `ShortId` can hold `-` and `+`,
+      // which `\w` does not match, and the test failed whenever one did.
+      final newId = RegExp(r'\(([^()]+)\)\.$').firstMatch(added)![1]!;
       expect(Stores.snippet.fetch().singleWhere((s) => s.id == newId).tags, ['disk']);
       await snippet.run({'action': 'delete', 'id': newId}, ctx);
       await snippet.run({'action': 'delete', 'id': 'sn-1'}, ctx);
