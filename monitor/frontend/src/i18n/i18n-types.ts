@@ -284,6 +284,55 @@ type RootTranslation = {
 	 */
 	cancel: string
 	/**
+	 * P​o​w​e​r
+	 */
+	powerControl: string
+	/**
+	 * S​h​u​t​ ​d​o​w​n
+	 */
+	powerShutdown: string
+	/**
+	 * R​e​b​o​o​t
+	 */
+	powerReboot: string
+	/**
+	 * S​u​s​p​e​n​d
+	 */
+	powerSuspend: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​s​t​o​p​s​ ​w​i​t​h​ ​t​h​e​ ​m​a​c​h​i​n​e​,​ ​s​o​ ​t​h​i​s​ ​p​a​n​e​l​ ​c​a​n​n​o​t​ ​s​t​a​r​t​ ​i​t​ ​a​g​a​i​n​.​ ​A​n​y​t​h​i​n​g​ ​r​u​n​n​i​n​g​ ​o​n​ ​i​t​ ​e​n​d​s​.
+	 */
+	powerNote: string
+	/**
+	 * S​u​d​o​ ​p​a​s​s​w​o​r​d
+	 */
+	powerPassword: string
+	/**
+	 * L​e​a​v​e​ ​b​l​a​n​k​ ​w​h​e​n​ ​t​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​a​s​ ​r​o​o​t​,​ ​o​r​ ​w​h​e​n​ ​i​t​s​ ​a​c​c​o​u​n​t​ ​h​a​s​ ​p​a​s​s​w​o​r​d​l​e​s​s​ ​s​u​d​o​ ​f​o​r​ ​t​h​i​s​ ​c​o​m​m​a​n​d​.
+	 */
+	powerPasswordHint: string
+	/**
+	 * T​h​e​ ​m​a​c​h​i​n​e​ ​r​e​f​u​s​e​d​ ​t​h​a​t​ ​p​a​s​s​w​o​r​d​.​ ​N​o​t​h​i​n​g​ ​h​a​p​p​e​n​e​d​.
+	 */
+	powerRejected: string
+	/**
+	 * T​h​e​ ​c​o​m​m​a​n​d​ ​f​a​i​l​e​d​.
+	 */
+	powerFailed: string
+	/**
+	 * N​o​ ​a​n​s​w​e​r​ ​c​a​m​e​ ​b​a​c​k​,​ ​w​h​i​c​h​ ​i​s​ ​w​h​a​t​ ​a​ ​m​a​c​h​i​n​e​ ​a​l​r​e​a​d​y​ ​g​o​i​n​g​ ​d​o​w​n​ ​l​o​o​k​s​ ​l​i​k​e​.
+	 */
+	powerTimeout: string
+	/**
+	 * S​e​n​t​:​ ​{​a​c​t​i​o​n​}​.​ ​I​f​ ​t​h​e​ ​m​a​c​h​i​n​e​ ​i​s​ ​g​o​i​n​g​ ​d​o​w​n​,​ ​t​h​i​s​ ​p​a​n​e​l​ ​l​o​s​e​s​ ​i​t​ ​u​n​t​i​l​ ​i​t​ ​i​s​ ​b​a​c​k​.
+	 * @param {unknown} action
+	 */
+	powerActionSent: RequiredParams<'action'>
+	/**
+	 * C​l​o​s​e
+	 */
+	close: string
+	/**
 	 * R​e​m​o​v​e​ ​t​h​i​s​ ​s​e​r​v​e​r​?​ ​T​h​i​s​ ​o​n​l​y​ ​f​o​r​g​e​t​s​ ​i​t​ ​i​n​ ​t​h​i​s​ ​b​r​o​w​s​e​r​ ​—​ ​i​t​ ​d​o​e​s​ ​n​o​t​ ​s​t​o​p​ ​t​h​e​ ​a​g​e​n​t​.
 	 */
 	confirmDeleteServer: string
@@ -1288,6 +1337,54 @@ export type TranslationFunctions = {
 	 * Cancel
 	 */
 	cancel: () => LocalizedString
+	/**
+	 * Power
+	 */
+	powerControl: () => LocalizedString
+	/**
+	 * Shut down
+	 */
+	powerShutdown: () => LocalizedString
+	/**
+	 * Reboot
+	 */
+	powerReboot: () => LocalizedString
+	/**
+	 * Suspend
+	 */
+	powerSuspend: () => LocalizedString
+	/**
+	 * The agent stops with the machine, so this panel cannot start it again. Anything running on it ends.
+	 */
+	powerNote: () => LocalizedString
+	/**
+	 * Sudo password
+	 */
+	powerPassword: () => LocalizedString
+	/**
+	 * Leave blank when the agent runs as root, or when its account has passwordless sudo for this command.
+	 */
+	powerPasswordHint: () => LocalizedString
+	/**
+	 * The machine refused that password. Nothing happened.
+	 */
+	powerRejected: () => LocalizedString
+	/**
+	 * The command failed.
+	 */
+	powerFailed: () => LocalizedString
+	/**
+	 * No answer came back, which is what a machine already going down looks like.
+	 */
+	powerTimeout: () => LocalizedString
+	/**
+	 * Sent: {action}. If the machine is going down, this panel loses it until it is back.
+	 */
+	powerActionSent: (arg: { action: unknown }) => LocalizedString
+	/**
+	 * Close
+	 */
+	close: () => LocalizedString
 	/**
 	 * Remove this server? This only forgets it in this browser — it does not stop the agent.
 	 */

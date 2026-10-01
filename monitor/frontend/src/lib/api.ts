@@ -18,6 +18,8 @@ import type {
   SettingsView,
   StatusResponse,
   SystemMetrics,
+  PowerAction,
+  PowerResult,
   WsTicketPurpose,
   WsTicketResponse,
 } from '../types'
@@ -25,6 +27,11 @@ import { isSecureAgentUrl } from './agentUrl'
 import { servers, type ServerEntry } from './servers.svelte'
 
 const TIMEOUT_MS = 10_000
+
+/// For the machine-management endpoints, which run a command and answer when
+/// it ends: the agent bounds that itself (`[remote_access.exec] timeout`,
+/// a minute by default), so this only has to outlast it.
+const MACHINE_TIMEOUT_MS = 120_000
 
 export class ApiError extends Error {
   /// HTTP status, when the request got far enough to have one. Absent for a
@@ -60,8 +67,8 @@ async function errorFrom(res: Response, fallback: string): Promise<ApiError> {
   return new ApiError(fallback, res.status)
 }
 
-function requestSignal(signal?: AbortSignal): AbortSignal {
-  const timeout = AbortSignal.timeout(TIMEOUT_MS)
+function requestSignal(signal?: AbortSignal, timeoutMs = TIMEOUT_MS): AbortSignal {
+  const timeout = AbortSignal.timeout(timeoutMs)
   return signal ? AbortSignal.any([signal, timeout]) : timeout
 }
 
@@ -76,6 +83,7 @@ async function request<T>(
   init: RequestInit = {},
   fallback = 'Request failed',
   signal?: AbortSignal,
+  timeoutMs = TIMEOUT_MS,
 ): Promise<T> {
   const server = servers.current ? { ...servers.current } : undefined
   requireSecureUrl(server?.url ?? '')
@@ -87,7 +95,7 @@ async function request<T>(
     res = await fetch(`${server?.url ?? ''}/api/v1${path}`, {
       ...init,
       headers,
-      signal: requestSignal(signal),
+      signal: requestSignal(signal, timeoutMs),
     })
   } catch {
     throw new ApiError(fallback)
@@ -224,6 +232,16 @@ export const api = {
     ),
   // Capabilities are platform-specific, so callers fetch them once per server.
   getCapabilities: () => request<Capabilities>('/capabilities', {}, 'Failed to fetch capabilities'),
+  /// Shuts the machine down, reboots or suspends it. The password is for
+  /// `sudo -S` and travels as its own field, never inside a command.
+  power: (action: PowerAction, password?: string) =>
+    request<PowerResult>(
+      '/power',
+      { method: 'POST', body: JSON.stringify({ action, password: password || null }) },
+      'Failed to reach the machine',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
   getSettings: () => request<SettingsView>('/settings', {}, 'Failed to fetch settings'),
   updateSettings: (payload: SettingsPayload) =>
     request<{ status: string }>(

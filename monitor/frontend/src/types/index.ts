@@ -107,6 +107,26 @@ export interface Capabilities {
   /// What the caller may do, per grant. Absent on agents predating roles:
   /// `remote_access` is then the whole answer — see `lib/access.ts`.
   grants?: CallerGrants
+  /// The machine-management endpoints the agent serves. Absent on agents
+  /// predating them, which serve none — see `machineAccess`.
+  features?: MachineFeature[]
+}
+
+/// A machine-management page the agent may serve (`api::machine::FEATURES`).
+export type MachineFeature = 'power'
+
+export type PowerAction = 'shutdown' | 'reboot' | 'suspend'
+
+/// What `POST /power` answered. A suspend that never returns is an ordinary
+/// end for one, so a timeout is a field; `sudo_rejected` is the one outcome
+/// the caller can act on, by asking for another password.
+export interface PowerResult {
+  exit_code: number | null
+  stdout: string
+  stderr: string
+  sudo_rejected: boolean
+  truncated: boolean
+  timed_out: boolean
 }
 
 /// The grants a role can hold. `read` is held by every account and is not

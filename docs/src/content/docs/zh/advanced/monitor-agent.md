@@ -282,6 +282,7 @@ App 和 Monitor agent 采集数据时都不会等待交互式 `sudo` 输入。�
 | `files` | 在 `[remote_access.fs] roots` 范围内浏览文件 | `read`（浏览和下载）或 `write`（另外允许上传、新建、重命名、chmod 和删除） |
 | `connect` | 远程桌面（RDP、VNC）以及本地和动态端口转发，即由 agent 发起的连接 | `allow`：允许访问的地址；为空表示不限制 |
 | `listen` | 远程端口转发，即由 agent 在服务器上监听端口 | `public`：允许 loopback 以外的地址；端口范围 |
+| `virt` | 网页面板中的 Proxmox VE、libvirt 和 BMC 页面：查看和控制这些机器。连接地址和登录凭据由管理员设置 | — |
 
 `shell` 实际上包含了其他几项：能执行命令的账号可以自己读取文件、建立连接和监听端口。账号只需要某一项时，可以只授予 `files`、`connect` 或 `listen`，不授予 `shell`，例如只能访问一台远程桌面的角色。
 

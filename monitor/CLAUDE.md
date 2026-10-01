@@ -180,6 +180,21 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   A caller that must outlive any configured timeout should start the work
   detached and poll it in short requests instead of asking for a longer one.
   `tests/exec_api.rs`.
+- **The machine-management endpoints (`api/machine.rs`, issue #1623)** — the
+  panel's power, process, service, cron and container pages. Each builds its
+  command in Rust (`sbm_parser`, the app's own text where one exists — power
+  runs the status script's `SbShutdown`/`SbReboot`/`SbSuspend` via
+  `monitoring::local_script_command`) and runs it through `api::exec::run`, so
+  `[remote_access.exec]` bounds it as it bounds `/exec`. `machine::gate` is the
+  one place they ask the grant (`shell` unless stated) and record a refusal;
+  audit rows are `Kind::Machine`, subject the account, detail the feature and
+  verb (`power reboot`) — never a password or output. A sudo password is a
+  request field written to stdin, and a refused one is answered as
+  `sudo_rejected` (`sbm_parser::script::sudo_password_rejected`), not a status.
+  `machine::FEATURES` is `features` in `/capabilities`: a panel offers a page
+  only when its name is there, since an older agent 404s the route.
+  `tests/power_api.rs` asserts refusals and records only — the actions take
+  the test machine down; `tests/common::machine` is the shared setup.
 - **`GET/PUT /api/v1/custom-cmds`** — the user's custom status commands, which
   are files in `~/.config/server_box/custom_cmds` (`sbm_parser::script`) rather
   than anything in this agent's config. The same directory the app writes over

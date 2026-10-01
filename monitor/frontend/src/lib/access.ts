@@ -9,8 +9,10 @@
 import type {
   Capabilities,
   FilesMode,
+  GrantName,
   GrantStatus,
   GrantWhy,
+  MachineFeature,
   Role,
   RoleGrants,
 } from '../types'
@@ -22,6 +24,18 @@ import { ApiError } from './api'
 /// `undefined` until the capabilities are in. An agent from before roles has
 /// no such thing as a non-admin — every login could change everything — so it
 /// answers true.
+/// Whether a machine-management page is offered: the agent serves it and the
+/// caller's role may use it over this link. Hidden otherwise, as the
+/// terminal and files are — the agent re-checks on every request either way.
+export function machineAccess(
+  caps: Capabilities | undefined,
+  feature: MachineFeature,
+  grant: GrantName = 'shell',
+): boolean {
+  if (!caps?.features?.includes(feature)) return false
+  return caps.grants?.[grant]?.ok === true
+}
+
 export function isAdmin(caps: Capabilities | undefined): boolean | undefined {
   if (caps === undefined) return undefined
   return caps.me ? caps.me.admin : true

@@ -330,6 +330,7 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .state(web::types::JsonConfig::default().limit(exec_max_request))
                     .route(web::post().to(crate::api::exec::exec)),
             )
+            .service(web::resource("/power").route(web::post().to(crate::api::power::power)))
             .service(
                 // A streamed body, so ntex's payload limit must not
                 // apply: the point of this endpoint is the file that
@@ -830,6 +831,9 @@ struct CapabilitiesView {
     /// has a day.
     #[serde(skip_serializing_if = "Option::is_none")]
     oldest_sample: Option<String>,
+    /// The machine-management endpoints this agent serves — see
+    /// `api::machine::FEATURES`. Whether the caller may use one is `grants`.
+    features: &'static [&'static str],
     remote_access: RemoteAccessView,
     /// Who is asking — absent for a watch token, which is nobody's session.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -906,6 +910,7 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             .unwrap_or_default()
             .metrics_days,
         oldest_sample,
+        features: crate::api::machine::FEATURES,
         remote_access: {
             let ok = |grant| {
                 caller.is_some_and(|c: &Caller| c.check(grant, &app_state, secure).is_ok())

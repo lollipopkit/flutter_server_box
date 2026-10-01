@@ -680,6 +680,22 @@ fn monitor_script_disabled(system: SystemType) -> Vec<String> {
         .collect()
 }
 
+/// The command that runs [func] of this machine's status script — the same
+/// script, and the same function, the app runs over SSH.
+///
+/// Writes the script first if it is missing or out of date, as each
+/// monitoring cycle does: the temp directory can have been cleaned since.
+pub fn local_script_command(func: sbm_parser::script::ShellFunc) -> std::io::Result<String> {
+    let system = system_type();
+    let path = script_path(system);
+    ensure_script(&path, &build_status_script(system))?;
+    Ok(sbm_parser::script::exec_command(
+        system,
+        &path.to_string_lossy(),
+        func,
+    ))
+}
+
 /// Script location in the temp dir. `.ps1` is mandatory for `powershell -File`
 fn script_path(system: SystemType) -> std::path::PathBuf {
     let name = match system {

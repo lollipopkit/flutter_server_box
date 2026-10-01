@@ -1286,3 +1286,26 @@ fn custom_cmd_file_names_sort_by_order() {
         None,
     );
 }
+
+#[test]
+fn a_rejected_sudo_password_is_told_apart_from_a_failing_command() {
+    for stderr in [
+        "Sorry, try again.\nsudo: 1 incorrect password attempt",
+        "sudo: 1 incorrect password attempt",
+        "sudo: a password is required",
+        // Not the first line: `sudo -S` writes its prompt to stderr first.
+        "Password: \nsudo: a password is required\n",
+    ] {
+        assert!(script::sudo_password_rejected(stderr), "{stderr:?}");
+    }
+    // A command's own failure, which also exits non-zero and is not a reason
+    // to ask for the password again.
+    for stderr in [
+        "",
+        "sh: systemctl: not found",
+        "Failed to power off system via logind: Access denied",
+        "sudo: unable to resolve host box",
+    ] {
+        assert!(!script::sudo_password_rejected(stderr), "{stderr:?}");
+    }
+}

@@ -60,19 +60,19 @@ pub struct ExecRequest {
 }
 
 #[derive(Serialize)]
-struct ExecResponse {
+pub(crate) struct ExecResponse {
     /// Null when the process was killed rather than exiting.
-    exit_code: Option<i32>,
-    stdout: String,
-    stderr: String,
+    pub(crate) exit_code: Option<i32>,
+    pub(crate) stdout: String,
+    pub(crate) stderr: String,
     /// Whether either stream hit the configured output cap, so a caller knows
     /// the output it is parsing is a prefix.
-    truncated: bool,
+    pub(crate) truncated: bool,
     /// Whether the configured timeout elapsed. The process is killed and both streams
     /// come back empty: they are read as one future together with the wait, so
     /// abandoning it abandons what was buffered too. A caller gets the fact
     /// that it timed out rather than a partial answer it might parse.
-    timed_out: bool,
+    pub(crate) timed_out: bool,
 }
 
 pub async fn exec(
@@ -152,7 +152,10 @@ fn first_line(cmd: &str) -> String {
     format!("{}…", &line[..end])
 }
 
-async fn run(
+/// Runs [cmd] in a shell under [limits]. Also what the machine-management
+/// endpoints (`api::machine`) run their commands through, so a command they
+/// build is bounded exactly as one sent to `/exec` is.
+pub(crate) async fn run(
     cmd: &str,
     stdin: Option<&str>,
     env: Option<&HashMap<String, String>>,

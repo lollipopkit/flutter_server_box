@@ -8,7 +8,7 @@ Six grants. `read` (status, charts, history) is held by every account and is not
 
 | Grant | Covers | Options |
 |---|---|---|
-| `shell` | `POST /exec`, the app terminal (local PTY on `/terminal/ws` without SSH credentials), running custom commands | — |
+| `shell` | `POST /exec`, the app terminal (local PTY on `/terminal/ws` without SSH credentials), running custom commands, the panel's machine pages (`POST /power`, and the process, service, cron and container endpoints as they land — #1623) | — |
 | `files` | `/fs/*` | `mode`: `"read"` \| `"write"` (read = list, stat, read, roots; write adds write, mkdir, rename, chmod, remove) |
 | `connect` | `/stream/ws` `open` (local/dynamic forwards, RDP/VNC) | `allow`: list of `"<ip or cidr>"` or `"<ip or cidr>:<port or lo-hi>"`; empty = anywhere. A host name in a request is resolved by the agent and *every* resolved address must match. IPv6 as `[addr]:port`. |
 | `listen` | `/listen/ws` (remote forwards) and `/stream/ws` `accept` | `public`: bool (non-loopback binds); `ports`: `[lo, hi]` or null (any) |
@@ -93,6 +93,8 @@ Every mutation is audited (`Kind::Admin`; detail names the account/role and what
 ```
 
 `why` (only when `ok` is false): `not_granted`, `insecure_transport`, `not_configured`. For a watch token `me` is absent and every grant is `not_granted`.
+
+`features` lists the machine-management endpoints the agent serves (`["power", ...]`, `api::machine::FEATURES`), for any caller; absent on an agent that serves none. A client offers a page when its name is there and the grant it needs is `ok`.
 
 The old `remote_access` object stays, derived for the caller (TODO remove): `terminal` = `ssh_terminal.ok || shell.ok`, `full_access` = `shell.ok`, `files` = `files.ok`, `stream` = `connect.ok`, `listen` = `listen.ok`.
 
