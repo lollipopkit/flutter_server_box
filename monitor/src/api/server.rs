@@ -341,6 +341,11 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::post().to(crate::api::process::kill)),
             )
             .service(
+                web::resource("/services")
+                    .route(web::get().to(crate::api::service::list))
+                    .route(web::post().to(crate::api::service::act)),
+            )
+            .service(
                 // A streamed body, so ntex's payload limit must not
                 // apply: the point of this endpoint is the file that
                 // `/exec` could not carry.

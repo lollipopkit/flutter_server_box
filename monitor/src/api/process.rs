@@ -42,7 +42,7 @@ use std::time::Duration;
 use ntex::web::{self, HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 
-use super::exec::{ExecResponse, Limits, run};
+use super::exec::{ExecResponse, run};
 use super::machine;
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome};
@@ -60,13 +60,7 @@ use sbm_parser::proc::{
 /// reader the whole page.
 const MIN_TABLE_BYTES: usize = 8 * 1024 * 1024;
 
-/// `/exec`'s bounds, with the output cap raised to [`MIN_TABLE_BYTES`].
-fn table_limits(exec: &Limits) -> Limits {
-    Limits {
-        max_output_bytes: exec.max_output_bytes.max(MIN_TABLE_BYTES),
-        ..exec.clone()
-    }
-}
+
 
 /// How long a reading answers further requests for it.
 ///
@@ -307,7 +301,7 @@ pub async fn list(
 
     let out = match crate::monitoring::local_script_command(sbm_parser::script::ShellFunc::Process)
     {
-        Ok(cmd) => run(&cmd, None, None, &table_limits(&state.remote_access.exec)).await,
+        Ok(cmd) => run(&cmd, None, None, &machine::at_least(&state.remote_access.exec, MIN_TABLE_BYTES)).await,
         Err(e) => Err(e),
     };
     let out = match out {

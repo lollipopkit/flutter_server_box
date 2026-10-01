@@ -333,6 +333,155 @@ type RootTranslation = {
 	 */
 	manageMachine: string
 	/**
+	 * D​i​s​a​b​l​e​ ​a​t​ ​b​o​o​t
+	 */
+	serviceActionDisable: string
+	/**
+	 * {​a​c​t​i​o​n​}​ ​o​n​ ​{​n​a​m​e​}​ ​w​a​s​ ​a​c​c​e​p​t​e​d​.
+	 * @param {unknown} action
+	 * @param {unknown} name
+	 */
+	serviceActionDone: RequiredParams<'action' | 'name'>
+	/**
+	 * E​n​a​b​l​e​ ​a​t​ ​b​o​o​t
+	 */
+	serviceActionEnable: string
+	/**
+	 * T​h​e​ ​a​c​t​i​o​n​ ​f​a​i​l​e​d​.
+	 */
+	serviceActionFailed: string
+	/**
+	 * R​e​s​t​a​r​t
+	 */
+	serviceActionRestart: string
+	/**
+	 * S​t​a​r​t
+	 */
+	serviceActionStart: string
+	/**
+	 * S​t​o​p
+	 */
+	serviceActionStop: string
+	/**
+	 * D​e​f​i​n​i​t​i​o​n
+	 */
+	serviceDefinition: string
+	/**
+	 * T​h​e​ ​u​n​i​t​s​ ​a​r​e​ ​l​i​s​t​e​d​ ​b​u​t​ ​n​o​t​ ​d​e​s​c​r​i​b​e​d​:​ ​w​h​a​t​ ​t​h​e​ ​m​a​n​a​g​e​r​ ​s​a​y​s​ ​a​b​o​u​t​ ​t​h​e​m​ ​c​o​u​l​d​ ​n​o​t​ ​a​l​l​ ​b​e​ ​r​e​a​d​.
+	 */
+	serviceDetailsUnavailable: string
+	/**
+	 * N​o​ ​u​n​i​t​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	serviceEmpty: string
+	/**
+	 * T​h​i​s​ ​u​n​i​t​ ​h​a​s​ ​l​o​g​g​e​d​ ​n​o​t​h​i​n​g​.
+	 */
+	serviceLogEmpty: string
+	/**
+	 * T​h​i​s​ ​a​c​c​o​u​n​t​ ​m​a​y​ ​n​o​t​ ​r​e​a​d​ ​t​h​e​ ​l​o​g​ ​o​f​ ​t​h​a​t​ ​u​n​i​t​,​ ​s​o​ ​n​o​t​h​i​n​g​ ​i​s​ ​s​h​o​w​n​.
+	 */
+	serviceLogUnreadable: string
+	/**
+	 * L​o​g
+	 */
+	serviceLogs: string
+	/**
+	 * M​e​m​o​r​y
+	 */
+	serviceMemory: string
+	/**
+	 * N​e​x​t​ ​r​u​n
+	 */
+	serviceNextRun: string
+	/**
+	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​k​e​e​p​s​ ​n​o​ ​l​o​g​ ​f​o​r​ ​a​ ​u​n​i​t​ ​b​y​ ​n​a​m​e​.
+	 */
+	serviceNoLog: string
+	/**
+	 * N​o​ ​u​n​i​t​ ​m​a​t​c​h​e​s​ ​t​h​e​ ​f​i​l​t​e​r​.
+	 */
+	serviceNoMatch: string
+	/**
+	 * T​h​a​t​ ​u​n​i​t​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​i​n​ ​t​h​e​ ​l​i​s​t​i​n​g​.​ ​T​h​e​ ​l​i​s​t​ ​h​a​s​ ​b​e​e​n​ ​r​e​a​d​ ​a​g​a​i​n​.
+	 */
+	serviceNoSuchUnit: string
+	/**
+	 * R​e​t​r​y​ ​a​s​ ​r​o​o​t
+	 */
+	serviceRetryAsRoot: string
+	/**
+	 * S​y​s​t​e​m
+	 */
+	serviceScopeSystem: string
+	/**
+	 * T​h​i​s​ ​a​c​c​o​u​n​t
+	 */
+	serviceScopeUser: string
+	/**
+	 * N​a​m​e​ ​o​r​ ​d​e​s​c​r​i​p​t​i​o​n
+	 */
+	serviceSearchHint: string
+	/**
+	 * S​i​n​c​e
+	 */
+	serviceSince: string
+	/**
+	 * F​a​i​l​e​d
+	 */
+	serviceStateFailed: string
+	/**
+	 * R​u​n​n​i​n​g
+	 */
+	serviceStateRunning: string
+	/**
+	 * S​t​a​r​t​i​n​g
+	 */
+	serviceStateStarting: string
+	/**
+	 * S​t​o​p​p​e​d
+	 */
+	serviceStateStopped: string
+	/**
+	 * S​t​o​p​p​i​n​g
+	 */
+	serviceStateStopping: string
+	/**
+	 * S​t​a​t​e​ ​u​n​k​n​o​w​n
+	 */
+	serviceStateUnknown: string
+	/**
+	 * S​t​a​t​u​s
+	 */
+	serviceStatus: string
+	/**
+	 * {​m​a​n​a​g​e​r​}​ ​·​ ​{​c​o​u​n​t​}​ ​u​n​i​t​s
+	 * @param {unknown} count
+	 * @param {unknown} manager
+	 */
+	serviceSubtitle: RequiredParams<'count' | 'manager'>
+	/**
+	 * T​h​e​ ​s​e​r​v​i​c​e​ ​m​a​n​a​g​e​r​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​r​e​a​d​.
+	 */
+	serviceUnreadable: string
+	/**
+	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​r​u​n​s​ ​{​m​a​n​a​g​e​r​}​,​ ​w​h​i​c​h​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​a​n​n​o​t​ ​l​i​s​t​.​ ​I​t​ ​l​i​s​t​s​ ​s​y​s​t​e​m​d​,​ ​p​r​o​c​d​ ​a​n​d​ ​O​p​e​n​R​C​.
+	 * @param {unknown} manager
+	 */
+	serviceUnsupportedManager: RequiredParams<'manager'>
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​o​n​ ​W​i​n​d​o​w​s​,​ ​w​h​i​c​h​ ​h​a​s​ ​n​o​ ​s​e​r​v​i​c​e​ ​m​a​n​a​g​e​r​ ​t​h​e​s​e​ ​c​o​m​m​a​n​d​s​ ​r​e​a​c​h​.
+	 */
+	serviceUnsupportedPlatform: string
+	/**
+	 * T​h​i​s​ ​a​c​c​o​u​n​t​'​s​ ​o​w​n​ ​u​n​i​t​s​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​r​e​a​d​.​ ​T​h​e​ ​s​y​s​t​e​m​ ​u​n​i​t​s​ ​a​r​e​ ​s​t​i​l​l​ ​l​i​s​t​e​d​.
+	 */
+	serviceUserScopeUnavailable: string
+	/**
+	 * S​e​r​v​i​c​e​s
+	 */
+	services: string
+	/**
 	 * C​P​U
 	 */
 	processCpu: string
@@ -1528,6 +1677,150 @@ export type TranslationFunctions = {
 	 * Manage machine
 	 */
 	manageMachine: () => LocalizedString
+	/**
+	 * Disable at boot
+	 */
+	serviceActionDisable: () => LocalizedString
+	/**
+	 * {action} on {name} was accepted.
+	 */
+	serviceActionDone: (arg: { action: unknown, name: unknown }) => LocalizedString
+	/**
+	 * Enable at boot
+	 */
+	serviceActionEnable: () => LocalizedString
+	/**
+	 * The action failed.
+	 */
+	serviceActionFailed: () => LocalizedString
+	/**
+	 * Restart
+	 */
+	serviceActionRestart: () => LocalizedString
+	/**
+	 * Start
+	 */
+	serviceActionStart: () => LocalizedString
+	/**
+	 * Stop
+	 */
+	serviceActionStop: () => LocalizedString
+	/**
+	 * Definition
+	 */
+	serviceDefinition: () => LocalizedString
+	/**
+	 * The units are listed but not described: what the manager says about them could not all be read.
+	 */
+	serviceDetailsUnavailable: () => LocalizedString
+	/**
+	 * No units on this machine.
+	 */
+	serviceEmpty: () => LocalizedString
+	/**
+	 * This unit has logged nothing.
+	 */
+	serviceLogEmpty: () => LocalizedString
+	/**
+	 * This account may not read the log of that unit, so nothing is shown.
+	 */
+	serviceLogUnreadable: () => LocalizedString
+	/**
+	 * Log
+	 */
+	serviceLogs: () => LocalizedString
+	/**
+	 * Memory
+	 */
+	serviceMemory: () => LocalizedString
+	/**
+	 * Next run
+	 */
+	serviceNextRun: () => LocalizedString
+	/**
+	 * This machine keeps no log for a unit by name.
+	 */
+	serviceNoLog: () => LocalizedString
+	/**
+	 * No unit matches the filter.
+	 */
+	serviceNoMatch: () => LocalizedString
+	/**
+	 * That unit is no longer in the listing. The list has been read again.
+	 */
+	serviceNoSuchUnit: () => LocalizedString
+	/**
+	 * Retry as root
+	 */
+	serviceRetryAsRoot: () => LocalizedString
+	/**
+	 * System
+	 */
+	serviceScopeSystem: () => LocalizedString
+	/**
+	 * This account
+	 */
+	serviceScopeUser: () => LocalizedString
+	/**
+	 * Name or description
+	 */
+	serviceSearchHint: () => LocalizedString
+	/**
+	 * Since
+	 */
+	serviceSince: () => LocalizedString
+	/**
+	 * Failed
+	 */
+	serviceStateFailed: () => LocalizedString
+	/**
+	 * Running
+	 */
+	serviceStateRunning: () => LocalizedString
+	/**
+	 * Starting
+	 */
+	serviceStateStarting: () => LocalizedString
+	/**
+	 * Stopped
+	 */
+	serviceStateStopped: () => LocalizedString
+	/**
+	 * Stopping
+	 */
+	serviceStateStopping: () => LocalizedString
+	/**
+	 * State unknown
+	 */
+	serviceStateUnknown: () => LocalizedString
+	/**
+	 * Status
+	 */
+	serviceStatus: () => LocalizedString
+	/**
+	 * {manager} · {count} units
+	 */
+	serviceSubtitle: (arg: { count: unknown, manager: unknown }) => LocalizedString
+	/**
+	 * The service manager could not be read.
+	 */
+	serviceUnreadable: () => LocalizedString
+	/**
+	 * This machine runs {manager}, which this agent cannot list. It lists systemd, procd and OpenRC.
+	 */
+	serviceUnsupportedManager: (arg: { manager: unknown }) => LocalizedString
+	/**
+	 * The agent runs on Windows, which has no service manager these commands reach.
+	 */
+	serviceUnsupportedPlatform: () => LocalizedString
+	/**
+	 * This account's own units could not be read. The system units are still listed.
+	 */
+	serviceUserScopeUnavailable: () => LocalizedString
+	/**
+	 * Services
+	 */
+	services: () => LocalizedString
 	/**
 	 * CPU
 	 */

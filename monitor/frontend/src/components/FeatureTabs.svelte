@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Activity, type LucideIcon } from '@lucide/svelte'
+  import { Activity, ServerCog, type LucideIcon } from '@lucide/svelte'
   import { enabledFeatures, type FeatureId } from '../lib/features'
   import { capabilitiesStore } from '../lib/capabilities.svelte'
   import { layout } from '../lib/layout.svelte'
@@ -17,6 +17,7 @@
   /// label here is a type error rather than an empty tab.
   const PRESENTATION: Record<FeatureId, { label: () => string; icon: LucideIcon }> = {
     process: { label: () => $LL.processes(), icon: Activity },
+    services: { label: () => $LL.services(), icon: ServerCog },
   }
 
   const served = $derived(enabledFeatures(capabilitiesStore.byServer[servers.currentId]))

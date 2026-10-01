@@ -207,7 +207,13 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   write speeds have a baseline (reused within 2 s, a baseline for 30 s); a stop
   checks the PID's start identity first and retries as root on `denied`.
   TODO(migration): the app still parses with its Dart copy; move it to
-  `sbm_parser::proc` over FFI.
+  `sbm_parser::proc` over FFI. `/services` (`sbm_parser::service`, ported from
+  the app's `service_manager.dart`, locked by `tests/service_compat.rs`):
+  systemd, procd and OpenRC; an action names a unit by the key its listing
+  gave it and is resolved against a listing read for that request, so whether
+  it needs root is the listing's answer, not the caller's. Outputs reach the
+  parsers as `CommandOutput` through `machine::command_output`, where a
+  timeout or the output cap is a failure carrying why.
 - **`GET/PUT /api/v1/custom-cmds`** — the user's custom status commands, which
   are files in `~/.config/server_box/custom_cmds` (`sbm_parser::script`) rather
   than anything in this agent's config. The same directory the app writes over

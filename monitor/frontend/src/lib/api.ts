@@ -24,6 +24,10 @@ import type {
   ProcessSignalResult,
   ProcessSortMode,
   ProcessView,
+  ServiceActRequest,
+  ServiceActResult,
+  ServicePart,
+  ServiceView,
   WsTicketPurpose,
   WsTicketResponse,
 } from '../types'
@@ -257,6 +261,26 @@ export const api = {
   signalProcess: (payload: ProcessSignalRequest) =>
     request<ProcessSignalResult>(
       '/process',
+      { method: 'POST', body: JSON.stringify(payload) },
+      'Failed to reach the machine',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// The machine's service units, or one unit's log, definition or status
+  /// (the `shell` grant). A unit is named by the key its listing gave it.
+  getServices: (part: ServicePart = 'list', key?: string) =>
+    request<ServiceView>(
+      `/services?${new URLSearchParams({ part, ...(key ? { key } : {}) })}`,
+      {},
+      'Failed to fetch the services',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// One action on one unit. The agent resolves the key against a fresh
+  /// listing and decides itself whether it needs root.
+  actService: (payload: ServiceActRequest) =>
+    request<ServiceActResult>(
+      '/services',
       { method: 'POST', body: JSON.stringify(payload) },
       'Failed to reach the machine',
       undefined,

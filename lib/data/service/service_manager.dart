@@ -1,3 +1,9 @@
+// TODO(migration): ported to `sbm_parser::service` (model, commands and
+// parsers, locked by `crates/sbm_parser/tests/service_compat.rs` against
+// `test/fixtures/systemd/`) for the monitor agent's panel. Delete this and read
+// it through the FFI boundary once the FFI result is asserted identical
+// against those fixtures.
+
 import 'package:server_box/core/utils/shell_quote.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/service.dart';
