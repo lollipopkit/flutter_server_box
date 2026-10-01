@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/llm/scope.dart';
 import 'package:server_box/view/page/agent/view.dart';
+import 'package:server_box/view/page/setting/entry.dart';
 
 /// Opens [scope]'s chat list as a sheet, for the layouts too narrow to give it
 /// a column of its own.
@@ -219,6 +220,18 @@ class _AgentHistoryPanelState extends State<AgentHistoryPanel> {
                       AgentChats.startNew(_scope);
                       _closeIfSheet();
                     },
+                  ),
+                  // Over the sheet rather than in place of it: back returns
+                  // to the list it was opened from.
+                  Btn.icon(
+                    key: const ValueKey('agent-settings'),
+                    text: libL10n.setting,
+                    icon: const Icon(Icons.settings_outlined, size: 18),
+                    onTap: () => SettingsSectionPage.route.go(
+                      context,
+                      SettingsSection.ai,
+                      target: NavTarget.root,
+                    ),
                   ),
                 ],
               ),
