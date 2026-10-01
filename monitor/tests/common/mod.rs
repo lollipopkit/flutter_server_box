@@ -167,7 +167,8 @@ pub mod machine {
             None => req.send().await.unwrap(),
         };
         let status = resp.status().as_u16();
-        let bytes = resp.body().await.unwrap_or_default();
+        // A process table is well past the client's default body limit.
+        let bytes = resp.body().limit(16 * 1024 * 1024).await.unwrap_or_default();
         (status, serde_json::from_slice(&bytes).unwrap_or(Value::Null))
     }
 }

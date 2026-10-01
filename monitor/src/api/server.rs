@@ -119,6 +119,9 @@ pub struct AppState {
     /// and re-checks its own account when it fires; terminal sessions, which
     /// outlive their sockets, are swept by `authz::revoke_lost` instead.
     pub grants_changed: broadcast::Sender<&'static str>,
+    /// The last process table read, which the next one's read and write
+    /// speeds are differenced against — see `api::process`.
+    pub process_sample: Arc<tokio::sync::Mutex<Option<crate::api::process::ProcessSample>>>,
     /// Serialises every read-modify-write of `config.toml`.
     ///
     /// `config_file::write` is atomic, so no reader ever sees a half-written
@@ -202,6 +205,7 @@ impl AppState {
             pending: Arc::new(PendingStore::default()),
             login_throttle: Arc::new(LoginThrottle::new()),
             grants_changed: broadcast::channel(16).0,
+            process_sample: Arc::new(tokio::sync::Mutex::new(None)),
             config,
             db,
             current_metrics: Arc::new(RwLock::new(None)),
@@ -331,6 +335,11 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::post().to(crate::api::exec::exec)),
             )
             .service(web::resource("/power").route(web::post().to(crate::api::power::power)))
+            .service(
+                web::resource("/process")
+                    .route(web::get().to(crate::api::process::list))
+                    .route(web::post().to(crate::api::process::kill)),
+            )
             .service(
                 // A streamed body, so ntex's payload limit must not
                 // apply: the point of this endpoint is the file that

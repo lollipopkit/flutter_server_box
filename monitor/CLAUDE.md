@@ -195,6 +195,17 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   only when its name is there, since an older agent 404s the route.
   `tests/power_api.rs` asserts refusals and records only — the actions take
   the test machine down; `tests/common::machine` is the shared setup.
+  Shell text built by `sbm_parser` runs through `machine::as_self` (`sh` with
+  the text on stdin, never a command line) and `machine::as_root` (`sudo -S
+  -p ''` with the password as the first stdin line, or `sudo -n` without one,
+  so sudo never reads the script as a password). `/process` (`sbm_parser::proc`,
+  a port of the app's `proc.dart`/`proc_kill.dart`, locked by
+  `tests/proc_compat.rs`): the table is the status script's `SbProcess` read
+  with at least 8 MiB of output, kept in `AppState.process_sample` so read and
+  write speeds have a baseline (reused within 2 s, a baseline for 30 s); a stop
+  checks the PID's start identity first and retries as root on `denied`.
+  TODO(migration): the app still parses with its Dart copy; move it to
+  `sbm_parser::proc` over FFI.
 - **`GET/PUT /api/v1/custom-cmds`** — the user's custom status commands, which
   are files in `~/.config/server_box/custom_cmds` (`sbm_parser::script`) rather
   than anything in this agent's config. The same directory the app writes over

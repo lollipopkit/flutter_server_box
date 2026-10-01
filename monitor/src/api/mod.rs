@@ -3,6 +3,7 @@ pub mod exec;
 pub mod fs;
 pub mod machine;
 pub mod power;
+pub mod process;
 pub mod push;
 pub mod cors;
 pub mod admin;

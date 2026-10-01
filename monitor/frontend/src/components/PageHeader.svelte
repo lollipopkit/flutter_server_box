@@ -14,6 +14,9 @@
     onback?: () => void
     /// Right-aligned actions such as buttons or badges.
     actions?: Snippet
+    /// Other screens reachable from this one (`FeatureTabs`), drawn under the
+    /// title in the same bar. Only a page with them gets the taller header.
+    tabs?: Snippet
     containerClass?: string
   }
 
@@ -23,6 +26,7 @@
     titleIcon,
     onback,
     actions,
+    tabs,
     containerClass = 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full',
   }: Props = $props()
 </script>
@@ -30,9 +34,9 @@
 <!-- Sticky top-level bar shared by every page (Dashboard, Settings) and by
      drill-down views (DetailPanel passes onback to reuse this same bar
      instead of stacking a second header underneath it) -->
-<header class="sticky top-0 z-10 bg-surface shadow-xs border-b border-line h-16 flex items-center">
+<header class="sticky top-0 z-10 bg-surface shadow-xs border-b border-line {tabs ? '' : 'h-16'} flex items-center">
   <div class={containerClass}>
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2 {tabs ? 'h-16' : ''}">
       {#if onback}
         <IconButton class="-ml-2" label={$LL.back()} onclick={onback}>
           <ChevronLeft class="w-5 h-5" />
@@ -54,5 +58,6 @@
       <span class="flex-1"></span>
       {#if actions}{@render actions()}{/if}
     </div>
+    {#if tabs}{@render tabs()}{/if}
   </div>
 </header>

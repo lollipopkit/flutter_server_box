@@ -8,6 +8,8 @@
 //! may not: [`gate`] is that, and nothing else in these handlers decides it.
 
 use ntex::http::StatusCode;
+
+use super::exec::{ExecResponse, Limits, run};
 use ntex::web::{HttpRequest, HttpResponse};
 
 use super::authz::{self, Caller};
@@ -18,7 +20,7 @@ use crate::core::permissions::Grant;
 /// The machine-management endpoints this agent serves, as `features` in
 /// `/capabilities`. A panel shows a page only when its name is here, which is
 /// how it tells an agent without the endpoint from one that refused.
-pub const FEATURES: &[&str] = &["power"];
+pub const FEATURES: &[&str] = &["power", "process"];
 
 /// Who is asking, and from where, once [`gate`] let them through.
 pub struct Gated {
@@ -52,4 +54,33 @@ pub async fn gate(
         return Err(authz::error(StatusCode::FORBIDDEN, "forbidden", why.as_str()));
     }
     Ok(Gated { caller, remote_ip })
+}
+
+/// Runs POSIX shell text as the agent's own account.
+///
+/// The text is `sh`'s standard input rather than a command line: what the
+/// shared modules in `sbm_parser` build interpolates values that came over
+/// HTTP or off the machine, and as input none of them is ever parsed as the
+/// shell's own syntax. It is also how the app feeds the same text over SSH.
+pub(crate) async fn as_self(text: &str, limits: &Limits) -> std::io::Result<ExecResponse> {
+    run("sh", Some(text), None, limits).await
+}
+
+/// Runs POSIX shell text as root through `sudo`.
+///
+/// With a password, it is the first line of the same pipe and `sudo -S -p ''`
+/// consumes exactly that line before the script begins — on a command line it
+/// would sit in `/proc/<pid>/cmdline` for every account to read. Without one,
+/// `sudo -n`: otherwise sudo reads the script as the password it is waiting
+/// for, and the command silently never runs.
+pub(crate) async fn as_root(
+    text: &str,
+    password: Option<&str>,
+    limits: &Limits,
+) -> std::io::Result<ExecResponse> {
+    let (entry, stdin) = match password {
+        Some(password) => ("sudo -S -p '' sh", format!("{password}\n{text}")),
+        None => ("sudo -n sh", text.to_owned()),
+    };
+    run(entry, Some(&stdin), None, limits).await
 }

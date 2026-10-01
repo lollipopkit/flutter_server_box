@@ -15,6 +15,7 @@
     CircleAlert,
     RefreshCw,
     Power,
+    ServerCog,
   } from '@lucide/svelte'
   import { Badge, Button, Card, IconButton, Spinner } from '@serverbox/webui'
   import DetailPanel, { type DetailKind } from '../components/DetailPanel.svelte'
@@ -25,6 +26,7 @@
   import PowerModal from '../components/PowerModal.svelte'
   import StatCard from '../components/StatCard.svelte'
   import { dashboardAccess, isAdmin, machineAccess } from '../lib/access'
+  import { enabledFeatures } from '../lib/features'
   import { api } from '../lib/api'
   import { capabilitiesStore } from '../lib/capabilities.svelte'
   import { health } from '../lib/health.svelte'
@@ -52,6 +54,9 @@
   /// for one from before them.
   const access = $derived(dashboardAccess(capabilities))
   const canPower = $derived(machineAccess(capabilities, 'power'))
+  /// The machine-management pages; the entry opens the first, and their tab
+  /// bar reaches the rest.
+  const features = $derived(enabledFeatures(capabilities))
   let powerOpen = $state(false)
   /// Whether the cards can be rearranged: the order is the agent's, shared by
   /// everyone who views it, so changing it is an administrator's call.
@@ -259,6 +264,11 @@
         {#if access.files}
           <IconButton label={$LL.files()} onclick={() => layout.navigate('files')}>
             <FolderOpen class="w-4 h-4" />
+          </IconButton>
+        {/if}
+        {#if features.length > 0}
+          <IconButton label={$LL.manageMachine()} onclick={() => layout.navigate(features[0].id)}>
+            <ServerCog class="w-4 h-4" />
           </IconButton>
         {/if}
         {#if canPower}

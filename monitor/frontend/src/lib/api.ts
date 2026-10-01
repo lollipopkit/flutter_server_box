@@ -20,6 +20,10 @@ import type {
   SystemMetrics,
   PowerAction,
   PowerResult,
+  ProcessSignalRequest,
+  ProcessSignalResult,
+  ProcessSortMode,
+  ProcessView,
   WsTicketPurpose,
   WsTicketResponse,
 } from '../types'
@@ -232,6 +236,32 @@ export const api = {
     ),
   // Capabilities are platform-specific, so callers fetch them once per server.
   getCapabilities: () => request<Capabilities>('/capabilities', {}, 'Failed to fetch capabilities'),
+  /// One reading of the machine's process table (the `shell` grant).
+  ///
+  /// The order is asked of the agent rather than applied here: which orders a
+  /// table can answer depends on the columns this machine printed, and the
+  /// response says both. `ascending` is omitted unless the user chose one.
+  getProcess: (sort?: ProcessSortMode, ascending?: boolean) =>
+    request<ProcessView>(
+      `/process?${new URLSearchParams({
+        ...(sort ? { sort } : {}),
+        ...(ascending === undefined ? {} : { ascending: String(ascending) }),
+      })}`,
+      {},
+      'Failed to fetch the process list',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// Sends one signal. The agent checks the PID's start identity first, and
+  /// retries as root with `password` for another account's process.
+  signalProcess: (payload: ProcessSignalRequest) =>
+    request<ProcessSignalResult>(
+      '/process',
+      { method: 'POST', body: JSON.stringify(payload) },
+      'Failed to reach the machine',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
   /// Shuts the machine down, reboots or suspends it. The password is for
   /// `sudo -S` and travels as its own field, never inside a command.
   power: (action: PowerAction, password?: string) =>
