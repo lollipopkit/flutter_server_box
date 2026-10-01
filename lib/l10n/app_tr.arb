@@ -1439,5 +1439,6 @@
   "monitorBuiltin": "Yerleşik",
   "monitorAdminRoleTip": "Hesapları, rolleri ve agent ayarlarını yönetir",
   "monitorYou": "Siz",
-  "monitorNoAccessToSettings": "Bu agent'ın ayarlarını yalnızca bir yönetici değiştirebilir."
+  "monitorNoAccessToSettings": "Bu agent'ın ayarlarını yalnızca bir yönetici değiştirebilir.",
+  "monitorPasswordNotSaved": "Parola agent üzerinde değiştirildi, ancak uygulama kaydedemedi. Bu sunucunun ayarlarında Monitor parolasını güncelleyin."
 }

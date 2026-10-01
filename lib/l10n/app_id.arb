@@ -1439,5 +1439,6 @@
   "monitorBuiltin": "Bawaan",
   "monitorAdminRoleTip": "Mengelola akun, peran, dan pengaturan agent",
   "monitorYou": "Anda",
-  "monitorNoAccessToSettings": "Hanya admin yang dapat mengubah pengaturan agent ini."
+  "monitorNoAccessToSettings": "Hanya admin yang dapat mengubah pengaturan agent ini.",
+  "monitorPasswordNotSaved": "Kata sandi sudah diubah di agen, tetapi aplikasi gagal menyimpannya. Perbarui kata sandi Monitor di pengaturan server ini."
 }

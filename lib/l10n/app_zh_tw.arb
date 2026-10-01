@@ -1439,5 +1439,6 @@
   "monitorBuiltin": "內建",
   "monitorAdminRoleTip": "管理帳號、角色和 agent 的設定",
   "monitorYou": "你",
-  "monitorNoAccessToSettings": "只有管理員可以變更此 agent 的設定。"
+  "monitorNoAccessToSettings": "只有管理員可以變更此 agent 的設定。",
+  "monitorPasswordNotSaved": "agent 上的密碼已修改，但 App 未能儲存新密碼。請在這台伺服器的設定中更新 Monitor 密碼。"
 }

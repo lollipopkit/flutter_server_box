@@ -1439,5 +1439,6 @@
   "monitorBuiltin": "Daxili",
   "monitorAdminRoleTip": "Hesabları, rolları və agent ayarlarını idarə edir",
   "monitorYou": "Siz",
-  "monitorNoAccessToSettings": "Bu agent-in ayarlarını yalnız admin dəyişə bilər."
+  "monitorNoAccessToSettings": "Bu agent-in ayarlarını yalnız admin dəyişə bilər.",
+  "monitorPasswordNotSaved": "Parol agent-də dəyişdirildi, lakin tətbiq onu saxlaya bilmədi. Bu serverin ayarlarında Monitor parolunu yeniləyin."
 }

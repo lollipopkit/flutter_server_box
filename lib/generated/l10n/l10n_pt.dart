@@ -5168,4 +5168,8 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get monitorNoAccessToSettings =>
       'Somente um administrador pode alterar as configurações deste agent.';
+
+  @override
+  String get monitorPasswordNotSaved =>
+      'A senha foi alterada no agente, mas o app não conseguiu salvá-la. Atualize a senha do Monitor nas configurações deste servidor.';
 }

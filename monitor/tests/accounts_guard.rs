@@ -136,3 +136,35 @@ async fn a_cli_reset_ends_what_the_old_password_paid_for() {
         .unwrap();
     assert_eq!(tokens, 0);
 }
+
+#[tokio::test]
+async fn the_cli_cannot_move_the_last_admin_away_either() {
+    // The same rule as the API: the CLI moving the only admin to another role
+    // would leave a database nobody administers. And the password given with
+    // the refused move is not set either.
+    let dir = tempfile::tempdir().unwrap();
+    let pool = file_pool(&dir).await;
+    add(&pool, "ops", "admin").await;
+    let (_, _, before) = accounts::account_since(&pool, "ops").await.unwrap().unwrap();
+
+    assert!(
+        bootstrap::set_password(&pool, "ops", "a-new-password", Some("viewer"))
+            .await
+            .is_err()
+    );
+    let (_, role) = accounts::account(&pool, "ops").await.unwrap().unwrap();
+    assert_eq!(role.name, "admin");
+    let (_, _, after) = accounts::account_since(&pool, "ops").await.unwrap().unwrap();
+    assert_eq!(after, before, "the password was not changed");
+
+    // With a second admin it goes through.
+    add(&pool, "root2", "admin").await;
+    assert_eq!(
+        bootstrap::set_password(&pool, "ops", "a-new-password", Some("viewer"))
+            .await
+            .unwrap(),
+        PasswordSet::Reset
+    );
+    let (_, role) = accounts::account(&pool, "ops").await.unwrap().unwrap();
+    assert_eq!(role.name, "viewer");
+}

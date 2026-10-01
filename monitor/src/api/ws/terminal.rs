@@ -572,13 +572,14 @@ async fn open_local(
     };
 
     let user = local_user();
-    let (session, input_rx) = Session::new(
+    let (mut session, input_rx) = Session::new(
         &ctx.subject,
         &user,
         SessionAuth::Local,
         ctx.state.remote_access.terminal.scrollback_bytes,
         INPUT_QUEUE,
     );
+    session.since = ctx.since;
     let inserted = match ctx.state.sessions.insert(session) {
         Ok(Some(inserted)) => inserted,
         Ok(None) => {
@@ -899,13 +900,14 @@ async fn start_shell(
         return None;
     }
 
-    let (session, input_rx) = Session::new(
+    let (mut session, input_rx) = Session::new(
         &ctx.subject,
         &user,
         SessionAuth::Ssh,
         ctx.state.remote_access.terminal.scrollback_bytes,
         INPUT_QUEUE,
     );
+    session.since = ctx.since;
 
     let inserted = match ctx.state.sessions.insert(session) {
         Ok(Some(inserted)) => inserted,

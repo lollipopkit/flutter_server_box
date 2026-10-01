@@ -1439,5 +1439,6 @@
   "monitorBuiltin": "Встроенная",
   "monitorAdminRoleTip": "Управляет учётными записями, ролями и настройками agent",
   "monitorYou": "Вы",
-  "monitorNoAccessToSettings": "Изменять настройки этого agent может только администратор."
+  "monitorNoAccessToSettings": "Изменять настройки этого agent может только администратор.",
+  "monitorPasswordNotSaved": "Пароль на агенте изменён, но приложению не удалось его сохранить. Обновите пароль Monitor в настройках этого сервера."
 }

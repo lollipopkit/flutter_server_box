@@ -5210,4 +5210,8 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get monitorNoAccessToSettings =>
       'Seul un administrateur peut modifier les réglages de cet agent.';
+
+  @override
+  String get monitorPasswordNotSaved =>
+      'Le mot de passe a été modifié sur l\'agent, mais l\'application n\'a pas pu l\'enregistrer. Mettez à jour le mot de passe Monitor dans les réglages de ce serveur.';
 }

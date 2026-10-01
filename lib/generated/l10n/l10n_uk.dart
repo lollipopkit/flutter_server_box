@@ -5159,4 +5159,8 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get monitorNoAccessToSettings =>
       'Змінювати налаштування цього agent може лише адміністратор.';
+
+  @override
+  String get monitorPasswordNotSaved =>
+      'Пароль на агенті змінено, але застосунку не вдалося його зберегти. Оновіть пароль Monitor у налаштуваннях цього сервера.';
 }

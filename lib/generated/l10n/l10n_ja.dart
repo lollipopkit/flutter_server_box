@@ -4879,4 +4879,8 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get monitorNoAccessToSettings => 'この agent の設定を変更できるのは管理者のみです。';
+
+  @override
+  String get monitorPasswordNotSaved =>
+      'agent 上のパスワードは変更されましたが、App に保存できませんでした。このサーバーの設定で Monitor のパスワードを更新してください。';
 }

@@ -153,6 +153,11 @@ pub struct Session {
     /// Panel account that created it. An `attach` from any other account is
     /// refused, so one user's ticket cannot pick up another's shell.
     pub subject: String,
+    /// The account's password epoch when the session was opened (see
+    /// `authz::Caller::since`). A session opened under a password that has
+    /// since changed — a CLI reset the running agent was not told about, or a
+    /// change that raced the open — is closed at the next sweep.
+    pub since: i64,
     pub ssh_user: String,
     pub auth: SessionAuth,
     secret: String,
@@ -178,6 +183,7 @@ impl Session {
         let (input, input_rx) = mpsc::channel(input_queue);
         let session = Self {
             subject: subject.into(),
+            since: 0,
             ssh_user: ssh_user.into(),
             auth,
             secret: String::new(),

@@ -198,15 +198,6 @@ pub async fn insert_account(
     Ok(())
 }
 
-pub async fn set_role(pool: &SqlitePool, username: &str, role: &str) -> Result<()> {
-    sqlx::query("UPDATE users SET role = ? WHERE username = ?")
-        .bind(role)
-        .bind(username)
-        .execute(pool)
-        .await?;
-    Ok(())
-}
-
 /// Sets a new password, and ends what the old one had paid for: panel
 /// tokens issued before now stop counting (`password_changed_ms`), and the
 /// watch tokens the account paired are deleted — a password is reset because

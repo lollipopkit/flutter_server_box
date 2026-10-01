@@ -257,9 +257,16 @@ enum ServerFuncBtn {
     }
     // An agent with roles says which grant and why, for this account.
     if (granted.grants case final grants?) {
+      // A forward is either grant's — see [availableWith] — so the reason is
+      // `connect`'s, or `listen`'s where that one says more.
+      if (this == portForward) {
+        return monitorGrantReason(toStr, grants.connect) ??
+            monitorGrantReason(toStr, grants.listen) ??
+            generic;
+      }
       final grant = switch (this) {
         files => grants.files,
-        portForward || remoteDesktop => grants.connect,
+        remoteDesktop => grants.connect,
         _ => grants.shell,
       };
       return monitorGrantReason(toStr, grant) ?? generic;

@@ -184,10 +184,19 @@ pub async fn set_password(
     let hash = crate::api::auth::hash_password(password)?;
     let exists = crate::db::accounts::account(pool, username).await?.is_some();
     if exists {
-        crate::db::accounts::set_password_hash(pool, username, &hash).await?;
+        // The role first, through the same last-admin guard as the API: a
+        // refused move must not leave the password changed behind it.
         if let Some(role) = role {
-            crate::db::accounts::set_role(pool, username, role).await?;
+            match crate::db::accounts::set_role_keeping_an_admin(pool, username, role).await? {
+                crate::db::accounts::Guarded::LastAdmin => {
+                    return Err(MonitorError::Parse(format!(
+                        "{username} is the last admin account; make another account an admin first"
+                    )));
+                }
+                crate::db::accounts::Guarded::Done | crate::db::accounts::Guarded::NotFound => {}
+            }
         }
+        crate::db::accounts::set_password_hash(pool, username, &hash).await?;
         return Ok(PasswordSet::Reset);
     }
     let first_admin = role.is_none() && crate::db::accounts::admin_count(pool).await? == 0;

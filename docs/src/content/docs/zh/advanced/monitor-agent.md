@@ -226,8 +226,6 @@ cd /opt/server-box-monitor
 
 命令会要求输入两次新密码，输入时不会回显，密码至少需要 8 个字符。如果指定的用户不存在，命令会创建该用户，并放入 `viewer` 角色；agent 还没有任何 admin 账号时，则放入 `admin` 角色。加上 `--role <名称>` 可以指定其他角色，也可以用它修改已有账号的角色。admin 也可以在 App 或面板中添加账号，见[编辑账号和角色](#编辑账号和角色)。
 
-无论通过哪种方式修改密码，该账号在所有地方都会退出登录：已有的登录、已配对的小组件和 Watch，以及正在使用的终端、端口转发和监听都会失效，需要用新密码重新登录。
-
 如需从环境变量读取密码（例如用于脚本或避免写入 shell history），请在 Bash 或 Zsh 中运行以下命令。`read -s` 不是 POSIX `sh` 的命令；后续检查可避免读取失败或密码为空时设置空密码：
 
 ```bash
@@ -238,7 +236,10 @@ SBM_PW="$SBM_PW" ./server_box_monitor user set-password admin --password-env SBM
 
 命令不接受密码作为参数，因为命令行参数可能出现在 `ps` 输出和 shell history 中。
 
-新密码从下一次登录起生效，无需重启 agent，因为每次登录都会读取用户表。已登录会话最多还能持续一小时（token 的有效期）。如需立即结束所有会话，请修改 `config.toml` 中的 `jwt_secret` 并重启 agent：systemd 使用 `systemctl --user restart server_box_monitor`，OpenRC 使用 `rc-service server-box-monitor restart`。重启后此前签发的 token 全部失效。
+修改密码后，旧密码对应的访问会结束：
+
+- **登录和已配对的设备：无论用哪种方式修改，都会立即失效。** 修改前的登录从下一次请求起被拒绝，该账号已配对的小组件和 Watch 会被解除配对。这一步不需要重启 agent，也不需要修改 `jwt_secret`。
+- **已打开的终端、端口转发和监听：在 App 或面板中修改时会立即关闭。** 上面的命令只写数据库，无法通知正在运行的 agent，因此用旧密码打开的连接会一直持续到 agent 重启：systemd 使用 `systemctl --user restart server_box_monitor`，OpenRC 使用 `rc-service server-box-monitor restart`。如果是因为密码可能已经泄露而重置，请在重置后重启 agent。
 
 每个账号也可以在 App 或面板中修改自己的密码，见[编辑账号和角色](#编辑账号和角色)。在 App 中修改时，App 会同时更新为该服务器保存的密码。
 
@@ -307,7 +308,7 @@ admin 可以修改两个内置角色的权限，也可以添加新角色。角�
 
 如果 agent 启动时读取的 `config.toml` 仍然设置了旧开关（`full_access`、`[remote_access.terminal] enabled`、`[remote_access.fs] enabled`、`listen_public`），例如在新的数据卷上挂载了旧配置，或复制了旧的示例配置，全新安装也会遵守这些开关：`admin` 角色只获得它们同样允许的权限，日志中会说明这一点。
 
-`files` 仍然需要配置 `[remote_access.fs] roots`。在配置之前，App 会提示 agent 上未配置文件浏览。无论 `roots` 如何设置，文件 API 都无法访问 agent 自己的文件，包括数据库、`jwt.secret`、`config.toml` 及其备份、TLS 密钥和证书、自定义命令，因为读取这些文件就等于拿到 admin 登录。
+`files` 仍然需要配置 `[remote_access.fs] roots`。在配置之前，App 会提示 agent 上未配置文件浏览。无论 `roots` 如何设置，文件 API 都无法访问 agent 自己的文件，包括数据库、`jwt.secret`、`config.toml` 及其备份、`.env`、TLS 密钥和证书、自定义命令，因为读取这些文件就等于拿到 admin 登录。
 
 **角色带有 `shell` 的账号，相当于拥有 agent 运行账户的 shell。** 因此 `install.sh` 默认以普通用户运行 agent。若选择以 root 运行，请先考虑这一点。
 

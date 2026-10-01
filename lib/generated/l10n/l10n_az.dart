@@ -5122,4 +5122,8 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get monitorNoAccessToSettings =>
       'Bu agent-in ayarlarını yalnız admin dəyişə bilər.';
+
+  @override
+  String get monitorPasswordNotSaved =>
+      'Parol agent-də dəyişdirildi, lakin tətbiq onu saxlaya bilmədi. Bu serverin ayarlarında Monitor parolunu yeniləyin.';
 }

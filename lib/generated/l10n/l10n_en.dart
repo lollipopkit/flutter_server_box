@@ -5126,4 +5126,8 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get monitorNoAccessToSettings =>
       'Only an admin can change this agent\'s settings.';
+
+  @override
+  String get monitorPasswordNotSaved =>
+      'The password was changed on the agent, but the app could not save it. Update this server\'s Monitor password in its settings.';
 }

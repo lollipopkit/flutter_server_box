@@ -4801,6 +4801,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get monitorNoAccessToSettings => '只有管理员可以修改此 agent 的设置。';
+
+  @override
+  String get monitorPasswordNotSaved =>
+      'agent 上的密码已修改，但 App 未能保存新密码。请在这台服务器的设置中更新 Monitor 密码。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -9599,4 +9603,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get monitorNoAccessToSettings => '只有管理員可以變更此 agent 的設定。';
+
+  @override
+  String get monitorPasswordNotSaved =>
+      'agent 上的密碼已修改，但 App 未能儲存新密碼。請在這台伺服器的設定中更新 Monitor 密碼。';
 }

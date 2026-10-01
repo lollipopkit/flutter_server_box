@@ -131,6 +131,22 @@ void main() {
       expect(portForwardUnavailable(server, listen: false), isNull);
     });
 
+    test('a forward says listen\'s reason when connect\'s says nothing', () {
+      // A forward is either grant's, so when the agent's reason for `connect`
+      // is one this app cannot read, `listen`'s is the one worth showing.
+      final access = MonitorCapabilities.fromJson(
+        withGrants()
+          ..['grants'] = {
+            'connect': {'ok': false, 'why': 'a_later_reason'},
+            'listen': {'ok': false, 'why': 'not_granted'},
+          },
+      ).remoteAccess;
+      expect(
+        ServerFuncBtn.portForward.unavailableReason(agentOnly, access),
+        l10n.funcNeedsAgentPermission(ServerFuncBtn.portForward.toStr),
+      );
+    });
+
     test('a grant held with nothing behind it: its operator', () {
       final notConfigured = MonitorCapabilities.fromJson(
         withGrants()

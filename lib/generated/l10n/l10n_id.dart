@@ -5119,4 +5119,8 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get monitorNoAccessToSettings =>
       'Hanya admin yang dapat mengubah pengaturan agent ini.';
+
+  @override
+  String get monitorPasswordNotSaved =>
+      'Kata sandi sudah diubah di agen, tetapi aplikasi gagal menyimpannya. Perbarui kata sandi Monitor di pengaturan server ini.';
 }

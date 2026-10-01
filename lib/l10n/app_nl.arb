@@ -1439,5 +1439,6 @@
   "monitorBuiltin": "Ingebouwd",
   "monitorAdminRoleTip": "Beheert accounts, rollen en de instellingen van de agent",
   "monitorYou": "Jij",
-  "monitorNoAccessToSettings": "Alleen een beheerder kan de instellingen van deze agent wijzigen."
+  "monitorNoAccessToSettings": "Alleen een beheerder kan de instellingen van deze agent wijzigen.",
+  "monitorPasswordNotSaved": "Het wachtwoord is op de agent gewijzigd, maar de app kon het niet opslaan. Werk het Monitor-wachtwoord bij in de instellingen van deze server."
 }

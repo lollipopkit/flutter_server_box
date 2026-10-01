@@ -220,7 +220,8 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   **The agent's own state is outside every root** (`fs_roots::Protected`,
   filled from the config in `api::server::agent_state`): the database and its
   journal files, `jwt.secret`, the first-start credentials, `config.toml` and
-  its backups, the TLS key, the custom-commands directory — each a way past
+  its backups, `.env` (the working directory's and the one `dotenvy` loaded),
+  the TLS key, the custom-commands directory — each a way past
   the roles. Per file, not per directory (the working directory can be a
   home); hidden from listings; their directories cannot be renamed, removed or
   chmod-ed. `tests/fs_protected.rs`.

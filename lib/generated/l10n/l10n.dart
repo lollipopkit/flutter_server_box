@@ -8774,6 +8774,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Only an admin can change this agent\'s settings.'**
   String get monitorNoAccessToSettings;
+
+  /// Shown when the agent accepted a new password but the app failed to update the credential it stores for the server.
+  ///
+  /// In en, this message translates to:
+  /// **'The password was changed on the agent, but the app could not save it. Update this server\'s Monitor password in its settings.'**
+  String get monitorPasswordNotSaved;
 }
 
 class _AppLocalizationsDelegate

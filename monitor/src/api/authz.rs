@@ -267,11 +267,12 @@ pub fn end_account(state: &Arc<AppState>, username: &str, code: &'static str) {
 /// Terminal sessions outlive their sockets, so they are swept here: each
 /// session's account is looked up again and a session whose kind of shell
 /// its role no longer grants is closed, with [code] as what the client is
-/// told. Relays and listeners are told through `AppState.grants_changed` and
+/// told — as is one opened under a password the account no longer has. Relays and listeners are told through `AppState.grants_changed` and
 /// each re-checks its own account — see `api::ws::stream` and `listen`.
 pub async fn revoke_lost(state: &Arc<AppState>, code: &'static str) {
     for subject in state.sessions.subjects() {
         let caller = caller_named(state, &subject).await;
+        let since = caller.as_ref().map(|c| c.since);
         let shell = caller
             .as_ref()
             .is_some_and(|c| c.grants().holds(Grant::Shell));
@@ -281,10 +282,11 @@ pub async fn revoke_lost(state: &Arc<AppState>, code: &'static str) {
         let closed = state.sessions.close_where(
             |session| {
                 session.subject == subject
-                    && match session.auth {
-                        ws::session::SessionAuth::Local => !shell,
-                        ws::session::SessionAuth::Ssh => !ssh,
-                    }
+                    && (since != Some(session.since)
+                        || match session.auth {
+                            ws::session::SessionAuth::Local => !shell,
+                            ws::session::SessionAuth::Ssh => !ssh,
+                        })
             },
             code,
         );

@@ -304,11 +304,6 @@ account yet; add `--role <name>` to give it another role, or to move an
 existing account. An admin can also add accounts from the App or the panel;
 see [Editing accounts and roles](#editing-accounts-and-roles).
 
-A password change, by any of these ways, signs the account out everywhere:
-its existing logins, its paired widgets and Watch, and its open terminals,
-forwards and listeners stop working, and it signs in again with the new
-password.
-
 To set the password from an environment variable, use the following in a
 script or when you want to keep it out of shell history. This uses Bash or
 Zsh: `read -s` is not available in POSIX `sh`. The check prevents a failed or
@@ -323,11 +318,19 @@ SBM_PW="$SBM_PW" ./server_box_monitor user set-password admin --password-env SBM
 The command deliberately has no password argument: command-line arguments
 can appear in `ps` output and shell history.
 
-The new password applies to the next login; no restart is needed because the
-agent reads the user table at each login. Existing sessions remain valid for
-up to one hour. To invalidate them immediately, change `jwt_secret` in
-`config.toml` and restart the agent with `systemctl --user restart
-server_box_monitor`, or `rc-service server-box-monitor restart` on OpenRC.
+A password change ends what the old password was used for:
+
+- **Logins and paired devices, at once, whichever way the password was
+  changed.** Logins from before the change are refused from the next request,
+  and the account's paired widgets and Watch are unpaired. No restart is
+  needed for this, and `jwt_secret` does not need to change.
+- **Open terminals, port forwards and listeners, at once when the password is
+  changed from the App or the panel.** The command above writes the database
+  and cannot reach the running agent, so connections already open under the
+  old password keep running until the agent restarts: `systemctl --user
+  restart server_box_monitor`, or `rc-service server-box-monitor restart` on
+  OpenRC. Restart it after a reset made because the password may be known to
+  someone else.
 
 Any account can also change its own password from the App or the panel; see
 [Editing accounts and roles](#editing-accounts-and-roles). Changing it in the
@@ -450,7 +453,7 @@ only what they allowed as well, and the log says so.
 `files` still needs `[remote_access.fs] roots`. Until they are set, the App
 reports file browsing as not set up on the agent. Whatever the roots, the file
 API never reaches the agent's own files — its database, `jwt.secret`,
-`config.toml` and its backups, the TLS key and certificate, and the custom
+`config.toml` and its backups, `.env`, the TLS key and certificate, and the custom
 commands — since reading them would hand out an admin login.
 
 **An account whose role holds `shell` has a shell as the agent's user.** The

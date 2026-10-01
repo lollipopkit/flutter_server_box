@@ -1439,5 +1439,6 @@
   "monitorBuiltin": "組み込み",
   "monitorAdminRoleTip": "アカウント、ロール、agent の設定を管理します",
   "monitorYou": "あなた",
-  "monitorNoAccessToSettings": "この agent の設定を変更できるのは管理者のみです。"
+  "monitorNoAccessToSettings": "この agent の設定を変更できるのは管理者のみです。",
+  "monitorPasswordNotSaved": "agent 上のパスワードは変更されましたが、App に保存できませんでした。このサーバーの設定で Monitor のパスワードを更新してください。"
 }

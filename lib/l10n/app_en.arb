@@ -6679,5 +6679,9 @@
   "monitorBuiltin": "Built-in",
   "monitorAdminRoleTip": "Manages accounts, roles and the agent's settings",
   "monitorYou": "You",
-  "monitorNoAccessToSettings": "Only an admin can change this agent's settings."
+  "monitorNoAccessToSettings": "Only an admin can change this agent's settings.",
+  "monitorPasswordNotSaved": "The password was changed on the agent, but the app could not save it. Update this server's Monitor password in its settings.",
+  "@monitorPasswordNotSaved": {
+    "description": "Shown when the agent accepted a new password but the app failed to update the credential it stores for the server."
+  }
 }

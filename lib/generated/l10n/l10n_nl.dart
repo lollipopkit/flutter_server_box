@@ -5169,4 +5169,8 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get monitorNoAccessToSettings =>
       'Alleen een beheerder kan de instellingen van deze agent wijzigen.';
+
+  @override
+  String get monitorPasswordNotSaved =>
+      'Het wachtwoord is op de agent gewijzigd, maar de app kon het niet opslaan. Werk het Monitor-wachtwoord bij in de instellingen van deze server.';
 }

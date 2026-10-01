@@ -5114,4 +5114,8 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get monitorNoAccessToSettings =>
       'Bu agent\'ın ayarlarını yalnızca bir yönetici değiştirebilir.';
+
+  @override
+  String get monitorPasswordNotSaved =>
+      'Parola agent üzerinde değiştirildi, ancak uygulama kaydedemedi. Bu sunucunun ayarlarında Monitor parolasını güncelleyin.';
 }

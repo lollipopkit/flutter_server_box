@@ -330,11 +330,29 @@ pub struct GoPush {
     pub iface: serde_json::Value,
 }
 
+/// The `.env` file the agent read its environment from, if it found one.
+static LOADED_DOTENV: std::sync::OnceLock<std::path::PathBuf> = std::sync::OnceLock::new();
+
+/// Loads `.env` — from the working directory or the nearest parent that has
+/// one, as `dotenvy` searches — and remembers which file that was, so the
+/// file API can keep it out of reach: it holds whatever the operator put in
+/// the environment, credentials included.
+pub fn load_dotenv() {
+    if let Ok(path) = dotenvy::dotenv() {
+        let _ = LOADED_DOTENV.set(path);
+    }
+}
+
+/// See [`load_dotenv`].
+pub fn loaded_dotenv() -> Option<&'static Path> {
+    LOADED_DOTENV.get().map(|p| p.as_path())
+}
+
 impl Config {
     pub async fn load() -> Result<Self> {
         // Environment variables are the primary configuration channel for
         // container and systemd deployments.
-        dotenvy::dotenv().ok();
+        load_dotenv();
 
         if Path::new("config.toml").exists() {
             let content =

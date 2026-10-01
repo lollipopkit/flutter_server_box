@@ -1439,5 +1439,6 @@
   "monitorBuiltin": "Integriert",
   "monitorAdminRoleTip": "Verwaltet Konten, Rollen und die Einstellungen des Agents",
   "monitorYou": "Du",
-  "monitorNoAccessToSettings": "Nur ein Admin kann die Einstellungen dieses Agents ändern."
+  "monitorNoAccessToSettings": "Nur ein Admin kann die Einstellungen dieses Agents ändern.",
+  "monitorPasswordNotSaved": "Das Passwort wurde auf dem Agent geändert, aber die App konnte es nicht speichern. Aktualisieren Sie das Monitor-Passwort in den Einstellungen dieses Servers."
 }

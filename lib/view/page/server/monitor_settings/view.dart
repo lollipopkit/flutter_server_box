@@ -721,16 +721,24 @@ extension on _MonitorSettingsViewState {
       Toast.show(monitorAccessErrText(e));
       return;
     }
+    var saved = true;
     try {
       await widget.onOwnPasswordChanged?.call(next);
-    } catch (e) {
-      Toast.show('$e');
+    } catch (e, s) {
+      Loggers.app.warning('Saving the new Monitor password failed', e, s);
+      saved = false;
     }
     if (!mounted) return;
     // The session this view holds logged in with the old one, and logs in
     // again when it expires.
     _client.dispose();
     _client = MonitorHttpClient(widget.monitor.withPwd(next));
-    Toast.success(libL10n.success);
+    // Not a success when the app still holds the old password: the agent has
+    // the new one, and the next login from here would fail.
+    if (saved) {
+      Toast.success(libL10n.success);
+    } else {
+      Toast.show(l10n.monitorPasswordNotSaved);
+    }
   }
 }

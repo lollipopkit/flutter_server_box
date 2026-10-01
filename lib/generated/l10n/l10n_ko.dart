@@ -4885,4 +4885,8 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get monitorNoAccessToSettings => '관리자만 이 agent의 설정을 변경할 수 있습니다.';
+
+  @override
+  String get monitorPasswordNotSaved =>
+      'agent의 비밀번호는 변경되었지만 앱에 저장하지 못했습니다. 이 서버 설정에서 Monitor 비밀번호를 업데이트하세요.';
 }
