@@ -6,6 +6,73 @@ description: What changed in each released version
 Every released version, newest first. Downloads and per-release notes are on
 [GitHub Releases](https://github.com/lollipopkit/flutter_server_box/releases).
 
+## v1.0.1719 — 2026-10-01
+
+### Before you upgrade
+
+- **Previous Agent conversations are removed.** The new Agent engine cannot
+  use the old conversation history, which was not included in backups.
+- **Some settings have been removed**, including the old CPU and network
+  display options, server history, card ordering, custom theme catalog URL,
+  and opening terminals in the system SSH app. Terminals now always open in
+  ServerBox.
+- **Some Monitor features require agent 0.2.0**, including accounts and roles,
+  port forwarding, longer history and Monitor settings. When upgraded, existing
+  accounts become admins with permissions based on the old access settings.
+
+### Added
+
+- **Remote desktop:** Connect to servers with RDP or VNC through SSH or a
+  Monitor agent, without exposing the desktop port. Multiple connection
+  profiles are supported. Password saving is optional; audio, multiple
+  monitors and file transfer are not supported.
+- **Virtualization:** Manage Proxmox VE and libvirt/KVM virtual machines and
+  containers, including power, console, snapshots, storage and networks.
+  Proxmox settings are carried over from the server page.
+- **Use this device as a server** on Linux, Windows and the macOS DMG build,
+  with status, processes, services, containers, terminal and files.
+- **Themes and a theme store:** Install official themes or import `.fsbt`
+  packages. Existing AMOLED modes are converted to the AMOLED theme.
+- **Port forwarding** through a Monitor agent, including local, remote and
+  SOCKS5 forwarding. SSH also supports SOCKS5 forwarding.
+- **Monitor accounts, roles and settings** can be managed in the app, including
+  access permissions, collection, alerts, data retention and notifications.
+- **`serverbox://` links** can open servers, features and snippets or prefill
+  a new server. Links do not include passwords or keys, and snippets ask
+  before running.
+- **ProxyCommand on Android and iOS**, plus access to installed Linux files
+  from Android's file picker.
+- **More monitoring data**, including GPU, disk, network, battery, sensor and
+  SMART readings, with up to 30 days of agent history.
+- **App-drawn tmux controls, reduced motion, improved terminal reconnection**
+  and support for older SSH servers are also available.
+
+### Changed
+
+- **Server and settings pages have a new layout**, with searchable settings,
+  server search and sorting, clearer status information and a more compact
+  phone navigation bar.
+- **Server connections are easier to manage:** SSH and Monitor can be enabled
+  separately and ordered as preferred or fallback connections.
+- **The Agent has a new engine** with provider and tool choices, separate app
+  and terminal conversations, image attachments and optional automatic
+  approval for commands judged safe.
+- **Server management pages are improved** for containers, users, processes,
+  services and scheduled tasks. Services can be managed without opening a
+  terminal, and process and task lists are easier to inspect.
+- Files in the old device Documents location are copied to the new app storage
+  location; the originals remain in place.
+
+### Fixed
+
+- Fixed process controls and status readings on Linux, Windows, macOS and BSD.
+- Fixed user and scheduled task pages on servers using fish or BusyBox.
+- Fixed backup restore and import issues, including duplicate server names
+  and older keys; server renames now keep benchmark history.
+- Fixed settings sync, server sorting, SSH connection cleanup and several
+  crashes caused by unexpected server responses.
+- Fixed Monitor agent hangs and alert rules that missed data or did not run.
+
 ## v1.0.1617 — 2026-09-12
 
 ### Added
