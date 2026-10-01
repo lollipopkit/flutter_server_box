@@ -45,6 +45,8 @@ pub enum Purpose {
     Terminal,
     /// A raw TCP connection, for the app's port forwarding and remote desktop.
     Stream,
+    /// A port listened on for the app's remote forwards — see `api::ws::listen`.
+    Listen,
 }
 
 struct Entry {

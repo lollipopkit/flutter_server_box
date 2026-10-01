@@ -15,8 +15,10 @@
 //!
 //! # Wire format
 //!
-//! - **Text** — the request first: `{"type":"open","host":..,"port":..}`. Then
-//!   control JSON, see [`ClientMsg`] and [`ServerMsg`].
+//! - **Text** — the request first: `{"type":"open","host":..,"port":..}`, or
+//!   `{"type":"accept","id":..}` to take a connection a remote forward's
+//!   listener is holding (see `api::ws::listen`). Then control JSON, see
+//!   [`ClientMsg`] and [`ServerMsg`].
 //! - **Binary** — the bytes of that connection, both directions.
 //!
 //! One socket is one connection, and it ends when either side ends it. Unlike
@@ -66,6 +68,10 @@ const READ_BUFFER: usize = 32 * 1024;
 enum ClientMsg {
     /// Dial this address and start relaying.
     Open { host: String, port: u16 },
+    /// Relay a connection a remote forward accepted, by the id its listener
+    /// announced. The other way round from `open`: the connection came in
+    /// rather than going out, and everything after it is the same.
+    Accept { id: String },
     /// Ask the agent to say whether it is still there.
     ///
     /// The app has its own watchdog; this is for a caller that would rather
@@ -289,6 +295,12 @@ async fn on_control(
             }
             open(ctx, sink, phase, &host, port).await
         }
+        ClientMsg::Accept { id } => {
+            if !claim_idle(phase) {
+                return Some(error_frame("bad_request", "A connection is already open"));
+            }
+            accept(ctx, sink, phase, &id).await
+        }
     }
 }
 
@@ -321,7 +333,7 @@ async fn open(
     // capabilities a client was told earlier are not a boundary.
     if !ctx.state.full_access_allowed(ctx.secure) {
         *phase.borrow_mut() = Phase::Done;
-        audit_connect(ctx, host, port, Outcome::Denied).await;
+        audit_connect(ctx, &format!("{host}:{port}"), Outcome::Denied).await;
         return Some(error_frame("forbidden", "Full access is off"));
     }
 
@@ -329,17 +341,53 @@ async fn open(
         Ok(stream) => stream,
         Err(error) => {
             *phase.borrow_mut() = Phase::Done;
-            audit_connect(ctx, host, port, Outcome::Error).await;
+            audit_connect(ctx, &format!("{host}:{port}"), Outcome::Error).await;
             tracing::info!("Stream relay could not reach {host}:{port}: {error}");
             return Some(error_frame("connect_failed", "Could not reach the target"));
         }
     };
-    let _ = stream.set_nodelay(true);
 
+    *phase.borrow_mut() = relay(sink, stream, revoked);
+    audit_connect(ctx, &format!("{host}:{port}"), Outcome::Ok).await;
+    // The caller waits for this before treating the connection as usable: a
+    // relay that answers `error` must not be raced by bytes the client already
+    // wrote into it.
+    Some(ServerMsg::Ready.frame())
+}
+
+/// Takes the connection a listener is holding under [id] and relays it.
+///
+/// Only one the same panel account listened for: an id is not a credential,
+/// and a second account that saw one in a log must not be able to take the
+/// connection it names. Anything else — unknown, expired, already taken — is
+/// the same answer, so the answer says nothing about which.
+async fn accept(
+    ctx: &Rc<ConnCtx>,
+    sink: &WsSink,
+    phase: &Rc<RefCell<Phase>>,
+    id: &str,
+) -> Option<Message> {
+    // Before the check, for the reason `open` gives.
+    let revoked = ctx.state.full_access_revoked.subscribe();
+    if !ctx.state.full_access_allowed(ctx.secure) {
+        *phase.borrow_mut() = Phase::Done;
+        return Some(error_frame("forbidden", "Full access is off"));
+    }
+    let Some((stream, peer)) = ctx.state.pending.claim(id, &ctx.subject) else {
+        *phase.borrow_mut() = Phase::Done;
+        return Some(error_frame("not_found", "No such connection is waiting"));
+    };
+    *phase.borrow_mut() = relay(sink, stream, revoked);
+    audit_connect(ctx, &peer.to_string(), Outcome::Ok).await;
+    Some(ServerMsg::Ready.frame())
+}
+
+/// Carries [stream] both ways over [sink] until either end closes or full
+/// access is revoked, and answers the phase the socket is now in.
+fn relay(sink: &WsSink, stream: TcpStream, revoked: broadcast::Receiver<()>) -> Phase {
+    let _ = stream.set_nodelay(true);
     let (mut reader, mut writer) = stream.into_split();
     let (tx, mut rx) = mpsc::channel::<Vec<u8>>(TARGET_QUEUE);
-    *phase.borrow_mut() = Phase::Running(tx);
-    audit_connect(ctx, host, port, Outcome::Ok).await;
 
     // Towards the target.
     let writing = async move {
@@ -377,9 +425,9 @@ async fn open(
     // The grant this connection was opened under, which the panel can take
     // away from a running process. Without this the socket would keep carrying
     // bytes after `full_access` was switched off — the flag is only consulted
-    // when something is *started*. The receiver was taken at the top of this
-    // function, so a revocation racing the connect is delivered rather than
-    // missed.
+    // when something is *started*. The receiver was taken by the caller before
+    // its own check, so a revocation racing the connect is delivered rather
+    // than missed.
     let revocation_sink = sink.clone();
 
     spawn(async move {
@@ -404,10 +452,7 @@ async fn open(
             }
         }
     });
-    // The caller waits for this before treating the connection as usable: a
-    // relay that answers `error` must not be raced by bytes the client already
-    // wrote into it.
-    Some(ServerMsg::Ready.frame())
+    Phase::Running(tx)
 }
 
 /// Resolves when the panel turns full access off, or never.
@@ -417,7 +462,7 @@ async fn open(
 /// happen while the agent is running — the sender lives in `AppState` — but a
 /// closed channel is treated as "no signal" rather than as a revocation, since
 /// guessing here would close every relay the moment a state was dropped.
-async fn awaiting_revocation(mut revoked: broadcast::Receiver<()>) {
+pub(super) async fn awaiting_revocation(mut revoked: broadcast::Receiver<()>) {
     loop {
         match revoked.recv().await {
             Ok(()) | Err(broadcast::error::RecvError::Lagged(_)) => return,
@@ -426,14 +471,16 @@ async fn awaiting_revocation(mut revoked: broadcast::Receiver<()>) {
     }
 }
 
-async fn audit_connect(ctx: &Rc<ConnCtx>, host: &str, port: u16, outcome: Outcome) {
+/// [target] is the address dialled, or for a connection a listener accepted,
+/// the peer it came from.
+async fn audit_connect(ctx: &Rc<ConnCtx>, target: &str, outcome: Outcome) {
     Event::new(Kind::Stream, Action::Connect, outcome)
         .subject(&ctx.subject)
         .remote_ip(ctx.remote_ip.clone())
         // The address is the whole of what this endpoint was asked for, and it
         // is the operator's own network being dialled — worth recording, and
         // nothing a credential could be read out of.
-        .detail(format!("{host}:{port}"))
+        .detail(target)
         .record(&ctx.state.db)
         .await;
 }
