@@ -10,6 +10,7 @@ import 'package:server_box/core/utils/monitor_listener.dart';
 import 'package:server_box/core/utils/monitor_tunnel.dart';
 import 'package:server_box/core/utils/server_tcp.dart';
 import 'package:server_box/core/utils/ssh_local_tunnel.dart';
+import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -39,6 +40,26 @@ part 'port_forward_provider.g.dart';
     relay: caps.tcpRelay || unknown,
     listen: caps.remoteListen || unknown,
   );
+}
+
+/// Why [server] cannot make a forward of the [listen] kind — see
+/// [portForwardKinds] — or null when it can.
+///
+/// An agent that has not granted `full_access` cannot carry any forward and
+/// is told so, as [ServerFuncBtn.unavailableReason] does; one that has, and
+/// relays but cannot listen, predates the listener and needs updating.
+String? portForwardUnavailable(ServerState server, {required bool listen}) {
+  final kinds = portForwardKinds(server);
+  if (listen ? kinds.listen : kinds.relay) return null;
+  final granted = server.remoteAccess;
+  if (listen &&
+      server.spi.transport == ServerTransport.monitorHttp &&
+      granted != null &&
+      granted.fullAccess &&
+      granted.stream) {
+    return l10n.portForwardRemoteNeedsAgent;
+  }
+  return ServerFuncBtn.portForward.unavailableReason(server.spi, granted);
 }
 
 @Riverpod(keepAlive: true)
@@ -273,14 +294,8 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     ServerState server, {
     required bool listen,
   }) async {
-    final kinds = portForwardKinds(server);
-    if (!(listen ? kinds.listen : kinds.relay)) {
-      throw Exception(
-        listen && _viaAgent(server)
-            ? l10n.portForwardRemoteNeedsAgent
-            : l10n.funcUnavailableFmt(libL10n.portForward),
-      );
-    }
+    final reason = portForwardUnavailable(server, listen: listen);
+    if (reason != null) throw Exception(reason);
     if (server.spi.transport == ServerTransport.ssh) await _connectedClient();
   }
 

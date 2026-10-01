@@ -6,6 +6,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
@@ -81,6 +82,8 @@ void main() {
       await closeTestDb();
     }
   });
+
+  _reasons();
 
   group('a forward on a server with both SSH and an agent', () {
     /// Starts a forward of [type] on a server led by [preferred], hands it to
@@ -190,6 +193,57 @@ void main() {
           expect(forwards.state.activeForwards[id]?.isActive, isNot(isTrue));
         },
       );
+    });
+  });
+}
+
+void _reasons() {
+  group('why a remote forward cannot be made', () {
+    ServerState agentLed(MonitorRemoteAccess? granted) => ServerState(
+      spi: spiFixture(name: 'server', id: 's', ip: '127.0.0.1').copyWith(
+        monitorHttp: const MonitorHttpCredential(addr: 'https://agent:3770'),
+        preferredTransport: ServerTransport.monitorHttp,
+      ),
+      status: InitStatus.status,
+      remoteAccess: granted,
+    );
+
+    test('an agent with full access off is told to turn it on', () {
+      final reason = portForwardUnavailable(
+        agentLed(MonitorRemoteAccess.none),
+        listen: true,
+      );
+      expect(reason, contains('full_access'));
+      expect(reason, isNot(l10n.portForwardRemoteNeedsAgent));
+    });
+
+    test('one that relays but cannot listen is told to update', () {
+      expect(
+        portForwardUnavailable(
+          agentLed(
+            const MonitorRemoteAccess(fullAccess: true, stream: true),
+          ),
+          listen: true,
+        ),
+        l10n.portForwardRemoteNeedsAgent,
+      );
+    });
+
+    test('one that listens, or has not answered yet, is not held back', () {
+      expect(
+        portForwardUnavailable(
+          agentLed(
+            const MonitorRemoteAccess(
+              fullAccess: true,
+              stream: true,
+              listen: true,
+            ),
+          ),
+          listen: true,
+        ),
+        isNull,
+      );
+      expect(portForwardUnavailable(agentLed(null), listen: true), isNull);
     });
   });
 }

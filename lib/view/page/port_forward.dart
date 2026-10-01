@@ -198,6 +198,10 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
         existing: existing,
         serverId: widget.args.spi.id,
         kinds: portForwardKinds(ref.read(serverProvider(widget.args.spi.id))),
+        listenUnavailable: portForwardUnavailable(
+          ref.read(serverProvider(widget.args.spi.id)),
+          listen: true,
+        ),
         onSave: (config) async {
           if (existing == null) {
             await _notifier.addConfig(config);
@@ -225,12 +229,17 @@ class _PortForwardConfigDialog extends StatefulWidget {
 
   /// Which kinds the server can make — see [portForwardKinds].
   final ({bool relay, bool listen}) kinds;
+
+  /// Why a remote forward cannot be made here, or null — see
+  /// [portForwardUnavailable].
+  final String? listenUnavailable;
   final Future<void> Function(PortForwardConfig config) onSave;
 
   const _PortForwardConfigDialog({
     required this.existing,
     required this.serverId,
     required this.kinds,
+    required this.listenUnavailable,
     required this.onSave,
   });
 
@@ -288,14 +297,11 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
             Input(controller: nameController, hint: libL10n.name),
             const SizedBox(height: 8),
             _buildTypeSelector(),
-            // Only an agent-led server lacks one: SSH listens, and a server
-            // whose agent cannot relay has no forwards at all.
-            if (!widget.kinds.listen) ...[
+            // Only an agent-led server can lack one, SSH always listens: the
+            // agent's grant is off, or the agent predates its listener.
+            if (widget.listenUnavailable case final reason?) ...[
               const SizedBox(height: 5),
-              Text(
-                context.l10n.portForwardRemoteNeedsAgent,
-                style: UIs.text12Grey,
-              ),
+              Text(reason, style: UIs.text12Grey),
             ],
             const SizedBox(height: 8),
             Row(
