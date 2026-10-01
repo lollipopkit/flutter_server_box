@@ -26,7 +26,7 @@ enum ServerFuncBtn {
   users(1579),
   scheduledTasks(1579),
   remoteDesktop(1617),
-  firewall(1715);
+  firewall(1719);
 
   /// The last released build that did not contain this entry.
   ///
