@@ -131,6 +131,12 @@ jobs:
           lfs: true
           persist-credentials: false
 
+      # The workspace `[patch.crates-io]` points at IronRDP's crates by path,
+      # and cargo resolves every patch before building any package, so the
+      # monitor needs this submodule even though it never links IronRDP.
+      - name: Check out IronRDP
+        run: git submodule update --init --depth 1 third_party/ironrdp
+
       - name: Install musl toolchain
         if: matrix.platform == 'linux'
         run: |
