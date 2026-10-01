@@ -128,6 +128,23 @@ void main() {
       expect(stopped.reach(_ssh('203.0.113.5'), null), FirewallReach.open);
     });
 
+    test('a zone is active by its flags, never by its name', () {
+      final zones = FirewalldManager.parseZones([
+        'inactive',
+        '  target: default',
+        'myactive',
+        '  target: default',
+        'public (default, active)',
+        '  target: default',
+        'internal (active)',
+        '  target: default',
+      ]);
+      expect(
+        {for (final z in zones) z.name: z.active},
+        {'inactive': false, 'myactive': false, 'public': true, 'internal': true},
+      );
+    });
+
     test('refuses output with no zones section', () {
       expect(
         () => FirewalldManager.parse('SrvBoxFwd.Version\t1\n'),

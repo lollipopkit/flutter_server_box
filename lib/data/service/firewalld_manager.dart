@@ -178,7 +178,7 @@ abstract final class FirewalldManager {
     ];
     return FirewalldZone(
       name: name,
-      active: block.header.contains('active'),
+      active: _flags(block).contains('active'),
       target:
           FirewalldTarget.fromToken(f['target']?.firstOrNull) ??
           FirewalldTarget.defaultTarget,
@@ -197,11 +197,20 @@ abstract final class FirewalldManager {
     );
   }
 
+  /// The words in parentheses after a block's name: `public (default,
+  /// active)` has `default` and `active`. Never the name itself, which may
+  /// hold any of them — a zone may be called `inactive`.
+  static Set<String> _flags(_Block block) {
+    final match = RegExp(r'^\S+\s+\(([^)]*)\)$').firstMatch(block.header);
+    if (match == null) return const {};
+    return {for (final flag in match.group(1)!.split(',')) flag.trim()};
+  }
+
   /// Active policies, as far as they may decide what reaches this host.
   static List<FirewalldPolicy> parsePolicies(List<String> lines) {
     return [
       for (final block in _blocks(lines))
-        if (block.header.contains('(active)'))
+        if (_flags(block).contains('active'))
           FirewalldPolicy(
             name: block.header.split(' ').first,
             target: block.fields['target']?.firstOrNull ?? 'CONTINUE',
