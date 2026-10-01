@@ -48,6 +48,7 @@ jobs:
     # status turns green the moment someone signs.
     name: Verify CLA signatures
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     # Skip on forks of this repository, and skip the vast majority of comments
     # without spinning up a runner. The script re-checks the comment body
     # strictly; `contains` here is only a cheap pre-filter.

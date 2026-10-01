@@ -34,9 +34,10 @@ env:
 jobs:
   reproducibilityCheck:
     # Static build-input validation. The independent byte-for-byte Android
-    # builds live in android-reproducible.yml.
+    # builds live in android-reproducible.yml, run by hand.
     name: Build input checks
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     outputs:
       # The selection, canonicalised once and matched exactly by every job
       # below. Wrapped in commas so `contains(..., ',linux,')` cannot match a
@@ -498,6 +499,7 @@ jobs:
             platform: windows
             arch: amd64
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     env:
       SQLX_OFFLINE: "true"
     steps:
@@ -518,24 +520,6 @@ jobs:
         shell: bash
         run: cargo build -p server_box_monitor --release --target ${{ matrix.target }}
 
-  # Two independent Android builds of this exact tree, compared byte for byte.
-  # `publishRelease` needs it, so a tree that has stopped building reproducibly
-  # does not become a release: F-Droid rebuilds from this source and compares
-  # against the published APK, and a divergence found there is found after the
-  # fact, by someone else.
-  #
-  # Gated the same way `buildAndroid` is, so a dispatch that did not ask for
-  # Android does not pay for it. It builds the unsigned F-Droid APKs rather than
-  # the signed ones this publishes — those are what the reproducibility work
-  # targets, and what F-Droid will rebuild.
-  androidReproducible:
-    name: Android reproducible build
-    if: >-
-      github.ref_type == 'tag'
-      || contains(needs.reproducibilityCheck.outputs.selected, ',android,')
-    needs: reproducibilityCheck
-    uses: ./.github/workflows/android-reproducible.yml
-
   buildAndroid:
     name: Build Android (${{ matrix.abi }})
     if: >-
@@ -550,6 +534,7 @@ jobs:
       APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
       BUILD_NUMBER: ${{ needs.reproducibilityCheck.outputs.buildNumber }}
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -691,6 +676,7 @@ jobs:
       APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
       BUILD_NUMBER: ${{ needs.reproducibilityCheck.outputs.buildNumber }}
     runs-on: macos-latest
+    timeout-minutes: 45
     # See `buildMacOS` — publication is one job, and it is the only one that
     # needs to write.
     permissions:
@@ -785,6 +771,7 @@ jobs:
             release_suffix: "_legacy"
             artifact_suffix: "-legacy"
     runs-on: ${{ matrix.runs_on }}
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -845,6 +832,7 @@ jobs:
       APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
       BUILD_NUMBER: ${{ needs.reproducibilityCheck.outputs.buildNumber }}
     runs-on: windows-latest
+    timeout-minutes: 45
     # See `buildMacOS` — publication is one job, and it is the only one that
     # needs to write.
     permissions:
@@ -901,13 +889,13 @@ jobs:
     if: needs.reproducibilityCheck.outputs.isRelease == 'true'
     needs:
       - reproducibilityCheck
-      - androidReproducible
       - buildMacOS
       - buildAndroid
       - buildIOS
       - buildLinux
       - buildWindows
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: write
     env:
@@ -1038,6 +1026,7 @@ jobs:
       - reproducibilityCheck
       - publishRelease
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions: {}
     env:
       APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
