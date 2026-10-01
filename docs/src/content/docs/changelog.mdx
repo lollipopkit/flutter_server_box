@@ -6,6 +6,136 @@ description: What changed in each released version
 Every released version, newest first. Downloads and per-release notes are on
 [GitHub Releases](https://github.com/lollipopkit/flutter_server_box/releases).
 
+## v1.0.1719 — 2026-10-01
+
+### Before you upgrade
+
+- **Earlier Agent conversations are deleted.** The Agent moved to a new
+  engine, and the old history cannot be carried over. It was never part of a
+  backup.
+- **Several settings are gone:** *Double column mode*, *Display CPU index*, the
+  old CPU progress-bar view, *Network view type*, *Prioritize displaying disk
+  capacity*, reordering the detail page's cards, the recent-server history, the
+  custom theme catalog URL, and opening terminals in the system SSH client.
+  Terminals always open in the app.
+- **Midnight, One Dark Pro, GitHub and Dracula are no longer bundled.** They are
+  in the theme store. If one of them was selected, the app returns to Default
+  until it is installed again.
+- **Features that use the Monitor agent need agent 0.2.0**: accounts and roles,
+  port forwarding, longer history and *Monitor settings*. Upgrading the agent
+  turns its old remote-access switches into roles, and every existing account
+  becomes an admin with what those switches allowed.
+- This version's data cannot be opened by v1.0.1617 or older. A downgraded
+  install shows the rescue screen.
+
+### Added
+
+- **Remote desktop (RDP and VNC).** A *Remote desktop* tab, and an entry on
+  each server, which can hold several connection profiles. The connection
+  goes through the server's SSH connection or its Monitor agent, so the
+  desktop port does not have to be reachable from your network. RDP pins the
+  server's certificate and supports the text clipboard and dynamic
+  resolution. VNC supports no authentication or a VNC password. The viewer
+  can fit to the window, zoom, switch between touchpad and direct pointer,
+  send Ctrl+Alt+Delete and reconnect on its own. Saving the password is
+  opt-in. Audio, multiple monitors and file transfer are not supported.
+- **Virtualization tab** for Proxmox VE (VMs and containers) and libvirt/KVM
+  hosts with `virsh`: guest list and state, power actions, console,
+  snapshots, storage, networks, cloud-init and cloning. It works over SSH, a
+  Monitor agent, or this device. Proxmox VE can sign in with an API token.
+  Proxmox VE moves here from the server page; its settings are carried over,
+  and the first connection asks you to confirm the server's certificate
+  again.
+- **This device as a server**, on Linux, Windows and the macOS DMG build:
+  status, processes, services, containers, terminal and files, without SSH
+  or an agent. Add it from the intro page or a server's *Connection*
+  settings.
+- **Themes and a theme store.** A theme can change the colours, icons,
+  background, corner radius, UI font and splash screen, and can come in
+  variants. Install official themes from the store or import a `.fsbt`
+  package. The old AMOLED modes are converted to the AMOLED theme.
+- **tmux, drawn by the app.** With *Auto tmux* on, tmux windows and panes get
+  the app's own session picker and window bar, scrollback and clipboard. It
+  works on local shells too.
+- **Port forwarding over a Monitor agent** — local, remote and SOCKS5. SOCKS5
+  dynamic forwarding is new over SSH as well.
+- **Accounts and roles for the Monitor agent**, edited from the app: each
+  role grants files (read-only or read-write), connect, listen, shell and SSH
+  terminal. Every account can change its own password.
+- **Monitor settings**: edit an agent's collection intervals, alert rules,
+  data retention and notification channels (with a test send) from the app.
+  Saved credentials are never shown back.
+- **`serverbox://` links** on Android, iOS and macOS, to open a server, a
+  function, a tab or a snippet, or to fill in a new server. *Copy link* is on
+  servers and snippets. A snippet link asks before it runs, and a setup link
+  never carries a password or key.
+- **ProxyCommand on Android and iOS.** It runs in the app's Linux environment,
+  so a Linux system has to be installed first.
+- **The Android file picker shows installed Linux systems**, so other apps can
+  open, create, rename and delete files in them.
+- **More readings**: Intel and AMD integrated GPUs on Linux (Intel needs
+  `intel_gpu_top`), a card per GPU, disk, network interface, battery, sensor
+  and SMART device, up to 30 days of history with a custom range on an
+  agent, and how long the last status read took.
+- **Legacy algorithms**, per server, for old SSH daemons that offer only
+  SHA-1 `ssh-rsa`, such as dropbear on routers. Off by default.
+- **Reduce motion**, which also follows the system setting on macOS.
+- The Terminal tab shows connection progress, retries temporary failures and
+  reconnects when the app returns to the foreground. Terminal settings open
+  from the terminal itself.
+- Releases include `SHA256SUMS` and `MD5SUMS`.
+
+### Changed
+
+- **A new layout for servers and settings.** The server detail page is one
+  chart with a row per metric, and says when it is loading, out of date or
+  failing. The server list gains density, tag groups, search, sort and a
+  *Server overview*, and stays beside the open server on wide screens.
+  Settings are grouped and searchable, and phones get a new bottom bar.
+  Context menus are used throughout.
+- **The server editor** turns SSH and the Monitor agent on and off separately
+  and orders them (preferred, then fallback). Turning one off keeps its
+  fields. Tags have their own editor.
+- **The Agent runs on a new engine.** Choose providers, tools and skills, keep
+  app-wide and per-terminal chats apart, attach photos, and let it run
+  commands judged safe without asking.
+- **Containers, Users, Processes, Services and Scheduled tasks are redone.**
+  Containers shows ports and reclaimable space. Users has a detail page with
+  password state, `authorized_keys` and sudo. Processes gains search, load
+  average, a kernel-thread switch, SIGTERM/SIGKILL and a retry with `sudo`.
+  Services gains filters, unit details, logs, and start, stop, restart,
+  enable and disable without a terminal. Scheduled tasks gains presets, a
+  readable schedule, the next run time and the raw crontab.
+- The device file browser keeps its files in app storage. Files in the old
+  Documents location are copied, not moved.
+- A theme's font fallbacks (such as CJK on Windows) apply to the whole UI and
+  to terminals.
+
+### Fixed
+
+- Stopping a process answered "not available" on Linux and Windows, and the
+  process list was empty on Alpine.
+- Users and Scheduled tasks failed when the login shell is fish, and an empty
+  busybox crontab was reported as an error.
+- Windows status readings were corrupted by PowerShell output on stderr. Disk
+  I/O on Windows is per drive now.
+- Malformed server output could crash the status parser.
+- Restoring a backup failed with two servers of the same name or with keys
+  from an old install. Renaming a server lost its benchmark history. Keys
+  dropped by an old migration are repaired on launch.
+- Importing JSON with non-ASCII text from the clipboard, and importing a full
+  backup through server import, failed.
+- Synced app settings were not applied.
+- Deleting a server left its SSH connection open.
+- *Sort → Uptime* did nothing.
+- Disk totals on macOS (APFS) and CPU usage on macOS and BSD were wrong.
+- The title bar was transparent on macOS 27.
+- *Backup* on the rescue screen produced no file on desktop.
+- The Linux AppImage was missing a library its tray icon needs.
+- Monitor agent: `/velocity` could hang the agent and stop every alert;
+  memory, disk and network rules judged missing samples; rules migrated from
+  the Go agent never fired.
+
 ## v1.0.1617 — 2026-09-12
 
 ### Added
