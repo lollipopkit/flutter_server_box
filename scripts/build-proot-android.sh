@@ -62,7 +62,14 @@ printf -v PREFIX_MAP_FLAGS_FOR_MAKE '%q ' "${PREFIX_MAP_FLAGS[@]}"
 PREFIX_MAP_FLAGS_FOR_MAKE="${PREFIX_MAP_FLAGS_FOR_MAKE% }"
 
 TALLOC_VERSION=2.4.2
-TALLOC_URL="https://download.samba.org/pub/talloc/talloc-${TALLOC_VERSION}.tar.gz"
+# Upstream first, then mirrors of the same tarball: samba.org has answered 504
+# for long enough to fail a release build. The digest is what is trusted, so
+# where the bytes come from does not matter.
+TALLOC_URLS=(
+  "https://download.samba.org/pub/talloc/talloc-${TALLOC_VERSION}.tar.gz"
+  "https://deb.debian.org/debian/pool/main/t/talloc/talloc_${TALLOC_VERSION}.orig.tar.gz"
+  "https://ftp.osuosl.org/pub/blfs/conglomeration/talloc/talloc-${TALLOC_VERSION}.tar.gz"
+)
 TALLOC_SHA256=85ecf9e465e20f98f9950a52e9a411e14320bc555fa257d87697b7e7a9b1d8a6
 
 # Pinned to a tag, and then to the commit that tag pointed at when it was
@@ -119,8 +126,11 @@ log "NDK: $NDK"
 
 mkdir -p "$WORK_DIR" "$OUT_DIR"
 
+# fetch DEST WANT URL... : the first URL whose download matches WANT (any
+# download, when WANT is empty).
 fetch() {
-  local url="$1" dest="$2" want="${3:-}" got
+  local dest="$1" want="$2" url got
+  shift 2
   if [ -f "$dest" ]; then
     if [ -z "$want" ]; then return; fi
     got="$(sha256 "$dest")"
@@ -130,19 +140,27 @@ fetch() {
   fi
   [ "${PROOT_OFFLINE:-false}" != true ] ||
     die "offline build is missing the prepared input: $dest"
-  log "Fetching $(basename "$dest")"
-  curl -fsSL --retry 3 -o "$dest" "$url"
-  [ -n "$want" ] || return
-  got="$(sha256 "$dest")"
-  # Removed, not left behind: a cached file that failed its check would be
-  # skipped by the `-f` above on the next run and never checked again.
-  [ "$got" = "$want" ] || { rm -f "$dest"; die "$(basename "$dest") is not what it should be: expected $want, got $got"; }
+  for url in "$@"; do
+    log "Fetching $(basename "$dest") from $url"
+    if ! curl -fsSL --retry 3 -o "$dest" "$url"; then
+      rm -f "$dest"
+      continue
+    fi
+    [ -n "$want" ] || return 0
+    got="$(sha256 "$dest")"
+    [ "$got" = "$want" ] && return 0
+    # Removed, not left behind: a cached file that failed its check would be
+    # skipped by the `-f` above on the next run and never checked again.
+    rm -f "$dest"
+    log "$(basename "$dest") from $url is not what it should be: expected $want, got $got"
+  done
+  die "could not fetch $(basename "$dest") from any of: $*"
 }
 
 seed_talloc_archive() {
   local dest="$WORK_DIR/talloc.tar.gz"
   if [ -z "${TALLOC_ARCHIVE:-}" ]; then
-    fetch "$TALLOC_URL" "$dest" "$TALLOC_SHA256"
+    fetch "$dest" "$TALLOC_SHA256" "${TALLOC_URLS[@]}"
     return
   fi
   [ -f "$TALLOC_ARCHIVE" ] || die "TALLOC_ARCHIVE not found: $TALLOC_ARCHIVE"
