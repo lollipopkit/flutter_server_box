@@ -9,6 +9,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/server_tcp.dart';
 import 'package:server_box/core/utils/ssh_local_tunnel.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 
@@ -218,9 +219,18 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     }
     final server = ref.read(serverProvider(_serverId));
     final caps = server.capabilities;
+    // Whether the agent's relay is what [ServerTcpDialer] tries first: the
+    // agent leads, and has not said it refuses — the dialer's own reading of
+    // the grant, where unknown is worth trying.
+    final relayLeads =
+        server.spi.transport == ServerTransport.monitorHttp &&
+        server.remoteAccess?.stream != false;
     // Connect before binding so a forward cannot look active with nothing
-    // behind its listener: an SSH session, or an agent that relays.
-    if (caps.byteStream) {
+    // behind its listener: an SSH session, or an agent that relays. Not SSH
+    // where the agent leads, though a server with both answers `byteStream`:
+    // the connections go over the relay, and an sshd that is down would fail
+    // a forward that never needed it.
+    if (caps.byteStream && !relayLeads) {
       await _connectedClient();
     } else if (!caps.tcpRelay) {
       throw Exception(l10n.funcUnavailableFmt(libL10n.portForward));
@@ -249,8 +259,9 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     return _LocalForwardEntry(tunnel, dialer);
   }
 
-  /// Remote and dynamic forwards have the server listen, which only sshd
-  /// does.
+  /// Remote and dynamic forwards are SSH's alone: a remote one has the
+  /// server listen, and a dynamic one listens here but is SSH's own SOCKS —
+  /// the agent's relay is neither.
   void _requireSsh() {
     if (!ref.read(serverProvider(_serverId)).capabilities.byteStream) {
       throw Exception(l10n.portForwardNeedsSsh);

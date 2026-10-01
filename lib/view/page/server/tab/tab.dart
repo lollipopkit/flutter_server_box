@@ -354,6 +354,12 @@ class _ServerPageState extends ConsumerState<ServerPage>
     _heroId = id;
     ref.read(serverSelectionProvider.notifier).select(id);
     _closeTimer?.cancel();
+    // Opened again in the gap between the chrome leaving and the card starting
+    // back — from the column, which is still there. The card never moved, so
+    // nothing will say it has finished growing: the chrome is put back here.
+    if (_openCtrl.isCompleted && !_detailShowing) {
+      setState(() => _detailShowing = true);
+    }
     // Switching from one open server to another is not a second opening: the
     // page is already the detail, and only which card is in it changes.
     if (was != null) return;

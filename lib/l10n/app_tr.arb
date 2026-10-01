@@ -574,7 +574,7 @@
   "funcUnavailableFmt": "{func}, bu sunucunun bağlantısında kullanılamıyor.",
   "funcNeedsAgentGrant": "{func} için Monitor agent'ta {setting} açık olmalıdır.",
   "funcNeedsAgentUpdate": "{func} için daha yeni bir Monitor agent gerekir.",
-  "portForwardNeedsSsh": "Uzak ve dinamik yönlendirmeler SSH gerektirir: sunucunun dinlemesi gerekir, Monitor agent bunu yapmaz.",
+  "portForwardNeedsSsh": "Uzak ve dinamik yönlendirmeler SSH gerektirir: Monitor agent bunları desteklemez.",
   "rangeLive": "Canlı",
   "diskIo": "Disk G/Ç",
   "peak": "tepe",

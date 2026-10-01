@@ -217,14 +217,20 @@ final class _PaneSummaryButtonState extends State<_PaneSummaryButton> {
           ContextMenuAction(
             text: '${pane.index}:${pane.displayName}',
             checked: pane.id == widget.activePaneId,
-            onTap: () => widget.onSelectPane?.call(pane),
+            // Run once the menu has closed, by when the bar may be gone with
+            // the session it was for.
+            onTap: () {
+              if (mounted) widget.onSelectPane?.call(pane);
+            },
             trailing: onClose == null
                 ? null
                 : ContextMenuTrailing(
                     key: ValueKey('close_tmux_pane_${pane.id}'),
                     icon: Icons.close_outlined,
                     tooltip: libL10n.delete,
-                    onTap: () => onClose(pane),
+                    onTap: () {
+                      if (mounted) onClose(pane);
+                    },
                   ),
           ),
       ],

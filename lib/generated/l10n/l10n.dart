@@ -3601,7 +3601,7 @@ abstract class AppLocalizations {
   /// No description provided for @portForwardNeedsSsh.
   ///
   /// In en, this message translates to:
-  /// **'Remote and dynamic forwards need SSH: the server has to listen, which the Monitor agent does not.'**
+  /// **'Remote and dynamic forwards need SSH: the Monitor agent does not support them.'**
   String get portForwardNeedsSsh;
 
   /// User-facing label or message for range live.

@@ -2070,7 +2070,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get portForwardNeedsSsh =>
-      'Penerusan jarak jauh dan dinamis memerlukan SSH: server harus mendengarkan, dan Monitor agent tidak melakukannya.';
+      'Penerusan jarak jauh dan dinamis memerlukan SSH: Monitor agent tidak mendukungnya.';
 
   @override
   String get rangeLive => 'Langsung';

@@ -2094,7 +2094,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get portForwardNeedsSsh =>
-      'Los reenvíos remotos y dinámicos requieren SSH: el servidor tiene que escuchar, y el Monitor agent no lo hace.';
+      'Los reenvíos remotos y dinámicos requieren SSH: el Monitor agent no los admite.';
 
   @override
   String get rangeLive => 'En vivo';

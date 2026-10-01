@@ -2080,7 +2080,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get portForwardNeedsSsh =>
-      'Externe en dynamische doorsturingen vereisen SSH: de server moet luisteren, en de Monitor agent doet dat niet.';
+      'Externe en dynamische doorsturingen vereisen SSH: de Monitor agent ondersteunt ze niet.';
 
   @override
   String get rangeLive => 'Live';

@@ -1241,6 +1241,29 @@ void main() {
     expect(tester.getRect(find.byType(AnimatedMasonry)).top, under);
   });
 
+  testWidgets('a machine picked from the column while closing stays open', (
+    tester,
+  ) async {
+    // Between the chrome leaving and the card starting back the column is
+    // still there, and picking from it cancels the way back. The card never
+    // moved, so nothing else would bring the chrome back.
+    addServers();
+    await pump(tester, size: const Size(1200, 900));
+    await answer(tester);
+    await tester.tap(find.text('web'));
+    await settle(tester);
+
+    await tester.tap(find.byIcon(Icons.arrow_back_ios_new));
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.tap(find.widgetWithText(SideBarTile, 'db'));
+    await settle(tester);
+
+    expect(openId(tester), 'srv-1');
+    // The page has the readings again, and the grid is gone.
+    expect(find.byType(AnimatedMasonry), findsNothing);
+    expect(find.byType(ServerDetailPage), findsOneWidget);
+  });
+
   testWidgets("the switcher's field is centred on its icon", (tester) async {
     addServers();
     await pump(tester, size: const Size(1200, 900));

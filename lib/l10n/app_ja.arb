@@ -574,7 +574,7 @@
   "funcUnavailableFmt": "{func} はこのサーバーの接続方法では利用できません。",
   "funcNeedsAgentGrant": "{func}を使うには Monitor agent の {setting} を有効にする必要があります。",
   "funcNeedsAgentUpdate": "{func}を使うには Monitor agent の更新が必要です。",
-  "portForwardNeedsSsh": "リモート転送と動的転送には SSH が必要です。サーバー側での待ち受けが必要で、Monitor agent はこれに対応していません。",
+  "portForwardNeedsSsh": "リモート転送と動的転送には SSH が必要です。Monitor agent はこれらに対応していません。",
   "rangeLive": "リアルタイム",
   "diskIo": "ディスク I/O",
   "peak": "ピーク",

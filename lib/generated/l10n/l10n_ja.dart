@@ -1949,7 +1949,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get portForwardNeedsSsh =>
-      'リモート転送と動的転送には SSH が必要です。サーバー側での待ち受けが必要で、Monitor agent はこれに対応していません。';
+      'リモート転送と動的転送には SSH が必要です。Monitor agent はこれらに対応していません。';
 
   @override
   String get rangeLive => 'リアルタイム';

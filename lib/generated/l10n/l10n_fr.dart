@@ -2095,7 +2095,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get portForwardNeedsSsh =>
-      'Les redirections distantes et dynamiques nécessitent SSH : le serveur doit écouter, ce que le Monitor agent ne fait pas.';
+      'Les redirections distantes et dynamiques nécessitent SSH : le Monitor agent ne les prend pas en charge.';
 
   @override
   String get rangeLive => 'En direct';

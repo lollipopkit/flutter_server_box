@@ -2064,7 +2064,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get portForwardNeedsSsh =>
-      'Uzak ve dinamik yönlendirmeler SSH gerektirir: sunucunun dinlemesi gerekir, Monitor agent bunu yapmaz.';
+      'Uzak ve dinamik yönlendirmeler SSH gerektirir: Monitor agent bunları desteklemez.';
 
   @override
   String get rangeLive => 'Canlı';

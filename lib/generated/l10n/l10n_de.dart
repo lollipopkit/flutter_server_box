@@ -2089,7 +2089,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get portForwardNeedsSsh =>
-      'Remote- und dynamische Weiterleitungen benötigen SSH: Der Server muss lauschen, und das kann der Monitor agent nicht.';
+      'Remote- und dynamische Weiterleitungen benötigen SSH: Der Monitor agent unterstützt sie nicht.';
 
   @override
   String get rangeLive => 'Live';
