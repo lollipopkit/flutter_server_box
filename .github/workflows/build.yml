@@ -37,6 +37,7 @@ jobs:
     # builds live in android-reproducible.yml, run by hand.
     name: Build input checks
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     outputs:
       # The selection, canonicalised once and matched exactly by every job
       # below. Wrapped in commas so `contains(..., ',linux,')` cannot match a
@@ -498,6 +499,7 @@ jobs:
             platform: windows
             arch: amd64
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     env:
       SQLX_OFFLINE: "true"
     steps:
@@ -532,6 +534,7 @@ jobs:
       APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
       BUILD_NUMBER: ${{ needs.reproducibilityCheck.outputs.buildNumber }}
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -673,6 +676,7 @@ jobs:
       APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
       BUILD_NUMBER: ${{ needs.reproducibilityCheck.outputs.buildNumber }}
     runs-on: macos-latest
+    timeout-minutes: 45
     # See `buildMacOS` — publication is one job, and it is the only one that
     # needs to write.
     permissions:
@@ -767,6 +771,7 @@ jobs:
             release_suffix: "_legacy"
             artifact_suffix: "-legacy"
     runs-on: ${{ matrix.runs_on }}
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -827,6 +832,7 @@ jobs:
       APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
       BUILD_NUMBER: ${{ needs.reproducibilityCheck.outputs.buildNumber }}
     runs-on: windows-latest
+    timeout-minutes: 45
     # See `buildMacOS` — publication is one job, and it is the only one that
     # needs to write.
     permissions:
@@ -889,6 +895,7 @@ jobs:
       - buildLinux
       - buildWindows
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: write
     env:
@@ -1019,6 +1026,7 @@ jobs:
       - reproducibilityCheck
       - publishRelease
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions: {}
     env:
       APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}

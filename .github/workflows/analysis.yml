@@ -15,6 +15,13 @@ on:
   # compiles and tests every Dart change on a pull request.
   workflow_dispatch:
 
+# A new push to a pull request makes the run for the previous one moot.
+# Only pull requests: every push to main is a state a release can be cut from,
+# and a manual run was asked for.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: read
   # For the `changes` job's file list. Read-only, and only for this repo.
@@ -38,6 +45,7 @@ jobs:
   changes:
     name: What changed
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       rust: ${{ steps.filter.outputs.rust }}
       dart: ${{ steps.filter.outputs.dart }}
@@ -125,6 +133,7 @@ jobs:
     # two independent Android builds are compared in android-reproducible.yml.
     name: Build input checks
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -166,6 +175,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -189,6 +199,14 @@ jobs:
           rustup toolchain install "$v" --profile minimal -c clippy --no-self-update
           echo "RUSTUP_TOOLCHAIN=$v" >> "$GITHUB_ENV"
 
+      # This job's own `cargo` builds into `target/`, so rust-cache applies
+      # here, unlike to the build hook (see `build-hook-cache`). After the
+      # toolchain step: the key includes the rustc it finds. Saved from main
+      # only, so pull requests restore main's and add nothing to the 10 GB.
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
       - name: Test Rust workspace
         run: cargo test --workspace --no-fail-fast
 
@@ -201,6 +219,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -250,6 +269,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.docs == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -296,6 +316,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.website == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -327,6 +348,7 @@ jobs:
     name: iOS Linux engine
     if: github.event_name == 'workflow_dispatch'
     runs-on: macos-latest
+    timeout-minutes: 45
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -488,6 +510,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.android == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -522,6 +545,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.dart == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -557,6 +581,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.dart == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -574,6 +599,13 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
+
+      # The `cargo build` below, not the build hook. One shard saves; all
+      # three build the same thing.
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          shared-key: flutter-tests-ffi
+          save-if: ${{ github.ref == 'refs/heads/main' && matrix.shard == 0 }}
 
       # FFI-dependent suites (frb_parser/windows/server_status_update_req...)
       # load the dylib from target/debug via test/helpers/rust_lib_helper.dart

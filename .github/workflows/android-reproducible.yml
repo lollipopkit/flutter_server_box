@@ -15,6 +15,7 @@ jobs:
   build:
     name: Independent build ${{ matrix.instance }} (${{ matrix.abi }})
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -163,6 +164,7 @@ jobs:
     name: Compare independent APKs (${{ matrix.abi }})
     needs: build
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
