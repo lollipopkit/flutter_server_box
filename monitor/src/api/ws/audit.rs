@@ -31,6 +31,10 @@ pub enum Kind {
     /// desktop session or a forwarded port. The detail is the address, which
     /// is the operator's own network rather than anything a client sent.
     Stream,
+    /// A port listened on through `api::ws::listen`, for a remote forward.
+    /// The detail is the address bound; each connection it hands over is
+    /// recorded as a `Stream` connect, with the peer as the detail.
+    Listen,
     /// A file operation through `api::fs`. The subject is the verb and the
     /// path, never the contents.
     Fs,
@@ -51,6 +55,7 @@ impl Kind {
             Kind::Terminal => "terminal",
             Kind::Exec => "exec",
             Kind::Stream => "stream",
+            Kind::Listen => "listen",
             Kind::Fs => "fs",
             Kind::CustomCmd => "custom_cmd",
             Kind::Push => "push",

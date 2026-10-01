@@ -578,6 +578,15 @@ class MonitorHttpClient {
   Future<WebSocket> openStream({Duration? timeout}) =>
       _openWs(timeout: timeout, purpose: 'stream', path: '/api/v1/stream/ws');
 
+  /// Opens the agent's listener endpoint and returns the raw WebSocket: the
+  /// control socket of a remote port forward. See `MonitorRemoteListener` for
+  /// the protocol spoken over it.
+  ///
+  /// The same `full_access` grant as [openStream], since a connection the
+  /// listener takes is claimed over the relay.
+  Future<WebSocket> openListen({Duration? timeout}) =>
+      _openWs(timeout: timeout, purpose: 'listen', path: '/api/v1/listen/ws');
+
   /// What this agent will accept right now, and what it runs on.
   ///
   /// Reports what the agent will *do*, not what its config asks for — the

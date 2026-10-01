@@ -423,11 +423,10 @@ List<ServerFuncEntry> serverFuncBtnsFor(
   //
   // The row is one line at every width and scrolls, so the entries that follow
   // cost nothing but the scroll they are past.
-  final caps = ServerCapabilities.ofSpi(spi, granted: granted);
   final available = <ServerFuncEntry>[];
   final rest = <ServerFuncEntry>[];
   for (final btn in ordered) {
-    final ok = btn.availableWith(caps);
+    final ok = btn.availableOn(spi, granted);
     final entry = (
       btn: btn,
       available: ok,

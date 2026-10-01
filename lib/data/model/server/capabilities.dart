@@ -50,6 +50,15 @@ abstract interface class ServerCapabilities {
   /// that can relay a socket still cannot answer for a file transfer.
   bool get tcpRelay;
 
+  /// A port on the server can be listened on and what connects to it carried
+  /// here: a remote port forward.
+  ///
+  /// sshd does it with `tcpip-forward`; an agent does it when it answers
+  /// `RemoteAccess.listen`. Its own question rather than [tcpRelay], which is
+  /// the other direction: an agent too old for the listen endpoint relays
+  /// connections out and still cannot take one in.
+  bool get remoteListen;
+
   /// Files can be browsed and moved: the file tab, the file button, and either
   /// end of a transfer.
   ///
@@ -87,6 +96,20 @@ abstract interface class ServerCapabilities {
       ),
     };
   }
+
+  /// What port forwarding can do on [spi], which is the leading transport's
+  /// answer when the agent leads, and [ofSpi]'s otherwise.
+  ///
+  /// Not the union for an agent-led server: a forward there goes through the
+  /// agent alone and never falls back to sshd, so what SSH could do is not
+  /// something it can use. One that leads with SSH still falls back to the
+  /// agent for what a relay carries, which the union says.
+  static ServerCapabilities forwardsOf(
+    Spi spi, {
+    MonitorRemoteAccess? granted,
+  }) => spi.transport == ServerTransport.monitorHttp
+      ? of(ServerConnectCredential.fromSpi(spi), granted: granted)
+      : ofSpi(spi, granted: granted);
 
   /// What a server can do across every way it is reachable.
   ///
@@ -135,6 +158,9 @@ class UnionCapabilities implements ServerCapabilities {
 
   @override
   bool get tcpRelay => a.tcpRelay || b.tcpRelay;
+
+  @override
+  bool get remoteListen => a.remoteListen || b.remoteListen;
 
   @override
   bool get files => a.files || b.files;
@@ -197,6 +223,10 @@ class SshCapabilities implements ServerCapabilities {
   @override
   bool get tcpRelay => true;
 
+  /// `tcpip-forward`, which is what `ssh -R` asks for.
+  @override
+  bool get remoteListen => true;
+
   @override
   bool get files => true;
 
@@ -245,6 +275,11 @@ class MonitorHttpCapabilities implements ServerCapabilities {
   /// not somewhere a file transfer can go.
   @override
   bool get tcpRelay => granted.stream;
+
+  /// Whether the agent will listen on a port of the server's and hand over
+  /// what connects — see [MonitorRemoteAccess.listen].
+  @override
+  bool get remoteListen => granted.listen;
 
   /// The agent's own answer, from `GET /api/v1/capabilities`.
   ///
@@ -306,6 +341,9 @@ class LocalCapabilities implements ServerCapabilities {
 
   @override
   bool get tcpRelay => false;
+
+  @override
+  bool get remoteListen => false;
 
   @override
   bool get files => supported;

@@ -109,6 +109,12 @@ ssh_addr = "127.0.0.1:22"
 # panel can turn it off — but never on — from its first-run prompt.
 # full_access = false
 
+# Let the app's remote port forwards listen on an address other than loopback
+# (0.0.0.0, a LAN address). This is sshd's GatewayPorts: off, a forward is
+# reachable from this machine only; on, it is reachable by everyone who can
+# reach this machine. Remote forwards themselves are granted by full_access.
+# listen_public = false
+
 # In-browser terminal in the panel. The agent acts as an SSH client to
 # ssh_addr, so a session has exactly the privileges of the SSH account the
 # browser authenticates as — the panel password alone grants no shell, unless

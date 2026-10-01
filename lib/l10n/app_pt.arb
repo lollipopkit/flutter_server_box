@@ -574,7 +574,7 @@
   "funcUnavailableFmt": "{func} não está disponível pela conexão deste servidor.",
   "funcNeedsAgentGrant": "{func} requer ativar {setting} no Monitor agent.",
   "funcNeedsAgentUpdate": "{func} requer um Monitor agent mais recente.",
-  "portForwardNeedsSsh": "Encaminhamentos remotos e dinâmicos precisam de SSH: o Monitor agent não os suporta.",
+  "portForwardRemoteNeedsAgent": "Encaminhamentos remotos pelo Monitor agent exigem uma versão mais recente: atualize-o no servidor.",
   "rangeLive": "Ao vivo",
   "diskIo": "E/S de disco",
   "peak": "pico",

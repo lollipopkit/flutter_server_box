@@ -277,4 +277,78 @@ void main() {
       );
     });
   });
+
+  group('port forwarding on a server with both SSH and an agent', () {
+    const monitor = MonitorHttpCredential(addr: 'https://agent:3770');
+    Spi both(ServerTransport preferred) => Spi(
+      name: 'test',
+      id: 'b',
+      ssh: const SshCredential(ip: '10.0.0.1'),
+      monitorHttp: monitor,
+      preferredTransport: preferred,
+    );
+    /// An agent from before the listen endpoint.
+    const relayOnly = MonitorRemoteAccess(
+      terminal: true,
+      fullAccess: true,
+      stream: true,
+    );
+
+    test('the agent leading, answers with the agent alone', () {
+      // A forward there never falls back to sshd, so sshd being able to
+      // listen says nothing about what the forward can do.
+      final caps = ServerCapabilities.forwardsOf(
+        both(ServerTransport.monitorHttp),
+        granted: relayOnly,
+      );
+      expect(caps.tcpRelay, isTrue);
+      expect(caps.remoteListen, isFalse);
+    });
+
+    test('SSH leading, answers with both', () {
+      final caps = ServerCapabilities.forwardsOf(
+        both(ServerTransport.ssh),
+        granted: MonitorRemoteAccess.none,
+      );
+      expect(caps.tcpRelay, isTrue);
+      expect(caps.remoteListen, isTrue);
+    });
+
+    test('the entry follows the agent where it leads, SSH or not', () {
+      final spi = both(ServerTransport.monitorHttp);
+      expect(
+        ServerFuncBtn.portForward.availableOn(spi, MonitorRemoteAccess.none),
+        isFalse,
+      );
+      expect(ServerFuncBtn.portForward.availableOn(spi, relayOnly), isTrue);
+      // And says what the agent is missing, as an agent-only server would.
+      expect(
+        ServerFuncBtn.portForward.unavailableReason(
+          spi,
+          MonitorRemoteAccess.none,
+        ),
+        contains('full_access'),
+      );
+      // Everything else still asks the union.
+      expect(
+        ServerFuncBtn.files.availableOn(spi, MonitorRemoteAccess.none),
+        isTrue,
+      );
+    });
+
+    test('an agent that listens can take a remote forward', () {
+      const listens = MonitorHttpCapabilities(
+        MonitorRemoteAccess(fullAccess: true, stream: true, listen: true),
+      );
+      expect(listens.remoteListen, isTrue);
+      expect(const MonitorHttpCapabilities(relayOnly).remoteListen, isFalse);
+      expect(const SshCapabilities().remoteListen, isTrue);
+      expect(
+        MonitorRemoteAccess.fromJson({'stream': true, 'listen': true}).listen,
+        isTrue,
+      );
+      // An agent too old to say is one that cannot.
+      expect(MonitorRemoteAccess.fromJson({'stream': true}).listen, isFalse);
+    });
+  });
 }

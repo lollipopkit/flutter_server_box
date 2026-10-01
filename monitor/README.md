@@ -101,10 +101,20 @@ exactly that:
 | Processes, systemd, containers, snippets, power | `full_access` (`POST /api/v1/exec`) |
 | Terminal | `full_access` (`/api/v1/terminal/ws`) |
 | File browser | `[remote_access.fs] enabled` + `roots` |
+| Remote desktop, local and dynamic port forwards | `full_access` (`/api/v1/stream/ws`) |
+| Remote port forwards | `full_access` (`/api/v1/listen/ws`); loopback only unless `listen_public` |
 
-SFTP and port forwarding are not offered on a monitor server: the agent has no
-endpoint that relays a connection to an address the app names. Add the server
-over SSH if you need them.
+`/api/v1/stream/ws` relays one TCP connection to an address the app names,
+dialled from this machine as the agent's account. `/api/v1/listen/ws` is the
+other direction: the agent listens on a port here and hands each connection to
+the app, which takes it over a `stream` socket. Both are the same grant as the
+shell — anyone who can open one can `ssh -L` or `ssh -R` from it. A remote
+forward binds loopback only unless `[remote_access] listen_public = true`,
+which is sshd's `GatewayPorts`.
+
+SFTP is not offered on a monitor server: the agent's file API moves file
+contents rather than an SSH byte stream. An agent older than these endpoints
+reports neither, and the app greys out what needs them.
 
 ## Remote access (optional, off by default)
 

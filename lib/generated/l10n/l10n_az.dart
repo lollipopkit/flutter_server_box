@@ -2076,8 +2076,8 @@ class AppLocalizationsAz extends AppLocalizations {
   }
 
   @override
-  String get portForwardNeedsSsh =>
-      'Uzaq və dinamik yönləndirmələr SSH tələb edir: Monitor agent onları dəstəkləmir.';
+  String get portForwardRemoteNeedsAgent =>
+      'Monitor agent vasitəsilə uzaq yönləndirmələr daha yeni agent tələb edir: serverdə onu yeniləyin.';
 
   @override
   String get rangeLive => 'Canlı';

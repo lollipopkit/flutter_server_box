@@ -2062,8 +2062,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get portForwardNeedsSsh =>
-      'Remote and dynamic forwards need SSH: the Monitor agent does not support them.';
+  String get portForwardRemoteNeedsAgent =>
+      'Remote forwards through the Monitor agent need a newer agent: update it on the server.';
 
   @override
   String get rangeLive => 'Live';

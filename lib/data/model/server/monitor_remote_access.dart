@@ -5,7 +5,7 @@
 /// for the agent's transport check, so a client can hide an entry instead of
 /// offering one that answers 403.
 ///
-/// Written by hand rather than generated: it is three booleans with a
+/// Written by hand rather than generated: it is a few booleans with a
 /// deliberate default of "not offered", which is the answer an older agent
 /// (whose `/capabilities` has no `remote_access` at all) should produce.
 class MonitorRemoteAccess {
@@ -36,11 +36,20 @@ class MonitorRemoteAccess {
   /// which of the two it is.
   final bool stream;
 
+  /// The agent will listen on a port of the server's and hand each connection
+  /// to this app: a remote port forward, over `/api/v1/listen/ws`.
+  ///
+  /// The same grant as [stream], for the same reason, and its own answer for
+  /// the same reason too: an agent older than the endpoint relays and still
+  /// cannot listen.
+  final bool listen;
+
   const MonitorRemoteAccess({
     this.terminal = false,
     this.fullAccess = false,
     this.files = false,
     this.stream = false,
+    this.listen = false,
   });
 
   static const none = MonitorRemoteAccess();
@@ -52,13 +61,14 @@ class MonitorRemoteAccess {
       fullAccess: flag('full_access'),
       files: flag('files'),
       stream: flag('stream'),
+      listen: flag('listen'),
     );
   }
 
   @override
   String toString() =>
       'MonitorRemoteAccess(terminal: $terminal, fullAccess: $fullAccess, '
-      'files: $files, stream: $stream)';
+      'files: $files, stream: $stream, listen: $listen)';
 
   @override
   bool operator ==(Object other) =>
@@ -66,8 +76,9 @@ class MonitorRemoteAccess {
        terminal == other.terminal &&
        fullAccess == other.fullAccess &&
        files == other.files &&
-       stream == other.stream;
+       stream == other.stream &&
+       listen == other.listen;
 
   @override
-  int get hashCode => Object.hash(terminal, fullAccess, files, stream);
+  int get hashCode => Object.hash(terminal, fullAccess, files, stream, listen);
 }

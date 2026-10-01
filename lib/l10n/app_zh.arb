@@ -570,7 +570,7 @@
   "funcUnavailableFmt": "此服务器的连接方式不提供{func}。",
   "funcNeedsAgentGrant": "{func}需要在 Monitor agent 中开启 {setting}。",
   "funcNeedsAgentUpdate": "{func}需要更新 Monitor agent。",
-  "portForwardNeedsSsh": "远程转发和动态转发需要 SSH，Monitor agent 不支持。",
+  "portForwardRemoteNeedsAgent": "通过 Monitor agent 进行远程转发需要更新版本的 agent，请在服务器上更新。",
   "rangeLive": "实时",
   "diskIo": "磁盘读写",
   "peak": "峰值",

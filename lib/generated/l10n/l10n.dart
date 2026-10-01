@@ -3598,11 +3598,11 @@ abstract class AppLocalizations {
   /// **'{func} needs a newer Monitor agent.'**
   String funcNeedsAgentUpdate(String func);
 
-  /// No description provided for @portForwardNeedsSsh.
+  /// No description provided for @portForwardRemoteNeedsAgent.
   ///
   /// In en, this message translates to:
-  /// **'Remote and dynamic forwards need SSH: the Monitor agent does not support them.'**
-  String get portForwardNeedsSsh;
+  /// **'Remote forwards through the Monitor agent need a newer agent: update it on the server.'**
+  String get portForwardRemoteNeedsAgent;
 
   /// User-facing label or message for range live.
   ///

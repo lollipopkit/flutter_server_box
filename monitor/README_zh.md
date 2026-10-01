@@ -74,9 +74,17 @@ curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main
 | 进程、systemd、容器、snippet、电源 | `full_access`(`POST /api/v1/exec`) |
 | 终端 | `full_access`(`/api/v1/terminal/ws`) |
 | 文件浏览 | `[remote_access.fs] enabled` + `roots` |
+| 远程桌面、本地和动态端口转发 | `full_access`(`/api/v1/stream/ws`) |
+| 远程端口转发 | `full_access`(`/api/v1/listen/ws`)；未开启 `listen_public` 时只能监听 loopback |
 
-monitor 服务器不提供 SFTP 和端口转发：agent 没有任何端点可以把连接中继到 App
-指定的地址。需要这两项请以 SSH 方式添加该服务器。
+`/api/v1/stream/ws` 以 agent 进程所属的账号从本机向 App 指定的地址发起一条 TCP
+连接并中继。`/api/v1/listen/ws` 方向相反：agent 在本机监听一个端口，把每条进来的
+连接交给 App，App 再通过一条 `stream` 连接接管。两者与 shell 是同一项授权：能打开
+shell 的人也能自己 `ssh -L` 或 `ssh -R`。远程转发默认只能监听 loopback，
+`[remote_access] listen_public = true` 才允许其他地址，对应 sshd 的 `GatewayPorts`。
+
+monitor 服务器不提供 SFTP：agent 的文件 API 传输的是文件内容，不是 SSH 字节流。
+早于这些端点的 agent 不会上报它们，App 会把依赖它们的功能置灰。
 
 ## 远程访问（可选，默认关闭）
 

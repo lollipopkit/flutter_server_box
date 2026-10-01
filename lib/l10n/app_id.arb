@@ -574,7 +574,7 @@
   "funcUnavailableFmt": "{func} tidak tersedia melalui koneksi server ini.",
   "funcNeedsAgentGrant": "{func} memerlukan {setting} diaktifkan di Monitor agent.",
   "funcNeedsAgentUpdate": "{func} memerlukan Monitor agent yang lebih baru.",
-  "portForwardNeedsSsh": "Penerusan jarak jauh dan dinamis memerlukan SSH: Monitor agent tidak mendukungnya.",
+  "portForwardRemoteNeedsAgent": "Penerusan jarak jauh melalui Monitor agent memerlukan versi yang lebih baru: perbarui di server.",
   "rangeLive": "Langsung",
   "diskIo": "I/O Disk",
   "peak": "puncak",

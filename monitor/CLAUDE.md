@@ -200,15 +200,25 @@ the panel password can't switch it on); shared admission checks live in
   gated on `full_access` exactly like the shell and `/exec`: it dials as the
   agent's account, so anyone who could open a shell could `ssh -L` from it and
   a switch of its own would withhold nothing. This is what the app's remote
-  desktop uses on a monitor-only server, and what port forwarding would use
-  next; the agent understands neither RDP nor VNC, which is what makes it one
+  desktop and local/dynamic port forwards use on a monitor-only server; the
+  agent understands neither RDP nor VNC, which is what makes it one
   endpoint for both. Text frames are the request and control JSON
-  (`{"type":"open","host":..,"port":..}` first, then `ready`/`error`/`exit`),
+  (`{"type":"open","host":..,"port":..}` or `{"type":"accept","id":..}` first,
+  then `ready`/`error`/`exit`),
   Binary frames are the bytes. **One socket is one connection and there is no
   session store and no replay** — RDP and VNC reconnect above this, and a
   resumed byte stream would be a corrupted one rather than a shorter one. The
   address travels in the frame, not the URL, so it stays out of access logs.
   `tests/stream_ws.rs`.
+- **`/api/v1/listen/ws`** — the other direction, for remote forwards: the agent
+  binds a port (`{"type":"listen",..}` → `ready`) and announces each accepted
+  connection (`incoming` with an id); the app takes it by opening a stream and
+  sending `accept`, so every connection keeps the stream relay's own
+  backpressure and nothing is multiplexed on the control socket. Waiting
+  connections live in `AppState.pending` (`listen::PendingStore`): claimable
+  only by the panel account that listened, closed after `PENDING_TTL`, and
+  dropped with their listener. Same grant as `stream`; loopback only unless
+  `[remote_access] listen_public` (sshd's `GatewayPorts`). `tests/listen_ws.rs`.
 
 Things that are easy to get wrong here, and are locked by tests:
 

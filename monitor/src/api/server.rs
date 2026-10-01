@@ -5,6 +5,7 @@ use crate::{
     api::ws::{
         self,
         audit::{self, Action, Event, Kind, Outcome},
+        listen::PendingStore,
         session::SessionStore,
         terminal::{start_reaper, terminal_ws},
         ticket::{Purpose, TicketRequest, TicketResponse, TicketStore},
@@ -86,6 +87,9 @@ pub struct AppState {
     /// Terminal sessions, which outlive the WebSockets driving them so a
     /// reconnect can rejoin the same shell — see `api::ws::session`.
     pub sessions: Arc<SessionStore>,
+    /// Connections a remote forward's listener accepted and the app has not
+    /// taken yet — see `api::ws::listen`.
+    pub pending: Arc<PendingStore>,
     pub login_throttle: Arc<LoginThrottle>,
     /// Set when the panel turns the access without SSH off, so the change
     /// applies to the running process rather than waiting for a restart.
@@ -129,6 +133,7 @@ impl AppState {
             tls_active,
             tickets: Arc::new(TicketStore::new()),
             sessions,
+            pending: Arc::new(PendingStore::default()),
             login_throttle: Arc::new(LoginThrottle::new()),
             full_access_off: Arc::new(AtomicBool::new(false)),
             full_access_revoked: broadcast::channel(1).0,
@@ -254,6 +259,7 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .route("/ws-ticket", web::post().to(issue_ws_ticket))
             .route("/terminal/ws", web::get().to(terminal_ws))
             .route("/stream/ws", web::get().to(crate::api::ws::stream::stream_ws))
+            .route("/listen/ws", web::get().to(ws::listen::listen_ws))
             .service(
                 // Its own payload limit: ntex allows 32 KiB by
                 // default, and this endpoint's `stdin` carries the
@@ -770,6 +776,10 @@ struct RemoteAccessView {
     /// still refuse the upgrade. Staying equal to `full_access` on every agent
     /// that has it is the point — a client reads this one, not that one.
     stream: bool,
+    /// Whether `/api/v1/listen/ws` will listen for a remote forward. The same
+    /// grant as [`Self::stream`], reported apart for the same reason: an agent
+    /// that predates the endpoint leaves it out, and a client reads that as no.
+    listen: bool,
 }
 
 async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
@@ -805,6 +815,7 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             full_access: app_state.full_access_allowed(secure),
             files: app_state.remote_access.fs.available(secure),
             stream: app_state.full_access_allowed(secure),
+            listen: app_state.full_access_allowed(secure),
         },
     }))
 }
@@ -833,7 +844,7 @@ async fn issue_ws_ticket(
             app_state.remote_access.terminal.available(secure),
             "terminal not available",
         ),
-        Purpose::Stream => (
+        Purpose::Stream | Purpose::Listen => (
             app_state.full_access_allowed(secure),
             "full access not available",
         ),
@@ -858,6 +869,7 @@ async fn issue_ws_ticket(
                 .detail(match purpose {
                     Purpose::Terminal => "terminal",
                     Purpose::Stream => "stream",
+                    Purpose::Listen => "listen",
                 })
                 .record(&app_state.db)
                 .await;

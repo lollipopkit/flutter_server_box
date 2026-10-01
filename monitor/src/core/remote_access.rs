@@ -67,6 +67,15 @@ pub struct RemoteAccessConfig {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub full_access: Option<bool>,
 
+    /// Let a remote forward listen on an address other than loopback.
+    ///
+    /// sshd's `GatewayPorts`, and off for the same reason: a forward the app
+    /// opens is for the app's user, and one bound to `0.0.0.0` hands the port
+    /// to everyone who can reach this machine. Off, `/api/v1/listen/ws` binds
+    /// loopback only.
+    #[serde(default)]
+    pub listen_public: bool,
+
     #[serde(default)]
     pub terminal: TerminalConfig,
 
@@ -85,6 +94,7 @@ impl Default for RemoteAccessConfig {
         Self {
             ssh_addr: default_ssh_addr(),
             full_access: None,
+            listen_public: false,
             terminal: TerminalConfig::default(),
             fs: FsConfig::default(),
             exec: ExecConfig::default(),
@@ -294,6 +304,7 @@ impl RemoteAccessConfig {
         RemoteAccess {
             ssh_addr: self.ssh_addr.clone(),
             full_access: resolve_full_access(self.full_access, full_access_from_env()),
+            listen_public: self.listen_public,
             terminal: Terminal {
                 enabled: self.terminal.enabled,
                 max_sessions: self.terminal.max_sessions.filter(|&n| n > 0).unwrap_or(slots),
@@ -348,6 +359,8 @@ pub struct RemoteAccess {
     pub ssh_addr: String,
     /// See [`RemoteAccessConfig::full_access`].
     pub full_access: bool,
+    /// See [`RemoteAccessConfig::listen_public`].
+    pub listen_public: bool,
     pub terminal: Terminal,
     pub fs: Fs,
     pub exec: Exec,
