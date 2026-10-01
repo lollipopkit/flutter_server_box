@@ -13,7 +13,7 @@ import type { Capabilities, GrantName } from '../types'
 
 /// A machine-management page. Also a `View` — `layout.svelte.ts` widens it
 /// with this type, so the two cannot drift.
-export type FeatureId = 'containers' | 'process' | 'services' | 'cron'
+export type FeatureId = 'containers' | 'process' | 'services' | 'cron' | 'benchmark'
 
 export interface FeatureSpec {
   id: FeatureId
@@ -26,6 +26,7 @@ export const FEATURES: FeatureSpec[] = [
   { id: 'process', grant: 'shell' },
   { id: 'services', grant: 'shell' },
   { id: 'cron', grant: 'shell' },
+  { id: 'benchmark', grant: 'shell' },
 ]
 
 /// The pages this agent serves and this caller may use — see

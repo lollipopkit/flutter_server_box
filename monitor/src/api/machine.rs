@@ -24,7 +24,14 @@ use crate::core::permissions::Grant;
 /// The machine-management endpoints this agent serves, as `features` in
 /// `/capabilities`. A panel shows a page only when its name is here, which is
 /// how it tells an agent without the endpoint from one that refused.
-pub const FEATURES: &[&str] = &["power", "process", "services", "cron", "containers"];
+pub const FEATURES: &[&str] = &[
+    "power",
+    "process",
+    "services",
+    "cron",
+    "containers",
+    "benchmark",
+];
 
 /// Who is asking, and from where, once [`gate`] let them through.
 pub struct Gated {

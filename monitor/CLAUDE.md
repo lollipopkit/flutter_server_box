@@ -225,6 +225,14 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   usage, logs) is one batch split by a fresh separator, and an action answers
   with the refreshed listing. A runtime the agent's account may not reach is
   `permission_denied`, not a failure. TODO: `DOCKER_HOST` and a sudo path.
+  `/benchmark` (`sbm_parser::bench`, the app's yabs command layer): the agent
+  owns the run, not the browser — the `benchmark_run` row (migration 012) is
+  written before the detached launcher starts, and `start_poller` (started in
+  `cli::serve`) carries it to a terminal state whether or not a page is open.
+  One run at a time is a partial unique index, not a check. The script is
+  `assets/yabs.b64`, embedded (`SCRIPT_ASSET_B64`, `tests/benchmark_asset.rs`).
+  Linux only (`supported` in the listing). `tests/benchmark_api.rs` never
+  starts a run.
   `tests/watch_token_scope.rs` lists these routes with requests that are
   harmless under the panel login; `/power` is left out, since every body it
   accepts takes the machine down.

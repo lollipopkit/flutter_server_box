@@ -9,6 +9,7 @@
   import Services from './pages/Services.svelte'
   import Cron from './pages/Cron.svelte'
   import Containers from './pages/Containers.svelte'
+  import Benchmark from './pages/Benchmark.svelte'
   import PanelSettings from './pages/PanelSettings.svelte'
   import ServerSettings from './pages/ServerSettings.svelte'
   import Terminal from './pages/Terminal.svelte'
@@ -45,6 +46,8 @@
             <Cron onback={() => layout.back('dashboard')} />
           {:else if layout.view === 'containers'}
             <Containers onback={() => layout.back('dashboard')} />
+          {:else if layout.view === 'benchmark'}
+            <Benchmark onback={() => layout.back('dashboard')} />
           {:else}
             <Dashboard />
           {/if}

@@ -32,6 +32,10 @@ COPY monitor/.sqlx/ ./.sqlx/
 
 # Copy source code
 COPY monitor/src/ ./src/
+# `api::benchmark` embeds yabs with `include_str!("../../../assets/yabs.b64")`,
+# relative to `src/api/`: in the repository that is the root's `assets/`, and
+# with `src/` at `/app/src` here it is `/assets`.
+COPY assets/yabs.b64 /assets/yabs.b64
 
 # 独立构建 monitor(脱离 monorepo workspace),修正 crates/ 下各依赖的相对路径
 #

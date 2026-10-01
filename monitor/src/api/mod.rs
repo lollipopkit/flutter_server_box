@@ -11,6 +11,7 @@ pub mod cors;
 pub mod admin;
 pub mod containers;
 pub mod auth;
+pub mod benchmark;
 pub mod authz;
 pub mod ratelimit;
 pub mod ws;

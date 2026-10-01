@@ -18,6 +18,11 @@ import type {
   SettingsView,
   StatusResponse,
   SystemMetrics,
+  BenchDetail,
+  BenchEstimate,
+  BenchOptions,
+  BenchRun,
+  BenchView,
   ContainerAction,
   ContainerActionResult,
   ContainerPart,
@@ -327,6 +332,62 @@ export const api = {
       '/containers',
       { method: 'POST', body: JSON.stringify(action) },
       'Failed to change the container',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// The benchmark runs this agent has started, and the live state of the one
+  /// going (the `shell` grant). `live.answered === false` means the machine
+  /// did not answer in time: ask again, and read nothing into `dir_exists`
+  /// until it is true. The agent polls the run for this request, which can
+  /// take a while on a machine under load, hence the long timeout.
+  getBenchmark: (signal?: AbortSignal) =>
+    request<BenchView>('/benchmark', {}, 'Failed to fetch the benchmark runs', signal, MACHINE_TIMEOUT_MS),
+  /// One run in full, including yabs' `result_json` and the stored log.
+  getBenchmarkRun: (id: string, signal?: AbortSignal) =>
+    request<BenchDetail>(
+      `/benchmark?run=${encodeURIComponent(id)}`,
+      {},
+      'Failed to fetch the run',
+      signal,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// What a set of options would cost, asked of the agent so this page never
+  /// re-derives the formula. Changes nothing.
+  estimateBenchmark: (options: BenchOptions) =>
+    request<BenchEstimate>(
+      '/benchmark',
+      { method: 'POST', body: JSON.stringify({ action: 'estimate', options }) },
+      'Failed to estimate the run',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// Starts a run. The agent writes the script, records the row and waits for
+  /// the launcher to confirm before it answers.
+  startBenchmark: (options: BenchOptions) =>
+    request<{ run: BenchRun }>(
+      '/benchmark',
+      { method: 'POST', body: JSON.stringify({ action: 'start', options }) },
+      'Failed to start the run',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// Stops the run that is going; a sleep sits between the TERM and the KILL.
+  cancelBenchmark: () =>
+    request<{ cancelled: boolean }>(
+      '/benchmark',
+      { method: 'POST', body: JSON.stringify({ action: 'cancel' }) },
+      'Failed to stop the run',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// Forgets one finished run and cleans up after it on the machine. One that
+  /// is still going is refused (`run_in_progress`): removing the record would
+  /// lose the only handle on a live process.
+  removeBenchmark: (id: string) =>
+    request<unknown>(
+      `/benchmark?run=${encodeURIComponent(id)}`,
+      { method: 'DELETE' },
+      'Failed to remove the run',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),

@@ -322,6 +322,13 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
             "/api/v1/containers",
             Some(json!({ "action": "stop", "id": "sbm-scope-test-nonexistent" })),
         ),
+        (Method::GET, "/api/v1/benchmark", None),
+        (
+            Method::POST,
+            "/api/v1/benchmark",
+            Some(json!({ "action": "estimate" })),
+        ),
+        (Method::DELETE, "/api/v1/benchmark?run=bench_scope_test", None),
         (Method::GET, "/api/v1/cron", None),
         (
             Method::PUT,
