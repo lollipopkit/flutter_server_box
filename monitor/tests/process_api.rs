@@ -162,7 +162,17 @@ async fn a_signal_stops_the_process_it_names() {
     if !signals_available() {
         return;
     }
-    let mut child = std::process::Command::new("sleep").arg("300").spawn().expect("sleep");
+    // Something that waits and is safe to stop. Windows has no `sleep` of its
+    // own (CI's comes with Git); `ping` is in every install.
+    let mut child = if cfg!(windows) {
+        std::process::Command::new("ping")
+            .args(["-n", "301", "127.0.0.1"])
+            .stdout(std::process::Stdio::null())
+            .spawn()
+            .expect("ping")
+    } else {
+        std::process::Command::new("sleep").arg("300").spawn().expect("sleep")
+    };
     let (srv, _) = server().await;
     let body = list(&srv, "").await;
     let row = body["procs"]
@@ -174,10 +184,13 @@ async fn a_signal_stops_the_process_it_names() {
         .unwrap_or_else(|| panic!("the process this test started is not in the table"));
     assert_eq!(row["killable"], true, "{row}");
 
+    // The platform's own first signal: Windows offers only `kill`, and a
+    // `term` there is refused before anything runs.
+    let signal = body["signals"][0].clone();
     let (_, answer) = stop(
         &srv,
         "admin",
-        json!({"pid": child.id(), "start_id": row["start_id"], "signal": "term"}),
+        json!({"pid": child.id(), "start_id": row["start_id"], "signal": signal}),
     )
     .await;
     if answer["outcome"] != "succeeded" {
