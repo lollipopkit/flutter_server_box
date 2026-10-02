@@ -435,7 +435,9 @@ async fn read_catalog(exec: &super::exec::Limits) -> Result<UserCatalog, Option<
 /// records. It carries what was said about it.
 async fn read_detail(user: &SystemUser, exec: &super::exec::Limits) -> Result<UserDetail, Option<String>> {
     let Ok(script) = detail_script(user) else {
-        // A name that is not one, which a catalog could not hold.
+        // A name the catalog lists but `valid_name` will not put in a script —
+        // an uppercase one from LDAP or sssd, say. Nothing was read about it,
+        // and a detail with every field unreadable is exactly that.
         return Ok(parse_detail("", &user.name));
     };
     let output = machine::command_output(machine::as_self(&script, exec).await);
