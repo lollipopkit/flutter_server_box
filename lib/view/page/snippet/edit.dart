@@ -335,9 +335,9 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> {
           data:
               '''
 📌 ${l10n.supportFmtArgs}\n
-${SnippetX.fmtArgs.keys.map((e) => '`$e`').join(', ')}\n
+${SnippetX.serverKeys.map((e) => '`$e`').join(', ')}\n
 
-${SnippetX.fmtTermKeys.keys.map((e) => '`$e+?}`').join(', ')}\n
+`\${ctrl+?}`, `\${alt+?}`, `\${sleep N}`, `\${enter N}`\n
 ${libL10n.example}: 
 - `\${ctrl+c}` (Control + C)
 - `\${ctrl+b}d` (Tmux Detach)

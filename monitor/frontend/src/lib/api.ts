@@ -45,6 +45,9 @@ import type {
   UserActResult,
   UserPart,
   UserView,
+  Snippet,
+  SnippetPlan,
+  SnippetsView,
 } from '../types'
 import { isSecureAgentUrl } from './agentUrl'
 import { servers, type ServerEntry } from './servers.svelte'
@@ -67,10 +70,15 @@ export class ApiError extends Error {
   /// endpoints, whose `error` is the message itself.
   readonly code?: string
 
-  constructor(message: string, status?: number, code?: string) {
+  /// The error body as the agent sent it, for a refusal that names more than
+  /// a code (`/snippets`' `index`, `/snippets/plan`'s `key`).
+  readonly body?: Record<string, unknown>
+
+  constructor(message: string, status?: number, code?: string, body?: Record<string, unknown>) {
     super(message)
     this.status = status
     this.code = code
+    this.body = body
   }
 }
 
@@ -81,9 +89,9 @@ export class ApiError extends Error {
 /// a `message` is the second, and its `error` is the code.
 async function errorFrom(res: Response, fallback: string): Promise<ApiError> {
   try {
-    const body = (await res.json()) as { error?: string; message?: string }
-    if (body.message) return new ApiError(body.message, res.status, body.error)
-    if (body.error) return new ApiError(body.error, res.status)
+    const body = (await res.json()) as { error?: string; message?: string } & Record<string, unknown>
+    if (body.message) return new ApiError(body.message, res.status, body.error, body)
+    if (body.error) return new ApiError(body.error, res.status, undefined, body)
   } catch {
     // Non-JSON error body: keep the fallback message
   }
@@ -423,6 +431,25 @@ export const api = {
       'Failed to reach the machine',
       undefined,
       MACHINE_TIMEOUT_MS,
+    ),
+  /// The snippet library saved on the agent (the `shell` grant).
+  getSnippets: () => request<SnippetsView>('/snippets', {}, 'Failed to fetch the snippets'),
+  /// Replaces the whole library, in the order given. A refusal arrives with
+  /// its code as `ApiError.message` and the row as `body.index`.
+  updateSnippets: (snippets: Snippet[]) =>
+    request<SnippetsView>(
+      '/snippets',
+      { method: 'PUT', body: JSON.stringify({ snippets }) },
+      'Failed to save the snippets',
+    ),
+  /// What a script types, expanded by the agent. Runs nothing. The panel has
+  /// no server values to offer, so the context is empty and a script naming
+  /// one is refused with `body.key`.
+  planSnippet: (script: string) =>
+    request<SnippetPlan>(
+      '/snippets/plan',
+      { method: 'POST', body: JSON.stringify({ script, context: {} }) },
+      'Failed to expand the snippet',
     ),
   /// Shuts the machine down, reboots or suspends it. The password is for
   /// `sudo -S` and travels as its own field, never inside a command.

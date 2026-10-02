@@ -200,6 +200,8 @@
     <section class="page-section store-detail"><p class="muted">…</p></section>
   {:else if open}
     {@const pv = openPreview}
+    {@const tabs = tabKeys.filter((t) => pv.images[`tab.${t}`] || pv.images[`tab.${t}.selected`])}
+    {@const navs = navKeys.filter((n) => pv.images[`nav.${n}`])}
     {@const m = pv.modes[detailMode]}
     {@const b = m.components.button ?? {}}
     {@const r = b.radius ?? pv.shapes.button}
@@ -248,11 +250,15 @@
         </div>
 
         <div class="detail-sections">
+          <!-- Only the icons the theme draws: a key it leaves to the app's
+               built-in glyph has nothing to show here. -->
+          {#if tabs.length || navs.length}
           <section class="detail-card" style={`background:${m.palette.surface}; color:${m.palette.onSurface}`}>
             <h2>{$LL.themes.icons()}</h2>
+            {#if tabs.length}
             <h3 style={`color:${m.palette.onSurfaceVariant}`}>{$LL.themes.tabIcons()}</h3>
             <div class="icon-grid">
-              {#each tabKeys as t}
+              {#each tabs as t}
                 <div class="icon-cell" title={`tab.${t}`}>
                   <ThemeIcon src={pv.images[`tab.${t}`]} color={m.palette.onSurfaceVariant} size={26} label={`tab.${t}`} />
                   <ThemeIcon src={pv.images[`tab.${t}.selected`]}
@@ -261,15 +267,19 @@
                 </div>
               {/each}
             </div>
+            {/if}
+            {#if navs.length}
             <h3 style={`color:${m.palette.onSurfaceVariant}`}>{$LL.themes.navIcons()}</h3>
             <div class="icon-grid">
-              {#each navKeys as n}
+              {#each navs as n}
                 <div class="icon-cell" title={`nav.${n}`}>
                   <ThemeIcon src={pv.images[`nav.${n}`]} color={m.iconColors[`nav.${n}`] ?? m.palette.onSurface} size={26} label={`nav.${n}`} />
                 </div>
               {/each}
             </div>
+            {/if}
           </section>
+          {/if}
 
           <section class="detail-card">
             <h2>{$LL.themes.palette()}</h2>

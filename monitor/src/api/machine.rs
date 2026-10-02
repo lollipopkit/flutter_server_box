@@ -1,5 +1,6 @@
 //! What the machine-management endpoints share: the panel's power, process,
-//! service, cron, container, benchmark and system user pages (issue #1623).
+//! service, cron, container, benchmark, system user and snippet pages (issue
+//! #1623).
 //!
 //! Each of them runs a command on the machine the agent is installed on,
 //! built and parsed in Rust (`sbm_parser`) rather than sent through `/exec` by
@@ -32,6 +33,7 @@ pub const FEATURES: &[&str] = &[
     "containers",
     "benchmark",
     "system_users",
+    "snippets",
 ];
 
 /// Who is asking, and from where, once [`gate`] let them through.

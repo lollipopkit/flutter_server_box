@@ -163,7 +163,7 @@ route × role matrix; tests seed accounts through `tests/common`. Shared
 WebSocket admission checks live in `api/ws/mod.rs`.
 - **`POST /api/v1/exec`** — one command, its output, its exit code, for the
   pages that parse what a command printed (processes, units, containers,
-  snippets, power). A request rather than a stream because none of those
+  power). A request rather than a stream because none of those
   callers streams or types. Deliberately not the terminal endpoint with an
   `exec` frame: a PTY is one stream shared with what the user is typing, so a
   command written into it lands in their shell — which is why `terminal.rs`
@@ -243,6 +243,14 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   0600 file under a random name and only its path reaches the root shell's
   command line, which `ps` shows every account. `tests/system_users_api.rs`
   never changes an account.
+  `/snippets` (`sbm_parser::snippet`, which the app reaches over FFI too):
+  the agent's snippet library (migration 013; a PUT replaces it whole, in
+  order, refused per row as `{error, index}`), and `POST /snippets/plan`,
+  which expands one script into the steps a terminal is fed and runs
+  nothing — the panel types them into its own terminal. The panel sends an
+  empty context, so a script naming a server value (`${host}`, `${pwd}`) is
+  refused as `{error: "unanswerable", key}`. All three need `shell`; the
+  audit names snippets, never a script.
   `tests/watch_token_scope.rs` lists these routes with requests that are
   harmless under the panel login; `/power` is left out, since every body it
   accepts takes the machine down.

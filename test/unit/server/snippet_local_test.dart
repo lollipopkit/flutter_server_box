@@ -7,7 +7,14 @@ import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:xterm/xterm.dart';
 
+import '../../helpers/rust_lib_helper.dart';
+
+/// The macros themselves are `sbm_parser::snippet`'s, tested there
+/// (`snippet_compat.rs` holds the cases this file used to); what is left is
+/// what the app adds: the context a [Spi] answers and the typing.
 void main() {
+  setUpAll(initRustLibForTest);
+
   group('typing', _stopsWhenReplaced);
 
   final spi = Spi(
@@ -65,6 +72,32 @@ void main() {
       const snippet = Snippet(id: 'n', name: 'n', script: 'df -h');
       expect(snippet.fmtWithSpi(null), 'df -h');
     });
+
+    test('a value the server does not have is refused, not emptied', () {
+      // No password: the server signs in with a key.
+      const snippet = Snippet(id: 'n', name: 'n', script: r'sshpass -p ${pwd} true');
+      expect(() => snippet.fmtWithSpi(spi), throwsA(isA<SnippetException>()));
+      expect(
+        () => snippet.runInTerm(Terminal(), spi),
+        throwsA(isA<SnippetException>()),
+      );
+    });
+  });
+
+  test('the terminal macros are typed as keys', () {
+    final typed = StringBuffer();
+    final terminal = Terminal()..onOutput = typed.write;
+    fakeAsync((async) {
+      unawaited(
+        const Snippet(
+          id: 's',
+          name: 's',
+          script: r'echo ${name}${enter}${ctrl+c}',
+        ).runInTerm(terminal, spi),
+      );
+      async.flushMicrotasks();
+    });
+    expect(typed.toString(), 'echo box\r\x03');
   });
 }
 

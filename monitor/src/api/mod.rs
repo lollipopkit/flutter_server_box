@@ -6,6 +6,7 @@ pub mod machine;
 pub mod power;
 pub mod process;
 pub mod service;
+pub mod snippets;
 pub mod system_users;
 pub mod push;
 pub mod cors;

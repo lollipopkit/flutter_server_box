@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Activity, CalendarClock, Container, Gauge, ServerCog, Users, type LucideIcon } from '@lucide/svelte'
+  import { Activity, CalendarClock, Container, Gauge, ScrollText, ServerCog, Users, type LucideIcon } from '@lucide/svelte'
   import { enabledFeatures, type FeatureId } from '../lib/features'
   import { capabilitiesStore } from '../lib/capabilities.svelte'
   import { layout } from '../lib/layout.svelte'
@@ -21,6 +21,7 @@
     services: { label: () => $LL.services(), icon: ServerCog },
     cron: { label: () => $LL.cron(), icon: CalendarClock },
     system_users: { label: () => $LL.systemUsers(), icon: Users },
+    snippets: { label: () => $LL.snippets(), icon: ScrollText },
     benchmark: { label: () => $LL.benchmark(), icon: Gauge },
   }
 

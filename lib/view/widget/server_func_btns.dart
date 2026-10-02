@@ -658,7 +658,13 @@ Future<void> confirmAndRunSnippet(
   Spi spi,
   Snippet snippet,
 ) async {
-  final fmted = snippet.fmtWithSpi(spi);
+  final String fmted;
+  try {
+    fmted = snippet.fmtWithSpi(spi);
+  } on SnippetException catch (e) {
+    Toast.error(e.message);
+    return;
+  }
   final sure = await context.showRoundDialog<bool>(
     title: libL10n.attention,
     child: SingleChildScrollView(

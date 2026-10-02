@@ -12,6 +12,7 @@ import 'package:server_box/src/rust/api/file.dart';
 import 'package:server_box/src/rust/api/parser.dart';
 import 'package:server_box/src/rust/api/remote_desktop.dart';
 import 'package:server_box/src/rust/api/script.dart';
+import 'package:server_box/src/rust/api/snippet.dart';
 import 'package:server_box/src/rust/api/ssh_asym.dart';
 import 'package:server_box/src/rust/api/ssh_crypto.dart';
 import 'package:server_box/src/rust/api/users.dart';
@@ -200,6 +201,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ShellFuncKind dco_decode_shell_func_kind(dynamic raw);
+
+  @protected
+  SnippetFfiError dco_decode_snippet_ffi_error(dynamic raw);
 
   @protected
   int dco_decode_u_16(dynamic raw);
@@ -420,6 +424,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ShellFuncKind sse_decode_shell_func_kind(SseDeserializer deserializer);
+
+  @protected
+  SnippetFfiError sse_decode_snippet_ffi_error(SseDeserializer deserializer);
 
   @protected
   int sse_decode_u_16(SseDeserializer deserializer);
@@ -684,6 +691,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_shell_func_kind(ShellFuncKind self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_snippet_ffi_error(
+    SnippetFfiError self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_u_16(int self, SseSerializer serializer);
