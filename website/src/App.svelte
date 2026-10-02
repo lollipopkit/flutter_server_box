@@ -357,7 +357,7 @@
         <div class="theme-strip">
           {#each store.themes.slice(0, 4) as theme (theme.id)}
             <a class="theme-strip-item" href={`/themes/?lang=${locale}#${theme.id}`}>
-              <LazyThemePreview {theme} mode={theme.modes.includes('dark') ? 'dark' : theme.modes[0]} scale={0.72} />
+              <LazyThemePreview theme={theme.variants[0]} mode={theme.modes.includes('dark') ? 'dark' : theme.modes[0]} scale={0.72} />
               <span>{theme.name}</span>
             </a>
           {/each}
