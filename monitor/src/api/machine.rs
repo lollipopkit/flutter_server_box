@@ -1,5 +1,5 @@
 //! What the machine-management endpoints share: the panel's power, process,
-//! service, cron and container pages (issue #1623).
+//! service, cron, container, benchmark and system user pages (issue #1623).
 //!
 //! Each of them runs a command on the machine the agent is installed on,
 //! built and parsed in Rust (`sbm_parser`) rather than sent through `/exec` by
@@ -31,6 +31,7 @@ pub const FEATURES: &[&str] = &[
     "cron",
     "containers",
     "benchmark",
+    "system_users",
 ];
 
 /// Who is asking, and from where, once [`gate`] let them through.
@@ -127,6 +128,61 @@ pub(crate) async fn as_root(
     run(entry, stdin.as_deref(), Some(&env), limits).await
 }
 
+/// [`as_root`] for text that holds a secret of its own — an account's new
+/// password, which `sbm_parser::users` writes into a `chpasswd` heredoc.
+///
+/// [`as_root`] puts the script on the root shell's command line, which every
+/// account on the machine can read with `ps`. Here the text goes into a file
+/// only the agent's user can read (root can read anything), created fresh
+/// under a random name so no one else's file or link is written through, and
+/// the command line names only that file. The file is removed when the
+/// command ends, however it ends.
+#[cfg(unix)]
+pub(crate) async fn as_root_private(
+    text: &str,
+    password: Option<&str>,
+    limits: &Limits,
+) -> std::io::Result<ExecResponse> {
+    let file = PrivateScript::write(text)?;
+    let path = file.path.to_string_lossy();
+    as_root(&format!("sh '{}'", path.replace('\'', "'\\''")), password, limits).await
+}
+
+/// A script file readable by this process's user alone, removed on drop.
+#[cfg(unix)]
+struct PrivateScript {
+    path: std::path::PathBuf,
+}
+
+#[cfg(unix)]
+impl PrivateScript {
+    fn write(text: &str) -> std::io::Result<Self> {
+        use std::io::Write;
+        use std::os::unix::fs::OpenOptionsExt;
+
+        let suffix = crate::utils::secrets::random_hex(16).map_err(std::io::Error::other)?;
+        let path = std::env::temp_dir().join(format!("sbm-root-{suffix}.sh"));
+        // `create_new` refuses a path that exists, a link included, and the
+        // mode is applied at creation: there is no moment at which the file
+        // is readable by anyone else.
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .mode(0o600)
+            .open(&path)?;
+        let script = Self { path };
+        file.write_all(text.as_bytes())?;
+        Ok(script)
+    }
+}
+
+#[cfg(unix)]
+impl Drop for PrivateScript {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_file(&self.path);
+    }
+}
+
 /// What [`as_root`] runs: the command, what goes on stdin, and the
 /// environment the script travels in.
 fn root_invocation(
@@ -162,6 +218,38 @@ mod tests {
         assert!(cmd.starts_with("sudo -n "), "{cmd}");
         assert_eq!(stdin, None);
         assert_eq!(env[ROOT_SCRIPT_VAR], "kill -s TERM 42");
+    }
+
+    /// The secret is in a file only this user can read, the command line names
+    /// the file and nothing else, and the file is gone once the command is.
+    #[cfg(unix)]
+    #[test]
+    fn a_private_script_is_this_users_alone_and_does_not_outlive_its_command() {
+        use std::os::unix::fs::PermissionsExt;
+        let script = PrivateScript::write("chpasswd <<'X'\nme:hunter2\nX").unwrap();
+        let path = script.path.clone();
+        let meta = std::fs::metadata(&path).unwrap();
+        assert_eq!(meta.permissions().mode() & 0o777, 0o600);
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), "chpasswd <<'X'\nme:hunter2\nX");
+        drop(script);
+        assert!(!path.exists(), "the file outlived its command");
+    }
+
+    /// A private script runs as the text it holds. `sh` stands in for sudo,
+    /// as below.
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn a_private_script_runs_its_text() {
+        let script = PrivateScript::write("echo ran").unwrap();
+        let limits = Limits {
+            timeout: std::time::Duration::from_secs(10),
+            max_output_bytes: 4096,
+            max_request_bytes: 4096,
+        };
+        let command = format!("sh '{}'", script.path.to_string_lossy());
+        assert!(!command.contains("echo ran"));
+        let out = run(&command, None, None, &limits).await.unwrap();
+        assert_eq!(out.stdout, "ran\n");
     }
 
     /// The case the separate streams exist for: when sudo does not read the
