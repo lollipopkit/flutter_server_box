@@ -362,6 +362,12 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::delete().to(crate::api::benchmark::remove)),
             )
             .service(
+                // Not `/users`, which is this agent's own accounts.
+                web::resource("/system-users")
+                    .route(web::get().to(crate::api::system_users::list))
+                    .route(web::post().to(crate::api::system_users::act)),
+            )
+            .service(
                 // A streamed body, so ntex's payload limit must not
                 // apply: the point of this endpoint is the file that
                 // `/exec` could not carry.

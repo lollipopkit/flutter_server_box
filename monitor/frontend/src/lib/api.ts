@@ -41,6 +41,10 @@ import type {
   ServiceView,
   WsTicketPurpose,
   WsTicketResponse,
+  UserActRequest,
+  UserActResult,
+  UserPart,
+  UserView,
 } from '../types'
 import { isSecureAgentUrl } from './agentUrl'
 import { servers, type ServerEntry } from './servers.svelte'
@@ -396,6 +400,27 @@ export const api = {
       `/benchmark?run=${encodeURIComponent(id)}`,
       { method: 'DELETE' },
       'Failed to remove the run',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// The machine's accounts, or one account's own records (the `shell`
+  /// grant). Not `/users`, which is this agent's own accounts.
+  getSystemUsers: (part: UserPart = 'list', name?: string) =>
+    request<UserView>(
+      `/system-users?${new URLSearchParams({ part, ...(name ? { name } : {}) })}`,
+      {},
+      'Failed to fetch the accounts',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// Creates, changes or removes one account. The agent resolves the account
+  /// against a listing it reads for the request, and runs the change as root;
+  /// a refusal before that arrives as `ApiError.message`, holding its code.
+  actSystemUser: (payload: UserActRequest) =>
+    request<UserActResult>(
+      '/system-users',
+      { method: 'POST', body: JSON.stringify(payload) },
+      'Failed to reach the machine',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),

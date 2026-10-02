@@ -42,6 +42,8 @@ const WAL_SIZE_LIMIT_BYTES: u32 = WAL_AUTOCHECKPOINT_PAGES * 4096 * 2;
 
 pub async fn init(database_url: &str) -> Result<SqlitePool> {
     let options = connect_options(database_url)?;
+    // Only the owner-only modes below read it, and they are Unix's.
+    #[cfg(unix)]
     let file = options.get_filename().to_path_buf();
 
     // Logged, not created. `Sqlite::create_database` opens a connection of its

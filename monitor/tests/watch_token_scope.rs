@@ -300,7 +300,7 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
         // The machine-management endpoints (#1623). Each request is one the
         // panel login can send harmlessly: a PID nothing holds, a unit no
         // machine has, a container no runtime has, a crontab line no crontab
-        // holds. `/power` is left out
+        // holds, an account no machine has. `/power` is left out
         // for the same reason — every body it accepts takes the machine down
         // under the panel login, and one it does not accept is a 400 from the
         // extractor before the token is looked at.
@@ -334,6 +334,12 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
             Method::PUT,
             "/api/v1/cron",
             Some(json!({ "op": "remove", "line_index": 4_294_967_295u32 })),
+        ),
+        (Method::GET, "/api/v1/system-users", None),
+        (
+            Method::POST,
+            "/api/v1/system-users",
+            Some(json!({ "action": "delete", "name": "sbm-scope-test-nonexistent" })),
         ),
     ]
 }

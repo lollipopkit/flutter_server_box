@@ -16,6 +16,7 @@ import 'package:server_box/src/rust/api/remote_desktop.dart';
 import 'package:server_box/src/rust/api/script.dart';
 import 'package:server_box/src/rust/api/ssh_asym.dart';
 import 'package:server_box/src/rust/api/ssh_crypto.dart';
+import 'package:server_box/src/rust/api/users.dart';
 import 'package:server_box/src/rust/api/virt.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
@@ -216,6 +217,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void dco_decode_unit(dynamic raw);
+
+  @protected
+  UserFfiError dco_decode_user_ffi_error(dynamic raw);
 
   @protected
   BigInt dco_decode_usize(dynamic raw);
@@ -433,6 +437,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_decode_unit(SseDeserializer deserializer);
+
+  @protected
+  UserFfiError sse_decode_user_ffi_error(SseDeserializer deserializer);
 
   @protected
   BigInt sse_decode_usize(SseDeserializer deserializer);
@@ -694,6 +701,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_unit(void self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_user_ffi_error(UserFfiError self, SseSerializer serializer);
 
   @protected
   void sse_encode_usize(BigInt self, SseSerializer serializer);
