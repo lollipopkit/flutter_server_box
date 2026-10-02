@@ -209,9 +209,14 @@ pub async fn list(
             Some(name.to_string()),
         )));
     };
-    response.name = Some(user.name.clone());
-    response.detail = Some(read_detail(&user, exec).await);
-    Ok(HttpResponse::Ok().json(&response))
+    match read_detail(&user, exec).await {
+        Ok(detail) => {
+            response.name = Some(user.name.clone());
+            response.detail = Some(detail);
+            Ok(HttpResponse::Ok().json(&response))
+        }
+        Err(reason) => Ok(HttpResponse::Ok().json(&empty_response(part, UserReason::Unreadable, reason))),
+    }
 }
 
 /// Creates, changes or removes one account.
@@ -423,15 +428,21 @@ async fn read_catalog(exec: &super::exec::Limits) -> Result<UserCatalog, Option<
     })
 }
 
-/// One account's own records. Never an error: every field may be unreadable on
-/// its own, and the shape says which were.
-async fn read_detail(user: &SystemUser, exec: &super::exec::Limits) -> UserDetail {
+/// One account's own records. Every field may be unreadable on its own and
+/// the shape says which were, so `Err` is only the run itself failing —
+/// every read in the script may fail and the last is `|| true`, so a non-zero
+/// exit, a timeout or a spawn that failed is not an account with unreadable
+/// records. It carries what was said about it.
+async fn read_detail(user: &SystemUser, exec: &super::exec::Limits) -> Result<UserDetail, Option<String>> {
     let Ok(script) = detail_script(user) else {
         // A name that is not one, which a catalog could not hold.
-        return parse_detail("");
+        return Ok(parse_detail(""));
     };
     let output = machine::command_output(machine::as_self(&script, exec).await);
-    parse_detail(&output.stdout)
+    if !output.succeeded {
+        return Err(output.detail());
+    }
+    Ok(parse_detail(&output.stdout))
 }
 
 // ---------------------------------------------------------------------------

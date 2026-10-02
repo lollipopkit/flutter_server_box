@@ -53,6 +53,15 @@ abstract final class UserManager {
     ServerUser user,
   ) async {
     final result = await exec.run(detailScript(user), entry: 'sh');
+    // Every read in the script is allowed to fail and the last one is
+    // `|| true`, so a non-zero exit is the run itself failing — a dropped
+    // connection, say — and not an account whose records are unreadable.
+    if (!result.succeeded) {
+      final detail = result.combined.trim();
+      throw UserManagerException(
+        detail.isEmpty ? 'Unable to read the account' : detail,
+      );
+    }
     return parseDetail(result.stdout);
   }
 

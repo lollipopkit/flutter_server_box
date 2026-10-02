@@ -480,3 +480,16 @@ fn a_field_with_a_line_break_is_refused() {
     primary.primary_group = "not a group".to_string();
     assert_eq!(create_command(&primary), Err(UserError::InvalidPrimaryGroup));
 }
+
+/// A day count no instant can hold is not a date, and reading one must not
+/// panic: the output is the machine's, and a parser that overflowed on it would
+/// take the page down with it.
+#[test]
+fn a_day_count_too_large_for_an_instant_is_no_date() {
+    let huge = "106751991167301"; // past i64::MAX / 86_400_000
+    let detail = parse_detail(&detail_out(&format!("lk:$y$hash:{huge}:0:99999:7::{huge}:"), "", "", "", true));
+    assert_eq!(detail.password_changed_millis, None);
+    assert_eq!(detail.expires_millis, None);
+    assert!(!detail.never_expires, "an unreadable expiry is not never");
+    assert_eq!(detail.password_state, Some(PasswordState::Set));
+}

@@ -573,10 +573,14 @@ fn password_state(hash: &str) -> Option<PasswordState> {
 
 /// Shadow's day count since the epoch, as an instant. Zero and anything that
 /// will not parse are `None`: day zero is 1970, which no account was set in,
-/// and it is what a field that could not be read holds.
+/// and it is what a field that could not be read holds. So is a count too
+/// large to be an instant, which is not a date either.
 fn days_to_millis(raw: &str) -> Option<i64> {
     let days: i64 = raw.trim().parse().ok()?;
-    (days > 0).then(|| days * 86_400_000)
+    if days <= 0 {
+        return None;
+    }
+    days.checked_mul(86_400_000)
 }
 
 /// The type field of one `authorized_keys` line, skipping the options that may

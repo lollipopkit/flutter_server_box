@@ -146,6 +146,24 @@ docker:x:998:admin,deploy
     expect(exec.entries, ['sh']);
   });
 
+  test('a detail run that failed is an error, not an unreadable account', () async {
+    // The script's reads may all fail and still exit zero, so a non-zero exit
+    // is the run itself — a dropped connection — and its words are the answer.
+    final exec = _QueueExec([
+      const ExecResult(exitCode: 255, stdout: '', stderr: 'connection reset'),
+    ]);
+    await expectLater(
+      UserManager.detail(exec, admin),
+      throwsA(
+        isA<UserManagerException>().having(
+          (e) => e.message,
+          'message',
+          'connection reset',
+        ),
+      ),
+    );
+  });
+
   test('a detail reads its instants as UTC days and keeps null apart from empty', () async {
     final detail = await UserManager.parseDetail('''
 SrvBoxUserDetail.Shadow
