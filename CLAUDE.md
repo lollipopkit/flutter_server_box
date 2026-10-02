@@ -44,6 +44,8 @@ Flutter app for managing servers, in a Rust workspace monorepo. Feature-specific
 
 ## Architecture
 
+- **Rust owns what is said to a server; each client owns its state and UI.** Every command the app or the panel sends to a server, the parser for its output, the model it produces and the call exposing it live in `sbm_parser`: the app calls it through FFI (`sbm_ffi`), the panel through the agent's endpoints. The app (Riverpod, Flutter) and the panel (Svelte) keep only state management and UI, and never build a command or parse its output. A new feature starts in Rust; HTTP JSON clients (PVE API, Redfish) and live protocols (tmux control mode) are outside this.
+  - Not there yet: proc, service, bench, container and cron still have Dart copies the app runs (each marked `TODO(migration)`; until removed, a fix to a command or parser lands in both), and firewall, system users, the PVE live-network check, shell file listing and tmux discovery exist only in Dart. Issue #1623, "One implementation: Rust", tracks them.
 - `crates/sbm_parser/` — single source of truth for the status command manifest, script generation and parsing; used by the app via FFI and by the monitor. Parsers are pure and emit raw counters; rates and time series stay with the caller. Locked by `tests/dart_compat.rs` / `script_compat.rs`. Porting rule ("test as spec"): port a module's Dart fixture tests to Rust first, delete the Dart side only after the FFI result is asserted identical.
   - The process table's `START_ID` column is what `ProcKill` checks a PID against; without it every stop silently answers "not available".
 - `crates/sbm_ffi/` — FRB bindings. `crates/sbm_native/` — native sampler, monitor only (the app always collects remotely).

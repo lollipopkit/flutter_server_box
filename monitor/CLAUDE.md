@@ -100,6 +100,7 @@ Monitor-only crate (the app never depends on it — it always collects over SSH 
 
 ### Frontend (Svelte - `frontend/src/`)
 
+- **State and UI only.** The panel never composes a shell command or parses one's output: it calls an agent endpoint, which builds and parses through `sbm_parser` — the same functions the app reaches over FFI (root `CLAUDE.md`, Architecture). Sending text to `/exec` and parsing the answer in TypeScript is the shape this rules out.
 - **Svelte 5 (runes)** with TypeScript and Tailwind 4 (class-driven dark mode)
 - **`pages/`**: Login.svelte, Dashboard.svelte (App.svelte gates them by auth state; no router)
 - **`components/`**: Spinner, StatCard, ThemeToggle
