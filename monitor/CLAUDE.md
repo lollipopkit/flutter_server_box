@@ -234,6 +234,15 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   `assets/yabs.b64`, embedded (`SCRIPT_ASSET_B64`, `tests/benchmark_asset.rs`).
   Linux only (`supported` in the listing). `tests/benchmark_api.rs` never
   starts a run.
+  `/system-users` (`sbm_parser::users`, which the app reaches over FFI too):
+  the machine's accounts — not `/users`, which is the agent's own. Linux only.
+  A write names an account resolved against a listing read for that request,
+  never the client's copy, and refuses root and the agent's own account. The
+  account's new password is inside the script (`chpasswd` heredoc), so a write
+  carrying one runs through `machine::as_root_private`: the script goes into a
+  0600 file under a random name and only its path reaches the root shell's
+  command line, which `ps` shows every account. `tests/system_users_api.rs`
+  never changes an account.
   `tests/watch_token_scope.rs` lists these routes with requests that are
   harmless under the panel login; `/power` is left out, since every body it
   accepts takes the machine down.
