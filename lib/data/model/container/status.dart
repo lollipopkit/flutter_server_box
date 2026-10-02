@@ -1,3 +1,6 @@
+// TODO(migration): parsed by `sbm_parser::container` too — see the TODO at
+// the top of `lib/data/provider/container.dart`. Deleted with it.
+
 import 'package:fl_lib/fl_lib.dart';
 
 /// A normalized Docker or Podman container state.

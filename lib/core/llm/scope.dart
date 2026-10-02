@@ -86,14 +86,37 @@ abstract final class TerminalHosts {
 abstract final class AgentChats {
   static final _current = <String?, ValueNotifier<String?>>{};
 
-  /// Starts at the newest chat of [scope], or none.
+  /// The Agent's starts at the empty composer, a new chat; the history is a
+  /// tap away. Starting at the newest chat had the floating window open over
+  /// whatever the app launched to, showing a conversation nobody had asked
+  /// for. A terminal's starts at its server's newest chat: that panel is
+  /// about the one server, and picking up where it was left is the point.
   static ValueNotifier<String?> of(String? scope) => _current[scope] ??=
-      ValueNotifier(LlmStores.chat.all(scope: scope).firstOrNull?.id);
+      ValueNotifier(
+        scope == null
+            ? null
+            : LlmStores.chat.all(scope: scope).firstOrNull?.id,
+      );
+
+  /// Whether the Agent has had a chat to follow this run — one picked, or
+  /// started by a message — or was sent floating on purpose. Until then its
+  /// floating window stays away: there is nothing in it but a composer.
+  ///
+  /// Never cleared by a new chat after that, so "new chat" pressed in the
+  /// floating window does not make the window vanish under the pointer.
+  static final engaged = ValueNotifier(false);
 
   static void select(String? scope, String? id) {
     of(scope).value = id;
+    if (scope == null && id != null) engaged.value = true;
     // What `Chats` keeps open while something else borrows a chat.
     if (id != null) Chats.current.value = id;
+  }
+
+  @visibleForTesting
+  static void reset() {
+    _current.clear();
+    engaged.value = false;
   }
 
   /// The empty composer, for a new chat on the next message.

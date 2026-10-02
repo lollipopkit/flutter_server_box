@@ -11,6 +11,8 @@ use std::collections::HashMap;
 
 use ntex::http::StatusCode;
 
+use sbm_parser::output::CommandOutput;
+
 use super::exec::{ExecResponse, Limits, run};
 use ntex::web::{HttpRequest, HttpResponse};
 
@@ -22,7 +24,14 @@ use crate::core::permissions::Grant;
 /// The machine-management endpoints this agent serves, as `features` in
 /// `/capabilities`. A panel shows a page only when its name is here, which is
 /// how it tells an agent without the endpoint from one that refused.
-pub const FEATURES: &[&str] = &["power", "process"];
+pub const FEATURES: &[&str] = &[
+    "power",
+    "process",
+    "services",
+    "cron",
+    "containers",
+    "benchmark",
+];
 
 /// Who is asking, and from where, once [`gate`] let them through.
 pub struct Gated {
@@ -56,6 +65,34 @@ pub async fn gate(
         return Err(authz::error(StatusCode::FORBIDDEN, "forbidden", why.as_str()));
     }
     Ok(Gated { caller, remote_ip })
+}
+
+/// `/exec`'s bounds with the output cap raised to at least [min_bytes]: for a
+/// command that describes a whole machine (a process table, every unit's
+/// details), where `[remote_access.exec]`'s 1 MiB default is a few thousand
+/// rows short and going over costs the reader the whole page.
+pub(crate) fn at_least(exec: &Limits, min_bytes: usize) -> Limits {
+    Limits {
+        max_output_bytes: exec.max_output_bytes.max(min_bytes),
+        ..exec.clone()
+    }
+}
+
+/// What a command printed, in the shape `sbm_parser`'s parsers read.
+///
+/// One that did not finish — killed at the timeout, cut at the output cap, or
+/// never started — is a failure carrying why, rather than a run that printed
+/// nothing: a parser reading an empty `stderr` would report the machine as
+/// having said nothing rather than as not having been heard.
+pub(crate) fn command_output(out: std::io::Result<ExecResponse>) -> CommandOutput {
+    match out {
+        Ok(out) if out.timed_out => CommandOutput::failed("the command did not finish in time"),
+        Ok(out) if out.truncated => {
+            CommandOutput::failed("the command printed more than this agent reads")
+        }
+        Ok(out) => CommandOutput::new(out.stdout, out.stderr, out.exit_code == Some(0)),
+        Err(e) => CommandOutput::failed(format!("the command could not be run: {e}")),
+    }
 }
 
 /// Runs POSIX shell text as the agent's own account.

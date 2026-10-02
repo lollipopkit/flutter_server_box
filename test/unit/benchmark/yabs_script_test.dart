@@ -330,6 +330,17 @@ exit $exitCode
       expect(state.alive, isFalse);
       expect(state.diedWithoutReporting, isTrue);
     });
+
+    test('an exit code with the launcher still there is not the end', () {
+      // What a poll reads right after a cancel whose KILL has not landed yet.
+      // Finished here, the run directory would be removed under fio.
+      final state = YabsPollState.parse(
+        '${YabsScript.stateMarker} exit=143 alive=1 started=1 pid=1',
+      );
+      expect(state.exitCode, YabsScript.cancelledExitCode);
+      expect(state.finished, isFalse);
+      expect(state.diedWithoutReporting, isFalse);
+    });
   });
 
   group('cancelling', () {

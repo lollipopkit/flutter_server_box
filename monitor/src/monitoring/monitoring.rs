@@ -707,7 +707,7 @@ fn script_path(system: SystemType) -> std::path::PathBuf {
 
 /// Write the script if missing or outdated (tmp reapers / version upgrades);
 /// checked every cycle before exec
-fn ensure_script(path: &std::path::Path, content: &str) -> std::io::Result<()> {
+pub(crate) fn ensure_script(path: &std::path::Path, content: &str) -> std::io::Result<()> {
     let up_to_date = std::fs::read_to_string(path).is_ok_and(|existing| existing == content);
     if up_to_date {
         return Ok(());

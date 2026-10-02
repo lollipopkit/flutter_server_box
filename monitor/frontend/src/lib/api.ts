@@ -18,12 +18,27 @@ import type {
   SettingsView,
   StatusResponse,
   SystemMetrics,
+  BenchDetail,
+  BenchEstimate,
+  BenchOptions,
+  BenchRun,
+  BenchView,
+  ContainerAction,
+  ContainerActionResult,
+  ContainerPart,
+  ContainerView,
+  CronEdit,
+  CronView,
   PowerAction,
   PowerResult,
   ProcessSignalRequest,
   ProcessSignalResult,
   ProcessSortMode,
   ProcessView,
+  ServiceActRequest,
+  ServiceActResult,
+  ServicePart,
+  ServiceView,
   WsTicketPurpose,
   WsTicketResponse,
 } from '../types'
@@ -259,6 +274,128 @@ export const api = {
       '/process',
       { method: 'POST', body: JSON.stringify(payload) },
       'Failed to reach the machine',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// The machine's service units, or one unit's log, definition or status
+  /// (the `shell` grant). A unit is named by the key its listing gave it.
+  getServices: (part: ServicePart = 'list', key?: string) =>
+    request<ServiceView>(
+      `/services?${new URLSearchParams({ part, ...(key ? { key } : {}) })}`,
+      {},
+      'Failed to fetch the services',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// One action on one unit. The agent resolves the key against a fresh
+  /// listing and decides itself whether it needs root.
+  actService: (payload: ServiceActRequest) =>
+    request<ServiceActResult>(
+      '/services',
+      { method: 'POST', body: JSON.stringify(payload) },
+      'Failed to reach the machine',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// The account's crontab, expanded on the agent against its own clock (the
+  /// `shell` grant).
+  getCron: () =>
+    request<CronView>('/cron', {}, 'Failed to fetch the schedule', undefined, MACHINE_TIMEOUT_MS),
+  /// One change; answers with the schedule as it now stands. The file is
+  /// re-read at the moment of the write, so only `line_index` can be stale,
+  /// and one that no longer names a job is refused (400) rather than applied
+  /// to whatever moved into its place. A refusal arrives as
+  /// `ApiError.message`, holding the rule's own name (`scheduleEmpty`, ...).
+  editCron: (edit: CronEdit) =>
+    request<CronView>(
+      '/cron',
+      { method: 'PUT', body: JSON.stringify(edit) },
+      'Failed to save the schedule',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// The runtime's containers, images or disk usage — one at a time (the
+  /// `shell` grant). `part: 'logs'` names a container: a log belongs to one,
+  /// and the agent refuses the request rather than guessing which.
+  getContainers: (part: ContainerPart, id?: string) =>
+    request<ContainerView>(
+      `/containers?part=${part}${id ? `&id=${encodeURIComponent(id)}` : ''}`,
+      {},
+      'Failed to fetch the containers',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// One change, answered in one round trip with the refreshed listing and
+  /// `exit_code`/`output`, what the runtime said about the change.
+  actContainer: (action: ContainerAction) =>
+    request<ContainerActionResult>(
+      '/containers',
+      { method: 'POST', body: JSON.stringify(action) },
+      'Failed to change the container',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// The benchmark runs this agent has started, and the live state of the one
+  /// going (the `shell` grant). `live.answered === false` means the machine
+  /// did not answer in time: ask again, and read nothing into `dir_exists`
+  /// until it is true. The agent polls the run for this request, which can
+  /// take a while on a machine under load, hence the long timeout.
+  getBenchmark: (signal?: AbortSignal) =>
+    request<BenchView>('/benchmark', {}, 'Failed to fetch the benchmark runs', signal, MACHINE_TIMEOUT_MS),
+  /// One run in full, including yabs' `result_json` and the stored log.
+  getBenchmarkRun: (id: string, signal?: AbortSignal) =>
+    request<BenchDetail>(
+      `/benchmark?run=${encodeURIComponent(id)}`,
+      {},
+      'Failed to fetch the run',
+      signal,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// What a set of options would cost, asked of the agent so this page never
+  /// re-derives the formula. Changes nothing.
+  ///
+  /// The agent answers `{estimate: {...}, system_info_only}`; flattened here
+  /// into the one object the page draws from.
+  estimateBenchmark: async (options: BenchOptions): Promise<BenchEstimate> => {
+    const { estimate, system_info_only } = await request<{
+      estimate: Omit<BenchEstimate, 'system_info_only'>
+      system_info_only: boolean
+    }>(
+      '/benchmark',
+      { method: 'POST', body: JSON.stringify({ action: 'estimate', options }) },
+      'Failed to estimate the run',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    )
+    return { ...estimate, system_info_only }
+  },
+  /// Starts a run. The agent writes the script, records the row and waits for
+  /// the launcher to confirm before it answers.
+  startBenchmark: (options: BenchOptions) =>
+    request<{ run: BenchRun }>(
+      '/benchmark',
+      { method: 'POST', body: JSON.stringify({ action: 'start', options }) },
+      'Failed to start the run',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// Stops the run that is going; a sleep sits between the TERM and the KILL.
+  cancelBenchmark: () =>
+    request<{ cancelled: boolean }>(
+      '/benchmark',
+      { method: 'POST', body: JSON.stringify({ action: 'cancel' }) },
+      'Failed to stop the run',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// Forgets one finished run and cleans up after it on the machine. One that
+  /// is still going is refused (`run_in_progress`): removing the record would
+  /// lose the only handle on a live process.
+  removeBenchmark: (id: string) =>
+    request<unknown>(
+      `/benchmark?run=${encodeURIComponent(id)}`,
+      { method: 'DELETE' },
+      'Failed to remove the run',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),

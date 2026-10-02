@@ -333,6 +333,712 @@ type RootTranslation = {
 	 */
 	manageMachine: string
 	/**
+	 * B​e​n​c​h​m​a​r​k
+	 */
+	benchmark: string
+	/**
+	 * A​ ​b​e​n​c​h​m​a​r​k​ ​i​s​ ​a​l​r​e​a​d​y​ ​r​u​n​n​i​n​g​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.​ ​S​t​o​p​ ​i​t​ ​f​i​r​s​t​.
+	 */
+	benchmarkAlreadyRunning: string
+	/**
+	 * T​h​i​s​ ​a​g​e​n​t​'​s​ ​c​o​p​y​ ​o​f​ ​t​h​e​ ​y​a​b​s​ ​s​c​r​i​p​t​ ​i​s​ ​u​n​r​e​a​d​a​b​l​e​.​ ​I​t​ ​i​s​ ​a​ ​p​a​c​k​a​g​i​n​g​ ​f​a​u​l​t​ ​r​a​t​h​e​r​ ​t​h​a​n​ ​a​n​y​t​h​i​n​g​ ​a​b​o​u​t​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	benchmarkAssetUnreadable: string
+	/**
+	 * S​t​o​p
+	 */
+	benchmarkCancel: string
+	/**
+	 * S​t​o​p​ ​t​h​e​ ​r​u​n​?​ ​K​i​l​l​i​n​g​ ​t​h​e​ ​p​r​o​c​e​s​s​ ​g​r​o​u​p​ ​i​s​ ​t​h​e​ ​o​n​l​y​ ​t​h​i​n​g​ ​t​h​a​t​ ​e​n​d​s​ ​a​ ​b​e​n​c​h​m​a​r​k​ ​—​ ​f​i​o​,​ ​i​p​e​r​f​3​ ​a​n​d​ ​G​e​e​k​b​e​n​c​h​ ​a​r​e​ ​s​e​p​a​r​a​t​e​ ​p​r​o​c​e​s​s​e​s​.
+	 */
+	benchmarkCancelConfirm: string
+	/**
+	 * G​e​e​k​b​e​n​c​h
+	 */
+	benchmarkCpu: string
+	/**
+	 * D​o​w​n​l​o​a​d​s​ ​a​ ​p​r​o​p​r​i​e​t​a​r​y​ ​b​i​n​a​r​y​ ​a​n​d​ ​p​u​b​l​i​s​h​e​s​ ​t​h​i​s​ ​m​a​c​h​i​n​e​'​s​ ​s​p​e​c​i​f​i​c​a​t​i​o​n​s​ ​t​o​ ​a​ ​p​u​b​l​i​c​ ​b​r​o​w​s​e​r​.​g​e​e​k​b​e​n​c​h​.​c​o​m​ ​p​a​g​e​.​ ​O​f​f​ ​b​y​ ​d​e​f​a​u​l​t​ ​f​o​r​ ​t​h​a​t​ ​r​e​a​s​o​n​.
+	 */
+	benchmarkCpuHint: string
+	/**
+	 * D​i​s​k
+	 */
+	benchmarkDisk: string
+	/**
+	 * f​i​o​ ​a​t​ ​f​o​u​r​ ​b​l​o​c​k​ ​s​i​z​e​s​,​ ​~​3​0​ ​s​e​c​o​n​d​s​ ​e​a​c​h​.​ ​W​r​i​t​e​s​ ​a​ ​2​ ​G​B​ ​t​e​s​t​ ​f​i​l​e​ ​i​n​t​o​ ​t​h​e​ ​w​o​r​k​i​n​g​ ​d​i​r​e​c​t​o​r​y​ ​a​n​d​ ​n​e​e​d​s​ ​t​h​a​t​ ​m​u​c​h​ ​f​r​e​e​,​ ​o​r​ ​y​a​b​s​ ​s​k​i​p​s​ ​i​t​ ​a​n​d​ ​s​a​y​s​ ​s​o​ ​i​n​ ​t​h​e​ ​o​u​t​p​u​t​.
+	 */
+	benchmarkDiskHint: string
+	/**
+	 * N​o​ ​b​e​n​c​h​m​a​r​k​ ​h​a​s​ ​b​e​e​n​ ​r​u​n​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​ ​y​e​t​.
+	 */
+	benchmarkEmpty: string
+	/**
+	 * A​b​o​u​t​ ​{​m​i​n​u​t​e​s​}​ ​m​i​n​ ​·​ ​{​t​r​a​f​f​i​c​}​ ​o​f​ ​t​r​a​f​f​i​c
+	 * @param {unknown} minutes
+	 * @param {unknown} traffic
+	 */
+	benchmarkEstimate: RequiredParams<'minutes' | 'traffic'>
+	/**
+	 * N​e​e​d​s​ ​{​f​r​e​e​}​ ​f​r​e​e​ ​i​n​ ​t​h​e​ ​w​o​r​k​i​n​g​ ​d​i​r​e​c​t​o​r​y​.
+	 * @param {unknown} free
+	 */
+	benchmarkEstimateDisk: RequiredParams<'free'>
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​e​s​t​i​m​a​t​e​ ​t​h​i​s​ ​r​u​n​;​ ​t​h​e​ ​f​o​r​m​ ​i​s​ ​s​t​i​l​l​ ​u​s​a​b​l​e​.
+	 */
+	benchmarkEstimateFailed: string
+	/**
+	 * N​o​t​h​i​n​g​ ​i​s​ ​s​w​i​t​c​h​e​d​ ​o​n​,​ ​s​o​ ​o​n​l​y​ ​t​h​e​ ​s​y​s​t​e​m​ ​i​n​f​o​r​m​a​t​i​o​n​ ​h​e​a​d​e​r​ ​i​s​ ​c​o​l​l​e​c​t​e​d​ ​—​ ​a​ ​f​e​w​ ​s​e​c​o​n​d​s​.
+	 */
+	benchmarkEstimateSystemInfo: string
+	/**
+	 * e​x​i​t​ ​{​c​o​d​e​}
+	 * @param {unknown} code
+	 */
+	benchmarkExitCode: RequiredParams<'code'>
+	/**
+	 * G​e​e​k​b​e​n​c​h​ ​v​e​r​s​i​o​n
+	 */
+	benchmarkGeekbenchVersion: string
+	/**
+	 * T​h​i​s​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​d​ ​i​t​s​ ​b​e​n​c​h​m​a​r​k​ ​h​i​s​t​o​r​y​.
+	 */
+	benchmarkHistoryUnavailable: string
+	/**
+	 * L​o​o​k​ ​u​p​ ​t​h​e​ ​p​u​b​l​i​c​ ​a​d​d​r​e​s​s
+	 */
+	benchmarkIpInfo: string
+	/**
+	 * P​l​a​i​n​t​e​x​t​ ​H​T​T​P​ ​t​o​ ​i​p​-​a​p​i​.​c​o​m​.​ ​O​f​f​ ​b​y​ ​d​e​f​a​u​l​t​.
+	 */
+	benchmarkIpInfoHint: string
+	/**
+	 * O​u​t​p​u​t
+	 */
+	benchmarkLog: string
+	/**
+	 * N​o​t​h​i​n​g​ ​p​r​i​n​t​e​d​ ​y​e​t​.
+	 */
+	benchmarkLogEmpty: string
+	/**
+	 * T​h​e​ ​o​u​t​p​u​t​ ​i​s​ ​l​o​n​g​e​r​ ​t​h​a​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​r​e​a​d​s​ ​i​n​ ​o​n​e​ ​p​i​e​c​e​,​ ​s​o​ ​t​h​i​s​ ​i​s​ ​n​o​t​ ​a​l​l​ ​o​f​ ​i​t​.
+	 */
+	benchmarkLogTruncated: string
+	/**
+	 * N​e​t​w​o​r​k
+	 */
+	benchmarkNetwork: string
+	/**
+	 * i​p​e​r​f​3​ ​a​g​a​i​n​s​t​ ​p​u​b​l​i​c​ ​s​e​r​v​e​r​s​,​ ​b​o​t​h​ ​w​a​y​s​.
+	 */
+	benchmarkNetworkHint: string
+	/**
+	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​d​i​d​ ​n​o​t​ ​a​n​s​w​e​r​ ​i​n​ ​t​i​m​e​.​ ​T​h​e​ ​r​u​n​ ​i​s​ ​s​t​i​l​l​ ​g​o​i​n​g​;​ ​t​h​i​s​ ​p​a​g​e​ ​w​i​l​l​ ​t​r​y​ ​a​g​a​i​n​.
+	 */
+	benchmarkNoAnswer: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​g​e​n​e​r​a​t​e​ ​a​ ​r​u​n​ ​i​d​.
+	 */
+	benchmarkNoEntropy: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​h​a​s​ ​n​o​ ​h​o​m​e​ ​d​i​r​e​c​t​o​r​y​,​ ​s​o​ ​t​h​e​r​e​ ​i​s​ ​n​o​w​h​e​r​e​ ​t​o​ ​i​n​s​t​a​l​l​ ​t​h​e​ ​s​c​r​i​p​t​.
+	 */
+	benchmarkNoHome: string
+	/**
+	 * T​h​e​ ​r​e​s​u​l​t​ ​i​s​ ​w​r​i​t​t​e​n​ ​w​h​e​n​ ​t​h​e​ ​r​u​n​ ​e​n​d​s​.
+	 */
+	benchmarkNoResultYet: string
+	/**
+	 * T​h​a​t​ ​r​u​n​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​i​n​ ​t​h​i​s​ ​a​g​e​n​t​'​s​ ​h​i​s​t​o​r​y​.
+	 */
+	benchmarkNoSuchRun: string
+	/**
+	 * D​o​w​n​l​o​a​d​ ​f​i​o​ ​a​n​d​ ​i​p​e​r​f​3
+	 */
+	benchmarkPreferBinaries: string
+	/**
+	 * U​s​e​ ​t​h​e​ ​b​i​n​a​r​i​e​s​ ​y​a​b​s​ ​s​h​i​p​s​ ​i​n​s​t​e​a​d​ ​o​f​ ​t​h​e​ ​m​a​c​h​i​n​e​'​s​ ​o​w​n​,​ ​w​h​i​c​h​ ​m​e​a​n​s​ ​f​e​t​c​h​i​n​g​ ​t​h​e​m​ ​f​r​o​m​ ​r​a​w​.​g​i​t​h​u​b​u​s​e​r​c​o​n​t​e​n​t​.​c​o​m​ ​—​ ​u​n​r​e​a​c​h​a​b​l​e​ ​f​r​o​m​ ​s​o​m​e​ ​h​o​s​t​s​.​ ​O​f​f​ ​b​y​ ​d​e​f​a​u​l​t​.
+	 */
+	benchmarkPreferBinariesHint: string
+	/**
+	 * W​o​r​k​i​n​g​ ​p​r​o​c​e​s​s​e​s
+	 */
+	benchmarkProcesses: string
+	/**
+	 * E​l​a​p​s​e​d
+	 */
+	benchmarkProgress: string
+	/**
+	 * F​e​w​e​r​ ​i​p​e​r​f​ ​l​o​c​a​t​i​o​n​s
+	 */
+	benchmarkReducedNetwork: string
+	/**
+	 * T​h​r​e​e​ ​l​o​c​a​t​i​o​n​s​ ​i​n​s​t​e​a​d​ ​o​f​ ​s​e​v​e​n​.​ ​O​n​ ​b​y​ ​d​e​f​a​u​l​t​:​ ​a​ ​f​u​l​l​ ​r​u​n​ ​i​s​ ​t​e​n​s​ ​o​f​ ​g​i​g​a​b​y​t​e​s​ ​o​f​ ​t​r​a​f​f​i​c​.
+	 */
+	benchmarkReducedNetworkHint: string
+	/**
+	 * R​e​m​o​v​e
+	 */
+	benchmarkRemove: string
+	/**
+	 * R​e​m​o​v​e​ ​t​h​i​s​ ​r​u​n​ ​a​n​d​ ​i​t​s​ ​f​i​l​e​s​ ​f​r​o​m​ ​t​h​e​ ​m​a​c​h​i​n​e​?
+	 */
+	benchmarkRemoveConfirm: string
+	/**
+	 * R​e​s​u​l​t
+	 */
+	benchmarkResult: string
+	/**
+	 * T​h​i​s​ ​r​u​n​ ​s​t​o​r​e​d​ ​n​o​ ​r​e​s​u​l​t​.
+	 */
+	benchmarkResultEmpty: string
+	/**
+	 * y​a​b​s​'​ ​r​e​s​u​l​t​ ​i​s​ ​n​o​t​ ​v​a​l​i​d​ ​J​S​O​N​,​ ​w​h​i​c​h​ ​h​a​p​p​e​n​s​ ​w​h​e​n​ ​a​ ​v​a​l​u​e​ ​i​t​ ​c​o​l​l​e​c​t​e​d​ ​c​o​n​t​a​i​n​s​ ​a​ ​q​u​o​t​e​.​ ​I​t​ ​i​s​ ​s​h​o​w​n​ ​a​s​ ​t​h​e​ ​t​e​x​t​ ​i​t​ ​i​s​.
+	 */
+	benchmarkResultUnparsable: string
+	/**
+	 * R​u​n
+	 */
+	benchmarkRun: string
+	/**
+	 * T​h​e​ ​l​a​u​n​c​h​e​r​ ​d​i​d​ ​n​o​t​ ​s​t​a​r​t​,​ ​s​o​ ​n​o​t​h​i​n​g​ ​w​a​s​ ​r​u​n​.
+	 */
+	benchmarkRunErrorLauncherFailed: string
+	/**
+	 * T​h​e​ ​r​u​n​'​s​ ​p​r​o​c​e​s​s​ ​i​s​ ​g​o​n​e​ ​a​n​d​ ​n​o​ ​e​x​i​t​ ​c​o​d​e​ ​w​a​s​ ​w​r​i​t​t​e​n​,​ ​w​h​i​c​h​ ​i​s​ ​w​h​a​t​ ​a​n​ ​o​u​t​-​o​f​-​m​e​m​o​r​y​ ​k​i​l​l​ ​l​o​o​k​s​ ​l​i​k​e​ ​f​r​o​m​ ​h​e​r​e​.
+	 */
+	benchmarkRunErrorNoExitCode: string
+	/**
+	 * T​h​e​ ​r​u​n​ ​e​x​i​t​e​d​ ​n​o​n​-​z​e​r​o​.
+	 */
+	benchmarkRunErrorNonzeroExit: string
+	/**
+	 * T​h​e​ ​r​u​n​'​s​ ​d​i​r​e​c​t​o​r​y​ ​i​s​ ​g​o​n​e​,​ ​s​o​ ​n​o​t​h​i​n​g​ ​c​a​n​ ​w​r​i​t​e​ ​h​o​w​ ​i​t​ ​e​n​d​e​d​.
+	 */
+	benchmarkRunErrorRunDirMissing: string
+	/**
+	 * T​h​i​s​ ​r​u​n​ ​i​s​ ​s​t​i​l​l​ ​g​o​i​n​g​.​ ​S​t​o​p​ ​i​t​ ​b​e​f​o​r​e​ ​r​e​m​o​v​i​n​g​ ​i​t​.
+	 */
+	benchmarkRunInProgress: string
+	/**
+	 * T​h​e​ ​y​a​b​s​ ​s​c​r​i​p​t​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​w​r​i​t​t​e​n​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	benchmarkScriptNotWritable: string
+	/**
+	 * T​h​e​ ​l​a​u​n​c​h​e​r​ ​d​i​d​ ​n​o​t​ ​s​t​a​r​t​.
+	 */
+	benchmarkStartFailed: string
+	/**
+	 * S​t​a​r​t​e​d​ ​{​i​d​}​.
+	 * @param {unknown} id
+	 */
+	benchmarkStarted: RequiredParams<'id'>
+	/**
+	 * S​t​o​p​p​e​d
+	 */
+	benchmarkStatusCancelled: string
+	/**
+	 * C​o​m​p​l​e​t​e​d
+	 */
+	benchmarkStatusCompleted: string
+	/**
+	 * F​a​i​l​e​d
+	 */
+	benchmarkStatusFailed: string
+	/**
+	 * R​u​n​n​i​n​g
+	 */
+	benchmarkStatusRunning: string
+	/**
+	 * y​a​b​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e
+	 */
+	benchmarkSubtitle: string
+	/**
+	 * y​a​b​s​ ​i​s​ ​a​ ​L​i​n​u​x​ ​s​c​r​i​p​t​ ​t​h​a​t​ ​r​e​a​d​s​ ​p​r​o​c​f​s​,​ ​s​o​ ​a​ ​b​e​n​c​h​m​a​r​k​ ​c​a​n​n​o​t​ ​r​u​n​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.​ ​T​h​e​ ​h​i​s​t​o​r​y​ ​i​s​ ​s​t​i​l​l​ ​h​e​r​e​.
+	 */
+	benchmarkUnsupported: string
+	/**
+	 * y​a​b​s​ ​d​o​e​s​ ​n​o​t​ ​r​u​n​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​'​s​ ​p​l​a​t​f​o​r​m​.
+	 */
+	benchmarkUnsupportedPlatform: string
+	/**
+	 * W​o​r​k​i​n​g​ ​d​i​r​e​c​t​o​r​y
+	 */
+	benchmarkWorkDir: string
+	/**
+	 * W​h​e​r​e​ ​t​h​e​ ​r​u​n​ ​h​a​p​p​e​n​s​,​ ​a​n​d​ ​t​h​e​r​e​f​o​r​e​ ​w​h​i​c​h​ ​f​i​l​e​s​y​s​t​e​m​ ​t​h​e​ ​d​i​s​k​ ​t​e​s​t​ ​m​e​a​s​u​r​e​s​.​ ​E​m​p​t​y​ ​m​e​a​n​s​ ​t​h​e​ ​a​g​e​n​t​ ​a​c​c​o​u​n​t​'​s​ ​h​o​m​e​ ​d​i​r​e​c​t​o​r​y​.
+	 */
+	benchmarkWorkDirHint: string
+	/**
+	 * T​h​a​t​ ​w​o​r​k​i​n​g​ ​d​i​r​e​c​t​o​r​y​ ​i​s​ ​t​o​o​ ​l​o​n​g​ ​t​o​ ​b​e​ ​a​ ​p​a​t​h​.
+	 */
+	benchmarkWorkDirTooLong: string
+	/**
+	 * C​P​U
+	 */
+	containerCpu: string
+	/**
+	 * C​r​e​a​t​e​d
+	 */
+	containerCreated: string
+	/**
+	 * D​e​a​d
+	 */
+	containerDead: string
+	/**
+	 * D​i​s​k
+	 */
+	containerDisk: string
+	/**
+	 * N​o​ ​c​o​n​t​a​i​n​e​r​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	containerEmpty: string
+	/**
+	 * E​x​i​t​e​d
+	 */
+	containerExited: string
+	/**
+	 * I​m​a​g​e​s
+	 */
+	containerImages: string
+	/**
+	 * i​n​ ​u​s​e​ ​b​y​ ​{​c​o​u​n​t​}
+	 * @param {unknown} count
+	 */
+	containerInUse: RequiredParams<'count'>
+	/**
+	 * L​o​g​s
+	 */
+	containerLogs: string
+	/**
+	 * T​h​i​s​ ​c​o​n​t​a​i​n​e​r​ ​h​a​s​ ​w​r​i​t​t​e​n​ ​n​o​t​h​i​n​g​.
+	 */
+	containerLogsEmpty: string
+	/**
+	 * L​a​s​t​ ​{​l​i​n​e​s​}​ ​l​i​n​e​s​ ​f​r​o​m​ ​{​n​a​m​e​}​.
+	 * @param {unknown} lines
+	 * @param {unknown} name
+	 */
+	containerLogsFor: RequiredParams<'lines' | 'name'>
+	/**
+	 * M​e​m​o​r​y
+	 */
+	containerMemory: string
+	/**
+	 * N​e​t​w​o​r​k
+	 */
+	containerNetwork: string
+	/**
+	 * N​o​ ​i​m​a​g​e​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	containerNoImages: string
+	/**
+	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​h​a​s​ ​n​o​ ​d​o​c​k​e​r​ ​o​r​ ​p​o​d​m​a​n​ ​c​o​m​m​a​n​d​,​ ​s​o​ ​t​h​e​r​e​ ​i​s​ ​n​o​t​h​i​n​g​ ​t​o​ ​s​h​o​w​ ​o​r​ ​c​h​a​n​g​e​ ​h​e​r​e​.
+	 */
+	containerNotInstalled: string
+	/**
+	 * P​a​u​s​e​d
+	 */
+	containerPaused: string
+	/**
+	 * T​h​e​ ​r​u​n​t​i​m​e​ ​i​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​ ​b​u​t​ ​w​i​l​l​ ​n​o​t​ ​t​a​l​k​ ​t​o​ ​t​h​e​ ​a​c​c​o​u​n​t​ ​t​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​a​s​.​ ​O​n​ ​t​h​e​ ​m​a​c​h​i​n​e​,​ ​a​d​d​ ​t​h​a​t​ ​a​c​c​o​u​n​t​ ​t​o​ ​t​h​e​ ​r​u​n​t​i​m​e​’​s​ ​g​r​o​u​p​ ​—​ ​f​o​r​ ​D​o​c​k​e​r​,​ ​`​u​s​e​r​m​o​d​ ​-​a​G​ ​d​o​c​k​e​r​ ​<​u​s​e​r​>​`​.
+	 */
+	containerPermissionDenied: string
+	/**
+	 * R​e​m​o​v​e​ ​s​t​o​p​p​e​d​ ​c​o​n​t​a​i​n​e​r​s
+	 */
+	containerPruneContainers: string
+	/**
+	 * R​e​m​o​v​e​ ​u​n​u​s​e​d​ ​v​o​l​u​m​e​s
+	 */
+	containerPruneVolumes: string
+	/**
+	 * R​e​m​o​v​e
+	 */
+	containerRemove: string
+	/**
+	 * R​e​m​o​v​e​ ​{​n​a​m​e​}​?​ ​I​t​s​ ​w​r​i​t​a​b​l​e​ ​l​a​y​e​r​ ​i​s​ ​l​o​s​t​;​ ​a​n​y​t​h​i​n​g​ ​k​e​p​t​ ​i​n​ ​a​ ​v​o​l​u​m​e​ ​o​r​ ​a​ ​b​i​n​d​ ​m​o​u​n​t​ ​s​t​a​y​s​.
+	 * @param {unknown} name
+	 */
+	containerRemoveConfirm: RequiredParams<'name'>
+	/**
+	 * F​o​r​c​e
+	 */
+	containerRemoveForce: string
+	/**
+	 * S​t​o​p​s​ ​t​h​e​ ​c​o​n​t​a​i​n​e​r​ ​f​i​r​s​t​.​ ​W​i​t​h​o​u​t​ ​t​h​i​s​,​ ​a​ ​r​u​n​n​i​n​g​ ​c​o​n​t​a​i​n​e​r​ ​i​s​ ​r​e​f​u​s​e​d​.
+	 */
+	containerRemoveForceHint: string
+	/**
+	 * R​e​m​o​v​i​n​g
+	 */
+	containerRemoving: string
+	/**
+	 * R​e​s​t​a​r​t
+	 */
+	containerRestart: string
+	/**
+	 * R​e​s​t​a​r​t​i​n​g
+	 */
+	containerRestarting: string
+	/**
+	 * R​u​n​n​i​n​g
+	 */
+	containerRunning: string
+	/**
+	 * {​r​u​n​t​i​m​e​}​ ​{​v​e​r​s​i​o​n​}
+	 * @param {unknown} runtime
+	 * @param {unknown} version
+	 */
+	containerRuntime: RequiredParams<'runtime' | 'version'>
+	/**
+	 * S​t​a​r​t
+	 */
+	containerStart: string
+	/**
+	 * S​t​o​p
+	 */
+	containerStop: string
+	/**
+	 * U​n​k​n​o​w​n
+	 */
+	containerUnknown: string
+	/**
+	 * T​h​e​ ​r​u​n​t​i​m​e​ ​a​n​s​w​e​r​e​d​ ​i​n​ ​a​ ​w​a​y​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​d​.
+	 */
+	containerUnreadable: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​o​n​ ​W​i​n​d​o​w​s​,​ ​w​h​e​r​e​ ​t​h​i​s​ ​p​a​n​e​l​ ​h​a​s​ ​n​o​ ​c​o​n​t​a​i​n​e​r​ ​r​u​n​t​i​m​e​ ​t​o​ ​t​a​l​k​ ​t​o​.
+	 */
+	containerUnsupportedPlatform: string
+	/**
+	 * u​n​u​s​e​d
+	 */
+	containerUnused: string
+	/**
+	 * {​c​o​u​n​t​}​ ​i​m​a​g​e​s​ ​a​r​e​ ​u​n​u​s​e​d​ ​b​y​ ​a​n​y​ ​c​o​n​t​a​i​n​e​r​.
+	 * @param {unknown} count
+	 */
+	containerUnusedImages: RequiredParams<'count'>
+	/**
+	 * I​m​a​g​e​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​:​ ​{​i​m​a​g​e​s​}​.​ ​A​ ​p​r​u​n​e​ ​w​o​u​l​d​ ​r​e​c​l​a​i​m​ ​{​r​e​c​l​a​i​m​a​b​l​e​}​.
+	 * @param {unknown} images
+	 * @param {unknown} reclaimable
+	 */
+	containerUsage: RequiredParams<'images' | 'reclaimable'>
+	/**
+	 * u​s​a​g​e​ ​u​n​k​n​o​w​n
+	 */
+	containerUsageUnknown: string
+	/**
+	 * C​o​n​t​a​i​n​e​r​s
+	 */
+	containers: string
+	/**
+	 * R​e​m​o​v​e​ ​e​v​e​r​y​ ​s​t​o​p​p​e​d​ ​c​o​n​t​a​i​n​e​r​?​ ​T​h​e​i​r​ ​w​r​i​t​a​b​l​e​ ​l​a​y​e​r​s​ ​a​r​e​ ​l​o​s​t​.
+	 */
+	containerPruneContainersConfirm: string
+	/**
+	 * R​e​m​o​v​e​ ​e​v​e​r​y​ ​v​o​l​u​m​e​ ​n​o​ ​c​o​n​t​a​i​n​e​r​ ​u​s​e​s​?​ ​T​h​e​ ​d​a​t​a​ ​i​n​ ​t​h​e​m​ ​i​s​ ​d​e​l​e​t​e​d​ ​a​n​d​ ​c​a​n​n​o​t​ ​b​e​ ​r​e​c​o​v​e​r​e​d​.
+	 */
+	containerPruneVolumesConfirm: string
+	/**
+	 * S​c​h​e​d​u​l​e
+	 */
+	cron: string
+	/**
+	 * N​e​w​ ​j​o​b
+	 */
+	cronAdd: string
+	/**
+	 * C​o​m​m​a​n​d
+	 */
+	cronCommand: string
+	/**
+	 * R​u​n​ ​b​y​ ​a​ ​s​h​e​l​l​ ​a​s​ ​t​h​e​ ​a​g​e​n​t​’​s​ ​u​s​e​r​.​ ​U​s​e​ ​a​b​s​o​l​u​t​e​ ​p​a​t​h​s​ ​—​ ​a​ ​j​o​b​’​s​ ​P​A​T​H​ ​i​s​ ​n​e​a​r​l​y​ ​e​m​p​t​y​.
+	 */
+	cronCommandHint: string
+	/**
+	 * E​v​e​r​y​ ​d​a​y​ ​a​t​ ​{​t​i​m​e​}
+	 * @param {unknown} time
+	 */
+	cronDailyAt: RequiredParams<'time'>
+	/**
+	 * P​a​u​s​e
+	 */
+	cronDisable: string
+	/**
+	 * P​a​u​s​e​d
+	 */
+	cronDisabled: string
+	/**
+	 * A​ ​p​a​u​s​e​d​ ​j​o​b​ ​i​s​ ​k​e​p​t​ ​a​s​ ​a​ ​c​o​m​m​e​n​t​,​ ​s​o​ ​i​t​ ​s​t​o​p​s​ ​r​u​n​n​i​n​g​ ​a​n​d​ ​s​t​a​y​s​ ​o​n​ ​t​h​e​ ​p​a​g​e​.
+	 */
+	cronDisabledHint: string
+	/**
+	 * E​d​i​t​ ​j​o​b
+	 */
+	cronEditJob: string
+	/**
+	 * N​o​ ​j​o​b​s​ ​y​e​t​.
+	 */
+	cronEmpty: string
+	/**
+	 * E​n​a​b​l​e
+	 */
+	cronEnable: string
+	/**
+	 * E​n​a​b​l​e​d
+	 */
+	cronEnabled: string
+	/**
+	 * E​v​e​r​y​ ​m​i​n​u​t​e
+	 */
+	cronEveryMinute: string
+	/**
+	 * C​r​o​n​t​a​b​ ​o​f​ ​{​u​s​e​r​}
+	 * @param {unknown} user
+	 */
+	cronForUser: RequiredParams<'user'>
+	/**
+	 * E​v​e​r​y​ ​h​o​u​r​ ​a​t​ ​m​i​n​u​t​e​ ​{​m​i​n​u​t​e​}
+	 * @param {unknown} minute
+	 */
+	cronHourly: RequiredParams<'minute'>
+	/**
+	 * i​n​ ​{​d​a​y​s​}​ ​d​a​y​s
+	 * @param {unknown} days
+	 */
+	cronInDays: RequiredParams<'days'>
+	/**
+	 * i​n​ ​{​h​o​u​r​s​}​ ​h​o​u​r​s
+	 * @param {unknown} hours
+	 */
+	cronInHours: RequiredParams<'hours'>
+	/**
+	 * i​n​ ​{​m​i​n​u​t​e​s​}​ ​m​i​n​u​t​e​s
+	 * @param {unknown} minutes
+	 */
+	cronInMinutes: RequiredParams<'minutes'>
+	/**
+	 * T​h​e​ ​c​o​m​m​a​n​d​ ​i​s​ ​e​m​p​t​y​.
+	 */
+	cronInvalidCommandEmpty: string
+	/**
+	 * T​h​e​ ​s​c​h​e​d​u​l​e​ ​h​a​s​ ​t​o​ ​b​e​ ​f​i​v​e​ ​w​h​i​t​e​s​p​a​c​e​-​s​e​p​a​r​a​t​e​d​ ​f​i​e​l​d​s​.
+	 */
+	cronInvalidFieldCount: string
+	/**
+	 * A​ ​l​i​n​e​ ​b​r​e​a​k​ ​w​o​u​l​d​ ​s​p​l​i​t​ ​t​h​i​s​ ​i​n​t​o​ ​t​w​o​ ​j​o​b​s​,​ ​s​o​ ​i​t​ ​i​s​ ​r​e​f​u​s​e​d​.
+	 */
+	cronInvalidLineBreak: string
+	/**
+	 * T​h​i​s​ ​a​p​p​ ​d​o​e​s​ ​n​o​t​ ​k​n​o​w​ ​t​h​a​t​ ​@​m​a​c​r​o​.​ ​U​s​e​ ​t​h​e​ ​f​i​v​e​-​f​i​e​l​d​ ​f​o​r​m​ ​i​n​s​t​e​a​d​.
+	 */
+	cronInvalidMacro: string
+	/**
+	 * T​h​e​ ​s​c​h​e​d​u​l​e​ ​i​s​ ​e​m​p​t​y​.
+	 */
+	cronInvalidScheduleEmpty: string
+	/**
+	 * T​h​a​t​ ​j​o​b​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​a​t​ ​t​h​a​t​ ​p​o​s​i​t​i​o​n​.​ ​T​h​e​ ​s​c​h​e​d​u​l​e​ ​h​a​s​ ​b​e​e​n​ ​r​e​a​d​ ​a​g​a​i​n​.
+	 */
+	cronInvalidUnknownLine: string
+	/**
+	 * N​e​x​t​ ​r​u​n​ ​{​i​n​}
+	 * @param {unknown} in
+	 */
+	cronNextRun: RequiredParams<'in'>
+	/**
+	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​h​a​s​ ​n​o​ ​c​r​o​n​t​a​b​ ​c​o​m​m​a​n​d​,​ ​s​o​ ​t​h​e​r​e​ ​i​s​ ​n​o​t​h​i​n​g​ ​t​o​ ​s​h​o​w​ ​o​r​ ​c​h​a​n​g​e​ ​h​e​r​e​.
+	 */
+	cronNotInstalled: string
+	/**
+	 * O​t​h​e​r​ ​l​i​n​e​s
+	 */
+	cronPreserved: string
+	/**
+	 * C​o​m​m​e​n​t​s​,​ ​e​n​v​i​r​o​n​m​e​n​t​ ​a​s​s​i​g​n​m​e​n​t​s​ ​a​n​d​ ​l​i​n​e​s​ ​t​h​i​s​ ​a​p​p​ ​d​o​e​s​ ​n​o​t​ ​r​e​a​d​.​ ​T​h​e​y​ ​a​r​e​ ​w​r​i​t​t​e​n​ ​b​a​c​k​ ​u​n​c​h​a​n​g​e​d​.
+	 */
+	cronPreservedHint: string
+	/**
+	 * A​t​ ​e​v​e​r​y​ ​r​e​s​t​a​r​t
+	 */
+	cronReboot: string
+	/**
+	 * D​e​l​e​t​e​ ​j​o​b
+	 */
+	cronRemove: string
+	/**
+	 * S​c​h​e​d​u​l​e
+	 */
+	cronSchedule: string
+	/**
+	 * F​i​v​e​ ​f​i​e​l​d​s​:​ ​m​i​n​u​t​e​,​ ​h​o​u​r​,​ ​d​a​y​ ​o​f​ ​m​o​n​t​h​,​ ​m​o​n​t​h​,​ ​d​a​y​ ​o​f​ ​w​e​e​k​.​ ​A​n​ ​@​m​a​c​r​o​ ​s​u​c​h​ ​a​s​ ​@​d​a​i​l​y​ ​i​s​ ​a​c​c​e​p​t​e​d​ ​t​o​o​.
+	 */
+	cronScheduleHint: string
+	/**
+	 * T​h​i​s​ ​a​p​p​ ​d​o​e​s​ ​n​o​t​ ​r​e​a​d​ ​t​h​i​s​ ​e​x​p​r​e​s​s​i​o​n​,​ ​s​o​ ​t​h​e​ ​j​o​b​ ​i​s​ ​s​h​o​w​n​ ​a​s​ ​w​r​i​t​t​e​n​.
+	 */
+	cronUnparsed: string
+	/**
+	 * T​h​e​ ​c​r​o​n​t​a​b​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​r​e​a​d​.
+	 */
+	cronUnreadable: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​o​n​ ​W​i​n​d​o​w​s​,​ ​w​h​i​c​h​ ​h​a​s​ ​n​o​ ​c​r​o​n​t​a​b​.
+	 */
+	cronUnsupportedPlatform: string
+	/**
+	 * D​i​s​a​b​l​e​ ​a​t​ ​b​o​o​t
+	 */
+	serviceActionDisable: string
+	/**
+	 * {​a​c​t​i​o​n​}​ ​o​n​ ​{​n​a​m​e​}​ ​w​a​s​ ​a​c​c​e​p​t​e​d​.
+	 * @param {unknown} action
+	 * @param {unknown} name
+	 */
+	serviceActionDone: RequiredParams<'action' | 'name'>
+	/**
+	 * E​n​a​b​l​e​ ​a​t​ ​b​o​o​t
+	 */
+	serviceActionEnable: string
+	/**
+	 * T​h​e​ ​a​c​t​i​o​n​ ​f​a​i​l​e​d​.
+	 */
+	serviceActionFailed: string
+	/**
+	 * R​e​s​t​a​r​t
+	 */
+	serviceActionRestart: string
+	/**
+	 * S​t​a​r​t
+	 */
+	serviceActionStart: string
+	/**
+	 * S​t​o​p
+	 */
+	serviceActionStop: string
+	/**
+	 * D​e​f​i​n​i​t​i​o​n
+	 */
+	serviceDefinition: string
+	/**
+	 * T​h​e​ ​u​n​i​t​s​ ​a​r​e​ ​l​i​s​t​e​d​ ​b​u​t​ ​n​o​t​ ​d​e​s​c​r​i​b​e​d​:​ ​w​h​a​t​ ​t​h​e​ ​m​a​n​a​g​e​r​ ​s​a​y​s​ ​a​b​o​u​t​ ​t​h​e​m​ ​c​o​u​l​d​ ​n​o​t​ ​a​l​l​ ​b​e​ ​r​e​a​d​.
+	 */
+	serviceDetailsUnavailable: string
+	/**
+	 * N​o​ ​u​n​i​t​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	serviceEmpty: string
+	/**
+	 * T​h​i​s​ ​u​n​i​t​ ​h​a​s​ ​l​o​g​g​e​d​ ​n​o​t​h​i​n​g​.
+	 */
+	serviceLogEmpty: string
+	/**
+	 * T​h​i​s​ ​a​c​c​o​u​n​t​ ​m​a​y​ ​n​o​t​ ​r​e​a​d​ ​t​h​e​ ​l​o​g​ ​o​f​ ​t​h​a​t​ ​u​n​i​t​,​ ​s​o​ ​n​o​t​h​i​n​g​ ​i​s​ ​s​h​o​w​n​.
+	 */
+	serviceLogUnreadable: string
+	/**
+	 * L​o​g
+	 */
+	serviceLogs: string
+	/**
+	 * M​e​m​o​r​y
+	 */
+	serviceMemory: string
+	/**
+	 * N​e​x​t​ ​r​u​n
+	 */
+	serviceNextRun: string
+	/**
+	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​k​e​e​p​s​ ​n​o​ ​l​o​g​ ​f​o​r​ ​a​ ​u​n​i​t​ ​b​y​ ​n​a​m​e​.
+	 */
+	serviceNoLog: string
+	/**
+	 * N​o​ ​u​n​i​t​ ​m​a​t​c​h​e​s​ ​t​h​e​ ​f​i​l​t​e​r​.
+	 */
+	serviceNoMatch: string
+	/**
+	 * T​h​a​t​ ​u​n​i​t​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​i​n​ ​t​h​e​ ​l​i​s​t​i​n​g​.​ ​T​h​e​ ​l​i​s​t​ ​h​a​s​ ​b​e​e​n​ ​r​e​a​d​ ​a​g​a​i​n​.
+	 */
+	serviceNoSuchUnit: string
+	/**
+	 * R​e​t​r​y​ ​a​s​ ​r​o​o​t
+	 */
+	serviceRetryAsRoot: string
+	/**
+	 * S​y​s​t​e​m
+	 */
+	serviceScopeSystem: string
+	/**
+	 * T​h​i​s​ ​a​c​c​o​u​n​t
+	 */
+	serviceScopeUser: string
+	/**
+	 * N​a​m​e​ ​o​r​ ​d​e​s​c​r​i​p​t​i​o​n
+	 */
+	serviceSearchHint: string
+	/**
+	 * S​i​n​c​e
+	 */
+	serviceSince: string
+	/**
+	 * F​a​i​l​e​d
+	 */
+	serviceStateFailed: string
+	/**
+	 * R​u​n​n​i​n​g
+	 */
+	serviceStateRunning: string
+	/**
+	 * S​t​a​r​t​i​n​g
+	 */
+	serviceStateStarting: string
+	/**
+	 * S​t​o​p​p​e​d
+	 */
+	serviceStateStopped: string
+	/**
+	 * S​t​o​p​p​i​n​g
+	 */
+	serviceStateStopping: string
+	/**
+	 * S​t​a​t​e​ ​u​n​k​n​o​w​n
+	 */
+	serviceStateUnknown: string
+	/**
+	 * S​t​a​t​u​s
+	 */
+	serviceStatus: string
+	/**
+	 * {​m​a​n​a​g​e​r​}​ ​·​ ​{​c​o​u​n​t​}​ ​u​n​i​t​s
+	 * @param {unknown} count
+	 * @param {unknown} manager
+	 */
+	serviceSubtitle: RequiredParams<'count' | 'manager'>
+	/**
+	 * T​h​e​ ​s​e​r​v​i​c​e​ ​m​a​n​a​g​e​r​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​r​e​a​d​.
+	 */
+	serviceUnreadable: string
+	/**
+	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​r​u​n​s​ ​{​m​a​n​a​g​e​r​}​,​ ​w​h​i​c​h​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​a​n​n​o​t​ ​l​i​s​t​.​ ​I​t​ ​l​i​s​t​s​ ​s​y​s​t​e​m​d​,​ ​p​r​o​c​d​ ​a​n​d​ ​O​p​e​n​R​C​.
+	 * @param {unknown} manager
+	 */
+	serviceUnsupportedManager: RequiredParams<'manager'>
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​o​n​ ​W​i​n​d​o​w​s​,​ ​w​h​i​c​h​ ​h​a​s​ ​n​o​ ​s​e​r​v​i​c​e​ ​m​a​n​a​g​e​r​ ​t​h​e​s​e​ ​c​o​m​m​a​n​d​s​ ​r​e​a​c​h​.
+	 */
+	serviceUnsupportedPlatform: string
+	/**
+	 * T​h​i​s​ ​a​c​c​o​u​n​t​'​s​ ​o​w​n​ ​u​n​i​t​s​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​r​e​a​d​.​ ​T​h​e​ ​s​y​s​t​e​m​ ​u​n​i​t​s​ ​a​r​e​ ​s​t​i​l​l​ ​l​i​s​t​e​d​.
+	 */
+	serviceUserScopeUnavailable: string
+	/**
+	 * S​e​r​v​i​c​e​s
+	 */
+	services: string
+	/**
 	 * C​P​U
 	 */
 	processCpu: string
@@ -1528,6 +2234,686 @@ export type TranslationFunctions = {
 	 * Manage machine
 	 */
 	manageMachine: () => LocalizedString
+	/**
+	 * Benchmark
+	 */
+	benchmark: () => LocalizedString
+	/**
+	 * A benchmark is already running on this machine. Stop it first.
+	 */
+	benchmarkAlreadyRunning: () => LocalizedString
+	/**
+	 * This agent's copy of the yabs script is unreadable. It is a packaging fault rather than anything about this machine.
+	 */
+	benchmarkAssetUnreadable: () => LocalizedString
+	/**
+	 * Stop
+	 */
+	benchmarkCancel: () => LocalizedString
+	/**
+	 * Stop the run? Killing the process group is the only thing that ends a benchmark — fio, iperf3 and Geekbench are separate processes.
+	 */
+	benchmarkCancelConfirm: () => LocalizedString
+	/**
+	 * Geekbench
+	 */
+	benchmarkCpu: () => LocalizedString
+	/**
+	 * Downloads a proprietary binary and publishes this machine's specifications to a public browser.geekbench.com page. Off by default for that reason.
+	 */
+	benchmarkCpuHint: () => LocalizedString
+	/**
+	 * Disk
+	 */
+	benchmarkDisk: () => LocalizedString
+	/**
+	 * fio at four block sizes, ~30 seconds each. Writes a 2 GB test file into the working directory and needs that much free, or yabs skips it and says so in the output.
+	 */
+	benchmarkDiskHint: () => LocalizedString
+	/**
+	 * No benchmark has been run on this machine yet.
+	 */
+	benchmarkEmpty: () => LocalizedString
+	/**
+	 * About {minutes} min · {traffic} of traffic
+	 */
+	benchmarkEstimate: (arg: { minutes: unknown, traffic: unknown }) => LocalizedString
+	/**
+	 * Needs {free} free in the working directory.
+	 */
+	benchmarkEstimateDisk: (arg: { free: unknown }) => LocalizedString
+	/**
+	 * The agent could not estimate this run; the form is still usable.
+	 */
+	benchmarkEstimateFailed: () => LocalizedString
+	/**
+	 * Nothing is switched on, so only the system information header is collected — a few seconds.
+	 */
+	benchmarkEstimateSystemInfo: () => LocalizedString
+	/**
+	 * exit {code}
+	 */
+	benchmarkExitCode: (arg: { code: unknown }) => LocalizedString
+	/**
+	 * Geekbench version
+	 */
+	benchmarkGeekbenchVersion: () => LocalizedString
+	/**
+	 * This agent could not read its benchmark history.
+	 */
+	benchmarkHistoryUnavailable: () => LocalizedString
+	/**
+	 * Look up the public address
+	 */
+	benchmarkIpInfo: () => LocalizedString
+	/**
+	 * Plaintext HTTP to ip-api.com. Off by default.
+	 */
+	benchmarkIpInfoHint: () => LocalizedString
+	/**
+	 * Output
+	 */
+	benchmarkLog: () => LocalizedString
+	/**
+	 * Nothing printed yet.
+	 */
+	benchmarkLogEmpty: () => LocalizedString
+	/**
+	 * The output is longer than this agent reads in one piece, so this is not all of it.
+	 */
+	benchmarkLogTruncated: () => LocalizedString
+	/**
+	 * Network
+	 */
+	benchmarkNetwork: () => LocalizedString
+	/**
+	 * iperf3 against public servers, both ways.
+	 */
+	benchmarkNetworkHint: () => LocalizedString
+	/**
+	 * This machine did not answer in time. The run is still going; this page will try again.
+	 */
+	benchmarkNoAnswer: () => LocalizedString
+	/**
+	 * The agent could not generate a run id.
+	 */
+	benchmarkNoEntropy: () => LocalizedString
+	/**
+	 * The agent has no home directory, so there is nowhere to install the script.
+	 */
+	benchmarkNoHome: () => LocalizedString
+	/**
+	 * The result is written when the run ends.
+	 */
+	benchmarkNoResultYet: () => LocalizedString
+	/**
+	 * That run is no longer in this agent's history.
+	 */
+	benchmarkNoSuchRun: () => LocalizedString
+	/**
+	 * Download fio and iperf3
+	 */
+	benchmarkPreferBinaries: () => LocalizedString
+	/**
+	 * Use the binaries yabs ships instead of the machine's own, which means fetching them from raw.githubusercontent.com — unreachable from some hosts. Off by default.
+	 */
+	benchmarkPreferBinariesHint: () => LocalizedString
+	/**
+	 * Working processes
+	 */
+	benchmarkProcesses: () => LocalizedString
+	/**
+	 * Elapsed
+	 */
+	benchmarkProgress: () => LocalizedString
+	/**
+	 * Fewer iperf locations
+	 */
+	benchmarkReducedNetwork: () => LocalizedString
+	/**
+	 * Three locations instead of seven. On by default: a full run is tens of gigabytes of traffic.
+	 */
+	benchmarkReducedNetworkHint: () => LocalizedString
+	/**
+	 * Remove
+	 */
+	benchmarkRemove: () => LocalizedString
+	/**
+	 * Remove this run and its files from the machine?
+	 */
+	benchmarkRemoveConfirm: () => LocalizedString
+	/**
+	 * Result
+	 */
+	benchmarkResult: () => LocalizedString
+	/**
+	 * This run stored no result.
+	 */
+	benchmarkResultEmpty: () => LocalizedString
+	/**
+	 * yabs' result is not valid JSON, which happens when a value it collected contains a quote. It is shown as the text it is.
+	 */
+	benchmarkResultUnparsable: () => LocalizedString
+	/**
+	 * Run
+	 */
+	benchmarkRun: () => LocalizedString
+	/**
+	 * The launcher did not start, so nothing was run.
+	 */
+	benchmarkRunErrorLauncherFailed: () => LocalizedString
+	/**
+	 * The run's process is gone and no exit code was written, which is what an out-of-memory kill looks like from here.
+	 */
+	benchmarkRunErrorNoExitCode: () => LocalizedString
+	/**
+	 * The run exited non-zero.
+	 */
+	benchmarkRunErrorNonzeroExit: () => LocalizedString
+	/**
+	 * The run's directory is gone, so nothing can write how it ended.
+	 */
+	benchmarkRunErrorRunDirMissing: () => LocalizedString
+	/**
+	 * This run is still going. Stop it before removing it.
+	 */
+	benchmarkRunInProgress: () => LocalizedString
+	/**
+	 * The yabs script could not be written on this machine.
+	 */
+	benchmarkScriptNotWritable: () => LocalizedString
+	/**
+	 * The launcher did not start.
+	 */
+	benchmarkStartFailed: () => LocalizedString
+	/**
+	 * Started {id}.
+	 */
+	benchmarkStarted: (arg: { id: unknown }) => LocalizedString
+	/**
+	 * Stopped
+	 */
+	benchmarkStatusCancelled: () => LocalizedString
+	/**
+	 * Completed
+	 */
+	benchmarkStatusCompleted: () => LocalizedString
+	/**
+	 * Failed
+	 */
+	benchmarkStatusFailed: () => LocalizedString
+	/**
+	 * Running
+	 */
+	benchmarkStatusRunning: () => LocalizedString
+	/**
+	 * yabs on this machine
+	 */
+	benchmarkSubtitle: () => LocalizedString
+	/**
+	 * yabs is a Linux script that reads procfs, so a benchmark cannot run on this machine. The history is still here.
+	 */
+	benchmarkUnsupported: () => LocalizedString
+	/**
+	 * yabs does not run on this machine's platform.
+	 */
+	benchmarkUnsupportedPlatform: () => LocalizedString
+	/**
+	 * Working directory
+	 */
+	benchmarkWorkDir: () => LocalizedString
+	/**
+	 * Where the run happens, and therefore which filesystem the disk test measures. Empty means the agent account's home directory.
+	 */
+	benchmarkWorkDirHint: () => LocalizedString
+	/**
+	 * That working directory is too long to be a path.
+	 */
+	benchmarkWorkDirTooLong: () => LocalizedString
+	/**
+	 * CPU
+	 */
+	containerCpu: () => LocalizedString
+	/**
+	 * Created
+	 */
+	containerCreated: () => LocalizedString
+	/**
+	 * Dead
+	 */
+	containerDead: () => LocalizedString
+	/**
+	 * Disk
+	 */
+	containerDisk: () => LocalizedString
+	/**
+	 * No containers on this machine.
+	 */
+	containerEmpty: () => LocalizedString
+	/**
+	 * Exited
+	 */
+	containerExited: () => LocalizedString
+	/**
+	 * Images
+	 */
+	containerImages: () => LocalizedString
+	/**
+	 * in use by {count}
+	 */
+	containerInUse: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * Logs
+	 */
+	containerLogs: () => LocalizedString
+	/**
+	 * This container has written nothing.
+	 */
+	containerLogsEmpty: () => LocalizedString
+	/**
+	 * Last {lines} lines from {name}.
+	 */
+	containerLogsFor: (arg: { lines: unknown, name: unknown }) => LocalizedString
+	/**
+	 * Memory
+	 */
+	containerMemory: () => LocalizedString
+	/**
+	 * Network
+	 */
+	containerNetwork: () => LocalizedString
+	/**
+	 * No images on this machine.
+	 */
+	containerNoImages: () => LocalizedString
+	/**
+	 * This machine has no docker or podman command, so there is nothing to show or change here.
+	 */
+	containerNotInstalled: () => LocalizedString
+	/**
+	 * Paused
+	 */
+	containerPaused: () => LocalizedString
+	/**
+	 * The runtime is on this machine but will not talk to the account the agent runs as. On the machine, add that account to the runtime’s group — for Docker, `usermod -aG docker <user>`.
+	 */
+	containerPermissionDenied: () => LocalizedString
+	/**
+	 * Remove stopped containers
+	 */
+	containerPruneContainers: () => LocalizedString
+	/**
+	 * Remove unused volumes
+	 */
+	containerPruneVolumes: () => LocalizedString
+	/**
+	 * Remove
+	 */
+	containerRemove: () => LocalizedString
+	/**
+	 * Remove {name}? Its writable layer is lost; anything kept in a volume or a bind mount stays.
+	 */
+	containerRemoveConfirm: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Force
+	 */
+	containerRemoveForce: () => LocalizedString
+	/**
+	 * Stops the container first. Without this, a running container is refused.
+	 */
+	containerRemoveForceHint: () => LocalizedString
+	/**
+	 * Removing
+	 */
+	containerRemoving: () => LocalizedString
+	/**
+	 * Restart
+	 */
+	containerRestart: () => LocalizedString
+	/**
+	 * Restarting
+	 */
+	containerRestarting: () => LocalizedString
+	/**
+	 * Running
+	 */
+	containerRunning: () => LocalizedString
+	/**
+	 * {runtime} {version}
+	 */
+	containerRuntime: (arg: { runtime: unknown, version: unknown }) => LocalizedString
+	/**
+	 * Start
+	 */
+	containerStart: () => LocalizedString
+	/**
+	 * Stop
+	 */
+	containerStop: () => LocalizedString
+	/**
+	 * Unknown
+	 */
+	containerUnknown: () => LocalizedString
+	/**
+	 * The runtime answered in a way this agent could not read.
+	 */
+	containerUnreadable: () => LocalizedString
+	/**
+	 * The agent runs on Windows, where this panel has no container runtime to talk to.
+	 */
+	containerUnsupportedPlatform: () => LocalizedString
+	/**
+	 * unused
+	 */
+	containerUnused: () => LocalizedString
+	/**
+	 * {count} images are unused by any container.
+	 */
+	containerUnusedImages: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * Images on this machine: {images}. A prune would reclaim {reclaimable}.
+	 */
+	containerUsage: (arg: { images: unknown, reclaimable: unknown }) => LocalizedString
+	/**
+	 * usage unknown
+	 */
+	containerUsageUnknown: () => LocalizedString
+	/**
+	 * Containers
+	 */
+	containers: () => LocalizedString
+	/**
+	 * Remove every stopped container? Their writable layers are lost.
+	 */
+	containerPruneContainersConfirm: () => LocalizedString
+	/**
+	 * Remove every volume no container uses? The data in them is deleted and cannot be recovered.
+	 */
+	containerPruneVolumesConfirm: () => LocalizedString
+	/**
+	 * Schedule
+	 */
+	cron: () => LocalizedString
+	/**
+	 * New job
+	 */
+	cronAdd: () => LocalizedString
+	/**
+	 * Command
+	 */
+	cronCommand: () => LocalizedString
+	/**
+	 * Run by a shell as the agent’s user. Use absolute paths — a job’s PATH is nearly empty.
+	 */
+	cronCommandHint: () => LocalizedString
+	/**
+	 * Every day at {time}
+	 */
+	cronDailyAt: (arg: { time: unknown }) => LocalizedString
+	/**
+	 * Pause
+	 */
+	cronDisable: () => LocalizedString
+	/**
+	 * Paused
+	 */
+	cronDisabled: () => LocalizedString
+	/**
+	 * A paused job is kept as a comment, so it stops running and stays on the page.
+	 */
+	cronDisabledHint: () => LocalizedString
+	/**
+	 * Edit job
+	 */
+	cronEditJob: () => LocalizedString
+	/**
+	 * No jobs yet.
+	 */
+	cronEmpty: () => LocalizedString
+	/**
+	 * Enable
+	 */
+	cronEnable: () => LocalizedString
+	/**
+	 * Enabled
+	 */
+	cronEnabled: () => LocalizedString
+	/**
+	 * Every minute
+	 */
+	cronEveryMinute: () => LocalizedString
+	/**
+	 * Crontab of {user}
+	 */
+	cronForUser: (arg: { user: unknown }) => LocalizedString
+	/**
+	 * Every hour at minute {minute}
+	 */
+	cronHourly: (arg: { minute: unknown }) => LocalizedString
+	/**
+	 * in {days} days
+	 */
+	cronInDays: (arg: { days: unknown }) => LocalizedString
+	/**
+	 * in {hours} hours
+	 */
+	cronInHours: (arg: { hours: unknown }) => LocalizedString
+	/**
+	 * in {minutes} minutes
+	 */
+	cronInMinutes: (arg: { minutes: unknown }) => LocalizedString
+	/**
+	 * The command is empty.
+	 */
+	cronInvalidCommandEmpty: () => LocalizedString
+	/**
+	 * The schedule has to be five whitespace-separated fields.
+	 */
+	cronInvalidFieldCount: () => LocalizedString
+	/**
+	 * A line break would split this into two jobs, so it is refused.
+	 */
+	cronInvalidLineBreak: () => LocalizedString
+	/**
+	 * This app does not know that @macro. Use the five-field form instead.
+	 */
+	cronInvalidMacro: () => LocalizedString
+	/**
+	 * The schedule is empty.
+	 */
+	cronInvalidScheduleEmpty: () => LocalizedString
+	/**
+	 * That job is no longer at that position. The schedule has been read again.
+	 */
+	cronInvalidUnknownLine: () => LocalizedString
+	/**
+	 * Next run {in}
+	 */
+	cronNextRun: (arg: { in: unknown }) => LocalizedString
+	/**
+	 * This machine has no crontab command, so there is nothing to show or change here.
+	 */
+	cronNotInstalled: () => LocalizedString
+	/**
+	 * Other lines
+	 */
+	cronPreserved: () => LocalizedString
+	/**
+	 * Comments, environment assignments and lines this app does not read. They are written back unchanged.
+	 */
+	cronPreservedHint: () => LocalizedString
+	/**
+	 * At every restart
+	 */
+	cronReboot: () => LocalizedString
+	/**
+	 * Delete job
+	 */
+	cronRemove: () => LocalizedString
+	/**
+	 * Schedule
+	 */
+	cronSchedule: () => LocalizedString
+	/**
+	 * Five fields: minute, hour, day of month, month, day of week. An @macro such as @daily is accepted too.
+	 */
+	cronScheduleHint: () => LocalizedString
+	/**
+	 * This app does not read this expression, so the job is shown as written.
+	 */
+	cronUnparsed: () => LocalizedString
+	/**
+	 * The crontab could not be read.
+	 */
+	cronUnreadable: () => LocalizedString
+	/**
+	 * The agent runs on Windows, which has no crontab.
+	 */
+	cronUnsupportedPlatform: () => LocalizedString
+	/**
+	 * Disable at boot
+	 */
+	serviceActionDisable: () => LocalizedString
+	/**
+	 * {action} on {name} was accepted.
+	 */
+	serviceActionDone: (arg: { action: unknown, name: unknown }) => LocalizedString
+	/**
+	 * Enable at boot
+	 */
+	serviceActionEnable: () => LocalizedString
+	/**
+	 * The action failed.
+	 */
+	serviceActionFailed: () => LocalizedString
+	/**
+	 * Restart
+	 */
+	serviceActionRestart: () => LocalizedString
+	/**
+	 * Start
+	 */
+	serviceActionStart: () => LocalizedString
+	/**
+	 * Stop
+	 */
+	serviceActionStop: () => LocalizedString
+	/**
+	 * Definition
+	 */
+	serviceDefinition: () => LocalizedString
+	/**
+	 * The units are listed but not described: what the manager says about them could not all be read.
+	 */
+	serviceDetailsUnavailable: () => LocalizedString
+	/**
+	 * No units on this machine.
+	 */
+	serviceEmpty: () => LocalizedString
+	/**
+	 * This unit has logged nothing.
+	 */
+	serviceLogEmpty: () => LocalizedString
+	/**
+	 * This account may not read the log of that unit, so nothing is shown.
+	 */
+	serviceLogUnreadable: () => LocalizedString
+	/**
+	 * Log
+	 */
+	serviceLogs: () => LocalizedString
+	/**
+	 * Memory
+	 */
+	serviceMemory: () => LocalizedString
+	/**
+	 * Next run
+	 */
+	serviceNextRun: () => LocalizedString
+	/**
+	 * This machine keeps no log for a unit by name.
+	 */
+	serviceNoLog: () => LocalizedString
+	/**
+	 * No unit matches the filter.
+	 */
+	serviceNoMatch: () => LocalizedString
+	/**
+	 * That unit is no longer in the listing. The list has been read again.
+	 */
+	serviceNoSuchUnit: () => LocalizedString
+	/**
+	 * Retry as root
+	 */
+	serviceRetryAsRoot: () => LocalizedString
+	/**
+	 * System
+	 */
+	serviceScopeSystem: () => LocalizedString
+	/**
+	 * This account
+	 */
+	serviceScopeUser: () => LocalizedString
+	/**
+	 * Name or description
+	 */
+	serviceSearchHint: () => LocalizedString
+	/**
+	 * Since
+	 */
+	serviceSince: () => LocalizedString
+	/**
+	 * Failed
+	 */
+	serviceStateFailed: () => LocalizedString
+	/**
+	 * Running
+	 */
+	serviceStateRunning: () => LocalizedString
+	/**
+	 * Starting
+	 */
+	serviceStateStarting: () => LocalizedString
+	/**
+	 * Stopped
+	 */
+	serviceStateStopped: () => LocalizedString
+	/**
+	 * Stopping
+	 */
+	serviceStateStopping: () => LocalizedString
+	/**
+	 * State unknown
+	 */
+	serviceStateUnknown: () => LocalizedString
+	/**
+	 * Status
+	 */
+	serviceStatus: () => LocalizedString
+	/**
+	 * {manager} · {count} units
+	 */
+	serviceSubtitle: (arg: { count: unknown, manager: unknown }) => LocalizedString
+	/**
+	 * The service manager could not be read.
+	 */
+	serviceUnreadable: () => LocalizedString
+	/**
+	 * This machine runs {manager}, which this agent cannot list. It lists systemd, procd and OpenRC.
+	 */
+	serviceUnsupportedManager: (arg: { manager: unknown }) => LocalizedString
+	/**
+	 * The agent runs on Windows, which has no service manager these commands reach.
+	 */
+	serviceUnsupportedPlatform: () => LocalizedString
+	/**
+	 * This account's own units could not be read. The system units are still listed.
+	 */
+	serviceUserScopeUnavailable: () => LocalizedString
+	/**
+	 * Services
+	 */
+	services: () => LocalizedString
 	/**
 	 * CPU
 	 */

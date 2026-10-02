@@ -1,3 +1,6 @@
+// TODO(migration): parsed by `sbm_parser::container` too — see the TODO at
+// the top of `lib/data/provider/container.dart`. Deleted with it.
+
 import 'dart:convert';
 
 /// What `system df` answers: how many images the runtime holds, and how many

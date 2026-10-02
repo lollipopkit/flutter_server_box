@@ -60,8 +60,8 @@ class _AgentPageState extends ConsumerState<AgentPage>
 }
 
 /// Sends this conversation floating, so it stays reachable from the other
-/// tabs. Off by default: most of the time the tab is where you want it, and a
-/// window over every other page would be in the way.
+/// tabs, or stops it. On by default, but the window only comes along once
+/// there is a chat to follow — see `AgentChats.engaged`.
 class _FloatToggle extends ConsumerWidget {
   const _FloatToggle();
 

@@ -170,6 +170,10 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
     db::bootstrap::ensure_admin_user(&db, &config.get_database_url()).await?;
 
     let app_state = crate::api::server::AppState::new(config.clone(), db);
+    // Unconditional, and cheap while nothing is running: a benchmark outlives
+    // the request that started it, so the party that carries it to a terminal
+    // state has to be resident. See `api::benchmark::start_poller`.
+    crate::api::benchmark::start_poller(app_state.clone());
 
     let monitoring_handle = tokio::spawn({
         let state = app_state.clone();

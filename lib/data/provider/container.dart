@@ -1,3 +1,10 @@
+// TODO(migration): ported to `sbm_parser::container` (commands, model and
+// parsers), which the monitor agent's panel already reads. The app still runs
+// this copy. Port this file's fixture tests to Rust first (there is no
+// `container_compat.rs` yet), expose the parsers over FFI, then delete the
+// Dart parsing here and in `lib/data/model/container/` once the FFI result is
+// asserted identical. Every container fix lands twice until then.
+
 import 'dart:async';
 import 'dart:convert';
 

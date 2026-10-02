@@ -100,6 +100,7 @@ Monitor-only crate (the app never depends on it — it always collects over SSH 
 
 ### Frontend (Svelte - `frontend/src/`)
 
+- **State and UI only.** The panel never composes a shell command or parses one's output: it calls an agent endpoint, which builds and parses through `sbm_parser` — the same functions the app reaches over FFI (root `CLAUDE.md`, Architecture). Sending text to `/exec` and parsing the answer in TypeScript is the shape this rules out.
 - **Svelte 5 (runes)** with TypeScript and Tailwind 4 (class-driven dark mode)
 - **`pages/`**: Login.svelte, Dashboard.svelte (App.svelte gates them by auth state; no router)
 - **`components/`**: Spinner, StatCard, ThemeToggle
@@ -207,7 +208,35 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   write speeds have a baseline (reused within 2 s, a baseline for 30 s); a stop
   checks the PID's start identity first and retries as root on `denied`.
   TODO(migration): the app still parses with its Dart copy; move it to
-  `sbm_parser::proc` over FFI.
+  `sbm_parser::proc` over FFI. `/services` (`sbm_parser::service`, ported from
+  the app's `service_manager.dart`, locked by `tests/service_compat.rs`):
+  systemd, procd and OpenRC; an action names a unit by the key its listing
+  gave it and is resolved against a listing read for that request, so whether
+  it needs root is the listing's answer, not the caller's. Outputs reach the
+  parsers as `CommandOutput` through `machine::command_output`, where a
+  timeout or the output cap is a failure carrying why. `/cron`
+  (`sbm_parser::cron`): the account's own crontab only. An edit is one
+  operation on one line by the index its listing gave, applied to the file
+  re-read at the moment of the write and written with `crontab -` on stdin;
+  an index that no longer names a job is refused (`unknownLine`). The audit
+  detail carries the schedule, never the command. `tests/cron_api.rs` never
+  saves — it would write the crontab of whoever runs the suite.
+  `/containers` (`sbm_parser::container`): Docker, then Podman, with a
+  `docker` that is Podman read as Podman; each part (containers, images,
+  usage, logs) is one batch split by a fresh separator, and an action answers
+  with the refreshed listing. A runtime the agent's account may not reach is
+  `permission_denied`, not a failure. TODO: `DOCKER_HOST` and a sudo path.
+  `/benchmark` (`sbm_parser::bench`, the app's yabs command layer): the agent
+  owns the run, not the browser — the `benchmark_run` row (migration 012) is
+  written before the detached launcher starts, and `start_poller` (started in
+  `cli::serve`) carries it to a terminal state whether or not a page is open.
+  One run at a time is a partial unique index, not a check. The script is
+  `assets/yabs.b64`, embedded (`SCRIPT_ASSET_B64`, `tests/benchmark_asset.rs`).
+  Linux only (`supported` in the listing). `tests/benchmark_api.rs` never
+  starts a run.
+  `tests/watch_token_scope.rs` lists these routes with requests that are
+  harmless under the panel login; `/power` is left out, since every body it
+  accepts takes the machine down.
 - **`GET/PUT /api/v1/custom-cmds`** — the user's custom status commands, which
   are files in `~/.config/server_box/custom_cmds` (`sbm_parser::script`) rather
   than anything in this agent's config. The same directory the app writes over

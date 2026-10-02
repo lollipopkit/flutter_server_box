@@ -1,3 +1,8 @@
+// TODO(migration): ported to `sbm_parser::proc` (locked by
+// `crates/sbm_parser/tests/proc_compat.rs` against `test/fixtures/process/`)
+// for the monitor agent's panel. Delete this and read it through the FFI
+// boundary once the FFI result is asserted identical against those fixtures.
+
 import 'dart:convert';
 
 final _whitespaceRegExp = RegExp(r'\s+');

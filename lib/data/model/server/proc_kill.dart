@@ -1,3 +1,7 @@
+// TODO(migration): ported to `sbm_parser::proc::kill_command` and
+// `kill_outcome` for the monitor agent's panel. Delete this and use them
+// through the FFI boundary once asserted identical.
+
 import 'dart:convert';
 
 import 'package:server_box/core/utils/shell_quote.dart';
