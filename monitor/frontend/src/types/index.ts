@@ -121,6 +121,7 @@ export type MachineFeature =
   | 'containers'
   | 'benchmark'
   | 'system_users'
+  | 'snippets'
 
 export type PowerAction = 'shutdown' | 'reboot' | 'suspend'
 
@@ -1275,3 +1276,35 @@ export type UserRefusalCode =
   | 'userExists'
   | 'agentAccount'
   | 'noSuchUser'
+
+/// A snippet saved on the agent (`/snippets`, migration 013). The library is
+/// the agent's rather than this browser's: `localStorage` is lost with the
+/// browser profile and invisible from a second one.
+export interface Snippet {
+  /// Minted by this client; the agent refuses a missing or repeated one.
+  id: string
+  name: string
+  /// As written, `${…}` included. Expanded when it runs, never on save.
+  script: string
+  note: string
+  tags: string[]
+}
+
+export interface SnippetsView {
+  snippets: Snippet[]
+}
+
+/// One thing a terminal is fed, in order: `sbm_parser::snippet::Step`'s wire
+/// shape, which the app's terminal executes too.
+export type SnippetStep =
+  /// Type this, exactly.
+  | { type: 'text'; text: string }
+  /// The first character with the modifier held, then `rest`.
+  | { type: 'combo'; ctrl: boolean; alt: boolean; key: string; rest: string }
+  | { type: 'sleep'; seconds: number }
+  /// Press Enter this many times. Never 0.
+  | { type: 'enter'; times: number }
+
+export interface SnippetPlan {
+  steps: SnippetStep[]
+}

@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/src/rust/api/snippet.dart' as ffi;
 import 'package:xterm/core.dart';
 
 part 'snippet.g.dart';
@@ -43,187 +45,118 @@ abstract class Snippet with _$Snippet {
   );
 }
 
-extension SnippetX on Snippet {
-  static final fmtFinder = RegExp(r'\$\{[^{}]+\}');
+/// A snippet the server it was run for cannot answer.
+final class SnippetException implements Exception {
+  const SnippetException(this.message);
 
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
+/// The macros are `sbm_parser::snippet`'s — the expansion the monitor agent's
+/// panel uses too. This extension only says what the app knows about a server
+/// and carries out the steps Rust answers with.
+extension SnippetX on Snippet {
   /// Whether this script names something only a server has.
   ///
   /// `${host}`, `${user}` and the rest are answered from a [Spi]. A terminal on
   /// this device has none, so a snippet that asks for one is not a snippet it
-  /// can run — and substituting an empty string would quietly run a *different*
-  /// command instead of refusing.
-  bool get needsServer => fmtArgs.keys.any(script.contains);
+  /// can run.
+  bool get needsServer => ffi.snippetUsesServerContext(script: script);
 
-  /// [spi] is null for a terminal that is not on a server. Only meaningful
-  /// where [needsServer] is false, which is what the callers filter on: there
-  /// is then nothing in the script for this to substitute.
-  String fmtWithSpi(Spi? spi) {
-    if (spi == null) return script;
-    return script.replaceAllMapped(fmtFinder, (match) {
-      final key = match.group(0);
-      final func = fmtArgs[key];
-      if (func != null) return func(spi);
-      // Preserve unknown placeholders for later processing.
-      return key ?? '';
-    });
-  }
+  /// The script as one command on [spi], for running rather than typing:
+  /// `${sleep}`, `${ctrl+…}` and the other terminal macros stay as written.
+  String fmtWithSpi(Spi? spi) =>
+      _call(() => ffi.snippetExpand(script: script, contextJson: _context(spi)));
 
-  /// Types this snippet into [terminal]. A placeholder can wait (`${sleep N}`)
-  /// or wait for a key; after each one the rest is typed only while [alive]
-  /// says the shell it began in is still the one [terminal] writes to — a
-  /// reconnect or a switch to tmux replaces it, and the rest was not written
-  /// for that one.
+  /// Types this snippet into [terminal]. A placeholder can wait (`${sleep N}`);
+  /// after each wait the rest is typed only while [alive] says the shell it
+  /// began in is still the one [terminal] writes to — a reconnect or a switch
+  /// to tmux replaces it, and the rest was not written for that one.
+  ///
+  /// Throws a [SnippetException], before typing anything, for a placeholder
+  /// [spi] cannot answer — a password on a key-authenticated server, say.
   Future<void> runInTerm(
     Terminal terminal,
     Spi? spi, {
     bool autoEnter = false,
     bool Function()? alive,
   }) async {
-    final argsFmted = fmtWithSpi(spi);
-    final matches = fmtFinder.allMatches(argsFmted);
+    final json = _call(
+      () => ffi.snippetPlan(script: script, contextJson: _context(spi)),
+    );
+    final steps = (jsonDecode(json) as List).cast<Map<String, Object?>>();
 
     // That one ran, and whether it was parameterised — never the script, the
-    // name or the server. `interactive` is the branch below: a snippet with
-    // `${key}` placeholders is typed in pieces and waits for the user between
-    // them, which is a different feature from pasting a fixed command and the
-    // one worth knowing is used before it is maintained.
+    // name or the server. `interactive` is a snippet typed in pieces, which is
+    // a different feature from pasting a fixed command and the one worth
+    // knowing is used before it is maintained.
     Diag.crumb(
       SbDiag.snippet,
       'run',
-      data: {'interactive': matches.isEmpty ? 'no' : 'yes'},
+      data: {
+        'interactive': steps.every((s) => s['type'] == 'text') ? 'no' : 'yes',
+      },
     );
 
-    // A fixed script can be sent as one input operation.
-    if (matches.isEmpty) {
-      terminal.textInput(argsFmted);
-      if (autoEnter) terminal.keyInput(TerminalKey.enter);
-      return;
-    }
-
-    // Keep both bounds because input between placeholders is sent separately.
-    final (starts, ends) = matches.fold((<int>[], <int>[]), (pre, e) {
-      pre.$1.add(e.start);
-      pre.$2.add(e.end);
-      return pre;
-    });
-
-    // Reject overlapping placeholders before slicing the script.
-    for (var i = 0; i < starts.length - 1; i++) {
-      final lastEnd = ends[i];
-      final nextStart = starts[i + 1];
-      if (nextStart < lastEnd) {
-        throw 'Invalid format: $nextStart < $lastEnd';
-      }
-    }
-
-    if (starts.first > 0) {
-      terminal.textInput(argsFmted.substring(0, starts.first));
-    }
-
-    for (var idx = 0; idx < starts.length; idx++) {
-      final start = starts[idx];
-      final end = ends[idx];
-      final key = argsFmted.substring(start, end).toLowerCase();
-
-      final special = _find(SnippetFuncs.specialCtrl, key);
-      if (special != null) {
-        final raw = key.substring(special.key.length + 1, key.length - 1);
-        await special.value((term: terminal, raw: raw));
-        if (alive != null && !alive()) return;
-      } else {
-        // Remaining placeholders represent terminal keys.
-        final termKey = _find(fmtTermKeys, key);
-        if (termKey != null) {
-          await _doTermKeys(terminal, termKey, key);
+    for (final step in steps) {
+      switch (step['type']) {
+        case 'text':
+          terminal.textInput(step['text'] as String);
+        case 'combo':
+          final key = step['key'] as String;
+          final ok = terminal.charInput(
+            key.codeUnitAt(0),
+            ctrl: step['ctrl'] == true,
+            alt: step['alt'] == true,
+          );
+          if (!ok) Loggers.app.warning('Failed to input: $key');
+          terminal.textInput(step['rest'] as String);
+        case 'sleep':
+          await Future.delayed(Duration(seconds: step['seconds'] as int));
           if (alive != null && !alive()) return;
-        } else {
-          // Normal input
-          terminal.textInput(key);
-        }
+        case 'enter':
+          for (var i = 0; i < (step['times'] as int); i++) {
+            terminal.keyInput(TerminalKey.enter);
+          }
       }
-
-      // Text between this and next match
-      if (idx < starts.length - 1) {
-        terminal.textInput(argsFmted.substring(end, starts[idx + 1]));
-      }
-    }
-
-    // End term input
-    if (ends.last < argsFmted.length) {
-      terminal.textInput(argsFmted.substring(ends.last));
     }
 
     if (autoEnter) terminal.keyInput(TerminalKey.enter);
   }
 
-  Future<void> _doTermKeys(
-    Terminal terminal,
-    MapEntry<String, TerminalKey> termKey,
-    String key,
-  ) async {
-    final ctrlAlt = switch (termKey.value) {
-      TerminalKey.control => (ctrl: true, alt: false),
-      TerminalKey.alt => (ctrl: false, alt: true),
-      _ => (ctrl: false, alt: false),
-    };
+  /// The six `${…}` a server answers, for the editor's help text.
+  static List<String> get serverKeys =>
+      [for (final key in ffi.snippetServerKeys()) '\${$key}'];
 
-    if (!key.contains('+')) return;
-
-    // `${ctrl+ad}` -> `ctrla + d`
-    final chars = key.substring(termKey.key.length + 1, key.length - 1);
-    if (chars.isEmpty) return;
-    final ok = terminal.charInput(
-      chars.codeUnitAt(0),
-      ctrl: ctrlAlt.ctrl,
-      alt: ctrlAlt.alt,
-    );
-    if (!ok) {
-      Loggers.app.warning('Failed to input: $key');
-    }
-
-    terminal.textInput(chars.substring(1));
+  /// What [spi] can answer. An absent key is a value the app does not have —
+  /// no SSH credential, or one without a password — and a script that asks
+  /// for it is refused rather than run with a hole in it.
+  static String _context(Spi? spi) {
+    if (spi == null) return '{}';
+    final ssh = spi.ssh;
+    return jsonEncode({
+      if (ssh != null) ...{
+        'host': ssh.ip,
+        'port': ssh.port.toString(),
+        'user': ssh.user,
+        'pwd': ?ssh.pwd,
+      },
+      'id': spi.id,
+      'name': spi.name,
+    });
   }
 
-  MapEntry<String, T>? _find<T>(Map<String, T> map, String key) {
-    return map.entries.firstWhereOrNull((e) => key.startsWith(e.key));
-  }
-
-  static final fmtArgs = {
-    r'${host}': (Spi spi) => spi.ssh?.ip ?? '',
-    r'${port}': (Spi spi) => (spi.ssh?.port ?? 22).toString(),
-    r'${user}': (Spi spi) => spi.ssh?.user ?? '',
-    r'${pwd}': (Spi spi) => spi.ssh?.pwd ?? '',
-    r'${id}': (Spi spi) => spi.id,
-    r'${name}': (Spi spi) => spi.name,
-  };
-
-  /// r'${ctrl+ad}' -> TerminalKey.control, a, d
-  static final fmtTermKeys = {
-    r'${ctrl': TerminalKey.control,
-    r'${alt': TerminalKey.alt,
-  };
-}
-
-typedef SnippetFuncCtx = ({Terminal term, String raw});
-
-abstract final class SnippetFuncs {
-  static final specialCtrl = {
-    // `${sleep 3}` -> sleep 3 seconds
-    r'${sleep': SnippetFuncs.sleep,
-    r'${enter': SnippetFuncs.enter,
-  };
-
-  static FutureOr<void> sleep(SnippetFuncCtx ctx) async {
-    final seconds = int.tryParse(ctx.raw);
-    if (seconds == null) return;
-    final duration = Duration(seconds: seconds);
-    await Future.delayed(duration);
-  }
-
-  static FutureOr<void> enter(SnippetFuncCtx ctx) async {
-    final times = int.tryParse(ctx.raw) ?? 1;
-    for (var i = 0; i < times; i++) {
-      ctx.term.keyInput(TerminalKey.enter);
+  static String _call(String Function() run) {
+    try {
+      return run();
+    } on ffi.SnippetFfiError catch (e) {
+      throw SnippetException(switch (e.code) {
+        'unanswerable' => 'This server has no value for \${${e.key}}',
+        _ => e.code,
+      });
     }
   }
 }

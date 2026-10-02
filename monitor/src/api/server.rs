@@ -368,6 +368,25 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::post().to(crate::api::system_users::act)),
             )
             .service(
+                // Its own payload limit, like `/custom-cmds`: a write is
+                // the whole library at once.
+                web::resource("/snippets")
+                    .state(
+                        web::types::JsonConfig::default()
+                            .limit(crate::api::snippets::MAX_REQUEST),
+                    )
+                    .route(web::get().to(crate::api::snippets::list))
+                    .route(web::put().to(crate::api::snippets::replace)),
+            )
+            .service(
+                web::resource("/snippets/plan")
+                    .state(
+                        web::types::JsonConfig::default()
+                            .limit(crate::api::snippets::MAX_REQUEST),
+                    )
+                    .route(web::post().to(crate::api::snippets::plan)),
+            )
+            .service(
                 // A streamed body, so ntex's payload limit must not
                 // apply: the point of this endpoint is the file that
                 // `/exec` could not carry.

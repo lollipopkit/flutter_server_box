@@ -2132,6 +2132,125 @@ type RootTranslation = {
 	 * U​s​e​r​s
 	 */
 	systemUsers: string
+	/**
+	 * S​n​i​p​p​e​t​s
+	 */
+	snippets: string
+	/**
+	 * {​c​o​u​n​t​}​ ​s​a​v​e​d​ ​s​c​r​i​p​t​s
+	 * @param {unknown} count
+	 */
+	snippetSubtitle: RequiredParams<'count'>
+	/**
+	 * N​o​ ​s​n​i​p​p​e​t​s​ ​s​a​v​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​y​e​t​.
+	 */
+	snippetEmpty: string
+	/**
+	 * N​e​w​ ​s​n​i​p​p​e​t
+	 */
+	snippetAdd: string
+	/**
+	 * E​d​i​t​ ​s​n​i​p​p​e​t
+	 */
+	snippetEdit: string
+	/**
+	 * D​e​l​e​t​e​ ​s​n​i​p​p​e​t
+	 */
+	snippetDelete: string
+	/**
+	 * D​e​l​e​t​e​ ​{​n​a​m​e​}​?​ ​I​t​ ​i​s​ ​r​e​m​o​v​e​d​ ​f​r​o​m​ ​t​h​i​s​ ​a​g​e​n​t​ ​o​n​l​y​.
+	 * @param {unknown} name
+	 */
+	snippetDeleteConfirm: RequiredParams<'name'>
+	/**
+	 * N​a​m​e
+	 */
+	snippetName: string
+	/**
+	 * S​c​r​i​p​t
+	 */
+	snippetScript: string
+	/**
+	 * W​r​i​t​t​e​n​ ​a​s​ ​i​t​ ​i​s​ ​t​y​p​e​d​.​ ​S​e​r​v​e​r​ ​v​a​l​u​e​s​ ​(​h​o​s​t​,​ ​p​o​r​t​,​ ​u​s​e​r​,​ ​p​a​s​s​w​o​r​d​)​ ​a​r​e​ ​n​o​t​ ​a​v​a​i​l​a​b​l​e​ ​i​n​ ​t​h​e​ ​p​a​n​e​l​,​ ​a​n​d​ ​a​ ​s​c​r​i​p​t​ ​t​h​a​t​ ​u​s​e​s​ ​o​n​e​ ​i​s​ ​n​o​t​ ​r​u​n​.
+	 */
+	snippetScriptHint: string
+	/**
+	 * N​o​t​e
+	 */
+	snippetNote: string
+	/**
+	 * T​a​g​s
+	 */
+	snippetTags: string
+	/**
+	 * S​e​p​a​r​a​t​e​d​ ​b​y​ ​c​o​m​m​a​s​.
+	 */
+	snippetTagsHint: string
+	/**
+	 * R​u​n
+	 */
+	snippetRun: string
+	/**
+	 * R​u​n​ ​o​p​e​n​s​ ​t​h​e​ ​t​e​r​m​i​n​a​l​ ​a​n​d​ ​t​y​p​e​s​ ​t​h​e​ ​s​n​i​p​p​e​t​ ​i​n​t​o​ ​i​t​s​ ​s​h​e​l​l​ ​o​n​c​e​ ​a​ ​s​e​s​s​i​o​n​ ​i​s​ ​c​o​n​n​e​c​t​e​d​.
+	 */
+	snippetRunNote: string
+	/**
+	 * T​y​p​i​n​g​ ​{​n​a​m​e​}
+	 * @param {unknown} name
+	 */
+	snippetTyping: RequiredParams<'name'>
+	/**
+	 * {​n​a​m​e​}​ ​i​s​ ​w​a​i​t​i​n​g​ ​f​o​r​ ​a​ ​s​h​e​l​l​.
+	 * @param {unknown} name
+	 */
+	snippetWaiting: RequiredParams<'name'>
+	/**
+	 * S​t​o​p
+	 */
+	snippetStop: string
+	/**
+	 * D​i​s​c​a​r​d
+	 */
+	snippetDiscard: string
+	/**
+	 * S​a​v​e​d​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 */
+	snippetDoneSaved: RequiredParams<'name'>
+	/**
+	 * D​e​l​e​t​e​d​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 */
+	snippetDoneDeleted: RequiredParams<'name'>
+	/**
+	 * A​ ​s​n​i​p​p​e​t​ ​i​s​ ​m​i​s​s​i​n​g​ ​i​t​s​ ​i​d​.
+	 */
+	snippetInvalidId: string
+	/**
+	 * T​w​o​ ​s​n​i​p​p​e​t​s​ ​s​h​a​r​e​ ​a​n​ ​i​d​.
+	 */
+	snippetDuplicateId: string
+	/**
+	 * A​ ​n​a​m​e​ ​i​s​ ​r​e​q​u​i​r​e​d​.
+	 */
+	snippetInvalidName: string
+	/**
+	 * T​w​o​ ​s​n​i​p​p​e​t​s​ ​h​a​v​e​ ​t​h​e​ ​s​a​m​e​ ​n​a​m​e​.
+	 */
+	snippetDuplicateName: string
+	/**
+	 * A​ ​t​a​g​ ​m​a​y​ ​n​o​t​ ​b​e​ ​e​m​p​t​y​.
+	 */
+	snippetInvalidTag: string
+	/**
+	 * A​ ​s​n​i​p​p​e​t​ ​c​a​n​n​o​t​ ​c​a​r​r​y​ ​t​h​e​ ​s​a​m​e​ ​t​a​g​ ​t​w​i​c​e​.
+	 */
+	snippetDuplicateTag: string
+	/**
+	 * T​h​i​s​ ​s​c​r​i​p​t​ ​u​s​e​s​ ​{​k​e​y​}​,​ ​w​h​i​c​h​ ​t​h​e​ ​p​a​n​e​l​ ​h​a​s​ ​n​o​ ​v​a​l​u​e​ ​f​o​r​.​ ​S​e​r​v​e​r​ ​v​a​l​u​e​s​ ​a​r​e​ ​f​i​l​l​e​d​ ​i​n​ ​o​n​l​y​ ​b​y​ ​t​h​e​ ​a​p​p​.
+	 * @param {unknown} key
+	 */
+	snippetUnanswerable: RequiredParams<'key'>
 }
 
 export type TranslationFunctions = {
@@ -4195,6 +4314,118 @@ export type TranslationFunctions = {
 	 * Users
 	 */
 	systemUsers: () => LocalizedString
+	/**
+	 * Snippets
+	 */
+	snippets: () => LocalizedString
+	/**
+	 * {count} saved scripts
+	 */
+	snippetSubtitle: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * No snippets saved on this agent yet.
+	 */
+	snippetEmpty: () => LocalizedString
+	/**
+	 * New snippet
+	 */
+	snippetAdd: () => LocalizedString
+	/**
+	 * Edit snippet
+	 */
+	snippetEdit: () => LocalizedString
+	/**
+	 * Delete snippet
+	 */
+	snippetDelete: () => LocalizedString
+	/**
+	 * Delete {name}? It is removed from this agent only.
+	 */
+	snippetDeleteConfirm: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Name
+	 */
+	snippetName: () => LocalizedString
+	/**
+	 * Script
+	 */
+	snippetScript: () => LocalizedString
+	/**
+	 * Written as it is typed. Server values (host, port, user, password) are not available in the panel, and a script that uses one is not run.
+	 */
+	snippetScriptHint: () => LocalizedString
+	/**
+	 * Note
+	 */
+	snippetNote: () => LocalizedString
+	/**
+	 * Tags
+	 */
+	snippetTags: () => LocalizedString
+	/**
+	 * Separated by commas.
+	 */
+	snippetTagsHint: () => LocalizedString
+	/**
+	 * Run
+	 */
+	snippetRun: () => LocalizedString
+	/**
+	 * Run opens the terminal and types the snippet into its shell once a session is connected.
+	 */
+	snippetRunNote: () => LocalizedString
+	/**
+	 * Typing {name}
+	 */
+	snippetTyping: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * {name} is waiting for a shell.
+	 */
+	snippetWaiting: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Stop
+	 */
+	snippetStop: () => LocalizedString
+	/**
+	 * Discard
+	 */
+	snippetDiscard: () => LocalizedString
+	/**
+	 * Saved {name}.
+	 */
+	snippetDoneSaved: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Deleted {name}.
+	 */
+	snippetDoneDeleted: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * A snippet is missing its id.
+	 */
+	snippetInvalidId: () => LocalizedString
+	/**
+	 * Two snippets share an id.
+	 */
+	snippetDuplicateId: () => LocalizedString
+	/**
+	 * A name is required.
+	 */
+	snippetInvalidName: () => LocalizedString
+	/**
+	 * Two snippets have the same name.
+	 */
+	snippetDuplicateName: () => LocalizedString
+	/**
+	 * A tag may not be empty.
+	 */
+	snippetInvalidTag: () => LocalizedString
+	/**
+	 * A snippet cannot carry the same tag twice.
+	 */
+	snippetDuplicateTag: () => LocalizedString
+	/**
+	 * This script uses {key}, which the panel has no value for. Server values are filled in only by the app.
+	 */
+	snippetUnanswerable: (arg: { key: unknown }) => LocalizedString
 }
 
 export type Formatters = {}
