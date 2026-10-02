@@ -62,14 +62,16 @@ abstract final class UserManager {
         detail.isEmpty ? 'Unable to read the account' : detail,
       );
     }
-    return parseDetail(result.stdout);
+    return parseDetail(result.stdout, user.name);
   }
 
   static String detailScript(ServerUser user) =>
       _command(() => ffi.usersDetailScript(userJson: _json(user.toJson())));
 
-  static Future<ServerUserDetail> parseDetail(String output) async {
-    final json = await ffi.parseUserDetailJson(raw: output);
+  /// Only the rows naming [name], the account the script was run about, are
+  /// read.
+  static Future<ServerUserDetail> parseDetail(String output, String name) async {
+    final json = await ffi.parseUserDetailJson(raw: output, name: name);
     return ServerUserDetail.fromJson(jsonDecode(json) as Map<String, Object?>);
   }
 

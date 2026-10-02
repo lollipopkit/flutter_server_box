@@ -20,9 +20,13 @@ Future<String> parseUsersListJson({required String raw}) =>
 String usersDetailScript({required String userJson}) =>
     RustLib.instance.api.crateApiUsersUsersDetailScript(userJson: userJson);
 
-/// [`users_detail_script`]'s output → `UserDetail` JSON
-Future<String> parseUserDetailJson({required String raw}) =>
-    RustLib.instance.api.crateApiUsersParseUserDetailJson(raw: raw);
+/// [`users_detail_script`]'s output for account `name` → `UserDetail` JSON.
+/// Only rows naming `name` are read.
+Future<String> parseUserDetailJson({
+  required String raw,
+  required String name,
+}) =>
+    RustLib.instance.api.crateApiUsersParseUserDetailJson(raw: raw, name: name);
 
 bool usersValidName({required String name}) =>
     RustLib.instance.api.crateApiUsersUsersValidName(name: name);

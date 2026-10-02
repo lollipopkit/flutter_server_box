@@ -436,13 +436,13 @@ async fn read_catalog(exec: &super::exec::Limits) -> Result<UserCatalog, Option<
 async fn read_detail(user: &SystemUser, exec: &super::exec::Limits) -> Result<UserDetail, Option<String>> {
     let Ok(script) = detail_script(user) else {
         // A name that is not one, which a catalog could not hold.
-        return Ok(parse_detail(""));
+        return Ok(parse_detail("", &user.name));
     };
     let output = machine::command_output(machine::as_self(&script, exec).await);
     if !output.succeeded {
         return Err(output.detail());
     }
-    Ok(parse_detail(&output.stdout))
+    Ok(parse_detail(&output.stdout, &user.name))
 }
 
 // ---------------------------------------------------------------------------

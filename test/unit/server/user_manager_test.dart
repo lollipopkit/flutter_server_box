@@ -165,14 +165,17 @@ docker:x:998:admin,deploy
   });
 
   test('a detail reads its instants as UTC days and keeps null apart from empty', () async {
-    final detail = await UserManager.parseDetail('''
+    final detail = await UserManager.parseDetail(
+      '''
 SrvBoxUserDetail.Shadow
 admin:\$6\$hash:20000:0:99999:7::20100:
 SrvBoxUserDetail.Status
 SrvBoxUserDetail.Keys
 SrvBoxUserDetail.KeysRead
 SrvBoxUserDetail.Sudo
-''');
+''',
+      'admin',
+    );
     expect(detail.passwordState, ServerUserPasswordState.set);
     expect(detail.passwordChanged, DateTime.utc(2024, 10, 4));
     expect(detail.expires, DateTime.utc(2025, 1, 12));
@@ -180,7 +183,7 @@ SrvBoxUserDetail.Sudo
     // The keys file was read and held nothing: an empty list, not "unknown".
     expect(detail.sshKeyTypes, isEmpty);
 
-    final unreadable = await UserManager.parseDetail('');
+    final unreadable = await UserManager.parseDetail('', 'admin');
     expect(unreadable.isEmpty, isTrue);
     expect(unreadable.sshKeyTypes, isNull);
   });

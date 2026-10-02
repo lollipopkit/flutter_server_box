@@ -27,8 +27,8 @@
 
 // Section: imports
 
-use crate::api::ssh_crypto::*;
-use crate::api::remote_desktop::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::remote_desktop::*;
+use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};
 
@@ -536,9 +536,10 @@ let api_temp_divisor = <f64>::sse_decode(&mut deserializer);deserializer.end(); 
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec,_,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "parse_user_detail_json", port: Some(port_), mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal }, move || {
             let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
             let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_raw = <String>::sse_decode(&mut deserializer);deserializer.end(); move |context|  {
+            let api_raw = <String>::sse_decode(&mut deserializer);
+let api_name = <String>::sse_decode(&mut deserializer);deserializer.end(); move |context|  {
                     transform_result_sse::<_, crate::api::users::UserFfiError>((move ||  {
-                         let output_ok = crate::api::users::parse_user_detail_json(api_raw)?;   std::result::Result::Ok(output_ok)
+                         let output_ok = crate::api::users::parse_user_detail_json(api_raw, api_name)?;   std::result::Result::Ok(output_ok)
                     })())
                 } })
             }fn wire__crate__api__users__parse_users_list_json_impl(port_: flutter_rust_bridge::for_generated::MessagePort,ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32)  {
@@ -2553,8 +2554,8 @@ crate::api::virt::VirtUploadEntryKind::SudoPassword => { 2 }
 
 // Section: imports
 
-use crate::api::ssh_crypto::*;
-use crate::api::remote_desktop::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::remote_desktop::*;
+use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
 
@@ -2613,8 +2614,8 @@ flutter_rust_bridge::frb_generated_boilerplate_io!();
 
 // Section: imports
 
-use crate::api::ssh_crypto::*;
-use crate::api::remote_desktop::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::remote_desktop::*;
+use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
                 use flutter_rust_bridge::for_generated::wasm_bindgen;

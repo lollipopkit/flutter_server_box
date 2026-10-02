@@ -450,8 +450,14 @@ pub fn detail_script(user: &SystemUser) -> Result<String, UserError> {
     .join("\n"))
 }
 
-/// Reads the detail script's output.
-pub fn parse_detail(output: &str) -> UserDetail {
+/// Reads the detail script's output for `name`, the account it was run about.
+///
+/// A shadow or `passwd -S` row is read only when it names that account. Both
+/// commands are asked about one account and print its row alone, so this holds
+/// on any machine that answers as asked — and output that carried another
+/// account's row would otherwise lend this one that account's password state
+/// and expiry.
+pub fn parse_detail(output: &str, name: &str) -> UserDetail {
     const MARKERS: [&str; 4] = [
         DETAIL_SHADOW_MARKER,
         DETAIL_STATUS_MARKER,
@@ -479,7 +485,7 @@ pub fn parse_detail(output: &str) -> UserDetail {
 
     let shadow = sections
         .get(DETAIL_SHADOW_MARKER)
-        .and_then(|lines| lines.iter().find(|line| line.contains(':')));
+        .and_then(|lines| lines.iter().find(|line| line.split(':').next() == Some(name)));
 
     let mut detail = UserDetail {
         password_state: None,
@@ -517,7 +523,7 @@ pub fn parse_detail(output: &str) -> UserDetail {
             // sometimes allowed it for its own account.
             detail.password_state = sections
                 .get(DETAIL_STATUS_MARKER)
-                .and_then(|lines| lines.iter().find(|line| !line.trim().is_empty()))
+                .and_then(|lines| lines.iter().find(|line| line.split_whitespace().next() == Some(name)))
                 .and_then(|status| {
                     let fields: Vec<&str> = status.split_whitespace().collect();
                     fields.get(1).and_then(|word| match word.to_uppercase().as_str() {

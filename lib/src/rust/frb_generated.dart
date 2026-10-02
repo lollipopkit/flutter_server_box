@@ -271,7 +271,10 @@ abstract class RustLibApi extends BaseApi {
     required double tempDivisor,
   });
 
-  Future<String> crateApiUsersParseUserDetailJson({required String raw});
+  Future<String> crateApiUsersParseUserDetailJson({
+    required String raw,
+    required String name,
+  });
 
   Future<String> crateApiUsersParseUsersListJson({required String raw});
 
@@ -1773,12 +1776,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<String> crateApiUsersParseUserDetailJson({required String raw}) {
+  Future<String> crateApiUsersParseUserDetailJson({
+    required String raw,
+    required String name,
+  }) {
     return handler.executeNormal(
       NormalTask(
         callFfi: (port_) {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(raw, serializer);
+          sse_encode_String(name, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -1791,7 +1798,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_user_ffi_error,
         ),
         constMeta: kCrateApiUsersParseUserDetailJsonConstMeta,
-        argValues: [raw],
+        argValues: [raw, name],
         apiImpl: this,
       ),
     );
@@ -1800,7 +1807,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiUsersParseUserDetailJsonConstMeta =>
       const TaskConstMeta(
         debugName: 'parse_user_detail_json',
-        argNames: ['raw'],
+        argNames: ['raw', 'name'],
       );
 
   @override

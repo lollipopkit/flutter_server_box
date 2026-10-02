@@ -58,9 +58,10 @@ pub fn users_detail_script(user_json: String) -> Result<String, UserFfiError> {
     Ok(users::detail_script(&account(&user_json)?)?)
 }
 
-/// [`users_detail_script`]'s output → `UserDetail` JSON
-pub fn parse_user_detail_json(raw: String) -> Result<String, UserFfiError> {
-    serde_json::to_string(&users::parse_detail(&raw)).map_err(malformed)
+/// [`users_detail_script`]'s output for account `name` → `UserDetail` JSON.
+/// Only rows naming `name` are read.
+pub fn parse_user_detail_json(raw: String, name: String) -> Result<String, UserFfiError> {
+    serde_json::to_string(&users::parse_detail(&raw, &name)).map_err(malformed)
 }
 
 #[flutter_rust_bridge::frb(sync)]

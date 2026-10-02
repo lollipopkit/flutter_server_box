@@ -169,6 +169,11 @@ fn the_catalog_script_is_sh_and_says_which_machine_it_read() {
 
 /// [keysRead] false leaves the read-marker out, which is what the script does
 /// when `authorized_keys` could not be opened.
+/// [`parse_detail`] for `name`, the account a fixture's rows are about.
+fn detail_of(name: &str, output: &str) -> UserDetail {
+    parse_detail(output, name)
+}
+
 fn detail_out(shadow: &str, status: &str, keys: &str, sudo: &str, keys_read: bool) -> String {
     [
         DETAIL_SHADOW_MARKER,
@@ -186,7 +191,7 @@ fn detail_out(shadow: &str, status: &str, keys: &str, sudo: &str, keys_read: boo
 
 #[test]
 fn reads_shadow_rather_than_the_locale_formatted_commands() {
-    let detail = parse_detail(&detail_out(
+    let detail = detail_of("lk", &detail_out(
         r"lk:$y$j9T$abc:20355:0:99999:7:::",
         "",
         "",
@@ -206,16 +211,16 @@ fn reads_shadow_rather_than_the_locale_formatted_commands() {
 #[test]
 fn tells_a_locked_password_from_an_absent_one() {
     for hash in ["!", "!!", "*", "!$y$abc"] {
-        let detail = parse_detail(&detail_out(&format!("svc:{hash}:20000:0:99999:7:::"), "", "", "", true));
+        let detail = detail_of("svc", &detail_out(&format!("svc:{hash}:20000:0:99999:7:::"), "", "", "", true));
         assert_eq!(detail.password_state, Some(PasswordState::Locked), "{hash}");
     }
-    let none = parse_detail(&detail_out("svc::20000:0:99999:7:::", "", "", "", true));
+    let none = detail_of("svc", &detail_out("svc::20000:0:99999:7:::", "", "", "", true));
     assert_eq!(none.password_state, Some(PasswordState::None));
 }
 
 #[test]
 fn an_expiry_date_is_a_date_an_empty_field_is_never() {
-    let expiring = parse_detail(&detail_out("temp:x:20000:0:99999:7::20500:", "", "", "", true));
+    let expiring = detail_of("temp", &detail_out("temp:x:20000:0:99999:7::20500:", "", "", "", true));
     assert_eq!(expiring.expires_millis, Some(1_771_200_000_000));
     assert!(!expiring.never_expires);
 }
@@ -226,7 +231,7 @@ fn an_expiry_date_is_a_date_an_empty_field_is_never() {
 #[test]
 fn an_unreadable_expiry_field_is_not_never() {
     for field in ["0", "-1", "garbage"] {
-        let detail = parse_detail(&detail_out(
+        let detail = detail_of("temp", &detail_out(
             &format!("temp:x:20000:0:99999:7::{field}:"),
             "",
             "",
@@ -240,7 +245,7 @@ fn an_unreadable_expiry_field_is_not_never() {
 
 #[test]
 fn falls_back_to_passwd_s_when_shadow_is_unreadable() {
-    let detail = parse_detail(&detail_out("", "lk L 09/28/2026 0 99999 7 -1", "", "", true));
+    let detail = detail_of("lk", &detail_out("", "lk L 09/28/2026 0 99999 7 -1", "", "", true));
     assert_eq!(detail.password_state, Some(PasswordState::Locked));
     assert_eq!(detail.password_changed_millis, None);
 }
@@ -249,7 +254,7 @@ fn falls_back_to_passwd_s_when_shadow_is_unreadable() {
 /// is what keeps the file's free-form contents off this stream.
 #[test]
 fn collects_distinct_key_types_in_file_order() {
-    let detail = parse_detail(&detail_out(
+    let detail = detail_of("lk", &detail_out(
         "",
         "",
         "ssh-ed25519\nssh-rsa\nssh-ed25519\necdsa-sha2-nistp256\n\n",
@@ -271,13 +276,13 @@ fn collects_distinct_key_types_in_file_order() {
 /// keys has none.
 #[test]
 fn an_unread_keys_file_is_none_an_empty_one_is_empty() {
-    let empty = parse_detail(&detail_out("", "", "", "", true));
+    let empty = detail_of("lk", &detail_out("", "", "", "", true));
     assert_eq!(empty.ssh_key_types, Some(Vec::new()));
 
-    let unread = parse_detail(&detail_out("", "", "", "", false));
+    let unread = detail_of("lk", &detail_out("", "", "", "", false));
     assert_eq!(unread.ssh_key_types, None);
 
-    let nothing = parse_detail(DETAIL_SHADOW_MARKER);
+    let nothing = detail_of("lk", DETAIL_SHADOW_MARKER);
     assert_eq!(nothing.ssh_key_types, None);
 }
 
@@ -310,7 +315,7 @@ fn a_detail_script_quotes_the_path_it_reads() {
 
 #[test]
 fn takes_the_first_sudoers_rule_and_drops_the_host_part() {
-    let detail = parse_detail(&detail_out(
+    let detail = detail_of("lk", &detail_out(
         "",
         "",
         "",
@@ -322,7 +327,7 @@ fn takes_the_first_sudoers_rule_and_drops_the_host_part() {
 
 #[test]
 fn nothing_readable_is_an_empty_detail_not_a_wrong_one() {
-    let detail = parse_detail(DETAIL_SHADOW_MARKER);
+    let detail = detail_of("lk", DETAIL_SHADOW_MARKER);
     assert!(detail.is_empty());
     assert_eq!(detail.password_state, None);
     assert_eq!(detail.sudo_rule, None);
@@ -487,9 +492,26 @@ fn a_field_with_a_line_break_is_refused() {
 #[test]
 fn a_day_count_too_large_for_an_instant_is_no_date() {
     let huge = "106751991167301"; // past i64::MAX / 86_400_000
-    let detail = parse_detail(&detail_out(&format!("lk:$y$hash:{huge}:0:99999:7::{huge}:"), "", "", "", true));
+    let detail = detail_of("lk", &detail_out(&format!("lk:$y$hash:{huge}:0:99999:7::{huge}:"), "", "", "", true));
     assert_eq!(detail.password_changed_millis, None);
     assert_eq!(detail.expires_millis, None);
     assert!(!detail.never_expires, "an unreadable expiry is not never");
     assert_eq!(detail.password_state, Some(PasswordState::Set));
+}
+
+/// The shadow and `passwd -S` rows are bound to the account asked about: a row
+/// naming another account, ahead of its own, is not read as this one's.
+#[test]
+fn a_row_about_another_account_is_not_this_ones() {
+    let shadow = "root:$y$roothash:20000:0:99999:7::20100:\nlk:!:20355:0:99999:7:::";
+    let detail = detail_of("lk", &detail_out(shadow, "", "", "", true));
+    assert_eq!(detail.password_state, Some(PasswordState::Locked));
+    assert_eq!(detail.expires_millis, None);
+    assert!(detail.never_expires);
+
+    // Only another account's row: nothing readable about this one, and the
+    // fallback is held to the same rule.
+    let other = detail_of("lk", &detail_out("root:$y$roothash:20000:0:99999:7:::", "root P 09/28/2026 0 99999 7 -1", "", "", true));
+    assert_eq!(other.password_state, None);
+    assert_eq!(other.password_changed_millis, None);
 }
