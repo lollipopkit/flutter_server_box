@@ -4,6 +4,7 @@
   // navigation. Everything is drawn from the theme's own manifest — palette,
   // component styles, radii, background and icons — as the app would.
   import ThemeIcon from './ThemeIcon.svelte'
+  import { defaultIcon } from './defaultIcons.js'
 
   let { preview, mode, scale = 1 } = $props()
 
@@ -31,7 +32,8 @@
 
   const inset = (v, fallback) => (v ? `${v[1]}px ${v[2]}px ${v[3]}px ${v[0]}px` : fallback)
 
-  const icon = (key) => p.images[key] ?? null
+  // The theme's image, else the app's own glyph for that key.
+  const icon = (key) => p.images[key] ?? defaultIcon(p.style, key)
   const iconColor = (key, fallback) => m.iconColors[key] ?? fallback
 
   const tabs = ['server', 'ssh', 'file', 'agent']
@@ -117,7 +119,7 @@
           style={`background:${selected ? (nav.indicatorColor ?? c.secondaryContainer) : 'transparent'}; border-radius:${nav.indicatorRadius ?? 16}px;`}
         >
           <ThemeIcon
-            src={icon(key) ?? icon(`tab.${t}`)}
+            src={icon(key)}
             color={iconColor(key, selected ? (nav.selectedIconColor ?? c.onSecondaryContainer) : (nav.unselectedIconColor ?? c.onSurfaceVariant))}
             size={20}
           />
