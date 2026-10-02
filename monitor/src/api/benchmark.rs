@@ -606,7 +606,7 @@ async fn cancel(
         &limits(&app_state.remote_access.exec, Duration::from_secs(30), 0),
     )
     .await;
-    let stopped = matches!(
+    let signalled = matches!(
         &result,
         Ok(output) if !output.timed_out && output.stdout.contains(bench::CANCELLED)
     );
@@ -614,11 +614,21 @@ async fn cancel(
     // The row is not written here. The cancel command writes the run's exit
     // file, and the state comes from a poll like any other — an exit code the
     // agent asserted would be its word rather than the machine's.
-    if stopped {
-        // Polled once so the caller's next read already has the end of it,
+    //
+    // The marker says only that the signals were sent. Stopped is what the
+    // poll then sees: the launcher gone and the cancellation code in place. A
+    // process still in uninterruptible I/O takes its `KILL` later, and the
+    // resident poller records the end once it does.
+    let stopped = if signalled {
+        // Polled now so the caller's next read already has the end of it,
         // rather than a page that shows a run going for another two seconds.
-        poll_and_finalize(app_state, &row).await;
-    }
+        let polled = poll_and_finalize(app_state, &row).await;
+        polled.state.answered
+            && !polled.state.alive
+            && polled.state.exit_code == Some(bench::CANCELLED_EXIT_CODE)
+    } else {
+        false
+    };
 
     Event::new(
         Kind::Machine,
@@ -849,6 +859,11 @@ fn terminal_of(state: &BenchPollState, past_grace: bool) -> Option<Ended> {
     if !state.answered {
         return None;
     }
+    // Whatever the exit file says — see `BenchPollState::finished`. Ended
+    // here, the directory would be removed under a process still writing in it.
+    if state.alive {
+        return None;
+    }
     if let Some(code) = state.exit_code {
         return Some(match code {
             0 => Ended {
@@ -1062,6 +1077,15 @@ mod tests {
         assert_eq!(failed.status, "failed");
         // The code itself lives in its own column.
         assert_eq!(failed.error, Some(RunError::NonzeroExit));
+    }
+
+    #[test]
+    fn an_exit_code_with_the_launcher_still_there_ends_nothing() {
+        // A cancel whose KILL has not landed: the code is written, the process
+        // is not gone. Its directory must not be removed yet.
+        assert!(terminal_of(&ended(Some(bench::CANCELLED_EXIT_CODE), true, true, true), true).is_none());
+        // Nor the moment between the launcher writing its own code and exiting.
+        assert!(terminal_of(&ended(Some(0), true, true, true), true).is_none());
     }
 
     /// The three codes are a contract with a client in another language — the

@@ -499,7 +499,15 @@ class YabsPollState {
   /// could not read is not lost — see [YabsResult].
   final String? resultJson;
 
-  bool get finished => answered && exitCode != null;
+  /// An exit code, and no launcher left.
+  ///
+  /// The exit code alone is not the end. [YabsScript.cancelCommand] writes 143
+  /// itself once its `KILL` is sent, and a process in uninterruptible I/O —
+  /// fio, in the middle of the disk phase — takes that signal only when the
+  /// I/O returns; the launcher also writes its own code a moment before it
+  /// exits. Read as finished either time, the run would be recorded and its
+  /// directory removed under a process still writing into it.
+  bool get finished => answered && exitCode != null && !alive;
 
   /// Started, no exit code, and no process left to produce one.
   bool get diedWithoutReporting =>

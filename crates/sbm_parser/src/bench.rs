@@ -550,8 +550,16 @@ pub struct BenchPollState {
 }
 
 impl BenchPollState {
+    /// An exit code, and no launcher left.
+    ///
+    /// The exit code alone is not the end. [`cancel_command`] writes 143 itself
+    /// once its `KILL` is sent, and a process in uninterruptible I/O — fio, in
+    /// the middle of the disk phase — takes that signal only when the I/O
+    /// returns; the launcher also writes its own code a moment before it exits.
+    /// Read as finished either time, the run would be recorded and its
+    /// directory removed under a process still writing into it.
     pub fn finished(&self) -> bool {
-        self.answered && self.exit_code.is_some()
+        self.answered && self.exit_code.is_some() && !self.alive
     }
 
     /// Started, no exit code, and no process left to produce one.
@@ -927,6 +935,15 @@ mod tests {
 
         let older = BenchPollState::parse(&format!("{STATE_MARKER} exit= alive=0 started=1"));
         assert!(older.launcher_started);
+    }
+
+    #[test]
+    fn an_exit_code_with_the_launcher_still_there_is_not_the_end() {
+        // What a poll reads right after a cancel whose KILL has not landed yet.
+        let state = BenchPollState::parse(&format!("{STATE_MARKER} exit=143 alive=1 started=1 pid=1"));
+        assert_eq!(state.exit_code, Some(CANCELLED_EXIT_CODE));
+        assert!(!state.finished());
+        assert!(!state.died_without_reporting());
     }
 
     #[test]
