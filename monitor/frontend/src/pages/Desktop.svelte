@@ -297,7 +297,7 @@
                   {/if}
                 </span>
                 <span class="block truncate text-xs text-muted-fg">
-                  {desktop.host}:{desktop.port}{#if desktop.username}{' · '}{desktop.username}{/if}
+                  {desktop.host}:{desktop.port}{#if desktop.username}&nbsp;· {desktop.username}{/if}
                 </span>
               </span>
             </button>
