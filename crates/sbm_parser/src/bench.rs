@@ -401,17 +401,19 @@ echo {JSON_MARKER}
 cat "$d/out.json" 2>/dev/null
 echo
 echo {PS_MARKER}
-if [ -n "$p" ] && same && [ -d /proc ]; then
-  for e in /proc/[0-9]*; do
-    [ -r "$e/stat" ] || continue
-    pg=`sed 's/^.*) //' "$e/stat" 2>/dev/null | awk '{{print $3}}'`
-    [ "$pg" = "$p" ] || continue
-    c=`tr '\0' ' ' < "$e/cmdline" 2>/dev/null`
-    [ -n "$c" ] || c=`sed -n 's/^Name:[[:space:]]*//p' "$e/status" 2>/dev/null`
-    echo "${{e#/proc/}} $c"
-  done
-elif [ -n "$p" ]; then
-  ps -o pid=,args= -p "$p" 2>/dev/null || true
+if [ -n "$p" ] && same; then
+  if [ -d /proc ]; then
+    for e in /proc/[0-9]*; do
+      [ -r "$e/stat" ] || continue
+      pg=`sed 's/^.*) //' "$e/stat" 2>/dev/null | awk '{{print $3}}'`
+      [ "$pg" = "$p" ] || continue
+      c=`tr '\0' ' ' < "$e/cmdline" 2>/dev/null`
+      [ -n "$c" ] || c=`sed -n 's/^Name:[[:space:]]*//p' "$e/status" 2>/dev/null`
+      echo "${{e#/proc/}} $c"
+    done
+  else
+    ps -o pid=,args= -p "$p" 2>/dev/null || true
+  fi
 fi
 echo {LOG_MARKER}
 cat "$d/log" 2>/dev/null
@@ -807,6 +809,10 @@ mod tests {
         let cancel = cancel_command(&run_dir(""));
         assert_eq!(cancel.matches("same").count(), 3, "{cancel}");
         assert!(poll_command(&run_dir("")).contains("same && kill -0"));
+        // The listing as a whole sits under the check, its `ps` fallback
+        // included: a reused pid is no more the run's in `ps` than in `/proc`.
+        assert!(poll_command(&run_dir("")).contains("if [ -n \"$p\" ] && same; then\n  if [ -d /proc ]; then"));
+        assert!(!poll_command(&run_dir("")).contains("elif"));
     }
 
     #[test]

@@ -268,17 +268,19 @@ echo $jsonMarker
 cat "\$d/out.json" 2>/dev/null
 echo
 echo $psMarker
-if [ -n "\$p" ] && same && [ -d /proc ]; then
-  for e in /proc/[0-9]*; do
-    [ -r "\$e/stat" ] || continue
-    pg=`sed 's/^.*) //' "\$e/stat" 2>/dev/null | awk '{print \$3}'`
-    [ "\$pg" = "\$p" ] || continue
-    c=`tr '\\0' ' ' < "\$e/cmdline" 2>/dev/null`
-    [ -n "\$c" ] || c=`sed -n 's/^Name:[[:space:]]*//p' "\$e/status" 2>/dev/null`
-    echo "\${e#/proc/} \$c"
-  done
-elif [ -n "\$p" ]; then
-  ps -o pid=,args= -p "\$p" 2>/dev/null || true
+if [ -n "\$p" ] && same; then
+  if [ -d /proc ]; then
+    for e in /proc/[0-9]*; do
+      [ -r "\$e/stat" ] || continue
+      pg=`sed 's/^.*) //' "\$e/stat" 2>/dev/null | awk '{print \$3}'`
+      [ "\$pg" = "\$p" ] || continue
+      c=`tr '\\0' ' ' < "\$e/cmdline" 2>/dev/null`
+      [ -n "\$c" ] || c=`sed -n 's/^Name:[[:space:]]*//p' "\$e/status" 2>/dev/null`
+      echo "\${e#/proc/} \$c"
+    done
+  else
+    ps -o pid=,args= -p "\$p" 2>/dev/null || true
+  fi
 fi
 echo $logMarker
 cat "\$d/log" 2>/dev/null
