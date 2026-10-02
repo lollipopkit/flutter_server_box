@@ -513,6 +513,10 @@ type RootTranslation = {
 	 */
 	benchmarkRunErrorNonzeroExit: string
 	/**
+	 * T​h​e​ ​r​u​n​'​s​ ​d​i​r​e​c​t​o​r​y​ ​i​s​ ​g​o​n​e​,​ ​s​o​ ​n​o​t​h​i​n​g​ ​c​a​n​ ​w​r​i​t​e​ ​h​o​w​ ​i​t​ ​e​n​d​e​d​.
+	 */
+	benchmarkRunErrorRunDirMissing: string
+	/**
 	 * T​h​i​s​ ​r​u​n​ ​i​s​ ​s​t​i​l​l​ ​g​o​i​n​g​.​ ​S​t​o​p​ ​i​t​ ​b​e​f​o​r​e​ ​r​e​m​o​v​i​n​g​ ​i​t​.
 	 */
 	benchmarkRunInProgress: string
@@ -2406,6 +2410,10 @@ export type TranslationFunctions = {
 	 * The run exited non-zero.
 	 */
 	benchmarkRunErrorNonzeroExit: () => LocalizedString
+	/**
+	 * The run's directory is gone, so nothing can write how it ended.
+	 */
+	benchmarkRunErrorRunDirMissing: () => LocalizedString
 	/**
 	 * This run is still going. Stop it before removing it.
 	 */

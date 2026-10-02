@@ -122,6 +122,7 @@ const en = {
 	benchmarkRunErrorNoExitCode:
 		'The run\'s process is gone and no exit code was written, which is what an out-of-memory kill looks like from here.',
 	benchmarkRunErrorNonzeroExit: 'The run exited non-zero.',
+	benchmarkRunErrorRunDirMissing: 'The run\'s directory is gone, so nothing can write how it ended.',
 	benchmarkRunInProgress: 'This run is still going. Stop it before removing it.',
 	benchmarkScriptNotWritable: 'The yabs script could not be written on this machine.',
 	benchmarkStartFailed: 'The launcher did not start.',

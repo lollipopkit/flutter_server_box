@@ -121,6 +121,7 @@ const fr = {
 	benchmarkRunErrorLauncherFailed: 'Le lanceur n\'a pas démarré : rien n\'a été exécuté.',
 	benchmarkRunErrorNoExitCode: 'Le processus de l\'exécution a disparu et aucun code de sortie n\'a été écrit : c\'est ce que donne un arrêt par manque de mémoire vu d\'ici.',
 	benchmarkRunErrorNonzeroExit: 'L\'exécution s\'est terminée avec un code non nul.',
+	benchmarkRunErrorRunDirMissing: 'Le répertoire de l\'exécution a disparu : plus rien ne peut écrire comment elle s\'est terminée.',
 	benchmarkRunInProgress: 'Cette exécution est toujours en cours. Arrêtez-la avant de la supprimer.',
 	benchmarkScriptNotWritable: 'Le script yabs n\'a pas pu être écrit sur cette machine.',
 	benchmarkStartFailed: 'Le lanceur n\'a pas démarré.',

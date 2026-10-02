@@ -25,9 +25,11 @@ describe('Benchmark page', () => {
     vi.clearAllMocks()
     mocked.getBenchmark.mockResolvedValue(view())
     mocked.estimateBenchmark.mockResolvedValue({
-      estimate: { minutes: 10, traffic_bytes: 0, disk_free_bytes: 0 },
+      minutes: 10,
+      traffic_bytes: 0,
+      required_free_bytes: null,
       system_info_only: false,
-    } as never)
+    })
   })
 
   it('starts a run with the form options and says so', async () => {

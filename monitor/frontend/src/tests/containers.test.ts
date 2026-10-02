@@ -47,3 +47,34 @@ describe('Containers page', () => {
     await waitFor(() => expect(actContainer).toHaveBeenCalledWith({ action: 'prune_volumes' }))
   })
 })
+
+describe('Containers page on the images tab', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    getContainers.mockImplementation(async (part) =>
+      part === 'images'
+        ? ({
+            ...view(),
+            part: 'images',
+            images: [{ id: 'sha256:abc', repository: 'alpine', tag: 'latest', size: '8MB', containers: 0, created_at: null }],
+          } as unknown as ContainerView)
+        : view(),
+    )
+    // What the agent answers to any change: the container listing only.
+    actContainer.mockResolvedValue({ ...view(), exit_code: 0, output: '' } as never)
+  })
+
+  it('keeps the images after a prune, reading the tab again', async () => {
+    render(Containers, { onback: () => {} })
+    await fireEvent.click(await screen.findByRole('button', { name: /^images$/i }))
+    expect(await screen.findByText(/alpine/)).toBeInTheDocument()
+
+    await fireEvent.click(screen.getByRole('button', { name: /remove stopped containers/i }))
+    const buttons = await screen.findAllByRole('button', { name: /remove stopped containers/i })
+    await fireEvent.click(buttons.at(-1)!)
+
+    await waitFor(() => expect(actContainer).toHaveBeenCalledWith({ action: 'prune_containers' }))
+    await waitFor(() => expect(getContainers.mock.calls.filter(([part]) => part === 'images').length).toBe(2))
+    expect(await screen.findByText(/alpine/)).toBeInTheDocument()
+  })
+})

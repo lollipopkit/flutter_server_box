@@ -121,6 +121,7 @@ const ja = {
 	benchmarkRunErrorLauncherFailed: 'ランチャーが起動しなかったため、何も実行されませんでした。',
 	benchmarkRunErrorNoExitCode: '実行のプロセスは消え、終了コードも書かれていません。ここから見ると、メモリ不足による kill はこのように見えます。',
 	benchmarkRunErrorNonzeroExit: '実行が非ゼロで終了しました。',
+	benchmarkRunErrorRunDirMissing: '実行のディレクトリが消えたため、どう終わったかを書き込めるものがありません。',
 	benchmarkRunInProgress: 'この実行はまだ続いています。削除する前に停止してください。',
 	benchmarkScriptNotWritable: 'yabs スクリプトをこのマシンに書き込めませんでした。',
 	benchmarkStartFailed: 'ランチャーが起動しませんでした。',

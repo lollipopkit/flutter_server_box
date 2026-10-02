@@ -340,6 +340,53 @@ fn a_pid_whose_process_is_gone_is_a_run_that_died() {
     assert!(state.died_without_reporting());
 }
 
+/// Whether this machine has the procfs the identity check reads. Without it a
+/// pid is all there is, which is the behaviour the tests above already hold.
+fn has_procfs() -> bool {
+    Path::new("/proc/self/stat").exists()
+}
+
+#[test]
+fn a_pid_now_held_by_another_process_is_not_the_run() {
+    // The launcher is gone and its number has been given to something else.
+    // Read as the run, that process keeps the row `running` for good and is
+    // what a cancel signals.
+    if !has_procfs() {
+        return;
+    }
+    let home = home();
+    let options = BenchOptions::default();
+    let run = Run {
+        home: home.clone(),
+        options: options.clone(),
+    };
+    let mut other = Command::new("sleep").arg("30").spawn().expect("sleep is on every machine this runs on");
+    let dir = bench::run_dir("");
+    sh(
+        &home,
+        &format!(
+            // Started one clock tick after boot: no `sleep` spawned by a test is.
+            "mkdir -p {dir} && echo {pid} > {dir}/pid && echo 1 > {dir}/{start}",
+            dir = bench::quote_path(&dir),
+            pid = other.id(),
+            start = bench::START_FILE,
+        ),
+        None,
+    );
+
+    let state = run.poll();
+    assert!(!state.alive, "a reused pid read as the run");
+    assert!(state.died_without_reporting());
+    assert!(state.processes.is_empty(), "listed another process's group: {}", state.processes);
+
+    let (stdout, _, _) = sh(&home, &bench::cancel_command(&dir), None);
+    assert!(stdout.contains(bench::CANCELLED), "{stdout}");
+    let untouched = other.try_wait().expect("the sleep can be asked about").is_none();
+    let _ = other.kill();
+    let _ = other.wait();
+    assert!(untouched, "cancel signalled a process that was not the run's");
+}
+
 // ---------- cancelling ----------
 
 #[test]
@@ -363,6 +410,20 @@ fn cancel_kills_the_process_group_and_marks_the_run_stopped() {
         std::thread::sleep(Duration::from_millis(50));
     }
     assert!(dir.join("pid").is_file(), "the launcher never recorded its pid");
+    if has_procfs() {
+        // And its start time, so the poll below goes through the identity
+        // check rather than around it.
+        let start = dir.join(bench::START_FILE);
+        while std::fs::read_to_string(&start).map_or(true, |text| text.trim().is_empty())
+            && Instant::now() < deadline
+        {
+            std::thread::sleep(Duration::from_millis(50));
+        }
+        assert!(
+            !std::fs::read_to_string(&start).unwrap_or_default().trim().is_empty(),
+            "the launcher never recorded its start time"
+        );
+    }
     assert!(run.poll().alive);
 
     let (stdout, _, _) = sh(&home, &bench::cancel_command(&bench::run_dir("")), None);

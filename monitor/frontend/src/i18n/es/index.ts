@@ -121,6 +121,7 @@ const es = {
 	benchmarkRunErrorLauncherFailed: 'El lanzador no se inició, así que no se ejecutó nada.',
 	benchmarkRunErrorNoExitCode: 'El proceso de la ejecución ya no está y no se escribió ningún código de salida, que es el aspecto que tiene desde aquí una muerte por falta de memoria.',
 	benchmarkRunErrorNonzeroExit: 'La ejecución terminó con un código distinto de cero.',
+	benchmarkRunErrorRunDirMissing: 'El directorio de la ejecución ya no está, así que nada puede escribir cómo terminó.',
 	benchmarkRunInProgress: 'Esta ejecución sigue en marcha. Deténla antes de eliminarla.',
 	benchmarkScriptNotWritable: 'El script yabs no se pudo escribir en esta máquina.',
 	benchmarkStartFailed: 'El lanzador no se inició.',

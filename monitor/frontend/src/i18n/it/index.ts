@@ -121,6 +121,7 @@ const it = {
 	benchmarkRunErrorLauncherFailed: 'Il launcher non è partito, quindi non è stato eseguito nulla.',
 	benchmarkRunErrorNoExitCode: 'Il processo dell\'esecuzione non c\'è più e nessun codice di uscita è stato scritto, che è l\'aspetto di una morte per memoria esaurita visto da qui.',
 	benchmarkRunErrorNonzeroExit: 'L\'esecuzione è terminata con un codice diverso da zero.',
+	benchmarkRunErrorRunDirMissing: 'La directory dell\'esecuzione non c\'è più, quindi niente può scrivere come è terminata.',
 	benchmarkRunInProgress: 'Questa esecuzione è ancora in corso. Fermala prima di rimuoverla.',
 	benchmarkScriptNotWritable: 'Lo script yabs non si è potuto scrivere su questa macchina.',
 	benchmarkStartFailed: 'Il launcher non è partito.',

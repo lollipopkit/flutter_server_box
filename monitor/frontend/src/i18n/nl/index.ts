@@ -121,6 +121,7 @@ const nl = {
 	benchmarkRunErrorLauncherFailed: 'De starter is niet opgestart, dus er is niets uitgevoerd.',
 	benchmarkRunErrorNoExitCode: 'Het proces van de uitvoering is weg en er is geen exitcode geschreven, wat er van hier uit uitziet als een kill wegens geheugentekort.',
 	benchmarkRunErrorNonzeroExit: 'De uitvoering eindigde met een exitcode die niet nul is.',
+	benchmarkRunErrorRunDirMissing: 'De map van de uitvoering is weg, dus niets kan nog schrijven hoe die is geëindigd.',
 	benchmarkRunInProgress: 'Deze uitvoering loopt nog. Stop die eerst voordat je hem verwijdert.',
 	benchmarkScriptNotWritable: 'Het yabs-script kon niet op deze machine worden geschreven.',
 	benchmarkStartFailed: 'De starter is niet opgestart.',

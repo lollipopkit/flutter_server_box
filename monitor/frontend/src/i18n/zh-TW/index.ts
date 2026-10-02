@@ -121,6 +121,7 @@ const zh_TW = {
 	benchmarkRunErrorLauncherFailed: '啟動器未能啟動，因此沒有執行任何內容。',
 	benchmarkRunErrorNoExitCode: '行程已結束，但沒有寫入結束碼。通常是因為記憶體不足被系統終止。',
 	benchmarkRunErrorNonzeroExit: '執行以非零狀態結束。',
+	benchmarkRunErrorRunDirMissing: '執行目錄已不存在，無法再記錄執行如何結束。',
 	benchmarkRunInProgress: '這次執行仍在進行。請先停止再刪除。',
 	benchmarkScriptNotWritable: 'yabs 腳本無法寫入本機。',
 	benchmarkStartFailed: '啟動器未能啟動。',

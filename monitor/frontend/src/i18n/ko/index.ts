@@ -121,6 +121,7 @@ const ko = {
 	benchmarkRunErrorLauncherFailed: '런처가 시작되지 않아 아무것도 실행되지 않았습니다.',
 	benchmarkRunErrorNoExitCode: '실행의 프로세스는 사라졌고 종료 코드도 기록되지 않았습니다. 메모리 부족으로 강제 종료된 경우가 여기서는 이렇게 보입니다.',
 	benchmarkRunErrorNonzeroExit: '실행이 0이 아닌 코드로 종료되었습니다.',
+	benchmarkRunErrorRunDirMissing: '실행 디렉터리가 사라져서 어떻게 끝났는지 기록할 수 없습니다.',
 	benchmarkRunInProgress: '이 실행은 아직 진행 중입니다. 삭제하기 전에 중지하세요.',
 	benchmarkScriptNotWritable: 'yabs 스크립트를 이 머신에 쓸 수 없었습니다.',
 	benchmarkStartFailed: '런처가 시작되지 않았습니다.',

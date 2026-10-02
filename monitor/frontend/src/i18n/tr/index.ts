@@ -121,6 +121,7 @@ const tr = {
 	benchmarkRunErrorLauncherFailed: 'Başlatıcı çalışmadı, bu yüzden hiçbir şey çalıştırılmadı.',
 	benchmarkRunErrorNoExitCode: 'Çalıştırmanın süreci gitmiş ve hiçbir çıkış kodu yazılmamış; belleğin yetmemesinden öldürülen bir çalıştırma buradan böyle görünür.',
 	benchmarkRunErrorNonzeroExit: 'Çalıştırma sıfırdan farklı bir kodla bitti.',
+	benchmarkRunErrorRunDirMissing: 'Çalıştırmanın dizini gitmiş; nasıl bittiğini yazabilecek bir şey kalmadı.',
 	benchmarkRunInProgress: 'Bu çalıştırma hâlâ sürüyor. Kaldırmadan önce durdurun.',
 	benchmarkScriptNotWritable: 'yabs betiği bu makinede yazılamadı.',
 	benchmarkStartFailed: 'Başlatıcı çalışmadı.',

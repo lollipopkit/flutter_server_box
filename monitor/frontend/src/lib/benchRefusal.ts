@@ -56,6 +56,8 @@ export function benchRunErrorText(code: string): string {
       return ll.benchmarkRunErrorNonzeroExit()
     case 'no_exit_code':
       return ll.benchmarkRunErrorNoExitCode()
+    case 'run_dir_missing':
+      return ll.benchmarkRunErrorRunDirMissing()
     default:
       return code
   }

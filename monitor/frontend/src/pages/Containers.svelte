@@ -103,13 +103,17 @@
     await loadUsage()
   }
 
-  /// Every change answers with the listing as it now stands, so one request
-  /// both writes and refreshes.
+  /// Every change answers with the container listing as it now stands, so on
+  /// that tab one request both writes and refreshes. It is only ever that
+  /// listing: on the images tab it would replace the images with nothing, so
+  /// that tab is read again instead.
   async function act(action: ContainerAction) {
     busy = true
     error = ''
     try {
-      view = await api.actContainer(action)
+      const answer = await api.actContainer(action)
+      if (tab === 'containers') view = answer
+      else void load(tab)
       void loadUsage()
     } catch (e) {
       error = e instanceof Error ? e.message : String(e)

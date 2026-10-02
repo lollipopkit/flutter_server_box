@@ -368,10 +368,19 @@ async fn probe(ty: ContainerType, part: ContainerPart, id: Option<&str>, exec: &
         ContainerPart::Usage => vec![ContainerCmd::Df.exec(ty)],
         // `read` refuses this part without an id, so an empty one here is the
         // path that never runs rather than a container named "".
-        ContainerPart::Logs => vec![sbm_parser::container::logs_tail_command(
-            ty,
-            id.unwrap_or_default(),
-            sbm_parser::container::LOG_TAIL,
+        //
+        // `2>&1`: the runtime replays the container's own stderr on its
+        // stderr. Merged into this segment it is part of the log, where it
+        // belongs, and stays out of the stream this probe reads the runtime's
+        // refusals from — a container whose log says "permission denied" is
+        // not a runtime that refused this user.
+        ContainerPart::Logs => vec![format!(
+            "{} 2>&1",
+            sbm_parser::container::logs_tail_command(
+                ty,
+                id.unwrap_or_default(),
+                sbm_parser::container::LOG_TAIL,
+            )
         )],
     });
 
@@ -401,7 +410,10 @@ async fn probe(ty: ContainerType, part: ContainerPart, id: Option<&str>, exec: &
     let exit_code = exit_code.unwrap_or(-1);
     let reason = || sbm_parser::container::user_facing_output(&stderr, &stdout);
 
-    if sbm_parser::container::is_not_installed(ty, &stdout, &stderr, exit_code) {
+    // stderr only, as below: the shell's "not found" is written there, and
+    // stdout carries what the containers put in it — names, command lines, a
+    // log — which says nothing about the runtime.
+    if sbm_parser::container::is_not_installed(ty, "", &stderr, exit_code) {
         return Probe::NotInstalled { reason: reason() };
     }
     // Checked before parsing rather than after: a client emulating another
@@ -417,7 +429,7 @@ async fn probe(ty: ContainerType, part: ContainerPart, id: Option<&str>, exec: &
     // A runtime that refuses this user answers `permission denied` and nothing
     // else, so this is reported as itself rather than folded into "unreadable":
     // the two have different remedies and only one of them is on the machine.
-    if needs_permission(&stdout, &stderr) {
+    if needs_permission(&stderr) {
         return Probe::PermissionDenied {
             ty,
             reason: reason(),
@@ -440,14 +452,18 @@ async fn probe(ty: ContainerType, part: ContainerPart, id: Option<&str>, exec: &
 }
 
 /// Whether the runtime is there but would not talk to this user.
-fn needs_permission(stdout: &str, stderr: &str) -> bool {
-    let denied = |text: &str| {
-        let lower = text.to_lowercase();
-        lower.contains("permission denied")
-            || lower.contains("access denied")
-            || lower.contains("got permission denied while trying to connect")
-    };
-    denied(stderr) || denied(stdout)
+///
+/// Read from stderr alone. stdout is the containers' own text — a name, a
+/// command line, a log — so a container that printed "permission denied" would
+/// otherwise read as a runtime refusing the agent, and the page would hide
+/// every container behind a remedy for a problem the machine does not have.
+/// The one part whose stderr is the containers' too, the log, merges it into
+/// stdout — see [`probe`].
+fn needs_permission(stderr: &str) -> bool {
+    let lower = stderr.to_lowercase();
+    lower.contains("permission denied")
+        || lower.contains("access denied")
+        || lower.contains("got permission denied while trying to connect")
 }
 
 /// Turns one batch's answers into the response body.
@@ -587,3 +603,19 @@ async fn run_local(command_text: &str, exec: &Limits) -> Option<ExecResponse> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_refusal_is_read_from_stderr_only() {
+        assert!(needs_permission(
+            "permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock"
+        ));
+        // What a container printed reaches stdout, and is not the runtime's
+        // answer to this user.
+        assert!(!needs_permission(""));
+    }
+}
+

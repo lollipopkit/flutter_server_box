@@ -121,6 +121,7 @@ const ru = {
 	benchmarkRunErrorLauncherFailed: 'Лончер не запустился, поэтому ничего не выполнялось.',
 	benchmarkRunErrorNoExitCode: 'Процесс прогона исчез, а код выхода не записан — так отсюда выглядит принудительное завершение из-за нехватки памяти.',
 	benchmarkRunErrorNonzeroExit: 'Прогон завершился с ненулевым кодом.',
+	benchmarkRunErrorRunDirMissing: 'Каталог прогона исчез, поэтому записать, чем он закончился, уже нечему.',
 	benchmarkRunInProgress: 'Этот прогон ещё идёт. Остановите его, прежде чем удалять.',
 	benchmarkScriptNotWritable: 'Не удалось записать скрипт yabs на этой машине.',
 	benchmarkStartFailed: 'Лончер не запустился.',

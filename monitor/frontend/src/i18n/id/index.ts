@@ -121,6 +121,7 @@ const id = {
 	benchmarkRunErrorLauncherFailed: 'Peluncur tidak mulai, jadi tidak ada yang dijalankan.',
 	benchmarkRunErrorNoExitCode: 'Proses eksekusi sudah hilang dan tidak ada exit code yang ditulis, yang dari sini terlihat seperti kill karena kehabisan memori.',
 	benchmarkRunErrorNonzeroExit: 'Eksekusi berakhir dengan exit code bukan nol.',
+	benchmarkRunErrorRunDirMissing: 'Direktori eksekusi sudah hilang, jadi tidak ada yang bisa menulis bagaimana eksekusi itu berakhir.',
 	benchmarkRunInProgress: 'Eksekusi ini masih berjalan. Hentikan dulu sebelum menghapusnya.',
 	benchmarkScriptNotWritable: 'Skrip yabs tidak bisa ditulis di mesin ini.',
 	benchmarkStartFailed: 'Peluncur tidak mulai.',

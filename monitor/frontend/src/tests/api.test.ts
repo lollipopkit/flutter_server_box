@@ -58,3 +58,33 @@ describe.each([
     expect(servers.current?.token).toBe('old-token')
   })
 })
+
+// The agent nests the figures under `estimate`; the page reads one flat object.
+// Returned as the agent sends it, the page drew "about undefined minutes".
+describe('estimateBenchmark', () => {
+  beforeEach(() => {
+    for (const entry of [...servers.list]) servers.remove(entry.id)
+    servers.add('https://first.example')
+    servers.login('token', 'admin')
+  })
+
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('flattens the agent answer into the page shape', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        Response.json({
+          estimate: { minutes: 14, traffic_bytes: 90, required_free_bytes: null },
+          system_info_only: true,
+        }),
+      ),
+    )
+    expect(await api.estimateBenchmark({} as never)).toEqual({
+      minutes: 14,
+      traffic_bytes: 90,
+      required_free_bytes: null,
+      system_info_only: true,
+    })
+  })
+})

@@ -121,6 +121,7 @@ const zh_CN = {
 	benchmarkRunErrorLauncherFailed: '启动器未能启动，因此没有运行任何内容。',
 	benchmarkRunErrorNoExitCode: '进程已退出，但没有写入退出码。通常是因为内存不足被系统结束。',
 	benchmarkRunErrorNonzeroExit: '运行以非零状态退出。',
+	benchmarkRunErrorRunDirMissing: '运行目录已不存在，无法再记录运行如何结束。',
 	benchmarkRunInProgress: '这次运行仍在进行。请先停止再删除。',
 	benchmarkScriptNotWritable: 'yabs 脚本无法写入本机。',
 	benchmarkStartFailed: '启动器未能启动。',

@@ -121,6 +121,7 @@ const de = {
 	benchmarkRunErrorLauncherFailed: 'Der Starter ist nicht angelaufen, es wurde also nichts ausgeführt.',
 	benchmarkRunErrorNoExitCode: 'Der Prozess des Laufs ist verschwunden und es wurde kein Exit-Code geschrieben, was von hier aus einem Out-of-Memory-Kill entspricht.',
 	benchmarkRunErrorNonzeroExit: 'Der Lauf endete mit einem Exit-Code ungleich null.',
+	benchmarkRunErrorRunDirMissing: 'Das Verzeichnis des Laufs ist verschwunden, daher kann nichts mehr schreiben, wie er geendet hat.',
 	benchmarkRunInProgress: 'Dieser Lauf geht noch. Stoppe ihn, bevor du ihn entfernst.',
 	benchmarkScriptNotWritable: 'Das yabs-Skript konnte auf dieser Maschine nicht geschrieben werden.',
 	benchmarkStartFailed: 'Der Starter ist nicht angelaufen.',

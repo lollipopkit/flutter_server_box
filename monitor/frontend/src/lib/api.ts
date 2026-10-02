@@ -353,14 +353,22 @@ export const api = {
     ),
   /// What a set of options would cost, asked of the agent so this page never
   /// re-derives the formula. Changes nothing.
-  estimateBenchmark: (options: BenchOptions) =>
-    request<BenchEstimate>(
+  ///
+  /// The agent answers `{estimate: {...}, system_info_only}`; flattened here
+  /// into the one object the page draws from.
+  estimateBenchmark: async (options: BenchOptions): Promise<BenchEstimate> => {
+    const { estimate, system_info_only } = await request<{
+      estimate: Omit<BenchEstimate, 'system_info_only'>
+      system_info_only: boolean
+    }>(
       '/benchmark',
       { method: 'POST', body: JSON.stringify({ action: 'estimate', options }) },
       'Failed to estimate the run',
       undefined,
       MACHINE_TIMEOUT_MS,
-    ),
+    )
+    return { ...estimate, system_info_only }
+  },
   /// Starts a run. The agent writes the script, records the row and waits for
   /// the launcher to confirm before it answers.
   startBenchmark: (options: BenchOptions) =>

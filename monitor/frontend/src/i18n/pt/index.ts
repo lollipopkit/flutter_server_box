@@ -121,6 +121,7 @@ const pt = {
 	benchmarkRunErrorLauncherFailed: 'O lançador não arrancou, então nada foi executado.',
 	benchmarkRunErrorNoExitCode: 'O processo da execução desapareceu e nenhum código de saída foi escrito, que é o aspeto de uma morte por falta de memória visto daqui.',
 	benchmarkRunErrorNonzeroExit: 'A execução terminou com um código diferente de zero.',
+	benchmarkRunErrorRunDirMissing: 'O diretório da execução desapareceu, por isso nada pode escrever como terminou.',
 	benchmarkRunInProgress: 'Esta execução ainda está a correr. Pare-a antes de a remover.',
 	benchmarkScriptNotWritable: 'O script yabs não pôde ser escrito nesta máquina.',
 	benchmarkStartFailed: 'O lançador não arrancou.',

@@ -119,6 +119,16 @@ const LOG_TAIL_BYTES: usize = 64 * 1024;
 /// exists.
 const POLL_INTERVAL: Duration = Duration::from_secs(2);
 
+/// How long a `running` row may name a directory that is not there before it
+/// is recorded as failed.
+///
+/// The row is written before the start command creates the directory, so a
+/// poll can land in between; this is that window, with room for a machine
+/// slow to spawn a shell. Past it, a missing directory is one something else
+/// removed — or a working directory on a disk that went away — and nothing
+/// will ever write an exit code into it.
+const RUN_DIR_GRACE: Duration = Duration::from_secs(60);
+
 /// The longest working directory accepted. It is a path rather than a
 /// paragraph, and it is the one user-typed value that reaches a command line —
 /// quoted, but bounded here so a client cannot make the agent build an
@@ -156,7 +166,8 @@ struct RunRow {
     exit_code: Option<i32>,
     /// Why a run that ended badly ended badly, as a stable code this agent's
     /// clients phrase in their own language — the same convention as a request
-    /// refusal. `launcher_failed`, `nonzero_exit`, `no_exit_code`, or empty.
+    /// refusal. `launcher_failed`, `nonzero_exit`, `no_exit_code`,
+    /// `run_dir_missing`, or empty.
     error: String,
 }
 
@@ -759,7 +770,7 @@ async fn poll(run_dir: &str, exec: &Limits) -> Polled {
 /// safe to have a side effect at all.
 async fn poll_and_finalize(app_state: &AppState, row: &RunRow) -> Polled {
     let polled = poll(&row.run_dir, &app_state.remote_access.exec).await;
-    let Some(ended) = terminal_of(&polled.state) else {
+    let Some(ended) = terminal_of(&polled.state, past_grace(&row.started_at, chrono::Utc::now())) else {
         return polled;
     };
 
@@ -813,6 +824,9 @@ enum RunError {
     /// The process went away and wrote no exit code, which is what the OOM
     /// killer looks like from here.
     NoExitCode,
+    /// The run directory is gone and was not there for longer than
+    /// [`RUN_DIR_GRACE`], so nothing can ever write the exit code into it.
+    RunDirMissing,
 }
 
 impl RunError {
@@ -821,11 +835,14 @@ impl RunError {
             RunError::LauncherFailed => "launcher_failed",
             RunError::NonzeroExit => "nonzero_exit",
             RunError::NoExitCode => "no_exit_code",
+            RunError::RunDirMissing => "run_dir_missing",
         }
     }
 }
 
-fn terminal_of(state: &BenchPollState) -> Option<Ended> {
+/// `past_grace`: whether the run started longer than [`RUN_DIR_GRACE`] ago —
+/// see [`past_grace`].
+fn terminal_of(state: &BenchPollState, past_grace: bool) -> Option<Ended> {
     // Without an answer there is nothing to conclude. Reading the all-zero
     // state `BenchPollState::default` produces as "the run is gone" is exactly
     // what `answered` exists to prevent.
@@ -859,7 +876,27 @@ fn terminal_of(state: &BenchPollState) -> Option<Ended> {
             error: Some(RunError::NoExitCode),
         });
     }
+    // Left `running`, a row whose directory is gone would hold the one-run
+    // index against every later start, with nothing left to end it.
+    if !state.dir_exists && past_grace {
+        return Some(Ended {
+            status: "failed",
+            error: Some(RunError::RunDirMissing),
+        });
+    }
     None
+}
+
+/// Whether a run that started at `started_at` (the row's RFC 3339 text) is
+/// past [`RUN_DIR_GRACE`] at `now`.
+///
+/// False for a value that will not parse: what it cannot date it does not
+/// end, which is what the poll did before there was a grace at all.
+fn past_grace(started_at: &str, now: chrono::DateTime<chrono::Utc>) -> bool {
+    let Ok(started) = chrono::DateTime::parse_from_rfc3339(started_at) else {
+        return false;
+    };
+    chrono::Duration::from_std(RUN_DIR_GRACE).is_ok_and(|grace| now.signed_duration_since(started) > grace)
 }
 
 /// Removes a run's directory, best effort.
@@ -1009,19 +1046,19 @@ mod tests {
     fn an_unanswered_poll_concludes_nothing() {
         // What a transport's own timeout produces. Reading this as a finished
         // run would fail a benchmark that is going fine.
-        assert!(terminal_of(&BenchPollState::default()).is_none());
+        assert!(terminal_of(&BenchPollState::default(), true).is_none());
     }
 
     #[test]
     fn the_exit_code_decides_the_status() {
-        let completed = terminal_of(&ended(Some(0), false, true, true)).unwrap();
+        let completed = terminal_of(&ended(Some(0), false, true, true), false).unwrap();
         assert_eq!(completed.status, "completed");
         assert!(completed.error.is_none());
 
-        let cancelled = terminal_of(&ended(Some(bench::CANCELLED_EXIT_CODE), false, true, true)).unwrap();
+        let cancelled = terminal_of(&ended(Some(bench::CANCELLED_EXIT_CODE), false, true, true), false).unwrap();
         assert_eq!(cancelled.status, "cancelled");
 
-        let failed = terminal_of(&ended(Some(1), false, true, true)).unwrap();
+        let failed = terminal_of(&ended(Some(1), false, true, true), false).unwrap();
         assert_eq!(failed.status, "failed");
         // The code itself lives in its own column.
         assert_eq!(failed.error, Some(RunError::NonzeroExit));
@@ -1036,22 +1073,49 @@ mod tests {
         assert_eq!(RunError::LauncherFailed.as_str(), "launcher_failed");
         assert_eq!(RunError::NonzeroExit.as_str(), "nonzero_exit");
         assert_eq!(RunError::NoExitCode.as_str(), "no_exit_code");
+        assert_eq!(RunError::RunDirMissing.as_str(), "run_dir_missing");
+    }
+
+    #[test]
+    fn a_run_whose_directory_stays_gone_failed() {
+        // Inside the window between the row and the directory, nothing is
+        // concluded; past it, the run cannot finish.
+        let gone = ended(None, false, false, false);
+        assert!(terminal_of(&gone, false).is_none());
+        let failed = terminal_of(&gone, true).unwrap();
+        assert_eq!(failed.status, "failed");
+        assert_eq!(failed.error, Some(RunError::RunDirMissing));
+        // Not an answer at all is still not one, however old the run.
+        assert!(terminal_of(&BenchPollState::default(), true).is_none());
+        // A directory that is there is the other checks' business.
+        assert!(terminal_of(&ended(None, true, true, true), true).is_none());
+    }
+
+    #[test]
+    fn the_grace_is_measured_from_the_stored_start() {
+        let now = chrono::DateTime::parse_from_rfc3339("2026-10-02T03:00:00+00:00").unwrap().to_utc();
+        // What sqlx writes for a `DateTime<Utc>`.
+        let started = (now - chrono::Duration::seconds(30)).to_rfc3339_opts(chrono::SecondsFormat::AutoSi, false);
+        assert!(!past_grace(&started, now));
+        let started = (now - chrono::Duration::seconds(90)).to_rfc3339_opts(chrono::SecondsFormat::AutoSi, false);
+        assert!(past_grace(&started, now));
+        assert!(!past_grace("not a time", now));
     }
 
     #[test]
     fn a_run_that_vanished_without_an_exit_code_failed() {
-        let died = terminal_of(&ended(None, false, true, true)).unwrap();
+        let died = terminal_of(&ended(None, false, true, true), false).unwrap();
         assert_eq!(died.status, "failed");
 
         // The window between the start command returning and the launcher
         // running its first line. A directory, no process, no exit code — and
         // not a failure.
-        assert!(terminal_of(&ended(None, false, true, false)).is_none());
+        assert!(terminal_of(&ended(None, false, true, false), false).is_none());
         // A directory that was never here at all, which is what a cleaned-up
         // run looks like from a poll that arrives afterwards.
-        assert!(terminal_of(&ended(None, false, false, false)).is_none());
+        assert!(terminal_of(&ended(None, false, false, false), false).is_none());
         // Still going.
-        assert!(terminal_of(&ended(None, true, true, true)).is_none());
+        assert!(terminal_of(&ended(None, true, true, true), false).is_none());
     }
 
     #[test]
