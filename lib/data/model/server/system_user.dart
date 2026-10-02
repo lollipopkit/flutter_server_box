@@ -19,6 +19,29 @@ final class ServerUser {
   final String? primaryGroup;
   final List<String> supplementaryGroups;
 
+  /// `sbm_parser::users::SystemUser` as serde writes it.
+  factory ServerUser.fromJson(Map<String, Object?> json) => ServerUser(
+    name: json['name'] as String,
+    uid: json['uid'] as int,
+    gid: json['gid'] as int,
+    comment: json['comment'] as String,
+    home: json['home'] as String,
+    shell: json['shell'] as String,
+    primaryGroup: json['primary_group'] as String?,
+    supplementaryGroups: (json['supplementary_groups'] as List).cast<String>(),
+  );
+
+  Map<String, Object?> toJson() => {
+    'name': name,
+    'uid': uid,
+    'gid': gid,
+    'comment': comment,
+    'home': home,
+    'shell': shell,
+    'primary_group': primaryGroup,
+    'supplementary_groups': supplementaryGroups,
+  };
+
   bool get isRoot => uid == 0;
 
   bool isSystem(int uidMin) => uid < uidMin;
@@ -35,6 +58,17 @@ final class ServerUserCatalog {
     required this.uidMin,
     required this.users,
   });
+
+  /// `sbm_parser::users::UserCatalog` as serde writes it.
+  factory ServerUserCatalog.fromJson(Map<String, Object?> json) =>
+      ServerUserCatalog(
+        currentUser: json['current_user'] as String,
+        uidMin: json['uid_min'] as int,
+        users: [
+          for (final user in json['users'] as List)
+            ServerUser.fromJson(user as Map<String, Object?>),
+        ],
+      );
 
   final String currentUser;
   final int uidMin;
@@ -65,6 +99,20 @@ final class ServerUserDraft {
   final bool moveHome;
   final bool system;
   final String? password;
+
+  /// `sbm_parser::users::UserDraft` as serde reads it.
+  Map<String, Object?> toJson() => {
+    'name': name,
+    'comment': comment,
+    'home': home,
+    'shell': shell,
+    'primary_group': primaryGroup,
+    'supplementary_groups': supplementaryGroups,
+    'create_home': createHome,
+    'move_home': moveHome,
+    'system': system,
+    'password': password,
+  };
 }
 
 /// Whether an account can be logged into with a password.
@@ -85,6 +133,27 @@ final class ServerUserDetail {
     this.sshKeyTypes,
     this.sudoRule,
   });
+
+  /// `sbm_parser::users::UserDetail` as serde writes it. Its instants are
+  /// shadow's day counts, which are UTC midnights.
+  factory ServerUserDetail.fromJson(Map<String, Object?> json) {
+    DateTime? instant(Object? millis) => millis is int
+        ? DateTime.fromMillisecondsSinceEpoch(millis, isUtc: true)
+        : null;
+    return ServerUserDetail(
+      passwordState: switch (json['password_state']) {
+        'set' => ServerUserPasswordState.set,
+        'locked' => ServerUserPasswordState.locked,
+        'none' => ServerUserPasswordState.none,
+        _ => null,
+      },
+      passwordChanged: instant(json['password_changed_millis']),
+      expires: instant(json['expires_millis']),
+      neverExpires: json['never_expires'] as bool? ?? false,
+      sshKeyTypes: (json['ssh_key_types'] as List?)?.cast<String>(),
+      sudoRule: json['sudo_rule'] as String?,
+    );
+  }
 
   final ServerUserPasswordState? passwordState;
   final DateTime? passwordChanged;

@@ -4,7 +4,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/system_user.dart';
 import 'package:server_box/data/service/user_manager.dart';
+import 'package:server_box/src/rust/api/users.dart' as ffi;
 
+import '../../helpers/rust_lib_helper.dart';
+
+/// The app's half of the accounts page: running what `sbm_parser::users`
+/// builds and carrying what it parses. The rules themselves — the catalog, the
+/// detail, the commands and what is refused — are asserted in Rust, by
+/// `crates/sbm_parser/tests/user_compat.rs`, which holds this file's former
+/// cases.
 final class _QueueExec implements ServerExec {
   _QueueExec(List<ExecResult> results) : results = Queue.of(results);
 
@@ -29,6 +37,8 @@ final class _QueueExec implements ServerExec {
 }
 
 void main() {
+  setUpAll(initRustLibForTest);
+
   const listing = '''
 SrvBoxUsers.Current\tadmin
 SrvBoxUsers.UidMin\t1000
@@ -43,300 +53,185 @@ users:x:1000:admin
 docker:x:998:admin,deploy
 ''';
 
-  test('parses passwd and group catalogs', () {
-    final catalog = UserManager.parse(listing);
+  const admin = ServerUser(
+    name: 'admin',
+    uid: 1000,
+    gid: 1000,
+    comment: '',
+    home: '/home/admin',
+    shell: '/usr/bin/fish',
+    primaryGroup: 'users',
+    supplementaryGroups: ['docker'],
+  );
 
-    expect(catalog.currentUser, 'admin');
-    expect(catalog.uidMin, 1000);
-    expect(catalog.users, hasLength(4));
-    expect(catalog.users.first.isRoot, isTrue);
-    expect(catalog.users[1].loginDisabled, isTrue);
+  ServerUserDraft draft({
+    String name = 'deploy',
+    String comment = '',
+    String? password,
+  }) => ServerUserDraft(
+    name: name,
+    comment: comment,
+    home: '/srv/deploy',
+    shell: '/bin/bash',
+    primaryGroup: 'users',
+    supplementaryGroups: const ['docker'],
+    createHome: true,
+    moveHome: false,
+    system: false,
+    password: password,
+  );
 
-    final admin = catalog.users[2];
-    expect(admin.comment, 'Admin User');
-    expect(admin.primaryGroup, 'users');
-    expect(admin.supplementaryGroups, ['docker']);
-    expect(admin.isSystem(catalog.uidMin), isFalse);
-  });
-
-  test('list runs the portable catalog script', () async {
+  test('list runs the Rust script through sh and reads its catalog', () async {
     final exec = _QueueExec([
       const ExecResult(exitCode: 0, stdout: listing, stderr: ''),
     ]);
 
     final catalog = await UserManager.list(exec);
 
-    expect(catalog.currentUser, 'admin');
-    expect(exec.scripts, [UserManager.listScript]);
+    expect(exec.scripts, [ffi.usersListScript()]);
     // Through `sh`, not the login shell: the script has an `if`, which fish
     // does not read.
     expect(exec.entries, ['sh']);
+    expect(catalog.currentUser, 'admin');
+    expect(catalog.uidMin, 1000);
+    expect(catalog.users.map((user) => user.name), [
+      'root',
+      'daemon',
+      'admin',
+      'deploy',
+    ]);
+    final read = catalog.users[2];
+    expect(read.comment, 'Admin User');
+    expect(read.primaryGroup, 'users');
+    expect(read.supplementaryGroups, ['docker']);
+    expect(catalog.users.first.isRoot, isTrue);
+    expect(catalog.users[1].loginDisabled, isTrue);
   });
 
-  test('detail reads the account through sh as well', () async {
-    const user = ServerUser(
-      name: 'admin',
-      uid: 1000,
-      gid: 1000,
-      comment: '',
-      home: '/home/admin',
-      shell: '/usr/bin/fish',
-      supplementaryGroups: [],
-    );
-    final exec = _QueueExec([
-      const ExecResult(
-        exitCode: 0,
-        stdout: 'SrvBoxUserDetail.Shadow\n',
-        stderr: '',
-      ),
+  test('a listing that fails or names no current user is refused', () async {
+    final failed = _QueueExec([
+      const ExecResult(exitCode: 1, stdout: '', stderr: 'getent: denied'),
     ]);
+    await expectLater(
+      UserManager.list(failed),
+      throwsA(
+        isA<UserManagerException>().having(
+          (e) => e.message,
+          'message',
+          'getent: denied',
+        ),
+      ),
+    );
 
-    await UserManager.detail(exec, user);
+    await expectLater(
+      UserManager.parse('SrvBoxUsers.Passwd\n'),
+      throwsA(
+        isA<UserManagerException>().having(
+          (e) => e.message,
+          'message',
+          'Unable to determine the current user',
+        ),
+      ),
+    );
+  });
 
-    expect(exec.scripts, [UserManager.detailScript(user)]);
+  test('an account crosses to Rust and back unchanged', () async {
+    // What the detail script is built from is the JSON this side writes.
+    expect(UserManager.detailScript(admin), contains("'/home/admin"));
+    final exec = _QueueExec([
+      const ExecResult(exitCode: 0, stdout: '', stderr: ''),
+    ]);
+    await UserManager.detail(exec, admin);
+    expect(exec.scripts, [UserManager.detailScript(admin)]);
     expect(exec.entries, ['sh']);
   });
 
-  test('builds a quoted create script and sets the password through stdin', () {
-    const draft = ServerUserDraft(
-      name: 'deploy',
-      comment: "Release operator's account",
-      home: '/srv/deploy',
-      shell: '/bin/bash',
-      primaryGroup: 'users',
-      supplementaryGroups: ['docker', 'wheel'],
-      createHome: true,
-      moveHome: false,
-      system: false,
-      password: 'correct horse battery staple',
-    );
+  test('a detail reads its instants as UTC days and keeps null apart from empty', () async {
+    final detail = await UserManager.parseDetail('''
+SrvBoxUserDetail.Shadow
+admin:\$6\$hash:20000:0:99999:7::20100:
+SrvBoxUserDetail.Status
+SrvBoxUserDetail.Keys
+SrvBoxUserDetail.KeysRead
+SrvBoxUserDetail.Sudo
+''');
+    expect(detail.passwordState, ServerUserPasswordState.set);
+    expect(detail.passwordChanged, DateTime.utc(2024, 10, 4));
+    expect(detail.expires, DateTime.utc(2025, 1, 12));
+    expect(detail.neverExpires, isFalse);
+    // The keys file was read and held nothing: an empty list, not "unknown".
+    expect(detail.sshKeyTypes, isEmpty);
 
-    final script = UserManager.createScript(draft);
-
-    expect(
-      script,
-      contains("-c 'Release operator'\\''s account'"),
-    );
-    expect(script, startsWith('set -e\nuseradd '));
-    expect(script, contains("-G 'docker,wheel' 'deploy'"));
-    expect(script, contains("chpasswd <<'SrvBoxUserPassword'"));
-    expect(script, contains('deploy:correct horse battery staple'));
+    final unreadable = await UserManager.parseDetail('');
+    expect(unreadable.isEmpty, isTrue);
+    expect(unreadable.sshKeyTypes, isNull);
   });
 
-  test('edits only fields that changed', () {
-    const original = ServerUser(
-      name: 'deploy',
-      uid: 1001,
-      gid: 1000,
-      comment: 'Deploy',
-      home: '/home/deploy',
-      shell: '/bin/sh',
-      primaryGroup: 'users',
-      supplementaryGroups: ['docker'],
-    );
-    const draft = ServerUserDraft(
-      name: 'deploy',
-      comment: 'Deploy',
-      home: '/srv/deploy',
-      shell: '/bin/bash',
-      primaryGroup: 'users',
-      supplementaryGroups: ['docker'],
-      createHome: true,
-      moveHome: true,
-      system: false,
-    );
-
+  test('a refusal reads as the message the form has always shown', () {
+    expect(UserManager.validateDraft(draft()), isNull);
     expect(
-      UserManager.editScript(original, draft),
-      "usermod -d '/srv/deploy' -m -s '/bin/bash' 'deploy'",
+      UserManager.validateDraft(draft(name: 'Bad Name')),
+      'Invalid user name',
     );
+    expect(
+      UserManager.validateDraft(draft(password: 'a\nb')),
+      'Password cannot contain line breaks',
+    );
+    expect(UserManager.validName('deploy'), isTrue);
+    expect(UserManager.validName('-rf'), isFalse);
   });
 
-  test('rejects unsafe names and root deletion', () {
-    const unsafe = ServerUserDraft(
-      name: 'bad;touch /tmp/pwned',
-      comment: '',
-      home: '',
-      shell: '',
-      primaryGroup: '',
-      supplementaryGroups: [],
-      createHome: true,
-      moveHome: false,
-      system: false,
+  test('a command Rust refuses is an ArgumentError, as it was', () {
+    expect(
+      () => UserManager.createScript(draft(name: 'Bad Name')),
+      throwsA(
+        isA<ArgumentError>().having((e) => e.message, 'message', 'Invalid user name'),
+      ),
     );
-    expect(() => UserManager.createScript(unsafe), throwsArgumentError);
-
+    expect(
+      () => UserManager.editScript(admin, draft(name: 'renamed')),
+      throwsA(
+        isA<ArgumentError>().having(
+          (e) => e.message,
+          'message',
+          'Renaming is not supported',
+        ),
+      ),
+    );
     const root = ServerUser(
       name: 'root',
       uid: 0,
       gid: 0,
       comment: '',
       home: '/root',
-      shell: '/bin/sh',
-      primaryGroup: 'root',
+      shell: '/bin/bash',
       supplementaryGroups: [],
     );
     expect(
       () => UserManager.deleteScript(root, removeHome: false),
-      throwsArgumentError,
+      throwsA(
+        isA<ArgumentError>().having(
+          (e) => e.message,
+          'message',
+          'The root user cannot be deleted',
+        ),
+      ),
     );
   });
 
-  group('parseDetail', () {
-    /// [keysRead] false leaves the read-marker out, which is what the script
-    /// does when `authorized_keys` could not be opened.
-    String out({
-      String shadow = '',
-      String status = '',
-      String keys = '',
-      String sudo = '',
-      bool keysRead = true,
-    }) => [
-      UserManager.detailShadowMarker,
-      shadow,
-      UserManager.detailStatusMarker,
-      status,
-      UserManager.detailKeysMarker,
-      if (keysRead) UserManager.detailKeysReadMarker,
-      keys,
-      UserManager.detailSudoMarker,
-      sudo,
-    ].join('\n');
-
-    test('reads shadow rather than the locale-formatted commands', () {
-      final detail = UserManager.parseDetail(
-        out(shadow: r'lk:$y$j9T$abc:20355:0:99999:7:::'),
-      );
-      expect(detail.passwordState, ServerUserPasswordState.set);
-      expect(
-        detail.passwordChanged,
-        DateTime.utc(2025, 9, 24),
-      );
-      expect(detail.neverExpires, true);
-      expect(detail.expires, isNull);
-    });
-
-    // `!`, `!!` and `*` all mean "no password login". An empty field means no
-    // password at all, which lets anyone in and must not read as locked.
-    test('tells a locked password from an absent one', () {
-      for (final hash in ['!', '!!', '*', r'!$y$abc']) {
-        expect(
-          UserManager.parseDetail(out(shadow: 'svc:$hash:20000:0:99999:7:::'))
-              .passwordState,
-          ServerUserPasswordState.locked,
-          reason: hash,
-        );
-      }
-      expect(
-        UserManager.parseDetail(out(shadow: 'svc::20000:0:99999:7:::'))
-            .passwordState,
-        ServerUserPasswordState.none,
-      );
-    });
-
-    test('an expiry date is a date, an empty field is never', () {
-      final expiring = UserManager.parseDetail(
-        out(shadow: 'temp:x:20000:0:99999:7::20500:'),
-      );
-      expect(expiring.expires, DateTime.utc(2026, 2, 16));
-      expect(expiring.neverExpires, false);
-    });
-
-    // Empty is the only thing that means never. Anything that will not parse
-    // means the record could not be read, and answering Never there would be
-    // a claim about an account's expiry made from no evidence.
-    test('an unreadable expiry field is not never', () {
-      for (final field in ['0', '-1', 'garbage']) {
-        final detail = UserManager.parseDetail(
-          out(shadow: 'temp:x:20000:0:99999:7::$field:'),
-        );
-        expect(detail.neverExpires, false, reason: field);
-        expect(detail.expires, isNull, reason: field);
-      }
-    });
-
-    test('falls back to passwd -S when shadow is unreadable', () {
-      final detail = UserManager.parseDetail(
-        out(status: 'lk L 09/28/2026 0 99999 7 -1'),
-      );
-      expect(detail.passwordState, ServerUserPasswordState.locked);
-      expect(detail.passwordChanged, isNull);
-    });
-
-    // The script's awk pass has already reduced each line to its type token,
-    // which is what keeps the file's free-form contents off this stream.
-    test('collects distinct key types in file order', () {
-      final detail = UserManager.parseDetail(
-        out(
-          keys: [
-            'ssh-ed25519',
-            'ssh-rsa',
-            'ssh-ed25519',
-            'ecdsa-sha2-nistp256',
-            '',
-          ].join('\n'),
-        ),
-      );
-      expect(detail.sshKeyTypes, ['ed25519', 'rsa', 'ecdsa']);
-    });
-
-    // An empty list is "read it, there are none"; null is "could not read it".
-    // Reporting the second as the first would tell the user that an account
-    // with keys has none.
-    test('an unread keys file is null, an empty one is an empty list', () {
-      expect(UserManager.parseDetail(out(keys: '')).sshKeyTypes, isEmpty);
-      expect(
-        UserManager.parseDetail(out(keysRead: false)).sshKeyTypes,
-        isNull,
-      );
-      expect(
-        UserManager.parseDetail(UserManager.detailShadowMarker).sshKeyTypes,
-        isNull,
-      );
-    });
-
-    // The file belongs to the account being looked at, and the markers travel
-    // as plain text on the same stream. Reducing each line to a token that
-    // cannot spell one is what stops its owner fabricating the sudo rule this
-    // page displays.
-    test('the script never lets a keys line reach the parser whole', () {
-      const user = ServerUser(
-        name: 'lk',
-        uid: 1000,
-        gid: 1000,
-        comment: '',
-        home: '/home/lk',
-        shell: '/bin/bash',
-        supplementaryGroups: [],
-      );
-      final script = UserManager.detailScript(user);
-
-      expect(script, contains(r'if ($i ~ /^(ssh-|ecdsa-|sk-)/)'));
-      expect(script, contains("if [ -r '/home/lk/.ssh/authorized_keys' ]"));
-      // The read has to report its own failure rather than be swallowed.
-      expect(script, isNot(contains('authorized_keys\' 2>/dev/null || true')));
-    });
-
-    test('takes the first sudoers rule and drops the host part', () {
-      final detail = UserManager.parseDetail(
-        out(
-          sudo: [
-            'Matching Defaults entries for lk on box:',
-            '    env_reset, mail_badpass',
-            '',
-            'User lk may run the following commands on box:',
-            '    (ALL : ALL) NOPASSWD: ALL',
-          ].join('\n'),
-        ),
-      );
-      expect(detail.sudoRule, 'NOPASSWD: ALL');
-    });
-
-    test('nothing readable is an empty detail, not a wrong one', () {
-      final detail = UserManager.parseDetail(UserManager.detailShadowMarker);
-      expect(detail.isEmpty, true);
-      expect(detail.passwordState, isNull);
-      expect(detail.sudoRule, isNull);
-    });
+  test('a draft reaches Rust whole', () {
+    // Every field the form fills in has to arrive: one dropped by the JSON
+    // would be a command that silently ignores what the user typed.
+    final script = UserManager.createScript(
+      draft(comment: "Release operator's account", password: 'secret'),
+    );
+    expect(script, contains('useradd'));
+    expect(script, contains('-m'));
+    expect(script, contains(r"'Release operator'\''s account'"));
+    expect(script, contains("-d '/srv/deploy'"));
+    expect(script, contains("-s '/bin/bash'"));
+    expect(script, contains("-g 'users'"));
+    expect(script, contains("-G 'docker'"));
+    expect(script, contains("chpasswd <<'SrvBoxUserPassword'\ndeploy:secret\n"));
   });
 }

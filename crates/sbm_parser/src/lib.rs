@@ -26,6 +26,7 @@ pub mod script;
 pub mod service;
 pub mod smart;
 pub mod types;
+pub mod users;
 pub mod virt;
 pub mod virt_cloud_init;
 pub mod virt_manage;
