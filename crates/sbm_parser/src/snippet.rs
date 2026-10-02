@@ -31,6 +31,9 @@
 //!   slicing past the end of the match it held.
 //! - **`${sleep N}` and `${enter N}` are bounded** ([`MAX_SLEEP_SECONDS`],
 //!   [`MAX_ENTER`]); the Dart code had no bound.
+//! - **A server value is typed as written**, where the Dart code substituted
+//!   it first and then read macros out of the result: a password containing
+//!   `${enter}` was pressed as Enter instead of typed.
 //!
 //! The guards against a script that cannot be executed are the caller's, not
 //! this module's: a snippet is the operator's own text, and there is nothing
@@ -213,9 +216,11 @@ pub fn uses_server_context(script: &str) -> bool {
 }
 
 /// Turns a script into what a client should type.
+///
+/// One pass over the script as written: a server value (`${pwd}` is a
+/// password) becomes text, never read for macros itself.
 pub fn plan(script: &str, ctx: &SnippetContext) -> Result<Vec<Step>, PlanError> {
-    let expanded = expand(script, ctx)?;
-    Ok(steps_of(&expanded))
+    steps_of(script, ctx)
 }
 
 /// Replaces the six server placeholders, refusing the first one the caller
@@ -237,9 +242,6 @@ pub fn expand(script: &str, ctx: &SnippetContext) -> Result<String, PlanError> {
             return Err(PlanError::Unanswerable { key: m.name.clone() });
         };
         out.push_str(&script[cursor..m.start]);
-        // The value goes in verbatim, including any `${…}` inside it, which the
-        // macro pass will then read. That was the Dart code's behaviour, and the only
-        // way a value stays opaque is to say so rather than to escape it.
         out.push_str(value);
         cursor = m.end;
     }
@@ -308,20 +310,22 @@ fn push_text(steps: &mut Vec<Step>, text: &str) {
     }
 }
 
-/// The macro pass: everything left after the server names were substituted.
-fn steps_of(script: &str) -> Vec<Step> {
-    let found = matches(script);
-    if found.is_empty() {
-        let mut steps = Vec::new();
-        push_text(&mut steps, script);
-        return steps;
-    }
-
+/// The script's server values and macros, in order.
+fn steps_of(script: &str, ctx: &SnippetContext) -> Result<Vec<Step>, PlanError> {
     let mut steps = Vec::new();
     let mut cursor = 0;
-    for m in &found {
+    for m in &matches(script) {
         push_text(&mut steps, &script[cursor..m.start]);
         cursor = m.end;
+        // The spelling as written, so `${HOST}` is a shell variable someone
+        // wrote rather than this macro.
+        if SERVER_KEYS.contains(&m.name.as_str()) {
+            let Some(value) = ctx.get(&m.name) else {
+                return Err(PlanError::Unanswerable { key: m.name.clone() });
+            };
+            push_text(&mut steps, value);
+            continue;
+        }
         // The name between the braces, lowercased: the macros are recognised
         // whatever case the operator spelled them in.
         let name = m.name.to_lowercase();
@@ -369,7 +373,7 @@ fn steps_of(script: &str) -> Vec<Step> {
         push_text(&mut steps, &script[m.start..m.end]);
     }
     push_text(&mut steps, &script[cursor..]);
-    steps
+    Ok(steps)
 }
 
 /// The inside of a `name argument` macro after the name: what follows the one
@@ -570,17 +574,18 @@ mod tests {
         assert!(placeholders("${host ${a{b}}").is_empty());
     }
 
-    /// A substituted value is opaque, even when it contains a macro — the
-    /// second pass reads it, which is what the Dart code did too.
+    /// A server value is typed as written, even when it contains a macro: a
+    /// password `abc${enter}def` is those eleven characters, not an Enter.
     #[test]
-    fn a_value_is_inserted_before_the_macros_are_read() {
+    fn a_value_is_never_read_for_macros() {
         let odd = SnippetContext {
+            pwd: Some("abc${enter}def".into()),
             name: Some("a${sleep 2}b".into()),
             ..ctx()
         };
         assert_eq!(
-            plan("${name}", &odd).unwrap(),
-            vec![text("a"), Step::Sleep { seconds: 2 }, text("b")]
+            plan("${name} ${pwd}${enter}", &odd).unwrap(),
+            vec![text("a${sleep 2}b abc${enter}def"), Step::Enter { times: 1 }]
         );
     }
 

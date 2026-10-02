@@ -148,14 +148,19 @@
   /// Nothing is executed by this: a snippet becomes a command only once a shell
   /// has run it, and what is queued is what a keyboard would have typed.
   async function run(snippet: Snippet) {
+    // The queue is global and the terminal types into whichever server is on
+    // screen, so a plan that answers after a switch belongs to neither.
+    const serverId = servers.currentId
     planning = true
     runError = ''
     try {
       const plan = await api.planSnippet(snippet.script)
+      if (stale(serverId)) return
       snippetRun.queue(snippet.name, plan.steps)
       opened = null
       layout.navigate('terminal')
     } catch (e) {
+      if (stale(serverId)) return
       runError = snippetPlanRefusalText(e)
     } finally {
       planning = false

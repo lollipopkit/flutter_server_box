@@ -4,6 +4,7 @@ import '@testing-library/jest-dom/vitest'
 import Snippets from '../pages/Snippets.svelte'
 import { api, ApiError } from '../lib/api'
 import { layout } from '../lib/layout.svelte'
+import { servers } from '../lib/servers.svelte'
 import { snippetRun } from '../lib/snippetRun.svelte'
 import type { Snippet } from '../types'
 
@@ -37,6 +38,24 @@ describe('Snippets page', () => {
     await waitFor(() => expect(navigate).toHaveBeenCalledWith('terminal'))
     expect(planSnippet).toHaveBeenCalledWith('df -h')
     expect(snippetRun.waiting).toEqual({ name: 'Disk', steps })
+  })
+
+  it('drops a plan that answers after the server was switched', async () => {
+    let answer!: (plan: { steps: [] }) => void
+    planSnippet.mockReturnValue(new Promise((resolve) => (answer = resolve)))
+    const navigate = vi.spyOn(layout, 'navigate')
+    const current = vi.spyOn(servers, 'currentId', 'get').mockReturnValue('a')
+    render(Snippets, { onback: () => {} })
+
+    await fireEvent.click(await screen.findByRole('button', { name: /Disk/ }))
+    await fireEvent.click(screen.getByRole('button', { name: /^run$/i }))
+    current.mockReturnValue('b')
+    answer({ steps: [] })
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /^run$/i })).toBeEnabled())
+    expect(snippetRun.waiting).toBeNull()
+    expect(navigate).not.toHaveBeenCalled()
+    current.mockRestore()
   })
 
   it('says which value the panel cannot fill in, and queues nothing', async () => {
