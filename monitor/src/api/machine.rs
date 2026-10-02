@@ -148,6 +148,21 @@ pub(crate) async fn as_root_private(
     as_root(&format!("sh '{}'", path.replace('\'', "'\\''")), password, limits).await
 }
 
+/// No `sudo` to run it through and no owner-only mode to give the file, so
+/// nothing that holds a secret is run as root here. Unreached by the callers,
+/// which refuse anything but Linux first; it exists so they build everywhere.
+#[cfg(not(unix))]
+pub(crate) async fn as_root_private(
+    _text: &str,
+    _password: Option<&str>,
+    _limits: &Limits,
+) -> std::io::Result<ExecResponse> {
+    Err(std::io::Error::new(
+        std::io::ErrorKind::Unsupported,
+        "running a script that holds a secret as root needs a Unix host",
+    ))
+}
+
 /// A script file readable by this process's user alone, removed on drop.
 #[cfg(unix)]
 struct PrivateScript {
