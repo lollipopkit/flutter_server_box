@@ -1,3 +1,6 @@
+// TODO(migration): parsed by `sbm_parser::service` too — see the TODO at the
+// top of `lib/data/service/service_manager.dart`. Deleted with it.
+
 import 'dart:convert';
 
 import 'package:server_box/data/model/server/server_exec.dart';

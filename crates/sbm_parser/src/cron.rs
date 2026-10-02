@@ -4,6 +4,9 @@
 //! Ported from the app's `lib/data/service/cron_manager.dart` and
 //! `lib/data/model/server/cron*.dart`; the Dart implementation stays until this
 //! one is asserted identical against the same fixtures.
+// TODO(migration): no `cron_compat.rs` yet. Port the Dart fixture tests here,
+// expose this over FFI, and delete the Dart side once the result is asserted
+// identical.
 //!
 //! The feature is one account's own crontab, as `crontab` itself is: no `-u`,
 //! no `/etc/cron.d`, no systemd timers. Running as another user needs sudo,

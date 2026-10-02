@@ -1,3 +1,9 @@
+// TODO(migration): ported to `sbm_parser::cron` (listing script, document
+// model, expression expansion), which the monitor agent's panel already reads.
+// The app still runs this copy. Port its fixture tests to Rust first (there is
+// no `cron_compat.rs` yet), expose it over FFI, then delete this and
+// `lib/data/model/server/cron*.dart` once the FFI result is asserted identical.
+
 import 'package:server_box/data/model/server/cron.dart';
 import 'package:server_box/data/model/server/cron_schedule.dart';
 import 'package:server_box/data/model/server/server_exec.dart';

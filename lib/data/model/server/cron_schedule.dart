@@ -1,3 +1,6 @@
+// TODO(migration): parsed by `sbm_parser::cron` too — see the TODO at the top
+// of `lib/data/service/cron_manager.dart`. Deleted with it.
+
 import 'package:intl/intl.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 

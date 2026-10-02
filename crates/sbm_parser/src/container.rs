@@ -3,8 +3,15 @@
 //!
 //! Pure like the rest of this crate: every function takes the text a runtime
 //! printed and returns a value, or takes a description and returns a command.
-//! Nothing here runs anything, so the app reaches it over SSH and the agent
-//! reaches it over a local shell and both read one implementation.
+//! Nothing here runs anything, so the same functions serve a caller that
+//! reaches the machine over SSH and one that runs a local shell.
+//!
+//! Only the agent uses them so far.
+// TODO(migration): the app still parses containers with its Dart copy
+// (`lib/data/provider/container.dart`, `lib/data/model/container/`). Port its
+// fixture tests here first (there is no `container_compat.rs` yet), expose
+// this over FFI, and delete the Dart side once the result is asserted
+// identical.
 //!
 //! The two runtimes are one feature with two dialects rather than two features:
 //! they share the verbs (`ps`, `stats`, `image ls`, `system df`, `stop`,

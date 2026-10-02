@@ -1,3 +1,8 @@
+// TODO(migration): the same commands as `sbm_parser::bench` (locked by
+// `crates/sbm_parser/tests/bench_script.rs`), which the monitor agent already
+// runs. Expose them over FFI and delete this; until then a change to either
+// copy has to be made to both.
+
 import 'dart:convert';
 
 import 'package:flutter/services.dart' show rootBundle;
