@@ -2926,6 +2926,18 @@ class AppLocalizationsId extends AppLocalizations {
   String get remoteDesktopUsernameRequired => 'Masukkan nama pengguna RDP.';
 
   @override
+  String get remoteDesktopNameInvalid =>
+      'Nama profil paling banyak 64 karakter dan tidak boleh berisi baris baru.';
+
+  @override
+  String get remoteDesktopHostInvalid =>
+      'Host tujuan tidak boleh berisi spasi atau baris baru.';
+
+  @override
+  String get remoteDesktopCredentialInvalid =>
+      'Nama pengguna dan domain paling banyak 256 karakter dan tidak boleh berisi baris baru.';
+
+  @override
   String get remoteDesktopVncPasswordAscii =>
       'Kata sandi VNC klasik hanya boleh berisi karakter ASCII.';
 

@@ -1,5 +1,6 @@
 <script module lang="ts">
   import type { Snippet } from '../types'
+  import { newId } from '../lib/newId'
 
   /// The form's own fields, in the shapes the form edits: the tags are one text
   /// field, because a list that is typed is a list of words separated by
@@ -25,26 +26,12 @@
   /// screen shows.
   export function snippetFormState(snippet?: Snippet): SnippetFormState {
     return {
-      id: snippet?.id ?? newSnippetId(),
+      id: snippet?.id ?? newId(),
       name: snippet?.name ?? '',
       script: snippet?.script ?? '',
       note: snippet?.note ?? '',
       tags: snippet?.tags.join(', ') ?? '',
     }
-  }
-
-  /// An identity for a snippet this client is about to add.
-  ///
-  /// `randomUUID` is absent outside a secure context, which a panel served over
-  /// plain HTTP from a LAN address is — a setup the terminal supports
-  /// (`allow_insecure`). It costs nothing here: no endpoint takes a snippet id,
-  /// a `PUT` sends the whole set, and the id is an identity within one library
-  /// rather than a secret.
-  export function newSnippetId(): string {
-    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-      return crypto.randomUUID()
-    }
-    return `s-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
   }
 
   /// The tags the set should hold, read out of the one text field they are

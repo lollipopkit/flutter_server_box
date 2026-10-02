@@ -48,6 +48,8 @@ import type {
   Snippet,
   SnippetPlan,
   SnippetsView,
+  Desktop,
+  DesktopsView,
 } from '../types'
 import { isSecureAgentUrl } from './agentUrl'
 import { servers, type ServerEntry } from './servers.svelte'
@@ -450,6 +452,16 @@ export const api = {
       '/snippets/plan',
       { method: 'POST', body: JSON.stringify({ script, context: {} }) },
       'Failed to expand the snippet',
+    ),
+  /// The desktop routes saved on the agent (the `connect` grant).
+  getDesktops: () => request<DesktopsView>('/desktops', {}, 'Failed to fetch the desktops'),
+  /// Replaces the whole set, in order. A refusal arrives with its code as
+  /// `ApiError.message` and the row as `body.index`.
+  updateDesktops: (desktops: Desktop[]) =>
+    request<DesktopsView>(
+      '/desktops',
+      { method: 'PUT', body: JSON.stringify({ desktops }) },
+      'Failed to save the desktops',
     ),
   /// Shuts the machine down, reboots or suspends it. The password is for
   /// `sudo -S` and travels as its own field, never inside a command.

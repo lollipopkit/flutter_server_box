@@ -108,6 +108,7 @@ exactly that:
 | Remote desktop, local and dynamic port forwards | `connect` (`/api/v1/stream/ws`), optionally limited by an `allow` list |
 | Remote port forwards | `listen` (`/api/v1/listen/ws`); loopback only unless its `public` option is on |
 | The panel's in-browser terminal | `ssh_terminal` |
+| The panel's remote desktops (VNC, RDP) | `connect` (`/api/v1/stream/ws`, `/api/v1/rdp/ws`), the same `allow` list |
 
 `/api/v1/stream/ws` relays one TCP connection to an address the app names,
 dialled from this machine as the agent's account. `/api/v1/listen/ws` is the

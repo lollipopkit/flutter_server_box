@@ -2944,6 +2944,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get remoteDesktopUsernameRequired => 'Введите имя пользователя RDP.';
 
   @override
+  String get remoteDesktopNameInvalid =>
+      'Имя профиля — не более 64 символов, без переносов строки.';
+
+  @override
+  String get remoteDesktopHostInvalid =>
+      'Целевой хост не может содержать пробелы или переносы строки.';
+
+  @override
+  String get remoteDesktopCredentialInvalid =>
+      'Имя пользователя и домен — не более 256 символов, без переносов строки.';
+
+  @override
   String get remoteDesktopVncPasswordAscii =>
       'Классические пароли VNC могут содержать только символы ASCII.';
 

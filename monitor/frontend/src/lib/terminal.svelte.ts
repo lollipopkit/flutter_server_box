@@ -21,6 +21,7 @@
 ///   heartbeat and a gap in it is what triggers a reconnect.
 
 import { ApiError, api } from './api'
+import { agentWsUrl, wsTicketProtocol } from './agentUrl'
 import { servers } from './servers.svelte'
 
 /// Missing this many milliseconds of heartbeat means the link is gone. The
@@ -116,26 +117,12 @@ function clearSession() {
   }
 }
 
-/// Turns the agent's base URL into the WebSocket URL for the terminal.
-///
-/// Built by string surgery rather than through `URL`, which would read a bare
-/// `agent.example.com:3770` as the scheme `agent.example.com:`. An entry
-/// without a scheme inherits the page's, so a panel served over HTTPS never
-/// silently downgrades its terminal to `ws:`.
-///
-/// Exported for its own test: getting the scheme wrong on a same-origin panel
-/// is the kind of thing that only shows up in production.
+/// The terminal endpoint as a WebSocket URL — see `agentWsUrl`.
 export function terminalWsUrl(base: string): string {
-  const origin = (base || window.location.origin).trim().replace(/\/+$/, '')
-  const ws = /^https?:\/\//i.test(origin)
-    ? origin.replace(/^http/i, 'ws')
-    : `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${origin}`
-  return `${ws}/api/v1/terminal/ws`
+  return agentWsUrl(base, '/api/v1/terminal/ws')
 }
 
-export function terminalWsProtocol(ticket: string): string {
-  return `sbm-ticket.${ticket}`
-}
+export const terminalWsProtocol = wsTicketProtocol
 
 export class TerminalSession {
   phase = $state<Phase>('idle')

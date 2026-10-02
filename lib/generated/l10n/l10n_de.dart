@@ -2959,6 +2959,18 @@ class AppLocalizationsDe extends AppLocalizations {
       'Geben Sie den RDP-Benutzernamen ein.';
 
   @override
+  String get remoteDesktopNameInvalid =>
+      'Der Profilname darf höchstens 64 Zeichen lang sein und keine Zeilenumbrüche enthalten.';
+
+  @override
+  String get remoteDesktopHostInvalid =>
+      'Der Zielhost darf keine Leerzeichen oder Zeilenumbrüche enthalten.';
+
+  @override
+  String get remoteDesktopCredentialInvalid =>
+      'Benutzername und Domäne dürfen höchstens 256 Zeichen lang sein und keine Zeilenumbrüche enthalten.';
+
+  @override
   String get remoteDesktopVncPasswordAscii =>
       'Klassische VNC-Passwörter dürfen nur ASCII-Zeichen enthalten.';
 

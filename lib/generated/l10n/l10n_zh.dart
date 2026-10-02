@@ -2731,6 +2731,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get remoteDesktopUsernameRequired => '请输入 RDP 用户名。';
 
   @override
+  String get remoteDesktopNameInvalid => '配置名称最多 64 个字符，不能换行。';
+
+  @override
+  String get remoteDesktopHostInvalid => '目标主机不能包含空格或换行。';
+
+  @override
+  String get remoteDesktopCredentialInvalid => '用户名和域最多 256 个字符，不能换行。';
+
+  @override
   String get remoteDesktopVncPasswordAscii => '传统 VNC 密码只能包含 ASCII 字符。';
 
   @override
@@ -7742,6 +7751,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get remoteDesktopUsernameRequired => '請輸入 RDP 使用者名稱。';
+
+  @override
+  String get remoteDesktopNameInvalid => '設定名稱最多 64 個字元，不能換行。';
+
+  @override
+  String get remoteDesktopHostInvalid => '目標主機不能包含空格或換行。';
+
+  @override
+  String get remoteDesktopCredentialInvalid => '使用者名稱和網域最多 256 個字元，不能換行。';
 
   @override
   String get remoteDesktopVncPasswordAscii => '傳統 VNC 密碼只能包含 ASCII 字元。';

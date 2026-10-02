@@ -47,6 +47,9 @@ pub enum Purpose {
     Stream,
     /// A port listened on for the app's remote forwards — see `api::ws::listen`.
     Listen,
+    /// The panel's RDP session — see `api::ws::rdcleanpath`. Carried inside the
+    /// first PDU rather than as a subprotocol, which the RDP client cannot set.
+    Rdp,
 }
 
 struct Entry {

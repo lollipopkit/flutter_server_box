@@ -122,6 +122,7 @@ export type MachineFeature =
   | 'benchmark'
   | 'system_users'
   | 'snippets'
+  | 'desktop'
 
 export type PowerAction = 'shutdown' | 'reboot' | 'suspend'
 
@@ -228,7 +229,7 @@ export interface RemoteAccess {
   listen?: boolean
 }
 
-export type WsTicketPurpose = 'terminal'
+export type WsTicketPurpose = 'terminal' | 'stream' | 'rdp'
 
 export interface WsTicketResponse {
   ticket: string
@@ -1307,4 +1308,32 @@ export type SnippetStep =
 
 export interface SnippetPlan {
   steps: SnippetStep[]
+}
+
+/// A remote desktop route saved on the agent (`/desktops`, migration 014).
+/// No password: it is typed when a session opens and goes to the desktop only.
+export type DesktopProtocol = 'vnc' | 'rdp'
+
+export interface Desktop {
+  /// Minted by this client; the agent refuses a missing or repeated one.
+  id: string
+  name: string
+  protocol: DesktopProtocol
+  /// Dialled by the agent, so `127.0.0.1` is the agent's machine.
+  host: string
+  port: number
+  username: string | null
+  domain: string | null
+  view_only: boolean
+  shared: boolean
+}
+
+export interface DesktopProtocolView {
+  id: DesktopProtocol
+  default_port: number
+}
+
+export interface DesktopsView {
+  desktops: Desktop[]
+  protocols: DesktopProtocolView[]
 }

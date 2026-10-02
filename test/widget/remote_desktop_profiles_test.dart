@@ -33,6 +33,7 @@ import 'package:server_box/view/page/remote_desktop/profiles.dart';
 import 'package:server_box/view/page/remote_desktop/tab.dart';
 import 'package:server_box/view/widget/group_title.dart';
 
+import '../helpers/rust_lib_helper.dart';
 import '../helpers/spi_fixture.dart';
 import '../helpers/test_db.dart';
 
@@ -72,6 +73,8 @@ class _NoConnectRemoteDesktopSessions extends RemoteDesktopSessions {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  // The profile editor's rules are `sbm_parser::desktop`, through FFI.
+  setUpAll(initRustLibForTest);
 
   const sid = 'srv-rdp-1';
   final spi = spiFixture(

@@ -251,6 +251,24 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   empty context, so a script naming a server value (`${host}`, `${pwd}`) is
   refused as `{error: "unanswerable", key}`. All three need `shell`; the
   audit names snippets, never a script.
+  `/desktops`: the panel's remote desktop routes (migration 014; a PUT
+  replaces the set, refused per row as `{error, index}`), under `connect`
+  rather than `shell`. What a route may hold is `sbm_parser::desktop`, the
+  rules the app's profile editor applies through FFI too. A route stores no password: the panel asks for it
+  when a session opens and hands it to noVNC only. A session is the
+  existing `/stream/ws` relay; the panel's `RelayChannel`
+  (`frontend/src/lib/desktop.svelte.ts`) gives noVNC the binary frames,
+  keeps the bytes a VNC server sends before noVNC attaches, and turns the
+  relay's `error`/`exit` frames into the reason the session ended. RDP goes
+  through `/rdp/ws` (`api/ws/rdcleanpath.rs`) instead: the browser's IronRDP
+  client cannot do RDP's TLS, so the agent is its RDCleanPath proxy — it reads
+  the request PDU (ticket in `proxy_auth`, purpose `rdp`), checks `connect`
+  and the `allow` list on the resolved addresses exactly as `/stream/ws` does,
+  forwards the X.224 request, does the TLS handshake with the RDP server
+  (certificate captured, not verified), answers with the chain, then relays.
+  **The session, NLA credential included, is plaintext in the agent**; the
+  panel says so beside it. A role change that takes `connect` to that address
+  away closes the session. `tests/rdp_ws.rs` runs it against a fake RDP server.
   `tests/watch_token_scope.rs` lists these routes with requests that are
   harmless under the panel login; `/power` is left out, since every body it
   accepts takes the machine down.
