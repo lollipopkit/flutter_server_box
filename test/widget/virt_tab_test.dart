@@ -1129,6 +1129,9 @@ void main() {
     testWidgets('text: in place, kept when left, taken up again, closed', (
       tester,
     ) async {
+      // Never is the default; this is about a console that is left behind, so
+      // there has to be a timeout for its notice to arrive at.
+      Stores.setting.remoteSessionIdleTimeout.put(60);
       _details['qemu/100'] = const VirtGuestDetail(
         consoles: {VirtConsoleKind.text},
       );
