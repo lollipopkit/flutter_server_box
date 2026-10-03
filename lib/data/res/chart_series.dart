@@ -46,14 +46,9 @@ enum ChartSeries { cpu, mem, diskRead, diskWrite, netRx, netTx }
 ///   or its number beside it, which is what makes a derived palette safe at
 ///   all: the six move with the seed, so nothing can be learned by hue.
 final class SeriesPalette {
-  const SeriesPalette._(this._colors, this._hues);
+  const SeriesPalette._(this._colors);
 
   final List<Color> _colors;
-
-  /// The hue each series was *built* at, which is not quite the hue of the
-  /// colour that came out: fitting to the gamut and rounding to eight bits
-  /// move it by a fraction of a degree. The rule about 60° is about these.
-  final List<double> _hues;
 
   /// Never under this, or a seed with almost no colour in it yields six greys.
   static const _minChroma = 0.10;
@@ -81,16 +76,13 @@ final class SeriesPalette {
       anchor.color,
       for (var i = 1; i < ChartSeries.values.length; i++)
         Oklch(steps[i % 2], anchor.c * 0.72, hues[i]).fitted.color,
-    ], hues);
+    ]);
   }
 
   static double _clampChroma(double c) =>
       math.min(_maxChroma, math.max(_minChroma, c));
 
   Color of(ChartSeries series) => _colors[series.index];
-
-  /// The hue [series] was built at — see [_hues].
-  double hueOf(ChartSeries series) => _hues[series.index];
 
   Color get cpu => _colors[0];
   Color get mem => _colors[1];

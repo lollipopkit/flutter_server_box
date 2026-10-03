@@ -104,28 +104,6 @@ final class Oklch {
       '${h.toStringAsFixed(1)})';
 }
 
-/// The share of light a colour reflects, for the contrast between two of them.
-///
-/// WCAG's relative luminance. Used by the palette's own self-check — see
-/// `chart_palette.dart` — rather than for a text contrast rule.
-double relativeLuminance(Color color) {
-  final rgb = _toLinear(color);
-  return 0.2126 * rgb.$1 + 0.7152 * rgb.$2 + 0.0722 * rgb.$3;
-}
-
-/// How far apart two colours are in light, 1 being identical.
-double contrastRatio(Color a, Color b) {
-  final x = relativeLuminance(a) + 0.05;
-  final y = relativeLuminance(b) + 0.05;
-  return x > y ? x / y : y / x;
-}
-
-/// How far apart two hues are, never more than half the wheel.
-double hueDistance(double a, double b) {
-  final d = (a - b).abs() % 360;
-  return d > 180 ? 360 - d : d;
-}
-
 (double, double, double) _toLinear(Color color) {
   double channel(double v) =>
       v <= 0.04045 ? v / 12.92 : math.pow((v + 0.055) / 1.055, 2.4).toDouble();

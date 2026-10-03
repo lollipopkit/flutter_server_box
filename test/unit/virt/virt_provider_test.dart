@@ -26,17 +26,17 @@ import 'package:server_box/data/provider/virt/pve_backend.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
 import 'package:server_box/data/res/status.dart';
 import 'package:server_box/data/res/store.dart';
-import 'package:server_box/src/rust/api/script.dart' as script;
 import 'package:server_box/view/page/virt/console_connect.dart';
 
 import '../../helpers/rust_lib_helper.dart';
+import '../../helpers/script_markers.dart';
 
 const _dir = 'crates/sbm_parser/tests/fixtures/virt';
 
 String _fixture(String name) => File('$_dir/$name').readAsStringSync();
 
 String _section(String key, String body, [int rc = 0]) =>
-    '${script.scriptSegmentMarker(key: key, custom: false)}\n$body\nSbVirtRc=$rc\n';
+    '${scriptSegmentMarker(key)}\n$body\nSbVirtRc=$rc\n';
 
 String _overview() => [
   _section('virt.version', _fixture('version_libvirt11.txt')),
@@ -109,7 +109,7 @@ void main() {
       ),
       'plain': _Exec(
         (_) => _ok(
-          '${script.scriptSegmentMarker(key: 'virt.missing', custom: false)}\n',
+          '${scriptSegmentMarker('virt.missing')}\n',
         ),
       ),
     });

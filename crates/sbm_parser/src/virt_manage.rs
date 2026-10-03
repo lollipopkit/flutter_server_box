@@ -506,17 +506,6 @@ pub fn parse_resource(raw: &str) -> Result<(), VirtError> {
 // Uploading into a volume
 // ---------------------------------------------------------------------------
 
-/// The volume an upload goes into: raw, exactly the file's size. Parse with
-/// [`parse_resource`]; a name taken is `Exists`.
-pub fn vol_upload_prepare_script(pool: &str, name: &str, bytes: u64) -> Result<String, VirtError> {
-    resource_script(&VirtResourceOp::VolCreate {
-        pool: pool.to_string(),
-        name: name.to_string(),
-        bytes,
-        format: "raw".to_string(),
-    })
-}
-
 /// How the upload command reaches the daemon: as this account, or through
 /// sudo with or without a password, as `PrivilegedExec` decided for the
 /// other scripts.

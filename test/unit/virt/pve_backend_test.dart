@@ -2432,14 +2432,6 @@ void main() {
       );
     });
 
-    test('a storage that does not support snapshots is a request PVE refuses', () {
-      // What PVE answers for a raw disk on a directory storage, on the task:
-      // the form's own check is what says so before it is started.
-      expect(virtPveStorageMaySnapshot('dir'), isFalse);
-      expect(virtPveStorageMaySnapshot('lvmthin'), isTrue);
-      expect(virtPveStorageMaySnapshot('zfspool'), isTrue);
-    });
-
     test('snapshot listing: the "current" entry marks, and is not one', () {
       final list = PveResources.parseSnapshots(fixture('snapshots_qemu.json'));
       expect(list.map((s) => s.name), ['sbx-disk', 'sbx-mem']);

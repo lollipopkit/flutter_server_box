@@ -73,19 +73,6 @@ enum FirewallReach {
   bool worseThan(FirewallReach before) => index > before.index;
 }
 
-/// The worst of [reaches] that is worse than it was before, or null when
-/// none got worse.
-FirewallReach? worstChange(
-  Iterable<(FirewallReach before, FirewallReach after)> reaches,
-) {
-  FirewallReach? worst;
-  for (final (before, after) in reaches) {
-    if (!after.worseThan(before)) continue;
-    if (worst == null || after.index > worst.index) worst = after;
-  }
-  return worst;
-}
-
 /// Whether [spec] — `22`, `80,443`, `6000:6010`, or firewalld's `6000-6010`
 /// — names [port]. A null [spec] is any port.
 bool portSpecCovers(String? spec, int port) {

@@ -30,7 +30,6 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 
-const globalAgentConversationScope = '__global_agent__';
 const _maxGlobalAgentShellOutputCharacters = 32000;
 const _shellOutputTruncationMarker = '\n\n[... output truncated ...]\n\n';
 

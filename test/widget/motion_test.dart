@@ -3,16 +3,46 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/motion.dart';
 import 'package:server_box/data/model/app/motion.dart';
+import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/setting.dart';
+
+import '../helpers/test_db.dart';
 
 /// Whether the app moves less: the device's settings, the app's own
 /// preference over them, and the page transitions that follow the answer.
+///
+/// The preference is written where the app writes it — `Stores.setting`'s own
+/// property, which `AppMotion.init` follows — rather than through a setter
+/// only this file could reach.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  tearDown(() {
-    AppMotion.debugPref = MotionPref.system;
-    AppMotion.refreshSystem();
+  // One store and one `AppMotion.init` for the whole file: `init` runs once per
+  // process and subscribes to the store that was registered when it did, so a
+  // store re-registered per test would leave it following a disposed one.
+  setUpAll(() async {
+    await openTestDb();
+    getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
+    await AppMotion.init();
   });
+
+  setUp(() {
+    // What the device says, before any test overrides it: the two that assert
+    // the device's own signals are about a preference that defers to them.
+    Stores.setting.motionPref.put(MotionPref.system);
+  });
+
+  tearDownAll(() async {
+    await getIt.reset();
+    await closeTestDb();
+  });
+
+  /// The app's preference, changed the way a user changes it.
+  ///
+  /// `put` reaches `AppMotion` through the property's listenable synchronously,
+  /// so there is nothing to await — and nothing that may be: inside
+  /// `testWidgets` the clock is fake, so `pumpEventQueue` never returns.
+  void setPref(MotionPref pref) => Stores.setting.motionPref.put(pref);
 
   test('the preference over what the device says', () {
     for (final system in [false, true]) {
@@ -66,11 +96,11 @@ void main() {
 
   testWidgets('the app says otherwise in either direction', (tester) async {
     await device(tester, reduceMotion: true);
-    AppMotion.debugPref = MotionPref.full;
+    setPref(MotionPref.full);
     expect(await seen(tester), isFalse);
 
     await device(tester);
-    AppMotion.debugPref = MotionPref.reduce;
+    setPref(MotionPref.reduce);
     expect(await seen(tester), isTrue);
   });
 
@@ -81,7 +111,7 @@ void main() {
     );
     key.currentState!.count = 3;
 
-    AppMotion.debugPref = MotionPref.reduce;
+    setPref(MotionPref.reduce);
     await tester.pump();
     expect(key.currentState!.count, 3);
   });
@@ -92,7 +122,7 @@ void main() {
       WidgetTester tester, {
       required bool reduced,
     }) async {
-      AppMotion.debugPref = reduced ? MotionPref.reduce : MotionPref.full;
+      setPref(reduced ? MotionPref.reduce : MotionPref.full);
       final nav = GlobalKey<NavigatorState>();
       await tester.pumpWidget(
         MaterialApp(

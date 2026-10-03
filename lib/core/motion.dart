@@ -71,10 +71,6 @@ abstract final class AppMotion {
   /// Reads the device's setting again, after the platform said it changed.
   static void refreshSystem() => _system.value = _platformReduces();
 
-  /// The app's preference, for a test that has no settings store behind this.
-  @visibleForTesting
-  static set debugPref(MotionPref pref) => _pref.value = pref;
-
   static bool _platformReduces() {
     final features =
         WidgetsBinding.instance.platformDispatcher.accessibilityFeatures;

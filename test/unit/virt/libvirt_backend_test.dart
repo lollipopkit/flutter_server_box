@@ -22,18 +22,17 @@ import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/model/virt/virt_manage.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/virt/libvirt_backend.dart';
-import 'package:server_box/src/rust/api/script.dart' as script;
 import 'package:server_box/src/rust/api/virt.dart'
     show parseVirtHardwareJson, virtUploadGoLine, virtUploadReadyMarker;
 
 import '../../helpers/rust_lib_helper.dart';
+import '../../helpers/script_markers.dart';
 
 const _dir = 'crates/sbm_parser/tests/fixtures/virt';
 
 String _fixture(String name) => File('$_dir/$name').readAsStringSync();
 
-String _marker(String key) =>
-    script.scriptSegmentMarker(key: key, custom: false);
+String _marker(String key) => scriptSegmentMarker(key);
 
 /// One `virsh` call's section, as the scripts print it.
 String _section(String key, String body, [int rc = 0]) =>

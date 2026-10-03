@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/src/rust/api/file.dart' as ffi;
 
@@ -13,18 +12,6 @@ import 'package:server_box/src/rust/api/file.dart' as ffi;
 /// making that protected directory the browser's root.
 abstract final class LocalFiles {
   static Future<String>? _ensuring;
-  static var _copyFileExclusive = ffi.copyFileExclusive;
-
-  @visibleForTesting
-  static set copyFileExclusiveForTesting(
-    Future<bool> Function({required String source, required String destination})
-    copy,
-  ) => _copyFileExclusive = copy;
-
-  @visibleForTesting
-  static void resetCopyFileExclusiveForTesting() {
-    _copyFileExclusive = ffi.copyFileExclusive;
-  }
 
   /// Creates [Paths.file], copies in anything the documents-directory release
   /// left, and answers with it.
@@ -137,21 +124,44 @@ abstract final class LocalFiles {
   ) async {
     switch (source) {
       case File():
-        return _copyFileExclusive(source: staging, destination: dest);
+        return ffi.copyFileExclusive(source: staging, destination: dest);
       case Directory():
         if (await FileSystemEntity.type(dest, followLinks: false) !=
             FileSystemEntityType.notFound) {
           return false;
         }
         await Directory(dest).create();
-        await for (final child in Directory(staging).list(followLinks: false)) {
-          final name = child.path.getFileName();
-          if (name == null || child is Link) continue;
-          await _publishNoReplace(
-            child,
-            child.path,
-            Directory(dest).path.joinPath(name),
-          );
+        try {
+          await for (final child in Directory(staging).list(
+            followLinks: false,
+          )) {
+            final name = child.path.getFileName();
+            if (name == null || child is Link) continue;
+            await _publishNoReplace(
+              child,
+              child.path,
+              Directory(dest).path.joinPath(name),
+            );
+          }
+        } catch (_) {
+          // Half a directory is worse than none: [importFrom] skips a name that
+          // already exists, so a child published after this failure would never
+          // be imported by a later attempt — the entry would be permanently
+          // incomplete while the failure that caused it may well be gone.
+          //
+          // The whole subtree is this call's to take back: `dest` was
+          // `notFound` a moment ago, so this call made it, and app writers
+          // await ensure() — which is waiting on this import — so nobody else
+          // has written under it. Best-effort, and the original failure is the
+          // one worth reporting.
+          try {
+            await Directory(dest).delete(recursive: true);
+          } catch (cleanupError, cleanupStack) {
+            // Worth knowing: the entry will look present but incomplete next
+            // time, which is the state this whole guard exists to avoid.
+            Loggers.app.warning('Roll back $dest', cleanupError, cleanupStack);
+          }
+          rethrow;
         }
         return true;
       case Link():

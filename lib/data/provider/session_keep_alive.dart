@@ -184,11 +184,6 @@ class SessionKeepAlive extends _$SessionKeepAlive {
     _schedule(id, entry);
   }
 
-  /// Whether [id] is tracked. For tests and for an owner checking its own
-  /// bookkeeping.
-  @visibleForTesting
-  bool isRegistered(String id) => _entries.containsKey(id);
-
   void _schedule(String id, _KeptSession entry) {
     entry.idle?.cancel();
     entry.idle = null;
