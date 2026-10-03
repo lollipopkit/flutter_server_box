@@ -41,6 +41,7 @@ pub mod cloud_init;
 pub mod manage;
 pub mod net;
 pub mod snapshot;
+pub mod host;
 
 use sbm_parser::script::{self, shell_quote_unix};
 use net::{VirtNetHost, parse_net_section};

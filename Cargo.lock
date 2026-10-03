@@ -2047,6 +2047,7 @@ dependencies = [
  "http",
  "http-body",
  "httparse",
+ "httpdate",
  "itoa",
  "pin-project-lite",
  "smallvec",
@@ -4674,12 +4675,23 @@ name = "sbm_virt"
 version = "0.1.0"
 dependencies = [
  "base64 0.23.1",
+ "bytes",
  "dotenvy",
+ "http-body-util",
+ "hyper",
+ "hyper-util",
  "roxmltree",
+ "rustls",
+ "rustls-pemfile",
  "sbm_parser",
+ "sbm_redfish",
  "serde",
  "serde_json",
  "sha2 0.11.0",
+ "tokio",
+ "tokio-rustls",
+ "tower-service",
+ "webpki-roots",
 ]
 
 [[package]]

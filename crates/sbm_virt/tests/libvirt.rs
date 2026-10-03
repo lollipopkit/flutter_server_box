@@ -3547,3 +3547,102 @@ esac
     assert!(log.contains("setmem --domain vm --size 128MiB --live"), "{log}");
     let _ = std::fs::remove_dir_all(&d);
 }
+
+// ---------------------------------------------------------------------------
+// The overview as the model has it (libvirt::host), ported from the app's
+// `libvirt_backend_test.dart`.
+// ---------------------------------------------------------------------------
+
+mod host {
+    use super::*;
+    use sbm_virt::libvirt::host::{power_plan, view_of};
+    use sbm_virt::model::{GuestState, HostKind, PowerAction};
+    use sbm_virt::rates::RateTracker;
+    use std::collections::BTreeSet;
+
+    // Guests in the captured fixtures (libvirt 11.3.0).
+    const RUN: &str = "8a2ed2a2-83e1-4c41-ad0a-a57d54d0d649"; // cirros-run
+    const PAUSED: &str = "24a8bbc6-deaa-4be0-9699-a1d801faa927"; // cirros-paused
+    const ODD: &str = "1438b9e3-f647-47ee-8ed2-6dbc3adccd68"; // it's-"odd"
+
+    fn overview(stats: &str) -> virt::VirtOverview {
+        let raw = [
+            section(virt::KEY_VERSION, &fixture("version_libvirt11.txt"), 0),
+            section(virt::KEY_LIST, &fixture("list_uuid_name.txt"), 0),
+            section(virt::KEY_AUTOSTART, &fixture("list_autostart.txt"), 0),
+            section(virt::KEY_PERSISTENT, &fixture("list_persistent.txt"), 0),
+            section(virt::KEY_STATS, stats, 0),
+        ]
+        .concat();
+        virt::parse_overview(&raw).unwrap()
+    }
+
+    fn set(a: &[PowerAction]) -> BTreeSet<PowerAction> {
+        a.iter().copied().collect()
+    }
+
+    #[test]
+    fn the_overview_maps_to_guests_states_and_actions() {
+        let view = view_of(&overview(&fixture("domstats.txt")), &mut RateTracker::new(false), 0, None, false);
+        assert_eq!(view.host.kind, HostKind::Libvirt);
+        assert_eq!(view.host.version.as_deref(), Some("11.3.0"));
+        assert_eq!(view.host.hypervisor.as_deref(), Some("QEMU 10.0.13"));
+        assert!(!view.capabilities.lxc && view.capabilities.pause);
+        assert_eq!(view.capabilities.pool_types, ["dir", "netfs", "logical"]);
+        assert_eq!(view.guests.len(), 3);
+
+        let web = view.guests.iter().find(|g| g.id == RUN).unwrap();
+        assert_eq!(web.name, "cirros-run");
+        assert_eq!(web.state, GuestState::Running);
+        assert_eq!(web.vcpu, Some(2));
+        assert_eq!(web.mem_bytes, Some(262_144 * 1024));
+        assert_eq!(web.autostart, Some(true));
+        use PowerAction::*;
+        assert_eq!(web.actions, set(&[Shutdown, Reboot, ForceStop, Suspend]));
+
+        let db = view.guests.iter().find(|g| g.id == PAUSED).unwrap();
+        assert_eq!(db.state, GuestState::Paused);
+        assert_eq!(db.actions, set(&[Resume, ForceStop]));
+
+        let odd = view.guests.iter().find(|g| g.id == ODD).unwrap();
+        assert_eq!(odd.state, GuestState::Stopped);
+        assert_eq!(odd.state_reason.as_deref(), Some("failed"));
+        assert_eq!(odd.actions, set(&[Start]));
+    }
+
+    #[test]
+    fn rates_across_two_samples() {
+        let mut rates = RateTracker::new(false);
+        let stats = fixture("domstats.txt");
+        let first = view_of(&overview(&stats), &mut rates, 0, None, false);
+        let web = &first.stats[RUN];
+        assert_eq!(web.cpu, None, "nothing to diff");
+        assert_eq!(web.mem_used, Some((198_384 - 151_264) * 1024));
+
+        let stats = stats
+            // +2 s of CPU over 2 s on 2 vCPUs: 50 %.
+            .replacen("cpu.time=7550532000", "cpu.time=9550532000", 1)
+            .replacen("block.0.rd.bytes=26923008", "block.0.rd.bytes=28923008", 1)
+            .replacen("net.0.rx.bytes=13386", "net.0.rx.bytes=23386", 1);
+        let second = view_of(&overview(&stats), &mut rates, 2000, None, false);
+        let web = &second.stats[RUN];
+        assert!((web.cpu.unwrap() - 50.0).abs() < 1e-9, "{:?}", web.cpu);
+        assert_eq!(web.disk_read, Some(1e6));
+        assert_eq!(web.disk_write, Some(0.0));
+        assert_eq!(web.net_in, Some(5000.0));
+        assert_eq!(web.net_out, Some(0.0));
+    }
+
+    #[test]
+    fn a_crashed_domain_is_destroyed_before_it_starts() {
+        let view = view_of(&overview(&fixture("domstats.txt")), &mut RateTracker::new(false), 0, None, false);
+        let mut odd = view.guests.into_iter().find(|g| g.id == ODD).unwrap();
+        assert_eq!(power_plan(&odd, PowerAction::Start), Some(vec![virt::VirtAction::Start]));
+        assert_eq!(power_plan(&odd, PowerAction::Shutdown), None, "not offered");
+        odd.state_reason = Some("crashed".into());
+        assert_eq!(
+            power_plan(&odd, PowerAction::Start),
+            Some(vec![virt::VirtAction::ForceStop, virt::VirtAction::Start])
+        );
+    }
+}
