@@ -14,6 +14,7 @@ import 'package:server_box/src/rust/api/file.dart';
 import 'package:server_box/src/rust/api/parser.dart';
 import 'package:server_box/src/rust/api/pve.dart';
 import 'package:server_box/src/rust/api/remote_desktop.dart';
+import 'package:server_box/src/rust/api/resource.dart';
 import 'package:server_box/src/rust/api/script.dart';
 import 'package:server_box/src/rust/api/snippet.dart';
 import 'package:server_box/src/rust/api/ssh_asym.dart';
@@ -513,6 +514,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   VirtOverlay dco_decode_virt_overlay(dynamic raw);
+
+  @protected
+  VirtResourceScript dco_decode_virt_resource_script(dynamic raw);
 
   @protected
   VirtUploadEntryKind dco_decode_virt_upload_entry_kind(dynamic raw);
@@ -1028,6 +1032,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   VirtOverlay sse_decode_virt_overlay(SseDeserializer deserializer);
+
+  @protected
+  VirtResourceScript sse_decode_virt_resource_script(
+    SseDeserializer deserializer,
+  );
 
   @protected
   VirtUploadEntryKind sse_decode_virt_upload_entry_kind(
@@ -1667,6 +1676,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_virt_overlay(VirtOverlay self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_virt_resource_script(
+    VirtResourceScript self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_virt_upload_entry_kind(

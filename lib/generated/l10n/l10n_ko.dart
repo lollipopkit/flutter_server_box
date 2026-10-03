@@ -3981,6 +3981,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get virtResNameEmpty => '이름을 입력하세요';
 
   @override
+  String get virtResNotFound => '이 호스트에 더 이상 없습니다';
+
+  @override
+  String get virtResUnsupported => '이 호스트에서는 할 수 없습니다';
+
+  @override
   String get virtResNameInvalid => '이 호스트가 받지 않는 이름입니다(문자, 숫자, . _ -)';
 
   @override

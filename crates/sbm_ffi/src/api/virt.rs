@@ -82,7 +82,7 @@ impl From<libvirt::VirtError> for VirtFfiError {
     }
 }
 
-fn json_err(e: serde_json::Error) -> VirtFfiError {
+pub(crate) fn json_err(e: serde_json::Error) -> VirtFfiError {
     VirtFfiError {
         kind: VirtErrorKind::Malformed,
         message: e.to_string(),
@@ -497,38 +497,23 @@ pub fn parse_virt_storage_json(raw: String) -> Result<String, VirtFfiError> {
     serde_json::to_string(&libvirt::parse_storage(&raw)?).map_err(json_err)
 }
 
-/// What each of `names` in `pool` is: format and sizes
+/// What each of `names` in `pool` is: format and sizes. Read with
+/// [`super::resource::virt_libvirt_volumes`].
 #[flutter_rust_bridge::frb(sync)]
 pub fn virt_volumes_script(pool: String, names: Vec<String>) -> String {
     libvirt::volumes_script(&pool, &names)
 }
 
-/// [`virt_volumes_script`]'s output → `Vec<VirtVolume>` JSON
-pub fn parse_virt_volumes_json(raw: String) -> Result<String, VirtFfiError> {
-    serde_json::to_string(&libvirt::parse_volumes(&raw)?).map_err(json_err)
-}
-
-/// Networks, DHCP leases and every domain's interfaces
+/// Networks, DHCP leases and every domain's interfaces. Read with
+/// [`super::resource::virt_libvirt_networks`].
 #[flutter_rust_bridge::frb(sync)]
 pub fn virt_networks_script() -> String {
     libvirt::networks_script()
 }
 
-/// [`virt_networks_script`]'s output → `VirtNetworks` JSON
-pub fn parse_virt_networks_json(raw: String) -> Result<String, VirtFfiError> {
-    serde_json::to_string(&libvirt::parse_networks(&raw)?).map_err(json_err)
-}
-
-/// Editing an existing network (phase 10): `op_json` is a
-/// `sbm_virt::libvirt::net::VirtNetOp`. Parse with [`parse_virt_net_change`].
-#[flutter_rust_bridge::frb(sync)]
-pub fn virt_net_change_script(op_json: String) -> Result<String, VirtFfiError> {
-    let op: net::VirtNetOp = serde_json::from_str(&op_json).map_err(json_err)?;
-    Ok(net::net_change_script(&op)?)
-}
-
-/// [`virt_net_change_script`]'s output: `Ok` once the definition (and, when
-/// asked for, the running network) has the change
+/// An existing network's edit or restart
+/// ([`super::resource::virt_libvirt_resource_script`], `net`): `Ok` once the
+/// definition (and, when asked for, the running network) has the change
 pub fn parse_virt_net_change(raw: String) -> Result<(), VirtFfiError> {
     Ok(net::parse_net_change(&raw)?)
 }

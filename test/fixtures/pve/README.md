@@ -7,20 +7,21 @@ asserted by `test/unit/virt/pve_backend_test.dart` and
 or per shape an endpoint answers in. The host's guests are VM 100, VM 101 and
 CT 200; anything named `sb*` was made for the capture and removed again.
 
+Storage and network answers (`node_storage.json`, `storage_config.json`,
+`content_local*.json`, `network.json`) moved with their parser to
+`crates/sbm_virt/tests/fixtures/pve/`.
+
 Each file is the endpoint's `data` alone (what `PveBackend` reads), verbatim
 apart from the whitespace `python3 -m json.tool` adds.
 
 | File | Endpoint | Notes |
 | --- | --- | --- |
-| `node_storage.json`, `node_storage_p8.json` | `GET /nodes/{node}/storage` | the node's storages; `_p8` is the older capture with `lvmthin` and a `dir` |
-| `storage_config.json` | `GET /storage` | the cluster's storage configuration (paths, `vgname`/`thinpool`) |
-| `content_local.json`, `content_local_lvm.json` | `GET /nodes/{node}/storage/{id}/content` | an ISO on `local`, a disk on `local-lvm` |
+| `node_storage_p8.json` | `GET /nodes/{node}/storage` | an older capture with `lvmthin` and a `dir` |
 | `backup_content.json` | `GET .../storage/local/content?content=backup&vmid=` | one `vzdump` archive, with `notes`, `size`, `subtype`, `vmid` |
 | `backup_job_fields.json` | `GET /cluster/backup` | one job that names its guests: `vmid` a comma list, `prune-backups` an object of strings, `notes-template` with PVE's `{{guestname}}` variables, `mailnotification` |
 | `backup_jobs_all.json` | `GET /cluster/backup` | the same job plus one with `all: 1` and `exclude`, and one that is `enabled: 0` — the two shapes `VirtBackupJob.takes` distinguishes |
 | `snapshots_qemu.json`, `snapshots_none.json` | `GET .../qemu/{vmid}/snapshot` | one snapshot with `vmstate: 1`, and a guest with none |
 | `snapshot_config.json`, `snapshot_current_config.json` | `GET .../snapshot/{name}/config` | the configuration a snapshot recorded, for the diff |
-| `network.json` | `GET /nodes/{node}/network` | bridges with `bridge_ports`, `cidr`, `active` |
 | `hw_vm_config.json`, `hw_vm_devices_config.json` | `GET .../qemu/{vmid}/config` | a VM's configuration, with and without passthrough devices |
 | `hw_vm_pending.json`, `hw_ct_pending.json` | `GET .../pending` | PVE's `{key, value, pending}` list, and a `delete: 1` entry |
 | `hw_ct_config.json`, `hw_ct_config_mp_delete.json` | `GET .../lxc/{vmid}/config` | a container's configuration, and one with a mount point to remove |

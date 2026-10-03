@@ -76,6 +76,8 @@ abstract final class PveResources {
 
   /// `GET /nodes/{node}/storage` for [node], with what `GET /storage` (the
   /// cluster's storage configuration, [config]) says of where each one is.
+  // TODO(migration): `sbm_virt::pve::resources::parse_storages`; here for the
+  // backup storages only, until backups move (#1623 item 5.7).
   static List<VirtStoragePool> parseStorages(
     String node,
     List<Object?> raw, {
@@ -282,134 +284,6 @@ abstract final class PveResources {
     final export = _str(c['export']) ?? _str(c['share']) ?? _str(c['target']);
     if (server != null && export != null) return '$server:$export';
     return server ?? _str(c['monhost']);
-  }
-
-  /// `GET /nodes/{node}/storage/{storage}/content`. The owner is `vmid`.
-  /// Whether the content listing's `size` of a volume is its file's rather
-  /// than its virtual size: an `import` image in a format with a size of
-  /// its own inside (qcow2, vmdk). PVE's `GET .../content/{volid}` answers
-  /// the virtual size (`qemu-img info`'s), verified on PVE 9.2.2 with only
-  /// `Datastore.Audit` on the storage.
-  static bool imageSizeUnknown(String? content, String? format) =>
-      content == 'import' && (format == 'qcow2' || format == 'vmdk');
-
-  static List<VirtVolume> parseContent(List<Object?> raw) {
-    final out = <VirtVolume>[];
-    for (final item in raw) {
-      if (item is! Map) continue;
-      final e = item.cast<String, Object?>();
-      final volid = _str(e['volid']);
-      if (volid == null) continue;
-      // `local:iso/debian.iso` → `debian.iso`; `local-lvm:vm-100-disk-0`.
-      final afterStorage = volid.substring(volid.indexOf(':') + 1);
-      final name = afterStorage.substring(afterStorage.lastIndexOf('/') + 1);
-      final vmid = _int(e['vmid']);
-      final ctime = _int(e['ctime']);
-      final content = _str(e['content']);
-      final sizeUnknown = imageSizeUnknown(content, _str(e['format']));
-      out.add(
-        VirtVolume(
-          id: volid,
-          name: name.isEmpty ? volid : name,
-          format: _str(e['format']),
-          content: content,
-          // An import image's `size` is its file's (PVE 9.2), which for a
-          // qcow2 or vmdk is not what the guest sees: unknown until
-          // `GET .../content/{volid}` says ([imageSizeUnknown]).
-          capacity: sizeUnknown ? null : _int(e['size']),
-          allocation: sizeUnknown ? _int(e['size']) : _int(e['used']),
-          createdAt: ctime == null
-              ? null
-              : DateTime.fromMillisecondsSinceEpoch(ctime * 1000),
-          users: [if (vmid != null && vmid > 0) VirtGuestRef(vmid: vmid)],
-        ),
-      );
-    }
-    return out;
-  }
-
-  /// `GET /nodes/{node}/network`, with [users] by bridge name.
-  static List<VirtNetwork> parseNetworks(
-    String node,
-    List<Object?> raw, {
-    Map<String, List<VirtGuestRef>> users = const {},
-    Set<String> management = const {},
-  }) {
-    List<String> words(Object? v) => [
-      for (final w in (_str(v) ?? '').split(RegExp(r'[\s,]+')))
-        if (w.isNotEmpty) w,
-    ];
-    final out = <VirtNetwork>[];
-    for (final item in raw) {
-      if (item is! Map) continue;
-      final e = item.cast<String, Object?>();
-      final iface = _str(e['iface']);
-      if (iface == null) continue;
-      final type = _str(e['type']) ?? 'unknown';
-      out.add(
-        VirtNetwork(
-          id: '$node/$iface',
-          name: iface,
-          node: node,
-          mode: type,
-          cidrs: [?_str(e['cidr']), ?_str(e['cidr6'])],
-          gateway: _str(e['gateway']),
-          ports: [
-            ...words(e['bridge_ports']),
-            ...words(e['ovs_ports']),
-            ...words(e['slaves']),
-          ],
-          vlanAware: switch (e['bridge_vlan_aware']) {
-            null => null,
-            final v => _int(v) == 1,
-          },
-          vlanId: _int(e['vlan-id']),
-          vlanDevice: _str(e['vlan-raw-device']),
-          bondMode: _str(e['bond_mode']),
-          active: _int(e['active']) == 1,
-          autostart: _int(e['autostart']) == 1,
-          comment: _str(e['comments'])?.trim(),
-          managementEditable: type == 'bridge' && !management.contains(iface),
-          users: users[iface] ?? const [],
-        ),
-      );
-    }
-    // Bridges first — what guests attach to — then bonds, VLANs and ports.
-    int rank(VirtNetwork n) => switch (n.mode) {
-      'bridge' || 'OVSBridge' => 0,
-      'bond' || 'OVSBond' => 1,
-      'vlan' || 'OVSIntPort' => 2,
-      _ => 3,
-    };
-    out.sort((a, b) {
-      final r = rank(a).compareTo(rank(b));
-      return r != 0 ? r : _naturalCompare(a.name, b.name);
-    });
-    return out;
-  }
-
-  /// A guest's NICs from its configuration, as users of the bridge each is
-  /// on.
-  static Map<String, List<VirtGuestRef>> bridgeUsers(
-    VirtGuest guest,
-    Map<String, Object?> config,
-  ) {
-    final out = <String, List<VirtGuestRef>>{};
-    for (final nic in parseConfig(config, guest.kind).nics) {
-      final bridge = nic.source;
-      if (bridge == null) continue;
-      out
-          .putIfAbsent(bridge, () => [])
-          .add(
-            VirtGuestRef(
-              guestId: guest.id,
-              vmid: guest.vmid,
-              device: nic.kind,
-              mac: nic.mac?.toLowerCase(),
-            ),
-          );
-    }
-    return out;
   }
 
   // ---------------------------------------------------------------------------

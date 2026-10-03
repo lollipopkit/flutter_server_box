@@ -1179,6 +1179,8 @@
   "virtPoolSourceZfs": "ZFS プール",
   "virtPoolTypeVg": "LVM ボリュームグループ",
   "virtResNameEmpty": "名前を入力してください",
+  "virtResNotFound": "このホストにはもうありません",
+  "virtResUnsupported": "このホストでは行えません",
   "virtResNameInvalid": "このホストでは使えない名前です（英数字、. _ -）",
   "virtResSourceInvalid": "有効なパスまたはソースではありません",
   "virtResTargetInvalid": "絶対パスを指定してください",

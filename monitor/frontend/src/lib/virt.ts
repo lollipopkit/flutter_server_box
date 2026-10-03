@@ -12,7 +12,9 @@ import type {
   PveConfigView,
   VirtError,
   VirtGuest,
+  VirtGuestRef,
   VirtGuestState,
+  VirtIssue,
   VirtPowerAction,
   VirtSnapshot,
   VirtStats,
@@ -50,6 +52,19 @@ export function virtErrorText(e: VirtError): string {
       case 'invalid_data':
       case 'missing_ticket':
         return ll.virtErrInvalidResponse()
+      case 'needs_privilege':
+        return ll.virtErrNeedsPrivilege({
+          account: detail.account,
+          privilege: detail.privilege,
+          path: detail.path,
+          command: detail.command,
+        })
+      case 'refused':
+        return issueText(detail.issue)
+      case 'apply_touches_management':
+        return ll.virtErrApplyManagement({ ifaces: detail.ifaces.join(', ') })
+      case 'apply_unreadable':
+        return ll.virtErrApplyUnreadable()
     }
   }
   const title = (() => {
@@ -272,4 +287,56 @@ export function snapshotTree(snapshots: VirtSnapshot[]): [VirtSnapshot, number][
     }
   }
   return out
+}
+
+/// Why the agent refused a storage or network change
+/// (`sbm_virt::resource::Issue`).
+export function issueText(issue: VirtIssue): string {
+  const ll = get(LL)
+  switch (issue) {
+    case 'name_empty':
+      return ll.virtIssueNameEmpty()
+    case 'name_invalid':
+      return ll.virtIssueNameInvalid()
+    case 'name_taken':
+      return ll.virtIssueNameTaken()
+    case 'source_invalid':
+      return ll.virtIssueSourceInvalid()
+    case 'target_invalid':
+      return ll.virtIssueTargetInvalid()
+    case 'cidr_invalid':
+      return ll.virtIssueCidrInvalid()
+    case 'dhcp_invalid':
+      return ll.virtIssueDhcpInvalid()
+    case 'subnet_taken':
+      return ll.virtIssueSubnetTaken()
+    case 'bridge_invalid':
+      return ll.virtIssueBridgeInvalid()
+    case 'size':
+      return ll.virtIssueSize()
+    case 'space':
+      return ll.virtIssueSpace()
+    case 'format':
+      return ll.virtIssueFormat()
+    case 'in_use':
+      return ll.virtIssueInUse()
+    case 'shrink':
+      return ll.virtIssueShrink()
+    case 'host_invalid':
+      return ll.virtIssueHostInvalid()
+    case 'management_iface':
+      return ll.virtIssueManagementIface()
+    case 'not_found':
+      return ll.virtIssueNotFound()
+    case 'unsupported':
+      return ll.virtIssueUnsupported()
+  }
+}
+
+/// Who a guest reference names, by the host's guests: its name, else its
+/// VMID or id.
+export function refText(ref: VirtGuestRef, guests: VirtGuest[]): string {
+  const g = guests.find((g) => (ref.guest_id && g.id === ref.guest_id) || (ref.vmid !== null && g.vmid === ref.vmid))
+  const who = g?.name ?? (ref.vmid !== null ? String(ref.vmid) : (ref.guest_id ?? '?'))
+  return ref.device ? `${who} (${ref.device})` : who
 }

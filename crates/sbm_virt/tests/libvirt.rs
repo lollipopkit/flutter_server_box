@@ -3727,3 +3727,293 @@ mod host {
         );
     }
 }
+
+/// Storage and networks as `sbm_virt::resource` has them, and each change as
+/// the script it runs. Ported from the app's `libvirt_backend_test.dart` and
+/// `virt_manage_test.dart`.
+mod resources {
+    use super::*;
+    use sbm_virt::libvirt::host::{ResourceScript, network_of, pool_of, resource_script, volume_of, with_backs};
+    use sbm_virt::libvirt::manage::VirtResourceOp as R;
+    use sbm_virt::libvirt::net::VirtNetOp as N;
+    use sbm_virt::resource::{Change, GuestRef, Issue, Listing, NetHost, Network, Pool, Volume};
+
+    const RUN: &str = "8a2ed2a2-83e1-4c41-ad0a-a57d54d0d649"; // cirros-run
+    const PAUSED: &str = "24a8bbc6-deaa-4be0-9699-a1d801faa927"; // cirros-paused
+    const ODD: &str = "1438b9e3-f647-47ee-8ed2-6dbc3adccd68"; // it's-"odd"
+
+    fn storage() -> virt::VirtStorage {
+        virt::parse_storage(&fixture("script_storage.txt")).unwrap()
+    }
+
+    fn volumes(pool: &str, file: &str) -> Vec<Volume> {
+        let s = storage();
+        virt::parse_volumes(&fixture(file)).unwrap().iter().map(|v| volume_of(v, pool, &s.disks)).collect()
+    }
+
+    #[test]
+    fn pools_with_an_inactive_one_read_as_unknown_rather_than_empty() {
+        let pools: Vec<Pool> = storage().pools.iter().map(pool_of).collect();
+        assert_eq!(pools.iter().map(|p| p.id.as_str()).collect::<Vec<_>>(), ["images", "sbx-iso", "sbx-off"]);
+        let images = &pools[0];
+        assert_eq!(images.pool_type, "dir");
+        assert_eq!(images.path.as_deref(), Some("/var/lib/libvirt/images"));
+        assert_eq!(images.capacity, Some(20922114048));
+        assert_eq!(images.used, Some(1152606208));
+        assert_eq!(images.autostart, Some(true));
+        assert_eq!(images.volume_count, Some(6));
+        let off = &pools[2];
+        assert!(!off.active);
+        assert_eq!(off.capacity, None);
+        assert_eq!(off.volume_count, None);
+    }
+
+    #[test]
+    fn volumes_with_their_format_the_guests_using_them_and_what_is_made_on_each() {
+        let images = volumes("images", "script_volumes_images.txt");
+        let iso = volumes("sbx-iso", "script_volumes_sbx_iso.txt");
+        let every: Vec<Volume> = images.iter().chain(&iso).cloned().collect();
+        let vols = with_backs(images, &every);
+        assert_eq!(
+            vols.iter().map(|v| v.name.as_str()).collect::<Vec<_>>(),
+            ["cirros.img", "data1.qcow2", "extra.qcow2", "off1.qcow2", "paused1.qcow2", "run1.qcow2"]
+        );
+        let run1 = vols.iter().find(|v| v.name == "run1.qcow2").unwrap();
+        assert_eq!(run1.format.as_deref(), Some("qcow2"));
+        assert_eq!(run1.capacity, Some(117440512));
+        assert_eq!(run1.backing.as_deref(), Some("/var/lib/libvirt/images/cirros.img"));
+        assert_eq!(run1.users, [GuestRef { guest_id: Some(RUN.into()), device: Some("vda".into()), ..Default::default() }]);
+        assert_eq!(vols.iter().find(|v| v.name == "off1.qcow2").unwrap().users[0].guest_id.as_deref(), Some(ODD));
+        // A base image only others are layered on is not "used" by a disk —
+        // but it is what they are made on, which is as good as in use.
+        let base = vols.iter().find(|v| v.name == "cirros.img").unwrap();
+        assert!(base.users.is_empty());
+        let mut backs: Vec<&str> = base.backs.iter().map(|p| p.rsplit('/').next().unwrap()).collect();
+        backs.sort();
+        assert_eq!(backs, ["data1.qcow2", "off1.qcow2", "paused1.qcow2", "run1.qcow2"]);
+        assert!(base.in_use());
+        let pools: Vec<Pool> = storage().pools.iter().map(pool_of).collect();
+        let delete = Change::VolumeDelete { pool: "images".into(), volume: "cirros.img".into() };
+        let e = resource_script(&delete, Listing { pools: &pools, volumes: &vols, ..Default::default() }).unwrap_err();
+        assert_eq!(e.detail.as_deref(), Some(&sbm_virt::error::Detail::Refused { issue: Issue::InUse }));
+        assert!(vols.iter().find(|v| v.name == "extra.qcow2").unwrap().backs.is_empty());
+
+        assert_eq!(iso[0].name, "my disk.qcow2");
+        let tiny = iso.iter().find(|v| v.name == "tiny.iso").unwrap();
+        assert_eq!(tiny.users, [GuestRef { guest_id: Some(ODD.into()), device: Some("hdc".into()), ..Default::default() }]);
+    }
+
+    #[test]
+    fn networks_with_modes_addresses_and_the_guests_on_each() {
+        let all = virt::parse_networks(&fixture("script_networks.txt")).unwrap();
+        let nets: Vec<Network> = all.networks.iter().map(|n| network_of(n, &all)).collect();
+        assert_eq!(nets.iter().map(|n| n.name.as_str()).collect::<Vec<_>>(), ["default", "sbx-bridge", "sbx-isolated"]);
+        let def = &nets[0];
+        assert_eq!(def.mode, "nat");
+        assert_eq!(def.bridge.as_deref(), Some("virbr0"));
+        assert_eq!(def.cidrs, ["192.168.122.1/24"]);
+        assert_eq!(def.dhcp_ranges, ["192.168.122.2-192.168.122.254"]);
+        assert_eq!(def.autostart, Some(true));
+        // Every domain's NICs on it, running or not, with a leased address.
+        assert_eq!(def.users.iter().map(|u| u.guest_id.as_deref().unwrap()).collect::<Vec<_>>(), [PAUSED, RUN, RUN, ODD]);
+        let leased = def.users.iter().find(|u| u.mac.as_deref() == Some("52:54:00:6e:d2:3c")).unwrap();
+        assert_eq!(leased.ip.as_deref(), Some("192.168.122.202/24"));
+        assert!(leased.device.is_some());
+        assert_eq!(def.users.last().unwrap().device, None, "shut off: no vnetN");
+        let iso = &nets[2];
+        assert_eq!(iso.mode, "isolated");
+        assert_eq!(iso.cidrs, ["10.99.0.1/24", "fd00:99::1/64"]);
+        assert_eq!(iso.users[0].guest_id.as_deref(), Some(ODD));
+        assert!(!nets[1].active);
+        assert!(nets[1].users.is_empty());
+        assert!(nets.iter().all(|n| n.management_editable));
+    }
+
+    #[test]
+    fn a_mac_on_two_isolated_networks_gets_each_networks_lease() {
+        let mac = "52:54:00:00:00:01";
+        let iface = |domain: &str, source: &str| virt::VirtIfaceUse {
+            domain: domain.into(),
+            kind: "network".into(),
+            source: Some(source.into()),
+            mac: Some(mac.into()),
+            ..Default::default()
+        };
+        let lease = |network: &str, ip: &str| virt::VirtLease { network: network.into(), mac: mac.into(), ip: ip.into(), hostname: None };
+        let all = virt::VirtNetworks {
+            networks: vec![
+                virt::VirtNetworkInfo { name: "a".into(), ..Default::default() },
+                virt::VirtNetworkInfo { name: "b".into(), ..Default::default() },
+            ],
+            ifaces: vec![iface("g1", "a"), iface("g2", "b")],
+            leases: vec![lease("a", "10.0.1.2/24"), lease("b", "10.0.2.2/24")],
+        };
+        assert_eq!(network_of(&all.networks[1], &all).users[0].ip.as_deref(), Some("10.0.2.2/24"));
+    }
+
+    fn dir() -> Pool {
+        Pool { id: "images".into(), name: "images".into(), pool_type: "dir".into(), active: true, available: Some(10 << 30), ..Default::default() }
+    }
+
+    fn op(change: &Change, volumes: &[Volume], networks: &[Network]) -> ResourceScript {
+        let pools = [dir()];
+        resource_script(change, Listing { pools: &pools, volumes, networks }).unwrap()
+    }
+
+    #[test]
+    fn each_change_as_the_script_it_runs() {
+        let pool_create = |ty: &str, source: &str, target: Option<&str>| Change::PoolCreate {
+            name: "p".into(),
+            pool_type: ty.into(),
+            source: source.into(),
+            target: target.map(str::to_owned),
+            node: None,
+            content: vec![],
+            autostart: true,
+        };
+        assert_eq!(
+            op(&pool_create("dir", "/srv/p", None), &[], &[]),
+            ResourceScript::Resource(R::PoolCreate {
+                name: "p".into(),
+                pool_type: "dir".into(),
+                target: Some("/srv/p".into()),
+                source: None,
+                autostart: true
+            })
+        );
+        let ResourceScript::Resource(R::PoolCreate { source, target, .. }) =
+            op(&pool_create("netfs", "nas:/e", Some("/mnt/n")), &[], &[])
+        else {
+            panic!()
+        };
+        assert_eq!((source.as_deref(), target.as_deref()), (Some("nas:/e"), Some("/mnt/n")));
+        assert_eq!(
+            op(&Change::VolumeCreate { pool: "images".into(), name: "a.qcow2".into(), gib: 2, format: "qcow2".into() }, &[], &[]),
+            ResourceScript::Resource(R::VolCreate { pool: "images".into(), name: "a.qcow2".into(), bytes: 2 << 30, format: "qcow2".into() })
+        );
+        let net_create = |mode: &str, bridge: Option<&str>, cidr: Option<&str>| Change::NetworkCreate {
+            name: format!("lab-{mode}"),
+            mode: mode.into(),
+            node: None,
+            bridge: bridge.map(str::to_owned),
+            cidr: cidr.map(str::to_owned),
+            dhcp_start: cidr.map(|_| "192.168.150.100".into()),
+            dhcp_end: cidr.map(|_| "192.168.150.200".into()),
+            vlan_aware: false,
+            autostart: true,
+        };
+        let ResourceScript::Resource(R::NetCreate { ipv4, .. }) = op(&net_create("nat", None, Some("192.168.150.1/24")), &[], &[]) else {
+            panic!()
+        };
+        let ipv4 = ipv4.unwrap();
+        assert_eq!((ipv4.address.as_str(), ipv4.prefix), ("192.168.150.1", 24));
+        assert_eq!(ipv4.dhcp_start.as_deref(), Some("192.168.150.100"));
+        let ResourceScript::Resource(R::NetCreate { bridge, ipv4, .. }) = op(&net_create("bridge", Some(" br0 "), None), &[], &[]) else {
+            panic!()
+        };
+        assert_eq!((bridge.as_deref(), ipv4), (Some("br0"), None));
+        let lab = Network { id: "lab".into(), name: "lab".into(), mode: "nat".into(), active: false, management_editable: true, ..Default::default() };
+        assert_eq!(
+            op(&Change::NetworkDelete { network: "lab".into() }, &[], std::slice::from_ref(&lab)),
+            ResourceScript::Resource(R::NetDelete { name: "lab".into() })
+        );
+        assert_eq!(
+            op(&Change::PoolDelete { pool: "images".into(), delete_storage: true }, &[], &[]),
+            ResourceScript::Resource(R::PoolDelete { name: "images".into(), active: true, delete_storage: true })
+        );
+        // Every op is one a script is written for.
+        let a = Volume { id: "a".into(), name: "a".into(), capacity: Some(1), ..Default::default() };
+        for c in [
+            pool_create("dir", "/srv/p", None),
+            Change::PoolSetActive { pool: "images".into(), active: false },
+            Change::PoolSetAutostart { pool: "images".into(), on: true },
+            Change::PoolRefresh { pool: "images".into() },
+            Change::PoolDelete { pool: "images".into(), delete_storage: false },
+            Change::VolumeResize { pool: "images".into(), volume: "a".into(), bytes: 1 << 30 },
+            Change::VolumeClone { pool: "images".into(), volume: "a".into(), name: "b".into() },
+            net_create("isolated", None, None),
+            Change::NetworkSetActive { network: "lab".into(), active: true },
+            Change::NetworkSetAutostart { network: "lab".into(), on: false },
+        ] {
+            let script = op(&c, std::slice::from_ref(&a), std::slice::from_ref(&lab)).script().unwrap();
+            assert!(script.contains("virsh"), "{c:?}");
+        }
+        // PVE's changes are refused before a script is written.
+        let pools = [dir()];
+        let e = resource_script(&Change::NetworkApply { node: "pve".into() }, Listing { pools: &pools, ..Default::default() }).unwrap_err();
+        assert_eq!(e.kind, sbm_virt::error::ErrorKind::Unsupported);
+    }
+
+    #[test]
+    fn an_existing_networks_edit_as_the_script_it_runs() {
+        let lab = Network {
+            id: "lab".into(),
+            name: "lab".into(),
+            mode: "nat".into(),
+            active: true,
+            management_editable: true,
+            cidrs: vec!["192.168.150.1/24".into()],
+            dhcp_ranges: vec!["192.168.150.100-192.168.150.200".into()],
+            bridge: Some("virbr1".into()),
+            xml: "<network>\n  <name>lab</name>\n  <forward mode='nat'/>\n  <bridge name='virbr1'/>\n  <ip address='192.168.150.1' prefix='24'>\n    <dhcp>\n      <range start='192.168.150.100' end='192.168.150.200'/>\n    </dhcp>\n  </ip>\n</network>\n".into(),
+            ..Default::default()
+        };
+        let edit = |address: &str, start: &str, end: &str, hosts: Vec<NetHost>| Change::NetworkEdit {
+            network: "lab".into(),
+            mode: "nat".into(),
+            bridge: None,
+            address: Some(address.into()),
+            prefix: Some(24),
+            dhcp_start: Some(start.into()),
+            dhcp_end: Some(end.into()),
+            hosts,
+            restart: false,
+            base_xml: None,
+        };
+        let moved = op(
+            &edit(
+                "192.168.151.1",
+                "192.168.151.100",
+                "192.168.151.200",
+                vec![NetHost { mac: "52:54:00:AA:BB:01".into(), ip: "192.168.151.10".into(), name: Some("h1".into()) }],
+            ),
+            &[],
+            std::slice::from_ref(&lab),
+        );
+        let ResourceScript::Net(N::Edit { name, edit: e, base_xml, active, restart, .. }) = &moved else { panic!() };
+        assert_eq!((name.as_str(), *active, *restart), ("lab", true, false));
+        assert!(base_xml.contains("<name>lab</name>"));
+        assert_eq!(e.hosts[0].mac, "52:54:00:aa:bb:01");
+        // The address moves, so the static hosts go into the definition with
+        // it: `net-update` would check them against the old subnet.
+        let script = moved.script().unwrap();
+        assert!(script.contains("net-define") && !script.contains("net-update"));
+        // A static host alone takes the live path.
+        let hosts_only = op(
+            &edit(
+                "192.168.150.1",
+                "192.168.150.100",
+                "192.168.150.200",
+                vec![NetHost { mac: "52:54:00:aa:bb:01".into(), ip: "192.168.150.10".into(), name: None }],
+            ),
+            &[],
+            std::slice::from_ref(&lab),
+        )
+        .script()
+        .unwrap();
+        assert!(hosts_only.contains("net-update") && !hosts_only.contains("net-define"));
+        // The definition the client edited from wins over the one read now.
+        let mut from_client = edit("192.168.150.1", "192.168.150.100", "192.168.150.200", vec![]);
+        if let Change::NetworkEdit { base_xml, .. } = &mut from_client {
+            *base_xml = Some("<network><name>lab</name></network>".into());
+        }
+        let ResourceScript::Net(N::Edit { base_xml, .. }) = op(&from_client, &[], std::slice::from_ref(&lab)) else { panic!() };
+        assert_eq!(base_xml, "<network><name>lab</name></network>");
+        // A restart is its own op: `net-destroy` and `net-start`, no
+        // definition written either way.
+        let restart = op(&Change::NetworkRestart { network: "lab".into(), base_xml: None }, &[], std::slice::from_ref(&lab));
+        let script = restart.script().unwrap();
+        assert!(script.contains("net-destroy") && script.contains("net-start") && !script.contains("net-define"));
+        assert!(restart.parse(&section("virt.net.step", "", 0)).is_ok());
+    }
+}

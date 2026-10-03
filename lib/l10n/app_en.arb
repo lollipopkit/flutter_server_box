@@ -5474,6 +5474,14 @@
   "@virtResNameEmpty": {
     "description": "Form error."
   },
+  "virtResNotFound": "It is no longer on this host",
+  "@virtResNotFound": {
+    "description": "Form error: the pool, volume or network was removed since it was listed."
+  },
+  "virtResUnsupported": "This host does not do that",
+  "@virtResUnsupported": {
+    "description": "Form error: a change this kind of host (PVE or libvirt) does not make."
+  },
   "virtResNameInvalid": "Not a name this host takes (letters, digits, . _ -)",
   "@virtResNameInvalid": {
     "description": "Form error: a pool, volume or network name the host does not take."

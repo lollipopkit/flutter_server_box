@@ -1542,6 +1542,10 @@ export type VirtErrorDetail =
   | { code: 'invalid_body' | 'invalid_data' | 'missing_ticket' | 'not_offered' | 'cert_not_presented' }
   | { code: 'no_privileges'; token: boolean; account: string; command: string }
   | { code: 'task_still_running'; node: string; upid: string; minutes: number }
+  | { code: 'needs_privilege'; account: string; privilege: string; path: string; command: string }
+  | { code: 'refused'; issue: VirtIssue }
+  | { code: 'apply_touches_management'; ifaces: string[] }
+  | { code: 'apply_unreadable' }
 
 export interface VirtError {
   kind: VirtErrorKind
@@ -1693,3 +1697,168 @@ export interface VirtSnapDiff {
   before: string | null
   after: string | null
 }
+
+// --- Storage and networks (`sbm_virt::resource`) ---
+
+export interface VirtGuestRef {
+  guest_id: string | null
+  vmid: number | null
+  device: string | null
+  mac: string | null
+  ip: string | null
+}
+
+export interface VirtPool {
+  id: string
+  name: string
+  node: string | null
+  type: string
+  path: string | null
+  source: string | null
+  capacity: number | null
+  used: number | null
+  available: number | null
+  active: boolean
+  autostart: boolean | null
+  enabled: boolean | null
+  shared: boolean | null
+  content: string[]
+  volume_count: number | null
+}
+
+/// What a form offers for one pool, the agent's answer.
+export interface VirtPoolRule {
+  formats: string[]
+  resizable: boolean
+}
+
+export interface VirtVolume {
+  id: string
+  name: string
+  path: string | null
+  format: string | null
+  content: string | null
+  capacity: number | null
+  allocation: number | null
+  backing: string | null
+  created_at: number | null
+  users: VirtGuestRef[]
+  backs: string[]
+}
+
+export interface VirtNetHost {
+  mac: string
+  ip: string
+  name: string | null
+}
+
+export interface VirtNetwork {
+  id: string
+  name: string
+  node: string | null
+  mode: string
+  bridge: string | null
+  cidrs: string[]
+  gateway: string | null
+  dhcp_ranges: string[]
+  ports: string[]
+  vlan_aware: boolean | null
+  vlan_id: number | null
+  vlan_device: string | null
+  bond_mode: string | null
+  active: boolean
+  autostart: boolean | null
+  comment: string | null
+  hosts: VirtNetHost[]
+  xml: string
+  pending_restart: boolean
+  management_editable: boolean
+  users: VirtGuestRef[]
+}
+
+export interface VirtNetworkChanges {
+  node: string
+  diff: string
+}
+
+/// `sbm_virt::resource::Issue`: why the agent refused a change.
+export type VirtIssue =
+  | 'name_empty'
+  | 'name_invalid'
+  | 'name_taken'
+  | 'source_invalid'
+  | 'target_invalid'
+  | 'cidr_invalid'
+  | 'dhcp_invalid'
+  | 'subnet_taken'
+  | 'bridge_invalid'
+  | 'size'
+  | 'space'
+  | 'format'
+  | 'in_use'
+  | 'shrink'
+  | 'host_invalid'
+  | 'management_iface'
+  | 'not_found'
+  | 'unsupported'
+
+/// `sbm_virt::resource::Change`.
+export type VirtChange =
+  | {
+      op: 'pool_create'
+      name: string
+      type: string
+      source: string
+      target?: string | null
+      node?: string | null
+      content?: string[]
+      autostart?: boolean
+    }
+  | { op: 'pool_set_active'; pool: string; active: boolean }
+  | { op: 'pool_set_autostart'; pool: string; on: boolean }
+  | { op: 'pool_refresh'; pool: string }
+  | { op: 'pool_delete'; pool: string; delete_storage?: boolean }
+  | { op: 'volume_create'; pool: string; name: string; gib: number; format: string }
+  | { op: 'volume_delete'; pool: string; volume: string }
+  | { op: 'volume_resize'; pool: string; volume: string; bytes: number }
+  | { op: 'volume_clone'; pool: string; volume: string; name: string }
+  | {
+      op: 'network_create'
+      name: string
+      mode: string
+      node?: string | null
+      bridge?: string | null
+      cidr?: string | null
+      dhcp_start?: string | null
+      dhcp_end?: string | null
+      vlan_aware?: boolean
+      autostart?: boolean
+    }
+  | {
+      op: 'network_edit'
+      network: string
+      mode: string
+      bridge?: string | null
+      address?: string | null
+      prefix?: number | null
+      dhcp_start?: string | null
+      dhcp_end?: string | null
+      hosts?: VirtNetHost[]
+      restart?: boolean
+      base_xml?: string | null
+    }
+  | {
+      op: 'network_edit_bridge'
+      network: string
+      ports?: string | null
+      cidr?: string | null
+      gateway?: string | null
+      vlan_aware?: boolean | null
+      autostart?: boolean | null
+    }
+  | { op: 'network_restart'; network: string; base_xml?: string | null }
+  | { op: 'network_set_active'; network: string; active: boolean }
+  | { op: 'network_set_autostart'; network: string; on: boolean }
+  | { op: 'network_delete'; network: string }
+  | { op: 'network_apply'; node: string }
+  | { op: 'network_revert'; node: string }

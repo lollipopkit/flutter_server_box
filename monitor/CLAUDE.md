@@ -318,7 +318,16 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   delete) and `/virt/snapshot/diff` act through `sbm_virt` — the libvirt
   flows (the chain read for an external one, the AppArmor checks before a
   revert or a delete, the leftover overlays deleted with it) are the app's,
-  moved into the agent's handler. `tests/virt_api.rs` runs against a fake PVE
+  moved into the agent's handler. Storage and networks
+  (`api/virt_resources.rs`): `POST /virt/storage` (the pools, with `rules`:
+  the formats a new volume may have, whether one grows on its own),
+  `/virt/volumes`, `/virt/networks` (PVE: with each node's pending
+  configuration) and `/virt/manage` (one `sbm_virt::resource::Change`, named
+  by id and checked against what the host lists at that moment — refused as
+  `Detail::Refused` with the issue). On PVE the node is asked which
+  interfaces it is using (`sbm_virt::pve::net::LIVE_NET_SCRIPT`, run here as
+  the agent's account), so the interface the operator is connected through
+  is never edited or applied over. `tests/virt_api.rs` runs against a fake PVE
   API over TLS.
   `/backup` (`api/backup.rs`): blobs the agent hosts for the app's backup sync
   (`MonitorBackupStorage`, a fourth `RemoteStorage`) and the panel's backup

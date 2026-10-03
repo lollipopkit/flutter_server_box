@@ -3914,6 +3914,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtResNameEmpty => '请输入名称';
 
   @override
+  String get virtResNotFound => '主机上已不存在';
+
+  @override
+  String get virtResUnsupported => '此主机不支持该操作';
+
+  @override
   String get virtResNameInvalid => '主机不接受此名称（字母、数字、. _ -）';
 
   @override
@@ -8951,6 +8957,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtResNameEmpty => '請輸入名稱';
+
+  @override
+  String get virtResNotFound => '主機上已不存在';
+
+  @override
+  String get virtResUnsupported => '此主機不支援該操作';
 
   @override
   String get virtResNameInvalid => '主機不接受此名稱（字母、數字、. _ -）';

@@ -486,3 +486,208 @@ pub fn snapshot_diff(
         })
         .collect()
 }
+
+// ---------------------------------------------------------------------------
+// Storage and networks
+// ---------------------------------------------------------------------------
+
+/// `GET /nodes/{node}/storage` for `node`, with what `GET /storage` (the
+/// cluster's storage configuration, `config`) says of where each one is.
+pub fn parse_storages(node: &str, raw: &[Value], config: &[Value]) -> Vec<crate::resource::Pool> {
+    let configs: BTreeMap<String, &serde_json::Map<String, Value>> = config
+        .iter()
+        .filter_map(Value::as_object)
+        .filter_map(|c| Some((str_of(c.get("storage"))?, c)))
+        .collect();
+    let empty = serde_json::Map::new();
+    let mut out: Vec<crate::resource::Pool> = raw
+        .iter()
+        .filter_map(Value::as_object)
+        .filter_map(|e| {
+            let name = str_of(e.get("storage"))?;
+            let c = configs.get(&name).copied().unwrap_or(&empty);
+            let pool_type = str_of(e.get("type")).or_else(|| str_of(c.get("type"))).unwrap_or_default();
+            let total = positive(uint(e.get("total")));
+            let mut content: Vec<String> = str_of(e.get("content"))
+                .or_else(|| str_of(c.get("content")))
+                .unwrap_or_default()
+                .split(',')
+                .map(str::trim)
+                .filter(|c| !c.is_empty())
+                .map(str::to_owned)
+                .collect();
+            content.sort();
+            Some(crate::resource::Pool {
+                id: format!("{node}/{name}"),
+                path: storage_path(c),
+                source: storage_source(c),
+                capacity: total,
+                used: total.and(uint(e.get("used"))),
+                available: total.and(uint(e.get("avail"))),
+                active: int(e.get("active")) == Some(1),
+                autostart: None,
+                enabled: int(e.get("enabled")).map(|v| v == 1),
+                shared: Some(int(e.get("shared")) == Some(1)),
+                content,
+                volume_count: None,
+                node: Some(node.to_owned()),
+                pool_type,
+                name,
+            })
+        })
+        .collect();
+    out.sort_by(|a, b| a.name.cmp(&b.name));
+    out
+}
+
+/// Where a storage keeps its volumes, by its type's configuration keys.
+fn storage_path(c: &serde_json::Map<String, Value>) -> Option<String> {
+    if let Some(path) = str_of(c.get("path")) {
+        return Some(path);
+    }
+    if let Some(vg) = str_of(c.get("vgname")) {
+        return Some(match str_of(c.get("thinpool")) {
+            Some(thin) => format!("{vg}/{thin}"),
+            None => vg,
+        });
+    }
+    str_of(c.get("pool")).or_else(|| str_of(c.get("datastore")))
+}
+
+/// Where a network storage comes from.
+fn storage_source(c: &serde_json::Map<String, Value>) -> Option<String> {
+    let server = str_of(c.get("server")).or_else(|| str_of(c.get("portal")));
+    let export = str_of(c.get("export")).or_else(|| str_of(c.get("share"))).or_else(|| str_of(c.get("target")));
+    match (server, export) {
+        (Some(s), Some(e)) => Some(format!("{s}:{e}")),
+        (server, _) => server.or_else(|| str_of(c.get("monhost"))),
+    }
+}
+
+/// Whether the content listing's `size` of a volume is its file's rather
+/// than its virtual size: an `import` image in a format with a size of its
+/// own inside (qcow2, vmdk). PVE's `GET .../content/{volid}` answers the
+/// virtual size (`qemu-img info`'s), verified on PVE 9.2.2 with only
+/// `Datastore.Audit` on the storage.
+pub fn image_size_unknown(content: Option<&str>, format: Option<&str>) -> bool {
+    content == Some("import") && matches!(format, Some("qcow2" | "vmdk"))
+}
+
+/// `GET /nodes/{node}/storage/{storage}/content`. The owner is `vmid`.
+pub fn parse_content(raw: &[Value]) -> Vec<crate::resource::Volume> {
+    raw.iter()
+        .filter_map(Value::as_object)
+        .filter_map(|e| {
+            let volid = str_of(e.get("volid"))?;
+            // `local:iso/debian.iso` → `debian.iso`; `local-lvm:vm-100-disk-0`.
+            let after = volid.split_once(':').map_or(volid.as_str(), |(_, rest)| rest);
+            let name = after.rsplit('/').next().unwrap_or(after);
+            let vmid = int(e.get("vmid")).filter(|v| *v > 0).and_then(|v| u32::try_from(v).ok());
+            let content = str_of(e.get("content"));
+            let format = str_of(e.get("format"));
+            // An import image's `size` is its file's (PVE 9.2), which for a
+            // qcow2 or vmdk is not what the guest sees: unknown until
+            // `GET .../content/{volid}` says.
+            let size_unknown = image_size_unknown(content.as_deref(), format.as_deref());
+            Some(crate::resource::Volume {
+                name: if name.is_empty() { volid.clone() } else { name.to_owned() },
+                capacity: if size_unknown { None } else { uint(e.get("size")) },
+                allocation: if size_unknown { uint(e.get("size")) } else { uint(e.get("used")) },
+                created_at: int(e.get("ctime")),
+                users: vmid.map(|vmid| crate::resource::GuestRef { vmid: Some(vmid), ..Default::default() }).into_iter().collect(),
+                id: volid,
+                content,
+                format,
+                ..Default::default()
+            })
+        })
+        .collect()
+}
+
+/// Keeps a volume's owner ([`parse_content`]'s `vmid`) as its user only where
+/// that guest exists, named by its id: a volume whose guest is gone is an
+/// orphan nothing uses.
+pub fn owned_by(volumes: &mut [crate::resource::Volume], guests: &[Guest]) {
+    for v in volumes {
+        v.users.retain_mut(|r| match guests.iter().find(|g| r.vmid.is_some() && g.vmid == r.vmid) {
+            Some(g) => {
+                r.guest_id = Some(g.id.clone());
+                true
+            }
+            None => false,
+        });
+    }
+}
+
+/// `GET /nodes/{node}/network`, with `users` by bridge name. An interface in
+/// `management` is not editable ([`super::net::management_ifaces`]).
+pub fn parse_networks(
+    node: &str,
+    raw: &[Value],
+    users: &BTreeMap<String, Vec<crate::resource::GuestRef>>,
+    management: &BTreeSet<String>,
+) -> Vec<crate::resource::Network> {
+    let words = |v: Option<&Value>| -> Vec<String> {
+        str_of(v)
+            .unwrap_or_default()
+            .split(|c: char| c.is_whitespace() || c == ',')
+            .filter(|w| !w.is_empty())
+            .map(str::to_owned)
+            .collect()
+    };
+    let mut out: Vec<crate::resource::Network> = raw
+        .iter()
+        .filter_map(Value::as_object)
+        .filter_map(|e| {
+            let iface = str_of(e.get("iface"))?;
+            let mode = str_of(e.get("type")).unwrap_or_else(|| "unknown".to_owned());
+            let mut ports = words(e.get("bridge_ports"));
+            ports.extend(words(e.get("ovs_ports")));
+            ports.extend(words(e.get("slaves")));
+            Some(crate::resource::Network {
+                id: format!("{node}/{iface}"),
+                node: Some(node.to_owned()),
+                cidrs: [str_of(e.get("cidr")), str_of(e.get("cidr6"))].into_iter().flatten().collect(),
+                gateway: str_of(e.get("gateway")),
+                ports,
+                vlan_aware: e.get("bridge_vlan_aware").filter(|v| !v.is_null()).map(|v| int(Some(v)) == Some(1)),
+                vlan_id: int(e.get("vlan-id")).and_then(|v| u32::try_from(v).ok()),
+                vlan_device: str_of(e.get("vlan-raw-device")),
+                bond_mode: str_of(e.get("bond_mode")),
+                active: int(e.get("active")) == Some(1),
+                autostart: Some(int(e.get("autostart")) == Some(1)),
+                comment: str_of(e.get("comments")).map(|c| c.trim().to_owned()),
+                management_editable: mode == "bridge" && !management.contains(&iface),
+                users: users.get(&iface).cloned().unwrap_or_default(),
+                name: iface,
+                mode,
+                ..Default::default()
+            })
+        })
+        .collect();
+    // Bridges first — what guests attach to — then bonds, VLANs and ports.
+    let rank = |n: &crate::resource::Network| match n.mode.as_str() {
+        "bridge" | "OVSBridge" => 0,
+        "bond" | "OVSBond" => 1,
+        "vlan" | "OVSIntPort" => 2,
+        _ => 3,
+    };
+    out.sort_by(|a, b| rank(a).cmp(&rank(b)).then_with(|| natural_cmp(&a.name, &b.name)));
+    out
+}
+
+/// A guest's NICs from its configuration, as users of the bridge each is on.
+pub fn bridge_users(guest: &Guest, config: &serde_json::Map<String, Value>) -> BTreeMap<String, Vec<crate::resource::GuestRef>> {
+    let mut out: BTreeMap<String, Vec<crate::resource::GuestRef>> = BTreeMap::new();
+    for nic in parse_config(config, guest.kind).nics {
+        let Some(bridge) = nic.source else { continue };
+        out.entry(bridge).or_default().push(crate::resource::GuestRef {
+            guest_id: Some(guest.id.clone()),
+            vmid: guest.vmid,
+            device: Some(nic.kind),
+            mac: nic.mac.map(|m| m.to_ascii_lowercase()),
+            ip: None,
+        });
+    }
+    out
+}

@@ -1179,6 +1179,8 @@
   "virtPoolSourceZfs": "ZFS-pool",
   "virtPoolTypeVg": "LVM-volumegroep",
   "virtResNameEmpty": "Voer een naam in",
+  "virtResNotFound": "Staat niet meer op deze host",
+  "virtResUnsupported": "Deze host ondersteunt dat niet",
   "virtResNameInvalid": "Geen naam die deze host accepteert (letters, cijfers, . _ -)",
   "virtResSourceInvalid": "Geen geldig pad of bron",
   "virtResTargetInvalid": "Een absoluut pad",

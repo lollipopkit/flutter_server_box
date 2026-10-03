@@ -1179,6 +1179,8 @@
   "virtPoolSourceZfs": "ZFS 池",
   "virtPoolTypeVg": "LVM 磁碟區群組",
   "virtResNameEmpty": "請輸入名稱",
+  "virtResNotFound": "主機上已不存在",
+  "virtResUnsupported": "此主機不支援該操作",
   "virtResNameInvalid": "主機不接受此名稱（字母、數字、. _ -）",
   "virtResSourceInvalid": "不是有效的路徑或來源",
   "virtResTargetInvalid": "需要絕對路徑",

@@ -4232,6 +4232,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get virtResNameEmpty => 'Namen eingeben';
 
   @override
+  String get virtResNotFound => 'Nicht mehr auf diesem Host';
+
+  @override
+  String get virtResUnsupported => 'Dieser Host unterstützt das nicht';
+
+  @override
   String get virtResNameInvalid =>
       'Kein Name, den dieser Host annimmt (Buchstaben, Ziffern, . _ -)';
 

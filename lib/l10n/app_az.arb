@@ -1179,6 +1179,8 @@
   "virtPoolSourceZfs": "ZFS hovuzu",
   "virtPoolTypeVg": "LVM həcm qrupu",
   "virtResNameEmpty": "Ad daxil edin",
+  "virtResNotFound": "Artıq bu hostda deyil",
+  "virtResUnsupported": "Bu host bunu etmir",
   "virtResNameInvalid": "Bu hostun qəbul etdiyi ad deyil (hərf, rəqəm, . _ -)",
   "virtResSourceInvalid": "Etibarlı yol və ya mənbə deyil",
   "virtResTargetInvalid": "Mütləq yol",

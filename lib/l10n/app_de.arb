@@ -1179,6 +1179,8 @@
   "virtPoolSourceZfs": "ZFS-Pool",
   "virtPoolTypeVg": "LVM-Volumegruppe",
   "virtResNameEmpty": "Namen eingeben",
+  "virtResNotFound": "Nicht mehr auf diesem Host",
+  "virtResUnsupported": "Dieser Host unterstützt das nicht",
   "virtResNameInvalid": "Kein Name, den dieser Host annimmt (Buchstaben, Ziffern, . _ -)",
   "virtResSourceInvalid": "Kein gültiger Pfad und keine gültige Quelle",
   "virtResTargetInvalid": "Ein absoluter Pfad",

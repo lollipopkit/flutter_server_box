@@ -3278,6 +3278,414 @@ type RootTranslation = {
 	 */
 	virtSnapDeleteConfirm: RequiredParams<'name'>
 	/**
+	 * G​u​e​s​t​s
+	 */
+	virtSectionGuests: string
+	/**
+	 * S​t​o​r​a​g​e
+	 */
+	virtSectionStorage: string
+	/**
+	 * N​e​t​w​o​r​k​s
+	 */
+	virtSectionNetworks: string
+	/**
+	 * C​r​e​a​t​e
+	 */
+	virtCreate: string
+	/**
+	 * D​e​l​e​t​e
+	 */
+	virtDelete: string
+	/**
+	 * E​d​i​t
+	 */
+	virtEdit: string
+	/**
+	 * N​o​ ​s​t​o​r​a​g​e​.
+	 */
+	virtPoolNone: string
+	/**
+	 * I​n​a​c​t​i​v​e
+	 */
+	virtPoolInactive: string
+	/**
+	 * D​i​s​a​b​l​e​d
+	 */
+	virtPoolDisabled: string
+	/**
+	 * S​h​a​r​e​d
+	 */
+	virtPoolShared: string
+	/**
+	 * A​u​t​o​s​t​a​r​t
+	 */
+	virtPoolAutostart: string
+	/**
+	 * S​t​a​r​t
+	 */
+	virtPoolStart: string
+	/**
+	 * S​t​o​p
+	 */
+	virtPoolStop: string
+	/**
+	 * E​n​a​b​l​e
+	 */
+	virtPoolEnable: string
+	/**
+	 * D​i​s​a​b​l​e
+	 */
+	virtPoolDisable: string
+	/**
+	 * R​e​s​c​a​n
+	 */
+	virtPoolRefresh: string
+	/**
+	 * R​e​m​o​v​e​ ​s​t​o​r​a​g​e
+	 */
+	virtPoolDelete: string
+	/**
+	 * R​e​m​o​v​e​ ​{​n​a​m​e​}​?​ ​I​t​s​ ​v​o​l​u​m​e​s​ ​s​t​a​y​ ​w​h​e​r​e​ ​t​h​e​y​ ​a​r​e​.
+	 * @param {unknown} name
+	 */
+	virtPoolDeleteConfirm: RequiredParams<'name'>
+	/**
+	 * A​l​s​o​ ​d​e​l​e​t​e​ ​i​t​s​ ​d​i​r​e​c​t​o​r​y​ ​(​o​n​l​y​ ​w​h​e​n​ ​e​m​p​t​y​)
+	 */
+	virtPoolDeleteStorage: string
+	/**
+	 * N​e​w​ ​s​t​o​r​a​g​e
+	 */
+	virtPoolCreate: string
+	/**
+	 * N​a​m​e
+	 */
+	virtPoolName: string
+	/**
+	 * T​y​p​e
+	 */
+	virtPoolType: string
+	/**
+	 * S​o​u​r​c​e
+	 */
+	virtPoolSource: string
+	/**
+	 * M​o​u​n​t​ ​p​o​i​n​t
+	 */
+	virtPoolTarget: string
+	/**
+	 * N​o​d​e
+	 */
+	virtPoolNode: string
+	/**
+	 * C​o​n​t​e​n​t
+	 */
+	virtPoolContent: string
+	/**
+	 * P​a​t​h
+	 */
+	virtPoolPath: string
+	/**
+	 * F​r​e​e
+	 */
+	virtPoolFree: string
+	/**
+	 * S​e​l​e​c​t​ ​a​ ​s​t​o​r​a​g​e​ ​t​o​ ​s​e​e​ ​i​t​s​ ​v​o​l​u​m​e​s​.
+	 */
+	virtPoolPick: string
+	/**
+	 * N​o​ ​v​o​l​u​m​e​s​.
+	 */
+	virtVolumeNone: string
+	/**
+	 * N​a​m​e
+	 */
+	virtVolumeName: string
+	/**
+	 * S​i​z​e​ ​(​G​i​B​)
+	 */
+	virtVolumeSize: string
+	/**
+	 * F​o​r​m​a​t
+	 */
+	virtVolumeFormat: string
+	/**
+	 * N​e​w​ ​v​o​l​u​m​e
+	 */
+	virtVolumeCreate: string
+	/**
+	 * D​e​l​e​t​e​ ​{​n​a​m​e​}​?​ ​I​t​s​ ​c​o​n​t​e​n​t​s​ ​a​r​e​ ​l​o​s​t​.
+	 * @param {unknown} name
+	 */
+	virtVolumeDeleteConfirm: RequiredParams<'name'>
+	/**
+	 * G​r​o​w
+	 */
+	virtVolumeResize: string
+	/**
+	 * N​e​w​ ​s​i​z​e​ ​(​G​i​B​)
+	 */
+	virtVolumeResizeTo: string
+	/**
+	 * C​o​p​y
+	 */
+	virtVolumeClone: string
+	/**
+	 * N​a​m​e​ ​o​f​ ​t​h​e​ ​c​o​p​y
+	 */
+	virtVolumeCloneName: string
+	/**
+	 * U​s​e​d​ ​b​y​ ​{​w​h​o​}
+	 * @param {unknown} who
+	 */
+	virtVolumeUsedBy: RequiredParams<'who'>
+	/**
+	 * {​c​o​u​n​t​}​ ​v​o​l​u​m​e​s​ ​a​r​e​ ​m​a​d​e​ ​o​n​ ​i​t
+	 * @param {unknown} count
+	 */
+	virtVolumeBacks: RequiredParams<'count'>
+	/**
+	 * {​s​i​z​e​}​ ​o​n​ ​d​i​s​k
+	 * @param {unknown} size
+	 */
+	virtVolumeOnDisk: RequiredParams<'size'>
+	/**
+	 * N​o​ ​n​e​t​w​o​r​k​s​.
+	 */
+	virtNetNone: string
+	/**
+	 * A​c​t​i​v​e
+	 */
+	virtNetActive: string
+	/**
+	 * I​n​a​c​t​i​v​e
+	 */
+	virtNetInactive: string
+	/**
+	 * A​u​t​o​s​t​a​r​t
+	 */
+	virtNetAutostart: string
+	/**
+	 * R​e​s​t​a​r​t​ ​t​o​ ​a​p​p​l​y
+	 */
+	virtNetPending: string
+	/**
+	 * S​t​a​r​t
+	 */
+	virtNetStart: string
+	/**
+	 * S​t​o​p
+	 */
+	virtNetStop: string
+	/**
+	 * R​e​s​t​a​r​t
+	 */
+	virtNetRestart: string
+	/**
+	 * R​e​s​t​a​r​t​ ​{​n​a​m​e​}​?​ ​G​u​e​s​t​s​ ​o​n​ ​i​t​ ​l​o​s​e​ ​t​h​e​i​r​ ​l​i​n​k​ ​u​n​t​i​l​ ​i​t​ ​i​s​ ​u​p​ ​a​g​a​i​n​.
+	 * @param {unknown} name
+	 */
+	virtNetRestartConfirm: RequiredParams<'name'>
+	/**
+	 * D​e​l​e​t​e​ ​{​n​a​m​e​}​?
+	 * @param {unknown} name
+	 */
+	virtNetDeleteConfirm: RequiredParams<'name'>
+	/**
+	 * C​a​r​r​i​e​s​ ​t​h​e​ ​h​o​s​t​'​s​ ​m​a​n​a​g​e​m​e​n​t​ ​t​r​a​f​f​i​c​:​ ​n​o​t​ ​e​d​i​t​a​b​l​e​ ​h​e​r​e​.
+	 */
+	virtNetManagement: string
+	/**
+	 * N​e​w​ ​n​e​t​w​o​r​k
+	 */
+	virtNetCreate: string
+	/**
+	 * N​e​w​ ​b​r​i​d​g​e
+	 */
+	virtNetCreateBridge: string
+	/**
+	 * N​a​m​e
+	 */
+	virtNetName: string
+	/**
+	 * M​o​d​e
+	 */
+	virtNetMode: string
+	/**
+	 * H​o​s​t​ ​b​r​i​d​g​e
+	 */
+	virtNetBridge: string
+	/**
+	 * P​o​r​t​s
+	 */
+	virtNetPorts: string
+	/**
+	 * A​d​d​r​e​s​s​/​p​r​e​f​i​x
+	 */
+	virtNetCidr: string
+	/**
+	 * A​d​d​r​e​s​s
+	 */
+	virtNetAddress: string
+	/**
+	 * P​r​e​f​i​x
+	 */
+	virtNetPrefix: string
+	/**
+	 * G​a​t​e​w​a​y
+	 */
+	virtNetGateway: string
+	/**
+	 * D​H​C​P​ ​r​a​n​g​e
+	 */
+	virtNetDhcp: string
+	/**
+	 * V​L​A​N​ ​a​w​a​r​e
+	 */
+	virtNetVlanAware: string
+	/**
+	 * N​o​d​e
+	 */
+	virtNetNode: string
+	/**
+	 * S​t​a​t​i​c​ ​D​H​C​P​ ​h​o​s​t​s
+	 */
+	virtNetHosts: string
+	/**
+	 * M​A​C
+	 */
+	virtNetMac: string
+	/**
+	 * A​d​d​r​e​s​s
+	 */
+	virtNetIp: string
+	/**
+	 * H​o​s​t​ ​n​a​m​e
+	 */
+	virtNetHostName: string
+	/**
+	 * R​e​s​t​a​r​t​ ​i​t​ ​n​o​w​ ​t​o​ ​a​p​p​l​y​ ​(​g​u​e​s​t​s​ ​o​n​ ​i​t​ ​l​o​s​e​ ​t​h​e​i​r​ ​l​i​n​k​ ​m​e​a​n​w​h​i​l​e​)
+	 */
+	virtNetRestartNow: string
+	/**
+	 * G​u​e​s​t​s​ ​o​n​ ​i​t
+	 */
+	virtNetUsers: string
+	/**
+	 * P​e​n​d​i​n​g​ ​c​h​a​n​g​e​s​ ​o​n​ ​{​n​o​d​e​}
+	 * @param {unknown} node
+	 */
+	virtNetChanges: RequiredParams<'node'>
+	/**
+	 * A​p​p​l​y
+	 */
+	virtNetApply: string
+	/**
+	 * D​i​s​c​a​r​d
+	 */
+	virtNetRevert: string
+	/**
+	 * A​p​p​l​y​ ​t​h​e​ ​p​e​n​d​i​n​g​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​o​n​ ​{​n​o​d​e​}​?​ ​P​V​E​ ​r​e​l​o​a​d​s​ ​i​t​s​ ​n​e​t​w​o​r​k​i​n​g​.
+	 * @param {unknown} node
+	 */
+	virtNetApplyConfirm: RequiredParams<'node'>
+	/**
+	 * D​i​s​c​a​r​d​ ​t​h​e​ ​p​e​n​d​i​n​g​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​o​n​ ​{​n​o​d​e​}​?
+	 * @param {unknown} node
+	 */
+	virtNetRevertConfirm: RequiredParams<'node'>
+	/**
+	 * {​a​c​c​o​u​n​t​}​ ​l​a​c​k​s​ ​{​p​r​i​v​i​l​e​g​e​}​ ​o​n​ ​{​p​a​t​h​}​.​ ​G​r​a​n​t​ ​i​t​ ​o​n​ ​t​h​e​ ​h​o​s​t​:​
+​{​c​o​m​m​a​n​d​}
+	 * @param {unknown} account
+	 * @param {unknown} command
+	 * @param {unknown} path
+	 * @param {unknown} privilege
+	 */
+	virtErrNeedsPrivilege: RequiredParams<'account' | 'command' | 'path' | 'privilege'>
+	/**
+	 * T​h​e​ ​p​e​n​d​i​n​g​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​c​h​a​n​g​e​s​ ​{​i​f​a​c​e​s​}​,​ ​w​h​i​c​h​ ​c​a​r​r​y​ ​t​h​e​ ​h​o​s​t​'​s​ ​m​a​n​a​g​e​m​e​n​t​ ​t​r​a​f​f​i​c​:​ ​a​p​p​l​y​ ​i​t​ ​f​r​o​m​ ​t​h​e​ ​h​o​s​t​'​s​ ​c​o​n​s​o​l​e​ ​o​r​ ​P​V​E​'​s​ ​o​w​n​ ​i​n​t​e​r​f​a​c​e​.
+	 * @param {unknown} ifaces
+	 */
+	virtErrApplyManagement: RequiredParams<'ifaces'>
+	/**
+	 * W​h​i​c​h​ ​i​n​t​e​r​f​a​c​e​s​ ​t​h​e​ ​p​e​n​d​i​n​g​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​c​h​a​n​g​e​s​ ​c​a​n​n​o​t​ ​b​e​ ​t​o​l​d​ ​f​r​o​m​ ​i​t​s​ ​d​i​f​f​:​ ​a​p​p​l​y​ ​i​t​ ​f​r​o​m​ ​t​h​e​ ​h​o​s​t​'​s​ ​c​o​n​s​o​l​e​ ​o​r​ ​P​V​E​'​s​ ​o​w​n​ ​i​n​t​e​r​f​a​c​e​.
+	 */
+	virtErrApplyUnreadable: string
+	/**
+	 * A​ ​n​a​m​e​ ​i​s​ ​n​e​e​d​e​d​.
+	 */
+	virtIssueNameEmpty: string
+	/**
+	 * T​h​a​t​ ​n​a​m​e​ ​i​s​ ​n​o​t​ ​o​n​e​ ​t​h​e​ ​h​o​s​t​ ​t​a​k​e​s​.
+	 */
+	virtIssueNameInvalid: string
+	/**
+	 * T​h​a​t​ ​n​a​m​e​ ​i​s​ ​t​a​k​e​n​.
+	 */
+	virtIssueNameTaken: string
+	/**
+	 * T​h​e​ ​s​o​u​r​c​e​ ​i​s​ ​n​o​t​ ​v​a​l​i​d​ ​f​o​r​ ​t​h​i​s​ ​t​y​p​e​.
+	 */
+	virtIssueSourceInvalid: string
+	/**
+	 * T​h​e​ ​m​o​u​n​t​ ​p​o​i​n​t​ ​m​u​s​t​ ​b​e​ ​a​n​ ​a​b​s​o​l​u​t​e​ ​p​a​t​h​.
+	 */
+	virtIssueTargetInvalid: string
+	/**
+	 * N​o​t​ ​a​n​ ​a​d​d​r​e​s​s​ ​w​i​t​h​ ​a​ ​u​s​a​b​l​e​ ​p​r​e​f​i​x​ ​(​a​.​b​.​c​.​d​/​p​r​e​f​i​x​)​.
+	 */
+	virtIssueCidrInvalid: string
+	/**
+	 * T​h​e​ ​D​H​C​P​ ​r​a​n​g​e​ ​m​u​s​t​ ​l​i​e​ ​i​n​s​i​d​e​ ​t​h​e​ ​n​e​t​w​o​r​k​,​ ​i​n​ ​o​r​d​e​r​,​ ​c​l​e​a​r​ ​o​f​ ​t​h​e​ ​h​o​s​t​'​s​ ​a​d​d​r​e​s​s​.
+	 */
+	virtIssueDhcpInvalid: string
+	/**
+	 * A​n​o​t​h​e​r​ ​n​e​t​w​o​r​k​ ​i​s​ ​o​n​ ​a​n​ ​o​v​e​r​l​a​p​p​i​n​g​ ​s​u​b​n​e​t​.
+	 */
+	virtIssueSubnetTaken: string
+	/**
+	 * N​o​t​ ​a​ ​v​a​l​i​d​ ​b​r​i​d​g​e​ ​o​r​ ​i​n​t​e​r​f​a​c​e​ ​n​a​m​e​.
+	 */
+	virtIssueBridgeInvalid: string
+	/**
+	 * N​o​t​ ​a​ ​s​i​z​e​ ​t​h​e​ ​h​o​s​t​ ​t​a​k​e​s​.
+	 */
+	virtIssueSize: string
+	/**
+	 * M​o​r​e​ ​t​h​a​n​ ​t​h​e​ ​s​t​o​r​a​g​e​ ​h​a​s​ ​f​r​e​e​.
+	 */
+	virtIssueSpace: string
+	/**
+	 * T​h​i​s​ ​s​t​o​r​a​g​e​ ​d​o​e​s​ ​n​o​t​ ​t​a​k​e​ ​t​h​a​t​ ​f​o​r​m​a​t​.
+	 */
+	virtIssueFormat: string
+	/**
+	 * A​ ​g​u​e​s​t​ ​u​s​e​s​ ​i​t​,​ ​o​r​ ​a​ ​v​o​l​u​m​e​ ​i​s​ ​m​a​d​e​ ​o​n​ ​i​t​.
+	 */
+	virtIssueInUse: string
+	/**
+	 * O​n​l​y​ ​a​ ​l​a​r​g​e​r​ ​s​i​z​e​.
+	 */
+	virtIssueShrink: string
+	/**
+	 * A​ ​s​t​a​t​i​c​ ​h​o​s​t​ ​h​a​s​ ​a​ ​M​A​C​,​ ​a​d​d​r​e​s​s​ ​o​r​ ​n​a​m​e​ ​t​h​e​ ​h​o​s​t​ ​w​o​u​l​d​ ​r​e​f​u​s​e​,​ ​o​r​ ​r​e​p​e​a​t​s​ ​o​n​e​.
+	 */
+	virtIssueHostInvalid: string
+	/**
+	 * I​t​ ​c​a​r​r​i​e​s​ ​t​h​e​ ​h​o​s​t​'​s​ ​m​a​n​a​g​e​m​e​n​t​ ​t​r​a​f​f​i​c​:​ ​c​h​a​n​g​i​n​g​ ​i​t​ ​w​o​u​l​d​ ​c​u​t​ ​t​h​e​ ​h​o​s​t​ ​o​f​f​.
+	 */
+	virtIssueManagementIface: string
+	/**
+	 * I​t​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​o​n​ ​t​h​e​ ​h​o​s​t​.
+	 */
+	virtIssueNotFound: string
+	/**
+	 * T​h​i​s​ ​h​o​s​t​ ​d​o​e​s​ ​n​o​t​ ​d​o​ ​t​h​a​t​.
+	 */
+	virtIssueUnsupported: string
+	/**
 	 * Y​e​s
 	 */
 	yes: string
@@ -6451,6 +6859,399 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Delete snapshot {name}? The guest keeps what it has now.
 	 */
 	virtSnapDeleteConfirm: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Guests
+	 */
+	virtSectionGuests: () => LocalizedString
+	/**
+	 * Storage
+	 */
+	virtSectionStorage: () => LocalizedString
+	/**
+	 * Networks
+	 */
+	virtSectionNetworks: () => LocalizedString
+	/**
+	 * Create
+	 */
+	virtCreate: () => LocalizedString
+	/**
+	 * Delete
+	 */
+	virtDelete: () => LocalizedString
+	/**
+	 * Edit
+	 */
+	virtEdit: () => LocalizedString
+	/**
+	 * No storage.
+	 */
+	virtPoolNone: () => LocalizedString
+	/**
+	 * Inactive
+	 */
+	virtPoolInactive: () => LocalizedString
+	/**
+	 * Disabled
+	 */
+	virtPoolDisabled: () => LocalizedString
+	/**
+	 * Shared
+	 */
+	virtPoolShared: () => LocalizedString
+	/**
+	 * Autostart
+	 */
+	virtPoolAutostart: () => LocalizedString
+	/**
+	 * Start
+	 */
+	virtPoolStart: () => LocalizedString
+	/**
+	 * Stop
+	 */
+	virtPoolStop: () => LocalizedString
+	/**
+	 * Enable
+	 */
+	virtPoolEnable: () => LocalizedString
+	/**
+	 * Disable
+	 */
+	virtPoolDisable: () => LocalizedString
+	/**
+	 * Rescan
+	 */
+	virtPoolRefresh: () => LocalizedString
+	/**
+	 * Remove storage
+	 */
+	virtPoolDelete: () => LocalizedString
+	/**
+	 * Remove {name}? Its volumes stay where they are.
+	 */
+	virtPoolDeleteConfirm: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Also delete its directory (only when empty)
+	 */
+	virtPoolDeleteStorage: () => LocalizedString
+	/**
+	 * New storage
+	 */
+	virtPoolCreate: () => LocalizedString
+	/**
+	 * Name
+	 */
+	virtPoolName: () => LocalizedString
+	/**
+	 * Type
+	 */
+	virtPoolType: () => LocalizedString
+	/**
+	 * Source
+	 */
+	virtPoolSource: () => LocalizedString
+	/**
+	 * Mount point
+	 */
+	virtPoolTarget: () => LocalizedString
+	/**
+	 * Node
+	 */
+	virtPoolNode: () => LocalizedString
+	/**
+	 * Content
+	 */
+	virtPoolContent: () => LocalizedString
+	/**
+	 * Path
+	 */
+	virtPoolPath: () => LocalizedString
+	/**
+	 * Free
+	 */
+	virtPoolFree: () => LocalizedString
+	/**
+	 * Select a storage to see its volumes.
+	 */
+	virtPoolPick: () => LocalizedString
+	/**
+	 * No volumes.
+	 */
+	virtVolumeNone: () => LocalizedString
+	/**
+	 * Name
+	 */
+	virtVolumeName: () => LocalizedString
+	/**
+	 * Size (GiB)
+	 */
+	virtVolumeSize: () => LocalizedString
+	/**
+	 * Format
+	 */
+	virtVolumeFormat: () => LocalizedString
+	/**
+	 * New volume
+	 */
+	virtVolumeCreate: () => LocalizedString
+	/**
+	 * Delete {name}? Its contents are lost.
+	 */
+	virtVolumeDeleteConfirm: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Grow
+	 */
+	virtVolumeResize: () => LocalizedString
+	/**
+	 * New size (GiB)
+	 */
+	virtVolumeResizeTo: () => LocalizedString
+	/**
+	 * Copy
+	 */
+	virtVolumeClone: () => LocalizedString
+	/**
+	 * Name of the copy
+	 */
+	virtVolumeCloneName: () => LocalizedString
+	/**
+	 * Used by {who}
+	 */
+	virtVolumeUsedBy: (arg: { who: unknown }) => LocalizedString
+	/**
+	 * {count} volumes are made on it
+	 */
+	virtVolumeBacks: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * {size} on disk
+	 */
+	virtVolumeOnDisk: (arg: { size: unknown }) => LocalizedString
+	/**
+	 * No networks.
+	 */
+	virtNetNone: () => LocalizedString
+	/**
+	 * Active
+	 */
+	virtNetActive: () => LocalizedString
+	/**
+	 * Inactive
+	 */
+	virtNetInactive: () => LocalizedString
+	/**
+	 * Autostart
+	 */
+	virtNetAutostart: () => LocalizedString
+	/**
+	 * Restart to apply
+	 */
+	virtNetPending: () => LocalizedString
+	/**
+	 * Start
+	 */
+	virtNetStart: () => LocalizedString
+	/**
+	 * Stop
+	 */
+	virtNetStop: () => LocalizedString
+	/**
+	 * Restart
+	 */
+	virtNetRestart: () => LocalizedString
+	/**
+	 * Restart {name}? Guests on it lose their link until it is up again.
+	 */
+	virtNetRestartConfirm: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Delete {name}?
+	 */
+	virtNetDeleteConfirm: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Carries the host's management traffic: not editable here.
+	 */
+	virtNetManagement: () => LocalizedString
+	/**
+	 * New network
+	 */
+	virtNetCreate: () => LocalizedString
+	/**
+	 * New bridge
+	 */
+	virtNetCreateBridge: () => LocalizedString
+	/**
+	 * Name
+	 */
+	virtNetName: () => LocalizedString
+	/**
+	 * Mode
+	 */
+	virtNetMode: () => LocalizedString
+	/**
+	 * Host bridge
+	 */
+	virtNetBridge: () => LocalizedString
+	/**
+	 * Ports
+	 */
+	virtNetPorts: () => LocalizedString
+	/**
+	 * Address/prefix
+	 */
+	virtNetCidr: () => LocalizedString
+	/**
+	 * Address
+	 */
+	virtNetAddress: () => LocalizedString
+	/**
+	 * Prefix
+	 */
+	virtNetPrefix: () => LocalizedString
+	/**
+	 * Gateway
+	 */
+	virtNetGateway: () => LocalizedString
+	/**
+	 * DHCP range
+	 */
+	virtNetDhcp: () => LocalizedString
+	/**
+	 * VLAN aware
+	 */
+	virtNetVlanAware: () => LocalizedString
+	/**
+	 * Node
+	 */
+	virtNetNode: () => LocalizedString
+	/**
+	 * Static DHCP hosts
+	 */
+	virtNetHosts: () => LocalizedString
+	/**
+	 * MAC
+	 */
+	virtNetMac: () => LocalizedString
+	/**
+	 * Address
+	 */
+	virtNetIp: () => LocalizedString
+	/**
+	 * Host name
+	 */
+	virtNetHostName: () => LocalizedString
+	/**
+	 * Restart it now to apply (guests on it lose their link meanwhile)
+	 */
+	virtNetRestartNow: () => LocalizedString
+	/**
+	 * Guests on it
+	 */
+	virtNetUsers: () => LocalizedString
+	/**
+	 * Pending changes on {node}
+	 */
+	virtNetChanges: (arg: { node: unknown }) => LocalizedString
+	/**
+	 * Apply
+	 */
+	virtNetApply: () => LocalizedString
+	/**
+	 * Discard
+	 */
+	virtNetRevert: () => LocalizedString
+	/**
+	 * Apply the pending configuration on {node}? PVE reloads its networking.
+	 */
+	virtNetApplyConfirm: (arg: { node: unknown }) => LocalizedString
+	/**
+	 * Discard the pending configuration on {node}?
+	 */
+	virtNetRevertConfirm: (arg: { node: unknown }) => LocalizedString
+	/**
+	 * {account} lacks {privilege} on {path}. Grant it on the host:
+{command}
+	 */
+	virtErrNeedsPrivilege: (arg: { account: unknown, command: unknown, path: unknown, privilege: unknown }) => LocalizedString
+	/**
+	 * The pending configuration changes {ifaces}, which carry the host's management traffic: apply it from the host's console or PVE's own interface.
+	 */
+	virtErrApplyManagement: (arg: { ifaces: unknown }) => LocalizedString
+	/**
+	 * Which interfaces the pending configuration changes cannot be told from its diff: apply it from the host's console or PVE's own interface.
+	 */
+	virtErrApplyUnreadable: () => LocalizedString
+	/**
+	 * A name is needed.
+	 */
+	virtIssueNameEmpty: () => LocalizedString
+	/**
+	 * That name is not one the host takes.
+	 */
+	virtIssueNameInvalid: () => LocalizedString
+	/**
+	 * That name is taken.
+	 */
+	virtIssueNameTaken: () => LocalizedString
+	/**
+	 * The source is not valid for this type.
+	 */
+	virtIssueSourceInvalid: () => LocalizedString
+	/**
+	 * The mount point must be an absolute path.
+	 */
+	virtIssueTargetInvalid: () => LocalizedString
+	/**
+	 * Not an address with a usable prefix (a.b.c.d/prefix).
+	 */
+	virtIssueCidrInvalid: () => LocalizedString
+	/**
+	 * The DHCP range must lie inside the network, in order, clear of the host's address.
+	 */
+	virtIssueDhcpInvalid: () => LocalizedString
+	/**
+	 * Another network is on an overlapping subnet.
+	 */
+	virtIssueSubnetTaken: () => LocalizedString
+	/**
+	 * Not a valid bridge or interface name.
+	 */
+	virtIssueBridgeInvalid: () => LocalizedString
+	/**
+	 * Not a size the host takes.
+	 */
+	virtIssueSize: () => LocalizedString
+	/**
+	 * More than the storage has free.
+	 */
+	virtIssueSpace: () => LocalizedString
+	/**
+	 * This storage does not take that format.
+	 */
+	virtIssueFormat: () => LocalizedString
+	/**
+	 * A guest uses it, or a volume is made on it.
+	 */
+	virtIssueInUse: () => LocalizedString
+	/**
+	 * Only a larger size.
+	 */
+	virtIssueShrink: () => LocalizedString
+	/**
+	 * A static host has a MAC, address or name the host would refuse, or repeats one.
+	 */
+	virtIssueHostInvalid: () => LocalizedString
+	/**
+	 * It carries the host's management traffic: changing it would cut the host off.
+	 */
+	virtIssueManagementIface: () => LocalizedString
+	/**
+	 * It is no longer on the host.
+	 */
+	virtIssueNotFound: () => LocalizedString
+	/**
+	 * This host does not do that.
+	 */
+	virtIssueUnsupported: () => LocalizedString
 	/**
 	 * Yes
 	 */

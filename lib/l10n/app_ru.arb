@@ -1179,6 +1179,8 @@
   "virtPoolSourceZfs": "Пул ZFS",
   "virtPoolTypeVg": "Группа томов LVM",
   "virtResNameEmpty": "Введите имя",
+  "virtResNotFound": "Больше нет на этом хосте",
+  "virtResUnsupported": "Этот хост этого не поддерживает",
   "virtResNameInvalid": "Такое имя хост не примет (буквы, цифры, . _ -)",
   "virtResSourceInvalid": "Недопустимый путь или источник",
   "virtResTargetInvalid": "Нужен абсолютный путь",

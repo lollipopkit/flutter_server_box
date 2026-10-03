@@ -314,6 +314,13 @@ void main() {
         storageReads++;
         return _ok(_fixture('script_storage.txt'));
       }
+      // A change is checked against the pool's volumes as they are now.
+      if (call.script.contains("vol-dumpxml --pool 'images'")) {
+        return _ok(_fixture('script_volumes_images.txt'));
+      }
+      if (call.script.contains("vol-dumpxml --pool 'sbx-iso'")) {
+        return _ok(_fixture('script_volumes_sbx_iso.txt'));
+      }
       if (call.script.contains('net-list')) {
         networkReads++;
         return _ok(_fixture('script_networks.txt'));
@@ -577,6 +584,12 @@ void main() {
       }
       if (call.script.contains('pool-list')) {
         return _ok(_fixture('script_storage.txt'));
+      }
+      if (call.script.contains("vol-dumpxml --pool 'images'")) {
+        return _ok(_fixture('script_volumes_images.txt'));
+      }
+      if (call.script.contains("vol-dumpxml --pool 'sbx-iso'")) {
+        return _ok(_fixture('script_volumes_sbx_iso.txt'));
       }
       return _ok(_overview());
     });

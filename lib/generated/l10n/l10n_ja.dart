@@ -3976,6 +3976,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get virtResNameEmpty => '名前を入力してください';
 
   @override
+  String get virtResNotFound => 'このホストにはもうありません';
+
+  @override
+  String get virtResUnsupported => 'このホストでは行えません';
+
+  @override
   String get virtResNameInvalid => 'このホストでは使えない名前です（英数字、. _ -）';
 
   @override

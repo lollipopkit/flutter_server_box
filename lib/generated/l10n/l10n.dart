@@ -7209,6 +7209,18 @@ abstract class AppLocalizations {
   /// **'Enter a name'**
   String get virtResNameEmpty;
 
+  /// Form error: the pool, volume or network was removed since it was listed.
+  ///
+  /// In en, this message translates to:
+  /// **'It is no longer on this host'**
+  String get virtResNotFound;
+
+  /// Form error: a change this kind of host (PVE or libvirt) does not make.
+  ///
+  /// In en, this message translates to:
+  /// **'This host does not do that'**
+  String get virtResUnsupported;
+
   /// Form error: a pool, volume or network name the host does not take.
   ///
   /// In en, this message translates to:

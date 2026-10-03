@@ -11,8 +11,8 @@ part of 'bmc.dart';
 /// One server's BMC.
 ///
 /// Holds a [BmcClient] (`sbm_redfish` over FFI), and therefore a session on a
-/// device that allows few of them — so the client is closed on dispose, which is the only thing
-/// that gives the session back. See `docs/principles/bmc.md`.
+/// device that allows few of them — so the client is closed on dispose, which
+/// is the only thing that gives the session back. See `docs/principles/bmc.md`.
 
 @ProviderFor(BmcNotifier)
 final bmcProvider = BmcNotifierFamily._();
@@ -20,15 +20,15 @@ final bmcProvider = BmcNotifierFamily._();
 /// One server's BMC.
 ///
 /// Holds a [BmcClient] (`sbm_redfish` over FFI), and therefore a session on a
-/// device that allows few of them — so the client is closed on dispose, which is the only thing
-/// that gives the session back. See `docs/principles/bmc.md`.
+/// device that allows few of them — so the client is closed on dispose, which
+/// is the only thing that gives the session back. See `docs/principles/bmc.md`.
 final class BmcNotifierProvider
     extends $NotifierProvider<BmcNotifier, BmcState> {
   /// One server's BMC.
   ///
   /// Holds a [BmcClient] (`sbm_redfish` over FFI), and therefore a session on a
-  /// device that allows few of them — so the client is closed on dispose, which is the only thing
-  /// that gives the session back. See `docs/principles/bmc.md`.
+  /// device that allows few of them — so the client is closed on dispose, which
+  /// is the only thing that gives the session back. See `docs/principles/bmc.md`.
   BmcNotifierProvider._({
     required BmcNotifierFamily super.from,
     required Spi super.argument,
@@ -78,8 +78,8 @@ String _$bmcNotifierHash() => r'58fd729ea27fd80983f6ccf429c2d2bb5b4aade5';
 /// One server's BMC.
 ///
 /// Holds a [BmcClient] (`sbm_redfish` over FFI), and therefore a session on a
-/// device that allows few of them — so the client is closed on dispose, which is the only thing
-/// that gives the session back. See `docs/principles/bmc.md`.
+/// device that allows few of them — so the client is closed on dispose, which
+/// is the only thing that gives the session back. See `docs/principles/bmc.md`.
 
 final class BmcNotifierFamily extends $Family
     with $ClassFamilyOverride<BmcNotifier, BmcState, BmcState, BmcState, Spi> {
@@ -95,8 +95,8 @@ final class BmcNotifierFamily extends $Family
   /// One server's BMC.
   ///
   /// Holds a [BmcClient] (`sbm_redfish` over FFI), and therefore a session on a
-  /// device that allows few of them — so the client is closed on dispose, which is the only thing
-  /// that gives the session back. See `docs/principles/bmc.md`.
+  /// device that allows few of them — so the client is closed on dispose, which
+  /// is the only thing that gives the session back. See `docs/principles/bmc.md`.
 
   BmcNotifierProvider call(Spi spi) =>
       BmcNotifierProvider._(argument: spi, from: this);
@@ -108,8 +108,8 @@ final class BmcNotifierFamily extends $Family
 /// One server's BMC.
 ///
 /// Holds a [BmcClient] (`sbm_redfish` over FFI), and therefore a session on a
-/// device that allows few of them — so the client is closed on dispose, which is the only thing
-/// that gives the session back. See `docs/principles/bmc.md`.
+/// device that allows few of them — so the client is closed on dispose, which
+/// is the only thing that gives the session back. See `docs/principles/bmc.md`.
 
 abstract class _$BmcNotifier extends $Notifier<BmcState> {
   late final _$args = ref.$arg as Spi;

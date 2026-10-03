@@ -4172,6 +4172,12 @@ class AppLocalizationsId extends AppLocalizations {
   String get virtResNameEmpty => 'Masukkan nama';
 
   @override
+  String get virtResNotFound => 'Sudah tidak ada di host ini';
+
+  @override
+  String get virtResUnsupported => 'Host ini tidak mendukungnya';
+
+  @override
   String get virtResNameInvalid =>
       'Bukan nama yang diterima host ini (huruf, angka, . _ -)';
 

@@ -467,6 +467,42 @@ impl PveSession {
         Ok(self.client.wait_task(&node, &upid).await?)
     }
 
+    // --- Storage and networks (sbm_virt::resource) ---
+
+    /// Every online node's storages, `sbm_virt::resource::Pool` JSON.
+    pub async fn storage_pools(&self) -> Result<String, PveError> {
+        to_json(&self.client.storage_pools().await?)
+    }
+
+    /// The volumes on `pool_json` (a `Pool`), `Volume` JSON.
+    pub async fn volumes(&self, pool_json: String) -> Result<String, PveError> {
+        let pool: sbm_virt::resource::Pool = from_json(&pool_json)?;
+        to_json(&self.client.volumes(&pool).await?)
+    }
+
+    /// Every online node's interfaces, `Network` JSON. `live` is what
+    /// [`super::resource::virt_pve_live_net_script`] printed on the server
+    /// this session reaches PVE through; None protects every interface with
+    /// an address.
+    pub async fn networks(&self, live: Option<String>) -> Result<String, PveError> {
+        let live = live.as_deref().and_then(sbm_virt::pve::net::parse_live_net);
+        to_json(&self.client.networks(live.as_ref()).await?)
+    }
+
+    /// Each online node's pending network configuration,
+    /// `NetworkChanges` JSON.
+    pub async fn network_changes(&self) -> Result<String, PveError> {
+        to_json(&self.client.network_changes().await?)
+    }
+
+    /// Makes `change_json` (a `Change`), checked first against what the host
+    /// lists now; `live` as for [`PveSession::networks`].
+    pub async fn manage(&self, change_json: String, live: Option<String>) -> Result<(), PveError> {
+        let change: sbm_virt::resource::Change = from_json(&change_json)?;
+        let live = live.as_deref().and_then(sbm_virt::pve::net::parse_live_net);
+        Ok(self.client.manage(&change, live.as_ref()).await?)
+    }
+
     /// The headers that authenticate a connection made outside the session
     /// (a console's websocket, an upload), logging in first if needed.
     pub async fn auth_headers(&self) -> Result<Vec<PveHeader>, PveError> {
@@ -478,6 +514,14 @@ impl PveSession {
             .map(|(name, value)| PveHeader { name, value })
             .collect())
     }
+}
+
+fn to_json<T: serde::Serialize>(value: &T) -> Result<String, PveError> {
+    serde_json::to_string(value).map_err(|e| Error::msg(ErrorKind::InvalidResponse, e.to_string()).into())
+}
+
+fn from_json<T: serde::de::DeserializeOwned>(json: &str) -> Result<T, PveError> {
+    serde_json::from_str(json).map_err(|e| Error::msg(ErrorKind::InvalidResponse, e.to_string()).into())
 }
 
 fn power_action(kind: VirtActionKind) -> PowerAction {

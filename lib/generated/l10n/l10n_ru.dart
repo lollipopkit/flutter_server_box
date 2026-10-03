@@ -4209,6 +4209,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get virtResNameEmpty => 'Введите имя';
 
   @override
+  String get virtResNotFound => 'Больше нет на этом хосте';
+
+  @override
+  String get virtResUnsupported => 'Этот хост этого не поддерживает';
+
+  @override
   String get virtResNameInvalid =>
       'Такое имя хост не примет (буквы, цифры, . _ -)';
 

@@ -13,6 +13,7 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
@@ -1585,158 +1586,6 @@ void main() {
       expect(PveResources.parseSnapshots(fixture('snapshots_none.json')), isEmpty);
     });
 
-    test('storage: node figures with the cluster configuration', () {
-      final pools = PveResources.parseStorages(
-        'pve',
-        fixture('node_storage.json'),
-        config: fixture('storage_config.json'),
-      );
-      expect(pools.map((p) => p.id), ['pve/local', 'pve/local-lvm']);
-      final local = pools.first;
-      expect(local.type, 'dir');
-      expect(local.path, '/var/lib/vz');
-      expect(local.content, ['backup', 'import', 'iso', 'vztmpl']);
-      expect(local.capacity, 105089261568);
-      expect(local.shared, isFalse);
-      final lvm = pools.last;
-      expect(lvm.path, 'pve/data');
-      expect(lvm.used, 4176431231);
-      expect(lvm.available, 848156473217);
-      expect(lvm.usedFraction, closeTo(0.0049, 0.0001));
-      // Without the configuration (no Datastore.Audit on /storage): no path.
-      final bare = PveResources.parseStorages('pve', fixture('node_storage.json'));
-      expect(bare.first.path, isNull);
-      // A network storage says where it comes from.
-      final nfs = PveResources.parseStorages(
-        'pve',
-        [
-          {'storage': 'nas', 'type': 'nfs', 'active': 0, 'content': 'backup'},
-        ],
-        config: [
-          {
-            'storage': 'nas',
-            'type': 'nfs',
-            'server': '10.0.0.5',
-            'export': '/export/pve',
-            'path': '/mnt/pve/nas',
-          },
-        ],
-      ).single;
-      expect(nfs.source, '10.0.0.5:/export/pve');
-      expect(nfs.active, isFalse);
-      expect(nfs.capacity, isNull);
-    });
-
-    test('content: names, kinds and owners', () {
-      final vols = PveResources.parseContent(fixture('content_local_lvm.json'));
-      expect(vols.map((v) => v.name), [
-        'vm-100-cloudinit',
-        'vm-100-disk-0',
-        'vm-101-cloudinit',
-        'vm-101-disk-0',
-        'vm-101-state-sbx-mem',
-        'vm-200-disk-0',
-      ]);
-      final disk = vols[1];
-      expect(disk.id, 'local-lvm:vm-100-disk-0');
-      expect(disk.capacity, 21474836480);
-      expect(disk.users, [const VirtGuestRef(vmid: 100)]);
-      // `ctime` arrives as a string for some storages.
-      expect(disk.createdAt, isNotNull);
-      final tmpl = PveResources.parseContent(fixture('content_local.json')).single;
-      expect(tmpl.name, 'alpine-3.24-default_20260714_amd64.tar.xz');
-      expect(tmpl.content, 'vztmpl');
-      expect(tmpl.users, isEmpty);
-    });
-
-    test('network: bridges first, ports, and the guests on each', () {
-      final nets = PveResources.parseNetworks(
-        'pve',
-        [
-          ...fixture('network.json'),
-          {
-            'iface': 'bond0',
-            'type': 'bond',
-            'slaves': 'nic1 nic2',
-            'bond_mode': '802.3ad',
-            'active': 1,
-          },
-          {
-            'iface': 'vmbr1',
-            'type': 'bridge',
-            'bridge_ports': 'bond0',
-            'bridge_vlan_aware': 1,
-            'comments': 'lab\n',
-          },
-          {
-            'iface': 'vmbr1.10',
-            'type': 'vlan',
-            'vlan-id': '10',
-            'vlan-raw-device': 'vmbr1',
-            'cidr': '10.10.0.2/24',
-          },
-        ],
-        users: {
-          'vmbr0': [const VirtGuestRef(guestId: 'qemu/100', vmid: 100)],
-        },
-      );
-      expect(nets.map((n) => n.name), [
-        'vmbr0',
-        'vmbr1',
-        'bond0',
-        'vmbr1.10',
-        'nic0',
-        'nic1',
-        'wlp4s0',
-      ]);
-      final vmbr0 = nets.first;
-      expect(vmbr0.id, 'pve/vmbr0');
-      expect(vmbr0.cidrs, ['192.168.31.20/24']);
-      expect(vmbr0.gateway, '192.168.31.1');
-      expect(vmbr0.ports, ['nic0']);
-      expect(vmbr0.active, isTrue);
-      expect(vmbr0.autostart, isTrue);
-      expect(vmbr0.vlanAware, isNull);
-      expect(vmbr0.users.single.vmid, 100);
-      expect(nets[1].vlanAware, isTrue);
-      expect(nets[1].comment, 'lab');
-      expect(nets[1].active, isFalse);
-      expect(nets[2].ports, ['nic1', 'nic2']);
-      expect(nets[2].bondMode, '802.3ad');
-      expect(nets[3].vlanId, 10);
-      expect(nets[3].vlanDevice, 'vmbr1');
-    });
-
-    test('bridge users from a guest configuration', () {
-      final users = PveResources.bridgeUsers(
-        const VirtGuest(
-          id: 'lxc/200',
-          name: 'ct',
-          kind: VirtGuestKind.lxc,
-          state: VirtGuestState.running,
-          vmid: 200,
-        ),
-        {
-          'net0':
-              'name=eth0,bridge=vmbr0,hwaddr=BC:24:11:30:5B:A7,ip=dhcp,type=veth',
-          'net1': 'name=eth1,bridge=vmbr1,hwaddr=BC:24:11:30:5B:A8',
-          'rootfs': 'local-lvm:vm-200-disk-0,size=4G',
-        },
-      );
-      expect(users.keys, unorderedEquals(['vmbr0', 'vmbr1']));
-      expect(
-        users['vmbr0'],
-        [
-          const VirtGuestRef(
-            guestId: 'lxc/200',
-            vmid: 200,
-            device: 'net0',
-            mac: 'bc:24:11:30:5b:a7',
-          ),
-        ],
-      );
-    });
-
     test('snapshot requests: create, rollback and delete wait for their task',
         () async {
       final api = _Api()..resources = _resources;
@@ -1814,10 +1663,17 @@ void main() {
     test('storage without /storage access still lists, without paths',
         () async {
       final api = _Api()..resources = _resources;
+      api.routes['GET /nodes'] = (_) => [
+        {'node': 'pve', 'status': 'online'},
+      ];
       api.routes['GET /storage'] = (_) => _Api._status(403);
-      api.routes['GET /nodes/pve/storage'] = (_) => fixture('node_storage.json');
+      // `sbm_virt`'s captures, which its own tests read.
+      Object? rust(String name) => jsonDecode(
+        File('crates/sbm_virt/tests/fixtures/pve/$name').readAsStringSync(),
+      );
+      api.routes['GET /nodes/pve/storage'] = (_) => rust('node_storage.json');
       api.routes['GET /nodes/pve/storage/local-lvm/content'] =
-          (_) => fixture('content_local_lvm.json');
+          (_) => rust('content_local_lvm.json');
       final pve = api.backend(token);
       await pve.load();
       final pools = await pve.storagePools();
@@ -1827,25 +1683,6 @@ void main() {
       expect(vols, hasLength(6));
     });
 
-    test("networks: each guest's configuration says which bridge", () async {
-      final api = _Api()..resources = _resources;
-      api.routes['GET /nodes/pve/network'] = (_) => fixture('network.json');
-      for (final g in ['lxc/100', 'qemu/101', 'qemu/102', 'qemu/103', 'qemu/9000', 'qemu/104']) {
-        api.routes['GET /nodes/pve/$g/config'] = (_) => {
-          'net0': g.startsWith('lxc')
-              ? 'name=eth0,bridge=vmbr0,hwaddr=BC:24:11:00:00:01,type=veth'
-              : 'virtio=BC:24:11:00:00:02,bridge=vmbr0',
-        };
-      }
-      // One guest this account may not read: left out, not a failure.
-      api.routes['GET /nodes/pve/qemu/104/config'] = (_) => _Api._status(403);
-      final pve = api.backend(token);
-      await pve.load();
-      final nets = await pve.networks();
-      final vmbr0 = nets.firstWhere((n) => n.name == 'vmbr0');
-      expect(vmbr0.users.map((u) => u.vmid), [100, 101, 102, 103, 9000]);
-      expect(nets.firstWhere((n) => n.name == 'nic0').users, isEmpty);
-    });
   });
 
   group('hardware: devices, firmware, display', () {
@@ -2050,103 +1887,18 @@ void main() {
       type: 'dir',
       content: ['iso', 'vztmpl', 'images'],
     );
-    const lvm = VirtStoragePool(
-      id: 'pve/local-lvm',
-      name: 'local-lvm',
-      node: 'pve',
-      type: 'lvmthin',
-      content: ['images', 'rootdir'],
-    );
-    Map<String, String> form(String body) => Uri.splitQueryString(body);
     _Api api0() => _Api()
       ..routes['GET /nodes'] = ((_) => [
         {'node': 'pve', 'status': 'online'},
       ]);
 
-    test('a storage: its type\'s fields, its node, the design\'s content', () async {
-      final api = api0()..routes['POST /storage'] = (_) => {'storage': 'x'};
-      final pve = api.backend(token);
-      await pve.manage(
-        const VirtPoolCreate(name: 'data', type: 'dir', source: '/srv/data', node: 'pve'),
-      );
-      await pve.manage(
-        const VirtPoolCreate(name: 'nas', type: 'nfs', source: '10.0.0.5:/export/pve', node: 'pve'),
-      );
-      await pve.manage(
-        const VirtPoolCreate(name: 'thin', type: 'lvmthin', source: 'pve/data', node: 'pve'),
-      );
-      final sent = [
-        for (final (i, p) in api.paths.indexed)
-          if (p == 'POST /storage') form(api.bodies[i]),
-      ];
-      expect(sent[0], {
-        'storage': 'data',
-        'type': 'dir',
-        'path': '/srv/data',
-        'content': 'images,rootdir',
-        'nodes': 'pve',
-      });
-      expect(sent[1], containsPair('server', '10.0.0.5'));
-      expect(sent[1], containsPair('export', '/export/pve'));
-      expect(sent[1], containsPair('content', 'backup,iso'));
-      expect(sent[2], containsPair('vgname', 'pve'));
-      expect(sent[2], containsPair('thinpool', 'data'));
-    });
-
-    test('disabled and enabled; removed', () async {
-      final api = api0()
-        ..routes['PUT /storage/local'] = ((_) => null)
-        ..routes['DELETE /storage/local'] = ((_) => null);
-      final pve = api.backend(token);
-      await pve.manage(const VirtPoolSetActive(local, active: false));
-      await pve.manage(const VirtPoolSetActive(local, active: true));
-      await pve.manage(const VirtPoolDelete(local));
-      final puts = [
-        for (final (i, p) in api.paths.indexed)
-          if (p == 'PUT /storage/local') form(api.bodies[i])['disable'],
-      ];
-      expect(puts, ['1', '0']);
-      expect(api.paths, contains('DELETE /storage/local'));
-      // What PVE has no call for is refused before anything is sent.
-      final e = await _err(pve.manage(const VirtPoolSetAutostart(local, on: true)));
-      expect(e.type, VirtErrType.unsupported);
-    });
-
-    test('a volume: for its VMID, with the extension a directory wants; deleted with its task', () async {
-      final api = api0()
-        ..routes['POST /nodes/pve/storage/local/content'] = ((_) => 'local:105/vm-105-disk-0.qcow2')
-        ..routes['POST /nodes/pve/storage/local-lvm/content'] = ((_) => 'local-lvm:vm-105-disk-1')
-        ..routes['DELETE /nodes/pve/storage/local/content/${Uri.encodeComponent('local:105/vm-105-disk-0.qcow2')}'] =
-            (_) => _Api.upid;
-      final pve = api.backend(token);
-      await pve.manage(
-        const VirtVolumeCreate(local, name: 'vm-105-disk-0', gib: 4, format: 'qcow2'),
-      );
-      await pve.manage(
-        const VirtVolumeCreate(lvm, name: 'vm-105-disk-1', gib: 8, format: 'raw'),
-      );
-      final bodies = [
-        for (final (i, p) in api.paths.indexed)
-          if (p.endsWith('/content')) form(api.bodies[i]),
-      ];
-      expect(bodies[0], {
-        'vmid': '105',
-        'filename': 'vm-105-disk-0.qcow2',
-        'size': '4G',
-        'format': 'qcow2',
-      });
-      expect(bodies[1], containsPair('filename', 'vm-105-disk-1'));
-      await pve.manage(
-        const VirtVolumeDelete(
-          local,
-          VirtVolume(id: 'local:105/vm-105-disk-0.qcow2', name: 'vm-105-disk-0.qcow2'),
-        ),
-      );
-      expect(api.paths.last, startsWith('GET /nodes/pve/tasks/'));
-    });
-
+    // What the session decides is `sbm_virt`'s (crates/sbm_virt/tests/
+    // pve_storage.rs); this is how the app says it.
     test('a privilege missing: which, where, and the command that grants it', () async {
       final api = api0()
+        ..routes['GET /storage'] = ((_) => const [])
+        ..routes['GET /nodes/pve/storage'] = ((_) => const [])
+        ..routes['GET /nodes/pve/network'] = ((_) => const [])
         ..routes['POST /storage'] = ((_) => _Api._status(
           403,
           message: 'Permission check failed (/storage, Datastore.Allocate)\n',
@@ -2157,7 +1909,7 @@ void main() {
         ));
       final pve = api.backend(token);
       final e = await _err(
-        pve.manage(const VirtPoolCreate(name: 'd', type: 'dir', source: '/d', node: 'pve')),
+        pve.manage(const VirtPoolCreate(name: 'data2', type: 'dir', source: '/d', node: 'pve')),
       );
       expect(e.type, VirtErrType.permissionDenied);
       expect(e.message, contains('Datastore.Allocate'));
@@ -2176,220 +1928,13 @@ void main() {
       expect(n.message, contains('/nodes/pve'));
     });
 
-    test('a name taken is exists', () async {
-      final api = api0()
-        ..routes['POST /storage'] = ((_) => _Api._status(
-          500,
-          message: "create storage failed: storage ID 'local' already defined\n",
-        ));
-      final e = await _err(
-        api.backend(token).manage(
-          const VirtPoolCreate(name: 'local', type: 'dir', source: '/d', node: 'pve'),
-        ),
-      );
-      expect(e.type, VirtErrType.exists);
-    });
-
-    test('a bridge: pending; its changes read, applied with a task, reverted', () async {
-      final api = api0()
-        ..routes['POST /nodes/pve/network'] = ((_) => null)
-        ..routes['PUT /nodes/pve/network'] = ((_) => _Api.upid)
-        ..routes['DELETE /nodes/pve/network'] = ((_) => null)
-        ..routes['DELETE /nodes/pve/network/vmbr9'] = ((_) => null)
-        ..routes['GET /nodes/pve/network'] = ((_) => ResponseBody.fromString(
-          jsonEncode({
-            'data': [
-              {'iface': 'vmbr9', 'type': 'bridge', 'autostart': 1},
-            ],
-            'changes': '--- a\n+++ b\n+auto vmbr9\n+iface vmbr9 inet manual\n',
-          }),
-          200,
-          headers: {
-            Headers.contentTypeHeader: [Headers.jsonContentType],
-          },
-        ));
-      final pve = api.backend(token);
-      await pve.manage(
-        const VirtNetworkCreate(
-          name: 'vmbr9',
-          mode: 'bridge',
-          node: 'pve',
-          cidr: '10.20.0.1/24',
-          vlanAware: true,
-        ),
-      );
-      expect(form(api.bodies[api.paths.indexOf('POST /nodes/pve/network')]), {
-        'iface': 'vmbr9',
-        'type': 'bridge',
-        'autostart': '1',
-        'cidr': '10.20.0.1/24',
-        'bridge_vlan_aware': '1',
-      });
-      final changes = await pve.networkChanges();
-      expect(changes.single.node, 'pve');
-      expect(changes.single.diff, contains('+iface vmbr9'));
-      await pve.manage(const VirtNetworkApply('pve'));
-      expect(api.paths.last, startsWith('GET /nodes/pve/tasks/'));
-      await pve.manage(const VirtNetworkRevert('pve'));
-      await pve.manage(
-        const VirtNetworkDelete(
-          VirtNetwork(id: 'pve/vmbr9', name: 'vmbr9', node: 'pve', mode: 'bridge'),
-        ),
-      );
-      expect(api.paths, containsAll(['DELETE /nodes/pve/network', 'DELETE /nodes/pve/network/vmbr9']));
-    });
-
-    test('an apply touching the management interface is refused', () async {
-      Map<String, Object?> listing(String changes) => {
-        'data': [
-          {
-            'iface': 'vmbr0',
-            'type': 'bridge',
-            'cidr': '192.168.31.20/24',
-            'gateway': '192.168.31.1',
-            'bridge_ports': 'nic0',
-          },
-          {'iface': 'vmbr9', 'type': 'bridge'},
-        ],
-        'changes': changes,
-      };
-      var changes = '--- a\n+++ b\n@@ -1,3 +1,4 @@\n iface vmbr0 inet static\n+\tbridge-vlan-aware yes\n';
-      final api = api0()
-        ..routes['PUT /nodes/pve/network'] = ((_) => _Api.upid)
-        ..routes['GET /nodes/pve/network'] = ((_) => ResponseBody.fromString(
-          jsonEncode(listing(changes)),
-          200,
-          headers: {
-            Headers.contentTypeHeader: [Headers.jsonContentType],
-          },
-        ));
-      final pve = api.backend(token);
-      final e = await _err(pve.manage(const VirtNetworkApply('pve')));
-      expect(e.type, VirtErrType.unsupported);
-      expect(e.message, contains('vmbr0'));
-      expect(api.paths, isNot(contains('PUT /nodes/pve/network')));
-      // A change to its port is one to it too.
-      changes = '--- a\n+++ b\n@@ -1,3 +1,3 @@\n iface nic0 inet manual\n-\tmtu 1500\n+\tmtu 9000\n';
-      expect((await _err(pve.manage(const VirtNetworkApply('pve')))).message, contains('nic0'));
-      // A hunk that does not say whose lines it changes.
-      changes = '--- a\n+++ b\n@@ -3,2 +3,2 @@\n-\tmtu 1500\n+\tmtu 9000\n';
-      expect((await _err(pve.manage(const VirtNetworkApply('pve')))).type, VirtErrType.unsupported);
-      // A comment on it is a change to it too (PVE writes `comments` as
-      // `#` lines in its stanza).
-      changes = '--- a\n+++ b\n@@ -1,3 +1,4 @@\n iface vmbr0 inet static\n \tbridge-fd 0\n+#note\n';
-      expect((await _err(pve.manage(const VirtNetworkApply('pve')))).message, contains('vmbr0'));
-      // Another bridge's change goes through.
-      changes = '--- a\n+++ b\n+auto vmbr9\n+iface vmbr9 inet manual\n';
-      await pve.manage(const VirtNetworkApply('pve'));
-      expect(api.paths, contains('PUT /nodes/pve/network'));
-    });
-
-    test('a pending change stripping the management address is refused '
-        'without the node\'s own word on what it uses', () async {
-      // The listing is the pending configuration: vmbr0 has neither its
-      // address nor its gateway there any more.
-      final api = api0()
-        ..routes['PUT /nodes/pve/network'] = ((_) => _Api.upid)
-        ..routes['GET /nodes/pve/network'] = ((_) => ResponseBody.fromString(
-          jsonEncode({
-            'data': [
-              {'iface': 'vmbr0', 'type': 'bridge', 'bridge_ports': 'nic0'},
-              {'iface': 'vmbr9', 'type': 'bridge'},
-            ],
-            'changes': '--- a\n+++ b\n@@ -1,5 +1,3 @@\n'
-                '-iface vmbr0 inet static\n'
-                '-\taddress 192.168.31.20/24\n'
-                '-\tgateway 192.168.31.1\n'
-                '+iface vmbr0 inet manual\n'
-                ' \tbridge-ports nic0\n',
-          }),
-          200,
-          headers: {
-            Headers.contentTypeHeader: [Headers.jsonContentType],
-          },
-        ));
-      final e = await _err(api.backend(token).manage(const VirtNetworkApply('pve')));
-      expect(e.type, VirtErrType.unsupported);
-      expect(e.message, contains('vmbr0'));
-      expect(api.paths, isNot(contains('PUT /nodes/pve/network')));
-    });
-
-    test('a node\'s network changes run one at a time', () async {
-      final saved = Completer<void>();
-      final api = api0()
-        ..routes['GET /nodes/pve/network'] = ((_) => [
-          {'iface': 'vmbr7', 'type': 'bridge'},
-        ])
-        ..routes['GET /nodes/pve/network/vmbr7'] = ((_) => {'iface': 'vmbr7', 'type': 'bridge'})
-        ..routes['PUT /nodes/pve/network/vmbr7'] = ((_) => saved.future.then((_) => null))
-        ..routes['DELETE /nodes/pve/network'] = ((_) => null);
-      final pve = api.backend(token);
-      const net = VirtNetwork(id: 'pve/vmbr7', name: 'vmbr7', node: 'pve', mode: 'bridge');
-      final edit = pve.manage(const VirtNetworkEditBridge(net, ports: 'nic1'));
-      while (!api.paths.contains('PUT /nodes/pve/network/vmbr7')) {
-        await Future<void>.delayed(const Duration(milliseconds: 1));
-      }
-      final revert = pve.manage(const VirtNetworkRevert('pve'));
-      await Future<void>.delayed(const Duration(milliseconds: 30));
-      expect(
-        api.paths,
-        isNot(contains('DELETE /nodes/pve/network')),
-        reason: 'the revert would drop the edit being saved',
-      );
-      saved.complete();
-      await Future.wait([edit, revert]);
-      expect(api.paths.last, 'DELETE /nodes/pve/network');
-      // A failed change does not hold the next one up.
-      api.routes['PUT /nodes/pve/network/vmbr7'] = (_) => _Api._status(500);
-      await _err(pve.manage(const VirtNetworkEditBridge(net, ports: 'nic1')));
-      await pve.manage(const VirtNetworkRevert('pve'));
-    });
-
-    test('a bridge edit sends the addresses it has back', () async {
+    test('a refusal before anything is sent says which rule', () async {
       final api = api0()
         ..routes['GET /nodes/pve/network'] = ((_) => [
           {'iface': 'vmbr0', 'type': 'bridge', 'cidr': '192.168.31.20/24', 'gateway': '192.168.31.1'},
-          {'iface': 'vmbr7', 'type': 'bridge', 'cidr': '10.7.0.1/24', 'cidr6': 'fd07::1/64'},
-        ])
-        ..routes['GET /nodes/pve/network/vmbr7'] = ((_) => {
-          'iface': 'vmbr7',
-          'type': 'bridge',
-          'cidr': '10.7.0.1/24',
-          'cidr6': 'fd07::1/64',
-        })
-        ..routes['PUT /nodes/pve/network/vmbr7'] = ((_) => null);
-      // The node says it is reached through vmbr0; vmbr7 carries nothing
-      // of its own traffic.
-      final pve = api.backend(
-        token,
-        liveNet: '@host pve\n@addr\n4: vmbr0    inet 192.168.31.20/24 scope global vmbr0\n'
-            '5: vmbr7    inet 10.7.0.1/24 scope global vmbr7\n'
-            '@route\ndefault via 192.168.31.1 dev vmbr0\n'
-            '@conn\n0 0 192.168.31.20:22 192.168.31.183:62036\n@lower\n@end\n',
-      );
-      const net = VirtNetwork(id: 'pve/vmbr7', name: 'vmbr7', node: 'pve', mode: 'bridge');
-      // Only the ports: PVE would drop both addresses from a request
-      // without them (`update_network` sets `method` from the request).
-      await pve.manage(const VirtNetworkEditBridge(net, ports: 'nic1'));
-      expect(form(api.bodies[api.paths.lastIndexOf('PUT /nodes/pve/network/vmbr7')]), {
-        'type': 'bridge',
-        'bridge_ports': 'nic1',
-        'cidr': '10.7.0.1/24',
-        'cidr6': 'fd07::1/64',
-      });
-      // A new IPv4 address: that one, and the IPv6 one still.
-      await pve.manage(const VirtNetworkEditBridge(net, cidr: '10.7.1.1/24'));
-      final sent = form(api.bodies[api.paths.lastIndexOf('PUT /nodes/pve/network/vmbr7')]);
-      expect(sent['cidr'], '10.7.1.1/24');
-      expect(sent['cidr6'], 'fd07::1/64');
-      // Cleared: deleted, not sent.
-      await pve.manage(const VirtNetworkEditBridge(net, cidr: ''));
-      final cleared = form(api.bodies[api.paths.lastIndexOf('PUT /nodes/pve/network/vmbr7')]);
-      expect(cleared.containsKey('cidr'), isFalse);
-      expect(cleared['delete'], contains('cidr'));
-      // The management bridge is refused before anything is sent.
+        ]);
       final e = await _err(
-        pve.manage(
+        api.backend(token).manage(
           const VirtNetworkEditBridge(
             VirtNetwork(id: 'pve/vmbr0', name: 'vmbr0', node: 'pve', mode: 'bridge'),
             ports: 'nic1',
@@ -2397,6 +1942,7 @@ void main() {
         ),
       );
       expect(e.type, VirtErrType.unsupported);
+      expect(e.message, l10n.virtNetManagementIface);
       expect(api.paths, isNot(contains('PUT /nodes/pve/network/vmbr0')));
     });
 

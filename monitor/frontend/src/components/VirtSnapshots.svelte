@@ -219,7 +219,7 @@
       {/if}
       <div class="flex justify-end gap-2">
         <Button variant="secondary" onclick={() => (reverting = null)}>{$LL.cancel()}</Button>
-        <Button variant="danger" disabled={busy} onclick={async () => { reverting = null; await run({ op: 'revert', name: s.name, start: startAfter }) }}>{$LL.virtSnapRevert()}</Button>
+        <Button variant="danger" disabled={busy} onclick={async () => { const op = { op: 'revert' as const, name: s.name, start: startAfter }; reverting = null; await run(op) }}>{$LL.virtSnapRevert()}</Button>
       </div>
     </div>
   </Modal>
@@ -232,7 +232,7 @@
       <p class="text-sm text-muted-fg">{$LL.virtSnapDeleteConfirm({ name: s.name })}</p>
       <div class="flex justify-end gap-2">
         <Button variant="secondary" onclick={() => (deleting = null)}>{$LL.cancel()}</Button>
-        <Button variant="danger" disabled={busy} onclick={async () => { deleting = null; await run({ op: 'delete', name: s.name }) }}>{$LL.virtSnapDelete()}</Button>
+        <Button variant="danger" disabled={busy} onclick={async () => { const op = { op: 'delete' as const, name: s.name }; deleting = null; await run(op) }}>{$LL.virtSnapDelete()}</Button>
       </div>
     </div>
   </Modal>

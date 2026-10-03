@@ -24,6 +24,8 @@ import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/model/virt/virt_rust.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/virt/backend.dart';
+import 'package:server_box/src/rust/api/pve.dart' show PveError;
+import 'package:server_box/src/rust/api/resource.dart' as res;
 import 'package:server_box/src/rust/api/virt.dart' as ffi;
 
 /// libvirt through `virsh`, run by `ServerNotifier.ensureExec()` — so over
@@ -871,7 +873,7 @@ class LibvirtBackend implements VirtBackend {
     final backers = <String, Set<String>>{};
     for (final pool in pools) {
       if (!pool.active) continue;
-      final (volumes, _) = await _volumes(storage, pool);
+      final (volumes, _) = await _volumes(pool);
       for (final v in volumes) {
         final path = v.path;
         if (path == null) continue;
@@ -1113,40 +1115,22 @@ class LibvirtBackend implements VirtBackend {
   // ---------------------------------------------------------------------------
 
   /// The last storage listing: which volumes each pool has and every
-  /// domain's disks, which [volumes] needs and does not list again.
+  /// domain's disks, which [volumes] needs and does not list again — as
+  /// `sbm_virt` gave it, and read.
   LibvirtStorage? _storage;
+  String? _storageJson;
 
   @override
   Future<List<VirtStoragePool>> storagePools() async {
     final json = await _run(ffi.virtStorageScript(), ffi.parseVirtStorageJson);
-    final storage = LibvirtStorage.fromJson(_decode(json));
-    _storage = storage;
-    return [for (final p in storage.pools) poolOf(p)];
-  }
-
-  static VirtStoragePool poolOf(LibvirtPool p) {
-    final capacity = p.capacity;
-    // An inactive pool reports 0 for everything: unknown, not empty.
-    final known = p.active && capacity != null && capacity > 0;
-    return VirtStoragePool(
-      id: p.name,
-      name: p.name,
-      type: p.poolType ?? '',
-      path: p.target,
-      source: p.source,
-      capacity: known ? capacity : null,
-      used: known ? p.allocation : null,
-      available: known ? p.available : null,
-      active: p.active,
-      autostart: p.autostart,
-      volumeCount: p.volumes?.length,
-    );
+    _storage = LibvirtStorage.fromJson(_decode(json));
+    _storageJson = json;
+    return VirtRust.pools(jsonDecode(res.virtLibvirtPools(storageJson: json)));
   }
 
   /// `vol-dumpxml` for each volume the last [storagePools] listed in [pool]
   /// (listed again when there is none), with the domains whose disks are
-  /// those volumes.
-  @override
+  /// those volumes and the volumes made on each, in any active pool.
   ///
   /// A volume libvirt lists but cannot read (its file removed behind
   /// libvirt's back: `vol-list` answers from the pool's cache, `vol-dumpxml`
@@ -1154,56 +1138,53 @@ class LibvirtBackend implements VirtBackend {
   /// pool is refreshed (`pool-refresh`, what libvirt does at its own start)
   /// and read again, once, so the count the pool shows and the volumes
   /// listed agree.
+  @override
   Future<List<VirtVolume>> volumes(VirtStoragePool pool) async {
-    var storage = _storage;
-    if (storage == null || !storage.pools.any((p) => p.name == pool.id)) {
-      await storagePools();
-      storage = _storage!;
-    }
-    var (read, missing) = await _volumes(storage, pool);
+    var pools = await _pools();
+    var (read, missing) = await _volumes(pool);
     if (missing && pool.active) {
-      await manage(VirtPoolRefresh(pool));
-      await storagePools();
-      storage = _storage!;
-      (read, _) = await _volumes(storage, pool);
+      await _run(
+        _script(
+          () => ffi.virtResourceScript(
+            opJson: jsonEncode({'op': 'pool_refresh', 'name': pool.id}),
+          ),
+        ),
+        _parseResource,
+        action: true,
+      );
+      pools = await storagePools();
+      (read, _) = await _volumes(pool);
     }
     // What is made on each: a base image is attached to nothing, and its
     // clones may be in another pool.
-    final backers = <String, List<String>>{};
-    for (final p in storage.pools) {
-      final other = VirtStoragePool(
-        id: p.name,
-        name: p.name,
-        type: p.poolType ?? '',
-        active: p.active,
-      );
-      final List<VirtVolume> vols;
-      if (p.name == pool.id) {
-        vols = read;
-      } else if (!p.active) {
-        continue;
-      } else {
-        (vols, _) = await _volumes(storage, other);
-      }
-      for (final v in vols) {
-        if ((v.backing, v.path) case (final b?, final path?)) {
-          backers.putIfAbsent(b, () => []).add(path);
-        }
-      }
+    final every = [...read];
+    for (final p in pools) {
+      if (p.id == pool.id || !p.active) continue;
+      every.addAll((await _volumes(p)).$1);
     }
-    return [
-      for (final v in read)
-        if (backers[v.path] case final backs?) v.copyWith(backs: backs) else v,
-    ];
+    return VirtRust.volumes(
+      jsonDecode(
+        res.virtLibvirtWithBacks(
+          volumesJson: jsonEncode([for (final v in read) VirtRust.volumeJson(v)]),
+          everyJson: jsonEncode([for (final v in every) VirtRust.volumeJson(v)]),
+        ),
+      ),
+    );
   }
 
-  /// [pool]'s volumes as [storage] lists them, and whether one of them did
-  /// not read.
-  Future<(List<VirtVolume>, bool)> _volumes(
-    LibvirtStorage storage,
-    VirtStoragePool pool,
-  ) async {
-    final listed = storage.pools
+  /// The pools as the last listing has them, listed when there is none.
+  Future<List<VirtStoragePool>> _pools() async {
+    final json = _storageJson;
+    if (json == null) return storagePools();
+    return VirtRust.pools(jsonDecode(res.virtLibvirtPools(storageJson: json)));
+  }
+
+  /// [pool]'s volumes as the last listing has them, and whether one of them
+  /// did not read.
+  Future<(List<VirtVolume>, bool)> _volumes(VirtStoragePool pool) async {
+    if (_storageJson == null) await storagePools();
+    final storageJson = _storageJson!;
+    final listed = _storage!.pools
         .firstWhereOrNull((p) => p.name == pool.id)
         ?.volumes;
     if (listed == null || listed.isEmpty) return (const <VirtVolume>[], false);
@@ -1212,117 +1193,65 @@ class LibvirtBackend implements VirtBackend {
         pool: pool.id,
         names: [for (final v in listed) v.name],
       ),
-      ffi.parseVirtVolumesJson,
+      ({required String raw}) async => res.virtLibvirtVolumes(
+        raw: raw,
+        pool: pool.id,
+        storageJson: storageJson,
+      ),
     );
-    final disks = storage.disks;
-    final read = [
-      for (final v in _decodeList(json))
-        volumeOf(LibvirtVolume.fromJson(v), pool.id, disks),
-    ];
+    final read = VirtRust.volumes(jsonDecode(json));
     return (read, read.length < listed.length);
   }
 
-  static VirtVolume volumeOf(
-    LibvirtVolume v,
-    String pool,
-    List<LibvirtDiskUse> disks,
-  ) {
-    final path = v.path;
-    bool uses(LibvirtDiskUse d) {
-      final source = d.source;
-      if (source == null) return false;
-      if (path != null && source == path) return true;
-      // A `type='volume'` disk names its pool and volume instead of a path.
-      return d.kind == 'volume' &&
-          (source == '$pool/${v.name}' || source == v.name);
-    }
-
-    return VirtVolume(
-      id: v.name,
-      name: v.name,
-      path: path,
-      format: v.format,
-      capacity: v.capacity,
-      allocation: v.allocation,
-      backing: v.backing,
-      users: [
-        for (final d in disks)
-          if (uses(d)) VirtGuestRef(guestId: d.domain, device: d.target),
-      ],
-    );
-  }
-
   @override
-  Future<List<VirtNetwork>> networks() async {
-    final json = await _run(
-      ffi.virtNetworksScript(),
-      ffi.parseVirtNetworksJson,
-    );
-    final nets = LibvirtNetworks.fromJson(_decode(json));
-    return [for (final n in nets.networks) networkOf(n, nets)];
-  }
-
-  /// [n] with the domains that have a NIC on it: by network name, or on its
-  /// bridge directly. Addresses from its DHCP leases.
-  static VirtNetwork networkOf(LibvirtNetwork n, LibvirtNetworks all) {
-    final bridge = n.bridge;
-    bool on(LibvirtIfaceUse i) =>
-        (i.kind == 'network' && i.source == n.name) ||
-        (i.kind == 'bridge' && bridge != null && i.source == bridge);
-    return VirtNetwork(
-      id: n.name,
-      name: n.name,
-      mode: n.mode,
-      bridge: bridge,
-      cidrs: [for (final ip in n.ips) ip.cidr],
-      dhcpRanges: [for (final ip in n.ips) ...ip.dhcpRanges],
-      ports: n.forwardDevs,
-      active: n.active,
-      autostart: n.autostart,
-      hosts: [
-        for (final h in n.hosts) VirtNetHost(mac: h.mac, ip: h.ip, name: h.name),
-      ],
-      xml: n.xml,
-      pendingRestart: n.pendingRestart,
-      users: [
-        for (final i in all.ifaces)
-          if (on(i))
-            VirtGuestRef(
-              guestId: i.domain,
-              device: i.interface,
-              mac: i.mac,
-              ip: all.leases
-                  // The leases are every network's: one MAC can be on two
-                  // isolated networks with an address on each.
-                  .firstWhereOrNull((l) => l.network == n.name && l.mac == i.mac)
-                  ?.ip,
-            ),
-      ],
-    );
-  }
+  Future<List<VirtNetwork>> networks() async => VirtRust.networks(
+    jsonDecode(
+      await _run(
+        ffi.virtNetworksScript(),
+        ({required String raw}) async => res.virtLibvirtNetworks(raw: raw),
+      ),
+    ),
+  );
 
   // ---------------------------------------------------------------------------
   // Managing storage and networks
   // ---------------------------------------------------------------------------
 
+  /// Checked against what the host lists now, then made
+  /// (`sbm_virt::libvirt::host::resource_script`): an existing network's
+  /// edit is its own script (`sbm_virt::libvirt::net`), which rewrites the
+  /// definition and, when told to, restarts the network on it, with the
+  /// rollback that keeps it up.
   @override
   Future<void> manage(VirtResourceChange change) async {
-    final op = opJson(change);
     try {
-      // An existing network's edit is its own script (`sbm_virt::libvirt::net`): it
-      // rewrites the definition and, when told to, restarts the network on
-      // it, with the rollback that keeps it up.
-      if (change is VirtNetworkEdit || change is VirtNetworkRestart) {
-        await _run(
-          _script(() => ffi.virtNetChangeScript(opJson: jsonEncode(op))),
-          _parseNetChange,
-          action: true,
+      final network = change.scope == 'nets' || change.scope.startsWith('net:');
+      final pools = network ? const <VirtStoragePool>[] : await storagePools();
+      final pool = switch (change) {
+        VirtPoolSetActive(:final pool) ||
+        VirtPoolDelete(:final pool) ||
+        VirtVolumeCreate(:final pool) ||
+        VirtVolumeDelete(:final pool) ||
+        VirtVolumeResize(:final pool) ||
+        VirtVolumeClone(:final pool) => pools.firstWhereOrNull((p) => p.id == pool.id),
+        _ => null,
+      };
+      final volumes = pool == null ? const <VirtVolume>[] : await this.volumes(pool);
+      final networks = network ? await this.networks() : const <VirtNetwork>[];
+      final res.VirtResourceScript script;
+      try {
+        script = res.virtLibvirtResourceScript(
+          changeJson: jsonEncode(VirtRust.changeJson(change)),
+          poolsJson: jsonEncode([for (final p in pools) VirtRust.poolJson(p)]),
+          networksJson: jsonEncode([for (final n in networks) VirtRust.networkJson(n)]),
+          volumesJson: jsonEncode([for (final v in volumes) VirtRust.volumeJson(v)]),
         );
-        return;
+      } on PveError catch (e) {
+        throw VirtRust.error(e);
       }
       await _run(
-        _script(() => ffi.virtResourceScript(opJson: jsonEncode(op))),
-        _parseResource,
+        script.script,
+        script.net ? _parseNetChange : _parseResource,
         action: true,
       );
     } on VirtErr catch (e) {
@@ -1330,6 +1259,7 @@ class LibvirtBackend implements VirtBackend {
     } finally {
       // What a pool holds, and which, is listed again.
       _storage = null;
+      _storageJson = null;
     }
   }
 
@@ -1341,152 +1271,6 @@ class LibvirtBackend implements VirtBackend {
   static Future<String> _parseResource({required String raw}) async {
     ffi.parseVirtResource(raw: raw);
     return '';
-  }
-
-  /// [change] as `sbm_virt::libvirt::manage::VirtResourceOp` JSON.
-  @visibleForTesting
-  static Map<String, Object?> opJson(VirtResourceChange change) {
-    switch (change) {
-      case VirtPoolCreate(:final name, :final type, :final source, :final target, :final autostart):
-        return {
-          'op': 'pool_create',
-          'name': name,
-          'pool_type': type,
-          'target': switch (type) {
-            'dir' => source,
-            'netfs' => target,
-            _ => null,
-          },
-          'source': type == 'dir' ? null : source,
-          'autostart': autostart,
-        };
-      case VirtPoolSetActive(:final pool, :final active):
-        return {'op': active ? 'pool_start' : 'pool_stop', 'name': pool.id};
-      case VirtPoolSetAutostart(:final pool, :final on):
-        return {'op': 'pool_autostart', 'name': pool.id, 'on': on};
-      case VirtPoolRefresh(:final pool):
-        return {'op': 'pool_refresh', 'name': pool.id};
-      case VirtPoolDelete(:final pool, :final deleteStorage):
-        return {
-          'op': 'pool_delete',
-          'name': pool.id,
-          'active': pool.active,
-          'delete_storage': deleteStorage,
-        };
-      case VirtVolumeCreate(:final pool, :final name, :final gib, :final format):
-        return {
-          'op': 'vol_create',
-          'pool': pool.id,
-          'name': name,
-          'bytes': gib << 30,
-          'format': format,
-        };
-      case VirtVolumeDelete(:final pool, :final volume):
-        return {'op': 'vol_delete', 'pool': pool.id, 'name': volume.name};
-      case VirtVolumeResize(:final pool, :final volume, :final bytes):
-        if (!virtVolumeResizable(pool, VirtHostKind.libvirt)) {
-          throw VirtErr(
-            type: VirtErrType.unsupported,
-            message: 'libvirt cannot resize a volume of a ${pool.type} pool',
-          );
-        }
-        return {
-          'op': 'vol_resize',
-          'pool': pool.id,
-          'name': volume.name,
-          'bytes': bytes,
-        };
-      case VirtVolumeClone(:final pool, :final volume, :final name):
-        return {
-          'op': 'vol_clone',
-          'pool': pool.id,
-          'name': volume.name,
-          'new_name': name,
-        };
-      case VirtNetworkCreate(
-        :final name,
-        :final mode,
-        :final bridge,
-        :final cidr,
-        :final dhcpStart,
-        :final dhcpEnd,
-        :final autostart,
-      ):
-        final ip = cidr == null || cidr.trim().isEmpty
-            ? null
-            : cidr.trim().split('/');
-        return {
-          'op': 'net_create',
-          'name': name,
-          'mode': mode,
-          'bridge': mode == 'bridge' ? bridge?.trim() : null,
-          'ipv4': mode == 'bridge' || ip == null
-              ? null
-              : {
-                  'address': ip.first,
-                  'prefix': int.parse(ip.last),
-                  'dhcp_start': dhcpStart,
-                  'dhcp_end': dhcpEnd,
-                },
-          'autostart': autostart,
-        };
-      case VirtNetworkSetActive(:final network, :final active):
-        return {'op': active ? 'net_start' : 'net_stop', 'name': network.id};
-      case VirtNetworkSetAutostart(:final network, :final on):
-        return {'op': 'net_autostart', 'name': network.id, 'on': on};
-      case VirtNetworkEdit(
-        :final network,
-        :final mode,
-        :final bridge,
-        :final address,
-        :final prefix,
-        :final dhcpStart,
-        :final dhcpEnd,
-        :final hosts,
-        :final restart,
-      ):
-        return {
-          'op': 'edit',
-          'name': network.id,
-          'edit': {
-            'mode': mode,
-            'bridge': mode == 'bridge' ? bridge?.trim() : null,
-            'address': address?.trim().isEmpty ?? true ? null : address!.trim(),
-            'prefix': prefix,
-            'dhcp_start': dhcpStart?.trim().isEmpty ?? true ? null : dhcpStart!.trim(),
-            'dhcp_end': dhcpEnd?.trim().isEmpty ?? true ? null : dhcpEnd!.trim(),
-            'hosts': [
-              for (final h in hosts)
-                {
-                  'mac': h.mac.toLowerCase(),
-                  'ip': h.ip,
-                  if ((h.name ?? '').isNotEmpty) 'name': h.name,
-                },
-            ],
-          },
-          'base_xml': network.xml,
-          'active': network.active,
-          'restart': restart,
-        };
-      case VirtNetworkRestart(:final network):
-        // Its own op: `net-destroy` then `net-start`, with no definition
-        // written either way — what is to be restarted onto is already in
-        // it (`VirtNetworkEdit(restart: true)` is the one that writes and
-        // restarts in one round trip).
-        return {
-          'op': 'restart',
-          'name': network.id,
-          'base_xml': network.xml,
-        };
-      case VirtNetworkDelete(:final network):
-        return {'op': 'net_delete', 'name': network.id};
-      case VirtNetworkApply() ||
-          VirtNetworkRevert() ||
-          VirtNetworkEditBridge():
-        // libvirt changes a network when told to: nothing waits, and a PVE
-        // bridge is not its.
-        throw const VirtErr(type: VirtErrType.unsupported);
-    }
   }
 
   /// libvirt applies every change as it is made.
@@ -1572,6 +1356,7 @@ class LibvirtBackend implements VirtBackend {
       }
     } finally {
       _storage = null;
+      _storageJson = null;
       if (!done) {
         try {
           await op({'op': 'vol_delete', 'pool': pool, 'name': upload.name});
@@ -1766,6 +1551,7 @@ class LibvirtBackend implements VirtBackend {
   Future<void> reset() async {
     _rates.clear();
     _storage = null;
+    _storageJson = null;
   }
 
   @override
@@ -1773,6 +1559,7 @@ class LibvirtBackend implements VirtBackend {
     _sudoPassword = null;
     _rates.clear();
     _storage = null;
+    _storageJson = null;
   }
 
   // ---------------------------------------------------------------------------

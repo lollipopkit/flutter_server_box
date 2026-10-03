@@ -123,7 +123,7 @@ fn handle(seen: &Mutex<Seen>, method: &str, path: &str, auth: Option<String>) ->
     if auth != "PVEAPIToken=root@pam!panel=s3cret" {
         return respond(401, Value::Null);
     }
-    let path = path.trim_start_matches("/api2/json");
+    let path = path.trim_start_matches("/api2/json").split('?').next().unwrap_or_default();
     match (method, path) {
         ("GET", "/version") => respond(200, json!({"version": "9.2.2"})),
         ("GET", "/cluster/resources") => respond(
@@ -155,6 +155,35 @@ fn handle(seen: &Mutex<Seen>, method: &str, path: &str, auth: Option<String>) ->
         ("GET", p) if p.starts_with("/nodes/pve/qemu/100/rrddata") => {
             respond(200, json!([{"time": 1700000060, "cpu": 0.5}, {"time": 1700000000, "cpu": 0.25}]))
         }
+        ("GET", "/nodes") => respond(200, json!([{"node": "pve", "status": "online"}])),
+        ("GET", "/storage") => respond(200, json!([{"storage": "local", "type": "dir", "path": "/var/lib/vz"}])),
+        ("GET", "/nodes/pve/storage") => respond(
+            200,
+            json!([{"storage": "local", "type": "dir", "active": 1, "enabled": 1, "content": "images,iso",
+                    "total": 1000, "used": 400, "avail": 600}]),
+        ),
+        ("GET", "/nodes/pve/storage/local/content") => respond(
+            200,
+            json!([{"volid": "local:100/vm-100-disk-0.qcow2", "content": "images", "format": "qcow2", "size": 8, "vmid": 100}]),
+        ),
+        ("GET", "/nodes/pve/network") => {
+            let body = json!({
+                "data": [
+                    {"iface": "vmbr0", "type": "bridge", "cidr": "192.168.31.20/24", "gateway": "192.168.31.1",
+                     "bridge_ports": "nic0", "active": 1, "autostart": 1},
+                    {"iface": "vmbr9", "type": "bridge", "autostart": 1},
+                    {"iface": "nic0", "type": "eth", "active": 1}
+                ],
+                "changes": "--- a\n+++ b\n@@ -1,3 +1,4 @@\n iface vmbr0 inet static\n+\tbridge-vlan-aware yes\n"
+            })
+            .to_string();
+            format!(
+                "HTTP/1.1 200 X\r\nconnection: close\r\ncontent-type: application/json\r\ncontent-length: {}\r\n\r\n{body}",
+                body.len()
+            )
+            .into_bytes()
+        }
+        ("POST", "/nodes/pve/network") => respond(200, Value::Null),
         _ => respond(404, Value::Null),
     }
 }
@@ -425,4 +454,56 @@ async fn snapshots_are_listed_taken_and_deleted_and_recorded() {
     let details: Vec<_> = audit(&db).await.into_iter().filter_map(|r| r.3).collect();
     assert!(details.contains(&"virt snapshot create qemu/100 pre-down".to_owned()), "{details:?}");
     assert!(details.contains(&"virt snapshot create qemu/100 1bad: Unsupported".to_owned()), "{details:?}");
+}
+
+#[ntex::test]
+async fn storage_and_networks_are_listed_and_a_change_is_checked_first() {
+    let pve = FakePve::start().await;
+    let (srv, db) = server().await;
+    let pin = pinned(&pve).await;
+    call(&srv, Some("admin"), Method::PUT, "/api/v1/virt/pve", Some(token_config(&pve.url(), Some(&pin)))).await;
+
+    let (_, body) = call(&srv, Some("admin"), Method::POST, "/api/v1/virt/storage", Some(json!({}))).await;
+    assert_eq!(body["error"], Value::Null, "{body}");
+    assert_eq!(body["pools"][0]["id"], "pve/local");
+    assert_eq!(body["pools"][0]["path"], "/var/lib/vz");
+    assert_eq!(body["pools"][0]["available"], 600);
+
+    let (_, body) = call(&srv, Some("admin"), Method::POST, "/api/v1/virt/volumes", Some(json!({"pool": "pve/local"}))).await;
+    assert_eq!(body["volumes"][0]["users"][0]["vmid"], 100, "{body}");
+    let (_, body) = call(&srv, Some("admin"), Method::POST, "/api/v1/virt/volumes", Some(json!({"pool": "pve/gone"}))).await;
+    assert_eq!(body["error"]["detail"]["issue"], "not_found", "{body}");
+
+    let (_, body) = call(&srv, Some("admin"), Method::POST, "/api/v1/virt/networks", Some(json!({}))).await;
+    assert_eq!(body["error"], Value::Null, "{body}");
+    let nets = body["networks"].as_array().unwrap();
+    let vmbr0 = nets.iter().find(|n| n["name"] == "vmbr0").unwrap();
+    // The interface with the node's default route is never editable.
+    assert_eq!(vmbr0["management_editable"], false);
+    assert_eq!(vmbr0["users"][0]["vmid"], 100);
+    assert_eq!(nets.iter().find(|n| n["name"] == "vmbr9").unwrap()["management_editable"], true);
+    assert_eq!(body["changes"][0]["node"], "pve");
+
+    // A change to it is refused before anything is sent, and so is an apply
+    // of a pending change to it.
+    let manage = |change: Value| call(&srv, Some("admin"), Method::POST, "/api/v1/virt/manage", Some(json!({ "change": change })));
+    let (_, body) = manage(json!({"op": "network_edit_bridge", "network": "pve/vmbr0", "vlan_aware": true})).await;
+    assert_eq!(body["error"]["detail"], json!({"code": "refused", "issue": "management_iface"}), "{body}");
+    let (_, body) = manage(json!({"op": "network_apply", "node": "pve"})).await;
+    assert_eq!(body["error"]["detail"], json!({"code": "apply_touches_management", "ifaces": ["vmbr0"]}), "{body}");
+    let (_, body) = manage(json!({"op": "network_create", "name": "vmbr8", "mode": "bridge", "node": "pve"})).await;
+    assert_eq!(body["error"], Value::Null, "{body}");
+    let (_, body) = manage(json!({"op": "network_create", "name": "vmbr9", "mode": "bridge", "node": "pve"})).await;
+    assert_eq!(body["error"]["kind"], "exists", "{body}");
+    let paths = pve.seen.lock().unwrap().paths.clone();
+    assert!(!paths.iter().any(|p| p == "PUT /api2/json/nodes/pve/network/vmbr0" || p == "PUT /api2/json/nodes/pve/network"), "{paths:?}");
+    assert_eq!(paths.iter().filter(|p| *p == "POST /api2/json/nodes/pve/network").count(), 1, "{paths:?}");
+
+    let details: Vec<_> = audit(&db).await.into_iter().filter_map(|r| r.3).collect();
+    assert!(details.contains(&"virt network create bridge vmbr8".to_owned()), "{details:?}");
+    assert!(details.contains(&"virt network apply pve: Unsupported".to_owned()), "{details:?}");
+
+    // `virt` is what it takes.
+    let (status, _) = call(&srv, Some("viewer"), Method::POST, "/api/v1/virt/manage", Some(json!({"change": {"op": "network_revert", "node": "pve"}}))).await;
+    assert_eq!(status, 403);
 }

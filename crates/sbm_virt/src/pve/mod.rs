@@ -7,6 +7,7 @@
 
 pub mod client;
 pub mod http;
+pub mod net;
 pub mod resources;
 pub mod termproxy;
 

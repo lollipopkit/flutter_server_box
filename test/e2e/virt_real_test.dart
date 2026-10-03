@@ -3481,14 +3481,25 @@ Future<void> _libvirtManage() async {
       expect(br.mode, 'bridge');
       expect(br.bridge, 'sbxe2ebr0');
 
-      // The first network's subnet: refused by the host at the start, and
-      // not left defined.
-      final used = await _virtErr(
+      // The first network's subnet: refused before the host is asked.
+      final taken = await _virtErr(
         virt.manage(
           VirtNetworkCreate(name: '$net-bad', mode: 'nat', cidr: '10.231.78.1/24'),
         ),
       );
-      expect(used.type, VirtErrType.actionFailed);
+      expect(taken.type, VirtErrType.unsupported);
+      expect(taken.message, l10n.virtResSubnetTaken);
+      // The host's own subnet, which no libvirt network lists: refused by the
+      // host at the start, and not left defined.
+      final lan = (await sh(
+        "ip -4 -o addr show scope global | awk '{print \$4}' | head -n1",
+      )).trim();
+      final hostAddr = lan.split('/').first.split('.');
+      final inUse = '${hostAddr.take(3).join('.')}.${hostAddr.last == '250' ? '251' : '250'}/${lan.split('/').last}';
+      final used = await _virtErr(
+        virt.manage(VirtNetworkCreate(name: '$net-bad', mode: 'nat', cidr: inUse)),
+      );
+      expect(used.type, VirtErrType.actionFailed, reason: inUse);
       expect(await findNet('$net-bad'), isNull);
       // The form refuses it before the host is asked.
       expect(
@@ -3679,7 +3690,7 @@ Future<void> _pveManage() async {
       expect(v.capacity, 1 << 30);
       expect(v.format, 'qcow2');
       // Its VMID has no guest: not in use.
-      expect(v.users.single.vmid, next);
+      expect(v.users, isEmpty);
 
       const size = 3 << 20;
       final sent = <int>[];

@@ -6,7 +6,9 @@
   import PageHeader from '../components/PageHeader.svelte'
   import PveForm from '../components/PveForm.svelte'
   import VirtConsole from '../components/VirtConsole.svelte'
+  import VirtNetworks from '../components/VirtNetworks.svelte'
   import VirtSnapshots from '../components/VirtSnapshots.svelte'
+  import VirtStorage from '../components/VirtStorage.svelte'
   import { api } from '../lib/api'
   import { prettyFingerprint } from '../lib/bmc'
   import { fmtBytes, fmtBytesPerSec, fmtPercent } from '../lib/format'
@@ -76,6 +78,8 @@
   let generation = 0
   /// The selected guest's view, the design's tabs.
   let pane = $state<'overview' | 'hardware' | 'console' | 'snapshots'>('overview')
+  /// What of the host the page shows: its guests, its storage, its networks.
+  let section = $state<'guests' | 'storage' | 'networks'>('guests')
   let detail = $state<VirtGuestDetail | null>(null)
   let detailFor = $state<string | null>(null)
   let detailError = $state('')
@@ -446,7 +450,25 @@
     </Card>
   {/if}
 
-  {#if view}
+  {#if view && (view.capabilities.storage || view.capabilities.network)}
+    <nav class="flex gap-1 overflow-x-auto">
+      {#each [['guests', $LL.virtSectionGuests()], ...(view.capabilities.storage ? [['storage', $LL.virtSectionStorage()]] : []), ...(view.capabilities.network ? [['networks', $LL.virtSectionNetworks()]] : [])] as [id, label] (id)}
+        <button
+          class="shrink-0 rounded-lg px-3 py-1.5 text-sm transition-colors {section === id ? 'bg-primary/10 text-fg-strong' : 'text-muted-fg hover:bg-muted'}"
+          aria-current={section === id ? 'page' : undefined}
+          onclick={() => (section = id as typeof section)}
+        >
+          {label}
+        </button>
+      {/each}
+    </nav>
+  {/if}
+
+  {#if view && section === 'storage'}
+    <VirtStorage {view} {sudoPassword} />
+  {:else if view && section === 'networks'}
+    <VirtNetworks {view} {sudoPassword} />
+  {:else if view}
     {@const alloc = allocation(guests)}
     {@const cpuCap = view.host.nodes.reduce((n, node) => n + (node.max_cpu ?? 0), 0)}
     {@const memCap = view.host.nodes.reduce((n, node) => n + (node.mem_total ?? 0), 0)}

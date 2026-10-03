@@ -83,6 +83,17 @@ pub enum Detail {
     TaskStillRunning { node: String, upid: String, minutes: u64 },
     /// The certificate to pin is not the one the server presented.
     CertNotPresented,
+    /// PVE's permission check refused `privilege` on `path`; `command` is
+    /// the `pveum` line that grants it.
+    NeedsPrivilege { account: String, privilege: String, path: String, command: String },
+    /// A change checked before it was sent ([`crate::resource::issue`]).
+    Refused { issue: crate::resource::Issue },
+    /// The pending network configuration changes `ifaces`, which carry the
+    /// node's management traffic.
+    ApplyTouchesManagement { ifaces: Vec<String> },
+    /// Which interfaces the pending network configuration changes cannot be
+    /// told from its diff.
+    ApplyUnreadable,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

@@ -32,6 +32,7 @@ import 'package:server_box/data/provider/virt/backend.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/src/rust/api/pve.dart';
+import 'package:server_box/src/rust/api/resource.dart' as res;
 import 'package:server_box/src/rust/api/virt.dart' show VirtActionKind;
 
 /// Opens a TCP connection to `host:port` as seen from the PVE server — what
@@ -187,7 +188,6 @@ class PveBackend implements VirtBackend {
     final json = await _rust((s) => s.load());
     final snap = VirtRust.snapshot(jsonDecode(json), serverId: serverId);
     _nodes = snap.host.nodes;
-    _guests = snap.guests;
     return snap;
   }
 
@@ -291,10 +291,8 @@ class PveBackend implements VirtBackend {
   // Snapshots
   // ---------------------------------------------------------------------------
 
-  /// The nodes and guests of the last [load]: which nodes to list storage and
-  /// networks for, and whose NICs say which guest is on which bridge.
+  /// The nodes of the last [load]: which nodes to list backups for.
   List<VirtNode> _nodes = const [];
-  List<VirtGuest> _guests = const [];
 
   @override
   Future<List<VirtGuestSnapshot>> snapshots(VirtGuest guest) async =>
@@ -1758,526 +1756,60 @@ class PveBackend implements VirtBackend {
   }
 
   @override
-  Future<List<VirtStoragePool>> storagePools() async {
-    final nodes = await _onlineNodes();
-    // Where each storage is comes from the cluster's configuration, which
-    // needs `Datastore.Audit` on `/storage`: without it the list is still
-    // there, only without paths.
-    List<Object?>? config;
-    try {
-      final c = await _call((dio) => dio.get(_url('/storage')));
-      if (c is List) config = c;
-    } on VirtErr catch (e) {
-      if (e.type != VirtErrType.authFailed) rethrow;
-      Loggers.app.info('PVE /storage: ${e.message}');
-    }
-    final out = <VirtStoragePool>[];
-    for (final node in nodes) {
-      final data = await _call(
-        (dio) => dio.get(_url('/nodes/${_seg(node)}/storage')),
-      );
-      if (data is! List) continue;
-      out.addAll(PveResources.parseStorages(node, data, config: config));
-    }
-    return out;
-  }
+  Future<List<VirtStoragePool>> storagePools() async =>
+      VirtRust.pools(jsonDecode(await _rust((s) => s.storagePools())));
 
   @override
-  Future<List<VirtVolume>> volumes(VirtStoragePool pool) async {
-    final node = pool.node;
-    if (node == null) {
-      throw VirtErr(
-        type: VirtErrType.invalidResponse,
-        message: 'No node for storage ${pool.name}',
+  Future<List<VirtVolume>> volumes(VirtStoragePool pool) async =>
+      VirtRust.volumes(
+        jsonDecode(
+          await _rust(
+            (s) => s.volumes(poolJson: jsonEncode(VirtRust.poolJson(pool))),
+          ),
+        ),
       );
-    }
-    if (!pool.active) return const [];
-    final data = await _call(
-      (dio) => dio.get(
-        _url('/nodes/${_seg(node)}/storage/${_seg(pool.name)}/content'),
-      ),
-    );
-    if (data is! List) {
-      throw VirtErr(
-        type: VirtErrType.invalidResponse,
-        message: l10n.pveInvalidResponseData,
-      );
-    }
-    return _withImageSizes(node, PveResources.parseContent(data));
-  }
-
-  /// How many import images are sized at once.
-  static const _imageSizeConcurrency = 4;
-
-  /// [volumes] with the virtual size of each import image whose listing
-  /// gives only its file's ([PveResources.imageSizeUnknown]), from
-  /// `GET .../content/{volid}` — what a new disk made from it must hold at
-  /// least. A few at a time; one PVE will not say stays unknown.
-  Future<List<VirtVolume>> _withImageSizes(
-    String node,
-    List<VirtVolume> volumes,
-  ) async {
-    final out = [...volumes];
-    final todo = [
-      for (var i = 0; i < out.length; i++)
-        if (PveResources.imageSizeUnknown(out[i].content, out[i].format)) i,
-    ];
-    var next = 0;
-    Future<void> worker() async {
-      while (next < todo.length) {
-        final i = todo[next++];
-        final v = out[i];
-        final storage = v.id.split(':').first;
-        try {
-          final info = await _call(
-            (dio) => dio.get(
-              _url(
-                '/nodes/${_seg(node)}/storage/${_seg(storage)}/content/${_seg(v.id)}',
-              ),
-            ),
-          );
-          final size = info is Map ? _intOf(info['size']) : null;
-          if (size != null) out[i] = v.copyWith(capacity: size);
-        } on VirtErr catch (e) {
-          Loggers.app.info('PVE size of ${v.id}: ${e.message}');
-        }
-      }
-    }
-
-    await Future.wait([
-      for (var w = 0; w < _imageSizeConcurrency && w < todo.length; w++) worker(),
-    ]);
-    return out;
-  }
-
-  /// How many guest configurations are read at once to find which bridge
-  /// each NIC is on.
-  static const _configConcurrency = 4;
 
   /// Every online node's interfaces, with the guests whose NICs are on each
-  /// bridge — read from each guest's configuration, one request per guest.
+  /// bridge and which may be changed at all
+  /// (`sbm_virt::pve::Client::networks`).
   @override
   Future<List<VirtNetwork>> networks() async {
-    final nodes = await _onlineNodes();
-    final out = <VirtNetwork>[];
-    for (final node in nodes) {
-      final data = await _call(
-        (dio) => dio.get(_url('/nodes/${_seg(node)}/network')),
-      );
-      if (data is! List) continue;
-      final users = await _bridgeUsers([
-        for (final g in _guests)
-          if (g.node == node) g,
-      ]);
-      final management = await _managementOf(node, data);
-      out.addAll(PveResources.parseNetworks(node, data, users: users, management: management));
-    }
-    return out;
-  }
-
-  Future<Map<String, List<VirtGuestRef>>> _bridgeUsers(
-    List<VirtGuest> guests,
-  ) async {
-    final users = <String, List<VirtGuestRef>>{};
-    var next = 0;
-    Future<void> worker() async {
-      while (next < guests.length) {
-        final guest = guests[next++];
-        try {
-          final config = await _call(
-            (dio) => dio.get(_url('${_guestPath(guest)}/config')),
-          );
-          if (config is! Map) continue;
-          final of = PveResources.bridgeUsers(
-            guest,
-            config.cast<String, Object?>(),
-          );
-          for (final MapEntry(:key, :value) in of.entries) {
-            users.putIfAbsent(key, () => []).addAll(value);
-          }
-        } on VirtErr catch (e) {
-          // One guest this account may not read, or one deleted since the
-          // last load listed it ("Configuration file ... does not exist"),
-          // leaves only that guest out.
-          if (e.type != VirtErrType.authFailed &&
-              e.type != VirtErrType.invalidResponse) {
-            rethrow;
-          }
-        }
-      }
-    }
-
-    await Future.wait([
-      for (var i = 0; i < _configConcurrency; i++) worker(),
-    ]);
-    for (final list in users.values) {
-      list.sort((a, b) => (a.vmid ?? 0).compareTo(b.vmid ?? 0));
-    }
-    return users;
-  }
-
-  // ---------------------------------------------------------------------------
-  // Managing storage and networks
-  // ---------------------------------------------------------------------------
-
-  static final _form = Options(contentType: Headers.formUrlEncodedContentType);
-
-  /// A storage is cluster configuration (`/storage`), limited to the node it
-  /// was made on; a volume and a bridge are a node's. Network changes wait in
-  /// the node's `interfaces.new` until [VirtNetworkApply].
-  ///
-  /// A node's network changes run one at a time: they all write the one
-  /// pending file, and an apply or a revert running beside an edit would
-  /// apply what its safety check never saw, or drop an edit just saved.
-  @override
-  Future<void> manage(VirtResourceChange change) {
-    final node = switch (change) {
-      VirtNetworkCreate(:final node) => node,
-      VirtNetworkEditBridge(:final network) ||
-      VirtNetworkDelete(:final network) => network.node,
-      VirtNetworkApply(:final node) || VirtNetworkRevert(:final node) => node,
-      _ => null,
-    };
-    if (node == null) return _manage(change);
-    final before = _netChanges[node] ?? Future<void>.value();
-    final run = before.then((_) => _manage(change));
-    final done = run.then<void>((_) {}, onError: (Object _) {});
-    _netChanges[node] = done;
-    unawaited(
-      done.whenComplete(() {
-        if (identical(_netChanges[node], done)) _netChanges.remove(node);
-      }),
+    final live = await _liveNet();
+    return VirtRust.networks(
+      jsonDecode(await _rust((s) => s.networks(live: live))),
     );
-    return run;
   }
 
-  /// Each node's last network change, which the next one waits for
-  /// ([manage]). Never completes with an error.
-  final _netChanges = <String, Future<void>>{};
-
-  Future<void> _manage(VirtResourceChange change) async {
-    try {
-      switch (change) {
-        case VirtPoolCreate(:final name, :final type, :final source, :final node, :final content):
-          final lvm = source.split('/');
-          final nfs = source.indexOf(':/');
-          await _call(
-            (dio) => dio.post(
-              _url('/storage'),
-              data: {
-                'storage': name,
-                'type': type,
-                ...switch (type) {
-                  'dir' => {'path': source},
-                  'nfs' => {
-                    'server': source.substring(0, nfs),
-                    'export': source.substring(nfs + 1),
-                  },
-                  'lvmthin' => {'vgname': lvm.first, 'thinpool': lvm.last},
-                  'zfspool' => {'pool': source},
-                  _ => throw const VirtErr(type: VirtErrType.unsupported),
-                },
-                'content': (content.isNotEmpty
-                        ? content
-                        : type == 'nfs'
-                        ? const ['backup', 'iso']
-                        : const ['images', 'rootdir'])
-                    .join(','),
-                'nodes': ?node,
-              },
-              options: _form,
-            ),
-            action: true,
-          );
-        case VirtPoolSetActive(:final pool, :final active):
-          await _call(
-            (dio) => dio.put(
-              _url('/storage/${_seg(pool.name)}'),
-              data: {'disable': active ? 0 : 1},
-              options: _form,
-            ),
-            action: true,
-          );
-        case VirtPoolDelete(:final pool):
-          await _call(
-            (dio) => dio.delete(_url('/storage/${_seg(pool.name)}')),
-            action: true,
-          );
-        case VirtPoolRefresh():
-          // PVE reads a storage's contents on every listing.
-          break;
-        case VirtVolumeCreate(:final pool, :final name, :final gib, :final format):
-          await _call(
-            (dio) => dio.post(
-              _url('${_storagePath(pool)}/content'),
-              data: {
-                'vmid': virtPveVolumeVmid(name),
-                'filename': virtVolumeFileName(pool, name, format),
-                'size': '${gib}G',
-                'format': format,
-              },
-              options: _form,
-            ),
-            action: true,
-          );
-        case VirtVolumeDelete(:final pool, :final volume):
-          await _nodeTask(
-            pool.node!,
-            (dio) => dio.delete(
-              _url('${_storagePath(pool)}/content/${_seg(volume.id)}'),
-            ),
-          );
-        case VirtNetworkCreate(
-          :final name,
-          :final node,
-          :final bridge,
-          :final cidr,
-          :final vlanAware,
-          :final autostart,
-          :final mode,
-        ):
-          if (mode != 'bridge' || node == null) {
-            throw const VirtErr(type: VirtErrType.unsupported);
-          }
-          final ports = bridge?.trim() ?? '';
-          final address = cidr?.trim() ?? '';
-          await _call(
-            (dio) => dio.post(
-              _url('/nodes/${_seg(node)}/network'),
-              data: {
-                'iface': name,
-                'type': 'bridge',
-                'autostart': autostart ? 1 : 0,
-                'bridge_ports': ?(ports.isEmpty ? null : ports),
-                'cidr': ?(address.isEmpty ? null : address),
-                'bridge_vlan_aware': ?(vlanAware ? 1 : null),
-              },
-              options: _form,
-            ),
-            action: true,
-          );
-        case VirtNetworkEditBridge(
-          :final network,
-          :final ports,
-          :final cidr,
-          :final gateway,
-          :final vlanAware,
-          :final autostart,
-        ):
-          final node = network.node!;
-          // The interface carries the node's management address: PVE would
-          // cut itself off applying this, and there is no console here.
-          if (!await _mayEditIfaceRead(node, network)) {
-            throw const VirtErr(
-              type: VirtErrType.unsupported,
-              message: 'This interface carries the host\'s own address',
-            );
-          }
-          final address = cidr?.trim();
-          final gw = gateway?.trim();
-          // PVE's `update_network` sets the interface's `method`/`method6`
-          // and its address families from this request alone
-          // (`$param->{method} = $param->{address} ? 'static' : 'manual'`,
-          // pve-manager 9.2.2): an address not sent is an address dropped.
-          // So the ones it has now go back with it — the IPv4 one unless
-          // this edit changes it, and the IPv6 one, which the form does not
-          // edit. Read fresh: the listing may be a while old.
-          final now = await _call(
-            (dio) => dio.get(
-              _url('/nodes/${_seg(node)}/network/${_seg(network.name)}'),
-            ),
-          );
-          String? current(String key) {
-            final v = now is Map ? now[key] : null;
-            final text = v?.toString().trim() ?? '';
-            return text.isEmpty ? null : text;
-          }
-          final cidr4 = address ?? current('cidr');
-          final cidr6 = current('cidr6');
-          // Everything else PVE keeps, and a `0` is not sent: turning
-          // something off means naming the key in `delete`.
-          final delete = <String>[
-            if (address != null && address.isEmpty) 'cidr,gateway',
-            // VLAN awareness is a pair of properties: PVE's own editor
-            // clears the allowed-VLAN list with it (`bridge_vids` is what
-            // writes the `bridge-vids` line, and pvesh drops a bare `0`).
-            if (vlanAware == false) 'bridge_vlan_aware,bridge_vids',
-          ];
-          await _call(
-            (dio) => dio.put(
-              _url('/nodes/${_seg(node)}/network/${_seg(network.name)}'),
-              data: {
-                'type': network.mode,
-                if (ports != null) 'bridge_ports': ports.trim(),
-                if (cidr4 != null && cidr4.isNotEmpty) 'cidr': cidr4,
-                'cidr6': ?cidr6,
-                if (gw != null && gw.isNotEmpty) 'gateway': gw,
-                if (vlanAware == true) 'bridge_vlan_aware': 1,
-                if (autostart != null) 'autostart': autostart ? 1 : 0,
-                if (delete.isNotEmpty) 'delete': delete.join(','),
-              },
-              options: _form,
-            ),
-            action: true,
-          );
-        case VirtNetworkDelete(:final network):
-          if (!await _mayEditIfaceRead(network.node!, network)) {
-            throw const VirtErr(
-              type: VirtErrType.unsupported,
-              message: 'This interface carries the host\'s own address',
-            );
-          }
-          await _call(
-            (dio) => dio.delete(
-              _url(
-                '/nodes/${_seg(network.node!)}/network/${_seg(network.name)}',
-              ),
-            ),
-            action: true,
-          );
-        case VirtNetworkApply(:final node):
-          await _checkApply(node);
-          await _nodeTask(
-            node,
-            (dio) => dio.put(_url('/nodes/${_seg(node)}/network')),
-          );
-        case VirtNetworkRevert(:final node):
-          await _call(
-            (dio) => dio.delete(_url('/nodes/${_seg(node)}/network')),
-            action: true,
-          );
-        case VirtPoolSetAutostart() ||
-            VirtVolumeResize() ||
-            VirtVolumeClone() ||
-            VirtNetworkSetActive() ||
-            VirtNetworkSetAutostart() ||
-            VirtNetworkRestart() ||
-            // libvirt's network edit: PVE has its own (`VirtNetworkEditBridge`).
-            VirtNetworkEdit():
-          throw const VirtErr(type: VirtErrType.unsupported);
-      }
-    } on VirtErr catch (e) {
-      throw _manageErr(e);
-    }
+  /// Checked against what the host lists now, then made, a node's network
+  /// changes one at a time (`sbm_virt::pve::Client::manage`).
+  @override
+  Future<void> manage(VirtResourceChange change) async {
+    final network = change.nodeScope != null;
+    final live = network ? await _liveNet() : null;
+    await _rust(
+      (s) => s.manage(
+        changeJson: jsonEncode(VirtRust.changeJson(change)),
+        live: live,
+      ),
+    );
   }
 
   /// Runs a command on the server this backend reaches PVE through, for
   /// what the API does not say ([_liveNet]); null in tests.
   final Future<ServerExec> Function()? _exec;
 
-  /// The interfaces that carry a node's management traffic
-  /// ([virtPveManagementIfaces]), from its listing and — for the node this
-  /// app is connected through — what the node itself says it is using.
-  /// Kept per node: an edit or a delete asks without reading them again.
-  final _managementIfaces = <String, Set<String>>{};
-
-  Future<Set<String>> _managementOf(String node, Object? listing) async =>
-      _management(node, listing, await _liveNet());
-
-  /// [_managementOf] with [live] already read; [also] as
-  /// [virtPveManagementIfaces] takes it.
-  Set<String> _management(
-    String node,
-    Object? listing,
-    VirtPveLiveNet? live, {
-    Set<String> also = const {},
-  }) {
-    final raw = listing is List ? listing : const <Object?>[];
-    final management = virtPveManagementIfaces(
-      PveResources.parseNetworks(node, raw),
-      live: live?.host == node ? live : null,
-      also: also,
-      gateways6: {
-        for (final e in raw)
-          if (e case {'iface': final String iface, 'gateway6': final Object g}
-              when '$g'.isNotEmpty)
-            iface,
-      },
-    );
-    _managementIfaces[node] = management;
-    return management;
-  }
-
-  /// [virtPveLiveNetScript] on the server; null when it could not be run or
-  /// read, which [virtPveManagementIfaces] answers by protecting every
-  /// interface with an address.
-  Future<VirtPveLiveNet?> _liveNet() async {
+  /// What the server says of the interfaces it is using
+  /// (`sbm_virt::pve::net::LIVE_NET_SCRIPT`), as it printed it; null when it
+  /// could not be run, which protects every interface with an address.
+  Future<String?> _liveNet() async {
     final exec = _exec;
     if (exec == null) return null;
     try {
-      final r = await (await exec()).run(virtPveLiveNetScript, entry: 'sh');
-      return virtPveParseLiveNet(r.stdout);
+      final r = await (await exec()).run(res.virtPveLiveNetScript(), entry: 'sh');
+      return r.stdout;
     } catch (e) {
       Loggers.app.info('PVE live network probe: $e');
       return null;
-    }
-  }
-
-  /// Whether [network] may be edited or deleted through this app.
-  ///
-  /// PVE allows a bridge; a physical interface's own settings belong to the
-  /// host. And never one carrying the node's management traffic, or one it
-  /// sits on ([virtPveManagementIfaces]): applying its configuration would
-  /// cut the host off, with no console to fix it from.
-  ///
-  /// A listing that cannot be read refuses the interface, which is what an
-  /// unknown management address deserves.
-  Future<bool> _mayEditIfaceRead(String node, VirtNetwork network) async {
-    if (network.mode != 'bridge') return false;
-    var known = _managementIfaces[node];
-    if (known == null) {
-      try {
-        final data = await _call(
-          (dio) => dio.get(_url('/nodes/${_seg(node)}/network')),
-        );
-        known = await _managementOf(node, data);
-      } on VirtErr catch (e) {
-        Loggers.app.info('PVE network listing for $node: ${e.message}');
-        return false;
-      }
-    }
-    return virtPveManagedIface(network, management: known);
-  }
-
-  /// Refuses applying [node]'s pending network configuration when it touches
-  /// a management interface ([virtPveManagementIfaces]) — made in the app or
-  /// anywhere else, PVE's web UI included — or when the diff does not say
-  /// whose lines it changes. Read fresh: an apply is the moment it matters.
-  Future<void> _checkApply(String node) async {
-    final body = await _call(
-      (dio) => dio.get(_url('/nodes/${_seg(node)}/network')),
-      whole: true,
-    );
-    final diff = body is Map ? body['changes'] : null;
-    if (diff is! String || diff.trim().isEmpty) return;
-    final probed = await _liveNet();
-    final live = probed?.host == node ? probed : null;
-    final touched = virtPveDiffIfaces(diff, interfaces: live?.interfaces);
-    // The listing is the pending configuration: an interface it no longer
-    // gives a gateway — or, without the node's own word on what it uses, an
-    // address — may be the one the node is managed through until this is
-    // applied.
-    final management = _management(
-      node,
-      body is Map ? body['data'] : null,
-      live,
-      also: {
-        ...touched.oldGateways,
-        if (live == null) ...touched.oldAddressed,
-      },
-    );
-    final hit = touched.ifaces.intersection(management);
-    if (touched.unknown || hit.isNotEmpty) {
-      throw VirtErr(
-        type: VirtErrType.unsupported,
-        message: hit.isNotEmpty
-            ? 'The pending configuration changes ${hit.join(', ')}, which '
-                  "carries the host's management traffic: apply it from "
-                  "the host's console or PVE's own interface"
-            : 'Which interfaces the pending configuration changes cannot be '
-                  "told from its diff: apply it from the host's console or "
-                  "PVE's own interface",
-      );
     }
   }
 
@@ -2309,9 +1841,11 @@ class PveBackend implements VirtBackend {
     r'Permission check failed \(([^,()]+), ([A-Za-z.]+)\)',
   );
 
-  /// A name taken as [VirtErrType.exists]; PVE's permission refusal as
-  /// [VirtErrType.permissionDenied] naming the privilege, where, and how to
-  /// grant it — the refusal alone says which, not what to type.
+  /// An upload's refusal: a name taken as [VirtErrType.exists]; PVE's
+  /// permission refusal naming the privilege, where, and how to grant it.
+  // TODO(migration): what `sbm_virt::pve::Client::manage` says of a refusal
+  // (`Detail::NeedsPrivilege`); here only for the upload, which streams over
+  // a connection of its own.
   VirtErr _manageErr(VirtErr e) {
     final message = e.message ?? '';
     if (message.contains('already exists') ||
@@ -2328,7 +1862,6 @@ class PveBackend implements VirtBackend {
     final who = "--${token ? 'tokens' : 'users'} '$qualified'";
     final command = switch (pvePrivilegeRole(privilege)) {
       final role? => 'pveum acl modify $path $who --roles $role',
-      // No built-in role holds it without far more: a role of its own.
       null =>
         "pveum role add ServerBox-${privilege.replaceAll('.', '')} "
             '--privs $privilege\n'
@@ -2344,6 +1877,8 @@ class PveBackend implements VirtBackend {
 
   /// The narrowest built-in PVE role holding [privilege]; null where only
   /// `Administrator` does (`Sys.Modify`).
+  // TODO(migration): `sbm_virt::pve::client` has the same table; remove with
+  // [_manageErr].
   @visibleForTesting
   static String? pvePrivilegeRole(String privilege) => switch (privilege) {
     'Datastore.AllocateSpace' || 'Datastore.Audit' => 'PVEDatastoreUser',
@@ -2354,23 +1889,12 @@ class PveBackend implements VirtBackend {
     _ => null,
   };
 
-  /// Each online node's pending network configuration: the `changes` PVE
-  /// puts beside the interfaces it lists.
+  /// Each online node's pending network configuration.
   @override
-  Future<List<VirtNetworkChanges>> networkChanges() async {
-    final out = <VirtNetworkChanges>[];
-    for (final node in await _onlineNodes()) {
-      final body = await _call(
-        (dio) => dio.get(_url('/nodes/${_seg(node)}/network')),
-        whole: true,
+  Future<List<VirtNetworkChanges>> networkChanges() async =>
+      VirtRust.networkChanges(
+        jsonDecode(await _rust((s) => s.networkChanges())),
       );
-      if (body case {'changes': final String diff}
-          when diff.trim().isNotEmpty) {
-        out.add(VirtNetworkChanges(node: node, diff: diff));
-      }
-    }
-    return out;
-  }
 
   /// How long PVE may take to answer an upload once it has the bytes: it
   /// checks the file and starts the task that moves it into place.
@@ -2615,75 +2139,12 @@ class PveBackend implements VirtBackend {
     _dio = null;
   }
 
-  /// A failure of the session as this app phrases it. What `sbm_virt` leaves
-  /// to the caller (`detail_json`) is said in the user's language; the
-  /// host's own words otherwise.
+  /// A failure of the session as this app phrases it ([VirtRust.error]);
+  /// the certificate it presented is what [confirmCert] may pin.
   VirtErr _fromRust(PveError e) {
-    final type = switch (e.kind) {
-      VirtFailure.unreachable => VirtErrType.unreachable,
-      VirtFailure.notConfigured => VirtErrType.notConfigured,
-      VirtFailure.authFailed => VirtErrType.authFailed,
-      VirtFailure.needTfa => VirtErrType.needTfa,
-      VirtFailure.certUnconfirmed => VirtErrType.certUnconfirmed,
-      VirtFailure.certChanged => VirtErrType.certChanged,
-      VirtFailure.permissionDenied => VirtErrType.permissionDenied,
-      VirtFailure.invalidResponse => VirtErrType.invalidResponse,
-      VirtFailure.actionFailed => VirtErrType.actionFailed,
-      VirtFailure.unsupported => VirtErrType.unsupported,
-      VirtFailure.exists => VirtErrType.exists,
-      VirtFailure.conflict => VirtErrType.conflict,
-      VirtFailure.notInstalled => VirtErrType.notInstalled,
-      VirtFailure.sudoPasswordRequired => VirtErrType.sudoPasswordRequired,
-      VirtFailure.sudoPasswordRejected => VirtErrType.sudoPasswordRejected,
-      VirtFailure.closed || VirtFailure.unknown => VirtErrType.unknown,
-    };
-    final detail = e.detailJson == null ? null : jsonDecode(e.detailJson!);
-    final message = switch (detail) {
-      {'code': 'no_user'} => 'No user to log in to PVE as. Use an API token.',
-      {'code': 'password_required'} => l10n.pvePasswordRequired,
-      {'code': 'token_incomplete'} => 'The PVE API token is incomplete',
-      {'code': 'otp_required'} => l10n.pveOtpRequired,
-      {'code': 'otp_empty'} => l10n.pveOtpCodeRequired,
-      {'code': 'otp_rejected'} => l10n.pveOtpVerificationFailed,
-      {'code': 'invalid_body'} => l10n.pveInvalidResponseBody,
-      {'code': 'invalid_data'} => l10n.pveInvalidResponseData,
-      {'code': 'missing_ticket'} => l10n.pveMissingAuthTicket,
-      {
-        'code': 'no_privileges',
-        'token': final bool token,
-        'account': final String account,
-        'command': final String command,
-      } =>
-        token
-            ? l10n.pveTokenNoPrivileges(account, command)
-            : l10n.pveUserNoPrivileges(account, command),
-      {
-        'code': 'task_still_running',
-        'node': final String node,
-        'upid': final String upid,
-        'minutes': final int minutes,
-      } =>
-        'Still running on $node after $minutes min; '
-            'its task log on the host says how it ends: $upid',
-      {'code': 'cert_not_presented'} =>
-        'That certificate was not presented by this server',
-      {'code': 'not_offered'} => 'Not offered for this guest',
-      _ => e.message,
-    };
     final cert = e.cert;
     if (cert != null) _presented = cert;
-    return VirtErr(
-      type: type,
-      message:
-          (type == VirtErrType.certUnconfirmed ||
-                  type == VirtErrType.certChanged) &&
-              cert != null
-          ? cert.prettyFingerprint
-          : message,
-      cert: cert,
-      previousFingerprint: e.previousFingerprint,
-      cause: e,
-    );
+    return VirtRust.error(e);
   }
 
   /// The client the calls not yet in `sbm_virt` build their requests with;

@@ -355,6 +355,10 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
         (Method::POST, "/api/v1/virt/power", Some(json!({ "guest": "absent", "action": "start" }))),
         (Method::GET, "/api/v1/virt/pve", None),
         (Method::POST, "/api/v1/virt/pve/tfa", Some(json!({ "code": "000000" }))),
+        (Method::POST, "/api/v1/virt/storage", Some(json!({}))),
+        (Method::POST, "/api/v1/virt/volumes", Some(json!({ "pool": "absent" }))),
+        (Method::POST, "/api/v1/virt/networks", Some(json!({}))),
+        (Method::POST, "/api/v1/virt/manage", Some(json!({ "change": { "op": "pool_refresh", "pool": "absent" } }))),
     ]
 }
 

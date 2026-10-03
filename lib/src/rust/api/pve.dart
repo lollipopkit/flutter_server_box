@@ -8,7 +8,7 @@ import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/src/rust/api/virt.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `power_action`
+// These functions are ignored because they are not marked as `pub`: `from_json`, `power_action`, `to_json`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `Loopback`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `clone`, `dial`, `eq`, `fmt`, `fmt`, `fmt`, `from`, `from`, `from`, `from`, `from`
 
@@ -61,6 +61,20 @@ abstract class PveSession implements RustOpaqueInterface {
 
   /// `sbm_virt::model::HostView` JSON.
   Future<String> load();
+
+  /// Makes `change_json` (a `Change`), checked first against what the host
+  /// lists now; `live` as for [`PveSession::networks`].
+  Future<void> manage({required String changeJson, String? live});
+
+  /// Each online node's pending network configuration,
+  /// `NetworkChanges` JSON.
+  Future<String> networkChanges();
+
+  /// Every online node's interfaces, `Network` JSON. `live` is what
+  /// [`super::resource::virt_pve_live_net_script`] printed on the server
+  /// this session reaches PVE through; None protects every interface with
+  /// an address.
+  Future<String> networks({String? live});
 
   /// Nothing is sent until the first call. `port` and `token` are the
   /// app's authenticated loopback tunnel to the API's address.
@@ -138,12 +152,18 @@ abstract class PveSession implements RustOpaqueInterface {
   /// `sbm_virt::snapshot::Snapshot` JSON list.
   Future<String> snapshots({required PveGuestRef guest});
 
+  /// Every online node's storages, `sbm_virt::resource::Pool` JSON.
+  Future<String> storagePools();
+
   Future<void> submitTfa({required String code});
 
   /// Replaces the login (an edit, or a pin confirmed elsewhere). A new
   /// session starts when anything changed. An address change also needs a
   /// new tunnel: [`PveSession::set_loopback`].
   void updateLogin({required PveLogin login});
+
+  /// The volumes on `pool_json` (a `Pool`), `Volume` JSON.
+  Future<String> volumes({required String poolJson});
 
   /// Waits for the task `upid` on `node` to stop; its error is
   /// `actionFailed` with PVE's text.

@@ -1179,6 +1179,8 @@
   "virtPoolSourceZfs": "Pool ZFS",
   "virtPoolTypeVg": "Volume group LVM",
   "virtResNameEmpty": "Masukkan nama",
+  "virtResNotFound": "Sudah tidak ada di host ini",
+  "virtResUnsupported": "Host ini tidak mendukungnya",
   "virtResNameInvalid": "Bukan nama yang diterima host ini (huruf, angka, . _ -)",
   "virtResSourceInvalid": "Bukan path atau sumber yang valid",
   "virtResTargetInvalid": "Path absolut",

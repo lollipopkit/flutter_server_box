@@ -35,6 +35,8 @@ use crate::error::{Detail, Error, ErrorKind, Result};
 use crate::model::{Capabilities, ConsoleKind, Guest, GuestDetail, GuestKind, HistoryWindow, Host, HostKind, HostView, PowerAction, Stats};
 use crate::rates::RateTracker;
 
+mod storage;
+
 /// How long PVE accepts a ticket or a TFA challenge (`$ticket_lifetime` in
 /// `PVE::AccessControl`, 2 hours on PVE 9.2).
 pub const TICKET_LIFETIME_MS: i64 = 2 * 3600 * 1000;
@@ -176,6 +178,8 @@ pub struct Client {
     state: Mutex<State>,
     /// Held by the login in flight.
     login: tokio::sync::Mutex<()>,
+    /// Each node's network changes, one at a time — see [`Client::manage`].
+    net_changes: Mutex<HashMap<String, Arc<tokio::sync::Mutex<()>>>>,
 }
 
 impl Client {
@@ -196,6 +200,7 @@ impl Client {
                 closed: false,
             }),
             login: tokio::sync::Mutex::new(()),
+            net_changes: Mutex::new(HashMap::new()),
         }
     }
 

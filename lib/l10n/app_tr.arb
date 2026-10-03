@@ -1179,6 +1179,8 @@
   "virtPoolSourceZfs": "ZFS havuzu",
   "virtPoolTypeVg": "LVM birim grubu",
   "virtResNameEmpty": "Bir ad girin",
+  "virtResNotFound": "Artık bu sunucuda değil",
+  "virtResUnsupported": "Bu sunucu bunu desteklemiyor",
   "virtResNameInvalid": "Bu ana makinenin kabul ettiği bir ad değil (harf, rakam, . _ -)",
   "virtResSourceInvalid": "Geçerli bir yol veya kaynak değil",
   "virtResTargetInvalid": "Mutlak bir yol",

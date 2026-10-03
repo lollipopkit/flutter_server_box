@@ -398,6 +398,10 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .service(web::resource("/virt/snapshots").route(web::post().to(crate::api::virt::snapshots)))
             .service(web::resource("/virt/snapshot").route(web::post().to(crate::api::virt::snapshot)))
             .service(web::resource("/virt/snapshot/diff").route(web::post().to(crate::api::virt::snapshot_diff)))
+            .service(web::resource("/virt/storage").route(web::post().to(crate::api::virt_resources::storage)))
+            .service(web::resource("/virt/volumes").route(web::post().to(crate::api::virt_resources::volumes)))
+            .service(web::resource("/virt/networks").route(web::post().to(crate::api::virt_resources::networks)))
+            .service(web::resource("/virt/manage").route(web::post().to(crate::api::virt_resources::manage)))
             .service(
                 web::resource("/virt/pve")
                     .route(web::get().to(crate::api::virt::pve_get))

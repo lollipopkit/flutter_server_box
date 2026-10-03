@@ -4243,6 +4243,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get virtResNameEmpty => 'Introduzca un nombre';
 
   @override
+  String get virtResNotFound => 'Ya no está en este host';
+
+  @override
+  String get virtResUnsupported => 'Este host no lo admite';
+
+  @override
   String get virtResNameInvalid =>
       'No es un nombre que admita este host (letras, dígitos, . _ -)';
 

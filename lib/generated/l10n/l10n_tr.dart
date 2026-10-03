@@ -4165,6 +4165,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get virtResNameEmpty => 'Bir ad girin';
 
   @override
+  String get virtResNotFound => 'Artık bu sunucuda değil';
+
+  @override
+  String get virtResUnsupported => 'Bu sunucu bunu desteklemiyor';
+
+  @override
   String get virtResNameInvalid =>
       'Bu ana makinenin kabul ettiği bir ad değil (harf, rakam, . _ -)';
 

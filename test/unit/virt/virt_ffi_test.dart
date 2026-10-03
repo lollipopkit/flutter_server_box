@@ -107,18 +107,6 @@ void main() {
       jsonDecode(await parseVirtStorageJson(raw: _fixture('script_storage.txt'))),
       jsonDecode(_fixture('storage.expected.json')),
     );
-    expect(
-      jsonDecode(
-        await parseVirtVolumesJson(raw: _fixture('script_volumes_sbx_iso.txt')),
-      ),
-      jsonDecode(_fixture('volumes_sbx_iso.expected.json')),
-    );
-    expect(
-      jsonDecode(
-        await parseVirtNetworksJson(raw: _fixture('script_networks.txt')),
-      ),
-      jsonDecode(_fixture('networks.expected.json')),
-    );
     // A refused snapshot is the host's words, typed: a name taken is `exists`.
     expect(
       () => parseVirtAction(raw: _fixture('script_snapshot_error_exists.txt')),

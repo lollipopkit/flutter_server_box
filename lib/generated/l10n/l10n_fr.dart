@@ -4253,6 +4253,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get virtResNameEmpty => 'Saisissez un nom';
 
   @override
+  String get virtResNotFound => 'N’est plus sur cet hôte';
+
+  @override
+  String get virtResUnsupported => 'Cet hôte ne le permet pas';
+
+  @override
   String get virtResNameInvalid =>
       'Nom refusé par cet hôte (lettres, chiffres, . _ -)';
 

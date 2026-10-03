@@ -4178,6 +4178,12 @@ class AppLocalizationsAz extends AppLocalizations {
   String get virtResNameEmpty => 'Ad daxil edin';
 
   @override
+  String get virtResNotFound => 'Artıq bu hostda deyil';
+
+  @override
+  String get virtResUnsupported => 'Bu host bunu etmir';
+
+  @override
   String get virtResNameInvalid =>
       'Bu hostun qəbul etdiyi ad deyil (hərf, rəqəm, . _ -)';
 

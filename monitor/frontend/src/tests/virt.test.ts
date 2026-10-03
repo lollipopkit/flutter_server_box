@@ -6,8 +6,8 @@ import { api } from '../lib/api'
 import { capabilitiesStore } from '../lib/capabilities.svelte'
 import { servers } from '../lib/servers.svelte'
 import { enabledFeatures } from '../lib/features'
-import { allocation, orderedActions, pushSample, pveDraft, snapshotTree, virtErrorText, HISTORY_LEN } from '../lib/virt'
-import type { Capabilities, VirtGuest, VirtLoad, VirtSnapshot, VirtStats } from '../types'
+import { allocation, issueText, orderedActions, pushSample, pveDraft, refText, snapshotTree, virtErrorText, HISTORY_LEN } from '../lib/virt'
+import type { Capabilities, VirtGuest, VirtLoad, VirtNetwork, VirtPool, VirtSnapshot, VirtStats } from '../types'
 
 vi.mock('../lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../lib/api')>()),
@@ -25,6 +25,10 @@ vi.mock('../lib/api', async (importOriginal) => ({
     virtSnapshots: vi.fn(),
     virtSnapshot: vi.fn(),
     virtSnapshotDiff: vi.fn(),
+    virtStorage: vi.fn(),
+    virtVolumes: vi.fn(),
+    virtNetworks: vi.fn(),
+    virtManage: vi.fn(),
   },
 }))
 const loadVirt = vi.mocked(api.loadVirt)
@@ -37,6 +41,10 @@ const virtConsole = vi.mocked(api.virtConsole)
 const virtHistory = vi.mocked(api.virtHistory)
 const virtSnapshots = vi.mocked(api.virtSnapshots)
 const virtSnapshot = vi.mocked(api.virtSnapshot)
+const virtStorage = vi.mocked(api.virtStorage)
+const virtVolumes = vi.mocked(api.virtVolumes)
+const virtNetworks = vi.mocked(api.virtNetworks)
+const virtManage = vi.mocked(api.virtManage)
 
 function guest(over: Partial<VirtGuest>): VirtGuest {
   return {
@@ -120,6 +128,26 @@ describe('the virtualization helpers', () => {
     expect(e).toContain("pveum acl modify / --tokens 'root@pam!sb'")
     const host = virtErrorText({ kind: 'action_failed', message: "can't lock file", detail: null, cert: null, previous_fingerprint: null })
     expect(host).toMatch(/refused the action\.\ncan't lock file/)
+  })
+
+  it('phrases a refused storage or network change', () => {
+    const refused = (detail: NonNullable<Parameters<typeof virtErrorText>[0]['detail']>) =>
+      virtErrorText({ kind: 'unsupported', message: null, detail, cert: null, previous_fingerprint: null })
+    expect(refused({ code: 'refused', issue: 'in_use' })).toBe(issueText('in_use'))
+    expect(issueText('management_iface')).toMatch(/management traffic/)
+    expect(refused({ code: 'apply_touches_management', ifaces: ['vmbr0', 'nic0'] })).toContain('vmbr0, nic0')
+    expect(
+      refused({
+        code: 'needs_privilege',
+        account: 'root@pam!sb',
+        privilege: 'Sys.Modify',
+        path: '/nodes/pve',
+        command: 'pveum role add ServerBox-SysModify --privs Sys.Modify',
+      }),
+    ).toContain('pveum role add ServerBox-SysModify')
+    const g = [guest({})]
+    expect(refText({ guest_id: null, vmid: 100, device: 'net0', mac: null, ip: null }, g)).toBe('web (net0)')
+    expect(refText({ guest_id: 'gone', vmid: null, device: null, mac: null, ip: null }, g)).toBe('gone')
   })
 
   it('counts what runs, orders actions gentlest first, and keeps a bounded history', () => {
@@ -341,6 +369,10 @@ describe('the virtualization page', () => {
     await fireEvent.click(screen.getAllByRole('button', { name: /^revert$/i })[0])
     expect(screen.getByText(/disks go back to then/)).toBeInTheDocument()
     expect(virtSnapshot).toHaveBeenCalledTimes(1)
+    // The dialog closes and the revert it asked about is the one sent.
+    const reverts = screen.getAllByRole('button', { name: /^revert$/i })
+    await fireEvent.click(reverts[reverts.length - 1])
+    await waitFor(() => expect(virtSnapshot).toHaveBeenLastCalledWith('qemu/100', { op: 'revert', name: 'pre-up', start: false }, undefined))
   })
 
   it('says why a snapshot cannot be taken, instead of the form', async () => {
@@ -355,3 +387,136 @@ describe('the virtualization page', () => {
   })
 })
 
+
+describe('the virtualization page: storage and networks', () => {
+  const pool = (over: Partial<VirtPool>): VirtPool => ({
+    id: 'pve/local',
+    name: 'local',
+    node: 'pve',
+    type: 'dir',
+    path: '/var/lib/vz',
+    source: null,
+    capacity: 1000,
+    used: 400,
+    available: 600,
+    active: true,
+    autostart: null,
+    enabled: true,
+    shared: false,
+    content: ['images', 'iso'],
+    volume_count: null,
+    ...over,
+  })
+  const net = (over: Partial<VirtNetwork>): VirtNetwork => ({
+    id: 'pve/vmbr0',
+    name: 'vmbr0',
+    node: 'pve',
+    mode: 'bridge',
+    bridge: null,
+    cidrs: ['192.168.31.20/24'],
+    gateway: '192.168.31.1',
+    dhcp_ranges: [],
+    ports: ['nic0'],
+    vlan_aware: null,
+    vlan_id: null,
+    vlan_device: null,
+    bond_mode: null,
+    active: true,
+    autostart: true,
+    comment: null,
+    hosts: [],
+    xml: '',
+    pending_restart: false,
+    management_editable: false,
+    users: [{ guest_id: 'qemu/100', vmid: 100, device: 'net0', mac: null, ip: null }],
+    ...over,
+  })
+
+  function withResources(): VirtLoad {
+    const view = loaded([guest({})])
+    Object.assign(view.view!.capabilities, {
+      storage: true,
+      network: true,
+      storage_edit: true,
+      network_edit: true,
+      pool_types: ['dir', 'nfs'],
+      network_modes: ['bridge'],
+    })
+    return view
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    asAdmin(true)
+    getPve.mockResolvedValue({
+      configured: true,
+      addr: 'https://127.0.0.1:8006',
+      auth: 'token',
+      username: null,
+      has_password: false,
+      token_id: 'root@pam!sb',
+      has_token_secret: true,
+      cert_sha256: null,
+      editable: true,
+    })
+    loadVirt.mockResolvedValue(withResources())
+  })
+
+  it('lists the pools and a pool\'s volumes with who uses them, and says why a delete is refused', async () => {
+    virtStorage.mockResolvedValue({ pools: [pool({})], rules: { 'pve/local': { formats: ['qcow2', 'raw'], resizable: false } }, error: null })
+    virtVolumes.mockResolvedValue({
+      volumes: [
+        {
+          id: 'local:100/vm-100-disk-0.qcow2',
+          name: 'vm-100-disk-0.qcow2',
+          path: null,
+          format: 'qcow2',
+          content: 'images',
+          capacity: 8 * 1024 ** 3,
+          allocation: null,
+          backing: null,
+          created_at: null,
+          users: [{ guest_id: null, vmid: 100, device: null, mac: null, ip: null }],
+          backs: [],
+        },
+      ],
+      error: null,
+    })
+    virtManage.mockResolvedValue({
+      error: { kind: 'unsupported', message: null, detail: { code: 'refused', issue: 'in_use' }, cert: null, previous_fingerprint: null },
+    })
+    render(Virt, { onback: () => {} })
+    await fireEvent.click(await screen.findByRole('button', { name: /^storage$/i }))
+    expect(await screen.findByText('vm-100-disk-0.qcow2')).toBeInTheDocument()
+    expect(virtVolumes).toHaveBeenCalledWith('pve/local', undefined)
+    expect(screen.getByText(/Used by web/)).toBeInTheDocument()
+    const deletes = screen.getAllByRole('button').filter((b) => b.querySelector('.lucide-trash-2'))
+    await fireEvent.click(deletes[deletes.length - 1])
+    await fireEvent.click(screen.getByRole('button', { name: /^delete$/i }))
+    await waitFor(() =>
+      expect(virtManage).toHaveBeenCalledWith({ op: 'volume_delete', pool: 'pve/local', volume: 'local:100/vm-100-disk-0.qcow2' }, undefined),
+    )
+    expect(await screen.findByText(issueText('in_use'))).toBeInTheDocument()
+  })
+
+  it('shows a node\'s pending changes, keeps the management bridge locked, and asks before applying', async () => {
+    virtNetworks.mockResolvedValue({
+      networks: [net({}), net({ id: 'pve/vmbr9', name: 'vmbr9', cidrs: [], gateway: null, ports: [], users: [], management_editable: true })],
+      changes: [{ node: 'pve', diff: '--- a\n+++ b\n+auto vmbr9\n' }],
+      error: null,
+    })
+    virtManage.mockResolvedValue({ error: null })
+    render(Virt, { onback: () => {} })
+    await fireEvent.click(await screen.findByRole('button', { name: /^networks$/i }))
+    expect(await screen.findByText('vmbr9')).toBeInTheDocument()
+    // Only the bridge of its own is editable.
+    expect(screen.getAllByRole('button', { name: /^edit$/i })).toHaveLength(1)
+    expect(screen.getByText(/Pending changes on pve/)).toBeInTheDocument()
+    await fireEvent.click(screen.getByRole('button', { name: /^apply$/i }))
+    expect(virtManage).not.toHaveBeenCalled()
+    expect(screen.getByText(/reloads its networking/)).toBeInTheDocument()
+    const applies = screen.getAllByRole('button', { name: /^apply$/i })
+    await fireEvent.click(applies[applies.length - 1])
+    await waitFor(() => expect(virtManage).toHaveBeenCalledWith({ op: 'network_apply', node: 'pve' }, undefined))
+  })
+})

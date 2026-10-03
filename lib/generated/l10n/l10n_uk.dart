@@ -4211,6 +4211,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get virtResNameEmpty => 'Введіть назву';
 
   @override
+  String get virtResNotFound => 'Більше немає на цьому хості';
+
+  @override
+  String get virtResUnsupported => 'Цей хост цього не підтримує';
+
+  @override
   String get virtResNameInvalid =>
       'Такої назви хост не прийме (літери, цифри, . _ -)';
 

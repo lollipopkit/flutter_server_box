@@ -64,6 +64,12 @@ import type {
   VirtHistoryWindow,
   VirtLoad,
   VirtSnapDiff,
+  VirtChange,
+  VirtNetwork,
+  VirtNetworkChanges,
+  VirtPool,
+  VirtPoolRule,
+  VirtVolume,
   VirtSnapshotOp,
   VirtSnapshots,
   VirtStats,
@@ -559,6 +565,40 @@ export const api = {
       '/virt/snapshot/diff',
       { method: 'POST', body: JSON.stringify({ guest, name, password: password ?? null }) },
       'Failed to compare the snapshot',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  virtStorage: (password?: string) =>
+    request<{ pools: VirtPool[] | null; rules: Record<string, VirtPoolRule> | null; error: VirtError | null }>(
+      '/virt/storage',
+      { method: 'POST', body: JSON.stringify({ password: password ?? null }) },
+      'Failed to read the storage',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  virtVolumes: (pool: string, password?: string) =>
+    request<{ volumes: VirtVolume[] | null; error: VirtError | null }>(
+      '/virt/volumes',
+      { method: 'POST', body: JSON.stringify({ pool, password: password ?? null }) },
+      'Failed to read the volumes',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  virtNetworks: (password?: string) =>
+    request<{ networks: VirtNetwork[] | null; changes: VirtNetworkChanges[] | null; error: VirtError | null }>(
+      '/virt/networks',
+      { method: 'POST', body: JSON.stringify({ password: password ?? null }) },
+      'Failed to read the networks',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// Checked against what the host lists now, then made; returns once the
+  /// host has.
+  virtManage: (change: VirtChange, password?: string) =>
+    request<{ error: VirtError | null }>(
+      '/virt/manage',
+      { method: 'POST', body: JSON.stringify({ change, password: password ?? null }) },
+      'Failed to reach the virtualization host',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),

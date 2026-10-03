@@ -470,3 +470,262 @@ pub fn overlays(chain: &crate::libvirt::snapshot::VirtSnapChain, name: &str, dir
         })
         .collect()
 }
+
+// ---------------------------------------------------------------------------
+// Storage and networks
+// ---------------------------------------------------------------------------
+
+/// A pool as [`crate::resource`] has it. An inactive pool reports 0 for
+/// everything: unknown, not empty.
+pub fn pool_of(p: &crate::libvirt::VirtPool) -> crate::resource::Pool {
+    let known = p.active && p.capacity.is_some_and(|c| c > 0);
+    crate::resource::Pool {
+        id: p.name.clone(),
+        name: p.name.clone(),
+        node: None,
+        pool_type: p.pool_type.clone().unwrap_or_default(),
+        path: p.target.clone(),
+        source: p.source.clone(),
+        capacity: if known { p.capacity } else { None },
+        used: if known { p.allocation } else { None },
+        available: if known { p.available } else { None },
+        active: p.active,
+        autostart: Some(p.autostart),
+        enabled: None,
+        shared: None,
+        content: Vec::new(),
+        volume_count: p.volumes.as_ref().map(|v| v.len() as u64),
+    }
+}
+
+/// A volume of `pool`, with the domains whose disks are it: by path, or a
+/// `type='volume'` disk naming its pool and volume instead.
+pub fn volume_of(v: &crate::libvirt::VirtVolume, pool: &str, disks: &[crate::libvirt::VirtDiskUse]) -> crate::resource::Volume {
+    let uses = |d: &crate::libvirt::VirtDiskUse| match &d.source {
+        None => false,
+        Some(source) => {
+            v.path.as_deref() == Some(source.as_str())
+                || (d.kind == "volume" && (source == &format!("{pool}/{}", v.name) || source == &v.name))
+        }
+    };
+    crate::resource::Volume {
+        id: v.name.clone(),
+        name: v.name.clone(),
+        path: v.path.clone(),
+        format: v.format.clone(),
+        content: None,
+        capacity: v.capacity,
+        allocation: v.allocation,
+        backing: v.backing.clone(),
+        created_at: None,
+        users: disks
+            .iter()
+            .filter(|d| uses(d))
+            .map(|d| crate::resource::GuestRef { guest_id: Some(d.domain.clone()), device: Some(d.target.clone()), ..Default::default() })
+            .collect(),
+        backs: Vec::new(),
+    }
+}
+
+/// `volumes` with what is made on each — the volumes in `every` (any active
+/// pool's) whose backing file it is. A base image is attached to nothing,
+/// and its clones may be in another pool.
+pub fn with_backs(mut volumes: Vec<crate::resource::Volume>, every: &[crate::resource::Volume]) -> Vec<crate::resource::Volume> {
+    for v in &mut volumes {
+        let Some(path) = v.path.as_deref() else { continue };
+        v.backs = every
+            .iter()
+            .filter(|o| o.backing.as_deref() == Some(path))
+            .filter_map(|o| o.path.clone())
+            .collect();
+    }
+    volumes
+}
+
+/// A network with the domains that have a NIC on it — by network name, or on
+/// its bridge directly — and their addresses from its DHCP leases.
+pub fn network_of(n: &crate::libvirt::VirtNetworkInfo, all: &crate::libvirt::VirtNetworks) -> crate::resource::Network {
+    let on = |i: &crate::libvirt::VirtIfaceUse| match i.kind.as_str() {
+        "network" => i.source.as_deref() == Some(n.name.as_str()),
+        "bridge" => n.bridge.is_some() && i.source == n.bridge,
+        _ => false,
+    };
+    crate::resource::Network {
+        id: n.name.clone(),
+        name: n.name.clone(),
+        node: None,
+        mode: n.mode.clone(),
+        bridge: n.bridge.clone(),
+        cidrs: n.ips.iter().map(|ip| ip.cidr.clone()).collect(),
+        gateway: None,
+        dhcp_ranges: n.ips.iter().flat_map(|ip| ip.dhcp_ranges.iter().cloned()).collect(),
+        ports: n.forward_devs.clone(),
+        vlan_aware: None,
+        vlan_id: None,
+        vlan_device: None,
+        bond_mode: None,
+        active: n.active,
+        autostart: Some(n.autostart),
+        comment: None,
+        hosts: n.hosts.clone(),
+        xml: n.xml.clone(),
+        pending_restart: n.pending_restart,
+        management_editable: true,
+        users: all
+            .ifaces
+            .iter()
+            .filter(|i| on(i))
+            .map(|i| crate::resource::GuestRef {
+                guest_id: Some(i.domain.clone()),
+                vmid: None,
+                device: i.interface.clone(),
+                mac: i.mac.clone(),
+                // The leases are every network's: one MAC can be on two
+                // isolated networks with an address on each.
+                ip: all
+                    .leases
+                    .iter()
+                    .find(|l| l.network == n.name && i.mac.as_deref() == Some(l.mac.as_str()))
+                    .map(|l| l.ip.clone()),
+            })
+            .collect(),
+    }
+}
+
+/// What a change runs as on a libvirt host: one of the resource scripts, or
+/// an existing network's edit ([`crate::libvirt::net`]), which rewrites the
+/// definition and, when told to, restarts the network on it with the
+/// rollback that keeps it up.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(tag = "script", content = "op", rename_all = "snake_case")]
+pub enum ResourceScript {
+    Resource(crate::libvirt::manage::VirtResourceOp),
+    Net(crate::libvirt::net::VirtNetOp),
+}
+
+impl ResourceScript {
+    /// The script, or why it cannot be written.
+    pub fn script(&self) -> Result<String, VirtError> {
+        match self {
+            ResourceScript::Resource(op) => crate::libvirt::manage::resource_script(op),
+            ResourceScript::Net(op) => crate::libvirt::net::net_change_script(op),
+        }
+    }
+
+    /// What the script printed, as the change made or the host's refusal.
+    pub fn parse(&self, raw: &str) -> Result<(), VirtError> {
+        match self {
+            ResourceScript::Resource(_) => crate::libvirt::manage::parse_resource(raw),
+            ResourceScript::Net(_) => crate::libvirt::net::parse_net_change(raw),
+        }
+    }
+}
+
+/// `change` as the script that makes it, checked first against `list` — the
+/// host's pools, networks and the volumes of the pool it is to, read for
+/// this change ([`crate::resource::issue`]).
+pub fn resource_script(change: &crate::resource::Change, list: crate::resource::Listing<'_>) -> Result<ResourceScript, Error> {
+    use crate::libvirt::manage::{VirtNetIpv4, VirtResourceOp as R};
+    use crate::libvirt::net::{VirtNetEdit, VirtNetHost, VirtNetOp as N};
+    use crate::resource::Change as C;
+    if let Some(issue) = crate::resource::issue(change, HostKind::Libvirt, list) {
+        return Err(crate::resource::refusal(issue));
+    }
+    let pool = || change.pool().and_then(|id| list.pools.iter().find(|p| p.id == id)).expect("checked");
+    let volume = |id: &str| list.volumes.iter().find(|v| v.id == id).expect("checked");
+    let network = || change.network().and_then(|id| list.networks.iter().find(|n| n.id == id)).expect("checked");
+    let trimmed = |s: &Option<String>| s.as_deref().map(str::trim).filter(|s| !s.is_empty()).map(str::to_owned);
+    let op = match change {
+        C::PoolCreate { name, pool_type, source, target, autostart, .. } => R::PoolCreate {
+            name: name.clone(),
+            pool_type: pool_type.clone(),
+            target: match pool_type.as_str() {
+                "dir" => Some(source.clone()),
+                "netfs" => target.clone(),
+                _ => None,
+            },
+            source: (pool_type != "dir").then(|| source.clone()),
+            autostart: *autostart,
+        },
+        C::PoolSetActive { active: true, .. } => R::PoolStart { name: pool().id.clone() },
+        C::PoolSetActive { active: false, .. } => R::PoolStop { name: pool().id.clone() },
+        C::PoolSetAutostart { on, .. } => R::PoolAutostart { name: pool().id.clone(), on: *on },
+        C::PoolRefresh { .. } => R::PoolRefresh { name: pool().id.clone() },
+        C::PoolDelete { delete_storage, .. } => {
+            let p = pool();
+            R::PoolDelete { name: p.id.clone(), active: p.active, delete_storage: *delete_storage }
+        }
+        C::VolumeCreate { name, gib, format, .. } => {
+            R::VolCreate { pool: pool().id.clone(), name: name.clone(), bytes: gib << 30, format: format.clone() }
+        }
+        C::VolumeDelete { volume: v, .. } => R::VolDelete { pool: pool().id.clone(), name: volume(v).name.clone() },
+        C::VolumeResize { volume: v, bytes, .. } => {
+            R::VolResize { pool: pool().id.clone(), name: volume(v).name.clone(), bytes: *bytes }
+        }
+        C::VolumeClone { volume: v, name, .. } => {
+            R::VolClone { pool: pool().id.clone(), name: volume(v).name.clone(), new_name: name.clone() }
+        }
+        C::NetworkCreate { name, mode, bridge, cidr, dhcp_start, dhcp_end, autostart, .. } => {
+            let ipv4 = match trimmed(cidr) {
+                Some(c) if mode != "bridge" => {
+                    let (address, prefix) = c.split_once('/').unwrap_or((c.as_str(), ""));
+                    Some(VirtNetIpv4 {
+                        address: address.to_owned(),
+                        prefix: prefix.parse().unwrap_or_default(),
+                        dhcp_start: dhcp_start.clone(),
+                        dhcp_end: dhcp_end.clone(),
+                    })
+                }
+                _ => None,
+            };
+            R::NetCreate {
+                name: name.clone(),
+                mode: mode.clone(),
+                bridge: if mode == "bridge" { trimmed(bridge) } else { None },
+                ipv4,
+                autostart: *autostart,
+            }
+        }
+        C::NetworkSetActive { active: true, .. } => R::NetStart { name: network().id.clone() },
+        C::NetworkSetActive { active: false, .. } => R::NetStop { name: network().id.clone() },
+        C::NetworkSetAutostart { on, .. } => R::NetAutostart { name: network().id.clone(), on: *on },
+        C::NetworkDelete { .. } => R::NetDelete { name: network().id.clone() },
+        C::NetworkEdit { mode, bridge, address, prefix, dhcp_start, dhcp_end, hosts, restart, base_xml, .. } => {
+            let n = network();
+            return Ok(ResourceScript::Net(N::Edit {
+                name: n.id.clone(),
+                edit: VirtNetEdit {
+                    mode: mode.clone(),
+                    bridge: if mode == "bridge" { trimmed(bridge) } else { None },
+                    address: trimmed(address),
+                    prefix: *prefix,
+                    dhcp_start: trimmed(dhcp_start),
+                    dhcp_end: trimmed(dhcp_end),
+                    hosts: hosts
+                        .iter()
+                        .map(|h| VirtNetHost {
+                            mac: h.mac.to_ascii_lowercase(),
+                            ip: h.ip.clone(),
+                            name: h.name.clone().filter(|n| !n.is_empty()),
+                        })
+                        .collect(),
+                },
+                base_xml: base_xml.clone().unwrap_or_else(|| n.xml.clone()),
+                active: n.active,
+                restart: *restart,
+                force_restart: false,
+            }));
+        }
+        // Its own op: `net-destroy` then `net-start`, with no definition
+        // written either way — what is to be restarted onto is already in it.
+        C::NetworkRestart { base_xml, .. } => {
+            let n = network();
+            return Ok(ResourceScript::Net(N::Restart { name: n.id.clone(), base_xml: base_xml.clone().unwrap_or_else(|| n.xml.clone()) }));
+        }
+        // Refused by `issue` above: PVE's.
+        C::NetworkEditBridge { .. } | C::NetworkApply { .. } | C::NetworkRevert { .. } => {
+            return Err(crate::resource::refusal(crate::resource::Issue::Unsupported));
+        }
+    };
+    Ok(ResourceScript::Resource(op))
+}

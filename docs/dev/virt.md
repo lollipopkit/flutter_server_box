@@ -601,7 +601,9 @@ the Hardware view (groups under a rule, an index beside them from 860 pt —
 and networks as forms in the detail pane (a page with one column), from the
 list bar's add button. Views: `lib/view/page/virt/storage.dart`,
 `network.dart`; changes: `VirtResourceChange` (`virt_manage.dart`), checked
-with `virtResourceIssue` before they are sent, made by `VirtBackend.manage`.
+with `virtResourceIssue` (`sbm_virt::resource::issue`) as the form is
+filled, and again against what the host lists when `VirtBackend.manage`
+makes them (`pve::Client::manage`, `libvirt::host::resource_script`).
 What each host offers is capabilities: `storageEdit`, `poolTypes`,
 `poolAutostart`, `poolDeleteStorage`, `volumeResize`, `volumeClone`,
 `upload`, `networkEdit`, `networkModes`, `networkStart`, `networkApply`.
@@ -1149,6 +1151,27 @@ storage support, diff, create, revert (with the start task waited for) and
 delete on `pve::Client`, and libvirt's mapping (`host::snapshot_of`,
 `chain_of`, `overlays`, `pool_of_file`). The app's `virtSnapshotNameIssue`,
 `virtSnapshotMemory`, `virtPoolHoldsFiles` and `virtPoolOfFile` call them.
+
+Since 5.4, storage and networks: `sbm_virt::resource` (pool, volume,
+network, the `Change` a client asks for by id, and `issue`, the rules it is
+checked by — names, sources, subnets, DHCP ranges, static hosts, in use, the
+management interface), `pve::net` (the live probe, which interfaces carry
+the node's management traffic, which a pending diff touches), PVE's
+listings and changes on `pve::Client` (`storage_pools`, `volumes` with the
+owner kept only while that guest exists, `networks` with each bridge's
+guests, `network_changes`, `manage` — a node's network changes one at a
+time, an apply refused when it touches the management interface), and
+libvirt's mapping (`host::pool_of`, `volume_of`, `with_backs`, `network_of`,
+`resource_script`). A change is resolved and checked against the host's
+listings read for it, so a page's stale copy cannot get one past the rules.
+The agent serves them as `/virt/storage`, `/virt/volumes`, `/virt/networks`
+and `/virt/manage`; the app's `virt_manage.dart` functions are FFI
+wrappers. The app's PVE upload stays its own streamed connection, and the
+panel has no upload yet. Verified 2026-10-04 against PVE 9.2.2 and libvirt
+11.3.0 through the agent and the app's `virt_real_test.dart`: a bridge made,
+applied, edited (its address kept), deleted and reverted; an apply touching
+`vmbr0` refused; storages, volumes, pools and networks made and removed; an
+orphan volume (its VMID gone) deletable.
 
 Still in Dart until their part of item 5 moves them (each marked
 `TODO(migration)`): every other PVE call `PveBackend` makes, built by a Dio
@@ -1729,7 +1752,7 @@ Decisions:
   mode — where it would otherwise be dropped with nothing said.
 - **PVE allows a bridge, and nothing carrying the node's management
   traffic.** Decided from what the node itself says, read over the same
-  server connection (`virtPveLiveNetScript`, no root needed): the devices
+  server connection (`sbm_virt::pve::net::LIVE_NET_SCRIPT`, no root needed): the devices
   its default routes go through (IPv4 and IPv6), the ones carrying the local
   address of an established TCP connection — this app's among them,
   whatever it came through (SSH, the agent, a NAT or VPN in front of the
@@ -1740,7 +1763,7 @@ Decisions:
   protects the bridge under it, where turning VLAN awareness off would cut
   it. A node that does not answer (another cluster node, a failed read) has
   every interface with an address protected. An **apply** is checked
-  against the pending diff (`virtPveDiffIfaces`: the stanza each changed
+  against the pending diff (`pve::net::diff_ifaces`: the stanza each changed
   line is under — a `#` line too, which is how PVE writes an interface's
   `comments`; a hunk that starts inside a stanza is placed by its line
   number in the node's current `/etc/network/interfaces`, read with the

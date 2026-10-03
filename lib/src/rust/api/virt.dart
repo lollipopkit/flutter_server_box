@@ -271,32 +271,22 @@ String virtStorageScript() =>
 Future<String> parseVirtStorageJson({required String raw}) =>
     RustLib.instance.api.crateApiVirtParseVirtStorageJson(raw: raw);
 
-/// What each of `names` in `pool` is: format and sizes
+/// What each of `names` in `pool` is: format and sizes. Read with
+/// [`super::resource::virt_libvirt_volumes`].
 String virtVolumesScript({required String pool, required List<String> names}) =>
     RustLib.instance.api.crateApiVirtVirtVolumesScript(
       pool: pool,
       names: names,
     );
 
-/// [`virt_volumes_script`]'s output → `Vec<VirtVolume>` JSON
-Future<String> parseVirtVolumesJson({required String raw}) =>
-    RustLib.instance.api.crateApiVirtParseVirtVolumesJson(raw: raw);
-
-/// Networks, DHCP leases and every domain's interfaces
+/// Networks, DHCP leases and every domain's interfaces. Read with
+/// [`super::resource::virt_libvirt_networks`].
 String virtNetworksScript() =>
     RustLib.instance.api.crateApiVirtVirtNetworksScript();
 
-/// [`virt_networks_script`]'s output → `VirtNetworks` JSON
-Future<String> parseVirtNetworksJson({required String raw}) =>
-    RustLib.instance.api.crateApiVirtParseVirtNetworksJson(raw: raw);
-
-/// Editing an existing network (phase 10): `op_json` is a
-/// `sbm_virt::libvirt::net::VirtNetOp`. Parse with [`parse_virt_net_change`].
-String virtNetChangeScript({required String opJson}) =>
-    RustLib.instance.api.crateApiVirtVirtNetChangeScript(opJson: opJson);
-
-/// [`virt_net_change_script`]'s output: `Ok` once the definition (and, when
-/// asked for, the running network) has the change
+/// An existing network's edit or restart
+/// ([`super::resource::virt_libvirt_resource_script`], `net`): `Ok` once the
+/// definition (and, when asked for, the running network) has the change
 Future<void> parseVirtNetChange({required String raw}) =>
     RustLib.instance.api.crateApiVirtParseVirtNetChange(raw: raw);
 

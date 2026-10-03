@@ -145,8 +145,8 @@ pub struct PowerRequest {
 }
 
 #[derive(Serialize)]
-struct PowerResponse {
-    error: Option<VirtError>,
+pub(crate) struct PowerResponse {
+    pub(crate) error: Option<VirtError>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -376,12 +376,12 @@ pub async fn power(
 }
 
 /// Where a guest lives: the PVE session, or libvirt on this machine.
-enum Backend {
+pub(crate) enum Backend {
     Pve(Arc<Client>),
     Libvirt,
 }
 
-async fn backend(state: &AppState) -> Result<Backend, HttpResponse> {
+pub(crate) async fn backend(state: &AppState) -> Result<Backend, HttpResponse> {
     match pve_client(state).await {
         Ok(Some(client)) => Ok(Backend::Pve(client)),
         Ok(None) if unix() => Ok(Backend::Libvirt),
@@ -889,7 +889,7 @@ async fn libvirt_view(state: &AppState, password: Option<&str>) -> Result<HostVi
 
 /// Runs a libvirt script and parses it: as this account, and through sudo
 /// once libvirt has refused it (from then on, every time).
-async fn run_libvirt<T>(
+pub(crate) async fn run_libvirt<T>(
     state: &AppState,
     script: &str,
     password: Option<&str>,

@@ -1,6 +1,10 @@
+import 'dart:convert';
+
 import 'package:collection/collection.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:server_box/data/model/virt/virt.dart';
+import 'package:server_box/data/model/virt/virt_rust.dart';
+import 'package:server_box/src/rust/api/resource.dart' as res;
 import 'package:server_box/src/rust/api/virt.dart' as ffi;
 
 part 'virt_resources.freezed.dart';
@@ -499,13 +503,13 @@ enum VirtExternalIssue {
   unknown,
 }
 
-/// Whether a volume of [pool] can be resized on its host. libvirt resizes
-/// only a pool of files (its `logical` backend, among others, has no resize
-/// at all: "storage pool does not support changing of volume capacity",
-/// libvirt 11.3); PVE resizes a disk on any storage.
-// TODO(migration): into `sbm_virt` with storage (#1623 item 5.4).
+/// Whether a volume of [pool] can be resized on its host
+/// (`sbm_virt::resource::volume_resizable`).
 bool virtVolumeResizable(VirtStoragePool pool, VirtHostKind host) =>
-    host == VirtHostKind.pve || const {'dir', 'fs', 'netfs'}.contains(pool.type);
+    res.virtVolumeResizable(
+      poolJson: jsonEncode(VirtRust.poolJson(pool)),
+      pve: host == VirtHostKind.pve,
+    );
 
 /// An active pool of files: where an overlay can go
 /// (`sbm_virt::libvirt::host::pool_holds_files`).

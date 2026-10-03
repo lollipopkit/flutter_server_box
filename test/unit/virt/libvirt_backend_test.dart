@@ -1350,25 +1350,6 @@ void main() {
     expect(nets[1].users, isEmpty);
   });
 
-  test('a MAC on two isolated networks gets each network\'s lease', () {
-    const mac = '52:54:00:00:00:01';
-    const all = LibvirtNetworks(
-      networks: [LibvirtNetwork(name: 'a'), LibvirtNetwork(name: 'b')],
-      ifaces: [
-        LibvirtIfaceUse(domain: 'g1', kind: 'network', source: 'a', mac: mac),
-        LibvirtIfaceUse(domain: 'g2', kind: 'network', source: 'b', mac: mac),
-      ],
-      leases: [
-        LibvirtLease(network: 'a', mac: mac, ip: '10.0.1.2/24'),
-        LibvirtLease(network: 'b', mac: mac, ip: '10.0.2.2/24'),
-      ],
-    );
-    expect(
-      LibvirtBackend.networkOf(all.networks[1], all).users.single.ip,
-      '10.0.2.2/24',
-    );
-  });
-
   group('hardware', () {
     // `sbhw-test`, captured running with 3 of 4 vCPUs online and 2 in the
     // persistent definition: the one change waiting for the next start.
