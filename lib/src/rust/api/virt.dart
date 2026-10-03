@@ -209,7 +209,7 @@ Future<String> parseVirtNetworksJson({required String raw}) =>
     RustLib.instance.api.crateApiVirtParseVirtNetworksJson(raw: raw);
 
 /// Editing an existing network (phase 10): `op_json` is a
-/// `sbm_parser::virt_net::VirtNetOp`. Parse with [`parse_virt_net_change`].
+/// `sbm_virt::libvirt::net::VirtNetOp`. Parse with [`parse_virt_net_change`].
 String virtNetChangeScript({required String opJson}) =>
     RustLib.instance.api.crateApiVirtVirtNetChangeScript(opJson: opJson);
 
@@ -397,7 +397,7 @@ void parseVirtResource({required String raw}) =>
     RustLib.instance.api.crateApiVirtParseVirtResource(raw: raw);
 
 /// The command writing its stdin into a volume, for a channel that carries
-/// bytes; see `sbm_parser::virt_manage::vol_upload_command` for what goes
+/// bytes; see `sbm_virt::libvirt::manage::vol_upload_command` for what goes
 /// on stdin, in which order
 String virtVolUploadCommand({
   required String pool,
@@ -422,7 +422,7 @@ String virtUploadGoLine() =>
 String virtUploadReadyMarker() =>
     RustLib.instance.api.crateApiVirtVirtUploadReadyMarker();
 
-/// Power actions (mirrors sbm_parser::virt::VirtAction)
+/// Power actions (mirrors sbm_virt::libvirt::VirtAction)
 enum VirtActionKind {
   start,
 
@@ -440,7 +440,7 @@ enum VirtActionKind {
   resume,
 }
 
-/// Classes of [`VirtFfiError`] (mirrors sbm_parser::virt::VirtError)
+/// Classes of [`VirtFfiError`] (mirrors sbm_virt::libvirt::VirtError)
 enum VirtErrorKind {
   /// `virsh` is not on PATH
   notInstalled,
@@ -488,7 +488,7 @@ class VirtFfiError implements FrbException {
 }
 
 /// How the upload command reaches the daemon (mirrors
-/// sbm_parser::virt_manage::VirtUploadEntry)
+/// sbm_virt::libvirt::manage::VirtUploadEntry)
 enum VirtUploadEntryKind {
   /// As this account
   direct,

@@ -29,7 +29,7 @@ import 'package:server_box/src/rust/api/virt.dart' as ffi;
 /// libvirt through `virsh`, run by `ServerNotifier.ensureExec()` — so over
 /// SSH, over a monitor agent with the `full_access` grant, or on this device.
 ///
-/// Scripts and parsers are `sbm_parser::virt`'s (FFI). Every script is POSIX
+/// Scripts and parsers are `sbm_virt::libvirt`'s (FFI). Every script is POSIX
 /// `sh`, fed to `sh` on stdin, never run as the login shell's command line.
 ///
 /// **Permissions.** `qemu:///system` wants root or the `libvirt` group. When
@@ -57,7 +57,7 @@ class LibvirtBackend implements VirtBackend {
        _now = now ?? DateTime.now;
 
   /// The ISO tools a cloud-init seed may be made with, in order; null: all
-  /// of them, in `sbm_parser`'s order. The end-to-end tests narrow it to
+  /// of them, in `sbm_virt`'s order. The end-to-end tests narrow it to
   /// make a seed with each tool in turn.
   final List<String>? seedTools;
 
@@ -575,7 +575,7 @@ class LibvirtBackend implements VirtBackend {
   ///
   /// [form] `external` writes a disk-only one instead: an overlay per disk
   /// (in [overlayPool] where one was picked), the guest left running. What
-  /// that means for the chain is `sbm_parser::virt_snapshot`'s module
+  /// that means for the chain is `sbm_virt::libvirt::snapshot`'s module
   /// comment; the guard is read before anything is sent.
   @override
   Future<void> createSnapshot(
@@ -792,7 +792,7 @@ class LibvirtBackend implements VirtBackend {
   /// KVM and q35 where it can), the disk — empty, or a copy of a cloud image
   /// — and a cloud-init seed, with their paths, then the domain on them —
   /// defined, and started when asked. A define the host refuses deletes the
-  /// volumes again. See `sbm_parser::virt::create_volume_script`.
+  /// volumes again. See `sbm_virt::libvirt::create_volume_script`.
   ///
   /// A cloud-init password is hashed here (SHA-512 crypt, a salt from
   /// `Random.secure`): only the hash reaches the host.
@@ -879,7 +879,7 @@ class LibvirtBackend implements VirtBackend {
     );
   }
 
-  /// [ci] as `sbm_parser::virt_cloud_init::VirtCloudInit` JSON for the
+  /// [ci] as `sbm_virt::libvirt::cloud_init::VirtCloudInit` JSON for the
   /// domain [name]: the password as its SHA-512 crypt hash — or, where none
   /// was typed, [keepHash] (the seed's own, when it is edited) — the
   /// hostname [name] where none was given, a new instance ID, and the NIC
@@ -1489,7 +1489,7 @@ class LibvirtBackend implements VirtBackend {
   Future<void> manage(VirtResourceChange change) async {
     final op = opJson(change);
     try {
-      // An existing network's edit is its own script (`virt_net`): it
+      // An existing network's edit is its own script (`sbm_virt::libvirt::net`): it
       // rewrites the definition and, when told to, restarts the network on
       // it, with the rollback that keeps it up.
       if (change is VirtNetworkEdit || change is VirtNetworkRestart) {
@@ -1523,7 +1523,7 @@ class LibvirtBackend implements VirtBackend {
     return '';
   }
 
-  /// [change] as `sbm_parser::virt_manage::VirtResourceOp` JSON.
+  /// [change] as `sbm_virt::libvirt::manage::VirtResourceOp` JSON.
   @visibleForTesting
   static Map<String, Object?> opJson(VirtResourceChange change) {
     switch (change) {
@@ -1675,7 +1675,7 @@ class LibvirtBackend implements VirtBackend {
 
   /// A raw volume of the file's size, then the file into it with
   /// `vol-upload` over a channel that carries bytes (see
-  /// `sbm_parser::virt_manage::vol_upload_command`): through sudo when
+  /// `sbm_virt::libvirt::manage::vol_upload_command`): through sudo when
   /// libvirt needs it, the password ahead of the file on the same stdin. A
   /// failed or cancelled upload deletes the volume, which holds part of a
   /// file at best.
@@ -1964,7 +1964,7 @@ class LibvirtBackend implements VirtBackend {
   final _hardware = <String, LibvirtHardwareInfo>{};
 
   /// One round trip: both definitions, autostart, the host's CPUs and
-  /// memory, and each disk's size. See `sbm_parser::virt::hardware_script`.
+  /// memory, and each disk's size. See `sbm_virt::libvirt::hardware_script`.
   @override
   Future<VirtHardware> hardware(VirtGuest guest) async {
     final info = await _hardwareInfo(guest);
@@ -2342,7 +2342,7 @@ class LibvirtBackend implements VirtBackend {
     return cloudInitStateOf(read, nicMacs: [for (final n in info.config.nics) n.mac]);
   }
 
-  /// A seed's read ([read], `sbm_parser::virt_cloud_init::VirtSeedRead`
+  /// A seed's read ([read], `sbm_virt::libvirt::cloud_init::VirtSeedRead`
   /// JSON) as the view shows it: never the hash, only that there is one.
   @visibleForTesting
   static VirtCloudInitState cloudInitStateOf(
@@ -2436,7 +2436,7 @@ class LibvirtBackend implements VirtBackend {
     return '52:54:00:${b()}:${b()}:${b()}';
   }
 
-  /// [change] as `sbm_parser::virt::VirtHwChange` JSON, addressed by what
+  /// [change] as `sbm_virt::libvirt::VirtHwChange` JSON, addressed by what
   /// [info]'s two definitions have.
   @visibleForTesting
   static Map<String, Object?> changeJson(
@@ -2677,7 +2677,7 @@ class LibvirtBackend implements VirtBackend {
   };
 
   /// The host's USB and PCI devices (`nodedev-list`), for giving one to a
-  /// guest. See `sbm_parser::virt::host_devices_script`.
+  /// guest. See `sbm_virt::libvirt::host_devices_script`.
   @override
   Future<VirtHostDevices> hostDevices(VirtGuest guest) async {
     final d = LibvirtHostDevices.fromJson(

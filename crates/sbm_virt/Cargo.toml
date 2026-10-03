@@ -1,0 +1,20 @@
+[package]
+name = "sbm_virt"
+version = "0.1.0"
+edition = "2024"
+description = "ServerBox virtualization: the libvirt command layer, shared by the monitor agent and the app"
+
+[dependencies]
+# The script helpers (shell quoting, the sudo marker) every command layer shares.
+sbm_parser = { path = "../sbm_parser" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+roxmltree = "0.21"
+# Scripts that carry another script (an upload's writer) base64-encoded
+base64 = "0.23"
+# SHA-512 crypt of a cloud-init password (libvirt::cloud_init)
+sha2 = "0.11"
+
+[dev-dependencies]
+# .env loading for the opt-in SSH e2e test (tests/ssh_e2e.rs)
+dotenvy = "0.15"

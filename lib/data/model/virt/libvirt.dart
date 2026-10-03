@@ -4,7 +4,7 @@ import 'package:server_box/data/model/virt/virt_detail.dart';
 part 'libvirt.freezed.dart';
 part 'libvirt.g.dart';
 
-/// `sbm_parser::virt` output as it crosses the FFI: serde JSON with
+/// `sbm_virt::libvirt` output as it crosses the FFI: serde JSON with
 /// snake_case keys. Raw counters only; `VirtRateTracker` turns two readings
 /// into rates.
 
@@ -98,7 +98,7 @@ abstract class LibvirtDomain with _$LibvirtDomain {
     required String uuid,
     required String name,
 
-    /// `sbm_parser::virt::VirtState`: `running`, `paused`, `stopped`,
+    /// `sbm_virt::libvirt::VirtState`: `running`, `paused`, `stopped`,
     /// `starting`, `stopping`, `unknown`.
     required String state,
 
@@ -164,7 +164,7 @@ abstract class LibvirtDomainDetail with _$LibvirtDomainDetail {
       _$LibvirtDomainDetailFromJson(json);
 }
 
-/// `sbm_parser::virt::VirtVncConsoleInfo`: a display and its VNC password.
+/// `sbm_virt::libvirt::VirtVncConsoleInfo`: a display and its VNC password.
 ///
 /// Not freezed: a generated `toString` would print the password.
 final class LibvirtVncConsoleInfo {
@@ -199,7 +199,7 @@ final class LibvirtVncConsoleInfo {
       '${password == null ? 'none' : '[redacted]'}, known: $passwordKnown)';
 }
 
-/// `sbm_parser::virt::VirtSnapshotInfo`.
+/// `sbm_virt::libvirt::VirtSnapshotInfo`.
 @freezed
 abstract class LibvirtSnapshot with _$LibvirtSnapshot {
   @JsonSerializable(fieldRename: FieldRename.snake)
@@ -226,7 +226,7 @@ abstract class LibvirtSnapshot with _$LibvirtSnapshot {
       _$LibvirtSnapshotFromJson(json);
 }
 
-/// `sbm_parser::virt_snapshot::VirtSnapLayer`.
+/// `sbm_virt::libvirt::snapshot::VirtSnapLayer`.
 @freezed
 abstract class LibvirtSnapLayer with _$LibvirtSnapLayer {
   @JsonSerializable(fieldRename: FieldRename.snake)
@@ -242,7 +242,7 @@ abstract class LibvirtSnapLayer with _$LibvirtSnapLayer {
       _$LibvirtSnapLayerFromJson(json);
 }
 
-/// `sbm_parser::virt_snapshot::VirtSnapDiff`.
+/// `sbm_virt::libvirt::snapshot::VirtSnapDiff`.
 @freezed
 abstract class LibvirtSnapDiff with _$LibvirtSnapDiff {
   @JsonSerializable(fieldRename: FieldRename.snake)
@@ -259,7 +259,7 @@ abstract class LibvirtSnapDiff with _$LibvirtSnapDiff {
       _$LibvirtSnapDiffFromJson(json);
 }
 
-/// `sbm_parser::virt_snapshot::VirtSnapChain`.
+/// `sbm_virt::libvirt::snapshot::VirtSnapChain`.
 @freezed
 abstract class LibvirtSnapChain with _$LibvirtSnapChain {
   @JsonSerializable(fieldRename: FieldRename.snake)
@@ -271,7 +271,7 @@ abstract class LibvirtSnapChain with _$LibvirtSnapChain {
       _$LibvirtSnapChainFromJson(json);
 }
 
-/// `sbm_parser::virt_snapshot::VirtSnapChainDisk`.
+/// `sbm_virt::libvirt::snapshot::VirtSnapChainDisk`.
 @freezed
 abstract class LibvirtSnapChainDisk with _$LibvirtSnapChainDisk {
   @JsonSerializable(fieldRename: FieldRename.snake)
@@ -290,7 +290,7 @@ abstract class LibvirtSnapChainDisk with _$LibvirtSnapChainDisk {
       _$LibvirtSnapChainDiskFromJson(json);
 }
 
-/// `sbm_parser::virt_snapshot::VirtSnapChainFile`.
+/// `sbm_virt::libvirt::snapshot::VirtSnapChainFile`.
 @freezed
 abstract class LibvirtSnapChainFile with _$LibvirtSnapChainFile {
   @JsonSerializable(fieldRename: FieldRename.snake)
@@ -315,7 +315,7 @@ abstract class LibvirtVolumeRef with _$LibvirtVolumeRef {
       _$LibvirtVolumeRefFromJson(json);
 }
 
-/// `sbm_parser::virt::VirtPool`.
+/// `sbm_virt::libvirt::VirtPool`.
 @freezed
 abstract class LibvirtPool with _$LibvirtPool {
   @JsonSerializable(fieldRename: FieldRename.snake)
@@ -365,7 +365,7 @@ abstract class LibvirtStorage with _$LibvirtStorage {
       _$LibvirtStorageFromJson(json);
 }
 
-/// `sbm_parser::virt::VirtVolume`.
+/// `sbm_virt::libvirt::VirtVolume`.
 @freezed
 abstract class LibvirtVolume with _$LibvirtVolume {
   @JsonSerializable(fieldRename: FieldRename.snake)
@@ -396,7 +396,7 @@ abstract class LibvirtNetIp with _$LibvirtNetIp {
       _$LibvirtNetIpFromJson(json);
 }
 
-/// One static DHCP entry (`sbm_parser::virt_net::VirtNetHost`).
+/// One static DHCP entry (`sbm_virt::libvirt::net::VirtNetHost`).
 @freezed
 abstract class LibvirtNetHost with _$LibvirtNetHost {
   const factory LibvirtNetHost({
@@ -409,7 +409,7 @@ abstract class LibvirtNetHost with _$LibvirtNetHost {
       _$LibvirtNetHostFromJson(json);
 }
 
-/// `sbm_parser::virt::VirtNetworkInfo`.
+/// `sbm_virt::libvirt::VirtNetworkInfo`.
 @freezed
 abstract class LibvirtNetwork with _$LibvirtNetwork {
   @JsonSerializable(fieldRename: FieldRename.snake)
@@ -480,7 +480,7 @@ abstract class LibvirtNetworks with _$LibvirtNetworks {
 
 // --- Hardware -----------------------------------------------------------------
 
-/// `sbm_parser::virt::VirtHwCpu`.
+/// `sbm_virt::libvirt::VirtHwCpu`.
 @freezed
 abstract class LibvirtHwCpu with _$LibvirtHwCpu {
   @JsonSerializable(fieldRename: FieldRename.snake)
@@ -535,7 +535,7 @@ abstract class LibvirtHwNic with _$LibvirtHwNic {
       _$LibvirtHwNicFromJson(json);
 }
 
-/// One definition of a domain's hardware (`sbm_parser::virt::VirtHwConfig`).
+/// One definition of a domain's hardware (`sbm_virt::libvirt::VirtHwConfig`).
 @freezed
 abstract class LibvirtHwConfig with _$LibvirtHwConfig {
   @JsonSerializable(fieldRename: FieldRename.snake)
@@ -605,7 +605,7 @@ abstract class LibvirtHwHostdev with _$LibvirtHwHostdev {
       _$LibvirtHwHostdevFromJson(json);
 }
 
-/// `sbm_parser::virt::VirtHwCaps`: what the host offers this domain.
+/// `sbm_virt::libvirt::VirtHwCaps`: what the host offers this domain.
 @freezed
 abstract class LibvirtHwCaps with _$LibvirtHwCaps {
   @JsonSerializable(fieldRename: FieldRename.snake)
@@ -623,7 +623,7 @@ abstract class LibvirtHwCaps with _$LibvirtHwCaps {
       _$LibvirtHwCapsFromJson(json);
 }
 
-/// `sbm_parser::virt::VirtCreateHost`: what a new domain runs as, and what
+/// `sbm_virt::libvirt::VirtCreateHost`: what a new domain runs as, and what
 /// its machine offers.
 @freezed
 abstract class LibvirtCreateHost with _$LibvirtCreateHost {
@@ -660,7 +660,7 @@ abstract class LibvirtFirmware with _$LibvirtFirmware {
       _$LibvirtFirmwareFromJson(json);
 }
 
-/// `sbm_parser::virt::VirtHostDevices`.
+/// `sbm_virt::libvirt::VirtHostDevices`.
 @freezed
 abstract class LibvirtHostDevices with _$LibvirtHostDevices {
   @JsonSerializable(fieldRename: FieldRename.snake)
@@ -714,7 +714,7 @@ abstract class LibvirtHostPci with _$LibvirtHostPci {
       _$LibvirtHostPciFromJson(json);
 }
 
-/// `sbm_parser::virt::VirtHardwareInfo`.
+/// `sbm_virt::libvirt::VirtHardwareInfo`.
 @freezed
 abstract class LibvirtHardwareInfo with _$LibvirtHardwareInfo {
   const LibvirtHardwareInfo._();

@@ -6,7 +6,7 @@ import 'package:server_box/data/model/virt/virt_resources.dart';
 /// `VirtBackend.manage`.
 ///
 /// libvirt: pools, volumes and networks through `virsh`
-/// (`sbm_parser::virt_manage`). PVE: storages (`/storage`), volumes
+/// (`sbm_virt::libvirt::manage`). PVE: storages (`/storage`), volumes
 /// (`/nodes/{node}/storage/{id}/content`) and Linux bridges
 /// (`/nodes/{node}/network`), whose changes wait in
 /// `/etc/network/interfaces.new` until applied ([VirtNetworkApply]).
@@ -484,7 +484,7 @@ enum VirtResIssue {
   managementIface,
 }
 
-/// libvirt pool and network names: what `sbm_parser::virt_manage` takes.
+/// libvirt pool and network names: what `sbm_virt::libvirt::manage` takes.
 final virtLibvirtResourceName = RegExp(r'^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$');
 
 /// PVE storage ids (`pve-storage-id`).

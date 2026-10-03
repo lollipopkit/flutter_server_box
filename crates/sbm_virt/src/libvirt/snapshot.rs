@@ -70,8 +70,8 @@
 //! 'vda' was target of not completed snapshot delete`). So the app asks
 //! first: [`snap_delete_refusal`].
 
-use crate::script::{self, shell_quote_unix};
-use crate::virt::{
+use sbm_parser::script::{self, shell_quote_unix};
+use crate::libvirt::{
     CONNECT_URI, RC_PREFIX, VirtError, child, domain_arg, parse_xml_doc, prelude, sections, take,
 };
 use serde::{Deserialize, Serialize};
@@ -153,7 +153,7 @@ fn chain_sections(d: &str) -> String {
     let mut s = String::new();
     s.push_str(&format!(
         "echo '{}'\nV dumpxml {d}\n",
-        script::cmd_marker(crate::virt::KEY_XML),
+        script::cmd_marker(crate::libvirt::KEY_XML),
     ));
     // One section per device: its path on the first line, then the chain.
     // `domblklist --details` prints `Type Device Target Source`; only a
@@ -221,7 +221,7 @@ fn read_snap_chain(raw: &str) -> Result<(VirtSnapChain, bool), VirtError> {
     // way the Hardware view does. A CD-ROM is not one of them.
     let mut defined: Vec<(String, Option<String>)> = Vec::new();
     let mut complete = false;
-    if let Ok(xml) = take(&secs, crate::virt::KEY_XML, raw).and_then(|s| s.ok())
+    if let Ok(xml) = take(&secs, crate::libvirt::KEY_XML, raw).and_then(|s| s.ok())
         && let Ok(doc) = parse_xml_doc(xml, "domain", "dumpxml") {
             complete = true;
             for disk in doc
@@ -702,7 +702,7 @@ pub fn snap_delete_leftovers(raw: &str) -> Result<Vec<String>, VirtError> {
 /// for AppArmor, or for every driver (no `model`).
 fn chain_domain_unconfined(raw: &str) -> bool {
     let Ok(secs) = sections(raw) else { return false };
-    let Ok(xml) = take(&secs, crate::virt::KEY_XML, raw) else {
+    let Ok(xml) = take(&secs, crate::libvirt::KEY_XML, raw) else {
         return false;
     };
     let Ok(doc) = parse_xml_doc(&xml.body, "domain", "dumpxml") else {
@@ -722,7 +722,7 @@ fn chain_domain_unconfined(raw: &str) -> bool {
 ///
 /// `overlays` is `(target, path)` per disk, the file the user chose; a disk
 /// without one gets libvirt's own name (`<disk>.<snapshot>`, beside the disk
-/// it backs). Parse with [`crate::virt::parse_action`].
+/// it backs). Parse with [`crate::libvirt::parse_action`].
 pub fn snapshot_external_script(
     domain: &str,
     name: &str,
@@ -749,7 +749,7 @@ pub fn snapshot_external_script(
     let mut s = prelude();
     s.push_str(&format!(
         "echo '{}'\nV {args}\n",
-        script::cmd_marker(crate::virt::KEY_ACTION)
+        script::cmd_marker(crate::libvirt::KEY_ACTION)
     ));
     s
 }
@@ -816,10 +816,10 @@ pub fn parse_snap_diff(raw: &str) -> Result<Vec<VirtSnapDiff>, VirtError> {
     // Both are `virsh` failures when either is refused; the parse then has
     // nothing to compare and says so rather than reporting "no differences".
     if before.rc != Some(0) {
-        return Err(crate::virt::classify_error(before.body.trim()));
+        return Err(crate::libvirt::classify_error(before.body.trim()));
     }
     if after.rc != Some(0) {
-        return Err(crate::virt::classify_error(after.body.trim()));
+        return Err(crate::libvirt::classify_error(after.body.trim()));
     }
     Ok(diff_domain_xml(&before.body, &after.body))
 }
@@ -882,7 +882,7 @@ pub fn diff_domain_xml(snapshot_xml: &str, current_xml: &str) -> Vec<VirtSnapDif
     // Memory
     let kib = |n: roxmltree::Node<'_, '_>, tag: &str| {
         child(n, tag)
-            .and_then(|m| crate::virt::bytes_of(Some(m)))
+            .and_then(|m| crate::libvirt::bytes_of(Some(m)))
             .map(|v| (v / 1024).to_string())
     };
     push(

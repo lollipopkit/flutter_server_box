@@ -1,6 +1,6 @@
 # virt fixtures
 
-Inputs for `sbm_parser::virt` (`tests/virt.rs`, and through FFI
+Inputs for `sbm_virt::libvirt` (`tests/libvirt.rs`, and through FFI
 `test/unit/virt/virt_ffi_test.dart` and `test/unit/virt/libvirt_backend_test.dart`).
 
 **Captured** files are raw `virsh --connect qemu:///system -q … </dev/null`

@@ -31,7 +31,7 @@ import 'package:server_box/view/page/virt/console_connect.dart';
 
 import '../../helpers/rust_lib_helper.dart';
 
-const _dir = 'crates/sbm_parser/tests/fixtures/virt';
+const _dir = 'crates/sbm_virt/tests/fixtures/libvirt';
 
 String _fixture(String name) => File('$_dir/$name').readAsStringSync();
 

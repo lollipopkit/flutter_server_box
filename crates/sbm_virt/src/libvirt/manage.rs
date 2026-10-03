@@ -1,7 +1,7 @@
 //! Managing libvirt storage and networks: scripts that create, start, stop and
 //! delete pools, volumes and networks, and upload a file into a volume.
 //!
-//! The same contract as [`crate::virt`]: pure, no I/O, POSIX `sh` fed to `sh`
+//! The same contract as [`crate::libvirt`]: pure, no I/O, POSIX `sh` fed to `sh`
 //! on stdin, every value quoted with [`shell_quote_unix`] or escaped into the
 //! XML a `define` reads from a temporary file. Each change is one round trip
 //! of steps; the first step that fails ends the script, and what a create had
@@ -19,8 +19,8 @@
 //! pool. See [`vol_upload_command`] for how that shares stdin with a sudo
 //! password.
 
-use crate::script::{self, shell_quote_unix};
-use crate::virt::{
+use sbm_parser::script::{self, shell_quote_unix};
+use crate::libvirt::{
     CONNECT_URI, RC_PREFIX, VirtError, prelude, run_fn, sections, take, xml_escape,
 };
 use serde::{Deserialize, Serialize};
@@ -703,11 +703,11 @@ mod tests {
         let br = network_xml("b", "bridge", Some("br0"), None);
         assert!(br.contains("<forward mode='bridge'/>") && br.contains("<bridge name='br0'/>"), "{br}");
         // What the parser reads back from such a definition
-        let info = crate::virt::parse_network_xml(&nat).unwrap();
+        let info = crate::libvirt::parse_network_xml(&nat).unwrap();
         assert_eq!(info.mode, "nat");
         assert_eq!(info.ips[0].cidr, "192.168.150.1/24");
         assert_eq!(info.ips[0].dhcp_ranges, vec!["192.168.150.100-192.168.150.200"]);
-        let pool = crate::virt::parse_pool_xml(&nfs).unwrap();
+        let pool = crate::libvirt::parse_pool_xml(&nfs).unwrap();
         assert_eq!(pool.source.as_deref(), Some("10.0.0.5:/export/iso"));
         assert_eq!(pool.target.as_deref(), Some("/mnt/n"));
     }

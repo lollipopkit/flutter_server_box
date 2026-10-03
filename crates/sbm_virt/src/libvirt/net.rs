@@ -25,8 +25,8 @@
 //! address, a `<dns>`, a `<domain>`, the `<forward>` of another mode) is
 //! kept exactly as the host wrote it.
 
-use crate::script::{self, shell_quote_unix};
-use crate::virt::{
+use sbm_parser::script::{self, shell_quote_unix};
+use crate::libvirt::{
     CONNECT_URI, RC_PREFIX, VirtError, prelude, run_fn, sections, take, xml_escape,
 };
 use serde::{Deserialize, Serialize};
@@ -719,7 +719,7 @@ fn restart_steps(n: &str, restore: Option<&str>) -> String {
 /// meanwhile is refused rather than undone.
 ///
 /// `--inactive`, because that is what the caller was given
-/// ([`crate::virt::networks_script`] reads it for the edit): a running
+/// ([`crate::libvirt::networks_script`] reads it for the edit): a running
 /// network's own XML carries what libvirt writes at start — a NAT `<port>`
 /// range, a `portid=` on an interface — which the definition does not have,
 /// and comparing the two would refuse every edit.

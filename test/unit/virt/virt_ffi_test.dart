@@ -1,5 +1,5 @@
-// sbm_parser::virt through FFI: the same fixtures and expected JSON as
-// crates/sbm_parser/tests/virt.rs, so the bridge is shown to carry the
+// sbm_virt::libvirt through FFI: the same fixtures and expected JSON as
+// crates/sbm_virt/tests/libvirt.rs, so the bridge is shown to carry the
 // parsers' output unchanged. Parsing behaviour itself is locked there.
 // Build the native library first: cargo build -p sbm_ffi
 
@@ -12,12 +12,12 @@ import 'package:server_box/src/rust/api/virt.dart';
 
 import '../../helpers/rust_lib_helper.dart';
 
-const _dir = 'crates/sbm_parser/tests/fixtures/virt';
+const _dir = 'crates/sbm_virt/tests/fixtures/libvirt';
 
 String _fixture(String name) => File('$_dir/$name').readAsStringSync();
 
 /// One `virsh` call's section as the scripts print it: marker, output, and
-/// the exit-status line (`sbm_parser::virt::RC_PREFIX`).
+/// the exit-status line (`sbm_virt::libvirt::RC_PREFIX`).
 String _section(String key, String body, [int rc = 0]) =>
     '${script.scriptSegmentMarker(key: key, custom: false)}\n$body\nSbVirtRc=$rc\n';
 

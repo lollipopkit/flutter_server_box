@@ -37,8 +37,13 @@
 //! name is matched exactly first and then with trailing whitespace ignored,
 //! so a name that itself ends in spaces is only ambiguous on libvirt < 7.0.
 
-use crate::script::{self, shell_quote_unix};
-use crate::virt_net::{VirtNetHost, parse_net_section};
+pub mod cloud_init;
+pub mod manage;
+pub mod net;
+pub mod snapshot;
+
+use sbm_parser::script::{self, shell_quote_unix};
+use net::{VirtNetHost, parse_net_section};
 use serde::{Deserialize, Serialize};
 
 /// Connection URI every command uses. Session (`qemu:///session`) guests are
@@ -1071,7 +1076,7 @@ pub fn parse_domain_xml(raw: &str) -> Result<VirtDomainXml, VirtError> {
 /// The seed path in the app's own `<metadata>` element, where it is an
 /// absolute path to an ISO; anything else is not a seed this app made.
 fn seed_of(root: roxmltree::Node<'_, '_>) -> Option<String> {
-    use crate::virt_cloud_init::{SEED_METADATA_ELEMENT, SEED_METADATA_NS};
+    use crate::libvirt::cloud_init::{SEED_METADATA_ELEMENT, SEED_METADATA_NS};
     child(root, "metadata")?
         .children()
         .find(|n| {
@@ -1370,7 +1375,7 @@ pub struct VirtSnapshotInfo {
     /// already reverted to once carries `<revertDisks>`, where a further
     /// revert would put the guest instead.
     #[serde(default)]
-    pub layers: Vec<crate::virt_snapshot::VirtSnapLayer>,
+    pub layers: Vec<crate::libvirt::snapshot::VirtSnapLayer>,
     /// The snapshot the domain's disks were last created from or reverted to
     pub current: bool,
 }
@@ -1427,7 +1432,7 @@ pub fn snapshot_revert_script(domain: &str, name: &str, running: bool) -> String
 /// `snapshot-delete`: the snapshot only; its children move up to its parent.
 ///
 /// `leftovers` are the files libvirt leaves behind deleting it
-/// ([`crate::virt_snapshot::snap_delete_leftovers`]): deleted once the
+/// ([`crate::libvirt::snapshot::snap_delete_leftovers`]): deleted once the
 /// snapshot is, through the pools they are in (`pools`, refreshed first — a
 /// file a revert or a snapshot made is not a volume until then). Parse with
 /// [`parse_snapshot_delete`].
@@ -1537,10 +1542,10 @@ pub fn parse_snapshot_xml(raw: &str) -> Result<VirtSnapshotInfo, VirtError> {
         Some(m) => m != "no",
         None => matches!(state.as_deref(), Some("running" | "paused" | "blocked")),
     };
-    let mut layers = crate::virt_snapshot::layers_of(root, "disks");
+    let mut layers = crate::libvirt::snapshot::layers_of(root, "disks");
     // A snapshot reverted to once names the file a *further* revert would use
     // in `<revertDisks>`; that is the one a chain view has to show.
-    for reverted in crate::virt_snapshot::layers_of(root, "revertDisks") {
+    for reverted in crate::libvirt::snapshot::layers_of(root, "revertDisks") {
         if let Some(layer) = layers.iter_mut().find(|l| l.target == reverted.target)
             && reverted.file.is_some() {
                 layer.file = reverted.file;
@@ -2386,7 +2391,7 @@ pub struct VirtCreateHost {
     #[serde(default)]
     pub caps: Option<VirtHwCaps>,
     /// The ISO tool a cloud-init seed is made with; none: the host has none
-    /// of [`crate::virt_cloud_init::SEED_TOOLS`]
+    /// of [`crate::libvirt::cloud_init::SEED_TOOLS`]
     #[serde(default)]
     pub seed_tool: Option<String>,
 }
@@ -2411,7 +2416,7 @@ pub fn create_host_script() -> String {
             script::cmd_marker(KEY_CAPS),
         ));
     }
-    s.push_str(&crate::virt_cloud_init::seed_tool_probe());
+    s.push_str(&crate::libvirt::cloud_init::seed_tool_probe());
     s
 }
 
@@ -2441,7 +2446,7 @@ pub fn parse_create_host(raw: &str) -> Result<VirtCreateHost, VirtError> {
                 arch,
                 max_vcpus,
                 caps: parse_domcaps(&body),
-                seed_tool: crate::virt_cloud_init::parse_seed_tool(&script::parse_script_segments(raw)),
+                seed_tool: crate::libvirt::cloud_init::parse_seed_tool(&script::parse_script_segments(raw)),
             });
         }
     }
@@ -2502,13 +2507,13 @@ pub struct VirtCreateSpec {
     pub tpm: bool,
     /// A NoCloud seed made on the host and attached as a CD-ROM
     #[serde(default)]
-    pub cloud_init: Option<crate::virt_cloud_init::VirtCloudInit>,
+    pub cloud_init: Option<crate::libvirt::cloud_init::VirtCloudInit>,
     /// The seed's path, as [`parse_create_volumes`] read it; needed by
     /// [`define_script`] only
     #[serde(default)]
     pub seed_path: Option<String>,
     /// The ISO tools a seed may be made with, in order; none:
-    /// [`crate::virt_cloud_init::SEED_TOOLS`]. Narrowed by the end-to-end
+    /// [`crate::libvirt::cloud_init::SEED_TOOLS`]. Narrowed by the end-to-end
     /// tests, which make a seed with each tool in turn.
     #[serde(default)]
     pub seed_tools: Option<Vec<String>>,
@@ -2540,7 +2545,7 @@ impl VirtCreateSpec {
     fn seed_tools(&self) -> Vec<&str> {
         match &self.seed_tools {
             Some(t) => t.iter().map(String::as_str).collect(),
-            None => crate::virt_cloud_init::SEED_TOOLS.to_vec(),
+            None => crate::libvirt::cloud_init::SEED_TOOLS.to_vec(),
         }
     }
 
@@ -2613,7 +2618,7 @@ impl VirtCreateSpec {
             return bad("mac");
         }
         if let Some(tools) = &self.seed_tools {
-            crate::virt_cloud_init::check_tools(tools)?;
+            crate::libvirt::cloud_init::check_tools(tools)?;
         }
         if let Some(ci) = &self.cloud_init {
             ci.check()?;
@@ -2696,8 +2701,8 @@ pub fn domain_xml(spec: &VirtCreateSpec) -> String {
         x.push_str(&format!(
             "  <metadata>\n    <sbx:{el} xmlns:sbx='{ns}' seed='{}'/>\n  </metadata>\n",
             e(seed),
-            el = crate::virt_cloud_init::SEED_METADATA_ELEMENT,
-            ns = crate::virt_cloud_init::SEED_METADATA_NS,
+            el = crate::libvirt::cloud_init::SEED_METADATA_ELEMENT,
+            ns = crate::libvirt::cloud_init::SEED_METADATA_NS,
         ));
     }
     x.push_str(&format!("  <memory unit='MiB'>{}</memory>\n", spec.memory_mib));
@@ -2875,7 +2880,7 @@ pub fn create_volume_script(spec: &VirtCreateSpec) -> Result<String, VirtError> 
         m(KEY_ROLLBACK),
     ));
     if let Some(ci) = &spec.cloud_init {
-        s.push_str(&crate::virt_cloud_init::seed_script(
+        s.push_str(&crate::libvirt::cloud_init::seed_script(
             ci,
             &spec.disk_pool,
             &spec.seed_name(),
@@ -2902,7 +2907,7 @@ pub struct VirtCreateVolumes {
 /// name already defined or a volume already there; `Command` naming the
 /// tools for a host that has none to make a seed with.
 pub fn parse_create_volumes(raw: &str) -> Result<VirtCreateVolumes, VirtError> {
-    use crate::virt_cloud_init as ci;
+    use crate::libvirt::cloud_init as ci;
     let segs = script::parse_script_segments(raw);
     let secs = sections(raw)?;
     if secs.iter().any(|(k, _)| k == KEY_EXISTS) {
@@ -3338,7 +3343,7 @@ pub fn clone_domain_xml(base_xml: &str, name: &str, disks: &[(String, String)]) 
     // A cloud-init seed stays the source's: the copy's CD-ROM reads the same
     // image, and a copy naming it as its own would delete it with itself.
     if let Some(metadata) = child(root, "metadata") {
-        use crate::virt_cloud_init::{SEED_METADATA_ELEMENT, SEED_METADATA_NS};
+        use crate::libvirt::cloud_init::{SEED_METADATA_ELEMENT, SEED_METADATA_NS};
         for n in metadata.children().filter(|n| {
             n.is_element()
                 && n.tag_name().name() == SEED_METADATA_ELEMENT

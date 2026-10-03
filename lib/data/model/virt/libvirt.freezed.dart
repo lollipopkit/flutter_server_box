@@ -1424,7 +1424,7 @@ as List<LibvirtNetStats>,
 /// @nodoc
 mixin _$LibvirtDomain {
 
- String get uuid; String get name;/// `sbm_parser::virt::VirtState`: `running`, `paused`, `stopped`,
+ String get uuid; String get name;/// `sbm_virt::libvirt::VirtState`: `running`, `paused`, `stopped`,
 /// `starting`, `stopping`, `unknown`.
  String get state;/// Raw `virDomainState`; -1 when `domstats` did not report the domain.
  int get stateCode; int get reasonCode; String get reason; bool get autostart; bool get persistent; int? get vcpuCurrent; int? get vcpuMax; int? get memCurrentKib; int? get memMaxKib; LibvirtCounters get counters;
@@ -1647,7 +1647,7 @@ class _LibvirtDomain implements LibvirtDomain {
 
 @override final  String uuid;
 @override final  String name;
-/// `sbm_parser::virt::VirtState`: `running`, `paused`, `stopped`,
+/// `sbm_virt::libvirt::VirtState`: `running`, `paused`, `stopped`,
 /// `starting`, `stopping`, `unknown`.
 @override final  String state;
 /// Raw `virDomainState`; -1 when `domstats` did not report the domain.

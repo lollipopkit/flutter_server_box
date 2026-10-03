@@ -1,5 +1,5 @@
 /// `LibvirtBackend` over a scripted `ServerExec` that answers with the
-/// `sbm_parser` virt fixtures: mapping, rates across two samples, the sudo
+/// `sbm_virt` libvirt fixtures: mapping, rates across two samples, the sudo
 /// retry, a server without virsh, and snapshots, storage, networks and
 /// hardware against the captured script outputs.
 ///
@@ -28,7 +28,7 @@ import 'package:server_box/src/rust/api/virt.dart'
 
 import '../../helpers/rust_lib_helper.dart';
 
-const _dir = 'crates/sbm_parser/tests/fixtures/virt';
+const _dir = 'crates/sbm_virt/tests/fixtures/libvirt';
 
 String _fixture(String name) => File('$_dir/$name').readAsStringSync();
 

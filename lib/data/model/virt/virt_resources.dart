@@ -40,7 +40,7 @@ abstract class VirtGuestSnapshot with _$VirtGuestSnapshot {
   /// Whether a later snapshot sits on this one. Reverting to a snapshot that
   /// has one is refused: on libvirt 11.3 such a revert of an external
   /// snapshot failed, leaving the guest shut off on a new file and its
-  /// running overlay deleted (see `sbm_parser::virt_snapshot`).
+  /// running overlay deleted (see `sbm_virt::libvirt::snapshot`).
   bool hasChildren(Iterable<VirtGuestSnapshot> all) =>
       all.any((s) => s.parent == name);
 }

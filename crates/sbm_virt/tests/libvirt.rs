@@ -1,21 +1,21 @@
-//! `sbm_parser::virt` against the fixtures in `tests/fixtures/virt/` (see the
+//! `sbm_virt::libvirt` against the fixtures in `tests/fixtures/libvirt/` (see the
 //! README there: mostly captured from a libvirt 11.3.0 host, the rest
 //! hand-written and labelled as such), plus the generated scripts run by a
 //! real `sh` against a stub `virsh`.
 //!
 //! `overview.expected.json` / `detail_*.expected.json` are also what the
 //! Dart FFI test compares against. Regenerate them with
-//! `SBM_UPDATE_VIRT_FIXTURES=1 cargo test -p sbm_parser --test virt`, and
+//! `SBM_UPDATE_VIRT_FIXTURES=1 cargo test -p sbm_virt --test libvirt`, and
 //! review the diff: they are the contract, not a snapshot to accept blindly.
 
 use sbm_parser::script;
-use sbm_parser::virt::{self, VirtAction, VirtError, VirtState};
-use sbm_parser::virt_snapshot;
+use sbm_virt::libvirt::{self as virt, VirtAction, VirtError, VirtState};
+use sbm_virt::libvirt::snapshot as virt_snapshot;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
 fn dir() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/virt")
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/libvirt")
 }
 
 fn fixture(name: &str) -> String {
@@ -2522,7 +2522,7 @@ esac
 #[cfg(unix)]
 #[test]
 fn manage_scripts_under_sh_with_hostile_names() {
-    use sbm_parser::virt_manage::{self as m, VirtResourceOp as Op};
+    use sbm_virt::libvirt::manage::{self as m, VirtResourceOp as Op};
     let d = manage_stub("hostile");
     let path = format!("{}:/usr/bin:/bin", d.display());
     let hostile = "it's \"odd\"; touch pwned $(id) `id`";
@@ -2626,7 +2626,7 @@ fn run_command(command: &str, path: &str, input: &[u8]) -> String {
 #[cfg(unix)]
 #[test]
 fn upload_streams_stdin_into_the_volume() {
-    use sbm_parser::virt_manage::{self as m, VirtUploadEntry};
+    use sbm_virt::libvirt::manage::{self as m, VirtUploadEntry};
     let d = manage_stub("upload");
     let path = format!("{}:/usr/bin:/bin", d.display());
     let hostile = "it's \"odd\" \\ $(id) `id`.iso";
@@ -3387,14 +3387,14 @@ esac
 }
 
 #[cfg(unix)]
-fn net_edit_op(base: &str, restart: bool) -> sbm_parser::virt_net::VirtNetOp {
-    let mut edit = sbm_parser::virt_net::VirtNetEdit {
+fn net_edit_op(base: &str, restart: bool) -> sbm_virt::libvirt::net::VirtNetOp {
+    let mut edit = sbm_virt::libvirt::net::VirtNetEdit {
         mode: "nat".into(),
         ..Default::default()
     };
     edit.address = Some("10.30.0.1".into());
     edit.prefix = Some(24);
-    sbm_parser::virt_net::VirtNetOp::Edit {
+    sbm_virt::libvirt::net::VirtNetOp::Edit {
         name: "lab".into(),
         edit,
         base_xml: base.into(),
@@ -3411,7 +3411,7 @@ fn net_edit_op(base: &str, restart: bool) -> sbm_parser::virt_net::VirtNetOp {
 #[cfg(unix)]
 #[test]
 fn a_network_restart_is_undone_on_every_refusal() {
-    use sbm_parser::virt_net::{net_change_script, parse_net_change};
+    use sbm_virt::libvirt::net::{net_change_script, parse_net_change};
     let base = "<network>\n  <name>lab</name>\n  <forward mode='nat'/>\n  <ip address='10.20.0.1' prefix='24'/>\n</network>";
     let log = |d: &PathBuf| std::fs::read_to_string(d.join("log")).unwrap_or_default();
     let script = net_change_script(&net_edit_op(base, true)).unwrap();
@@ -3446,7 +3446,7 @@ fn a_network_restart_is_undone_on_every_refusal() {
     assert!(e.message().contains("it is down"), "{e:?}");
 
     // A restart of its own: the same way back, with no definition written.
-    let restart = net_change_script(&sbm_parser::virt_net::VirtNetOp::Restart {
+    let restart = net_change_script(&sbm_virt::libvirt::net::VirtNetOp::Restart {
         name: "lab".into(),
         base_xml: base.into(),
     })

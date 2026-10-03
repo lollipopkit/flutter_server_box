@@ -18,8 +18,8 @@
 //! builtin: no process, no argv) into a `mktemp -d` directory (0700, files
 //! 0600), which the script removes on every way out.
 
-use crate::script::{self, shell_quote_unix};
-use crate::virt::{CONNECT_URI, RC_PREFIX, VirtError};
+use sbm_parser::script::{self, shell_quote_unix};
+use crate::libvirt::{CONNECT_URI, RC_PREFIX, VirtError};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha512};
 
@@ -42,7 +42,7 @@ pub const SEED_TOOLS: &[&str] = &["genisoimage", "xorriso", "mkisofs", "cloud-lo
 
 /// The domain metadata element naming a domain's own seed volume, so that
 /// deleting the domain deletes it and nothing else
-/// ([`crate::virt::VirtDomainXml::seed`]).
+/// ([`crate::libvirt::VirtDomainXml::seed`]).
 pub const SEED_METADATA_NS: &str = "https://serverbox.app/xmlns/libvirt/cloud-init/1";
 pub const SEED_METADATA_ELEMENT: &str = "cloud-init";
 
@@ -398,7 +398,7 @@ fn iso_script(ci: &VirtCloudInit, tools: &[&str], fail: &str) -> String {
 
 /// The seed as an ISO on the host, then a raw volume `volume` of `pool`
 /// holding it (`vol-create-as` of its size, `vol-upload`), then its path in
-/// `$seed`. Written for [`crate::virt::create_volume_script`], after the
+/// `$seed`. Written for [`crate::libvirt::create_volume_script`], after the
 /// disk was made: `rollback` is the shell that takes the disk back, run when
 /// any step here fails, and the seed's volume is deleted as well once made.
 /// `R` is the script's virsh wrapper (status in `$r`). `tools` is the ISO
@@ -487,8 +487,8 @@ pub fn seed_read_script(seed: &str) -> Result<String, VirtError> {
     check_seed_path(seed)?;
     let m = script::cmd_marker;
     let seed = shell_quote_unix(seed);
-    let mut s = crate::virt::prelude();
-    s.push_str(&crate::virt::run_fn());
+    let mut s = crate::libvirt::prelude();
+    s.push_str(&crate::libvirt::run_fn());
     s.push_str(&format!("echo '{}'\n", m(KEY_SEED_READ)));
     s.push_str(&staging(""));
     s.push_str(&format!(
@@ -522,10 +522,10 @@ pub struct VirtSeedRead {
 /// [`seed_read_script`]'s output.
 pub fn parse_seed_read(raw: &str) -> Result<VirtSeedRead, VirtError> {
     use base64::Engine;
-    let secs = crate::virt::sections(raw)?;
-    crate::virt::take(&secs, KEY_SEED_READ, raw)?.ok()?;
-    let revision = crate::virt::take(&secs, KEY_SEED_SUM, raw)?.ok()?.trim().to_string();
-    let data: String = crate::virt::take(&secs, KEY_SEED_DATA, raw)?
+    let secs = crate::libvirt::sections(raw)?;
+    crate::libvirt::take(&secs, KEY_SEED_READ, raw)?.ok()?;
+    let revision = crate::libvirt::take(&secs, KEY_SEED_SUM, raw)?.ok()?.trim().to_string();
+    let data: String = crate::libvirt::take(&secs, KEY_SEED_DATA, raw)?
         .ok()?
         .chars()
         .filter(|c| !c.is_ascii_whitespace())
@@ -568,8 +568,8 @@ pub fn seed_update_script(seed: &str, revision: &str, ci: &VirtCloudInit, tools:
     let q = shell_quote_unix;
     let m = script::cmd_marker;
     let seed = q(seed);
-    let mut s = crate::virt::prelude();
-    s.push_str(&crate::virt::run_fn());
+    let mut s = crate::libvirt::prelude();
+    s.push_str(&crate::libvirt::run_fn());
     s.push_str(&format!("echo '{}'\n", m(KEY_SEED_BACKUP)));
     s.push_str(&staging(""));
     s.push_str(&format!(
@@ -619,7 +619,7 @@ const SEED_LOCK_SH: &str = "lock=\"${TMPDIR:-/tmp}/sbm-seed-$(printf '%s' \"$see
 /// seed is back when the upload did.
 pub fn parse_seed_update(raw: &str) -> Result<(), VirtError> {
     let segs = script::parse_script_segments(raw);
-    let secs = crate::virt::sections(raw)?;
+    let secs = crate::libvirt::sections(raw)?;
     // Before the backup's own status: a lock not had in time is a conflict
     // said before the download ran.
     if segs.iter().any(|(k, _)| k == KEY_SEED_CONFLICT) {
@@ -627,16 +627,16 @@ pub fn parse_seed_update(raw: &str) -> Result<(), VirtError> {
             message: "The cloud-init seed changed since it was read".into(),
         });
     }
-    crate::virt::take(&secs, KEY_SEED_BACKUP, raw)?.ok()?;
+    crate::libvirt::take(&secs, KEY_SEED_BACKUP, raw)?.ok()?;
     if segs.iter().any(|(k, _)| k == KEY_SEED_NO_TOOL) {
         return Err(no_tool_error());
     }
-    crate::virt::take(&secs, KEY_SEED_ISO, raw)?.ok()?;
-    crate::virt::take(&secs, KEY_SEED_INFO, raw)?.ok()?;
+    crate::libvirt::take(&secs, KEY_SEED_ISO, raw)?.ok()?;
+    crate::libvirt::take(&secs, KEY_SEED_INFO, raw)?.ok()?;
     if let Some((_, grow)) = secs.iter().find(|(k, _)| k == KEY_SEED_GROW) {
         grow.ok()?;
     }
-    let upload = crate::virt::take(&secs, KEY_SEED_UPLOAD, raw)?.ok();
+    let upload = crate::libvirt::take(&secs, KEY_SEED_UPLOAD, raw)?.ok();
     match (upload, secs.iter().find(|(k, _)| k == KEY_SEED_RESTORE)) {
         (Ok(_), _) => Ok(()),
         (Err(e), Some((_, restore))) => Err(VirtError::Command {

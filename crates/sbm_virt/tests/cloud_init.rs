@@ -3,8 +3,8 @@
 //! against a stub `virsh` and a stub ISO tool, with hostile values, and the
 //! XML they define.
 
-use sbm_parser::virt::{self, VirtError};
-use sbm_parser::virt_cloud_init::{self as ci, VirtCiIpv4, VirtCiNetwork, VirtCloudInit};
+use sbm_virt::libvirt::{self as virt, VirtError};
+use sbm_virt::libvirt::cloud_init::{self as ci, VirtCiIpv4, VirtCiNetwork, VirtCloudInit};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
@@ -13,7 +13,7 @@ const MAC: &str = "52:54:00:12:34:56";
 
 fn host() -> virt::VirtCreateHost {
     let raw = std::fs::read_to_string(
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/virt/script_create_host_full.txt"),
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/libvirt/script_create_host_full.txt"),
     )
     .unwrap();
     virt::parse_create_host(&raw).unwrap()
@@ -569,7 +569,7 @@ fn the_tool_order_can_be_narrowed() {
 // Reading a seed back
 // ---------------------------------------------------------------------------
 
-/// The values the captured seeds (`tests/fixtures/virt/seed_*.iso`) were
+/// The values the captured seeds (`tests/fixtures/libvirt/seed_*.iso`) were
 /// made from: [`cloud_init`] with a second key, and a second DNS server.
 fn captured() -> VirtCloudInit {
     let mut c = cloud_init();
@@ -579,7 +579,7 @@ fn captured() -> VirtCloudInit {
 }
 
 fn fixture_bytes(name: &str) -> Vec<u8> {
-    std::fs::read(Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/virt").join(name)).unwrap()
+    std::fs::read(Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/libvirt").join(name)).unwrap()
 }
 
 /// Seeds made on the libvirt host by each tool (genisoimage, `xorriso -as
@@ -739,7 +739,7 @@ fn several_nics_and_several_search_domains() {
 fn a_seed_is_read_under_sh() {
     let d = bin_dir("read", None);
     std::fs::copy(
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/virt/seed_genisoimage.iso"),
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/libvirt/seed_genisoimage.iso"),
         d.join("current.iso"),
     )
     .unwrap();
@@ -986,7 +986,7 @@ fn iso_of(files: &[(String, Vec<u8>)]) -> Vec<u8> {
 fn update_dir(tag: &str) -> (PathBuf, String) {
     let d = bin_dir(tag, Some("genisoimage"));
     std::fs::copy(
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/virt/seed_genisoimage.iso"),
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/libvirt/seed_genisoimage.iso"),
         d.join("current.iso"),
     )
     .unwrap();
@@ -1076,7 +1076,7 @@ fn a_seed_update_that_fails_leaves_the_old_one() {
     // No tool: named, nothing uploaded.
     let d = bin_dir("update-notool", None);
     std::fs::copy(
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/virt/seed_genisoimage.iso"),
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/libvirt/seed_genisoimage.iso"),
         d.join("current.iso"),
     )
     .unwrap();

@@ -154,8 +154,8 @@ certificate is an error with the old and new fingerprints.
 - `qemu:///system` needs root or the `libvirt` group. A permission error runs
   the command again through `runWithSudo` (password on stdin); a user outside
   the group without sudo sees the error text and what to change.
-- Command strings and output parsers live in `crates/sbm_parser` (new module
-  `virt`), per the repo's "test as spec" rule, so the monitor web panel can
+- Command strings and output parsers live in `crates/sbm_virt` (module
+  `libvirt`), per the repo's "test as spec" rule, so the monitor web panel can
   reuse them later. Fixtures are captured `virsh` output.
 
 ### Host detection
@@ -169,7 +169,7 @@ A server is a virtualization host when:
   every other server only through "Check this server" / "Check all". Cached
   per server for the session. A server that has both is shown as PVE.
 
-The probe (`sbm_parser::virt::probe_script`, one round trip) asks, in order:
+The probe (`sbm_virt::libvirt::probe_script`, one round trip) asks, in order:
 
 1. `pveversion`. Present: the server runs PVE, nothing else is asked
    (`VirtProbeStatus.pve`). Without a `server_pve` row it is not a host yet —
@@ -290,9 +290,9 @@ config below, so no store changes beyond the PVE columns.
   dialog says so in red for an active guest and offers to start it again
   (`--running` / `start=1`). A snapshot operation is one per guest and blocks
   power actions on it (`VirtHostState.snapshotOps`), and the reverse.
-- Scripts, parsers and fixtures: `sbm_parser::virt` (`snapshots_script`,
+- Scripts, parsers and fixtures: `sbm_virt::libvirt` (`snapshots_script`,
   `storage_script`, `volumes_script`, `networks_script`, the three snapshot
-  actions), `tests/fixtures/virt/script_*.txt` captured from the libvirt host.
+  actions), `crates/sbm_virt/tests/fixtures/libvirt/script_*.txt` captured from the libvirt host.
   PVE payloads: `test/fixtures/pve/`, captured from PVE 9.2.2.
 - The providers (`virtSnapshotsProvider`, `virtStoragePoolsProvider`,
   `virtVolumesProvider`, `virtNetworksProvider`) do not retry by themselves:
@@ -606,7 +606,7 @@ What each host offers is capabilities: `storageEdit`, `poolTypes`,
 `poolAutostart`, `poolDeleteStorage`, `volumeResize`, `volumeClone`,
 `upload`, `networkEdit`, `networkModes`, `networkStart`, `networkApply`.
 
-| | libvirt (`sbm_parser::virt_manage`, one `virsh` round trip each) | PVE (HTTP API) |
+| | libvirt (`sbm_virt::libvirt::manage`, one `virsh` round trip each) | PVE (HTTP API) |
 | --- | --- | --- |
 | New pool | `pool-define` (XML through a `mktemp` file) → `pool-build` (`dir`, `netfs`; never `logical`: its build formats devices, an existing volume group is used as it is) → `pool-start` → `pool-autostart`; a failed build or start undefines it again | `POST /storage` (`dir` `path`; `nfs` `server`/`export`; `lvmthin` `vgname`/`thinpool`; `zfspool` `pool`), `nodes=<node>`, content `images,rootdir` (`backup,iso` for NFS, as the design) |
 | Stop / start | `pool-destroy` / `pool-start` | `PUT /storage/{id}` `disable=1/0` |
@@ -721,7 +721,7 @@ system comes from install media or, where the host can (`VirtCreateOptions`,
 bus, the NIC model, UEFI or BIOS, and a TPM. The Hardware view's "CD-ROM and
 passthrough" group adds and removes a CD-ROM drive.
 
-| | libvirt (`sbm_parser::virt`, `virt_cloud_init`) | PVE (HTTP API) |
+| | libvirt (`sbm_virt::libvirt`, its `cloud_init`) | PVE (HTTP API) |
 | --- | --- | --- |
 | Options | `create_host_script`: `domcapabilities` for the machine a new domain gets (its disk buses — q35 has no IDE —, OVMF, swtpm) and which ISO tool the host has (`genisoimage`, `xorriso`, `mkisofs`, `cloud-localds`, first found) | Fixed: SCSI/virtio/SATA/IDE, UEFI, TPM, cloud-init; cloud images from 8.2 (`import` content) |
 | Cloud images offered | qcow2 or raw volumes of any active pool no guest uses (a disk in use would be copied mid-write), not an ISO | Volumes with `import` content in a format QEMU reads (qcow2, raw, vmdk; not an OVA) on the node |
@@ -753,7 +753,7 @@ The seed:
   string (JSON is YAML), so nothing typed becomes a key of its own; Rust
   checks each again (`VirtCloudInit::check`).
 - **The password never leaves the app.** It is hashed in-process with
-  SHA-512 crypt (`virt_cloud_init::sha512_crypt`, checked against the
+  SHA-512 crypt (`sbm_virt::libvirt::cloud_init::sha512_crypt`, checked against the
   specification's examples and glibc's `crypt(3)` on the PVE host; a
   16-character salt from `Random.secure`), and only the hash is in the seed,
   the script and the host. The files are written by `printf` (a shell
@@ -928,9 +928,9 @@ The phase-2 snapshot machinery extended: a **disk-only snapshot while the
 guest runs** (libvirt external snapshots), the **disk chain** the guest is
 left on, the **configuration diff** between a snapshot and the guest now, and
 PVE's **per-storage support** said before a task is started rather than after
-it fails. Scripts: `sbm_parser::virt_snapshot` (`snap_chain_script`,
+it fails. Scripts: `sbm_virt::libvirt::snapshot` (`snap_chain_script`,
 `snapshot_external_script`, `snap_diff_script`); the snapshot listing gained a
-per-snapshot `layers` field (`sbm_parser::virt::VirtSnapshotInfo`), read from
+per-snapshot `layers` field (`sbm_virt::libvirt::VirtSnapshotInfo`), read from
 the same `snapshot-dumpxml` the phase-2 script already collects.
 
 | | libvirt (`virsh`, through `ensureExec()`) | PVE (HTTP API) |
@@ -1115,7 +1115,7 @@ run later ("Second pass", phase 10).
 ## Verified against real hosts
 
 `test/e2e/virt_real_test.dart` (opt-in; its header lists the variables) and
-`crates/sbm_parser/tests/ssh_e2e.rs` (`ssh_e2e_virt`), run 2026-09-25 against
+`crates/sbm_virt/tests/ssh_e2e.rs` (`ssh_e2e_virt`), run 2026-09-25 against
 PVE 9.2.2 (proxmox-termproxy 2.1.0, pve-xtermjs 6.0.0; API token auth, and
 password auth with and without TOTP for throwaway `@pam` accounts) over an
 SSH channel and directly, and against libvirt 11.3.0 / QEMU 10.0.13 on
@@ -1463,7 +1463,7 @@ Follows the repo's tab conventions (`CLAUDE.md` → Tabs):
    - Migration regression test fed by a database written by the release before
      this step (per `CLAUDE.md`), covering `ignore_cert` and the `homeTabs`
      change.
-   - `sbm_parser` virt fixtures for `virsh` output (`dart_compat`-style lock).
+   - `sbm_virt` libvirt fixtures for `virsh` output (`dart_compat`-style lock).
 
 ## IntroPage
 
@@ -1631,7 +1631,7 @@ and static hosts; PVE's bridge ports, address, VLAN awareness and autostart.
 The rows are a draft until Save. What each backend does with it differs, and
 the rows say which:
 
-| | libvirt (`sbm_parser::virt_net`, one `virsh` round trip) | PVE (HTTP API) |
+| | libvirt (`sbm_virt::libvirt::net`, one `virsh` round trip) | PVE (HTTP API) |
 | --- | --- | --- |
 | Which fields go where | mode, host bridge, address, prefix and DHCP range through `net-define`; the static hosts through `net-update add/delete ip-dhcp-host` | `PUT /nodes/{n}/network/{iface}` — ports, `cidr`, `gateway`, `bridge_vlan_aware`, `autostart`, and the interface's current `cidr`/`cidr6` sent back with every edit (below) |
 | When it applies | `net-define` writes the definition; the **running** network keeps its address, its bridge and its dnsmasq until it is restarted. A restart is offered as a switch of its own beside Save, and the rows say what it does to the guests on it | Pending, like every other PVE network change: the node's `interfaces.new`, applied with the card above the list |
@@ -1799,7 +1799,7 @@ token, its ACLs and its role deleted.
 | A pending change discarded | a memory change with the guest running, seen in the inactive XML, reverted: the inactive XML matched the live one again, the guest still running, the NVRAM file's sha256 unchanged | – |
 
 Scripts and parsers run under real `sh` with hostile values in
-`sbm_parser::virt_net`'s tests; fixtures captured from the libvirt host
+`sbm_virt::libvirt::net`'s tests; fixtures captured from the libvirt host
 (`script_hardware.txt`, and `dumpxml_revert_live.xml` /
 `dumpxml_revert_definition.xml` for the revert transform, the latter defined
 on that host and accepted).
@@ -1923,4 +1923,4 @@ What the pass found, fixed and pinned by Rust and Dart tests:
   `notification-mode`; a backup's verification run; `prune-backups` as its
   own steppers rather than one property string.
 - Monitor agent: native virt endpoints and web panel parity, reusing
-  `sbm_parser::virt`.
+  `sbm_virt::libvirt`.

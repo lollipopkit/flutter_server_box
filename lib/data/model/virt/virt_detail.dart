@@ -15,7 +15,7 @@ enum VirtConsoleKind {
 
 /// A disk, CD drive or container volume.
 ///
-/// JSON keys are snake_case, `sbm_parser::virt::VirtDisk`'s, so libvirt's
+/// JSON keys are snake_case, `sbm_virt::libvirt::VirtDisk`'s, so libvirt's
 /// detail decodes straight into this.
 @freezed
 abstract class VirtDisk with _$VirtDisk {
