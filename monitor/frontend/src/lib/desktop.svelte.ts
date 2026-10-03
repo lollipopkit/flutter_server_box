@@ -66,7 +66,11 @@ export class RelayChannel {
           this.receiver(e)
           return
         }
-        this.earlyBytes += e.data instanceof Blob ? e.data.size : (e.data as ArrayBuffer).byteLength
+        const size = e.data instanceof Blob ? e.data.size : (e.data as ArrayBuffer).byteLength
+        // An empty frame carries nothing, and kept it would be a cost the
+        // byte bound below never sees.
+        if (size === 0) return
+        this.earlyBytes += size
         // A VNC server says a dozen bytes and waits for the client; more than
         // this before one attaches is not a VNC server, and is not kept.
         if (this.earlyBytes > MAX_EARLY_BYTES) {

@@ -124,6 +124,8 @@ describe('RelayChannel', () => {
   it('closes rather than keep an unbounded amount before noVNC attaches', () => {
     const socket = new FakeSocket('ws://x')
     const channel = new RelayChannel(socket as unknown as WebSocket)
+    for (let i = 0; i < 10; i++) socket.onmessage?.({ data: new ArrayBuffer(0) })
+    expect((channel as unknown as { early: unknown[] }).early).toEqual([])
     socket.onmessage?.({ data: new ArrayBuffer(MAX_EARLY_BYTES) })
     expect(socket.readyState).toBe(FakeSocket.OPEN)
     socket.onmessage?.({ data: new ArrayBuffer(1) })
