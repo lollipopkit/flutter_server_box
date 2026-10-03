@@ -5,7 +5,10 @@
 
 use sbm_parser::virt::{self, VirtError};
 use sbm_parser::virt_cloud_init::{self as ci, VirtCiIpv4, VirtCiNetwork, VirtCloudInit};
-use std::path::{Path, PathBuf};
+use std::path::Path;
+#[cfg(unix)]
+use std::path::PathBuf;
+#[cfg(unix)]
 use std::process::{Command, Stdio};
 
 const NAME: &str = "it's \"odd\"; touch pwned $(id) `id`";
@@ -164,6 +167,7 @@ fn run_sh(script: &str, path: &Path) -> String {
     String::from_utf8(out.stdout).unwrap()
 }
 
+#[cfg(unix)]
 fn read(d: &Path, f: &str) -> String {
     std::fs::read_to_string(d.join(f)).unwrap_or_default()
 }
@@ -790,6 +794,7 @@ fn a_seed_on_a_device_bigger_than_it_is_read() {
     let _ = std::fs::remove_dir_all(&d);
 }
 
+#[cfg(unix)]
 fn read_log_has(d: &Path, args: &[&str]) -> bool {
     read(d, "log").contains(&format!("{}\n", args.join("\n")))
 }

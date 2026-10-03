@@ -12,6 +12,7 @@ use sbm_parser::script;
 use sbm_parser::virt::{self, VirtAction, VirtError, VirtState};
 use sbm_parser::virt_snapshot;
 use std::path::PathBuf;
+#[cfg(unix)]
 use std::process::{Command, Stdio};
 
 fn dir() -> PathBuf {
@@ -425,6 +426,7 @@ fn error_json_shape() {
 
 /// A directory holding a `virsh` that answers from the fixtures, logs its
 /// argv (one argument per line) and whatever it finds on stdin.
+#[cfg(unix)]
 fn stub_dir(tag: &str) -> PathBuf {
     let d = std::env::temp_dir().join(format!("sbm_virt_stub_{tag}_{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&d);
@@ -459,6 +461,7 @@ esac
 }
 
 /// Feed `script` to `sh` on stdin, as the app does, with `path` as PATH.
+#[cfg(unix)]
 fn run_sh(script: &str, path: &str) -> String {
     use std::io::Write;
     let mut child = Command::new("/bin/sh")
