@@ -352,3 +352,121 @@ pub fn dial_host(host: Option<&str>) -> String {
         Some(h) => h.to_owned(),
     }
 }
+
+/// A snapshot as the model has it.
+pub fn snapshot_of(s: &crate::libvirt::VirtSnapshotInfo) -> crate::snapshot::Snapshot {
+    crate::snapshot::Snapshot {
+        name: s.name.clone(),
+        parent: s.parent.clone(),
+        description: s.description.clone(),
+        created_at: s.creation_time,
+        current: s.current,
+        with_memory: s.memory,
+        external: s.external,
+        layers: s
+            .layers
+            .iter()
+            .map(|l| crate::snapshot::SnapshotLayer {
+                target: l.target.clone(),
+                file: l.file.clone(),
+                external: l.snapshot.as_deref() == Some("external"),
+            })
+            .collect(),
+    }
+}
+
+/// Pool types whose volumes are files in the pool's target directory. The
+/// rest hold block devices or objects: a file written to their target is
+/// not a volume of the pool.
+const FILE_POOL_TYPES: &[&str] = &["dir", "fs", "netfs"];
+
+fn is_file_pool(p: &crate::libvirt::VirtPool) -> bool {
+    p.pool_type.as_deref().is_some_and(|t| FILE_POOL_TYPES.contains(&t))
+        && p.target.as_deref().is_some_and(|t| t.starts_with('/'))
+}
+
+/// An active pool of files: where an overlay can go.
+pub fn pool_holds_files(p: &crate::libvirt::VirtPool) -> bool {
+    p.active && is_file_pool(p)
+}
+
+/// The pool of files whose directory holds `file` itself.
+pub fn pool_of_file<'a>(pools: &'a [crate::libvirt::VirtPool], file: &str) -> Option<&'a crate::libvirt::VirtPool> {
+    let at = file.rfind('/').filter(|at| *at > 0)?;
+    let dir = &file[..at];
+    pools.iter().find(|p| {
+        is_file_pool(p) && {
+            let t = p.target.as_deref().unwrap_or_default();
+            (if t.len() > 1 { t.trim_end_matches('/') } else { t }) == dir
+        }
+    })
+}
+
+/// The disk chain as the model has it: each layer named for the snapshot
+/// that left the guest on it, each disk's pool, and where an overlay can go.
+///
+/// A snapshot records the file it left a disk on; that file is what the
+/// guest wrote to until the next snapshot moved it on. The topmost layer is
+/// the one in use, the current external snapshot's.
+pub fn chain_of(
+    chain: &crate::libvirt::snapshot::VirtSnapChain,
+    snapshots: &[crate::snapshot::Snapshot],
+    pools: &[crate::libvirt::VirtPool],
+) -> crate::snapshot::Chain {
+    use crate::snapshot::{Chain, ChainDisk, ChainFile};
+    let mut owner = std::collections::HashMap::new();
+    for s in snapshots {
+        for l in &s.layers {
+            if let Some(f) = &l.file {
+                owner.insert(f.clone(), s.name.clone());
+            }
+        }
+    }
+    if let Some(current) = snapshots.iter().find(|s| s.current && s.external) {
+        for d in chain.disks_iter() {
+            if let Some(top) = d.files.first() {
+                owner.entry(top.path.clone()).or_insert_with(|| current.name.clone());
+            }
+        }
+    }
+    Chain {
+        pools: pools.iter().filter(|p| pool_holds_files(p)).map(|p| p.name.clone()).collect(),
+        disks: chain
+            .disks_iter()
+            .map(|d| ChainDisk {
+                target: d.target.clone(),
+                pool: d.files.first().and_then(|top| pool_of_file(pools, &top.path)).map(|p| p.name.clone()),
+                error: d.error.clone(),
+                files: d
+                    .files
+                    .iter()
+                    .enumerate()
+                    .map(|(i, f)| ChainFile {
+                        path: f.path.clone(),
+                        format: f.format.clone(),
+                        allocation: f.allocation,
+                        backing: f.backing.clone(),
+                        snap: owner.get(&f.path).cloned(),
+                        active: i == 0,
+                    })
+                    .collect(),
+            })
+            .collect(),
+        refusal: crate::libvirt::snapshot::snapshot_refusal(chain),
+        external_refusal: crate::libvirt::snapshot::external_snapshot_refusal(chain),
+    }
+}
+
+/// The overlays an external snapshot named `name` puts each disk on, in the
+/// pool directory `dir`. None picked: no `--diskspec` at all, and libvirt
+/// names each `<disk>.<snapshot>` beside the disk it backs.
+pub fn overlays(chain: &crate::libvirt::snapshot::VirtSnapChain, name: &str, dir: Option<&str>) -> Vec<(String, String)> {
+    let Some(dir) = dir else { return Vec::new() };
+    chain
+        .disks_iter()
+        .filter_map(|d| {
+            let top = d.files.first()?;
+            Some((d.target.clone(), crate::snapshot::overlay_path(&top.path, name, Some(dir))))
+        })
+        .collect()
+}

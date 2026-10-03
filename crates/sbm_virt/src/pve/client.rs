@@ -412,6 +412,134 @@ impl Client {
         })
     }
 
+    // -----------------------------------------------------------------------
+    // Snapshots
+    // -----------------------------------------------------------------------
+
+    pub async fn snapshots(&self, guest: &Guest) -> Result<Vec<crate::snapshot::Snapshot>> {
+        let path = guest_path(guest)?;
+        match self.call(Method::Get, &format!("{path}/snapshot"), None, false).await? {
+            Value::Array(list) => Ok(resources::parse_snapshots(&list)),
+            _ => Err(Error::detail(ErrorKind::InvalidResponse, Detail::InvalidData)),
+        }
+    }
+
+    /// Whether every disk of `guest` is on a storage that snapshots: PVE's
+    /// own answer (`feature?feature=snapshot`), what its web UI asks before
+    /// it offers the button. None where it cannot say (an older PVE).
+    pub async fn snapshot_supported(&self, guest: &Guest) -> Option<bool> {
+        let path = guest_path(guest).ok()?;
+        let data = self.call(Method::Get, &format!("{path}/feature?feature=snapshot"), None, false).await.ok()?;
+        data.as_object().map(|d| resources::int(d.get("hasFeature")) == Some(1))
+    }
+
+    /// Why a snapshot of `guest` cannot be taken, naming its storages, or
+    /// None when it can.
+    pub async fn snapshot_refusal(&self, guest: &Guest) -> Option<String> {
+        if self.snapshot_supported(guest).await != Some(false) {
+            return None;
+        }
+        let storages = match self.config_of(guest).await {
+            Ok(config) => resources::guest_storages(&resources::parse_config(&config, guest.kind)),
+            Err(_) => Vec::new(),
+        };
+        Some(if storages.is_empty() {
+            "snapshot feature is not available".to_owned()
+        } else {
+            format!("snapshot feature is not available: {}", storages.join(", "))
+        })
+    }
+
+    /// What differs between snapshot `name`'s configuration and the guest's
+    /// now (the pending changes applied: what a rollback would produce).
+    pub async fn snapshot_diff(&self, guest: &Guest, name: &str) -> Result<Vec<crate::snapshot::Diff>> {
+        let path = guest_path(guest)?;
+        let snap = self.call(Method::Get, &format!("{path}/snapshot/{}/config", seg(name)), None, false).await?;
+        let current = self.call(Method::Get, &format!("{path}/config"), None, false).await?;
+        match (snap.as_object(), current.as_object()) {
+            (Some(b), Some(a)) => Ok(resources::snapshot_diff(b, a)),
+            _ => Err(Error::detail(ErrorKind::InvalidResponse, Detail::InvalidData)),
+        }
+    }
+
+    /// Takes snapshot `name` and returns once its task has finished. Refused
+    /// before the task starts where the guest's storage cannot (PVE's own
+    /// answer). `memory` is a VM's `vmstate`; a container has none.
+    pub async fn create_snapshot(&self, guest: &Guest, name: &str, description: Option<&str>, memory: bool) -> Result<()> {
+        if !crate::snapshot::valid_name(name) {
+            return Err(Error::msg(ErrorKind::Unsupported, format!("Not a snapshot name: {name}")));
+        }
+        if let Some(why) = self.snapshot_refusal(guest).await {
+            return Err(Error::msg(ErrorKind::Unsupported, why));
+        }
+        let mut fields = vec![("snapname", name)];
+        let desc = description.map(str::trim).filter(|d| !d.is_empty());
+        if let Some(d) = desc {
+            fields.push(("description", d));
+        }
+        if memory && guest.kind == GuestKind::Qemu {
+            fields.push(("vmstate", "1"));
+        }
+        let path = guest_path(guest)?;
+        self.task(guest, Method::Post, &format!("{path}/snapshot"), Some(Body::form(form(&fields)))).await
+    }
+
+    /// `rollback`, with `start` to start the guest again after it (a
+    /// snapshot without memory stops a running guest). That start is a task
+    /// of its own, holding the guest's lock until done (45 s for a container
+    /// on PVE 9.2): it is waited for too.
+    pub async fn revert_snapshot(&self, guest: &Guest, name: &str, start: bool) -> Result<()> {
+        let path = guest_path(guest)?;
+        let body = Body::form(if start { form(&[("start", "1")]) } else { String::new() });
+        self.task(guest, Method::Post, &format!("{path}/snapshot/{}/rollback", seg(name)), Some(body)).await?;
+        if start {
+            self.wait_start_task(guest).await?;
+        }
+        self.read_status(guest, &path).await;
+        Ok(())
+    }
+
+    /// Deletes snapshot `name`; its children move up to its parent.
+    pub async fn delete_snapshot(&self, guest: &Guest, name: &str) -> Result<()> {
+        let path = guest_path(guest)?;
+        self.task(guest, Method::Delete, &format!("{path}/snapshot/{}", seg(name)), None).await
+    }
+
+    /// A request answering a UPID, and its task waited for. PVE answers a
+    /// request bound to fail (a name taken) with a task all the same, and the
+    /// task's exit status says why.
+    async fn task(&self, guest: &Guest, method: Method, path: &str, body: Option<Body>) -> Result<()> {
+        let upid = self.call(method, path, body, true).await?;
+        if let Some(upid) = upid.as_str().filter(|u| u.starts_with("UPID:")) {
+            self.wait_task(guest.node.as_deref().unwrap_or_default(), upid).await?;
+        }
+        Ok(())
+    }
+
+    /// The guest's running start task (`qmstart` / `vzstart`), waited for if
+    /// one appears within 5 s.
+    async fn wait_start_task(&self, guest: &Guest) -> Result<()> {
+        let node = guest.node.clone().unwrap_or_default();
+        let deadline = self.now() + 5_000;
+        let path = format!("/nodes/{}/tasks?vmid={}&source=active", seg(&node), guest.vmid.unwrap_or_default());
+        loop {
+            let data = self.call(Method::Get, &path, None, true).await?;
+            let upid = data.as_array().and_then(|tasks| {
+                tasks.iter().find_map(|t| {
+                    let kind = t.get("type").and_then(Value::as_str)?;
+                    (kind == "qmstart" || kind == "vzstart").then(|| t.get("upid")?.as_str().map(str::to_owned))?
+                })
+            });
+            if let Some(upid) = upid {
+                return self.wait_task(&node, &upid).await;
+            }
+            if self.now() > deadline {
+                return Ok(());
+            }
+            tokio::time::sleep(self.opts.task_poll).await;
+        }
+    }
+
     /// Opens `console`'s `vncwebsocket` with the session's credentials, over
     /// the same connection rules and certificate decision as the API calls.
     /// A text console has been logged in to termproxy (its ticket sent, `OK`

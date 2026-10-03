@@ -389,3 +389,87 @@ fn qemu_disk_bus(key: &str) -> Option<&str> {
 fn lxc_disk(key: &str) -> bool {
     key == "rootfs" || is_numbered(key, "mp") || is_numbered(key, "unused")
 }
+
+/// `GET .../{qemu|lxc}/{vmid}/snapshot`. The listing ends in an entry named
+/// `current` ("You are here!"), which is not a snapshot: its `parent` is the
+/// current one.
+pub fn parse_snapshots(raw: &[Value]) -> Vec<crate::snapshot::Snapshot> {
+    let mut current = None;
+    let mut out = Vec::new();
+    for e in raw.iter().filter_map(Value::as_object) {
+        let Some(name) = str_of(e.get("name")) else { continue };
+        if name == "current" {
+            current = str_of(e.get("parent"));
+            continue;
+        }
+        out.push(crate::snapshot::Snapshot {
+            parent: str_of(e.get("parent")),
+            description: str_of(e.get("description")).map(|d| d.trim_end().to_owned()).filter(|d| !d.is_empty()),
+            created_at: int(e.get("snaptime")),
+            with_memory: int(e.get("vmstate")) == Some(1),
+            name,
+            ..Default::default()
+        });
+    }
+    for s in &mut out {
+        s.current = current.as_deref() == Some(s.name.as_str());
+    }
+    out
+}
+
+/// The disks a snapshot takes, by storage: not a CD-ROM, not an unused
+/// volume, and named `<storage>:<volume>` rather than by a host path.
+pub fn guest_storages(detail: &GuestDetail) -> Vec<String> {
+    let mut out: Vec<String> = detail
+        .disks
+        .iter()
+        .filter(|d| d.device != "cdrom" && !d.target.as_deref().is_some_and(|t| t.starts_with("unused")))
+        .filter_map(|d| {
+            let src = d.source.as_deref()?;
+            let at = src.find(':').filter(|at| *at > 0 && !src.starts_with('/'))?;
+            Some(src[..at].to_owned())
+        })
+        .collect();
+    out.sort();
+    out.dedup();
+    out
+}
+
+/// A configuration value as one line for a diff: a `delete: 1` entry is the
+/// removal of a key, and a pending one shows what it will be.
+fn diff_value(v: Option<&Value>) -> Option<String> {
+    match v? {
+        Value::Null => None,
+        Value::Object(m) if m.get("delete").and_then(Value::as_i64) == Some(1) => None,
+        Value::Object(m) => m.get("pending").map(|p| p.as_str().map(str::to_owned).unwrap_or_else(|| p.to_string())),
+        Value::String(s) if s.is_empty() => None,
+        Value::String(s) => Some(s.clone()),
+        other => Some(other.to_string()),
+    }
+}
+
+/// Keys a diff never shows: the listing's own bookkeeping, and what PVE
+/// writes by itself.
+const DIFF_IGNORE: &[&str] =
+    &["digest", "snapname", "snaptime", "parent", "description", "meta", "smbios1", "vmgenid", "lock", "pending"];
+
+/// The snapshot's own configuration against the guest's current one.
+pub fn snapshot_diff(
+    before: &serde_json::Map<String, Value>,
+    after: &serde_json::Map<String, Value>,
+) -> Vec<crate::snapshot::Diff> {
+    let mut keys: Vec<&String> = before.keys().chain(after.keys()).filter(|k| !DIFF_IGNORE.contains(&k.as_str())).collect();
+    keys.sort();
+    keys.dedup();
+    keys.into_iter()
+        .filter_map(|key| {
+            let (b, a) = (diff_value(before.get(key)), diff_value(after.get(key)));
+            (b != a).then(|| crate::snapshot::Diff {
+                group: crate::snapshot::DiffGroup::of_pve_key(key),
+                key: key.clone(),
+                before: b,
+                after: a,
+            })
+        })
+        .collect()
+}

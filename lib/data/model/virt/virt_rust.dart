@@ -1,6 +1,7 @@
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
+import 'package:server_box/data/model/virt/virt_resources.dart';
 
 /// `sbm_virt::model::HostView` JSON (snake_case, the agent's wire format) read
 /// into this app's models. What a guest offers, its state and its usage are
@@ -85,6 +86,80 @@ abstract final class VirtRust {
       description: json['description'] as String?,
       arch: json['arch'] as String?,
       machine: json['machine'] as String?,
+    );
+  }
+
+  /// A list of `sbm_virt::snapshot::Snapshot`.
+  static List<VirtGuestSnapshot> snapshots(Object? json) {
+    if (json is! List) throw _invalid('snapshots');
+    return [
+      for (final s in json.whereType<Map>())
+        VirtGuestSnapshot(
+          name: s['name'] as String,
+          parent: s['parent'] as String?,
+          description: s['description'] as String?,
+          createdAt: switch (s['created_at']) {
+            final int t => DateTime.fromMillisecondsSinceEpoch(t * 1000),
+            _ => null,
+          },
+          current: s['current'] as bool? ?? false,
+          withMemory: s['with_memory'] as bool? ?? false,
+          external: s['external'] as bool? ?? false,
+          layers: [
+            for (final l in (s['layers'] as List? ?? const []).whereType<Map>())
+              VirtSnapshotLayer(
+                target: l['target'] as String,
+                file: l['file'] as String?,
+                external: l['external'] as bool? ?? false,
+              ),
+          ],
+        ),
+    ];
+  }
+
+  /// A list of `sbm_virt::snapshot::Diff`.
+  static List<VirtSnapDiff> diff(Object? json) {
+    if (json is! List) throw _invalid('snapshot diff');
+    return [
+      for (final d in json.whereType<Map>())
+        VirtSnapDiff(
+          group: VirtSnapDiffGroup.values.firstWhere(
+            (g) => g.name == d['group'],
+            orElse: () => VirtSnapDiffGroup.other,
+          ),
+          key: d['key'] as String,
+          before: d['before'] as String?,
+          after: d['after'] as String?,
+        ),
+    ];
+  }
+
+  /// `sbm_virt::snapshot::Chain`.
+  static VirtSnapChain chain(Object? json) {
+    if (json is! Map) throw _invalid('snapshot chain');
+    return VirtSnapChain(
+      pools: [...(json['pools'] as List? ?? const []).whereType<String>()],
+      refusal: json['refusal'] as String?,
+      externalRefusal: json['external_refusal'] as String?,
+      disks: [
+        for (final d in (json['disks'] as List? ?? const []).whereType<Map>())
+          VirtSnapChainDisk(
+            target: d['target'] as String,
+            pool: d['pool'] as String?,
+            error: d['error'] as String?,
+            files: [
+              for (final f in (d['files'] as List? ?? const []).whereType<Map>())
+                VirtSnapChainFile(
+                  path: f['path'] as String,
+                  format: f['format'] as String?,
+                  allocation: f['allocation'] as int?,
+                  backing: f['backing'] as String?,
+                  snap: f['snap'] as String?,
+                  active: f['active'] as bool? ?? false,
+                ),
+            ],
+          ),
+      ],
     );
   }
 

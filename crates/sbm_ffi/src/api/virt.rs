@@ -166,6 +166,126 @@ pub fn virt_libvirt_guest_detail(raw: String) -> Result<String, VirtFfiError> {
     serde_json::to_string(&libvirt::host::detail_of(&detail)).map_err(json_err)
 }
 
+// --- Snapshots (sbm_virt::snapshot, sbm_virt::libvirt::host) ---
+
+/// A libvirt pool as a snapshot's chain needs it (mirrors the fields of
+/// sbm_virt::libvirt::VirtPool it reads).
+pub struct LibvirtPoolRef {
+    pub name: String,
+    pub pool_type: Option<String>,
+    pub active: bool,
+    /// The pool's target: a directory for a pool of files.
+    pub target: Option<String>,
+}
+
+impl From<LibvirtPoolRef> for libvirt::VirtPool {
+    fn from(p: LibvirtPoolRef) -> Self {
+        libvirt::VirtPool { name: p.name, pool_type: p.pool_type, active: p.active, target: p.target, ..Default::default() }
+    }
+}
+
+/// An active pool of files: where an overlay can go.
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_libvirt_pool_holds_files(pool: LibvirtPoolRef) -> bool {
+    libvirt::host::pool_holds_files(&pool.into())
+}
+
+/// The pool of files whose directory holds `file` itself, by name.
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_libvirt_pool_of_file(pools: Vec<LibvirtPoolRef>, file: String) -> Option<String> {
+    let pools: Vec<libvirt::VirtPool> = pools.into_iter().map(Into::into).collect();
+    libvirt::host::pool_of_file(&pools, &file).map(|p| p.name.clone())
+}
+
+/// [`virt_snapshots_script`]'s output as `sbm_virt::snapshot::Snapshot`
+/// JSON.
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_libvirt_snapshots(raw: String) -> Result<String, VirtFfiError> {
+    let list: Vec<_> = libvirt::parse_snapshots(&raw)?.iter().map(libvirt::host::snapshot_of).collect();
+    serde_json::to_string(&list).map_err(json_err)
+}
+
+/// [`virt_snap_chain_script`]'s output as `sbm_virt::snapshot::Chain` JSON:
+/// each layer named for the snapshot (`snapshots_json`, from
+/// [`virt_libvirt_snapshots`]) that left the disk on it, each disk's pool.
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_libvirt_chain(chain_raw: String, snapshots_json: String, pools: Vec<LibvirtPoolRef>) -> Result<String, VirtFfiError> {
+    let chain = snapshot::parse_snap_chain(&chain_raw)?;
+    let snaps: Vec<sbm_virt::snapshot::Snapshot> = serde_json::from_str(&snapshots_json).map_err(json_err)?;
+    let pools: Vec<libvirt::VirtPool> = pools.into_iter().map(Into::into).collect();
+    serde_json::to_string(&libvirt::host::chain_of(&chain, &snaps, &pools)).map_err(json_err)
+}
+
+pub struct VirtOverlay {
+    pub target: String,
+    pub path: String,
+}
+
+/// Where an external snapshot `name` puts each disk's overlay in `dir`; none
+/// without one (libvirt names them beside each disk).
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_libvirt_overlays(chain_raw: String, name: String, dir: Option<String>) -> Result<Vec<VirtOverlay>, VirtFfiError> {
+    let chain = snapshot::parse_snap_chain(&chain_raw)?;
+    Ok(libvirt::host::overlays(&chain, &name, dir.as_deref())
+        .into_iter()
+        .map(|(target, path)| VirtOverlay { target, path })
+        .collect())
+}
+
+/// Why a name cannot be a new snapshot's (mirrors sbm_virt::snapshot::NameIssue).
+pub enum SnapshotNameIssue {
+    Empty,
+    Invalid,
+    Taken,
+}
+
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_snapshot_name_issue(name: String, existing: Vec<String>) -> Option<SnapshotNameIssue> {
+    use sbm_virt::snapshot::NameIssue;
+    sbm_virt::snapshot::name_issue(&name, existing.iter().map(String::as_str)).map(|i| match i {
+        NameIssue::Empty => SnapshotNameIssue::Empty,
+        NameIssue::Invalid => SnapshotNameIssue::Invalid,
+        NameIssue::Taken => SnapshotNameIssue::Taken,
+    })
+}
+
+/// Where a snapshot may take memory from (mirrors sbm_virt::snapshot::Memory).
+pub enum SnapshotMemoryKind {
+    None,
+    Optional,
+    Always,
+}
+
+/// [`sbm_virt::snapshot::memory`] for a guest that is `lxc` or not, running
+/// or paused (`active`), on a host whose internal snapshot of an active
+/// guest always holds memory (`memory_required`).
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_snapshot_memory(lxc: bool, active: bool, memory_required: bool) -> SnapshotMemoryKind {
+    use sbm_virt::model::{Capabilities, Guest, GuestKind, GuestState};
+    let caps = Capabilities { snapshot_memory_required: memory_required, ..Default::default() };
+    let guest = Guest {
+        id: String::new(),
+        name: String::new(),
+        kind: if lxc { GuestKind::Lxc } else { GuestKind::Qemu },
+        state: if active { GuestState::Running } else { GuestState::Stopped },
+        state_reason: None,
+        vmid: None,
+        node: None,
+        vcpu: None,
+        mem_bytes: None,
+        uptime: None,
+        tags: Vec::new(),
+        template: false,
+        autostart: None,
+        actions: Default::default(),
+    };
+    match sbm_virt::snapshot::memory(&caps, &guest) {
+        sbm_virt::snapshot::Memory::None => SnapshotMemoryKind::None,
+        sbm_virt::snapshot::Memory::Optional => SnapshotMemoryKind::Optional,
+        sbm_virt::snapshot::Memory::Always => SnapshotMemoryKind::Always,
+    }
+}
+
 /// The `virsh` actions that carry out `action` on a guest the last view read
 /// with `state_reason` and `offered`; None when it does not offer it. A
 /// crashed domain's start is a destroy first (sbm_virt::libvirt::host).

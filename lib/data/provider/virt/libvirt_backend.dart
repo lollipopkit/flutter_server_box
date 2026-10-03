@@ -301,71 +301,31 @@ class LibvirtBackend implements VirtBackend {
   // ---------------------------------------------------------------------------
 
   @override
-  Future<List<VirtGuestSnapshot>> snapshots(VirtGuest guest) async {
-    final json = await _run(
-      ffi.virtSnapshotsScript(domain: guest.id),
-      ffi.parseVirtSnapshotsJson,
-    );
-    return [
-      for (final s in _decodeList(json))
-        snapshotOf(LibvirtSnapshot.fromJson(s)),
-    ];
-  }
+  Future<List<VirtGuestSnapshot>> snapshots(VirtGuest guest) async =>
+      VirtRust.snapshots(jsonDecode(await _snapshotsJson(guest)));
 
-  static VirtGuestSnapshot snapshotOf(LibvirtSnapshot s) => VirtGuestSnapshot(
-    name: s.name,
-    parent: s.parent,
-    description: s.description,
-    createdAt: switch (s.creationTime) {
-      final t? => DateTime.fromMillisecondsSinceEpoch(t * 1000),
-      null => null,
-    },
-    current: s.current,
-    withMemory: s.memory,
-    external: s.external,
-    layers: [
-      for (final l in s.layers)
-        VirtSnapshotLayer(target: l.target, file: l.file, external: l.snapshot == 'external'),
-    ],
+  Future<String> _snapshotsJson(VirtGuest guest) => _run(
+    ffi.virtSnapshotsScript(domain: guest.id),
+    ({required String raw}) async => ffi.virtLibvirtSnapshots(raw: raw),
   );
 
-  /// The disk chain: the definition's disks, where each device is now, and
-  /// each one's chain as QEMU resolves it, all of that in one round trip
-  /// (`snap_chain_script`).
-  ///
-  /// Two more run beside it, both cheap next to a `virsh` call and both
-  /// already read by the view that shows a chain: the snapshot listing, whose
-  /// layers name which snapshot left the guest on which file, and the pool
-  /// list, whose target directories are where a `--diskspec file=` can put
-  /// an overlay (a pool of block devices has none and is not offered).
+  /// The raw chain read (`snap_chain_script`), checked as it is read.
+  Future<String> _chainRaw(VirtGuest guest) => _run(
+    ffi.virtSnapChainScript(domain: guest.id),
+    ({required String raw}) async {
+      await ffi.parseVirtSnapChainJson(raw: raw);
+      return raw;
+    },
+  );
+
+  /// The disk chain, each layer named for the snapshot that left the guest
+  /// on it, and the pools an overlay can go in
+  /// (`sbm_virt::libvirt::host::chain_of`). Three reads: the chain, the
+  /// snapshots, and the pools, which the Storage view reads anyway.
   @override
   Future<VirtSnapChain> snapshotChain(VirtGuest guest) async {
-    final json = await _run(
-      ffi.virtSnapChainScript(domain: guest.id),
-      ffi.parseVirtSnapChainJson,
-    );
-    final chain = LibvirtSnapChain.fromJson(_decode(json));
-    final snaps = await snapshots(guest);
-    // Which snapshot left the guest on which layer, so the view can name it
-    // rather than only the file: a snapshot records the file it was left on,
-    // and that file is what the guest wrote to until the next snapshot moved
-    // it on. The topmost layer is the one in use, which is the current
-    // external snapshot's.
-    final owner = <String, String>{};
-    for (final s in snaps) {
-      for (final l in s.layers) {
-        if (l.file != null) owner[l.file!] = s.name;
-      }
-    }
-    final current = snaps.firstWhereOrNull((s) => s.current && s.external);
-    if (current != null) {
-      for (final d in chain.disks) {
-        final top = d.files.firstOrNull;
-        if (top != null) owner.putIfAbsent(top.path, () => current.name);
-      }
-    }
-    // Where an overlay can go (the pools of files the host has), and which
-    // pool each disk is in: the pool whose directory holds its topmost file.
+    final raw = await _chainRaw(guest);
+    final snaps = await _snapshotsJson(guest);
     List<VirtStoragePool> pools;
     try {
       pools = await storagePools();
@@ -373,36 +333,19 @@ class LibvirtBackend implements VirtBackend {
       Loggers.app.info('libvirt pools for a snapshot overlay: ${e.message}');
       pools = const [];
     }
-    return VirtSnapChain(
-      pools: [
-        for (final p in pools)
-          if (virtPoolHoldsFiles(p)) p.name,
-      ],
-      disks: [
-        for (final d in chain.disks)
-          VirtSnapChainDisk(
-            target: d.target,
-            pool: switch (d.files.firstOrNull) {
-              final top? => virtPoolOfFile(pools, top.path)?.name,
-              null => null,
-            },
-            error: d.error,
-            files: [
-              for (var i = 0; i < d.files.length; i++)
-                VirtSnapChainFile(
-                  path: d.files[i].path,
-                  format: d.files[i].format,
-                  allocation: d.files[i].allocation,
-                  backing: d.files[i].backing,
-                  snap: owner[d.files[i].path],
-                  active: i == 0,
-                ),
-            ],
+    try {
+      return VirtRust.chain(
+        jsonDecode(
+          ffi.virtLibvirtChain(
+            chainRaw: raw,
+            snapshotsJson: snaps,
+            pools: [for (final p in pools) virtPoolRef(p)],
           ),
-      ],
-      refusal: ffi.virtSnapshotRefusal(chainJson: json),
-      externalRefusal: ffi.virtExternalSnapshotRefusal(chainJson: json),
-    );
+        ),
+      );
+    } on ffi.VirtFfiError catch (e) {
+      throw _toErr(e);
+    }
   }
 
   /// libvirt has nothing to ask: whether a snapshot can be taken is what the
@@ -474,27 +417,27 @@ class LibvirtBackend implements VirtBackend {
       );
       return;
     }
-    final chain = await snapshotChain(guest);
-    if (chain.externalRefusal case final why?) {
+    // One read of the chain answers both: whether an external snapshot can
+    // be taken, and the files the overlays go on.
+    final raw = await _chainRaw(guest);
+    final why = ffi.virtExternalSnapshotRefusal(
+      chainJson: await ffi.parseVirtSnapChainJson(raw: raw),
+    );
+    if (why != null) {
       throw VirtErr(type: VirtErrType.unsupported, message: why);
     }
     // Where the overlays go. **No pool picked: no `--diskspec` at all** —
     // libvirt then names each overlay `<disk>.<snapshot>` beside the disk it
-    // backs, which is the disk's own pool and needs no lookup. A pool the
-    // user picked is resolved to its directory once, and every disk's
-    // overlay goes there.
-    final overlays = <(String, String)>[];
-    if (overlayPool != null) {
-      final dir = await _poolTarget(overlayPool);
-      for (final d in chain.disks) {
-        final top = d.files.firstOrNull;
-        if (top == null) continue;
-        overlays.add((
-          d.target,
-          virtSnapshotOverlayPath(top.path, name, dir),
-        ));
-      }
-    }
+    // backs. A pool the user picked is resolved to its directory once.
+    final dir = overlayPool == null ? null : await _poolTarget(overlayPool);
+    final overlays = [
+      for (final o in ffi.virtLibvirtOverlays(
+        chainRaw: raw,
+        name: name,
+        dir: dir,
+      ))
+        (o.target, o.path),
+    ];
     await _action1(
       ffi.virtSnapshotExternalScript(
         domain: guest.id,
@@ -585,7 +528,7 @@ class LibvirtBackend implements VirtBackend {
   }
 
   static void _checkName(String name) {
-    if (!virtSnapshotNamePattern.hasMatch(name)) {
+    if (virtSnapshotNameIssue(name, const []) != null) {
       throw VirtErr(
         type: VirtErrType.unsupported,
         message: 'Not a snapshot name: $name',

@@ -6,6 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 
+import '../../helpers/rust_lib_helper.dart';
+
 VirtGuestSnapshot _s(String name, [String? parent, int day = 1]) =>
     VirtGuestSnapshot(
       name: name,
@@ -14,6 +16,8 @@ VirtGuestSnapshot _s(String name, [String? parent, int day = 1]) =>
     );
 
 void main() {
+  setUpAll(initRustLibForTest);
+
   group('networks', _networkAddress);
 
   test('tree: depth-first, siblings oldest first', () {

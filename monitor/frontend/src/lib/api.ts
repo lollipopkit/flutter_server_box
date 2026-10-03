@@ -63,6 +63,9 @@ import type {
   VirtGuestDetail,
   VirtHistoryWindow,
   VirtLoad,
+  VirtSnapDiff,
+  VirtSnapshotOp,
+  VirtSnapshots,
   VirtStats,
   VirtPowerAction,
   DesktopsView,
@@ -531,6 +534,31 @@ export const api = {
       '/virt/console',
       { method: 'POST', body: JSON.stringify({ guest, kind, password: password ?? null }) },
       'Failed to open the console',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  virtSnapshots: (guest: string, password?: string) =>
+    request<VirtSnapshots>(
+      '/virt/snapshots',
+      { method: 'POST', body: JSON.stringify({ guest, password: password ?? null }) },
+      'Failed to read the snapshots',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// Returns once the host has finished it.
+  virtSnapshot: (guest: string, op: VirtSnapshotOp, password?: string) =>
+    request<{ error: VirtError | null }>(
+      '/virt/snapshot',
+      { method: 'POST', body: JSON.stringify({ guest, ...op, password: password ?? null }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  virtSnapshotDiff: (guest: string, name: string, password?: string) =>
+    request<{ diff: VirtSnapDiff[] | null; error: VirtError | null }>(
+      '/virt/snapshot/diff',
+      { method: 'POST', body: JSON.stringify({ guest, name, password: password ?? null }) },
+      'Failed to compare the snapshot',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),

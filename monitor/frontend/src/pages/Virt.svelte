@@ -6,6 +6,7 @@
   import PageHeader from '../components/PageHeader.svelte'
   import PveForm from '../components/PveForm.svelte'
   import VirtConsole from '../components/VirtConsole.svelte'
+  import VirtSnapshots from '../components/VirtSnapshots.svelte'
   import { api } from '../lib/api'
   import { prettyFingerprint } from '../lib/bmc'
   import { fmtBytes, fmtBytesPerSec, fmtPercent } from '../lib/format'
@@ -74,7 +75,7 @@
   let timer: ReturnType<typeof setTimeout> | null = null
   let generation = 0
   /// The selected guest's view, the design's tabs.
-  let pane = $state<'overview' | 'hardware' | 'console'>('overview')
+  let pane = $state<'overview' | 'hardware' | 'console' | 'snapshots'>('overview')
   let detail = $state<VirtGuestDetail | null>(null)
   let detailFor = $state<string | null>(null)
   let detailError = $state('')
@@ -297,7 +298,7 @@
 
   $effect(() => {
     const g = current
-    if (g && pane !== 'overview' && detailFor !== g.id) untrack(() => void loadDetail(g))
+    if (g && (pane === 'hardware' || pane === 'console') && detailFor !== g.id) untrack(() => void loadDetail(g))
   })
 
   function chart(samples: VirtStats[]) {
@@ -541,7 +542,7 @@
           </Card>
 
           <nav class="flex items-center gap-1 overflow-x-auto">
-            {#each [['overview', $LL.virtViewOverview()], ['hardware', $LL.virtViewHardware()], ['console', $LL.virtViewConsole()]] as [id, label] (id)}
+            {#each [['overview', $LL.virtViewOverview()], ['hardware', $LL.virtViewHardware()], ['console', $LL.virtViewConsole()], ...(view.capabilities.snapshots && !g.template ? [['snapshots', $LL.virtViewSnapshots()]] : [])] as [id, label] (id)}
               <button
                 class="shrink-0 rounded-lg px-3 py-1.5 text-sm transition-colors {pane === id ? 'bg-primary/10 text-fg-strong' : 'text-muted-fg hover:bg-muted'}"
                 aria-current={pane === id ? 'page' : undefined}
@@ -552,7 +553,9 @@
             {/each}
           </nav>
 
-          {#if pane === 'hardware'}
+          {#if pane === 'snapshots'}
+            <VirtSnapshots guest={g} {sudoPassword} onchanged={() => void refresh()} />
+          {:else if pane === 'hardware'}
             <Card class="space-y-3">
               {#if detailError}
                 <p class="text-sm text-danger whitespace-pre-wrap break-all">{detailError}</p>

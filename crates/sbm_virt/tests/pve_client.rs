@@ -1236,3 +1236,174 @@ async fn consoles_termproxy_and_vncproxy_tickets() {
     let e = pve.console(guest(&view, "lxc/100"), ConsoleKind::Vnc).await.unwrap_err();
     assert_eq!(e.kind, ErrorKind::Unsupported);
 }
+
+// ---------------------------------------------------------------------------
+// Snapshots
+// ---------------------------------------------------------------------------
+
+fn pve_fixture(name: &str) -> Value {
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../test/fixtures/pve").join(name);
+    serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap()
+}
+
+fn vm100() -> Guest {
+    Guest {
+        id: "qemu/100".into(),
+        name: "web-01".into(),
+        kind: GuestKind::Qemu,
+        state: GuestState::Running,
+        state_reason: None,
+        vmid: Some(100),
+        node: Some("pve".into()),
+        vcpu: None,
+        mem_bytes: None,
+        uptime: None,
+        tags: Vec::new(),
+        template: false,
+        autostart: None,
+        actions: Default::default(),
+    }
+}
+
+#[tokio::test]
+async fn storage_support_asked_of_the_guest_refused_before_the_task() {
+    let api = Fake::with(|a| {
+        a.routes.insert("GET /nodes/pve/qemu/100/feature".into(), Box::new(|_| json!({"hasFeature": 0, "nodes": ["pve"]})));
+        // Only the disks a snapshot takes name a storage: not a NIC's MAC, a
+        // description with a colon, a CD-ROM or an unused volume.
+        a.routes.insert(
+            "GET /nodes/pve/qemu/100/config".into(),
+            Box::new(|_| {
+                json!({
+                    "scsi0": "local-lvm:vm-100-disk-0,size=20G",
+                    "net0": "virtio=BC:24:11:AA:BB:CC,bridge=vmbr0",
+                    "description": "Note: prod",
+                    "ide2": "local:iso/debian.iso,media=cdrom",
+                    "unused0": "nfs:100/vm-100-disk-1.qcow2",
+                })
+            }),
+        );
+    });
+    let pve = api.client(token());
+    let guest = vm100();
+    assert_eq!(pve.snapshot_supported(&guest).await, Some(false));
+    assert_eq!(pve.snapshot_refusal(&guest).await.as_deref(), Some("snapshot feature is not available: local-lvm"));
+    let e = pve.create_snapshot(&guest, "pre-up", None, false).await.unwrap_err();
+    assert_eq!(e.kind, ErrorKind::Unsupported);
+    assert!(e.message.unwrap().contains("snapshot feature is not available"));
+    assert!(!api.api().paths.contains(&"POST /nodes/pve/qemu/100/snapshot".to_owned()));
+
+    api.api().routes.insert("GET /nodes/pve/qemu/100/feature".into(), Box::new(|_| json!({"hasFeature": 1})));
+    assert_eq!(pve.snapshot_supported(&guest).await, Some(true));
+    assert_eq!(pve.snapshot_refusal(&guest).await, None);
+    // A host that does not answer the question (an older PVE) is unknown,
+    // not no.
+    api.api().routes.remove("GET /nodes/pve/qemu/100/feature");
+    assert_eq!(pve.snapshot_supported(&guest).await, None);
+    assert_eq!(pve.snapshot_refusal(&guest).await, None);
+}
+
+#[tokio::test]
+async fn the_config_diff_the_snapshots_own_config_against_the_guests() {
+    use sbm_virt::snapshot::DiffGroup;
+    let api = Fake::with(|a| {
+        a.routes.insert(
+            "GET /nodes/pve/qemu/100/snapshot/sbx/config".into(),
+            Box::new(|_| {
+                json!({"cores": 1, "memory": "512", "scsi0": "local-lvm:vm-100-disk-0,size=20G",
+                       "net0": "virtio=BC:24:11:65:B0:B5,bridge=vmbr0", "description": "before the bump",
+                       "snaptime": 1790415090, "digest": "aa"})
+            }),
+        );
+        a.routes.insert(
+            "GET /nodes/pve/qemu/100/config".into(),
+            Box::new(|_| {
+                json!({"cores": 2, "memory": "1024", "scsi0": "local-lvm:vm-100-disk-0,size=20G",
+                       "net0": "virtio=BC:24:11:65:B0:B5,bridge=vmbr1", "digest": "bb", "parent": "sbx"})
+            }),
+        );
+    });
+    let diff = api.client(token()).snapshot_diff(&vm100(), "sbx").await.unwrap();
+    let rows: Vec<_> = diff.iter().map(|d| (d.group, d.key.as_str(), d.before.as_deref(), d.after.as_deref())).collect();
+    assert_eq!(
+        rows,
+        [
+            (DiffGroup::Cpu, "cores", Some("1"), Some("2")),
+            (DiffGroup::Memory, "memory", Some("512"), Some("1024")),
+            (
+                DiffGroup::Nics,
+                "net0",
+                Some("virtio=BC:24:11:65:B0:B5,bridge=vmbr0"),
+                Some("virtio=BC:24:11:65:B0:B5,bridge=vmbr1")
+            ),
+        ]
+    );
+}
+
+#[test]
+fn the_captured_payloads_a_real_snapshot_config_against_the_current_one() {
+    let (snap, cur) = (pve_fixture("snapshot_config.json"), pve_fixture("snapshot_current_config.json"));
+    let diff = resources::snapshot_diff(snap.as_object().unwrap(), cur.as_object().unwrap());
+    let memory = diff.iter().find(|d| d.key == "memory").unwrap();
+    assert_eq!((memory.before.as_deref(), memory.after.as_deref()), (Some("512"), Some("768")));
+    assert!(diff.iter().all(|d| d.key != "digest" && d.key != "vmgenid"));
+}
+
+#[test]
+fn snapshot_listing_the_current_entry_marks_and_is_not_one() {
+    let list = resources::parse_snapshots(pve_fixture("snapshots_qemu.json").as_array().unwrap());
+    assert_eq!(list.iter().map(|s| s.name.as_str()).collect::<Vec<_>>(), ["sbx-disk", "sbx-mem"]);
+    let disk = &list[0];
+    assert_eq!(disk.description.as_deref(), Some("disk only"));
+    assert!(!disk.with_memory && disk.current, "after a rollback to it: `current`'s parent");
+    assert_eq!(disk.created_at, Some(1790335982));
+    let mem = &list[1];
+    assert!(mem.with_memory && !mem.current);
+    assert_eq!(mem.parent.as_deref(), Some("sbx-disk"));
+    assert_eq!(mem.description, None, "an empty description is none");
+    assert!(resources::parse_snapshots(pve_fixture("snapshots_none.json").as_array().unwrap()).is_empty());
+}
+
+#[tokio::test]
+async fn snapshot_requests_create_rollback_and_delete_wait_for_their_task() {
+    let api = Fake::with(|a| {
+        a.resources = resources_fixture();
+        for key in [
+            "POST /nodes/pve/qemu/102/snapshot",
+            "POST /nodes/pve/lxc/100/snapshot",
+            "POST /nodes/pve/qemu/102/snapshot/pre-up/rollback",
+            "DELETE /nodes/pve/qemu/102/snapshot/pre-up",
+        ] {
+            a.routes.insert(key.into(), Box::new(|_| json!(UPID)));
+        }
+        a.current = Some(json!({"status": "stopped"}));
+    });
+    let pve = api.client(token());
+    let view = pve.load().await.unwrap();
+    let (vm, ct) = (guest(&view, "qemu/102").clone(), guest(&view, "lxc/100").clone());
+
+    pve.create_snapshot(&vm, "pre-up", Some(" before "), true).await.unwrap();
+    let body = |api: &Fake, path: &str| {
+        let a = api.api();
+        a.bodies[a.paths.iter().position(|p| p == path).unwrap()].clone()
+    };
+    assert_eq!(body(&api, "POST /nodes/pve/qemu/102/snapshot"), "snapname=pre-up&description=before&vmstate=1");
+    assert!(api.api().paths.last().unwrap().starts_with("GET /nodes/pve/tasks/"));
+    // A container has no memory to save, whatever is asked.
+    pve.create_snapshot(&ct, "pre-up", None, true).await.unwrap();
+    assert_eq!(body(&api, "POST /nodes/pve/lxc/100/snapshot"), "snapname=pre-up");
+
+    // The start is a task of its own, holding the guest's lock: waited for.
+    api.api().routes.insert(
+        "GET /nodes/pve/tasks".into(),
+        Box::new(|_| json!([{"type": "vncproxy", "upid": "UPID:other"}, {"type": "qmstart", "upid": "UPID:pve:9:9:9:qmstart:102:root@pam:"}])),
+    );
+    pve.revert_snapshot(&vm, "pre-up", true).await.unwrap();
+    assert_eq!(body(&api, "POST /nodes/pve/qemu/102/snapshot/pre-up/rollback"), "start=1");
+    assert!(api.api().paths.iter().any(|p| p.starts_with("GET /nodes/pve/tasks/UPID%3Apve%3A9")), "{:?}", api.api().paths);
+    assert_eq!(api.api().paths.last().unwrap(), "GET /nodes/pve/qemu/102/status/current");
+
+    pve.delete_snapshot(&vm, "pre-up").await.unwrap();
+    assert!(api.api().paths.contains(&"DELETE /nodes/pve/qemu/102/snapshot/pre-up".to_owned()));
+    assert_eq!(pve.create_snapshot(&vm, "1bad", None, false).await.unwrap_err().kind, ErrorKind::Unsupported);
+}

@@ -3691,6 +3691,30 @@ mod host {
     }
 
     #[test]
+    fn a_chain_names_its_layers_snapshots_and_its_pools() {
+        use sbm_virt::libvirt::host::{chain_of, overlays, snapshot_of};
+        let snaps: Vec<_> = virt::parse_snapshots(&fixture("script_snapshots_external.txt"))
+            .unwrap()
+            .iter()
+            .map(snapshot_of)
+            .collect();
+        assert!(snaps.iter().any(|s| s.external), "{snaps:?}");
+        let raw = virt_snapshot::parse_snap_chain(&fixture("script_snap_chain_overlay.txt")).unwrap();
+        let storage = virt::parse_storage(&fixture("script_storage.txt")).unwrap();
+        let chain = chain_of(&raw, &snaps, &storage.pools);
+        assert!(!chain.disks.is_empty());
+        let disk = &chain.disks[0];
+        assert!(disk.files[0].active && disk.files.iter().skip(1).all(|f| !f.active));
+        // A pool of files is where an overlay can go; its disk's pool is the
+        // one holding its topmost file.
+        assert!(chain.pools.iter().all(|p| storage.pools.iter().any(|x| &x.name == p)));
+        assert_eq!(chain.refusal, virt_snapshot::snapshot_refusal(&raw));
+        let placed = overlays(&raw, "s2", Some("/srv/overlays"));
+        assert!(placed.iter().all(|(_, path)| path.starts_with("/srv/overlays/") && path.ends_with(".s2")), "{placed:?}");
+        assert!(overlays(&raw, "s2", None).is_empty(), "no pool picked: libvirt names them itself");
+    }
+
+    #[test]
     fn a_crashed_domain_is_destroyed_before_it_starts() {
         let view = view_of(&overview(&fixture("domstats.txt")), &mut RateTracker::new(false), 0, None, false);
         let mut odd = view.guests.into_iter().find(|g| g.id == ODD).unwrap();

@@ -376,6 +376,45 @@ impl PveSession {
     }
 
 
+    /// `sbm_virt::snapshot::Snapshot` JSON list.
+    pub async fn snapshots(&self, guest: PveGuestRef) -> Result<String, PveError> {
+        let list = self.client.snapshots(&guest.into()).await?;
+        serde_json::to_string(&list).map_err(|e| Error::msg(ErrorKind::InvalidResponse, e.to_string()).into())
+    }
+
+    /// PVE's own answer whether every disk snapshots; None where it cannot say.
+    pub async fn snapshot_supported(&self, guest: PveGuestRef) -> Option<bool> {
+        self.client.snapshot_supported(&guest.into()).await
+    }
+
+    pub async fn snapshot_refusal(&self, guest: PveGuestRef) -> Option<String> {
+        self.client.snapshot_refusal(&guest.into()).await
+    }
+
+    /// `sbm_virt::snapshot::Diff` JSON list.
+    pub async fn snapshot_diff(&self, guest: PveGuestRef, name: String) -> Result<String, PveError> {
+        let diff = self.client.snapshot_diff(&guest.into(), &name).await?;
+        serde_json::to_string(&diff).map_err(|e| Error::msg(ErrorKind::InvalidResponse, e.to_string()).into())
+    }
+
+    pub async fn create_snapshot(
+        &self,
+        guest: PveGuestRef,
+        name: String,
+        description: Option<String>,
+        memory: bool,
+    ) -> Result<(), PveError> {
+        Ok(self.client.create_snapshot(&guest.into(), &name, description.as_deref(), memory).await?)
+    }
+
+    pub async fn revert_snapshot(&self, guest: PveGuestRef, name: String, start: bool) -> Result<(), PveError> {
+        Ok(self.client.revert_snapshot(&guest.into(), &name, start).await?)
+    }
+
+    pub async fn delete_snapshot(&self, guest: PveGuestRef, name: String) -> Result<(), PveError> {
+        Ok(self.client.delete_snapshot(&guest.into(), &name).await?)
+    }
+
     /// Reads the guest's state again after an action made through
     /// [`PveSession::raw`] (a snapshot revert), so the next load shows it.
     pub async fn refresh_status(&self, guest: PveGuestRef) {

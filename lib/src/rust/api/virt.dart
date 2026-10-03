@@ -7,7 +7,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `json_err`, `spec_of`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `clone`, `eq`, `fmt`, `fmt`, `from`, `from`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `clone`, `eq`, `fmt`, `fmt`, `from`, `from`, `from`, `from`
 
 /// Host probe: Proxmox VE, a container, or `virsh` answering this user
 String virtProbeScript() => RustLib.instance.api.crateApiVirtVirtProbeScript();
@@ -45,6 +45,70 @@ Future<String> parseVirtOverviewJson({required String raw}) =>
 /// `sbm_virt::model::GuestDetail` JSON (sbm_virt::libvirt::host).
 String virtLibvirtGuestDetail({required String raw}) =>
     RustLib.instance.api.crateApiVirtVirtLibvirtGuestDetail(raw: raw);
+
+/// An active pool of files: where an overlay can go.
+bool virtLibvirtPoolHoldsFiles({required LibvirtPoolRef pool}) =>
+    RustLib.instance.api.crateApiVirtVirtLibvirtPoolHoldsFiles(pool: pool);
+
+/// The pool of files whose directory holds `file` itself, by name.
+String? virtLibvirtPoolOfFile({
+  required List<LibvirtPoolRef> pools,
+  required String file,
+}) => RustLib.instance.api.crateApiVirtVirtLibvirtPoolOfFile(
+  pools: pools,
+  file: file,
+);
+
+/// [`virt_snapshots_script`]'s output as `sbm_virt::snapshot::Snapshot`
+/// JSON.
+String virtLibvirtSnapshots({required String raw}) =>
+    RustLib.instance.api.crateApiVirtVirtLibvirtSnapshots(raw: raw);
+
+/// [`virt_snap_chain_script`]'s output as `sbm_virt::snapshot::Chain` JSON:
+/// each layer named for the snapshot (`snapshots_json`, from
+/// [`virt_libvirt_snapshots`]) that left the disk on it, each disk's pool.
+String virtLibvirtChain({
+  required String chainRaw,
+  required String snapshotsJson,
+  required List<LibvirtPoolRef> pools,
+}) => RustLib.instance.api.crateApiVirtVirtLibvirtChain(
+  chainRaw: chainRaw,
+  snapshotsJson: snapshotsJson,
+  pools: pools,
+);
+
+/// Where an external snapshot `name` puts each disk's overlay in `dir`; none
+/// without one (libvirt names them beside each disk).
+List<VirtOverlay> virtLibvirtOverlays({
+  required String chainRaw,
+  required String name,
+  String? dir,
+}) => RustLib.instance.api.crateApiVirtVirtLibvirtOverlays(
+  chainRaw: chainRaw,
+  name: name,
+  dir: dir,
+);
+
+SnapshotNameIssue? virtSnapshotNameIssue({
+  required String name,
+  required List<String> existing,
+}) => RustLib.instance.api.crateApiVirtVirtSnapshotNameIssue(
+  name: name,
+  existing: existing,
+);
+
+/// [`sbm_virt::snapshot::memory`] for a guest that is `lxc` or not, running
+/// or paused (`active`), on a host whose internal snapshot of an active
+/// guest always holds memory (`memory_required`).
+SnapshotMemoryKind virtSnapshotMemory({
+  required bool lxc,
+  required bool active,
+  required bool memoryRequired,
+}) => RustLib.instance.api.crateApiVirtVirtSnapshotMemory(
+  lxc: lxc,
+  active: active,
+  memoryRequired: memoryRequired,
+);
 
 /// The `virsh` actions that carry out `action` on a guest the last view read
 /// with `state_reason` and `offered`; None when it does not offer it. A
@@ -458,6 +522,44 @@ abstract class LibvirtRates implements RustOpaqueInterface {
   });
 }
 
+/// A libvirt pool as a snapshot's chain needs it (mirrors the fields of
+/// sbm_virt::libvirt::VirtPool it reads).
+class LibvirtPoolRef {
+  final String name;
+  final String? poolType;
+  final bool active;
+
+  /// The pool's target: a directory for a pool of files.
+  final String? target;
+
+  const LibvirtPoolRef({
+    required this.name,
+    this.poolType,
+    required this.active,
+    this.target,
+  });
+
+  @override
+  int get hashCode =>
+      name.hashCode ^ poolType.hashCode ^ active.hashCode ^ target.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is LibvirtPoolRef &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          poolType == other.poolType &&
+          active == other.active &&
+          target == other.target;
+}
+
+/// Where a snapshot may take memory from (mirrors sbm_virt::snapshot::Memory).
+enum SnapshotMemoryKind { none, optional, always }
+
+/// Why a name cannot be a new snapshot's (mirrors sbm_virt::snapshot::NameIssue).
+enum SnapshotNameIssue { empty, invalid, taken }
+
 /// Power actions (mirrors sbm_virt::libvirt::VirtAction)
 enum VirtActionKind {
   start,
@@ -521,6 +623,24 @@ class VirtFfiError implements FrbException {
           runtimeType == other.runtimeType &&
           kind == other.kind &&
           message == other.message;
+}
+
+class VirtOverlay {
+  final String target;
+  final String path;
+
+  const VirtOverlay({required this.target, required this.path});
+
+  @override
+  int get hashCode => target.hashCode ^ path.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is VirtOverlay &&
+          runtimeType == other.runtimeType &&
+          target == other.target &&
+          path == other.path;
 }
 
 /// How the upload command reaches the daemon (mirrors

@@ -142,6 +142,16 @@ fn handle(seen: &Mutex<Seen>, method: &str, path: &str, auth: Option<String>) ->
             respond(200, json!({"port": "5900", "ticket": "PVEVNC:x", "user": "root@pam!panel", "password": "abcdefghij"}))
         }
         ("GET", "/nodes/pve/qemu/100/config") => respond(200, json!({"scsi0": "local-lvm:vm-100-disk-0,size=8G", "net0": "virtio=BC:24:11:00:00:01,bridge=vmbr0", "ostype": "l26"})),
+        ("GET", "/nodes/pve/qemu/100/snapshot") => respond(
+            200,
+            json!([
+                {"name": "pre-up", "snaptime": 1790335982, "description": "before\n", "vmstate": 0},
+                {"name": "current", "parent": "pre-up", "running": 1}
+            ]),
+        ),
+        ("GET", p) if p.starts_with("/nodes/pve/qemu/100/feature") => respond(200, json!({"hasFeature": 1})),
+        ("POST", "/nodes/pve/qemu/100/snapshot") => respond(200, json!(UPID)),
+        ("DELETE", "/nodes/pve/qemu/100/snapshot/pre-up") => respond(200, json!(UPID)),
         ("GET", p) if p.starts_with("/nodes/pve/qemu/100/rrddata") => {
             respond(200, json!([{"time": 1700000060, "cpu": 0.5}, {"time": 1700000000, "cpu": 0.25}]))
         }
@@ -375,4 +385,44 @@ async fn a_console_needs_virt_and_its_own_ticket() {
     // console it opens.
     let (status, _) = call(&srv, Some("admin"), Method::POST, "/api/v1/ws-ticket", Some(json!({"purpose": "virt"}))).await;
     assert_eq!(status, 403);
+}
+
+#[ntex::test]
+async fn snapshots_are_listed_taken_and_deleted_and_recorded() {
+    let pve = FakePve::start().await;
+    let (srv, db) = server().await;
+    let pin = pinned(&pve).await;
+    call(&srv, Some("admin"), Method::PUT, "/api/v1/virt/pve", Some(token_config(&pve.url(), Some(&pin)))).await;
+
+    let (_, body) = call(&srv, Some("admin"), Method::POST, "/api/v1/virt/snapshots", Some(json!({"guest": "qemu/100"}))).await;
+    assert_eq!(body["error"], Value::Null, "{body}");
+    assert_eq!(body["snapshots"][0]["name"], "pre-up");
+    assert_eq!(body["snapshots"][0]["current"], true);
+    assert_eq!(body["snapshots"][0]["description"], "before");
+    // A running VM's memory is the user's choice on PVE.
+    assert_eq!(body["memory"], "optional");
+    assert_eq!(body["refusal"], Value::Null);
+
+    for op in [json!({"op": "create", "name": "pre-down", "description": "x"}), json!({"op": "delete", "name": "pre-up"})] {
+        let mut req = op.clone();
+        req["guest"] = json!("qemu/100");
+        let (_, body) = call(&srv, Some("admin"), Method::POST, "/api/v1/virt/snapshot", Some(req)).await;
+        assert_eq!(body["error"], Value::Null, "{op}: {body}");
+    }
+    let (_, body) = call(
+        &srv,
+        Some("admin"),
+        Method::POST,
+        "/api/v1/virt/snapshot",
+        Some(json!({"guest": "qemu/100", "op": "create", "name": "1bad"})),
+    )
+    .await;
+    assert_eq!(body["error"]["kind"], "unsupported", "{body}");
+    let paths = pve.seen.lock().unwrap().paths.clone();
+    assert!(paths.contains(&"POST /api2/json/nodes/pve/qemu/100/snapshot".to_owned()), "{paths:?}");
+    assert!(paths.contains(&"DELETE /api2/json/nodes/pve/qemu/100/snapshot/pre-up".to_owned()), "{paths:?}");
+
+    let details: Vec<_> = audit(&db).await.into_iter().filter_map(|r| r.3).collect();
+    assert!(details.contains(&"virt snapshot create qemu/100 pre-down".to_owned()), "{details:?}");
+    assert!(details.contains(&"virt snapshot create qemu/100 1bad: Unsupported".to_owned()), "{details:?}");
 }

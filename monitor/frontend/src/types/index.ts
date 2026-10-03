@@ -1641,3 +1641,55 @@ export interface VirtConsoleAnswer {
   command: string | null
   error: VirtError | null
 }
+
+export interface VirtSnapshot {
+  name: string
+  parent: string | null
+  description: string | null
+  /// Unix seconds.
+  created_at: number | null
+  current: boolean
+  with_memory: boolean
+  external: boolean
+  layers: { target: string; file: string | null; external: boolean }[]
+}
+
+export interface VirtChainFile {
+  path: string
+  format: string | null
+  allocation: number | null
+  backing: string | null
+  snap: string | null
+  active: boolean
+}
+
+export interface VirtChain {
+  disks: { target: string; files: VirtChainFile[]; pool: string | null; error: string | null }[]
+  refusal: string | null
+  external_refusal: string | null
+  pools: string[]
+}
+
+export type VirtSnapshotMemory = 'none' | 'optional' | 'always'
+
+/// `POST /virt/snapshots`.
+export interface VirtSnapshots {
+  snapshots?: VirtSnapshot[]
+  memory?: VirtSnapshotMemory
+  refusal?: string | null
+  /// libvirt: the chain an external snapshot sits on.
+  chain?: VirtChain | null
+  error: VirtError | null
+}
+
+export type VirtSnapshotOp =
+  | { op: 'create'; name: string; description: string | null; memory: boolean; external: boolean; pool: string | null }
+  | { op: 'revert'; name: string; start: boolean }
+  | { op: 'delete'; name: string }
+
+export interface VirtSnapDiff {
+  group: 'cpu' | 'memory' | 'disks' | 'nics' | 'firmware' | 'boot' | 'other'
+  key: string
+  before: string | null
+  after: string | null
+}

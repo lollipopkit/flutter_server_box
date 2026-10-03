@@ -2127,7 +2127,6 @@ Future<void> _pvePassword() async {
     Spi spi,
     SSHClient client, {
     String? pvePwd,
-    DateTime Function()? now,
   }) {
     final d = ServerTcpDialer(
       spi: spi,
@@ -2144,7 +2143,6 @@ Future<void> _pvePassword() async {
       sshPassword: spi.ssh?.pwd,
       taskPoll: const Duration(milliseconds: 500),
       taskTimeout: const Duration(minutes: 3),
-      now: now,
     );
   }
 
@@ -2334,8 +2332,7 @@ Future<void> _pvePassword() async {
         return _totp(totpSecret, lastStep);
       }
 
-      PveBackend totp({DateTime Function()? now}) =>
-          backend(byKey(totpUser), totpKey, pvePwd: totpPwd, now: now);
+      PveBackend totp() => backend(byKey(totpUser), totpKey, pvePwd: totpPwd);
 
       test('needTfa, a wrong code keeps the challenge, the right one logs in',
           () async {

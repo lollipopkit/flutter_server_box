@@ -6,8 +6,8 @@ import { api } from '../lib/api'
 import { capabilitiesStore } from '../lib/capabilities.svelte'
 import { servers } from '../lib/servers.svelte'
 import { enabledFeatures } from '../lib/features'
-import { allocation, orderedActions, pushSample, pveDraft, virtErrorText, HISTORY_LEN } from '../lib/virt'
-import type { Capabilities, VirtGuest, VirtLoad, VirtStats } from '../types'
+import { allocation, orderedActions, pushSample, pveDraft, snapshotTree, virtErrorText, HISTORY_LEN } from '../lib/virt'
+import type { Capabilities, VirtGuest, VirtLoad, VirtSnapshot, VirtStats } from '../types'
 
 vi.mock('../lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../lib/api')>()),
@@ -22,6 +22,9 @@ vi.mock('../lib/api', async (importOriginal) => ({
     virtDetail: vi.fn(),
     virtHistory: vi.fn(),
     virtConsole: vi.fn(),
+    virtSnapshots: vi.fn(),
+    virtSnapshot: vi.fn(),
+    virtSnapshotDiff: vi.fn(),
   },
 }))
 const loadVirt = vi.mocked(api.loadVirt)
@@ -32,6 +35,8 @@ const pveTfa = vi.mocked(api.pveTfa)
 const virtDetail = vi.mocked(api.virtDetail)
 const virtConsole = vi.mocked(api.virtConsole)
 const virtHistory = vi.mocked(api.virtHistory)
+const virtSnapshots = vi.mocked(api.virtSnapshots)
+const virtSnapshot = vi.mocked(api.virtSnapshot)
 
 function guest(over: Partial<VirtGuest>): VirtGuest {
   return {
@@ -125,6 +130,14 @@ describe('the virtualization helpers', () => {
     for (let i = 0; i < HISTORY_LEN + 5; i++) h = pushSample(h, stats(i, 1))
     expect(h).toHaveLength(HISTORY_LEN)
     expect(pushSample(h, stats(h.at(-1)!.at, 2))).toBe(h)
+  })
+
+  it('draws snapshots as a tree, oldest sibling first, orphans as roots', () => {
+    const snap = (name: string, parent: string | null, at: number | null): VirtSnapshot => ({
+      name, parent, description: null, created_at: at, current: false, with_memory: false, external: false, layers: [],
+    })
+    const order = snapshotTree([snap('b', 'a', 3), snap('a', null, 1), snap('c', 'a', 2), snap('x', 'gone', null)])
+    expect(order.map(([s, d]) => `${s.name}:${d}`)).toEqual(['a:0', 'c:1', 'b:1', 'x:0'])
   })
 
   it('drafts the form with every secret kept', () => {
@@ -299,6 +312,46 @@ describe('the virtualization page', () => {
     await fireEvent.click(await screen.findByRole('button', { name: /^day$/i }))
     await waitFor(() => expect(virtHistory).toHaveBeenCalledWith('qemu/100', 'day'))
     vi.unstubAllGlobals()
+  })
+
+  it('takes a snapshot with what the host says the memory may be, and asks before a revert', async () => {
+    const view = loaded([guest({})])
+    view.view!.capabilities.snapshots = true
+    loadVirt.mockResolvedValue(view)
+    virtSnapshots.mockResolvedValue({
+      snapshots: [{ name: 'pre-up', parent: null, description: 'before', created_at: 1790000000, current: true, with_memory: false, external: false, layers: [] }],
+      memory: 'optional',
+      refusal: null,
+      chain: null,
+      error: null,
+    })
+    virtSnapshot.mockResolvedValue({ error: null })
+    render(Virt, { onback: () => {} })
+    await fireEvent.click(await screen.findByRole('button', { name: /^snapshots$/i }))
+    expect(await screen.findByText('pre-up')).toBeInTheDocument()
+    await fireEvent.input(screen.getByPlaceholderText('Name'), { target: { value: 'pre-down' } })
+    await fireEvent.click(screen.getByRole('button', { name: /take snapshot/i }))
+    await waitFor(() =>
+      expect(virtSnapshot).toHaveBeenCalledWith(
+        'qemu/100',
+        { op: 'create', name: 'pre-down', description: null, memory: true, external: false, pool: null },
+        undefined,
+      ),
+    )
+    await fireEvent.click(screen.getAllByRole('button', { name: /^revert$/i })[0])
+    expect(screen.getByText(/disks go back to then/)).toBeInTheDocument()
+    expect(virtSnapshot).toHaveBeenCalledTimes(1)
+  })
+
+  it('says why a snapshot cannot be taken, instead of the form', async () => {
+    const view = loaded([guest({})])
+    view.view!.capabilities.snapshots = true
+    loadVirt.mockResolvedValue(view)
+    virtSnapshots.mockResolvedValue({ snapshots: [], memory: 'optional', refusal: 'snapshot feature is not available: local', chain: null, error: null })
+    render(Virt, { onback: () => {} })
+    await fireEvent.click(await screen.findByRole('button', { name: /^snapshots$/i }))
+    expect(await screen.findByText(/not available: local/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /take snapshot/i })).not.toBeInTheDocument()
   })
 })
 

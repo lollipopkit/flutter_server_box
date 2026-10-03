@@ -75,14 +75,12 @@ class PveBackend implements VirtBackend {
     void Function()? onClose,
     this.taskPoll = const Duration(seconds: 1),
     this.taskTimeout = const Duration(minutes: 10),
-    DateTime Function()? now,
   }) : _config = config,
        _openTunnel = tunnel,
        _connect = connect,
        _onCertConfirmed = onCertConfirmed,
        _onClose = onClose,
-       _exec = exec,
-       _now = now ?? DateTime.now;
+       _exec = exec;
 
   /// The backend for [spi], connecting through its `ServerTcpDialer` and
   /// writing a confirmed certificate to `Stores.pve`.
@@ -141,7 +139,6 @@ class PveBackend implements VirtBackend {
   final PveConnect _connect;
   final void Function(String fingerprint)? _onCertConfirmed;
   final void Function()? _onClose;
-  final DateTime Function() _now;
 
   PveConfig get config => _config;
 
@@ -300,156 +297,25 @@ class PveBackend implements VirtBackend {
   List<VirtGuest> _guests = const [];
 
   @override
-  Future<List<VirtGuestSnapshot>> snapshots(VirtGuest guest) async {
-    final data = await _call(
-      (dio) => dio.get(_url('${_guestPath(guest)}/snapshot')),
-    );
-    if (data is! List) {
-      throw VirtErr(
-        type: VirtErrType.invalidResponse,
-        message: l10n.pveInvalidResponseData,
-      );
-    }
-    return PveResources.parseSnapshots(data);
-  }
+  Future<List<VirtGuestSnapshot>> snapshots(VirtGuest guest) async =>
+      VirtRust.snapshots(jsonDecode(await _rust((s) => s.snapshots(guest: _ref(guest)))));
 
-  /// PVE snapshots whole volumes: a disk on an `lvmthin`, `zfspool` or `rbd`
-  /// storage is one, a raw file on a `dir` storage is not. `/storage` and a
-  /// node's storage list say what each storage holds, not whether it
-  /// snapshots, so the question is asked of the guest itself — the same
-  /// `feature?feature=snapshot` its own web UI asks before it offers the
-  /// button (`PVE::QemuConfig::has_feature` over each volume).
-  ///
-  /// A guest whose disks are on **mixed** storages answers false when any one
-  /// of them cannot be snapshotted, and PVE then refuses the task with
-  /// "snapshot feature is not available" (verified on PVE 9.2.2 with a raw
-  /// disk on a `dir` storage beside a thin one).
+  /// PVE's own answer whether every disk of [guest] is on a storage that
+  /// snapshots (`sbm_virt::pve::Client::snapshot_supported`); null where it
+  /// cannot say.
   @override
-  Future<bool?> snapshotSupported(VirtGuest guest) async {
-    try {
-      final data = await _call(
-        (dio) => dio.get(
-          _url('${_guestPath(guest)}/feature'),
-          queryParameters: {'feature': 'snapshot'},
-        ),
-      );
-      return data is Map ? data['hasFeature'] == 1 : null;
-    } on VirtErr catch (e) {
-      // An older PVE, or a guest deleted since the last load: unknown
-      // rather than "no".
-      Loggers.app.info('PVE snapshot feature of ${guest.vmid}: ${e.message}');
-      return null;
-    }
-  }
+  Future<bool?> snapshotSupported(VirtGuest guest) =>
+      _rust((s) => s.snapshotSupported(guest: _ref(guest)));
 
-  /// The storages the guest's disks are on, by name, for the view to name
-  /// when it says why a snapshot is refused.
   @override
-  Future<String?> snapshotRefusal(VirtGuest guest) async {
-    final supported = await snapshotSupported(guest);
-    if (supported != false) return null;
-    final storages = await _guestStorages(guest);
-    return storages.isEmpty
-        ? 'snapshot feature is not available'
-        : 'snapshot feature is not available: ${storages.join(', ')}';
-  }
+  Future<String?> snapshotRefusal(VirtGuest guest) =>
+      _rust((s) => s.snapshotRefusal(guest: _ref(guest)));
 
-  /// The ids of the storages this guest's own volumes are on, from its
-  /// configuration (`scsi0: local-lvm:vm-900-disk-0`).
-  Future<List<String>> _guestStorages(VirtGuest guest) async {
-    try {
-      final data = await _call((dio) => dio.get(_url('${_guestPath(guest)}/config')));
-      if (data is! Map) return const [];
-      // The disks a snapshot takes: not a CD-ROM, not an unused volume, and
-      // named `<storage>:<volume>` rather than by a host path.
-      final out = <String>{
-        for (final d in PveResources.parseConfig(
-          data.cast<String, Object?>(),
-          guest.kind,
-        ).disks)
-          if (d.device != 'cdrom' && !(d.target?.startsWith('unused') ?? false))
-            if (d.source case final src?
-                when !src.startsWith('/') && src.indexOf(':') > 0)
-              src.substring(0, src.indexOf(':')),
-      };
-      return out.toList()..sort();
-    } on VirtErr catch (e) {
-      Loggers.app.info('PVE config of ${guest.vmid}: ${e.message}');
-      return const [];
-    }
-  }
-
-  /// The snapshot's own `config` against the guest's current one.
-  ///
-  /// PVE answers the snapshot's configuration whole (`GET .../snapshot/
-  /// {name}/config`), which is the guest's configuration as it was; the
-  /// guest's own is `GET config`, with the pending changes already applied
-  /// (that is what a rollback would produce). Keys that are the listing's own
-  /// (`digest`, `snapname`, `snaptime`, `parent`, `description`) are left out,
-  /// as are the ones that are not a setting anyone makes (`meta`, `smbios1`,
-  /// `vmgenid`): none of them differs for a reason the view could act on.
   @override
-  Future<List<VirtSnapDiff>> snapshotDiff(VirtGuest guest, String name) async {
-    final path = _guestPath(guest);
-    final snap = await _call(
-      (dio) => dio.get(_url('$path/snapshot/${_seg(name)}/config')),
-    );
-    final current = await _call((dio) => dio.get(_url('$path/config')));
-    if (snap is! Map || current is! Map) {
-      throw VirtErr(
-        type: VirtErrType.invalidResponse,
-        message: l10n.pveInvalidResponseData,
+  Future<List<VirtSnapDiff>> snapshotDiff(VirtGuest guest, String name) async =>
+      VirtRust.diff(
+        jsonDecode(await _rust((s) => s.snapshotDiff(guest: _ref(guest), name: name))),
       );
-    }
-    final before = snap.cast<String, Object?>();
-    final after = current.cast<String, Object?>();
-    final keys = {...before.keys, ...after.keys}.difference(_diffIgnore);
-    final out = <VirtSnapDiff>[];
-    for (final key in keys) {
-      final b = _diffValue(before[key]);
-      final a = _diffValue(after[key]);
-      if (b == a) continue;
-      out.add(
-        VirtSnapDiff(
-          group: VirtSnapDiffGroup.of(key),
-          key: key,
-          before: b,
-          after: a,
-        ),
-      );
-    }
-    out.sort((x, y) => x.key.compareTo(y.key));
-    return out;
-  }
-
-  /// Keys a diff never shows: the listing's own bookkeeping, and what PVE
-  /// writes by itself.
-  static const _diffIgnore = {
-    'digest',
-    'snapname',
-    'snaptime',
-    'parent',
-    'description',
-    'meta',
-    'smbios1',
-    'vmgenid',
-    'lock',
-    'pending',
-  };
-
-  /// A configuration value as one line. A password is never read back (PVE
-  /// answers `**********`), and `delete: 1` entries are the removal of a key
-  /// rather than a value.
-  static String? _diffValue(Object? v) {
-    if (v == null) return null;
-    if (v is Map) {
-      if (v['delete'] == 1) return null;
-      if (v['pending'] != null) return v['pending'].toString();
-      return null;
-    }
-    final text = v.toString();
-    return text.isEmpty ? null : text;
-  }
 
   /// PVE has no external form: a snapshot is a volume-level one taken by the
   /// storage, and a running VM's memory is `vmstate`.
@@ -460,8 +326,6 @@ class PveBackend implements VirtBackend {
         message: 'PVE snapshots are per volume; there is no chain to show',
       );
 
-  /// `vmstate` only for a VM: a container's snapshot never has memory, and
-  /// PVE refuses the parameter for one.
   @override
   Future<void> createSnapshot(
     VirtGuest guest, {
@@ -470,100 +334,29 @@ class PveBackend implements VirtBackend {
     bool memory = false,
     VirtSnapshotForm form = VirtSnapshotForm.internal,
     String? overlayPool,
-  }) async {
-    if (!virtSnapshotNamePattern.hasMatch(name)) {
-      throw VirtErr(
-        type: VirtErrType.unsupported,
-        message: 'Not a snapshot name: $name',
-      );
-    }
-    // Refused before the task is started, with what the host says about the
-    // guest's storages, rather than after it fails.
-    if (await snapshotRefusal(guest) case final why?) {
-      throw VirtErr(type: VirtErrType.unsupported, message: why);
-    }
-    final desc = description?.trim();
-    await _task(
-      guest,
-      (dio) => dio.post(
-        _url('${_guestPath(guest)}/snapshot'),
-        data: {
-          'snapname': name,
-          if (desc != null && desc.isNotEmpty) 'description': desc,
-          if (memory && guest.kind == VirtGuestKind.qemu) 'vmstate': 1,
-        },
-        options: Options(contentType: Headers.formUrlEncodedContentType),
-      ),
-    );
-  }
+  }) => _rust(
+    (s) => s.createSnapshot(
+      guest: _ref(guest),
+      name: name,
+      description: description,
+      memory: memory,
+    ),
+  );
 
-  /// `rollback`, with `start=1` for [start]. A snapshot without memory stops
-  /// a running guest; PVE starts it again afterwards when asked (verified on
-  /// PVE 9.2 for a VM and a container).
-  ///
-  /// That start is a task of its own (`qmstart` / `vzstart`), begun as the
-  /// rollback's ends, and it holds the guest's lock until it is done: on
-  /// PVE 9.2 a container's took 45 s, and a snapshot deleted meanwhile failed
-  /// with "Failed to obtain guest migration lock". So with [start] this
-  /// returns once that task has finished too, and the guest is not offered
-  /// anything before.
+  /// `rollback`, with the start after it waited for
+  /// (`sbm_virt::pve::Client::revert_snapshot`).
   @override
   Future<void> revertSnapshot(
     VirtGuest guest,
     String name, {
     bool start = false,
-  }) async {
-    final path = _guestPath(guest);
-    await _task(
-      guest,
-      (dio) => dio.post(
-        _url('$path/snapshot/${_seg(name)}/rollback'),
-        data: {if (start) 'start': 1},
-        options: Options(contentType: Headers.formUrlEncodedContentType),
-      ),
-    );
-    if (start) await _waitStartTask(guest);
-    await _rust((s) => s.refreshStatus(guest: _ref(guest)));
-  }
-
-  /// How long [_waitStartTask] looks for the start task to appear.
-  static const _startTaskAppears = Duration(seconds: 5);
-
-  /// Waits for the guest's running start task, if one appears within
-  /// [_startTaskAppears]. Its failure is the action's.
-  Future<void> _waitStartTask(VirtGuest guest) async {
-    final node = guest.node!;
-    final deadline = _now().add(_startTaskAppears);
-    while (true) {
-      final data = await _call(
-        (dio) => dio.get(
-          _url('/nodes/${_seg(node)}/tasks'),
-          queryParameters: {'vmid': guest.vmid, 'source': 'active'},
-        ),
-        action: true,
-      );
-      final upid = data is List
-          ? data
-                .whereType<Map>()
-                .where((t) => t['type'] == 'qmstart' || t['type'] == 'vzstart')
-                .map((t) => t['upid'])
-                .whereType<String>()
-                .firstOrNull
-          : null;
-      if (upid != null) {
-        await _waitTask(node, upid);
-        return;
-      }
-      if (_now().isAfter(deadline)) return;
-      await Future<void>.delayed(taskPoll);
-    }
-  }
+  }) => _rust(
+    (s) => s.revertSnapshot(guest: _ref(guest), name: name, start: start),
+  );
 
   @override
-  Future<void> deleteSnapshot(VirtGuest guest, String name) => _task(
-    guest,
-    (dio) => dio.delete(_url('${_guestPath(guest)}/snapshot/${_seg(name)}')),
-  );
+  Future<void> deleteSnapshot(VirtGuest guest, String name) =>
+      _rust((s) => s.deleteSnapshot(guest: _ref(guest), name: name));
 
   /// Runs [request], which answers a UPID, and waits for its task. PVE
   /// answers a snapshot request that is bound to fail (a name taken, one that

@@ -3185,6 +3185,99 @@ type RootTranslation = {
 	 */
 	virtConsoleCommand: string
 	/**
+	 * S​n​a​p​s​h​o​t​s
+	 */
+	virtViewSnapshots: string
+	/**
+	 * N​a​m​e
+	 */
+	virtSnapName: string
+	/**
+	 * D​e​s​c​r​i​p​t​i​o​n​ ​(​o​p​t​i​o​n​a​l​)
+	 */
+	virtSnapDescription: string
+	/**
+	 * T​a​k​e​ ​s​n​a​p​s​h​o​t
+	 */
+	virtSnapTake: string
+	/**
+	 * I​n​c​l​u​d​e​ ​m​e​m​o​r​y
+	 */
+	virtSnapWithMemory: string
+	/**
+	 * A​ ​r​u​n​n​i​n​g​ ​g​u​e​s​t​'​s​ ​m​e​m​o​r​y​ ​i​s​ ​a​l​w​a​y​s​ ​i​n​c​l​u​d​e​d​.
+	 */
+	virtSnapMemoryAlways: string
+	/**
+	 * E​x​t​e​r​n​a​l​ ​(​d​i​s​k​ ​o​n​l​y​,​ ​t​h​e​ ​g​u​e​s​t​ ​k​e​e​p​s​ ​r​u​n​n​i​n​g​)
+	 */
+	virtSnapExternal: string
+	/**
+	 * B​e​s​i​d​e​ ​e​a​c​h​ ​d​i​s​k
+	 */
+	virtSnapPoolOwn: string
+	/**
+	 * N​o​ ​e​x​t​e​r​n​a​l​ ​s​n​a​p​s​h​o​t​:​ ​{​w​h​y​}
+	 * @param {unknown} why
+	 */
+	virtSnapNoExternal: RequiredParams<'why'>
+	/**
+	 * A​ ​s​n​a​p​s​h​o​t​ ​c​a​n​n​o​t​ ​b​e​ ​t​a​k​e​n​:​ ​{​w​h​y​}
+	 * @param {unknown} why
+	 */
+	virtSnapRefused: RequiredParams<'why'>
+	/**
+	 * N​o​ ​s​n​a​p​s​h​o​t​s​.
+	 */
+	virtSnapNone: string
+	/**
+	 * C​u​r​r​e​n​t
+	 */
+	virtSnapCurrent: string
+	/**
+	 * M​e​m​o​r​y
+	 */
+	virtSnapMemory: string
+	/**
+	 * E​x​t​e​r​n​a​l
+	 */
+	virtSnapExternalBadge: string
+	/**
+	 * C​h​a​n​g​e​s
+	 */
+	virtSnapDiff: string
+	/**
+	 * N​o​t​h​i​n​g​ ​c​h​a​n​g​e​d​ ​s​i​n​c​e​ ​t​h​i​s​ ​s​n​a​p​s​h​o​t​.
+	 */
+	virtSnapSame: string
+	/**
+	 * R​e​v​e​r​t
+	 */
+	virtSnapRevert: string
+	/**
+	 * R​e​v​e​r​t​ ​t​o​ ​{​n​a​m​e​}​?​ ​T​h​e​ ​g​u​e​s​t​ ​g​o​e​s​ ​b​a​c​k​ ​t​o​ ​w​h​e​r​e​ ​i​t​ ​w​a​s​,​ ​i​t​s​ ​m​e​m​o​r​y​ ​i​n​c​l​u​d​e​d​;​ ​a​n​y​t​h​i​n​g​ ​s​i​n​c​e​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} name
+	 */
+	virtSnapRevertMemory: RequiredParams<'name'>
+	/**
+	 * R​e​v​e​r​t​ ​t​o​ ​{​n​a​m​e​}​?​ ​I​t​s​ ​d​i​s​k​s​ ​g​o​ ​b​a​c​k​ ​t​o​ ​t​h​e​n​ ​a​n​d​ ​t​h​e​ ​g​u​e​s​t​ ​i​s​ ​s​t​o​p​p​e​d​;​ ​a​n​y​t​h​i​n​g​ ​s​i​n​c​e​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} name
+	 */
+	virtSnapRevertDisk: RequiredParams<'name'>
+	/**
+	 * S​t​a​r​t​ ​i​t​ ​a​g​a​i​n​ ​a​f​t​e​r​w​a​r​d​s
+	 */
+	virtSnapStartAfter: string
+	/**
+	 * D​e​l​e​t​e​ ​s​n​a​p​s​h​o​t
+	 */
+	virtSnapDelete: string
+	/**
+	 * D​e​l​e​t​e​ ​s​n​a​p​s​h​o​t​ ​{​n​a​m​e​}​?​ ​T​h​e​ ​g​u​e​s​t​ ​k​e​e​p​s​ ​w​h​a​t​ ​i​t​ ​h​a​s​ ​n​o​w​.
+	 * @param {unknown} name
+	 */
+	virtSnapDeleteConfirm: RequiredParams<'name'>
+	/**
 	 * Y​e​s
 	 */
 	yes: string
@@ -6270,6 +6363,94 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * A serial console runs in a terminal. Open the terminal and run:
 	 */
 	virtConsoleCommand: () => LocalizedString
+	/**
+	 * Snapshots
+	 */
+	virtViewSnapshots: () => LocalizedString
+	/**
+	 * Name
+	 */
+	virtSnapName: () => LocalizedString
+	/**
+	 * Description (optional)
+	 */
+	virtSnapDescription: () => LocalizedString
+	/**
+	 * Take snapshot
+	 */
+	virtSnapTake: () => LocalizedString
+	/**
+	 * Include memory
+	 */
+	virtSnapWithMemory: () => LocalizedString
+	/**
+	 * A running guest's memory is always included.
+	 */
+	virtSnapMemoryAlways: () => LocalizedString
+	/**
+	 * External (disk only, the guest keeps running)
+	 */
+	virtSnapExternal: () => LocalizedString
+	/**
+	 * Beside each disk
+	 */
+	virtSnapPoolOwn: () => LocalizedString
+	/**
+	 * No external snapshot: {why}
+	 */
+	virtSnapNoExternal: (arg: { why: unknown }) => LocalizedString
+	/**
+	 * A snapshot cannot be taken: {why}
+	 */
+	virtSnapRefused: (arg: { why: unknown }) => LocalizedString
+	/**
+	 * No snapshots.
+	 */
+	virtSnapNone: () => LocalizedString
+	/**
+	 * Current
+	 */
+	virtSnapCurrent: () => LocalizedString
+	/**
+	 * Memory
+	 */
+	virtSnapMemory: () => LocalizedString
+	/**
+	 * External
+	 */
+	virtSnapExternalBadge: () => LocalizedString
+	/**
+	 * Changes
+	 */
+	virtSnapDiff: () => LocalizedString
+	/**
+	 * Nothing changed since this snapshot.
+	 */
+	virtSnapSame: () => LocalizedString
+	/**
+	 * Revert
+	 */
+	virtSnapRevert: () => LocalizedString
+	/**
+	 * Revert to {name}? The guest goes back to where it was, its memory included; anything since is lost.
+	 */
+	virtSnapRevertMemory: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Revert to {name}? Its disks go back to then and the guest is stopped; anything since is lost.
+	 */
+	virtSnapRevertDisk: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Start it again afterwards
+	 */
+	virtSnapStartAfter: () => LocalizedString
+	/**
+	 * Delete snapshot
+	 */
+	virtSnapDelete: () => LocalizedString
+	/**
+	 * Delete snapshot {name}? The guest keeps what it has now.
+	 */
+	virtSnapDeleteConfirm: (arg: { name: unknown }) => LocalizedString
 	/**
 	 * Yes
 	 */

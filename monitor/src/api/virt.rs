@@ -537,6 +537,300 @@ pub async fn console(
     }))
 }
 
+// ---------------------------------------------------------------------------
+// Snapshots
+// ---------------------------------------------------------------------------
+
+#[derive(Deserialize)]
+#[serde(tag = "op", rename_all = "snake_case")]
+pub enum SnapshotOp {
+    Create {
+        name: String,
+        #[serde(default)]
+        description: Option<String>,
+        /// Ignored where the memory is not the user's choice
+        /// (`sbm_virt::snapshot::memory`).
+        #[serde(default)]
+        memory: bool,
+        /// libvirt: a disk-only external snapshot, the guest left running.
+        #[serde(default)]
+        external: bool,
+        /// libvirt, external: the pool the overlays go in; the disks' own
+        /// where None.
+        #[serde(default)]
+        pool: Option<String>,
+    },
+    Revert {
+        name: String,
+        /// Start the guest after a snapshot without memory.
+        #[serde(default)]
+        start: bool,
+    },
+    Delete {
+        name: String,
+    },
+}
+
+#[derive(Deserialize)]
+pub struct SnapshotRequest {
+    guest: String,
+    #[serde(flatten)]
+    op: SnapshotOp,
+    #[serde(default)]
+    password: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct DiffRequest {
+    guest: String,
+    name: String,
+    #[serde(default)]
+    password: Option<String>,
+}
+
+/// Every snapshot of a guest, and what a new one may be: whether one can be
+/// taken at all and why not (`refusal`), whether its memory is the user's
+/// choice (`memory`), and on libvirt the chain an external one would sit on.
+pub async fn snapshots(
+    req: HttpRequest,
+    body: web::types::Json<GuestRequest>,
+    state: web::types::State<Arc<AppState>>,
+) -> Result<HttpResponse, web::Error> {
+    if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "virt snapshots").await {
+        return Ok(refused);
+    }
+    let request = body.into_inner();
+    let password = request.password.as_deref().filter(|p| !p.is_empty());
+    let backend = match backend(&state).await {
+        Ok(b) => b,
+        Err(answer) => return Ok(answer),
+    };
+    let guest = match guest_of(&state, &backend, &request.guest, password).await {
+        Ok(g) => g,
+        Err(e) => return Ok(HttpResponse::Ok().json(&serde_json::json!({ "error": e }))),
+    };
+    let answer = match &backend {
+        Backend::Pve(client) => match client.snapshots(&guest).await {
+            Ok(list) => {
+                let caps = pve::client::capabilities(false);
+                serde_json::json!({
+                    "snapshots": list,
+                    "memory": sbm_virt::snapshot::memory(&caps, &guest),
+                    "refusal": client.snapshot_refusal(&guest).await,
+                    "chain": null,
+                    "error": null,
+                })
+            }
+            Err(e) => serde_json::json!({ "error": e }),
+        },
+        Backend::Libvirt => match libvirt_snapshots(&state, &guest, password).await {
+            Ok((list, chain)) => {
+                let caps = lv::capabilities(None, false);
+                serde_json::json!({
+                    "snapshots": list,
+                    "memory": sbm_virt::snapshot::memory(&caps, &guest),
+                    "refusal": chain.refusal,
+                    "chain": chain,
+                    "error": null,
+                })
+            }
+            Err(e) => serde_json::json!({ "error": e }),
+        },
+    };
+    Ok(HttpResponse::Ok().json(&answer))
+}
+
+async fn libvirt_snapshots(
+    state: &AppState,
+    guest: &Guest,
+    password: Option<&str>,
+) -> Result<(Vec<sbm_virt::snapshot::Snapshot>, sbm_virt::snapshot::Chain), VirtError> {
+    let list: Vec<_> = run_libvirt(state, &libvirt::snapshots_script(&guest.id), password, false, libvirt::parse_snapshots)
+        .await?
+        .iter()
+        .map(lv::snapshot_of)
+        .collect();
+    let raw = libvirt_chain(state, guest, password).await?;
+    // Where an overlay can go; a host whose pools cannot be read just has
+    // none to offer.
+    let pools = run_libvirt(state, &libvirt::storage_script(), password, false, libvirt::parse_storage)
+        .await
+        .map(|s| s.pools)
+        .unwrap_or_default();
+    let chain = lv::chain_of(&raw, &list, &pools);
+    Ok((list, chain))
+}
+
+async fn libvirt_chain(
+    state: &AppState,
+    guest: &Guest,
+    password: Option<&str>,
+) -> Result<libvirt::snapshot::VirtSnapChain, VirtError> {
+    run_libvirt(state, &libvirt::snapshot::snap_chain_script(&guest.id), password, false, libvirt::snapshot::parse_snap_chain).await
+}
+
+pub async fn snapshot(
+    req: HttpRequest,
+    body: web::types::Json<SnapshotRequest>,
+    state: web::types::State<Arc<AppState>>,
+) -> Result<HttpResponse, web::Error> {
+    let request = body.into_inner();
+    let (verb, name) = match &request.op {
+        SnapshotOp::Create { name, .. } => ("create", name),
+        SnapshotOp::Revert { name, .. } => ("revert", name),
+        SnapshotOp::Delete { name } => ("delete", name),
+    };
+    let what = format!("virt snapshot {verb} {} {name}", request.guest);
+    let gated = match machine::gate(&req, &state, Grant::Virt, &what).await {
+        Ok(gated) => gated,
+        Err(refused) => return Ok(refused),
+    };
+    let record = |action, outcome, why: Option<&str>| {
+        Event::new(Kind::Machine, action, outcome)
+            .subject(&gated.caller.username)
+            .remote_ip(gated.remote_ip.clone())
+            .detail(match why {
+                Some(why) => format!("{what}: {why}"),
+                None => what.clone(),
+            })
+    };
+    record(Action::Open, Outcome::Ok, None).record(&state.db).await;
+    let password = request.password.as_deref().filter(|p| !p.is_empty());
+    let backend = match backend(&state).await {
+        Ok(b) => b,
+        Err(answer) => return Ok(answer),
+    };
+    let result = match guest_of(&state, &backend, &request.guest, password).await {
+        Ok(guest) => match &backend {
+            Backend::Pve(client) => pve_snapshot(client, &guest, &request.op).await,
+            Backend::Libvirt => libvirt_snapshot(&state, &guest, &request.op, password).await,
+        },
+        Err(e) => Err(e),
+    };
+    if let Err(e) = &result {
+        record(Action::Close, Outcome::Error, Some(&format!("{:?}", e.kind))).record(&state.db).await;
+    }
+    Ok(HttpResponse::Ok().json(&PowerResponse { error: result.err() }))
+}
+
+async fn pve_snapshot(client: &Client, guest: &Guest, op: &SnapshotOp) -> Result<(), VirtError> {
+    match op {
+        SnapshotOp::Create { name, description, memory, .. } => {
+            let caps = pve::client::capabilities(false);
+            let memory = *memory && sbm_virt::snapshot::memory(&caps, guest) != sbm_virt::snapshot::Memory::None;
+            client.create_snapshot(guest, name, description.as_deref(), memory).await
+        }
+        SnapshotOp::Revert { name, start } => client.revert_snapshot(guest, name, *start).await,
+        SnapshotOp::Delete { name } => client.delete_snapshot(guest, name).await,
+    }
+}
+
+async fn libvirt_snapshot(state: &AppState, guest: &Guest, op: &SnapshotOp, password: Option<&str>) -> Result<(), VirtError> {
+    let action = |script: String| async move { run_libvirt(state, &script, password, true, libvirt::parse_action).await };
+    match op {
+        SnapshotOp::Create { name, description, external, pool, .. } => {
+            if !sbm_virt::snapshot::valid_name(name) {
+                return Err(VirtError::msg(ErrorKind::Unsupported, format!("Not a snapshot name: {name}")));
+            }
+            if !*external {
+                return action(libvirt::snapshot_create_script(&guest.id, name, description.as_deref())).await;
+            }
+            let chain = libvirt_chain(state, guest, password).await?;
+            if let Some(why) = libvirt::snapshot::external_snapshot_refusal(&chain) {
+                return Err(VirtError::msg(ErrorKind::Unsupported, why));
+            }
+            let dir = match pool {
+                Some(pool) => {
+                    let storage = run_libvirt(state, &libvirt::storage_script(), password, false, libvirt::parse_storage).await?;
+                    let found = storage.pools.iter().find(|p| &p.name == pool).filter(|p| lv::pool_holds_files(p));
+                    match found.and_then(|p| p.target.clone()) {
+                        Some(dir) => Some(dir),
+                        None => {
+                            return Err(VirtError::msg(
+                                ErrorKind::Unsupported,
+                                format!("Pool {pool} has no directory an overlay can go in"),
+                            ));
+                        }
+                    }
+                }
+                None => None,
+            };
+            let overlays = lv::overlays(&chain, name, dir.as_deref());
+            action(libvirt::snapshot::snapshot_external_script(&guest.id, name, description.as_deref(), &overlays)).await
+        }
+        SnapshotOp::Revert { name, start } => {
+            let check = libvirt::snapshot::snap_check_script(&guest.id, name);
+            if let Some(why) = run_libvirt(state, &check, password, false, libvirt::snapshot::snap_revert_refusal).await? {
+                return Err(VirtError::msg(ErrorKind::Unsupported, why));
+            }
+            action(libvirt::snapshot_revert_script(&guest.id, name, *start)).await
+        }
+        SnapshotOp::Delete { name } => {
+            let check = libvirt::snapshot::snap_check_script(&guest.id, name);
+            let (refusal, leftovers) = run_libvirt(state, &check, password, false, |raw| {
+                Ok((libvirt::snapshot::snap_delete_refusal(raw)?, libvirt::snapshot::snap_delete_leftovers(raw)?))
+            })
+            .await?;
+            if let Some(why) = refusal {
+                return Err(VirtError::msg(ErrorKind::Unsupported, why));
+            }
+            // The pools the leftover overlays are in, refreshed after.
+            let pools: Vec<String> = if leftovers.is_empty() {
+                Vec::new()
+            } else {
+                let storage = run_libvirt(state, &libvirt::storage_script(), password, false, libvirt::parse_storage).await?;
+                let mut names: Vec<String> =
+                    leftovers.iter().filter_map(|f| lv::pool_of_file(&storage.pools, f)).map(|p| p.name.clone()).collect();
+                names.sort();
+                names.dedup();
+                names
+            };
+            let script = libvirt::snapshot_delete_script(&guest.id, name, &pools, &leftovers).map_err(|e| lv::error_of(&e, true))?;
+            run_libvirt(state, &script, password, true, libvirt::parse_snapshot_delete).await
+        }
+    }
+}
+
+/// What differs between a snapshot and the guest now.
+pub async fn snapshot_diff(
+    req: HttpRequest,
+    body: web::types::Json<DiffRequest>,
+    state: web::types::State<Arc<AppState>>,
+) -> Result<HttpResponse, web::Error> {
+    if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "virt snapshot diff").await {
+        return Ok(refused);
+    }
+    let request = body.into_inner();
+    let password = request.password.as_deref().filter(|p| !p.is_empty());
+    let backend = match backend(&state).await {
+        Ok(b) => b,
+        Err(answer) => return Ok(answer),
+    };
+    let result = match &backend {
+        Backend::Pve(client) => match guest_of(&state, &backend, &request.guest, None).await {
+            Ok(guest) => client.snapshot_diff(&guest, &request.name).await,
+            Err(e) => Err(e),
+        },
+        Backend::Libvirt => {
+            let script = libvirt::snapshot::snap_diff_script(&request.guest, &request.name);
+            run_libvirt(&state, &script, password, false, libvirt::snapshot::parse_snap_diff).await.map(|list| {
+                list.into_iter()
+                    .map(|d| sbm_virt::snapshot::Diff {
+                        group: sbm_virt::snapshot::DiffGroup::of_libvirt(&d.group),
+                        key: d.key,
+                        before: d.before,
+                        after: d.after,
+                    })
+                    .collect()
+            })
+        }
+    };
+    Ok(HttpResponse::Ok().json(&match result {
+        Ok(diff) => serde_json::json!({ "diff": diff, "error": null }),
+        Err(e) => serde_json::json!({ "diff": null, "error": e }),
+    }))
+}
+
 async fn pve_power(client: &Client, id: &str, action: PowerAction) -> Result<(), VirtError> {
     // What the guest offers now, not what a page drawn a while ago showed.
     let view = client.load().await?;

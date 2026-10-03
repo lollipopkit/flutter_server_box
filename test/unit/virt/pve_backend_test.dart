@@ -2497,7 +2497,6 @@ class _Api {
     String? user = 'root',
     String? sshKeyId,
     String sshPassword = 'sshpw',
-    DateTime Function()? now,
     String? liveNet,
     Duration taskTimeout = const Duration(minutes: 10),
   }) {
@@ -2519,7 +2518,6 @@ class _Api {
       ),
       taskPoll: const Duration(milliseconds: 1),
       taskTimeout: taskTimeout,
-      now: now,
     );
   }
 

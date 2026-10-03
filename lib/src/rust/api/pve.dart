@@ -38,6 +38,18 @@ abstract class PveSession implements RustOpaqueInterface {
     required PveConsoleKind kind,
   });
 
+  Future<void> createSnapshot({
+    required PveGuestRef guest,
+    required String name,
+    String? description,
+    required bool memory,
+  });
+
+  Future<void> deleteSnapshot({
+    required PveGuestRef guest,
+    required String name,
+  });
+
   /// `sbm_virt::model::GuestDetail` JSON.
   Future<String> detail({required PveGuestRef guest});
 
@@ -102,9 +114,29 @@ abstract class PveSession implements RustOpaqueInterface {
   /// Drops the session; the next call logs in again.
   void reset();
 
+  Future<void> revertSnapshot({
+    required PveGuestRef guest,
+    required String name,
+    required bool start,
+  });
+
   /// A new tunnel to the same address. Connections still open on the old
   /// one fail and are made again.
   void setLoopback({required int port, required List<int> token});
+
+  /// `sbm_virt::snapshot::Diff` JSON list.
+  Future<String> snapshotDiff({
+    required PveGuestRef guest,
+    required String name,
+  });
+
+  Future<String?> snapshotRefusal({required PveGuestRef guest});
+
+  /// PVE's own answer whether every disk snapshots; None where it cannot say.
+  Future<bool?> snapshotSupported({required PveGuestRef guest});
+
+  /// `sbm_virt::snapshot::Snapshot` JSON list.
+  Future<String> snapshots({required PveGuestRef guest});
 
   Future<void> submitTfa({required String code});
 

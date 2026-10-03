@@ -14,6 +14,7 @@ import type {
   VirtGuest,
   VirtGuestState,
   VirtPowerAction,
+  VirtSnapshot,
   VirtStats,
 } from '../types'
 
@@ -234,4 +235,41 @@ export function pveDraft(view: PveConfigView | null): PveConfigInput {
     token_secret: null,
     cert_sha256: view?.cert_sha256 ?? null,
   }
+}
+
+/// [snapshots] depth-first from the roots, each with its depth: how the list
+/// draws a tree without drawing one. Siblings oldest first, undated last; a
+/// snapshot whose parent is not listed is a root.
+export function snapshotTree(snapshots: VirtSnapshot[]): [VirtSnapshot, number][] {
+  const names = new Set(snapshots.map((s) => s.name))
+  const children = new Map<string | null, VirtSnapshot[]>()
+  for (const s of snapshots) {
+    const key = s.parent && names.has(s.parent) && s.parent !== s.name ? s.parent : null
+    children.set(key, [...(children.get(key) ?? []), s])
+  }
+  const byTime = (a: VirtSnapshot, b: VirtSnapshot) => {
+    if (a.created_at === null) return b.created_at === null ? a.name.localeCompare(b.name) : 1
+    if (b.created_at === null) return -1
+    return a.created_at - b.created_at || a.name.localeCompare(b.name)
+  }
+  for (const list of children.values()) list.sort(byTime)
+  const out: [VirtSnapshot, number][] = []
+  const seen = new Set<string>()
+  const walk = (parent: string | null, depth: number) => {
+    for (const s of children.get(parent) ?? []) {
+      if (seen.has(s.name)) continue
+      seen.add(s.name)
+      out.push([s, depth])
+      walk(s.name, depth + 1)
+    }
+  }
+  walk(null, 0)
+  for (const s of snapshots) {
+    if (!seen.has(s.name)) {
+      seen.add(s.name)
+      out.push([s, 0])
+      walk(s.name, 1)
+    }
+  }
+  return out
 }

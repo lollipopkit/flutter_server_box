@@ -216,7 +216,7 @@ async fn connect(ctx: Rc<ConnCtx>, sink: WsSink, phase: Rc<RefCell<Phase>>, targ
     // otherwise read before it knows the console is up.
     enum Opened {
         Tcp(tokio::net::TcpStream),
-        Pve(sbm_virt::pve::client::ConsoleSocket, bool),
+        Pve(Box<sbm_virt::pve::client::ConsoleSocket>, bool),
     }
     let opened = match target {
         ConsoleTarget::Tcp { host, port } => match tokio::net::TcpStream::connect((host.as_str(), port)).await {
@@ -233,7 +233,7 @@ async fn connect(ctx: Rc<ConnCtx>, sink: WsSink, phase: Rc<RefCell<Phase>>, targ
             }
         },
         ConsoleTarget::Pve(client, console) => match client.open_console(&console).await {
-            Ok(socket) => Opened::Pve(socket, console.kind == ConsoleKind::Text),
+            Ok(socket) => Opened::Pve(Box::new(socket), console.kind == ConsoleKind::Text),
             Err(e) => {
                 *phase.borrow_mut() = Phase::Done;
                 ctx.audit(Action::Connect, Outcome::Error, Some(&format!("{:?}", e.kind))).await;
@@ -254,7 +254,7 @@ async fn connect(ctx: Rc<ConnCtx>, sink: WsSink, phase: Rc<RefCell<Phase>>, targ
     }
     let pump = match opened {
         Opened::Tcp(stream) => spawn_tcp(stream, rx, sink.clone()),
-        Opened::Pve(socket, text) => spawn_pve(socket, text, rx, sink.clone()),
+        Opened::Pve(socket, text) => spawn_pve(*socket, text, rx, sink.clone()),
     };
     watch(ctx, sink, changes, pump);
 }
