@@ -211,12 +211,18 @@ async fn connect(ctx: Rc<ConnCtx>, sink: WsSink, phase: Rc<RefCell<Phase>>, targ
         let _ = sink.send(error_frame("forbidden", "This account may not open consoles")).await;
         return;
     }
-    let (tx, rx) = mpsc::channel::<Input>(QUEUE);
-    let pump = match target {
+    // Connected first, carried after: `ready` goes out before the console's
+    // first byte (a VNC server speaks first), which the client would
+    // otherwise read before it knows the console is up.
+    enum Opened {
+        Tcp(tokio::net::TcpStream),
+        Pve(sbm_virt::pve::client::ConsoleSocket, bool),
+    }
+    let opened = match target {
         ConsoleTarget::Tcp { host, port } => match tokio::net::TcpStream::connect((host.as_str(), port)).await {
             Ok(stream) => {
                 let _ = stream.set_nodelay(true);
-                spawn_tcp(stream, rx, sink.clone())
+                Opened::Tcp(stream)
             }
             Err(e) => {
                 *phase.borrow_mut() = Phase::Done;
@@ -227,7 +233,7 @@ async fn connect(ctx: Rc<ConnCtx>, sink: WsSink, phase: Rc<RefCell<Phase>>, targ
             }
         },
         ConsoleTarget::Pve(client, console) => match client.open_console(&console).await {
-            Ok(socket) => spawn_pve(socket, console.kind == ConsoleKind::Text, rx, sink.clone()),
+            Ok(socket) => Opened::Pve(socket, console.kind == ConsoleKind::Text),
             Err(e) => {
                 *phase.borrow_mut() = Phase::Done;
                 ctx.audit(Action::Connect, Outcome::Error, Some(&format!("{:?}", e.kind))).await;
@@ -240,9 +246,16 @@ async fn connect(ctx: Rc<ConnCtx>, sink: WsSink, phase: Rc<RefCell<Phase>>, targ
     if matches!(*phase.borrow(), Phase::Done) {
         return;
     }
+    let (tx, rx) = mpsc::channel::<Input>(QUEUE);
     *phase.borrow_mut() = Phase::Running(tx);
     ctx.audit(Action::Connect, Outcome::Ok, None).await;
-    let _ = sink.send(ServerMsg::Ready.frame()).await;
+    if sink.send(ServerMsg::Ready.frame()).await.is_err() {
+        return;
+    }
+    let pump = match opened {
+        Opened::Tcp(stream) => spawn_tcp(stream, rx, sink.clone()),
+        Opened::Pve(socket, text) => spawn_pve(socket, text, rx, sink.clone()),
+    };
     watch(ctx, sink, changes, pump);
 }
 
