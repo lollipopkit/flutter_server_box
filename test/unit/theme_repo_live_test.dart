@@ -14,14 +14,9 @@ import 'package:flutter_test/flutter_test.dart';
 /// the one an app of this build would pick.
 ///
 /// ```sh
-/// SBM_E2E_THEME_CATALOG=https://raw.githubusercontent.com/lollipopkit/flutter_server_box/feat/theme-packages/assets/catalog/repos.toml \
+/// SBM_E2E_THEME_CATALOG=https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/assets/catalog/repos.toml \
 /// flutter test test/unit/theme_repo_live_test.dart
 /// ```
-///
-/// The ref is the branch the catalog is on: `main` does not serve it yet, and an
-/// address that answers 404 is what the check below is meant to catch rather
-/// than to be run against. TODO: point this at `main` once the catalog is
-/// merged.
 ///
 /// Silently skipped when unset, since it needs the network.
 void main() {

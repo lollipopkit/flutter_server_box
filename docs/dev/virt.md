@@ -22,26 +22,35 @@ Design: Claude Design project `2a6eadf3-ac6c-4925-bb18-8f763a0c3ead`,
 | libvirt snapshots | Internal (`snapshot-create-as` without `--disk-only`): every writable disk must be qcow2, and an active domain's snapshot always holds its memory — QEMU refuses an internal one without it, so the form shows the memory switch on and fixed. External (disk-only) snapshots are phase 8; see that section. |
 | Snapshot names | PVE's `pve-configid` rule (a letter, then letters, digits, `-`, `_`; 2–40), for both backends, and never `current` (PVE's "you are here" entry). A name never needs quoting to be read back. |
 
-## Current PVE implementation (what is being migrated)
+## Where PVE lives now
 
-- `lib/data/provider/pve.dart` — `pveProvider(spi)`. Binds a loopback
-  `ServerSocket`, forwards each accepted socket over
-  `SSHClient.forwardLocal(pveAddr.host, pveAddr.port)`, and points Dio at it
-  (TLS via `SecureSocket.secure`, `pveIgnoreCert` accepts any certificate).
-  Requires an SSH client: a monitor-only server gets `pveServerClientMissing`.
-- Login: `POST /access/ticket` (PAM realm, `spi.ssh.user`, `pvePwd` or the SSH
-  password), TOTP via `tfa-challenge`. Calls: `/version`,
+The old standalone PVE page is gone; PVE is one backend of the Virtualization
+tab. What is left of the pre-tab code, and where each part went:
+
+- Transport: `ServerTcpDialer` (`lib/core/utils/server_tcp.dart`) is the one
+  place a connection to an address *as the server sees it* is made — SSH
+  direct-tcpip, the agent's `/stream/ws` relay, or a direct socket for a local
+  server. `lib/data/provider/virt/pve_backend.dart` points Dio at it and takes
+  the pin decision from `sbm_redfish`'s `certPinAccepts`.
+- Login: `POST /access/ticket` (PAM realm, the server's SSH user, a password or
+  an API token), TOTP via `tfa-challenge`. Calls: `/version`,
   `/cluster/resources`, `POST /nodes/{node}/{qemu|lxc}/{vmid}/status/{action}`.
-- Models: `lib/data/model/server/pve.dart` (`PveRes`, `PveQemu`, `PveLxc`,
-  `PveNode`, `PveStorage`, `PveSdn`). Errors: `PveErr` in
-  `lib/data/model/app/error.dart`.
-- Config: `server` table columns `pve_addr`, `pve_ignore_cert`, `pve_pwd`
-  (`lib/data/store/db.dart`), surfaced as `ServerCustom.pveAddr/pveIgnoreCert/pvePwd`;
-  editor group in `lib/view/page/server/edit/widget.dart` (`_buildPVEs`).
-- Entry: `ServerDetailCards.pve` → `PvePage.route`.
-- Tests: `test/unit/server/pve_test.dart` (parse fixture, expired sessions,
-  client replacement), store round-trip, Hive/m017 migration tests.
-- Nothing in `crates/` or `monitor/` knows about PVE or libvirt.
+- Parsing: `lib/data/model/virt/pve_resources.dart` (`PveResources`), beside the
+  libvirt models in `lib/data/model/virt/`.
+- Config: the `server` table's PVE columns, surfaced as
+  `ServerCustom.pveAddr/pveIgnoreCert/pvePwd` and the token fields; the editor
+  group is `_buildPVEs` in `lib/view/page/server/edit/widget.dart`.
+- Entry: the Virtualization tab (`AppTab.virt`), whose host picker is
+  `lib/view/page/virt/hosts.dart`. A server's PVE card opens the tab there —
+  the intro page says so to anyone upgrading with PVE configured.
+- Tests: `test/unit/virt/pve_backend_test.dart` (parsing against captured
+  fixtures, sessions, TLS), `test/unit/virt/pve_console_test.dart`,
+  `test/unit/virt/pve_tls_test.dart`, the store round-trip and the Hive/m017
+  migration tests. The opt-in live suites are `test/e2e/virt_real_test.dart`
+  (a real host) and `test/e2e/virt_monitor_test.dart` (libvirt over the agent,
+  PVE over the relay).
+- `crates/sbm_parser` and `monitor/` carry no PVE knowledge: PVE is an HTTP
+  JSON client, which the architecture keeps outside the parser.
 
 ## Architecture
 
@@ -1059,8 +1068,10 @@ false, and the reason comes from the guest's own configuration
 `VM.Config.Memory` (or whichever key is diffed) for nothing — the diff only
 reads.
 
-`virtSnapshotSupportIssue` and `virtPveStorageMaySnapshot` are the form's own
-hints; the host's answer is what decides.
+`virtSnapshotSupportIssue` and `virtPveStorageMaySnapshot` were the form's own
+hints; both are gone. The host's answer above is what decides, and the
+snapshot form is offered or not on it alone — a second, guessed rule beside a
+definitive one only added a way for the two to disagree.
 
 Verified 2026-09-26 by the "snapshots: external, chain and diff" groups of
 `test/e2e/virt_monitor_test.dart` (libvirt over the agent, PVE over the
