@@ -1323,7 +1323,20 @@ async fn the_config_diff_the_snapshots_own_config_against_the_guests() {
             }),
         );
     });
+    // A cloud-init password: masked for the guest, its hash in a snapshot.
+    {
+        let mut a = api.api();
+        a.routes.insert(
+            "GET /nodes/pve/qemu/100/snapshot/sbx/config".into(),
+            Box::new(|_| {
+                json!({"cores": 1, "memory": "512", "scsi0": "local-lvm:vm-100-disk-0,size=20G",
+                       "net0": "virtio=BC:24:11:65:B0:B5,bridge=vmbr0", "description": "before the bump",
+                       "snaptime": 1790415090, "digest": "aa", "cipassword": "$5$salt$hash"})
+            }),
+        );
+    }
     let diff = api.client(token()).snapshot_diff(&vm100(), "sbx").await.unwrap();
+    assert!(diff.iter().all(|d| d.key != "cipassword"), "never shown, never compared");
     let rows: Vec<_> = diff.iter().map(|d| (d.group, d.key.as_str(), d.before.as_deref(), d.after.as_deref())).collect();
     assert_eq!(
         rows,

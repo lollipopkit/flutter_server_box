@@ -448,10 +448,23 @@ fn diff_value(v: Option<&Value>) -> Option<String> {
     }
 }
 
-/// Keys a diff never shows: the listing's own bookkeeping, and what PVE
-/// writes by itself.
-const DIFF_IGNORE: &[&str] =
-    &["digest", "snapname", "snaptime", "parent", "description", "meta", "smbios1", "vmgenid", "lock", "pending"];
+/// Keys a diff never shows: the listing's own bookkeeping, what PVE writes
+/// by itself, and a secret. `cipassword` is answered masked (`**********`)
+/// for the guest and as its **hash** for a snapshot (PVE 9.2.2), so the two
+/// never compare equal and the hash would be shown.
+const DIFF_IGNORE: &[&str] = &[
+    "digest",
+    "snapname",
+    "snaptime",
+    "parent",
+    "description",
+    "meta",
+    "smbios1",
+    "vmgenid",
+    "lock",
+    "pending",
+    "cipassword",
+];
 
 /// The snapshot's own configuration against the guest's current one.
 pub fn snapshot_diff(
