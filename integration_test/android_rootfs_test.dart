@@ -27,6 +27,12 @@ import 'package:path_provider/path_provider.dart';
 ///     from, and where the real thing would ship;
 ///   * an Alpine aarch64 minirootfs at `/data/local/tmp/alpine.tar.gz`.
 /// Absent either, the test skips rather than pretending to have measured.
+///
+/// The unpacked tree is the test's own — under the support directory, where an
+/// app may run a tree from, but under a name no install uses — and the run
+/// removes it, so nothing is left on the device. `tar` overlays rather than
+/// replaces, so a tree kept from a previous run would let the release and
+/// machine read back belong to either.
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
@@ -59,7 +65,11 @@ void main() {
     _,
   ) async {
     final files = (await getApplicationSupportDirectory()).path;
-    final rootfs = '$files/alpine';
+    // Under the support directory, where an app may put a tree it will run from
+    // — but a name of this test's own. `alpine/` at the root of it is where a
+    // release before the `linux/` container unpacked, and that tree is not this
+    // test's to delete.
+    final rootfs = '$files/.rootfs-proot-probe';
     const staged = '/data/local/tmp/alpine.tar.gz';
 
     // The native library directory is not exposed to Dart, so it is derived
@@ -100,6 +110,23 @@ void main() {
 
     // Unpack with the system's own tar, which can exec because it is a system
     // binary. What lands in the rootfs cannot.
+    //
+    // A fresh tree each run: `tar` overlays, so a previous run's files would
+    // survive where the archive does not carry them, and the release and
+    // machine this reads back could be either run's. `-C` also needs its
+    // directory to exist, which the same call settles.
+    if (await Directory(rootfs).exists()) {
+      await Directory(rootfs).delete(recursive: true);
+    }
+    await Directory(rootfs).create(recursive: true);
+    // The test's own directory, so it goes when the test does — the device
+    // keeps nothing between runs.
+    addTearDown(() async {
+      if (await Directory(rootfs).exists()) {
+        await Directory(rootfs).delete(recursive: true);
+      }
+    });
+
     final untar = await attempt('/system/bin/tar', [
       'xzf',
       staged,
@@ -107,7 +134,11 @@ void main() {
       rootfs,
     ]);
     debugPrint('ROOTFS untar        = ${describe(untar)}');
-    expect(untar.exit, 0, reason: 'the staged rootfs did not unpack: ${untar.err}');
+    expect(
+      untar.exit,
+      0,
+      reason: 'the staged rootfs did not unpack: ${untar.err}',
+    );
 
     final busybox = '$rootfs/bin/busybox';
     expect(
@@ -187,7 +218,11 @@ void main() {
       'cat /etc/alpine-release; uname -m',
     ], env: env);
     debugPrint('ROOTFS release      = ${describe(release)}');
-    expect(release.exit, 0, reason: 'the rootfs shell did not run: ${release.err}');
+    expect(
+      release.exit,
+      0,
+      reason: 'the rootfs shell did not run: ${release.err}',
+    );
     final lines = release.out
         .split('\n')
         .map((l) => l.trim())

@@ -131,14 +131,37 @@ abstract final class LocalFiles {
           return false;
         }
         await Directory(dest).create();
-        await for (final child in Directory(staging).list(followLinks: false)) {
-          final name = child.path.getFileName();
-          if (name == null || child is Link) continue;
-          await _publishNoReplace(
-            child,
-            child.path,
-            Directory(dest).path.joinPath(name),
-          );
+        try {
+          await for (final child in Directory(staging).list(
+            followLinks: false,
+          )) {
+            final name = child.path.getFileName();
+            if (name == null || child is Link) continue;
+            await _publishNoReplace(
+              child,
+              child.path,
+              Directory(dest).path.joinPath(name),
+            );
+          }
+        } catch (_) {
+          // Half a directory is worse than none: [importFrom] skips a name that
+          // already exists, so a child published after this failure would never
+          // be imported by a later attempt — the entry would be permanently
+          // incomplete while the failure that caused it may well be gone.
+          //
+          // The whole subtree is this call's to take back: `dest` was
+          // `notFound` a moment ago, so this call made it, and app writers
+          // await ensure() — which is waiting on this import — so nobody else
+          // has written under it. Best-effort, and the original failure is the
+          // one worth reporting.
+          try {
+            await Directory(dest).delete(recursive: true);
+          } catch (cleanupError, cleanupStack) {
+            // Worth knowing: the entry will look present but incomplete next
+            // time, which is the state this whole guard exists to avoid.
+            Loggers.app.warning('Roll back $dest', cleanupError, cleanupStack);
+          }
+          rethrow;
         }
         return true;
       case Link():
