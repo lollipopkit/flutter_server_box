@@ -22,6 +22,7 @@ export type FeatureId =
   | 'snippets'
   | 'desktop'
   | 'benchmark'
+  | 'virt'
   | 'bmc'
   | 'backup'
 
@@ -41,6 +42,7 @@ export const FEATURES: FeatureSpec[] = [
   { id: 'snippets', grant: 'shell' },
   { id: 'desktop', grant: 'connect' },
   { id: 'benchmark', grant: 'shell' },
+  { id: 'virt', grant: 'virt' },
   { id: 'bmc', grant: 'virt' },
   { id: 'backup', grant: 'admin' },
 ]

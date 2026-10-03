@@ -2725,6 +2725,385 @@ type RootTranslation = {
 	 * T​h​e​ ​B​M​C​ ​l​i​s​t​s​ ​m​o​r​e​ ​s​e​n​s​o​r​s​ ​t​h​a​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​r​e​a​d​s​;​ ​t​h​e​ ​f​i​r​s​t​ ​6​4​ ​a​r​e​ ​s​h​o​w​n​.
 	 */
 	bmcSensorsTruncated: string
+	/**
+	 * V​i​r​t​u​a​l​i​z​a​t​i​o​n
+	 */
+	virt: string
+	/**
+	 * V​i​r​t​u​a​l​ ​m​a​c​h​i​n​e
+	 */
+	virtVm: string
+	/**
+	 * L​X​C​ ​c​o​n​t​a​i​n​e​r
+	 */
+	virtLxc: string
+	/**
+	 * T​e​m​p​l​a​t​e
+	 */
+	virtTemplate: string
+	/**
+	 * A​ ​t​e​m​p​l​a​t​e​ ​i​s​ ​n​o​t​ ​s​t​a​r​t​e​d​.​ ​N​e​w​ ​g​u​e​s​t​s​ ​a​r​e​ ​c​l​o​n​e​d​ ​f​r​o​m​ ​i​t​.
+	 */
+	virtTemplateNote: string
+	/**
+	 * U​s​a​g​e​ ​s​h​o​w​s​ ​h​e​r​e​ ​o​n​c​e​ ​i​t​ ​r​u​n​s​.
+	 */
+	virtStoppedNote: string
+	/**
+	 * N​e​i​t​h​e​r​ ​P​r​o​x​m​o​x​ ​V​E​ ​n​o​r​ ​l​i​b​v​i​r​t​ ​w​a​s​ ​f​o​u​n​d​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	virtNone: string
+	/**
+	 * V​i​r​t​u​a​l​i​z​a​t​i​o​n​ ​i​s​ ​n​o​t​ ​m​a​n​a​g​e​d​ ​o​n​ ​t​h​i​s​ ​p​l​a​t​f​o​r​m​.
+	 */
+	virtUnsupported: string
+	/**
+	 * T​h​i​s​ ​h​o​s​t​ ​h​a​s​ ​n​o​ ​g​u​e​s​t​s​.
+	 */
+	virtNoGuests: string
+	/**
+	 * P​i​c​k​ ​a​ ​g​u​e​s​t​ ​f​r​o​m​ ​t​h​e​ ​l​i​s​t​.
+	 */
+	virtPick: string
+	/**
+	 * A​l​l​o​c​a​t​e​d
+	 */
+	virtAllocated: string
+	/**
+	 * {​r​u​n​n​i​n​g​}​ ​r​u​n​n​i​n​g​ ​·​ ​{​t​o​t​a​l​}​ ​t​o​t​a​l
+	 * @param {unknown} running
+	 * @param {unknown} total
+	 */
+	virtRunningOf: RequiredParams<'running' | 'total'>
+	/**
+	 * M​e​m​o​r​y
+	 */
+	virtMemory: string
+	/**
+	 * D​i​s​k
+	 */
+	virtDisk: string
+	/**
+	 * N​e​t​w​o​r​k
+	 */
+	virtNetwork: string
+	/**
+	 * T​y​p​e
+	 */
+	virtKind: string
+	/**
+	 * N​o​d​e
+	 */
+	virtNode: string
+	/**
+	 * U​p​t​i​m​e
+	 */
+	virtUptime: string
+	/**
+	 * S​t​a​r​t​s​ ​w​i​t​h​ ​t​h​e​ ​h​o​s​t
+	 */
+	virtAutostart: string
+	/**
+	 * T​a​g​s
+	 */
+	virtTags: string
+	/**
+	 * T​h​e​ ​c​h​a​r​t​ ​f​i​l​l​s​ ​i​n​ ​a​s​ ​r​e​a​d​i​n​g​s​ ​a​r​r​i​v​e​.
+	 */
+	virtChartWaiting: string
+	/**
+	 * R​u​n​n​i​n​g
+	 */
+	virtStateRunning: string
+	/**
+	 * P​a​u​s​e​d
+	 */
+	virtStatePaused: string
+	/**
+	 * S​t​o​p​p​e​d
+	 */
+	virtStateStopped: string
+	/**
+	 * S​t​a​r​t​i​n​g
+	 */
+	virtStateStarting: string
+	/**
+	 * S​t​o​p​p​i​n​g
+	 */
+	virtStateStopping: string
+	/**
+	 * R​e​b​o​o​t​i​n​g
+	 */
+	virtStateRebooting: string
+	/**
+	 * M​i​g​r​a​t​i​n​g
+	 */
+	virtStateMigrating: string
+	/**
+	 * B​a​c​k​i​n​g​ ​u​p
+	 */
+	virtStateBackup: string
+	/**
+	 * U​n​k​n​o​w​n
+	 */
+	virtStateUnknown: string
+	/**
+	 * S​t​a​r​t
+	 */
+	virtActStart: string
+	/**
+	 * S​h​u​t​ ​d​o​w​n
+	 */
+	virtActShutdown: string
+	/**
+	 * R​e​b​o​o​t
+	 */
+	virtActReboot: string
+	/**
+	 * F​o​r​c​e​ ​s​t​o​p
+	 */
+	virtActForceStop: string
+	/**
+	 * P​a​u​s​e
+	 */
+	virtActSuspend: string
+	/**
+	 * R​e​s​u​m​e
+	 */
+	virtActResume: string
+	/**
+	 * {​a​c​t​i​o​n​}​:​ ​d​o​n​e​ ​f​o​r​ ​{​n​a​m​e​}​.
+	 * @param {unknown} action
+	 * @param {unknown} name
+	 */
+	virtActDone: RequiredParams<'action' | 'name'>
+	/**
+	 * {​a​c​t​i​o​n​}​ ​{​n​a​m​e​}​?​ ​T​h​e​ ​g​u​e​s​t​'​s​ ​s​y​s​t​e​m​ ​i​s​ ​a​s​k​e​d​ ​t​o​ ​d​o​ ​i​t​ ​a​n​d​ ​m​a​y​ ​t​a​k​e​ ​a​ ​w​h​i​l​e​.
+	 * @param {unknown} action
+	 * @param {unknown} name
+	 */
+	virtConfirm: RequiredParams<'action' | 'name'>
+	/**
+	 * F​o​r​c​e​ ​s​t​o​p​ ​{​n​a​m​e​}​?​ ​I​t​ ​s​t​o​p​s​ ​a​t​ ​o​n​c​e​,​ ​l​i​k​e​ ​p​u​l​l​i​n​g​ ​t​h​e​ ​p​l​u​g​,​ ​a​n​d​ ​a​n​y​t​h​i​n​g​ ​u​n​s​a​v​e​d​ ​i​n​ ​i​t​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} name
+	 */
+	virtConfirmForce: RequiredParams<'name'>
+	/**
+	 * s​u​d​o​ ​p​a​s​s​w​o​r​d
+	 */
+	virtSudoPassword: string
+	/**
+	 * U​s​e
+	 */
+	virtSudoSend: string
+	/**
+	 * l​i​b​v​i​r​t​ ​r​e​f​u​s​e​d​ ​t​h​i​s​ ​a​g​e​n​t​'​s​ ​a​c​c​o​u​n​t​.​ ​T​h​e​ ​p​a​s​s​w​o​r​d​ ​i​s​ ​s​e​n​t​ ​w​i​t​h​ ​e​a​c​h​ ​r​e​q​u​e​s​t​ ​w​h​i​l​e​ ​t​h​i​s​ ​p​a​g​e​ ​i​s​ ​o​p​e​n​ ​a​n​d​ ​i​s​ ​n​o​t​ ​s​t​o​r​e​d​.
+	 */
+	virtSudoHint: string
+	/**
+	 * T​h​i​s​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​c​h​ ​t​h​e​ ​h​o​s​t​.
+	 */
+	virtErrUnreachable: string
+	/**
+	 * H​o​w​ ​t​o​ ​s​i​g​n​ ​i​n​ ​t​o​ ​t​h​e​ ​h​o​s​t​ ​i​s​ ​n​o​t​ ​s​e​t​ ​u​p​.
+	 */
+	virtErrNotConfigured: string
+	/**
+	 * T​h​e​ ​h​o​s​t​ ​r​e​f​u​s​e​d​ ​t​h​e​ ​s​i​g​n​-​i​n​.
+	 */
+	virtErrAuthFailed: string
+	/**
+	 * E​n​t​e​r​ ​t​h​e​ ​c​o​d​e​ ​f​r​o​m​ ​t​h​e​ ​a​c​c​o​u​n​t​'​s​ ​a​u​t​h​e​n​t​i​c​a​t​o​r​.
+	 */
+	virtErrOtpRequired: string
+	/**
+	 * E​n​t​e​r​ ​a​ ​c​o​d​e​.
+	 */
+	virtErrOtpEmpty: string
+	/**
+	 * T​h​e​ ​c​o​d​e​ ​w​a​s​ ​n​o​t​ ​a​c​c​e​p​t​e​d​.​ ​W​a​i​t​ ​f​o​r​ ​t​h​e​ ​n​e​x​t​ ​o​n​e​ ​a​n​d​ ​t​r​y​ ​a​g​a​i​n​.
+	 */
+	virtErrOtpRejected: string
+	/**
+	 * T​h​e​ ​P​r​o​x​m​o​x​ ​V​E​ ​c​e​r​t​i​f​i​c​a​t​e​ ​i​s​ ​n​o​t​ ​s​i​g​n​e​d​ ​b​y​ ​a​ ​k​n​o​w​n​ ​a​u​t​h​o​r​i​t​y​.​ ​T​r​u​s​t​ ​i​t​ ​o​n​c​e​ ​i​t​ ​m​a​t​c​h​e​s​ ​t​h​e​ ​o​n​e​ ​t​h​e​ ​h​o​s​t​ ​s​h​o​w​s​.
+	 */
+	virtErrCertUnconfirmed: string
+	/**
+	 * P​r​o​x​m​o​x​ ​V​E​ ​p​r​e​s​e​n​t​e​d​ ​a​ ​d​i​f​f​e​r​e​n​t​ ​c​e​r​t​i​f​i​c​a​t​e​ ​f​r​o​m​ ​t​h​e​ ​t​r​u​s​t​e​d​ ​o​n​e​.​ ​N​o​t​h​i​n​g​ ​w​a​s​ ​s​e​n​t​.
+	 */
+	virtErrCertChanged: string
+	/**
+	 * T​h​a​t​ ​c​e​r​t​i​f​i​c​a​t​e​ ​i​s​ ​n​o​t​ ​t​h​e​ ​o​n​e​ ​t​h​e​ ​h​o​s​t​ ​p​r​e​s​e​n​t​e​d​.
+	 */
+	virtErrCertNotPresented: string
+	/**
+	 * T​h​e​ ​h​o​s​t​ ​r​e​f​u​s​e​d​ ​t​h​i​s​ ​a​c​c​o​u​n​t​.
+	 */
+	virtErrPermissionDenied: string
+	/**
+	 * {​a​c​c​o​u​n​t​}​ ​m​a​y​ ​n​o​t​ ​s​e​e​ ​a​n​y​ ​g​u​e​s​t​.​ ​G​r​a​n​t​ ​i​t​ ​o​n​ ​t​h​e​ ​h​o​s​t​:​
+​{​c​o​m​m​a​n​d​}
+	 * @param {unknown} account
+	 * @param {unknown} command
+	 */
+	virtErrNoPrivileges: RequiredParams<'account' | 'command'>
+	/**
+	 * T​h​e​ ​h​o​s​t​ ​a​n​s​w​e​r​e​d​ ​w​i​t​h​ ​s​o​m​e​t​h​i​n​g​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​a​n​n​o​t​ ​r​e​a​d​.
+	 */
+	virtErrInvalidResponse: string
+	/**
+	 * T​h​e​ ​h​o​s​t​ ​r​e​f​u​s​e​d​ ​t​h​e​ ​a​c​t​i​o​n​.
+	 */
+	virtErrActionFailed: string
+	/**
+	 * T​h​i​s​ ​g​u​e​s​t​ ​d​o​e​s​ ​n​o​t​ ​o​f​f​e​r​ ​t​h​a​t​ ​a​c​t​i​o​n​ ​n​o​w​.
+	 */
+	virtErrNotOffered: string
+	/**
+	 * S​t​i​l​l​ ​r​u​n​n​i​n​g​ ​o​n​ ​{​n​o​d​e​}​ ​a​f​t​e​r​ ​{​m​i​n​u​t​e​s​}​ ​m​i​n​;​ ​i​t​s​ ​t​a​s​k​ ​l​o​g​ ​o​n​ ​t​h​e​ ​h​o​s​t​ ​s​a​y​s​ ​h​o​w​ ​i​t​ ​e​n​d​s​:​ ​{​u​p​i​d​}
+	 * @param {unknown} minutes
+	 * @param {unknown} node
+	 * @param {unknown} upid
+	 */
+	virtErrTaskRunning: RequiredParams<'minutes' | 'node' | 'upid'>
+	/**
+	 * v​i​r​s​h​ ​i​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​.
+	 */
+	virtErrNotInstalled: string
+	/**
+	 * N​o​ ​u​s​e​r​ ​n​a​m​e​ ​t​o​ ​s​i​g​n​ ​i​n​ ​w​i​t​h​.​ ​U​s​e​ ​a​n​ ​A​P​I​ ​t​o​k​e​n​.
+	 */
+	virtErrNoUser: string
+	/**
+	 * N​o​ ​p​a​s​s​w​o​r​d​ ​t​o​ ​s​i​g​n​ ​i​n​ ​w​i​t​h​.
+	 */
+	virtErrPasswordRequired: string
+	/**
+	 * T​h​e​ ​A​P​I​ ​t​o​k​e​n​ ​n​e​e​d​s​ ​b​o​t​h​ ​i​t​s​ ​I​D​ ​a​n​d​ ​i​t​s​ ​s​e​c​r​e​t​.
+	 */
+	virtErrTokenIncomplete: string
+	/**
+	 * l​i​b​v​i​r​t​ ​r​e​f​u​s​e​d​ ​t​h​i​s​ ​a​g​e​n​t​'​s​ ​a​c​c​o​u​n​t​,​ ​a​n​d​ ​s​u​d​o​ ​n​e​e​d​s​ ​a​ ​p​a​s​s​w​o​r​d​.
+	 */
+	virtErrSudoRequired: string
+	/**
+	 * s​u​d​o​ ​r​e​j​e​c​t​e​d​ ​t​h​e​ ​p​a​s​s​w​o​r​d​.
+	 */
+	virtErrSudoRejected: string
+	/**
+	 * P​r​o​x​m​o​x​ ​V​E​ ​s​e​t​t​i​n​g​s
+	 */
+	pveSettings: string
+	/**
+	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​r​u​n​s​ ​P​r​o​x​m​o​x​ ​V​E​.​ ​A​n​ ​a​d​m​i​n​ ​h​a​s​ ​t​o​ ​s​e​t​ ​u​p​ ​h​o​w​ ​t​h​i​s​ ​a​g​e​n​t​ ​s​i​g​n​s​ ​i​n​ ​t​o​ ​i​t​s​ ​A​P​I​.
+	 */
+	pveSetup: string
+	/**
+	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​r​u​n​s​ ​P​r​o​x​m​o​x​ ​V​E​.​ ​S​e​t​ ​u​p​ ​h​o​w​ ​t​h​i​s​ ​a​g​e​n​t​ ​s​i​g​n​s​ ​i​n​ ​t​o​ ​i​t​s​ ​A​P​I​;​ ​a​n​ ​A​P​I​ ​t​o​k​e​n​ ​i​s​ ​r​e​c​o​m​m​e​n​d​e​d​.
+	 */
+	pveSetupAdmin: string
+	/**
+	 * A​P​I​ ​a​d​d​r​e​s​s
+	 */
+	pveAddr: string
+	/**
+	 * A​s​ ​r​e​a​c​h​e​d​ ​f​r​o​m​ ​t​h​i​s​ ​a​g​e​n​t​'​s​ ​m​a​c​h​i​n​e​.​ ​h​t​t​p​s​:​/​/​1​2​7​.​0​.​0​.​1​:​8​0​0​6​ ​i​s​ ​t​h​i​s​ ​h​o​s​t​ ​i​t​s​e​l​f​.
+	 */
+	pveAddrHint: string
+	/**
+	 * S​i​g​n​ ​i​n​ ​w​i​t​h
+	 */
+	pveAuth: string
+	/**
+	 * A​P​I​ ​t​o​k​e​n
+	 */
+	pveAuthToken: string
+	/**
+	 * P​a​s​s​w​o​r​d
+	 */
+	pveAuthPassword: string
+	/**
+	 * T​o​k​e​n​ ​I​D
+	 */
+	pveTokenId: string
+	/**
+	 * S​e​c​r​e​t
+	 */
+	pveTokenSecret: string
+	/**
+	 * u​s​e​r​@​r​e​a​l​m​!​n​a​m​e​.​ ​T​o​ ​c​r​e​a​t​e​ ​o​n​e​ ​o​n​ ​t​h​e​ ​h​o​s​t​:​
+​p​v​e​u​m​ ​u​s​e​r​ ​t​o​k​e​n​ ​a​d​d​ ​r​o​o​t​@​p​a​m​ ​s​e​r​v​e​r​b​o​x​ ​-​-​p​r​i​v​s​e​p​ ​1​
+​p​v​e​u​m​ ​a​c​l​ ​m​o​d​i​f​y​ ​/​ ​-​-​t​o​k​e​n​s​ ​'​r​o​o​t​@​p​a​m​!​s​e​r​v​e​r​b​o​x​'​ ​-​-​r​o​l​e​s​ ​P​V​E​A​u​d​i​t​o​r​,​P​V​E​V​M​A​d​m​i​n
+	 */
+	pveTokenHint: string
+	/**
+	 * A​n​ ​a​c​c​o​u​n​t​ ​w​i​t​h​ ​T​O​T​P​ ​i​s​ ​a​s​k​e​d​ ​f​o​r​ ​a​ ​c​o​d​e​ ​a​f​t​e​r​ ​t​h​e​ ​a​g​e​n​t​ ​r​e​s​t​a​r​t​s​.
+	 */
+	pvePasswordHint: string
+	/**
+	 * N​o​ ​c​e​r​t​i​f​i​c​a​t​e​ ​i​s​ ​t​r​u​s​t​e​d​ ​y​e​t​.​ ​T​h​e​ ​p​a​g​e​ ​s​h​o​w​s​ ​t​h​e​ ​o​n​e​ ​t​h​e​ ​h​o​s​t​ ​p​r​e​s​e​n​t​s​ ​f​o​r​ ​y​o​u​ ​t​o​ ​t​r​u​s​t​.
+	 */
+	pveCertNone: string
+	/**
+	 * F​o​r​g​e​t​ ​i​t
+	 */
+	pveCertForget: string
+	/**
+	 * T​r​u​s​t​e​d​ ​b​e​f​o​r​e
+	 */
+	pveCertPrevious: string
+	/**
+	 * C​o​m​p​a​r​e​ ​t​h​e​ ​f​i​n​g​e​r​p​r​i​n​t​ ​w​i​t​h​ ​t​h​e​ ​o​n​e​ ​t​h​e​ ​h​o​s​t​ ​s​h​o​w​s​ ​(​p​v​e​n​o​d​e​ ​c​e​r​t​ ​i​n​f​o​)​ ​b​e​f​o​r​e​ ​t​r​u​s​t​i​n​g​ ​i​t​.
+	 */
+	pveCertCompare: string
+	/**
+	 * A​n​ ​a​d​m​i​n​ ​h​a​s​ ​t​o​ ​t​r​u​s​t​ ​t​h​e​ ​c​e​r​t​i​f​i​c​a​t​e​.
+	 */
+	pveCertAdmin: string
+	/**
+	 * C​e​r​t​i​f​i​c​a​t​e​ ​t​r​u​s​t​e​d​.
+	 */
+	pveCertTrusted: string
+	/**
+	 * S​i​g​n​ ​i​n
+	 */
+	pveTfaSend: string
+	/**
+	 * P​r​o​x​m​o​x​ ​V​E​ ​s​e​t​t​i​n​g​s​ ​s​a​v​e​d​.
+	 */
+	pveSaved: string
+	/**
+	 * P​r​o​x​m​o​x​ ​V​E​ ​s​e​t​t​i​n​g​s​ ​r​e​m​o​v​e​d​.
+	 */
+	pveRemoved: string
+	/**
+	 * R​e​m​o​v​e​ ​s​e​t​t​i​n​g​s
+	 */
+	pveRemove: string
+	/**
+	 * R​e​m​o​v​e​ ​h​o​w​ ​t​h​i​s​ ​a​g​e​n​t​ ​s​i​g​n​s​ ​i​n​ ​t​o​ ​P​r​o​x​m​o​x​ ​V​E​?​ ​T​h​e​ ​s​t​o​r​e​d​ ​s​e​c​r​e​t​ ​g​o​e​s​ ​w​i​t​h​ ​i​t​.
+	 */
+	pveRemoveConfirm: string
+	/**
+	 * T​h​e​ ​a​d​d​r​e​s​s​ ​h​a​s​ ​t​o​ ​b​e​ ​h​t​t​p​s​:​/​/​h​o​s​t​ ​o​r​ ​h​t​t​p​s​:​/​/​h​o​s​t​:​p​o​r​t​.
+	 */
+	pveInvalidAddr: string
+	/**
+	 * A​ ​u​s​e​r​ ​n​a​m​e​ ​i​s​ ​r​e​q​u​i​r​e​d​.
+	 */
+	pveInvalidUsername: string
+	/**
+	 * A​ ​t​o​k​e​n​ ​I​D​ ​l​o​o​k​s​ ​l​i​k​e​ ​u​s​e​r​@​r​e​a​l​m​!​n​a​m​e​.
+	 */
+	pveInvalidTokenId: string
+	/**
+	 * Y​e​s
+	 */
+	yes: string
+	/**
+	 * N​o
+	 */
+	no: string
 }
 
 export type TranslationFunctions = {
@@ -5356,6 +5735,373 @@ export type TranslationFunctions = {
 	 * The BMC lists more sensors than this agent reads; the first 64 are shown.
 	 */
 	bmcSensorsTruncated: () => LocalizedString
+	/**
+	 * Virtualization
+	 */
+	virt: () => LocalizedString
+	/**
+	 * Virtual machine
+	 */
+	virtVm: () => LocalizedString
+	/**
+	 * LXC container
+	 */
+	virtLxc: () => LocalizedString
+	/**
+	 * Template
+	 */
+	virtTemplate: () => LocalizedString
+	/**
+	 * A template is not started. New guests are cloned from it.
+	 */
+	virtTemplateNote: () => LocalizedString
+	/**
+	 * Usage shows here once it runs.
+	 */
+	virtStoppedNote: () => LocalizedString
+	/**
+	 * Neither Proxmox VE nor libvirt was found on this machine.
+	 */
+	virtNone: () => LocalizedString
+	/**
+	 * Virtualization is not managed on this platform.
+	 */
+	virtUnsupported: () => LocalizedString
+	/**
+	 * This host has no guests.
+	 */
+	virtNoGuests: () => LocalizedString
+	/**
+	 * Pick a guest from the list.
+	 */
+	virtPick: () => LocalizedString
+	/**
+	 * Allocated
+	 */
+	virtAllocated: () => LocalizedString
+	/**
+	 * {running} running · {total} total
+	 */
+	virtRunningOf: (arg: { running: unknown, total: unknown }) => LocalizedString
+	/**
+	 * Memory
+	 */
+	virtMemory: () => LocalizedString
+	/**
+	 * Disk
+	 */
+	virtDisk: () => LocalizedString
+	/**
+	 * Network
+	 */
+	virtNetwork: () => LocalizedString
+	/**
+	 * Type
+	 */
+	virtKind: () => LocalizedString
+	/**
+	 * Node
+	 */
+	virtNode: () => LocalizedString
+	/**
+	 * Uptime
+	 */
+	virtUptime: () => LocalizedString
+	/**
+	 * Starts with the host
+	 */
+	virtAutostart: () => LocalizedString
+	/**
+	 * Tags
+	 */
+	virtTags: () => LocalizedString
+	/**
+	 * The chart fills in as readings arrive.
+	 */
+	virtChartWaiting: () => LocalizedString
+	/**
+	 * Running
+	 */
+	virtStateRunning: () => LocalizedString
+	/**
+	 * Paused
+	 */
+	virtStatePaused: () => LocalizedString
+	/**
+	 * Stopped
+	 */
+	virtStateStopped: () => LocalizedString
+	/**
+	 * Starting
+	 */
+	virtStateStarting: () => LocalizedString
+	/**
+	 * Stopping
+	 */
+	virtStateStopping: () => LocalizedString
+	/**
+	 * Rebooting
+	 */
+	virtStateRebooting: () => LocalizedString
+	/**
+	 * Migrating
+	 */
+	virtStateMigrating: () => LocalizedString
+	/**
+	 * Backing up
+	 */
+	virtStateBackup: () => LocalizedString
+	/**
+	 * Unknown
+	 */
+	virtStateUnknown: () => LocalizedString
+	/**
+	 * Start
+	 */
+	virtActStart: () => LocalizedString
+	/**
+	 * Shut down
+	 */
+	virtActShutdown: () => LocalizedString
+	/**
+	 * Reboot
+	 */
+	virtActReboot: () => LocalizedString
+	/**
+	 * Force stop
+	 */
+	virtActForceStop: () => LocalizedString
+	/**
+	 * Pause
+	 */
+	virtActSuspend: () => LocalizedString
+	/**
+	 * Resume
+	 */
+	virtActResume: () => LocalizedString
+	/**
+	 * {action}: done for {name}.
+	 */
+	virtActDone: (arg: { action: unknown, name: unknown }) => LocalizedString
+	/**
+	 * {action} {name}? The guest's system is asked to do it and may take a while.
+	 */
+	virtConfirm: (arg: { action: unknown, name: unknown }) => LocalizedString
+	/**
+	 * Force stop {name}? It stops at once, like pulling the plug, and anything unsaved in it is lost.
+	 */
+	virtConfirmForce: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * sudo password
+	 */
+	virtSudoPassword: () => LocalizedString
+	/**
+	 * Use
+	 */
+	virtSudoSend: () => LocalizedString
+	/**
+	 * libvirt refused this agent's account. The password is sent with each request while this page is open and is not stored.
+	 */
+	virtSudoHint: () => LocalizedString
+	/**
+	 * This agent could not reach the host.
+	 */
+	virtErrUnreachable: () => LocalizedString
+	/**
+	 * How to sign in to the host is not set up.
+	 */
+	virtErrNotConfigured: () => LocalizedString
+	/**
+	 * The host refused the sign-in.
+	 */
+	virtErrAuthFailed: () => LocalizedString
+	/**
+	 * Enter the code from the account's authenticator.
+	 */
+	virtErrOtpRequired: () => LocalizedString
+	/**
+	 * Enter a code.
+	 */
+	virtErrOtpEmpty: () => LocalizedString
+	/**
+	 * The code was not accepted. Wait for the next one and try again.
+	 */
+	virtErrOtpRejected: () => LocalizedString
+	/**
+	 * The Proxmox VE certificate is not signed by a known authority. Trust it once it matches the one the host shows.
+	 */
+	virtErrCertUnconfirmed: () => LocalizedString
+	/**
+	 * Proxmox VE presented a different certificate from the trusted one. Nothing was sent.
+	 */
+	virtErrCertChanged: () => LocalizedString
+	/**
+	 * That certificate is not the one the host presented.
+	 */
+	virtErrCertNotPresented: () => LocalizedString
+	/**
+	 * The host refused this account.
+	 */
+	virtErrPermissionDenied: () => LocalizedString
+	/**
+	 * {account} may not see any guest. Grant it on the host:
+{command}
+	 */
+	virtErrNoPrivileges: (arg: { account: unknown, command: unknown }) => LocalizedString
+	/**
+	 * The host answered with something this agent cannot read.
+	 */
+	virtErrInvalidResponse: () => LocalizedString
+	/**
+	 * The host refused the action.
+	 */
+	virtErrActionFailed: () => LocalizedString
+	/**
+	 * This guest does not offer that action now.
+	 */
+	virtErrNotOffered: () => LocalizedString
+	/**
+	 * Still running on {node} after {minutes} min; its task log on the host says how it ends: {upid}
+	 */
+	virtErrTaskRunning: (arg: { minutes: unknown, node: unknown, upid: unknown }) => LocalizedString
+	/**
+	 * virsh is not installed.
+	 */
+	virtErrNotInstalled: () => LocalizedString
+	/**
+	 * No user name to sign in with. Use an API token.
+	 */
+	virtErrNoUser: () => LocalizedString
+	/**
+	 * No password to sign in with.
+	 */
+	virtErrPasswordRequired: () => LocalizedString
+	/**
+	 * The API token needs both its ID and its secret.
+	 */
+	virtErrTokenIncomplete: () => LocalizedString
+	/**
+	 * libvirt refused this agent's account, and sudo needs a password.
+	 */
+	virtErrSudoRequired: () => LocalizedString
+	/**
+	 * sudo rejected the password.
+	 */
+	virtErrSudoRejected: () => LocalizedString
+	/**
+	 * Proxmox VE settings
+	 */
+	pveSettings: () => LocalizedString
+	/**
+	 * This machine runs Proxmox VE. An admin has to set up how this agent signs in to its API.
+	 */
+	pveSetup: () => LocalizedString
+	/**
+	 * This machine runs Proxmox VE. Set up how this agent signs in to its API; an API token is recommended.
+	 */
+	pveSetupAdmin: () => LocalizedString
+	/**
+	 * API address
+	 */
+	pveAddr: () => LocalizedString
+	/**
+	 * As reached from this agent's machine. https://127.0.0.1:8006 is this host itself.
+	 */
+	pveAddrHint: () => LocalizedString
+	/**
+	 * Sign in with
+	 */
+	pveAuth: () => LocalizedString
+	/**
+	 * API token
+	 */
+	pveAuthToken: () => LocalizedString
+	/**
+	 * Password
+	 */
+	pveAuthPassword: () => LocalizedString
+	/**
+	 * Token ID
+	 */
+	pveTokenId: () => LocalizedString
+	/**
+	 * Secret
+	 */
+	pveTokenSecret: () => LocalizedString
+	/**
+	 * user@realm!name. To create one on the host:
+pveum user token add root@pam serverbox --privsep 1
+pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
+	 */
+	pveTokenHint: () => LocalizedString
+	/**
+	 * An account with TOTP is asked for a code after the agent restarts.
+	 */
+	pvePasswordHint: () => LocalizedString
+	/**
+	 * No certificate is trusted yet. The page shows the one the host presents for you to trust.
+	 */
+	pveCertNone: () => LocalizedString
+	/**
+	 * Forget it
+	 */
+	pveCertForget: () => LocalizedString
+	/**
+	 * Trusted before
+	 */
+	pveCertPrevious: () => LocalizedString
+	/**
+	 * Compare the fingerprint with the one the host shows (pvenode cert info) before trusting it.
+	 */
+	pveCertCompare: () => LocalizedString
+	/**
+	 * An admin has to trust the certificate.
+	 */
+	pveCertAdmin: () => LocalizedString
+	/**
+	 * Certificate trusted.
+	 */
+	pveCertTrusted: () => LocalizedString
+	/**
+	 * Sign in
+	 */
+	pveTfaSend: () => LocalizedString
+	/**
+	 * Proxmox VE settings saved.
+	 */
+	pveSaved: () => LocalizedString
+	/**
+	 * Proxmox VE settings removed.
+	 */
+	pveRemoved: () => LocalizedString
+	/**
+	 * Remove settings
+	 */
+	pveRemove: () => LocalizedString
+	/**
+	 * Remove how this agent signs in to Proxmox VE? The stored secret goes with it.
+	 */
+	pveRemoveConfirm: () => LocalizedString
+	/**
+	 * The address has to be https://host or https://host:port.
+	 */
+	pveInvalidAddr: () => LocalizedString
+	/**
+	 * A user name is required.
+	 */
+	pveInvalidUsername: () => LocalizedString
+	/**
+	 * A token ID looks like user@realm!name.
+	 */
+	pveInvalidTokenId: () => LocalizedString
+	/**
+	 * Yes
+	 */
+	yes: () => LocalizedString
+	/**
+	 * No
+	 */
+	no: () => LocalizedString
 }
 
 export type Formatters = {}

@@ -125,6 +125,7 @@ export type MachineFeature =
   | 'desktop'
   | 'backup'
   | 'bmc'
+  | 'virt'
 
 export type PowerAction = 'shutdown' | 'reboot' | 'suspend'
 
@@ -1425,4 +1426,163 @@ export interface BmcCertInfo {
   /// Unix seconds.
   not_before: number
   not_after: number
+}
+
+// --- Virtualization (`/virt`, `sbm_virt::model`) ---
+
+export type VirtHostKind = 'pve' | 'libvirt'
+export type VirtGuestKind = 'qemu' | 'lxc'
+export type VirtGuestState =
+  | 'running'
+  | 'paused'
+  | 'stopped'
+  | 'starting'
+  | 'stopping'
+  | 'rebooting'
+  | 'migrating'
+  | 'backup'
+  | 'unknown'
+export type VirtPowerAction = 'start' | 'shutdown' | 'reboot' | 'force_stop' | 'suspend' | 'resume'
+
+export interface VirtNode {
+  name: string
+  online: boolean
+  /// Fraction of `max_cpu` in use, 0..1.
+  cpu: number | null
+  max_cpu: number | null
+  mem_used: number | null
+  mem_total: number | null
+  /// Seconds.
+  uptime: number | null
+}
+
+export interface VirtHost {
+  kind: VirtHostKind
+  version: string | null
+  hypervisor: string | null
+  nodes: VirtNode[]
+}
+
+export interface VirtGuest {
+  /// PVE `qemu/100`, libvirt the domain's UUID.
+  id: string
+  name: string
+  kind: VirtGuestKind
+  state: VirtGuestState
+  /// PVE's lock or QEMU status, libvirt's reason.
+  state_reason: string | null
+  vmid: number | null
+  node: string | null
+  vcpu: number | null
+  /// Bytes.
+  mem_bytes: number | null
+  /// Seconds.
+  uptime: number | null
+  tags: string[]
+  template: boolean
+  autostart: boolean | null
+  actions: VirtPowerAction[]
+}
+
+/// One reading; null is "not measured", never zero.
+export interface VirtStats {
+  /// Unix ms.
+  at: number
+  /// Percent of the guest's own vCPUs.
+  cpu: number | null
+  mem_used: number | null
+  mem_total: number | null
+  disk_used: number | null
+  disk_total: number | null
+  /// Bytes per second.
+  disk_read: number | null
+  disk_write: number | null
+  net_in: number | null
+  net_out: number | null
+}
+
+/// What a view shows or hides by. Only the fields this panel reads.
+export interface VirtCapabilities {
+  lxc: boolean
+  pause: boolean
+  cluster: boolean
+  [key: string]: boolean | string[]
+}
+
+export interface VirtHostView {
+  host: VirtHost
+  guests: VirtGuest[]
+  stats: Record<string, VirtStats>
+  capabilities: VirtCapabilities
+}
+
+export type VirtErrorKind =
+  | 'unreachable'
+  | 'not_configured'
+  | 'auth_failed'
+  | 'need_tfa'
+  | 'cert_unconfirmed'
+  | 'cert_changed'
+  | 'permission_denied'
+  | 'invalid_response'
+  | 'action_failed'
+  | 'unsupported'
+  | 'exists'
+  | 'conflict'
+  | 'not_installed'
+  | 'sudo_password_required'
+  | 'sudo_password_rejected'
+  | 'closed'
+  | 'unknown'
+
+/// `sbm_virt::error::Detail`: what the panel phrases itself.
+export type VirtErrorDetail =
+  | { code: 'no_user' | 'password_required' | 'token_incomplete' }
+  | { code: 'otp_required' | 'otp_empty' | 'otp_rejected' }
+  | { code: 'invalid_body' | 'invalid_data' | 'missing_ticket' | 'not_offered' | 'cert_not_presented' }
+  | { code: 'no_privileges'; token: boolean; account: string; command: string }
+  | { code: 'task_still_running'; node: string; upid: string; minutes: number }
+
+export interface VirtError {
+  kind: VirtErrorKind
+  /// The host's own words.
+  message: string | null
+  detail: VirtErrorDetail | null
+  cert: BmcCertInfo | null
+  previous_fingerprint: string | null
+}
+
+/// `POST /virt`.
+export interface VirtLoad {
+  host: VirtHostKind | null
+  supported: boolean
+  pve_configured: boolean
+  view: VirtHostView | null
+  error: VirtError | null
+}
+
+export type PveAuthKind = 'password' | 'token'
+
+/// `GET /virt/pve`: never a secret.
+export interface PveConfigView {
+  configured: boolean
+  addr: string | null
+  auth: PveAuthKind | null
+  username: string | null
+  has_password: boolean
+  token_id: string | null
+  has_token_secret: boolean
+  cert_sha256: string | null
+  editable: boolean
+}
+
+/// `PUT /virt/pve`. A secret of `null` keeps the stored one.
+export interface PveConfigInput {
+  addr: string
+  auth: PveAuthKind
+  username: string | null
+  password: string | null
+  token_id: string | null
+  token_secret: string | null
+  cert_sha256: string | null
 }

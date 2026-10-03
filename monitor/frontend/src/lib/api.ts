@@ -55,6 +55,11 @@ import type {
   BmcList,
   BmcStatus,
   BmcTargetInput,
+  PveConfigInput,
+  PveConfigView,
+  VirtError,
+  VirtLoad,
+  VirtPowerAction,
   DesktopsView,
 } from '../types'
 import { isSecureAgentUrl } from './agentUrl'
@@ -479,6 +484,45 @@ export const api = {
       `/bmc/${encodeURIComponent(id)}/power`,
       { method: 'POST', body: JSON.stringify({ intent }) },
       'Failed to reach the BMC',
+    ),
+  /// The host and its guests. `password` is the operator's sudo password
+  /// for a libvirt that refuses the agent's account: sent for this request,
+  /// never stored. A host's failure is `error` in a 200, not an `ApiError`.
+  loadVirt: (password?: string) =>
+    request<VirtLoad>(
+      '/virt',
+      { method: 'POST', body: JSON.stringify({ password: password ?? null }) },
+      'Failed to read the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// Returns once the host has finished it (a PVE task stopped).
+  virtPower: (guest: string, action: VirtPowerAction, password?: string) =>
+    request<{ error: VirtError | null }>(
+      '/virt/power',
+      { method: 'POST', body: JSON.stringify({ guest, action, password: password ?? null }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  getPve: () => request<PveConfigView>('/virt/pve', {}, 'Failed to read the Proxmox VE settings'),
+  /// A refusal arrives with its code as `ApiError.message`.
+  setPve: (config: PveConfigInput) =>
+    request<PveConfigView>('/virt/pve', { method: 'PUT', body: JSON.stringify(config) }, 'Failed to save the Proxmox VE settings'),
+  removePve: () => request<PveConfigView>('/virt/pve', { method: 'DELETE' }, 'Failed to remove the Proxmox VE settings'),
+  pinPve: (fingerprint: string) =>
+    request<{ error: VirtError | null }>(
+      '/virt/pve/cert',
+      { method: 'POST', body: JSON.stringify({ fingerprint }) },
+      'Failed to trust the certificate',
+    ),
+  pveTfa: (code: string) =>
+    request<{ error: VirtError | null }>(
+      '/virt/pve/tfa',
+      { method: 'POST', body: JSON.stringify({ code }) },
+      'Failed to send the code',
+      undefined,
+      MACHINE_TIMEOUT_MS,
     ),
   getBackups: () => request<BackupView>('/backup', {}, 'Failed to list the backups'),
   /// The blob's bytes, as stored. The panel has no key for what is in them.
