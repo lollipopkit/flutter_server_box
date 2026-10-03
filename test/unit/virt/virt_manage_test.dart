@@ -20,10 +20,10 @@ import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_manage.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/virt/libvirt_backend.dart';
-import 'package:server_box/src/rust/api/script.dart' as script;
 import 'package:server_box/src/rust/api/virt.dart' as ffi;
 
 import '../../helpers/rust_lib_helper.dart';
+import '../../helpers/script_markers.dart';
 
 const _dir = VirtStoragePool(
   id: 'images',
@@ -41,8 +41,7 @@ const _pveDir = VirtStoragePool(
   content: ['iso', 'vztmpl', 'images'],
 );
 
-String _marker(String key) =>
-    script.scriptSegmentMarker(key: key, custom: false);
+String _marker(String key) => scriptSegmentMarker(key);
 
 String _section(String key, String body, [int rc = 0]) =>
     '${_marker(key)}\n$body\nSbVirtRc=$rc\n';

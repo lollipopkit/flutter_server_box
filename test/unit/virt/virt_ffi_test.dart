@@ -7,10 +7,10 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/src/rust/api/script.dart' as script;
 import 'package:server_box/src/rust/api/virt.dart';
 
 import '../../helpers/rust_lib_helper.dart';
+import '../../helpers/script_markers.dart';
 
 const _dir = 'crates/sbm_parser/tests/fixtures/virt';
 
@@ -19,7 +19,7 @@ String _fixture(String name) => File('$_dir/$name').readAsStringSync();
 /// One `virsh` call's section as the scripts print it: marker, output, and
 /// the exit-status line (`sbm_parser::virt::RC_PREFIX`).
 String _section(String key, String body, [int rc = 0]) =>
-    '${script.scriptSegmentMarker(key: key, custom: false)}\n$body\nSbVirtRc=$rc\n';
+    '${scriptSegmentMarker(key)}\n$body\nSbVirtRc=$rc\n';
 
 void main() {
   setUpAll(initRustLibForTest);

@@ -103,17 +103,6 @@ bool containsScriptSegment({required String raw}) =>
 bool containsStatusSegment({required String raw}) =>
     RustLib.instance.api.crateApiScriptContainsStatusSegment(raw: raw);
 
-/// Build the exact marker line used by the shared script protocol.
-String scriptSegmentMarker({required String key, required bool custom}) =>
-    RustLib.instance.api.crateApiScriptScriptSegmentMarker(
-      key: key,
-      custom: custom,
-    );
-
-/// Parsed-map key for one custom command's output.
-String customResultKey({required String name}) =>
-    RustLib.instance.api.crateApiScriptCustomResultKey(name: name);
-
 /// Return the custom-command name when `key` is in the shared namespace.
 String? customResultName({required String key}) =>
     RustLib.instance.api.crateApiScriptCustomResultName(key: key);

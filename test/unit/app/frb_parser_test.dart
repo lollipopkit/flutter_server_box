@@ -12,6 +12,7 @@ import 'package:server_box/src/rust/api/parser.dart';
 import 'package:server_box/src/rust/api/script.dart' as script;
 
 import '../../helpers/rust_lib_helper.dart';
+import '../../helpers/script_markers.dart';
 
 const _cpuRaw = '''cpu  18232538 52837 5772391 334460731 247294 0 134107 0 0 0
 cpu0  1823253 5283 577239 33446073 24729 0 13410 0 0 0''';
@@ -307,11 +308,11 @@ __SBM_GPU_END__
     );
 
     final raw = [
-      script.scriptSegmentMarker(key: 'time', custom: false), '123',
-      script.scriptSegmentMarker(key: 'x', custom: true), 'hello',
+      scriptSegmentMarker('time'), '123',
+      scriptSegmentMarker('x', custom: true), 'hello',
       // A custom command named after a built-in section, plus output that
       // looks like an unencoded marker
-      script.scriptSegmentMarker(key: 'time', custom: true), 'SrvBoxSep.host',
+      scriptSegmentMarker('time', custom: true), 'SrvBoxSep.host',
       '',
     ].join('\n');
 
@@ -319,15 +320,15 @@ __SBM_GPU_END__
     expect(script.containsStatusSegment(raw: raw), isTrue);
     expect(
       script.containsStatusSegment(
-        raw: '${script.scriptSegmentMarker(key: 'x', custom: true)}\nhello',
+        raw: '${scriptSegmentMarker('x', custom: true)}\nhello',
       ),
       isFalse,
     );
 
     final segments = await script.parseScriptSegments(raw: raw);
     final map = {for (final s in segments) s.key: s.value};
-    final customX = script.customResultKey(name: 'x');
-    final customTime = script.customResultKey(name: 'time');
+    final customX = customResultKey('x');
+    final customTime = customResultKey('time');
     expect(map['time'], '123');
     expect(map[customX], 'hello');
     // The namespaced key is what the app reads, and it did not clobber 'time'

@@ -186,22 +186,6 @@ pub fn contains_status_segment(raw: String) -> bool {
     sbm_parser::script::contains_status_segment(&raw)
 }
 
-/// Build the exact marker line used by the shared script protocol.
-#[flutter_rust_bridge::frb(sync)]
-pub fn script_segment_marker(key: String, custom: bool) -> String {
-    if custom {
-        sbm_parser::script::custom_cmd_marker(&key)
-    } else {
-        sbm_parser::script::cmd_marker(&key)
-    }
-}
-
-/// Parsed-map key for one custom command's output.
-#[flutter_rust_bridge::frb(sync)]
-pub fn custom_result_key(name: String) -> String {
-    sbm_parser::script::custom_result_key(&name)
-}
-
 /// Return the custom-command name when `key` is in the shared namespace.
 #[flutter_rust_bridge::frb(sync)]
 pub fn custom_result_name(key: String) -> Option<String> {
