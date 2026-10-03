@@ -182,6 +182,12 @@
     actionError = message ?? ''
   }
 
+  /// Closes the password dialog without connecting; what was typed goes too.
+  function dismissPassword() {
+    pending = null
+    password = ''
+  }
+
   const desktops = $derived(view?.desktops ?? [])
 
   /// Why a route cannot be opened, or `null`: an RDP session signs in, so it
@@ -382,7 +388,7 @@
 <!-- The password exists only in this dialog and in the viewer it is handed to. -->
 {#if pending}
   {@const target = pending}
-  <Modal open title={$LL.desktopConnect()} onclose={() => (pending = null)}>
+  <Modal open title={$LL.desktopConnect()} onclose={dismissPassword}>
     <form
       class="space-y-4"
       onsubmit={(e) => {
@@ -397,7 +403,7 @@
         <p class="text-xs text-muted-fg">{$LL.desktopPasswordNone()}</p>
       </div>
       <div class="flex justify-end gap-2">
-        <Button type="button" variant="secondary" onclick={() => (pending = null)}>{$LL.cancel()}</Button>
+        <Button type="button" variant="secondary" onclick={dismissPassword}>{$LL.cancel()}</Button>
         <Button type="submit" disabled={busy}>{$LL.desktopConnect()}</Button>
       </div>
     </form>

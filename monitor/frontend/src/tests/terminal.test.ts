@@ -466,6 +466,18 @@ describe('TerminalSession', () => {
     expect(session.resumable).toBe(true)
   })
 
+  it('resumes from the start when the stored position is not a byte count', async () => {
+    for (const rendered of ['5', -1, 1.5]) {
+      FakeSocket.instances = []
+      window.sessionStorage.setItem('terminal.session', JSON.stringify({ handle: 'abc.def', rendered }))
+      const session = new TerminalSession()
+      await session.start(renderer, '', null)
+      FakeSocket.latest().onopen?.()
+      expect(FakeSocket.latest().sent[0]).toMatchObject({ type: 'attach', since: 0 })
+      session.dispose()
+    }
+  })
+
   it('never writes the handle to localStorage', async () => {
     const { session } = await connected(renderer)
     session.flush()

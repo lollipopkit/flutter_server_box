@@ -99,7 +99,13 @@
 
     try {
       const session = await ui.connect(builder.build())
-      if (ended) return
+      if (ended) {
+        // Left while the session was coming up: the teardown's shutdown found
+        // nothing to end, so this one is ended here.
+        ui.shutdown()
+        void session.run().catch(() => {})
+        return
+      }
       connecting = false
       // Resolves on a graceful disconnect — the server saying goodbye, or the
       // teardown below shutting the session down — and rejects when the link
@@ -157,7 +163,11 @@
       // runtime, so there is no expected DOM for it to disagree with.
       // eslint-disable-next-line svelte/no-dom-manipulating
       container.appendChild(element)
-    })()
+    })().catch((e: unknown) => {
+      // The client's chunk or its wasm failed to load: said, so the page can
+      // offer a retry instead of a spinner that never stops.
+      if (!cancelled) end(rdpFailureSentence(rdpFailureText(e)))
+    })
 
     return () => {
       cancelled = true

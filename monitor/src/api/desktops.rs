@@ -125,7 +125,7 @@ pub async fn replace(
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
-    let desktops = body.into_inner().desktops;
+    let desktops: Vec<Desktop> = body.into_inner().desktops.into_iter().map(normalize).collect();
     if let Err(refusal) = validate(&desktops) {
         return Ok(HttpResponse::BadRequest().json(&refusal));
     }
@@ -168,6 +168,20 @@ fn response(desktops: Vec<Desktop>) -> ListResponse {
                 default_port: *default_port,
             })
             .collect(),
+    }
+}
+
+/// What is stored is what the rules accepted: `validate_profile` reads past
+/// surrounding whitespace, so it is trimmed here, as both editors do before
+/// sending, and an empty user name or domain is none.
+fn normalize(d: Desktop) -> Desktop {
+    let trimmed = |v: Option<String>| v.map(|v| v.trim().to_string()).filter(|v| !v.is_empty());
+    Desktop {
+        name: d.name.trim().to_string(),
+        host: d.host.trim().to_string(),
+        username: trimmed(d.username),
+        domain: trimmed(d.domain),
+        ..d
     }
 }
 
@@ -315,6 +329,18 @@ mod tests {
             validate(&[desktop("a", "one"), desktop("b", "one")]),
             Err(Refusal::DuplicateName { index: 1 })
         );
+    }
+
+    #[test]
+    fn surrounding_whitespace_is_not_stored() {
+        let d = normalize(Desktop {
+            host: " 10.0.0.5 ".into(),
+            username: Some("  ".into()),
+            domain: Some(" corp ".into()),
+            ..desktop("a", " one ")
+        });
+        assert_eq!((d.name.as_str(), d.host.as_str()), ("one", "10.0.0.5"));
+        assert_eq!((d.username, d.domain.as_deref()), (None, Some("corp")));
     }
 
     #[test]

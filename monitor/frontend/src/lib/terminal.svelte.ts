@@ -95,7 +95,13 @@ function loadSession(): { handle: string; rendered: number } | null {
     if (!raw) return null
     const parsed = JSON.parse(raw) as { handle?: string; rendered?: number }
     if (typeof parsed.handle !== 'string') return null
-    return { handle: parsed.handle, rendered: parsed.rendered ?? 0 }
+    // Sent back as `since`, a `u64` on the agent: anything else would make
+    // the attach frame invalid, so it resumes from the start instead.
+    const rendered =
+      Number.isSafeInteger(parsed.rendered) && (parsed.rendered as number) >= 0
+        ? (parsed.rendered as number)
+        : 0
+    return { handle: parsed.handle, rendered }
   } catch {
     return null
   }

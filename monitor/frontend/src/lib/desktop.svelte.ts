@@ -35,6 +35,9 @@ export function relayOpenMessage(host: string, port: number): string {
   return JSON.stringify({ type: 'open', host, port })
 }
 
+/// What `RelayChannel` keeps for a client that has not attached yet.
+export const MAX_EARLY_BYTES = 64 * 1024
+
 /// The relay socket as the WebSocket-shaped channel noVNC attaches to, with
 /// the relay's own control frames taken out.
 ///
@@ -54,12 +57,25 @@ export class RelayChannel {
   reason: string | null = null
   private receiver: ((e: MessageEvent) => void) | null = null
   private early: MessageEvent[] = []
+  private earlyBytes = 0
 
   constructor(private readonly socket: WebSocket) {
     socket.onmessage = (e) => {
       if (typeof e.data !== 'string') {
-        if (this.receiver) this.receiver(e)
-        else this.early.push(e)
+        if (this.receiver) {
+          this.receiver(e)
+          return
+        }
+        this.earlyBytes += e.data instanceof Blob ? e.data.size : (e.data as ArrayBuffer).byteLength
+        // A VNC server says a dozen bytes and waits for the client; more than
+        // this before one attaches is not a VNC server, and is not kept.
+        if (this.earlyBytes > MAX_EARLY_BYTES) {
+          this.early = []
+          this.reason = 'The desktop sent more than expected before the client started'
+          socket.close()
+          return
+        }
+        this.early.push(e)
         return
       }
       const control = parseControl(e.data)

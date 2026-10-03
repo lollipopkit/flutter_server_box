@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
-import { DesktopSession, RelayChannel, parseControl, relayOpenMessage } from '../lib/desktop.svelte'
+import { DesktopSession, MAX_EARLY_BYTES, RelayChannel, parseControl, relayOpenMessage } from '../lib/desktop.svelte'
 import { agentWsUrl, wsTicketProtocol } from '../lib/agentUrl'
 import { desktopDraftOf, desktopFormState } from '../components/DesktopForm.svelte'
 import { servers } from '../lib/servers.svelte'
@@ -119,6 +119,16 @@ describe('RelayChannel', () => {
     channel.onmessage = (e) => seen.push(e.data)
     await Promise.resolve()
     expect(seen).toEqual([banner])
+  })
+
+  it('closes rather than keep an unbounded amount before noVNC attaches', () => {
+    const socket = new FakeSocket('ws://x')
+    const channel = new RelayChannel(socket as unknown as WebSocket)
+    socket.onmessage?.({ data: new ArrayBuffer(MAX_EARLY_BYTES) })
+    expect(socket.readyState).toBe(FakeSocket.OPEN)
+    socket.onmessage?.({ data: new ArrayBuffer(1) })
+    expect(socket.readyState).toBe(FakeSocket.CLOSED)
+    expect(channel.reason).not.toBeNull()
   })
 
   it('has every property noVNC checks before attaching', () => {

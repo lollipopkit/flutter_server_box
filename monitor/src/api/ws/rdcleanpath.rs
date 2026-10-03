@@ -84,6 +84,11 @@ const READ_BUFFER: usize = 32 * 1024;
 /// it is inside the PDU — so without this a socket could be held for free.
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(15);
 
+/// How long resolving, dialling, the X.224 exchange and the TLS handshake
+/// may take together. A destination that accepts and then says nothing would
+/// otherwise hold the socket, the connection and this task for good.
+const SETUP_TIMEOUT: Duration = Duration::from_secs(20);
+
 /// The largest request PDU accepted. Real ones are a few hundred bytes plus
 /// an X.224 request; this bounds what an unauthenticated socket can make the
 /// agent buffer.
@@ -351,8 +356,9 @@ async fn handshake(
     let Ok((host, port)) = parse_destination(&destination) else {
         return refuse(sink, &RDCleanPathPdu::new_http_error(400));
     };
+    let deadline = tokio::time::Instant::now() + SETUP_TIMEOUT;
     // Resolved once: every address must be allowed, and these are dialled.
-    let addrs: Vec<SocketAddr> = match tokio::net::lookup_host((host.as_str(), port)).await {
+    let addrs: Vec<SocketAddr> = match within(deadline, tokio::net::lookup_host((host.as_str(), port))).await {
         Ok(addrs) => addrs.collect(),
         Err(error) => {
             tracing::info!("RDP proxy could not resolve {destination}: {error}");
@@ -365,7 +371,7 @@ async fn handshake(
         return refuse(sink, &RDCleanPathPdu::new_http_error(403));
     }
 
-    let mut stream = match TcpStream::connect(&addrs[..]).await {
+    let mut stream = match within(deadline, TcpStream::connect(&addrs[..])).await {
         Ok(stream) => stream,
         Err(error) => {
             tracing::info!("RDP proxy could not reach {destination}: {error}");
@@ -379,12 +385,12 @@ async fn handshake(
 
     // The client's own X.224 request, as written: the negotiation it asks for
     // is the one that gets answered.
-    if let Err(error) = stream.write_all(x224_connection_request.as_bytes()).await {
+    if let Err(error) = within(deadline, stream.write_all(x224_connection_request.as_bytes())).await {
         tracing::info!("RDP proxy could not write the X.224 request: {error}");
         ctx.audit(Outcome::Error, &destination).await;
         return refuse(sink, &RDCleanPathPdu::new_http_error(502));
     }
-    let connection_confirm = match read_tpkt(&mut stream).await {
+    let connection_confirm = match within(deadline, read_tpkt(&mut stream)).await {
         Ok(confirm) => confirm,
         Err(error) => {
             tracing::info!("RDP proxy could not read the X.224 confirm: {error}");
@@ -413,7 +419,7 @@ async fn handshake(
     let Ok(name) = ServerName::try_from(host.clone()) else {
         return refuse(sink, &RDCleanPathPdu::new_http_error(400));
     };
-    let tls = match TlsConnector::from(config).connect(name, stream).await {
+    let tls = match within(deadline, TlsConnector::from(config).connect(name, stream)).await {
         Ok(tls) => tls,
         Err(error) => {
             tracing::info!("RDP proxy could not open TLS with {server_addr}: {error}");
@@ -539,6 +545,16 @@ fn error_pdu(pdu: &RDCleanPathPdu) -> Message {
             Message::Close(Some(CloseCode::Normal.into()))
         }
     }
+}
+
+/// `step`, or a `TimedOut` error once `deadline` has passed.
+async fn within<T>(
+    deadline: tokio::time::Instant,
+    step: impl std::future::Future<Output = io::Result<T>>,
+) -> io::Result<T> {
+    tokio::time::timeout_at(deadline, step)
+        .await
+        .unwrap_or_else(|_| Err(io::Error::new(io::ErrorKind::TimedOut, "setup timed out")))
 }
 
 /// Reads one TPKT frame by its length: the TLS handshake follows on the same
@@ -754,6 +770,15 @@ mod tests {
         for bad in ["", "   ", ":3389", "[]:3389", "[::1", "[::1]x", "host:", "host:0", "host:99999", "host:rdp"] {
             assert_eq!(parse_destination(bad), Err(()), "{bad:?}");
         }
+    }
+
+    #[tokio::test]
+    async fn a_step_that_never_finishes_ends_at_the_deadline() {
+        let deadline = tokio::time::Instant::now() + Duration::from_millis(20);
+        let error = within(deadline, std::future::pending::<io::Result<()>>())
+            .await
+            .unwrap_err();
+        assert_eq!(error.kind(), io::ErrorKind::TimedOut);
     }
 
     fn confirm(negotiation: &[u8]) -> Vec<u8> {
