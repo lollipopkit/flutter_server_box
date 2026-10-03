@@ -5363,4 +5363,25 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get firewallInvalidForwardPort =>
       'Gunakan port=80:proto=tcp:toport=8080, dengan toport, toaddr, atau keduanya.';
+
+  @override
+  String get monitorSyncNeedsServer =>
+      'Pilih server yang agen monitornya menyimpan cadangan.';
+
+  @override
+  String get monitorBackupUnsupported =>
+      'Agen monitor ini tidak dapat menyimpan cadangan. Perbarui agen.';
+
+  @override
+  String get monitorBackupAdminOnly =>
+      'Hanya akun admin agen monitor yang dapat menyimpan cadangan di dalamnya.';
+
+  @override
+  String monitorBackupTooLarge(String max) {
+    return 'Cadangan lebih besar dari yang diterima agen monitor ($max).';
+  }
+
+  @override
+  String get monitorBackupTooMany =>
+      'Agen monitor sudah menyimpan cadangan sebanyak yang diizinkan. Hapus satu terlebih dahulu.';
 }

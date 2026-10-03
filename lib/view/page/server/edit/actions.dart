@@ -239,7 +239,10 @@ extension _Actions on _ServerEditPageState {
 
     final CertInfo info;
     try {
-      info = await fetchServerCert(uri.host, port);
+      info = await bmcFetchServerCert(host: uri.host, port: port);
+    } on BmcError catch (e) {
+      Toast.error(libL10n.fail, body: e.message);
+      return;
     } catch (e) {
       Toast.error(libL10n.fail, body: '$e');
       return;

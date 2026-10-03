@@ -123,6 +123,8 @@ export type MachineFeature =
   | 'system_users'
   | 'snippets'
   | 'desktop'
+  | 'backup'
+  | 'bmc'
 
 export type PowerAction = 'shutdown' | 'reboot' | 'suspend'
 
@@ -1336,4 +1338,91 @@ export interface DesktopProtocolView {
 export interface DesktopsView {
   desktops: Desktop[]
   protocols: DesktopProtocolView[]
+}
+
+/// One blob the agent hosts (`api::backup::BlobView`). Never its contents.
+export interface BackupBlob {
+  name: string
+  size: number
+  /// RFC 3339.
+  updated_at: string
+}
+
+/// `GET /backup`.
+export interface BackupView {
+  blobs: BackupBlob[]
+  max_bytes: number
+}
+
+/// A BMC target the agent reaches (`api::bmc::TargetView`). The password is
+/// never read back.
+export interface BmcTarget {
+  id: string
+  name: string
+  /// `https://host[:port]`.
+  url: string
+  username: string
+  has_password: boolean
+  cert_sha256: string | null
+}
+
+/// What a write sends: `password` `null` keeps the stored one.
+export interface BmcTargetInput {
+  id: string
+  name: string
+  url: string
+  username: string
+  password: string | null
+  cert_sha256: string | null
+}
+
+export interface BmcList {
+  targets: BmcTarget[]
+  /// Whether this caller may change the set (admin).
+  editable: boolean
+}
+
+/// `sbm_redfish::model::PowerState`.
+export type BmcPowerState = 'on' | 'off' | 'poweringOn' | 'poweringOff' | 'paused' | 'unknown'
+/// `sbm_redfish::model::PowerIntent`.
+export type BmcIntent = 'on' | 'gracefulShutdown' | 'forceOff' | 'restart' | 'powerCycle'
+
+export interface BmcReading {
+  name: string
+  value: number
+  unit: string | null
+}
+
+/// The parts of `sbm_redfish::Snapshot` the page shows.
+export interface BmcSnapshot {
+  topology: {
+    root: { product: string | null; vendor: string | null; version: string | null }
+    system: {
+      power_state: BmcPowerState
+      model: string | null
+      manufacturer: string | null
+      serial: string | null
+      bios_version: string | null
+      health: string | null
+    } | null
+    has_multiple_systems: boolean
+  }
+  sensors: { temperatures: BmcReading[]; fans: BmcReading[]; watts: number | null }
+  sensors_truncated: boolean
+}
+
+/// `GET /bmc/{id}`: the state, and the actions this system answers.
+export interface BmcStatus {
+  snapshot: BmcSnapshot
+  intents: BmcIntent[]
+}
+
+/// `POST /bmc/probe`: the certificate an address presents.
+export interface BmcCertInfo {
+  fingerprint: string
+  subject: string
+  issuer: string
+  /// Unix seconds.
+  not_before: number
+  not_after: number
 }

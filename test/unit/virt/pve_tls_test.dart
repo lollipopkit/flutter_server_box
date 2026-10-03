@@ -34,6 +34,8 @@ import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/virt/pve_backend.dart';
 
+import '../../helpers/rust_lib_helper.dart';
+
 const _dir = 'test/fixtures/virt_tls';
 
 /// SHA-256 of the leaf's DER form: what the backend must report and pin.
@@ -47,6 +49,9 @@ String _leafFingerprint() {
 }
 
 void main() {
+  // The certificate pin is decided by sbm_ffi (`certPinAccepts`)
+  setUpAll(initRustLibForTest);
+
   late HttpServer server;
   final authHeaders = <String?>[];
 

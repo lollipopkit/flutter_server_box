@@ -1,7 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:redfish/redfish.dart' show CertInfo;
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/src/rust/api/bmc.dart' show CertInfo;
 
 /// Remote sync needs a backup password, and none is set.
 ///

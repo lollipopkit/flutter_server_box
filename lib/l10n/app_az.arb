@@ -1509,5 +1509,10 @@
   "firewallStoppedNote": "firewalld dayandırılıb. Dəyişikliklər saxlanılır və o başlayanda qüvvəyə minir.",
   "firewallInvalidSource": "Yanlış mənbə. Ünvan, 192.168.1.0/24 kimi şəbəkə, ipset:AD və ya MAC ünvanı istifadə edin.",
   "firewallInvalidRichRule": "Rich rule \"rule\" ilə başlayır və bir sətirdə olur.",
-  "firewallInvalidForwardPort": "port=80:proto=tcp:toport=8080 formatından toport, toaddr və ya hər ikisi ilə istifadə edin."
+  "firewallInvalidForwardPort": "port=80:proto=tcp:toport=8080 formatından toport, toaddr və ya hər ikisi ilə istifadə edin.",
+  "monitorSyncNeedsServer": "Ehtiyat nüsxəni saxlayan monitor agentinin serverini seçin.",
+  "monitorBackupUnsupported": "Bu monitor agenti ehtiyat nüsxə saxlaya bilmir. Agenti yeniləyin.",
+  "monitorBackupAdminOnly": "Monitor agentində yalnız administrator hesabı ehtiyat nüsxə saxlaya bilər.",
+  "monitorBackupTooLarge": "Ehtiyat nüsxə monitor agentinin qəbul etdiyi ölçüdən ({max}) böyükdür.",
+  "monitorBackupTooMany": "Monitor agenti icazə verdiyi qədər ehtiyat nüsxə saxlayır. Əvvəlcə birini silin."
 }

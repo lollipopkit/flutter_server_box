@@ -109,6 +109,8 @@ exactly that:
 | Remote port forwards | `listen` (`/api/v1/listen/ws`); loopback only unless its `public` option is on |
 | The panel's in-browser terminal | `ssh_terminal` |
 | The panel's remote desktops (VNC, RDP) | `connect` (`/api/v1/stream/ws`, `/api/v1/rdp/ws`), the same `allow` list |
+| The panel's BMCs (Redfish): state and power | `virt` (`/api/v1/bmc`); adding a BMC and its credentials: admin |
+| Backup sync to this agent, the panel's backup page | admin (`/api/v1/backup`) |
 
 `/api/v1/stream/ws` relays one TCP connection to an address the app names,
 dialled from this machine as the agent's account. `/api/v1/listen/ws` is the

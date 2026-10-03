@@ -1509,5 +1509,10 @@
   "firewallStoppedNote": "firewalld durdurulmuş. Değişiklikler kaydedilir ve başladığında geçerli olur.",
   "firewallInvalidSource": "Geçersiz kaynak. Bir adres, 192.168.1.0/24 gibi bir ağ, ipset:AD veya bir MAC adresi kullanın.",
   "firewallInvalidRichRule": "Rich rule \"rule\" ile başlar ve tek satırdır.",
-  "firewallInvalidForwardPort": "port=80:proto=tcp:toport=8080 biçimini toport, toaddr veya ikisiyle birlikte kullanın."
+  "firewallInvalidForwardPort": "port=80:proto=tcp:toport=8080 biçimini toport, toaddr veya ikisiyle birlikte kullanın.",
+  "monitorSyncNeedsServer": "Yedeği saklayacak monitor aracısının sunucusunu seçin.",
+  "monitorBackupUnsupported": "Bu monitor aracısı yedek saklayamaz. Aracıyı güncelleyin.",
+  "monitorBackupAdminOnly": "Monitor aracısında yalnızca yönetici hesabı yedek saklayabilir.",
+  "monitorBackupTooLarge": "Yedek, monitor aracısının kabul ettiği boyuttan ({max}) büyük.",
+  "monitorBackupTooMany": "Monitor aracısı izin verdiği sayıda yedeği zaten saklıyor. Önce birini silin."
 }

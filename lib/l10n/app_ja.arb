@@ -1509,5 +1509,10 @@
   "firewallStoppedNote": "firewalld は停止しています。変更は保存され、起動時に有効になります。",
   "firewallInvalidSource": "無効な送信元です。アドレス、192.168.1.0/24 のようなネットワーク、ipset:名前、または MAC アドレスを入力してください。",
   "firewallInvalidRichRule": "rich rule は \"rule\" で始まり、1 行で記述する必要があります。",
-  "firewallInvalidForwardPort": "port=80:proto=tcp:toport=8080 の形式で、toport、toaddr、またはその両方を指定してください。"
+  "firewallInvalidForwardPort": "port=80:proto=tcp:toport=8080 の形式で、toport、toaddr、またはその両方を指定してください。",
+  "monitorSyncNeedsServer": "バックアップを保存する Monitor エージェントのサーバーを選択してください。",
+  "monitorBackupUnsupported": "この Monitor エージェントはバックアップを保存できません。エージェントを更新してください。",
+  "monitorBackupAdminOnly": "Monitor エージェントにバックアップを保存できるのは管理者アカウントのみです。",
+  "monitorBackupTooLarge": "バックアップが Monitor エージェントの上限サイズ（{max}）を超えています。",
+  "monitorBackupTooMany": "Monitor エージェントのバックアップ数が上限に達しています。先に 1 つ削除してください。"
 }

@@ -13,6 +13,8 @@
   import SystemUsers from './pages/SystemUsers.svelte'
   import Snippets from './pages/Snippets.svelte'
   import Desktop from './pages/Desktop.svelte'
+  import Backup from './pages/Backup.svelte'
+  import Bmc from './pages/Bmc.svelte'
   import PanelSettings from './pages/PanelSettings.svelte'
   import ServerSettings from './pages/ServerSettings.svelte'
   import Terminal from './pages/Terminal.svelte'
@@ -57,6 +59,10 @@
             <Snippets onback={() => layout.back('dashboard')} />
           {:else if layout.view === 'desktop'}
             <Desktop onback={() => layout.back('dashboard')} />
+          {:else if layout.view === 'bmc'}
+            <Bmc onback={() => layout.back('dashboard')} />
+          {:else if layout.view === 'backup'}
+            <Backup onback={() => layout.back('dashboard')} />
           {:else}
             <Dashboard />
           {/if}

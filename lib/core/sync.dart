@@ -5,10 +5,12 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/service/report_filter.dart';
+import 'package:server_box/core/utils/monitor_backup_storage.dart';
 import 'package:server_box/data/model/app/bak/backup.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/bak/utils.dart';
 import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/schema.dart';
@@ -316,6 +318,41 @@ final class BakSyncer extends SyncIface {
     final gistEnabled = PrefProps.gistSync.get();
     if (gistEnabled) return GistRs.shared;
 
+    if (monitorSync.get()) return monitorStorage;
+
     return null;
+  }
+
+  /// Whether the backup syncs to one of this app's own monitor agents, and to
+  /// which server's. Device-local prefs like the other three switches, and
+  /// beside them rather than in fl_lib's `PrefProps`, since a server id is
+  /// this app's concept. Keys are permanent.
+  static const monitorSync = PrefPropDefault(
+    'monitor_sync',
+    false,
+    updateLastUpdateTsOnSetProp: false,
+  );
+  static const monitorSyncServer = PrefProp<String>(
+    'monitor_sync_server',
+    updateLastUpdateTsOnSetProp: false,
+  );
+
+  /// Kept while the chosen server and its agent settings stay the same: it
+  /// owns an HTTP client, and [remoteStorage] is read on every sync.
+  MonitorBackupStorage? _monitorStorage;
+
+  /// The chosen server's agent store, or null when none is chosen, the record
+  /// is gone, or its agent is not configured or switched off ([Spix.monitorOn]).
+  MonitorBackupStorage? get monitorStorage {
+    final id = monitorSyncServer.get();
+    final monitor = id == null ? null : Stores.server.fetchOneRaw(id)?.monitorOn;
+    final cached = _monitorStorage;
+    if (id != null && monitor != null && cached != null && cached.matches(id, monitor)) {
+      return cached;
+    }
+    cached?.close();
+    _monitorStorage = null;
+    if (id == null || monitor == null) return null;
+    return _monitorStorage = MonitorBackupStorage(id, monitor);
   }
 }

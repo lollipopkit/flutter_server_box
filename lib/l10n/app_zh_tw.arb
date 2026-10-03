@@ -1509,5 +1509,10 @@
   "firewallStoppedNote": "firewalld 已停止。變更會儲存，啟動後生效。",
   "firewallInvalidSource": "來源無效。請填寫位址、網段（如 192.168.1.0/24）、ipset:名稱 或 MAC 位址。",
   "firewallInvalidRichRule": "rich rule 必須以 \"rule\" 開頭，且只能有一行。",
-  "firewallInvalidForwardPort": "格式為 port=80:proto=tcp:toport=8080，需包含 toport、toaddr 或兩者。"
+  "firewallInvalidForwardPort": "格式為 port=80:proto=tcp:toport=8080，需包含 toport、toaddr 或兩者。",
+  "monitorSyncNeedsServer": "請選擇存放備份的伺服器（使用其 Monitor 代理）。",
+  "monitorBackupUnsupported": "此 Monitor 代理不支援存放備份，請更新代理。",
+  "monitorBackupAdminOnly": "只有 Monitor 代理的管理員帳戶可以在其上存放備份。",
+  "monitorBackupTooLarge": "備份超過了 Monitor 代理允許的大小（{max}）。",
+  "monitorBackupTooMany": "Monitor 代理存放的備份數量已達上限，請先刪除一個。"
 }

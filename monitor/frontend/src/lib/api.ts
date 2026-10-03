@@ -49,6 +49,12 @@ import type {
   SnippetPlan,
   SnippetsView,
   Desktop,
+  BackupView,
+  BmcCertInfo,
+  BmcIntent,
+  BmcList,
+  BmcStatus,
+  BmcTargetInput,
   DesktopsView,
 } from '../types'
 import { isSecureAgentUrl } from './agentUrl'
@@ -454,6 +460,50 @@ export const api = {
       'Failed to expand the snippet',
     ),
   /// The desktop routes saved on the agent (the `connect` grant).
+  getBmc: () => request<BmcList>('/bmc', {}, 'Failed to list the BMCs'),
+  /// Replaces the whole set. A refusal arrives with its code as
+  /// `ApiError.message` and the row as `body.index`.
+  updateBmc: (targets: BmcTargetInput[]) =>
+    request<BmcList>('/bmc', { method: 'PUT', body: JSON.stringify({ targets }) }, 'Failed to save the BMCs'),
+  probeBmc: (url: string) =>
+    request<BmcCertInfo>(
+      '/bmc/probe',
+      { method: 'POST', body: JSON.stringify({ url }) },
+      'Failed to read the certificate',
+    ),
+  /// An upstream failure arrives as `ApiError` with `body.failure`.
+  bmcStatus: (id: string) =>
+    request<BmcStatus>(`/bmc/${encodeURIComponent(id)}`, {}, 'Failed to reach the BMC'),
+  bmcPower: (id: string, intent: BmcIntent) =>
+    request<{ outcome: { kind: 'done' | 'accepted' } }>(
+      `/bmc/${encodeURIComponent(id)}/power`,
+      { method: 'POST', body: JSON.stringify({ intent }) },
+      'Failed to reach the BMC',
+    ),
+  getBackups: () => request<BackupView>('/backup', {}, 'Failed to list the backups'),
+  /// The blob's bytes, as stored. The panel has no key for what is in them.
+  downloadBackup: async (name: string): Promise<Blob> => {
+    const res = await fsBytes(
+      `/backup/blob?name=${encodeURIComponent(name)}`,
+      {},
+      'Failed to download the backup',
+    )
+    return res.blob()
+  },
+  uploadBackup: async (name: string, body: Blob): Promise<void> => {
+    await fsBytes(
+      `/backup/blob?name=${encodeURIComponent(name)}`,
+      { method: 'PUT', body, headers: { 'Content-Type': 'application/octet-stream' } },
+      'Failed to store the backup',
+    )
+  },
+  deleteBackup: async (name: string): Promise<void> => {
+    await fsBytes(
+      `/backup/blob?name=${encodeURIComponent(name)}`,
+      { method: 'DELETE' },
+      'Failed to remove the backup',
+    )
+  },
   getDesktops: () => request<DesktopsView>('/desktops', {}, 'Failed to fetch the desktops'),
   /// Replaces the whole set, in order. A refusal arrives with its code as
   /// `ApiError.message` and the row as `body.index`.

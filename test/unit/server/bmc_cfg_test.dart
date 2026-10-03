@@ -2,8 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
 
 /// The app's own BMC config: how an address is parsed and when a record counts
-/// as usable. The protocol side moved to `package:redfish`, which knows nothing
-/// about how this app stores anything.
+/// as usable. The protocol side is `crates/sbm_redfish` (over FFI, see
+/// `bmc_ffi_test.dart`), which knows nothing about how this app stores
+/// anything.
 void main() {
   group('BmcCfg', () {
     test('parses an address and defaults the port per scheme', () {

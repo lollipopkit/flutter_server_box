@@ -5435,4 +5435,25 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get firewallInvalidForwardPort =>
       'Verwende port=80:proto=tcp:toport=8080, mit toport, toaddr oder beidem.';
+
+  @override
+  String get monitorSyncNeedsServer =>
+      'Wähle den Server, dessen Monitor-Agent das Backup speichert.';
+
+  @override
+  String get monitorBackupUnsupported =>
+      'Dieser Monitor-Agent kann keine Backups speichern. Aktualisiere den Agent.';
+
+  @override
+  String get monitorBackupAdminOnly =>
+      'Nur ein Administratorkonto des Monitor-Agents kann Backups darauf speichern.';
+
+  @override
+  String monitorBackupTooLarge(String max) {
+    return 'Das Backup ist größer, als der Monitor-Agent annimmt ($max).';
+  }
+
+  @override
+  String get monitorBackupTooMany =>
+      'Der Monitor-Agent hält bereits so viele Backups, wie er erlaubt. Lösche zuerst eines.';
 }

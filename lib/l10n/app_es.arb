@@ -1509,5 +1509,10 @@
   "firewallStoppedNote": "firewalld está detenido. Los cambios se guardan y se aplican cuando se inicie.",
   "firewallInvalidSource": "Origen no válido. Usa una dirección, una red como 192.168.1.0/24, ipset:NOMBRE o una dirección MAC.",
   "firewallInvalidRichRule": "Una rich rule empieza por \"rule\" y ocupa una sola línea.",
-  "firewallInvalidForwardPort": "Usa port=80:proto=tcp:toport=8080, con toport, toaddr o ambos."
+  "firewallInvalidForwardPort": "Usa port=80:proto=tcp:toport=8080, con toport, toaddr o ambos.",
+  "monitorSyncNeedsServer": "Elige el servidor cuyo agente monitor guarda la copia de seguridad.",
+  "monitorBackupUnsupported": "Este agente monitor no puede guardar copias de seguridad. Actualiza el agente.",
+  "monitorBackupAdminOnly": "Solo una cuenta de administrador del agente monitor puede guardar copias de seguridad en él.",
+  "monitorBackupTooLarge": "La copia de seguridad supera el tamaño que acepta el agente monitor ({max}).",
+  "monitorBackupTooMany": "El agente monitor ya guarda tantas copias de seguridad como permite. Elimina una primero."
 }

@@ -5356,4 +5356,25 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get firewallInvalidForwardPort =>
       'port=80:proto=tcp:toport=8080 biçimini toport, toaddr veya ikisiyle birlikte kullanın.';
+
+  @override
+  String get monitorSyncNeedsServer =>
+      'Yedeği saklayacak monitor aracısının sunucusunu seçin.';
+
+  @override
+  String get monitorBackupUnsupported =>
+      'Bu monitor aracısı yedek saklayamaz. Aracıyı güncelleyin.';
+
+  @override
+  String get monitorBackupAdminOnly =>
+      'Monitor aracısında yalnızca yönetici hesabı yedek saklayabilir.';
+
+  @override
+  String monitorBackupTooLarge(String max) {
+    return 'Yedek, monitor aracısının kabul ettiği boyuttan ($max) büyük.';
+  }
+
+  @override
+  String get monitorBackupTooMany =>
+      'Monitor aracısı izin verdiği sayıda yedeği zaten saklıyor. Önce birini silin.';
 }

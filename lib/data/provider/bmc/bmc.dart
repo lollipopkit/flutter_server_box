@@ -4,12 +4,13 @@ import 'dart:async';
 // does not re-export.
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:redfish/redfish.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/diag.dart';
+import 'package:server_box/core/extension/bmc.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/bmc_credential.dart';
+import 'package:server_box/src/rust/api/bmc.dart';
 
 part 'bmc.freezed.dart';
 part 'bmc.g.dart';
@@ -32,15 +33,6 @@ const _pollInterval = Duration(minutes: 1);
 /// accepted and nothing more. What happened is in `PowerState`.
 const _powerConfirmTimeout = Duration(minutes: 2);
 const _powerPollInterval = Duration(seconds: 5);
-
-/// How many members of a `Sensors` collection to read.
-///
-/// The new model puts every reading in its own resource, so a chassis with a
-/// hundred sensors is a hundred requests to a device that answers in seconds.
-/// A cap is the only thing that keeps one poll from outlasting the next, and
-/// [BmcState.sensorsTruncated] says when one was applied — a silent cap reads
-/// as "this machine has 64 sensors".
-const _maxSensorMembers = 64;
 
 /// What came of asking a machine to change state.
 enum BmcPowerResult {
@@ -65,12 +57,12 @@ abstract class BmcState with _$BmcState {
   const factory BmcState({
     /// Null until the first successful discovery.
     RedfishTopology? topology,
-    @Default(BmcSensors()) BmcSensors sensors,
+    @Default(BmcSensors(temperatures: [], fans: [])) BmcSensors sensors,
     RedfishFailure? failure,
     String? failureDetail,
     @Default(false) bool isBusy,
 
-    /// Set when the sensor list was cut to [_maxSensorMembers].
+    /// Set when the sensor list was cut to `sbm_redfish::MAX_SENSOR_MEMBERS`.
     @Default(false) bool sensorsTruncated,
   }) = _BmcState;
 
@@ -81,17 +73,17 @@ abstract class BmcState with _$BmcState {
       topology?.system?.powerState ?? PowerState.unknown;
 
   /// Whether there is anything to show.
-  bool get hasData => topology?.isUsable == true;
+  bool get hasData => topology?.system != null;
 }
 
 /// One server's BMC.
 ///
-/// Holds a [RedfishClient], and therefore a session on a device that allows
-/// few of them — so the client is closed on dispose, which is the only thing
-/// that gives the session back. See `docs/principles/bmc.md`.
+/// Holds a [BmcClient] (`sbm_redfish` over FFI), and therefore a session on a
+/// device that allows few of them — so the client is closed on dispose, which
+/// is the only thing that gives the session back. See `docs/principles/bmc.md`.
 @riverpod
 class BmcNotifier extends _$BmcNotifier {
-  RedfishClient? _client;
+  BmcClient? _client;
   Timer? _timer;
 
   /// Rises on every rebuild, so a fetch in flight when the config changed can
@@ -131,9 +123,13 @@ class BmcNotifier extends _$BmcNotifier {
       _timer?.cancel();
       _timer = null;
       // Not awaited — dispose cannot wait — but started, because a session
-      // nobody ends stays on the BMC until it times out
-      unawaited(_client?.close());
+      // nobody ends stays on the BMC until it times out. The native handle is
+      // released once the session is given back.
+      final client = _client;
       _client = null;
+      if (client != null) {
+        unawaited(client.close().whenComplete(client.dispose));
+      }
     });
 
     if (cfg == null || !cfg.isComplete) return const BmcState();
@@ -159,15 +155,20 @@ class BmcNotifier extends _$BmcNotifier {
       return const BmcState(failure: RedfishFailure.noCredential);
     }
 
-    // Plain values, not this app's records: the client is `package:redfish`
-    // now and knows nothing about how anything here is stored.
-    _client = RedfishClient(
-      baseUrl: cfg.addr,
-      user: cred.user,
-      password: cred.pwd,
-      pinnedCertSha256: cfg.certSha256,
-      onWarning: (message, error) => Loggers.app.warning('BMC: $message', error),
-    );
+    // Plain values, not this app's records: the client is `sbm_redfish` and
+    // knows nothing about how anything here is stored. Without a pin every
+    // handshake is refused as `certificateRejected`, which the editor answers
+    // by offering the certificate for review.
+    try {
+      _client = BmcClient(
+        baseUrl: cfg.addr,
+        user: cred.user,
+        password: cred.pwd,
+        pinnedSha256: cfg.certSha256,
+      );
+    } on BmcError catch (e) {
+      return BmcState(failure: e.failure, failureDetail: e.detail);
+    }
     unawaited(refresh());
     _timer = Timer.periodic(_pollInterval, (_) => unawaited(refresh()));
 
@@ -188,25 +189,21 @@ class BmcNotifier extends _$BmcNotifier {
     if (!state.isBusy) state = state.copyWith(isBusy: true);
 
     try {
-      final topology = state.topology ?? await RedfishDiscovery(client).run();
-      // The system is re-read every time — power state is the point of this
-      final system = RedfishSystem.fromJson(
-        await client.get(topology.systemPath!),
-      );
-      final fresh = topology.withSystem(system);
-
-      final (sensors, truncated) = await _readSensors(client, topology);
+      final snapshot = await client.snapshot(known: state.topology);
       if (generation != _generation) return;
+      if (snapshot.sensorsTruncated) {
+        Loggers.app.info('BMC sensors truncated to the first 64 members');
+      }
 
       state = state.copyWith(
-        topology: fresh,
-        sensors: sensors,
-        sensorsTruncated: truncated,
+        topology: snapshot.topology,
+        sensors: snapshot.sensors,
+        sensorsTruncated: snapshot.sensorsTruncated,
         failure: null,
         failureDetail: null,
         isBusy: false,
       );
-    } on RedfishException catch (e) {
+    } on BmcError catch (e) {
       if (generation != _generation) return;
       state = state.copyWith(
         failure: e.failure,
@@ -238,19 +235,21 @@ class BmcNotifier extends _$BmcNotifier {
   ResetRequest? plan(PowerIntent intent) {
     final system = state.topology?.system;
     if (system == null) return null;
-    return ResetRequest.build(system, intent);
+    return bmcPlan(system: system, intent: intent);
   }
 
   /// Asks the machine to change state, and waits to see whether it did.
   ///
-  /// Never called by a test against real hardware — see the header of
-  /// `packages/redfish/test/e2e_test.dart`. What the caller must not skip is the
+  /// Never called by a test against real hardware. What the caller must not skip is the
   /// confirmation: this is the one thing in the app that can take a running
   /// server away from whoever is using it.
   Future<BmcPowerResult> power(PowerIntent intent) async {
     final client = _client;
+    final topology = state.topology;
     final request = plan(intent);
-    if (client == null || request == null) return BmcPowerResult.notSupported;
+    if (client == null || topology == null || request == null) {
+      return BmcPowerResult.notSupported;
+    }
 
     final before = state.powerState;
     _powering = true;
@@ -261,16 +260,19 @@ class BmcNotifier extends _$BmcNotifier {
       // is the right one.
       Diag.crumb(SbDiag.bmc, 'power', data: {'intent': intent.name});
       try {
-        await client.post(request.target, request.body);
+        await client.power(topology: topology, intent: intent);
       } catch (e) {
+        final error = e is BmcError ? e.message : e;
         Diag.crumb(
           SbDiag.bmc,
           'power failed',
           level: DiagLevel.warning,
-          data: {'intent': intent.name, 'error': Redact.error(e)},
+          data: {'intent': intent.name, 'error': Redact.error(error)},
         );
-        Loggers.app.warning('BMC ${request.resetType} refused', e);
-        return BmcPowerResult.failed;
+        Loggers.app.warning('BMC ${request.resetType} refused', error);
+        return e is BmcError && e.failure == RedfishFailure.notSupported
+            ? BmcPowerResult.notSupported
+            : BmcPowerResult.failed;
       }
 
       // `accepted` and `confirmed` are told apart because they are different
@@ -288,111 +290,44 @@ class BmcNotifier extends _$BmcNotifier {
     }
   }
 
-  /// Where [intent] should leave the machine.
+  /// Polls until [PowerWatch] says the machine has both moved and arrived
+  /// where [intent] means it to be.
   ///
-  /// `restart` and `powerCycle` end where they started, which is why the
-  /// arrival test cannot be "the state differs from before": a machine that
-  /// finishes rebooting between two polls is only ever seen `on`, and was
-  /// reported as *accepted* — the weaker answer — for a restart that had in
-  /// fact happened.
-  static PowerState _expected(PowerIntent intent) => switch (intent) {
-    PowerIntent.on || PowerIntent.restart || PowerIntent.powerCycle =>
-      PowerState.on,
-    PowerIntent.gracefulShutdown || PowerIntent.forceOff => PowerState.off,
-  };
-
-  /// Polls until the machine has both moved and arrived where [intent] means
-  /// it to be.
-  ///
-  /// A transitional state does not count as arrival — `PoweringOff` is the
-  /// machine on its way, and reporting that as done would be reporting the
-  /// request back rather than the result — but it does count as having moved,
-  /// which is the only evidence an operation ending where it began can leave.
+  /// The clock is here and the decision is in Rust: a transitional state is
+  /// the machine on its way, not arrival, and a restart that finishes between
+  /// two polls is only ever seen `on` — see `sbm_redfish::model::PowerWatch`.
   Future<bool> _awaitPowerChange(
-    RedfishClient client,
+    BmcClient client,
     PowerState before,
     PowerIntent intent,
   ) async {
     final generation = _generation;
     final deadline = DateTime.now().add(_powerConfirmTimeout);
-    // Whether the machine was ever seen anywhere other than where it started.
-    // For an intent that ends where it began, this is the whole of the
-    // evidence; for the others it is redundant with the state itself.
-    var moved = before != _expected(intent);
-
-    while (DateTime.now().isBefore(deadline)) {
-      await Future.delayed(_powerPollInterval);
-      if (generation != _generation) return false;
-
-      try {
-        final system = RedfishSystem.fromJson(
-          await client.get(state.topology!.systemPath!),
-        );
-        state = state.copyWith(topology: state.topology!.withSystem(system));
-        final now = system.powerState;
-        if (now.isTransitional) {
-          // On its way. Seeing this is itself the evidence a restart needs,
-          // since it will settle back where it started.
-          moved = true;
-          continue;
-        }
-        if (now != before) moved = true;
-        if (moved && now == _expected(intent)) return true;
-      } catch (e) {
-        // A machine on its way down stops answering, which is itself not an
-        // answer about whether it got there
-        Loggers.app.info('BMC unreachable while confirming power change', e);
-      }
-    }
-    return false;
-  }
-
-  /// Sensors, by whichever model this chassis presents.
-  ///
-  /// Never fatal: a chassis that cannot be read costs the readings, and the
-  /// power state — the thing this feature exists for — is already in hand.
-  Future<(BmcSensors, bool)> _readSensors(
-    RedfishClient client,
-    RedfishTopology topology,
-  ) async {
-    final chassis = topology.chassis;
-    if (chassis == null) return (const BmcSensors(), false);
-
+    final watch = PowerWatch(before: before, intent: intent);
     try {
-      switch (chassis.model) {
-        case SensorModel.legacy:
-          final thermal = chassis.thermal;
-          final power = chassis.power;
-          return (
-            BmcSensors.fromLegacy(
-              thermal: thermal == null ? null : await client.get(thermal),
-              power: power == null ? null : await client.get(power),
-            ),
-            false,
+      while (DateTime.now().isBefore(deadline)) {
+        await Future.delayed(_powerPollInterval);
+        if (generation != _generation) return false;
+        final topology = state.topology;
+        if (topology == null) return false;
+
+        try {
+          final system = await client.readSystem(topology: topology);
+          if (generation != _generation) return false;
+          state = state.copyWith(topology: topology.withSystem(system));
+          if (watch.observe(now: system.powerState)) return true;
+        } catch (e) {
+          // A machine on its way down stops answering, which is itself not an
+          // answer about whether it got there
+          Loggers.app.info(
+            'BMC unreachable while confirming power change',
+            e is BmcError ? e.message : e,
           );
-        case SensorModel.modern:
-          final members = collectionMembers(await client.get(chassis.sensors!));
-          final truncated = members.length > _maxSensorMembers;
-          final wanted = truncated
-              ? members.take(_maxSensorMembers)
-              : members;
-          final fetched = <Map<String, dynamic>>[];
-          for (final path in wanted) {
-            fetched.add(await client.get(path));
-          }
-          if (truncated) {
-            Loggers.app.info(
-              'BMC sensors truncated: ${members.length} offered, '
-              '$_maxSensorMembers read',
-            );
-          }
-          return (BmcSensors.fromSensors(fetched), truncated);
-        case SensorModel.none:
-          return (const BmcSensors(), false);
+        }
       }
-    } catch (e) {
-      Loggers.app.warning('BMC sensors unavailable', e);
-      return (const BmcSensors(), false);
+      return false;
+    } finally {
+      watch.dispose();
     }
   }
 }

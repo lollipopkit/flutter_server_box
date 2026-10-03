@@ -1,3 +1,4 @@
+pub mod bmc;
 pub mod desktop;
 pub mod file;
 pub mod parser;

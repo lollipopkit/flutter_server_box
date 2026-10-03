@@ -56,7 +56,7 @@ final class AgentShellProvider
   }
 }
 
-String _$agentShellHash() => r'7b4e8674930e490318e3d9e0af4e61b2eb09bda0';
+String _$agentShellHash() => r'9a9f54bc2cff9648660fcb666bd5aaacea13ea56';
 
 /// Whether the Agent follows you onto the other tabs, and how much of it comes
 /// along.

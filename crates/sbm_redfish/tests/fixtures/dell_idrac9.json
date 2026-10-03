@@ -1,0 +1,66 @@
+{
+  "/redfish/v1/": {
+    "RedfishVersion": "1.13.0",
+    "Product": "Integrated Dell Remote Access Controller",
+    "Systems": {
+      "@odata.id": "/redfish/v1/Systems"
+    },
+    "Chassis": {
+      "@odata.id": "/redfish/v1/Chassis"
+    },
+    "Links": {
+      "Sessions": {
+        "@odata.id": "/redfish/v1/Sessions"
+      }
+    }
+  },
+  "/redfish/v1/Systems": {
+    "Members": [
+      {
+        "@odata.id": "/redfish/v1/Systems/System.Embedded.1"
+      }
+    ],
+    "Members@odata.count": 1
+  },
+  "/redfish/v1/Chassis": {
+    "Members": [
+      {
+        "@odata.id": "/redfish/v1/Chassis/System.Embedded.1"
+      }
+    ]
+  },
+  "/redfish/v1/Systems/System.Embedded.1": {
+    "PowerState": "On",
+    "Model": "PowerEdge R740",
+    "Manufacturer": "Dell Inc.",
+    "SerialNumber": "ABCDEF1",
+    "BiosVersion": "2.19.0",
+    "Status": {
+      "Health": "OK",
+      "HealthRollup": "Warning",
+      "State": "Enabled"
+    },
+    "Actions": {
+      "#ComputerSystem.Reset": {
+        "target": "/redfish/v1/Systems/System.Embedded.1/Actions/ComputerSystem.Reset",
+        "ResetType@Redfish.AllowableValues": [
+          "On",
+          "ForceOff",
+          "ForceRestart",
+          "GracefulShutdown",
+          "PushPowerButton",
+          "Nmi"
+        ]
+      }
+    }
+  },
+  "/redfish/v1/Chassis/System.Embedded.1": {
+    "Name": "Computer System Chassis",
+    "Thermal": {
+      "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Thermal"
+    },
+    "Power": {
+      "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Power"
+    }
+  }
+}

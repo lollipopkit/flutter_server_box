@@ -1509,5 +1509,10 @@
   "firewallStoppedNote": "firewalld is gestopt. Wijzigingen worden opgeslagen en gelden zodra het start.",
   "firewallInvalidSource": "Ongeldige bron. Gebruik een adres, een netwerk zoals 192.168.1.0/24, ipset:NAAM of een MAC-adres.",
   "firewallInvalidRichRule": "Een rich rule begint met \"rule\" en past op één regel.",
-  "firewallInvalidForwardPort": "Gebruik port=80:proto=tcp:toport=8080, met toport, toaddr of beide."
+  "firewallInvalidForwardPort": "Gebruik port=80:proto=tcp:toport=8080, met toport, toaddr of beide.",
+  "monitorSyncNeedsServer": "Kies de server waarvan de monitor-agent de back-up opslaat.",
+  "monitorBackupUnsupported": "Deze monitor-agent kan geen back-ups opslaan. Werk de agent bij.",
+  "monitorBackupAdminOnly": "Alleen een beheerdersaccount van de monitor-agent kan er back-ups op opslaan.",
+  "monitorBackupTooLarge": "De back-up is groter dan de monitor-agent accepteert ({max}).",
+  "monitorBackupTooMany": "De monitor-agent bewaart al het maximale aantal back-ups. Verwijder er eerst een."
 }

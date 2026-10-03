@@ -5413,4 +5413,25 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get firewallInvalidForwardPort =>
       'Gebruik port=80:proto=tcp:toport=8080, met toport, toaddr of beide.';
+
+  @override
+  String get monitorSyncNeedsServer =>
+      'Kies de server waarvan de monitor-agent de back-up opslaat.';
+
+  @override
+  String get monitorBackupUnsupported =>
+      'Deze monitor-agent kan geen back-ups opslaan. Werk de agent bij.';
+
+  @override
+  String get monitorBackupAdminOnly =>
+      'Alleen een beheerdersaccount van de monitor-agent kan er back-ups op opslaan.';
+
+  @override
+  String monitorBackupTooLarge(String max) {
+    return 'De back-up is groter dan de monitor-agent accepteert ($max).';
+  }
+
+  @override
+  String get monitorBackupTooMany =>
+      'De monitor-agent bewaart al het maximale aantal back-ups. Verwijder er eerst een.';
 }

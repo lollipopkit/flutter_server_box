@@ -5026,6 +5026,23 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get firewallInvalidForwardPort =>
       '格式为 port=80:proto=tcp:toport=8080，需包含 toport、toaddr 或两者。';
+
+  @override
+  String get monitorSyncNeedsServer => '请选择存放备份的服务器（使用其 Monitor 代理）。';
+
+  @override
+  String get monitorBackupUnsupported => '此 Monitor 代理不支持存放备份，请更新代理。';
+
+  @override
+  String get monitorBackupAdminOnly => '只有 Monitor 代理的管理员账户可以在其上存放备份。';
+
+  @override
+  String monitorBackupTooLarge(String max) {
+    return '备份超过了 Monitor 代理允许的大小（$max）。';
+  }
+
+  @override
+  String get monitorBackupTooMany => 'Monitor 代理存放的备份数量已达上限，请先删除一个。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -10049,4 +10066,21 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get firewallInvalidForwardPort =>
       '格式為 port=80:proto=tcp:toport=8080，需包含 toport、toaddr 或兩者。';
+
+  @override
+  String get monitorSyncNeedsServer => '請選擇存放備份的伺服器（使用其 Monitor 代理）。';
+
+  @override
+  String get monitorBackupUnsupported => '此 Monitor 代理不支援存放備份，請更新代理。';
+
+  @override
+  String get monitorBackupAdminOnly => '只有 Monitor 代理的管理員帳戶可以在其上存放備份。';
+
+  @override
+  String monitorBackupTooLarge(String max) {
+    return '備份超過了 Monitor 代理允許的大小（$max）。';
+  }
+
+  @override
+  String get monitorBackupTooMany => 'Monitor 代理存放的備份數量已達上限，請先刪除一個。';
 }

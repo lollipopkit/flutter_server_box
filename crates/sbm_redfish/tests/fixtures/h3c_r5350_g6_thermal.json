@@ -1,0 +1,28 @@
+{
+  "Temperatures": [
+    {
+      "Name": "Inlet_Temp",
+      "ReadingCelsius": 4294967295
+    },
+    {
+      "Name": "CPU1_Temp",
+      "ReadingCelsius": 4294967295
+    },
+    {
+      "Name": "OCP_Temp",
+      "ReadingCelsius": 59
+    }
+  ],
+  "Fans": [
+    {
+      "Name": "Fan1",
+      "Reading": 1050,
+      "ReadingUnits": "RPM"
+    },
+    {
+      "Name": "Fan9",
+      "Reading": 4294967295,
+      "ReadingUnits": "RPM"
+    }
+  ]
+}

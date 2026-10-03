@@ -9194,6 +9194,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Use port=80:proto=tcp:toport=8080, with toport, toaddr or both.'**
   String get firewallInvalidForwardPort;
+
+  /// Backup sync to a monitor agent: no server is chosen yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick the server whose monitor agent stores the backup.'**
+  String get monitorSyncNeedsServer;
+
+  /// Backup sync to a monitor agent: the agent is too old to store backups.
+  ///
+  /// In en, this message translates to:
+  /// **'This monitor agent cannot store backups. Update the agent.'**
+  String get monitorBackupUnsupported;
+
+  /// Backup sync to a monitor agent: the account the app logs in with is not an admin.
+  ///
+  /// In en, this message translates to:
+  /// **'Only an admin account of the monitor agent can store backups on it.'**
+  String get monitorBackupAdminOnly;
+
+  /// Backup sync to a monitor agent: the file exceeds the agent's size limit, given as max.
+  ///
+  /// In en, this message translates to:
+  /// **'The backup is larger than the monitor agent accepts ({max}).'**
+  String monitorBackupTooLarge(String max);
+
+  /// Backup sync to a monitor agent: the agent's blob count limit is reached.
+  ///
+  /// In en, this message translates to:
+  /// **'The monitor agent already holds as many backups as it allows. Delete one first.'**
+  String get monitorBackupTooMany;
 }
 
 class _AppLocalizationsDelegate

@@ -42,7 +42,7 @@ device-local state are not included.
 A local backup may be unencrypted when no backup password is set. When you set a
 backup password, the backup is encrypted before it is written or uploaded.
 Automatic remote backup requires a non-empty backup password. After a backup is
-sent to iCloud, WebDAV or GitHub Gist, that provider's storage, access and
+sent to iCloud, WebDAV, GitHub Gist or one of your monitor agents, that provider's storage, access and
 retention rules also apply.
 
 ## Automatic diagnostic data
@@ -257,7 +257,7 @@ automatic diagnostic payload described above.
 | Request | Destination | When and what it carries |
 |---|---|---|
 | AI request | The endpoint configured by you | When you send an Agent message; see [AI requests](#ai-requests) |
-| Backup or sync | iCloud, your WebDAV server, or GitHub Gist | When you upload, download or sync a backup; the selected backup file, which may be encrypted |
+| Backup or sync | iCloud, your WebDAV server, GitHub Gist, or your monitor agent | When you upload, download or sync a backup; the selected backup file, which may be encrypted |
 | Update check | `api.github.com` | On launch when automatic update checks are enabled |
 | Linux userland manifest | `github.com` | When the app checks for a newer local Linux release; it contains release metadata and signatures |
 | Linux userland image | The distribution mirror or source URL selected by the verified manifest | When you install or update a local Linux environment; the image is checked against the manifest's digest |

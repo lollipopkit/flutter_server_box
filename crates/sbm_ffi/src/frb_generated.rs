@@ -27,8 +27,9 @@
 
 // Section: imports
 
+use crate::api::ssh_crypto::*;
 use crate::api::remote_desktop::*;
-use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::bmc::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};
 
@@ -40,7 +41,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
                     default_rust_auto_opaque = RustAutoOpaqueMoi,
                 );
                 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-                pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 311761911;
+                pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1637450155;
             
 
 // Section: executor
@@ -49,7 +50,139 @@ flutter_rust_bridge::frb_generated_default_handler!();
 
 // Section: wire_funcs
 
-fn wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_close_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+fn wire__crate__api__bmc__BmcClient_close_impl(port_: flutter_rust_bridge::for_generated::MessagePort,ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32)  {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec,_,_,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "BmcClient_close", port: Some(port_), mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<BmcClient>>>::sse_decode(&mut deserializer);deserializer.end(); move |context| async move {
+                    transform_result_sse::<_, ()>((move || async move {
+                        let mut api_that_guard = None;
+let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false)]);
+        for i in decode_indices_ {
+            match i {
+                0 => api_that_guard = Some(api_that.lockable_decode_async_ref().await),
+                _ => unreachable!(),
+            }
+        }
+        let api_that_guard = api_that_guard.unwrap();
+ let output_ok = Ok::<_, ()>({ crate::api::bmc::BmcClient::close(&*api_that_guard).await; })?;   std::result::Result::Ok(output_ok)
+                    })().await)
+                } })
+            }fn wire__crate__api__bmc__BmcClient_discover_impl(port_: flutter_rust_bridge::for_generated::MessagePort,ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32)  {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec,_,_,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "BmcClient_discover", port: Some(port_), mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<BmcClient>>>::sse_decode(&mut deserializer);deserializer.end(); move |context| async move {
+                    transform_result_sse::<_, crate::api::bmc::BmcError>((move || async move {
+                        let mut api_that_guard = None;
+let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false)]);
+        for i in decode_indices_ {
+            match i {
+                0 => api_that_guard = Some(api_that.lockable_decode_async_ref().await),
+                _ => unreachable!(),
+            }
+        }
+        let api_that_guard = api_that_guard.unwrap();
+ let output_ok = crate::api::bmc::BmcClient::discover(&*api_that_guard).await?;   std::result::Result::Ok(output_ok)
+                    })().await)
+                } })
+            }fn wire__crate__api__bmc__BmcClient_new_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "BmcClient_new", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_base_url = <String>::sse_decode(&mut deserializer);
+let api_user = <String>::sse_decode(&mut deserializer);
+let api_password = <Option<String>>::sse_decode(&mut deserializer);
+let api_pinned_sha256 = <Option<String>>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, crate::api::bmc::BmcError>((move || {
+                     let output_ok = crate::api::bmc::BmcClient::new(api_base_url, api_user, api_password, api_pinned_sha256)?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__bmc__BmcClient_power_impl(port_: flutter_rust_bridge::for_generated::MessagePort,ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32)  {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec,_,_,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "BmcClient_power", port: Some(port_), mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<BmcClient>>>::sse_decode(&mut deserializer);
+let api_topology = <crate::api::bmc::RedfishTopology>::sse_decode(&mut deserializer);
+let api_intent = <crate::api::bmc::PowerIntent>::sse_decode(&mut deserializer);deserializer.end(); move |context| async move {
+                    transform_result_sse::<_, crate::api::bmc::BmcError>((move || async move {
+                        let mut api_that_guard = None;
+let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false)]);
+        for i in decode_indices_ {
+            match i {
+                0 => api_that_guard = Some(api_that.lockable_decode_async_ref().await),
+                _ => unreachable!(),
+            }
+        }
+        let api_that_guard = api_that_guard.unwrap();
+ let output_ok = crate::api::bmc::BmcClient::power(&*api_that_guard, api_topology, api_intent).await?;   std::result::Result::Ok(output_ok)
+                    })().await)
+                } })
+            }fn wire__crate__api__bmc__BmcClient_read_system_impl(port_: flutter_rust_bridge::for_generated::MessagePort,ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32)  {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec,_,_,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "BmcClient_read_system", port: Some(port_), mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<BmcClient>>>::sse_decode(&mut deserializer);
+let api_topology = <crate::api::bmc::RedfishTopology>::sse_decode(&mut deserializer);deserializer.end(); move |context| async move {
+                    transform_result_sse::<_, crate::api::bmc::BmcError>((move || async move {
+                        let mut api_that_guard = None;
+let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false)]);
+        for i in decode_indices_ {
+            match i {
+                0 => api_that_guard = Some(api_that.lockable_decode_async_ref().await),
+                _ => unreachable!(),
+            }
+        }
+        let api_that_guard = api_that_guard.unwrap();
+ let output_ok = crate::api::bmc::BmcClient::read_system(&*api_that_guard, api_topology).await?;   std::result::Result::Ok(output_ok)
+                    })().await)
+                } })
+            }fn wire__crate__api__bmc__BmcClient_snapshot_impl(port_: flutter_rust_bridge::for_generated::MessagePort,ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32)  {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec,_,_,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "BmcClient_snapshot", port: Some(port_), mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<BmcClient>>>::sse_decode(&mut deserializer);
+let api_known = <Option<crate::api::bmc::RedfishTopology>>::sse_decode(&mut deserializer);deserializer.end(); move |context| async move {
+                    transform_result_sse::<_, crate::api::bmc::BmcError>((move || async move {
+                        let mut api_that_guard = None;
+let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false)]);
+        for i in decode_indices_ {
+            match i {
+                0 => api_that_guard = Some(api_that.lockable_decode_async_ref().await),
+                _ => unreachable!(),
+            }
+        }
+        let api_that_guard = api_that_guard.unwrap();
+ let output_ok = crate::api::bmc::BmcClient::snapshot(&*api_that_guard, api_known).await?;   std::result::Result::Ok(output_ok)
+                    })().await)
+                } })
+            }fn wire__crate__api__bmc__PowerWatch_new_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "PowerWatch_new", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_before = <crate::api::bmc::PowerState>::sse_decode(&mut deserializer);
+let api_intent = <crate::api::bmc::PowerIntent>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, ()>((move || {
+                     let output_ok = Ok::<_, ()>(crate::api::bmc::PowerWatch::new(api_before, api_intent))?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__bmc__PowerWatch_observe_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "PowerWatch_observe", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PowerWatch>>>::sse_decode(&mut deserializer);
+let api_now = <crate::api::bmc::PowerState>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, ()>((move || {
+                    let mut api_that_guard = None;
+let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, true)]);
+        for i in decode_indices_ {
+            match i {
+                0 => api_that_guard = Some(api_that.lockable_decode_sync_ref_mut()),
+                _ => unreachable!(),
+            }
+        }
+        let mut api_that_guard = api_that_guard.unwrap();
+ let output_ok = Ok::<_, ()>(crate::api::bmc::PowerWatch::observe(&mut *api_that_guard, api_now))?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_close_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "RemoteDesktopSessionHandle_close", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
             let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
             let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
@@ -356,6 +489,25 @@ let api_output_len = <u32>::sse_decode(&mut deserializer);deserializer.end();
                 transform_result_sse::<_, String>((move || {
                      let output_ok = crate::api::ssh_asym::bcrypt_pbkdf(api_passphrase, api_salt, api_rounds, api_output_len)?;   std::result::Result::Ok(output_ok)
                 })()) })
+            }fn wire__crate__api__bmc__bmc_fetch_server_cert_impl(port_: flutter_rust_bridge::for_generated::MessagePort,ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32)  {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec,_,_,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "bmc_fetch_server_cert", port: Some(port_), mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_host = <String>::sse_decode(&mut deserializer);
+let api_port = <u16>::sse_decode(&mut deserializer);deserializer.end(); move |context| async move {
+                    transform_result_sse::<_, crate::api::bmc::BmcError>((move || async move {
+                         let output_ok = crate::api::bmc::bmc_fetch_server_cert(api_host, api_port).await?;   std::result::Result::Ok(output_ok)
+                    })().await)
+                } })
+            }fn wire__crate__api__bmc__bmc_plan_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "bmc_plan", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_system = <crate::api::bmc::RedfishSystem>::sse_decode(&mut deserializer);
+let api_intent = <crate::api::bmc::PowerIntent>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, ()>((move || {
+                     let output_ok = Ok::<_, ()>(crate::api::bmc::bmc_plan(api_system, api_intent))?;   std::result::Result::Ok(output_ok)
+                })()) })
             }fn wire__crate__api__script__build_script_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "build_script", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
             let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
@@ -365,6 +517,55 @@ let api_disabled = <Vec<String>>::sse_decode(&mut deserializer);
 let api_build_number = <String>::sse_decode(&mut deserializer);deserializer.end();
                 transform_result_sse::<_, String>((move || {
                      let output_ok = crate::api::script::build_script(api_system, api_disabled, api_build_number)?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__bmc__cert_fingerprint_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "cert_fingerprint", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_der = <Vec<u8>>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, ()>((move || {
+                     let output_ok = Ok::<_, ()>(crate::api::bmc::cert_fingerprint(api_der))?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__bmc__cert_info_from_der_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "cert_info_from_der", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_der = <Vec<u8>>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, ()>((move || {
+                     let output_ok = Ok::<_, ()>(crate::api::bmc::cert_info_from_der(api_der))?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__bmc__cert_info_is_expired_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "cert_info_is_expired", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <crate::api::bmc::CertInfo>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, ()>((move || {
+                     let output_ok = Ok::<_, ()>(crate::api::bmc::CertInfo::is_expired(&api_that))?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__bmc__cert_info_pretty_fingerprint_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "cert_info_pretty_fingerprint", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <crate::api::bmc::CertInfo>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, ()>((move || {
+                     let output_ok = Ok::<_, ()>(crate::api::bmc::CertInfo::pretty_fingerprint(&api_that))?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__bmc__cert_normalize_fingerprint_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "cert_normalize_fingerprint", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_input = <String>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, ()>((move || {
+                     let output_ok = Ok::<_, ()>(crate::api::bmc::cert_normalize_fingerprint(api_input))?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__bmc__cert_pin_accepts_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "cert_pin_accepts", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_pin = <Option<String>>::sse_decode(&mut deserializer);
+let api_der = <Vec<u8>>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, ()>((move || {
+                     let output_ok = Ok::<_, ()>(crate::api::bmc::cert_pin_accepts(api_pin, api_der))?;   std::result::Result::Ok(output_ok)
                 })()) })
             }fn wire__crate__api__parser__command_specs_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "command_specs", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
@@ -1310,6 +1511,8 @@ let api_peer_public_key = <Vec<u8>>::sse_decode(&mut deserializer);deserializer.
 
 // Section: related_funcs
 
+flutter_rust_bridge::frb_generated_moi_arc_impl_value!(flutter_rust_bridge::for_generated::RustAutoOpaqueInner<BmcClient>);
+flutter_rust_bridge::frb_generated_moi_arc_impl_value!(flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PowerWatch>);
 flutter_rust_bridge::frb_generated_moi_arc_impl_value!(flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RemoteDesktopSessionHandle>);
 flutter_rust_bridge::frb_generated_moi_arc_impl_value!(flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SshBlockCipher>);
 flutter_rust_bridge::frb_generated_moi_arc_impl_value!(flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SshMac>);
@@ -1318,6 +1521,18 @@ flutter_rust_bridge::frb_generated_moi_arc_impl_value!(flutter_rust_bridge::for_
 // Section: dart2rust
 
 
+                impl SseDecode for BmcClient {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut inner = <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<BmcClient>>>::sse_decode(deserializer);
+        return flutter_rust_bridge::for_generated::rust_auto_opaque_decode_owned(inner);}
+                }
+                
+                impl SseDecode for PowerWatch {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut inner = <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PowerWatch>>>::sse_decode(deserializer);
+        return flutter_rust_bridge::for_generated::rust_auto_opaque_decode_owned(inner);}
+                }
+                
                 impl SseDecode for RemoteDesktopSessionHandle {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut inner = <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RemoteDesktopSessionHandle>>>::sse_decode(deserializer);
@@ -1340,6 +1555,18 @@ flutter_rust_bridge::frb_generated_moi_arc_impl_value!(flutter_rust_bridge::for_
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut inner = <Vec<(String,String,)>>::sse_decode(deserializer);
         return inner.into_iter().collect();}
+                }
+                
+                impl SseDecode for RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<BmcClient>> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut inner = <usize>::sse_decode(deserializer);
+        return decode_rust_opaque_moi(inner);}
+                }
+                
+                impl SseDecode for RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PowerWatch>> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut inner = <usize>::sse_decode(deserializer);
+        return decode_rust_opaque_moi(inner);}
                 }
                 
                 impl SseDecode for RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RemoteDesktopSessionHandle>> {
@@ -1366,9 +1593,56 @@ flutter_rust_bridge::frb_generated_moi_arc_impl_value!(flutter_rust_bridge::for_
         return String::from_utf8(inner).unwrap();}
                 }
                 
+                impl SseDecode for crate::api::bmc::BmcError {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_failure = <crate::api::bmc::RedfishFailure>::sse_decode(deserializer);
+let mut var_detail = <Option<String>>::sse_decode(deserializer);
+return crate::api::bmc::BmcError{failure: var_failure, detail: var_detail};}
+                }
+                
+                impl SseDecode for crate::api::bmc::BmcOutcome {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_task = <Option<String>>::sse_decode(deserializer);
+return crate::api::bmc::BmcOutcome{task: var_task};}
+                }
+                
+                impl SseDecode for crate::api::bmc::BmcReading {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_name = <String>::sse_decode(deserializer);
+let mut var_value = <f64>::sse_decode(deserializer);
+let mut var_unit = <Option<String>>::sse_decode(deserializer);
+return crate::api::bmc::BmcReading{name: var_name, value: var_value, unit: var_unit};}
+                }
+                
+                impl SseDecode for crate::api::bmc::BmcSensors {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_temperatures = <Vec<crate::api::bmc::BmcReading>>::sse_decode(deserializer);
+let mut var_fans = <Vec<crate::api::bmc::BmcReading>>::sse_decode(deserializer);
+let mut var_watts = <Option<f64>>::sse_decode(deserializer);
+return crate::api::bmc::BmcSensors{temperatures: var_temperatures, fans: var_fans, watts: var_watts};}
+                }
+                
+                impl SseDecode for crate::api::bmc::BmcSnapshot {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_topology = <crate::api::bmc::RedfishTopology>::sse_decode(deserializer);
+let mut var_sensors = <crate::api::bmc::BmcSensors>::sse_decode(deserializer);
+let mut var_sensorsTruncated = <bool>::sse_decode(deserializer);
+return crate::api::bmc::BmcSnapshot{topology: var_topology, sensors: var_sensors, sensors_truncated: var_sensorsTruncated};}
+                }
+                
                 impl SseDecode for bool {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {deserializer.cursor.read_u8().unwrap() != 0}
+                }
+                
+                impl SseDecode for crate::api::bmc::CertInfo {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_fingerprint = <String>::sse_decode(deserializer);
+let mut var_subject = <String>::sse_decode(deserializer);
+let mut var_issuer = <String>::sse_decode(deserializer);
+let mut var_notBefore = <i64>::sse_decode(deserializer);
+let mut var_notAfter = <i64>::sse_decode(deserializer);
+return crate::api::bmc::CertInfo{fingerprint: var_fingerprint, subject: var_subject, issuer: var_issuer, not_before: var_notBefore, not_after: var_notAfter};}
                 }
                 
                 impl SseDecode for crate::api::parser::CommandSpec {
@@ -1407,11 +1681,24 @@ return crate::api::ssh_asym::EcdsaSignature{r: var_r, s: var_s};}
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {deserializer.cursor.read_i32::<NativeEndian>().unwrap()}
                 }
                 
+                impl SseDecode for i64 {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {deserializer.cursor.read_i64::<NativeEndian>().unwrap()}
+                }
+                
                 impl SseDecode for Vec<String> {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut len_ = <i32>::sse_decode(deserializer);
         let mut ans_ = Vec::with_capacity(len_ as usize);
         for idx_ in 0..len_ { ans_.push(<String>::sse_decode(deserializer)); }
+        return ans_;}
+                }
+                
+                impl SseDecode for Vec<crate::api::bmc::BmcReading> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ { ans_.push(<crate::api::bmc::BmcReading>::sse_decode(deserializer)); }
         return ans_;}
                 }
                 
@@ -1464,10 +1751,64 @@ return crate::api::ssh_asym::EcdsaSignature{r: var_r, s: var_s};}
             }}
                 }
                 
+                impl SseDecode for Option<crate::api::bmc::CertInfo> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {if (<bool>::sse_decode(deserializer)) {
+                return Some(<crate::api::bmc::CertInfo>::sse_decode(deserializer));
+            } else {
+                return None;
+            }}
+                }
+                
+                impl SseDecode for Option<f64> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {if (<bool>::sse_decode(deserializer)) {
+                return Some(<f64>::sse_decode(deserializer));
+            } else {
+                return None;
+            }}
+                }
+                
+                impl SseDecode for Option<crate::api::bmc::RedfishChassis> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {if (<bool>::sse_decode(deserializer)) {
+                return Some(<crate::api::bmc::RedfishChassis>::sse_decode(deserializer));
+            } else {
+                return None;
+            }}
+                }
+                
+                impl SseDecode for Option<crate::api::bmc::RedfishSystem> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {if (<bool>::sse_decode(deserializer)) {
+                return Some(<crate::api::bmc::RedfishSystem>::sse_decode(deserializer));
+            } else {
+                return None;
+            }}
+                }
+                
+                impl SseDecode for Option<crate::api::bmc::RedfishTopology> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {if (<bool>::sse_decode(deserializer)) {
+                return Some(<crate::api::bmc::RedfishTopology>::sse_decode(deserializer));
+            } else {
+                return None;
+            }}
+                }
+                
                 impl SseDecode for Option<crate::api::remote_desktop::RemoteDesktopEvent> {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {if (<bool>::sse_decode(deserializer)) {
                 return Some(<crate::api::remote_desktop::RemoteDesktopEvent>::sse_decode(deserializer));
+            } else {
+                return None;
+            }}
+                }
+                
+                impl SseDecode for Option<crate::api::bmc::ResetRequest> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {if (<bool>::sse_decode(deserializer)) {
+                return Some(<crate::api::bmc::ResetRequest>::sse_decode(deserializer));
             } else {
                 return None;
             }}
@@ -1509,6 +1850,33 @@ return crate::api::ssh_asym::EcdsaSignature{r: var_r, s: var_s};}
             }}
                 }
                 
+                impl SseDecode for crate::api::bmc::PowerIntent {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::bmc::PowerIntent::On,
+1 => crate::api::bmc::PowerIntent::GracefulShutdown,
+2 => crate::api::bmc::PowerIntent::ForceOff,
+3 => crate::api::bmc::PowerIntent::Restart,
+4 => crate::api::bmc::PowerIntent::PowerCycle,
+            _ => unreachable!("Invalid variant for PowerIntent: {}", inner),
+        };}
+                }
+                
+                impl SseDecode for crate::api::bmc::PowerState {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::bmc::PowerState::On,
+1 => crate::api::bmc::PowerState::Off,
+2 => crate::api::bmc::PowerState::PoweringOn,
+3 => crate::api::bmc::PowerState::PoweringOff,
+4 => crate::api::bmc::PowerState::Paused,
+5 => crate::api::bmc::PowerState::Unknown,
+            _ => unreachable!("Invalid variant for PowerState: {}", inner),
+        };}
+                }
+                
                 impl SseDecode for crate::api::remote_desktop::RdpSessionParams {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_connectHost = <String>::sse_decode(deserializer);
@@ -1531,6 +1899,73 @@ return crate::api::remote_desktop::RdpSessionParams{connect_host: var_connectHos
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_field0 = <String>::sse_decode(deserializer);
 let mut var_field1 = <String>::sse_decode(deserializer);
 return (var_field0, var_field1);}
+                }
+                
+                impl SseDecode for crate::api::bmc::RedfishChassis {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_thermal = <Option<String>>::sse_decode(deserializer);
+let mut var_power = <Option<String>>::sse_decode(deserializer);
+let mut var_thermalSubsystem = <Option<String>>::sse_decode(deserializer);
+let mut var_powerSubsystem = <Option<String>>::sse_decode(deserializer);
+let mut var_sensors = <Option<String>>::sse_decode(deserializer);
+let mut var_name = <Option<String>>::sse_decode(deserializer);
+return crate::api::bmc::RedfishChassis{thermal: var_thermal, power: var_power, thermal_subsystem: var_thermalSubsystem, power_subsystem: var_powerSubsystem, sensors: var_sensors, name: var_name};}
+                }
+                
+                impl SseDecode for crate::api::bmc::RedfishFailure {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::bmc::RedfishFailure::NotAService,
+1 => crate::api::bmc::RedfishFailure::NoSystem,
+2 => crate::api::bmc::RedfishFailure::Forbidden,
+3 => crate::api::bmc::RedfishFailure::CertificateRejected,
+4 => crate::api::bmc::RedfishFailure::Unauthorized,
+5 => crate::api::bmc::RedfishFailure::NoCredential,
+6 => crate::api::bmc::RedfishFailure::PreconditionRequired,
+7 => crate::api::bmc::RedfishFailure::Unreachable,
+8 => crate::api::bmc::RedfishFailure::NotSupported,
+9 => crate::api::bmc::RedfishFailure::CertNotReviewed,
+10 => crate::api::bmc::RedfishFailure::InvalidResponse,
+11 => crate::api::bmc::RedfishFailure::InvalidUrl,
+12 => crate::api::bmc::RedfishFailure::Closed,
+            _ => unreachable!("Invalid variant for RedfishFailure: {}", inner),
+        };}
+                }
+                
+                impl SseDecode for crate::api::bmc::RedfishRoot {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_systems = <Option<String>>::sse_decode(deserializer);
+let mut var_chassis = <Option<String>>::sse_decode(deserializer);
+let mut var_sessions = <Option<String>>::sse_decode(deserializer);
+let mut var_version = <Option<String>>::sse_decode(deserializer);
+let mut var_product = <Option<String>>::sse_decode(deserializer);
+let mut var_vendor = <Option<String>>::sse_decode(deserializer);
+return crate::api::bmc::RedfishRoot{systems: var_systems, chassis: var_chassis, sessions: var_sessions, version: var_version, product: var_product, vendor: var_vendor};}
+                }
+                
+                impl SseDecode for crate::api::bmc::RedfishSystem {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_powerState = <crate::api::bmc::PowerState>::sse_decode(deserializer);
+let mut var_model = <Option<String>>::sse_decode(deserializer);
+let mut var_manufacturer = <Option<String>>::sse_decode(deserializer);
+let mut var_serial = <Option<String>>::sse_decode(deserializer);
+let mut var_biosVersion = <Option<String>>::sse_decode(deserializer);
+let mut var_health = <Option<String>>::sse_decode(deserializer);
+let mut var_resetTarget = <Option<String>>::sse_decode(deserializer);
+let mut var_resetTypes = <Vec<String>>::sse_decode(deserializer);
+return crate::api::bmc::RedfishSystem{power_state: var_powerState, model: var_model, manufacturer: var_manufacturer, serial: var_serial, bios_version: var_biosVersion, health: var_health, reset_target: var_resetTarget, reset_types: var_resetTypes};}
+                }
+                
+                impl SseDecode for crate::api::bmc::RedfishTopology {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_root = <crate::api::bmc::RedfishRoot>::sse_decode(deserializer);
+let mut var_systemPath = <Option<String>>::sse_decode(deserializer);
+let mut var_chassisPath = <Option<String>>::sse_decode(deserializer);
+let mut var_system = <Option<crate::api::bmc::RedfishSystem>>::sse_decode(deserializer);
+let mut var_chassis = <Option<crate::api::bmc::RedfishChassis>>::sse_decode(deserializer);
+let mut var_hasMultipleSystems = <bool>::sse_decode(deserializer);
+return crate::api::bmc::RedfishTopology{root: var_root, system_path: var_systemPath, chassis_path: var_chassisPath, system: var_system, chassis: var_chassis, has_multiple_systems: var_hasMultipleSystems};}
                 }
                 
                 impl SseDecode for crate::api::remote_desktop::RemoteDesktopConnectionState {
@@ -1600,6 +2035,13 @@ return crate::api::remote_desktop::RemoteDesktopEvent::Error{message: var_messag
 let mut var_message = <Option<String>>::sse_decode(deserializer);
 return crate::api::remote_desktop::RemoteDesktopEvent::Ended{reason: var_reason, message: var_message}; }
  _ => { unimplemented!(""); }}}
+                }
+                
+                impl SseDecode for crate::api::bmc::ResetRequest {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_target = <String>::sse_decode(deserializer);
+let mut var_resetType = <String>::sse_decode(deserializer);
+return crate::api::bmc::ResetRequest{target: var_target, reset_type: var_resetType};}
                 }
                 
                 impl SseDecode for crate::api::script::ScriptSegment {
@@ -1740,37 +2182,43 @@ return crate::api::ssh_asym::X25519KeyPair{private_key: var_privateKey, public_k
                 )  {
                     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
                     match func_id {
-                        2 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_next_event_impl(port, ptr, rust_vec_len, data_len),
-24 => wire__crate__api__file__copy_file_exclusive_impl(port, ptr, rust_vec_len, data_len),
-34 => wire__crate__api__parser__init_app_impl(port, ptr, rust_vec_len, data_len),
-39 => wire__crate__api__script__parse_script_segments_impl(port, ptr, rust_vec_len, data_len),
-40 => wire__crate__api__parser__parse_status_json_impl(port, ptr, rust_vec_len, data_len),
-41 => wire__crate__api__users__parse_user_detail_json_impl(port, ptr, rust_vec_len, data_len),
-42 => wire__crate__api__users__parse_users_list_json_impl(port, ptr, rust_vec_len, data_len),
-44 => wire__crate__api__virt__parse_virt_clone_volumes_impl(port, ptr, rust_vec_len, data_len),
-45 => wire__crate__api__virt__parse_virt_create_host_json_impl(port, ptr, rust_vec_len, data_len),
-46 => wire__crate__api__virt__parse_virt_create_json_impl(port, ptr, rust_vec_len, data_len),
-47 => wire__crate__api__virt__parse_virt_create_volumes_json_impl(port, ptr, rust_vec_len, data_len),
-48 => wire__crate__api__virt__parse_virt_domain_detail_json_impl(port, ptr, rust_vec_len, data_len),
-49 => wire__crate__api__virt__parse_virt_firmware_json_impl(port, ptr, rust_vec_len, data_len),
-50 => wire__crate__api__virt__parse_virt_hardware_change_json_impl(port, ptr, rust_vec_len, data_len),
-51 => wire__crate__api__virt__parse_virt_hardware_json_impl(port, ptr, rust_vec_len, data_len),
-52 => wire__crate__api__virt__parse_virt_host_devices_json_impl(port, ptr, rust_vec_len, data_len),
-53 => wire__crate__api__virt__parse_virt_net_change_impl(port, ptr, rust_vec_len, data_len),
-54 => wire__crate__api__virt__parse_virt_networks_json_impl(port, ptr, rust_vec_len, data_len),
-55 => wire__crate__api__virt__parse_virt_overview_json_impl(port, ptr, rust_vec_len, data_len),
-57 => wire__crate__api__virt__parse_virt_probe_json_impl(port, ptr, rust_vec_len, data_len),
-59 => wire__crate__api__virt__parse_virt_seed_read_json_impl(port, ptr, rust_vec_len, data_len),
-61 => wire__crate__api__virt__parse_virt_snap_chain_json_impl(port, ptr, rust_vec_len, data_len),
-62 => wire__crate__api__virt__parse_virt_snap_delete_leftovers_impl(port, ptr, rust_vec_len, data_len),
-63 => wire__crate__api__virt__parse_virt_snap_delete_refusal_impl(port, ptr, rust_vec_len, data_len),
-64 => wire__crate__api__virt__parse_virt_snap_diff_json_impl(port, ptr, rust_vec_len, data_len),
-65 => wire__crate__api__virt__parse_virt_snap_revert_refusal_impl(port, ptr, rust_vec_len, data_len),
-66 => wire__crate__api__virt__parse_virt_snapshot_delete_impl(port, ptr, rust_vec_len, data_len),
-67 => wire__crate__api__virt__parse_virt_snapshots_json_impl(port, ptr, rust_vec_len, data_len),
-68 => wire__crate__api__virt__parse_virt_storage_json_impl(port, ptr, rust_vec_len, data_len),
-70 => wire__crate__api__virt__parse_virt_vnc_console_json_impl(port, ptr, rust_vec_len, data_len),
-72 => wire__crate__api__virt__parse_virt_volumes_json_impl(port, ptr, rust_vec_len, data_len),
+                        1 => wire__crate__api__bmc__BmcClient_close_impl(port, ptr, rust_vec_len, data_len),
+2 => wire__crate__api__bmc__BmcClient_discover_impl(port, ptr, rust_vec_len, data_len),
+4 => wire__crate__api__bmc__BmcClient_power_impl(port, ptr, rust_vec_len, data_len),
+5 => wire__crate__api__bmc__BmcClient_read_system_impl(port, ptr, rust_vec_len, data_len),
+6 => wire__crate__api__bmc__BmcClient_snapshot_impl(port, ptr, rust_vec_len, data_len),
+10 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_next_event_impl(port, ptr, rust_vec_len, data_len),
+28 => wire__crate__api__bmc__bmc_fetch_server_cert_impl(port, ptr, rust_vec_len, data_len),
+40 => wire__crate__api__file__copy_file_exclusive_impl(port, ptr, rust_vec_len, data_len),
+50 => wire__crate__api__parser__init_app_impl(port, ptr, rust_vec_len, data_len),
+55 => wire__crate__api__script__parse_script_segments_impl(port, ptr, rust_vec_len, data_len),
+56 => wire__crate__api__parser__parse_status_json_impl(port, ptr, rust_vec_len, data_len),
+57 => wire__crate__api__users__parse_user_detail_json_impl(port, ptr, rust_vec_len, data_len),
+58 => wire__crate__api__users__parse_users_list_json_impl(port, ptr, rust_vec_len, data_len),
+60 => wire__crate__api__virt__parse_virt_clone_volumes_impl(port, ptr, rust_vec_len, data_len),
+61 => wire__crate__api__virt__parse_virt_create_host_json_impl(port, ptr, rust_vec_len, data_len),
+62 => wire__crate__api__virt__parse_virt_create_json_impl(port, ptr, rust_vec_len, data_len),
+63 => wire__crate__api__virt__parse_virt_create_volumes_json_impl(port, ptr, rust_vec_len, data_len),
+64 => wire__crate__api__virt__parse_virt_domain_detail_json_impl(port, ptr, rust_vec_len, data_len),
+65 => wire__crate__api__virt__parse_virt_firmware_json_impl(port, ptr, rust_vec_len, data_len),
+66 => wire__crate__api__virt__parse_virt_hardware_change_json_impl(port, ptr, rust_vec_len, data_len),
+67 => wire__crate__api__virt__parse_virt_hardware_json_impl(port, ptr, rust_vec_len, data_len),
+68 => wire__crate__api__virt__parse_virt_host_devices_json_impl(port, ptr, rust_vec_len, data_len),
+69 => wire__crate__api__virt__parse_virt_net_change_impl(port, ptr, rust_vec_len, data_len),
+70 => wire__crate__api__virt__parse_virt_networks_json_impl(port, ptr, rust_vec_len, data_len),
+71 => wire__crate__api__virt__parse_virt_overview_json_impl(port, ptr, rust_vec_len, data_len),
+73 => wire__crate__api__virt__parse_virt_probe_json_impl(port, ptr, rust_vec_len, data_len),
+75 => wire__crate__api__virt__parse_virt_seed_read_json_impl(port, ptr, rust_vec_len, data_len),
+77 => wire__crate__api__virt__parse_virt_snap_chain_json_impl(port, ptr, rust_vec_len, data_len),
+78 => wire__crate__api__virt__parse_virt_snap_delete_leftovers_impl(port, ptr, rust_vec_len, data_len),
+79 => wire__crate__api__virt__parse_virt_snap_delete_refusal_impl(port, ptr, rust_vec_len, data_len),
+80 => wire__crate__api__virt__parse_virt_snap_diff_json_impl(port, ptr, rust_vec_len, data_len),
+81 => wire__crate__api__virt__parse_virt_snap_revert_refusal_impl(port, ptr, rust_vec_len, data_len),
+82 => wire__crate__api__virt__parse_virt_snapshot_delete_impl(port, ptr, rust_vec_len, data_len),
+83 => wire__crate__api__virt__parse_virt_snapshots_json_impl(port, ptr, rust_vec_len, data_len),
+84 => wire__crate__api__virt__parse_virt_storage_json_impl(port, ptr, rust_vec_len, data_len),
+86 => wire__crate__api__virt__parse_virt_vnc_console_json_impl(port, ptr, rust_vec_len, data_len),
+88 => wire__crate__api__virt__parse_virt_volumes_json_impl(port, ptr, rust_vec_len, data_len),
                         _ => unreachable!(),
                     }
                 }
@@ -1783,102 +2231,112 @@ return crate::api::ssh_asym::X25519KeyPair{private_key: var_privateKey, public_k
                 ) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
                     match func_id {
-                        1 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_close_impl(ptr, rust_vec_len, data_len),
-3 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_release_all_keys_impl(ptr, rust_vec_len, data_len),
-4 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_resize_impl(ptr, rust_vec_len, data_len),
-5 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_send_clipboard_text_impl(ptr, rust_vec_len, data_len),
-6 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_send_key_impl(ptr, rust_vec_len, data_len),
-7 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_send_pointer_impl(ptr, rust_vec_len, data_len),
-8 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_send_unicode_text_impl(ptr, rust_vec_len, data_len),
-9 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_send_wheel_impl(ptr, rust_vec_len, data_len),
-10 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_set_visible_impl(ptr, rust_vec_len, data_len),
-11 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_start_rdp_impl(ptr, rust_vec_len, data_len),
-12 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_start_vnc_impl(ptr, rust_vec_len, data_len),
-13 => wire__crate__api__ssh_crypto__SshBlockCipher_block_size_impl(ptr, rust_vec_len, data_len),
-14 => wire__crate__api__ssh_crypto__SshBlockCipher_new_impl(ptr, rust_vec_len, data_len),
-15 => wire__crate__api__ssh_crypto__SshBlockCipher_process_impl(ptr, rust_vec_len, data_len),
-16 => wire__crate__api__ssh_crypto__SshMac_compute_impl(ptr, rust_vec_len, data_len),
-17 => wire__crate__api__ssh_crypto__SshMac_mac_size_impl(ptr, rust_vec_len, data_len),
-18 => wire__crate__api__ssh_crypto__SshMac_new_impl(ptr, rust_vec_len, data_len),
-19 => wire__crate__api__ssh_asym__bcrypt_pbkdf_impl(ptr, rust_vec_len, data_len),
-20 => wire__crate__api__script__build_script_impl(ptr, rust_vec_len, data_len),
-21 => wire__crate__api__parser__command_specs_impl(ptr, rust_vec_len, data_len),
-22 => wire__crate__api__script__contains_script_segment_impl(ptr, rust_vec_len, data_len),
-23 => wire__crate__api__script__contains_status_segment_impl(ptr, rust_vec_len, data_len),
-25 => wire__crate__api__script__custom_result_key_impl(ptr, rust_vec_len, data_len),
-26 => wire__crate__api__script__custom_result_name_impl(ptr, rust_vec_len, data_len),
-27 => wire__crate__api__desktop__desktop_validate_profile_impl(ptr, rust_vec_len, data_len),
-28 => wire__crate__api__desktop__desktop_validate_vnc_password_impl(ptr, rust_vec_len, data_len),
-29 => wire__crate__api__ssh_asym__ecdsa_sign_impl(ptr, rust_vec_len, data_len),
-30 => wire__crate__api__ssh_asym__ecdsa_verify_impl(ptr, rust_vec_len, data_len),
-31 => wire__crate__api__ssh_asym__ed25519_sign_impl(ptr, rust_vec_len, data_len),
-32 => wire__crate__api__ssh_asym__ed25519_verify_impl(ptr, rust_vec_len, data_len),
-33 => wire__crate__api__script__exec_command_impl(ptr, rust_vec_len, data_len),
-35 => wire__crate__api__script__install_command_impl(ptr, rust_vec_len, data_len),
-36 => wire__crate__api__script__install_custom_cmds_command_impl(ptr, rust_vec_len, data_len),
-37 => wire__crate__api__script__install_payload_impl(ptr, rust_vec_len, data_len),
-38 => wire__crate__api__script__parse_custom_cmds_listing_impl(ptr, rust_vec_len, data_len),
-43 => wire__crate__api__virt__parse_virt_action_impl(ptr, rust_vec_len, data_len),
-56 => wire__crate__api__virt__parse_virt_pool_types_impl(ptr, rust_vec_len, data_len),
-58 => wire__crate__api__virt__parse_virt_resource_impl(ptr, rust_vec_len, data_len),
-60 => wire__crate__api__virt__parse_virt_seed_update_impl(ptr, rust_vec_len, data_len),
-69 => wire__crate__api__virt__parse_virt_undefine_impl(ptr, rust_vec_len, data_len),
-71 => wire__crate__api__virt__parse_virt_vol_upload_impl(ptr, rust_vec_len, data_len),
-73 => wire__crate__api__parser__parse_windows_net_speed_json_impl(ptr, rust_vec_len, data_len),
-74 => wire__crate__api__script__read_custom_cmds_command_impl(ptr, rust_vec_len, data_len),
-75 => wire__crate__api__script__script_segment_marker_impl(ptr, rust_vec_len, data_len),
-76 => wire__crate__api__script__shell_func_flag_impl(ptr, rust_vec_len, data_len),
-77 => wire__crate__api__snippet__snippet_expand_impl(ptr, rust_vec_len, data_len),
-78 => wire__crate__api__snippet__snippet_plan_impl(ptr, rust_vec_len, data_len),
-79 => wire__crate__api__snippet__snippet_server_keys_impl(ptr, rust_vec_len, data_len),
-80 => wire__crate__api__snippet__snippet_uses_server_context_impl(ptr, rust_vec_len, data_len),
-81 => wire__crate__api__users__users_create_command_impl(ptr, rust_vec_len, data_len),
-82 => wire__crate__api__users__users_delete_command_impl(ptr, rust_vec_len, data_len),
-83 => wire__crate__api__users__users_detail_script_impl(ptr, rust_vec_len, data_len),
-84 => wire__crate__api__users__users_edit_command_impl(ptr, rust_vec_len, data_len),
-85 => wire__crate__api__users__users_list_script_impl(ptr, rust_vec_len, data_len),
-86 => wire__crate__api__users__users_valid_name_impl(ptr, rust_vec_len, data_len),
-87 => wire__crate__api__users__users_validate_draft_impl(ptr, rust_vec_len, data_len),
-88 => wire__crate__api__virt__virt_action_script_impl(ptr, rust_vec_len, data_len),
-89 => wire__crate__api__virt__virt_clone_define_script_impl(ptr, rust_vec_len, data_len),
-90 => wire__crate__api__virt__virt_clone_volumes_script_impl(ptr, rust_vec_len, data_len),
-91 => wire__crate__api__virt__virt_console_command_impl(ptr, rust_vec_len, data_len),
-92 => wire__crate__api__virt__virt_create_host_script_impl(ptr, rust_vec_len, data_len),
-93 => wire__crate__api__virt__virt_create_volume_script_impl(ptr, rust_vec_len, data_len),
-94 => wire__crate__api__virt__virt_define_script_impl(ptr, rust_vec_len, data_len),
-95 => wire__crate__api__virt__virt_domain_detail_script_impl(ptr, rust_vec_len, data_len),
-96 => wire__crate__api__virt__virt_external_snapshot_refusal_impl(ptr, rust_vec_len, data_len),
-97 => wire__crate__api__virt__virt_firmware_script_impl(ptr, rust_vec_len, data_len),
-98 => wire__crate__api__virt__virt_hardware_change_script_impl(ptr, rust_vec_len, data_len),
-99 => wire__crate__api__virt__virt_hardware_script_impl(ptr, rust_vec_len, data_len),
-100 => wire__crate__api__virt__virt_hash_password_impl(ptr, rust_vec_len, data_len),
-101 => wire__crate__api__virt__virt_host_devices_script_impl(ptr, rust_vec_len, data_len),
-102 => wire__crate__api__virt__virt_net_change_script_impl(ptr, rust_vec_len, data_len),
-103 => wire__crate__api__virt__virt_networks_script_impl(ptr, rust_vec_len, data_len),
-104 => wire__crate__api__virt__virt_overview_script_impl(ptr, rust_vec_len, data_len),
-105 => wire__crate__api__virt__virt_pool_types_script_impl(ptr, rust_vec_len, data_len),
-106 => wire__crate__api__virt__virt_probe_script_impl(ptr, rust_vec_len, data_len),
-107 => wire__crate__api__virt__virt_resource_script_impl(ptr, rust_vec_len, data_len),
-108 => wire__crate__api__virt__virt_seed_read_script_impl(ptr, rust_vec_len, data_len),
-109 => wire__crate__api__virt__virt_seed_update_script_impl(ptr, rust_vec_len, data_len),
-110 => wire__crate__api__virt__virt_snap_chain_script_impl(ptr, rust_vec_len, data_len),
-111 => wire__crate__api__virt__virt_snap_check_script_impl(ptr, rust_vec_len, data_len),
-112 => wire__crate__api__virt__virt_snap_diff_script_impl(ptr, rust_vec_len, data_len),
-113 => wire__crate__api__virt__virt_snapshot_create_script_impl(ptr, rust_vec_len, data_len),
-114 => wire__crate__api__virt__virt_snapshot_delete_script_impl(ptr, rust_vec_len, data_len),
-115 => wire__crate__api__virt__virt_snapshot_external_script_impl(ptr, rust_vec_len, data_len),
-116 => wire__crate__api__virt__virt_snapshot_refusal_impl(ptr, rust_vec_len, data_len),
-117 => wire__crate__api__virt__virt_snapshot_revert_script_impl(ptr, rust_vec_len, data_len),
-118 => wire__crate__api__virt__virt_snapshots_script_impl(ptr, rust_vec_len, data_len),
-119 => wire__crate__api__virt__virt_storage_script_impl(ptr, rust_vec_len, data_len),
-120 => wire__crate__api__virt__virt_undefine_script_impl(ptr, rust_vec_len, data_len),
-121 => wire__crate__api__virt__virt_upload_go_line_impl(ptr, rust_vec_len, data_len),
-122 => wire__crate__api__virt__virt_upload_ready_marker_impl(ptr, rust_vec_len, data_len),
-123 => wire__crate__api__virt__virt_vnc_console_script_impl(ptr, rust_vec_len, data_len),
-124 => wire__crate__api__virt__virt_vol_upload_command_impl(ptr, rust_vec_len, data_len),
-125 => wire__crate__api__virt__virt_volumes_script_impl(ptr, rust_vec_len, data_len),
-126 => wire__crate__api__ssh_asym__x25519_keypair_impl(ptr, rust_vec_len, data_len),
-127 => wire__crate__api__ssh_asym__x25519_shared_secret_impl(ptr, rust_vec_len, data_len),
+                        3 => wire__crate__api__bmc__BmcClient_new_impl(ptr, rust_vec_len, data_len),
+7 => wire__crate__api__bmc__PowerWatch_new_impl(ptr, rust_vec_len, data_len),
+8 => wire__crate__api__bmc__PowerWatch_observe_impl(ptr, rust_vec_len, data_len),
+9 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_close_impl(ptr, rust_vec_len, data_len),
+11 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_release_all_keys_impl(ptr, rust_vec_len, data_len),
+12 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_resize_impl(ptr, rust_vec_len, data_len),
+13 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_send_clipboard_text_impl(ptr, rust_vec_len, data_len),
+14 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_send_key_impl(ptr, rust_vec_len, data_len),
+15 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_send_pointer_impl(ptr, rust_vec_len, data_len),
+16 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_send_unicode_text_impl(ptr, rust_vec_len, data_len),
+17 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_send_wheel_impl(ptr, rust_vec_len, data_len),
+18 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_set_visible_impl(ptr, rust_vec_len, data_len),
+19 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_start_rdp_impl(ptr, rust_vec_len, data_len),
+20 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_start_vnc_impl(ptr, rust_vec_len, data_len),
+21 => wire__crate__api__ssh_crypto__SshBlockCipher_block_size_impl(ptr, rust_vec_len, data_len),
+22 => wire__crate__api__ssh_crypto__SshBlockCipher_new_impl(ptr, rust_vec_len, data_len),
+23 => wire__crate__api__ssh_crypto__SshBlockCipher_process_impl(ptr, rust_vec_len, data_len),
+24 => wire__crate__api__ssh_crypto__SshMac_compute_impl(ptr, rust_vec_len, data_len),
+25 => wire__crate__api__ssh_crypto__SshMac_mac_size_impl(ptr, rust_vec_len, data_len),
+26 => wire__crate__api__ssh_crypto__SshMac_new_impl(ptr, rust_vec_len, data_len),
+27 => wire__crate__api__ssh_asym__bcrypt_pbkdf_impl(ptr, rust_vec_len, data_len),
+29 => wire__crate__api__bmc__bmc_plan_impl(ptr, rust_vec_len, data_len),
+30 => wire__crate__api__script__build_script_impl(ptr, rust_vec_len, data_len),
+31 => wire__crate__api__bmc__cert_fingerprint_impl(ptr, rust_vec_len, data_len),
+32 => wire__crate__api__bmc__cert_info_from_der_impl(ptr, rust_vec_len, data_len),
+33 => wire__crate__api__bmc__cert_info_is_expired_impl(ptr, rust_vec_len, data_len),
+34 => wire__crate__api__bmc__cert_info_pretty_fingerprint_impl(ptr, rust_vec_len, data_len),
+35 => wire__crate__api__bmc__cert_normalize_fingerprint_impl(ptr, rust_vec_len, data_len),
+36 => wire__crate__api__bmc__cert_pin_accepts_impl(ptr, rust_vec_len, data_len),
+37 => wire__crate__api__parser__command_specs_impl(ptr, rust_vec_len, data_len),
+38 => wire__crate__api__script__contains_script_segment_impl(ptr, rust_vec_len, data_len),
+39 => wire__crate__api__script__contains_status_segment_impl(ptr, rust_vec_len, data_len),
+41 => wire__crate__api__script__custom_result_key_impl(ptr, rust_vec_len, data_len),
+42 => wire__crate__api__script__custom_result_name_impl(ptr, rust_vec_len, data_len),
+43 => wire__crate__api__desktop__desktop_validate_profile_impl(ptr, rust_vec_len, data_len),
+44 => wire__crate__api__desktop__desktop_validate_vnc_password_impl(ptr, rust_vec_len, data_len),
+45 => wire__crate__api__ssh_asym__ecdsa_sign_impl(ptr, rust_vec_len, data_len),
+46 => wire__crate__api__ssh_asym__ecdsa_verify_impl(ptr, rust_vec_len, data_len),
+47 => wire__crate__api__ssh_asym__ed25519_sign_impl(ptr, rust_vec_len, data_len),
+48 => wire__crate__api__ssh_asym__ed25519_verify_impl(ptr, rust_vec_len, data_len),
+49 => wire__crate__api__script__exec_command_impl(ptr, rust_vec_len, data_len),
+51 => wire__crate__api__script__install_command_impl(ptr, rust_vec_len, data_len),
+52 => wire__crate__api__script__install_custom_cmds_command_impl(ptr, rust_vec_len, data_len),
+53 => wire__crate__api__script__install_payload_impl(ptr, rust_vec_len, data_len),
+54 => wire__crate__api__script__parse_custom_cmds_listing_impl(ptr, rust_vec_len, data_len),
+59 => wire__crate__api__virt__parse_virt_action_impl(ptr, rust_vec_len, data_len),
+72 => wire__crate__api__virt__parse_virt_pool_types_impl(ptr, rust_vec_len, data_len),
+74 => wire__crate__api__virt__parse_virt_resource_impl(ptr, rust_vec_len, data_len),
+76 => wire__crate__api__virt__parse_virt_seed_update_impl(ptr, rust_vec_len, data_len),
+85 => wire__crate__api__virt__parse_virt_undefine_impl(ptr, rust_vec_len, data_len),
+87 => wire__crate__api__virt__parse_virt_vol_upload_impl(ptr, rust_vec_len, data_len),
+89 => wire__crate__api__parser__parse_windows_net_speed_json_impl(ptr, rust_vec_len, data_len),
+90 => wire__crate__api__script__read_custom_cmds_command_impl(ptr, rust_vec_len, data_len),
+91 => wire__crate__api__script__script_segment_marker_impl(ptr, rust_vec_len, data_len),
+92 => wire__crate__api__script__shell_func_flag_impl(ptr, rust_vec_len, data_len),
+93 => wire__crate__api__snippet__snippet_expand_impl(ptr, rust_vec_len, data_len),
+94 => wire__crate__api__snippet__snippet_plan_impl(ptr, rust_vec_len, data_len),
+95 => wire__crate__api__snippet__snippet_server_keys_impl(ptr, rust_vec_len, data_len),
+96 => wire__crate__api__snippet__snippet_uses_server_context_impl(ptr, rust_vec_len, data_len),
+97 => wire__crate__api__users__users_create_command_impl(ptr, rust_vec_len, data_len),
+98 => wire__crate__api__users__users_delete_command_impl(ptr, rust_vec_len, data_len),
+99 => wire__crate__api__users__users_detail_script_impl(ptr, rust_vec_len, data_len),
+100 => wire__crate__api__users__users_edit_command_impl(ptr, rust_vec_len, data_len),
+101 => wire__crate__api__users__users_list_script_impl(ptr, rust_vec_len, data_len),
+102 => wire__crate__api__users__users_valid_name_impl(ptr, rust_vec_len, data_len),
+103 => wire__crate__api__users__users_validate_draft_impl(ptr, rust_vec_len, data_len),
+104 => wire__crate__api__virt__virt_action_script_impl(ptr, rust_vec_len, data_len),
+105 => wire__crate__api__virt__virt_clone_define_script_impl(ptr, rust_vec_len, data_len),
+106 => wire__crate__api__virt__virt_clone_volumes_script_impl(ptr, rust_vec_len, data_len),
+107 => wire__crate__api__virt__virt_console_command_impl(ptr, rust_vec_len, data_len),
+108 => wire__crate__api__virt__virt_create_host_script_impl(ptr, rust_vec_len, data_len),
+109 => wire__crate__api__virt__virt_create_volume_script_impl(ptr, rust_vec_len, data_len),
+110 => wire__crate__api__virt__virt_define_script_impl(ptr, rust_vec_len, data_len),
+111 => wire__crate__api__virt__virt_domain_detail_script_impl(ptr, rust_vec_len, data_len),
+112 => wire__crate__api__virt__virt_external_snapshot_refusal_impl(ptr, rust_vec_len, data_len),
+113 => wire__crate__api__virt__virt_firmware_script_impl(ptr, rust_vec_len, data_len),
+114 => wire__crate__api__virt__virt_hardware_change_script_impl(ptr, rust_vec_len, data_len),
+115 => wire__crate__api__virt__virt_hardware_script_impl(ptr, rust_vec_len, data_len),
+116 => wire__crate__api__virt__virt_hash_password_impl(ptr, rust_vec_len, data_len),
+117 => wire__crate__api__virt__virt_host_devices_script_impl(ptr, rust_vec_len, data_len),
+118 => wire__crate__api__virt__virt_net_change_script_impl(ptr, rust_vec_len, data_len),
+119 => wire__crate__api__virt__virt_networks_script_impl(ptr, rust_vec_len, data_len),
+120 => wire__crate__api__virt__virt_overview_script_impl(ptr, rust_vec_len, data_len),
+121 => wire__crate__api__virt__virt_pool_types_script_impl(ptr, rust_vec_len, data_len),
+122 => wire__crate__api__virt__virt_probe_script_impl(ptr, rust_vec_len, data_len),
+123 => wire__crate__api__virt__virt_resource_script_impl(ptr, rust_vec_len, data_len),
+124 => wire__crate__api__virt__virt_seed_read_script_impl(ptr, rust_vec_len, data_len),
+125 => wire__crate__api__virt__virt_seed_update_script_impl(ptr, rust_vec_len, data_len),
+126 => wire__crate__api__virt__virt_snap_chain_script_impl(ptr, rust_vec_len, data_len),
+127 => wire__crate__api__virt__virt_snap_check_script_impl(ptr, rust_vec_len, data_len),
+128 => wire__crate__api__virt__virt_snap_diff_script_impl(ptr, rust_vec_len, data_len),
+129 => wire__crate__api__virt__virt_snapshot_create_script_impl(ptr, rust_vec_len, data_len),
+130 => wire__crate__api__virt__virt_snapshot_delete_script_impl(ptr, rust_vec_len, data_len),
+131 => wire__crate__api__virt__virt_snapshot_external_script_impl(ptr, rust_vec_len, data_len),
+132 => wire__crate__api__virt__virt_snapshot_refusal_impl(ptr, rust_vec_len, data_len),
+133 => wire__crate__api__virt__virt_snapshot_revert_script_impl(ptr, rust_vec_len, data_len),
+134 => wire__crate__api__virt__virt_snapshots_script_impl(ptr, rust_vec_len, data_len),
+135 => wire__crate__api__virt__virt_storage_script_impl(ptr, rust_vec_len, data_len),
+136 => wire__crate__api__virt__virt_undefine_script_impl(ptr, rust_vec_len, data_len),
+137 => wire__crate__api__virt__virt_upload_go_line_impl(ptr, rust_vec_len, data_len),
+138 => wire__crate__api__virt__virt_upload_ready_marker_impl(ptr, rust_vec_len, data_len),
+139 => wire__crate__api__virt__virt_vnc_console_script_impl(ptr, rust_vec_len, data_len),
+140 => wire__crate__api__virt__virt_vol_upload_command_impl(ptr, rust_vec_len, data_len),
+141 => wire__crate__api__virt__virt_volumes_script_impl(ptr, rust_vec_len, data_len),
+142 => wire__crate__api__ssh_asym__x25519_keypair_impl(ptr, rust_vec_len, data_len),
+143 => wire__crate__api__ssh_asym__x25519_shared_secret_impl(ptr, rust_vec_len, data_len),
                         _ => unreachable!(),
                     }
                 }
@@ -1887,6 +2345,36 @@ return crate::api::ssh_asym::X25519KeyPair{private_key: var_privateKey, public_k
 // Section: rust2dart
 
 
+                // Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for FrbWrapper<BmcClient> {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    flutter_rust_bridge::for_generated::rust_auto_opaque_encode::<_, MoiArc<_>>(self.0).into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<BmcClient> {}
+
+                impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<BmcClient>> for BmcClient {
+            fn into_into_dart(self) -> FrbWrapper<BmcClient> {
+                self.into()
+            }
+        }
+
+                
+                // Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for FrbWrapper<PowerWatch> {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    flutter_rust_bridge::for_generated::rust_auto_opaque_encode::<_, MoiArc<_>>(self.0).into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<PowerWatch> {}
+
+                impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<PowerWatch>> for PowerWatch {
+            fn into_into_dart(self) -> FrbWrapper<PowerWatch> {
+                self.into()
+            }
+        }
+
+                
                 // Codec=Dco (DartCObject based), see doc to use other codecs
             impl flutter_rust_bridge::IntoDart for FrbWrapper<RemoteDesktopSessionHandle> {
                 fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
@@ -1932,6 +2420,101 @@ return crate::api::ssh_asym::X25519KeyPair{private_key: var_privateKey, public_k
         }
 
                 // Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::bmc::BmcError {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.failure.into_into_dart().into_dart(),
+self.detail.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::bmc::BmcError {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::bmc::BmcError> for crate::api::bmc::BmcError {
+            fn into_into_dart(self) -> crate::api::bmc::BmcError {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::bmc::BmcOutcome {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.task.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::bmc::BmcOutcome {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::bmc::BmcOutcome> for crate::api::bmc::BmcOutcome {
+            fn into_into_dart(self) -> crate::api::bmc::BmcOutcome {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::bmc::BmcReading {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.name.into_into_dart().into_dart(),
+self.value.into_into_dart().into_dart(),
+self.unit.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::bmc::BmcReading {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::bmc::BmcReading> for crate::api::bmc::BmcReading {
+            fn into_into_dart(self) -> crate::api::bmc::BmcReading {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::bmc::BmcSensors {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.temperatures.into_into_dart().into_dart(),
+self.fans.into_into_dart().into_dart(),
+self.watts.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::bmc::BmcSensors {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::bmc::BmcSensors> for crate::api::bmc::BmcSensors {
+            fn into_into_dart(self) -> crate::api::bmc::BmcSensors {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::bmc::BmcSnapshot {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.topology.into_into_dart().into_dart(),
+self.sensors.into_into_dart().into_dart(),
+self.sensors_truncated.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::bmc::BmcSnapshot {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::bmc::BmcSnapshot> for crate::api::bmc::BmcSnapshot {
+            fn into_into_dart(self) -> crate::api::bmc::BmcSnapshot {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::bmc::CertInfo {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.fingerprint.into_into_dart().into_dart(),
+self.subject.into_into_dart().into_dart(),
+self.issuer.into_into_dart().into_dart(),
+self.not_before.into_into_dart().into_dart(),
+self.not_after.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::bmc::CertInfo {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::bmc::CertInfo> for crate::api::bmc::CertInfo {
+            fn into_into_dart(self) -> crate::api::bmc::CertInfo {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
             impl flutter_rust_bridge::IntoDart for crate::api::parser::CommandSpec {
                 fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
                     [
@@ -1977,6 +2560,45 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::EcdsaSignature> for
             }
         }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::bmc::PowerIntent {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    match self {
+                    Self::On => 0.into_dart(),
+Self::GracefulShutdown => 1.into_dart(),
+Self::ForceOff => 2.into_dart(),
+Self::Restart => 3.into_dart(),
+Self::PowerCycle => 4.into_dart(),
+                    _ => unreachable!(),
+                }
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::bmc::PowerIntent {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::bmc::PowerIntent> for crate::api::bmc::PowerIntent {
+            fn into_into_dart(self) -> crate::api::bmc::PowerIntent {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::bmc::PowerState {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    match self {
+                    Self::On => 0.into_dart(),
+Self::Off => 1.into_dart(),
+Self::PoweringOn => 2.into_dart(),
+Self::PoweringOff => 3.into_dart(),
+Self::Paused => 4.into_dart(),
+Self::Unknown => 5.into_dart(),
+                    _ => unreachable!(),
+                }
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::bmc::PowerState {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::bmc::PowerState> for crate::api::bmc::PowerState {
+            fn into_into_dart(self) -> crate::api::bmc::PowerState {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
             impl flutter_rust_bridge::IntoDart for crate::api::remote_desktop::RdpSessionParams {
                 fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
                     [
@@ -1998,6 +2620,111 @@ self.scale_factor.into_into_dart().into_dart()
             impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::remote_desktop::RdpSessionParams {}
 impl flutter_rust_bridge::IntoIntoDart<crate::api::remote_desktop::RdpSessionParams> for crate::api::remote_desktop::RdpSessionParams {
             fn into_into_dart(self) -> crate::api::remote_desktop::RdpSessionParams {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::bmc::RedfishChassis {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.thermal.into_into_dart().into_dart(),
+self.power.into_into_dart().into_dart(),
+self.thermal_subsystem.into_into_dart().into_dart(),
+self.power_subsystem.into_into_dart().into_dart(),
+self.sensors.into_into_dart().into_dart(),
+self.name.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::bmc::RedfishChassis {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::bmc::RedfishChassis> for crate::api::bmc::RedfishChassis {
+            fn into_into_dart(self) -> crate::api::bmc::RedfishChassis {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::bmc::RedfishFailure {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    match self {
+                    Self::NotAService => 0.into_dart(),
+Self::NoSystem => 1.into_dart(),
+Self::Forbidden => 2.into_dart(),
+Self::CertificateRejected => 3.into_dart(),
+Self::Unauthorized => 4.into_dart(),
+Self::NoCredential => 5.into_dart(),
+Self::PreconditionRequired => 6.into_dart(),
+Self::Unreachable => 7.into_dart(),
+Self::NotSupported => 8.into_dart(),
+Self::CertNotReviewed => 9.into_dart(),
+Self::InvalidResponse => 10.into_dart(),
+Self::InvalidUrl => 11.into_dart(),
+Self::Closed => 12.into_dart(),
+                    _ => unreachable!(),
+                }
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::bmc::RedfishFailure {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::bmc::RedfishFailure> for crate::api::bmc::RedfishFailure {
+            fn into_into_dart(self) -> crate::api::bmc::RedfishFailure {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::bmc::RedfishRoot {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.systems.into_into_dart().into_dart(),
+self.chassis.into_into_dart().into_dart(),
+self.sessions.into_into_dart().into_dart(),
+self.version.into_into_dart().into_dart(),
+self.product.into_into_dart().into_dart(),
+self.vendor.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::bmc::RedfishRoot {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::bmc::RedfishRoot> for crate::api::bmc::RedfishRoot {
+            fn into_into_dart(self) -> crate::api::bmc::RedfishRoot {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::bmc::RedfishSystem {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.power_state.into_into_dart().into_dart(),
+self.model.into_into_dart().into_dart(),
+self.manufacturer.into_into_dart().into_dart(),
+self.serial.into_into_dart().into_dart(),
+self.bios_version.into_into_dart().into_dart(),
+self.health.into_into_dart().into_dart(),
+self.reset_target.into_into_dart().into_dart(),
+self.reset_types.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::bmc::RedfishSystem {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::bmc::RedfishSystem> for crate::api::bmc::RedfishSystem {
+            fn into_into_dart(self) -> crate::api::bmc::RedfishSystem {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::bmc::RedfishTopology {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.root.into_into_dart().into_dart(),
+self.system_path.into_into_dart().into_dart(),
+self.chassis_path.into_into_dart().into_dart(),
+self.system.into_into_dart().into_dart(),
+self.chassis.into_into_dart().into_dart(),
+self.has_multiple_systems.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::bmc::RedfishTopology {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::bmc::RedfishTopology> for crate::api::bmc::RedfishTopology {
+            fn into_into_dart(self) -> crate::api::bmc::RedfishTopology {
                 self
             }
         }
@@ -2085,6 +2812,21 @@ message.into_into_dart().into_dart()].into_dart() }
             impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::remote_desktop::RemoteDesktopEvent {}
 impl flutter_rust_bridge::IntoIntoDart<crate::api::remote_desktop::RemoteDesktopEvent> for crate::api::remote_desktop::RemoteDesktopEvent {
             fn into_into_dart(self) -> crate::api::remote_desktop::RemoteDesktopEvent {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::bmc::ResetRequest {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.target.into_into_dart().into_dart(),
+self.reset_type.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::bmc::ResetRequest {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::bmc::ResetRequest> for crate::api::bmc::ResetRequest {
+            fn into_into_dart(self) -> crate::api::bmc::ResetRequest {
                 self
             }
         }
@@ -2261,6 +3003,16 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for 
             }
         }
 
+                impl SseEncode for BmcClient {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<BmcClient>>>::sse_encode(flutter_rust_bridge::for_generated::rust_auto_opaque_encode::<_, MoiArc<_>>(self), serializer);}
+                }
+                
+                impl SseEncode for PowerWatch {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PowerWatch>>>::sse_encode(flutter_rust_bridge::for_generated::rust_auto_opaque_encode::<_, MoiArc<_>>(self), serializer);}
+                }
+                
                 impl SseEncode for RemoteDesktopSessionHandle {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RemoteDesktopSessionHandle>>>::sse_encode(flutter_rust_bridge::for_generated::rust_auto_opaque_encode::<_, MoiArc<_>>(self), serializer);}
@@ -2279,6 +3031,20 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for 
                 impl SseEncode for std::collections::HashMap<String, String> {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<Vec<(String,String,)>>::sse_encode(self.into_iter().collect(), serializer);}
+                }
+                
+                impl SseEncode for RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<BmcClient>> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {let (ptr, size) = self.sse_encode_raw();
+                <usize>::sse_encode(ptr, serializer);
+                <i32>::sse_encode(size, serializer);}
+                }
+                
+                impl SseEncode for RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PowerWatch>> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {let (ptr, size) = self.sse_encode_raw();
+                <usize>::sse_encode(ptr, serializer);
+                <i32>::sse_encode(size, serializer);}
                 }
                 
                 impl SseEncode for RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RemoteDesktopSessionHandle>> {
@@ -2307,9 +3073,50 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for 
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<Vec<u8>>::sse_encode(self.into_bytes(), serializer);}
                 }
                 
+                impl SseEncode for crate::api::bmc::BmcError {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<crate::api::bmc::RedfishFailure>::sse_encode(self.failure, serializer);
+<Option<String>>::sse_encode(self.detail, serializer);}
+                }
+                
+                impl SseEncode for crate::api::bmc::BmcOutcome {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<Option<String>>::sse_encode(self.task, serializer);}
+                }
+                
+                impl SseEncode for crate::api::bmc::BmcReading {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<String>::sse_encode(self.name, serializer);
+<f64>::sse_encode(self.value, serializer);
+<Option<String>>::sse_encode(self.unit, serializer);}
+                }
+                
+                impl SseEncode for crate::api::bmc::BmcSensors {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<Vec<crate::api::bmc::BmcReading>>::sse_encode(self.temperatures, serializer);
+<Vec<crate::api::bmc::BmcReading>>::sse_encode(self.fans, serializer);
+<Option<f64>>::sse_encode(self.watts, serializer);}
+                }
+                
+                impl SseEncode for crate::api::bmc::BmcSnapshot {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<crate::api::bmc::RedfishTopology>::sse_encode(self.topology, serializer);
+<crate::api::bmc::BmcSensors>::sse_encode(self.sensors, serializer);
+<bool>::sse_encode(self.sensors_truncated, serializer);}
+                }
+                
                 impl SseEncode for bool {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {serializer.cursor.write_u8(self as _).unwrap();}
+                }
+                
+                impl SseEncode for crate::api::bmc::CertInfo {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<String>::sse_encode(self.fingerprint, serializer);
+<String>::sse_encode(self.subject, serializer);
+<String>::sse_encode(self.issuer, serializer);
+<i64>::sse_encode(self.not_before, serializer);
+<i64>::sse_encode(self.not_after, serializer);}
                 }
                 
                 impl SseEncode for crate::api::parser::CommandSpec {
@@ -2345,10 +3152,21 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for 
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {serializer.cursor.write_i32::<NativeEndian>(self).unwrap();}
                 }
                 
+                impl SseEncode for i64 {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {serializer.cursor.write_i64::<NativeEndian>(self).unwrap();}
+                }
+                
                 impl SseEncode for Vec<String> {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<i32>::sse_encode(self.len() as _, serializer);
         for item in self { <String>::sse_encode(item, serializer); }}
+                }
+                
+                impl SseEncode for Vec<crate::api::bmc::BmcReading> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<i32>::sse_encode(self.len() as _, serializer);
+        for item in self { <crate::api::bmc::BmcReading>::sse_encode(item, serializer); }}
                 }
                 
                 impl SseEncode for Vec<crate::api::parser::CommandSpec> {
@@ -2389,11 +3207,59 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for 
                 }}
                 }
                 
+                impl SseEncode for Option<crate::api::bmc::CertInfo> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<bool>::sse_encode(self.is_some(), serializer);
+                if let Some(value) = self {
+                    <crate::api::bmc::CertInfo>::sse_encode(value, serializer);
+                }}
+                }
+                
+                impl SseEncode for Option<f64> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<bool>::sse_encode(self.is_some(), serializer);
+                if let Some(value) = self {
+                    <f64>::sse_encode(value, serializer);
+                }}
+                }
+                
+                impl SseEncode for Option<crate::api::bmc::RedfishChassis> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<bool>::sse_encode(self.is_some(), serializer);
+                if let Some(value) = self {
+                    <crate::api::bmc::RedfishChassis>::sse_encode(value, serializer);
+                }}
+                }
+                
+                impl SseEncode for Option<crate::api::bmc::RedfishSystem> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<bool>::sse_encode(self.is_some(), serializer);
+                if let Some(value) = self {
+                    <crate::api::bmc::RedfishSystem>::sse_encode(value, serializer);
+                }}
+                }
+                
+                impl SseEncode for Option<crate::api::bmc::RedfishTopology> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<bool>::sse_encode(self.is_some(), serializer);
+                if let Some(value) = self {
+                    <crate::api::bmc::RedfishTopology>::sse_encode(value, serializer);
+                }}
+                }
+                
                 impl SseEncode for Option<crate::api::remote_desktop::RemoteDesktopEvent> {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<bool>::sse_encode(self.is_some(), serializer);
                 if let Some(value) = self {
                     <crate::api::remote_desktop::RemoteDesktopEvent>::sse_encode(value, serializer);
+                }}
+                }
+                
+                impl SseEncode for Option<crate::api::bmc::ResetRequest> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<bool>::sse_encode(self.is_some(), serializer);
+                if let Some(value) = self {
+                    <crate::api::bmc::ResetRequest>::sse_encode(value, serializer);
                 }}
                 }
                 
@@ -2429,6 +3295,27 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for 
                 }}
                 }
                 
+                impl SseEncode for crate::api::bmc::PowerIntent {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<i32>::sse_encode(match self {crate::api::bmc::PowerIntent::On => { 0 }
+crate::api::bmc::PowerIntent::GracefulShutdown => { 1 }
+crate::api::bmc::PowerIntent::ForceOff => { 2 }
+crate::api::bmc::PowerIntent::Restart => { 3 }
+crate::api::bmc::PowerIntent::PowerCycle => { 4 }
+ _ => { unimplemented!(""); }}, serializer);}
+                }
+                
+                impl SseEncode for crate::api::bmc::PowerState {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<i32>::sse_encode(match self {crate::api::bmc::PowerState::On => { 0 }
+crate::api::bmc::PowerState::Off => { 1 }
+crate::api::bmc::PowerState::PoweringOn => { 2 }
+crate::api::bmc::PowerState::PoweringOff => { 3 }
+crate::api::bmc::PowerState::Paused => { 4 }
+crate::api::bmc::PowerState::Unknown => { 5 }
+ _ => { unimplemented!(""); }}, serializer);}
+                }
+                
                 impl SseEncode for crate::api::remote_desktop::RdpSessionParams {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<String>::sse_encode(self.connect_host, serializer);
@@ -2449,6 +3336,66 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for 
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<String>::sse_encode(self.0, serializer);
 <String>::sse_encode(self.1, serializer);}
+                }
+                
+                impl SseEncode for crate::api::bmc::RedfishChassis {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<Option<String>>::sse_encode(self.thermal, serializer);
+<Option<String>>::sse_encode(self.power, serializer);
+<Option<String>>::sse_encode(self.thermal_subsystem, serializer);
+<Option<String>>::sse_encode(self.power_subsystem, serializer);
+<Option<String>>::sse_encode(self.sensors, serializer);
+<Option<String>>::sse_encode(self.name, serializer);}
+                }
+                
+                impl SseEncode for crate::api::bmc::RedfishFailure {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<i32>::sse_encode(match self {crate::api::bmc::RedfishFailure::NotAService => { 0 }
+crate::api::bmc::RedfishFailure::NoSystem => { 1 }
+crate::api::bmc::RedfishFailure::Forbidden => { 2 }
+crate::api::bmc::RedfishFailure::CertificateRejected => { 3 }
+crate::api::bmc::RedfishFailure::Unauthorized => { 4 }
+crate::api::bmc::RedfishFailure::NoCredential => { 5 }
+crate::api::bmc::RedfishFailure::PreconditionRequired => { 6 }
+crate::api::bmc::RedfishFailure::Unreachable => { 7 }
+crate::api::bmc::RedfishFailure::NotSupported => { 8 }
+crate::api::bmc::RedfishFailure::CertNotReviewed => { 9 }
+crate::api::bmc::RedfishFailure::InvalidResponse => { 10 }
+crate::api::bmc::RedfishFailure::InvalidUrl => { 11 }
+crate::api::bmc::RedfishFailure::Closed => { 12 }
+ _ => { unimplemented!(""); }}, serializer);}
+                }
+                
+                impl SseEncode for crate::api::bmc::RedfishRoot {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<Option<String>>::sse_encode(self.systems, serializer);
+<Option<String>>::sse_encode(self.chassis, serializer);
+<Option<String>>::sse_encode(self.sessions, serializer);
+<Option<String>>::sse_encode(self.version, serializer);
+<Option<String>>::sse_encode(self.product, serializer);
+<Option<String>>::sse_encode(self.vendor, serializer);}
+                }
+                
+                impl SseEncode for crate::api::bmc::RedfishSystem {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<crate::api::bmc::PowerState>::sse_encode(self.power_state, serializer);
+<Option<String>>::sse_encode(self.model, serializer);
+<Option<String>>::sse_encode(self.manufacturer, serializer);
+<Option<String>>::sse_encode(self.serial, serializer);
+<Option<String>>::sse_encode(self.bios_version, serializer);
+<Option<String>>::sse_encode(self.health, serializer);
+<Option<String>>::sse_encode(self.reset_target, serializer);
+<Vec<String>>::sse_encode(self.reset_types, serializer);}
+                }
+                
+                impl SseEncode for crate::api::bmc::RedfishTopology {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<crate::api::bmc::RedfishRoot>::sse_encode(self.root, serializer);
+<Option<String>>::sse_encode(self.system_path, serializer);
+<Option<String>>::sse_encode(self.chassis_path, serializer);
+<Option<crate::api::bmc::RedfishSystem>>::sse_encode(self.system, serializer);
+<Option<crate::api::bmc::RedfishChassis>>::sse_encode(self.chassis, serializer);
+<bool>::sse_encode(self.has_multiple_systems, serializer);}
                 }
                 
                 impl SseEncode for crate::api::remote_desktop::RemoteDesktopConnectionState {
@@ -2511,6 +3458,12 @@ crate::api::remote_desktop::RemoteDesktopEvent::Ended{reason,message} => { <i32>
 <Option<String>>::sse_encode(message, serializer);
  }
  _ => { unimplemented!(""); }}}
+                }
+                
+                impl SseEncode for crate::api::bmc::ResetRequest {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<String>::sse_encode(self.target, serializer);
+<String>::sse_encode(self.reset_type, serializer);}
                 }
                 
                 impl SseEncode for crate::api::script::ScriptSegment {
@@ -2638,14 +3591,39 @@ crate::api::virt::VirtUploadEntryKind::SudoPassword => { 2 }
 
 // Section: imports
 
+use crate::api::ssh_crypto::*;
 use crate::api::remote_desktop::*;
-use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::bmc::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
 
 // Section: boilerplate
 
 flutter_rust_bridge::frb_generated_boilerplate_io!();
+
+                #[unsafe(no_mangle)]
+                pub extern "C" fn frbgen_server_box_rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerBmcClient(ptr: *const std::ffi::c_void)  {
+                    MoiArc::<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<BmcClient>>::increment_strong_count(ptr as _);
+                }
+            
+
+                #[unsafe(no_mangle)]
+                pub extern "C" fn frbgen_server_box_rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerBmcClient(ptr: *const std::ffi::c_void)  {
+                    MoiArc::<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<BmcClient>>::decrement_strong_count(ptr as _);
+                }
+            
+
+                #[unsafe(no_mangle)]
+                pub extern "C" fn frbgen_server_box_rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPowerWatch(ptr: *const std::ffi::c_void)  {
+                    MoiArc::<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PowerWatch>>::increment_strong_count(ptr as _);
+                }
+            
+
+                #[unsafe(no_mangle)]
+                pub extern "C" fn frbgen_server_box_rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPowerWatch(ptr: *const std::ffi::c_void)  {
+                    MoiArc::<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PowerWatch>>::decrement_strong_count(ptr as _);
+                }
+            
 
                 #[unsafe(no_mangle)]
                 pub extern "C" fn frbgen_server_box_rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(ptr: *const std::ffi::c_void)  {
@@ -2698,8 +3676,9 @@ flutter_rust_bridge::frb_generated_boilerplate_io!();
 
 // Section: imports
 
+use crate::api::ssh_crypto::*;
 use crate::api::remote_desktop::*;
-use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::bmc::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
                 use flutter_rust_bridge::for_generated::wasm_bindgen;
@@ -2709,6 +3688,30 @@ use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt,
 // Section: boilerplate
 
 flutter_rust_bridge::frb_generated_boilerplate_web!();
+
+                #[wasm_bindgen]
+                pub  fn rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerBmcClient(ptr: *const std::ffi::c_void)  {
+                    MoiArc::<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<BmcClient>>::increment_strong_count(ptr as _);
+                }
+            
+
+                #[wasm_bindgen]
+                pub  fn rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerBmcClient(ptr: *const std::ffi::c_void)  {
+                    MoiArc::<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<BmcClient>>::decrement_strong_count(ptr as _);
+                }
+            
+
+                #[wasm_bindgen]
+                pub  fn rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPowerWatch(ptr: *const std::ffi::c_void)  {
+                    MoiArc::<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PowerWatch>>::increment_strong_count(ptr as _);
+                }
+            
+
+                #[wasm_bindgen]
+                pub  fn rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPowerWatch(ptr: *const std::ffi::c_void)  {
+                    MoiArc::<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PowerWatch>>::decrement_strong_count(ptr as _);
+                }
+            
 
                 #[wasm_bindgen]
                 pub  fn rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(ptr: *const std::ffi::c_void)  {

@@ -2419,6 +2419,312 @@ type RootTranslation = {
 	 * T​h​i​s​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​c​h​ ​t​h​e​ ​d​e​s​k​t​o​p​,​ ​o​r​ ​c​o​u​l​d​ ​n​o​t​ ​s​e​c​u​r​e​ ​t​h​e​ ​c​o​n​n​e​c​t​i​o​n​ ​t​o​ ​i​t​.
 	 */
 	desktopRdpUnreachable: string
+	/**
+	 * B​a​c​k​u​p
+	 */
+	backup: string
+	/**
+	 * {​c​o​u​n​t​}​ ​s​t​o​r​e​d​ ​·​ ​u​p​ ​t​o​ ​{​m​a​x​}​ ​e​a​c​h
+	 * @param {unknown} count
+	 * @param {unknown} max
+	 */
+	backupSubtitle: RequiredParams<'count' | 'max'>
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​k​e​e​p​s​ ​t​h​e​s​e​ ​f​i​l​e​s​ ​f​o​r​ ​t​h​e​ ​a​p​p​'​s​ ​b​a​c​k​u​p​ ​s​y​n​c​ ​a​n​d​ ​f​o​r​ ​u​p​l​o​a​d​s​ ​f​r​o​m​ ​h​e​r​e​.​ ​T​h​e​ ​a​p​p​ ​e​n​c​r​y​p​t​s​ ​i​t​s​ ​b​a​c​k​u​p​ ​w​i​t​h​ ​y​o​u​r​ ​b​a​c​k​u​p​ ​p​a​s​s​w​o​r​d​ ​b​e​f​o​r​e​ ​s​e​n​d​i​n​g​ ​i​t​;​ ​t​h​e​ ​p​a​n​e​l​ ​m​o​v​e​s​ ​t​h​e​ ​f​i​l​e​s​ ​w​i​t​h​o​u​t​ ​o​p​e​n​i​n​g​ ​t​h​e​m​.
+	 */
+	backupWhatItIs: string
+	/**
+	 * N​o​t​h​i​n​g​ ​i​s​ ​s​t​o​r​e​d​ ​y​e​t​.​ ​T​u​r​n​ ​o​n​ ​s​y​n​c​ ​t​o​ ​t​h​i​s​ ​a​g​e​n​t​ ​i​n​ ​t​h​e​ ​a​p​p​,​ ​o​r​ ​u​p​l​o​a​d​ ​a​ ​b​a​c​k​u​p​ ​f​i​l​e​.
+	 */
+	backupEmpty: string
+	/**
+	 * U​p​l​o​a​d
+	 */
+	backupUpload: string
+	/**
+	 * A​p​p​ ​s​y​n​c
+	 */
+	backupAppFile: string
+	/**
+	 * S​t​o​r​e​d​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 */
+	backupStored: RequiredParams<'name'>
+	/**
+	 * R​e​m​o​v​e​d​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 */
+	backupRemoved: RequiredParams<'name'>
+	/**
+	 * R​e​m​o​v​e​ ​{​n​a​m​e​}​?​ ​A​ ​d​e​v​i​c​e​ ​t​h​a​t​ ​s​y​n​c​s​ ​t​o​ ​t​h​i​s​ ​a​g​e​n​t​ ​u​p​l​o​a​d​s​ ​i​t​s​ ​b​a​c​k​u​p​ ​a​g​a​i​n​ ​o​n​ ​i​t​s​ ​n​e​x​t​ ​s​y​n​c​;​ ​a​n​y​ ​o​t​h​e​r​ ​f​i​l​e​ ​i​s​ ​g​o​n​e​ ​f​o​r​ ​g​o​o​d​.
+	 * @param {unknown} name
+	 */
+	backupConfirmRemove: RequiredParams<'name'>
+	/**
+	 * {​s​i​z​e​}​ ​i​s​ ​m​o​r​e​ ​t​h​a​n​ ​t​h​e​ ​{​m​a​x​}​ ​t​h​i​s​ ​a​g​e​n​t​ ​t​a​k​e​s​.
+	 * @param {unknown} max
+	 * @param {unknown} size
+	 */
+	backupTooLarge: RequiredParams<'max' | 'size'>
+	/**
+	 * T​h​e​ ​f​i​l​e​ ​i​s​ ​l​a​r​g​e​r​ ​t​h​a​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​t​a​k​e​s​.
+	 */
+	backupTooLargeRefused: string
+	/**
+	 * T​h​i​s​ ​a​g​e​n​t​ ​k​e​e​p​s​ ​a​t​ ​m​o​s​t​ ​6​4​ ​b​a​c​k​u​p​s​.​ ​R​e​m​o​v​e​ ​o​n​e​ ​f​i​r​s​t​.
+	 */
+	backupTooMany: string
+	/**
+	 * A​ ​b​a​c​k​u​p​ ​n​a​m​e​ ​m​a​y​ ​h​o​l​d​ ​o​n​l​y​ ​l​e​t​t​e​r​s​,​ ​d​i​g​i​t​s​,​ ​d​o​t​s​,​ ​d​a​s​h​e​s​ ​a​n​d​ ​u​n​d​e​r​s​c​o​r​e​s​,​ ​a​n​d​ ​m​a​y​ ​n​o​t​ ​s​t​a​r​t​ ​w​i​t​h​ ​a​ ​d​o​t​.
+	 */
+	backupInvalidName: string
+	/**
+	 * T​h​a​t​ ​b​a​c​k​u​p​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​o​n​ ​t​h​e​ ​a​g​e​n​t​.
+	 */
+	backupGone: string
+	/**
+	 * B​M​C
+	 */
+	bmc: string
+	/**
+	 * {​c​o​u​n​t​}​ ​B​M​C​s​ ​r​e​a​c​h​e​d​ ​t​h​r​o​u​g​h​ ​t​h​i​s​ ​a​g​e​n​t
+	 * @param {unknown} count
+	 */
+	bmcSubtitle: RequiredParams<'count'>
+	/**
+	 * A​d​d​ ​B​M​C
+	 */
+	bmcAdd: string
+	/**
+	 * E​d​i​t​ ​B​M​C
+	 */
+	bmcEdit: string
+	/**
+	 * R​e​m​o​v​e​ ​B​M​C
+	 */
+	bmcRemove: string
+	/**
+	 * R​e​m​o​v​e​ ​{​n​a​m​e​}​?​ ​I​t​s​ ​s​t​o​r​e​d​ ​p​a​s​s​w​o​r​d​ ​g​o​e​s​ ​w​i​t​h​ ​i​t​.
+	 * @param {unknown} name
+	 */
+	bmcRemoveConfirm: RequiredParams<'name'>
+	/**
+	 * S​a​v​e​d​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 */
+	bmcSaved: RequiredParams<'name'>
+	/**
+	 * R​e​m​o​v​e​d​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 */
+	bmcRemoved: RequiredParams<'name'>
+	/**
+	 * N​o​ ​B​M​C​ ​h​a​s​ ​b​e​e​n​ ​a​d​d​e​d​ ​t​o​ ​t​h​i​s​ ​a​g​e​n​t​.​ ​A​n​ ​a​d​m​i​n​ ​c​a​n​ ​a​d​d​ ​o​n​e​.
+	 */
+	bmcEmpty: string
+	/**
+	 * N​o​ ​B​M​C​ ​y​e​t​.​ ​A​d​d​ ​o​n​e​ ​b​y​ ​i​t​s​ ​H​T​T​P​S​ ​a​d​d​r​e​s​s​ ​a​n​d​ ​a​n​ ​a​c​c​o​u​n​t​ ​o​n​ ​i​t​;​ ​t​h​i​s​ ​a​g​e​n​t​ ​s​i​g​n​s​ ​i​n​ ​f​o​r​ ​y​o​u​.
+	 */
+	bmcEmptyAdmin: string
+	/**
+	 * N​a​m​e
+	 */
+	bmcName: string
+	/**
+	 * A​d​d​r​e​s​s
+	 */
+	bmcUrl: string
+	/**
+	 * h​t​t​p​s​:​/​/​h​o​s​t​ ​o​r​ ​h​t​t​p​s​:​/​/​h​o​s​t​:​p​o​r​t​,​ ​a​s​ ​r​e​a​c​h​e​d​ ​f​r​o​m​ ​t​h​i​s​ ​a​g​e​n​t​'​s​ ​m​a​c​h​i​n​e​.
+	 */
+	bmcUrlHint: string
+	/**
+	 * U​s​e​r​ ​n​a​m​e
+	 */
+	bmcUsername: string
+	/**
+	 * P​a​s​s​w​o​r​d
+	 */
+	bmcPassword: string
+	/**
+	 * U​n​c​h​a​n​g​e​d
+	 */
+	bmcPasswordKept: string
+	/**
+	 * C​e​r​t​i​f​i​c​a​t​e
+	 */
+	bmcCert: string
+	/**
+	 * N​o​ ​c​e​r​t​i​f​i​c​a​t​e​ ​i​s​ ​t​r​u​s​t​e​d​ ​y​e​t​.​ ​T​h​i​s​ ​a​g​e​n​t​ ​w​i​l​l​ ​n​o​t​ ​s​i​g​n​ ​i​n​ ​u​n​t​i​l​ ​o​n​e​ ​i​s​.
+	 */
+	bmcCertNone: string
+	/**
+	 * R​e​a​d​ ​t​h​e​ ​c​e​r​t​i​f​i​c​a​t​e
+	 */
+	bmcCertRead: string
+	/**
+	 * S​u​b​j​e​c​t
+	 */
+	bmcCertSubject: string
+	/**
+	 * I​s​s​u​e​r
+	 */
+	bmcCertIssuer: string
+	/**
+	 * V​a​l​i​d
+	 */
+	bmcCertValid: string
+	/**
+	 * T​h​i​s​ ​c​e​r​t​i​f​i​c​a​t​e​ ​h​a​s​ ​e​x​p​i​r​e​d​.
+	 */
+	bmcCertExpired: string
+	/**
+	 * C​o​m​p​a​r​e​ ​t​h​e​ ​f​i​n​g​e​r​p​r​i​n​t​ ​w​i​t​h​ ​t​h​e​ ​o​n​e​ ​t​h​e​ ​B​M​C​'​s​ ​o​w​n​ ​c​o​n​s​o​l​e​ ​s​h​o​w​s​ ​b​e​f​o​r​e​ ​t​r​u​s​t​i​n​g​ ​i​t​.
+	 */
+	bmcCertCompare: string
+	/**
+	 * T​r​u​s​t​ ​t​h​i​s​ ​c​e​r​t​i​f​i​c​a​t​e
+	 */
+	bmcCertTrust: string
+	/**
+	 * N​o​ ​c​e​r​t​i​f​i​c​a​t​e​ ​i​s​ ​t​r​u​s​t​e​d​ ​f​o​r​ ​t​h​i​s​ ​B​M​C​ ​y​e​t​.​ ​E​d​i​t​ ​i​t​ ​a​n​d​ ​r​e​a​d​ ​i​t​s​ ​c​e​r​t​i​f​i​c​a​t​e​ ​f​i​r​s​t​.
+	 */
+	bmcCertNotReviewed: string
+	/**
+	 * T​h​e​ ​B​M​C​ ​p​r​e​s​e​n​t​e​d​ ​a​ ​d​i​f​f​e​r​e​n​t​ ​c​e​r​t​i​f​i​c​a​t​e​ ​f​r​o​m​ ​t​h​e​ ​t​r​u​s​t​e​d​ ​o​n​e​.
+	 */
+	bmcCertRejected: string
+	/**
+	 * T​h​e​ ​B​M​C​ ​r​e​j​e​c​t​e​d​ ​t​h​e​ ​u​s​e​r​ ​n​a​m​e​ ​o​r​ ​p​a​s​s​w​o​r​d​.
+	 */
+	bmcUnauthorized: string
+	/**
+	 * T​h​e​ ​B​M​C​ ​a​c​c​o​u​n​t​ ​m​a​y​ ​n​o​t​ ​d​o​ ​t​h​i​s​.
+	 */
+	bmcForbidden: string
+	/**
+	 * T​h​i​s​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​c​h​ ​t​h​e​ ​B​M​C​.
+	 */
+	bmcUnreachable: string
+	/**
+	 * T​h​e​ ​a​d​d​r​e​s​s​ ​d​i​d​ ​n​o​t​ ​a​n​s​w​e​r​ ​a​s​ ​a​ ​R​e​d​f​i​s​h​ ​s​e​r​v​i​c​e​.
+	 */
+	bmcNotRedfish: string
+	/**
+	 * T​h​e​ ​B​M​C​ ​l​i​s​t​s​ ​n​o​ ​s​y​s​t​e​m​ ​t​o​ ​m​a​n​a​g​e​.
+	 */
+	bmcNoSystem: string
+	/**
+	 * T​h​i​s​ ​s​y​s​t​e​m​ ​o​f​f​e​r​s​ ​n​o​ ​p​o​w​e​r​ ​a​c​t​i​o​n​s​.
+	 */
+	bmcNotSupported: string
+	/**
+	 * T​h​a​t​ ​B​M​C​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.
+	 */
+	bmcGone: string
+	/**
+	 * E​a​c​h​ ​B​M​C​ ​n​e​e​d​s​ ​i​t​s​ ​o​w​n​ ​n​a​m​e​,​ ​u​p​ ​t​o​ ​6​4​ ​c​h​a​r​a​c​t​e​r​s​.
+	 */
+	bmcInvalidName: string
+	/**
+	 * T​h​e​ ​a​d​d​r​e​s​s​ ​h​a​s​ ​t​o​ ​b​e​ ​h​t​t​p​s​:​/​/​h​o​s​t​ ​o​r​ ​h​t​t​p​s​:​/​/​h​o​s​t​:​p​o​r​t​,​ ​w​i​t​h​ ​n​o​ ​p​a​t​h​.
+	 */
+	bmcInvalidUrl: string
+	/**
+	 * A​ ​u​s​e​r​ ​n​a​m​e​ ​i​s​ ​r​e​q​u​i​r​e​d​.
+	 */
+	bmcInvalidUsername: string
+	/**
+	 * T​h​e​ ​c​e​r​t​i​f​i​c​a​t​e​ ​f​i​n​g​e​r​p​r​i​n​t​ ​i​s​ ​n​o​t​ ​a​ ​S​H​A​-​2​5​6​ ​f​i​n​g​e​r​p​r​i​n​t​.
+	 */
+	bmcInvalidCertificate: string
+	/**
+	 * O​n
+	 */
+	bmcStateOn: string
+	/**
+	 * O​f​f
+	 */
+	bmcStateOff: string
+	/**
+	 * P​o​w​e​r​i​n​g​ ​o​n
+	 */
+	bmcStatePoweringOn: string
+	/**
+	 * P​o​w​e​r​i​n​g​ ​o​f​f
+	 */
+	bmcStatePoweringOff: string
+	/**
+	 * P​a​u​s​e​d
+	 */
+	bmcStatePaused: string
+	/**
+	 * U​n​k​n​o​w​n
+	 */
+	bmcStateUnknown: string
+	/**
+	 * P​o​w​e​r​ ​o​n
+	 */
+	bmcIntentOn: string
+	/**
+	 * S​h​u​t​ ​d​o​w​n
+	 */
+	bmcIntentShutdown: string
+	/**
+	 * F​o​r​c​e​ ​o​f​f
+	 */
+	bmcIntentForceOff: string
+	/**
+	 * R​e​s​t​a​r​t
+	 */
+	bmcIntentRestart: string
+	/**
+	 * P​o​w​e​r​ ​c​y​c​l​e
+	 */
+	bmcIntentPowerCycle: string
+	/**
+	 * {​a​c​t​i​o​n​}​:​ ​s​e​n​t​ ​t​o​ ​t​h​e​ ​B​M​C​.
+	 * @param {unknown} action
+	 */
+	bmcPowerSent: RequiredParams<'action'>
+	/**
+	 * {​a​c​t​i​o​n​}​ ​{​n​a​m​e​}​?​ ​T​h​i​s​ ​a​c​t​s​ ​o​n​ ​t​h​e​ ​h​a​r​d​w​a​r​e​,​ ​w​h​a​t​e​v​e​r​ ​t​h​e​ ​o​p​e​r​a​t​i​n​g​ ​s​y​s​t​e​m​ ​i​s​ ​d​o​i​n​g​.
+	 * @param {unknown} action
+	 * @param {unknown} name
+	 */
+	bmcPowerConfirm: RequiredParams<'action' | 'name'>
+	/**
+	 * M​a​n​u​f​a​c​t​u​r​e​r
+	 */
+	bmcManufacturer: string
+	/**
+	 * M​o​d​e​l
+	 */
+	bmcModel: string
+	/**
+	 * S​e​r​i​a​l​ ​n​u​m​b​e​r
+	 */
+	bmcSerial: string
+	/**
+	 * B​I​O​S
+	 */
+	bmcBios: string
+	/**
+	 * T​e​m​p​e​r​a​t​u​r​e​s
+	 */
+	bmcTemperatures: string
+	/**
+	 * F​a​n​s
+	 */
+	bmcFans: string
+	/**
+	 * P​o​w​e​r​ ​d​r​a​w
+	 */
+	bmcPowerDraw: string
+	/**
+	 * T​h​e​ ​B​M​C​ ​l​i​s​t​s​ ​m​o​r​e​ ​s​e​n​s​o​r​s​ ​t​h​a​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​r​e​a​d​s​;​ ​t​h​e​ ​f​i​r​s​t​ ​6​4​ ​a​r​e​ ​s​h​o​w​n​.
+	 */
+	bmcSensorsTruncated: string
 }
 
 export type TranslationFunctions = {
@@ -4758,6 +5064,298 @@ export type TranslationFunctions = {
 	 * This agent could not reach the desktop, or could not secure the connection to it.
 	 */
 	desktopRdpUnreachable: () => LocalizedString
+	/**
+	 * Backup
+	 */
+	backup: () => LocalizedString
+	/**
+	 * {count} stored · up to {max} each
+	 */
+	backupSubtitle: (arg: { count: unknown, max: unknown }) => LocalizedString
+	/**
+	 * The agent keeps these files for the app's backup sync and for uploads from here. The app encrypts its backup with your backup password before sending it; the panel moves the files without opening them.
+	 */
+	backupWhatItIs: () => LocalizedString
+	/**
+	 * Nothing is stored yet. Turn on sync to this agent in the app, or upload a backup file.
+	 */
+	backupEmpty: () => LocalizedString
+	/**
+	 * Upload
+	 */
+	backupUpload: () => LocalizedString
+	/**
+	 * App sync
+	 */
+	backupAppFile: () => LocalizedString
+	/**
+	 * Stored {name}.
+	 */
+	backupStored: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Removed {name}.
+	 */
+	backupRemoved: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Remove {name}? A device that syncs to this agent uploads its backup again on its next sync; any other file is gone for good.
+	 */
+	backupConfirmRemove: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * {size} is more than the {max} this agent takes.
+	 */
+	backupTooLarge: (arg: { max: unknown, size: unknown }) => LocalizedString
+	/**
+	 * The file is larger than this agent takes.
+	 */
+	backupTooLargeRefused: () => LocalizedString
+	/**
+	 * This agent keeps at most 64 backups. Remove one first.
+	 */
+	backupTooMany: () => LocalizedString
+	/**
+	 * A backup name may hold only letters, digits, dots, dashes and underscores, and may not start with a dot.
+	 */
+	backupInvalidName: () => LocalizedString
+	/**
+	 * That backup is no longer on the agent.
+	 */
+	backupGone: () => LocalizedString
+	/**
+	 * BMC
+	 */
+	bmc: () => LocalizedString
+	/**
+	 * {count} BMCs reached through this agent
+	 */
+	bmcSubtitle: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * Add BMC
+	 */
+	bmcAdd: () => LocalizedString
+	/**
+	 * Edit BMC
+	 */
+	bmcEdit: () => LocalizedString
+	/**
+	 * Remove BMC
+	 */
+	bmcRemove: () => LocalizedString
+	/**
+	 * Remove {name}? Its stored password goes with it.
+	 */
+	bmcRemoveConfirm: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Saved {name}.
+	 */
+	bmcSaved: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Removed {name}.
+	 */
+	bmcRemoved: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * No BMC has been added to this agent. An admin can add one.
+	 */
+	bmcEmpty: () => LocalizedString
+	/**
+	 * No BMC yet. Add one by its HTTPS address and an account on it; this agent signs in for you.
+	 */
+	bmcEmptyAdmin: () => LocalizedString
+	/**
+	 * Name
+	 */
+	bmcName: () => LocalizedString
+	/**
+	 * Address
+	 */
+	bmcUrl: () => LocalizedString
+	/**
+	 * https://host or https://host:port, as reached from this agent's machine.
+	 */
+	bmcUrlHint: () => LocalizedString
+	/**
+	 * User name
+	 */
+	bmcUsername: () => LocalizedString
+	/**
+	 * Password
+	 */
+	bmcPassword: () => LocalizedString
+	/**
+	 * Unchanged
+	 */
+	bmcPasswordKept: () => LocalizedString
+	/**
+	 * Certificate
+	 */
+	bmcCert: () => LocalizedString
+	/**
+	 * No certificate is trusted yet. This agent will not sign in until one is.
+	 */
+	bmcCertNone: () => LocalizedString
+	/**
+	 * Read the certificate
+	 */
+	bmcCertRead: () => LocalizedString
+	/**
+	 * Subject
+	 */
+	bmcCertSubject: () => LocalizedString
+	/**
+	 * Issuer
+	 */
+	bmcCertIssuer: () => LocalizedString
+	/**
+	 * Valid
+	 */
+	bmcCertValid: () => LocalizedString
+	/**
+	 * This certificate has expired.
+	 */
+	bmcCertExpired: () => LocalizedString
+	/**
+	 * Compare the fingerprint with the one the BMC's own console shows before trusting it.
+	 */
+	bmcCertCompare: () => LocalizedString
+	/**
+	 * Trust this certificate
+	 */
+	bmcCertTrust: () => LocalizedString
+	/**
+	 * No certificate is trusted for this BMC yet. Edit it and read its certificate first.
+	 */
+	bmcCertNotReviewed: () => LocalizedString
+	/**
+	 * The BMC presented a different certificate from the trusted one.
+	 */
+	bmcCertRejected: () => LocalizedString
+	/**
+	 * The BMC rejected the user name or password.
+	 */
+	bmcUnauthorized: () => LocalizedString
+	/**
+	 * The BMC account may not do this.
+	 */
+	bmcForbidden: () => LocalizedString
+	/**
+	 * This agent could not reach the BMC.
+	 */
+	bmcUnreachable: () => LocalizedString
+	/**
+	 * The address did not answer as a Redfish service.
+	 */
+	bmcNotRedfish: () => LocalizedString
+	/**
+	 * The BMC lists no system to manage.
+	 */
+	bmcNoSystem: () => LocalizedString
+	/**
+	 * This system offers no power actions.
+	 */
+	bmcNotSupported: () => LocalizedString
+	/**
+	 * That BMC is no longer on this agent.
+	 */
+	bmcGone: () => LocalizedString
+	/**
+	 * Each BMC needs its own name, up to 64 characters.
+	 */
+	bmcInvalidName: () => LocalizedString
+	/**
+	 * The address has to be https://host or https://host:port, with no path.
+	 */
+	bmcInvalidUrl: () => LocalizedString
+	/**
+	 * A user name is required.
+	 */
+	bmcInvalidUsername: () => LocalizedString
+	/**
+	 * The certificate fingerprint is not a SHA-256 fingerprint.
+	 */
+	bmcInvalidCertificate: () => LocalizedString
+	/**
+	 * On
+	 */
+	bmcStateOn: () => LocalizedString
+	/**
+	 * Off
+	 */
+	bmcStateOff: () => LocalizedString
+	/**
+	 * Powering on
+	 */
+	bmcStatePoweringOn: () => LocalizedString
+	/**
+	 * Powering off
+	 */
+	bmcStatePoweringOff: () => LocalizedString
+	/**
+	 * Paused
+	 */
+	bmcStatePaused: () => LocalizedString
+	/**
+	 * Unknown
+	 */
+	bmcStateUnknown: () => LocalizedString
+	/**
+	 * Power on
+	 */
+	bmcIntentOn: () => LocalizedString
+	/**
+	 * Shut down
+	 */
+	bmcIntentShutdown: () => LocalizedString
+	/**
+	 * Force off
+	 */
+	bmcIntentForceOff: () => LocalizedString
+	/**
+	 * Restart
+	 */
+	bmcIntentRestart: () => LocalizedString
+	/**
+	 * Power cycle
+	 */
+	bmcIntentPowerCycle: () => LocalizedString
+	/**
+	 * {action}: sent to the BMC.
+	 */
+	bmcPowerSent: (arg: { action: unknown }) => LocalizedString
+	/**
+	 * {action} {name}? This acts on the hardware, whatever the operating system is doing.
+	 */
+	bmcPowerConfirm: (arg: { action: unknown, name: unknown }) => LocalizedString
+	/**
+	 * Manufacturer
+	 */
+	bmcManufacturer: () => LocalizedString
+	/**
+	 * Model
+	 */
+	bmcModel: () => LocalizedString
+	/**
+	 * Serial number
+	 */
+	bmcSerial: () => LocalizedString
+	/**
+	 * BIOS
+	 */
+	bmcBios: () => LocalizedString
+	/**
+	 * Temperatures
+	 */
+	bmcTemperatures: () => LocalizedString
+	/**
+	 * Fans
+	 */
+	bmcFans: () => LocalizedString
+	/**
+	 * Power draw
+	 */
+	bmcPowerDraw: () => LocalizedString
+	/**
+	 * The BMC lists more sensors than this agent reads; the first 64 are shown.
+	 */
+	bmcSensorsTruncated: () => LocalizedString
 }
 
 export type Formatters = {}
