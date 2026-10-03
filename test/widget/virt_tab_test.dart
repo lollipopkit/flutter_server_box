@@ -1159,7 +1159,6 @@ void main() {
       var shellClosed = false;
       unawaited(shell.done.then((_) => shellClosed = true));
       final consoles = container.read(virtTextConsolesProvider.notifier);
-      final keepAlive = container.read(sessionKeepAliveProvider.notifier);
       consoles.park(id, session, name: 'web-01', host: 'pve-host');
       await settle(tester);
 
@@ -1178,23 +1177,28 @@ void main() {
         closeTo(tester.getTopRight(find.byType(SSHPage)).dx, 20),
       );
       expect(container.read(virtTextConsolesProvider), isEmpty);
-      expect(keepAlive.isRegistered(id), isFalse, reason: 'on screen');
+      // On screen: nothing is waiting on it, so no notice.
+      expect(container.read(sessionKeepAliveProvider), isEmpty);
 
       // Another guest: left, so kept running and counted off screen.
       await tester.tap(find.text('dns-01'));
       await settle(tester);
       expect(find.byType(SSHPage), findsNothing);
       expect(container.read(virtTextConsolesProvider), contains(id));
-      expect(keepAlive.isRegistered(id), isTrue);
       expect(shellClosed, isFalse);
+      // Left off screen: its notice comes at the timeout, which is what being
+      // tracked means now that there is no predicate to ask.
+      await tester.pump(const Duration(seconds: 61));
+      await settle(tester);
+      expect(container.read(sessionKeepAliveProvider), contains(id));
 
-      // Back: the same session, in place again.
+      // Back: the same session, in place again, and the notice is withdrawn.
       await tester.tap(find.text('web-01'));
       await settle(tester);
       await tester.tap(segment(app_locale.l10n.virtConsole));
       await settle(tester);
       expect(find.byType(SSHPage), findsOneWidget);
-      expect(keepAlive.isRegistered(id), isFalse);
+      expect(container.read(sessionKeepAliveProvider), isEmpty);
 
       await tester.tap(find.byTooltip(libL10n.close));
       await settle(tester);

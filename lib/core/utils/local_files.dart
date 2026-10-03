@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/src/rust/api/file.dart' as ffi;
 
@@ -13,18 +12,6 @@ import 'package:server_box/src/rust/api/file.dart' as ffi;
 /// making that protected directory the browser's root.
 abstract final class LocalFiles {
   static Future<String>? _ensuring;
-  static var _copyFileExclusive = ffi.copyFileExclusive;
-
-  @visibleForTesting
-  static set copyFileExclusiveForTesting(
-    Future<bool> Function({required String source, required String destination})
-    copy,
-  ) => _copyFileExclusive = copy;
-
-  @visibleForTesting
-  static void resetCopyFileExclusiveForTesting() {
-    _copyFileExclusive = ffi.copyFileExclusive;
-  }
 
   /// Creates [Paths.file], copies in anything the documents-directory release
   /// left, and answers with it.
@@ -137,7 +124,7 @@ abstract final class LocalFiles {
   ) async {
     switch (source) {
       case File():
-        return _copyFileExclusive(source: staging, destination: dest);
+        return ffi.copyFileExclusive(source: staging, destination: dest);
       case Directory():
         if (await FileSystemEntity.type(dest, followLinks: false) !=
             FileSystemEntityType.notFound) {

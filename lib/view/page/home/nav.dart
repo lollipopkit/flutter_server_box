@@ -7,11 +7,6 @@ part of '../home.dart';
 /// out twice for the sake of a hover.
 const _kRailWidth = NavRailMetrics.width;
 
-/// What the `Row` holds open for it, which is the number above and not the one
-/// the rail reaches when it opens.
-@visibleForTesting
-const railWidth = _kRailWidth;
-
 /// What the rail spends on things that are not destinations.
 ///
 /// Its own padding and the settings at its foot. Subtracted before the

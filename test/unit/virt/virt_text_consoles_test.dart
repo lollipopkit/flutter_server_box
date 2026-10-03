@@ -68,10 +68,9 @@ void main() {
       final (s, _) = session();
       consoles.park(id, s, name: 'web-01', host: 'pve');
       expect(container.read(virtTextConsolesProvider), {id});
-      expect(
-        container.read(sessionKeepAliveProvider.notifier).isRegistered(id),
-        isTrue,
-      );
+      // Tracked: left off screen, its notice comes at the timeout.
+      async.elapse(const Duration(seconds: 61));
+      expect(container.read(sessionKeepAliveProvider), contains(id));
     });
   });
 
@@ -90,11 +89,9 @@ void main() {
       expect(consoles.take(id), same(s));
       expect(consoles.take(id), isNull);
       expect(container.read(virtTextConsolesProvider), isEmpty);
-      expect(
-        container.read(sessionKeepAliveProvider.notifier).isRegistered(id),
-        isFalse,
-      );
+      // Out of the timeout with it: no notice ever arrives.
       async.elapse(const Duration(hours: 1));
+      expect(container.read(sessionKeepAliveProvider), isEmpty);
       expect(s.foreground, same(shell), reason: 'still running');
     });
   });
@@ -123,10 +120,6 @@ void main() {
 
       expect(first.foreground, isNull, reason: 'the first was closed');
       expect(container.read(virtTextConsolesProvider), isEmpty);
-      expect(
-        container.read(sessionKeepAliveProvider.notifier).isRegistered(id),
-        isFalse,
-      );
       // No notice later for a console that no longer exists.
       async.elapse(const Duration(hours: 1));
       expect(container.read(sessionKeepAliveProvider), isNot(contains(id)));
@@ -146,10 +139,9 @@ void main() {
       async.flushMicrotasks();
       expect(shellClosed, isTrue);
       expect(container.read(virtTextConsolesProvider), isEmpty);
-      expect(
-        container.read(sessionKeepAliveProvider.notifier).isRegistered(id),
-        isFalse,
-      );
+      // And out of the timeout: nothing follows it.
+      async.elapse(const Duration(hours: 1));
+      expect(container.read(sessionKeepAliveProvider), isEmpty);
 
       // A console opened after the guest started again is kept as usual.
       final (next, _) = session();
@@ -165,10 +157,9 @@ void main() {
       shell!.finish();
       async.flushMicrotasks();
       expect(container.read(virtTextConsolesProvider), isEmpty);
-      expect(
-        container.read(sessionKeepAliveProvider.notifier).isRegistered(id),
-        isFalse,
-      );
+      // Nothing left to warn about later.
+      async.elapse(const Duration(hours: 1));
+      expect(container.read(sessionKeepAliveProvider), isEmpty);
     });
   });
 }

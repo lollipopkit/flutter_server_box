@@ -345,8 +345,9 @@ void main() {
         NavRailMetrics.expandedWidth,
       );
       // And the tab beside it never moved: the rail is painted over it, and
-      // what the `Row` holds open is the shut width — see `_kRailWidth`.
-      expect(railWidth, NavRailMetrics.width);
+      // what the `Row` holds open is the shut width — the number the first
+      // assertion above reads off the laid-out rail (`_kRailWidth` is
+      // `NavRailMetrics.width` by definition).
     });
 
     testWidgets('lays an item out inside the pill at every width', (

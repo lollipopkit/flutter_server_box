@@ -494,19 +494,6 @@ enum VirtSnapshotForm {
   external,
 }
 
-/// Why an external snapshot cannot be taken here, for the form to say before
-/// the host is asked.
-enum VirtExternalIssue {
-  /// The guest has no disk (or none QEMU would open).
-  noDisk,
-
-  /// A disk is raw: an external snapshot needs a qcow2 image under it.
-  rawDisk,
-
-  /// The chain could not be read, so nothing is known about it.
-  unknown,
-}
-
 /// The file libvirt would give an overlay it makes itself, for a disk at
 /// [diskPath]: `<disk>.<snapshot>`, beside the disk it backs (captured on
 /// libvirt 11.3.0). The app names its own overlays the same way, so a chain
@@ -555,34 +542,6 @@ VirtStoragePool? virtPoolOfFile(Iterable<VirtStoragePool> pools, String file) {
   }
   return null;
 }
-
-/// Why a snapshot cannot be taken, from what the host answered about its
-/// storage, in the host's own words; null when one can.
-///
-/// [supported] is `false` only where the host said so (PVE's own
-/// `feature?feature=snapshot`, which its web UI asks before offering the
-/// button). A storage that does not support snapshots is the usual reason: a
-/// disk on a `dir` storage is a raw file, and PVE snapshots need qcow2.
-String? virtSnapshotSupportIssue({
-  required bool? supported,
-  required VirtGuest guest,
-  required Iterable<String> storageNames,
-}) {
-  if (supported != false) return null;
-  final where = storageNames.isEmpty ? '' : ' (${storageNames.join(', ')})';
-  return '${guest.name}$where';
-}
-
-/// Whether a disk on a storage of [content] kinds can be snapshotted on PVE.
-///
-/// PVE has no `snapshot` content kind: `content` lists what may be *stored*
-/// (`images`, `rootdir`, `iso`, ...), and snapshot support follows the
-/// storage's type and the disk's format instead — a `dir` storage holds raw
-/// files, an `lvmthin` or `zfspool` one makes a snapshot per volume. So this
-/// is a hint for the form, never a refusal: the host's own answer
-/// (`snapshotSupported`) is what decides.
-bool virtPveStorageMaySnapshot(String type) =>
-    type == 'lvmthin' || type == 'zfspool' || type == 'rbd' || type == 'btrfs';
 
 /// What one difference between a snapshot's configuration and the guest's
 /// current one is about, as the view groups it.

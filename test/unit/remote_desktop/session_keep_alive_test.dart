@@ -92,7 +92,13 @@ void main() {
       async.elapse(const Duration(milliseconds: 1));
       expect(closed, ['a']);
       expect(notices(container), isEmpty);
-      expect(keepAlive.isRegistered('a'), isFalse);
+
+      // Out of the timeout for good: nothing is tracked any more, so no
+      // further notice and no second close.
+      keepAlive.setVisible('a', false);
+      async.elapse(const Duration(hours: 1));
+      expect(notices(container), isEmpty);
+      expect(closed, ['a']);
     });
   });
 
@@ -386,16 +392,10 @@ void main() {
         profile,
         target: () => Completer<RemoteDesktopTarget>().future,
       );
-      expect(keepAlive.isRegistered('vm'), isTrue);
 
       container.invalidate(remoteDesktopSessionsProvider);
       container.read(remoteDesktopSessionsProvider);
       async.flushMicrotasks();
-      expect(
-        keepAlive.isRegistered('vm'),
-        isFalse,
-        reason: 'no notice for a desktop already closed',
-      );
 
       // Off screen for the timeout and the grace: nothing to show or close.
       async.elapse(const Duration(minutes: 5));
@@ -416,7 +416,15 @@ void main() {
         onClose: () {},
       );
       async.flushMicrotasks();
-      expect(keepAlive.isRegistered('vm'), isTrue);
+      // The other owner's registration survives the desktop provider's
+      // disposal — the whole point of the owner tag.
+      keepAlive.setVisible('vm', false);
+      async.elapse(const Duration(seconds: 61));
+      expect(
+        container.read(sessionKeepAliveProvider),
+        contains('vm'),
+        reason: 'the registration made after the dispose is still tracked',
+      );
 
       container.dispose();
       async.flushTimers();

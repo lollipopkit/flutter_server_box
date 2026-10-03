@@ -4,26 +4,20 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/local_files.dart';
 
+import '../../helpers/rust_lib_helper.dart';
+
 void main() {
   late Directory root;
 
   setUpAll(() async {
+    // The import publishes through the FFI's exclusive create, so the real
+    // library is what this exercises — no seam stands in for it.
+    await initRustLibForTest();
     root = await Directory.systemTemp.createTemp('serverbox_local_files_');
     Paths.file = (await Directory('${root.path}/device').create()).path;
-    LocalFiles.copyFileExclusiveForTesting =
-        ({required source, required destination}) async {
-          try {
-            await File(destination).create(exclusive: true);
-          } on PathExistsException {
-            return false;
-          }
-          await File(source).copy(destination);
-          return true;
-        };
   });
 
   tearDownAll(() async {
-    LocalFiles.resetCopyFileExclusiveForTesting();
     if (await root.exists()) await root.delete(recursive: true);
   });
 

@@ -498,11 +498,3 @@ final class _IntroPage extends StatelessWidget {
     Toast.show(ctx.l10n.backupPasswordSet);
   }
 }
-
-/// Whether this launch's intro shows the Virtualization page.
-@visibleForTesting
-Future<bool> introShowsVirt() => _IntroPage._virtUnseen();
-
-/// What that page adds, as it would be read now.
-@visibleForTesting
-({bool pveMoved, bool inBar}) introVirtFacts() => _IntroPage._virtFacts();

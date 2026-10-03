@@ -69,26 +69,20 @@ void main() {
     expect(portSpecCovers('6000-6010', 6011), isFalse);
   });
 
-  test('worstChange says only what got worse', () {
-    expect(
-      worstChange([(FirewallReach.open, FirewallReach.open)]),
-      isNull,
-    );
-    expect(
-      worstChange([(FirewallReach.blocked, FirewallReach.blocked)]),
-      isNull,
-    );
-    expect(
-      worstChange([
-        (FirewallReach.open, FirewallReach.unknown),
-        (FirewallReach.open, FirewallReach.blocked),
-      ]),
-      FirewallReach.blocked,
-    );
-    expect(
-      worstChange([(FirewallReach.open, FirewallReach.limited)]),
-      FirewallReach.limited,
-    );
+  group('FirewallReach', () {
+    test('only a step down counts as worse', () {
+      expect(FirewallReach.open.worseThan(FirewallReach.open), isFalse);
+      expect(FirewallReach.blocked.worseThan(FirewallReach.blocked), isFalse);
+      expect(FirewallReach.open.worseThan(FirewallReach.blocked), isFalse);
+      expect(FirewallReach.unknown.worseThan(FirewallReach.open), isTrue);
+      expect(FirewallReach.blocked.worseThan(FirewallReach.open), isTrue);
+      expect(FirewallReach.limited.worseThan(FirewallReach.open), isTrue);
+      // What the confirmation reads to decide a change shuts a way in.
+      expect(FirewallReach.limited.admits, isTrue);
+      expect(FirewallReach.open.admits, isTrue);
+      expect(FirewallReach.unknown.admits, isFalse);
+      expect(FirewallReach.blocked.admits, isFalse);
+    });
   });
 
   group('FirewallProbe', () {
