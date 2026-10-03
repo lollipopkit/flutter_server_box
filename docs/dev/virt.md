@@ -1143,6 +1143,13 @@ termproxy's framing (`Client::open_console`, `pve::termproxy`; the agent's
 `/virt/console/ws`). The app still opens its console websocket itself
 (`PveBackend.openConsoleSocket`, Dart's TLS path) with the session's headers.
 
+Since 5.3, snapshots: `sbm_virt::snapshot` (the model, the chain, a diff and
+its groups, the rules a form checks: `name_issue`, `memory`), PVE's listing,
+storage support, diff, create, revert (with the start task waited for) and
+delete on `pve::Client`, and libvirt's mapping (`host::snapshot_of`,
+`chain_of`, `overlays`, `pool_of_file`). The app's `virtSnapshotNameIssue`,
+`virtSnapshotMemory`, `virtPoolHoldsFiles` and `virtPoolOfFile` call them.
+
 Still in Dart until their part of item 5 moves them (each marked
 `TODO(migration)`): every other PVE call `PveBackend` makes, built by a Dio
 whose adapter hands the request to `PveSession.raw` (the session's rules

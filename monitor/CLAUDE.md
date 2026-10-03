@@ -312,7 +312,14 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   and does termproxy's ticket, `OK`, input framing, resize and keep-alive
   itself, so the console ticket never reaches the browser. A libvirt serial
   console answers the `virsh console` command to run in the panel terminal
-  (it needs a PTY). `tests/virt_api.rs` runs against a fake PVE API over TLS.
+  (it needs a PTY). `POST /virt/snapshots` lists a guest's snapshots with
+  what a new one may be (`refusal`, `memory`, libvirt's `chain` and the pools
+  an overlay can go in); `POST /virt/snapshot` (`op`: create, revert,
+  delete) and `/virt/snapshot/diff` act through `sbm_virt` — the libvirt
+  flows (the chain read for an external one, the AppArmor checks before a
+  revert or a delete, the leftover overlays deleted with it) are the app's,
+  moved into the agent's handler. `tests/virt_api.rs` runs against a fake PVE
+  API over TLS.
   `/backup` (`api/backup.rs`): blobs the agent hosts for the app's backup sync
   (`MonitorBackupStorage`, a fourth `RemoteStorage`) and the panel's backup
   page, as rows (migration 015) so they share the database's protection from
