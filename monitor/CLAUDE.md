@@ -299,7 +299,20 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   (through sudo once it refused the account, as the app does), or nothing.
   A host's failure is answered 200 with `error` (`sbm_virt::error::Error`),
   never as this agent's status. `virt` to see and act; admin to configure and
-  pin. `tests/virt_api.rs` runs against a fake PVE API over TLS.
+  pin. `POST /virt/detail` and `/virt/history` (PVE's stored `rrddata`; null
+  on libvirt) read one guest. **A console is resolved before its socket
+  opens**: `POST /virt/console` asks PVE for the `vncproxy`/`termproxy`
+  ticket (or reads a libvirt display's port and password) and mints a
+  `Purpose::Virt` ticket bound to it, kept in `AppState.virt` for 30 s —
+  `/ws-ticket` refuses that purpose, so a client cannot name a target.
+  `/virt/console/ws` (`api/ws/virt_console.rs`) speaks `/stream/ws`'s
+  framing (`ready`/`error`/`exit`, binary bytes) so the panel's
+  `RelayChannel` drives noVNC on it; it dials the libvirt display, or opens
+  PVE's `vncwebsocket` with the session (`sbm_virt::pve::Client::open_console`)
+  and does termproxy's ticket, `OK`, input framing, resize and keep-alive
+  itself, so the console ticket never reaches the browser. A libvirt serial
+  console answers the `virsh console` command to run in the panel terminal
+  (it needs a PTY). `tests/virt_api.rs` runs against a fake PVE API over TLS.
   `/backup` (`api/backup.rs`): blobs the agent hosts for the app's backup sync
   (`MonitorBackupStorage`, a fourth `RemoteStorage`) and the panel's backup
   page, as rows (migration 015) so they share the database's protection from

@@ -158,6 +158,14 @@ impl LibvirtRates {
     }
 }
 
+/// [`virt_domain_detail_script`]'s output read into
+/// `sbm_virt::model::GuestDetail` JSON (sbm_virt::libvirt::host).
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_libvirt_guest_detail(raw: String) -> Result<String, VirtFfiError> {
+    let detail = libvirt::parse_domain_detail(&raw)?;
+    serde_json::to_string(&libvirt::host::detail_of(&detail)).map_err(json_err)
+}
+
 /// The `virsh` actions that carry out `action` on a guest the last view read
 /// with `state_reason` and `offered`; None when it does not offer it. A
 /// crashed domain's start is a destroy first (sbm_virt::libvirt::host).

@@ -1,9 +1,13 @@
+import 'dart:convert';
+
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_backup.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
+import 'package:server_box/data/model/virt/virt_rust.dart';
+import 'package:server_box/src/rust/api/pve.dart' show pveGuestDetail;
 
 /// Reading PVE API answers into the Virtualization models. Pure functions,
 /// tested against captured payloads.
@@ -12,162 +16,25 @@ import 'package:server_box/data/model/virt/virt_resources.dart';
 /// a field missing from one entry (a guest being created has no name yet, an offline node no
 /// figures) costs that field, not the whole listing.
 abstract final class PveResources {
-  /// `/nodes/{node}/{type}/{vmid}/rrddata`: rates already, bytes per second.
-  static List<VirtStats> parseRrd(List<Object?> raw) {
-    final out = <VirtStats>[];
-    for (final item in raw) {
-      if (item is! Map) continue;
-      final e = item.cast<String, Object?>();
-      final time = _int(e['time']);
-      if (time == null) continue;
-      final cpu = _double(e['cpu']);
-      out.add(
-        VirtStats(
-          at: DateTime.fromMillisecondsSinceEpoch(time * 1000),
-          cpu: cpu == null ? null : cpu * 100,
-          memUsed: _double(e['mem'])?.round(),
-          memTotal: _double(e['maxmem'])?.round(),
-          diskUsed: _positive(_double(e['disk'])?.round()),
-          diskTotal: _positive(_double(e['maxdisk'])?.round()),
-          diskRead: _double(e['diskread']),
-          diskWrite: _double(e['diskwrite']),
-          netIn: _double(e['netin']),
-          netOut: _double(e['netout']),
-        ),
-      );
-    }
-    out.sort((a, b) => a.at.compareTo(b.at));
-    return out;
-  }
-
   static final _qemuDisk = RegExp(
     r'^(ide|sata|scsi|virtio|efidisk|tpmstate|unused)(\d+)$',
   );
   static final _lxcDisk = RegExp(r'^(rootfs|mp\d+|unused\d+)$');
   static final _net = RegExp(r'^net(\d+)$');
-  static final _serial = RegExp(r'^serial\d+$');
 
-  /// `/nodes/{node}/{type}/{vmid}/config`.
+  /// `/nodes/{node}/{type}/{vmid}/config`: `sbm_virt::pve::resources`'s
+  /// reading of it.
   static VirtGuestDetail parseConfig(
     Map<String, Object?> config,
     VirtGuestKind kind,
-  ) {
-    final disks = <VirtDisk>[];
-    final nics = <VirtNic>[];
-    var hasSerial = false;
-    final keys = config.keys.toList()..sort(_naturalCompare);
-    for (final key in keys) {
-      final value = config[key];
-      if (value is! String) continue;
-      if (kind == VirtGuestKind.qemu && _serial.hasMatch(key)) {
-        hasSerial = true;
-      }
-      final diskMatch = kind == VirtGuestKind.qemu
-          ? _qemuDisk.firstMatch(key)
-          : _lxcDisk.firstMatch(key);
-      if (diskMatch != null) {
-        disks.add(_disk(key, value, kind, diskMatch));
-        continue;
-      }
-      if (_net.hasMatch(key)) nics.add(_nic(key, value, kind));
-    }
-
-    final vgaRaw = config['vga'];
-    final vga = vgaRaw is String ? _options(vgaRaw).first.$2 : 'std';
-    // `vga: serial0` puts the display on the serial port, and `none` has no
-    // display: neither has a VNC console.
-    final hasVnc = vga != 'none' && !vga.startsWith('serial');
-    final graphics = <VirtGraphics>[
-      if (kind == VirtGuestKind.qemu) VirtGraphics(kind: vga),
-    ];
-    return VirtGuestDetail(
-      disks: disks,
-      nics: nics,
-      graphics: graphics,
-      consoles: switch (kind) {
-        VirtGuestKind.lxc => const {VirtConsoleKind.text},
-        VirtGuestKind.qemu => {
-          if (hasVnc) VirtConsoleKind.vnc,
-          if (hasSerial) VirtConsoleKind.text,
-        },
-      },
-      description: _str(config['description']),
-      arch: _str(config['arch']),
-      machine: _str(config['ostype']) ?? _str(config['machine']),
-    );
-  }
-
-  static VirtDisk _disk(
-    String key,
-    String value,
-    VirtGuestKind kind,
-    RegExpMatch match,
-  ) {
-    final opts = _options(value);
-    final named = {for (final (k, v) in opts) k: v};
-    final volume = volumeOf(value);
-    final media = named['media'];
-    final source = volume == null || volume == 'none' ? null : volume;
-    final String device;
-    if (kind == VirtGuestKind.lxc) {
-      device = key == 'rootfs' ? 'rootfs' : 'mp';
-    } else {
-      device = media == 'cdrom' ? 'cdrom' : 'disk';
-    }
-    return VirtDisk(
-      device: device,
-      source: source,
-      target: key,
-      bus: kind == VirtGuestKind.qemu ? match.group(1) : null,
-      format: named['format'],
-      readonly: named['ro'] == '1' || media == 'cdrom',
-      size: _size(named['size']),
-    );
-  }
-
-  static VirtNic _nic(String key, String value, VirtGuestKind kind) {
-    final opts = _options(value);
-    final named = {for (final (k, v) in opts) k: v};
-    if (kind == VirtGuestKind.lxc) {
-      return VirtNic(
-        kind: key,
-        mac: named['hwaddr'],
-        source: named['bridge'],
-        model: named['type'] ?? 'veth',
-        target: named['name'],
-      );
-    }
-    // `virtio=BC:24:11:AA:BB:CC,bridge=vmbr0`: the model is the key of the
-    // pair that carries the MAC.
-    const models = {
-      'virtio',
-      'e1000',
-      'e1000e',
-      'rtl8139',
-      'vmxnet3',
-      'i82551',
-      'i82557b',
-      'i82559er',
-      'ne2k_isa',
-      'ne2k_pci',
-      'pcnet',
-    };
-    String? model;
-    String? mac;
-    for (final (k, v) in opts) {
-      if (models.contains(k)) {
-        model = k;
-        mac = v.isEmpty ? null : v;
-        break;
-      }
-    }
-    return VirtNic(
-      kind: key,
-      mac: mac ?? named['macaddr'],
-      source: named['bridge'],
-      model: model ?? named['model'],
-    );
-  }
+  ) => VirtRust.detail(
+    jsonDecode(
+      pveGuestDetail(
+        configJson: jsonEncode(config),
+        lxc: kind == VirtGuestKind.lxc,
+      ),
+    ),
+  );
 
   // ---------------------------------------------------------------------------
   // Snapshots, storage, networks
@@ -573,6 +440,11 @@ abstract final class PveResources {
     final disks = <VirtHwDisk>[];
     final nics = <VirtHwNic>[];
     final devices = <VirtHwDevice>[];
+    // The disks and NICs as `sbm_virt` reads them; what only the Hardware
+    // view needs is read here beside them.
+    final base = parseConfig(config, kind);
+    final disksByKey = {for (final d in base.disks) d.target: d};
+    final nicsByKey = {for (final n in base.nics) n.kind: n};
     final keys = config.keys.toList()..sort(_naturalCompare);
     for (final key in keys) {
       final value = config[key];
@@ -594,7 +466,7 @@ abstract final class PveResources {
         if (key.startsWith('unused') || key.startsWith('efidisk')) {
           continue;
         }
-        final d = _disk(key, value, kind, diskMatch);
+        final d = disksByKey[key] ?? VirtDisk(target: key);
         final named = {for (final (k, v) in _options(value)) k: v};
         final source = d.source;
         disks.add(
@@ -631,7 +503,7 @@ abstract final class PveResources {
         }
       }
       if (_net.hasMatch(key)) {
-        final n = _nic(key, value, kind);
+        final n = nicsByKey[key] ?? VirtNic(kind: key);
         final named = {for (final (k, v) in _options(value)) k: v};
         nics.add(
           VirtHwNic(
@@ -1028,12 +900,6 @@ abstract final class PveResources {
     final int i => i,
     final num n => n.toInt(),
     final String s => int.tryParse(s),
-    _ => null,
-  };
-
-  static double? _double(Object? v) => switch (v) {
-    final num n => n.toDouble(),
-    final String s => double.tryParse(s),
     _ => null,
   };
 

@@ -197,19 +197,6 @@ void main() {
       expect(lxc.nics.single.mac, 'BC:24:11:00:00:01');
       expect(lxc.consoles, {VirtConsoleKind.text});
     });
-
-    test('rrddata is already rates, sorted oldest first', () {
-      final points = PveResources.parseRrd([
-        {'time': 1700000060, 'cpu': 0.5, 'netin': 10.5, 'maxmem': 1024.0},
-        {'time': 1700000000, 'cpu': 0.25, 'diskread': 3.0},
-        {'cpu': 1},
-      ]);
-      expect(points, hasLength(2));
-      expect(points.first.cpu, 25);
-      expect(points.first.diskRead, 3);
-      expect(points.last.netIn, 10.5);
-      expect(points.last.memTotal, 1024);
-    });
   });
 
   test('consoles: termproxy and vncproxy tickets', () async {

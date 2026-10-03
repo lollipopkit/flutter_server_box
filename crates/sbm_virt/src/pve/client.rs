@@ -28,11 +28,11 @@ use std::time::Duration;
 use sbm_redfish::cert::CertInfo;
 use serde_json::{Map, Value};
 
-use super::http::{Body, Connector, Http, Method, Request, Response, TransportError};
+use super::http::{Body, Connector, Http, Method, Request, Response, Stream, TransportError, Upgrade};
 use super::resources;
 use super::{Auth, Config, form, seg, version_less_than};
 use crate::error::{Detail, Error, ErrorKind, Result};
-use crate::model::{Capabilities, Guest, Host, HostKind, HostView, PowerAction};
+use crate::model::{Capabilities, ConsoleKind, Guest, GuestDetail, GuestKind, HistoryWindow, Host, HostKind, HostView, PowerAction, Stats};
 use crate::rates::RateTracker;
 
 /// How long PVE accepts a ticket or a TFA challenge (`$ticket_lifetime` in
@@ -328,6 +328,128 @@ impl Client {
             self.read_status(guest, &path).await;
         }
         Ok(())
+    }
+
+    /// Disks, NICs, display and the consoles `guest` opens.
+    pub async fn detail(&self, guest: &Guest) -> Result<GuestDetail> {
+        Ok(resources::parse_config(&self.config_of(guest).await?, guest.kind))
+    }
+
+    async fn config_of(&self, guest: &Guest) -> Result<serde_json::Map<String, Value>> {
+        let path = guest_path(guest)?;
+        match self.call(Method::Get, &format!("{path}/config"), None, false).await? {
+            Value::Object(config) => Ok(config),
+            _ => Err(Error::detail(ErrorKind::InvalidResponse, Detail::InvalidData)),
+        }
+    }
+
+    /// Usage over `window` as PVE stored it (`rrddata`), oldest first.
+    pub async fn history(&self, guest: &Guest, window: HistoryWindow) -> Result<Vec<Stats>> {
+        let path = guest_path(guest)?;
+        let query = format!("{path}/rrddata?timeframe={}&cf=AVERAGE", window.as_str());
+        match self.call(Method::Get, &query, None, false).await? {
+            Value::Array(list) => Ok(resources::parse_rrd(&list)),
+            _ => Err(Error::detail(ErrorKind::InvalidResponse, Detail::InvalidData)),
+        }
+    }
+
+    /// A fresh ticket for `kind` of console on `guest`. Fetch right before
+    /// connecting: a ticket is good for a short while and one use.
+    pub async fn console(&self, guest: &Guest, kind: ConsoleKind) -> Result<PveConsole> {
+        let path = guest_path(guest)?;
+        let vnc = kind == ConsoleKind::Vnc;
+        if vnc && guest.kind == GuestKind::Lxc {
+            return Err(Error::msg(ErrorKind::Unsupported, "Containers have a text console only"));
+        }
+        let serial = if !vnc && guest.kind == GuestKind::Qemu {
+            Some(resources::serial_device(&self.config_of(guest).await?))
+        } else {
+            None
+        };
+        let request = |generate_password: bool| {
+            let mut fields: Vec<(&str, &str)> = Vec::new();
+            if vnc {
+                fields.push(("websocket", "1"));
+            }
+            // A VNC password of its own rather than the ticket: QEMU checks
+            // only the first 8 bytes of one, and a bare ticket's first 8 are
+            // `PVEVNC:` and one more character. PVE 9.2 generates one for any
+            // `websocket=1` request anyway and answers it as `password`.
+            if vnc && generate_password {
+                fields.push(("generate-password", "1"));
+            }
+            if let Some(serial) = &serial {
+                fields.push(("serial", serial));
+            }
+            let body = Body::form(form(&fields));
+            let endpoint = format!("{path}/{}", if vnc { "vncproxy" } else { "termproxy" });
+            async move { self.call(Method::Post, &endpoint, Some(body), true).await }
+        };
+        let data = match request(vnc).await {
+            // `generate-password` is PVE 7.2 and later; an older API refuses
+            // the parameter by name.
+            Err(e) if vnc && e.status == Some(400) && e.message.as_deref().is_some_and(|m| m.contains("generate-password")) => {
+                request(false).await?
+            }
+            other => other?,
+        };
+        let port = resources::int(data.get("port")).and_then(|p| u16::try_from(p).ok());
+        let ticket = resources::str_of(data.get("ticket"));
+        let (Some(port), Some(ticket)) = (port, ticket) else {
+            return Err(Error::detail(ErrorKind::InvalidResponse, Detail::InvalidData));
+        };
+        let user = data.get("user").and_then(Value::as_str).unwrap_or_default().to_owned();
+        let password = vnc.then(|| resources::str_of(data.get("password")).unwrap_or_else(|| ticket.clone()));
+        Ok(PveConsole {
+            node: guest.node.clone().unwrap_or_default(),
+            guest_kind: guest.kind,
+            vmid: guest.vmid.unwrap_or_default(),
+            kind,
+            port,
+            ticket,
+            user,
+            password,
+        })
+    }
+
+    /// Opens `console`'s `vncwebsocket` with the session's credentials, over
+    /// the same connection rules and certificate decision as the API calls.
+    /// A text console has been logged in to termproxy (its ticket sent, `OK`
+    /// read) when this returns; the caller frames what it sends
+    /// ([`super::termproxy`]).
+    pub async fn open_console(&self, console: &PveConsole) -> Result<ConsoleSocket> {
+        use futures_util::{SinkExt, StreamExt};
+        use tokio_tungstenite::tungstenite::Message;
+        let session = self.ensure_session().await?;
+        let req = Request { method: Method::Get, path: console.websocket_path(), headers: session.headers(), body: None };
+        let stream = match session.http.upgrade(req).await {
+            Ok(Upgrade::Switched(stream)) => stream,
+            Ok(Upgrade::Refused(resp)) => return Err(self.status_err(&resp, true)),
+            Err(e) => return Err(self.transport_err(e)),
+        };
+        let mut socket = tokio_tungstenite::WebSocketStream::from_raw_socket(
+            stream,
+            tokio_tungstenite::tungstenite::protocol::Role::Client,
+            None,
+        )
+        .await;
+        if console.kind == ConsoleKind::Text {
+            let refused = || Error::msg(ErrorKind::ActionFailed, "termproxy did not accept the ticket");
+            socket
+                .send(Message::Binary(super::termproxy::auth(&console.user, &console.ticket).into()))
+                .await
+                .map_err(|e| Error::msg(ErrorKind::Unreachable, e.to_string()))?;
+            // A refused ticket gets no answer: the socket ends before `OK`.
+            loop {
+                match tokio::time::timeout(Duration::from_secs(15), socket.next()).await {
+                    Ok(Some(Ok(Message::Binary(b)))) if b.as_ref() == super::termproxy::ACCEPTED => break,
+                    Ok(Some(Ok(Message::Text(t)))) if t.as_bytes() == super::termproxy::ACCEPTED => break,
+                    Ok(Some(Ok(Message::Ping(_) | Message::Pong(_)))) => continue,
+                    _ => return Err(refused()),
+                }
+            }
+        }
+        Ok(socket)
     }
 
     /// Waits for the task `upid` on `node` to stop. Its exit status other
@@ -930,6 +1052,73 @@ impl Client {
         st.fresh.retain(|id, _| listed.contains(id));
         out
     }
+}
+
+/// A console's websocket, once open.
+pub type ConsoleSocket = tokio_tungstenite::WebSocketStream<Box<dyn Stream>>;
+
+/// A PVE console: `termproxy` or `vncproxy`, reached through the node's
+/// `vncwebsocket` with the session's credentials. Never printed: the ticket
+/// and the password are secrets.
+#[derive(Clone, PartialEq, Eq)]
+pub struct PveConsole {
+    pub node: String,
+    pub guest_kind: GuestKind,
+    pub vmid: u32,
+    pub kind: ConsoleKind,
+    /// The proxy's port on the node, passed back to `vncwebsocket`.
+    pub port: u16,
+    pub ticket: String,
+    /// The PVE user the ticket was issued to.
+    pub user: String,
+    /// VNC only: the password QEMU was given for this connection — the one
+    /// `generate-password` made, or before PVE 7.2 the ticket itself.
+    pub password: Option<String>,
+}
+
+impl std::fmt::Debug for PveConsole {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "PveConsole({}/{}/{}, {:?}, port {})", self.node, self.guest_kind.as_str(), self.vmid, self.kind, self.port)
+    }
+}
+
+impl PveConsole {
+    /// `vncwebsocket`'s path and query, under the API's origin.
+    pub fn websocket_path(&self) -> String {
+        let ticket: String = url_query(&self.ticket);
+        format!(
+            "{API}/nodes/{}/{}/{}/vncwebsocket?port={}&vncticket={ticket}",
+            seg(&self.node),
+            self.guest_kind.as_str(),
+            self.vmid,
+            self.port
+        )
+    }
+
+    /// The password as RFB's VNC authentication uses it: DES keyed with the
+    /// first 8 bytes, which is also all QEMU keeps of a longer one.
+    pub fn rfb_password(&self) -> Option<String> {
+        self.password.as_ref().map(|p| p.chars().take(8).collect())
+    }
+
+    /// The first thing a termproxy client sends: `<user>:<ticket>\n`.
+    pub fn termproxy_login(&self) -> String {
+        format!("{}:{}\n", self.user, self.ticket)
+    }
+}
+
+/// `Uri.encodeQueryComponent`: a space as `+`, the rest percent-encoded
+/// beyond `A-Za-z0-9-._~*`.
+fn url_query(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    for b in s.bytes() {
+        match b {
+            b' ' => out.push('+'),
+            b if b.is_ascii_alphanumeric() || b"-._~*".contains(&b) => out.push(b as char),
+            b => out.push_str(&format!("%{b:02X}")),
+        }
+    }
+    out
 }
 
 /// What this build does with a PVE host.

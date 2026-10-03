@@ -3097,6 +3097,94 @@ type RootTranslation = {
 	 */
 	pveInvalidTokenId: string
 	/**
+	 * O​v​e​r​v​i​e​w
+	 */
+	virtViewOverview: string
+	/**
+	 * H​a​r​d​w​a​r​e
+	 */
+	virtViewHardware: string
+	/**
+	 * C​o​n​s​o​l​e
+	 */
+	virtViewConsole: string
+	/**
+	 * D​i​s​k​s
+	 */
+	virtDisks: string
+	/**
+	 * N​e​t​w​o​r​k​ ​i​n​t​e​r​f​a​c​e​s
+	 */
+	virtNics: string
+	/**
+	 * r​e​a​d​-​o​n​l​y
+	 */
+	virtReadonly: string
+	/**
+	 * L​i​v​e
+	 */
+	virtRangeLive: string
+	/**
+	 * H​o​u​r
+	 */
+	virtRangeHour: string
+	/**
+	 * D​a​y
+	 */
+	virtRangeDay: string
+	/**
+	 * W​e​e​k
+	 */
+	virtRangeWeek: string
+	/**
+	 * T​h​e​ ​h​o​s​t​ ​h​a​s​ ​n​o​ ​r​e​a​d​i​n​g​s​ ​f​o​r​ ​t​h​i​s​ ​r​a​n​g​e​.
+	 */
+	virtChartNone: string
+	/**
+	 * G​r​a​p​h​i​c​a​l​ ​c​o​n​s​o​l​e
+	 */
+	virtConsoleVnc: string
+	/**
+	 * T​e​x​t​ ​c​o​n​s​o​l​e
+	 */
+	virtConsoleText: string
+	/**
+	 * O​p​e​n
+	 */
+	virtConsoleOpen: string
+	/**
+	 * C​l​o​s​e
+	 */
+	virtConsoleClose: string
+	/**
+	 * T​h​e​ ​c​o​n​s​o​l​e​ ​d​i​d​ ​n​o​t​ ​o​p​e​n​.
+	 */
+	virtConsoleFailed: string
+	/**
+	 * T​h​e​ ​c​o​n​s​o​l​e​ ​e​n​d​e​d​.
+	 */
+	virtConsoleEnded: string
+	/**
+	 * T​h​i​s​ ​g​u​e​s​t​ ​h​a​s​ ​n​o​ ​c​o​n​s​o​l​e​.
+	 */
+	virtConsoleNone: string
+	/**
+	 * A​ ​c​o​n​s​o​l​e​ ​o​p​e​n​s​ ​o​n​c​e​ ​t​h​e​ ​g​u​e​s​t​ ​r​u​n​s​.
+	 */
+	virtConsoleStopped: string
+	/**
+	 * V​N​C​ ​p​a​s​s​w​o​r​d
+	 */
+	virtConsolePassword: string
+	/**
+	 * T​h​e​ ​d​i​s​p​l​a​y​'​s​ ​p​a​s​s​w​o​r​d​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​r​e​a​d​.​ ​E​n​t​e​r​ ​i​t​ ​i​f​ ​i​t​ ​a​s​k​s​ ​f​o​r​ ​o​n​e​.
+	 */
+	virtConsolePasswordHint: string
+	/**
+	 * A​ ​s​e​r​i​a​l​ ​c​o​n​s​o​l​e​ ​r​u​n​s​ ​i​n​ ​a​ ​t​e​r​m​i​n​a​l​.​ ​O​p​e​n​ ​t​h​e​ ​t​e​r​m​i​n​a​l​ ​a​n​d​ ​r​u​n​:
+	 */
+	virtConsoleCommand: string
+	/**
 	 * Y​e​s
 	 */
 	yes: string
@@ -6094,6 +6182,94 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * A token ID looks like user@realm!name.
 	 */
 	pveInvalidTokenId: () => LocalizedString
+	/**
+	 * Overview
+	 */
+	virtViewOverview: () => LocalizedString
+	/**
+	 * Hardware
+	 */
+	virtViewHardware: () => LocalizedString
+	/**
+	 * Console
+	 */
+	virtViewConsole: () => LocalizedString
+	/**
+	 * Disks
+	 */
+	virtDisks: () => LocalizedString
+	/**
+	 * Network interfaces
+	 */
+	virtNics: () => LocalizedString
+	/**
+	 * read-only
+	 */
+	virtReadonly: () => LocalizedString
+	/**
+	 * Live
+	 */
+	virtRangeLive: () => LocalizedString
+	/**
+	 * Hour
+	 */
+	virtRangeHour: () => LocalizedString
+	/**
+	 * Day
+	 */
+	virtRangeDay: () => LocalizedString
+	/**
+	 * Week
+	 */
+	virtRangeWeek: () => LocalizedString
+	/**
+	 * The host has no readings for this range.
+	 */
+	virtChartNone: () => LocalizedString
+	/**
+	 * Graphical console
+	 */
+	virtConsoleVnc: () => LocalizedString
+	/**
+	 * Text console
+	 */
+	virtConsoleText: () => LocalizedString
+	/**
+	 * Open
+	 */
+	virtConsoleOpen: () => LocalizedString
+	/**
+	 * Close
+	 */
+	virtConsoleClose: () => LocalizedString
+	/**
+	 * The console did not open.
+	 */
+	virtConsoleFailed: () => LocalizedString
+	/**
+	 * The console ended.
+	 */
+	virtConsoleEnded: () => LocalizedString
+	/**
+	 * This guest has no console.
+	 */
+	virtConsoleNone: () => LocalizedString
+	/**
+	 * A console opens once the guest runs.
+	 */
+	virtConsoleStopped: () => LocalizedString
+	/**
+	 * VNC password
+	 */
+	virtConsolePassword: () => LocalizedString
+	/**
+	 * The display's password could not be read. Enter it if it asks for one.
+	 */
+	virtConsolePasswordHint: () => LocalizedString
+	/**
+	 * A serial console runs in a terminal. Open the terminal and run:
+	 */
+	virtConsoleCommand: () => LocalizedString
 	/**
 	 * Yes
 	 */

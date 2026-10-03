@@ -1135,6 +1135,14 @@ The model, both backends' mapping onto it and the PVE session live in
   tunnel of its `ServerTcpDialer` (`PveSession`, FFI), so SSH, the agent's
   relay and a local socket all work as before.
 
+Since 5.2 also `sbm_virt`'s: a guest's detail (`pve::resources::parse_config`,
+`libvirt::host::detail_of`), PVE's stored history (`parse_rrd`), console
+tickets (`Client::console`, the serial port termproxy takes, the
+`generate-password` fallback) and opening a console's `vncwebsocket` with
+termproxy's framing (`Client::open_console`, `pve::termproxy`; the agent's
+`/virt/console/ws`). The app still opens its console websocket itself
+(`PveBackend.openConsoleSocket`, Dart's TLS path) with the session's headers.
+
 Still in Dart until their part of item 5 moves them (each marked
 `TODO(migration)`): every other PVE call `PveBackend` makes, built by a Dio
 whose adapter hands the request to `PveSession.raw` (the session's rules

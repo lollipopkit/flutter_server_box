@@ -12,8 +12,7 @@
 //! [`PveError`], whose `kind` the app branches on and whose `detail_json`
 //! (`sbm_virt::error::Detail`) carries what it phrases itself.
 
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, RwLock};
 
 use sbm_virt::error::{Error, ErrorKind};
 use sbm_virt::model::{Guest, PowerAction};
@@ -168,6 +167,81 @@ pub struct PveTiming {
     pub task_timeout_ms: Option<u64>,
 }
 
+/// Which console (mirrors sbm_virt::model::ConsoleKind).
+pub enum PveConsoleKind {
+    Text,
+    Vnc,
+}
+
+/// How far back stored usage reaches (mirrors sbm_virt::model::HistoryWindow).
+pub enum PveHistoryWindow {
+    Hour,
+    Day,
+    Week,
+}
+
+/// A PVE console ticket (mirrors sbm_virt::pve::client::PveConsole): fetch
+/// right before connecting, a ticket is good for a short while and one use.
+pub struct PveConsoleTicket {
+    pub node: String,
+    pub lxc: bool,
+    pub vmid: u32,
+    pub vnc: bool,
+    pub port: u16,
+    /// Never logged.
+    pub ticket: String,
+    pub user: String,
+    /// VNC: the password QEMU was given for this connection. Never logged.
+    pub password: Option<String>,
+    /// `vncwebsocket`'s path and query, under the API's origin.
+    pub websocket_path: String,
+}
+
+/// A guest's configuration (`/nodes/../config` JSON) read into
+/// `sbm_virt::model::GuestDetail` JSON.
+#[flutter_rust_bridge::frb(sync)]
+pub fn pve_guest_detail(config_json: String, lxc: bool) -> Result<String, PveError> {
+    let config: serde_json::Map<String, serde_json::Value> = serde_json::from_str(&config_json)
+        .map_err(|e| Error::msg(ErrorKind::InvalidResponse, e.to_string()))?;
+    let kind = if lxc { sbm_virt::model::GuestKind::Lxc } else { sbm_virt::model::GuestKind::Qemu };
+    let detail = sbm_virt::pve::resources::parse_config(&config, kind);
+    serde_json::to_string(&detail).map_err(|e| Error::msg(ErrorKind::InvalidResponse, e.to_string()).into())
+}
+
+/// A guest as the app holds it, from the last load (mirrors the fields of
+/// sbm_virt::model::Guest that a call on one guest reads).
+pub struct PveGuestRef {
+    pub id: String,
+    pub name: String,
+    pub node: Option<String>,
+    pub vmid: Option<u32>,
+    pub lxc: bool,
+    /// What it offered at that load; an action not among these is refused.
+    pub actions: Vec<VirtActionKind>,
+}
+
+impl From<PveGuestRef> for Guest {
+    fn from(g: PveGuestRef) -> Self {
+        use sbm_virt::model::{GuestKind, GuestState};
+        Guest {
+            id: g.id,
+            name: g.name,
+            kind: if g.lxc { GuestKind::Lxc } else { GuestKind::Qemu },
+            state: GuestState::Unknown,
+            state_reason: None,
+            vmid: g.vmid,
+            node: g.node,
+            vcpu: None,
+            mem_bytes: None,
+            uptime: None,
+            tags: Vec::new(),
+            template: false,
+            autostart: None,
+            actions: g.actions.into_iter().map(power_action).collect(),
+        }
+    }
+}
+
 /// The loopback tunnel a session's connections go to, swapped when the app
 /// opens a new one (the old one ended with its SSH connection).
 struct Loopback(RwLock<LoopbackDial>);
@@ -183,9 +257,6 @@ impl Dial for Loopback {
 pub struct PveSession {
     client: Client,
     loopback: Arc<Loopback>,
-    /// The guests the last load read, by id: what a power action is checked
-    /// against, so a guest's offered actions are always the host's answer.
-    guests: Mutex<HashMap<String, Guest>>,
 }
 
 impl PveSession {
@@ -207,7 +278,6 @@ impl PveSession {
         Ok(PveSession {
             client: Client::new(config, connector, options),
             loopback,
-            guests: Mutex::new(HashMap::new()),
         })
     }
 
@@ -253,32 +323,65 @@ impl PveSession {
     /// `sbm_virt::model::HostView` JSON.
     pub async fn load(&self) -> Result<String, PveError> {
         let view = self.client.load().await?;
-        *self.guests.lock().unwrap() = view.guests.iter().map(|g| (g.id.clone(), g.clone())).collect();
         serde_json::to_string(&view).map_err(|e| Error::msg(ErrorKind::InvalidResponse, e.to_string()).into())
     }
 
-    /// Runs `action` on the guest the last load read as `guest_id`, and
-    /// returns once PVE has finished it.
-    pub async fn power(&self, guest_id: String, action: VirtActionKind) -> Result<(), PveError> {
-        let guest = self.guests.lock().unwrap().get(&guest_id).cloned();
-        let Some(guest) = guest else {
-            return Err(Error::msg(ErrorKind::ActionFailed, format!("no guest {guest_id}")).into());
-        };
-        Ok(self.client.power(&guest, power_action(action)).await?)
-    }
-
-    /// Reads the guest's state again after an action made through
-    /// [`PveSession::raw`] (a snapshot revert), so the next load shows it.
-    pub async fn refresh_status(&self, guest_id: String) {
-        let guest = self.guests.lock().unwrap().get(&guest_id).cloned();
-        if let Some(guest) = guest {
-            self.client.refresh_status(&guest).await;
-        }
+    /// Runs `action` on `guest` and returns once PVE has finished it.
+    pub async fn power(&self, guest: PveGuestRef, action: VirtActionKind) -> Result<(), PveError> {
+        Ok(self.client.power(&guest.into(), power_action(action)).await?)
     }
 
     pub async fn submit_tfa(&self, code: String) -> Result<(), PveError> {
         Ok(self.client.submit_tfa(&code).await?)
     }
+
+    /// `sbm_virt::model::GuestDetail` JSON.
+    pub async fn detail(&self, guest: PveGuestRef) -> Result<String, PveError> {
+        let guest: Guest = guest.into();
+        let detail = self.client.detail(&guest).await?;
+        serde_json::to_string(&detail).map_err(|e| Error::msg(ErrorKind::InvalidResponse, e.to_string()).into())
+    }
+
+    /// `sbm_virt::model::Stats` JSON list, oldest first.
+    pub async fn history(&self, guest: PveGuestRef, window: PveHistoryWindow) -> Result<String, PveError> {
+        let guest: Guest = guest.into();
+        let window = match window {
+            PveHistoryWindow::Hour => sbm_virt::model::HistoryWindow::Hour,
+            PveHistoryWindow::Day => sbm_virt::model::HistoryWindow::Day,
+            PveHistoryWindow::Week => sbm_virt::model::HistoryWindow::Week,
+        };
+        let history = self.client.history(&guest, window).await?;
+        serde_json::to_string(&history).map_err(|e| Error::msg(ErrorKind::InvalidResponse, e.to_string()).into())
+    }
+
+    /// A fresh console ticket.
+    pub async fn console(&self, guest: PveGuestRef, kind: PveConsoleKind) -> Result<PveConsoleTicket, PveError> {
+        let guest: Guest = guest.into();
+        let kind = match kind {
+            PveConsoleKind::Text => sbm_virt::model::ConsoleKind::Text,
+            PveConsoleKind::Vnc => sbm_virt::model::ConsoleKind::Vnc,
+        };
+        let c = self.client.console(&guest, kind).await?;
+        Ok(PveConsoleTicket {
+            websocket_path: c.websocket_path(),
+            node: c.node,
+            lxc: c.guest_kind == sbm_virt::model::GuestKind::Lxc,
+            vmid: c.vmid,
+            vnc: c.kind == sbm_virt::model::ConsoleKind::Vnc,
+            port: c.port,
+            ticket: c.ticket,
+            user: c.user,
+            password: c.password,
+        })
+    }
+
+
+    /// Reads the guest's state again after an action made through
+    /// [`PveSession::raw`] (a snapshot revert), so the next load shows it.
+    pub async fn refresh_status(&self, guest: PveGuestRef) {
+        self.client.refresh_status(&guest.into()).await;
+    }
+
 
     /// Any API call in this session, `path` under `/api2/json` with its
     /// query: the body's `data` as JSON, or the whole body with `whole`.

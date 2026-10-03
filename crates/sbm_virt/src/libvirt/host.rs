@@ -243,3 +243,112 @@ pub fn sudo_refusal(stderr: &str, had_password: bool) -> Option<Error> {
     }
     Some(Error::new(if had_password { ErrorKind::SudoPasswordRejected } else { ErrorKind::SudoPasswordRequired }))
 }
+
+/// A domain's detail as the model has it: the consoles are a serial device
+/// (text) and a VNC display, configured or running.
+pub fn detail_of(d: &crate::libvirt::VirtDomainDetail) -> crate::model::GuestDetail {
+    use crate::model::{ConsoleKind, Disk, Display, Graphics, GuestDetail, Nic};
+    let xml = &d.xml;
+    let vnc = d.display.as_ref().is_some_and(|d| d.protocol == "vnc") || xml.graphics.iter().any(|g| g.kind == "vnc");
+    let mut consoles = std::collections::BTreeSet::new();
+    if xml.has_serial_console {
+        consoles.insert(ConsoleKind::Text);
+    }
+    if vnc {
+        consoles.insert(ConsoleKind::Vnc);
+    }
+    GuestDetail {
+        disks: xml
+            .disks
+            .iter()
+            .map(|x| Disk {
+                device: x.device.clone(),
+                source_type: x.source_type.clone(),
+                source: x.source.clone(),
+                target: x.target.clone(),
+                bus: x.bus.clone(),
+                format: x.format.clone(),
+                readonly: x.readonly,
+                size: None,
+            })
+            .collect(),
+        nics: xml
+            .nics
+            .iter()
+            .map(|n| Nic {
+                kind: n.kind.clone(),
+                mac: n.mac.clone(),
+                source: n.source.clone(),
+                model: n.model.clone(),
+                target: n.target.clone(),
+            })
+            .collect(),
+        graphics: xml
+            .graphics
+            .iter()
+            .map(|g| Graphics {
+                kind: g.kind.clone(),
+                port: g.port,
+                tls_port: g.tls_port,
+                autoport: g.autoport,
+                listen: g.listen.clone(),
+                socket: g.socket.clone(),
+            })
+            .collect(),
+        display: d.display.as_ref().map(|x| Display {
+            uri: x.uri.clone(),
+            protocol: x.protocol.clone(),
+            host: x.host.clone(),
+            port: x.port,
+            tls_port: x.tls_port,
+            socket: x.socket.clone(),
+        }),
+        consoles,
+        description: xml.description.clone(),
+        arch: xml.arch.clone(),
+        machine: xml.machine.clone(),
+    }
+}
+
+/// Where a running domain's VNC display is reached from the hypervisor, and
+/// its password for this one connection. Never printed.
+#[derive(Clone, PartialEq, Eq)]
+pub struct VncTarget {
+    pub host: String,
+    pub port: u16,
+    pub password: Option<String>,
+    /// Whether the password could be read; false: the display may still ask
+    /// for one nobody here could read.
+    pub password_known: bool,
+}
+
+impl std::fmt::Debug for VncTarget {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "VncTarget({}:{})", self.host, self.port)
+    }
+}
+
+/// [`super::parse_vnc_console`]'s answer as something to dial, or why not.
+pub fn vnc_target(info: &crate::libvirt::VirtVncConsoleInfo, name: &str) -> Result<VncTarget, Error> {
+    let Some(display) = &info.display else {
+        return Err(Error::msg(ErrorKind::Unsupported, format!("No VNC display while {name} is not running")));
+    };
+    match (display.protocol.as_str(), display.port) {
+        ("vnc", Some(port)) => Ok(VncTarget {
+            host: dial_host(display.host.as_deref()),
+            port,
+            password: info.password.clone(),
+            password_known: info.password_known,
+        }),
+        _ => Err(Error::msg(ErrorKind::Unsupported, format!("The display is {}, not a VNC port", display.uri))),
+    }
+}
+
+/// A listen address as something to dial from the hypervisor: a wildcard is
+/// the hypervisor itself.
+pub fn dial_host(host: Option<&str>) -> String {
+    match host {
+        None | Some("" | "0.0.0.0" | "::" | "[::]") => "127.0.0.1".to_owned(),
+        Some(h) => h.to_owned(),
+    }
+}

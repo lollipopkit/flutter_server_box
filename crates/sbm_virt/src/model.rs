@@ -296,6 +296,108 @@ pub struct HostView {
     pub capabilities: Capabilities,
 }
 
+/// The consoles a guest offers.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ConsoleKind {
+    /// PVE `termproxy` (a container's shell, a VM's serial port), or
+    /// libvirt's `virsh console` on the serial device.
+    Text,
+    /// VNC.
+    Vnc,
+}
+
+/// A disk, CD drive or container volume.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Disk {
+    /// `disk`, `cdrom`, `floppy`, `lun`; PVE containers: `rootfs`, `mp`.
+    pub device: String,
+    /// libvirt's source kind (`file`, `block`, `network`, `volume`).
+    pub source_type: Option<String>,
+    /// Path, `pool/volume`, PVE `storage:volume`; None for an empty drive.
+    pub source: Option<String>,
+    /// libvirt target (`vda`) or PVE key (`scsi0`, `rootfs`, `mp0`).
+    pub target: Option<String>,
+    pub bus: Option<String>,
+    pub format: Option<String>,
+    pub readonly: bool,
+    /// Bytes, where the configuration says (PVE `size=`).
+    pub size: Option<u64>,
+}
+
+/// A network interface.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Nic {
+    /// libvirt `network`/`bridge`/`direct`/...; PVE `net0`, `net1`, ...
+    pub kind: String,
+    pub mac: Option<String>,
+    /// Network, bridge or host device.
+    pub source: Option<String>,
+    /// NIC model (`virtio`, `e1000e`), or `veth` for a container.
+    pub model: Option<String>,
+    /// Host-side device while running (libvirt `vnetN`), or a container's
+    /// interface name (`eth0`).
+    pub target: Option<String>,
+}
+
+/// A graphics device in the guest's configuration.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Graphics {
+    /// `vnc`, `spice`, ...; PVE's `vga` type (`std`, `qxl`, `serial0`).
+    pub kind: String,
+    pub port: Option<u16>,
+    pub tls_port: Option<u16>,
+    pub autoport: bool,
+    pub listen: Option<String>,
+    pub socket: Option<String>,
+}
+
+/// Where a running libvirt guest's display listens (`virsh domdisplay`).
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Display {
+    pub uri: String,
+    pub protocol: String,
+    /// On the hypervisor's side; `localhost` is the hypervisor itself.
+    pub host: Option<String>,
+    pub port: Option<u16>,
+    pub tls_port: Option<u16>,
+    pub socket: Option<String>,
+}
+
+/// A guest's disks, NICs, display and the consoles it opens.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct GuestDetail {
+    pub disks: Vec<Disk>,
+    pub nics: Vec<Nic>,
+    pub graphics: Vec<Graphics>,
+    /// libvirt, while running with graphics.
+    pub display: Option<Display>,
+    pub consoles: BTreeSet<ConsoleKind>,
+    pub description: Option<String>,
+    pub arch: Option<String>,
+    /// libvirt machine type, or PVE `ostype`.
+    pub machine: Option<String>,
+}
+
+/// How far back a stored history reaches, in PVE `rrddata` terms.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum HistoryWindow {
+    Hour,
+    Day,
+    Week,
+}
+
+impl HistoryWindow {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            HistoryWindow::Hour => "hour",
+            HistoryWindow::Day => "day",
+            HistoryWindow::Week => "week",
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

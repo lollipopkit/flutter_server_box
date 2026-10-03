@@ -202,142 +202,44 @@ class PveBackend implements VirtBackend {
         message: '${action.name} is not offered for ${guest.name}',
       );
     }
-    final kind = switch (action) {
-      VirtPowerAction.start => VirtActionKind.start,
-      VirtPowerAction.shutdown => VirtActionKind.shutdown,
-      VirtPowerAction.reboot => VirtActionKind.reboot,
-      VirtPowerAction.forceStop => VirtActionKind.forceStop,
-      VirtPowerAction.suspend => VirtActionKind.suspend,
-      VirtPowerAction.resume => VirtActionKind.resume,
-    };
-    await _rust((s) => s.power(guestId: guest.id, action: kind));
+    final kind = _kindOf(action);
+    await _rust((s) => s.power(guest: _ref(guest), action: kind));
   }
 
   @override
-  Future<VirtGuestDetail> detail(VirtGuest guest) async {
-    final data = await _call(
-      (dio) => dio.get(_url('${_guestPath(guest)}/config')),
-    );
-    if (data is! Map) {
-      throw VirtErr(
-        type: VirtErrType.invalidResponse,
-        message: l10n.pveInvalidResponseData,
-      );
-    }
-    return PveResources.parseConfig(data.cast<String, Object?>(), guest.kind);
-  }
+  Future<VirtGuestDetail> detail(VirtGuest guest) async => VirtRust.detail(
+    jsonDecode(await _rust((s) => s.detail(guest: _ref(guest)))),
+  );
 
   @override
   Future<PveConsole> console(VirtGuest guest, VirtConsoleKind kind) async {
-    final path = _guestPath(guest);
-    final vnc = kind == VirtConsoleKind.vnc;
-    if (vnc && guest.kind == VirtGuestKind.lxc) {
-      throw VirtErr(
-        type: VirtErrType.unsupported,
-        message: 'Containers have a text console only',
-      );
-    }
-    final serial = !vnc && guest.kind == VirtGuestKind.qemu
-        ? await _serialDevice(guest)
-        : null;
-    Future<Object?> request({required bool generatePassword}) => _call(
-      (dio) => dio.post(
-        _url('$path/${vnc ? 'vncproxy' : 'termproxy'}'),
-        data: {
-          if (vnc) 'websocket': 1,
-          // A VNC password of its own rather than the ticket: QEMU checks
-          // only the first 8 bytes of one, and a bare ticket's first 8 are
-          // `PVEVNC:` and one more character. PVE 9.2 generates one for any
-          // `websocket=1` request anyway and answers it as `password`, with
-          // the ticket as `<password>:PVEVNC:...` (verified,
-          // test/e2e/virt_real_test.dart); the flag stays for versions that
-          // do not (since which release is not checked).
-          if (vnc && generatePassword) 'generate-password': 1,
-          'serial': ?serial,
-        },
-        options: Options(contentType: Headers.formUrlEncodedContentType),
+    final t = await _rust(
+      (s) => s.console(
+        guest: _ref(guest),
+        kind: kind == VirtConsoleKind.vnc ? PveConsoleKind.vnc : PveConsoleKind.text,
       ),
-      action: true,
     );
-    Object? data;
-    try {
-      data = await request(generatePassword: vnc);
-    } on VirtErr catch (e) {
-      // `generate-password` is PVE 7.2 and later; an older API refuses the
-      // parameter by name.
-      if (!vnc || !_refusedParam(e, 'generate-password')) rethrow;
-      data = await request(generatePassword: false);
-    }
-    if (data is! Map) {
-      throw VirtErr(
-        type: VirtErrType.invalidResponse,
-        message: l10n.pveInvalidResponseData,
-      );
-    }
-    final port = int.tryParse('${data['port']}');
-    final ticket = data['ticket'];
-    if (port == null || ticket is! String || ticket.isEmpty) {
-      throw VirtErr(
-        type: VirtErrType.invalidResponse,
-        message: l10n.pveInvalidResponseData,
-      );
-    }
-    final user = '${data['user'] ?? ''}';
-    if (vnc) {
-      final password = data['password'];
+    final guestKind = t.lxc ? VirtGuestKind.lxc : VirtGuestKind.qemu;
+    if (t.vnc) {
       return PveVncConsole(
-        node: guest.node!,
-        guestKind: guest.kind,
-        vmid: guest.vmid!,
-        port: port,
-        ticket: ticket,
-        user: user,
-        password: password is String && password.isNotEmpty
-            ? password
-            : ticket,
+        node: t.node,
+        guestKind: guestKind,
+        vmid: t.vmid,
+        port: t.port,
+        ticket: t.ticket,
+        user: t.user,
+        password: t.password ?? t.ticket,
       );
     }
     return PveTermConsole(
-      node: guest.node!,
-      guestKind: guest.kind,
-      vmid: guest.vmid!,
-      port: port,
-      ticket: ticket,
-      user: user,
+      node: t.node,
+      guestKind: guestKind,
+      vmid: t.vmid,
+      port: t.port,
+      ticket: t.ticket,
+      user: t.user,
     );
   }
-
-  /// The first serial port in a QEMU guest's configuration — what
-  /// `termproxy` attaches to — or `serial0` when it names none.
-  Future<String> _serialDevice(VirtGuest guest) async {
-    final data = await _call(
-      (dio) => dio.get(_url('${_guestPath(guest)}/config')),
-    );
-    final ports = data is Map
-        ? (data.keys
-              .whereType<String>()
-              .where(_serialKey.hasMatch)
-              .toList()
-            ..sort())
-        : const <String>[];
-    return ports.firstOrNull ?? 'serial0';
-  }
-
-  /// Whether [e] is PVE's parameter check refusing [name]: a 400 whose
-  /// `errors` names it.
-  static bool _refusedParam(VirtErr e, String name) {
-    final cause = e.cause;
-    if (cause is! DioException || cause.response?.statusCode != 400) {
-      return false;
-    }
-    final data = cause.response?.data;
-    final errors = data is Map ? data['errors'] : null;
-    return (errors is Map && errors.containsKey(name)) ||
-        (e.message?.contains(name) ?? false);
-  }
-
-  /// termproxy accepts `serial0` to `serial3`.
-  static final _serialKey = RegExp(r'^serial[0-3]$');
 
   /// A websocket to [console]'s `vncwebsocket`, over the same transport,
   /// certificate policy and login as the API calls.
@@ -373,21 +275,20 @@ class PveBackend implements VirtBackend {
   Future<List<VirtStats>> history(
     VirtGuest guest, {
     VirtHistoryWindow window = VirtHistoryWindow.hour,
-  }) async {
-    final data = await _call(
-      (dio) => dio.get(
-        _url('${_guestPath(guest)}/rrddata'),
-        queryParameters: {'timeframe': window.pveTimeframe, 'cf': 'AVERAGE'},
+  }) async => VirtRust.history(
+    jsonDecode(
+      await _rust(
+        (s) => s.history(
+          guest: _ref(guest),
+          window: switch (window) {
+            VirtHistoryWindow.hour => PveHistoryWindow.hour,
+            VirtHistoryWindow.day => PveHistoryWindow.day,
+            VirtHistoryWindow.week => PveHistoryWindow.week,
+          },
+        ),
       ),
-    );
-    if (data is! List) {
-      throw VirtErr(
-        type: VirtErrType.invalidResponse,
-        message: l10n.pveInvalidResponseData,
-      );
-    }
-    return PveResources.parseRrd(data);
-  }
+    ),
+  );
 
   // ---------------------------------------------------------------------------
   // Snapshots
@@ -622,7 +523,7 @@ class PveBackend implements VirtBackend {
       ),
     );
     if (start) await _waitStartTask(guest);
-    await _rust((s) => s.refreshStatus(guestId: guest.id));
+    await _rust((s) => s.refreshStatus(guest: _ref(guest)));
   }
 
   /// How long [_waitStartTask] looks for the start task to appear.
@@ -2805,6 +2706,25 @@ class PveBackend implements VirtBackend {
   // ---------------------------------------------------------------------------
   // The session (sbm_virt::pve over FFI)
   // ---------------------------------------------------------------------------
+
+  /// [guest] as a call on it carries it to the session.
+  static PveGuestRef _ref(VirtGuest guest) => PveGuestRef(
+    id: guest.id,
+    name: guest.name,
+    node: guest.node,
+    vmid: guest.vmid,
+    lxc: guest.kind == VirtGuestKind.lxc,
+    actions: [for (final a in guest.actions) _kindOf(a)],
+  );
+
+  static VirtActionKind _kindOf(VirtPowerAction action) => switch (action) {
+    VirtPowerAction.start => VirtActionKind.start,
+    VirtPowerAction.shutdown => VirtActionKind.shutdown,
+    VirtPowerAction.reboot => VirtActionKind.reboot,
+    VirtPowerAction.forceStop => VirtActionKind.forceStop,
+    VirtPowerAction.suspend => VirtActionKind.suspend,
+    VirtPowerAction.resume => VirtActionKind.resume,
+  };
 
   /// Who a password login is for: `root@pam` already names its realm.
   Map<String, String> _userFields() {

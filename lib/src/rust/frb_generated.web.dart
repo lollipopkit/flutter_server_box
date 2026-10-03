@@ -223,6 +223,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   double dco_decode_box_autoadd_f_64(dynamic raw);
 
   @protected
+  PveGuestRef dco_decode_box_autoadd_pve_guest_ref(dynamic raw);
+
+  @protected
   PveLogin dco_decode_box_autoadd_pve_login(dynamic raw);
 
   @protected
@@ -372,10 +375,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PowerState dco_decode_power_state(dynamic raw);
 
   @protected
+  PveConsoleKind dco_decode_pve_console_kind(dynamic raw);
+
+  @protected
+  PveConsoleTicket dco_decode_pve_console_ticket(dynamic raw);
+
+  @protected
   PveError dco_decode_pve_error(dynamic raw);
 
   @protected
+  PveGuestRef dco_decode_pve_guest_ref(dynamic raw);
+
+  @protected
   PveHeader dco_decode_pve_header(dynamic raw);
+
+  @protected
+  PveHistoryWindow dco_decode_pve_history_window(dynamic raw);
 
   @protected
   PveLogin dco_decode_pve_login(dynamic raw);
@@ -640,6 +655,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   double sse_decode_box_autoadd_f_64(SseDeserializer deserializer);
 
   @protected
+  PveGuestRef sse_decode_box_autoadd_pve_guest_ref(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   PveLogin sse_decode_box_autoadd_pve_login(SseDeserializer deserializer);
 
   @protected
@@ -819,10 +839,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PowerState sse_decode_power_state(SseDeserializer deserializer);
 
   @protected
+  PveConsoleKind sse_decode_pve_console_kind(SseDeserializer deserializer);
+
+  @protected
+  PveConsoleTicket sse_decode_pve_console_ticket(SseDeserializer deserializer);
+
+  @protected
   PveError sse_decode_pve_error(SseDeserializer deserializer);
 
   @protected
+  PveGuestRef sse_decode_pve_guest_ref(SseDeserializer deserializer);
+
+  @protected
   PveHeader sse_decode_pve_header(SseDeserializer deserializer);
+
+  @protected
+  PveHistoryWindow sse_decode_pve_history_window(SseDeserializer deserializer);
 
   @protected
   PveLogin sse_decode_pve_login(SseDeserializer deserializer);
@@ -1121,6 +1153,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_box_autoadd_f_64(double self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_pve_guest_ref(
+    PveGuestRef self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_pve_login(
     PveLogin self,
     SseSerializer serializer,
@@ -1349,10 +1387,31 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_power_state(PowerState self, SseSerializer serializer);
 
   @protected
+  void sse_encode_pve_console_kind(
+    PveConsoleKind self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_pve_console_ticket(
+    PveConsoleTicket self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_pve_error(PveError self, SseSerializer serializer);
 
   @protected
+  void sse_encode_pve_guest_ref(PveGuestRef self, SseSerializer serializer);
+
+  @protected
   void sse_encode_pve_header(PveHeader self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_pve_history_window(
+    PveHistoryWindow self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_pve_login(PveLogin self, SseSerializer serializer);

@@ -1,5 +1,6 @@
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/virt/virt.dart';
+import 'package:server_box/data/model/virt/virt_detail.dart';
 
 /// `sbm_virt::model::HostView` JSON (snake_case, the agent's wire format) read
 /// into this app's models. What a guest offers, its state and its usage are
@@ -61,6 +62,37 @@ abstract final class VirtRust {
         ?_action(a),
     },
   );
+
+  /// `sbm_virt::model::GuestDetail`.
+  static VirtGuestDetail detail(Object? json) {
+    if (json is! Map) throw _invalid('guest detail');
+    List<Map<String, dynamic>> maps(Object? v) => [
+      for (final e in (v as List? ?? const []).whereType<Map>())
+        Map<String, dynamic>.from(e),
+    ];
+    final display = json['display'];
+    return VirtGuestDetail(
+      disks: [for (final d in maps(json['disks'])) VirtDisk.fromJson(d)],
+      nics: [for (final n in maps(json['nics'])) VirtNic.fromJson(n)],
+      graphics: [for (final g in maps(json['graphics'])) VirtGraphics.fromJson(g)],
+      display: display is Map
+          ? VirtDisplay.fromJson(Map<String, dynamic>.from(display))
+          : null,
+      consoles: {
+        for (final c in (json['consoles'] as List? ?? const []))
+          if (c == 'text') VirtConsoleKind.text else if (c == 'vnc') VirtConsoleKind.vnc,
+      },
+      description: json['description'] as String?,
+      arch: json['arch'] as String?,
+      machine: json['machine'] as String?,
+    );
+  }
+
+  /// A list of `sbm_virt::model::Stats`.
+  static List<VirtStats> history(Object? json) {
+    if (json is! List) throw _invalid('history');
+    return [for (final s in json.whereType<Map>()) _stats(s)];
+  }
 
   static VirtStats _stats(Map s) => VirtStats(
     at: DateTime.fromMillisecondsSinceEpoch(s['at'] as int),

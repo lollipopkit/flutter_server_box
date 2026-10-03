@@ -234,26 +234,14 @@ class LibvirtBackend implements VirtBackend {
   }
 
   @override
-  Future<VirtGuestDetail> detail(VirtGuest guest) async {
-    final d = await _domainDetail(guest);
-    final xml = d.xml;
-    final vnc =
-        d.display?.protocol == 'vnc' ||
-        xml.graphics.any((g) => g.kind == 'vnc');
-    return VirtGuestDetail(
-      disks: xml.disks,
-      nics: xml.nics,
-      graphics: xml.graphics,
-      display: d.display,
-      consoles: {
-        if (xml.hasSerialConsole) VirtConsoleKind.text,
-        if (vnc) VirtConsoleKind.vnc,
-      },
-      description: xml.description,
-      arch: xml.arch,
-      machine: xml.machine,
-    );
-  }
+  Future<VirtGuestDetail> detail(VirtGuest guest) async => VirtRust.detail(
+    _decode(
+      await _run(
+        ffi.virtDomainDetailScript(domain: guest.id),
+        ({required String raw}) async => ffi.virtLibvirtGuestDetail(raw: raw),
+      ),
+    ),
+  );
 
   Future<LibvirtDomainDetail> _domainDetail(VirtGuest guest) async =>
       LibvirtDomainDetail.fromJson(

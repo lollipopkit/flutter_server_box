@@ -41,6 +41,11 @@ Future<String> parseVirtProbeJson({required String raw}) =>
 Future<String> parseVirtOverviewJson({required String raw}) =>
     RustLib.instance.api.crateApiVirtParseVirtOverviewJson(raw: raw);
 
+/// [`virt_domain_detail_script`]'s output read into
+/// `sbm_virt::model::GuestDetail` JSON (sbm_virt::libvirt::host).
+String virtLibvirtGuestDetail({required String raw}) =>
+    RustLib.instance.api.crateApiVirtVirtLibvirtGuestDetail(raw: raw);
+
 /// The `virsh` actions that carry out `action` on a guest the last view read
 /// with `state_reason` and `offered`; None when it does not offer it. A
 /// crashed domain's start is a destroy first (sbm_virt::libvirt::host).

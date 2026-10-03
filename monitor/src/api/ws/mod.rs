@@ -11,6 +11,7 @@ pub mod stream;
 pub mod terminal;
 pub mod ticket;
 pub mod upgrade;
+pub mod virt_console;
 
 use std::net::IpAddr;
 

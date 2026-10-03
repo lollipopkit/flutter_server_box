@@ -326,6 +326,7 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .route("/stream/ws", web::get().to(crate::api::ws::stream::stream_ws))
             .route("/rdp/ws", web::get().to(crate::api::ws::rdcleanpath::rdp_ws))
             .route("/listen/ws", web::get().to(ws::listen::listen_ws))
+            .route("/virt/console/ws", web::get().to(ws::virt_console::virt_console_ws))
             .service(
                 // Its own payload limit: ntex allows 32 KiB by
                 // default, and this endpoint's `stdin` carries the
@@ -391,6 +392,9 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .service(web::resource("/bmc/probe").route(web::post().to(crate::api::bmc::probe)))
             .service(web::resource("/virt").route(web::post().to(crate::api::virt::load)))
             .service(web::resource("/virt/power").route(web::post().to(crate::api::virt::power)))
+            .service(web::resource("/virt/detail").route(web::post().to(crate::api::virt::detail)))
+            .service(web::resource("/virt/history").route(web::post().to(crate::api::virt::history)))
+            .service(web::resource("/virt/console").route(web::post().to(crate::api::virt::console)))
             .service(
                 web::resource("/virt/pve")
                     .route(web::get().to(crate::api::virt::pve_get))
@@ -1061,6 +1065,9 @@ async fn issue_ws_ticket(
         ),
         Purpose::Listen => (ok(Grant::Listen), "listen not available"),
         Purpose::Rdp => (ok(Grant::Connect), "rdp not available"),
+        // Bound to the console it opens, so only `POST /virt/console` mints
+        // one.
+        Purpose::Virt => (false, "virt consoles are opened through /virt/console"),
     };
     if !available {
         Event::new(Kind::Ticket, Action::Denied, Outcome::Denied)
@@ -1084,6 +1091,7 @@ async fn issue_ws_ticket(
                     Purpose::Stream => "stream",
                     Purpose::Listen => "listen",
                     Purpose::Rdp => "rdp",
+                    Purpose::Virt => "virt",
                 })
                 .record(&app_state.db)
                 .await;

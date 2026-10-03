@@ -1130,3 +1130,109 @@ async fn a_raw_request_answers_as_the_host_did_and_keeps_the_session_rules() {
     assert_eq!(resp.status, 200);
     assert_eq!(api.count("POST /access/ticket"), 2);
 }
+
+#[test]
+fn config_disks_nics_consoles() {
+    use sbm_virt::model::ConsoleKind;
+    let qemu = json!({
+        "scsi0": "local-lvm:vm-100-disk-0,iothread=1,size=32G",
+        "scsi10": "local-lvm:vm-100-disk-2,size=512M",
+        "scsi2": "local-lvm:vm-100-disk-1,size=1T",
+        "ide2": "local:iso/debian.iso,media=cdrom,size=600M",
+        "net0": "virtio=BC:24:11:AA:BB:CC,bridge=vmbr0,firewall=1",
+        "serial0": "socket",
+        "vga": "qxl,memory=32",
+        "ostype": "l26",
+    });
+    let d = resources::parse_config(qemu.as_object().unwrap(), GuestKind::Qemu);
+    let targets: Vec<_> = d.disks.iter().map(|d| d.target.clone().unwrap()).collect();
+    assert_eq!(targets, ["ide2", "scsi0", "scsi2", "scsi10"]);
+    assert_eq!(d.disks[0].device, "cdrom");
+    assert_eq!(d.disks[1].size, Some(32 << 30));
+    assert_eq!(d.disks[1].source.as_deref(), Some("local-lvm:vm-100-disk-0"));
+    assert_eq!(d.disks[3].size, Some(512 << 20));
+    assert_eq!(d.nics[0].model.as_deref(), Some("virtio"));
+    assert_eq!(d.nics[0].mac.as_deref(), Some("BC:24:11:AA:BB:CC"));
+    assert_eq!(d.nics[0].source.as_deref(), Some("vmbr0"));
+    assert_eq!(d.graphics[0].kind, "qxl");
+    assert_eq!(d.consoles, [ConsoleKind::Vnc, ConsoleKind::Text].into_iter().collect());
+    assert_eq!(d.machine.as_deref(), Some("l26"));
+
+    let serial_only = resources::parse_config(json!({"vga": "serial0", "serial0": "socket"}).as_object().unwrap(), GuestKind::Qemu);
+    assert_eq!(serial_only.consoles, [ConsoleKind::Text].into_iter().collect());
+
+    let lxc = resources::parse_config(
+        json!({
+            "rootfs": "local-lvm:vm-100-disk-0,size=8G",
+            "mp0": "/srv/data,mp=/data,ro=1",
+            "net0": "name=eth0,bridge=vmbr0,hwaddr=BC:24:11:00:00:01,ip=dhcp,type=veth",
+        })
+        .as_object()
+        .unwrap(),
+        GuestKind::Lxc,
+    );
+    assert_eq!(lxc.disks.iter().map(|d| d.device.as_str()).collect::<Vec<_>>(), ["mp", "rootfs"]);
+    assert!(lxc.disks[0].readonly);
+    assert_eq!(lxc.nics[0].target.as_deref(), Some("eth0"));
+    assert_eq!(lxc.nics[0].mac.as_deref(), Some("BC:24:11:00:00:01"));
+    assert_eq!(lxc.consoles, [ConsoleKind::Text].into_iter().collect());
+}
+
+#[test]
+fn rrddata_is_already_rates_sorted_oldest_first() {
+    let points = resources::parse_rrd(&serde_json::from_value::<Vec<Value>>(json!([
+        {"time": 1700000060, "cpu": 0.5, "netin": 10.5, "maxmem": 1024.0},
+        {"time": 1700000000, "cpu": 0.25, "diskread": 3.0},
+        {"cpu": 1},
+    ])).unwrap());
+    assert_eq!(points.len(), 2);
+    assert_eq!(points[0].cpu, Some(25.0));
+    assert_eq!(points[0].disk_read, Some(3.0));
+    assert_eq!(points[1].net_in, Some(10.5));
+    assert_eq!(points[1].mem_total, Some(1024));
+}
+
+#[test]
+fn serial_ports_termproxy_takes() {
+    let cfg = |v: Value| resources::serial_device(v.as_object().unwrap());
+    assert_eq!(cfg(json!({"serial2": "socket", "serial1": "socket"})), "serial1");
+    assert_eq!(cfg(json!({"serial7": "socket"})), "serial0", "termproxy takes 0 to 3");
+    assert_eq!(cfg(json!({})), "serial0");
+}
+
+#[tokio::test]
+async fn consoles_termproxy_and_vncproxy_tickets() {
+    use sbm_virt::model::ConsoleKind;
+    let ticket = || json!({"port": "5900", "ticket": "PVEVNC:abc/=", "user": "root@pam", "upid": UPID});
+    let api = Fake::with(|a| {
+        a.resources = resources_fixture();
+        a.routes.insert("POST /nodes/pve/lxc/100/termproxy".into(), Box::new(move |_| ticket()));
+        a.routes.insert(
+            "POST /nodes/pve/qemu/102/vncproxy".into(),
+            Box::new(|_| json!({"port": 5901, "ticket": "PVEVNC:x", "user": "root@pam", "password": "s3cretpass"})),
+        );
+        a.routes.insert("GET /nodes/pve/qemu/102/config".into(), Box::new(|_| json!({"serial1": "socket"})));
+    });
+    let pve = api.client(token());
+    let view = pve.load().await.unwrap();
+    let term = pve.console(guest(&view, "lxc/100"), ConsoleKind::Text).await.unwrap();
+    assert_eq!(
+        term.websocket_path(),
+        "/api2/json/nodes/pve/lxc/100/vncwebsocket?port=5900&vncticket=PVEVNC%3Aabc%2F%3D"
+    );
+    assert_eq!(term.termproxy_login(), "root@pam:PVEVNC:abc/=\n");
+    assert_eq!(term.password, None);
+    assert!(!format!("{term:?}").contains("PVEVNC"), "the ticket is not printed");
+
+    let vnc = pve.console(guest(&view, "qemu/102"), ConsoleKind::Vnc).await.unwrap();
+    assert_eq!((vnc.port, vnc.rfb_password().as_deref()), (5901, Some("s3cretpa")));
+    assert!(api.api().bodies.last().unwrap().contains("websocket=1"));
+    assert!(api.api().bodies.last().unwrap().contains("generate-password=1"));
+    // A VM's text console names its first serial port.
+    api.api().routes.insert("POST /nodes/pve/qemu/102/termproxy".into(), Box::new(|_| json!({"port": 5902, "ticket": "t", "user": "u"})));
+    pve.console(guest(&view, "qemu/102"), ConsoleKind::Text).await.unwrap();
+    assert!(api.api().bodies.last().unwrap().contains("serial=serial1"), "{:?}", api.api().bodies.last());
+
+    let e = pve.console(guest(&view, "lxc/100"), ConsoleKind::Vnc).await.unwrap_err();
+    assert_eq!(e.kind, ErrorKind::Unsupported);
+}

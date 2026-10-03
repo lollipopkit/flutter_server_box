@@ -37,7 +37,7 @@ use sqlx::SqlitePool;
 use sbm_parser::SystemType;
 use sbm_virt::error::{Error as VirtError, ErrorKind};
 use sbm_virt::libvirt::{self, VirtHostProbe, host as lv};
-use sbm_virt::model::{HostKind, HostView, PowerAction};
+use sbm_virt::model::{ConsoleKind, Guest, HistoryWindow, HostKind, HostView, PowerAction};
 use sbm_virt::pve::http::{TcpDial, TlsConnector};
 use sbm_virt::pve::{self, Auth, Client};
 use sbm_virt::rates::RateTracker;
@@ -59,6 +59,40 @@ pub struct VirtState {
     /// told when the configuration changes.
     pve: tokio::sync::Mutex<Option<Arc<Client>>>,
     libvirt: tokio::sync::Mutex<LibvirtState>,
+    /// Consoles resolved by `POST /virt/console`, by the ticket that opens
+    /// each — what `/virt/console/ws` connects to. Never sent anywhere.
+    consoles: std::sync::Mutex<std::collections::HashMap<String, PendingConsole>>,
+}
+
+/// How long a resolved console waits for its websocket: the ticket's own
+/// lifetime.
+const CONSOLE_TTL: std::time::Duration = std::time::Duration::from_secs(30);
+
+pub(crate) struct PendingConsole {
+    pub(crate) subject: String,
+    pub(crate) target: ConsoleTarget,
+    /// What the audit row names: the guest and the kind.
+    pub(crate) what: String,
+    at: std::time::Instant,
+}
+
+/// What a console's websocket connects to.
+pub(crate) enum ConsoleTarget {
+    /// PVE's `vncwebsocket`, with the session that asked for the ticket.
+    Pve(Arc<Client>, Box<pve::client::PveConsole>),
+    /// A libvirt display, dialled from this machine.
+    Tcp { host: String, port: u16 },
+}
+
+impl VirtState {
+    /// The console `ticket` was minted for, once; `subject` must be who it
+    /// was minted for.
+    pub(crate) fn take_console(&self, ticket: &str, subject: &str) -> Option<PendingConsole> {
+        let mut consoles = self.consoles.lock().unwrap();
+        consoles.retain(|_, c| c.at.elapsed() < CONSOLE_TTL);
+        let pending = consoles.remove(ticket)?;
+        (pending.subject == subject).then_some(pending)
+    }
 }
 
 struct LibvirtState {
@@ -171,6 +205,53 @@ pub struct CertRequest {
 #[derive(Deserialize)]
 pub struct TfaRequest {
     code: String,
+}
+
+#[derive(Deserialize)]
+pub struct GuestRequest {
+    guest: String,
+    #[serde(default)]
+    password: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct HistoryRequest {
+    guest: String,
+    #[serde(default = "default_window")]
+    window: HistoryWindow,
+}
+
+fn default_window() -> HistoryWindow {
+    HistoryWindow::Hour
+}
+
+#[derive(Deserialize)]
+pub struct ConsoleRequest {
+    guest: String,
+    kind: ConsoleKind,
+    #[serde(default)]
+    password: Option<String>,
+}
+
+#[derive(Serialize)]
+struct ConsoleAnswer {
+    /// Opens `/virt/console/ws` once (`sbm-ticket.<ticket>`), within 30 s.
+    ticket: Option<String>,
+    /// VNC: the password the display asks for this connection, cut to what
+    /// RFB uses. The panel hands it to the VNC client only.
+    vnc_password: Option<String>,
+    /// VNC: whether the password could be read; false, the display may ask
+    /// for one the operator types.
+    password_known: bool,
+    /// Text on libvirt: what to run in a terminal on this machine.
+    command: Option<String>,
+    error: Option<VirtError>,
+}
+
+impl ConsoleAnswer {
+    fn failed(e: VirtError) -> Self {
+        Self { ticket: None, vnc_password: None, password_known: false, command: None, error: Some(e) }
+    }
 }
 
 fn refusal(status: StatusCode, error: &'static str) -> HttpResponse {
@@ -292,6 +373,168 @@ pub async fn power(
         record(Action::Close, Outcome::Error, Some(&format!("{:?}", e.kind))).record(&state.db).await;
     }
     Ok(HttpResponse::Ok().json(&PowerResponse { error: result.err() }))
+}
+
+/// Where a guest lives: the PVE session, or libvirt on this machine.
+enum Backend {
+    Pve(Arc<Client>),
+    Libvirt,
+}
+
+async fn backend(state: &AppState) -> Result<Backend, HttpResponse> {
+    match pve_client(state).await {
+        Ok(Some(client)) => Ok(Backend::Pve(client)),
+        Ok(None) if unix() => Ok(Backend::Libvirt),
+        Ok(None) => Err(HttpResponse::Ok().json(&PowerResponse { error: Some(VirtError::new(ErrorKind::Unsupported)) })),
+        Err(e) => Err(internal_error(&e)),
+    }
+}
+
+/// The guest `id` as the host has it now.
+async fn guest_of(state: &AppState, backend: &Backend, id: &str, password: Option<&str>) -> Result<Guest, VirtError> {
+    let missing = || VirtError::msg(ErrorKind::ActionFailed, format!("no guest {id}"));
+    match backend {
+        Backend::Pve(client) => client.load().await?.guests.into_iter().find(|g| g.id == id).ok_or_else(missing),
+        Backend::Libvirt => {
+            let overview = run_libvirt(state, &libvirt::overview_script(), password, false, libvirt::parse_overview).await?;
+            overview.domains.iter().find(|d| d.uuid == id).map(lv::guest_of).ok_or_else(missing)
+        }
+    }
+}
+
+pub async fn detail(
+    req: HttpRequest,
+    body: web::types::Json<GuestRequest>,
+    state: web::types::State<Arc<AppState>>,
+) -> Result<HttpResponse, web::Error> {
+    if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "virt detail").await {
+        return Ok(refused);
+    }
+    let request = body.into_inner();
+    let password = request.password.as_deref().filter(|p| !p.is_empty());
+    let backend = match backend(&state).await {
+        Ok(b) => b,
+        Err(answer) => return Ok(answer),
+    };
+    let result = match &backend {
+        Backend::Pve(client) => match guest_of(&state, &backend, &request.guest, None).await {
+            Ok(guest) => client.detail(&guest).await,
+            Err(e) => Err(e),
+        },
+        Backend::Libvirt => {
+            run_libvirt(&state, &libvirt::domain_detail_script(&request.guest), password, false, libvirt::parse_domain_detail)
+                .await
+                .map(|d| lv::detail_of(&d))
+        }
+    };
+    Ok(HttpResponse::Ok().json(&match result {
+        Ok(detail) => serde_json::json!({ "detail": detail, "error": null }),
+        Err(e) => serde_json::json!({ "detail": null, "error": e }),
+    }))
+}
+
+/// What the host stored of a guest's usage; `history: null` where it keeps
+/// none (libvirt), which the page fills from its own readings.
+pub async fn history(
+    req: HttpRequest,
+    body: web::types::Json<HistoryRequest>,
+    state: web::types::State<Arc<AppState>>,
+) -> Result<HttpResponse, web::Error> {
+    if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "virt history").await {
+        return Ok(refused);
+    }
+    let request = body.into_inner();
+    let backend = match backend(&state).await {
+        Ok(b) => b,
+        Err(answer) => return Ok(answer),
+    };
+    let result = match &backend {
+        Backend::Pve(client) => match guest_of(&state, &backend, &request.guest, None).await {
+            Ok(guest) => client.history(&guest, request.window).await.map(Some),
+            Err(e) => Err(e),
+        },
+        Backend::Libvirt => Ok(None),
+    };
+    Ok(HttpResponse::Ok().json(&match result {
+        Ok(history) => serde_json::json!({ "history": history, "error": null }),
+        Err(e) => serde_json::json!({ "history": null, "error": e }),
+    }))
+}
+
+/// Resolves a console and mints the ticket its websocket opens with. What
+/// it connects to stays here; the panel gets the ticket and, for VNC, the
+/// display's password for this connection.
+pub async fn console(
+    req: HttpRequest,
+    body: web::types::Json<ConsoleRequest>,
+    state: web::types::State<Arc<AppState>>,
+) -> Result<HttpResponse, web::Error> {
+    let request = body.into_inner();
+    let kind = if request.kind == ConsoleKind::Vnc { "vnc" } else { "text" };
+    let what = format!("virt console {kind} {}", request.guest);
+    let gated = match machine::gate(&req, &state, Grant::Virt, &what).await {
+        Ok(gated) => gated,
+        Err(refused) => return Ok(refused),
+    };
+    let password = request.password.as_deref().filter(|p| !p.is_empty());
+    let backend = match backend(&state).await {
+        Ok(b) => b,
+        Err(answer) => return Ok(answer),
+    };
+    let resolved = match &backend {
+        Backend::Pve(client) => match guest_of(&state, &backend, &request.guest, None).await {
+            Ok(guest) => match client.console(&guest, request.kind).await {
+                Ok(console) => {
+                    let vnc_password = console.rfb_password();
+                    Ok((ConsoleTarget::Pve(client.clone(), Box::new(console)), vnc_password, true))
+                }
+                Err(e) => Err(e),
+            },
+            Err(e) => Err(e),
+        },
+        Backend::Libvirt if request.kind == ConsoleKind::Text => {
+            // A serial console is `virsh console` in a terminal: it needs a
+            // PTY, and the panel's terminal is one.
+            return Ok(HttpResponse::Ok().json(&ConsoleAnswer {
+                ticket: None,
+                vnc_password: None,
+                password_known: true,
+                command: Some(libvirt::console_command(&request.guest)),
+                error: None,
+            }));
+        }
+        Backend::Libvirt => {
+            let script = libvirt::vnc_console_script(&request.guest);
+            match run_libvirt(&state, &script, password, false, libvirt::parse_vnc_console).await {
+                Ok(info) => lv::vnc_target(&info, &request.guest)
+                    .map(|t| (ConsoleTarget::Tcp { host: t.host, port: t.port }, t.password, t.password_known)),
+                Err(e) => Err(e),
+            }
+        }
+    };
+    let (target, vnc_password, password_known) = match resolved {
+        Ok(r) => r,
+        Err(e) => return Ok(HttpResponse::Ok().json(&ConsoleAnswer::failed(e))),
+    };
+    let ticket = match state.tickets.issue(super::ws::ticket::Purpose::Virt, &gated.caller.username) {
+        Ok(ticket) => ticket,
+        Err(_) => return Ok(refusal(StatusCode::TOO_MANY_REQUESTS, "too_many_tickets")),
+    };
+    {
+        let mut consoles = state.virt.consoles.lock().unwrap();
+        consoles.retain(|_, c| c.at.elapsed() < CONSOLE_TTL);
+        consoles.insert(
+            ticket.clone(),
+            PendingConsole { subject: gated.caller.username.clone(), target, what, at: std::time::Instant::now() },
+        );
+    }
+    Ok(HttpResponse::Ok().json(&ConsoleAnswer {
+        ticket: Some(ticket),
+        vnc_password,
+        password_known,
+        command: None,
+        error: None,
+    }))
 }
 
 async fn pve_power(client: &Client, id: &str, action: PowerAction) -> Result<(), VirtError> {

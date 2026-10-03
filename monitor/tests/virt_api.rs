@@ -138,6 +138,13 @@ fn handle(seen: &Mutex<Seen>, method: &str, path: &str, auth: Option<String>) ->
         ("POST", "/nodes/pve/qemu/100/status/shutdown") => respond(200, json!(UPID)),
         ("GET", p) if p.starts_with("/nodes/pve/tasks/") => respond(200, json!({"status": "stopped", "exitstatus": "OK"})),
         ("GET", "/nodes/pve/qemu/100/status/current") => respond(200, json!({"status": "stopped", "qmpstatus": "stopped"})),
+        ("POST", "/nodes/pve/qemu/100/vncproxy") => {
+            respond(200, json!({"port": "5900", "ticket": "PVEVNC:x", "user": "root@pam!panel", "password": "abcdefghij"}))
+        }
+        ("GET", "/nodes/pve/qemu/100/config") => respond(200, json!({"scsi0": "local-lvm:vm-100-disk-0,size=8G", "net0": "virtio=BC:24:11:00:00:01,bridge=vmbr0", "ostype": "l26"})),
+        ("GET", p) if p.starts_with("/nodes/pve/qemu/100/rrddata") => {
+            respond(200, json!([{"time": 1700000060, "cpu": 0.5}, {"time": 1700000000, "cpu": 0.25}]))
+        }
         _ => respond(404, Value::Null),
     }
 }
@@ -315,4 +322,57 @@ async fn capabilities_list_the_virtualization_page() {
     let (srv, _) = server().await;
     let (_, caps) = call(&srv, Some("viewer"), Method::GET, "/api/v1/capabilities", None).await;
     assert!(caps["features"].as_array().unwrap().iter().any(|f| f == "virt"), "{caps}");
+}
+
+async fn pinned(pve: &FakePve) -> String {
+    sbm_redfish::cert::fetch_server_cert("127.0.0.1", pve.addr.port(), std::time::Duration::from_secs(5))
+        .await
+        .unwrap()
+        .fingerprint
+}
+
+#[ntex::test]
+async fn detail_history_and_a_console_ticket() {
+    let pve = FakePve::start().await;
+    let (srv, db) = server().await;
+    let pin = pinned(&pve).await;
+    call(&srv, Some("admin"), Method::PUT, "/api/v1/virt/pve", Some(token_config(&pve.url(), Some(&pin)))).await;
+
+    let (_, body) = call(&srv, Some("admin"), Method::POST, "/api/v1/virt/detail", Some(json!({"guest": "qemu/100"}))).await;
+    assert_eq!(body["detail"]["disks"][0]["size"], 8u64 << 30, "{body}");
+    assert_eq!(body["detail"]["nics"][0]["source"], "vmbr0");
+    assert_eq!(body["detail"]["consoles"], json!(["vnc"]));
+
+    let (_, body) = call(&srv, Some("admin"), Method::POST, "/api/v1/virt/history", Some(json!({"guest": "qemu/100", "window": "day"}))).await;
+    assert_eq!(body["history"].as_array().map(Vec::len), Some(2), "{body}");
+    assert_eq!(body["history"][0]["cpu"], 25.0, "oldest first: {body}");
+    assert!(pve.seen.lock().unwrap().paths.iter().any(|p| p.contains("rrddata?timeframe=day&cf=AVERAGE")));
+
+    let (status, body) =
+        call(&srv, Some("admin"), Method::POST, "/api/v1/virt/console", Some(json!({"guest": "qemu/100", "kind": "vnc"}))).await;
+    assert_eq!(status, 200, "{body}");
+    assert!(body["ticket"].as_str().is_some_and(|t| !t.is_empty()), "{body}");
+    // What RFB uses of it; the console ticket itself stays in the agent.
+    assert_eq!(body["vnc_password"], "abcdefgh");
+    assert!(!body.to_string().contains("PVEVNC"), "{body}");
+
+    // A guest the host does not have.
+    let (_, body) =
+        call(&srv, Some("admin"), Method::POST, "/api/v1/virt/console", Some(json!({"guest": "qemu/404", "kind": "vnc"}))).await;
+    assert_eq!(body["error"]["kind"], "action_failed", "{body}");
+
+    let details: Vec<_> = audit(&db).await.into_iter().filter_map(|r| r.3).collect();
+    assert!(details.iter().all(|d| !d.contains("PVEVNC")), "{details:?}");
+}
+
+#[ntex::test]
+async fn a_console_needs_virt_and_its_own_ticket() {
+    let (srv, _) = server().await;
+    let (status, _) =
+        call(&srv, Some("viewer"), Method::POST, "/api/v1/virt/console", Some(json!({"guest": "x", "kind": "vnc"}))).await;
+    assert_eq!(status, 403);
+    // The generic issuer does not mint one: a virt ticket is bound to the
+    // console it opens.
+    let (status, _) = call(&srv, Some("admin"), Method::POST, "/api/v1/ws-ticket", Some(json!({"purpose": "virt"}))).await;
+    assert_eq!(status, 403);
 }

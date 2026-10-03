@@ -19,6 +19,9 @@ vi.mock('../lib/api', async (importOriginal) => ({
     removePve: vi.fn(),
     pinPve: vi.fn(),
     pveTfa: vi.fn(),
+    virtDetail: vi.fn(),
+    virtHistory: vi.fn(),
+    virtConsole: vi.fn(),
   },
 }))
 const loadVirt = vi.mocked(api.loadVirt)
@@ -26,6 +29,9 @@ const virtPower = vi.mocked(api.virtPower)
 const getPve = vi.mocked(api.getPve)
 const pinPve = vi.mocked(api.pinPve)
 const pveTfa = vi.mocked(api.pveTfa)
+const virtDetail = vi.mocked(api.virtDetail)
+const virtConsole = vi.mocked(api.virtConsole)
+const virtHistory = vi.mocked(api.virtHistory)
 
 function guest(over: Partial<VirtGuest>): VirtGuest {
   return {
@@ -245,4 +251,54 @@ describe('the virtualization page', () => {
     render(Virt, { onback: () => {} })
     expect(await screen.findByText(/Set up how this agent signs in/)).toBeInTheDocument()
   })
+
+  it('reads a guest\'s hardware when its view opens', async () => {
+    loadVirt.mockResolvedValue(loaded([guest({})]))
+    virtDetail.mockResolvedValue({
+      detail: {
+        disks: [{ device: 'disk', source_type: null, source: 'local-lvm:vm-100-disk-0', target: 'scsi0', bus: 'scsi', format: null, readonly: false, size: 8 * 1024 ** 3 }],
+        nics: [{ kind: 'net0', mac: 'BC:24:11:00:00:01', source: 'vmbr0', model: 'virtio', target: null }],
+        graphics: [],
+        display: null,
+        consoles: ['vnc'],
+        description: null,
+        arch: null,
+        machine: 'l26',
+      },
+      error: null,
+    })
+    render(Virt, { onback: () => {} })
+    await fireEvent.click(await screen.findByRole('button', { name: /^hardware$/i }))
+    expect(await screen.findByText(/local-lvm:vm-100-disk-0/)).toBeInTheDocument()
+    expect(screen.getByText(/vmbr0/)).toBeInTheDocument()
+    expect(virtDetail).toHaveBeenCalledWith('qemu/100', undefined)
+  })
+
+  it('shows what to run for a libvirt serial console', async () => {
+    loadVirt.mockResolvedValue({ ...loaded([guest({ id: 'uuid-1', vmid: null, node: null })]), host: 'libvirt' })
+    virtDetail.mockResolvedValue({
+      detail: { disks: [], nics: [], graphics: [], display: null, consoles: ['text'], description: null, arch: null, machine: null },
+      error: null,
+    })
+    virtConsole.mockResolvedValue({ ticket: null, vnc_password: null, password_known: true, command: "virsh --connect qemu:///system console --force --domain 'uuid-1'", error: null })
+    render(Virt, { onback: () => {} })
+    await fireEvent.click(await screen.findByRole('button', { name: /^console$/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: /^open$/i }))
+    expect(await screen.findByText(/console --force --domain 'uuid-1'/)).toBeInTheDocument()
+    expect(virtConsole).toHaveBeenCalledWith('uuid-1', 'text', undefined)
+  })
+
+  it('reads what PVE stored for a range', async () => {
+    const view = loaded([guest({})])
+    view.view!.capabilities.stored_history = true
+    loadVirt.mockResolvedValue(view)
+    virtHistory.mockResolvedValue({ history: [stats(1, 10), stats(2, 20)], error: null })
+    // The chart sizes itself to its box; jsdom has no layout to observe.
+    vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} })
+    render(Virt, { onback: () => {} })
+    await fireEvent.click(await screen.findByRole('button', { name: /^day$/i }))
+    await waitFor(() => expect(virtHistory).toHaveBeenCalledWith('qemu/100', 'day'))
+    vi.unstubAllGlobals()
+  })
 })
+

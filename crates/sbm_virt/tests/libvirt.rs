@@ -3675,6 +3675,22 @@ mod host {
     }
 
     #[test]
+    fn a_running_domains_detail_offers_both_consoles_and_its_vnc_target() {
+        use sbm_virt::model::ConsoleKind;
+        let detail = virt::parse_domain_detail(&detail_output(("domdisplay_cirros_run.txt", 0), "dumpxml_cirros_run.xml")).unwrap();
+        let d = sbm_virt::libvirt::host::detail_of(&detail);
+        assert!(d.consoles.contains(&ConsoleKind::Vnc), "{:?}", d.consoles);
+        assert_eq!(d.display.as_ref().map(|x| x.protocol.as_str()), Some("vnc"));
+        assert!(!d.disks.is_empty() && !d.nics.is_empty());
+        let info = virt::VirtVncConsoleInfo { display: detail.display.clone(), password: None, password_known: true };
+        let target = sbm_virt::libvirt::host::vnc_target(&info, "cirros-run").unwrap();
+        assert!(target.port >= 5900, "{target:?}");
+        let off = virt::VirtVncConsoleInfo { display: None, password: None, password_known: true };
+        assert_eq!(sbm_virt::libvirt::host::vnc_target(&off, "x").unwrap_err().kind, sbm_virt::error::ErrorKind::Unsupported);
+        assert_eq!(sbm_virt::libvirt::host::dial_host(Some("0.0.0.0")), "127.0.0.1");
+    }
+
+    #[test]
     fn a_crashed_domain_is_destroyed_before_it_starts() {
         let view = view_of(&overview(&fixture("domstats.txt")), &mut RateTracker::new(false), 0, None, false);
         let mut odd = view.guests.into_iter().find(|g| g.id == ODD).unwrap();

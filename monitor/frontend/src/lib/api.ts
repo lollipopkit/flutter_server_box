@@ -57,8 +57,13 @@ import type {
   BmcTargetInput,
   PveConfigInput,
   PveConfigView,
+  VirtConsoleAnswer,
+  VirtConsoleKind,
   VirtError,
+  VirtGuestDetail,
+  VirtHistoryWindow,
   VirtLoad,
+  VirtStats,
   VirtPowerAction,
   DesktopsView,
 } from '../types'
@@ -502,6 +507,30 @@ export const api = {
       '/virt/power',
       { method: 'POST', body: JSON.stringify({ guest, action, password: password ?? null }) },
       'Failed to reach the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  virtDetail: (guest: string, password?: string) =>
+    request<{ detail: VirtGuestDetail | null; error: VirtError | null }>(
+      '/virt/detail',
+      { method: 'POST', body: JSON.stringify({ guest, password: password ?? null }) },
+      'Failed to read the guest',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// `history: null` where the host keeps none (libvirt).
+  virtHistory: (guest: string, window: VirtHistoryWindow) =>
+    request<{ history: VirtStats[] | null; error: VirtError | null }>(
+      '/virt/history',
+      { method: 'POST', body: JSON.stringify({ guest, window }) },
+      'Failed to read the guest\'s history',
+    ),
+  /// Resolves the console and mints the ticket its websocket opens with.
+  virtConsole: (guest: string, kind: VirtConsoleKind, password?: string) =>
+    request<VirtConsoleAnswer>(
+      '/virt/console',
+      { method: 'POST', body: JSON.stringify({ guest, kind, password: password ?? null }) },
+      'Failed to open the console',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),

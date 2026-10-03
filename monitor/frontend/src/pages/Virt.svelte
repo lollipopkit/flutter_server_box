@@ -5,6 +5,7 @@
   import LineChart from '../components/LineChart.svelte'
   import PageHeader from '../components/PageHeader.svelte'
   import PveForm from '../components/PveForm.svelte'
+  import VirtConsole from '../components/VirtConsole.svelte'
   import { api } from '../lib/api'
   import { prettyFingerprint } from '../lib/bmc'
   import { fmtBytes, fmtBytesPerSec, fmtPercent } from '../lib/format'
@@ -27,7 +28,7 @@
   } from '../lib/virt'
   import { onDestroy, untrack } from 'svelte'
   import { LL } from '../i18n/i18n-svelte'
-  import type { PveConfigInput, PveConfigView, VirtError, VirtGuest, VirtLoad, VirtPowerAction, VirtStats } from '../types'
+  import type { PveConfigInput, PveConfigView, VirtError, VirtGuest, VirtGuestDetail, VirtHistoryWindow, VirtLoad, VirtPowerAction, VirtStats } from '../types'
 
   /// This machine's guests, PVE or libvirt: the list on one side, the one
   /// selected on the other — its usage, its power. Everything is read and
@@ -72,6 +73,15 @@
   let removing = $state(false)
   let timer: ReturnType<typeof setTimeout> | null = null
   let generation = 0
+  /// The selected guest's view, the design's tabs.
+  let pane = $state<'overview' | 'hardware' | 'console'>('overview')
+  let detail = $state<VirtGuestDetail | null>(null)
+  let detailFor = $state<string | null>(null)
+  let detailError = $state('')
+  /// `live` is this session's readings; the rest are what PVE stored.
+  let range = $state<'live' | VirtHistoryWindow>('live')
+  let stored = $state<VirtStats[] | null>(null)
+  let storedError = $state('')
 
   const admin = $derived(isAdmin(capabilitiesStore.byServer[servers.currentId]) === true)
   const view = $derived(load?.view ?? null)
@@ -240,6 +250,55 @@
       void refresh()
     }
   }
+
+  async function loadDetail(g: VirtGuest) {
+    detailFor = g.id
+    detail = null
+    detailError = ''
+    try {
+      const { detail: next, error } = await api.virtDetail(g.id, sudoPassword ?? undefined)
+      if (detailFor !== g.id) return
+      if (error) detailError = virtErrorText(error)
+      else detail = next
+    } catch (e) {
+      if (detailFor === g.id) detailError = virtRequestText(e)
+    }
+  }
+
+  async function loadStored(g: VirtGuest, window: VirtHistoryWindow) {
+    stored = null
+    storedError = ''
+    try {
+      const { history: points, error } = await api.virtHistory(g.id, window)
+      if (selected !== g.id || range !== window) return
+      if (error) storedError = virtErrorText(error)
+      else stored = points ?? []
+    } catch (e) {
+      storedError = virtRequestText(e)
+    }
+  }
+
+  function pickRange(g: VirtGuest, next: 'live' | VirtHistoryWindow) {
+    range = next
+    if (next !== 'live') void loadStored(g, next)
+  }
+
+  $effect(() => {
+    // A new guest starts on its overview, with this session's readings.
+    void selected
+    untrack(() => {
+      pane = 'overview'
+      range = 'live'
+      stored = null
+      detail = null
+      detailFor = null
+    })
+  })
+
+  $effect(() => {
+    const g = current
+    if (g && pane !== 'overview' && detailFor !== g.id) untrack(() => void loadDetail(g))
+  })
 
   function chart(samples: VirtStats[]) {
     return {
@@ -481,7 +540,73 @@
             </div>
           </Card>
 
-          {#if g.state === 'stopped' || g.template}
+          <nav class="flex items-center gap-1 overflow-x-auto">
+            {#each [['overview', $LL.virtViewOverview()], ['hardware', $LL.virtViewHardware()], ['console', $LL.virtViewConsole()]] as [id, label] (id)}
+              <button
+                class="shrink-0 rounded-lg px-3 py-1.5 text-sm transition-colors {pane === id ? 'bg-primary/10 text-fg-strong' : 'text-muted-fg hover:bg-muted'}"
+                aria-current={pane === id ? 'page' : undefined}
+                onclick={() => (pane = id as typeof pane)}
+              >
+                {label}
+              </button>
+            {/each}
+          </nav>
+
+          {#if pane === 'hardware'}
+            <Card class="space-y-3">
+              {#if detailError}
+                <p class="text-sm text-danger whitespace-pre-wrap break-all">{detailError}</p>
+              {:else if !detail}
+                <Spinner class="w-5 h-5" />
+              {:else}
+                {@const d = detail}
+                <div class="space-y-1">
+                  <p class="text-xs text-faint-fg">{$LL.virtDisks()}</p>
+                  {#each d.disks as disk (disk.target ?? disk.source)}
+                    <p class="flex flex-wrap justify-between gap-2 text-xs">
+                      <span class="font-mono text-fg">{disk.target ?? '—'}{disk.bus ? ` · ${disk.bus}` : ''}</span>
+                      <span class="break-all text-muted-fg">{[disk.device, disk.source, disk.format, disk.size !== null ? fmtBytes(disk.size) : null, disk.readonly ? $LL.virtReadonly() : null].filter(Boolean).join(' · ')}</span>
+                    </p>
+                  {:else}
+                    <p class="text-xs text-muted-fg">—</p>
+                  {/each}
+                </div>
+                <div class="space-y-1">
+                  <p class="text-xs text-faint-fg">{$LL.virtNics()}</p>
+                  {#each d.nics as nic (nic.kind + (nic.mac ?? ''))}
+                    <p class="flex flex-wrap justify-between gap-2 text-xs">
+                      <span class="font-mono text-fg">{nic.target ?? nic.kind}</span>
+                      <span class="break-all text-muted-fg">{[nic.model, nic.source, nic.mac].filter(Boolean).join(' · ')}</span>
+                    </p>
+                  {:else}
+                    <p class="text-xs text-muted-fg">—</p>
+                  {/each}
+                </div>
+                {#if d.graphics.length > 0 || d.machine || d.arch}
+                  <p class="text-xs text-muted-fg">
+                    {[d.graphics.map((x) => x.kind).join(', '), d.machine, d.arch].filter(Boolean).join(' · ')}
+                  </p>
+                {/if}
+                {#if d.description}
+                  <p class="whitespace-pre-wrap text-xs text-muted-fg">{d.description}</p>
+                {/if}
+              {/if}
+            </Card>
+          {:else if pane === 'console'}
+            {#if detailError}
+              <Card><p class="text-sm text-danger whitespace-pre-wrap break-all">{detailError}</p></Card>
+            {:else if !detail}
+              <Card><Spinner class="w-5 h-5" /></Card>
+            {:else if !g.state || g.state === 'stopped' || detail.consoles.length === 0}
+              <Card><p class="text-sm text-muted-fg">{detail.consoles.length === 0 ? $LL.virtConsoleNone() : $LL.virtConsoleStopped()}</p></Card>
+            {:else}
+              {#each detail.consoles as kind (kind)}
+                {#key g.id}
+                  <VirtConsole guest={g} {kind} {sudoPassword} />
+                {/key}
+              {/each}
+            {/if}
+          {:else if g.state === 'stopped' || g.template}
             <Card class="flex flex-col items-center gap-3 py-10 text-center">
               <Power class="h-6 w-6 text-faint-fg" />
               <p class="text-sm text-fg-strong">{g.template ? $LL.virtTemplate() : stateText(g.state)}</p>
@@ -495,7 +620,25 @@
             </Card>
           {:else}
             <Card class="space-y-3">
-              {#if samples.length > 1}
+              {#if view.capabilities.stored_history}
+                <div class="flex flex-wrap gap-1">
+                  {#each [['live', $LL.virtRangeLive()], ['hour', $LL.virtRangeHour()], ['day', $LL.virtRangeDay()], ['week', $LL.virtRangeWeek()]] as [id, label] (id)}
+                    <Button variant={range === id ? 'primary' : 'secondary'} size="sm" onclick={() => pickRange(g, id as typeof range)}>{label}</Button>
+                  {/each}
+                </div>
+              {/if}
+              {#if range !== 'live'}
+                {#if storedError}
+                  <p class="text-sm text-danger whitespace-pre-wrap break-all">{storedError}</p>
+                {:else if stored === null}
+                  <Spinner class="w-5 h-5" />
+                {:else if stored.length > 1}
+                  {@const c = chart(stored)}
+                  <LineChart labels={c.labels} series={c.series} yMax={100} format={(v) => fmtPercent(v)} />
+                {:else}
+                  <p class="text-xs text-muted-fg">{$LL.virtChartNone()}</p>
+                {/if}
+              {:else if samples.length > 1}
                 {@const c = chart(samples)}
                 <LineChart labels={c.labels} series={c.series} yMax={100} format={(v) => fmtPercent(v)} />
               {:else}
@@ -524,6 +667,7 @@
             </Card>
           {/if}
 
+          {#if pane === 'overview'}
           <Card>
             <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs sm:grid-cols-3">
               {#each [[$LL.virtKind(), g.kind === 'lxc' ? $LL.virtLxc() : $LL.virtVm()], [g.vmid !== null ? 'VMID' : 'UUID', g.vmid !== null ? String(g.vmid) : g.id], [$LL.virtNode(), g.node], ['vCPU', g.vcpu !== null ? String(g.vcpu) : null], [$LL.virtMemory(), g.mem_bytes !== null ? fmtBytes(g.mem_bytes) : null], [$LL.virtUptime(), g.uptime ? fmtUptime(g.uptime) : null], [$LL.virtAutostart(), g.autostart === null ? null : g.autostart ? $LL.yes() : $LL.no()], [$LL.virtTags(), g.tags.join(', ') || null]] as [label, value] (label)}
@@ -536,6 +680,7 @@
               {/each}
             </dl>
           </Card>
+          {/if}
         {:else if guests.length > 0}
           <Card><p class="text-sm text-muted-fg">{$LL.virtPick()}</p></Card>
         {/if}

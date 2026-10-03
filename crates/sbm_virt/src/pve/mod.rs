@@ -8,8 +8,11 @@
 pub mod client;
 pub mod http;
 pub mod resources;
+pub mod termproxy;
 
 pub use client::{Client, Clock, Options, SystemClock};
+/// The websocket types a console's socket ([`client::ConsoleSocket`]) carries.
+pub use tokio_tungstenite::tungstenite;
 
 use crate::error::{Detail, Error, ErrorKind};
 

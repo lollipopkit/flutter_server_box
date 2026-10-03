@@ -121,6 +121,21 @@ pub enum TransportError {
 /// Sends requests to one address, with one certificate decision.
 pub trait Http: Send + Sync {
     fn send(&self, req: Request) -> BoxFuture<'_, Result<Response, TransportError>>;
+
+    /// A websocket upgrade of `req` (a console's `vncwebsocket`): the stream
+    /// it became, or the answer that refused it.
+    fn upgrade(&self, req: Request) -> BoxFuture<'_, Result<Upgrade, TransportError>> {
+        let _ = req;
+        Box::pin(async { Err(TransportError::Unreachable("no upgrades here".into())) })
+    }
+}
+
+/// What a websocket upgrade came to.
+pub enum Upgrade {
+    /// `101 Switching Protocols`: the connection, now the websocket's.
+    Switched(Box<dyn Stream>),
+    /// Anything else, as answered.
+    Refused(Response),
 }
 
 /// Makes the [`Http`] for a configuration: its address and its pin. A new one
@@ -246,6 +261,39 @@ struct HyperHttp {
 }
 
 impl Http for HyperHttp {
+    fn upgrade(&self, req: Request) -> BoxFuture<'_, Result<Upgrade, TransportError>> {
+        Box::pin(async move {
+            let uri = format!("{}{}", self.base.to_string().trim_end_matches('/'), req.path);
+            let mut builder = hyper::Request::builder()
+                .method("GET")
+                .uri(uri)
+                .header("connection", "Upgrade")
+                .header("upgrade", "websocket")
+                .header("sec-websocket-version", "13")
+                .header("sec-websocket-key", tokio_tungstenite::tungstenite::handshake::client::generate_key())
+                // What PVE's own clients ask for: frames relayed byte for byte.
+                .header("sec-websocket-protocol", "binary");
+            for (k, v) in &req.headers {
+                builder = builder.header(k, v);
+            }
+            let request = builder
+                .body(Full::new(Bytes::new()))
+                .map_err(|e| TransportError::Unreachable(e.to_string()))?;
+            let resp = match tokio::time::timeout(REQUEST_TIMEOUT, self.client.request(request)).await {
+                Ok(Ok(resp)) => resp,
+                Ok(Err(e)) => return Err(self.transport_error(&e)),
+                Err(_) => return Err(TransportError::Unreachable("no answer to the upgrade".into())),
+            };
+            if resp.status() != hyper::StatusCode::SWITCHING_PROTOCOLS {
+                let status = resp.status().as_u16();
+                let body = Limited::new(resp.into_body(), MAX_BODY).collect().await.map(|b| b.to_bytes().to_vec()).unwrap_or_default();
+                return Ok(Upgrade::Refused(Response { status, reason: None, body }));
+            }
+            let upgraded = hyper::upgrade::on(resp).await.map_err(|e| TransportError::Unreachable(e.to_string()))?;
+            Ok(Upgrade::Switched(Box::new(TokioIo::new(upgraded)) as Box<dyn Stream>))
+        })
+    }
+
     fn send(&self, req: Request) -> BoxFuture<'_, Result<Response, TransportError>> {
         Box::pin(async move {
             let uri = format!("{}{}", self.base.to_string().trim_end_matches('/'), req.path);
@@ -281,19 +329,23 @@ impl Http for HyperHttp {
             .await;
             match sent {
                 Ok(Ok((status, reason, body))) => Ok(Response { status: status.as_u16(), reason, body: body.to_vec() }),
-                Ok(Err(e)) => {
-                    let refused = self.presented.lock().unwrap().take();
-                    match refused.and_then(|der| CertInfo::from_der(&der).or_else(|| bare_info(&der))) {
-                        Some(cert) => Err(TransportError::Cert { cert, pinned: self.pin.clone() }),
-                        None => Err(TransportError::Unreachable(error_chain(e.as_ref()))),
-                    }
-                }
+                Ok(Err(e)) => Err(self.transport_error(e.as_ref())),
                 Err(_) => Err(TransportError::Unreachable(format!(
                     "no answer within {}s",
                     REQUEST_TIMEOUT.as_secs()
                 ))),
             }
         })
+    }
+}
+
+impl HyperHttp {
+    fn transport_error(&self, e: &(dyn std::error::Error + 'static)) -> TransportError {
+        let refused = self.presented.lock().unwrap().take();
+        match refused.and_then(|der| CertInfo::from_der(&der).or_else(|| bare_info(&der))) {
+            Some(cert) => TransportError::Cert { cert, pinned: self.pin.clone() },
+            None => TransportError::Unreachable(error_chain(e)),
+        }
     }
 }
 

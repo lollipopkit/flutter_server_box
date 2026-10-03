@@ -1586,3 +1586,58 @@ export interface PveConfigInput {
   token_secret: string | null
   cert_sha256: string | null
 }
+
+export type VirtConsoleKind = 'text' | 'vnc'
+export type VirtHistoryWindow = 'hour' | 'day' | 'week'
+
+export interface VirtDisk {
+  device: string
+  source_type: string | null
+  source: string | null
+  target: string | null
+  bus: string | null
+  format: string | null
+  readonly: boolean
+  /// Bytes.
+  size: number | null
+}
+
+export interface VirtNic {
+  kind: string
+  mac: string | null
+  source: string | null
+  model: string | null
+  target: string | null
+}
+
+export interface VirtGraphics {
+  kind: string
+  port: number | null
+  tls_port: number | null
+  autoport: boolean
+  listen: string | null
+  socket: string | null
+}
+
+export interface VirtGuestDetail {
+  disks: VirtDisk[]
+  nics: VirtNic[]
+  graphics: VirtGraphics[]
+  display: { uri: string; protocol: string; host: string | null; port: number | null } | null
+  consoles: VirtConsoleKind[]
+  description: string | null
+  arch: string | null
+  machine: string | null
+}
+
+/// `POST /virt/console`.
+export interface VirtConsoleAnswer {
+  /// Opens `/virt/console/ws` once, within 30 s.
+  ticket: string | null
+  /// VNC: the display's password for this connection, for the VNC client only.
+  vnc_password: string | null
+  password_known: boolean
+  /// A libvirt text console: what to run in a terminal on the machine.
+  command: string | null
+  error: VirtError | null
+}

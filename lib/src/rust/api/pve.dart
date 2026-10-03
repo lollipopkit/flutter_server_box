@@ -10,7 +10,15 @@ import 'package:server_box/src/rust/frb_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `power_action`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `Loopback`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `clone`, `dial`, `eq`, `fmt`, `fmt`, `fmt`, `from`, `from`, `from`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `clone`, `dial`, `eq`, `fmt`, `fmt`, `fmt`, `from`, `from`, `from`, `from`, `from`
+
+/// A guest's configuration (`/nodes/../config` JSON) read into
+/// `sbm_virt::model::GuestDetail` JSON.
+String pveGuestDetail({required String configJson, required bool lxc}) =>
+    RustLib.instance.api.crateApiPvePveGuestDetail(
+      configJson: configJson,
+      lxc: lxc,
+    );
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PveSession>>
 abstract class PveSession implements RustOpaqueInterface {
@@ -23,6 +31,21 @@ abstract class PveSession implements RustOpaqueInterface {
   /// Pins the certificate the last refused connection presented; answers
   /// the pin as stored.
   String confirmCert({required String fingerprint});
+
+  /// A fresh console ticket.
+  Future<PveConsoleTicket> console({
+    required PveGuestRef guest,
+    required PveConsoleKind kind,
+  });
+
+  /// `sbm_virt::model::GuestDetail` JSON.
+  Future<String> detail({required PveGuestRef guest});
+
+  /// `sbm_virt::model::Stats` JSON list, oldest first.
+  Future<String> history({
+    required PveGuestRef guest,
+    required PveHistoryWindow window,
+  });
 
   /// `sbm_virt::model::HostView` JSON.
   Future<String> load();
@@ -41,9 +64,11 @@ abstract class PveSession implements RustOpaqueInterface {
     timing: timing,
   );
 
-  /// Runs `action` on the guest the last load read as `guest_id`, and
-  /// returns once PVE has finished it.
-  Future<void> power({required String guestId, required VirtActionKind action});
+  /// Runs `action` on `guest` and returns once PVE has finished it.
+  Future<void> power({
+    required PveGuestRef guest,
+    required VirtActionKind action,
+  });
 
   /// A request answered as the host answered it, for the app's calls that
   /// read PVE's answers themselves. `path` is the whole path, API root and
@@ -58,7 +83,7 @@ abstract class PveSession implements RustOpaqueInterface {
 
   /// Reads the guest's state again after an action made through
   /// [`PveSession::raw`] (a snapshot revert), so the next load shows it.
-  Future<void> refreshStatus({required String guestId});
+  Future<void> refreshStatus({required PveGuestRef guest});
 
   /// PVE's release, once a session has read it.
   String? release();
@@ -91,6 +116,68 @@ abstract class PveSession implements RustOpaqueInterface {
   /// Waits for the task `upid` on `node` to stop; its error is
   /// `actionFailed` with PVE's text.
   Future<void> waitTask({required String node, required String upid});
+}
+
+/// Which console (mirrors sbm_virt::model::ConsoleKind).
+enum PveConsoleKind { text, vnc }
+
+/// A PVE console ticket (mirrors sbm_virt::pve::client::PveConsole): fetch
+/// right before connecting, a ticket is good for a short while and one use.
+class PveConsoleTicket {
+  final String node;
+  final bool lxc;
+  final int vmid;
+  final bool vnc;
+  final int port;
+
+  /// Never logged.
+  final String ticket;
+  final String user;
+
+  /// VNC: the password QEMU was given for this connection. Never logged.
+  final String? password;
+
+  /// `vncwebsocket`'s path and query, under the API's origin.
+  final String websocketPath;
+
+  const PveConsoleTicket({
+    required this.node,
+    required this.lxc,
+    required this.vmid,
+    required this.vnc,
+    required this.port,
+    required this.ticket,
+    required this.user,
+    this.password,
+    required this.websocketPath,
+  });
+
+  @override
+  int get hashCode =>
+      node.hashCode ^
+      lxc.hashCode ^
+      vmid.hashCode ^
+      vnc.hashCode ^
+      port.hashCode ^
+      ticket.hashCode ^
+      user.hashCode ^
+      password.hashCode ^
+      websocketPath.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PveConsoleTicket &&
+          runtimeType == other.runtimeType &&
+          node == other.node &&
+          lxc == other.lxc &&
+          vmid == other.vmid &&
+          vnc == other.vnc &&
+          port == other.port &&
+          ticket == other.ticket &&
+          user == other.user &&
+          password == other.password &&
+          websocketPath == other.websocketPath;
 }
 
 /// A PVE failure (mirrors sbm_virt::error::Error). `message` is the host's or
@@ -138,6 +225,49 @@ class PveError implements FrbException {
           status == other.status;
 }
 
+/// A guest as the app holds it, from the last load (mirrors the fields of
+/// sbm_virt::model::Guest that a call on one guest reads).
+class PveGuestRef {
+  final String id;
+  final String name;
+  final String? node;
+  final int? vmid;
+  final bool lxc;
+
+  /// What it offered at that load; an action not among these is refused.
+  final List<VirtActionKind> actions;
+
+  const PveGuestRef({
+    required this.id,
+    required this.name,
+    this.node,
+    this.vmid,
+    required this.lxc,
+    required this.actions,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      name.hashCode ^
+      node.hashCode ^
+      vmid.hashCode ^
+      lxc.hashCode ^
+      actions.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PveGuestRef &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          name == other.name &&
+          node == other.node &&
+          vmid == other.vmid &&
+          lxc == other.lxc &&
+          actions == other.actions;
+}
+
 class PveHeader {
   final String name;
   final String value;
@@ -155,6 +285,9 @@ class PveHeader {
           name == other.name &&
           value == other.value;
 }
+
+/// How far back stored usage reaches (mirrors sbm_virt::model::HistoryWindow).
+enum PveHistoryWindow { hour, day, week }
 
 /// How a session logs in (mirrors sbm_virt::pve::Config). `token` picks the
 /// API token; otherwise `user` and `password` log in, `password` being what
