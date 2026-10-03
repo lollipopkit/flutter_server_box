@@ -78,6 +78,20 @@ impl Method {
     }
 }
 
+/// A request body and its content type.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Body {
+    pub content_type: String,
+    pub bytes: Vec<u8>,
+}
+
+impl Body {
+    /// `application/x-www-form-urlencoded`, what PVE's own clients send.
+    pub fn form(encoded: String) -> Self {
+        Self { content_type: "application/x-www-form-urlencoded".into(), bytes: encoded.into_bytes() }
+    }
+}
+
 /// One API request. `path` is under the address's root, query included
 /// (`/api2/json/cluster/resources`).
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -85,8 +99,7 @@ pub struct Request {
     pub method: Method,
     pub path: String,
     pub headers: Vec<(String, String)>,
-    /// `application/x-www-form-urlencoded`, PVE's request body.
-    pub form: Option<String>,
+    pub body: Option<Body>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -240,10 +253,10 @@ impl Http for HyperHttp {
             for (k, v) in &req.headers {
                 builder = builder.header(k, v);
             }
-            let body = match req.form {
-                Some(form) => {
-                    builder = builder.header("content-type", "application/x-www-form-urlencoded");
-                    Full::new(Bytes::from(form))
+            let body = match req.body {
+                Some(body) => {
+                    builder = builder.header("content-type", body.content_type);
+                    Full::new(Bytes::from(body.bytes))
                 }
                 None => Full::new(Bytes::new()),
             };

@@ -1112,6 +1112,44 @@ snapshot refused on LVM, and an internal revert after an external one were
 run later ("Second pass", phase 10).
 
 
+## One implementation: `sbm_virt` (issue #1623 item 5)
+
+The model, both backends' mapping onto it and the PVE session live in
+`crates/sbm_virt`, shared by the app (FFI) and the monitor agent's `/virt`
+(the web panel's Virtualization page):
+
+- `sbm_virt::model` (host, guest, state, actions, capabilities, usage),
+  `rates` (counters into usage), `error` (the failure kinds, and a `Detail`
+  code for what a client phrases itself).
+- `libvirt` — the `virsh` scripts and parsers (moved out of `sbm_parser`)
+  and `libvirt::host`: the overview read into the model, the power plan (a
+  crashed domain is destroyed before it starts). The app's `LibvirtBackend`
+  keeps running the scripts and the sudo flow; `LibvirtRates` (FFI) maps
+  each load.
+- `pve::Client` — login (password + TOTP, or a token), ticket renewal, one
+  new login for a refused ticket, the certificate decision (CA-valid against
+  the Mozilla roots, or the pinned leaf, decided in the handshake), the host
+  view with the state read after an action laid over the lagging listing,
+  power and its task. It reaches the API over a byte stream the caller opens:
+  the agent dials TCP itself; the app gives it an authenticated loopback
+  tunnel of its `ServerTcpDialer` (`PveSession`, FFI), so SSH, the agent's
+  relay and a local socket all work as before.
+
+Still in Dart until their part of item 5 moves them (each marked
+`TODO(migration)`): every other PVE call `PveBackend` makes, built by a Dio
+whose adapter hands the request to `PveSession.raw` (the session's rules
+apply; the status and body come back as PVE sent them), and a console's
+websocket and an upload, which are connections of their own authenticated
+with the session's headers.
+
+Not verified on a real host since the move: the session in Rust (renewal,
+TOTP, a refused ticket replaced) against PVE, and libvirt through the agent's
+`/virt`. The Dart client these replace was (below); the Rust port is
+locked by `crates/sbm_virt/tests/pve_client.rs` and `pve_tls.rs`, ported
+from the Dart tests, and the app's remaining PVE tests now run through the
+FFI session against a TLS fake. The clock-driven real-host tests (a renewal
+an hour on, a challenge past its lifetime) went with the Dart session.
+
 ## Verified against real hosts
 
 `test/e2e/virt_real_test.dart` (opt-in; its header lists the variables) and

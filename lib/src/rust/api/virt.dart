@@ -41,6 +41,19 @@ Future<String> parseVirtProbeJson({required String raw}) =>
 Future<String> parseVirtOverviewJson({required String raw}) =>
     RustLib.instance.api.crateApiVirtParseVirtOverviewJson(raw: raw);
 
+/// The `virsh` actions that carry out `action` on a guest the last view read
+/// with `state_reason` and `offered`; None when it does not offer it. A
+/// crashed domain's start is a destroy first (sbm_virt::libvirt::host).
+List<VirtActionKind>? virtLibvirtPowerPlan({
+  String? stateReason,
+  required List<VirtActionKind> offered,
+  required VirtActionKind action,
+}) => RustLib.instance.api.crateApiVirtVirtLibvirtPowerPlan(
+  stateReason: stateReason,
+  offered: offered,
+  action: action,
+);
+
 /// Display and VNC password, for opening a graphical console
 String virtVncConsoleScript({required String domain}) =>
     RustLib.instance.api.crateApiVirtVirtVncConsoleScript(domain: domain);
@@ -421,6 +434,24 @@ String virtUploadGoLine() =>
 /// What the upload command prints once the bytes may follow
 String virtUploadReadyMarker() =>
     RustLib.instance.api.crateApiVirtVirtUploadReadyMarker();
+
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<LibvirtRates>>
+abstract class LibvirtRates implements RustOpaqueInterface {
+  /// Forgets every guest's counters: the next view has no rates.
+  void clear();
+
+  factory LibvirtRates() => RustLib.instance.api.crateApiVirtLibvirtRatesNew();
+
+  /// `raw` is [`virt_overview_script`]'s output, `at_ms` when it was read.
+  /// `pool_types` is [`parse_virt_pool_types`]'s answer; `upload` whether
+  /// the channel carries bytes for `vol-upload`.
+  String view({
+    required String raw,
+    required PlatformInt64 atMs,
+    List<String>? poolTypes,
+    required bool upload,
+  });
+}
 
 /// Power actions (mirrors sbm_virt::libvirt::VirtAction)
 enum VirtActionKind {

@@ -20,8 +20,8 @@ import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/model/virt/virt_manage.dart';
-import 'package:server_box/data/model/virt/virt_rates.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
+import 'package:server_box/data/model/virt/virt_rust.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/virt/backend.dart';
 import 'package:server_box/src/rust/api/virt.dart' as ffi;
@@ -95,7 +95,9 @@ class LibvirtBackend implements VirtBackend {
   final Future<ServerByteExec> Function()? _byteExec;
   final bool Function()? _canStream;
   final DateTime Function() _now;
-  final _rates = VirtRateTracker();
+  /// Each guest's last counters, which the next load's usage is diffed
+  /// against (`sbm_virt::libvirt::host`).
+  final _rates = ffi.LibvirtRates();
 
   /// This account reaches the daemon only through sudo.
   bool _viaSudo = false;
@@ -113,10 +115,6 @@ class LibvirtBackend implements VirtBackend {
     _sudoPassword = null;
     _onSudoRejected?.call();
   }
-
-  /// State codes by guest id from the last [load], for what the mapped state
-  /// hides (crashed with the process preserved).
-  final _stateCodes = <String, int>{};
 
   bool get needsSudo => _viaSudo;
 
@@ -164,176 +162,67 @@ class LibvirtBackend implements VirtBackend {
 
   @override
   Future<VirtSnapshot> load() async {
-    final json = await _run(
-      ffi.virtOverviewScript(),
-      ffi.parseVirtOverviewJson,
-    );
+    // Parsed here as well as by [_rates] below: the parse is what tells a
+    // refusal [_run] answers with sudo from a listing.
+    final raw = await _run(ffi.virtOverviewScript(), ({required String raw}) async {
+      await ffi.parseVirtOverviewJson(raw: raw);
+      return raw;
+    });
     final at = _now();
-    final overview = LibvirtOverview.fromJson(_decode(json));
     await _readPoolTypes();
-    final guests = <VirtGuest>[];
-    final stats = <String, VirtStats>{};
-    _stateCodes.clear();
-    for (final d in overview.domains) {
-      _stateCodes[d.uuid] = d.stateCode;
-      guests.add(guestOf(d));
-      stats[d.uuid] = _rates.add(d.uuid, sampleOf(d, at));
-    }
-    _rates.retain(_stateCodes.keys);
-    final version = overview.version;
-    final hypervisor = [
-      version?.hypervisor,
-      version?.hypervisorVersion,
-    ].nonNulls.join(' ');
-    return VirtSnapshot(
-      host: VirtHost(
-        serverId: serverId,
-        kind: VirtHostKind.libvirt,
-        version: version?.libvirt,
-        hypervisor: hypervisor.isEmpty ? null : hypervisor,
-      ),
-      guests: guests,
-      stats: stats,
-      capabilities: VirtCapabilities(
-        pause: true,
-        snapshots: true,
-        snapshotMemoryRequired: true,
-        snapshotExternal: true,
-        storage: true,
-        network: true,
-        serialConsole: true,
-        vncConsole: true,
-        create: true,
-        deleteKeepsDisks: true,
-        hardware: true,
-        hardwareRevertPending: true,
-        clone: true,
-        cloneTarget: true,
-        storageEdit: true,
-        poolTypes: _poolTypes ?? const ['dir', 'netfs', 'logical'],
-        poolAutostart: true,
-        poolDeleteStorage: true,
-        volumeResize: true,
-        volumeClone: true,
+    final String json;
+    try {
+      json = _rates.view(
+        raw: raw,
+        atMs: at.millisecondsSinceEpoch,
+        poolTypes: _poolTypes,
         upload: _byteExec != null && (_canStream?.call() ?? false),
-        networkEdit: true,
-        networkEditExisting: true,
-        networkRestart: true,
-        networkModes: const ['nat', 'route', 'isolated', 'bridge'],
-        networkStart: true,
-      ),
-    );
-  }
-
-  /// One overview domain as a guest.
-  ///
-  /// Two libvirt states read differently from what [VirtGuestState] alone
-  /// says: `pmsuspended` (7) is paused but not woken by `resume`, so resume
-  /// is not offered; `crashed` (6) is stopped, with the QEMU process kept by
-  /// `on_crash=preserve`, so [power] destroys it before starting.
-  static VirtGuest guestOf(LibvirtDomain d) {
-    final state = switch (d.state) {
-      'running' => VirtGuestState.running,
-      'paused' => VirtGuestState.paused,
-      'stopped' => VirtGuestState.stopped,
-      'starting' => VirtGuestState.starting,
-      'stopping' => VirtGuestState.stopping,
-      _ => VirtGuestState.unknown,
-    };
-    final pmSuspended = d.stateCode == 7;
-    final crashed = d.stateCode == 6;
-    // Migration holds a domain paused with reason `migration` (2) on the
-    // source.
-    final migrating = d.stateCode == 3 && d.reasonCode == 2;
-    final shown = migrating ? VirtGuestState.migrating : state;
-    final actions = VirtPowerAction.offered(
-      shown,
-      pause: true,
-      resumable: !pmSuspended,
-    );
-    return VirtGuest(
-      id: d.uuid,
-      name: d.name,
-      kind: VirtGuestKind.qemu,
-      state: shown,
-      stateReason: pmSuspended
-          ? 'pmsuspended'
-          : crashed
-          ? 'crashed'
-          : (d.reason == 'unknown' ? null : d.reason),
-      vcpu: d.vcpuCurrent ?? d.vcpuMax,
-      memBytes: _kib(d.memMaxKib ?? d.memCurrentKib),
-      autostart: d.autostart,
-      actions: {...actions, if (crashed) VirtPowerAction.forceStop},
-    );
-  }
-
-  /// One overview domain's counters, for [VirtRateTracker].
-  static VirtCounterSample sampleOf(LibvirtDomain d, DateTime at) {
-    final c = d.counters;
-    int? sum(Iterable<int?> values) {
-      final present = values.nonNulls;
-      return present.isEmpty ? null : present.reduce((a, b) => a + b);
+      );
+    } on ffi.VirtFfiError catch (e) {
+      throw _toErr(e);
     }
-
-    // Used memory as the guest sees it, when its balloon driver reports;
-    // otherwise what the QEMU process holds on the host.
-    final available = c.balloonAvailableKib;
-    final unused = c.balloonUnusedKib;
-    final used = available != null && unused != null
-        ? available - unused
-        : c.balloonRssKib;
-    final disks = c.blocks.where((b) => b.capacity != null);
-    return VirtCounterSample(
-      at: at,
-      cpuTimeNs: c.cpuTimeNs,
-      vcpus: d.vcpuCurrent ?? d.vcpuMax,
-      memUsed: _kib(used),
-      memTotal: _kib(available ?? d.memCurrentKib ?? d.memMaxKib),
-      diskUsed: sum(disks.map((b) => b.allocation)),
-      diskTotal: sum(disks.map((b) => b.capacity)),
-      diskRead: sum(c.blocks.map((b) => b.rdBytes)),
-      diskWrite: sum(c.blocks.map((b) => b.wrBytes)),
-      netIn: sum(c.nets.map((n) => n.rxBytes)),
-      netOut: sum(c.nets.map((n) => n.txBytes)),
-    );
+    return VirtRust.snapshot(jsonDecode(json), serverId: serverId);
   }
 
   @override
   Future<void> power(VirtGuest guest, VirtPowerAction action) async {
-    if (!guest.actions.contains(action)) {
+    // A crashed domain's start is a destroy first (`sbm_virt::libvirt::host`).
+    final plan = ffi.virtLibvirtPowerPlan(
+      stateReason: guest.stateReason,
+      offered: [for (final a in guest.actions) _kindOf(a)],
+      action: _kindOf(action),
+    );
+    if (plan == null) {
       throw VirtErr(
         type: VirtErrType.unsupported,
         message: '${action.name} is not offered for ${guest.name}',
       );
     }
-    if (action == VirtPowerAction.start && _stateCodes[guest.id] == 6) {
-      // Crashed with `on_crash=preserve`: the process is still there, and
-      // `start` refuses a domain that has one.
+    for (final (i, step) in plan.indexed) {
       try {
-        await _action(VirtPowerAction.forceStop, guest.id);
+        await _action(step, guest.id);
       } on VirtErr catch (e) {
-        if (e.cause case ffi.VirtFfiError(
-          kind: ffi.VirtErrorKind.invalidState,
-        )) {
-          // Already gone.
-        } else {
-          rethrow;
-        }
+        // The destroy before a crashed domain's start: already gone.
+        final gone =
+            plan.length > 1 &&
+            i == 0 &&
+            e.cause is ffi.VirtFfiError &&
+            (e.cause as ffi.VirtFfiError).kind == ffi.VirtErrorKind.invalidState;
+        if (!gone) rethrow;
       }
     }
-    await _action(action, guest.id);
   }
 
-  Future<void> _action(VirtPowerAction action, String domain) async {
-    final kind = switch (action) {
-      VirtPowerAction.start => ffi.VirtActionKind.start,
-      VirtPowerAction.shutdown => ffi.VirtActionKind.shutdown,
-      VirtPowerAction.reboot => ffi.VirtActionKind.reboot,
-      VirtPowerAction.forceStop => ffi.VirtActionKind.forceStop,
-      VirtPowerAction.suspend => ffi.VirtActionKind.suspend,
-      VirtPowerAction.resume => ffi.VirtActionKind.resume,
-    };
+  static ffi.VirtActionKind _kindOf(VirtPowerAction action) => switch (action) {
+    VirtPowerAction.start => ffi.VirtActionKind.start,
+    VirtPowerAction.shutdown => ffi.VirtActionKind.shutdown,
+    VirtPowerAction.reboot => ffi.VirtActionKind.reboot,
+    VirtPowerAction.forceStop => ffi.VirtActionKind.forceStop,
+    VirtPowerAction.suspend => ffi.VirtActionKind.suspend,
+    VirtPowerAction.resume => ffi.VirtActionKind.resume,
+  };
+
+  Future<void> _action(ffi.VirtActionKind kind, String domain) async {
     await _run(
       ffi.virtActionScript(action: kind, domain: domain),
       ({required String raw}) async {
@@ -2891,7 +2780,6 @@ class LibvirtBackend implements VirtBackend {
     }
   }
 
-  static int? _kib(int? kib) => kib == null ? null : kib * 1024;
 }
 
 /// What one upload attempt came to.

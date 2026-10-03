@@ -28,7 +28,7 @@ use std::time::Duration;
 use sbm_redfish::cert::CertInfo;
 use serde_json::{Map, Value};
 
-use super::http::{Connector, Http, Method, Request, Response, TransportError};
+use super::http::{Body, Connector, Http, Method, Request, Response, TransportError};
 use super::resources;
 use super::{Auth, Config, form, seg, version_less_than};
 use crate::error::{Detail, Error, ErrorKind, Result};
@@ -318,7 +318,7 @@ impl Client {
         let overrule = action == PowerAction::ForceStop
             && self.release().is_some_and(|r| !version_less_than(&r, &OVERRULE_SHUTDOWN_SINCE));
         let body = if overrule { form(&[("overrule-shutdown", "1")]) } else { String::new() };
-        let upid = self.call(Method::Post, &format!("{path}/status/{verb}"), Some(body), true).await?;
+        let upid = self.call(Method::Post, &format!("{path}/status/{verb}"), Some(Body::form(body)), true).await?;
         if let Some(upid) = upid.as_str().filter(|u| u.starts_with("UPID:")) {
             self.wait_task(guest.node.as_deref().unwrap_or_default(), upid).await?;
         }
@@ -371,11 +371,48 @@ impl Client {
 
     /// Any API call in this session, `path` under `/api2/json` (query
     /// included), answering the body's `data` — or, with `whole`, the body
-    /// itself, for what PVE puts beside `data`. `form` is the request body.
-    /// `action` marks a call on one guest, whose refusal is
-    /// [`ErrorKind::ActionFailed`].
-    pub async fn request(&self, method: Method, path: &str, form: Option<String>, action: bool, whole: bool) -> Result<Value> {
-        self.call_with(method, path, form, action, whole).await
+    /// itself, for what PVE puts beside `data`. `action` marks a call on one
+    /// guest, whose refusal is [`ErrorKind::ActionFailed`].
+    pub async fn request(&self, method: Method, path: &str, body: Option<Body>, action: bool, whole: bool) -> Result<Value> {
+        self.call_with(method, path, body, action, whole).await
+    }
+
+    /// Reads `guest`'s state again after an action the caller made itself
+    /// (a snapshot revert), so the next [`Client::load`] shows it before the
+    /// listing catches up.
+    pub async fn refresh_status(&self, guest: &Guest) {
+        if let Ok(path) = guest_path(guest) {
+            self.read_status(guest, &path).await;
+        }
+    }
+
+    /// A request in this session answered as the host answered it, status
+    /// and body uninterpreted, for a caller that reads PVE's answers itself.
+    /// `path` is the whole path, API root and query included. The session's
+    /// own rules still apply: a 401 drops it, and on a password session this
+    /// call did not log in, it is sent again once after a new login.
+    // TODO(migration): for the app's PVE calls not yet moved here; remove
+    // once every one has a typed call of its own.
+    pub async fn raw(&self, method: Method, path: &str, body: Option<Body>) -> Result<Response> {
+        let before = {
+            let st = self.state.lock().unwrap();
+            st.session.clone().filter(|s| s.generation == st.generation)
+        };
+        let session = self.ensure_session().await?;
+        let req = Request { method, path: path.to_owned(), headers: Vec::new(), body };
+        let resp = self.send_raw(&session, req.clone()).await?;
+        if resp.status == 401 && session.ticket().is_some() && before.as_ref().is_some_and(|b| Arc::ptr_eq(b, &session)) {
+            let session = self.ensure_session().await?;
+            return self.send_raw(&session, req).await;
+        }
+        Ok(resp)
+    }
+
+    /// The headers that authenticate a request in the current session,
+    /// logging in first if needed: for a connection made outside this client
+    /// (a console's websocket). They carry the ticket or the token.
+    pub async fn auth_headers(&self) -> Result<Vec<(String, String)>> {
+        Ok(self.ensure_session().await?.headers())
     }
 
     // -----------------------------------------------------------------------
@@ -628,7 +665,7 @@ impl Client {
             method: Method::Post,
             path: format!("{API}/access/ticket"),
             headers: Vec::new(),
-            form: Some(form(fields)),
+            body: Some(Body::form(form(fields))),
         };
         let resp = http.send(req).await.map_err(|e| self.transport_err(e))?;
         if resp.status == 401 || (200..300).contains(&resp.status) {
@@ -646,7 +683,7 @@ impl Client {
             method: Method::Get,
             path: format!("{API}/version"),
             headers: session.headers(),
-            form: None,
+            body: None,
         };
         let resp = session.http.send(req).await.map_err(|e| self.transport_err(e))?;
         if resp.status == 401 || resp.status == 403 {
@@ -659,8 +696,8 @@ impl Client {
             .and_then(|v| resources::str_of(Some(v))))
     }
 
-    async fn call(&self, method: Method, path: &str, form: Option<String>, action: bool) -> Result<Value> {
-        self.call_with(method, path, form, action, false).await
+    async fn call(&self, method: Method, path: &str, body: Option<Body>, action: bool) -> Result<Value> {
+        self.call_with(method, path, body, action, false).await
     }
 
     /// Runs one request in the current session.
@@ -669,13 +706,13 @@ impl Client {
     /// once, after a new login: PVE refused the ticket (it expired while the
     /// client slept through the renewal), and nothing ran. A second refusal,
     /// the login's own, or a 401 on a token is reported as it is.
-    async fn call_with(&self, method: Method, path: &str, form: Option<String>, action: bool, whole: bool) -> Result<Value> {
+    async fn call_with(&self, method: Method, path: &str, body: Option<Body>, action: bool, whole: bool) -> Result<Value> {
         let before = {
             let st = self.state.lock().unwrap();
             st.session.clone().filter(|s| s.generation == st.generation)
         };
         let session = self.ensure_session().await?;
-        let req = Request { method, path: format!("{API}{path}"), headers: Vec::new(), form };
+        let req = Request { method, path: format!("{API}{path}"), headers: Vec::new(), body };
         match self.send(&session, req.clone(), action, whole).await {
             Err(e)
                 if e.kind == ErrorKind::AuthFailed
@@ -690,7 +727,9 @@ impl Client {
         }
     }
 
-    async fn send(&self, session: &Arc<Session>, mut req: Request, action: bool, whole: bool) -> Result<Value> {
+    /// One request with the session's headers. A transport failure or a 401
+    /// ends the session.
+    async fn send_raw(&self, session: &Arc<Session>, mut req: Request) -> Result<Response> {
         req.headers.extend(session.headers());
         let resp = match session.http.send(req).await {
             Ok(resp) => resp,
@@ -700,12 +739,16 @@ impl Client {
                 return Err(err);
             }
         };
+        if resp.status == 401 {
+            self.drop_session(session);
+        }
+        Ok(resp)
+    }
+
+    async fn send(&self, session: &Arc<Session>, req: Request, action: bool, whole: bool) -> Result<Value> {
+        let resp = self.send_raw(session, req).await?;
         if !(200..300).contains(&resp.status) {
-            let err = self.status_err(&resp, action);
-            if resp.status == 401 {
-                self.drop_session(session);
-            }
-            return Err(err);
+            return Err(self.status_err(&resp, action));
         }
         let body: Value = serde_json::from_slice(&resp.body)
             .ok()

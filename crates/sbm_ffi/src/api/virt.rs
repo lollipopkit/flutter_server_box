@@ -129,6 +129,84 @@ pub fn parse_virt_overview_json(raw: String) -> Result<String, VirtFfiError> {
     serde_json::to_string(&libvirt::parse_overview(&raw)?).map_err(json_err)
 }
 
+/// The overview read into one host view (`sbm_virt::model::HostView` JSON),
+/// with usage diffed against the previous one (sbm_virt::libvirt::host). One
+/// per host: it holds each guest's last counters.
+#[flutter_rust_bridge::frb(opaque)]
+pub struct LibvirtRates(sbm_virt::rates::RateTracker);
+
+impl LibvirtRates {
+    #[flutter_rust_bridge::frb(sync)]
+    pub fn new() -> LibvirtRates {
+        LibvirtRates(sbm_virt::rates::RateTracker::new(false))
+    }
+
+    /// `raw` is [`virt_overview_script`]'s output, `at_ms` when it was read.
+    /// `pool_types` is [`parse_virt_pool_types`]'s answer; `upload` whether
+    /// the channel carries bytes for `vol-upload`.
+    #[flutter_rust_bridge::frb(sync)]
+    pub fn view(&mut self, raw: String, at_ms: i64, pool_types: Option<Vec<String>>, upload: bool) -> Result<String, VirtFfiError> {
+        let overview = libvirt::parse_overview(&raw)?;
+        let view = libvirt::host::view_of(&overview, &mut self.0, at_ms, pool_types.as_deref(), upload);
+        serde_json::to_string(&view).map_err(json_err)
+    }
+
+    /// Forgets every guest's counters: the next view has no rates.
+    #[flutter_rust_bridge::frb(sync)]
+    pub fn clear(&mut self) {
+        self.0.clear();
+    }
+}
+
+/// The `virsh` actions that carry out `action` on a guest the last view read
+/// with `state_reason` and `offered`; None when it does not offer it. A
+/// crashed domain's start is a destroy first (sbm_virt::libvirt::host).
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_libvirt_power_plan(
+    state_reason: Option<String>,
+    offered: Vec<VirtActionKind>,
+    action: VirtActionKind,
+) -> Option<Vec<VirtActionKind>> {
+    use sbm_virt::model::{Guest, GuestKind, GuestState, PowerAction};
+    let model = |k: &VirtActionKind| match k {
+        VirtActionKind::Start => PowerAction::Start,
+        VirtActionKind::Shutdown => PowerAction::Shutdown,
+        VirtActionKind::Reboot => PowerAction::Reboot,
+        VirtActionKind::ForceStop => PowerAction::ForceStop,
+        VirtActionKind::Suspend => PowerAction::Suspend,
+        VirtActionKind::Resume => PowerAction::Resume,
+    };
+    let guest = Guest {
+        id: String::new(),
+        name: String::new(),
+        kind: GuestKind::Qemu,
+        state: GuestState::Unknown,
+        state_reason,
+        vmid: None,
+        node: None,
+        vcpu: None,
+        mem_bytes: None,
+        uptime: None,
+        tags: Vec::new(),
+        template: false,
+        autostart: None,
+        actions: offered.iter().map(model).collect(),
+    };
+    let plan = libvirt::host::power_plan(&guest, model(&action))?;
+    Some(
+        plan.into_iter()
+            .map(|a| match a {
+                libvirt::VirtAction::Start => VirtActionKind::Start,
+                libvirt::VirtAction::Shutdown => VirtActionKind::Shutdown,
+                libvirt::VirtAction::Reboot => VirtActionKind::Reboot,
+                libvirt::VirtAction::ForceStop => VirtActionKind::ForceStop,
+                libvirt::VirtAction::Suspend => VirtActionKind::Suspend,
+                libvirt::VirtAction::Resume => VirtActionKind::Resume,
+            })
+            .collect(),
+    )
+}
+
 /// Display and VNC password, for opening a graphical console
 #[flutter_rust_bridge::frb(sync)]
 pub fn virt_vnc_console_script(domain: String) -> String {

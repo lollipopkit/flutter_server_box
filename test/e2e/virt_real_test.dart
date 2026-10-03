@@ -646,6 +646,7 @@ Future<void> _pve() async {
         return PveBackend(
           serverId: 'e2e-pve',
           config: config(addr, pin: pinned),
+          tunnel: d.loopback,
           connect: d.startConnect,
           onClose: d.close,
           taskPoll: const Duration(milliseconds: 500),
@@ -984,6 +985,7 @@ Future<void> _pveTestVm() async {
             tokenSecret: tokenSecret,
             certSha256: pin,
           ),
+          tunnel: d.loopback,
           connect: d.startConnect,
           onClose: d.close,
           taskPoll: const Duration(milliseconds: 500),
@@ -1707,6 +1709,7 @@ Future<void> _pvePassthrough() async {
           tokenId: tokenId,
           tokenSecret: tokenSecret,
         ),
+        tunnel: d.loopback,
         connect: d.startConnect,
         onClose: d.close,
         taskPoll: const Duration(milliseconds: 500),
@@ -1886,6 +1889,7 @@ Future<void> _pveCreate() async {
           tokenId: tokenId,
           tokenSecret: tokenSecret,
         ),
+        tunnel: d.loopback,
         connect: d.startConnect,
         onClose: d.close,
         taskPoll: const Duration(milliseconds: 500),
@@ -2132,6 +2136,7 @@ Future<void> _pvePassword() async {
     return PveBackend(
       serverId: spi.id,
       config: PveConfig(addr: addr, pwd: pvePwd, certSha256: pin),
+      tunnel: d.loopback,
       connect: d.startConnect,
       onClose: d.close,
       user: spi.ssh?.user,
@@ -2299,28 +2304,6 @@ Future<void> _pvePassword() async {
         }
       });
 
-      test('an hour on, the ticket is renewed with itself', () async {
-        var offset = Duration.zero;
-        final pve = backend(
-          byKey(pwdUser),
-          pwdKey,
-          pvePwd: pwd,
-          now: () => DateTime.now().add(offset),
-        );
-        try {
-          await pve.load();
-          final logins = await settledAuthCount(pwdUser);
-          offset = PveBackend.renewAfter;
-          expect((await pve.load()).guests, isNotEmpty);
-          expect(await authCountAtLeast(pwdUser, logins + 1), logins + 1);
-          // The renewed ticket is what the session uses now.
-          final ct = guestOf(await pve.load(), VirtGuestKind.lxc, lxcId);
-          expect((await pve.console(ct, VirtConsoleKind.text)).user,
-              '$pwdUser@pam');
-        } finally {
-          await pve.close();
-        }
-      });
     });
 
     if (totpUser == null || totpPwd == null || totpSecret == null) {
@@ -2390,39 +2373,6 @@ Future<void> _pvePassword() async {
           expect(replay.message, l10n.pveOtpVerificationFailed);
           await pve.submitTfa(await freshCode());
           expect((await pve.load()).guests, isNotEmpty);
-        } finally {
-          await pve.close();
-        }
-      });
-
-      test('a challenge past its lifetime is replaced, and the code answers '
-          'the new one', () async {
-        var offset = Duration.zero;
-        final pve = totp(now: () => DateTime.now().add(offset));
-        try {
-          expect((await _virtErr(pve.load())).type, VirtErrType.needTfa);
-          final logins = await settledAuthCount(totpUser);
-          offset = PveBackend.ticketLifetime;
-          await pve.submitTfa(await freshCode());
-          expect((await pve.load()).guests, isNotEmpty);
-          // The new first-factor login and the answer.
-          expect(await authCountAtLeast(totpUser, logins + 2), logins + 2);
-        } finally {
-          await pve.close();
-        }
-      });
-
-      test('an hour on, the ticket is renewed without a code', () async {
-        var offset = Duration.zero;
-        final pve = totp(now: () => DateTime.now().add(offset));
-        try {
-          expect((await _virtErr(pve.load())).type, VirtErrType.needTfa);
-          await pve.submitTfa(await freshCode());
-          await pve.load();
-          final logins = await settledAuthCount(totpUser);
-          offset = PveBackend.renewAfter;
-          expect((await pve.load()).guests, isNotEmpty);
-          expect(await authCountAtLeast(totpUser, logins + 1), logins + 1);
         } finally {
           await pve.close();
         }
@@ -3629,6 +3579,7 @@ Future<void> _pveManage() async {
           tokenId: tokenId,
           tokenSecret: tokenSecret,
         ),
+        tunnel: d.loopback,
         connect: d.startConnect,
         // What the node says of its own interfaces, over the same SSH.
         exec: () async => SshExec(c),
@@ -4709,6 +4660,7 @@ Future<void> _pveCloudInit() async {
           tokenId: tokenId,
           tokenSecret: tokenSecret,
         ),
+        tunnel: d.loopback,
         connect: d.startConnect,
         onClose: d.close,
         taskPoll: const Duration(milliseconds: 500),
@@ -5507,6 +5459,7 @@ Future<void> _p8Pve() async {
           tokenSecret: tokenSecret,
           certSha256: pin,
         ),
+        tunnel: dialer.loopback,
         connect: dialer.startConnect,
         onClose: dialer.close,
         taskPoll: const Duration(milliseconds: 500),

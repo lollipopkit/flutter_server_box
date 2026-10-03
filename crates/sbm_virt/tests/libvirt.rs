@@ -3633,6 +3633,47 @@ mod host {
         assert_eq!(web.net_out, Some(0.0));
     }
 
+    fn domain(state: virt::VirtState, code: i32, reason: i32) -> virt::VirtDomain {
+        virt::VirtDomain {
+            uuid: ODD.into(),
+            name: "x".into(),
+            state,
+            state_code: code,
+            reason_code: reason,
+            reason: "unknown".into(),
+            autostart: false,
+            persistent: true,
+            vcpu_current: None,
+            vcpu_max: None,
+            mem_current_kib: None,
+            mem_max_kib: None,
+            counters: Default::default(),
+        }
+    }
+
+    #[test]
+    fn pmsuspended_is_paused_without_resume() {
+        let g = sbm_virt::libvirt::host::guest_of(&domain(virt::VirtState::Paused, 7, 0));
+        assert_eq!(g.state, GuestState::Paused);
+        assert_eq!(g.state_reason.as_deref(), Some("pmsuspended"));
+        assert_eq!(g.actions, set(&[PowerAction::ForceStop]));
+    }
+
+    #[test]
+    fn migration_shows_as_migrating_and_offers_nothing() {
+        let g = sbm_virt::libvirt::host::guest_of(&domain(virt::VirtState::Paused, 3, 2));
+        assert_eq!(g.state, GuestState::Migrating);
+        assert!(g.actions.is_empty());
+    }
+
+    #[test]
+    fn a_crashed_domain_is_stopped_offering_start_and_force_stop() {
+        let g = sbm_virt::libvirt::host::guest_of(&domain(virt::VirtState::Stopped, 6, 1));
+        assert_eq!(g.state, GuestState::Stopped);
+        assert_eq!(g.state_reason.as_deref(), Some("crashed"));
+        assert_eq!(g.actions, set(&[PowerAction::Start, PowerAction::ForceStop]));
+    }
+
     #[test]
     fn a_crashed_domain_is_destroyed_before_it_starts() {
         let view = view_of(&overview(&fixture("domstats.txt")), &mut RateTracker::new(false), 0, None, false);

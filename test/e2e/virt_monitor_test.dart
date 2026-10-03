@@ -4774,6 +4774,7 @@ void _pveUnverified(_Agent agent) {
         user: 'root@pam',
         // What a server logged in to with a password lends PVE.
         sshPassword: ticket,
+        tunnel: dialer.loopback,
         connect: dialer.startConnect,
         taskPoll: const Duration(milliseconds: 500),
       );

@@ -23,6 +23,7 @@ import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/provider/virt/pve_backend.dart';
 
+import '../../helpers/pve_tunnel.dart';
 import '../../helpers/rust_lib_helper.dart';
 import '../../helpers/tunnel_client.dart';
 
@@ -158,6 +159,7 @@ void main() {
       tokenSecret: 'secret',
       certSha256: pin,
     ),
+    tunnel: (_, _) => loopbackTo(server.port),
     connect: (_, _) => ConnectionTask.fromSocket(
       Socket.connect(InternetAddress.loopbackIPv4, server.port),
       () {},

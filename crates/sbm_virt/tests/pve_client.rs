@@ -184,7 +184,7 @@ impl Http for FakeHttp {
             let path = req.path.trim_start_matches("/api2/json").split('?').next().unwrap().to_owned();
             let method = req.method.as_str();
             let key = format!("{method} {path}");
-            let body = req.form.clone().unwrap_or_default();
+            let body = req.body.as_ref().map(|b| String::from_utf8_lossy(&b.bytes).into_owned()).unwrap_or_default();
             let gate = {
                 let mut a = self.api.api();
                 a.paths.push(key.clone());
@@ -1109,4 +1109,24 @@ async fn a_closed_client_answers_closed() {
     pve.load().await.unwrap();
     pve.close();
     assert_eq!(pve.load().await.unwrap_err().kind, ErrorKind::Closed);
+}
+
+#[tokio::test]
+async fn a_raw_request_answers_as_the_host_did_and_keeps_the_session_rules() {
+    use sbm_virt::pve::http::Method;
+    let api = standard();
+    let pve = api.client(password("pw"));
+    pve.load().await.unwrap();
+    // A refusal is the caller's to read: answered, not an error.
+    api.api().action_status = 403;
+    let resp = pve.raw(Method::Post, "/api2/json/nodes/pve/qemu/101/status/start", None).await.unwrap();
+    assert_eq!(resp.status, 403);
+    assert!(String::from_utf8_lossy(&resp.body).contains("Permission check failed"));
+    assert_eq!(api.count("POST /access/ticket"), 1, "a 403 keeps the session");
+    // A refused ticket is replaced once and the request sent again.
+    api.api().action_status = 200;
+    api.api().resources_401 = 1;
+    let resp = pve.raw(Method::Get, "/api2/json/cluster/resources", None).await.unwrap();
+    assert_eq!(resp.status, 200);
+    assert_eq!(api.count("POST /access/ticket"), 2);
 }

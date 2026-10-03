@@ -325,21 +325,9 @@ void main() {
     expect(virt.needsSudo, isFalse);
   });
 
+  // pmsuspended and migration are `sbm_virt`'s mapping:
+  // crates/sbm_virt/tests/libvirt.rs (`host`).
   group('states the mapped state hides', () {
-    LibvirtDomain domain(int code, String state) => LibvirtDomain(
-      uuid: _odd,
-      name: 'x',
-      state: state,
-      stateCode: code,
-    );
-
-    test('pmsuspended is paused without resume', () {
-      final g = LibvirtBackend.guestOf(domain(7, 'paused'));
-      expect(g.state, VirtGuestState.paused);
-      expect(g.stateReason, 'pmsuspended');
-      expect(g.actions, {VirtPowerAction.forceStop});
-    });
-
     test('crashed and preserved: start destroys it first', () async {
       final crashed = _fixture('domstats.txt').replaceFirst(
         '  state.state=5\n  state.reason=6',
@@ -362,20 +350,6 @@ void main() {
       expect(exec.calls, hasLength(2));
       expect(exec.calls.first.script, contains('V destroy --domain'));
       expect(exec.calls.last.script, contains('V start --domain'));
-    });
-
-    test('migration shows as migrating and offers nothing', () {
-      final g = LibvirtBackend.guestOf(
-        const LibvirtDomain(
-          uuid: _odd,
-          name: 'x',
-          state: 'paused',
-          stateCode: 3,
-          reasonCode: 2,
-        ),
-      );
-      expect(g.state, VirtGuestState.migrating);
-      expect(g.actions, isEmpty);
     });
   });
 

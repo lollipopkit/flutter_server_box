@@ -5,7 +5,7 @@ part 'libvirt.freezed.dart';
 part 'libvirt.g.dart';
 
 /// `sbm_virt::libvirt` output as it crosses the FFI: serde JSON with
-/// snake_case keys. Raw counters only; `VirtRateTracker` turns two readings
+/// snake_case keys. Raw counters only; `sbm_virt::rates` turns two readings
 /// into rates.
 
 /// `virsh version`.

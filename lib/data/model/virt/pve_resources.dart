@@ -3,7 +3,6 @@ import 'package:server_box/data/model/virt/virt_backup.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_hardware.dart';
-import 'package:server_box/data/model/virt/virt_rates.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 
 /// Reading PVE API answers into the Virtualization models. Pure functions,
@@ -13,140 +12,6 @@ import 'package:server_box/data/model/virt/virt_resources.dart';
 /// a field missing from one entry (a guest being created has no name yet, an offline node no
 /// figures) costs that field, not the whole listing.
 abstract final class PveResources {
-  /// `/cluster/resources`: the nodes, the guests (templates included, marked),
-  /// and each guest's counters at [at].
-  static ({
-    List<VirtNode> nodes,
-    List<VirtGuest> guests,
-    Map<String, VirtCounterSample> samples,
-  })
-  parse(List<Object?> raw, {required DateTime at}) {
-    final nodes = <VirtNode>[];
-    final guests = <VirtGuest>[];
-    final samples = <String, VirtCounterSample>{};
-    for (final item in raw) {
-      if (item is! Map) continue;
-      final e = item.cast<String, Object?>();
-      switch (e['type']) {
-        case 'node':
-          final name = _str(e['node']);
-          if (name == null) continue;
-          nodes.add(
-            VirtNode(
-              name: name,
-              online: e['status'] == 'online',
-              cpu: _double(e['cpu']),
-              maxCpu: _int(e['maxcpu']),
-              memUsed: _int(e['mem']),
-              memTotal: _int(e['maxmem']),
-              uptime: _duration(e['uptime']),
-            ),
-          );
-        case final String type when type == 'qemu' || type == 'lxc':
-          final vmid = _int(e['vmid']);
-          final id = _str(e['id']) ?? (vmid == null ? null : '$type/$vmid');
-          if (id == null) continue;
-          final kind = type == 'lxc' ? VirtGuestKind.lxc : VirtGuestKind.qemu;
-          final status = _str(e['status']);
-          final lock = _str(e['lock']);
-          final template = _int(e['template']) == 1;
-          final state = stateOf(status, lock);
-          guests.add(
-            VirtGuest(
-              id: id,
-              name: _str(e['name']) ?? '${vmid ?? id}',
-              kind: kind,
-              state: state,
-              stateReason: lock ?? (status == state.name ? null : status),
-              vmid: vmid,
-              node: _str(e['node']),
-              vcpu: _int(e['maxcpu']),
-              memBytes: _int(e['maxmem']),
-              uptime: _duration(e['uptime']),
-              tags: _tags(e['tags']),
-              template: template,
-              actions: template
-                  ? const {}
-                  : actionsOf(status, lock, kind, state),
-            ),
-          );
-          // What runs, whatever holds the lock: a VM being backed up is
-          // still running, and its counters still count.
-          final active = stateOf(status, null).isActive;
-          final cpu = _double(e['cpu']);
-          samples[id] = VirtCounterSample(
-            at: at,
-            cpuPercent: active && cpu != null ? cpu * 100 : null,
-            vcpus: _int(e['maxcpu']),
-            memUsed: active ? _int(e['mem']) : null,
-            memTotal: _int(e['maxmem']),
-            // QEMU reports 0 used without the guest agent; that is "not
-            // known", not an empty disk.
-            diskUsed: _positive(_int(e['disk'])),
-            diskTotal: _positive(_int(e['maxdisk'])),
-            diskRead: active ? _int(e['diskread']) : null,
-            diskWrite: active ? _int(e['diskwrite']) : null,
-            netIn: active ? _int(e['netin']) : null,
-            netOut: active ? _int(e['netout']) : null,
-          );
-      }
-    }
-    return (nodes: nodes, guests: guests, samples: samples);
-  }
-
-  /// What a guest with PVE's [status] and [lock] offers, [state] being
-  /// [stateOf] the two.
-  ///
-  /// A lock is an operation in progress (snapshot, clone, rollback, ...) that
-  /// PVE refuses power actions during, with two exceptions. `suspended` is a
-  /// hibernated VM, which `start` resumes. `backup` still lets a VM be paused
-  /// and resumed (`vm_suspend` and `vm_resume` skip the lock check for it,
-  /// PVE 9.2 `QemuServer/RunState.pm`; verified, test/e2e/virt_real_test.dart),
-  /// which is how a paused VM that a backup job picked up is woken.
-  static Set<VirtPowerAction> actionsOf(
-    String? status,
-    String? lock,
-    VirtGuestKind kind,
-    VirtGuestState state,
-  ) {
-    final qemu = kind == VirtGuestKind.qemu;
-    return switch (lock) {
-      null || 'suspended' => VirtPowerAction.offered(state, pause: qemu),
-      'backup' when qemu => switch (status) {
-        'running' => const {VirtPowerAction.suspend},
-        'paused' => const {VirtPowerAction.resume},
-        _ => const {},
-      },
-      _ => const {},
-    };
-  }
-
-  /// PVE's `status` and `lock`, as one state.
-  ///
-  /// `status` is the QEMU run state where `pvestatd` has one, so beside
-  /// `running` and `stopped` it can be `paused`, `prelaunch`, `suspended`
-  /// (S3), `io-error`, `internal-error`, `guest-panicked`, ... A `lock` wins
-  /// where it names what the guest is busy with.
-  static VirtGuestState stateOf(String? status, String? lock) {
-    switch (lock) {
-      case 'backup':
-        return VirtGuestState.backup;
-      case 'migrate':
-        return VirtGuestState.migrating;
-      case 'suspending':
-        return VirtGuestState.stopping;
-    }
-    return switch (status) {
-      'running' => VirtGuestState.running,
-      'stopped' => VirtGuestState.stopped,
-      'paused' || 'suspended' || 'io-error' => VirtGuestState.paused,
-      'prelaunch' || 'inmigrate' => VirtGuestState.starting,
-      'shutdown' => VirtGuestState.stopping,
-      'postmigrate' || 'finish-migrate' => VirtGuestState.migrating,
-      _ => VirtGuestState.unknown,
-    };
-  }
-
   /// `/nodes/{node}/{type}/{vmid}/rrddata`: rates already, bytes per second.
   static List<VirtStats> parseRrd(List<Object?> raw) {
     final out = <VirtStats>[];
@@ -1157,15 +1022,6 @@ abstract final class PveResources {
     );
   }
 
-  static List<String> _tags(Object? raw) {
-    if (raw is! String || raw.isEmpty) return const [];
-    return raw
-        .split(RegExp('[;, ]'))
-        .map((t) => t.trim())
-        .where((t) => t.isNotEmpty)
-        .toList();
-  }
-
   static String? _str(Object? v) => v is String && v.isNotEmpty ? v : null;
 
   static int? _int(Object? v) => switch (v) {
@@ -1183,8 +1039,4 @@ abstract final class PveResources {
 
   static int? _positive(int? v) => v == null || v <= 0 ? null : v;
 
-  static Duration? _duration(Object? v) {
-    final s = _int(v);
-    return s == null || s <= 0 ? null : Duration(seconds: s);
-  }
 }

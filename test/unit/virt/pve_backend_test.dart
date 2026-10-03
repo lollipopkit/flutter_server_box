@@ -9,8 +9,8 @@ library;
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/error.dart';
@@ -26,6 +26,9 @@ import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/model/virt/virt_manage.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/virt/pve_backend.dart';
+
+import '../../helpers/pve_tunnel.dart';
+import '../../helpers/rust_lib_helper.dart';
 
 /// `/cluster/resources` from a one-node PVE 8 (the old `pve_test.dart`
 /// fixture), plus a locked guest and a template.
@@ -145,100 +148,9 @@ final _resources = <Map<String, Object?>>[
 ];
 
 void main() {
+  setUpAll(initRustLibForTest);
+
   group('PveResources', () {
-    test('parses nodes and guests, skipping storage and SDN', () {
-      final r = PveResources.parse(_resources, at: DateTime(2026));
-      expect(r.nodes.map((n) => n.name), ['pve']);
-      expect(r.nodes.single.memTotal, 29287632896);
-      expect(r.guests.map((g) => g.id), [
-        'lxc/100',
-        'qemu/101',
-        'qemu/102',
-        'qemu/103',
-        'qemu/9000',
-        'qemu/104',
-      ]);
-      final lxc = r.guests.first;
-      expect(lxc.kind, VirtGuestKind.lxc);
-      expect(lxc.state, VirtGuestState.running);
-      expect(lxc.tags, ['media', 'prod']);
-      expect(lxc.uptime, const Duration(seconds: 1204757));
-      // No suspend for a container.
-      expect(lxc.actions, {
-        VirtPowerAction.shutdown,
-        VirtPowerAction.reboot,
-        VirtPowerAction.forceStop,
-      });
-      expect(r.guests[1].actions, {VirtPowerAction.start});
-      expect(r.guests[2].actions, contains(VirtPowerAction.suspend));
-
-      final locked = r.guests[3];
-      expect(locked.state, VirtGuestState.backup);
-      expect(locked.stateReason, 'backup');
-      // PVE lets a VM under backup be paused, and nothing else.
-      expect(locked.actions, {VirtPowerAction.suspend});
-      // Still running: the lock does not hide its counters.
-      expect(r.samples['qemu/103']!.cpuPercent, closeTo(25, 0.001));
-      expect(r.samples['qemu/103']!.memUsed, 1073741824);
-
-      final template = r.guests[4];
-      expect(template.template, isTrue);
-      expect(template.actions, isEmpty);
-
-      final paused = r.guests[5];
-      expect(paused.state, VirtGuestState.paused);
-      expect(paused.actions, {
-        VirtPowerAction.resume,
-        VirtPowerAction.forceStop,
-      });
-
-      // CPU is a fraction of the guest's own CPUs; a stopped guest has none.
-      expect(r.samples['lxc/100']!.cpuPercent, closeTo(5.446, 0.001));
-      expect(r.samples['qemu/101']!.cpuPercent, isNull);
-      // QEMU without the guest agent reports disk 0: not measured.
-      expect(r.samples['qemu/102']!.diskUsed, isNull);
-    });
-
-    test('a lock leaves only what PVE allows under it', () {
-      Set<VirtPowerAction> of(
-        String status,
-        String? lock, [
-        VirtGuestKind kind = VirtGuestKind.qemu,
-      ]) => PveResources.actionsOf(
-        status,
-        lock,
-        kind,
-        PveResources.stateOf(status, lock),
-      );
-      // `vm_suspend` / `vm_resume` skip the lock check for a backup only.
-      expect(of('running', 'backup'), {VirtPowerAction.suspend});
-      expect(of('paused', 'backup'), {VirtPowerAction.resume});
-      expect(of('stopped', 'backup'), isEmpty);
-      expect(of('running', 'backup', VirtGuestKind.lxc), isEmpty);
-      for (final lock in ['snapshot', 'clone', 'rollback', 'migrate']) {
-        expect(of('running', lock), isEmpty, reason: lock);
-        expect(of('paused', lock), isEmpty, reason: lock);
-      }
-      // A hibernated VM: `start` resumes it.
-      expect(of('stopped', 'suspended'), {VirtPowerAction.start});
-      expect(of('paused', null), {
-        VirtPowerAction.resume,
-        VirtPowerAction.forceStop,
-      });
-    });
-
-    test('status and lock map to one state', () {
-      VirtGuestState of(String? status, [String? lock]) =>
-          PveResources.stateOf(status, lock);
-      expect(of('running', 'migrate'), VirtGuestState.migrating);
-      expect(of('stopped', 'suspended'), VirtGuestState.stopped);
-      expect(of('running', 'suspending'), VirtGuestState.stopping);
-      expect(of('prelaunch'), VirtGuestState.starting);
-      expect(of('io-error'), VirtGuestState.paused);
-      expect(of('guest-panicked'), VirtGuestState.unknown);
-      expect(PveResources.stateOf(null, null), VirtGuestState.unknown);
-    });
-
     test('config: disks, NICs, consoles', () {
       final qemu = PveResources.parseConfig({
         'scsi0': 'local-lvm:vm-100-disk-0,iothread=1,size=32G',
@@ -300,756 +212,6 @@ void main() {
     });
   });
 
-  group('auth', () {
-    test('an API token goes in every request, with no login', () async {
-      final api = _Api()..resources = _resources;
-      final pve = api.backend(
-        const PveConfig(
-          addr: 'https://pve.lan:8006',
-          auth: PveAuth.token,
-          tokenId: 'root@pam!sb',
-          tokenSecret: 's3cret',
-        ),
-      );
-      final snap = await pve.load();
-      expect(snap.guests, hasLength(6));
-      expect(snap.host.version, '8.2.4');
-      // A bridge's configuration is edited in place: the view reads this.
-      expect(snap.capabilities.networkEditExisting, isTrue);
-      expect(api.paths, ['GET /version', 'GET /cluster/resources']);
-      for (final headers in api.headers) {
-        expect(headers['Authorization'], 'PVEAPIToken=root@pam!sb=s3cret');
-        expect(headers.containsKey('Cookie'), isFalse);
-        expect(headers.containsKey('CSRFPreventionToken'), isFalse);
-      }
-    });
-
-    test('a token that may see nothing says so, with the ACL to grant', () async {
-      // Privilege separation on and no ACL of its own: PVE answers with the
-      // node's bare name and nothing else, not a refusal (PVE 9.2).
-      final api = _Api()
-        ..resources = [
-          {
-            'id': 'node/pve',
-            'node': 'pve',
-            'type': 'node',
-            'status': 'online',
-            'level': '',
-            'cgroup-mode': 2,
-          },
-        ]
-        ..routes['GET /access/permissions'] = ((_) => {});
-      const token = PveConfig(
-        addr: 'https://pve.lan:8006',
-        auth: PveAuth.token,
-        tokenId: 'root@pam!sb',
-        tokenSecret: 's3cret',
-      );
-      final e = await _err(api.backend(token).load());
-      expect(e.type, VirtErrType.permissionDenied);
-      expect(
-        e.message,
-        contains("pveum acl modify / --tokens 'root@pam!sb' "
-            '--roles PVEAuditor,PVEVMAdmin'),
-      );
-      expect(e.message, isNot(contains('s3cret')));
-
-      // An empty host that may be audited is only empty.
-      final empty = _Api()
-        ..routes['GET /access/permissions'] = ((_) => {
-          '/': {'Sys.Audit': 1, 'VM.Audit': 1},
-        });
-      expect((await empty.backend(token).load()).guests, isEmpty);
-    });
-
-    test('a refused token is authFailed naming the id, not the secret', () async {
-      final api = _Api()..versionStatus = 401;
-      final pve = api.backend(
-        const PveConfig(
-          addr: 'https://pve.lan:8006',
-          auth: PveAuth.token,
-          tokenId: 'root@pam!sb',
-          tokenSecret: 's3cret',
-        ),
-      );
-      final err = await _err(pve.load());
-      expect(err.type, VirtErrType.authFailed);
-      expect(err.message, contains('root@pam!sb'));
-      expect(err.message, isNot(contains('s3cret')));
-    });
-
-    test('a password login carries its ticket and CSRF token', () async {
-      final api = _Api()..resources = _resources;
-      final pve = api.backend(const PveConfig(addr: 'https://pve.lan:8006'));
-      await pve.load();
-      expect(api.paths.first, 'POST /access/ticket');
-      expect(api.bodies.first, contains('username=root'));
-      expect(api.bodies.first, contains('realm=pam'));
-      expect(api.bodies.first, contains('password=sshpw'));
-      final last = api.headers.last;
-      expect(last['Cookie'], 'PVEAuthCookie=T1');
-      expect(last['CSRFPreventionToken'], 'C1');
-    });
-
-    test('TOTP: needTfa, then the code logs in', () async {
-      final api = _Api()
-        ..resources = _resources
-        ..needTfa = true;
-      final pve = api.backend(
-        const PveConfig(addr: 'https://pve.lan:8006', pwd: 'pvepw'),
-        sshKeyId: 'key',
-      );
-      final err = await _err(pve.load());
-      expect(err.type, VirtErrType.needTfa);
-      expect(api.bodies.first, contains('password=pvepw'));
-
-      await pve.submitTfa('123456');
-      final answer = api.bodies.lastWhere((b) => b.contains('tfa-challenge'));
-      expect(answer, contains('tfa-challenge=CHALLENGE1'));
-      expect(answer, contains('password=totp%3A123456'));
-      final snap = await pve.load();
-      expect(snap.guests, isNotEmpty);
-      expect(api.headers.last['Cookie'], 'PVEAuthCookie=T2');
-    });
-
-    group('which password a password login sends', () {
-      // Every earlier build's rule: the PVE password when SSH logs in with a
-      // key (there is no SSH password to lend), the SSH password otherwise.
-      test('SSH with a key: the PVE password', () async {
-        final api = _Api()..resources = _resources;
-        final pve = api.backend(
-          const PveConfig(addr: 'https://pve.lan:8006', pwd: 'pvepw'),
-          sshKeyId: 'key',
-        );
-        await pve.load();
-        expect(api.bodies.first, contains('password=pvepw'));
-      });
-
-      test('SSH with a password: that one, whatever PVE has stored', () async {
-        final api = _Api()..resources = _resources;
-        final pve = api.backend(
-          const PveConfig(addr: 'https://pve.lan:8006', pwd: 'stale'),
-        );
-        await pve.load();
-        expect(api.bodies.first, contains('password=sshpw'));
-        expect(api.bodies.first, isNot(contains('stale')));
-      });
-
-      test('SSH with a key and no PVE password: notConfigured', () async {
-        final api = _Api();
-        final pve = api.backend(
-          const PveConfig(addr: 'https://pve.lan:8006'),
-          sshKeyId: 'key',
-        );
-        expect((await _err(pve.load())).type, VirtErrType.notConfigured);
-        expect(api.paths, isEmpty);
-      });
-
-      test('a password is sent as stored, spaces included', () async {
-        final api = _Api()..resources = _resources;
-        final pve = api.backend(
-          const PveConfig(addr: 'https://pve.lan:8006'),
-          sshPassword: ' pw ',
-        );
-        await pve.load();
-        expect(api.bodies.first, contains('password=+pw+&'));
-      });
-
-      test('the helper itself', () {
-        const cfg = PveConfig(addr: 'https://h', pwd: 'pve');
-        expect(cfg.loginPassword(sshKeyId: 'k', sshPassword: 'ssh'), 'pve');
-        expect(cfg.loginPassword(sshKeyId: null, sshPassword: 'ssh'), 'ssh');
-      });
-    });
-
-    test('a refused login without PVE text carries no made-up sentence', () {
-      // The UI titles authFailed in the user's language; a fallback written
-      // here would be English whatever the language.
-      final api = _Api()..ticketStatus = 401;
-      final pve = api.backend(const PveConfig(addr: 'https://pve.lan:8006'));
-      return _err(pve.load()).then((err) {
-        expect(err.type, VirtErrType.authFailed);
-        expect(err.message, isNull);
-      });
-    });
-
-    test('no user and no token is notConfigured', () async {
-      final api = _Api();
-      final pve = api.backend(
-        const PveConfig(addr: 'https://pve.lan:8006'),
-        user: null,
-      );
-      expect((await _err(pve.load())).type, VirtErrType.notConfigured);
-      expect(api.paths, isEmpty);
-    });
-  });
-
-  group('expired sessions', () {
-    test('a refused ticket: one new login and the request repeated', () async {
-      // What an expired ticket looks like: PVE answers the listing 401, and a
-      // login with the stored password works.
-      final api = _Api()..resources = _resources;
-      final pve = api.backend(const PveConfig(addr: 'https://pve.lan:8006'));
-      await pve.load();
-      api.resources401 = 1;
-      final snap = await pve.load();
-      expect(snap.guests, hasLength(6));
-      expect(api.closed, 1, reason: 'the refused session is dropped');
-      expect(api.paths.where((p) => p == 'POST /access/ticket'), hasLength(2));
-      expect(api.headers.last['Cookie'], 'PVEAuthCookie=T2');
-    });
-
-    test('a 401 a new login does not fix is authFailed, and drops the '
-        'session', () async {
-      final api = _Api()..resources = _resources;
-      final pve = api.backend(const PveConfig(addr: 'https://pve.lan:8006'));
-      await pve.load();
-      api.resourcesStatus = 401;
-      final err = await _err(pve.load());
-      expect(err.type, VirtErrType.authFailed);
-      expect(
-        api.paths.where((p) => p == 'GET /cluster/resources'),
-        hasLength(3),
-        reason: 'the first load, the refused one, and one repeat',
-      );
-      expect(api.closed, 2, reason: 'both sessions are dropped');
-
-      api.resourcesStatus = 200;
-      await pve.load();
-      expect(
-        api.paths.where((p) => p == 'POST /access/ticket'),
-        hasLength(3),
-        reason: 'the next call logs in again',
-      );
-    });
-
-    test('a 401 in the session the call logged in is not repeated', () async {
-      final api = _Api()
-        ..resources = _resources
-        ..resourcesStatus = 401;
-      final pve = api.backend(const PveConfig(addr: 'https://pve.lan:8006'));
-      expect((await _err(pve.load())).type, VirtErrType.authFailed);
-      expect(api.paths.where((p) => p == 'POST /access/ticket'), hasLength(1));
-    });
-
-    test('a refused token is not retried', () async {
-      final api = _Api()..resources = _resources;
-      final pve = api.backend(
-        const PveConfig(
-          addr: 'https://pve.lan:8006',
-          auth: PveAuth.token,
-          tokenId: 'root@pam!sb',
-          tokenSecret: 's3cret',
-        ),
-      );
-      await pve.load();
-      api.resources401 = 1;
-      expect((await _err(pve.load())).type, VirtErrType.authFailed);
-      expect(api.paths.where((p) => p == 'GET /cluster/resources'), hasLength(2));
-    });
-
-    // PVE answers 403 only from its permission check, after it has accepted
-    // the ticket or token: the session is good, the account lacks a privilege
-    // on that path. This test once asserted the session was dropped, which
-    // threw away a valid ticket and made a TOTP account type a code again to
-    // be refused the same way. Only a 401 says the session itself is bad.
-    test('a refused action keeps the session and says why', () async {
-      final api = _Api()..resources = _resources;
-      final pve = api.backend(const PveConfig(addr: 'https://pve.lan:8006'));
-      final guest = (await pve.load()).guests[1];
-      api.actionStatus = 403;
-      final err = await _err(pve.power(guest, VirtPowerAction.start));
-      expect(err.type, VirtErrType.actionFailed);
-      expect(err.message, contains('Permission check failed'));
-      expect(api.closed, 0, reason: 'the session is kept');
-
-      api.actionStatus = 200;
-      await pve.load();
-      expect(
-        api.paths.where((p) => p == 'POST /access/ticket'),
-        hasLength(1),
-        reason: 'no second login',
-      );
-    });
-
-    test('a refused console ticket keeps the session', () async {
-      final api = _Api()..resources = _resources;
-      final pve = api.backend(const PveConfig(addr: 'https://pve.lan:8006'));
-      final lxc = (await pve.load()).guests.first;
-      api.consoleStatus = 403;
-      final err = await _err(pve.console(lxc, VirtConsoleKind.text));
-      expect(err.type, VirtErrType.actionFailed);
-      expect(err.message, contains('VM.Console'));
-      expect(api.closed, 0);
-    });
-
-    test('a 403 on a listing is authFailed and keeps the session', () async {
-      final api = _Api()..resources = _resources;
-      final pve = api.backend(const PveConfig(addr: 'https://pve.lan:8006'));
-      await pve.load();
-      api.resourcesStatus = 403;
-      expect((await _err(pve.load())).type, VirtErrType.authFailed);
-      expect(api.closed, 0);
-    });
-
-    test('a 401 on an action drops the session; the action is sent again '
-        'once, after a new login', () async {
-      final api = _Api()..resources = _resources;
-      final pve = api.backend(const PveConfig(addr: 'https://pve.lan:8006'));
-      final guest = (await pve.load()).guests[1];
-      api.actionStatus = 401;
-      final err = await _err(pve.power(guest, VirtPowerAction.start));
-      expect(err.type, VirtErrType.authFailed);
-      expect(
-        api.paths.where((p) => p == 'POST /nodes/pve/qemu/101/status/start'),
-        hasLength(2),
-      );
-      expect(api.closed, 2);
-    });
-
-    test('a reset during a login waits for it, and the stale one never '
-        'becomes the session', () async {
-      final api = _Api()..resources = _resources;
-      final release = Completer<void>();
-      api.ticketGate = release.future;
-      final pve = api.backend(const PveConfig(addr: 'https://pve.lan:8006'));
-
-      final first = pve.load();
-      await api.ticketRequested.future.timeout(const Duration(seconds: 2));
-      await pve.reset();
-      final second = pve.load();
-      await Future<void>.delayed(const Duration(milliseconds: 50));
-      expect(
-        api.paths.where((p) => p == 'POST /access/ticket'),
-        hasLength(1),
-        reason: 'the new login must not overlap the stale one',
-      );
-
-      api.ticketGate = null;
-      release.complete();
-      await Future.wait([first, second]);
-      expect(api.paths.where((p) => p == 'POST /access/ticket'), hasLength(2));
-      expect(api.maxConcurrentTickets, 1);
-      // The stale login's client was closed, and its ticket is not in use.
-      expect(api.closed, greaterThanOrEqualTo(1));
-      expect(api.headers.last['Cookie'], 'PVEAuthCookie=T2');
-    });
-
-    test('an address change during a login sends none of its credentials '
-        'to the new address', () async {
-      final api = _Api()..resources = _resources;
-      final release = Completer<void>();
-      api.ticketGate = release.future;
-      const old = PveConfig(addr: 'https://old.lan:8006', pwd: 'pvepw');
-      final pve = api.backend(old);
-
-      final first = pve.load();
-      await api.ticketRequested.future.timeout(const Duration(seconds: 2));
-      pve.updateConfig(old.copyWith(addr: 'https://new.lan:8006'));
-      api.ticketGate = null;
-      release.complete();
-      await first;
-
-      expect(api.hosts.first, 'old.lan');
-      for (var i = 0; i < api.paths.length; i++) {
-        final cookie = api.headers[i]['Cookie'];
-        if (api.hosts[i] == 'new.lan') {
-          expect(cookie, isNot('PVEAuthCookie=T1'), reason: api.paths[i]);
-        } else {
-          expect(api.paths[i], 'POST /access/ticket');
-        }
-      }
-      expect(api.hosts.last, 'new.lan');
-    });
-  });
-
-  group('ticket lifetime', () {
-    const tfaCfg = PveConfig(addr: 'https://pve.lan:8006', pwd: 'pvepw');
-
-    Future<PveBackend> loggedIn(_Api api, DateTime Function() now) async {
-      final pve = api.backend(tfaCfg, sshKeyId: 'key', now: now);
-      expect((await _err(pve.load())).type, VirtErrType.needTfa);
-      await pve.submitTfa('123456');
-      await pve.load();
-      return pve;
-    }
-
-    int logins(_Api api) =>
-        api.bodies.where((b) => b.contains('password=pvepw')).length;
-
-    test('an hour on, the ticket is renewed with itself, no code asked',
-        () async {
-      var now = DateTime(2026, 1, 1);
-      final api = _Api()
-        ..resources = _resources
-        ..needTfa = true;
-      final pve = await loggedIn(api, () => now);
-      expect(api.headers.last['Cookie'], 'PVEAuthCookie=T2');
-
-      now = now.add(const Duration(minutes: 59));
-      await pve.load();
-      expect(api.paths.where((p) => p == 'POST /access/ticket'), hasLength(2));
-
-      now = now.add(const Duration(minutes: 2));
-      final snap = await pve.load();
-      expect(snap.guests, isNotEmpty);
-      final renewal = api.bodies.lastWhere((b) => b.contains('password=T'));
-      expect(renewal, contains('password=T2'));
-      expect(renewal, isNot(contains('tfa-challenge')));
-      expect(api.headers.last['Cookie'], 'PVEAuthCookie=T3');
-      expect(logins(api), 1, reason: 'no new login');
-
-      // Renewed: the clock starts again.
-      now = now.add(const Duration(minutes: 30));
-      await pve.load();
-      expect(api.headers.last['Cookie'], 'PVEAuthCookie=T3');
-    });
-
-    test('renewals running together are one request', () async {
-      var now = DateTime(2026, 1, 1);
-      final api = _Api()..resources = _resources;
-      final pve = api.backend(
-        const PveConfig(addr: 'https://pve.lan:8006'),
-        now: () => now,
-      );
-      await pve.load();
-      now = now.add(const Duration(minutes: 61));
-      await Future.wait([pve.load(), pve.load(), pve.load()]);
-      expect(api.paths.where((p) => p == 'POST /access/ticket'), hasLength(2));
-    });
-
-    test('a refused renewal logs in again, which asks for a code', () async {
-      var now = DateTime(2026, 1, 1);
-      final api = _Api()
-        ..resources = _resources
-        ..needTfa = true;
-      final pve = await loggedIn(api, () => now);
-      api.renewStatus = 401;
-      now = now.add(const Duration(minutes: 61));
-      expect((await _err(pve.load())).type, VirtErrType.needTfa);
-      expect(logins(api), 2);
-    });
-
-    test('past the lifetime nothing is renewed: a new login', () async {
-      var now = DateTime(2026, 1, 1);
-      final api = _Api()
-        ..resources = _resources
-        ..needTfa = true;
-      final pve = await loggedIn(api, () => now);
-      now = now.add(PveBackend.ticketLifetime);
-      expect((await _err(pve.load())).type, VirtErrType.needTfa);
-      expect(api.bodies.where((b) => b.contains('password=T')), isEmpty);
-      expect(logins(api), 2);
-    });
-
-    test('a failed renewal that is not a refusal keeps the ticket', () async {
-      var now = DateTime(2026, 1, 1);
-      final api = _Api()..resources = _resources;
-      final pve = api.backend(
-        const PveConfig(addr: 'https://pve.lan:8006'),
-        now: () => now,
-      );
-      await pve.load();
-      api.renewStatus = 500;
-      now = now.add(const Duration(minutes: 61));
-      await pve.load();
-      expect(api.headers.last['Cookie'], 'PVEAuthCookie=T1');
-      expect(api.closed, 0);
-    });
-  });
-
-  group('TOTP challenges', () {
-    const cfg = PveConfig(addr: 'https://pve.lan:8006', pwd: 'pvepw');
-
-    test('a wrong code keeps the challenge for the next one', () async {
-      final api = _Api()
-        ..resources = _resources
-        ..needTfa = true
-        ..tfaStatus = 401;
-      final pve = api.backend(cfg, sshKeyId: 'key');
-      await _err(pve.load());
-      final wrong = await _err(pve.submitTfa('000000'));
-      expect(wrong.type, VirtErrType.needTfa);
-      api.tfaStatus = 200;
-      await pve.submitTfa('123456');
-      final answers = api.bodies.where((b) => b.contains('tfa-challenge'));
-      expect(answers, everyElement(contains('tfa-challenge=CHALLENGE1')));
-      expect(api.bodies.where((b) => b.contains('password=pvepw')), hasLength(1));
-    });
-
-    test('a challenge past its lifetime is replaced before the code answers',
-        () async {
-      // PVE answers an expired challenge as it answers a wrong code, so
-      // answering it would read as a wrong code however often it was typed.
-      var now = DateTime(2026, 1, 1);
-      final api = _Api()
-        ..resources = _resources
-        ..needTfa = true;
-      final pve = api.backend(cfg, sshKeyId: 'key', now: () => now);
-      await _err(pve.load());
-      now = now.add(PveBackend.ticketLifetime);
-      await pve.submitTfa('123456');
-      final answer = api.bodies.lastWhere((b) => b.contains('tfa-challenge'));
-      expect(answer, contains('tfa-challenge=CHALLENGE2'));
-      expect(answer, contains('password=totp%3A123456'));
-      expect((await pve.load()).guests, isNotEmpty);
-    });
-
-    test('a challenge dropped by a reset is replaced, not reported', () async {
-      final api = _Api()
-        ..resources = _resources
-        ..needTfa = true;
-      final pve = api.backend(cfg, sshKeyId: 'key');
-      await _err(pve.load());
-      await pve.reset();
-      await pve.submitTfa('123456');
-      final answer = api.bodies.lastWhere((b) => b.contains('tfa-challenge'));
-      expect(answer, contains('tfa-challenge=CHALLENGE2'));
-      expect((await pve.load()).guests, isNotEmpty);
-    });
-
-    test('an empty code asks nothing of PVE', () async {
-      final api = _Api()
-        ..resources = _resources
-        ..needTfa = true;
-      final pve = api.backend(cfg, sshKeyId: 'key');
-      await _err(pve.load());
-      final before = api.paths.length;
-      expect((await _err(pve.submitTfa('  '))).type, VirtErrType.needTfa);
-      expect(api.paths, hasLength(before));
-    });
-  });
-
-  group('power', () {
-    test('waits for the UPID task to stop', () async {
-      final api = _Api()
-        ..resources = _resources
-        ..taskStates = ['running', 'running', 'stopped'];
-      final pve = api.backend(const PveConfig(addr: 'https://pve.lan:8006'));
-      final guest = (await pve.load()).guests[2];
-      await pve.power(guest, VirtPowerAction.suspend);
-      expect(api.paths, contains('POST /nodes/pve/qemu/102/status/suspend'));
-      final polls = api.paths.where((p) => p.contains('/tasks/')).toList();
-      expect(polls, hasLength(3));
-      expect(polls.first, contains(Uri.encodeComponent(_Api.upid)));
-    });
-
-    test('a task still running at the deadline is not reported as done, '
-        'and what depends on it does not run', () async {
-      final api = _Api()
-        ..resources = _resources
-        ..taskStates = ['running'];
-      final pve = api.backend(
-        const PveConfig(addr: 'https://pve.lan:8006'),
-        taskTimeout: const Duration(milliseconds: 20),
-      );
-      final guest = (await pve.load()).guests[2];
-      final err = await _err(pve.power(guest, VirtPowerAction.suspend));
-      expect(err.type, VirtErrType.actionFailed);
-      expect(err.message, contains(_Api.upid));
-      // The status read that follows a completed action never ran.
-      expect(api.paths.last, contains('/tasks/'));
-    });
-
-    test('a task ending in an error is actionFailed with its text', () async {
-      final api = _Api()
-        ..resources = _resources
-        ..taskStates = ['stopped']
-        ..taskExit = "can't lock file '/var/lock/qemu-server/lock-101.conf'";
-      final pve = api.backend(const PveConfig(addr: 'https://pve.lan:8006'));
-      final guest = (await pve.load()).guests[1];
-      final err = await _err(pve.power(guest, VirtPowerAction.start));
-      expect(err.type, VirtErrType.actionFailed);
-      expect(err.message, contains("can't lock file"));
-    });
-
-    test('the state after an action shows before /cluster/resources catches '
-        'up', () async {
-      var now = DateTime(2026, 1, 1);
-      final api = _Api()
-        ..resources = _resources
-        // What PVE 9.2 answered: status/current already `stopped` while the
-        // listing still said `running`.
-        ..current = {'status': 'stopped', 'qmpstatus': 'stopped'};
-      final pve = api.backend(
-        const PveConfig(addr: 'https://pve.lan:8006'),
-        now: () => now,
-      );
-      VirtGuest vm(VirtSnapshot s) =>
-          s.guests.firstWhere((g) => g.id == 'qemu/102');
-      final running = vm(await pve.load());
-      expect(running.state, VirtGuestState.running);
-      await pve.power(running, VirtPowerAction.forceStop);
-      expect(api.paths.last, 'GET /nodes/pve/qemu/102/status/current');
-
-      now = now.add(const Duration(seconds: 2));
-      final snap = await pve.load();
-      expect(vm(snap).state, VirtGuestState.stopped);
-      expect(vm(snap).actions, {VirtPowerAction.start});
-      expect(snap.stats['qemu/102']!.cpu, isNull, reason: 'not running');
-
-      // The listing still lags past the window: it is believed again.
-      now = now.add(PveBackend.freshStatusFor);
-      expect(vm(await pve.load()).state, VirtGuestState.running);
-    });
-
-    test('force stop overrules a pending shutdown, where PVE knows how', () async {
-      Future<String> stopBody(String version) async {
-        final api = _Api()
-          ..resources = _resources
-          ..version = version
-          ..current = {'status': 'stopped', 'qmpstatus': 'stopped'};
-        final pve = api.backend(const PveConfig(addr: 'https://pve.lan:8006'));
-        final vm = (await pve.load()).guests.firstWhere(
-          (g) => g.id == 'qemu/102',
-        );
-        await pve.power(vm, VirtPowerAction.forceStop);
-        final at = api.paths.indexOf('POST /nodes/pve/qemu/102/status/stop');
-        expect(at, isNonNegative);
-        return api.bodies[at];
-      }
-
-      expect(await stopBody('9.2.2'), contains('overrule-shutdown=1'));
-      expect(await stopBody('8.1.3'), contains('overrule-shutdown=1'));
-      // Older releases refuse a parameter they do not know.
-      expect(await stopBody('8.0.4'), isNot(contains('overrule-shutdown')));
-      expect(await stopBody('7.4-3'), isNot(contains('overrule-shutdown')));
-    });
-
-    test('the listing agreeing ends the overlay', () async {
-      final api = _Api()
-        ..resources = _resources
-        ..current = {'status': 'running', 'qmpstatus': 'paused'};
-      final pve = api.backend(const PveConfig(addr: 'https://pve.lan:8006'));
-      final running = (await pve.load()).guests.firstWhere(
-        (g) => g.id == 'qemu/102',
-      );
-      await pve.power(running, VirtPowerAction.suspend);
-      // The QEMU run state wins over `status`, as pvestatd reports it.
-      VirtGuest vm(VirtSnapshot s) =>
-          s.guests.firstWhere((g) => g.id == 'qemu/102');
-      expect(vm(await pve.load()).state, VirtGuestState.paused);
-      api.resources = [
-        for (final r in _resources)
-          r['id'] == 'qemu/102' ? {...r, 'status': 'paused'} : r,
-      ];
-      expect(vm(await pve.load()).state, VirtGuestState.paused);
-      // Caught up, so a later change in the listing is taken as it is.
-      api.resources = _resources;
-      expect(vm(await pve.load()).state, VirtGuestState.running);
-    });
-
-    test('after a reboot the old uptime is not believed', () async {
-      var now = DateTime(2026, 1, 1);
-      final api = _Api()
-        ..resources = _resources
-        ..current = {'status': 'running', 'uptime': 3};
-      final pve = api.backend(
-        const PveConfig(addr: 'https://pve.lan:8006'),
-        now: () => now,
-      );
-      VirtGuest vm(VirtSnapshot s) =>
-          s.guests.firstWhere((g) => g.id == 'qemu/102');
-      final before = vm(await pve.load());
-      expect(before.uptime, greaterThan(const Duration(minutes: 1)));
-      await pve.power(before, VirtPowerAction.reboot);
-      now = now.add(const Duration(seconds: 4));
-      expect(vm(await pve.load()).uptime, const Duration(seconds: 7));
-      // pvestatd has caught up.
-      api.resources = [
-        for (final r in _resources)
-          r['id'] == 'qemu/102' ? {...r, 'uptime': 12} : r,
-      ];
-      now = now.add(const Duration(seconds: 6));
-      expect(vm(await pve.load()).uptime, const Duration(seconds: 12));
-    });
-
-    test('an uptime of 0 read right after a reboot counts up', () async {
-      var now = DateTime(2026, 1, 1);
-      final api = _Api()
-        ..resources = _resources
-        ..current = {'status': 'running', 'uptime': 0};
-      final pve = api.backend(
-        const PveConfig(addr: 'https://pve.lan:8006'),
-        now: () => now,
-      );
-      VirtGuest vm(VirtSnapshot s) =>
-          s.guests.firstWhere((g) => g.id == 'qemu/102');
-      await pve.power(vm(await pve.load()), VirtPowerAction.reboot);
-      now = now.add(const Duration(seconds: 5));
-      final after = vm(await pve.load());
-      expect(after.state, VirtGuestState.running);
-      expect(after.uptime, const Duration(seconds: 5));
-    });
-
-    test('a VM read as stopped right after its reboot task is asked again '
-        'until it runs', () async {
-      final api = _Api()
-        ..resources = _resources
-        // PVE 9.2: `qmreboot` ends once the guest is down, and `qmeventd`
-        // starts it again a moment later.
-        ..currentFirst.addAll([
-          {'status': 'stopped', 'qmpstatus': 'stopped'},
-          {'status': 'stopped', 'qmpstatus': 'stopped'},
-        ])
-        ..current = {'status': 'running', 'qmpstatus': 'running', 'uptime': 1};
-      final pve = api.backend(const PveConfig(addr: 'https://pve.lan:8006'));
-      VirtGuest vm(VirtSnapshot s) =>
-          s.guests.firstWhere((g) => g.id == 'qemu/102');
-      await pve.power(vm(await pve.load()), VirtPowerAction.reboot);
-      expect(
-        api.paths.where((p) => p.endsWith('/status/current')),
-        hasLength(3),
-      );
-      final after = vm(await pve.load());
-      expect(after.state, VirtGuestState.running);
-      expect(after.actions, contains(VirtPowerAction.reboot));
-    });
-
-    test('a guest that stays down after a reboot is believed in the end',
-        () async {
-      var now = DateTime(2026, 1, 1);
-      final api = _Api()
-        ..resources = _resources
-        ..current = {'status': 'stopped', 'qmpstatus': 'stopped'};
-      final pve = api.backend(
-        const PveConfig(addr: 'https://pve.lan:8006'),
-        now: () => now = now.add(const Duration(seconds: 1)),
-      );
-      VirtGuest vm(VirtSnapshot s) =>
-          s.guests.firstWhere((g) => g.id == 'qemu/102');
-      await pve.power(vm(await pve.load()), VirtPowerAction.reboot);
-      final reads = api.paths.where((p) => p.endsWith('/status/current'));
-      expect(reads.length, greaterThan(1));
-      expect(reads.length, lessThan(40));
-      expect(vm(await pve.load()).state, VirtGuestState.stopped);
-    });
-
-    test('other actions read the state once', () async {
-      final api = _Api()
-        ..resources = _resources
-        ..current = {'status': 'stopped', 'qmpstatus': 'stopped'};
-      final pve = api.backend(const PveConfig(addr: 'https://pve.lan:8006'));
-      final running = (await pve.load()).guests.firstWhere(
-        (g) => g.id == 'qemu/102',
-      );
-      await pve.power(running, VirtPowerAction.shutdown);
-      expect(
-        api.paths.where((p) => p.endsWith('/status/current')),
-        hasLength(1),
-      );
-    });
-
-    test('an action the guest does not offer is not sent', () async {
-      final api = _Api()..resources = _resources;
-      final pve = api.backend(const PveConfig(addr: 'https://pve.lan:8006'));
-      final lxc = (await pve.load()).guests.first;
-      final err = await _err(pve.power(lxc, VirtPowerAction.suspend));
-      expect(err.type, VirtErrType.unsupported);
-      expect(api.paths.where((p) => p.contains('/status/')), isEmpty);
-    });
-  });
-
   test('consoles: termproxy and vncproxy tickets', () async {
     final api = _Api()..resources = _resources;
     final pve = api.backend(const PveConfig(addr: 'https://pve.lan:8006'));
@@ -1068,31 +230,6 @@ void main() {
       (await _err(pve.console(guests.first, VirtConsoleKind.vnc))).type,
       VirtErrType.unsupported,
     );
-  });
-
-  test('rates come from successive samples, held between PVE updates', () async {
-    var now = DateTime(2026, 1, 1, 0, 0, 0);
-    final api = _Api()..resources = _resources;
-    final pve = api.backend(
-      const PveConfig(addr: 'https://pve.lan:8006'),
-      now: () => now,
-    );
-    var snap = await pve.load();
-    expect(snap.stats['lxc/100']!.netIn, isNull, reason: 'nothing to diff');
-
-    now = now.add(const Duration(seconds: 10));
-    api.resources = [
-      {..._resources.first, 'netin': 65412250538 + 10000},
-      ..._resources.skip(1),
-    ];
-    snap = await pve.load();
-    expect(snap.stats['lxc/100']!.netIn, 1000);
-    expect(snap.stats['lxc/100']!.diskRead, 0);
-
-    // pvestatd has not updated yet: the rate holds rather than dropping to 0.
-    now = now.add(const Duration(seconds: 3));
-    snap = await pve.load();
-    expect(snap.stats['lxc/100']!.netIn, 1000);
   });
 
   group('create and delete', () {
@@ -3050,8 +2187,6 @@ void main() {
       // role of its own.
       expect(n.message, contains('pveum role add ServerBox-SysModify --privs Sys.Modify'));
       expect(n.message, contains('/nodes/pve'));
-      // The session stays: a refusal is not a failed login.
-      expect(api.closed, 0);
     });
 
     test('a name taken is exists', () async {
@@ -3366,6 +2501,10 @@ class _Api {
   int maxConcurrentTickets = 0;
   int _taskPolls = 0;
 
+  /// A backend whose session is the real one (`sbm_virt::pve` over FFI),
+  /// reaching this fake through an authenticated loopback tunnel and TLS, as
+  /// it reaches PVE. The fake's certificate is pinned unless [config] pins
+  /// something else.
   PveBackend backend(
     PveConfig config, {
     String? user = 'root',
@@ -3374,19 +2513,73 @@ class _Api {
     DateTime Function()? now,
     String? liveNet,
     Duration taskTimeout = const Duration(minutes: 10),
-  }) => PveBackend(
-    serverId: 'srv',
-    config: config,
-    user: user,
-    sshKeyId: sshKeyId,
-    sshPassword: sshPassword,
-    exec: liveNet == null ? null : () async => _Probe(liveNet),
-    connect: (_, _) => throw StateError('no network in this test'),
-    adapter: () => _Adapter(this),
-    taskPoll: const Duration(milliseconds: 1),
-    taskTimeout: taskTimeout,
-    now: now,
-  );
+  }) {
+    addTearDown(close);
+    return PveBackend(
+      serverId: 'srv',
+      config: config.certSha256 == null
+          ? config.copyWith(certSha256: _leafFingerprint())
+          : config,
+      user: user,
+      sshKeyId: sshKeyId,
+      sshPassword: sshPassword,
+      exec: liveNet == null ? null : () async => _Probe(liveNet),
+      tunnel: (_, _) async => loopbackTo(await _serve()),
+      // A console's or an upload's own connection, to the same fake.
+      connect: (_, _) => ConnectionTask.fromSocket(
+        _serve().then((port) => Socket.connect(InternetAddress.loopbackIPv4, port)),
+        () {},
+      ),
+      taskPoll: const Duration(milliseconds: 1),
+      taskTimeout: taskTimeout,
+      now: now,
+    );
+  }
+
+  HttpServer? _server;
+  Future<int>? _serving;
+
+  Future<int> _serve() => _serving ??= () async {
+    final ctx = SecurityContext()
+      ..useCertificateChain('$_tlsDir/leaf.pem')
+      ..usePrivateKey('$_tlsDir/leaf.key');
+    final server = await HttpServer.bindSecure(InternetAddress.loopbackIPv4, 0, ctx);
+    _server = server;
+    server.listen((req) async {
+      final body = await utf8.decodeStream(req);
+      final o = RequestOptions(
+        method: req.method,
+        baseUrl: 'https://${req.headers.host ?? 'localhost'}',
+        path: req.uri.toString(),
+        headers: {
+          for (final MapEntry(:key, :value) in _headersOf(req).entries) key: value,
+        },
+      );
+      final answer = await handle(o, body);
+      req.response.statusCode = answer.statusCode;
+      answer.headers.forEach((k, v) => req.response.headers.set(k, v));
+      await req.response.addStream(answer.stream);
+      await req.response.close();
+    });
+    return server.port;
+  }();
+
+  /// The request's headers under the names a client sets them by.
+  static Map<String, String> _headersOf(HttpRequest req) {
+    String name(String lower) => switch (lower) {
+      'authorization' => 'Authorization',
+      'cookie' => 'Cookie',
+      'csrfpreventiontoken' => 'CSRFPreventionToken',
+      final n => n,
+    };
+    final out = <String, String>{};
+    req.headers.forEach((k, v) => out[name(k)] = v.join(', '));
+    return out;
+  }
+
+  Future<void> close() async {
+    await _server?.close(force: true);
+  }
 
   Future<ResponseBody> handle(RequestOptions o, String body) async {
     final path = o.uri.path.replaceFirst('/api2/json', '');
@@ -3506,28 +2699,16 @@ class _Api {
       );
 }
 
-class _Adapter implements HttpClientAdapter {
-  _Adapter(this.api);
+const _tlsDir = 'test/fixtures/virt_tls';
 
-  final _Api api;
-
-  @override
-  Future<ResponseBody> fetch(
-    RequestOptions options,
-    Stream<Uint8List>? requestStream,
-    Future<void>? cancelFuture,
-  ) async {
-    final bytes = <int>[];
-    if (requestStream != null) {
-      await for (final chunk in requestStream) {
-        bytes.addAll(chunk);
-      }
-    }
-    return api.handle(options, utf8.decode(bytes));
-  }
-
-  @override
-  void close({bool force = false}) => api.closed++;
+/// SHA-256 of the fake's leaf, which every backend here pins.
+String _leafFingerprint() {
+  final pem = File('$_tlsDir/leaf.pem').readAsStringSync();
+  final body = pem
+      .split('\n')
+      .where((l) => !l.startsWith('-----') && l.trim().isNotEmpty)
+      .join();
+  return sha256.convert(base64.decode(body)).toString();
 }
 
 VirtStoragePool _pool(String name) => VirtStoragePool(
