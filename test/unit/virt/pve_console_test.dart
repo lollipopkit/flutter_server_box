@@ -23,6 +23,7 @@ import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/provider/virt/pve_backend.dart';
 
+import '../../helpers/rust_lib_helper.dart';
 import '../../helpers/tunnel_client.dart';
 
 const _dir = 'test/fixtures/virt_tls';
@@ -55,6 +56,9 @@ const _qemu = VirtGuest(
 );
 
 void main() {
+  // The certificate pin is decided by sbm_ffi (`certPinAccepts`)
+  setUpAll(initRustLibForTest);
+
   late HttpServer server;
 
   /// Form bodies of the POSTs, by path.

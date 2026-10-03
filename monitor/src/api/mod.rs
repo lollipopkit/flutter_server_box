@@ -1,4 +1,6 @@
 pub mod cron;
+pub mod backup;
+pub mod bmc;
 pub mod desktops;
 pub mod custom_cmds;
 pub mod exec;

@@ -56,6 +56,10 @@ pub enum Kind {
     /// `process stop 1234`), and never carries a password or a command's
     /// output.
     Machine,
+    /// A blob hosted by `api::backup` written or removed. The subject is the
+    /// account; the detail the verb, the blob's name and its size — never its
+    /// contents.
+    Backup,
 }
 
 impl Kind {
@@ -71,6 +75,7 @@ impl Kind {
             Kind::Push => "push",
             Kind::Admin => "admin",
             Kind::Machine => "machine",
+            Kind::Backup => "backup",
         }
     }
 }
@@ -88,6 +93,8 @@ pub enum Action {
     /// was made. Its own action rather than `Open`, which for a terminal means
     /// a shell and is answered with a session handle this has none of.
     Connect,
+    /// Something stored was replaced or removed.
+    Write,
 }
 
 impl Action {
@@ -99,6 +106,7 @@ impl Action {
             Action::Close => "close",
             Action::Denied => "denied",
             Action::Connect => "connect",
+            Action::Write => "write",
         }
     }
 }

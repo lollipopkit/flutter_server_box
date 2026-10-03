@@ -1509,5 +1509,10 @@
   "firewallStoppedNote": "firewalld остановлен. Изменения сохраняются и вступят в силу при запуске.",
   "firewallInvalidSource": "Недопустимый источник. Используйте адрес, сеть вроде 192.168.1.0/24, ipset:ИМЯ или MAC-адрес.",
   "firewallInvalidRichRule": "Rich rule начинается с «rule» и занимает одну строку.",
-  "firewallInvalidForwardPort": "Используйте port=80:proto=tcp:toport=8080, с toport, toaddr или обоими."
+  "firewallInvalidForwardPort": "Используйте port=80:proto=tcp:toport=8080, с toport, toaddr или обоими.",
+  "monitorSyncNeedsServer": "Выберите сервер, агент monitor которого хранит резервную копию.",
+  "monitorBackupUnsupported": "Этот агент monitor не может хранить резервные копии. Обновите агент.",
+  "monitorBackupAdminOnly": "Хранить резервные копии на агенте monitor может только учётная запись администратора.",
+  "monitorBackupTooLarge": "Резервная копия больше, чем принимает агент monitor ({max}).",
+  "monitorBackupTooMany": "Агент monitor уже хранит максимально допустимое число резервных копий. Сначала удалите одну."
 }

@@ -5117,4 +5117,23 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get firewallInvalidForwardPort =>
       'port=80:proto=tcp:toport=8080 형식을 사용하고 toport, toaddr 또는 둘 다 지정하세요.';
+
+  @override
+  String get monitorSyncNeedsServer => '백업을 저장할 Monitor 에이전트의 서버를 선택하세요.';
+
+  @override
+  String get monitorBackupUnsupported =>
+      '이 Monitor 에이전트는 백업을 저장할 수 없습니다. 에이전트를 업데이트하세요.';
+
+  @override
+  String get monitorBackupAdminOnly => 'Monitor 에이전트의 관리자 계정만 백업을 저장할 수 있습니다.';
+
+  @override
+  String monitorBackupTooLarge(String max) {
+    return '백업이 Monitor 에이전트가 허용하는 크기($max)보다 큽니다.';
+  }
+
+  @override
+  String get monitorBackupTooMany =>
+      'Monitor 에이전트에 저장된 백업 수가 한도에 도달했습니다. 먼저 하나를 삭제하세요.';
 }

@@ -22,7 +22,7 @@ Server Box 通过 Redfish 的 HTTPS/JSON API 与 BMC 通信。Redfish 是现代�
 | | Redfish | IPMI 2.0 over LAN |
 |---|---|---|
 | 传输 | HTTPS + JSON | RMCP+ over UDP 623，二进制协议 |
-| 在本项目中的实现成本 | `dio` 即可实现，不需要原生代码 | 没有 Dart 实现，需要通过 FFI 在 `crates/` 中实现客户端 |
+| 在本项目中的实现成本 | HTTPS 客户端（`crates/sbm_redfish`），App 通过 FFI 使用，monitor agent 直接使用 | 需要在 `crates/` 中实现二进制 RMCP+ 客户端 |
 | 数据模型 | 自描述资源，可通过链接遍历 | SDR、SEL、chassis 命令及厂商自定义 raw 数据 |
 | 认证 | TLS + session token | RAKP |
 | 硬件覆盖 | 通常为 2016 年及之后的设备 | 还覆盖更早和入门级设备 |
@@ -71,14 +71,16 @@ BMC 账户是独立记录，按 ID 引用。机架中的多台服务器通常共
 ```text
 BmcCfg + BmcCredential    用户配置                       App
   ↓
-RedfishClient             TLS 信任、session、GET/POST     package:redfish
-RedfishDiscovery          一次性发现资源和 reset 类型      package:redfish
-resources / sensors       JSON → model，不执行 IO          package:redfish
+client                    TLS 信任、session、GET/POST     crates/sbm_redfish
+discover / snapshot       一次性发现资源和 reset 类型      crates/sbm_redfish
+model / cert              JSON → model、证书判定，不执行 IO crates/sbm_redfish
+  ↓
+sbm_ffi::api::bmc         BmcClient、PowerWatch、证书 pin   FFI
   ↓
 BmcNotifier               状态和独立轮询周期               App
 ```
 
-只有 `RedfishClient` 访问网络。下层解析组件接收已获取的 JSON map 并返回 model，因此厂商差异可以通过保存的响应测试，而不必每次连接真实硬件。
+只有 `client` 访问网络。monitor agent 直接使用同一个 crate。App 只保留状态和轮询计时：电源操作是否完成由 `PowerWatch` 判定，App 把每次读到的电源状态交给它。下层解析组件接收已获取的 JSON map 并返回 model，因此厂商差异可以通过保存的响应测试，而不必每次连接真实硬件。
 
 ## TLS 和首次使用信任
 
@@ -191,15 +193,8 @@ BMC 的响应通常比操作系统 API 慢，一次传感器读取可能需要�
 
 ### 只读测试
 
-`packages/redfish/test/e2e_test.dart` 是 opt-in 的只读测试。工作区根目录的 `.env` 中设置以下变量后才会连接真实设备；未设置时会静默跳过：
-
-```bash
-SBM_E2E_BMC_URL=https://10.0.0.9
-SBM_E2E_BMC_USER=...
-SBM_E2E_BMC_PWD=...
-```
-
-测试会打印发现到的资源 ID、传感器模型、reset 类型和每个用户意图的映射结果，不会断言某个厂商必须使用某种形状。它会读取 reset action，但不会向 action 发送 POST。
+<!-- TODO: port the read-only hardware test to `crates/sbm_redfish` -->
+目前没有针对真实硬件的只读测试。客户端迁到 `crates/sbm_redfish` 时，Dart 包中的 opt-in 测试随包一起删除，尚未移植。它发现的厂商行为以保存的响应形式保留在 `crates/sbm_redfish/tests/fixtures`，`cargo test -p sbm_redfish` 无需设备即可运行。
 
 ### 电源操作
 

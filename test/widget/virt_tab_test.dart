@@ -13,7 +13,6 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:redfish/redfish.dart' show CertInfo;
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/tab.dart';
@@ -36,6 +35,7 @@ import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/src/rust/api/bmc.dart' show CertInfo;
 import 'package:server_box/view/page/remote_desktop/viewer.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/virt/common.dart';
@@ -45,6 +45,7 @@ import 'package:server_box/view/page/virt/hardware.dart';
 import 'package:server_box/view/page/virt/tab.dart';
 
 import '../helpers/fake_shell.dart';
+import '../helpers/rust_lib_helper.dart';
 import '../helpers/segment.dart';
 import '../helpers/spi_fixture.dart';
 import '../helpers/test_db.dart';
@@ -239,6 +240,9 @@ class _FakeHost extends VirtHostNotifier {
 }
 
 void main() {
+  // The certificate dialog formats through sbm_ffi (`CertInfo.prettyFingerprint`)
+  setUpAll(initRustLibForTest);
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() async {
@@ -849,8 +853,8 @@ void main() {
         fingerprint: 'ab' * 32,
         subject: 'CN=pve',
         issuer: 'CN=PVE Cluster CA',
-        startValidity: DateTime(2026),
-        endValidity: DateTime(2036),
+        notBefore: DateTime(2026).millisecondsSinceEpoch ~/ 1000,
+        notAfter: DateTime(2036).millisecondsSinceEpoch ~/ 1000,
       );
       await withError(
         tester,
@@ -873,8 +877,8 @@ void main() {
         fingerprint: 'cd' * 32,
         subject: 'CN=pve',
         issuer: 'CN=pve',
-        startValidity: DateTime(2026),
-        endValidity: DateTime(2036),
+        notBefore: DateTime(2026).millisecondsSinceEpoch ~/ 1000,
+        notAfter: DateTime(2036).millisecondsSinceEpoch ~/ 1000,
       );
       await withError(
         tester,

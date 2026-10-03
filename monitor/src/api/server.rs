@@ -380,6 +380,25 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::put().to(crate::api::snippets::replace)),
             )
             .service(
+                web::resource("/bmc")
+                    .route(web::get().to(crate::api::bmc::list))
+                    .route(web::put().to(crate::api::bmc::replace)),
+            )
+            .service(web::resource("/bmc/probe").route(web::post().to(crate::api::bmc::probe)))
+            .service(web::resource("/bmc/{id}").route(web::get().to(crate::api::bmc::status)))
+            .service(
+                web::resource("/bmc/{id}/power").route(web::post().to(crate::api::bmc::power)),
+            )
+            .service(
+                web::resource("/backup").route(web::get().to(crate::api::backup::list)),
+            )
+            .service(
+                web::resource("/backup/blob")
+                    .route(web::get().to(crate::api::backup::download))
+                    .route(web::put().to(crate::api::backup::upload))
+                    .route(web::delete().to(crate::api::backup::remove)),
+            )
+            .service(
                 web::resource("/desktops")
                     .route(web::get().to(crate::api::desktops::list))
                     .route(web::put().to(crate::api::desktops::replace)),

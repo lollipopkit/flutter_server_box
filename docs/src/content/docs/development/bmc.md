@@ -22,7 +22,7 @@ Server Box communicates with the BMC through Redfish's HTTPS/JSON API. Redfish i
 | | Redfish | IPMI 2.0 over LAN |
 |---|---|---|
 | Transport | HTTPS + JSON | RMCP+ over UDP 623, binary protocol |
-| Implementation cost in this project | `dio` is sufficient; no native code required | No Dart implementation exists; a client would need to be implemented in `crates/` behind FFI |
+| Implementation cost in this project | An HTTPS client (`crates/sbm_redfish`), shared by the App through FFI and by the monitor agent | A binary RMCP+ client would have to be written in `crates/` |
 | Data model | Self-describing resources connected by links | SDR, SEL, and chassis commands plus vendor-specific raw data |
 | Authentication | TLS + session token | RAKP |
 | Hardware coverage | Generally devices from around 2016 onward | Also covers older and entry-level devices |
@@ -71,14 +71,16 @@ The layers keep the code that can be tested with fixtures independent of real se
 ```text
 BmcCfg + BmcCredential    user configuration                 App
   ↓
-RedfishClient             TLS trust, sessions, GET/POST      package:redfish
-RedfishDiscovery          one-time resource discovery        package:redfish
-resources / sensors       JSON → models, no IO                package:redfish
+client                    TLS trust, sessions, GET/POST      crates/sbm_redfish
+discover / snapshot       one-time resource discovery        crates/sbm_redfish
+model / cert              JSON → models, pin decision, no IO crates/sbm_redfish
+  ↓
+sbm_ffi::api::bmc         BmcClient, PowerWatch, cert pins   FFI
   ↓
 BmcNotifier               state and independent polling      App
 ```
 
-Only `RedfishClient` accesses the network. Lower-level parsers receive decoded JSON maps and return models, so vendor differences can be tested against saved responses rather than hardware.
+Only `client` accesses the network. The monitor agent uses the same crate directly. The App keeps only state and the polling clock: whether a power change has landed is decided by `PowerWatch`, which the App feeds each power state it reads. Lower-level parsers receive decoded JSON maps and return models, so vendor differences can be tested against saved responses rather than hardware.
 
 ## TLS and trust on first use
 
@@ -191,15 +193,8 @@ Not yet covered: Dell (`System.Embedded.1`), OpenBMC (`system`), the Supermicro 
 
 ### Read-only test
 
-`packages/redfish/test/e2e_test.dart` is an opt-in, read-only test. It connects to a real device only when these variables are present in the workspace-root `.env`; otherwise it skips silently:
-
-```bash
-SBM_E2E_BMC_URL=https://10.0.0.9
-SBM_E2E_BMC_USER=...
-SBM_E2E_BMC_PWD=...
-```
-
-The test prints discovered resource IDs, sensor model, reset types, and intent mappings. It does not assert that every vendor uses one resource shape. It reads the reset action but never posts to it.
+<!-- TODO: port the read-only hardware test to `crates/sbm_redfish` -->
+There is currently no read-only test against real hardware. The Dart package's opt-in test was removed with the package when the client moved to `crates/sbm_redfish`, and has not been ported yet. The vendor behaviour it found is kept as saved responses under `crates/sbm_redfish/tests/fixtures`, which `cargo test -p sbm_redfish` runs without a device.
 
 ### Power operations
 

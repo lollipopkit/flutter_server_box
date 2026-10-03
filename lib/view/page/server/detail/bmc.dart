@@ -59,7 +59,7 @@ extension on _ServerDetailPageState {
           tone: ReadoutVerdict.bad,
         ),
         BmcState(hasData: false, isBusy: true) => null,
-        BmcState(powerState: PowerState.on) => (
+        BmcState(powerState: PowerState.on_) => (
           text: l10n.bmcPowerOn,
           tone: ReadoutVerdict.ok,
         ),
@@ -157,7 +157,7 @@ extension on _ServerDetailPageState {
   }
 
   String _bmcIntentText(PowerIntent intent) => switch (intent) {
-    PowerIntent.on => l10n.bmcPowerOnAction,
+    PowerIntent.on_ => l10n.bmcPowerOnAction,
     PowerIntent.gracefulShutdown => l10n.bmcShutdown,
     PowerIntent.forceOff => l10n.bmcForceOff,
     PowerIntent.restart => l10n.restart,
@@ -165,7 +165,7 @@ extension on _ServerDetailPageState {
   };
 
   String _bmcPowerText(PowerState state) => switch (state) {
-    PowerState.on => l10n.bmcPowerOn,
+    PowerState.on_ => l10n.bmcPowerOn,
     PowerState.off => l10n.bmcPowerOff,
     PowerState.poweringOn || PowerState.poweringOff => libL10n.loadingEllipsis,
     PowerState.paused => 'Paused',
@@ -174,7 +174,8 @@ extension on _ServerDetailPageState {
 
   String _bmcFailureText(RedfishFailure failure, String? detail) =>
       switch (failure) {
-        RedfishFailure.certificateRejected => l10n.bmcCertRejected,
+        RedfishFailure.certificateRejected ||
+        RedfishFailure.certNotReviewed => l10n.bmcCertRejected,
         RedfishFailure.unauthorized => l10n.bmcUnauthorized,
         RedfishFailure.noCredential => l10n.bmcAccountMissing,
         RedfishFailure.notAService => l10n.bmcNotAService,
@@ -185,6 +186,10 @@ extension on _ServerDetailPageState {
         // rather than showing a generic failure — this is what a change made
         // through the BMC's own web interface in the meantime looks like.
         RedfishFailure.preconditionRequired => l10n.bmcStaleWrite,
-        RedfishFailure.unreachable => detail ?? libL10n.fail,
+        RedfishFailure.invalidUrl => l10n.bmcAddrInvalid,
+        RedfishFailure.unreachable ||
+        RedfishFailure.notSupported ||
+        RedfishFailure.invalidResponse ||
+        RedfishFailure.closed => detail ?? libL10n.fail,
       };
 }

@@ -80,6 +80,8 @@ curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main
 | 远程端口转发 | `listen`（`/api/v1/listen/ws`）；未开启其 `public` 选项时只能监听 loopback |
 | 面板的网页终端 | `ssh_terminal` |
 | 面板里的远程桌面（VNC、RDP） | `connect`（`/api/v1/stream/ws`、`/api/v1/rdp/ws`），同一份 `allow` 列表 |
+| 面板里的 BMC（Redfish）：状态和电源 | `virt`（`/api/v1/bmc`）；添加 BMC 和凭据：admin |
+| 备份同步到这个 agent、面板的备份页面 | admin（`/api/v1/backup`） |
 
 `/api/v1/stream/ws` 以 agent 进程所属的账号从本机向 App 指定的地址发起一条 TCP
 连接并中继。`/api/v1/listen/ws` 方向相反：agent 在本机监听一个端口，把每条进来的

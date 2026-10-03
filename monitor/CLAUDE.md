@@ -269,6 +269,26 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   **The session, NLA credential included, is plaintext in the agent**; the
   panel says so beside it. A role change that takes `connect` to that address
   away closes the session. `tests/rdp_ws.rs` runs it against a fake RDP server.
+  `/bmc` (`api/bmc.rs`): the BMCs (Redfish) the panel reaches through this
+  agent, a set of targets (migration 016) so an agent can reach its
+  neighbours' BMCs, since a machine that is off has no agent to ask. The
+  client is `sbm_redfish`, which the app reaches over FFI too. Seeing and
+  controlling (`GET /bmc`, `GET /bmc/{id}`, `POST /bmc/{id}/power`) need
+  `virt`; changing the targets and `POST /bmc/probe` (the certificate an
+  address presents, for review) are admin. A password is write-only
+  (`has_password`; `null` keeps it, by id). **A target with no pinned
+  certificate is never dialled** (`require_pin`), one login per request with
+  the session deleted after, and an upstream failure is `502 {error:"bmc",
+  failure}` — never a 401, which would log the panel out. `GET /bmc/{id}`
+  answers `intents`, the actions `ResetRequest::build` finds for that system,
+  so the panel has no copy of that mapping. `tests/bmc_api.rs` runs against a
+  fake Redfish service.
+  `/backup` (`api/backup.rs`): blobs the agent hosts for the app's backup sync
+  (`MonitorBackupStorage`, a fourth `RemoteStorage`) and the panel's backup
+  page, as rows (migration 015) so they share the database's protection from
+  `/fs`. Admin only, both ways. Opaque: the app encrypts before sending and
+  nothing here reads one. Bounded by `MAX_BYTES` per blob and `MAX_BLOBS`;
+  names are `[A-Za-z0-9._-]`, no leading dot. `tests/backup_api.rs`.
   `tests/watch_token_scope.rs` lists these routes with requests that are
   harmless under the panel login; `/power` is left out, since every body it
   accepts takes the machine down.

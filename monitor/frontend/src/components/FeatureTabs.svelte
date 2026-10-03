@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Activity, CalendarClock, Container, Gauge, MonitorPlay, ScrollText, ServerCog, Users, type LucideIcon } from '@lucide/svelte'
+  import { Activity, ArchiveRestore, CalendarClock, Container, Cpu, Gauge, MonitorPlay, ScrollText, ServerCog, Users, type LucideIcon } from '@lucide/svelte'
   import { enabledFeatures, type FeatureId } from '../lib/features'
   import { capabilitiesStore } from '../lib/capabilities.svelte'
   import { layout } from '../lib/layout.svelte'
@@ -24,6 +24,8 @@
     snippets: { label: () => $LL.snippets(), icon: ScrollText },
     desktop: { label: () => $LL.desktop(), icon: MonitorPlay },
     benchmark: { label: () => $LL.benchmark(), icon: Gauge },
+    bmc: { label: () => $LL.bmc(), icon: Cpu },
+    backup: { label: () => $LL.backup(), icon: ArchiveRestore },
   }
 
   const served = $derived(enabledFeatures(capabilitiesStore.byServer[servers.currentId]))

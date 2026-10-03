@@ -5401,4 +5401,25 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get firewallInvalidForwardPort =>
       'Используйте port=80:proto=tcp:toport=8080, с toport, toaddr или обоими.';
+
+  @override
+  String get monitorSyncNeedsServer =>
+      'Выберите сервер, агент monitor которого хранит резервную копию.';
+
+  @override
+  String get monitorBackupUnsupported =>
+      'Этот агент monitor не может хранить резервные копии. Обновите агент.';
+
+  @override
+  String get monitorBackupAdminOnly =>
+      'Хранить резервные копии на агенте monitor может только учётная запись администратора.';
+
+  @override
+  String monitorBackupTooLarge(String max) {
+    return 'Резервная копия больше, чем принимает агент monitor ($max).';
+  }
+
+  @override
+  String get monitorBackupTooMany =>
+      'Агент monitor уже хранит максимально допустимое число резервных копий. Сначала удалите одну.';
 }

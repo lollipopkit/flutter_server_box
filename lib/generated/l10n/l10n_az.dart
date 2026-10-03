@@ -5363,4 +5363,25 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get firewallInvalidForwardPort =>
       'port=80:proto=tcp:toport=8080 formatından toport, toaddr və ya hər ikisi ilə istifadə edin.';
+
+  @override
+  String get monitorSyncNeedsServer =>
+      'Ehtiyat nüsxəni saxlayan monitor agentinin serverini seçin.';
+
+  @override
+  String get monitorBackupUnsupported =>
+      'Bu monitor agenti ehtiyat nüsxə saxlaya bilmir. Agenti yeniləyin.';
+
+  @override
+  String get monitorBackupAdminOnly =>
+      'Monitor agentində yalnız administrator hesabı ehtiyat nüsxə saxlaya bilər.';
+
+  @override
+  String monitorBackupTooLarge(String max) {
+    return 'Ehtiyat nüsxə monitor agentinin qəbul etdiyi ölçüdən ($max) böyükdür.';
+  }
+
+  @override
+  String get monitorBackupTooMany =>
+      'Monitor agenti icazə verdiyi qədər ehtiyat nüsxə saxlayır. Əvvəlcə birini silin.';
 }

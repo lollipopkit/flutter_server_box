@@ -5,7 +5,6 @@ import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
-import 'package:redfish/redfish.dart' show CertInfo, PinnedCert;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/server_tcp.dart';
@@ -28,6 +27,7 @@ import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/virt/backend.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/src/rust/api/bmc.dart';
 
 /// Opens a TCP connection to `host:port` as seen from the PVE server — what
 /// `ServerTcpDialer.startConnect` is.
@@ -592,7 +592,7 @@ class PveBackend implements VirtBackend {
       for (final key in const ['Authorization', 'Cookie'])
         if (session.dio.options.headers[key] case final Object v) key: v,
     };
-    final client = _httpClient(PinnedCert(_config.certSha256));
+    final client = _httpClient(_config.certSha256);
     try {
       return await WebSocket.connect(
         url.toString(),
@@ -3523,7 +3523,7 @@ class PveBackend implements VirtBackend {
   /// A client bound to the current address and certificate pin: a
   /// configuration edit makes new clients and never redirects this one.
   Dio _newDio() {
-    final pin = PinnedCert(_config.certSha256);
+    final pin = _config.certSha256;
     final dio = Dio(
       BaseOptions(
         baseUrl: '$_base',
@@ -3547,7 +3547,9 @@ class PveBackend implements VirtBackend {
   /// been received.
   static const idleTimeout = Duration(seconds: 3);
 
-  HttpClient _httpClient(PinnedCert pin) {
+  /// [pin] is the confirmed certificate's fingerprint, or null when none has
+  /// been confirmed — in which case every certificate is refused for review.
+  HttpClient _httpClient(String? pin) {
     final client = HttpClient()
       ..connectionTimeout = connectTimeout
       ..idleTimeout = idleTimeout;
@@ -3558,7 +3560,7 @@ class PveBackend implements VirtBackend {
 
   /// A connection for [url]: the dialer's socket, secured here for `https` so
   /// the certificate decision is this class's and not `HttpClient`'s.
-  ConnectionTask<Socket> _connectTo(Uri url, PinnedCert pin) {
+  ConnectionTask<Socket> _connectTo(Uri url, String? pin) {
     final task = _connect(url.host, url.port);
     if (!url.isScheme('https') && !url.isScheme('wss')) return task;
     X509Certificate? refused;
@@ -3569,7 +3571,7 @@ class PveBackend implements VirtBackend {
           host: url.host,
           context: securityContext,
           onBadCertificate: (cert) {
-            if (pin.accepts(cert)) return true;
+            if (certPinAccepts(pin: pin, der: cert.der)) return true;
             refused = cert;
             return false;
           },
@@ -3586,10 +3588,20 @@ class PveBackend implements VirtBackend {
     return ConnectionTask.fromSocket(secure, task.cancel);
   }
 
-  VirtErr _certErr(X509Certificate cert, PinnedCert pin, Object cause) {
-    final info = CertInfo.of(cert);
+  VirtErr _certErr(X509Certificate cert, String? pin, Object cause) {
+    // What `x509-cert` cannot read is still shown, from the platform's own
+    // reading, rather than hidden behind a bare handshake error.
+    final info =
+        certInfoFromDer(der: cert.der) ??
+        CertInfo(
+          fingerprint: certFingerprint(der: cert.der),
+          subject: cert.subject,
+          issuer: cert.issuer,
+          notBefore: cert.startValidity.millisecondsSinceEpoch ~/ 1000,
+          notAfter: cert.endValidity.millisecondsSinceEpoch ~/ 1000,
+        );
     _presented = info;
-    if (!pin.hasPin) {
+    if (pin == null || pin.isEmpty) {
       return VirtErr(
         type: VirtErrType.certUnconfirmed,
         message: info.prettyFingerprint,
@@ -3601,7 +3613,7 @@ class PveBackend implements VirtBackend {
       type: VirtErrType.certChanged,
       message: info.prettyFingerprint,
       cert: info,
-      previousFingerprint: pin.fingerprint,
+      previousFingerprint: pin,
       cause: cause,
     );
   }

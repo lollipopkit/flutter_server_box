@@ -6969,5 +6969,30 @@
   "firewallInvalidForwardPort": "Use port=80:proto=tcp:toport=8080, with toport, toaddr or both.",
   "@firewallInvalidForwardPort": {
     "description": "Validation error for a firewalld forwarded port."
+  },
+  "monitorSyncNeedsServer": "Pick the server whose monitor agent stores the backup.",
+  "@monitorSyncNeedsServer": {
+    "description": "Backup sync to a monitor agent: no server is chosen yet."
+  },
+  "monitorBackupUnsupported": "This monitor agent cannot store backups. Update the agent.",
+  "@monitorBackupUnsupported": {
+    "description": "Backup sync to a monitor agent: the agent is too old to store backups."
+  },
+  "monitorBackupAdminOnly": "Only an admin account of the monitor agent can store backups on it.",
+  "@monitorBackupAdminOnly": {
+    "description": "Backup sync to a monitor agent: the account the app logs in with is not an admin."
+  },
+  "monitorBackupTooLarge": "The backup is larger than the monitor agent accepts ({max}).",
+  "@monitorBackupTooLarge": {
+    "description": "Backup sync to a monitor agent: the file exceeds the agent's size limit, given as max.",
+    "placeholders": {
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "monitorBackupTooMany": "The monitor agent already holds as many backups as it allows. Delete one first.",
+  "@monitorBackupTooMany": {
+    "description": "Backup sync to a monitor agent: the agent's blob count limit is reached."
   }
 }

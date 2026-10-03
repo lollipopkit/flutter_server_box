@@ -1,0 +1,55 @@
+{
+  "/redfish/v1/": {
+    "RedfishVersion": "1.8.0",
+    "Systems": {
+      "@odata.id": "/redfish/v1/Systems"
+    },
+    "Chassis": {
+      "@odata.id": "/redfish/v1/Chassis"
+    },
+    "SessionService": {
+      "@odata.id": "/redfish/v1/SessionService"
+    }
+  },
+  "/redfish/v1/Systems": {
+    "Members": [
+      {
+        "@odata.id": "/redfish/v1/Systems/1"
+      }
+    ]
+  },
+  "/redfish/v1/Chassis": {
+    "Members": [
+      {
+        "@odata.id": "/redfish/v1/Chassis/1"
+      }
+    ]
+  },
+  "/redfish/v1/Systems/1": {
+    "PowerState": "Off",
+    "Model": "SYS-1029P",
+    "Actions": {
+      "#ComputerSystem.Reset": {
+        "target": "/redfish/v1/Systems/1/Actions/ComputerSystem.Reset",
+        "ResetType@Redfish.AllowableValues": [
+          "On",
+          "ForceOff",
+          "GracefulShutdown",
+          "GracefulRestart",
+          "ForceRestart",
+          "Nmi",
+          "ForceOn",
+          "PowerCycle"
+        ]
+      }
+    }
+  },
+  "/redfish/v1/Chassis/1": {
+    "Thermal": {
+      "@odata.id": "/redfish/v1/Chassis/1/Thermal"
+    },
+    "Power": {
+      "@odata.id": "/redfish/v1/Chassis/1/Power"
+    }
+  }
+}

@@ -16,6 +16,7 @@
   import { LL } from '../i18n/i18n-svelte'
   import { filesAccess, whyText } from '../lib/access'
   import { api } from '../lib/api'
+  import { saveBlob } from '../lib/saveBlob'
   import { capabilitiesStore } from '../lib/capabilities.svelte'
   import { fmtBytes } from '../lib/format'
   import { joinPath, modeText, parentOf, parseMode, sortEntries } from '../lib/fsPath'
@@ -115,16 +116,7 @@
   async function download(entry: FsEntry) {
     if (!cwd) return
     await act(entry.name, async () => {
-      const blob = await api.fsRead(joinPath(cwd!, entry.name))
-      // The token cannot ride an `<a download>`, so the bytes are fetched and
-      // handed over from memory. Revoked on the next tick, once the click has
-      // been dispatched.
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = entry.name
-      a.click()
-      setTimeout(() => URL.revokeObjectURL(url), 0)
+      saveBlob(await api.fsRead(joinPath(cwd!, entry.name)), entry.name)
     })
   }
 

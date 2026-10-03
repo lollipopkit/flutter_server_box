@@ -4619,6 +4619,7 @@ dependencies = [
  "p384 0.14.0",
  "p521",
  "sbm_parser",
+ "sbm_redfish",
  "serde_json",
  "sha1 0.11.0",
  "sha2 0.11.0",
@@ -4650,6 +4651,22 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.11.0",
+]
+
+[[package]]
+name = "sbm_redfish"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "dotenvy",
+ "reqwest 0.13.5",
+ "rustls",
+ "serde",
+ "serde_json",
+ "sha2 0.11.0",
+ "tokio",
+ "tokio-rustls",
+ "x509-cert 0.3.0",
 ]
 
 [[package]]
@@ -4883,6 +4900,7 @@ dependencies = [
  "rustls-pemfile",
  "sbm_native",
  "sbm_parser",
+ "sbm_redfish",
  "serde",
  "serde_json",
  "sha2 0.11.0",

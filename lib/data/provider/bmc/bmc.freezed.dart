@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 mixin _$BmcState {
 
 /// Null until the first successful discovery.
- RedfishTopology? get topology; BmcSensors get sensors; RedfishFailure? get failure; String? get failureDetail; bool get isBusy;/// Set when the sensor list was cut to [_maxSensorMembers].
+ RedfishTopology? get topology; BmcSensors get sensors; RedfishFailure? get failure; String? get failureDetail; bool get isBusy;/// Set when the sensor list was cut to `sbm_redfish::MAX_SENSOR_MEMBERS`.
  bool get sensorsTruncated;
 /// Create a copy of BmcState
 /// with the given fields replaced by the non-null parameter values.
@@ -213,7 +213,7 @@ return $default(_that.topology,_that.sensors,_that.failure,_that.failureDetail,_
 
 
 class _BmcState extends BmcState {
-  const _BmcState({this.topology, this.sensors = const BmcSensors(), this.failure, this.failureDetail, this.isBusy = false, this.sensorsTruncated = false}): super._();
+  const _BmcState({this.topology, this.sensors = const BmcSensors(temperatures: [], fans: []), this.failure, this.failureDetail, this.isBusy = false, this.sensorsTruncated = false}): super._();
   
 
 /// Null until the first successful discovery.
@@ -222,7 +222,7 @@ class _BmcState extends BmcState {
 @override final  RedfishFailure? failure;
 @override final  String? failureDetail;
 @override@JsonKey() final  bool isBusy;
-/// Set when the sensor list was cut to [_maxSensorMembers].
+/// Set when the sensor list was cut to `sbm_redfish::MAX_SENSOR_MEMBERS`.
 @override@JsonKey() final  bool sensorsTruncated;
 
 /// Create a copy of BmcState

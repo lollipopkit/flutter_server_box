@@ -1,0 +1,58 @@
+{
+  "/redfish/v1/": {
+    "RedfishVersion": "1.15.0",
+    "Systems": {
+      "@odata.id": "/redfish/v1/Systems"
+    },
+    "Chassis": {
+      "@odata.id": "/redfish/v1/Chassis"
+    },
+    "Links": {
+      "Sessions": {
+        "@odata.id": "/redfish/v1/SessionService/Sessions"
+      }
+    }
+  },
+  "/redfish/v1/Systems": {
+    "Members": [
+      {
+        "@odata.id": "/redfish/v1/Systems/system"
+      }
+    ]
+  },
+  "/redfish/v1/Chassis": {
+    "Members": [
+      {
+        "@odata.id": "/redfish/v1/Chassis/chassis"
+      }
+    ]
+  },
+  "/redfish/v1/Systems/system": {
+    "PowerState": "On",
+    "Actions": {
+      "#ComputerSystem.Reset": {
+        "target": "/redfish/v1/Systems/system/Actions/ComputerSystem.Reset",
+        "ResetType@Redfish.AllowableValues": [
+          "On",
+          "ForceOff",
+          "ForceRestart",
+          "GracefulRestart",
+          "GracefulShutdown",
+          "PowerCycle",
+          "Nmi"
+        ]
+      }
+    }
+  },
+  "/redfish/v1/Chassis/chassis": {
+    "ThermalSubsystem": {
+      "@odata.id": "/redfish/v1/Chassis/chassis/ThermalSubsystem"
+    },
+    "PowerSubsystem": {
+      "@odata.id": "/redfish/v1/Chassis/chassis/PowerSubsystem"
+    },
+    "Sensors": {
+      "@odata.id": "/redfish/v1/Chassis/chassis/Sensors"
+    }
+  }
+}

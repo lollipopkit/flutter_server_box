@@ -1509,5 +1509,10 @@
   "firewallStoppedNote": "firewalld berhenti. Perubahan disimpan dan berlaku saat dijalankan.",
   "firewallInvalidSource": "Sumber tidak valid. Gunakan alamat, jaringan seperti 192.168.1.0/24, ipset:NAMA, atau alamat MAC.",
   "firewallInvalidRichRule": "Rich rule diawali \"rule\" dan hanya satu baris.",
-  "firewallInvalidForwardPort": "Gunakan port=80:proto=tcp:toport=8080, dengan toport, toaddr, atau keduanya."
+  "firewallInvalidForwardPort": "Gunakan port=80:proto=tcp:toport=8080, dengan toport, toaddr, atau keduanya.",
+  "monitorSyncNeedsServer": "Pilih server yang agen monitornya menyimpan cadangan.",
+  "monitorBackupUnsupported": "Agen monitor ini tidak dapat menyimpan cadangan. Perbarui agen.",
+  "monitorBackupAdminOnly": "Hanya akun admin agen monitor yang dapat menyimpan cadangan di dalamnya.",
+  "monitorBackupTooLarge": "Cadangan lebih besar dari yang diterima agen monitor ({max}).",
+  "monitorBackupTooMany": "Agen monitor sudah menyimpan cadangan sebanyak yang diizinkan. Hapus satu terlebih dahulu."
 }

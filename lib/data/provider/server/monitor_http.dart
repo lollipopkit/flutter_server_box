@@ -7,6 +7,7 @@ import 'package:meta/meta.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/secure_endpoint.dart';
 import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/server/monitor_backup.dart';
 import 'package:server_box/data/model/server/monitor_capabilities.dart';
 import 'package:server_box/data/model/server/monitor_exec_output.dart';
 import 'package:server_box/data/model/server/monitor_grants.dart';
@@ -484,6 +485,116 @@ class MonitorHttpClient {
         options: Options(method: 'DELETE'),
       );
     });
+  }
+
+  // -------------------------------------------------------------- backup
+  //
+  // `/api/v1/backup*`: opaque blobs the agent stores for this app's backup
+  // sync. What is sent is already encrypted with the backup password, so the
+  // agent holds bytes it cannot read. Admin accounts only.
+
+  Future<MonitorBackupList> fetchBackups() {
+    return _authed(
+      () => _backup(() async {
+        return MonitorBackupList.fromJson(await _object('/api/v1/backup'));
+      }, missing: l10n.monitorBackupUnsupported),
+    );
+  }
+
+  /// One blob's bytes, streamed.
+  Future<Stream<List<int>>> backupRead(String name) {
+    return _authed(
+      () => _backup(() async {
+        final resp = await _session().get<ResponseBody>(
+          '/api/v1/backup/blob',
+          queryParameters: {'name': name},
+          options: Options(responseType: ResponseType.stream),
+        );
+        final body = resp.data;
+        if (body == null) {
+          throw const MonitorHttpErr(
+            type: MonitorHttpErrType.invalidResponse,
+            message: 'Empty /api/v1/backup/blob response',
+          );
+        }
+        return body.stream.map((chunk) => chunk.toList());
+      }, missing: '404 noSuchBlob: $name'),
+    );
+  }
+
+  /// Stores [size] bytes from [open] under [name], replacing a blob of that
+  /// name.
+  ///
+  /// [open] is called once per attempt, so the 401 retry in [_authed] sends a
+  /// fresh stream rather than one the first attempt already consumed. The
+  /// listing first is what refreshes the token, and what lets a file over the
+  /// agent's cap be refused before any of it is sent.
+  Future<void> backupWrite(
+    String name,
+    Stream<List<int>> Function() open, {
+    required int size,
+  }) async {
+    final maxBytes = (await fetchBackups()).maxBytes;
+    if (maxBytes != null && size > maxBytes) {
+      throw MonitorHttpErr(
+        type: MonitorHttpErrType.badRequest,
+        message: l10n.monitorBackupTooLarge(maxBytes.bytes2Str),
+      );
+    }
+    await _authed(
+      () => _backup(() async {
+        await _session().put<dynamic>(
+          '/api/v1/backup/blob',
+          queryParameters: {'name': name},
+          data: open(),
+          options: Options(
+            headers: {
+              'content-type': 'application/octet-stream',
+              'content-length': size,
+            },
+          ),
+        );
+      }, maxBytes: maxBytes),
+    );
+  }
+
+  Future<void> backupRemove(String name) {
+    return _authed(
+      () => _backup(() async {
+        await _session().delete<dynamic>(
+          '/api/v1/backup/blob',
+          queryParameters: {'name': name},
+        );
+      }, missing: '404 noSuchBlob: $name'),
+    );
+  }
+
+  /// [fn] with the backup endpoints' refusals typed and worded. A 401 is left
+  /// to [_authed]. [missing] is what a 404 means for this call: no such blob,
+  /// or, for the listing, an agent without the endpoints.
+  Future<T> _backup<T>(
+    Future<T> Function() fn, {
+    String? missing,
+    int? maxBytes,
+  }) async {
+    try {
+      return await fn();
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      final (type, message) = switch (status) {
+        403 => (MonitorHttpErrType.forbidden, l10n.monitorBackupAdminOnly),
+        404 => (MonitorHttpErrType.notFound, missing),
+        409 => (MonitorHttpErrType.conflict, l10n.monitorBackupTooMany),
+        413 => (
+          MonitorHttpErrType.badRequest,
+          l10n.monitorBackupTooLarge(maxBytes?.bytes2Str ?? '?'),
+        ),
+        400 => (MonitorHttpErrType.badRequest, '400 ${e.response?.data}'),
+        _ => (null, null),
+      };
+      if (type == null) rethrow;
+      throw MonitorHttpErr(type: type, message: message);
+    }
   }
 
   // ------------------------------------------------------------ settings

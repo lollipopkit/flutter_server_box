@@ -5113,4 +5113,25 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get firewallInvalidForwardPort =>
       'port=80:proto=tcp:toport=8080 の形式で、toport、toaddr、またはその両方を指定してください。';
+
+  @override
+  String get monitorSyncNeedsServer =>
+      'バックアップを保存する Monitor エージェントのサーバーを選択してください。';
+
+  @override
+  String get monitorBackupUnsupported =>
+      'この Monitor エージェントはバックアップを保存できません。エージェントを更新してください。';
+
+  @override
+  String get monitorBackupAdminOnly =>
+      'Monitor エージェントにバックアップを保存できるのは管理者アカウントのみです。';
+
+  @override
+  String monitorBackupTooLarge(String max) {
+    return 'バックアップが Monitor エージェントの上限サイズ（$max）を超えています。';
+  }
+
+  @override
+  String get monitorBackupTooMany =>
+      'Monitor エージェントのバックアップ数が上限に達しています。先に 1 つ削除してください。';
 }

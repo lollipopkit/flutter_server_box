@@ -1,0 +1,30 @@
+[package]
+name = "sbm_redfish"
+version = "0.1.0"
+edition = "2024"
+description = "ServerBox Redfish client: BMC discovery, power, sensors and certificate pinning, shared by the monitor agent and the app"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.53", default-features = false, features = ["time", "sync", "net", "macros"] }
+# `rustls-no-provider` and not `rustls`, which is `__rustls-aws-lc-rs` and
+# pulls aws-lc-sys: a second crypto implementation beside `ring`, with a cmake
+# build script in front of every mobile and musl target. The provider is
+# passed explicitly where each `ClientConfig` is built, so nothing here relies
+# on a process default being installed.
+reqwest = { version = "0.13", default-features = false, features = ["json", "rustls-no-provider", "http2"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+# Reading the review certificate in `cert::fetch_server_cert` without an HTTP
+# request around it.
+tokio-rustls = { version = "0.26", default-features = false, features = ["ring", "tls12"] }
+# Subject, issuer and validity of the certificate a person is asked to review.
+x509-cert = { version = "0.3", default-features = false, features = ["std"] }
+sha2 = "0.11"
+# Basic auth for a service that offers no sessions.
+base64 = "0.22"
+
+[dev-dependencies]
+# The opt-in hardware test reads the workspace-root `.env`.
+dotenvy = "0.15"
+tokio = { version = "1.53", features = ["full"] }

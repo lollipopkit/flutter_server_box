@@ -346,6 +346,11 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
         (Method::POST, "/api/v1/snippets/plan", Some(json!({ "script": "ls" }))),
         (Method::GET, "/api/v1/desktops", None),
         (Method::PUT, "/api/v1/desktops", Some(json!({ "desktops": [] }))),
+        (Method::GET, "/api/v1/backup", None),
+        (Method::GET, "/api/v1/backup/blob?name=absent", None),
+        (Method::DELETE, "/api/v1/backup/blob?name=absent", None),
+        (Method::GET, "/api/v1/bmc", None),
+        (Method::GET, "/api/v1/bmc/absent", None),
     ]
 }
 
