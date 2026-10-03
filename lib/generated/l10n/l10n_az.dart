@@ -2937,6 +2937,18 @@ class AppLocalizationsAz extends AppLocalizations {
   String get remoteDesktopUsernameRequired => 'RDP istifadəçi adını daxil et.';
 
   @override
+  String get remoteDesktopNameInvalid =>
+      'Profil adı ən çox 64 simvol ola bilər və sətir sonu ola bilməz.';
+
+  @override
+  String get remoteDesktopHostInvalid =>
+      'Hədəf host boşluq və ya sətir sonu ehtiva edə bilməz.';
+
+  @override
+  String get remoteDesktopCredentialInvalid =>
+      'İstifadəçi adı və domen ən çox 256 simvol ola bilər və sətir sonu ola bilməz.';
+
+  @override
   String get remoteDesktopVncPasswordAscii =>
       'Klassik VNC parolları yalnız ASCII simvollarından ibarət olmalıdır.';
 

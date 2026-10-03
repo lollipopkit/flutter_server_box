@@ -21,6 +21,12 @@ ntex-files = "3.2"
 # TLS (ring instead of aws-lc: no cmake/assembly dependency for static musl builds)
 rustls = { version = "0.23", default-features = false, features = ["ring", "logging", "std", "tls12"] }
 rustls-pemfile = "2"
+# The panel's RDP sessions (`api::ws::rdcleanpath`): the RDCleanPath PDU the
+# browser's IronRDP client opens with, and the TLS client the agent uses to
+# reach the RDP server on its behalf (the browser cannot do RDP's TLS). Pinned
+# to the protocol version `@devolutions/iron-remote-desktop-rdp` 0.7 speaks.
+ironrdp-rdcleanpath = "=0.2.2"
+tokio-rustls = { version = "0.26", default-features = false, features = ["ring", "logging", "tls12"] }
 
 # Async runtime
 tokio = { version = "1.53", features = ["full"] }
@@ -118,3 +124,6 @@ libc = "0.2"
 
 [dev-dependencies]
 tempfile = "3.27.0"
+# Self-signed certificates for the fake RDP server in `tests/rdp_ws.rs`.
+# `ring`, so the tree keeps one crypto implementation.
+rcgen = { version = "0.14", default-features = false, features = ["ring", "pem"] }

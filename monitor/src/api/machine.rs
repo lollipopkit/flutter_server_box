@@ -1,5 +1,5 @@
 //! What the machine-management endpoints share: the panel's power, process,
-//! service, cron, container, benchmark, system user and snippet pages (issue
+//! service, cron, container, benchmark, system user, snippet and desktop pages (issue
 //! #1623).
 //!
 //! Each of them runs a command on the machine the agent is installed on,
@@ -34,6 +34,7 @@ pub const FEATURES: &[&str] = &[
     "benchmark",
     "system_users",
     "snippets",
+    "desktop",
 ];
 
 /// Who is asking, and from where, once [`gate`] let them through.

@@ -2949,6 +2949,18 @@ class AppLocalizationsNl extends AppLocalizations {
   String get remoteDesktopUsernameRequired => 'Voer de RDP-gebruikersnaam in.';
 
   @override
+  String get remoteDesktopNameInvalid =>
+      'De profielnaam mag maximaal 64 tekens bevatten en geen regeleinden.';
+
+  @override
+  String get remoteDesktopHostInvalid =>
+      'De doelhost mag geen spaties of regeleinden bevatten.';
+
+  @override
+  String get remoteDesktopCredentialInvalid =>
+      'Gebruikersnaam en domein mogen maximaal 256 tekens bevatten en geen regeleinden.';
+
+  @override
   String get remoteDesktopVncPasswordAscii =>
       'Klassieke VNC-wachtwoorden mogen alleen ASCII-tekens bevatten.';
 

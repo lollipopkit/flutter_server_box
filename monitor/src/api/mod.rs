@@ -1,4 +1,5 @@
 pub mod cron;
+pub mod desktops;
 pub mod custom_cmds;
 pub mod exec;
 pub mod fs;

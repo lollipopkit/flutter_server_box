@@ -2786,6 +2786,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String get remoteDesktopUsernameRequired => 'RDP 사용자 이름을 입력하세요.';
 
   @override
+  String get remoteDesktopNameInvalid => '프로필 이름은 64자 이하이며 줄바꿈을 쓸 수 없습니다.';
+
+  @override
+  String get remoteDesktopHostInvalid => '대상 호스트에는 공백이나 줄바꿈을 쓸 수 없습니다.';
+
+  @override
+  String get remoteDesktopCredentialInvalid =>
+      '사용자 이름과 도메인은 256자 이하이며 줄바꿈을 쓸 수 없습니다.';
+
+  @override
   String get remoteDesktopVncPasswordAscii =>
       '클래식 VNC 비밀번호는 ASCII 문자만 포함할 수 있습니다.';
 

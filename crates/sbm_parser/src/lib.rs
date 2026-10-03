@@ -17,6 +17,7 @@ pub mod capabilities;
 pub mod commands;
 pub mod common;
 pub mod container;
+pub mod desktop;
 pub mod cron;
 pub mod gpu;
 pub mod linux;

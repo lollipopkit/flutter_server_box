@@ -320,6 +320,7 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .route("/ws-ticket", web::post().to(issue_ws_ticket))
             .route("/terminal/ws", web::get().to(terminal_ws))
             .route("/stream/ws", web::get().to(crate::api::ws::stream::stream_ws))
+            .route("/rdp/ws", web::get().to(crate::api::ws::rdcleanpath::rdp_ws))
             .route("/listen/ws", web::get().to(ws::listen::listen_ws))
             .service(
                 // Its own payload limit: ntex allows 32 KiB by
@@ -377,6 +378,11 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     )
                     .route(web::get().to(crate::api::snippets::list))
                     .route(web::put().to(crate::api::snippets::replace)),
+            )
+            .service(
+                web::resource("/desktops")
+                    .route(web::get().to(crate::api::desktops::list))
+                    .route(web::put().to(crate::api::desktops::replace)),
             )
             .service(
                 web::resource("/snippets/plan")
@@ -1021,6 +1027,7 @@ async fn issue_ws_ticket(
             "stream not available",
         ),
         Purpose::Listen => (ok(Grant::Listen), "listen not available"),
+        Purpose::Rdp => (ok(Grant::Connect), "rdp not available"),
     };
     if !available {
         Event::new(Kind::Ticket, Action::Denied, Outcome::Denied)
@@ -1043,6 +1050,7 @@ async fn issue_ws_ticket(
                     Purpose::Terminal => "terminal",
                     Purpose::Stream => "stream",
                     Purpose::Listen => "listen",
+                    Purpose::Rdp => "rdp",
                 })
                 .record(&app_state.db)
                 .await;

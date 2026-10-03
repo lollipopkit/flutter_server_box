@@ -5068,6 +5068,24 @@ abstract class AppLocalizations {
   /// **'Enter the RDP username.'**
   String get remoteDesktopUsernameRequired;
 
+  /// No description provided for @remoteDesktopNameInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The profile name can be up to 64 characters and cannot contain line breaks.'**
+  String get remoteDesktopNameInvalid;
+
+  /// No description provided for @remoteDesktopHostInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The target host cannot contain spaces or line breaks.'**
+  String get remoteDesktopHostInvalid;
+
+  /// No description provided for @remoteDesktopCredentialInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The username and domain can be up to 256 characters and cannot contain line breaks.'**
+  String get remoteDesktopCredentialInvalid;
+
   /// No description provided for @remoteDesktopVncPasswordAscii.
   ///
   /// In en, this message translates to:

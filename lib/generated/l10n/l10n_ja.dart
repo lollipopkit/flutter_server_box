@@ -2781,6 +2781,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get remoteDesktopUsernameRequired => 'RDP のユーザー名を入力してください。';
 
   @override
+  String get remoteDesktopNameInvalid => 'プロファイル名は 64 文字以内で、改行は使えません。';
+
+  @override
+  String get remoteDesktopHostInvalid => '接続先ホストに空白や改行は使えません。';
+
+  @override
+  String get remoteDesktopCredentialInvalid =>
+      'ユーザー名とドメインは 256 文字以内で、改行は使えません。';
+
+  @override
   String get remoteDesktopVncPasswordAscii =>
       '従来の VNC パスワードは ASCII 文字のみ使用できます。';
 

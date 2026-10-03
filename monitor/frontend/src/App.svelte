@@ -12,6 +12,7 @@
   import Benchmark from './pages/Benchmark.svelte'
   import SystemUsers from './pages/SystemUsers.svelte'
   import Snippets from './pages/Snippets.svelte'
+  import Desktop from './pages/Desktop.svelte'
   import PanelSettings from './pages/PanelSettings.svelte'
   import ServerSettings from './pages/ServerSettings.svelte'
   import Terminal from './pages/Terminal.svelte'
@@ -54,6 +55,8 @@
             <SystemUsers onback={() => layout.back('dashboard')} />
           {:else if layout.view === 'snippets'}
             <Snippets onback={() => layout.back('dashboard')} />
+          {:else if layout.view === 'desktop'}
+            <Desktop onback={() => layout.back('dashboard')} />
           {:else}
             <Dashboard />
           {/if}
