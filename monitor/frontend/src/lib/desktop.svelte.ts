@@ -199,8 +199,12 @@ export class DesktopSession {
     const socket = this.socket
     this.socket = null
     if (socket && socket.readyState !== WebSocket.CLOSED) socket.close()
-    if (this.phase !== 'failed') this.phase = 'idle'
-    this.error = null
+    // A failure stays readable until the next connect: the page reads `error`
+    // after the answer, and may have closed the session first.
+    if (this.phase !== 'failed') {
+      this.phase = 'idle'
+      this.error = null
+    }
     this.answer(null)
   }
 

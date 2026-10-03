@@ -100,14 +100,15 @@ fn has_control(value: &str) -> bool {
 }
 
 /// The first problem with a route, in the order a form lays its fields out.
-/// Whitespace around a value is the form's to trim; a name or host that is
-/// only whitespace is empty.
+/// A value is checked as it would be stored, so whitespace around one is
+/// refused rather than read past: the caller trims. A name, host or RDP user
+/// name that is only whitespace is empty.
 pub fn validate_profile(input: &ProfileInput) -> Result<(), ProfileError> {
     let name = input.name.trim();
     if name.is_empty() {
         return Err(ProfileError::NameRequired);
     }
-    if name.chars().count() > MAX_NAME || has_control(name) {
+    if name.len() != input.name.len() || name.chars().count() > MAX_NAME || has_control(name) {
         return Err(ProfileError::InvalidName);
     }
     if default_port(&input.protocol).is_none() {
@@ -117,7 +118,10 @@ pub fn validate_profile(input: &ProfileInput) -> Result<(), ProfileError> {
     if host.is_empty() {
         return Err(ProfileError::HostRequired);
     }
-    if host.len() > MAX_HOST || host.chars().any(|c| c.is_whitespace() || c.is_control()) {
+    if host.len() != input.host.len()
+        || host.len() > MAX_HOST
+        || host.chars().any(|c| c.is_whitespace() || c.is_control())
+    {
         return Err(ProfileError::InvalidHost);
     }
     if !matches!(input.port, Some(1..=65535)) {
@@ -128,7 +132,7 @@ pub fn validate_profile(input: &ProfileInput) -> Result<(), ProfileError> {
         return Err(ProfileError::UsernameRequired);
     }
     for value in [input.username.as_deref(), input.domain.as_deref()].into_iter().flatten() {
-        if value.chars().count() > MAX_IDENT || has_control(value) {
+        if value.trim() != value || value.chars().count() > MAX_IDENT || has_control(value) {
             return Err(ProfileError::InvalidCredential);
         }
     }
@@ -179,7 +183,10 @@ mod tests {
             (ProfileInput { name: "a\nb".into(), ..route("vnc") }, ProfileError::InvalidName),
             (ProfileInput { protocol: "spice".into(), ..route("vnc") }, ProfileError::InvalidProtocol),
             (ProfileInput { host: " ".into(), ..route("vnc") }, ProfileError::HostRequired),
+            (ProfileInput { name: " Desktop".into(), ..route("vnc") }, ProfileError::InvalidName),
             (ProfileInput { host: "a b".into(), ..route("vnc") }, ProfileError::InvalidHost),
+            (ProfileInput { host: " 10.0.0.5 ".into(), ..route("vnc") }, ProfileError::InvalidHost),
+            (ProfileInput { username: Some("lk ".into()), ..route("rdp") }, ProfileError::InvalidCredential),
             (ProfileInput { host: "h".repeat(MAX_HOST + 1), ..route("vnc") }, ProfileError::InvalidHost),
             (ProfileInput { port: None, ..route("vnc") }, ProfileError::InvalidPort),
             (ProfileInput { port: Some(0), ..route("vnc") }, ProfileError::InvalidPort),

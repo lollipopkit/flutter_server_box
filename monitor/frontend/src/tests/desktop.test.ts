@@ -179,6 +179,10 @@ describe('DesktopSession', () => {
     expect(await connecting).toBeNull()
     expect(session.phase).toBe('failed')
     expect(session.error).toBe('not on the allow list')
+    // Closed afterwards, the failure keeps its reason.
+    session.close()
+    expect(session.phase).toBe('failed')
+    expect(session.error).toBe('not on the allow list')
   })
 
   it('answers a connect that was abandoned instead of leaving it waiting', async () => {

@@ -567,11 +567,12 @@ String? validateRemoteDesktopProfileInput({
   final code =
       ffi.desktopValidateProfile(
         inputJson: jsonEncode({
-          'name': name,
+          // What the profile will carry: the rules refuse untrimmed values.
+          'name': name.trim(),
           'protocol': protocol.name,
-          'host': host,
+          'host': host.trim(),
           'port': port,
-          // What the profile will carry: a VNC profile keeps neither.
+          // A VNC profile keeps neither.
           'username': rdp ? username.trim() : null,
           'domain': rdp ? domain.trim() : null,
         }),
