@@ -11,6 +11,7 @@ path = "src/lib.rs"
 # Shared status parser (monorepo-wide)
 sbm_parser = { path = "../crates/sbm_parser" }
 sbm_redfish = { path = "../crates/sbm_redfish" }
+sbm_virt = { path = "../crates/sbm_virt" }
 # Native (syscall/procfs) status sampling for monitor's own local collection
 # path (never used by the SSH-based app) — see monitoring.rs::collect_metrics
 sbm_native = { path = "../crates/sbm_native" }

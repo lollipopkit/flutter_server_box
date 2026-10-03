@@ -39,8 +39,17 @@ pub enum ErrorKind {
     Exists,
     /// The configuration changed since it was read.
     Conflict,
+    /// `virsh` is not installed.
+    NotInstalled,
+    /// libvirt refused this account; sudo needs a password.
+    SudoPasswordRequired,
+    /// The sudo password given was rejected.
+    SudoPasswordRejected,
     /// The client was closed.
     Closed,
+    /// A failure with nothing more specific to say; the message is the
+    /// host's.
+    Unknown,
 }
 
 /// What a client phrases itself, in its own language, when no host text
@@ -118,6 +127,8 @@ impl Error {
                 | ErrorKind::CertChanged
                 | ErrorKind::AuthFailed
                 | ErrorKind::NotConfigured
+                | ErrorKind::SudoPasswordRequired
+                | ErrorKind::SudoPasswordRejected
         )
     }
 }

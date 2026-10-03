@@ -351,6 +351,10 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
         (Method::DELETE, "/api/v1/backup/blob?name=absent", None),
         (Method::GET, "/api/v1/bmc", None),
         (Method::GET, "/api/v1/bmc/absent", None),
+        (Method::POST, "/api/v1/virt", Some(json!({}))),
+        (Method::POST, "/api/v1/virt/power", Some(json!({ "guest": "absent", "action": "start" }))),
+        (Method::GET, "/api/v1/virt/pve", None),
+        (Method::POST, "/api/v1/virt/pve/tfa", Some(json!({ "code": "000000" }))),
     ]
 }
 

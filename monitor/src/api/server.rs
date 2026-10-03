@@ -122,6 +122,9 @@ pub struct AppState {
     /// The last process table read, which the next one's read and write
     /// speeds are differenced against — see `api::process`.
     pub process_sample: Arc<tokio::sync::Mutex<Option<crate::api::process::ProcessSample>>>,
+    /// The PVE session and the libvirt rate history kept between the
+    /// Virtualization page's requests — see `api::virt`.
+    pub virt: Arc<crate::api::virt::VirtState>,
     /// Serialises every read-modify-write of `config.toml`.
     ///
     /// `config_file::write` is atomic, so no reader ever sees a half-written
@@ -206,6 +209,7 @@ impl AppState {
             login_throttle: Arc::new(LoginThrottle::new()),
             grants_changed: broadcast::channel(16).0,
             process_sample: Arc::new(tokio::sync::Mutex::new(None)),
+            virt: Arc::new(crate::api::virt::VirtState::default()),
             config,
             db,
             current_metrics: Arc::new(RwLock::new(None)),
@@ -385,6 +389,16 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::put().to(crate::api::bmc::replace)),
             )
             .service(web::resource("/bmc/probe").route(web::post().to(crate::api::bmc::probe)))
+            .service(web::resource("/virt").route(web::post().to(crate::api::virt::load)))
+            .service(web::resource("/virt/power").route(web::post().to(crate::api::virt::power)))
+            .service(
+                web::resource("/virt/pve")
+                    .route(web::get().to(crate::api::virt::pve_get))
+                    .route(web::put().to(crate::api::virt::pve_put))
+                    .route(web::delete().to(crate::api::virt::pve_delete)),
+            )
+            .service(web::resource("/virt/pve/cert").route(web::post().to(crate::api::virt::pve_cert)))
+            .service(web::resource("/virt/pve/tfa").route(web::post().to(crate::api::virt::pve_tfa)))
             .service(web::resource("/bmc/{id}").route(web::get().to(crate::api::bmc::status)))
             .service(
                 web::resource("/bmc/{id}/power").route(web::post().to(crate::api::bmc::power)),

@@ -283,6 +283,23 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   answers `intents`, the actions `ResetRequest::build` finds for that system,
   so the panel has no copy of that mapping. `tests/bmc_api.rs` runs against a
   fake Redfish service.
+  `/virt` (`api/virt.rs`): the Virtualization page — this machine's guests,
+  PVE or libvirt, in `sbm_virt::model` terms (the app's FFI reaches the same
+  crate). `POST /virt` loads (a POST: a libvirt refusing the agent's account
+  takes the operator's sudo password, which a body carries and a URL must
+  not; used for that request, never stored), `POST /virt/power` acts on a
+  guest re-read for the request. PVE is reached by the one stored
+  configuration (migration 017, `virt_pve`, one row; `password` and
+  `token_secret` write-only, `null` keeps): **one `sbm_virt::pve::Client` per
+  agent, kept in `AppState.virt`** so a ticket lives its two hours and a TOTP
+  account is not asked on every refresh; `POST /virt/pve/tfa` answers a
+  waiting login. A certificate no CA vouches for is shown (`cert_unconfirmed`
+  with the certificate) and nothing is sent until `POST /virt/pve/cert` pins
+  it. Without a configuration the probe decides: PVE not set up yet, libvirt
+  (through sudo once it refused the account, as the app does), or nothing.
+  A host's failure is answered 200 with `error` (`sbm_virt::error::Error`),
+  never as this agent's status. `virt` to see and act; admin to configure and
+  pin. `tests/virt_api.rs` runs against a fake PVE API over TLS.
   `/backup` (`api/backup.rs`): blobs the agent hosts for the app's backup sync
   (`MonitorBackupStorage`, a fourth `RemoteStorage`) and the panel's backup
   page, as rows (migration 015) so they share the database's protection from

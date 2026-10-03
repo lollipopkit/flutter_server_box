@@ -6,7 +6,8 @@
 //! the [`RateTracker`] between loads. Ported from the app's `LibvirtBackend`
 //! (`load`, `guestOf`, `sampleOf`).
 
-use crate::libvirt::{POOL_TYPES, VirtAction, VirtDomain, VirtOverview, VirtState};
+use crate::error::{Error, ErrorKind};
+use crate::libvirt::{POOL_TYPES, VirtAction, VirtDomain, VirtError, VirtOverview, VirtState};
 use crate::model::{Capabilities, Guest, GuestKind, GuestState, Host, HostKind, HostView, PowerAction};
 use crate::rates::{CounterSample, RateTracker};
 
@@ -209,4 +210,36 @@ pub fn virsh_action(action: PowerAction) -> VirtAction {
 
 fn kib(v: Option<u64>) -> Option<u64> {
     v.map(|k| k * 1024)
+}
+
+/// A `virsh` failure as the shared error. `action` marks a call that changes
+/// something, whose refusal in the host's words is [`ErrorKind::ActionFailed`].
+pub fn error_of(e: &VirtError, action: bool) -> Error {
+    let refused = if action { ErrorKind::ActionFailed } else { ErrorKind::Unknown };
+    let (kind, message) = match e {
+        VirtError::NotInstalled => (ErrorKind::NotInstalled, None),
+        VirtError::PermissionDenied { message } => (ErrorKind::PermissionDenied, Some(message)),
+        VirtError::ConnectFailed { message } => (ErrorKind::Unreachable, Some(message)),
+        VirtError::Malformed { message } => (ErrorKind::InvalidResponse, Some(message)),
+        VirtError::Conflict { message } => (ErrorKind::Conflict, Some(message)),
+        // `exists` too: a snapshot name taken is the action refused, with the
+        // host's words. Creating a guest tells it apart itself.
+        VirtError::DomainNotFound { message }
+        | VirtError::InvalidState { message }
+        | VirtError::Exists { message }
+        | VirtError::Command { message } => (refused, Some(message)),
+    };
+    let mut err = Error::new(kind);
+    err.message = message.filter(|m| !m.is_empty()).cloned();
+    err
+}
+
+/// What a script run through `sudo` came to, when sudo itself refused: no
+/// password and one is needed, or the one given was wrong. None when sudo
+/// let the script run.
+pub fn sudo_refusal(stderr: &str, had_password: bool) -> Option<Error> {
+    if !sbm_parser::script::sudo_password_rejected(stderr) {
+        return None;
+    }
+    Some(Error::new(if had_password { ErrorKind::SudoPasswordRejected } else { ErrorKind::SudoPasswordRequired }))
 }
