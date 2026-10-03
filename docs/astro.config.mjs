@@ -100,6 +100,10 @@ export default defineConfig({
 						{ label: 'Building', translations: { 'zh-CN': '构建' }, slug: 'development/building' },
 						{ label: 'Testing', translations: { 'zh-CN': '测试' }, slug: 'development/testing' },
 						{ label: 'Themes', translations: { 'zh-CN': '主题' }, slug: 'development/themes' },
+						{ label: 'Authoring a theme', translations: { 'zh-CN': '编写主题' }, slug: 'development/theme-authoring' },
+						{ label: 'Monitor agent', translations: { 'zh-CN': '监控 agent' }, slug: 'development/monitor-agent' },
+						{ label: 'Remote desktop', translations: { 'zh-CN': '远程桌面' }, slug: 'development/remote-desktop' },
+						{ label: 'BMC / Redfish', translations: { 'zh-CN': 'BMC / Redfish' }, slug: 'development/bmc' },
 					],
 				},
 				// Its own entry rather than a line in a group: the app links

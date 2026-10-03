@@ -11,7 +11,7 @@ description: Capability 上报、指标历史和 remote access 行为
 App 通过 `GET /api/v1/capabilities` 查询 agent 支持的功能，以及当前登录账号可以使用的功能。返回内容针对调用者：
 
 - `me`：`username`、`role` 和 `admin`。watch token 没有 `me`。
-- `grants`：`shell`、`ssh_terminal`、`files`、`connect` 和 `listen` 各一项，带有 `ok`，不可用时还带有 `why`：`not_granted`（角色没有这项权限）、`insecure_transport`（需要 TLS、loopback 调用方或 `[remote_access] allow_insecure`）、`not_configured`（`files` 没有配置 `roots`）。每项权限还带有它的选项：`files.mode`、`connect.allow`、`listen.public` 和 `listen.ports`。watch token 的每项权限都是 `not_granted`。
+- `grants`：`shell`、`ssh_terminal`、`files`、`connect`、`listen` 和 `virt` 各一项，带有 `ok`，不可用时还带有 `why`：`not_granted`（角色没有这项权限）、`insecure_transport`（需要 TLS、loopback 调用方或 `[remote_access] allow_insecure`）、`not_configured`（`files` 没有配置 `roots`）。每项权限还带有它的选项：`files.mode`、`connect.allow`、`listen.public` 和 `listen.ports`。watch token 的每项权限都是 `not_granted`。
 - `remote_access`：角色功能之前的 agent 上报的布尔值，由 `grants` 推导出来，供旧版 App 使用（`terminal` 对应 `ssh_terminal` 或 `shell`，`full_access` 对应 `shell`，`stream` 对应 `connect`）。存在 `grants` 时，App 读取 `grants`。
 
 不要仅根据 agent 版本或默认配置推断功能是否可用；应读取运行中 agent
@@ -45,6 +45,7 @@ GET /api/v1/metrics/history?from=<epoch-seconds>&to=<epoch-seconds>
 | `files` | `/api/v1/fs/*`；`mode = "read"` 时只允许 `roots`、`list`、`stat` 和 `read` |
 | `connect` | `/api/v1/stream/ws` 上的 `open`，按 `allow` 检查 |
 | `listen` | `/api/v1/listen/ws`，以及 `/api/v1/stream/ws` 上的 `accept` |
+| `virt` | `GET /api/v1/bmc`、`GET /api/v1/bmc/{id}` 和 `POST /api/v1/bmc/{id}/power`：agent 为面板访问的 hypervisor 和 BMC |
 
 读取状态、指标、历史、velocity、capabilities 和卡片顺序，只需要任意账号或 watch token。watch token 不能做其他任何事。
 

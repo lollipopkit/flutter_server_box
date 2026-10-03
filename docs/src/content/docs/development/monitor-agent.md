@@ -15,7 +15,7 @@ caller:
 
 - `me`: `username`, `role`, and `admin`. A watch token gets no `me`.
 - `grants`: one entry for each of `shell`, `ssh_terminal`, `files`,
-  `connect`, and `listen`, with `ok` and, when it is not usable, `why`:
+  `connect`, `listen`, and `virt`, with `ok` and, when it is not usable, `why`:
   `not_granted` (the role does not hold it), `insecure_transport` (it needs
   TLS, a loopback caller, or `[remote_access] allow_insecure`), or
   `not_configured` (`files` with no `roots`). A grant also carries its
@@ -66,6 +66,7 @@ including every request and response shape, is
 | `files` | `/api/v1/fs/*`; `mode = "read"` allows `roots`, `list`, `stat`, and `read` only |
 | `connect` | `open` on `/api/v1/stream/ws`, checked against `allow` |
 | `listen` | `/api/v1/listen/ws`, and `accept` on `/api/v1/stream/ws` |
+| `virt` | `GET /api/v1/bmc`, `GET /api/v1/bmc/{id}` and `POST /api/v1/bmc/{id}/power`: the hypervisors and BMCs the agent reaches for the panel |
 
 Reading status, metrics, history, velocity, capabilities, and the card order
 needs any account or a watch token. A watch token can do nothing else.
